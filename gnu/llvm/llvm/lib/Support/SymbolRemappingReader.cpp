@@ -15,6 +15,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/LineIterator.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
 
@@ -47,11 +48,11 @@ Error SymbolRemappingReader::read(MemoryBuffer &B) {
                          "found '" + Line + "'");
 
     using FK = ItaniumManglingCanonicalizer::FragmentKind;
-    Optional<FK> FragmentKind = StringSwitch<Optional<FK>>(Parts[0])
-                                    .Case("name", FK::Name)
-                                    .Case("type", FK::Type)
-                                    .Case("encoding", FK::Encoding)
-                                    .Default(None);
+    std::optional<FK> FragmentKind = StringSwitch<std::optional<FK>>(Parts[0])
+                                         .Case("name", FK::Name)
+                                         .Case("type", FK::Type)
+                                         .Case("encoding", FK::Encoding)
+                                         .Default(std::nullopt);
     if (!FragmentKind)
       return ReportError("Invalid kind, expected 'name', 'type', or 'encoding',"
                          " found '" + Parts[0] + "'");

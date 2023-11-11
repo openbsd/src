@@ -1,4 +1,4 @@
-import("//llvm/utils/unittest/unittest.gni")
+import("//third-party/unittest/unittest.gni")
 
 unittest("OrcJITTests") {
   deps = [
@@ -10,23 +10,31 @@ unittest("OrcJITTests") {
     "//llvm/lib/Object",
     "//llvm/lib/Support",
     "//llvm/lib/Target:NativeTarget",
+    "//llvm/lib/TargetParser",
     "//llvm/lib/Testing/Support",
   ]
   sources = [
     "CoreAPIsTest.cpp",
+    "EPCGenericJITLinkMemoryManagerTest.cpp",
+    "EPCGenericMemoryAccessTest.cpp",
     "ExecutionSessionWrapperFunctionCallsTest.cpp",
+    "ExecutorAddressTest.cpp",
     "IndirectionUtilsTest.cpp",
     "JITTargetMachineBuilderTest.cpp",
     "LazyCallThroughAndReexportsTest.cpp",
+    "LookupAndRecordAddrsTest.cpp",
+    "MapperJITLinkMemoryManagerTest.cpp",
+    "MemoryMapperTest.cpp",
     "ObjectLinkingLayerTest.cpp",
     "OrcCAPITest.cpp",
     "OrcTestCommon.cpp",
-    "QueueChannel.cpp",
-    "RPCUtilsTest.cpp",
     "RTDyldObjectLinkingLayerTest.cpp",
     "ResourceTrackerTest.cpp",
+    "SharedMemoryMapperTest.cpp",
+    "SimpleExecutorMemoryManagerTest.cpp",
     "SimplePackedSerializationTest.cpp",
     "SymbolStringPoolTest.cpp",
+    "TaskDispatchTest.cpp",
     "ThreadSafeModuleTest.cpp",
     "WrapperFunctionUtilsTest.cpp",
   ]

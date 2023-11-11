@@ -10,9 +10,9 @@
 #define LLVM_EXECUTIONENGINE_RUNTIMEDYLDCHECKER_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ExecutionEngine/JITSymbol.h"
 #include "llvm/Support/Endian.h"
+#include <optional>
 
 #include <cstdint>
 #include <memory>
@@ -127,7 +127,7 @@ public:
     JITTargetAddress getTargetAddress() const { return TargetAddress; }
 
   private:
-    const char *ContentPtr = 0;
+    const char *ContentPtr = nullptr;
     uint64_t Size = 0;
     JITTargetAddress TargetAddress = 0;
   };
@@ -173,7 +173,7 @@ public:
 
   /// If there is a section at the given local address, return its load
   /// address, otherwise return none.
-  Optional<uint64_t> getSectionLoadAddress(void *LocalAddress) const;
+  std::optional<uint64_t> getSectionLoadAddress(void *LocalAddress) const;
 
 private:
   std::unique_ptr<RuntimeDyldCheckerImpl> Impl;

@@ -25,6 +25,7 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "hexagon-isel"
+#define PASS_NAME "Hexagon DAG->DAG Pattern Instruction Selection"
 
 static
 cl::opt<bool>
@@ -62,6 +63,10 @@ FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
   return new HexagonDAGToDAGISel(TM, OptLevel);
 }
 }
+
+char HexagonDAGToDAGISel::ID = 0;
+
+INITIALIZE_PASS(HexagonDAGToDAGISel, DEBUG_TYPE, PASS_NAME, false, false)
 
 void HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, const SDLoc &dl) {
   SDValue Chain = LD->getChain();
@@ -304,7 +309,7 @@ bool HexagonDAGToDAGISel::tryLoadOfLoadIntrinsic(LoadSDNode *N) {
     SDNode *S = StoreInstrForLoadIntrinsic(L, C);
     SDValue F[] = { SDValue(N,0), SDValue(N,1), SDValue(C,0), SDValue(C,1) };
     SDValue T[] = { SDValue(L,0), SDValue(S,0), SDValue(L,1), SDValue(S,0) };
-    ReplaceUses(F, T, array_lengthof(T));
+    ReplaceUses(F, T, std::size(T));
     // This transformation will leave the intrinsic dead. If it remains in
     // the DAG, the selection code will see it again, but without the load,
     // and it will generate a store that is normally required for it.
@@ -354,7 +359,7 @@ bool HexagonDAGToDAGISel::SelectBrevLdIntrinsic(SDNode *IntN) {
   return false;
 }
 
-/// Generate a machine instruction node for the new circlar buffer intrinsics.
+/// Generate a machine instruction node for the new circular buffer intrinsics.
 /// The new versions use a CSx register instead of the K field.
 bool HexagonDAGToDAGISel::SelectNewCircIntrinsic(SDNode *IntN) {
   if (IntN->getOpcode() != ISD::INTRINSIC_W_CHAIN)
@@ -682,6 +687,7 @@ void HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
 
   SDValue V = N->getOperand(1);
   SDValue U;
+  // Splat intrinsics.
   if (keepsLowBits(V, Bits, U)) {
     SDValue R = CurDAG->getNode(N->getOpcode(), SDLoc(N), N->getValueType(0),
                                 N->getOperand(0), U);
@@ -690,6 +696,25 @@ void HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
     return;
   }
   SelectCode(N);
+}
+
+void HexagonDAGToDAGISel::SelectExtractSubvector(SDNode *N) {
+  SDValue Inp = N->getOperand(0);
+  MVT ResTy = N->getValueType(0).getSimpleVT();
+  auto IdxN = cast<ConstantSDNode>(N->getOperand(1));
+  unsigned Idx = IdxN->getZExtValue();
+
+  [[maybe_unused]] MVT InpTy = Inp.getValueType().getSimpleVT();
+  [[maybe_unused]] unsigned ResLen = ResTy.getVectorNumElements();
+  assert(InpTy.getVectorElementType() == ResTy.getVectorElementType());
+  assert(2 * ResLen == InpTy.getVectorNumElements());
+  assert(ResTy.getSizeInBits() == 32);
+  assert(Idx == 0 || Idx == ResLen);
+
+  unsigned SubReg = Idx == 0 ? Hexagon::isub_lo : Hexagon::isub_hi;
+  SDValue Ext = CurDAG->getTargetExtractSubreg(SubReg, SDLoc(N), ResTy, Inp);
+
+  ReplaceNode(N, Ext.getNode());
 }
 
 //
@@ -749,7 +774,7 @@ void HexagonDAGToDAGISel::SelectFrameIndex(SDNode *N) {
     R = CurDAG->getMachineNode(Hexagon::PS_fi, DL, MVT::i32, FI, Zero);
   } else {
     auto &HMFI = *MF->getInfo<HexagonMachineFunctionInfo>();
-    unsigned AR = HMFI.getStackAlignBaseVReg();
+    Register AR = HMFI.getStackAlignBaseReg();
     SDValue CH = CurDAG->getEntryNode();
     SDValue Ops[] = { CurDAG->getCopyFromReg(CH, DL, AR, MVT::i32), FI, Zero };
     R = CurDAG->getMachineNode(Hexagon::PS_fia, DL, MVT::i32, Ops);
@@ -884,6 +909,27 @@ void HexagonDAGToDAGISel::Select(SDNode *N) {
   if (N->isMachineOpcode())
     return N->setNodeId(-1);  // Already selected.
 
+  auto isHvxOp = [this](SDNode *N) {
+    for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
+      if (HST->isHVXVectorType(N->getValueType(i), true))
+        return true;
+    }
+    for (SDValue I : N->ops()) {
+      if (HST->isHVXVectorType(I.getValueType(), true))
+        return true;
+    }
+    return false;
+  };
+
+  if (HST->useHVXOps() && isHvxOp(N)) {
+    switch (N->getOpcode()) {
+    case ISD::EXTRACT_SUBVECTOR:  return SelectHvxExtractSubvector(N);
+    case ISD::VECTOR_SHUFFLE:     return SelectHvxShuffle(N);
+
+    case HexagonISD::VROR:        return SelectHvxRor(N);
+    }
+  }
+
   switch (N->getOpcode()) {
   case ISD::Constant:             return SelectConstant(N);
   case ISD::ConstantFP:           return SelectConstantFP(N);
@@ -893,6 +939,7 @@ void HexagonDAGToDAGISel::Select(SDNode *N) {
   case ISD::STORE:                return SelectStore(N);
   case ISD::INTRINSIC_W_CHAIN:    return SelectIntrinsicWChain(N);
   case ISD::INTRINSIC_WO_CHAIN:   return SelectIntrinsicWOChain(N);
+  case ISD::EXTRACT_SUBVECTOR:    return SelectExtractSubvector(N);
 
   case HexagonISD::ADDC:
   case HexagonISD::SUBC:          return SelectAddSubCarry(N);
@@ -903,13 +950,6 @@ void HexagonDAGToDAGISel::Select(SDNode *N) {
   case HexagonISD::D2P:           return SelectD2P(N);
   case HexagonISD::Q2V:           return SelectQ2V(N);
   case HexagonISD::V2Q:           return SelectV2Q(N);
-  }
-
-  if (HST->useHVXOps()) {
-    switch (N->getOpcode()) {
-    case ISD::VECTOR_SHUFFLE:     return SelectHvxShuffle(N);
-    case HexagonISD::VROR:        return SelectHvxRor(N);
-    }
   }
 
   SelectCode(N);
@@ -984,13 +1024,13 @@ static bool isMemOPCandidate(SDNode *I, SDNode *U) {
 void HexagonDAGToDAGISel::ppSimplifyOrSelect0(std::vector<SDNode*> &&Nodes) {
   SelectionDAG &DAG = *CurDAG;
 
-  for (auto I : Nodes) {
+  for (auto *I : Nodes) {
     if (I->getOpcode() != ISD::OR)
       continue;
 
     auto IsZero = [] (const SDValue &V) -> bool {
       if (ConstantSDNode *SC = dyn_cast<ConstantSDNode>(V.getNode()))
-        return SC->isNullValue();
+        return SC->isZero();
       return false;
     };
     auto IsSelect0 = [IsZero] (const SDValue &Op) -> bool {
@@ -1032,7 +1072,7 @@ void HexagonDAGToDAGISel::ppSimplifyOrSelect0(std::vector<SDNode*> &&Nodes) {
 void HexagonDAGToDAGISel::ppAddrReorderAddShl(std::vector<SDNode*> &&Nodes) {
   SelectionDAG &DAG = *CurDAG;
 
-  for (auto I : Nodes) {
+  for (auto *I : Nodes) {
     if (I->getOpcode() != ISD::STORE)
       continue;
 
@@ -1176,6 +1216,9 @@ void HexagonDAGToDAGISel::ppHoistZextI1(std::vector<SDNode*> &&Nodes) {
       EVT UVT = U->getValueType(0);
       if (!UVT.isSimple() || !UVT.isInteger() || UVT.getSimpleVT() == MVT::i1)
         continue;
+      // Do not generate select for all i1 vector type.
+      if (UVT.isVector() && UVT.getVectorElementType() == MVT::i1)
+        continue;
       if (isMemOPCandidate(N, U))
         continue;
 
@@ -1220,13 +1263,16 @@ void HexagonDAGToDAGISel::ppHoistZextI1(std::vector<SDNode*> &&Nodes) {
 void HexagonDAGToDAGISel::PreprocessISelDAG() {
   // Repack all nodes before calling each preprocessing function,
   // because each of them can modify the set of nodes.
-  auto getNodes = [this] () -> std::vector<SDNode*> {
-    std::vector<SDNode*> T;
+  auto getNodes = [this]() -> std::vector<SDNode *> {
+    std::vector<SDNode *> T;
     T.reserve(CurDAG->allnodes_size());
     for (SDNode &N : CurDAG->allnodes())
       T.push_back(&N);
     return T;
   };
+
+  if (HST->useHVXOps())
+    PreprocessHvxISelDAG();
 
   // Transform: (or (select c x 0) z)  ->  (select c (or x z) z)
   //            (or (select c 0 y) z)  ->  (select c z (or y z))
@@ -1282,11 +1328,22 @@ void HexagonDAGToDAGISel::emitFunctionEntryCode() {
 
   MachineFrameInfo &MFI = MF->getFrameInfo();
   MachineBasicBlock *EntryBB = &MF->front();
-  unsigned AR = FuncInfo->CreateReg(MVT::i32);
   Align EntryMaxA = MFI.getMaxAlign();
-  BuildMI(EntryBB, DebugLoc(), HII->get(Hexagon::PS_aligna), AR)
+
+  // Reserve the first non-volatile register.
+  Register AP = 0;
+  auto &HRI = *HST.getRegisterInfo();
+  BitVector Reserved = HRI.getReservedRegs(*MF);
+  for (const MCPhysReg *R = HRI.getCalleeSavedRegs(MF); *R; ++R) {
+    if (Reserved[*R])
+      continue;
+    AP = *R;
+    break;
+  }
+  assert(AP.isValid() && "Couldn't reserve stack align register");
+  BuildMI(EntryBB, DebugLoc(), HII->get(Hexagon::PS_aligna), AP)
       .addImm(EntryMaxA.value());
-  MF->getInfo<HexagonMachineFunctionInfo>()->setStackAlignBaseVReg(AR);
+  MF->getInfo<HexagonMachineFunctionInfo>()->setStackAlignBaseReg(AP);
 }
 
 void HexagonDAGToDAGISel::updateAligna() {
@@ -1342,7 +1399,8 @@ inline bool HexagonDAGToDAGISel::SelectAnyInt(SDValue &N, SDValue &R) {
   EVT T = N.getValueType();
   if (!T.isInteger() || T.getSizeInBits() != 32 || !isa<ConstantSDNode>(N))
     return false;
-  R = N;
+  int32_t V = cast<const ConstantSDNode>(N)->getZExtValue();
+  R = CurDAG->getTargetConstant(V, SDLoc(N), N.getValueType());
   return true;
 }
 
@@ -1537,7 +1595,7 @@ bool HexagonDAGToDAGISel::keepsLowBits(const SDValue &Val, unsigned NumBits,
     break;
   case ISD::AND: {
     // Check if this is an AND with NumBits of lower bits set to 1.
-    uint64_t Mask = (1 << NumBits) - 1;
+    uint64_t Mask = (1ULL << NumBits) - 1;
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Val.getOperand(0))) {
       if (C->getZExtValue() == Mask) {
         Src = Val.getOperand(1);
@@ -1555,7 +1613,7 @@ bool HexagonDAGToDAGISel::keepsLowBits(const SDValue &Val, unsigned NumBits,
   case ISD::OR:
   case ISD::XOR: {
     // OR/XOR with the lower NumBits bits set to 0.
-    uint64_t Mask = (1 << NumBits) - 1;
+    uint64_t Mask = (1ULL << NumBits) - 1;
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Val.getOperand(0))) {
       if ((C->getZExtValue() & Mask) == 0) {
         Src = Val.getOperand(1);
@@ -1577,7 +1635,7 @@ bool HexagonDAGToDAGISel::keepsLowBits(const SDValue &Val, unsigned NumBits,
 }
 
 bool HexagonDAGToDAGISel::isAlignedMemNode(const MemSDNode *N) const {
-  return N->getAlignment() >= N->getMemoryVT().getStoreSize();
+  return N->getAlign().value() >= N->getMemoryVT().getStoreSize();
 }
 
 bool HexagonDAGToDAGISel::isSmallStackStore(const StoreSDNode *N) const {
@@ -1652,7 +1710,7 @@ struct WeightedLeaf {
   int Weight;
   int InsertionOrder;
 
-  WeightedLeaf() : Value(SDValue()) { }
+  WeightedLeaf() {}
 
   WeightedLeaf(SDValue Value, int Weight, int InsertionOrder) :
     Value(Value), Weight(Weight), InsertionOrder(InsertionOrder) {
@@ -2247,8 +2305,8 @@ SDValue HexagonDAGToDAGISel::balanceSubTree(SDNode *N, bool TopLevel) {
 }
 
 void HexagonDAGToDAGISel::rebalanceAddressTrees() {
-  for (auto I = CurDAG->allnodes_begin(), E = CurDAG->allnodes_end(); I != E;) {
-    SDNode *N = &*I++;
+  for (SDNode &Node : llvm::make_early_inc_range(CurDAG->allnodes())) {
+    SDNode *N = &Node;
     if (N->getOpcode() != ISD::LOAD && N->getOpcode() != ISD::STORE)
       continue;
 

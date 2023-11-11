@@ -519,6 +519,8 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
       case PPC::XXSLDWI:
       case PPC::XSCVDPSPN:
       case PPC::XSCVSPDPN:
+      case PPC::MTVSCR:
+      case PPC::MFVSCR:
         break;
       }
     }
@@ -606,7 +608,7 @@ void PPCVSXSwapRemoval::formWebs() {
       if (!isVecReg(Reg) && !isScalarVecReg(Reg))
         continue;
 
-      if (!Register::isVirtualRegister(Reg)) {
+      if (!Reg.isVirtual()) {
         if (!(MI->isCopy() && isScalarVecReg(Reg)))
           SwapVector[EntryIdx].MentionsPhysVR = 1;
         continue;

@@ -12,9 +12,7 @@
 #include "DwarfUnit.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/IR/DebugInfoMetadata.h"
-#include "llvm/IR/Metadata.h"
 #include "llvm/MC/MCStreamer.h"
-#include <algorithm>
 #include <cstdint>
 
 using namespace llvm;
@@ -44,10 +42,10 @@ void DwarfFile::emitUnit(DwarfUnit *TheU, bool UseOffsets) {
 
   // Skip CUs that ended up not being needed (split CUs that were abandoned
   // because they added no information beyond the non-split CU)
-  if (llvm::empty(TheU->getUnitDie().values()))
+  if (TheU->getUnitDie().values().empty())
     return;
 
-  Asm->OutStreamer->SwitchSection(S);
+  Asm->OutStreamer->switchSection(S);
   TheU->emitHeader(UseOffsets);
   Asm->emitDwarfDIE(TheU->getUnitDie());
 
@@ -68,7 +66,7 @@ void DwarfFile::computeSizeAndOffsets() {
 
     // Skip CUs that ended up not being needed (split CUs that were abandoned
     // because they added no information beyond the non-split CU)
-    if (llvm::empty(TheU->getUnitDie().values()))
+    if (TheU->getUnitDie().values().empty())
       return;
 
     TheU->setDebugSectionOffset(SecOffset);
@@ -92,7 +90,8 @@ unsigned DwarfFile::computeSizeAndOffsetsForUnit(DwarfUnit *TheU) {
 // Compute the size and offset of a DIE. The offset is relative to start of the
 // CU. It returns the offset after laying out the DIE.
 unsigned DwarfFile::computeSizeAndOffset(DIE &Die, unsigned Offset) {
-  return Die.computeOffsetsAndAbbrevs(Asm, Abbrevs, Offset);
+  return Die.computeOffsetsAndAbbrevs(Asm->getDwarfFormParams(), Abbrevs,
+                                      Offset);
 }
 
 void DwarfFile::emitAbbrevs(MCSection *Section) { Abbrevs.Emit(Asm, Section); }

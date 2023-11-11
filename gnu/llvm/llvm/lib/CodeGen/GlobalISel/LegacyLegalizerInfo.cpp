@@ -64,7 +64,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, LegacyLegalizeAction Action) {
   return OS;
 }
 
-LegacyLegalizerInfo::LegacyLegalizerInfo() : TablesInitialized(false) {
+LegacyLegalizerInfo::LegacyLegalizerInfo() {
   // Set defaults.
   // FIXME: these two (G_ANYEXT and G_TRUNC?) can be legalized to the
   // fundamental load/store Jakob proposed. Once loads & stores are supported.
@@ -264,7 +264,7 @@ LegacyLegalizerInfo::findAction(const SizeAndActionsVec &Vec, const uint32_t Siz
     // Special case for scalarization:
     if (Vec == SizeAndActionsVec({{1, FewerElements}}))
       return {1, FewerElements};
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case NarrowScalar: {
     // The following needs to be a loop, as for now, we do allow needing to
     // go over "Unsupported" bit sizes before finding a legalizable bit size.

@@ -15,6 +15,7 @@
 #ifndef LLVM_IR_INLINEASM_H
 #define LLVM_IR_INLINEASM_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -24,6 +25,7 @@
 
 namespace llvm {
 
+class Error;
 class FunctionType;
 class PointerType;
 template <class ConstantClass> class ConstantUniqueMap;
@@ -82,18 +84,18 @@ public:
 
   const std::string &getAsmString() const { return AsmString; }
   const std::string &getConstraintString() const { return Constraints; }
+  void collectAsmStrs(SmallVectorImpl<StringRef> &AsmStrs) const;
 
-  /// Verify - This static method can be used by the parser to check to see if
-  /// the specified constraint string is legal for the type.  This returns true
-  /// if legal, false if not.
-  ///
-  static bool Verify(FunctionType *Ty, StringRef Constraints);
+  /// This static method can be used by the parser to check to see if the
+  /// specified constraint string is legal for the type.
+  static Error verify(FunctionType *Ty, StringRef Constraints);
 
   // Constraint String Parsing
   enum ConstraintPrefix {
     isInput,            // 'x'
     isOutput,           // '=x'
-    isClobber           // '~x'
+    isClobber,          // '~x'
+    isLabel,            // '!x'
   };
 
   using ConstraintCodeVector = std::vector<std::string>;
@@ -118,7 +120,7 @@ public:
   using ConstraintInfoVector = std::vector<ConstraintInfo>;
 
   struct ConstraintInfo {
-    /// Type - The basic type of the constraint: input/output/clobber
+    /// Type - The basic type of the constraint: input/output/clobber/label
     ///
     ConstraintPrefix Type = isInput;
 
@@ -171,6 +173,11 @@ public:
     /// selectAlternative - Point this constraint to the alternative constraint
     /// indicated by the index.
     void selectAlternative(unsigned index);
+
+    /// Whether this constraint corresponds to an argument.
+    bool hasArg() const {
+      return Type == isInput || (Type == isOutput && isIndirect);
+    }
   };
 
   /// ParseConstraints - Split up the constraint string into the specific
@@ -235,15 +242,20 @@ public:
     Kind_RegDefEarlyClobber = 3, // Early-clobber output register, "=&r".
     Kind_Clobber = 4,            // Clobbered register, "~r".
     Kind_Imm = 5,                // Immediate.
-    Kind_Mem = 6,                // Memory operand, "m".
+    Kind_Mem = 6,                // Memory operand, "m", or an address, "p".
+    Kind_Func = 7,               // Address operand of function call
 
     // Memory constraint codes.
     // These could be tablegenerated but there's little need to do that since
     // there's plenty of space in the encoding to support the union of all
     // constraint codes for all targets.
+    // Addresses are included here as they need to be treated the same by the
+    // backend, the only difference is that they are not used to actaully
+    // access memory by the instruction.
     Constraint_Unknown = 0,
     Constraint_es,
     Constraint_i,
+    Constraint_k,
     Constraint_m,
     Constraint_o,
     Constraint_v,
@@ -261,9 +273,18 @@ public:
     Constraint_Uy,
     Constraint_X,
     Constraint_Z,
+    Constraint_ZB,
     Constraint_ZC,
     Constraint_Zy,
-    Constraints_Max = Constraint_Zy,
+
+    // Address constraints
+    Constraint_p,
+    Constraint_ZQ,
+    Constraint_ZR,
+    Constraint_ZS,
+    Constraint_ZT,
+
+    Constraints_Max = Constraint_ZT,
     Constraints_ShiftAmount = 16,
 
     Flag_MatchingOperand = 0x80000000
@@ -271,13 +292,14 @@ public:
 
   static unsigned getFlagWord(unsigned Kind, unsigned NumOps) {
     assert(((NumOps << 3) & ~0xffff) == 0 && "Too many inline asm operands!");
-    assert(Kind >= Kind_RegUse && Kind <= Kind_Mem && "Invalid Kind");
+    assert(Kind >= Kind_RegUse && Kind <= Kind_Func && "Invalid Kind");
     return Kind | (NumOps << 3);
   }
 
   static bool isRegDefKind(unsigned Flag){ return getKind(Flag) == Kind_RegDef;}
   static bool isImmKind(unsigned Flag) { return getKind(Flag) == Kind_Imm; }
   static bool isMemKind(unsigned Flag) { return getKind(Flag) == Kind_Mem; }
+  static bool isFuncKind(unsigned Flag) { return getKind(Flag) == Kind_Func; }
   static bool isRegDefEarlyClobberKind(unsigned Flag) {
     return getKind(Flag) == Kind_RegDefEarlyClobber;
   }
@@ -313,7 +335,8 @@ public:
   /// Augment an existing flag word returned by getFlagWord with the constraint
   /// code for a memory constraint.
   static unsigned getFlagWordForMem(unsigned InputFlag, unsigned Constraint) {
-    assert(isMemKind(InputFlag) && "InputFlag is not a memory constraint!");
+    assert((isMemKind(InputFlag) || isFuncKind(InputFlag)) &&
+           "InputFlag is not a memory (include function) constraint!");
     assert(Constraint <= 0x7fff && "Too large a memory constraint ID");
     assert(Constraint <= Constraints_Max && "Unknown constraint ID");
     assert((InputFlag & ~0xffff) == 0 && "High bits already contain data");
@@ -330,7 +353,8 @@ public:
   }
 
   static unsigned getMemoryConstraintID(unsigned Flag) {
-    assert(isMemKind(Flag));
+    assert((isMemKind(Flag) || isFuncKind(Flag)) &&
+           "Not expected mem or function flang!");
     return (Flag >> Constraints_ShiftAmount) & 0x7fff;
   }
 
@@ -400,6 +424,7 @@ public:
     case InlineAsm::Kind_Imm:
       return "imm";
     case InlineAsm::Kind_Mem:
+    case InlineAsm::Kind_Func:
       return "mem";
     default:
       llvm_unreachable("Unknown operand kind");
@@ -412,6 +437,8 @@ public:
       return "es";
     case InlineAsm::Constraint_i:
       return "i";
+    case InlineAsm::Constraint_k:
+      return "k";
     case InlineAsm::Constraint_m:
       return "m";
     case InlineAsm::Constraint_o:
@@ -444,10 +471,22 @@ public:
       return "X";
     case InlineAsm::Constraint_Z:
       return "Z";
+    case InlineAsm::Constraint_ZB:
+      return "ZB";
     case InlineAsm::Constraint_ZC:
       return "ZC";
     case InlineAsm::Constraint_Zy:
       return "Zy";
+    case InlineAsm::Constraint_p:
+      return "p";
+    case InlineAsm::Constraint_ZQ:
+      return "ZQ";
+    case InlineAsm::Constraint_ZR:
+      return "ZR";
+    case InlineAsm::Constraint_ZS:
+      return "ZS";
+    case InlineAsm::Constraint_ZT:
+      return "ZT";
     default:
       llvm_unreachable("Unknown memory constraint");
     }

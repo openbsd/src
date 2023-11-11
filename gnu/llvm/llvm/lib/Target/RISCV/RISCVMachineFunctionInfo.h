@@ -14,10 +14,33 @@
 #define LLVM_LIB_TARGET_RISCV_RISCVMACHINEFUNCTIONINFO_H
 
 #include "RISCVSubtarget.h"
+#include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
+
+class RISCVMachineFunctionInfo;
+
+namespace yaml {
+struct RISCVMachineFunctionInfo final : public yaml::MachineFunctionInfo {
+  int VarArgsFrameIndex;
+  int VarArgsSaveSize;
+
+  RISCVMachineFunctionInfo() = default;
+  RISCVMachineFunctionInfo(const llvm::RISCVMachineFunctionInfo &MFI);
+
+  void mappingImpl(yaml::IO &YamlIO) override;
+  ~RISCVMachineFunctionInfo() = default;
+};
+
+template <> struct MappingTraits<RISCVMachineFunctionInfo> {
+  static void mapping(IO &YamlIO, RISCVMachineFunctionInfo &MFI) {
+    YamlIO.mapOptional("varArgsFrameIndex", MFI.VarArgsFrameIndex);
+    YamlIO.mapOptional("varArgsSaveSize", MFI.VarArgsSaveSize);
+  }
+};
+} // end namespace yaml
 
 /// RISCVMachineFunctionInfo - This class is derived from MachineFunctionInfo
 /// and contains private RISCV-specific information for each MachineFunction.
@@ -30,17 +53,31 @@ private:
   /// FrameIndex used for transferring values between 64-bit FPRs and a pair
   /// of 32-bit GPRs via the stack.
   int MoveF64FrameIndex = -1;
+  /// FrameIndex of the spill slot for the scratch register in BranchRelaxation.
+  int BranchRelaxationScratchFrameIndex = -1;
   /// Size of any opaque stack adjustment due to save/restore libcalls.
   unsigned LibCallStackSize = 0;
   /// Size of RVV stack.
   uint64_t RVVStackSize = 0;
+  /// Alignment of RVV stack.
+  Align RVVStackAlign;
   /// Padding required to keep RVV stack aligned within the main stack.
   uint64_t RVVPadding = 0;
   /// Size of stack frame to save callee saved registers
   unsigned CalleeSavedStackSize = 0;
+  /// Is there any vector argument or return?
+  bool IsVectorCall = false;
+
+  /// Registers that have been sign extended from i32.
+  SmallVector<Register, 8> SExt32Registers;
 
 public:
-  RISCVMachineFunctionInfo(const MachineFunction &MF) {}
+  RISCVMachineFunctionInfo(const Function &F, const TargetSubtargetInfo *STI) {}
+
+  MachineFunctionInfo *
+  clone(BumpPtrAllocator &Allocator, MachineFunction &DestMF,
+        const DenseMap<MachineBasicBlock *, MachineBasicBlock *> &Src2DstMBB)
+      const override;
 
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
   void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
@@ -53,6 +90,13 @@ public:
       MoveF64FrameIndex =
           MF.getFrameInfo().CreateStackObject(8, Align(8), false);
     return MoveF64FrameIndex;
+  }
+
+  int getBranchRelaxationScratchFrameIndex() const {
+    return BranchRelaxationScratchFrameIndex;
+  }
+  void setBranchRelaxationScratchFrameIndex(int Index) {
+    BranchRelaxationScratchFrameIndex = Index;
   }
 
   unsigned getLibCallStackSize() const { return LibCallStackSize; }
@@ -69,11 +113,22 @@ public:
   uint64_t getRVVStackSize() const { return RVVStackSize; }
   void setRVVStackSize(uint64_t Size) { RVVStackSize = Size; }
 
+  Align getRVVStackAlign() const { return RVVStackAlign; }
+  void setRVVStackAlign(Align StackAlign) { RVVStackAlign = StackAlign; }
+
   uint64_t getRVVPadding() const { return RVVPadding; }
   void setRVVPadding(uint64_t Padding) { RVVPadding = Padding; }
 
   unsigned getCalleeSavedStackSize() const { return CalleeSavedStackSize; }
   void setCalleeSavedStackSize(unsigned Size) { CalleeSavedStackSize = Size; }
+
+  void initializeBaseYamlFields(const yaml::RISCVMachineFunctionInfo &YamlMFI);
+
+  void addSExt32Register(Register Reg);
+  bool isSExt32Register(Register Reg) const;
+
+  bool isVectorCall() const { return IsVectorCall; }
+  void setIsVectorCall() { IsVectorCall = true; }
 };
 
 } // end namespace llvm

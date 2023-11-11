@@ -2,6 +2,7 @@ set(LLVM_LINK_COMPONENTS
   Demangle
   Option
   Support
+  TargetParser
   )
 
 set(LLVM_TARGET_DEFINITIONS Opts.td)
@@ -13,6 +14,7 @@ add_llvm_tool(llvm-cxxfilt
 
   DEPENDS
   CxxfiltOptsTableGen
+  GENERATE_DRIVER
   )
 
 if(LLVM_INSTALL_BINUTILS_SYMLINKS)

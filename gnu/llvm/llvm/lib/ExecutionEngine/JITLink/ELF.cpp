@@ -1,9 +1,8 @@
 //===-------------- ELF.cpp - JIT linker function for ELF -------------===//
 //
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -14,6 +13,9 @@
 #include "llvm/ExecutionEngine/JITLink/ELF.h"
 
 #include "llvm/BinaryFormat/ELF.h"
+#include "llvm/ExecutionEngine/JITLink/ELF_aarch64.h"
+#include "llvm/ExecutionEngine/JITLink/ELF_i386.h"
+#include "llvm/ExecutionEngine/JITLink/ELF_loongarch.h"
 #include "llvm/ExecutionEngine/JITLink/ELF_riscv.h"
 #include "llvm/ExecutionEngine/JITLink/ELF_x86_64.h"
 #include "llvm/Object/ELF.h"
@@ -65,10 +67,16 @@ createLinkGraphFromELFObject(MemoryBufferRef ObjectBuffer) {
     return TargetMachineArch.takeError();
 
   switch (*TargetMachineArch) {
+  case ELF::EM_AARCH64:
+    return createLinkGraphFromELFObject_aarch64(ObjectBuffer);
+  case ELF::EM_LOONGARCH:
+    return createLinkGraphFromELFObject_loongarch(ObjectBuffer);
   case ELF::EM_RISCV:
     return createLinkGraphFromELFObject_riscv(ObjectBuffer);
   case ELF::EM_X86_64:
     return createLinkGraphFromELFObject_x86_64(ObjectBuffer);
+  case ELF::EM_386:
+    return createLinkGraphFromELFObject_i386(ObjectBuffer);
   default:
     return make_error<JITLinkError>(
         "Unsupported target machine architecture in ELF object " +
@@ -79,12 +87,22 @@ createLinkGraphFromELFObject(MemoryBufferRef ObjectBuffer) {
 void link_ELF(std::unique_ptr<LinkGraph> G,
               std::unique_ptr<JITLinkContext> Ctx) {
   switch (G->getTargetTriple().getArch()) {
+  case Triple::aarch64:
+    link_ELF_aarch64(std::move(G), std::move(Ctx));
+    return;
+  case Triple::loongarch32:
+  case Triple::loongarch64:
+    link_ELF_loongarch(std::move(G), std::move(Ctx));
+    return;
   case Triple::riscv32:
   case Triple::riscv64:
     link_ELF_riscv(std::move(G), std::move(Ctx));
     return;
   case Triple::x86_64:
     link_ELF_x86_64(std::move(G), std::move(Ctx));
+    return;
+  case Triple::x86:
+    link_ELF_i386(std::move(G), std::move(Ctx));
     return;
   default:
     Ctx->notifyFailed(make_error<JITLinkError>(

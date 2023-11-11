@@ -14,11 +14,43 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Type.h"
 
 #include "ConstantsContext.h"
 
 namespace llvm {
+bool Operator::hasPoisonGeneratingFlags() const {
+  switch (getOpcode()) {
+  case Instruction::Add:
+  case Instruction::Sub:
+  case Instruction::Mul:
+  case Instruction::Shl: {
+    auto *OBO = cast<OverflowingBinaryOperator>(this);
+    return OBO->hasNoUnsignedWrap() || OBO->hasNoSignedWrap();
+  }
+  case Instruction::UDiv:
+  case Instruction::SDiv:
+  case Instruction::AShr:
+  case Instruction::LShr:
+    return cast<PossiblyExactOperator>(this)->isExact();
+  case Instruction::GetElementPtr: {
+    auto *GEP = cast<GEPOperator>(this);
+    // Note: inrange exists on constexpr only
+    return GEP->isInBounds() || GEP->getInRangeIndex() != std::nullopt;
+  }
+  default:
+    if (const auto *FP = dyn_cast<FPMathOperator>(this))
+      return FP->hasNoNaNs() || FP->hasNoInfs();
+    return false;
+  }
+}
+
+bool Operator::hasPoisonGeneratingFlagsOrMetadata() const {
+  if (hasPoisonGeneratingFlags())
+    return true;
+  auto *I = dyn_cast<Instruction>(this);
+  return I && I->hasPoisonGeneratingMetadata();
+}
+
 Type *GEPOperator::getSourceElementType() const {
   if (auto *I = dyn_cast<GetElementPtrInst>(this))
     return I->getSourceElementType();
@@ -38,7 +70,7 @@ Align GEPOperator::getMaxPreservedAlignment(const DataLayout &DL) const {
   Align Result = Align(llvm::Value::MaximumAlignment);
   for (gep_type_iterator GTI = gep_type_begin(this), GTE = gep_type_end(this);
        GTI != GTE; ++GTI) {
-    int64_t Offset = 1;
+    uint64_t Offset;
     ConstantInt *OpC = dyn_cast<ConstantInt>(GTI.getOperand());
 
     if (StructType *STy = GTI.getStructTypeOrNull()) {
@@ -46,11 +78,9 @@ Align GEPOperator::getMaxPreservedAlignment(const DataLayout &DL) const {
       Offset = SL->getElementOffset(OpC->getZExtValue());
     } else {
       assert(GTI.isSequential() && "should be sequencial");
-      /// If the index isn't know we take 1 because it is the index that will
+      /// If the index isn't known, we take 1 because it is the index that will
       /// give the worse alignment of the offset.
-      int64_t ElemCount = 1;
-      if (OpC)
-        ElemCount = OpC->getZExtValue();
+      const uint64_t ElemCount = OpC ? OpC->getZExtValue() : 1;
       Offset = DL.getTypeAllocSize(GTI.getIndexedType()) * ElemCount;
     }
     Result = Align(MinAlign(Offset, Result.value()));
@@ -64,7 +94,7 @@ bool GEPOperator::accumulateConstantOffset(
   assert(Offset.getBitWidth() ==
              DL.getIndexSizeInBits(getPointerAddressSpace()) &&
          "The offset bit width does not match DL specification.");
-  SmallVector<const Value *> Index(value_op_begin() + 1, value_op_end());
+  SmallVector<const Value *> Index(llvm::drop_begin(operand_values()));
   return GEPOperator::accumulateConstantOffset(getSourceElementType(), Index,
                                                DL, Offset, ExternalAnalysis);
 }
@@ -190,13 +220,36 @@ bool GEPOperator::collectOffset(
 
     if (STy || ScalableType)
       return false;
-    // Insert an initial offset of 0 for V iff none exists already, then
-    // increment the offset by IndexedSize.
-    VariableOffsets.insert({V, APInt(BitWidth, 0)});
     APInt IndexedSize =
         APInt(BitWidth, DL.getTypeAllocSize(GTI.getIndexedType()));
-    VariableOffsets[V] += IndexedSize;
+    // Insert an initial offset of 0 for V iff none exists already, then
+    // increment the offset by IndexedSize.
+    if (!IndexedSize.isZero()) {
+      VariableOffsets.insert({V, APInt(BitWidth, 0)});
+      VariableOffsets[V] += IndexedSize;
+    }
   }
   return true;
+}
+
+void FastMathFlags::print(raw_ostream &O) const {
+  if (all())
+    O << " fast";
+  else {
+    if (allowReassoc())
+      O << " reassoc";
+    if (noNaNs())
+      O << " nnan";
+    if (noInfs())
+      O << " ninf";
+    if (noSignedZeros())
+      O << " nsz";
+    if (allowReciprocal())
+      O << " arcp";
+    if (allowContract())
+      O << " contract";
+    if (approxFunc())
+      O << " afn";
+  }
 }
 } // namespace llvm

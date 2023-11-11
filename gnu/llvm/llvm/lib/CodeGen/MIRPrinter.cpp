@@ -13,14 +13,11 @@
 
 #include "llvm/CodeGen/MIRPrinter.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/None.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -32,29 +29,19 @@
 #include "llvm/CodeGen/MachineModuleSlotTracker.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/IRPrintingPasses.h"
-#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/IR/Value.h"
 #include "llvm/MC/LaneBitmask.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCDwarf.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -63,7 +50,6 @@
 #include "llvm/Support/LowLevelTypeImpl.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 #include <cassert>
@@ -209,6 +195,13 @@ void MIRPrinter::print(const MachineFunction &MF) {
   YamlMF.ExposesReturnsTwice = MF.exposesReturnsTwice();
   YamlMF.HasWinCFI = MF.hasWinCFI();
 
+  YamlMF.CallsEHReturn = MF.callsEHReturn();
+  YamlMF.CallsUnwindInit = MF.callsUnwindInit();
+  YamlMF.HasEHCatchret = MF.hasEHCatchret();
+  YamlMF.HasEHScopes = MF.hasEHScopes();
+  YamlMF.HasEHFunclets = MF.hasEHFunclets();
+  YamlMF.UseDebugInstrRef = MF.useDebugInstrRef();
+
   YamlMF.Legalized = MF.getProperties().hasProperty(
       MachineFunctionProperties::Property::Legalized);
   YamlMF.RegBankSelected = MF.getProperties().hasProperty(
@@ -217,6 +210,10 @@ void MIRPrinter::print(const MachineFunction &MF) {
       MachineFunctionProperties::Property::Selected);
   YamlMF.FailedISel = MF.getProperties().hasProperty(
       MachineFunctionProperties::Property::FailedISel);
+  YamlMF.FailsVerification = MF.getProperties().hasProperty(
+      MachineFunctionProperties::Property::FailsVerification);
+  YamlMF.TracksDebugUserValues = MF.getProperties().hasProperty(
+      MachineFunctionProperties::Property::TracksDebugUserValues);
 
   convert(YamlMF, MF.getRegInfo(), MF.getSubtarget().getRegisterInfo());
   MachineModuleSlotTracker MST(&MF);
@@ -310,13 +307,13 @@ void MIRPrinter::convert(yaml::MachineFunction &MF,
 
   // Print the virtual register definitions.
   for (unsigned I = 0, E = RegInfo.getNumVirtRegs(); I < E; ++I) {
-    unsigned Reg = Register::index2VirtReg(I);
+    Register Reg = Register::index2VirtReg(I);
     yaml::VirtualRegisterDefinition VReg;
     VReg.ID = I;
     if (RegInfo.getVRegName(Reg) != "")
       continue;
     ::printRegClassOrBank(Reg, VReg.Class, RegInfo, TRI);
-    unsigned PreferredReg = RegInfo.getSimpleHint(Reg);
+    Register PreferredReg = RegInfo.getSimpleHint(Reg);
     if (PreferredReg)
       printRegMIR(PreferredReg, VReg.PreferredRegister, TRI);
     MF.VirtualRegisters.push_back(VReg);
@@ -483,6 +480,12 @@ void MIRPrinter::convertStackObjects(yaml::MachineFunction &YMF,
     raw_string_ostream StrOS(YMF.FrameInfo.StackProtector.Value);
     MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
         .printStackObjectReference(MFI.getStackProtectorIndex());
+  }
+
+  if (MFI.hasFunctionContextIndex()) {
+    raw_string_ostream StrOS(YMF.FrameInfo.FunctionContext.Value);
+    MIPrinter(StrOS, MST, RegisterMaskIds, StackObjectOperandMapping)
+        .printStackObjectReference(MFI.getFunctionContextIndex());
   }
 
   // Print the debug variable information.
@@ -689,11 +692,11 @@ void MIPrinter::print(const MachineBasicBlock &MBB) {
 
   // Print the live in registers.
   const MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  if (MRI.tracksLiveness() && !MBB.livein_empty()) {
+  if (!MBB.livein_empty()) {
     const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
     OS.indent(2) << "liveins: ";
     bool First = true;
-    for (const auto &LI : MBB.liveins()) {
+    for (const auto &LI : MBB.liveins_dbg()) {
       if (!First)
         OS << ", ";
       First = false;
@@ -817,6 +820,19 @@ void MIPrinter::print(const MachineInstr &MI) {
     HeapAllocMarker->printAsOperand(OS, MST);
     NeedComma = true;
   }
+  if (MDNode *PCSections = MI.getPCSections()) {
+    if (NeedComma)
+      OS << ',';
+    OS << " pcsections ";
+    PCSections->printAsOperand(OS, MST);
+    NeedComma = true;
+  }
+  if (uint32_t CFIType = MI.getCFIType()) {
+    if (NeedComma)
+      OS << ',';
+    OS << " cfi-type " << CFIType;
+    NeedComma = true;
+  }
 
   if (auto Num = MI.peekDebugInstrNum()) {
     if (NeedComma)
@@ -878,7 +894,7 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
       MachineOperand::printSubRegIdx(OS, Op.getImm(), TRI);
       break;
     }
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case MachineOperand::MO_Register:
   case MachineOperand::MO_CImmediate:
   case MachineOperand::MO_FPImmediate:
@@ -895,6 +911,7 @@ void MIPrinter::print(const MachineInstr &MI, unsigned OpIdx,
   case MachineOperand::MO_IntrinsicID:
   case MachineOperand::MO_Predicate:
   case MachineOperand::MO_BlockAddress:
+  case MachineOperand::MO_DbgInstrRef:
   case MachineOperand::MO_ShuffleMask: {
     unsigned TiedOperandIdx = 0;
     if (ShouldPrintRegisterTies && Op.isReg() && Op.isTied() && !Op.isDef())

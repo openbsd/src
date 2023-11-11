@@ -6,11 +6,28 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_RISCV_RISCVELFSTREAMER_H
-#define LLVM_LIB_TARGET_RISCV_RISCVELFSTREAMER_H
+#ifndef LLVM_LIB_TARGET_RISCV_MCTARGETDESC_RISCVELFSTREAMER_H
+#define LLVM_LIB_TARGET_RISCV_MCTARGETDESC_RISCVELFSTREAMER_H
 
 #include "RISCVTargetStreamer.h"
 #include "llvm/MC/MCELFStreamer.h"
+
+using namespace llvm;
+
+class RISCVELFStreamer : public MCELFStreamer {
+  static std::pair<unsigned, unsigned> getRelocPairForSize(unsigned Size);
+  static bool requiresFixups(MCContext &C, const MCExpr *Value,
+                             const MCExpr *&LHS, const MCExpr *&RHS);
+  void reset() override;
+
+public:
+  RISCVELFStreamer(MCContext &C, std::unique_ptr<MCAsmBackend> MAB,
+                   std::unique_ptr<MCObjectWriter> MOW,
+                   std::unique_ptr<MCCodeEmitter> MCE)
+      : MCELFStreamer(C, std::move(MAB), std::move(MOW), std::move(MCE)) {}
+
+  void emitValueImpl(const MCExpr *Value, unsigned Size, SMLoc Loc) override;
+};
 
 namespace llvm {
 
@@ -29,6 +46,7 @@ private:
   SmallVector<AttributeItem, 64> Contents;
 
   MCSection *AttributeSection = nullptr;
+  const MCSubtargetInfo &STI;
 
   AttributeItem *getAttributeItem(unsigned Attribute) {
     for (size_t i = 0; i < Contents.size(); ++i)
@@ -91,8 +109,10 @@ private:
   void finishAttributeSection() override;
   size_t calculateContentSize() const;
 
+  void reset() override;
+
 public:
-  MCELFStreamer &getStreamer();
+  RISCVELFStreamer &getStreamer();
   RISCVTargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);
 
   void emitDirectiveOptionPush() override;
@@ -103,6 +123,9 @@ public:
   void emitDirectiveOptionNoRVC() override;
   void emitDirectiveOptionRelax() override;
   void emitDirectiveOptionNoRelax() override;
+  void emitDirectiveVariantCC(MCSymbol &Symbol) override;
+
+  void finish() override;
 };
 
 MCELFStreamer *createRISCVELFStreamer(MCContext &C,

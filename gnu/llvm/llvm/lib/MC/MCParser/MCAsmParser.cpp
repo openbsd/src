@@ -21,11 +21,13 @@
 
 using namespace llvm;
 
+namespace llvm {
 cl::opt<unsigned> AsmMacroMaxNestingDepth(
     "asm-macro-max-nesting-depth", cl::init(20), cl::Hidden,
     cl::desc("The maximum nesting depth allowed for assembly macros."));
+}
 
-MCAsmParser::MCAsmParser() {}
+MCAsmParser::MCAsmParser() = default;
 
 MCAsmParser::~MCAsmParser() = default;
 

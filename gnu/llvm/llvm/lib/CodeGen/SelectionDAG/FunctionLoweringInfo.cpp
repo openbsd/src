@@ -31,13 +31,10 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetOptions.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -57,7 +54,7 @@ static bool isUsedOutsideOfDefiningBlock(const Instruction *I) {
   return false;
 }
 
-static ISD::NodeType getPreferredExtendForValue(const Value *V) {
+static ISD::NodeType getPreferredExtendForValue(const Instruction *I) {
   // For the users of the source value being used for compare instruction, if
   // the number of signed predicate is greater than unsigned predicate, we
   // prefer to use SIGN_EXTEND.
@@ -67,7 +64,7 @@ static ISD::NodeType getPreferredExtendForValue(const Value *V) {
   // can be exposed.
   ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
   unsigned NumOfSigned = 0, NumOfUnsigned = 0;
-  for (const User *U : V->users()) {
+  for (const User *U : I->users()) {
     if (const auto *CI = dyn_cast<CmpInst>(U)) {
       NumOfSigned += CI->isSigned();
       NumOfUnsigned += CI->isUnsigned();
@@ -122,10 +119,6 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       }
     }
   }
-  if (Personality == EHPersonality::Wasm_CXX) {
-    WasmEHFuncInfo &EHInfo = *MF->getWasmEHFuncInfo();
-    calculateWasmEHInfo(&fn, EHInfo);
-  }
 
   // Initialize the mapping of values to registers.  This is only set up for
   // instruction values that are used outside of the block that defines
@@ -157,7 +150,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
             (TFI->isStackRealignable() || (Alignment <= StackAlign))) {
           const ConstantInt *CUI = cast<ConstantInt>(AI->getArraySize());
           uint64_t TySize =
-              MF->getDataLayout().getTypeAllocSize(Ty).getKnownMinSize();
+              MF->getDataLayout().getTypeAllocSize(Ty).getKnownMinValue();
 
           TySize *= CUI->getZExtValue();   // Get total allocated size.
           if (TySize == 0) TySize = 1; // Don't create zero-sized stack objects.
@@ -273,7 +266,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
     // be multiple MachineBasicBlocks corresponding to one BasicBlock, and only
     // the first one should be marked.
     if (BB.hasAddressTaken())
-      MBB->setHasAddressTaken();
+      MBB->setAddressTakenIRBlock(const_cast<BasicBlock *>(&BB));
 
     // Mark landing pad blocks.
     if (BB.isEHPad())
@@ -326,10 +319,10 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       const auto *BB = CME.Handler.get<const BasicBlock *>();
       CME.Handler = MBBMap[BB];
     }
-  }
-
-  else if (Personality == EHPersonality::Wasm_CXX) {
+  } else if (Personality == EHPersonality::Wasm_CXX) {
     WasmEHFuncInfo &EHInfo = *MF->getWasmEHFuncInfo();
+    calculateWasmEHInfo(&fn, EHInfo);
+
     // Map all BB references in the Wasm EH data to MBBs.
     DenseMap<BBOrMBB, BBOrMBB> SrcToUnwindDest;
     for (auto &KV : EHInfo.SrcToUnwindDest) {
@@ -372,8 +365,7 @@ void FunctionLoweringInfo::clear() {
 
 /// CreateReg - Allocate a single virtual register for the given type.
 Register FunctionLoweringInfo::CreateReg(MVT VT, bool isDivergent) {
-  return RegInfo->createVirtualRegister(
-      MF->getSubtarget().getTargetLowering()->getRegClassFor(VT, isDivergent));
+  return RegInfo->createVirtualRegister(TLI->getRegClassFor(VT, isDivergent));
 }
 
 /// CreateRegs - Allocate the appropriate number of virtual registers of
@@ -384,8 +376,6 @@ Register FunctionLoweringInfo::CreateReg(MVT VT, bool isDivergent) {
 /// will assign registers for each member or element.
 ///
 Register FunctionLoweringInfo::CreateRegs(Type *Ty, bool isDivergent) {
-  const TargetLowering *TLI = MF->getSubtarget().getTargetLowering();
-
   SmallVector<EVT, 4> ValueVTs;
   ComputeValueVTs(*TLI, MF->getDataLayout(), Ty, ValueVTs);
 
@@ -448,9 +438,14 @@ void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
   IntVT = TLI->getTypeToTransformTo(PN->getContext(), IntVT);
   unsigned BitWidth = IntVT.getSizeInBits();
 
-  Register DestReg = ValueMap[PN];
-  if (!Register::isVirtualRegister(DestReg))
+  auto It = ValueMap.find(PN);
+  if (It == ValueMap.end())
     return;
+
+  Register DestReg = It->second;
+  if (DestReg == 0)
+    return;
+  assert(DestReg.isVirtual() && "Expected a virtual reg");
   LiveOutRegInfo.grow(DestReg);
   LiveOutInfo &DestLOI = LiveOutRegInfo[DestReg];
 
@@ -462,14 +457,18 @@ void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
   }
 
   if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-    APInt Val = CI->getValue().zextOrTrunc(BitWidth);
+    APInt Val;
+    if (TLI->signExtendConstant(CI))
+      Val = CI->getValue().sext(BitWidth);
+    else
+      Val = CI->getValue().zext(BitWidth);
     DestLOI.NumSignBits = Val.getNumSignBits();
     DestLOI.Known = KnownBits::makeConstant(Val);
   } else {
     assert(ValueMap.count(V) && "V should have been placed in ValueMap when its"
                                 "CopyToReg node was created.");
     Register SrcReg = ValueMap[V];
-    if (!Register::isVirtualRegister(SrcReg)) {
+    if (!SrcReg.isVirtual()) {
       DestLOI.IsValid = false;
       return;
     }
@@ -494,7 +493,11 @@ void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
     }
 
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      APInt Val = CI->getValue().zextOrTrunc(BitWidth);
+      APInt Val;
+      if (TLI->signExtendConstant(CI))
+        Val = CI->getValue().sext(BitWidth);
+      else
+        Val = CI->getValue().zext(BitWidth);
       DestLOI.NumSignBits = std::min(DestLOI.NumSignBits, Val.getNumSignBits());
       DestLOI.Known.Zero &= ~Val;
       DestLOI.Known.One &= Val;

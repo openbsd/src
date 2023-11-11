@@ -1138,6 +1138,7 @@ getT2AddrModeImm8s4OpValue(const MCInst &MI, unsigned OpIdx,
   // representation for the complex operand in the .td file. This isn't just
   // style, unfortunately. As-is, we can't represent the distinct encoding
   // for #-0.
+  assert(((Imm8 & 0x3) == 0) && "Not a valid immediate!");
   uint32_t Binary = (Imm8 >> 2) & 0xff;
   // Immediate is always encoded as positive. The 'U' bit controls add vs sub.
   if (isAdd)
@@ -1679,7 +1680,7 @@ getT2SORegOpValue(const MCInst &MI, unsigned OpIdx,
   case ARM_AM::lsl: SBits = 0x0; break;
   case ARM_AM::lsr: SBits = 0x2; break;
   case ARM_AM::asr: SBits = 0x4; break;
-  case ARM_AM::rrx: LLVM_FALLTHROUGH;
+  case ARM_AM::rrx: [[fallthrough]];
   case ARM_AM::ror: SBits = 0x6; break;
   }
 
@@ -2005,13 +2006,11 @@ getMVEPairVectorIndexOpValue(const MCInst &MI, unsigned OpIdx,
 #include "ARMGenMCCodeEmitter.inc"
 
 MCCodeEmitter *llvm::createARMLEMCCodeEmitter(const MCInstrInfo &MCII,
-                                              const MCRegisterInfo &MRI,
                                               MCContext &Ctx) {
   return new ARMMCCodeEmitter(MCII, Ctx, true);
 }
 
 MCCodeEmitter *llvm::createARMBEMCCodeEmitter(const MCInstrInfo &MCII,
-                                              const MCRegisterInfo &MRI,
                                               MCContext &Ctx) {
   return new ARMMCCodeEmitter(MCII, Ctx, false);
 }

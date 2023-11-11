@@ -15,13 +15,11 @@
 #define LLVM_SUPPORT_THREADING_H
 
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/FunctionExtras.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/llvm-config.h" // for LLVM_ON_UNIX
 #include "llvm/Support/Compiler.h"
 #include <ciso646> // So we can check the C++ standard lib macros.
-#include <functional>
+#include <optional>
 
 #if defined(_MSC_VER)
 // MSVC's call_once implementation worked since VS 2015, which is the minimum
@@ -29,14 +27,13 @@
 #define LLVM_THREADING_USE_STD_CALL_ONCE 1
 #elif defined(LLVM_ON_UNIX) &&                                                 \
     (defined(_LIBCPP_VERSION) ||                                               \
-     !(defined(__NetBSD__) || defined(__OpenBSD__) ||                          \
-       (defined(__ppc__) || defined(__PPC__))))
+     !(defined(__NetBSD__) || defined(__OpenBSD__) || defined(__powerpc__)))
 // std::call_once from libc++ is used on all Unix platforms. Other
 // implementations like libstdc++ are known to have problems on NetBSD,
 // OpenBSD and PowerPC.
 #define LLVM_THREADING_USE_STD_CALL_ONCE 1
 #elif defined(LLVM_ON_UNIX) &&                                                 \
-    ((defined(__ppc__) || defined(__PPC__)) && defined(__LITTLE_ENDIAN__))
+    (defined(__powerpc__) && defined(__LITTLE_ENDIAN__))
 #define LLVM_THREADING_USE_STD_CALL_ONCE 1
 #else
 #define LLVM_THREADING_USE_STD_CALL_ONCE 0
@@ -53,7 +50,7 @@ class Twine;
 
 /// Returns true if LLVM is compiled with support for multi-threading, and
 /// false otherwise.
-bool llvm_is_multithreaded();
+constexpr bool llvm_is_multithreaded() { return LLVM_ENABLE_THREADS; }
 
 #if LLVM_THREADING_USE_STD_CALL_ONCE
 
@@ -142,9 +139,9 @@ bool llvm_is_multithreaded();
     /// compute_thread_count()).
     void apply_thread_strategy(unsigned ThreadPoolNum) const;
 
-    /// Finds the CPU socket where a thread should go. Returns 'None' if the
-    /// thread shall remain on the actual CPU socket.
-    Optional<unsigned> compute_cpu_socket(unsigned ThreadPoolNum) const;
+    /// Finds the CPU socket where a thread should go. Returns 'std::nullopt' if
+    /// the thread shall remain on the actual CPU socket.
+    std::optional<unsigned> compute_cpu_socket(unsigned ThreadPoolNum) const;
   };
 
   /// Build a strategy from a number of threads as a string provided in \p Num.
@@ -152,7 +149,7 @@ bool llvm_is_multithreaded();
   /// strategy, we attempt to equally allocate the threads on all CPU sockets.
   /// "0" or an empty string will return the \p Default strategy.
   /// "all" for using all hardware threads.
-  Optional<ThreadPoolStrategy>
+  std::optional<ThreadPoolStrategy>
   get_threadpool_strategy(StringRef Num, ThreadPoolStrategy Default = {});
 
   /// Returns a thread strategy for tasks requiring significant memory or other
@@ -174,7 +171,7 @@ bool llvm_is_multithreaded();
   /// If \p Num is invalid, returns a default strategy where one thread per
   /// hardware core is used.
   inline ThreadPoolStrategy heavyweight_hardware_concurrency(StringRef Num) {
-    Optional<ThreadPoolStrategy> S =
+    std::optional<ThreadPoolStrategy> S =
         get_threadpool_strategy(Num, heavyweight_hardware_concurrency());
     if (S)
       return *S;
@@ -235,16 +232,26 @@ bool llvm_is_multithreaded();
   /// Returns how many physical CPUs or NUMA groups the system has.
   unsigned get_cpus();
 
+  /// Returns how many physical cores (as opposed to logical cores returned from
+  /// thread::hardware_concurrency(), which includes hyperthreads).
+  /// Returns -1 if unknown for the current host system.
+  int get_physical_cores();
+
   enum class ThreadPriority {
+    /// Lower the current thread's priority as much as possible. Can be used
+    /// for long-running tasks that are not time critical; more energy-
+    /// efficient than Low.
     Background = 0,
-    Default = 1,
+
+    /// Lower the current thread's priority such that it does not affect
+    /// foreground tasks significantly. This is a good default for long-
+    /// running, latency-insensitive tasks to make sure cpu is not hogged
+    /// by this task.
+    Low = 1,
+
+    /// Restore the current thread's priority to default scheduling priority.
+    Default = 2,
   };
-  /// If priority is Background tries to lower current threads priority such
-  /// that it does not affect foreground tasks significantly. Can be used for
-  /// long-running, latency-insensitive tasks to make sure cpu is not hogged by
-  /// this task.
-  /// If the priority is default tries to restore current threads priority to
-  /// default scheduling priority.
   enum class SetThreadPriorityResult { FAILURE, SUCCESS };
   SetThreadPriorityResult set_thread_priority(ThreadPriority Priority);
 }

@@ -7,6 +7,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/ARMBuildAttributes.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
+#include "llvm/Support/LEB128.h"
+#include <iomanip>
+#include <sstream>
 
 using namespace llvm;
 
@@ -50,6 +55,10 @@ static const TagNameItem tagData[] = {
     {ARMBuildAttrs::MPextension_use, "Tag_MPextension_use"},
     {ARMBuildAttrs::DIV_use, "Tag_DIV_use"},
     {ARMBuildAttrs::DSP_extension, "Tag_DSP_extension"},
+    {ARMBuildAttrs::PAC_extension, "Tag_PAC_extension"},
+    {ARMBuildAttrs::BTI_extension, "Tag_BTI_extension"},
+    {ARMBuildAttrs::BTI_use, "Tag_BTI_use"},
+    {ARMBuildAttrs::PACRET_use, "Tag_PACRET_use"},
     {ARMBuildAttrs::nodefaults, "Tag_nodefaults"},
     {ARMBuildAttrs::also_compatible_with, "Tag_also_compatible_with"},
     {ARMBuildAttrs::T2EE_use, "Tag_T2EE_use"},

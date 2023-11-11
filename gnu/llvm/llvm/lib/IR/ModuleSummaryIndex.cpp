@@ -14,7 +14,6 @@
 #include "llvm/IR/ModuleSummaryIndex.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
@@ -106,11 +105,13 @@ uint64_t ModuleSummaryIndex::getFlags() const {
     Flags |= 0x20;
   if (withDSOLocalPropagation())
     Flags |= 0x40;
+  if (withWholeProgramVisibility())
+    Flags |= 0x80;
   return Flags;
 }
 
 void ModuleSummaryIndex::setFlags(uint64_t Flags) {
-  assert(Flags <= 0x7f && "Unexpected bits in flag");
+  assert(Flags <= 0xff && "Unexpected bits in flag");
   // 1 bit: WithGlobalValueDeadStripping flag.
   // Set on combined index only.
   if (Flags & 0x1)
@@ -140,6 +141,10 @@ void ModuleSummaryIndex::setFlags(uint64_t Flags) {
   // Set on combined index only.
   if (Flags & 0x40)
     setWithDSOLocalPropagation();
+  // 1 bit: WithWholeProgramVisibility flag.
+  // Set on combined index only.
+  if (Flags & 0x80)
+    setWithWholeProgramVisibility();
 }
 
 // Collect for the given module the list of function it defines
@@ -251,12 +256,13 @@ void ModuleSummaryIndex::propagateAttributes(
     bool IsDSOLocal = true;
     for (auto &S : P.second.SummaryList) {
       if (!isGlobalValueLive(S.get())) {
-        // computeDeadSymbols should have marked all copies live. Note that
-        // it is possible that there is a GUID collision between internal
-        // symbols with the same name in different files of the same name but
-        // not enough distinguishing path. Because computeDeadSymbols should
-        // conservatively mark all copies live we can assert here that all are
-        // dead if any copy is dead.
+        // computeDeadSymbolsAndUpdateIndirectCalls should have marked all
+        // copies live. Note that it is possible that there is a GUID collision
+        // between internal symbols with the same name in different files of the
+        // same name but not enough distinguishing path. Because
+        // computeDeadSymbolsAndUpdateIndirectCalls should conservatively mark
+        // all copies live we can assert here that all are dead if any copy is
+        // dead.
         assert(llvm::none_of(
             P.second.SummaryList,
             [&](const std::unique_ptr<GlobalValueSummary> &Summary) {
@@ -446,9 +452,17 @@ static std::string linkageToString(GlobalValue::LinkageTypes LT) {
 
 static std::string fflagsToString(FunctionSummary::FFlags F) {
   auto FlagValue = [](unsigned V) { return V ? '1' : '0'; };
-  char FlagRep[] = {FlagValue(F.ReadNone),     FlagValue(F.ReadOnly),
-                    FlagValue(F.NoRecurse),    FlagValue(F.ReturnDoesNotAlias),
-                    FlagValue(F.NoInline), FlagValue(F.AlwaysInline), 0};
+  char FlagRep[] = {FlagValue(F.ReadNone),
+                    FlagValue(F.ReadOnly),
+                    FlagValue(F.NoRecurse),
+                    FlagValue(F.ReturnDoesNotAlias),
+                    FlagValue(F.NoInline),
+                    FlagValue(F.AlwaysInline),
+                    FlagValue(F.NoUnwind),
+                    FlagValue(F.MayThrow),
+                    FlagValue(F.HasUnknownCall),
+                    FlagValue(F.MustBeUnreachable),
+                    0};
 
   return FlagRep;
 }
@@ -556,8 +570,7 @@ void ModuleSummaryIndex::exportToDot(
         " [color=brown]; // call (hotness : Hot)",
         " [style=bold,color=red]; // call (hotness : Critical)"};
 
-    assert(static_cast<size_t>(TypeOrHotness) <
-           sizeof(EdgeAttrs) / sizeof(EdgeAttrs[0]));
+    assert(static_cast<size_t>(TypeOrHotness) < std::size(EdgeAttrs));
     OS << Pfx << NodeId(SrcMod, SrcId) << " -> " << NodeId(DstMod, DstId)
        << EdgeAttrs[TypeOrHotness] << "\n";
   };

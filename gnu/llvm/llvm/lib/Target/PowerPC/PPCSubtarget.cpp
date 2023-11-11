@@ -18,13 +18,14 @@
 #include "PPCRegisterInfo.h"
 #include "PPCTargetMachine.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
+#include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cstdlib>
 
@@ -36,8 +37,10 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_CTOR
 #include "PPCGenSubtargetInfo.inc"
 
-static cl::opt<bool> UseSubRegLiveness("ppc-track-subreg-liveness",
-cl::desc("Enable subregister liveness tracking for PPC"), cl::Hidden);
+static cl::opt<bool>
+    UseSubRegLiveness("ppc-track-subreg-liveness",
+                      cl::desc("Enable subregister liveness tracking for PPC"),
+                      cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
     EnableMachinePipeliner("ppc-enable-pipeliner",
@@ -45,18 +48,20 @@ static cl::opt<bool>
                            cl::init(false), cl::Hidden);
 
 PPCSubtarget &PPCSubtarget::initializeSubtargetDependencies(StringRef CPU,
+                                                            StringRef TuneCPU,
                                                             StringRef FS) {
   initializeEnvironment();
-  initSubtargetFeatures(CPU, FS);
+  initSubtargetFeatures(CPU, TuneCPU, FS);
   return *this;
 }
 
 PPCSubtarget::PPCSubtarget(const Triple &TT, const std::string &CPU,
-                           const std::string &FS, const PPCTargetMachine &TM)
-    : PPCGenSubtargetInfo(TT, CPU, /*TuneCPU*/ CPU, FS), TargetTriple(TT),
+                           const std::string &TuneCPU, const std::string &FS,
+                           const PPCTargetMachine &TM)
+    : PPCGenSubtargetInfo(TT, CPU, TuneCPU, FS), TargetTriple(TT),
       IsPPC64(TargetTriple.getArch() == Triple::ppc64 ||
               TargetTriple.getArch() == Triple::ppc64le),
-      TM(TM), FrameLowering(initializeSubtargetDependencies(CPU, FS)),
+      TM(TM), FrameLowering(initializeSubtargetDependencies(CPU, TuneCPU, FS)),
       InstrInfo(*this), TLInfo(TM, *this) {
   CallLoweringInfo.reset(new PPCCallLowering(*getTargetLowering()));
   Legalizer.reset(new PPCLegalizerInfo(*this));
@@ -70,80 +75,11 @@ PPCSubtarget::PPCSubtarget(const Triple &TT, const std::string &CPU,
 void PPCSubtarget::initializeEnvironment() {
   StackAlignment = Align(16);
   CPUDirective = PPC::DIR_NONE;
-  HasMFOCRF = false;
-  Has64BitSupport = false;
-  Use64BitRegs = false;
-  UseCRBits = false;
-  HasHardFloat = false;
-  HasAltivec = false;
-  HasSPE = false;
-  HasEFPU2 = false;
-  HasFPU = false;
-  HasVSX = false;
-  NeedsTwoConstNR = false;
-  HasP8Vector = false;
-  HasP8Altivec = false;
-  HasP8Crypto = false;
-  HasP9Vector = false;
-  HasP9Altivec = false;
-  HasMMA = false;
-  HasROPProtect = false;
-  HasPrivileged = false;
-  HasP10Vector = false;
-  HasPrefixInstrs = false;
-  HasPCRelativeMemops = false;
-  HasFCPSGN = false;
-  HasFSQRT = false;
-  HasFRE = false;
-  HasFRES = false;
-  HasFRSQRTE = false;
-  HasFRSQRTES = false;
-  HasRecipPrec = false;
-  HasSTFIWX = false;
-  HasLFIWAX = false;
-  HasFPRND = false;
-  HasFPCVT = false;
-  HasISEL = false;
-  HasBPERMD = false;
-  HasExtDiv = false;
-  HasCMPB = false;
-  HasLDBRX = false;
-  IsBookE = false;
-  HasOnlyMSYNC = false;
-  IsPPC4xx = false;
-  IsPPC6xx = false;
-  IsE500 = false;
-  FeatureMFTB = false;
-  AllowsUnalignedFPAccess = false;
-  DeprecatedDST = false;
-  HasICBT = false;
-  HasInvariantFunctionDescriptors = false;
-  HasPartwordAtomics = false;
-  HasQuadwordAtomics = false;
-  HasDirectMove = false;
-  HasHTM = false;
-  HasFloat128 = false;
-  HasFusion = false;
-  HasStoreFusion = false;
-  HasAddiLoadFusion = false;
-  HasAddisLoadFusion = false;
-  IsISA2_07 = false;
-  IsISA3_0 = false;
-  IsISA3_1 = false;
-  UseLongCalls = false;
-  SecurePlt = false;
-  VectorsUseTwoUnits = false;
-  UsePPCPreRASchedStrategy = false;
-  UsePPCPostRASchedStrategy = false;
-  PairedVectorMemops = false;
-  PredictableSelectIsExpensive = false;
-  HasModernAIXAs = false;
-  IsAIX = false;
-
   HasPOPCNTD = POPCNTD_Unavailable;
 }
 
-void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
+void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef TuneCPU,
+                                         StringRef FS) {
   // Determine default and user specified characteristics
   std::string CPUName = std::string(CPU);
   if (CPUName.empty() || CPU == "generic") {
@@ -156,11 +92,14 @@ void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       CPUName = "generic";
   }
 
+  // Determine the CPU to schedule for.
+  if (TuneCPU.empty()) TuneCPU = CPUName;
+
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
 
   // Parse features string.
-  ParseSubtargetFeatures(CPUName, /*TuneCPU*/ CPUName, FS);
+  ParseSubtargetFeatures(CPUName, TuneCPU, FS);
 
   // If the user requested use of 64-bit regs, but the cpu selected doesn't
   // support it, ignore.
@@ -170,7 +109,7 @@ void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   if ((TargetTriple.isOSFreeBSD() && TargetTriple.getOSMajorVersion() >= 13) ||
       TargetTriple.isOSNetBSD() || TargetTriple.isOSOpenBSD() ||
       TargetTriple.isMusl())
-    SecurePlt = true;
+    IsSecurePlt = true;
 
   if (HasSPE && IsPPC64)
     report_fatal_error( "SPE is only supported for 32-bit targets.\n", false);

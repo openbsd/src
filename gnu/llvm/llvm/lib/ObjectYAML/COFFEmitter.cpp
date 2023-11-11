@@ -19,11 +19,13 @@
 #include "llvm/Object/COFF.h"
 #include "llvm/ObjectYAML/ObjectYAML.h"
 #include "llvm/ObjectYAML/yaml2obj.h"
+#include "llvm/Support/BinaryStreamWriter.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
+#include <optional>
 #include <vector>
 
 using namespace llvm;
@@ -45,10 +47,11 @@ struct COFFParser {
            COFF::MaxNumberOfSections16;
   }
 
-  bool isPE() const { return Obj.OptionalHeader.hasValue(); }
+  bool isPE() const { return Obj.OptionalHeader.has_value(); }
   bool is64Bit() const {
     return Obj.Header.Machine == COFF::IMAGE_FILE_MACHINE_AMD64 ||
-           Obj.Header.Machine == COFF::IMAGE_FILE_MACHINE_ARM64;
+           Obj.Header.Machine == COFF::IMAGE_FILE_MACHINE_ARM64 ||
+           Obj.Header.Machine == COFF::IMAGE_FILE_MACHINE_ARM64EC;
   }
 
   uint32_t getFileAlignment() const {
@@ -64,11 +67,7 @@ struct COFFParser {
   }
 
   bool parseSections() {
-    for (std::vector<COFFYAML::Section>::iterator i = Obj.Sections.begin(),
-                                                  e = Obj.Sections.end();
-         i != e; ++i) {
-      COFFYAML::Section &Sec = *i;
-
+    for (COFFYAML::Section &Sec : Obj.Sections) {
       // If the name is less than 8 bytes, store it in place, otherwise
       // store it in the string table.
       StringRef Name = Sec.Name;
@@ -103,11 +102,7 @@ struct COFFParser {
   }
 
   bool parseSymbols() {
-    for (std::vector<COFFYAML::Symbol>::iterator i = Obj.Symbols.begin(),
-                                                 e = Obj.Symbols.end();
-         i != e; ++i) {
-      COFFYAML::Symbol &Sym = *i;
-
+    for (COFFYAML::Symbol &Sym : Obj.Symbols) {
       // If the name is less than 8 bytes, store it in place, otherwise
       // store it in the string table.
       StringRef Name = Sym.Name;
@@ -170,8 +165,8 @@ static bool layoutOptionalHeader(COFFParser &CP) {
   unsigned PEHeaderSize = CP.is64Bit() ? sizeof(object::pe32plus_header)
                                        : sizeof(object::pe32_header);
   CP.Obj.Header.SizeOfOptionalHeader =
-      PEHeaderSize +
-      sizeof(object::data_directory) * (COFF::NUM_DATA_DIRECTORIES + 1);
+      PEHeaderSize + sizeof(object::data_directory) *
+                         CP.Obj.OptionalHeader->Header.NumberOfRvaAndSize;
   return true;
 }
 
@@ -244,7 +239,7 @@ static bool layoutCOFF(COFFParser &CP) {
       if (S.SectionData.binary_size() == 0)
         S.SectionData = CodeViewYAML::toDebugT(S.DebugP, CP.Allocator, S.Name);
     } else if (S.Name == ".debug$H") {
-      if (S.DebugH.hasValue() && S.SectionData.binary_size() == 0)
+      if (S.DebugH && S.SectionData.binary_size() == 0)
         S.SectionData = CodeViewYAML::toDebugH(*S.DebugH, CP.Allocator);
     }
 
@@ -397,7 +392,7 @@ static uint32_t initializeOptionalHeader(COFFParser &CP, uint16_t Magic,
   Header->SizeOfStackCommit = CP.Obj.OptionalHeader->Header.SizeOfStackCommit;
   Header->SizeOfHeapReserve = CP.Obj.OptionalHeader->Header.SizeOfHeapReserve;
   Header->SizeOfHeapCommit = CP.Obj.OptionalHeader->Header.SizeOfHeapCommit;
-  Header->NumberOfRvaAndSize = COFF::NUM_DATA_DIRECTORIES + 1;
+  Header->NumberOfRvaAndSize = CP.Obj.OptionalHeader->Header.NumberOfRvaAndSize;
   return BaseOfData;
 }
 
@@ -458,45 +453,42 @@ static bool writeCOFF(COFFParser &CP, raw_ostream &OS) {
       PEH.BaseOfData = BaseOfData;
       OS.write(reinterpret_cast<char *>(&PEH), sizeof(PEH));
     }
-    for (const Optional<COFF::DataDirectory> &DD :
-         CP.Obj.OptionalHeader->DataDirectories) {
-      if (!DD.hasValue()) {
+    for (uint32_t I = 0; I < CP.Obj.OptionalHeader->Header.NumberOfRvaAndSize;
+         ++I) {
+      const std::optional<COFF::DataDirectory> *DataDirectories =
+          CP.Obj.OptionalHeader->DataDirectories;
+      uint32_t NumDataDir = std::size(CP.Obj.OptionalHeader->DataDirectories);
+      if (I >= NumDataDir || !DataDirectories[I]) {
         OS << zeros(uint32_t(0));
         OS << zeros(uint32_t(0));
       } else {
-        OS << binary_le(DD->RelativeVirtualAddress);
-        OS << binary_le(DD->Size);
+        OS << binary_le(DataDirectories[I]->RelativeVirtualAddress);
+        OS << binary_le(DataDirectories[I]->Size);
       }
     }
-    OS << zeros(uint32_t(0));
-    OS << zeros(uint32_t(0));
   }
 
   assert(OS.tell() == CP.SectionTableStart);
   // Output section table.
-  for (std::vector<COFFYAML::Section>::iterator i = CP.Obj.Sections.begin(),
-                                                e = CP.Obj.Sections.end();
-       i != e; ++i) {
-    OS.write(i->Header.Name, COFF::NameSize);
-    OS << binary_le(i->Header.VirtualSize)
-       << binary_le(i->Header.VirtualAddress)
-       << binary_le(i->Header.SizeOfRawData)
-       << binary_le(i->Header.PointerToRawData)
-       << binary_le(i->Header.PointerToRelocations)
-       << binary_le(i->Header.PointerToLineNumbers)
-       << binary_le(i->Header.NumberOfRelocations)
-       << binary_le(i->Header.NumberOfLineNumbers)
-       << binary_le(i->Header.Characteristics);
+  for (const COFFYAML::Section &S : CP.Obj.Sections) {
+    OS.write(S.Header.Name, COFF::NameSize);
+    OS << binary_le(S.Header.VirtualSize)
+       << binary_le(S.Header.VirtualAddress)
+       << binary_le(S.Header.SizeOfRawData)
+       << binary_le(S.Header.PointerToRawData)
+       << binary_le(S.Header.PointerToRelocations)
+       << binary_le(S.Header.PointerToLineNumbers)
+       << binary_le(S.Header.NumberOfRelocations)
+       << binary_le(S.Header.NumberOfLineNumbers)
+       << binary_le(S.Header.Characteristics);
   }
   assert(OS.tell() == CP.SectionTableStart + CP.SectionTableSize);
 
   unsigned CurSymbol = 0;
   StringMap<unsigned> SymbolTableIndexMap;
-  for (std::vector<COFFYAML::Symbol>::iterator I = CP.Obj.Symbols.begin(),
-                                               E = CP.Obj.Symbols.end();
-       I != E; ++I) {
-    SymbolTableIndexMap[I->Name] = CurSymbol;
-    CurSymbol += 1 + I->Header.NumberOfAuxSymbols;
+  for (const COFFYAML::Symbol &Sym : CP.Obj.Symbols) {
+    SymbolTableIndexMap[Sym.Name] = CurSymbol;
+    CurSymbol += 1 + Sym.Header.NumberOfAuxSymbols;
   }
 
   // Output section data.

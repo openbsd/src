@@ -56,6 +56,7 @@ static_library("LLVMBPFCodeGen") {
     "//llvm/lib/MC",
     "//llvm/lib/Support",
     "//llvm/lib/Target",
+    "//llvm/lib/TargetParser",
   ]
   include_dirs = [ "." ]
   sources = [
@@ -64,6 +65,7 @@ static_library("LLVMBPFCodeGen") {
     "BPFAsmPrinter.cpp",
     "BPFCheckAndAdjustIR.cpp",
     "BPFFrameLowering.cpp",
+    "BPFIRPeephole.cpp",
     "BPFISelDAGToDAG.cpp",
     "BPFISelLowering.cpp",
     "BPFInstrInfo.cpp",

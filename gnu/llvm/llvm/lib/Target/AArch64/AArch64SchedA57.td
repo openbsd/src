@@ -33,7 +33,8 @@ def CortexA57Model : SchedMachineModel {
 
   list<Predicate> UnsupportedFeatures = !listconcat(SVEUnsupported.F,
                                                     PAUnsupported.F,
-                                                    SMEUnsupported.F);
+                                                    SMEUnsupported.F,
+                                                    [HasMTE]);
 }
 
 //===----------------------------------------------------------------------===//
@@ -96,7 +97,8 @@ def : SchedAlias<WriteFCopy, A57Write_5cyc_1L>;
 def : SchedAlias<WriteFImm,  A57Write_3cyc_1V>;
 def : WriteRes<WriteFMul, [A57UnitV]> { let Latency = 5;}
 def : SchedAlias<WriteFDiv,  A57Write_17cyc_1W>;
-def : SchedAlias<WriteV,     A57Write_3cyc_1V>;
+def : SchedAlias<WriteVd,    A57Write_3cyc_1V>;
+def : SchedAlias<WriteVq,    A57Write_3cyc_1V>;
 def : SchedAlias<WriteVLD,   A57Write_5cyc_1L>;
 def : SchedAlias<WriteVST,   A57Write_1cyc_1S>;
 
@@ -116,6 +118,7 @@ def : ReadAdvance<ReadIM,      0>;
 def : ReadAdvance<ReadIMA,     2, [WriteIM32, WriteIM64]>;
 def : ReadAdvance<ReadID,      0>;
 def : ReadAdvance<ReadExtrHi,  0>;
+def : ReadAdvance<ReadST,      0>;
 def : ReadAdvance<ReadAdrBase, 0>;
 def : ReadAdvance<ReadVLD,     0>;
 
@@ -457,9 +460,9 @@ def : InstRW<[A57Write_5cyc_2V], (instregex "^(FACGE|FACGT|FCMEQ|FCMGE|FCMGT|FCM
 // ASIMD FP convert, long and narrow
 def : InstRW<[A57Write_8cyc_3V], (instregex "^FCVT(L|N|XN)v")>;
 // ASIMD FP convert, other, D-form
-def : InstRW<[A57Write_5cyc_1V], (instregex "^[FVSU]CVT([AMNPZ][SU])?(_Int)?(v2f32|v1i32|v2i32|v1i64)")>;
+def : InstRW<[A57Write_5cyc_1V], (instregex "^[FSU]CVT([AMNPZ][SU])?(_Int)?(v2f32|v1i32|v2i32|v1i64)")>;
 // ASIMD FP convert, other, Q-form
-def : InstRW<[A57Write_5cyc_2V], (instregex "^[FVSU]CVT([AMNPZ][SU])?(_Int)?(v4f32|v2f64|v4i32|v2i64)")>;
+def : InstRW<[A57Write_5cyc_2V], (instregex "^[FSU]CVT([AMNPZ][SU])?(_Int)?(v4f32|v2f64|v4i32|v2i64)")>;
 
 // ASIMD FP divide, D-form, F32
 def : InstRW<[A57Write_17cyc_1W], (instregex "FDIVv2f32")>;
@@ -524,7 +527,7 @@ def : InstRW<[A57Write_5cyc_2V], (instregex "^FRINT[AIMNPXZ](v4f32|v2f64)")>;
 def : InstRW<[A57Write_3cyc_2V], (instregex "^(BIF|BIT|BSL|BSP)v16i8")>;
 
 // ASIMD duplicate, gen reg, D-form and Q-form
-def : InstRW<[A57Write_8cyc_1L_1V], (instregex "^CPY")>;
+def : InstRW<[A57Write_8cyc_1L_1V], (instregex "^DUP(i8|i16|i32|i64)$")>;
 def : InstRW<[A57Write_8cyc_1L_1V], (instregex "^DUPv.+gpr")>;
 
 // ASIMD move, saturating

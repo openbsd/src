@@ -19,6 +19,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
 #include <memory>
 #include <utility>
 
@@ -46,6 +47,9 @@ struct PassConcept {
   virtual PreservedAnalyses run(IRUnitT &IR, AnalysisManagerT &AM,
                                 ExtraArgTs... ExtraArgs) = 0;
 
+  virtual void
+  printPipeline(raw_ostream &OS,
+                function_ref<StringRef(StringRef)> MapClassName2PassName) = 0;
   /// Polymorphic method to access the name of a pass.
   virtual StringRef name() const = 0;
 
@@ -83,6 +87,12 @@ struct PassModel : PassConcept<IRUnitT, AnalysisManagerT, ExtraArgTs...> {
   PreservedAnalysesT run(IRUnitT &IR, AnalysisManagerT &AM,
                          ExtraArgTs... ExtraArgs) override {
     return Pass.run(IR, AM, ExtraArgs...);
+  }
+
+  void printPipeline(
+      raw_ostream &OS,
+      function_ref<StringRef(StringRef)> MapClassName2PassName) override {
+    Pass.printPipeline(OS, MapClassName2PassName);
   }
 
   StringRef name() const override { return PassT::name(); }

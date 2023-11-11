@@ -13,6 +13,7 @@
 #include "llvm-cxxdump.h"
 #include "Error.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolSize.h"
@@ -20,7 +21,6 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
@@ -36,7 +36,7 @@ namespace opts {
 cl::OptionCategory CXXDumpCategory("CXX Dump Options");
 cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input object files>"),
-                                     cl::ZeroOrMore, cl::cat(CXXDumpCategory));
+                                     cl::cat(CXXDumpCategory));
 } // namespace opts
 
 namespace llvm {
@@ -49,7 +49,7 @@ static void error(std::error_code EC) {
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN static void error(Error Err) {
+[[noreturn]] static void error(Error Err) {
   logAllUnhandledErrors(std::move(Err), WithColor::error(outs()),
                         "reading file: ");
   outs().flush();
@@ -234,8 +234,8 @@ static void dumpCXXData(const ObjectFile *Obj) {
     // Complete object locators in the MS-ABI start with '??_R4'
     else if (SymName.startswith("??_R4")) {
       CompleteObjectLocator COL;
-      COL.Data = makeArrayRef(
-          reinterpret_cast<const little32_t *>(SymContents.data()), 3);
+      COL.Data =
+          ArrayRef(reinterpret_cast<const little32_t *>(SymContents.data()), 3);
       StringRef *I = std::begin(COL.Symbols), *E = std::end(COL.Symbols);
       collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I, E);
       COLs[SymName] = COL;
@@ -243,8 +243,8 @@ static void dumpCXXData(const ObjectFile *Obj) {
     // Class hierarchy descriptors in the MS-ABI start with '??_R3'
     else if (SymName.startswith("??_R3")) {
       ClassHierarchyDescriptor CHD;
-      CHD.Data = makeArrayRef(
-          reinterpret_cast<const little32_t *>(SymContents.data()), 3);
+      CHD.Data =
+          ArrayRef(reinterpret_cast<const little32_t *>(SymContents.data()), 3);
       StringRef *I = std::begin(CHD.Symbols), *E = std::end(CHD.Symbols);
       collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I, E);
       CHDs[SymName] = CHD;
@@ -259,7 +259,7 @@ static void dumpCXXData(const ObjectFile *Obj) {
     // Base class descriptors in the MS-ABI start with '??_R1'
     else if (SymName.startswith("??_R1")) {
       BaseClassDescriptor BCD;
-      BCD.Data = makeArrayRef(
+      BCD.Data = ArrayRef(
           reinterpret_cast<const little32_t *>(SymContents.data()) + 1, 5);
       StringRef *I = std::begin(BCD.Symbols), *E = std::end(BCD.Symbols);
       collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I, E);
@@ -499,7 +499,7 @@ static void dumpCXXData(const ObjectFile *Obj) {
 
 static void dumpArchive(const Archive *Arc) {
   Error Err = Error::success();
-  for (auto &ArcC : Arc->children(Err)) {
+  for (const auto &ArcC : Arc->children(Err)) {
     Expected<std::unique_ptr<Binary>> ChildOrErr = ArcC.getAsBinary();
     if (!ChildOrErr) {
       // Ignore non-object files.

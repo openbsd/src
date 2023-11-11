@@ -18,9 +18,9 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Analysis/DomTreeUpdater.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/ValueMap.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
@@ -36,6 +36,8 @@ class Type;
 
 class StackProtector : public FunctionPass {
 private:
+  static constexpr unsigned DefaultSSPBufferSize = 8;
+
   /// A mapping of AllocaInsts to their required SSP layout.
   using SSPLayoutMap = DenseMap<const AllocaInst *,
                                 MachineFrameInfo::SSPLayoutKind>;
@@ -50,7 +52,7 @@ private:
   Function *F;
   Module *M;
 
-  DominatorTree *DT;
+  std::optional<DomTreeUpdater> DTU;
 
   /// Layout - Mapping of allocations to the required SSPLayoutKind.
   /// StackProtector analysis will update this map when determining if an
@@ -59,7 +61,7 @@ private:
 
   /// The minimum size of buffers that will receive stack smashing
   /// protection when -fstack-protection is used.
-  unsigned SSPBufferSize = 0;
+  unsigned SSPBufferSize = DefaultSSPBufferSize;
 
   /// VisitedPHIs - The set of PHI nodes visited when determining
   /// if a variable's reference has been taken.  This set
@@ -95,7 +97,7 @@ private:
                                 bool InStruct = false) const;
 
   /// Check whether a stack allocation has its address taken.
-  bool HasAddressTaken(const Instruction *AI, uint64_t AllocSize);
+  bool HasAddressTaken(const Instruction *AI, TypeSize AllocSize);
 
   /// RequiresStackProtector - Check whether or not this function needs a
   /// stack protector based upon the stack protector level.

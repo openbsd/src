@@ -19,10 +19,18 @@
 
 llvm::ThreadPoolStrategy llvm::parallel::strategy;
 
-#if LLVM_ENABLE_THREADS
-
 namespace llvm {
 namespace parallel {
+#if LLVM_ENABLE_THREADS
+
+#ifdef _WIN32
+static thread_local unsigned threadIndex;
+
+unsigned getThreadIndex() { return threadIndex; }
+#else
+thread_local unsigned threadIndex;
+#endif
+
 namespace detail {
 
 namespace {
@@ -89,20 +97,21 @@ public:
   void add(std::function<void()> F) override {
     {
       std::lock_guard<std::mutex> Lock(Mutex);
-      WorkStack.push(F);
+      WorkStack.push(std::move(F));
     }
     Cond.notify_one();
   }
 
 private:
   void work(ThreadPoolStrategy S, unsigned ThreadID) {
+    threadIndex = ThreadID;
     S.apply_thread_strategy(ThreadID);
     while (true) {
       std::unique_lock<std::mutex> Lock(Mutex);
       Cond.wait(Lock, [&] { return Stop || !WorkStack.empty(); });
       if (Stop)
         break;
-      auto Task = WorkStack.top();
+      auto Task = std::move(WorkStack.top());
       WorkStack.pop();
       Lock.unlock();
       Task();
@@ -143,6 +152,8 @@ Executor *Executor::getDefaultExecutor() {
   return Exec.get();
 }
 } // namespace
+} // namespace detail
+#endif
 
 static std::atomic<int> TaskGroupInstances;
 
@@ -151,21 +162,68 @@ static std::atomic<int> TaskGroupInstances;
 // lock, only allow the first TaskGroup to run tasks parallelly. In the scenario
 // of nested parallel_for_each(), only the outermost one runs parallelly.
 TaskGroup::TaskGroup() : Parallel(TaskGroupInstances++ == 0) {}
-TaskGroup::~TaskGroup() { --TaskGroupInstances; }
+TaskGroup::~TaskGroup() {
+  // We must ensure that all the workloads have finished before decrementing the
+  // instances count.
+  L.sync();
+  --TaskGroupInstances;
+}
 
 void TaskGroup::spawn(std::function<void()> F) {
+#if LLVM_ENABLE_THREADS
   if (Parallel) {
     L.inc();
-    Executor::getDefaultExecutor()->add([&, F] {
+    detail::Executor::getDefaultExecutor()->add([&, F = std::move(F)] {
       F();
       L.dec();
     });
-  } else {
-    F();
+    return;
   }
+#endif
+  F();
 }
 
-} // namespace detail
+void TaskGroup::execute(std::function<void()> F) {
+  if (parallel::strategy.ThreadsRequested == 1)
+    F();
+  else
+    spawn(F);
+}
 } // namespace parallel
 } // namespace llvm
-#endif // LLVM_ENABLE_THREADS
+
+void llvm::parallelFor(size_t Begin, size_t End,
+                       llvm::function_ref<void(size_t)> Fn) {
+  // If we have zero or one items, then do not incur the overhead of spinning up
+  // a task group.  They are surprisingly expensive, and because they do not
+  // support nested parallelism, a single entry task group can block parallel
+  // execution underneath them.
+#if LLVM_ENABLE_THREADS
+  auto NumItems = End - Begin;
+  if (NumItems > 1 && parallel::strategy.ThreadsRequested != 1) {
+    // Limit the number of tasks to MaxTasksPerGroup to limit job scheduling
+    // overhead on large inputs.
+    auto TaskSize = NumItems / parallel::detail::MaxTasksPerGroup;
+    if (TaskSize == 0)
+      TaskSize = 1;
+
+    parallel::TaskGroup TG;
+    for (; Begin + TaskSize < End; Begin += TaskSize) {
+      TG.spawn([=, &Fn] {
+        for (size_t I = Begin, E = Begin + TaskSize; I != E; ++I)
+          Fn(I);
+      });
+    }
+    if (Begin != End) {
+      TG.spawn([=, &Fn] {
+        for (size_t I = Begin; I != End; ++I)
+          Fn(I);
+      });
+    }
+    return;
+  }
+#endif
+
+  for (; Begin != End; ++Begin)
+    Fn(Begin);
+}

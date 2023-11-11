@@ -152,7 +152,7 @@ public:
       }
       return C;
     });
-    N.erase(std::remove(N.begin(), N.end(), '_'), N.end());
+    llvm::erase_value(N, '_');
     return N;
   }
 
@@ -174,6 +174,16 @@ public:
   }
 
   bool isImplicit() const { return Def->getValueAsBit("isImplicit"); }
+
+  std::vector<StringRef> getAliases() const {
+    return Def->getValueAsListOfStrings("aliases");
+  }
+
+  StringRef getPrefix() const { return Def->getValueAsString("prefix"); }
+
+  bool isPrefixOptional() const {
+    return Def->getValueAsBit("isPrefixOptional");
+  }
 };
 
 // Wrapper class that contains VersionedClause's information defined in

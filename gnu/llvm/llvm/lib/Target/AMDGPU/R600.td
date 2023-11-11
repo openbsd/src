@@ -10,7 +10,6 @@ include "llvm/Target/Target.td"
 
 def R600InstrInfo : InstrInfo {
   let guessInstructionProperties = 1;
-  let noNamedPositionallyEncodedOperands = 1;
 }
 
 def R600 : Target {
@@ -34,6 +33,7 @@ def ALU_NULL : FuncUnit;
 include "AMDGPUFeatures.td"
 include "R600Schedule.td"
 include "R600Processors.td"
+include "R600InstrInfo.td"
 include "AMDGPUInstrInfo.td"
 include "AMDGPUInstructions.td"
 include "R600Instructions.td"

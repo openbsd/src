@@ -9,16 +9,14 @@
 #ifndef LLVM_DEBUGINFO_DWARF_DWARFEXPRESSION_H
 #define LLVM_DEBUGINFO_DWARF_DWARFEXPRESSION_H
 
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/Optional.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator.h"
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/BinaryFormat/Dwarf.h"
-#include "llvm/DebugInfo/DIContext.h"
 #include "llvm/Support/DataExtractor.h"
 
 namespace llvm {
 class DWARFUnit;
+struct DIDumpOptions;
 class MCRegisterInfo;
 class raw_ostream;
 
@@ -86,24 +84,29 @@ public:
     uint64_t OperandEndOffsets[2];
 
   public:
-    Description &getDescription() { return Desc; }
-    uint8_t getCode() { return Opcode; }
-    uint64_t getRawOperand(unsigned Idx) { return Operands[Idx]; }
-    uint64_t getOperandEndOffset(unsigned Idx) { return OperandEndOffsets[Idx]; }
-    uint64_t getEndOffset() { return EndOffset; }
-    bool extract(DataExtractor Data, uint8_t AddressSize, uint64_t Offset,
-                 Optional<dwarf::DwarfFormat> Format);
-    bool isError() { return Error; }
+    const Description &getDescription() const { return Desc; }
+    uint8_t getCode() const { return Opcode; }
+    uint64_t getRawOperand(unsigned Idx) const { return Operands[Idx]; }
+    uint64_t getOperandEndOffset(unsigned Idx) const {
+      return OperandEndOffsets[Idx];
+    }
+    uint64_t getEndOffset() const { return EndOffset; }
+    bool isError() const { return Error; }
     bool print(raw_ostream &OS, DIDumpOptions DumpOpts,
-               const DWARFExpression *Expr, const MCRegisterInfo *RegInfo,
-               DWARFUnit *U, bool isEH);
-    bool verify(DWARFUnit *U);
+               const DWARFExpression *Expr, DWARFUnit *U) const;
+
+    /// Verify \p Op. Does not affect the return of \a isError().
+    static bool verify(const Operation &Op, DWARFUnit *U);
+
+  private:
+    bool extract(DataExtractor Data, uint8_t AddressSize, uint64_t Offset,
+                 std::optional<dwarf::DwarfFormat> Format);
   };
 
   /// An iterator to go through the expression operations.
   class iterator
       : public iterator_facade_base<iterator, std::forward_iterator_tag,
-                                    Operation> {
+                                    const Operation> {
     friend class DWARFExpression;
     const DWARFExpression *Expr;
     uint64_t Offset;
@@ -116,19 +119,17 @@ public:
     }
 
   public:
-    class Operation &operator++() {
+    iterator &operator++() {
       Offset = Op.isError() ? Expr->Data.getData().size() : Op.EndOffset;
       Op.Error =
           Offset >= Expr->Data.getData().size() ||
           !Op.extract(Expr->Data, Expr->AddressSize, Offset, Expr->Format);
-      return Op;
+      return *this;
     }
 
-    class Operation &operator*() {
-      return Op;
-    }
+    const Operation &operator*() const { return Op; }
 
-    iterator skipBytes(uint64_t Add) {
+    iterator skipBytes(uint64_t Add) const {
       return iterator(Expr, Op.EndOffset + Add);
     }
 
@@ -137,7 +138,7 @@ public:
   };
 
   DWARFExpression(DataExtractor Data, uint8_t AddressSize,
-                  Optional<dwarf::DwarfFormat> Format = None)
+                  std::optional<dwarf::DwarfFormat> Format = std::nullopt)
       : Data(Data), AddressSize(AddressSize), Format(Format) {
     assert(AddressSize == 8 || AddressSize == 4 || AddressSize == 2);
   }
@@ -145,24 +146,31 @@ public:
   iterator begin() const { return iterator(this, 0); }
   iterator end() const { return iterator(this, Data.getData().size()); }
 
-  void print(raw_ostream &OS, DIDumpOptions DumpOpts,
-             const MCRegisterInfo *RegInfo, DWARFUnit *U,
+  void print(raw_ostream &OS, DIDumpOptions DumpOpts, DWARFUnit *U,
              bool IsEH = false) const;
 
   /// Print the expression in a format intended to be compact and useful to a
   /// user, but not perfectly unambiguous, or capable of representing every
   /// valid DWARF expression. Returns true if the expression was sucessfully
   /// printed.
-  bool printCompact(raw_ostream &OS, const MCRegisterInfo &RegInfo);
+  bool printCompact(raw_ostream &OS,
+                    std::function<StringRef(uint64_t RegNum, bool IsEH)>
+                        GetNameForDWARFReg = nullptr);
 
   bool verify(DWARFUnit *U);
 
   bool operator==(const DWARFExpression &RHS) const;
 
+  StringRef getData() const { return Data.getData(); }
+
+  static bool prettyPrintRegisterOp(DWARFUnit *U, raw_ostream &OS,
+                                    DIDumpOptions DumpOpts, uint8_t Opcode,
+                                    const uint64_t Operands[2]);
+
 private:
   DataExtractor Data;
   uint8_t AddressSize;
-  Optional<dwarf::DwarfFormat> Format;
+  std::optional<dwarf::DwarfFormat> Format;
 };
 
 inline bool operator==(const DWARFExpression::iterator &LHS,

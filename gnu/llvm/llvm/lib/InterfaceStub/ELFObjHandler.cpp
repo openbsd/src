@@ -17,9 +17,8 @@
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Process.h"
+#include <optional>
 
-using llvm::MemoryBufferRef;
 using llvm::object::ELFObjectFile;
 
 using namespace llvm;
@@ -33,13 +32,13 @@ namespace ifs {
 struct DynamicEntries {
   uint64_t StrTabAddr = 0;
   uint64_t StrSize = 0;
-  Optional<uint64_t> SONameOffset;
+  std::optional<uint64_t> SONameOffset;
   std::vector<uint64_t> NeededLibNames;
   // Symbol table:
   uint64_t DynSymAddr = 0;
   // Hash tables:
-  Optional<uint64_t> ElfHash;
-  Optional<uint64_t> GnuHash;
+  std::optional<uint64_t> ElfHash;
+  std::optional<uint64_t> GnuHash;
 };
 
 /// This initializes an ELF file header with information specific to a binary
@@ -196,7 +195,7 @@ public:
     for (const std::string &Lib : Stub.NeededLibs)
       DynStr.Content.add(Lib);
     if (Stub.SoName)
-      DynStr.Content.add(Stub.SoName.getValue());
+      DynStr.Content.add(*Stub.SoName);
 
     std::vector<OutputSection<ELFT> *> Sections = {&DynSym, &DynStr, &DynTab,
                                                    &ShStrTab};
@@ -219,7 +218,8 @@ public:
       // time as long as it is not SHN_UNDEF. Set shndx to 1, which
       // points to ".dynsym".
       uint16_t Shndx = Sym.Undefined ? SHN_UNDEF : 1;
-      DynSym.Content.add(DynStr.Content.getOffset(Sym.Name), Sym.Size, Bind,
+      uint64_t Size = Sym.Size.value_or(0);
+      DynSym.Content.add(DynStr.Content.getOffset(Sym.Name), Size, Bind,
                          convertIFSSymbolTypeToELF(Sym.Type), 0, Shndx);
     }
     DynSym.Size = DynSym.Content.getSize();
@@ -227,11 +227,12 @@ public:
     // Poplulate dynamic table.
     size_t DynSymIndex = DynTab.Content.addAddr(DT_SYMTAB, 0);
     size_t DynStrIndex = DynTab.Content.addAddr(DT_STRTAB, 0);
+    DynTab.Content.addValue(DT_STRSZ, DynSym.Size);
     for (const std::string &Lib : Stub.NeededLibs)
       DynTab.Content.addValue(DT_NEEDED, DynStr.Content.getOffset(Lib));
     if (Stub.SoName)
       DynTab.Content.addValue(DT_SONAME,
-                              DynStr.Content.getOffset(Stub.SoName.getValue()));
+                              DynStr.Content.getOffset(*Stub.SoName));
     DynTab.Size = DynTab.Content.getSize();
     // Calculate sections' addresses and offsets.
     uint64_t CurrentOffset = sizeof(Elf_Ehdr);
@@ -250,8 +251,7 @@ public:
     fillStrTabShdr(ShStrTab);
 
     // Finish initializing the ELF header.
-    initELFHeader<ELFT>(ElfHeader,
-                        static_cast<uint16_t>(Stub.Target.Arch.getValue()));
+    initELFHeader<ELFT>(ElfHeader, static_cast<uint16_t>(*Stub.Target.Arch));
     ElfHeader.e_shstrndx = ShStrTab.Index;
     ElfHeader.e_shnum = LastSection->Index + 1;
     ElfHeader.e_shoff =
@@ -335,6 +335,89 @@ private:
     write(Data + shdrOffset(Sec), Sec.Shdr);
   }
 };
+
+/// This function takes an error, and appends a string of text to the end of
+/// that error. Since "appending" to an Error isn't supported behavior of an
+/// Error, this function technically creates a new error with the combined
+/// message and consumes the old error.
+///
+/// @param Err Source error.
+/// @param After Text to append at the end of Err's error message.
+Error appendToError(Error Err, StringRef After) {
+  std::string Message;
+  raw_string_ostream Stream(Message);
+  Stream << Err;
+  Stream << " " << After;
+  consumeError(std::move(Err));
+  return createError(Stream.str());
+}
+
+template <class ELFT> class DynSym {
+  using Elf_Shdr_Range = typename ELFT::ShdrRange;
+  using Elf_Shdr = typename ELFT::Shdr;
+
+public:
+  static Expected<DynSym> create(const ELFFile<ELFT> &ElfFile,
+                                 const DynamicEntries &DynEnt) {
+    Expected<Elf_Shdr_Range> Shdrs = ElfFile.sections();
+    if (!Shdrs)
+      return Shdrs.takeError();
+    return DynSym(ElfFile, DynEnt, *Shdrs);
+  }
+
+  Expected<const uint8_t *> getDynSym() {
+    if (DynSymHdr)
+      return ElfFile.base() + DynSymHdr->sh_offset;
+    return getDynamicData(DynEnt.DynSymAddr, "dynamic symbol table");
+  }
+
+  Expected<StringRef> getDynStr() {
+    if (DynSymHdr)
+      return ElfFile.getStringTableForSymtab(*DynSymHdr, Shdrs);
+    Expected<const uint8_t *> DataOrErr = getDynamicData(
+        DynEnt.StrTabAddr, "dynamic string table", DynEnt.StrSize);
+    if (!DataOrErr)
+      return DataOrErr.takeError();
+    return StringRef(reinterpret_cast<const char *>(*DataOrErr),
+                     DynEnt.StrSize);
+  }
+
+private:
+  DynSym(const ELFFile<ELFT> &ElfFile, const DynamicEntries &DynEnt,
+         Elf_Shdr_Range Shdrs)
+      : ElfFile(ElfFile), DynEnt(DynEnt), Shdrs(Shdrs),
+        DynSymHdr(findDynSymHdr()) {}
+
+  const Elf_Shdr *findDynSymHdr() {
+    for (const Elf_Shdr &Sec : Shdrs)
+      if (Sec.sh_type == SHT_DYNSYM) {
+        // If multiple .dynsym are present, use the first one.
+        // This behavior aligns with llvm::object::ELFFile::getDynSymtabSize()
+        return &Sec;
+      }
+    return nullptr;
+  }
+
+  Expected<const uint8_t *> getDynamicData(uint64_t EntAddr, StringRef Name,
+                                           uint64_t Size = 0) {
+    Expected<const uint8_t *> SecPtr = ElfFile.toMappedAddr(EntAddr);
+    if (!SecPtr)
+      return appendToError(
+          SecPtr.takeError(),
+          ("when locating " + Name + " section contents").str());
+    Expected<const uint8_t *> SecEndPtr = ElfFile.toMappedAddr(EntAddr + Size);
+    if (!SecEndPtr)
+      return appendToError(
+          SecEndPtr.takeError(),
+          ("when locating " + Name + " section contents").str());
+    return *SecPtr;
+  }
+
+  const ELFFile<ELFT> &ElfFile;
+  const DynamicEntries &DynEnt;
+  Elf_Shdr_Range Shdrs;
+  const Elf_Shdr *DynSymHdr;
+};
 } // end anonymous namespace
 
 /// This function behaves similarly to StringRef::substr(), but attempts to
@@ -354,25 +437,9 @@ static Expected<StringRef> terminatedSubstr(StringRef Str, size_t Offset) {
   return Str.substr(Offset, StrLen);
 }
 
-/// This function takes an error, and appends a string of text to the end of
-/// that error. Since "appending" to an Error isn't supported behavior of an
-/// Error, this function technically creates a new error with the combined
-/// message and consumes the old error.
-///
-/// @param Err Source error.
-/// @param After Text to append at the end of Err's error message.
-Error appendToError(Error Err, StringRef After) {
-  std::string Message;
-  raw_string_ostream Stream(Message);
-  Stream << Err;
-  Stream << " " << After;
-  consumeError(std::move(Err));
-  return createError(Stream.str().c_str());
-}
-
 /// This function populates a DynamicEntries struct using an ELFT::DynRange.
 /// After populating the struct, the members are validated with
-/// some basic sanity checks.
+/// some basic correctness checks.
 ///
 /// @param Dyn Target DynamicEntries struct to populate.
 /// @param DynTable Source dynamic table.
@@ -426,7 +493,7 @@ static Error populateDynamic(DynamicEntries &Dyn,
     return createError(
         "Couldn't locate dynamic symbol table (no DT_SYMTAB entry)");
   }
-  if (Dyn.SONameOffset.hasValue() && *Dyn.SONameOffset >= Dyn.StrSize) {
+  if (Dyn.SONameOffset && *Dyn.SONameOffset >= Dyn.StrSize) {
     return createStringError(object_error::parse_failed,
                              "DT_SONAME string offset (0x%016" PRIx64
                              ") outside of dynamic string table",
@@ -508,7 +575,6 @@ template <class ELFT>
 static Expected<std::unique_ptr<IFSStub>>
 buildStub(const ELFObjectFile<ELFT> &ElfObj) {
   using Elf_Dyn_Range = typename ELFT::DynRange;
-  using Elf_Phdr_Range = typename ELFT::PhdrRange;
   using Elf_Sym_Range = typename ELFT::SymRange;
   using Elf_Sym = typename ELFT::Sym;
   std::unique_ptr<IFSStub> DestStub = std::make_unique<IFSStub>();
@@ -519,25 +585,19 @@ buildStub(const ELFObjectFile<ELFT> &ElfObj) {
     return DynTable.takeError();
   }
 
-  // Fetch program headers.
-  Expected<Elf_Phdr_Range> PHdrs = ElfFile.program_headers();
-  if (!PHdrs) {
-    return PHdrs.takeError();
-  }
-
   // Collect relevant .dynamic entries.
   DynamicEntries DynEnt;
   if (Error Err = populateDynamic<ELFT>(DynEnt, *DynTable))
     return std::move(Err);
+  Expected<DynSym<ELFT>> EDynSym = DynSym<ELFT>::create(ElfFile, DynEnt);
+  if (!EDynSym)
+    return EDynSym.takeError();
 
-  // Get pointer to in-memory location of .dynstr section.
-  Expected<const uint8_t *> DynStrPtr = ElfFile.toMappedAddr(DynEnt.StrTabAddr);
-  if (!DynStrPtr)
-    return appendToError(DynStrPtr.takeError(),
-                         "when locating .dynstr section contents");
+  Expected<StringRef> EDynStr = EDynSym->getDynStr();
+  if (!EDynStr)
+    return EDynStr.takeError();
 
-  StringRef DynStr(reinterpret_cast<const char *>(DynStrPtr.get()),
-                   DynEnt.StrSize);
+  StringRef DynStr = *EDynStr;
 
   // Populate Arch from ELF header.
   DestStub->Target.Arch = static_cast<IFSArch>(ElfFile.getHeader().e_machine);
@@ -548,7 +608,7 @@ buildStub(const ELFObjectFile<ELFT> &ElfObj) {
   DestStub->Target.ObjectFormat = "ELF";
 
   // Populate SoName from .dynamic entries and dynamic string table.
-  if (DynEnt.SONameOffset.hasValue()) {
+  if (DynEnt.SONameOffset) {
     Expected<StringRef> NameOrErr =
         terminatedSubstr(DynStr, *DynEnt.SONameOffset);
     if (!NameOrErr) {
@@ -573,8 +633,7 @@ buildStub(const ELFObjectFile<ELFT> &ElfObj) {
     return SymCount.takeError();
   if (*SymCount > 0) {
     // Get pointer to in-memory location of .dynsym section.
-    Expected<const uint8_t *> DynSymPtr =
-        ElfFile.toMappedAddr(DynEnt.DynSymAddr);
+    Expected<const uint8_t *> DynSymPtr = EDynSym->getDynSym();
     if (!DynSymPtr)
       return appendToError(DynSymPtr.takeError(),
                            "when locating .dynsym section contents");

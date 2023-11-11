@@ -19,12 +19,12 @@
 namespace llvm {
 
 class AAResults;
+class AssumptionCache;
 class DataLayout;
 class DominatorTree;
 class Instruction;
 class LoadInst;
 class Loop;
-class MDNode;
 class MemoryLocation;
 class ScalarEvolution;
 class TargetLibraryInfo;
@@ -32,9 +32,9 @@ class TargetLibraryInfo;
 /// Return true if this is always a dereferenceable pointer. If the context
 /// instruction is specified perform context-sensitive analysis and return true
 /// if the pointer is dereferenceable at the specified instruction.
-bool isDereferenceablePointer(const Value *V, Type *Ty,
-                              const DataLayout &DL,
+bool isDereferenceablePointer(const Value *V, Type *Ty, const DataLayout &DL,
                               const Instruction *CtxI = nullptr,
+                              AssumptionCache *AC = nullptr,
                               const DominatorTree *DT = nullptr,
                               const TargetLibraryInfo *TLI = nullptr);
 
@@ -43,9 +43,9 @@ bool isDereferenceablePointer(const Value *V, Type *Ty,
 /// performs context-sensitive analysis and returns true if the pointer is
 /// dereferenceable at the specified instruction.
 bool isDereferenceableAndAlignedPointer(const Value *V, Type *Ty,
-                                        MaybeAlign Alignment,
-                                        const DataLayout &DL,
+                                        Align Alignment, const DataLayout &DL,
                                         const Instruction *CtxI = nullptr,
+                                        AssumptionCache *AC = nullptr,
                                         const DominatorTree *DT = nullptr,
                                         const TargetLibraryInfo *TLI = nullptr);
 
@@ -56,6 +56,7 @@ bool isDereferenceableAndAlignedPointer(const Value *V, Type *Ty,
 bool isDereferenceableAndAlignedPointer(const Value *V, Align Alignment,
                                         const APInt &Size, const DataLayout &DL,
                                         const Instruction *CtxI = nullptr,
+                                        AssumptionCache *AC = nullptr,
                                         const DominatorTree *DT = nullptr,
                                         const TargetLibraryInfo *TLI = nullptr);
 
@@ -70,6 +71,7 @@ bool isDereferenceableAndAlignedPointer(const Value *V, Align Alignment,
 bool isSafeToLoadUnconditionally(Value *V, Align Alignment, APInt &Size,
                                  const DataLayout &DL,
                                  Instruction *ScanFrom = nullptr,
+                                 AssumptionCache *AC = nullptr,
                                  const DominatorTree *DT = nullptr,
                                  const TargetLibraryInfo *TLI = nullptr);
 
@@ -77,12 +79,12 @@ bool isSafeToLoadUnconditionally(Value *V, Align Alignment, APInt &Size,
 /// within the specified loop) would access only dereferenceable memory, and
 /// be properly aligned on every iteration of the specified loop regardless of
 /// its placement within the loop. (i.e. does not require predication beyond
-/// that required by the the header itself and could be hoisted into the header
+/// that required by the header itself and could be hoisted into the header
 /// if desired.)  This is more powerful than the variants above when the
-/// address loaded from is analyzeable by SCEV.  
+/// address loaded from is analyzeable by SCEV.
 bool isDereferenceableAndAlignedInLoop(LoadInst *LI, Loop *L,
-                                       ScalarEvolution &SE,
-                                       DominatorTree &DT);
+                                       ScalarEvolution &SE, DominatorTree &DT,
+                                       AssumptionCache *AC = nullptr);
 
 /// Return true if we know that executing a load from this value cannot trap.
 ///
@@ -95,6 +97,7 @@ bool isDereferenceableAndAlignedInLoop(LoadInst *LI, Loop *L,
 bool isSafeToLoadUnconditionally(Value *V, Type *Ty, Align Alignment,
                                  const DataLayout &DL,
                                  Instruction *ScanFrom = nullptr,
+                                 AssumptionCache *AC = nullptr,
                                  const DominatorTree *DT = nullptr,
                                  const TargetLibraryInfo *TLI = nullptr);
 

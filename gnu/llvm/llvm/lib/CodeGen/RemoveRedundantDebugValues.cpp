@@ -12,13 +12,12 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Function.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
+#include "llvm/PassRegistry.h"
 
 /// \file RemoveRedundantDebugValues.cpp
 ///
@@ -90,7 +89,7 @@ static bool reduceDbgValsForwardScan(MachineBasicBlock &MBB) {
 
   for (auto &MI : MBB) {
     if (MI.isDebugValue()) {
-      DebugVariable Var(MI.getDebugVariable(), NoneType(),
+      DebugVariable Var(MI.getDebugVariable(), std::nullopt,
                         MI.getDebugLoc()->getInlinedAt());
       auto VMI = VariableMap.find(Var);
       // Just stop tracking this variable, until we cover DBG_VALUE_LIST.
@@ -159,20 +158,17 @@ static bool reduceDbgValsBackwardScan(MachineBasicBlock &MBB) {
   SmallVector<MachineInstr *, 8> DbgValsToBeRemoved;
   SmallDenseSet<DebugVariable> VariableSet;
 
-  for (MachineBasicBlock::reverse_iterator I = MBB.rbegin(), E = MBB.rend();
-       I != E; ++I) {
-    MachineInstr *MI = &*I;
-
-    if (MI->isDebugValue()) {
-      DebugVariable Var(MI->getDebugVariable(), MI->getDebugExpression(),
-                        MI->getDebugLoc()->getInlinedAt());
+  for (MachineInstr &MI : llvm::reverse(MBB)) {
+    if (MI.isDebugValue()) {
+      DebugVariable Var(MI.getDebugVariable(), MI.getDebugExpression(),
+                        MI.getDebugLoc()->getInlinedAt());
       auto R = VariableSet.insert(Var);
       // If it is a DBG_VALUE describing a constant as:
       //   DBG_VALUE 0, ...
       // we just don't consider such instructions as candidates
       // for redundant removal.
-      if (MI->isNonListDebugValue()) {
-        MachineOperand &Loc = MI->getDebugOperand(0);
+      if (MI.isNonListDebugValue()) {
+        MachineOperand &Loc = MI.getDebugOperand(0);
         if (!Loc.isReg()) {
           // If we have already encountered this variable, just stop
           // tracking it.
@@ -185,7 +181,7 @@ static bool reduceDbgValsBackwardScan(MachineBasicBlock &MBB) {
       // We have already encountered the value for this variable,
       // so this one can be deleted.
       if (!R.second)
-        DbgValsToBeRemoved.push_back(MI);
+        DbgValsToBeRemoved.push_back(&MI);
       continue;
     }
 

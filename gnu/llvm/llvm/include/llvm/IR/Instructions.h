@@ -18,41 +18,37 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Bitfields.h"
 #include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/None.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/IR/Attributes.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/CallingConv.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/OperandTraits.h"
-#include "llvm/IR/Type.h"
 #include "llvm/IR/Use.h"
 #include "llvm/IR/User.h"
-#include "llvm/IR/Value.h"
 #include "llvm/Support/AtomicOrdering.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <optional>
 
 namespace llvm {
 
+class APFloat;
 class APInt;
+class BasicBlock;
 class ConstantInt;
 class DataLayout;
-class LLVMContext;
+class StringRef;
+class Type;
+class Value;
 
 //===----------------------------------------------------------------------===//
 //                                AllocaInst Class
@@ -105,9 +101,18 @@ public:
     return cast<PointerType>(Instruction::getType());
   }
 
-  /// Get allocation size in bits. Returns None if size can't be determined,
-  /// e.g. in case of a VLA.
-  Optional<TypeSize> getAllocationSizeInBits(const DataLayout &DL) const;
+  /// Return the address space for the allocation.
+  unsigned getAddressSpace() const {
+    return getType()->getAddressSpace();
+  }
+
+  /// Get allocation size in bytes. Returns std::nullopt if size can't be
+  /// determined, e.g. in case of a VLA.
+  std::optional<TypeSize> getAllocationSize(const DataLayout &DL) const;
+
+  /// Get allocation size in bits. Returns std::nullopt if size can't be
+  /// determined, e.g. in case of a VLA.
+  std::optional<TypeSize> getAllocationSizeInBits(const DataLayout &DL) const;
 
   /// Return the type that is being allocated by the instruction.
   Type *getAllocatedType() const { return AllocatedType; }
@@ -124,9 +129,6 @@ public:
   void setAlignment(Align Align) {
     setSubclassData<AlignmentField>(Log2(Align));
   }
-
-  // FIXME: Remove this one transition to Align is over.
-  unsigned getAlignment() const { return getAlign().value(); }
 
   /// Return true if this alloca is in the entry block of the function and is a
   /// constant size. If so, the code generator will fold it into the
@@ -213,11 +215,6 @@ public:
 
   /// Specify whether this is a volatile load or not.
   void setVolatile(bool V) { setSubclassData<VolatileField>(V); }
-
-  /// Return the alignment of the access that is being performed.
-  /// FIXME: Remove this function once transition to Align is over.
-  /// Use getAlign() instead.
-  unsigned getAlignment() const { return getAlign().value(); }
 
   /// Return the alignment of the access that is being performed.
   Align getAlign() const {
@@ -344,11 +341,6 @@ public:
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-
-  /// Return the alignment of the access that is being performed
-  /// FIXME: Remove this function once transition to Align is over.
-  /// Use getAlign() instead.
-  unsigned getAlignment() const { return getAlign().value(); }
 
   Align getAlign() const {
     return Align(1ULL << (getSubclassData<AlignmentField>()));
@@ -765,8 +757,24 @@ public:
     /// *p = old - v
     FSub,
 
+    /// *p = maxnum(old, v)
+    /// \p maxnum matches the behavior of \p llvm.maxnum.*.
+    FMax,
+
+    /// *p = minnum(old, v)
+    /// \p minnum matches the behavior of \p llvm.minnum.*.
+    FMin,
+
+    /// Increment one up to a maximum value.
+    /// *p = (old u>= v) ? 0 : (old + 1)
+    UIncWrap,
+
+    /// Decrement one until a minimum value or zero.
+    /// *p = ((old == 0) || (old u> v)) ? v : (old - 1)
+    UDecWrap,
+
     FIRST_BINOP = Xchg,
-    LAST_BINOP = FSub,
+    LAST_BINOP = UDecWrap,
     BAD_BINOP
   };
 
@@ -778,7 +786,7 @@ private:
 
   template <unsigned Offset>
   using BinOpBitfieldElement =
-      typename Bitfield::Element<BinOp, Offset, 4, BinOp::LAST_BINOP>;
+      typename Bitfield::Element<BinOp, Offset, 5, BinOp::LAST_BINOP>;
 
 public:
   AtomicRMWInst(BinOp Operation, Value *Ptr, Value *Val, Align Alignment,
@@ -809,6 +817,8 @@ public:
     switch (Op) {
     case AtomicRMWInst::FAdd:
     case AtomicRMWInst::FSub:
+    case AtomicRMWInst::FMax:
+    case AtomicRMWInst::FMin:
       return true;
     default:
       return false;
@@ -849,6 +859,8 @@ public:
   void setOrdering(AtomicOrdering Ordering) {
     assert(Ordering != AtomicOrdering::NotAtomic &&
            "atomicrmw instructions can only be atomic.");
+    assert(Ordering != AtomicOrdering::Unordered &&
+           "atomicrmw instructions cannot be unordered.");
     setSubclassData<AtomicOrderingField>(Ordering);
   }
 
@@ -975,15 +987,6 @@ public:
                                           NameStr, InsertAtEnd);
   }
 
-  LLVM_ATTRIBUTE_DEPRECATED(static GetElementPtrInst *CreateInBounds(
-        Value *Ptr, ArrayRef<Value *> IdxList, const Twine &NameStr = "",
-        Instruction *InsertBefore = nullptr),
-      "Use the version with explicit element type instead") {
-    return CreateInBounds(
-        Ptr->getType()->getScalarType()->getPointerElementType(), Ptr, IdxList,
-        NameStr, InsertBefore);
-  }
-
   /// Create an "inbounds" getelementptr. See the documentation for the
   /// "inbounds" flag in LangRef.html for details.
   static GetElementPtrInst *
@@ -994,15 +997,6 @@ public:
         Create(PointeeType, Ptr, IdxList, NameStr, InsertBefore);
     GEP->setIsInBounds(true);
     return GEP;
-  }
-
-  LLVM_ATTRIBUTE_DEPRECATED(static GetElementPtrInst *CreateInBounds(
-        Value *Ptr, ArrayRef<Value *> IdxList, const Twine &NameStr,
-        BasicBlock *InsertAtEnd),
-      "Use the version with explicit element type instead") {
-    return CreateInBounds(
-        Ptr->getType()->getScalarType()->getPointerElementType(), Ptr, IdxList,
-        NameStr, InsertAtEnd);
   }
 
   static GetElementPtrInst *CreateInBounds(Type *PointeeType, Value *Ptr,
@@ -1339,6 +1333,10 @@ public:
     return P == ICMP_SLE || P == ICMP_ULE;
   }
 
+  /// Returns the sequence of all ICmp predicates.
+  ///
+  static auto predicates() { return ICmpPredicates(); }
+
   /// Exchange the two operands to this instruction in such a way that it does
   /// not modify the semantics of the instruction. The predicate value may be
   /// changed to retain the same result if the predicate is order dependent
@@ -1348,6 +1346,10 @@ public:
     setPredicate(getSwappedPredicate());
     Op<0>().swap(Op<1>());
   }
+
+  /// Return result of `LHS Pred RHS` comparison.
+  static bool compare(const APInt &LHS, const APInt &RHS,
+                      ICmpInst::Predicate Pred);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Instruction *I) {
@@ -1457,6 +1459,14 @@ public:
     Op<0>().swap(Op<1>());
   }
 
+  /// Returns the sequence of all FCmp predicates.
+  ///
+  static auto predicates() { return FCmpPredicates(); }
+
+  /// Return result of `LHS Pred RHS` comparison.
+  static bool compare(const APFloat &LHS, const APFloat &RHS,
+                      FCmpInst::Predicate Pred);
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::FCmp;
@@ -1483,7 +1493,7 @@ class CallInst : public CallBase {
 
   inline CallInst(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
                   const Twine &NameStr, Instruction *InsertBefore)
-      : CallInst(Ty, Func, Args, None, NameStr, InsertBefore) {}
+      : CallInst(Ty, Func, Args, std::nullopt, NameStr, InsertBefore) {}
 
   /// Construct a CallInst given a range of arguments.
   /// Construct a CallInst from a range of arguments
@@ -1524,11 +1534,11 @@ public:
                           const Twine &NameStr,
                           Instruction *InsertBefore = nullptr) {
     return new (ComputeNumOperands(Args.size()))
-        CallInst(Ty, Func, Args, None, NameStr, InsertBefore);
+        CallInst(Ty, Func, Args, std::nullopt, NameStr, InsertBefore);
   }
 
   static CallInst *Create(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
-                          ArrayRef<OperandBundleDef> Bundles = None,
+                          ArrayRef<OperandBundleDef> Bundles = std::nullopt,
                           const Twine &NameStr = "",
                           Instruction *InsertBefore = nullptr) {
     const int NumOperands =
@@ -1547,7 +1557,7 @@ public:
   static CallInst *Create(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
                           const Twine &NameStr, BasicBlock *InsertAtEnd) {
     return new (ComputeNumOperands(Args.size()))
-        CallInst(Ty, Func, Args, None, NameStr, InsertAtEnd);
+        CallInst(Ty, Func, Args, std::nullopt, NameStr, InsertAtEnd);
   }
 
   static CallInst *Create(FunctionType *Ty, Value *Func, ArrayRef<Value *> Args,
@@ -1568,7 +1578,7 @@ public:
   }
 
   static CallInst *Create(FunctionCallee Func, ArrayRef<Value *> Args,
-                          ArrayRef<OperandBundleDef> Bundles = None,
+                          ArrayRef<OperandBundleDef> Bundles = std::nullopt,
                           const Twine &NameStr = "",
                           Instruction *InsertBefore = nullptr) {
     return Create(Func.getFunctionType(), Func.getCallee(), Args, Bundles,
@@ -1626,18 +1636,16 @@ public:
                                    Value *ArraySize = nullptr,
                                    Function *MallocF = nullptr,
                                    const Twine &Name = "");
-  static Instruction *CreateMalloc(Instruction *InsertBefore, Type *IntPtrTy,
-                                   Type *AllocTy, Value *AllocSize,
-                                   Value *ArraySize = nullptr,
-                                   ArrayRef<OperandBundleDef> Bundles = None,
-                                   Function *MallocF = nullptr,
-                                   const Twine &Name = "");
-  static Instruction *CreateMalloc(BasicBlock *InsertAtEnd, Type *IntPtrTy,
-                                   Type *AllocTy, Value *AllocSize,
-                                   Value *ArraySize = nullptr,
-                                   ArrayRef<OperandBundleDef> Bundles = None,
-                                   Function *MallocF = nullptr,
-                                   const Twine &Name = "");
+  static Instruction *
+  CreateMalloc(Instruction *InsertBefore, Type *IntPtrTy, Type *AllocTy,
+               Value *AllocSize, Value *ArraySize = nullptr,
+               ArrayRef<OperandBundleDef> Bundles = std::nullopt,
+               Function *MallocF = nullptr, const Twine &Name = "");
+  static Instruction *
+  CreateMalloc(BasicBlock *InsertAtEnd, Type *IntPtrTy, Type *AllocTy,
+               Value *AllocSize, Value *ArraySize = nullptr,
+               ArrayRef<OperandBundleDef> Bundles = std::nullopt,
+               Function *MallocF = nullptr, const Twine &Name = "");
   /// Generate the IR for a call to the builtin free function.
   static Instruction *CreateFree(Value *Source, Instruction *InsertBefore);
   static Instruction *CreateFree(Value *Source, BasicBlock *InsertAtEnd);
@@ -1685,9 +1693,7 @@ public:
 
   /// Return true if the call can return twice
   bool canReturnTwice() const { return hasFnAttr(Attribute::ReturnsTwice); }
-  void setCanReturnTwice() {
-    addAttribute(AttributeList::FunctionIndex, Attribute::ReturnsTwice);
-  }
+  void setCanReturnTwice() { addFnAttr(Attribute::ReturnsTwice); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Instruction *I) {
@@ -2019,6 +2025,14 @@ protected:
   ShuffleVectorInst *cloneImpl() const;
 
 public:
+  ShuffleVectorInst(Value *V1, Value *Mask, const Twine &NameStr = "",
+                    Instruction *InsertBefore = nullptr);
+  ShuffleVectorInst(Value *V1, Value *Mask, const Twine &NameStr,
+                    BasicBlock *InsertAtEnd);
+  ShuffleVectorInst(Value *V1, ArrayRef<int> Mask, const Twine &NameStr = "",
+                    Instruction *InsertBefore = nullptr);
+  ShuffleVectorInst(Value *V1, ArrayRef<int> Mask, const Twine &NameStr,
+                    BasicBlock *InsertAtEnd);
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                     const Twine &NameStr = "",
                     Instruction *InsertBefor = nullptr);
@@ -2132,6 +2146,12 @@ public:
   static bool isIdentityMask(ArrayRef<int> Mask);
   static bool isIdentityMask(const Constant *Mask) {
     assert(Mask->getType()->isVectorTy() && "Shuffle needs vector constant.");
+
+    // Not possible to express a shuffle mask for a scalable vector for this
+    // case.
+    if (isa<ScalableVectorType>(Mask->getType()))
+      return false;
+
     SmallVector<int, 16> MaskAsInts;
     getShuffleMask(Mask, MaskAsInts);
     return isIdentityMask(MaskAsInts);
@@ -2142,6 +2162,11 @@ public:
   /// from its input vectors.
   /// Example: shufflevector <4 x n> A, <4 x n> B, <4,undef,6,undef>
   bool isIdentity() const {
+    // Not possible to express a shuffle mask for a scalable vector for this
+    // case.
+    if (isa<ScalableVectorType>(getType()))
+      return false;
+
     return !changesLength() && isIdentityMask(ShuffleMask);
   }
 
@@ -2277,6 +2302,26 @@ public:
     return !changesLength() && isTransposeMask(ShuffleMask);
   }
 
+  /// Return true if this shuffle mask is a splice mask, concatenating the two
+  /// inputs together and then extracts an original width vector starting from
+  /// the splice index.
+  /// Example: shufflevector <4 x n> A, <4 x n> B, <1,2,3,4>
+  static bool isSpliceMask(ArrayRef<int> Mask, int &Index);
+  static bool isSpliceMask(const Constant *Mask, int &Index) {
+    assert(Mask->getType()->isVectorTy() && "Shuffle needs vector constant.");
+    SmallVector<int, 16> MaskAsInts;
+    getShuffleMask(Mask, MaskAsInts);
+    return isSpliceMask(MaskAsInts, Index);
+  }
+
+  /// Return true if this shuffle splices two inputs without changing the length
+  /// of the vectors. This operation concatenates the two inputs together and
+  /// then extracts an original width vector starting from the splice index.
+  /// Example: shufflevector <4 x n> A, <4 x n> B, <1,2,3,4>
+  bool isSplice(int &Index) const {
+    return !changesLength() && isSpliceMask(ShuffleMask, Index);
+  }
+
   /// Return true if this shuffle mask is an extract subvector mask.
   /// A valid extract subvector mask returns a smaller vector from a single
   /// source operand. The base extraction index is returned as well.
@@ -2305,6 +2350,72 @@ public:
         cast<FixedVectorType>(Op<0>()->getType())->getNumElements();
     return isExtractSubvectorMask(ShuffleMask, NumSrcElts, Index);
   }
+
+  /// Return true if this shuffle mask is an insert subvector mask.
+  /// A valid insert subvector mask inserts the lowest elements of a second
+  /// source operand into an in-place first source operand operand.
+  /// Both the sub vector width and the insertion index is returned.
+  static bool isInsertSubvectorMask(ArrayRef<int> Mask, int NumSrcElts,
+                                    int &NumSubElts, int &Index);
+  static bool isInsertSubvectorMask(const Constant *Mask, int NumSrcElts,
+                                    int &NumSubElts, int &Index) {
+    assert(Mask->getType()->isVectorTy() && "Shuffle needs vector constant.");
+    // Not possible to express a shuffle mask for a scalable vector for this
+    // case.
+    if (isa<ScalableVectorType>(Mask->getType()))
+      return false;
+    SmallVector<int, 16> MaskAsInts;
+    getShuffleMask(Mask, MaskAsInts);
+    return isInsertSubvectorMask(MaskAsInts, NumSrcElts, NumSubElts, Index);
+  }
+
+  /// Return true if this shuffle mask is an insert subvector mask.
+  bool isInsertSubvectorMask(int &NumSubElts, int &Index) const {
+    // Not possible to express a shuffle mask for a scalable vector for this
+    // case.
+    if (isa<ScalableVectorType>(getType()))
+      return false;
+
+    int NumSrcElts =
+        cast<FixedVectorType>(Op<0>()->getType())->getNumElements();
+    return isInsertSubvectorMask(ShuffleMask, NumSrcElts, NumSubElts, Index);
+  }
+
+  /// Return true if this shuffle mask replicates each of the \p VF elements
+  /// in a vector \p ReplicationFactor times.
+  /// For example, the mask for \p ReplicationFactor=3 and \p VF=4 is:
+  ///   <0,0,0,1,1,1,2,2,2,3,3,3>
+  static bool isReplicationMask(ArrayRef<int> Mask, int &ReplicationFactor,
+                                int &VF);
+  static bool isReplicationMask(const Constant *Mask, int &ReplicationFactor,
+                                int &VF) {
+    assert(Mask->getType()->isVectorTy() && "Shuffle needs vector constant.");
+    // Not possible to express a shuffle mask for a scalable vector for this
+    // case.
+    if (isa<ScalableVectorType>(Mask->getType()))
+      return false;
+    SmallVector<int, 16> MaskAsInts;
+    getShuffleMask(Mask, MaskAsInts);
+    return isReplicationMask(MaskAsInts, ReplicationFactor, VF);
+  }
+
+  /// Return true if this shuffle mask is a replication mask.
+  bool isReplicationMask(int &ReplicationFactor, int &VF) const;
+
+  /// Return true if this shuffle mask represents "clustered" mask of size VF,
+  /// i.e. each index between [0..VF) is used exactly once in each submask of
+  /// size VF.
+  /// For example, the mask for \p VF=4 is:
+  /// 0, 1, 2, 3, 3, 2, 0, 1 - "clustered", because each submask of size 4
+  /// (0,1,2,3 and 3,2,0,1) uses indices [0..VF) exactly one time.
+  /// 0, 1, 2, 3, 3, 3, 1, 0 - not "clustered", because
+  ///                          element 3 is used twice in the second submask
+  ///                          (3,3,1,0) and index 2 is not used at all.
+  static bool isOneUseSingleSourceMask(ArrayRef<int> Mask, int VF);
+
+  /// Return true if this shuffle mask is a one-use-single-source("clustered")
+  /// mask.
+  bool isOneUseSingleSourceMask(int VF) const;
 
   /// Change values in a shuffle permute mask assuming the two vector operands
   /// of length InVecNumElts have swapped position.
@@ -2652,28 +2763,18 @@ public:
 
   // Block iterator interface. This provides access to the list of incoming
   // basic blocks, which parallels the list of incoming values.
+  // Please note that we are not providing non-const iterators for blocks to
+  // force all updates go through an interface function.
 
   using block_iterator = BasicBlock **;
   using const_block_iterator = BasicBlock * const *;
-
-  block_iterator block_begin() {
-    return reinterpret_cast<block_iterator>(op_begin() + ReservedSpace);
-  }
 
   const_block_iterator block_begin() const {
     return reinterpret_cast<const_block_iterator>(op_begin() + ReservedSpace);
   }
 
-  block_iterator block_end() {
-    return block_begin() + getNumOperands();
-  }
-
   const_block_iterator block_end() const {
     return block_begin() + getNumOperands();
-  }
-
-  iterator_range<block_iterator> blocks() {
-    return make_range(block_begin(), block_end());
   }
 
   iterator_range<const_block_iterator> blocks() const {
@@ -2730,8 +2831,14 @@ public:
   }
 
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
-    assert(BB && "PHI node got a null basic block!");
-    block_begin()[i] = BB;
+    const_cast<block_iterator>(block_begin())[i] = BB;
+  }
+
+  /// Copies the basic blocks from \p BBRange to the incoming basic block list
+  /// of this PHINode, starting at \p ToIdx.
+  void copyIncomingBlocks(iterator_range<const_block_iterator> BBRange,
+                          uint32_t ToIdx = 0) {
+    copy(BBRange, const_cast<block_iterator>(block_begin()) + ToIdx);
   }
 
   /// Replace every incoming basic block \p Old to basic block \p New.
@@ -3281,14 +3388,14 @@ public:
     CaseHandle(SwitchInst *SI, ptrdiff_t Index) : CaseHandleImpl(SI, Index) {}
 
     /// Sets the new value for current case.
-    void setValue(ConstantInt *V) {
+    void setValue(ConstantInt *V) const {
       assert((unsigned)Index < SI->getNumCases() &&
              "Index out the number of cases.");
       SI->setOperand(2 + Index*2, reinterpret_cast<Value*>(V));
     }
 
     /// Sets the new successor for current case.
-    void setSuccessor(BasicBlock *S) {
+    void setSuccessor(BasicBlock *S) const {
       SI->setSuccessor(getSuccessorIndex(), S);
     }
   };
@@ -3297,7 +3404,7 @@ public:
   class CaseIteratorImpl
       : public iterator_facade_base<CaseIteratorImpl<CaseHandleT>,
                                     std::random_access_iterator_tag,
-                                    CaseHandleT> {
+                                    const CaseHandleT> {
     using SwitchInstT = typename CaseHandleT::SwitchInstType;
 
     CaseHandleT Case;
@@ -3356,7 +3463,6 @@ public:
       assert(Case.SI == RHS.Case.SI && "Incompatible operators.");
       return Case.Index < RHS.Case.Index;
     }
-    CaseHandleT &operator*() { return Case; }
     const CaseHandleT &operator*() const { return Case; }
   };
 
@@ -3446,15 +3552,12 @@ public:
   /// default case iterator to indicate that it is handled by the default
   /// handler.
   CaseIt findCaseValue(const ConstantInt *C) {
-    CaseIt I = llvm::find_if(
-        cases(), [C](CaseHandle &Case) { return Case.getCaseValue() == C; });
-    if (I != case_end())
-      return I;
-
-    return case_default();
+    return CaseIt(
+        this,
+        const_cast<const SwitchInst *>(this)->findCaseValue(C)->getCaseIndex());
   }
   ConstCaseIt findCaseValue(const ConstantInt *C) const {
-    ConstCaseIt I = llvm::find_if(cases(), [C](ConstCaseHandle &Case) {
+    ConstCaseIt I = llvm::find_if(cases(), [C](const ConstCaseHandle &Case) {
       return Case.getCaseValue() == C;
     });
     if (I != case_end())
@@ -3521,18 +3624,16 @@ public:
 /// their prof branch_weights metadata.
 class SwitchInstProfUpdateWrapper {
   SwitchInst &SI;
-  Optional<SmallVector<uint32_t, 8> > Weights = None;
+  std::optional<SmallVector<uint32_t, 8>> Weights;
   bool Changed = false;
 
 protected:
-  static MDNode *getProfBranchWeightsMD(const SwitchInst &SI);
-
   MDNode *buildProfBranchWeightsMD();
 
   void init();
 
 public:
-  using CaseWeightOpt = Optional<uint32_t>;
+  using CaseWeightOpt = std::optional<uint32_t>;
   SwitchInst *operator->() { return &SI; }
   SwitchInst &operator*() { return SI; }
   operator SwitchInst *() { return &SI; }
@@ -3760,13 +3861,13 @@ public:
                             Instruction *InsertBefore = nullptr) {
     int NumOperands = ComputeNumOperands(Args.size());
     return new (NumOperands)
-        InvokeInst(Ty, Func, IfNormal, IfException, Args, None, NumOperands,
-                   NameStr, InsertBefore);
+        InvokeInst(Ty, Func, IfNormal, IfException, Args, std::nullopt,
+                   NumOperands, NameStr, InsertBefore);
   }
 
   static InvokeInst *Create(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
                             BasicBlock *IfException, ArrayRef<Value *> Args,
-                            ArrayRef<OperandBundleDef> Bundles = None,
+                            ArrayRef<OperandBundleDef> Bundles = std::nullopt,
                             const Twine &NameStr = "",
                             Instruction *InsertBefore = nullptr) {
     int NumOperands =
@@ -3783,8 +3884,8 @@ public:
                             const Twine &NameStr, BasicBlock *InsertAtEnd) {
     int NumOperands = ComputeNumOperands(Args.size());
     return new (NumOperands)
-        InvokeInst(Ty, Func, IfNormal, IfException, Args, None, NumOperands,
-                   NameStr, InsertAtEnd);
+        InvokeInst(Ty, Func, IfNormal, IfException, Args, std::nullopt,
+                   NumOperands, NameStr, InsertAtEnd);
   }
 
   static InvokeInst *Create(FunctionType *Ty, Value *Func, BasicBlock *IfNormal,
@@ -3805,12 +3906,12 @@ public:
                             const Twine &NameStr,
                             Instruction *InsertBefore = nullptr) {
     return Create(Func.getFunctionType(), Func.getCallee(), IfNormal,
-                  IfException, Args, None, NameStr, InsertBefore);
+                  IfException, Args, std::nullopt, NameStr, InsertBefore);
   }
 
   static InvokeInst *Create(FunctionCallee Func, BasicBlock *IfNormal,
                             BasicBlock *IfException, ArrayRef<Value *> Args,
-                            ArrayRef<OperandBundleDef> Bundles = None,
+                            ArrayRef<OperandBundleDef> Bundles = std::nullopt,
                             const Twine &NameStr = "",
                             Instruction *InsertBefore = nullptr) {
     return Create(Func.getFunctionType(), Func.getCallee(), IfNormal,
@@ -3944,9 +4045,6 @@ class CallBrInst : public CallBase {
             ArrayRef<BasicBlock *> IndirectDests, ArrayRef<Value *> Args,
             ArrayRef<OperandBundleDef> Bundles, const Twine &NameStr);
 
-  /// Should the Indirect Destinations change, scan + update the Arg list.
-  void updateArgBlockAddresses(unsigned i, BasicBlock *B);
-
   /// Compute the number of operands to allocate.
   static int ComputeNumOperands(int NumArgs, int NumIndirectDests,
                                 int NumBundleInputs = 0) {
@@ -3969,17 +4067,15 @@ public:
                             Instruction *InsertBefore = nullptr) {
     int NumOperands = ComputeNumOperands(Args.size(), IndirectDests.size());
     return new (NumOperands)
-        CallBrInst(Ty, Func, DefaultDest, IndirectDests, Args, None,
+        CallBrInst(Ty, Func, DefaultDest, IndirectDests, Args, std::nullopt,
                    NumOperands, NameStr, InsertBefore);
   }
 
-  static CallBrInst *Create(FunctionType *Ty, Value *Func,
-                            BasicBlock *DefaultDest,
-                            ArrayRef<BasicBlock *> IndirectDests,
-                            ArrayRef<Value *> Args,
-                            ArrayRef<OperandBundleDef> Bundles = None,
-                            const Twine &NameStr = "",
-                            Instruction *InsertBefore = nullptr) {
+  static CallBrInst *
+  Create(FunctionType *Ty, Value *Func, BasicBlock *DefaultDest,
+         ArrayRef<BasicBlock *> IndirectDests, ArrayRef<Value *> Args,
+         ArrayRef<OperandBundleDef> Bundles = std::nullopt,
+         const Twine &NameStr = "", Instruction *InsertBefore = nullptr) {
     int NumOperands = ComputeNumOperands(Args.size(), IndirectDests.size(),
                                          CountBundleInputs(Bundles));
     unsigned DescriptorBytes = Bundles.size() * sizeof(BundleOpInfo);
@@ -3996,7 +4092,7 @@ public:
                             BasicBlock *InsertAtEnd) {
     int NumOperands = ComputeNumOperands(Args.size(), IndirectDests.size());
     return new (NumOperands)
-        CallBrInst(Ty, Func, DefaultDest, IndirectDests, Args, None,
+        CallBrInst(Ty, Func, DefaultDest, IndirectDests, Args, std::nullopt,
                    NumOperands, NameStr, InsertAtEnd);
   }
 
@@ -4026,7 +4122,7 @@ public:
   static CallBrInst *Create(FunctionCallee Func, BasicBlock *DefaultDest,
                             ArrayRef<BasicBlock *> IndirectDests,
                             ArrayRef<Value *> Args,
-                            ArrayRef<OperandBundleDef> Bundles = None,
+                            ArrayRef<OperandBundleDef> Bundles = std::nullopt,
                             const Twine &NameStr = "",
                             Instruction *InsertBefore = nullptr) {
     return Create(Func.getFunctionType(), Func.getCallee(), DefaultDest,
@@ -4069,14 +4165,12 @@ public:
   ///
   Value *getIndirectDestLabel(unsigned i) const {
     assert(i < getNumIndirectDests() && "Out of bounds!");
-    return getOperand(i + getNumArgOperands() + getNumTotalBundleOperands() +
-                      1);
+    return getOperand(i + arg_size() + getNumTotalBundleOperands() + 1);
   }
 
   Value *getIndirectDestLabelUse(unsigned i) const {
     assert(i < getNumIndirectDests() && "Out of bounds!");
-    return getOperandUse(i + getNumArgOperands() + getNumTotalBundleOperands() +
-                         1);
+    return getOperandUse(i + arg_size() + getNumTotalBundleOperands() + 1);
   }
 
   // Return the destination basic blocks...
@@ -4096,7 +4190,6 @@ public:
     *(&Op<-1>() - getNumIndirectDests() - 1) = reinterpret_cast<Value *>(B);
   }
   void setIndirectDest(unsigned i, BasicBlock *B) {
-    updateArgBlockAddresses(i, B);
     *(&Op<-1>() - getNumIndirectDests() + i) = reinterpret_cast<Value *>(B);
   }
 
@@ -4409,7 +4502,8 @@ private:
                        NameStr, InsertAtEnd) {}
 
 public:
-  static CleanupPadInst *Create(Value *ParentPad, ArrayRef<Value *> Args = None,
+  static CleanupPadInst *Create(Value *ParentPad,
+                                ArrayRef<Value *> Args = std::nullopt,
                                 const Twine &NameStr = "",
                                 Instruction *InsertBefore = nullptr) {
     unsigned Values = 1 + Args.size();
@@ -5260,6 +5354,10 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                          Helper functions
+//===----------------------------------------------------------------------===//
+
 /// A helper function that returns the pointer operand of a load or store
 /// instruction. Returns nullptr if not load or store.
 inline const Value *getLoadStorePointerOperand(const Value *V) {
@@ -5313,6 +5411,24 @@ inline Type *getLoadStoreType(Value *I) {
   if (auto *LI = dyn_cast<LoadInst>(I))
     return LI->getType();
   return cast<StoreInst>(I)->getValueOperand()->getType();
+}
+
+/// A helper function that returns an atomic operation's sync scope; returns
+/// std::nullopt if it is not an atomic operation.
+inline std::optional<SyncScope::ID> getAtomicSyncScopeID(const Instruction *I) {
+  if (!I->isAtomic())
+    return std::nullopt;
+  if (auto *AI = dyn_cast<LoadInst>(I))
+    return AI->getSyncScopeID();
+  if (auto *AI = dyn_cast<StoreInst>(I))
+    return AI->getSyncScopeID();
+  if (auto *AI = dyn_cast<FenceInst>(I))
+    return AI->getSyncScopeID();
+  if (auto *AI = dyn_cast<AtomicCmpXchgInst>(I))
+    return AI->getSyncScopeID();
+  if (auto *AI = dyn_cast<AtomicRMWInst>(I))
+    return AI->getSyncScopeID();
+  llvm_unreachable("unhandled atomic operation");
 }
 
 //===----------------------------------------------------------------------===//

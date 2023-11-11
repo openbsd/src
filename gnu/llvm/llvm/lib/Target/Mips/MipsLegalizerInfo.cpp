@@ -13,6 +13,7 @@
 #include "MipsLegalizerInfo.h"
 #include "MipsTargetMachine.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
+#include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/IR/IntrinsicsMips.h"
 
 using namespace llvm;
@@ -410,9 +411,10 @@ bool MipsLegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
         auto Load_Rem = MIRBuilder.buildLoad(s32, Addr, *RemMemOp);
 
         if (Size == 64)
-          MIRBuilder.buildMerge(Val, {Load_P2Half, Load_Rem});
+          MIRBuilder.buildMergeLikeInstr(Val, {Load_P2Half, Load_Rem});
         else {
-          auto Merge = MIRBuilder.buildMerge(s64, {Load_P2Half, Load_Rem});
+          auto Merge =
+              MIRBuilder.buildMergeLikeInstr(s64, {Load_P2Half, Load_Rem});
           MIRBuilder.buildTrunc(Val, Merge);
         }
       }
@@ -439,7 +441,8 @@ bool MipsLegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
     // Done. Trunc double to float if needed.
 
     auto C_HiMask = MIRBuilder.buildConstant(s32, UINT32_C(0x43300000));
-    auto Bitcast = MIRBuilder.buildMerge(s64, {Src, C_HiMask.getReg(0)});
+    auto Bitcast =
+        MIRBuilder.buildMergeLikeInstr(s64, {Src, C_HiMask.getReg(0)});
 
     MachineInstrBuilder TwoP52FP = MIRBuilder.buildFConstant(
         s64, BitsToDouble(UINT64_C(0x4330000000000000)));
@@ -502,8 +505,7 @@ static bool MSA2OpIntrinsicToGeneric(MachineInstr &MI, unsigned Opcode,
 bool MipsLegalizerInfo::legalizeIntrinsic(LegalizerHelper &Helper,
                                           MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
-  const MipsSubtarget &ST =
-      static_cast<const MipsSubtarget &>(MI.getMF()->getSubtarget());
+  const MipsSubtarget &ST = MI.getMF()->getSubtarget<MipsSubtarget>();
   const MipsInstrInfo &TII = *ST.getInstrInfo();
   const MipsRegisterInfo &TRI = *ST.getRegisterInfo();
   const RegisterBankInfo &RBI = *ST.getRegBankInfo();

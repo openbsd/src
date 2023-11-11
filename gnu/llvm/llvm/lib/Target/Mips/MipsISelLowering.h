@@ -99,6 +99,9 @@ class TargetRegisterClass;
       // Floating Point Compare
       FPCmp,
 
+      // Floating point Abs
+      FAbs,
+
       // Floating point select
       FSELECT,
 
@@ -157,7 +160,7 @@ class TargetRegisterClass;
       Ins,
       CIns,
 
-      // EXTR.W instrinsic nodes.
+      // EXTR.W intrinsic nodes.
       EXTP,
       EXTPDP,
       EXTR_S_H,
@@ -280,8 +283,9 @@ class TargetRegisterClass;
     EVT getTypeForExtReturn(LLVMContext &Context, EVT VT,
                             ISD::NodeType) const override;
 
-    bool isCheapToSpeculateCttz() const override;
-    bool isCheapToSpeculateCtlz() const override;
+    bool isCheapToSpeculateCttz(Type *Ty) const override;
+    bool isCheapToSpeculateCtlz(Type *Ty) const override;
+    bool hasBitTest(SDValue X, SDValue Y) const override;
     bool shouldFoldConstantShiftPairToMask(const SDNode *N,
                                            CombineLevel Level) const override;
 
@@ -540,6 +544,10 @@ class TargetRegisterClass;
     SDValue lowerVAARG(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerFABS(SDValue Op, SelectionDAG &DAG) const;
+    SDValue lowerFABS32(SDValue Op, SelectionDAG &DAG,
+                        bool HasExtractInsert) const;
+    SDValue lowerFABS64(SDValue Op, SelectionDAG &DAG,
+                        bool HasExtractInsert) const;
     SDValue lowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const;

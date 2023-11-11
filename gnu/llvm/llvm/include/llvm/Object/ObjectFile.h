@@ -13,25 +13,25 @@
 #ifndef LLVM_OBJECT_OBJECTFILE_H
 #define LLVM_OBJECT_OBJECTFILE_H
 
-#include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/BinaryFormat/Magic.h"
+#include "llvm/BinaryFormat/Swift.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/Error.h"
 #include "llvm/Object/SymbolicFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/MemoryBufferRef.h"
 #include <cassert>
 #include <cstdint>
 #include <memory>
-#include <system_error>
 
 namespace llvm {
 
-class ARMAttributeParser;
 class SubtargetFeatures;
 
 namespace object {
@@ -99,8 +99,8 @@ public:
   uint64_t getSize() const;
   Expected<StringRef> getContents() const;
 
-  /// Get the alignment of this section as the actual value (not log 2).
-  uint64_t getAlignment() const;
+  /// Get the alignment of this section.
+  Align getAlignment() const;
 
   bool isCompressed() const;
   /// Whether this section contains instructions.
@@ -170,11 +170,11 @@ class SymbolRef : public BasicSymbolRef {
 public:
   enum Type {
     ST_Unknown, // Type not specified
+    ST_Other,
     ST_Data,
     ST_Debug,
     ST_File,
     ST_Function,
-    ST_Other
   };
 
   SymbolRef() = default;
@@ -291,6 +291,11 @@ protected:
   virtual void getRelocationTypeName(DataRefImpl Rel,
                                      SmallVectorImpl<char> &Result) const = 0;
 
+  virtual llvm::binaryformat::Swift5ReflectionSectionKind
+  mapReflectionSectionNameToEnumValue(StringRef SectionName) const {
+    return llvm::binaryformat::Swift5ReflectionSectionKind::unknown;
+  };
+
   Expected<uint64_t> getSymbolValue(DataRefImpl Symb) const;
 
 public:
@@ -323,14 +328,18 @@ public:
     return section_iterator_range(section_begin(), section_end());
   }
 
+  virtual bool hasDebugInfo() const;
+
   /// The number of bytes used to represent an address in this object
   ///        file format.
   virtual uint8_t getBytesInAddress() const = 0;
 
   virtual StringRef getFileFormatName() const = 0;
   virtual Triple::ArchType getArch() const = 0;
-  virtual SubtargetFeatures getFeatures() const = 0;
-  virtual Optional<StringRef> tryGetCPUName() const { return None; };
+  virtual Expected<SubtargetFeatures> getFeatures() const = 0;
+  virtual std::optional<StringRef> tryGetCPUName() const {
+    return std::nullopt;
+  };
   virtual void setARMSubArch(Triple &TheTriple) const { }
   virtual Expected<uint64_t> getStartAddress() const {
     return errorCodeToError(object_error::parse_failed);
@@ -344,6 +353,11 @@ public:
 
   /// True if this is a relocatable object (.o/.obj).
   virtual bool isRelocatableObject() const = 0;
+
+  /// True if the reflection section can be stripped by the linker.
+  bool isReflectionSectionStrippable(
+      llvm::binaryformat::Swift5ReflectionSectionKind ReflectionSectionKind)
+      const;
 
   /// @returns Pointer to ObjectFile subclass to handle this type of object.
   /// @param ObjectPath The path to the object file. ObjectPath.isObject must
@@ -467,8 +481,9 @@ inline Expected<StringRef> SectionRef::getContents() const {
   return StringRef(reinterpret_cast<const char *>(Res->data()), Res->size());
 }
 
-inline uint64_t SectionRef::getAlignment() const {
-  return OwningObject->getSectionAlignment(SectionPimpl);
+inline Align SectionRef::getAlignment() const {
+  return MaybeAlign(OwningObject->getSectionAlignment(SectionPimpl))
+      .valueOrOne();
 }
 
 inline bool SectionRef::isCompressed() const {

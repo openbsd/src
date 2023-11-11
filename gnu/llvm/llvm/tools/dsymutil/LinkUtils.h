@@ -23,12 +23,23 @@
 namespace llvm {
 namespace dsymutil {
 
+enum class DsymutilAccelTableKind : uint8_t {
+  None,
+  Apple,   ///< .apple_names, .apple_namespaces, .apple_types, .apple_objc.
+  Dwarf,   ///< DWARF v5 .debug_names.
+  Default, ///< Dwarf for DWARF5 or later, Apple otherwise.
+  Pub,     ///< .debug_pubnames, .debug_pubtypes
+};
+
 struct LinkOptions {
   /// Verbosity
   bool Verbose = false;
 
   /// Statistics
   bool Statistics = false;
+
+  /// Verify the input DWARF.
+  bool VerifyInputDWARF = false;
 
   /// Skip emitting output
   bool NoOutput = false;
@@ -53,7 +64,7 @@ struct LinkOptions {
   OutputFileType FileType = OutputFileType::Object;
 
   /// The accelerator table kind
-  AccelTableKind TheAccelTableKind;
+  DsymutilAccelTableKind TheAccelTableKind;
 
   /// -oso-prepend-path
   std::string PrependPath;
@@ -62,7 +73,7 @@ struct LinkOptions {
   std::map<std::string, std::string> ObjectPrefixMap;
 
   /// The Resources directory in the .dSYM bundle.
-  Optional<std::string> ResourceDir;
+  std::optional<std::string> ResourceDir;
 
   /// Symbol map translator.
   SymbolMapTranslator Translator;

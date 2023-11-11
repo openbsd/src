@@ -20,29 +20,38 @@ add_public_tablegen_target(RISCVCommonTableGen)
 
 add_llvm_target(RISCVCodeGen
   RISCVAsmPrinter.cpp
-  RISCVCallLowering.cpp
+  RISCVCodeGenPrepare.cpp
+  RISCVMakeCompressible.cpp
   RISCVExpandAtomicPseudoInsts.cpp
   RISCVExpandPseudoInsts.cpp
   RISCVFrameLowering.cpp
+  RISCVGatherScatterLowering.cpp
   RISCVInsertVSETVLI.cpp
   RISCVInstrInfo.cpp
-  RISCVInstructionSelector.cpp
   RISCVISelDAGToDAG.cpp
   RISCVISelLowering.cpp
-  RISCVLegalizerInfo.cpp
+  RISCVMachineFunctionInfo.cpp
+  RISCVMacroFusion.cpp
   RISCVMCInstLower.cpp
   RISCVMergeBaseOffset.cpp
-  RISCVRegisterBankInfo.cpp
+  RISCVRedundantCopyElimination.cpp
   RISCVRegisterInfo.cpp
+  RISCVSExtWRemoval.cpp
+  RISCVStripWSuffix.cpp
   RISCVSubtarget.cpp
   RISCVTargetMachine.cpp
   RISCVTargetObjectFile.cpp
   RISCVTargetTransformInfo.cpp
+  GISel/RISCVCallLowering.cpp
+  GISel/RISCVInstructionSelector.cpp
+  GISel/RISCVLegalizerInfo.cpp
+  GISel/RISCVRegisterBankInfo.cpp
 
   LINK_COMPONENTS
   Analysis
   AsmPrinter
   Core
+  IPO
   CodeGen
   MC
   RISCVDesc
@@ -50,6 +59,8 @@ add_llvm_target(RISCVCodeGen
   SelectionDAG
   Support
   Target
+  TargetParser
+  TransformUtils
   GlobalISel
 
   ADD_TO_COMPONENT
@@ -59,4 +70,5 @@ add_llvm_target(RISCVCodeGen
 add_subdirectory(AsmParser)
 add_subdirectory(Disassembler)
 add_subdirectory(MCTargetDesc)
+add_subdirectory(MCA)
 add_subdirectory(TargetInfo)

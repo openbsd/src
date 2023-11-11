@@ -11,17 +11,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsTargetStreamer.h"
-#include "MipsInstPrinter.h"
 #include "MCTargetDesc/MipsABIInfo.h"
 #include "MipsELFStreamer.h"
+#include "MipsInstPrinter.h"
 #include "MipsMCExpr.h"
 #include "MipsMCTargetDesc.h"
 #include "MipsTargetObjectFile.h"
 #include "llvm/BinaryFormat/ELF.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbolELF.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -36,6 +38,10 @@ static cl::opt<bool> RoundSectionSizes(
 
 static bool isMicroMips(const MCSubtargetInfo *STI) {
   return STI->getFeatureBits()[Mips::FeatureMicroMips];
+}
+
+static bool isMips32r6(const MCSubtargetInfo *STI) {
+  return STI->getFeatureBits()[Mips::FeatureMips32r6];
 }
 
 MipsTargetStreamer::MipsTargetStreamer(MCStreamer &S)
@@ -277,10 +283,18 @@ void MipsTargetStreamer::emitDSLL(unsigned DstReg, unsigned SrcReg,
 
 void MipsTargetStreamer::emitEmptyDelaySlot(bool hasShortDelaySlot, SMLoc IDLoc,
                                             const MCSubtargetInfo *STI) {
-  if (hasShortDelaySlot)
-    emitRR(Mips::MOVE16_MM, Mips::ZERO, Mips::ZERO, IDLoc, STI);
-  else
-    emitRRI(Mips::SLL, Mips::ZERO, Mips::ZERO, 0, IDLoc, STI);
+  // The default case of `nop` is `sll $zero, $zero, 0`.
+  unsigned Opc = Mips::SLL;
+  if (isMicroMips(STI) && hasShortDelaySlot) {
+    Opc = isMips32r6(STI) ? Mips::MOVE16_MMR6 : Mips::MOVE16_MM;
+    emitRR(Opc, Mips::ZERO, Mips::ZERO, IDLoc, STI);
+    return;
+  }
+
+  if (isMicroMips(STI))
+    Opc = isMips32r6(STI) ? Mips::SLL_MMR6 : Mips::SLL_MM;
+
+  emitRRI(Opc, Mips::ZERO, Mips::ZERO, 0, IDLoc, STI);
 }
 
 void MipsTargetStreamer::emitNop(SMLoc IDLoc, const MCSubtargetInfo *STI) {
@@ -885,9 +899,9 @@ void MipsTargetELFStreamer::finish() {
   MCSection &BSSSection = *OFI.getBSSSection();
   MCA.registerSection(BSSSection);
 
-  TextSection.setAlignment(Align(std::max(16u, TextSection.getAlignment())));
-  DataSection.setAlignment(Align(std::max(16u, DataSection.getAlignment())));
-  BSSSection.setAlignment(Align(std::max(16u, BSSSection.getAlignment())));
+  TextSection.ensureMinAlignment(Align(16));
+  DataSection.ensureMinAlignment(Align(16));
+  BSSSection.ensureMinAlignment(Align(16));
 
   if (RoundSectionSizes) {
     // Make sections sizes a multiple of the alignment. This is useful for
@@ -898,14 +912,12 @@ void MipsTargetELFStreamer::finish() {
     for (MCSection &S : MCA) {
       MCSectionELF &Section = static_cast<MCSectionELF &>(S);
 
-      unsigned Alignment = Section.getAlignment();
-      if (Alignment) {
-        OS.SwitchSection(&Section);
-        if (Section.UseCodeAlign())
-          OS.emitCodeAlignment(Alignment, Alignment);
-        else
-          OS.emitValueToAlignment(Alignment, 0, 1, Alignment);
-      }
+      Align Alignment = Section.getAlign();
+      OS.switchSection(&Section);
+      if (Section.useCodeAlign())
+        OS.emitCodeAlignment(Alignment, &STI, Alignment.value());
+      else
+        OS.emitValueToAlignment(Alignment, 0, 1, Alignment.value());
     }
   }
 
@@ -1012,9 +1024,9 @@ void MipsTargetELFStreamer::emitDirectiveEnd(StringRef Name) {
   MCA.registerSection(*Sec);
   Sec->setAlignment(Align(4));
 
-  OS.PushSection();
+  OS.pushSection();
 
-  OS.SwitchSection(Sec);
+  OS.switchSection(Sec);
 
   OS.emitValueImpl(ExprRef, 4);
 
@@ -1032,7 +1044,7 @@ void MipsTargetELFStreamer::emitDirectiveEnd(StringRef Name) {
   // the information gathered up until this point.
   GPRInfoSet = FPRInfoSet = FrameInfoSet = false;
 
-  OS.PopSection();
+  OS.popSection();
 
   // .end also implicitly sets the size.
   MCSymbol *CurPCSym = Context.createTempSymbol();
@@ -1312,7 +1324,7 @@ void MipsTargetELFStreamer::emitMipsAbiFlags() {
       ".MIPS.abiflags", ELF::SHT_MIPS_ABIFLAGS, ELF::SHF_ALLOC, 24);
   MCA.registerSection(*Sec);
   Sec->setAlignment(Align(8));
-  OS.SwitchSection(Sec);
+  OS.switchSection(Sec);
 
   OS << ABIFlagsSection;
 }

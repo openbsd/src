@@ -5,9 +5,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the DenseMap class.
-//
+///
+/// \file
+/// This file defines the DenseMap class.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_DENSEMAP_H
@@ -94,9 +95,7 @@ public:
     return makeConstIterator(getBucketsEnd(), getBucketsEnd(), *this, true);
   }
 
-  LLVM_NODISCARD bool empty() const {
-    return getNumEntries() == 0;
-  }
+  [[nodiscard]] bool empty() const { return getNumEntries() == 0; }
   unsigned size() const { return getNumEntries(); }
 
   /// Grow the densemap so that it can contain at least \p NumEntries items
@@ -136,6 +135,7 @@ public:
         }
       }
       assert(NumEntries == 0 && "Node count imbalance!");
+      (void)NumEntries;
     }
     setNumEntries(0);
     setNumTombstones(0);
@@ -905,6 +905,8 @@ class SmallDenseMap
 
 public:
   explicit SmallDenseMap(unsigned NumInitBuckets = 0) {
+    if (NumInitBuckets > InlineBuckets)
+      NumInitBuckets = NextPowerOf2(NumInitBuckets - 1);
     init(NumInitBuckets);
   }
 
@@ -1195,8 +1197,7 @@ class DenseMapIterator : DebugEpochBase::HandleBase {
 
 public:
   using difference_type = ptrdiff_t;
-  using value_type =
-      typename std::conditional<IsConst, const Bucket, Bucket>::type;
+  using value_type = std::conditional_t<IsConst, const Bucket, Bucket>;
   using pointer = value_type *;
   using reference = value_type &;
   using iterator_category = std::forward_iterator_tag;

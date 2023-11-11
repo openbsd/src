@@ -25,7 +25,9 @@ def ThunderX3T110Model : SchedMachineModel {
   let CompleteModel         =   1;
 
   list<Predicate> UnsupportedFeatures = !listconcat(SVEUnsupported.F,
-                                                    PAUnsupported.F);
+                                                    PAUnsupported.F,
+                                                    SMEUnsupported.F,
+                                                    [HasMTE]);
   // FIXME: Remove when all errors have been fixed.
   let FullInstRWOverlapCheck = 0;
 }
@@ -621,6 +623,7 @@ def : ReadAdvance<ReadID,      0>;
 def : ReadAdvance<ReadExtrHi,  0>;
 def : ReadAdvance<ReadAdrBase, 0>;
 def : ReadAdvance<ReadVLD,     0>;
+def : ReadAdvance<ReadST,      0>;
 
 //===----------------------------------------------------------------------===//
 // 3. Instruction Tables.
@@ -1356,7 +1359,12 @@ def : InstRW<[THX3T110Write_5Cyc_F01], (instrs FMOVXDHighr, FMOVDXHighr)>;
 // ASIMD shift by register, basic, Q-form
 // ASIMD shift by register, complex, D-form
 // ASIMD shift by register, complex, Q-form
-def : WriteRes<WriteV, [THX3T110FP0123]> {
+def : WriteRes<WriteVd, [THX3T110FP0123]> {
+  let Latency = 5;
+  let NumMicroOps = 4;
+  let ResourceCycles = [4];
+}
+def : WriteRes<WriteVq, [THX3T110FP0123]> {
   let Latency = 5;
   let NumMicroOps = 4;
   let ResourceCycles = [4];
@@ -1602,7 +1610,7 @@ def : InstRW<[THX3T110Write_3_4Cyc_F23_F0123],
 // ASIMD duplicate, gen reg
 // ASIMD duplicate, element
 def : InstRW<[THX3T110Write_5Cyc_F0123], (instregex "^DUPv")>;
-def : InstRW<[THX3T110Write_5Cyc_F0123], (instregex "^CPY")>;
+def : InstRW<[THX3T110Write_5Cyc_F0123], (instregex "^DUP(i8|i16|i32|i64)$")>;
 def : InstRW<[THX3T110Write_5Cyc_F0123], (instregex "^DUPv.+gpr")>;
 
 // ASIMD extract

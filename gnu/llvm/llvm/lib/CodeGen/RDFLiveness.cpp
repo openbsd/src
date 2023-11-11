@@ -22,6 +22,7 @@
 // and Embedded Architectures and Compilers", 8 (4),
 // <10.1145/2086696.2086706>. <hal-00647369>
 //
+#include "llvm/CodeGen/RDFLiveness.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -32,14 +33,12 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/RDFLiveness.h"
 #include "llvm/CodeGen/RDFGraph.h"
 #include "llvm/CodeGen/RDFRegisters.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -62,10 +61,10 @@ namespace rdf {
 
   raw_ostream &operator<< (raw_ostream &OS, const Print<Liveness::RefMap> &P) {
     OS << '{';
-    for (auto &I : P.Obj) {
+    for (const auto &I : P.Obj) {
       OS << ' ' << printReg(I.first, &P.G.getTRI()) << '{';
       for (auto J = I.second.begin(), E = I.second.end(); J != E; ) {
-        OS << Print<NodeId>(J->first, P.G) << PrintLaneMaskOpt(J->second);
+        OS << Print(J->first, P.G) << PrintLaneMaskOpt(J->second);
         if (++J != E)
           OS << ',';
       }
@@ -171,7 +170,7 @@ NodeList Liveness::getAllReachingDefs(RegisterRef RefRR,
 
   SmallSet<NodeId,32> Defs;
 
-  // Remove all non-phi defs that are not aliased to RefRR, and segregate
+  // Remove all non-phi defs that are not aliased to RefRR, and separate
   // the the remaining defs into buckets for containing blocks.
   std::map<NodeId, NodeAddr<InstrNode*>> Owners;
   std::map<MachineBasicBlock*, SmallVector<NodeId,32>> Blocks;
@@ -341,9 +340,8 @@ Liveness::getAllReachingDefsRecImpl(RegisterRef RefRR, NodeAddr<RefNode*> RefA,
     if (!(DA.Addr->getFlags() & NodeAttrs::PhiRef))
       continue;
     NodeAddr<PhiNode*> PA = DA.Addr->getOwner(DFG);
-    if (Visited.count(PA.Id))
+    if (!Visited.insert(PA.Id).second)
       continue;
-    Visited.insert(PA.Id);
     // Go over all phi uses and get the reaching defs for each use.
     for (auto U : PA.Addr->members_if(DFG.IsRef<NodeAttrs::Use>, DFG)) {
       const auto &T = getAllReachingDefsRecImpl(RefRR, U, Visited, TmpDefs,
@@ -621,10 +619,9 @@ void Liveness::computePhiInfo() {
   if (Trace) {
     dbgs() << "Phi-up-to-phi map with intervening defs:\n";
     for (auto I : PhiUp) {
-      dbgs() << "phi " << Print<NodeId>(I.first, DFG) << " -> {";
+      dbgs() << "phi " << Print(I.first, DFG) << " -> {";
       for (auto R : I.second)
-        dbgs() << ' ' << Print<NodeId>(R.first, DFG)
-               << Print<RegisterAggr>(R.second, DFG);
+        dbgs() << ' ' << Print(R.first, DFG) << Print(R.second, DFG);
       dbgs() << " }\n";
     }
   }
@@ -722,16 +719,16 @@ void Liveness::computePhiInfo() {
   if (Trace) {
     dbgs() << "Real use map:\n";
     for (auto I : RealUseMap) {
-      dbgs() << "phi " << Print<NodeId>(I.first, DFG);
+      dbgs() << "phi " << Print(I.first, DFG);
       NodeAddr<PhiNode*> PA = DFG.addr<PhiNode*>(I.first);
       NodeList Ds = PA.Addr->members_if(DFG.IsRef<NodeAttrs::Def>, DFG);
       if (!Ds.empty()) {
         RegisterRef RR = NodeAddr<DefNode*>(Ds[0]).Addr->getRegRef(DFG);
-        dbgs() << '<' << Print<RegisterRef>(RR, DFG) << '>';
+        dbgs() << '<' << Print(RR, DFG) << '>';
       } else {
         dbgs() << "<noreg>";
       }
-      dbgs() << " -> " << Print<RefMap>(I.second, DFG) << '\n';
+      dbgs() << " -> " << Print(I.second, DFG) << '\n';
     }
   }
 }
@@ -769,7 +766,7 @@ void Liveness::computeLiveIns() {
   }
 
   for (auto I : IDF)
-    for (auto S : I.second)
+    for (auto *S : I.second)
       IIDF[S].insert(I.first);
 
   computePhiInfo();
@@ -790,7 +787,7 @@ void Liveness::computeLiveIns() {
     dbgs() << "Phi live-on-entry map:\n";
     for (auto &I : PhiLON)
       dbgs() << "block #" << I.first->getNumber() << " -> "
-             << Print<RefMap>(I.second, DFG) << '\n';
+             << Print(I.second, DFG) << '\n';
   }
 
   // Build the phi live-on-exit map. Each phi node has some set of reached
@@ -853,7 +850,7 @@ void Liveness::computeLiveIns() {
     dbgs() << "Phi live-on-exit map:\n";
     for (auto &I : PhiLOX)
       dbgs() << "block #" << I.first->getNumber() << " -> "
-             << Print<RefMap>(I.second, DFG) << '\n';
+             << Print(I.second, DFG) << '\n';
   }
 
   RefMap LiveIn;
@@ -871,9 +868,9 @@ void Liveness::computeLiveIns() {
       llvm::sort(LV);
       dbgs() << printMBBReference(B) << "\t rec = {";
       for (auto I : LV)
-        dbgs() << ' ' << Print<RegisterRef>(I, DFG);
+        dbgs() << ' ' << Print(I, DFG);
       dbgs() << " }\n";
-      //dbgs() << "\tcomp = " << Print<RegisterAggr>(LiveMap[&B], DFG) << '\n';
+      //dbgs() << "\tcomp = " << Print(LiveMap[&B], DFG) << '\n';
 
       LV.clear();
       const RegisterAggr &LG = LiveMap[&B];
@@ -882,7 +879,7 @@ void Liveness::computeLiveIns() {
       llvm::sort(LV);
       dbgs() << "\tcomp = {";
       for (auto I : LV)
-        dbgs() << ' ' << Print<RegisterRef>(I, DFG);
+        dbgs() << ' ' << Print(I, DFG);
       dbgs() << " }\n";
 
     }
@@ -928,7 +925,7 @@ void Liveness::resetKills(MachineBasicBlock *B) {
 
   BitVector LiveIn(TRI.getNumRegs()), Live(TRI.getNumRegs());
   CopyLiveIns(B, LiveIn);
-  for (auto SI : B->successors())
+  for (auto *SI : B->successors())
     CopyLiveIns(SI, Live);
 
   for (MachineInstr &MI : llvm::reverse(*B)) {
@@ -944,7 +941,7 @@ void Liveness::resetKills(MachineBasicBlock *B) {
       if (!Op.isReg() || !Op.isDef() || Op.isImplicit())
         continue;
       Register R = Op.getReg();
-      if (!Register::isPhysicalRegister(R))
+      if (!R.isPhysical())
         continue;
       for (MCSubRegIterator SR(R, &TRI, true); SR.isValid(); ++SR)
         Live.reset(*SR);
@@ -953,7 +950,7 @@ void Liveness::resetKills(MachineBasicBlock *B) {
       if (!Op.isReg() || !Op.isUse() || Op.isUndef())
         continue;
       Register R = Op.getReg();
-      if (!Register::isPhysicalRegister(R))
+      if (!R.isPhysical())
         continue;
       bool IsLive = false;
       for (MCRegAliasIterator AR(R, &TRI, true); AR.isValid(); ++AR) {
@@ -1005,7 +1002,7 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
 
   // Go up the dominator tree (depth-first).
   MachineDomTreeNode *N = MDT.getNode(B);
-  for (auto I : *N) {
+  for (auto *I : *N) {
     RefMap L;
     MachineBasicBlock *SB = I->getBlock();
     traverse(SB, L);
@@ -1017,11 +1014,11 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
   if (Trace) {
     dbgs() << "\n-- " << printMBBReference(*B) << ": " << __func__
            << " after recursion into: {";
-    for (auto I : *N)
+    for (auto *I : *N)
       dbgs() << ' ' << I->getBlock()->getNumber();
     dbgs() << " }\n";
-    dbgs() << "  LiveIn: " << Print<RefMap>(LiveIn, DFG) << '\n';
-    dbgs() << "  Local:  " << Print<RegisterAggr>(LiveMap[B], DFG) << '\n';
+    dbgs() << "  LiveIn: " << Print(LiveIn, DFG) << '\n';
+    dbgs() << "  Local:  " << Print(LiveMap[B], DFG) << '\n';
   }
 
   // Add reaching defs of phi uses that are live on exit from this block.
@@ -1031,8 +1028,8 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
 
   if (Trace) {
     dbgs() << "after LOX\n";
-    dbgs() << "  LiveIn: " << Print<RefMap>(LiveIn, DFG) << '\n';
-    dbgs() << "  Local:  " << Print<RegisterAggr>(LiveMap[B], DFG) << '\n';
+    dbgs() << "  LiveIn: " << Print(LiveIn, DFG) << '\n';
+    dbgs() << "  Local:  " << Print(LiveMap[B], DFG) << '\n';
   }
 
   // The LiveIn map at this point has all defs that are live-on-exit from B,
@@ -1115,8 +1112,8 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
 
   if (Trace) {
     dbgs() << "after defs in block\n";
-    dbgs() << "  LiveIn: " << Print<RefMap>(LiveIn, DFG) << '\n';
-    dbgs() << "  Local:  " << Print<RegisterAggr>(LiveMap[B], DFG) << '\n';
+    dbgs() << "  LiveIn: " << Print(LiveIn, DFG) << '\n';
+    dbgs() << "  Local:  " << Print(LiveMap[B], DFG) << '\n';
   }
 
   // Scan the block for upward-exposed uses and add them to the tracking set.
@@ -1136,8 +1133,8 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
 
   if (Trace) {
     dbgs() << "after uses in block\n";
-    dbgs() << "  LiveIn: " << Print<RefMap>(LiveIn, DFG) << '\n';
-    dbgs() << "  Local:  " << Print<RegisterAggr>(LiveMap[B], DFG) << '\n';
+    dbgs() << "  LiveIn: " << Print(LiveIn, DFG) << '\n';
+    dbgs() << "  Local:  " << Print(LiveMap[B], DFG) << '\n';
   }
 
   // Phi uses should not be propagated up the dominator tree, since they
@@ -1153,11 +1150,11 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
 
   if (Trace) {
     dbgs() << "after phi uses in block\n";
-    dbgs() << "  LiveIn: " << Print<RefMap>(LiveIn, DFG) << '\n';
-    dbgs() << "  Local:  " << Print<RegisterAggr>(Local, DFG) << '\n';
+    dbgs() << "  LiveIn: " << Print(LiveIn, DFG) << '\n';
+    dbgs() << "  Local:  " << Print(Local, DFG) << '\n';
   }
 
-  for (auto C : IIDF[B]) {
+  for (auto *C : IIDF[B]) {
     RegisterAggr &LiveC = LiveMap[C];
     for (const std::pair<const RegisterId, NodeRefSet> &S : LiveIn)
       for (auto R : S.second)

@@ -17,16 +17,16 @@
 #include "TargetInfo/WebAssemblyTargetInfo.h"
 #include "Utils/WebAssemblyTypeUtilities.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCDecoderOps.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
-#include "llvm/MC/MCFixedLenDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCSymbolWasm.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/LEB128.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -45,10 +45,9 @@ class WebAssemblyDisassembler final : public MCDisassembler {
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
                               ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &CStream) const override;
-  Optional<DecodeStatus> onSymbolStart(SymbolInfoTy &Symbol, uint64_t &Size,
-                                       ArrayRef<uint8_t> Bytes,
-                                       uint64_t Address,
-                                       raw_ostream &CStream) const override;
+  std::optional<DecodeStatus>
+  onSymbolStart(SymbolInfoTy &Symbol, uint64_t &Size, ArrayRef<uint8_t> Bytes,
+                uint64_t Address, raw_ostream &CStream) const override;
 
 public:
   WebAssemblyDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx,
@@ -121,29 +120,31 @@ bool parseImmediate(MCInst &MI, uint64_t &Size, ArrayRef<uint8_t> Bytes) {
   return true;
 }
 
-Optional<MCDisassembler::DecodeStatus> WebAssemblyDisassembler::onSymbolStart(
-    SymbolInfoTy &Symbol, uint64_t &Size, ArrayRef<uint8_t> Bytes,
-    uint64_t Address, raw_ostream &CStream) const {
+std::optional<MCDisassembler::DecodeStatus>
+WebAssemblyDisassembler::onSymbolStart(SymbolInfoTy &Symbol, uint64_t &Size,
+                                       ArrayRef<uint8_t> Bytes,
+                                       uint64_t Address,
+                                       raw_ostream &CStream) const {
   Size = 0;
   if (Address == 0) {
     // Start of a code section: we're parsing only the function count.
     int64_t FunctionCount;
     if (!nextLEB(FunctionCount, Bytes, Size, false))
-      return None;
+      return std::nullopt;
     outs() << "        # " << FunctionCount << " functions in section.";
   } else {
     // Parse the start of a single function.
     int64_t BodySize, LocalEntryCount;
     if (!nextLEB(BodySize, Bytes, Size, false) ||
         !nextLEB(LocalEntryCount, Bytes, Size, false))
-      return None;
+      return std::nullopt;
     if (LocalEntryCount) {
       outs() << "        .local ";
       for (int64_t I = 0; I < LocalEntryCount; I++) {
         int64_t Count, Type;
         if (!nextLEB(Count, Bytes, Size, false) ||
             !nextLEB(Type, Bytes, Size, false))
-          return None;
+          return std::nullopt;
         for (int64_t J = 0; J < Count; J++) {
           if (I || J)
             outs() << ", ";
@@ -238,28 +239,6 @@ MCDisassembler::DecodeStatus WebAssemblyDisassembler::getInstruction(
         const MCExpr *Expr = MCSymbolRefExpr::create(
             WasmSym, MCSymbolRefExpr::VK_WASM_TYPEINDEX, getContext());
         MI.addOperand(MCOperand::createExpr(Expr));
-      }
-      break;
-    }
-    // heap_type operands, for e.g. ref.null:
-    case WebAssembly::OPERAND_HEAPTYPE: {
-      int64_t Val;
-      uint64_t PrevSize = Size;
-      if (!nextLEB(Val, Bytes, Size, true))
-        return MCDisassembler::Fail;
-      if (Val < 0 && Size == PrevSize + 1) {
-        // The HeapType encoding is like BlockType, in that encodings that
-        // decode as negative values indicate ValTypes.  In practice we expect
-        // either wasm::ValType::EXTERNREF or wasm::ValType::FUNCREF here.
-        //
-        // The positive SLEB values are reserved for future expansion and are
-        // expected to be type indices in the typed function references
-        // proposal, and should disassemble as MCSymbolRefExpr as in BlockType
-        // above.
-        MI.addOperand(MCOperand::createImm(Val & 0x7f));
-      } else {
-        MI.addOperand(
-            MCOperand::createImm(int64_t(WebAssembly::HeapType::Invalid)));
       }
       break;
     }

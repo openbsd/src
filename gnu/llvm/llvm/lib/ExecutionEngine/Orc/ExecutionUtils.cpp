@@ -7,14 +7,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/Orc/ExecutionUtils.h"
+#include "llvm/ExecutionEngine/JITLink/x86_64.h"
 #include "llvm/ExecutionEngine/Orc/Layer.h"
+#include "llvm/ExecutionEngine/Orc/ObjectFileInterface.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Module.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
 #include <string>
 
@@ -61,7 +63,7 @@ CtorDtorIterator::Element CtorDtorIterator::operator*() const {
       break;
     } else if (ConstantExpr *CE = dyn_cast_or_null<ConstantExpr>(FuncC)) {
       if (CE->isCast())
-        FuncC = dyn_cast_or_null<ConstantExpr>(CE->getOperand(0));
+        FuncC = CE->getOperand(0);
       else
         break;
     } else {
@@ -269,25 +271,30 @@ Error DynamicLibrarySearchGenerator::tryToGenerate(
 }
 
 Expected<std::unique_ptr<StaticLibraryDefinitionGenerator>>
-StaticLibraryDefinitionGenerator::Load(ObjectLayer &L, const char *FileName) {
-  auto ArchiveBuffer = errorOrToExpected(MemoryBuffer::getFile(FileName));
+StaticLibraryDefinitionGenerator::Load(
+    ObjectLayer &L, const char *FileName,
+    GetObjectFileInterface GetObjFileInterface) {
+  auto ArchiveBuffer = MemoryBuffer::getFile(FileName);
 
   if (!ArchiveBuffer)
-    return ArchiveBuffer.takeError();
+    return createFileError(FileName, ArchiveBuffer.getError());
 
-  return Create(L, std::move(*ArchiveBuffer));
+  return Create(L, std::move(*ArchiveBuffer), std::move(GetObjFileInterface));
 }
 
 Expected<std::unique_ptr<StaticLibraryDefinitionGenerator>>
-StaticLibraryDefinitionGenerator::Load(ObjectLayer &L, const char *FileName,
-                                       const Triple &TT) {
+StaticLibraryDefinitionGenerator::Load(
+    ObjectLayer &L, const char *FileName, const Triple &TT,
+    GetObjectFileInterface GetObjFileInterface) {
+
   auto B = object::createBinary(FileName);
   if (!B)
-    return B.takeError();
+    return createFileError(FileName, B.takeError());
 
   // If this is a regular archive then create an instance from it.
   if (isa<object::Archive>(B->getBinary()))
-    return Create(L, std::move(B->takeBinary().second));
+    return Create(L, std::move(B->takeBinary().second),
+                  std::move(GetObjFileInterface));
 
   // If this is a universal binary then search for a slice matching the given
   // Triple.
@@ -309,7 +316,8 @@ StaticLibraryDefinitionGenerator::Load(ObjectLayer &L, const char *FileName,
                   " .. " + formatv("{0:x}", Obj.getOffset() + Obj.getSize()) +
                   ": " + SliceBuffer.getError().message(),
               SliceBuffer.getError());
-        return Create(L, std::move(*SliceBuffer));
+        return Create(L, std::move(*SliceBuffer),
+                      std::move(GetObjFileInterface));
       }
     }
 
@@ -326,11 +334,13 @@ StaticLibraryDefinitionGenerator::Load(ObjectLayer &L, const char *FileName,
 
 Expected<std::unique_ptr<StaticLibraryDefinitionGenerator>>
 StaticLibraryDefinitionGenerator::Create(
-    ObjectLayer &L, std::unique_ptr<MemoryBuffer> ArchiveBuffer) {
+    ObjectLayer &L, std::unique_ptr<MemoryBuffer> ArchiveBuffer,
+    GetObjectFileInterface GetObjFileInterface) {
   Error Err = Error::success();
 
   std::unique_ptr<StaticLibraryDefinitionGenerator> ADG(
-      new StaticLibraryDefinitionGenerator(L, std::move(ArchiveBuffer), Err));
+      new StaticLibraryDefinitionGenerator(
+          L, std::move(ArchiveBuffer), std::move(GetObjFileInterface), Err));
 
   if (Err)
     return std::move(Err);
@@ -341,7 +351,6 @@ StaticLibraryDefinitionGenerator::Create(
 Error StaticLibraryDefinitionGenerator::tryToGenerate(
     LookupState &LS, LookupKind K, JITDylib &JD,
     JITDylibLookupFlags JDLookupFlags, const SymbolLookupSet &Symbols) {
-
   // Don't materialize symbols from static archives unless this is a static
   // lookup.
   if (K != LookupKind::Static)
@@ -355,33 +364,187 @@ Error StaticLibraryDefinitionGenerator::tryToGenerate(
 
   for (const auto &KV : Symbols) {
     const auto &Name = KV.first;
-    auto Child = Archive->findSym(*Name);
-    if (!Child)
-      return Child.takeError();
-    if (*Child == None)
+    if (!ObjectFilesMap.count(Name))
       continue;
-    auto ChildBuffer = (*Child)->getMemoryBufferRef();
-    if (!ChildBuffer)
-      return ChildBuffer.takeError();
+    auto ChildBuffer = ObjectFilesMap[Name];
     ChildBufferInfos.insert(
-        {ChildBuffer->getBuffer(), ChildBuffer->getBufferIdentifier()});
+        {ChildBuffer.getBuffer(), ChildBuffer.getBufferIdentifier()});
   }
 
   for (auto ChildBufferInfo : ChildBufferInfos) {
     MemoryBufferRef ChildBufferRef(ChildBufferInfo.first,
                                    ChildBufferInfo.second);
 
-    if (auto Err = L.add(JD, MemoryBuffer::getMemBuffer(ChildBufferRef, false)))
+    auto I = GetObjFileInterface(L.getExecutionSession(), ChildBufferRef);
+    if (!I)
+      return I.takeError();
+
+    if (auto Err = L.add(JD, MemoryBuffer::getMemBuffer(ChildBufferRef, false),
+                         std::move(*I)))
       return Err;
   }
 
   return Error::success();
 }
 
+Error StaticLibraryDefinitionGenerator::buildObjectFilesMap() {
+  DenseMap<uint64_t, MemoryBufferRef> MemoryBuffers;
+  DenseSet<uint64_t> Visited;
+  DenseSet<uint64_t> Excluded;
+  for (auto &S : Archive->symbols()) {
+    StringRef SymName = S.getName();
+    auto Member = S.getMember();
+    if (!Member)
+      return Member.takeError();
+    auto DataOffset = Member->getDataOffset();
+    if (!Visited.count(DataOffset)) {
+      Visited.insert(DataOffset);
+      auto Child = Member->getAsBinary();
+      if (!Child)
+        return Child.takeError();
+      if ((*Child)->isCOFFImportFile()) {
+        ImportedDynamicLibraries.insert((*Child)->getFileName().str());
+        Excluded.insert(DataOffset);
+        continue;
+      }
+      MemoryBuffers[DataOffset] = (*Child)->getMemoryBufferRef();
+    }
+    if (!Excluded.count(DataOffset))
+      ObjectFilesMap[L.getExecutionSession().intern(SymName)] =
+          MemoryBuffers[DataOffset];
+  }
+
+  return Error::success();
+}
+
 StaticLibraryDefinitionGenerator::StaticLibraryDefinitionGenerator(
-    ObjectLayer &L, std::unique_ptr<MemoryBuffer> ArchiveBuffer, Error &Err)
-    : L(L), ArchiveBuffer(std::move(ArchiveBuffer)),
-      Archive(std::make_unique<object::Archive>(*this->ArchiveBuffer, Err)) {}
+    ObjectLayer &L, std::unique_ptr<MemoryBuffer> ArchiveBuffer,
+    GetObjectFileInterface GetObjFileInterface, Error &Err)
+    : L(L), GetObjFileInterface(std::move(GetObjFileInterface)),
+      ArchiveBuffer(std::move(ArchiveBuffer)),
+      Archive(std::make_unique<object::Archive>(*this->ArchiveBuffer, Err)) {
+  ErrorAsOutParameter _(&Err);
+  if (!this->GetObjFileInterface)
+    this->GetObjFileInterface = getObjectFileInterface;
+  if (!Err)
+    Err = buildObjectFilesMap();
+}
+
+std::unique_ptr<DLLImportDefinitionGenerator>
+DLLImportDefinitionGenerator::Create(ExecutionSession &ES,
+                                     ObjectLinkingLayer &L) {
+  return std::unique_ptr<DLLImportDefinitionGenerator>(
+      new DLLImportDefinitionGenerator(ES, L));
+}
+
+Error DLLImportDefinitionGenerator::tryToGenerate(
+    LookupState &LS, LookupKind K, JITDylib &JD,
+    JITDylibLookupFlags JDLookupFlags, const SymbolLookupSet &Symbols) {
+  JITDylibSearchOrder LinkOrder;
+  JD.withLinkOrderDo([&](const JITDylibSearchOrder &LO) {
+    LinkOrder.reserve(LO.size());
+    for (auto &KV : LO) {
+      if (KV.first == &JD)
+        continue;
+      LinkOrder.push_back(KV);
+    }
+  });
+
+  // FIXME: if regular symbol name start with __imp_ we have to issue lookup of
+  // both __imp_ and stripped name and use the lookup information to resolve the
+  // real symbol name.
+  SymbolLookupSet LookupSet;
+  DenseMap<StringRef, SymbolLookupFlags> ToLookUpSymbols;
+  for (auto &KV : Symbols) {
+    StringRef Deinterned = *KV.first;
+    if (Deinterned.startswith(getImpPrefix()))
+      Deinterned = Deinterned.drop_front(StringRef(getImpPrefix()).size());
+    // Don't degrade the required state
+    if (ToLookUpSymbols.count(Deinterned) &&
+        ToLookUpSymbols[Deinterned] == SymbolLookupFlags::RequiredSymbol)
+      continue;
+    ToLookUpSymbols[Deinterned] = KV.second;
+  }
+
+  for (auto &KV : ToLookUpSymbols)
+    LookupSet.add(ES.intern(KV.first), KV.second);
+
+  auto Resolved =
+      ES.lookup(LinkOrder, LookupSet, LookupKind::DLSym, SymbolState::Resolved);
+  if (!Resolved)
+    return Resolved.takeError();
+
+  auto G = createStubsGraph(*Resolved);
+  if (!G)
+    return G.takeError();
+  return L.add(JD, std::move(*G));
+}
+
+Expected<unsigned>
+DLLImportDefinitionGenerator::getTargetPointerSize(const Triple &TT) {
+  switch (TT.getArch()) {
+  case Triple::x86_64:
+    return 8;
+  default:
+    return make_error<StringError>(
+        "architecture unsupported by DLLImportDefinitionGenerator",
+        inconvertibleErrorCode());
+  }
+}
+
+Expected<support::endianness>
+DLLImportDefinitionGenerator::getTargetEndianness(const Triple &TT) {
+  switch (TT.getArch()) {
+  case Triple::x86_64:
+    return support::endianness::little;
+  default:
+    return make_error<StringError>(
+        "architecture unsupported by DLLImportDefinitionGenerator",
+        inconvertibleErrorCode());
+  }
+}
+
+Expected<std::unique_ptr<jitlink::LinkGraph>>
+DLLImportDefinitionGenerator::createStubsGraph(const SymbolMap &Resolved) {
+  Triple TT = ES.getExecutorProcessControl().getTargetTriple();
+  auto PointerSize = getTargetEndianness(TT);
+  if (!PointerSize)
+    return PointerSize.takeError();
+  auto Endianness = getTargetEndianness(TT);
+  if (!Endianness)
+    return Endianness.takeError();
+
+  auto G = std::make_unique<jitlink::LinkGraph>(
+      "<DLLIMPORT_STUBS>", TT, *PointerSize, *Endianness,
+      jitlink::getGenericEdgeKindName);
+  jitlink::Section &Sec =
+      G->createSection(getSectionName(), MemProt::Read | MemProt::Exec);
+
+  for (auto &KV : Resolved) {
+    jitlink::Symbol &Target = G->addAbsoluteSymbol(
+        *KV.first, ExecutorAddr(KV.second.getAddress()), *PointerSize,
+        jitlink::Linkage::Strong, jitlink::Scope::Local, false);
+
+    // Create __imp_ symbol
+    jitlink::Symbol &Ptr =
+        jitlink::x86_64::createAnonymousPointer(*G, Sec, &Target);
+    auto NameCopy = G->allocateString(Twine(getImpPrefix()) + *KV.first);
+    StringRef NameCopyRef = StringRef(NameCopy.data(), NameCopy.size());
+    Ptr.setName(NameCopyRef);
+    Ptr.setLinkage(jitlink::Linkage::Strong);
+    Ptr.setScope(jitlink::Scope::Default);
+
+    // Create PLT stub
+    // FIXME: check PLT stub of data symbol is not accessed
+    jitlink::Block &StubBlock =
+        jitlink::x86_64::createPointerJumpStubBlock(*G, Sec, Ptr);
+    G->addDefinedSymbol(StubBlock, 0, *KV.first, StubBlock.getSize(),
+                        jitlink::Linkage::Strong, jitlink::Scope::Default, true,
+                        false);
+  }
+
+  return std::move(G);
+}
 
 } // End namespace orc.
 } // End namespace llvm.

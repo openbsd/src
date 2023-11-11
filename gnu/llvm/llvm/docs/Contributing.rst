@@ -5,7 +5,7 @@ Contributing to LLVM
 
 Thank you for your interest in contributing to LLVM! There are multiple ways to
 contribute, and we appreciate all contributions. In case you
-have questions, you can either use the `Developer's List (llvm-dev)`_
+have questions, you can either use the `Forum`_
 or the #llvm channel on `irc.oftc.net`_.
 
 If you want to contribute code, please familiarize yourself with the :doc:`DeveloperPolicy`.
@@ -26,14 +26,13 @@ about it. Please let us know and follow the instructions in
 Bug Fixes
 ---------
 If you are interested in contributing code to LLVM, bugs labeled with the
-`beginner keyword`_ in the `bug tracker`_ are a good way to get familiar with
-the code base. If you are interested in fixing a bug, please create an account
-for the bug tracker and assign it to yourself, to let people know you are working on
-it.
+`good first issue`_ keyword in the `bug tracker`_ are a good way to get familiar with
+the code base. If you are interested in fixing a bug please comment on it to
+let people know you are working on it.
 
 Then try to reproduce and fix the bug with upstream LLVM. Start by building
 LLVM from source as described in :doc:`GettingStarted` and
-and use the built binaries to reproduce the failure described in the bug. Use
+use the built binaries to reproduce the failure described in the bug. Use
 a debug build (`-DCMAKE_BUILD_TYPE=Debug`) or a build with assertions
 (`-DLLVM_ENABLE_ASSERTIONS=On`, enabled for Debug builds).
 
@@ -46,9 +45,10 @@ Bigger Pieces of Work
 ---------------------
 In case you are interested in taking on a bigger piece of work, a list of
 interesting projects is maintained at the `LLVM's Open Projects page`_. In case
-you are interested in working on any of these projects, please send a mail to
-the `LLVM Developer's mailing list`_, so that we know the project is being
-worked on.
+you are interested in working on any of these projects, please post on the
+`Forum`_, so that we know the project is being worked on.
+
+.. _submit_patch:
 
 How to Submit a Patch
 =====================
@@ -58,6 +58,7 @@ Once you have a patch ready, it is time to submit it. The patch should:
 * conform to the :doc:`CodingStandards`. You can use the `clang-format-diff.py`_ or `git-clang-format`_ tools to automatically format your patch properly.
 * not contain any unrelated changes
 * be an isolated change. Independent changes should be submitted as separate patches as this makes reviewing easier.
+* have a single commit (unless stacked on another Differential), up-to-date with the upstream ``origin/main`` branch, and don't have merges.
 
 .. _format patches:
 
@@ -87,11 +88,10 @@ in order to update the last commit with all pending changes.
   the git integration can be run from
   ``clang/tools/clang-format/git-clang-format``.
 
-
-To get a patch accepted, it has to be reviewed by the LLVM community. This can
-be done using `LLVM's Phabricator`_ or the llvm-commits mailing list.
-Please  follow :ref:`Phabricator#phabricator-reviews <phabricator-reviews>`
-to request a review using Phabricator.
+We don't currently accept GitHub pull requests, and you'll need to send patches
+via :ref:`Phabricator#phabricator-reviews <phabricator-reviews>`.
+(We used to allow patches on the llvm-commits mailing list, but the mailing lists
+have been deprecated.)
 
 To make sure the right people see your patch, please select suitable reviewers
 and add them to your patch when requesting a review. Suitable reviewers are the
@@ -117,6 +117,52 @@ professional developers.
 
 For more information on LLVM's code-review process, please see :doc:`CodeReview`.
 
+.. _commit_from_git:
+
+For developers to commit changes from Git
+-----------------------------------------
+
+Once a patch is reviewed, you should rebase it, re-test locally, and commit the
+changes to LLVM's main branch. This is done using `git push` if you have the
+required access rights. See `committing a change
+<Phabricator.html#committing-a-change>`_ for Phabricator based commits or
+`obtaining commit access <DeveloperPolicy.html#obtaining-commit-access>`_
+for commit access.
+
+Here is an example workflow using git. This workflow assumes you have an
+accepted commit on the branch named `branch-with-change`.
+
+.. code-block:: console
+
+  # Pull changes from the upstream main branch.
+  % git checkout main && git pull
+  # Rebase your change onto main.
+  % git rebase --onto main --root branch-with-change
+  # Rerun the appropriate tests if needed.
+  % ninja check-$whatever
+  # Check that the list of commits about to be pushed is correct.
+  % git log origin/main...HEAD --oneline
+  # Push to Github.
+  % git push origin HEAD:main
+
+LLVM currently has a linear-history policy, which means that merge commits are
+not allowed. The `llvm-project` repo on github is configured to reject pushes
+that include merges, so the `git rebase` step above is required.
+
+Please ask for help if you're having trouble with your particular git workflow.
+
+.. _git_pre_push_hook:
+
+Git pre-push hook
+^^^^^^^^^^^^^^^^^
+
+We include an optional pre-push hook that run some sanity checks on the revisions
+you are about to push and ask confirmation if you push multiple commits at once.
+You can set it up (on Unix systems) by running from the repository root:
+
+.. code-block:: console
+
+  % ln -sf ../../llvm/utils/git/pre-push.py .git/hooks/pre-push
 
 Helpful Information About LLVM
 ==============================
@@ -148,12 +194,11 @@ of LLVM's high-level design, as well as its internals:
 
   .. __: http://www.aosabook.org/en/llvm.html
 
-.. _Developer's List (llvm-dev): http://lists.llvm.org/mailman/listinfo/llvm-dev
+.. _Forum: https://discourse.llvm.org
 .. _irc.oftc.net: irc://irc.oftc.net/llvm
-.. _beginner keyword: https://bugs.llvm.org/buglist.cgi?bug_status=NEW&bug_status=REOPENED&keywords=beginner%2C%20&keywords_type=allwords&list_id=130748&query_format=advanced&resolution=---
-.. _bug tracker: https://bugs.llvm.org
+.. _good first issue: https://github.com/llvm/llvm-project/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22
+.. _bug tracker: https://github.com/llvm/llvm-project/issues
 .. _clang-format-diff.py: https://reviews.llvm.org/source/llvm-github/browse/main/clang/tools/clang-format/clang-format-diff.py
 .. _git-clang-format: https://reviews.llvm.org/source/llvm-github/browse/main/clang/tools/clang-format/git-clang-format
 .. _LLVM's Phabricator: https://reviews.llvm.org/
 .. _LLVM's Open Projects page: https://llvm.org/OpenProjects.html#what
-.. _LLVM Developer's mailing list: http://lists.llvm.org/mailman/listinfo/llvm-dev

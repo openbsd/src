@@ -22,9 +22,6 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/SymbolTableListTraits.h"
 #include "llvm/IR/Value.h"
-#include "llvm/Support/CBindingWrapping.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/Compiler.h"
 #include <cassert>
 #include <cstddef>
 #include <iterator>
@@ -92,6 +89,14 @@ public:
   using reverse_iterator = InstListType::reverse_iterator;
   using const_reverse_iterator = InstListType::const_reverse_iterator;
 
+  // These functions and classes need access to the instruction list.
+  friend void Instruction::removeFromParent();
+  friend iplist<Instruction>::iterator Instruction::eraseFromParent();
+  friend BasicBlock::iterator Instruction::insertInto(BasicBlock *BB,
+                                                      BasicBlock::iterator It);
+  friend class llvm::SymbolTableListTraits<llvm::Instruction>;
+  friend class llvm::ilist_node_with_parent<llvm::Instruction, llvm::BasicBlock>;
+
   /// Creates a new BasicBlock.
   ///
   /// If the Parent parameter is specified, the basic block is automatically
@@ -119,7 +124,11 @@ public:
 
   /// Returns the terminator instruction if the block is well formed or null
   /// if the block is not well formed.
-  const Instruction *getTerminator() const LLVM_READONLY;
+  const Instruction *getTerminator() const LLVM_READONLY {
+    if (InstList.empty() || !InstList.back().isTerminator())
+      return nullptr;
+    return &InstList.back();
+  }
   Instruction *getTerminator() {
     return const_cast<Instruction *>(
         static_cast<const BasicBlock *>(this)->getTerminator());
@@ -167,8 +176,8 @@ public:
   /// Returns a pointer to the first instruction in this block that is not a
   /// PHINode or a debug intrinsic, or any pseudo operation if \c SkipPseudoOp
   /// is true.
-  const Instruction *getFirstNonPHIOrDbg(bool SkipPseudoOp = false) const;
-  Instruction *getFirstNonPHIOrDbg(bool SkipPseudoOp = false) {
+  const Instruction *getFirstNonPHIOrDbg(bool SkipPseudoOp = true) const;
+  Instruction *getFirstNonPHIOrDbg(bool SkipPseudoOp = true) {
     return const_cast<Instruction *>(
         static_cast<const BasicBlock *>(this)->getFirstNonPHIOrDbg(
             SkipPseudoOp));
@@ -178,8 +187,8 @@ public:
   /// PHINode, a debug intrinsic, or a lifetime intrinsic, or any pseudo
   /// operation if \c SkipPseudoOp is true.
   const Instruction *
-  getFirstNonPHIOrDbgOrLifetime(bool SkipPseudoOp = false) const;
-  Instruction *getFirstNonPHIOrDbgOrLifetime(bool SkipPseudoOp = false) {
+  getFirstNonPHIOrDbgOrLifetime(bool SkipPseudoOp = true) const;
+  Instruction *getFirstNonPHIOrDbgOrLifetime(bool SkipPseudoOp = true) {
     return const_cast<Instruction *>(
         static_cast<const BasicBlock *>(this)->getFirstNonPHIOrDbgOrLifetime(
             SkipPseudoOp));
@@ -195,19 +204,28 @@ public:
                                           ->getFirstInsertionPt().getNonConst();
   }
 
+  /// Returns an iterator to the first instruction in this block that is
+  /// not a PHINode, a debug intrinsic, a static alloca or any pseudo operation.
+  const_iterator getFirstNonPHIOrDbgOrAlloca() const;
+  iterator getFirstNonPHIOrDbgOrAlloca() {
+    return static_cast<const BasicBlock *>(this)
+        ->getFirstNonPHIOrDbgOrAlloca()
+        .getNonConst();
+  }
+
   /// Return a const iterator range over the instructions in the block, skipping
   /// any debug instructions. Skip any pseudo operations as well if \c
   /// SkipPseudoOp is true.
   iterator_range<filter_iterator<BasicBlock::const_iterator,
                                  std::function<bool(const Instruction &)>>>
-  instructionsWithoutDebug(bool SkipPseudoOp = false) const;
+  instructionsWithoutDebug(bool SkipPseudoOp = true) const;
 
   /// Return an iterator range over the instructions in the block, skipping any
   /// debug instructions. Skip and any pseudo operations as well if \c
   /// SkipPseudoOp is true.
   iterator_range<
       filter_iterator<BasicBlock::iterator, std::function<bool(Instruction &)>>>
-  instructionsWithoutDebug(bool SkipPseudoOp = false);
+  instructionsWithoutDebug(bool SkipPseudoOp = true);
 
   /// Return the size of the basic block ignoring debug instructions
   filter_iterator<BasicBlock::const_iterator,
@@ -356,18 +374,21 @@ public:
   }
   iterator_range<phi_iterator> phis();
 
+private:
   /// Return the underlying instruction list container.
-  ///
-  /// Currently you need to access the underlying instruction list container
-  /// directly if you want to modify it.
+  /// This is deliberately private because we have implemented an adequate set
+  /// of functions to modify the list, including BasicBlock::splice(),
+  /// BasicBlock::erase(), Instruction::insertInto() etc.
   const InstListType &getInstList() const { return InstList; }
-        InstListType &getInstList()       { return InstList; }
+  InstListType &getInstList() { return InstList; }
 
   /// Returns a pointer to a member of the instruction list.
-  static InstListType BasicBlock::*getSublistAccess(Instruction*) {
+  /// This is private on purpose, just like `getInstList()`.
+  static InstListType BasicBlock::*getSublistAccess(Instruction *) {
     return &BasicBlock::InstList;
   }
 
+public:
   /// Returns a pointer to the symbol table if one exists.
   ValueSymbolTable *getValueSymbolTable();
 
@@ -443,6 +464,32 @@ public:
     return splitBasicBlockBefore(I->getIterator(), BBName);
   }
 
+  /// Transfer all instructions from \p FromBB to this basic block at \p ToIt.
+  void splice(BasicBlock::iterator ToIt, BasicBlock *FromBB) {
+    splice(ToIt, FromBB, FromBB->begin(), FromBB->end());
+  }
+
+  /// Transfer one instruction from \p FromBB at \p FromIt to this basic block
+  /// at \p ToIt.
+  void splice(BasicBlock::iterator ToIt, BasicBlock *FromBB,
+              BasicBlock::iterator FromIt) {
+    auto FromItNext = std::next(FromIt);
+    // Single-element splice is a noop if destination == source.
+    if (ToIt == FromIt || ToIt == FromItNext)
+      return;
+    splice(ToIt, FromBB, FromIt, FromItNext);
+  }
+
+  /// Transfer a range of instructions that belong to \p FromBB from \p
+  /// FromBeginIt to \p FromEndIt, to this basic block at \p ToIt.
+  void splice(BasicBlock::iterator ToIt, BasicBlock *FromBB,
+              BasicBlock::iterator FromBeginIt,
+              BasicBlock::iterator FromEndIt);
+
+  /// Erases a range of instructions from \p FromIt to (not including) \p ToIt.
+  /// \Returns \p ToIt.
+  BasicBlock::iterator erase(BasicBlock::iterator FromIt, BasicBlock::iterator ToIt);
+
   /// Returns true if there are any uses of this basic block other than
   /// direct branches, switches, etc. to it.
   bool hasAddressTaken() const {
@@ -484,7 +531,7 @@ public:
   /// This method can only be used on blocks that have a parent function.
   bool isEntryBlock() const;
 
-  Optional<uint64_t> getIrrLoopHeaderWeight() const;
+  std::optional<uint64_t> getIrrLoopHeaderWeight() const;
 
   /// Returns true if the Order field of child Instructions is valid.
   bool isInstrOrderValid() const {

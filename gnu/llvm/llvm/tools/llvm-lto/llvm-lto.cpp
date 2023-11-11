@@ -46,6 +46,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/WithColor.h"
 #include "llvm/Target/TargetOptions.h"
 #include <algorithm>
 #include <cassert>
@@ -70,7 +71,7 @@ static cl::opt<char>
     OptLevel("O",
              cl::desc("Optimization level. [-O0, -O1, -O2, or -O3] "
                       "(default = '-O2')"),
-             cl::Prefix, cl::ZeroOrMore, cl::init('2'), cl::cat(LTOCategory));
+             cl::Prefix, cl::init('2'), cl::cat(LTOCategory));
 
 static cl::opt<bool>
     IndexStats("thinlto-index-stats",
@@ -209,12 +210,12 @@ static cl::opt<std::string> OutputFilename("o", cl::init(""),
 static cl::list<std::string> ExportedSymbols(
     "exported-symbol",
     cl::desc("List of symbols to export from the resulting object file"),
-    cl::ZeroOrMore, cl::cat(LTOCategory));
+    cl::cat(LTOCategory));
 
 static cl::list<std::string>
     DSOSymbols("dso-symbol",
                cl::desc("Symbol to put in the symtab in the resulting dso"),
-               cl::ZeroOrMore, cl::cat(LTOCategory));
+               cl::cat(LTOCategory));
 
 static cl::opt<bool> ListSymbolsOnly(
     "list-symbols-only", cl::init(false),
@@ -226,6 +227,10 @@ static cl::opt<bool> ListDependentLibrariesOnly(
     cl::desc(
         "Instead of running LTO, list the dependent libraries in each IR file"),
     cl::cat(LTOCategory));
+
+static cl::opt<bool> QueryHasCtorDtor(
+    "query-hasCtorDtor", cl::init(false),
+    cl::desc("Queries LTOModule::hasCtorDtor() on each IR file"));
 
 static cl::opt<bool>
     SetMergedModule("set-merged-module", cl::init(false),
@@ -251,19 +256,19 @@ static cl::opt<bool> PrintMachOCPUOnly(
     cl::desc("Instead of running LTO, print the mach-o cpu in each IR file"),
     cl::cat(LTOCategory));
 
-static cl::opt<bool> UseNewPM(
-    "use-new-pm", cl::desc("Run LTO passes using the new pass manager"),
-    cl::init(LLVM_ENABLE_NEW_PASS_MANAGER), cl::Hidden, cl::cat(LTOCategory));
-
 static cl::opt<bool>
     DebugPassManager("debug-pass-manager", cl::init(false), cl::Hidden,
                      cl::desc("Print pass management debugging information"),
                      cl::cat(LTOCategory));
 
+static cl::opt<bool>
+    LTOSaveBeforeOpt("lto-save-before-opt", cl::init(false),
+                     cl::desc("Save the IR before running optimizations"));
+
 namespace {
 
 struct ModuleInfo {
-  std::vector<bool> CanBeHidden;
+  BitVector CanBeHidden;
 };
 
 } // end anonymous namespace
@@ -312,11 +317,11 @@ namespace {
       if (!CurrentActivity.empty())
         OS << ' ' << CurrentActivity;
       OS << ": ";
-  
+
       DiagnosticPrinterRawOStream DP(OS);
       DI.print(DP);
       OS << '\n';
-  
+
       if (DI.getSeverity() == DS_Error)
         exit(1);
       return true;
@@ -371,7 +376,7 @@ static void printIndexStats() {
         ExitOnErr(getModuleSummaryIndexForFile(Filename));
     // Skip files without a module summary.
     if (!Index)
-      report_fatal_error(Filename + " does not contain an index");
+      report_fatal_error(Twine(Filename) + " does not contain an index");
 
     unsigned Calls = 0, Refs = 0, Functions = 0, Alias = 0, Globals = 0;
     for (auto &Summaries : *Index) {
@@ -394,22 +399,27 @@ static void printIndexStats() {
   }
 }
 
-/// List symbols in each IR file.
+/// Load each IR file and dump certain information based on active flags.
 ///
 /// The main point here is to provide lit-testable coverage for the LTOModule
-/// functionality that's exposed by the C API to list symbols.  Moreover, this
-/// provides testing coverage for modules that have been created in their own
-/// contexts.
-static void listSymbols(const TargetOptions &Options) {
+/// functionality that's exposed by the C API. Moreover, this provides testing
+/// coverage for modules that have been created in their own contexts.
+static void testLTOModule(const TargetOptions &Options) {
   for (auto &Filename : InputFilenames) {
     std::unique_ptr<MemoryBuffer> Buffer;
     std::unique_ptr<LTOModule> Module =
         getLocalLTOModule(Filename, Buffer, Options);
 
-    // List the symbols.
-    outs() << Filename << ":\n";
-    for (int I = 0, E = Module->getSymbolCount(); I != E; ++I)
-      outs() << Module->getSymbolName(I) << "\n";
+    if (ListSymbolsOnly) {
+      // List the symbols.
+      outs() << Filename << ":\n";
+      for (int I = 0, E = Module->getSymbolCount(); I != E; ++I)
+        outs() << Module->getSymbolName(I) << "\n";
+    }
+    if (QueryHasCtorDtor)
+      outs() << Filename
+             << ": hasCtorDtor = " << (Module->hasCtorDtor() ? "true" : "false")
+             << "\n";
   }
 }
 
@@ -478,12 +488,16 @@ static void createCombinedModuleSummaryIndex() {
         ExitOnErr(errorOrToExpected(MemoryBuffer::getFileOrSTDIN(Filename)));
     ExitOnErr(readModuleSummaryIndex(*MB, CombinedIndex, NextModuleId++));
   }
+  // In order to use this index for testing, specifically import testing, we
+  // need to update any indirect call edges created from SamplePGO, so that they
+  // point to the correct GUIDs.
+  updateIndirectCalls(CombinedIndex);
   std::error_code EC;
   assert(!OutputFilename.empty());
   raw_fd_ostream OS(OutputFilename + ".thinlto.bc", EC,
                     sys::fs::OpenFlags::OF_None);
   error(EC, "error opening the file '" + OutputFilename + ".thinlto.bc'");
-  WriteIndexToFile(CombinedIndex, OS);
+  writeIndexToFile(CombinedIndex, OS);
   OS.close();
 }
 
@@ -590,7 +604,6 @@ public:
     ThinGenerator.setCacheMaxSizeFiles(ThinLTOCacheMaxSizeFiles);
     ThinGenerator.setCacheMaxSizeBytes(ThinLTOCacheMaxSizeBytes);
     ThinGenerator.setFreestanding(EnableFreestanding);
-    ThinGenerator.setUseNewPM(UseNewPM);
     ThinGenerator.setDebugPassManager(DebugPassManager);
 
     // Add all the exported symbols to the table of symbols to preserve.
@@ -646,7 +659,7 @@ private:
     std::error_code EC;
     raw_fd_ostream OS(OutputFilename, EC, sys::fs::OpenFlags::OF_None);
     error(EC, "error opening the file '" + OutputFilename + "'");
-    WriteIndexToFile(*CombinedIndex, OS);
+    writeIndexToFile(*CombinedIndex, OS);
   }
 
   /// Load the combined index from disk, then compute and generate
@@ -684,7 +697,7 @@ private:
       std::error_code EC;
       raw_fd_ostream OS(OutputName, EC, sys::fs::OpenFlags::OF_None);
       error(EC, "error opening the file '" + OutputName + "'");
-      WriteIndexToFile(*Index, OS, &ModuleToSummariesForIndex);
+      writeIndexToFile(*Index, OS, &ModuleToSummariesForIndex);
     }
   }
 
@@ -939,8 +952,8 @@ int main(int argc, char **argv) {
   // set up the TargetOptions for the machine
   TargetOptions Options = codegen::InitTargetOptionsFromCodeGenFlags(Triple());
 
-  if (ListSymbolsOnly) {
-    listSymbols(Options);
+  if (ListSymbolsOnly || QueryHasCtorDtor) {
+    testLTOModule(Options);
     return 0;
   }
 
@@ -1001,6 +1014,7 @@ int main(int argc, char **argv) {
 
   CodeGen.setCodePICModel(codegen::getExplicitRelocModel());
   CodeGen.setFreestanding(EnableFreestanding);
+  CodeGen.setDebugPassManager(DebugPassManager);
 
   CodeGen.setDebugInfo(LTO_DEBUG_MODEL_DWARF);
   CodeGen.setTargetOptions(Options);
@@ -1050,17 +1064,18 @@ int main(int argc, char **argv) {
     CodeGen.addMustPreserveSymbol(KeptDSOSyms[i]);
 
   // Set cpu and attrs strings for the default target/subtarget.
-  CodeGen.setCpu(codegen::getMCPU().c_str());
+  CodeGen.setCpu(codegen::getMCPU());
 
   CodeGen.setOptLevel(OptLevel - '0');
   CodeGen.setAttrs(codegen::getMAttrs());
 
-  CodeGen.setUseNewPM(UseNewPM);
-
   if (auto FT = codegen::getExplicitFileType())
-    CodeGen.setFileType(FT.getValue());
+    CodeGen.setFileType(*FT);
 
   if (!OutputFilename.empty()) {
+    if (LTOSaveBeforeOpt)
+      CodeGen.setSaveIRBeforeOptPath(OutputFilename + ".0.preopt.bc");
+
     if (SaveLinkedModuleFile) {
       std::string ModuleFilename = OutputFilename;
       ModuleFilename += ".linked.bc";
@@ -1085,7 +1100,8 @@ int main(int argc, char **argv) {
     }
 
     auto AddStream =
-        [&](size_t Task) -> std::unique_ptr<lto::NativeObjectStream> {
+        [&](size_t Task,
+            const Twine &ModuleName) -> std::unique_ptr<CachedFileStream> {
       std::string PartFilename = OutputFilename;
       if (Parallelism != 1)
         PartFilename += "." + utostr(Task);
@@ -1095,7 +1111,7 @@ int main(int argc, char **argv) {
           std::make_unique<raw_fd_ostream>(PartFilename, EC, sys::fs::OF_None);
       if (EC)
         error("error opening the file '" + PartFilename + "': " + EC.message());
-      return std::make_unique<lto::NativeObjectStream>(std::move(S));
+      return std::make_unique<CachedFileStream>(std::move(S));
     };
 
     if (!CodeGen.compileOptimized(AddStream, Parallelism))

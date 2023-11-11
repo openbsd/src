@@ -451,6 +451,21 @@ public:
                           MachineFunction &MF,
                           unsigned Intrinsic) const override;
 
+  /// getFunctionParamOptimizedAlign - since function arguments are passed via
+  /// .param space, we may want to increase their alignment in a way that
+  /// ensures that we can effectively vectorize their loads & stores. We can
+  /// increase alignment only if the function has internal or has private
+  /// linkage as for other linkage types callers may already rely on default
+  /// alignment. To allow using 128-bit vectorized loads/stores, this function
+  /// ensures that alignment is 16 or greater.
+  Align getFunctionParamOptimizedAlign(const Function *F, Type *ArgTy,
+                                       const DataLayout &DL) const;
+
+  /// Helper for computing alignment of a device function byval parameter.
+  Align getFunctionByValParamAlign(const Function *F, Type *ArgTy,
+                                   Align InitialAlign,
+                                   const DataLayout &DL) const;
+
   /// isLegalAddressingMode - Return true if the addressing mode represented
   /// by AM is legal for this target, for a load/store of the specified type
   /// Used to guide target specific optimizations, like loop strength
@@ -489,10 +504,11 @@ public:
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;
 
-  std::string getPrototype(const DataLayout &DL, Type *, const ArgListTy &,
-                           const SmallVectorImpl<ISD::OutputArg> &,
-                           MaybeAlign retAlignment, const CallBase &CB,
-                           unsigned UniqueCallSite) const;
+  std::string
+  getPrototype(const DataLayout &DL, Type *, const ArgListTy &,
+               const SmallVectorImpl<ISD::OutputArg> &, MaybeAlign retAlignment,
+               std::optional<std::pair<unsigned, const APInt &>> VAInfo,
+               const CallBase &CB, unsigned UniqueCallSite) const;
 
   SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -549,7 +565,18 @@ public:
   // x == 0 is not undefined behavior) into a branch that checks whether x is 0
   // and avoids calling ctlz in that case.  We have a dedicated ctlz
   // instruction, so we say that ctlz is cheap to speculate.
-  bool isCheapToSpeculateCtlz() const override { return true; }
+  bool isCheapToSpeculateCtlz(Type *Ty) const override { return true; }
+
+  AtomicExpansionKind shouldCastAtomicLoadInIR(LoadInst *LI) const override {
+    return AtomicExpansionKind::None;
+  }
+
+  AtomicExpansionKind shouldCastAtomicStoreInIR(StoreInst *SI) const override {
+    return AtomicExpansionKind::None;
+  }
+
+  AtomicExpansionKind
+  shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
 
 private:
   const NVPTXSubtarget &STI; // cache the subtarget here
@@ -574,6 +601,9 @@ private:
   SDValue LowerShiftLeftParts(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue LowerSelect(SDValue Op, SelectionDAG &DAG) const;
+
+  SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
 
   void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
                           SelectionDAG &DAG) const override;

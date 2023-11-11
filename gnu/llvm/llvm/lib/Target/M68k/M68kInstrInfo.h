@@ -1,4 +1,4 @@
-//===-- M68kInstrInfo.h - M68k Instruction Information ------*- C++ -*-===//
+//===-- M68kInstrInfo.h - M68k Instruction Information ----------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -173,7 +173,7 @@ static inline unsigned IsCMP(unsigned Op) {
   case M68k::CMP8di:
   case M68k::CMP8dj:
   case M68k::CMP8dp:
-  case M68k::CMP16dd:
+  case M68k::CMP16dr:
   case M68k::CMP16df:
   case M68k::CMP16di:
   case M68k::CMP16dj:
@@ -281,12 +281,14 @@ public:
                            MachineBasicBlock::iterator MI, Register SrcReg,
                            bool IsKill, int FrameIndex,
                            const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI) const override;
+                           const TargetRegisterInfo *TRI,
+                           Register VReg) const override;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI, Register DestReg,
                             int FrameIndex, const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI) const override;
+                            const TargetRegisterInfo *TRI,
+                            Register VReg) const override;
 
   bool expandPostRAPseudo(MachineInstr &MI) const override;
 
@@ -336,4 +338,4 @@ public:
 
 } // namespace llvm
 
-#endif
+#endif // LLVM_LIB_TARGET_M68K_M68KINSTRINFO_H

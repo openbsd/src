@@ -49,6 +49,7 @@ static_library("LLVMPowerPCCodeGen") {
     "//llvm/lib/MC",
     "//llvm/lib/Support",
     "//llvm/lib/Target",
+    "//llvm/lib/TargetParser",
     "//llvm/lib/Transforms/Utils",
   ]
   include_dirs = [ "." ]
@@ -63,12 +64,14 @@ static_library("LLVMPowerPCCodeGen") {
     "PPCBranchSelector.cpp",
     "PPCCCState.cpp",
     "PPCCTRLoops.cpp",
+    "PPCCTRLoopsVerify.cpp",
     "PPCCallingConv.cpp",
     "PPCEarlyReturn.cpp",
     "PPCExpandAtomicPseudoInsts.cpp",
     "PPCExpandISEL.cpp",
     "PPCFastISel.cpp",
     "PPCFrameLowering.cpp",
+    "PPCGenScalarMASSEntries.cpp",
     "PPCHazardRecognizers.cpp",
     "PPCISelDAGToDAG.cpp",
     "PPCISelLowering.cpp",

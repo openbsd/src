@@ -126,11 +126,35 @@ OPTIONS
 
  Use BSD output format. Alias for ``--format=bsd``.
 
+.. option:: -X
+
+ Specify the type of XCOFF object file, ELF object file, or IR object file input
+ from command line or from archive files that llvm-nm should examine. The
+ mode must be one of the following:
+ 
+   32
+         Process only 32-bit object files.
+   64
+         Process only 64-bit object files.
+   32_64
+         Process both 32-bit and 64-bit object files.
+   any
+         Process all the supported object files.
+
+  On AIX OS, the default is to process 32-bit object files only and to ignore
+  64-bit objects. The can be changed by setting the OBJECT_MODE environment
+  variable. For example, OBJECT_MODE=64 causes :program:`llvm-nm` to process
+  64-bit objects and ignore 32-bit objects. The -X flag overrides the OBJECT_MODE
+  variable.
+
+  On other operating systems, the default is to process all object files: the
+  OBJECT_MODE environment variable is not supported.
+
 .. option:: --debug-syms, -a
 
  Show all symbols, even those usually suppressed.
 
-.. option:: --defined-only
+.. option:: --defined-only, -U
 
  Print only symbols defined in this file.
 
@@ -141,6 +165,11 @@ OPTIONS
 .. option:: --dynamic, -D
 
  Display dynamic symbols instead of normal symbols.
+
+.. option:: --export-symbols
+
+ Print sorted symbols with their visibility (if applicable), with duplicates
+ removed.
 
 .. option:: --extern-only, -g
 
@@ -177,7 +206,7 @@ OPTIONS
 
  Show symbols in the order encountered.
 
-.. option:: --no-weak
+.. option:: --no-weak, -W
 
  Don't print weak symbols.
 
@@ -266,6 +295,13 @@ MACH-O SPECIFIC OPTIONS
 .. option:: -x
 
  Print symbol entry in hex.
+
+XCOFF SPECIFIC OPTIONS
+----------------------
+
+.. option:: --no-rsrc
+
+  Exclude resource file symbols (``__rsrc``) from export symbol list.
 
 BUGS
 ----

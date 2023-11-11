@@ -11,6 +11,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/DebugInfo/Symbolize/SymbolizableModule.h"
 #include "llvm/DebugInfo/Symbolize/Symbolize.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
@@ -22,6 +23,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/COFF.h"
@@ -41,7 +43,6 @@
 #include "llvm/Support/SHA1.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/SpecialCaseList.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/YAMLParser.h"
@@ -55,6 +56,8 @@ using namespace llvm;
 namespace {
 
 // --------- COMMAND LINE FLAGS ---------
+
+cl::OptionCategory Cat("sancov Options");
 
 enum ActionType {
   CoveredFunctionsAction,
@@ -83,35 +86,41 @@ cl::opt<ActionType> Action(
                    "REMOVED. Use -symbolize & coverage-report-server.py."),
         clEnumValN(SymbolizeAction, "symbolize",
                    "Produces a symbolized JSON report from binary report."),
-        clEnumValN(MergeAction, "merge", "Merges reports.")));
+        clEnumValN(MergeAction, "merge", "Merges reports.")),
+    cl::cat(Cat));
 
 static cl::list<std::string>
     ClInputFiles(cl::Positional, cl::OneOrMore,
                  cl::desc("<action> <binary files...> <.sancov files...> "
-                          "<.symcov files...>"));
+                          "<.symcov files...>"),
+                 cl::cat(Cat));
 
 static cl::opt<bool> ClDemangle("demangle", cl::init(true),
-                                cl::desc("Print demangled function name."));
+                                cl::desc("Print demangled function name"),
+                                cl::cat(Cat));
 
 static cl::opt<bool>
     ClSkipDeadFiles("skip-dead-files", cl::init(true),
-                    cl::desc("Do not list dead source files in reports."));
-
-static cl::opt<std::string> ClStripPathPrefix(
-    "strip_path_prefix", cl::init(""),
-    cl::desc("Strip this prefix from file paths in reports."));
+                    cl::desc("Do not list dead source files in reports"),
+                    cl::cat(Cat));
 
 static cl::opt<std::string>
-    ClBlacklist("blacklist", cl::init(""),
-                cl::desc("Blacklist file (sanitizer blacklist format)."));
+    ClStripPathPrefix("strip_path_prefix", cl::init(""),
+                      cl::desc("Strip this prefix from file paths in reports"),
+                      cl::cat(Cat));
 
-static cl::opt<bool> ClUseDefaultBlacklist(
-    "use_default_blacklist", cl::init(true), cl::Hidden,
-    cl::desc("Controls if default blacklist should be used."));
+static cl::opt<std::string>
+    ClIgnorelist("ignorelist", cl::init(""),
+                 cl::desc("Ignorelist file (sanitizer ignorelist format)"),
+                 cl::cat(Cat));
 
-static const char *const DefaultBlacklistStr = "fun:__sanitizer_.*\n"
-                                               "src:/usr/include/.*\n"
-                                               "src:.*/libc\\+\\+/.*\n";
+static cl::opt<bool> ClUseDefaultIgnorelist(
+    "use_default_ignorelist", cl::init(true), cl::Hidden,
+    cl::desc("Controls if default ignorelist should be used"), cl::cat(Cat));
+
+static const char *const DefaultIgnorelistStr = "fun:__sanitizer_.*\n"
+                                                "src:/usr/include/.*\n"
+                                                "src:.*/libc\\+\\+/.*\n";
 
 // --------- FORMAT SPECIFICATION ---------
 
@@ -472,48 +481,48 @@ static std::string normalizeFilename(const std::string &FileName) {
   return stripPathPrefix(sys::path::convert_to_slash(std::string(S)));
 }
 
-class Blacklists {
+class Ignorelists {
 public:
-  Blacklists()
-      : DefaultBlacklist(createDefaultBlacklist()),
-        UserBlacklist(createUserBlacklist()) {}
+  Ignorelists()
+      : DefaultIgnorelist(createDefaultIgnorelist()),
+        UserIgnorelist(createUserIgnorelist()) {}
 
-  bool isBlacklisted(const DILineInfo &I) {
-    if (DefaultBlacklist &&
-        DefaultBlacklist->inSection("sancov", "fun", I.FunctionName))
+  bool isIgnorelisted(const DILineInfo &I) {
+    if (DefaultIgnorelist &&
+        DefaultIgnorelist->inSection("sancov", "fun", I.FunctionName))
       return true;
-    if (DefaultBlacklist &&
-        DefaultBlacklist->inSection("sancov", "src", I.FileName))
+    if (DefaultIgnorelist &&
+        DefaultIgnorelist->inSection("sancov", "src", I.FileName))
       return true;
-    if (UserBlacklist &&
-        UserBlacklist->inSection("sancov", "fun", I.FunctionName))
+    if (UserIgnorelist &&
+        UserIgnorelist->inSection("sancov", "fun", I.FunctionName))
       return true;
-    if (UserBlacklist && UserBlacklist->inSection("sancov", "src", I.FileName))
+    if (UserIgnorelist &&
+        UserIgnorelist->inSection("sancov", "src", I.FileName))
       return true;
     return false;
   }
 
 private:
-  static std::unique_ptr<SpecialCaseList> createDefaultBlacklist() {
-    if (!ClUseDefaultBlacklist)
+  static std::unique_ptr<SpecialCaseList> createDefaultIgnorelist() {
+    if (!ClUseDefaultIgnorelist)
       return std::unique_ptr<SpecialCaseList>();
     std::unique_ptr<MemoryBuffer> MB =
-        MemoryBuffer::getMemBuffer(DefaultBlacklistStr);
+        MemoryBuffer::getMemBuffer(DefaultIgnorelistStr);
     std::string Error;
-    auto Blacklist = SpecialCaseList::create(MB.get(), Error);
+    auto Ignorelist = SpecialCaseList::create(MB.get(), Error);
     failIfNotEmpty(Error);
-    return Blacklist;
+    return Ignorelist;
   }
 
-  static std::unique_ptr<SpecialCaseList> createUserBlacklist() {
-    if (ClBlacklist.empty())
+  static std::unique_ptr<SpecialCaseList> createUserIgnorelist() {
+    if (ClIgnorelist.empty())
       return std::unique_ptr<SpecialCaseList>();
-
-    return SpecialCaseList::createOrDie({{ClBlacklist}},
+    return SpecialCaseList::createOrDie({{ClIgnorelist}},
                                         *vfs::getRealFileSystem());
   }
-  std::unique_ptr<SpecialCaseList> DefaultBlacklist;
-  std::unique_ptr<SpecialCaseList> UserBlacklist;
+  std::unique_ptr<SpecialCaseList> DefaultIgnorelist;
+  std::unique_ptr<SpecialCaseList> UserIgnorelist;
 };
 
 static std::vector<CoveragePoint>
@@ -522,7 +531,7 @@ getCoveragePoints(const std::string &ObjectFile,
                   const std::set<uint64_t> &CoveredAddrs) {
   std::vector<CoveragePoint> Result;
   auto Symbolizer(createSymbolizer());
-  Blacklists B;
+  Ignorelists Ig;
 
   std::set<std::string> CoveredFiles;
   if (ClSkipDeadFiles) {
@@ -560,7 +569,7 @@ getCoveragePoints(const std::string &ObjectFile,
         CoveredFiles.find(LineInfo->FileName) == CoveredFiles.end())
       continue;
     LineInfo->FileName = normalizeFilename(LineInfo->FileName);
-    if (B.isBlacklisted(*LineInfo))
+    if (Ig.isIgnorelisted(*LineInfo))
       continue;
 
     auto Id = utohexstr(Addr, true);
@@ -577,7 +586,7 @@ getCoveragePoints(const std::string &ObjectFile,
           CoveredFiles.find(FrameInfo.FileName) == CoveredFiles.end())
         continue;
       FrameInfo.FileName = normalizeFilename(FrameInfo.FileName);
-      if (B.isBlacklisted(FrameInfo))
+      if (Ig.isIgnorelisted(FrameInfo))
         continue;
       if (Infos.find(FrameInfo) == Infos.end()) {
         Infos.insert(FrameInfo);
@@ -687,17 +696,20 @@ findSanitizerCovFunctions(const object::ObjectFile &O) {
   return Result;
 }
 
+// Ported from
+// compiler-rt/lib/sanitizer_common/sanitizer_stacktrace.h:GetPreviousInstructionPc
+// GetPreviousInstructionPc.
 static uint64_t getPreviousInstructionPc(uint64_t PC,
                                          Triple TheTriple) {
-  if (TheTriple.isARM()) {
+  if (TheTriple.isARM())
     return (PC - 3) & (~1);
-  } else if (TheTriple.isAArch64()) {
-    return PC - 4;
-  } else if (TheTriple.isMIPS()) {
+  if (TheTriple.isMIPS() || TheTriple.isSPARC())
     return PC - 8;
-  } else {
+  if (TheTriple.isRISCV())
+    return PC - 2;
+  if (TheTriple.isX86() || TheTriple.isSystemZ())
     return PC - 1;
-  }
+  return PC - 4;
 }
 
 // Locate addresses of all coverage points in a file. Coverage point
@@ -757,10 +769,13 @@ static void getObjectCoveragePoints(const object::ObjectFile &O,
     for (uint64_t Index = 0, Size = 0; Index < Section.getSize();
          Index += Size) {
       MCInst Inst;
-      if (!DisAsm->getInstruction(Inst, Size, Bytes.slice(Index),
-                                  SectionAddr + Index, nulls())) {
+      ArrayRef<uint8_t> ThisBytes = Bytes.slice(Index);
+      uint64_t ThisAddr = SectionAddr + Index;
+      if (!DisAsm->getInstruction(Inst, Size, ThisBytes, ThisAddr, nulls())) {
         if (Size == 0)
-          Size = 1;
+          Size = std::min<uint64_t>(
+              ThisBytes.size(),
+              DisAsm->suggestBytesToSkip(ThisBytes, ThisAddr));
         continue;
       }
       uint64_t Addr = Index + SectionAddr;
@@ -874,7 +889,7 @@ symbolize(const RawCoverage &Data, const std::string ObjectFile) {
   Hasher.update((*BufOrErr)->getBuffer());
   Coverage->BinaryHash = toHex(Hasher.final());
 
-  Blacklists B;
+  Ignorelists Ig;
   auto Symbolizer(createSymbolizer());
 
   for (uint64_t Addr : *Data.Addrs) {
@@ -883,7 +898,7 @@ symbolize(const RawCoverage &Data, const std::string ObjectFile) {
     auto LineInfo = Symbolizer->symbolizeCode(
         ObjectFile, {Addr, object::SectionedAddress::UndefSection});
     failIfError(LineInfo);
-    if (B.isBlacklisted(*LineInfo))
+    if (Ig.isIgnorelisted(*LineInfo))
       continue;
 
     Coverage->CoveredIds.insert(utohexstr(Addr, true));
@@ -1132,6 +1147,7 @@ readSymbolizeAndMergeCmdArguments(std::vector<std::string> FileNames) {
 
 int main(int Argc, char **Argv) {
   llvm::InitLLVM X(Argc, Argv);
+  cl::HideUnrelatedOptions(Cat);
 
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();

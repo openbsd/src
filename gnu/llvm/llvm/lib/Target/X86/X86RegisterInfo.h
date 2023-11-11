@@ -115,13 +115,25 @@ public:
   /// register scavenger to determine what registers are free.
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 
+  /// isArgumentReg - Returns true if Reg can be used as an argument to a
+  /// function.
+  bool isArgumentRegister(const MachineFunction &MF,
+                          MCRegister Reg) const override;
+
+  /// Return true if it is tile register class.
+  bool isTileRegisterClass(const TargetRegisterClass *RC) const;
+
+  /// Returns true if PhysReg is a fixed register.
+  bool isFixedRegister(const MachineFunction &MF,
+                       MCRegister PhysReg) const override;
+
   void adjustStackMapLiveOutMask(uint32_t *Mask) const override;
 
   bool hasBasePointer(const MachineFunction &MF) const;
 
   bool canRealignStack(const MachineFunction &MF) const override;
 
-  void eliminateFrameIndex(MachineBasicBlock::iterator MI,
+  bool eliminateFrameIndex(MachineBasicBlock::iterator MI,
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;
 

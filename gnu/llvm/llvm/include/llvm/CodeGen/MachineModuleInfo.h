@@ -30,7 +30,6 @@
 #ifndef LLVM_CODEGEN_MACHINEMODULEINFO_H
 #define LLVM_CODEGEN_MACHINEMODULEINFO_H
 
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/IR/PassManager.h"
@@ -43,11 +42,8 @@
 
 namespace llvm {
 
-class BasicBlock;
-class CallInst;
 class Function;
 class LLVMTargetMachine;
-class MMIAddrLabelMap;
 class MachineFunction;
 class Module;
 
@@ -98,18 +94,10 @@ class MachineModuleInfo {
   /// \name Exception Handling
   /// \{
 
-  /// Vector of all personality functions ever seen. Used to emit common EH
-  /// frames.
-  std::vector<const Function *> Personalities;
-
   /// The current call site index being processed, if any. 0 if none.
   unsigned CurCallSite;
 
   /// \}
-
-  /// This map keeps track of which symbol is being used for the specified
-  /// basic block's address of label.
-  MMIAddrLabelMap *AddrLabelSymbols;
 
   // TODO: Ideally, what we'd like is to have a switch that allows emitting
   // synchronous (precise at call-sites only) CFA into .eh_frame. However,
@@ -123,22 +111,6 @@ class MachineModuleInfo {
   /// True if this module is being built for windows/msvc, and uses floating
   /// point.  This is used to emit an undefined reference to _fltused.
   bool UsesMSVCFloatingPoint;
-
-  /// True if the module calls the __morestack function indirectly, as is
-  /// required under the large code model on x86. This is used to emit
-  /// a definition of a symbol, __morestack_addr, containing the address. See
-  /// comments in lib/Target/X86/X86FrameLowering.cpp for more details.
-  bool UsesMorestackAddr;
-
-  /// True if the module contains split-stack functions. This is used to
-  /// emit .note.GNU-split-stack section as required by the linker for
-  /// special handling split-stack function calling no-split-stack function.
-  bool HasSplitStack;
-
-  /// True if the module contains no-split-stack functions. This is used to
-  /// emit .note.GNU-no-split-stack section when it also contains split-stack
-  /// functions.
-  bool HasNosplitStack;
 
   /// Maps IR Functions to their corresponding MachineFunctions.
   DenseMap<const Function*, std::unique_ptr<MachineFunction>> MachineFunctions;
@@ -185,6 +157,9 @@ public:
   /// Machine Function map.
   void deleteMachineFunctionFor(Function &F);
 
+  /// Add an externally created MachineFunction \p MF for \p F.
+  void insertFunction(const Function &F, std::unique_ptr<MachineFunction> &&MF);
+
   /// Keep track of various per-module pieces of information for backends
   /// that would like to do so.
   template<typename Ty>
@@ -201,54 +176,10 @@ public:
 
   /// Returns true if valid debug info is present.
   bool hasDebugInfo() const { return DbgInfoAvailable; }
-  void setDebugInfoAvailability(bool avail) { DbgInfoAvailable = avail; }
 
   bool usesMSVCFloatingPoint() const { return UsesMSVCFloatingPoint; }
 
   void setUsesMSVCFloatingPoint(bool b) { UsesMSVCFloatingPoint = b; }
-
-  bool usesMorestackAddr() const {
-    return UsesMorestackAddr;
-  }
-
-  void setUsesMorestackAddr(bool b) {
-    UsesMorestackAddr = b;
-  }
-
-  bool hasSplitStack() const {
-    return HasSplitStack;
-  }
-
-  void setHasSplitStack(bool b) {
-    HasSplitStack = b;
-  }
-
-  bool hasNosplitStack() const {
-    return HasNosplitStack;
-  }
-
-  void setHasNosplitStack(bool b) {
-    HasNosplitStack = b;
-  }
-
-  /// Return the symbol to be used for the specified basic block when its
-  /// address is taken.  This cannot be its normal LBB label because the block
-  /// may be accessed outside its containing function.
-  MCSymbol *getAddrLabelSymbol(const BasicBlock *BB) {
-    return getAddrLabelSymbolToEmit(BB).front();
-  }
-
-  /// Return the symbol to be used for the specified basic block when its
-  /// address is taken.  If other blocks were RAUW'd to this one, we may have
-  /// to emit them as well, return the whole set.
-  ArrayRef<MCSymbol *> getAddrLabelSymbolToEmit(const BasicBlock *BB);
-
-  /// If the specified function has had any references to address-taken blocks
-  /// generated, but the block got deleted, return the symbol now so we can
-  /// emit it.  This prevents emitting a reference to a symbol that has no
-  /// definition.
-  void takeDeletedSymbolsForFunction(const Function *F,
-                                     std::vector<MCSymbol*> &Result);
 
   /// \name Exception Handling
   /// \{
@@ -260,13 +191,6 @@ public:
   /// none.
   unsigned getCurrentCallSite() { return CurCallSite; }
 
-  /// Provide the personality function for the exception information.
-  void addPersonality(const Function *Personality);
-
-  /// Return array of personality functions ever seen.
-  const std::vector<const Function *>& getPersonalities() const {
-    return Personalities;
-  }
   /// \}
 
   // MMI owes MCContext. It should never be invalidated.

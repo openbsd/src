@@ -30,8 +30,9 @@ static bool isArithmeticBccPair(const MachineInstr *FirstMI,
 
   // If we're in CmpOnly mode, we only fuse arithmetic instructions that
   // discard their result.
-  if (CmpOnly && !(FirstMI->getOperand(0).getReg() == AArch64::XZR ||
-                   FirstMI->getOperand(0).getReg() == AArch64::WZR)) {
+  if (CmpOnly && FirstMI->getOperand(0).isReg() &&
+      !(FirstMI->getOperand(0).getReg() == AArch64::XZR ||
+        FirstMI->getOperand(0).getReg() == AArch64::WZR)) {
     return false;
   }
 
@@ -157,16 +158,19 @@ static bool isCryptoEORPair(const MachineInstr *FirstMI,
   return false;
 }
 
+static bool isAdrpAddPair(const MachineInstr *FirstMI,
+                          const MachineInstr &SecondMI) {
+  // Assume the 1st instr to be a wildcard if it is unspecified.
+  if ((FirstMI == nullptr || FirstMI->getOpcode() == AArch64::ADRP) &&
+      SecondMI.getOpcode() == AArch64::ADDXri)
+    return true;
+  return false;
+}
+
 /// Literal generation.
 static bool isLiteralsPair(const MachineInstr *FirstMI,
                            const MachineInstr &SecondMI) {
   // Assume the 1st instr to be a wildcard if it is unspecified.
-
-  // PC relative address.
-  if ((FirstMI == nullptr || FirstMI->getOpcode() == AArch64::ADRP) &&
-      SecondMI.getOpcode() == AArch64::ADDXri)
-    return true;
-
   // 32 bit immediate.
   if ((FirstMI == nullptr || FirstMI->getOpcode() == AArch64::MOVZWi) &&
       (SecondMI.getOpcode() == AArch64::MOVKWi &&
@@ -396,6 +400,8 @@ static bool shouldScheduleAdjacent(const TargetInstrInfo &TII,
   if (ST.hasFuseAES() && isAESPair(FirstMI, SecondMI))
     return true;
   if (ST.hasFuseCryptoEOR() && isCryptoEORPair(FirstMI, SecondMI))
+    return true;
+  if (ST.hasFuseAdrpAdd() && isAdrpAddPair(FirstMI, SecondMI))
     return true;
   if (ST.hasFuseLiterals() && isLiteralsPair(FirstMI, SecondMI))
     return true;

@@ -19,13 +19,14 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "wasm-mc-target-desc"
 
 #define GET_INSTRINFO_MC_DESC
+#define ENABLE_INSTR_PREDICATE_VERIFIER
 #include "WebAssemblyGenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_MC_DESC
@@ -62,7 +63,6 @@ static MCInstPrinter *createMCInstPrinter(const Triple & /*T*/,
 }
 
 static MCCodeEmitter *createCodeEmitter(const MCInstrInfo &MCII,
-                                        const MCRegisterInfo & /*MRI*/,
                                         MCContext &Ctx) {
   return createWebAssemblyMCCodeEmitter(MCII);
 }

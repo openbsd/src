@@ -6,10 +6,17 @@ clang_tablegen("Opcodes") {
   td_file = "Interp/Opcodes.td"
 }
 
+clang_tablegen("AttrDocTable") {
+  visibility = [ ":AST" ]
+  args = [ "-gen-clang-attr-doc-table" ]
+  td_file = "//clang/include/clang/Basic/Attr.td"
+}
+
 static_library("AST") {
   output_name = "clangAST"
   configs += [ "//llvm/utils/gn/build:clang_code" ]
   deps = [
+    ":AttrDocTable",
     ":Opcodes",
     "//clang/include/clang/AST:AttrImpl",
     "//clang/include/clang/AST:AttrNodeTraverse",
@@ -24,6 +31,7 @@ static_library("AST") {
     "//llvm/lib/BinaryFormat",
     "//llvm/lib/Frontend/OpenMP",
     "//llvm/lib/Support",
+    "//llvm/lib/TargetParser",
   ]
 
   # Generated files used in public headers should be in public_deps, the rest
@@ -51,6 +59,7 @@ static_library("AST") {
     "ASTImporterLookupTable.cpp",
     "ASTStructuralEquivalence.cpp",
     "ASTTypeTraits.cpp",
+    "AttrDocTable.cpp",
     "AttrImpl.cpp",
     "CXXInheritance.cpp",
     "Comment.cpp",
@@ -111,6 +120,7 @@ static_library("AST") {
     "MicrosoftMangle.cpp",
     "NSAPI.cpp",
     "NestedNameSpecifier.cpp",
+    "ODRDiagsEmitter.cpp",
     "ODRHash.cpp",
     "OSLog.cpp",
     "OpenMPClause.cpp",
@@ -118,6 +128,7 @@ static_library("AST") {
     "ParentMapContext.cpp",
     "PrintfFormatString.cpp",
     "QualTypeNames.cpp",
+    "Randstruct.cpp",
     "RawCommentList.cpp",
     "RecordLayout.cpp",
     "RecordLayoutBuilder.cpp",

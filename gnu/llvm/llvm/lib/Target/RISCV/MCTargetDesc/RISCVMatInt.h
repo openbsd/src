@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_TARGET_RISCV_MATINT_H
-#define LLVM_LIB_TARGET_RISCV_MATINT_H
+#ifndef LLVM_LIB_TARGET_RISCV_MCTARGETDESC_MATINT_H
+#define LLVM_LIB_TARGET_RISCV_MCTARGETDESC_MATINT_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/SubtargetFeature.h"
@@ -15,14 +15,29 @@
 
 namespace llvm {
 class APInt;
-class MCSubtargetInfo;
 
 namespace RISCVMatInt {
-struct Inst {
-  unsigned Opc;
-  int64_t Imm;
 
-  Inst(unsigned Opc, int64_t Imm) : Opc(Opc), Imm(Imm) {}
+enum OpndKind {
+  RegImm, // ADDI/ADDIW/SLLI/SRLI/BSETI/BCLRI
+  Imm,    // LUI
+  RegReg, // SH1ADD/SH2ADD/SH3ADD
+  RegX0,  // ADD_UW
+};
+
+class Inst {
+  unsigned Opc;
+  int32_t Imm; // The largest value we need to store is 20 bits.
+
+public:
+  Inst(unsigned Opc, int64_t I) : Opc(Opc), Imm(I) {
+    assert(I == Imm && "truncated");
+  }
+
+  unsigned getOpcode() const { return Opc; }
+  int64_t getImm() const { return Imm; }
+
+  OpndKind getOpndKind() const;
 };
 using InstSeq = SmallVector<Inst, 8>;
 

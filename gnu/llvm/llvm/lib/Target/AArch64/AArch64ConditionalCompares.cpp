@@ -18,7 +18,6 @@
 
 #include "AArch64.h"
 #include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
@@ -247,8 +246,8 @@ void SSACCmpConv::updateTailPHIs() {
     for (unsigned oi = I.getNumOperands(); oi > 2; oi -= 2) {
       // PHI operands are (Reg, MBB) at (oi-2, oi-1).
       if (I.getOperand(oi - 1).getMBB() == CmpBB) {
-        I.RemoveOperand(oi - 1);
-        I.RemoveOperand(oi - 2);
+        I.removeOperand(oi - 1);
+        I.removeOperand(oi - 2);
       }
     }
   }
@@ -333,7 +332,7 @@ MachineInstr *SSACCmpConv::findConvertibleCompare(MachineBasicBlock *MBB) {
         ++NumImmRangeRejs;
         return nullptr;
       }
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case AArch64::SUBSWrr:
     case AArch64::SUBSXrr:
     case AArch64::ADDSWrr:

@@ -14,14 +14,13 @@
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFDEBUG_H
 
 #include "AddressPool.h"
-#include "DebugLocStream.h"
 #include "DebugLocEntry.h"
+#include "DebugLocStream.h"
 #include "DwarfFile.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -31,7 +30,6 @@
 #include "llvm/CodeGen/AccelTable.h"
 #include "llvm/CodeGen/DbgEntityHistoryCalculator.h"
 #include "llvm/CodeGen/DebugHandlerBase.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Metadata.h"
@@ -65,39 +63,40 @@ class Module;
 /// such that it could levarage polymorphism to extract common code for
 /// DbgVariable and DbgLabel.
 class DbgEntity {
-  const DINode *Entity;
-  const DILocation *InlinedAt;
-  DIE *TheDIE = nullptr;
-  unsigned SubclassID;
-
 public:
   enum DbgEntityKind {
     DbgVariableKind,
     DbgLabelKind
   };
 
-  DbgEntity(const DINode *N, const DILocation *IA, unsigned ID)
-    : Entity(N), InlinedAt(IA), SubclassID(ID) {}
-  virtual ~DbgEntity() {}
+private:
+  const DINode *Entity;
+  const DILocation *InlinedAt;
+  DIE *TheDIE = nullptr;
+  const DbgEntityKind SubclassID;
+
+public:
+  DbgEntity(const DINode *N, const DILocation *IA, DbgEntityKind ID)
+      : Entity(N), InlinedAt(IA), SubclassID(ID) {}
+  virtual ~DbgEntity() = default;
 
   /// Accessors.
   /// @{
   const DINode *getEntity() const { return Entity; }
   const DILocation *getInlinedAt() const { return InlinedAt; }
   DIE *getDIE() const { return TheDIE; }
-  unsigned getDbgEntityID() const { return SubclassID; }
+  DbgEntityKind getDbgEntityID() const { return SubclassID; }
   /// @}
 
   void setDIE(DIE &D) { TheDIE = &D; }
 
   static bool classof(const DbgEntity *N) {
     switch (N->getDbgEntityID()) {
-    default:
-      return false;
     case DbgVariableKind:
     case DbgLabelKind:
       return true;
     }
+    llvm_unreachable("Invalid DbgEntityKind");
   }
 };
 
@@ -117,7 +116,7 @@ class DbgVariable : public DbgEntity {
   /// Index of the entry list in DebugLocs.
   unsigned DebugLocListIndex = ~0u;
   /// DW_OP_LLVM_tag_offset value from DebugLocs.
-  Optional<uint8_t> DebugLocListTagOffset;
+  std::optional<uint8_t> DebugLocListTagOffset;
 
   /// Single value location description.
   std::unique_ptr<DbgValueLoc> ValueLoc = nullptr;
@@ -176,7 +175,9 @@ public:
   void setDebugLocListIndex(unsigned O) { DebugLocListIndex = O; }
   unsigned getDebugLocListIndex() const { return DebugLocListIndex; }
   void setDebugLocListTagOffset(uint8_t O) { DebugLocListTagOffset = O; }
-  Optional<uint8_t> getDebugLocListTagOffset() const { return DebugLocListTagOffset; }
+  std::optional<uint8_t> getDebugLocListTagOffset() const {
+    return DebugLocListTagOffset;
+  }
   StringRef getName() const { return getVariable()->getName(); }
   const DbgValueLoc *getValueLoc() const { return ValueLoc.get(); }
   /// Get the FI entries, sorted by fragment offset.
@@ -612,7 +613,7 @@ private:
                          DenseSet<InlinedEntity> &ProcessedVars);
 
   /// Build the location list for all DBG_VALUEs in the
-  /// function that describe the same variable. If the resulting 
+  /// function that describe the same variable. If the resulting
   /// list has only one entry that is valid for entire variable's
   /// scope return true.
   bool buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
@@ -631,6 +632,9 @@ protected:
 
   /// Gather and emit post-function debug information.
   void endFunctionImpl(const MachineFunction *MF) override;
+
+  /// Get Dwarf compile unit ID for line table.
+  unsigned getDwarfCompileUnitIDForLineTable(const DwarfCompileUnit &CU);
 
   void skippedNonDebugFunction() override;
 
@@ -662,19 +666,6 @@ public:
   /// type units.
   void addDwarfTypeUnitType(DwarfCompileUnit &CU, StringRef Identifier,
                             DIE &Die, const DICompositeType *CTy);
-
-  class NonTypeUnitContext {
-    DwarfDebug *DD;
-    decltype(DwarfDebug::TypeUnitsUnderConstruction) TypeUnitsUnderConstruction;
-    bool AddrPoolUsed;
-    friend class DwarfDebug;
-    NonTypeUnitContext(DwarfDebug *DD);
-  public:
-    NonTypeUnitContext(NonTypeUnitContext&&) = default;
-    ~NonTypeUnitContext();
-  };
-
-  NonTypeUnitContext enterNonTypeUnitContext();
 
   /// Add a label so that arange data can be generated for it.
   void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }
@@ -778,6 +769,9 @@ public:
   const DwarfCompileUnit *getPrevCU() const { return PrevCU; }
   void setPrevCU(const DwarfCompileUnit *PrevCU) { this->PrevCU = PrevCU; }
 
+  /// Terminate the line table by adding the last range label.
+  void terminateLineTable(const DwarfCompileUnit *CU);
+
   /// Returns the entries for the .debug_loc section.
   const DebugLocStream &getDebugLocs() const { return DebugLocs; }
 
@@ -847,7 +841,7 @@ public:
 
   /// If the \p File has an MD5 checksum, return it as an MD5Result
   /// allocated in the MCContext.
-  Optional<MD5::MD5Result> getMD5AsBytes(const DIFile *File) const;
+  std::optional<MD5::MD5Result> getMD5AsBytes(const DIFile *File) const;
 };
 
 } // end namespace llvm

@@ -16,8 +16,8 @@ concepts. This document provides an overview of the general usage of the back-
 end, including a description of the conventions used and the set of accepted
 LLVM IR.
 
-.. note:: 
-   
+.. note::
+
    This document assumes a basic familiarity with CUDA and the PTX
    assembly language. Information about the CUDA Driver API and the PTX assembly
    language can be found in the `CUDA documentation
@@ -328,14 +328,16 @@ optimization pipeline before dead-code elimination.
 
 The NVPTX TargetMachine knows how to schedule ``NVVMReflect`` at the beginning
 of your pass manager; just use the following code when setting up your pass
-manager:
+manager and the PassBuilder will use ``registerPassBuilderCallbacks`` to let
+NVPTXTargetMachine::registerPassBuilderCallbacks add the the pass to the
+pass manager:
 
 .. code-block:: c++
 
     std::unique_ptr<TargetMachine> TM = ...;
-    PassManagerBuilder PMBuilder(...);
-    if (TM)
-      TM->adjustPassManager(PMBuilder);
+    PassBuilder PB(TM);
+    ModulePassManager MPM;
+    PB.parsePassPipeline(MPM, ...);
 
 Reflection Parameters
 ---------------------
@@ -519,7 +521,7 @@ The output we get from ``llc`` (as of LLVM 3.4):
 Dissecting the Kernel
 ---------------------
 
-Now let us dissect the LLVM IR that makes up this kernel. 
+Now let us dissect the LLVM IR that makes up this kernel.
 
 Data Layout
 ^^^^^^^^^^^
@@ -969,4 +971,3 @@ This gives us the following PTX (excerpt):
     st.global.f32   [%rl1], %f110;
     ret;
   }
-

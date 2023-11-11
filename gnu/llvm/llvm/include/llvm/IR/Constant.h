@@ -111,13 +111,13 @@ public:
   /// elements.
   bool containsPoisonElement() const;
 
+  /// Return true if this is a vector constant that includes any strictly undef
+  /// (not poison) elements.
+  bool containsUndefElement() const;
+
   /// Return true if this is a fixed width vector constant that includes
   /// any constant expressions.
   bool containsConstantExpression() const;
-
-  /// Return true if evaluation of this constant could trap. This is true for
-  /// things like constant expressions that could divide by zero.
-  bool canTrap() const;
 
   /// Return true if the value can vary between threads.
   bool isThreadDependent() const;
@@ -198,6 +198,18 @@ public:
   /// hanging off of the globals.
   void removeDeadConstantUsers() const;
 
+  /// Return true if the constant has exactly one live use.
+  ///
+  /// This returns the same result as calling Value::hasOneUse after
+  /// Constant::removeDeadConstantUsers, but doesn't remove dead constants.
+  bool hasOneLiveUse() const;
+
+  /// Return true if the constant has no live uses.
+  ///
+  /// This returns the same result as calling Value::use_empty after
+  /// Constant::removeDeadConstantUsers, but doesn't remove dead constants.
+  bool hasZeroLiveUses() const;
+
   const Constant *stripPointerCasts() const {
     return cast<Constant>(Value::stripPointerCasts());
   }
@@ -238,6 +250,8 @@ private:
 
   /// Determine what potential relocations may be needed by this constant.
   PossibleRelocationsTy getRelocationInfo() const;
+
+  bool hasNLiveUses(unsigned N) const;
 };
 
 } // end namespace llvm

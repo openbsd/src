@@ -182,6 +182,11 @@ option specifies "``-``", then the output will also be sent to standard output.
 
   Enable the printing of instruction encodings within the instruction info view.
 
+.. option:: -show-barriers
+
+  Enable the printing of LoadBarrier and StoreBarrier flags within the
+  instruction info view.
+
 .. option:: -all-stats
 
   Print all hardware statistics. This enables extra statistics related to the
@@ -217,9 +222,17 @@ option specifies "``-``", then the output will also be sent to standard output.
 
 .. option:: -disable-cb
 
-  Force usage of the generic CustomBehaviour class rather than using the target
-  specific class. The generic class never detects any custom hazards.
+  Force usage of the generic CustomBehaviour and InstrPostProcess classes rather
+  than using the target specific implementation. The generic classes never
+  detect any custom hazards or make any post processing modifications to
+  instructions.
 
+.. option:: -disable-im
+
+  Force usage of the generic InstrumentManager rather than using the target
+  specific implementation. The generic class creates Instruments that provide
+  no extra information, and InstrumentManager never overrides the default
+  schedule class for a given instruction.
 
 EXIT STATUS
 -----------
@@ -231,9 +244,9 @@ USING MARKERS TO ANALYZE SPECIFIC CODE BLOCKS
 ---------------------------------------------
 :program:`llvm-mca` allows for the optional usage of special code comments to
 mark regions of the assembly code to be analyzed.  A comment starting with
-substring ``LLVM-MCA-BEGIN`` marks the beginning of a code region. A comment
-starting with substring ``LLVM-MCA-END`` marks the end of a code region.  For
-example:
+substring ``LLVM-MCA-BEGIN`` marks the beginning of an analysis region. A
+comment starting with substring ``LLVM-MCA-END`` marks the end of a region.
+For example:
 
 .. code-block:: none
 
@@ -244,15 +257,15 @@ example:
 If no user-defined region is specified, then :program:`llvm-mca` assumes a
 default region which contains every instruction in the input file.  Every region
 is analyzed in isolation, and the final performance report is the union of all
-the reports generated for every code region.
+the reports generated for every analysis region.
 
-Code regions can have names. For example:
+Analysis regions can have names. For example:
 
 .. code-block:: none
 
   # LLVM-MCA-BEGIN A simple example
     add %eax, %eax
-  # LLVM-MCA-END 
+  # LLVM-MCA-END
 
 The code from the example above defines a region named "A simple example" with a
 single instruction in it. Note how the region name doesn't have to be repeated
@@ -292,9 +305,9 @@ C++. As a workaround, inline assembly directives may be used:
 .. code-block:: c++
 
   int foo(int a, int b) {
-    __asm volatile("# LLVM-MCA-BEGIN foo");
+    __asm volatile("# LLVM-MCA-BEGIN foo":::"memory");
     a += 42;
-    __asm volatile("# LLVM-MCA-END");
+    __asm volatile("# LLVM-MCA-END":::"memory");
     a *= b;
     return a;
   }
@@ -307,6 +320,91 @@ to emit markers, then the recommendation is to always verify that the output
 assembly is equivalent to the assembly generated in the absence of markers.
 The `Clang options to emit optimization reports <https://clang.llvm.org/docs/UsersManual.html#options-to-emit-optimization-reports>`_
 can also help in detecting missed optimizations.
+
+INSTRUMENT REGIONS
+------------------
+
+An InstrumentRegion describes a region of assembly code guarded by
+special LLVM-MCA comment directives.
+
+.. code-block:: none
+
+  # LLVM-MCA-<INSTRUMENT_TYPE> <data>
+    ...  ## asm
+
+where `INSTRUMENT_TYPE` is a type defined by the target and expects
+to use `data`.
+
+A comment starting with substring `LLVM-MCA-<INSTRUMENT_TYPE>`
+brings data into scope for llvm-mca to use in its analysis for
+all following instructions.
+
+If a comment with the same `INSTRUMENT_TYPE` is found later in the
+instruction list, then the original InstrumentRegion will be
+automatically ended, and a new InstrumentRegion will begin.
+
+If there are comments containing the different `INSTRUMENT_TYPE`,
+then both data sets remain available. In contrast with an AnalysisRegion,
+an InstrumentRegion does not need a comment to end the region.
+
+Comments that are prefixed with `LLVM-MCA-` but do not correspond to
+a valid `INSTRUMENT_TYPE` for the target cause an error, except for
+`BEGIN` and `END`, since those correspond to AnalysisRegions. Comments
+that do not start with `LLVM-MCA-` are ignored by :program `llvm-mca`.
+
+An instruction (a MCInst) is added to an InstrumentRegion R only
+if its location is in range [R.RangeStart, R.RangeEnd].
+
+On RISCV targets, vector instructions have different behaviour depending
+on the LMUL. Code can be instrumented with a comment that takes the
+following form:
+
+.. code-block:: none
+
+  # LLVM-MCA-RISCV-LMUL <M1|M2|M4|M8|MF2|MF4|MF8>
+
+The RISCV InstrumentManager will override the schedule class for vector
+instructions to use the scheduling behaviour of its pseudo-instruction
+which is LMUL dependent. It makes sense to place RISCV instrument
+comments directly after `vset{i}vl{i}` instructions, although
+they can be placed anywhere in the program.
+
+Example of program with no call to `vset{i}vl{i}`:
+
+.. code-block:: none
+
+  # LLVM-MCA-RISCV-LMUL M2
+  vadd.vv v2, v2, v2
+
+Example of program with call to `vset{i}vl{i}`:
+
+.. code-block:: none
+
+  vsetvli zero, a0, e8, m1, tu, mu
+  # LLVM-MCA-RISCV-LMUL M1
+  vadd.vv v2, v2, v2
+
+Example of program with multiple calls to `vset{i}vl{i}`:
+
+.. code-block:: none
+
+  vsetvli zero, a0, e8, m1, tu, mu
+  # LLVM-MCA-RISCV-LMUL M1
+  vadd.vv v2, v2, v2
+  vsetvli zero, a0, e8, m8, tu, mu
+  # LLVM-MCA-RISCV-LMUL M8
+  vadd.vv v2, v2, v2
+
+Example of program with call to `vsetvl`:
+
+.. code-block:: none
+
+ vsetvl rd, rs1, rs2
+ # LLVM-MCA-RISCV-LMUL M1
+ vadd.vv v12, v12, v12
+ vsetvl rd, rs1, rs2
+ # LLVM-MCA-RISCV-LMUL M4
+ vadd.vv v12, v12, v12
 
 HOW LLVM-MCA WORKS
 ------------------
@@ -625,26 +723,26 @@ Below is an example of ``-bottleneck-analysis`` output generated by
 
 
   Cycles with backend pressure increase [ 48.07% ]
-  Throughput Bottlenecks: 
+  Throughput Bottlenecks:
     Resource Pressure       [ 47.77% ]
     - JFPA  [ 47.77% ]
     - JFPU0  [ 47.77% ]
     Data Dependencies:      [ 0.30% ]
     - Register Dependencies [ 0.30% ]
     - Memory Dependencies   [ 0.00% ]
-  
+
   Critical sequence based on the simulation:
-  
+
                 Instruction                         Dependency Information
    +----< 2.    vhaddps %xmm3, %xmm3, %xmm4
    |
-   |    < loop carried > 
+   |    < loop carried >
    |
    |      0.    vmulps  %xmm0, %xmm1, %xmm2
    +----> 1.    vhaddps %xmm2, %xmm2, %xmm3         ## RESOURCE interference:  JFPA [ probability: 74% ]
    +----> 2.    vhaddps %xmm3, %xmm3, %xmm4         ## REGISTER dependency:  %xmm3
    |
-   |    < loop carried > 
+   |    < loop carried >
    |
    +----> 1.    vhaddps %xmm2, %xmm2, %xmm3         ## RESOURCE interference:  JFPA [ probability: 74% ]
 
@@ -947,15 +1045,16 @@ cache.  It only knows if an instruction "MayLoad" and/or "MayStore."  For
 loads, the scheduling model provides an "optimistic" load-to-use latency (which
 usually matches the load-to-use latency for when there is a hit in the L1D).
 
-:program:`llvm-mca` does not know about serializing operations or memory-barrier
-like instructions.  The LSUnit conservatively assumes that an instruction which
-has both "MayLoad" and unmodeled side effects behaves like a "soft"
-load-barrier.  That means, it serializes loads without forcing a flush of the
-load queue.  Similarly, instructions that "MayStore" and have unmodeled side
-effects are treated like store barriers.  A full memory barrier is a "MayLoad"
-and "MayStore" instruction with unmodeled side effects.  This is inaccurate, but
-it is the best that we can do at the moment with the current information
-available in LLVM.
+:program:`llvm-mca` does not (on its own) know about serializing operations or
+memory-barrier like instructions.  The LSUnit used to conservatively use an
+instruction's "MayLoad", "MayStore", and unmodeled side effects flags to
+determine whether an instruction should be treated as a memory-barrier. This was
+inaccurate in general and was changed so that now each instruction has an
+IsAStoreBarrier and IsALoadBarrier flag. These flags are mca specific and
+default to false for every instruction. If any instruction should have either of
+these flags set, it should be done within the target's InstrPostProcess class.
+For an example, look at the `X86InstrPostProcess::postProcessInstruction` method
+within `llvm/lib/Target/X86/MCA/X86CustomBehaviour.cpp`.
 
 A load/store barrier consumes one entry of the load/store queue.  A load/store
 barrier enforces ordering of loads/stores.  A younger load cannot pass a load
@@ -995,7 +1094,7 @@ option though (maybe because the instruction is modeled incorrectly on
 purpose or the instruction's behaviour is quite complex). The
 CustomBehaviour class can be used in these cases to enforce proper
 instruction modeling (often by customizing data dependencies and detecting
-hazards that :program:`llvm-ma` has no way of knowing about).
+hazards that :program:`llvm-mca` has no way of knowing about).
 
 :program:`llvm-mca` comes with one generic and multiple target specific
 CustomBehaviour classes. The generic class will be used if the ``-disable-cb``
@@ -1013,4 +1112,54 @@ if you don't know the exact number and a value of 0 represents no stall).
 
 If you'd like to add a CustomBehaviour class for a target that doesn't
 already have one, refer to an existing implementation to see how to set it
-up. Remember to look at (and add to) `/llvm-mca/lib/CMakeLists.txt`.
+up. The classes are implemented within the target specific backend (for
+example `/llvm/lib/Target/AMDGPU/MCA/`) so that they can access backend symbols.
+
+Instrument Manager
+""""""""""""""""""""""""""""""""""""
+On certain architectures, scheduling information for certain instructions
+do not contain all of the information required to identify the most precise
+schedule class. For example, data that can have an impact on scheduling can
+be stored in CSR registers.
+
+One example of this is on RISCV, where values in registers such as `vtype`
+and `vl` change the scheduling behaviour of vector instructions. Since MCA
+does not keep track of the values in registers, instrument comments can
+be used to specify these values.
+
+InstrumentManager's main function is `getSchedClassID()` which has access
+to the MCInst and all of the instruments that are active for that MCInst.
+This function can use the instruments to override the schedule class of
+the MCInst.
+
+On RISCV, instrument comments containing LMUL information are used
+by `getSchedClassID()` to map a vector instruction and the active
+LMUL to the scheduling class of the pseudo-instruction that describes
+that base instruction and the active LMUL.
+
+Custom Views
+""""""""""""""""""""""""""""""""""""
+:program:`llvm-mca` comes with several Views such as the Timeline View and
+Summary View. These Views are generic and can work with most (if not all)
+targets. If you wish to add a new View to :program:`llvm-mca` and it does not
+require any backend functionality that is not already exposed through MC layer
+classes (MCSubtargetInfo, MCInstrInfo, etc.), please add it to the
+`/tools/llvm-mca/View/` directory. However, if your new View is target specific
+AND requires unexposed backend symbols or functionality, you can define it in
+the `/lib/Target/<TargetName>/MCA/` directory.
+
+To enable this target specific View, you will have to use this target's
+CustomBehaviour class to override the `CustomBehaviour::getViews()` methods.
+There are 3 variations of these methods based on where you want your View to
+appear in the output: `getStartViews()`, `getPostInstrInfoViews()`, and
+`getEndViews()`. These methods returns a vector of Views so you will want to
+return a vector containing all of the target specific Views for the target in
+question.
+
+Because these target specific (and backend dependent) Views require the
+`CustomBehaviour::getViews()` variants, these Views will not be enabled if
+the `-disable-cb` flag is used.
+
+Enabling these custom Views does not affect the non-custom (generic) Views.
+Continue to use the usual command line arguments to enable / disable those
+Views.

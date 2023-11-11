@@ -12,7 +12,6 @@
 
 #include "InstCombineInternal.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/Transforms/InstCombine/InstCombiner.h"
 
 using namespace llvm;
 
@@ -62,7 +61,13 @@ bool isIdempotentRMW(AtomicRMWInst& RMWI) {
 /// equivalent to its value operand.
 bool isSaturating(AtomicRMWInst& RMWI) {
   if (auto CF = dyn_cast<ConstantFP>(RMWI.getValOperand()))
-    switch(RMWI.getOperation()) {
+    switch (RMWI.getOperation()) {
+    case AtomicRMWInst::FMax:
+      // maxnum(x, +inf) -> +inf
+      return !CF->isNegative() && CF->isInfinity();
+    case AtomicRMWInst::FMin:
+      // minnum(x, -inf) -> +inf
+      return CF->isNegative() && CF->isInfinity();
     case AtomicRMWInst::FAdd:
     case AtomicRMWInst::FSub:
       return CF->isNaN();
@@ -123,10 +128,9 @@ Instruction *InstCombinerImpl::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
     if (Ordering != AtomicOrdering::Release &&
         Ordering != AtomicOrdering::Monotonic)
       return nullptr;
-    auto *SI = new StoreInst(RMWI.getValOperand(),
-                             RMWI.getPointerOperand(), &RMWI);
-    SI->setAtomic(Ordering, RMWI.getSyncScopeID());
-    SI->setAlignment(DL.getABITypeAlign(RMWI.getType()));
+    new StoreInst(RMWI.getValOperand(), RMWI.getPointerOperand(),
+                  /*isVolatile*/ false, RMWI.getAlign(), Ordering,
+                  RMWI.getSyncScopeID(), &RMWI);
     return eraseInstFromFunction(RMWI);
   }
 
@@ -147,13 +151,5 @@ Instruction *InstCombinerImpl::visitAtomicRMWInst(AtomicRMWInst &RMWI) {
     return replaceOperand(RMWI, 1, ConstantFP::getNegativeZero(RMWI.getType()));
   }
 
-  // Check if the required ordering is compatible with an atomic load.
-  if (Ordering != AtomicOrdering::Acquire &&
-      Ordering != AtomicOrdering::Monotonic)
-    return nullptr;
-
-  LoadInst *Load = new LoadInst(RMWI.getType(), RMWI.getPointerOperand(), "",
-                                false, DL.getABITypeAlign(RMWI.getType()),
-                                Ordering, RMWI.getSyncScopeID());
-  return Load;
+  return nullptr;
 }

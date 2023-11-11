@@ -18,9 +18,6 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/Hashing.h"
-#include "llvm/ADT/IntervalMap.h"
-#include "llvm/ADT/None.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
@@ -30,6 +27,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/BinaryFormat/MachO.h"
+#include "llvm/BinaryFormat/Swift.h"
 #include "llvm/CodeGen/AccelTable.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DIE.h"
@@ -59,6 +57,8 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/MC/MCTargetOptionsCommandFlags.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolicFile.h"
@@ -76,14 +76,12 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/MC/MCTargetOptionsCommandFlags.h"
 #include <algorithm>
 #include <cassert>
 #include <cinttypes>
@@ -94,6 +92,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <system_error>
 #include <tuple>
@@ -174,7 +173,7 @@ bool DwarfLinkerForBinary::createStreamer(const Triple &TheTriple,
       [&](const Twine &Warning, StringRef Context, const DWARFDie *) {
         warn(Warning, Context);
       });
-  return Streamer->init(TheTriple);
+  return Streamer->init(TheTriple, "__DWARF");
 }
 
 ErrorOr<const object::ObjectFile &>
@@ -295,6 +294,260 @@ DwarfLinkerForBinary::loadObject(const DebugMapObject &Obj,
   return ErrorOrObj.getError();
 }
 
+static bool binaryHasStrippableSwiftReflectionSections(
+    const DebugMap &Map, const LinkOptions &Options, BinaryHolder &BinHolder) {
+  // If the input binary has strippable swift5 reflection sections, there is no
+  // need to copy them to the .dSYM. Only copy them for binaries where the
+  // linker omitted the reflection metadata.
+  if (!Map.getBinaryPath().empty() &&
+      Options.FileType == OutputFileType::Object) {
+
+    auto ObjectEntry = BinHolder.getObjectEntry(Map.getBinaryPath());
+    // If ObjectEntry or Object has an error, no binary exists, therefore no
+    // reflection sections exist.
+    if (!ObjectEntry) {
+      // Any errors will be diagnosed later in the main loop, ignore them here.
+      llvm::consumeError(ObjectEntry.takeError());
+      return false;
+    }
+
+    auto Object =
+        ObjectEntry->getObjectAs<object::MachOObjectFile>(Map.getTriple());
+    if (!Object) {
+      // Any errors will be diagnosed later in the main loop, ignore them here.
+      llvm::consumeError(Object.takeError());
+      return false;
+    }
+
+    for (auto &Section : Object->sections()) {
+      llvm::Expected<llvm::StringRef> NameOrErr =
+          Object->getSectionName(Section.getRawDataRefImpl());
+      if (!NameOrErr) {
+        llvm::consumeError(NameOrErr.takeError());
+        continue;
+      }
+      NameOrErr->consume_back("__TEXT");
+      auto ReflectionSectionKind =
+          Object->mapReflectionSectionNameToEnumValue(*NameOrErr);
+      if (Object->isReflectionSectionStrippable(ReflectionSectionKind)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/// Calculate the start of the strippable swift reflection sections in Dwarf.
+/// Note that there's an assumption that the reflection sections will appear
+/// in alphabetic order.
+static std::vector<uint64_t>
+calculateStartOfStrippableReflectionSections(const DebugMap &Map) {
+  using llvm::binaryformat::Swift5ReflectionSectionKind;
+  uint64_t AssocTySize = 0;
+  uint64_t FieldMdSize = 0;
+  for (const auto &Obj : Map.objects()) {
+    auto OF =
+        llvm::object::ObjectFile::createObjectFile(Obj->getObjectFilename());
+    if (!OF) {
+      llvm::consumeError(OF.takeError());
+      continue;
+    }
+    if (auto *MO = dyn_cast<llvm::object::MachOObjectFile>(OF->getBinary())) {
+      for (auto &Section : MO->sections()) {
+        llvm::Expected<llvm::StringRef> NameOrErr =
+            MO->getSectionName(Section.getRawDataRefImpl());
+        if (!NameOrErr) {
+          llvm::consumeError(NameOrErr.takeError());
+          continue;
+        }
+        NameOrErr->consume_back("__TEXT");
+        auto ReflSectionKind =
+            MO->mapReflectionSectionNameToEnumValue(*NameOrErr);
+        switch (ReflSectionKind) {
+        case Swift5ReflectionSectionKind::assocty:
+          AssocTySize += Section.getSize();
+          break;
+        case Swift5ReflectionSectionKind::fieldmd:
+          FieldMdSize += Section.getSize();
+          break;
+        default:
+          break;
+        }
+      }
+    }
+  }
+  // Initialize the vector with enough space to fit every reflection section
+  // kind.
+  std::vector<uint64_t> SectionToOffset(Swift5ReflectionSectionKind::last, 0);
+  SectionToOffset[Swift5ReflectionSectionKind::assocty] = 0;
+  SectionToOffset[Swift5ReflectionSectionKind::fieldmd] =
+      llvm::alignTo(AssocTySize, 4);
+  SectionToOffset[Swift5ReflectionSectionKind::reflstr] = llvm::alignTo(
+      SectionToOffset[Swift5ReflectionSectionKind::fieldmd] + FieldMdSize, 4);
+
+  return SectionToOffset;
+}
+
+void DwarfLinkerForBinary::collectRelocationsToApplyToSwiftReflectionSections(
+    const object::SectionRef &Section, StringRef &Contents,
+    const llvm::object::MachOObjectFile *MO,
+    const std::vector<uint64_t> &SectionToOffsetInDwarf,
+    const llvm::dsymutil::DebugMapObject *Obj,
+    std::vector<MachOUtils::DwarfRelocationApplicationInfo> &RelocationsToApply)
+    const {
+  for (auto It = Section.relocation_begin(); It != Section.relocation_end();
+       ++It) {
+    object::DataRefImpl RelocDataRef = It->getRawDataRefImpl();
+    MachO::any_relocation_info MachOReloc = MO->getRelocation(RelocDataRef);
+
+    if (!object::MachOObjectFile::isMachOPairedReloc(
+            MO->getAnyRelocationType(MachOReloc), MO->getArch())) {
+      reportWarning(
+          "Unimplemented relocation type in strippable reflection section ",
+          Obj->getObjectFilename());
+      continue;
+    }
+
+    auto CalculateAddressOfSymbolInDwarfSegment =
+        [&]() -> std::optional<int64_t> {
+      auto Symbol = It->getSymbol();
+      auto SymbolAbsoluteAddress = Symbol->getAddress();
+      if (!SymbolAbsoluteAddress)
+        return {};
+      auto Section = Symbol->getSection();
+      if (!Section) {
+        llvm::consumeError(Section.takeError());
+        return {};
+      }
+
+      if ((*Section)->getObject()->section_end() == *Section)
+        return {};
+
+      auto SectionStart = (*Section)->getAddress();
+      auto SymbolAddressInSection = *SymbolAbsoluteAddress - SectionStart;
+      auto SectionName = (*Section)->getName();
+      if (!SectionName)
+        return {};
+      auto ReflSectionKind =
+          MO->mapReflectionSectionNameToEnumValue(*SectionName);
+
+      int64_t SectionStartInLinkedBinary =
+          SectionToOffsetInDwarf[ReflSectionKind];
+
+      auto Addr = SectionStartInLinkedBinary + SymbolAddressInSection;
+      return Addr;
+    };
+
+    // The first symbol should always be in the section we're currently
+    // iterating over.
+    auto FirstSymbolAddress = CalculateAddressOfSymbolInDwarfSegment();
+    ++It;
+
+    bool ShouldSubtractDwarfVM = false;
+    // For the second symbol there are two possibilities.
+    std::optional<int64_t> SecondSymbolAddress;
+    auto Sym = It->getSymbol();
+    if (Sym != MO->symbol_end()) {
+      Expected<StringRef> SymbolName = Sym->getName();
+      if (SymbolName) {
+        if (const auto *Mapping = Obj->lookupSymbol(*SymbolName)) {
+          // First possibility: the symbol exists in the binary, and exists in a
+          // non-strippable section (for example, typeref, or __TEXT,__const),
+          // in which case we look up its address in the  binary, which dsymutil
+          // will copy verbatim.
+          SecondSymbolAddress = Mapping->getValue().BinaryAddress;
+          // Since the symbols live in different segments, we have to substract
+          // the start of the Dwarf's vmaddr so the value calculated points to
+          // the correct place.
+          ShouldSubtractDwarfVM = true;
+        }
+      }
+    }
+
+    if (!SecondSymbolAddress) {
+      // Second possibility, this symbol is not present in the main binary, and
+      // must be in one of the strippable sections (for example, reflstr).
+      // Calculate its address in the same way as we did the first one.
+      SecondSymbolAddress = CalculateAddressOfSymbolInDwarfSegment();
+    }
+
+    if (!FirstSymbolAddress || !SecondSymbolAddress)
+      continue;
+
+    auto SectionName = Section.getName();
+    if (!SectionName)
+      continue;
+
+    int32_t Addend;
+    memcpy(&Addend, Contents.data() + It->getOffset(), sizeof(int32_t));
+    int32_t Value = (*SecondSymbolAddress + Addend) - *FirstSymbolAddress;
+    auto ReflSectionKind =
+        MO->mapReflectionSectionNameToEnumValue(*SectionName);
+    uint64_t AddressFromDwarfVM =
+        SectionToOffsetInDwarf[ReflSectionKind] + It->getOffset();
+    RelocationsToApply.emplace_back(AddressFromDwarfVM, Value,
+                                    ShouldSubtractDwarfVM);
+  }
+}
+
+void DwarfLinkerForBinary::copySwiftReflectionMetadata(
+    const llvm::dsymutil::DebugMapObject *Obj, DwarfStreamer *Streamer,
+    std::vector<uint64_t> &SectionToOffsetInDwarf,
+    std::vector<MachOUtils::DwarfRelocationApplicationInfo>
+        &RelocationsToApply) {
+  using binaryformat::Swift5ReflectionSectionKind;
+  auto OF =
+      llvm::object::ObjectFile::createObjectFile(Obj->getObjectFilename());
+  if (!OF) {
+    llvm::consumeError(OF.takeError());
+    return;
+  }
+  if (auto *MO = dyn_cast<llvm::object::MachOObjectFile>(OF->getBinary())) {
+    // Collect the swift reflection sections before emitting them. This is
+    // done so we control the order they're emitted.
+    std::array<std::optional<object::SectionRef>,
+               Swift5ReflectionSectionKind::last + 1>
+        SwiftSections;
+    for (auto &Section : MO->sections()) {
+      llvm::Expected<llvm::StringRef> NameOrErr =
+          MO->getSectionName(Section.getRawDataRefImpl());
+      if (!NameOrErr) {
+        llvm::consumeError(NameOrErr.takeError());
+        continue;
+      }
+      NameOrErr->consume_back("__TEXT");
+      auto ReflSectionKind =
+          MO->mapReflectionSectionNameToEnumValue(*NameOrErr);
+      if (MO->isReflectionSectionStrippable(ReflSectionKind))
+        SwiftSections[ReflSectionKind] = Section;
+    }
+    // Make sure we copy the sections in alphabetic order.
+    auto SectionKindsToEmit = {Swift5ReflectionSectionKind::assocty,
+                               Swift5ReflectionSectionKind::fieldmd,
+                               Swift5ReflectionSectionKind::reflstr};
+    for (auto SectionKind : SectionKindsToEmit) {
+      if (!SwiftSections[SectionKind])
+        continue;
+      auto &Section = *SwiftSections[SectionKind];
+      llvm::Expected<llvm::StringRef> SectionContents = Section.getContents();
+      if (!SectionContents)
+        continue;
+      const auto *MO =
+          llvm::cast<llvm::object::MachOObjectFile>(Section.getObject());
+      collectRelocationsToApplyToSwiftReflectionSections(
+          Section, *SectionContents, MO, SectionToOffsetInDwarf, Obj,
+          RelocationsToApply);
+      // Update the section start with the current section's contribution, so
+      // the next section we copy from a different .o file points to the correct
+      // place.
+      SectionToOffsetInDwarf[SectionKind] += Section.getSize();
+      Streamer->emitSwiftReflectionSection(SectionKind, *SectionContents,
+                                           Section.getAlignment().value(),
+                                           Section.getSize());
+    }
+  }
+}
+
 bool DwarfLinkerForBinary::link(const DebugMap &Map) {
   if (!createStreamer(Map.getTriple(), OutFile))
     return false;
@@ -319,11 +572,11 @@ bool DwarfLinkerForBinary::link(const DebugMap &Map) {
 
   GeneralLinker.setVerbosity(Options.Verbose);
   GeneralLinker.setStatistics(Options.Statistics);
+  GeneralLinker.setVerifyInputDWARF(Options.VerifyInputDWARF);
   GeneralLinker.setNoOutput(Options.NoOutput);
   GeneralLinker.setNoODR(Options.NoODR);
   GeneralLinker.setUpdate(Options.Update);
   GeneralLinker.setNumThreads(Options.Threads);
-  GeneralLinker.setAccelTableKind(Options.TheAccelTableKind);
   GeneralLinker.setPrependPath(Options.PrependPath);
   GeneralLinker.setKeepFunctionForStatic(Options.KeepFunctionForStatic);
   if (Options.Translator)
@@ -336,59 +589,81 @@ bool DwarfLinkerForBinary::link(const DebugMap &Map) {
       [&](const Twine &Error, StringRef Context, const DWARFDie *) {
         error(Error, Context);
       });
-  GeneralLinker.setObjFileLoader(
-      [&DebugMap, &RL, this](StringRef ContainerName,
-                             StringRef Path) -> ErrorOr<DWARFFile &> {
-        auto &Obj = DebugMap.addDebugMapObject(
-            Path, sys::TimePoint<std::chrono::seconds>(), MachO::N_OSO);
+  objFileLoader Loader = [&DebugMap, &RL,
+                          this](StringRef ContainerName,
+                                StringRef Path) -> ErrorOr<DWARFFile &> {
+    auto &Obj = DebugMap.addDebugMapObject(
+        Path, sys::TimePoint<std::chrono::seconds>(), MachO::N_OSO);
 
-        if (auto ErrorOrObj = loadObject(Obj, DebugMap, RL)) {
-          return *ErrorOrObj;
-        } else {
-          // Try and emit more helpful warnings by applying some heuristics.
-          StringRef ObjFile = ContainerName;
-          bool IsClangModule = sys::path::extension(Path).equals(".pcm");
-          bool IsArchive = ObjFile.endswith(")");
+    if (auto ErrorOrObj = loadObject(Obj, DebugMap, RL)) {
+      return *ErrorOrObj;
+    } else {
+      // Try and emit more helpful warnings by applying some heuristics.
+      StringRef ObjFile = ContainerName;
+      bool IsClangModule = sys::path::extension(Path).equals(".pcm");
+      bool IsArchive = ObjFile.endswith(")");
 
-          if (IsClangModule) {
-            StringRef ModuleCacheDir = sys::path::parent_path(Path);
-            if (sys::fs::exists(ModuleCacheDir)) {
-              // If the module's parent directory exists, we assume that the
-              // module cache has expired and was pruned by clang.  A more
-              // adventurous dsymutil would invoke clang to rebuild the module
-              // now.
-              if (!ModuleCacheHintDisplayed) {
-                WithColor::note()
-                    << "The clang module cache may have expired since "
-                       "this object file was built. Rebuilding the "
-                       "object file will rebuild the module cache.\n";
-                ModuleCacheHintDisplayed = true;
-              }
-            } else if (IsArchive) {
-              // If the module cache directory doesn't exist at all and the
-              // object file is inside a static library, we assume that the
-              // static library was built on a different machine. We don't want
-              // to discourage module debugging for convenience libraries within
-              // a project though.
-              if (!ArchiveHintDisplayed) {
-                WithColor::note()
-                    << "Linking a static library that was built with "
-                       "-gmodules, but the module cache was not found.  "
-                       "Redistributable static libraries should never be "
-                       "built with module debugging enabled.  The debug "
-                       "experience will be degraded due to incomplete "
-                       "debug information.\n";
-                ArchiveHintDisplayed = true;
-              }
-            }
+      if (IsClangModule) {
+        StringRef ModuleCacheDir = sys::path::parent_path(Path);
+        if (sys::fs::exists(ModuleCacheDir)) {
+          // If the module's parent directory exists, we assume that the
+          // module cache has expired and was pruned by clang.  A more
+          // adventurous dsymutil would invoke clang to rebuild the module
+          // now.
+          if (!ModuleCacheHintDisplayed) {
+            WithColor::note()
+                << "The clang module cache may have expired since "
+                   "this object file was built. Rebuilding the "
+                   "object file will rebuild the module cache.\n";
+            ModuleCacheHintDisplayed = true;
           }
-
-          return ErrorOrObj.getError();
+        } else if (IsArchive) {
+          // If the module cache directory doesn't exist at all and the
+          // object file is inside a static library, we assume that the
+          // static library was built on a different machine. We don't want
+          // to discourage module debugging for convenience libraries within
+          // a project though.
+          if (!ArchiveHintDisplayed) {
+            WithColor::note()
+                << "Linking a static library that was built with "
+                   "-gmodules, but the module cache was not found.  "
+                   "Redistributable static libraries should never be "
+                   "built with module debugging enabled.  The debug "
+                   "experience will be degraded due to incomplete "
+                   "debug information.\n";
+            ArchiveHintDisplayed = true;
+          }
         }
+      }
 
-        llvm_unreachable("Unhandled DebugMap object");
-      });
+      return ErrorOrObj.getError();
+    }
+
+    llvm_unreachable("Unhandled DebugMap object");
+  };
   GeneralLinker.setSwiftInterfacesMap(&ParseableSwiftInterfaces);
+  bool ReflectionSectionsPresentInBinary = false;
+  // If there is no output specified, no point in checking the binary for swift5
+  // reflection sections.
+  if (!Options.NoOutput) {
+    ReflectionSectionsPresentInBinary =
+        binaryHasStrippableSwiftReflectionSections(Map, Options, BinHolder);
+  }
+
+  std::vector<MachOUtils::DwarfRelocationApplicationInfo> RelocationsToApply;
+  if (!Options.NoOutput && !ReflectionSectionsPresentInBinary) {
+    auto SectionToOffsetInDwarf =
+        calculateStartOfStrippableReflectionSections(Map);
+    for (const auto &Obj : Map.objects()) 
+      copySwiftReflectionMetadata(Obj.get(), Streamer.get(),
+                                  SectionToOffsetInDwarf, RelocationsToApply);
+  }
+
+  uint16_t MaxDWARFVersion = 0;
+  std::function<void(const DWARFUnit &Unit)> OnCUDieLoaded =
+      [&MaxDWARFVersion](const DWARFUnit &Unit) {
+        MaxDWARFVersion = std::max(Unit.getVersion(), MaxDWARFVersion);
+      };
 
   for (const auto &Obj : Map.objects()) {
     // N_AST objects (swiftmodule files) should get dumped directly into the
@@ -414,11 +689,12 @@ bool DwarfLinkerForBinary::link(const DebugMap &Map) {
         auto ModificationTime =
             std::chrono::time_point_cast<std::chrono::seconds>(
                 Stat.getLastModificationTime());
-        if (ModificationTime != Obj->getTimestamp()) {
+        if (Obj->getTimestamp() != sys::TimePoint<>() &&
+            ModificationTime != Obj->getTimestamp()) {
           // Not using the helper here as we can easily stream TimePoint<>.
           WithColor::warning()
               << File << ": timestamp mismatch between swift interface file ("
-              << sys::TimePoint<>(Obj->getTimestamp()) << ") and debug map ("
+              << sys::TimePoint<>(ModificationTime) << ") and debug map ("
               << sys::TimePoint<>(Obj->getTimestamp()) << ")\n";
           continue;
         }
@@ -432,7 +708,7 @@ bool DwarfLinkerForBinary::link(const DebugMap &Map) {
     }
 
     if (auto ErrorOrObj = loadObject(*Obj, Map, RL))
-      GeneralLinker.addObjectFile(*ErrorOrObj);
+      GeneralLinker.addObjectFile(*ErrorOrObj, Loader, OnCUDieLoaded);
     else {
       ObjectsForLinking.push_back(std::make_unique<DWARFFile>(
           Obj->getObjectFilename(), nullptr, nullptr,
@@ -441,8 +717,37 @@ bool DwarfLinkerForBinary::link(const DebugMap &Map) {
     }
   }
 
+  // If we haven't seen any CUs, pick an arbitrary valid Dwarf version anyway.
+  if (MaxDWARFVersion == 0)
+    MaxDWARFVersion = 3;
+
+  if (Error E = GeneralLinker.setTargetDWARFVersion(MaxDWARFVersion))
+    return error(toString(std::move(E)));
+
+  switch (Options.TheAccelTableKind) {
+  case DsymutilAccelTableKind::Apple:
+    GeneralLinker.addAccelTableKind(DwarfLinkerAccelTableKind::Apple);
+    break;
+  case DsymutilAccelTableKind::Dwarf:
+    GeneralLinker.addAccelTableKind(DwarfLinkerAccelTableKind::DebugNames);
+    break;
+  case DsymutilAccelTableKind::Pub:
+    GeneralLinker.addAccelTableKind(DwarfLinkerAccelTableKind::Pub);
+    break;
+  case DsymutilAccelTableKind::Default:
+    if (MaxDWARFVersion >= 5)
+      GeneralLinker.addAccelTableKind(DwarfLinkerAccelTableKind::DebugNames);
+    else
+      GeneralLinker.addAccelTableKind(DwarfLinkerAccelTableKind::Apple);
+    break;
+  case DsymutilAccelTableKind::None:
+    // Nothing to do.
+    break;
+  }
+
   // link debug info for loaded object files.
-  GeneralLinker.link();
+  if (Error E = GeneralLinker.link())
+    return error(toString(std::move(E)));
 
   StringRef ArchName = Map.getTriple().getArchName();
   if (Error E = emitRemarks(Options, Map.getBinaryPath(), ArchName, RL))
@@ -462,30 +767,10 @@ bool DwarfLinkerForBinary::link(const DebugMap &Map) {
       Options.FileType == OutputFileType::Object)
     return MachOUtils::generateDsymCompanion(
         Options.VFS, Map, Options.Translator,
-        *Streamer->getAsmPrinter().OutStreamer, OutFile);
+        *Streamer->getAsmPrinter().OutStreamer, OutFile, RelocationsToApply);
 
   Streamer->finish();
   return true;
-}
-
-static bool isMachOPairedReloc(uint64_t RelocType, uint64_t Arch) {
-  switch (Arch) {
-  case Triple::x86:
-    return RelocType == MachO::GENERIC_RELOC_SECTDIFF ||
-           RelocType == MachO::GENERIC_RELOC_LOCAL_SECTDIFF;
-  case Triple::x86_64:
-    return RelocType == MachO::X86_64_RELOC_SUBTRACTOR;
-  case Triple::arm:
-  case Triple::thumb:
-    return RelocType == MachO::ARM_RELOC_SECTDIFF ||
-           RelocType == MachO::ARM_RELOC_LOCAL_SECTDIFF ||
-           RelocType == MachO::ARM_RELOC_HALF ||
-           RelocType == MachO::ARM_RELOC_HALF_SECTDIFF;
-  case Triple::aarch64:
-    return RelocType == MachO::ARM64_RELOC_SUBTRACTOR;
-  default:
-    return false;
-  }
 }
 
 /// Iterate over the relocations of the given \p Section and
@@ -512,7 +797,7 @@ void DwarfLinkerForBinary::AddressManager::findValidRelocsMachO(
     object::DataRefImpl RelocDataRef = Reloc.getRawDataRefImpl();
     MachO::any_relocation_info MachOReloc = Obj.getRelocation(RelocDataRef);
 
-    if (isMachOPairedReloc(Obj.getAnyRelocationType(MachOReloc),
+    if (object::MachOObjectFile::isMachOPairedReloc(Obj.getAnyRelocationType(MachOReloc),
                            Obj.getArch())) {
       SkipNext = true;
       Linker.reportWarning("unsupported relocation in " + *Section.getName() +
@@ -689,11 +974,11 @@ getAttributeOffsets(const DWARFAbbreviationDeclaration *Abbrev, unsigned Idx,
   return std::make_pair(Offset, End);
 }
 
-bool DwarfLinkerForBinary::AddressManager::hasLiveMemoryLocation(
+bool DwarfLinkerForBinary::AddressManager::isLiveVariable(
     const DWARFDie &DIE, CompileUnit::DIEInfo &MyInfo) {
   const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
 
-  Optional<uint32_t> LocationIdx =
+  std::optional<uint32_t> LocationIdx =
       Abbrev->findAttributeIndex(dwarf::DW_AT_location);
   if (!LocationIdx)
     return false;
@@ -708,11 +993,12 @@ bool DwarfLinkerForBinary::AddressManager::hasLiveMemoryLocation(
                               LocationEndOffset, MyInfo);
 }
 
-bool DwarfLinkerForBinary::AddressManager::hasLiveAddressRange(
+bool DwarfLinkerForBinary::AddressManager::isLiveSubprogram(
     const DWARFDie &DIE, CompileUnit::DIEInfo &MyInfo) {
   const auto *Abbrev = DIE.getAbbreviationDeclarationPtr();
 
-  Optional<uint32_t> LowPcIdx = Abbrev->findAttributeIndex(dwarf::DW_AT_low_pc);
+  std::optional<uint32_t> LowPcIdx =
+      Abbrev->findAttributeIndex(dwarf::DW_AT_low_pc);
   if (!LowPcIdx)
     return false;
 
@@ -728,8 +1014,8 @@ bool DwarfLinkerForBinary::AddressManager::hasLiveAddressRange(
   }
 
   if (Form == dwarf::DW_FORM_addrx) {
-    Optional<DWARFFormValue> AddrValue = DIE.find(dwarf::DW_AT_low_pc);
-    if (Optional<uint64_t> AddrOffsetSectionBase =
+    std::optional<DWARFFormValue> AddrValue = DIE.find(dwarf::DW_AT_low_pc);
+    if (std::optional<uint64_t> AddrOffsetSectionBase =
             DIE.getDwarfUnit()->getAddrOffsetSectionBase()) {
       uint64_t StartOffset = *AddrOffsetSectionBase + AddrValue->getRawUValue();
       uint64_t EndOffset =
@@ -758,7 +1044,6 @@ DwarfLinkerForBinary::AddressManager::relocate(const ValidReloc &Reloc) const {
 /// \returns whether any reloc has been applied.
 bool DwarfLinkerForBinary::AddressManager::applyValidRelocs(
     MutableArrayRef<char> Data, uint64_t BaseOffset, bool IsLittleEndian) {
-  assert(areRelocationsResolved());
   std::vector<ValidReloc> Relocs = getRelocations(
       ValidDebugInfoRelocs, BaseOffset, BaseOffset + Data.size());
 

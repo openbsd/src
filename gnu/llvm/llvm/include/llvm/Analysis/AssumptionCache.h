@@ -26,9 +26,10 @@
 
 namespace llvm {
 
-class AssumeInst;
+class CondGuardInst;
 class Function;
 class raw_ostream;
+class TargetTransformInfo;
 class Value;
 
 /// A cache of \@llvm.assume calls within a function.
@@ -58,6 +59,8 @@ private:
   ///
   /// We track this to lazily populate our assumptions.
   Function &F;
+
+  TargetTransformInfo *TTI;
 
   /// Vector of weak value handles to calls of the \@llvm.assume
   /// intrinsic.
@@ -103,7 +106,8 @@ private:
 public:
   /// Construct an AssumptionCache from a function by scanning all of
   /// its instructions.
-  AssumptionCache(Function &F) : F(F) {}
+  AssumptionCache(Function &F, TargetTransformInfo *TTI = nullptr)
+      : F(F), TTI(TTI) {}
 
   /// This cache is designed to be self-updating and so it should never be
   /// invalidated.
@@ -116,15 +120,15 @@ public:
   ///
   /// The call passed in must be an instruction within this function and must
   /// not already be in the cache.
-  void registerAssumption(AssumeInst *CI);
+  void registerAssumption(CondGuardInst *CI);
 
   /// Remove an \@llvm.assume intrinsic from this function's cache if it has
   /// been added to the cache earlier.
-  void unregisterAssumption(AssumeInst *CI);
+  void unregisterAssumption(CondGuardInst *CI);
 
   /// Update the cache of values being affected by this assumption (i.e.
   /// the values about which this assumption provides information).
-  void updateAffectedValues(AssumeInst *CI);
+  void updateAffectedValues(CondGuardInst *CI);
 
   /// Clear the cache of \@llvm.assume intrinsics for a function.
   ///
@@ -174,9 +178,7 @@ class AssumptionAnalysis : public AnalysisInfoMixin<AssumptionAnalysis> {
 public:
   using Result = AssumptionCache;
 
-  AssumptionCache run(Function &F, FunctionAnalysisManager &) {
-    return AssumptionCache(F);
-  }
+  AssumptionCache run(Function &F, FunctionAnalysisManager &);
 };
 
 /// Printer pass for the \c AssumptionAnalysis results.

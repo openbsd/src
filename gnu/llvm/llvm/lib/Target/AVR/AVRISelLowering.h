@@ -38,12 +38,18 @@ enum NodeType {
   LSL,     ///< Logical shift left.
   LSLBN,   ///< Byte logical shift left N bits.
   LSLWN,   ///< Word logical shift left N bits.
+  LSLHI,   ///< Higher 8-bit of word logical shift left.
+  LSLW,    ///< Wide logical shift left.
   LSR,     ///< Logical shift right.
   LSRBN,   ///< Byte logical shift right N bits.
   LSRWN,   ///< Word logical shift right N bits.
+  LSRLO,   ///< Lower 8-bit of word logical shift right.
+  LSRW,    ///< Wide logical shift right.
   ASR,     ///< Arithmetic shift right.
   ASRBN,   ///< Byte arithmetic shift right N bits.
   ASRWN,   ///< Word arithmetic shift right N bits.
+  ASRLO,   ///< Lower 8-bit of word arithmetic shift right.
+  ASRW,    ///< Wide arithmetic shift right.
   ROR,     ///< Bit rotate right.
   ROL,     ///< Bit rotate left.
   LSLLOOP, ///< A loop of single logical shift left instructions.
@@ -133,12 +139,18 @@ public:
                                     std::vector<SDValue> &Ops,
                                     SelectionDAG &DAG) const override;
 
-  Register getRegisterByName(const char* RegName, LLT VT,
+  Register getRegisterByName(const char *RegName, LLT VT,
                              const MachineFunction &MF) const override;
 
-  bool shouldSplitFunctionArgumentsAsLittleEndian(const DataLayout &DL)
-    const override {
+  bool shouldSplitFunctionArgumentsAsLittleEndian(
+      const DataLayout &DL) const override {
     return false;
+  }
+
+  ShiftLegalizationStrategy
+  preferredShiftLegalizationStrategy(SelectionDAG &DAG, SDNode *N,
+                                     unsigned ExpansionFactor) const override {
+    return ShiftLegalizationStrategy::LowerToLibcall;
   }
 
 private:
@@ -179,12 +191,18 @@ private:
                           SmallVectorImpl<SDValue> &InVals) const;
 
 protected:
-
   const AVRSubtarget &Subtarget;
 
 private:
   MachineBasicBlock *insertShift(MachineInstr &MI, MachineBasicBlock *BB) const;
+  MachineBasicBlock *insertWideShift(MachineInstr &MI,
+                                     MachineBasicBlock *BB) const;
   MachineBasicBlock *insertMul(MachineInstr &MI, MachineBasicBlock *BB) const;
+  MachineBasicBlock *insertCopyZero(MachineInstr &MI,
+                                    MachineBasicBlock *BB) const;
+  MachineBasicBlock *insertAtomicArithmeticOp(MachineInstr &MI,
+                                              MachineBasicBlock *BB,
+                                              unsigned Opcode, int Width) const;
 };
 
 } // end namespace llvm

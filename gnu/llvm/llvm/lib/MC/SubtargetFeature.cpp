@@ -20,10 +20,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <cstring>
-#include <iterator>
 #include <string>
 #include <vector>
 
@@ -46,6 +42,11 @@ void SubtargetFeatures::AddFeature(StringRef String, bool Enable) {
                                        : (Enable ? "+" : "-") + String.lower());
 }
 
+void SubtargetFeatures::addFeaturesVector(
+    const ArrayRef<std::string> OtherFeatures) {
+  Features.insert(Features.cend(), OtherFeatures.begin(), OtherFeatures.end());
+}
+
 SubtargetFeatures::SubtargetFeatures(StringRef Initial) {
   // Break up string into separate features
   Split(Features, Initial);
@@ -56,7 +57,7 @@ std::string SubtargetFeatures::getString() const {
 }
 
 void SubtargetFeatures::print(raw_ostream &OS) const {
-  for (auto &F : Features)
+  for (const auto &F : Features)
     OS << F << " ";
   OS << "\n";
 }

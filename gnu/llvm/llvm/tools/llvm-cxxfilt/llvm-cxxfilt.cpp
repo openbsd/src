@@ -32,11 +32,14 @@ enum ID {
 #undef OPTION
 };
 
-#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+#define PREFIX(NAME, VALUE)                                                    \
+  static constexpr llvm::StringLiteral NAME##_init[] = VALUE;                  \
+  static constexpr llvm::ArrayRef<llvm::StringLiteral> NAME(                   \
+      NAME##_init, std::size(NAME##_init) - 1);
 #include "Opts.inc"
 #undef PREFIX
 
-const opt::OptTable::Info InfoTable[] = {
+static constexpr opt::OptTable::Info InfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {                                                                            \
@@ -48,9 +51,11 @@ const opt::OptTable::Info InfoTable[] = {
 #undef OPTION
 };
 
-class CxxfiltOptTable : public opt::OptTable {
+class CxxfiltOptTable : public opt::GenericOptTable {
 public:
-  CxxfiltOptTable() : OptTable(InfoTable) { setGroupedShortOptions(true); }
+  CxxfiltOptTable() : opt::GenericOptTable(InfoTable) {
+    setGroupedShortOptions(true);
+  }
 };
 } // namespace
 
@@ -65,34 +70,27 @@ static void error(const Twine &Message) {
 }
 
 static std::string demangle(const std::string &Mangled) {
-  int Status;
-  std::string Prefix;
-
   const char *DecoratedStr = Mangled.c_str();
   if (StripUnderscore)
     if (DecoratedStr[0] == '_')
       ++DecoratedStr;
-  size_t DecoratedLength = strlen(DecoratedStr);
 
+  std::string Result;
+  if (nonMicrosoftDemangle(DecoratedStr, Result))
+    return Result;
+
+  std::string Prefix;
   char *Undecorated = nullptr;
 
-  if (Types ||
-      ((DecoratedLength >= 2 && strncmp(DecoratedStr, "_Z", 2) == 0) ||
-       (DecoratedLength >= 4 && strncmp(DecoratedStr, "___Z", 4) == 0)))
-    Undecorated = itaniumDemangle(DecoratedStr, nullptr, nullptr, &Status);
+  if (Types)
+    Undecorated = itaniumDemangle(DecoratedStr, nullptr, nullptr, nullptr);
 
-  if (!Undecorated &&
-      (DecoratedLength > 6 && strncmp(DecoratedStr, "__imp_", 6) == 0)) {
+  if (!Undecorated && strncmp(DecoratedStr, "__imp_", 6) == 0) {
     Prefix = "import thunk for ";
-    Undecorated = itaniumDemangle(DecoratedStr + 6, nullptr, nullptr, &Status);
+    Undecorated = itaniumDemangle(DecoratedStr + 6, nullptr, nullptr, nullptr);
   }
 
-  if (!Undecorated &&
-      (DecoratedLength >= 2 && strncmp(DecoratedStr, "_R", 2) == 0)) {
-    Undecorated = rustDemangle(DecoratedStr, nullptr, nullptr, &Status);
-  }
-
-  std::string Result(Undecorated ? Prefix + Undecorated : Mangled);
+  Result = Undecorated ? Prefix + Undecorated : Mangled;
   free(Undecorated);
   return Result;
 }
@@ -128,7 +126,7 @@ static void SplitStringDelims(
 static bool IsLegalItaniumChar(char C) {
   // Itanium CXX ABI [External Names]p5.1.1:
   // '$' and '.' in mangled names are reserved for private implementations.
-  return isalnum(C) || C == '.' || C == '$' || C == '_';
+  return isAlnum(C) || C == '.' || C == '$' || C == '_';
 }
 
 // If 'Split' is true, then 'Mangled' is broken into individual words and each
@@ -147,7 +145,7 @@ static void demangleLine(llvm::raw_ostream &OS, StringRef Mangled, bool Split) {
   OS.flush();
 }
 
-int main(int argc, char **argv) {
+int llvm_cxxfilt_main(int argc, char **argv) {
   InitLLVM X(argc, argv);
   BumpPtrAllocator A;
   StringSaver Saver(A);

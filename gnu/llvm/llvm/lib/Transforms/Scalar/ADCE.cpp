@@ -29,13 +29,13 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
-#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -296,7 +296,7 @@ void AggressiveDeadCodeElimination::initialize() {
   // return of the function.
   // We do this by seeing which of the postdomtree root children exit the
   // program, and for all others, mark the subtree live.
-  for (auto &PDTChild : children<DomTreeNode *>(PDT.getRootNode())) {
+  for (const auto &PDTChild : children<DomTreeNode *>(PDT.getRootNode())) {
     auto *BB = PDTChild->getBlock();
     auto &Info = BlockInfo[BB];
     // Real function return
@@ -307,7 +307,7 @@ void AggressiveDeadCodeElimination::initialize() {
     }
 
     // This child is something else, like an infinite loop.
-    for (auto DFNode : depth_first(PDTChild))
+    for (auto *DFNode : depth_first(PDTChild))
       markLive(BlockInfo[DFNode->getBlock()].Terminator);
   }
 
@@ -538,12 +538,17 @@ bool AggressiveDeadCodeElimination::removeDeadInstructions() {
   // that have no side effects and do not influence the control flow or return
   // value of the function, and may therefore be deleted safely.
   // NOTE: We reuse the Worklist vector here for memory efficiency.
-  for (Instruction &I : instructions(F)) {
+  for (Instruction &I : llvm::reverse(instructions(F))) {
     // Check if the instruction is alive.
     if (isLive(&I))
       continue;
 
     if (auto *DII = dyn_cast<DbgInfoIntrinsic>(&I)) {
+      // Avoid removing a dbg.assign that is linked to instructions because it
+      // holds information about an existing store.
+      if (auto *DAI = dyn_cast<DbgAssignIntrinsic>(DII))
+        if (!at::getAssignmentInsts(DAI).empty())
+          continue;
       // Check if the scope of this variable location is alive.
       if (AliveScopes.count(DII->getDebugLoc()->getScope()))
         continue;
@@ -554,8 +559,10 @@ bool AggressiveDeadCodeElimination::removeDeadInstructions() {
     // Prepare to delete.
     Worklist.push_back(&I);
     salvageDebugInfo(I);
-    I.dropAllReferences();
   }
+
+  for (Instruction *&I : Worklist)
+    I->dropAllReferences();
 
   for (Instruction *&I : Worklist) {
     ++NumRemoved;
@@ -577,6 +584,7 @@ bool AggressiveDeadCodeElimination::updateDeadRegions() {
   // Don't compute the post ordering unless we needed it.
   bool HavePostOrder = false;
   bool Changed = false;
+  SmallVector<DominatorTree::UpdateType, 10> DeletedEdges;
 
   for (auto *BB : BlocksWithDeadTerminators) {
     auto &Info = BlockInfo[BB];
@@ -615,7 +623,6 @@ bool AggressiveDeadCodeElimination::updateDeadRegions() {
     makeUnconditional(BB, PreferredSucc->BB);
 
     // Inform the dominators about the deleted CFG edges.
-    SmallVector<DominatorTree::UpdateType, 4> DeletedEdges;
     for (auto *Succ : RemovedSuccessors) {
       // It might have happened that the same successor appeared multiple times
       // and the CFG edge wasn't really removed.
@@ -627,12 +634,13 @@ bool AggressiveDeadCodeElimination::updateDeadRegions() {
       }
     }
 
-    DomTreeUpdater(DT, &PDT, DomTreeUpdater::UpdateStrategy::Eager)
-        .applyUpdates(DeletedEdges);
-
     NumBranchesRemoved += 1;
     Changed = true;
   }
+
+  if (!DeletedEdges.empty())
+    DomTreeUpdater(DT, &PDT, DomTreeUpdater::UpdateStrategy::Eager)
+        .applyUpdates(DeletedEdges);
 
   return Changed;
 }

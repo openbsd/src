@@ -27,7 +27,8 @@ def ThunderX2T99Model : SchedMachineModel {
 
   list<Predicate> UnsupportedFeatures = !listconcat(SVEUnsupported.F,
                                                     PAUnsupported.F,
-                                                    SMEUnsupported.F);
+                                                    SMEUnsupported.F,
+                                                    [HasMTE]);
   // FIXME: Remove when all errors have been fixed.
   let FullInstRWOverlapCheck = 0;
 }
@@ -362,6 +363,7 @@ def : ReadAdvance<ReadID,      0>;
 def : ReadAdvance<ReadExtrHi,  0>;
 def : ReadAdvance<ReadAdrBase, 0>;
 def : ReadAdvance<ReadVLD,     0>;
+def : ReadAdvance<ReadST,      0>;
 
 //===----------------------------------------------------------------------===//
 // 3. Instruction Tables.
@@ -1249,7 +1251,12 @@ def : InstRW<[THX2T99Write_5Cyc_F01], (instrs FMOVXDHighr, FMOVDXHighr)>;
 // ASIMD shift by register, basic, Q-form
 // ASIMD shift by register, complex, D-form
 // ASIMD shift by register, complex, Q-form
-def : WriteRes<WriteV, [THX2T99F01]> {
+def : WriteRes<WriteVd, [THX2T99F01]> {
+  let Latency = 7;
+  let NumMicroOps = 4;
+  let ResourceCycles = [4];
+}
+def : WriteRes<WriteVq, [THX2T99F01]> {
   let Latency = 7;
   let NumMicroOps = 4;
   let ResourceCycles = [4];
@@ -1493,7 +1500,7 @@ def : InstRW<[THX2T99Write_5Cyc_F01],
 // ASIMD duplicate, gen reg
 // ASIMD duplicate, element
 def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^DUPv")>;
-def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^CPY")>;
+def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^DUP(i8|i16|i32|i64)$")>;
 def : InstRW<[THX2T99Write_5Cyc_F01], (instregex "^DUPv.+gpr")>;
 
 // ASIMD extract

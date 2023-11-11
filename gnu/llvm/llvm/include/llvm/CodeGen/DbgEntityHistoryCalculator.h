@@ -12,16 +12,15 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/LexicalScopes.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include <utility>
 
 namespace llvm {
 
-class DILocalVariable;
 class DILocation;
+class LexicalScopes;
 class DINode;
 class MachineFunction;
-class MachineInstr;
 class TargetRegisterInfo;
 
 /// Record instruction ordering so we can query their relative positions within

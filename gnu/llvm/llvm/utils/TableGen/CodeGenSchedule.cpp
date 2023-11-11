@@ -17,7 +17,6 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
@@ -101,7 +100,7 @@ struct InstRegexOp : public SetTheory::Operator {
       if (removeParens(Original).find_first_of("|?") != std::string::npos)
         FirstMeta = 0;
 
-      Optional<Regex> Regexpr = None;
+      std::optional<Regex> Regexpr;
       StringRef Prefix = Original.substr(0, FirstMeta);
       StringRef PatStr = Original.substr(FirstMeta);
       if (!PatStr.empty()) {
@@ -493,7 +492,7 @@ void CodeGenSchedModels::collectLoadStoreQueueInfo() {
       if (PM.StoreQueue) {
         PrintError(Queue->getLoc(),
                    "Expected a single StoreQueue definition");
-        PrintNote(PM.LoadQueue->getLoc(),
+        PrintNote(PM.StoreQueue->getLoc(),
                   "Previous definition of StoreQueue was here");
       }
 
@@ -520,6 +519,15 @@ void CodeGenSchedModels::collectOptionalProcessorInfo() {
 void CodeGenSchedModels::collectProcModels() {
   RecVec ProcRecords = Records.getAllDerivedDefinitions("Processor");
   llvm::sort(ProcRecords, LessRecordFieldName());
+
+  // Check for duplicated names.
+  auto I = std::adjacent_find(ProcRecords.begin(), ProcRecords.end(),
+                              [](const Record *Rec1, const Record *Rec2) {
+    return Rec1->getValueAsString("Name") == Rec2->getValueAsString("Name");
+  });
+  if (I != ProcRecords.end())
+    PrintFatalError((*I)->getLoc(), "Duplicate processor name " +
+                    (*I)->getValueAsString("Name"));
 
   // Reserve space because we can. Reallocation would be ok.
   ProcModels.reserve(ProcRecords.size()+1);
@@ -726,14 +734,12 @@ unsigned CodeGenSchedModels::getSchedRWIdx(const Record *Def,
 }
 
 bool CodeGenSchedModels::hasReadOfWrite(Record *WriteDef) const {
-  for (const CodeGenSchedRW &Read : SchedReads) {
-    Record *ReadDef = Read.TheDef;
-    if (!ReadDef || !ReadDef->isSubClassOf("ProcReadAdvance"))
-      continue;
-
-    RecVec ValidWrites = ReadDef->getValueAsListOfDefs("ValidWrites");
-    if (is_contained(ValidWrites, WriteDef)) {
-      return true;
+  for (auto& ProcModel : ProcModels) {
+    const RecVec &RADefs = ProcModel.ReadAdvanceDefs;
+    for (auto& RADef : RADefs) {
+      RecVec ValidWrites = RADef->getValueAsListOfDefs("ValidWrites");
+      if (is_contained(ValidWrites, WriteDef))
+        return true;
     }
   }
   return false;
@@ -832,7 +838,7 @@ unsigned CodeGenSchedModels::findRWForSequence(ArrayRef<unsigned> Seq,
   std::vector<CodeGenSchedRW> &RWVec = IsRead ? SchedReads : SchedWrites;
 
   auto I = find_if(RWVec, [Seq](CodeGenSchedRW &RW) {
-    return makeArrayRef(RW.Sequence) == Seq;
+    return ArrayRef(RW.Sequence) == Seq;
   });
   // Index zero reserved for invalid RW.
   return I == RWVec.end() ? 0 : std::distance(RWVec.begin(), I);
@@ -1398,7 +1404,7 @@ bool PredTransitions::mutuallyExclusive(Record *PredDef,
       //
       // if (A) return ...;
       // if (B) return ...;
-      if (!count(Preds, PC.Predicate))
+      if (!llvm::is_contained(Preds, PC.Predicate))
         continue;
       return true;
     }
@@ -1973,7 +1979,6 @@ void CodeGenSchedModels::collectProcResources() {
 
 void CodeGenSchedModels::checkCompleteness() {
   bool Complete = true;
-  bool HadCompleteModel = false;
   for (const CodeGenProcModel &ProcModel : procModels()) {
     const bool HasItineraries = ProcModel.hasItineraries();
     if (!ProcModel.ModelDef->getValueAsBit("CompleteModel"))
@@ -1985,7 +1990,7 @@ void CodeGenSchedModels::checkCompleteness() {
         continue;
       unsigned SCIdx = getSchedClassIdx(*Inst);
       if (!SCIdx) {
-        if (Inst->TheDef->isValueUnset("SchedRW") && !HadCompleteModel) {
+        if (Inst->TheDef->isValueUnset("SchedRW")) {
           PrintError(Inst->TheDef->getLoc(),
                      "No schedule information for instruction '" +
                          Inst->TheDef->getName() + "' in SchedMachineModel '" +
@@ -2013,7 +2018,6 @@ void CodeGenSchedModels::checkCompleteness() {
         Complete = false;
       }
     }
-    HadCompleteModel = true;
   }
   if (!Complete) {
     errs() << "\n\nIncomplete schedule models found.\n"

@@ -279,8 +279,8 @@ static void createRetBitCast(CallBase &CB, Type *RetTy, CastInst **RetBitCast) {
 ///     ; The original call instruction stays in its original block.
 ///     %t0 = musttail call i32 %ptr()
 ///     ret %t0
-static CallBase &versionCallSite(CallBase &CB, Value *Callee,
-                                 MDNode *BranchWeights) {
+CallBase &llvm::versionCallSite(CallBase &CB, Value *Callee,
+                                MDNode *BranchWeights) {
 
   IRBuilder<> Builder(&CB);
   CallBase *OrigInst = &CB;
@@ -415,6 +415,21 @@ bool llvm::isLegalToPromote(const CallBase &CB, Function *Callee,
   // site.
   unsigned I = 0;
   for (; I < NumParams; ++I) {
+    // Make sure that the callee and call agree on byval/inalloca. The types do
+    // not have to match.
+    if (Callee->hasParamAttribute(I, Attribute::ByVal) !=
+        CB.getAttributes().hasParamAttr(I, Attribute::ByVal)) {
+      if (FailureReason)
+        *FailureReason = "byval mismatch";
+      return false;
+    }
+    if (Callee->hasParamAttribute(I, Attribute::InAlloca) !=
+        CB.getAttributes().hasParamAttr(I, Attribute::InAlloca)) {
+      if (FailureReason)
+        *FailureReason = "inalloca mismatch";
+      return false;
+    }
+
     Type *FormalTy = Callee->getFunctionType()->getFunctionParamType(I);
     Type *ActualTy = CB.getArgOperand(I)->getType();
     if (FormalTy == ActualTy)
@@ -423,6 +438,18 @@ bool llvm::isLegalToPromote(const CallBase &CB, Function *Callee,
       if (FailureReason)
         *FailureReason = "Argument type mismatch";
       return false;
+    }
+
+    // MustTail call needs stricter type match. See
+    // Verifier::verifyMustTailCall().
+    if (CB.isMustTailCall()) {
+      PointerType *PF = dyn_cast<PointerType>(FormalTy);
+      PointerType *PA = dyn_cast<PointerType>(ActualTy);
+      if (!PF || !PA || PF->getAddressSpace() != PA->getAddressSpace()) {
+        if (FailureReason)
+          *FailureReason = "Musttail call Argument type mismatch";
+        return false;
+      }
     }
   }
   for (; I < NumArgs; I++) {
@@ -485,24 +512,25 @@ CallBase &llvm::promoteCall(CallBase &CB, Function *Callee,
       CB.setArgOperand(ArgNo, Cast);
 
       // Remove any incompatible attributes for the argument.
-      AttrBuilder ArgAttrs(CallerPAL.getParamAttributes(ArgNo));
+      AttrBuilder ArgAttrs(Ctx, CallerPAL.getParamAttrs(ArgNo));
       ArgAttrs.remove(AttributeFuncs::typeIncompatible(FormalTy));
 
-      // If byval is used, this must be a pointer type, and the byval type must
-      // match the element type. Update it if present.
+      // We may have a different byval/inalloca type.
       if (ArgAttrs.getByValType())
         ArgAttrs.addByValAttr(Callee->getParamByValType(ArgNo));
+      if (ArgAttrs.getInAllocaType())
+        ArgAttrs.addInAllocaAttr(Callee->getParamInAllocaType(ArgNo));
 
       NewArgAttrs.push_back(AttributeSet::get(Ctx, ArgAttrs));
       AttributeChanged = true;
     } else
-      NewArgAttrs.push_back(CallerPAL.getParamAttributes(ArgNo));
+      NewArgAttrs.push_back(CallerPAL.getParamAttrs(ArgNo));
   }
 
   // If the return type of the call site doesn't match that of the callee, cast
   // the returned value to the appropriate type.
   // Remove any incompatible return value attribute.
-  AttrBuilder RAttrs(CallerPAL, AttributeList::ReturnIndex);
+  AttrBuilder RAttrs(Ctx, CallerPAL.getRetAttrs());
   if (!CallSiteRetTy->isVoidTy() && CallSiteRetTy != CalleeRetTy) {
     createRetBitCast(CB, CallSiteRetTy, RetBitCast);
     RAttrs.remove(AttributeFuncs::typeIncompatible(CalleeRetTy));
@@ -511,7 +539,7 @@ CallBase &llvm::promoteCall(CallBase &CB, Function *Callee,
 
   // Set the new callsite attribute.
   if (AttributeChanged)
-    CB.setAttributes(AttributeList::get(Ctx, CallerPAL.getFnAttributes(),
+    CB.setAttributes(AttributeList::get(Ctx, CallerPAL.getFnAttrs(),
                                         AttributeSet::get(Ctx, RAttrs),
                                         NewArgAttrs));
 

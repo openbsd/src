@@ -48,9 +48,9 @@ static void warnAboutLeftoverTransformations(Loop *L,
 
   if (hasVectorizeTransformation(L) == TM_ForcedByUser) {
     LLVM_DEBUG(dbgs() << "Leftover vectorization transformation\n");
-    Optional<ElementCount> VectorizeWidth =
+    std::optional<ElementCount> VectorizeWidth =
         getOptionalElementCountLoopAttribute(L);
-    Optional<int> InterleaveCount =
+    std::optional<int> InterleaveCount =
         getOptionalIntLoopAttribute(L, "llvm.loop.interleave.count");
 
     if (!VectorizeWidth || VectorizeWidth->isVector())
@@ -61,7 +61,7 @@ static void warnAboutLeftoverTransformations(Loop *L,
           << "loop not vectorized: the optimizer was unable to perform the "
              "requested transformation; the transformation might be disabled "
              "or specified as part of an unsupported transformation ordering");
-    else if (InterleaveCount.getValueOr(0) != 1)
+    else if (InterleaveCount.value_or(0) != 1)
       ORE->emit(
           DiagnosticInfoOptimizationFailure(DEBUG_TYPE,
                                             "FailedRequestedInterleaving",

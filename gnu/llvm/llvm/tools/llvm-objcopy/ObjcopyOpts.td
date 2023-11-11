@@ -29,12 +29,13 @@ defm new_symbol_visibility : Eq<"new-symbol-visibility", "Visibility of "
                                 " with --add-symbol unless otherwise"
                                 " specified. The default value is 'default'.">;
 
-def compress_debug_sections : Flag<["--"], "compress-debug-sections">;
-def compress_debug_sections_eq
+def compress_debug_sections
     : Joined<["--"], "compress-debug-sections=">,
-      MetaVarName<"[ zlib | zlib-gnu ]">,
-      HelpText<"Compress DWARF debug sections using specified style. Supported "
-               "styles: 'zlib-gnu' and 'zlib'">;
+      MetaVarName<"format">,
+      HelpText<"Compress DWARF debug sections using specified format. Supported "
+               "formats: zlib, zstd. Select zlib if <format> is omitted">;
+def : Flag<["--"], "compress-debug-sections">, Alias<compress_debug_sections>,
+      AliasArgs<["zlib"]>;
 def decompress_debug_sections : Flag<["--"], "decompress-debug-sections">,
                                 HelpText<"Decompress DWARF debug sections.">;
 defm split_dwo
@@ -50,7 +51,8 @@ defm rename_section
     : Eq<"rename-section",
          "Renames a section from old to new, optionally with specified flags. "
          "Flags supported for GNU compatibility: alloc, load, noload, "
-         "readonly, debug, code, data, rom, share, contents, merge, strings.">,
+         "readonly, exclude, debug, code, data, rom, share, contents, merge, "
+         "strings.">,
       MetaVarName<"old=new[,flag1,...]">;
 defm redefine_symbol
     : Eq<"redefine-sym", "Change the name of a symbol old to new">,
@@ -82,9 +84,14 @@ defm set_section_alignment
 defm set_section_flags
     : Eq<"set-section-flags",
          "Set section flags for a given section. Flags supported for GNU "
-         "compatibility: alloc, load, noload, readonly, debug, code, data, "
-         "rom, share, contents, merge, strings.">,
+         "compatibility: alloc, load, noload, readonly, exclude, debug, code, "
+         "data, rom, share, contents, merge, strings.">,
       MetaVarName<"section=flag1[,flag2,...]">;
+
+defm set_section_type
+    : Eq<"set-section-type",
+         "Set the type of section <section> to the integer <type>">,
+      MetaVarName<"section=type">;
 
 def S : Flag<["-"], "S">,
         Alias<strip_all>,
@@ -103,6 +110,11 @@ defm strip_unneeded_symbols
          "Reads a list of symbols from <filename> and removes them "
          "if they are not needed by relocations">,
       MetaVarName<"filename">;
+
+defm subsystem
+    : Eq<"subsystem",
+         "Set PE subsystem and version">,
+      MetaVarName<"name[:version]">;
 
 def extract_dwo
     : Flag<["--"], "extract-dwo">,
@@ -214,3 +226,7 @@ defm add_symbol
          "compatibility: debug, constructor, warning, indirect, synthetic, "
          "unique-object, before.">,
       MetaVarName<"name=[section:]value[,flags]">;
+
+defm update_section
+    : Eq<"update-section", "Replace the contents of section <name> with contents from a file <file>.">,
+      MetaVarName<"name=file">;

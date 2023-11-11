@@ -15,6 +15,7 @@
 
 #include "llvm-c/Remarks.h"
 #include "llvm/Demangle/Demangle.h"
+#include "llvm/Remarks/Remark.h"
 #include "llvm/Remarks/RemarkFormat.h"
 #include "llvm/Remarks/RemarkParser.h"
 #include "llvm/Support/CommandLine.h"
@@ -31,6 +32,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 #include <map>
+#include <optional>
 #include <set>
 
 using namespace llvm;
@@ -207,7 +209,7 @@ static bool readLocationInfo(LocationInfoTy &LocationInfo) {
         Arg.Val.getAsInteger(10, UnrollCount);
     }
 
-    const Optional<remarks::RemarkLocation> &Loc = Remark.Loc;
+    const std::optional<remarks::RemarkLocation> &Loc = Remark.Loc;
     if (!Loc)
       continue;
 

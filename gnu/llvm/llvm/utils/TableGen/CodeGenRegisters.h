@@ -27,7 +27,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/LaneBitmask.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MachineValueType.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/SetTheory.h"
 #include <cassert>
@@ -155,6 +154,7 @@ namespace llvm {
     bool CoveredBySubRegs;
     bool HasDisjunctSubRegs;
     bool Artificial;
+    bool Constant;
 
     // Map SubRegIndex -> Register.
     typedef std::map<CodeGenSubRegIndex *, CodeGenRegister *,
@@ -234,7 +234,7 @@ namespace llvm {
     const RegUnitList &getRegUnits() const { return RegUnits; }
 
     ArrayRef<LaneBitmask> getRegUnitLaneMasks() const {
-      return makeArrayRef(RegUnitLaneMasks).slice(0, NativeRegUnits.count());
+      return ArrayRef(RegUnitLaneMasks).slice(0, NativeRegUnits.count());
     }
 
     // Get the native register units. This is a prefix of getRegUnits().
@@ -332,6 +332,8 @@ namespace llvm {
     bool Allocatable;
     StringRef AltOrderSelect;
     uint8_t AllocationPriority;
+    bool GlobalPriority;
+    uint8_t TSFlags;
     /// Contains the combination of the lane masks of all subregisters.
     LaneBitmask LaneMask;
     /// True if there are at least 2 subregisters which do not interfere.
@@ -351,10 +353,7 @@ namespace llvm {
     std::string getQualifiedName() const;
     ArrayRef<ValueTypeByHwMode> getValueTypes() const { return VTs; }
     unsigned getNumValueTypes() const { return VTs.size(); }
-
-    bool hasType(const ValueTypeByHwMode &VT) const {
-      return llvm::is_contained(VTs, VT);
-    }
+    bool hasType(const ValueTypeByHwMode &VT) const;
 
     const ValueTypeByHwMode &getValueTypeNum(unsigned VTNum) const {
       if (VTNum < VTs.size())
@@ -393,7 +392,7 @@ namespace llvm {
     /// \return std::pair<SubClass, SubRegClass> where SubClass is a SubClass is
     /// a class where every register has SubIdx and SubRegClass is a class where
     /// every register is covered by the SubIdx subregister of SubClass.
-    Optional<std::pair<CodeGenRegisterClass *, CodeGenRegisterClass *>>
+    std::optional<std::pair<CodeGenRegisterClass *, CodeGenRegisterClass *>>
     getMatchingSubClassWithSubRegs(CodeGenRegBank &RegBank,
                                    const CodeGenSubRegIndex *SubIdx) const;
 
@@ -473,6 +472,33 @@ namespace llvm {
 
     // Called by CodeGenRegBank::CodeGenRegBank().
     static void computeSubClasses(CodeGenRegBank&);
+
+    // Get ordering value among register base classes.
+    std::optional<int> getBaseClassOrder() const {
+      if (TheDef && !TheDef->isValueUnset("BaseClassOrder"))
+        return TheDef->getValueAsInt("BaseClassOrder");
+      return {};
+    }
+  };
+
+  // Register categories are used when we need to deterine the category a
+  // register falls into (GPR, vector, fixed, etc.) without having to know
+  // specific information about the target architecture.
+  class CodeGenRegisterCategory {
+    Record *TheDef;
+    std::string Name;
+    std::list<CodeGenRegisterClass *> Classes;
+
+  public:
+    CodeGenRegisterCategory(CodeGenRegBank &, Record *R);
+    CodeGenRegisterCategory(CodeGenRegisterCategory &) = delete;
+
+    // Return the Record that defined this class, or NULL if the class was
+    // created by TableGen.
+    Record *getDef() const { return TheDef; }
+
+    std::string getName() const { return Name; }
+    std::list<CodeGenRegisterClass *> getClasses() const { return Classes; }
   };
 
   // Register units are used to model interference and register pressure.
@@ -505,7 +531,7 @@ namespace llvm {
 
     ArrayRef<const CodeGenRegister*> getRoots() const {
       assert(!(Roots[1] && !Roots[0]) && "Invalid roots array");
-      return makeArrayRef(Roots, !!Roots[0] + !!Roots[1]);
+      return ArrayRef(Roots, !!Roots[0] + !!Roots[1]);
     }
   };
 
@@ -557,6 +583,13 @@ namespace llvm {
     DenseMap<Record*, CodeGenRegisterClass*> Def2RC;
     typedef std::map<CodeGenRegisterClass::Key, CodeGenRegisterClass*> RCKeyMap;
     RCKeyMap Key2RC;
+
+    // Register categories.
+    std::list<CodeGenRegisterCategory> RegCategories;
+    DenseMap<Record *, CodeGenRegisterCategory *> Def2RCat;
+    using RCatKeyMap =
+        std::map<CodeGenRegisterClass::Key, CodeGenRegisterCategory *>;
+    RCatKeyMap Key2RCat;
 
     // Remember each unique set of register units. Initially, this contains a
     // unique set for each register class. Simliar sets are coalesced with
@@ -716,6 +749,14 @@ namespace llvm {
 
     const std::list<CodeGenRegisterClass> &getRegClasses() const {
       return RegClasses;
+    }
+
+    std::list<CodeGenRegisterCategory> &getRegCategories() {
+      return RegCategories;
+    }
+
+    const std::list<CodeGenRegisterCategory> &getRegCategories() const {
+      return RegCategories;
     }
 
     // Find a register class from its def.

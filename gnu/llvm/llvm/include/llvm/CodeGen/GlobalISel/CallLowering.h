@@ -17,25 +17,26 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/TargetCallingConv.h"
-#include "llvm/IR/Attributes.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/LowLevelTypeImpl.h"
 #include "llvm/Support/MachineValueType.h"
 #include <cstdint>
 #include <functional>
 
 namespace llvm {
 
+class AttributeList;
 class CallBase;
 class DataLayout;
 class Function;
 class FunctionLoweringInfo;
 class MachineIRBuilder;
+class MachineFunction;
 struct MachinePointerInfo;
 class MachineRegisterInfo;
 class TargetLowering;
@@ -95,7 +96,7 @@ public:
             bool IsFixed = true)
       : ArgInfo(Regs, OrigValue.getType(), OrigIndex, Flags, IsFixed, &OrigValue) {}
 
-    ArgInfo() : BaseArgInfo() {}
+    ArgInfo() = default;
   };
 
   struct CallLoweringInfo {
@@ -115,6 +116,9 @@ public:
     /// Valid if the call has a swifterror inout parameter, and contains the
     /// vreg that the swifterror should be copied into after the call.
     Register SwiftErrorVReg;
+
+    /// Original IR callsite corresponding to this call, if available.
+    const CallBase *CB = nullptr;
 
     MDNode *KnownCallees = nullptr;
 
@@ -140,6 +144,9 @@ public:
 
     /// The stack index for sret demotion.
     int DemoteStackIndex;
+
+    /// Expected type identifier for indirect calls with a CFI check.
+    const ConstantInt *CFIType = nullptr;
   };
 
   /// Argument handling is mostly uniform between the four places that
@@ -259,7 +266,7 @@ public:
     /// handle the appropriate COPY (either to or from) and mark any
     /// relevant uses/defines as needed.
     virtual void assignValueToReg(Register ValVReg, Register PhysReg,
-                                  CCValAssign &VA) = 0;
+                                  CCValAssign VA) = 0;
 
     /// The specified value has been assigned to a stack
     /// location. Load or store it there, with appropriate extension
@@ -279,11 +286,14 @@ public:
     }
 
     /// Handle custom values, which may be passed into one or more of \p VAs.
+    /// \p If the handler wants the assignments to be delayed until after
+    /// mem loc assignments, then it sets \p Thunk to the thunk to do the
+    /// assignment.
     /// \return The number of \p VAs that have been assigned after the first
     ///         one, and which should therefore be skipped from further
     ///         processing.
-    virtual unsigned assignCustomValue(ArgInfo &Arg,
-                                       ArrayRef<CCValAssign> VAs) {
+    virtual unsigned assignCustomValue(ArgInfo &Arg, ArrayRef<CCValAssign> VAs,
+                                       std::function<void()> *Thunk = nullptr) {
       // This is not a pure virtual method because not all targets need to worry
       // about custom values.
       llvm_unreachable("Custom values not supported");
@@ -315,7 +325,7 @@ public:
 
     /// Provides a default implementation for argument handling.
     void assignValueToReg(Register ValVReg, Register PhysReg,
-                          CCValAssign &VA) override;
+                          CCValAssign VA) override;
   };
 
   /// Base class for ValueHandlers used for arguments passed to a function call,
@@ -341,6 +351,9 @@ protected:
   /// parameter of \p Call.
   ISD::ArgFlagsTy getAttributesForArgIdx(const CallBase &Call,
                                          unsigned ArgIdx) const;
+
+  /// \returns Flags corresponding to the attributes on the return from \p Call.
+  ISD::ArgFlagsTy getAttributesForReturn(const CallBase &Call) const;
 
   /// Adds flags to \p Flags based off of the attributes in \p Attrs.
   /// \p OpIdx is the index in \p Attrs to add flags from.
@@ -382,21 +395,20 @@ protected:
   /// \p Handler to move them to the assigned locations.
   ///
   /// \return True if everything has succeeded, false otherwise.
-  bool determineAndHandleAssignments(ValueHandler &Handler,
-                                     ValueAssigner &Assigner,
-                                     SmallVectorImpl<ArgInfo> &Args,
-                                     MachineIRBuilder &MIRBuilder,
-                                     CallingConv::ID CallConv, bool IsVarArg,
-                                     Register ThisReturnReg = Register()) const;
+  bool determineAndHandleAssignments(
+      ValueHandler &Handler, ValueAssigner &Assigner,
+      SmallVectorImpl<ArgInfo> &Args, MachineIRBuilder &MIRBuilder,
+      CallingConv::ID CallConv, bool IsVarArg,
+      ArrayRef<Register> ThisReturnRegs = std::nullopt) const;
 
   /// Use \p Handler to insert code to handle the argument/return values
   /// represented by \p Args. It's expected determineAssignments previously
   /// processed these arguments to populate \p CCState and \p ArgLocs.
-  bool handleAssignments(ValueHandler &Handler, SmallVectorImpl<ArgInfo> &Args,
-                         CCState &CCState,
-                         SmallVectorImpl<CCValAssign> &ArgLocs,
-                         MachineIRBuilder &MIRBuilder,
-                         Register ThisReturnReg = Register()) const;
+  bool
+  handleAssignments(ValueHandler &Handler, SmallVectorImpl<ArgInfo> &Args,
+                    CCState &CCState, SmallVectorImpl<CCValAssign> &ArgLocs,
+                    MachineIRBuilder &MIRBuilder,
+                    ArrayRef<Register> ThisReturnRegs = std::nullopt) const;
 
   /// Check whether parameters to a call that are passed in callee saved
   /// registers are the same as from the calling function.  This needs to be

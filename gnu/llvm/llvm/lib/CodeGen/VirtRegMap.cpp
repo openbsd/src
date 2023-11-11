@@ -145,7 +145,7 @@ void VirtRegMap::assignVirt2StackSlot(Register virtReg, int SS) {
 void VirtRegMap::print(raw_ostream &OS, const Module*) const {
   OS << "********** REGISTER MAP **********\n";
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
-    unsigned Reg = Register::index2VirtReg(i);
+    Register Reg = Register::index2VirtReg(i);
     if (Virt2PhysMap[Reg] != (unsigned)VirtRegMap::NO_PHYS_REG) {
       OS << '[' << printReg(Reg, TRI) << " -> "
          << printReg(Virt2PhysMap[Reg], TRI) << "] "
@@ -154,7 +154,7 @@ void VirtRegMap::print(raw_ostream &OS, const Module*) const {
   }
 
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
-    unsigned Reg = Register::index2VirtReg(i);
+    Register Reg = Register::index2VirtReg(i);
     if (Virt2StackSlotMap[Reg] != VirtRegMap::NO_STACK_SLOT) {
       OS << '[' << printReg(Reg, TRI) << " -> fi#" << Virt2StackSlotMap[Reg]
          << "] " << TRI->getRegClassName(MRI->getRegClass(Reg)) << "\n";
@@ -475,7 +475,7 @@ void VirtRegRewriter::expandCopyBundle(MachineInstr &MI) const {
     // clobbering.
     for (int E = MIs.size(), PrevE = E; E > 1; PrevE = E) {
       for (int I = E; I--; )
-        if (!anyRegsAlias(MIs[I], makeArrayRef(MIs).take_front(E), TRI)) {
+        if (!anyRegsAlias(MIs[I], ArrayRef(MIs).take_front(E), TRI)) {
           if (I + 1 != E)
             std::swap(MIs[I], MIs[E - 1]);
           --E;
@@ -541,15 +541,8 @@ void VirtRegRewriter::rewrite() {
   for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
        MBBI != MBBE; ++MBBI) {
     LLVM_DEBUG(MBBI->print(dbgs(), Indexes));
-    for (MachineBasicBlock::instr_iterator
-           MII = MBBI->instr_begin(), MIE = MBBI->instr_end(); MII != MIE;) {
-      MachineInstr *MI = &*MII;
-      ++MII;
-
-      for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
-           MOE = MI->operands_end(); MOI != MOE; ++MOI) {
-        MachineOperand &MO = *MOI;
-
+    for (MachineInstr &MI : llvm::make_early_inc_range(MBBI->instrs())) {
+      for (MachineOperand &MO : MI.operands()) {
         // Make sure MRI knows about registers clobbered by regmasks.
         if (MO.isRegMask())
           MRI->addPhysRegsUsedFromRegMask(MO.getRegMask());
@@ -574,7 +567,7 @@ void VirtRegRewriter::rewrite() {
             // have to add implicit killed operands for the super-register.  A
             // partial redef always kills and redefines the super-register.
             if ((MO.readsReg() && (MO.isDef() || MO.isKill())) ||
-                (MO.isDef() && subRegLiveThrough(*MI, PhysReg)))
+                (MO.isDef() && subRegLiveThrough(MI, PhysReg)))
               SuperKills.push_back(PhysReg);
 
             if (MO.isDef()) {
@@ -619,20 +612,20 @@ void VirtRegRewriter::rewrite() {
       // Add any missing super-register kills after rewriting the whole
       // instruction.
       while (!SuperKills.empty())
-        MI->addRegisterKilled(SuperKills.pop_back_val(), TRI, true);
+        MI.addRegisterKilled(SuperKills.pop_back_val(), TRI, true);
 
       while (!SuperDeads.empty())
-        MI->addRegisterDead(SuperDeads.pop_back_val(), TRI, true);
+        MI.addRegisterDead(SuperDeads.pop_back_val(), TRI, true);
 
       while (!SuperDefs.empty())
-        MI->addRegisterDefined(SuperDefs.pop_back_val(), TRI);
+        MI.addRegisterDefined(SuperDefs.pop_back_val(), TRI);
 
-      LLVM_DEBUG(dbgs() << "> " << *MI);
+      LLVM_DEBUG(dbgs() << "> " << MI);
 
-      expandCopyBundle(*MI);
+      expandCopyBundle(MI);
 
       // We can remove identity copies right now.
-      handleIdentityCopy(*MI);
+      handleIdentityCopy(MI);
     }
   }
 

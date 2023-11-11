@@ -27,12 +27,16 @@ combined with other commands:
 
 .. option:: -d, --disassemble
 
-  Disassemble all text sections found in the input files.
+  Disassemble all executable sections found in the input files. On some
+  architectures (AArch64, PPC64, x86), all known instructions are disassembled by
+  default. On the others, :option:`--mcpu` or :option:`--mattr` is needed to
+  enable some instruction sets. Disabled instructions are displayed as
+  ``<unknown>``.
 
 .. option:: -D, --disassemble-all
 
   Disassemble all sections found in the input files.
-  
+
 .. option:: --disassemble-symbols=<symbol1[,symbol2,...]>
 
   Disassemble only the specified symbols. Takes demangled symbol names when
@@ -93,6 +97,8 @@ combined with other commands:
 
   Display the unwind info of the input(s).
 
+  This operation is only currently supported for COFF and Mach-O object files.
+
 .. option:: -v, --version
 
   Display the version of the :program:`llvm-objdump` executable. Does not stack
@@ -119,9 +125,27 @@ OPTIONS
   Specify the target architecture when disassembling. Use :option:`--version`
   for a list of available targets.
 
+.. option:: --build-id=<string>
+
+  Look up the object using the given build ID, specified as a hexadecimal
+  string. The found object is handled as if it were an input filename.
+
 .. option:: -C, --demangle
 
   Demangle symbol names in the output.
+
+.. option:: --debug-file-directory <path>
+
+  Provide a path to a directory with a `.build-id` subdirectory to search for
+  debug information for stripped binaries. Multiple instances of this argument
+  are searched in the order given.
+
+.. option:: --debuginfod, --no-debuginfod
+
+  Whether or not to try debuginfod lookups for debug binaries. Unless specified,
+  debuginfod is only enabled if libcurl was compiled in (``LLVM_ENABLE_CURL``)
+  and at least one server URL was provided by the environment variable
+  ``DEBUGINFOD_URLS``.
 
 .. option:: --debug-vars=<format>
 
@@ -150,7 +174,7 @@ OPTIONS
 
   * ``reg-names-std``: ARM only (default). Print in ARM 's instruction set documentation, with r13/r14/r15 replaced by sp/lr/pc.
   * ``reg-names-raw``: ARM only. Use r followed by the register number.
-  * ``no-aliases``: AArch64 and RISC-V only. Print raw instruction mnemonic instead of pesudo instruction mnemonic.
+  * ``no-aliases``: AArch64 and RISC-V only. Print raw instruction mnemonic instead of pseudo instruction mnemonic.
   * ``numeric``: RISC-V only. Print raw register names instead of ABI mnemonic. (e.g. print x1 instead of ra)
   * ``att``: x86 only (default). Print in the AT&T syntax.
   * ``intel``: x86 only. Print in the intel syntax.
@@ -165,17 +189,22 @@ OPTIONS
   Enable/disable target-specific attributes. Specify ``--mattr=help`` to display
   the available attributes.
 
-.. option:: --no-leading-addr
+.. option:: --no-leading-addr, --no-addresses
 
-  When disassembling, do not print leading addresses.
+  When disassembling, do not print leading addresses for instructions or inline
+  relocations.
 
 .. option:: --no-print-imm-hex
 
-  Do not use hex format for immediate values in disassembly output (default).
+  Do not use hex format for immediate values in disassembly output.
 
 .. option:: --no-show-raw-insn
 
   When disassembling, do not print the raw bytes of each instruction.
+
+.. option:: --offloading
+
+  Display the content of the LLVM offloading section.
 
 .. option:: --prefix=<prefix>
 
@@ -190,12 +219,17 @@ OPTIONS
 
 .. option:: --print-imm-hex
 
-  Use hex format when printing immediate values in disassembly output.
+  Use hex format when printing immediate values in disassembly output (default).
 
 .. option:: -S, --source
 
   When disassembling, display source interleaved with the disassembly. Implies
   :option:`--disassemble`.
+
+.. option:: --show-all-symbols
+
+  Show all symbols during disassembly, even if multiple symbols are defined at
+  the same location.
 
 .. option:: --show-lma
 
@@ -224,7 +258,9 @@ OPTIONS
 
   When printing a PC-relative global symbol reference, print it as an offset from the leading symbol.
 
-  Only works with an X86 linked image.
+  When a bb-address-map section is present (i.e., the object file is built with ``-fbasic-block-sections=labels``), labels are retrieved from that section instead.
+
+  Only works with PowerPC objects or X86 linked images.
 
   Example:
     A non-symbolized branch instruction with a local target and pc-relative memory access like
@@ -300,6 +336,15 @@ MACH-O ONLY OPTIONS AND COMMANDS
 
   Disassemble just the specified symbol's instructions.
 
+.. option:: --chained-fixups
+
+  Print chained fixup information.
+
+.. option:: --dyld-info
+
+  Print bind and rebase information used by dyld to resolve external
+  references in a final linked binary.
+
 .. option:: --dylibs-used
 
   Display the shared libraries used for linked files.
@@ -316,9 +361,12 @@ MACH-O ONLY OPTIONS AND COMMANDS
 
   Display exported symbols.
 
-.. option:: --function-starts
+.. option:: --function-starts [=<addrs|names|both>]
 
-  Print the function starts table for Mach-O objects.
+  Print the function starts table for Mach-O objects. Either ``addrs``
+  (default) to print only the addresses of functions, ``names`` to print only
+  the names of the functions (when available), or ``both`` to print the
+  names beside the addresses.
 
 .. option:: -g
 
@@ -395,7 +443,7 @@ XCOFF ONLY OPTIONS AND COMMANDS
 BUGS
 ----
 
-To report bugs, please visit <https://bugs.llvm.org/>.
+To report bugs, please visit <https://github.com/llvm/llvm-project/labels/tools:llvm-objdump/>.
 
 SEE ALSO
 --------

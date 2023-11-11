@@ -16,7 +16,6 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrItineraries.h"
@@ -27,6 +26,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <numeric>
 
 using namespace llvm;
 
@@ -44,22 +44,6 @@ bool TargetSchedModel::hasInstrItineraries() const {
   return EnableSchedItins && !InstrItins.isEmpty();
 }
 
-static unsigned gcd(unsigned Dividend, unsigned Divisor) {
-  // Dividend and Divisor will be naturally swapped as needed.
-  while (Divisor) {
-    unsigned Rem = Dividend % Divisor;
-    Dividend = Divisor;
-    Divisor = Rem;
-  };
-  return Dividend;
-}
-
-static unsigned lcm(unsigned A, unsigned B) {
-  unsigned LCM = (uint64_t(A) * B) / gcd(A, B);
-  assert((LCM >= A && LCM >= B) && "LCM overflow");
-  return LCM;
-}
-
 void TargetSchedModel::init(const TargetSubtargetInfo *TSInfo) {
   STI = TSInfo;
   SchedModel = TSInfo->getSchedModel();
@@ -72,7 +56,7 @@ void TargetSchedModel::init(const TargetSubtargetInfo *TSInfo) {
   for (unsigned Idx = 0; Idx < NumRes; ++Idx) {
     unsigned NumUnits = SchedModel.getProcResource(Idx)->NumUnits;
     if (NumUnits > 0)
-      ResourceLCM = lcm(ResourceLCM, NumUnits);
+      ResourceLCM = std::lcm(ResourceLCM, NumUnits);
   }
   MicroOpFactor = ResourceLCM / SchedModel.IssueWidth;
   for (unsigned Idx = 0; Idx < NumRes; ++Idx) {
@@ -238,9 +222,9 @@ unsigned TargetSchedModel::computeOperandLatency(
   // If DefIdx does not exist in the model (e.g. implicit defs), then return
   // unit latency (defaultDefLatency may be too conservative).
 #ifndef NDEBUG
-  if (SCDesc->isValid() && !DefMI->getOperand(DefOperIdx).isImplicit()
-      && !DefMI->getDesc().OpInfo[DefOperIdx].isOptionalDef()
-      && SchedModel.isComplete()) {
+  if (SCDesc->isValid() && !DefMI->getOperand(DefOperIdx).isImplicit() &&
+      !DefMI->getDesc().operands()[DefOperIdx].isOptionalDef() &&
+      SchedModel.isComplete()) {
     errs() << "DefIdx " << DefIdx << " exceeds machine model writes for "
            << *DefMI << " (Try with MCSchedModel.CompleteModel set to false)";
     llvm_unreachable("incomplete machine model");

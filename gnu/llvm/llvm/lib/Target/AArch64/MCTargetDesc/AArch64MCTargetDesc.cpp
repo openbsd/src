@@ -26,14 +26,15 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
 #define GET_INSTRINFO_MC_DESC
 #define GET_INSTRINFO_MC_HELPERS
+#define ENABLE_INSTR_PREDICATE_VERIFIER
 #include "AArch64GenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_MC_DESC
@@ -52,6 +53,8 @@ static MCSubtargetInfo *
 createAArch64MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   if (CPU.empty()) {
     CPU = "generic";
+    if (FS.empty())
+      FS = "+v8a";
 
     if (TT.isArm64e())
       CPU = "apple-a12";
@@ -228,10 +231,98 @@ void AArch64_MC::initLLVMToCVRegMapping(MCRegisterInfo *MRI) {
       {codeview::RegisterId::ARM64_Q29, AArch64::Q29},
       {codeview::RegisterId::ARM64_Q30, AArch64::Q30},
       {codeview::RegisterId::ARM64_Q31, AArch64::Q31},
-
+      {codeview::RegisterId::ARM64_B0, AArch64::B0},
+      {codeview::RegisterId::ARM64_B1, AArch64::B1},
+      {codeview::RegisterId::ARM64_B2, AArch64::B2},
+      {codeview::RegisterId::ARM64_B3, AArch64::B3},
+      {codeview::RegisterId::ARM64_B4, AArch64::B4},
+      {codeview::RegisterId::ARM64_B5, AArch64::B5},
+      {codeview::RegisterId::ARM64_B6, AArch64::B6},
+      {codeview::RegisterId::ARM64_B7, AArch64::B7},
+      {codeview::RegisterId::ARM64_B8, AArch64::B8},
+      {codeview::RegisterId::ARM64_B9, AArch64::B9},
+      {codeview::RegisterId::ARM64_B10, AArch64::B10},
+      {codeview::RegisterId::ARM64_B11, AArch64::B11},
+      {codeview::RegisterId::ARM64_B12, AArch64::B12},
+      {codeview::RegisterId::ARM64_B13, AArch64::B13},
+      {codeview::RegisterId::ARM64_B14, AArch64::B14},
+      {codeview::RegisterId::ARM64_B15, AArch64::B15},
+      {codeview::RegisterId::ARM64_B16, AArch64::B16},
+      {codeview::RegisterId::ARM64_B17, AArch64::B17},
+      {codeview::RegisterId::ARM64_B18, AArch64::B18},
+      {codeview::RegisterId::ARM64_B19, AArch64::B19},
+      {codeview::RegisterId::ARM64_B20, AArch64::B20},
+      {codeview::RegisterId::ARM64_B21, AArch64::B21},
+      {codeview::RegisterId::ARM64_B22, AArch64::B22},
+      {codeview::RegisterId::ARM64_B23, AArch64::B23},
+      {codeview::RegisterId::ARM64_B24, AArch64::B24},
+      {codeview::RegisterId::ARM64_B25, AArch64::B25},
+      {codeview::RegisterId::ARM64_B26, AArch64::B26},
+      {codeview::RegisterId::ARM64_B27, AArch64::B27},
+      {codeview::RegisterId::ARM64_B28, AArch64::B28},
+      {codeview::RegisterId::ARM64_B29, AArch64::B29},
+      {codeview::RegisterId::ARM64_B30, AArch64::B30},
+      {codeview::RegisterId::ARM64_B31, AArch64::B31},
+      {codeview::RegisterId::ARM64_H0, AArch64::H0},
+      {codeview::RegisterId::ARM64_H1, AArch64::H1},
+      {codeview::RegisterId::ARM64_H2, AArch64::H2},
+      {codeview::RegisterId::ARM64_H3, AArch64::H3},
+      {codeview::RegisterId::ARM64_H4, AArch64::H4},
+      {codeview::RegisterId::ARM64_H5, AArch64::H5},
+      {codeview::RegisterId::ARM64_H6, AArch64::H6},
+      {codeview::RegisterId::ARM64_H7, AArch64::H7},
+      {codeview::RegisterId::ARM64_H8, AArch64::H8},
+      {codeview::RegisterId::ARM64_H9, AArch64::H9},
+      {codeview::RegisterId::ARM64_H10, AArch64::H10},
+      {codeview::RegisterId::ARM64_H11, AArch64::H11},
+      {codeview::RegisterId::ARM64_H12, AArch64::H12},
+      {codeview::RegisterId::ARM64_H13, AArch64::H13},
+      {codeview::RegisterId::ARM64_H14, AArch64::H14},
+      {codeview::RegisterId::ARM64_H15, AArch64::H15},
+      {codeview::RegisterId::ARM64_H16, AArch64::H16},
+      {codeview::RegisterId::ARM64_H17, AArch64::H17},
+      {codeview::RegisterId::ARM64_H18, AArch64::H18},
+      {codeview::RegisterId::ARM64_H19, AArch64::H19},
+      {codeview::RegisterId::ARM64_H20, AArch64::H20},
+      {codeview::RegisterId::ARM64_H21, AArch64::H21},
+      {codeview::RegisterId::ARM64_H22, AArch64::H22},
+      {codeview::RegisterId::ARM64_H23, AArch64::H23},
+      {codeview::RegisterId::ARM64_H24, AArch64::H24},
+      {codeview::RegisterId::ARM64_H25, AArch64::H25},
+      {codeview::RegisterId::ARM64_H26, AArch64::H26},
+      {codeview::RegisterId::ARM64_H27, AArch64::H27},
+      {codeview::RegisterId::ARM64_H28, AArch64::H28},
+      {codeview::RegisterId::ARM64_H29, AArch64::H29},
+      {codeview::RegisterId::ARM64_H30, AArch64::H30},
+      {codeview::RegisterId::ARM64_H31, AArch64::H31},
   };
-  for (unsigned I = 0; I < array_lengthof(RegMap); ++I)
-    MRI->mapLLVMRegToCVReg(RegMap[I].Reg, static_cast<int>(RegMap[I].CVReg));
+  for (const auto &I : RegMap)
+    MRI->mapLLVMRegToCVReg(I.Reg, static_cast<int>(I.CVReg));
+}
+
+bool AArch64_MC::isQForm(const MCInst &MI, const MCInstrInfo *MCII) {
+  const auto &FPR128 = AArch64MCRegisterClasses[AArch64::FPR128RegClassID];
+  return llvm::any_of(MI, [&](const MCOperand &Op) {
+    return Op.isReg() && FPR128.contains(Op.getReg());
+  });
+}
+
+bool AArch64_MC::isFpOrNEON(const MCInst &MI, const MCInstrInfo *MCII) {
+  const auto &FPR128 = AArch64MCRegisterClasses[AArch64::FPR128RegClassID];
+  const auto &FPR64 = AArch64MCRegisterClasses[AArch64::FPR64RegClassID];
+  const auto &FPR32 = AArch64MCRegisterClasses[AArch64::FPR32RegClassID];
+  const auto &FPR16 = AArch64MCRegisterClasses[AArch64::FPR16RegClassID];
+  const auto &FPR8 = AArch64MCRegisterClasses[AArch64::FPR8RegClassID];
+
+  auto IsFPR = [&](const MCOperand &Op) {
+    if (!Op.isReg())
+      return false;
+    auto Reg = Op.getReg();
+    return FPR128.contains(Reg) || FPR64.contains(Reg) || FPR32.contains(Reg) ||
+           FPR16.contains(Reg) || FPR8.contains(Reg);
+  };
+
+  return llvm::any_of(MI, IsFPR);
 }
 
 static MCRegisterInfo *createAArch64MCRegisterInfo(const Triple &Triple) {
@@ -320,9 +411,12 @@ public:
     // condition code) and cbz (where it is a register).
     const auto &Desc = Info->get(Inst.getOpcode());
     for (unsigned i = 0, e = Inst.getNumOperands(); i != e; i++) {
-      if (Desc.OpInfo[i].OperandType == MCOI::OPERAND_PCREL) {
-        int64_t Imm = Inst.getOperand(i).getImm() * 4;
-        Target = Addr + Imm;
+      if (Desc.operands()[i].OperandType == MCOI::OPERAND_PCREL) {
+        int64_t Imm = Inst.getOperand(i).getImm();
+        if (Inst.getOpcode() == AArch64::ADRP)
+          Target = (Addr & -4096) + Imm * 4096;
+        else
+          Target = Addr + Imm * 4;
         return true;
       }
     }
@@ -404,6 +498,10 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAArch64TargetMC() {
     // Register the asm streamer.
     TargetRegistry::RegisterAsmTargetStreamer(*T,
                                               createAArch64AsmTargetStreamer);
+    // Register the null streamer.
+    TargetRegistry::RegisterNullTargetStreamer(*T,
+                                               createAArch64NullTargetStreamer);
+
     // Register the MCInstPrinter.
     TargetRegistry::RegisterMCInstPrinter(*T, createAArch64MCInstPrinter);
   }

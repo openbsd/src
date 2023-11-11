@@ -56,7 +56,7 @@ public:
 
   /// Destruct this instance. If a multi-threaded instance, waits for all
   /// compile threads to complete.
-  ~LLJIT();
+  virtual ~LLJIT();
 
   /// Returns the ExecutionSession for this instance.
   ExecutionSession &getExecutionSession() { return *ES; }
@@ -110,30 +110,30 @@ public:
 
   /// Look up a symbol in JITDylib JD by the symbol's linker-mangled name (to
   /// look up symbols based on their IR name use the lookup function instead).
-  Expected<JITEvaluatedSymbol> lookupLinkerMangled(JITDylib &JD,
-                                                   SymbolStringPtr Name);
+  Expected<ExecutorAddr> lookupLinkerMangled(JITDylib &JD,
+                                             SymbolStringPtr Name);
 
   /// Look up a symbol in JITDylib JD by the symbol's linker-mangled name (to
   /// look up symbols based on their IR name use the lookup function instead).
-  Expected<JITEvaluatedSymbol> lookupLinkerMangled(JITDylib &JD,
-                                                   StringRef Name) {
+  Expected<ExecutorAddr> lookupLinkerMangled(JITDylib &JD,
+                                             StringRef Name) {
     return lookupLinkerMangled(JD, ES->intern(Name));
   }
 
   /// Look up a symbol in the main JITDylib by the symbol's linker-mangled name
   /// (to look up symbols based on their IR name use the lookup function
   /// instead).
-  Expected<JITEvaluatedSymbol> lookupLinkerMangled(StringRef Name) {
+  Expected<ExecutorAddr> lookupLinkerMangled(StringRef Name) {
     return lookupLinkerMangled(*Main, Name);
   }
 
   /// Look up a symbol in JITDylib JD based on its IR symbol name.
-  Expected<JITEvaluatedSymbol> lookup(JITDylib &JD, StringRef UnmangledName) {
+  Expected<ExecutorAddr> lookup(JITDylib &JD, StringRef UnmangledName) {
     return lookupLinkerMangled(JD, mangle(UnmangledName));
   }
 
   /// Look up a symbol in the main JITDylib based on its IR symbol name.
-  Expected<JITEvaluatedSymbol> lookup(StringRef UnmangledName) {
+  Expected<ExecutorAddr> lookup(StringRef UnmangledName) {
     return lookup(*Main, UnmangledName);
   }
 
@@ -262,8 +262,8 @@ public:
 
   std::unique_ptr<ExecutorProcessControl> EPC;
   std::unique_ptr<ExecutionSession> ES;
-  Optional<JITTargetMachineBuilder> JTMB;
-  Optional<DataLayout> DL;
+  std::optional<JITTargetMachineBuilder> JTMB;
+  std::optional<DataLayout> DL;
   ObjectLinkingLayerCreator CreateObjectLinkingLayer;
   CompileFunctionCreator CreateCompileFunction;
   PlatformSetupFunction SetUpPlatform;
@@ -305,13 +305,13 @@ public:
 
   /// Return a reference to the JITTargetMachineBuilder.
   ///
-  Optional<JITTargetMachineBuilder> &getJITTargetMachineBuilder() {
+  std::optional<JITTargetMachineBuilder> &getJITTargetMachineBuilder() {
     return impl().JTMB;
   }
 
   /// Set a DataLayout for this instance. If no data layout is specified then
   /// the target's default data layout will be used.
-  SetterImpl &setDataLayout(Optional<DataLayout> DL) {
+  SetterImpl &setDataLayout(std::optional<DataLayout> DL) {
     impl().DL = std::move(DL);
     return impl();
   }
@@ -401,7 +401,7 @@ public:
       std::function<std::unique_ptr<IndirectStubsManager>()>;
 
   Triple TT;
-  JITTargetAddress LazyCompileFailureAddr = 0;
+  ExecutorAddr LazyCompileFailureAddr;
   std::unique_ptr<LazyCallThroughManager> LCTMgr;
   IndirectStubsManagerBuilderFunction ISMBuilder;
 
@@ -415,7 +415,7 @@ public:
   /// Set the address in the target address to call if a lazy compile fails.
   ///
   /// If this method is not called then the value will default to 0.
-  SetterImpl &setLazyCompileFailureAddr(JITTargetAddress Addr) {
+  SetterImpl &setLazyCompileFailureAddr(ExecutorAddr Addr) {
     this->impl().LazyCompileFailureAddr = Addr;
     return this->impl();
   }
@@ -446,6 +446,9 @@ class LLLazyJITBuilder
     : public LLLazyJITBuilderState,
       public LLLazyJITBuilderSetters<LLLazyJIT, LLLazyJITBuilder,
                                      LLLazyJITBuilderState> {};
+
+/// Configure the LLJIT instance to use orc runtime support. 
+Error setUpOrcPlatform(LLJIT& J);
 
 /// Configure the LLJIT instance to scrape modules for llvm.global_ctors and
 /// llvm.global_dtors variables and (if present) build initialization and

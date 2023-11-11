@@ -18,7 +18,6 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
@@ -31,6 +30,7 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "msp430-isel"
+#define PASS_NAME "MSP430 DAG->DAG Pattern Instruction Selection"
 
 namespace {
   struct MSP430ISelAddressMode {
@@ -91,14 +91,14 @@ namespace {
 namespace {
   class MSP430DAGToDAGISel : public SelectionDAGISel {
   public:
+    static char ID;
+
+    MSP430DAGToDAGISel() = delete;
+
     MSP430DAGToDAGISel(MSP430TargetMachine &TM, CodeGenOpt::Level OptLevel)
-        : SelectionDAGISel(TM, OptLevel) {}
+        : SelectionDAGISel(ID, TM, OptLevel) {}
 
   private:
-    StringRef getPassName() const override {
-      return "MSP430 DAG->DAG Pattern Instruction Selection";
-    }
-
     bool MatchAddress(SDValue N, MSP430ISelAddressMode &AM);
     bool MatchWrapper(SDValue N, MSP430ISelAddressMode &AM);
     bool MatchAddressBase(SDValue N, MSP430ISelAddressMode &AM);
@@ -119,6 +119,10 @@ namespace {
     bool SelectAddr(SDValue Addr, SDValue &Base, SDValue &Disp);
   };
 }  // end anonymous namespace
+
+char MSP430DAGToDAGISel::ID;
+
+INITIALIZE_PASS(MSP430DAGToDAGISel, DEBUG_TYPE, PASS_NAME, false, false)
 
 /// createMSP430ISelDag - This pass converts a legalized DAG into a
 /// MSP430-specific DAG, ready for instruction scheduling.
@@ -255,7 +259,7 @@ bool MSP430DAGToDAGISel::SelectAddr(SDValue N,
   Base = (AM.BaseType == MSP430ISelAddressMode::FrameIndexBase)
              ? CurDAG->getTargetFrameIndex(
                    AM.Base.FrameIndex,
-                   getTargetLowering()->getPointerTy(CurDAG->getDataLayout()))
+                   N.getValueType())
              : AM.Base.Reg;
 
   if (AM.GV)
@@ -304,13 +308,11 @@ static bool isValidIndexedLoad(const LoadSDNode *LD) {
 
   switch (VT.getSimpleVT().SimpleTy) {
   case MVT::i8:
-    // Sanity check
     if (cast<ConstantSDNode>(LD->getOffset())->getZExtValue() != 1)
       return false;
 
     break;
   case MVT::i16:
-    // Sanity check
     if (cast<ConstantSDNode>(LD->getOffset())->getZExtValue() != 2)
       return false;
 

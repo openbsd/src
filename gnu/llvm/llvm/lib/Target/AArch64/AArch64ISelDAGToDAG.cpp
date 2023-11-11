@@ -14,6 +14,7 @@
 #include "AArch64TargetMachine.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/Function.h" // To access function attributes.
 #include "llvm/IR/GlobalValue.h"
@@ -28,6 +29,7 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "aarch64-isel"
+#define PASS_NAME "AArch64 Instruction Selection"
 
 //===--------------------------------------------------------------------===//
 /// AArch64DAGToDAGISel - AArch64 specific code to select AArch64 machine
@@ -42,13 +44,13 @@ class AArch64DAGToDAGISel : public SelectionDAGISel {
   const AArch64Subtarget *Subtarget;
 
 public:
+  static char ID;
+
+  AArch64DAGToDAGISel() = delete;
+
   explicit AArch64DAGToDAGISel(AArch64TargetMachine &tm,
                                CodeGenOpt::Level OptLevel)
-      : SelectionDAGISel(tm, OptLevel), Subtarget(nullptr) {}
-
-  StringRef getPassName() const override {
-    return "AArch64 Instruction Selection";
-  }
+      : SelectionDAGISel(ID, tm, OptLevel), Subtarget(nullptr) {}
 
   bool runOnMachineFunction(MachineFunction &MF) override {
     Subtarget = &MF.getSubtarget<AArch64Subtarget>();
@@ -69,6 +71,7 @@ public:
   bool tryMLAV64LaneV128(SDNode *N);
   bool tryMULLV64LaneV128(unsigned IntNo, SDNode *N);
   bool SelectArithExtendedRegister(SDValue N, SDValue &Reg, SDValue &Shift);
+  bool SelectArithUXTXRegister(SDValue N, SDValue &Reg, SDValue &Shift);
   bool SelectArithImmed(SDValue N, SDValue &Val, SDValue &Shift);
   bool SelectNegArithImmed(SDValue N, SDValue &Val, SDValue &Shift);
   bool SelectArithShiftedRegister(SDValue N, SDValue &Reg, SDValue &Shift) {
@@ -159,6 +162,51 @@ public:
     return SelectAddrModeXRO(N, Width / 8, Base, Offset, SignExtend, DoShift);
   }
 
+  bool SelectExtractHigh(SDValue N, SDValue &Res) {
+    if (Subtarget->isLittleEndian() && N->getOpcode() == ISD::BITCAST)
+      N = N->getOperand(0);
+    if (N->getOpcode() != ISD::EXTRACT_SUBVECTOR ||
+        !isa<ConstantSDNode>(N->getOperand(1)))
+      return false;
+    EVT VT = N->getValueType(0);
+    EVT LVT = N->getOperand(0).getValueType();
+    unsigned Index = N->getConstantOperandVal(1);
+    if (!VT.is64BitVector() || !LVT.is128BitVector() ||
+        Index != VT.getVectorNumElements())
+      return false;
+    Res = N->getOperand(0);
+    return true;
+  }
+
+  bool SelectRoundingVLShr(SDValue N, SDValue &Res1, SDValue &Res2) {
+    if (N.getOpcode() != AArch64ISD::VLSHR)
+      return false;
+    SDValue Op = N->getOperand(0);
+    EVT VT = Op.getValueType();
+    unsigned ShtAmt = N->getConstantOperandVal(1);
+    if (ShtAmt > VT.getScalarSizeInBits() / 2 || Op.getOpcode() != ISD::ADD)
+      return false;
+
+    APInt Imm;
+    if (Op.getOperand(1).getOpcode() == AArch64ISD::MOVIshift)
+      Imm = APInt(VT.getScalarSizeInBits(),
+                  Op.getOperand(1).getConstantOperandVal(0)
+                      << Op.getOperand(1).getConstantOperandVal(1));
+    else if (Op.getOperand(1).getOpcode() == AArch64ISD::DUP &&
+             isa<ConstantSDNode>(Op.getOperand(1).getOperand(0)))
+      Imm = APInt(VT.getScalarSizeInBits(),
+                  Op.getOperand(1).getConstantOperandVal(0));
+    else
+      return false;
+
+    if (Imm != 1ULL << (ShtAmt - 1))
+      return false;
+
+    Res1 = Op.getOperand(0);
+    Res2 = CurDAG->getTargetConstant(ShtAmt, SDLoc(N), MVT::i32);
+    return true;
+  }
+
   bool SelectDupZeroOrUndef(SDValue N) {
     switch(N->getOpcode()) {
     case ISD::UNDEF:
@@ -166,12 +214,10 @@ public:
     case AArch64ISD::DUP:
     case ISD::SPLAT_VECTOR: {
       auto Opnd0 = N->getOperand(0);
-      if (auto CN = dyn_cast<ConstantSDNode>(Opnd0))
-        if (CN->isNullValue())
-          return true;
-      if (auto CN = dyn_cast<ConstantFPSDNode>(Opnd0))
-        if (CN->isZero())
-          return true;
+      if (isNullConstant(Opnd0))
+        return true;
+      if (isNullFPConstant(Opnd0))
+        return true;
       break;
     }
     default:
@@ -186,12 +232,10 @@ public:
     case AArch64ISD::DUP:
     case ISD::SPLAT_VECTOR: {
       auto Opnd0 = N->getOperand(0);
-      if (auto CN = dyn_cast<ConstantSDNode>(Opnd0))
-        if (CN->isNullValue())
-          return true;
-      if (auto CN = dyn_cast<ConstantFPSDNode>(Opnd0))
-        if (CN->isZero())
-          return true;
+      if (isNullConstant(Opnd0))
+        return true;
+      if (isNullFPConstant(Opnd0))
+        return true;
       break;
     }
     }
@@ -202,6 +246,11 @@ public:
   template<MVT::SimpleValueType VT>
   bool SelectSVEAddSubImm(SDValue N, SDValue &Imm, SDValue &Shift) {
     return SelectSVEAddSubImm(N, VT, Imm, Shift);
+  }
+
+  template <MVT::SimpleValueType VT>
+  bool SelectSVECpyDupImm(SDValue N, SDValue &Imm, SDValue &Shift) {
+    return SelectSVECpyDupImm(N, VT, Imm, Shift);
   }
 
   template <MVT::SimpleValueType VT, bool Invert = false>
@@ -217,6 +266,16 @@ public:
   template <unsigned Low, unsigned High, bool AllowSaturation = false>
   bool SelectSVEShiftImm(SDValue N, SDValue &Imm) {
     return SelectSVEShiftImm(N, Low, High, AllowSaturation, Imm);
+  }
+
+  bool SelectSVEShiftSplatImmR(SDValue N, SDValue &Imm) {
+    if (N->getOpcode() != ISD::SPLAT_VECTOR)
+      return false;
+
+    EVT EltVT = N->getValueType(0).getVectorElementType();
+    return SelectSVEShiftImm(N->getOperand(0), /* Low */ 1,
+                             /* High */ EltVT.getFixedSizeInBits(),
+                             /* AllowSaturation */ true, Imm);
   }
 
   // Returns a suitable CNT/INC/DEC/RDVL multiplier to calculate VSCALE*N.
@@ -257,6 +316,15 @@ public:
     return false;
   }
 
+  template <unsigned BaseReg> bool ImmToTile(SDValue N, SDValue &Imm) {
+    if (auto *CI = dyn_cast<ConstantSDNode>(N)) {
+      uint64_t C = CI->getZExtValue();
+      Imm = CurDAG->getRegister(BaseReg + C, MVT::Other);
+      return true;
+    }
+    return false;
+  }
+
   /// Form sequences of consecutive 64/128-bit registers for use in NEON
   /// instructions making use of a vector-list (e.g. ldN, tbl). Vecs must have
   /// between 1 and 4 elements. If it contains a single element that is returned
@@ -286,7 +354,10 @@ public:
   void SelectLoadLane(SDNode *N, unsigned NumVecs, unsigned Opc);
   void SelectPostLoadLane(SDNode *N, unsigned NumVecs, unsigned Opc);
   void SelectPredicatedLoad(SDNode *N, unsigned NumVecs, unsigned Scale,
-                            unsigned Opc_rr, unsigned Opc_ri);
+                            unsigned Opc_rr, unsigned Opc_ri,
+                            bool IsIntr = false);
+  void SelectWhilePair(SDNode *N, unsigned Opc);
+  void SelectCVTIntrinsic(SDNode *N, unsigned NumVecs, unsigned Opcode);
 
   bool SelectAddrModeFrameIndexSVE(SDValue N, SDValue &Base, SDValue &OffImm);
   /// SVE Reg+Imm addressing mode.
@@ -297,6 +368,11 @@ public:
   template <unsigned Scale>
   bool SelectSVERegRegAddrMode(SDValue N, SDValue &Base, SDValue &Offset) {
     return SelectSVERegRegAddrMode(N, Scale, Base, Offset);
+  }
+
+  template <unsigned MaxIdx, unsigned Scale>
+  bool SelectSMETileSlice(SDValue N, SDValue &Vector, SDValue &Offset) {
+    return SelectSMETileSlice(N, MaxIdx, Vector, Offset, Scale);
   }
 
   void SelectStore(SDNode *N, unsigned NumVecs, unsigned Opc);
@@ -326,6 +402,7 @@ public:
 private:
   bool SelectShiftedRegister(SDValue N, bool AllowROR, SDValue &Reg,
                              SDValue &Shift);
+  bool SelectShiftedRegisterFromAnd(SDValue N, SDValue &Reg, SDValue &Shift);
   bool SelectAddrModeIndexed7S(SDValue N, unsigned Size, SDValue &Base,
                                SDValue &OffImm) {
     return SelectAddrModeIndexedBitWidth(N, true, 7, Size, Base, OffImm);
@@ -356,10 +433,8 @@ private:
 
   bool SelectCMP_SWAP(SDNode *N);
 
-  bool SelectSVE8BitLslImm(SDValue N, SDValue &Imm, SDValue &Shift);
-
   bool SelectSVEAddSubImm(SDValue N, MVT VT, SDValue &Imm, SDValue &Shift);
-
+  bool SelectSVECpyDupImm(SDValue N, MVT VT, SDValue &Imm, SDValue &Shift);
   bool SelectSVELogicalImm(SDValue N, MVT VT, SDValue &Imm, bool Invert);
 
   bool SelectSVESignedArithImm(SDValue N, SDValue &Imm);
@@ -369,10 +444,16 @@ private:
   bool SelectSVEArithImm(SDValue N, MVT VT, SDValue &Imm);
   bool SelectSVERegRegAddrMode(SDValue N, unsigned Scale, SDValue &Base,
                                SDValue &Offset);
+  bool SelectSMETileSlice(SDValue N, unsigned MaxSize, SDValue &Vector,
+                          SDValue &Offset, unsigned Scale = 1);
 
   bool SelectAllActivePredicate(SDValue N);
 };
 } // end anonymous namespace
+
+char AArch64DAGToDAGISel::ID = 0;
+
+INITIALIZE_PASS(AArch64DAGToDAGISel, DEBUG_TYPE, PASS_NAME, false, false)
 
 /// isIntImmediate - This method tests to see if the node is a constant
 /// operand. If so Imm will receive the 32-bit value.
@@ -398,6 +479,17 @@ static bool isOpcWithIntImmediate(const SDNode *N, unsigned Opc,
   return N->getOpcode() == Opc &&
          isIntImmediate(N->getOperand(1).getNode(), Imm);
 }
+
+// isIntImmediateEq - This method tests to see if N is a constant operand that
+// is equivalent to 'ImmExpected'.
+#ifndef NDEBUG
+static bool isIntImmediateEq(SDValue N, const uint64_t ImmExpected) {
+  uint64_t Imm;
+  if (!isIntImmediate(N.getNode(), Imm))
+    return false;
+  return Imm == ImmExpected;
+}
+#endif
 
 bool AArch64DAGToDAGISel::SelectInlineAsmMemoryOperand(
     const SDValue &Op, unsigned ConstraintID, std::vector<SDValue> &OutOps) {
@@ -552,6 +644,84 @@ bool AArch64DAGToDAGISel::isWorthFolding(SDValue V) const {
   return false;
 }
 
+/// and (shl/srl/sra, x, c), mask --> shl (srl/sra, x, c1), c2
+/// to select more shifted register
+bool AArch64DAGToDAGISel::SelectShiftedRegisterFromAnd(SDValue N, SDValue &Reg,
+                                                       SDValue &Shift) {
+  EVT VT = N.getValueType();
+  if (VT != MVT::i32 && VT != MVT::i64)
+    return false;
+
+  if (N->getOpcode() != ISD::AND || !N->hasOneUse())
+    return false;
+  SDValue LHS = N.getOperand(0);
+  if (!LHS->hasOneUse())
+    return false;
+
+  unsigned LHSOpcode = LHS->getOpcode();
+  if (LHSOpcode != ISD::SHL && LHSOpcode != ISD::SRL && LHSOpcode != ISD::SRA)
+    return false;
+
+  ConstantSDNode *ShiftAmtNode = dyn_cast<ConstantSDNode>(LHS.getOperand(1));
+  if (!ShiftAmtNode)
+    return false;
+
+  uint64_t ShiftAmtC = ShiftAmtNode->getZExtValue();
+  ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N.getOperand(1));
+  if (!RHSC)
+    return false;
+
+  APInt AndMask = RHSC->getAPIntValue();
+  unsigned LowZBits, MaskLen;
+  if (!AndMask.isShiftedMask(LowZBits, MaskLen))
+    return false;
+
+  unsigned BitWidth = N.getValueSizeInBits();
+  SDLoc DL(LHS);
+  uint64_t NewShiftC;
+  unsigned NewShiftOp;
+  if (LHSOpcode == ISD::SHL) {
+    // LowZBits <= ShiftAmtC will fall into isBitfieldPositioningOp
+    // BitWidth != LowZBits + MaskLen doesn't match the pattern
+    if (LowZBits <= ShiftAmtC || (BitWidth != LowZBits + MaskLen))
+      return false;
+
+    NewShiftC = LowZBits - ShiftAmtC;
+    NewShiftOp = VT == MVT::i64 ? AArch64::UBFMXri : AArch64::UBFMWri;
+  } else {
+    if (LowZBits == 0)
+      return false;
+
+    // NewShiftC >= BitWidth will fall into isBitfieldExtractOp
+    NewShiftC = LowZBits + ShiftAmtC;
+    if (NewShiftC >= BitWidth)
+      return false;
+
+    // SRA need all high bits
+    if (LHSOpcode == ISD::SRA && (BitWidth != (LowZBits + MaskLen)))
+      return false;
+
+    // SRL high bits can be 0 or 1
+    if (LHSOpcode == ISD::SRL && (BitWidth > (NewShiftC + MaskLen)))
+      return false;
+
+    if (LHSOpcode == ISD::SRL)
+      NewShiftOp = VT == MVT::i64 ? AArch64::UBFMXri : AArch64::UBFMWri;
+    else
+      NewShiftOp = VT == MVT::i64 ? AArch64::SBFMXri : AArch64::SBFMWri;
+  }
+
+  assert(NewShiftC < BitWidth && "Invalid shift amount");
+  SDValue NewShiftAmt = CurDAG->getTargetConstant(NewShiftC, DL, VT);
+  SDValue BitWidthMinus1 = CurDAG->getTargetConstant(BitWidth - 1, DL, VT);
+  Reg = SDValue(CurDAG->getMachineNode(NewShiftOp, DL, VT, LHS->getOperand(0),
+                                       NewShiftAmt, BitWidthMinus1),
+                0);
+  unsigned ShVal = AArch64_AM::getShifterImm(AArch64_AM::LSL, LowZBits);
+  Shift = CurDAG->getTargetConstant(ShVal, DL, MVT::i32);
+  return true;
+}
+
 /// SelectShiftedRegister - Select a "shifted register" operand.  If the value
 /// is not shifted, set the Shift operand to default of "LSL 0".  The logical
 /// instructions allow the shifted register to be rotated, but the arithmetic
@@ -559,6 +729,9 @@ bool AArch64DAGToDAGISel::isWorthFolding(SDValue V) const {
 /// supported.
 bool AArch64DAGToDAGISel::SelectShiftedRegister(SDValue N, bool AllowROR,
                                                 SDValue &Reg, SDValue &Shift) {
+  if (SelectShiftedRegisterFromAnd(N, Reg, Shift))
+    return true;
+
   AArch64_AM::ShiftExtendType ShType = getShiftTypeForNode(N);
   if (ShType == AArch64_AM::InvalidShiftExtend)
     return false;
@@ -821,9 +994,17 @@ bool AArch64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
 
     Reg = N.getOperand(0);
 
-    // Don't match if free 32-bit -> 64-bit zext can be used instead.
-    if (Ext == AArch64_AM::UXTW &&
-        Reg->getValueType(0).getSizeInBits() == 32 && isDef32(*Reg.getNode()))
+    // Don't match if free 32-bit -> 64-bit zext can be used instead. Use the
+    // isDef32 as a heuristic for when the operand is likely to be a 32bit def.
+    auto isDef32 = [](SDValue N) {
+      unsigned Opc = N.getOpcode();
+      return Opc != ISD::TRUNCATE && Opc != TargetOpcode::EXTRACT_SUBREG &&
+             Opc != ISD::CopyFromReg && Opc != ISD::AssertSext &&
+             Opc != ISD::AssertZext && Opc != ISD::AssertAlign &&
+             Opc != ISD::FREEZE;
+    };
+    if (Ext == AArch64_AM::UXTW && Reg->getValueType(0).getSizeInBits() == 32 &&
+        isDef32(Reg))
       return false;
   }
 
@@ -839,13 +1020,37 @@ bool AArch64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
   return isWorthFolding(N);
 }
 
+/// SelectArithUXTXRegister - Select a "UXTX register" operand. This
+/// operand is refered by the instructions have SP operand
+bool AArch64DAGToDAGISel::SelectArithUXTXRegister(SDValue N, SDValue &Reg,
+                                                  SDValue &Shift) {
+  unsigned ShiftVal = 0;
+  AArch64_AM::ShiftExtendType Ext;
+
+  if (N.getOpcode() != ISD::SHL)
+    return false;
+
+  ConstantSDNode *CSD = dyn_cast<ConstantSDNode>(N.getOperand(1));
+  if (!CSD)
+    return false;
+  ShiftVal = CSD->getZExtValue();
+  if (ShiftVal > 4)
+    return false;
+
+  Ext = AArch64_AM::UXTX;
+  Reg = N.getOperand(0);
+  Shift = CurDAG->getTargetConstant(getArithExtendImm(Ext, ShiftVal), SDLoc(N),
+                                    MVT::i32);
+  return isWorthFolding(N);
+}
+
 /// If there's a use of this ADDlow that's not itself a load/store then we'll
 /// need to create a real ADD instruction from it anyway and there's no point in
 /// folding it into the mem op. Theoretically, it shouldn't matter, but there's
 /// a single pseudo-instruction for an ADRP/ADD pair so over-aggressive folding
 /// leads to duplicated ADRP instructions.
 static bool isWorthFoldingADDlow(SDValue N) {
-  for (auto Use : N->uses()) {
+  for (auto *Use : N->uses()) {
     if (Use->getOpcode() != ISD::LOAD && Use->getOpcode() != ISD::STORE &&
         Use->getOpcode() != ISD::ATOMIC_LOAD &&
         Use->getOpcode() != ISD::ATOMIC_STORE)
@@ -1485,9 +1690,83 @@ AArch64DAGToDAGISel::findAddrModeSVELoadStore(SDNode *N, unsigned Opc_rr,
   return std::make_tuple(IsRegReg ? Opc_rr : Opc_ri, NewBase, NewOffset);
 }
 
+enum class SelectTypeKind {
+  Int1 = 0,
+};
+
+/// This function selects an opcode from a list of opcodes, which is
+/// expected to be the opcode for { 8-bit, 16-bit, 32-bit, 64-bit }
+/// element types, in this order.
+template <SelectTypeKind Kind>
+static unsigned SelectOpcodeFromVT(EVT VT, ArrayRef<unsigned> Opcodes) {
+  // Only match scalable vector VTs
+  if (!VT.isScalableVector())
+    return 0;
+
+  EVT EltVT = VT.getVectorElementType();
+  switch (Kind) {
+  case SelectTypeKind::Int1:
+    if (EltVT != MVT::i1)
+      return 0;
+    break;
+  }
+
+  unsigned Offset;
+  switch (VT.getVectorMinNumElements()) {
+  case 16: // 8-bit
+    Offset = 0;
+    break;
+  case 8: // 16-bit
+    Offset = 1;
+    break;
+  case 4: // 32-bit
+    Offset = 2;
+    break;
+  case 2: // 64-bit
+    Offset = 3;
+    break;
+  default:
+    return 0;
+  }
+
+  return (Opcodes.size() <= Offset) ? 0 : Opcodes[Offset];
+}
+
+void AArch64DAGToDAGISel::SelectWhilePair(SDNode *N, unsigned Opc) {
+  SDLoc DL(N);
+  EVT VT = N->getValueType(0);
+
+  SDValue Ops[] = {N->getOperand(1), N->getOperand(2)};
+
+  SDNode *WhilePair = CurDAG->getMachineNode(Opc, DL, MVT::Untyped, Ops);
+  SDValue SuperReg = SDValue(WhilePair, 0);
+
+  for (unsigned I = 0; I < 2; ++I)
+    ReplaceUses(SDValue(N, I), CurDAG->getTargetExtractSubreg(
+                                   AArch64::psub0 + I, DL, VT, SuperReg));
+
+  CurDAG->RemoveDeadNode(N);
+}
+
+void AArch64DAGToDAGISel::SelectCVTIntrinsic(SDNode *N, unsigned NumVecs,
+                                             unsigned Opcode) {
+  EVT VT = N->getValueType(0);
+  SmallVector<SDValue, 4> Regs(N->op_begin() + 1, N->op_begin() + 1 + NumVecs);
+  SDValue Ops = createZTuple(Regs);
+  SDLoc DL(N);
+  SDNode *Intrinsic = CurDAG->getMachineNode(Opcode, DL, MVT::Untyped, Ops);
+  SDValue SuperReg = SDValue(Intrinsic, 0);
+  for (unsigned i = 0; i < NumVecs; ++i)
+    ReplaceUses(SDValue(N, i), CurDAG->getTargetExtractSubreg(
+                                   AArch64::zsub0 + i, DL, VT, SuperReg));
+
+  CurDAG->RemoveDeadNode(N);
+  return;
+}
+
 void AArch64DAGToDAGISel::SelectPredicatedLoad(SDNode *N, unsigned NumVecs,
                                                unsigned Scale, unsigned Opc_ri,
-                                               unsigned Opc_rr) {
+                                               unsigned Opc_rr, bool IsIntr) {
   assert(Scale < 4 && "Invalid scaling value.");
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
@@ -1497,11 +1776,11 @@ void AArch64DAGToDAGISel::SelectPredicatedLoad(SDNode *N, unsigned NumVecs,
   SDValue Base, Offset;
   unsigned Opc;
   std::tie(Opc, Base, Offset) = findAddrModeSVELoadStore(
-      N, Opc_rr, Opc_ri, N->getOperand(2),
+      N, Opc_rr, Opc_ri, N->getOperand(IsIntr ? 3 : 2),
       CurDAG->getTargetConstant(0, DL, MVT::i64), Scale);
 
-  SDValue Ops[] = {N->getOperand(1), // Predicate
-                   Base,             // Memory operand
+  SDValue Ops[] = {N->getOperand(IsIntr ? 2 : 1), // Predicate
+                   Base,                          // Memory operand
                    Offset, Chain};
 
   const EVT ResTys[] = {MVT::Untyped, MVT::Other};
@@ -1814,7 +2093,7 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
   // undo that as part of the transform here if we want to catch all
   // the opportunities.
   // Currently the NumberOfIgnoredLowBits argument helps to recover
-  // form these situations when matching bigger pattern (bitfield insert).
+  // from these situations when matching bigger pattern (bitfield insert).
 
   // For unsigned extracts, check for a shift right and mask
   uint64_t AndImm = 0;
@@ -1851,6 +2130,7 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
     VT = Opd0->getValueType(0);
   } else if (isOpcWithIntImmediate(Op0, ISD::SRL, SrlImm)) {
     Opd0 = Op0->getOperand(0);
+    ClampMSB = (VT == MVT::i32);
   } else if (BiggerPattern) {
     // Let's pretend a 0 shift right has been performed.
     // The resulting code will be at least as good as the original one
@@ -1932,7 +2212,7 @@ static bool isSeveralBitsExtractOpFromShr(SDNode *N, unsigned &Opc,
   //
   // This gets selected into a single UBFM:
   //
-  // UBFM Value, ShiftImm, BitWide + SrlImm -1
+  // UBFM Value, ShiftImm, findLastSet(MaskImm)
   //
 
   if (N->getOpcode() != ISD::SRL)
@@ -1949,19 +2229,13 @@ static bool isSeveralBitsExtractOpFromShr(SDNode *N, unsigned &Opc,
     return false;
 
   // Check whether we really have several bits extract here.
-  unsigned BitWide = 64 - countLeadingOnes(~(AndMask >> SrlImm));
-  if (BitWide && isMask_64(AndMask >> SrlImm)) {
-    if (N->getValueType(0) == MVT::i32)
-      Opc = AArch64::UBFMWri;
-    else
-      Opc = AArch64::UBFMXri;
+  if (!isMask_64(AndMask >> SrlImm))
+    return false;
 
-    LSB = SrlImm;
-    MSB = BitWide + SrlImm - 1;
-    return true;
-  }
-
-  return false;
+  Opc = N->getValueType(0) == MVT::i32 ? AArch64::UBFMWri : AArch64::UBFMXri;
+  LSB = SrlImm;
+  MSB = findLastSet(AndMask, ZB_Undefined);
+  return true;
 }
 
 static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
@@ -2167,7 +2441,7 @@ static bool isBitfieldDstMask(uint64_t DstMask, const APInt &BitsToBeInserted,
   APInt SignificantBitsToBeInserted = BitsToBeInserted.zextOrTrunc(BitWidth);
 
   return (SignificantDstMask & SignificantBitsToBeInserted) == 0 &&
-         (SignificantDstMask | SignificantBitsToBeInserted).isAllOnesValue();
+         (SignificantDstMask | SignificantBitsToBeInserted).isAllOnes();
 }
 
 // Look for bits that will be useful for later uses.
@@ -2419,12 +2693,25 @@ static SDValue getLeftShift(SelectionDAG *CurDAG, SDValue Op, int ShlAmount) {
   return SDValue(ShiftNode, 0);
 }
 
+// For bit-field-positioning pattern "(and (shl VAL, N), ShiftedMask)".
+static bool isBitfieldPositioningOpFromAnd(SelectionDAG *CurDAG, SDValue Op,
+                                           bool BiggerPattern,
+                                           const uint64_t NonZeroBits,
+                                           SDValue &Src, int &DstLSB,
+                                           int &Width);
+
+// For bit-field-positioning pattern "shl VAL, N)".
+static bool isBitfieldPositioningOpFromShl(SelectionDAG *CurDAG, SDValue Op,
+                                           bool BiggerPattern,
+                                           const uint64_t NonZeroBits,
+                                           SDValue &Src, int &DstLSB,
+                                           int &Width);
+
 /// Does this tree qualify as an attempt to move a bitfield into position,
-/// essentially "(and (shl VAL, N), Mask)".
+/// essentially "(and (shl VAL, N), Mask)" or (shl VAL, N).
 static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
-                                    bool BiggerPattern,
-                                    SDValue &Src, int &ShiftAmount,
-                                    int &MaskWidth) {
+                                    bool BiggerPattern, SDValue &Src,
+                                    int &DstLSB, int &Width) {
   EVT VT = Op.getValueType();
   unsigned BitWidth = VT.getSizeInBits();
   (void)BitWidth;
@@ -2434,41 +2721,175 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
 
   // Non-zero in the sense that they're not provably zero, which is the key
   // point if we want to use this value
-  uint64_t NonZeroBits = (~Known.Zero).getZExtValue();
-
-  // Discard a constant AND mask if present. It's safe because the node will
-  // already have been factored into the computeKnownBits calculation above.
-  uint64_t AndImm;
-  if (isOpcWithIntImmediate(Op.getNode(), ISD::AND, AndImm)) {
-    assert((~APInt(BitWidth, AndImm) & ~Known.Zero) == 0);
-    Op = Op.getOperand(0);
-  }
-
-  // Don't match if the SHL has more than one use, since then we'll end up
-  // generating SHL+UBFIZ instead of just keeping SHL+AND.
-  if (!BiggerPattern && !Op.hasOneUse())
-    return false;
-
-  uint64_t ShlImm;
-  if (!isOpcWithIntImmediate(Op.getNode(), ISD::SHL, ShlImm))
-    return false;
-  Op = Op.getOperand(0);
-
+  const uint64_t NonZeroBits = (~Known.Zero).getZExtValue();
   if (!isShiftedMask_64(NonZeroBits))
     return false;
 
-  ShiftAmount = countTrailingZeros(NonZeroBits);
-  MaskWidth = countTrailingOnes(NonZeroBits >> ShiftAmount);
+  switch (Op.getOpcode()) {
+  default:
+    break;
+  case ISD::AND:
+    return isBitfieldPositioningOpFromAnd(CurDAG, Op, BiggerPattern,
+                                          NonZeroBits, Src, DstLSB, Width);
+  case ISD::SHL:
+    return isBitfieldPositioningOpFromShl(CurDAG, Op, BiggerPattern,
+                                          NonZeroBits, Src, DstLSB, Width);
+  }
+
+  return false;
+}
+
+static bool isBitfieldPositioningOpFromAnd(SelectionDAG *CurDAG, SDValue Op,
+                                           bool BiggerPattern,
+                                           const uint64_t NonZeroBits,
+                                           SDValue &Src, int &DstLSB,
+                                           int &Width) {
+  assert(isShiftedMask_64(NonZeroBits) && "Caller guaranteed");
+
+  EVT VT = Op.getValueType();
+  assert((VT == MVT::i32 || VT == MVT::i64) &&
+         "Caller guarantees VT is one of i32 or i64");
+  (void)VT;
+
+  uint64_t AndImm;
+  if (!isOpcWithIntImmediate(Op.getNode(), ISD::AND, AndImm))
+    return false;
+
+  // If (~AndImm & NonZeroBits) is not zero at POS, we know that
+  //   1) (AndImm & (1 << POS) == 0)
+  //   2) the result of AND is not zero at POS bit (according to NonZeroBits)
+  //
+  // 1) and 2) don't agree so something must be wrong (e.g., in
+  // 'SelectionDAG::computeKnownBits')
+  assert((~AndImm & NonZeroBits) == 0 &&
+         "Something must be wrong (e.g., in SelectionDAG::computeKnownBits)");
+
+  SDValue AndOp0 = Op.getOperand(0);
+
+  uint64_t ShlImm;
+  SDValue ShlOp0;
+  if (isOpcWithIntImmediate(AndOp0.getNode(), ISD::SHL, ShlImm)) {
+    // For pattern "and(shl(val, N), shifted-mask)", 'ShlOp0' is set to 'val'.
+    ShlOp0 = AndOp0.getOperand(0);
+  } else if (VT == MVT::i64 && AndOp0.getOpcode() == ISD::ANY_EXTEND &&
+             isOpcWithIntImmediate(AndOp0.getOperand(0).getNode(), ISD::SHL,
+                                   ShlImm)) {
+    // For pattern "and(any_extend(shl(val, N)), shifted-mask)"
+
+    // ShlVal == shl(val, N), which is a left shift on a smaller type.
+    SDValue ShlVal = AndOp0.getOperand(0);
+
+    // Since this is after type legalization and ShlVal is extended to MVT::i64,
+    // expect VT to be MVT::i32.
+    assert((ShlVal.getValueType() == MVT::i32) && "Expect VT to be MVT::i32.");
+
+    // Widens 'val' to MVT::i64 as the source of bit field positioning.
+    ShlOp0 = Widen(CurDAG, ShlVal.getOperand(0));
+  } else
+    return false;
+
+  // For !BiggerPattern, bail out if the AndOp0 has more than one use, since
+  // then we'll end up generating AndOp0+UBFIZ instead of just keeping
+  // AndOp0+AND.
+  if (!BiggerPattern && !AndOp0.hasOneUse())
+    return false;
+
+  DstLSB = countTrailingZeros(NonZeroBits);
+  Width = countTrailingOnes(NonZeroBits >> DstLSB);
+
+  // Bail out on large Width. This happens when no proper combining / constant
+  // folding was performed.
+  if (Width >= (int)VT.getSizeInBits()) {
+    // If VT is i64, Width > 64 is insensible since NonZeroBits is uint64_t, and
+    // Width == 64 indicates a missed dag-combine from "(and val, AllOnes)" to
+    // "val".
+    // If VT is i32, what Width >= 32 means:
+    // - For "(and (any_extend(shl val, N)), shifted-mask)", the`and` Op
+    //   demands at least 'Width' bits (after dag-combiner). This together with
+    //   `any_extend` Op (undefined higher bits) indicates missed combination
+    //   when lowering the 'and' IR instruction to an machine IR instruction.
+    LLVM_DEBUG(
+        dbgs()
+        << "Found large Width in bit-field-positioning -- this indicates no "
+           "proper combining / constant folding was performed\n");
+    return false;
+  }
 
   // BFI encompasses sufficiently many nodes that it's worth inserting an extra
   // LSL/LSR if the mask in NonZeroBits doesn't quite match up with the ISD::SHL
   // amount.  BiggerPattern is true when this pattern is being matched for BFI,
   // BiggerPattern is false when this pattern is being matched for UBFIZ, in
   // which case it is not profitable to insert an extra shift.
-  if (ShlImm - ShiftAmount != 0 && !BiggerPattern)
+  if (ShlImm != uint64_t(DstLSB) && !BiggerPattern)
     return false;
-  Src = getLeftShift(CurDAG, Op, ShlImm - ShiftAmount);
 
+  Src = getLeftShift(CurDAG, ShlOp0, ShlImm - DstLSB);
+  return true;
+}
+
+// For node (shl (and val, mask), N)), returns true if the node is equivalent to
+// UBFIZ.
+static bool isSeveralBitsPositioningOpFromShl(const uint64_t ShlImm, SDValue Op,
+                                              SDValue &Src, int &DstLSB,
+                                              int &Width) {
+  // Caller should have verified that N is a left shift with constant shift
+  // amount; asserts that.
+  assert(Op.getOpcode() == ISD::SHL &&
+         "Op.getNode() should be a SHL node to call this function");
+  assert(isIntImmediateEq(Op.getOperand(1), ShlImm) &&
+         "Op.getNode() should shift ShlImm to call this function");
+
+  uint64_t AndImm = 0;
+  SDValue Op0 = Op.getOperand(0);
+  if (!isOpcWithIntImmediate(Op0.getNode(), ISD::AND, AndImm))
+    return false;
+
+  const uint64_t ShiftedAndImm = ((AndImm << ShlImm) >> ShlImm);
+  if (isMask_64(ShiftedAndImm)) {
+    // AndImm is a superset of (AllOnes >> ShlImm); in other words, AndImm
+    // should end with Mask, and could be prefixed with random bits if those
+    // bits are shifted out.
+    //
+    // For example, xyz11111 (with {x,y,z} being 0 or 1) is fine if ShlImm >= 3;
+    // the AND result corresponding to those bits are shifted out, so it's fine
+    // to not extract them.
+    Width = countTrailingOnes(ShiftedAndImm);
+    DstLSB = ShlImm;
+    Src = Op0.getOperand(0);
+    return true;
+  }
+  return false;
+}
+
+static bool isBitfieldPositioningOpFromShl(SelectionDAG *CurDAG, SDValue Op,
+                                           bool BiggerPattern,
+                                           const uint64_t NonZeroBits,
+                                           SDValue &Src, int &DstLSB,
+                                           int &Width) {
+  assert(isShiftedMask_64(NonZeroBits) && "Caller guaranteed");
+
+  EVT VT = Op.getValueType();
+  assert((VT == MVT::i32 || VT == MVT::i64) &&
+         "Caller guarantees that type is i32 or i64");
+  (void)VT;
+
+  uint64_t ShlImm;
+  if (!isOpcWithIntImmediate(Op.getNode(), ISD::SHL, ShlImm))
+    return false;
+
+  if (!BiggerPattern && !Op.hasOneUse())
+    return false;
+
+  if (isSeveralBitsPositioningOpFromShl(ShlImm, Op, Src, DstLSB, Width))
+    return true;
+
+  DstLSB = countTrailingZeros(NonZeroBits);
+  Width = countTrailingOnes(NonZeroBits >> DstLSB);
+
+  if (ShlImm != uint64_t(DstLSB) && !BiggerPattern)
+    return false;
+
+  Src = getLeftShift(CurDAG, Op.getOperand(0), ShlImm - DstLSB);
   return true;
 }
 
@@ -2567,6 +2988,181 @@ static bool tryBitfieldInsertOpFromOrAndImm(SDNode *N, SelectionDAG *CurDAG) {
   unsigned Opc = (VT == MVT::i32) ? AArch64::BFMWri : AArch64::BFMXri;
   CurDAG->SelectNodeTo(N, Opc, VT, Ops);
   return true;
+}
+
+static bool isWorthFoldingIntoOrrWithShift(SDValue Dst, SelectionDAG *CurDAG,
+                                           SDValue &ShiftedOperand,
+                                           uint64_t &EncodedShiftImm) {
+  // Avoid folding Dst into ORR-with-shift if Dst has other uses than ORR.
+  if (!Dst.hasOneUse())
+    return false;
+
+  EVT VT = Dst.getValueType();
+  assert((VT == MVT::i32 || VT == MVT::i64) &&
+         "Caller should guarantee that VT is one of i32 or i64");
+  const unsigned SizeInBits = VT.getSizeInBits();
+
+  SDLoc DL(Dst.getNode());
+  uint64_t AndImm, ShlImm;
+  if (isOpcWithIntImmediate(Dst.getNode(), ISD::AND, AndImm) &&
+      isShiftedMask_64(AndImm)) {
+    // Avoid transforming 'DstOp0' if it has other uses than the AND node.
+    SDValue DstOp0 = Dst.getOperand(0);
+    if (!DstOp0.hasOneUse())
+      return false;
+
+    // An example to illustrate the transformation
+    // From:
+    //    lsr     x8, x1, #1
+    //    and     x8, x8, #0x3f80
+    //    bfxil   x8, x1, #0, #7
+    // To:
+    //    and    x8, x23, #0x7f
+    //    ubfx   x9, x23, #8, #7
+    //    orr    x23, x8, x9, lsl #7
+    //
+    // The number of instructions remains the same, but ORR is faster than BFXIL
+    // on many AArch64 processors (or as good as BFXIL if not faster). Besides,
+    // the dependency chain is improved after the transformation.
+    uint64_t SrlImm;
+    if (isOpcWithIntImmediate(DstOp0.getNode(), ISD::SRL, SrlImm)) {
+      uint64_t NumTrailingZeroInShiftedMask = countTrailingZeros(AndImm);
+      if ((SrlImm + NumTrailingZeroInShiftedMask) < SizeInBits) {
+        unsigned MaskWidth =
+            countTrailingOnes(AndImm >> NumTrailingZeroInShiftedMask);
+        unsigned UBFMOpc =
+            (VT == MVT::i32) ? AArch64::UBFMWri : AArch64::UBFMXri;
+        SDNode *UBFMNode = CurDAG->getMachineNode(
+            UBFMOpc, DL, VT, DstOp0.getOperand(0),
+            CurDAG->getTargetConstant(SrlImm + NumTrailingZeroInShiftedMask, DL,
+                                      VT),
+            CurDAG->getTargetConstant(
+                SrlImm + NumTrailingZeroInShiftedMask + MaskWidth - 1, DL, VT));
+        ShiftedOperand = SDValue(UBFMNode, 0);
+        EncodedShiftImm = AArch64_AM::getShifterImm(
+            AArch64_AM::LSL, NumTrailingZeroInShiftedMask);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  if (isOpcWithIntImmediate(Dst.getNode(), ISD::SHL, ShlImm)) {
+    ShiftedOperand = Dst.getOperand(0);
+    EncodedShiftImm = AArch64_AM::getShifterImm(AArch64_AM::LSL, ShlImm);
+    return true;
+  }
+
+  uint64_t SrlImm;
+  if (isOpcWithIntImmediate(Dst.getNode(), ISD::SRL, SrlImm)) {
+    ShiftedOperand = Dst.getOperand(0);
+    EncodedShiftImm = AArch64_AM::getShifterImm(AArch64_AM::LSR, SrlImm);
+    return true;
+  }
+  return false;
+}
+
+// Given an 'ISD::OR' node that is going to be selected as BFM, analyze
+// the operands and select it to AArch64::ORR with shifted registers if
+// that's more efficient. Returns true iff selection to AArch64::ORR happens.
+static bool tryOrrWithShift(SDNode *N, SDValue OrOpd0, SDValue OrOpd1,
+                            SDValue Src, SDValue Dst, SelectionDAG *CurDAG,
+                            const bool BiggerPattern) {
+  EVT VT = N->getValueType(0);
+  assert(N->getOpcode() == ISD::OR && "Expect N to be an OR node");
+  assert(((N->getOperand(0) == OrOpd0 && N->getOperand(1) == OrOpd1) ||
+          (N->getOperand(1) == OrOpd0 && N->getOperand(0) == OrOpd1)) &&
+         "Expect OrOpd0 and OrOpd1 to be operands of ISD::OR");
+  assert((VT == MVT::i32 || VT == MVT::i64) &&
+         "Expect result type to be i32 or i64 since N is combinable to BFM");
+  SDLoc DL(N);
+
+  // Bail out if BFM simplifies away one node in BFM Dst.
+  if (OrOpd1 != Dst)
+    return false;
+
+  const unsigned OrrOpc = (VT == MVT::i32) ? AArch64::ORRWrs : AArch64::ORRXrs;
+  // For "BFM Rd, Rn, #immr, #imms", it's known that BFM simplifies away fewer
+  // nodes from Rn (or inserts additional shift node) if BiggerPattern is true.
+  if (BiggerPattern) {
+    uint64_t SrcAndImm;
+    if (isOpcWithIntImmediate(OrOpd0.getNode(), ISD::AND, SrcAndImm) &&
+        isMask_64(SrcAndImm) && OrOpd0.getOperand(0) == Src) {
+      // OrOpd0 = AND Src, #Mask
+      // So BFM simplifies away one AND node from Src and doesn't simplify away
+      // nodes from Dst. If ORR with left-shifted operand also simplifies away
+      // one node (from Rd), ORR is better since it has higher throughput and
+      // smaller latency than BFM on many AArch64 processors (and for the rest
+      // ORR is at least as good as BFM).
+      SDValue ShiftedOperand;
+      uint64_t EncodedShiftImm;
+      if (isWorthFoldingIntoOrrWithShift(Dst, CurDAG, ShiftedOperand,
+                                         EncodedShiftImm)) {
+        SDValue Ops[] = {OrOpd0, ShiftedOperand,
+                         CurDAG->getTargetConstant(EncodedShiftImm, DL, VT)};
+        CurDAG->SelectNodeTo(N, OrrOpc, VT, Ops);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  assert((!BiggerPattern) && "BiggerPattern should be handled above");
+
+  uint64_t ShlImm;
+  if (isOpcWithIntImmediate(OrOpd0.getNode(), ISD::SHL, ShlImm)) {
+    if (OrOpd0.getOperand(0) == Src && OrOpd0.hasOneUse()) {
+      SDValue Ops[] = {
+          Dst, Src,
+          CurDAG->getTargetConstant(
+              AArch64_AM::getShifterImm(AArch64_AM::LSL, ShlImm), DL, VT)};
+      CurDAG->SelectNodeTo(N, OrrOpc, VT, Ops);
+      return true;
+    }
+
+    // Select the following pattern to left-shifted operand rather than BFI.
+    // %val1 = op ..
+    // %val2 = shl %val1, #imm
+    // %res = or %val1, %val2
+    //
+    // If N is selected to be BFI, we know that
+    // 1) OrOpd0 would be the operand from which extract bits (i.e., folded into
+    // BFI) 2) OrOpd1 would be the destination operand (i.e., preserved)
+    //
+    // Instead of selecting N to BFI, fold OrOpd0 as a left shift directly.
+    if (OrOpd0.getOperand(0) == OrOpd1) {
+      SDValue Ops[] = {
+          OrOpd1, OrOpd1,
+          CurDAG->getTargetConstant(
+              AArch64_AM::getShifterImm(AArch64_AM::LSL, ShlImm), DL, VT)};
+      CurDAG->SelectNodeTo(N, OrrOpc, VT, Ops);
+      return true;
+    }
+  }
+
+  uint64_t SrlImm;
+  if (isOpcWithIntImmediate(OrOpd0.getNode(), ISD::SRL, SrlImm)) {
+    // Select the following pattern to right-shifted operand rather than BFXIL.
+    // %val1 = op ..
+    // %val2 = lshr %val1, #imm
+    // %res = or %val1, %val2
+    //
+    // If N is selected to be BFXIL, we know that
+    // 1) OrOpd0 would be the operand from which extract bits (i.e., folded into
+    // BFXIL) 2) OrOpd1 would be the destination operand (i.e., preserved)
+    //
+    // Instead of selecting N to BFXIL, fold OrOpd0 as a right shift directly.
+    if (OrOpd0.getOperand(0) == OrOpd1) {
+      SDValue Ops[] = {
+          OrOpd1, OrOpd1,
+          CurDAG->getTargetConstant(
+              AArch64_AM::getShifterImm(AArch64_AM::LSR, SrlImm), DL, VT)};
+      CurDAG->SelectNodeTo(N, OrrOpc, VT, Ops);
+      return true;
+    }
+  }
+
+  return false;
 }
 
 static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
@@ -2671,6 +3267,12 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
       // or is useful because it discards more bits
       Dst = OrOpd1Val;
 
+    // Before selecting ISD::OR node to AArch64::BFM, see if an AArch64::ORR
+    // with shifted operand is more efficient.
+    if (tryOrrWithShift(N, OrOpd0Val, OrOpd1Val, Src, Dst, CurDAG,
+                        BiggerPattern))
+      return true;
+
     // both parts match
     SDLoc DL(N);
     SDValue Ops[] = {Dst, Src, CurDAG->getTargetConstant(ImmR, DL, VT),
@@ -2709,8 +3311,16 @@ static bool tryBitfieldInsertOpFromOr(SDNode *N, const APInt &UsefulBits,
     // shift the needed bits into place.
     SDLoc DL(N);
     unsigned ShiftOpc = (VT == MVT::i32) ? AArch64::UBFMWri : AArch64::UBFMXri;
+    uint64_t LsrImm = LSB;
+    if (Src->hasOneUse() &&
+        isOpcWithIntImmediate(Src.getNode(), ISD::SRL, LsrImm) &&
+        (LsrImm + LSB) < BitWidth) {
+      Src = Src->getOperand(0);
+      LsrImm += LSB;
+    }
+
     SDNode *LSR = CurDAG->getMachineNode(
-        ShiftOpc, DL, VT, Src, CurDAG->getTargetConstant(LSB, DL, VT),
+        ShiftOpc, DL, VT, Src, CurDAG->getTargetConstant(LsrImm, DL, VT),
         CurDAG->getTargetConstant(BitWidth - 1, DL, VT));
 
     // BFXIL is an alias of BFM, so translate to BFM operands.
@@ -2826,15 +3436,15 @@ bool AArch64DAGToDAGISel::tryShiftAmountMod(SDNode *N) {
     SDValue Add1 = ShiftAmt->getOperand(1);
     uint64_t Add0Imm;
     uint64_t Add1Imm;
-    // If we are shifting by X+/-N where N == 0 mod Size, then just shift by X
-    // to avoid the ADD/SUB.
-    if (isIntImmediate(Add1, Add1Imm) && (Add1Imm % Size == 0))
+    if (isIntImmediate(Add1, Add1Imm) && (Add1Imm % Size == 0)) {
+      // If we are shifting by X+/-N where N == 0 mod Size, then just shift by X
+      // to avoid the ADD/SUB.
       NewShiftAmt = Add0;
-    // If we are shifting by N-X where N == 0 mod Size, then just shift by -X to
-    // generate a NEG instead of a SUB of a constant.
-    else if (ShiftAmt->getOpcode() == ISD::SUB &&
-             isIntImmediate(Add0, Add0Imm) && Add0Imm != 0 &&
-             (Add0Imm % Size == 0)) {
+    } else if (ShiftAmt->getOpcode() == ISD::SUB &&
+               isIntImmediate(Add0, Add0Imm) && Add0Imm != 0 &&
+               (Add0Imm % Size == 0)) {
+      // If we are shifting by N-X where N == 0 mod Size, then just shift by -X
+      // to generate a NEG instead of a SUB from a constant.
       unsigned NegOpc;
       unsigned ZeroReg;
       EVT SubVT = ShiftAmt->getValueType(0);
@@ -2851,6 +3461,26 @@ bool AArch64DAGToDAGISel::tryShiftAmountMod(SDNode *N) {
       MachineSDNode *Neg =
           CurDAG->getMachineNode(NegOpc, DL, SubVT, Zero, Add1);
       NewShiftAmt = SDValue(Neg, 0);
+    } else if (ShiftAmt->getOpcode() == ISD::SUB &&
+               isIntImmediate(Add0, Add0Imm) && (Add0Imm % Size == Size - 1)) {
+      // If we are shifting by N-X where N == -1 mod Size, then just shift by ~X
+      // to generate a NOT instead of a SUB from a constant.
+      unsigned NotOpc;
+      unsigned ZeroReg;
+      EVT SubVT = ShiftAmt->getValueType(0);
+      if (SubVT == MVT::i32) {
+        NotOpc = AArch64::ORNWrr;
+        ZeroReg = AArch64::WZR;
+      } else {
+        assert(SubVT == MVT::i64);
+        NotOpc = AArch64::ORNXrr;
+        ZeroReg = AArch64::XZR;
+      }
+      SDValue Zero =
+          CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL, ZeroReg, SubVT);
+      MachineSDNode *Not =
+          CurDAG->getMachineNode(NotOpc, DL, SubVT, Zero, Add1);
+      NewShiftAmt = SDValue(Not, 0);
     } else
       return false;
   } else {
@@ -2965,45 +3595,60 @@ static int getIntOperandFromRegisterString(StringRef RegString) {
 // form described in getIntOperandsFromRegsterString) or is a named register
 // known by the MRS SysReg mapper.
 bool AArch64DAGToDAGISel::tryReadRegister(SDNode *N) {
-  const MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(N->getOperand(1));
-  const MDString *RegString = dyn_cast<MDString>(MD->getMD()->getOperand(0));
+  const auto *MD = cast<MDNodeSDNode>(N->getOperand(1));
+  const auto *RegString = cast<MDString>(MD->getMD()->getOperand(0));
   SDLoc DL(N);
 
-  int Reg = getIntOperandFromRegisterString(RegString->getString());
-  if (Reg != -1) {
-    ReplaceNode(N, CurDAG->getMachineNode(
-                       AArch64::MRS, DL, N->getSimpleValueType(0), MVT::Other,
-                       CurDAG->getTargetConstant(Reg, DL, MVT::i32),
-                       N->getOperand(0)));
-    return true;
+  bool ReadIs128Bit = N->getOpcode() == AArch64ISD::MRRS;
+
+  unsigned Opcode64Bit = AArch64::MRS;
+  int Imm = getIntOperandFromRegisterString(RegString->getString());
+  if (Imm == -1) {
+    // No match, Use the sysreg mapper to map the remaining possible strings to
+    // the value for the register to be used for the instruction operand.
+    const auto *TheReg =
+        AArch64SysReg::lookupSysRegByName(RegString->getString());
+    if (TheReg && TheReg->Readable &&
+        TheReg->haveFeatures(Subtarget->getFeatureBits()))
+      Imm = TheReg->Encoding;
+    else
+      Imm = AArch64SysReg::parseGenericRegister(RegString->getString());
+
+    if (Imm == -1) {
+      // Still no match, see if this is "pc" or give up.
+      if (!ReadIs128Bit && RegString->getString() == "pc") {
+        Opcode64Bit = AArch64::ADR;
+        Imm = 0;
+      } else {
+        return false;
+      }
+    }
   }
 
-  // Use the sysreg mapper to map the remaining possible strings to the
-  // value for the register to be used for the instruction operand.
-  auto TheReg = AArch64SysReg::lookupSysRegByName(RegString->getString());
-  if (TheReg && TheReg->Readable &&
-      TheReg->haveFeatures(Subtarget->getFeatureBits()))
-    Reg = TheReg->Encoding;
-  else
-    Reg = AArch64SysReg::parseGenericRegister(RegString->getString());
+  SDValue InChain = N->getOperand(0);
+  SDValue SysRegImm = CurDAG->getTargetConstant(Imm, DL, MVT::i32);
+  if (!ReadIs128Bit) {
+    CurDAG->SelectNodeTo(N, Opcode64Bit, MVT::i64, MVT::Other /* Chain */,
+                         {SysRegImm, InChain});
+  } else {
+    SDNode *MRRS = CurDAG->getMachineNode(
+        AArch64::MRRS, DL,
+        {MVT::Untyped /* XSeqPair */, MVT::Other /* Chain */},
+        {SysRegImm, InChain});
 
-  if (Reg != -1) {
-    ReplaceNode(N, CurDAG->getMachineNode(
-                       AArch64::MRS, DL, N->getSimpleValueType(0), MVT::Other,
-                       CurDAG->getTargetConstant(Reg, DL, MVT::i32),
-                       N->getOperand(0)));
-    return true;
-  }
+    // Sysregs are not endian. The even register always contains the low half
+    // of the register.
+    SDValue Lo = CurDAG->getTargetExtractSubreg(AArch64::sube64, DL, MVT::i64,
+                                                SDValue(MRRS, 0));
+    SDValue Hi = CurDAG->getTargetExtractSubreg(AArch64::subo64, DL, MVT::i64,
+                                                SDValue(MRRS, 0));
+    SDValue OutChain = SDValue(MRRS, 1);
 
-  if (RegString->getString() == "pc") {
-    ReplaceNode(N, CurDAG->getMachineNode(
-                       AArch64::ADR, DL, N->getSimpleValueType(0), MVT::Other,
-                       CurDAG->getTargetConstant(0, DL, MVT::i32),
-                       N->getOperand(0)));
-    return true;
-  }
-
-  return false;
+    ReplaceUses(SDValue(N, 0), Lo);
+    ReplaceUses(SDValue(N, 1), Hi);
+    ReplaceUses(SDValue(N, 2), OutChain);
+  };
+  return true;
 }
 
 // Lower the write_register intrinsic to an MSR instruction node if the special
@@ -3011,64 +3656,81 @@ bool AArch64DAGToDAGISel::tryReadRegister(SDNode *N) {
 // form described in getIntOperandsFromRegsterString) or is a named register
 // known by the MSR SysReg mapper.
 bool AArch64DAGToDAGISel::tryWriteRegister(SDNode *N) {
-  const MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(N->getOperand(1));
-  const MDString *RegString = dyn_cast<MDString>(MD->getMD()->getOperand(0));
+  const auto *MD = cast<MDNodeSDNode>(N->getOperand(1));
+  const auto *RegString = cast<MDString>(MD->getMD()->getOperand(0));
   SDLoc DL(N);
 
-  int Reg = getIntOperandFromRegisterString(RegString->getString());
-  if (Reg != -1) {
-    ReplaceNode(
-        N, CurDAG->getMachineNode(AArch64::MSR, DL, MVT::Other,
-                                  CurDAG->getTargetConstant(Reg, DL, MVT::i32),
-                                  N->getOperand(2), N->getOperand(0)));
-    return true;
+  bool WriteIs128Bit = N->getOpcode() == AArch64ISD::MSRR;
+
+  if (!WriteIs128Bit) {
+    // Check if the register was one of those allowed as the pstatefield value
+    // in the MSR (immediate) instruction. To accept the values allowed in the
+    // pstatefield for the MSR (immediate) instruction, we also require that an
+    // immediate value has been provided as an argument, we know that this is
+    // the case as it has been ensured by semantic checking.
+    auto trySelectPState = [&](auto PMapper, unsigned State) {
+      if (PMapper) {
+        assert(isa<ConstantSDNode>(N->getOperand(2)) &&
+               "Expected a constant integer expression.");
+        unsigned Reg = PMapper->Encoding;
+        uint64_t Immed = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
+        CurDAG->SelectNodeTo(
+            N, State, MVT::Other, CurDAG->getTargetConstant(Reg, DL, MVT::i32),
+            CurDAG->getTargetConstant(Immed, DL, MVT::i16), N->getOperand(0));
+        return true;
+      }
+      return false;
+    };
+
+    if (trySelectPState(
+            AArch64PState::lookupPStateImm0_15ByName(RegString->getString()),
+            AArch64::MSRpstateImm4))
+      return true;
+    if (trySelectPState(
+            AArch64PState::lookupPStateImm0_1ByName(RegString->getString()),
+            AArch64::MSRpstateImm1))
+      return true;
   }
 
-  // Check if the register was one of those allowed as the pstatefield value in
-  // the MSR (immediate) instruction. To accept the values allowed in the
-  // pstatefield for the MSR (immediate) instruction, we also require that an
-  // immediate value has been provided as an argument, we know that this is
-  // the case as it has been ensured by semantic checking.
-  auto PMapper = AArch64PState::lookupPStateByName(RegString->getString());
-  if (PMapper) {
-    assert (isa<ConstantSDNode>(N->getOperand(2))
-              && "Expected a constant integer expression.");
-    unsigned Reg = PMapper->Encoding;
-    uint64_t Immed = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
-    unsigned State;
-    if (Reg == AArch64PState::PAN || Reg == AArch64PState::UAO || Reg == AArch64PState::SSBS) {
-      assert(Immed < 2 && "Bad imm");
-      State = AArch64::MSRpstateImm1;
-    } else {
-      assert(Immed < 16 && "Bad imm");
-      State = AArch64::MSRpstateImm4;
-    }
-    ReplaceNode(N, CurDAG->getMachineNode(
-                       State, DL, MVT::Other,
-                       CurDAG->getTargetConstant(Reg, DL, MVT::i32),
-                       CurDAG->getTargetConstant(Immed, DL, MVT::i16),
-                       N->getOperand(0)));
-    return true;
+  int Imm = getIntOperandFromRegisterString(RegString->getString());
+  if (Imm == -1) {
+    // Use the sysreg mapper to attempt to map the remaining possible strings
+    // to the value for the register to be used for the MSR (register)
+    // instruction operand.
+    auto TheReg = AArch64SysReg::lookupSysRegByName(RegString->getString());
+    if (TheReg && TheReg->Writeable &&
+        TheReg->haveFeatures(Subtarget->getFeatureBits()))
+      Imm = TheReg->Encoding;
+    else
+      Imm = AArch64SysReg::parseGenericRegister(RegString->getString());
+
+    if (Imm == -1)
+      return false;
   }
 
-  // Use the sysreg mapper to attempt to map the remaining possible strings
-  // to the value for the register to be used for the MSR (register)
-  // instruction operand.
-  auto TheReg = AArch64SysReg::lookupSysRegByName(RegString->getString());
-  if (TheReg && TheReg->Writeable &&
-      TheReg->haveFeatures(Subtarget->getFeatureBits()))
-    Reg = TheReg->Encoding;
-  else
-    Reg = AArch64SysReg::parseGenericRegister(RegString->getString());
-  if (Reg != -1) {
-    ReplaceNode(N, CurDAG->getMachineNode(
-                       AArch64::MSR, DL, MVT::Other,
-                       CurDAG->getTargetConstant(Reg, DL, MVT::i32),
-                       N->getOperand(2), N->getOperand(0)));
-    return true;
+  SDValue InChain = N->getOperand(0);
+  if (!WriteIs128Bit) {
+    CurDAG->SelectNodeTo(N, AArch64::MSR, MVT::Other,
+                         CurDAG->getTargetConstant(Imm, DL, MVT::i32),
+                         N->getOperand(2), InChain);
+  } else {
+    // No endian swap. The lower half always goes into the even subreg, and the
+    // higher half always into the odd supreg.
+    SDNode *Pair = CurDAG->getMachineNode(
+        TargetOpcode::REG_SEQUENCE, DL, MVT::Untyped /* XSeqPair */,
+        {CurDAG->getTargetConstant(AArch64::XSeqPairsClassRegClass.getID(), DL,
+                                   MVT::i32),
+         N->getOperand(2),
+         CurDAG->getTargetConstant(AArch64::sube64, DL, MVT::i32),
+         N->getOperand(3),
+         CurDAG->getTargetConstant(AArch64::subo64, DL, MVT::i32)});
+
+    CurDAG->SelectNodeTo(N, AArch64::MSRR, MVT::Other,
+                         CurDAG->getTargetConstant(Imm, DL, MVT::i32),
+                         SDValue(Pair, 0), InChain);
   }
 
-  return false;
+  return true;
 }
 
 /// We've got special pseudo-instructions for these
@@ -3107,73 +3769,81 @@ bool AArch64DAGToDAGISel::SelectCMP_SWAP(SDNode *N) {
   return true;
 }
 
-bool AArch64DAGToDAGISel::SelectSVE8BitLslImm(SDValue N, SDValue &Base,
-                                                  SDValue &Offset) {
-  auto C = dyn_cast<ConstantSDNode>(N);
-  if (!C)
+bool AArch64DAGToDAGISel::SelectSVEAddSubImm(SDValue N, MVT VT, SDValue &Imm,
+                                             SDValue &Shift) {
+  if (!isa<ConstantSDNode>(N))
     return false;
 
-  auto Ty = N->getValueType(0);
-
-  int64_t Imm = C->getSExtValue();
   SDLoc DL(N);
+  uint64_t Val = cast<ConstantSDNode>(N)
+                     ->getAPIntValue()
+                     .trunc(VT.getFixedSizeInBits())
+                     .getZExtValue();
 
-  if ((Imm >= -128) && (Imm <= 127)) {
-    Base = CurDAG->getTargetConstant(Imm, DL, Ty);
-    Offset = CurDAG->getTargetConstant(0, DL, Ty);
+  switch (VT.SimpleTy) {
+  case MVT::i8:
+    // All immediates are supported.
+    Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
+    Imm = CurDAG->getTargetConstant(Val, DL, MVT::i32);
     return true;
-  }
-
-  if (((Imm % 256) == 0) && (Imm >= -32768) && (Imm <= 32512)) {
-    Base = CurDAG->getTargetConstant(Imm/256, DL, Ty);
-    Offset = CurDAG->getTargetConstant(8, DL, Ty);
-    return true;
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    // Support 8bit unsigned immediates.
+    if (Val <= 255) {
+      Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
+      Imm = CurDAG->getTargetConstant(Val, DL, MVT::i32);
+      return true;
+    }
+    // Support 16bit unsigned immediates that are a multiple of 256.
+    if (Val <= 65280 && Val % 256 == 0) {
+      Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
+      Imm = CurDAG->getTargetConstant(Val >> 8, DL, MVT::i32);
+      return true;
+    }
+    break;
+  default:
+    break;
   }
 
   return false;
 }
 
-bool AArch64DAGToDAGISel::SelectSVEAddSubImm(SDValue N, MVT VT, SDValue &Imm, SDValue &Shift) {
-  if (auto CNode = dyn_cast<ConstantSDNode>(N)) {
-    const int64_t ImmVal = CNode->getSExtValue();
-    SDLoc DL(N);
+bool AArch64DAGToDAGISel::SelectSVECpyDupImm(SDValue N, MVT VT, SDValue &Imm,
+                                             SDValue &Shift) {
+  if (!isa<ConstantSDNode>(N))
+    return false;
 
-    switch (VT.SimpleTy) {
-    case MVT::i8:
-      // Can always select i8s, no shift, mask the immediate value to
-      // deal with sign-extended value from lowering.
+  SDLoc DL(N);
+  int64_t Val = cast<ConstantSDNode>(N)
+                    ->getAPIntValue()
+                    .trunc(VT.getFixedSizeInBits())
+                    .getSExtValue();
+
+  switch (VT.SimpleTy) {
+  case MVT::i8:
+    // All immediates are supported.
+    Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
+    Imm = CurDAG->getTargetConstant(Val & 0xFF, DL, MVT::i32);
+    return true;
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+    // Support 8bit signed immediates.
+    if (Val >= -128 && Val <= 127) {
       Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
-      Imm = CurDAG->getTargetConstant(ImmVal & 0xFF, DL, MVT::i32);
+      Imm = CurDAG->getTargetConstant(Val & 0xFF, DL, MVT::i32);
       return true;
-    case MVT::i16:
-      // i16 values get sign-extended to 32-bits during lowering.
-      if ((ImmVal & 0xFF) == ImmVal) {
-        Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
-        Imm = CurDAG->getTargetConstant(ImmVal, DL, MVT::i32);
-        return true;
-      } else if ((ImmVal & 0xFF) == 0) {
-        assert((ImmVal >= -32768) && (ImmVal <= 32512));
-        Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
-        Imm = CurDAG->getTargetConstant((ImmVal >> 8) & 0xFF, DL, MVT::i32);
-        return true;
-      }
-      break;
-    case MVT::i32:
-    case MVT::i64:
-      // Range of immediate won't trigger signedness problems for 32/64b.
-      if ((ImmVal & 0xFF) == ImmVal) {
-        Shift = CurDAG->getTargetConstant(0, DL, MVT::i32);
-        Imm = CurDAG->getTargetConstant(ImmVal, DL, MVT::i32);
-        return true;
-      } else if ((ImmVal & 0xFF00) == ImmVal) {
-        Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
-        Imm = CurDAG->getTargetConstant(ImmVal >> 8, DL, MVT::i32);
-        return true;
-      }
-      break;
-    default:
-      break;
     }
+    // Support 16bit signed immediates that are a multiple of 256.
+    if (Val >= -32768 && Val <= 32512 && Val % 256 == 0) {
+      Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
+      Imm = CurDAG->getTargetConstant((Val >> 8) & 0xFF, DL, MVT::i32);
+      return true;
+    }
+    break;
+  default:
+    break;
   }
 
   return false;
@@ -3345,7 +4015,7 @@ void AArch64DAGToDAGISel::SelectTagP(SDNode *N) {
 // vector types larger than NEON don't have a matching SubRegIndex.
 static SDNode *extractSubReg(SelectionDAG *DAG, EVT VT, SDValue V) {
   assert(V.getValueType().isScalableVector() &&
-         V.getValueType().getSizeInBits().getKnownMinSize() ==
+         V.getValueType().getSizeInBits().getKnownMinValue() ==
              AArch64::SVEBitsPerBlock &&
          "Expected to extract from a packed scalable vector!");
   assert(VT.isFixedLengthVector() &&
@@ -3372,7 +4042,7 @@ static SDNode *extractSubReg(SelectionDAG *DAG, EVT VT, SDValue V) {
 // vector types larger than NEON don't have a matching SubRegIndex.
 static SDNode *insertSubReg(SelectionDAG *DAG, EVT VT, SDValue V) {
   assert(VT.isScalableVector() &&
-         VT.getSizeInBits().getKnownMinSize() == AArch64::SVEBitsPerBlock &&
+         VT.getSizeInBits().getKnownMinValue() == AArch64::SVEBitsPerBlock &&
          "Expected to insert into a packed scalable vector!");
   assert(V.getValueType().isFixedLengthVector() &&
          "Expected to insert a fixed length vector!");
@@ -3419,11 +4089,13 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     break;
 
   case ISD::READ_REGISTER:
+  case AArch64ISD::MRRS:
     if (tryReadRegister(Node))
       return;
     break;
 
   case ISD::WRITE_REGISTER:
+  case AArch64ISD::MSRR:
     if (tryWriteRegister(Node))
       return;
     break;
@@ -3449,7 +4121,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       return;
     if (tryBitfieldInsertInZeroOp(Node))
       return;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case ISD::ROTR:
   case ISD::SHL:
     if (tryShiftAmountMod(Node))
@@ -3521,7 +4193,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     // Materialize zero constants as copies from WZR/XZR.  This allows
     // the coalescer to propagate these into other instructions.
     ConstantSDNode *ConstNode = cast<ConstantSDNode>(Node);
-    if (ConstNode->isNullValue()) {
+    if (ConstNode->isZero()) {
       if (VT == MVT::i32) {
         SDValue New = CurDAG->getCopyFromReg(
             CurDAG->getEntryNode(), SDLoc(Node), AArch64::WZR, MVT::i32);
@@ -3895,6 +4567,87 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_ld64b:
       SelectLoad(Node, 8, AArch64::LD64B, AArch64::x8sub_0);
       return;
+    case Intrinsic::aarch64_sve_ld2_sret: {
+      if (VT == MVT::nxv16i8) {
+        SelectPredicatedLoad(Node, 2, 0, AArch64::LD2B_IMM, AArch64::LD2B,
+                             true);
+        return;
+      } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
+                 VT == MVT::nxv8bf16) {
+        SelectPredicatedLoad(Node, 2, 1, AArch64::LD2H_IMM, AArch64::LD2H,
+                             true);
+        return;
+      } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
+        SelectPredicatedLoad(Node, 2, 2, AArch64::LD2W_IMM, AArch64::LD2W,
+                             true);
+        return;
+      } else if (VT == MVT::nxv2i64 || VT == MVT::nxv2f64) {
+        SelectPredicatedLoad(Node, 2, 3, AArch64::LD2D_IMM, AArch64::LD2D,
+                             true);
+        return;
+      }
+      break;
+    }
+    case Intrinsic::aarch64_sve_ld3_sret: {
+      if (VT == MVT::nxv16i8) {
+        SelectPredicatedLoad(Node, 3, 0, AArch64::LD3B_IMM, AArch64::LD3B,
+                             true);
+        return;
+      } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
+                 VT == MVT::nxv8bf16) {
+        SelectPredicatedLoad(Node, 3, 1, AArch64::LD3H_IMM, AArch64::LD3H,
+                             true);
+        return;
+      } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
+        SelectPredicatedLoad(Node, 3, 2, AArch64::LD3W_IMM, AArch64::LD3W,
+                             true);
+        return;
+      } else if (VT == MVT::nxv2i64 || VT == MVT::nxv2f64) {
+        SelectPredicatedLoad(Node, 3, 3, AArch64::LD3D_IMM, AArch64::LD3D,
+                             true);
+        return;
+      }
+      break;
+    }
+    case Intrinsic::aarch64_sve_ld4_sret: {
+      if (VT == MVT::nxv16i8) {
+        SelectPredicatedLoad(Node, 4, 0, AArch64::LD4B_IMM, AArch64::LD4B,
+                             true);
+        return;
+      } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
+                 VT == MVT::nxv8bf16) {
+        SelectPredicatedLoad(Node, 4, 1, AArch64::LD4H_IMM, AArch64::LD4H,
+                             true);
+        return;
+      } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
+        SelectPredicatedLoad(Node, 4, 2, AArch64::LD4W_IMM, AArch64::LD4W,
+                             true);
+        return;
+      } else if (VT == MVT::nxv2i64 || VT == MVT::nxv2f64) {
+        SelectPredicatedLoad(Node, 4, 3, AArch64::LD4D_IMM, AArch64::LD4D,
+                             true);
+        return;
+      }
+      break;
+    }
+    case Intrinsic::swift_async_context_addr: {
+      SDLoc DL(Node);
+      SDValue Chain = Node->getOperand(0);
+      SDValue CopyFP = CurDAG->getCopyFromReg(Chain, DL, AArch64::FP, MVT::i64);
+      SDValue Res = SDValue(
+          CurDAG->getMachineNode(AArch64::SUBXri, DL, MVT::i64, CopyFP,
+                                 CurDAG->getTargetConstant(8, DL, MVT::i32),
+                                 CurDAG->getTargetConstant(0, DL, MVT::i32)),
+          0);
+      ReplaceUses(SDValue(Node, 0), Res);
+      ReplaceUses(SDValue(Node, 1), CopyFP.getValue(1));
+      CurDAG->RemoveDeadNode(Node);
+
+      auto &MF = CurDAG->getMachineFunction();
+      MF.getFrameInfo().setFrameAddressIsTaken(true);
+      MF.getInfo<AArch64FunctionInfo>()->setHasSwiftAsyncContext(true);
+      return;
+    }
     }
   } break;
   case ISD::INTRINSIC_WO_CHAIN: {
@@ -3940,18 +4693,86 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       if (tryMULLV64LaneV128(IntNo, Node))
         return;
       break;
-    case Intrinsic::swift_async_context_addr: {
-      SDLoc DL(Node);
-      CurDAG->SelectNodeTo(Node, AArch64::SUBXri, MVT::i64,
-                           CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
-                                                  AArch64::FP, MVT::i64),
-                           CurDAG->getTargetConstant(8, DL, MVT::i32),
-                           CurDAG->getTargetConstant(0, DL, MVT::i32));
-      auto &MF = CurDAG->getMachineFunction();
-      MF.getFrameInfo().setFrameAddressIsTaken(true);
-      MF.getInfo<AArch64FunctionInfo>()->setHasSwiftAsyncContext(true);
+    case Intrinsic::aarch64_sve_whilege_x2:
+      if (auto Op = SelectOpcodeFromVT<SelectTypeKind::Int1>(
+              Node->getValueType(0),
+              {AArch64::WHILEGE_2PXX_B, AArch64::WHILEGE_2PXX_H,
+               AArch64::WHILEGE_2PXX_S, AArch64::WHILEGE_2PXX_D}))
+        SelectWhilePair(Node, Op);
       return;
-    }
+    case Intrinsic::aarch64_sve_whilegt_x2:
+      if (auto Op = SelectOpcodeFromVT<SelectTypeKind::Int1>(
+              Node->getValueType(0),
+              {AArch64::WHILEGT_2PXX_B, AArch64::WHILEGT_2PXX_H,
+               AArch64::WHILEGT_2PXX_S, AArch64::WHILEGT_2PXX_D}))
+        SelectWhilePair(Node, Op);
+      return;
+    case Intrinsic::aarch64_sve_whilehi_x2:
+      if (auto Op = SelectOpcodeFromVT<SelectTypeKind::Int1>(
+              Node->getValueType(0),
+              {AArch64::WHILEHI_2PXX_B, AArch64::WHILEHI_2PXX_H,
+               AArch64::WHILEHI_2PXX_S, AArch64::WHILEHI_2PXX_D}))
+        SelectWhilePair(Node, Op);
+      return;
+    case Intrinsic::aarch64_sve_whilehs_x2:
+      if (auto Op = SelectOpcodeFromVT<SelectTypeKind::Int1>(
+              Node->getValueType(0),
+              {AArch64::WHILEHS_2PXX_B, AArch64::WHILEHS_2PXX_H,
+               AArch64::WHILEHS_2PXX_S, AArch64::WHILEHS_2PXX_D}))
+        SelectWhilePair(Node, Op);
+      return;
+    case Intrinsic::aarch64_sve_whilele_x2:
+      if (auto Op = SelectOpcodeFromVT<SelectTypeKind::Int1>(
+              Node->getValueType(0),
+              {AArch64::WHILELE_2PXX_B, AArch64::WHILELE_2PXX_H,
+               AArch64::WHILELE_2PXX_S, AArch64::WHILELE_2PXX_D}))
+      SelectWhilePair(Node, Op);
+      return;
+    case Intrinsic::aarch64_sve_whilelo_x2:
+      if (auto Op = SelectOpcodeFromVT<SelectTypeKind::Int1>(
+              Node->getValueType(0),
+              {AArch64::WHILELO_2PXX_B, AArch64::WHILELO_2PXX_H,
+               AArch64::WHILELO_2PXX_S, AArch64::WHILELO_2PXX_D}))
+      SelectWhilePair(Node, Op);
+      return;
+    case Intrinsic::aarch64_sve_whilels_x2:
+      if (auto Op = SelectOpcodeFromVT<SelectTypeKind::Int1>(
+              Node->getValueType(0),
+              {AArch64::WHILELS_2PXX_B, AArch64::WHILELS_2PXX_H,
+               AArch64::WHILELS_2PXX_S, AArch64::WHILELS_2PXX_D}))
+        SelectWhilePair(Node, Op);
+      return;
+    case Intrinsic::aarch64_sve_whilelt_x2:
+      if (auto Op = SelectOpcodeFromVT<SelectTypeKind::Int1>(
+              Node->getValueType(0),
+              {AArch64::WHILELT_2PXX_B, AArch64::WHILELT_2PXX_H,
+               AArch64::WHILELT_2PXX_S, AArch64::WHILELT_2PXX_D}))
+        SelectWhilePair(Node, Op);
+      return;
+    case Intrinsic::aarch64_sve_fcvts_x2:
+      SelectCVTIntrinsic(Node, 2, AArch64::FCVTZS_2Z2Z_StoS);
+      return;
+    case Intrinsic::aarch64_sve_scvtf_x2:
+      SelectCVTIntrinsic(Node, 2, AArch64::SCVTF_2Z2Z_StoS);
+      return;
+    case Intrinsic::aarch64_sve_fcvtu_x2:
+      SelectCVTIntrinsic(Node, 2, AArch64::FCVTZU_2Z2Z_StoS);
+      return;
+    case Intrinsic::aarch64_sve_ucvtf_x2:
+      SelectCVTIntrinsic(Node, 2, AArch64::UCVTF_2Z2Z_StoS);
+      return;
+    case Intrinsic::aarch64_sve_fcvts_x4:
+      SelectCVTIntrinsic(Node, 4, AArch64::FCVTZS_4Z4Z_StoS);
+      return;
+    case Intrinsic::aarch64_sve_scvtf_x4:
+      SelectCVTIntrinsic(Node, 4, AArch64::SCVTF_4Z4Z_StoS);
+      return;
+    case Intrinsic::aarch64_sve_fcvtu_x4:
+      SelectCVTIntrinsic(Node, 4, AArch64::FCVTZU_4Z4Z_StoS);
+      return;
+    case Intrinsic::aarch64_sve_ucvtf_x4:
+      SelectCVTIntrinsic(Node, 4, AArch64::UCVTF_4Z4Z_StoS);
+      return;
     }
     break;
   }
@@ -4204,7 +5025,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
         SelectPredicatedStore(Node, 2, 0, AArch64::ST2B, AArch64::ST2B_IMM);
         return;
       } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
-                 (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+                 VT == MVT::nxv8bf16) {
         SelectPredicatedStore(Node, 2, 1, AArch64::ST2H, AArch64::ST2H_IMM);
         return;
       } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
@@ -4221,7 +5042,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
         SelectPredicatedStore(Node, 3, 0, AArch64::ST3B, AArch64::ST3B_IMM);
         return;
       } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
-                 (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+                 VT == MVT::nxv8bf16) {
         SelectPredicatedStore(Node, 3, 1, AArch64::ST3H, AArch64::ST3H_IMM);
         return;
       } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
@@ -4238,7 +5059,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
         SelectPredicatedStore(Node, 4, 0, AArch64::ST4B, AArch64::ST4B_IMM);
         return;
       } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
-                 (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+                 VT == MVT::nxv8bf16) {
         SelectPredicatedStore(Node, 4, 1, AArch64::ST4H, AArch64::ST4H_IMM);
         return;
       } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
@@ -4848,7 +5669,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       SelectPredicatedLoad(Node, 2, 0, AArch64::LD2B_IMM, AArch64::LD2B);
       return;
     } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
-               (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+               VT == MVT::nxv8bf16) {
       SelectPredicatedLoad(Node, 2, 1, AArch64::LD2H_IMM, AArch64::LD2H);
       return;
     } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
@@ -4865,7 +5686,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       SelectPredicatedLoad(Node, 3, 0, AArch64::LD3B_IMM, AArch64::LD3B);
       return;
     } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
-               (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+               VT == MVT::nxv8bf16) {
       SelectPredicatedLoad(Node, 3, 1, AArch64::LD3H_IMM, AArch64::LD3H);
       return;
     } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
@@ -4882,7 +5703,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       SelectPredicatedLoad(Node, 4, 0, AArch64::LD4B_IMM, AArch64::LD4B);
       return;
     } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
-               (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+               VT == MVT::nxv8bf16) {
       SelectPredicatedLoad(Node, 4, 1, AArch64::LD4H_IMM, AArch64::LD4H);
       return;
     } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
@@ -4965,18 +5786,30 @@ static EVT getMemVTFromNode(LLVMContext &Ctx, SDNode *Root) {
     break;
   }
 
-  if (Opcode != ISD::INTRINSIC_VOID)
+  if (Opcode != ISD::INTRINSIC_VOID && Opcode != ISD::INTRINSIC_W_CHAIN)
     return EVT();
 
-  const unsigned IntNo =
-      cast<ConstantSDNode>(Root->getOperand(1))->getZExtValue();
-  if (IntNo != Intrinsic::aarch64_sve_prf)
+  switch (cast<ConstantSDNode>(Root->getOperand(1))->getZExtValue()) {
+  default:
     return EVT();
-
-  // We are using an SVE prefetch intrinsic. Type must be inferred
-  // from the width of the predicate.
-  return getPackedVectorTypeFromPredicateType(
-      Ctx, Root->getOperand(2)->getValueType(0), /*NumVec=*/1);
+  case Intrinsic::aarch64_sme_ldr:
+  case Intrinsic::aarch64_sme_str:
+    return MVT::nxv16i8;
+  case Intrinsic::aarch64_sve_prf:
+    // We are using an SVE prefetch intrinsic. Type must be inferred from the
+    // width of the predicate.
+    return getPackedVectorTypeFromPredicateType(
+        Ctx, Root->getOperand(2)->getValueType(0), /*NumVec=*/1);
+  case Intrinsic::aarch64_sve_ld2_sret:
+    return getPackedVectorTypeFromPredicateType(
+        Ctx, Root->getOperand(2)->getValueType(0), /*NumVec=*/2);
+  case Intrinsic::aarch64_sve_ld3_sret:
+    return getPackedVectorTypeFromPredicateType(
+        Ctx, Root->getOperand(2)->getValueType(0), /*NumVec=*/3);
+  case Intrinsic::aarch64_sve_ld4_sret:
+    return getPackedVectorTypeFromPredicateType(
+        Ctx, Root->getOperand(2)->getValueType(0), /*NumVec=*/4);
+  }
 }
 
 /// SelectAddrModeIndexedSVE - Attempt selection of the addressing mode:
@@ -4987,6 +5820,21 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexedSVE(SDNode *Root, SDValue N,
                                                    SDValue &Base,
                                                    SDValue &OffImm) {
   const EVT MemVT = getMemVTFromNode(*(CurDAG->getContext()), Root);
+  const DataLayout &DL = CurDAG->getDataLayout();
+  const MachineFrameInfo &MFI = MF->getFrameInfo();
+
+  if (N.getOpcode() == ISD::FrameIndex) {
+    int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    // We can only encode VL scaled offsets, so only fold in frame indexes
+    // referencing SVE objects.
+    if (FI == 0 || MFI.getStackID(FI) == TargetStackID::ScalableVector) {
+      Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+      OffImm = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i64);
+      return true;
+    }
+
+    return false;
+  }
 
   if (MemVT == EVT())
     return false;
@@ -4999,7 +5847,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexedSVE(SDNode *Root, SDValue N,
     return false;
 
   TypeSize TS = MemVT.getSizeInBits();
-  int64_t MemWidthBytes = static_cast<int64_t>(TS.getKnownMinSize()) / 8;
+  int64_t MemWidthBytes = static_cast<int64_t>(TS.getKnownMinValue()) / 8;
   int64_t MulImm = cast<ConstantSDNode>(VScale.getOperand(0))->getSExtValue();
 
   if ((MulImm % MemWidthBytes) != 0)
@@ -5010,6 +5858,14 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexedSVE(SDNode *Root, SDValue N,
     return false;
 
   Base = N.getOperand(0);
+  if (Base.getOpcode() == ISD::FrameIndex) {
+    int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+    // We can only encode VL scaled offsets, so only fold in frame indexes
+    // referencing SVE objects.
+    if (FI == 0 || MFI.getStackID(FI) == TargetStackID::ScalableVector)
+      Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+  }
+
   OffImm = CurDAG->getTargetConstant(Offset, SDLoc(N), MVT::i64);
   return true;
 }
@@ -5071,5 +5927,32 @@ bool AArch64DAGToDAGISel::SelectAllActivePredicate(SDValue N) {
   const AArch64TargetLowering *TLI =
       static_cast<const AArch64TargetLowering *>(getTargetLowering());
 
-  return TLI->isAllActivePredicate(N);
+  return TLI->isAllActivePredicate(*CurDAG, N);
+}
+
+bool AArch64DAGToDAGISel::SelectSMETileSlice(SDValue N, unsigned MaxSize,
+                                             SDValue &Base, SDValue &Offset,
+                                             unsigned Scale) {
+  if (N.getOpcode() != ISD::ADD) {
+    Base = N;
+    Offset = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i64);
+    return true;
+  }
+
+  // Process an ADD node.
+  const SDValue LHS = N.getOperand(0);
+  const SDValue RHS = N.getOperand(1);
+
+  if (auto C = dyn_cast<ConstantSDNode>(RHS)) {
+    int64_t ImmOff = C->getSExtValue();
+
+    if ((ImmOff < 0 || ImmOff > MaxSize) || (ImmOff % Scale != 0))
+      return false;
+
+    Base = LHS;
+    Offset = CurDAG->getTargetConstant(ImmOff / Scale, SDLoc(N), MVT::i64);
+    return true;
+  }
+
+  return false;
 }

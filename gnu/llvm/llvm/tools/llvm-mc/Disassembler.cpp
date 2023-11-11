@@ -21,9 +21,9 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -65,7 +65,7 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
       SM.PrintMessage(SMLoc::getFromPointer(Bytes.second[Index]),
                       SourceMgr::DK_Warning,
                       "potentially undefined instruction encoding");
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
 
     case MCDisassembler::Success:
       Streamer.emitInstruction(Inst, STI);
@@ -156,7 +156,7 @@ int Disassembler::disassemble(const Target &T, const std::string &Triple,
   }
 
   // Set up initial section manually here
-  Streamer.InitSections(false);
+  Streamer.initSections(false, STI);
 
   bool ErrorOccurred = false;
 

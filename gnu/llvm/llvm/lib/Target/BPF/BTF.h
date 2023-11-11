@@ -48,6 +48,8 @@
 #ifndef LLVM_LIB_TARGET_BPF_BTF_H
 #define LLVM_LIB_TARGET_BPF_BTF_H
 
+#include <cstdint>
+
 namespace llvm {
 namespace BTF {
 
@@ -60,6 +62,7 @@ enum {
   CommonTypeSize = 12,
   BTFArraySize = 12,
   BTFEnumSize = 8,
+  BTFEnum64Size = 12,
   BTFMemberSize = 12,
   BTFParamSize = 8,
   BTFDataSecVarSize = 12,
@@ -113,7 +116,7 @@ struct CommonType {
   /// "Size" tells the size of the type it is describing.
   ///
   /// "Type" is used by PTR, TYPEDEF, VOLATILE, CONST, RESTRICT,
-  /// FUNC, FUNC_PROTO and VAR.
+  /// FUNC, FUNC_PROTO, VAR, DECL_TAG and TYPE_TAG.
   /// "Type" is a type_id referring to another type.
   union {
     uint32_t Size;
@@ -143,6 +146,15 @@ enum : uint8_t {
 struct BTFEnum {
   uint32_t NameOff; ///< Enum name offset in the string table
   int32_t Val;      ///< Enum member value
+};
+
+/// BTF_KIND_ENUM64 is followed by multiple "struct BTFEnum64".
+/// The exact number of BTFEnum64 is stored in the vlen (of the
+/// info in "struct CommonType").
+struct BTFEnum64 {
+  uint32_t NameOff; ///< Enum name offset in the string table
+  uint32_t Val_Lo32;     ///< Enum member lo32 value
+  uint32_t Val_Hi32;     ///< Enum member hi32 value
 };
 
 /// BTF_KIND_ARRAY is followed by one "struct BTFArray".

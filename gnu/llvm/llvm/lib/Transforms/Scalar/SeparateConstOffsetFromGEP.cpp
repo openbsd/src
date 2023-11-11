@@ -189,7 +189,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <cassert>
@@ -648,13 +647,13 @@ Value *ConstantOffsetExtractor::applyExts(Value *V) {
   Value *Current = V;
   // ExtInsts is built in the use-def order. Therefore, we apply them to V
   // in the reversed order.
-  for (auto I = ExtInsts.rbegin(), E = ExtInsts.rend(); I != E; ++I) {
+  for (CastInst *I : llvm::reverse(ExtInsts)) {
     if (Constant *C = dyn_cast<Constant>(Current)) {
       // If Current is a constant, apply s/zext using ConstantExpr::getCast.
       // ConstantExpr::getCast emits a ConstantInt if C is a ConstantInt.
-      Current = ConstantExpr::getCast((*I)->getOpcode(), C, (*I)->getType());
+      Current = ConstantExpr::getCast(I->getOpcode(), C, I->getType());
     } else {
-      Instruction *Ext = (*I)->clone();
+      Instruction *Ext = I->clone();
       Ext->setOperand(0, Current);
       Ext->insertBefore(IP);
       Current = Ext;
@@ -818,6 +817,10 @@ SeparateConstOffsetFromGEP::accumulateByteOffset(GetElementPtrInst *GEP,
   gep_type_iterator GTI = gep_type_begin(*GEP);
   for (unsigned I = 1, E = GEP->getNumOperands(); I != E; ++I, ++GTI) {
     if (GTI.isSequential()) {
+      // Constant offsets of scalable types are not really constant.
+      if (isa<ScalableVectorType>(GTI.getIndexedType()))
+        continue;
+
       // Tries to extract a constant offset from this GEP index.
       int64_t ConstantOffset =
           ConstantOffsetExtractor::Find(GEP->getOperand(I), GEP, DT);
@@ -1007,6 +1010,10 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
   gep_type_iterator GTI = gep_type_begin(*GEP);
   for (unsigned I = 1, E = GEP->getNumOperands(); I != E; ++I, ++GTI) {
     if (GTI.isSequential()) {
+      // Constant offsets of scalable types are not really constant.
+      if (isa<ScalableVectorType>(GTI.getIndexedType()))
+        continue;
+
       // Splits this GEP index into a variadic part and a constant offset, and
       // uses the variadic part as the new index.
       Value *OldIdx = GEP->getOperand(I);
@@ -1123,18 +1130,17 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
     // sizeof(int64).
     //
     // Emit an uglygep in this case.
-    Type *I8PtrTy = Type::getInt8PtrTy(GEP->getContext(),
-                                       GEP->getPointerAddressSpace());
-    NewGEP = new BitCastInst(NewGEP, I8PtrTy, "", GEP);
-    NewGEP = GetElementPtrInst::Create(
-        Type::getInt8Ty(GEP->getContext()), NewGEP,
-        ConstantInt::get(IntPtrTy, AccumulativeByteOffset, true), "uglygep",
-        GEP);
+    IRBuilder<> Builder(GEP);
+    Type *I8PtrTy =
+        Builder.getInt8Ty()->getPointerTo(GEP->getPointerAddressSpace());
+
+    NewGEP = cast<Instruction>(Builder.CreateGEP(
+        Builder.getInt8Ty(), Builder.CreateBitCast(NewGEP, I8PtrTy),
+        {ConstantInt::get(IntPtrTy, AccumulativeByteOffset, true)}, "uglygep",
+        GEPWasInBounds));
+
     NewGEP->copyMetadata(*GEP);
-    // Inherit the inbounds attribute of the original GEP.
-    cast<GetElementPtrInst>(NewGEP)->setIsInBounds(GEPWasInBounds);
-    if (GEP->getType() != I8PtrTy)
-      NewGEP = new BitCastInst(NewGEP, GEP->getType(), GEP->getName(), GEP);
+    NewGEP = cast<Instruction>(Builder.CreateBitCast(NewGEP, GEP->getType()));
   }
 
   GEP->replaceAllUsesWith(NewGEP);
@@ -1164,8 +1170,11 @@ bool SeparateConstOffsetFromGEP::run(Function &F) {
   DL = &F.getParent()->getDataLayout();
   bool Changed = false;
   for (BasicBlock &B : F) {
-    for (BasicBlock::iterator I = B.begin(), IE = B.end(); I != IE;)
-      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I++))
+    if (!DT->isReachableFromEntry(&B))
+      continue;
+
+    for (Instruction &I : llvm::make_early_inc_range(B))
+      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I))
         Changed |= splitGEP(GEP);
     // No need to split GEP ConstantExprs because all its indices are constant
     // already.
@@ -1258,10 +1267,8 @@ bool SeparateConstOffsetFromGEP::reuniteExts(Function &F) {
   DominatingSubs.clear();
   for (const auto Node : depth_first(DT)) {
     BasicBlock *BB = Node->getBlock();
-    for (auto I = BB->begin(); I != BB->end(); ) {
-      Instruction *Cur = &*I++;
-      Changed |= reuniteExts(Cur);
-    }
+    for (Instruction &I : llvm::make_early_inc_range(*BB))
+      Changed |= reuniteExts(&I);
   }
   return Changed;
 }

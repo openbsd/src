@@ -10,23 +10,24 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AVRMCTargetDesc.h"
 #include "AVRELFStreamer.h"
 #include "AVRInstPrinter.h"
 #include "AVRMCAsmInfo.h"
 #include "AVRMCELFStreamer.h"
-#include "AVRMCTargetDesc.h"
 #include "AVRTargetStreamer.h"
 #include "TargetInfo/AVRTargetInfo.h"
 
 #include "llvm/MC/MCAsmBackend.h"
-#include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"
 
 #define GET_INSTRINFO_MC_DESC
+#define ENABLE_INSTR_PREDICATE_VERIFIER
 #include "AVRGenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_MC_DESC
@@ -108,7 +109,8 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAVRTargetMC() {
                                         createAVRMCInstPrinter);
 
   // Register the MC Code Emitter
-  TargetRegistry::RegisterMCCodeEmitter(getTheAVRTarget(), createAVRMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(getTheAVRTarget(),
+                                        createAVRMCCodeEmitter);
 
   // Register the obj streamer
   TargetRegistry::RegisterELFStreamer(getTheAVRTarget(), createMCStreamer);
@@ -124,4 +126,3 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAVRTargetMC() {
   // Register the asm backend (as little endian).
   TargetRegistry::RegisterMCAsmBackend(getTheAVRTarget(), createAVRAsmBackend);
 }
-

@@ -16,7 +16,6 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 
 using namespace llvm;
@@ -62,7 +61,7 @@ static void findLoadCallsAtConstantOffset(
     } else if (auto GEP = dyn_cast<GetElementPtrInst>(User)) {
       // Take into account the GEP offset.
       if (VPtr == GEP->getPointerOperand() && GEP->hasAllConstantIndices()) {
-        SmallVector<Value *, 8> Indices(GEP->op_begin() + 1, GEP->op_end());
+        SmallVector<Value *, 8> Indices(drop_begin(GEP->operands()));
         int64_t GEPOffset = M->getDataLayout().getIndexedOffsetInType(
             GEP->getSourceElementType(), Indices);
         findLoadCallsAtConstantOffset(M, DevirtCalls, User, Offset + GEPOffset,
@@ -76,7 +75,9 @@ void llvm::findDevirtualizableCallsForTypeTest(
     SmallVectorImpl<DevirtCallSite> &DevirtCalls,
     SmallVectorImpl<CallInst *> &Assumes, const CallInst *CI,
     DominatorTree &DT) {
-  assert(CI->getCalledFunction()->getIntrinsicID() == Intrinsic::type_test);
+  assert(CI->getCalledFunction()->getIntrinsicID() == Intrinsic::type_test ||
+         CI->getCalledFunction()->getIntrinsicID() ==
+             Intrinsic::public_type_test);
 
   const Module *M = CI->getParent()->getParent()->getParent();
 
@@ -126,7 +127,8 @@ void llvm::findDevirtualizableCallsForTypeCheckedLoad(
                               Offset->getZExtValue(), CI, DT);
 }
 
-Constant *llvm::getPointerAtOffset(Constant *I, uint64_t Offset, Module &M) {
+Constant *llvm::getPointerAtOffset(Constant *I, uint64_t Offset, Module &M,
+                                   Constant *TopLevelGlobal) {
   if (I->getType()->isPointerTy()) {
     if (Offset == 0)
       return I;
@@ -142,7 +144,8 @@ Constant *llvm::getPointerAtOffset(Constant *I, uint64_t Offset, Module &M) {
 
     unsigned Op = SL->getElementContainingOffset(Offset);
     return getPointerAtOffset(cast<Constant>(I->getOperand(Op)),
-                              Offset - SL->getElementOffset(Op), M);
+                              Offset - SL->getElementOffset(Op), M,
+                              TopLevelGlobal);
   }
   if (auto *C = dyn_cast<ConstantArray>(I)) {
     ArrayType *VTableTy = C->getType();
@@ -153,7 +156,62 @@ Constant *llvm::getPointerAtOffset(Constant *I, uint64_t Offset, Module &M) {
       return nullptr;
 
     return getPointerAtOffset(cast<Constant>(I->getOperand(Op)),
-                              Offset % ElemSize, M);
+                              Offset % ElemSize, M, TopLevelGlobal);
+  }
+
+  // (Swift-specific) relative-pointer support starts here.
+  if (auto *CI = dyn_cast<ConstantInt>(I)) {
+    if (Offset == 0 && CI->getZExtValue() == 0) {
+      return I;
+    }
+  }
+  if (auto *C = dyn_cast<ConstantExpr>(I)) {
+    switch (C->getOpcode()) {
+    case Instruction::Trunc:
+    case Instruction::PtrToInt:
+      return getPointerAtOffset(cast<Constant>(C->getOperand(0)), Offset, M,
+                                TopLevelGlobal);
+    case Instruction::Sub: {
+      auto *Operand0 = cast<Constant>(C->getOperand(0));
+      auto *Operand1 = cast<Constant>(C->getOperand(1));
+
+      auto StripGEP = [](Constant *C) {
+        auto *CE = dyn_cast<ConstantExpr>(C);
+        if (!CE)
+          return C;
+        if (CE->getOpcode() != Instruction::GetElementPtr)
+          return C;
+        return CE->getOperand(0);
+      };
+      auto *Operand1TargetGlobal = StripGEP(getPointerAtOffset(Operand1, 0, M));
+
+      // Check that in the "sub (@a, @b)" expression, @b points back to the top
+      // level global (or a GEP thereof) that we're processing. Otherwise bail.
+      if (Operand1TargetGlobal != TopLevelGlobal)
+        return nullptr;
+
+      return getPointerAtOffset(Operand0, Offset, M, TopLevelGlobal);
+    }
+    default:
+      return nullptr;
+    }
   }
   return nullptr;
+}
+
+void llvm::replaceRelativePointerUsersWithZero(Function *F) {
+  for (auto *U : F->users()) {
+    auto *PtrExpr = dyn_cast<ConstantExpr>(U);
+    if (!PtrExpr || PtrExpr->getOpcode() != Instruction::PtrToInt)
+      continue;
+
+    for (auto *PtrToIntUser : PtrExpr->users()) {
+      auto *SubExpr = dyn_cast<ConstantExpr>(PtrToIntUser);
+      if (!SubExpr || SubExpr->getOpcode() != Instruction::Sub)
+        continue;
+
+      SubExpr->replaceNonMetadataUsesWith(
+          ConstantInt::get(SubExpr->getType(), 0));
+    }
+  }
 }

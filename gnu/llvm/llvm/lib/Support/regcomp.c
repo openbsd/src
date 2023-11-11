@@ -249,10 +249,10 @@ static char nuls[10];		/* place to point scanner in event of error */
  */
 #define	PEEK()	(*p->next)
 #define	PEEK2()	(*(p->next+1))
-#define	MORE()	(p->next < p->end)
-#define	MORE2()	(p->next+1 < p->end)
+#define	MORE()	(p->end - p->next > 0)
+#define	MORE2()	(p->end - p->next > 1)
 #define	SEE(c)	(MORE() && PEEK() == (c))
-#define	SEETWO(a, b)	(MORE() && MORE2() && PEEK() == (a) && PEEK2() == (b))
+#define	SEETWO(a, b)	(MORE2() && PEEK() == (a) && PEEK2() == (b))
 #define	EAT(c)	((SEE(c)) ? (NEXT(), 1) : 0)
 #define	EATTWO(a, b)	((SEETWO(a, b)) ? (NEXT2(), 1) : 0)
 #define	NEXT()	(p->next++)
@@ -525,8 +525,8 @@ p_ere_exp(struct parse *p)
 			assert(backrefnum <= p->g->nsub);
 			EMIT(OBACK_, backrefnum);
 			assert(p->pbegin[backrefnum] != 0);
-			assert(OP(p->strip[p->pbegin[backrefnum]]) != OLPAREN);
-			assert(OP(p->strip[p->pend[backrefnum]]) != ORPAREN);
+			assert(OP(p->strip[p->pbegin[backrefnum]]) == OLPAREN);
+			assert(OP(p->strip[p->pend[backrefnum]]) == ORPAREN);
 			(void) dupl(p, p->pbegin[backrefnum]+1, p->pend[backrefnum]);
 			EMIT(O_BACK, backrefnum);
 			p->g->backrefs = 1;
@@ -800,15 +800,17 @@ p_bracket(struct parse *p)
 	int invert = 0;
 
 	/* Dept of Truly Sickening Special-Case Kludges */
-	if (p->next + 5 < p->end && strncmp(p->next, "[:<:]]", 6) == 0) {
-		EMIT(OBOW, 0);
-		NEXTn(6);
-		return;
-	}
-	if (p->next + 5 < p->end && strncmp(p->next, "[:>:]]", 6) == 0) {
-		EMIT(OEOW, 0);
-		NEXTn(6);
-		return;
+	if (p->end - p->next > 5) {
+		if (strncmp(p->next, "[:<:]]", 6) == 0) {
+			EMIT(OBOW, 0);
+			NEXTn(6);
+			return;
+		}
+		if (strncmp(p->next, "[:>:]]", 6) == 0) {
+			EMIT(OEOW, 0);
+			NEXTn(6);
+			return;
+		}
 	}
 
 	if ((cs = allocset(p)) == NULL) {

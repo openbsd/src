@@ -10,15 +10,19 @@
 #define LLVM_MC_MCASMBACKEND_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCFixup.h"
-#include "llvm/MC/MCFragment.h"
 #include "llvm/Support/Endian.h"
 #include <cstdint>
 
 namespace llvm {
 
+class MCAlignFragment;
+class MCDwarfCallFrameFragment;
+class MCDwarfLineAddrFragment;
+class MCFragment;
+class MCRelaxableFragment;
+class MCSymbol;
 class MCAsmLayout;
 class MCAssembler;
 class MCCFIInstruction;
@@ -31,6 +35,7 @@ class MCSubtargetInfo;
 class MCValue;
 class raw_pwrite_stream;
 class StringRef;
+class raw_ostream;
 
 /// Generic interface to target specific assembler backends.
 class MCAsmBackend {
@@ -55,7 +60,8 @@ public:
   /// Give the target a chance to manipulate state related to instruction
   /// alignment (e.g. padding for optimization), instruction relaxablility, etc.
   /// before and after actually emitting the instruction.
-  virtual void emitInstructionBegin(MCObjectStreamer &OS, const MCInst &Inst) {}
+  virtual void emitInstructionBegin(MCObjectStreamer &OS, const MCInst &Inst,
+                                    const MCSubtargetInfo &STI) {}
   virtual void emitInstructionEnd(MCObjectStreamer &OS, const MCInst &Inst) {}
 
   /// lifetime management
@@ -82,7 +88,7 @@ public:
   virtual unsigned getNumFixupKinds() const = 0;
 
   /// Map a relocation name used in .reloc to a fixup kind.
-  virtual Optional<MCFixupKind> getFixupKind(StringRef Name) const;
+  virtual std::optional<MCFixupKind> getFixupKind(StringRef Name) const;
 
   /// Get information on a fixup kind.
   virtual const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const;
@@ -185,13 +191,16 @@ public:
 
   /// Returns the maximum size of a nop in bytes on this target.
   ///
-  virtual unsigned getMaximumNopSize() const { return 0; }
+  virtual unsigned getMaximumNopSize(const MCSubtargetInfo &STI) const {
+    return 0;
+  }
 
   /// Write an (optimal) nop sequence of Count bytes to the given output. If the
   /// target cannot generate such a sequence, it should return an error.
   ///
   /// \return - True on success.
-  virtual bool writeNopData(raw_ostream &OS, uint64_t Count) const = 0;
+  virtual bool writeNopData(raw_ostream &OS, uint64_t Count,
+                            const MCSubtargetInfo *STI) const = 0;
 
   /// Give backend an opportunity to finish layout after relaxation
   virtual void finishLayout(MCAssembler const &Asm,

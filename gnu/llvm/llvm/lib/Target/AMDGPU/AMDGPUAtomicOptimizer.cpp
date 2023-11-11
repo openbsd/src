@@ -311,6 +311,12 @@ Value *AMDGPUAtomicOptimizer::buildReduction(IRBuilder<> &B,
   if (ST->isWave32())
     return V;
 
+  if (ST->hasPermLane64()) {
+    // Reduce across the upper and lower 32 lanes.
+    return buildNonAtomicBinOp(
+        B, Op, V, B.CreateIntrinsic(Intrinsic::amdgcn_permlane64, {}, V));
+  }
+
   // Pick an arbitrary lane from 0..31 and an arbitrary lane from 32..63 and
   // combine them with a scalar operation.
   Function *ReadLane =
@@ -541,7 +547,7 @@ void AMDGPUAtomicOptimizer::optimizeAtomic(Instruction &I,
       if (NeedResult)
         ExclScan = buildShiftRight(B, NewV, Identity);
 
-      // Read the value from the last lane, which has accumlated the values of
+      // Read the value from the last lane, which has accumulated the values of
       // each active lane in the wavefront. This will be our new value which we
       // will provide to the atomic operation.
       Value *const LastLaneIdx = B.getInt32(ST->getWavefrontSize() - 1);
@@ -620,7 +626,7 @@ void AMDGPUAtomicOptimizer::optimizeAtomic(Instruction &I,
   if (NeedResult) {
     // Create a PHI node to get our new atomic result into the exit block.
     PHINode *const PHI = B.CreatePHI(Ty, 2);
-    PHI->addIncoming(UndefValue::get(Ty), EntryBB);
+    PHI->addIncoming(PoisonValue::get(Ty), EntryBB);
     PHI->addIncoming(NewI, SingleLaneTerminator->getParent());
 
     // We need to broadcast the value who was the lowest active lane (the first
@@ -637,7 +643,7 @@ void AMDGPUAtomicOptimizer::optimizeAtomic(Instruction &I,
       CallInst *const ReadFirstLaneHi =
           B.CreateIntrinsic(Intrinsic::amdgcn_readfirstlane, {}, ExtractHi);
       Value *const PartialInsert = B.CreateInsertElement(
-          UndefValue::get(VecTy), ReadFirstLaneLo, B.getInt32(0));
+          PoisonValue::get(VecTy), ReadFirstLaneLo, B.getInt32(0));
       Value *const Insert =
           B.CreateInsertElement(PartialInsert, ReadFirstLaneHi, B.getInt32(1));
       BroadcastI = B.CreateBitCast(Insert, Ty);
@@ -684,7 +690,7 @@ void AMDGPUAtomicOptimizer::optimizeAtomic(Instruction &I,
       B.SetInsertPoint(PixelExitBB->getFirstNonPHI());
 
       PHINode *const PHI = B.CreatePHI(Ty, 2);
-      PHI->addIncoming(UndefValue::get(Ty), PixelEntryBB);
+      PHI->addIncoming(PoisonValue::get(Ty), PixelEntryBB);
       PHI->addIncoming(Result, I.getParent());
       I.replaceAllUsesWith(PHI);
     } else {

@@ -17,6 +17,7 @@
 #include "llvm/DebugInfo/CodeView/Line.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/MC/MCAsmLayout.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCValue.h"
@@ -25,7 +26,7 @@
 using namespace llvm;
 using namespace llvm::codeview;
 
-CodeViewContext::CodeViewContext() {}
+CodeViewContext::CodeViewContext() = default;
 
 CodeViewContext::~CodeViewContext() {
   // If someone inserted strings into the string table but never actually
@@ -184,7 +185,7 @@ void CodeViewContext::emitStringTable(MCObjectStreamer &OS) {
     InsertedStrTabFragment = true;
   }
 
-  OS.emitValueToAlignment(4, 0);
+  OS.emitValueToAlignment(Align(4), 0);
 
   OS.emitLabel(StringEnd);
 }
@@ -232,7 +233,7 @@ void CodeViewContext::emitFileChecksums(MCObjectStreamer &OS) {
     OS.emitInt8(static_cast<uint8_t>(File.Checksum.size()));
     OS.emitInt8(File.ChecksumKind);
     OS.emitBytes(toStringRef(File.Checksum));
-    OS.emitValueToAlignment(4);
+    OS.emitValueToAlignment(Align(4));
   }
 
   OS.emitLabel(FileEnd);
@@ -317,10 +318,10 @@ std::pair<size_t, size_t> CodeViewContext::getLineExtent(unsigned FuncId) {
 
 ArrayRef<MCCVLoc> CodeViewContext::getLinesForExtent(size_t L, size_t R) {
   if (R <= L)
-    return None;
+    return std::nullopt;
   if (L >= MCCVLines.size())
-    return None;
-  return makeArrayRef(&MCCVLines[L], R - L);
+    return std::nullopt;
+  return ArrayRef(&MCCVLines[L], R - L);
 }
 
 void CodeViewContext::emitLineTableForFunction(MCObjectStreamer &OS,
@@ -334,8 +335,8 @@ void CodeViewContext::emitLineTableForFunction(MCObjectStreamer &OS,
   OS.emitInt32(uint32_t(DebugSubsectionKind::Lines));
   OS.emitAbsoluteSymbolDiff(LineEnd, LineBegin, 4);
   OS.emitLabel(LineBegin);
-  OS.EmitCOFFSecRel32(FuncBegin, /*Offset=*/0);
-  OS.EmitCOFFSectionIndex(FuncBegin);
+  OS.emitCOFFSecRel32(FuncBegin, /*Offset=*/0);
+  OS.emitCOFFSectionIndex(FuncBegin);
 
   // Actual line info.
   std::vector<MCCVLoc> Locs = getFunctionLineEntries(FuncId);

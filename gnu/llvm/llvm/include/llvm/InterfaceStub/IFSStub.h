@@ -14,9 +14,8 @@
 #ifndef LLVM_INTERFACESTUB_IFSSTUB_H
 #define LLVM_INTERFACESTUB_IFSSTUB_H
 
-#include "llvm/Support/Error.h"
 #include "llvm/Support/VersionTuple.h"
-#include <set>
+#include <optional>
 #include <vector>
 
 namespace llvm {
@@ -54,21 +53,21 @@ struct IFSSymbol {
   IFSSymbol() = default;
   explicit IFSSymbol(std::string SymbolName) : Name(std::move(SymbolName)) {}
   std::string Name;
-  uint64_t Size;
+  std::optional<uint64_t> Size;
   IFSSymbolType Type;
   bool Undefined;
   bool Weak;
-  Optional<std::string> Warning;
+  std::optional<std::string> Warning;
   bool operator<(const IFSSymbol &RHS) const { return Name < RHS.Name; }
 };
 
 struct IFSTarget {
-  Optional<std::string> Triple;
-  Optional<std::string> ObjectFormat;
-  Optional<IFSArch> Arch;
-  Optional<std::string> ArchString;
-  Optional<IFSEndiannessType> Endianness;
-  Optional<IFSBitWidthType> BitWidth;
+  std::optional<std::string> Triple;
+  std::optional<std::string> ObjectFormat;
+  std::optional<IFSArch> Arch;
+  std::optional<std::string> ArchString;
+  std::optional<IFSEndiannessType> Endianness;
+  std::optional<IFSBitWidthType> BitWidth;
 
   bool empty();
 };
@@ -90,12 +89,12 @@ inline bool operator!=(const IFSTarget &Lhs, const IFSTarget &Rhs) {
 struct IFSStub {
   // TODO: Add support for symbol versioning.
   VersionTuple IfsVersion;
-  Optional<std::string> SoName;
+  std::optional<std::string> SoName;
   IFSTarget Target;
   std::vector<std::string> NeededLibs;
   std::vector<IFSSymbol> Symbols;
 
-  IFSStub() {}
+  IFSStub() = default;
   IFSStub(const IFSStub &Stub);
   IFSStub(IFSStub &&Stub);
 };
@@ -106,7 +105,7 @@ struct IFSStub {
 // This class makes it possible to map a second traits so the same data
 // structure can be used for 2 different yaml schema.
 struct IFSStubTriple : IFSStub {
-  IFSStubTriple() {}
+  IFSStubTriple() = default;
   IFSStubTriple(const IFSStub &Stub);
   IFSStubTriple(const IFSStubTriple &Stub);
   IFSStubTriple(IFSStubTriple &&Stub);

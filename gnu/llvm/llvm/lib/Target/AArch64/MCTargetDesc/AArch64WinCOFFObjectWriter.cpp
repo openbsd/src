@@ -19,6 +19,7 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/MCWinCOFFObjectWriter.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
@@ -29,8 +30,10 @@ namespace {
 
 class AArch64WinCOFFObjectWriter : public MCWinCOFFObjectTargetWriter {
 public:
-  AArch64WinCOFFObjectWriter()
-      : MCWinCOFFObjectTargetWriter(COFF::IMAGE_FILE_MACHINE_ARM64) {}
+  AArch64WinCOFFObjectWriter(const Triple &TheTriple)
+      : MCWinCOFFObjectTargetWriter(TheTriple.isWindowsArm64EC()
+                                        ? COFF::IMAGE_FILE_MACHINE_ARM64EC
+                                        : COFF::IMAGE_FILE_MACHINE_ARM64) {}
 
   ~AArch64WinCOFFObjectWriter() override = default;
 
@@ -158,6 +161,7 @@ bool AArch64WinCOFFObjectWriter::recordRelocation(const MCFixup &Fixup) const {
   return true;
 }
 
-std::unique_ptr<MCObjectTargetWriter> llvm::createAArch64WinCOFFObjectWriter() {
-  return std::make_unique<AArch64WinCOFFObjectWriter>();
+std::unique_ptr<MCObjectTargetWriter>
+llvm::createAArch64WinCOFFObjectWriter(const Triple &TheTriple) {
+  return std::make_unique<AArch64WinCOFFObjectWriter>(TheTriple);
 }

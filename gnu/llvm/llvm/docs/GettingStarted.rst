@@ -38,9 +38,9 @@ This is an example workflow and configuration to get and build the LLVM source:
    * ``git clone https://github.com/llvm/llvm-project.git``
    * Or, on windows, ``git clone --config core.autocrlf=false
      https://github.com/llvm/llvm-project.git``
-   * To save storage and speed-up the checkout time, you may want to do a 
-     `shallow clone <https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt>`_. 
-     For example, to get the latest revision of the LLVM project, use 
+   * To save storage and speed-up the checkout time, you may want to do a
+     `shallow clone <https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---depthltdepthgt>`_.
+     For example, to get the latest revision of the LLVM project, use
      ``git clone --depth 1 https://github.com/llvm/llvm-project.git``
 
 #. Configure and build LLVM and Clang:
@@ -48,7 +48,7 @@ This is an example workflow and configuration to get and build the LLVM source:
    * ``cd llvm-project``
    * ``mkdir build``
    * ``cd build``
-   * ``cmake -G <generator> [options] ../llvm``
+   * ``cmake -G <generator> -DCMAKE_BUILD_TYPE=<type> [options] ../llvm``
 
      Some common build system generators are:
 
@@ -63,18 +63,20 @@ This is an example workflow and configuration to get and build the LLVM source:
 
      * ``-DLLVM_ENABLE_PROJECTS='...'`` --- semicolon-separated list of the LLVM
        subprojects you'd like to additionally build. Can include any of: clang,
-       clang-tools-extra, libcxx, libcxxabi, libunwind, lldb, compiler-rt, lld,
-       polly, or cross-project-tests.
+       clang-tools-extra, lldb, compiler-rt, lld, polly, or cross-project-tests.
 
        For example, to build LLVM, Clang, libcxx, and libcxxabi, use
-       ``-DLLVM_ENABLE_PROJECTS="clang;libcxx;libcxxabi"``.
+       ``-DLLVM_ENABLE_PROJECTS="clang" -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi"``.
 
      * ``-DCMAKE_INSTALL_PREFIX=directory`` --- Specify for *directory* the full
        pathname of where you want the LLVM tools and libraries to be installed
        (default ``/usr/local``).
 
-     * ``-DCMAKE_BUILD_TYPE=type`` --- Valid options for *type* are Debug,
-       Release, RelWithDebInfo, and MinSizeRel. Default is Debug.
+     * ``-DCMAKE_BUILD_TYPE=type`` --- Controls optimization level and debug information
+       of the build. The default value is ``Debug`` which fits people who want
+       to work on LLVM or its libraries. ``Release`` is a better fit for most
+       users of LLVM and Clang. For more detailed information see
+       :ref:`CMAKE_BUILD_TYPE <cmake_build_type>`.
 
      * ``-DLLVM_ENABLE_ASSERTIONS=On`` --- Compile with assertion checks enabled
        (default is Yes for Debug builds, No for all other build types).
@@ -105,6 +107,92 @@ Consult the `Getting Started with LLVM`_ section for detailed information on
 configuring and compiling LLVM.  Go to `Directory Layout`_ to learn about the
 layout of the source code tree.
 
+Stand-alone Builds
+------------------
+
+Stand-alone builds allow you to build a sub-project against a pre-built
+version of the clang or llvm libraries that is already present on your
+system.
+
+You can use the source code from a standard checkout of the llvm-project
+(as described above) to do stand-alone builds, but you may also build
+from a :ref:`sparse checkout<workflow-multicheckout-nocommit>` or from the
+tarballs available on the `releases <https://github.com/llvm/llvm-project/releases/>`_
+page.
+
+For stand-alone builds, you must have an llvm install that is configured
+properly to be consumable by stand-alone builds of the other projects.
+This could be a distro provided LLVM install, or you can build it yourself,
+like this:
+
+.. code-block:: console
+
+  cmake -G Ninja -S path/to/llvm-project/llvm -B $builddir \
+        -DLLVM_INSTALL_UTILS=ON \
+        -DCMAKE_INSTALL_PREFIX=/path/to/llvm/install/prefix \
+        < other options >
+
+  ninja -C $builddir install
+
+Once llvm is installed, to configure a project for a stand-alone build, invoke CMake like this:
+
+.. code-block:: console
+
+  cmake -G Ninja -S path/to/llvm-project/$subproj \
+        -B $buildir_subproj \
+        -DLLVM_EXTERNAL_LIT=/path/to/lit \
+        -DLLVM_ROOT=/path/to/llvm/install/prefix
+
+Notice that:
+
+* The stand-alone build needs to happen in a folder that is not the
+  original folder where LLVMN was built
+  (`$builddir!=$builddir_subproj`).
+* ``LLVM_ROOT`` should point to the prefix of your llvm installation,
+  so for example, if llvm is installed into ``/usr/bin`` and
+  ``/usr/lib64``, then you should pass ``-DLLVM_ROOT=/usr/``.
+* Both the ``LLVM_ROOT`` and ``LLVM_EXTERNAL_LIT`` options are
+  required to do stand-alone builds for all sub-projects.  Additional
+  required options for each sub-project can be found in the table
+  below.
+
+The ``check-$subproj`` and ``install`` build targets are supported for the
+sub-projects listed in the table below.
+
+============ ======================== ======================
+Sub-Project  Required Sub-Directories Required CMake Options
+============ ======================== ======================
+llvm         llvm, cmake, third-party LLVM_INSTALL_UTILS=ON
+clang        clang, cmake             CLANG_INCLUDE_TESTS=ON (Required for check-clang only)
+lld          lld, cmake
+============ ======================== ======================
+
+Example for building stand-alone `clang`:
+
+.. code-block:: console
+
+   #!/bin/sh
+
+   build_llvm=`pwd`/build-llvm
+   build_clang=`pwd`/build-clang
+   installprefix=`pwd`/install
+   llvm=`pwd`/llvm-project
+   mkdir -p $build_llvm
+   mkdir -p $installprefix
+
+   cmake -G Ninja -S $llvm/llvm -B $build_llvm \
+         -DLLVM_INSTALL_UTILS=ON \
+         -DCMAKE_INSTALL_PREFIX=$installprefix \
+         -DCMAKE_BUILD_TYPE=Release
+
+   ninja -C $build_llvm install
+
+   cmake -G Ninja -S $llvm/clang -B $build_clang \
+         -DLLVM_EXTERNAL_LIT=$build_llvm/utils/lit \
+         -DLLVM_ROOT=$installprefix
+
+   ninja -C $build_clang
+
 Requirements
 ============
 
@@ -127,10 +215,13 @@ Linux              Mips                  GCC, Clang
 Linux              PowerPC               GCC, Clang
 Linux              SystemZ               GCC, Clang
 Solaris            V9 (Ultrasparc)       GCC
+DragonFlyBSD       amd64                 GCC, Clang
 FreeBSD            x86\ :sup:`1`         GCC, Clang
 FreeBSD            amd64                 GCC, Clang
 NetBSD             x86\ :sup:`1`         GCC, Clang
 NetBSD             amd64                 GCC, Clang
+OpenBSD            x86\ :sup:`1`         GCC, Clang
+OpenBSD            amd64                 GCC, Clang
 macOS\ :sup:`2`    PowerPC               GCC
 macOS              x86                   GCC, Clang
 Cygwin/Win32       x86\ :sup:`1, 3`      GCC
@@ -173,7 +264,7 @@ uses the package and provides other details.
 Package                                                     Version      Notes
 =========================================================== ============ ==========================================
 `CMake <http://cmake.org/>`__                               >=3.13.4     Makefile/workspace generator
-`GCC <http://gcc.gnu.org/>`_                                >=5.1.0      C/C++ compiler\ :sup:`1`
+`GCC <http://gcc.gnu.org/>`_                                >=7.1.0      C/C++ compiler\ :sup:`1`
 `python <http://www.python.org/>`_                          >=3.6        Automated test suite\ :sup:`2`
 `zlib <http://zlib.net>`_                                   >=1.2.3.4    Compression library\ :sup:`3`
 `GNU Make <http://savannah.gnu.org/projects/make>`_         3.79, 3.79.1 Makefile/build processor\ :sup:`4`
@@ -233,10 +324,10 @@ LLVM is written using the subset of C++ documented in :doc:`coding
 standards<CodingStandards>`. To enforce this language version, we check the most
 popular host toolchains for specific minimum versions in our build systems:
 
-* Clang 3.5
-* Apple Clang 6.0
-* GCC 5.1
-* Visual Studio 2017
+* Clang 5.0
+* Apple Clang 10.0
+* GCC 7.1
+* Visual Studio 2019 16.7
 
 Anything older than these toolchains *may* work, but will require forcing the
 build system with a special option and is not really a supported host platform.
@@ -271,8 +362,8 @@ Getting a Modern Host C++ Toolchain
 This section mostly applies to Linux and older BSDs. On macOS, you should
 have a sufficiently modern Xcode, or you will likely need to upgrade until you
 do. Windows does not have a "system compiler", so you must install either Visual
-Studio 2017 or a recent version of mingw64. FreeBSD 10.0 and newer have a modern
-Clang as the system compiler.
+Studio 2019 (or later), or a recent version of mingw64. FreeBSD 10.0 and newer
+have a modern Clang as the system compiler.
 
 However, some Linux distributions and some other or older BSDs sometimes have
 extremely old versions of GCC. These steps attempt to help you upgrade you
@@ -301,11 +392,11 @@ GCC from source. It is also quite easy to do these days.
 .. _github gist:
   https://gist.github.com/application2000/73fd6f4bf1be6600a2cf9f56315a2d91
 
-Easy steps for installing GCC 5.1.0:
+Easy steps for installing GCC 7.1.0:
 
 .. code-block:: console
 
-  % gcc_version=5.1.0
+  % gcc_version=7.1.0
   % wget https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.bz2
   % wget https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.bz2.sig
   % wget https://ftp.gnu.org/gnu/gnu-keyring.gpg
@@ -453,99 +544,7 @@ command.  Use `git tag -l` to list all of them.
 Sending patches
 ^^^^^^^^^^^^^^^
 
-Please read `Developer Policy <DeveloperPolicy.html#one-off-patches>`_, too.
-
-We don't currently accept github pull requests, so you'll need to send patches
-either via emailing to llvm-commits, or, preferably, via :ref:`Phabricator
-<phabricator-reviews>`.
-
-You'll generally want to make sure your branch has a single commit,
-corresponding to the review you wish to send, up-to-date with the upstream
-``origin/main`` branch, and doesn't contain merges. Once you have that, you
-can start `a Phabricator review <Phabricator.html>`_ (or use ``git show`` or
-``git format-patch`` to output the diff, and attach it to an email message).
-
-However, using the "Arcanist" tool is often easier. After `installing
-arcanist`_, you can upload the latest commit using:
-
-.. code-block:: console
-
-  % arc diff HEAD~1
-
-Additionally, before sending a patch for review, please also try to ensure it's
-formatted properly. We use ``clang-format`` for this, which has git integration
-through the ``git-clang-format`` script. On some systems, it may already be
-installed (or be installable via your package manager). If so, you can simply
-run it -- the following command will format only the code changed in the most
-recent commit:
-
-.. code-block:: console
-
-  % git clang-format HEAD~1
-
-Note that this modifies the files, but doesn't commit them -- you'll likely want
-to run
-
-.. code-block:: console
-
-  % git commit --amend -a
-
-in order to update the last commit with all pending changes.
-
-.. note::
-  If you don't already have ``clang-format`` or ``git clang-format`` installed
-  on your system, the ``clang-format`` binary will be built alongside clang, and
-  the git integration can be run from
-  ``clang/tools/clang-format/git-clang-format``.
-
-
-.. _commit_from_git:
-
-For developers to commit changes from Git
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Once a patch is reviewed, you should rebase it, re-test locally, and commit the
-changes to LLVM's main branch. This is done using `git push` if you have the
-required access rights. See `committing a change
-<Phabricator.html#committing-a-change>`_ for Phabricator based commits or
-`obtaining commit access <DeveloperPolicy.html#obtaining-commit-access>`_
-for commit access.
-
-Here is an example workflow using git. This workflow assumes you have an
-accepted commit on the branch named `branch-with-change`.
-
-.. code-block:: console
-
-  # Go to the branch with your accepted commit.
-  % git checkout branch-with-change
-  # Rebase your change onto the latest commits on Github.
-  % git pull --rebase origin main
-  # Rerun the appropriate tests if needed.
-  % ninja check-$whatever
-  # Check that the list of commits about to be pushed is correct.
-  % git log origin/main...HEAD --oneline
-  # Push to Github.
-  % git push origin HEAD:main
-
-LLVM currently has a linear-history policy, which means that merge commits are
-not allowed. The `llvm-project` repo on github is configured to reject pushes
-that include merges, so the `git rebase` step above is required.
-
-Please ask for help if you're having trouble with your particular git workflow.
-
-
-.. _git_pre_push_hook:
-
-Git pre-push hook
-^^^^^^^^^^^^^^^^^
-
-We include an optional pre-push hook that run some sanity checks on the revisions
-you are about to push and ask confirmation if you push multiple commits at once.
-You can set it up (on Unix systems) by running from the repository root:
-
-.. code-block:: console
-
-  % ln -sf ../../llvm/utils/git/pre-push.py .git/hooks/pre-push
+See :ref:`Contributing <submit_patch>`.
 
 Bisecting commits
 ^^^^^^^^^^^^^^^^^
@@ -590,7 +589,7 @@ used by people developing LLVM.
 | CMAKE_INSTALL_PREFIX    | Specifies the install directory to target when     |
 |                         | running the install action of the build files.     |
 +-------------------------+----------------------------------------------------+
-| PYTHON_EXECUTABLE       | Forces CMake to use a specific Python version by   |
+| Python3_EXECUTABLE      | Forces CMake to use a specific Python version by   |
 |                         | passing a path to a Python interpreter. By default |
 |                         | the Python version of the interpreter in your PATH |
 |                         | is used.                                           |
@@ -613,8 +612,15 @@ used by people developing LLVM.
 |                         | other LLVM subprojects to additionally build. (Only|
 |                         | effective when using a side-by-side project layout |
 |                         | e.g. via git). The default list is empty. Can      |
-|                         | include: clang, libcxx, libcxxabi, libunwind, lldb,|
-|                         | compiler-rt, lld, polly, or debuginfo-tests.       |
+|                         | include: clang, clang-tools-extra,                 |
+|                         | cross-project-tests, flang, libc, libclc, lld,     |
+|                         | lldb, mlir, openmp, polly, or pstl.                |
++-------------------------+----------------------------------------------------+
+| LLVM_ENABLE_RUNTIMES    | A semicolon-delimited list selecting which of the  |
+|                         | runtimes to build. (Only effective when using the  |
+|                         | full monorepo layout). The default list is empty.  |
+|                         | Can include: compiler-rt, libc, libcxx, libcxxabi, |
+|                         | libunwind, or openmp.                              |
 +-------------------------+----------------------------------------------------+
 | LLVM_ENABLE_SPHINX      | Build sphinx-based documentation from the source   |
 |                         | code. This is disabled by default because it is    |
@@ -645,7 +651,7 @@ To configure LLVM, follow these steps:
 
    .. code-block:: console
 
-     % cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/install/path
+     % cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=<type> -DCMAKE_INSTALL_PREFIX=/install/path
        [other options] SRC_ROOT
 
 Compiling the LLVM Suite Source Code
@@ -657,7 +663,7 @@ invocation:
 
    .. code-block:: console
 
-     % cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=type SRC_ROOT
+     % cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=<type> -DCMAKE_BUILD_TYPE=type SRC_ROOT
 
 Between runs, CMake preserves the values set for all options. CMake has the
 following build types defined:
@@ -764,7 +770,7 @@ platforms or configurations using the same source tree.
 
   .. code-block:: console
 
-    % cmake -G "Unix Makefiles" SRC_ROOT
+    % cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release SRC_ROOT
 
 The LLVM build will create a structure underneath *OBJ_ROOT* that matches the
 LLVM source tree. At each level where source files are present in the source
@@ -816,10 +822,10 @@ layout:
 
 ``llvm/cmake``
 --------------
-Genereates system build files.
+Generates system build files.
 
 ``llvm/cmake/modules``
-  Build configuration for llvm user defined options. Checks compiler version and 
+  Build configuration for llvm user defined options. Checks compiler version and
   linker flags.
 
 ``llvm/cmake/platforms``
@@ -829,20 +835,20 @@ Genereates system build files.
 ``llvm/examples``
 -----------------
 
-- Some simple examples showing how to use LLVM as a compiler for a custom 
+- Some simple examples showing how to use LLVM as a compiler for a custom
   language - including lowering, optimization, and code generation.
 
-- Kaleidoscope Tutorial: Kaleidoscope language tutorial run through the 
-  implementation of a nice little compiler for a non-trivial language 
-  including a hand-written lexer, parser, AST, as well as code generation 
-  support using LLVM- both static (ahead of time) and various approaches to 
-  Just In Time (JIT) compilation. 
-  `Kaleidoscope Tutorial for complete beginner 
+- Kaleidoscope Tutorial: Kaleidoscope language tutorial run through the
+  implementation of a nice little compiler for a non-trivial language
+  including a hand-written lexer, parser, AST, as well as code generation
+  support using LLVM- both static (ahead of time) and various approaches to
+  Just In Time (JIT) compilation.
+  `Kaleidoscope Tutorial for complete beginner
   <https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/index.html>`_.
 
-- BuildingAJIT: Examples of the `BuildingAJIT tutorial 
-  <https://llvm.org/docs/tutorial/BuildingAJIT1.html>`_ that shows how LLVM’s 
-  ORC JIT APIs interact with other parts of LLVM. It also, teaches how to 
+- BuildingAJIT: Examples of the `BuildingAJIT tutorial
+  <https://llvm.org/docs/tutorial/BuildingAJIT1.html>`_ that shows how LLVM’s
+  ORC JIT APIs interact with other parts of LLVM. It also, teaches how to
   recombine them to build a custom JIT that is suited to your use-case.
 
 ``llvm/include``
@@ -910,8 +916,8 @@ share code among the `tools`_.
 
 ``llvm/lib/MC/``
 
-  The libraries represent and process code at machine code level. Handles 
-  assembly and object-file emission. 
+  The libraries represent and process code at machine code level. Handles
+  assembly and object-file emission.
 
 ``llvm/lib/ExecutionEngine/``
 
@@ -929,7 +935,7 @@ share code among the `tools`_.
 Contains bindings for the LLVM compiler infrastructure to allow
 programs written in languages other than C or C++ to take advantage of the LLVM
 infrastructure.
-LLVM project provides language bindings for Go, OCaml and Python.
+LLVM project provides language bindings for OCaml and Python.
 
 ``llvm/projects``
 -----------------
@@ -1168,15 +1174,9 @@ following options with cmake:
    you may want to use the gold linker as a faster alternative to GNU ld.
 
  * -DCMAKE_BUILD_TYPE
-
-    - Debug --- This is the default build type. This disables optimizations while
-      compiling LLVM and enables debug info. On ELF-based platforms (e.g. Linux)
-      linking with debug info may consume a large amount of memory.
-
-    - Release --- Turns on optimizations and disables debug info. Combining the
-      Release build type with -DLLVM_ENABLE_ASSERTIONS=ON may be a good trade-off
-      between speed and debugability during development, particularly for running
-      the test suite.
+   Controls optimization level and debug information of the build.  This setting
+   can affect RAM and disk usage, see :ref:`CMAKE_BUILD_TYPE <cmake_build_type>`
+   for more information.
 
  * -DLLVM_ENABLE_ASSERTIONS
    This option defaults to ON for Debug builds and defaults to OFF for Release
@@ -1205,6 +1205,11 @@ following options with cmake:
    compiling more than one project, separate the items with a semicolon. Should
    you run into issues with the semicolon, try surrounding it with single quotes.
 
+ * -DLLVM_ENABLE_RUNTIMES
+   Set this equal to the runtimes you wish to compile (e.g. libcxx, libcxxabi, etc.)
+   If compiling more than one runtime, separate the items with a semicolon. Should
+   you run into issues with the semicolon, try surrounding it with single quotes.
+
  * -DCLANG_ENABLE_STATIC_ANALYZER
    Set this option to OFF if you do not require the clang static analyzer. This
    should improve your build time slightly.
@@ -1229,5 +1234,3 @@ write something up!).  For more information about LLVM, check out:
 * `LLVM Homepage <https://llvm.org/>`_
 * `LLVM Doxygen Tree <https://llvm.org/doxygen/>`_
 * `Starting a Project that Uses LLVM <https://llvm.org/docs/Projects.html>`_
-
-.. _installing arcanist: https://secure.phabricator.com/book/phabricator/article/arcanist_quick_start/

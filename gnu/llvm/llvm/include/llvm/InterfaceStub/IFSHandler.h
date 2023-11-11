@@ -19,6 +19,9 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/VersionTuple.h"
 #include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 namespace llvm {
 
@@ -39,10 +42,10 @@ Expected<std::unique_ptr<IFSStub>> readIFSFromBuffer(StringRef Buf);
 Error writeIFSToOutputStream(raw_ostream &OS, const IFSStub &Stub);
 
 /// Override the target platform inforation in the text stub.
-Error overrideIFSTarget(IFSStub &Stub, Optional<IFSArch> OverrideArch,
-                        Optional<IFSEndiannessType> OverrideEndianness,
-                        Optional<IFSBitWidthType> OverrideBitWidth,
-                        Optional<std::string> OverrideTriple);
+Error overrideIFSTarget(IFSStub &Stub, std::optional<IFSArch> OverrideArch,
+                        std::optional<IFSEndiannessType> OverrideEndianness,
+                        std::optional<IFSBitWidthType> OverrideBitWidth,
+                        std::optional<std::string> OverrideTriple);
 
 /// Validate the target platform inforation in the text stub.
 Error validateIFSTarget(IFSStub &Stub, bool ParseTriple);
@@ -50,6 +53,9 @@ Error validateIFSTarget(IFSStub &Stub, bool ParseTriple);
 /// Strips target platform information from the text stub.
 void stripIFSTarget(IFSStub &Stub, bool StripTriple, bool StripArch,
                     bool StripEndianness, bool StripBitWidth);
+
+Error filterIFSSyms(IFSStub &Stub, bool StripUndefined,
+                    const std::vector<std::string> &Exclude = {});
 
 /// Parse llvm triple string into a IFSTarget struct.
 IFSTarget parseTriple(StringRef TripleStr);

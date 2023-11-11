@@ -15,7 +15,6 @@
 
 #include "DebugOptions.h"
 
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/CommandLine.h"
@@ -23,14 +22,15 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/FormatAdapters.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Mutex.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/StringSaver.h"
 #include "llvm/Support/raw_ostream.h"
+#include <array>
+#include <cmath>
 #include <vector>
 
 //===----------------------------------------------------------------------===//
@@ -82,13 +82,20 @@ struct CallbackAndCookie {
   enum class Status { Empty, Initializing, Initialized, Executing };
   std::atomic<Status> Flag;
 };
+
 static constexpr size_t MaxSignalHandlerCallbacks = 8;
-static CallbackAndCookie CallBacksToRun[MaxSignalHandlerCallbacks];
+
+// A global array of CallbackAndCookie may not compile with
+// -Werror=global-constructors in c++20 and above
+static std::array<CallbackAndCookie, MaxSignalHandlerCallbacks> &
+CallBacksToRun() {
+  static std::array<CallbackAndCookie, MaxSignalHandlerCallbacks> callbacks;
+  return callbacks;
+}
 
 // Signal-safe.
 void sys::RunSignalHandlers() {
-  for (size_t I = 0; I < MaxSignalHandlerCallbacks; ++I) {
-    auto &RunMe = CallBacksToRun[I];
+  for (CallbackAndCookie &RunMe : CallBacksToRun()) {
     auto Expected = CallbackAndCookie::Status::Initialized;
     auto Desired = CallbackAndCookie::Status::Executing;
     if (!RunMe.Flag.compare_exchange_strong(Expected, Desired))
@@ -103,8 +110,7 @@ void sys::RunSignalHandlers() {
 // Signal-safe.
 static void insertSignalHandler(sys::SignalHandlerCallback FnPtr,
                                 void *Cookie) {
-  for (size_t I = 0; I < MaxSignalHandlerCallbacks; ++I) {
-    auto &SetMe = CallBacksToRun[I];
+  for (CallbackAndCookie &SetMe : CallBacksToRun()) {
     auto Expected = CallbackAndCookie::Status::Empty;
     auto Desired = CallbackAndCookie::Status::Initializing;
     if (!SetMe.Flag.compare_exchange_strong(Expected, Desired))
@@ -186,8 +192,8 @@ static bool printSymbolizedStackTrace(StringRef Argv0, void **StackTrace,
     }
   }
 
-  Optional<StringRef> Redirects[] = {InputFile.str(), OutputFile.str(),
-                                     StringRef("")};
+  std::optional<StringRef> Redirects[] = {InputFile.str(), OutputFile.str(),
+                                          StringRef("")};
   StringRef Args[] = {"llvm-symbolizer", "--functions=linkage", "--inlining",
 #ifdef _WIN32
                       // Pass --relative-address on Windows so that we don't
@@ -197,7 +203,7 @@ static bool printSymbolizedStackTrace(StringRef Argv0, void **StackTrace,
 #endif
                       "--demangle"};
   int RunResult =
-      sys::ExecuteAndWait(LLVMSymbolizerPath, Args, None, Redirects);
+      sys::ExecuteAndWait(LLVMSymbolizerPath, Args, std::nullopt, Redirects);
   if (RunResult != 0)
     return false;
 

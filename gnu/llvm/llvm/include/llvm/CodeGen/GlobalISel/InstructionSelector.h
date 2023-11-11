@@ -16,24 +16,25 @@
 #define LLVM_CODEGEN_GLOBALISEL_INSTRUCTIONSELECTOR_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/BlockFrequencyInfo.h"
-#include "llvm/Analysis/ProfileSummaryInfo.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Support/CodeGenCoverage.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/LowLevelTypeImpl.h"
 #include <bitset>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <initializer_list>
+#include <optional>
 #include <vector>
 
 namespace llvm {
 
+class BlockFrequencyInfo;
+class CodeGenCoverage;
+class MachineBasicBlock;
+class ProfileSummaryInfo;
 class APInt;
 class APFloat;
 class GISelKnownBits;
@@ -194,6 +195,10 @@ enum {
   /// - InsnID - Instruction ID
   /// - PredicateID - The ID of the predicate function to call
   GIM_CheckCxxInsnPredicate,
+
+  /// Check if there's no use of the first result.
+  /// - InsnID - Instruction ID
+  GIM_CheckHasNoUse,
 
   /// Check the type for the specified operand
   /// - InsnID - Instruction ID
@@ -463,7 +468,7 @@ public:
 
 protected:
   using ComplexRendererFns =
-      Optional<SmallVector<std::function<void(MachineInstrBuilder &)>, 4>>;
+      std::optional<SmallVector<std::function<void(MachineInstrBuilder &)>, 4>>;
   using RecordedMIVector = SmallVector<MachineInstr *, 4>;
   using NewMIVector = SmallVector<MachineInstrBuilder, 4>;
 

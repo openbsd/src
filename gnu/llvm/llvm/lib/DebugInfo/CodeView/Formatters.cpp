@@ -9,8 +9,10 @@
 #include "llvm/DebugInfo/CodeView/Formatters.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/DebugInfo/CodeView/GUID.h"
+#include "llvm/Support/Endian.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
 #include <cassert>
 
 using namespace llvm;
@@ -18,7 +20,7 @@ using namespace llvm::codeview;
 using namespace llvm::codeview::detail;
 
 GuidAdapter::GuidAdapter(StringRef Guid)
-    : FormatAdapter(makeArrayRef(Guid.bytes_begin(), Guid.bytes_end())) {}
+    : FormatAdapter(ArrayRef(Guid.bytes_begin(), Guid.bytes_end())) {}
 
 GuidAdapter::GuidAdapter(ArrayRef<uint8_t> Guid)
     : FormatAdapter(std::move(Guid)) {}

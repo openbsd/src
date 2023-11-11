@@ -16,7 +16,10 @@
 #include "llvm/ExecutionEngine/Orc/Shared/WrapperFunctionUtils.h"
 #include <cstdint>
 
-extern "C" llvm::orc::shared::detail::CWrapperFunctionResult
+extern "C" llvm::orc::shared::CWrapperFunctionResult
 llvm_orc_registerJITLoaderGDBWrapper(const char *Data, uint64_t Size);
+
+extern "C" llvm::orc::shared::CWrapperFunctionResult
+llvm_orc_registerJITLoaderGDBAllocAction(const char *Data, size_t Size);
 
 #endif // LLVM_EXECUTIONENGINE_ORC_TARGETPROCESS_JITLOADERGDB_H

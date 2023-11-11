@@ -23,8 +23,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <cstdint>
@@ -88,7 +88,9 @@ class BranchRelaxation : public MachineFunctionPass {
   bool relaxBranchInstructions();
   void scanFunction();
 
-  MachineBasicBlock *createNewBlockAfter(MachineBasicBlock &BB);
+  MachineBasicBlock *createNewBlockAfter(MachineBasicBlock &OrigMBB);
+  MachineBasicBlock *createNewBlockAfter(MachineBasicBlock &OrigMBB,
+                                         const BasicBlock *BB);
 
   MachineBasicBlock *splitBlockBeforeInstr(MachineInstr &MI,
                                            MachineBasicBlock *DestBB);
@@ -202,12 +204,20 @@ void BranchRelaxation::adjustBlockOffsets(MachineBasicBlock &Start) {
   }
 }
 
-/// Insert a new empty basic block and insert it after \BB
-MachineBasicBlock *BranchRelaxation::createNewBlockAfter(MachineBasicBlock &BB) {
+/// Insert a new empty MachineBasicBlock and insert it after \p OrigMBB
+MachineBasicBlock *
+BranchRelaxation::createNewBlockAfter(MachineBasicBlock &OrigBB) {
+  return createNewBlockAfter(OrigBB, OrigBB.getBasicBlock());
+}
+
+/// Insert a new empty MachineBasicBlock with \p BB as its BasicBlock
+/// and insert it after \p OrigMBB
+MachineBasicBlock *
+BranchRelaxation::createNewBlockAfter(MachineBasicBlock &OrigMBB,
+                                      const BasicBlock *BB) {
   // Create a new MBB for the code after the OrigBB.
-  MachineBasicBlock *NewBB =
-      MF->CreateMachineBasicBlock(BB.getBasicBlock());
-  MF->insert(++BB.getIterator(), NewBB);
+  MachineBasicBlock *NewBB = MF->CreateMachineBasicBlock(BB);
+  MF->insert(++OrigMBB.getIterator(), NewBB);
 
   // Insert an entry into BlockInfo to align it properly with the block numbers.
   BlockInfo.insert(BlockInfo.begin() + NewBB->getNumber(), BasicBlockInfo());
@@ -432,7 +442,7 @@ bool BranchRelaxation::fixupConditionalBranch(MachineInstr &MI) {
 
 bool BranchRelaxation::fixupUnconditionalBranch(MachineInstr &MI) {
   MachineBasicBlock *MBB = MI.getParent();
-
+  SmallVector<MachineOperand, 4> Cond;
   unsigned OldBrSize = TII->getInstSizeInBytes(MI);
   MachineBasicBlock *DestBB = TII->getBranchDestBlock(MI);
 
@@ -463,10 +473,50 @@ bool BranchRelaxation::fixupUnconditionalBranch(MachineInstr &MI) {
 
   DebugLoc DL = MI.getDebugLoc();
   MI.eraseFromParent();
-  BlockInfo[BranchBB->getNumber()].Size += TII->insertIndirectBranch(
-    *BranchBB, *DestBB, DL, DestOffset - SrcOffset, RS.get());
 
+  // Create the optional restore block and, initially, place it at the end of
+  // function. That block will be placed later if it's used; otherwise, it will
+  // be erased.
+  MachineBasicBlock *RestoreBB = createNewBlockAfter(MF->back(),
+                                                     DestBB->getBasicBlock());
+
+  TII->insertIndirectBranch(*BranchBB, *DestBB, *RestoreBB, DL,
+                            DestOffset - SrcOffset, RS.get());
+
+  BlockInfo[BranchBB->getNumber()].Size = computeBlockSize(*BranchBB);
   adjustBlockOffsets(*MBB);
+
+  // If RestoreBB is required, try to place just before DestBB.
+  if (!RestoreBB->empty()) {
+    // TODO: For multiple far branches to the same destination, there are
+    // chances that some restore blocks could be shared if they clobber the
+    // same registers and share the same restore sequence. So far, those
+    // restore blocks are just duplicated for each far branch.
+    assert(!DestBB->isEntryBlock());
+    MachineBasicBlock *PrevBB = &*std::prev(DestBB->getIterator());
+    // Fall through only if PrevBB has no unconditional branch as one of its
+    // terminators.
+    if (auto *FT = PrevBB->getLogicalFallThrough()) {
+      assert(FT == DestBB);
+      TII->insertUnconditionalBranch(*PrevBB, FT, DebugLoc());
+      BlockInfo[PrevBB->getNumber()].Size = computeBlockSize(*PrevBB);
+    }
+    // Now, RestoreBB could be placed directly before DestBB.
+    MF->splice(DestBB->getIterator(), RestoreBB->getIterator());
+    // Update successors and predecessors.
+    RestoreBB->addSuccessor(DestBB);
+    BranchBB->replaceSuccessor(DestBB, RestoreBB);
+    if (TRI->trackLivenessAfterRegAlloc(*MF))
+      computeAndAddLiveIns(LiveRegs, *RestoreBB);
+    // Compute the restore block size.
+    BlockInfo[RestoreBB->getNumber()].Size = computeBlockSize(*RestoreBB);
+    // Update the offset starting from the previous block.
+    adjustBlockOffsets(*PrevBB);
+  } else {
+    // Remove restore block if it's not required.
+    MF->erase(RestoreBB);
+  }
+
   return true;
 }
 
@@ -475,9 +525,7 @@ bool BranchRelaxation::relaxBranchInstructions() {
 
   // Relaxing branches involves creating new basic blocks, so re-eval
   // end() for termination.
-  for (MachineFunction::iterator I = MF->begin(); I != MF->end(); ++I) {
-    MachineBasicBlock &MBB = *I;
-
+  for (MachineBasicBlock &MBB : *MF) {
     // Empty block?
     MachineBasicBlock::iterator Last = MBB.getLastNonDebugInstr();
     if (Last == MBB.end())

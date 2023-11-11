@@ -197,8 +197,7 @@ void DAGTypeLegalizer::ExpandRes_BUILD_PAIR(SDNode *N, SDValue &Lo,
 void DAGTypeLegalizer::ExpandRes_EXTRACT_ELEMENT(SDNode *N, SDValue &Lo,
                                                  SDValue &Hi) {
   GetExpandedOp(N->getOperand(0), Lo, Hi);
-  SDValue Part = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() ?
-                   Hi : Lo;
+  SDValue Part = N->getConstantOperandVal(1) ? Hi : Lo;
 
   assert(Part.getValueType() == N->getValueType(0) &&
          "Type twice as big as expanded type not itself expanded!");
@@ -209,7 +208,7 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_ELEMENT(SDNode *N, SDValue &Lo,
 void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
                                                     SDValue &Hi) {
   SDValue OldVec = N->getOperand(0);
-  unsigned OldElts = OldVec.getValueType().getVectorNumElements();
+  ElementCount OldEltCount = OldVec.getValueType().getVectorElementCount();
   EVT OldEltVT = OldVec.getValueType().getVectorElementType();
   SDLoc dl(N);
 
@@ -223,14 +222,13 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
     // the input vector.  If so, extend the elements of the input vector to the
     // same bitwidth as the result before expanding.
     assert(OldEltVT.bitsLT(OldVT) && "Result type smaller then element type!");
-    EVT NVecVT = EVT::getVectorVT(*DAG.getContext(), OldVT, OldElts);
+    EVT NVecVT = EVT::getVectorVT(*DAG.getContext(), OldVT, OldEltCount);
     OldVec = DAG.getNode(ISD::ANY_EXTEND, dl, NVecVT, N->getOperand(0));
   }
 
-  SDValue NewVec = DAG.getNode(ISD::BITCAST, dl,
-                               EVT::getVectorVT(*DAG.getContext(),
-                                                NewVT, 2*OldElts),
-                               OldVec);
+  SDValue NewVec = DAG.getNode(
+      ISD::BITCAST, dl,
+      EVT::getVectorVT(*DAG.getContext(), NewVT, OldEltCount * 2), OldVec);
 
   // Extract the elements at 2 * Idx and 2 * Idx + 1 from the new vector.
   SDValue Idx = N->getOperand(1);
@@ -359,8 +357,7 @@ SDValue DAGTypeLegalizer::ExpandOp_BITCAST(SDNode *N) {
     SmallVector<SDValue, 8> Ops;
     IntegerToVector(N->getOperand(0), NumElts, Ops, NVT.getVectorElementType());
 
-    SDValue Vec =
-        DAG.getBuildVector(NVT, dl, makeArrayRef(Ops.data(), NumElts));
+    SDValue Vec = DAG.getBuildVector(NVT, dl, ArrayRef(Ops.data(), NumElts));
     return DAG.getNode(ISD::BITCAST, dl, N->getValueType(0), Vec);
   }
 
@@ -403,7 +400,7 @@ SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
 SDValue DAGTypeLegalizer::ExpandOp_EXTRACT_ELEMENT(SDNode *N) {
   SDValue Lo, Hi;
   GetExpandedOp(N->getOperand(0), Lo, Hi);
-  return cast<ConstantSDNode>(N->getOperand(1))->getZExtValue() ? Hi : Lo;
+  return N->getConstantOperandVal(1) ? Hi : Lo;
 }
 
 SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
@@ -506,9 +503,10 @@ void DAGTypeLegalizer::SplitRes_MERGE_VALUES(SDNode *N, unsigned ResNo,
   GetSplitOp(Op, Lo, Hi);
 }
 
-void DAGTypeLegalizer::SplitRes_SELECT(SDNode *N, SDValue &Lo, SDValue &Hi) {
+void DAGTypeLegalizer::SplitRes_Select(SDNode *N, SDValue &Lo, SDValue &Hi) {
   SDValue LL, LH, RL, RH, CL, CH;
   SDLoc dl(N);
+  unsigned Opcode = N->getOpcode();
   GetSplitOp(N->getOperand(1), LL, LH);
   GetSplitOp(N->getOperand(2), RL, RH);
 
@@ -539,8 +537,18 @@ void DAGTypeLegalizer::SplitRes_SELECT(SDNode *N, SDValue &Lo, SDValue &Hi) {
       std::tie(CL, CH) = DAG.SplitVector(Cond, dl);
   }
 
-  Lo = DAG.getNode(N->getOpcode(), dl, LL.getValueType(), CL, LL, RL);
-  Hi = DAG.getNode(N->getOpcode(), dl, LH.getValueType(), CH, LH, RH);
+  if (Opcode != ISD::VP_SELECT && Opcode != ISD::VP_MERGE) {
+    Lo = DAG.getNode(Opcode, dl, LL.getValueType(), CL, LL, RL);
+    Hi = DAG.getNode(Opcode, dl, LH.getValueType(), CH, LH, RH);
+    return;
+  }
+
+  SDValue EVLLo, EVLHi;
+  std::tie(EVLLo, EVLHi) =
+      DAG.SplitEVL(N->getOperand(3), N->getValueType(0), dl);
+
+  Lo = DAG.getNode(Opcode, dl, LL.getValueType(), CL, LL, RL, EVLLo);
+  Hi = DAG.getNode(Opcode, dl, LH.getValueType(), CH, LH, RH, EVLHi);
 }
 
 void DAGTypeLegalizer::SplitRes_SELECT_CC(SDNode *N, SDValue &Lo,
@@ -570,4 +578,14 @@ void DAGTypeLegalizer::SplitRes_FREEZE(SDNode *N, SDValue &Lo, SDValue &Hi) {
 
   Lo = DAG.getNode(ISD::FREEZE, dl, L.getValueType(), L);
   Hi = DAG.getNode(ISD::FREEZE, dl, H.getValueType(), H);
+}
+
+void DAGTypeLegalizer::SplitRes_ARITH_FENCE(SDNode *N, SDValue &Lo,
+                                            SDValue &Hi) {
+  SDValue L, H;
+  SDLoc DL(N);
+  GetSplitOp(N->getOperand(0), L, H);
+
+  Lo = DAG.getNode(ISD::ARITH_FENCE, DL, L.getValueType(), L);
+  Hi = DAG.getNode(ISD::ARITH_FENCE, DL, H.getValueType(), H);
 }

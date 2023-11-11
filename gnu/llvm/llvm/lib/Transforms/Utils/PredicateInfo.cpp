@@ -15,19 +15,12 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AssumptionCache.h"
-#include "llvm/Analysis/CFG.h"
 #include "llvm/IR/AssemblyAnnotationWriter.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
-#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/InitializePasses.h"
@@ -35,7 +28,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/DebugCounter.h"
 #include "llvm/Support/FormattedStream.h"
-#include "llvm/Transforms/Utils.h"
 #include <algorithm>
 #define DEBUG_TYPE "predicateinfo"
 using namespace llvm;
@@ -517,7 +509,7 @@ void PredicateInfoBuilder::buildPredicateInfo() {
   // Collect operands to rename from all conditional branch terminators, as well
   // as assume statements.
   SmallVector<Value *, 8> OpsToRename;
-  for (auto DTN : depth_first(DT.getRootNode())) {
+  for (auto *DTN : depth_first(DT.getRootNode())) {
     BasicBlock *BranchBB = DTN->getBlock();
     if (auto *BI = dyn_cast<BranchInst>(BranchBB->getTerminator())) {
       if (!BI->isConditional())
@@ -634,7 +626,7 @@ void PredicateInfoBuilder::renameUses(SmallVectorImpl<Value *> &OpsToRename) {
     // Insert the possible copies into the def/use list.
     // They will become real copies if we find a real use for them, and never
     // created otherwise.
-    for (auto &PossibleCopy : ValueInfo.Infos) {
+    for (const auto &PossibleCopy : ValueInfo.Infos) {
       ValueDFS VD;
       // Determine where we are going to place the copy by the copy type.
       // The predicate info for branches always come first, they will get
@@ -780,7 +772,7 @@ PredicateInfo::~PredicateInfo() {
   // Collect function pointers in set first, as SmallSet uses a SmallVector
   // internally and we have to remove the asserting value handles first.
   SmallPtrSet<Function *, 20> FunctionPtrs;
-  for (auto &F : CreatedDeclarations)
+  for (const auto &F : CreatedDeclarations)
     FunctionPtrs.insert(&*F);
   CreatedDeclarations.clear();
 
@@ -791,7 +783,7 @@ PredicateInfo::~PredicateInfo() {
   }
 }
 
-Optional<PredicateConstraint> PredicateBase::getConstraint() const {
+std::optional<PredicateConstraint> PredicateBase::getConstraint() const {
   switch (Type) {
   case PT_Assume:
   case PT_Branch: {
@@ -808,7 +800,7 @@ Optional<PredicateConstraint> PredicateBase::getConstraint() const {
     CmpInst *Cmp = dyn_cast<CmpInst>(Condition);
     if (!Cmp) {
       // TODO: Make this an assertion once RenamedOp is fully accurate.
-      return None;
+      return std::nullopt;
     }
 
     CmpInst::Predicate Pred;
@@ -821,7 +813,7 @@ Optional<PredicateConstraint> PredicateBase::getConstraint() const {
       OtherOp = Cmp->getOperand(0);
     } else {
       // TODO: Make this an assertion once RenamedOp is fully accurate.
-      return None;
+      return std::nullopt;
     }
 
     // Invert predicate along false edge.
@@ -833,7 +825,7 @@ Optional<PredicateConstraint> PredicateBase::getConstraint() const {
   case PT_Switch:
     if (Condition != RenamedOp) {
       // TODO: Make this an assertion once RenamedOp is fully accurate.
-      return None;
+      return std::nullopt;
     }
 
     return {{CmpInst::ICMP_EQ, cast<PredicateSwitch>(this)->CaseValue}};

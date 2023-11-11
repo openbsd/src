@@ -16,17 +16,19 @@
 #define LLVM_TRANSFORMS_IPO_SAMPLEPROFILEPROBE_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/LazyCallGraph.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/IR/PassInstrumentation.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/IR/PseudoProbe.h"
 #include "llvm/ProfileData/SampleProf.h"
-#include "llvm/Target/TargetMachine.h"
 #include <unordered_map>
 
 namespace llvm {
+class Any;
+class BasicBlock;
+class Function;
+class Instruction;
+class Loop;
+class PassInstrumentationCallbacks;
+class TargetMachine;
 
 class Module;
 
@@ -38,8 +40,6 @@ using InstructionIdMap = std::unordered_map<Instruction *, uint32_t>;
 using ProbeFactorMap = std::unordered_map<std::pair<uint64_t, uint64_t>, float,
                                           pair_hash<uint64_t, uint64_t>>;
 using FuncProbeFactorMap = StringMap<ProbeFactorMap>;
-
-enum class PseudoProbeReservedId { Invalid = 0, Last = Invalid };
 
 class PseudoProbeDescriptor {
   uint64_t FunctionGUID;
@@ -154,7 +154,7 @@ class PseudoProbeUpdatePass : public PassInfoMixin<PseudoProbeUpdatePass> {
   void runOnFunction(Function &F, FunctionAnalysisManager &FAM);
 
 public:
-  PseudoProbeUpdatePass() {}
+  PseudoProbeUpdatePass() = default;
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 

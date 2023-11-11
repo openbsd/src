@@ -379,8 +379,8 @@ public:
   }
 
   bool isCommon() const {
-    return isExternal() && getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED &&
-           getValue() != 0;
+    return (isExternal() || isSection()) &&
+           getSectionNumber() == COFF::IMAGE_SYM_UNDEFINED && getValue() != 0;
   }
 
   bool isUndefined() const {
@@ -596,17 +596,6 @@ struct coff_tls_directory {
 
 using coff_tls_directory32 = coff_tls_directory<support::little32_t>;
 using coff_tls_directory64 = coff_tls_directory<support::little64_t>;
-
-/// Bits in control flow guard flags as we understand them.
-enum class coff_guard_flags : uint32_t {
-  CFInstrumented = 0x00000100,
-  HasFidTable = 0x00000400,
-  ProtectDelayLoadIAT = 0x00001000,
-  DelayLoadIATSection = 0x00002000, // Delay load in separate section
-  HasLongJmpTable = 0x00010000,
-  HasEHContTable = 0x00400000,
-  FidTableHasFlags = 0x10000000, // Indicates that fid tables are 5 bytes
-};
 
 enum class frame_type : uint16_t { Fpo = 0, Trap = 1, Tss = 2, NonFpo = 3 };
 
@@ -925,6 +914,10 @@ public:
 
   uint32_t getStringTableSize() const { return StringTableSize; }
 
+  const export_directory_table_entry *getExportTable() const {
+    return ExportDirectory;
+  }
+
   const coff_load_configuration32 *getLoadConfig32() const {
     assert(!is64());
     return reinterpret_cast<const coff_load_configuration32 *>(LoadConfig);
@@ -987,7 +980,9 @@ public:
   StringRef getFileFormatName() const override;
   Triple::ArchType getArch() const override;
   Expected<uint64_t> getStartAddress() const override;
-  SubtargetFeatures getFeatures() const override { return SubtargetFeatures(); }
+  Expected<SubtargetFeatures> getFeatures() const override {
+    return SubtargetFeatures();
+  }
 
   import_directory_iterator import_directory_begin() const;
   import_directory_iterator import_directory_end() const;
@@ -1079,13 +1074,15 @@ public:
 
   uint64_t getImageBase() const;
   Error getVaPtr(uint64_t VA, uintptr_t &Res) const;
-  Error getRvaPtr(uint32_t Rva, uintptr_t &Res) const;
+  Error getRvaPtr(uint32_t Rva, uintptr_t &Res,
+                  const char *ErrorContext = nullptr) const;
 
   /// Given an RVA base and size, returns a valid array of bytes or an error
   /// code if the RVA and size is not contained completely within a valid
   /// section.
   Error getRvaAndSizeAsBytes(uint32_t RVA, uint32_t Size,
-                             ArrayRef<uint8_t> &Contents) const;
+                             ArrayRef<uint8_t> &Contents,
+                             const char *ErrorContext = nullptr) const;
 
   Error getHintName(uint32_t Rva, uint16_t &Hint,
                               StringRef &Name) const;
@@ -1294,6 +1291,12 @@ struct FpoData {
 
   // cbFrame: frame pointer
   frame_type getFP() const { return static_cast<frame_type>(Attributes >> 14); }
+};
+
+class SectionStrippedError
+    : public ErrorInfo<SectionStrippedError, BinaryError> {
+public:
+  SectionStrippedError() { setErrorCode(object_error::section_stripped); }
 };
 
 } // end namespace object

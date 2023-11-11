@@ -107,6 +107,8 @@ def HasRAS           : Predicate<"Subtarget->hasRAS()">,
                                  AssemblerPredicate<(all_of FeatureRAS), "ras">;
 def HasLOB           : Predicate<"Subtarget->hasLOB()">,
                                  AssemblerPredicate<(all_of FeatureLOB), "lob">;
+def HasPACBTI        : Predicate<"Subtarget->hasPACBTI()">,
+                                 AssemblerPredicate<(all_of FeaturePACBTI), "pacbti">;
 def HasFP16          : Predicate<"Subtarget->hasFP16()">,
                                  AssemblerPredicate<(all_of FeatureFP16),"half-float conversions">;
 def HasFullFP16      : Predicate<"Subtarget->hasFullFP16()">,
@@ -224,3 +226,7 @@ def GenExecuteOnly : Predicate<"Subtarget->genExecuteOnly()">;
 // Armv8.5-A extensions
 def HasSB            : Predicate<"Subtarget->hasSB()">,
                        AssemblerPredicate<(all_of FeatureSB), "sb">;
+
+// Armv8.9-A/9.4-A 2022 Architecture extensions
+def HasCLRBHB        : Predicate<"Subtarget->hasCLRBHB()">,
+                       AssemblerPredicate<(all_of FeatureCLRBHB), "clrbhb">;

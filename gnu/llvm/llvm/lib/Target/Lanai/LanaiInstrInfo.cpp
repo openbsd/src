@@ -19,8 +19,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -50,7 +50,7 @@ void LanaiInstrInfo::storeRegToStackSlot(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator Position,
     Register SourceRegister, bool IsKill, int FrameIndex,
     const TargetRegisterClass *RegisterClass,
-    const TargetRegisterInfo * /*RegisterInfo*/) const {
+    const TargetRegisterInfo * /*RegisterInfo*/, Register /*VReg*/) const {
   DebugLoc DL;
   if (Position != MBB.end()) {
     DL = Position->getDebugLoc();
@@ -70,7 +70,7 @@ void LanaiInstrInfo::loadRegFromStackSlot(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator Position,
     Register DestinationRegister, int FrameIndex,
     const TargetRegisterClass *RegisterClass,
-    const TargetRegisterInfo * /*RegisterInfo*/) const {
+    const TargetRegisterInfo * /*RegisterInfo*/, Register /*VReg*/) const {
   DebugLoc DL;
   if (Position != MBB.end()) {
     DL = Position->getDebugLoc();
@@ -171,12 +171,12 @@ LanaiInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
       {MO_ABS_HI, "lanai-hi"},
       {MO_ABS_LO, "lanai-lo"},
       {MO_NO_FLAG, "lanai-nf"}};
-  return makeArrayRef(TargetFlags);
+  return ArrayRef(TargetFlags);
 }
 
 bool LanaiInstrInfo::analyzeCompare(const MachineInstr &MI, Register &SrcReg,
-                                    Register &SrcReg2, int &CmpMask,
-                                    int &CmpValue) const {
+                                    Register &SrcReg2, int64_t &CmpMask,
+                                    int64_t &CmpValue) const {
   switch (MI.getOpcode()) {
   default:
     break;
@@ -203,7 +203,7 @@ bool LanaiInstrInfo::analyzeCompare(const MachineInstr &MI, Register &SrcReg,
 // * SFSUB_F_RR can be made redundant by SUB_RI if the operands are the same.
 // * SFSUB_F_RI can be made redundant by SUB_I if the operands are the same.
 inline static bool isRedundantFlagInstr(MachineInstr *CmpI, unsigned SrcReg,
-                                        unsigned SrcReg2, int ImmValue,
+                                        unsigned SrcReg2, int64_t ImmValue,
                                         MachineInstr *OI) {
   if (CmpI->getOpcode() == Lanai::SFSUB_F_RR &&
       OI->getOpcode() == Lanai::SUB_R &&
@@ -281,8 +281,9 @@ inline static unsigned flagSettingOpcodeVariant(unsigned OldOpcode) {
 }
 
 bool LanaiInstrInfo::optimizeCompareInstr(
-    MachineInstr &CmpInstr, Register SrcReg, Register SrcReg2, int /*CmpMask*/,
-    int CmpValue, const MachineRegisterInfo *MRI) const {
+    MachineInstr &CmpInstr, Register SrcReg, Register SrcReg2,
+    int64_t /*CmpMask*/, int64_t CmpValue,
+    const MachineRegisterInfo *MRI) const {
   // Get the unique definition of SrcReg.
   MachineInstr *MI = MRI->getUniqueVRegDef(SrcReg);
   if (!MI)
@@ -418,10 +419,8 @@ bool LanaiInstrInfo::optimizeCompareInstr(
     // live-out. If it is live-out, do not optimize.
     if (!isSafe) {
       MachineBasicBlock *MBB = CmpInstr.getParent();
-      for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-                                            SE = MBB->succ_end();
-           SI != SE; ++SI)
-        if ((*SI)->isLiveIn(Lanai::SR))
+      for (const MachineBasicBlock *Succ : MBB->successors())
+        if (Succ->isLiveIn(Lanai::SR))
           return false;
     }
 
@@ -468,8 +467,7 @@ static MachineInstr *canFoldIntoSelect(Register Reg,
     return nullptr;
   // Check if MI has any non-dead defs or physreg uses. This also detects
   // predicated instructions which will be reading SR.
-  for (unsigned i = 1, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
+  for (const MachineOperand &MO : llvm::drop_begin(MI->operands(), 1)) {
     // Reject frame index operands.
     if (MO.isFI() || MO.isCPI() || MO.isJTI())
       return nullptr;
@@ -478,7 +476,7 @@ static MachineInstr *canFoldIntoSelect(Register Reg,
     // MI can't have any tied operands, that would conflict with predication.
     if (MO.isTied())
       return nullptr;
-    if (Register::isPhysicalRegister(MO.getReg()))
+    if (MO.getReg().isPhysical())
       return nullptr;
     if (MO.isDef() && !MO.isDead())
       return nullptr;
@@ -516,7 +514,7 @@ LanaiInstrInfo::optimizeSelect(MachineInstr &MI,
   // Copy all the DefMI operands, excluding its (null) predicate.
   const MCInstrDesc &DefDesc = DefMI->getDesc();
   for (unsigned i = 1, e = DefDesc.getNumOperands();
-       i != e && !DefDesc.OpInfo[i].isPredicate(); ++i)
+       i != e && !DefDesc.operands()[i].isPredicate(); ++i)
     NewMI.add(DefMI->getOperand(i));
 
   unsigned CondCode = MI.getOperand(3).getImm();
@@ -594,9 +592,7 @@ bool LanaiInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
       }
 
       // If the block has any instructions after a branch, delete them.
-      while (std::next(Instruction) != MBB.end()) {
-        std::next(Instruction)->eraseFromParent();
-      }
+      MBB.erase(std::next(Instruction), MBB.end());
 
       Condition.clear();
       FalseBlock = nullptr;

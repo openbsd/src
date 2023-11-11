@@ -181,19 +181,20 @@ public:
   /// machine basic block before the specified machine instruction. If isKill
   /// is true, the register operand is the last use and must be marked kill.
   void storeRegToStackSlot(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MBBI,
-                           Register SrcReg, bool isKill, int FrameIndex,
+                           MachineBasicBlock::iterator MBBI, Register SrcReg,
+                           bool isKill, int FrameIndex,
                            const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI) const override;
+                           const TargetRegisterInfo *TRI,
+                           Register VReg) const override;
 
   /// Load the specified register of the given register class from the specified
   /// stack frame index. The load instruction is to be added to the given
   /// machine basic block before the specified machine instruction.
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MBBI,
-                            Register DestReg, int FrameIndex,
-                            const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI) const override;
+                            MachineBasicBlock::iterator MBBI, Register DestReg,
+                            int FrameIndex, const TargetRegisterClass *RC,
+                            const TargetRegisterInfo *TRI,
+                            Register VReg) const override;
 
   /// This function is called for all pseudo instructions
   /// that remain after register allocation. Many pseudo instructions are
@@ -270,7 +271,8 @@ public:
   /// compares against in CmpValue. Return true if the comparison instruction
   /// can be analyzed.
   bool analyzeCompare(const MachineInstr &MI, Register &SrcReg,
-                      Register &SrcReg2, int &Mask, int &Value) const override;
+                      Register &SrcReg2, int64_t &Mask,
+                      int64_t &Value) const override;
 
   /// Compute the instruction latency of a given instruction.
   /// If the instruction has higher cost when predicated, it's returned via
@@ -334,10 +336,17 @@ public:
   getSerializableBitmaskMachineOperandTargetFlags() const override;
 
   bool isTailCall(const MachineInstr &MI) const override;
+  bool isAsCheapAsAMove(const MachineInstr &MI) const override;
+
+  // Return true if the instruction should be sunk by MachineSink.
+  // MachineSink determines on its own whether the instruction is safe to sink;
+  // this gives the target a hook to override the default behavior with regards
+  // to which instructions should be sunk.
+  bool shouldSink(const MachineInstr &MI) const override;
 
   /// HexagonInstrInfo specifics.
 
-  unsigned createVR(MachineFunction *MF, MVT VT) const;
+  Register createVR(MachineFunction *MF, MVT VT) const;
   MachineInstr *findLoopInstr(MachineBasicBlock *BB, unsigned EndLoopOp,
                               MachineBasicBlock *TargetBB,
                               SmallPtrSet<MachineBasicBlock *, 8> &Visited) const;
@@ -355,7 +364,6 @@ public:
   bool isDotCurInst(const MachineInstr &MI) const;
   bool isDotNewInst(const MachineInstr &MI) const;
   bool isDuplexPair(const MachineInstr &MIa, const MachineInstr &MIb) const;
-  bool isEarlySourceInstr(const MachineInstr &MI) const;
   bool isEndLoopN(unsigned Opcode) const;
   bool isExpr(unsigned OpType) const;
   bool isExtendable(const MachineInstr &MI) const;
@@ -367,9 +375,6 @@ public:
   bool isIndirectL4Return(const MachineInstr &MI) const;
   bool isJumpR(const MachineInstr &MI) const;
   bool isJumpWithinBranchRange(const MachineInstr &MI, unsigned offset) const;
-  bool isLateInstrFeedsEarlyInstr(const MachineInstr &LRMI,
-                                  const MachineInstr &ESMI) const;
-  bool isLateResultInstr(const MachineInstr &MI) const;
   bool isLateSourceInstr(const MachineInstr &MI) const;
   bool isLoopN(const MachineInstr &MI) const;
   bool isMemOp(const MachineInstr &MI) const;
@@ -425,7 +430,7 @@ public:
                      const MachineInstr &ConsMI) const;
   bool producesStall(const MachineInstr &MI,
                      MachineBasicBlock::const_instr_iterator MII) const;
-  bool predCanBeUsedAsDotNew(const MachineInstr &MI, unsigned PredReg) const;
+  bool predCanBeUsedAsDotNew(const MachineInstr &MI, Register PredReg) const;
   bool PredOpcodeHasJMP_c(unsigned Opcode) const;
   bool predOpcodeHasNot(ArrayRef<MachineOperand> Cond) const;
 
@@ -459,7 +464,7 @@ public:
   unsigned getMemAccessSize(const MachineInstr &MI) const;
   int getMinValue(const MachineInstr &MI) const;
   short getNonExtOpcode(const MachineInstr &MI) const;
-  bool getPredReg(ArrayRef<MachineOperand> Cond, unsigned &PredReg,
+  bool getPredReg(ArrayRef<MachineOperand> Cond, Register &PredReg,
                   unsigned &PredRegPos, unsigned &PredRegFlags) const;
   short getPseudoInstrPair(const MachineInstr &MI) const;
   short getRegForm(const MachineInstr &MI) const;
@@ -523,6 +528,8 @@ public:
   short changeAddrMode_ur_rr(const MachineInstr &MI) const {
     return changeAddrMode_ur_rr(MI.getOpcode());
   }
+
+  MCInst getNop() const override;
 };
 
 } // end namespace llvm

@@ -11,23 +11,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Core.h"
-#include "llvm-c/Target.h"
 #include "llvm-c/TargetMachine.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/CodeGenCWrappers.h"
 #include "llvm/Target/TargetMachine.h"
-#include <cassert>
-#include <cstdlib>
 #include <cstring>
+#include <optional>
 
 using namespace llvm;
 
@@ -103,7 +100,7 @@ LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T,
         const char *Triple, const char *CPU, const char *Features,
         LLVMCodeGenOptLevel Level, LLVMRelocMode Reloc,
         LLVMCodeModel CodeModel) {
-  Optional<Reloc::Model> RM;
+  std::optional<Reloc::Model> RM;
   switch (Reloc){
     case LLVMRelocStatic:
       RM = Reloc::Static;
@@ -128,7 +125,7 @@ LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T,
   }
 
   bool JIT;
-  Optional<CodeModel::Model> CM = unwrap(CodeModel, JIT);
+  std::optional<CodeModel::Model> CM = unwrap(CodeModel, JIT);
 
   CodeGenOpt::Level OL;
   switch (Level) {
@@ -217,7 +214,9 @@ static LLVMBool LLVMTargetMachineEmit(LLVMTargetMachineRef T, LLVMModuleRef M,
 }
 
 LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
-  char* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage) {
+                                     const char *Filename,
+                                     LLVMCodeGenFileType codegen,
+                                     char **ErrorMessage) {
   std::error_code EC;
   raw_fd_ostream dest(Filename, EC, sys::fs::OF_None);
   if (EC) {
@@ -259,8 +258,8 @@ char *LLVMGetHostCPUFeatures(void) {
   StringMap<bool> HostFeatures;
 
   if (sys::getHostCPUFeatures(HostFeatures))
-    for (auto &F : HostFeatures)
-      Features.AddFeature(F.first(), F.second);
+    for (const auto &[Feature, IsEnabled] : HostFeatures)
+      Features.AddFeature(Feature, IsEnabled);
 
   return strdup(Features.getString().c_str());
 }

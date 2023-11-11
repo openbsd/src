@@ -13,15 +13,18 @@
 #include "llvm/IR/BasicBlock.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Type.h"
-#include <algorithm>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "ir"
+STATISTIC(NumInstrRenumberings, "Number of renumberings across all blocks");
 
 ValueSymbolTable *BasicBlock::getValueSymbolTable() {
   if (Function *F = getParent())
@@ -59,9 +62,9 @@ void BasicBlock::insertInto(Function *NewParent, BasicBlock *InsertBefore) {
   assert(!Parent && "Already has a parent");
 
   if (InsertBefore)
-    NewParent->getBasicBlockList().insert(InsertBefore->getIterator(), this);
+    NewParent->insert(InsertBefore->getIterator(), this);
   else
-    NewParent->getBasicBlockList().push_back(this);
+    NewParent->insert(NewParent->end(), this);
 }
 
 BasicBlock::~BasicBlock() {
@@ -131,24 +134,17 @@ iplist<BasicBlock>::iterator BasicBlock::eraseFromParent() {
 }
 
 void BasicBlock::moveBefore(BasicBlock *MovePos) {
-  MovePos->getParent()->getBasicBlockList().splice(
-      MovePos->getIterator(), getParent()->getBasicBlockList(), getIterator());
+  MovePos->getParent()->splice(MovePos->getIterator(), getParent(),
+                               getIterator());
 }
 
 void BasicBlock::moveAfter(BasicBlock *MovePos) {
-  MovePos->getParent()->getBasicBlockList().splice(
-      ++MovePos->getIterator(), getParent()->getBasicBlockList(),
-      getIterator());
+  MovePos->getParent()->splice(++MovePos->getIterator(), getParent(),
+                               getIterator());
 }
 
 const Module *BasicBlock::getModule() const {
   return getParent()->getParent();
-}
-
-const Instruction *BasicBlock::getTerminator() const {
-  if (InstList.empty() || !InstList.back().isTerminator())
-    return nullptr;
-  return &InstList.back();
 }
 
 const CallInst *BasicBlock::getTerminatingMustTailCall() const {
@@ -253,6 +249,30 @@ BasicBlock::const_iterator BasicBlock::getFirstInsertionPt() const {
 
   const_iterator InsertPt = FirstNonPHI->getIterator();
   if (InsertPt->isEHPad()) ++InsertPt;
+  return InsertPt;
+}
+
+BasicBlock::const_iterator BasicBlock::getFirstNonPHIOrDbgOrAlloca() const {
+  const Instruction *FirstNonPHI = getFirstNonPHI();
+  if (!FirstNonPHI)
+    return end();
+
+  const_iterator InsertPt = FirstNonPHI->getIterator();
+  if (InsertPt->isEHPad())
+    ++InsertPt;
+
+  if (isEntryBlock()) {
+    const_iterator End = end();
+    while (InsertPt != End &&
+           (isa<AllocaInst>(*InsertPt) || isa<DbgInfoIntrinsic>(*InsertPt) ||
+            isa<PseudoProbeInst>(*InsertPt))) {
+      if (const AllocaInst *AI = dyn_cast<AllocaInst>(&*InsertPt)) {
+        if (!AI->isStaticAlloca())
+          break;
+      }
+      ++InsertPt;
+    }
+  }
   return InsertPt;
 }
 
@@ -394,7 +414,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const Twine &BBName,
   DebugLoc Loc = I->getDebugLoc();
   // Move all of the specified instructions from the original basic block into
   // the new basic block.
-  New->getInstList().splice(New->end(), this->getInstList(), I, end());
+  New->splice(New->end(), this, I, end());
 
   // Add a branch instruction to the newly formed basic block.
   BranchInst *BI = BranchInst::Create(New, this);
@@ -423,7 +443,7 @@ BasicBlock *BasicBlock::splitBasicBlockBefore(iterator I, const Twine &BBName) {
   DebugLoc Loc = I->getDebugLoc();
   // Move all of the specified instructions from the original basic block into
   // the new basic block.
-  New->getInstList().splice(New->end(), this->getInstList(), begin(), I);
+  New->splice(New->end(), this, begin(), I);
 
   // Loop through all of the predecessors of the 'this' block (which will be the
   // predecessors of the New block), replace the specified successor 'this'
@@ -431,7 +451,11 @@ BasicBlock *BasicBlock::splitBasicBlockBefore(iterator I, const Twine &BBName) {
   // If there were PHI nodes in 'this' block, the PHI nodes are updated
   // to reflect that the incoming branches will be from the New block and not
   // from predecessors of the 'this' block.
-  for (BasicBlock *Pred : predecessors(this)) {
+  // Save predecessors to separate vector before modifying them.
+  SmallVector<BasicBlock *, 4> Predecessors;
+  for (BasicBlock *Pred : predecessors(this))
+    Predecessors.push_back(Pred);
+  for (BasicBlock *Pred : Predecessors) {
     Instruction *TI = Pred->getTerminator();
     TI->replaceSuccessorWith(this, New);
     this->replacePhiUsesWith(Pred, New);
@@ -443,11 +467,28 @@ BasicBlock *BasicBlock::splitBasicBlockBefore(iterator I, const Twine &BBName) {
   return New;
 }
 
+void BasicBlock::splice(BasicBlock::iterator ToIt, BasicBlock *FromBB,
+                        BasicBlock::iterator FromBeginIt,
+                        BasicBlock::iterator FromEndIt) {
+#ifdef EXPENSIVE_CHECKS
+  // Check that FromBeginIt is befor FromEndIt.
+  auto FromBBEnd = FromBB->end();
+  for (auto It = FromBeginIt; It != FromEndIt; ++It)
+    assert(It != FromBBEnd && "FromBeginIt not before FromEndIt!");
+#endif // EXPENSIVE_CHECKS
+  getInstList().splice(ToIt, FromBB->getInstList(), FromBeginIt, FromEndIt);
+}
+
+BasicBlock::iterator BasicBlock::erase(BasicBlock::iterator FromIt,
+                                       BasicBlock::iterator ToIt) {
+  return InstList.erase(FromIt, ToIt);
+}
+
 void BasicBlock::replacePhiUsesWith(BasicBlock *Old, BasicBlock *New) {
   // N.B. This might not be a complete BasicBlock, so don't assume
   // that it ends with a non-phi instruction.
-  for (iterator II = begin(), IE = end(); II != IE; ++II) {
-    PHINode *PN = dyn_cast<PHINode>(II);
+  for (Instruction &I : *this) {
+    PHINode *PN = dyn_cast<PHINode>(&I);
     if (!PN)
       break;
     PN->replaceIncomingBlockWith(Old, New);
@@ -477,17 +518,17 @@ const LandingPadInst *BasicBlock::getLandingPadInst() const {
   return dyn_cast<LandingPadInst>(getFirstNonPHI());
 }
 
-Optional<uint64_t> BasicBlock::getIrrLoopHeaderWeight() const {
+std::optional<uint64_t> BasicBlock::getIrrLoopHeaderWeight() const {
   const Instruction *TI = getTerminator();
   if (MDNode *MDIrrLoopHeader =
       TI->getMetadata(LLVMContext::MD_irr_loop)) {
     MDString *MDName = cast<MDString>(MDIrrLoopHeader->getOperand(0));
     if (MDName->getString().equals("loop_header_weight")) {
       auto *CI = mdconst::extract<ConstantInt>(MDIrrLoopHeader->getOperand(1));
-      return Optional<uint64_t>(CI->getValue().getZExtValue());
+      return std::optional<uint64_t>(CI->getValue().getZExtValue());
     }
   }
-  return Optional<uint64_t>();
+  return std::nullopt;
 }
 
 BasicBlock::iterator llvm::skipDebugIntrinsics(BasicBlock::iterator It) {
@@ -505,6 +546,8 @@ void BasicBlock::renumberInstructions() {
   BasicBlockBits Bits = getBasicBlockBits();
   Bits.InstrOrderValid = true;
   setBasicBlockBits(Bits);
+
+  NumInstrRenumberings++;
 }
 
 #ifndef NDEBUG

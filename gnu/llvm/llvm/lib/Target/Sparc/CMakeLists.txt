@@ -1,4 +1,4 @@
-add_llvm_component_group(Sparc HAS_JIT)
+add_llvm_component_group(Sparc)
 
 set(LLVM_TARGET_DEFINITIONS Sparc.td)
 
@@ -39,6 +39,7 @@ add_llvm_target(SparcCodeGen
   SparcInfo
   Support
   Target
+  TargetParser
 
   ADD_TO_COMPONENT
   Sparc

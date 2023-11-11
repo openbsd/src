@@ -45,6 +45,7 @@
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMSubtarget.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -176,9 +177,8 @@ static bool tryInterleave(Instruction *Start,
     // Truncs
     case Instruction::Trunc:
     case Instruction::FPTrunc:
-      if (Truncs.count(I))
+      if (!Truncs.insert(I))
         continue;
-      Truncs.insert(I);
       Visited.insert(I);
       break;
 
@@ -221,7 +221,7 @@ static bool tryInterleave(Instruction *Start,
       default:
         return false;
       }
-      LLVM_FALLTHROUGH; // Fall through to treating these like an operator below.
+      [[fallthrough]]; // Fall through to treating these like an operator below.
     }
     // Binary/tertiary ops
     case Instruction::Add:
@@ -235,9 +235,8 @@ static bool tryInterleave(Instruction *Start,
     case Instruction::FAdd:
     case Instruction::FMul:
     case Instruction::Select:
-      if (Ops.count(I))
+      if (!Ops.insert(I))
         continue;
-      Ops.insert(I);
 
       for (Use &Op : I->operands()) {
         if (!isa<FixedVectorType>(Op->getType()))
@@ -256,7 +255,7 @@ static bool tryInterleave(Instruction *Start,
       // A shuffle of a splat is a splat.
       if (cast<ShuffleVectorInst>(I)->isZeroEltSplat())
         continue;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
 
     default:
       LLVM_DEBUG(dbgs() << "  Unhandled instruction: " << *I << "\n");

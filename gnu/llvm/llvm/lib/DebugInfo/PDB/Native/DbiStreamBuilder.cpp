@@ -14,7 +14,6 @@
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiModuleDescriptorBuilder.h"
-#include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/BinaryStreamWriter.h"
@@ -30,7 +29,7 @@ DbiStreamBuilder::DbiStreamBuilder(msf::MSFBuilder &Msf)
       PdbDllVersion(0), PdbDllRbld(0), Flags(0), MachineType(PDB_Machine::x86),
       Header(nullptr) {}
 
-DbiStreamBuilder::~DbiStreamBuilder() {}
+DbiStreamBuilder::~DbiStreamBuilder() = default;
 
 void DbiStreamBuilder::setVersionHeader(PdbRaw_DbiVer V) { VerHeader = V; }
 
@@ -72,7 +71,7 @@ void DbiStreamBuilder::setPublicsStreamIndex(uint32_t Index) {
 }
 
 void DbiStreamBuilder::addNewFpoData(const codeview::FrameData &FD) {
-  if (!NewFpoData.hasValue())
+  if (!NewFpoData)
     NewFpoData.emplace(false);
 
   NewFpoData->addFrameData(FD);
@@ -87,7 +86,7 @@ Error DbiStreamBuilder::addDbgStream(pdb::DbgHeaderType Type,
   assert(Type != DbgHeaderType::NewFPO &&
          "NewFPO data should be written via addFrameData()!");
 
-  DbgStreams[(int)Type].emplace();
+  DbgStreams[(int)Type] = DebugStream{};
   DbgStreams[(int)Type]->Size = Data.size();
   DbgStreams[(int)Type]->WriteFn = [Data](BinaryStreamWriter &Writer) {
     return Writer.writeArray(Data);
@@ -286,8 +285,8 @@ Error DbiStreamBuilder::finalize() {
 }
 
 Error DbiStreamBuilder::finalizeMsfLayout() {
-  if (NewFpoData.hasValue()) {
-    DbgStreams[(int)DbgHeaderType::NewFPO].emplace();
+  if (NewFpoData) {
+    DbgStreams[(int)DbgHeaderType::NewFPO] = DebugStream{};
     DbgStreams[(int)DbgHeaderType::NewFPO]->Size =
         NewFpoData->calculateSerializedSize();
     DbgStreams[(int)DbgHeaderType::NewFPO]->WriteFn =
@@ -297,17 +296,17 @@ Error DbiStreamBuilder::finalizeMsfLayout() {
   }
 
   if (!OldFpoData.empty()) {
-    DbgStreams[(int)DbgHeaderType::FPO].emplace();
+    DbgStreams[(int)DbgHeaderType::FPO] = DebugStream{};
     DbgStreams[(int)DbgHeaderType::FPO]->Size =
         sizeof(object::FpoData) * OldFpoData.size();
     DbgStreams[(int)DbgHeaderType::FPO]->WriteFn =
         [this](BinaryStreamWriter &Writer) {
-          return Writer.writeArray(makeArrayRef(OldFpoData));
+          return Writer.writeArray(ArrayRef(OldFpoData));
         };
   }
 
   for (auto &S : DbgStreams) {
-    if (!S.hasValue())
+    if (!S)
       continue;
     auto ExpectedIndex = Msf.addStream(S->Size);
     if (!ExpectedIndex)
@@ -332,8 +331,6 @@ static uint16_t toSecMapFlags(uint32_t Flags) {
     Ret |= static_cast<uint16_t>(OMFSegDescFlags::Read);
   if (Flags & COFF::IMAGE_SCN_MEM_WRITE)
     Ret |= static_cast<uint16_t>(OMFSegDescFlags::Write);
-  if (Flags & COFF::IMAGE_SCN_MEM_EXECUTE)
-    Ret |= static_cast<uint16_t>(OMFSegDescFlags::Execute);
   if (Flags & COFF::IMAGE_SCN_MEM_EXECUTE)
     Ret |= static_cast<uint16_t>(OMFSegDescFlags::Execute);
   if (!(Flags & COFF::IMAGE_SCN_MEM_16BIT))
@@ -409,7 +406,7 @@ Error DbiStreamBuilder::commit(const msf::MSFLayout &Layout,
   if (!SectionContribs.empty()) {
     if (auto EC = Writer.writeEnum(DbiSecContribVer60))
       return EC;
-    if (auto EC = Writer.writeArray(makeArrayRef(SectionContribs)))
+    if (auto EC = Writer.writeArray(ArrayRef(SectionContribs)))
       return EC;
   }
 
@@ -418,7 +415,7 @@ Error DbiStreamBuilder::commit(const msf::MSFLayout &Layout,
     SecMapHeader SMHeader = {Size, Size};
     if (auto EC = Writer.writeObject(SMHeader))
       return EC;
-    if (auto EC = Writer.writeArray(makeArrayRef(SectionMap)))
+    if (auto EC = Writer.writeArray(ArrayRef(SectionMap)))
       return EC;
   }
 
@@ -430,14 +427,14 @@ Error DbiStreamBuilder::commit(const msf::MSFLayout &Layout,
 
   for (auto &Stream : DbgStreams) {
     uint16_t StreamNumber = kInvalidStreamIndex;
-    if (Stream.hasValue())
+    if (Stream)
       StreamNumber = Stream->StreamNumber;
     if (auto EC = Writer.writeInteger(StreamNumber))
       return EC;
   }
 
   for (auto &Stream : DbgStreams) {
-    if (!Stream.hasValue())
+    if (!Stream)
       continue;
     assert(Stream->StreamNumber != kInvalidStreamIndex);
 

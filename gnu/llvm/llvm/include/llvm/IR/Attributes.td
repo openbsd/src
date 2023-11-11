@@ -47,15 +47,22 @@ class StrBoolAttr<string S> : Attr<S, []>;
 /// 0 means unaligned (different from align(1)).
 def Alignment : IntAttr<"align", [ParamAttr, RetAttr]>;
 
+/// Parameter of a function that tells us the alignment of an allocation, as in
+/// aligned_alloc and aligned ::operator::new.
+def AllocAlign: EnumAttr<"allocalign", [ParamAttr]>;
+
+/// Describes behavior of an allocator function in terms of known properties.
+def AllocKind: IntAttr<"allockind", [FnAttr]>;
+
+/// Parameter is the pointer to be manipulated by the allocator function.
+def AllocatedPointer : EnumAttr<"allocptr", [ParamAttr]>;
+
 /// The result of the function is guaranteed to point to a number of bytes that
 /// we can determine if we know the value of the function's arguments.
 def AllocSize : IntAttr<"allocsize", [FnAttr]>;
 
 /// inline=always.
 def AlwaysInline : EnumAttr<"alwaysinline", [FnAttr]>;
-
-/// Function can access memory only using pointers based on its arguments.
-def ArgMemOnly : EnumAttr<"argmemonly", [FnAttr]>;
 
 /// Callee is recognized as a builtin, despite nobuiltin attribute on its
 /// declaration.
@@ -86,16 +93,15 @@ def Dereferenceable : IntAttr<"dereferenceable", [ParamAttr, RetAttr]>;
 def DereferenceableOrNull : IntAttr<"dereferenceable_or_null",
                                     [ParamAttr, RetAttr]>;
 
+/// Do not instrument function with sanitizers.
+def DisableSanitizerInstrumentation: EnumAttr<"disable_sanitizer_instrumentation", [FnAttr]>;
+
 /// Provide pointer element type to intrinsic.
 def ElementType : TypeAttr<"elementtype", [ParamAttr]>;
 
-/// Function may only access memory that is inaccessible from IR.
-def InaccessibleMemOnly : EnumAttr<"inaccessiblememonly", [FnAttr]>;
-
-/// Function may only access memory that is either inaccessible from the IR,
-/// or pointed to by its pointer arguments.
-def InaccessibleMemOrArgMemOnly : EnumAttr<"inaccessiblemem_or_argmemonly",
-                                           [FnAttr]>;
+/// Whether to keep return instructions, or replace with a jump to an external
+/// symbol.
+def FnRetThunkExtern : EnumAttr<"fn_ret_thunk_extern", [FnAttr]>;
 
 /// Pass structure in an alloca.
 def InAlloca : TypeAttr<"inalloca", [ParamAttr]>;
@@ -108,6 +114,9 @@ def InReg : EnumAttr<"inreg", [ParamAttr, RetAttr]>;
 
 /// Build jump-instruction tables and replace refs.
 def JumpTable : EnumAttr<"jumptable", [FnAttr]>;
+
+/// Memory effects of the function.
+def Memory : IntAttr<"memory", [FnAttr]>;
 
 /// Function must be optimized for size first.
 def MinSize : EnumAttr<"minsize", [FnAttr]>;
@@ -169,8 +178,15 @@ def NoCfCheck : EnumAttr<"nocf_check", [FnAttr]>;
 /// Function should not be instrumented.
 def NoProfile : EnumAttr<"noprofile", [FnAttr]>;
 
+/// This function should not be instrumented but it is ok to inline profiled
+// functions into it.
+def SkipProfile : EnumAttr<"skipprofile", [FnAttr]>;
+
 /// Function doesn't unwind stack.
 def NoUnwind : EnumAttr<"nounwind", [FnAttr]>;
+
+/// No SanitizeBounds instrumentation.
+def NoSanitizeBounds : EnumAttr<"nosanitize_bounds", [FnAttr]>;
 
 /// No SanitizeCoverage instrumentation.
 def NoSanitizeCoverage : EnumAttr<"nosanitize_coverage", [FnAttr]>;
@@ -191,10 +207,10 @@ def OptimizeNone : EnumAttr<"optnone", [FnAttr]>;
 def Preallocated : TypeAttr<"preallocated", [FnAttr, ParamAttr]>;
 
 /// Function does not access memory.
-def ReadNone : EnumAttr<"readnone", [FnAttr, ParamAttr]>;
+def ReadNone : EnumAttr<"readnone", [ParamAttr]>;
 
 /// Function only reads from memory.
-def ReadOnly : EnumAttr<"readonly", [FnAttr, ParamAttr]>;
+def ReadOnly : EnumAttr<"readonly", [ParamAttr]>;
 
 /// Return value is always equal to this argument.
 def Returned : EnumAttr<"returned", [ParamAttr]>;
@@ -270,7 +286,7 @@ def SwiftSelf : EnumAttr<"swiftself", [ParamAttr]>;
 def SwiftAsync : EnumAttr<"swiftasync", [ParamAttr]>;
 
 /// Function must be in a unwind table.
-def UWTable : EnumAttr<"uwtable", [FnAttr]>;
+def UWTable : IntAttr<"uwtable", [FnAttr]>;
 
 /// Minimum/Maximum vscale value for function.
 def VScaleRange : IntAttr<"vscale_range", [FnAttr]>;
@@ -279,7 +295,7 @@ def VScaleRange : IntAttr<"vscale_range", [FnAttr]>;
 def WillReturn : EnumAttr<"willreturn", [FnAttr]>;
 
 /// Function only writes to memory.
-def WriteOnly : EnumAttr<"writeonly", [FnAttr, ParamAttr]>;
+def WriteOnly : EnumAttr<"writeonly", [ParamAttr]>;
 
 /// Zero extended before/after call.
 def ZExt : EnumAttr<"zeroext", [ParamAttr, RetAttr]>;
@@ -287,10 +303,14 @@ def ZExt : EnumAttr<"zeroext", [ParamAttr, RetAttr]>;
 /// Function is required to make Forward Progress.
 def MustProgress : EnumAttr<"mustprogress", [FnAttr]>;
 
+/// Function is a presplit coroutine.
+def PresplitCoroutine : EnumAttr<"presplitcoroutine", [FnAttr]>;
+
 /// Target-independent string attributes.
 def LessPreciseFPMAD : StrBoolAttr<"less-precise-fpmad">;
 def NoInfsFPMath : StrBoolAttr<"no-infs-fp-math">;
 def NoNansFPMath : StrBoolAttr<"no-nans-fp-math">;
+def ApproxFuncFPMath : StrBoolAttr<"approx-func-fp-math">;
 def NoSignedZerosFPMath : StrBoolAttr<"no-signed-zeros-fp-math">;
 def UnsafeFPMath : StrBoolAttr<"unsafe-fp-math">;
 def NoJumpTables : StrBoolAttr<"no-jump-tables">;
@@ -330,6 +350,7 @@ class MergeRule<string F> {
 def : MergeRule<"setAND<LessPreciseFPMADAttr>">;
 def : MergeRule<"setAND<NoInfsFPMathAttr>">;
 def : MergeRule<"setAND<NoNansFPMathAttr>">;
+def : MergeRule<"setAND<ApproxFuncFPMathAttr>">;
 def : MergeRule<"setAND<NoSignedZerosFPMathAttr>">;
 def : MergeRule<"setAND<UnsafeFPMathAttr>">;
 def : MergeRule<"setOR<NoImplicitFloatAttr>">;

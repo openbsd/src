@@ -127,7 +127,7 @@ multiple file formats.
 
 .. option:: --set-section-alignment <section>=<align>
 
- Set the alignment of section ``<section>`` to `<align>``. Can be specified
+ Set the alignment of section ``<section>`` to ``<align>``. Can be specified
  multiple times to update multiple sections.
 
 .. option:: --set-section-flags <section>=<flag>[,<flag>,...]
@@ -217,6 +217,12 @@ multiple file formats.
  Remove from the output all local or undefined symbols that are not required by
  relocations. Also remove all debug sections.
 
+.. option:: --update-section <name>=<file>
+
+ Replace the contents of the section ``<name>`` with contents from the file
+ ``<file>``. If the section ``<name>`` is part of a segment, the new contents
+ cannot be larger than the existing section.
+
 .. option:: --version, -V
 
  Display the version of the :program:`llvm-objcopy` executable.
@@ -290,11 +296,10 @@ them.
  Add ``<incr>`` to the program's start address. Can be specified multiple
  times, in which case the values will be applied cumulatively.
 
-.. option:: --compress-debug-sections [<style>]
+.. option:: --compress-debug-sections [<format>]
 
- Compress DWARF debug sections in the output, using the specified style.
- Supported styles are `zlib-gnu` and `zlib`. Defaults to `zlib` if no style is
- specified.
+ Compress DWARF debug sections in the output, using the specified format.
+ Supported formats are ``zlib`` and ``zstd``. Use ``zlib`` if ``<format>`` is omitted.
 
 .. option:: --decompress-debug-sections
 
@@ -338,7 +343,7 @@ them.
 
  Keep symbols of type `STT_FILE`, even if they would otherwise be stripped.
 
-.. option:: --keep-global-symbol <symbol>
+.. option:: --keep-global-symbol <symbol>, -G
 
  Make all symbols local in the output, except for symbols with the name
  ``<symbol>``. Can be specified multiple times to ignore multiple symbols.
@@ -383,7 +388,7 @@ them.
  represents a single symbol, with leading and trailing whitespace ignored, as is
  anything following a '#'. Can be specified multiple times to read names from
  multiple files.
- 
+
 .. option:: --new-symbol-visibility <visibility>
 
  Specify the visibility of the symbols automatically created when using binary
@@ -421,6 +426,11 @@ them.
  Rename sections called ``<old>`` to ``<new>`` in the output, and apply any
  specified ``<flag>`` values. See :option:`--set-section-flags` for a list of
  supported flags. Can be specified multiple times to rename multiple sections.
+
+.. option:: --set-section-type <section>=<type>
+
+ Set the type of section ``<section>`` to the integer ``<type>``. Can be
+ specified multiple times to update multiple sections.
 
 .. option:: --set-start-addr <addr>
 
@@ -476,6 +486,13 @@ MACH-O-SPECIFIC OPTIONS
 .. option:: --keep-undefined
 
  Keep undefined symbols, even if they would otherwise be stripped.
+
+COFF-SPECIFIC OPTIONS
+---------------------
+
+.. option:: --subsystem <name>[:<version>]
+
+ Set the PE subsystem, and optionally subsystem version.
 
 SUPPORTED FORMATS
 -----------------
@@ -536,7 +553,7 @@ Otherwise, it exits with code 0.
 BUGS
 ----
 
-To report bugs, please visit <https://bugs.llvm.org/>.
+To report bugs, please visit <https://github.com/llvm/llvm-project/labels/tools:llvm-objcopy/strip/>.
 
 There is a known issue with :option:`--input-target` and :option:`--target`
 causing only ``binary`` and ``ihex`` formats to have any effect. Other values

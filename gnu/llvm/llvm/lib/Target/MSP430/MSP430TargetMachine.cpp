@@ -12,24 +12,26 @@
 
 #include "MSP430TargetMachine.h"
 #include "MSP430.h"
+#include "MSP430MachineFunctionInfo.h"
 #include "TargetInfo/MSP430TargetInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/MCAsmInfo.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"
+#include <optional>
 using namespace llvm;
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMSP430Target() {
   // Register the target.
   RegisterTargetMachine<MSP430TargetMachine> X(getTheMSP430Target());
+  PassRegistry &PR = *PassRegistry::getPassRegistry();
+  initializeMSP430DAGToDAGISelPass(PR);
 }
 
-static Reloc::Model getEffectiveRelocModel(Optional<Reloc::Model> RM) {
-  if (!RM.hasValue())
-    return Reloc::Static;
-  return *RM;
+static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM) {
+  return RM.value_or(Reloc::Static);
 }
 
 static std::string computeDataLayout(const Triple &TT, StringRef CPU,
@@ -40,8 +42,8 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
 MSP430TargetMachine::MSP430TargetMachine(const Target &T, const Triple &TT,
                                          StringRef CPU, StringRef FS,
                                          const TargetOptions &Options,
-                                         Optional<Reloc::Model> RM,
-                                         Optional<CodeModel::Model> CM,
+                                         std::optional<Reloc::Model> RM,
+                                         std::optional<CodeModel::Model> CM,
                                          CodeGenOpt::Level OL, bool JIT)
     : LLVMTargetMachine(T, computeDataLayout(TT, CPU, Options), TT, CPU, FS,
                         Options, getEffectiveRelocModel(RM),
@@ -51,7 +53,7 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T, const Triple &TT,
   initAsmInfo();
 }
 
-MSP430TargetMachine::~MSP430TargetMachine() {}
+MSP430TargetMachine::~MSP430TargetMachine() = default;
 
 namespace {
 /// MSP430 Code Generator Pass Configuration Options.
@@ -73,6 +75,13 @@ TargetPassConfig *MSP430TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new MSP430PassConfig(*this, PM);
 }
 
+MachineFunctionInfo *MSP430TargetMachine::createMachineFunctionInfo(
+    BumpPtrAllocator &Allocator, const Function &F,
+    const TargetSubtargetInfo *STI) const {
+  return MSP430MachineFunctionInfo::create<MSP430MachineFunctionInfo>(Allocator,
+                                                                      F, STI);
+}
+
 bool MSP430PassConfig::addInstSelector() {
   // Install an instruction selector.
   addPass(createMSP430ISelDag(getMSP430TargetMachine(), getOptLevel()));
@@ -81,5 +90,5 @@ bool MSP430PassConfig::addInstSelector() {
 
 void MSP430PassConfig::addPreEmitPass() {
   // Must run branch selection immediately preceding the asm printer.
-  addPass(createMSP430BranchSelectionPass(), false);
+  addPass(createMSP430BranchSelectionPass());
 }

@@ -25,7 +25,6 @@
 #include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/Support/Casting.h"
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <memory>
@@ -85,6 +84,9 @@ class DwarfCompileUnit final : public DwarfUnit {
 
   /// DWO ID for correlating skeleton and split units.
   uint64_t DWOId = 0;
+
+  const DIFile *LastFile = nullptr;
+  unsigned LastFileID;
 
   /// Construct a DIE for the given DbgVariable without initializing the
   /// DbgVariable's DIE reference.
@@ -190,9 +192,9 @@ public:
   /// variables in this scope then create and insert DIEs for these
   /// variables.
   DIE &updateSubprogramScopeDIE(const DISubprogram *SP);
+  DIE &updateSubprogramScopeDIEImpl(const DISubprogram *SP, DIE *SPDie);
 
-  void constructScopeDIE(LexicalScope *Scope,
-                         SmallVectorImpl<DIE *> &FinalChildren);
+  void constructScopeDIE(LexicalScope *Scope, DIE &ParentScopeDIE);
 
   /// A helper function to construct a RangeSpanList for a given
   /// lexical scope.
@@ -203,9 +205,9 @@ public:
   void attachRangesOrLowHighPC(DIE &D,
                                const SmallVectorImpl<InsnRange> &Ranges);
 
-  /// This scope represents inlined body of a function. Construct
+  /// This scope represents an inlined body of a function. Construct a
   /// DIE to represent this concrete inlined copy of the function.
-  DIE *constructInlinedScopeDIE(LexicalScope *Scope);
+  DIE *constructInlinedScopeDIE(LexicalScope *Scope, DIE &ParentScopeDIE);
 
   /// Construct new DW_TAG_lexical_block for this scope and
   /// attach DW_AT_low_pc/DW_AT_high_pc labels.
@@ -219,11 +221,6 @@ public:
 
   /// Construct a DIE for the given DbgLabel.
   DIE *constructLabelDIE(DbgLabel &DL, const LexicalScope &Scope);
-
-  /// A helper function to create children of a Scope DIE.
-  DIE *createScopeChildrenDIE(LexicalScope *Scope,
-                              SmallVectorImpl<DIE *> &Children,
-                              bool *HasNonScopeChildren = nullptr);
 
   void createBaseTypeDIEs();
 

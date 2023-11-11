@@ -61,13 +61,18 @@ bool CSEConfigFull::shouldCSEOpc(unsigned Opc) {
   case TargetOpcode::G_TRUNC:
   case TargetOpcode::G_PTR_ADD:
   case TargetOpcode::G_EXTRACT:
+  case TargetOpcode::G_SELECT:
+  case TargetOpcode::G_BUILD_VECTOR:
+  case TargetOpcode::G_BUILD_VECTOR_TRUNC:
+  case TargetOpcode::G_SEXT_INREG:
     return true;
   }
   return false;
 }
 
 bool CSEConfigConstantOnly::shouldCSEOpc(unsigned Opc) {
-  return Opc == TargetOpcode::G_CONSTANT || Opc == TargetOpcode::G_IMPLICIT_DEF;
+  return Opc == TargetOpcode::G_CONSTANT || Opc == TargetOpcode::G_FCONSTANT ||
+         Opc == TargetOpcode::G_IMPLICIT_DEF;
 }
 
 std::unique_ptr<CSEConfigBase>
@@ -88,7 +93,7 @@ void GISelCSEInfo::setMF(MachineFunction &MF) {
   this->MRI = &MF.getRegInfo();
 }
 
-GISelCSEInfo::~GISelCSEInfo() {}
+GISelCSEInfo::~GISelCSEInfo() = default;
 
 bool GISelCSEInfo::isUniqueMachineInstValid(
     const UniqueMachineInstr &UMI) const {
@@ -318,7 +323,7 @@ const GISelInstProfileBuilder &
 GISelInstProfileBuilder::addNodeID(const MachineInstr *MI) const {
   addNodeIDMBB(MI->getParent());
   addNodeIDOpcode(MI->getOpcode());
-  for (auto &Op : MI->operands())
+  for (const auto &Op : MI->operands())
     addNodeIDMachineOperand(Op);
   addNodeIDFlag(MI->getFlags());
   return *this;

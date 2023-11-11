@@ -541,7 +541,7 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
                   Operand immoperand, SDPatternOperator immoperator,
                   Operand imm8operand, SDPatternOperator imm8operator,
                   bit hasOddOpcode, OperandSize opSize,
-                  bit hasREX_WPrefix> {
+                  bit hasREX_W> {
   /// VT - This is the value type itself.
   ValueType VT = vt;
 
@@ -596,9 +596,9 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
   /// to Opsize16. i32 sets this to OpSize32.
   OperandSize OpSize = opSize;
 
-  /// HasREX_WPrefix - This bit is set to true if the instruction should have
+  /// HasREX_W - This bit is set to true if the instruction should have
   /// the 0x40 REX prefix.  This is set for i64 types.
-  bit HasREX_WPrefix = hasREX_WPrefix;
+  bit HasREX_W = hasREX_W;
 }
 
 def invalid_node : SDNode<"<<invalid_node>>", SDTIntLeaf,[],"<<invalid_node>>">;
@@ -634,7 +634,7 @@ class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins,
 
   // Infer instruction prefixes from type info.
   let OpSize = typeinfo.OpSize;
-  let hasREX_WPrefix  = typeinfo.HasREX_WPrefix;
+  let hasREX_W  = typeinfo.HasREX_W;
 }
 
 // BinOpRR - Instructions like "add reg, reg, reg".
@@ -1497,13 +1497,17 @@ multiclass bmi_mulx<string mnemonic, RegisterClass RC, X86MemOperand x86memop,
 let hasSideEffects = 0 in {
   def rr : I<0xF6, MRMSrcReg, (outs RC:$dst1, RC:$dst2), (ins RC:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
-             []>, T8XD, VEX_4V, Sched<[sched, WriteIMulH]>;
+             []>, T8XD, VEX_4V, Sched<[WriteIMulH, sched]>;
 
   let mayLoad = 1 in
   def rm : I<0xF6, MRMSrcMem, (outs RC:$dst1, RC:$dst2), (ins x86memop:$src),
              !strconcat(mnemonic, "\t{$src, $dst2, $dst1|$dst1, $dst2, $src}"),
-
-             []>, T8XD, VEX_4V, Sched<[sched.Folded, WriteIMulH]>;
+             []>, T8XD, VEX_4V,
+             Sched<[WriteIMulHLd, sched.Folded,
+                    // Memory operand.
+                    ReadDefault, ReadDefault, ReadDefault, ReadDefault, ReadDefault,
+                    // Implicit read of EDX/RDX
+                    sched.ReadAfterFold]>;
 
   // Pseudo instructions to be used when the low result isn't used. The
   // instruction is defined to keep the high if both destinations are the same.
@@ -1518,9 +1522,9 @@ let hasSideEffects = 0 in {
 
 let Predicates = [HasBMI2] in {
   let Uses = [EDX] in
-    defm MULX32 : bmi_mulx<"mulx{l}", GR32, i32mem, WriteIMul32>;
+    defm MULX32 : bmi_mulx<"mulx{l}", GR32, i32mem, WriteMULX32>;
   let Uses = [RDX] in
-    defm MULX64 : bmi_mulx<"mulx{q}", GR64, i64mem, WriteIMul64>, VEX_W;
+    defm MULX64 : bmi_mulx<"mulx{q}", GR64, i64mem, WriteMULX64>, VEX_W;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1547,7 +1551,12 @@ let Predicates = [HasADX], Defs = [EFLAGS], Uses = [EFLAGS],
                     "adox{q}\t{$src2, $dst|$dst, $src2}", []>, T8XS;
   } // SchedRW
 
-  let mayLoad = 1, SchedRW = [WriteADC.Folded, WriteADC.ReadAfterFold] in {
+  let mayLoad = 1,
+      SchedRW = [WriteADC.Folded, WriteADC.ReadAfterFold,
+                 // Memory operand.
+                 ReadDefault, ReadDefault, ReadDefault, ReadDefault, ReadDefault,
+                 // Implicit read of EFLAGS
+                 WriteADC.ReadAfterFold] in {
   def ADCX32rm : I<0xF6, MRMSrcMem, (outs GR32:$dst),
                    (ins GR32:$src1, i32mem:$src2),
                    "adcx{l}\t{$src2, $dst|$dst, $src2}", []>, T8PD;

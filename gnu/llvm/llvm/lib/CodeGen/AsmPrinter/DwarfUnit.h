@@ -15,19 +15,17 @@
 
 #include "DwarfDebug.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DIE.h"
 #include "llvm/Target/TargetMachine.h"
+#include <optional>
 #include <string>
 
 namespace llvm {
 
 class ConstantFP;
 class ConstantInt;
-class DbgVariable;
 class DwarfCompileUnit;
-class MachineOperand;
 class MCDwarfDwoLineTable;
 class MCSymbol;
 
@@ -53,7 +51,7 @@ protected:
   DwarfFile *DU;
 
   /// An anonymous type for index type.  Owned by DIEUnit.
-  DIE *IndexTyDie;
+  DIE *IndexTyDie = nullptr;
 
   /// Tracks the mapping of unit level debug information variables to debug
   /// information entries.
@@ -145,15 +143,15 @@ public:
 
   /// Add an unsigned integer attribute data and value.
   void addUInt(DIEValueList &Die, dwarf::Attribute Attribute,
-               Optional<dwarf::Form> Form, uint64_t Integer);
+               std::optional<dwarf::Form> Form, uint64_t Integer);
 
   void addUInt(DIEValueList &Block, dwarf::Form Form, uint64_t Integer);
 
   /// Add an signed integer attribute data and value.
   void addSInt(DIEValueList &Die, dwarf::Attribute Attribute,
-               Optional<dwarf::Form> Form, int64_t Integer);
+               std::optional<dwarf::Form> Form, int64_t Integer);
 
-  void addSInt(DIELoc &Die, Optional<dwarf::Form> Form, int64_t Integer);
+  void addSInt(DIELoc &Die, std::optional<dwarf::Form> Form, int64_t Integer);
 
   /// Add a string attribute data and value.
   ///
@@ -226,6 +224,9 @@ public:
   /// Add thrown types.
   void addThrownTypes(DIE &Die, DINodeArray ThrownTypes);
 
+  /// Add the accessibility attribute.
+  void addAccess(DIE &Die, DINode::DIFlags Flags);
+
   /// Add a new type attribute to the specified entity.
   ///
   /// This takes and attribute parameter because DW_AT_friend attributes are
@@ -294,6 +295,9 @@ public:
   void addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
                        const MCSymbol *Label, const MCSymbol *Sec);
 
+  /// Add DW_TAG_LLVM_annotation.
+  void addAnnotation(DIE &Buffer, DINodeArray Annotations);
+
   /// Get context owner's DIE.
   DIE *createTypeDIE(const DICompositeType *Ty);
 
@@ -346,6 +350,10 @@ private:
 
   virtual bool isDwoUnit() const = 0;
   const MCSymbol *getCrossSectionRelativeBaseAddress() const override;
+
+  /// Returns 'true' if the current DwarfVersion is compatible
+  /// with the specified \p Version.
+  bool isCompatibleWithVersion(uint16_t Version) const;
 };
 
 class DwarfTypeUnit final : public DwarfUnit {

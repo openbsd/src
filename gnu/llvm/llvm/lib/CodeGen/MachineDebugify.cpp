@@ -16,14 +16,11 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
-#include "llvm/IR/DIBuilder.h"
-#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Transforms/Utils/Debugify.h"
@@ -156,10 +153,15 @@ bool applyDebugifyMetadataToMachineFunction(MachineModuleInfo &MMI,
       NMD->setOperand(Idx, MDNode::get(Ctx, ValueAsMetadata::getConstant(
                                                 ConstantInt::get(Int32Ty, N))));
     };
+    auto getDebugifyOperand = [&](unsigned Idx) {
+      return mdconst::extract<ConstantInt>(NMD->getOperand(Idx)->getOperand(0))
+          ->getZExtValue();
+    };
     // Set number of lines.
     setDebugifyOperand(0, NextLine - 1);
     // Set number of variables.
-    setDebugifyOperand(1, VarSet.size());
+    auto OldNumVars = getDebugifyOperand(1);
+    setDebugifyOperand(1, OldNumVars + VarSet.size());
   }
 
   return true;
@@ -169,6 +171,9 @@ bool applyDebugifyMetadataToMachineFunction(MachineModuleInfo &MMI,
 /// legacy module pass manager.
 struct DebugifyMachineModule : public ModulePass {
   bool runOnModule(Module &M) override {
+    // We will insert new debugify metadata, so erasing the old one.
+    assert(!M.getNamedMetadata("llvm.mir.debugify") &&
+           "llvm.mir.debugify metadata already exists! Strip it first");
     MachineModuleInfo &MMI =
         getAnalysis<MachineModuleInfoWrapperPass>().getMMI();
     return applyDebugifyMetadata(

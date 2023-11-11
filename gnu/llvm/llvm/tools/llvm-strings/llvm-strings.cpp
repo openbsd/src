@@ -39,11 +39,14 @@ enum ID {
 #undef OPTION
 };
 
-#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+#define PREFIX(NAME, VALUE)                                                    \
+  static constexpr StringLiteral NAME##_init[] = VALUE;                        \
+  static constexpr ArrayRef<StringLiteral> NAME(NAME##_init,                   \
+                                                std::size(NAME##_init) - 1);
 #include "Opts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info InfoTable[] = {
+static constexpr opt::OptTable::Info InfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {                                                                            \
@@ -55,17 +58,18 @@ static const opt::OptTable::Info InfoTable[] = {
 #undef OPTION
 };
 
-class StringsOptTable : public opt::OptTable {
+class StringsOptTable : public opt::GenericOptTable {
 public:
-  StringsOptTable() : OptTable(InfoTable) { setGroupedShortOptions(true); }
+  StringsOptTable() : GenericOptTable(InfoTable) {
+    setGroupedShortOptions(true);
+  }
 };
 } // namespace
 
-const char ToolName[] = "llvm-strings";
+static StringRef ToolName;
 
 static cl::list<std::string> InputFileNames(cl::Positional,
-                                            cl::desc("<input object files>"),
-                                            cl::ZeroOrMore);
+                                            cl::desc("<input object files>"));
 
 static int MinLength = 4;
 static bool PrintFileName;
@@ -73,7 +77,7 @@ static bool PrintFileName;
 enum radix { none, octal, hexadecimal, decimal };
 static radix Radix;
 
-LLVM_ATTRIBUTE_NORETURN static void reportCmdLineError(const Twine &Message) {
+[[noreturn]] static void reportCmdLineError(const Twine &Message) {
   WithColor::error(errs(), ToolName) << Message << "\n";
   exit(1);
 }
@@ -129,6 +133,7 @@ int main(int argc, char **argv) {
   BumpPtrAllocator A;
   StringSaver Saver(A);
   StringsOptTable Tbl;
+  ToolName = argv[0];
   opt::InputArgList Args =
       Tbl.parseArgs(argc, argv, OPT_UNKNOWN, Saver,
                     [&](StringRef Msg) { reportCmdLineError(Msg); });

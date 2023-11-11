@@ -13,8 +13,6 @@
 #include "llvm/Analysis/BlockFrequencyInfoImpl.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/None.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Function.h"
@@ -22,8 +20,8 @@
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ScaledNumber.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/ScaledNumber.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cassert>
@@ -32,6 +30,7 @@
 #include <iterator>
 #include <list>
 #include <numeric>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -48,7 +47,7 @@ cl::opt<bool> CheckBFIUnknownBlockQueries(
              "for debugging missed BFI updates"));
 
 cl::opt<bool> UseIterativeBFIInference(
-    "use-iterative-bfi-inference", cl::init(false), cl::Hidden, cl::ZeroOrMore,
+    "use-iterative-bfi-inference", cl::Hidden,
     cl::desc("Apply an iterative post-processing to infer correct BFI counts"));
 
 cl::opt<unsigned> IterativeBFIMaxIterationsPerBlock(
@@ -586,7 +585,7 @@ BlockFrequencyInfoImplBase::getBlockFreq(const BlockNode &Node) const {
   return Freqs[Node.Index].Integer;
 }
 
-Optional<uint64_t>
+std::optional<uint64_t>
 BlockFrequencyInfoImplBase::getBlockProfileCount(const Function &F,
                                                  const BlockNode &Node,
                                                  bool AllowSynthetic) const {
@@ -594,15 +593,15 @@ BlockFrequencyInfoImplBase::getBlockProfileCount(const Function &F,
                                  AllowSynthetic);
 }
 
-Optional<uint64_t>
+std::optional<uint64_t>
 BlockFrequencyInfoImplBase::getProfileCountFromFreq(const Function &F,
                                                     uint64_t Freq,
                                                     bool AllowSynthetic) const {
   auto EntryCount = F.getEntryCount(AllowSynthetic);
   if (!EntryCount)
-    return None;
+    return std::nullopt;
   // Use 128 bit APInt to do the arithmetic to avoid overflow.
-  APInt BlockCount(128, EntryCount.getCount());
+  APInt BlockCount(128, EntryCount->getCount());
   APInt BlockFreq(128, Freq);
   APInt EntryFreq(128, getEntryFreq());
   BlockCount *= BlockFreq;

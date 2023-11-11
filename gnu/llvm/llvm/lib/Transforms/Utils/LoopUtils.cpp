@@ -12,7 +12,6 @@
 
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PriorityWorklist.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SetVector.h"
@@ -22,31 +21,27 @@
 #include "llvm/Analysis/BasicAliasAnalysis.h"
 #include "llvm/Analysis/DomTreeUpdater.h"
 #include "llvm/Analysis/GlobalsModRef.h"
-#include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/InstSimplifyFolder.h"
 #include "llvm/Analysis/LoopAccessAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/MemorySSA.h"
 #include "llvm/Analysis/MemorySSAUpdater.h"
-#include "llvm/Analysis/MustExecute.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/ProfDataUtils.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/KnownBits.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
@@ -79,9 +74,6 @@ bool llvm::formDedicatedExitBlocks(Loop *L, DominatorTree *DT, LoopInfo *LI,
       if (L->contains(PredBB)) {
         if (isa<IndirectBrInst>(PredBB->getTerminator()))
           // We cannot rewrite exiting edges from an indirectbr.
-          return false;
-        if (isa<CallBrInst>(PredBB->getTerminator()))
-          // We cannot rewrite exiting edges from a callbr.
           return false;
 
         InLoopPredecessors.push_back(PredBB);
@@ -254,27 +246,27 @@ void llvm::addStringMetadataToLoop(Loop *TheLoop, const char *StringMD,
   TheLoop->setLoopID(NewLoopID);
 }
 
-Optional<ElementCount>
+std::optional<ElementCount>
 llvm::getOptionalElementCountLoopAttribute(const Loop *TheLoop) {
-  Optional<int> Width =
+  std::optional<int> Width =
       getOptionalIntLoopAttribute(TheLoop, "llvm.loop.vectorize.width");
 
-  if (Width.hasValue()) {
-    Optional<int> IsScalable = getOptionalIntLoopAttribute(
+  if (Width) {
+    std::optional<int> IsScalable = getOptionalIntLoopAttribute(
         TheLoop, "llvm.loop.vectorize.scalable.enable");
-    return ElementCount::get(*Width, IsScalable.getValueOr(false));
+    return ElementCount::get(*Width, IsScalable.value_or(false));
   }
 
-  return None;
+  return std::nullopt;
 }
 
-Optional<MDNode *> llvm::makeFollowupLoopID(
+std::optional<MDNode *> llvm::makeFollowupLoopID(
     MDNode *OrigLoopID, ArrayRef<StringRef> FollowupOptions,
     const char *InheritOptionsExceptPrefix, bool AlwaysNew) {
   if (!OrigLoopID) {
     if (AlwaysNew)
       return nullptr;
-    return None;
+    return std::nullopt;
   }
 
   assert(OrigLoopID->getOperand(0) == OrigLoopID);
@@ -333,7 +325,7 @@ Optional<MDNode *> llvm::makeFollowupLoopID(
   // Attributes of the followup loop not specified explicity, so signal to the
   // transformation pass to add suitable attributes.
   if (!AlwaysNew && !HasAnyFollowup)
-    return None;
+    return std::nullopt;
 
   // If no attributes were added or remove, the previous loop Id can be reused.
   if (!AlwaysNew && !Changed)
@@ -361,10 +353,10 @@ TransformationMode llvm::hasUnrollTransformation(const Loop *L) {
   if (getBooleanLoopAttribute(L, "llvm.loop.unroll.disable"))
     return TM_SuppressedByUser;
 
-  Optional<int> Count =
+  std::optional<int> Count =
       getOptionalIntLoopAttribute(L, "llvm.loop.unroll.count");
-  if (Count.hasValue())
-    return Count.getValue() == 1 ? TM_SuppressedByUser : TM_ForcedByUser;
+  if (Count)
+    return *Count == 1 ? TM_SuppressedByUser : TM_ForcedByUser;
 
   if (getBooleanLoopAttribute(L, "llvm.loop.unroll.enable"))
     return TM_ForcedByUser;
@@ -382,10 +374,10 @@ TransformationMode llvm::hasUnrollAndJamTransformation(const Loop *L) {
   if (getBooleanLoopAttribute(L, "llvm.loop.unroll_and_jam.disable"))
     return TM_SuppressedByUser;
 
-  Optional<int> Count =
+  std::optional<int> Count =
       getOptionalIntLoopAttribute(L, "llvm.loop.unroll_and_jam.count");
-  if (Count.hasValue())
-    return Count.getValue() == 1 ? TM_SuppressedByUser : TM_ForcedByUser;
+  if (Count)
+    return *Count == 1 ? TM_SuppressedByUser : TM_ForcedByUser;
 
   if (getBooleanLoopAttribute(L, "llvm.loop.unroll_and_jam.enable"))
     return TM_ForcedByUser;
@@ -397,15 +389,15 @@ TransformationMode llvm::hasUnrollAndJamTransformation(const Loop *L) {
 }
 
 TransformationMode llvm::hasVectorizeTransformation(const Loop *L) {
-  Optional<bool> Enable =
+  std::optional<bool> Enable =
       getOptionalBoolLoopAttribute(L, "llvm.loop.vectorize.enable");
 
   if (Enable == false)
     return TM_SuppressedByUser;
 
-  Optional<ElementCount> VectorizeWidth =
+  std::optional<ElementCount> VectorizeWidth =
       getOptionalElementCountLoopAttribute(L);
-  Optional<int> InterleaveCount =
+  std::optional<int> InterleaveCount =
       getOptionalIntLoopAttribute(L, "llvm.loop.interleave.count");
 
   // 'Forcing' vector width and interleave count to one effectively disables
@@ -493,12 +485,16 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
   // Tell ScalarEvolution that the loop is deleted. Do this before
   // deleting the loop so that ScalarEvolution can look at the loop
   // to determine what it needs to clean up.
-  if (SE)
+  if (SE) {
     SE->forgetLoop(L);
+    SE->forgetBlockAndLoopDispositions();
+  }
 
-  auto *OldBr = dyn_cast<BranchInst>(Preheader->getTerminator());
-  assert(OldBr && "Preheader must end with a branch");
-  assert(OldBr->isUnconditional() && "Preheader must have a single successor");
+  Instruction *OldTerm = Preheader->getTerminator();
+  assert(!OldTerm->mayHaveSideEffects() &&
+         "Preheader must end with a side-effect-free terminator");
+  assert(OldTerm->getNumSuccessors() == 1 &&
+         "Preheader must have a single successor");
   // Connect the preheader to the exit block. Keep the old edge to the header
   // around to perform the dominator tree update in two separate steps
   // -- #1 insertion of the edge preheader -> exit and #2 deletion of the edge
@@ -524,7 +520,7 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
   // coming to this inner loop, this will break the outer loop structure (by
   // deleting the backedge of the outer loop). If the outer loop is indeed a
   // non-loop, it will be deleted in a future iteration of loop deletion pass.
-  IRBuilder<> Builder(OldBr);
+  IRBuilder<> Builder(OldTerm);
 
   auto *ExitBlock = L->getUniqueExitBlock();
   DomTreeUpdater DTU(DT, DomTreeUpdater::UpdateStrategy::Eager);
@@ -534,7 +530,7 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
 
     Builder.CreateCondBr(Builder.getFalse(), L->getHeader(), ExitBlock);
     // Remove the old branch. The conditional branch becomes a new terminator.
-    OldBr->eraseFromParent();
+    OldTerm->eraseFromParent();
 
     // Rewrite phis in the exit block to get their inputs from the Preheader
     // instead of the exiting block.
@@ -578,7 +574,7 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
     assert(L->hasNoExitBlocks() &&
            "Loop should have either zero or one exit blocks.");
 
-    Builder.SetInsertPoint(OldBr);
+    Builder.SetInsertPoint(OldTerm);
     Builder.CreateUnreachable();
     Preheader->getTerminator()->eraseFromParent();
   }
@@ -597,7 +593,7 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
   }
 
   // Use a map to unique and a vector to guarantee deterministic ordering.
-  llvm::SmallDenseSet<std::pair<DIVariable *, DIExpression *>, 4> DeadDebugSet;
+  llvm::SmallDenseSet<DebugVariable, 4> DeadDebugSet;
   llvm::SmallVector<DbgVariableIntrinsic *, 4> DeadDebugInst;
 
   if (ExitBlock) {
@@ -608,14 +604,11 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
     // loop will be already eliminated and we have less work to do but according
     // to API doc of User::dropAllReferences only valid operation after dropping
     // references, is deletion. So let's substitute all usages of
-    // instruction from the loop with undef value of corresponding type first.
+    // instruction from the loop with poison value of corresponding type first.
     for (auto *Block : L->blocks())
       for (Instruction &I : *Block) {
-        auto *Undef = UndefValue::get(I.getType());
-        for (Value::use_iterator UI = I.use_begin(), E = I.use_end();
-             UI != E;) {
-          Use &U = *UI;
-          ++UI;
+        auto *Poison = PoisonValue::get(I.getType());
+        for (Use &U : llvm::make_early_inc_range(I.uses())) {
           if (auto *Usr = dyn_cast<Instruction>(U.getUser()))
             if (L->contains(Usr->getParent()))
               continue;
@@ -624,16 +617,13 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
           if (DT)
             assert(!DT->isReachableFromEntry(U) &&
                    "Unexpected user in reachable block");
-          U.set(Undef);
+          U.set(Poison);
         }
         auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I);
         if (!DVI)
           continue;
-        auto Key =
-            DeadDebugSet.find({DVI->getVariable(), DVI->getExpression()});
-        if (Key != DeadDebugSet.end())
+        if (!DeadDebugSet.insert(DebugVariable(DVI)).second)
           continue;
-        DeadDebugSet.insert({DVI->getVariable(), DVI->getExpression()});
         DeadDebugInst.push_back(DVI);
       }
 
@@ -642,15 +632,14 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
     // Since debug values in the loop have been deleted, inserting an undef
     // dbg.value truncates the range of any dbg.value before the loop where the
     // loop used to be. This is particularly important for constant values.
-    DIBuilder DIB(*ExitBlock->getModule());
     Instruction *InsertDbgValueBefore = ExitBlock->getFirstNonPHI();
     assert(InsertDbgValueBefore &&
            "There should be a non-PHI instruction in exit block, else these "
            "instructions will have no parent.");
-    for (auto *DVI : DeadDebugInst)
-      DIB.insertDbgValueIntrinsic(UndefValue::get(Builder.getInt32Ty()),
-                                  DVI->getVariable(), DVI->getExpression(),
-                                  DVI->getDebugLoc(), InsertDbgValueBefore);
+    for (auto *DVI : DeadDebugInst) {
+      DVI->setKillLocation();
+      DVI->moveBefore(InsertDbgValueBefore);
+    }
   }
 
   // Remove the block from the reference counting scheme, so that we can
@@ -666,9 +655,8 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
     // about ordering because we already dropped the references.
     // NOTE: This iteration is safe because erasing the block does not remove
     // its entry from the loop's block list.  We do that in the next section.
-    for (Loop::block_iterator LpI = L->block_begin(), LpE = L->block_end();
-         LpI != LpE; ++LpI)
-      (*LpI)->eraseFromParent();
+    for (BasicBlock *BB : L->blocks())
+      BB->eraseFromParent();
 
     // Finally, the blocks from loopinfo.  This has to happen late because
     // otherwise our loop iterators won't work.
@@ -695,36 +683,68 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
   }
 }
 
-static Loop *getOutermostLoop(Loop *L) {
-  while (Loop *Parent = L->getParentLoop())
-    L = Parent;
-  return L;
-}
-
 void llvm::breakLoopBackedge(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
                              LoopInfo &LI, MemorySSA *MSSA) {
   auto *Latch = L->getLoopLatch();
   assert(Latch && "multiple latches not yet supported");
   auto *Header = L->getHeader();
-  Loop *OutermostLoop = getOutermostLoop(L);
+  Loop *OutermostLoop = L->getOutermostLoop();
 
   SE.forgetLoop(L);
-
-  // Note: By splitting the backedge, and then explicitly making it unreachable
-  // we gracefully handle corner cases such as non-bottom tested loops and the
-  // like.  We also have the benefit of being able to reuse existing well tested
-  // code.  It might be worth special casing the common bottom tested case at
-  // some point to avoid code churn.
+  SE.forgetBlockAndLoopDispositions();
 
   std::unique_ptr<MemorySSAUpdater> MSSAU;
   if (MSSA)
     MSSAU = std::make_unique<MemorySSAUpdater>(MSSA);
 
-  auto *BackedgeBB = SplitEdge(Latch, Header, &DT, &LI, MSSAU.get());
+  // Update the CFG and domtree.  We chose to special case a couple of
+  // of common cases for code quality and test readability reasons.
+  [&]() -> void {
+    if (auto *BI = dyn_cast<BranchInst>(Latch->getTerminator())) {
+      if (!BI->isConditional()) {
+        DomTreeUpdater DTU(&DT, DomTreeUpdater::UpdateStrategy::Eager);
+        (void)changeToUnreachable(BI, /*PreserveLCSSA*/ true, &DTU,
+                                  MSSAU.get());
+        return;
+      }
 
-  DomTreeUpdater DTU(&DT, DomTreeUpdater::UpdateStrategy::Eager);
-  (void)changeToUnreachable(BackedgeBB->getTerminator(),
-                            /*PreserveLCSSA*/ true, &DTU, MSSAU.get());
+      // Conditional latch/exit - note that latch can be shared by inner
+      // and outer loop so the other target doesn't need to an exit
+      if (L->isLoopExiting(Latch)) {
+        // TODO: Generalize ConstantFoldTerminator so that it can be used
+        // here without invalidating LCSSA or MemorySSA.  (Tricky case for
+        // LCSSA: header is an exit block of a preceeding sibling loop w/o
+        // dedicated exits.)
+        const unsigned ExitIdx = L->contains(BI->getSuccessor(0)) ? 1 : 0;
+        BasicBlock *ExitBB = BI->getSuccessor(ExitIdx);
+
+        DomTreeUpdater DTU(&DT, DomTreeUpdater::UpdateStrategy::Eager);
+        Header->removePredecessor(Latch, true);
+
+        IRBuilder<> Builder(BI);
+        auto *NewBI = Builder.CreateBr(ExitBB);
+        // Transfer the metadata to the new branch instruction (minus the
+        // loop info since this is no longer a loop)
+        NewBI->copyMetadata(*BI, {LLVMContext::MD_dbg,
+                                  LLVMContext::MD_annotation});
+
+        BI->eraseFromParent();
+        DTU.applyUpdates({{DominatorTree::Delete, Latch, Header}});
+        if (MSSA)
+          MSSAU->applyUpdates({{DominatorTree::Delete, Latch, Header}}, DT);
+        return;
+      }
+    }
+
+    // General case.  By splitting the backedge, and then explicitly making it
+    // unreachable we gracefully handle corner cases such as switch and invoke
+    // termiantors.
+    auto *BackedgeBB = SplitEdge(Latch, Header, &DT, &LI, MSSAU.get());
+
+    DomTreeUpdater DTU(&DT, DomTreeUpdater::UpdateStrategy::Eager);
+    (void)changeToUnreachable(BackedgeBB->getTerminator(),
+                              /*PreserveLCSSA*/ true, &DTU, MSSAU.get());
+  }();
 
   // Erase (and destroy) this loop instance.  Handles relinking sub-loops
   // and blocks within the loop as needed.
@@ -740,8 +760,8 @@ void llvm::breakLoopBackedge(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
 }
 
 
-/// Checks if \p L has single exit through latch block except possibly
-/// "deoptimizing" exits. Returns branch instruction terminating the loop
+/// Checks if \p L has an exiting latch branch.  There may also be other
+/// exiting blocks.  Returns branch instruction terminating the loop
 /// latch if above check is successful, nullptr otherwise.
 static BranchInst *getExpectedExitLoopLatchBranch(Loop *L) {
   BasicBlock *Latch = L->getLoopLatch();
@@ -756,53 +776,61 @@ static BranchInst *getExpectedExitLoopLatchBranch(Loop *L) {
           LatchBR->getSuccessor(1) == L->getHeader()) &&
          "At least one edge out of the latch must go to the header");
 
-  SmallVector<BasicBlock *, 4> ExitBlocks;
-  L->getUniqueNonLatchExitBlocks(ExitBlocks);
-  if (any_of(ExitBlocks, [](const BasicBlock *EB) {
-        return !EB->getTerminatingDeoptimizeCall();
-      }))
-    return nullptr;
-
   return LatchBR;
 }
 
-Optional<unsigned>
-llvm::getLoopEstimatedTripCount(Loop *L,
-                                unsigned *EstimatedLoopInvocationWeight) {
-  // Support loops with an exiting latch and other existing exists only
-  // deoptimize.
-  BranchInst *LatchBranch = getExpectedExitLoopLatchBranch(L);
-  if (!LatchBranch)
-    return None;
-
+/// Return the estimated trip count for any exiting branch which dominates
+/// the loop latch.
+static std::optional<uint64_t> getEstimatedTripCount(BranchInst *ExitingBranch,
+                                                     Loop *L,
+                                                     uint64_t &OrigExitWeight) {
   // To estimate the number of times the loop body was executed, we want to
   // know the number of times the backedge was taken, vs. the number of times
   // we exited the loop.
-  uint64_t BackedgeTakenWeight, LatchExitWeight;
-  if (!LatchBranch->extractProfMetadata(BackedgeTakenWeight, LatchExitWeight))
-    return None;
+  uint64_t LoopWeight, ExitWeight;
+  if (!extractBranchWeights(*ExitingBranch, LoopWeight, ExitWeight))
+    return std::nullopt;
 
-  if (LatchBranch->getSuccessor(0) != L->getHeader())
-    std::swap(BackedgeTakenWeight, LatchExitWeight);
+  if (L->contains(ExitingBranch->getSuccessor(1)))
+    std::swap(LoopWeight, ExitWeight);
 
-  if (!LatchExitWeight)
-    return None;
+  if (!ExitWeight)
+    // Don't have a way to return predicated infinite
+    return std::nullopt;
 
-  if (EstimatedLoopInvocationWeight)
-    *EstimatedLoopInvocationWeight = LatchExitWeight;
+  OrigExitWeight = ExitWeight;
 
-  // Estimated backedge taken count is a ratio of the backedge taken weight by
-  // the weight of the edge exiting the loop, rounded to nearest.
-  uint64_t BackedgeTakenCount =
-      llvm::divideNearest(BackedgeTakenWeight, LatchExitWeight);
-  // Estimated trip count is one plus estimated backedge taken count.
-  return BackedgeTakenCount + 1;
+  // Estimated exit count is a ratio of the loop weight by the weight of the
+  // edge exiting the loop, rounded to nearest.
+  uint64_t ExitCount = llvm::divideNearest(LoopWeight, ExitWeight);
+  // Estimated trip count is one plus estimated exit count.
+  return ExitCount + 1;
+}
+
+std::optional<unsigned>
+llvm::getLoopEstimatedTripCount(Loop *L,
+                                unsigned *EstimatedLoopInvocationWeight) {
+  // Currently we take the estimate exit count only from the loop latch,
+  // ignoring other exiting blocks.  This can overestimate the trip count
+  // if we exit through another exit, but can never underestimate it.
+  // TODO: incorporate information from other exits
+  if (BranchInst *LatchBranch = getExpectedExitLoopLatchBranch(L)) {
+    uint64_t ExitWeight;
+    if (std::optional<uint64_t> EstTripCount =
+            getEstimatedTripCount(LatchBranch, L, ExitWeight)) {
+      if (EstimatedLoopInvocationWeight)
+        *EstimatedLoopInvocationWeight = ExitWeight;
+      return *EstTripCount;
+    }
+  }
+  return std::nullopt;
 }
 
 bool llvm::setLoopEstimatedTripCount(Loop *L, unsigned EstimatedTripCount,
                                      unsigned EstimatedloopInvocationWeight) {
-  // Support loops with an exiting latch and other existing exists only
-  // deoptimize.
+  // At the moment, we currently support changing the estimate trip count of
+  // the latch branch only.  We could extend this API to manipulate estimated
+  // trip counts for any exit.
   BranchInst *LatchBranch = getExpectedExitLoopLatchBranch(L);
   if (!LatchBranch)
     return false;
@@ -852,32 +880,37 @@ bool llvm::hasIterationCountInvariantInParent(Loop *InnerLoop,
   return true;
 }
 
-Value *llvm::createMinMaxOp(IRBuilderBase &Builder, RecurKind RK, Value *Left,
-                            Value *Right) {
-  CmpInst::Predicate Pred;
+CmpInst::Predicate llvm::getMinMaxReductionPredicate(RecurKind RK) {
   switch (RK) {
   default:
     llvm_unreachable("Unknown min/max recurrence kind");
   case RecurKind::UMin:
-    Pred = CmpInst::ICMP_ULT;
-    break;
+    return CmpInst::ICMP_ULT;
   case RecurKind::UMax:
-    Pred = CmpInst::ICMP_UGT;
-    break;
+    return CmpInst::ICMP_UGT;
   case RecurKind::SMin:
-    Pred = CmpInst::ICMP_SLT;
-    break;
+    return CmpInst::ICMP_SLT;
   case RecurKind::SMax:
-    Pred = CmpInst::ICMP_SGT;
-    break;
+    return CmpInst::ICMP_SGT;
   case RecurKind::FMin:
-    Pred = CmpInst::FCMP_OLT;
-    break;
+    return CmpInst::FCMP_OLT;
   case RecurKind::FMax:
-    Pred = CmpInst::FCMP_OGT;
-    break;
+    return CmpInst::FCMP_OGT;
   }
+}
 
+Value *llvm::createSelectCmpOp(IRBuilderBase &Builder, Value *StartVal,
+                               RecurKind RK, Value *Left, Value *Right) {
+  if (auto VTy = dyn_cast<VectorType>(Left->getType()))
+    StartVal = Builder.CreateVectorSplat(VTy->getElementCount(), StartVal);
+  Value *Cmp =
+      Builder.CreateCmp(CmpInst::ICMP_NE, Left, StartVal, "rdx.select.cmp");
+  return Builder.CreateSelect(Cmp, Left, Right, "rdx.select");
+}
+
+Value *llvm::createMinMaxOp(IRBuilderBase &Builder, RecurKind RK, Value *Left,
+                            Value *Right) {
+  CmpInst::Predicate Pred = getMinMaxReductionPredicate(RK);
   Value *Cmp = Builder.CreateCmp(Pred, Left, Right, "rdx.minmax.cmp");
   Value *Select = Builder.CreateSelect(Cmp, Left, Right, "rdx.minmax.select");
   return Select;
@@ -885,8 +918,7 @@ Value *llvm::createMinMaxOp(IRBuilderBase &Builder, RecurKind RK, Value *Left,
 
 // Helper to generate an ordered reduction.
 Value *llvm::getOrderedReduction(IRBuilderBase &Builder, Value *Acc, Value *Src,
-                                 unsigned Op, RecurKind RdxKind,
-                                 ArrayRef<Value *> RedOps) {
+                                 unsigned Op, RecurKind RdxKind) {
   unsigned VF = cast<FixedVectorType>(Src->getType())->getNumElements();
 
   // Extract and apply reduction ops in ascending order:
@@ -904,9 +936,6 @@ Value *llvm::getOrderedReduction(IRBuilderBase &Builder, Value *Acc, Value *Src,
              "Invalid min/max");
       Result = createMinMaxOp(Builder, RdxKind, Result, Ext);
     }
-
-    if (!RedOps.empty())
-      propagateIRFlags(Result, RedOps);
   }
 
   return Result;
@@ -914,14 +943,20 @@ Value *llvm::getOrderedReduction(IRBuilderBase &Builder, Value *Acc, Value *Src,
 
 // Helper to generate a log2 shuffle reduction.
 Value *llvm::getShuffleReduction(IRBuilderBase &Builder, Value *Src,
-                                 unsigned Op, RecurKind RdxKind,
-                                 ArrayRef<Value *> RedOps) {
+                                 unsigned Op, RecurKind RdxKind) {
   unsigned VF = cast<FixedVectorType>(Src->getType())->getNumElements();
   // VF is a power of 2 so we can emit the reduction using log2(VF) shuffles
   // and vector ops, reducing the set of values being computed by half each
   // round.
   assert(isPowerOf2_32(VF) &&
          "Reduction emission only supported for pow2 vectors!");
+  // Note: fast-math-flags flags are controlled by the builder configuration
+  // and are assumed to apply to all generated arithmetic instructions.  Other
+  // poison generating flags (nsw/nuw/inbounds/inrange/exact) are not part
+  // of the builder configuration, and since they're not passed explicitly,
+  // will never be relevant here.  Note that it would be generally unsound to
+  // propagate these from an intrinsic call to the expansion anyways as we/
+  // change the order of operations.
   Value *TmpVec = Src;
   SmallVector<int, 32> ShuffleMask(VF);
   for (unsigned i = VF; i != 1; i >>= 1) {
@@ -935,7 +970,6 @@ Value *llvm::getShuffleReduction(IRBuilderBase &Builder, Value *Src,
     Value *Shuf = Builder.CreateShuffleVector(TmpVec, ShuffleMask, "rdx.shuf");
 
     if (Op != Instruction::ICmp && Op != Instruction::FCmp) {
-      // The builder propagates its fast-math-flags setting.
       TmpVec = Builder.CreateBinOp((Instruction::BinaryOps)Op, TmpVec, Shuf,
                                    "bin.rdx");
     } else {
@@ -943,27 +977,54 @@ Value *llvm::getShuffleReduction(IRBuilderBase &Builder, Value *Src,
              "Invalid min/max");
       TmpVec = createMinMaxOp(Builder, RdxKind, TmpVec, Shuf);
     }
-    if (!RedOps.empty())
-      propagateIRFlags(TmpVec, RedOps);
-
-    // We may compute the reassociated scalar ops in a way that does not
-    // preserve nsw/nuw etc. Conservatively, drop those flags.
-    if (auto *ReductionInst = dyn_cast<Instruction>(TmpVec))
-      ReductionInst->dropPoisonGeneratingFlags();
   }
   // The result is in the first element of the vector.
   return Builder.CreateExtractElement(TmpVec, Builder.getInt32(0));
 }
 
+Value *llvm::createSelectCmpTargetReduction(IRBuilderBase &Builder,
+                                            const TargetTransformInfo *TTI,
+                                            Value *Src,
+                                            const RecurrenceDescriptor &Desc,
+                                            PHINode *OrigPhi) {
+  assert(RecurrenceDescriptor::isSelectCmpRecurrenceKind(
+             Desc.getRecurrenceKind()) &&
+         "Unexpected reduction kind");
+  Value *InitVal = Desc.getRecurrenceStartValue();
+  Value *NewVal = nullptr;
+
+  // First use the original phi to determine the new value we're trying to
+  // select from in the loop.
+  SelectInst *SI = nullptr;
+  for (auto *U : OrigPhi->users()) {
+    if ((SI = dyn_cast<SelectInst>(U)))
+      break;
+  }
+  assert(SI && "One user of the original phi should be a select");
+
+  if (SI->getTrueValue() == OrigPhi)
+    NewVal = SI->getFalseValue();
+  else {
+    assert(SI->getFalseValue() == OrigPhi &&
+           "At least one input to the select should be the original Phi");
+    NewVal = SI->getTrueValue();
+  }
+
+  // Create a splat vector with the new value and compare this to the vector
+  // we want to reduce.
+  ElementCount EC = cast<VectorType>(Src->getType())->getElementCount();
+  Value *Right = Builder.CreateVectorSplat(EC, InitVal);
+  Value *Cmp =
+      Builder.CreateCmp(CmpInst::ICMP_NE, Src, Right, "rdx.select.cmp");
+
+  // If any predicate is true it means that we want to select the new value.
+  Cmp = Builder.CreateOrReduce(Cmp);
+  return Builder.CreateSelect(Cmp, NewVal, InitVal, "rdx.select");
+}
+
 Value *llvm::createSimpleTargetReduction(IRBuilderBase &Builder,
                                          const TargetTransformInfo *TTI,
-                                         Value *Src, RecurKind RdxKind,
-                                         ArrayRef<Value *> RedOps) {
-  TargetTransformInfo::ReductionFlags RdxFlags;
-  RdxFlags.IsMaxOp = RdxKind == RecurKind::SMax || RdxKind == RecurKind::UMax ||
-                     RdxKind == RecurKind::FMax;
-  RdxFlags.IsSigned = RdxKind == RecurKind::SMax || RdxKind == RecurKind::SMin;
-
+                                         Value *Src, RecurKind RdxKind) {
   auto *SrcVecEltTy = cast<VectorType>(Src->getType())->getElementType();
   switch (RdxKind) {
   case RecurKind::Add:
@@ -976,6 +1037,7 @@ Value *llvm::createSimpleTargetReduction(IRBuilderBase &Builder,
     return Builder.CreateOrReduce(Src);
   case RecurKind::Xor:
     return Builder.CreateXorReduce(Src);
+  case RecurKind::FMulAdd:
   case RecurKind::FAdd:
     return Builder.CreateFAddReduce(ConstantFP::getNegativeZero(SrcVecEltTy),
                                     Src);
@@ -1000,20 +1062,26 @@ Value *llvm::createSimpleTargetReduction(IRBuilderBase &Builder,
 
 Value *llvm::createTargetReduction(IRBuilderBase &B,
                                    const TargetTransformInfo *TTI,
-                                   const RecurrenceDescriptor &Desc,
-                                   Value *Src) {
+                                   const RecurrenceDescriptor &Desc, Value *Src,
+                                   PHINode *OrigPhi) {
   // TODO: Support in-order reductions based on the recurrence descriptor.
   // All ops in the reduction inherit fast-math-flags from the recurrence
   // descriptor.
   IRBuilderBase::FastMathFlagGuard FMFGuard(B);
   B.setFastMathFlags(Desc.getFastMathFlags());
-  return createSimpleTargetReduction(B, TTI, Src, Desc.getRecurrenceKind());
+
+  RecurKind RK = Desc.getRecurrenceKind();
+  if (RecurrenceDescriptor::isSelectCmpRecurrenceKind(RK))
+    return createSelectCmpTargetReduction(B, TTI, Src, Desc, OrigPhi);
+
+  return createSimpleTargetReduction(B, TTI, Src, RK);
 }
 
 Value *llvm::createOrderedReduction(IRBuilderBase &B,
                                     const RecurrenceDescriptor &Desc,
                                     Value *Src, Value *Start) {
-  assert(Desc.getRecurrenceKind() == RecurKind::FAdd &&
+  assert((Desc.getRecurrenceKind() == RecurKind::FAdd ||
+          Desc.getRecurrenceKind() == RecurKind::FMulAdd) &&
          "Unexpected reduction kind");
   assert(Src->getType()->isVectorTy() && "Expected a vector type");
   assert(!Start->getType()->isVectorTy() && "Expected a scalar type");
@@ -1021,7 +1089,8 @@ Value *llvm::createOrderedReduction(IRBuilderBase &B,
   return B.CreateFAddReduce(Start, Src);
 }
 
-void llvm::propagateIRFlags(Value *I, ArrayRef<Value *> VL, Value *OpValue) {
+void llvm::propagateIRFlags(Value *I, ArrayRef<Value *> VL, Value *OpValue,
+                            bool IncludeWrapFlags) {
   auto *VecOp = dyn_cast<Instruction>(I);
   if (!VecOp)
     return;
@@ -1030,7 +1099,7 @@ void llvm::propagateIRFlags(Value *I, ArrayRef<Value *> VL, Value *OpValue) {
   if (!Intersection)
     return;
   const unsigned Opcode = Intersection->getOpcode();
-  VecOp->copyIRFlags(Intersection);
+  VecOp->copyIRFlags(Intersection, IncludeWrapFlags);
   for (auto *V : VL) {
     auto *Instr = dyn_cast<Instruction>(V);
     if (!Instr)
@@ -1081,58 +1150,6 @@ bool llvm::cannotBeMaxInLoop(const SCEV *S, const Loop *L, ScalarEvolution &SE,
 // As a side effect, reduces the amount of IV processing within the loop.
 //===----------------------------------------------------------------------===//
 
-// Return true if the SCEV expansion generated by the rewriter can replace the
-// original value. SCEV guarantees that it produces the same value, but the way
-// it is produced may be illegal IR.  Ideally, this function will only be
-// called for verification.
-static bool isValidRewrite(ScalarEvolution *SE, Value *FromVal, Value *ToVal) {
-  // If an SCEV expression subsumed multiple pointers, its expansion could
-  // reassociate the GEP changing the base pointer. This is illegal because the
-  // final address produced by a GEP chain must be inbounds relative to its
-  // underlying object. Otherwise basic alias analysis, among other things,
-  // could fail in a dangerous way. Ultimately, SCEV will be improved to avoid
-  // producing an expression involving multiple pointers. Until then, we must
-  // bail out here.
-  //
-  // Retrieve the pointer operand of the GEP. Don't use getUnderlyingObject
-  // because it understands lcssa phis while SCEV does not.
-  Value *FromPtr = FromVal;
-  Value *ToPtr = ToVal;
-  if (auto *GEP = dyn_cast<GEPOperator>(FromVal))
-    FromPtr = GEP->getPointerOperand();
-
-  if (auto *GEP = dyn_cast<GEPOperator>(ToVal))
-    ToPtr = GEP->getPointerOperand();
-
-  if (FromPtr != FromVal || ToPtr != ToVal) {
-    // Quickly check the common case
-    if (FromPtr == ToPtr)
-      return true;
-
-    // SCEV may have rewritten an expression that produces the GEP's pointer
-    // operand. That's ok as long as the pointer operand has the same base
-    // pointer. Unlike getUnderlyingObject(), getPointerBase() will find the
-    // base of a recurrence. This handles the case in which SCEV expansion
-    // converts a pointer type recurrence into a nonrecurrent pointer base
-    // indexed by an integer recurrence.
-
-    // If the GEP base pointer is a vector of pointers, abort.
-    if (!FromPtr->getType()->isPointerTy() || !ToPtr->getType()->isPointerTy())
-      return false;
-
-    const SCEV *FromBase = SE->getPointerBase(SE->getSCEV(FromPtr));
-    const SCEV *ToBase = SE->getPointerBase(SE->getSCEV(ToPtr));
-    if (FromBase == ToBase)
-      return true;
-
-    LLVM_DEBUG(dbgs() << "rewriteLoopExitValues: GEP rewrite bail out "
-                      << *FromBase << " != " << *ToBase << "\n");
-
-    return false;
-  }
-  return true;
-}
-
 static bool hasHardUserWithinLoop(const Loop *L, const Instruction *I) {
   SmallPtrSet<const Instruction *, 8> Visited;
   SmallVector<const Instruction *, 8> WorkList;
@@ -1147,7 +1164,7 @@ static bool hasHardUserWithinLoop(const Loop *L, const Instruction *I) {
     if (Curr->mayHaveSideEffects())
       return true;
     // Otherwise, add all its users to worklist.
-    for (auto U : Curr->users()) {
+    for (const auto *U : Curr->users()) {
       auto *UI = cast<Instruction>(U);
       if (Visited.insert(UI).second)
         WorkList.push_back(UI);
@@ -1164,9 +1181,6 @@ struct RewritePhi {
   const SCEV *ExpansionSCEV; // The SCEV of the incoming value we are rewriting.
   Instruction *ExpansionPoint; // Where we'd like to expand that SCEV?
   bool HighCost;               // Is this expansion a high-cost?
-
-  Value *Expansion = nullptr;
-  bool ValidRewrite = false;
 
   RewritePhi(PHINode *P, unsigned I, const SCEV *Val, Instruction *ExpansionPt,
              bool H)
@@ -1204,8 +1218,6 @@ static bool canLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet)
     // phase later. Skip it in the loop invariant check below.
     bool found = false;
     for (const RewritePhi &Phi : RewritePhiSet) {
-      if (!Phi.ValidRewrite)
-        continue;
       unsigned i = Phi.Ith;
       if (Phi.PN == P && (Phi.PN)->getIncomingValue(i) == Incoming) {
         found = true;
@@ -1228,6 +1240,20 @@ static bool canLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet)
       return false;
 
   return true;
+}
+
+/// Checks if it is safe to call InductionDescriptor::isInductionPHI for \p Phi,
+/// and returns true if this Phi is an induction phi in the loop. When
+/// isInductionPHI returns true, \p ID will be also be set by isInductionPHI.
+static bool checkIsIndPhi(PHINode *Phi, Loop *L, ScalarEvolution *SE,
+                          InductionDescriptor &ID) {
+  if (!Phi)
+    return false;
+  if (!L->getLoopPreheader())
+    return false;
+  if (Phi->getParent() != L->getHeader())
+    return false;
+  return InductionDescriptor::isInductionPHI(Phi, L, SE, ID);
 }
 
 int llvm::rewriteLoopExitValues(Loop *L, LoopInfo *LI, TargetLibraryInfo *TLI,
@@ -1264,13 +1290,6 @@ int llvm::rewriteLoopExitValues(Loop *L, LoopInfo *LI, TargetLibraryInfo *TLI,
       if (!SE->isSCEVable(PN->getType()))
         continue;
 
-      // It's necessary to tell ScalarEvolution about this explicitly so that
-      // it can walk the def-use list and forget all SCEVs, as it may not be
-      // watching the PHI itself. Once the new exit value is in place, there
-      // may not be a def-use connection between the loop and every instruction
-      // which got a SCEVAddRecExpr for that loop.
-      SE->forgetValue(PN);
-
       // Iterate over all of the values in all the PHI nodes.
       for (unsigned i = 0; i != NumPreds; ++i) {
         // If the value being merged in is not integer or is not defined
@@ -1288,6 +1307,46 @@ int llvm::rewriteLoopExitValues(Loop *L, LoopInfo *LI, TargetLibraryInfo *TLI,
         if (!L->contains(Inst))
           continue;
 
+        // Find exit values which are induction variables in the loop, and are
+        // unused in the loop, with the only use being the exit block PhiNode,
+        // and the induction variable update binary operator.
+        // The exit value can be replaced with the final value when it is cheap
+        // to do so.
+        if (ReplaceExitValue == UnusedIndVarInLoop) {
+          InductionDescriptor ID;
+          PHINode *IndPhi = dyn_cast<PHINode>(Inst);
+          if (IndPhi) {
+            if (!checkIsIndPhi(IndPhi, L, SE, ID))
+              continue;
+            // This is an induction PHI. Check that the only users are PHI
+            // nodes, and induction variable update binary operators.
+            if (llvm::any_of(Inst->users(), [&](User *U) {
+                  if (!isa<PHINode>(U) && !isa<BinaryOperator>(U))
+                    return true;
+                  BinaryOperator *B = dyn_cast<BinaryOperator>(U);
+                  if (B && B != ID.getInductionBinOp())
+                    return true;
+                  return false;
+                }))
+              continue;
+          } else {
+            // If it is not an induction phi, it must be an induction update
+            // binary operator with an induction phi user.
+            BinaryOperator *B = dyn_cast<BinaryOperator>(Inst);
+            if (!B)
+              continue;
+            if (llvm::any_of(Inst->users(), [&](User *U) {
+                  PHINode *Phi = dyn_cast<PHINode>(U);
+                  if (Phi != PN && !checkIsIndPhi(Phi, L, SE, ID))
+                    return true;
+                  return false;
+                }))
+              continue;
+            if (B != ID.getInductionBinOp())
+              continue;
+          }
+        }
+
         // Okay, this instruction has a user outside of the current loop
         // and varies predictably *inside* the loop.  Evaluate the value it
         // contains when the loop exits, if possible.  We prefer to start with
@@ -1297,7 +1356,7 @@ int llvm::rewriteLoopExitValues(Loop *L, LoopInfo *LI, TargetLibraryInfo *TLI,
         const SCEV *ExitValue = SE->getSCEVAtScope(Inst, L->getParentLoop());
         if (isa<SCEVCouldNotCompute>(ExitValue) ||
             !SE->isLoopInvariant(ExitValue, L) ||
-            !isSafeToExpand(ExitValue, *SE)) {
+            !Rewriter.isSafeToExpand(ExitValue)) {
           // TODO: This should probably be sunk into SCEV in some way; maybe a
           // getSCEVForExit(SCEV*, L, ExitingBB)?  It can be generalized for
           // most SCEV expressions and other recurrence types (e.g. shift
@@ -1310,7 +1369,7 @@ int llvm::rewriteLoopExitValues(Loop *L, LoopInfo *LI, TargetLibraryInfo *TLI,
               ExitValue = AddRec->evaluateAtIteration(ExitCount, *SE);
           if (isa<SCEVCouldNotCompute>(ExitValue) ||
               !SE->isLoopInvariant(ExitValue, L) ||
-              !isSafeToExpand(ExitValue, *SE))
+              !Rewriter.isSafeToExpand(ExitValue))
             continue;
         }
 
@@ -1334,66 +1393,59 @@ int llvm::rewriteLoopExitValues(Loop *L, LoopInfo *LI, TargetLibraryInfo *TLI,
         // and next SCEV may errneously get smaller cost.
 
         // Collect all the candidate PHINodes to be rewritten.
-        RewritePhiSet.emplace_back(PN, i, ExitValue, Inst, HighCost);
+        Instruction *InsertPt =
+          (isa<PHINode>(Inst) || isa<LandingPadInst>(Inst)) ?
+          &*Inst->getParent()->getFirstInsertionPt() : Inst;
+        RewritePhiSet.emplace_back(PN, i, ExitValue, InsertPt, HighCost);
       }
     }
   }
 
-  // Now that we've done preliminary filtering and billed all the SCEV's,
-  // we can perform the last sanity check - the expansion must be valid.
-  for (RewritePhi &Phi : RewritePhiSet) {
-    Phi.Expansion = Rewriter.expandCodeFor(Phi.ExpansionSCEV, Phi.PN->getType(),
-                                           Phi.ExpansionPoint);
-
-    LLVM_DEBUG(dbgs() << "rewriteLoopExitValues: AfterLoopVal = "
-                      << *(Phi.Expansion) << '\n'
-                      << "  LoopVal = " << *(Phi.ExpansionPoint) << "\n");
-
-    // FIXME: isValidRewrite() is a hack. it should be an assert, eventually.
-    Phi.ValidRewrite = isValidRewrite(SE, Phi.ExpansionPoint, Phi.Expansion);
-    if (!Phi.ValidRewrite) {
-      DeadInsts.push_back(Phi.Expansion);
-      continue;
-    }
-
-#ifndef NDEBUG
-    // If we reuse an instruction from a loop which is neither L nor one of
-    // its containing loops, we end up breaking LCSSA form for this loop by
-    // creating a new use of its instruction.
-    if (auto *ExitInsn = dyn_cast<Instruction>(Phi.Expansion))
-      if (auto *EVL = LI->getLoopFor(ExitInsn->getParent()))
-        if (EVL != L)
-          assert(EVL->contains(L) && "LCSSA breach detected!");
-#endif
-  }
-
-  // TODO: after isValidRewrite() is an assertion, evaluate whether
-  // it is beneficial to change how we calculate high-cost:
-  // if we have SCEV 'A' which we know we will expand, should we calculate
-  // the cost of other SCEV's after expanding SCEV 'A',
-  // thus potentially giving cost bonus to those other SCEV's?
+  // TODO: evaluate whether it is beneficial to change how we calculate
+  // high-cost: if we have SCEV 'A' which we know we will expand, should we
+  // calculate the cost of other SCEV's after expanding SCEV 'A', thus
+  // potentially giving cost bonus to those other SCEV's?
 
   bool LoopCanBeDel = canLoopBeDeleted(L, RewritePhiSet);
   int NumReplaced = 0;
 
   // Transformation.
   for (const RewritePhi &Phi : RewritePhiSet) {
-    if (!Phi.ValidRewrite)
-      continue;
-
     PHINode *PN = Phi.PN;
-    Value *ExitVal = Phi.Expansion;
 
     // Only do the rewrite when the ExitValue can be expanded cheaply.
     // If LoopCanBeDel is true, rewrite exit value aggressively.
-    if (ReplaceExitValue == OnlyCheapRepl && !LoopCanBeDel && Phi.HighCost) {
-      DeadInsts.push_back(ExitVal);
+    if ((ReplaceExitValue == OnlyCheapRepl ||
+         ReplaceExitValue == UnusedIndVarInLoop) &&
+        !LoopCanBeDel && Phi.HighCost)
       continue;
-    }
+
+    Value *ExitVal = Rewriter.expandCodeFor(
+        Phi.ExpansionSCEV, Phi.PN->getType(), Phi.ExpansionPoint);
+
+    LLVM_DEBUG(dbgs() << "rewriteLoopExitValues: AfterLoopVal = " << *ExitVal
+                      << '\n'
+                      << "  LoopVal = " << *(Phi.ExpansionPoint) << "\n");
+
+#ifndef NDEBUG
+    // If we reuse an instruction from a loop which is neither L nor one of
+    // its containing loops, we end up breaking LCSSA form for this loop by
+    // creating a new use of its instruction.
+    if (auto *ExitInsn = dyn_cast<Instruction>(ExitVal))
+      if (auto *EVL = LI->getLoopFor(ExitInsn->getParent()))
+        if (EVL != L)
+          assert(EVL->contains(L) && "LCSSA breach detected!");
+#endif
 
     NumReplaced++;
     Instruction *Inst = cast<Instruction>(PN->getIncomingValue(Phi.Ith));
     PN->setIncomingValue(Phi.Ith, ExitVal);
+    // It's necessary to tell ScalarEvolution about this explicitly so that
+    // it can walk the def-use list and forget all SCEVs, as it may not be
+    // watching the PHI itself. Once the new exit value is in place, there
+    // may not be a def-use connection between the loop and every instruction
+    // which got a SCEVAddRecExpr for that loop.
+    SE->forgetValue(PN);
 
     // If this instruction is dead now, delete it. Don't do it now to avoid
     // invalidating iterators.
@@ -1424,7 +1476,7 @@ void llvm::setProfileInfoAfterUnrolling(Loop *OrigLoop, Loop *UnrolledLoop,
 
   // Get number of iterations in the original scalar loop.
   unsigned OrigLoopInvocationWeight = 0;
-  Optional<unsigned> OrigAverageTripCount =
+  std::optional<unsigned> OrigAverageTripCount =
       getLoopEstimatedTripCount(OrigLoop, &OrigLoopInvocationWeight);
   if (!OrigAverageTripCount)
     return;
@@ -1498,10 +1550,9 @@ Loop *llvm::cloneLoop(Loop *L, Loop *PL, ValueToValueMapTy &VM,
     LPM->addLoop(New);
 
   // Add all of the blocks in L to the new loop.
-  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
-       I != E; ++I)
-    if (LI->getLoopFor(*I) == L)
-      New.addBasicBlockToLoop(cast<BasicBlock>(VM[*I]), *LI);
+  for (BasicBlock *BB : L->blocks())
+    if (LI->getLoopFor(BB) == L)
+      New.addBasicBlockToLoop(cast<BasicBlock>(VM[BB]), *LI);
 
   // Add all of the subloops to the new loop.
   for (Loop *I : *L)
@@ -1531,6 +1582,11 @@ static PointerBounds expandBounds(const RuntimeCheckingPtrGroup *CG,
   LLVM_DEBUG(dbgs() << "LAA: Adding RT check for range:\n");
   Start = Exp.expandCodeFor(CG->Low, PtrArithTy, Loc);
   End = Exp.expandCodeFor(CG->High, PtrArithTy, Loc);
+  if (CG->NeedsFreeze) {
+    IRBuilder<> Builder(Loc);
+    Start = Builder.CreateFreeze(Start, Start->getName() + ".fr");
+    End = Builder.CreateFreeze(End, End->getName() + ".fr");
+  }
   LLVM_DEBUG(dbgs() << "Start: " << *CG->Low << " End: " << *CG->High << "\n");
   return {Start, End};
 }
@@ -1554,7 +1610,7 @@ expandBounds(const SmallVectorImpl<RuntimePointerCheck> &PointerChecks, Loop *L,
   return ChecksWithBounds;
 }
 
-std::pair<Instruction *, Instruction *> llvm::addRuntimeChecks(
+Value *llvm::addRuntimeChecks(
     Instruction *Loc, Loop *TheLoop,
     const SmallVectorImpl<RuntimePointerCheck> &PointerChecks,
     SCEVExpander &Exp) {
@@ -1563,21 +1619,11 @@ std::pair<Instruction *, Instruction *> llvm::addRuntimeChecks(
   auto ExpandedChecks = expandBounds(PointerChecks, TheLoop, Loc, Exp);
 
   LLVMContext &Ctx = Loc->getContext();
-  Instruction *FirstInst = nullptr;
-  IRBuilder<> ChkBuilder(Loc);
+  IRBuilder<InstSimplifyFolder> ChkBuilder(Ctx,
+                                           Loc->getModule()->getDataLayout());
+  ChkBuilder.SetInsertPoint(Loc);
   // Our instructions might fold to a constant.
   Value *MemoryRuntimeCheck = nullptr;
-
-  // FIXME: this helper is currently a duplicate of the one in
-  // LoopVectorize.cpp.
-  auto GetFirstInst = [](Instruction *FirstInst, Value *V,
-                         Instruction *Loc) -> Instruction * {
-    if (FirstInst)
-      return FirstInst;
-    if (Instruction *I = dyn_cast<Instruction>(V))
-      return I->getParent() == Loc->getParent() ? I : nullptr;
-    return nullptr;
-  };
 
   for (const auto &Check : ExpandedChecks) {
     const PointerBounds &A = Check.first, &B = Check.second;
@@ -1607,36 +1653,59 @@ std::pair<Instruction *, Instruction *> llvm::addRuntimeChecks(
     // bound1 = (A.Start < B.End)
     //  IsConflict = bound0 & bound1
     Value *Cmp0 = ChkBuilder.CreateICmpULT(Start0, End1, "bound0");
-    FirstInst = GetFirstInst(FirstInst, Cmp0, Loc);
     Value *Cmp1 = ChkBuilder.CreateICmpULT(Start1, End0, "bound1");
-    FirstInst = GetFirstInst(FirstInst, Cmp1, Loc);
     Value *IsConflict = ChkBuilder.CreateAnd(Cmp0, Cmp1, "found.conflict");
-    FirstInst = GetFirstInst(FirstInst, IsConflict, Loc);
     if (MemoryRuntimeCheck) {
       IsConflict =
           ChkBuilder.CreateOr(MemoryRuntimeCheck, IsConflict, "conflict.rdx");
-      FirstInst = GetFirstInst(FirstInst, IsConflict, Loc);
     }
     MemoryRuntimeCheck = IsConflict;
   }
 
-  if (!MemoryRuntimeCheck)
-    return std::make_pair(nullptr, nullptr);
-
-  // We have to do this trickery because the IRBuilder might fold the check to a
-  // constant expression in which case there is no Instruction anchored in a
-  // the block.
-  Instruction *Check =
-      BinaryOperator::CreateAnd(MemoryRuntimeCheck, ConstantInt::getTrue(Ctx));
-  ChkBuilder.Insert(Check, "memcheck.conflict");
-  FirstInst = GetFirstInst(FirstInst, Check, Loc);
-  return std::make_pair(FirstInst, Check);
+  return MemoryRuntimeCheck;
 }
 
-Optional<IVConditionInfo> llvm::hasPartialIVCondition(Loop &L,
-                                                      unsigned MSSAThreshold,
-                                                      MemorySSA &MSSA,
-                                                      AAResults &AA) {
+Value *llvm::addDiffRuntimeChecks(
+    Instruction *Loc, ArrayRef<PointerDiffInfo> Checks, SCEVExpander &Expander,
+    function_ref<Value *(IRBuilderBase &, unsigned)> GetVF, unsigned IC) {
+
+  LLVMContext &Ctx = Loc->getContext();
+  IRBuilder<InstSimplifyFolder> ChkBuilder(Ctx,
+                                           Loc->getModule()->getDataLayout());
+  ChkBuilder.SetInsertPoint(Loc);
+  // Our instructions might fold to a constant.
+  Value *MemoryRuntimeCheck = nullptr;
+
+  for (const auto &C : Checks) {
+    Type *Ty = C.SinkStart->getType();
+    // Compute VF * IC * AccessSize.
+    auto *VFTimesUFTimesSize =
+        ChkBuilder.CreateMul(GetVF(ChkBuilder, Ty->getScalarSizeInBits()),
+                             ConstantInt::get(Ty, IC * C.AccessSize));
+    Value *Sink = Expander.expandCodeFor(C.SinkStart, Ty, Loc);
+    Value *Src = Expander.expandCodeFor(C.SrcStart, Ty, Loc);
+    if (C.NeedsFreeze) {
+      IRBuilder<> Builder(Loc);
+      Sink = Builder.CreateFreeze(Sink, Sink->getName() + ".fr");
+      Src = Builder.CreateFreeze(Src, Src->getName() + ".fr");
+    }
+    Value *Diff = ChkBuilder.CreateSub(Sink, Src);
+    Value *IsConflict =
+        ChkBuilder.CreateICmpULT(Diff, VFTimesUFTimesSize, "diff.check");
+
+    if (MemoryRuntimeCheck) {
+      IsConflict =
+          ChkBuilder.CreateOr(MemoryRuntimeCheck, IsConflict, "conflict.rdx");
+    }
+    MemoryRuntimeCheck = IsConflict;
+  }
+
+  return MemoryRuntimeCheck;
+}
+
+std::optional<IVConditionInfo>
+llvm::hasPartialIVCondition(const Loop &L, unsigned MSSAThreshold,
+                            const MemorySSA &MSSA, AAResults &AA) {
   auto *TI = dyn_cast<BranchInst>(L.getHeader()->getTerminator());
   if (!TI || !TI->isConditional())
     return {};
@@ -1693,7 +1762,7 @@ Optional<IVConditionInfo> llvm::hasPartialIVCondition(Loop &L,
       [&L, &AA, &AccessedLocs, &ExitingBlocks, &InstToDuplicate,
        MSSAThreshold](BasicBlock *Succ, BasicBlock *Header,
                       SmallVector<MemoryAccess *, 4> AccessesToCheck)
-      -> Optional<IVConditionInfo> {
+      -> std::optional<IVConditionInfo> {
     IVConditionInfo Info;
     // First, collect all blocks in the loop that are on a patch from Succ
     // to the header.
@@ -1771,7 +1840,7 @@ Optional<IVConditionInfo> llvm::hasPartialIVCondition(Loop &L,
           if (L.contains(Succ))
             continue;
 
-          Info.PathIsNoop &= llvm::empty(Succ->phis()) &&
+          Info.PathIsNoop &= Succ->phis().empty() &&
                              (!Info.ExitForPath || Info.ExitForPath == Succ);
           if (!Info.PathIsNoop)
             break;

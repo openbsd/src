@@ -192,10 +192,8 @@ private:
 
     void push_back(Value *V) {
       // Do not push back duplicates.
-      if (!S.count(V)) {
+      if (S.insert(V).second)
         Q.push_back(V);
-        S.insert(V);
-      }
     }
 
     Value *pop_front_val() {
@@ -524,7 +522,7 @@ void Simplifier::Context::link(Instruction *I, BasicBlock *B,
       link(OpI, B, At);
   }
 
-  B->getInstList().insert(At, I);
+  I->insertInto(B, At);
 }
 
 Value *Simplifier::Context::materialize(BasicBlock *B,
@@ -1139,7 +1137,7 @@ bool PolynomialMultiplyRecognize::findCycle(Value *Out, Value *In,
   auto *BB = cast<Instruction>(Out)->getParent();
   bool HadPhi = false;
 
-  for (auto U : Out->users()) {
+  for (auto *U : Out->users()) {
     auto *I = dyn_cast<Instruction>(&*U);
     if (I == nullptr || I->getParent() != BB)
       continue;
@@ -1152,9 +1150,8 @@ bool PolynomialMultiplyRecognize::findCycle(Value *Out, Value *In,
     if (IsPhi && HadPhi)
       return false;
     HadPhi |= IsPhi;
-    if (Cycle.count(I))
+    if (!Cycle.insert(I))
       return false;
-    Cycle.insert(I);
     if (findCycle(I, In, Cycle))
       break;
     Cycle.remove(I);
@@ -1351,8 +1348,8 @@ bool PolynomialMultiplyRecognize::convertShiftsToLeft(BasicBlock *LoopB,
     // be unshifted.
     if (!commutesWithShift(R))
       return false;
-    for (auto I = R->user_begin(), E = R->user_end(); I != E; ++I) {
-      auto *T = cast<Instruction>(*I);
+    for (User *U : R->users()) {
+      auto *T = cast<Instruction>(U);
       // Skip users from outside of the loop. They will be handled later.
       // Also, skip the right-shifts and phi nodes, since they mix early
       // and late values.
@@ -1487,13 +1484,11 @@ bool PolynomialMultiplyRecognize::convertShiftsToLeft(BasicBlock *LoopB,
 
 void PolynomialMultiplyRecognize::cleanupLoopBody(BasicBlock *LoopB) {
   for (auto &I : *LoopB)
-    if (Value *SV = SimplifyInstruction(&I, {DL, &TLI, &DT}))
+    if (Value *SV = simplifyInstruction(&I, {DL, &TLI, &DT}))
       I.replaceAllUsesWith(SV);
 
-  for (auto I = LoopB->begin(), N = I; I != LoopB->end(); I = N) {
-    N = std::next(I);
-    RecursivelyDeleteTriviallyDeadInstructions(&*I, &TLI);
-  }
+  for (Instruction &I : llvm::make_early_inc_range(*LoopB))
+    RecursivelyDeleteTriviallyDeadInstructions(&I, &TLI);
 }
 
 unsigned PolynomialMultiplyRecognize::getInverseMxN(unsigned QP) {
@@ -2008,8 +2003,7 @@ mayLoopAccessLocation(Value *Ptr, ModRefInfo Access, Loop *L,
   for (auto *B : L->blocks())
     for (auto &I : *B)
       if (Ignored.count(&I) == 0 &&
-          isModOrRefSet(
-              intersectModRef(AA.getModRefInfo(&I, StoreLoc), Access)))
+          isModOrRefSet(AA.getModRefInfo(&I, StoreLoc) & Access))
         return true;
 
   return false;
@@ -2171,7 +2165,7 @@ CleanupAndExit:
                                SCEV::FlagNUW);
   Value *NumBytes = Expander.expandCodeFor(NumBytesS, IntPtrTy, ExpPt);
   if (Instruction *In = dyn_cast<Instruction>(NumBytes))
-    if (Value *Simp = SimplifyInstruction(In, {*DL, TLI, DT}))
+    if (Value *Simp = simplifyInstruction(In, {*DL, TLI, DT}))
       NumBytes = Simp;
 
   CallInst *NewCall;
@@ -2247,8 +2241,7 @@ CleanupAndExit:
     DT->addNewBlock(MemmoveB, Preheader);
     // Find the new immediate dominator of the exit block.
     BasicBlock *ExitD = Preheader;
-    for (auto PI = pred_begin(ExitB), PE = pred_end(ExitB); PI != PE; ++PI) {
-      BasicBlock *PB = *PI;
+    for (BasicBlock *PB : predecessors(ExitB)) {
       ExitD = DT->findNearestCommonDominator(ExitD, PB);
       if (!ExitD)
         break;
@@ -2282,7 +2275,7 @@ CleanupAndExit:
       Value *NumWords = Expander.expandCodeFor(NumWordsS, Int32Ty,
                                                MemmoveB->getTerminator());
       if (Instruction *In = dyn_cast<Instruction>(NumWords))
-        if (Value *Simp = SimplifyInstruction(In, {*DL, TLI, DT}))
+        if (Value *Simp = simplifyInstruction(In, {*DL, TLI, DT}))
           NumWords = Simp;
 
       Value *Op0 = (StoreBasePtr->getType() == Int32PtrTy)
@@ -2353,7 +2346,7 @@ bool HexagonLoopIdiomRecognize::coverLoop(Loop *L,
         continue;
       if (!Worklist.count(&In) && In.mayHaveSideEffects())
         return false;
-      for (auto K : In.users()) {
+      for (auto *K : In.users()) {
         Instruction *UseI = dyn_cast<Instruction>(K);
         if (!UseI)
           continue;

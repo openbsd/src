@@ -13,7 +13,6 @@
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/ADT/AllocatorList.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/None.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -27,7 +26,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Unicode.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -260,8 +258,9 @@ public:
   Token getNext();
 
   void printError(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Message,
-                  ArrayRef<SMRange> Ranges = None) {
-    SM.PrintMessage(Loc, Kind, Message, Ranges, /* FixIts= */ None, ShowColors);
+                  ArrayRef<SMRange> Ranges = std::nullopt) {
+    SM.PrintMessage(Loc, Kind, Message, Ranges, /* FixIts= */ std::nullopt,
+                    ShowColors);
   }
 
   void setError(const Twine &Message, StringRef::iterator Position) {
@@ -393,6 +392,9 @@ private:
   ///        Pos is whitespace or a new line
   bool isBlankOrBreak(StringRef::iterator Position);
 
+  /// Return true if the line is a line break, false otherwise.
+  bool isLineEmpty(StringRef Line);
+
   /// Consume a single b-break[28] if it's present at the current position.
   ///
   /// Return false if the code unit at the current position isn't a line break.
@@ -470,6 +472,18 @@ private:
 
   /// Scan a block scalar starting with | or >.
   bool scanBlockScalar(bool IsLiteral);
+
+  /// Scan a block scalar style indicator and header.
+  ///
+  /// Note: This is distinct from scanBlockScalarHeader to mirror the fact that
+  /// YAML does not consider the style indicator to be a part of the header.
+  ///
+  /// Return false if an error occurred.
+  bool scanBlockScalarIndicators(char &StyleIndicator, char &ChompingIndicator,
+                                 unsigned &IndentIndicator, bool &IsDone);
+
+  /// Scan a style indicator in a block scalar header.
+  char scanBlockStyleIndicator();
 
   /// Scan a chomping indicator in a block scalar header.
   char scanBlockChompingIndicator();
@@ -746,7 +760,7 @@ std::string yaml::escape(StringRef Input, bool EscapePrintable) {
   return EscapedInput;
 }
 
-llvm::Optional<bool> yaml::parseBool(StringRef S) {
+std::optional<bool> yaml::parseBool(StringRef S) {
   switch (S.size()) {
   case 1:
     switch (S.front()) {
@@ -757,78 +771,78 @@ llvm::Optional<bool> yaml::parseBool(StringRef S) {
     case 'N':
       return false;
     default:
-      return None;
+      return std::nullopt;
     }
   case 2:
     switch (S.front()) {
     case 'O':
       if (S[1] == 'N') // ON
         return true;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case 'o':
       if (S[1] == 'n') //[Oo]n
         return true;
-      return None;
+      return std::nullopt;
     case 'N':
       if (S[1] == 'O') // NO
         return false;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case 'n':
       if (S[1] == 'o') //[Nn]o
         return false;
-      return None;
+      return std::nullopt;
     default:
-      return None;
+      return std::nullopt;
     }
   case 3:
     switch (S.front()) {
     case 'O':
       if (S.drop_front() == "FF") // OFF
         return false;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case 'o':
       if (S.drop_front() == "ff") //[Oo]ff
         return false;
-      return None;
+      return std::nullopt;
     case 'Y':
       if (S.drop_front() == "ES") // YES
         return true;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case 'y':
       if (S.drop_front() == "es") //[Yy]es
         return true;
-      return None;
+      return std::nullopt;
     default:
-      return None;
+      return std::nullopt;
     }
   case 4:
     switch (S.front()) {
     case 'T':
       if (S.drop_front() == "RUE") // TRUE
         return true;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case 't':
       if (S.drop_front() == "rue") //[Tt]rue
         return true;
-      return None;
+      return std::nullopt;
     default:
-      return None;
+      return std::nullopt;
     }
   case 5:
     switch (S.front()) {
     case 'F':
       if (S.drop_front() == "ALSE") // FALSE
         return false;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case 'f':
       if (S.drop_front() == "alse") //[Ff]alse
         return false;
-      return None;
+      return std::nullopt;
     default:
-      return None;
+      return std::nullopt;
     }
   default:
-    return None;
+    return std::nullopt;
   }
 }
 
@@ -1033,6 +1047,13 @@ bool Scanner::isBlankOrBreak(StringRef::iterator Position) {
     return false;
   return *Position == ' ' || *Position == '\t' || *Position == '\r' ||
          *Position == '\n';
+}
+
+bool Scanner::isLineEmpty(StringRef Line) {
+  for (const auto *Position = Line.begin(); Position != Line.end(); ++Position)
+    if (!isBlankOrBreak(Position))
+      return false;
+  return true;
 }
 
 bool Scanner::consumeLineBreakIfPresent() {
@@ -1517,6 +1538,25 @@ bool Scanner::scanAliasOrAnchor(bool IsAlias) {
   return true;
 }
 
+bool Scanner::scanBlockScalarIndicators(char &StyleIndicator,
+                                        char &ChompingIndicator,
+                                        unsigned &IndentIndicator,
+                                        bool &IsDone) {
+  StyleIndicator = scanBlockStyleIndicator();
+  if (!scanBlockScalarHeader(ChompingIndicator, IndentIndicator, IsDone))
+    return false;
+  return true;
+}
+
+char Scanner::scanBlockStyleIndicator() {
+  char Indicator = ' ';
+  if (Current != End && (*Current == '>' || *Current == '|')) {
+    Indicator = *Current;
+    skip(1);
+  }
+  return Indicator;
+}
+
 char Scanner::scanBlockChompingIndicator() {
   char Indicator = ' ';
   if (Current != End && (*Current == '+' || *Current == '-')) {
@@ -1655,19 +1695,19 @@ bool Scanner::scanBlockScalarIndent(unsigned BlockIndent,
 }
 
 bool Scanner::scanBlockScalar(bool IsLiteral) {
-  // Eat '|' or '>'
   assert(*Current == '|' || *Current == '>');
-  skip(1);
-
+  char StyleIndicator;
   char ChompingIndicator;
   unsigned BlockIndent;
   bool IsDone = false;
-  if (!scanBlockScalarHeader(ChompingIndicator, BlockIndent, IsDone))
+  if (!scanBlockScalarIndicators(StyleIndicator, ChompingIndicator, BlockIndent,
+                                 IsDone))
     return false;
   if (IsDone)
     return true;
+  bool IsFolded = StyleIndicator == '>';
 
-  auto Start = Current;
+  const auto *Start = Current;
   unsigned BlockExitIndent = Indent < 0 ? 0 : (unsigned)Indent;
   unsigned LineBreaks = 0;
   if (BlockIndent == 0) {
@@ -1688,6 +1728,22 @@ bool Scanner::scanBlockScalar(bool IsLiteral) {
     auto LineStart = Current;
     advanceWhile(&Scanner::skip_nb_char);
     if (LineStart != Current) {
+      if (LineBreaks && IsFolded && !Scanner::isLineEmpty(Str)) {
+        // The folded style "folds" any single line break between content into a
+        // single space, except when that content is "empty" (only contains
+        // whitespace) in which case the line break is left as-is.
+        if (LineBreaks == 1) {
+          Str.append(LineBreaks,
+                     isLineEmpty(StringRef(LineStart, Current - LineStart))
+                         ? '\n'
+                         : ' ');
+        }
+        // If we saw a single line break, we are completely replacing it and so
+        // want `LineBreaks == 0`. Otherwise this decrement accounts for the
+        // fact that the first line break is "trimmed", only being used to
+        // signal a sequence of line breaks which should not be folded.
+        LineBreaks--;
+      }
       Str.append(LineBreaks, '\n');
       Str.append(StringRef(LineStart, Current - LineStart));
       LineBreaks = 0;
@@ -1841,11 +1897,11 @@ bool Scanner::fetchMoreTokens() {
 
 Stream::Stream(StringRef Input, SourceMgr &SM, bool ShowColors,
                std::error_code *EC)
-    : scanner(new Scanner(Input, SM, ShowColors, EC)), CurrentDoc() {}
+    : scanner(new Scanner(Input, SM, ShowColors, EC)) {}
 
 Stream::Stream(MemoryBufferRef InputBuffer, SourceMgr &SM, bool ShowColors,
                std::error_code *EC)
-    : scanner(new Scanner(InputBuffer, SM, ShowColors, EC)), CurrentDoc() {}
+    : scanner(new Scanner(InputBuffer, SM, ShowColors, EC)) {}
 
 Stream::~Stream() = default;
 
@@ -1876,8 +1932,8 @@ document_iterator Stream::end() {
 }
 
 void Stream::skip() {
-  for (document_iterator i = begin(), e = end(); i != e; ++i)
-    i->skip();
+  for (Document &Doc : *this)
+    Doc.skip();
 }
 
 Node::Node(unsigned int Type, std::unique_ptr<Document> &D, StringRef A,
@@ -2229,7 +2285,7 @@ void MappingNode::increment() {
       break;
     default:
       setError("Unexpected token. Expected Key or Block End", T);
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case Token::TK_Error:
       IsAtEnd = true;
       CurrentEntry = nullptr;
@@ -2242,7 +2298,7 @@ void MappingNode::increment() {
       return increment();
     case Token::TK_FlowMappingEnd:
       getNext();
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case Token::TK_Error:
       // Set this to end iterator.
       IsAtEnd = true;
@@ -2285,7 +2341,7 @@ void SequenceNode::increment() {
     default:
       setError( "Unexpected token. Expected Block Entry or Block End."
               , T);
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case Token::TK_Error:
       IsAtEnd = true;
       CurrentEntry = nullptr;
@@ -2314,7 +2370,7 @@ void SequenceNode::increment() {
       return increment();
     case Token::TK_FlowSequenceEnd:
       getNext();
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case Token::TK_Error:
       // Set this to end iterator.
       IsAtEnd = true;

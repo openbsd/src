@@ -16,9 +16,7 @@
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/LineIterator.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cmath>
@@ -33,10 +31,10 @@ namespace symbolize {
 class SourceCode {
   std::unique_ptr<MemoryBuffer> MemBuf;
 
-  const Optional<StringRef> load(StringRef FileName,
-                                 const Optional<StringRef> &EmbeddedSource) {
+  std::optional<StringRef>
+  load(StringRef FileName, const std::optional<StringRef> &EmbeddedSource) {
     if (Lines <= 0)
-      return None;
+      return std::nullopt;
 
     if (EmbeddedSource)
       return EmbeddedSource;
@@ -44,15 +42,15 @@ class SourceCode {
       ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
           MemoryBuffer::getFile(FileName);
       if (!BufOrErr)
-        return None;
+        return std::nullopt;
       MemBuf = std::move(*BufOrErr);
       return MemBuf->getBuffer();
     }
   }
 
-  const Optional<StringRef> pruneSource(const Optional<StringRef> &Source) {
+  std::optional<StringRef> pruneSource(const std::optional<StringRef> &Source) {
     if (!Source)
-      return None;
+      return std::nullopt;
     size_t FirstLinePos = StringRef::npos, Pos = 0;
     for (int64_t L = 1; L <= LastLine; ++L, ++Pos) {
       if (L == FirstLine)
@@ -62,7 +60,7 @@ class SourceCode {
         break;
     }
     if (FirstLinePos == StringRef::npos)
-      return None;
+      return std::nullopt;
     return Source->substr(FirstLinePos, (Pos == StringRef::npos)
                                             ? StringRef::npos
                                             : Pos - FirstLinePos);
@@ -73,11 +71,11 @@ public:
   const int Lines;
   const int64_t FirstLine;
   const int64_t LastLine;
-  const Optional<StringRef> PrunedSource;
+  const std::optional<StringRef> PrunedSource;
 
-  SourceCode(
-      StringRef FileName, int64_t Line, int Lines,
-      const Optional<StringRef> &EmbeddedSource = Optional<StringRef>(None))
+  SourceCode(StringRef FileName, int64_t Line, int Lines,
+             const std::optional<StringRef> &EmbeddedSource =
+                 std::optional<StringRef>())
       : Line(Line), Lines(Lines),
         FirstLine(std::max(static_cast<int64_t>(1), Line - Lines / 2)),
         LastLine(FirstLine + Lines - 1),
@@ -208,6 +206,10 @@ void PlainPrinterBase::print(const Request &Request, const DIGlobal &Global) {
     Name = DILineInfo::Addr2LineBadString;
   OS << Name << "\n";
   OS << Global.Start << " " << Global.Size << "\n";
+  if (Global.DeclFile.empty())
+    OS << "??:?\n";
+  else
+    OS << Global.DeclFile << ":" << Global.DeclLine << "\n";
   printFooter();
 }
 

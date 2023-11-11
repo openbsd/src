@@ -16,6 +16,7 @@
 #include "ResourceScriptToken.h"
 #include "ResourceVisitor.h"
 
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringSet.h"
 
 namespace llvm {
@@ -138,9 +139,9 @@ private:
 
 public:
   IntOrString() : IntOrString(RCInt(0)) {}
-  IntOrString(uint32_t Value) : Data(Value), IsInt(1) {}
-  IntOrString(RCInt Value) : Data(Value), IsInt(1) {}
-  IntOrString(StringRef Value) : Data(Value), IsInt(0) {}
+  IntOrString(uint32_t Value) : Data(Value), IsInt(true) {}
+  IntOrString(RCInt Value) : Data(Value), IsInt(true) {}
+  IntOrString(StringRef Value) : Data(Value), IsInt(false) {}
   IntOrString(const RCToken &Token)
       : Data(Token), IsInt(Token.kind() == RCToken::Kind::Int) {}
 
@@ -610,8 +611,8 @@ public:
   StringRef Type;
   IntOrString Title;
   uint32_t ID, X, Y, Width, Height;
-  Optional<IntWithNotMask> Style;
-  Optional<uint32_t> ExtStyle, HelpID;
+  std::optional<IntWithNotMask> Style;
+  std::optional<uint32_t> ExtStyle, HelpID;
   IntOrString Class;
 
   // Control classes as described in DLGITEMTEMPLATEEX documentation.
@@ -635,8 +636,9 @@ public:
 
   Control(StringRef CtlType, IntOrString CtlTitle, uint32_t CtlID,
           uint32_t PosX, uint32_t PosY, uint32_t ItemWidth, uint32_t ItemHeight,
-          Optional<IntWithNotMask> ItemStyle, Optional<uint32_t> ExtItemStyle,
-          Optional<uint32_t> CtlHelpID, IntOrString CtlClass)
+          std::optional<IntWithNotMask> ItemStyle,
+          std::optional<uint32_t> ExtItemStyle,
+          std::optional<uint32_t> CtlHelpID, IntOrString CtlClass)
       : Type(CtlType), Title(CtlTitle), ID(CtlID), X(PosX), Y(PosY),
         Width(ItemWidth), Height(ItemHeight), Style(ItemStyle),
         ExtStyle(ExtItemStyle), HelpID(CtlHelpID), Class(CtlClass) {}
@@ -768,10 +770,10 @@ class VersionInfoValue : public VersionInfoStmt {
 public:
   StringRef Key;
   std::vector<IntOrString> Values;
-  std::vector<bool> HasPrecedingComma;
+  BitVector HasPrecedingComma;
 
   VersionInfoValue(StringRef InfoKey, std::vector<IntOrString> &&Vals,
-                   std::vector<bool> &&CommasBeforeVals)
+                   BitVector &&CommasBeforeVals)
       : Key(InfoKey), Values(std::move(Vals)),
         HasPrecedingComma(std::move(CommasBeforeVals)) {}
   raw_ostream &log(raw_ostream &) const override;

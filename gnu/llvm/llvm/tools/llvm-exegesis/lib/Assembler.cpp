@@ -153,7 +153,7 @@ ArrayRef<unsigned> FunctionFiller::getRegistersSetUp() const {
 }
 
 static std::unique_ptr<Module>
-createModule(const std::unique_ptr<LLVMContext> &Context, const DataLayout DL) {
+createModule(const std::unique_ptr<LLVMContext> &Context, const DataLayout &DL) {
   auto Mod = std::make_unique<Module>(ModuleID, *Context);
   Mod->setDataLayout(DL);
   return Mod;
@@ -209,6 +209,7 @@ Error assembleToStream(const ExegesisTarget &ET,
 
   // If the snippet setup is not complete, we disable liveliness tracking. This
   // means that we won't know what values are in the registers.
+  // FIXME: this should probably be an assertion.
   if (!IsSnippetSetupComplete)
     Properties.reset(MachineFunctionProperties::Property::TracksLiveness);
 
@@ -309,7 +310,7 @@ ExecutableFunction::ExecutableFunction(
               std::make_unique<TrackingSectionMemoryManager>(&CodeSize))
           .create(TM.release()));
   if (!ExecEngine)
-    report_fatal_error(Error);
+    report_fatal_error(Twine(Error));
   // Adding the generated object file containing the assembled function.
   // The ExecutionEngine makes sure the object file is copied into an
   // executable page.

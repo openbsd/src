@@ -11,16 +11,19 @@
 
 #include "MCTargetDesc/BPFMCTargetDesc.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 class BPFTargetMachine;
+class PassRegistry;
 
 ModulePass *createBPFAdjustOpt();
 ModulePass *createBPFCheckAndAdjustIR();
 
 FunctionPass *createBPFAbstractMemberAccess(BPFTargetMachine *TM);
 FunctionPass *createBPFPreserveDIType();
+FunctionPass *createBPFIRPeephole();
 FunctionPass *createBPFISelDag(BPFTargetMachine &TM);
 FunctionPass *createBPFMISimplifyPatchablePass();
 FunctionPass *createBPFMIPeepholePass();
@@ -28,16 +31,17 @@ FunctionPass *createBPFMIPeepholeTruncElimPass();
 FunctionPass *createBPFMIPreEmitPeepholePass();
 FunctionPass *createBPFMIPreEmitCheckingPass();
 
+void initializeBPFAbstractMemberAccessLegacyPassPass(PassRegistry &);
 void initializeBPFAdjustOptPass(PassRegistry&);
 void initializeBPFCheckAndAdjustIRPass(PassRegistry&);
-
-void initializeBPFAbstractMemberAccessLegacyPassPass(PassRegistry &);
-void initializeBPFPreserveDITypePass(PassRegistry&);
-void initializeBPFMISimplifyPatchablePass(PassRegistry&);
+void initializeBPFDAGToDAGISelPass(PassRegistry &);
+void initializeBPFIRPeepholePass(PassRegistry &);
 void initializeBPFMIPeepholePass(PassRegistry&);
-void initializeBPFMIPeepholeTruncElimPass(PassRegistry&);
-void initializeBPFMIPreEmitPeepholePass(PassRegistry&);
+void initializeBPFMIPeepholeTruncElimPass(PassRegistry &);
 void initializeBPFMIPreEmitCheckingPass(PassRegistry&);
+void initializeBPFMIPreEmitPeepholePass(PassRegistry &);
+void initializeBPFMISimplifyPatchablePass(PassRegistry &);
+void initializeBPFPreserveDITypePass(PassRegistry &);
 
 class BPFAbstractMemberAccessPass
     : public PassInfoMixin<BPFAbstractMemberAccessPass> {
@@ -51,6 +55,13 @@ public:
 };
 
 class BPFPreserveDITypePass : public PassInfoMixin<BPFPreserveDITypePass> {
+public:
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+
+  static bool isRequired() { return true; }
+};
+
+class BPFIRPeepholePass : public PassInfoMixin<BPFIRPeepholePass> {
 public:
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 

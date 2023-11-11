@@ -13,23 +13,16 @@
 
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/MC/MCInstrDesc.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include <cassert>
 
 #define DEBUG_TYPE "instructionselector"
 
 using namespace llvm;
 
 InstructionSelector::MatcherState::MatcherState(unsigned MaxRenderers)
-    : Renderers(MaxRenderers), MIs() {}
+    : Renderers(MaxRenderers) {}
 
 InstructionSelector::InstructionSelector() = default;
 
@@ -37,7 +30,7 @@ bool InstructionSelector::isOperandImmEqual(
     const MachineOperand &MO, int64_t Value,
     const MachineRegisterInfo &MRI) const {
   if (MO.isReg() && MO.getReg())
-    if (auto VRegVal = getConstantVRegValWithLookThrough(MO.getReg(), MRI))
+    if (auto VRegVal = getIConstantVRegValWithLookThrough(MO.getReg(), MRI))
       return VRegVal->Value.getSExtValue() == Value;
   return false;
 }
@@ -65,6 +58,10 @@ bool InstructionSelector::isObviouslySafeToFold(MachineInstr &MI,
   if (MI.getParent() == IntoMI.getParent() &&
       std::next(MI.getIterator()) == IntoMI.getIterator())
     return true;
+
+  // Convergent instructions cannot be moved in the CFG.
+  if (MI.isConvergent() && MI.getParent() != IntoMI.getParent())
+    return false;
 
   return !MI.mayLoadOrStore() && !MI.mayRaiseFPException() &&
          !MI.hasUnmodeledSideEffects() && MI.implicit_operands().empty();

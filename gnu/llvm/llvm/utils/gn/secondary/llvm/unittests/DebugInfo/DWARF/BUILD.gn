@@ -1,4 +1,4 @@
-import("//llvm/utils/unittest/unittest.gni")
+import("//third-party/unittest/unittest.gni")
 
 unittest("DebugInfoDWARFTests") {
   deps = [
@@ -9,6 +9,7 @@ unittest("DebugInfoDWARFTests") {
     "//llvm/lib/ObjectYAML",
     "//llvm/lib/Support",
     "//llvm/lib/Target:TargetsToBuild",
+    "//llvm/lib/TargetParser",
     "//llvm/lib/Testing/Support",
   ]
   sources = [
@@ -21,6 +22,7 @@ unittest("DebugInfoDWARFTests") {
     "DWARFDieManualExtractTest.cpp",
     "DWARFDieTest.cpp",
     "DWARFExpressionCompactPrinterTest.cpp",
+    "DWARFExpressionCopyBytesTest.cpp",
     "DWARFFormValueTest.cpp",
     "DWARFListTableTest.cpp",
     "DWARFLocationExpressionTest.cpp",

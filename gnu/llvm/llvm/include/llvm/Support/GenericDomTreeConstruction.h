@@ -44,6 +44,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GenericDomTree.h"
+#include <optional>
 #include <queue>
 
 #define DEBUG_TYPE "dom-tree-builder"
@@ -78,7 +79,7 @@ struct SemiNCAInfo {
   using UpdateT = typename DomTreeT::UpdateType;
   using UpdateKind = typename DomTreeT::UpdateKind;
   struct BatchUpdateInfo {
-    // Note: Updates inside PreViewCFG are aleady legalized.
+    // Note: Updates inside PreViewCFG are already legalized.
     BatchUpdateInfo(GraphDiffT &PreViewCFG, GraphDiffT *PostViewCFG = nullptr)
         : PreViewCFG(PreViewCFG), PostViewCFG(PostViewCFG),
           NumLegalized(PreViewCFG.getNumLegalizedUpdates()) {}
@@ -403,7 +404,7 @@ struct SemiNCAInfo {
       // immune to swap successors transformation (e.g. canonicalizing branch
       // predicates). SuccOrder is initialized lazily only for successors of
       // reverse unreachable nodes.
-      Optional<NodeOrderMap> SuccOrder;
+      std::optional<NodeOrderMap> SuccOrder;
       auto InitSuccOrderOnce = [&]() {
         SuccOrder = NodeOrderMap();
         for (const auto Node : nodes(DT.Parent))
@@ -430,7 +431,6 @@ struct SemiNCAInfo {
       // is unreachable. This is because we are still going to only visit each
       // unreachable node once, we may just visit it in two directions,
       // depending on how lucky we get.
-      SmallPtrSet<NodePtr, 4> ConnectToExitBlock;
       for (const NodePtr I : nodes(DT.Parent)) {
         if (SNCA.NodeToInfo.count(I) == 0) {
           LLVM_DEBUG(dbgs()
@@ -457,7 +457,6 @@ struct SemiNCAInfo {
           LLVM_DEBUG(dbgs() << "\t\t\tFound a new furthest away node "
                             << "(non-trivial root): "
                             << BlockNamePrinter(FurthestAway) << "\n");
-          ConnectToExitBlock.insert(FurthestAway);
           Roots.push_back(FurthestAway);
           LLVM_DEBUG(dbgs() << "\t\t\tPrev DFSNum: " << Num << ", new DFSNum: "
                             << NewNum << "\n\t\t\tRemoving DFS info\n");
@@ -714,7 +713,7 @@ struct SemiNCAInfo {
     assert(IsPostDom && "This function is only for postdominators");
 
     // The tree has only trivial roots -- nothing to update.
-    if (std::none_of(DT.Roots.begin(), DT.Roots.end(), [BUI](const NodePtr N) {
+    if (llvm::none_of(DT.Roots, [BUI](const NodePtr N) {
           return HasForwardSuccessors(N, BUI);
         }))
       return;

@@ -21,6 +21,7 @@
 #include "llvm/Target/CodeGenCWrappers.h"
 #include "llvm/Target/TargetOptions.h"
 #include <cstring>
+#include <optional>
 
 using namespace llvm;
 
@@ -188,8 +189,7 @@ LLVMBool LLVMCreateMCJITCompilerForModule(
     for (auto &F : *Mod) {
       auto Attrs = F.getAttributes();
       StringRef Value = options.NoFramePointerElim ? "all" : "none";
-      Attrs = Attrs.addAttribute(F.getContext(), AttributeList::FunctionIndex,
-                                 "frame-pointer", Value);
+      Attrs = Attrs.addFnAttribute(F.getContext(), "frame-pointer", Value);
       F.setAttributes(Attrs);
     }
 
@@ -200,7 +200,7 @@ LLVMBool LLVMCreateMCJITCompilerForModule(
          .setOptLevel((CodeGenOpt::Level)options.OptLevel)
          .setTargetOptions(targetOptions);
   bool JIT;
-  if (Optional<CodeModel::Model> CM = unwrap(options.CodeModel, JIT))
+  if (std::optional<CodeModel::Model> CM = unwrap(options.CodeModel, JIT))
     builder.setCodeModel(*CM);
   if (options.MCJMM)
     builder.setMCJITMemoryManager(

@@ -33,6 +33,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -423,7 +424,7 @@ Error DWARFYAML::emitDebugInfo(raw_ostream &OS, const DWARFYAML::Data &DI) {
     std::string EntryBuffer;
     raw_string_ostream EntryBufferOS(EntryBuffer);
 
-    uint64_t AbbrevTableID = Unit.AbbrevTableID.getValueOr(I);
+    uint64_t AbbrevTableID = Unit.AbbrevTableID.value_or(I);
     for (const DWARFYAML::Entry &Entry : Unit.Entries) {
       if (Expected<uint64_t> EntryLength =
               writeDIE(DI, I, AbbrevTableID, Params, Entry, EntryBufferOS,
@@ -507,7 +508,7 @@ static void writeExtendedOpcode(const DWARFYAML::LineTableOpcode &Op,
     for (auto OpByte : Op.UnknownOpcodeData)
       writeInteger((uint8_t)OpByte, OpBufferOS, IsLittleEndian);
   }
-  uint64_t ExtLen = Op.ExtLen.getValueOr(OpBuffer.size());
+  uint64_t ExtLen = Op.ExtLen.value_or(OpBuffer.size());
   encodeULEB128(ExtLen, OS);
   OS.write(OpBuffer.data(), OpBuffer.size());
 }
@@ -552,7 +553,7 @@ static void writeLineTableOpcode(const DWARFYAML::LineTableOpcode &Op,
 }
 
 static std::vector<uint8_t>
-getStandardOpcodeLengths(uint16_t Version, Optional<uint8_t> OpcodeBase) {
+getStandardOpcodeLengths(uint16_t Version, std::optional<uint8_t> OpcodeBase) {
   // If the opcode_base field isn't specified, we returns the
   // standard_opcode_lengths array according to the version by default.
   std::vector<uint8_t> StandardOpcodeLengths{0, 1, 1, 1, 1, 0,
@@ -582,7 +583,7 @@ Error DWARFYAML::emitDebugLine(raw_ostream &OS, const DWARFYAML::Data &DI) {
     writeInteger(LineTable.LineRange, BufferOS, DI.IsLittleEndian);
 
     std::vector<uint8_t> StandardOpcodeLengths =
-        LineTable.StandardOpcodeLengths.getValueOr(
+        LineTable.StandardOpcodeLengths.value_or(
             getStandardOpcodeLengths(LineTable.Version, LineTable.OpcodeBase));
     uint8_t OpcodeBase = LineTable.OpcodeBase
                              ? *LineTable.OpcodeBase

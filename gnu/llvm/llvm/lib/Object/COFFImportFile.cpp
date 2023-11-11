@@ -12,10 +12,14 @@
 
 #include "llvm/Object/COFFImportFile.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ArchiveWriter.h"
 #include "llvm/Object/COFF.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Path.h"
 
 #include <cstdint>
@@ -34,6 +38,7 @@ static bool is32bit(MachineTypes Machine) {
   default:
     llvm_unreachable("unsupported machine");
   case IMAGE_FILE_MACHINE_ARM64:
+  case IMAGE_FILE_MACHINE_ARM64EC:
   case IMAGE_FILE_MACHINE_AMD64:
     return false;
   case IMAGE_FILE_MACHINE_ARMNT:
@@ -51,6 +56,7 @@ static uint16_t getImgRelRelocation(MachineTypes Machine) {
   case IMAGE_FILE_MACHINE_ARMNT:
     return IMAGE_REL_ARM_ADDR32NB;
   case IMAGE_FILE_MACHINE_ARM64:
+  case IMAGE_FILE_MACHINE_ARM64EC:
     return IMAGE_REL_ARM64_ADDR32NB;
   case IMAGE_FILE_MACHINE_I386:
     return IMAGE_REL_I386_DIR32NB;

@@ -27,6 +27,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/JSON.h"
+#include <optional>
 
 #define DEBUG_TYPE "debugify"
 
@@ -37,12 +38,16 @@ namespace {
 cl::opt<bool> Quiet("debugify-quiet",
                     cl::desc("Suppress verbose debugify output"));
 
+cl::opt<uint64_t> DebugifyFunctionsLimit(
+    "debugify-func-limit",
+    cl::desc("Set max number of processed functions per pass."),
+    cl::init(UINT_MAX));
+
 enum class Level {
   Locations,
   LocationsAndVariables
 };
 
-// Used for the synthetic mode only.
 cl::opt<Level> DebugifyLevel(
     "debugify-level", cl::desc("Kind of debug info to add"),
     cl::values(clEnumValN(Level::Locations, "locations", "Locations only"),
@@ -110,7 +115,8 @@ bool llvm::applyDebugifyMetadata(
       continue;
 
     bool InsertedDbgVal = false;
-    auto SPType = DIB.createSubroutineType(DIB.getOrCreateTypeArray(None));
+    auto SPType =
+        DIB.createSubroutineType(DIB.getOrCreateTypeArray(std::nullopt));
     DISubprogram::DISPFlags SPFlags =
         DISubprogram::SPFlagDefinition | DISubprogram::SPFlagOptimized;
     if (F.hasPrivateLinkage() || F.hasInternalLinkage())
@@ -210,15 +216,15 @@ bool llvm::applyDebugifyMetadata(
 static bool
 applyDebugify(Function &F,
               enum DebugifyMode Mode = DebugifyMode::SyntheticDebugInfo,
-              DebugInfoPerPassMap *DIPreservationMap = nullptr,
+              DebugInfoPerPass *DebugInfoBeforePass = nullptr,
               StringRef NameOfWrappedPass = "") {
   Module &M = *F.getParent();
   auto FuncIt = F.getIterator();
   if (Mode == DebugifyMode::SyntheticDebugInfo)
     return applyDebugifyMetadata(M, make_range(FuncIt, std::next(FuncIt)),
                                  "FunctionDebugify: ", /*ApplyToMF*/ nullptr);
-  assert(DIPreservationMap);
-  return collectDebugInfoMetadata(M, M.functions(), *DIPreservationMap,
+  assert(DebugInfoBeforePass);
+  return collectDebugInfoMetadata(M, M.functions(), *DebugInfoBeforePass,
                                   "FunctionDebugify (original debuginfo)",
                                   NameOfWrappedPass);
 }
@@ -226,12 +232,12 @@ applyDebugify(Function &F,
 static bool
 applyDebugify(Module &M,
               enum DebugifyMode Mode = DebugifyMode::SyntheticDebugInfo,
-              DebugInfoPerPassMap *DIPreservationMap = nullptr,
+              DebugInfoPerPass *DebugInfoBeforePass = nullptr,
               StringRef NameOfWrappedPass = "") {
   if (Mode == DebugifyMode::SyntheticDebugInfo)
     return applyDebugifyMetadata(M, M.functions(),
                                  "ModuleDebugify: ", /*ApplyToMF*/ nullptr);
-  return collectDebugInfoMetadata(M, M.functions(), *DIPreservationMap,
+  return collectDebugInfoMetadata(M, M.functions(), *DebugInfoBeforePass,
                                   "ModuleDebugify (original debuginfo)",
                                   NameOfWrappedPass);
 }
@@ -239,10 +245,15 @@ applyDebugify(Module &M,
 bool llvm::stripDebugifyMetadata(Module &M) {
   bool Changed = false;
 
-  // Remove the llvm.debugify module-level named metadata.
+  // Remove the llvm.debugify and llvm.mir.debugify module-level named metadata.
   NamedMDNode *DebugifyMD = M.getNamedMetadata("llvm.debugify");
   if (DebugifyMD) {
     M.eraseNamedMetadata(DebugifyMD);
+    Changed = true;
+  }
+
+  if (auto *MIRDebugifyMD = M.getNamedMetadata("llvm.mir.debugify")) {
+    M.eraseNamedMetadata(MIRDebugifyMD);
     Changed = true;
   }
 
@@ -267,7 +278,7 @@ bool llvm::stripDebugifyMetadata(Module &M) {
   SmallVector<MDNode *, 4> Flags(NMD->operands());
   NMD->clearOperands();
   for (MDNode *Flag : Flags) {
-    MDString *Key = dyn_cast_or_null<MDString>(Flag->getOperand(1));
+    auto *Key = cast<MDString>(Flag->getOperand(1));
     if (Key->getString() == "Debug Info Version") {
       Changed = true;
       continue;
@@ -283,32 +294,37 @@ bool llvm::stripDebugifyMetadata(Module &M) {
 
 bool llvm::collectDebugInfoMetadata(Module &M,
                                     iterator_range<Module::iterator> Functions,
-                                    DebugInfoPerPassMap &DIPreservationMap,
+                                    DebugInfoPerPass &DebugInfoBeforePass,
                                     StringRef Banner,
                                     StringRef NameOfWrappedPass) {
   LLVM_DEBUG(dbgs() << Banner << ": (before) " << NameOfWrappedPass << '\n');
-
-  // Clear the map with the debug info before every single pass.
-  DIPreservationMap.clear();
 
   if (!M.getNamedMetadata("llvm.dbg.cu")) {
     dbg() << Banner << ": Skipping module without debug info\n";
     return false;
   }
 
+  uint64_t FunctionsCnt = DebugInfoBeforePass.DIFunctions.size();
   // Visit each instruction.
   for (Function &F : Functions) {
+    // Use DI collected after previous Pass (when -debugify-each is used).
+    if (DebugInfoBeforePass.DIFunctions.count(&F))
+      continue;
+
     if (isFunctionSkipped(F))
       continue;
 
+    // Stop collecting DI if the Functions number reached the limit.
+    if (++FunctionsCnt >= DebugifyFunctionsLimit)
+      break;
     // Collect the DISubprogram.
     auto *SP = F.getSubprogram();
-    DIPreservationMap[NameOfWrappedPass].DIFunctions.insert({F.getName(), SP});
+    DebugInfoBeforePass.DIFunctions.insert({&F, SP});
     if (SP) {
       LLVM_DEBUG(dbgs() << "  Collecting subprogram: " << *SP << '\n');
       for (const DINode *DN : SP->getRetainedNodes()) {
         if (const auto *DV = dyn_cast<DILocalVariable>(DN)) {
-          DIPreservationMap[NameOfWrappedPass].DIVariables[DV] = 0;
+          DebugInfoBeforePass.DIVariables[DV] = 0;
         }
       }
     }
@@ -320,20 +336,22 @@ bool llvm::collectDebugInfoMetadata(Module &M,
         if (isa<PHINode>(I))
           continue;
 
-        // Collect dbg.values and dbg.declares.
-        if (auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I)) {
-          if (!SP)
-            continue;
-          // Skip inlined variables.
-          if (I.getDebugLoc().getInlinedAt())
-            continue;
-          // Skip undef values.
-          if (DVI->isUndef())
-            continue;
+        // Cllect dbg.values and dbg.declare.
+        if (DebugifyLevel > Level::Locations) {
+          if (auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I)) {
+            if (!SP)
+              continue;
+            // Skip inlined variables.
+            if (I.getDebugLoc().getInlinedAt())
+              continue;
+            // Skip undef values.
+            if (DVI->isKillLocation())
+              continue;
 
-          auto *Var = DVI->getVariable();
-          DIPreservationMap[NameOfWrappedPass].DIVariables[Var]++;
-          continue;
+            auto *Var = DVI->getVariable();
+            DebugInfoBeforePass.DIVariables[Var]++;
+            continue;
+          }
         }
 
         // Skip debug instructions other than dbg.value and dbg.declare.
@@ -341,11 +359,11 @@ bool llvm::collectDebugInfoMetadata(Module &M,
           continue;
 
         LLVM_DEBUG(dbgs() << "  Collecting info for inst: " << I << '\n');
-        DIPreservationMap[NameOfWrappedPass].InstToDelete.insert({&I, &I});
+        DebugInfoBeforePass.InstToDelete.insert({&I, &I});
 
         const DILocation *Loc = I.getDebugLoc().get();
         bool HasLoc = Loc != nullptr;
-        DIPreservationMap[NameOfWrappedPass].DILocations.insert({&I, HasLoc});
+        DebugInfoBeforePass.DILocations.insert({&I, HasLoc});
       }
     }
   }
@@ -367,12 +385,12 @@ static bool checkFunctions(const DebugFnMap &DIFunctionsBefore,
     if (SPIt == DIFunctionsBefore.end()) {
       if (ShouldWriteIntoJSON)
         Bugs.push_back(llvm::json::Object({{"metadata", "DISubprogram"},
-                                           {"name", F.first},
+                                           {"name", F.first->getName()},
                                            {"action", "not-generate"}}));
       else
         dbg() << "ERROR: " << NameOfWrappedPass
-              << " did not generate DISubprogram for " << F.first << " from "
-              << FileNameFromCU << '\n';
+              << " did not generate DISubprogram for " << F.first->getName()
+              << " from " << FileNameFromCU << '\n';
       Preserved = false;
     } else {
       auto SP = SPIt->second;
@@ -382,11 +400,11 @@ static bool checkFunctions(const DebugFnMap &DIFunctionsBefore,
       // a debug info bug.
       if (ShouldWriteIntoJSON)
         Bugs.push_back(llvm::json::Object({{"metadata", "DISubprogram"},
-                                           {"name", F.first},
+                                           {"name", F.first->getName()},
                                            {"action", "drop"}}));
       else
         dbg() << "ERROR: " << NameOfWrappedPass << " dropped DISubprogram of "
-              << F.first << " from " << FileNameFromCU << '\n';
+              << F.first->getName() << " from " << FileNameFromCU << '\n';
       Preserved = false;
     }
   }
@@ -457,14 +475,14 @@ static bool checkInstructions(const DebugInstMap &DILocsBefore,
 }
 
 // This checks the preservation of original debug variable intrinsics.
-static bool checkVars(const DebugVarMap &DIFunctionsBefore,
-                      const DebugVarMap &DIFunctionsAfter,
+static bool checkVars(const DebugVarMap &DIVarsBefore,
+                      const DebugVarMap &DIVarsAfter,
                       StringRef NameOfWrappedPass, StringRef FileNameFromCU,
                       bool ShouldWriteIntoJSON, llvm::json::Array &Bugs) {
   bool Preserved = true;
-  for (const auto &V : DIFunctionsBefore) {
-    auto VarIt = DIFunctionsAfter.find(V.first);
-    if (VarIt == DIFunctionsAfter.end())
+  for (const auto &V : DIVarsBefore) {
+    auto VarIt = DIVarsAfter.find(V.first);
+    if (VarIt == DIVarsAfter.end())
       continue;
 
     unsigned NumOfDbgValsAfter = VarIt->second;
@@ -502,20 +520,24 @@ static void writeJSON(StringRef OrigDIVerifyBugsReportFilePath,
     return;
   }
 
-  OS_FILE << "{\"file\":\"" << FileNameFromCU << "\", ";
+  if (auto L = OS_FILE.lock()) {
+    OS_FILE << "{\"file\":\"" << FileNameFromCU << "\", ";
 
-  StringRef PassName = NameOfWrappedPass != "" ? NameOfWrappedPass : "no-name";
-  OS_FILE << "\"pass\":\"" << PassName << "\", ";
+    StringRef PassName =
+        NameOfWrappedPass != "" ? NameOfWrappedPass : "no-name";
+    OS_FILE << "\"pass\":\"" << PassName << "\", ";
 
-  llvm::json::Value BugsToPrint{std::move(Bugs)};
-  OS_FILE << "\"bugs\": " << BugsToPrint;
+    llvm::json::Value BugsToPrint{std::move(Bugs)};
+    OS_FILE << "\"bugs\": " << BugsToPrint;
 
-  OS_FILE << "}\n";
+    OS_FILE << "}\n";
+  }
+  OS_FILE.close();
 }
 
 bool llvm::checkDebugInfoMetadata(Module &M,
                                   iterator_range<Module::iterator> Functions,
-                                  DebugInfoPerPassMap &DIPreservationMap,
+                                  DebugInfoPerPass &DebugInfoBeforePass,
                                   StringRef Banner, StringRef NameOfWrappedPass,
                                   StringRef OrigDIVerifyBugsReportFilePath) {
   LLVM_DEBUG(dbgs() << Banner << ": (after) " << NameOfWrappedPass << '\n');
@@ -526,24 +548,26 @@ bool llvm::checkDebugInfoMetadata(Module &M,
   }
 
   // Map the debug info holding DIs after a pass.
-  DebugInfoPerPassMap DIPreservationAfter;
+  DebugInfoPerPass DebugInfoAfterPass;
 
   // Visit each instruction.
   for (Function &F : Functions) {
     if (isFunctionSkipped(F))
       continue;
 
+    // Don't process functions without DI collected before the Pass.
+    if (!DebugInfoBeforePass.DIFunctions.count(&F))
+      continue;
     // TODO: Collect metadata other than DISubprograms.
     // Collect the DISubprogram.
     auto *SP = F.getSubprogram();
-    DIPreservationAfter[NameOfWrappedPass].DIFunctions.insert(
-        {F.getName(), SP});
+    DebugInfoAfterPass.DIFunctions.insert({&F, SP});
 
     if (SP) {
       LLVM_DEBUG(dbgs() << "  Collecting subprogram: " << *SP << '\n');
       for (const DINode *DN : SP->getRetainedNodes()) {
         if (const auto *DV = dyn_cast<DILocalVariable>(DN)) {
-          DIPreservationAfter[NameOfWrappedPass].DIVariables[DV] = 0;
+          DebugInfoAfterPass.DIVariables[DV] = 0;
         }
       }
     }
@@ -556,19 +580,21 @@ bool llvm::checkDebugInfoMetadata(Module &M,
           continue;
 
         // Collect dbg.values and dbg.declares.
-        if (auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I)) {
-          if (!SP)
-            continue;
-          // Skip inlined variables.
-          if (I.getDebugLoc().getInlinedAt())
-            continue;
-          // Skip undef values.
-          if (DVI->isUndef())
-            continue;
+        if (DebugifyLevel > Level::Locations) {
+          if (auto *DVI = dyn_cast<DbgVariableIntrinsic>(&I)) {
+            if (!SP)
+              continue;
+            // Skip inlined variables.
+            if (I.getDebugLoc().getInlinedAt())
+              continue;
+            // Skip undef values.
+            if (DVI->isKillLocation())
+              continue;
 
-          auto *Var = DVI->getVariable();
-          DIPreservationAfter[NameOfWrappedPass].DIVariables[Var]++;
-          continue;
+            auto *Var = DVI->getVariable();
+            DebugInfoAfterPass.DIVariables[Var]++;
+            continue;
+          }
         }
 
         // Skip debug instructions other than dbg.value and dbg.declare.
@@ -580,7 +606,7 @@ bool llvm::checkDebugInfoMetadata(Module &M,
         const DILocation *Loc = I.getDebugLoc().get();
         bool HasLoc = Loc != nullptr;
 
-        DIPreservationAfter[NameOfWrappedPass].DILocations.insert({&I, HasLoc});
+        DebugInfoAfterPass.DILocations.insert({&I, HasLoc});
       }
     }
   }
@@ -590,16 +616,16 @@ bool llvm::checkDebugInfoMetadata(Module &M,
       (cast<DICompileUnit>(M.getNamedMetadata("llvm.dbg.cu")->getOperand(0)))
           ->getFilename();
 
-  auto DIFunctionsBefore = DIPreservationMap[NameOfWrappedPass].DIFunctions;
-  auto DIFunctionsAfter = DIPreservationAfter[NameOfWrappedPass].DIFunctions;
+  auto DIFunctionsBefore = DebugInfoBeforePass.DIFunctions;
+  auto DIFunctionsAfter = DebugInfoAfterPass.DIFunctions;
 
-  auto DILocsBefore = DIPreservationMap[NameOfWrappedPass].DILocations;
-  auto DILocsAfter = DIPreservationAfter[NameOfWrappedPass].DILocations;
+  auto DILocsBefore = DebugInfoBeforePass.DILocations;
+  auto DILocsAfter = DebugInfoAfterPass.DILocations;
 
-  auto InstToDelete = DIPreservationAfter[NameOfWrappedPass].InstToDelete;
+  auto InstToDelete = DebugInfoBeforePass.InstToDelete;
 
-  auto DIVarsBefore = DIPreservationMap[NameOfWrappedPass].DIVariables;
-  auto DIVarsAfter = DIPreservationAfter[NameOfWrappedPass].DIVariables;
+  auto DIVarsBefore = DebugInfoBeforePass.DIVariables;
+  auto DIVarsAfter = DebugInfoAfterPass.DIVariables;
 
   bool ShouldWriteIntoJSON = !OrigDIVerifyBugsReportFilePath.empty();
   llvm::json::Array Bugs;
@@ -626,6 +652,11 @@ bool llvm::checkDebugInfoMetadata(Module &M,
   else
     dbg() << ResultBanner << ": FAIL\n";
 
+  // In the case of the `debugify-each`, no need to go over all the instructions
+  // again in the collectDebugInfoMetadata(), since as an input we can use
+  // the debugging information from the previous pass.
+  DebugInfoBeforePass = DebugInfoAfterPass;
+
   LLVM_DEBUG(dbgs() << "\n\n");
   return Result;
 }
@@ -650,7 +681,7 @@ bool diagnoseMisSizedDbgValue(Module &M, DbgValueInst *DVI) {
 
   Type *Ty = V->getType();
   uint64_t ValueOperandSize = getAllocSizeInBits(M, Ty);
-  Optional<uint64_t> DbgVarSize = DVI->getFragmentSizeInBits();
+  std::optional<uint64_t> DbgVarSize = DVI->getFragmentSizeInBits();
   if (!ValueOperandSize || !DbgVarSize)
     return false;
 
@@ -770,14 +801,14 @@ bool checkDebugifyMetadata(Module &M,
 /// legacy module pass manager.
 struct DebugifyModulePass : public ModulePass {
   bool runOnModule(Module &M) override {
-    return applyDebugify(M, Mode, DIPreservationMap, NameOfWrappedPass);
+    return applyDebugify(M, Mode, DebugInfoBeforePass, NameOfWrappedPass);
   }
 
   DebugifyModulePass(enum DebugifyMode Mode = DebugifyMode::SyntheticDebugInfo,
                      StringRef NameOfWrappedPass = "",
-                     DebugInfoPerPassMap *DIPreservationMap = nullptr)
+                     DebugInfoPerPass *DebugInfoBeforePass = nullptr)
       : ModulePass(ID), NameOfWrappedPass(NameOfWrappedPass),
-        DIPreservationMap(DIPreservationMap), Mode(Mode) {}
+        DebugInfoBeforePass(DebugInfoBeforePass), Mode(Mode) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
@@ -787,7 +818,7 @@ struct DebugifyModulePass : public ModulePass {
 
 private:
   StringRef NameOfWrappedPass;
-  DebugInfoPerPassMap *DIPreservationMap;
+  DebugInfoPerPass *DebugInfoBeforePass;
   enum DebugifyMode Mode;
 };
 
@@ -795,15 +826,15 @@ private:
 /// single function, used with the legacy module pass manager.
 struct DebugifyFunctionPass : public FunctionPass {
   bool runOnFunction(Function &F) override {
-    return applyDebugify(F, Mode, DIPreservationMap, NameOfWrappedPass);
+    return applyDebugify(F, Mode, DebugInfoBeforePass, NameOfWrappedPass);
   }
 
   DebugifyFunctionPass(
       enum DebugifyMode Mode = DebugifyMode::SyntheticDebugInfo,
       StringRef NameOfWrappedPass = "",
-      DebugInfoPerPassMap *DIPreservationMap = nullptr)
+      DebugInfoPerPass *DebugInfoBeforePass = nullptr)
       : FunctionPass(ID), NameOfWrappedPass(NameOfWrappedPass),
-        DIPreservationMap(DIPreservationMap), Mode(Mode) {}
+        DebugInfoBeforePass(DebugInfoBeforePass), Mode(Mode) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
@@ -813,7 +844,7 @@ struct DebugifyFunctionPass : public FunctionPass {
 
 private:
   StringRef NameOfWrappedPass;
-  DebugInfoPerPassMap *DIPreservationMap;
+  DebugInfoPerPass *DebugInfoBeforePass;
   enum DebugifyMode Mode;
 };
 
@@ -825,7 +856,7 @@ struct CheckDebugifyModulePass : public ModulePass {
       return checkDebugifyMetadata(M, M.functions(), NameOfWrappedPass,
                                    "CheckModuleDebugify", Strip, StatsMap);
     return checkDebugInfoMetadata(
-        M, M.functions(), *DIPreservationMap,
+        M, M.functions(), *DebugInfoBeforePass,
         "CheckModuleDebugify (original debuginfo)", NameOfWrappedPass,
         OrigDIVerifyBugsReportFilePath);
   }
@@ -834,11 +865,11 @@ struct CheckDebugifyModulePass : public ModulePass {
       bool Strip = false, StringRef NameOfWrappedPass = "",
       DebugifyStatsMap *StatsMap = nullptr,
       enum DebugifyMode Mode = DebugifyMode::SyntheticDebugInfo,
-      DebugInfoPerPassMap *DIPreservationMap = nullptr,
+      DebugInfoPerPass *DebugInfoBeforePass = nullptr,
       StringRef OrigDIVerifyBugsReportFilePath = "")
       : ModulePass(ID), NameOfWrappedPass(NameOfWrappedPass),
         OrigDIVerifyBugsReportFilePath(OrigDIVerifyBugsReportFilePath),
-        StatsMap(StatsMap), DIPreservationMap(DIPreservationMap), Mode(Mode),
+        StatsMap(StatsMap), DebugInfoBeforePass(DebugInfoBeforePass), Mode(Mode),
         Strip(Strip) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -851,7 +882,7 @@ private:
   StringRef NameOfWrappedPass;
   StringRef OrigDIVerifyBugsReportFilePath;
   DebugifyStatsMap *StatsMap;
-  DebugInfoPerPassMap *DIPreservationMap;
+  DebugInfoPerPass *DebugInfoBeforePass;
   enum DebugifyMode Mode;
   bool Strip;
 };
@@ -867,7 +898,7 @@ struct CheckDebugifyFunctionPass : public FunctionPass {
                                    NameOfWrappedPass, "CheckFunctionDebugify",
                                    Strip, StatsMap);
     return checkDebugInfoMetadata(
-        M, make_range(FuncIt, std::next(FuncIt)), *DIPreservationMap,
+        M, make_range(FuncIt, std::next(FuncIt)), *DebugInfoBeforePass,
         "CheckFunctionDebugify (original debuginfo)", NameOfWrappedPass,
         OrigDIVerifyBugsReportFilePath);
   }
@@ -876,11 +907,11 @@ struct CheckDebugifyFunctionPass : public FunctionPass {
       bool Strip = false, StringRef NameOfWrappedPass = "",
       DebugifyStatsMap *StatsMap = nullptr,
       enum DebugifyMode Mode = DebugifyMode::SyntheticDebugInfo,
-      DebugInfoPerPassMap *DIPreservationMap = nullptr,
+      DebugInfoPerPass *DebugInfoBeforePass = nullptr,
       StringRef OrigDIVerifyBugsReportFilePath = "")
       : FunctionPass(ID), NameOfWrappedPass(NameOfWrappedPass),
         OrigDIVerifyBugsReportFilePath(OrigDIVerifyBugsReportFilePath),
-        StatsMap(StatsMap), DIPreservationMap(DIPreservationMap), Mode(Mode),
+        StatsMap(StatsMap), DebugInfoBeforePass(DebugInfoBeforePass), Mode(Mode),
         Strip(Strip) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -893,7 +924,7 @@ private:
   StringRef NameOfWrappedPass;
   StringRef OrigDIVerifyBugsReportFilePath;
   DebugifyStatsMap *StatsMap;
-  DebugInfoPerPassMap *DIPreservationMap;
+  DebugInfoPerPass *DebugInfoBeforePass;
   enum DebugifyMode Mode;
   bool Strip;
 };
@@ -923,57 +954,68 @@ void llvm::exportDebugifyStats(StringRef Path, const DebugifyStatsMap &Map) {
 
 ModulePass *createDebugifyModulePass(enum DebugifyMode Mode,
                                      llvm::StringRef NameOfWrappedPass,
-                                     DebugInfoPerPassMap *DIPreservationMap) {
+                                     DebugInfoPerPass *DebugInfoBeforePass) {
   if (Mode == DebugifyMode::SyntheticDebugInfo)
     return new DebugifyModulePass();
   assert(Mode == DebugifyMode::OriginalDebugInfo && "Must be original mode");
-  return new DebugifyModulePass(Mode, NameOfWrappedPass, DIPreservationMap);
+  return new DebugifyModulePass(Mode, NameOfWrappedPass, DebugInfoBeforePass);
 }
 
 FunctionPass *
 createDebugifyFunctionPass(enum DebugifyMode Mode,
                            llvm::StringRef NameOfWrappedPass,
-                           DebugInfoPerPassMap *DIPreservationMap) {
+                           DebugInfoPerPass *DebugInfoBeforePass) {
   if (Mode == DebugifyMode::SyntheticDebugInfo)
     return new DebugifyFunctionPass();
   assert(Mode == DebugifyMode::OriginalDebugInfo && "Must be original mode");
-  return new DebugifyFunctionPass(Mode, NameOfWrappedPass, DIPreservationMap);
+  return new DebugifyFunctionPass(Mode, NameOfWrappedPass, DebugInfoBeforePass);
 }
 
 PreservedAnalyses NewPMDebugifyPass::run(Module &M, ModuleAnalysisManager &) {
-  applyDebugifyMetadata(M, M.functions(),
-                        "ModuleDebugify: ", /*ApplyToMF*/ nullptr);
+  if (Mode == DebugifyMode::SyntheticDebugInfo)
+    applyDebugifyMetadata(M, M.functions(),
+                          "ModuleDebugify: ", /*ApplyToMF*/ nullptr);
+  else
+    collectDebugInfoMetadata(M, M.functions(), *DebugInfoBeforePass,
+                             "ModuleDebugify (original debuginfo)",
+                              NameOfWrappedPass);
   return PreservedAnalyses::all();
 }
 
 ModulePass *createCheckDebugifyModulePass(
     bool Strip, StringRef NameOfWrappedPass, DebugifyStatsMap *StatsMap,
-    enum DebugifyMode Mode, DebugInfoPerPassMap *DIPreservationMap,
+    enum DebugifyMode Mode, DebugInfoPerPass *DebugInfoBeforePass,
     StringRef OrigDIVerifyBugsReportFilePath) {
   if (Mode == DebugifyMode::SyntheticDebugInfo)
     return new CheckDebugifyModulePass(Strip, NameOfWrappedPass, StatsMap);
   assert(Mode == DebugifyMode::OriginalDebugInfo && "Must be original mode");
   return new CheckDebugifyModulePass(false, NameOfWrappedPass, nullptr, Mode,
-                                     DIPreservationMap,
+                                     DebugInfoBeforePass,
                                      OrigDIVerifyBugsReportFilePath);
 }
 
 FunctionPass *createCheckDebugifyFunctionPass(
     bool Strip, StringRef NameOfWrappedPass, DebugifyStatsMap *StatsMap,
-    enum DebugifyMode Mode, DebugInfoPerPassMap *DIPreservationMap,
+    enum DebugifyMode Mode, DebugInfoPerPass *DebugInfoBeforePass,
     StringRef OrigDIVerifyBugsReportFilePath) {
   if (Mode == DebugifyMode::SyntheticDebugInfo)
     return new CheckDebugifyFunctionPass(Strip, NameOfWrappedPass, StatsMap);
   assert(Mode == DebugifyMode::OriginalDebugInfo && "Must be original mode");
   return new CheckDebugifyFunctionPass(false, NameOfWrappedPass, nullptr, Mode,
-                                       DIPreservationMap,
+                                       DebugInfoBeforePass,
                                        OrigDIVerifyBugsReportFilePath);
 }
 
 PreservedAnalyses NewPMCheckDebugifyPass::run(Module &M,
                                               ModuleAnalysisManager &) {
-  checkDebugifyMetadata(M, M.functions(), "", "CheckModuleDebugify", false,
-                        nullptr);
+  if (Mode == DebugifyMode::SyntheticDebugInfo)
+    checkDebugifyMetadata(M, M.functions(), NameOfWrappedPass,
+                                   "CheckModuleDebugify", Strip, StatsMap);
+  else
+    checkDebugInfoMetadata(
+      M, M.functions(), *DebugInfoBeforePass,
+      "CheckModuleDebugify (original debuginfo)", NameOfWrappedPass,
+      OrigDIVerifyBugsReportFilePath);
   return PreservedAnalyses::all();
 }
 
@@ -986,28 +1028,42 @@ static bool isIgnoredPass(StringRef PassID) {
 
 void DebugifyEachInstrumentation::registerCallbacks(
     PassInstrumentationCallbacks &PIC) {
-  PIC.registerBeforeNonSkippedPassCallback([](StringRef P, Any IR) {
+  PIC.registerBeforeNonSkippedPassCallback([this](StringRef P, Any IR) {
     if (isIgnoredPass(P))
       return;
-    if (any_isa<const Function *>(IR))
-      applyDebugify(*const_cast<Function *>(any_cast<const Function *>(IR)));
-    else if (any_isa<const Module *>(IR))
-      applyDebugify(*const_cast<Module *>(any_cast<const Module *>(IR)));
+    if (const auto **F = any_cast<const Function *>(&IR))
+      applyDebugify(*const_cast<Function *>(*F),
+                    Mode, DebugInfoBeforePass, P);
+    else if (const auto **M = any_cast<const Module *>(&IR))
+      applyDebugify(*const_cast<Module *>(*M),
+                    Mode, DebugInfoBeforePass, P);
   });
   PIC.registerAfterPassCallback([this](StringRef P, Any IR,
                                        const PreservedAnalyses &PassPA) {
     if (isIgnoredPass(P))
       return;
-    if (any_isa<const Function *>(IR)) {
-      auto &F = *const_cast<Function *>(any_cast<const Function *>(IR));
+    if (const auto **CF = any_cast<const Function *>(&IR)) {
+      auto &F = *const_cast<Function *>(*CF);
       Module &M = *F.getParent();
       auto It = F.getIterator();
-      checkDebugifyMetadata(M, make_range(It, std::next(It)), P,
-                            "CheckFunctionDebugify", /*Strip=*/true, &StatsMap);
-    } else if (any_isa<const Module *>(IR)) {
-      auto &M = *const_cast<Module *>(any_cast<const Module *>(IR));
-      checkDebugifyMetadata(M, M.functions(), P, "CheckModuleDebugify",
-                            /*Strip=*/true, &StatsMap);
+      if (Mode == DebugifyMode::SyntheticDebugInfo)
+        checkDebugifyMetadata(M, make_range(It, std::next(It)), P,
+                              "CheckFunctionDebugify", /*Strip=*/true, DIStatsMap);
+      else
+        checkDebugInfoMetadata(
+          M, make_range(It, std::next(It)), *DebugInfoBeforePass,
+          "CheckModuleDebugify (original debuginfo)",
+          P, OrigDIVerifyBugsReportFilePath);
+    } else if (const auto **CM = any_cast<const Module *>(&IR)) {
+      auto &M = *const_cast<Module *>(*CM);
+      if (Mode == DebugifyMode::SyntheticDebugInfo)
+       checkDebugifyMetadata(M, M.functions(), P, "CheckModuleDebugify",
+                            /*Strip=*/true, DIStatsMap);
+      else
+        checkDebugInfoMetadata(
+          M, M.functions(), *DebugInfoBeforePass,
+          "CheckModuleDebugify (original debuginfo)",
+          P, OrigDIVerifyBugsReportFilePath);
     }
   });
 }

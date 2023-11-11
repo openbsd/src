@@ -13,14 +13,14 @@
 
 #include "llvm/CodeGen/PreISelIntrinsicLowering.h"
 #include "llvm/Analysis/ObjCARCInstKind.h"
+#include "llvm/Analysis/ObjCARCUtil.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
-#include "llvm/IR/User.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
@@ -36,9 +36,8 @@ static bool lowerLoadRelative(Function &F) {
   Type *Int32PtrTy = Int32Ty->getPointerTo();
   Type *Int8Ty = Type::getInt8Ty(F.getContext());
 
-  for (auto I = F.use_begin(), E = F.use_end(); I != E;) {
-    auto CI = dyn_cast<CallInst>(I->getUser());
-    ++I;
+  for (Use &U : llvm::make_early_inc_range(F.uses())) {
+    auto CI = dyn_cast<CallInst>(U.getUser());
     if (!CI || CI->getCalledOperand() != &F)
       continue;
 
@@ -71,6 +70,8 @@ static CallInst::TailCallKind getOverridingTailCallKind(const Function &F) {
 
 static bool lowerObjCCall(Function &F, const char *NewFn,
                           bool setNonLazyBind = false) {
+  assert(IntrinsicInst::mayLowerToFunctionCall(F.getIntrinsicID()) &&
+         "Pre-ISel intrinsics do lower into regular function calls");
   if (F.use_empty())
     return false;
 
@@ -90,14 +91,28 @@ static bool lowerObjCCall(Function &F, const char *NewFn,
 
   CallInst::TailCallKind OverridingTCK = getOverridingTailCallKind(F);
 
-  for (auto I = F.use_begin(), E = F.use_end(); I != E;) {
-    auto *CI = cast<CallInst>(I->getUser());
+  for (Use &U : llvm::make_early_inc_range(F.uses())) {
+    auto *CB = cast<CallBase>(U.getUser());
+
+    if (CB->getCalledFunction() != &F) {
+      objcarc::ARCInstKind Kind = objcarc::getAttachedARCFunctionKind(CB);
+      (void)Kind;
+      assert((Kind == objcarc::ARCInstKind::RetainRV ||
+              Kind == objcarc::ARCInstKind::UnsafeClaimRV) &&
+             "use expected to be the argument of operand bundle "
+             "\"clang.arc.attachedcall\"");
+      U.set(FCache.getCallee());
+      continue;
+    }
+
+    auto *CI = cast<CallInst>(CB);
     assert(CI->getCalledFunction() && "Cannot lower an indirect call!");
-    ++I;
 
     IRBuilder<> Builder(CI->getParent(), CI->getIterator());
     SmallVector<Value *, 8> Args(CI->args());
-    CallInst *NewCI = Builder.CreateCall(FCache, Args);
+    SmallVector<llvm::OperandBundleDef, 1> BundleList;
+    CI->getOperandBundlesAsDefs(BundleList);
+    CallInst *NewCI = Builder.CreateCall(FCache, Args, BundleList);
     NewCI->setName(CI->getName());
 
     // Try to set the most appropriate TailCallKind based on both the current

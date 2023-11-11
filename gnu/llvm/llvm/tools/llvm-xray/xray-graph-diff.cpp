@@ -22,6 +22,7 @@
 #include "xray-color-helper.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/XRay/Trace.h"
 
 using namespace llvm;
@@ -263,7 +264,7 @@ static std::string getColor(const GraphDiffRenderer::GraphT::EdgeValueType &E,
   const auto &RightStat = EdgeAttr.CorrEdgePtr[1]->second.S;
 
   double RelDiff = statRelDiff(LeftStat, RightStat, T);
-  double CappedRelDiff = std::min(1.0, std::max(-1.0, RelDiff));
+  double CappedRelDiff = std::clamp(RelDiff, -1.0, 1.0);
 
   return H.getColorString(CappedRelDiff);
 }
@@ -284,7 +285,7 @@ static std::string getColor(const GraphDiffRenderer::GraphT::VertexValueType &V,
   const auto &RightStat = VertexAttr.CorrVertexPtr[1]->second.S;
 
   double RelDiff = statRelDiff(LeftStat, RightStat, T);
-  double CappedRelDiff = std::min(1.0, std::max(-1.0, RelDiff));
+  double CappedRelDiff = std::clamp(RelDiff, -1.0, 1.0);
 
   return H.getColorString(CappedRelDiff);
 }

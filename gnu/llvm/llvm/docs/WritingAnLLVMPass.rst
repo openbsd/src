@@ -66,7 +66,7 @@ copy the following into ``CMakeLists.txt``:
 
   add_llvm_library( LLVMHello MODULE
     Hello.cpp
-  
+
     PLUGIN_TOOL
     opt
     )
@@ -185,18 +185,6 @@ without modifying it then the third argument is set to ``true``; if a pass is
 an analysis pass, for example dominator tree pass, then ``true`` is supplied as
 the fourth argument.
 
-If we want to register the pass as a step of an existing pipeline, some extension
-points are provided, e.g. ``PassManagerBuilder::EP_EarlyAsPossible`` to apply our
-pass before any optimization, or ``PassManagerBuilder::EP_FullLinkTimeOptimizationLast``
-to apply it after Link Time Optimizations.
-
-.. code-block:: c++
-
-    static llvm::RegisterStandardPasses Y(
-        llvm::PassManagerBuilder::EP_EarlyAsPossible,
-        [](const llvm::PassManagerBuilder &Builder,
-           llvm::legacy::PassManagerBase &PM) { PM.add(new Hello()); });
-
 As a whole, the ``.cpp`` file looks like:
 
 .. code-block:: c++
@@ -214,7 +202,7 @@ As a whole, the ``.cpp`` file looks like:
   struct Hello : public FunctionPass {
     static char ID;
     Hello() : FunctionPass(ID) {}
-  
+
     bool runOnFunction(Function &F) override {
       errs() << "Hello: ";
       errs().write_escaped(F.getName()) << '\n';
@@ -227,11 +215,6 @@ As a whole, the ``.cpp`` file looks like:
   static RegisterPass<Hello> X("hello", "Hello World Pass",
                                false /* Only looks at CFG */,
                                false /* Analysis Pass */);
-
-  static RegisterStandardPasses Y(
-      PassManagerBuilder::EP_EarlyAsPossible,
-      [](const PassManagerBuilder &Builder,
-         legacy::PassManagerBase &PM) { PM.add(new Hello()); });
 
 Now that it's all together, compile the file with a simple "``gmake``" command
 from the top level of your build directory and you should get a new file
@@ -307,7 +290,7 @@ you queue up.  For example:
                         ... Pass execution timing report ...
   ===-------------------------------------------------------------------------===
     Total Execution Time: 0.0007 seconds (0.0005 wall clock)
-  
+
      ---User Time---   --User+System--   ---Wall Time---  --- Name ---
      0.0004 ( 55.3%)   0.0004 ( 55.3%)   0.0004 ( 75.7%)  Bitcode Writer
      0.0003 ( 44.7%)   0.0003 ( 44.7%)   0.0001 ( 13.6%)  Hello World Pass
@@ -377,7 +360,7 @@ should only ask for the ``DominatorTree`` for function definitions, not
 declarations.
 
 To write a correct ``ModulePass`` subclass, derive from ``ModulePass`` and
-overload the ``runOnModule`` method with the following signature:
+override the ``runOnModule`` method with the following signature:
 
 The ``runOnModule`` method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -485,7 +468,7 @@ To be explicit, ``FunctionPass`` subclasses are not allowed to:
 
 Implementing a ``FunctionPass`` is usually straightforward (See the :ref:`Hello
 World <writing-an-llvm-pass-basiccode>` pass for example).
-``FunctionPass``\ es may overload three virtual methods to do their work.  All
+``FunctionPass``\ es may override three virtual methods to do their work.  All
 of these methods should return ``true`` if they modified the program, or
 ``false`` if they didn't.
 
@@ -550,7 +533,7 @@ loops in loop nest order such that outer most loop is processed last.
 
 ``LoopPass`` subclasses are allowed to update loop nest using ``LPPassManager``
 interface.  Implementing a loop pass is usually straightforward.
-``LoopPass``\ es may overload three virtual methods to do their work.  All
+``LoopPass``\ es may override three virtual methods to do their work.  All
 these methods should return ``true`` if they modified the program, or ``false``
 if they didn't.
 
@@ -611,7 +594,7 @@ but executes on each single entry single exit region in the function.
 region is processed last.
 
 ``RegionPass`` subclasses are allowed to update the region tree by using the
-``RGPassManager`` interface.  You may overload three virtual methods of
+``RGPassManager`` interface.  You may override three virtual methods of
 ``RegionPass`` to implement your own region pass.  All these methods should
 return ``true`` if they modified the program, or ``false`` if they did not.
 
@@ -1183,51 +1166,6 @@ implement ``releaseMemory`` to, well, release the memory allocated to maintain
 this internal state.  This method is called after the ``run*`` method for the
 class, before the next call of ``run*`` in your pass.
 
-Building pass plugins
-=====================
-
-As an alternative to using ``PLUGIN_TOOL``, LLVM provides a mechanism to
-automatically register pass plugins within ``clang``, ``opt`` and ``bugpoint``.
-One first needs to create an independent project and add it to either ``tools/``
-or, using the MonoRepo layout, at the root of the repo alongside other projects.
-This project must contain the following minimal ``CMakeLists.txt``:
-
-.. code-block:: cmake
-
-    add_llvm_pass_plugin(Name source0.cpp)
-
-The pass must provide two entry points for the new pass manager, one for static
-registration and one for dynamically loaded plugins:
-
-- ``llvm::PassPluginLibraryInfo get##Name##PluginInfo();``
-- ``extern "C" ::llvm::PassPluginLibraryInfo llvmGetPassPluginInfo() LLVM_ATTRIBUTE_WEAK;``
-
-Pass plugins are compiled and link dynamically by default, but it's
-possible to set the following variables to change this behavior:
-
-- ``LLVM_${NAME}_LINK_INTO_TOOLS``, when set to ``ON``, turns the project into
-  a statically linked extension
-
-
-When building a tool that uses the new pass manager, one can use the following snippet to
-include statically linked pass plugins:
-
-.. code-block:: c++
-
-    // fetch the declaration
-    #define HANDLE_EXTENSION(Ext) llvm::PassPluginLibraryInfo get##Ext##PluginInfo();
-    #include "llvm/Support/Extension.def"
-
-    [...]
-
-    // use them, PB is an llvm::PassBuilder instance
-    #define HANDLE_EXTENSION(Ext) get##Ext##PluginInfo().RegisterPassBuilderCallbacks(PB);
-    #include "llvm/Support/Extension.def"
-
-
-
-
-
 Registering dynamically loaded passes
 =====================================
 
@@ -1440,4 +1378,3 @@ multithreaded constructs, requiring only the LLVM core to have locking in a few
 places (for global resources).  Although this is a simple extension, we simply
 haven't had time (or multiprocessor machines, thus a reason) to implement this.
 Despite that, we have kept the LLVM passes SMP ready, and you should too.
-

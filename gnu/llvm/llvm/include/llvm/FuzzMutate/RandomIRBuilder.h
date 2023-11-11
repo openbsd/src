@@ -13,12 +13,19 @@
 #ifndef LLVM_FUZZMUTATE_RANDOMIRBUILDER_H
 #define LLVM_FUZZMUTATE_RANDOMIRBUILDER_H
 
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/FuzzMutate/IRMutator.h"
-#include "llvm/FuzzMutate/Random.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include <random>
 
 namespace llvm {
+class BasicBlock;
+class Instruction;
+class LLVMContext;
+class Type;
+class Value;
+namespace fuzzerop {
+class SourcePred;
+}
 
 using RandomEngine = std::mt19937;
 
@@ -41,10 +48,12 @@ struct RandomIRBuilder {
   /// values in \c Srcs should be source operands that have already been
   /// selected.
   Value *findOrCreateSource(BasicBlock &BB, ArrayRef<Instruction *> Insts,
-                            ArrayRef<Value *> Srcs, fuzzerop::SourcePred Pred);
+                            ArrayRef<Value *> Srcs, fuzzerop::SourcePred Pred,
+                            bool allowConstant = true);
   /// Create some Value suitable as a source for some operation.
   Value *newSource(BasicBlock &BB, ArrayRef<Instruction *> Insts,
-                   ArrayRef<Value *> Srcs, fuzzerop::SourcePred Pred);
+                   ArrayRef<Value *> Srcs, fuzzerop::SourcePred Pred,
+                   bool allowConstant = true);
   /// Find a viable user for \c V in \c Insts, which should all be contained in
   /// \c BB. This may also create some new instruction in \c BB and use that.
   void connectToSink(BasicBlock &BB, ArrayRef<Instruction *> Insts, Value *V);
@@ -54,8 +63,10 @@ struct RandomIRBuilder {
                      ArrayRef<Value *> Srcs, fuzzerop::SourcePred Pred);
   Type *chooseType(LLVMContext &Context, ArrayRef<Value *> Srcs,
                    fuzzerop::SourcePred Pred);
+  /// Return a uniformly choosen type from \c AllowedTypes
+  Type *randomType();
 };
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif // LLVM_FUZZMUTATE_RANDOMIRBUILDER_H

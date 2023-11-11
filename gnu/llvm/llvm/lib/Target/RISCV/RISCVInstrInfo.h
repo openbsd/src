@@ -18,11 +18,28 @@
 #include "llvm/IR/DiagnosticInfo.h"
 
 #define GET_INSTRINFO_HEADER
+#define GET_INSTRINFO_OPERAND_ENUM
 #include "RISCVGenInstrInfo.inc"
 
 namespace llvm {
 
 class RISCVSubtarget;
+
+namespace RISCVCC {
+
+enum CondCode {
+  COND_EQ,
+  COND_NE,
+  COND_LT,
+  COND_GE,
+  COND_LTU,
+  COND_GEU,
+  COND_INVALID
+};
+
+CondCode getOppositeBranchCondition(CondCode);
+
+} // end of namespace RISCVCC
 
 class RISCVInstrInfo : public RISCVGenInstrInfo {
 
@@ -30,6 +47,7 @@ public:
   explicit RISCVInstrInfo(RISCVSubtarget &STI);
 
   MCInst getNop() const override;
+  const MCInstrDesc &getBrCond(RISCVCC::CondCode CC) const;
 
   unsigned isLoadFromStackSlot(const MachineInstr &MI,
                                int &FrameIndex) const override;
@@ -44,12 +62,22 @@ public:
                            MachineBasicBlock::iterator MBBI, Register SrcReg,
                            bool IsKill, int FrameIndex,
                            const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI) const override;
+                           const TargetRegisterInfo *TRI,
+                           Register VReg) const override;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI, Register DstReg,
                             int FrameIndex, const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI) const override;
+                            const TargetRegisterInfo *TRI,
+                            Register VReg) const override;
+
+  using TargetInstrInfo::foldMemoryOperandImpl;
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr &MI,
+                                      ArrayRef<unsigned> Ops,
+                                      MachineBasicBlock::iterator InsertPt,
+                                      int FrameIndex,
+                                      LiveIntervals *LIS = nullptr,
+                                      VirtRegMap *VRM = nullptr) const override;
 
   // Materializes the given integer Val into DstReg.
   void movImm(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
@@ -68,10 +96,10 @@ public:
                         const DebugLoc &dl,
                         int *BytesAdded = nullptr) const override;
 
-  unsigned insertIndirectBranch(MachineBasicBlock &MBB,
-                                MachineBasicBlock &NewDestBB,
-                                const DebugLoc &DL, int64_t BrOffset,
-                                RegScavenger *RS = nullptr) const override;
+  void insertIndirectBranch(MachineBasicBlock &MBB,
+                            MachineBasicBlock &NewDestBB,
+                            MachineBasicBlock &RestoreBB, const DebugLoc &DL,
+                            int64_t BrOffset, RegScavenger *RS) const override;
 
   unsigned removeBranch(MachineBasicBlock &MBB,
                         int *BytesRemoved = nullptr) const override;
@@ -84,9 +112,17 @@ public:
   bool isBranchOffsetInRange(unsigned BranchOpc,
                              int64_t BrOffset) const override;
 
+  bool analyzeSelect(const MachineInstr &MI,
+                     SmallVectorImpl<MachineOperand> &Cond, unsigned &TrueOp,
+                     unsigned &FalseOp, bool &Optimizable) const override;
+
+  MachineInstr *optimizeSelect(MachineInstr &MI,
+                               SmallPtrSetImpl<MachineInstr *> &SeenMIs,
+                               bool) const override;
+
   bool isAsCheapAsAMove(const MachineInstr &MI) const override;
 
-  Optional<DestSourcePair>
+  std::optional<DestSourcePair>
   isCopyInstrImpl(const MachineInstr &MI) const override;
 
   bool verifyInstruction(const MachineInstr &MI,
@@ -108,34 +144,33 @@ public:
   getSerializableDirectMachineOperandTargetFlags() const override;
 
   // Return true if the function can safely be outlined from.
-  virtual bool
-  isFunctionSafeToOutlineFrom(MachineFunction &MF,
-                              bool OutlineFromLinkOnceODRs) const override;
+  bool isFunctionSafeToOutlineFrom(MachineFunction &MF,
+                                   bool OutlineFromLinkOnceODRs) const override;
 
   // Return true if MBB is safe to outline from, and return any target-specific
   // information in Flags.
-  virtual bool isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
-                                      unsigned &Flags) const override;
+  bool isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
+                              unsigned &Flags) const override;
+
+  bool shouldOutlineFromFunctionByDefault(MachineFunction &MF) const override;
 
   // Calculate target-specific information for a set of outlining candidates.
   outliner::OutlinedFunction getOutliningCandidateInfo(
       std::vector<outliner::Candidate> &RepeatedSequenceLocs) const override;
 
   // Return if/how a given MachineInstr should be outlined.
-  virtual outliner::InstrType
-  getOutliningType(MachineBasicBlock::iterator &MBBI,
-                   unsigned Flags) const override;
+  outliner::InstrType getOutliningType(MachineBasicBlock::iterator &MBBI,
+                                       unsigned Flags) const override;
 
   // Insert a custom frame for outlined functions.
-  virtual void
-  buildOutlinedFrame(MachineBasicBlock &MBB, MachineFunction &MF,
-                     const outliner::OutlinedFunction &OF) const override;
+  void buildOutlinedFrame(MachineBasicBlock &MBB, MachineFunction &MF,
+                          const outliner::OutlinedFunction &OF) const override;
 
   // Insert a call to an outlined function into a given basic block.
-  virtual MachineBasicBlock::iterator
+  MachineBasicBlock::iterator
   insertOutlinedCall(Module &M, MachineBasicBlock &MBB,
                      MachineBasicBlock::iterator &It, MachineFunction &MF,
-                     const outliner::Candidate &C) const override;
+                     outliner::Candidate &C) const override;
 
   bool findCommutedOpIndices(const MachineInstr &MI, unsigned &SrcOpIdx1,
                              unsigned &SrcOpIdx2) const override;
@@ -143,26 +178,90 @@ public:
                                        unsigned OpIdx1,
                                        unsigned OpIdx2) const override;
 
-  MachineInstr *convertToThreeAddress(MachineFunction::iterator &MBB,
-                                      MachineInstr &MI,
-                                      LiveVariables *LV) const override;
+  MachineInstr *convertToThreeAddress(MachineInstr &MI, LiveVariables *LV,
+                                      LiveIntervals *LIS) const override;
 
-  Register getVLENFactoredAmount(
+  // MIR printer helper function to annotate Operands with a comment.
+  std::string
+  createMIROperandComment(const MachineInstr &MI, const MachineOperand &Op,
+                          unsigned OpIdx,
+                          const TargetRegisterInfo *TRI) const override;
+
+  void getVLENFactoredAmount(
       MachineFunction &MF, MachineBasicBlock &MBB,
-      MachineBasicBlock::iterator II, const DebugLoc &DL, int64_t Amount,
-      MachineInstr::MIFlag Flag = MachineInstr::NoFlags) const;
+      MachineBasicBlock::iterator II, const DebugLoc &DL, Register DestReg,
+      int64_t Amount, MachineInstr::MIFlag Flag = MachineInstr::NoFlags) const;
 
-  // Returns true if the given MI is an RVV instruction opcode for which we may
-  // expect to see a FrameIndex operand. When CheckFIs is true, the instruction
-  // must contain at least one FrameIndex operand.
-  bool isRVVSpill(const MachineInstr &MI, bool CheckFIs) const;
+  bool useMachineCombiner() const override { return true; }
 
-  Optional<std::pair<unsigned, unsigned>>
-  isRVVSpillForZvlsseg(unsigned Opcode) const;
+  void setSpecialOperandAttr(MachineInstr &OldMI1, MachineInstr &OldMI2,
+                             MachineInstr &NewMI1,
+                             MachineInstr &NewMI2) const override;
+  bool
+  getMachineCombinerPatterns(MachineInstr &Root,
+                             SmallVectorImpl<MachineCombinerPattern> &Patterns,
+                             bool DoRegPressureReduce) const override;
+
+  void
+  finalizeInsInstrs(MachineInstr &Root, MachineCombinerPattern &P,
+                    SmallVectorImpl<MachineInstr *> &InsInstrs) const override;
+
+  void genAlternativeCodeSequence(
+      MachineInstr &Root, MachineCombinerPattern Pattern,
+      SmallVectorImpl<MachineInstr *> &InsInstrs,
+      SmallVectorImpl<MachineInstr *> &DelInstrs,
+      DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const override;
+
+  bool hasReassociableSibling(const MachineInstr &Inst,
+                              bool &Commuted) const override;
+
+  bool isAssociativeAndCommutative(const MachineInstr &Inst,
+                                   bool Invert) const override;
+
+  std::optional<unsigned> getInverseOpcode(unsigned Opcode) const override;
+
+  // Returns true if all uses of OrigMI only depend on the lower \p NBits bits
+  // of its output.
+  bool hasAllNBitUsers(const MachineInstr &MI, const MachineRegisterInfo &MRI,
+                       unsigned NBits) const;
+  // Returns true if all uses of OrigMI only depend on the lower word of its
+  // output, so we can transform OrigMI to the corresponding W-version.
+  bool hasAllWUsers(const MachineInstr &MI,
+                    const MachineRegisterInfo &MRI) const {
+    return hasAllNBitUsers(MI, MRI, 32);
+  }
 
 protected:
   const RISCVSubtarget &STI;
 };
+
+namespace RISCV {
+
+// Returns true if this is the sext.w pattern, addiw rd, rs1, 0.
+bool isSEXT_W(const MachineInstr &MI);
+bool isZEXT_W(const MachineInstr &MI);
+bool isZEXT_B(const MachineInstr &MI);
+
+// Returns true if the given MI is an RVV instruction opcode for which we may
+// expect to see a FrameIndex operand.
+bool isRVVSpill(const MachineInstr &MI);
+
+std::optional<std::pair<unsigned, unsigned>>
+isRVVSpillForZvlsseg(unsigned Opcode);
+
+bool isFaultFirstLoad(const MachineInstr &MI);
+
+// Implemented in RISCVGenInstrInfo.inc
+int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);
+
+// Return true if both input instructions have equal rounding mode. If at least
+// one of the instructions does not have rounding mode, false will be returned.
+bool hasEqualFRM(const MachineInstr &MI1, const MachineInstr &MI2);
+
+// Special immediate for AVL operand of V pseudo instructions to indicate VLMax.
+static constexpr int64_t VLMaxSentinel = -1LL;
+
+} // namespace RISCV
 
 namespace RISCVVPseudosTable {
 

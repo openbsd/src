@@ -19,6 +19,7 @@
 #include "llvm/IR/ProfileSummary.h"
 #include "llvm/Pass.h"
 #include <memory>
+#include <optional>
 
 namespace llvm {
 class BasicBlock;
@@ -42,17 +43,17 @@ private:
   std::unique_ptr<ProfileSummary> Summary;
   void computeThresholds();
   // Count thresholds to answer isHotCount and isColdCount queries.
-  Optional<uint64_t> HotCountThreshold, ColdCountThreshold;
+  std::optional<uint64_t> HotCountThreshold, ColdCountThreshold;
   // True if the working set size of the code is considered huge,
   // because the number of profile counts required to reach the hot
   // percentile is above a huge threshold.
-  Optional<bool> HasHugeWorkingSetSize;
+  std::optional<bool> HasHugeWorkingSetSize;
   // True if the working set size of the code is considered large,
   // because the number of profile counts required to reach the hot
   // percentile is above a large threshold.
-  Optional<bool> HasLargeWorkingSetSize;
+  std::optional<bool> HasLargeWorkingSetSize;
   // Compute the threshold for a given cutoff.
-  Optional<uint64_t> computeThreshold(int PercentileCutoff) const;
+  std::optional<uint64_t> computeThreshold(int PercentileCutoff) const;
   // The map that caches the threshold values. The keys are the percentile
   // cutoff values and the values are the corresponding threshold values.
   mutable DenseMap<int, uint64_t> ThresholdCache;
@@ -97,9 +98,9 @@ public:
   }
 
   /// Returns the profile count for \p CallInst.
-  Optional<uint64_t> getProfileCount(const CallBase &CallInst,
-                                     BlockFrequencyInfo *BFI,
-                                     bool AllowSynthetic = false) const;
+  std::optional<uint64_t> getProfileCount(const CallBase &CallInst,
+                                          BlockFrequencyInfo *BFI,
+                                          bool AllowSynthetic = false) const;
   /// Returns true if module \c M has partial-profile sample profile.
   bool hasPartialSampleProfile() const;
   /// Returns true if the working set size of the code is considered huge.
@@ -134,9 +135,13 @@ public:
   bool isColdCount(uint64_t C) const;
   /// Returns true if count \p C is considered hot with regard to a given
   /// hot percentile cutoff value.
+  /// PercentileCutoff is encoded as a 6 digit decimal fixed point number, where
+  /// the first two digits are the whole part. E.g. 995000 for 99.5 percentile.
   bool isHotCountNthPercentile(int PercentileCutoff, uint64_t C) const;
   /// Returns true if count \p C is considered cold with regard to a given
   /// cold percentile cutoff value.
+  /// PercentileCutoff is encoded as a 6 digit decimal fixed point number, where
+  /// the first two digits are the whole part. E.g. 995000 for 99.5 percentile.
   bool isColdCountNthPercentile(int PercentileCutoff, uint64_t C) const;
   /// Returns true if BasicBlock \p BB is considered hot.
   bool isHotBlock(const BasicBlock *BB, BlockFrequencyInfo *BFI) const;
@@ -144,10 +149,14 @@ public:
   bool isColdBlock(const BasicBlock *BB, BlockFrequencyInfo *BFI) const;
   /// Returns true if BasicBlock \p BB is considered hot with regard to a given
   /// hot percentile cutoff value.
+  /// PercentileCutoff is encoded as a 6 digit decimal fixed point number, where
+  /// the first two digits are the whole part. E.g. 995000 for 99.5 percentile.
   bool isHotBlockNthPercentile(int PercentileCutoff, const BasicBlock *BB,
                                BlockFrequencyInfo *BFI) const;
   /// Returns true if BasicBlock \p BB is considered cold with regard to a given
   /// cold percentile cutoff value.
+  /// PercentileCutoff is encoded as a 6 digit decimal fixed point number, where
+  /// the first two digits are the whole part. E.g. 995000 for 99.5 percentile.
   bool isColdBlockNthPercentile(int PercentileCutoff, const BasicBlock *BB,
                                 BlockFrequencyInfo *BFI) const;
   /// Returns true if the call site \p CB is considered hot.
@@ -162,11 +171,11 @@ public:
   uint64_t getOrCompColdCountThreshold() const;
   /// Returns HotCountThreshold if set.
   uint64_t getHotCountThreshold() const {
-    return HotCountThreshold ? HotCountThreshold.getValue() : 0;
+    return HotCountThreshold.value_or(0);
   }
   /// Returns ColdCountThreshold if set.
   uint64_t getColdCountThreshold() const {
-    return ColdCountThreshold ? ColdCountThreshold.getValue() : 0;
+    return ColdCountThreshold.value_or(0);
   }
 
  private:

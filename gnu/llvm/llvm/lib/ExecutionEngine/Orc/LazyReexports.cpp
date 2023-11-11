@@ -119,6 +119,10 @@ createLocalLazyCallThroughManager(const Triple &T, ExecutionSession &ES,
   case Triple::x86:
     return LocalLazyCallThroughManager::Create<OrcI386>(ES, ErrorHandlerAddr);
 
+  case Triple::loongarch64:
+    return LocalLazyCallThroughManager::Create<OrcLoongArch64>(
+        ES, ErrorHandlerAddr);
+
   case Triple::mips:
     return LocalLazyCallThroughManager::Create<OrcMips32Be>(ES,
                                                             ErrorHandlerAddr);
@@ -130,6 +134,10 @@ createLocalLazyCallThroughManager(const Triple &T, ExecutionSession &ES,
   case Triple::mips64:
   case Triple::mips64el:
     return LocalLazyCallThroughManager::Create<OrcMips64>(ES, ErrorHandlerAddr);
+
+  case Triple::riscv64:
+    return LocalLazyCallThroughManager::Create<OrcRiscv64>(ES,
+                                                           ErrorHandlerAddr);
 
   case Triple::x86_64:
     if (T.getOS() == Triple::OSType::Win32)
@@ -144,7 +152,7 @@ createLocalLazyCallThroughManager(const Triple &T, ExecutionSession &ES,
 LazyReexportsMaterializationUnit::LazyReexportsMaterializationUnit(
     LazyCallThroughManager &LCTManager, IndirectStubsManager &ISManager,
     JITDylib &SourceJD, SymbolAliasMap CallableAliases, ImplSymbolMap *SrcJDLoc)
-    : MaterializationUnit(extractFlags(CallableAliases), nullptr),
+    : MaterializationUnit(extractFlags(CallableAliases)),
       LCTManager(LCTManager), ISManager(ISManager), SourceJD(SourceJD),
       CallableAliases(std::move(CallableAliases)), AliaseeTable(SrcJDLoc) {}
 
@@ -219,7 +227,7 @@ void LazyReexportsMaterializationUnit::discard(const JITDylib &JD,
   CallableAliases.erase(Name);
 }
 
-SymbolFlagsMap
+MaterializationUnit::Interface
 LazyReexportsMaterializationUnit::extractFlags(const SymbolAliasMap &Aliases) {
   SymbolFlagsMap SymbolFlags;
   for (auto &KV : Aliases) {
@@ -227,7 +235,7 @@ LazyReexportsMaterializationUnit::extractFlags(const SymbolAliasMap &Aliases) {
            "Lazy re-exports must be callable symbols");
     SymbolFlags[KV.first] = KV.second.AliasFlags;
   }
-  return SymbolFlags;
+  return MaterializationUnit::Interface(std::move(SymbolFlags), nullptr);
 }
 
 } // End namespace orc.

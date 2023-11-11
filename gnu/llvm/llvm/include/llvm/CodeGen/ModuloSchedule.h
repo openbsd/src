@@ -61,7 +61,6 @@
 #define LLVM_CODEGEN_MODULOSCHEDULE_H
 
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineLoopUtils.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
@@ -70,6 +69,8 @@
 
 namespace llvm {
 class MachineBasicBlock;
+class MachineLoop;
+class MachineRegisterInfo;
 class MachineInstr;
 class LiveIntervals;
 
@@ -190,7 +191,8 @@ private:
   void generateProlog(unsigned LastStage, MachineBasicBlock *KernelBB,
                       ValueMapTy *VRMap, MBBVectorTy &PrologBBs);
   void generateEpilog(unsigned LastStage, MachineBasicBlock *KernelBB,
-                      ValueMapTy *VRMap, MBBVectorTy &EpilogBBs,
+                      MachineBasicBlock *OrigBB, ValueMapTy *VRMap,
+                      ValueMapTy *VRMapPhi, MBBVectorTy &EpilogBBs,
                       MBBVectorTy &PrologBBs);
   void generateExistingPhis(MachineBasicBlock *NewBB, MachineBasicBlock *BB1,
                             MachineBasicBlock *BB2, MachineBasicBlock *KernelBB,
@@ -199,8 +201,9 @@ private:
                             bool IsLast);
   void generatePhis(MachineBasicBlock *NewBB, MachineBasicBlock *BB1,
                     MachineBasicBlock *BB2, MachineBasicBlock *KernelBB,
-                    ValueMapTy *VRMap, InstrMapTy &InstrMap,
-                    unsigned LastStageNum, unsigned CurStageNum, bool IsLast);
+                    ValueMapTy *VRMap, ValueMapTy *VRMapPhi,
+                    InstrMapTy &InstrMap, unsigned LastStageNum,
+                    unsigned CurStageNum, bool IsLast);
   void removeDeadInstructions(MachineBasicBlock *KernelBB,
                               MBBVectorTy &EpilogBBs);
   void splitLifetimes(MachineBasicBlock *KernelBB, MBBVectorTy &EpilogBBs);

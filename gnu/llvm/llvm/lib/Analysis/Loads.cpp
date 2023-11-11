@@ -13,19 +13,14 @@
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumeBundleQueries.h"
-#include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/GlobalAlias.h"
-#include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 
@@ -43,7 +38,7 @@ static bool isAligned(const Value *Base, const APInt &Offset, Align Alignment,
 /// a simple load or store.
 static bool isDereferenceableAndAlignedPointer(
     const Value *V, Align Alignment, const APInt &Size, const DataLayout &DL,
-    const Instruction *CtxI, const DominatorTree *DT,
+    const Instruction *CtxI, AssumptionCache *AC, const DominatorTree *DT,
     const TargetLibraryInfo *TLI, SmallPtrSetImpl<const Value *> &Visited,
     unsigned MaxDepth) {
   assert(V->getType()->isPointerTy() && "Base must be pointer");
@@ -58,65 +53,6 @@ static bool isDereferenceableAndAlignedPointer(
 
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
-
-  // Recurse into both hands of select.
-  if (const SelectInst *Sel = dyn_cast<SelectInst>(V)) {
-    return isDereferenceableAndAlignedPointer(Sel->getTrueValue(), Alignment,
-                                              Size, DL, CtxI, DT, TLI, Visited,
-                                              MaxDepth) &&
-           isDereferenceableAndAlignedPointer(Sel->getFalseValue(), Alignment,
-                                              Size, DL, CtxI, DT, TLI, Visited,
-                                              MaxDepth);
-  }
-
-  // bitcast instructions are no-ops as far as dereferenceability is concerned.
-  if (const BitCastOperator *BC = dyn_cast<BitCastOperator>(V)) {
-    if (BC->getSrcTy()->isPointerTy())
-      return isDereferenceableAndAlignedPointer(
-          BC->getOperand(0), Alignment, Size, DL, CtxI, DT, TLI,
-          Visited, MaxDepth);
-  }
-
-  bool CheckForNonNull, CheckForFreed;
-  APInt KnownDerefBytes(Size.getBitWidth(),
-                        V->getPointerDereferenceableBytes(DL, CheckForNonNull,
-                                                          CheckForFreed));
-  if (KnownDerefBytes.getBoolValue() && KnownDerefBytes.uge(Size) &&
-      !CheckForFreed)
-    if (!CheckForNonNull || isKnownNonZero(V, DL, 0, nullptr, CtxI, DT)) {
-      // As we recursed through GEPs to get here, we've incrementally checked
-      // that each step advanced by a multiple of the alignment. If our base is
-      // properly aligned, then the original offset accessed must also be.
-      Type *Ty = V->getType();
-      assert(Ty->isSized() && "must be sized");
-      APInt Offset(DL.getTypeStoreSizeInBits(Ty), 0);
-      return isAligned(V, Offset, Alignment, DL);
-    }
-
-  if (CtxI) {
-    /// Look through assumes to see if both dereferencability and alignment can
-    /// be provent by an assume
-    RetainedKnowledge AlignRK;
-    RetainedKnowledge DerefRK;
-    if (getKnowledgeForValue(
-            V, {Attribute::Dereferenceable, Attribute::Alignment}, nullptr,
-            [&](RetainedKnowledge RK, Instruction *Assume, auto) {
-              if (!isValidAssumeForContext(Assume, CtxI))
-                return false;
-              if (RK.AttrKind == Attribute::Alignment)
-                AlignRK = std::max(AlignRK, RK);
-              if (RK.AttrKind == Attribute::Dereferenceable)
-                DerefRK = std::max(DerefRK, RK);
-              if (AlignRK && DerefRK && AlignRK.ArgValue >= Alignment.value() &&
-                  DerefRK.ArgValue >= Size.getZExtValue())
-                return true; // We have found what we needed so we stop looking
-              return false;  // Other assumes may have better information. so
-                             // keep looking
-            }))
-      return true;
-  }
-  /// TODO refactor this function to be able to search independently for
-  /// Dereferencability and Alignment requirements.
 
   // For GEPs, determine if the indexing lands within the allocated object.
   if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
@@ -138,24 +74,49 @@ static bool isDereferenceableAndAlignedPointer(
     // addrspacecast, so we can't do arithmetic directly on the APInt values.
     return isDereferenceableAndAlignedPointer(
         Base, Alignment, Offset + Size.sextOrTrunc(Offset.getBitWidth()), DL,
-        CtxI, DT, TLI, Visited, MaxDepth);
+        CtxI, AC, DT, TLI, Visited, MaxDepth);
   }
 
-  // For gc.relocate, look through relocations
-  if (const GCRelocateInst *RelocateInst = dyn_cast<GCRelocateInst>(V))
-    return isDereferenceableAndAlignedPointer(RelocateInst->getDerivedPtr(),
-                                              Alignment, Size, DL, CtxI, DT,
-                                              TLI, Visited, MaxDepth);
+  // bitcast instructions are no-ops as far as dereferenceability is concerned.
+  if (const BitCastOperator *BC = dyn_cast<BitCastOperator>(V)) {
+    if (BC->getSrcTy()->isPointerTy())
+      return isDereferenceableAndAlignedPointer(
+        BC->getOperand(0), Alignment, Size, DL, CtxI, AC, DT, TLI,
+          Visited, MaxDepth);
+  }
 
-  if (const AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(V))
-    return isDereferenceableAndAlignedPointer(ASC->getOperand(0), Alignment,
-                                              Size, DL, CtxI, DT, TLI,
+  // Recurse into both hands of select.
+  if (const SelectInst *Sel = dyn_cast<SelectInst>(V)) {
+    return isDereferenceableAndAlignedPointer(Sel->getTrueValue(), Alignment,
+                                              Size, DL, CtxI, AC, DT, TLI,
+                                              Visited, MaxDepth) &&
+           isDereferenceableAndAlignedPointer(Sel->getFalseValue(), Alignment,
+                                              Size, DL, CtxI, AC, DT, TLI,
                                               Visited, MaxDepth);
+  }
+
+  bool CheckForNonNull, CheckForFreed;
+  APInt KnownDerefBytes(Size.getBitWidth(),
+                        V->getPointerDereferenceableBytes(DL, CheckForNonNull,
+                                                          CheckForFreed));
+  if (KnownDerefBytes.getBoolValue() && KnownDerefBytes.uge(Size) &&
+      !CheckForFreed)
+    if (!CheckForNonNull || isKnownNonZero(V, DL, 0, AC, CtxI, DT)) {
+      // As we recursed through GEPs to get here, we've incrementally checked
+      // that each step advanced by a multiple of the alignment. If our base is
+      // properly aligned, then the original offset accessed must also be.
+      APInt Offset(DL.getTypeStoreSizeInBits(V->getType()), 0);
+      return isAligned(V, Offset, Alignment, DL);
+    }
+
+  /// TODO refactor this function to be able to search independently for
+  /// Dereferencability and Alignment requirements.
+
 
   if (const auto *Call = dyn_cast<CallBase>(V)) {
     if (auto *RP = getArgumentAliasingToReturnedPointer(Call, true))
       return isDereferenceableAndAlignedPointer(RP, Alignment, Size, DL, CtxI,
-                                                DT, TLI, Visited, MaxDepth);
+                                                AC, DT, TLI, Visited, MaxDepth);
 
     // If we have a call we can't recurse through, check to see if this is an
     // allocation function for which we can establish an minimum object size.
@@ -174,45 +135,73 @@ static bool isDereferenceableAndAlignedPointer(
     if (getObjectSize(V, ObjSize, DL, TLI, Opts)) {
       APInt KnownDerefBytes(Size.getBitWidth(), ObjSize);
       if (KnownDerefBytes.getBoolValue() && KnownDerefBytes.uge(Size) &&
-          isKnownNonZero(V, DL, 0, nullptr, CtxI, DT) && !V->canBeFreed()) {
+          isKnownNonZero(V, DL, 0, AC, CtxI, DT) && !V->canBeFreed()) {
         // As we recursed through GEPs to get here, we've incrementally
         // checked that each step advanced by a multiple of the alignment. If
         // our base is properly aligned, then the original offset accessed
-        // must also be. 
-        Type *Ty = V->getType();
-        assert(Ty->isSized() && "must be sized");
-        APInt Offset(DL.getTypeStoreSizeInBits(Ty), 0);
+        // must also be.
+        APInt Offset(DL.getTypeStoreSizeInBits(V->getType()), 0);
         return isAligned(V, Offset, Alignment, DL);
       }
     }
+  }
+
+  // For gc.relocate, look through relocations
+  if (const GCRelocateInst *RelocateInst = dyn_cast<GCRelocateInst>(V))
+    return isDereferenceableAndAlignedPointer(RelocateInst->getDerivedPtr(),
+                                              Alignment, Size, DL, CtxI, AC, DT,
+                                              TLI, Visited, MaxDepth);
+
+  if (const AddrSpaceCastOperator *ASC = dyn_cast<AddrSpaceCastOperator>(V))
+    return isDereferenceableAndAlignedPointer(ASC->getOperand(0), Alignment,
+                                              Size, DL, CtxI, AC, DT, TLI,
+                                              Visited, MaxDepth);
+
+  if (CtxI) {
+    /// Look through assumes to see if both dereferencability and alignment can
+    /// be provent by an assume
+    RetainedKnowledge AlignRK;
+    RetainedKnowledge DerefRK;
+    if (getKnowledgeForValue(
+            V, {Attribute::Dereferenceable, Attribute::Alignment}, AC,
+            [&](RetainedKnowledge RK, Instruction *Assume, auto) {
+              if (!isValidAssumeForContext(Assume, CtxI))
+                return false;
+              if (RK.AttrKind == Attribute::Alignment)
+                AlignRK = std::max(AlignRK, RK);
+              if (RK.AttrKind == Attribute::Dereferenceable)
+                DerefRK = std::max(DerefRK, RK);
+              if (AlignRK && DerefRK && AlignRK.ArgValue >= Alignment.value() &&
+                  DerefRK.ArgValue >= Size.getZExtValue())
+                return true; // We have found what we needed so we stop looking
+              return false;  // Other assumes may have better information. so
+                             // keep looking
+            }))
+      return true;
   }
 
   // If we don't know, assume the worst.
   return false;
 }
 
-bool llvm::isDereferenceableAndAlignedPointer(const Value *V, Align Alignment,
-                                              const APInt &Size,
-                                              const DataLayout &DL,
-                                              const Instruction *CtxI,
-                                              const DominatorTree *DT,
-                                              const TargetLibraryInfo *TLI) {
+bool llvm::isDereferenceableAndAlignedPointer(
+    const Value *V, Align Alignment, const APInt &Size, const DataLayout &DL,
+    const Instruction *CtxI, AssumptionCache *AC, const DominatorTree *DT,
+    const TargetLibraryInfo *TLI) {
   // Note: At the moment, Size can be zero.  This ends up being interpreted as
   // a query of whether [Base, V] is dereferenceable and V is aligned (since
   // that's what the implementation happened to do).  It's unclear if this is
   // the desired semantic, but at least SelectionDAG does exercise this case.
 
   SmallPtrSet<const Value *, 32> Visited;
-  return ::isDereferenceableAndAlignedPointer(V, Alignment, Size, DL, CtxI, DT,
-                                              TLI, Visited, 16);
+  return ::isDereferenceableAndAlignedPointer(V, Alignment, Size, DL, CtxI, AC,
+                                              DT, TLI, Visited, 16);
 }
 
-bool llvm::isDereferenceableAndAlignedPointer(const Value *V, Type *Ty,
-                                              MaybeAlign MA,
-                                              const DataLayout &DL,
-                                              const Instruction *CtxI,
-                                              const DominatorTree *DT,
-                                              const TargetLibraryInfo *TLI) {
+bool llvm::isDereferenceableAndAlignedPointer(
+    const Value *V, Type *Ty, Align Alignment, const DataLayout &DL,
+    const Instruction *CtxI, AssumptionCache *AC, const DominatorTree *DT,
+    const TargetLibraryInfo *TLI) {
   // For unsized types or scalable vectors we don't know exactly how many bytes
   // are dereferenced, so bail out.
   if (!Ty->isSized() || isa<ScalableVectorType>(Ty))
@@ -223,20 +212,20 @@ bool llvm::isDereferenceableAndAlignedPointer(const Value *V, Type *Ty,
   // determine the exact offset to the attributed variable, we can use that
   // information here.
 
-  // Require ABI alignment for loads without alignment specification
-  const Align Alignment = DL.getValueOrABITypeAlignment(MA, Ty);
   APInt AccessSize(DL.getPointerTypeSizeInBits(V->getType()),
                    DL.getTypeStoreSize(Ty));
   return isDereferenceableAndAlignedPointer(V, Alignment, AccessSize, DL, CtxI,
-                                            DT, TLI);
+                                            AC, DT, TLI);
 }
 
 bool llvm::isDereferenceablePointer(const Value *V, Type *Ty,
                                     const DataLayout &DL,
                                     const Instruction *CtxI,
+                                    AssumptionCache *AC,
                                     const DominatorTree *DT,
                                     const TargetLibraryInfo *TLI) {
-  return isDereferenceableAndAlignedPointer(V, Ty, Align(1), DL, CtxI, DT, TLI);
+  return isDereferenceableAndAlignedPointer(V, Ty, Align(1), DL, CtxI, AC, DT,
+                                            TLI);
 }
 
 /// Test if A and B will obviously have the same value.
@@ -272,12 +261,13 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
 
 bool llvm::isDereferenceableAndAlignedInLoop(LoadInst *LI, Loop *L,
                                              ScalarEvolution &SE,
-                                             DominatorTree &DT) {
+                                             DominatorTree &DT,
+                                             AssumptionCache *AC) {
   auto &DL = LI->getModule()->getDataLayout();
   Value *Ptr = LI->getPointerOperand();
 
   APInt EltSize(DL.getIndexTypeSizeInBits(Ptr->getType()),
-                DL.getTypeStoreSize(LI->getType()).getFixedSize());
+                DL.getTypeStoreSize(LI->getType()).getFixedValue());
   const Align Alignment = LI->getAlign();
 
   Instruction *HeaderFirstNonPHI = L->getHeader()->getFirstNonPHI();
@@ -286,7 +276,7 @@ bool llvm::isDereferenceableAndAlignedInLoop(LoadInst *LI, Loop *L,
   // access is safe within the loop w/o needing predication.
   if (L->isLoopInvariant(Ptr))
     return isDereferenceableAndAlignedPointer(Ptr, Alignment, EltSize, DL,
-                                              HeaderFirstNonPHI, &DT);
+                                              HeaderFirstNonPHI, AC, &DT);
 
   // Otherwise, check to see if we have a repeating access pattern where we can
   // prove that all accesses are well aligned and dereferenceable.
@@ -318,7 +308,7 @@ bool llvm::isDereferenceableAndAlignedInLoop(LoadInst *LI, Loop *L,
   if (EltSize.urem(Alignment.value()) != 0)
     return false;
   return isDereferenceableAndAlignedPointer(Base, Alignment, AccessSize, DL,
-                                            HeaderFirstNonPHI, &DT);
+                                            HeaderFirstNonPHI, AC, &DT);
 }
 
 /// Check if executing a load of this pointer value cannot trap.
@@ -335,11 +325,13 @@ bool llvm::isDereferenceableAndAlignedInLoop(LoadInst *LI, Loop *L,
 bool llvm::isSafeToLoadUnconditionally(Value *V, Align Alignment, APInt &Size,
                                        const DataLayout &DL,
                                        Instruction *ScanFrom,
+                                       AssumptionCache *AC,
                                        const DominatorTree *DT,
                                        const TargetLibraryInfo *TLI) {
   // If DT is not specified we can't make context-sensitive query
   const Instruction* CtxI = DT ? ScanFrom : nullptr;
-  if (isDereferenceableAndAlignedPointer(V, Alignment, Size, DL, CtxI, DT, TLI))
+  if (isDereferenceableAndAlignedPointer(V, Alignment, Size, DL, CtxI, AC, DT,
+                                         TLI))
     return true;
 
   if (!ScanFrom)
@@ -367,7 +359,7 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Align Alignment, APInt &Size,
     // If we see a free or a call which may write to memory (i.e. which might do
     // a free) the pointer could be marked invalid.
     if (isa<CallInst>(BBI) && BBI->mayWriteToMemory() &&
-        !isa<DbgInfoIntrinsic>(BBI))
+        !isa<LifetimeIntrinsic>(BBI) && !isa<DbgInfoIntrinsic>(BBI))
       return false;
 
     Value *AccessedPtr;
@@ -410,10 +402,15 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Align Alignment, APInt &Size,
 bool llvm::isSafeToLoadUnconditionally(Value *V, Type *Ty, Align Alignment,
                                        const DataLayout &DL,
                                        Instruction *ScanFrom,
+                                       AssumptionCache *AC,
                                        const DominatorTree *DT,
                                        const TargetLibraryInfo *TLI) {
-  APInt Size(DL.getIndexTypeSizeInBits(V->getType()), DL.getTypeStoreSize(Ty));
-  return isSafeToLoadUnconditionally(V, Alignment, Size, DL, ScanFrom, DT, TLI);
+  TypeSize TySize = DL.getTypeStoreSize(Ty);
+  if (TySize.isScalable())
+    return false;
+  APInt Size(DL.getIndexTypeSizeInBits(V->getType()), TySize.getFixedValue());
+  return isSafeToLoadUnconditionally(V, Alignment, Size, DL, ScanFrom, AC, DT,
+                                     TLI);
 }
 
 /// DefMaxInstsToScan - the default number of maximum instructions
@@ -451,8 +448,8 @@ static bool areNonOverlapSameBaseLoadAndStore(const Value *LoadPtr,
                                               const Value *StorePtr,
                                               Type *StoreTy,
                                               const DataLayout &DL) {
-  APInt LoadOffset(DL.getTypeSizeInBits(LoadPtr->getType()), 0);
-  APInt StoreOffset(DL.getTypeSizeInBits(StorePtr->getType()), 0);
+  APInt LoadOffset(DL.getIndexTypeSizeInBits(LoadPtr->getType()), 0);
+  APInt StoreOffset(DL.getIndexTypeSizeInBits(StorePtr->getType()), 0);
   const Value *LoadBase = LoadPtr->stripAndAccumulateConstantOffsets(
       DL, LoadOffset, /* AllowNonInbounds */ false);
   const Value *StoreBase = StorePtr->stripAndAccumulateConstantOffsets(
@@ -511,8 +508,48 @@ static Value *getAvailableLoadStore(Instruction *Inst, const Value *Ptr,
     if (CastInst::isBitOrNoopPointerCastable(Val->getType(), AccessTy, DL))
       return Val;
 
-    if (auto *C = dyn_cast<Constant>(Val))
-      return ConstantFoldLoadThroughBitcast(C, AccessTy, DL);
+    TypeSize StoreSize = DL.getTypeSizeInBits(Val->getType());
+    TypeSize LoadSize = DL.getTypeSizeInBits(AccessTy);
+    if (TypeSize::isKnownLE(LoadSize, StoreSize))
+      if (auto *C = dyn_cast<Constant>(Val))
+        return ConstantFoldLoadFromConst(C, AccessTy, DL);
+  }
+
+  if (auto *MSI = dyn_cast<MemSetInst>(Inst)) {
+    // Don't forward from (non-atomic) memset to atomic load.
+    if (AtLeastAtomic)
+      return nullptr;
+
+    // Only handle constant memsets.
+    auto *Val = dyn_cast<ConstantInt>(MSI->getValue());
+    auto *Len = dyn_cast<ConstantInt>(MSI->getLength());
+    if (!Val || !Len)
+      return nullptr;
+
+    // TODO: Handle offsets.
+    Value *Dst = MSI->getDest();
+    if (!AreEquivalentAddressValues(Dst, Ptr))
+      return nullptr;
+
+    if (IsLoadCSE)
+      *IsLoadCSE = false;
+
+    TypeSize LoadTypeSize = DL.getTypeSizeInBits(AccessTy);
+    if (LoadTypeSize.isScalable())
+      return nullptr;
+
+    // Make sure the read bytes are contained in the memset.
+    uint64_t LoadSize = LoadTypeSize.getFixedValue();
+    if ((Len->getValue() * 8).ult(LoadSize))
+      return nullptr;
+
+    APInt Splat = LoadSize >= 8 ? APInt::getSplat(LoadSize, Val->getValue())
+                                : Val->getValue().trunc(LoadSize);
+    ConstantInt *SplatC = ConstantInt::get(MSI->getContext(), Splat);
+    if (CastInst::isBitOrNoopPointerCastable(SplatC->getType(), AccessTy, DL))
+      return SplatC;
+
+    return nullptr;
   }
 
   return nullptr;

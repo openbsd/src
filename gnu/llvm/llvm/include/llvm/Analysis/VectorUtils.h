@@ -115,7 +115,7 @@ struct VFShape {
 
     return {EC, Parameters};
   }
-  /// Sanity check on the Parameters in the VFShape.
+  /// Validation check on the Parameters in the VFShape.
   bool hasValidParameterList() const;
 };
 
@@ -164,7 +164,8 @@ static constexpr char const *_LLVM_Scalarize_ = "_LLVM_Scalarize_";
 /// name. At the moment, this parameter is needed only to retrieve the
 /// Vectorization Factor of scalable vector functions from their
 /// respective IR declarations.
-Optional<VFInfo> tryDemangleForVFABI(StringRef MangledName, const Module &M);
+std::optional<VFInfo> tryDemangleForVFABI(StringRef MangledName,
+                                          const Module &M);
 
 /// This routine mangles the given VectorName according to the LangRef
 /// specification for vector-function-abi-variant attribute and is specific to
@@ -230,16 +231,16 @@ class VFDatabase {
     if (ListOfStrings.empty())
       return;
     for (const auto &MangledName : ListOfStrings) {
-      const Optional<VFInfo> Shape =
+      const std::optional<VFInfo> Shape =
           VFABI::tryDemangleForVFABI(MangledName, *(CI.getModule()));
       // A match is found via scalar and vector names, and also by
       // ensuring that the variant described in the attribute has a
       // corresponding definition or declaration of the vector
       // function in the Module M.
-      if (Shape.hasValue() && (Shape.getValue().ScalarName == ScalarName)) {
-        assert(CI.getModule()->getFunction(Shape.getValue().VectorName) &&
+      if (Shape && (Shape->ScalarName == ScalarName)) {
+        assert(CI.getModule()->getFunction(Shape->VectorName) &&
                "Vector function is missing.");
-        Mappings.push_back(Shape.getValue());
+        Mappings.push_back(*Shape);
       }
     }
   }
@@ -309,16 +310,16 @@ inline Type *ToVectorTy(Type *Scalar, unsigned VF) {
 /// Identify if the intrinsic is trivially vectorizable.
 /// This method returns true if the intrinsic's argument types are all scalars
 /// for the scalar form of the intrinsic and all vectors (or scalars handled by
-/// hasVectorInstrinsicScalarOpd) for the vector form of the intrinsic.
+/// isVectorIntrinsicWithScalarOpAtArg) for the vector form of the intrinsic.
 bool isTriviallyVectorizable(Intrinsic::ID ID);
 
 /// Identifies if the vector form of the intrinsic has a scalar operand.
-bool hasVectorInstrinsicScalarOpd(Intrinsic::ID ID, unsigned ScalarOpdIdx);
+bool isVectorIntrinsicWithScalarOpAtArg(Intrinsic::ID ID,
+                                        unsigned ScalarOpdIdx);
 
-/// Identifies if the vector form of the intrinsic has a scalar operand that has
+/// Identifies if the vector form of the intrinsic has a operand that has
 /// an overloaded type.
-bool hasVectorInstrinsicOverloadedScalarOpd(Intrinsic::ID ID,
-                                            unsigned ScalarOpdIdx);
+bool isVectorIntrinsicWithOverloadTypeAtArg(Intrinsic::ID ID, unsigned OpdIdx);
 
 /// Returns intrinsic ID for call.
 /// For the input call instruction it finds mapping intrinsic and returns
@@ -366,6 +367,14 @@ Value *getSplatValue(const Value *V);
 /// not limited by finding a scalar source value to a splatted vector.
 bool isSplatValue(const Value *V, int Index = -1, unsigned Depth = 0);
 
+/// Transform a shuffle mask's output demanded element mask into demanded
+/// element masks for the 2 operands, returns false if the mask isn't valid.
+/// Both \p DemandedLHS and \p DemandedRHS are initialised to [SrcWidth].
+/// \p AllowUndefElts permits "-1" indices to be treated as undef.
+bool getShuffleDemandedElts(int SrcWidth, ArrayRef<int> Mask,
+                            const APInt &DemandedElts, APInt &DemandedLHS,
+                            APInt &DemandedRHS, bool AllowUndefElts = false);
+
 /// Replace each shuffle mask index with the scaled sequential indices for an
 /// equivalent mask of narrowed elements. Mask elements that are less than 0
 /// (sentinel values) are repeated in the output mask.
@@ -397,6 +406,29 @@ void narrowShuffleMaskElts(int Scale, ArrayRef<int> Mask,
 /// divide evenly (scale down) to map to wider vector elements.
 bool widenShuffleMaskElts(int Scale, ArrayRef<int> Mask,
                           SmallVectorImpl<int> &ScaledMask);
+
+/// Repetitively apply `widenShuffleMaskElts()` for as long as it succeeds,
+/// to get the shuffle mask with widest possible elements.
+void getShuffleMaskWithWidestElts(ArrayRef<int> Mask,
+                                  SmallVectorImpl<int> &ScaledMask);
+
+/// Splits and processes shuffle mask depending on the number of input and
+/// output registers. The function does 2 main things: 1) splits the
+/// source/destination vectors into real registers; 2) do the mask analysis to
+/// identify which real registers are permuted. Then the function processes
+/// resulting registers mask using provided action items. If no input register
+/// is defined, \p NoInputAction action is used. If only 1 input register is
+/// used, \p SingleInputAction is used, otherwise \p ManyInputsAction is used to
+/// process > 2 input registers and masks.
+/// \param Mask Original shuffle mask.
+/// \param NumOfSrcRegs Number of source registers.
+/// \param NumOfDestRegs Number of destination registers.
+/// \param NumOfUsedRegs Number of actually used destination registers.
+void processShuffleMasks(
+    ArrayRef<int> Mask, unsigned NumOfSrcRegs, unsigned NumOfDestRegs,
+    unsigned NumOfUsedRegs, function_ref<void()> NoInputAction,
+    function_ref<void(ArrayRef<int>, unsigned, unsigned)> SingleInputAction,
+    function_ref<void(ArrayRef<int>, unsigned, unsigned)> ManyInputsAction);
 
 /// Compute a map of integer instructions to their minimum legal type
 /// size.
@@ -533,6 +565,12 @@ llvm::SmallVector<int, 16> createStrideMask(unsigned Start, unsigned Stride,
 llvm::SmallVector<int, 16>
 createSequentialMask(unsigned Start, unsigned NumInts, unsigned NumUndefs);
 
+/// Given a shuffle mask for a binary shuffle, create the equivalent shuffle
+/// mask assuming both operands are identical. This assumes that the unary
+/// shuffle will use elements from operand 0 (operand 1 will be unused).
+llvm::SmallVector<int, 16> createUnaryMask(ArrayRef<int> Mask,
+                                           unsigned NumElts);
+
 /// Concatenate a list of vectors.
 ///
 /// This function generates code that concatenate the vectors in \p Vecs into a
@@ -609,7 +647,7 @@ public:
   /// \returns false if the instruction doesn't belong to the group.
   bool insertMember(InstTy *Instr, int32_t Index, Align NewAlign) {
     // Make sure the key fits in an int32_t.
-    Optional<int32_t> MaybeKey = checkedAdd(Index, SmallestKey);
+    std::optional<int32_t> MaybeKey = checkedAdd(Index, SmallestKey);
     if (!MaybeKey)
       return false;
     int32_t Key = *MaybeKey;
@@ -632,7 +670,7 @@ public:
     } else if (Key < SmallestKey) {
 
       // Make sure the largest index fits in an int32_t.
-      Optional<int32_t> MaybeLargestIndex = checkedSub(LargestKey, Key);
+      std::optional<int32_t> MaybeLargestIndex = checkedSub(LargestKey, Key);
       if (!MaybeLargestIndex)
         return false;
 
@@ -686,10 +724,8 @@ public:
     if (getMember(getFactor() - 1))
       return false;
 
-    // We have a group with gaps. It therefore cannot be a group of stores,
-    // and it can't be a reversed access, because such groups get invalidated.
-    assert(!getMember(0)->mayWriteToMemory() &&
-           "Group should have been invalidated");
+    // We have a group with gaps. It therefore can't be a reversed access,
+    // because such groups get invalidated (TODO).
     assert(!isReverse() && "Group should have been invalidated");
 
     // This is a group of loads, with gaps, and without a last-member
@@ -788,6 +824,9 @@ public:
   /// happen when optimizing for size forbids a scalar epilogue, and the gap
   /// cannot be filtered by masking the load/store.
   void invalidateGroupsRequiringScalarEpilogue();
+
+  /// Returns true if we have any interleave groups.
+  bool hasGroups() const { return !InterleaveGroups.empty(); }
 
 private:
   /// A wrapper around ScalarEvolution, used to add runtime SCEV checks.

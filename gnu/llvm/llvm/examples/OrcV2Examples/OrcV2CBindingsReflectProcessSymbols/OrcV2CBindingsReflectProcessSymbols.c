@@ -45,7 +45,7 @@ int allowedSymbols(void *Ctx, LLVMOrcSymbolStringPoolEntryRef Sym) {
   return 0;
 }
 
-LLVMOrcThreadSafeModuleRef createDemoModule() {
+LLVMOrcThreadSafeModuleRef createDemoModule(void) {
   // Create a new ThreadSafeContext and underlying LLVMContext.
   LLVMOrcThreadSafeContextRef TSCtx = LLVMOrcCreateNewThreadSafeContext();
 
@@ -99,6 +99,9 @@ LLVMOrcThreadSafeModuleRef createDemoModule() {
 
   //  - Build the return instruction.
   LLVMBuildRet(Builder, AddResult);
+
+  //  - Free the builder.
+  LLVMDisposeBuilder(Builder);
 
   // Our demo module is now complete. Wrap it and our ThreadSafeContext in a
   // ThreadSafeModule.

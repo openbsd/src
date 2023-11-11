@@ -29,7 +29,7 @@
 //   __wasm_lpad_context.lpad_index = index;
 //   __wasm_lpad_context.lsda = wasm.lsda();
 //   _Unwind_CallPersonality(exn);
-//   selector = __wasm.landingpad_context.selector;
+//   selector = __wasm_lpad_context.selector;
 //   ...
 //
 //
@@ -77,8 +77,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/TargetLowering.h"
-#include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/WasmEHFuncInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/IntrinsicsWebAssembly.h"
@@ -182,8 +182,7 @@ bool WasmEHPrepare::prepareThrows(Function &F) {
     Changed = true;
     auto *BB = ThrowI->getParent();
     SmallVector<BasicBlock *, 4> Succs(successors(BB));
-    auto &InstList = BB->getInstList();
-    InstList.erase(std::next(BasicBlock::iterator(ThrowI)), InstList.end());
+    BB->erase(std::next(BasicBlock::iterator(ThrowI)), BB->end());
     IRB.SetInsertPoint(BB);
     IRB.CreateUnreachable();
     eraseDeadBBsAndChildren(Succs);
@@ -212,9 +211,15 @@ bool WasmEHPrepare::prepareEHPads(Function &F) {
 
   assert(F.hasPersonalityFn() && "Personality function not found");
 
-  // __wasm_lpad_context global variable
+  // __wasm_lpad_context global variable.
+  // This variable should be thread local. If the target does not support TLS,
+  // we depend on CoalesceFeaturesAndStripAtomics to downgrade it to
+  // non-thread-local ones, in which case we don't allow this object to be
+  // linked with other objects using shared memory.
   LPadContextGV = cast<GlobalVariable>(
       M.getOrInsertGlobal("__wasm_lpad_context", LPadContextTy));
+  LPadContextGV->setThreadLocalMode(GlobalValue::GeneralDynamicTLSModel);
+
   LPadIndexField = IRB.CreateConstGEP2_32(LPadContextTy, LPadContextGV, 0, 0,
                                           "lpad_index_gep");
   LSDAField =
@@ -247,7 +252,7 @@ bool WasmEHPrepare::prepareEHPads(Function &F) {
     auto *CPI = cast<CatchPadInst>(BB->getFirstNonPHI());
     // In case of a single catch (...), we don't need to emit a personalify
     // function call
-    if (CPI->getNumArgOperands() == 1 &&
+    if (CPI->arg_size() == 1 &&
         cast<Constant>(CPI->getArgOperand(0))->isNullValue())
       prepareEHPad(BB, false);
     else
@@ -329,7 +334,7 @@ void WasmEHPrepare::prepareEHPad(BasicBlock *BB, bool NeedPersonality,
                                     OperandBundleDef("funclet", CPI));
   PersCI->setDoesNotThrow();
 
-  // Pseudocode: int selector = __wasm.landingpad_context.selector;
+  // Pseudocode: int selector = __wasm_lpad_context.selector;
   Instruction *Selector =
       IRB.CreateLoad(IRB.getInt32Ty(), SelectorField, "selector");
 

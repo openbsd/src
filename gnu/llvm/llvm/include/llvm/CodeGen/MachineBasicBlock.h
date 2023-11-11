@@ -14,9 +14,9 @@
 #define LLVM_CODEGEN_MACHINEBASICBLOCK_H
 
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/iterator_range.h"
-#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBundleIterator.h"
 #include "llvm/IR/DebugLoc.h"
@@ -24,7 +24,6 @@
 #include "llvm/Support/BranchProbability.h"
 #include <cassert>
 #include <cstdint>
-#include <functional>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -110,10 +109,10 @@ public:
 private:
   using Instructions = ilist<MachineInstr, ilist_sentinel_tracking<true>>;
 
-  Instructions Insts;
   const BasicBlock *BB;
   int Number;
   MachineFunction *xParent;
+  Instructions Insts;
 
   /// Keep track of the predecessor / successor basic blocks.
   std::vector<MachineBasicBlock *> Predecessors;
@@ -127,7 +126,7 @@ private:
   using const_probability_iterator =
       std::vector<BranchProbability>::const_iterator;
 
-  Optional<uint64_t> IrrLoopHeaderWeight;
+  std::optional<uint64_t> IrrLoopHeaderWeight;
 
   /// Keep track of the physical registers that are livein of the basicblock.
   using LiveInVector = std::vector<RegisterMaskPair>;
@@ -136,13 +135,21 @@ private:
   /// Alignment of the basic block. One if the basic block does not need to be
   /// aligned.
   Align Alignment;
+  /// Maximum amount of bytes that can be added to align the basic block. If the
+  /// alignment cannot be reached in this many bytes, no bytes are emitted.
+  /// Zero to represent no maximum.
+  unsigned MaxBytesForAlignment = 0;
 
   /// Indicate that this basic block is entered via an exception handler.
   bool IsEHPad = false;
 
-  /// Indicate that this basic block is potentially the target of an indirect
-  /// branch.
-  bool AddressTaken = false;
+  /// Indicate that this MachineBasicBlock is referenced somewhere other than
+  /// as predecessor/successor, a terminator MachineInstr, or a jump table.
+  bool MachineBlockAddressTaken = false;
+
+  /// If this MachineBasicBlock corresponds to an IR-level "blockaddress"
+  /// constant, this contains a pointer to that block.
+  BasicBlock *AddressTakenIRBlock = nullptr;
 
   /// Indicate that this basic block needs its symbol be emitted regardless of
   /// whether the flow just falls-through to it.
@@ -161,6 +168,10 @@ private:
 
   /// Indicate that this basic block is the entry block of a cleanup funclet.
   bool IsCleanupFuncletEntry = false;
+
+  /// Fixed unique ID assigned to this basic block upon creation. Used with
+  /// basic block sections and basic block labels.
+  std::optional<unsigned> BBID;
 
   /// With basic block sections, this stores the Section ID of the basic block.
   MBBSectionID SectionID{0};
@@ -201,18 +212,47 @@ public:
   /// to an LLVM basic block.
   const BasicBlock *getBasicBlock() const { return BB; }
 
+  /// Remove the reference to the underlying IR BasicBlock. This is for
+  /// reduction tools and should generally not be used.
+  void clearBasicBlock() {
+    BB = nullptr;
+  }
+
   /// Return the name of the corresponding LLVM basic block, or an empty string.
   StringRef getName() const;
 
   /// Return a formatted string to identify this block and its parent function.
   std::string getFullName() const;
 
-  /// Test whether this block is potentially the target of an indirect branch.
-  bool hasAddressTaken() const { return AddressTaken; }
+  /// Test whether this block is used as as something other than the target
+  /// of a terminator, exception-handling target, or jump table. This is
+  /// either the result of an IR-level "blockaddress", or some form
+  /// of target-specific branch lowering.
+  bool hasAddressTaken() const {
+    return MachineBlockAddressTaken || AddressTakenIRBlock;
+  }
 
-  /// Set this block to reflect that it potentially is the target of an indirect
-  /// branch.
-  void setHasAddressTaken() { AddressTaken = true; }
+  /// Test whether this block is used as something other than the target of a
+  /// terminator, exception-handling target, jump table, or IR blockaddress.
+  /// For example, its address might be loaded into a register, or
+  /// stored in some branch table that isn't part of MachineJumpTableInfo.
+  bool isMachineBlockAddressTaken() const { return MachineBlockAddressTaken; }
+
+  /// Test whether this block is the target of an IR BlockAddress.  (There can
+  /// more than one MBB associated with an IR BB where the address is taken.)
+  bool isIRBlockAddressTaken() const { return AddressTakenIRBlock; }
+
+  /// Retrieves the BasicBlock which corresponds to this MachineBasicBlock.
+  BasicBlock *getAddressTakenIRBlock() const { return AddressTakenIRBlock; }
+
+  /// Set this block to indicate that its address is used as something other
+  /// than the target of a terminator, exception-handling target, jump table,
+  /// or IR-level "blockaddress".
+  void setMachineBlockAddressTaken() { MachineBlockAddressTaken = true; }
+
+  /// Set this block to reflect that it corresponds to an IR-level basic block
+  /// with a BlockAddress.
+  void setAddressTakenIRBlock(BasicBlock *BB) { AddressTakenIRBlock = BB; }
 
   /// Test whether this block must have its label emitted.
   bool hasLabelMustBeEmitted() const { return LabelMustBeEmitted; }
@@ -237,6 +277,7 @@ public:
       MachineInstrBundleIterator<const MachineInstr, true>;
 
   unsigned size() const { return (unsigned)Insts.size(); }
+  bool sizeWithoutDebugLargerThan(unsigned Limit) const;
   bool empty() const { return Insts.empty(); }
 
   MachineInstr       &instr_front()       { return Insts.front(); }
@@ -396,7 +437,7 @@ public:
   // Iteration support for live in sets.  These sets are kept in sorted
   // order by their register number.
   using livein_iterator = LiveInVector::const_iterator;
-#ifndef NDEBUG
+
   /// Unlike livein_begin, this method does not check that the liveness
   /// information is accurate. Still for debug purposes it may be useful
   /// to have iterators that won't assert if the liveness information
@@ -405,7 +446,7 @@ public:
   iterator_range<livein_iterator> liveins_dbg() const {
     return make_range(livein_begin_dbg(), livein_end());
   }
-#endif
+
   livein_iterator livein_begin() const;
   livein_iterator livein_end()   const { return LiveIns.end(); }
   bool            livein_empty() const { return LiveIns.empty(); }
@@ -521,6 +562,19 @@ public:
   /// Set alignment of the basic block.
   void setAlignment(Align A) { Alignment = A; }
 
+  void setAlignment(Align A, unsigned MaxBytes) {
+    setAlignment(A);
+    setMaxBytesForAlignment(MaxBytes);
+  }
+
+  /// Return the maximum amount of padding allowed for aligning the basic block.
+  unsigned getMaxBytesForAlignment() const { return MaxBytesForAlignment; }
+
+  /// Set the maximum amount of padding allowed for aligning the basic block
+  void setMaxBytesForAlignment(unsigned MaxBytes) {
+    MaxBytesForAlignment = MaxBytes;
+  }
+
   /// Returns true if the block is a landing pad. That is this basic block is
   /// entered via an exception handler.
   bool isEHPad() const { return IsEHPad; }
@@ -570,6 +624,14 @@ public:
 
   void setIsEndSection(bool V = true) { IsEndSection = V; }
 
+  std::optional<unsigned> getBBID() const { return BBID; }
+
+  /// Returns the BBID of the block when BBAddrMapVersion >= 2, otherwise
+  /// returns `MachineBasicBlock::Number`.
+  /// TODO: Remove this function when version 1 is deprecated and replace its
+  /// uses with `getBBID()`.
+  unsigned getBBIDOrNumber() const;
+
   /// Returns the section ID of this basic block.
   MBBSectionID getSectionID() const { return SectionID; }
 
@@ -577,6 +639,12 @@ public:
   unsigned getSectionIDNum() const {
     return ((unsigned)MBBSectionID::SectionType::Cold) -
            ((unsigned)SectionID.Type) + SectionID.Number;
+  }
+
+  /// Sets the fixed BBID of this basic block.
+  void setBBID(unsigned V) {
+    assert(!BBID.has_value() && "Cannot change BBID.");
+    BBID = V;
   }
 
   /// Sets the section ID for this basic block.
@@ -714,12 +782,26 @@ public:
   /// other block.
   bool isLayoutSuccessor(const MachineBasicBlock *MBB) const;
 
+  /// Return the successor of this block if it has a single successor.
+  /// Otherwise return a null pointer.
+  ///
+  const MachineBasicBlock *getSingleSuccessor() const;
+  MachineBasicBlock *getSingleSuccessor() {
+    return const_cast<MachineBasicBlock *>(
+        static_cast<const MachineBasicBlock *>(this)->getSingleSuccessor());
+  }
+
   /// Return the fallthrough block if the block can implicitly
   /// transfer control to the block after it by falling off the end of
-  /// it.  This should return null if it can reach the block after
-  /// it, but it uses an explicit branch to do so (e.g., a table
-  /// jump).  Non-null return  is a conservative answer.
-  MachineBasicBlock *getFallThrough();
+  /// it. If an explicit branch to the fallthrough block is not allowed,
+  /// set JumpToFallThrough to be false. Non-null return is a conservative
+  /// answer.
+  MachineBasicBlock *getFallThrough(bool JumpToFallThrough = false);
+
+  /// Return the fallthrough block if the block can implicitly
+  /// transfer control to it's successor, whether by a branch or
+  /// a fallthrough. Non-null return is a conservative answer.
+  MachineBasicBlock *getLogicalFallThrough() { return getFallThrough(true); }
 
   /// Return true if the block can implicitly transfer control to the
   /// block after it by falling off the end of it.  This should return
@@ -755,6 +837,11 @@ public:
   /// Same getFirstTerminator but it ignores bundles and return an
   /// instr_iterator instead.
   instr_iterator getFirstInstrTerminator();
+
+  /// Finds the first terminator in a block by scanning forward. This can handle
+  /// cases in GlobalISel where there may be non-terminator instructions between
+  /// terminators, for which getFirstTerminator() will not work correctly.
+  iterator getFirstTerminatorForward();
 
   /// Returns an iterator to the first non-debug instruction in the basic block,
   /// or end(). Skip any pseudo probe operation if \c SkipPseudoOp is true.
@@ -1062,13 +1149,18 @@ public:
   /// Return the EHCatchret Symbol for this basic block.
   MCSymbol *getEHCatchretSymbol() const;
 
-  Optional<uint64_t> getIrrLoopHeaderWeight() const {
+  std::optional<uint64_t> getIrrLoopHeaderWeight() const {
     return IrrLoopHeaderWeight;
   }
 
   void setIrrLoopHeaderWeight(uint64_t Weight) {
     IrrLoopHeaderWeight = Weight;
   }
+
+  /// Return probability of the edge from this block to MBB. This method should
+  /// NOT be called directly, but by using getEdgeProbability method from
+  /// MachineBranchProbabilityInfo class.
+  BranchProbability getSuccProbability(const_succ_iterator Succ) const;
 
 private:
   /// Return probability iterator corresponding to the I successor iterator.
@@ -1078,11 +1170,6 @@ private:
 
   friend class MachineBranchProbabilityInfo;
   friend class MIPrinter;
-
-  /// Return probability of the edge from this block to MBB. This method should
-  /// NOT be called directly, but by using getEdgeProbability method from
-  /// MachineBranchProbabilityInfo class.
-  BranchProbability getSuccProbability(const_succ_iterator Succ) const;
 
   // Methods used to maintain doubly linked list of blocks...
   friend struct ilist_callback_traits<MachineBasicBlock>;

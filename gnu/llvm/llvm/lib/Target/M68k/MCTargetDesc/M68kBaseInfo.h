@@ -1,4 +1,4 @@
-//===-- M68kBaseInfo.h - Top level definitions for M68k MC --*- C++ -*-----===//
+//===-- M68kBaseInfo.h - Top level definitions for M68k MC ------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -21,6 +21,7 @@
 
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_MI_OPS_INFO
@@ -46,6 +47,24 @@ enum { MemDisp = 0, MemBase = 1, MemIndex = 2, MemOuter = 3 };
 /// ([bd,PC],Xn,od)
 /// ([bd,PC,Xn],od)
 enum { PCRelDisp = 0, PCRelIndex = 1, PCRelOuter = 2 };
+
+// On a LE host:
+// MSB                   LSB    MSB                   LSB
+// | 0x12 0x34 | 0xAB 0xCD | -> | 0xAB 0xCD | 0x12 0x34 |
+// (On a BE host nothing changes)
+template <typename value_t> value_t swapWord(value_t Val) {
+  const unsigned NumWords = sizeof(Val) / 2;
+  if (NumWords <= 1)
+    return Val;
+  Val = support::endian::byte_swap(Val, support::big);
+  value_t NewVal = 0;
+  for (unsigned i = 0U; i != NumWords; ++i) {
+    uint16_t Part = (Val >> (i * 16)) & 0xFFFF;
+    Part = support::endian::byte_swap(Part, support::big);
+    NewVal |= (Part << (i * 16));
+  }
+  return NewVal;
+}
 } // namespace M68k
 
 namespace M68kBeads {
@@ -244,4 +263,4 @@ static inline unsigned getMaskedSpillRegister(unsigned order) {
 
 } // namespace llvm
 
-#endif
+#endif // LLVM_LIB_TARGET_M68K_MCTARGETDESC_M68KBASEINFO_H

@@ -281,12 +281,25 @@ enum NodeType {
 
   /// Carry-using nodes for multiple precision addition and subtraction.
   /// These nodes take three operands: The first two are the normal lhs and
-  /// rhs to the add or sub, and the third is a boolean indicating if there
-  /// is an incoming carry. These nodes produce two results: the normal
-  /// result of the add or sub, and the output carry so they can be chained
-  /// together. The use of this opcode is preferable to adde/sube if the
-  /// target supports it, as the carry is a regular value rather than a
-  /// glue, which allows further optimisation.
+  /// rhs to the add or sub, and the third is a boolean value that is 1 if and
+  /// only if there is an incoming carry/borrow. These nodes produce two
+  /// results: the normal result of the add or sub, and a boolean value that is
+  /// 1 if and only if there is an outgoing carry/borrow.
+  ///
+  /// Care must be taken if these opcodes are lowered to hardware instructions
+  /// that use the inverse logic -- 0 if and only if there is an
+  /// incoming/outgoing carry/borrow.  In such cases, you must preserve the
+  /// semantics of these opcodes by inverting the incoming carry/borrow, feeding
+  /// it to the add/sub hardware instruction, and then inverting the outgoing
+  /// carry/borrow.
+  ///
+  /// The use of these opcodes is preferable to adde/sube if the target supports
+  /// it, as the carry is a regular value rather than a glue, which allows
+  /// further optimisation.
+  ///
+  /// These opcodes are different from [US]{ADD,SUB}O in that ADDCARRY/SUBCARRY
+  /// consume and produce a carry/borrow, whereas [US]{ADD,SUB}O produce an
+  /// overflow.
   ADDCARRY,
   SUBCARRY,
 
@@ -294,7 +307,7 @@ enum NodeType {
   /// subtraction. These nodes take three operands: The first two are normal lhs
   /// and rhs to the add or sub, and the third is a boolean indicating if there
   /// is an incoming carry. They produce two results: the normal result of the
-  /// add or sub, and a boolean that indicates if an overflow occured (*not*
+  /// add or sub, and a boolean that indicates if an overflow occurred (*not*
   /// flag, because it may be a store to memory, etc.). If the type of the
   /// boolean is not i1 then the high bits conform to getBooleanContents.
   SADDO_CARRY,
@@ -462,6 +475,9 @@ enum NodeType {
   STRICT_FSETCC,
   STRICT_FSETCCS,
 
+  // FPTRUNC_ROUND - This corresponds to the fptrunc_round intrinsic.
+  FPTRUNC_ROUND,
+
   /// FMA - Perform a * b + c with no intermediate rounding step.
   FMA,
 
@@ -481,6 +497,13 @@ enum NodeType {
 
   /// Returns platform specific canonical encoding of a floating point number.
   FCANONICALIZE,
+
+  /// Performs a check of floating point class property, defined by IEEE-754.
+  /// The first operand is the floating point value to check. The second operand
+  /// specifies the checked property and is a TargetConstant which specifies
+  /// test in the same way as intrinsic 'is_fpclass'.
+  /// Returns boolean value.
+  IS_FPCLASS,
 
   /// BUILD_VECTOR(ELT0, ELT1, ELT2, ELT3,...) - Return a fixed-width vector
   /// with the specified, possibly variable, elements. The types of the
@@ -613,6 +636,17 @@ enum NodeType {
   /// part.
   MULHU,
   MULHS,
+
+  /// AVGFLOORS/AVGFLOORU - Averaging add - Add two integers using an integer of
+  /// type i[N+1], halving the result by shifting it one bit right.
+  /// shr(add(ext(X), ext(Y)), 1)
+  AVGFLOORS,
+  AVGFLOORU,
+  /// AVGCEILS/AVGCEILU - Rounding averaging add - Add two integers using an
+  /// integer of type i[N+2], add 1 and halve the result by shifting it one bit
+  /// right. shr(add(ext(X), ext(Y), 1), 1)
+  AVGCEILS,
+  AVGCEILU,
 
   // ABDS/ABDU - Absolute difference - Return the absolute difference between
   // two numbers interpreted as signed/unsigned.
@@ -797,6 +831,10 @@ enum NodeType {
   /// The scalar width of the type given in operand 1 must be equal to, or
   /// smaller than, the scalar result type width. It may end up being smaller
   /// than the result width as a result of integer type legalization.
+  ///
+  /// After converting to the scalar integer type in operand 1, the value is
+  /// extended to the result VT. FP_TO_SINT_SAT sign extends and FP_TO_UINT_SAT
+  /// zero extends.
   FP_TO_SINT_SAT,
   FP_TO_UINT_SAT,
 
@@ -821,12 +859,11 @@ enum NodeType {
   ///  3 Round to -inf
   ///  4 Round to nearest, ties to zero
   /// Result is rounding mode and chain. Input is a chain.
-  /// TODO: Rename this node to GET_ROUNDING.
-  FLT_ROUNDS_,
+  GET_ROUNDING,
 
   /// Set rounding mode.
   /// The first operand is a chain pointer. The second specifies the required
-  /// rounding mode, encoded in the same way as used in '``FLT_ROUNDS_``'.
+  /// rounding mode, encoded in the same way as used in '``GET_ROUNDING``'.
   SET_ROUNDING,
 
   /// X = FP_EXTEND(Y) - Extend a smaller FP type into a larger FP type.
@@ -859,6 +896,13 @@ enum NodeType {
   FP_TO_FP16,
   STRICT_FP16_TO_FP,
   STRICT_FP_TO_FP16,
+
+  /// BF16_TO_FP, FP_TO_BF16 - These operators are used to perform promotions
+  /// and truncation for bfloat16. These nodes form a semi-softened interface
+  /// for dealing with bf16 (as an i16), which is often a storage-only type but
+  /// has native conversions.
+  BF16_TO_FP,
+  FP_TO_BF16,
 
   /// Perform various unary floating-point operations inspired by libm. For
   /// FPOWI, the result is undefined if if the integer operand doesn't fit into
@@ -1104,6 +1148,9 @@ enum NodeType {
   /// operand and output are the same floating type.
   ARITH_FENCE,
 
+  /// MEMBARRIER - Compiler barrier only; generate a no-op.
+  MEMBARRIER,
+
   /// OUTCHAIN = ATOMIC_FENCE(INCHAIN, ordering, scope)
   /// This corresponds to the fence instruction. It takes an input chain, and
   /// two integer constants: an AtomicOrdering and a SynchronizationScope.
@@ -1150,6 +1197,10 @@ enum NodeType {
   ATOMIC_LOAD_UMAX,
   ATOMIC_LOAD_FADD,
   ATOMIC_LOAD_FSUB,
+  ATOMIC_LOAD_FMAX,
+  ATOMIC_LOAD_FMIN,
+  ATOMIC_LOAD_UINC_WRAP,
+  ATOMIC_LOAD_UDEC_WRAP,
 
   // Masked load and store - consecutive vector load and store operations
   // with additional mask operand that prevents memory accesses to the
@@ -1240,6 +1291,17 @@ enum NodeType {
   VECREDUCE_UMAX,
   VECREDUCE_UMIN,
 
+  // The `llvm.experimental.stackmap` intrinsic.
+  // Operands: input chain, glue, <id>, <numShadowBytes>, [live0[, live1...]]
+  // Outputs: output chain, glue
+  STACKMAP,
+
+  // The `llvm.experimental.patchpoint.*` intrinsic.
+  // Operands: input chain, [glue], reg-mask, <id>, <numShadowBytes>, callee,
+  //   <numArgs>, cc, ...
+  // Outputs: [rv], output chain, glue
+  PATCHPOINT,
+
 // Vector Predication
 #define BEGIN_REGISTER_VP_SDNODE(VPSDID, ...) VPSDID,
 #include "llvm/IR/VPIntrinsics.def"
@@ -1260,6 +1322,11 @@ static const int FIRST_TARGET_STRICTFP_OPCODE = BUILTIN_OP_END + 400;
 /// be used with SelectionDAG::getMemIntrinsicNode.
 static const int FIRST_TARGET_MEMORY_OPCODE = BUILTIN_OP_END + 500;
 
+/// Whether this is bitwise logic opcode.
+inline bool isBitwiseLogicOp(unsigned Opcode) {
+  return Opcode == ISD::AND || Opcode == ISD::OR || Opcode == ISD::XOR;
+}
+
 /// Get underlying scalar opcode for VECREDUCE opcode.
 /// For example ISD::AND for ISD::VECREDUCE_AND.
 NodeType getVecReduceBaseOpcode(unsigned VecReduceOpcode);
@@ -1267,11 +1334,17 @@ NodeType getVecReduceBaseOpcode(unsigned VecReduceOpcode);
 /// Whether this is a vector-predicated Opcode.
 bool isVPOpcode(unsigned Opcode);
 
+/// Whether this is a vector-predicated binary operation opcode.
+bool isVPBinaryOp(unsigned Opcode);
+
+/// Whether this is a vector-predicated reduction opcode.
+bool isVPReduction(unsigned Opcode);
+
 /// The operand position of the vector mask.
-Optional<unsigned> getVPMaskIdx(unsigned Opcode);
+std::optional<unsigned> getVPMaskIdx(unsigned Opcode);
 
 /// The operand position of the explicit vector length parameter.
-Optional<unsigned> getVPExplicitVectorLengthIdx(unsigned Opcode);
+std::optional<unsigned> getVPExplicitVectorLengthIdx(unsigned Opcode);
 
 //===--------------------------------------------------------------------===//
 /// MemIndexedMode enum - This enum defines the load / store indexed
@@ -1309,18 +1382,18 @@ static const int LAST_INDEXED_MODE = POST_DEC + 1;
 /// MemIndexType enum - This enum defines how to interpret MGATHER/SCATTER's
 /// index parameter when calculating addresses.
 ///
-/// SIGNED_SCALED     Addr = Base + ((signed)Index * sizeof(element))
-/// SIGNED_UNSCALED   Addr = Base + (signed)Index
-/// UNSIGNED_SCALED   Addr = Base + ((unsigned)Index * sizeof(element))
-/// UNSIGNED_UNSCALED Addr = Base + (unsigned)Index
-enum MemIndexType {
-  SIGNED_SCALED = 0,
-  SIGNED_UNSCALED,
-  UNSIGNED_SCALED,
-  UNSIGNED_UNSCALED
-};
+/// SIGNED_SCALED     Addr = Base + ((signed)Index * Scale)
+/// UNSIGNED_SCALED   Addr = Base + ((unsigned)Index * Scale)
+///
+/// NOTE: The value of Scale is typically only known to the node owning the
+/// IndexType, with a value of 1 the equivalent of being unscaled.
+enum MemIndexType { SIGNED_SCALED = 0, UNSIGNED_SCALED };
 
-static const int LAST_MEM_INDEX_TYPE = UNSIGNED_UNSCALED + 1;
+static const int LAST_MEM_INDEX_TYPE = UNSIGNED_SCALED + 1;
+
+inline bool isIndexTypeSigned(MemIndexType IndexType) {
+  return IndexType == SIGNED_SCALED;
+}
 
 //===--------------------------------------------------------------------===//
 /// LoadExtType enum - This enum defines the three variants of LOADEXT
@@ -1416,6 +1489,11 @@ inline unsigned getUnorderedFlavor(CondCode Cond) {
 /// Return the operation corresponding to !(X op Y), where 'op' is a valid
 /// SetCC operation.
 CondCode getSetCCInverse(CondCode Operation, EVT Type);
+
+inline bool isExtOpcode(unsigned Opcode) {
+  return Opcode == ISD::ANY_EXTEND || Opcode == ISD::ZERO_EXTEND ||
+         Opcode == ISD::SIGN_EXTEND;
+}
 
 namespace GlobalISel {
 /// Return the operation corresponding to !(X op Y), where 'op' is a valid

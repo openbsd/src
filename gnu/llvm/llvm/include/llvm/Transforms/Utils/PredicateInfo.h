@@ -56,7 +56,6 @@
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/IR/Value.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 
@@ -65,6 +64,7 @@ namespace llvm {
 class AssumptionCache;
 class DominatorTree;
 class Function;
+class Value;
 class IntrinsicInst;
 class raw_ostream;
 
@@ -103,7 +103,7 @@ public:
   }
 
   /// Fetch condition in the form of PredicateConstraint, if possible.
-  Optional<PredicateConstraint> getConstraint() const;
+  std::optional<PredicateConstraint> getConstraint() const;
 
 protected:
   PredicateBase(PredicateType PT, Value *Op, Value *Condition)

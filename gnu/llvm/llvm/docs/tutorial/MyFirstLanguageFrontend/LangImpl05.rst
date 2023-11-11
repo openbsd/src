@@ -214,7 +214,7 @@ Kaleidoscope looks like this:
 
 To visualize the control flow graph, you can use a nifty feature of the
 LLVM '`opt <https://llvm.org/cmds/opt.html>`_' tool. If you put this LLVM
-IR into "t.ll" and run "``llvm-as < t.ll | opt -analyze -view-cfg``", `a
+IR into "t.ll" and run "``llvm-as < t.ll | opt -passes=view-cfg``", `a
 window will pop up <../../ProgrammersManual.html#viewing-graphs-while-debugging-code>`_ and you'll
 see this graph:
 
@@ -377,7 +377,7 @@ value for code that will set up the Phi node.
 .. code-block:: c++
 
       // Emit else block.
-      TheFunction->getBasicBlockList().push_back(ElseBB);
+      TheFunction->insert(TheFunction->end(), ElseBB);
       Builder.SetInsertPoint(ElseBB);
 
       Value *ElseV = Else->codegen();
@@ -398,7 +398,7 @@ code:
 .. code-block:: c++
 
       // Emit merge block.
-      TheFunction->getBasicBlockList().push_back(MergeBB);
+      TheFunction->insert(TheFunction->end(), MergeBB);
       Builder.SetInsertPoint(MergeBB);
       PHINode *PN =
         Builder.CreatePHI(Type::getDoubleTy(TheContext), 2, "iftmp");

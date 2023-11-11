@@ -24,15 +24,16 @@ using namespace llvm;
 
 #define DEBUG_TYPE "regalloc"
 
-STATISTIC(NumDCEDeleted,     "Number of instructions deleted by DCE");
-STATISTIC(NumDCEFoldedLoads, "Number of single use loads folded after DCE");
-STATISTIC(NumFracRanges,     "Number of live ranges fractured by DCE");
+STATISTIC(NumDCEDeleted,        "Number of instructions deleted by DCE");
+STATISTIC(NumDCEFoldedLoads,    "Number of single use loads folded after DCE");
+STATISTIC(NumFracRanges,        "Number of live ranges fractured by DCE");
+STATISTIC(NumReMaterialization, "Number of instructions rematerialized");
 
 void LiveRangeEdit::Delegate::anchor() { }
 
 LiveInterval &LiveRangeEdit::createEmptyIntervalFrom(Register OldReg,
                                                      bool createSubRanges) {
-  Register VReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
+  Register VReg = MRI.cloneVirtualRegister(OldReg);
   if (VRM)
     VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
 
@@ -52,7 +53,7 @@ LiveInterval &LiveRangeEdit::createEmptyIntervalFrom(Register OldReg,
 }
 
 Register LiveRangeEdit::createFrom(Register OldReg) {
-  Register VReg = MRI.createVirtualRegister(MRI.getRegClass(OldReg));
+  Register VReg = MRI.cloneVirtualRegister(OldReg);
   if (VRM) {
     VRM->setIsSplitFromReg(VReg, VRM->getOriginal(OldReg));
   }
@@ -68,17 +69,16 @@ Register LiveRangeEdit::createFrom(Register OldReg) {
 }
 
 bool LiveRangeEdit::checkRematerializable(VNInfo *VNI,
-                                          const MachineInstr *DefMI,
-                                          AAResults *aa) {
+                                          const MachineInstr *DefMI) {
   assert(DefMI && "Missing instruction");
   ScannedRemattable = true;
-  if (!TII.isTriviallyReMaterializable(*DefMI, aa))
+  if (!TII.isTriviallyReMaterializable(*DefMI))
     return false;
   Remattable.insert(VNI);
   return true;
 }
 
-void LiveRangeEdit::scanRemattable(AAResults *aa) {
+void LiveRangeEdit::scanRemattable() {
   for (VNInfo *VNI : getParent().valnos) {
     if (VNI->isUnused())
       continue;
@@ -90,14 +90,14 @@ void LiveRangeEdit::scanRemattable(AAResults *aa) {
     MachineInstr *DefMI = LIS.getInstructionFromIndex(OrigVNI->def);
     if (!DefMI)
       continue;
-    checkRematerializable(OrigVNI, DefMI, aa);
+    checkRematerializable(OrigVNI, DefMI);
   }
   ScannedRemattable = true;
 }
 
-bool LiveRangeEdit::anyRematerializable(AAResults *aa) {
+bool LiveRangeEdit::anyRematerializable() {
   if (!ScannedRemattable)
-    scanRemattable(aa);
+    scanRemattable();
   return !Remattable.empty();
 }
 
@@ -107,15 +107,14 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
                                        SlotIndex OrigIdx,
                                        SlotIndex UseIdx) const {
   OrigIdx = OrigIdx.getRegSlot(true);
-  UseIdx = UseIdx.getRegSlot(true);
-  for (unsigned i = 0, e = OrigMI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = OrigMI->getOperand(i);
+  UseIdx = std::max(UseIdx, UseIdx.getRegSlot(true));
+  for (const MachineOperand &MO : OrigMI->operands()) {
     if (!MO.isReg() || !MO.getReg() || !MO.readsReg())
       continue;
 
     // We can't remat physreg uses, unless it is a constant or target wants
     // to ignore this use.
-    if (Register::isPhysicalRegister(MO.getReg())) {
+    if (MO.getReg().isPhysical()) {
       if (MRI.isConstantPhysReg(MO.getReg()) || TII.isIgnorableUse(MO))
         continue;
       return false;
@@ -134,6 +133,24 @@ bool LiveRangeEdit::allUsesAvailableAt(const MachineInstr *OrigMI,
 
     if (OVNI != li.getVNInfoAt(UseIdx))
       return false;
+
+    // Check that subrange is live at UseIdx.
+    if (li.hasSubRanges()) {
+      const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
+      unsigned SubReg = MO.getSubReg();
+      LaneBitmask LM = SubReg ? TRI->getSubRegIndexLaneMask(SubReg)
+                              : MRI.getMaxLaneMaskForVReg(MO.getReg());
+      for (LiveInterval::SubRange &SR : li.subranges()) {
+        if ((SR.LaneMask & LM).none())
+          continue;
+        if (!SR.liveAt(UseIdx))
+          return false;
+        // Early exit if all used lanes are checked. No need to continue.
+        LM &= ~SR.LaneMask;
+        if (LM.none())
+          break;
+      }
+    }
   }
   return true;
 }
@@ -167,14 +184,20 @@ SlotIndex LiveRangeEdit::rematerializeAt(MachineBasicBlock &MBB,
                                          unsigned DestReg,
                                          const Remat &RM,
                                          const TargetRegisterInfo &tri,
-                                         bool Late) {
+                                         bool Late,
+                                         unsigned SubIdx,
+                                         MachineInstr *ReplaceIndexMI) {
   assert(RM.OrigMI && "Invalid remat");
-  TII.reMaterialize(MBB, MI, DestReg, 0, *RM.OrigMI, tri);
+  TII.reMaterialize(MBB, MI, DestReg, SubIdx, *RM.OrigMI, tri);
   // DestReg of the cloned instruction cannot be Dead. Set isDead of DestReg
   // to false anyway in case the isDead flag of RM.OrigMI's dest register
   // is true.
   (*--MI).getOperand(0).setIsDead(false);
   Rematted.insert(RM.ParentVNI);
+  ++NumReMaterialization;
+
+  if (ReplaceIndexMI)
+    return LIS.ReplaceMachineInstrInMaps(*ReplaceIndexMI, *MI).getRegSlot();
   return LIS.getSlotIndexes()->insertMachineInstrInMaps(*MI, Late).getRegSlot();
 }
 
@@ -259,8 +282,7 @@ bool LiveRangeEdit::useIsKill(const LiveInterval &LI,
 }
 
 /// Find all live intervals that need to shrink, then remove the instruction.
-void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink,
-                                     AAResults *AA) {
+void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink) {
   assert(MI->allDefsAreDead() && "Def isn't really dead");
   SlotIndex Idx = LIS.getInstructionIndex(*MI).getRegSlot();
 
@@ -287,14 +309,16 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink,
   SmallVector<unsigned, 8> RegsToErase;
   bool ReadsPhysRegs = false;
   bool isOrigDef = false;
-  unsigned Dest;
+  Register Dest;
+  unsigned DestSubReg;
   // Only optimize rematerialize case when the instruction has one def, since
   // otherwise we could leave some dead defs in the code.  This case is
   // extremely rare.
   if (VRM && MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
       MI->getDesc().getNumDefs() == 1) {
     Dest = MI->getOperand(0).getReg();
-    unsigned Original = VRM->getOriginal(Dest);
+    DestSubReg = MI->getOperand(0).getSubReg();
+    Register Original = VRM->getOriginal(Dest);
     LiveInterval &OrigLI = LIS.getInterval(Original);
     VNInfo *OrigVNI = OrigLI.getVNInfoAt(Idx);
     // The original live-range may have been shrunk to
@@ -305,17 +329,18 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink,
       isOrigDef = SlotIndex::isSameInstr(OrigVNI->def, Idx);
   }
 
+  bool HasLiveVRegUses = false;
+
   // Check for live intervals that may shrink
-  for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
-         MOE = MI->operands_end(); MOI != MOE; ++MOI) {
-    if (!MOI->isReg())
+  for (const MachineOperand &MO : MI->operands()) {
+    if (!MO.isReg())
       continue;
-    Register Reg = MOI->getReg();
-    if (!Register::isVirtualRegister(Reg)) {
+    Register Reg = MO.getReg();
+    if (!Reg.isVirtual()) {
       // Check if MI reads any unreserved physregs.
-      if (Reg && MOI->readsReg() && !MRI.isReserved(Reg))
+      if (Reg && MO.readsReg() && !MRI.isReserved(Reg))
         ReadsPhysRegs = true;
-      else if (MOI->isDef())
+      else if (MO.isDef())
         LIS.removePhysRegDefAt(Reg.asMCReg(), Idx);
       continue;
     }
@@ -325,12 +350,14 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink,
     // unlikely to change anything. We typically don't want to shrink the
     // PIC base register that has lots of uses everywhere.
     // Always shrink COPY uses that probably come from live range splitting.
-    if ((MI->readsVirtualRegister(Reg) && (MI->isCopy() || MOI->isDef())) ||
-        (MOI->readsReg() && (MRI.hasOneNonDBGUse(Reg) || useIsKill(LI, *MOI))))
+    if ((MI->readsVirtualRegister(Reg) && (MI->isCopy() || MO.isDef())) ||
+        (MO.readsReg() && (MRI.hasOneNonDBGUse(Reg) || useIsKill(LI, MO))))
       ToShrink.insert(&LI);
+    else if (MO.readsReg())
+      HasLiveVRegUses = true;
 
     // Remove defined value.
-    if (MOI->isDef()) {
+    if (MO.isDef()) {
       if (TheDelegate && LI.getVNInfoAt(Idx) != nullptr)
         TheDelegate->LRE_WillShrinkVirtReg(LI.reg());
       LIS.removeVRegDefAt(LI, Idx);
@@ -351,9 +378,9 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink,
     // Remove all operands that aren't physregs.
     for (unsigned i = MI->getNumOperands(); i; --i) {
       const MachineOperand &MO = MI->getOperand(i-1);
-      if (MO.isReg() && Register::isPhysicalRegister(MO.getReg()))
+      if (MO.isReg() && MO.getReg().isPhysical())
         continue;
-      MI->RemoveOperand(i-1);
+      MI->removeOperand(i-1);
     }
     LLVM_DEBUG(dbgs() << "Converted physregs to:\t" << *MI);
   } else {
@@ -362,10 +389,24 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink,
     // the inst for remat of other siblings. The inst is saved in
     // LiveRangeEdit::DeadRemats and will be deleted after all the
     // allocations of the func are done.
-    if (isOrigDef && DeadRemats && TII.isTriviallyReMaterializable(*MI, AA)) {
+    // However, immediately delete instructions which have unshrunk virtual
+    // register uses. That may provoke RA to split an interval at the KILL
+    // and later result in an invalid live segment end.
+    if (isOrigDef && DeadRemats && !HasLiveVRegUses &&
+        TII.isTriviallyReMaterializable(*MI)) {
       LiveInterval &NewLI = createEmptyIntervalFrom(Dest, false);
-      VNInfo *VNI = NewLI.getNextValue(Idx, LIS.getVNInfoAllocator());
+      VNInfo::Allocator &Alloc = LIS.getVNInfoAllocator();
+      VNInfo *VNI = NewLI.getNextValue(Idx, Alloc);
       NewLI.addSegment(LiveInterval::Segment(Idx, Idx.getDeadSlot(), VNI));
+
+      if (DestSubReg) {
+        const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
+        auto *SR = NewLI.createSubRange(
+            Alloc, TRI->getSubRegIndexLaneMask(DestSubReg));
+        SR->addSegment(LiveInterval::Segment(Idx, Idx.getDeadSlot(),
+                                             SR->getNextValue(Idx, Alloc)));
+      }
+
       pop_back();
       DeadRemats->insert(MI);
       const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
@@ -392,24 +433,22 @@ void LiveRangeEdit::eliminateDeadDef(MachineInstr *MI, ToShrinkSet &ToShrink,
 }
 
 void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr *> &Dead,
-                                      ArrayRef<Register> RegsBeingSpilled,
-                                      AAResults *AA) {
+                                      ArrayRef<Register> RegsBeingSpilled) {
   ToShrinkSet ToShrink;
 
   for (;;) {
     // Erase all dead defs.
     while (!Dead.empty())
-      eliminateDeadDef(Dead.pop_back_val(), ToShrink, AA);
+      eliminateDeadDef(Dead.pop_back_val(), ToShrink);
 
     if (ToShrink.empty())
       break;
 
     // Shrink just one live interval. Then delete new dead defs.
-    LiveInterval *LI = ToShrink.back();
-    ToShrink.pop_back();
+    LiveInterval *LI = ToShrink.pop_back_val();
     if (foldAsLoad(LI, Dead))
       continue;
-    unsigned VReg = LI->reg();
+    Register VReg = LI->reg();
     if (TheDelegate)
       TheDelegate->LRE_WillShrinkVirtReg(VReg);
     if (!LIS.shrinkToUses(LI, &Dead))
@@ -419,15 +458,8 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr *> &Dead,
     // The new intervals would have to be spilled anyway so its not worth it.
     // Also they currently aren't spilled so creating them and not spilling
     // them results in incorrect code.
-    bool BeingSpilled = false;
-    for (unsigned i = 0, e = RegsBeingSpilled.size(); i != e; ++i) {
-      if (VReg == RegsBeingSpilled[i]) {
-        BeingSpilled = true;
-        break;
-      }
-    }
-
-    if (BeingSpilled) continue;
+    if (llvm::is_contained(RegsBeingSpilled, VReg))
+      continue;
 
     // LI may have been separated, create new intervals.
     LI->RenumberValues();

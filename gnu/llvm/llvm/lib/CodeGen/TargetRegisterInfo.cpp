@@ -16,10 +16,11 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/BinaryFormat/Dwarf.h"
+#include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
@@ -114,7 +115,7 @@ Printable printReg(Register Reg, const TargetRegisterInfo *TRI,
       OS << "$noreg";
     else if (Register::isStackSlot(Reg))
       OS << "SS#" << Register::stackSlot2Index(Reg);
-    else if (Register::isVirtualRegister(Reg)) {
+    else if (Reg.isVirtual()) {
       StringRef Name = MRI ? MRI->getVRegName(Reg) : "";
       if (Name != "") {
         OS << '%' << Name;
@@ -248,8 +249,8 @@ static void getAllocatableSetForRC(const MachineFunction &MF,
                                    const TargetRegisterClass *RC, BitVector &R){
   assert(RC->isAllocatable() && "invalid for nonallocatable sets");
   ArrayRef<MCPhysReg> Order = RC->getRawAllocationOrder(MF);
-  for (unsigned i = 0; i != Order.size(); ++i)
-    R.set(Order[i]);
+  for (MCPhysReg PR : Order)
+    R.set(PR);
 }
 
 BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
@@ -552,7 +553,7 @@ bool TargetRegisterInfo::getCoveringSubRegIndexes(
 
   // Abort if we cannot possibly implement the COPY with the given indexes.
   if (BestIdx == 0)
-    return 0;
+    return false;
 
   NeededIndexes.push_back(BestIdx);
 
@@ -570,10 +571,14 @@ bool TargetRegisterInfo::getCoveringSubRegIndexes(
         break;
       }
 
-      // Try to cover as much of the remaining lanes as possible but
-      // as few of the already covered lanes as possible.
-      int Cover = (SubRegMask & LanesLeft).getNumLanes() -
-                  (SubRegMask & ~LanesLeft).getNumLanes();
+      // Do not cover already-covered lanes to avoid creating cycles
+      // in copy bundles (= bundle contains copies that write to the
+      // registers).
+      if ((SubRegMask & ~LanesLeft).any())
+        continue;
+
+      // Try to cover as many of the remaining lanes as possible.
+      const int Cover = (SubRegMask & LanesLeft).getNumLanes();
       if (Cover > BestCover) {
         BestCover = Cover;
         BestIdx = Idx;
@@ -581,7 +586,7 @@ bool TargetRegisterInfo::getCoveringSubRegIndexes(
     }
 
     if (BestIdx == 0)
-      return 0; // Impossible to handle
+      return false; // Impossible to handle
 
     NeededIndexes.push_back(BestIdx);
 

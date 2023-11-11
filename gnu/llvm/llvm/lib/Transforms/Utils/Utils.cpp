@@ -16,6 +16,7 @@
 #include "llvm-c/Transforms/Utils.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/InitializePasses.h"
+#include "llvm/Pass.h"
 #include "llvm/PassRegistry.h"
 
 using namespace llvm;
@@ -27,15 +28,14 @@ void llvm::initializeTransformUtils(PassRegistry &Registry) {
   initializeAssumeSimplifyPassLegacyPassPass(Registry);
   initializeAssumeBuilderPassLegacyPassPass(Registry);
   initializeBreakCriticalEdgesPass(Registry);
-  initializeCanonicalizeAliasesLegacyPassPass(Registry);
   initializeCanonicalizeFreezeInLoopsPass(Registry);
   initializeInstNamerPass(Registry);
   initializeLCSSAWrapperPassPass(Registry);
   initializeLibCallsShrinkWrapLegacyPassPass(Registry);
   initializeLoopSimplifyPass(Registry);
+  initializeLowerGlobalDtorsLegacyPassPass(Registry);
   initializeLowerInvokeLegacyPassPass(Registry);
   initializeLowerSwitchLegacyPassPass(Registry);
-  initializeNameAnonGlobalLegacyPassPass(Registry);
   initializePromoteLegacyPassPass(Registry);
   initializeStripNonLineTableDebugLegacyPassPass(Registry);
   initializeUnifyFunctionExitNodesLegacyPassPass(Registry);

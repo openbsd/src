@@ -13,7 +13,6 @@
 #include "llvm/IR/Value.h"
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
@@ -21,18 +20,16 @@
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/DerivedUser.h"
-#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/TypedPointerType.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
@@ -47,6 +44,8 @@ static cl::opt<unsigned> UseDerefAtPointSemantics(
 //===----------------------------------------------------------------------===//
 static inline Type *checkType(Type *Ty) {
   assert(Ty && "Value defined with a null type: Error!");
+  assert(!isa<TypedPointerType>(Ty->getScalarType()) &&
+         "Cannot have values with typed pointer types");
   return Ty;
 }
 
@@ -171,6 +170,18 @@ Use *Value::getSingleUndroppableUse() {
       if (Result)
         return nullptr;
       Result = &U;
+    }
+  }
+  return Result;
+}
+
+User *Value::getUniqueUndroppableUser() {
+  User *Result = nullptr;
+  for (auto *U : users()) {
+    if (!U->isDroppable()) {
+      if (Result && Result != U)
+        return nullptr;
+      Result = U;
     }
   }
   return Result;
@@ -341,7 +352,7 @@ void Value::setNameImpl(const Twine &NewName) {
 
     // Create the new name.
     MallocAllocator Allocator;
-    setValueName(ValueName::Create(NameRef, Allocator));
+    setValueName(ValueName::create(NameRef, Allocator));
     getValueName()->setValue(this);
     return;
   }
@@ -368,6 +379,7 @@ void Value::setName(const Twine &NewName) {
 }
 
 void Value::takeName(Value *V) {
+  assert(V != this && "Illegal call to this->takeName(this)!");
   ValueSymbolTable *ST = nullptr;
   // If this value has a name, drop it.
   if (hasName()) {
@@ -399,7 +411,7 @@ void Value::takeName(Value *V) {
     }
   }
 
-  // Get V's ST, this should always succed, because V has a name.
+  // Get V's ST, this should always succeed, because V has a name.
   ValueSymbolTable *VST;
   bool Failure = getSymTab(V, VST);
   assert(!Failure && "V has a name, so it should have a ST!"); (void)Failure;
@@ -534,9 +546,7 @@ void Value::replaceUsesWithIf(Value *New,
   SmallVector<TrackingVH<Constant>, 8> Consts;
   SmallPtrSet<Constant *, 8> Visited;
 
-  for (use_iterator UI = use_begin(), E = use_end(); UI != E;) {
-    Use &U = *UI;
-    ++UI;
+  for (Use &U : llvm::make_early_inc_range(uses())) {
     if (!ShouldReplace(U))
       continue;
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
@@ -626,7 +636,7 @@ static const Value *stripPointerCastsAndOffsets(
       case PSK_InBoundsConstantIndices:
         if (!GEP->hasAllConstantIndices())
           return V;
-        LLVM_FALLTHROUGH;
+        [[fallthrough]];
       case PSK_InBounds:
         if (!GEP->isInBounds())
           return V;
@@ -694,6 +704,7 @@ const Value *Value::stripPointerCastsForAliasAnalysis() const {
 
 const Value *Value::stripAndAccumulateConstantOffsets(
     const DataLayout &DL, APInt &Offset, bool AllowNonInbounds,
+    bool AllowInvariantGroup,
     function_ref<bool(Value &, APInt &)> ExternalAnalysis) const {
   if (!getType()->isPtrOrPtrVectorTy())
     return this;
@@ -753,6 +764,8 @@ const Value *Value::stripAndAccumulateConstantOffsets(
     } else if (const auto *Call = dyn_cast<CallBase>(V)) {
         if (const Value *RV = Call->getReturnedArgOperand())
           V = RV;
+        if (AllowInvariantGroup && Call->isLaunderOrStripInvariantGroup())
+          V = Call->getArgOperand(0);
     }
     assert(V->getType()->isPtrOrPtrVectorTy() && "Unexpected operand type!");
   } while (Visited.insert(V).second);
@@ -842,7 +855,7 @@ uint64_t Value::getPointerDereferenceableBytes(const DataLayout &DL,
       if (Type *ArgMemTy = A->getPointeeInMemoryValueType()) {
         if (ArgMemTy->isSized()) {
           // FIXME: Why isn't this the type alloc size?
-          DerefBytes = DL.getTypeStoreSize(ArgMemTy).getKnownMinSize();
+          DerefBytes = DL.getTypeStoreSize(ArgMemTy).getKnownMinValue();
         }
       }
     }
@@ -852,10 +865,9 @@ uint64_t Value::getPointerDereferenceableBytes(const DataLayout &DL,
       CanBeNull = true;
     }
   } else if (const auto *Call = dyn_cast<CallBase>(this)) {
-    DerefBytes = Call->getDereferenceableBytes(AttributeList::ReturnIndex);
+    DerefBytes = Call->getRetDereferenceableBytes();
     if (DerefBytes == 0) {
-      DerefBytes =
-          Call->getDereferenceableOrNullBytes(AttributeList::ReturnIndex);
+      DerefBytes = Call->getRetDereferenceableOrNullBytes();
       CanBeNull = true;
     }
   } else if (const LoadInst *LI = dyn_cast<LoadInst>(this)) {
@@ -887,7 +899,7 @@ uint64_t Value::getPointerDereferenceableBytes(const DataLayout &DL,
   } else if (auto *AI = dyn_cast<AllocaInst>(this)) {
     if (!AI->isArrayAllocation()) {
       DerefBytes =
-          DL.getTypeStoreSize(AI->getAllocatedType()).getKnownMinSize();
+          DL.getTypeStoreSize(AI->getAllocatedType()).getKnownMinValue();
       CanBeNull = false;
       CanBeFreed = false;
     }
@@ -895,7 +907,7 @@ uint64_t Value::getPointerDereferenceableBytes(const DataLayout &DL,
     if (GV->getValueType()->isSized() && !GV->hasExternalWeakLinkage()) {
       // TODO: Don't outright reject hasExternalWeakLinkage but set the
       // CanBeNull flag.
-      DerefBytes = DL.getTypeStoreSize(GV->getValueType()).getFixedSize();
+      DerefBytes = DL.getTypeStoreSize(GV->getValueType()).getFixedValue();
       CanBeNull = false;
       CanBeFreed = false;
     }
@@ -916,7 +928,7 @@ Align Value::getPointerAlignment(const DataLayout &DL) const {
       }
       llvm_unreachable("Unhandled FunctionPtrAlignType");
     }
-    const MaybeAlign Alignment(GO->getAlignment());
+    const MaybeAlign Alignment(GO->getAlign());
     if (!Alignment) {
       if (auto *GVar = dyn_cast<GlobalVariable>(GO)) {
         Type *ObjectType = GVar->getValueType();
@@ -954,6 +966,9 @@ Align Value::getPointerAlignment(const DataLayout &DL) const {
       return Align(CI->getLimitedValue());
     }
   } else if (auto *CstPtr = dyn_cast<Constant>(this)) {
+    // Strip pointer casts to avoid creating unnecessary ptrtoint expression
+    // if the only "reduction" is combining a bitcast + ptrtoint.
+    CstPtr = CstPtr->stripPointerCasts();
     if (auto *CstInt = dyn_cast_or_null<ConstantInt>(ConstantExpr::getPtrToInt(
             const_cast<Constant *>(CstPtr), DL.getIntPtrType(getType()),
             /*OnlyIfReduced=*/true))) {
@@ -1005,27 +1020,6 @@ bool Value::isSwiftError() const {
   if (!Alloca)
     return false;
   return Alloca->isSwiftError();
-}
-
-bool Value::isTransitiveUsedByMetadataOnly() const {
-  if (use_empty())
-    return false;
-  llvm::SmallVector<const User *, 32> WorkList;
-  llvm::SmallPtrSet<const User *, 32> Visited;
-  WorkList.insert(WorkList.begin(), user_begin(), user_end());
-  while (!WorkList.empty()) {
-    const User *U = WorkList.back();
-    WorkList.pop_back();
-    Visited.insert(U);
-    // If it is transitively used by a global value or a non-constant value,
-    // it's obviously not only used by metadata.
-    if (!isa<Constant>(U) || isa<GlobalValue>(U))
-      return false;
-    for (const User *UU : U->users())
-      if (!Visited.count(UU))
-        WorkList.push_back(UU);
-  }
-  return true;
 }
 
 //===----------------------------------------------------------------------===//

@@ -107,9 +107,8 @@ bool SystemZRegisterInfo::getRegAllocationHints(
 
         auto tryAddHint = [&](const MachineOperand *MO) -> void {
           Register Reg = MO->getReg();
-          Register PhysReg = Register::isPhysicalRegister(Reg)
-                                 ? Reg
-                                 : Register(VRM->getPhys(Reg));
+          Register PhysReg =
+              Reg.isPhysical() ? Reg : Register(VRM->getPhys(Reg));
           if (PhysReg) {
             if (MO->getSubReg())
               PhysReg = getSubReg(PhysReg, MO->getSubReg());
@@ -190,7 +189,9 @@ bool SystemZRegisterInfo::getRegAllocationHints(
 
 const MCPhysReg *
 SystemZXPLINK64Registers::getCalleeSavedRegs(const MachineFunction *MF) const {
-  return CSR_SystemZ_XPLINK64_SaveList;
+  const SystemZSubtarget &Subtarget = MF->getSubtarget<SystemZSubtarget>();
+  return Subtarget.hasVector() ? CSR_SystemZ_XPLINK64_Vector_SaveList
+                               : CSR_SystemZ_XPLINK64_SaveList;
 }
 
 const MCPhysReg *
@@ -211,7 +212,9 @@ SystemZELFRegisters::getCalleeSavedRegs(const MachineFunction *MF) const {
 const uint32_t *
 SystemZXPLINK64Registers::getCallPreservedMask(const MachineFunction &MF,
                                                CallingConv::ID CC) const {
-  return CSR_SystemZ_XPLINK64_RegMask;
+  const SystemZSubtarget &Subtarget = MF.getSubtarget<SystemZSubtarget>();
+  return Subtarget.hasVector() ? CSR_SystemZ_XPLINK64_Vector_RegMask
+                               : CSR_SystemZ_XPLINK64_RegMask;
 }
 
 const uint32_t *
@@ -278,7 +281,7 @@ SystemZRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-void
+bool
 SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                          int SPAdj, unsigned FIOperandNum,
                                          RegScavenger *RS) const {
@@ -286,8 +289,7 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 
   MachineBasicBlock &MBB = *MI->getParent();
   MachineFunction &MF = *MBB.getParent();
-  auto *TII =
-      static_cast<const SystemZInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  auto *TII = MF.getSubtarget<SystemZSubtarget>().getInstrInfo();
   const SystemZFrameLowering *TFI = getFrameLowering(MF);
   DebugLoc DL = MI->getDebugLoc();
 
@@ -311,13 +313,13 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
       MI->getDebugExpressionOp().setMetadata(
           DIExpression::appendOpsToArg(MI->getDebugExpression(), Ops, OpIdx));
     }
-    return;
+    return false;
   }
 
   // See if the offset is in range, or if an equivalent instruction that
   // accepts the offset exists.
   unsigned Opcode = MI->getOpcode();
-  unsigned OpcodeForOffset = TII->getOpcodeForOffset(Opcode, Offset);
+  unsigned OpcodeForOffset = TII->getOpcodeForOffset(Opcode, Offset, &*MI);
   if (OpcodeForOffset) {
     if (OpcodeForOffset == SystemZ::LE &&
         MF.getSubtarget<SystemZSubtarget>().hasVector()) {
@@ -371,6 +373,7 @@ SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
   }
   MI->setDesc(TII->get(OpcodeForOffset));
   MI->getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
+  return false;
 }
 
 bool SystemZRegisterInfo::shouldCoalesce(MachineInstr *MI,
@@ -426,7 +429,7 @@ bool SystemZRegisterInfo::shouldCoalesce(MachineInstr *MI,
   MEE++;
   for (; MII != MEE; ++MII) {
     for (const MachineOperand &MO : MII->operands())
-      if (MO.isReg() && Register::isPhysicalRegister(MO.getReg())) {
+      if (MO.isReg() && MO.getReg().isPhysical()) {
         for (MCSuperRegIterator SI(MO.getReg(), this, true/*IncludeSelf*/);
              SI.isValid(); ++SI)
           if (NewRC->contains(*SI)) {

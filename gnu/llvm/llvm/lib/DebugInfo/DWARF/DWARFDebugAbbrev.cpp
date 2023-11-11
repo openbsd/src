@@ -74,7 +74,7 @@ std::string DWARFAbbreviationDeclarationSet::getCodeRange() const {
   for (const auto &Decl : Decls)
     Codes.push_back(Decl.getCode());
 
-  std::string Buffer = "";
+  std::string Buffer;
   raw_string_ostream Stream(Buffer);
   // Each iteration through this loop represents a single contiguous range in
   // the set of codes.
@@ -122,7 +122,7 @@ void DWARFDebugAbbrev::parse() const {
       break;
     AbbrDeclSets.insert(I, std::make_pair(CUAbbrOffset, std::move(AbbrDecls)));
   }
-  Data = None;
+  Data = std::nullopt;
 }
 
 void DWARFDebugAbbrev::dump(raw_ostream &OS) const {

@@ -13,14 +13,15 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -38,8 +39,9 @@ class BPFAsmParser : public MCTargetAsmParser {
                                uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override;
 
-  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
-  OperandMatchResultTy tryParseRegister(unsigned &RegNo, SMLoc &StartLoc,
+  bool parseRegister(MCRegister &RegNo, SMLoc &StartLoc,
+                     SMLoc &EndLoc) override;
+  OperandMatchResultTy tryParseRegister(MCRegister &RegNo, SMLoc &StartLoc,
                                         SMLoc &EndLoc) override;
 
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
@@ -101,7 +103,7 @@ struct BPFOperand : public MCParsedAsmOperand {
     ImmOp Imm;
   };
 
-  BPFOperand(KindTy K) : MCParsedAsmOperand(), Kind(K) {}
+  BPFOperand(KindTy K) : Kind(K) {}
 
 public:
   BPFOperand(const BPFOperand &o) : MCParsedAsmOperand() {
@@ -322,14 +324,14 @@ bool BPFAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   llvm_unreachable("Unknown match type detected!");
 }
 
-bool BPFAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
+bool BPFAsmParser::parseRegister(MCRegister &RegNo, SMLoc &StartLoc,
                                  SMLoc &EndLoc) {
   if (tryParseRegister(RegNo, StartLoc, EndLoc) != MatchOperand_Success)
     return Error(StartLoc, "invalid register name");
   return false;
 }
 
-OperandMatchResultTy BPFAsmParser::tryParseRegister(unsigned &RegNo,
+OperandMatchResultTy BPFAsmParser::tryParseRegister(MCRegister &RegNo,
                                                     SMLoc &StartLoc,
                                                     SMLoc &EndLoc) {
   const AsmToken &Tok = getParser().getTok();
@@ -367,7 +369,7 @@ BPFAsmParser::parseOperandAsOperator(OperandVector &Operands) {
   case AsmToken::Plus: {
     if (getLexer().peekTok().is(AsmToken::Integer))
       return MatchOperand_NoMatch;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   }
 
   case AsmToken::Equal:

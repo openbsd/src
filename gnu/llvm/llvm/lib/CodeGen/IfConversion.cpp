@@ -21,6 +21,7 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/ProfileSummaryInfo.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
+#include "llvm/CodeGen/MBFIWrapper.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
@@ -28,16 +29,13 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/MBFIWrapper.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
-#include "llvm/IR/Attributes.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -1211,11 +1209,11 @@ bool IfConverter::FeasibilityAnalysis(BBInfo &BBI,
 void IfConverter::AnalyzeBlock(
     MachineBasicBlock &MBB, std::vector<std::unique_ptr<IfcvtToken>> &Tokens) {
   struct BBState {
-    BBState(MachineBasicBlock &MBB) : MBB(&MBB), SuccsAnalyzed(false) {}
+    BBState(MachineBasicBlock &MBB) : MBB(&MBB) {}
     MachineBasicBlock *MBB;
 
     /// This flag is true if MBB's successors have been analyzed.
-    bool SuccsAnalyzed;
+    bool SuccsAnalyzed = false;
   };
 
   // Push MBB to the stack.
@@ -2245,6 +2243,15 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges) {
   MachineBasicBlock &FromMBB = *FromBBI.BB;
   assert(!FromMBB.hasAddressTaken() &&
          "Removing a BB whose address is taken!");
+
+  // If we're about to splice an INLINEASM_BR from FromBBI, we need to update
+  // ToBBI's successor list accordingly.
+  if (FromMBB.mayHaveInlineAsmBr())
+    for (MachineInstr &MI : FromMBB)
+      if (MI.getOpcode() == TargetOpcode::INLINEASM_BR)
+        for (MachineOperand &MO : MI.operands())
+          if (MO.isMBB() && !ToBBI.BB->isSuccessor(MO.getMBB()))
+            ToBBI.BB->addSuccessor(MO.getMBB(), BranchProbability::getZero());
 
   // In case FromMBB contains terminators (e.g. return instruction),
   // first move the non-terminator instructions, then the terminators.

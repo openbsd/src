@@ -237,7 +237,7 @@ shouldReplaceInst(MachineFunction *MF, const MCInstrDesc *InstDesc,
     SIMDInstrTable[InstID] = false;
     return false;
   }
-  for (auto IDesc : InstDescRepl)
+  for (const auto *IDesc : InstDescRepl)
   {
     SCDescRepl = SchedModel.getMCSchedModel()->getSchedClassDesc(
       IDesc->getSchedClass());
@@ -250,7 +250,7 @@ shouldReplaceInst(MachineFunction *MF, const MCInstrDesc *InstDesc,
 
   // Replacement cost.
   unsigned ReplCost = 0;
-  for (auto IDesc :InstDescRepl)
+  for (const auto *IDesc :InstDescRepl)
     ReplCost += SchedModel.computeInstrLatency(IDesc->getOpcode());
 
   if (SchedModel.computeInstrLatency(InstDesc->getOpcode()) > ReplCost)
@@ -633,7 +633,7 @@ bool AArch64SIMDInstrOpt::optimizeLdStInterleave(MachineInstr &MI) {
 /// Return true when the instruction is processed successfully.
 bool AArch64SIMDInstrOpt::processSeqRegInst(MachineInstr *DefiningMI,
      unsigned* StReg, unsigned* StRegKill, unsigned NumArg) const {
-  assert (DefiningMI != NULL);
+  assert(DefiningMI != nullptr);
   if (DefiningMI->getOpcode() != AArch64::REG_SEQUENCE)
     return false;
 
@@ -641,7 +641,7 @@ bool AArch64SIMDInstrOpt::processSeqRegInst(MachineInstr *DefiningMI,
     StReg[i]     = DefiningMI->getOperand(2*i+1).getReg();
     StRegKill[i] = getKillRegState(DefiningMI->getOperand(2*i+1).isKill());
 
-    // Sanity check for the other arguments.
+    // Validation check for the other arguments.
     if (DefiningMI->getOperand(2*i+2).isImm()) {
       switch (DefiningMI->getOperand(2*i+2).getImm()) {
       default:
@@ -711,9 +711,7 @@ bool AArch64SIMDInstrOpt::runOnMachineFunction(MachineFunction &MF) {
     if (!shouldExitEarly(&MF, OptimizationKind)) {
       SmallVector<MachineInstr *, 8> RemoveMIs;
       for (MachineBasicBlock &MBB : MF) {
-        for (MachineBasicBlock::iterator MII = MBB.begin(), MIE = MBB.end();
-             MII != MIE;) {
-          MachineInstr &MI = *MII;
+        for (MachineInstr &MI : MBB) {
           bool InstRewrite;
           if (OptimizationKind == VectorElem)
             InstRewrite = optimizeVectElement(MI) ;
@@ -725,7 +723,6 @@ bool AArch64SIMDInstrOpt::runOnMachineFunction(MachineFunction &MF) {
             RemoveMIs.push_back(&MI);
             Changed = true;
           }
-          ++MII;
         }
       }
       for (MachineInstr *MI : RemoveMIs)

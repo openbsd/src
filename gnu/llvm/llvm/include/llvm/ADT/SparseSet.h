@@ -5,21 +5,22 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the SparseSet class derived from the version described in
-// Briggs, Torczon, "An efficient representation for sparse sets", ACM Letters
-// on Programming Languages and Systems, Volume 2 Issue 1-4, March-Dec.  1993.
-//
-// A sparse set holds a small number of objects identified by integer keys from
-// a moderately sized universe. The sparse set uses more memory than other
-// containers in order to provide faster operations.
-//
+///
+/// \file
+/// This file defines the SparseSet class derived from the version described in
+/// Briggs, Torczon, "An efficient representation for sparse sets", ACM Letters
+/// on Programming Languages and Systems, Volume 2 Issue 1-4, March-Dec.  1993.
+///
+/// A sparse set holds a small number of objects identified by integer keys from
+/// a moderately sized universe. The sparse set uses more memory than other
+/// containers in order to provide faster operations.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_SPARSESET_H
 #define LLVM_ADT_SPARSESET_H
 
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/identity.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/AllocatorBase.h"
 #include <cassert>
@@ -121,8 +122,7 @@ template<typename ValueT,
          typename KeyFunctorT = identity<unsigned>,
          typename SparseT = uint8_t>
 class SparseSet {
-  static_assert(std::numeric_limits<SparseT>::is_integer &&
-                !std::numeric_limits<SparseT>::is_signed,
+  static_assert(std::is_unsigned_v<SparseT>,
                 "SparseT must be an unsigned integer type");
 
   using KeyT = typename KeyFunctorT::argument_type;

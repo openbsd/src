@@ -11,10 +11,8 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCExpr.h"
-#include "llvm/MC/MCInstrInfo.h"
-#include "llvm/MC/MCParser/MCAsmLexer.h"
-#include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCAsmParserExtension.h"
+#include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCTargetOptions.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Support/SMLoc.h"
@@ -23,9 +21,13 @@
 
 namespace llvm {
 
+class MCContext;
 class MCInst;
+class MCInstrInfo;
+class MCRegister;
 class MCStreamer;
 class MCSubtargetInfo;
+class MCSymbol;
 template <typename T> class SmallVectorImpl;
 
 using OperandVector = SmallVectorImpl<std::unique_ptr<MCParsedAsmOperand>>;
@@ -100,10 +102,14 @@ struct AsmRewrite {
   int64_t Val;
   StringRef Label;
   IntelExpr IntelExp;
+  bool IntelExpRestricted;
 
 public:
-  AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len = 0, int64_t val = 0)
-    : Kind(kind), Loc(loc), Len(len), Done(false), Val(val) {}
+  AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len = 0, int64_t val = 0,
+             bool Restricted = false)
+      : Kind(kind), Loc(loc), Len(len), Done(false), Val(val) {
+    IntelExpRestricted = Restricted;
+  }
   AsmRewrite(AsmRewriteKind kind, SMLoc loc, unsigned len, StringRef label)
     : AsmRewrite(kind, loc, len) { Label = label; }
   AsmRewrite(SMLoc loc, unsigned len, IntelExpr exp)
@@ -372,7 +378,7 @@ public:
     return getParser().parsePrimaryExpr(Res, EndLoc, nullptr);
   }
 
-  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
+  virtual bool parseRegister(MCRegister &Reg, SMLoc &StartLoc,
                              SMLoc &EndLoc) = 0;
 
   /// tryParseRegister - parse one register if possible
@@ -381,7 +387,7 @@ public:
   /// location, without failing the entire parse if it can't. Must not consume
   /// tokens if the parse fails.
   virtual OperandMatchResultTy
-  tryParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) = 0;
+  tryParseRegister(MCRegister &Reg, SMLoc &StartLoc, SMLoc &EndLoc) = 0;
 
   /// ParseInstruction - Parse one assembly instruction.
   ///
@@ -454,13 +460,12 @@ public:
   virtual void convertToMapAndConstraints(unsigned Kind,
                                           const OperandVector &Operands) = 0;
 
-  /// Returns whether two registers are equal and is used by the tied-operands
-  /// checks in the AsmMatcher. This method can be overridden allow e.g. a
-  /// sub- or super-register as the tied operand.
-  virtual bool regsEqual(const MCParsedAsmOperand &Op1,
-                         const MCParsedAsmOperand &Op2) const {
-    assert(Op1.isReg() && Op2.isReg() && "Operands not all regs");
-    return Op1.getReg() == Op2.getReg();
+  /// Returns whether two operands are registers and are equal. This is used
+  /// by the tied-operands checks in the AsmMatcher. This method can be
+  /// overridden to allow e.g. a sub- or super-register as the tied operand.
+  virtual bool areEqualRegs(const MCParsedAsmOperand &Op1,
+                            const MCParsedAsmOperand &Op2) const {
+    return Op1.isReg() && Op2.isReg() && Op1.getReg() == Op2.getReg();
   }
 
   // Return whether this parser uses assignment statements with equals tokens
@@ -477,7 +482,7 @@ public:
   }
 
   // For actions that have to be performed before a label is emitted
-  virtual void doBeforeLabelEmit(MCSymbol *Symbol) {}
+  virtual void doBeforeLabelEmit(MCSymbol *Symbol, SMLoc IDLoc) {}
   
   virtual void onLabelParsed(MCSymbol *Symbol) {}
 

@@ -13,6 +13,7 @@
 
 #include "WebAssemblyTypeUtilities.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 
 // Get register classes enum.
 #define GET_REGINFO_ENUM
@@ -20,7 +21,7 @@
 
 using namespace llvm;
 
-Optional<wasm::ValType> WebAssembly::parseType(StringRef Type) {
+std::optional<wasm::ValType> WebAssembly::parseType(StringRef Type) {
   // FIXME: can't use StringSwitch because wasm::ValType doesn't have a
   // "invalid" value.
   if (Type == "i32")
@@ -38,14 +39,7 @@ Optional<wasm::ValType> WebAssembly::parseType(StringRef Type) {
     return wasm::ValType::FUNCREF;
   if (Type == "externref")
     return wasm::ValType::EXTERNREF;
-  return Optional<wasm::ValType>();
-}
-
-WebAssembly::HeapType WebAssembly::parseHeapType(StringRef Type) {
-  return StringSwitch<WebAssembly::HeapType>(Type)
-      .Case("extern", WebAssembly::HeapType::Externref)
-      .Case("func", WebAssembly::HeapType::Funcref)
-      .Default(WebAssembly::HeapType::Invalid);
+  return std::nullopt;
 }
 
 WebAssembly::BlockType WebAssembly::parseBlockType(StringRef Type) {
@@ -172,5 +166,43 @@ wasm::ValType WebAssembly::regClassToValType(unsigned RC) {
     return wasm::ValType::EXTERNREF;
   default:
     llvm_unreachable("unexpected type");
+  }
+}
+
+wasm::ValType WebAssembly::regClassToValType(const TargetRegisterClass *RC) {
+  assert(RC != nullptr);
+  return regClassToValType(RC->getID());
+}
+
+void WebAssembly::wasmSymbolSetType(MCSymbolWasm *Sym, const Type *GlobalVT,
+                                    const SmallVector<MVT, 1> &VTs) {
+  assert(!Sym->getType());
+
+  // Tables are represented as Arrays in LLVM IR therefore
+  // they reach this point as aggregate Array types with an element type
+  // that is a reference type.
+  wasm::ValType ValTy;
+  bool IsTable = false;
+  if (GlobalVT->isArrayTy() &&
+      WebAssembly::isRefType(GlobalVT->getArrayElementType())) {
+    IsTable = true;
+    const Type *ElTy = GlobalVT->getArrayElementType();
+    if (WebAssembly::isExternrefType(ElTy))
+      ValTy = wasm::ValType::EXTERNREF;
+    else if (WebAssembly::isFuncrefType(ElTy))
+      ValTy = wasm::ValType::FUNCREF;
+    else
+      report_fatal_error("unhandled reference type");
+  } else if (VTs.size() == 1) {
+    ValTy = WebAssembly::toValType(VTs[0]);
+  } else
+    report_fatal_error("Aggregate globals not yet implemented");
+
+  if (IsTable) {
+    Sym->setType(wasm::WASM_SYMBOL_TYPE_TABLE);
+    Sym->setTableType(ValTy);
+  } else {
+    Sym->setType(wasm::WASM_SYMBOL_TYPE_GLOBAL);
+    Sym->setGlobalType(wasm::WasmGlobalType{uint8_t(ValTy), /*Mutable=*/true});
   }
 }

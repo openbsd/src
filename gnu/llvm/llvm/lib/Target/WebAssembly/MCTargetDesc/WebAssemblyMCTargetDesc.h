@@ -26,7 +26,6 @@ class MCAsmBackend;
 class MCCodeEmitter;
 class MCInstrInfo;
 class MCObjectTargetWriter;
-class MVT;
 class Triple;
 
 MCCodeEmitter *createWebAssemblyMCCodeEmitter(const MCInstrInfo &MCII);
@@ -78,8 +77,6 @@ enum OperandType {
   OPERAND_BRLIST,
   /// 32-bit unsigned table number.
   OPERAND_TABLE,
-  /// heap type immediate for ref.null.
-  OPERAND_HEAPTYPE,
 };
 } // end namespace WebAssembly
 
@@ -94,6 +91,9 @@ enum TOF {
   // runtime.  This adds a level of indirection similar to the GOT on native
   // platforms.
   MO_GOT,
+
+  // Same as MO_GOT but the address stored in the global is a TLS address.
+  MO_GOT_TLS,
 
   // On a symbol operand this indicates that the immediate is the symbol
   // address relative the __memory_base wasm global.
@@ -124,6 +124,7 @@ enum TOF {
 // Defines symbolic names for the WebAssembly instructions.
 //
 #define GET_INSTRINFO_ENUM
+#define GET_INSTRINFO_MC_HELPER_DECLS
 #include "WebAssemblyGenInstrInfo.inc"
 
 namespace llvm {
@@ -409,6 +410,72 @@ inline bool isCatch(unsigned Opc) {
   case WebAssembly::CATCH_S:
   case WebAssembly::CATCH_ALL:
   case WebAssembly::CATCH_ALL_S:
+    return true;
+  default:
+    return false;
+  }
+}
+
+inline bool isLocalGet(unsigned Opc) {
+  switch (Opc) {
+  case WebAssembly::LOCAL_GET_I32:
+  case WebAssembly::LOCAL_GET_I32_S:
+  case WebAssembly::LOCAL_GET_I64:
+  case WebAssembly::LOCAL_GET_I64_S:
+  case WebAssembly::LOCAL_GET_F32:
+  case WebAssembly::LOCAL_GET_F32_S:
+  case WebAssembly::LOCAL_GET_F64:
+  case WebAssembly::LOCAL_GET_F64_S:
+  case WebAssembly::LOCAL_GET_V128:
+  case WebAssembly::LOCAL_GET_V128_S:
+  case WebAssembly::LOCAL_GET_FUNCREF:
+  case WebAssembly::LOCAL_GET_FUNCREF_S:
+  case WebAssembly::LOCAL_GET_EXTERNREF:
+  case WebAssembly::LOCAL_GET_EXTERNREF_S:
+    return true;
+  default:
+    return false;
+  }
+}
+
+inline bool isLocalSet(unsigned Opc) {
+  switch (Opc) {
+  case WebAssembly::LOCAL_SET_I32:
+  case WebAssembly::LOCAL_SET_I32_S:
+  case WebAssembly::LOCAL_SET_I64:
+  case WebAssembly::LOCAL_SET_I64_S:
+  case WebAssembly::LOCAL_SET_F32:
+  case WebAssembly::LOCAL_SET_F32_S:
+  case WebAssembly::LOCAL_SET_F64:
+  case WebAssembly::LOCAL_SET_F64_S:
+  case WebAssembly::LOCAL_SET_V128:
+  case WebAssembly::LOCAL_SET_V128_S:
+  case WebAssembly::LOCAL_SET_FUNCREF:
+  case WebAssembly::LOCAL_SET_FUNCREF_S:
+  case WebAssembly::LOCAL_SET_EXTERNREF:
+  case WebAssembly::LOCAL_SET_EXTERNREF_S:
+    return true;
+  default:
+    return false;
+  }
+}
+
+inline bool isLocalTee(unsigned Opc) {
+  switch (Opc) {
+  case WebAssembly::LOCAL_TEE_I32:
+  case WebAssembly::LOCAL_TEE_I32_S:
+  case WebAssembly::LOCAL_TEE_I64:
+  case WebAssembly::LOCAL_TEE_I64_S:
+  case WebAssembly::LOCAL_TEE_F32:
+  case WebAssembly::LOCAL_TEE_F32_S:
+  case WebAssembly::LOCAL_TEE_F64:
+  case WebAssembly::LOCAL_TEE_F64_S:
+  case WebAssembly::LOCAL_TEE_V128:
+  case WebAssembly::LOCAL_TEE_V128_S:
+  case WebAssembly::LOCAL_TEE_FUNCREF:
+  case WebAssembly::LOCAL_TEE_FUNCREF_S:
+  case WebAssembly::LOCAL_TEE_EXTERNREF:
+  case WebAssembly::LOCAL_TEE_EXTERNREF_S:
     return true;
   default:
     return false;

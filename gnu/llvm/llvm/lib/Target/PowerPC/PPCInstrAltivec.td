@@ -1057,6 +1057,8 @@ def : Pat<(int_ppc_altivec_vnmsubfp v4f32:$A, v4f32:$B, v4f32:$C),
 
 def : Pat<(PPCvperm v16i8:$vA, v16i8:$vB, v16i8:$vC),
           (VPERM $vA, $vB, $vC)>;
+def : Pat<(PPCvperm v2f64:$vA, v2f64:$vB, v16i8:$vC),
+          (VPERM $vA, $vB, $vC)>;
 
 def : Pat<(PPCfre v4f32:$A), (VREFP $A)>;
 def : Pat<(PPCfrsqrte v4f32:$A), (VRSQRTEFP $A)>;
@@ -1160,6 +1162,22 @@ def : Pat<(v16i8 (srl (sub v16i8:$vA, (v16i8 (bitconvert(vnot v4i32:$vB)))),
           (v16i8 (immEQOneV)))), (v16i8 (VAVGUB $vA, $vB))>;
 
 } // end HasAltivec
+
+// [PO VRT VRA VRB 1 PS XO], "_o" means CR6 is set.
+class VX_VT5_VA5_VB5_PS1_XO9_o<bits<9> xo, string opc, list<dag> pattern>
+  : VX_RD5_RSp5_PS1_XO9<xo,
+                   (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB, u1imm:$PS),
+                   !strconcat(opc, " $vD, $vA, $vB, $PS"), IIC_VecFP, pattern> {
+  let Defs = [CR6];
+}
+
+// [PO VRT VRA VRB 1 / XO]
+class VX_VT5_VA5_VB5_XO9_o<bits<9> xo, string opc, list<dag> pattern>
+  : VX_RD5_RSp5_PS1_XO9<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                        !strconcat(opc, " $vD, $vA, $vB"), IIC_VecFP, pattern> {
+  let Defs = [CR6];
+  let PS = 0;
+}
 
 def HasP8Altivec : Predicate<"Subtarget->hasP8Altivec()">;
 def HasP8Crypto : Predicate<"Subtarget->hasP8Crypto()">;
@@ -1351,6 +1369,13 @@ def VUPKHSW : VX2_Int_Ty2<1614, "vupkhsw", int_ppc_altivec_vupkhsw,
                           v2i64, v4i32>;
 def VUPKLSW : VX2_Int_Ty2<1742, "vupklsw", int_ppc_altivec_vupklsw,
                           v2i64, v4i32>;
+def BCDADD_rec : VX_VT5_VA5_VB5_PS1_XO9_o<1,  "bcdadd." , []>;
+def BCDSUB_rec : VX_VT5_VA5_VB5_PS1_XO9_o<65, "bcdsub." , []>;
+
+def : Pat<(v16i8 (int_ppc_bcdadd v16i8:$vA, v16i8:$vB, timm:$PS)),
+          (BCDADD_rec $vA, $vB, $PS)>;
+def : Pat<(v16i8 (int_ppc_bcdsub v16i8:$vA, v16i8:$vB, timm:$PS)),
+          (BCDSUB_rec $vA, $vB, $PS)>;
 
 // Shuffle patterns for unary and swapped (LE) vector pack modulo.
 def:Pat<(vpkudum_unary_shuffle v16i8:$vA, undef),
@@ -1425,12 +1450,12 @@ def VEXTRACTD  : VX1_VT5_UIM5_VB5<717, "vextractd" , []>;
 
 // Vector Extract Unsigned Byte/Halfword/Word Left/Right-Indexed
 let hasSideEffects = 0 in {
-def VEXTUBLX : VX1_RT5_RA5_VB5<1549, "vextublx", []>;
-def VEXTUBRX : VX1_RT5_RA5_VB5<1805, "vextubrx", []>;
-def VEXTUHLX : VX1_RT5_RA5_VB5<1613, "vextuhlx", []>;
-def VEXTUHRX : VX1_RT5_RA5_VB5<1869, "vextuhrx", []>;
-def VEXTUWLX : VX1_RT5_RA5_VB5<1677, "vextuwlx", []>;
-def VEXTUWRX : VX1_RT5_RA5_VB5<1933, "vextuwrx", []>;
+def VEXTUBLX : VX1_RT5_RA5_VB5<1549, "vextublx", []>, ZExt32To64;
+def VEXTUBRX : VX1_RT5_RA5_VB5<1805, "vextubrx", []>, ZExt32To64;
+def VEXTUHLX : VX1_RT5_RA5_VB5<1613, "vextuhlx", []>, ZExt32To64;
+def VEXTUHRX : VX1_RT5_RA5_VB5<1869, "vextuhrx", []>, ZExt32To64;
+def VEXTUWLX : VX1_RT5_RA5_VB5<1677, "vextuwlx", []>, ZExt32To64;
+def VEXTUWRX : VX1_RT5_RA5_VB5<1933, "vextuwrx", []>, ZExt32To64;
 }
 
 // Vector Insert Element Instructions
@@ -1518,8 +1543,8 @@ def VPRTYBQ : VX_VT5_EO5_VB5<1538, 10, "vprtybq", [(set v1i128:$vD,
                             (int_ppc_altivec_vprtybq v1i128:$vB))]>;
 
 // Vector (Bit) Permute (Right-indexed)
-def VBPERMD : VXForm_1<1484, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                       "vbpermd $vD, $vA, $vB", IIC_VecFP, []>;
+def VBPERMD : VX1_Int_Ty3<1484, "vbpermd", int_ppc_altivec_vbpermd,
+                          v2i64, v2i64, v16i8>;
 def VPERMR : VAForm_1a<59, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB, vrrc:$vC),
                        "vpermr $vD, $vA, $vB, $vC", IIC_VecFP, []>;
 
@@ -1597,22 +1622,6 @@ let Defs = [CR6] in
 def BCDCPSGN_rec : VX1_VT5_VA5_VB5<833, "bcdcpsgn.", []>;
 
 def BCDSETSGN_rec : VX_VT5_EO5_VB5_PS1_XO9_o<31, 385, "bcdsetsgn.", []>;
-
-// [PO VRT VRA VRB 1 PS XO], "_o" means CR6 is set.
-class VX_VT5_VA5_VB5_PS1_XO9_o<bits<9> xo, string opc, list<dag> pattern>
-  : VX_RD5_RSp5_PS1_XO9<xo,
-                   (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB, u1imm:$PS),
-                   !strconcat(opc, " $vD, $vA, $vB, $PS"), IIC_VecFP, pattern> {
-  let Defs = [CR6];
-}
-
-// [PO VRT VRA VRB 1 / XO]
-class VX_VT5_VA5_VB5_XO9_o<bits<9> xo, string opc, list<dag> pattern>
-  : VX_RD5_RSp5_PS1_XO9<xo, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
-                        !strconcat(opc, " $vD, $vA, $vB"), IIC_VecFP, pattern> {
-  let Defs = [CR6];
-  let PS = 0;
-}
 
 // Decimal Shift/Unsigned-Shift/Shift-and-Round
 def BCDS_rec :  VX_VT5_VA5_VB5_PS1_XO9_o<193, "bcds." , []>;

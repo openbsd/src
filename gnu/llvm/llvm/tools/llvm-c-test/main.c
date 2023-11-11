@@ -49,6 +49,9 @@ static void print_usage(void) {
       "    Read lines of name, rpn from stdin - print generated module\n\n");
   fprintf(stderr, "  * --echo\n");
   fprintf(stderr, "    Read bitcode file from stdin - print it back out\n\n");
+  fprintf(stderr, "  * --echo --opaque-pointers\n");
+  fprintf(stderr, "    Read bitcode file from stdin - print it back out in "
+                  "opaque pointer mode\n\n");
   fprintf(stderr, "  * --test-diagnostic-handler\n");
   fprintf(stderr,
           "    Read bitcode file from stdin with a diagnostic handler set\n\n");

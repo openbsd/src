@@ -21,7 +21,7 @@ namespace omp {
 using Kernel = Function *;
 
 /// Set of kernels in the module
-using KernelSet = SmallPtrSet<Kernel, 4>;
+using KernelSet = SetVector<Kernel>;
 
 /// Helper to determine if \p M contains OpenMP.
 bool containsOpenMP(Module &M);
@@ -37,13 +37,25 @@ KernelSet getDeviceKernels(Module &M);
 /// OpenMP optimizations pass.
 class OpenMPOptPass : public PassInfoMixin<OpenMPOptPass> {
 public:
+  OpenMPOptPass() : LTOPhase(ThinOrFullLTOPhase::None) {}
+  OpenMPOptPass(ThinOrFullLTOPhase LTOPhase) : LTOPhase(LTOPhase) {}
+
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+
+private:
+  const ThinOrFullLTOPhase LTOPhase = ThinOrFullLTOPhase::None;
 };
 
 class OpenMPOptCGSCCPass : public PassInfoMixin<OpenMPOptCGSCCPass> {
 public:
+  OpenMPOptCGSCCPass() : LTOPhase(ThinOrFullLTOPhase::None) {}
+  OpenMPOptCGSCCPass(ThinOrFullLTOPhase LTOPhase) : LTOPhase(LTOPhase) {}
+
   PreservedAnalyses run(LazyCallGraph::SCC &C, CGSCCAnalysisManager &AM,
                         LazyCallGraph &CG, CGSCCUpdateResult &UR);
+
+private:
+  const ThinOrFullLTOPhase LTOPhase = ThinOrFullLTOPhase::None;
 };
 
 } // end namespace llvm

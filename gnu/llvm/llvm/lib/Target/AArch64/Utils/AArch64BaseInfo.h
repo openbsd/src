@@ -331,6 +331,41 @@ inline static unsigned getNZCVToSatisfyCondCode(CondCode Code) {
   case LE: return Z; // Z == 1 || N != V
   }
 }
+
+/// Return true if Code is a reflexive relationship:
+/// forall x. (CSET Code (CMP x x)) == 1
+inline static bool isReflexive(CondCode Code) {
+  switch (Code) {
+  case EQ:
+  case HS:
+  case PL:
+  case LS:
+  case GE:
+  case LE:
+  case AL:
+  case NV:
+    return true;
+  default:
+    return false;
+  }
+}
+
+/// Return true if Code is an irreflexive relationship:
+/// forall x. (CSET Code (CMP x x)) == 0
+inline static bool isIrreflexive(CondCode Code) {
+  switch (Code) {
+  case NE:
+  case LO:
+  case MI:
+  case HI:
+  case LT:
+  case GT:
+    return true;
+  default:
+    return false;
+  }
+}
+
 } // end namespace AArch64CC
 
 struct SysAlias {
@@ -343,7 +378,8 @@ struct SysAlias {
       : Name(N), Encoding(E), FeaturesRequired(F) {}
 
   bool haveFeatures(FeatureBitset ActiveFeatures) const {
-    return (FeaturesRequired & ActiveFeatures) == FeaturesRequired;
+    return ActiveFeatures[llvm::AArch64::FeatureAll] ||
+           (FeaturesRequired & ActiveFeatures) == FeaturesRequired;
   }
 
   FeatureBitset getRequiredFeatures() const { return FeaturesRequired; }
@@ -445,6 +481,14 @@ namespace AArch64SVEPRFM {
 #include "AArch64GenSystemOperands.inc"
 }
 
+namespace AArch64RPRFM {
+struct RPRFM : SysAlias {
+  using SysAlias::SysAlias;
+};
+#define GET_RPRFM_DECL
+#include "AArch64GenSystemOperands.inc"
+} // namespace AArch64RPRFM
+
 namespace AArch64SVEPredPattern {
   struct SVEPREDPAT {
     const char *Name;
@@ -452,6 +496,71 @@ namespace AArch64SVEPredPattern {
   };
 #define GET_SVEPREDPAT_DECL
 #include "AArch64GenSystemOperands.inc"
+}
+
+namespace AArch64SVEVecLenSpecifier {
+  struct SVEVECLENSPECIFIER {
+    const char *Name;
+    uint16_t Encoding;
+  };
+#define GET_SVEVECLENSPECIFIER_DECL
+#include "AArch64GenSystemOperands.inc"
+} // namespace AArch64SVEVecLenSpecifier
+
+/// Return the number of active elements for VL1 to VL256 predicate pattern,
+/// zero for all other patterns.
+inline unsigned getNumElementsFromSVEPredPattern(unsigned Pattern) {
+  switch (Pattern) {
+  default:
+    return 0;
+  case AArch64SVEPredPattern::vl1:
+  case AArch64SVEPredPattern::vl2:
+  case AArch64SVEPredPattern::vl3:
+  case AArch64SVEPredPattern::vl4:
+  case AArch64SVEPredPattern::vl5:
+  case AArch64SVEPredPattern::vl6:
+  case AArch64SVEPredPattern::vl7:
+  case AArch64SVEPredPattern::vl8:
+    return Pattern;
+  case AArch64SVEPredPattern::vl16:
+    return 16;
+  case AArch64SVEPredPattern::vl32:
+    return 32;
+  case AArch64SVEPredPattern::vl64:
+    return 64;
+  case AArch64SVEPredPattern::vl128:
+    return 128;
+  case AArch64SVEPredPattern::vl256:
+    return 256;
+  }
+}
+
+/// Return specific VL predicate pattern based on the number of elements.
+inline std::optional<unsigned>
+getSVEPredPatternFromNumElements(unsigned MinNumElts) {
+  switch (MinNumElts) {
+  default:
+    return std::nullopt;
+  case 1:
+  case 2:
+  case 3:
+  case 4:
+  case 5:
+  case 6:
+  case 7:
+  case 8:
+    return MinNumElts;
+  case 16:
+    return AArch64SVEPredPattern::vl16;
+  case 32:
+    return AArch64SVEPredPattern::vl32;
+  case 64:
+    return AArch64SVEPredPattern::vl64;
+  case 128:
+    return AArch64SVEPredPattern::vl128;
+  case 256:
+    return AArch64SVEPredPattern::vl256;
+  }
 }
 
 namespace AArch64ExactFPImm {
@@ -465,10 +574,16 @@ namespace AArch64ExactFPImm {
 }
 
 namespace AArch64PState {
-  struct PState : SysAlias{
+  struct PStateImm0_15 : SysAlias{
     using SysAlias::SysAlias;
   };
-  #define GET_PSTATE_DECL
+  #define GET_PSTATEIMM0_15_DECL
+  #include "AArch64GenSystemOperands.inc"
+
+  struct PStateImm0_1 : SysAlias{
+    using SysAlias::SysAlias;
+  };
+  #define GET_PSTATEIMM0_1_DECL
   #include "AArch64GenSystemOperands.inc"
 }
 
@@ -571,13 +686,15 @@ AArch64StringToVectorLayout(StringRef LayoutStr) {
 namespace AArch64SysReg {
   struct SysReg {
     const char *Name;
+    const char *AltName;
     unsigned Encoding;
     bool Readable;
     bool Writeable;
     FeatureBitset FeaturesRequired;
 
     bool haveFeatures(FeatureBitset ActiveFeatures) const {
-      return (FeaturesRequired & ActiveFeatures) == FeaturesRequired;
+      return ActiveFeatures[llvm::AArch64::FeatureAll] ||
+             (FeaturesRequired & ActiveFeatures) == FeaturesRequired;
     }
   };
 
@@ -689,8 +806,57 @@ namespace AArch64II {
     /// SP-relative load or store instruction (which do not check tags), or to
     /// an LDG instruction to obtain the tag value.
     MO_TAGGED = 0x400,
+
+    /// MO_DLLIMPORTAUX - Symbol refers to "auxilliary" import stub. On
+    /// Arm64EC, there are two kinds of import stubs used for DLL import of
+    /// functions: MO_DLLIMPORT refers to natively callable Arm64 code, and
+    /// MO_DLLIMPORTAUX refers to the original address which can be compared
+    /// for equality.
+    MO_DLLIMPORTAUX = 0x800,
   };
 } // end namespace AArch64II
+
+//===----------------------------------------------------------------------===//
+// v8.3a Pointer Authentication
+//
+
+namespace AArch64PACKey {
+enum ID : uint8_t {
+  IA = 0,
+  IB = 1,
+  DA = 2,
+  DB = 3,
+  LAST = DB
+};
+} // namespace AArch64PACKey
+
+/// Return 2-letter identifier string for numeric key ID.
+inline static StringRef AArch64PACKeyIDToString(AArch64PACKey::ID KeyID) {
+  switch (KeyID) {
+  case AArch64PACKey::IA:
+    return StringRef("ia");
+  case AArch64PACKey::IB:
+    return StringRef("ib");
+  case AArch64PACKey::DA:
+    return StringRef("da");
+  case AArch64PACKey::DB:
+    return StringRef("db");
+  }
+}
+
+/// Return numeric key ID for 2-letter identifier string.
+inline static std::optional<AArch64PACKey::ID>
+AArch64StringToPACKeyID(StringRef Name) {
+  if (Name == "ia")
+    return AArch64PACKey::IA;
+  if (Name == "ib")
+    return AArch64PACKey::IB;
+  if (Name == "da")
+    return AArch64PACKey::DA;
+  if (Name == "db")
+    return AArch64PACKey::DB;
+  return std::nullopt;
+}
 
 namespace AArch64 {
 // The number of bits in a SVE register is architecturally defined
@@ -702,7 +868,6 @@ namespace AArch64 {
 // <n x (M*P) x t> vector (such as index 1) are undefined.
 static constexpr unsigned SVEBitsPerBlock = 128;
 static constexpr unsigned SVEMaxBitsPerVector = 2048;
-const unsigned NeonBitsPerVector = 128;
 } // end namespace AArch64
 } // end namespace llvm
 

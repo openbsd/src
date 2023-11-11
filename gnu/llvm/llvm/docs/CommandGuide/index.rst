@@ -21,14 +21,17 @@ Basic Commands
    llvm-config
    llvm-cov
    llvm-cxxmap
+   llvm-debuginfo-analyzer
    llvm-diff
    llvm-dis
    llvm-dwarfdump
+   llvm-dwarfutil
    llvm-lib
    llvm-libtool-darwin
    llvm-link
    llvm-lipo
    llvm-mca
+   llvm-opt-report
    llvm-otool
    llvm-profdata
    llvm-readobj
@@ -79,6 +82,17 @@ Developer Tools
    mlir-tblgen
    lit
    llvm-exegesis
+   llvm-ifs
    llvm-locstats
    llvm-pdbutil
    llvm-profgen
+   llvm-tli-checker
+
+Remarks Tools
+~~~~~~~~~~~~~~
+
+.. toctree::
+   :maxdepth: 1
+
+   llvm-remark-size-diff
+   llvm-remarkutil

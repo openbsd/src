@@ -11,8 +11,9 @@
 //  llvm-bcanalyzer [options] x.bc - Read LLVM bitcode from the x.bc file
 //
 //  Options:
-//      --help      - Output information about command line switches
-//      --dump      - Dump low-level bitcode structure in readable format
+//      --help            - Output information about command line switches
+//      --dump            - Dump low-level bitcode structure in readable format
+//      --dump-blockinfo  - Dump the BLOCKINFO_BLOCK, when used with --dump
 //
 // This tool provides analytical information about a bitcode file. It is
 // intended as an aid to developers of bitcode reading and writing software. It
@@ -26,7 +27,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/Optional.h"
 #include "llvm/Bitcode/BitcodeAnalyzer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Error.h"
@@ -35,6 +35,7 @@
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
+#include <optional>
 using namespace llvm;
 
 static cl::OptionCategory BCAnalyzerCategory("BC Analyzer Options");
@@ -46,6 +47,11 @@ static cl::opt<std::string> InputFilename(cl::Positional,
 
 static cl::opt<bool> Dump("dump", cl::desc("Dump low level bitcode trace"),
                           cl::cat(BCAnalyzerCategory));
+
+static cl::opt<bool> DumpBlockinfo("dump-blockinfo",
+                                   cl::desc("Include BLOCKINFO details in low"
+                                            " level dump"),
+                                   cl::cat(BCAnalyzerCategory));
 
 //===----------------------------------------------------------------------===//
 // Bitcode specific analysis.
@@ -107,17 +113,19 @@ int main(int argc, char **argv) {
     BlockInfoMB = ExitOnErr(openBitcodeFile(BlockInfoFilename));
 
   BitcodeAnalyzer BA(MB->getBuffer(),
-                     BlockInfoMB ? Optional<StringRef>(BlockInfoMB->getBuffer())
-                                 : None);
+                     BlockInfoMB
+                         ? std::optional<StringRef>(BlockInfoMB->getBuffer())
+                         : std::nullopt);
 
   BCDumpOptions O(outs());
   O.Histogram = !NoHistogram;
   O.Symbolic = !NonSymbolic;
   O.ShowBinaryBlobs = ShowBinaryBlobs;
+  O.DumpBlockinfo = DumpBlockinfo;
 
   ExitOnErr(BA.analyze(
-      Dump ? Optional<BCDumpOptions>(O) : Optional<BCDumpOptions>(None),
-      CheckHash.empty() ? None : Optional<StringRef>(CheckHash)));
+      Dump ? std::optional<BCDumpOptions>(O) : std::optional<BCDumpOptions>(),
+      CheckHash.empty() ? std::nullopt : std::optional<StringRef>(CheckHash)));
 
   if (Dump)
     outs() << "\n\n";

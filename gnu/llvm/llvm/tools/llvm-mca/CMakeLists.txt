@@ -1,9 +1,8 @@
 include_directories(include)
 
-add_subdirectory(lib)
-
 set(LLVM_LINK_COMPONENTS
   AllTargetsAsmParsers
+  AllTargetsMCAs          # CustomBehaviour and InstrPostProcess
   AllTargetsDescs
   AllTargetsDisassemblers
   AllTargetsInfos
@@ -11,6 +10,7 @@ set(LLVM_LINK_COMPONENTS
   MC
   MCParser
   Support
+  TargetParser
   )
 
 add_llvm_tool(llvm-mca
@@ -28,13 +28,6 @@ add_llvm_tool(llvm-mca
   Views/SchedulerStatistics.cpp
   Views/SummaryView.cpp
   Views/TimelineView.cpp
-  Views/View.cpp
   )
 
 set(LLVM_MCA_SOURCE_DIR ${CURRENT_SOURCE_DIR})
-
-target_link_libraries(llvm-mca PRIVATE
-  ${LLVM_MCA_CUSTOMBEHAVIOUR_TARGETS}
-  )
-
-add_definitions(${LLVM_MCA_MACROS_TO_DEFINE})

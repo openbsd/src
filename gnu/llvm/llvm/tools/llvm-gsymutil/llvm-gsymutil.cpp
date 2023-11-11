@@ -1,9 +1,8 @@
 //===-- gsymutil.cpp - GSYM dumping and creation utility for llvm ---------===//
 //
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,7 +20,6 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Signals.h"
@@ -43,6 +41,7 @@
 #include "llvm/DebugInfo/GSYM/InlineInfo.h"
 #include "llvm/DebugInfo/GSYM/LookupResult.h"
 #include "llvm/DebugInfo/GSYM/ObjectFileTransformer.h"
+#include <optional>
 
 using namespace llvm;
 using namespace gsym;
@@ -67,7 +66,7 @@ static opt<bool> Verbose("verbose",
                          cat(GeneralOptions));
 
 static list<std::string> InputFilenames(Positional, desc("<input GSYM files>"),
-                                        ZeroOrMore, cat(GeneralOptions));
+                                        cat(GeneralOptions));
 
 static opt<std::string>
     ConvertFilename("convert", cl::init(""),
@@ -127,6 +126,13 @@ static opt<bool> LookupAddressesFromStdin(
 /// @}
 //===----------------------------------------------------------------------===//
 
+static void error(Error Err) {
+  if (!Err)
+    return;
+  WithColor::error() << toString(std::move(Err)) << "\n";
+  exit(1);
+}
+
 static void error(StringRef Prefix, llvm::Error Err) {
   if (!Err)
     return;
@@ -140,39 +146,6 @@ static void error(StringRef Prefix, std::error_code EC) {
     return;
   errs() << Prefix << ": " << EC.message() << "\n";
   exit(1);
-}
-
-/// If the input path is a .dSYM bundle (as created by the dsymutil tool),
-/// replace it with individual entries for each of the object files inside the
-/// bundle otherwise return the input path.
-static std::vector<std::string> expandBundle(const std::string &InputPath) {
-  std::vector<std::string> BundlePaths;
-  SmallString<256> BundlePath(InputPath);
-  // Manually open up the bundle to avoid introducing additional dependencies.
-  if (sys::fs::is_directory(BundlePath) &&
-      sys::path::extension(BundlePath) == ".dSYM") {
-    std::error_code EC;
-    sys::path::append(BundlePath, "Contents", "Resources", "DWARF");
-    for (sys::fs::directory_iterator Dir(BundlePath, EC), DirEnd;
-         Dir != DirEnd && !EC; Dir.increment(EC)) {
-      const std::string &Path = Dir->path();
-      sys::fs::file_status Status;
-      EC = sys::fs::status(Path, Status);
-      error(Path, EC);
-      switch (Status.type()) {
-      case sys::fs::file_type::regular_file:
-      case sys::fs::file_type::symlink_file:
-      case sys::fs::file_type::type_unknown:
-        BundlePaths.push_back(Path);
-        break;
-      default: /*ignore*/;
-      }
-    }
-    error(BundlePath, EC);
-  }
-  if (!BundlePaths.size())
-    BundlePaths.push_back(InputPath);
-  return BundlePaths;
 }
 
 static uint32_t getCPUType(MachOObjectFile &MachO) {
@@ -214,17 +187,17 @@ static bool filterArch(MachOObjectFile &Obj) {
 ///
 /// \returns A valid image base address if we are able to extract one.
 template <class ELFT>
-static llvm::Optional<uint64_t>
+static std::optional<uint64_t>
 getImageBaseAddress(const object::ELFFile<ELFT> &ELFFile) {
   auto PhdrRangeOrErr = ELFFile.program_headers();
   if (!PhdrRangeOrErr) {
     consumeError(PhdrRangeOrErr.takeError());
-    return llvm::None;
+    return std::nullopt;
   }
   for (const typename ELFT::Phdr &Phdr : *PhdrRangeOrErr)
     if (Phdr.p_type == ELF::PT_LOAD)
       return (uint64_t)Phdr.p_vaddr;
-  return llvm::None;
+  return std::nullopt;
 }
 
 /// Determine the virtual address that is considered the base address of mach-o
@@ -235,7 +208,7 @@ getImageBaseAddress(const object::ELFFile<ELFT> &ELFFile) {
 /// \param MachO A mach-o object file we will search.
 ///
 /// \returns A valid image base address if we are able to extract one.
-static llvm::Optional<uint64_t>
+static std::optional<uint64_t>
 getImageBaseAddress(const object::MachOObjectFile *MachO) {
   for (const auto &Command : MachO->load_commands()) {
     if (Command.C.cmd == MachO::LC_SEGMENT) {
@@ -250,7 +223,7 @@ getImageBaseAddress(const object::MachOObjectFile *MachO) {
         return SLC.vmaddr;
     }
   }
-  return llvm::None;
+  return std::nullopt;
 }
 
 /// Determine the virtual address that is considered the base address of an
@@ -265,7 +238,7 @@ getImageBaseAddress(const object::MachOObjectFile *MachO) {
 /// \param Obj An object file we will search.
 ///
 /// \returns A valid image base address if we are able to extract one.
-static llvm::Optional<uint64_t> getImageBaseAddress(object::ObjectFile &Obj) {
+static std::optional<uint64_t> getImageBaseAddress(object::ObjectFile &Obj) {
   if (const auto *MachO = dyn_cast<object::MachOObjectFile>(&Obj))
     return getImageBaseAddress(MachO);
   else if (const auto *ELFObj = dyn_cast<object::ELF32LEObjectFile>(&Obj))
@@ -276,7 +249,7 @@ static llvm::Optional<uint64_t> getImageBaseAddress(object::ObjectFile &Obj) {
     return getImageBaseAddress(ELFObj->getELFFile());
   else if (const auto *ELFObj = dyn_cast<object::ELF64BEObjectFile>(&Obj))
     return getImageBaseAddress(ELFObj->getELFFile());
-  return llvm::None;
+  return std::nullopt;
 }
 
 static llvm::Error handleObjectFile(ObjectFile &Obj,
@@ -313,7 +286,6 @@ static llvm::Error handleObjectFile(ObjectFile &Obj,
   if (!DICtx)
     return createStringError(std::errc::invalid_argument,
                              "unable to create DWARF context");
-  logAllUnhandledErrors(DICtx->loadRegisterInfo(Obj), OS, "DwarfTransformer: ");
 
   // Make a DWARF transformer object and populate the ranges of the code
   // so we don't end up adding invalid functions to GSYM data.
@@ -338,7 +310,7 @@ static llvm::Error handleObjectFile(ObjectFile &Obj,
   // Save the GSYM file to disk.
   support::endianness Endian =
       Obj.makeTriple().isLittleEndian() ? support::little : support::big;
-  if (auto Err = Gsym.save(OutFile.c_str(), Endian))
+  if (auto Err = Gsym.save(OutFile, Endian))
     return Err;
 
   // Verify the DWARF if requested. This will ensure all the info in the DWARF
@@ -360,7 +332,7 @@ static llvm::Error handleBuffer(StringRef Filename, MemoryBufferRef Buffer,
     Triple ObjTriple(Obj->makeTriple());
     auto ArchName = ObjTriple.getArchName();
     outs() << "Output file (" << ArchName << "): " << OutFile << "\n";
-    if (auto Err = handleObjectFile(*Obj, OutFile.c_str()))
+    if (auto Err = handleObjectFile(*Obj, OutFile))
       return Err;
   } else if (auto *Fat = dyn_cast<MachOUniversalBinary>(BinOrErr->get())) {
     // Iterate over all contained architectures and filter out any that were
@@ -421,8 +393,15 @@ static llvm::Error convertFileToGSYM(raw_ostream &OS) {
 
   OS << "Input file: " << ConvertFilename << "\n";
 
-  auto Objs = expandBundle(ConvertFilename);
-  llvm::append_range(Objects, Objs);
+  if (auto DsymObjectsOrErr =
+          MachOObjectFile::findDsymObjectMembers(ConvertFilename)) {
+    if (DsymObjectsOrErr->empty())
+      Objects.push_back(ConvertFilename);
+    else
+      llvm::append_range(Objects, *DsymObjectsOrErr);
+  } else {
+    error(DsymObjectsOrErr.takeError());
+  }
 
   for (auto Object : Objects) {
     if (auto Err = handleFileConversionToGSYM(Object, OutFile))
@@ -501,7 +480,7 @@ int main(int argc, char const *argv[]) {
 
     std::string InputLine;
     std::string CurrentGSYMPath;
-    llvm::Optional<Expected<GsymReader>> CurrentGsym;
+    std::optional<Expected<GsymReader>> CurrentGsym;
 
     while (std::getline(std::cin, InputLine)) {
       // Strip newline characters.
@@ -517,6 +496,7 @@ int main(int argc, char const *argv[]) {
         CurrentGsym = GsymReader::openFile(GSYMPath);
         if (!*CurrentGsym)
           error(GSYMPath, CurrentGsym->takeError());
+        CurrentGSYMPath = GSYMPath;
       }
 
       uint64_t Addr;

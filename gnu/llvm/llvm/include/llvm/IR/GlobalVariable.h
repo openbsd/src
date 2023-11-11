@@ -34,7 +34,6 @@ class Constant;
 class Module;
 
 template <typename ValueSubClass> class SymbolTableListTraits;
-class DIGlobalVariable;
 class DIGlobalVariableExpression;
 
 class GlobalVariable : public GlobalObject, public ilist_node<GlobalVariable> {
@@ -60,7 +59,7 @@ public:
                  Constant *Initializer, const Twine &Name = "",
                  GlobalVariable *InsertBefore = nullptr,
                  ThreadLocalMode = NotThreadLocal,
-                 Optional<unsigned> AddressSpace = None,
+                 std::optional<unsigned> AddressSpace = std::nullopt,
                  bool isExternallyInitialized = false);
   GlobalVariable(const GlobalVariable &) = delete;
   GlobalVariable &operator=(const GlobalVariable &) = delete;

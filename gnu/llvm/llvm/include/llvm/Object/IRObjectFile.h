@@ -13,17 +13,13 @@
 #ifndef LLVM_OBJECT_IROBJECTFILE_H
 #define LLVM_OBJECT_IROBJECTFILE_H
 
-#include "llvm/ADT/PointerUnion.h"
+#include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/Object/IRSymtab.h"
 #include "llvm/Object/ModuleSymbolTable.h"
 #include "llvm/Object/SymbolicFile.h"
 
 namespace llvm {
-class BitcodeModule;
-class Mangler;
 class Module;
-class GlobalValue;
-class Triple;
 
 namespace object {
 class ObjectFile;
@@ -86,6 +82,6 @@ Expected<IRSymtabFile> readIRSymtab(MemoryBufferRef MBRef);
 
 }
 
-}
+} // namespace llvm
 
 #endif

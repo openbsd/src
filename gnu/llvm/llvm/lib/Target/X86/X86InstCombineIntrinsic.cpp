@@ -18,6 +18,7 @@
 #include "llvm/IR/IntrinsicsX86.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Transforms/InstCombine/InstCombiner.h"
+#include <optional>
 
 using namespace llvm;
 
@@ -135,7 +136,7 @@ static Value *simplifyX86immShift(const IntrinsicInst &II,
   case Intrinsic::x86_avx512_psrai_q_512:
   case Intrinsic::x86_avx512_psrai_w_512:
     IsImm = true;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case Intrinsic::x86_sse2_psra_d:
   case Intrinsic::x86_sse2_psra_w:
   case Intrinsic::x86_avx2_psra_d:
@@ -158,7 +159,7 @@ static Value *simplifyX86immShift(const IntrinsicInst &II,
   case Intrinsic::x86_avx512_psrli_q_512:
   case Intrinsic::x86_avx512_psrli_w_512:
     IsImm = true;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case Intrinsic::x86_sse2_psrl_d:
   case Intrinsic::x86_sse2_psrl_q:
   case Intrinsic::x86_sse2_psrl_w:
@@ -181,7 +182,7 @@ static Value *simplifyX86immShift(const IntrinsicInst &II,
   case Intrinsic::x86_avx512_pslli_q_512:
   case Intrinsic::x86_avx512_pslli_w_512:
     IsImm = true;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case Intrinsic::x86_sse2_psll_d:
   case Intrinsic::x86_sse2_psll_q:
   case Intrinsic::x86_sse2_psll_w:
@@ -239,7 +240,7 @@ static Value *simplifyX86immShift(const IntrinsicInst &II,
     KnownBits KnownUpperBits = llvm::computeKnownBits(
         Amt, DemandedUpper, II.getModule()->getDataLayout());
     if (KnownLowerBits.getMaxValue().ult(BitWidth) &&
-        (DemandedUpper.isNullValue() || KnownUpperBits.isZero())) {
+        (DemandedUpper.isZero() || KnownUpperBits.isZero())) {
       SmallVector<int, 16> ZeroSplat(VWidth, 0);
       Amt = Builder.CreateShuffleVector(Amt, ZeroSplat);
       return (LogicalShift ? (ShiftLeft ? Builder.CreateShl(Vec, Amt)
@@ -269,7 +270,7 @@ static Value *simplifyX86immShift(const IntrinsicInst &II,
   }
 
   // If shift-by-zero then just return the original value.
-  if (Count.isNullValue())
+  if (Count.isZero())
     return Vec;
 
   // Handle cases when Shift >= BitWidth.
@@ -354,10 +355,9 @@ static Value *simplifyX86varShift(const IntrinsicInst &II,
 
   // If the shift amount is guaranteed to be in-range we can replace it with a
   // generic shift.
-  APInt UpperBits =
-      APInt::getHighBitsSet(BitWidth, BitWidth - Log2_32(BitWidth));
-  if (llvm::MaskedValueIsZero(Amt, UpperBits,
-                              II.getModule()->getDataLayout())) {
+  KnownBits KnownAmt =
+      llvm::computeKnownBits(Amt, II.getModule()->getDataLayout());
+  if (KnownAmt.getMaxValue().ult(BitWidth)) {
     return (LogicalShift ? (ShiftLeft ? Builder.CreateShl(Vec, Amt)
                                       : Builder.CreateLShr(Vec, Amt))
                          : Builder.CreateAShr(Vec, Amt));
@@ -476,7 +476,7 @@ static Value *simplifyX86pack(IntrinsicInst &II,
     // PACKUS: Truncate signed value with unsigned saturation.
     // Source values less than zero are saturated to zero.
     // Source values greater than dst maxuint are saturated to maxuint.
-    MinValue = APInt::getNullValue(SrcScalarSizeInBits);
+    MinValue = APInt::getZero(SrcScalarSizeInBits);
     MaxValue = APInt::getLowBitsSet(SrcScalarSizeInBits, DstScalarSizeInBits);
   }
 
@@ -521,11 +521,10 @@ static Value *simplifyX86movmsk(const IntrinsicInst &II,
   // %int = bitcast <16 x i1> %cmp to i16
   // %res = zext i16 %int to i32
   unsigned NumElts = ArgTy->getNumElements();
-  Type *IntegerVecTy = VectorType::getInteger(ArgTy);
   Type *IntegerTy = Builder.getIntNTy(NumElts);
 
-  Value *Res = Builder.CreateBitCast(Arg, IntegerVecTy);
-  Res = Builder.CreateICmpSLT(Res, Constant::getNullValue(IntegerVecTy));
+  Value *Res = Builder.CreateBitCast(Arg, VectorType::getInteger(ArgTy));
+  Res = Builder.CreateIsNeg(Res);
   Res = Builder.CreateBitCast(Res, IntegerTy);
   Res = Builder.CreateZExtOrTrunc(Res, ResTy);
   return Res;
@@ -550,7 +549,7 @@ static Value *simplifyX86addcarry(const IntrinsicInst &II,
     Value *UAddResult = Builder.CreateExtractValue(UAdd, 0);
     Value *UAddOV = Builder.CreateZExt(Builder.CreateExtractValue(UAdd, 1),
                                        Builder.getInt8Ty());
-    Value *Res = UndefValue::get(RetTy);
+    Value *Res = PoisonValue::get(RetTy);
     Res = Builder.CreateInsertValue(Res, UAddOV, 0);
     return Builder.CreateInsertValue(Res, UAddResult, 1);
   }
@@ -842,7 +841,7 @@ static Value *simplifyX86pshufb(const IntrinsicInst &II,
 
   auto V1 = II.getArgOperand(0);
   auto V2 = Constant::getNullValue(VecTy);
-  return Builder.CreateShuffleVector(V1, V2, makeArrayRef(Indexes, NumElts));
+  return Builder.CreateShuffleVector(V1, V2, ArrayRef(Indexes, NumElts));
 }
 
 /// Attempt to convert vpermilvar* to shufflevector if the mask is constant.
@@ -889,7 +888,7 @@ static Value *simplifyX86vpermilvar(const IntrinsicInst &II,
   }
 
   auto V1 = II.getArgOperand(0);
-  return Builder.CreateShuffleVector(V1, makeArrayRef(Indexes, NumElts));
+  return Builder.CreateShuffleVector(V1, ArrayRef(Indexes, NumElts));
 }
 
 /// Attempt to convert vpermd/vpermps to shufflevector if the mask is constant.
@@ -923,10 +922,10 @@ static Value *simplifyX86vpermv(const IntrinsicInst &II,
   }
 
   auto V1 = II.getArgOperand(0);
-  return Builder.CreateShuffleVector(V1, makeArrayRef(Indexes, Size));
+  return Builder.CreateShuffleVector(V1, ArrayRef(Indexes, Size));
 }
 
-Optional<Instruction *>
+std::optional<Instruction *>
 X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
   auto SimplifyDemandedVectorEltsLow = [&IC](Value *Op, unsigned Width,
                                              unsigned DemandedWidth) {
@@ -997,19 +996,17 @@ X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
         return IC.replaceInstUsesWith(II, II.getArgOperand(0));
       }
 
-      if (MaskC->getValue().isShiftedMask()) {
+      unsigned MaskIdx, MaskLen;
+      if (MaskC->getValue().isShiftedMask(MaskIdx, MaskLen)) {
         // any single contingous sequence of 1s anywhere in the mask simply
         // describes a subset of the input bits shifted to the appropriate
         // position.  Replace with the straight forward IR.
-        unsigned ShiftAmount = MaskC->getValue().countTrailingZeros();
         Value *Input = II.getArgOperand(0);
         Value *Masked = IC.Builder.CreateAnd(Input, II.getArgOperand(1));
-        Value *Shifted = IC.Builder.CreateLShr(Masked,
-                                               ConstantInt::get(II.getType(),
-                                                                ShiftAmount));
+        Value *ShiftAmt = ConstantInt::get(II.getType(), MaskIdx);
+        Value *Shifted = IC.Builder.CreateLShr(Masked, ShiftAmt);
         return IC.replaceInstUsesWith(II, Shifted);
       }
-
 
       if (auto *SrcC = dyn_cast<ConstantInt>(II.getArgOperand(0))) {
         uint64_t Src = SrcC->getZExtValue();
@@ -1042,15 +1039,15 @@ X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
       if (MaskC->isAllOnesValue()) {
         return IC.replaceInstUsesWith(II, II.getArgOperand(0));
       }
-      if (MaskC->getValue().isShiftedMask()) {
+
+      unsigned MaskIdx, MaskLen;
+      if (MaskC->getValue().isShiftedMask(MaskIdx, MaskLen)) {
         // any single contingous sequence of 1s anywhere in the mask simply
         // describes a subset of the input bits shifted to the appropriate
         // position.  Replace with the straight forward IR.
-        unsigned ShiftAmount = MaskC->getValue().countTrailingZeros();
         Value *Input = II.getArgOperand(0);
-        Value *Shifted = IC.Builder.CreateShl(Input,
-                                              ConstantInt::get(II.getType(),
-                                                               ShiftAmount));
+        Value *ShiftAmt = ConstantInt::get(II.getType(), MaskIdx);
+        Value *Shifted = IC.Builder.CreateShl(Input, ShiftAmt);
         Value *Masked = IC.Builder.CreateAnd(Shifted, II.getArgOperand(1));
         return IC.replaceInstUsesWith(II, Masked);
       }
@@ -1734,10 +1731,10 @@ X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
   default:
     break;
   }
-  return None;
+  return std::nullopt;
 }
 
-Optional<Value *> X86TTIImpl::simplifyDemandedUseBitsIntrinsic(
+std::optional<Value *> X86TTIImpl::simplifyDemandedUseBitsIntrinsic(
     InstCombiner &IC, IntrinsicInst &II, APInt DemandedMask, KnownBits &Known,
     bool &KnownBitsComputed) const {
   switch (II.getIntrinsicID()) {
@@ -1764,7 +1761,7 @@ Optional<Value *> X86TTIImpl::simplifyDemandedUseBitsIntrinsic(
     // we know that DemandedMask is non-zero already.
     APInt DemandedElts = DemandedMask.zextOrTrunc(ArgWidth);
     Type *VTy = II.getType();
-    if (DemandedElts.isNullValue()) {
+    if (DemandedElts.isZero()) {
       return ConstantInt::getNullValue(VTy);
     }
 
@@ -1774,10 +1771,10 @@ Optional<Value *> X86TTIImpl::simplifyDemandedUseBitsIntrinsic(
     break;
   }
   }
-  return None;
+  return std::nullopt;
 }
 
-Optional<Value *> X86TTIImpl::simplifyDemandedVectorEltsIntrinsic(
+std::optional<Value *> X86TTIImpl::simplifyDemandedVectorEltsIntrinsic(
     InstCombiner &IC, IntrinsicInst &II, APInt DemandedElts, APInt &UndefElts,
     APInt &UndefElts2, APInt &UndefElts3,
     std::function<void(Instruction *, unsigned, APInt, APInt &)>
@@ -1934,6 +1931,23 @@ Optional<Value *> X86TTIImpl::simplifyDemandedVectorEltsIntrinsic(
     break;
   }
 
+  // General per-element vector operations.
+  case Intrinsic::x86_avx2_psllv_d:
+  case Intrinsic::x86_avx2_psllv_d_256:
+  case Intrinsic::x86_avx2_psllv_q:
+  case Intrinsic::x86_avx2_psllv_q_256:
+  case Intrinsic::x86_avx2_psrlv_d:
+  case Intrinsic::x86_avx2_psrlv_d_256:
+  case Intrinsic::x86_avx2_psrlv_q:
+  case Intrinsic::x86_avx2_psrlv_q_256:
+  case Intrinsic::x86_avx2_psrav_d:
+  case Intrinsic::x86_avx2_psrav_d_256: {
+    simplifyAndSetOp(&II, 0, DemandedElts, UndefElts);
+    simplifyAndSetOp(&II, 1, DemandedElts, UndefElts2);
+    UndefElts &= UndefElts2;
+    break;
+  }
+
   case Intrinsic::x86_sse2_packssdw_128:
   case Intrinsic::x86_sse2_packsswb_128:
   case Intrinsic::x86_sse2_packuswb_128:
@@ -2012,5 +2026,5 @@ Optional<Value *> X86TTIImpl::simplifyDemandedVectorEltsIntrinsic(
     UndefElts.setHighBits(VWidth / 2);
     break;
   }
-  return None;
+  return std::nullopt;
 }

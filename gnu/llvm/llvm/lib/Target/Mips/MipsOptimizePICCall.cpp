@@ -127,7 +127,7 @@ static MachineOperand *getCallTargetRegOpnd(MachineInstr &MI) {
 
   MachineOperand &MO = MI.getOperand(0);
 
-  if (!MO.isReg() || !MO.isUse() || !Register::isVirtualRegister(MO.getReg()))
+  if (!MO.isReg() || !MO.isUse() || !MO.getReg().isVirtual())
     return nullptr;
 
   return &MO;
@@ -170,7 +170,7 @@ static void eraseGPOpnd(MachineInstr &MI) {
   for (unsigned I = 0; I < MI.getNumOperands(); ++I) {
     MachineOperand &MO = MI.getOperand(I);
     if (MO.isReg() && MO.getReg() == Reg) {
-      MI.RemoveOperand(I);
+      MI.removeOperand(I);
       return;
     }
   }
@@ -194,7 +194,7 @@ void MBBInfo::postVisit() {
 
 // OptimizePICCall methods.
 bool OptimizePICCall::runOnMachineFunction(MachineFunction &F) {
-  if (static_cast<const MipsSubtarget &>(F.getSubtarget()).inMips16Mode())
+  if (F.getSubtarget<MipsSubtarget>().inMips16Mode())
     return false;
 
   // Do a pre-order traversal of the dominator tree.

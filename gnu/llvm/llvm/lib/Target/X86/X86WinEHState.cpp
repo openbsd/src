@@ -389,10 +389,10 @@ Function *WinEHStatePass::generateLSDAInEAXThunk(Function *ParentFunc) {
   Type *ArgTys[5] = {Int8PtrType, Int8PtrType, Int8PtrType, Int8PtrType,
                      Int8PtrType};
   FunctionType *TrampolineTy =
-      FunctionType::get(Int32Ty, makeArrayRef(&ArgTys[0], 4),
+      FunctionType::get(Int32Ty, ArrayRef(&ArgTys[0], 4),
                         /*isVarArg=*/false);
   FunctionType *TargetFuncTy =
-      FunctionType::get(Int32Ty, makeArrayRef(&ArgTys[0], 5),
+      FunctionType::get(Int32Ty, ArrayRef(&ArgTys[0], 5),
                         /*isVarArg=*/false);
   Function *Trampoline =
       Function::Create(TrampolineTy, GlobalValue::InternalLinkage,
@@ -458,7 +458,7 @@ void WinEHStatePass::unlinkExceptionRegistration(IRBuilder<> &Builder) {
 void WinEHStatePass::rewriteSetJmpCall(IRBuilder<> &Builder, Function &F,
                                        CallBase &Call, Value *State) {
   // Don't rewrite calls with a weird number of arguments.
-  if (Call.getNumArgOperands() != 2)
+  if (Call.arg_size() != 2)
     return;
 
   SmallVector<OperandBundleDef, 1> OpBundles;

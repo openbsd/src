@@ -15,7 +15,11 @@
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DIContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFAcceleratorTable.h"
+#include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Object/ObjectFile.h"
@@ -120,7 +124,7 @@ using namespace cl;
 OptionCategory DwarfDumpCategory("Specific Options");
 static list<std::string>
     InputFilenames(Positional, desc("<input object files or .dSYM bundles>"),
-                   ZeroOrMore, cat(DwarfDumpCategory));
+                   cat(DwarfDumpCategory));
 
 cl::OptionCategory SectionCategory("Section-specific Dump Options",
                                    "These control which sections are dumped. "
@@ -135,8 +139,7 @@ static alias DumpAllAlias("a", desc("Alias for --all"), aliasopt(DumpAll),
 
 // Options for dumping specific sections.
 static unsigned DumpType = DIDT_Null;
-static std::array<llvm::Optional<uint64_t>, (unsigned)DIDT_ID_Count>
-    DumpOffsets;
+static std::array<std::optional<uint64_t>, (unsigned)DIDT_ID_Count> DumpOffsets;
 #define HANDLE_DWARF_SECTION(ENUM_NAME, ELF_NAME, CMDLINE_NAME, OPTION)        \
   static opt<OPTION> Dump##ENUM_NAME(CMDLINE_NAME,                             \
                                      desc("Dump the " ELF_NAME " section"),    \
@@ -169,7 +172,7 @@ static list<std::string>
 static alias FindAlias("f", desc("Alias for --find."), aliasopt(Find),
                        cl::NotHidden);
 static opt<bool> IgnoreCase("ignore-case",
-                            desc("Ignore case distinctions when searching."),
+                            desc("Ignore case distinctions when using --name."),
                             value_desc("i"), cat(DwarfDumpCategory));
 static alias IgnoreCaseAlias("i", desc("Alias for --ignore-case."),
                              aliasopt(IgnoreCase), cl::NotHidden);
@@ -192,11 +195,12 @@ static opt<std::string>
                    cl::value_desc("filename"), cat(DwarfDumpCategory));
 static alias OutputFilenameAlias("out-file", desc("Alias for -o."),
                                  aliasopt(OutputFilename));
-static opt<bool>
-    UseRegex("regex",
-             desc("Treat any <pattern> strings as regular expressions when "
-                  "searching instead of just as an exact string match."),
-             cat(DwarfDumpCategory));
+static opt<bool> UseRegex(
+    "regex",
+    desc("Treat any <pattern> strings as regular "
+         "expressions when searching with --name. If --ignore-case is also "
+         "specified, the regular expression becomes case-insensitive."),
+    cat(DwarfDumpCategory));
 static alias RegexAlias("x", desc("Alias for --regex"), aliasopt(UseRegex),
                         cl::NotHidden);
 static opt<bool>
@@ -245,6 +249,17 @@ static cl::opt<bool>
                      cl::desc("Show the sizes of all debug sections, "
                               "expressed in bytes."),
                      cat(DwarfDumpCategory));
+static cl::opt<bool> ManuallyGenerateUnitIndex(
+    "manaully-generate-unit-index",
+    cl::desc("if the input is dwp file, parse .debug_info "
+             "section and use it to populate "
+             "DW_SECT_INFO contributions in cu-index. "
+             "For DWARF5 it also populated TU Index."),
+    cl::init(false), cl::Hidden, cl::cat(DwarfDumpCategory));
+static cl::opt<bool>
+    ShowSources("show-sources",
+                cl::desc("Show the sources across all compilation units."),
+                cat(DwarfDumpCategory));
 static opt<bool> Verify("verify", desc("Verify the DWARF debug info."),
                         cat(DwarfDumpCategory));
 static opt<bool> Quiet("quiet", desc("Use with -verify to not emit to STDOUT."),
@@ -263,6 +278,13 @@ static cl::extrahelp
 } // namespace
 /// @}
 //===----------------------------------------------------------------------===//
+
+static void error(Error Err) {
+  if (!Err)
+    return;
+  WithColor::error() << toString(std::move(Err)) << "\n";
+  exit(1);
+}
 
 static void error(StringRef Prefix, Error Err) {
   if (!Err)
@@ -288,8 +310,10 @@ static DIDumpOptions getDumpOpts(DWARFContext &C) {
   DumpOpts.Verbose = Verbose;
   DumpOpts.RecoverableErrorHandler = C.getRecoverableErrorHandler();
   // In -verify mode, print DIEs without children in error messages.
-  if (Verify)
+  if (Verify) {
+    DumpOpts.Verbose = true;
     return DumpOpts.noImplicitRecursion();
+  }
   return DumpOpts;
 }
 
@@ -325,9 +349,11 @@ using HandlerFn = std::function<bool(ObjectFile &, DWARFContext &DICtx,
                                      const Twine &, raw_ostream &)>;
 
 /// Print only DIEs that have a certain name.
-static bool filterByName(const StringSet<> &Names, DWARFDie Die,
-                         StringRef NameRef, raw_ostream &OS) {
+static bool filterByName(
+    const StringSet<> &Names, DWARFDie Die, StringRef NameRef, raw_ostream &OS,
+    std::function<StringRef(uint64_t RegNum, bool IsEH)> GetNameForDWARFReg) {
   DIDumpOptions DumpOpts = getDumpOpts(Die.getDwarfUnit()->getContext());
+  DumpOpts.GetNameForDWARFReg = GetNameForDWARFReg;
   std::string Name =
       (IgnoreCase && !UseRegex) ? NameRef.lower() : NameRef.str();
   if (UseRegex) {
@@ -353,24 +379,25 @@ static bool filterByName(const StringSet<> &Names, DWARFDie Die,
 }
 
 /// Print only DIEs that have a certain name.
-static void filterByName(const StringSet<> &Names,
-                         DWARFContext::unit_iterator_range CUs,
-                         raw_ostream &OS) {
+static void filterByName(
+    const StringSet<> &Names, DWARFContext::unit_iterator_range CUs,
+    raw_ostream &OS,
+    std::function<StringRef(uint64_t RegNum, bool IsEH)> GetNameForDWARFReg) {
   for (const auto &CU : CUs)
     for (const auto &Entry : CU->dies()) {
       DWARFDie Die = {CU.get(), &Entry};
       if (const char *Name = Die.getName(DINameKind::ShortName))
-        if (filterByName(Names, Die, Name, OS))
+        if (filterByName(Names, Die, Name, OS, GetNameForDWARFReg))
           continue;
       if (const char *Name = Die.getName(DINameKind::LinkageName))
-        filterByName(Names, Die, Name, OS);
+        filterByName(Names, Die, Name, OS, GetNameForDWARFReg);
     }
 }
 
 static void getDies(DWARFContext &DICtx, const AppleAcceleratorTable &Accel,
                     StringRef Name, SmallVectorImpl<DWARFDie> &Dies) {
   for (const auto &Entry : Accel.equal_range(Name)) {
-    if (llvm::Optional<uint64_t> Off = Entry.getDIESectionOffset()) {
+    if (std::optional<uint64_t> Off = Entry.getDIESectionOffset()) {
       if (DWARFDie Die = DICtx.getDIEForOffset(*Off))
         Dies.push_back(Die);
     }
@@ -379,8 +406,8 @@ static void getDies(DWARFContext &DICtx, const AppleAcceleratorTable &Accel,
 
 static DWARFDie toDie(const DWARFDebugNames::Entry &Entry,
                       DWARFContext &DICtx) {
-  llvm::Optional<uint64_t> CUOff = Entry.getCUOffset();
-  llvm::Optional<uint64_t> Off = Entry.getDIEUnitOffset();
+  std::optional<uint64_t> CUOff = Entry.getCUOffset();
+  std::optional<uint64_t> Off = Entry.getDIEUnitOffset();
   if (!CUOff || !Off)
     return DWARFDie();
 
@@ -388,7 +415,7 @@ static DWARFDie toDie(const DWARFDebugNames::Entry &Entry,
   if (!CU)
     return DWARFDie();
 
-  if (llvm::Optional<uint64_t> DWOId = CU->getDWOId()) {
+  if (std::optional<uint64_t> DWOId = CU->getDWOId()) {
     // This is a skeleton unit. Look up the DIE in the DWO unit.
     CU = DICtx.getDWOCompileUnitForHash(*DWOId);
     if (!CU)
@@ -407,8 +434,9 @@ static void getDies(DWARFContext &DICtx, const DWARFDebugNames &Accel,
 }
 
 /// Print only DIEs that have a certain name.
-static void filterByAccelName(ArrayRef<std::string> Names, DWARFContext &DICtx,
-                              raw_ostream &OS) {
+static void filterByAccelName(
+    ArrayRef<std::string> Names, DWARFContext &DICtx, raw_ostream &OS,
+    std::function<StringRef(uint64_t RegNum, bool IsEH)> GetNameForDWARFReg) {
   SmallVector<DWARFDie, 4> Dies;
   for (const auto &Name : Names) {
     getDies(DICtx, DICtx.getAppleNames(), Name, Dies);
@@ -420,6 +448,7 @@ static void filterByAccelName(ArrayRef<std::string> Names, DWARFContext &DICtx,
   Dies.erase(std::unique(Dies.begin(), Dies.end()), Dies.end());
 
   DIDumpOptions DumpOpts = getDumpOpts(DICtx);
+  DumpOpts.GetNameForDWARFReg = GetNameForDWARFReg;
   for (DWARFDie Die : Dies)
     Die.dump(OS, 0, DumpOpts);
 }
@@ -455,10 +484,122 @@ static bool lookup(ObjectFile &Obj, DWARFContext &DICtx, uint64_t Address,
   return true;
 }
 
+// Collect all sources referenced from the given line table, scoped to the given
+// CU compilation directory.
+static bool collectLineTableSources(const DWARFDebugLine::LineTable &LT,
+                                    StringRef CompDir,
+                                    std::vector<std::string> &Sources) {
+  bool Result = true;
+  std::optional<uint64_t> LastIndex = LT.getLastValidFileIndex();
+  for (uint64_t I = LT.hasFileAtIndex(0) ? 0 : 1,
+                E = LastIndex ? *LastIndex + 1 : 0;
+       I < E; ++I) {
+    std::string Path;
+    Result &= LT.getFileNameByIndex(
+        I, CompDir, DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath,
+        Path);
+    Sources.push_back(std::move(Path));
+  }
+  return Result;
+}
+
+static bool collectObjectSources(ObjectFile &Obj, DWARFContext &DICtx,
+                                 const Twine &Filename, raw_ostream &OS) {
+  bool Result = true;
+  std::vector<std::string> Sources;
+
+  bool HasCompileUnits = false;
+  for (const auto &CU : DICtx.compile_units()) {
+    HasCompileUnits = true;
+    // Extract paths from the line table for this CU. This allows combining the
+    // compilation directory with the line information, in case both the include
+    // directory and file names in the line table are relative.
+    const DWARFDebugLine::LineTable *LT = DICtx.getLineTableForUnit(CU.get());
+    StringRef CompDir = CU->getCompilationDir();
+    if (LT) {
+      Result &= collectLineTableSources(*LT, CompDir, Sources);
+    } else {
+      // Since there's no line table for this CU, collect the name from the CU
+      // itself.
+      const char *Name = CU->getUnitDIE().getShortName();
+      if (!Name) {
+        WithColor::warning()
+            << Filename << ": missing name for compilation unit\n";
+        continue;
+      }
+      SmallString<64> AbsName;
+      if (sys::path::is_relative(Name, sys::path::Style::posix) &&
+          sys::path::is_relative(Name, sys::path::Style::windows))
+        AbsName = CompDir;
+      sys::path::append(AbsName, Name);
+      Sources.push_back(std::string(AbsName));
+    }
+  }
+
+  if (!HasCompileUnits) {
+    // Since there's no compile units available, walk the line tables and
+    // extract out any referenced paths.
+    DWARFDataExtractor LineData(DICtx.getDWARFObj(),
+                                DICtx.getDWARFObj().getLineSection(),
+                                DICtx.isLittleEndian(), 0);
+    DWARFDebugLine::SectionParser Parser(LineData, DICtx, DICtx.normal_units());
+    while (!Parser.done()) {
+      const auto RecoverableErrorHandler = [&](Error Err) {
+        Result = false;
+        WithColor::defaultErrorHandler(std::move(Err));
+      };
+      void (*UnrecoverableErrorHandler)(Error Err) = error;
+
+      DWARFDebugLine::LineTable LT =
+          Parser.parseNext(RecoverableErrorHandler, UnrecoverableErrorHandler);
+      Result &= collectLineTableSources(LT, /*CompDir=*/"", Sources);
+    }
+  }
+
+  // Dedup and order the sources.
+  llvm::sort(Sources);
+  Sources.erase(std::unique(Sources.begin(), Sources.end()), Sources.end());
+
+  for (StringRef Name : Sources)
+    OS << Name << "\n";
+  return Result;
+}
+
+static std::unique_ptr<MCRegisterInfo>
+createRegInfo(const object::ObjectFile &Obj) {
+  std::unique_ptr<MCRegisterInfo> MCRegInfo;
+  Triple TT;
+  TT.setArch(Triple::ArchType(Obj.getArch()));
+  TT.setVendor(Triple::UnknownVendor);
+  TT.setOS(Triple::UnknownOS);
+  std::string TargetLookupError;
+  const Target *TheTarget =
+      TargetRegistry::lookupTarget(TT.str(), TargetLookupError);
+  if (!TargetLookupError.empty())
+    return nullptr;
+  MCRegInfo.reset(TheTarget->createMCRegInfo(TT.str()));
+  return MCRegInfo;
+}
+
 static bool dumpObjectFile(ObjectFile &Obj, DWARFContext &DICtx,
                            const Twine &Filename, raw_ostream &OS) {
-  logAllUnhandledErrors(DICtx.loadRegisterInfo(Obj), errs(),
-                        Filename.str() + ": ");
+
+  auto MCRegInfo = createRegInfo(Obj);
+  if (!MCRegInfo)
+    logAllUnhandledErrors(createStringError(inconvertibleErrorCode(),
+                                            "Error in creating MCRegInfo"),
+                          errs(), Filename.str() + ": ");
+
+  auto GetRegName = [&MCRegInfo](uint64_t DwarfRegNum, bool IsEH) -> StringRef {
+    if (!MCRegInfo)
+      return {};
+    if (std::optional<unsigned> LLVMRegNum =
+            MCRegInfo->getLLVMRegNum(DwarfRegNum, IsEH))
+      if (const char *RegName = MCRegInfo->getName(*LLVMRegNum))
+        return StringRef(RegName);
+    return {};
+  };
+
   // The UUID dump already contains all the same information.
   if (!(DumpType & DIDT_UUID) || DumpType == DIDT_All)
     OS << Filename << ":\tfile format " << Obj.getFileFormatName() << '\n';
@@ -473,19 +614,21 @@ static bool dumpObjectFile(ObjectFile &Obj, DWARFContext &DICtx,
     for (auto name : Name)
       Names.insert((IgnoreCase && !UseRegex) ? StringRef(name).lower() : name);
 
-    filterByName(Names, DICtx.normal_units(), OS);
-    filterByName(Names, DICtx.dwo_units(), OS);
+    filterByName(Names, DICtx.normal_units(), OS, GetRegName);
+    filterByName(Names, DICtx.dwo_units(), OS, GetRegName);
     return true;
   }
 
   // Handle the --find option and lower it to --debug-info=<offset>.
   if (!Find.empty()) {
-    filterByAccelName(Find, DICtx, OS);
+    filterByAccelName(Find, DICtx, OS, GetRegName);
     return true;
   }
 
   // Dump the complete DWARF structure.
-  DICtx.dump(OS, getDumpOpts(DICtx), DumpOffsets);
+  auto DumpOpts = getDumpOpts(DICtx);
+  DumpOpts.GetNameForDWARFReg = GetRegName;
+  DICtx.dump(OS, DumpOpts, DumpOffsets);
   return true;
 }
 
@@ -536,8 +679,10 @@ static bool handleBuffer(StringRef Filename, MemoryBufferRef Buffer,
   };
   if (auto *Obj = dyn_cast<ObjectFile>(BinOrErr->get())) {
     if (filterArch(*Obj)) {
-      std::unique_ptr<DWARFContext> DICtx =
-          DWARFContext::create(*Obj, nullptr, "", RecoverableErrorHandler);
+      std::unique_ptr<DWARFContext> DICtx = DWARFContext::create(
+          *Obj, DWARFContext::ProcessDebugRelocations::Process, nullptr, "",
+          RecoverableErrorHandler);
+      DICtx->setParseCUTUIndexManually(ManuallyGenerateUnitIndex);
       if (!HandleObj(*Obj, *DICtx, Filename, OS))
         Result = false;
     }
@@ -548,8 +693,9 @@ static bool handleBuffer(StringRef Filename, MemoryBufferRef Buffer,
       if (auto MachOOrErr = ObjForArch.getAsObjectFile()) {
         auto &Obj = **MachOOrErr;
         if (filterArch(Obj)) {
-          std::unique_ptr<DWARFContext> DICtx =
-              DWARFContext::create(Obj, nullptr, "", RecoverableErrorHandler);
+          std::unique_ptr<DWARFContext> DICtx = DWARFContext::create(
+              Obj, DWARFContext::ProcessDebugRelocations::Process, nullptr, "",
+              RecoverableErrorHandler);
           if (!HandleObj(Obj, *DICtx, ObjName, OS))
             Result = false;
         }
@@ -576,41 +722,6 @@ static bool handleFile(StringRef Filename, HandlerFn HandleObj,
   error(Filename, BuffOrErr.getError());
   std::unique_ptr<MemoryBuffer> Buffer = std::move(BuffOrErr.get());
   return handleBuffer(Filename, *Buffer, HandleObj, OS);
-}
-
-/// If the input path is a .dSYM bundle (as created by the dsymutil tool),
-/// replace it with individual entries for each of the object files inside the
-/// bundle otherwise return the input path.
-static std::vector<std::string> expandBundle(const std::string &InputPath) {
-  std::vector<std::string> BundlePaths;
-  SmallString<256> BundlePath(InputPath);
-  // Normalize input path. This is necessary to accept `bundle.dSYM/`.
-  sys::path::remove_dots(BundlePath);
-  // Manually open up the bundle to avoid introducing additional dependencies.
-  if (sys::fs::is_directory(BundlePath) &&
-      sys::path::extension(BundlePath) == ".dSYM") {
-    std::error_code EC;
-    sys::path::append(BundlePath, "Contents", "Resources", "DWARF");
-    for (sys::fs::directory_iterator Dir(BundlePath, EC), DirEnd;
-         Dir != DirEnd && !EC; Dir.increment(EC)) {
-      const std::string &Path = Dir->path();
-      sys::fs::file_status Status;
-      EC = sys::fs::status(Path, Status);
-      error(Path, EC);
-      switch (Status.type()) {
-      case sys::fs::file_type::regular_file:
-      case sys::fs::file_type::symlink_file:
-      case sys::fs::file_type::type_unknown:
-        BundlePaths.push_back(Path);
-        break;
-      default: /*ignore*/;
-      }
-    }
-    error(BundlePath, EC);
-  }
-  if (!BundlePaths.size())
-    BundlePaths.push_back(InputPath);
-  return BundlePaths;
 }
 
 int main(int argc, char **argv) {
@@ -681,8 +792,14 @@ int main(int argc, char **argv) {
   // Expand any .dSYM bundles to the individual object files contained therein.
   std::vector<std::string> Objects;
   for (const auto &F : InputFilenames) {
-    auto Objs = expandBundle(F);
-    llvm::append_range(Objects, Objs);
+    if (auto DsymObjectsOrErr = MachOObjectFile::findDsymObjectMembers(F)) {
+      if (DsymObjectsOrErr->empty())
+        Objects.push_back(F);
+      else
+        llvm::append_range(Objects, *DsymObjectsOrErr);
+    } else {
+      error(DsymObjectsOrErr.takeError());
+    }
   }
 
   bool Success = true;
@@ -695,6 +812,9 @@ int main(int argc, char **argv) {
   } else if (ShowSectionSizes) {
     for (auto Object : Objects)
       Success &= handleFile(Object, collectObjectSectionSizes, OutputFile.os());
+  } else if (ShowSources) {
+    for (auto Object : Objects)
+      Success &= handleFile(Object, collectObjectSources, OutputFile.os());
   } else {
     for (auto Object : Objects)
       Success &= handleFile(Object, dumpObjectFile, OutputFile.os());

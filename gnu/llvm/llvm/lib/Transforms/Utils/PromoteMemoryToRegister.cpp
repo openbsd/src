@@ -20,19 +20,17 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/IteratedDominanceFrontier.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DIBuilder.h"
-#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
@@ -45,6 +43,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include <algorithm>
 #include <cassert>
@@ -67,10 +66,11 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
     if (const LoadInst *LI = dyn_cast<LoadInst>(U)) {
       // Note that atomic loads can be transformed; atomic semantics do
       // not have any meaning for a local alloca.
-      if (LI->isVolatile())
+      if (LI->isVolatile() || LI->getType() != AI->getAllocatedType())
         return false;
     } else if (const StoreInst *SI = dyn_cast<StoreInst>(U)) {
-      if (SI->getOperand(0) == AI)
+      if (SI->getValueOperand() == AI ||
+          SI->getValueOperand()->getType() != AI->getAllocatedType())
         return false; // Don't allow a store OF the AI, only INTO the AI.
       // Note that atomic stores can be transformed; atomic semantics do
       // not have any meaning for a local alloca.
@@ -100,6 +100,67 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
 
 namespace {
 
+/// Helper for updating assignment tracking debug info when promoting allocas.
+class AssignmentTrackingInfo {
+  /// DbgAssignIntrinsics linked to the alloca with at most one per variable
+  /// fragment. (i.e. not be a comprehensive set if there are multiple
+  /// dbg.assigns for one variable fragment).
+  SmallVector<DbgVariableIntrinsic *> DbgAssigns;
+
+public:
+  void init(AllocaInst *AI) {
+    SmallSet<DebugVariable, 2> Vars;
+    for (DbgAssignIntrinsic *DAI : at::getAssignmentMarkers(AI)) {
+      if (Vars.insert(DebugVariable(DAI)).second)
+        DbgAssigns.push_back(DAI);
+    }
+  }
+
+  /// Update assignment tracking debug info given for the to-be-deleted store
+  /// \p ToDelete that stores to this alloca.
+  void updateForDeletedStore(StoreInst *ToDelete, DIBuilder &DIB) const {
+    // There's nothing to do if the alloca doesn't have any variables using
+    // assignment tracking.
+    if (DbgAssigns.empty()) {
+      assert(at::getAssignmentMarkers(ToDelete).empty());
+      return;
+    }
+
+    // Just leave dbg.assign intrinsics in place and remember that we've seen
+    // one for each variable fragment.
+    SmallSet<DebugVariable, 2> VarHasDbgAssignForStore;
+    for (DbgAssignIntrinsic *DAI : at::getAssignmentMarkers(ToDelete))
+      VarHasDbgAssignForStore.insert(DebugVariable(DAI));
+
+    // It's possible for variables using assignment tracking to have no
+    // dbg.assign linked to this store. These are variables in DbgAssigns that
+    // are missing from VarHasDbgAssignForStore. Since there isn't a dbg.assign
+    // to mark the assignment - and the store is going to be deleted - insert a
+    // dbg.value to do that now. An untracked store may be either one that
+    // cannot be represented using assignment tracking (non-const offset or
+    // size) or one that is trackable but has had its DIAssignID attachment
+    // dropped accidentally.
+    for (auto *DAI : DbgAssigns) {
+      if (VarHasDbgAssignForStore.contains(DebugVariable(DAI)))
+        continue;
+      ConvertDebugDeclareToDebugValue(DAI, ToDelete, DIB);
+    }
+  }
+
+  /// Update assignment tracking debug info given for the newly inserted PHI \p
+  /// NewPhi.
+  void updateForNewPhi(PHINode *NewPhi, DIBuilder &DIB) const {
+    // Regardless of the position of dbg.assigns relative to stores, the
+    // incoming values into a new PHI should be the same for the (imaginary)
+    // debug-phi.
+    for (auto *DAI : DbgAssigns)
+      ConvertDebugDeclareToDebugValue(DAI, NewPhi, DIB);
+  }
+
+  void clear() { DbgAssigns.clear(); }
+  bool empty() { return DbgAssigns.empty(); }
+};
+
 struct AllocaInfo {
   using DbgUserVec = SmallVector<DbgVariableIntrinsic *, 1>;
 
@@ -110,7 +171,10 @@ struct AllocaInfo {
   BasicBlock *OnlyBlock;
   bool OnlyUsedInOneBlock;
 
+  /// Debug users of the alloca - does not include dbg.assign intrinsics.
   DbgUserVec DbgUsers;
+  /// Helper to update assignment tracking debug info.
+  AssignmentTrackingInfo AssignmentTracking;
 
   void clear() {
     DefiningBlocks.clear();
@@ -119,6 +183,7 @@ struct AllocaInfo {
     OnlyBlock = nullptr;
     OnlyUsedInOneBlock = true;
     DbgUsers.clear();
+    AssignmentTracking.clear();
   }
 
   /// Scan the uses of the specified alloca, filling in the AllocaInfo used
@@ -150,8 +215,13 @@ struct AllocaInfo {
           OnlyUsedInOneBlock = false;
       }
     }
-
-    findDbgUsers(DbgUsers, AI);
+    DbgUserVec AllDbgUsers;
+    findDbgUsers(AllDbgUsers, AI);
+    std::copy_if(AllDbgUsers.begin(), AllDbgUsers.end(),
+                 std::back_inserter(DbgUsers), [](DbgVariableIntrinsic *DII) {
+                   return !isa<DbgAssignIntrinsic>(DII);
+                 });
+    AssignmentTracking.init(AI);
   }
 };
 
@@ -251,6 +321,10 @@ struct PromoteMem2Reg {
   /// intrinsic if the alloca gets promoted.
   SmallVector<AllocaInfo::DbgUserVec, 8> AllocaDbgUsers;
 
+  /// For each alloca, keep an instance of a helper class that gives us an easy
+  /// way to update assignment tracking debug info if the alloca is promoted.
+  SmallVector<AssignmentTrackingInfo, 8> AllocaATInfo;
+
   /// The set of basic blocks the renamer has already visited.
   SmallPtrSet<BasicBlock *, 16> Visited;
 
@@ -307,6 +381,19 @@ static void addAssumeNonNull(AssumptionCache *AC, LoadInst *LI) {
   CallInst *CI = CallInst::Create(AssumeIntrinsic, {LoadNotNull});
   CI->insertAfter(LoadNotNull);
   AC->registerAssumption(cast<AssumeInst>(CI));
+}
+
+static void convertMetadataToAssumes(LoadInst *LI, Value *Val,
+                                     const DataLayout &DL, AssumptionCache *AC,
+                                     const DominatorTree *DT) {
+  // If the load was marked as nonnull we don't want to lose that information
+  // when we erase this Load. So we preserve it with an assume. As !nonnull
+  // returns poison while assume violations are immediate undefined behavior,
+  // we can only do this if the value is known non-poison.
+  if (AC && LI->getMetadata(LLVMContext::MD_nonnull) &&
+      LI->getMetadata(LLVMContext::MD_noundef) &&
+      !isKnownNonZero(Val, DL, 0, AC, LI, DT))
+    addAssumeNonNull(AC, LI);
 }
 
 static void removeIntrinsicUsers(AllocaInst *AI) {
@@ -401,13 +488,7 @@ static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
     if (ReplVal == LI)
       ReplVal = PoisonValue::get(LI->getType());
 
-    // If the load was marked as nonnull we don't want to lose
-    // that information when we erase this Load. So we preserve
-    // it with an assume.
-    if (AC && LI->getMetadata(LLVMContext::MD_nonnull) &&
-        !isKnownNonZero(ReplVal, DL, 0, AC, LI, &DT))
-      addAssumeNonNull(AC, LI);
-
+    convertMetadataToAssumes(LI, ReplVal, DL, AC, &DT);
     LI->replaceAllUsesWith(ReplVal);
     LI->eraseFromParent();
     LBI.deleteValue(LI);
@@ -417,17 +498,24 @@ static bool rewriteSingleStoreAlloca(AllocaInst *AI, AllocaInfo &Info,
   if (!Info.UsingBlocks.empty())
     return false; // If not, we'll have to fall back for the remainder.
 
+  DIBuilder DIB(*AI->getModule(), /*AllowUnresolved*/ false);
+  // Update assignment tracking info for the store we're going to delete.
+  Info.AssignmentTracking.updateForDeletedStore(Info.OnlyStore, DIB);
+
   // Record debuginfo for the store and remove the declaration's
   // debuginfo.
   for (DbgVariableIntrinsic *DII : Info.DbgUsers) {
     if (DII->isAddressOfVariable()) {
-      DIBuilder DIB(*AI->getModule(), /*AllowUnresolved*/ false);
       ConvertDebugDeclareToDebugValue(DII, Info.OnlyStore, DIB);
       DII->eraseFromParent();
     } else if (DII->getExpression()->startsWithDeref()) {
       DII->eraseFromParent();
     }
   }
+
+  // Remove dbg.assigns linked to the alloca as these are now redundant.
+  at::deleteAssignmentMarkers(AI);
+
   // Remove the (now dead) store and alloca.
   Info.OnlyStore->eraseFromParent();
   LBI.deleteValue(Info.OnlyStore);
@@ -488,42 +576,42 @@ static bool promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
         StoresByIndex,
         std::make_pair(LoadIdx, static_cast<StoreInst *>(nullptr)),
         less_first());
+    Value *ReplVal;
     if (I == StoresByIndex.begin()) {
       if (StoresByIndex.empty())
         // If there are no stores, the load takes the undef value.
-        LI->replaceAllUsesWith(UndefValue::get(LI->getType()));
+        ReplVal = UndefValue::get(LI->getType());
       else
         // There is no store before this load, bail out (load may be affected
         // by the following stores - see main comment).
         return false;
     } else {
-      // Otherwise, there was a store before this load, the load takes its value.
-      // Note, if the load was marked as nonnull we don't want to lose that
-      // information when we erase it. So we preserve it with an assume.
-      Value *ReplVal = std::prev(I)->second->getOperand(0);
-      if (AC && LI->getMetadata(LLVMContext::MD_nonnull) &&
-          !isKnownNonZero(ReplVal, DL, 0, AC, LI, &DT))
-        addAssumeNonNull(AC, LI);
-
-      // If the replacement value is the load, this must occur in unreachable
-      // code.
-      if (ReplVal == LI)
-        ReplVal = PoisonValue::get(LI->getType());
-
-      LI->replaceAllUsesWith(ReplVal);
+      // Otherwise, there was a store before this load, the load takes its
+      // value.
+      ReplVal = std::prev(I)->second->getOperand(0);
     }
 
+    convertMetadataToAssumes(LI, ReplVal, DL, AC, &DT);
+
+    // If the replacement value is the load, this must occur in unreachable
+    // code.
+    if (ReplVal == LI)
+      ReplVal = PoisonValue::get(LI->getType());
+
+    LI->replaceAllUsesWith(ReplVal);
     LI->eraseFromParent();
     LBI.deleteValue(LI);
   }
 
   // Remove the (now dead) stores and alloca.
+  DIBuilder DIB(*AI->getModule(), /*AllowUnresolved*/ false);
   while (!AI->use_empty()) {
     StoreInst *SI = cast<StoreInst>(AI->user_back());
+    // Update assignment tracking info for the store we're going to delete.
+    Info.AssignmentTracking.updateForDeletedStore(SI, DIB);
     // Record debuginfo for the store before removing it.
     for (DbgVariableIntrinsic *DII : Info.DbgUsers) {
       if (DII->isAddressOfVariable()) {
-        DIBuilder DIB(*AI->getModule(), /*AllowUnresolved*/ false);
         ConvertDebugDeclareToDebugValue(DII, SI, DIB);
       }
     }
@@ -531,6 +619,8 @@ static bool promoteSingleBlockAlloca(AllocaInst *AI, const AllocaInfo &Info,
     LBI.deleteValue(SI);
   }
 
+  // Remove dbg.assigns linked to the alloca as these are now redundant.
+  at::deleteAssignmentMarkers(AI);
   AI->eraseFromParent();
 
   // The alloca's debuginfo can be removed as well.
@@ -546,6 +636,7 @@ void PromoteMem2Reg::run() {
   Function &F = *DT.getRoot()->getParent();
 
   AllocaDbgUsers.resize(Allocas.size());
+  AllocaATInfo.resize(Allocas.size());
 
   AllocaInfo Info;
   LargeBlockInfo LBI;
@@ -605,6 +696,8 @@ void PromoteMem2Reg::run() {
     // Remember the dbg.declare intrinsic describing this alloca, if any.
     if (!Info.DbgUsers.empty())
       AllocaDbgUsers[AllocaNum] = Info.DbgUsers;
+    if (!Info.AssignmentTracking.empty())
+      AllocaATInfo[AllocaNum] = Info.AssignmentTracking;
 
     // Keep the reverse mapping of the 'Allocas' array for the rename pass.
     AllocaLookup[Allocas[AllocaNum]] = AllocaNum;
@@ -668,6 +761,8 @@ void PromoteMem2Reg::run() {
 
   // Remove the allocas themselves from the function.
   for (Instruction *A : Allocas) {
+    // Remove dbg.assigns linked to the alloca as these are now redundant.
+    at::deleteAssignmentMarkers(A);
     // If there are any uses of the alloca instructions left, they must be in
     // unreachable basic blocks that were not processed by walking the dominator
     // tree. Just delete the users now.
@@ -676,7 +771,7 @@ void PromoteMem2Reg::run() {
     A->eraseFromParent();
   }
 
-  // Remove alloca's dbg.declare instrinsics from the function.
+  // Remove alloca's dbg.declare intrinsics from the function.
   for (auto &DbgUsers : AllocaDbgUsers) {
     for (auto *DII : DbgUsers)
       if (DII->isAddressOfVariable() || DII->getExpression()->startsWithDeref())
@@ -702,7 +797,7 @@ void PromoteMem2Reg::run() {
       PHINode *PN = I->second;
 
       // If this PHI node merges one value and/or undefs, get the value.
-      if (Value *V = SimplifyInstruction(PN, SQ)) {
+      if (Value *V = simplifyInstruction(PN, SQ)) {
         PN->replaceAllUsesWith(V);
         PN->eraseFromParent();
         NewPhiNodes.erase(I++);
@@ -921,6 +1016,7 @@ NextIteration:
 
         // The currently active variable for this block is now the PHI.
         IncomingVals[AllocaNo] = APN;
+        AllocaATInfo[AllocaNo].updateForNewPhi(APN, DIB);
         for (DbgVariableIntrinsic *DII : AllocaDbgUsers[AllocaNo])
           if (DII->isAddressOfVariable())
             ConvertDebugDeclareToDebugValue(DII, APN, DIB);
@@ -954,17 +1050,11 @@ NextIteration:
         continue;
 
       Value *V = IncomingVals[AI->second];
-
-      // If the load was marked as nonnull we don't want to lose
-      // that information when we erase this Load. So we preserve
-      // it with an assume.
-      if (AC && LI->getMetadata(LLVMContext::MD_nonnull) &&
-          !isKnownNonZero(V, SQ.DL, 0, AC, LI, &DT))
-        addAssumeNonNull(AC, LI);
+      convertMetadataToAssumes(LI, V, SQ.DL, AC, &DT);
 
       // Anything using the load now uses the current value.
       LI->replaceAllUsesWith(V);
-      BB->getInstList().erase(LI);
+      LI->eraseFromParent();
     } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
       // Delete this instruction and mark the name as the current holder of the
       // value
@@ -982,10 +1072,11 @@ NextIteration:
 
       // Record debuginfo for the store before removing it.
       IncomingLocs[AllocaNo] = SI->getDebugLoc();
+      AllocaATInfo[AllocaNo].updateForDeletedStore(SI, DIB);
       for (DbgVariableIntrinsic *DII : AllocaDbgUsers[ai->second])
         if (DII->isAddressOfVariable())
           ConvertDebugDeclareToDebugValue(DII, SI, DIB);
-      BB->getInstList().erase(SI);
+      SI->eraseFromParent();
     }
   }
 

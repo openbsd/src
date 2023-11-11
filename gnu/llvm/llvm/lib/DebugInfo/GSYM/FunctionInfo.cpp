@@ -12,6 +12,7 @@
 #include "llvm/DebugInfo/GSYM/LineTable.h"
 #include "llvm/DebugInfo/GSYM/InlineInfo.h"
 #include "llvm/Support/DataExtractor.h"
+#include <optional>
 
 using namespace llvm;
 using namespace gsym;
@@ -36,12 +37,11 @@ raw_ostream &llvm::gsym::operator<<(raw_ostream &OS, const FunctionInfo &FI) {
 llvm::Expected<FunctionInfo> FunctionInfo::decode(DataExtractor &Data,
                                                   uint64_t BaseAddr) {
   FunctionInfo FI;
-  FI.Range.Start = BaseAddr;
   uint64_t Offset = 0;
   if (!Data.isValidOffsetForDataOfSize(Offset, 4))
     return createStringError(std::errc::io_error,
         "0x%8.8" PRIx64 ": missing FunctionInfo Size", Offset);
-  FI.Range.End = FI.Range.Start + Data.getU32(&Offset);
+  FI.Range = {BaseAddr, BaseAddr + Data.getU32(&Offset)};
   if (!Data.isValidOffsetForDataOfSize(Offset, 4))
     return createStringError(std::errc::io_error,
         "0x%8.8" PRIx64 ": missing FunctionInfo Name", Offset);
@@ -109,13 +109,13 @@ llvm::Expected<uint64_t> FunctionInfo::encode(FileWriter &O) const {
   // Write the name of this function as a uint32_t string table offset.
   O.writeU32(Name);
 
-  if (OptLineTable.hasValue()) {
+  if (OptLineTable) {
     O.writeU32(InfoType::LineTableInfo);
     // Write a uint32_t length as zero for now, we will fix this up after
     // writing the LineTable out with the number of bytes that were written.
     O.writeU32(0);
     const auto StartOffset = O.tell();
-    llvm::Error err = OptLineTable->encode(O, Range.Start);
+    llvm::Error err = OptLineTable->encode(O, Range.start());
     if (err)
       return std::move(err);
     const auto Length = O.tell() - StartOffset;
@@ -127,13 +127,13 @@ llvm::Expected<uint64_t> FunctionInfo::encode(FileWriter &O) const {
   }
 
   // Write out the inline function info if we have any and if it is valid.
-  if (Inline.hasValue()) {
+  if (Inline) {
     O.writeU32(InfoType::InlineInfo);
     // Write a uint32_t length as zero for now, we will fix this up after
     // writing the LineTable out with the number of bytes that were written.
     O.writeU32(0);
     const auto StartOffset = O.tell();
-    llvm::Error err = Inline->encode(O, Range.Start);
+    llvm::Error err = Inline->encode(O, Range.start());
     if (err)
       return std::move(err);
     const auto Length = O.tell() - StartOffset;
@@ -157,9 +157,8 @@ llvm::Expected<LookupResult> FunctionInfo::lookup(DataExtractor &Data,
                                                   uint64_t Addr) {
   LookupResult LR;
   LR.LookupAddr = Addr;
-  LR.FuncRange.Start = FuncAddr;
   uint64_t Offset = 0;
-  LR.FuncRange.End = FuncAddr + Data.getU32(&Offset);
+  LR.FuncRange = {FuncAddr, FuncAddr + Data.getU32(&Offset)};
   uint32_t NameOffset = Data.getU32(&Offset);
   // The "lookup" functions doesn't report errors as accurately as the "decode"
   // function as it is meant to be fast. For more accurage errors we could call
@@ -180,8 +179,8 @@ llvm::Expected<LookupResult> FunctionInfo::lookup(DataExtractor &Data,
         Offset - 4);
   LR.FuncName = GR.getString(NameOffset);
   bool Done = false;
-  Optional<LineEntry> LineEntry;
-  Optional<DataExtractor> InlineInfoData;
+  std::optional<LineEntry> LineEntry;
+  std::optional<DataExtractor> InlineInfoData;
   while (!Done) {
     if (!Data.isValidOffsetForDataOfSize(Offset, 8))
       return createStringError(std::errc::io_error,
@@ -228,7 +227,7 @@ llvm::Expected<LookupResult> FunctionInfo::lookup(DataExtractor &Data,
     return LR;
   }
 
-  Optional<FileEntry> LineEntryFile = GR.getFile(LineEntry->File);
+  std::optional<FileEntry> LineEntryFile = GR.getFile(LineEntry->File);
   if (!LineEntryFile)
     return createStringError(std::errc::invalid_argument,
                               "failed to extract file[%" PRIu32 "]",

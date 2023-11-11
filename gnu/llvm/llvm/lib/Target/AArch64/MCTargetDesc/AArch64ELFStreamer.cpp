@@ -107,6 +107,46 @@ class AArch64TargetAsmStreamer : public AArch64TargetStreamer {
   void emitARM64WinCFIClearUnwoundToCall() override {
     OS << "\t.seh_clear_unwound_to_call\n";
   }
+  void emitARM64WinCFIPACSignLR() override {
+    OS << "\t.seh_pac_sign_lr\n";
+  }
+
+  void emitARM64WinCFISaveAnyRegI(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg\tx" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegIP(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_p\tx" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegD(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg\td" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegDP(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_p\td" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegQ(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg\tq" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegQP(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_p\tq" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegIX(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_x\tx" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegIPX(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_px\tx" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegDX(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_x\td" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegDPX(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_px\td" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegQX(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_x\tq" << Reg << ", " << Offset << "\n";
+  }
+  void emitARM64WinCFISaveAnyRegQPX(unsigned Reg, int Offset) override {
+    OS << "\t.seh_save_any_reg_px\tq" << Reg << ", " << Offset << "\n";
+  }
 
 public:
   AArch64TargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
@@ -177,8 +217,8 @@ public:
     // We can't just use EmitIntValue here, as that will emit a data mapping
     // symbol, and swap the endianness on big-endian systems (instructions are
     // always little-endian).
-    for (unsigned I = 0; I < 4; ++I) {
-      Buffer[I] = uint8_t(Inst);
+    for (char &C : Buffer) {
+      C = uint8_t(Inst);
       Inst >>= 8;
     }
 
@@ -254,6 +294,7 @@ void AArch64TargetELFStreamer::emitInst(uint32_t Inst) {
 }
 
 void AArch64TargetELFStreamer::emitDirectiveVariantPCS(MCSymbol *Symbol) {
+  getStreamer().getAssembler().registerSymbol(*Symbol);
   cast<MCSymbolELF>(Symbol)->setOther(ELF::STO_AARCH64_VARIANT_PCS);
 }
 

@@ -16,7 +16,8 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/InitializePasses.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Pass.h"
+#include "llvm/PassRegistry.h"
 #include <utility>
 using namespace llvm;
 
@@ -109,7 +110,7 @@ bool FinalizeMachineBundles::runOnMachineFunction(MachineFunction &MF) {
 static DebugLoc getDebugLoc(MachineBasicBlock::instr_iterator FirstMI,
                             MachineBasicBlock::instr_iterator LastMI) {
   for (auto MII = FirstMI; MII != LastMI; ++MII)
-    if (MII->getDebugLoc().get())
+    if (MII->getDebugLoc())
       return MII->getDebugLoc();
   return DebugLoc();
 }
@@ -144,6 +145,10 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
   SmallSet<Register, 8> UndefUseSet;
   SmallVector<MachineOperand*, 4> Defs;
   for (auto MII = FirstMI; MII != LastMI; ++MII) {
+    // Debug instructions have no effects to track.
+    if (MII->isDebugInstr())
+      continue;
+
     for (unsigned i = 0, e = MII->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MII->getOperand(i);
       if (!MO.isReg())
@@ -193,7 +198,7 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
           DeadDefSet.erase(Reg);
       }
 
-      if (!MO.isDead() && Register::isPhysicalRegister(Reg)) {
+      if (!MO.isDead() && Reg.isPhysical()) {
         for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
           unsigned SubReg = *SubRegs;
           if (LocalDefSet.insert(SubReg).second)
@@ -323,7 +328,7 @@ PhysRegInfo llvm::AnalyzePhysRegInBundle(const MachineInstr &MI, Register Reg,
       continue;
 
     Register MOReg = MO.getReg();
-    if (!MOReg || !Register::isPhysicalRegister(MOReg))
+    if (!MOReg || !MOReg.isPhysical())
       continue;
 
     if (!TRI->regsOverlap(MOReg, Reg))

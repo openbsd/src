@@ -23,6 +23,7 @@
 #include "WindowsResourceDumper.h"
 #include "llvm/DebugInfo/CodeView/GlobalTypeTableBuilder.h"
 #include "llvm/DebugInfo/CodeView/MergingTypeTableBuilder.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFFImportFile.h"
 #include "llvm/Object/ELFObjectFile.h"
@@ -44,7 +45,6 @@
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/ScopedPrinter.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/WithColor.h"
 
 using namespace llvm;
@@ -61,11 +61,14 @@ enum ID {
 #undef OPTION
 };
 
-#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+#define PREFIX(NAME, VALUE)                                                    \
+  static constexpr StringLiteral NAME##_init[] = VALUE;                        \
+  static constexpr ArrayRef<StringLiteral> NAME(NAME##_init,                   \
+                                                std::size(NAME##_init) - 1);
 #include "Opts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info InfoTable[] = {
+static constexpr opt::OptTable::Info InfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {                                                                            \
@@ -77,12 +80,22 @@ static const opt::OptTable::Info InfoTable[] = {
 #undef OPTION
 };
 
-class ReadobjOptTable : public opt::OptTable {
+class ReadobjOptTable : public opt::GenericOptTable {
 public:
-  ReadobjOptTable() : OptTable(InfoTable) { setGroupedShortOptions(true); }
+  ReadobjOptTable() : opt::GenericOptTable(InfoTable) {
+    setGroupedShortOptions(true);
+  }
 };
 
 enum OutputFormatTy { bsd, sysv, posix, darwin, just_symbols };
+
+enum SortSymbolKeyTy {
+  NAME = 0,
+  TYPE = 1,
+  UNKNOWN = 100,
+  // TODO: add ADDRESS, SIZE as needed.
+};
+
 } // namespace
 
 namespace opts {
@@ -99,6 +112,7 @@ static bool DynamicSymbols;
 static bool FileHeaders;
 static bool Headers;
 static std::vector<std::string> HexDump;
+static bool PrettyPrint;
 static bool PrintStackMap;
 static bool PrintStackSizes;
 static bool Relocations;
@@ -112,6 +126,7 @@ static bool StringTable;
 static bool Symbols;
 static bool UnwindInfo;
 static cl::boolOrDefault SectionMapping;
+static SmallVector<SortSymbolKeyTy> SortKeys;
 
 // ELF specific options.
 static bool DynamicTable;
@@ -149,6 +164,13 @@ static bool COFFLoadConfig;
 static bool COFFResources;
 static bool COFFTLSDirectory;
 
+// XCOFF specific options.
+static bool XCOFFAuxiliaryHeader;
+static bool XCOFFLoaderSectionHeader;
+static bool XCOFFLoaderSectionSymbol;
+static bool XCOFFLoaderSectionRelocation;
+static bool XCOFFExceptionSection;
+
 OutputStyleTy Output = OutputStyleTy::LLVM;
 static std::vector<std::string> InputFilenames;
 } // namespace opts
@@ -157,7 +179,7 @@ static StringRef ToolName;
 
 namespace llvm {
 
-LLVM_ATTRIBUTE_NORETURN static void error(Twine Msg) {
+[[noreturn]] static void error(Twine Msg) {
   // Flush the standard output to print the error at a
   // proper place.
   fouts().flush();
@@ -165,7 +187,7 @@ LLVM_ATTRIBUTE_NORETURN static void error(Twine Msg) {
   exit(1);
 }
 
-LLVM_ATTRIBUTE_NORETURN void reportError(Error Err, StringRef Input) {
+[[noreturn]] void reportError(Error Err, StringRef Input) {
   assert(Err);
   if (Input == "-")
     Input = "<stdin>";
@@ -227,13 +249,17 @@ static void parseOptions(const opt::InputArgList &Args) {
   opts::DynamicTable = Args.hasArg(OPT_dynamic_table);
   opts::ELFLinkerOptions = Args.hasArg(OPT_elf_linker_options);
   if (Arg *A = Args.getLastArg(OPT_elf_output_style_EQ)) {
-    StringRef V(A->getValue());
-    if (V == "LLVM")
-      opts::Output = opts::OutputStyleTy::LLVM;
-    else if (V == "GNU")
-      opts::Output = opts::OutputStyleTy::GNU;
-    else
-      error("--elf-output-style value should be either 'LLVM' or 'GNU'");
+    std::string OutputStyleChoice = A->getValue();
+    opts::Output = StringSwitch<opts::OutputStyleTy>(OutputStyleChoice)
+                       .Case("LLVM", opts::OutputStyleTy::LLVM)
+                       .Case("GNU", opts::OutputStyleTy::GNU)
+                       .Case("JSON", opts::OutputStyleTy::JSON)
+                       .Default(opts::OutputStyleTy::UNKNOWN);
+    if (opts::Output == opts::OutputStyleTy::UNKNOWN) {
+      error("--elf-output-style value should be either 'LLVM', 'GNU', or "
+            "'JSON', but was '" +
+            OutputStyleChoice + "'");
+    }
   }
   opts::GnuHashTable = Args.hasArg(OPT_gnu_hash_table);
   opts::HashSymbols = Args.hasArg(OPT_hash_symbols);
@@ -241,9 +267,23 @@ static void parseOptions(const opt::InputArgList &Args) {
   opts::HashHistogram = Args.hasArg(OPT_histogram);
   opts::NeededLibraries = Args.hasArg(OPT_needed_libs);
   opts::Notes = Args.hasArg(OPT_notes);
+  opts::PrettyPrint = Args.hasArg(OPT_pretty_print);
   opts::ProgramHeaders = Args.hasArg(OPT_program_headers);
   opts::RawRelr = Args.hasArg(OPT_raw_relr);
   opts::SectionGroups = Args.hasArg(OPT_section_groups);
+  if (Arg *A = Args.getLastArg(OPT_sort_symbols_EQ)) {
+    std::string SortKeysString = A->getValue();
+    for (StringRef KeyStr : llvm::split(A->getValue(), ",")) {
+      SortSymbolKeyTy KeyType = StringSwitch<SortSymbolKeyTy>(KeyStr)
+                                    .Case("name", SortSymbolKeyTy::NAME)
+                                    .Case("type", SortSymbolKeyTy::TYPE)
+                                    .Default(SortSymbolKeyTy::UNKNOWN);
+      if (KeyType == SortSymbolKeyTy::UNKNOWN)
+        error("--sort-symbols value should be 'name' or 'type', but was '" +
+              Twine(KeyStr) + "'");
+      opts::SortKeys.push_back(KeyType);
+    }
+  }
   opts::VersionInfo = Args.hasArg(OPT_version_info);
 
   // Mach-O specific options.
@@ -268,14 +308,22 @@ static void parseOptions(const opt::InputArgList &Args) {
   opts::COFFResources = Args.hasArg(OPT_coff_resources);
   opts::COFFTLSDirectory = Args.hasArg(OPT_coff_tls_directory);
 
+  // XCOFF specific options.
+  opts::XCOFFAuxiliaryHeader = Args.hasArg(OPT_auxiliary_header);
+  opts::XCOFFLoaderSectionHeader = Args.hasArg(OPT_loader_section_header);
+  opts::XCOFFLoaderSectionSymbol = Args.hasArg(OPT_loader_section_symbols);
+  opts::XCOFFLoaderSectionRelocation =
+      Args.hasArg(OPT_loader_section_relocations);
+  opts::XCOFFExceptionSection = Args.hasArg(OPT_exception_section);
+
   opts::InputFilenames = Args.getAllArgValues(OPT_INPUT);
 }
 
 namespace {
 struct ReadObjTypeTableBuilder {
   ReadObjTypeTableBuilder()
-      : Allocator(), IDTable(Allocator), TypeTable(Allocator),
-        GlobalIDTable(Allocator), GlobalTypeTable(Allocator) {}
+      : IDTable(Allocator), TypeTable(Allocator), GlobalIDTable(Allocator),
+        GlobalTypeTable(Allocator) {}
 
   llvm::BumpPtrAllocator Allocator;
   llvm::codeview::MergingTypeTableBuilder IDTable;
@@ -322,26 +370,48 @@ static void dumpObject(ObjectFile &Obj, ScopedPrinter &Writer,
                        toString(std::move(ContentErr));
 
   ObjDumper *Dumper;
+  std::optional<SymbolComparator> SymComp;
   Expected<std::unique_ptr<ObjDumper>> DumperOrErr = createDumper(Obj, Writer);
   if (!DumperOrErr)
     reportError(DumperOrErr.takeError(), FileStr);
   Dumper = (*DumperOrErr).get();
 
-  if (opts::Output == opts::LLVM || opts::InputFilenames.size() > 1 || A) {
-    Writer.startLine() << "\n";
-    Writer.printString("File", FileStr);
+  if (!opts::SortKeys.empty()) {
+    if (Dumper->canCompareSymbols()) {
+      SymComp = SymbolComparator();
+      for (SortSymbolKeyTy Key : opts::SortKeys) {
+        switch (Key) {
+        case NAME:
+          SymComp->addPredicate([Dumper](SymbolRef LHS, SymbolRef RHS) {
+            return Dumper->compareSymbolsByName(LHS, RHS);
+          });
+          break;
+        case TYPE:
+          SymComp->addPredicate([Dumper](SymbolRef LHS, SymbolRef RHS) {
+            return Dumper->compareSymbolsByType(LHS, RHS);
+          });
+          break;
+        case UNKNOWN:
+          llvm_unreachable("Unsupported sort key");
+        }
+      }
+
+    } else {
+      reportWarning(createStringError(
+                        errc::invalid_argument,
+                        "--sort-symbols is not supported yet for this format"),
+                    FileStr);
+    }
   }
-  if (opts::Output == opts::LLVM) {
-    Writer.printString("Format", Obj.getFileFormatName());
-    Writer.printString("Arch", Triple::getArchTypeName(Obj.getArch()));
-    Writer.printString(
-        "AddressSize",
-        std::string(formatv("{0}bit", 8 * Obj.getBytesInAddress())));
-    Dumper->printLoadName();
-  }
+  Dumper->printFileSummary(FileStr, Obj, opts::InputFilenames, A);
 
   if (opts::FileHeaders)
     Dumper->printFileHeaders();
+
+  // Auxiliary header in XOCFF is right after the file header, so print the data
+  // here.
+  if (Obj.isXCOFF() && opts::XCOFFAuxiliaryHeader)
+    Dumper->printAuxiliaryHeader();
 
   // This is only used for ELF currently. In some cases, when an object is
   // corrupt (e.g. truncated), we can't dump anything except the file header.
@@ -370,7 +440,7 @@ static void dumpObject(ObjectFile &Obj, ScopedPrinter &Writer,
   if (opts::UnwindInfo)
     Dumper->printUnwindInfo();
   if (opts::Symbols || opts::DynamicSymbols)
-    Dumper->printSymbols(opts::Symbols, opts::DynamicSymbols);
+    Dumper->printSymbols(opts::Symbols, opts::DynamicSymbols, SymComp);
   if (!opts::StringDump.empty())
     Dumper->printSectionsAsString(Obj, opts::StringDump);
   if (!opts::HexDump.empty())
@@ -444,7 +514,21 @@ static void dumpObject(ObjectFile &Obj, ScopedPrinter &Writer,
       Dumper->printMachOVersionMin();
     if (opts::MachODysymtab)
       Dumper->printMachODysymtab();
+    if (opts::CGProfile)
+      Dumper->printCGProfile();
   }
+
+  if (Obj.isXCOFF()) {
+    if (opts::XCOFFLoaderSectionHeader || opts::XCOFFLoaderSectionSymbol ||
+        opts::XCOFFLoaderSectionRelocation)
+      Dumper->printLoaderSection(opts::XCOFFLoaderSectionHeader,
+                                 opts::XCOFFLoaderSectionSymbol,
+                                 opts::XCOFFLoaderSectionRelocation);
+
+    if (opts::XCOFFExceptionSection)
+      Dumper->printExceptionSection();
+  }
+
   if (opts::PrintStackMap)
     Dumper->printStackMap();
   if (opts::PrintStackSizes)
@@ -541,7 +625,14 @@ static void dumpInput(StringRef File, ScopedPrinter &Writer) {
       OwningBinary<Binary>(std::move(Bin), std::move(Buffer)));
 }
 
-int main(int argc, char *argv[]) {
+std::unique_ptr<ScopedPrinter> createWriter() {
+  if (opts::Output == opts::JSON)
+    return std::make_unique<JSONScopedPrinter>(
+        fouts(), opts::PrettyPrint ? 2 : 0, std::make_unique<ListScope>());
+  return std::make_unique<ScopedPrinter>(fouts());
+}
+
+int llvm_readobj_main(int argc, char **argv) {
   InitLLVM X(argc, argv);
   BumpPtrAllocator A;
   StringSaver Saver(A);
@@ -577,6 +668,7 @@ int main(int argc, char *argv[]) {
 
   if (opts::All) {
     opts::FileHeaders = true;
+    opts::XCOFFAuxiliaryHeader = true;
     opts::ProgramHeaders = true;
     opts::SectionHeaders = true;
     opts::Symbols = true;
@@ -595,20 +687,22 @@ int main(int argc, char *argv[]) {
 
   if (opts::Headers) {
     opts::FileHeaders = true;
+    opts::XCOFFAuxiliaryHeader = true;
     opts::ProgramHeaders = true;
     opts::SectionHeaders = true;
   }
 
-  ScopedPrinter Writer(fouts());
+  std::unique_ptr<ScopedPrinter> Writer = createWriter();
+
   for (const std::string &I : opts::InputFilenames)
-    dumpInput(I, Writer);
+    dumpInput(I, *Writer.get());
 
   if (opts::CodeViewMergedTypes) {
     if (opts::CodeViewEnableGHash)
-      dumpCodeViewMergedTypes(Writer, CVTypes.GlobalIDTable.records(),
+      dumpCodeViewMergedTypes(*Writer.get(), CVTypes.GlobalIDTable.records(),
                               CVTypes.GlobalTypeTable.records());
     else
-      dumpCodeViewMergedTypes(Writer, CVTypes.IDTable.records(),
+      dumpCodeViewMergedTypes(*Writer.get(), CVTypes.IDTable.records(),
                               CVTypes.TypeTable.records());
   }
 

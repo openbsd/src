@@ -12,8 +12,6 @@
 
 #include "llvm/IR/Module.h"
 #include "SymbolTableListTraitsImpl.h"
-#include "llvm/ADT/Optional.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -39,7 +37,6 @@
 #include "llvm/IR/TypeFinder.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/Error.h"
@@ -51,6 +48,7 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -73,8 +71,7 @@ template class llvm::SymbolTableListTraits<GlobalIFunc>;
 
 Module::Module(StringRef MID, LLVMContext &C)
     : Context(C), ValSymTab(std::make_unique<ValueSymbolTable>(-1)),
-      Materializer(), ModuleID(std::string(MID)),
-      SourceFileName(std::string(MID)), DL("") {
+      ModuleID(std::string(MID)), SourceFileName(std::string(MID)), DL("") {
   Context.addModule(this);
 }
 
@@ -599,7 +596,9 @@ PICLevel::Level Module::getPICLevel() const {
 }
 
 void Module::setPICLevel(PICLevel::Level PL) {
-  addModuleFlag(ModFlagBehavior::Max, "PIC Level", PL);
+  // The merge result of a non-PIC object and a PIC object can only be reliably
+  // used as a non-PIC object, so use the Min merge behavior.
+  addModuleFlag(ModFlagBehavior::Min, "PIC Level", PL);
 }
 
 PIELevel::Level Module::getPIELevel() const {
@@ -616,11 +615,11 @@ void Module::setPIELevel(PIELevel::Level PL) {
   addModuleFlag(ModFlagBehavior::Max, "PIE Level", PL);
 }
 
-Optional<CodeModel::Model> Module::getCodeModel() const {
+std::optional<CodeModel::Model> Module::getCodeModel() const {
   auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("Code Model"));
 
   if (!Val)
-    return None;
+    return std::nullopt;
 
   return static_cast<CodeModel::Model>(
       cast<ConstantInt>(Val->getValue())->getZExtValue());
@@ -673,12 +672,15 @@ void Module::setRtLibUseGOT() {
   addModuleFlag(ModFlagBehavior::Max, "RtLibUseGOT", 1);
 }
 
-bool Module::getUwtable() const {
-  auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("uwtable"));
-  return Val && (cast<ConstantInt>(Val->getValue())->getZExtValue() > 0);
+UWTableKind Module::getUwtable() const {
+  if (auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("uwtable")))
+    return UWTableKind(cast<ConstantInt>(Val->getValue())->getZExtValue());
+  return UWTableKind::None;
 }
 
-void Module::setUwtable() { addModuleFlag(ModFlagBehavior::Max, "uwtable", 1); }
+void Module::setUwtable(UWTableKind Kind) {
+  addModuleFlag(ModFlagBehavior::Max, "uwtable", uint32_t(Kind));
+}
 
 FramePointerKind Module::getFramePointer() const {
   auto *Val = cast_or_null<ConstantAsMetadata>(getModuleFlag("frame-pointer"));
@@ -714,6 +716,18 @@ void Module::setStackProtectorGuardReg(StringRef Reg) {
   addModuleFlag(ModFlagBehavior::Error, "stack-protector-guard-reg", ID);
 }
 
+StringRef Module::getStackProtectorGuardSymbol() const {
+  Metadata *MD = getModuleFlag("stack-protector-guard-symbol");
+  if (auto *MDS = dyn_cast_or_null<MDString>(MD))
+    return MDS->getString();
+  return {};
+}
+
+void Module::setStackProtectorGuardSymbol(StringRef Symbol) {
+  MDString *ID = MDString::get(getContext(), Symbol);
+  addModuleFlag(ModFlagBehavior::Error, "stack-protector-guard-symbol", ID);
+}
+
 int Module::getStackProtectorGuardOffset() const {
   Metadata *MD = getModuleFlag("stack-protector-guard-offset");
   if (auto *CI = mdconst::dyn_extract_or_null<ConstantInt>(MD))
@@ -736,7 +750,7 @@ void Module::setOverrideStackAlignment(unsigned Align) {
   addModuleFlag(ModFlagBehavior::Error, "override-stack-alignment", Align);
 }
 
-void Module::setSDKVersion(const VersionTuple &V) {
+static void addSDKVersionMD(const VersionTuple &V, Module &M, StringRef Name) {
   SmallVector<unsigned, 3> Entries;
   Entries.push_back(V.getMajor());
   if (auto Minor = V.getMinor()) {
@@ -746,20 +760,24 @@ void Module::setSDKVersion(const VersionTuple &V) {
     // Ignore the 'build' component as it can't be represented in the object
     // file.
   }
-  addModuleFlag(ModFlagBehavior::Warning, "SDK Version",
-                ConstantDataArray::get(Context, Entries));
+  M.addModuleFlag(Module::ModFlagBehavior::Warning, Name,
+                  ConstantDataArray::get(M.getContext(), Entries));
 }
 
-VersionTuple Module::getSDKVersion() const {
-  auto *CM = dyn_cast_or_null<ConstantAsMetadata>(getModuleFlag("SDK Version"));
+void Module::setSDKVersion(const VersionTuple &V) {
+  addSDKVersionMD(V, *this, "SDK Version");
+}
+
+static VersionTuple getSDKVersionMD(Metadata *MD) {
+  auto *CM = dyn_cast_or_null<ConstantAsMetadata>(MD);
   if (!CM)
     return {};
   auto *Arr = dyn_cast_or_null<ConstantDataArray>(CM->getValue());
   if (!Arr)
     return {};
-  auto getVersionComponent = [&](unsigned Index) -> Optional<unsigned> {
+  auto getVersionComponent = [&](unsigned Index) -> std::optional<unsigned> {
     if (Index >= Arr->getNumElements())
-      return None;
+      return std::nullopt;
     return (unsigned)Arr->getElementAsInteger(Index);
   };
   auto Major = getVersionComponent(0);
@@ -773,6 +791,10 @@ VersionTuple Module::getSDKVersion() const {
     }
   }
   return Result;
+}
+
+VersionTuple Module::getSDKVersion() const {
+  return getSDKVersionMD(getModuleFlag("SDK Version"));
 }
 
 GlobalVariable *llvm::collectUsedGlobalVariables(
@@ -808,4 +830,23 @@ void Module::setPartialSampleProfileRatio(const ModuleSummaryIndex &Index) {
                         ProfileSummary::PSK_Sample);
     }
   }
+}
+
+StringRef Module::getDarwinTargetVariantTriple() const {
+  if (const auto *MD = getModuleFlag("darwin.target_variant.triple"))
+    return cast<MDString>(MD)->getString();
+  return "";
+}
+
+void Module::setDarwinTargetVariantTriple(StringRef T) {
+  addModuleFlag(ModFlagBehavior::Override, "darwin.target_variant.triple",
+                MDString::get(getContext(), T));
+}
+
+VersionTuple Module::getDarwinTargetVariantSDKVersion() const {
+  return getSDKVersionMD(getModuleFlag("darwin.target_variant.SDK Version"));
+}
+
+void Module::setDarwinTargetVariantSDKVersion(VersionTuple Version) {
+  addSDKVersionMD(Version, *this, "darwin.target_variant.SDK Version");
 }

@@ -1,4 +1,4 @@
-//===- ToolOutputFile.h - Output files for compiler-like tools -----------===//
+//===- ToolOutputFile.h - Output files for compiler-like tools --*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -13,8 +13,8 @@
 #ifndef LLVM_SUPPORT_TOOLOUTPUTFILE_H
 #define LLVM_SUPPORT_TOOLOUTPUTFILE_H
 
-#include "llvm/ADT/Optional.h"
 #include "llvm/Support/raw_ostream.h"
+#include <optional>
 
 namespace llvm {
 
@@ -29,9 +29,10 @@ class ToolOutputFile {
   /// raw_fd_ostream is destructed. It installs cleanups in its constructor and
   /// uninstalls them in its destructor.
   class CleanupInstaller {
+  public:
     /// The name of the file.
     std::string Filename;
-  public:
+
     /// The flag which indicates whether we should not delete the file.
     bool Keep;
 
@@ -42,7 +43,7 @@ class ToolOutputFile {
 
   /// Storage for the stream, if we're owning our own stream. This is
   /// intentionally declared after Installer.
-  Optional<raw_fd_ostream> OSHolder;
+  std::optional<raw_fd_ostream> OSHolder;
 
   /// The actual stream to use.
   raw_fd_ostream *OS;
@@ -64,6 +65,8 @@ public:
   /// Indicate that the tool's job wrt this output file has been successful and
   /// the file should not be deleted.
   void keep() { Installer.Keep = true; }
+
+  const std::string &outputFilename() { return Installer.Filename; }
 };
 
 } // end llvm namespace

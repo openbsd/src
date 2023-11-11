@@ -18,6 +18,7 @@
 #include "ResourceScriptToken.h"
 
 #include "llvm/ADT/Triple.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Object/WindowsResource.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
@@ -27,7 +28,6 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/InitLLVM.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -56,11 +56,15 @@ enum ID {
 #undef OPTION
 };
 
-#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+namespace rc_opt {
+#define PREFIX(NAME, VALUE)                                                    \
+  static constexpr StringLiteral NAME##_init[] = VALUE;                        \
+  static constexpr ArrayRef<StringLiteral> NAME(NAME##_init,                   \
+                                                std::size(NAME##_init) - 1);
 #include "Opts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info InfoTable[] = {
+static constexpr opt::OptTable::Info InfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {                                                                            \
@@ -71,10 +75,11 @@ static const opt::OptTable::Info InfoTable[] = {
 #include "Opts.inc"
 #undef OPTION
 };
+} // namespace rc_opt
 
-class RcOptTable : public opt::OptTable {
+class RcOptTable : public opt::GenericOptTable {
 public:
-  RcOptTable() : OptTable(InfoTable, /* IgnoreCase = */ true) {}
+  RcOptTable() : GenericOptTable(rc_opt::InfoTable, /* IgnoreCase = */ true) {}
 };
 
 enum Windres_ID {
@@ -86,32 +91,37 @@ enum Windres_ID {
 #undef OPTION
 };
 
-#define PREFIX(NAME, VALUE) const char *const WINDRES_##NAME[] = VALUE;
+namespace windres_opt {
+#define PREFIX(NAME, VALUE)                                                    \
+  static constexpr StringLiteral NAME##_init[] = VALUE;                        \
+  static constexpr ArrayRef<StringLiteral> NAME(NAME##_init,                   \
+                                                std::size(NAME##_init) - 1);
 #include "WindresOpts.inc"
 #undef PREFIX
 
-static const opt::OptTable::Info WindresInfoTable[] = {
+static constexpr opt::OptTable::Info InfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
-  {                                                                            \
-      WINDRES_##PREFIX, NAME,         HELPTEXT,                                \
-      METAVAR,          WINDRES_##ID, opt::Option::KIND##Class,                \
-      PARAM,            FLAGS,        WINDRES_##GROUP,                         \
-      WINDRES_##ALIAS,  ALIASARGS,    VALUES},
+  {PREFIX,          NAME,         HELPTEXT,                                    \
+   METAVAR,         WINDRES_##ID, opt::Option::KIND##Class,                    \
+   PARAM,           FLAGS,        WINDRES_##GROUP,                             \
+   WINDRES_##ALIAS, ALIASARGS,    VALUES},
 #include "WindresOpts.inc"
 #undef OPTION
 };
+} // namespace windres_opt
 
-class WindresOptTable : public opt::OptTable {
+class WindresOptTable : public opt::GenericOptTable {
 public:
-  WindresOptTable() : OptTable(WindresInfoTable, /* IgnoreCase = */ false) {}
+  WindresOptTable()
+      : GenericOptTable(windres_opt::InfoTable, /* IgnoreCase = */ false) {}
 };
 
 static ExitOnError ExitOnErr;
 static FileRemover TempPreprocFile;
 static FileRemover TempResFile;
 
-LLVM_ATTRIBUTE_NORETURN static void fatalError(const Twine &Message) {
+[[noreturn]] static void fatalError(const Twine &Message) {
   errs() << Message << "\n";
   exit(1);
 }
@@ -124,13 +134,16 @@ std::string createTempFile(const Twine &Prefix, StringRef Suffix) {
   return static_cast<std::string>(FileName);
 }
 
-ErrorOr<std::string> findClang(const char *Argv0) {
+ErrorOr<std::string> findClang(const char *Argv0, StringRef Triple) {
   StringRef Parent = llvm::sys::path::parent_path(Argv0);
   ErrorOr<std::string> Path = std::error_code();
+  std::string TargetClang = (Triple + "-clang").str();
+  std::string VersionedClang = ("clang-" + Twine(LLVM_VERSION_MAJOR)).str();
   if (!Parent.empty()) {
     // First look for the tool with all potential names in the specific
     // directory of Argv0, if known
-    for (const auto *Name : {"clang", "clang-cl"}) {
+    for (const auto *Name :
+         {TargetClang.c_str(), VersionedClang.c_str(), "clang", "clang-cl"}) {
       Path = sys::findProgramByName(Name, Parent);
       if (Path)
         return Path;
@@ -205,6 +218,7 @@ struct RcOptions {
   std::string OutputFile;
   Format OutputFormat = Res;
 
+  bool IsWindres = false;
   bool BeVerbose = false;
   WriterParams Params;
   bool AppendNull = false;
@@ -216,18 +230,21 @@ struct RcOptions {
 bool preprocess(StringRef Src, StringRef Dst, const RcOptions &Opts,
                 const char *Argv0) {
   std::string Clang;
-  if (Opts.PrintCmdAndExit) {
+  if (Opts.PrintCmdAndExit || !Opts.PreprocessCmd.empty()) {
     Clang = "clang";
   } else {
-    ErrorOr<std::string> ClangOrErr = findClang(Argv0);
+    ErrorOr<std::string> ClangOrErr = findClang(Argv0, Opts.Triple);
     if (ClangOrErr) {
       Clang = *ClangOrErr;
     } else {
       errs() << "llvm-rc: Unable to find clang, skipping preprocessing."
              << "\n";
-      errs() << "Pass -no-cpp to disable preprocessing. This will be an error "
-                "in the future."
-             << "\n";
+      StringRef OptionName =
+          Opts.IsWindres ? "--no-preprocess" : "-no-preprocess";
+      errs()
+          << "Pass " << OptionName
+          << " to disable preprocessing. This will be an error in the future."
+          << "\n";
       return false;
     }
   }
@@ -256,7 +273,7 @@ bool preprocess(StringRef Src, StringRef Dst, const RcOptions &Opts,
   }
   // The llvm Support classes don't handle reading from stdout of a child
   // process; otherwise we could avoid using a temp file.
-  int Res = sys::ExecuteAndWait(Clang, Args);
+  int Res = sys::ExecuteAndWait(Args[0], Args);
   if (Res) {
     fatalError("llvm-rc: Preprocessing failed.");
   }
@@ -351,6 +368,8 @@ RcOptions parseWindresOptions(ArrayRef<const char *> ArgsArr,
   RcOptions Opts;
   unsigned MAI, MAC;
   opt::InputArgList InputArgs = T.ParseArgs(ArgsArr, MAI, MAC);
+
+  Opts.IsWindres = true;
 
   // The tool prints nothing when invoked with no command-line arguments.
   if (InputArgs.hasArg(WINDRES_help)) {
@@ -724,16 +743,16 @@ void doCvtres(std::string Src, std::string Dest, std::string TargetTriple) {
 
 } // anonymous namespace
 
-int main(int Argc, const char **Argv) {
+int llvm_rc_main(int Argc, char **Argv) {
   InitLLVM X(Argc, Argv);
   ExitOnErr.setBanner("llvm-rc: ");
 
-  const char **DashDash = std::find_if(
-      Argv + 1, Argv + Argc, [](StringRef Str) { return Str == "--"; });
-  ArrayRef<const char *> ArgsArr = makeArrayRef(Argv + 1, DashDash);
+  char **DashDash = std::find_if(Argv + 1, Argv + Argc,
+                                 [](StringRef Str) { return Str == "--"; });
+  ArrayRef<const char *> ArgsArr = ArrayRef(Argv + 1, DashDash);
   ArrayRef<const char *> FileArgsArr;
   if (DashDash != Argv + Argc)
-    FileArgsArr = makeArrayRef(DashDash + 1, Argv + Argc);
+    FileArgsArr = ArrayRef(DashDash + 1, Argv + Argc);
 
   RcOptions Opts = getOptions(Argv[0], ArgsArr, FileArgsArr);
 
