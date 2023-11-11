@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.40 2023/04/19 12:30:09 jsg Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.41 2023/11/11 09:35:21 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -406,8 +406,12 @@ int
 X509v3_asid_add_inherit(ASIdentifiers *asid, int which)
 {
 	ASIdentifierChoice **choice;
+	ASIdentifierChoice *aic = NULL;
+	int ret = 0;
+
 	if (asid == NULL)
-		return 0;
+		goto err;
+
 	switch (which) {
 	case V3_ASID_ASNUM:
 		choice = &asid->asnum;
@@ -416,18 +420,75 @@ X509v3_asid_add_inherit(ASIdentifiers *asid, int which)
 		choice = &asid->rdi;
 		break;
 	default:
-		return 0;
+		goto err;
 	}
-	if (*choice == NULL) {
-		if ((*choice = ASIdentifierChoice_new()) == NULL)
-			return 0;
-		if (((*choice)->u.inherit = ASN1_NULL_new()) == NULL)
-			return 0;
-		(*choice)->type = ASIdentifierChoice_inherit;
+
+	if (*choice != NULL) {
+		if ((*choice)->type != ASIdentifierChoice_inherit)
+			goto err;
+	} else {
+		if ((aic = ASIdentifierChoice_new()) == NULL)
+			goto err;
+		if ((aic->u.inherit = ASN1_NULL_new()) == NULL)
+			goto err;
+		aic->type = ASIdentifierChoice_inherit;
+
+		*choice = aic;
+		aic = NULL;
 	}
-	return (*choice)->type == ASIdentifierChoice_inherit;
+
+	ret = 1;
+
+ err:
+	ASIdentifierChoice_free(aic);
+
+	return ret;
 }
 LCRYPTO_ALIAS(X509v3_asid_add_inherit);
+
+static int
+ASIdOrRanges_add_id_or_range(ASIdOrRanges *aors, ASN1_INTEGER *min,
+    ASN1_INTEGER *max)
+{
+	ASIdOrRange *aor = NULL;
+	ASRange *asr = NULL;
+	int ret = 0;
+
+	/* Preallocate since we must not fail after sk_ASIdOrRange_push(). */
+	if (max != NULL) {
+		if ((asr = ASRange_new()) == NULL)
+			goto err;
+	}
+
+	if ((aor = ASIdOrRange_new()) == NULL)
+		goto err;
+	if (sk_ASIdOrRange_push(aors, aor) <= 0)
+		goto err;
+
+	if (max == NULL) {
+		aor->type = ASIdOrRange_id;
+		aor->u.id = min;
+	} else {
+		ASN1_INTEGER_free(asr->min);
+		asr->min = min;
+		ASN1_INTEGER_free(asr->max);
+		asr->max = max;
+
+		aor->type = ASIdOrRange_range;
+		aor->u.range = asr;
+		asr = NULL;
+	}
+
+	aor = NULL;
+
+	ret = 1;
+
+ err:
+	ASIdOrRange_free(aor);
+	ASRange_free(asr);
+
+	return ret;
+}
 
 /*
  * Add an ID or range to an ASIdentifierChoice.
@@ -437,9 +498,12 @@ X509v3_asid_add_id_or_range(ASIdentifiers *asid, int which, ASN1_INTEGER *min,
     ASN1_INTEGER *max)
 {
 	ASIdentifierChoice **choice;
-	ASIdOrRange *aor;
+	ASIdentifierChoice *aic = NULL, *new_aic = NULL;
+	int ret = 0;
+
 	if (asid == NULL)
-		return 0;
+		goto err;
+
 	switch (which) {
 	case V3_ASID_ASNUM:
 		choice = &asid->asnum;
@@ -448,39 +512,33 @@ X509v3_asid_add_id_or_range(ASIdentifiers *asid, int which, ASN1_INTEGER *min,
 		choice = &asid->rdi;
 		break;
 	default:
-		return 0;
-	}
-	if (*choice != NULL && (*choice)->type == ASIdentifierChoice_inherit)
-		return 0;
-	if (*choice == NULL) {
-		if ((*choice = ASIdentifierChoice_new()) == NULL)
-			return 0;
-		(*choice)->u.asIdsOrRanges = sk_ASIdOrRange_new(ASIdOrRange_cmp);
-		if ((*choice)->u.asIdsOrRanges == NULL)
-			return 0;
-		(*choice)->type = ASIdentifierChoice_asIdsOrRanges;
-	}
-	if ((aor = ASIdOrRange_new()) == NULL)
-		return 0;
-	if (max == NULL) {
-		aor->type = ASIdOrRange_id;
-		aor->u.id = min;
-	} else {
-		aor->type = ASIdOrRange_range;
-		if ((aor->u.range = ASRange_new()) == NULL)
-			goto err;
-		ASN1_INTEGER_free(aor->u.range->min);
-		aor->u.range->min = min;
-		ASN1_INTEGER_free(aor->u.range->max);
-		aor->u.range->max = max;
-	}
-	if (!(sk_ASIdOrRange_push((*choice)->u.asIdsOrRanges, aor)))
 		goto err;
-	return 1;
+	}
+
+	if ((aic = *choice) != NULL) {
+		if (aic->type != ASIdentifierChoice_asIdsOrRanges)
+			goto err;
+	} else {
+		if ((aic = new_aic = ASIdentifierChoice_new()) == NULL)
+			goto err;
+		aic->u.asIdsOrRanges = sk_ASIdOrRange_new(ASIdOrRange_cmp);
+		if (aic->u.asIdsOrRanges == NULL)
+			goto err;
+		aic->type = ASIdentifierChoice_asIdsOrRanges;
+	}
+
+	if (!ASIdOrRanges_add_id_or_range(aic->u.asIdsOrRanges, min, max))
+		goto err;
+
+	*choice = aic;
+	aic = new_aic = NULL;
+
+	ret = 1;
 
  err:
-	ASIdOrRange_free(aor);
-	return 0;
+	ASIdentifierChoice_free(new_aic);
+
+	return ret;
 }
 LCRYPTO_ALIAS(X509v3_asid_add_id_or_range);
 
