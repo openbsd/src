@@ -1,4 +1,4 @@
-/* $OpenBSD: if_dwqe_pci.c,v 1.2 2023/10/31 05:46:36 jsg Exp $ */
+/* $OpenBSD: if_dwqe_pci.c,v 1.3 2023/11/11 16:50:25 stsp Exp $ */
 
 /*
  * Copyright (c) 2023 Stefan Sperling <stsp@openbsd.org>
@@ -41,13 +41,13 @@
 
 static const struct pci_matchid dwqe_pci_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE0_RGMII_1G	},
-#if 0
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE0_SGMII_1G },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE0_SGMII_2G },
+#if 0
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE1_RGMII_1G },
+#endif
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE1_SGMII_1G },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE1_SGMII_2G },
-#endif
 };
 
 struct dwqe_pci_softc {
@@ -107,7 +107,15 @@ dwqe_pci_attach(struct device *parent, struct device *self, void *aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_EHL_PSE0_RGMII_1G:
 		sc->sc_phy_mode = DWQE_PHY_MODE_RGMII_ID;
-		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_250_300; 
+		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_250_300;
+		sc->sc_clkrate = 200000000;
+		break;
+	case PCI_PRODUCT_INTEL_EHL_PSE0_SGMII_1G:
+	case PCI_PRODUCT_INTEL_EHL_PSE0_SGMII_2G:
+	case PCI_PRODUCT_INTEL_EHL_PSE1_SGMII_1G:
+	case PCI_PRODUCT_INTEL_EHL_PSE1_SGMII_2G:
+		sc->sc_phy_mode = DWQE_PHY_MODE_SGMII;
+		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_250_300;
 		sc->sc_clkrate = 200000000;
 		break;
 	default:
