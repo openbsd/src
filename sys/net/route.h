@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.200 2023/11/10 20:05:22 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.201 2023/11/11 12:52:20 dlg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -38,6 +38,10 @@
 /*
  * Locks used to protect struct members in this file:
  *	I	immutable after creation
+ *	N	net lock
+ *	X	exclusive net lock, or shared net lock + kernel lock
+ *	R	art (rtable) lock
+ *	L	arp/nd6/etc lock for updates, net lock for reads
  *	T	rttimer_mtx		route timer lists
  */
 
@@ -99,32 +103,38 @@ struct rttimer;
  * preferring the former if available.  For each route we infer
  * the interface to use from the gateway address supplied when
  * the route was entered.  Routes that forward packets through
- * gateways are marked so that the output routines know to address the
- * gateway rather than the ultimate destination.
+ * gateways are marked with RTF_GATEWAY so that the output routines
+ * know to address the gateway rather than the ultimate destination.
+ *
+ * How the RT_gw union is used also depends on RTF_GATEWAY. With
+ * RTF_GATEWAY set, rt_gwroute points at the rtentry for the rt_gateway
+ * address. If RTF_GATEWAY is not set, rt_cachecnt contains the
+ * number of RTF_GATEWAY rtentry structs with their rt_gwroute pointing
+ * at this rtentry.
  */
 
 struct rtentry {
-	struct sockaddr	*rt_dest;	/* destination */
-	SRPL_ENTRY(rtentry) rt_next;	/* Next multipath entry to our dst. */
-	struct sockaddr	*rt_gateway;	/* value */
-	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
-	caddr_t		 rt_llinfo;	/* pointer to link level info cache or
-					   to an MPLS structure */
+	struct sockaddr	*rt_dest;	/* [I] destination */
+	SRPL_ENTRY(rtentry) rt_next;	/* [R] next mpath entry to our dst */
+	struct sockaddr	*rt_gateway;	/* [N] gateway address */
+	struct ifaddr	*rt_ifa;	/* [N] interface addr to use */
+	caddr_t		 rt_llinfo;	/* [L] pointer to link level info or
+					   an MPLS structure */
 	union {
-		struct rtentry	*_nh;	/* implied entry for gatewayed routes */
-		unsigned int	 _ref;	/* # gatewayed caching this route */
+		struct rtentry	*_nh;	/* [N] rtentry for rt_gateway */
+		unsigned int	 _ref;	/* [N] # gateway rtentry refs */
 	} RT_gw;
 #define rt_gwroute	 RT_gw._nh
 #define rt_cachecnt	 RT_gw._ref
-	struct rtentry	*rt_parent;	/* If cloned, parent of this route. */
+	struct rtentry	*rt_parent;	/* [N] if cloned, parent rtentry */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	struct rt_kmetrics rt_rmx;	/* metrics used by rx'ing protocols */
-	unsigned int	 rt_ifidx;	/* the answer: interface to use */
-	unsigned int	 rt_flags;	/* up/down?, host/net */
+	unsigned int	 rt_ifidx;	/* [N] interface to use */
+	unsigned int	 rt_flags;	/* [X] up/down?, host/net */
 	struct refcnt	 rt_refcnt;	/* # held references */
-	int		 rt_plen;	/* prefix length */
-	uint16_t	 rt_labelid;	/* route label ID */
-	uint8_t		 rt_priority;	/* routing priority to use */
+	int		 rt_plen;	/* [I] prefix length */
+	uint16_t	 rt_labelid;	/* [N] route label ID */
+	uint8_t		 rt_priority;	/* [N] routing priority to use */
 };
 #define	rt_use		rt_rmx.rmx_pksent
 #define	rt_expire	rt_rmx.rmx_expire
