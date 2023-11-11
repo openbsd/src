@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbAPI
 NOPIC=
@@ -62,6 +62,7 @@ SRCS=	SBAddress.cpp \
 	SBThreadCollection.cpp \
 	SBThreadPlan.cpp \
 	SBTrace.cpp \
+	SBTraceCursor.cpp \
 	SBType.cpp \
 	SBTypeCategory.cpp \
 	SBTypeEnumMember.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2021/12/17 14:55:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2023/11/11 18:35:37 robert Exp $
 
 LIB=	LLVMMCParser
 NOPROFILE=
@@ -9,6 +9,7 @@ SRCS+=	AsmLexer.cpp \
 	AsmParser.cpp \
 	COFFAsmParser.cpp \
 	COFFMasmParser.cpp \
+	GOFFAsmParser.cpp \
 	DarwinAsmParser.cpp \
 	ELFAsmParser.cpp \
 	MCAsmLexer.cpp \

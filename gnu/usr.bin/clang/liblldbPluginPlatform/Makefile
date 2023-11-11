@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbPluginPlatform
 NOPIC=
@@ -11,6 +11,7 @@ SRCS=	AdbClient.cpp \
 	PlatformFreeBSD.cpp \
 	PlatformLinux.cpp \
 	PlatformDarwin.cpp \
+	PlatformDarwinDevice.cpp \
 	PlatformDarwinKernel.cpp \
 	PlatformMacOSX.cpp \
 	PlatformRemoteAppleBridge.cpp \
@@ -19,6 +20,7 @@ SRCS=	AdbClient.cpp \
 	PlatformRemoteDarwinDevice.cpp \
 	PlatformRemoteMacOSX.cpp \
 	PlatformRemoteiOS.cpp \
+	PlatformAppleSimulator.cpp \
 	PlatformNetBSD.cpp \
 	PlatformOpenBSD.cpp \
 	PlatformPOSIX.cpp \
@@ -42,3 +44,4 @@ install:
 
 CPPFLAGS+=	${LLDB_INCLUDES}
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${.OBJDIR}/../include/lldb/Plugins

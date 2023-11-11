@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:36 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,9 @@ DEFS=	Attributes.inc \
 	IntrinsicsAMDGPU.h \
 	IntrinsicsARM.h \
 	IntrinsicsBPF.h \
+	IntrinsicsDirectX.h \
 	IntrinsicsHexagon.h \
+	IntrinsicsLoongArch.h \
 	IntrinsicsMips.h \
 	IntrinsicsNVPTX.h \
 	IntrinsicsPowerPC.h \
@@ -72,8 +74,20 @@ IntrinsicsBPF.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}
 
+IntrinsicsDirectX.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-enums -intrinsic-prefix=dx \
+		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
+		-I${LLVM_SRCS}/include \
+		-o ${.TARGET} ${.ALLSRC}
+
 IntrinsicsHexagon.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-enums -intrinsic-prefix=hexagon \
+		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
+		-I${LLVM_SRCS}/include \
+		-o ${.TARGET} ${.ALLSRC}
+
+IntrinsicsLoongArch.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-enums -intrinsic-prefix=loongarch \
 		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.15 2023/11/11 18:35:38 robert Exp $
 
 LIB=	LLVMTransformUtils
 NOPROFILE=
@@ -21,6 +21,7 @@ SRCS+=	AddDiscriminators.cpp \
 	CloneFunction.cpp \
 	CloneModule.cpp \
 	CodeExtractor.cpp \
+	CodeLayout.cpp \
 	CodeMoverUtils.cpp \
 	CtorUtils.cpp \
 	Debugify.cpp \
@@ -41,7 +42,7 @@ SRCS+=	AddDiscriminators.cpp \
 	IntegerDivision.cpp \
 	LCSSA.cpp \
 	LibCallsShrinkWrap.cpp \
-	Local.cpp \
+	TransformUtilsLocal.cpp \
 	LoopPeel.cpp \
 	LoopRotationUtils.cpp \
 	LoopSimplify.cpp \
@@ -50,13 +51,18 @@ SRCS+=	AddDiscriminators.cpp \
 	LoopUnrollRuntime.cpp \
 	LoopUtils.cpp \
 	LoopVersioning.cpp \
+	LowerAtomic.cpp \
+	LowerGlobalDtors.cpp \
+	LowerIFunc.cpp \
 	LowerInvoke.cpp \
 	LowerMemIntrinsics.cpp \
 	LowerSwitch.cpp \
 	MatrixUtils.cpp \
 	MemoryOpRemark.cpp \
+	MemoryTaggingSupport.cpp \
 	Mem2Reg.cpp \
 	MetaRenamer.cpp \
+	MisExpect.cpp \
 	ModuleUtils.cpp \
 	NameAnonGlobals.cpp \
 	PredicateInfo.cpp \
@@ -67,6 +73,7 @@ SRCS+=	AddDiscriminators.cpp \
 	StripGCRelocates.cpp \
 	SSAUpdater.cpp \
 	SSAUpdaterBulk.cpp \
+	SampleProfileInference.cpp \
 	SampleProfileLoaderBaseUtil.cpp \
 	SanitizerStats.cpp \
 	SimplifyCFG.cpp \
@@ -85,9 +92,12 @@ SRCS+=	AddDiscriminators.cpp \
 TransformUtilsGuardUtils.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Utils/GuardUtils.cpp $@
 
+TransformUtilsLocal.cpp:
+	ln -s ${LLVM_SRCS}/lib/Transforms/Utils/Local.cpp $@
+
 TransformUtilsUtils.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Utils/Utils.cpp $@
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Transforms/Utils
 
-CLEANFILES+= TransformUtilsUtils.cpp
+CLEANFILES+= TransformUtilsUtils.cpp TransformUtilsGuardUtils.cpp TransformUtilsLocal.cpp

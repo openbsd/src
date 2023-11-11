@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbPluginSymbolFile
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
+
 # SymbolFile/Breakpad
 SRCS=	SymbolFileBreakpad.cpp
 
@@ -13,6 +14,7 @@ SRCS+=	AppleDWARFIndex.cpp \
 	DebugNamesDWARFIndex.cpp \
 	DIERef.cpp \
 	DWARFAbbreviationDeclaration.cpp \
+	DWARFASTParser.cpp \
 	DWARFASTParserClang.cpp \
 	DWARFAttribute.cpp \
 	DWARFBaseDIE.cpp \

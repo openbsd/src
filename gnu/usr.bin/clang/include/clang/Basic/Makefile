@@ -1,12 +1,12 @@
-# $OpenBSD: Makefile,v 1.9 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:35 robert Exp $
 
 .include <bsd.own.mk>
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
 CLANG_INC=${.CURDIR}/../../../../../llvm/clang/include
 
-_DIAG=	Analysis \
-	AST \
+_DIAG=	AST \
+	Analysis \
 	Comment \
 	Common \
 	CrossTU \
@@ -23,7 +23,7 @@ GEN=
 GEN+= Diagnostic${_comp}Kinds.inc
 .endfor
 
-GEN+= DiagnosticGroups.inc \
+GEN+=	DiagnosticGroups.inc \
 	DiagnosticIndexName.inc \
 	AttrList.inc \
 	AttrSubMatchRulesList.inc \
@@ -43,7 +43,8 @@ GEN+= DiagnosticGroups.inc \
 	arm_cde_builtin_sema.inc \
 	arm_cde_builtin_aliases.inc \
 	riscv_vector_builtins.inc \
-	riscv_vector_builtin_cg.inc
+	riscv_vector_builtin_cg.inc \
+	riscv_vector_builtin_sema.inc
 
 all: ${GEN}
 
@@ -143,6 +144,10 @@ riscv_vector_builtins.inc: ${CLANG_INC}/clang/Basic/riscv_vector.td
 
 riscv_vector_builtin_cg.inc: ${CLANG_INC}/clang/Basic/riscv_vector.td
 	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-riscv-vector-builtin-codegen \
+		-o ${.TARGET} ${.ALLSRC}
+
+riscv_vector_builtin_sema.inc: ${CLANG_INC}/clang/Basic/riscv_vector.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-riscv-vector-builtin-sema \
 		-o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

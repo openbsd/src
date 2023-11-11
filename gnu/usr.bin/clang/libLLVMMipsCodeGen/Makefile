@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2021/04/28 12:55:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:37 robert Exp $
 
 LIB=	LLVMMipsCodeGen
 NOPROFILE=
@@ -34,6 +34,7 @@ SRCS+=	Mips16FrameLowering.cpp \
 	MipsOptimizePICCall.cpp \
 	MipsOs16.cpp \
 	MipsPreLegalizerCombiner.cpp \
+	MipsPostLegalizerCombiner.cpp \
 	MipsRegisterBankInfo.cpp \
 	MipsRegisterInfo.cpp \
 	MipsReturnProtectorLowering.cpp \
@@ -45,6 +46,8 @@ SRCS+=	Mips16FrameLowering.cpp \
 	MipsSubtarget.cpp \
 	MipsTargetMachine.cpp \
 	MipsTargetObjectFile.cpp \
-	MicroMipsSizeReduction.cpp
+	MipsTargetTransformInfo.cpp \
+	MicroMipsSizeReduction.cpp \
+	MipsMulMulBugPass.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/Mips

@@ -1,10 +1,13 @@
-# $OpenBSD: Makefile,v 1.18 2020/08/03 14:45:31 patrick Exp $
+# $OpenBSD: Makefile,v 1.19 2023/11/11 18:35:40 robert Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ld.lld
 BINDIR=	/usr/bin
-SRCS=	lld.cpp
+SRCS+=	lld.cpp
+
+DRIVER_TEMPLATE=Yes
+DRIVER_NAME=	lld
 
 TARGET_ARCH?=	${MACHINE_ARCH}
 .if ${LINKER_VERSION:L} == "lld"
@@ -22,7 +25,6 @@ CPPFLAGS+=	-I${.CURDIR}/../../../llvm/lld/include
 
 LLVM_LIBDEPS=	LLVM \
 		lldELF \
-		lldCommon \
-		lldCore
+		lldCommon
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:36 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ HDRS=	MipsGenAsmMatcher.inc \
 	MipsGenDisassemblerTables.inc \
 	MipsGenFastISel.inc \
 	MipsGenGlobalISel.inc \
+	MipsGenPostLegalizeGICombiner.inc \
 	MipsGenInstrInfo.inc \
 	MipsGenMCCodeEmitter.inc \
 	MipsGenMCPseudoLowering.inc \
@@ -61,6 +62,14 @@ MipsGenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
 		-o ${.TARGET} ${.ALLSRC}
+
+MipsGenPostLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
+		-combiners="MipsPostLegalizerCombinerHelper" \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
+		-o ${.TARGET} ${.ALLSRC}
+
+MipsGenInstrInfo.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 
 MipsGenInstrInfo.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-instr-info \

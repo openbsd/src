@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2023/11/11 18:35:38 robert Exp $
 
 LIB=	clangAnalysis
 NOPIC=
@@ -7,6 +7,7 @@ NOPROFILE=
 CPPFLAGS+=	${CLANG_INCLUDES}
 
 .include <bsd.own.mk>
+
 SRCS=	AnalysisDeclContext.cpp \
 	BodyFarm.cpp \
 	CalledOnceCheck.cpp \
@@ -23,6 +24,7 @@ SRCS=	AnalysisDeclContext.cpp \
 	ExprMutationAnalyzer.cpp \
 	IssueHash.cpp \
 	LiveVariables.cpp \
+	MacroExpansionContext.cpp \
 	ObjCNoReturn.cpp \
 	PathDiagnostic.cpp \
 	PostOrderCFGView.cpp \
@@ -33,7 +35,8 @@ SRCS=	AnalysisDeclContext.cpp \
 	ThreadSafetyCommon.cpp \
 	ThreadSafetyLogical.cpp \
 	ThreadSafetyTIL.cpp \
-	UninitializedValues.cpp
+	UninitializedValues.cpp \
+	UnsafeBufferUsage.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/Analysis
 

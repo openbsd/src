@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/12/17 14:55:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2023/11/11 18:35:40 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ SRCS=	llvm-objdump.cpp \
 	COFFDump.cpp \
 	ELFDump.cpp \
 	MachODump.cpp \
+	OffloadDump.cpp \
 	WasmDump.cpp \
 	XCOFFDump.cpp
 

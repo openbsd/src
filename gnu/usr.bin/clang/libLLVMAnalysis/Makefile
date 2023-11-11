@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2021/12/17 14:55:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.14 2023/11/11 18:35:36 robert Exp $
 
 LIB=	LLVMAnalysis
 NOPROFILE=
@@ -18,8 +18,7 @@ SRCS+=	AliasAnalysis.cpp \
 	BranchProbabilityInfo.cpp \
 	CFG.cpp \
 	CFGPrinter.cpp \
-	CFLAndersAliasAnalysis.cpp \
-	CFLSteensAliasAnalysis.cpp \
+	CFGSCCPrinter.cpp \
 	CGSCCPassManager.cpp \
 	CallGraph.cpp \
 	CallGraphSCCPass.cpp \
@@ -29,6 +28,7 @@ SRCS+=	AliasAnalysis.cpp \
 	CostModel.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
+	CycleAnalysis.cpp \
 	DDG.cpp \
 	DDGPrinter.cpp \
 	ConstraintSystem.cpp \
@@ -53,6 +53,7 @@ SRCS+=	AliasAnalysis.cpp \
 	IndirectCallPromotionAnalysis.cpp \
 	InlineCost.cpp \
 	InlineAdvisor.cpp \
+	InlineOrder.cpp \
 	InlineSizeEstimatorAnalysis.cpp \
 	InstCount.cpp \
 	InstructionPrecedenceTracking.cpp \
@@ -66,6 +67,7 @@ SRCS+=	AliasAnalysis.cpp \
 	LegacyDivergenceAnalysis.cpp \
 	Lint.cpp \
 	Loads.cpp \
+	Local.cpp \
 	LoopAccessAnalysis.cpp \
 	LoopAnalysisManager.cpp \
 	LoopCacheAnalysis.cpp \
@@ -79,11 +81,14 @@ SRCS+=	AliasAnalysis.cpp \
 	MemoryBuiltins.cpp \
 	MemoryDependenceAnalysis.cpp \
 	MemoryLocation.cpp \
+	MemoryProfileInfo.cpp \
 	MemorySSA.cpp \
 	MemorySSAUpdater.cpp \
+	ModelUnderTrainingRunner.cpp \
 	ModuleDebugInfoPrinter.cpp \
 	ModuleSummaryAnalysis.cpp \
 	MustExecute.cpp \
+	NoInferenceModelRunner.cpp \
 	ObjCARCAliasAnalysis.cpp \
 	ObjCARCAnalysisUtils.cpp \
 	ObjCARCInstKind.cpp \
@@ -97,7 +102,6 @@ SRCS+=	AliasAnalysis.cpp \
 	RegionInfo.cpp \
 	RegionPass.cpp \
 	RegionPrinter.cpp \
-	ReleaseModeModelRunner.cpp \
 	ReplayInlineAdvisor.cpp \
 	ScalarEvolution.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
@@ -107,12 +111,15 @@ SRCS+=	AliasAnalysis.cpp \
 	StackSafetyAnalysis.cpp \
 	SyncDependenceAnalysis.cpp \
 	SyntheticCountsUtils.cpp \
-	TFUtils.cpp \
+	TFLiteUtils.cpp \
 	TargetLibraryInfo.cpp \
 	TargetTransformInfo.cpp \
+	TensorSpec.cpp \
 	Trace.cpp \
+	TrainingLogger.cpp \
 	TypeBasedAliasAnalysis.cpp \
 	TypeMetadataUtils.cpp \
+	UniformityAnalysis.cpp \
 	ScopedNoAliasAA.cpp \
 	ValueLattice.cpp \
 	ValueLatticeUtils.cpp \

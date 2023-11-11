@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2021/04/28 12:55:37 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:35 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -24,8 +24,7 @@ GEN=	Attrs.inc \
 	CommentHTMLNamedCharacterReferences.inc \
 	CommentCommandInfo.inc \
 	CommentCommandList.inc \
-	StmtDataCollectors.inc \
-	Opcodes.inc
+	StmtDataCollectors.inc
 
 all: ${GEN}
 
@@ -110,10 +109,6 @@ CommentCommandList.inc: ${CLANG_INC}/clang/AST/CommentCommands.td
 
 StmtDataCollectors.inc: ${CLANG_INC}/clang/AST/StmtDataCollectors.td
 	${TBLGEN} -gen-clang-data-collectors \
-		-o ${.TARGET} ${.ALLSRC}
-
-Opcodes.inc: ${CLANG_SRCS}/lib/AST/Interp/Opcodes.td
-	${TBLGEN} -gen-clang-opcodes \
 		-o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

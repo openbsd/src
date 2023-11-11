@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:25 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2023/11/11 18:35:36 robert Exp $
 
 LIB=	LLVMCoroutines
 NOPROFILE=
@@ -8,6 +8,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/Coroutines
 
 SRCS+=	Coroutines.cpp \
 	CoroCleanup.cpp \
+	CoroConditionalWrapper.cpp \
 	CoroEarly.cpp \
 	CoroElide.cpp \
 	CoroFrame.cpp \

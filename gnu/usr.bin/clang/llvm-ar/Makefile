@@ -1,18 +1,23 @@
-# $OpenBSD: Makefile,v 1.4 2022/03/23 22:44:01 deraadt Exp $
+# $OpenBSD: Makefile,v 1.5 2023/11/11 18:35:40 robert Exp $
 
 PROG=	ar
 BINDIR=	/usr/bin
 
 .include <bsd.own.mk>
 
-SRCS=	llvm-ar.cpp
+DRIVER_NAME=	llvm_ar
+DRIVER_TEMPLATE=Yes
+
+SRCS+=	llvm-ar.cpp
 
 LINKS=	${BINDIR}/ar ${BINDIR}/ranlib
 MAN+=	ranlib.1 ar.1
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/tools/llvm-ar
 
-LLVM_LIBDEPS=	LLVM LLVMDlltoolDriver LLVMLibDriver
+LLVM_LIBDEPS=	LLVM \
+		LLVMDlltoolDriver \
+		LLVMLibDriver
 
 LDADD+= -L ${.OBJDIR}/../libLLVM -lLLVM
 

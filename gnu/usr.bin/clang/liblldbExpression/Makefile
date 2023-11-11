@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2021/04/28 12:55:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbExpression
 NOPIC=
@@ -8,6 +8,7 @@ NOPROFILE=
 
 SRCS=	DiagnosticManager.cpp \
 	DWARFExpression.cpp \
+	DWARFExpressionList.cpp \
 	Expression.cpp \
 	ExpressionVariable.cpp \
 	FunctionCaller.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbPluginObjectFile
 NOPIC=
@@ -32,3 +32,4 @@ install:
 
 CPPFLAGS+=	${LLDB_INCLUDES}
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${.OBJDIR}/../include/lldb/Plugins

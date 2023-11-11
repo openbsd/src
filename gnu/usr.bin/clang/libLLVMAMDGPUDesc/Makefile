@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:24 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2023/11/11 18:35:36 robert Exp $
 
 LIB=	LLVMAMDGPUDesc
 NOPROFILE=
@@ -14,6 +14,7 @@ SRCS+=	AMDGPUAsmBackend.cpp \
 	AMDGPUMCCodeEmitter.cpp \
 	AMDGPUMCTargetDesc.cpp \
 	AMDGPUTargetStreamer.cpp \
+	R600InstPrinter.cpp \
 	R600MCCodeEmitter.cpp \
 	R600MCTargetDesc.cpp \
 	SIMCCodeEmitter.cpp

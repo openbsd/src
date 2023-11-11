@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:39 robert Exp $
 
 LIB=	clangSema
 NOPIC=
@@ -8,10 +8,12 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/clang/Sema \
 		${CLANG_INCLUDES}
 
 .include <bsd.own.mk>
+
 SRCS=	AnalysisBasedWarnings.cpp \
 	CodeCompleteConsumer.cpp \
 	DeclSpec.cpp \
 	DelayedDiagnostic.cpp \
+	HLSLExternalSemaSource.cpp \
 	IdentifierResolver.cpp \
 	JumpDiagnostics.cpp \
 	MultiplexExternalSemaSource.cpp \
@@ -40,6 +42,7 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	SemaExprMember.cpp \
 	SemaExprObjC.cpp \
 	SemaFixItUtils.cpp \
+	SemaHLSL.cpp \
 	SemaInit.cpp \
 	SemaLambda.cpp \
 	SemaLookup.cpp \
@@ -48,6 +51,7 @@ SRCS=	AnalysisBasedWarnings.cpp \
 	SemaOpenMP.cpp \
 	SemaOverload.cpp \
 	SemaPseudoObject.cpp \
+	SemaRISCVVectorLookup.cpp \
 	SemaStmt.cpp \
 	SemaStmtAsm.cpp \
 	SemaStmtAttr.cpp \

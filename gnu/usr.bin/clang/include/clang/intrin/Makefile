@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.25 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.26 2023/11/11 18:35:35 robert Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			13.0.0
+LLVM_V=			16
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -11,11 +11,13 @@ CLANG_INC=${.CURDIR}/../../../../../llvm/clang/include
 .PATH:	${.CURDIR}/../../../../../llvm/clang/lib/Headers
 
 GEN=
-HEADERS=	stdalign.h \
+HEADERS=	intrin.h \
+		stdalign.h \
 		stdatomic.h \
 		stdnoreturn.h \
 		tgmath.h \
 		unwind.h \
+		vadefs.h \
 		varargs.h \
 		module.modulemap \
 
@@ -28,47 +30,57 @@ GEN+=		arm_mve.h
 GEN+=		arm_cde.h
 HEADERS+=	arm_acle.h arm_cmse.h ${GEN}
 .elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
-HEADERS+=	adxintrin.h \
+HEADERS+=	__wmmintrin_aes.h \
+		__wmmintrin_pclmul.h \
+		adxintrin.h \
 		ammintrin.h \
+		amxfp16intrin.h \
 		amxintrin.h \
 		avx2intrin.h \
 		avx512bf16intrin.h \
-		avx512bwintrin.h \
 		avx512bitalgintrin.h \
-		avx512vlbitalgintrin.h \
+		avx512bwintrin.h \
 		avx512cdintrin.h \
-		avx512vpopcntdqintrin.h \
 		avx512dqintrin.h \
 		avx512erintrin.h \
 		avx512fintrin.h \
+		avx512fp16intrin.h \
 		avx512ifmaintrin.h \
 		avx512ifmavlintrin.h \
 		avx512pfintrin.h \
+		avx512vbmi2intrin.h \
 		avx512vbmiintrin.h \
 		avx512vbmivlintrin.h \
-		avx512vbmi2intrin.h \
-		avx512vlvbmi2intrin.h \
 		avx512vlbf16intrin.h \
+		avx512vlbitalgintrin.h \
 		avx512vlbwintrin.h \
 		avx512vlcdintrin.h \
 		avx512vldqintrin.h \
+		avx512vlfp16intrin.h \
 		avx512vlintrin.h \
-		avx512vp2intersectintrin.h \
-		avx512vlvp2intersectintrin.h \
-		avx512vpopcntdqvlintrin.h \
-		avx512vnniintrin.h \
+		avx512vlvbmi2intrin.h \
 		avx512vlvnniintrin.h \
+		avx512vlvp2intersectintrin.h \
+		avx512vnniintrin.h \
+		avx512vp2intersectintrin.h \
+		avx512vpopcntdqintrin.h \
+		avx512vpopcntdqvlintrin.h \
+		avxifmaintrin.h \
 		avxintrin.h \
+		avxneconvertintrin.h \
+		avxvnniint8intrin.h \
 		avxvnniintrin.h \
 		bmi2intrin.h \
 		bmiintrin.h \
-		cetintrin.h \
 		cet.h \
+		cetintrin.h \
 		cldemoteintrin.h \
-		clzerointrin.h \
-		cpuid.h \
 		clflushoptintrin.h \
 		clwbintrin.h \
+		clzerointrin.h \
+		cmpccxaddintrin.h \
+		cpuid.h \
+		crc32intrin.h \
 		emmintrin.h \
 		enqcmdintrin.h \
 		f16cintrin.h \
@@ -84,8 +96,8 @@ HEADERS+=	adxintrin.h \
 		lwpintrin.h \
 		lzcntintrin.h \
 		mm3dnow.h \
-		mmintrin.h \
 		mm_malloc.h \
+		mmintrin.h \
 		movdirintrin.h \
 		mwaitxintrin.h \
 		nmmintrin.h \
@@ -93,8 +105,11 @@ HEADERS+=	adxintrin.h \
 		pkuintrin.h \
 		pmmintrin.h \
 		popcntintrin.h \
+		prfchiintrin.h \
 		prfchwintrin.h \
 		ptwriteintrin.h \
+		raointintrin.h \
+		rdpruintrin.h \
 		rdseedintrin.h \
 		rtmintrin.h \
 		serializeintrin.h \
@@ -108,11 +123,8 @@ HEADERS+=	adxintrin.h \
 		vaesintrin.h \
 		vpclmulqdqintrin.h \
 		waitpkgintrin.h \
-		wasm_simd128.h \
 		wbnoinvdintrin.h \
 		wmmintrin.h \
-		__wmmintrin_aes.h \
-		__wmmintrin_pclmul.h \
 		x86gprintrin.h \
 		x86intrin.h \
 		xmmintrin.h \

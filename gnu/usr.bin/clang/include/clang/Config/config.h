@@ -6,7 +6,10 @@
 #define CLANG_CONFIG_H
 
 /* Bug report URL. */
-#define BUG_REPORT_URL "https://bugs.llvm.org/"
+#define BUG_REPORT_URL "https://github.com/llvm/llvm-project/issues/"
+
+/* Default to -fPIE and -pie on Linux. */
+#define CLANG_DEFAULT_PIE_ON_LINUX 1
 
 /* Default linker to use. */
 #define CLANG_DEFAULT_LINKER ""
@@ -32,14 +35,11 @@
 /* Default OpenMP runtime used by -fopenmp. */
 #define CLANG_DEFAULT_OPENMP_RUNTIME "libomp"
 
-/* Default architecture for OpenMP offloading to Nvidia GPUs. */
-#define CLANG_OPENMP_NVPTX_DEFAULT_ARCH ""
-
 /* Default architecture for SystemZ. */
-#define CLANG_SYSTEMZ_DEFAULT_ARCH ""
+#define CLANG_SYSTEMZ_DEFAULT_ARCH "z10"
 
-/* Multilib suffix for libdir. */
-#define CLANG_LIBDIR_SUFFIX ""
+/* Multilib basename for libdir. */
+#define CLANG_INSTALL_LIBDIR_BASENAME "lib"
 
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR ""
@@ -48,8 +48,8 @@
 #define C_INCLUDE_DIRS ""
 
 /* Directories clang will search for configuration files */
-#define CLANG_CONFIG_FILE_SYSTEM_DIR ""
-#define CLANG_CONFIG_FILE_USER_DIR ""
+/* #undef CLANG_CONFIG_FILE_SYSTEM_DIR */
+/* #undef CLANG_CONFIG_FILE_USER_DIR */
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT ""
@@ -63,9 +63,6 @@
 /* Define if we have sys/resource.h (rlimits) */
 #define CLANG_HAVE_RLIMITS 1
 
-/* The LLVM product name and version */
-#define BACKEND_PACKAGE_STRING "LLVM 13.0.0"
-
 /* Linker version detected at compile time. */
 /* #undef HOST_LINK_VERSION */
 
@@ -73,7 +70,10 @@
 /* #undef ENABLE_LINKER_BUILD_ID */
 
 /* enable x86 relax relocations by default */
-#define ENABLE_X86_RELAX_RELOCATIONS 0
+#define ENABLE_X86_RELAX_RELOCATIONS 1
+
+/* Enable IEEE binary128 as default long double format on PowerPC Linux. */
+#define PPC_LINUX_DEFAULT_IEEELONGDOUBLE 0
 
 /* Enable each functionality of modules */
 #define CLANG_ENABLE_ARCMT 0

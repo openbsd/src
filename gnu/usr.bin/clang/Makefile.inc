@@ -1,9 +1,11 @@
-# $OpenBSD: Makefile.inc,v 1.26 2022/05/12 15:51:23 gkoehler Exp $
+# $OpenBSD: Makefile.inc,v 1.27 2023/11/11 18:35:35 robert Exp $
 
 CLANG_SRCS?=	${.CURDIR}/../../../llvm/clang
 LLDB_SRCS?=	${.CURDIR}/../../../llvm/lldb
 LLD_SRCS?=	${.CURDIR}/../../../llvm/lld
 LLVM_SRCS?=	${.CURDIR}/../../../llvm/llvm
+
+DRIVER_TEMPLATE?=no
 
 .if ${COMPILER_VERSION:L} != "clang"
 CC=		clang
@@ -49,18 +51,24 @@ TRIPLE=		armv7-unknown-openbsd${OSREV}-gnueabi
 .else
 TRIPLE=		${MACHINE_ARCH}-unknown-openbsd${OSREV}
 .endif
-CPPFLAGS+=	-DLLVM_PREFIX=\"/usr\"
 .include "Makefile.arch"
 
 # upstream defaults
 CFLAGS+=	-ffunction-sections -fdata-sections
-CXXFLAGS+=	-std=c++14
+CXXFLAGS+=	-ffunction-sections -fdata-sections
+CXXFLAGS+=	-std=c++17
 CXXFLAGS+=	-fvisibility-inlines-hidden
 CXXFLAGS+=	-fno-exceptions -fno-rtti
+CXXFLAGS+=	-fno-semantic-interposition
 # warnings (from upstream)
-CXXFLAGS+=	-Wall -W -Wno-unused-parameter -Wwrite-strings -Wcast-qual \
-		-Wno-missing-field-initializers -pedantic -Wno-long-long \
-		-Wdelete-non-virtual-dtor -Wno-comment
+CXXFLAGS+=	-Wall -Wc++98-compat-extra-semi -Wcast-qual \
+		-Wcovered-switch-default -Wctad-maybe-unsupported \
+		-Wdelete-non-virtual-dtor -Werror=date-time \
+		-Werror=unguarded-availability-new -Wextra \
+		-Wimplicit-fallthrough -Wmisleading-indentation \
+		-Wmissing-field-initializers -Wno-long-long -Wno-noexcept-type \
+		-Wno-unused-parameter -Wnon-virtual-dtor -Wstring-conversion \
+		-Wsuggest-override -Wwrite-strings
 
 LDADD+=-Wl,--start-group
 .for lib in ${LLVM_LIBDEPS}
@@ -68,3 +76,13 @@ DPADD+=	${.OBJDIR}/../lib${lib}/lib${lib}.a
 LDADD+=	${.OBJDIR}/../lib${lib}/lib${lib}.a
 .endfor
 LDADD+=-Wl,--end-group
+
+.if ${DRIVER_TEMPLATE:L} == "yes"
+DRIVER_NAME?=	${PROG:S/-/_/g}
+CLEANFILES+=	${DRIVER_NAME}_main.cpp
+SRCS+=		${DRIVER_NAME}_main.cpp
+
+${DRIVER_NAME}_main.cpp:
+	sed "s,@TOOL_NAME@,${DRIVER_NAME},g" \
+		${LLVM_SRCS}/cmake/modules/llvm-driver-template.cpp.in > $@
+.endif

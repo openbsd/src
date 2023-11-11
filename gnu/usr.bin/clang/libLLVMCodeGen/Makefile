@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2021/12/17 14:55:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.17 2023/11/11 18:35:36 robert Exp $
 
 LIB=	LLVMCodeGen
 NOPROFILE=
@@ -9,20 +9,25 @@ CPPFLAGS+=-I${LLVM_SRC}/include/llvm/CodeGen/PBQP
 SRCS+=	AggressiveAntiDepBreaker.cpp \
 	AllocationOrder.cpp \
 	CodeGenAnalysis.cpp \
+	AssignmentTrackingAnalysis.cpp \
 	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
 	BranchRelaxation.cpp \
 	BreakFalseDeps.cpp \
 	BasicBlockSections.cpp \
+	BasicBlockSectionsProfileReader.cpp \
 	CalcSpillWeights.cpp \
 	CallingConvLower.cpp \
 	CFGuardLongjmp.cpp \
+	CFIFixup.cpp \
 	CFIInstrInserter.cpp \
 	CodeGen.cpp \
+	CodeGenCommonISel.cpp \
 	CodeGenPassBuilder.cpp \
 	CodeGenPrepare.cpp \
 	CommandFlags.cpp \
+	ComplexDeinterleavingPass.cpp \
 	CriticalAntiDepBreaker.cpp \
 	DeadMachineInstructionElim.cpp \
 	DetectDeadLanes.cpp \
@@ -32,6 +37,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	EdgeBundles.cpp \
 	EHContGuardCatchret.cpp \
 	ExecutionDomainFix.cpp \
+	ExpandLargeDivRem.cpp \
+	ExpandLargeFpConvert.cpp \
 	ExpandMemCmp.cpp \
 	ExpandPostRAPseudos.cpp \
 	ExpandReductions.cpp \
@@ -54,6 +61,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	InterleavedAccessPass.cpp \
 	InterleavedLoadCombinePass.cpp \
 	IntrinsicLowering.cpp \
+	JMCInstrumenter.cpp \
 	LatencyPriorityQueue.cpp \
 	LazyMachineBlockFrequencyInfo.cpp \
 	LexicalScopes.cpp \
@@ -79,10 +87,12 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineBlockFrequencyInfo.cpp \
 	MachineBlockPlacement.cpp \
 	MachineBranchProbabilityInfo.cpp \
+	MachineCFGPrinter.cpp \
 	MachineCombiner.cpp \
 	MachineCopyPropagation.cpp \
 	MachineCSE.cpp \
 	MachineCheckDebugify.cpp \
+	MachineCycleAnalysis.cpp \
 	MachineDebugify.cpp \
 	MachineDominanceFrontier.cpp \
 	MachineDominators.cpp \
@@ -93,6 +103,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineFunctionSplitter.cpp \
 	MachineInstrBundle.cpp \
 	MachineInstr.cpp \
+	MachineLateInstrsCleanup.cpp \
 	MachineLICM.cpp \
 	MachineLoopInfo.cpp \
 	MachineLoopUtils.cpp \
@@ -110,12 +121,17 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineScheduler.cpp \
 	MachineSink.cpp \
 	MachineSizeOpts.cpp \
+	MachineSSAContext.cpp \
 	MachineSSAUpdater.cpp \
 	MachineStripDebug.cpp \
 	MachineTraceMetrics.cpp \
+	MachineUniformityAnalysis.cpp \
 	MachineVerifier.cpp \
 	MIRFSDiscriminator.cpp \
+	MIRSampleProfile.cpp \
 	MIRYamlMapping.cpp \
+	MLRegallocEvictAdvisor.cpp \
+	MLRegallocPriorityAdvisor.cpp \
 	ModuloSchedule.cpp \
 	MultiHazardRecognizer.cpp \
 	PatchableFunction.cpp \
@@ -142,9 +158,12 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ReachingDefAnalysis.cpp \
 	RegAllocBase.cpp \
 	RegAllocBasic.cpp \
+	RegAllocEvictionAdvisor.cpp \
 	RegAllocFast.cpp \
 	RegAllocGreedy.cpp \
 	RegAllocPBQP.cpp \
+	RegAllocPriorityAdvisor.cpp \
+	RegAllocScore.cpp \
 	RegisterClassInfo.cpp \
 	RegisterCoalescer.cpp \
 	RegisterPressure.cpp \
@@ -162,12 +181,16 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	ResetMachineFunctionPass.cpp \
 	ReturnProtectorLowering.cpp \
 	ReturnProtectorPass.cpp \
+	RegisterBank.cpp \
+	RegisterBankInfo.cpp \
 	SafeStack.cpp \
 	SafeStackLayout.cpp \
+	SanitizerBinaryMetadata.cpp \
 	ScheduleDAG.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \
 	ScoreboardHazardRecognizer.cpp \
+	SelectOptimize.cpp \
 	ShadowStackGCLowering.cpp \
 	ShrinkWrap.cpp \
 	SjLjEHPrepare.cpp \
@@ -175,6 +198,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	SpillPlacement.cpp \
 	SplitKit.cpp \
 	StackColoring.cpp \
+	StackFrameLayoutAnalysisPass.cpp \
 	StackMapLivenessAnalysis.cpp \
 	StackMaps.cpp \
 	StackProtector.cpp \
@@ -192,15 +216,18 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	TargetRegisterInfo.cpp \
 	TargetSchedule.cpp \
 	TargetSubtargetInfo.cpp \
-	TypePromotion.cpp \
 	TwoAddressInstructionPass.cpp \
+	TypePromotion.cpp \
 	UnreachableBlockElim.cpp \
 	ValueTypes.cpp \
+	VLIWMachineScheduler.cpp \
 	VirtRegMap.cpp \
 	WasmEHPrepare.cpp \
 	WinEHPrepare.cpp \
-	XRayInstrumentation.cpp \
-	LiveDebugValues.cpp \
+	XRayInstrumentation.cpp
+	
+# LiveDebugValues
+SRCS+=	LiveDebugValues.cpp \
 	VarLocBasedImpl.cpp \
 	InstrRefBasedImpl.cpp
 

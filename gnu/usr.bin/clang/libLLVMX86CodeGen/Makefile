@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.18 2023/11/11 18:35:38 robert Exp $
 
 LIB=	LLVMX86CodeGen
 NOPROFILE=
@@ -18,6 +18,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86PreAMXConfig.cpp \
 	X86LowerAMXIntrinsics.cpp \
 	X86TileConfig.cpp \
+	X86FastPreTileConfig.cpp \
 	X86FastTileConfig.cpp \
 	X86PreTileConfig.cpp \
 	X86ExpandPseudo.cpp \
@@ -26,6 +27,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86FixupGadgets.cpp \
 	X86FixupLEAs.cpp \
 	X86AvoidStoreForwardingBlocks.cpp \
+	X86DynAllocaExpander.cpp \
 	X86FixupSetCC.cpp \
 	X86FlagsCopyLowering.cpp \
 	X86FloatingPoint.cpp \
@@ -42,6 +44,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86InstrFoldTables.cpp \
 	X86InstrInfo.cpp \
 	X86EvexToVex.cpp \
+	X86KCFI.cpp \
 	X86LegalizerInfo.cpp \
 	X86LoadValueInjectionLoadHardening.cpp \
 	X86LoadValueInjectionRetHardening.cpp \
@@ -54,6 +57,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86RegisterBankInfo.cpp \
 	X86RegisterInfo.cpp \
 	X86ReturnProtectorLowering.cpp \
+	X86ReturnThunks.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86ShuffleDecodeConstantPool.cpp \
 	X86SpeculativeLoadHardening.cpp \
@@ -63,7 +67,6 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86TargetObjectFile.cpp \
 	X86TargetTransformInfo.cpp \
 	X86VZeroUpper.cpp \
-	X86WinAllocaExpander.cpp \
 	X86WinEHState.cpp \
 	X86InsertWait.cpp
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.15 2023/11/11 18:35:37 robert Exp $
 
 LIB=	LLVMScalarOpts
 NOPROFILE=
@@ -52,9 +52,8 @@ SRCS+=	ADCE.cpp \
 	LoopStrengthReduce.cpp \
 	LoopUnrollPass.cpp \
 	LoopUnrollAndJamPass.cpp \
-	LoopUnswitch.cpp \
 	LoopVersioningLICM.cpp \
-	LowerAtomic.cpp \
+	LowerAtomicPass.cpp \
 	LowerConstantIntrinsics.cpp \
 	LowerExpectIntrinsic.cpp \
 	LowerGuardIntrinsic.cpp \
@@ -84,6 +83,7 @@ SRCS+=	ADCE.cpp \
 	StraightLineStrengthReduce.cpp \
 	StructurizeCFG.cpp \
 	TailRecursionElimination.cpp \
+	TLSVariableHoist.cpp \
 	WarnMissedTransforms.cpp
 
 ScalarSCCP.cpp:

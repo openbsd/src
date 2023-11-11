@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2023/11/11 18:35:35 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,10 @@ DEFS=	DynamicLoaderDarwinKernelProperties.inc \
 	DynamicLoaderDarwinKernelPropertiesEnum.inc \
 	JITLoaderGDBProperties.inc \
 	JITLoaderGDBPropertiesEnum.inc \
+	ObjectFilePECOFFProperties.inc \
+	ObjectFilePECOFFPropertiesEnum.inc \
+	PlatformMacOSXProperties.inc \
+	PlatformMacOSXPropertiesEnum.inc \
 	ProcessGDBRemoteProperties.inc \
 	ProcessGDBRemotePropertiesEnum.inc \
 	StructuredDataDarwinLogProperties.inc \
@@ -45,6 +49,30 @@ JITLoaderGDBPropertiesEnum.inc: \
 	${LLDB_SRCS}/source/Plugins/JITLoader/GDB/JITLoaderGDBProperties.td
 	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
 		-I${LLDB_SRCS}/source/Plugins/JITLoader/GDB \
+		-o ${.TARGET} ${.ALLSRC}
+
+ObjectFilePECOFFProperties.inc: \
+	${LLDB_SRCS}/source/Plugins/ObjectFile/PECOFF/ObjectFilePECOFFProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-defs \
+		-I${LLDB_SRCS}/source/Plugins/ObjectFile/PECOFF \
+		-o ${.TARGET} ${.ALLSRC}
+
+ObjectFilePECOFFPropertiesEnum.inc: \
+	${LLDB_SRCS}/source/Plugins/ObjectFile/PECOFF/ObjectFilePECOFFProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
+		-I${LLDB_SRCS}/source/Plugins/ObjectFile/PECOFF \
+		-o ${.TARGET} ${.ALLSRC}
+
+PlatformMacOSXProperties.inc: \
+	${LLDB_SRCS}/source/Plugins/Platform/MacOSX/PlatformMacOSXProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-defs \
+		-I${LLDB_SRCS}/source/Plugins/Platform/MacOSX \
+		-o ${.TARGET} ${.ALLSRC}
+
+PlatformMacOSXPropertiesEnum.inc: \
+	${LLDB_SRCS}/source/Plugins/Platform/MacOSX/PlatformMacOSXProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
+		-I${LLDB_SRCS}/source/Plugins/Platform/MacOSX \
 		-o ${.TARGET} ${.ALLSRC}
 
 ProcessGDBRemoteProperties.inc: \

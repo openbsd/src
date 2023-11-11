@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2023/11/11 18:35:38 robert Exp $
 
 LIB=	clangLex
 NOPIC=
@@ -7,9 +7,11 @@ NOPROFILE=
 CPPFLAGS+=	${CLANG_INCLUDES}
 
 .include <bsd.own.mk>
-SRCS=	DependencyDirectivesSourceMinimizer.cpp \
+
+SRCS=	DependencyDirectivesScanner.cpp \
 	HeaderMap.cpp \
 	HeaderSearch.cpp \
+	InitHeaderSearch.cpp \
 	Lexer.cpp \
 	LiteralSupport.cpp \
 	MacroArgs.cpp \

@@ -1,9 +1,12 @@
-# $OpenBSD: Makefile,v 1.9 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:35 robert Exp $
 
 PROG=	clang-tblgen
 NOMAN=
 
+CPPFLAGS+=	${CLANG_INCLUDES}
+
 .include <bsd.own.mk>
+
 SRCS=	ASTTableGen.cpp \
 	ClangASTNodesEmitter.cpp \
 	ClangASTPropertiesEmitter.cpp \
@@ -27,7 +30,7 @@ SRCS=	ASTTableGen.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/clang/utils/TableGen
 
-LLVM_LIBDEPS=	LLVMTableGen LLVMSupport
+LLVM_LIBDEPS=	LLVMTableGen LLVMSupport clangSupport
 
 install:
 	@# Nothing here so far ...

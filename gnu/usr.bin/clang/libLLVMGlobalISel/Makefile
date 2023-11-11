@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2021/12/17 14:55:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:37 robert Exp $
 
 LIB=	LLVMGlobalISel
 NOPROFILE=
@@ -23,12 +23,11 @@ SRCS+=	CSEInfo.cpp \
 	LegalizerHelper.cpp \
 	LegalizerInfo.cpp \
 	LegacyLegalizerInfo.cpp \
+	LoadStoreOpt.cpp \
 	Localizer.cpp \
 	LostDebugLocObserver.cpp \
 	MachineIRBuilder.cpp \
 	RegBankSelect.cpp \
-	RegisterBank.cpp \
-	RegisterBankInfo.cpp \
 	GlobalISelUtils.cpp
 
 GlobalISelUtils.cpp:

@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbInterpreter
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
+
 SRCS=	CommandAlias.cpp \
 	CommandHistory.cpp \
 	CommandInterpreter.cpp \
@@ -16,6 +17,7 @@ SRCS=	CommandAlias.cpp \
 	OptionGroupBoolean.cpp \
 	OptionGroupFile.cpp \
 	OptionGroupFormat.cpp \
+	OptionGroupMemoryTag.cpp \
 	OptionGroupPythonClassWithDict.cpp \
 	OptionGroupOutputFile.cpp \
 	OptionGroupPlatform.cpp \

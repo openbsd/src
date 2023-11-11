@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2023/11/11 18:35:38 robert Exp $
 
 LIB=	clangFrontend
 NOPIC=
@@ -7,6 +7,7 @@ NOPROFILE=
 CPPFLAGS+=	${CLANG_INCLUDES}
 
 .include <bsd.own.mk>
+
 SRCS=	ASTConsumers.cpp \
 	ASTMerge.cpp \
 	ASTUnit.cpp \
@@ -22,7 +23,6 @@ SRCS=	ASTConsumers.cpp \
 	FrontendActions.cpp \
 	FrontendOptions.cpp \
 	HeaderIncludeGen.cpp \
-	InitHeaderSearch.cpp \
 	InitPreprocessor.cpp \
 	LayoutOverrideSource.cpp \
 	LogDiagnosticPrinter.cpp \
@@ -30,6 +30,8 @@ SRCS=	ASTConsumers.cpp \
 	MultiplexConsumer.cpp \
 	PrecompiledPreamble.cpp \
 	PrintPreprocessedOutput.cpp \
+	SARIFDiagnostic.cpp \
+	SARIFDiagnosticPrinter.cpp \
 	SerializedDiagnosticPrinter.cpp \
 	SerializedDiagnosticReader.cpp \
 	TestModuleFileExtension.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/04/28 12:55:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldELF
 NOPROFILE=
@@ -8,9 +8,9 @@ CPPFLAGS+=	-I${LLD_SRCS}/include
 CPPFLAGS+=	-I${LLD_SRCS}/ELF
 
 .include <bsd.own.mk>
+
 # ELF/Arch
-SRCS=	AArch64ErrataFix.cpp \
-	AArch64.cpp \
+SRCS=	AArch64.cpp \
 	AMDGPU.cpp \
 	ARM.cpp \
 	AVR.cpp \
@@ -26,7 +26,8 @@ SRCS=	AArch64ErrataFix.cpp \
 	X86_64.cpp
 
 # ELF
-SRCS+=	ARMErrataFix.cpp \
+SRCS+=	AArch64ErrataFix.cpp \
+	ARMErrataFix.cpp \
 	CallGraphSort.cpp \
 	DWARF.cpp \
 	Driver.cpp \
@@ -48,7 +49,7 @@ SRCS+=	ARMErrataFix.cpp \
 	SyntheticSections.cpp \
 	Target.cpp \
 	Thunks.cpp \
-	Writer.cpp \
+	Writer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lld/ELF
 .PATH:	${.CURDIR}/../../../llvm/lld/ELF/Arch

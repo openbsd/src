@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2021/04/28 12:55:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbABI
 NOPIC=
@@ -22,6 +22,7 @@ SRCS=	ABIAArch64.cpp \
 	ABISysV_ppc64.cpp \
 	ABISysV_s390x.cpp \
 	ABIX86.cpp \
+	ABIX86_i386.cpp \
 	ABIMacOSX_i386.cpp \
 	ABISysV_i386.cpp \
 	ABISysV_x86_64.cpp \

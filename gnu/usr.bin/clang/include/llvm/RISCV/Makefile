@@ -1,19 +1,22 @@
-# $OpenBSD: Makefile,v 1.2 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2023/11/11 18:35:36 robert Exp $
 
 .include <bsd.own.mk>
 
 LLVM_SRCS=	${.CURDIR}/../../../../../llvm/llvm
 
-HDRS=	RISCVGenAsmMatcher.inc RISCVGenAsmWriter.inc \
-	RISCVGenCallingConv.inc RISCVGenDAGISel.inc \
+HDRS=	RISCVGenAsmMatcher.inc \
+	RISCVGenAsmWriter.inc \
+	RISCVGenCompressInstEmitter.inc \
+	RISCVGenDAGISel.inc \
 	RISCVGenDisassemblerTables.inc \
-	RISCVGenInstrInfo.inc RISCVGenRegisterInfo.inc \
-	RISCVGenSubtargetInfo.inc \
-	RISCVGenMCCodeEmitter.inc RISCVGenMCPseudoLowering.inc \
-	RISCVGenSearchableTables.inc RISCVGenRegisterBank.inc \
-	RISCVGenGlobalISel.inc RISCVGenCompressInstEmitter.inc
-
-# RISCVGenGICombiner.inc  RISCVGenFastISel.inc 
+	RISCVGenGlobalISel.inc \
+	RISCVGenInstrInfo.inc \
+	RISCVGenMCCodeEmitter.inc \
+	RISCVGenMCPseudoLowering.inc \
+	RISCVGenRegisterBank.inc \
+	RISCVGenRegisterInfo.inc \
+	RISCVGenSearchableTables.inc \
+	RISCVGenSubtargetInfo.inc
 
 all: ${HDRS}
 
@@ -58,8 +61,8 @@ RISCVGenFastISel.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
 		-o ${.TARGET} ${.ALLSRC}
 
-RISCVGenCallingConv.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-callingconv \
+RISCVGenCompressInstEmitter.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-compress-inst-emitter \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
 		-o ${.TARGET} ${.ALLSRC}
 

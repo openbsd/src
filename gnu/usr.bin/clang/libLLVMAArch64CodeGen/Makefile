@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2021/12/17 14:55:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.13 2023/11/11 18:35:36 robert Exp $
 
 LIB=	LLVMAArch64CodeGen
 NOPROFILE=
@@ -40,10 +40,13 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64ISelDAGToDAG.cpp \
 	AArch64ISelLowering.cpp \
 	AArch64InstrInfo.cpp \
+	AArch64KCFI.cpp \
 	AArch64LoadStoreOptimizer.cpp \
 	AArch64LowerHomogeneousPrologEpilog.cpp \
 	AArch64MachineFunctionInfo.cpp \
+	AArch64MachineScheduler.cpp \
 	AArch64MacroFusion.cpp \
+	AArch64MIPeepholeOpt.cpp \
 	AArch64MCInstLower.cpp \
 	AArch64PromoteConstant.cpp \
 	AArch64PBQPRegAlloc.cpp \
@@ -59,6 +62,7 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64TargetMachine.cpp \
 	AArch64TargetObjectFile.cpp \
 	AArch64TargetTransformInfo.cpp \
+	SMEABIPass.cpp \
 	SVEIntrinsicOpts.cpp \
 	AArch64SIMDInstrOpt.cpp
 

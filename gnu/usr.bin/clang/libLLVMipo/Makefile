@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.15 2023/11/11 18:35:38 robert Exp $
 
 LIB=	LLVMipo
 NOPROFILE=
@@ -36,10 +36,10 @@ SRCS+=	AlwaysInliner.cpp \
 	LoopExtractor.cpp \
 	LowerTypeTests.cpp \
 	MergeFunctions.cpp \
+	ModuleInliner.cpp \
 	OpenMPOpt.cpp \
 	PartialInlining.cpp \
 	PassManagerBuilder.cpp \
-	PruneEH.cpp \
 	SampleContextTracker.cpp \
 	SampleProfile.cpp \
 	SampleProfileProbe.cpp \

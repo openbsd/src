@@ -1,8 +1,5 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "LLVM-CONFIG" "1" "2021-08-29" "13" "LLVM"
-.SH NAME
-llvm-config \- Print LLVM compilation options
 .
 .nr rst2man-indent-level 0
 .
@@ -30,6 +27,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
+.TH "LLVM-CONFIG" "1" "2023-10-21" "16" "LLVM"
+.SH NAME
+llvm-config \- Print LLVM compilation options
 .SH SYNOPSIS
 .sp
 \fBllvm\-config\fP \fIoption\fP [\fIcomponents\fP\&...]
@@ -55,38 +55,10 @@ g++ \(gallvm\-config \-\-ldflags\(ga \-o HowToUseJIT HowToUseJIT.o \e
 .UNINDENT
 .SH OPTIONS
 .sp
-\fB\-\-version\fP
+\fB\-\-assertion\-mode\fP
 .INDENT 0.0
 .INDENT 3.5
-Print the version number of LLVM.
-.UNINDENT
-.UNINDENT
-.sp
-\fB\-help\fP
-.INDENT 0.0
-.INDENT 3.5
-Print a summary of \fBllvm\-config\fP arguments.
-.UNINDENT
-.UNINDENT
-.sp
-\fB\-\-prefix\fP
-.INDENT 0.0
-.INDENT 3.5
-Print the installation prefix for LLVM.
-.UNINDENT
-.UNINDENT
-.sp
-\fB\-\-src\-root\fP
-.INDENT 0.0
-.INDENT 3.5
-Print the source root from which LLVM was built.
-.UNINDENT
-.UNINDENT
-.sp
-\fB\-\-obj\-root\fP
-.INDENT 0.0
-.INDENT 3.5
-Print the object root used to build LLVM.
+Print the assertion mode used when LLVM was built (ON or OFF).
 .UNINDENT
 .UNINDENT
 .sp
@@ -97,17 +69,45 @@ Print the installation directory for LLVM binaries.
 .UNINDENT
 .UNINDENT
 .sp
-\fB\-\-includedir\fP
+\fB\-\-build\-mode\fP
 .INDENT 0.0
 .INDENT 3.5
-Print the installation directory for LLVM headers.
+Print the build mode used when LLVM was built (e.g. Debug or Release).
 .UNINDENT
 .UNINDENT
 .sp
-\fB\-\-libdir\fP
+\fB\-\-build\-system\fP
 .INDENT 0.0
 .INDENT 3.5
-Print the installation directory for LLVM libraries.
+Print the build system used to build LLVM (e.g. \fIcmake\fP or \fIgn\fP).
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-cflags\fP
+.INDENT 0.0
+.INDENT 3.5
+Print the C compiler flags needed to use LLVM headers.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-cmakedir\fP
+.INDENT 0.0
+.INDENT 3.5
+Print the installation directory for LLVM CMake modules.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-components\fP
+.INDENT 0.0
+.INDENT 3.5
+Print all valid component names.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-cppflags\fP
+.INDENT 0.0
+.INDENT 3.5
+Print the C preprocessor flags needed to use LLVM headers.
 .UNINDENT
 .UNINDENT
 .sp
@@ -118,6 +118,41 @@ Print the C++ compiler flags needed to use LLVM headers.
 .UNINDENT
 .UNINDENT
 .sp
+\fB\-\-has\-rtti\fP
+.INDENT 0.0
+.INDENT 3.5
+Print whether or not LLVM was built with rtti (YES or NO).
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-help\fP
+.INDENT 0.0
+.INDENT 3.5
+Print a summary of \fBllvm\-config\fP arguments.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-host\-target\fP
+.INDENT 0.0
+.INDENT 3.5
+Print the target triple used to configure LLVM.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-ignore\-libllvm\fP
+.INDENT 0.0
+.INDENT 3.5
+Ignore libLLVM and link component libraries instead.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-includedir\fP
+.INDENT 0.0
+.INDENT 3.5
+Print the installation directory for LLVM headers.
+.UNINDENT
+.UNINDENT
+.sp
 \fB\-\-ldflags\fP
 .INDENT 0.0
 .INDENT 3.5
@@ -125,20 +160,10 @@ Print the flags needed to link against LLVM libraries.
 .UNINDENT
 .UNINDENT
 .sp
-\fB\-\-libs\fP
+\fB\-\-libdir\fP
 .INDENT 0.0
 .INDENT 3.5
-Print all the libraries needed to link against the specified LLVM
-\fIcomponents\fP, including any dependencies.
-.UNINDENT
-.UNINDENT
-.sp
-\fB\-\-libnames\fP
-.INDENT 0.0
-.INDENT 3.5
-Similar to \fB\-\-libs\fP, but prints the bare filenames of the libraries
-without \fB\-l\fP or pathnames.  Useful for linking against a not\-yet\-installed
-copy of LLVM.
+Print the installation directory for LLVM libraries.
 .UNINDENT
 .UNINDENT
 .sp
@@ -151,10 +176,63 @@ any library it uses changes.
 .UNINDENT
 .UNINDENT
 .sp
-\fB\-\-components\fP
+\fB\-\-libnames\fP
 .INDENT 0.0
 .INDENT 3.5
-Print all valid component names.
+Similar to \fB\-\-libs\fP, but prints the bare filenames of the libraries
+without \fB\-l\fP or pathnames.  Useful for linking against a not\-yet\-installed
+copy of LLVM.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-libs\fP
+.INDENT 0.0
+.INDENT 3.5
+Print all the libraries needed to link against the specified LLVM
+\fIcomponents\fP, including any dependencies.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-link\-shared\fP
+.INDENT 0.0
+.INDENT 3.5
+Link the components as shared libraries.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-link\-static\fP
+.INDENT 0.0
+.INDENT 3.5
+Link the component libraries statically.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-obj\-root\fP
+.INDENT 0.0
+.INDENT 3.5
+Print the object root used to build LLVM.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-prefix\fP
+.INDENT 0.0
+.INDENT 3.5
+Print the installation prefix for LLVM.
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-shared\-mode\fP
+.INDENT 0.0
+.INDENT 3.5
+Print how the provided components can be collectively linked (\fIshared\fP or \fIstatic\fP).
+.UNINDENT
+.UNINDENT
+.sp
+\fB\-\-system\-libs\fP
+.INDENT 0.0
+.INDENT 3.5
+Print all the system libraries needed to link against the specified LLVM
+\fIcomponents\fP, including any dependencies.
 .UNINDENT
 .UNINDENT
 .sp
@@ -165,17 +243,17 @@ Print the component names for all targets supported by this copy of LLVM.
 .UNINDENT
 .UNINDENT
 .sp
-\fB\-\-build\-mode\fP
+\fB\-\-version\fP
 .INDENT 0.0
 .INDENT 3.5
-Print the build mode used when LLVM was built (e.g. Debug or Release)
+Print the version number of LLVM.
 .UNINDENT
 .UNINDENT
 .SH COMPONENTS
 .sp
 To print a list of all available components, run \fBllvm\-config
 \-\-components\fP\&.  In most cases, components correspond directly to LLVM
-libraries.  Useful "virtual" components include:
+libraries.  Useful \(dqvirtual\(dq components include:
 .sp
 \fBall\fP
 .INDENT 0.0
@@ -204,6 +282,6 @@ occurs, it will exit with a non\-zero value.
 .SH AUTHOR
 Maintained by the LLVM Team (https://llvm.org/).
 .SH COPYRIGHT
-2003-2021, LLVM Project
+2003-2023, LLVM Project
 .\" Generated by docutils manpage writer.
 .

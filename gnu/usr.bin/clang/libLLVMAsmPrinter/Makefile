@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/12/17 14:55:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:36 robert Exp $
 
 LIB=	LLVMAsmPrinter
 NOPROFILE=
@@ -30,6 +30,5 @@ SRCS+=	AccelTable.cpp \
 	WinException.cpp \
 	CodeViewDebug.cpp \
 	WasmException.cpp
-
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/CodeGen/AsmPrinter

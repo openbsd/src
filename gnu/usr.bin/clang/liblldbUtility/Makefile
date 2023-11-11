@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2021/12/17 14:55:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:40 robert Exp $
 
 LIB=	lldbUtility
 NOPIC=
@@ -17,28 +17,26 @@ SRCS=	ArchSpec.cpp \
 	DataBufferLLVM.cpp \
 	DataEncoder.cpp \
 	DataExtractor.cpp \
+	Diagnostics.cpp \
 	Environment.cpp \
 	Event.cpp \
 	FileSpec.cpp \
 	GDBRemote.cpp \
 	IOObject.cpp \
 	LLDBAssert.cpp \
+	LLDBLog.cpp \
 	Listener.cpp \
 	Log.cpp \
-	Logging.cpp \
 	NameMatches.cpp \
 	ProcessInfo.cpp \
 	RegisterValue.cpp \
 	RegularExpression.cpp \
-	Reproducer.cpp \
-	ReproducerInstrumentation.cpp \
-	ReproducerProvider.cpp \
+	Instrumentation.cpp \
 	Scalar.cpp \
 	SelectHelper.cpp \
 	State.cpp \
 	Status.cpp \
 	Stream.cpp \
-	StreamCallback.cpp \
 	StreamString.cpp \
 	StringExtractor.cpp \
 	StringExtractorGDBRemote.cpp \

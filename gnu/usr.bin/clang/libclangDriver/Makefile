@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:38 robert Exp $
 
 LIB=	clangDriver
 NOPIC=
@@ -17,6 +17,7 @@ SRCS=	Action.cpp \
 	DriverOptions.cpp \
 	Job.cpp \
 	Multilib.cpp \
+	OffloadBundler.cpp \
 	OptionUtils.cpp \
 	Phases.cpp \
 	SanitizerArgs.cpp \
@@ -37,6 +38,7 @@ SRCS+=	AIX.cpp \
 	CommonArgs.cpp \
 	Contiki.cpp \
 	CrossWindows.cpp \
+	CSKYToolChain.cpp \
 	Cuda.cpp \
 	Darwin.cpp \
 	DragonFly.cpp \
@@ -45,8 +47,11 @@ SRCS+=	AIX.cpp \
 	Fuchsia.cpp \
 	Gnu.cpp \
 	Haiku.cpp \
-	HIP.cpp \
+	HIPUtility.cpp \
+	HIPAMD.cpp \
+	HIPSPV.cpp \
 	Hexagon.cpp \
+	HLSL.cpp \
 	Hurd.cpp \
 	Linux.cpp \
 	MipsLinux.cpp \
@@ -61,17 +66,21 @@ SRCS+=	AIX.cpp \
 	PS4CPU.cpp \
 	RISCVToolchain.cpp \
 	Solaris.cpp \
+	SPIRV.cpp \
 	TCE.cpp \
 	VEToolchain.cpp \
 	WebAssembly.cpp \
 	XCore.cpp \
 	PPCLinux.cpp \
+	PPCFreeBSD.cpp \
 	InterfaceStubs.cpp \
 	ZOS.cpp
 
 # Driver/Toolchains/Arch
 SRCS+=	AArch64.cpp \
 	ARM.cpp \
+	CSKY.cpp \
+	LoongArch.cpp \
 	M68k.cpp \
 	Mips.cpp \
 	PPC.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:28 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2023/11/11 18:35:38 robert Exp $
 
 LIB=	clangBasicTargets
 NOPIC=
@@ -9,15 +9,20 @@ CPPFLAGS+=	-I${CLANG_SRCS}/lib/Basic
 CPPFLAGS+=	-I${CLANG_SRCS}/lib/Basic/Targets
 
 .include <bsd.own.mk>
+
 SRCS=	AArch64.cpp \
 	AMDGPU.cpp \
 	ARC.cpp \
 	ARM.cpp \
 	AVR.cpp \
 	BPF.cpp \
+	CSKY.cpp \
+	DirectX.cpp \
 	Hexagon.cpp \
 	Lanai.cpp \
 	Le64.cpp \
+	LoongArch.cpp \
+	M68k.cpp \
 	MSP430.cpp \
 	Mips.cpp \
 	NVPTX.cpp \
@@ -29,6 +34,7 @@ SRCS=	AArch64.cpp \
 	Sparc.cpp \
 	SystemZ.cpp \
 	TCE.cpp \
+	VE.cpp \
 	WebAssembly.cpp \
 	X86.cpp \
 	XCore.cpp

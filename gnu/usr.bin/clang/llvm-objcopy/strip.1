@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LLVM-STRIP" "1" "2023-01-08" "13" "LLVM"
+.TH "LLVM-STRIP" "1" "2023-10-21" "16" "LLVM"
 .SH NAME
 llvm-strip \- object stripping tool
 .SH SYNOPSIS
@@ -85,6 +85,16 @@ Disable \fI\%\-\-strip\-all\fP\&.
 .B \-o <file>
 Write output to <file>. Multiple input files cannot be used in combination
 with \-o.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-only\-keep\-debug
+Produce a debug file as the output that only preserves contents of sections
+useful for debugging purposes.
+.sp
+For ELF objects, this removes the contents of \fISHF_ALLOC\fP sections that are not
+\fISHT_NOTE\fP by making them \fISHT_NOBITS\fP and shrinking the program headers where
+possible.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -209,17 +219,6 @@ the same as \fB\-w \-N \(aq!x\(aq \-N \(aq*\(aq\fP\&.
 .B @<FILE>
 Read command\-line options and commands from response file \fI<FILE>\fP\&.
 .UNINDENT
-.SH COFF-SPECIFIC OPTIONS
-.sp
-The following options are implemented only for COFF objects. If used with other
-objects, \fBllvm\-strip\fP will either emit an error or silently ignore
-them.
-.INDENT 0.0
-.TP
-.B \-\-only\-keep\-debug
-Remove the contents of non\-debug sections from the output, but keep the section
-headers.
-.UNINDENT
 .SH ELF-SPECIFIC OPTIONS
 .sp
 The following options are implemented only for ELF objects. If used with other
@@ -276,7 +275,7 @@ Remove Swift symbols.
 Otherwise, it exits with code 0.
 .SH BUGS
 .sp
-To report bugs, please visit <\fI\%https://bugs.llvm.org/\fP>.
+To report bugs, please visit <\fI\%https://github.com/llvm/llvm\-project/labels/tools:llvm\-objcopy%2Fstrip\fP>.
 .SH SEE ALSO
 .sp
 \fBllvm\-objcopy(1)\fP

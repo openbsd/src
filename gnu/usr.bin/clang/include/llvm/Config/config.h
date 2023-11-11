@@ -3,14 +3,17 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// Include this header only under the llvm source tree.
+// This is a private header.
+
 /* Exported configuration */
 #include "llvm/Config/llvm-config.h"
 
 /* Bug report URL. */
-#define BUG_REPORT_URL "https://bugs.llvm.org/"
+#define BUG_REPORT_URL "https://github.com/llvm/llvm-project/issues/"
 
 /* Define to 1 to enable backtraces, and to 0 otherwise. */
-#define ENABLE_BACKTRACES 1
+#define ENABLE_BACKTRACES 0
 
 /* Define to 1 to enable crash overrides, and to 0 otherwise. */
 #define ENABLE_CRASH_OVERRIDES 1
@@ -18,13 +21,17 @@
 /* Define to 1 to enable crash memory dumps, and to 0 otherwise. */
 #define LLVM_ENABLE_CRASH_DUMPS 0
 
+/* Define to 1 to prefer forward slashes on Windows, and to 0 prefer
+   backslashes. */
+#define LLVM_WINDOWS_PREFER_FORWARD_SLASH 0
+
 /* Define to 1 if you have the `backtrace' function. */
 /* #undef HAVE_BACKTRACE */
 
 /* #undef BACKTRACE_HEADER */
 
 /* Define to 1 if you have the <CrashReporterClient.h> header file. */
-#undef HAVE_CRASHREPORTERCLIENT_H
+/* #undef HAVE_CRASHREPORTERCLIENT_H */
 
 /* can use __crashreporter_info__ */
 #define HAVE_CRASHREPORTER_INFO 0
@@ -44,9 +51,6 @@
 /* Define to 1 if you have the declaration of `strerror_s', and to 0 if you
    don't. */
 #define HAVE_DECL_STRERROR_S 0
-
-/* Define to 1 if you have the DIA SDK installed, and to 0 if you don't. */
-#define LLVM_ENABLE_DIA_SDK 0
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
@@ -110,7 +114,7 @@
 #define HAVE_ISATTY 1
 
 /* Define to 1 if you have the `edit' library (-ledit). */
-#define HAVE_LIBEDIT 1
+#define HAVE_LIBEDIT TRUE
 
 /* Define to 1 if you have the `pfm' library (-lpfm). */
 /* #undef HAVE_LIBPFM */
@@ -131,10 +135,7 @@
 /* #undef HAVE_PTHREAD_SETNAME_NP */
 
 /* Define to 1 if you have the <link.h> header file. */
-/* #undef HAVE_LINK_H */
-
-/* Define to 1 if you have the `lseek64' function. */
-/* #undef HAVE_LSEEK64 */
+#define HAVE_LINK_H 1
 
 /* Define to 1 if you have the <mach/mach.h> header file. */
 /* #undef HAVE_MACH_MACH_H */
@@ -142,7 +143,7 @@
 /* Define to 1 if you have the `mallctl' function. */
 /* #undef HAVE_MALLCTL */
 
-/* Define if mallinfo() is available on this platform. */
+/* Define to 1 if you have the `mallinfo' function. */
 /* #undef HAVE_MALLINFO */
 
 /* Define to 1 if you have the `mallinfo2' function. */
@@ -154,17 +155,11 @@
 /* Define to 1 if you have the `malloc_zone_statistics' function. */
 /* #undef HAVE_MALLOC_ZONE_STATISTICS */
 
-/* Define to 1 if you have the `posix_fallocate' function. */
-/* #undef HAVE_POSIX_FALLOCATE */
-
 /* Define to 1 if you have the `posix_spawn' function. */
 #define HAVE_POSIX_SPAWN 1
 
 /* Define to 1 if you have the `pread' function. */
 #define HAVE_PREAD 1
-
-/* Have pthread_getspecific */
-#define HAVE_PTHREAD_GETSPECIFIC 1
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #define HAVE_PTHREAD_H 1
@@ -197,7 +192,7 @@
 #define HAVE_STRERROR_R 1
 
 /* Define to 1 if you have the `sysconf' function. */
-/* #undef HAVE_SYSCONF */
+#define HAVE_SYSCONF 1
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #define HAVE_SYS_IOCTL_H 1
@@ -218,13 +213,13 @@
 #define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if stat struct has st_mtimespec member .*/
-/* #undef HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC */
+#define HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC 1
 
 /* Define to 1 if stat struct has st_mtim member. */
 #define HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-/* #undef HAVE_SYS_TYPES_H */
+#define HAVE_SYS_TYPES_H 1
 
 /* Define if the setupterm() function is supported this platform. */
 /* #undef LLVM_ENABLE_TERMINFO */
@@ -236,7 +231,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
-/* #define HAVE_VALGRIND_VALGRIND_H 1 */
+/* #undef HAVE_VALGRIND_VALGRIND_H */
 
 /* Have host's _alloca */
 /* #undef HAVE__ALLOCA */
@@ -301,18 +296,8 @@
 /* Linker version detected at compile time. */
 /* #undef HOST_LINK_VERSION */
 
-/* Target triple LLVM will generate code for by default */
-/* Doesn't use `cmakedefine` because it is allowed to be empty. */
-/* #define LLVM_DEFAULT_TARGET_TRIPLE "amd64-unknown-openbsd7.0" */
-
-/* Define if zlib compression is available */
-/* #define LLVM_ENABLE_ZLIB 1 */
-
 /* Define if overriding target triple is enabled */
 /* #undef LLVM_TARGET_TRIPLE_ENV */
-
-/* LLVM version information */
-/* #undef LLVM_VERSION_INFO */
 
 /* Whether tools show host and target info when invoked with --version */
 #define LLVM_VERSION_PRINTER_SHOW_HOST_TARGET_INFO 1
@@ -327,25 +312,19 @@
 #define LLVM_PLUGIN_EXT ".so"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "https://bugs.llvm.org/"
+#define PACKAGE_BUGREPORT "https://github.com/llvm/llvm-project/issues/"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LLVM 13.0.0"
+#define PACKAGE_STRING "LLVM 16.0.6"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "13.0.0"
+#define PACKAGE_VERSION "16.0.6"
 
 /* Define to the vendor of this package. */
 /* #undef PACKAGE_VENDOR */
-
-/* Define as the return type of signal handlers (`int' or `void'). */
-#define RETSIGTYPE void
-
-/* Define if std::is_trivially_copyable is supported */
-#define HAVE_STD_IS_TRIVIALLY_COPYABLE 1
 
 /* Define to a function implementing stricmp */
 /* #undef stricmp */
@@ -358,6 +337,9 @@
 
 /* Define to the default GlobalISel coverage file prefix */
 /* #undef LLVM_GISEL_COV_PREFIX */
+
+/* Whether Timers signpost passes in Xcode Instruments */
+#define LLVM_SUPPORT_XCODE_SIGNPOSTS 0
 
 /* #undef HAVE_PROC_PID_RUSAGE */
 

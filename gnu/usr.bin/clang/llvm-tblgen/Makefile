@@ -1,15 +1,17 @@
-# $OpenBSD: Makefile,v 1.13 2021/12/17 14:55:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.14 2023/11/11 18:35:40 robert Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
 
 .include <bsd.own.mk>
+
+# TableGen
 SRCS=	AsmMatcherEmitter.cpp \
 	AsmWriterEmitter.cpp \
 	AsmWriterInst.cpp \
 	Attributes.cpp \
+	CTagsEmitter.cpp \
 	CallingConvEmitter.cpp \
-	CodeBeadsGen.cpp \
 	CodeEmitterGen.cpp \
 	CodeGenDAGPatterns.cpp \
 	CodeGenHwModes.cpp \
@@ -18,30 +20,32 @@ SRCS=	AsmMatcherEmitter.cpp \
 	CodeGenRegisters.cpp \
 	CodeGenSchedule.cpp \
 	CodeGenTarget.cpp \
+	CompressInstEmitter.cpp \
 	DAGISelEmitter.cpp \
+	DAGISelMatcher.cpp \
 	DAGISelMatcherEmitter.cpp \
 	DAGISelMatcherGen.cpp \
 	DAGISelMatcherOpt.cpp \
-	DAGISelMatcher.cpp \
 	DFAEmitter.cpp \
 	DFAPacketizerEmitter.cpp \
+	DXILEmitter.cpp \
+	DecoderEmitter.cpp \
 	DirectiveEmitter.cpp \
 	DisassemblerEmitter.cpp \
 	ExegesisEmitter.cpp \
 	FastISelEmitter.cpp \
-	FixedLenDecoderEmitter.cpp \
 	GICombinerEmitter.cpp \
 	GlobalISelEmitter.cpp \
 	InfoByHwMode.cpp \
-	InstrInfoEmitter.cpp \
 	InstrDocsEmitter.cpp \
+	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
 	OptEmitter.cpp \
 	OptParserEmitter.cpp \
 	OptRSTEmitter.cpp \
 	PredicateExpander.cpp \
 	PseudoLoweringEmitter.cpp \
-	RISCVCompressInstEmitter.cpp \
+	RISCVTargetDefEmitter.cpp \
 	RegisterBankEmitter.cpp \
 	RegisterInfoEmitter.cpp \
 	SDNodeProperties.cpp \
@@ -50,14 +54,17 @@ SRCS=	AsmMatcherEmitter.cpp \
 	SubtargetFeatureInfo.cpp \
 	TableGen.cpp \
 	Types.cpp \
+	VarLenCodeEmitterGen.cpp \
+	WebAssemblyDisassemblerEmitter.cpp \
 	X86DisassemblerTables.cpp \
 	X86EVEX2VEXTablesEmitter.cpp \
 	X86FoldTablesEmitter.cpp \
+	X86MnemonicTables.cpp \
 	X86ModRMFilters.cpp \
-	X86RecognizableInstr.cpp \
-	WebAssemblyDisassemblerEmitter.cpp \
-	CTagsEmitter.cpp \
-	CodeExpander.cpp \
+	X86RecognizableInstr.cpp
+
+# TableGen/GlobalISel
+SRCS+=	CodeExpander.cpp \
 	GIMatchDag.cpp \
 	GIMatchDagEdge.cpp \
 	GIMatchDagInstr.cpp \

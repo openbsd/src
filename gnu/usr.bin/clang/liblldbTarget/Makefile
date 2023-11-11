@@ -1,12 +1,14 @@
-# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:40 robert Exp $
 
 LIB=	lldbTarget
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
+
 SRCS=	ABI.cpp \
 	AssertFrameRecognizer.cpp \
+	DynamicRegisterInfo.cpp \
 	ExecutionContext.cpp \
 	InstrumentationRuntime.cpp \
 	InstrumentationRuntimeStopInfo.cpp \
@@ -17,6 +19,7 @@ SRCS=	ABI.cpp \
 	Memory.cpp \
 	MemoryHistory.cpp \
 	MemoryRegionInfo.cpp \
+	MemoryTagMap.cpp \
 	ModuleCache.cpp \
 	OperatingSystem.cpp \
 	PathMappingList.cpp \
@@ -36,6 +39,7 @@ SRCS=	ABI.cpp \
 	StackFrameList.cpp \
 	StackFrameRecognizer.cpp \
 	StackID.cpp \
+	Statistics.cpp \
 	StopInfo.cpp \
 	StructuredDataPlugin.cpp \
 	SystemRuntime.cpp \
@@ -67,7 +71,7 @@ SRCS=	ABI.cpp \
 	Trace.cpp \
 	TraceCursor.cpp \
 	TraceExporter.cpp \
-	TraceInstructionDumper.cpp \
+	TraceDumper.cpp \
 	UnixSignals.cpp \
 	UnwindAssembly.cpp \
 	UnwindLLDB.cpp

@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbHostCommon
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
+
 SRCS=	Editline.cpp \
 	FileAction.cpp \
 	FileCache.cpp \
@@ -18,7 +19,7 @@ SRCS=	Editline.cpp \
 	HostThread.cpp \
 	LockFileBase.cpp \
 	LZMA.cpp \
-	MainLoop.cpp \
+	MainLoopBase.cpp \
 	MonitoringProcessLauncher.cpp \
 	NativeProcessProtocol.cpp \
 	NativeRegisterContext.cpp \
@@ -31,7 +32,6 @@ SRCS=	Editline.cpp \
 	PseudoTerminal.cpp \
 	SocketAddress.cpp \
 	Socket.cpp \
-	StringConvert.cpp \
 	TCPSocket.cpp \
 	Terminal.cpp \
 	ThreadLauncher.cpp \

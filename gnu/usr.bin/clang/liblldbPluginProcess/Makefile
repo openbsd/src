@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.10 2021/12/17 14:55:47 patrick Exp $
+# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
+
 # Process/OpenBSD
 SRCS=	NativeProcessOpenBSD.cpp \
 	NativeRegisterContextOpenBSD.cpp \
@@ -24,19 +25,18 @@ SRCS+=	GDBRemoteClientBase.cpp \
 	GDBRemoteCommunication.cpp \
 	GDBRemoteCommunicationClient.cpp \
 	GDBRemoteCommunicationHistory.cpp \
-	GDBRemoteCommunicationReplayServer.cpp \
 	GDBRemoteCommunicationServer.cpp \
 	GDBRemoteCommunicationServerCommon.cpp \
 	GDBRemoteCommunicationServerLLGS.cpp \
 	GDBRemoteCommunicationServerPlatform.cpp \
 	GDBRemoteRegisterContext.cpp \
+	GDBRemoteRegisterFallback.cpp \
 	ProcessGDBRemote.cpp \
 	ProcessGDBRemoteLog.cpp \
 	ThreadGDBRemote.cpp
 
 # Process/Utility
 SRCS+=	AuxVector.cpp \
-	DynamicRegisterInfo.cpp \
 	FreeBSDSignals.cpp \
 	GDBRemoteSignals.cpp \
 	HistoryThread.cpp \
@@ -76,9 +76,11 @@ SRCS+=	AuxVector.cpp \
 	RegisterContextOpenBSD_x86_64.cpp \
 	RegisterContextPOSIX_arm.cpp \
 	RegisterContextPOSIX_arm64.cpp \
+	RegisterContextPOSIX_loongarch64.cpp \
 	RegisterContextPOSIX_mips64.cpp \
 	RegisterContextPOSIX_powerpc.cpp \
 	RegisterContextPOSIX_ppc64le.cpp \
+	RegisterContextPOSIX_riscv64.cpp \
 	RegisterContextPOSIX_s390x.cpp \
 	RegisterContextPOSIX_x86.cpp \
 	RegisterContextThreadMemory.cpp \
@@ -86,7 +88,9 @@ SRCS+=	AuxVector.cpp \
 	RegisterContextWindows_x86_64.cpp \
 	RegisterInfoPOSIX_arm.cpp \
 	RegisterInfoPOSIX_arm64.cpp \
+	RegisterInfoPOSIX_loongarch64.cpp \
 	RegisterInfoPOSIX_ppc64le.cpp \
+	RegisterInfoPOSIX_riscv64.cpp \
 	StopInfoMachException.cpp \
 	ThreadMemory.cpp
 
@@ -117,7 +121,8 @@ SRCS+=	MinidumpTypes.cpp \
 	ThreadMinidump.cpp
 
 # Process/scripted
-SRCS+=	ScriptedProcess.cpp
+SRCS+=	ScriptedProcess.cpp \
+	ScriptedThread.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/OpenBSD
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/POSIX

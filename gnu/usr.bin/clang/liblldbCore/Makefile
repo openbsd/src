@@ -1,16 +1,19 @@
-# $OpenBSD: Makefile,v 1.6 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:39 robert Exp $
 
 LIB=	lldbCore
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
+
 SRCS=	Address.cpp \
 	AddressRange.cpp \
 	AddressResolver.cpp \
 	AddressResolverFileLine.cpp \
 	Communication.cpp \
+	DataFileCache.cpp \
 	Debugger.cpp \
+	DebuggerEvents.cpp \
 	Declaration.cpp \
 	Disassembler.cpp \
 	DumpDataExtractor.cpp \
@@ -37,6 +40,7 @@ SRCS=	Address.cpp \
 	SourceManager.cpp \
 	StreamAsynchronousIO.cpp \
 	StreamFile.cpp \
+	ThreadedCommunication.cpp \
 	UserSettingsController.cpp \
 	Value.cpp \
 	ValueObject.cpp \

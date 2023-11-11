@@ -13,15 +13,11 @@
 
 #define LLDB_HAVE_EL_RFUNC_T 1
 
-#define HAVE_SYS_TYPES_H 1
-
 #define HAVE_SYS_EVENT_H 1
 
 #define HAVE_PPOLL 1
 
 #define HAVE_PTSNAME_R 0
-
-#define HAVE_SIGACTION 1
 
 #define HAVE_PROCESS_VM_READV 0
 
@@ -49,10 +45,14 @@
 
 #define LLDB_ENABLE_PYTHON 0
 
+#define LLDB_ENABLE_FBSDVMCORE 0
+
 #define LLDB_EMBED_PYTHON_HOME 0
 
 #define LLDB_PYTHON_HOME ""
 
-#define LLDB_LIBDIR_SUFFIX ""
+#define LLDB_INSTALL_LIBDIR_BASENAME ""
+
+/* #undef LLDB_GLOBAL_INIT_DIRECTORY */
 
 #endif // #ifndef LLDB_HOST_CONFIG_H
