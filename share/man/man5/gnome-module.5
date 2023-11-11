@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gnome-module.5,v 1.6 2023/11/11 12:27:00 ajacoutot Exp $
+.\"	$OpenBSD: gnome-module.5,v 1.7 2023/11/11 12:32:34 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -44,6 +44,17 @@ This module has full support for the
 and
 .Ar cmake
 CONFIGURE_STYLE.
+.Pp
+If
+.Ev DIST_TUPLE
+is set and the
+.Em gnome
+template is used, this module will set default values for
+.Ev GNOME_PROJECT,
+.Ev GNOME_VERSION,
+.Ev WRKDIST,
+and
+.Ev EXTRACT_SUFX .
 .Pp
 If both
 .Ev GNOME_PROJECT
