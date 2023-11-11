@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.710 2023/11/10 15:51:24 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.711 2023/11/11 14:24:03 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1522,7 +1522,7 @@ if_congested(void)
  * Locate an interface based on a complete address.
  */
 struct ifaddr *
-ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
+ifa_ifwithaddr(const struct sockaddr *addr, u_int rtableid)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -1551,7 +1551,7 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
  * Locate the point to point interface with a given destination address.
  */
 struct ifaddr *
-ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
+ifa_ifwithdstaddr(const struct sockaddr *addr, u_int rdomain)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -1581,10 +1581,10 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
  * a given address.
  */
 struct ifaddr *
-ifaof_ifpforaddr(struct sockaddr *addr, struct ifnet *ifp)
+ifaof_ifpforaddr(const struct sockaddr *addr, struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
-	char *cp, *cp2, *cp3;
+	const char *cp, *cp2, *cp3;
 	char *cplim;
 	struct ifaddr *ifa_maybe = NULL;
 	u_int af = addr->sa_family;
@@ -3124,20 +3124,20 @@ if_getgrouplist(caddr_t data)
 }
 
 void
-if_group_routechange(struct sockaddr *dst, struct sockaddr *mask)
+if_group_routechange(const struct sockaddr *dst, const struct sockaddr *mask)
 {
 	switch (dst->sa_family) {
 	case AF_INET:
-		if (satosin(dst)->sin_addr.s_addr == INADDR_ANY &&
+		if (satosin_const(dst)->sin_addr.s_addr == INADDR_ANY &&
 		    mask && (mask->sa_len == 0 ||
-		    satosin(mask)->sin_addr.s_addr == INADDR_ANY))
+		    satosin_const(mask)->sin_addr.s_addr == INADDR_ANY))
 			if_group_egress_build();
 		break;
 #ifdef INET6
 	case AF_INET6:
-		if (IN6_ARE_ADDR_EQUAL(&(satosin6(dst))->sin6_addr,
+		if (IN6_ARE_ADDR_EQUAL(&(satosin6_const(dst))->sin6_addr,
 		    &in6addr_any) && mask && (mask->sa_len == 0 ||
-		    IN6_ARE_ADDR_EQUAL(&(satosin6(mask))->sin6_addr,
+		    IN6_ARE_ADDR_EQUAL(&(satosin6_const(mask))->sin6_addr,
 		    &in6addr_any)))
 			if_group_egress_build();
 		break;

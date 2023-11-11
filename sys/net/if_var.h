@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.129 2023/07/07 08:05:02 bluhm Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.130 2023/11/11 14:24:03 bluhm Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -337,9 +337,9 @@ void	p2p_rtrequest(struct ifnet *, int, struct rtentry *);
 void	p2p_input(struct ifnet *, struct mbuf *);
 int	p2p_bpf_mtap(caddr_t, const struct mbuf *, u_int);
 
-struct	ifaddr *ifa_ifwithaddr(struct sockaddr *, u_int);
-struct	ifaddr *ifa_ifwithdstaddr(struct sockaddr *, u_int);
-struct	ifaddr *ifaof_ifpforaddr(struct sockaddr *, struct ifnet *);
+struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *, u_int);
+struct	ifaddr *ifa_ifwithdstaddr(const struct sockaddr *, u_int);
+struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
 struct	ifaddr *ifaref(struct ifaddr *);
 void	ifafree(struct ifaddr *);
 
