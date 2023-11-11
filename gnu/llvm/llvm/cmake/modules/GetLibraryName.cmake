@@ -2,7 +2,7 @@
 function(get_library_name path name)
   get_filename_component(path ${path} NAME)
   set(prefixes ${CMAKE_FIND_LIBRARY_PREFIXES})
-  set(suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  set(suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES} ".so.[0-9]+.[0-9]+")
   list(FILTER prefixes EXCLUDE REGEX "^\\s*$")
   list(FILTER suffixes EXCLUDE REGEX "^\\s*$")
   if(prefixes)

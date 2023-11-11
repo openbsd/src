@@ -71,18 +71,18 @@ void X86ReturnProtectorLowering::insertReturnProtectorEpilogue(
 bool X86ReturnProtectorLowering::opcodeIsReturn(unsigned opcode) const {
   switch (opcode) {
   case X86::RET:
-  case X86::RETL:
-  case X86::RETQ:
-  case X86::RETW:
-  case X86::RETIL:
-  case X86::RETIQ:
-  case X86::RETIW:
-  case X86::LRETL:
-  case X86::LRETQ:
-  case X86::LRETW:
-  case X86::LRETIL:
-  case X86::LRETIQ:
-  case X86::LRETIW:
+  case X86::RET16:
+  case X86::RET32:
+  case X86::RET64:
+  case X86::RETI16:
+  case X86::RETI32:
+  case X86::RETI64:
+  case X86::LRET16:
+  case X86::LRET32:
+  case X86::LRET64:
+  case X86::LRETI16:
+  case X86::LRETI32:
+  case X86::LRETI64:
     return true;
   default:
     return false;

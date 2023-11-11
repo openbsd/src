@@ -18,37 +18,42 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
-  class MipsTargetMachine;
-  class ModulePass;
-  class FunctionPass;
-  class MipsRegisterBankInfo;
-  class MipsSubtarget;
-  class MipsTargetMachine;
-  class InstructionSelector;
-  class PassRegistry;
+class FunctionPass;
+class InstructionSelector;
+class MipsRegisterBankInfo;
+class MipsSubtarget;
+class MipsTargetMachine;
+class MipsTargetMachine;
+class ModulePass;
+class PassRegistry;
 
-  ModulePass *createMipsOs16Pass();
-  ModulePass *createMips16HardFloatPass();
+ModulePass *createMipsOs16Pass();
+ModulePass *createMips16HardFloatPass();
 
-  FunctionPass *createMipsModuleISelDagPass();
-  FunctionPass *createMipsOptimizePICCallPass();
-  FunctionPass *createMipsDelaySlotFillerPass();
-  FunctionPass *createMipsBranchExpansion();
-  FunctionPass *createMipsConstantIslandPass();
-  FunctionPass *createMicroMipsSizeReducePass();
-  FunctionPass *createMipsExpandPseudoPass();
-  FunctionPass *createMipsPreLegalizeCombiner();
-  FunctionPass *createMipsLoongson2FBTBFix();
+FunctionPass *createMipsLoongson2FBTBFix();
+FunctionPass *createMipsModuleISelDagPass();
+FunctionPass *createMipsOptimizePICCallPass();
+FunctionPass *createMipsDelaySlotFillerPass();
+FunctionPass *createMipsBranchExpansion();
+FunctionPass *createMipsConstantIslandPass();
+FunctionPass *createMicroMipsSizeReducePass();
+FunctionPass *createMipsExpandPseudoPass();
+FunctionPass *createMipsPreLegalizeCombiner();
+FunctionPass *createMipsPostLegalizeCombiner(bool IsOptNone);
+FunctionPass *createMipsMulMulBugPass();
 
-  InstructionSelector *createMipsInstructionSelector(const MipsTargetMachine &,
-                                                     MipsSubtarget &,
-                                                     MipsRegisterBankInfo &);
+InstructionSelector *createMipsInstructionSelector(const MipsTargetMachine &,
+                                                   MipsSubtarget &,
+                                                   MipsRegisterBankInfo &);
 
-  void initializeMipsDelaySlotFillerPass(PassRegistry &);
-  void initializeMipsBranchExpansionPass(PassRegistry &);
-  void initializeMicroMipsSizeReducePass(PassRegistry &);
-  void initializeMipsPreLegalizerCombinerPass(PassRegistry&);
-  void initializeMipsLoongson2FBTBFixPass(PassRegistry &);
-} // end namespace llvm;
+void initializeMipsLoongson2FBTBFixPass(PassRegistry &);
+void initializeMicroMipsSizeReducePass(PassRegistry &);
+void initializeMipsBranchExpansionPass(PassRegistry &);
+void initializeMipsDAGToDAGISelPass(PassRegistry &);
+void initializeMipsDelaySlotFillerPass(PassRegistry &);
+void initializeMipsMulMulBugFixPass(PassRegistry &);
+void initializeMipsPostLegalizerCombinerPass(PassRegistry &);
+void initializeMipsPreLegalizerCombinerPass(PassRegistry &);
+} // namespace llvm
 
 #endif

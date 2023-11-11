@@ -542,23 +542,19 @@ bool FixupGadgetsPass::hasImplicitUseOrDef(const MachineInstr &MI,
 
   const MCInstrDesc &Desc = MI.getDesc();
 
-  const MCPhysReg *ImpDefs = Desc.getImplicitDefs();
-  if (ImpDefs) {
-    for (; *ImpDefs; ++ImpDefs) {
-      unsigned w = getWidestRegForReg(*ImpDefs);
-      if (w == Reg1 || w == Reg2) {
-        return true;
-      }
+  const ArrayRef<MCPhysReg> ImpDefs = Desc.implicit_defs();
+  for (MCPhysReg ImpDef : ImpDefs) {
+    unsigned w = getWidestRegForReg(ImpDef);
+    if (w == Reg1 || w == Reg2) {
+      return true;
     }
   }
 
-  const MCPhysReg *ImpUses = Desc.getImplicitUses();
-  if (ImpUses) {
-    for (; *ImpUses; ++ImpUses) {
-      unsigned w = getWidestRegForReg(*ImpUses);
-      if (w == Reg1 || w == Reg2) {
-        return true;
-      }
+  const ArrayRef<MCPhysReg> ImpUses = Desc.implicit_uses();
+  for (MCPhysReg ImpUse : ImpUses) {
+    unsigned w = getWidestRegForReg(ImpUse);
+    if (w == Reg1 || w == Reg2) {
+      return true;
     }
   }
   return false;

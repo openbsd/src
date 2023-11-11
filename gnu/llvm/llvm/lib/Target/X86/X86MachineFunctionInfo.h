@@ -105,8 +105,8 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// True if this function uses the red zone.
   bool UsesRedZone = false;
 
-  /// True if this function has WIN_ALLOCA instructions.
-  bool HasWinAlloca = false;
+  /// True if this function has DYN_ALLOCA instructions.
+  bool HasDynAlloca = false;
 
   /// True if this function has any preallocated calls.
   bool HasPreallocatedCall = false;
@@ -116,9 +116,15 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// other tools to detect the extended record.
   bool HasSwiftAsyncContext = false;
 
-  Optional<int> SwiftAsyncContextFrameIdx;
+  /// True if this function has tile virtual register. This is used to
+  /// determine if we should insert tilerelease in frame lowering.
+  bool HasVirtualTileReg = false;
 
-  ValueMap<const Value *, size_t> PreallocatedIds;
+  std::optional<int> SwiftAsyncContextFrameIdx;
+
+  // Preallocated fields are only used during isel.
+  // FIXME: Can we find somewhere else to store these?
+  DenseMap<const Value *, size_t> PreallocatedIds;
   SmallVector<size_t, 0> PreallocatedStackSizes;
   SmallVector<SmallVector<size_t, 4>, 0> PreallocatedArgOffsets;
 
@@ -129,8 +135,14 @@ private:
 
 public:
   X86MachineFunctionInfo() = default;
+  X86MachineFunctionInfo(const Function &F, const TargetSubtargetInfo *STI) {}
 
-  explicit X86MachineFunctionInfo(MachineFunction &MF) {}
+  X86MachineFunctionInfo(const X86MachineFunctionInfo &) = default;
+
+  MachineFunctionInfo *
+  clone(BumpPtrAllocator &Allocator, MachineFunction &DestMF,
+        const DenseMap<MachineBasicBlock *, MachineBasicBlock *> &Src2DstMBB)
+      const override;
 
   bool getForceFramePointer() const { return ForceFramePointer;}
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
@@ -204,8 +216,8 @@ public:
   bool getUsesRedZone() const { return UsesRedZone; }
   void setUsesRedZone(bool V) { UsesRedZone = V; }
 
-  bool hasWinAlloca() const { return HasWinAlloca; }
-  void setHasWinAlloca(bool v) { HasWinAlloca = v; }
+  bool hasDynAlloca() const { return HasDynAlloca; }
+  void setHasDynAlloca(bool v) { HasDynAlloca = v; }
 
   bool hasPreallocatedCall() const { return HasPreallocatedCall; }
   void setHasPreallocatedCall(bool v) { HasPreallocatedCall = v; }
@@ -213,7 +225,10 @@ public:
   bool hasSwiftAsyncContext() const { return HasSwiftAsyncContext; }
   void setHasSwiftAsyncContext(bool v) { HasSwiftAsyncContext = v; }
 
-  Optional<int> getSwiftAsyncContextFrameIdx() const {
+  bool hasVirtualTileReg() const { return HasVirtualTileReg; }
+  void setHasVirtualTileReg(bool v) { HasVirtualTileReg = v; }
+
+  std::optional<int> getSwiftAsyncContextFrameIdx() const {
     return SwiftAsyncContextFrameIdx;
   }
   void setSwiftAsyncContextFrameIdx(int v) { SwiftAsyncContextFrameIdx = v; }
