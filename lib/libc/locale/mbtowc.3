@@ -1,4 +1,4 @@
-.\" $OpenBSD: mbtowc.3,v 1.7 2023/11/11 01:28:41 schwarze Exp $
+.\" $OpenBSD: mbtowc.3,v 1.8 2023/11/11 01:38:23 schwarze Exp $
 .\" $NetBSD: mbtowc.3,v 1.5 2003/09/08 17:54:31 wiz Exp $
 .\"
 .\" Copyright (c) 2016, 2023 Ingo Schwarze <schwarze@openbsd.org>
@@ -30,11 +30,9 @@
 .Dd $Mdocdate: November 11 2023 $
 .Dt MBTOWC 3
 .Os
-.\" ----------------------------------------------------------------------
 .Sh NAME
 .Nm mbtowc
 .Nd converts a multibyte character to a wide character
-.\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft int
@@ -132,7 +130,6 @@ never form a complete character and
 .Fn mbtowc
 always fails.
 .El
-.\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
 Normally,
 .Fn mbtowc
@@ -168,7 +165,6 @@ The current encoding is state-independent.
 .It non-zero
 The current encoding is state-dependent.
 .El
-.\" ----------------------------------------------------------------------
 .Sh EXAMPLES
 The following program parses a UTF-8 string and reports encoding errors:
 .Bd -literal
@@ -228,12 +224,10 @@ in the following cases:
 .Fa s
 points to an invalid or incomplete multibyte character.
 .El
-.\" ----------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr mblen 3 ,
 .Xr mbrtowc 3 ,
 .Xr setlocale 3
-.\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The
 .Fn mbtowc
