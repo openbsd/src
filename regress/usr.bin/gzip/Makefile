@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/06/22 16:10:34 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2023/11/11 02:52:55 gkoehler Exp $
 
 # Copyright (c) 2008 Marco Pfatschbacher <mpf@openbsd.org>
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
@@ -15,7 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-CLEANFILES=	*.gz rc rcmotd multi owner perm
+CLEANFILES=	*.gz rc rcmotd multi owner out perm
 
 # Test if gzip(1) detects truncated or corrupted files
 
@@ -95,6 +95,29 @@ run-regress-multi:
 	# check that gunzipped files do match
 	cat /etc/rc /etc/motd >rcmotd
 	diff -up rcmotd multi
+
+# Test -N
+
+REGRESS_TARGETS+=	run-regress-name
+run-regress-name:
+	@echo "\n==== $@ ===="
+	# check gunzip -N
+	gzip -c /etc/rc >in.gz
+	rm -f rc
+	gunzip -N in.gz
+	diff -up /etc/rc rc
+	# check that -N works with -l
+	gzip -c /etc/rc >in.gz
+	gzip -lN in.gz | grep -q ' rc$$'
+	gzip -lN <in.gz | grep -q ' rc$$'
+	# check that stdout ignores -N
+	rm -f out
+	gzip -dN <in.gz >out
+	diff -up /etc/rc out
+	# check that zcat ignores -N
+	rm -f out
+	zcat -N in.gz >out
+	diff -up /etc/rc out
 
 # Test permissions
 
