@@ -20,6 +20,9 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf;
 
+// Undefine the macro predefined by GCC powerpc32.
+#undef PPC
+
 namespace {
 class PPC final : public TargetInfo {
 public:
@@ -27,6 +30,7 @@ public:
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   RelType getDynRel(RelType type) const override;
+  int64_t getImplicitAddend(const uint8_t *buf, RelType type) const override;
   void writeGotHeader(uint8_t *buf) const override;
   void writePltHeader(uint8_t *buf) const override {
     llvm_unreachable("should call writePPC32GlinkSection() instead");
@@ -47,14 +51,13 @@ public:
                 uint64_t val) const override;
   RelExpr adjustTlsExpr(RelType type, RelExpr expr) const override;
   int getTlsGdRelaxSkip(RelType type) const override;
-  void relaxTlsGdToIe(uint8_t *loc, const Relocation &rel,
-                      uint64_t val) const override;
-  void relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
-                      uint64_t val) const override;
-  void relaxTlsLdToLe(uint8_t *loc, const Relocation &rel,
-                      uint64_t val) const override;
-  void relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
-                      uint64_t val) const override;
+  void relocateAlloc(InputSectionBase &sec, uint8_t *buf) const override;
+
+private:
+  void relaxTlsGdToIe(uint8_t *loc, const Relocation &rel, uint64_t val) const;
+  void relaxTlsGdToLe(uint8_t *loc, const Relocation &rel, uint64_t val) const;
+  void relaxTlsLdToLe(uint8_t *loc, const Relocation &rel, uint64_t val) const;
+  void relaxTlsIeToLe(uint8_t *loc, const Relocation &rel, uint64_t val) const;
 };
 } // namespace
 
@@ -74,7 +77,7 @@ void elf::writePPC32GlinkSection(uint8_t *buf, size_t numEntries) {
   // non-GOT-non-PLT relocations referencing external functions for -fpie/-fPIE.
   uint32_t glink = in.plt->getVA(); // VA of .glink
   if (!config->isPic) {
-    for (const Symbol *sym : cast<PPC32GlinkSection>(in.plt)->canonical_plts) {
+    for (const Symbol *sym : cast<PPC32GlinkSection>(*in.plt).canonical_plts) {
       writePPC32PltCallStub(buf, sym->getGotPltVA(), nullptr, 0);
       buf += 16;
       glink += 16;
@@ -151,12 +154,10 @@ void elf::writePPC32GlinkSection(uint8_t *buf, size_t numEntries) {
 PPC::PPC() {
   copyRel = R_PPC_COPY;
   gotRel = R_PPC_GLOB_DAT;
-  noneRel = R_PPC_NONE;
   pltRel = R_PPC_JMP_SLOT;
   relativeRel = R_PPC_RELATIVE;
   iRelativeRel = R_PPC_IRELATIVE;
   symbolicRel = R_PPC_ADDR32;
-  gotBaseSymInGotPlt = false;
   gotHeaderEntriesNum = 3;
   gotPltHeaderEntriesNum = 0;
   pltHeaderSize = 0;
@@ -191,7 +192,7 @@ void PPC::writeGotHeader(uint8_t *buf) const {
 
 void PPC::writeGotPlt(uint8_t *buf, const Symbol &s) const {
   // Address of the symbol resolver stub in .glink .
-  write32(buf, in.plt->getVA() + in.plt->headerSize + 4 * s.pltIndex);
+  write32(buf, in.plt->getVA() + in.plt->headerSize + 4 * s.getPltIdx());
 }
 
 bool PPC::needsThunk(RelExpr expr, RelType type, const InputFile *file,
@@ -272,6 +273,20 @@ RelType PPC::getDynRel(RelType type) const {
   if (type == R_PPC_ADDR32)
     return type;
   return R_PPC_NONE;
+}
+
+int64_t PPC::getImplicitAddend(const uint8_t *buf, RelType type) const {
+  switch (type) {
+  case R_PPC_NONE:
+    return 0;
+  case R_PPC_ADDR32:
+  case R_PPC_REL32:
+    return SignExtend64<32>(read32(buf));
+  default:
+    internalLinkerError(getErrorLocation(buf),
+                        "cannot read addend for relocation " + toString(type));
+    return 0;
+  }
 }
 
 static std::pair<RelType, uint64_t> fromDTPREL(RelType type, uint64_t val) {
@@ -464,6 +479,36 @@ void PPC::relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
   }
   default:
     llvm_unreachable("unsupported relocation for TLS IE to LE relaxation");
+  }
+}
+
+void PPC::relocateAlloc(InputSectionBase &sec, uint8_t *buf) const {
+  uint64_t secAddr = sec.getOutputSection()->addr;
+  if (auto *s = dyn_cast<InputSection>(&sec))
+    secAddr += s->outSecOff;
+  for (const Relocation &rel : sec.relocs()) {
+    uint8_t *loc = buf + rel.offset;
+    const uint64_t val = SignExtend64(
+        sec.getRelocTargetVA(sec.file, rel.type, rel.addend,
+                             secAddr + rel.offset, *rel.sym, rel.expr),
+        32);
+    switch (rel.expr) {
+    case R_RELAX_TLS_GD_TO_IE_GOT_OFF:
+      relaxTlsGdToIe(loc, rel, val);
+      break;
+    case R_RELAX_TLS_GD_TO_LE:
+      relaxTlsGdToLe(loc, rel, val);
+      break;
+    case R_RELAX_TLS_LD_TO_LE_ABS:
+      relaxTlsLdToLe(loc, rel, val);
+      break;
+    case R_RELAX_TLS_IE_TO_LE:
+      relaxTlsIeToLe(loc, rel, val);
+      break;
+    default:
+      relocate(loc, rel, val);
+      break;
+    }
   }
 }
 

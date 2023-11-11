@@ -161,6 +161,34 @@ list(INSERT CMAKE_MODULE_PATH 0
 
 include(AddLLD)
 
+option(LLD_ENABLE_WASM
+       "Enable support for WASM."
+       OFF)
+if (LLD_ENABLE_WASM)
+  add_definitions("-DLLD_ENABLE_WASM=1")
+endif()
+
+option(LLD_ENABLE_MACHO
+       "Enable support for MachO."
+       OFF)
+if (LLD_ENABLE_MACHO)
+  add_definitions("-DLLD_ENABLE_MACHO=1")
+endif()
+
+option(LLD_ENABLE_MINGW
+       "Enable support for MINGW."
+       OFF)
+if (LLD_ENABLE_MINGW)
+  add_definitions("-DLLD_ENABLE_MINGW=1")
+endif()
+
+option(LLD_ENABLE_COFF
+       "Enable support for COFF."
+       OFF)
+if (LLD_ENABLE_COFF)
+  add_definitions("-DLLD_ENABLE_COFF=1")
+endif()
+
 option(LLD_USE_VTUNE
        "Enable VTune user task tracking."
        OFF)
@@ -210,7 +238,9 @@ endif()
 add_subdirectory(docs)
 add_subdirectory(COFF)
 add_subdirectory(ELF)
-add_subdirectory(MachO)
+if (LLD_ENABLE_MACHO)
+  add_subdirectory(MachO)
+endif()
 add_subdirectory(MinGW)
 add_subdirectory(wasm)
 

@@ -23,10 +23,15 @@ lld_target_link_libraries(lld
   lldCommon
   lldCOFF
   lldELF
-  lldMachO
   lldMinGW
   lldWasm
   )
+
+if (LLD_ENABLE_MACHO)
+  target_link_libraries(lld  
+    lldMachO
+    )
+endif() 
 
 install(TARGETS lld
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
