@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.24 2023/11/10 20:05:22 bluhm Exp $ */
+/* $OpenBSD: art.h,v 1.25 2023/11/11 12:17:50 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -106,7 +106,7 @@ struct art_node *art_lookup(struct art_root *, const void *, int,
 int		 art_walk(struct art_root *,
 		     int (*)(struct art_node *, void *), void *);
 
-struct art_node	*art_get(void *, uint8_t);
+struct art_node *art_get(uint8_t);
 void		 art_put(struct art_node *);
 
 #endif /* _NET_ART_H_ */

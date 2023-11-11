@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.30 2023/11/10 20:05:22 bluhm Exp $ */
+/*	$OpenBSD: art.c,v 1.31 2023/11/11 12:17:50 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -889,7 +889,7 @@ moveup:
 }
 
 struct art_node *
-art_get(void *dst, uint8_t plen)
+art_get(uint8_t plen)
 {
 	struct art_node		*an;
 

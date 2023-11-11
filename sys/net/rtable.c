@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.83 2023/11/10 20:05:22 bluhm Exp $ */
+/*	$OpenBSD: rtable.c,v 1.84 2023/11/11 12:17:50 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -591,7 +591,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 		}
 	}
 
-	an = art_get(dst, plen);
+	an = art_get(plen);
 	if (an == NULL) {
 		error = ENOBUFS;
 		goto leave;
