@@ -993,6 +993,7 @@
 ./usr/include/llvm/Config/AsmPrinters.def
 ./usr/include/llvm/Config/Disassemblers.def
 ./usr/include/llvm/Config/Targets.def
+./usr/include/llvm/Config/TargetMCAs.def
 ./usr/include/llvm/Config/abi-breaking.h
 ./usr/include/llvm/Config/llvm-config.h
 ./usr/include/llvm/DWARFLinker
