@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2023/11/11 18:35:40 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2023/11/12 21:17:48 robert Exp $
 
 PROG=	llvm-config
 BINDIR= /usr/bin
@@ -39,7 +39,10 @@ reconf:
 	rm -rf ${.CURDIR}/CMakeGen
 .endfor
 
-CLEANFILES+= BuildVariables.inc LibraryDependencies.inc ExtensionDependencies.inc
+CLEANFILES+=	BuildVariables.inc LibraryDependencies.inc
+.if ${.CURDIR} != ${.OBJDIR}
+CLEANFILES+=	ExtensionDependencies.inc
+.endif
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/tools/llvm-config
 
