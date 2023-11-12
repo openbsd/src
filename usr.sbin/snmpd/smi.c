@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.37 2023/11/12 20:12:01 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.38 2023/11/12 20:14:39 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,17 @@
 #include "mib.h"
 #include "application.h"
 
+struct oid {
+	struct ber_oid		 o_id;
+#define o_oid			 o_id.bo_id
+#define o_oidlen		 o_id.bo_n
+
+	char			*o_name;
+
+	RB_ENTRY(oid)		 o_element;
+	RB_ENTRY(oid)		 o_keyword;
+};
+
 void		 smi_mibtree(struct oid *);
 struct oid	*smi_findkey(char *);
 int		 smi_oid_cmp(struct oid *, struct oid *);
@@ -89,7 +100,6 @@ smi_oid2string(struct ber_oid *o, char *buf, size_t len, size_t skip)
 	bzero(buf, len);
 	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	key.o_flags |= OID_KEY;		/* do not match wildcards */
 
 	if (snmpd_env->sc_flags & SNMPD_F_NONAMES)
 		lookup = 0;
@@ -179,8 +189,6 @@ smi_mibtree(struct oid *oids)
 	for (i = 0; oids[i].o_oid[0] != 0; i++) {
 		oid = &oids[i];
 		if (oid->o_name != NULL) {
-			if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
-				fatalx("smi_mibtree: invalid MIB table");
 			RB_INSERT(oidtree, &smi_oidtree, oid);
 			RB_INSERT(keytree, &smi_keytree, oid);
 			continue;
@@ -188,11 +196,6 @@ smi_mibtree(struct oid *oids)
 		decl = RB_FIND(oidtree, &smi_oidtree, oid);
 		if (decl == NULL)
 			fatalx("smi_mibtree: undeclared MIB");
-		decl->o_flags = oid->o_flags;
-		decl->o_get = oid->o_get;
-		decl->o_table = oid->o_table;
-		decl->o_val = oid->o_val;
-		decl->o_data = oid->o_data;
 	}
 }
 
