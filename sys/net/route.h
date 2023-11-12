@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.201 2023/11/11 12:52:20 dlg Exp $	*/
+/*	$OpenBSD: route.h,v 1.202 2023/11/12 15:42:54 dlg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -116,13 +116,13 @@ struct rttimer;
 struct rtentry {
 	struct sockaddr	*rt_dest;	/* [I] destination */
 	SRPL_ENTRY(rtentry) rt_next;	/* [R] next mpath entry to our dst */
-	struct sockaddr	*rt_gateway;	/* [N] gateway address */
+	struct sockaddr	*rt_gateway;	/* [X] gateway address */
 	struct ifaddr	*rt_ifa;	/* [N] interface addr to use */
 	caddr_t		 rt_llinfo;	/* [L] pointer to link level info or
 					   an MPLS structure */
 	union {
-		struct rtentry	*_nh;	/* [N] rtentry for rt_gateway */
-		unsigned int	 _ref;	/* [N] # gateway rtentry refs */
+		struct rtentry	*_nh;	/* [X] rtentry for rt_gateway */
+		unsigned int	 _ref;	/* [X] # gateway rtentry refs */
 	} RT_gw;
 #define rt_gwroute	 RT_gw._nh
 #define rt_cachecnt	 RT_gw._ref
