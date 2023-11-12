@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.h,v 1.11 2023/11/08 20:07:14 martijn Exp $	*/
+/*	$OpenBSD: application.h,v 1.12 2023/11/12 16:03:41 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -160,3 +160,5 @@ void	 appl_blocklist_shutdown(void);
 /* application_internal.c */
 void	 appl_internal_init(void);
 void	 appl_internal_shutdown(void);
+const char *appl_internal_object_int(struct ber_oid *, int32_t);
+const char *appl_internal_object_string(struct ber_oid *, char *);

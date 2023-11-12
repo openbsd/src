@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.7 2023/11/08 19:46:28 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.8 2023/11/12 16:03:41 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -18,8 +18,10 @@
 
 #include <sys/tree.h>
 
+#include <errno.h>
 #include <event.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "application.h"
@@ -33,6 +35,9 @@ struct appl_internal_object {
 	struct ber_element *		(*get)(struct ber_oid *);
 	/* No getnext means the object is scalar */
 	struct ber_element *		(*getnext)(int8_t, struct ber_oid *);
+
+	int32_t				 intval;
+	char				*stringval;
 
 	RB_ENTRY(appl_internal_object)	 entry;
 };
@@ -49,6 +54,8 @@ struct ber_element *appl_internal_snmp(struct ber_oid *);
 struct ber_element *appl_internal_engine(struct ber_oid *);
 struct ber_element *appl_internal_usmstats(struct ber_oid *);
 struct ber_element *appl_internal_system(struct ber_oid *);
+struct ber_element *appl_internal_get_int(struct ber_oid *);
+struct ber_element *appl_internal_get_string(struct ber_oid *);
 struct appl_internal_object *appl_internal_object_parent(struct ber_oid *);
 int appl_internal_object_cmp(struct appl_internal_object *,
     struct appl_internal_object *);
@@ -67,14 +74,26 @@ struct appl_backend appl_internal = {
 	.ab_fn = &appl_internal_functions
 };
 
+struct appl_backend appl_config = {
+	.ab_name = "config",
+	.ab_cookie = NULL,
+	.ab_retries = 0,
+	.ab_range = 1,
+	.ab_fn = &appl_internal_functions
+};
+
 static RB_HEAD(appl_internal_objects, appl_internal_object)
-    appl_internal_objects = RB_INITIALIZER(&appl_internal_objects);
+    appl_internal_objects = RB_INITIALIZER(&appl_internal_objects),
+    appl_internal_objects_conf = RB_INITIALIZER(&appl_internal_objects_conf);
 RB_PROTOTYPE_STATIC(appl_internal_objects, appl_internal_object, entry,
     appl_internal_object_cmp);
 
 void
 appl_internal_init(void)
 {
+	struct appl_internal_object *obj;
+	struct ber_oid oid;
+
 	appl_internal_region(&OID(MIB_system));
 	appl_internal_object(&OID(MIB_sysDescr), appl_internal_system, NULL);
 	appl_internal_object(&OID(MIB_sysOID), appl_internal_system, NULL);
@@ -178,6 +197,22 @@ appl_internal_init(void)
 	    appl_internal_usmstats, NULL);
 	appl_internal_object(&OID(MIB_usmStatsDecryptionErrors),
 	    appl_internal_usmstats, NULL);
+
+	while ((obj = RB_MIN(appl_internal_objects,
+	    &appl_internal_objects_conf)) != NULL) {
+		RB_REMOVE(appl_internal_objects,
+		    &appl_internal_objects_conf, obj);
+		oid = obj->oid;
+		oid.bo_id[oid.bo_n++] = 0;
+		if (appl_register(NULL, 150, 1, &oid,
+		    1, 1, 0, 0, &appl_config) != APPL_ERROR_NOERROR) {
+			if (obj->stringval != NULL)
+				free(obj->stringval);
+			free(obj);
+		} else
+			RB_INSERT(appl_internal_objects, &appl_internal_objects,
+			    obj);
+	}
 }
 
 void
@@ -225,6 +260,47 @@ appl_internal_object(struct ber_oid *oid,
 	obj->getnext = getnext;
 
 	RB_INSERT(appl_internal_objects, &appl_internal_objects, obj);
+}
+
+const char *
+appl_internal_object_int(struct ber_oid *oid, int32_t val)
+{
+	struct appl_internal_object *obj;
+
+	if ((obj = calloc(1, sizeof(*obj))) == NULL)
+		return strerror(errno);
+	obj->oid = *oid;
+	obj->get = appl_internal_get_int;
+	obj->getnext = NULL;
+	obj->intval = val;
+	obj->stringval = NULL;
+
+	if (RB_INSERT(appl_internal_objects,
+	    &appl_internal_objects_conf, obj) != NULL) {
+		free(obj);
+		return "OID already defined";
+	}
+	return NULL;
+}
+
+const char *
+appl_internal_object_string(struct ber_oid *oid, char *val)
+{
+	struct appl_internal_object *obj;
+
+	if ((obj = calloc(1, sizeof(*obj))) == NULL)
+		return strerror(errno);
+	obj->oid = *oid;
+	obj->get = appl_internal_get_string;
+	obj->getnext = NULL;
+	obj->stringval = val;
+
+	if (RB_INSERT(appl_internal_objects,
+	    &appl_internal_objects_conf, obj) != NULL) {
+		free(obj);
+		return "OID already defined";
+	}
+	return NULL;
 }
 
 void
@@ -500,6 +576,24 @@ appl_internal_system(struct ber_oid *oid)
 	else if (ober_oid_cmp(&OID(MIB_sysServices, 0), oid) == 0)
 		return ober_add_integer(NULL, s->sys_services);
 	return value;
+}
+
+struct ber_element *
+appl_internal_get_int(struct ber_oid *oid)
+{
+	struct appl_internal_object *obj;
+
+	obj = appl_internal_object_parent(oid);
+	return ober_add_integer(NULL, obj->intval);
+}
+
+struct ber_element *
+appl_internal_get_string(struct ber_oid *oid)
+{
+	struct appl_internal_object *obj;
+
+	obj = appl_internal_object_parent(oid);
+	return ober_add_string(NULL, obj->stringval);
 }
 
 struct appl_internal_object *
