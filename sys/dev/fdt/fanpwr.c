@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.7 2023/04/10 04:21:20 jsg Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.8 2023/11/12 12:41:43 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -44,9 +44,14 @@
 #define  TCS4525_TIME_SLEW_MASK		(0x3 << 3)
 #define  TCS4525_TIME_SLEW_SHIFT	3
 
+#define RK8602_VSEL0			0x06
+#define RK8602_VSEL1			0x07
+#define  RK8602_VSEL_NSEL_MASK		0xff
+
 /* Distinguish between Fairchild original and Silergy clones. */
 enum fanpwr_id {
 	FANPWR_FAN53555,	/* Fairchild FAN53555 */
+	FANPWR_RK8602,		/* Rockchip RK8602 */
 	FANPWR_SYR827,		/* Silergy SYR827 */
 	FANPWR_SYR828,		/* Silergy SYR828 */
 	FANPWR_TCS4525,		/* TCS TCS4525 */
@@ -88,6 +93,8 @@ fanpwr_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	return (strcmp(ia->ia_name, "fcs,fan53555") == 0 ||
+	    strcmp(ia->ia_name, "rockchip,rk8602") == 0 ||
+	    strcmp(ia->ia_name, "rockchip,rk8603") == 0 ||
 	    strcmp(ia->ia_name, "silergy,syr827") == 0 ||
 	    strcmp(ia->ia_name, "silergy,syr828") == 0 ||
 	    strcmp(ia->ia_name, "tcs,tcs4525") == 0);
@@ -107,7 +114,11 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	if (OF_is_compatible(node, "silergy,syr827")) {
+	if (OF_is_compatible(node, "rockchip,rk8602") ||
+	    OF_is_compatible(node, "rockchip,rk8603")) {
+		printf(": RK8602");
+		sc->sc_id = FANPWR_RK8602;
+	} else if (OF_is_compatible(node, "silergy,syr827")) {
 		printf(": SYR827");
 		sc->sc_id = FANPWR_SYR827;
 	} else if (OF_is_compatible(node, "silergy,syr828")) {
@@ -127,6 +138,12 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 		else
 			sc->sc_vsel = TCS4525_VSEL1;
 		sc->sc_vsel_nsel_mask = TCS4525_VSEL_NSEL_MASK;
+	} else if (sc->sc_id == FANPWR_RK8602) {
+		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0))
+			sc->sc_vsel = RK8602_VSEL0;
+		else
+			sc->sc_vsel = RK8602_VSEL1;
+		sc->sc_vsel_nsel_mask = RK8602_VSEL_NSEL_MASK;
 	} else {
 		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0))
 			sc->sc_vsel = FAN53555_VSEL0;
@@ -172,6 +189,10 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 			printf(", unknown ID1 0x%02x ID2 0x%02x\n", id1, id2);
 			return;
 		}
+		break;
+	case FANPWR_RK8602:
+		sc->sc_vbase = 500000;
+		sc->sc_vstep = 6250;
 		break;
 	case FANPWR_SYR827:
 	case FANPWR_SYR828:
