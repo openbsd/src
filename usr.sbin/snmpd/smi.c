@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.36 2023/11/12 20:10:13 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.37 2023/11/12 20:12:01 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,11 @@
 #include "mib.h"
 #include "application.h"
 
+void		 smi_mibtree(struct oid *);
+struct oid	*smi_findkey(char *);
+int		 smi_oid_cmp(struct oid *, struct oid *);
+int		 smi_key_cmp(struct oid *, struct oid *);
+
 RB_HEAD(oidtree, oid);
 RB_PROTOTYPE(oidtree, oid, o_element, smi_oid_cmp);
 struct oidtree smi_oidtree;
@@ -72,26 +77,6 @@ smi_getticks(void)
 		ticks += run.tv_usec / 10000;
 
 	return (ticks);
-}
-
-void
-smi_oidlen(struct ber_oid *o)
-{
-	size_t	 i;
-
-	for (i = 0; i < BER_MAX_OID_LEN && o->bo_id[i] != 0; i++)
-		;
-	o->bo_n = i;
-}
-
-void
-smi_scalar_oidlen(struct ber_oid *o)
-{
-	smi_oidlen(o);
-
-	/* Append .0. */
-	if (o->bo_n < BER_MAX_OID_LEN)
-		o->bo_n++;
 }
 
 char *
@@ -162,24 +147,6 @@ smi_string2oid(const char *oidstr, struct ber_oid *o)
 	return (0);
 }
 
-void
-smi_delete(struct oid *oid)
-{
-	struct oid	 key, *value;
-
-	bzero(&key, sizeof(key));
-	bcopy(&oid->o_id, &key.o_id, sizeof(struct ber_oid));
-	if ((value = RB_FIND(oidtree, &smi_oidtree, &key)) != NULL &&
-	    value == oid)
-		RB_REMOVE(oidtree, &smi_oidtree, value);
-
-	free(oid->o_data);
-	if (oid->o_flags & OID_DYNAMIC) {
-		free(oid->o_name);
-		free(oid);
-	}
-}
-
 const char *
 smi_insert(struct ber_oid *oid, const char *name)
 {
@@ -239,18 +206,6 @@ smi_init(void)
 }
 
 struct oid *
-smi_find(struct oid *oid)
-{
-	return (RB_FIND(oidtree, &smi_oidtree, oid));
-}
-
-struct oid *
-smi_nfind(struct oid *oid)
-{
-	return (RB_NFIND(oidtree, &smi_oidtree, oid));
-}
-
-struct oid *
 smi_findkey(char *name)
 {
 	struct oid	oid;
@@ -258,37 +213,6 @@ smi_findkey(char *name)
 		return (NULL);
 	oid.o_name = name;
 	return (RB_FIND(keytree, &smi_keytree, &oid));
-}
-
-struct oid *
-smi_next(struct oid *oid)
-{
-	return (RB_NEXT(oidtree, &smi_oidtree, oid));
-}
-
-struct oid *
-smi_foreach(struct oid *oid, u_int flags)
-{
-	/*
-	 * Traverse the tree of MIBs with the option to check
-	 * for specific OID flags.
-	 */
-	if (oid == NULL) {
-		oid = RB_MIN(oidtree, &smi_oidtree);
-		if (oid == NULL)
-			return (NULL);
-		if (flags == 0 || (oid->o_flags & flags))
-			return (oid);
-	}
-	for (;;) {
-		oid = RB_NEXT(oidtree, &smi_oidtree, oid);
-		if (oid == NULL)
-			break;
-		if (flags == 0 || (oid->o_flags & flags))
-			return (oid);
-	}
-
-	return (oid);
 }
 
 #ifdef DEBUG

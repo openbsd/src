@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.111 2023/11/12 20:06:53 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.112 2023/11/12 20:12:01 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -505,19 +505,8 @@ int		 trap_send(struct ber_oid *, struct ber_element *);
 
 /* smi.c */
 int		 smi_init(void);
-void		 smi_mibtree(struct oid *);
-struct oid	*smi_find(struct oid *);
-struct oid	*smi_nfind(struct oid *);
-struct oid	*smi_findkey(char *);
-struct oid	*smi_next(struct oid *);
-struct oid	*smi_foreach(struct oid *, u_int);
-void		 smi_oidlen(struct ber_oid *);
-void		 smi_scalar_oidlen(struct ber_oid *);
 int		 smi_string2oid(const char *, struct ber_oid *);
-void		 smi_delete(struct oid *);
 const char	*smi_insert(struct ber_oid *, const char *);
-int		 smi_oid_cmp(struct oid *, struct oid *);
-int		 smi_key_cmp(struct oid *, struct oid *);
 unsigned int	 smi_application(struct ber_element *);
 void		 smi_debug_elements(struct ber_element *);
 
