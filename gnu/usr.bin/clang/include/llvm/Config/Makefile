@@ -1,11 +1,12 @@
-# $OpenBSD: Makefile,v 1.7 2019/12/06 09:22:24 jsg Exp $
+# $OpenBSD: Makefile,v 1.8 2023/11/12 14:25:40 robert Exp $
 
 .include <bsd.own.mk>
 
 .include "../../../Makefile.arch"
 .include "../../../Makefile.inc"
 
-DEFS=	AsmParsers.def AsmPrinters.def Disassemblers.def Targets.def llvm-config.h
+DEFS=	AsmParsers.def AsmPrinters.def Disassemblers.def Targets.def \
+	TargetMCAs.def llvm-config.h
 
 HDRS=	abi-breaking.h
 INCDIR=	/usr/include/llvm/Config
@@ -27,6 +28,10 @@ Disassemblers.def:
 Targets.def:
 	printf "LLVM_TARGET(AMDGPU)\n" >$@
 	printf "LLVM_TARGET(${LLVM_ARCH})\n#undef LLVM_TARGET\n" >>$@
+TargetMCAs.def:
+	printf "LLVM_TARGETMCA(AMDGPU)\n" >$@
+	printf "LLVM_TARGETMCA(RISCV)\n" >>$@
+	printf "LLVM_TARGETMCA(X86)\n#undef LLVM_TARGETMCA\n" >>$@
 
 llvm-config.h: llvm-config.h.in
 	cp ${.CURDIR}/llvm-config.h.in $@
