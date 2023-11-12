@@ -1135,8 +1135,15 @@ static void readConfigs(opt::InputArgList &args) {
   config->icf = getICF(args);
   config->ignoreDataAddressEquality =
       args.hasArg(OPT_ignore_data_address_equality);
+#if defined(__OpenBSD__)
+  // Needed to allow preemption of protected symbols (e.g. memcpy) on at least i386.
+  config->ignoreFunctionAddressEquality =
+      args.hasFlag(OPT_ignore_function_address_equality,
+                   OPT_no_ignore_function_address_equality, true);
+#else
   config->ignoreFunctionAddressEquality =
       args.hasArg(OPT_ignore_function_address_equality);
+#endif
   config->init = args.getLastArgValue(OPT_init, "_init");
   config->ltoAAPipeline = args.getLastArgValue(OPT_lto_aa_pipeline);
   config->ltoCSProfileGenerate = args.hasArg(OPT_lto_cs_profile_generate);
