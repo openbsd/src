@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.35 2023/11/12 20:07:48 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.36 2023/11/12 20:10:13 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -47,8 +47,6 @@
 #include "snmpd.h"
 #include "mib.h"
 #include "application.h"
-
-#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 RB_HEAD(oidtree, oid);
 RB_PROTOTYPE(oidtree, oid, o_element, smi_oid_cmp);
@@ -694,23 +692,7 @@ smi_application(struct ber_element *elm)
 int
 smi_oid_cmp(struct oid *a, struct oid *b)
 {
-	size_t	 i;
-
-	for (i = 0; i < MINIMUM(a->o_oidlen, b->o_oidlen); i++)
-		if (a->o_oid[i] != b->o_oid[i])
-			return (a->o_oid[i] - b->o_oid[i]);
-
-	/*
-	 * Return success if the matched object is a table
-	 * or a MIB registered by a subagent
-	 * (it will match any sub-elements)
-	 */
-	if (b->o_flags & OID_TABLE &&
-	    (a->o_flags & OID_KEY) == 0 &&
-	    (a->o_oidlen > b->o_oidlen))
-		return (0);
-
-	return (a->o_oidlen - b->o_oidlen);
+	return ober_oid_cmp(&a->o_id, &b->o_id);
 }
 
 RB_GENERATE(oidtree, oid, o_element, smi_oid_cmp);
