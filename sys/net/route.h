@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.202 2023/11/12 15:42:54 dlg Exp $	*/
+/*	$OpenBSD: route.h,v 1.203 2023/11/12 17:51:40 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -383,7 +383,7 @@ struct route {
 
 struct rt_addrinfo {
 	int	rti_addrs;
-	struct	sockaddr *rti_info[RTAX_MAX];
+	const	struct sockaddr *rti_info[RTAX_MAX];
 	int	rti_flags;
 	struct	ifaddr *rti_ifa;
 	struct	rt_msghdr *rti_rtm;
@@ -428,7 +428,7 @@ struct rttimer_queue {
 
 const char	*rtlabel_id2name_locked(u_int16_t);
 const char	*rtlabel_id2name(u_int16_t, char *, size_t);
-u_int16_t	 rtlabel_name2id(char *);
+u_int16_t	 rtlabel_name2id(const char *);
 struct sockaddr	*rtlabel_id2sa(u_int16_t, struct sockaddr_rtlabel *);
 void		 rtlabel_unref(u_int16_t);
 
@@ -458,7 +458,7 @@ void	 rtm_send(struct rtentry *, int, int, unsigned int);
 void	 rtm_addr(int, struct ifaddr *);
 void	 rtm_miss(int, struct rt_addrinfo *, int, uint8_t, u_int, int, u_int);
 void	 rtm_proposal(struct ifnet *, struct rt_addrinfo *, int, uint8_t);
-int	 rt_setgate(struct rtentry *, struct sockaddr *, u_int);
+int	 rt_setgate(struct rtentry *, const struct sockaddr *, u_int);
 struct rtentry *rt_getll(struct rtentry *);
 
 void		rt_timer_init(void);
@@ -473,13 +473,13 @@ void		rt_timer_queue_flush(struct rttimer_queue *);
 unsigned long	rt_timer_queue_count(struct rttimer_queue *);
 void		rt_timer_timer(void *);
 
-int	 rt_mpls_set(struct rtentry *, struct sockaddr *, uint8_t);
+int	 rt_mpls_set(struct rtentry *, const struct sockaddr *, uint8_t);
 void	 rt_mpls_clear(struct rtentry *);
 
 int	 rtisvalid(struct rtentry *);
 int	 rt_hash(struct rtentry *, const struct sockaddr *, uint32_t *);
-struct	 rtentry *rtalloc_mpath(struct sockaddr *, uint32_t *, u_int);
-struct	 rtentry *rtalloc(struct sockaddr *, int, unsigned int);
+struct	 rtentry *rtalloc_mpath(const struct sockaddr *, uint32_t *, u_int);
+struct	 rtentry *rtalloc(const struct sockaddr *, int, unsigned int);
 void	 rtref(struct rtentry *);
 void	 rtfree(struct rtentry *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.84 2023/11/11 12:17:50 bluhm Exp $ */
+/*	$OpenBSD: rtable.c,v 1.85 2023/11/12 17:51:40 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -352,7 +352,7 @@ rtable_l2set(unsigned int rtableid, unsigned int rdomain, unsigned int loifidx)
 static inline const uint8_t *satoaddr(struct art_root *,
     const struct sockaddr *);
 
-int	an_match(struct art_node *, struct sockaddr *, int);
+int	an_match(struct art_node *, const struct sockaddr *, int);
 void	rtentry_ref(void *, void *);
 void	rtentry_unref(void *, void *);
 
@@ -415,8 +415,8 @@ rtable_clearsource(unsigned int rtableid, struct sockaddr *src)
 }
 
 struct rtentry *
-rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio)
+rtable_lookup(unsigned int rtableid, const struct sockaddr *dst,
+    const struct sockaddr *mask, const struct sockaddr *gateway, uint8_t prio)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
@@ -545,7 +545,7 @@ out:
 
 int
 rtable_insert(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, struct sockaddr *gateway, uint8_t prio,
+    const struct sockaddr *mask, const struct sockaddr *gateway, uint8_t prio,
     struct rtentry *rt)
 {
 	struct rtentry			*mrt;
@@ -650,8 +650,8 @@ leave:
 }
 
 int
-rtable_delete(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, struct rtentry *rt)
+rtable_delete(unsigned int rtableid, const struct sockaddr *dst,
+    const struct sockaddr *mask, struct rtentry *rt)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
@@ -865,7 +865,7 @@ rtable_mpath_insert(struct art_node *an, struct rtentry *rt)
  * Returns 1 if ``an'' perfectly matches (``dst'', ``plen''), 0 otherwise.
  */
 int
-an_match(struct art_node *an, struct sockaddr *dst, int plen)
+an_match(struct art_node *an, const struct sockaddr *dst, int plen)
 {
 	struct rtentry			*rt;
 	struct srp_ref			 sr;
@@ -912,7 +912,7 @@ satoaddr(struct art_root *at, const struct sockaddr *sa)
  * Return the prefix length of a mask.
  */
 int
-rtable_satoplen(sa_family_t af, struct sockaddr *mask)
+rtable_satoplen(sa_family_t af, const struct sockaddr *mask)
 {
 	const struct domain	*dp;
 	uint8_t			*ap, *ep;

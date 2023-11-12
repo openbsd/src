@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.27 2023/11/10 20:05:22 bluhm Exp $ */
+/*	$OpenBSD: rtable.h,v 1.28 2023/11/12 17:51:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -29,7 +29,7 @@
 #define	rt_plen(rt)	((rt)->rt_plen)
 #define	RT_ROOT(rt)	(0)
 
-int		 rtable_satoplen(sa_family_t, struct sockaddr *);
+int		 rtable_satoplen(sa_family_t, const struct sockaddr *);
 
 void		 rtable_init(void);
 int		 rtable_exists(unsigned int);
@@ -42,16 +42,16 @@ void		 rtable_l2set(unsigned int, unsigned int, unsigned int);
 int		 rtable_setsource(unsigned int, int, struct sockaddr *);
 struct sockaddr *rtable_getsource(unsigned int, int);
 void		 rtable_clearsource(unsigned int, struct sockaddr *);
-struct rtentry	*rtable_lookup(unsigned int, struct sockaddr *,
-		     struct sockaddr *, struct sockaddr *, uint8_t);
+struct rtentry	*rtable_lookup(unsigned int, const struct sockaddr *,
+		     const struct sockaddr *, const struct sockaddr *, uint8_t);
 struct rtentry	*rtable_match(unsigned int, const struct sockaddr *,
 		     uint32_t *);
 struct rtentry	*rtable_iterate(struct rtentry *);
 int		 rtable_insert(unsigned int, struct sockaddr *,
-		     struct sockaddr *, struct sockaddr *, uint8_t,
+		     const struct sockaddr *, const struct sockaddr *, uint8_t,
 		     struct rtentry *);
-int		 rtable_delete(unsigned int, struct sockaddr *,
-		     struct sockaddr *, struct rtentry *);
+int		 rtable_delete(unsigned int, const struct sockaddr *,
+		     const struct sockaddr *, struct rtentry *);
 int		 rtable_walk(unsigned int, sa_family_t, struct rtentry **,
 		     int (*)(struct rtentry *, void *, unsigned int), void *);
 

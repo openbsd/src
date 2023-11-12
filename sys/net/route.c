@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.424 2023/11/12 15:42:05 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.425 2023/11/12 17:51:40 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -158,15 +158,17 @@ int			rttrash;	/* routes not in table but not freed */
 struct pool	rtentry_pool;		/* pool for rtentry structures */
 struct pool	rttimer_pool;		/* pool for rttimer structures */
 
-int	rt_setgwroute(struct rtentry *, struct sockaddr *, u_int);
+int	rt_setgwroute(struct rtentry *, const struct sockaddr *, u_int);
 void	rt_putgwroute(struct rtentry *, struct rtentry *);
 int	rtflushclone1(struct rtentry *, void *, u_int);
 int	rtflushclone(struct rtentry *, unsigned int);
 int	rt_ifa_purge_walker(struct rtentry *, void *, unsigned int);
-struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
-int	rt_clone(struct rtentry **, struct sockaddr *, unsigned int);
+struct rtentry *rt_match(const struct sockaddr *, uint32_t *, int,
+    unsigned int);
+int	rt_clone(struct rtentry **, const struct sockaddr *, unsigned int);
 struct sockaddr *rt_plentosa(sa_family_t, int, struct sockaddr_in6 *);
-static int rt_copysa(struct sockaddr *, struct sockaddr *, struct sockaddr **);
+static int rt_copysa(const struct sockaddr *, const struct sockaddr *,
+    struct sockaddr **);
 
 #define	LABELID_MAX	50000
 
@@ -229,7 +231,8 @@ rtisvalid(struct rtentry *rt)
  * NDP), if it does not exist.
  */
 struct rtentry *
-rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
+rt_match(const struct sockaddr *dst, uint32_t *src, int flags,
+    unsigned int tableid)
 {
 	struct rtentry		*rt = NULL;
 
@@ -247,7 +250,8 @@ rt_match(struct sockaddr *dst, uint32_t *src, int flags, unsigned int tableid)
 }
 
 int
-rt_clone(struct rtentry **rtp, struct sockaddr *dst, unsigned int rtableid)
+rt_clone(struct rtentry **rtp, const struct sockaddr *dst,
+    unsigned int rtableid)
 {
 	struct rt_addrinfo	 info;
 	struct rtentry		*rt = *rtp;
@@ -355,7 +359,7 @@ rt_hash(struct rtentry *rt, const struct sockaddr *dst, uint32_t *src)
  * Allocate a route, potentially using multipath to select the peer.
  */
 struct rtentry *
-rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
+rtalloc_mpath(const struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
 {
 	return (rt_match(dst, src, RT_RESOLVE, rtableid));
 }
@@ -368,7 +372,7 @@ rtalloc_mpath(struct sockaddr *dst, uint32_t *src, unsigned int rtableid)
  * longer valid, try to cache it.
  */
 struct rtentry *
-rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
+rtalloc(const struct sockaddr *dst, int flags, unsigned int rtableid)
 {
 	return (rt_match(dst, NULL, flags, rtableid));
 }
@@ -378,7 +382,7 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
  * the gateway entry ``rt''.
  */
 int
-rt_setgwroute(struct rtentry *rt, struct sockaddr *gate, u_int rtableid)
+rt_setgwroute(struct rtentry *rt, const struct sockaddr *gate, u_int rtableid)
 {
 	struct rtentry *prt, *nhrt;
 	unsigned int rdomain = rtable_l2(rtableid);
@@ -988,7 +992,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 }
 
 int
-rt_setgate(struct rtentry *rt, struct sockaddr *gate, u_int rtableid)
+rt_setgate(struct rtentry *rt, const struct sockaddr *gate, u_int rtableid)
 {
 	int glen = ROUNDUP(gate->sa_len);
 	struct sockaddr *sa, *osa;
@@ -1064,7 +1068,8 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
  * that is useable for the routing table.
  */
 static int
-rt_copysa(struct sockaddr *src, struct sockaddr *mask, struct sockaddr **dst)
+rt_copysa(const struct sockaddr *src, const struct sockaddr *mask,
+    struct sockaddr **dst)
 {
 	static const u_char maskarray[] = {
 	    0x0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe };
@@ -1576,7 +1581,7 @@ rt_timer_timer(void *arg)
 
 #ifdef MPLS
 int
-rt_mpls_set(struct rtentry *rt, struct sockaddr *src, uint8_t op)
+rt_mpls_set(struct rtentry *rt, const struct sockaddr *src, uint8_t op)
 {
 	struct sockaddr_mpls	*psa_mpls = (struct sockaddr_mpls *)src;
 	struct rt_mpls		*rt_mpls;
@@ -1614,7 +1619,7 @@ rt_mpls_clear(struct rtentry *rt)
 #endif
 
 u_int16_t
-rtlabel_name2id(char *name)
+rtlabel_name2id(const char *name)
 {
 	struct rt_label		*label, *p;
 	u_int16_t		 new_id = 1, id = 0;

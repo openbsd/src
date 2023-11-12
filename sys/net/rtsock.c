@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.371 2023/11/12 16:10:46 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.372 2023/11/12 17:51:41 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ int		 sysctl_iflist(int, struct walkarg *);
 int		 sysctl_ifnames(struct walkarg *);
 int		 sysctl_rtable_rtstat(void *, size_t *, void *);
 
-int		 rt_setsource(unsigned int, struct sockaddr *);
+int		 rt_setsource(unsigned int, const struct sockaddr *);
 
 /*
  * Locks used to protect struct members
@@ -1176,7 +1176,7 @@ change:
 		ifp->if_rtrequest(ifp, RTM_ADD, rt);
 
 		if (info->rti_info[RTAX_LABEL] != NULL) {
-			char *rtlabel = ((struct sockaddr_rtlabel *)
+			const char *rtlabel = ((const struct sockaddr_rtlabel *)
 			    info->rti_info[RTAX_LABEL])->sr_label;
 			rtlabel_unref(rt->rt_labelid);
 			rt->rt_labelid = rtlabel_name2id(rtlabel);
@@ -1202,8 +1202,8 @@ change:
 }
 
 struct ifaddr *
-ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
-    unsigned int rtableid)
+ifa_ifwithroute(int flags, const struct sockaddr *dst,
+    const struct sockaddr *gateway, unsigned int rtableid)
 {
 	struct ifaddr	*ifa;
 
@@ -1230,9 +1230,11 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 	}
 	if (ifa == NULL) {
 		if (gateway->sa_family == AF_LINK) {
-			struct sockaddr_dl *sdl = satosdl(gateway);
-			struct ifnet *ifp = if_get(sdl->sdl_index);
+			const struct sockaddr_dl *sdl;
+			struct ifnet *ifp;
 
+			sdl = satosdl_const(gateway);
+			ifp = if_get(sdl->sdl_index);
 			if (ifp != NULL)
 				ifa = ifaof_ifpforaddr(dst, ifp);
 			if_put(ifp);
@@ -1272,9 +1274,9 @@ rtm_getifa(struct rt_addrinfo *info, unsigned int rtid)
 	 * is ambiguous
 	 */
 	if (info->rti_info[RTAX_IFP] != NULL) {
-		struct sockaddr_dl *sdl;
+		const struct sockaddr_dl *sdl;
 
-		sdl = satosdl(info->rti_info[RTAX_IFP]);
+		sdl = satosdl_const(info->rti_info[RTAX_IFP]);
 		ifp = if_get(sdl->sdl_index);
 	}
 
@@ -1294,7 +1296,7 @@ rtm_getifa(struct rt_addrinfo *info, unsigned int rtid)
 		info->rti_ifa = ifa_ifwithaddr(info->rti_info[RTAX_IFA], rtid);
 
 	if (info->rti_ifa == NULL) {
-		struct sockaddr	*sa;
+		const struct sockaddr	*sa;
 
 		if ((sa = info->rti_info[RTAX_IFA]) == NULL)
 			if ((sa = info->rti_info[RTAX_GATEWAY]) == NULL)
@@ -1573,7 +1575,7 @@ rtm_msg1(int type, struct rt_addrinfo *rtinfo)
 	struct rt_msghdr	*rtm;
 	struct mbuf		*m;
 	int			 i;
-	struct sockaddr		*sa;
+	const struct sockaddr	*sa;
 	int			 len, dlen, hlen;
 
 	switch (type) {
@@ -1666,7 +1668,7 @@ again:
 	if ((cp0 = cp) != NULL)
 		cp += len;
 	for (i = 0; i < RTAX_MAX; i++) {
-		struct sockaddr *sa;
+		const struct sockaddr *sa;
 
 		if ((sa = rtinfo->rti_info[i]) == NULL)
 			continue;
@@ -1753,7 +1755,7 @@ rtm_miss(int type, struct rt_addrinfo *rtinfo, int flags, uint8_t prio,
 {
 	struct rt_msghdr	*rtm;
 	struct mbuf		*m;
-	struct sockaddr		*sa = rtinfo->rti_info[RTAX_DST];
+	const struct sockaddr	*sa = rtinfo->rti_info[RTAX_DST];
 
 	if (rtptable.rtp_count == 0)
 		return;
@@ -2275,7 +2277,7 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 	}
 
 	if (ISSET(info->rti_addrs, RTA_NETMASK)) {
-		struct sockaddr *sa = info->rti_info[RTAX_NETMASK];
+		const struct sockaddr *sa = info->rti_info[RTAX_NETMASK];
 		if (sa == NULL)
 			return -1;
 		switch (sa->sa_family) {
@@ -2293,7 +2295,7 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 	}
 
 	if (ISSET(info->rti_addrs, RTA_IFA)) {
-		struct sockaddr *sa = info->rti_info[RTAX_IFA];
+		const struct sockaddr *sa = info->rti_info[RTAX_IFA];
 		if (sa == NULL)
 			return -1;
 		switch (sa->sa_family) {
@@ -2311,8 +2313,8 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 	}
 
 	if (ISSET(info->rti_addrs, RTA_DNS)) {
-		struct sockaddr_rtdns *rtdns =
-		    (struct sockaddr_rtdns *)info->rti_info[RTAX_DNS];
+		const struct sockaddr_rtdns *rtdns =
+		    (const struct sockaddr_rtdns *)info->rti_info[RTAX_DNS];
 		if (rtdns == NULL)
 			return -1;
 		if (rtdns->sr_len > sizeof(*rtdns))
@@ -2338,8 +2340,8 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 	}
 
 	if (ISSET(info->rti_addrs, RTA_STATIC)) {
-		struct sockaddr_rtstatic *rtstatic =
-		    (struct sockaddr_rtstatic *)info->rti_info[RTAX_STATIC];
+		const struct sockaddr_rtstatic *rtstatic = (const struct
+		    sockaddr_rtstatic *)info->rti_info[RTAX_STATIC];
 		if (rtstatic == NULL)
 			return -1;
 		if (rtstatic->sr_len > sizeof(*rtstatic))
@@ -2350,8 +2352,8 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 	}
 
 	if (ISSET(info->rti_addrs, RTA_SEARCH)) {
-		struct sockaddr_rtsearch *rtsearch =
-		    (struct sockaddr_rtsearch *)info->rti_info[RTAX_SEARCH];
+		const struct sockaddr_rtsearch *rtsearch = (const struct
+		    sockaddr_rtsearch *)info->rti_info[RTAX_SEARCH];
 		if (rtsearch == NULL)
 			return -1;
 		if (rtsearch->sr_len > sizeof(*rtsearch))
@@ -2365,7 +2367,7 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 }
 
 int
-rt_setsource(unsigned int rtableid, struct sockaddr *src)
+rt_setsource(unsigned int rtableid, const struct sockaddr *src)
 {
 	struct ifaddr	*ifa;
 	/*
@@ -2374,14 +2376,14 @@ rt_setsource(unsigned int rtableid, struct sockaddr *src)
 	 */
 	switch(src->sa_family) {
 	case AF_INET:
-		if(satosin(src)->sin_addr.s_addr == INADDR_ANY) {
+		if(satosin_const(src)->sin_addr.s_addr == INADDR_ANY) {
 			rtable_setsource(rtableid, AF_INET, NULL);
 			return (0);
 		}
 		break;
 #ifdef INET6
 	case AF_INET6:
-		if (IN6_IS_ADDR_UNSPECIFIED(&satosin6(src)->sin6_addr)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&satosin6_const(src)->sin6_addr)) {
 			rtable_setsource(rtableid, AF_INET6, NULL);
 			return (0);
 		}
