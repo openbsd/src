@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.277 2023/06/24 20:54:46 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.278 2023/11/12 23:19:14 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
 
 const struct in_addr zeroin_addr;
 
-union {
+const union {
 	struct in_addr	za_in;
 	struct in6_addr	za_in6;
 } zeroin46_addr;
@@ -271,7 +271,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 	struct socket *so = inp->inp_socket;
 	u_int16_t lport = 0;
 	int wild = 0;
-	void *laddr = &zeroin46_addr;
+	const void *laddr = &zeroin46_addr;
 	int error;
 
 	if (inp->inp_lport)
@@ -415,8 +415,8 @@ in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
 }
 
 int
-in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
-    struct proc *p)
+in_pcbpickport(u_int16_t *lport, const void *laddr, int wild,
+    const struct inpcb *inp, struct proc *p)
 {
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
@@ -803,15 +803,15 @@ in_rtchange(struct inpcb *inp, int errno)
 }
 
 struct inpcb *
-in_pcblookup_local(struct inpcbtable *table, void *laddrp, u_int lport_arg,
-    int flags, u_int rtable)
+in_pcblookup_local(struct inpcbtable *table, const void *laddrp,
+    u_int lport_arg, int flags, u_int rtable)
 {
 	struct inpcb *inp, *match = NULL;
 	int matchwild = 3, wildcard;
 	u_int16_t lport = lport_arg;
-	struct in_addr laddr = *(struct in_addr *)laddrp;
+	const struct in_addr laddr = *(const struct in_addr *)laddrp;
 #ifdef INET6
-	struct in6_addr *laddr6 = (struct in6_addr *)laddrp;
+	const struct in6_addr *laddr6 = (const struct in6_addr *)laddrp;
 #endif
 	struct inpcbhead *head;
 	uint64_t lhash;
