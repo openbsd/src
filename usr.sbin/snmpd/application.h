@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.h,v 1.12 2023/11/12 16:03:41 martijn Exp $	*/
+/*	$OpenBSD: application.h,v 1.13 2023/11/12 16:07:34 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -142,10 +142,6 @@ void appl_response(struct appl_backend *, int32_t, enum appl_error, int16_t,
     struct appl_varbind *);
 void appl_report(struct snmp_message *, int32_t, struct ber_oid *);
 struct ber_element *appl_exception(enum appl_exception);
-
-/* application_legacy.c */
-void	 appl_legacy_init(void);
-void	 appl_legacy_shutdown(void);
 
 /* application_agentx.c */
 void	 appl_agentx(void);

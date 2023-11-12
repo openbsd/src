@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.108 2023/11/04 09:38:47 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.109 2023/11/12 16:07:34 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -502,21 +502,6 @@ RB_PROTOTYPE(snmp_messages, snmp_message, sm_entry, snmp_messagecmp)
 void		 trap_init(void);
 int		 trap_imsg(struct imsgev *, pid_t);
 int		 trap_send(struct ber_oid *, struct ber_element *);
-
-/* mps.c */
-int		 mps_getreq(struct snmp_message *, struct ber_element *,
-		    struct ber_oid *, u_int);
-int		 mps_getnextreq(struct snmp_message *, struct ber_element *,
-		    struct ber_oid *);
-int		 mps_getbulkreq(struct snmp_message *, struct ber_element **,
-		    struct ber_element **, struct ber_oid *, int);
-int		 mps_set(struct ber_oid *, void *, long long);
-int		 mps_getstr(struct oid *, struct ber_oid *,
-		    struct ber_element **);
-int		 mps_getint(struct oid *, struct ber_oid *,
-		    struct ber_element **);
-int		 mps_getts(struct oid *, struct ber_oid *,
-		    struct ber_element **);
 
 /* smi.c */
 int		 smi_init(void);
