@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.423 2023/11/10 20:05:22 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.424 2023/11/12 15:42:05 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -158,8 +158,8 @@ int			rttrash;	/* routes not in table but not freed */
 struct pool	rtentry_pool;		/* pool for rtentry structures */
 struct pool	rttimer_pool;		/* pool for rttimer structures */
 
-int	rt_setgwroute(struct rtentry *, u_int);
-void	rt_putgwroute(struct rtentry *);
+int	rt_setgwroute(struct rtentry *, struct sockaddr *, u_int);
+void	rt_putgwroute(struct rtentry *, struct rtentry *);
 int	rtflushclone1(struct rtentry *, void *, u_int);
 int	rtflushclone(struct rtentry *, unsigned int);
 int	rt_ifa_purge_walker(struct rtentry *, void *, unsigned int);
@@ -378,7 +378,7 @@ rtalloc(struct sockaddr *dst, int flags, unsigned int rtableid)
  * the gateway entry ``rt''.
  */
 int
-rt_setgwroute(struct rtentry *rt, u_int rtableid)
+rt_setgwroute(struct rtentry *rt, struct sockaddr *gate, u_int rtableid)
 {
 	struct rtentry *prt, *nhrt;
 	unsigned int rdomain = rtable_l2(rtableid);
@@ -386,10 +386,8 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 
 	NET_ASSERT_LOCKED();
 
-	KASSERT(ISSET(rt->rt_flags, RTF_GATEWAY));
-
 	/* If we cannot find a valid next hop bail. */
-	nhrt = rt_match(rt->rt_gateway, NULL, RT_RESOLVE, rdomain);
+	nhrt = rt_match(gate, NULL, RT_RESOLVE, rdomain);
 	if (nhrt == NULL)
 		return (ENOENT);
 
@@ -422,7 +420,7 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 			return (EHOSTUNREACH);
 		}
 
-		error = rt_clone(&prt, rt->rt_gateway, rdomain);
+		error = rt_clone(&prt, gate, rdomain);
 		if (error) {
 			rtfree(prt);
 			return (error);
@@ -438,10 +436,6 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 		rtfree(nhrt);
 		return (ENETUNREACH);
 	}
-
-	/* Next hop is valid so remove possible old cache. */
-	rt_putgwroute(rt);
-	KASSERT(rt->rt_gwroute == NULL);
 
 	/*
 	 * If the MTU of next hop is 0, this will reset the MTU of the
@@ -459,7 +453,8 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
 	nhrt->rt_flags |= RTF_CACHED;
 	nhrt->rt_cachecnt++;
 
-	rt->rt_gwroute = nhrt;
+	/* commit */
+	rt_putgwroute(rt, nhrt);
 
 	return (0);
 }
@@ -468,24 +463,29 @@ rt_setgwroute(struct rtentry *rt, u_int rtableid)
  * Invalidate the cached route entry of the gateway entry ``rt''.
  */
 void
-rt_putgwroute(struct rtentry *rt)
+rt_putgwroute(struct rtentry *rt, struct rtentry *nhrt)
 {
-	struct rtentry *nhrt = rt->rt_gwroute;
+	struct rtentry *onhrt;
 
 	NET_ASSERT_LOCKED();
 
-	if (!ISSET(rt->rt_flags, RTF_GATEWAY) || nhrt == NULL)
+	if (!ISSET(rt->rt_flags, RTF_GATEWAY))
 		return;
 
-	KASSERT(ISSET(nhrt->rt_flags, RTF_CACHED));
-	KASSERT(nhrt->rt_cachecnt > 0);
+	/* this is protected as per [X] in route.h */
+	onhrt = rt->rt_gwroute;
+	rt->rt_gwroute = nhrt;
 
-	--nhrt->rt_cachecnt;
-	if (nhrt->rt_cachecnt == 0)
-		nhrt->rt_flags &= ~RTF_CACHED;
+	if (onhrt != NULL) {
+		KASSERT(onhrt->rt_cachecnt > 0);
+		KASSERT(ISSET(onhrt->rt_flags, RTF_CACHED));
 
-	rtfree(rt->rt_gwroute);
-	rt->rt_gwroute = NULL;
+		--onhrt->rt_cachecnt;
+		if (onhrt->rt_cachecnt == 0)
+			CLR(onhrt->rt_flags, RTF_CACHED);
+
+		rtfree(onhrt);
+	}
 }
 
 void
@@ -796,7 +796,7 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 	}
 
 	/* Release next hop cache before flushing cloned entries. */
-	rt_putgwroute(rt);
+	rt_putgwroute(rt, NULL);
 
 	/* Clean up any cloned children. */
 	if (ISSET(rt->rt_flags, RTF_CLONING))
@@ -932,7 +932,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		    tableid))) {
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
-			rt_putgwroute(rt);
+			rt_putgwroute(rt, NULL);
 			free(rt->rt_gateway, M_RTABLE,
 			    ROUNDUP(rt->rt_gateway->sa_len));
 			free(ndst, M_RTABLE, ndst->sa_len);
@@ -965,7 +965,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (error != 0) {
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
-			rt_putgwroute(rt);
+			rt_putgwroute(rt, NULL);
 			free(rt->rt_gateway, M_RTABLE,
 			    ROUNDUP(rt->rt_gateway->sa_len));
 			free(ndst, M_RTABLE, ndst->sa_len);
@@ -991,22 +991,35 @@ int
 rt_setgate(struct rtentry *rt, struct sockaddr *gate, u_int rtableid)
 {
 	int glen = ROUNDUP(gate->sa_len);
-	struct sockaddr *sa;
+	struct sockaddr *sa, *osa;
 
-	if (rt->rt_gateway == NULL || glen != ROUNDUP(rt->rt_gateway->sa_len)) {
-		sa = malloc(glen, M_RTABLE, M_NOWAIT);
-		if (sa == NULL)
-			return (ENOBUFS);
-		if (rt->rt_gateway != NULL) {
-			free(rt->rt_gateway, M_RTABLE,
-			    ROUNDUP(rt->rt_gateway->sa_len));
+	KASSERT(gate != NULL);
+	if (rt->rt_gateway == gate) {
+		/* nop */
+		return (0);
+	};
+
+	sa = malloc(glen, M_RTABLE, M_NOWAIT | M_ZERO);
+	if (sa == NULL)
+		return (ENOBUFS);
+	memcpy(sa, gate, gate->sa_len);
+
+	KERNEL_LOCK(); /* see [X] in route.h */
+	if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
+		int error = rt_setgwroute(rt, gate, rtableid);
+		if (error != 0) {
+			KERNEL_UNLOCK();
+			free(sa, M_RTABLE, glen);
+			return (error);
 		}
-		rt->rt_gateway = sa;
 	}
-	memmove(rt->rt_gateway, gate, glen);
 
-	if (ISSET(rt->rt_flags, RTF_GATEWAY))
-		return (rt_setgwroute(rt, rtableid));
+	osa = rt->rt_gateway;
+	rt->rt_gateway = sa;
+	KERNEL_UNLOCK();
+
+	if (osa != NULL)
+		free(osa, M_RTABLE, ROUNDUP(osa->sa_len));
 
 	return (0);
 }
