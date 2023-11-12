@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.90 2023/11/08 20:07:14 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.91 2023/11/12 19:59:56 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -71,20 +71,9 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 {
 	struct snmpd		*env = ps->ps_env;
 	struct address		*h;
-#ifdef DEBUG
-	char		 buf[BUFSIZ];
-	struct oid	*oid;
-#endif
 
 	if ((setlocale(LC_CTYPE, "en_US.UTF-8")) == NULL)
 		fatal("setlocale(LC_CTYPE, \"en_US.UTF-8\")");
-
-#ifdef DEBUG
-	for (oid = NULL; (oid = smi_foreach(oid, 0)) != NULL;) {
-		smi_oid2string(&oid->o_id, buf, sizeof(buf), 0);
-		log_debug("oid %s", buf);
-	}
-#endif
 
 	appl();
 
