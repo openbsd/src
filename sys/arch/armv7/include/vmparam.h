@@ -1,4 +1,4 @@
-/* 	$OpenBSD: vmparam.h,v 1.7 2022/01/11 16:54:58 kettenis Exp $	*/
+/* 	$OpenBSD: vmparam.h,v 1.8 2023/11/12 16:37:28 kettenis Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.23 2003/05/22 05:47:07 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 /* Allow armv7 to have bigger limits than generic arm, allow user to override */
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(1024*1024*1024)		/* max data size */
+#define	MAXDSIZ		(2UL*1024*1024*1024)	/* max data size */
 #endif
 #ifndef BRKSIZ
 #define	BRKSIZ		MAXDSIZ			/* heap gap size */
