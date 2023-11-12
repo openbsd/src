@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.64 2023/11/09 18:36:19 dlg Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.65 2023/11/12 15:18:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -690,13 +690,13 @@ main(int argc, char **argv)
 	signal(SIGTERM, sig_close);
 	siginterrupt(SIGTERM, 1);
 	signal(SIGINT, sig_close);
-	siginterrupt(SIGTERM, 1);
+	siginterrupt(SIGINT, 1);
 	signal(SIGQUIT, sig_close);
-	siginterrupt(SIGTERM, 1);
+	siginterrupt(SIGQUIT, 1);
 	signal(SIGALRM, sig_alrm);
-	siginterrupt(SIGTERM, 1);
+	siginterrupt(SIGALRM, 1);
 	signal(SIGHUP, sig_hup);
-	siginterrupt(SIGTERM, 1);
+	siginterrupt(SIGHUP, 1);
 	alarm(delay);
 
 	if (priv_init_pcap(snaplen))
