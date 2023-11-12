@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2021/09/02 05:41:02 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.38 2023/11/12 19:58:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -42,13 +42,11 @@
 void
 trap_init(void)
 {
-	struct ber_oid	 trapoid = OID(MIB_coldStart);
-
 	/*
 	 * Send a coldStart to notify that the daemon has been
 	 * started and re-initialized.
 	 */
-	trap_send(&trapoid, NULL);
+	trap_send(&OID(MIB_coldStart, 0), NULL);
 }
 
 int
@@ -56,18 +54,14 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 {
 	struct trap_address	*tr;
 	struct ber_element	*vblist, *trap;
-	struct			 ber_oid uptime = OID(MIB_sysUpTime);
-	struct			 ber_oid trapoid = OID(MIB_snmpTrapOID);
+	struct			 ber_oid uptime = OID(MIB_sysUpTime, 0);
+	struct			 ber_oid trapoid = OID(MIB_snmpTrapOID, 0);
 	char			 ostr[SNMP_MAX_OID_STRLEN];
 	struct oid		 oa, ob;
 	struct snmp_message	*msg;
 
 	if (TAILQ_EMPTY(&snmpd_env->sc_trapreceivers))
 		return (0);
-
-	smi_scalar_oidlen(&uptime);
-	smi_scalar_oidlen(&trapoid);
-	smi_scalar_oidlen(oid);
 
 	smi_oid2string(oid, ostr, sizeof(ostr), 0);
 	log_debug("trap_send: oid %s", ostr);
