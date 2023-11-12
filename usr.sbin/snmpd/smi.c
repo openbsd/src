@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.34 2023/11/12 20:04:35 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.35 2023/11/12 20:07:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -213,7 +213,6 @@ smi_mibtree(struct oid *oids)
 
 	for (i = 0; oids[i].o_oid[0] != 0; i++) {
 		oid = &oids[i];
-		smi_oidlen(&oid->o_id);
 		if (oid->o_name != NULL) {
 			if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
 				fatalx("smi_mibtree: invalid MIB table");
