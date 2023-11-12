@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.370 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.371 2023/11/12 16:10:46 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1416,8 +1416,7 @@ rtm_getmetrics(const struct rtentry *rt, struct rt_metrics *out)
 int
 rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 {
-	struct sockaddr	*sa;
-	int		 i;
+	int i;
 
 	/*
 	 * Parse address bits, split address storage in chunks, and
@@ -1426,6 +1425,8 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 	 */
 	bzero(rtinfo->rti_info, sizeof(rtinfo->rti_info));
 	for (i = 0; i < sizeof(rtinfo->rti_addrs) * 8; i++) {
+		struct sockaddr *sa;
+
 		if ((rtinfo->rti_addrs & (1U << i)) == 0)
 			continue;
 		if (i >= RTAX_MAX || cp + sizeof(socklen_t) > cplim)
@@ -1443,6 +1444,7 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 	 * be NUL terminated.
 	 */
 	for (i = 0; i < RTAX_MAX; i++) {
+		const struct sockaddr *sa;
 		size_t len, maxlen, size;
 
 		sa = rtinfo->rti_info[i];
@@ -1497,13 +1499,15 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 			}
 			break;
 		case RTAX_LABEL:
-			sa->sa_family = AF_UNSPEC;
+			if (sa->sa_family != AF_UNSPEC)
+				return (EAFNOSUPPORT);
 			maxlen = RTLABEL_LEN;
 			size = sizeof(struct sockaddr_rtlabel);
 			break;
 #ifdef BFD
 		case RTAX_BFD:
-			sa->sa_family = AF_UNSPEC;
+			if (sa->sa_family != AF_UNSPEC)
+				return (EAFNOSUPPORT);
 			size = sizeof(struct sockaddr_bfd);
 			break;
 #endif
@@ -1525,12 +1529,21 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 			}
 			break;
 		case RTAX_STATIC:
-			sa->sa_family = AF_UNSPEC;
+			switch (sa->sa_family) {
+			case AF_INET:
+#ifdef INET6
+			case AF_INET6:
+#endif
+				break;
+			default:
+				return (EAFNOSUPPORT);
+			}
 			maxlen = RTSTATIC_LEN;
 			size = sizeof(struct sockaddr_rtstatic);
 			break;
 		case RTAX_SEARCH:
-			sa->sa_family = AF_UNSPEC;
+			if (sa->sa_family != AF_UNSPEC)
+				return (EAFNOSUPPORT);
 			maxlen = RTSEARCH_LEN;
 			size = sizeof(struct sockaddr_rtsearch);
 			break;
