@@ -2177,9 +2177,9 @@
 ./usr/lib/clang/16/include/tgmath.h
 ./usr/lib/clang/16/include/unwind.h
 ./usr/lib/clang/16/include/varargs.h
-./usr/lib/clang/13.0.0/lib
-./usr/lib/clang/13.0.0/lib/libclang_rt.profile.a
-./usr/lib/clang/13.0.0/lib/libclang_rt.ubsan_minimal.a
+./usr/lib/clang/16/lib
+./usr/lib/clang/16/libclang_rt.profile.a
+./usr/lib/clang/16/libclang_rt.ubsan_minimal.a
 ./usr/lib/libc++.a
 ./usr/lib/libc++_p.a
 ./usr/lib/libc++abi.a
