@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.36 2020/01/09 19:37:56 tb Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.37 2023/11/12 18:53:22 otto Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -42,6 +42,7 @@
 #include <limits.h>
 #include <math.h>
 #include <netdb.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,6 +90,20 @@
 
 #define MILLION_L    1000000l		/* For conversion to/from timeval */
 #define MILLION_D       1.0e6		/* Must be equal to MILLION_L */
+
+/* 
+ * The era we're in if we have no reason to assume otherwise.
+ * If unpack_ntp() sees a small offset the era is is assumed to be
+ * NTP_ERA + 1.
+ * Once the actual year is well into era 1, (after 2036) define NTP_ERA to 1
+ * and adapt (disable) the increments in unpack_ntp().
+ * Once more than half of era 1 has elapsed (after 2104), re-inroduce the test
+ * to move to era 2 if offset is small, repeat for each half era.
+ */
+#define NTP_ERA         0
+
+#define SECS_IN_ERA     (UINT32_MAX + 1ULL)
+
 
 struct ntp_data {
 	u_char		status;
@@ -392,7 +407,7 @@ retry:
 void
 unpack_ntp(struct ntp_data *data, u_char *packet)
 {
-	int i;
+	int i, era;
 	double d;
 
 	data->current = current_time(JAN_1970);
@@ -403,14 +418,22 @@ unpack_ntp(struct ntp_data *data, u_char *packet)
 	data->stratum = packet[1];
 
 	for (i = 0, d = 0.0; i < 8; ++i)
-	    d = 256.0*d+packet[NTP_RECEIVE+i];
+		d = 256.0*d+packet[NTP_RECEIVE+i];
 
+	era = NTP_ERA;
+	if (packet[NTP_RECEIVE] <= 127)
+		era++;
 	data->receive = d / NTP_SCALE;
+	data->receive += era * SECS_IN_ERA;
 
 	for (i = 0, d = 0.0; i < 8; ++i)
-	    d = 256.0*d+packet[NTP_TRANSMIT+i];
+		d = 256.0*d+packet[NTP_TRANSMIT+i];
 
+	era = NTP_ERA;
+	if (packet[NTP_TRANSMIT] <= 127)
+		era++;
 	data->transmit = d / NTP_SCALE;
+	data->transmit += era * SECS_IN_ERA;
 
 	/* See write_packet for why this isn't an endian problem. */
 	bcopy((packet + NTP_ORIGINATE), &data->recvck, sizeof(data->recvck));
@@ -449,11 +472,11 @@ void
 create_timeval(double difference, struct timeval *new, struct timeval *adjust)
 {
 	struct timeval old;
-	long n;
+	long long n;
 
 	/* Start by converting to timeval format. Note that we have to
 	 * cater for negative, unsigned values. */
-	if ((n = (long) difference) > difference)
+	if ((n = (long long) difference) > difference)
 		--n;
 	adjust->tv_sec = n;
 	adjust->tv_usec = (long) (MILLION_D * (difference-n));
