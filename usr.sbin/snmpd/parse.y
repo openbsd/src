@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.81 2023/11/12 16:03:41 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.82 2023/11/12 20:04:35 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -99,7 +99,7 @@ char		*symget(const char *);
 struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct usmuser		*user = NULL;
-static struct oid		*smi_object;
+static struct ber_oid		*smi_object;
 
 static uint8_t			 engineid[SNMPD_MAXENGINEIDLEN];
 static int32_t			 enginepen;
@@ -848,25 +848,19 @@ sysmib		: CONTACT STRING		{
 		;
 
 object		: OBJECTID oid NAME STRING optwrite 	{
-			smi_object = calloc(1, sizeof(*smi_object));
-			if (smi_object == NULL) {
-				yyerror("calloc");
+			const char *error;
+
+			smi_object = $2;
+			error = smi_insert($2, $4);
+			free($4);
+			if (error != NULL) {
+				yyerror("%s", error);
 				free($2);
-				free($4);
 				YYERROR;
 			}
-
-			smi_object->o_id = *$2;
-			smi_object->o_name = $4;
-
-			if (smi_insert(smi_object) == -1) {
-				yyerror("duplicate oid");
-				free($2);
-				free($4);
-				free(smi_object);
-				YYERROR;
-			}
-		} objectvalue
+		} objectvalue {
+			free(smi_object);
+		}
 		;
 
 objectvalue	: INTEGER NUMBER			{
@@ -880,7 +874,7 @@ objectvalue	: INTEGER NUMBER			{
 				yyerror("number too large");
 				YYERROR;
 			}
-			error = appl_internal_object_int(&smi_object->o_id, $2);
+			error = appl_internal_object_int(smi_object, $2);
 			if (error != NULL) {
 				yyerror("%s", error);
 				YYERROR;
@@ -889,8 +883,8 @@ objectvalue	: INTEGER NUMBER			{
 		| OCTETSTRING STRING			{
 			const char *error;
 
-			if ((error = appl_internal_object_string(
-			    &smi_object->o_id, $2)) != NULL) {
+			error = appl_internal_object_string(smi_object, $2);
+			if (error != NULL) {
 				yyerror("%s", error);
 				free($2);
 				YYERROR;

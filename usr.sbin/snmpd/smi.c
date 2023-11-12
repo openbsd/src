@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.33 2023/11/04 09:38:47 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.34 2023/11/12 20:04:35 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -182,22 +182,27 @@ smi_delete(struct oid *oid)
 	}
 }
 
-int
-smi_insert(struct oid *oid)
+const char *
+smi_insert(struct ber_oid *oid, const char *name)
 {
-	struct oid		 key, *value;
+	struct oid	 *object;
 
-	if ((oid->o_flags & OID_TABLE) && oid->o_get == NULL)
-		fatalx("smi_insert: invalid MIB table");
+	if ((object = calloc(1, sizeof(*object))) == NULL)
+		return strerror(errno);
 
-	bzero(&key, sizeof(key));
-	bcopy(&oid->o_id, &key.o_id, sizeof(struct ber_oid));
-	value = RB_FIND(oidtree, &smi_oidtree, &key);
-	if (value != NULL)
-		return (-1);
+	object->o_id = *oid;
+	if ((object->o_name = strdup(name)) == NULL) {
+		free(object);
+		return strerror(errno);
+	}
 
-	RB_INSERT(oidtree, &smi_oidtree, oid);
-	return (0);
+	if (RB_INSERT(oidtree, &smi_oidtree, object) != NULL) {
+		free(object->o_name);
+		free(object);
+		return "duplicate oid";
+	}
+
+	return NULL;
 }
 
 void
