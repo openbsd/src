@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.110 2023/11/12 20:04:35 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.111 2023/11/12 20:06:53 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -217,7 +217,7 @@ struct oid {
 
 #define OID(...)		(struct ber_oid){ { __VA_ARGS__ },	\
     (sizeof((uint32_t []) { __VA_ARGS__ }) / sizeof(uint32_t)) }
-#define MIBDECL(...)		{ { MIB_##__VA_ARGS__ } }, #__VA_ARGS__
+#define MIBDECL(...)		OID(MIB_##__VA_ARGS__), #__VA_ARGS__
 #define MIB(...)		{ { MIB_##__VA_ARGS__ } }, NULL
 #define MIBEND			{ { 0 } }, NULL
 
