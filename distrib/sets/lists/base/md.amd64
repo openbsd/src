@@ -10,7 +10,7 @@
 ./usr/bin/clang-cpp
 ./usr/bin/ld.lld
 ./usr/bin/pctr
-./usr/lib/libLLVM.so.7.0
+./usr/lib/libLLVM.so.8.0
 ./usr/lib/libc++.so.9.0
 ./usr/lib/libc++abi.so.6.0
 ./usr/lib/libcompiler_rt.a
