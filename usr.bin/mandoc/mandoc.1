@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.192 2023/10/24 20:30:49 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.193 2023/11/13 19:13:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2012, 2014-2023 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2023 $
+.Dd $Mdocdate: November 13 2023 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -287,10 +287,7 @@ arguments are accepted:
 .It Cm indent Ns = Ns Ar indent
 The left margin for normal text is set to
 .Ar indent
-blank characters instead of the default of five for
-.Xr mdoc 7
-and seven for
-.Xr man 7 .
+blank characters instead of the default of five.
 Increasing this is not recommended; it may result in degraded formatting,
 for example overfull lines or ugly line breaks.
 When output is to a pager on a terminal that is less than 66 columns
@@ -302,8 +299,7 @@ input files in
 .Xr mdoc 7
 output style.
 This prints the operating system name rather than the page title
-on the right side of the footer line, and it implies
-.Fl O Cm indent Ns =5 .
+on the right side of the footer line.
 One useful application is for checking that
 .Fl T Cm man
 output formats in the same way as the

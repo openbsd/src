@@ -1,4 +1,4 @@
-/* $OpenBSD: term_ascii.c,v 1.54 2022/08/16 17:44:53 schwarze Exp $ */
+/* $OpenBSD: term_ascii.c,v 1.55 2023/11/13 19:13:00 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -64,6 +64,7 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 	p->maxtcol = 1;
 
 	p->line = 1;
+	p->defindent = 5;
 	p->defrmargin = p->lastrmargin = 78;
 	p->fontq = mandoc_reallocarray(NULL,
 	     (p->fontsz = 8), sizeof(*p->fontq));
@@ -112,10 +113,8 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 		}
 	}
 
-	if (outopts->mdoc) {
+	if (outopts->mdoc)
 		p->mdocstyle = 1;
-		p->defindent = 5;
-	}
 	if (outopts->indent)
 		p->defindent = outopts->indent;
 	if (outopts->width)
