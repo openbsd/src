@@ -364,4 +364,6 @@ void backend_error_getnext_parseerror(void);
 void backend_error_getnext_requestdenied(void);
 void backend_error_getnext_processingerror(void);
 void backend_error_getnext_nonstandard(void);
+void backend_error_getbulk_firstrepetition(void);
+void backend_error_getbulk_secondrepetition(void);
 void snmp_v3_usm_noauthpriv(void);

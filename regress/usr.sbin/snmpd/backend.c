@@ -5373,3 +5373,83 @@ backend_error_getnext_nonstandard(void)
 	snmpv2_response_validate(snmp_s, 1000, community, requestid, GENERR, 1,
 	    &varbind, 1);
 }
+
+void
+backend_error_getbulk_firstrepetition(void)
+{
+	struct sockaddr_storage ss;
+	struct sockaddr *sa = (struct sockaddr *)&ss;
+	socklen_t salen;
+	int snmp_s, ax_s;
+	uint32_t sessionid;
+	struct varbind varbind = {
+		.type = TYPE_NULL,
+		.name = OID_STRUCT(MIB_BACKEND_ERROR, 63),
+	};
+	int32_t requestid;
+	char buf[1024];
+	size_t n;
+
+	ax_s = agentx_connect(axsocket);
+	sessionid = agentx_open(ax_s, 0, 0,
+	    OID_ARG(MIB_SUBAGENT_BACKEND_ERROR, 63), __func__);
+	agentx_register(ax_s, sessionid, 0, 0, 127, 0,
+	    OID_ARG(MIB_BACKEND_ERROR, 63), 0);
+
+	salen = snmp_resolve(SOCK_DGRAM, hostname, servname, sa);
+	snmp_s = snmp_connect(SOCK_DGRAM, sa, salen);
+	requestid = snmpv2_getbulk(snmp_s, community, 0, 0, 2, &varbind, 1);
+
+	varbind.name.subid[varbind.name.n_subid++] = 0;
+	n = agentx_read(ax_s, buf, sizeof(buf), 1000);
+	agentx_getnext_handle(__func__, buf, n, 0, sessionid, NULL, &varbind, 1);
+	varbind.name.n_subid--;
+	agentx_response(ax_s, buf, GENERR, 1, &varbind, 1);
+
+	snmpv2_response_validate(snmp_s, 1000, community, requestid, GENERR, 1,
+	    &varbind, 1);
+}
+
+void
+backend_error_getbulk_secondrepetition(void)
+{
+	struct sockaddr_storage ss;
+	struct sockaddr *sa = (struct sockaddr *)&ss;
+	socklen_t salen;
+	int snmp_s, ax_s;
+	uint32_t sessionid;
+	struct varbind varbind = {
+		.type = TYPE_NULL,
+		.name = OID_STRUCT(MIB_BACKEND_ERROR, 64),
+		.data.int32 = 1
+	};
+	int32_t requestid;
+	char buf[1024];
+	size_t n;
+
+	ax_s = agentx_connect(axsocket);
+	sessionid = agentx_open(ax_s, 0, 0,
+	    OID_ARG(MIB_SUBAGENT_BACKEND_ERROR, 64), __func__);
+	agentx_register(ax_s, sessionid, 0, 0, 127, 0,
+	    OID_ARG(MIB_BACKEND_ERROR, 64), 0);
+
+	salen = snmp_resolve(SOCK_DGRAM, hostname, servname, sa);
+	snmp_s = snmp_connect(SOCK_DGRAM, sa, salen);
+	requestid = snmpv2_getbulk(snmp_s, community, 0, 0, 2, &varbind, 1);
+
+	varbind.name.subid[varbind.name.n_subid++] = 0;
+	n = agentx_read(ax_s, buf, sizeof(buf), 1000);
+	agentx_getnext_handle(__func__, buf, n, 0, sessionid, NULL, &varbind, 1);
+	varbind.type = TYPE_INTEGER;
+	agentx_response(ax_s, buf, 0, NOERROR, &varbind, 1);
+	varbind.name.subid[varbind.name.n_subid - 1] = 1;
+	n = agentx_read(ax_s, buf, sizeof(buf), 1000);
+	agentx_getnext_handle(__func__, buf, n, 0, sessionid, NULL, &varbind, 1);
+	varbind.name.subid[varbind.name.n_subid - 1] = 0;
+	varbind.type = TYPE_NULL;
+	agentx_response(ax_s, buf, 0, GENERR, &varbind, 1);
+
+	varbind.name.n_subid--;
+	snmpv2_response_validate(snmp_s, 1000, community, requestid, GENERR, 1,
+	    &varbind, 1);
+}
