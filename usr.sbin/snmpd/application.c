@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.36 2023/11/12 16:07:34 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.37 2023/11/13 10:14:29 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -911,6 +911,8 @@ appl_processpdu(struct snmp_message *statereference, const char *ctxname,
 			ureq->aru_vblist[i - repeaterlen].avi_sub =
 			    &(ureq->aru_vblist[i]);
 			ureq->aru_vblist[i].avi_state = APPL_VBSTATE_MUSTFILL;
+			ureq->aru_vblist[i].avi_index =
+			    ureq->aru_vblist[i - repeaterlen].avi_index;
 			continue;
 		}
 		ober_get_oid(varbind->be_sub,
