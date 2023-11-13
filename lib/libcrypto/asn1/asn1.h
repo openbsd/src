@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.80 2023/07/28 10:33:13 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.81 2023/11/13 12:46:07 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -913,6 +913,11 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
 int SMIME_text(BIO *in, BIO *out);
 
 void ERR_load_ASN1_strings(void);
+
+#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
+int OPENSSL_timegm(const struct tm *tm, time_t *out);
+struct tm *OPENSSL_gmtime(const time_t *time, struct tm *out_tm);
+#endif
 
 /* Error codes for the ASN1 functions. */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_posix.c,v 1.3 2023/01/01 16:58:23 miod Exp $ */
+/* $OpenBSD: a_time_posix.c,v 1.4 2023/11/13 12:46:07 beck Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  * Copyright (c) 2022, Bob Beck <beck@obtuse.com>
@@ -25,6 +25,8 @@
 #include <limits.h>
 #include <string.h>
 #include <time.h>
+
+#include <openssl/asn1.h>
 
 #define SECS_PER_HOUR (int64_t)(60 * 60)
 #define SECS_PER_DAY (int64_t)(24 * SECS_PER_HOUR)
@@ -219,6 +221,20 @@ asn1_time_time_t_to_tm(const time_t *time, struct tm *out_tm)
 
 	return asn1_time_posix_to_tm(posix_time, out_tm);
 }
+
+int
+OPENSSL_timegm(const struct tm *tm, time_t *out) {
+	return asn1_time_tm_to_time_t(tm, out);
+}
+LCRYPTO_ALIAS(OPENSSL_timegm);
+
+struct tm *
+OPENSSL_gmtime(const time_t *time, struct tm *out_tm) {
+	if (!asn1_time_time_t_to_tm(time, out_tm))
+		return NULL;
+	return out_tm;
+}
+LCRYPTO_ALIAS(OPENSSL_gmtime);
 
 int
 OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
