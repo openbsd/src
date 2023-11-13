@@ -1,4 +1,4 @@
-/* $OpenBSD: x509type.c,v 1.20 2023/11/13 15:36:55 tb Exp $ */
+/* $OpenBSD: x509type.c,v 1.21 2023/11/13 15:38:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,7 +106,7 @@ X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
 		break;
 	}
 
-	i = OBJ_obj2nid(x->sig_alg->algorithm);
+	i = X509_get_signature_nid(x);
 	if (i && OBJ_find_sigid_algs(i, NULL, &i)) {
 		switch (i) {
 		case NID_rsaEncryption:
