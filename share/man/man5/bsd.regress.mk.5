@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.25 2023/09/25 05:43:22 claudio Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.26 2023/11/13 10:11:41 op Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 25 2023 $
+.Dd $Mdocdate: November 13 2023 $
 .Dt BSD.REGRESS.MK 5
 .Os
 .Sh NAME
@@ -51,14 +51,13 @@ test programs.
 Build any dependencies required to carry out the current set
 of regression tests.
 .It Cm regress
-Executes all of the regression targets defined in the Makefile.
-If one of the tests fails, the line
+Executes the regression targets defined in the Makefile.
+If a tests fails, the line
 .Qq FAILED
 is printed to the standard output.
-By default, execution continues with the next test and, after running
-all the tests,
+By default, execution stops after the first test failure and
 .Sy make Cm regress
-exits with an exit status of 0 even if some of the tests failed.
+exits with a non-zero status.
 .It Cm run-regress-*
 Runs an individual regression test.
 If the exit status of the program indicates an error or timeout,
