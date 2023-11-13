@@ -2377,6 +2377,7 @@
 ./usr/lib/clang/16/include/__wmmintrin_pclmul.h
 ./usr/lib/clang/16/include/adxintrin.h
 ./usr/lib/clang/16/include/ammintrin.h
+./usr/lib/clang/16/include/amxfp16intrin.h
 ./usr/lib/clang/16/include/amxintrin.h
 ./usr/lib/clang/16/include/avx2intrin.h
 ./usr/lib/clang/16/include/avx512bf16intrin.h
@@ -2386,6 +2387,7 @@
 ./usr/lib/clang/16/include/avx512dqintrin.h
 ./usr/lib/clang/16/include/avx512erintrin.h
 ./usr/lib/clang/16/include/avx512fintrin.h
+./usr/lib/clang/16/include/avx512fp16intrin.h
 ./usr/lib/clang/16/include/avx512ifmaintrin.h
 ./usr/lib/clang/16/include/avx512ifmavlintrin.h
 ./usr/lib/clang/16/include/avx512pfintrin.h
@@ -2397,6 +2399,7 @@
 ./usr/lib/clang/16/include/avx512vlbwintrin.h
 ./usr/lib/clang/16/include/avx512vlcdintrin.h
 ./usr/lib/clang/16/include/avx512vldqintrin.h
+./usr/lib/clang/16/include/avx512vlfp16intrin.h
 ./usr/lib/clang/16/include/avx512vlintrin.h
 ./usr/lib/clang/16/include/avx512vlvbmi2intrin.h
 ./usr/lib/clang/16/include/avx512vlvnniintrin.h
@@ -2405,7 +2408,10 @@
 ./usr/lib/clang/16/include/avx512vp2intersectintrin.h
 ./usr/lib/clang/16/include/avx512vpopcntdqintrin.h
 ./usr/lib/clang/16/include/avx512vpopcntdqvlintrin.h
+./usr/lib/clang/16/include/avxifmaintrin.h
 ./usr/lib/clang/16/include/avxintrin.h
+./usr/lib/clang/16/include/avxneconvertintrin.h
+./usr/lib/clang/16/include/avxvnniint8intrin.h
 ./usr/lib/clang/16/include/avxvnniintrin.h
 ./usr/lib/clang/16/include/bmi2intrin.h
 ./usr/lib/clang/16/include/bmiintrin.h
@@ -2415,7 +2421,9 @@
 ./usr/lib/clang/16/include/clflushoptintrin.h
 ./usr/lib/clang/16/include/clwbintrin.h
 ./usr/lib/clang/16/include/clzerointrin.h
+./usr/lib/clang/16/include/cmpccxaddintrin.h
 ./usr/lib/clang/16/include/cpuid.h
+./usr/lib/clang/16/include/crc32intrin.h
 ./usr/lib/clang/16/include/emmintrin.h
 ./usr/lib/clang/16/include/enqcmdintrin.h
 ./usr/lib/clang/16/include/f16cintrin.h
@@ -2442,8 +2450,11 @@
 ./usr/lib/clang/16/include/pkuintrin.h
 ./usr/lib/clang/16/include/pmmintrin.h
 ./usr/lib/clang/16/include/popcntintrin.h
+./usr/lib/clang/16/include/prfchiintrin.h
 ./usr/lib/clang/16/include/prfchwintrin.h
 ./usr/lib/clang/16/include/ptwriteintrin.h
+./usr/lib/clang/16/include/raointintrin.h
+./usr/lib/clang/16/include/rdpruintrin.h
 ./usr/lib/clang/16/include/rdseedintrin.h
 ./usr/lib/clang/16/include/rtmintrin.h
 ./usr/lib/clang/16/include/serializeintrin.h
@@ -2464,7 +2475,6 @@
 ./usr/lib/clang/16/include/varargs.h
 ./usr/lib/clang/16/include/vpclmulqdqintrin.h
 ./usr/lib/clang/16/include/waitpkgintrin.h
-./usr/lib/clang/16/include/wasm_simd128.h
 ./usr/lib/clang/16/include/wbnoinvdintrin.h
 ./usr/lib/clang/16/include/wmmintrin.h
 ./usr/lib/clang/16/include/x86gprintrin.h
