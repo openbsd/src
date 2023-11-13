@@ -1,9 +1,9 @@
 CHAR-BASIC(1)               General Commands Manual              CHAR-BASIC(1)
 
 NNAAMMEE
-       char-basic - the char request
+     char-basic - the char request
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text XX myval final teyt
+     initial text XX myval final teyt
 
 OpenBSD                         August 25, 2018                  CHAR-BASIC(1)

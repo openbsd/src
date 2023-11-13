@@ -1,9 +1,9 @@
 TP-EOF(1)                   General Commands Manual                  TP-EOF(1)
 
 NNAAMMEE
-       TP-eof - indented paragraph macro at the end of the file
+     TP-eof - indented paragraph macro at the end of the file
 
 DDEESSCCRRIIPPTTIIOONN
-       The last line of the file is TP:
+     The last line of the file is TP:
 
 OpenBSD                          July 7, 2014                        TP-EOF(1)

@@ -1,12 +1,12 @@
 B-NEST(1)                   General Commands Manual                  B-NEST(1)
 
 NNAAMMEE
-       B-nest - nested next-line scopes
+     B-nest - nested next-line scopes
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text bboolldd tteexxtt back to roman _i_t_a_l_i_croman
+     initial text bboolldd tteexxtt back to roman _i_t_a_l_i_croman
 
 section_h_e_a_d_e_r
-       final text
+     final text
 
 OpenBSD                         April 28, 2022                       B-NEST(1)

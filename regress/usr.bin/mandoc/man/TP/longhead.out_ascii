@@ -1,15 +1,15 @@
 TP-LONGHEAD(1)              General Commands Manual             TP-LONGHEAD(1)
 
 NNAAMMEE
-       TP-longhead - tagged paragraph with a long head
+     TP-longhead - tagged paragraph with a long head
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text
+     normal text
 
-       TThhiiss ttaaggggeedd ppaarraaggrraapphh hhaass rriiddiiccuulloouussllyy lloonngg tteexxtt iinn iittss hheeaadd,, ssuucchh tthhaatt
-       iitt ddooeessnn''tt eevveenn ffiitt oonn tthhee lliinnee
-             paragraph body
+     TThhiiss ttaaggggeedd ppaarraaggrraapphh hhaass rriiddiiccuulloouussllyy lloonngg tteexxtt iinn iittss hheeaadd,, ssuucchh tthhaatt
+     iitt ddooeessnn''tt eevveenn ffiitt oonn tthhee lliinnee
+           paragraph body
 
-       normal text
+     normal text
 
 OpenBSD                          April 8, 2014                  TP-LONGHEAD(1)

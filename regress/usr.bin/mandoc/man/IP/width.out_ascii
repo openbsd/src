@@ -1,83 +1,83 @@
 IP-WIDTH(1)                 General Commands Manual                IP-WIDTH(1)
 
 NNAAMMEE
-       IP-width - indentation width of indented paragraphs
+     IP-width - indentation width of indented paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
-       Regular mode:
+     Regular mode:
 
-       tag
+     tag
 indented
 text
 
-       tag
-   indented
-   text
+     tag
+ indented
+ text
 
-       tag
+     tag
+     indented
+     text
+
+     tag
+      indented
+      text
+
+     tag
        indented
        text
 
-       tag
+     tag
         indented
         text
 
-       tag
-         indented
+     tag indented
          text
 
-       tag
-          indented
+     tag  indented
           text
 
-       tag indented
-           text
+     tag  indented
+          text
 
-       tag  indented
-            text
+     tag                                                                                                 indented
+                                                                                                         text
 
-       tag  indented
-            text
+     Literal mode:
 
-       tag                                                                                                 indented
-                                                                                                           text
-
-       Literal mode:
-
-       tag
+     tag
 indented
 text
 
-       tag
-   indented
-   text
+     tag
+ indented
+ text
 
-       tag
+     tag
+     indented
+     text
+
+     tag
+      indented
+      text
+
+     tag
        indented
        text
 
-       tag
+     tag
         indented
         text
 
-       tag
-         indented
+     tag indented
          text
 
-       tag
-          indented
+     tag  indented
           text
 
-       tag indented
-           text
+     tag  indented
+          text
 
-       tag  indented
-            text
-
-       tag  indented
-            text
-
-       tag                                                                                                 indented
-                                                                                                           text
+     tag                                                                                                 indented
+                                                                                                         text
 
 OpenBSD                        December 23, 2014                   IP-WIDTH(1)

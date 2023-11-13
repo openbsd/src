@@ -1,9 +1,9 @@
 PS-IGNORE(1)                General Commands Manual               PS-IGNORE(1)
 
 NNAAMMEE
-       ps-ignore - ignoreing point size macros
+     ps-ignore - ignoreing point size macros
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text small text big text
+     normal text small text big text
 
 OpenBSD                         Febuary 5, 2011                   PS-IGNORE(1)

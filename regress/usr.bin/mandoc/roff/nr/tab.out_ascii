@@ -1,11 +1,11 @@
 NR-TAB(1)                   General Commands Manual                  NR-TAB(1)
 
 NNAAMMEE
-       nr-tab - tab characters in register definition lines
+     nr-tab - tab characters in register definition lines
 
 DDEESSCCRRIIPPTTIIOONN
-       with tab: >>0<<
-       with space: >>2<<
-       rr with tab: >>0:42<<
+     with tab: >>0<<
+     with space: >>2<<
+     rr with tab: >>0:42<<
 
 OpenBSD                        February 6, 2019                      NR-TAB(1)

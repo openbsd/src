@@ -1,10 +1,10 @@
 HORIZ(1)                    General Commands Manual                   HORIZ(1)
 
 NNAAMMEE
-       horiz - horizontal distances
+     horiz - horizontal distances
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
+     initial text
           240u
               3.6c
         0.003f
@@ -18,6 +18,6 @@ DDEESSCCRRIIPPTTIIOONN
                1.5ix
          -6n
 
-       final text
+     final text
 
 OpenBSD                        December 23, 2014                      HORIZ(1)

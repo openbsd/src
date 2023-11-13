@@ -1,20 +1,20 @@
 TP-MACROTAG(1)              General Commands Manual             TP-MACROTAG(1)
 
 NNAAMMEE
-       TP-macrotag - macros in the head of tagged paragraphs
+     TP-macrotag - macros in the head of tagged paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
+     regular text
 
-       lloonnggiinnddeenntt
-              indented text
+     lloonnggiinnddeenntt
+            indented text
 
-       _n_e_x_t_-_l_i_n_e
-              indented text
+     _n_e_x_t_-_l_i_n_e
+            indented text
 
-       bboolldd ssmmaallll
-              indented text
+     bboolldd ssmmaallll
+            indented text
 
-       regular text
+     regular text
 
 OpenBSD                        September 9, 2020                TP-MACROTAG(1)

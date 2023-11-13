@@ -1,22 +1,21 @@
 UR-ARGS(1)                  General Commands Manual                 UR-ARGS(1)
 
 NNAAMMEE
-       UR-basic - argument handling of the man-ext URI macro
+     UR-basic - argument handling of the man-ext URI macro
 
 DDEESSCCRRIIPPTTIIOONN
-       argument, text, and tail: text <http://www.openbsd.org/>tail argument
+     argument, text, and tail: text <http://www.openbsd.org/>tail argument
 
-       argument plus text: OpenBSD homepage <http://www.openbsd.org/> next
-       line
+     argument plus text: OpenBSD homepage <http://www.openbsd.org/> next line
 
-       argument but no text: <http://www.netbsd.org/>
+     argument but no text: <http://www.netbsd.org/>
 
-       no argument, but text: some text <>
+     no argument, but text: some text <>
 
-       two arguments plus text: some text <first>
+     two arguments plus text: some text <first>
 
-       two arguments, but no text: <first>
+     two arguments, but no text: <first>
 
-       final text
+     final text
 
 OpenBSD                         August 14, 2018                     UR-ARGS(1)

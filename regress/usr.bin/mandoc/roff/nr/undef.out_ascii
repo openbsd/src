@@ -1,17 +1,17 @@
 NR-UNDEF(1)                 General Commands Manual                NR-UNDEF(1)
 
 NNAAMMEE
-       nr-undef - using an undefined number register
+     nr-undef - using an undefined number register
 
 DDEESSCCRRIIPPTTIIOONN
-       The myr register is initially undefined.
+     The myr register is initially undefined.
 
-       Its initial value is 0.
+     Its initial value is 0.
 
-       After interpolating it, is is now defined.
+     After interpolating it, is is now defined.
 
-       After defining it to 1, it is of course still defined.
+     After defining it to 1, it is of course still defined.
 
-       After removing it, it is again undefined.
+     After removing it, it is again undefined.
 
 OpenBSD                          April 9, 2018                     NR-UNDEF(1)

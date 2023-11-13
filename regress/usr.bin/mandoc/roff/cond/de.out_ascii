@@ -1,9 +1,9 @@
 COND-DE(1)                  General Commands Manual                 COND-DE(1)
 
 NNAAMMEE
-       cond-de - close macro definition and conditional block on the same line
+     cond-de - close macro definition and conditional block on the same line
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text first content second content final text
+     initial text first content second content final text
 
 OpenBSD                         August 3, 2020                      COND-DE(1)

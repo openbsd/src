@@ -1,24 +1,24 @@
 CHAR-ACCENT-NOCOMBINE(1)    General Commands Manual   CHAR-ACCENT-NOCOMBINE(1)
 
 NNAAMMEE
-       cchhaarr--aacccceenntt--nnooccoommbbiinnee - non-combining accents
+     cchhaarr--aacccceenntt--nnooccoommbbiinnee - non-combining accents
 
 DDEESSCCRRIIPPTTIIOONN
-       bare acute accent: e'e
-       escaped acute accent: e'ee
-       acute accent sequence: e'e
-       bare grave accent: e`e
-       escaped grave accent: e`ee
-       acute grave sequence: e`e
-       hungarian umlaut: e"e
-       circumflex: e^e
-       cedilla: e,e
-       dieresis: e"e
-       caron: eve
-       ring: eoe
-       tilde: e~e
-       ogonek: e,e
-       text hat: e^e
-       text tilde: e~e
+     bare acute accent: e'e
+     escaped acute accent: e'ee
+     acute accent sequence: e'e
+     bare grave accent: e`e
+     escaped grave accent: e`ee
+     acute grave sequence: e`e
+     hungarian umlaut: e"e
+     circumflex: e^e
+     cedilla: e,e
+     dieresis: e"e
+     caron: eve
+     ring: eoe
+     tilde: e~e
+     ogonek: e,e
+     text hat: e^e
+     text tilde: e~e
 
 OpenBSD                        December 15, 2018      CHAR-ACCENT-NOCOMBINE(1)

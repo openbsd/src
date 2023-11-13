@@ -1,24 +1,24 @@
 CE-BREAK(1)                 General Commands Manual                CE-BREAK(1)
 
 NNAAMMEE
-       ce-break - centering requests broken by high-level macros
+     ce-break - centering requests broken by high-level macros
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
-                        Text centered with the .ce request is
-       _n_o_t filled.
+     initial text
+                       Text centered with the .ce request is
+     _n_o_t filled.
                                              Text adjusted to the right margin
                                              works in just the same way and is
-       _n_o_t filled either.
-                     High-level macros break centering even in a
-       _c_o_n_d_i_t_i_o_n_a_l block.
+     _n_o_t filled either.
+                    High-level macros break centering even in a
+     _c_o_n_d_i_t_i_o_n_a_l block.
 
-       Now entering
-       explicit no-fill mode.
-                                    Text is still
-       _n_o_t
-       filled.
+     Now entering
+     explicit no-fill mode.
+                                   Text is still
+     _n_o_t
+     filled.
 
-       final text in fill mode
+     final text in fill mode
 
 OpenBSD                         April 30, 2022                     CE-BREAK(1)

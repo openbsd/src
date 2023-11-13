@@ -1,5 +1,5 @@
-.\" $OpenBSD: broken.in,v 1.4 2017/07/04 14:53:23 schwarze Exp $
-.TH RS-BROKEN 1 "January 24, 2015"
+.\" $OpenBSD: broken.in,v 1.5 2023/11/13 20:35:34 schwarze Exp $
+.TH RS-BROKEN 1 "November 13, 2023"
 .SH NAME
 RS-broken \- indented blocks broken by other blocks
 .SH DESCRIPTION
@@ -34,7 +34,7 @@ broken by HP:
 .RS
 indented
 .HP 2n
-Let's have a longer text here such that we can see the line break.
+Let us have a longer text here such that we can see the line break.
 .PP
 still indented
 .RE

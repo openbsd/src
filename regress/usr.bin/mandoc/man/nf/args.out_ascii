@@ -1,12 +1,12 @@
 NF-ARGS(1)                  General Commands Manual                 NF-ARGS(1)
 
 NNAAMMEE
-       nf-args - filling macros with arguments
+     nf-args - filling macros with arguments
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-       literal
-       text
-       regular text
+     regular text
+     literal
+     text
+     regular text
 
 OpenBSD                        January 16, 2011                     NF-ARGS(1)

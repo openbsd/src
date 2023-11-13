@@ -1,34 +1,34 @@
 ARGS-MAN(1)                 General Commands Manual                ARGS-MAN(1)
 
 NNAAMMEE
-       args-man - arguments to man macros
+     args-man - arguments to man macros
 
 DDEESSCCRRIIPPTTIIOONN
-       standard unquoted: _o_n_ettwwoo text
-       escaped blanks: _o_n_e _o_n_ettwwoo ttwwoo text
-       escaped 'e' character: _o_n_e_\_o_n_ettwwoo text
-       escaped backslash before 'e' character: _o_n_e_\ttwwoo text
-       double inter-argument space: _o_n_ettwwoo text
-       triple inter-argument space: _o_n_ettwwoo text
-       single eol blank: _o_n_ettwwoo text
-       double eol blank: _o_n_ettwwoo text
-       triple eol blank: _o_n_ettwwoo text
-       standard quoted: _o_n_ettwwoo text
-       quoted quotes: _o_n_e_"_o_n_e""ttwwoo"" text
-       quoted whitespace: _o_n_e _o_n_ettwwoo ttwwoo text
-       escaped 'e' characters: _o_n_e _\ _o_n_e\\ text
-       escaped backslash before blank: _o_n_e _o_n_e  text
-       escaped backslash before 'e' character: _o_n_e_\_o_n_e\\ text
-       double inter-argument space: _o_n_e _o_n_ettwwoo ttwwoo text
-       triple inter-argument space: _o_n_e _o_n_ettwwoo ttwwoo text
-       missing inter-argument space: _o_n_e _o_n_ettwwoo ttwwoo text
-       single eol blank: _o_n_e _o_n_ettwwoo ttwwoo text
-       double eol blank: _o_n_e _o_n_ettwwoo ttwwoo text
-       triple eol blank: _o_n_e _o_n_ettwwoo ttwwoo text
-       unterminated quotes: _o_n_e text
-       _o_n_ettwwoo text
-       tab after macro: _o_n_ettwwoo text
-       escape sequence after macro: _o_n_ettwwoo text
-       backslash at eol: _o_n_ettwwoo
+     standard unquoted: _o_n_ettwwoo text
+     escaped blanks: _o_n_e _o_n_ettwwoo ttwwoo text
+     escaped 'e' character: _o_n_e_\_o_n_ettwwoo text
+     escaped backslash before 'e' character: _o_n_e_\ttwwoo text
+     double inter-argument space: _o_n_ettwwoo text
+     triple inter-argument space: _o_n_ettwwoo text
+     single eol blank: _o_n_ettwwoo text
+     double eol blank: _o_n_ettwwoo text
+     triple eol blank: _o_n_ettwwoo text
+     standard quoted: _o_n_ettwwoo text
+     quoted quotes: _o_n_e_"_o_n_e""ttwwoo"" text
+     quoted whitespace: _o_n_e _o_n_ettwwoo ttwwoo text
+     escaped 'e' characters: _o_n_e _\ _o_n_e\\ text
+     escaped backslash before blank: _o_n_e _o_n_e  text
+     escaped backslash before 'e' character: _o_n_e_\_o_n_e\\ text
+     double inter-argument space: _o_n_e _o_n_ettwwoo ttwwoo text
+     triple inter-argument space: _o_n_e _o_n_ettwwoo ttwwoo text
+     missing inter-argument space: _o_n_e _o_n_ettwwoo ttwwoo text
+     single eol blank: _o_n_e _o_n_ettwwoo ttwwoo text
+     double eol blank: _o_n_e _o_n_ettwwoo ttwwoo text
+     triple eol blank: _o_n_e _o_n_ettwwoo ttwwoo text
+     unterminated quotes: _o_n_e text
+     _o_n_ettwwoo text
+     tab after macro: _o_n_ettwwoo text
+     escape sequence after macro: _o_n_ettwwoo text
+     backslash at eol: _o_n_ettwwoo
 
 OpenBSD                        November 19, 2014                   ARGS-MAN(1)

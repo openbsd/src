@@ -1,11 +1,11 @@
 CHAR-ACCENT-UTF8ONLY(1)     General Commands Manual    CHAR-ACCENT-UTF8ONLY(1)
 
 NNAAMMEE
-       cchhaarr--aacccceenntt--uuttff88oonnllyy - accents available in UTF-8 only
+     cchhaarr--aacccceenntt--uuttff88oonnllyy - accents available in UTF-8 only
 
 DDEESSCCRRIIPPTTIIOONN
-       macron: e¯e
-       dotted: e˙e
-       breve: e˘e
+     macron: e¯e
+     dotted: e˙e
+     breve: e˘e
 
 OpenBSD                          March 8, 2014         CHAR-ACCENT-UTF8ONLY(1)

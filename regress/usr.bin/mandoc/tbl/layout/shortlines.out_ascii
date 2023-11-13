@@ -1,42 +1,42 @@
 TBL-LAYOUT-SHORTLINES(1)    General Commands Manual   TBL-LAYOUT-SHORTLINES(1)
 
 NNAAMMEE
-       tbl-layout-shortlines - table lines of different length
+     tbl-layout-shortlines - table lines of different length
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text
-       +------+-------+
-       |left  | right |
-       +------+-------+
-       |short |       |
-       +------+-------+
-       |left  | right |
-       +------+-------+
+     normal text
+     +------+-------+
+     |left  | right |
+     +------+-------+
+     |short |       |
+     +------+-------+
+     |left  | right |
+     +------+-------+
 
-       +-------------+-------+
-       |left         | right |
-       +-------------+-------+
-       |first short  |       |
-       +-------------+-------+
-       |second short |       |
-       +-------------+-------+
-       |left         | right |
-       +-------------+-------+
+     +-------------+-------+
+     |left         | right |
+     +-------------+-------+
+     |first short  |       |
+     +-------------+-------+
+     |second short |       |
+     +-------------+-------+
+     |left         | right |
+     +-------------+-------+
 
-       +-----------+--------+-------+
-       |left       | middle | right |
-       +-----------+--------+-------+
-       |short      | line   |       |
-       +-----------+--------+-------+
-       |very short |        |       |
-       +-----------+--------+-------+
+     +-----------+--------+-------+
+     |left       | middle | right |
+     +-----------+--------+-------+
+     |short      | line   |       |
+     +-----------+--------+-------+
+     |very short |        |       |
+     +-----------+--------+-------+
 
-       +-----------+--------+-------+
-       |very short |        |       |
-       +-----------+--------+-------+
-       |short      | line   |       |
-       +-----------+--------+-------+
-       |left       | middle | right |
-       +-----------+--------+-------+
+     +-----------+--------+-------+
+     |very short |        |       |
+     +-----------+--------+-------+
+     |short      | line   |       |
+     +-----------+--------+-------+
+     |left       | middle | right |
+     +-----------+--------+-------+
 
 OpenBSD                        January 11, 2020       TBL-LAYOUT-SHORTLINES(1)

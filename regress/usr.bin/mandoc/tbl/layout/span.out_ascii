@@ -1,48 +1,48 @@
 TBL-LAYOUT-SPAN(1)          General Commands Manual         TBL-LAYOUT-SPAN(1)
 
 NNAAMMEE
-       tbl-layout-span - alignment of spanned cells
+     tbl-layout-span - alignment of spanned cells
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text
-       +--------------+
-       |a   b   c   d |
-       |s       c   d |
-       |a   s       d |
-       |a   b   s     |
-       +--------------+
+     normal text
+     +--------------+
+     |a   b   c   d |
+     |s       c   d |
+     |a   s       d |
+     |a   b   s     |
+     +--------------+
 
-       +--------------+
-       |a   b   c   d |
-       |  s     c   d |
-       |a     s     d |
-       |a   b     s   |
-       +--------------+
+     +--------------+
+     |a   b   c   d |
+     |  s     c   d |
+     |a     s     d |
+     |a   b     s   |
+     +--------------+
 
-       +--------------+
-       |a   b   c   d |
-       |    s   c   d |
-       |a       s   d |
-       |a   b       s |
-       +--------------+
+     +--------------+
+     |a   b   c   d |
+     |    s   c   d |
+     |a       s   d |
+     |a   b       s |
+     +--------------+
 
-       +--+---+---+---+---+
-       |a | b | c | d | e |
-       +--+---+---+---+---+
-       |   s1     |  s2   |
-       +--+---+---+---+---+
-       |a | b | c | d | e |
-       +--+---+---+---+---+
+     +--+---+---+---+---+
+     |a | b | c | d | e |
+     +--+---+---+---+---+
+     |   s1     |  s2   |
+     +--+---+---+---+---+
+     |a | b | c | d | e |
+     +--+---+---+---+---+
 
-       +----------+
-       |x***nnnnn |
-       +--+-------+
-       |a |  0.01 |
-       +--+-------+
-       |b | 10.0  |
-       +--+-------+
+     +----------+
+     |x***nnnnn |
+     +--+-------+
+     |a |  0.01 |
+     +--+-------+
+     |b | 10.0  |
+     +--+-------+
 
-       leaked tab settings:
-       a    b    c    d    e    f
+     leaked tab settings:
+     a    b    c    d    e    f
 
 OpenBSD                        September 7, 2021            TBL-LAYOUT-SPAN(1)

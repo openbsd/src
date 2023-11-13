@@ -1,24 +1,24 @@
 IP-BULLET(1)                General Commands Manual               IP-BULLET(1)
 
 NNAAMMEE
-       IP-bullet - bullet lists
+     IP-bullet - bullet lists
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST
+     BEGINTEST
 
-       *  one
+     *  one
 
-       *  two
+     *  two
 
-       +o  three
+     +o  three
 
-       +o  four
+     +o  four
 
-       -  five
+     -  five
 
-       -  six
+     -  six
 
-       ENDTEST
-       end of file
+     ENDTEST
+     end of file
 
 OpenBSD                        February 20, 2020                  IP-BULLET(1)

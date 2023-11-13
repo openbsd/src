@@ -1,30 +1,30 @@
 CHAR-UNICODE-ASCII(1)       General Commands Manual      CHAR-UNICODE-ASCII(1)
 
 NNAAMMEE
-       char-unicode-ascii - Unicode characters in the ASCII range
+     char-unicode-ascii - Unicode characters in the ASCII range
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST
-       """  QUOTATION MARK
-       ###  NUMBER SIGN
-       $$$  DOLLAR SIGN
-       '''  APOSTROPHE
-       +++  PLUS SIGN
-       --   HYPHEN-MINUS
-       ..   FULL STOP
-       ///  SOLIDUS
-       ===  EQUALS SIGN
-       @@@  COMMERCIAL AT
-       [[[  LEFT SQUARE BRACKET
-       \\\\ REVERSE SOLIDUS
-       ]]]  RIGHT SQUARE BRACKET
-       ^^^^ CIRCUMFLEX ACCENT
-       ____ LOW LINE
-       ```` GRAVE ACCENT
-       {{{  LEFT CURLY BRACKET
-       |||| VERTICAL LINE
-       }}}  RIGHT CURLY BRACKET
-       ~~~~ TILDE
-       ENDTEST
+     BEGINTEST
+     """  QUOTATION MARK
+     ###  NUMBER SIGN
+     $$$  DOLLAR SIGN
+     '''  APOSTROPHE
+     +++  PLUS SIGN
+     --   HYPHEN-MINUS
+     ..   FULL STOP
+     ///  SOLIDUS
+     ===  EQUALS SIGN
+     @@@  COMMERCIAL AT
+     [[[  LEFT SQUARE BRACKET
+     \\\\ REVERSE SOLIDUS
+     ]]]  RIGHT SQUARE BRACKET
+     ^^^^ CIRCUMFLEX ACCENT
+     ____ LOW LINE
+     ```` GRAVE ACCENT
+     {{{  LEFT CURLY BRACKET
+     |||| VERTICAL LINE
+     }}}  RIGHT CURLY BRACKET
+     ~~~~ TILDE
+     ENDTEST
 
 OpenBSD                        October 27, 2014          CHAR-UNICODE-ASCII(1)

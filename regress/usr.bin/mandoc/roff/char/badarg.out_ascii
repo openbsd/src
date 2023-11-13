@@ -1,9 +1,9 @@
 CHAR-BADARG(1)              General Commands Manual             CHAR-BADARG(1)
 
 NNAAMMEE
-       char-badarg - char requests with invalid arguments
+     char-badarg - char requests with invalid arguments
 
 DDEESSCCRRIIPPTTIIOONN
-       myc: <> x
+     myc: <> x
 
 OpenBSD                         August 25, 2018                 CHAR-BADARG(1)

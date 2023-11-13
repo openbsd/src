@@ -1,9 +1,9 @@
 ARGS-ESC(1)                 General Commands Manual                ARGS-ESC(1)
 
 NNAAMMEE
-       args-esc - delayed escape sequence expansion in macro arguments
+     args-esc - delayed escape sequence expansion in macro arguments
 
 DDEESSCCRRIIPPTTIIOONN
-       ccoonntteenntt
+     ccoonntteenntt
 
 OpenBSD                        October 21, 2023                    ARGS-ESC(1)

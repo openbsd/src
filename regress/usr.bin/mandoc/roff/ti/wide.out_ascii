@@ -1,18 +1,18 @@
 TI-WIDE(1)                  General Commands Manual                 TI-WIDE(1)
 
 NNAAMMEE
-       ti-wide - excessive temporary indentation
+     ti-wide - excessive temporary indentation
 
 DDEESSCCRRIIPPTTIIOONN
-       Absolute .ti of more than 72n:
+     Absolute .ti of more than 72n:
                                                                         max
-                                               Indented block plus excessive
-                                               relative indentation:
+                                             Indented block plus excessive
+                                             relative indentation:
                                                                         max
-                                                                         Block
-                                                                         beyond
-                                                                         72n:
-                                                                         same
-       Back to normal.
+                                                                       Block
+                                                                       beyond
+                                                                       72n:
+                                                                        same
+     Back to normal.
 
 OpenBSD                        September 3, 2020                    TI-WIDE(1)

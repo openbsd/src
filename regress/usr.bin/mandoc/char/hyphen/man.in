@@ -1,12 +1,12 @@
-.\" $OpenBSD: man.in,v 1.3 2017/07/04 14:53:23 schwarze Exp $
-.TH hyphen-man 1 "September 18, 2011"
+.\" $OpenBSD: man.in,v 1.4 2023/11/13 20:35:33 schwarze Exp $
+.TH hyphen-man 1 "November 13, 2023"
 .SH NAME
 \fBhyphen-man\fR - formatting hyphens and breaking lines
 .SH DESCRIPTION
 This is a long line of text, such that the last word won't fit: break-here
 .PP
-Try the same thing once same again, but now in italic font mode:
+Try the same thing once again, but this time in italic font mode:
 \fIbreak-here\fP
 .PP
-Finally, try it a third time, but this time in bold font mode:
+Finally, try again a third time, but this time in bold font mode:
 \fBbreak-here\fP

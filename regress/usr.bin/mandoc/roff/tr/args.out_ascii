@@ -1,10 +1,10 @@
 TR-BASIC(1)                 General Commands Manual                TR-BASIC(1)
 
 NNAAMMEE
-       tr-args - arguments of the tr request
+     tr-args - arguments of the tr request
 
 DDEESSCCRRIIPPTTIIOONN
-       no argument: one character: >> << two characters: >>y<< three
-       characters: >>y << last line
+     no argument: one character: >> << two characters: >>y<< three characters:
+     >>y << last line
 
 OpenBSD                        February 6, 2015                    TR-BASIC(1)

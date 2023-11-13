@@ -1,10 +1,10 @@
 ESC-UNSUPP(1)               General Commands Manual              ESC-UNSUPP(1)
 
 NNAAMMEE
-       esc-unsupp - unsupported escape sequences
+     esc-unsupp - unsupported escape sequences
 
 DDEESSCCRRIIPPTTIIOONN
-       exclamation mark: abc
-       question mark: abc
+     exclamation mark: abc
+     question mark: abc
 
 OpenBSD                        December 15, 2018                 ESC-UNSUPP(1)

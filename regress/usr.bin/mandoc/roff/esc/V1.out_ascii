@@ -1,11 +1,11 @@
 ESC-V1(1)                   General Commands Manual                  ESC-V1(1)
 
 NNAAMMEE
-       esc-V1 - interpolate environment variables
+     esc-V1 - interpolate environment variables
 
 DDEESSCCRRIIPPTTIIOONN
-       single-character name: "${N}"
-       double-character name: "${VN}"
-       multi-character name: "${VARNAME}"
+     single-character name: "${N}"
+     double-character name: "${VN}"
+     multi-character name: "${VARNAME}"
 
 OpenBSD                          May 31, 2022                        ESC-V1(1)

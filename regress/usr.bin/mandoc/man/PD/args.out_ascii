@@ -1,27 +1,27 @@
 PD-ARGS(1)                  General Commands Manual                 PD-ARGS(1)
 
 NNAAMMEE
-       PD-args - unusual arguments to the PD macro
+     PD-args - unusual arguments to the PD macro
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
+     initial text
 
-       default spacing
-
-
-       argument(2)
-
-       no argument at all
+     default spacing
 
 
-       argument(2v)
-       argument(2p)
+     argument(2)
+
+     no argument at all
 
 
-       argument(1cx)
+     argument(2v)
+     argument(2p)
 
 
-       argument(xxx)
-       excessive argument
+     argument(1cx)
+
+
+     argument(xxx)
+     excessive argument
 
 OpenBSD                        December 23, 2014                    PD-ARGS(1)

@@ -1,13 +1,13 @@
 TP-BROKEN(1)                General Commands Manual               TP-BROKEN(1)
 
 NNAAMMEE
-       TP-broken - broken tagged paragraphs
+     TP-broken - broken tagged paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-           indented text
-       regular text
+     regular text
+         indented text
+     regular text
 
-       head   body
+     head   body
 
 OpenBSD                        September 9, 2020                  TP-BROKEN(1)

@@ -1,16 +1,16 @@
 IE(1)                       General Commands Manual                      IE(1)
 
 NNAAMMEE
-       if - the roff conditional instruction with else-clause
+     if - the roff conditional instruction with else-clause
 
 DDEESSCCRRIIPPTTIIOONN
-       One-line true condition.
-       Text following the true condition.
-       Two-line true condition.
-       Text following the false condition.
-       Two-line else after false.
-       Else after empty condition.
-       Else after negated empty condition.
-       If .el\{ works, nothing follows here:
+     One-line true condition.
+     Text following the true condition.
+     Two-line true condition.
+     Text following the false condition.
+     Two-line else after false.
+     Else after empty condition.
+     Else after negated empty condition.
+     If .el\{ works, nothing follows here:
 
 OpenBSD                          July 4, 2017                            IE(1)

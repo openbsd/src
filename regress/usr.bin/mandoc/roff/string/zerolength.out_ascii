@@ -1,11 +1,11 @@
 STRING-ZEROLENGTH(1)        General Commands Manual       STRING-ZEROLENGTH(1)
 
 NNAAMMEE
-       string-zerolength - handling of zero-length user-defined strings
+     string-zerolength - handling of zero-length user-defined strings
 
 DDEESSCCRRIIPPTTIIOONN
-       use zero-length string: xx x
+     use zero-length string: xx x
 
-       use zero-length macro: xx x
+     use zero-length macro: xx x
 
 OpenBSD                        December 19, 2010          STRING-ZEROLENGTH(1)

@@ -1,36 +1,36 @@
 TP-MANYARGS(1)              General Commands Manual             TP-MANYARGS(1)
 
 NNAAMMEE
-       TP-manyargs - too many header args for indented blocks
+     TP-manyargs - too many header args for indented blocks
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
+     regular text
 
-       tag1      indented text
+     tag1      indented text
 
-       regular text
+     regular text
 
-       tag2      indented text
+     tag2      indented text
 
-       regular text
+     regular text
 
-       tag3      indented text
-                 literal
-                 text
+     tag3      indented text
+               literal
+               text
 
-       tag1      indented
-                 text
+     tag1      indented
+               text
 
-       literal
-       text
+     literal
+     text
 
-       tag2      indented
-                 text
+     tag2      indented
+               text
 
-       literal
-       text
+     literal
+     text
 
-       tag3      indented
-                 text
+     tag3      indented
+               text
 
 OpenBSD                         January 4, 2011                 TP-MANYARGS(1)

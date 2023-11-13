@@ -1,25 +1,25 @@
 TP-LITERAL(1)               General Commands Manual              TP-LITERAL(1)
 
 NNAAMMEE
-       TP-literal - indented paragraphs in literal context
+     TP-literal - indented paragraphs in literal context
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST before indentation
+     BEGINTEST before indentation
 
-       tag       regular indented text
+     tag       regular indented text
 
-       regular paragraph
-       literal
-       text
+     regular paragraph
+     literal
+     text
 
-       tag       indented
-                 literal
-                 text
+     tag       indented
+               literal
+               text
 
-       literal
-       paragraph
-       regular text
-       ENDTEST
-       end of file
+     literal
+     paragraph
+     regular text
+     ENDTEST
+     end of file
 
 OpenBSD                         January 6, 2019                  TP-LITERAL(1)

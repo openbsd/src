@@ -1,9 +1,9 @@
 ARGS-INFREC(1)              General Commands Manual             ARGS-INFREC(1)
 
 NNAAMMEE
-       args-infrec - infinite recursion in macro argument expansion
+     args-infrec - infinite recursion in macro argument expansion
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text prefixpostfix final text
+     initial text prefixpostfix final text
 
 OpenBSD                        October 22, 2023                 ARGS-INFREC(1)

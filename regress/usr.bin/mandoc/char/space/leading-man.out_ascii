@@ -1,11 +1,11 @@
 SPACE-LEADING-MAN(1)        General Commands Manual       SPACE-LEADING-MAN(1)
 
 NNAAMMEE
-       space-leading-man - leading spaces on text lines in man documents
+     space-leading-man - leading spaces on text lines in man documents
 
 DDEESSCCRRIIPPTTIIOONN
-       normal line of text second normal line
-        leading space bboolldd_i_t_a_l_i_c normal after macro bboolldd_i_t_a_l_i_c
-        leading space after a macro line
+     normal line of text second normal line
+      leading space bboolldd_i_t_a_l_i_c normal after macro bboolldd_i_t_a_l_i_c
+      leading space after a macro line
 
 OpenBSD                        January 15, 2011           SPACE-LEADING-MAN(1)

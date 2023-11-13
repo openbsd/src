@@ -1,9 +1,9 @@
 TH-TWOARGS()                                                      TH-TWOARGS()
 
 NNAAMMEE
-       TH-twoargs - only two arguments to the TH macro
+     TH-twoargs - only two arguments to the TH macro
 
 DDEESSCCRRIIPPTTIIOONN
-       some text
+     some text
 
 OpenBSD                                                           TH-TWOARGS()

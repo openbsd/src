@@ -1,12 +1,12 @@
 HP-BREAK(1)                 General Commands Manual                HP-BREAK(1)
 
 NNAAMMEE
-       HP-break - breaking the head line of hanged paragraphs
+     HP-break - breaking the head line of hanged paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
-       This is an extremely long head line of a hanged paragraph; it is so
-                   long that it won't even fit on the line.
-                   The body of the hanged paragraph is quite long as well and
-                   will again break the line.
+     This is an extremely long head line of a hanged paragraph; it is so long
+                 that it won't even fit on the line.
+                 The body of the hanged paragraph is quite long as well and
+                 will again break the line.
 
 OpenBSD                       September 21, 2011                   HP-BREAK(1)

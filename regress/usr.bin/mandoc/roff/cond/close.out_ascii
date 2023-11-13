@@ -1,42 +1,42 @@
 COND-CLOSE(1)               General Commands Manual              COND-CLOSE(1)
 
 NNAAMMEE
-       cond-close - closing conditional macros
+     cond-close - closing conditional macros
 
 DDEESSCCRRIIPPTTIIOONN
-       closing after an unknown macro
+     closing after an unknown macro
 
-       closing after an ignored macro
+     closing after an ignored macro
 
-       closing after plain text
+     closing after plain text
 
-       text line contains closing brace only
+     text line contains closing brace only
 
-       text line contains closing brace and additional words
+     text line contains closing brace and additional words
 
-       request line contains closing brace only
+     request line contains closing brace only
 
-       request line contains closing brace and additional args
+     request line contains closing brace and additional args
 
-       conditional content  following words with whitespace
+     conditional content  following words with whitespace
 
-       conditional contentfollowing words without whitespace
+     conditional contentfollowing words without whitespace
 
-       preceding words standard multi-line style following words
+     preceding words standard multi-line style following words
 
-       preceding words
+     preceding words
 
-       non-standard multi-line style following words
+     non-standard multi-line style following words
 
-       preceding words text line block end  with additional words following
-       words
+     preceding words text line block end  with additional words following
+     words
 
-       two closes on the same text line
+     two closes on the same text line
 
-       preceding words close on request line following words
+     preceding words close on request line following words
 
-       preceding words two closes oonntthheesame macro line
+     preceding words two closes oonntthheesame macro line
 
-       still open at the end of the file
+     still open at the end of the file
 
 OpenBSD                        November 26, 2018                 COND-CLOSE(1)

@@ -1,9 +1,9 @@
 STRING-INFINITE(1)          General Commands Manual         STRING-INFINITE(1)
 
 NNAAMMEE
-       string-infinite - endless recursion in string expansion
+     string-infinite - endless recursion in string expansion
 
 DDEESSCCRRIIPPTTIIOONN
-       Blow up, but still render following text correctly.
+     Blow up, but still render following text correctly.
 
 OpenBSD                        December 3, 2010             STRING-INFINITE(1)

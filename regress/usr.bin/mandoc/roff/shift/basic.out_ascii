@@ -1,21 +1,21 @@
 SHIFT_BASIC(1)              General Commands Manual             SHIFT_BASIC(1)
 
 NNAAMMEE
-       sshhiifftt--bbaassiicc - the shift request
+     sshhiifftt--bbaassiicc - the shift request
 
 DDEESSCCRRIIPPTTIIOONN
-       original arguments: oonnee_t_w_otthhrreeee_f_o_u_rffiivvee
+     original arguments: oonnee_t_w_otthhrreeee_f_o_u_rffiivvee
 
-       after shift 2: tthhrreeee_f_o_u_rffiivvee
+     after shift 2: tthhrreeee_f_o_u_rffiivvee
 
-       after shift without argument: ffoouurr_f_i_v_e
+     after shift without argument: ffoouurr_f_i_v_e
 
-       after shift 0: ffoouurr_f_i_v_e
+     after shift 0: ffoouurr_f_i_v_e
 
-       expand to less than three bytes: <1>
+     expand to less than three bytes: <1>
 
-       expand to exactly three bytes: <x y>
+     expand to exactly three bytes: <x y>
 
-       expand to more than three bytes: <a longer argument... and another>
+     expand to more than three bytes: <a longer argument... and another>
 
 OpenBSD                         August 23, 2018                 SHIFT_BASIC(1)

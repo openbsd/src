@@ -1,15 +1,15 @@
 IP-LONGHEAD(1)              General Commands Manual             IP-LONGHEAD(1)
 
 NNAAMMEE
-       IP-longhead - indented paragraph with a long head
+     IP-longhead - indented paragraph with a long head
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text
+     normal text
 
-       This indented paragraph has ridiculously long text in its head, such
-       that it doesn't even fit on the line
-             paragraph body
+     This indented paragraph has ridiculously long text in its head, such that
+     it doesn't even fit on the line
+           paragraph body
 
-       normal text
+     normal text
 
 OpenBSD                          April 8, 2014                  IP-LONGHEAD(1)

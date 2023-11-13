@@ -1,13 +1,13 @@
 HP-MACROTAG(1)              General Commands Manual             HP-MACROTAG(1)
 
 NNAAMMEE
-       HP-macrotag - macro in the head of a tagged paragraph
+     HP-macrotag - macro in the head of a tagged paragraph
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
+     regular text
 
-       lloonnggiinnddeenntt indented text
+     lloonnggiinnddeenntt indented text
 
-       regular text
+     regular text
 
 OpenBSD                       September 20, 2011                HP-MACROTAG(1)

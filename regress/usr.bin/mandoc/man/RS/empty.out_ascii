@@ -1,12 +1,12 @@
 RS-EMPTY(1)                 General Commands Manual                RS-EMPTY(1)
 
 NNAAMMEE
-       RS-empty - empty margin reset blocks
+     RS-empty - empty margin reset blocks
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-       regular text
-               indented text
-       regular text
+     regular text
+     regular text
+             indented text
+     regular text
 
 OpenBSD                          July 17, 2012                     RS-EMPTY(1)

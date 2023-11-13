@@ -1,9 +1,9 @@
 SS-BROKEN_ELINE(1)          General Commands Manual         SS-BROKEN_ELINE(1)
 
 NNAAMMEE
-       SS-broken_eline - subsection and element line scope broken by eof
+     SS-broken_eline - subsection and element line scope broken by eof
 
 DDEESSCCRRIIPPTTIIOONN
-       some text
+     some text
 
 OpenBSD                          July 30, 2014              SS-BROKEN_ELINE(1)

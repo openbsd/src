@@ -1,10 +1,10 @@
 NR-RR(1)                    General Commands Manual                   NR-RR(1)
 
 NNAAMMEE
-       nr-rr - defining and undefining number registers
+     nr-rr - defining and undefining number registers
 
 DDEESSCCRRIIPPTTIIOONN
-       non-null values: 2 4
-       unset values: 0 0 0
+     non-null values: 2 4
+     unset values: 0 0 0
 
 OpenBSD                          April 5, 2014                        NR-RR(1)

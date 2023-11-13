@@ -1,15 +1,15 @@
 PP-ARG(1)                   General Commands Manual                  PP-ARG(1)
 
 NNAAMMEE
-       PP-arg - paragraphs macros with arguments
+     PP-arg - paragraphs macros with arguments
 
 DDEESSCCRRIIPPTTIIOONN
-       PP with argument:
+     PP with argument:
 
-       LP with arguments:
+     LP with arguments:
 
-       P with argument:
+     P with argument:
 
-       final text
+     final text
 
 OpenBSD                          July 4, 2014                        PP-ARG(1)

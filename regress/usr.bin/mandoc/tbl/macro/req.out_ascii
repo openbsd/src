@@ -1,18 +1,18 @@
 TBL-MACRO-REQ(1)            General Commands Manual           TBL-MACRO-REQ(1)
 
 NNAAMMEE
-       tbl-macro-req - requests generating nodes in a table
+     tbl-macro-req - requests generating nodes in a table
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
-       +--+-----+
-       |a | b   |
-       +--+-----+
-       |c | d e |
-       |f | g h |
-       |i | j k |
-       +--+-----+
+     initial text
+     +--+-----+
+     |a | b   |
+     +--+-----+
+     |c | d e |
+     |f | g h |
+     |i | j k |
+     +--+-----+
 
-       final text
+     final text
 
 OpenBSD                         April 30, 2022                TBL-MACRO-REQ(1)

@@ -1,37 +1,37 @@
 RS-BROKEN(1)                General Commands Manual               RS-BROKEN(1)
 
 NNAAMMEE
-       RS-broken - indented blocks broken by other blocks
+     RS-broken - indented blocks broken by other blocks
 
 DDEESSCCRRIIPPTTIIOONN
-       broken by PP:
-         indented
+     broken by PP:
+       indented
 
-         still indented
-       broken by IP:
-              indented
+       still indented
+     broken by IP:
+            indented
 
-              tag   first line
-                    second line
+            tag   first line
+                  second line
 
-              still indented
-       broken by TP:
-              indented
+            still indented
+     broken by TP:
+            indented
 
-              tag   first line
-                    second line
+            tag   first line
+                  second line
 
-              still indented
-       broken by HP:
-              indented
+            still indented
+     broken by HP:
+            indented
 
-              Let's have a longer text here such that we can see the line
-                break.
+            Let us have a longer text here such that we can see the line
+              break.
 
-              still indented
-       trailing PP:
-              indented
+            still indented
+     trailing PP:
+            indented
 
-       final text
+     final text
 
-OpenBSD                        January 24, 2015                   RS-BROKEN(1)
+OpenBSD                        November 13, 2023                  RS-BROKEN(1)

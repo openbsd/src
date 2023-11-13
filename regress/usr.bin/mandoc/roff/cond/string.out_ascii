@@ -1,28 +1,28 @@
 STRING(1)                   General Commands Manual                  STRING(1)
 
 NNAAMMEE
-       string - conditional testing whether a string is defined
+     string - conditional testing whether a string is defined
 
 DDEESSCCRRIIPPTTIIOONN
-       mystr not yet defined
-       now defined
+     mystr not yet defined
+     now defined
 
-       mymac not yet defined
-       now defined
+     mymac not yet defined
+     now defined
 
-       myren not yet defined
-       now defined
+     myren not yet defined
+     now defined
 
-       standard macro is defined
+     standard macro is defined
 
-       identifier and tab:      mystr is defined
+     identifier and tab:      mystr is defined
 
-       escape sequence after identifier: -mystr is defined
+     escape sequence after identifier: -mystr is defined
 
-       backslash in name: \ is defined
+     backslash in name: \ is defined
 
-       dot in name: . is defined \. is defined
+     dot in name: . is defined \. is defined
 
-       invalid escape in name: G is defined \G is defined
+     invalid escape in name: G is defined \G is defined
 
 OpenBSD                          June 3, 2022                        STRING(1)

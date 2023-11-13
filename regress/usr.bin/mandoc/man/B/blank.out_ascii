@@ -1,9 +1,9 @@
 B-BLANK(1)                  General Commands Manual                 B-BLANK(1)
 
 NNAAMMEE
-       B-blank - blank line in font macro next line scope
+     B-blank - blank line in font macro next line scope
 
 DDEESSCCRRIIPPTTIIOONN
-       A blank line in bboolldd next line scope.
+     A blank line in bboolldd next line scope.
 
 OpenBSD                          June 3, 2017                       B-BLANK(1)

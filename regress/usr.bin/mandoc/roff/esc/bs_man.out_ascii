@@ -1,17 +1,17 @@
 ESC-BS_MAN(1)               General Commands Manual              ESC-BS_MAN(1)
 
 NNAAMMEE
-       esc-bs_man - escaped backslashes in man(7) code
+     esc-bs_man - escaped backslashes in man(7) code
 
 DDEESSCCRRIIPPTTIIOONN
-       on a text line: prefix\suffix
+     on a text line: prefix\suffix
 
-       in a macro definition: prefix(initial)suffix prefix(later)suffix
+     in a macro definition: prefix(initial)suffix prefix(later)suffix
 
-       in a string definition: prefix(initial)middle(later)suffix
+     in a string definition: prefix(initial)middle(later)suffix
 
-       in a high-level macro argument: _p_r_e_f_i_x####((llaatteerr))####_s_u_f_f_i_x
+     in a high-level macro argument: _p_r_e_f_i_x####((llaatteerr))####_s_u_f_f_i_x
 
-       in a user-defined macro argument: {prefix(later)suffix}
+     in a user-defined macro argument: {prefix(later)suffix}
 
 OpenBSD                        January 17, 2019                  ESC-BS_MAN(1)

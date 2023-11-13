@@ -1,17 +1,17 @@
 bar-man(1)                  General Commands Manual                 bar-man(1)
 
 NNAAMMEE
-       bbaarr--mmaann - formatting the vertical bar symbol
+     bbaarr--mmaann - formatting the vertical bar symbol
 
 DDEESSCCRRIIPPTTIIOONN
    nnoorrmmaall bbaarr
-       Manually switching fonts: _i_t_a_l_i_croman|roman_i_t_a_l_i_c
+     Manually switching fonts: _i_t_a_l_i_croman|roman_i_t_a_l_i_c
 
-       pprreeffiixx || ssuuffffiixx
+     pprreeffiixx || ssuuffffiixx
 
    ssppeecciiaall cchhaarraacctteerr
-       Manually switching fonts: _i_t_a_l_i_croman|roman_i_t_a_l_i_c
+     Manually switching fonts: _i_t_a_l_i_croman|roman_i_t_a_l_i_c
 
-       pprreeffiixx || ssuuffffiixx
+     pprreeffiixx || ssuuffffiixx
 
 OpenBSD                          July 17, 2012                      bar-man(1)

@@ -1,19 +1,19 @@
 RS-LONELYRE(1)              General Commands Manual             RS-LONELYRE(1)
 
 NNAAMMEE
-       RS-lonelyRE - closing RS that is not open
+     RS-lonelyRE - closing RS that is not open
 
 DDEESSCCRRIIPPTTIIOONN
-              indented text
+            indented text
 
-       tag   body
-       out of body
+     tag   body
+     out of body
 
-       tag   body
-       out of body
+     tag   body
+     out of body
 
-       Here we need some text that is long enough to span more than one output
-             line, such that we can see the hanging indentation.
-       out of body
+     Here we need some text that is long enough to span more than one output
+           line, such that we can see the hanging indentation.
+     out of body
 
 OpenBSD                        November 10, 2013                RS-LONELYRE(1)

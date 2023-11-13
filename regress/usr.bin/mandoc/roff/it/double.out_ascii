@@ -1,9 +1,9 @@
 IT-DOUBLE(1)                General Commands Manual               IT-DOUBLE(1)
 
 NNAAMMEE
-       it-double - double input line trap
+     it-double - double input line trap
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text first line second line secondmacro third line
+     initial text first line second line secondmacro third line
 
 OpenBSD                           2013-07-13                      IT-DOUBLE(1)

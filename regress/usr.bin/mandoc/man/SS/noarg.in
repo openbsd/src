@@ -1,5 +1,5 @@
-.\" $OpenBSD: noarg.in,v 1.3 2017/07/04 14:53:24 schwarze Exp $
-.TH SS-NOARG 1 "March 20, 2015"
+.\" $OpenBSD: noarg.in,v 1.4 2023/11/13 20:35:34 schwarze Exp $
+.TH SS-NOARG 1 "November 11, 2023"
 .SH NAME
 SS-noarg \- empty subsection header lines
 .SS
@@ -19,7 +19,7 @@ indented list
 .SS
 .HP 6n
 This is a hanged paragraph.
-A bit more text is needed to see the effect.
+Some additional text is needed to see the effect.
 .SS
 .PP
 normal paragraph

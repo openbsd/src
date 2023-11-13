@@ -1,57 +1,57 @@
 SPACE-TAB-FILLED(1)         General Commands Manual        SPACE-TAB-FILLED(1)
 
 NNAAMMEE
-       SPACE-TAB-FILLED - tab characters in fill mode
+     SPACE-TAB-FILLED - tab characters in fill mode
 
 DDEESSCCRRIIPPTTIIOONN
    TTaabbss aarree rreellaattiivvee ttoo tthhee bbeeggiinnnniinngg ooff tthhee ccuurrrreenntt iinnppuutt lliinnee..
-       one  two
-            t
-             t
-       a 1    t
-       a 22   t
-       a 333  t
-       a 4444 t
-       a 55555     t
-       ab 1    t
-       ab 22   t
-       ab 333  t
-       ab 4444 t
-       ab 55555     t
+     one  two
+          t
+           t
+     a 1    t
+     a 22   t
+     a 333  t
+     a 4444 t
+     a 55555     t
+     ab 1    t
+     ab 22   t
+     ab 333  t
+     ab 4444 t
+     ab 55555     t
 
    TTaabb mmeeaassuurreemmeenntt ccoonnttiinnuueess oonnttoo tthhee nneexxtt oouuttppuutt lliinnee..
-       Using a line length of 5n=12n-7n and tab positions of 7n and 9n:
-       a
-       1    t
-       a
-       22   t
-       a
-       333  t
-       a
-       4444 t
-       a
-       55555  t
-       ab
-       1   t
-       ab
-       22  t
-       ab
-       333 t
-       ab
-       4444  t
-       abc
-       1  t
-       abc
-       22 t
-       abc
-       333  t
-       adcd
-       1 t
-       abcd
-       22  t
-       abcde
-       1  t
-       abcdef
-       1  t
+     Using a line length of 5n=12n-7n and tab positions of 7n and 9n:
+     a
+     1    t
+     a
+     22   t
+     a
+     333  t
+     a
+     4444 t
+     a
+     55555  t
+     ab
+     1   t
+     ab
+     22  t
+     ab
+     333 t
+     ab
+     4444  t
+     abc
+     1  t
+     abc
+     22 t
+     abc
+     333  t
+     adcd
+     1 t
+     abcd
+     22  t
+     abcde
+     1  t
+     abcdef
+     1 t
 
 OpenBSD                         August 16, 2022            SPACE-TAB-FILLED(1)

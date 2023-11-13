@@ -1,17 +1,17 @@
 ESC-O1(1)                   General Commands Manual                  ESC-O1(1)
 
 NNAAMMEE
-       esc-O1 - escape sequence to suppress output
+     esc-O1 - escape sequence to suppress output
 
 DDEESSCCRRIIPPTTIIOONN
-       O1: ab
-       O2: ab
-       O3: ab
-       O4: ab
-       O5: ab
-       O52: ab
-       O5n: ab
-       O6: ab
-       O0: ab
+     O1: ab
+     O2: ab
+     O3: ab
+     O4: ab
+     O5: ab
+     O52: ab
+     O5n: ab
+     O6: ab
+     O0: ab
 
 OpenBSD                        December 15, 2018                     ESC-O1(1)

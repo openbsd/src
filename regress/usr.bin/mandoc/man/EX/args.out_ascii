@@ -1,12 +1,12 @@
 EX-ARGS(1)                  General Commands Manual                 EX-ARGS(1)
 
 NNAAMMEE
-       EX-args - example macro with arguments
+     EX-args - example macro with arguments
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-       literal
-       text
-       regular text
+     regular text
+     literal
+     text
+     regular text
 
 OpenBSD                          June 3, 2012                       EX-ARGS(1)

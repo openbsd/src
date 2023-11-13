@@ -1,20 +1,20 @@
 REGISTER(1)                 General Commands Manual                REGISTER(1)
 
 NNAAMMEE
-       register - conditional testing whether a register is defined
+     register - conditional testing whether a register is defined
 
 DDEESSCCRRIIPPTTIIOONN
-       not yet defined
-       now defined
+     not yet defined
+     now defined
 
-       tab after identifier:      myreg is defined
+     tab after identifier:      myreg is defined
 
-       escape sequence after identifier: -myreg is defined
+     escape sequence after identifier: -myreg is defined
 
-       backslash in name: \ is defined
+     backslash in name: \ is defined
 
-       dot in name: . is defined \. is defined
+     dot in name: . is defined \. is defined
 
-       invalid escape in name: G is defined \G is defined
+     invalid escape in name: G is defined \G is defined
 
 OpenBSD                          June 3, 2022                      REGISTER(1)

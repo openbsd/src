@@ -1,37 +1,37 @@
 COND-NUMERIC(1)             General Commands Manual            COND-NUMERIC(1)
 
 NNAAMMEE
-       cond-numeric - roff conditions involving numbers
+     cond-numeric - roff conditions involving numbers
 
 DDEESSCCRRIIPPTTIIOONN
-       positive number: plain (t) negated (f)
+     positive number: plain (t) negated (f)
 
-       negative number: plain (f) negated (t)
+     negative number: plain (f) negated (t)
 
-       second number missing: ok
+     second number missing: ok
 
-       operator "<": smaller (t) equal (f) greater (f)
+     operator "<": smaller (t) equal (f) greater (f)
 
-       operator "<=": smaller (t) equal (t) greater (f)
+     operator "<=": smaller (t) equal (t) greater (f)
 
-       operator "=": smaller (f) equal (t) greater (f)
+     operator "=": smaller (f) equal (t) greater (f)
 
-       operator "==": smaller (f) equal (t) greater (f)
+     operator "==": smaller (f) equal (t) greater (f)
 
-       operator ">=": smaller (f) equal (t) greater (t)
+     operator ">=": smaller (f) equal (t) greater (t)
 
-       operator ">": smaller (f) equal (f) greater (t)
+     operator ">": smaller (f) equal (f) greater (t)
 
-       with negative numbers: mm (t) mp (t) pm (t)
+     with negative numbers: mm (t) mp (t) pm (t)
 
-       operator "&": 00 (f) 01 (f) 10 (f) 11 (t)
+     operator "&": 00 (f) 01 (f) 10 (f) 11 (t)
 
-       operator ":": 00 (f) 01 (t) 10 (t) 11 (t)
+     operator ":": 00 (f) 01 (t) 10 (t) 11 (t)
 
-       with scaling units: 1i>2c (t) 1i-6P (f)
+     with scaling units: 1i>2c (t) 1i-6P (f)
 
-       unmatched parenthesis: (f) one (t)
+     unmatched parenthesis: (f) one (t)
 
-       negated unmatched parenthesis: (f) zero (t)
+     negated unmatched parenthesis: (f) zero (t)
 
 OpenBSD                        December 16, 2014               COND-NUMERIC(1)

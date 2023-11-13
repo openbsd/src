@@ -1,21 +1,21 @@
 TBL-BREAK(1)                General Commands Manual               TBL-BREAK(1)
 
 NNAAMMEE
-       tbl-break - tables breaking blocks
+     tbl-break - tables breaking blocks
 
 DDEESSCCRRIIPPTTIIOONN
-       tagged paragraph:
-       first line
-       second line
-       section:
-       first line
-       second line
-       subsection:
-       first line
-       second line
-       bold:
-       first line
-       second line
-       final text
+     tagged paragraph:
+     first line
+     second line
+     section:
+     first line
+     second line
+     subsection:
+     first line
+     second line
+     bold:
+     first line
+     second line
+     final text
 
 OpenBSD                        January 30, 2015                   TBL-BREAK(1)

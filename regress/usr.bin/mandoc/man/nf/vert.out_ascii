@@ -1,20 +1,20 @@
 NF-VERT(1)                  General Commands Manual                 NF-VERT(1)
 
 NNAAMMEE
-       nf-vert - spacing around filling macros
+     nf-vert - spacing around filling macros
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-       literal
-       text
-       regular text
-       literal
-       text
-       regular text
+     regular text
+     literal
+     text
+     regular text
+     literal
+     text
+     regular text
 
-       literal
-       text
+     literal
+     text
 
-       regular text
+     regular text
 
 OpenBSD                          June 2, 2012                       NF-VERT(1)

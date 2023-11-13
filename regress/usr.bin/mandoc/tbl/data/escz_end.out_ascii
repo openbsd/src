@@ -1,13 +1,13 @@
 TBL-DATA-ESCZ_END(1)        General Commands Manual       TBL-DATA-ESCZ_END(1)
 
 NNAAMMEE
-       tbl-data-escz_end - z escape sequence at the end of a tbl(7) cell
+     tbl-data-escz_end - z escape sequence at the end of a tbl(7) cell
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
-       a   b   c
-       d   e   f
+     initial text
+     a   b   c
+     d   e   f
 
-       final text
+     final text
 
 OpenBSD                         April 26, 2022            TBL-DATA-ESCZ_END(1)

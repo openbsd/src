@@ -1,18 +1,18 @@
 RS-WIDTH(1)                 General Commands Manual                RS-WIDTH(1)
 
 NNAAMMEE
-       RS-width - negative and excessive indentation
+     RS-width - negative and excessive indentation
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
+     regular text
 indented text
-       regular text
-   indented text
-       regular text
-           indented text
-       regular text
-                                                                                                           indented
-                                                                                                           text
-       regular text
+     regular text
+ indented text
+     regular text
+         indented text
+     regular text
+                                                                                                         indented
+                                                                                                         text
+     regular text
 
 OpenBSD                        December 23, 2014                   RS-WIDTH(1)

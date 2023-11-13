@@ -1,9 +1,9 @@
 SH-BROKEN_ELINE(1)          General Commands Manual         SH-BROKEN_ELINE(1)
 
 NNAAMMEE
-       SH-broken_eline - section and element line scope broken by eof
+     SH-broken_eline - section and element line scope broken by eof
 
 DDEESSCCRRIIPPTTIIOONN
-       some text
+     some text
 
 OpenBSD                          July 30, 2014              SH-BROKEN_ELINE(1)

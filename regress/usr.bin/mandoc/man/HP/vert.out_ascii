@@ -1,17 +1,17 @@
 HP-VERT(1)                  General Commands Manual                 HP-VERT(1)
 
 NNAAMMEE
-       HP-vert - vertical spacing before hanged lists
+     HP-vert - vertical spacing before hanged lists
 
 DDEESSCCRRIIPPTTIIOONN
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-              next line.
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+            next line.
 
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-              next line.
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+            next line.
 
 
-       Normal text.
+     Normal text.
 
 OpenBSD                        February 19, 2020                    HP-VERT(1)

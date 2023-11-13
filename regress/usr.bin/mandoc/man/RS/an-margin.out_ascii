@@ -1,13 +1,13 @@
 RS-AN-MARGIN(1)             General Commands Manual            RS-AN-MARGIN(1)
 
 NNAAMMEE
-       RS-an-margin - reStructuredText peeks at an internal register
+     RS-an-margin - reStructuredText peeks at an internal register
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-       zero indent 168
-          non-zero indent 252
-       back to zero indent 168
-       back to regular text 168
+     regular text
+     zero indent 120
+        non-zero indent 204
+     back to zero indent 120
+     back to regular text 120
 
 OpenBSD                          June 13, 2017                 RS-AN-MARGIN(1)

@@ -1,30 +1,30 @@
 NF-INDENT(1)                General Commands Manual               NF-INDENT(1)
 
 NNAAMMEE
-       nf-indent - indentation of literal blocks
+     nf-indent - indentation of literal blocks
 
 DDEESSCCRRIIPPTTIIOONN
-       Here comes an indented block:
-       oneword
-       two words
-       and three words
-       This is a very long line; because it is indented, it is a bit too long to fit.
-       completely blank line:
+     Here comes an indented block:
+     oneword
+     two words
+     and three words
+     This is a very long line; because it is indented, it is a bit too long to fit.
+     completely blank line:
 
-       line containing a blank character:
+     line containing a blank character:
 
-       line containing two blank characters:
+     line containing two blank characters:
 
-       line containing space tab space:
+     line containing space tab space:
 
-       line containing a zero-width space:
+     line containing a zero-width space:
 
-       line containing an invalid numbered character escape:
+     line containing an invalid numbered character escape:
 
-       line containing an invalid named character escape:
+     line containing an invalid named character escape:
 
-       line containing a font escape:
-       end of literal
-       He is some more regular text.
+     line containing a font escape:
+     end of literal
+     He is some more regular text.
 
 OpenBSD                         August 15, 2022                   NF-INDENT(1)

@@ -1,17 +1,17 @@
 NR-PREDEF(1)                General Commands Manual               NR-PREDEF(1)
 
 NNAAMMEE
-       nr-predef - pre-defined read-only integer number registers
+     nr-predef - pre-defined read-only integer number registers
 
 DDEESSCCRRIIPPTTIIOONN
-       ascii mode: 0
-       groff mode: 1
-       horizontal resolution: 24
-       adjustment mode: 0
-       output device defined: 1 1
-       vertical resolution: 40
-       user defined macro with 0 arguments:
-       user defined macro with 1 arguments: one
-       user defined macro with 2 arguments: one two
+     ascii mode: 0
+     groff mode: 1
+     horizontal resolution: 24
+     adjustment mode: 0
+     output device defined: 1 1
+     vertical resolution: 40
+     user defined macro with 0 arguments:
+     user defined macro with 1 arguments: one
+     user defined macro with 2 arguments: one two
 
 OpenBSD                         August 29, 2015                   NR-PREDEF(1)

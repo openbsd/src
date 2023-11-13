@@ -1,22 +1,22 @@
 IP-EMPTY(1)                 General Commands Manual                IP-EMPTY(1)
 
 NNAAMMEE
-       IP-empty - empty indented paragraphs
+     IP-empty - empty indented paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST regular text
+     BEGINTEST regular text
 
-              indented text
+            indented text
 
-       Empty IP is deleted:
+     Empty IP is deleted:
 
-       tag1
+     tag1
 
-       tag2      indented text
+     tag2      indented text
 
-       Empty IP is deleted, RS does not cause additional spacing:
+     Empty IP is deleted, RS does not cause additional spacing:
 
-              tag    indented text
-       regular text ENDTEST
+            tag    indented text
+     regular text ENDTEST
 
 OpenBSD                          July 17, 2012                     IP-EMPTY(1)

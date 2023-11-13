@@ -1,43 +1,43 @@
 TBL-OPT-BOX(1)              General Commands Manual             TBL-OPT-BOX(1)
 
 NNAAMMEE
-       tbl-opt-box - box table options
+     tbl-opt-box - box table options
 
 DDEESSCCRRIIPPTTIIOONN
-       no boxing:
-       a   b
-       c   d
-       automatic boxing:
-       +------+
-       |a   b |
-       |c   d |
-       +------+
-       allbox:
-       +--+---+
-       |a | b |
-       +--+---+
-       |c | d |
-       +--+---+
-       manual boxing:
-       +--++--+
-       |a ||b |
-       +--++--+
-       |c ||d |
-       +--++--+
-       automatic and manual boxing:
-       +--++--+
-       |a ||b |
-       +--++--+
-       |c ||d |
-       +--++--+
-       +--++--+
-       allbox and manual boxing:
-       +--++--+
-       |a ||b |
-       +--++--+
-       +--++--+
-       |c ||d |
-       +--++--+
-       +--++--+
+     no boxing:
+     a   b
+     c   d
+     automatic boxing:
+     +------+
+     |a   b |
+     |c   d |
+     +------+
+     allbox:
+     +--+---+
+     |a | b |
+     +--+---+
+     |c | d |
+     +--+---+
+     manual boxing:
+     +--++--+
+     |a ||b |
+     +--++--+
+     |c ||d |
+     +--++--+
+     automatic and manual boxing:
+     +--++--+
+     |a ||b |
+     +--++--+
+     |c ||d |
+     +--++--+
+     +--++--+
+     allbox and manual boxing:
+     +--++--+
+     |a ||b |
+     +--++--+
+     +--++--+
+     |c ||d |
+     +--++--+
+     +--++--+
 
 OpenBSD                         August 28, 2022                 TBL-OPT-BOX(1)

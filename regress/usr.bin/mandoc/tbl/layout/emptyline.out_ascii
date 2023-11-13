@@ -1,18 +1,18 @@
 TBL-LAYOUT-EMPTYLINE(1)     General Commands Manual    TBL-LAYOUT-EMPTYLINE(1)
 
 NNAAMMEE
-       tbl-layout-emptyline - empty lines in table layouts
+     tbl-layout-emptyline - empty lines in table layouts
 
 DDEESSCCRRIIPPTTIIOONN
-       An empty line in the middle of a table joins with the next:
-        table text
-       +-----------
-       |       bar
-       |     right
+     An empty line in the middle of a table joins with the next:
+      table text
+     +-----------
+     |       bar
+     |     right
 
-       An empty line at the end of a table is discarded:
-       table text
-            right
-       normal text
+     An empty line at the end of a table is discarded:
+     table text
+          right
+     normal text
 
 OpenBSD                        January 29, 2015        TBL-LAYOUT-EMPTYLINE(1)

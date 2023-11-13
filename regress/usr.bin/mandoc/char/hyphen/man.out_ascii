@@ -1,16 +1,16 @@
 hyphen-man(1)               General Commands Manual              hyphen-man(1)
 
 NNAAMMEE
-       hhyypphheenn--mmaann - formatting hyphens and breaking lines
+     hhyypphheenn--mmaann - formatting hyphens and breaking lines
 
 DDEESSCCRRIIPPTTIIOONN
-       This is a long line of text, such that the last word won't fit: break-
-       here
+     This is a long line of text, such that the last word won't fit: break-
+     here
 
-       Try the same thing once same again, but now in italic font mode: _b_r_e_a_k_-
-       _h_e_r_e
+     Try the same thing once again, but this time in italic font mode: _b_r_e_a_k_-
+     _h_e_r_e
 
-       Finally, try it a third time, but this time in bold font mode: bbrreeaakk--
-       hheerree
+     Finally, try again a third time, but this time in bold font mode: bbrreeaakk--
+     hheerree
 
-OpenBSD                       September 18, 2011                 hyphen-man(1)
+OpenBSD                        November 13, 2023                 hyphen-man(1)

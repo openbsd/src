@@ -1,11 +1,11 @@
 MT-NOME(1)                  General Commands Manual                 MT-NOME(1)
 
 NNAAMMEE
-       MT-noME - unclosed mailto macro
+     MT-noME - unclosed mailto macro
 
 DDEESSCCRRIIPPTTIIOONN
-       lonely ME:
+     lonely ME:
 
-       argument plus text: invalid address <test@example.com>
+     argument plus text: invalid address <test@example.com>
 
 OpenBSD                          June 25, 2017                      MT-NOME(1)

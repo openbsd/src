@@ -1,30 +1,30 @@
 ESC-INVALID(1)              General Commands Manual             ESC-INVALID(1)
 
 NNAAMMEE
-       esc-invalid - invalid roff escape sequences
+     esc-invalid - invalid roff escape sequences
 
 DDEESSCCRRIIPPTTIIOONN
-       plus: a+bc
-       semicolon: a;bc
-       less than: a<bc
-       equal to: a=bc
-       greater than: a>bc
-       at: a@bc
-       square bracket: a]b
-       curly braces: abc
-       digit: a1bc
-       G: aGbc
-       I: aIbc
-       i: aibc
-       J: aJbc
-       j: ajbc
-       K: aKbc
-       P: aPbc
-       Q: aQbc
-       q: aqbc
-       T: aTbc
-       U: aUbc
-       W: aWbc
-       y: aybc
+     plus: a+bc
+     semicolon: a;bc
+     less than: a<bc
+     equal to: a=bc
+     greater than: a>bc
+     at: a@bc
+     square bracket: a]b
+     curly braces: abc
+     digit: a1bc
+     G: aGbc
+     I: aIbc
+     i: aibc
+     J: aJbc
+     j: ajbc
+     K: aKbc
+     P: aPbc
+     Q: aQbc
+     q: aqbc
+     T: aTbc
+     U: aUbc
+     W: aWbc
+     y: aybc
 
 OpenBSD                        December 15, 2018                ESC-INVALID(1)

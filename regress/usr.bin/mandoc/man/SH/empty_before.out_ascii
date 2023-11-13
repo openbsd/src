@@ -1,9 +1,9 @@
 SH-EMPTY_BEFORE(1)          General Commands Manual         SH-EMPTY_BEFORE(1)
 
 NNAAMMEE
-       SH-empty_before - empty paragraph before first section header
+     SH-empty_before - empty paragraph before first section header
 
 DDEESSCCRRIIPPTTIIOONN
-       some text
+     some text
 
 OpenBSD                         August 18, 2014             SH-EMPTY_BEFORE(1)

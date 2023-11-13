@@ -1,13 +1,13 @@
 TBL-MOD-FONT-EOL(1)         General Commands Manual        TBL-MOD-FONT-EOL(1)
 
 NNAAMMEE
-       tbl-mod-font-eol - font modifier at eol in table layout
+     tbl-mod-font-eol - font modifier at eol in table layout
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text
-       +--------------+
-       |bboolldd   none   |
-       |bboolldd   _i_t_a_l_i_c |
-       +--------------+
+     normal text
+     +--------------+
+     |bboolldd   none   |
+     |bboolldd   _i_t_a_l_i_c |
+     +--------------+
 
 OpenBSD                         August 9, 2021             TBL-MOD-FONT-EOL(1)

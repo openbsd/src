@@ -1,9 +1,9 @@
 DE-TH(1)                    General Commands Manual                   DE-TH(1)
 
 NNAAMMEE
-       de-TH - interaction of the TH macro with de requests
+     de-TH - interaction of the TH macro with de requests
 
 DDEESSCCRRIIPPTTIIOONN
-       bboolldd_i_t_a_l_i_cbboolldd
+     bboolldd_i_t_a_l_i_cbboolldd
 
 OpenBSD                          June 3, 2012                         DE-TH(1)

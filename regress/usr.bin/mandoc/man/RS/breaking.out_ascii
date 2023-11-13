@@ -1,17 +1,17 @@
 RS-BREAKING(1)              General Commands Manual             RS-BREAKING(1)
 
 NNAAMMEE
-       RS-breaking - some block gets broken by an RS block
+     RS-breaking - some block gets broken by an RS block
 
 DDEESSCCRRIIPPTTIIOONN
-       preceding text
+     preceding text
 
-       *   item
-               indented text
-       middle text
+     *   item
+             indented text
+     middle text
 
-       *
-               indented text
-       trailing text
+     *
+             indented text
+     trailing text
 
 OpenBSD                           7 July 2012                   RS-BREAKING(1)

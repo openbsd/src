@@ -1,17 +1,17 @@
 TBL-DATA-BLOCK_EMPTY(1)     General Commands Manual    TBL-DATA-BLOCK_EMPTY(1)
 
 NNAAMMEE
-       tbl-data-block_empty - empty text block
+     tbl-data-block_empty - empty text block
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text
-       +------+------+
-       |A     | test |
-       +------+------+
-       |table |      |
-       +------+------+
+     normal text
+     +------+------+
+     |A     | test |
+     +------+------+
+     |table |      |
+     +------+------+
 
 AAUUTTHHOORRSS
-       Eygene Ryabinkin <rea@FreeBSD.org>
+     Eygene Ryabinkin <rea@FreeBSD.org>
 
 OpenBSD                          July 17, 2019         TBL-DATA-BLOCK_EMPTY(1)

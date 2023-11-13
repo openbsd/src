@@ -1,77 +1,77 @@
 BLANK-LINE(1)               General Commands Manual              BLANK-LINE(1)
 
 NNAAMMEE
-       blank-line - handling of blank lines
+     blank-line - handling of blank lines
 
 DDEESSCCRRIIPPTTIIOONN
-       Single br:
-       Single PP:
+     Single br:
+     Single PP:
 
-       Single sp:
+     Single sp:
 
-       Single blank:
+     Single blank:
 
-       Double br:
-       br PP:
+     Double br:
+     br PP:
 
-       PP br:
+     PP br:
 
-       Double PP:
+     Double PP:
 
-       br sp:
+     br sp:
 
-       sp br:
+     sp br:
 
-       PP sp:
+     PP sp:
 
-       PP sp 2v:
+     PP sp 2v:
 
-       sp PP:
-
-
-       Double sp:
+     sp PP:
 
 
-       br blank:
-
-       blank br:
-
-       PP blank:
-
-       blank PP:
+     Double sp:
 
 
-       sp blank:
+     br blank:
+
+     blank br:
+
+     PP blank:
+
+     blank PP:
 
 
-       blank sp:
+     sp blank:
 
 
-       Double blank:
+     blank sp:
 
 
-       RS sp 2v:
+     Double blank:
 
 
-             RE sp 2v:
+     RS sp 2v:
 
 
-       IP sp 2v:
-
-       tag
+           RE sp 2v:
 
 
-             TP sp 2v:
+     IP sp 2v:
 
-       tag
+     tag
 
 
-             SH sp 2v:
+           TP sp 2v:
+
+     tag
+
+
+           SH sp 2v:
 
 CCUUSSTTOOMM
-       SS sp PP:
+     SS sp PP:
 
    ssuubbsseeccttiioonn
-       End.
+     End.
 
 OpenBSD                          July 14, 2012                   BLANK-LINE(1)

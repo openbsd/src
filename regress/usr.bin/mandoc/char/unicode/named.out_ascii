@@ -1,178 +1,178 @@
 CHAR-UNICODE-NAMED(1)       General Commands Manual      CHAR-UNICODE-NAMED(1)
 
 NNAAMMEE
-       char-unicode-named - Unicode characters having named escapes
+     char-unicode-named - Unicode characters having named escapes
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST
-       ii   LATIN SMALL LETTER DOTLESS I
-       IJIJ LATIN CAPITAL LIGATURE IJ
-       ijij LATIN SMALL LIGATURE IJ
-       /L/L   LATIN CAPITAL LETTER L WITH STROKE
-       /l/l   LATIN SMALL LETTER L WITH STROKE
-       OEOE LATIN CAPITAL LIGATURE OE
-       oeoe LATIN SMALL LIGATURE OE
-       ,f,f   LATIN SMALL LETTER F WITH HOOK
-       jj   LATIN SMALL LETTER DOTLESS J
-       vv   CARON
-       '`'`   BREVE
-       ..   DOT ABOVE
-       oo   RING ABOVE
-       ,,   OGONEK
-       ""   DOUBLE ACUTE ACCENT
-       AA   GREEK CAPITAL LETTER ALPHA
-       BB   GREEK CAPITAL LETTER BETA
-       <Gamma><Gamma> GREEK CAPITAL LETTER GAMMA
-       <Delta><Delta> GREEK CAPITAL LETTER DELTA
-       EE   GREEK CAPITAL LETTER EPSILON
-       ZZ   GREEK CAPITAL LETTER ZETA
-       HH   GREEK CAPITAL LETTER ETA
-       <Theta><Theta> GREEK CAPITAL LETTER THETA
-       II   GREEK CAPITAL LETTER IOTA
-       KK   GREEK CAPITAL LETTER KAPPA
-       <Lambda><Lambda>    GREEK CAPITAL LETTER LAMDA
-       MM   GREEK CAPITAL LETTER MU
-       NN   GREEK CAPITAL LETTER NU
-       <Xi><Xi>  GREEK CAPITAL LETTER XI
-       OO   GREEK CAPITAL LETTER OMICRON
-       <Pi><Pi>  GREEK CAPITAL LETTER PI
-       PP   GREEK CAPITAL LETTER RHO
-       <Sigma><Sigma> GREEK CAPITAL LETTER SIGMA
-       TT   GREEK CAPITAL LETTER TAU
-       YY   GREEK CAPITAL LETTER UPSILON
-       <Phi><Phi>     GREEK CAPITAL LETTER PHI
-       XX   GREEK CAPITAL LETTER CHI
-       <Psi><Psi>     GREEK CAPITAL LETTER PSI
-       <Omega><Omega> GREEK CAPITAL LETTER OMEGA
-       <alpha><alpha> GREEK SMALL LETTER ALPHA
-       <beta><beta>   GREEK SMALL LETTER BETA
-       <gamma><gamma> GREEK SMALL LETTER GAMMA
-       <delta><delta> GREEK SMALL LETTER DELTA
-       <epsilon><epsilon>  GREEK SMALL LETTER EPSILON
-       <zeta><zeta>   GREEK SMALL LETTER ZETA
-       <eta><eta>     GREEK SMALL LETTER ETA
-       <theta><theta> GREEK SMALL LETTER THETA
-       <iota><iota>   GREEK SMALL LETTER IOTA
-       <kappa><kappa> GREEK SMALL LETTER KAPPA
-       <lambda><lambda>    GREEK SMALL LETTER LAMDA
-       <mu><mu>  GREEK SMALL LETTER MU
-       <nu><nu>  GREEK SMALL LETTER NU
-       <xi><xi>  GREEK SMALL LETTER XI
-       oo   GREEK SMALL LETTER OMICRON
-       <pi><pi>  GREEK SMALL LETTER PI
-       <rho><rho>     GREEK SMALL LETTER RHO
-       <sigma><sigma> GREEK SMALL LETTER FINAL SIGMA
-       <sigma><sigma> GREEK SMALL LETTER SIGMA
-       <tau><tau>     GREEK SMALL LETTER TAU
-       <upsilon><upsilon>  GREEK SMALL LETTER UPSILON
-       <phi><phi>     GREEK SMALL LETTER PHI
-       <chi><chi>     GREEK SMALL LETTER CHI
-       <psi><psi>     GREEK SMALL LETTER PSI
-       <omega><omega> GREEK SMALL LETTER OMEGA
-       <theta><theta> GREEK THETA SYMBOL
-       <phi><phi>     GREEK PHI SYMBOL
-       <pi><pi>  GREEK PI SYMBOL
-       <epsilon><epsilon>  GREEK LUNATE EPSILON SYMBOL
-       --   HYPHEN
-       --   EN DASH
-       ---- EM DASH
-       ``   LEFT SINGLE QUOTATION MARK
-       ''   RIGHT SINGLE QUOTATION MARK
-       ,,   SINGLE LOW-9 QUOTATION MARK
-       ""   LEFT DOUBLE QUOTATION MARK
-       ""   RIGHT DOUBLE QUOTATION MARK
-       ,,,, DOUBLE LOW-9 QUOTATION MARK
-       <*><*>    DAGGER
-       <**><**>  DOUBLE DAGGER
-       +o+o   BULLET
-       <permille><permille>     PER MILLE SIGN
-       ''   PRIME
-       ""   DOUBLE PRIME
-       <<   SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-       >>   SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-       //   FRACTION SLASH
-       EUREUREUR EURO SIGN
-       <Im><Im>  BLACK-LETTER CAPITAL I
-       pp   SCRIPT CAPITAL P
-       <Re><Re>  BLACK-LETTER CAPITAL R
-       tmtm TRADE MARK SIGN
-       <Aleph><Aleph> ALEF SYMBOL
-       1/81/8    VULGAR FRACTION ONE EIGHTH
-       3/83/8    VULGAR FRACTION THREE EIGHTHS
-       5/85/8    VULGAR FRACTION FIVE EIGHTHS
-       7/87/8    VULGAR FRACTION SEVEN EIGHTHS
-       <-<- LEFTWARDS ARROW
-       |^|^   UPWARDS ARROW
-       ->-> RIGHTWARDS ARROW
-       |v|v   DOWNWARDS ARROW
-       <-><->    LEFT RIGHT ARROW
-       <cr><cr>  DOWNWARDS ARROW WITH CORNER LEFTWARDS
-       <=<= LEFTWARDS DOUBLE ARROW
-       =^=^   UPWARDS DOUBLE ARROW
-       =>=> RIGHTWARDS DOUBLE ARROW
-       =v=v   DOWNWARDS DOUBLE ARROW
-       <=><=>    LEFT RIGHT DOUBLE ARROW
-       <for all><for all>  FOR ALL
-       <del><del>     PARTIAL DIFFERENTIAL
-       <there exists><there exists>  THERE EXISTS
-       {}{} EMPTY SET
-       <nabla><nabla> NABLA
-       <element of><element of> ELEMENT OF
-       <not element of><not element of>   NOT AN ELEMENT OF
-       <such that><such that>   CONTAINS AS MEMBER
-       <product><product>  N-ARY PRODUCT
-       <coproduct><coproduct>   N-ARY COPRODUCT
-       <sum><sum>     N-ARY SUMMATION
-       --   MINUS SIGN
-       -+-+ MINUS-OR-PLUS SIGN
-       **   ASTERISK OPERATOR
-       <sqrt><sqrt>   SQUARE ROOT
-       <proportional to><proportional to> PROPORTIONAL TO
-       <infinity><infinity>     INFINITY
-       <angle><angle> ANGLE
-       ^^   LOGICAL AND
-       vv   LOGICAL OR
-       <intersection><intersection>  INTERSECTION
-       <union><union> UNION
-       <integral><integral>     INTEGRAL
-       <therefore><therefore><therefore>  THEREFORE
-       ~~   TILDE OPERATOR
-       -~-~ ASYMPTOTICALLY EQUAL TO
-       =~=~ APPROXIMATELY EQUAL TO
-       ~~~~~=    ALMOST EQUAL TO
-       !=!= NOT EQUAL TO
-       ==== IDENTICAL TO
-       !==!==    NOT IDENTICAL TO
-       <=<= LESS-THAN OR EQUAL TO
-       >=>= GREATER-THAN OR EQUAL TO
-       <proper subset><proper subset>     SUBSET OF
-       <proper superset><proper superset> SUPERSET OF
-       <not subset><not subset> NOT A SUBSET OF
-       <not superset><not superset>  NOT A SUPERSET OF
-       <subset or equal><subset or equal> SUBSET OF OR EQUAL TO
-       <superset or equal><superset or equal>  SUPERSET OF OR EQUAL TO
-       O+O+   CIRCLED PLUS
-       OxOx   CIRCLED TIMES
-       <perpendicular><perpendicular>     UP TACK
-       ..   DOT OPERATOR
-       |~|~ LEFT CEILING
-       ~|~| RIGHT CEILING
-       |_|_ LEFT FLOOR
-       _|_| RIGHT FLOOR
-       ||   CURLY BRACKET EXTENSION
-       --   HORIZONTAL LINE EXTENSION
-       ||   BOX DRAWINGS LIGHT VERTICAL
-       [][] WHITE SQUARE
-       <><> LOZENGE
-       OO   WHITE CIRCLE
-       <=<= WHITE LEFT POINTING INDEX
-       =>=> WHITE RIGHT POINTING INDEX
-       SS   BLACK SPADE SUIT
-       CC   BLACK CLUB SUIT
-       HH   BLACK HEART SUIT
-       DD   BLACK DIAMOND SUIT
-       <<   MATHEMATICAL LEFT ANGLE BRACKET
-       >>   MATHEMATICAL RIGHT ANGLE BRACKET
-       ENDTEST
+     BEGINTEST
+     ii   LATIN SMALL LETTER DOTLESS I
+     IJIJ LATIN CAPITAL LIGATURE IJ
+     ijij LATIN SMALL LIGATURE IJ
+     /L/L   LATIN CAPITAL LETTER L WITH STROKE
+     /l/l   LATIN SMALL LETTER L WITH STROKE
+     OEOE LATIN CAPITAL LIGATURE OE
+     oeoe LATIN SMALL LIGATURE OE
+     ,f,f   LATIN SMALL LETTER F WITH HOOK
+     jj   LATIN SMALL LETTER DOTLESS J
+     vv   CARON
+     '`'`   BREVE
+     ..   DOT ABOVE
+     oo   RING ABOVE
+     ,,   OGONEK
+     ""   DOUBLE ACUTE ACCENT
+     AA   GREEK CAPITAL LETTER ALPHA
+     BB   GREEK CAPITAL LETTER BETA
+     <Gamma><Gamma> GREEK CAPITAL LETTER GAMMA
+     <Delta><Delta> GREEK CAPITAL LETTER DELTA
+     EE   GREEK CAPITAL LETTER EPSILON
+     ZZ   GREEK CAPITAL LETTER ZETA
+     HH   GREEK CAPITAL LETTER ETA
+     <Theta><Theta> GREEK CAPITAL LETTER THETA
+     II   GREEK CAPITAL LETTER IOTA
+     KK   GREEK CAPITAL LETTER KAPPA
+     <Lambda><Lambda>    GREEK CAPITAL LETTER LAMDA
+     MM   GREEK CAPITAL LETTER MU
+     NN   GREEK CAPITAL LETTER NU
+     <Xi><Xi>  GREEK CAPITAL LETTER XI
+     OO   GREEK CAPITAL LETTER OMICRON
+     <Pi><Pi>  GREEK CAPITAL LETTER PI
+     PP   GREEK CAPITAL LETTER RHO
+     <Sigma><Sigma> GREEK CAPITAL LETTER SIGMA
+     TT   GREEK CAPITAL LETTER TAU
+     YY   GREEK CAPITAL LETTER UPSILON
+     <Phi><Phi>     GREEK CAPITAL LETTER PHI
+     XX   GREEK CAPITAL LETTER CHI
+     <Psi><Psi>     GREEK CAPITAL LETTER PSI
+     <Omega><Omega> GREEK CAPITAL LETTER OMEGA
+     <alpha><alpha> GREEK SMALL LETTER ALPHA
+     <beta><beta>   GREEK SMALL LETTER BETA
+     <gamma><gamma> GREEK SMALL LETTER GAMMA
+     <delta><delta> GREEK SMALL LETTER DELTA
+     <epsilon><epsilon>  GREEK SMALL LETTER EPSILON
+     <zeta><zeta>   GREEK SMALL LETTER ZETA
+     <eta><eta>     GREEK SMALL LETTER ETA
+     <theta><theta> GREEK SMALL LETTER THETA
+     <iota><iota>   GREEK SMALL LETTER IOTA
+     <kappa><kappa> GREEK SMALL LETTER KAPPA
+     <lambda><lambda>    GREEK SMALL LETTER LAMDA
+     <mu><mu>  GREEK SMALL LETTER MU
+     <nu><nu>  GREEK SMALL LETTER NU
+     <xi><xi>  GREEK SMALL LETTER XI
+     oo   GREEK SMALL LETTER OMICRON
+     <pi><pi>  GREEK SMALL LETTER PI
+     <rho><rho>     GREEK SMALL LETTER RHO
+     <sigma><sigma> GREEK SMALL LETTER FINAL SIGMA
+     <sigma><sigma> GREEK SMALL LETTER SIGMA
+     <tau><tau>     GREEK SMALL LETTER TAU
+     <upsilon><upsilon>  GREEK SMALL LETTER UPSILON
+     <phi><phi>     GREEK SMALL LETTER PHI
+     <chi><chi>     GREEK SMALL LETTER CHI
+     <psi><psi>     GREEK SMALL LETTER PSI
+     <omega><omega> GREEK SMALL LETTER OMEGA
+     <theta><theta> GREEK THETA SYMBOL
+     <phi><phi>     GREEK PHI SYMBOL
+     <pi><pi>  GREEK PI SYMBOL
+     <epsilon><epsilon>  GREEK LUNATE EPSILON SYMBOL
+     --   HYPHEN
+     --   EN DASH
+     ---- EM DASH
+     ``   LEFT SINGLE QUOTATION MARK
+     ''   RIGHT SINGLE QUOTATION MARK
+     ,,   SINGLE LOW-9 QUOTATION MARK
+     ""   LEFT DOUBLE QUOTATION MARK
+     ""   RIGHT DOUBLE QUOTATION MARK
+     ,,,, DOUBLE LOW-9 QUOTATION MARK
+     <*><*>    DAGGER
+     <**><**>  DOUBLE DAGGER
+     +o+o   BULLET
+     <permille><permille>     PER MILLE SIGN
+     ''   PRIME
+     ""   DOUBLE PRIME
+     <<   SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+     >>   SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+     //   FRACTION SLASH
+     EUREUREUR EURO SIGN
+     <Im><Im>  BLACK-LETTER CAPITAL I
+     pp   SCRIPT CAPITAL P
+     <Re><Re>  BLACK-LETTER CAPITAL R
+     tmtm TRADE MARK SIGN
+     <Aleph><Aleph> ALEF SYMBOL
+     1/81/8    VULGAR FRACTION ONE EIGHTH
+     3/83/8    VULGAR FRACTION THREE EIGHTHS
+     5/85/8    VULGAR FRACTION FIVE EIGHTHS
+     7/87/8    VULGAR FRACTION SEVEN EIGHTHS
+     <-<- LEFTWARDS ARROW
+     |^|^   UPWARDS ARROW
+     ->-> RIGHTWARDS ARROW
+     |v|v   DOWNWARDS ARROW
+     <-><->    LEFT RIGHT ARROW
+     <cr><cr>  DOWNWARDS ARROW WITH CORNER LEFTWARDS
+     <=<= LEFTWARDS DOUBLE ARROW
+     =^=^   UPWARDS DOUBLE ARROW
+     =>=> RIGHTWARDS DOUBLE ARROW
+     =v=v   DOWNWARDS DOUBLE ARROW
+     <=><=>    LEFT RIGHT DOUBLE ARROW
+     <for all><for all>  FOR ALL
+     <del><del>     PARTIAL DIFFERENTIAL
+     <there exists><there exists>  THERE EXISTS
+     {}{} EMPTY SET
+     <nabla><nabla> NABLA
+     <element of><element of> ELEMENT OF
+     <not element of><not element of>   NOT AN ELEMENT OF
+     <such that><such that>   CONTAINS AS MEMBER
+     <product><product>  N-ARY PRODUCT
+     <coproduct><coproduct>   N-ARY COPRODUCT
+     <sum><sum>     N-ARY SUMMATION
+     --   MINUS SIGN
+     -+-+ MINUS-OR-PLUS SIGN
+     **   ASTERISK OPERATOR
+     <sqrt><sqrt>   SQUARE ROOT
+     <proportional to><proportional to> PROPORTIONAL TO
+     <infinity><infinity>     INFINITY
+     <angle><angle> ANGLE
+     ^^   LOGICAL AND
+     vv   LOGICAL OR
+     <intersection><intersection>  INTERSECTION
+     <union><union> UNION
+     <integral><integral>     INTEGRAL
+     <therefore><therefore><therefore>  THEREFORE
+     ~~   TILDE OPERATOR
+     -~-~ ASYMPTOTICALLY EQUAL TO
+     =~=~ APPROXIMATELY EQUAL TO
+     ~~~~~=    ALMOST EQUAL TO
+     !=!= NOT EQUAL TO
+     ==== IDENTICAL TO
+     !==!==    NOT IDENTICAL TO
+     <=<= LESS-THAN OR EQUAL TO
+     >=>= GREATER-THAN OR EQUAL TO
+     <proper subset><proper subset>     SUBSET OF
+     <proper superset><proper superset> SUPERSET OF
+     <not subset><not subset> NOT A SUBSET OF
+     <not superset><not superset>  NOT A SUPERSET OF
+     <subset or equal><subset or equal> SUBSET OF OR EQUAL TO
+     <superset or equal><superset or equal>  SUPERSET OF OR EQUAL TO
+     O+O+   CIRCLED PLUS
+     OxOx   CIRCLED TIMES
+     <perpendicular><perpendicular>     UP TACK
+     ..   DOT OPERATOR
+     |~|~ LEFT CEILING
+     ~|~| RIGHT CEILING
+     |_|_ LEFT FLOOR
+     _|_| RIGHT FLOOR
+     ||   CURLY BRACKET EXTENSION
+     --   HORIZONTAL LINE EXTENSION
+     ||   BOX DRAWINGS LIGHT VERTICAL
+     [][] WHITE SQUARE
+     <><> LOZENGE
+     OO   WHITE CIRCLE
+     <=<= WHITE LEFT POINTING INDEX
+     =>=> WHITE RIGHT POINTING INDEX
+     SS   BLACK SPADE SUIT
+     CC   BLACK CLUB SUIT
+     HH   BLACK HEART SUIT
+     DD   BLACK DIAMOND SUIT
+     <<   MATHEMATICAL LEFT ANGLE BRACKET
+     >>   MATHEMATICAL RIGHT ANGLE BRACKET
+     ENDTEST
 
 OpenBSD                         August 21, 2018          CHAR-UNICODE-NAMED(1)

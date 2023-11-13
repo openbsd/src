@@ -1,13 +1,13 @@
 TBL-DATA-ESCZ(1)            General Commands Manual           TBL-DATA-ESCZ(1)
 
 NNAAMMEE
-       tbl-data-escz - non-advancing glyph at the end of a tbl(7) cell
+     tbl-data-escz - non-advancing glyph at the end of a tbl(7) cell
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
-       a   b
-       cd  e
+     initial text
+     a   b
+     cd  e
 
-       final text
+     final text
 
 OpenBSD                         April 26, 2022                TBL-DATA-ESCZ(1)

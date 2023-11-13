@@ -1,15 +1,15 @@
 NF-DUPE(1)                  General Commands Manual                 NF-DUPE(1)
 
 NNAAMMEE
-       nf-dupe - duplicate filling macros
+     nf-dupe - duplicate filling macros
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-       still regular text
-       literal
-       text
-       still
-       literal
-       text
+     regular text
+     still regular text
+     literal
+     text
+     still
+     literal
+     text
 
 OpenBSD                          July 2, 2014                       NF-DUPE(1)

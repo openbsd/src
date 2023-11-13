@@ -1,18 +1,18 @@
 NR-INCR(1)                  General Commands Manual                 NR-INCR(1)
 
 NNAAMMEE
-       nr-incr - increment a number register by accessing it
+     nr-incr - increment a number register by accessing it
 
 DDEESSCCRRIIPPTTIIOONN
-       Roff can count by merely accessing a number register: 1 2 3
+     Roff can count by merely accessing a number register: 1 2 3
 
-       It can also change the step size: 5 7 9
+     It can also change the step size: 5 7 9
 
-       It can also count down: 6 3 0 -3
+     It can also count down: 6 3 0 -3
 
-       Down in negative steps is up: -1 1 3 5
+     Down in negative steps is up: -1 1 3 5
 
-       Go to some other value, then continue incrementing with an unchanged
-       (negative) step size: 40 38 36
+     Go to some other value, then continue incrementing with an unchanged
+     (negative) step size: 40 38 36
 
 OpenBSD                         April 10, 2018                      NR-INCR(1)

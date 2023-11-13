@@ -1,13 +1,13 @@
 TBL-LAYOUT-EMPTY(1)         General Commands Manual        TBL-LAYOUT-EMPTY(1)
 
 NNAAMMEE
-       tbl-layout-empty - empty table layout
+     tbl-layout-empty - empty table layout
 
 DDEESSCCRRIIPPTTIIOONN
-       completely empty layout:
-       table text
-       layout only contains a bar:
-       |table text
-       normal text
+     completely empty layout:
+     table text
+     layout only contains a bar:
+     |table text
+     normal text
 
 OpenBSD                        January 29, 2015            TBL-LAYOUT-EMPTY(1)

@@ -1,23 +1,23 @@
 SY-LITERAL(1)               General Commands Manual              SY-LITERAL(1)
 
 NNAAMMEE
-       SY-literal - synopsis block in literal context
+     SY-literal - synopsis block in literal context
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST
-       initial regular text
+     BEGINTEST
+     initial regular text
 
-       ccoommmmaanndd _a_r_g_u_m_e_n_t_s
-       middle regular text
-       literal text
-       before display
+     ccoommmmaanndd _a_r_g_u_m_e_n_t_s
+     middle regular text
+     literal text
+     before display
 
-       ccoommmmaanndd
-               _a_r_g_u_m_e_n_t_s
-       literal text
-       after display
-       final regular text
-       ENDTEST
-       end of file
+     ccoommmmaanndd
+             _a_r_g_u_m_e_n_t_s
+     literal text
+     after display
+     final regular text
+     ENDTEST
+     end of file
 
 OpenBSD                         January 5, 2019                  SY-LITERAL(1)

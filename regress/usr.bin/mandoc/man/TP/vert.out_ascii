@@ -1,16 +1,16 @@
 TP-VERT(1)                  General Commands Manual                 TP-VERT(1)
 
 NNAAMMEE
-       TP-vert - vertical spacing before tagged paragraphs BEGINTEST
+     TP-vert - vertical spacing before tagged paragraphs BEGINTEST
 
 DDEESSCCRRIIPPTTIIOONN
-       tag    text
+     tag    text
 
 
-       tag    text
+     tag    text
 
 
-       ENDTEST
-       end of file
+     ENDTEST
+     end of file
 
 OpenBSD                        February 19, 2020                    TP-VERT(1)

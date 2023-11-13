@@ -1,37 +1,37 @@
 RS-NESTED(1)                General Commands Manual               RS-NESTED(1)
 
 NNAAMMEE
-       RS-nested - various blocks nested inside reset blocks
+     RS-nested - various blocks nested inside reset blocks
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-              outer text (default indent)
-                     inner text (default indent)
-              outer text
-       regular text
+     regular text
+            outer text (default indent)
+                   inner text (default indent)
+            outer text
+     regular text
 
-       tag   tagged text (6n)
-             outer text (saved 6n)
-                    inner text (default indent)
-             outer text
-       regular text
-           outer text (4n)
-             inner text (2n)
+     tag   tagged text (6n)
+           outer text (saved 6n)
+                  inner text (default indent)
+           outer text
+     regular text
+         outer text (4n)
+           inner text (2n)
+         outer text
+
+         indent  text (8n)
+
+         tag   text (6n)
+
+         hanged This is very long text.  Let's see where it will break the
+                     line, and which indent the next line will have -
+                     hopefully 12n.
+
+         outer text
+     nesting HP and RS inside RS:
            outer text
 
-           indent  text (8n)
 
-           tag   text (6n)
-
-           hanged This is very long text.  Let's see where it will break the
-                       line, and which indent the next line will have -
-                       hopefully 12n.
-
-           outer text
-       nesting HP and RS inside RS:
-             outer text
-
-
-                 inner text
+               inner text
 
 OpenBSD                          April 4, 2015                    RS-NESTED(1)

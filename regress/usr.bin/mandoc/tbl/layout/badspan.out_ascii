@@ -1,14 +1,14 @@
 TBL-LAYOUT-BADSPAN(1)       General Commands Manual      TBL-LAYOUT-BADSPAN(1)
 
 NNAAMMEE
-       tbl-layout-badspan - invalid spanned cells
+     tbl-layout-badspan - invalid spanned cells
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text
-       +--+-----------+-----+---+
-       |  | span      | end |   |
-       +--+---+---+---+-----+---+
-       |1 | 2 | 3 | 4 | 5   | 6 |
-       +--+---+---+---+-----+---+
+     normal text
+     +--+-----------+-----+---+
+     |  | span      | end |   |
+     +--+---+---+---+-----+---+
+     |1 | 2 | 3 | 4 | 5   | 6 |
+     +--+---+---+---+-----+---+
 
 OpenBSD                        January 11, 2020          TBL-LAYOUT-BADSPAN(1)

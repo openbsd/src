@@ -1,23 +1,23 @@
 EX-SPACING(1)               General Commands Manual              EX-SPACING(1)
 
 NNAAMMEE
-       EX-spacing - spacing around the example macro
+     EX-spacing - spacing around the example macro
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-       example
-       text
-       regular text
-       literal
-       text
-       example
-       text
-       regular text
+     regular text
+     example
+     text
+     regular text
+     literal
+     text
+     example
+     text
+     regular text
 
-       after PP, before nf
-       after nf, before fi
-       after fi, before PP
+     after PP, before nf
+     after nf, before fi
+     after fi, before PP
 
-       regular text
+     regular text
 
 OpenBSD                          June 3, 2012                    EX-SPACING(1)

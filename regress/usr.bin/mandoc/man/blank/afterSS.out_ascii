@@ -1,56 +1,55 @@
 BLANK-AFTERSS(1)            General Commands Manual           BLANK-AFTERSS(1)
 
 NNAAMMEE
-       blank-afterSS - handling of blank lines right after a subsection
-       heading
+     blank-afterSS - handling of blank lines right after a subsection heading
 
 DDEESSCCRRIIPPTTIIOONN
    11
-       blank line before text
+     blank line before text
 
    22
-       blank line before PP
+     blank line before PP
 
    33
-             blank line before RS
+           blank line before RS
 
    44
-       TAG    blank line before an indented paragraph
+     TAG    blank line before an indented paragraph
 
    55
-       TAG    blank line before a tagged paragraph
+     TAG    blank line before a tagged paragraph
 
    66
-       blank line before a hanged paragraph
+     blank line before a hanged paragraph
 
    77
-       blank line before br
+     blank line before br
 
    88
-       blank line before sp
+     blank line before sp
 
    1100
-       double blank line before text
+     double blank line before text
 
    1122
-       double blank line before PP
+     double blank line before PP
 
    1133
-             double blank line before RS
+           double blank line before RS
 
    1144
-       TAG    double blank line before an indented paragraph
+     TAG    double blank line before an indented paragraph
 
    1155
-       TAG    double blank line before a tagged paragraph
+     TAG    double blank line before a tagged paragraph
 
    1166
-       double blank line before a hanged paragraph
+     double blank line before a hanged paragraph
 
    1177
-       double blank line before br
+     double blank line before br
 
    1188
-       double blank line before sp
+     double blank line before sp
 
 OpenBSD                        November 10, 2013              BLANK-AFTERSS(1)

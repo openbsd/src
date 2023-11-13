@@ -1,13 +1,13 @@
 SH-LONGARG(1)               General Commands Manual              SH-LONGARG(1)
 
 NNAAMMEE
-       SH-longarg - long section header lines
+     SH-longarg - long section header lines
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
+     initial text
 
 TThhiiss sseeccttiioonn hhaass aa rreeaallllyy rriiddiiccuulloouussllyy lloonngg ttiittllee wwhhiicchh wwoonn''tt eevveenn ffiitt oonn tthhee
-       lliinnee..
-       custom section text
+     lliinnee..
+     custom section text
 
 OpenBSD                          April 4, 2015                   SH-LONGARG(1)

@@ -1,54 +1,54 @@
 HP-SPACING(1)               General Commands Manual              HP-SPACING(1)
 
 NNAAMMEE
-       HP-spacing - spacing in hanged lists
+     HP-spacing - spacing in hanged lists
 
 DDEESSCCRRIIPPTTIIOONN
-       Normal text.
+     Normal text.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-              next line.
-              And a second line.
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+            next line.
+            And a second line.
 
-              Vertical spacing an a third line.
-              A fourth line.
+            Vertical spacing an a third line.
+            A fourth line.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
 next line.
 And a second line.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-   next line.
-   And a second line.
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+ next line.
+ And a second line.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+     next line.
+     And a second line.
+
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+      next line.
+      And a second line.
+
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
        next line.
        And a second line.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-        next line.
-        And a second line.
-
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
          next line.
          And a second line.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-           next line.
-           And a second line.
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+             next line.
+             And a second line.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-               next line.
-               And a second line.
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+                     next line.
+                     And a second line.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-                       next line.
-                       And a second line.
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+                                                                                   next
+                                                                                   line.
 
-       Each hanged paragraph gets a sufficient amount of text to wrap to the
-                                                                                     next
-                                                                                     line.
-
-       Normal text.
+     Normal text.
 
 OpenBSD                        December 23, 2014                 HP-SPACING(1)

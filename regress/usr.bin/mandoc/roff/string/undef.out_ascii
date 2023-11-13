@@ -1,33 +1,33 @@
 STRING-UNDEF(1)             General Commands Manual            STRING-UNDEF(1)
 
 NNAAMMEE
-       string-undef - expanding undefined strings
+     string-undef - expanding undefined strings
 
 DDEESSCCRRIIPPTTIIOONN
    UUsseerr ddeeffiinneedd ssttrriinngg
-       The sting "mys" is undefined and remains undefined.
+     The sting "mys" is undefined and remains undefined.
 
-       Its value is "", and now it is defined, and its value is still "".
+     Its value is "", and now it is defined, and its value is still "".
 
-       After redefining it to "newval", it is of course still defined.
+     After redefining it to "newval", it is of course still defined.
 
-       After removing the definition, it is now undefined.
+     After removing the definition, it is now undefined.
 
    UUsseerr ddeeffiinneedd mmaaccrroo
-       The macro "mym" is undefined.
+     The macro "mym" is undefined.
 
-       It has no effect: But now it is defined.
+     It has no effect: But now it is defined.
 
-       After defining it as: neweffect it is of course still defined.
+     After defining it as: neweffect it is of course still defined.
 
-       After removing the definition, it is now undefined.
+     After removing the definition, it is now undefined.
 
    RReennaammeedd mmaaccrroo
-       The standard .BR macro is defined, and it wwoorrkkss.
+     The standard .BR macro is defined, and it wwoorrkkss.
 
-       After renaming it, the new name is defined, and wwoorrkkss.
+     After renaming it, the new name is defined, and wwoorrkkss.
 
    PPrreeddeeffiinneedd ssttrriinngg
-       A predefined string is defined and has the value "(R)".
+     A predefined string is defined and has the value "(R)".
 
 OpenBSD                          April 9, 2018                 STRING-UNDEF(1)

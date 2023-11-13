@@ -1,15 +1,15 @@
 CHAR-UNICODE-MAN(1)         General Commands Manual        CHAR-UNICODE-MAN(1)
 
 NNAAMMEE
-       char-unicode-mdoc - unicode characters in man code
+     char-unicode-mdoc - unicode characters in man code
 
 DDEESSCCRRIIPPTTIIOONN
-       Copyright symbol: © = ©
+     Copyright symbol: © = ©
 
-       m-dash: — = —
+     m-dash: — = —
 
-       nabla: 𝛁 = 𝛁
+     nabla: 𝛁 = 𝛁
 
-       not really Unicode: up arrows: ↑⇑ = ↑⇑ = ↑⇑
+     not really Unicode: up arrows: ↑⇑ = ↑⇑ = ↑⇑
 
 OpenBSD                        October 13, 2014            CHAR-UNICODE-MAN(1)

@@ -1,10 +1,10 @@
 RS-NORE(1)                  General Commands Manual                 RS-NORE(1)
 
 NNAAMMEE
-       RS-noRE - unclosed indented block
+     RS-noRE - unclosed indented block
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
-               indented text
+     regular text
+             indented text
 
 OpenBSD                          June 20, 2014                      RS-NORE(1)

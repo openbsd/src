@@ -1,10 +1,10 @@
 OP-ARGS(1)                  General Commands Manual                 OP-ARGS(1)
 
 NNAAMMEE
-       OP-args - argument handling of the man-ext OP macro
+     OP-args - argument handling of the man-ext OP macro
 
 DDEESSCCRRIIPPTTIIOONN
-       no argument: [] one argument: [--ff] two arguments: [--ff _a_r_g] three
-       arguments: [--ff _a_r_g] final text
+     no argument: [] one argument: [--ff] two arguments: [--ff _a_r_g] three
+     arguments: [--ff _a_r_g] final text
 
 OpenBSD                        February 6, 2015                     OP-ARGS(1)

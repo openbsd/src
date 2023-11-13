@@ -1,12 +1,12 @@
 FT-BADARGS(1)               General Commands Manual              FT-BADARGS(1)
 
 NNAAMMEE
-       ft-badargs - font request with bad arguments
+     ft-badargs - font request with bad arguments
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST
-       default font _i_t_a_l_i_c _bb_oo_ll_dd _ii_tt_aa_ll_ii_cc typeqriter roman bboolldd _i_t_a_l_i_c bboolldd ssttiillll
-       bboolldd _i_t_a_l_i_c bbaacckk ttoo bboolldd _b_a_c_k _t_o _i_t_a_l_i_c
-       ENDTEST
+     BEGINTEST
+     default font _i_t_a_l_i_c _bb_oo_ll_dd _ii_tt_aa_ll_ii_cc typeqriter roman bboolldd _i_t_a_l_i_c bboolldd ssttiillll
+     bboolldd _i_t_a_l_i_c bbaacckk ttoo bboolldd _b_a_c_k _t_o _i_t_a_l_i_c
+     ENDTEST
 
 OpenBSD                        December 15, 2018                 FT-BADARGS(1)

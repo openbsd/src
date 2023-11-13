@@ -1,14 +1,14 @@
 ESC-F(1)                    General Commands Manual                   ESC-F(1)
 
 NNAAMMEE
-       esc-f - the roff escape f sequence: font changes
+     esc-f - the roff escape f sequence: font changes
 
 DDEESSCCRRIIPPTTIIOONN
-       BEGINTEST
-       numbers: _bb_oo_ll_dd_ii_tt_aa_ll_ii_ccbboolldd_i_t_a_l_i_croman
-       letters: bboolldd_i_t_a_l_i_cbbaacckk_bb_oo_ll_dd_ii_tt_aa_ll_ii_ccroman
-       multiletter: bboollddempty_i_t_a_l_i_cback_bb_oo_ll_dd_ii_tt_aa_ll_ii_ccroman
-       typewriter: romanbboollddroman_i_t_a_l_i_croman
-       ENDTEST
+     BEGINTEST
+     numbers: _bb_oo_ll_dd_ii_tt_aa_ll_ii_ccbboolldd_i_t_a_l_i_croman
+     letters: bboolldd_i_t_a_l_i_cbbaacckk_bb_oo_ll_dd_ii_tt_aa_ll_ii_ccroman
+     multiletter: bboollddempty_i_t_a_l_i_cback_bb_oo_ll_dd_ii_tt_aa_ll_ii_ccroman
+     typewriter: romanbboollddroman_i_t_a_l_i_croman
+     ENDTEST
 
 OpenBSD                        December 15, 2018                      ESC-F(1)

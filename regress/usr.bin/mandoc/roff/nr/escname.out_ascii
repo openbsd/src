@@ -1,15 +1,15 @@
 NR-ESCNAME(1)               General Commands Manual              NR-ESCNAME(1)
 
 NNAAMMEE
-       nr-escname - escape sequences in register names
+     nr-escname - escape sequences in register names
 
 DDEESSCCRRIIPPTTIIOONN
-       1 2 3 5 6
+     1 2 3 5 6
 
-       0 2 3
+     0 2 3
 
-       0 2 0
+     0 2 0
 
-       incomplete:
+     incomplete:
 
 OpenBSD                          June 3, 2022                    NR-ESCNAME(1)

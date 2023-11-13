@@ -1,9 +1,9 @@
 SH-BROKEN(1)                General Commands Manual               SH-BROKEN(1)
 
 NNAAMMEE
-       SH-broken - section header line scope broken by end of file
+     SH-broken - section header line scope broken by end of file
 
 DDEESSCCRRIIPPTTIIOONN
-       some text
+     some text
 
 OpenBSD                          July 30, 2014                    SH-BROKEN(1)

@@ -1,54 +1,54 @@
 BLANK-AFTERSH(1)            General Commands Manual           BLANK-AFTERSH(1)
 
 NNAAMMEE
-       blank-afterSH - handling of blank lines right after a section heading
+     blank-afterSH - handling of blank lines right after a section heading
 
 DDEESSCCRRIIPPTTIIOONN
-       blank line before text
+     blank line before text
 
 DDEESSCCRRIIPPTTIIOONN 22
-       blank line before PP
+     blank line before PP
 
 DDEESSCCRRIIPPTTIIOONN 33
-             blank line before RS
+           blank line before RS
 
 DDEESSCCRRIIPPTTIIOONN 44
-       TAG    blank line before an indented paragraph
+     TAG    blank line before an indented paragraph
 
 DDEESSCCRRIIPPTTIIOONN 55
-       TAG    blank line before a tagged paragraph
+     TAG    blank line before a tagged paragraph
 
 DDEESSCCRRIIPPTTIIOONN 66
-       blank line before a hanged paragraph
+     blank line before a hanged paragraph
 
 DDEESSCCRRIIPPTTIIOONN 77
-       blank line before br
+     blank line before br
 
 DDEESSCCRRIIPPTTIIOONN 88
-       blank line before sp
+     blank line before sp
 
 DDEESSCCRRIIPPTTIIOONN 1100
-       double blank line before text
+     double blank line before text
 
 DDEESSCCRRIIPPTTIIOONN 1122
-       double blank line before PP
+     double blank line before PP
 
 DDEESSCCRRIIPPTTIIOONN 1133
-             double blank line before RS
+           double blank line before RS
 
 DDEESSCCRRIIPPTTIIOONN 1144
-       TAG    double blank line before an indented paragraph
+     TAG    double blank line before an indented paragraph
 
 DDEESSCCRRIIPPTTIIOONN 1155
-       TAG    double blank line before a tagged paragraph
+     TAG    double blank line before a tagged paragraph
 
 DDEESSCCRRIIPPTTIIOONN 1166
-       double blank line before a hanged paragraph
+     double blank line before a hanged paragraph
 
 DDEESSCCRRIIPPTTIIOONN 1177
-       double blank line before br
+     double blank line before br
 
 DDEESSCCRRIIPPTTIIOONN 1188
-       double blank line before sp
+     double blank line before sp
 
 OpenBSD                        November 10, 2013              BLANK-AFTERSH(1)

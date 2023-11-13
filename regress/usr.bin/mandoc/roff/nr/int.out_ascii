@@ -1,11 +1,11 @@
 NR-INT(1)                   General Commands Manual                  NR-INT(1)
 
 NNAAMMEE
-       nr-int - integer number registers
+     nr-int - integer number registers
 
 DDEESSCCRRIIPPTTIIOONN
-       initial contents: 0 0 0
-       intermediate contents: 42 -1 2147483647
-       final contents: 23 1 -2147483648
+     initial contents: 0 0 0
+     intermediate contents: 42 -1 2147483647
+     final contents: 23 1 -2147483648
 
 OpenBSD                         October 3, 2013                      NR-INT(1)

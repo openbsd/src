@@ -1,21 +1,21 @@
 CE-BASIC(1)                 General Commands Manual                CE-BASIC(1)
 
 NNAAMMEE
-       ce-basic - basic usage of the centering request
+     ce-basic - basic usage of the centering request
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
-                         Text centered with the .ce request
-                                   is not filled.
-       normal text
+     initial text
+                        Text centered with the .ce request
+                                  is not filled.
+     normal text
                                              Text adjusted to the right margin
                            works in just the same way and isn't filled either.
 
-       Now entering
-       explicit no-fill mode.
-                                    Text is still
-                                     not filled.
+     Now entering
+     explicit no-fill mode.
+                                   Text is still
+                                    not filled.
 
-       final text in fill mode
+     final text in fill mode
 
 OpenBSD                        September 2, 2020                   CE-BASIC(1)

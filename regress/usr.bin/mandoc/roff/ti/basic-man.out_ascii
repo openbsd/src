@@ -1,17 +1,17 @@
 TI-BASIC-MAN(1)             General Commands Manual            TI-BASIC-MAN(1)
 
 NNAAMMEE
-       ti-basic-man - temporary indentation in man(7)
+     ti-basic-man - temporary indentation in man(7)
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
+     initial text
           This text is indented.  However, the indent is temporary, so as soon
-       as the line wraps, it is gone.
-                 The temporary indent can be relative.  All the same, it will
-       expire in the usual way.
-    It is also possible to temporarily reduce the indentation, but that will
-       also last until the next line break only.
+     as the line wraps, it is gone.
+               The temporary indent can be relative.  All the same, it will
+     expire in the usual way.
+  It is also possible to temporarily reduce the indentation, but that will
+     also last until the next line break only.
 Reducing by more than the current offset starts the next line at the physical
-       left margin.
+     left margin.
 
 OpenBSD                           May 8, 2014                  TI-BASIC-MAN(1)

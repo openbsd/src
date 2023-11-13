@@ -1,19 +1,19 @@
 RS-REARG(1)                 General Commands Manual                RS-REARG(1)
 
 NNAAMMEE
-       RS-REarg - arguments to the RE macro
+     RS-REarg - arguments to the RE macro
 
 DDEESSCCRRIIPPTTIIOONN
-       level 1
-           level 2
-             level 3
-           back to 2
-       back to 1
-           level 2
-             level 3
-       back to 1
-           level 2
-             level 3
-       back to 1
+     level 1
+         level 2
+           level 3
+         back to 2
+     back to 1
+         level 2
+           level 3
+     back to 1
+         level 2
+           level 3
+     back to 1
 
 OpenBSD                        December 21, 2018                   RS-REARG(1)

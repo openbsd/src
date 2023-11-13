@@ -1,13 +1,13 @@
 CHAR-ACCENT-COMBINE(1)      General Commands Manual     CHAR-ACCENT-COMBINE(1)
 
 NNAAMMEE
-       cchhaarr--aacccceenntt--ccoommbbiinnee - combining accents
+     cchhaarr--aacccceenntt--ccoommbbiinnee - combining accents
 
 DDEESSCCRRIIPPTTIIOONN
-       char + combine char U: eU'0301'
-       char + combine char C: é
-       char + combine char named: é
-       combined char pre N: é
-       combined char pre 2: é
+     char + combine char U: eU'0301'
+     char + combine char C: é
+     char + combine char named: é
+     combined char pre N: é
+     combined char pre 2: é
 
 OpenBSD                        February 28, 2014        CHAR-ACCENT-COMBINE(1)

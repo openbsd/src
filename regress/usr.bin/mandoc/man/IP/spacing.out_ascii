@@ -1,37 +1,37 @@
 IP-SPACING(1)               General Commands Manual              IP-SPACING(1)
 
 NNAAMMEE
-       IP-spacing - spacing in indentend paragraphs
+     IP-spacing - spacing in indentend paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
-       Normal text.
+     Normal text.
 
-       tag    Indented text.
+     tag    Indented text.
 
-       four   Indented text.
+     four   Indented text.
 
-       ffive  Indented text.
+     ffive  Indented text.
 
-       sixsix Indented text.
+     sixsix Indented text.
 
-       seseven
-              Indented text.
+     seseven
+            Indented text.
 
-       a much longer tag
-              Indented text.
+     a much longer tag
+            Indented text.
 
-       Tags with trailing space:
+     Tags with trailing space:
 
-       tag    Three plus one makes four.
+     tag    Three plus one makes four.
 
-       tag    Three plus two makes five.
+     tag    Three plus two makes five.
 
-       tag    Three plus three makes six.
+     tag    Three plus three makes six.
 
-       tag    Three plus four makes seven.
+     tag    Three plus four makes seven.
 
-       tag    Three plus five makes eight.
+     tag    Three plus five makes eight.
 
-       Normal text.
+     Normal text.
 
 OpenBSD                       September 21, 2015                 IP-SPACING(1)

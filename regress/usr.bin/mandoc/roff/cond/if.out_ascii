@@ -1,30 +1,30 @@
 IF(1)                       General Commands Manual                      IF(1)
 
 NNAAMMEE
-       if - the roff conditional instruction
+     if - the roff conditional instruction
 
 DDEESSCCRRIIPPTTIIOONN
-       One-line true condition.
+     One-line true condition.
 
-       Next-line empty true condition.
-       False condition with whitespace:
-       True condition with whitespace:
+     Next-line empty true condition.
+     False condition with whitespace:
+     True condition with whitespace:
 
-       One-line true condition with block.
-       One-line true condition with block with leading blanks.
-       Two-line true condition without continuation and macros.
-       Two-line true condition wwiitthhoouutt ccoonnttiinnuuaattiioonn bbuutt wwiitthh mmaaccrrooss..
-       Two-line true condition with continuation and macros.
+     One-line true condition with block.
+     One-line true condition with block with leading blanks.
+     Two-line true condition without continuation and macros.
+     Two-line true condition wwiitthhoouutt ccoonnttiinnuuaattiioonn bbuutt wwiitthh mmaaccrrooss..
+     Two-line true condition with continuation and macros.
 
-       Two-line true condition with blank line.
-       Outer true condition.
-       Inner one-line true condition.
-       Inner two-line true condition without continuation and macros.
-       Back to the outer true condition.
-       Outer true condition.  After conditional.
-       Outer true condition.  After conditional.
-       Outer true condition.  Inner true condition.  After conditional.
-       Outer true condition.  After conditional.
-       Backslash-backslash-brace in text: On a macro line: End.
+     Two-line true condition with blank line.
+     Outer true condition.
+     Inner one-line true condition.
+     Inner two-line true condition without continuation and macros.
+     Back to the outer true condition.
+     Outer true condition.  After conditional.
+     Outer true condition.  After conditional.
+     Outer true condition.  Inner true condition.  After conditional.
+     Outer true condition.  After conditional.
+     Backslash-backslash-brace in text: On a macro line: End.
 
 OpenBSD                          June 27, 2015                           IF(1)

@@ -1,18 +1,18 @@
 TBL-MOD-MISALIGN(1)         General Commands Manual        TBL-MOD-MISALIGN(1)
 
 NNAAMMEE
-       tbl-mod-misalign - failing alignment in tables
+     tbl-mod-misalign - failing alignment in tables
 
 DDEESSCCRRIIPPTTIIOONN
-       normal text
-       +------+
-       |12.34 |
-       +------+
-       |100.0 |
-       |0.001 |
-       +------+
-       |1000.0 |
-       |0.0001 |
-       +------+
+     normal text
+     +------+
+     |12.34 |
+     +------+
+     |100.0 |
+     |0.001 |
+     +------+
+     |1000.0 |
+     |0.0001 |
+     +------+
 
 OpenBSD                        December 24, 2014           TBL-MOD-MISALIGN(1)

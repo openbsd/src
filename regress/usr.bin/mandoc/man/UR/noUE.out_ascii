@@ -1,11 +1,11 @@
 UR-NOUE(1)                  General Commands Manual                 UR-NOUE(1)
 
 NNAAMMEE
-       UR-noUE - unclosed URI macro
+     UR-noUE - unclosed URI macro
 
 DDEESSCCRRIIPPTTIIOONN
-       lonely UE:
+     lonely UE:
 
-       argument plus text: OpenBSD homepage <http://www.openbsd.org/>
+     argument plus text: OpenBSD homepage <http://www.openbsd.org/>
 
 OpenBSD                          July 7, 2014                       UR-NOUE(1)

@@ -1,18 +1,17 @@
 TBL-MOD-EXPAND-TOOWIDE(1)   General Commands Manual  TBL-MOD-EXPAND-TOOWIDE(1)
 
 NNAAMMEE
-       tbl-mod-expand-toowide - try to expand columns in a table that is
-       already too wide
+     tbl-mod-expand-toowide - try to expand columns in a table that is already
+     too wide
 
 DDEESSCCRRIIPPTTIIOONN
-       In this
-       section, the
-       line length
-       is limited to
-       20
-       characters.
-       x   1234567890   x
+     In this
+     section, the
+     line length is
+     limited to 20
+     characters.
+     x   1234567890   x
 
-       Now we are back to the default terminal width.
+     Now we are back to the default terminal width.
 
 OpenBSD                           May 1, 2017        TBL-MOD-EXPAND-TOOWIDE(1)

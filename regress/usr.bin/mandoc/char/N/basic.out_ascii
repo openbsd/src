@@ -1,17 +1,17 @@
 N-BASIC(1)                  General Commands Manual                 N-BASIC(1)
 
 NNAAMMEE
-       N-basic - basic handling of character number escapes
+     N-basic - basic handling of character number escapes
 
 DDEESSCCRRIIPPTTIIOONN
-       basic usage: xAx
-       too large: xx
-       much too large: xx
-       non-numerical content: xX'x
-       mixed content: xAX'x
-       empty: xx
-       no quoting: x65x
-       non-matching quoting characters: xAx
-       end of test document
+     basic usage: xAx
+     too large: xx
+     much too large: xx
+     non-numerical content: xX'x
+     mixed content: xAX'x
+     empty: xx
+     no quoting: x65x
+     non-matching quoting characters: xAx
+     end of test document
 
 OpenBSD                        January 29, 2011                     N-BASIC(1)

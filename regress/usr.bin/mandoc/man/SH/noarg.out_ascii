@@ -1,31 +1,31 @@
 SH-NOARG(1)                 General Commands Manual                SH-NOARG(1)
 
 NNAAMMEE
-       SH-noarg - empty header lines
+     SH-noarg - empty header lines
 
 DDEESSCCRRIIPPTTIIOONN
-       initial text
+     initial text
 
    SSuubbsseeccttiioonn
-       subsection text
+     subsection text
 
-       tag   tagged list
+     tag   tagged list
 
-       tag   indented list
+     tag   indented list
 
-       This is a hanged paragraph.  A bit more text is needed to see the
-             effect.
+     This is a hanged paragraph.  Some additional text is needed to see the
+           effect.
 
-       normal paragraph
-             indented paragraph
-       after the end of the indented paragraph hyperlink <www.openbsd.org>
-       after the end of the hyperlink
+     normal paragraph
+           indented paragraph
+     after the end of the indented paragraph hyperlink <www.openbsd.org> after
+     the end of the hyperlink
 
-       no-fill mode
+     no-fill mode
 
-       back in fill mode
+     back in fill mode
 
 SSEEEE AALLSSOO
-       broken(1)
+     broken(1)
 
-OpenBSD                         March 20, 2015                     SH-NOARG(1)
+OpenBSD                        November 11, 2023                   SH-NOARG(1)
