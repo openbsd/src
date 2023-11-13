@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ocsp.c,v 1.23 2023/05/14 07:26:25 op Exp $ */
+/*	$OpenBSD: tls_ocsp.c,v 1.24 2023/11/13 10:56:19 tb Exp $ */
 /*
  * Copyright (c) 2015 Marko Kreen <markokr@gmail.com>
  * Copyright (c) 2016 Bob Beck <beck@openbsd.org>
@@ -64,8 +64,9 @@ tls_ocsp_asn1_parse_time(struct tls *ctx, ASN1_GENERALIZEDTIME *gt, time_t *gt_t
 	if (gt == NULL)
 		return -1;
 	/* RFC 6960 specifies that all times in OCSP must be GENERALIZEDTIME */
-	if (ASN1_time_parse(gt->data, gt->length, &tm,
-		V_ASN1_GENERALIZEDTIME) == -1)
+	if (!ASN1_GENERALIZEDTIME_check(gt))
+		return -1;
+	if (!ASN1_TIME_to_tm(gt, &tm))
 		return -1;
 	if ((*gt_time = timegm(&tm)) == -1)
 		return -1;
