@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.425 2023/11/12 17:51:40 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.426 2023/11/13 17:18:27 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -517,7 +517,10 @@ rtfree(struct rtentry *rt)
 #ifdef MPLS
 	rt_mpls_clear(rt);
 #endif
-	free(rt->rt_gateway, M_RTABLE, ROUNDUP(rt->rt_gateway->sa_len));
+	if (rt->rt_gateway != NULL) {
+		free(rt->rt_gateway, M_RTABLE,
+		    ROUNDUP(rt->rt_gateway->sa_len));
+	}
 	free(rt_key(rt), M_RTABLE, rt_key(rt)->sa_len);
 
 	pool_put(&rtentry_pool, rt);
@@ -937,8 +940,10 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
 			rt_putgwroute(rt, NULL);
-			free(rt->rt_gateway, M_RTABLE,
-			    ROUNDUP(rt->rt_gateway->sa_len));
+			if (rt->rt_gateway != NULL) {
+				free(rt->rt_gateway, M_RTABLE,
+				    ROUNDUP(rt->rt_gateway->sa_len));
+			}
 			free(ndst, M_RTABLE, ndst->sa_len);
 			pool_put(&rtentry_pool, rt);
 			return (error);
@@ -970,8 +975,10 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
 			rt_putgwroute(rt, NULL);
-			free(rt->rt_gateway, M_RTABLE,
-			    ROUNDUP(rt->rt_gateway->sa_len));
+			if (rt->rt_gateway != NULL) {
+				free(rt->rt_gateway, M_RTABLE,
+				    ROUNDUP(rt->rt_gateway->sa_len));
+			}
 			free(ndst, M_RTABLE, ndst->sa_len);
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
@@ -996,6 +1003,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate, u_int rtableid)
 {
 	int glen = ROUNDUP(gate->sa_len);
 	struct sockaddr *sa, *osa;
+	int error = 0;
 
 	KASSERT(gate != NULL);
 	if (rt->rt_gateway == gate) {
@@ -1009,23 +1017,17 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate, u_int rtableid)
 	memcpy(sa, gate, gate->sa_len);
 
 	KERNEL_LOCK(); /* see [X] in route.h */
-	if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
-		int error = rt_setgwroute(rt, gate, rtableid);
-		if (error != 0) {
-			KERNEL_UNLOCK();
-			free(sa, M_RTABLE, glen);
-			return (error);
-		}
-	}
-
 	osa = rt->rt_gateway;
 	rt->rt_gateway = sa;
+
+	if (ISSET(rt->rt_flags, RTF_GATEWAY))
+		error = rt_setgwroute(rt, gate, rtableid);
 	KERNEL_UNLOCK();
 
 	if (osa != NULL)
 		free(osa, M_RTABLE, ROUNDUP(osa->sa_len));
 
-	return (0);
+	return (error);
 }
 
 /*
