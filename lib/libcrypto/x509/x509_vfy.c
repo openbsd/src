@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.125 2023/06/08 22:02:40 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.126 2023/11/13 10:33:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1969,8 +1969,7 @@ X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time, int is_notafter)
 	else
 		compare = *cmp_time;
 
-	if ((cert_time = x509_verify_asn1_time_to_time_t(ctm, is_notafter)) ==
-	    -1)
+	if (!x509_verify_asn1_time_to_time_t(ctm, is_notafter, &cert_time))
 		return 0; /* invalid time */
 
 	if (cert_time <= compare)
