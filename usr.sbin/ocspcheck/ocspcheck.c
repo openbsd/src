@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.31 2022/12/28 21:30:17 jmc Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.32 2023/11/13 11:46:24 tb Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -189,8 +189,9 @@ parse_ocsp_time(ASN1_GENERALIZEDTIME *gt)
 	if (gt == NULL)
 		return -1;
 	/* RFC 6960 specifies that all times in OCSP must be GENERALIZEDTIME */
-	if (ASN1_time_parse(gt->data, gt->length, &tm,
-		V_ASN1_GENERALIZEDTIME) == -1)
+	if (!ASN1_GENERALIZEDTIME_check(gt))
+		return -1;
+	if (!ASN1_TIME_to_tm(gt, &tm))
 		return -1;
 	if ((rv = timegm(&tm)) == -1)
 		return -1;
