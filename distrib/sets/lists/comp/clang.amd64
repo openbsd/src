@@ -456,8 +456,6 @@
 ./usr/include/llvm-c/Target.h
 ./usr/include/llvm-c/TargetMachine.h
 ./usr/include/llvm-c/Transforms
-./usr/include/llvm-c/Transforms/AggressiveInstCombine.h
-./usr/include/llvm-c/Transforms/Coroutines.h
 ./usr/include/llvm-c/Transforms/IPO.h
 ./usr/include/llvm-c/Transforms/InstCombine.h
 ./usr/include/llvm-c/Transforms/PassBuilder.h
@@ -553,7 +551,6 @@
 ./usr/include/llvm/ADT/TypeSwitch.h
 ./usr/include/llvm/ADT/Uniformity.h
 ./usr/include/llvm/ADT/UniqueVector.h
-./usr/include/llvm/ADT/Waymarking.h
 ./usr/include/llvm/ADT/bit.h
 ./usr/include/llvm/ADT/edit_distance.h
 ./usr/include/llvm/ADT/fallible_iterator.h
@@ -580,9 +577,6 @@
 ./usr/include/llvm/Analysis/CFG.h
 ./usr/include/llvm/Analysis/CFGPrinter.h
 ./usr/include/llvm/Analysis/CFGSCCPrinter.h
-./usr/include/llvm/Analysis/CFLAliasAnalysisUtils.h
-./usr/include/llvm/Analysis/CFLAndersAliasAnalysis.h
-./usr/include/llvm/Analysis/CFLSteensAliasAnalysis.h
 ./usr/include/llvm/Analysis/CGSCCPassManager.h
 ./usr/include/llvm/Analysis/CallGraph.h
 ./usr/include/llvm/Analysis/CallGraphSCCPass.h
@@ -841,8 +835,6 @@
 ./usr/include/llvm/CodeGen/GlobalISel/MIPatternMatch.h
 ./usr/include/llvm/CodeGen/GlobalISel/MachineIRBuilder.h
 ./usr/include/llvm/CodeGen/GlobalISel/RegBankSelect.h
-./usr/include/llvm/CodeGen/GlobalISel/RegisterBank.h
-./usr/include/llvm/CodeGen/GlobalISel/RegisterBankInfo.h
 ./usr/include/llvm/CodeGen/GlobalISel/Utils.h
 ./usr/include/llvm/CodeGen/ISDOpcodes.h
 ./usr/include/llvm/CodeGen/IndirectThunks.h
@@ -992,8 +984,8 @@
 ./usr/include/llvm/Config/AsmParsers.def
 ./usr/include/llvm/Config/AsmPrinters.def
 ./usr/include/llvm/Config/Disassemblers.def
-./usr/include/llvm/Config/Targets.def
 ./usr/include/llvm/Config/TargetMCAs.def
+./usr/include/llvm/Config/Targets.def
 ./usr/include/llvm/Config/abi-breaking.h
 ./usr/include/llvm/Config/llvm-config.h
 ./usr/include/llvm/DWARFLinker
@@ -1118,7 +1110,6 @@
 ./usr/include/llvm/DebugInfo/GSYM/LineTable.h
 ./usr/include/llvm/DebugInfo/GSYM/LookupResult.h
 ./usr/include/llvm/DebugInfo/GSYM/ObjectFileTransformer.h
-./usr/include/llvm/DebugInfo/GSYM/Range.h
 ./usr/include/llvm/DebugInfo/GSYM/StringTable.h
 ./usr/include/llvm/DebugInfo/LogicalView
 ./usr/include/llvm/DebugInfo/LogicalView/Core
@@ -1354,7 +1345,6 @@
 ./usr/include/llvm/ExecutionEngine/Orc/IndirectionUtils.h
 ./usr/include/llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h
 ./usr/include/llvm/ExecutionEngine/Orc/LLJIT.h
-./usr/include/llvm/ExecutionEngine/Orc/LLVMSPSSerializers.h
 ./usr/include/llvm/ExecutionEngine/Orc/Layer.h
 ./usr/include/llvm/ExecutionEngine/Orc/LazyReexports.h
 ./usr/include/llvm/ExecutionEngine/Orc/LookupAndRecordAddrs.h
@@ -1366,21 +1356,13 @@
 ./usr/include/llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h
 ./usr/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h
 ./usr/include/llvm/ExecutionEngine/Orc/OrcABISupport.h
-./usr/include/llvm/ExecutionEngine/Orc/OrcRPCExecutorProcessControl.h
-./usr/include/llvm/ExecutionEngine/Orc/OrcRemoteTargetClient.h
-./usr/include/llvm/ExecutionEngine/Orc/OrcRemoteTargetRPCAPI.h
-./usr/include/llvm/ExecutionEngine/Orc/OrcRemoteTargetServer.h
 ./usr/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/AllocationActions.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h
-./usr/include/llvm/ExecutionEngine/Orc/Shared/FDRawByteChannel.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/MemoryFlags.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/OrcError.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/OrcRTBridge.h
-./usr/include/llvm/ExecutionEngine/Orc/Shared/RPCUtils.h
-./usr/include/llvm/ExecutionEngine/Orc/Shared/RawByteChannel.h
-./usr/include/llvm/ExecutionEngine/Orc/Shared/Serialization.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/SimplePackedSerialization.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/SimpleRemoteEPCUtils.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/TargetProcessControlTypes.h
@@ -1393,7 +1375,6 @@
 ./usr/include/llvm/ExecutionEngine/Orc/TargetProcess/ExecutorBootstrapService.h
 ./usr/include/llvm/ExecutionEngine/Orc/TargetProcess/ExecutorSharedMemoryMapperService.h
 ./usr/include/llvm/ExecutionEngine/Orc/TargetProcess/JITLoaderGDB.h
-./usr/include/llvm/ExecutionEngine/Orc/TargetProcess/OrcRPCTPCServer.h
 ./usr/include/llvm/ExecutionEngine/Orc/TargetProcess/RegisterEHFrames.h
 ./usr/include/llvm/ExecutionEngine/Orc/TargetProcess/SimpleExecutorDylibManager.h
 ./usr/include/llvm/ExecutionEngine/Orc/TargetProcess/SimpleExecutorMemoryManager.h
@@ -1401,8 +1382,6 @@
 ./usr/include/llvm/ExecutionEngine/Orc/TargetProcess/TargetExecutionUtils.h
 ./usr/include/llvm/ExecutionEngine/Orc/TaskDispatch.h
 ./usr/include/llvm/ExecutionEngine/Orc/ThreadSafeModule.h
-./usr/include/llvm/ExecutionEngine/OrcMCJITReplacement.h
-./usr/include/llvm/ExecutionEngine/OrcV1Deprecation.h
 ./usr/include/llvm/ExecutionEngine/RTDyldMemoryManager.h
 ./usr/include/llvm/ExecutionEngine/RuntimeDyld.h
 ./usr/include/llvm/ExecutionEngine/RuntimeDyldChecker.h
@@ -1474,7 +1453,6 @@
 ./usr/include/llvm/IR/GetElementPtrTypeIterator.h
 ./usr/include/llvm/IR/GlobalAlias.h
 ./usr/include/llvm/IR/GlobalIFunc.h
-./usr/include/llvm/IR/GlobalIndirectSymbol.h
 ./usr/include/llvm/IR/GlobalObject.h
 ./usr/include/llvm/IR/GlobalValue.h
 ./usr/include/llvm/IR/GlobalVariable.h
@@ -1591,7 +1569,6 @@
 ./usr/include/llvm/InterfaceStub/IFSHandler.h
 ./usr/include/llvm/InterfaceStub/IFSStub.h
 ./usr/include/llvm/LTO
-./usr/include/llvm/LTO/Caching.h
 ./usr/include/llvm/LTO/Config.h
 ./usr/include/llvm/LTO/LTO.h
 ./usr/include/llvm/LTO/LTOBackend.h
@@ -1638,7 +1615,6 @@
 ./usr/include/llvm/MC/MCELFObjectWriter.h
 ./usr/include/llvm/MC/MCELFStreamer.h
 ./usr/include/llvm/MC/MCExpr.h
-./usr/include/llvm/MC/MCFixedLenDisassembler.h
 ./usr/include/llvm/MC/MCFixup.h
 ./usr/include/llvm/MC/MCFixupKindInfo.h
 ./usr/include/llvm/MC/MCFragment.h
@@ -1856,14 +1832,12 @@
 ./usr/include/llvm/Remarks/RemarkStringTable.h
 ./usr/include/llvm/Remarks/YAMLRemarkSerializer.h
 ./usr/include/llvm/Support
-./usr/include/llvm/Support/AArch64TargetParser.def
 ./usr/include/llvm/Support/AArch64TargetParser.h
 ./usr/include/llvm/Support/AMDGPUMetadata.h
 ./usr/include/llvm/Support/AMDHSAKernelDescriptor.h
 ./usr/include/llvm/Support/ARMAttributeParser.h
 ./usr/include/llvm/Support/ARMBuildAttributes.h
 ./usr/include/llvm/Support/ARMEHABI.h
-./usr/include/llvm/Support/ARMTargetParser.def
 ./usr/include/llvm/Support/ARMTargetParser.h
 ./usr/include/llvm/Support/ARMTargetParserCommon.h
 ./usr/include/llvm/Support/ARMWinEH.h
@@ -1993,7 +1967,6 @@
 ./usr/include/llvm/Support/RISCVAttributeParser.h
 ./usr/include/llvm/Support/RISCVAttributes.h
 ./usr/include/llvm/Support/RISCVISAInfo.h
-./usr/include/llvm/Support/RISCVTargetParser.def
 ./usr/include/llvm/Support/RWMutex.h
 ./usr/include/llvm/Support/RandomNumberGenerator.h
 ./usr/include/llvm/Support/Recycler.h
@@ -2024,10 +1997,8 @@
 ./usr/include/llvm/Support/TarWriter.h
 ./usr/include/llvm/Support/TargetOpcodes.def
 ./usr/include/llvm/Support/TargetParser.h
-./usr/include/llvm/Support/TargetRegistry.h
 ./usr/include/llvm/Support/TargetSelect.h
 ./usr/include/llvm/Support/TaskQueue.h
-./usr/include/llvm/Support/ThreadLocal.h
 ./usr/include/llvm/Support/ThreadPool.h
 ./usr/include/llvm/Support/Threading.h
 ./usr/include/llvm/Support/TimeProfiler.h
@@ -2114,7 +2085,6 @@
 ./usr/include/llvm/Testing/Annotations
 ./usr/include/llvm/Testing/Annotations/Annotations.h
 ./usr/include/llvm/Testing/Support
-./usr/include/llvm/Testing/Support/Annotations.h
 ./usr/include/llvm/Testing/Support/Error.h
 ./usr/include/llvm/Testing/Support/SupportHelpers.h
 ./usr/include/llvm/TextAPI
@@ -2138,7 +2108,6 @@
 ./usr/include/llvm/Transforms/AggressiveInstCombine/AggressiveInstCombine.h
 ./usr/include/llvm/Transforms/CFGuard.h
 ./usr/include/llvm/Transforms/Coroutines
-./usr/include/llvm/Transforms/Coroutines.h
 ./usr/include/llvm/Transforms/Coroutines/CoroCleanup.h
 ./usr/include/llvm/Transforms/Coroutines/CoroConditionalWrapper.h
 ./usr/include/llvm/Transforms/Coroutines/CoroEarly.h
@@ -2188,7 +2157,6 @@
 ./usr/include/llvm/Transforms/IPO/WholeProgramDevirt.h
 ./usr/include/llvm/Transforms/InstCombine
 ./usr/include/llvm/Transforms/InstCombine/InstCombine.h
-./usr/include/llvm/Transforms/InstCombine/InstCombineWorklist.h
 ./usr/include/llvm/Transforms/InstCombine/InstCombiner.h
 ./usr/include/llvm/Transforms/Instrumentation
 ./usr/include/llvm/Transforms/Instrumentation.h
@@ -2260,7 +2228,6 @@
 ./usr/include/llvm/Transforms/Scalar/LoopUnrollAndJamPass.h
 ./usr/include/llvm/Transforms/Scalar/LoopUnrollPass.h
 ./usr/include/llvm/Transforms/Scalar/LoopVersioningLICM.h
-./usr/include/llvm/Transforms/Scalar/LowerAtomic.h
 ./usr/include/llvm/Transforms/Scalar/LowerAtomicPass.h
 ./usr/include/llvm/Transforms/Scalar/LowerConstantIntrinsics.h
 ./usr/include/llvm/Transforms/Scalar/LowerExpectIntrinsic.h
@@ -2522,8 +2489,8 @@
 ./usr/lib/clang/16/include/xsavesintrin.h
 ./usr/lib/clang/16/include/xtestintrin.h
 ./usr/lib/clang/16/lib
-./usr/lib/clang/16/libclang_rt.profile.a
-./usr/lib/clang/16/libclang_rt.ubsan_minimal.a
+./usr/lib/clang/16/lib/libclang_rt.profile.a
+./usr/lib/clang/16/lib/libclang_rt.ubsan_minimal.a
 ./usr/lib/libc++.a
 ./usr/lib/libc++_p.a
 ./usr/lib/libc++abi.a
