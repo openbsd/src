@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.56 2023/07/02 07:08:57 tb Exp $ */
+/* $OpenBSD: ca.c,v 1.57 2023/11/13 12:43:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -606,26 +606,6 @@ static const struct option ca_options[] = {
 	},
 	{ NULL },
 };
-
-/*
- * Set a certificate time based on user provided input. Make sure
- * what we put in the certificate is legit for RFC 5280. Returns
- * 0 on success, -1 on an invalid time string. Strings must be
- * YYYYMMDDHHMMSSZ for post 2050 dates. YYYYMMDDHHMMSSZ or
- * YYMMDDHHMMSSZ is accepted for pre 2050 dates, and fixed up to
- * be the correct format in the certificate.
- */
-static int
-setCertificateTime(ASN1_TIME *x509time, char *timestring)
-{
-	struct tm tm1;
-
-	if (ASN1_time_parse(timestring, strlen(timestring), &tm1, 0) == -1)
-		return (-1);
-	if (!ASN1_TIME_set_tm(x509time, &tm1))
-		return (-1);
-	return 0;
-}
 
 static void
 ca_usage(void)
@@ -1985,7 +1965,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	if (strcmp(startdate, "today") == 0) {
 		if (X509_gmtime_adj(X509_get_notBefore(ret), 0) == NULL)
 			goto err;
-	} else if (setCertificateTime(X509_get_notBefore(ret), startdate) == -1) {
+	} else if (!ASN1_TIME_set_string_X509(X509_get_notBefore(ret), startdate)) {
 		BIO_printf(bio_err, "Invalid start date %s\n", startdate);
 		goto err;
 	}
@@ -1994,7 +1974,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		if (X509_time_adj_ex(X509_get_notAfter(ret), days, 0,
 		    NULL) == NULL)
 			goto err;
-	} else if (setCertificateTime(X509_get_notAfter(ret), enddate) == -1) {
+	} else if (!ASN1_TIME_set_string_X509(X509_get_notAfter(ret), enddate)) {
 		BIO_printf(bio_err, "Invalid end date %s\n", enddate);
 		goto err;
 	}
