@@ -1,4 +1,4 @@
-/* $OpenBSD: x509type.c,v 1.22 2023/11/13 15:40:44 tb Exp $ */
+/* $OpenBSD: x509type.c,v 1.23 2023/11/13 15:44:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,9 +126,6 @@ X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
 		}
 	}
 
-	/* /8 because it's 1024 bits we look for, not bytes */
-	if (EVP_PKEY_size(pk) <= 1024 / 8)
-		ret |= EVP_PKT_EXP;
 	return (ret);
 }
 LCRYPTO_ALIAS(X509_certificate_type);
