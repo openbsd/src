@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.33 2023/04/14 06:47:07 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.34 2023/11/13 11:50:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1156,8 +1156,7 @@ x509_main(int argc, char **argv)
 				ASN1_TIME *nB = X509_get_notBefore(x);
 
 				BIO_puts(STDout, "notBefore=");
-				if (ASN1_time_parse(nB->data, nB->length, NULL,
-				    0) == -1)
+				if (!ASN1_TIME_to_tm(nB, NULL))
 					BIO_puts(STDout,
 					    "INVALID RFC5280 TIME");
 				else
@@ -1167,8 +1166,7 @@ x509_main(int argc, char **argv)
 				ASN1_TIME *nA = X509_get_notAfter(x);
 
 				BIO_puts(STDout, "notAfter=");
-				if (ASN1_time_parse(nA->data, nA->length, NULL,
-				    0) == -1)
+				if (!ASN1_TIME_to_tm(nA, NULL))
 					BIO_puts(STDout,
 					    "INVALID RFC5280 TIME");
 				else
