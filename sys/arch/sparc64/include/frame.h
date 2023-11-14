@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.8 2022/10/22 20:09:41 miod Exp $	*/
+/*	$OpenBSD: frame.h,v 1.9 2023/11/14 10:12:24 claudio Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2001/03/04 09:28:35 mrg Exp $ */
 
 /*
@@ -52,7 +52,7 @@
  * of the frame, you must first force the kernel to write any such
  * windows to the stack.
  *
- * V9 frames have an odd bias, so you can tall a v9 frame from
+ * V9 frames have an odd bias, so you can tell a v9 frame from
  * a v8 frame by testing the stack pointer's lsb.
  */
 #if !defined(_LOCORE) && !defined(_LIBC)
