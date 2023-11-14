@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2023/11/11 18:35:37 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2023/11/14 16:42:14 jca Exp $
 
 LIB=	LLVMRISCVCodeGen
 NOPROFILE=
@@ -37,3 +37,4 @@ SRCS+=	RISCVAsmPrinter.cpp \
 	RISCVTargetTransformInfo.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/RISCV
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/RISCV/GISel
