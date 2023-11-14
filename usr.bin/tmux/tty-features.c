@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.29 2023/09/02 09:17:23 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.30 2023/11/14 15:38:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -216,7 +216,7 @@ static const struct tty_feature tty_feature_strikethrough = {
 
 /* Terminal supports synchronized updates. */
 static const char *const tty_feature_sync_capabilities[] = {
-	"Sync=\\EP=%p1%ds\\E\\\\",
+	"Sync=\\E[?2026%?%p1%{1}%-%tl%eh%;",
 	NULL
 };
 static const struct tty_feature tty_feature_sync = {
