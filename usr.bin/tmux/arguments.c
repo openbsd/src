@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.61 2023/11/14 15:59:49 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.62 2023/11/14 20:01:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -789,7 +789,8 @@ args_make_commands_prepare(struct cmd *self, struct cmdq_item *item, u_int idx,
 	if (wait)
 		state->pi.item = item;
 	cmd_get_source(self, &file, &state->pi.line);
-	state->pi.file = xstrdup(file);
+	if (file != NULL)
+		state->pi.file = xstrdup(file);
 	state->pi.c = tc;
 	if (state->pi.c != NULL)
 		state->pi.c->references++;
