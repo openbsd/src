@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.37 2022/09/11 19:34:40 miod Exp $	*/
+/*	$OpenBSD: disk.h,v 1.38 2023/11/15 20:23:19 kn Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ struct device *disk_lookup(struct cfdriver *, int);
 
 char 	*disk_readlabel(struct disklabel *, dev_t, char *, size_t);
 
-int	disk_map(char *, char *, int, int);
+int	disk_map(const char *, char *, int, int);
 
 int	duid_iszero(u_char *);
 const char *duid_format(u_char *);
