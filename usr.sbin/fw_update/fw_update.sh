@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.52 2023/11/15 01:54:01 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.53 2023/11/15 02:00:02 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -108,21 +108,24 @@ spin() {
 
 fetch() {
 	local _src="${FWURL}/${1##*/}" _dst=$1 _user=_file _exit _error=''
+	local _ftp_errors="$FD_DIR/ftp_errors"
+	rm -f "$_ftp_errors"
 
 	# The installer uses a limited doas(1) as a tiny su(1)
 	set -o monitor # make sure ftp gets its own process group
 	(
 	_flags=-vm
 	case "$VERBOSE" in
-		0|1) _flags=-VM ;;
+		0|1) _flags=-VM ; exec 2>"$_ftp_errors" ;;
 		  2) _flags=-Vm ;;
 	esac
+
 	if [ -x /usr/bin/su ]; then
 		exec /usr/bin/su -s /bin/ksh "$_user" -c \
-		    "/usr/bin/ftp -N '${0##/}' -D 'Get/Verify' $_flags -o- '$_src'" > "$_dst"
+		    "/usr/bin/ftp -N error -D 'Get/Verify' $_flags -o- '$_src'" > "$_dst"
 	else
 		exec /usr/bin/doas -u "$_user" \
-		    /usr/bin/ftp -N "${0##/}" -D 'Get/Verify' $_flags -o- "$_src" > "$_dst"
+		    /usr/bin/ftp -N error -D 'Get/Verify' $_flags -o- "$_src" > "$_dst"
 	fi
 	) & FTPPID=$!
 	set +o monitor
@@ -152,13 +155,34 @@ fetch() {
 
 	unset FTPPID
 
-	if [ "$_exit" -ne 0 ]; then
+	if ((_exit != 0)); then
 		rm -f "$_dst"
+
+		# ftp doesn't provide useful exit codes
+		# so we have to grep its STDERR.
+		# _exit=2 means don't keep trying
+		_exit=2
+
+		# If it was 404, we might succeed at another file
+		if [ -s "$_ftp_errors" ] && \
+		    grep -q "404 Not Found" "$_ftp_errors"; then
+			_exit=1
+			_error=" (404 Not Found)"
+			rm -f "$_ftp_errors"
+		fi
+
 		warn "Cannot fetch $_src$_error"
-		return 1
 	fi
 
-	return 0
+	# If we have ftp errors, print them out,
+	# removing any cntrl characters (like 0x0d),
+	# and any leading blank lines.
+	if [ -s "$_ftp_errors" ]; then
+		sed -e 's/[[:cntrl:]]//g' \
+		    -e '/./,$!d' "$_ftp_errors" >&"$WARN_FD"
+	fi
+
+	return "$_exit"
 }
 
 # If we fail to fetch the CFILE, we don't want to try again
@@ -166,12 +190,12 @@ fetch() {
 # a blank file indicating failure.
 check_cfile() {
 	if [ -e "$CFILE" ]; then
-		[ -s "$CFILE" ] || return 1
+		[ -s "$CFILE" ] || return 2
 		return 0
 	fi
 	if ! fetch_cfile; then
 		echo -n > "$CFILE"
-		return 1
+		return 2
 	fi
 	return 0
 }
@@ -193,7 +217,7 @@ fetch_cfile() {
 }
 
 verify() {
-	check_cfile || return 1
+	check_cfile || return $?
 	# The installer sha256 lacks -C, do it by hand
 	if ! grep -Fqx "SHA256 (${1##*/}) = $( /bin/sha256 -qb "$1" )" "$CFILE"
 	then
@@ -208,7 +232,7 @@ verify() {
 # if VERBOSE is 0, don't show the checksum failure of an existing file.
 verify_existing() {
 	local _v=$VERBOSE
-	check_cfile || return 1
+	check_cfile || return $?
 
 	((_v == 0)) && "$DOWNLOAD" && _v=1
 	( VERBOSE=$_v verify "$@" )
@@ -243,7 +267,7 @@ firmware_in_dmesg() {
 }
 
 firmware_filename() {
-	check_cfile || return 1
+	check_cfile || return $?
 	sed -n "s/.*(\($1-firmware-.*\.tgz\)).*/\1/p" "$CFILE" | sed '$!d'
 }
 
@@ -600,7 +624,18 @@ if [ "${devices[*]:-}" ]; then
 
 		verify_existing=true
 		if [ "$f" = "$d" ]; then
-			f=$( firmware_filename "$d" ) || continue
+			f=$( firmware_filename "$d" ) || {
+				# Fetching the CFILE here is often the
+				# first attempt to talk to FWURL
+				# If it fails, no point in continuing.
+				if (($? > 1)); then
+					status " failed."
+					exit 1
+				fi
+
+				# otherwise we can try the next firmware
+				continue
+			}
 			if [ ! "$f" ]; then
 				if "$INSTALL" && unregister_firmware "$d"; then
 					unregister="$unregister,$d"
@@ -718,6 +753,8 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 			fi
 			fetch  "$f" &&
 			verify "$f" || {
+				integer e=$?
+
 				"$pending_status" && echo " failed."
 				status " failed (${f##*/})"
 
@@ -725,6 +762,11 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 					cat "$FD_DIR/warn" >&2
 					rm -f "$FD_DIR/warn"
 				fi
+
+				# Fetch or verify exited > 1
+				# which means we don't keep trying.
+				((e > 1)) && exit 1
+
 				continue
 			}
 		fi
