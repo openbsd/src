@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.18 2023/11/09 14:07:18 dlg Exp $	*/
+/*	$OpenBSD: bio.c,v 1.19 2023/11/15 23:57:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -31,18 +31,33 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/queue.h>
+#include <sys/tree.h>
 #include <sys/systm.h>
 
 #include <dev/biovar.h>
 
 struct bio_mapping {
-	LIST_ENTRY(bio_mapping) bm_link;
+	RBT_ENTRY(bio_mapping) bm_link;
+	uintptr_t bm_cookie;
 	struct device *bm_dev;
 	int (*bm_ioctl)(struct device *, u_long, caddr_t);
 };
 
-LIST_HEAD(, bio_mapping) bios = LIST_HEAD_INITIALIZER(bios);
+RBT_HEAD(bio_mappings, bio_mapping);
+
+static inline int
+bio_cookie_cmp(const struct bio_mapping *a, const struct bio_mapping *b)
+{
+	if (a->bm_cookie < b->bm_cookie)
+		return (1);
+	if (a->bm_cookie > b->bm_cookie)
+		return (-1);
+	return (0);
+}
+
+RBT_PROTOTYPE(bio_mappings, bio_mapping, bm_link, bio_cookie_cmp);
+
+struct bio_mappings bios = RBT_INITIALIZER();
 
 void	bioattach(int);
 int	bioclose(dev_t, int, int, struct proc *);
@@ -51,7 +66,7 @@ int	bioopen(dev_t, int, int, struct proc *);
 
 int	bio_delegate_ioctl(struct bio_mapping *, u_long, caddr_t);
 struct	bio_mapping *bio_lookup(char *);
-int	bio_validate(void *);
+struct	bio_mapping *bio_validate(void *);
 
 void
 bioattach(int nunits)
@@ -73,6 +88,7 @@ bioclose(dev_t dev, int flags, int mode, struct proc *p)
 int
 bioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
+	struct bio_mapping *bm;
 	struct bio_locate *locate;
 	struct bio *bio;
 	char name[16];
@@ -84,18 +100,19 @@ bioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = copyinstr(locate->bl_name, name, sizeof name, NULL);
 		if (error != 0)
 			return (error);
-		locate->bl_bio.bio_cookie = bio_lookup(name);
-		if (locate->bl_bio.bio_cookie == NULL)
+		bm = bio_lookup(name);
+		if (bm == NULL)
 			return (ENOENT);
+		locate->bl_bio.bio_cookie = (void *)bm->bm_cookie;
 		break;
 
 	default:
 		bio = (struct bio *)addr;
-		if (!bio_validate(bio->bio_cookie))
+		bm = bio_validate(bio->bio_cookie);
+		if (bm == NULL)
 			return (ENOENT);
 
-		error = bio_delegate_ioctl(
-		    (struct bio_mapping *)bio->bio_cookie, cmd, addr);
+		error = bio_delegate_ioctl(bm, cmd, addr);
 		break;
 	}
 
@@ -112,7 +129,10 @@ bio_register(struct device *dev, int (*ioctl)(struct device *, u_long, caddr_t))
 		return (ENOMEM);
 	bm->bm_dev = dev;
 	bm->bm_ioctl = ioctl;
-	LIST_INSERT_HEAD(&bios, bm, bm_link);
+	do {
+		bm->bm_cookie = arc4random();
+		/* lets hope we don't have 4 billion bio_registers */
+	} while (RBT_INSERT(bio_mappings, &bios, bm) != NULL);
 	return (0);
 }
 
@@ -121,11 +141,9 @@ bio_unregister(struct device *dev)
 {
 	struct bio_mapping *bm, *next;
 
-	for (bm = LIST_FIRST(&bios); bm != NULL; bm = next) {
-		next = LIST_NEXT(bm, bm_link);
-
+	RBT_FOREACH_SAFE(bm, bio_mappings, &bios, next) {
 		if (dev == bm->bm_dev) {
-			LIST_REMOVE(bm, bm_link);
+			RBT_REMOVE(bio_mappings, &bios, bm);
 			free(bm, M_DEVBUF, sizeof(*bm));
 		}
 	}
@@ -136,21 +154,20 @@ bio_lookup(char *name)
 {
 	struct bio_mapping *bm;
 
-	LIST_FOREACH(bm, &bios, bm_link)
+	RBT_FOREACH(bm, bio_mappings, &bios) {
 		if (strcmp(name, bm->bm_dev->dv_xname) == 0)
 			return (bm);
+	}
+
 	return (NULL);
 }
 
-int
+struct bio_mapping *
 bio_validate(void *cookie)
 {
-	struct bio_mapping *bm;
+	struct bio_mapping key = { .bm_cookie = (uintptr_t)cookie };
 
-	LIST_FOREACH(bm, &bios, bm_link)
-		if (bm == cookie)
-			return (1);
-	return (0);
+	return (RBT_FIND(bio_mappings, &bios, &key));
 }
 
 int
@@ -218,3 +235,5 @@ bio_status(struct bio_status *bs, int print, int msg_type, const char *fmt,
 	if (print)
 		printf("%s: %s\n", bs->bs_controller, bs->bs_msgs[idx].bm_msg);
 }
+
+RBT_GENERATE(bio_mappings, bio_mapping, bm_link, bio_cookie_cmp);
