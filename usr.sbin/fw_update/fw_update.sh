@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.51 2023/10/14 18:10:47 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.52 2023/11/15 01:54:01 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -60,7 +60,8 @@ cleanup() {
 
 	if [ -d "$FD_DIR" ]; then
 		echo "" >&"$STATUS_FD"
-		exec 4>&-
+		((STATUS_FD == 3)) && exec 3>&-
+		((WARN_FD   == 4)) && exec 4>&-
 
 		[ -s "$FD_DIR/status" ] && cat "$FD_DIR/status"
 		[ -s "$FD_DIR/warn"   ] && cat "$FD_DIR/warn" >&2
@@ -334,8 +335,11 @@ add_firmware () {
 		    -s ",^firmware,${DESTDIR}/etc/firmware," \
 		    -C / -zxphf - "+*" "firmware/*"
 
-	_pkg="$( sed -n '/^@name /{s///p;q;}' "${FWPKGTMP}/+CONTENTS" )"
-	if [ ! "$_pkg" ]; then
+
+	[ -s "${FWPKGTMP}/+CONTENTS" ] &&
+	    _pkg="$( sed -n '/^@name /{s///p;q;}' "${FWPKGTMP}/+CONTENTS" )"
+
+	if [ ! "${_pkg:-}" ]; then
 		warn "Failed to extract name from $1, partial install"
 		rm -rf "$FWPKGTMP"
 		unset FWPKGTMP
@@ -500,23 +504,17 @@ fi
 
 set -sA devices -- "$@"
 
-# In the normal case, we output the status line piecemeal
-# so we save warnings to output at the end to not disrupt
-# the single line status.
-# Actual errors from things like ftp will stil interrupt,
-# but it's impossible to know if it's a message people need
-# to see now or something that can wait.
-# In the verbose case, we instead print out single lines
-# or progress bars for each thing we are doing,
-# so instead we save up the final status line for the end.
 FD_DIR="$( tmpdir "${DESTDIR}/tmp/${0##*/}-fd" )"
+# When being verbose, save the status line for the end.
 if ((VERBOSE)); then
-	exec 4>"${FD_DIR}/status"
-	STATUS_FD=4
-else
-	exec 4>"${FD_DIR}/warn"
-	WARN_FD=4
+	exec 3>"${FD_DIR}/status"
+	STATUS_FD=3
 fi
+# Control "warning" messages to avoid the middle of a line.
+# Things that we don't expect to send to STDERR
+# still go there so the output, while it may be ugly, isn't lost
+exec 4>"${FD_DIR}/warn"
+WARN_FD=4
 
 status "${0##*/}:"
 
@@ -560,7 +558,10 @@ if "$DELETE"; then
 			if "$DRYRUN"; then
 				((VERBOSE)) && echo "Delete $fw"
 			else
-				delete_firmware "$fw" || continue
+				delete_firmware "$fw" || {
+					status " ($fw failed)"
+					continue
+				}
 			fi
 		done
 	fi
@@ -717,10 +718,12 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 			fi
 			fetch  "$f" &&
 			verify "$f" || {
-				if "$pending_status"; then
-					echo " failed."
-				elif ! ((VERBOSE)); then
-					status " failed (${f##*/})"
+				"$pending_status" && echo " failed."
+				status " failed (${f##*/})"
+
+				if ((VERBOSE)) && [ -s "$FD_DIR/warn" ]; then
+					cat "$FD_DIR/warn" >&2
+					rm -f "$FD_DIR/warn"
 				fi
 				continue
 			}
@@ -740,22 +743,19 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 			for i in $( installed_firmware '' "$d-firmware-" '*' )
 			do
 				delete_firmware "$i" || {
-					if "$pending_status"; then
-						echo " failed."
-					elif ! ((VERBOSE)); then
-						status " failed ($i)"
-					fi
+					"$pending_status" &&
+					    echo -n " (remove $i failed)"
+					status " (remove $i failed)"
+
 					continue
 				}
+				#status " (removed $i)"
 			done
 		fi
 
 		add_firmware "$f" "$action" || {
-			if "$pending_status"; then
-				echo " failed."
-			elif ! ((VERBOSE)); then
-				status " failed (${f##*/})"
-			fi
+			"$pending_status" && echo " failed."
+			status " failed (${f##*/})"
 			continue
 		}
 	fi
