@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.46 2023/11/15 18:48:13 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.47 2023/11/15 18:56:53 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -905,13 +905,10 @@ bool fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 		 * (except for EOF's nullbyte, if present) and null
 		 * terminate the buffer.
 		 */
-		do {
-			int ii;
-			for (ii = r.len; ii > 0; ii--)
-				if (buf[--k] && ungetc(buf[k], f) == EOF)
-					FATAL("unable to ungetc '%c'", buf[k]);
-		} while (k > i + patlen);
-		buf[k] = '\0';
+		for (; r.len > 0; r.len--)
+			if (buf[--k] && ungetc(buf[k], f) == EOF)
+				FATAL("unable to ungetc '%c'", buf[k]);
+		buf[k-patlen] = '\0';
 		return true;
 	}
 	else
