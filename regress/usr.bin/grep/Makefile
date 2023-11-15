@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.18 2021/12/29 19:31:01 sdk Exp $
+# $OpenBSD: Makefile,v 1.19 2023/11/15 00:52:42 millert Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
-	t18 t19 t20 t21 t22 t23 t24 t25 t26 t27
+	t18 t19 t20 t21 t22 t23 t24 t25 t26 t27 t28
 
 t1:
 	grep t.s ${.CURDIR}/in | diff - ${.CURDIR}/t1.out
@@ -107,8 +107,27 @@ t27:
 	grep -B1 'C' ${.CURDIR}/t27.in | diff - ${.CURDIR}/t27b.out
 	grep -C1 'C' ${.CURDIR}/t27.in | diff - ${.CURDIR}/t27c.out
 
+t28:
+	grep -m 0 -o x.y ${.CURDIR}/t28.in | diff - /dev/null
+	grep -m 1 -o x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_1.out
+	grep -m 2 -o x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_2.out
+	grep -m 3 -o x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_3.out
+	grep -m 4 -o x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_4.out
+	grep -m 5 -o x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_4.out
+	grep -m 6 -o x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_4.out
+	grep -m 7 -o x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_4.out
+	grep -m 8 -o x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_4.out
+	grep -m 0 x.y ${.CURDIR}/t28.in | diff - /dev/null
+	grep -m 1 x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_5.out
+	grep -m 2 x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_6.out
+	grep -m 3 x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_7.out
+	grep -m 4 x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_8.out
+	grep -m 5 x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_8.out
+	grep -m 6 x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_8.out
+	grep -m 7 x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_8.out
+	grep -m 8 x.y ${.CURDIR}/t28.in | diff - ${.CURDIR}/t28_8.out
 
 .PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
-.PHONY: t21 t22 t23 t24 t25 t26 t27
+.PHONY: t21 t22 t23 t24 t25 t26 t27 t28
 
 .include <bsd.regress.mk>

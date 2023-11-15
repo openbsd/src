@@ -1,0 +1,7 @@
+regression test pattern should match nothing on this line
+x1y x2y x3y x4y - four matches here
+match nothing on this line
+x5y x6y x7y - three here
+x8y x9y - two here
+x0y - one here
+none here
