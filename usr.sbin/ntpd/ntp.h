@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.14 2020/01/30 15:55:41 otto Exp $ */
+/*	$OpenBSD: ntp.h,v 1.15 2023/11/15 15:52:09 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -43,11 +43,13 @@ struct l_fixedpt {
 	u_int32_t int_partl;
 	u_int32_t fractionl;
 };
+#define L_DENOMINATOR	(UINT32_MAX + 1ULL)
 
 struct s_fixedpt {
 	u_int16_t int_parts;
 	u_int16_t fractions;
 };
+#define S_DENOMINATOR	(UINT16_MAX + 1)
 
 /* RFC Section 4
  *
