@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.67 2022/07/12 18:09:31 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.68 2023/11/15 00:50:43 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -197,7 +197,7 @@ static int
 procline(str_t *l, int nottext)
 {
 	regmatch_t	pmatch = { 0 };
-	int		c, i, r;
+	int		c, i, r, counted;
 	regoff_t	offset;
 
 	/* size_t will be converted to regoff_t. ssize_t is guaranteed to fit
@@ -208,6 +208,7 @@ procline(str_t *l, int nottext)
 
 	c = 0;
 	i = 0;
+	counted = 0;
 	if (matchall) {
 		c = 1;
 		goto print;
@@ -251,9 +252,11 @@ print:
 	if (vflag)
 		c = !c;
 
-	/* Count the matches if we have a match limit */
-	if (mflag)
+	/* Count the matches if there is a match limit (but only once). */
+	if (mflag && !counted) {
 		mcount -= c;
+		counted = 1;
+	}
 
 	if (c && binbehave == BIN_FILE_BIN && nottext)
 		return c; /* Binary file */

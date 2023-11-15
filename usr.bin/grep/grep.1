@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grep.1,v 1.52 2023/01/04 07:33:00 jmc Exp $
+.\"	$OpenBSD: grep.1,v 1.53 2023/11/15 00:50:43 millert Exp $
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"	@(#)grep.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: January 4 2023 $
+.Dd $Mdocdate: November 15 2023 $
 .Dt GREP 1
 .Os
 .Sh NAME
@@ -222,9 +222,9 @@ If the standard input is searched, the string
 .Dq (standard input)
 is written.
 .It Fl m Ar num
-Stop after
+Stop after finding at least one match on
 .Ar num
-matches.
+different lines.
 .It Fl n
 Each output line is preceded by its relative line number in the file,
 starting at line 1.
