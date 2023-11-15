@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.53 2023/11/15 02:00:02 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.54 2023/11/15 02:03:49 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -278,6 +278,7 @@ firmware_devicename() {
 }
 
 lock_db() {
+	local _waited
 	[ "${LOCKPID:-}" ] && return 0
 
 	# The installer doesn't have perl, so we can't lock there
@@ -292,9 +293,22 @@ lock_db() {
 		$|=1;
 
 		$0 = "fw_update: lock_db";
-		lock_db(0);
+		my $waited = 0;
+		package OpenBSD::FwUpdateState {
+			use parent 'OpenBSD::BaseState';
+			sub errprint ($self, @p) {
+				if ($p[0] && $p[0] =~ /already locked/) {
+					$waited++;
+					$p[0] = " " . $p[0]
+					    if !$ENV{VERBOSE};
+				}
+				$self->SUPER::errprint(@p);
+			}
 
-		say $$;
+		}
+		lock_db(0, 'OpenBSD::FwUpdateState');
+
+		say "$$ $waited";
 
 		# Wait for STDOUT to be readable, which won't happen
 		# but if our parent exits unexpectedly it will close.
@@ -304,7 +318,11 @@ lock_db() {
 EOL
 	set +o monitor
 
-	read -rp LOCKPID
+	read -rp LOCKPID _waited
+
+	if ((_waited)); then
+		! ((VERBOSE)) && status "${0##*/}:"
+	fi
 
 	return 0
 }
