@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.28 2023/10/19 17:05:54 job Exp $ */
+/*	$OpenBSD: crl.c,v 1.29 2023/11/16 11:17:52 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,7 +32,7 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 	const X509_ALGOR	*palg;
 	const ASN1_OBJECT	*cobj;
 	const ASN1_TIME		*at;
-	int			 nid, rc = 0;
+	int			 count, nid, rc = 0;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
@@ -73,8 +73,21 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
+	/*
+	 * RFC 6487, section 5: AKI and crlNumber MUST be present, no other
+	 * CRL extensions are allowed.
+	 */
 	if ((crl->aki = x509_crl_get_aki(crl->x509_crl, fn)) == NULL) {
-		warnx("x509_crl_get_aki failed");
+		warnx("%s: x509_crl_get_aki failed", fn);
+		goto out;
+	}
+	if ((crl->number = x509_crl_get_number(crl->x509_crl, fn)) == NULL) {
+		warnx("%s: x509_crl_get_number failed", fn);
+		goto out;
+	}
+	if ((count = X509_CRL_get_ext_count(crl->x509_crl)) != 2) {
+		warnx("%s: RFC 6487 section 5: unexpected number of extensions "
+		    "%d != 2", fn, count);
 		goto out;
 	}
 
@@ -141,6 +154,7 @@ crl_free(struct crl *crl)
 	if (crl == NULL)
 		return;
 	free(crl->aki);
+	free(crl->number);
 	X509_CRL_free(crl->x509_crl);
 	free(crl);
 }
