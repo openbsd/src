@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_TIME_set.3,v 1.20 2023/11/13 12:46:07 beck Exp $
+.\" $OpenBSD: ASN1_TIME_set.3,v 1.21 2023/11/16 14:20:49 tb Exp $
 .\" full merge up to: OpenSSL 3d0f1cb9 Jul 11 03:01:24 2017 +0800
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 13 2023 $
+.Dd $Mdocdate: November 16 2023 $
 .Dt ASN1_TIME_SET 3
 .Os
 .Sh NAME
@@ -94,9 +94,9 @@
 .Nm ASN1_TIME_cmp_time_t ,
 .Nm ASN1_UTCTIME_cmp_time_t ,
 .Nm ASN1_TIME_compare ,
-.Nm ASN1_TIME_to_generalizedtime
-.Nm OPENSSL_gmtime,
-.Nm OPENSSL_timegm,
+.Nm ASN1_TIME_to_generalizedtime ,
+.Nm OPENSSL_gmtime ,
+.Nm OPENSSL_timegm
 .Nd ASN.1 Time functions
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -516,6 +516,19 @@ and
 functions act only on that specific time format, while the
 .Vt ASN1_TIME
 functions operate on either format.
+.Pp
+.Fn OPENSSL_gmtime
+converts a time_t value in
+.Fa time
+to a struct tm in
+.Fa out_tm
+and also returns the struct passed in on success.
+.Pp
+.Fn OPENSSL_timegm
+converts a time structure in UTC time in
+.Fa tm
+to a time_t value in
+.Fa out_time .
 .Sh RETURN VALUES
 .Fn ASN1_TIME_set ,
 .Fn ASN1_UTCTIME_set ,
@@ -576,20 +589,10 @@ is later than
 or \-2 on error.
 .Pp
 .Fn OPENSSL_timegm
-converts a time structure in UTC time in
-.Fa tm
-to a time_t value in
-.Fa out_time
-.Fn OPENSSL_timegm
 returns 1 for success or 0 for failure.
 It can fail if the time is not representable in a time_t,
 or falls outside the range allowed in RFC 5280 times.
 .Pp
-.Fn OPENSSL_gmtime
-converts a time_t value in
-.Fa time
-to a struct tm in
-.Fa out_tm
 .Fn OPENSSL_gmtime
 returns
 .Fa out_tm
