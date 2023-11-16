@@ -8113,7 +8113,7 @@ def err_typecheck_convert_pointer_int : Error<
   "; remove &}3">;
 def ext_typecheck_convert_pointer_int : ExtWarn<
   err_typecheck_convert_pointer_int.Summary>,
-  InGroup<IntConversion>, DefaultError;
+  InGroup<IntConversion>;
 def err_typecheck_convert_int_pointer : Error<
   "incompatible integer to pointer conversion "
   "%select{%diff{assigning to $ from $|assigning to different types}0,1"
@@ -8133,7 +8133,7 @@ def err_typecheck_convert_int_pointer : Error<
   "; remove &}3">;
 def ext_typecheck_convert_int_pointer : ExtWarn<
   err_typecheck_convert_int_pointer.Summary>,
-  InGroup<IntConversion>, DefaultError;
+  InGroup<IntConversion>;
 def ext_typecheck_convert_pointer_void_func : Extension<
   "%select{%diff{assigning to $ from $|assigning to different types}0,1"
   "|%diff{passing $ to parameter of type $|"
