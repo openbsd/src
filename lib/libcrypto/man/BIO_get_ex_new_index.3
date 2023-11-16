@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_get_ex_new_index.3,v 1.15 2023/11/16 15:39:32 schwarze Exp $
+.\" $OpenBSD: BIO_get_ex_new_index.3,v 1.16 2023/11/16 20:27:43 schwarze Exp $
 .\" full merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file was written by Rich Salz <rsalz@akamai.com>.
@@ -140,7 +140,7 @@ object.
 .Fn TYPE_set_app_data
 and
 .Fn TYPE_get_app_data
-are deprecated wrappers that call
+are deprecated wrapper macros that call
 .Fn TYPE_set_ex_data
 and
 .Fn TYPE_get_ex_data

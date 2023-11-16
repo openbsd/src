@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.4 2023/08/10 14:15:16 schwarze Exp $
+.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.5 2023/11/16 20:27:43 schwarze Exp $
 .\"
 .\" Copyright (c) 2021, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2023 $
+.Dd $Mdocdate: November 16 2023 $
 .Dt X509_STORE_GET_BY_SUBJECT 3
 .Os
 .Sh NAME
@@ -160,7 +160,7 @@ encourage checking of validity times, CAs with a valid time are
 preferred, but if no matching CA has a valid time, one with an
 invalid time is accepted anyway.
 .Pp
-The following are deprecated aliases:
+The following are deprecated aliases implemented as macros:
 .Bl -column X509_STORE_get_by_subject F X509_STORE_CTX_get_by_subject
 .It Fn X509_STORE_get_by_subject Ta for Ta Fn X509_STORE_CTX_get_by_subject
 .It Fn X509_STORE_get1_certs     Ta for Ta Fn X509_STORE_CTX_get1_certs

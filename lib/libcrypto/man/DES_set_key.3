@@ -1,4 +1,4 @@
-.\" $OpenBSD: DES_set_key.3,v 1.15 2022/03/31 17:27:16 naddy Exp $
+.\" $OpenBSD: DES_set_key.3,v 1.16 2023/11/16 20:27:43 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/DES_random_key 521738e9 Oct 5 14:58:30 2018 -0400
 .\"
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: November 16 2023 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -599,10 +599,11 @@ then update ivec and num.
 num contains "how far" we are though ivec.
 If this does not make much sense, read more about CFB mode of DES.
 .Pp
+The
 .Fn DES_ede3_cfb64_encrypt
-and
+function and the
 .Fn DES_ede2_cfb64_encrypt
-is the same as
+macro are the same as
 .Fn DES_cfb64_encrypt
 except that Triple-DES is used.
 .Pp
@@ -625,10 +626,11 @@ is the same as
 .Fn DES_cfb64_encrypt
 using Output Feed Back mode.
 .Pp
+The
 .Fn DES_ede3_ofb64_encrypt
-and
+function and the
 .Fn DES_ede2_ofb64_encrypt
-is the same as
+macro are the same as
 .Fn DES_ofb64_encrypt ,
 using Triple-DES.
 .Pp

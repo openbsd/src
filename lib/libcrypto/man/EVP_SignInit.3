@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_SignInit.3,v 1.16 2022/07/13 19:10:40 schwarze Exp $
+.\" $OpenBSD: EVP_SignInit.3,v 1.17 2023/11/16 20:27:43 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 79b49fb0 Mar 20 10:03:10 2018 +1000
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2022 $
+.Dd $Mdocdate: November 16 2023 $
 .Dt EVP_SIGNINIT 3
 .Os
 .Sh NAME
@@ -157,6 +157,12 @@ Since only a copy of the digest context is ever finalized, the context
 must be cleaned up after use by calling
 .Xr EVP_MD_CTX_free 3
 or a memory leak will occur.
+.Pp
+.Fn EVP_SignInit_ex ,
+.Fn EVP_SignUpdate ,
+and
+.Fn EVP_SignInit
+are implemented as macros.
 .Sh RETURN VALUES
 .Fn EVP_SignInit_ex ,
 .Fn EVP_SignUpdate ,
