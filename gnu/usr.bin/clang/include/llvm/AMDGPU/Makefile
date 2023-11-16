@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2023/11/16 15:05:44 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,10 @@ HDRS+=	R600GenAsmWriter.inc \
 	R600GenSubtargetInfo.inc
 
 HDRS+=	InstCombineTables.inc
+
+.if ${MACHINE_CPU} == "i386"
+.NOTPARALLEL: ${HDRS}
+.endif
 
 all: ${HDRS}
 
