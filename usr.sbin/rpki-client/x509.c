@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.74 2023/09/12 09:33:30 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.75 2023/11/16 11:10:59 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -802,6 +802,36 @@ x509_crl_get_aki(X509_CRL *crl, const char *fn)
 	res = hex_encode(d, dsz);
 out:
 	AUTHORITY_KEYID_free(akid);
+	return res;
+}
+
+/*
+ * Retrieve CRL Number extension. Returns a printable hexadecimal representation
+ * of the number which has to be freed after use.
+ */
+char *
+x509_crl_get_number(X509_CRL *crl, const char *fn)
+{
+	ASN1_INTEGER		*aint;
+	int			 crit;
+	char			*res = NULL;
+
+	aint = X509_CRL_get_ext_d2i(crl, NID_crl_number, &crit, NULL);
+	if (aint == NULL) {
+		warnx("%s: RFC 6487 section 5: CRL Number missing", fn);
+		return NULL;
+	}
+	if (crit != 0) {
+		warnx("%s: RFC 5280, section 5.2.3: "
+		    "CRL Number not non-critical", fn);
+		goto out;
+	}
+
+	/* This checks that the number is non-negative and <= 20 bytes. */
+	res = x509_convert_seqnum(fn, aint);
+
+ out:
+	ASN1_INTEGER_free(aint);
 	return res;
 }
 
