@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.222 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.223 2023/11/16 18:27:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1347,6 +1347,7 @@ tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 
 #undef ASSIGN
 
+	mtx_enter(&syn_cache_mtx);
 	set = &tcp_syn_cache[tcp_syn_cache_active];
 	tcpstat.tcps_sc_hash_size = set->scs_size;
 	tcpstat.tcps_sc_entry_count = set->scs_count;
@@ -1360,6 +1361,7 @@ tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 	}
 	tcpstat.tcps_sc_bucket_limit = tcp_syn_bucket_limit;
 	tcpstat.tcps_sc_uses_left = set->scs_use;
+	mtx_leave(&syn_cache_mtx);
 
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    &tcpstat, sizeof(tcpstat)));
@@ -1473,10 +1475,12 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			 * Global tcp_syn_use_limit is used when reseeding a
 			 * new cache.  Also update the value in active cache.
 			 */
+			mtx_enter(&syn_cache_mtx);
 			if (tcp_syn_cache[0].scs_use > tcp_syn_use_limit)
 				tcp_syn_cache[0].scs_use = tcp_syn_use_limit;
 			if (tcp_syn_cache[1].scs_use > tcp_syn_use_limit)
 				tcp_syn_cache[1].scs_use = tcp_syn_use_limit;
+			mtx_leave(&syn_cache_mtx);
 		}
 		NET_UNLOCK();
 		return (error);
@@ -1492,11 +1496,13 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			 * switch sets as soon as possible.  Then
 			 * the actual hash array will be reallocated.
 			 */
+			mtx_enter(&syn_cache_mtx);
 			if (tcp_syn_cache[0].scs_size != nval)
 				tcp_syn_cache[0].scs_use = 0;
 			if (tcp_syn_cache[1].scs_size != nval)
 				tcp_syn_cache[1].scs_use = 0;
 			tcp_syn_hash_size = nval;
+			mtx_leave(&syn_cache_mtx);
 		}
 		NET_UNLOCK();
 		return (error);

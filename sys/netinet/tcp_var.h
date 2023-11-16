@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.171 2023/09/04 23:00:36 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.172 2023/11/16 18:27:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -225,6 +225,15 @@ struct tcp_opt_info {
  * Data for the TCP compressed state engine.
  */
 
+/*
+ * Locks used to protect global data and struct members:
+ *	I	immutable after creation
+ *	N	net lock
+ *	S	syn_cache_mtx		tcp syn cache global mutex
+ */
+
+extern struct mutex syn_cache_mtx;
+
 #define	TCP_SYN_HASH_SIZE	293
 #define	TCP_SYN_BUCKET_SIZE	35
 
@@ -235,7 +244,7 @@ union syn_cache_sa {
 };
 
 struct syn_cache {
-	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
+	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* [S] link on bucket list */
 	struct refcnt sc_refcnt;		/* ref count list and timer */
 	struct timeout sc_timer;		/* rexmt timer */
 	union {					/* cached route */
@@ -244,54 +253,55 @@ struct syn_cache {
 		struct route_in6 route6;
 #endif
 	} sc_route_u;
-#define sc_route4	sc_route_u.route4
+#define sc_route4	sc_route_u.route4	/* [N] */
 #ifdef INET6
-#define sc_route6	sc_route_u.route6
+#define sc_route6	sc_route_u.route6	/* [N] */
 #endif
-	long sc_win;				/* advertised window */
-	struct syn_cache_head *sc_buckethead;	/* our bucket index */
-	struct syn_cache_set *sc_set;		/* our syn cache set */
-	u_int64_t sc_timestamp;			/* timestamp from SYN */
-	u_int32_t sc_hash;
-	u_int32_t sc_modulate;			/* our timestamp modulator */
-	union syn_cache_sa sc_src;
-	union syn_cache_sa sc_dst;
-	tcp_seq sc_irs;
-	tcp_seq sc_iss;
-	u_int sc_rtableid;
-	u_int sc_rxtcur;			/* current rxt timeout */
-	u_int sc_rxttot;			/* total time spend on queues */
-	u_short sc_rxtshift;			/* for computing backoff */
-	u_short sc_flags;
+	long sc_win;				/* [I] advertised window */
+	struct syn_cache_head *sc_buckethead;	/* [S] our bucket index */
+	struct syn_cache_set *sc_set;		/* [S] our syn cache set */
+	u_int64_t sc_timestamp;		/* [N] timestamp from SYN */
+	u_int32_t sc_hash;		/* [S] */
+	u_int32_t sc_modulate;		/* [I] our timestamp modulator */
+	union syn_cache_sa sc_src;	/* [I] */
+	union syn_cache_sa sc_dst;	/* [I] */
+	tcp_seq sc_irs;			/* [I] */
+	tcp_seq sc_iss;			/* [I] */
+	u_int sc_rtableid;		/* [I] */
+	u_int sc_rxtcur;		/* [S] current rxt timeout */
+	u_int sc_rxttot;		/* [S] total time spend on queues */
+	u_int sc_rxtshift;		/* [S] for computing backoff */
+	u_int sc_dynflags;		/* [S] flags accessed with mutex */
+#define SCF_UNREACH	0x0001U		/* we've had an unreach error */
+#define SCF_DEAD	0x0002U		/* this entry to be released */
 
-#define	SCF_UNREACH		0x0001		/* we've had an unreach error */
-#define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
-#define	SCF_DEAD		0x0004		/* this entry to be released */
-#define	SCF_SACK_PERMIT		0x0008		/* permit sack */
-#define	SCF_ECN_PERMIT		0x0010		/* permit ecn */
-#define	SCF_SIGNATURE		0x0020		/* enforce tcp signatures */
+	u_short sc_fixflags;		/* [I] set during initialization */
+#define SCF_TIMESTAMP	0x0010U		/* peer will do timestamps */
+#define SCF_SACK_PERMIT	0x0020U		/* permit sack */
+#define SCF_ECN_PERMIT	0x0040U		/* permit ecn */
+#define SCF_SIGNATURE	0x0080U		/* enforce tcp signatures */
 
-	struct mbuf *sc_ipopts;			/* IP options */
-	u_int16_t sc_peermaxseg;
-	u_int16_t sc_ourmaxseg;
-	u_int     sc_request_r_scale	: 4,
-		  sc_requested_s_scale	: 4;
+	struct mbuf *sc_ipopts;			/* [N] IP options */
+	u_int16_t sc_peermaxseg;		/* [I] */
+	u_int16_t sc_ourmaxseg;			/* [I] */
+	u_int     sc_request_r_scale	: 4,	/* [I] */
+		  sc_requested_s_scale	: 4;	/* [I] */
 
-	struct tcpcb *sc_tp;			/* tcb for listening socket */
-	LIST_ENTRY(syn_cache) sc_tpq;		/* list of entries by same tp */
+	struct tcpcb *sc_tp;		/* [S] tcb for listening socket */
+	LIST_ENTRY(syn_cache) sc_tpq;	/* [S] list of entries by same tp */
 };
 
 struct syn_cache_head {
-	TAILQ_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
-	u_short sch_length;			/* # entries in bucket */
+	TAILQ_HEAD(, syn_cache) sch_bucket;	/* [S] bucket entries */
+	u_short sch_length;			/* [S] # entries in bucket */
 };
 
 struct syn_cache_set {
-	struct		syn_cache_head *scs_buckethead;
-	long		scs_use;
-	int		scs_size;
-	int		scs_count;
-	u_int32_t	scs_random[5];
+	struct		syn_cache_head *scs_buckethead;	/* [S] */
+	long		scs_use;	/* [S] */
+	int		scs_size;	/* [S] current size of hash table */
+	int		scs_count;	/* [S] */
+	u_int32_t	scs_random[5];	/* [S] */
 };
 
 #endif /* _KERNEL */
