@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.43 2023/07/19 21:49:30 job Exp $ */
+/*	$OpenBSD: print.c,v 1.44 2023/11/16 11:18:47 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -327,7 +327,6 @@ crl_print(const struct crl *p)
 {
 	STACK_OF(X509_REVOKED)	*revlist;
 	X509_REVOKED *rev;
-	ASN1_INTEGER *crlnum;
 	X509_NAME *xissuer;
 	int i;
 	char *issuer, *serial;
@@ -341,20 +340,16 @@ crl_print(const struct crl *p)
 
 	xissuer = X509_CRL_get_issuer(p->x509_crl);
 	issuer = X509_NAME_oneline(xissuer, NULL, 0);
-	crlnum = X509_CRL_get_ext_d2i(p->x509_crl, NID_crl_number, NULL, NULL);
-	serial = x509_convert_seqnum(__func__, crlnum);
-	if (issuer != NULL && serial != NULL) {
+	if (issuer != NULL && p->number != NULL) {
 		if (outformats & FORMAT_JSON) {
 			json_do_string("crl_issuer", issuer);
-			json_do_string("crl_serial", serial);
+			json_do_string("crl_serial", p->number);
 		} else {
 			printf("CRL issuer:               %s\n", issuer);
-			printf("CRL serial number:        %s\n", serial);
+			printf("CRL serial number:        %s\n", p->number);
 		}
 	}
 	free(issuer);
-	free(serial);
-	ASN1_INTEGER_free(crlnum);
 
 	if (outformats & FORMAT_JSON) {
 		json_do_int("valid_since", p->lastupdate);
