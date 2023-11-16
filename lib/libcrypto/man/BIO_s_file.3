@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_file.3,v 1.16 2023/05/01 07:04:38 jsg Exp $
+.\" $OpenBSD: BIO_s_file.3,v 1.17 2023/11/16 20:19:23 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL 1212818e Sep 11 13:22:14 2018 +0100
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 1 2023 $
+.Dd $Mdocdate: November 16 2023 $
 .Dt BIO_S_FILE 3
 .Os
 .Sh NAME
@@ -196,14 +196,12 @@ sets the file pointer of a file BIO to
 .Fa flags
 has the same meaning as in
 .Fn BIO_new_fp .
-.Fn BIO_set_fp
-is a macro.
 .Pp
 .Fn BIO_get_fp
-retrieves the file pointer of a file BIO, it is a macro.
+retrieves the file pointer of a file BIO.
 .Pp
 .Xr BIO_seek 3
-is a macro that sets the position pointer to
+sets the position pointer to
 .Fa offset
 bytes from the start of file.
 .Pp
