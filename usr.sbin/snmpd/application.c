@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.38 2023/11/15 13:36:11 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.39 2023/11/16 13:25:07 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -1368,6 +1368,8 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 			    origvb->avi_state == APPL_VBSTATE_DONE) {
 				origvb->avi_sub->avi_varbind.av_oid =
 				    origvb->avi_varbind.av_oid;
+				origvb->avi_sub->avi_origid =
+				    origvb->avi_varbind.av_oid;
 				origvb->avi_sub->avi_state = APPL_VBSTATE_NEW;
 			}
 			origvb = origvb->avi_next;
@@ -1663,9 +1665,11 @@ appl_varbind_backend(struct appl_varbind_internal *ivb)
 		ivb->avi_state = APPL_VBSTATE_DONE;
 		if (ivb->avi_varbind.av_value == NULL)
 			return -1;
-		if (ivb->avi_sub != NULL)
+		if (ivb->avi_sub != NULL) {
 			ivb->avi_sub->avi_varbind.av_oid =
 			    ivb->avi_varbind.av_oid;
+			ivb->avi_sub->avi_origid = ivb->avi_origid;
+		}
 		ivb = ivb->avi_sub;
 	} while (ivb != NULL);
 
