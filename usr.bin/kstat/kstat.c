@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.12 2023/11/16 02:45:54 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.13 2023/11/16 03:17:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -193,6 +193,7 @@ main(int argc, char *argv[])
 		err(1, "kstat version");
 
 	kstat_list(&kt, fd, version, &kfs);
+	kstat_read(&kt, fd);
 	kstat_print(&kt);
 
 	if (wait == 0)
@@ -516,7 +517,6 @@ kstat_list(struct kstat_tree *kt, int fd, unsigned int version,
 {
 	struct kstat_entry *kse;
 	struct kstat_req *ksreq;
-	size_t len;
 	uint64_t id = 0;
 
 	for (;;) {
@@ -529,19 +529,12 @@ kstat_list(struct kstat_tree *kt, int fd, unsigned int version,
 		ksreq->ks_version = version;
 		ksreq->ks_id = ++id;
 
-		ksreq->ks_datalen = len = 64; /* magic */
-		ksreq->ks_data = malloc(len);
-		if (ksreq->ks_data == NULL)
-			err(1, "data alloc");
-
 		if (ioctl(fd, KSTATIOC_NFIND_ID, ksreq) == -1) {
 			if (errno == ENOENT) {
 				free(ksreq->ks_data);
 				free(kse);
 				break;
 			}
-
-			kse->serrno = errno;
 		} else
 			id = ksreq->ks_id;
 
@@ -554,18 +547,9 @@ kstat_list(struct kstat_tree *kt, int fd, unsigned int version,
 		if (RBT_INSERT(kstat_tree, kt, kse) != NULL)
 			errx(1, "duplicate kstat entry");
 
-		if (kse->serrno != 0)
-			continue;
-
-		while (ksreq->ks_datalen > len) {
-			len = ksreq->ks_datalen;
-			ksreq->ks_data = realloc(ksreq->ks_data, len);
-			if (ksreq->ks_data == NULL)
-				err(1, "data resize (%zu)", len);
-
-			if (ioctl(fd, KSTATIOC_FIND_ID, ksreq) == -1)
-				err(1, "find id %llu", ksreq->ks_id);
-		}
+		ksreq->ks_data = malloc(ksreq->ks_datalen);
+		if (ksreq->ks_data == NULL)
+			err(1, "kstat data alloc");
 	}
 }
 
@@ -581,7 +565,8 @@ kstat_print(struct kstat_tree *kt)
 		    ksreq->ks_provider, ksreq->ks_instance,
 		    ksreq->ks_name, ksreq->ks_unit);
 		if (kse->serrno != 0) {
-			printf("\t%s\n", strerror(kse->serrno));
+			printf("\tkstat read error: %s\n",
+			    strerror(kse->serrno));
 			continue;
 		}
 		switch (ksreq->ks_type) {
@@ -607,9 +592,10 @@ kstat_read(struct kstat_tree *kt, int fd)
 	struct kstat_req *ksreq;
 
 	RBT_FOREACH(kse, kstat_tree, kt) {
+		kse->serrno = 0;
 		ksreq = &kse->kstat;
 		if (ioctl(fd, KSTATIOC_FIND_ID, ksreq) == -1)
-			err(1, "update id %llu", ksreq->ks_id);
+			kse->serrno = errno;
 	}
 }
 
