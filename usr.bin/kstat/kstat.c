@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.11 2022/07/10 19:51:37 kn Exp $ */
+/* $OpenBSD: kstat.c,v 1.12 2023/11/16 02:45:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -51,6 +51,29 @@
 #ifndef SET
 #define SET(_i, _m)		((_i) |= (_m))
 #endif
+
+struct fmt_result {
+	uint64_t		val;
+	unsigned int		frac;
+	unsigned int		exp;
+};
+
+static void
+fmt_thing(struct fmt_result *fr, uint64_t val, uint64_t chunk)
+{
+	unsigned int exp = 0;
+	uint64_t rem = 0;
+
+	while (val > chunk) {
+		rem = val % chunk;
+		val /= chunk;
+		exp++;
+	}
+
+	fr->val = val;
+	fr->exp = exp;
+	fr->frac = (rem * 1000) / chunk;
+}
 
 #define str_is_empty(_str)	(*(_str) == '\0')
 
@@ -351,6 +374,11 @@ strdumpnl(const void *s, size_t len)
 	printf("\n");
 }
 
+static const char *si_prefixes[] = { "", "k", "M", "G", "T", "P", "E" };
+#ifdef notyet
+static const char *iec_prefixes[] = { "", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei" };
+#endif
+
 static void
 kstat_kv(const void *d, ssize_t len)
 {
@@ -359,6 +387,7 @@ kstat_kv(const void *d, ssize_t len)
 	ssize_t blen;
 	void (*trailer)(const void *, size_t);
 	double f;
+	struct fmt_result fr;
 
 	if (len < (ssize_t)sizeof(*kv)) {
 		warn("short kv (len %zu < size %zu)", len, sizeof(*kv));
@@ -423,6 +452,24 @@ kstat_kv(const void *d, ssize_t len)
 		case KSTAT_KV_T_TEMP:
 			f = kstat_kv_temp(kv);
 			printf("%.2f degC", (f - 273150000.0) / 1000000.0);
+			break;
+
+		case KSTAT_KV_T_FREQ:
+			fmt_thing(&fr, kstat_kv_freq(kv), 1000);
+			printf("%llu", fr.val);
+			if (fr.frac > 10)
+				printf(".%02u", fr.frac / 10);
+			printf(" %sHz", si_prefixes[fr.exp]);
+			break;
+
+		case KSTAT_KV_T_VOLTS_DC: /* uV */
+			f = kstat_kv_volts(kv);
+			printf("%.2f VDC", f / 1000000.0);
+			break;
+
+		case KSTAT_KV_T_VOLTS_AC: /* uV */
+			f = kstat_kv_volts(kv);
+			printf("%.2f VAC", f / 1000000.0);
 			break;
 
 		default:
