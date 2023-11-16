@@ -1,13 +1,9 @@
-# $OpenBSD: dot.login,v 1.6 2015/12/15 16:37:58 deraadt Exp $
+# $OpenBSD: dot.login,v 1.7 2023/11/16 16:05:13 millert Exp $
 #
 # csh login file
 
 if ( ! $?TERMCAP ) then
-	if ( $?XTERM_VERSION ) then
-		tset -IQ '-munknown:?vt220' $TERM
-	else
-		tset -Q '-munknown:?vt220' $TERM
-	endif
+	tset -IQ '-munknown:?vt220' $TERM
 endif
 
 stty	newcrt crterase
