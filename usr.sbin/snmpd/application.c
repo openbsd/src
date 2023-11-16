@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.39 2023/11/16 13:25:07 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.40 2023/11/16 14:35:25 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -919,15 +919,11 @@ appl_processpdu(struct snmp_message *statereference, const char *ctxname,
 		    &(ureq->aru_vblist[i].avi_varbind.av_oid));
 		ureq->aru_vblist[i].avi_origid =
 		    ureq->aru_vblist[i].avi_varbind.av_oid;
-		if (i + 1 < ureq->aru_varbindlen) {
-			ureq->aru_vblist[i].avi_next =
-			    &(ureq->aru_vblist[i + 1]);
+		if (i + 1 < varbindlen)
 			ureq->aru_vblist[i].avi_varbind.av_next =
 			    &(ureq->aru_vblist[i + 1].avi_varbind);
-		} else {
-			ureq->aru_vblist[i].avi_next = NULL;
+		else
 			ureq->aru_vblist[i].avi_varbind.av_next = NULL;
-		}
 		varbind = varbind->be_next;
 	}
 
