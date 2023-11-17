@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.65 2023/11/12 15:18:04 dlg Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.66 2023/11/17 12:10:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -725,7 +725,7 @@ main(int argc, char **argv)
 	while (1) {
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS,
 		    phandler, (u_char *)dpcap);
-		if (np < 0) {
+		if (np == -1) {
 			if (!if_exists(interface)) {
 				logmsg(LOG_NOTICE, "interface %s went away",
 				    interface);
