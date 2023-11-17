@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.20 2023/11/17 13:43:32 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.21 2023/11/17 15:35:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,12 +164,12 @@ imsg_get(struct imsgbuf *imsgbuf, struct imsg *imsg)
 }
 
 int
-imsg_compose(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid, pid_t pid,
+imsg_compose(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id, pid_t pid,
     int fd, const void *data, uint16_t datalen)
 {
 	struct ibuf	*wbuf;
 
-	if ((wbuf = imsg_create(imsgbuf, type, peerid, pid, datalen)) == NULL)
+	if ((wbuf = imsg_create(imsgbuf, type, id, pid, datalen)) == NULL)
 		return (-1);
 
 	if (imsg_add(wbuf, data, datalen) == -1)
@@ -182,8 +182,8 @@ imsg_compose(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid, pid_t pid,
 }
 
 int
-imsg_composev(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid,
-    pid_t pid, int fd, const struct iovec *iov, int iovcnt)
+imsg_composev(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id, pid_t pid,
+    int fd, const struct iovec *iov, int iovcnt)
 {
 	struct ibuf	*wbuf;
 	int		 i, datalen = 0;
@@ -191,7 +191,7 @@ imsg_composev(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid,
 	for (i = 0; i < iovcnt; i++)
 		datalen += iov[i].iov_len;
 
-	if ((wbuf = imsg_create(imsgbuf, type, peerid, pid, datalen)) == NULL)
+	if ((wbuf = imsg_create(imsgbuf, type, id, pid, datalen)) == NULL)
 		return (-1);
 
 	for (i = 0; i < iovcnt; i++)
@@ -205,7 +205,7 @@ imsg_composev(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid,
 }
 
 int
-imsg_compose_ibuf(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid,
+imsg_compose_ibuf(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id,
     pid_t pid, struct ibuf *buf)
 {
 	struct ibuf	*wbuf = NULL;
@@ -220,7 +220,7 @@ imsg_compose_ibuf(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid,
 	hdr.type = type;
 	hdr.len = ibuf_size(buf) + IMSG_HEADER_SIZE;
 	hdr.flags = 0;
-	hdr.peerid = peerid;
+	hdr.peerid = id;
 	if ((hdr.pid = pid) == 0)
 		hdr.pid = imsgbuf->pid;
 
@@ -242,7 +242,7 @@ imsg_compose_ibuf(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid,
 }
 
 struct ibuf *
-imsg_create(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid, pid_t pid,
+imsg_create(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id, pid_t pid,
     uint16_t datalen)
 {
 	struct ibuf	*wbuf;
@@ -256,7 +256,7 @@ imsg_create(struct imsgbuf *imsgbuf, uint32_t type, uint32_t peerid, pid_t pid,
 
 	hdr.type = type;
 	hdr.flags = 0;
-	hdr.peerid = peerid;
+	hdr.peerid = id;
 	if ((hdr.pid = pid) == 0)
 		hdr.pid = imsgbuf->pid;
 	if ((wbuf = ibuf_dynamic(datalen, MAX_IMSGSIZE)) == NULL) {
