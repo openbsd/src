@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2023/11/17 21:51:37 millert Exp $
+#	$OpenBSD: Makefile,v 1.17 2023/11/17 21:54:20 millert Exp $
 
 # DATAFORM selects the data format.  OpenBSD always uses "main"
 # Available formats represent essentially the same data, albeit
@@ -94,7 +94,7 @@ $(DATAFORM).zi:	$(DSTDATA_ZI_DEPS)
 		(cd ${.CURDIR}/datfiles && \
 		    awk -v DATAFORM=`expr $@ : '\(.*\).zi'` -f ../ziguard.awk \
 		    $(TDATA) >${.OBJDIR}/$@.out)
-		mv ${.OBJDIR}/$@.out ${.OBJDIR}/$@
+		mv -f ${.OBJDIR}/$@.out ${.OBJDIR}/$@
 
 tzdata.zi:	$(DATAFORM).zi version zishrink.awk
 		(cd ${.CURDIR}/datfiles && version=`sed 1q ../version` && \
@@ -105,12 +105,12 @@ tzdata.zi:	$(DATAFORM).zi version zishrink.awk
 		    -v version="$$version" \
 		    -f ../zishrink.awk \
 		    ${.OBJDIR}/$(DATAFORM).zi >${.OBJDIR}/$@.out)
-		mv ${.OBJDIR}/$@.out ${.OBJDIR}/$@
+		mv -f ${.OBJDIR}/$@.out ${.OBJDIR}/$@
 
 leapseconds: leapseconds.awk datfiles/leap-seconds.list
 	awk -v EXPIRES_LINE=$(EXPIRES_LINE) -f ${.CURDIR}/leapseconds.awk \
 	    ${.CURDIR}/datfiles/leap-seconds.list >${.OBJDIR}/$@.out
-	mv ${.OBJDIR}/$@.out ${.OBJDIR}/$@
+	mv -f ${.OBJDIR}/$@.out ${.OBJDIR}/$@
 
 posix_only: ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
