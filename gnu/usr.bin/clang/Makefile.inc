@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.27 2023/11/11 18:35:35 robert Exp $
+# $OpenBSD: Makefile.inc,v 1.28 2023/11/17 15:46:58 visa Exp $
 
 CLANG_SRCS?=	${.CURDIR}/../../../llvm/clang
 LLDB_SRCS?=	${.CURDIR}/../../../llvm/lldb
@@ -41,6 +41,7 @@ CXXFLAGS+=	-mno-retpoline
 # Omit frame pointer to improve performance.
 .if ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "mips64el"
 CXXFLAGS+=	-fomit-frame-pointer
+CXXFLAGS+=	-mxgot
 .endif
 
 CPPFLAGS+=	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
