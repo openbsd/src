@@ -1,4 +1,4 @@
-# $OpenBSD: ikeca.cnf,v 1.9 2017/01/31 21:35:07 sthen Exp $
+# $OpenBSD: ikeca.cnf,v 1.10 2023/11/17 14:43:36 tobhe Exp $
 
 CERT_C			= DE
 CERT_ST			= Lower Saxony
@@ -104,6 +104,6 @@ serial				= $ENV::CASERIAL
 default_md			= sha256
 default_days			= 365
 default_crl_days		= 365
-unique_subject			= yes
+unique_subject			= no
 email_in_dn			= yes
 policy				= CA_sign_policy
