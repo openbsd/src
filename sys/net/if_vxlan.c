@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.94 2023/10/27 20:56:48 jan Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.95 2023/11/18 00:23:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1346,6 +1346,9 @@ vxlan_set_tunnel(struct vxlan_softc *sc, const struct if_laddrreq *req)
 			if (in_nullhost(dst4->sin_addr))
 				return (EINVAL);
 
+			if (dst4->sin_port != htons(0))
+				return (EINVAL);
+
 			/* all good */
 			mode = IN_MULTICAST(dst4->sin_addr.s_addr) ?
 			    VXLAN_TMODE_LEARNING : VXLAN_TMODE_P2P;
@@ -1374,6 +1377,9 @@ vxlan_set_tunnel(struct vxlan_softc *sc, const struct if_laddrreq *req)
 				return (EINVAL);
 
 			if (src6->sin6_scope_id != dst6->sin6_scope_id)
+				return (EINVAL);
+
+			if (dst6->sin6_port != htons(0))
 				return (EINVAL);
 
 			/* all good */
