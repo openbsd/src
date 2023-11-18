@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.23 2023/11/18 09:37:15 tb Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.24 2023/11/18 10:46:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -338,7 +338,7 @@ rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	long num = 0;
 	int i = 0;
 	int key_bits;
-	unsigned int l;
+	int l;
 	unsigned char iv[EVP_MAX_IV_LENGTH];
 
 	if (type != NULL) {
@@ -348,7 +348,7 @@ rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 			return -1;
 		}
 		i = ASN1_TYPE_get_int_octetstring(type, &num, iv, l);
-		if (i != (int)l)
+		if (i != l)
 			return (-1);
 		key_bits = rc2_magic_to_meth((int)num);
 		if (!key_bits)
