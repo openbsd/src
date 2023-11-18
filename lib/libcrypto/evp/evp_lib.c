@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.28 2023/09/28 11:29:10 tb Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.29 2023/11/18 09:37:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,16 +98,16 @@ int
 EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
 	int i = 0;
-	unsigned int l;
+	int l;
 
 	if (type != NULL) {
 		l = EVP_CIPHER_CTX_iv_length(c);
-		if (l > sizeof(c->iv)) {
+		if (l < 0 || l > sizeof(c->iv)) {
 			EVPerror(EVP_R_IV_TOO_LARGE);
 			return 0;
 		}
 		i = ASN1_TYPE_get_octetstring(type, c->oiv, l);
-		if (i != (int)l)
+		if (i != l)
 			return (-1);
 		else if (i > 0)
 			memcpy(c->iv, c->oiv, l);
@@ -119,11 +119,11 @@ int
 EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
 	int i = 0;
-	unsigned int j;
+	int j;
 
 	if (type != NULL) {
 		j = EVP_CIPHER_CTX_iv_length(c);
-		if (j > sizeof(c->iv)) {
+		if (j < 0 || j > sizeof(c->iv)) {
 			EVPerror(EVP_R_IV_TOO_LARGE);
 			return 0;
 		}

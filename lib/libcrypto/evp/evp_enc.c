@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.53 2023/09/10 16:53:56 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.54 2023/11/18 09:37:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -181,6 +181,8 @@ skip_to_init:
 	}
 
 	if (!(EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV)) {
+		int iv_len;
+
 		switch (EVP_CIPHER_CTX_mode(ctx)) {
 
 		case EVP_CIPH_STREAM_CIPHER:
@@ -194,25 +196,26 @@ skip_to_init:
 			/* fall-through */
 
 		case EVP_CIPH_CBC_MODE:
-
-			if ((size_t)EVP_CIPHER_CTX_iv_length(ctx) >
-			    sizeof(ctx->iv)) {
+			iv_len = EVP_CIPHER_CTX_iv_length(ctx);
+			if (iv_len < 0 || iv_len > sizeof(ctx->oiv)) {
 				EVPerror(EVP_R_IV_TOO_LARGE);
 				return 0;
 			}
-			if (iv)
-				memcpy(ctx->oiv, iv,
-				    EVP_CIPHER_CTX_iv_length(ctx));
-			memcpy(ctx->iv, ctx->oiv,
-			    EVP_CIPHER_CTX_iv_length(ctx));
+			if (iv != NULL)
+				memcpy(ctx->oiv, iv, iv_len);
+			memcpy(ctx->iv, ctx->oiv, iv_len);
 			break;
 
 		case EVP_CIPH_CTR_MODE:
 			ctx->num = 0;
+			iv_len = EVP_CIPHER_CTX_iv_length(ctx);
+			if (iv_len < 0 || iv_len > sizeof(ctx->iv)) {
+				EVPerror(EVP_R_IV_TOO_LARGE);
+				return 0;
+			}
 			/* Don't reuse IV for CTR mode */
-			if (iv)
-				memcpy(ctx->iv, iv,
-				    EVP_CIPHER_CTX_iv_length(ctx));
+			if (iv != NULL)
+				memcpy(ctx->iv, iv, iv_len);
 			break;
 
 		default:

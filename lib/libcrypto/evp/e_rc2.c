@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.22 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.23 2023/11/18 09:37:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -343,7 +343,7 @@ rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (type != NULL) {
 		l = EVP_CIPHER_CTX_iv_length(c);
-		if (l > sizeof(iv)) {
+		if (l < 0 || l > sizeof(iv)) {
 			EVPerror(EVP_R_IV_TOO_LARGE);
 			return -1;
 		}
@@ -373,6 +373,8 @@ rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	if (type != NULL) {
 		num = rc2_meth_to_magic(c);
 		j = EVP_CIPHER_CTX_iv_length(c);
+		if (j < 0 || j > sizeof(c->oiv))
+			return 0;
 		i = ASN1_TYPE_set_int_octetstring(type, num, c->oiv, j);
 	}
 	return (i);
@@ -381,9 +383,15 @@ rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 static int
 rc2_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
+	int iv_len;
+
 	switch (type) {
 	case EVP_CTRL_INIT:
-		data(c)->key_bits = EVP_CIPHER_CTX_key_length(c) * 8;
+		data(c)->key_bits = 0;
+		/* XXX - upper bound? */
+		if ((iv_len = EVP_CIPHER_CTX_key_length(c)) < 0)
+			return -1;
+		data(c)->key_bits = iv_len * 8;
 		return 1;
 
 	case EVP_CTRL_GET_RC2_KEY_BITS:

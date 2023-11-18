@@ -1,4 +1,4 @@
-/* $OpenBSD: p_seal.c,v 1.16 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: p_seal.c,v 1.17 2023/11/18 09:37:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
     int *ekl, unsigned char *iv, EVP_PKEY **pubk, int npubk)
 {
 	unsigned char key[EVP_MAX_KEY_LENGTH];
-	int i;
+	int i, iv_len;
 
 	if (type) {
 		EVP_CIPHER_CTX_init(ctx);
@@ -85,8 +85,11 @@ EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 		return 1;
 	if (EVP_CIPHER_CTX_rand_key(ctx, key) <= 0)
 		return 0;
-	if (EVP_CIPHER_CTX_iv_length(ctx))
-		arc4random_buf(iv, EVP_CIPHER_CTX_iv_length(ctx));
+	/* XXX - upper bound? */
+	if ((iv_len = EVP_CIPHER_CTX_iv_length(ctx)) < 0)
+		return 0;
+	if (iv_len > 0)
+		arc4random_buf(iv, iv_len);
 
 	if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
 		return 0;
