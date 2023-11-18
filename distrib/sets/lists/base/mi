@@ -6518,7 +6518,10 @@
 ./usr/share/zoneinfo/W-SU
 ./usr/share/zoneinfo/WET
 ./usr/share/zoneinfo/Zulu
+./usr/share/zoneinfo/leap-seconds.list
+./usr/share/zoneinfo/leapseconds
 ./usr/share/zoneinfo/posixrules
+./usr/share/zoneinfo/tzdata.zi
 ./usr/share/zoneinfo/zone.tab
 ./usr/share/zoneinfo/zone1970.tab
 ./var
