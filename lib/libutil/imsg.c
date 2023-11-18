@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.21 2023/11/17 15:35:15 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.22 2023/11/18 07:14:13 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,7 +30,7 @@
 
 int	 imsg_fd_overhead = 0;
 
-static int	 imsg_get_fd(struct imsgbuf *);
+static int	 imsg_dequeue_fd(struct imsgbuf *);
 
 void
 imsg_init(struct imsgbuf *imsgbuf, int fd)
@@ -146,7 +146,7 @@ imsg_get(struct imsgbuf *imsgbuf, struct imsg *imsg)
 		return (-1);
 
 	if (imsg->hdr.flags & IMSGF_HASFD)
-		imsg->fd = imsg_get_fd(imsgbuf);
+		imsg->fd = imsg_dequeue_fd(imsgbuf);
 	else
 		imsg->fd = -1;
 
@@ -301,7 +301,7 @@ imsg_free(struct imsg *imsg)
 }
 
 static int
-imsg_get_fd(struct imsgbuf *imsgbuf)
+imsg_dequeue_fd(struct imsgbuf *imsgbuf)
 {
 	int		 fd;
 	struct imsg_fd	*ifd;
@@ -331,6 +331,6 @@ imsg_clear(struct imsgbuf *imsgbuf)
 	int	fd;
 
 	msgbuf_clear(&imsgbuf->w);
-	while ((fd = imsg_get_fd(imsgbuf)) != -1)
+	while ((fd = imsg_dequeue_fd(imsgbuf)) != -1)
 		close(fd);
 }
