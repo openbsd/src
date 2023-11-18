@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.156 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.157 2023/11/18 10:51:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2343,7 +2343,7 @@ ssl3_send_newsession_ticket(SSL *s)
 	unsigned int hlen;
 	EVP_CIPHER_CTX *ctx = NULL;
 	HMAC_CTX *hctx = NULL;
-	int len;
+	int iv_len, len;
 
 	/*
 	 * New Session Ticket - RFC 5077, section 3.3.
@@ -2426,7 +2426,9 @@ ssl3_send_newsession_ticket(SSL *s)
 			goto err;
 		if (!CBB_add_bytes(&ticket, key_name, sizeof(key_name)))
 			goto err;
-		if (!CBB_add_bytes(&ticket, iv, EVP_CIPHER_CTX_iv_length(ctx)))
+		if ((iv_len = EVP_CIPHER_CTX_iv_length(ctx)) < 0)
+			goto err;
+		if (!CBB_add_bytes(&ticket, iv, iv_len))
 			goto err;
 		if (!CBB_add_bytes(&ticket, enc_session, enc_session_len))
 			goto err;

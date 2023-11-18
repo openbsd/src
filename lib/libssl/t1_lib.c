@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.197 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.198 2023/11/18 10:51:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -987,7 +987,7 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 	HMAC_CTX *hctx = NULL;
 	EVP_CIPHER_CTX *cctx = NULL;
 	SSL_CTX *tctx = s->initial_ctx;
-	int slen, hlen;
+	int slen, hlen, iv_len;
 	int alert_desc = SSL_AD_INTERNAL_ERROR;
 	int ret = TLS1_TICKET_FATAL_ERROR;
 
@@ -1027,12 +1027,13 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 			s->tlsext_ticket_expected = 1;
 		}
 
+		if ((iv_len = EVP_CIPHER_CTX_iv_length(cctx)) < 0)
+			goto err;
 		/*
 		 * Now that the cipher context is initialised, we can extract
 		 * the IV since its length is known.
 		 */
-		if (!CBS_get_bytes(ticket, &ticket_iv,
-		    EVP_CIPHER_CTX_iv_length(cctx)))
+		if (!CBS_get_bytes(ticket, &ticket_iv, iv_len))
 			goto derr;
 	} else {
 		/* Check that the key name matches. */
@@ -1040,8 +1041,9 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 		    tctx->tlsext_tick_key_name,
 		    sizeof(tctx->tlsext_tick_key_name)))
 			goto derr;
-		if (!CBS_get_bytes(ticket, &ticket_iv,
-		    EVP_CIPHER_iv_length(EVP_aes_128_cbc())))
+		if ((iv_len = EVP_CIPHER_iv_length(EVP_aes_128_cbc())) < 0)
+			goto err;
+		if (!CBS_get_bytes(ticket, &ticket_iv, iv_len))
 			goto derr;
 		if (!EVP_DecryptInit_ex(cctx, EVP_aes_128_cbc(), NULL,
 		    tctx->tlsext_tick_aes_key, CBS_data(&ticket_iv)))
