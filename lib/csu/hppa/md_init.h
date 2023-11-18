@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.15 2020/10/15 16:30:23 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.16 2023/11/18 16:26:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -137,17 +137,13 @@
 	"	copy	%dp, %r19				\n" \
 	"	.exit						\n" \
 	"	.procend					\n" \
-	"	.export _dl_exit, entry				\n" \
-	"	.type	_dl_exit,@function			\n" \
-	"	.label _dl_exit					\n" \
+	"	.export _csu_abort, entry			\n" \
+	"	.type	_csu_abort,@function			\n" \
+	"	.label _csu_abort				\n" \
 	"	.proc						\n" \
 	"	.callinfo frame=0, calls			\n" \
 	"	.entry						\n" \
-	"_dl_exit:						\n" \
-	"	stw	%rp, -24(%sp)				\n" \
-	"	ldil	L%0xc0000000, %r1			\n" \
-	"	ble	4(%sr7, %r1)				\n" \
-	"	ldi	" STR(SYS_exit) ", %t1			\n" \
+	"_csu_abort:						\n" \
 	"	break 0,0					\n" \
 	"	.exit						\n" \
 	"	.procend")

@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.10 2023/04/25 04:10:21 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.11 2023/11/18 16:26:16 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -107,12 +107,10 @@
 	"	addq	$8,%rsp				\n" \
 	"	jmp	___start			\n" \
 	"						\n" \
-	"	.global	_dl_exit			\n" \
-	"	.type	_dl_exit,@function		\n" \
+	"	.global	_csu_abort			\n" \
+	"	.type	_csu_abort,@function		\n" \
 	"	.align	8				\n" \
-	"_dl_exit:					\n" \
+	"_csu_abort:					\n" \
 	"	endbr64					\n" \
-	"	movl	$ " STR(SYS_exit) ", %eax	\n" \
-	"	syscall					\n" \
 	"	int3					\n" \
 	"	.previous")

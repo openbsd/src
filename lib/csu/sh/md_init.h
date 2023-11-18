@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.10 2020/10/15 16:30:23 deraadt Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.11 2023/11/18 16:26:16 deraadt Exp $	*/
 /*	$NetBSD: dot_init.h,v 1.3 2005/12/24 22:02:10 perry Exp $	*/
 
 /*-
@@ -131,10 +131,8 @@ __asm(".section " #section "\n"		\
 	"	.long	_DYNAMIC - .L_offbase				\n" \
 									\
 	"	.align	2						\n" \
-	"	.globl	_dl_exit					\n" \
-	"	.type	_dl_exit,@function				\n" \
-	"_dl_exit:							\n" \
-	"	mov	#" STR(SYS_exit) ", r0				\n" \
-	"	.word	0xc380	/* trapa #0x80 */			\n" \
+	"	.globl	_csu_abort					\n" \
+	"	.type	_csu_abort,@function				\n" \
+	"_csu_abort:							\n" \
 	"	sleep	/* illegal */					\n" \
 	".previous")

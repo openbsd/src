@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.18 2022/01/31 05:43:22 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.19 2023/11/18 16:26:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -49,7 +49,7 @@ RELOC_JMPREL(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
 		p[0] = v + s->st_value + r->r_addend;
 		p[1] = pltgot;
 	} else {
-		_dl_exit(5);
+		_csu_abort();
 	}
 }
 
@@ -64,7 +64,7 @@ RELOC_DYN(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	} else if (ELF_R_TYPE(r->r_info) == RELOC_PLABEL32) {
 		*p = v + s->st_value + r->r_addend;
 	} else {
-		_dl_exit(6);
+		_csu_abort();
 	}
 }
 

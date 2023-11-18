@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2022/01/16 02:16:40 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2023/11/18 16:26:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -59,7 +59,7 @@ RELOC_DYN(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 		if (((val & 0xfe000000) != 0) &&
 		    ((val & 0xfe000000) != 0xfe000000)) {
 			/* invalid offset */
-			_dl_exit(20);
+			_csu_abort();
 		}
 		val &= ~0xfc000000;
 		val |=  0x48000000;
@@ -68,7 +68,7 @@ RELOC_DYN(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	} else if (ELF_R_TYPE((r)->r_info) == R_PPC64_GLOB_DAT) {
 		*p = v + s->st_value + r->r_addend;
 	} else {
-		_dl_exit(6);
+		_csu_abort();
 	}
 }
 

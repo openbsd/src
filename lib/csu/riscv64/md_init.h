@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.3 2021/07/22 18:16:13 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.4 2023/11/18 16:26:16 deraadt Exp $ */
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
  *
@@ -107,8 +107,6 @@
 	"	j	___start					\n" \
 	"	.size	_start, .-_start				\n" \
 	"	.size	__start, .-__start				\n" \
-	"_dl_exit:							\n" \
-	"	li	t0, " STR(SYS_exit) "				\n" \
-	"	ecall							\n" \
+	"_csu_abort:							\n" \
 	"	unimp							\n" \
 	".previous");

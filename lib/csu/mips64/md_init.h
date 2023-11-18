@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.20 2020/10/20 15:26:59 visa Exp $ */
+/* $OpenBSD: md_init.h,v 1.21 2023/11/18 16:26:16 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -140,14 +140,12 @@
 	"	dla	$t9, ___start		\n" \
 	"	jr	$t9			\n" \
 	"	.end	__start			\n" \
-	"	.globl	_dl_exit		\n" \
-	"	.ent	_dl_exit		\n" \
-	"	.type	_dl_exit, @function	\n" \
-	"_dl_exit:				\n" \
-	"	li	$v0, " STR(SYS_exit) "	\n" \
-	"	syscall				\n" \
-	"	teq	$zero, $zero, 0x52	\n" \
-	"	.end	_dl_exit		\n" \
+	"	.globl	_csu_abort		\n" \
+	"	.ent	_csu_abort		\n" \
+	"	.type	_csu_abort, @function	\n" \
+	"_csu_abort:				\n" \
+	"	teq	zero, zero, 0x52	\n" \
+	"	.end	_csu_abort		\n" \
 	"	.previous")
 
 struct kframe {

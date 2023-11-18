@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.17 2022/01/17 19:45:34 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.18 2023/11/18 16:26:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -45,7 +45,7 @@ do {									\
 		else							\
 			*adrp += val;					\
 	} else if (ELF_R_TYPE(relp->r_info) != R_MIPS_NONE) {		\
-		_dl_exit(ELF_R_TYPE(relp->r_info)+100);			\
+		_csu_abort();						\
 	}								\
 } while (0)
 
@@ -76,7 +76,7 @@ do {									\
 		if (sp->st_shndx == SHN_UNDEF ||			\
 		    sp->st_shndx == SHN_COMMON) {			\
 			if (ELF_ST_BIND(sp->st_info) != STB_WEAK)	\
-				_dl_exit(7);				\
+				_csu_abort();				\
 		} else if (ELF_ST_TYPE(sp->st_info) == STT_FUNC) {	\
 			*gotp += __loff;				\
 		} else {						\

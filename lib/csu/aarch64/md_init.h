@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.11 2023/03/31 18:46:24 kettenis Exp $ */
+/* $OpenBSD: md_init.h,v 1.12 2023/11/18 16:26:16 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -112,10 +112,6 @@
 	"					\n" \
 	"	b	___start		\n" \
 	"					\n" \
-	"_dl_exit:				\n" \
-	"	mov	x8, #" STR(SYS_exit) "	\n" \
-	"	svc	#0			\n" \
-	"	dsb	nsh			\n" \
-	"	isb				\n" \
+	"_csu_abort:				\n" \
 	"	udf	#0			\n" \
 	".previous");

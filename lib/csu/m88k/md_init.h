@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.9 2020/10/15 16:30:23 deraadt Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.10 2023/11/18 16:26:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -99,9 +99,6 @@
 	"	 addu	%r4, %r4, 4			\n" \
 	"	 /* envp = argv + argc + 1 */		\n" \
 	\
-	"_dl_exit:					\n" \
-	"	or	%r13, %r0, " STR(SYS_exit) "	\n" \
-	"	tb0	0, %r0, 450			\n" \
-	"	or	%r0, %r0, %r0			\n" \
+	"_csu_abort:					\n" \
 	"	tb0	0, %r0, 130 /* breakpoint */	\n" \
 	"	.previous");

@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.9 2020/10/15 16:30:23 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.10 2023/11/18 16:26:16 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -100,10 +100,8 @@
 	"	ba,pt	%icc, ___start		\n" \
 	"	 clr	%o1			\n" \
 	"					\n" \
-	"	.global	_dl_exit		\n" \
-	"_dl_exit:				\n" \
-	"	mov	" STR(SYS_exit) ", %g1	\n" \
-	"	t	0			\n" \
+	"	.global	_csu_abort		\n" \
+	"_csu_abort:				\n" \
 	"	unimp				\n" \
 	"	.previous")
 

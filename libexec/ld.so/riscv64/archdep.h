@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2022/01/16 02:17:05 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2023/11/18 16:26:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2021 Dale Rahn <drahn@openbsd.org>
@@ -44,7 +44,7 @@ RELOC_DYN(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	} else if (ELF_R_TYPE(r->r_info) == R_RISCV_64) {
 		*p = v + s->st_value + r->r_addend;
 	} else {
-		_dl_exit(6);
+		_csu_abort();
 	}
 }
 

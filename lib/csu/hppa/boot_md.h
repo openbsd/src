@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_md.h,v 1.4 2022/10/27 19:40:21 deraadt Exp $ */
+/*	$OpenBSD: boot_md.h,v 1.5 2023/11/18 16:26:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,7 +40,7 @@
 #include <machine/reloc.h>
 
 __dead
-void _dl_exit(int);
+void _csu_abort(void);
 
 #include "archdep.h"
 
