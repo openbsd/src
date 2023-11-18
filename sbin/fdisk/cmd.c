@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.178 2023/11/10 16:20:52 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.179 2023/11/18 15:42:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -181,6 +181,7 @@ parseflag(const char *flagstr, uint64_t *flagvalue)
 	char			*ep;
 	uint64_t		 val;
 
+	flagstr += strspn(flagstr, WHITESPACE);
 	if (flagstr[0] == '0' && (flagstr[1] == 'x' || flagstr[1] == 'X')) {
 		errno = 0;
 		val = strtoull(flagstr, &ep, 16);
