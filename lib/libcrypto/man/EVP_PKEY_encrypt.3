@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_PKEY_encrypt.3,v 1.8 2023/05/14 09:29:37 tb Exp $
+.\"	$OpenBSD: EVP_PKEY_encrypt.3,v 1.9 2023/11/19 10:09:27 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 14 2023 $
+.Dd $Mdocdate: November 19 2023 $
 .Dt EVP_PKEY_ENCRYPT 3
 .Os
 .Sh NAME
@@ -138,17 +138,15 @@ to start with the default OpenSSL RSA implementation:
 .Bd -literal -offset indent
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
-#include <openssl/engine.h>
 
 EVP_PKEY_CTX *ctx;
-ENGINE *eng;
 unsigned char *out, *in;
 size_t outlen, inlen;
 EVP_PKEY *key;
-/* NB: assumes eng, key in, inlen are already set up
+/* NB: assumes that key, in, inlen are already set up
  * and that key is an RSA public key
  */
-ctx = EVP_PKEY_CTX_new(key, eng);
+ctx = EVP_PKEY_CTX_new(key, NULL);
 if (!ctx)
 	/* Error occurred */
 if (EVP_PKEY_encrypt_init(ctx) <= 0)
