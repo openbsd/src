@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.26 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: ts.c,v 1.27 2023/11/19 09:19:54 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -599,7 +599,7 @@ create_query(BIO *data_bio, char *digest, const EVP_MD *md, const char *policy,
 	TS_MSG_IMPRINT *msg_imprint = NULL;
 	X509_ALGOR *algo = NULL;
 	unsigned char *data = NULL;
-	ASN1_OBJECT *policy_obj = NULL;
+	ASN1_OBJECT *md_obj = NULL, *policy_obj = NULL;
 	ASN1_INTEGER *nonce_asn1 = NULL;
 
 	/* Setting default message digest. */
@@ -621,11 +621,14 @@ create_query(BIO *data_bio, char *digest, const EVP_MD *md, const char *policy,
 	/* Adding algorithm. */
 	if ((algo = X509_ALGOR_new()) == NULL)
 		goto err;
-	if ((algo->algorithm = OBJ_nid2obj(EVP_MD_type(md))) == NULL)
+	if ((md_obj = OBJ_nid2obj(EVP_MD_type(md))) == NULL)
 		goto err;
-	if ((algo->parameter = ASN1_TYPE_new()) == NULL)
+	/*
+	 * This does not use X509_ALGOR_set_md() for historical reasons.
+	 * See the comment in PKCS7_SIGNER_INFO_set() for details.
+	 */
+	if (!X509_ALGOR_set0(algo, md_obj, V_ASN1_NULL, NULL))
 		goto err;
-	algo->parameter->type = V_ASN1_NULL;
 	if (!TS_MSG_IMPRINT_set_algo(msg_imprint, algo))
 		goto err;
 
