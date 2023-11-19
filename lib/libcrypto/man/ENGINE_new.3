@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_new.3,v 1.9 2023/11/19 20:54:14 tb Exp $
+.\" $OpenBSD: ENGINE_new.3,v 1.10 2023/11/19 21:13:47 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -112,7 +112,8 @@ LibreSSL no longer supports this feature.
 All functions in this manual ignore all their arguments and
 do nothing except return failure if possible.
 They are provided only to avoid patching software that expects
-ENGINE support to be available.
+.Vt ENGINE
+support to be available.
 .Sh RETURN VALUES
 .Fn ENGINE_new ,
 .Fn ENGINE_by_id ,
