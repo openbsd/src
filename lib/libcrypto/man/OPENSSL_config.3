@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_config.3,v 1.15 2019/06/14 13:41:31 schwarze Exp $
+.\" $OpenBSD: OPENSSL_config.3,v 1.16 2023/11/19 21:01:27 tb Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: November 19 2023 $
 .Dt OPENSSL_CONFIG 3
 .Os
 .Sh NAME
@@ -117,10 +117,9 @@ To use a non-standard configuration file, refer to
 Internally,
 .Fn OPENSSL_config
 calls
-.Xr OPENSSL_init_crypto 3 ,
-.Xr OPENSSL_load_builtin_modules 3 ,
+.Xr OPENSSL_init_crypto 3
 and
-.Xr ENGINE_load_builtin_engines 3 .
+.Xr OPENSSL_load_builtin_modules 3 .
 .Pp
 If an application is compiled with the preprocessor symbol
 .Dv OPENSSL_LOAD_CONF
