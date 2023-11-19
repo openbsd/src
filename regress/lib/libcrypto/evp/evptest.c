@@ -1,4 +1,4 @@
-/*	$OpenBSD: evptest.c,v 1.12 2023/03/02 20:24:51 tb Exp $	*/
+/*	$OpenBSD: evptest.c,v 1.13 2023/11/19 13:11:06 tb Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -53,9 +53,6 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/evp.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 #include <openssl/conf.h>
 
@@ -350,23 +347,6 @@ main(int argc, char **argv)
 	/* Load up the software EVP_CIPHER and EVP_MD definitions */
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
-#ifndef OPENSSL_NO_ENGINE
-	/* Load all compiled-in ENGINEs */
-	ENGINE_load_builtin_engines();
-#endif
-#if 0
-	OPENSSL_config();
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    /* Register all available ENGINE implementations of ciphers and digests.
-     * This could perhaps be changed to "ENGINE_register_all_complete()"? */
-	ENGINE_register_all_ciphers();
-	ENGINE_register_all_digests();
-    /* If we add command-line options, this statement should be switchable.
-     * It'll prevent ENGINEs being ENGINE_init()ialised for cipher/digest use if
-     * they weren't already initialised. */
-	/* ENGINE_set_cipher_flags(ENGINE_CIPHER_FLAG_NOINIT); */
-#endif
 
 	for (;;) {
 		char line[8 * 1024];
@@ -457,9 +437,6 @@ main(int argc, char **argv)
 	}
 	fclose(f);
 
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_cleanup();
-#endif
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);

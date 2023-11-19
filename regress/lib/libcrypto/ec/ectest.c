@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.21 2023/07/26 22:46:06 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.22 2023/11/19 13:11:05 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -75,9 +75,6 @@
 #include <time.h>
 
 #include <openssl/ec.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/objects.h>
@@ -769,9 +766,6 @@ main(int argc, char *argv[])
 	/* test the internal curves */
 	internal_curve_test();
 
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_cleanup();
-#endif
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
 	ERR_remove_thread_state(NULL);

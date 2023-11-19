@@ -1,4 +1,4 @@
-/*	$OpenBSD: gost2814789t.c,v 1.9 2023/06/19 18:51:47 tb Exp $	*/
+/*	$OpenBSD: gost2814789t.c,v 1.10 2023/11/19 13:11:06 tb Exp $	*/
 /* vim: set fileencoding=ascii : Charset: ASCII */
 /* test/gostr2814789t.c */
 /* ====================================================================
@@ -24,9 +24,6 @@ int main(int argc, char *argv[])
 #include <inttypes.h>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -1289,9 +1286,6 @@ int main(int argc, char *argv[])
     }
 
     ERR_load_crypto_strings();
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_load_builtin_engines();
-#endif
     OPENSSL_load_builtin_modules();
     OpenSSL_add_all_algorithms();
 

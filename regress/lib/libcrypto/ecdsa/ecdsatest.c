@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdsatest.c,v 1.17 2023/05/04 13:50:14 tb Exp $	*/
+/*	$OpenBSD: ecdsatest.c,v 1.18 2023/11/19 13:11:06 tb Exp $	*/
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -78,9 +78,6 @@
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/ecdsa.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 
 int test_builtin(void);

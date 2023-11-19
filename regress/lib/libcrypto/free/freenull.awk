@@ -1,4 +1,4 @@
-# $OpenBSD: freenull.awk,v 1.3 2023/07/28 18:29:26 tb Exp $
+# $OpenBSD: freenull.awk,v 1.4 2023/11/19 13:11:06 tb Exp $
 # Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -39,13 +39,6 @@
 /^ECPKPARAMETERS_free$/				||
 /^X9_62_CHARACTERISTIC_TWO_free$/		||
 /^X9_62_PENTANOMIAL_free$/ {
-	next
-}
-
-/^ENGINE_free$/ {
-	printf("#ifndef OPENSSL_NO_ENGINE\n")
-	printf("\tENGINE_free(NULL);\n")
-	printf("#endif\n")
 	next
 }
 

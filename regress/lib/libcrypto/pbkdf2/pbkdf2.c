@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbkdf2.c,v 1.2 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: pbkdf2.c,v 1.3 2023/11/19 13:11:06 tb Exp $	*/
 /* Written by Christian Heimes, 2013 */
 /*
  * Copyright (c) 2013 The OpenSSL Project.  All rights reserved.
@@ -56,9 +56,6 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/evp.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 #include <openssl/conf.h>
 
@@ -192,10 +189,6 @@ main(int argc,char **argv)
 	const testdata *test = test_cases;
 
 	OpenSSL_add_all_digests();
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_load_builtin_engines();
-	ENGINE_register_all_digests();
-#endif
 
 	for (n = 0; test->pass != NULL; n++, test++) {
 		test_p5_pbkdf2(n, "sha1", test, sha1_results[n]);
@@ -203,9 +196,6 @@ main(int argc,char **argv)
 		test_p5_pbkdf2(n, "sha512", test, sha512_results[n]);
 	}
 
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_cleanup();
-#endif
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);
