@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.43 2023/08/15 11:20:57 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.44 2023/11/19 13:12:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -167,9 +167,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/ssl.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
@@ -762,9 +759,6 @@ end:
 	SSL_CTX_free(c_ctx);
 	BIO_free(bio_stdout);
 
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_cleanup();
-#endif
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
 	ERR_remove_thread_state(NULL);
