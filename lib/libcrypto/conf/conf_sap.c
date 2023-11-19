@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_sap.c,v 1.14 2018/03/19 03:56:08 beck Exp $ */
+/* $OpenBSD: conf_sap.c,v 1.15 2023/11/19 15:46:09 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -67,10 +67,6 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 /* This is the automatic configuration loader: it is called automatically by
  * OpenSSL when any of a number of standard initialisation functions are called,
  * unless this is overridden by calling OPENSSL_no_config()
@@ -84,10 +80,6 @@ static void
 OPENSSL_config_internal(void)
 {
 	OPENSSL_load_builtin_modules();
-#ifndef OPENSSL_NO_ENGINE
-	/* Need to load ENGINEs */
-	ENGINE_load_builtin_engines();
-#endif
 	/* Add others here? */
 
 	ERR_clear_error();

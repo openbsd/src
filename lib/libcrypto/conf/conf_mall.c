@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mall.c,v 1.9 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: conf_mall.c,v 1.10 2023/11/19 15:46:09 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -65,10 +65,6 @@
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 /* Load all OpenSSL builtin modules */
 
 void
@@ -76,7 +72,4 @@ OPENSSL_load_builtin_modules(void)
 {
 	/* Add builtin modules here */
 	ASN1_add_oid_module();
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_add_conf_module();
-#endif
 }

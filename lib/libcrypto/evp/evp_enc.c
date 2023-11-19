@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.54 2023/11/18 09:37:15 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.55 2023/11/19 15:46:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,10 +68,6 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 #include "evp_local.h"
 
 int
@@ -94,15 +90,6 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 			enc = 1;
 		ctx->encrypt = enc;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
-	 * so this context may already have an ENGINE! Try to avoid releasing
-	 * the previous handle, re-querying for an ENGINE, and having a
-	 * reinitialisation, when it may all be unnecessary. */
-	if (ctx->engine && ctx->cipher &&
-	    (!cipher || (cipher && (cipher->nid == ctx->cipher->nid))))
-		goto skip_to_init;
-#endif
 	if (cipher) {
 		/* Ensure a context left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
@@ -114,32 +101,6 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 			ctx->encrypt = enc;
 			ctx->flags = flags;
 		}
-#ifndef OPENSSL_NO_ENGINE
-		if (impl) {
-			if (!ENGINE_init(impl)) {
-				EVPerror(EVP_R_INITIALIZATION_ERROR);
-				return 0;
-			}
-		} else
-			/* Ask if an ENGINE is reserved for this job */
-			impl = ENGINE_get_cipher_engine(cipher->nid);
-		if (impl) {
-			/* There's an ENGINE for this job ... (apparently) */
-			const EVP_CIPHER *c =
-			    ENGINE_get_cipher(impl, cipher->nid);
-			if (!c) {
-				EVPerror(EVP_R_INITIALIZATION_ERROR);
-				return 0;
-			}
-			/* We'll use the ENGINE's private cipher definition */
-			cipher = c;
-			/* Store the ENGINE functional reference so we know
-			 * 'cipher' came from an ENGINE and we need to release
-			 * it when done. */
-			ctx->engine = impl;
-		} else
-			ctx->engine = NULL;
-#endif
 
 		ctx->cipher = cipher;
 		if (ctx->cipher->ctx_size) {
@@ -163,9 +124,6 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 		EVPerror(EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
-#ifndef OPENSSL_NO_ENGINE
-skip_to_init:
-#endif
 	/* we assume block size is a power of 2 in *cryptUpdate */
 	if (ctx->cipher->block_size != 1 &&
 	    ctx->cipher->block_size != 8 &&
@@ -614,10 +572,6 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	/* XXX - store size of cipher_data so we can always freezero(). */
 	free(c->cipher_data);
 
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(c->engine);
-#endif
-
 	explicit_bzero(c, sizeof(EVP_CIPHER_CTX));
 
 	return 1;
@@ -688,13 +642,6 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 		EVPerror(EVP_R_INPUT_NOT_INITIALIZED);
 		return 0;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	/* Make sure it's safe to copy a cipher context using an ENGINE */
-	if (in->engine && !ENGINE_init(in->engine)) {
-		EVPerror(ERR_R_ENGINE_LIB);
-		return 0;
-	}
-#endif
 
 	EVP_CIPHER_CTX_cleanup(out);
 	memcpy(out, in, sizeof *out);

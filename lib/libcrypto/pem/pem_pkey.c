@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pkey.c,v 1.27 2023/07/07 13:40:44 beck Exp $ */
+/* $OpenBSD: pem_pkey.c,v 1.28 2023/11/19 15:46:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,10 +68,6 @@
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
-
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 #include "asn1_local.h"
 #include "evp_local.h"

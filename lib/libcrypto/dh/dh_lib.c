@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.41 2023/08/13 12:09:14 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.42 2023/11/19 15:46:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,10 +65,6 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 #include "dh_local.h"
 
 static const DH_METHOD *default_DH_method = NULL;
@@ -101,10 +97,6 @@ DH_set_method(DH *dh, const DH_METHOD *meth)
 	mtmp = dh->meth;
 	if (mtmp->finish)
 		mtmp->finish(dh);
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(dh->engine);
-	dh->engine = NULL;
-#endif
 	dh->meth = meth;
 	if (meth->init)
 		meth->init(dh);
@@ -133,24 +125,6 @@ DH_new_method(ENGINE *engine)
 	dh->flags = dh->meth->flags & ~DH_FLAG_NON_FIPS_ALLOW;
 	dh->references = 1;
 
-#ifndef OPENSSL_NO_ENGINE
-	if (engine != NULL) {
-		if (!ENGINE_init(engine)) {
-			DHerror(ERR_R_ENGINE_LIB);
-			goto err;
-		}
-		dh->engine = engine;
-	} else
-		dh->engine = ENGINE_get_default_DH();
-	if (dh->engine != NULL) {
-		if ((dh->meth = ENGINE_get_DH(dh->engine)) == NULL) {
-			DHerror(ERR_R_ENGINE_LIB);
-			goto err;
-		}
-		dh->flags = dh->meth->flags & ~DH_FLAG_NON_FIPS_ALLOW;
-	}
-#endif
-
 	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, dh, &dh->ex_data))
 		goto err;
 	if (dh->meth->init != NULL && !dh->meth->init(dh))
@@ -178,9 +152,6 @@ DH_free(DH *r)
 
 	if (r->meth != NULL && r->meth->finish != NULL)
 		r->meth->finish(r);
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(r->engine);
-#endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 

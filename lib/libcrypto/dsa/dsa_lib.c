@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.44 2023/08/12 06:14:36 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.45 2023/11/19 15:46:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,9 +70,6 @@
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 #include "dh_local.h"
 #include "dsa_local.h"
@@ -113,10 +110,6 @@ DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
 	mtmp = dsa->meth;
 	if (mtmp->finish)
 		mtmp->finish(dsa);
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(dsa->engine);
-	dsa->engine = NULL;
-#endif
 	dsa->meth = meth;
 	if (meth->init)
 		meth->init(dsa);
@@ -137,24 +130,6 @@ DSA_new_method(ENGINE *engine)
 	dsa->meth = DSA_get_default_method();
 	dsa->flags = dsa->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 	dsa->references = 1;
-
-#ifndef OPENSSL_NO_ENGINE
-	if (engine) {
-		if (!ENGINE_init(engine)) {
-			DSAerror(ERR_R_ENGINE_LIB);
-			goto err;
-		}
-		dsa->engine = engine;
-	} else
-		dsa->engine = ENGINE_get_default_DSA();
-	if (dsa->engine != NULL) {
-		if ((dsa->meth = ENGINE_get_DSA(dsa->engine)) == NULL) {
-			DSAerror(ERR_R_ENGINE_LIB);
-			goto err;
-		}
-		dsa->flags = dsa->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
-	}
-#endif
 
 	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, dsa, &dsa->ex_data))
 		goto err;
@@ -184,9 +159,6 @@ DSA_free(DSA *r)
 
 	if (r->meth != NULL && r->meth->finish != NULL)
 		r->meth->finish(r);
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(r->engine);
-#endif
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
 

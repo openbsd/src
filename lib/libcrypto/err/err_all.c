@@ -1,4 +1,4 @@
-/* $OpenBSD: err_all.c,v 1.32 2023/07/28 09:46:36 tb Exp $ */
+/* $OpenBSD: err_all.c,v 1.33 2023/11/19 15:46:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,9 +91,6 @@
 #ifndef OPENSSL_NO_EC
 #include <openssl/ec.h>
 #endif
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
@@ -129,9 +126,6 @@ ERR_load_crypto_strings_internal(void)
 #endif
 #ifndef OPENSSL_NO_EC
 	ERR_load_EC_strings();
-#endif
-#ifndef OPENSSL_NO_ENGINE
-	ERR_load_ENGINE_strings();
 #endif
 	ERR_load_EVP_strings();
 #ifndef OPENSSL_NO_GOST

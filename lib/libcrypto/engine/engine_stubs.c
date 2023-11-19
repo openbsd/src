@@ -1,12 +1,10 @@
-/*	$OpenBSD: engine_stubs.c,v 1.1 2023/07/21 09:04:23 tb Exp $ */
+/*	$OpenBSD: engine_stubs.c,v 1.2 2023/11/19 15:46:09 tb Exp $ */
 
 /*
  * Written by Theo Buehler. Public domain.
  */
 
 #include <openssl/engine.h>
-
-#ifdef OPENSSL_NO_ENGINE
 
 void
 ENGINE_load_builtin_engines(void)
@@ -121,5 +119,3 @@ ENGINE_load_public_key(ENGINE *engine, const char *key_id,
 {
 	return NULL;
 }
-
-#endif

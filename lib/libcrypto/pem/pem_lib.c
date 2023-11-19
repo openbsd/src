@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.53 2023/07/07 13:40:44 beck Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.54 2023/11/19 15:46:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,9 +73,6 @@
 
 #ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
-#endif
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
 #endif
 
 #include "asn1_local.h"
@@ -231,9 +228,6 @@ check_pem(const char *nm, const char *name)
 					r = 1;
 				else
 					r = 0;
-#ifndef OPENSSL_NO_ENGINE
-				ENGINE_finish(e);
-#endif
 				return r;
 			}
 		}

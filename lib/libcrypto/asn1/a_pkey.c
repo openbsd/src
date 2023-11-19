@@ -1,4 +1,4 @@
-/* $OpenBSD: a_pkey.c,v 1.6 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: a_pkey.c,v 1.7 2023/11/19 15:46:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,10 +67,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 #include "asn1_local.h"
 #include "evp_local.h"
 
@@ -87,10 +83,6 @@ d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 		}
 	} else {
 		ret = *a;
-#ifndef OPENSSL_NO_ENGINE
-		ENGINE_finish(ret->engine);
-		ret->engine = NULL;
-#endif
 	}
 
 	if (!EVP_PKEY_set_type(ret, type)) {

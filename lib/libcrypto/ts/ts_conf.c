@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_conf.c,v 1.12 2023/07/07 07:25:21 beck Exp $ */
+/* $OpenBSD: ts_conf.c,v 1.13 2023/11/19 15:46:10 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -64,10 +64,6 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/ts.h>
-
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 /* Macro definitions for the configuration file. */
 
@@ -210,56 +206,6 @@ err:
 	return ret;
 }
 LCRYPTO_ALIAS(TS_CONF_set_serial);
-
-#ifndef OPENSSL_NO_ENGINE
-
-int
-TS_CONF_set_crypto_device(CONF *conf, const char *section, const char *device)
-{
-	int ret = 0;
-
-	if (!device)
-		device = NCONF_get_string(conf, section, ENV_CRYPTO_DEVICE);
-
-	if (device && !TS_CONF_set_default_engine(device)) {
-		TS_CONF_invalid(section, ENV_CRYPTO_DEVICE);
-		goto err;
-	}
-	ret = 1;
-
-err:
-	return ret;
-}
-LCRYPTO_ALIAS(TS_CONF_set_crypto_device);
-
-int
-TS_CONF_set_default_engine(const char *name)
-{
-	ENGINE *e = NULL;
-	int ret = 0;
-
-	/* Leave the default if builtin specified. */
-	if (strcmp(name, "builtin") == 0)
-		return 1;
-
-	if (!(e = ENGINE_by_id(name)))
-		goto err;
-	/* All the operations are going to be carried out by the engine. */
-	if (!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-		goto err;
-	ret = 1;
-
-err:
-	if (!ret) {
-		TSerror(TS_R_COULD_NOT_SET_ENGINE);
-		ERR_asprintf_error_data("engine:%s", name);
-	}
-	ENGINE_free(e);
-	return ret;
-}
-LCRYPTO_ALIAS(TS_CONF_set_default_engine);
-
-#endif
 
 int
 TS_CONF_set_signer_cert(CONF *conf, const char *section, const char *cert,

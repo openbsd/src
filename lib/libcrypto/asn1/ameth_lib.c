@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.32 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.33 2023/11/19 15:46:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -63,10 +63,6 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 #include "asn1_local.h"
 #include "evp_local.h"
@@ -170,15 +166,6 @@ EVP_PKEY_asn1_find(ENGINE **pe, int type)
 		type = mp->pkey_base_id;
 	}
 	if (pe) {
-#ifndef OPENSSL_NO_ENGINE
-		ENGINE *e;
-		/* type will contain the final unaliased type */
-		e = ENGINE_get_pkey_asn1_meth_engine(type);
-		if (e) {
-			*pe = e;
-			return ENGINE_get_pkey_asn1_meth(e, type);
-		}
-#endif
 		*pe = NULL;
 	}
 	return mp;
@@ -193,20 +180,6 @@ EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
 	if (len == -1)
 		len = strlen(str);
 	if (pe) {
-#ifndef OPENSSL_NO_ENGINE
-		ENGINE *e;
-		ameth = ENGINE_pkey_asn1_find_str(&e, str, len);
-		if (ameth) {
-			/* Convert structural into
-			 * functional reference
-			 */
-			if (!ENGINE_init(e))
-				ameth = NULL;
-			ENGINE_free(e);
-			*pe = e;
-			return ameth;
-		}
-#endif
 		*pe = NULL;
 	}
 	for (i = EVP_PKEY_asn1_get_count() - 1; i >= 0; i--) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.12 2023/07/28 09:28:37 tb Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.13 2023/11/19 15:46:09 tb Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -53,9 +53,6 @@
  */
 
 #include <openssl/ec.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 
 #include "bn_local.h"
@@ -126,11 +123,6 @@ EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
 	if (finish != NULL)
 		finish(key);
 
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(key->engine);
-	key->engine = NULL;
-#endif
-
 	key->meth = meth;
 	if (meth->init != NULL)
 		return meth->init(key);
@@ -148,23 +140,6 @@ EC_KEY_new_method(ENGINE *engine)
 		return NULL;
 	}
 	ret->meth = EC_KEY_get_default_method();
-#ifndef OPENSSL_NO_ENGINE
-	if (engine != NULL) {
-		if (!ENGINE_init(engine)) {
-			ECerror(ERR_R_ENGINE_LIB);
-			goto err;
-		}
-		ret->engine = engine;
-	} else
-		ret->engine = ENGINE_get_default_EC();
-	if (ret->engine) {
-		ret->meth = ENGINE_get_EC(ret->engine);
-		if (ret->meth == NULL) {
-			ECerror(ERR_R_ENGINE_LIB);
-			goto err;
-		}
-	}
-#endif
 	ret->version = 1;
 	ret->flags = 0;
 	ret->group = NULL;

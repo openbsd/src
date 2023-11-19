@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.38 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: digest.c,v 1.39 2023/11/19 15:46:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,10 +118,6 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
-
 #include "evp_local.h"
 
 int
@@ -136,49 +132,6 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 {
 	EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
 
-#ifndef OPENSSL_NO_ENGINE
-	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
-	 * so this context may already have an ENGINE! Try to avoid releasing
-	 * the previous handle, re-querying for an ENGINE, and having a
-	 * reinitialisation, when it may all be unnecessary. */
-	if (ctx->engine && ctx->digest && (!type ||
-	    (type && (type->type == ctx->digest->type))))
-		goto skip_to_init;
-	if (type) {
-		/* Ensure an ENGINE left lying around from last time is cleared
-		 * (the previous check attempted to avoid this if the same
-		 * ENGINE and EVP_MD could be used). */
-		ENGINE_finish(ctx->engine);
-		if (impl != NULL) {
-			if (!ENGINE_init(impl)) {
-				EVPerror(EVP_R_INITIALIZATION_ERROR);
-				return 0;
-			}
-		} else
-			/* Ask if an ENGINE is reserved for this job */
-			impl = ENGINE_get_digest_engine(type->type);
-		if (impl != NULL) {
-			/* There's an ENGINE for this job ... (apparently) */
-			const EVP_MD *d = ENGINE_get_digest(impl, type->type);
-			if (d == NULL) {
-				/* Same comment from evp_enc.c */
-				EVPerror(EVP_R_INITIALIZATION_ERROR);
-				ENGINE_finish(impl);
-				return 0;
-			}
-			/* We'll use the ENGINE's private digest definition */
-			type = d;
-			/* Store the ENGINE functional reference so we know
-			 * 'type' came from an ENGINE and we need to release
-			 * it when done. */
-			ctx->engine = impl;
-		} else
-			ctx->engine = NULL;
-	} else if (!ctx->digest) {
-		EVPerror(EVP_R_NO_DIGEST_SET);
-		return 0;
-	}
-#endif
 	if (ctx->digest != type) {
 		if (ctx->digest && ctx->digest->ctx_size && ctx->md_data &&
 		    !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
@@ -197,9 +150,6 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			}
 		}
 	}
-#ifndef OPENSSL_NO_ENGINE
-skip_to_init:
-#endif
 	if (ctx->pctx) {
 		int r;
 		r = EVP_PKEY_CTX_ctrl(ctx->pctx, -1, EVP_PKEY_OP_TYPE_SIG,
@@ -266,13 +216,6 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 		EVPerror(EVP_R_INPUT_NOT_INITIALIZED);
 		return 0;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	/* Make sure it's safe to copy a digest context using an ENGINE */
-	if (in->engine && !ENGINE_init(in->engine)) {
-		EVPerror(ERR_R_ENGINE_LIB);
-		return 0;
-	}
-#endif
 
 	if (out->digest == in->digest) {
 		tmp_buf = out->md_data;
@@ -397,9 +340,6 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	 */
 	if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
 		EVP_PKEY_CTX_free(ctx->pctx);
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(ctx->engine);
-#endif
 	memset(ctx, 0, sizeof(*ctx));
 
 	return 1;
