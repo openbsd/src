@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine_stubs.c,v 1.2 2023/11/19 15:46:09 tb Exp $ */
+/*	$OpenBSD: engine_stubs.c,v 1.3 2023/11/19 15:47:40 tb Exp $ */
 
 /*
  * Written by Theo Buehler. Public domain.
@@ -93,7 +93,7 @@ ENGINE_set_default_RSA(ENGINE *engine)
 }
 
 int
-ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name, long i, void *p,
+ENGINE_ctrl_cmd(ENGINE *engine, const char *cmd_name, long i, void *p,
     void (*f)(void), int cmd_optional)
 {
 	return 0;
