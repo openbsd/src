@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.161 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.162 2023/11/19 15:50:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,9 +161,6 @@
 #include <openssl/objects.h>
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #ifndef OPENSSL_NO_GOST
 #include <openssl/gost.h>
 #endif
@@ -2527,20 +2524,10 @@ ssl3_check_finished(SSL *s)
 static int
 ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 {
-	int	i = 0;
+	if (s->ctx->client_cert_cb == NULL)
+		return 0;
 
-#ifndef OPENSSL_NO_ENGINE
-	if (s->ctx->client_cert_engine) {
-		i = ENGINE_load_ssl_client_cert(
-		    s->ctx->client_cert_engine, s,
-		    SSL_get_client_CA_list(s), px509, ppkey, NULL, NULL, NULL);
-		if (i != 0)
-			return (i);
-	}
-#endif
-	if (s->ctx->client_cert_cb)
-		i = s->ctx->client_cert_cb(s, px509, ppkey);
-	return (i);
+	return s->ctx->client_cert_cb(s, px509, ppkey);
 }
 
 static int
