@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.33 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.34 2023/11/19 15:43:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -67,10 +67,6 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
-
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 #include "asn1_local.h"
 #include "evp_local.h"
@@ -161,26 +157,8 @@ evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *engine, int id)
 			return NULL;
 		id = pkey->ameth->pkey_id;
 	}
-#ifndef OPENSSL_NO_ENGINE
-	if (pkey != NULL && pkey->engine != NULL)
-		engine = pkey->engine;
-	/* Try to find an ENGINE which implements this method. */
-	if (engine != NULL) {
-		if (!ENGINE_init(engine)) {
-			EVPerror(ERR_R_ENGINE_LIB);
-			return NULL;
-		}
-	} else
-		engine = ENGINE_get_pkey_meth_engine(id);
 
-	/* Look up method handler in ENGINE or use internal tables. */
-	if (engine != NULL)
-		pmeth = ENGINE_get_pkey_meth(engine, id);
-	else
-#endif
-		pmeth = EVP_PKEY_meth_find(id);
-
-	if (pmeth == NULL) {
+	if ((pmeth = EVP_PKEY_meth_find(id)) == NULL) {
 		EVPerror(EVP_R_UNSUPPORTED_ALGORITHM);
 		goto err;
 	}
@@ -205,9 +183,6 @@ evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *engine, int id)
 
  err:
 	EVP_PKEY_CTX_free(pkey_ctx);
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(engine);
-#endif
 
 	return NULL;
 }
@@ -275,22 +250,12 @@ EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 
 	if (pctx->pmeth == NULL || pctx->pmeth->copy == NULL)
 		goto err;
-#ifndef OPENSSL_NO_ENGINE
-	/* Make sure it's safe to copy a pkey context using an ENGINE */
-	if (pctx->engine != NULL && !ENGINE_init(pctx->engine)) {
-		EVPerror(ERR_R_ENGINE_LIB);
-		goto err;
-	}
-#endif
 	if ((rctx = calloc(1, sizeof(*rctx))) == NULL) {
 		EVPerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	rctx->pmeth = pctx->pmeth;
-#ifndef OPENSSL_NO_ENGINE
-	rctx->engine = pctx->engine;
-#endif
 
 	if ((rctx->pkey = pctx->pkey) != NULL)
 		EVP_PKEY_up_ref(rctx->pkey);
@@ -333,9 +298,6 @@ EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 		ctx->pmeth->cleanup(ctx);
 	EVP_PKEY_free(ctx->pkey);
 	EVP_PKEY_free(ctx->peerkey);
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(ctx->engine);
-#endif
 	free(ctx);
 }
 
