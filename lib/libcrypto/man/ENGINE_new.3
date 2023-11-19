@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_new.3,v 1.7 2023/11/19 11:50:02 tb Exp $
+.\" $OpenBSD: ENGINE_new.3,v 1.8 2023/11/19 15:40:12 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,6 +23,8 @@
 .Nm ENGINE_free ,
 .Nm ENGINE_init ,
 .Nm ENGINE_finish ,
+.Nm ENGINE_ctrl_cmd ,
+.Nm ENGINE_ctrl_cmd_string ,
 .Nm ENGINE_by_id ,
 .Nm ENGINE_get_id ,
 .Nm ENGINE_get_name ,
@@ -34,7 +36,8 @@
 .Nm ENGINE_load_builtin_engines ,
 .Nm ENGINE_load_dynamic ,
 .Nm ENGINE_load_openssl ,
-.Nm ENGINE_register_all_complete
+.Nm ENGINE_register_all_complete ,
+.Nm ENGINE_cleanup
 .Nd ENGINE stub functions
 .Sh SYNOPSIS
 .In openssl/engine.h
@@ -48,6 +51,22 @@
 .Fn ENGINE_init "ENGINE *engine"
 .Ft int
 .Fn ENGINE_finish "ENGINE *engine"
+.Ft int
+.Fo ENGINE_ctrl_cmd
+.Fa "ENGINE *engine"
+.Fa "const char *cmd_name"
+.Fa "long i"
+.Fa "void *p"
+.Fa "void (*f)(void)"
+.Fa "int cmd_optional"
+.Fc
+.Ft int
+.Fo ENGINE_ctrl_cmd_string
+.Fa "ENGINE *engine"
+.Fa "const char *cmd_name"
+.Fa "const char *arg"
+.Fa "int cmd_optional"
+.Fc
 .Ft ENGINE *
 .Fn ENGINE_by_id "const char *id"
 .Ft const char *
@@ -82,6 +101,8 @@
 .Fn ENGINE_load_openssl "void"
 .Ft int
 .Fn ENGINE_register_all_complete "void"
+.Ft void
+.Fn ENGINE_cleanup "void"
 .Sh DESCRIPTION
 .Vt ENGINE
 objects used to provide alternative implementations of
@@ -105,6 +126,8 @@ always return
 .Fn ENGINE_free ,
 .Fn ENGINE_init ,
 .Fn ENGINE_finish ,
+.Fn ENGINE_ctrl_cmd ,
+.Fn ENGINE_ctrl_cmd_string ,
 .Fn ENGINE_set_default ,
 .Fn ENGINE_set_default_RSA ,
 and
@@ -135,10 +158,13 @@ first appeared in OpenSSL 0.9.7
 and have been available since
 .Ox 2.9 .
 .Pp
+.Fn ENGINE_ctrl_cmd ,
+.Fn ENGINE_ctrl_cmd_string ,
 .Fn ENGINE_load_builtin_engines ,
 .Fn ENGINE_load_openssl ,
+.Fn ENGINE_register_all_complete ,
 and
-.Fn ENGINE_register_all_complete
+.Fn ENGINE_cleanup
 first appeared in OpenSSL 0.9.7
 and have been available since
 .Ox 3.4 .
