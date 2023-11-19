@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.314 2023/09/19 01:22:31 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.315 2023/11/19 15:51:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,10 +153,6 @@
 #include <openssl/ocsp.h>
 #include <openssl/opensslconf.h>
 #include <openssl/x509v3.h>
-
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 
 #include "bytestring.h"
 #include "dtls_local.h"
@@ -2164,26 +2160,6 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->tlsext_status_cb = 0;
 	ret->tlsext_status_arg = NULL;
 
-#ifndef OPENSSL_NO_ENGINE
-	ret->client_cert_engine = NULL;
-#ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
-#define eng_strx(x)	#x
-#define eng_str(x)	eng_strx(x)
-	/* Use specific client engine automatically... ignore errors */
-	{
-		ENGINE *eng;
-		eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
-		if (!eng) {
-			ERR_clear_error();
-			ENGINE_load_builtin_engines();
-			eng = ENGINE_by_id(eng_str(
-			    OPENSSL_SSL_CLIENT_ENGINE_AUTO));
-		}
-		if (!eng || !SSL_CTX_set_client_cert_engine(ret, eng))
-			ERR_clear_error();
-	}
-#endif
-#endif
 	/*
 	 * Default is to connect to non-RI servers. When RI is more widely
 	 * deployed might change this.
@@ -2239,10 +2215,6 @@ SSL_CTX_free(SSL_CTX *ctx)
 #ifndef OPENSSL_NO_SRTP
 	if (ctx->srtp_profiles)
 		sk_SRTP_PROTECTION_PROFILE_free(ctx->srtp_profiles);
-#endif
-
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(ctx->client_cert_engine);
 #endif
 
 	free(ctx->tlsext_ecpointformatlist);

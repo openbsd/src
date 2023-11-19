@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.7 2023/07/06 07:56:32 beck Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.8 2023/11/19 15:51:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -864,12 +864,6 @@ struct ssl_ctx_st {
 	 * padding and MAC overheads.
 	 */
 	unsigned int max_send_fragment;
-
-#ifndef OPENSSL_NO_ENGINE
-	/* Engine to pass requests for client certs to
-	 */
-	ENGINE *client_cert_engine;
-#endif
 
 	/* RFC 4507 session ticket keys */
 	unsigned char tlsext_tick_key_name[16];

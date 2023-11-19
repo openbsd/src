@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.230 2022/12/26 07:31:44 jmc Exp $ */
+/* $OpenBSD: ssl.h,v 1.231 2023/11/19 15:51:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -610,9 +610,6 @@ void SSL_CTX_set_client_cert_cb(SSL_CTX *ctx,
     int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey));
 int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL *ssl, X509 **x509,
     EVP_PKEY **pkey);
-#ifndef OPENSSL_NO_ENGINE
-int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e);
-#endif
 void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
     int (*app_gen_cookie_cb)(SSL *ssl, unsigned char *cookie,
     unsigned int *cookie_len));
