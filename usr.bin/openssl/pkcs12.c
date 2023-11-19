@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.25 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.26 2023/11/19 09:29:11 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1010,15 +1010,18 @@ get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **out_chain)
 static int
 alg_print(BIO *x, const X509_ALGOR *alg)
 {
-	PBEPARAM *pbe;
-	const unsigned char *p;
+	PBEPARAM *pbe = NULL;
+	const ASN1_OBJECT *aobj;
+	int param_type;
+	const void *param;
 
-	p = alg->parameter->value.sequence->data;
-	pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
+	X509_ALGOR_get0(&aobj, &param_type, &param, alg);
+	if (param_type == V_ASN1_SEQUENCE)
+		pbe = ASN1_item_unpack(param, &PBEPARAM_it);
 	if (pbe == NULL)
 		return 1;
 	BIO_printf(bio_err, "%s, Iteration %ld\n",
-	    OBJ_nid2ln(OBJ_obj2nid(alg->algorithm)),
+	    OBJ_nid2ln(OBJ_obj2nid(aobj)),
 	    ASN1_INTEGER_get(pbe->iter));
 	PBEPARAM_free(pbe);
 	return 1;
