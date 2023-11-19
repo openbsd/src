@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2023/11/15 15:52:09 otto Exp $ */
+/*	$OpenBSD: util.c,v 1.27 2023/11/19 10:41:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -18,6 +18,7 @@
 
 #include <fcntl.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
