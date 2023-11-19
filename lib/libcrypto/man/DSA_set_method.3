@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DSA_set_method.3,v 1.10 2022/01/15 23:38:50 jsg Exp $
+.\"	$OpenBSD: DSA_set_method.3,v 1.11 2023/11/19 10:34:26 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2022 $
+.Dd $Mdocdate: November 19 2023 $
 .Dt DSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -93,16 +93,9 @@ selects
 as the default method for all
 .Vt DSA
 structures created later.
-If any
-.Vt ENGINE
-was registered with
-.Xr ENGINE_register_DSA 3
-that can be successfully initialized, it overrides the default.
 .Pp
 .Fn DSA_get_default_method
-returns a pointer to the current default method,
-even if it is actually overridden by an
-.Vt ENGINE .
+returns a pointer to the current default method.
 .Pp
 .Fn DSA_set_method
 selects
@@ -111,15 +104,10 @@ to perform all operations using the key
 .Fa dsa .
 This replaces the
 .Vt DSA_METHOD
-used by the DSA key and if the previous method was supplied by an
-.Vt ENGINE ,
-.Xr ENGINE_finish 3
-is called on it.
+used by the DSA key.
 It is possible to have DSA keys that only work with certain
 .Vt DSA_METHOD
-implementations (e.g. from an
-.Vt ENGINE
-module that supports embedded hardware-protected keys),
+implementations,
 and in such cases attempting to change the
 .Vt DSA_METHOD
 for the key can have unexpected results.
@@ -127,17 +115,10 @@ for the key can have unexpected results.
 .Fn DSA_new_method
 allocates and initializes a
 .Vt DSA
-structure so that
+structure.
+The
 .Fa engine
-is used for the DSA operations.
-If
-.Fa engine
-is
-.Dv NULL ,
-.Xr ENGINE_get_default_DSA 3
-is used.
-If that returns
-.Dv NULL ,
+argument is ignored and
 the default method controlled by
 .Fn DSA_set_default_method
 is used.
@@ -206,10 +187,7 @@ if the allocation fails.
 Otherwise it returns a pointer to the newly allocated structure.
 .Sh SEE ALSO
 .Xr DSA_meth_new 3 ,
-.Xr DSA_new 3 ,
-.Xr ENGINE_get_default_DSA 3 ,
-.Xr ENGINE_register_DSA 3 ,
-.Xr ENGINE_set_default_DSA 3
+.Xr DSA_new 3
 .Sh HISTORY
 .Fn DSA_set_default_method ,
 .Fn DSA_get_default_method ,

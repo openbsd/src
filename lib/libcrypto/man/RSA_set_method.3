@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_set_method.3,v 1.17 2023/05/14 09:33:19 tb Exp $
+.\"	$OpenBSD: RSA_set_method.3,v 1.18 2023/11/19 10:34:26 tb Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 14 2023 $
+.Dd $Mdocdate: November 19 2023 $
 .Dt RSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -105,16 +105,9 @@ selects
 as the default method for all
 .Vt RSA
 structures created later.
-If any
-.Vt ENGINE
-was registered with
-.Xr ENGINE_register_RSA 3
-that can be successfully initialized, it overrides the default.
 .Pp
 .Fn RSA_get_default_method
-returns a pointer to the current default method,
-even if it is actually overridden by an
-.Vt ENGINE .
+returns a pointer to the current default method.
 .Pp
 .Fn RSA_set_method
 selects
@@ -127,10 +120,7 @@ used by the RSA key, calling the
 .Fa finish
 function set up with
 .Xr RSA_meth_set_finish 3
-if any, and if the previous method was supplied by an
-.Vt ENGINE ,
-.Xr ENGINE_finish 3
-is called on it.
+if any.
 If
 .Fa meth
 contains an
@@ -142,9 +132,7 @@ that function is called just before returning from
 .Pp
 It is possible to have RSA keys that only work with certain
 .Vt RSA_METHOD
-implementations (e.g. from an
-.Vt ENGINE
-module that supports embedded hardware-protected keys),
+implementations,
 and in such cases attempting to change the
 .Vt RSA_METHOD
 for the key can have unexpected results.
@@ -154,12 +142,6 @@ returns a pointer to the
 .Vt RSA_METHOD
 being used by
 .Fa rsa .
-This method may or may not be supplied by an
-.Vt ENGINE
-implementation but if it is, the return value can only be guaranteed
-to be valid as long as the RSA key itself is valid and does not
-have its implementation changed by
-.Fn RSA_set_method .
 .Pp
 The misleadingly named function
 .Fn RSA_flags
@@ -178,17 +160,10 @@ section for more details.
 .Fn RSA_new_method
 allocates and initializes an
 .Vt RSA
-structure so that
+structure.
+The
 .Fa engine
-is used for the RSA operations.
-If
-.Fa engine
-is
-.Dv NULL ,
-.Xr ENGINE_get_default_RSA 3
-is used.
-If that returns
-.Dv NULL ,
+argument is ignored and
 the default method controlled by
 .Fn RSA_set_default_method
 is used.
@@ -224,9 +199,6 @@ and sets an error code that can be obtained by
 if the allocation fails.
 Otherwise it returns a pointer to the newly allocated structure.
 .Sh SEE ALSO
-.Xr ENGINE_get_default_RSA 3 ,
-.Xr ENGINE_register_RSA 3 ,
-.Xr ENGINE_set_default_RSA 3 ,
 .Xr RSA_meth_new 3 ,
 .Xr RSA_new 3
 .Sh HISTORY
