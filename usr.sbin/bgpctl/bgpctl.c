@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.297 2023/11/20 14:40:52 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.298 2023/11/20 14:41:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -60,7 +60,7 @@ void		 network_bulk(struct parse_result *);
 int		 match_aspath(void *, uint16_t, struct filter_as *);
 struct flowspec	*res_to_flowspec(struct parse_result *);
 
-struct imsgbuf	*ibuf;
+struct imsgbuf	*imsgbuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
 struct mrt_parser net_mrt = { network_mrt_dump, NULL, NULL };
 const struct output	*output = &show_output;
@@ -174,9 +174,9 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((imsgbuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsg_init(ibuf, fd);
+	imsg_init(imsgbuf, fd);
 	done = 0;
 
 	switch (res->action) {
@@ -186,10 +186,11 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	case SHOW:
 	case SHOW_SUMMARY:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
+		    NULL, 0);
 		break;
 	case SHOW_SUMMARY_TERSE:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_TERSE, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_TERSE, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_FIB:
 		if (!res->addr.aid) {
@@ -197,7 +198,7 @@ main(int argc, char *argv[])
 			sa_family_t	 af;
 
 			af = aid2af(res->aid);
-			if ((msg = imsg_create(ibuf, IMSG_CTL_KROUTE,
+			if ((msg = imsg_create(imsgbuf, IMSG_CTL_KROUTE,
 			    res->rtableid, 0, sizeof(res->flags) +
 			    sizeof(af))) == NULL)
 				errx(1, "imsg_create failure");
@@ -205,36 +206,39 @@ main(int argc, char *argv[])
 			    -1 ||
 			    imsg_add(msg, &af, sizeof(af)) == -1)
 				errx(1, "imsg_add failure");
-			imsg_close(ibuf, msg);
+			imsg_close(imsgbuf, msg);
 		} else
-			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, res->rtableid,
-			    0, -1, &res->addr, sizeof(res->addr));
+			imsg_compose(imsgbuf, IMSG_CTL_KROUTE_ADDR,
+			    res->rtableid, 0, -1,
+			    &res->addr, sizeof(res->addr));
 		break;
 	case SHOW_FIB_TABLES:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_FIB_TABLES, 0, 0, -1, NULL, 0);
-		break;
-	case SHOW_NEXTHOP:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_NEXTHOP, res->rtableid, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_FIB_TABLES, 0, 0, -1,
 		    NULL, 0);
 		break;
+	case SHOW_NEXTHOP:
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_NEXTHOP, res->rtableid,
+		    0, -1, NULL, 0);
+		break;
 	case SHOW_INTERFACE:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_INTERFACE, 0, 0, -1,
+		    NULL, 0);
 		break;
 	case SHOW_SET:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_SET, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_SET, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_RTR:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_RTR, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_RTR, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
 	case SHOW_NEIGHBOR_TERSE:
 		neighbor.show_timers = (res->action == SHOW_NEIGHBOR_TIMERS);
 		if (res->peeraddr.aid || res->peerdesc[0])
-			imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
+			imsg_compose(imsgbuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
 			    &neighbor, sizeof(neighbor));
 		else
-			imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
+			imsg_compose(imsgbuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
 			    NULL, 0);
 		break;
 	case SHOW_RIB:
@@ -254,19 +258,20 @@ main(int argc, char *argv[])
 		ribreq.aid = res->aid;
 		ribreq.path_id = res->pathid;
 		ribreq.flags = res->flags;
-		imsg_compose(ibuf, type, 0, 0, -1, &ribreq, sizeof(ribreq));
+		imsg_compose(imsgbuf, type, 0, 0, -1, &ribreq, sizeof(ribreq));
 		break;
 	case SHOW_RIB_MEM:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_METRICS:
 		output = &ometric_output;
 		numdone = 2;
-		imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1, NULL, 0);
-		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
+		    NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
 		break;
 	case RELOAD:
-		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_RELOAD, 0, 0, -1,
 		    res->reason, sizeof(res->reason));
 		if (res->reason[0])
 			printf("reload request sent: %s\n", res->reason);
@@ -277,14 +282,14 @@ main(int argc, char *argv[])
 		errx(1, "action==FIB");
 		break;
 	case FIB_COUPLE:
-		imsg_compose(ibuf, IMSG_CTL_FIB_COUPLE, res->rtableid, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_FIB_COUPLE, res->rtableid, 0, -1,
 		    NULL, 0);
 		printf("couple request sent.\n");
 		done = 1;
 		break;
 	case FIB_DECOUPLE:
-		imsg_compose(ibuf, IMSG_CTL_FIB_DECOUPLE, res->rtableid, 0, -1,
-		    NULL, 0);
+		imsg_compose(imsgbuf, IMSG_CTL_FIB_DECOUPLE, res->rtableid,
+		    0, -1, NULL, 0);
 		printf("decouple request sent.\n");
 		done = 1;
 		break;
@@ -292,23 +297,23 @@ main(int argc, char *argv[])
 		errx(1, "action==NEIGHBOR");
 		break;
 	case NEIGHBOR_UP:
-		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_UP, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_NEIGHBOR_UP, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
 		break;
 	case NEIGHBOR_DOWN:
-		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_DOWN, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_NEIGHBOR_DOWN, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
 		break;
 	case NEIGHBOR_CLEAR:
-		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_CLEAR, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_NEIGHBOR_CLEAR, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
 		break;
 	case NEIGHBOR_RREFRESH:
-		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_RREFRESH, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_NEIGHBOR_RREFRESH, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
 		break;
 	case NEIGHBOR_DESTROY:
-		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_DESTROY, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_NEIGHBOR_DESTROY, 0, 0, -1,
 		    &neighbor, sizeof(neighbor));
 		break;
 	case NETWORK_BULK_ADD:
@@ -325,19 +330,19 @@ main(int argc, char *argv[])
 		net.rd = res->rd;
 		/* attribute sets are not supported */
 		if (res->action == NETWORK_ADD) {
-			imsg_compose(ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
+			imsg_compose(imsgbuf, IMSG_NETWORK_ADD, 0, 0, -1,
 			    &net, sizeof(net));
-			send_filterset(ibuf, &res->set);
-			imsg_compose(ibuf, IMSG_NETWORK_DONE, 0, 0, -1,
+			send_filterset(imsgbuf, &res->set);
+			imsg_compose(imsgbuf, IMSG_NETWORK_DONE, 0, 0, -1,
 			    NULL, 0);
 		} else
-			imsg_compose(ibuf, IMSG_NETWORK_REMOVE, 0, 0, -1,
+			imsg_compose(imsgbuf, IMSG_NETWORK_REMOVE, 0, 0, -1,
 			    &net, sizeof(net));
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case NETWORK_FLUSH:
-		imsg_compose(ibuf, IMSG_NETWORK_FLUSH, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_NETWORK_FLUSH, 0, 0, -1, NULL, 0);
 		printf("request sent.\n");
 		done = 1;
 		break;
@@ -345,7 +350,7 @@ main(int argc, char *argv[])
 		memset(&ribreq, 0, sizeof(ribreq));
 		ribreq.aid = res->aid;
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
-		imsg_compose(ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1,
 		    &ribreq, sizeof(ribreq));
 		break;
 	case NETWORK_MRT:
@@ -369,19 +374,19 @@ main(int argc, char *argv[])
 		f = res_to_flowspec(res);
 		/* attribute sets are not supported */
 		if (res->action == FLOWSPEC_ADD) {
-			imsg_compose(ibuf, IMSG_FLOWSPEC_ADD, 0, 0, -1,
+			imsg_compose(imsgbuf, IMSG_FLOWSPEC_ADD, 0, 0, -1,
 			    f, FLOWSPEC_SIZE + f->len);
-			send_filterset(ibuf, &res->set);
-			imsg_compose(ibuf, IMSG_FLOWSPEC_DONE, 0, 0, -1,
+			send_filterset(imsgbuf, &res->set);
+			imsg_compose(imsgbuf, IMSG_FLOWSPEC_DONE, 0, 0, -1,
 			    NULL, 0);
 		} else
-			imsg_compose(ibuf, IMSG_FLOWSPEC_REMOVE, 0, 0, -1,
+			imsg_compose(imsgbuf, IMSG_FLOWSPEC_REMOVE, 0, 0, -1,
 			    f, FLOWSPEC_SIZE + f->len);
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case FLOWSPEC_FLUSH:
-		imsg_compose(ibuf, IMSG_FLOWSPEC_FLUSH, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_FLOWSPEC_FLUSH, 0, 0, -1, NULL, 0);
 		printf("request sent.\n");
 		done = 1;
 		break;
@@ -402,14 +407,14 @@ main(int argc, char *argv[])
 			    aid2str(res->aid));
 		}
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
-		imsg_compose(ibuf, IMSG_CTL_SHOW_FLOWSPEC, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_SHOW_FLOWSPEC, 0, 0, -1,
 		    &ribreq, sizeof(ribreq));
 		break;
 	case LOG_VERBOSE:
 		verbose = 1;
 		/* FALLTHROUGH */
 	case LOG_BRIEF:
-		imsg_compose(ibuf, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
 		    &verbose, sizeof(verbose));
 		printf("logging request sent.\n");
 		done = 1;
@@ -419,13 +424,13 @@ main(int argc, char *argv[])
 	output->head(res);
 
  again:
-	while (ibuf->w.queued)
-		if (msgbuf_write(&ibuf->w) <= 0)
+	while (imsgbuf->w.queued)
+		if (msgbuf_write(&imsgbuf->w) <= 0)
 			err(1, "write error");
 
 	while (!done) {
 		while (!done) {
-			if ((n = imsg_get(ibuf, &imsg)) == -1)
+			if ((n = imsg_get(imsgbuf, &imsg)) == -1)
 				err(1, "imsg_get error");
 			if (n == 0)
 				break;
@@ -437,7 +442,7 @@ main(int argc, char *argv[])
 		if (done)
 			break;
 
-		if ((n = imsg_read(ibuf)) == -1)
+		if ((n = imsg_read(imsgbuf)) == -1)
 			err(1, "imsg_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
@@ -452,7 +457,7 @@ main(int argc, char *argv[])
 	output->tail();
 
 	close(fd);
-	free(ibuf);
+	free(imsgbuf);
 
 	exit(0);
 }
@@ -1197,21 +1202,21 @@ network_bulk(struct parse_result *res)
 			net.rd = res->rd;
 
 			if (res->action == NETWORK_BULK_ADD) {
-				imsg_compose(ibuf, IMSG_NETWORK_ADD,
+				imsg_compose(imsgbuf, IMSG_NETWORK_ADD,
 				    0, 0, -1, &net, sizeof(net));
 				/*
 				 * can't use send_filterset since that
 				 * would free the set.
 				 */
 				TAILQ_FOREACH(s, &res->set, entry) {
-					imsg_compose(ibuf,
+					imsg_compose(imsgbuf,
 					    IMSG_FILTER_SET,
 					    0, 0, -1, s, sizeof(*s));
 				}
-				imsg_compose(ibuf, IMSG_NETWORK_DONE,
+				imsg_compose(imsgbuf, IMSG_NETWORK_DONE,
 				    0, 0, -1, NULL, 0);
 			} else
-				imsg_compose(ibuf, IMSG_NETWORK_REMOVE,
+				imsg_compose(imsgbuf, IMSG_NETWORK_REMOVE,
 				     0, 0, -1, &net, sizeof(net));
 		}
 	}
@@ -1388,22 +1393,22 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		net.type = NETWORK_MRTCLONE;
 		/* XXX rd can't be set and will be 0 */
 
-		imsg_compose(ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
+		imsg_compose(imsgbuf, IMSG_NETWORK_ADD, 0, 0, -1,
 		    &net, sizeof(net));
-		if ((msg = imsg_create(ibuf, IMSG_NETWORK_ASPATH,
+		if ((msg = imsg_create(imsgbuf, IMSG_NETWORK_ASPATH,
 		    0, 0, sizeof(ctl) + mre->aspath_len)) == NULL)
 			errx(1, "imsg_create failure");
 		if (imsg_add(msg, &ctl, sizeof(ctl)) == -1 ||
 		    imsg_add(msg, mre->aspath, mre->aspath_len) == -1)
 			errx(1, "imsg_add failure");
-		imsg_close(ibuf, msg);
+		imsg_close(imsgbuf, msg);
 		for (j = 0; j < mre->nattrs; j++)
-			imsg_compose(ibuf, IMSG_NETWORK_ATTR, 0, 0, -1,
+			imsg_compose(imsgbuf, IMSG_NETWORK_ATTR, 0, 0, -1,
 			    mre->attrs[j].attr, mre->attrs[j].attr_len);
-		imsg_compose(ibuf, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0);
+		imsg_compose(imsgbuf, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0);
 
-		while (ibuf->w.queued) {
-			if (msgbuf_write(&ibuf->w) <= 0 && errno != EAGAIN)
+		while (imsgbuf->w.queued) {
+			if (msgbuf_write(&imsgbuf->w) <= 0 && errno != EAGAIN)
 				err(1, "write error");
 		}
 	}
