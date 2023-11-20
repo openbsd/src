@@ -832,6 +832,13 @@ static bool maybeReportUndefined(Undefined &sym, InputSectionBase &sec,
   if (sym.discardedSecIdx != 0 && (sec.name == ".got2" || sec.name == ".toc"))
     return false;
 
+#ifdef __OpenBSD__
+  // GCC (at least 8 and 11) can produce a ".gcc_except_table" with relocations
+  // to discarded sections on riscv64
+  if (sym.discardedSecIdx != 0 && sec.name == ".gcc_except_table")
+    return false;
+#endif
+
   bool isWarning =
       (config->unresolvedSymbols == UnresolvedPolicy::Warn && canBeExternal) ||
       config->noinhibitExec;
