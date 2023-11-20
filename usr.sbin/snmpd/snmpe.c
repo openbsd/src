@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.91 2023/11/12 19:59:56 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.92 2023/11/20 10:32:45 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -648,7 +648,6 @@ snmpe_writecb(int fd, short type, void *arg)
 		    msg->sm_datalen - reqlen);
 		nmsg->sm_datalen = msg->sm_datalen - reqlen;
 		snmp_msgfree(msg);
-		snmpe_prepare_read(nmsg, fd);
 		snmpe_tryparse(fd, nmsg);
 	} else {
 		snmp_msgfree(msg);
