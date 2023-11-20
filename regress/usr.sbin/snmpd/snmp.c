@@ -54,18 +54,6 @@ enum snmp_exception {
 	EXCEPTION_ENDOFMIBVIEW = 2
 };
 
-enum snmp_request {
-	REQUEST_GET = 0,
-	REQUEST_GETNEXT = 1,
-	REQUEST_RESPONSE = 2,
-	REQUEST_SET = 3,
-	REQUEST_TRAP = 4,
-	REQUEST_GETBULK = 5,
-	REQUEST_INFORM = 6,
-	REQUEST_TRAPV2 = 7,
-	REQUEST_REPORT = 8
-};
-
 enum security_model {
 	SM_USM = 3,
 	SM_TSM = 4
@@ -127,7 +115,6 @@ struct ber_element *snmp_data2ber_element(enum type, union data *);
 unsigned int smi_application(struct ber_element *);
 char *smi_oid2string(struct ber_oid *, char *, size_t);
 char *smi_print_element(struct ber_element *);
-void smi_debug_elements(struct ber_element *);
 struct ber_element *v2cmps(struct ber_element *, const char *);
 void snmp_pdu_validate(struct ber_element *, enum snmp_request, int32_t,
     int32_t, int32_t, struct varbind *, size_t);
@@ -243,6 +230,23 @@ snmpv2_getbulk(int s, const char *community, int32_t requestid, int32_t nonrep,
 	    maxrep, varbindlist, nvarbind);
 }
 
+struct ber_element *
+snmpv2_build(const char *community, enum snmp_request request,
+    int32_t requestid, int32_t error, int32_t index,
+    struct varbind *varbindlist, size_t nvarbind)
+{
+	struct ber_element *message;
+
+	if (community == NULL)
+		community = SNMP_R_COMMUNITY;
+	message = ober_printf_elements(NULL, "{dse}", 1, community,
+	    snmp_pdu(request, requestid, error, index, varbindlist, nvarbind));
+	if (message == NULL)
+		err(1, NULL);
+
+	return message;
+}
+
 int32_t
 snmpv2_send(int s, const char *community, enum snmp_request request,
     int32_t requestid, int32_t error, int32_t index,
@@ -253,14 +257,11 @@ snmpv2_send(int s, const char *community, enum snmp_request request,
 	void *buf;
 	ssize_t buflen, writelen;
 
-	if (community == NULL)
-		community = SNMP_R_COMMUNITY;
 	while (requestid == 0) 
 		requestid = arc4random();
-	message = ober_printf_elements(NULL, "{dse}", 1, community,
-	    snmp_pdu(request, requestid, error, index, varbindlist, nvarbind));
-	if (message == NULL)
-		err(1, NULL);
+
+	message = snmpv2_build(community, request, requestid, error, index,
+	    varbindlist,nvarbind);
 
 	if (ober_write_elements(&ber, message) == -1)
 		err(1, "ober_write_elements");

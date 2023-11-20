@@ -213,7 +213,10 @@ const struct {
 	{ "backend_error_getnext_nonstandard", backend_error_getnext_nonstandard },
 	{ "backend_error_getbulk_firstrepetition", backend_error_getbulk_firstrepetition },
 	{ "backend_error_getbulk_secondrepetition", backend_error_getbulk_secondrepetition },
-	{ "snmp_v3_usm_noauthpriv", snmp_v3_usm_noauthpriv},
+	{ "snmp_v3_usm_noauthpriv", snmp_v3_usm_noauthpriv },
+	{ "transport_tcp_get", transport_tcp_get },
+	{ "transport_tcp_disconnect", transport_tcp_disconnect },
+	{ "transport_tcp_double_get_disconnect", transport_tcp_double_get_disconnect },
 	{ NULL, NULL }
 };
 

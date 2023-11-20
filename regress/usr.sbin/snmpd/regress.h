@@ -98,6 +98,19 @@ struct varbind {
 	}		data;
 };
 
+enum snmp_request {
+	REQUEST_GET = 0,
+	REQUEST_GETNEXT = 1,
+	REQUEST_RESPONSE = 2,
+	REQUEST_SET = 3,
+	REQUEST_TRAP = 4,
+	REQUEST_GETBULK = 5,
+	REQUEST_INFORM = 6,
+	REQUEST_TRAPV2 = 7,
+	REQUEST_REPORT = 8
+};
+
+
 extern int verbose;
 extern char *axsocket;
 extern char *hostname;
@@ -128,11 +141,13 @@ char *oid_print(struct oid *, char *, size_t);
 #define MIB_SUBAGENT_UNREGISTER MIB_SUBAGENTS, 4
 #define MIB_SUBAGENT_BACKEND MIB_SUBAGENTS, 5
 #define MIB_SUBAGENT_SNMP MIB_SUBAGENTS, 6
+#define MIB_SUBAGENT_TRANSPORT MIB_SUBAGENTS, 7
 /* Region used for registration testing */
 #define MIB_REGISTER MIB_OPENBSD_REGRESS, 2
 #define MIB_UNREGISTER MIB_OPENBSD_REGRESS, 3
 #define MIB_BACKEND MIB_OPENBSD_REGRESS, 4
 #define MIB_SNMP MIB_OPENBSD_REGRESS, 5
+#define MIB_TRANSPORT MIB_OPENBSD_REGRESS, 6
 
 #define SYSORTABLE 1, 3, 6, 1, 2, 1, 1, 9
 
@@ -234,9 +249,12 @@ int32_t snmpv2_get(int, const char *, int32_t, struct varbind *, size_t);
 int32_t snmpv2_getnext(int, const char *, int32_t, struct varbind *, size_t);
 int32_t snmpv2_getbulk(int, const char *, int32_t, int32_t, int32_t,
     struct varbind *, size_t);
+struct ber_element *snmpv2_build(const char *, enum snmp_request, int32_t,
+    int32_t, int32_t, struct varbind *, size_t);
 void snmpv2_response_validate(int, int, const char *, int32_t, int32_t, int32_t,
     struct varbind *, size_t);
 void snmp_timeout(int, int);
+void smi_debug_elements(struct ber_element *);
 
 void backend_get_integer(void);
 void backend_get_octetstring(void);
@@ -370,3 +388,6 @@ void backend_error_getnext_nonstandard(void);
 void backend_error_getbulk_firstrepetition(void);
 void backend_error_getbulk_secondrepetition(void);
 void snmp_v3_usm_noauthpriv(void);
+void transport_tcp_get(void);
+void transport_tcp_disconnect(void);
+void transport_tcp_double_get_disconnect(void);
