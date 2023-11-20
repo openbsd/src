@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.20 2023/11/10 15:51:19 bluhm Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.21 2023/11/20 20:41:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -214,6 +214,7 @@ struct dwge_desc {
 #define RDES0_OE		(1 << 11)
 #define RDES0_SAF		(1 << 13)
 #define RDES0_DE		(1 << 14)
+#define RDES0_ES		(1 << 15)
 #define RDES0_FL_MASK		0x3fff
 #define RDES0_FL_SHIFT		16
 #define RDES0_AFM		(1 << 30)
@@ -1097,15 +1098,20 @@ dwge_rx_proc(struct dwge_softc *sc)
 		    len, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, rxb->tb_map);
 
-		/* Strip off CRC. */
-		len -= ETHER_CRC_LEN;
-		KASSERT(len > 0);
-
 		m = rxb->tb_m;
 		rxb->tb_m = NULL;
-		m->m_pkthdr.len = m->m_len = len;
+		if (rxd->sd_status & RDES0_ES) {
+			ifp->if_ierrors++;
+			m_freem(m);
+		} else {
+			/* Strip off CRC. */
+			len -= ETHER_CRC_LEN;
+			KASSERT(len > 0);
 
-		ml_enqueue(&ml, m);
+			m->m_pkthdr.len = m->m_len = len;
+
+			ml_enqueue(&ml, m);
+		}
 
 		put++;
 		if (sc->sc_rx_cons == (DWGE_NRXDESC - 1))
