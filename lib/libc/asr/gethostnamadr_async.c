@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.47 2023/11/14 08:27:33 florian Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.48 2023/11/20 12:15:16 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -206,6 +206,37 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 
 			if (!hnok_lenient(as->as.hostnamadr.name)) {
 				ar->ar_gai_errno = EAI_FAIL;
+				async_set_state(as, ASR_STATE_HALT);
+				break;
+			}
+
+			/*
+			 * If hostname is "localhost" or falls within the
+			 * ".localhost." domain, use local address.
+			 * RFC 6761, 6.3:
+			 * 3. Name resolution APIs and libraries SHOULD
+			 * recognize localhost names as special and SHOULD
+			 * always return the IP loopback address for address
+			 * queries and negative responses for all other query
+			 * types.  Name resolution APIs SHOULD NOT send queries
+			 * for localhost names to their configured caching DNS
+			 * server(s).
+			 */
+
+			if (_asr_is_localhost(as->as.hostnamadr.name)) {
+				inet_pton(as->as.hostnamadr.family,
+				    as->as.hostnamadr.family == AF_INET ?
+				    "127.0.0.1" : "::1", addr);
+				h = hostent_from_addr(as->as.hostnamadr.family,
+				    as->as.hostnamadr.name, addr);
+				if (h == NULL) {
+					ar->ar_errno = errno;
+					ar->ar_h_errno = NETDB_INTERNAL;
+				}
+				else {
+					ar->ar_hostent = &h->h;
+					ar->ar_h_errno = NETDB_SUCCESS;
+				}
 				async_set_state(as, ASR_STATE_HALT);
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.21 2023/03/15 22:12:00 millert Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.22 2023/11/20 12:15:16 florian Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -581,4 +581,36 @@ hnok_lenient(const char *dn)
 		pch = ch; ch = *dn++;
 	}
 	return 1;
+}
+
+/* Check if the hostname is localhost or if it's in the localhost domain */
+int
+_asr_is_localhost(const char *hn)
+{
+	size_t	 hnlen, localhostlen;
+
+	if (hn == NULL)
+		return 0;
+
+	if (strcasecmp(hn, "localhost") == 0 ||
+	    strcasecmp(hn, "localhost.") == 0)
+		return 1;
+
+	hnlen = strlen(hn);
+	localhostlen = strlen(".localhost");
+
+	if (hnlen < localhostlen)
+		return 0;
+
+	if (strcasecmp(hn + hnlen - localhostlen, ".localhost") == 0)
+		return 1;
+
+	localhostlen++;
+	if (hnlen < localhostlen)
+		return 0;
+
+	if (strcasecmp(hn + hnlen - localhostlen, ".localhost.") == 0)
+		return 1;
+
+	return 0;
 }

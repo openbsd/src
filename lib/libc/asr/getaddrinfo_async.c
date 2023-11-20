@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.59 2022/12/27 17:10:06 jmc Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.60 2023/11/20 12:15:16 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -115,7 +115,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 	char		 fqdn[MAXDNAME];
 	const char	*str;
 	struct addrinfo	*ai;
-	int		 i, family, r;
+	int		 i, family, r, is_localhost;
 	FILE		*f;
 	union {
 		struct sockaddr		sa;
@@ -228,8 +228,19 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 
 		ar->ar_gai_errno = 0;
 
-		/* If hostname is NULL, use local address */
-		if (as->as.ai.hostname == NULL) {
+		is_localhost = _asr_is_localhost(as->as.ai.hostname);
+		/*
+		 * If hostname is NULL, "localhost" or falls within the
+		 * ".localhost." domain, use local address.
+		 * RFC 6761, 6.3:
+		 * 3. Name resolution APIs and libraries SHOULD recognize
+		 * localhost names as special and SHOULD always return the IP
+		 * loopback address for address queries and negative responses
+		 * for all other query types.  Name resolution APIs SHOULD NOT
+		 * send queries for localhost names to their configured caching
+		 * DNS server(s).
+		 */
+		if (as->as.ai.hostname == NULL || is_localhost) {
 			for (family = iter_family(as, 1);
 			    family != -1;
 			    family = iter_family(as, 0)) {
@@ -238,11 +249,12 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 				 * those, rather than parsing over and over.
 				 */
 				if (family == PF_INET)
-					str = (ai->ai_flags & AI_PASSIVE) ? \
-						"0.0.0.0" : "127.0.0.1";
+					str = (ai->ai_flags & AI_PASSIVE &&
+					    !is_localhost) ? "0.0.0.0" :
+					    "127.0.0.1";
 				else /* PF_INET6 */
-					str = (ai->ai_flags & AI_PASSIVE) ? \
-						"::" : "::1";
+					str = (ai->ai_flags & AI_PASSIVE &&
+					    !is_localhost) ? "::" : "::1";
 				 /* This can't fail */
 				_asr_sockaddr_from_str(&sa.sa, family, str);
 				if ((r = addrinfo_add(as, &sa.sa, NULL))) {
