@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.43 2021/09/17 15:13:04 deraadt Exp $
+#	$OpenBSD: mkioctls,v 1.44 2023/11/20 17:43:51 kn Exp $
 
 #
 # Copyright (c) 1994
@@ -79,16 +79,16 @@ BEGIN {
 	print "#include <sys/tty.h>"
 	print "#include <sys/syslog.h>"
 	print "#include <sys/videoio.h>"
+	print "#include <scsi/scsi_all.h>"
 	print "#include <dev/biovar.h>"
 	print "#include <dev/ipmi.h>"
-	print "#include <dev/wscons/wsconsio.h>"
-	print "#include <dev/vndioctl.h>"
-	print "#include <scsi/scsi_all.h>"
-	print "#include <dev/vscsivar.h>"
 	print "#include <dev/pci/drm/include/uapi/drm/i915_drm.h>"
 	print "#include <dev/pv/pvvar.h>"
 	print "#include <dev/usb/udlio.h>"
 	print "#include <dev/usb/usb.h>"
+	print "#include <dev/vndioctl.h>"
+	print "#include <dev/vscsivar.h>"
+	print "#include <dev/wscons/wsconsio.h>"
 	print "#include <sys/ioctl.h>"
 	print "#include \"kdump.h\""
 	print ""
