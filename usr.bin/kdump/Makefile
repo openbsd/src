@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2023/11/20 17:43:51 kn Exp $
+#	$OpenBSD: Makefile,v 1.39 2023/11/20 17:48:27 kn Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -12,6 +12,7 @@ ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
 	CC="${CC}" \
 	/bin/sh ${.CURDIR}/mkioctls \
 	    ${SYS_DIR}/dev/biovar.h \
+	    ${SYS_DIR}/dev/efi/efiio.h \
 	    ${SYS_DIR}/dev/ipmi.h \
 	    ${SYS_DIR}/dev/pci/drm/include/uapi/drm/i915_drm.h \
 	    ${SYS_DIR}/dev/pv/pvvar.h \

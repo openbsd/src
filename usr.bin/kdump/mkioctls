@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.44 2023/11/20 17:43:51 kn Exp $
+#	$OpenBSD: mkioctls,v 1.45 2023/11/20 17:48:27 kn Exp $
 
 #
 # Copyright (c) 1994
@@ -81,6 +81,7 @@ BEGIN {
 	print "#include <sys/videoio.h>"
 	print "#include <scsi/scsi_all.h>"
 	print "#include <dev/biovar.h>"
+	print "#include <dev/efi/efiio.h>"
 	print "#include <dev/ipmi.h>"
 	print "#include <dev/pci/drm/include/uapi/drm/i915_drm.h>"
 	print "#include <dev/pv/pvvar.h>"
@@ -99,7 +100,7 @@ BEGIN {
 	print ""
 }
 
-/^[ 	]*#[ 	]*define[ 	]+(ATAIO|AUDIO_|BIOC|CDIO|CHIO|DIOC|DRM|GPIO|IPMICTL|TIO|FIO|KIO|MEMRANGE|MTIOC|LIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PIPEX|PPPIOC|PPPOE|PVBUSIOC|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|UDLIO|USB|VIDIOC|VNDIOC|VSCSI|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
+/^[ 	]*#[ 	]*define[ 	]+(ATAIO|AUDIO_|BIOC|CDIO|CHIO|DIOC|DRM|EFI|GPIO|IPMICTL|TIO|FIO|KIO|MEMRANGE|MTIOC|LIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PIPEX|PPPIOC|PPPOE|PVBUSIOC|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|UDLIO|USB|VIDIOC|VNDIOC|VSCSI|WSKBD|WSMOUSE|WSDISPLAY|WSMUX|PTM)[A-Z_0-9]*[ 	]+(DRM)?_IO/ {
 
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
