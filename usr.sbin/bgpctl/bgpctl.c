@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.296 2023/09/06 09:52:26 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.297 2023/11/20 14:40:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1807,7 +1807,8 @@ show_mrt_update(u_char *p, uint16_t len, int reqflags, int addpath)
 		while (len > 0) {
 			if (addpath) {
 				if (len <= sizeof(pathid)) {
-					printf(" bad nlri prefix: pathid, len %d", len);
+					printf(" bad nlri prefix: pathid, "
+					    "len %d", len);
 					return;
 				}
 				memcpy(&pathid, p, sizeof(pathid));
