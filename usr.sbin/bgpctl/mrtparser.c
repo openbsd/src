@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.19 2022/10/18 09:30:29 job Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.20 2023/11/20 14:18:21 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -435,7 +435,7 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 
 		if ((aid = mrt_afi2aid(afi, safi, verbose)) == AID_UNSPEC)
 			goto fail;
-		
+
 		/* prefix */
 		ret = mrt_extract_prefix(b, len, aid, &r->prefix,
 		    &r->prefixlen, verbose);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.35 2023/06/05 16:24:05 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.36 2023/11/20 14:18:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -392,7 +392,7 @@ json_fib(struct kroute_full *kf)
 
 	if (kf->flags & F_MPLS) {
 		json_do_array("mplslabel");
-		json_do_uint("mplslabel", 
+		json_do_uint("mplslabel",
 		    ntohl(kf->mplslabel) >> MPLS_LABEL_OFFSET);
 		json_do_end();
 	}
@@ -956,7 +956,7 @@ json_rib_mem(struct rde_memstats *stats)
 	    stats->attr_cnt * sizeof(struct attr), stats->attr_refs);
 	json_rib_mem_element("attributes", stats->attr_dcnt,
 	    stats->attr_data, UINT64_MAX);
-	json_rib_mem_element("total", UINT64_MAX, 
+	json_rib_mem_element("total", UINT64_MAX,
 	    pts + stats->prefix_cnt * sizeof(struct prefix) +
 	    stats->rib_cnt * sizeof(struct rib_entry) +
 	    stats->path_cnt * sizeof(struct rde_aspath) +
@@ -971,7 +971,7 @@ json_rib_mem(struct rde_memstats *stats)
 	    UINT64_MAX);
 	json_rib_mem_element("prefix_set", stats->pset_cnt, stats->pset_size,
 	    UINT64_MAX);
-	json_rib_mem_element("total", UINT64_MAX, 
+	json_rib_mem_element("total", UINT64_MAX,
 	    stats->aset_size + stats->pset_size, UINT64_MAX);
 	json_do_end();
 }

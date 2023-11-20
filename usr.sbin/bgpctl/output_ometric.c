@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.11 2023/03/28 12:07:09 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.12 2023/11/20 14:18:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -297,7 +297,7 @@ ometric_rib_mem(struct rde_memstats *stats)
 	ometric_rib_mem_element("attributes", stats->attr_dcnt,
 	    stats->attr_data, UINT64_MAX);
 
-	ometric_rib_mem_element("total", UINT64_MAX, 
+	ometric_rib_mem_element("total", UINT64_MAX,
 	    pts + stats->prefix_cnt * sizeof(struct prefix) +
 	    stats->rib_cnt * sizeof(struct rib_entry) +
 	    stats->path_cnt * sizeof(struct rde_aspath) +
@@ -314,7 +314,7 @@ ometric_rib_mem(struct rde_memstats *stats)
 	    OKV("type"), OKV("prefix_set"), NULL);
 	ometric_set_int_with_labels(rde_set_count, stats->pset_cnt,
 	    OKV("type"), OKV("prefix_set"), NULL);
-	ometric_rib_mem_element("set_total", UINT64_MAX, 
+	ometric_rib_mem_element("set_total", UINT64_MAX,
 	    stats->aset_size + stats->pset_size, UINT64_MAX);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.133 2023/05/09 13:26:27 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.134 2023/11/20 14:18:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -329,8 +329,8 @@ static const struct token t_show_mrt_as[] = {
 static const struct token t_show_prefix[] = {
 	{ FLAG,		"all",		F_LONGER,	t_show_rib},
 	{ FLAG,		"longer-prefixes", F_LONGER,	t_show_rib},
-	{ FLAG,		"or-longer", 	F_LONGER,	t_show_rib},
-	{ FLAG,		"or-shorter", 	F_SHORTER,	t_show_rib},
+	{ FLAG,		"or-longer",	F_LONGER,	t_show_rib},
+	{ FLAG,		"or-shorter",	F_SHORTER,	t_show_rib},
 	{ ANYTOKEN,	"",		NONE,		t_show_rib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
