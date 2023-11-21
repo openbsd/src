@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.6 2023/10/24 18:27:26 martijn Exp $	*/
+/*	$OpenBSD: mib.c,v 1.7 2023/11/21 08:49:08 martijn Exp $	*/
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -3270,7 +3270,11 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'C':
 			if (strcmp(optarg, "filter-routes") == 0) {
-				conf.sc_rtfilter = 1;
+				conf.sc_rtfilter = ROUTE_FILTER(RTM_NEWADDR) |
+				    ROUTE_FILTER(RTM_DELADDR) |
+				    ROUTE_FILTER(RTM_IFINFO) |
+				    ROUTE_FILTER(RTM_IFANNOUNCE);
+
 			}
 			break;
 		case 'c':
