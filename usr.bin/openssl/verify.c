@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.17 2023/04/14 15:27:13 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.18 2023/11/21 17:56:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -251,7 +251,7 @@ verify_usage(void)
 
 	fprintf(stderr, "\nValid purposes:\n\n");
 	for (i = 0; i < X509_PURPOSE_get_count(); i++) {
-		X509_PURPOSE *ptmp = X509_PURPOSE_get0(i);
+		const X509_PURPOSE *ptmp = X509_PURPOSE_get0(i);
 		fprintf(stderr, "  %-18s%s\n", X509_PURPOSE_get0_sname(ptmp),
 		    X509_PURPOSE_get0_name(ptmp));
 	}

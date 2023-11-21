@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.66 2023/07/23 11:39:29 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.67 2023/11/21 17:56:19 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1716,7 +1716,7 @@ args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
 		}
 		(*pargs)++;
 	} else if (strcmp(arg, "-purpose") == 0) {
-		X509_PURPOSE *xptmp;
+		const X509_PURPOSE *xptmp;
 		if (!argn)
 			*badarg = 1;
 		else {

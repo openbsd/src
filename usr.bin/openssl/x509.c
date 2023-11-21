@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.34 2023/11/13 11:50:36 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.35 2023/11/21 17:56:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,7 +86,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
     X509 *x, X509 *xca, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *sigopts,
     char *serial, int create, int days, int clrext, CONF *conf, char *section,
     ASN1_INTEGER *sno);
-static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
+static int purpose_print(BIO *bio, X509 *cert, const X509_PURPOSE *pt);
 
 static struct {
 	char *alias;
@@ -1022,7 +1022,7 @@ x509_main(int argc, char **argv)
 			}
 #endif
 			else if (cfg.pprint == i) {
-				X509_PURPOSE *ptmp;
+				const X509_PURPOSE *ptmp;
 				int j;
 
 				BIO_printf(STDout, "Certificate purposes:\n");
@@ -1534,10 +1534,10 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 }
 
 static int
-purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
+purpose_print(BIO *bio, X509 *cert, const X509_PURPOSE *pt)
 {
 	int id, i, idret;
-	char *pname;
+	const char *pname;
 
 	id = X509_PURPOSE_get_id(pt);
 	pname = X509_PURPOSE_get0_name(pt);
