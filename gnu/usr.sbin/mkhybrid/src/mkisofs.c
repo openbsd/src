@@ -110,6 +110,7 @@ char * volume_id = VOLUME_ID_DEFAULT;
 char * system_id = SYSTEM_ID_DEFAULT;
 char * boot_catalog = BOOT_CATALOG_DEFAULT;
 char * boot_image = BOOT_IMAGE_DEFAULT;
+char * efi_boot_image = EFI_BOOT_IMAGE_DEFAULT;
 int volume_set_size = 1;
 int volume_sequence_number = 1;
 
@@ -274,6 +275,8 @@ static const struct ld_option ld_options[] =
       'd', NULL, "Omit trailing periods from filenames", ONE_DASH },
   { {"disable-deep-relocation", no_argument, NULL, 'D'},
       'D', NULL, "Disable deep directory relocation", ONE_DASH },
+  { {"eltorito-boot-efi", required_argument, NULL, 'e' },
+      'e', "FILE", "Set El Torito EFI boot image name" , ONE_DASH },
   { {"follow-links", no_argument, NULL, 'f'},
       'f', NULL, "Follow symbolic links", ONE_DASH },
   { {"help", no_argument, NULL, OPTION_HELP},
@@ -862,6 +865,14 @@ int FDECL2(main, int, argc, char **, argv){
 	boot_image = optarg;  /* pathname of the boot image on cd */
 	if (boot_image == NULL) {
 	        fprintf(stderr,"Required boot image pathname missing\n");
+		exit(1);
+	}
+	break;
+      case 'e':
+	use_eltorito++;
+	efi_boot_image = optarg;
+	if (efi_boot_image == NULL) {
+		fprintf(stderr,"Required EFI boot image pathname missing\n");
 		exit(1);
 	}
 	break;

@@ -21,7 +21,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /*
- * 	$Id: iso9660.h,v 1.1 2000/10/10 20:40:16 beck Exp $
+ * 	$Id: iso9660.h,v 1.2 2023/11/21 08:46:06 jmatthew Exp $
  */
 
 #ifndef _ISOFS_FS_H
@@ -52,6 +52,7 @@ struct iso_volume_descriptor {
 #define EL_TORITO_ARCH_x86 0
 #define EL_TORITO_ARCH_PPC 1
 #define EL_TORITO_ARCH_MAC 2
+#define EL_TORITO_ARCH_EFI 0xEF
 #define EL_TORITO_BOOTABLE 0x88
 #define EL_TORITO_MEDIA_NOEMUL 0
 #define EL_TORITO_MEDIA_12FLOP  1
@@ -127,6 +128,16 @@ struct eltorito_defaultboot_entry {
         char nsect                      [ISODCL (  7,    8)];
 	char bootoff			[ISODCL (  9,   12)];
         char pad2                       [ISODCL ( 13,   32)];
+};
+
+/* El Torito section header entry in boot catalog */
+struct eltorito_sectionheader_entry {
+#define EL_TORITO_SHDR_ID_SHDR		0x90
+#define EL_TORITO_SHDR_ID_LAST_SHDR	0x91
+	char header_id			[ISODCL (  1,    1)]; /* 711 */
+	char platform_id		[ISODCL (  2,    2)];
+	char entry_count		[ISODCL (  3,    4)]; /* 721 */
+	char id				[ISODCL (  5,   32)];
 };
 
 

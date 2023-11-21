@@ -44,6 +44,8 @@
 static struct eltorito_validation_entry valid_desc;
 static struct eltorito_defaultboot_entry default_desc;
 static struct eltorito_boot_descriptor gboot_desc;
+static struct eltorito_sectionheader_entry shdr_desc;
+static struct eltorito_defaultboot_entry efi_desc;
 
 static int tvd_write	__PR((FILE * outfile));
 
@@ -120,8 +122,9 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
     int				bootcat;
     int				checksum;
     unsigned char		      * checksum_ptr;
-    struct directory_entry      * de;
+    struct directory_entry      * de = NULL;
     struct directory_entry      * de2;
+    struct directory_entry      * efi_de = NULL;
     int				i;
     int				nsectors;
     
@@ -149,8 +152,12 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
      * now adjust boot catalog
      * lets find boot image first 
      */
-    de=search_tree_file(root, boot_image);
-    if (!de) 
+    if (boot_image != NULL)
+	de=search_tree_file(root, boot_image);
+    if (efi_boot_image != NULL)
+        efi_de=search_tree_file(root, efi_boot_image);
+
+    if (de == NULL && efi_boot_image == NULL)
     {
 	fprintf(stderr,"Uh oh, I cant find the boot image!\n");
 	exit(1);
@@ -162,7 +169,8 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
      */
     memset(&valid_desc, 0, sizeof(valid_desc));
     valid_desc.headerid[0] = 1;
-    valid_desc.arch[0] = EL_TORITO_ARCH_x86;
+    valid_desc.arch[0] =
+	(boot_image != NULL)? EL_TORITO_ARCH_x86 : EL_TORITO_ARCH_EFI;
     
     /*
      * we'll shove start of publisher id into id field, may get truncated
@@ -198,6 +206,8 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
     checksum = -checksum;
     set_721(valid_desc.cksum, (unsigned int) checksum);
     
+    if (de == NULL)
+	goto skip_x86;
     /*
      * now make the initial/default entry for boot catalog 
      */
@@ -279,7 +289,28 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
 #endif
     set_731(default_desc.bootoff, 
 	    (unsigned int) get_733(de->isorec.extent));
-    
+ skip_x86:
+    /*
+     * add the EFI boot image, if specified
+     */
+    if (efi_de != NULL) {
+	if (de != NULL) {
+	    memset(&shdr_desc, 0, sizeof(shdr_desc));
+	    shdr_desc.header_id[0] = EL_TORITO_SHDR_ID_LAST_SHDR;
+	    shdr_desc.platform_id[0] = EL_TORITO_ARCH_EFI;
+	    set_721(shdr_desc.entry_count, 1);
+	}
+
+	memset(&efi_desc, 0, sizeof(efi_desc));
+	efi_desc.boot_id[0] = EL_TORITO_BOOTABLE;
+	set_721(efi_desc.loadseg, 0);
+	efi_desc.arch[0] = EL_TORITO_ARCH_EFI;
+
+	nsectors = ((efi_de->size + 511) & ~(511))/512;
+	set_721(efi_desc.nsect, nsectors);
+	set_731(efi_desc.bootoff, (unsigned int)get_733(efi_de->isorec.extent));
+    }
+
     /*
      * now write it to disk 
      */
@@ -295,7 +326,14 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
      * write out 
      */
     write(bootcat, &valid_desc, 32);
-    write(bootcat, &default_desc, 32);
+    if (de != NULL)
+    {
+	write(bootcat, &default_desc, 32);
+	if (efi_de != NULL)
+	    write(bootcat, &shdr_desc, sizeof(shdr_desc));
+    }
+    if (efi_de != NULL)
+	write(bootcat, &efi_desc, sizeof(efi_desc));
     close(bootcat);
 } /* get_torito_desc(... */
 

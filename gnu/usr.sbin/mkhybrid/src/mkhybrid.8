@@ -2,7 +2,7 @@
 .\" To print, first run through tbl
 .\" -*- nroff -*-
 .\"
-.\" $Id: mkhybrid.8,v 1.4 2022/07/11 03:11:49 daniel Exp $
+.\" $Id: mkhybrid.8,v 1.5 2023/11/21 08:46:06 jmatthew Exp $
 .\"
 .TH MKHYBRID 8 "7 April 1999" "Version 1.12b5.1"
 .SH NAME
@@ -44,6 +44,10 @@ mkhybrid \- create an hybrid ISO9660/JOLIET/HFS filesystem with optional Rock Ri
 ]
 [
 .B \-D
+]
+[
+.B \-e
+.I efi_boot_image
 ]
 [
 .B \-hide
@@ -473,6 +477,18 @@ ISO9660 standard, but it happens to work on many systems.  Use with caution.
 Do not use deep directory relocation, and instead just pack them in the
 way we see them.  This violates the ISO9660 standard, but it works on many
 systems.  Use with caution.
+.TP
+.BI \-e " efi_boot_image
+Specifies the path and filename of the EFI boot image to be used when making
+an "El Torito" bootable CD.
+The pathname must be relative to the source path specified to
+.B mkhybrid.
+The file should contain an EFI system partition image.
+The
+.B \-e
+option can be used with or without the
+.B \-b
+option.
 .TP
 .B \-f
 Follow symbolic links when generating the filesystem.  When this option is not
