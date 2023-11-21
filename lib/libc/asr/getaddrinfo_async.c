@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.60 2023/11/20 12:15:16 florian Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.61 2023/11/21 15:26:56 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -115,7 +115,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 	char		 fqdn[MAXDNAME];
 	const char	*str;
 	struct addrinfo	*ai;
-	int		 i, family, r, is_localhost;
+	int		 i, family, r, is_localhost = 0;
 	FILE		*f;
 	union {
 		struct sockaddr		sa;
@@ -228,7 +228,8 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 
 		ar->ar_gai_errno = 0;
 
-		is_localhost = _asr_is_localhost(as->as.ai.hostname);
+		if (!(ai->ai_flags & AI_NUMERICHOST))
+			is_localhost = _asr_is_localhost(as->as.ai.hostname);
 		/*
 		 * If hostname is NULL, "localhost" or falls within the
 		 * ".localhost." domain, use local address.
