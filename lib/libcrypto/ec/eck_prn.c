@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.29 2023/11/21 16:31:31 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.30 2023/11/21 22:05:33 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -161,10 +161,6 @@ ECParameters_print(BIO *bp, const EC_KEY *x)
 LCRYPTO_ALIAS(ECParameters_print);
 
 static int
-print_bin(BIO *fp, const char *str, const unsigned char *num,
-    size_t len, int off);
-
-static int
 ecpk_print_asn1_parameters(BIO *bp, const EC_GROUP *group, int off)
 {
 	const char *nist_name;
@@ -289,8 +285,33 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 	if (!bn_printf(bp, cofactor, off, "Cofactor: "))
 		goto err;
 	if ((seed = EC_GROUP_get0_seed(group)) != NULL) {
+		size_t i;
+
 		seed_len = EC_GROUP_get_seed_len(group);
-		if (!print_bin(bp, "Seed:", seed, seed_len, off))
+
+		/* XXX - ecx_buf_print() has a CBS version of this - dedup. */
+		if (!BIO_indent(bp, off, 128))
+			goto err;
+		if (BIO_printf(bp, "Seed:") <= 0)
+			goto err;
+
+		for (i = 0; i < seed_len; i++) {
+			const char *sep = ":";
+
+			if (i % 15 == 0) {
+				if (BIO_printf(bp, "\n") <= 0)
+					goto err;
+				if (!BIO_indent(bp, off + 4, 128))
+					goto err;
+			}
+
+			if (i + 1 == seed_len)
+				sep = "";
+			if (BIO_printf(bp, "%02x%s", seed[i], sep) <= 0)
+				goto err;
+		}
+
+		if (BIO_printf(bp, "\n") <= 0)
 			goto err;
 	}
 
@@ -316,39 +337,3 @@ ECPKParameters_print(BIO *bp, const EC_GROUP *group, int off)
 	return ecpk_print_explicit_parameters(bp, group, off);
 }
 LCRYPTO_ALIAS(ECPKParameters_print);
-
-static int
-print_bin(BIO *fp, const char *name, const unsigned char *buf,
-    size_t len, int off)
-{
-	size_t i;
-	/* XXX - redo the function with asprintf/strlcat. */
-	char str[128 + 1 + 4];
-
-	if (buf == NULL)
-		return 1;
-	if (off) {
-		if (off > 128)
-			off = 128;
-		memset(str, ' ', off);
-		if (BIO_write(fp, str, off) <= 0)
-			return 0;
-	}
-	if (BIO_printf(fp, "%s", name) <= 0)
-		return 0;
-
-	for (i = 0; i < len; i++) {
-		if ((i % 15) == 0) {
-			str[0] = '\n';
-			memset(&(str[1]), ' ', off + 4);
-			if (BIO_write(fp, str, off + 1 + 4) <= 0)
-				return 0;
-		}
-		if (BIO_printf(fp, "%02x%s", buf[i], ((i + 1) == len) ? "" : ":") <= 0)
-			return 0;
-	}
-	if (BIO_write(fp, "\n", 1) <= 0)
-		return 0;
-
-	return 1;
-}
