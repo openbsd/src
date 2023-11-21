@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.82 2023/11/12 20:04:35 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.83 2023/11/21 08:47:04 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -331,13 +331,7 @@ main		: LISTEN ON listen_udptcp
 			free($2);
 		}
 		| RTFILTER yesno		{
-			if ($2 == 1)
-				conf->sc_rtfilter = ROUTE_FILTER(RTM_NEWADDR) |
-				    ROUTE_FILTER(RTM_DELADDR) |
-				    ROUTE_FILTER(RTM_IFINFO) |
-				    ROUTE_FILTER(RTM_IFANNOUNCE);
-			else
-				conf->sc_rtfilter = 0;
+			conf->sc_rtfilter = $2;
 		}
 		| seclevel {
 			conf->sc_min_seclevel = $1;
