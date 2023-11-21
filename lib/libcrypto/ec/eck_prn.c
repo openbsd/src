@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.28 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.29 2023/11/21 16:31:31 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -322,7 +322,8 @@ print_bin(BIO *fp, const char *name, const unsigned char *buf,
     size_t len, int off)
 {
 	size_t i;
-	char str[128];
+	/* XXX - redo the function with asprintf/strlcat. */
+	char str[128 + 1 + 4];
 
 	if (buf == NULL)
 		return 1;
