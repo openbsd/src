@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.94 2023/06/10 19:30:48 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.95 2023/11/21 14:00:13 bluhm Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -818,6 +818,7 @@ process_checktracestate(struct process *curpr, struct process *tr,
 	return 0;
 }
 
+#endif /* PTRACE */
 
 /*
  * Check if a process is allowed to fiddle with the memory of another.
@@ -886,4 +887,3 @@ process_domem(struct proc *curp, struct process *tr, struct uio *uio, int req)
 
 	return error;
 }
-#endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.725 2023/08/07 01:59:38 dlg Exp $
+#	$OpenBSD: files,v 1.726 2023/11/21 14:00:13 bluhm Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -752,7 +752,7 @@ file kern/subr_xxx.c
 file kern/sys_futex.c
 file kern/sys_generic.c
 file kern/sys_pipe.c
-file kern/sys_process.c			ptrace
+file kern/sys_process.c			ptrace | dt
 file kern/sys_socket.c
 file kern/syscalls.c			syscall_debug
 file kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
