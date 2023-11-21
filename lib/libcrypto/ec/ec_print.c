@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.13 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: ec_print.c,v 1.14 2023/11/21 22:17:15 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -63,8 +63,7 @@ EC_POINT_point2bn(const EC_GROUP *group, const EC_POINT *point,
 	size_t buf_len = 0;
 	unsigned char *buf;
 
-	buf_len = EC_POINT_point2oct(group, point, form,
-	    NULL, 0, ctx);
+	buf_len = EC_POINT_point2oct(group, point, form, NULL, 0, ctx);
 	if (buf_len == 0)
 		return NULL;
 
