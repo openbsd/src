@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.289 2023/07/04 14:41:26 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.290 2023/11/22 11:18:37 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -828,6 +828,8 @@ sub new($class, $args)
 		return OpenBSD::PackingElement::AlwaysUpdate->new_with_hash($1);
 	} elsif ($args eq 'always-update') {
 		return OpenBSD::PackingElement::AlwaysUpdate->new;
+	} elsif ($args eq 'updatedb') {
+		return OpenBSD::PackingElement::UpdateDB->new;
 	} elsif ($args eq 'is-branch') {
 		return OpenBSD::PackingElement::IsBranch->new;
 	} else {
@@ -866,6 +868,13 @@ sub write_no_sig($, $)
 package OpenBSD::PackingElement::Firmware;
 our @ISA=qw(OpenBSD::PackingElement::ManualInstallation);
 sub category($) { 'firmware' }
+
+package OpenBSD::PackingElement::UpdateDB;
+our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
+sub category($)
+{
+	'updatedb';
+}
 
 package OpenBSD::PackingElement::AlwaysUpdate;
 our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
