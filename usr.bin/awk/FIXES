@@ -25,6 +25,18 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the 
 second edition of the AWK book was published in September 2023.
 
+Nov 20, 2023
+	rewrite of fnematch to fix a number of issues, including
+	extraneous output, out-of-bounds access, number of bytes
+	to push back after a failed match etc.
+	thanks to Miguel Pineiro Jr.
+
+Nov 15, 2023
+	Man page edit, regression test fixes. thanks to Arnold Robbins
+	consolidation of sub and gsub into dosub, removing duplicate
+	code. thanks to Miguel Pineiro Jr.
+	gcc replaced with cc everywhere.
+
 Oct 30, 2023:
 	multiple fixes and a minor code cleanup.
 	disabled utf-8 for non-multibyte locales, such as C or POSIX.

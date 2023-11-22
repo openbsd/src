@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.22 2023/09/17 14:49:44 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.23 2023/11/22 01:01:21 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -199,8 +199,7 @@ extern	FILE	*openfile(int, const char *, bool *);
 extern	const char	*filename(FILE *);
 extern	Cell	*closefile(Node **, int);
 extern	void	closeall(void);
-extern	Cell	*sub(Node **, int);
-extern	Cell	*gsub(Node **, int);
+extern	Cell	*dosub(Node **, int);
 extern	Cell	*gensub(Node **, int);
 
 extern	FILE	*popen(const char *, const char *);
