@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.231 2023/11/19 15:51:49 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.232 2023/11/22 15:43:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1395,8 +1395,6 @@ void SSL_set_accept_state(SSL *s);
 
 long SSL_get_default_timeout(const SSL *s);
 
-int SSL_library_init(void );
-
 char *SSL_CIPHER_description(const SSL_CIPHER *, char *buf, int size);
 STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk);
 
@@ -2352,6 +2350,7 @@ void ERR_load_SSL_strings(void);
 #define OPENSSL_INIT_SSL_DEFAULT	_OPENSSL_INIT_FLAG_NOOP
 
 int OPENSSL_init_ssl(uint64_t opts, const void *settings);
+int SSL_library_init(void);
 
 #ifdef  __cplusplus
 }
