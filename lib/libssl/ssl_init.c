@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_init.c,v 1.5 2023/11/22 15:49:47 tb Exp $ */
+/* $OpenBSD: ssl_init.c,v 1.6 2023/11/22 15:53:53 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -25,6 +25,13 @@
 #include "ssl_local.h"
 
 static pthread_t ssl_init_thread;
+
+int
+SSL_library_init(void)
+{
+	return OPENSSL_init_ssl(0, NULL);
+}
+LSSL_ALIAS(SSL_library_init);
 
 static void
 OPENSSL_init_ssl_internal(void)
