@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.115 2023/07/09 08:02:14 tobhe Exp $ */
+/* $OpenBSD: wskbd.c,v 1.116 2023/11/22 18:19:25 tobhe Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -177,10 +177,19 @@ struct wskbd_softc {
 #if NAUDIO > 0
 	void	*sc_audiocookie;
 #endif
+	struct task sc_kbd_backlight_task;
+	u_int	sc_kbd_backlight_cmd;
 #if NWSDISPLAY > 0
 	struct task sc_brightness_task;
 	int	sc_brightness_steps;
 #endif
+};
+
+enum wskbd_kbd_backlight_cmds {
+	KBD_BACKLIGHT_NONE,
+	KBD_BACKLIGHT_UP,
+	KBD_BACKLIGHT_DOWN,
+	KBD_BACKLIGHT_TOGGLE,
 };
 
 #define MOD_SHIFT_L		(1 << 0)
@@ -249,6 +258,8 @@ void	wskbd_set_keymap(struct wskbd_softc *, struct wscons_keymap *, int);
 
 int	(*wskbd_get_backlight)(struct wskbd_backlight *);
 int	(*wskbd_set_backlight)(struct wskbd_backlight *);
+
+void	wskbd_kbd_backlight_task(void *);
 #if NWSDISPLAY > 0
 void	wskbd_brightness_task(void *);
 #endif
@@ -406,6 +417,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		bcopy(ap->keymap, &sc->id->t_keymap, sizeof(sc->id->t_keymap));
 	}
 
+	task_set(&sc->sc_kbd_backlight_task, wskbd_kbd_backlight_task, sc);
 #if NWSDISPLAY > 0
 	timeout_set(&sc->sc_repeat_ch, wskbd_repeat, sc);
 	task_set(&sc->sc_brightness_task, wskbd_brightness_task, sc);
@@ -1544,6 +1556,21 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 #endif
 #endif
 
+	switch (ksym) {
+	case KS_Cmd_KbdBacklightUp:
+		atomic_store_int(&sc->sc_kbd_backlight_cmd, KBD_BACKLIGHT_UP);
+		task_add(systq, &sc->sc_kbd_backlight_task);
+		return (1);
+	case KS_Cmd_KbdBacklightDown:
+		atomic_store_int(&sc->sc_kbd_backlight_cmd, KBD_BACKLIGHT_DOWN);
+		task_add(systq, &sc->sc_kbd_backlight_task);
+		return (1);
+	case KS_Cmd_KbdBacklightToggle:
+		atomic_store_int(&sc->sc_kbd_backlight_cmd, KBD_BACKLIGHT_TOGGLE);
+		task_add(systq, &sc->sc_kbd_backlight_task);
+		return (1);
+	}
+
 #if NWSDISPLAY > 0
 	switch(ksym) {
 	case KS_Cmd_BrightnessUp:
@@ -1897,6 +1924,32 @@ wskbd_set_keymap(struct wskbd_softc *sc, struct wscons_keymap *map, int maplen)
 	free(sc->sc_map, M_DEVBUF, sc->sc_maplen * sizeof(*sc->sc_map));
 	sc->sc_map = map;
 	sc->sc_maplen = maplen;
+}
+
+void
+wskbd_kbd_backlight_task(void *arg)
+{
+	struct wskbd_softc *sc = arg;
+	struct wskbd_backlight data;
+	int step, val;
+	u_int cmd;
+
+	if (wskbd_get_backlight == NULL || wskbd_set_backlight == NULL)
+		return;
+
+	cmd  = atomic_swap_uint(&sc->sc_kbd_backlight_cmd, 0);
+	if (cmd != KBD_BACKLIGHT_UP &&
+	    cmd != KBD_BACKLIGHT_DOWN &&
+	    cmd != KBD_BACKLIGHT_TOGGLE)
+		return;
+
+	(*wskbd_get_backlight)(&data);
+	step = (data.max - data.min + 1) / 8;
+	val = (cmd == KBD_BACKLIGHT_UP) ?  data.curval + step :
+	    (cmd == KBD_BACKLIGHT_DOWN) ?  data.curval - step :
+	    (data.curval) ?  0 : (data.max - data.min + 1) / 2;
+	data.curval = (val > 0xff) ?  0xff : (val < 0) ? 0 : val;
+	(*wskbd_set_backlight)(&data);
 }
 
 #if NWSDISPLAY > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.9 2023/07/09 08:02:13 tobhe Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.10 2023/11/22 18:19:25 tobhe Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -143,6 +143,9 @@ static const struct hidkbd_translation apple_fn_trans[] = {
 	{ 60, 127 },	/* F3 -> audio mute */
 	{ 61, 129 },	/* F4 -> audio lower */
 	{ 62, 128 },	/* F5 -> audio raise */
+	{ 65, 234 },	/* F8 -> backlight toggle */
+	{ 66, 236 },	/* F9 -> backlight lower */
+	{ 67, 235 },	/* F10 -> backlight raise */
 #else
 	{ 63, 102 },	/* F6 -> sleep */
 	{ 67, 127 },	/* F10 -> audio mute */
@@ -569,6 +572,9 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 			case 129:
 			case 232:
 			case 233:
+			case 234:
+			case 235:
+			case 236:
 				wskbd_input(kbd->sc_wskbddev,
 				    key & RELEASE ?  WSCONS_EVENT_KEY_UP :
 				      WSCONS_EVENT_KEY_DOWN, key & CODEMASK);

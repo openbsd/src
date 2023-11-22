@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.41 2023/07/09 08:02:14 tobhe Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.42 2023/11/22 18:19:25 tobhe Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -668,6 +668,9 @@
 #define KS_Cmd_ScrollFwd	0xf42d
 #define KS_Cmd_KbdReset		0xf42e
 #define KS_Cmd_Sleep		0xf42f
+#define KS_Cmd_KbdBacklightToggle		0xf430
+#define KS_Cmd_KbdBacklightUp		0xf431
+#define KS_Cmd_KbdBacklightDown		0xf432
 
 /*
  * Group 5 (internal)

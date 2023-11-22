@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.16 2023/07/09 08:02:13 tobhe Exp $
+#	$OpenBSD: makemap.awk,v 1.17 2023/11/22 18:19:25 tobhe Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.16 2023/07/09 08:02:13 tobhe Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.17 2023/11/22 18:19:25 tobhe Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -343,6 +343,9 @@ $1 == "#define" || $1 == "#undef" {
 			lines[126] = "    KC(126),\tKS_Find,"
 			lines[232] = "    KC(232),\tKS_Cmd_BrightnessUp,"
 			lines[233] = "    KC(233),\tKS_Cmd_BrightnessDown,"
+			lines[234] = "    KC(234),\tKS_Cmd_KbdBacklightToggle,"
+			lines[235] = "    KC(235),\tKS_Cmd_KbdBacklightUp,"
+			lines[236] = "    KC(236),\tKS_Cmd_KbdBacklightDown,"
 		}
 
 		for (i = 0; i < 256; i++)
