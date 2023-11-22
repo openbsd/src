@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.50 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: adb.c,v 1.51 2023/11/22 18:14:35 tobhe Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -96,6 +96,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/wscons/wsconsio.h>
 
 #include <dev/adb/adb.h>
 #include <macppc/dev/adbvar.h>
@@ -242,6 +243,12 @@ void	setsoftadb(void);
 int	adb_intr(void *arg);
 void	adb_cuda_autopoll(void);
 void 	adb_cuda_fileserver_mode(void);
+uint8_t pmu_backlight; /* keyboard backlight value */
+int	pmu_get_backlight(struct wskbd_backlight *);
+int	pmu_set_backlight(struct wskbd_backlight *);
+extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
+extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
+
 
 #ifndef SMALL_KERNEL
 void	adb_shutdown(void *);
@@ -1730,8 +1737,11 @@ adbattach(struct device *parent, struct device *self, void *aux)
 
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_fileserver_mode();
-	if (adbHardware == ADB_HW_PMU)
+	if (adbHardware == ADB_HW_PMU) {
+		wskbd_get_backlight = pmu_get_backlight;
+		wskbd_set_backlight = pmu_set_backlight;
 		pmu_fileserver_mode(1);
+	}
 
 	/*
 	 * XXX If the machine doesn't have an ADB bus (PowerBook5,6+)
@@ -1757,4 +1767,20 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_autopoll();
 	adb_polling = 0;
+}
+
+int
+pmu_get_backlight(struct wskbd_backlight *kbl)
+{
+	kbl->min = 0;
+	kbl->max = 0xff;
+	kbl->curval = pmu_backlight;
+	return 0;
+}
+
+int
+pmu_set_backlight(struct wskbd_backlight *kbl)
+{
+	pmu_backlight = kbl->curval;
+	return pmu_set_kbl(pmu_backlight);
 }
