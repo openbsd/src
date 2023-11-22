@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.176 2023/10/24 13:20:09 claudio Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.177 2023/11/22 18:50:10 bluhm Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1023,10 +1023,11 @@ cpu_hatch(void *v)
 
 		identifycpu(ci);
 
-		/* Signal we're done */
-		atomic_clearbits_int(&ci->ci_flags, CPUF_IDENTIFY);
 		/* Prevent identifycpu() from running again */
 		atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFIED);
+
+		/* Signal we're done */
+		atomic_clearbits_int(&ci->ci_flags, CPUF_IDENTIFY);
 	}
 
 	/* These have to run after identifycpu() */ 
