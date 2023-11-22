@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.32 2022/03/31 17:27:29 naddy Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.33 2023/11/22 18:06:44 florian Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: November 22 2023 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -346,6 +346,10 @@ This option specifies whether the client should configure its IP layer
 for packet forwarding.
 A value of 0 means disable IP forwarding, and a value of 1 means enable
 IP forwarding.
+.It Ic option ipv6-only-preferred Ar uint32 ;
+This option specifies that a NAT64 is available and the pool is IPv6-mostly
+capable.
+This option is specified in RFC 8925.
 .It Ic option irc-server Ar ip-address Oo , Ar ip-address ... Oc ;
 The
 .Ic irc-server
