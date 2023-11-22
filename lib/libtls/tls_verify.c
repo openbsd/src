@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.28 2023/06/01 07:32:25 tb Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.29 2023/11/22 18:23:09 op Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -244,7 +244,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 		 * certificate as hostile.
 		 */
 		tls_set_errorx(ctx, "error verifying name '%s': "
-		    "Certificate subject contains mutiple Common Name fields, "
+		    "Certificate subject contains multiple Common Name fields, "
 		    "probably a malicious or malformed certificate", name);
 		goto err;
 	}
