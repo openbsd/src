@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.31 2023/05/16 14:32:54 jan Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.32 2023/11/23 23:45:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -612,6 +612,7 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 {
 	struct ether_header *eh, copy;
 	const struct veb_pf_ip_family *fam;
+	int hlen;
 
 	/*
 	 * pf runs on vport interfaces when they enter or leave the
@@ -640,11 +641,9 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 	copy = *eh;
 	m_adj(m, sizeof(*eh));
 
-	if (dir == PF_IN) {
-		m = (*fam->ip_check)(ifp0, m);
-		if (m == NULL)
-			return (NULL);
-	}
+	m = (*fam->ip_check)(ifp0, m);
+	if (m == NULL)
+		return (NULL);
 
 	if (pf_test(fam->af, dir, ifp0, &m) != PF_PASS) {
 		m_freem(m);
@@ -660,12 +659,14 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m)
 		return (NULL);
 	}
 
-	m = m_prepend(m, sizeof(*eh), M_DONTWAIT);
+	hlen = roundup(sizeof(*eh), sizeof(long));
+	m = m_prepend(m, hlen, M_DONTWAIT);
 	if (m == NULL)
 		return (NULL);
 
 	/* checksum? */
 
+	m_adj(m, hlen - sizeof(*eh));
 	eh = mtod(m, struct ether_header *);
 	*eh = copy;
 
