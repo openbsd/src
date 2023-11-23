@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.116 2023/11/22 18:19:25 tobhe Exp $ */
+/* $OpenBSD: wskbd.c,v 1.117 2023/11/23 15:02:57 deraadt Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -94,6 +94,7 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/task.h>
 
 #include <ddb/db_var.h>
 
@@ -113,7 +114,6 @@
 
 #if NWSDISPLAY > 0
 #include <sys/atomic.h>
-#include <sys/task.h>
 #endif
 
 #ifdef WSKBD_DEBUG
