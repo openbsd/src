@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.468 2023/10/29 14:23:04 millert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.469 2023/11/23 03:22:14 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3185,9 +3185,11 @@ static void
 print_tunnel(const struct if_laddrreq *req)
 {
 	char psrcaddr[NI_MAXHOST];
+	char psrcport[NI_MAXSERV];
 	char pdstaddr[NI_MAXHOST];
+	char pdstport[NI_MAXSERV];
 	const char *ver = "";
-	const int niflag = NI_NUMERICHOST;
+	const int niflag = NI_NUMERICHOST | NI_NUMERICSERV | NI_DGRAM;
 
 	if (req == NULL) {
 		printf("(unset)");
@@ -3197,12 +3199,15 @@ print_tunnel(const struct if_laddrreq *req)
 	psrcaddr[0] = pdstaddr[0] = '\0';
 
 	if (getnameinfo((struct sockaddr *)&req->addr, req->addr.ss_len,
-	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag) != 0)
+	    psrcaddr, sizeof(psrcaddr), psrcport, sizeof(psrcport),
+	    niflag) != 0)
 		strlcpy(psrcaddr, "<error>", sizeof(psrcaddr));
 	if (req->addr.ss_family == AF_INET6)
 		ver = "6";
 
 	printf("inet%s %s", ver, psrcaddr);
+	if (strcmp(psrcport, "0") != 0)
+		printf(":%s", psrcport);
 
 	if (req->dstaddr.ss_family != AF_UNSPEC) {
 		in_port_t dstport = 0;
@@ -3211,24 +3216,12 @@ print_tunnel(const struct if_laddrreq *req)
 
 		if (getnameinfo((struct sockaddr *)&req->dstaddr,
 		    req->dstaddr.ss_len, pdstaddr, sizeof(pdstaddr),
-		    0, 0, niflag) != 0)
+		    pdstport, sizeof(pdstport), niflag) != 0)
 			strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
 
 		printf(" --> %s", pdstaddr);
-
-		switch (req->dstaddr.ss_family) {
-		case AF_INET:
-			sin = (const struct sockaddr_in *)&req->dstaddr;
-			dstport = sin->sin_port;
-			break;
-		case AF_INET6:
-			sin6 = (const struct sockaddr_in6 *)&req->dstaddr;
-			dstport = sin6->sin6_port;
-			break;
-		}
-
-		if (dstport)
-			printf(":%u", ntohs(dstport));
+		if (strcmp(pdstport, "0") != 0)
+			printf(":%s", pdstport);
 	}
 }
 
@@ -3715,29 +3708,58 @@ in6_status(int force)
 void
 settunnel(const char *src, const char *dst)
 {
-	char buf[HOST_NAME_MAX+1 + sizeof (":65535")], *dstport;
-	const char *dstip;
+	char srcbuf[HOST_NAME_MAX], dstbuf[HOST_NAME_MAX];
+	const char *srcport, *dstport;
+	const char *srcaddr, *dstaddr;
 	struct addrinfo *srcres, *dstres;
+	struct addrinfo hints = {
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_DGRAM,
+		.ai_protocol = IPPROTO_UDP,
+		.ai_flags = AI_PASSIVE,
+	};
 	int ecode;
+	size_t len;
 	struct if_laddrreq req;
 
-	if (strchr(dst, ':') == NULL || strchr(dst, ':') != strrchr(dst, ':')) {
+	srcport = strchr(src, ':');
+	if (srcport == NULL || srcport != strrchr(src, ':')) {
 		/* no port or IPv6 */
-		dstip = dst;
-		dstport = NULL;
+		srcaddr = src;
+		srcport = NULL;
 	} else {
-		if (strlcpy(buf, dst, sizeof(buf)) >= sizeof(buf))
-			errx(1, "%s bad value", dst);
-		dstport = strchr(buf, ':');
-		*dstport++ = '\0';
-		dstip = buf;
+		len = srcport - src;
+		if (len >= sizeof(srcbuf))
+			errx(1, "src %s bad value", src);
+		memcpy(srcbuf, src, len);
+		srcbuf[len] = '\0';
+
+		srcaddr = srcbuf;
+		srcport++;
 	}
 
-	if ((ecode = getaddrinfo(src, NULL, NULL, &srcres)) != 0)
+	dstport = strchr(dst, ':');
+	if (dstport == NULL || dstport != strrchr(dst, ':')) {
+		/* no port or IPv6 */
+		dstaddr = dst;
+		dstport = NULL;
+	} else {
+		len = dstport - dst;
+		if (len >= sizeof(dstbuf))
+			errx(1, "dst %s bad value", dst);
+		memcpy(dstbuf, dst, len);
+		dstbuf[len] = '\0';
+
+		dstaddr = dstbuf;
+		dstport++;
+	}
+
+	if ((ecode = getaddrinfo(srcaddr, srcport, &hints, &srcres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
-	if ((ecode = getaddrinfo(dstip, dstport, NULL, &dstres)) != 0)
+	hints.ai_flags = 0;
+	if ((ecode = getaddrinfo(dstaddr, dstport, &hints, &dstres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
@@ -3757,37 +3779,56 @@ settunnel(const char *src, const char *dst)
 }
 
 void
-settunneladdr(const char *addr, int ignored)
+settunneladdr(const char *src, int ignored)
 {
-	struct addrinfo hints, *res;
+	char srcbuf[HOST_NAME_MAX];
+	const char *srcport;
+	const char *srcaddr;
+	struct addrinfo *srcres;
+	struct addrinfo hints = {
+		.ai_family = AF_UNSPEC,
+		.ai_socktype = SOCK_DGRAM,
+		.ai_protocol = IPPROTO_UDP,
+		.ai_flags = AI_PASSIVE,
+	};
 	struct if_laddrreq req;
 	ssize_t len;
 	int rv;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_protocol = 0;
-	hints.ai_flags = AI_PASSIVE;
+	srcport = strchr(src, ':');
+	if (srcport == NULL || srcport != strrchr(src, ':')) {
+		/* no port or IPv6 */
+		srcaddr = src;
+		srcport = NULL;
+	} else {
+		len = srcport - src;
+		if (len >= sizeof(srcbuf))
+			errx(1, "src %s bad value", src);
+		memcpy(srcbuf, src, len);
+		srcbuf[len] = '\0';
 
-	rv = getaddrinfo(addr, NULL, &hints, &res);
+		srcaddr = srcbuf;
+		srcport++;
+	}
+
+	rv = getaddrinfo(srcaddr, srcport, &hints, &srcres);
 	if (rv != 0)
-		errx(1, "tunneladdr %s: %s", addr, gai_strerror(rv));
+		errx(1, "tunneladdr %s: %s", src, gai_strerror(rv));
 
 	memset(&req, 0, sizeof(req));
 	len = strlcpy(req.iflr_name, ifname, sizeof(req.iflr_name));
 	if (len >= sizeof(req.iflr_name))
 		errx(1, "%s: Interface name too long", ifname);
 
-	memcpy(&req.addr, res->ai_addr, res->ai_addrlen);
+	memcpy(&req.addr, srcres->ai_addr, srcres->ai_addrlen);
 
 	req.dstaddr.ss_len = 2;
 	req.dstaddr.ss_family = AF_UNSPEC;
 
 	if (ioctl(sock, SIOCSLIFPHYADDR, &req) == -1)
-		warn("tunneladdr %s", addr);
+		warn("tunneladdr %s", src);
 
-	freeaddrinfo(res);
+	freeaddrinfo(srcres);
 }
 
 void
