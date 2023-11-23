@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.c,v 1.7 2020/12/31 11:11:22 kettenis Exp $	*/
+/*	$OpenBSD: ofw_thermal.c,v 1.8 2023/11/23 00:47:13 dlg Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -15,12 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "kstat.h"
+
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/stdint.h>
 #include <sys/task.h>
 #include <sys/timeout.h>
+#include <sys/sched.h>
+#include <sys/kstat.h>
 
 #include <machine/bus.h>
 
@@ -36,6 +40,7 @@ LIST_HEAD(, cooling_device) cooling_devices =
 struct taskq *tztq;
 
 struct trippoint {
+	int		tp_node;
 	int32_t		tp_temperature;
 	uint32_t	tp_hysteresis;
 	int		tp_type;
@@ -47,6 +52,14 @@ struct trippoint {
 #define THERMAL_PASSIVE		2
 #define THERMAL_HOT		3
 #define THERMAL_CRITICAL	4
+
+static const char *trip_types[] = {
+	[THERMAL_NONE]		= "none",
+	[THERMAL_ACTIVE]	= "active",
+	[THERMAL_PASSIVE]	= "passive",
+	[THERMAL_HOT]		= "hot",
+	[THERMAL_CRITICAL]	= "critical",
+};
 
 struct cmap {
 	uint32_t	*cm_cdev;
@@ -82,7 +95,15 @@ struct thermal_zone {
 	LIST_HEAD(, cdev) tz_cdevs;
 
 	int32_t		tz_temperature;
+
+	struct rwlock	tz_lock;
+	struct kstat	*tz_kstat;
 };
+
+#if NKSTAT > 0
+static void	thermal_zone_kstat_attach(struct thermal_zone *);
+static void	thermal_zone_kstat_update(struct thermal_zone *);
+#endif /* NKSTAT > 0 */
 
 LIST_HEAD(, thermal_zone) thermal_zones =
 	LIST_HEAD_INITIALIZER(thermal_zones);
@@ -324,11 +345,31 @@ thermal_zone_poll(void *arg)
 
 out:
 	tz->tz_temperature = temp;
+#if NKSTAT > 0
+	thermal_zone_kstat_update(tz);
+#endif
 	if (tz->tz_tp && tz->tz_tp->tp_type == THERMAL_PASSIVE)
 		polling_delay = tz->tz_polling_delay_passive;
 	else
 		polling_delay = tz->tz_polling_delay;
 	timeout_add_msec(&tz->tz_poll_to, polling_delay);
+}
+
+static int
+thermal_zone_triptype(const char *prop)
+{
+	size_t i;
+
+	for (i = 0; i < nitems(trip_types); i++) {
+		const char *name = trip_types[i];
+		if (name == NULL)
+			continue;
+
+		if (strcmp(name, prop) == 0)
+			return (i);
+	}
+
+	return (THERMAL_NONE);
 }
 
 void
@@ -351,6 +392,7 @@ thermal_zone_init(int node)
 
 	tz = malloc(sizeof(struct thermal_zone), M_DEVBUF, M_ZERO | M_WAITOK);
 	tz->tz_node = node;
+	rw_init(&tz->tz_lock, "tzlk");
 
 	OF_getprop(node, "name", &tz->tz_name, sizeof(tz->tz_name));
 	tz->tz_name[sizeof(tz->tz_name) - 1] = 0;
@@ -394,17 +436,11 @@ thermal_zone_init(int node)
 			break;
 		}
 		tp = &tz->tz_trips[i];
+		tp->tp_node = node;
 		tp->tp_temperature = temp;
 		tp->tp_hysteresis = OF_getpropint(node, "hysteresis", 0);
 		OF_getprop(node, "type", type, sizeof(type));
-		if (strcmp(type, "active") == 0)
-			tp->tp_type = THERMAL_ACTIVE;
-		else if (strcmp(type, "passive") == 0)
-			tp->tp_type = THERMAL_PASSIVE;
-		else if (strcmp(type, "hot") == 0)
-			tp->tp_type = THERMAL_HOT;
-		else if (strcmp(type, "critical") == 0)
-			tp->tp_type = THERMAL_CRITICAL;
+		tp->tp_type = thermal_zone_triptype(type);
 		tp->tp_phandle = OF_getpropint(node, "phandle", 0);
 		tp++;
 	}
@@ -465,6 +501,10 @@ thermal_zone_init(int node)
 	if (tz->tz_polling_delay > 0)
 		timeout_add_msec(&tz->tz_poll_to, tz->tz_polling_delay);
 	LIST_INSERT_HEAD(&thermal_zones, tz, tz_list);
+
+#if NKSTAT > 0
+	thermal_zone_kstat_attach(tz);
+#endif
 }
 
 void
@@ -480,3 +520,109 @@ thermal_init(void)
 	for (node = OF_child(node); node != 0; node = OF_peer(node))
 		thermal_zone_init(node);
 }
+
+#if NKSTAT > 0
+
+static const char *
+thermal_zone_tripname(int type)
+{
+	if (type >= nitems(trip_types))
+		return (NULL);
+
+	return (trip_types[type]);
+}
+
+struct thermal_zone_kstats {
+	struct kstat_kv		tzk_name; /* istr could be short */
+	struct kstat_kv		tzk_temp;
+	struct kstat_kv		tzk_tp;
+	struct kstat_kv		tzk_tp_type;
+	struct kstat_kv		tzk_cooling;
+};
+
+static void
+thermal_zone_kstat_update(struct thermal_zone *tz)
+{
+	struct kstat *ks = tz->tz_kstat;
+	struct thermal_zone_kstats *tzk;
+
+	if (ks == NULL)
+		return;
+
+	tzk = ks->ks_data;
+
+	rw_enter_write(&tz->tz_lock);
+	if (tz->tz_temperature == THERMAL_SENSOR_MAX)
+		tzk->tzk_temp.kv_type = KSTAT_KV_T_NULL;
+	else {
+		tzk->tzk_temp.kv_type = KSTAT_KV_T_TEMP;
+		kstat_kv_temp(&tzk->tzk_temp) = 273150000 +
+		    1000 * tz->tz_temperature;
+	}
+
+	if (tz->tz_tp == NULL) {
+		kstat_kv_u32(&tzk->tzk_tp) = 0;
+		strlcpy(kstat_kv_istr(&tzk->tzk_tp_type), "none",
+		    sizeof(kstat_kv_istr(&tzk->tzk_tp_type)));
+	} else {
+		int triptype = tz->tz_tp->tp_type;
+		const char *tripname = thermal_zone_tripname(triptype);
+
+		kstat_kv_u32(&tzk->tzk_tp) = tz->tz_tp->tp_node;
+
+		if (tripname == NULL) {
+			snprintf(kstat_kv_istr(&tzk->tzk_tp_type),
+			    sizeof(kstat_kv_istr(&tzk->tzk_tp_type)),
+			    "%u", triptype);
+		} else {
+			strlcpy(kstat_kv_istr(&tzk->tzk_tp_type), tripname,
+			    sizeof(kstat_kv_istr(&tzk->tzk_tp_type)));
+		}
+	}
+
+	kstat_kv_bool(&tzk->tzk_cooling) = (tz->tz_cm != NULL);
+
+	getnanouptime(&ks->ks_updated);
+	rw_exit_write(&tz->tz_lock);
+}
+
+static void
+thermal_zone_kstat_attach(struct thermal_zone *tz)
+{
+	struct kstat *ks;
+	struct thermal_zone_kstats *tzk;
+	static unsigned int unit = 0;
+
+	ks = kstat_create("dt", 0, "thermal-zone", unit++, KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		printf("unable to create thermal-zone kstats for %s",
+		    tz->tz_name);
+		return;
+	}
+
+	tzk = malloc(sizeof(*tzk), M_DEVBUF, M_WAITOK|M_ZERO);
+
+	kstat_kv_init(&tzk->tzk_name, "name", KSTAT_KV_T_ISTR);
+	strlcpy(kstat_kv_istr(&tzk->tzk_name), tz->tz_name,
+	    sizeof(kstat_kv_istr(&tzk->tzk_name)));
+	kstat_kv_init(&tzk->tzk_temp, "temperature", KSTAT_KV_T_NULL);
+
+	/* XXX dt node is not be the most useful info here. */
+	kstat_kv_init(&tzk->tzk_tp, "trip-point-node", KSTAT_KV_T_UINT32);
+	kstat_kv_init(&tzk->tzk_tp_type, "trip-type", KSTAT_KV_T_ISTR);
+	strlcpy(kstat_kv_istr(&tzk->tzk_tp_type), "unknown",
+	    sizeof(kstat_kv_istr(&tzk->tzk_tp_type)));
+
+	kstat_kv_init(&tzk->tzk_cooling, "active-cooling", KSTAT_KV_T_BOOL);
+	kstat_kv_bool(&tzk->tzk_cooling) = 0;
+
+	ks->ks_softc = tz;
+	ks->ks_data = tzk;
+	ks->ks_datalen = sizeof(*tzk);
+	ks->ks_read = kstat_read_nop;
+	kstat_set_rlock(ks, &tz->tz_lock);
+
+	tz->tz_kstat = ks;
+	kstat_install(ks);
+}
+#endif /* NKSTAT > 0 */
