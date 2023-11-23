@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.100 2023/11/23 01:00:44 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.101 2023/11/23 19:54:30 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1926,7 +1926,7 @@ cpu_opp_kstat_read(struct kstat *ks)
 	struct cpu_opp_kstats *coppk = ks->ks_data;
 
 	struct opp_table *ot = ci->ci_opp_table;
-	struct cpu_info *oci = ot->ot_master;
+	struct cpu_info *oci;
 	struct timespec now, diff;
 
 	/* rate limit */
@@ -1935,6 +1935,10 @@ cpu_opp_kstat_read(struct kstat *ks)
 	if (diff.tv_sec < 1)
 		return (0);
 
+	if (ot == NULL)
+		return (0);
+
+	oci = ot->ot_master;
 	if (oci == NULL)
 		oci = ci;
 
