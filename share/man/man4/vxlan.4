@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.19 2022/09/13 01:38:31 jsg Exp $
+.\"	$OpenBSD: vxlan.4,v 1.20 2023/11/23 03:36:42 dlg Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2022 $
+.Dd $Mdocdate: November 23 2023 $
 .Dt VXLAN 4
 .Os
 .Sh NAME
@@ -173,10 +173,10 @@ The following examples creates a learning overlay network:
 .Pp
 Prior to the assignment of UDP port 4789 by IANA, some early VXLAN
 implementations used port 8472.
-A non-standard port can be specified with the tunnel destination
+A non-standard port can be specified with the tunnel source
 address:
 .Bd -literal -offset indent
-# ifconfig vxlan0 tunnel 192.168.1.100 239.1.1.100:8472
+# ifconfig vxlan0 tunnel 192.168.1.100:8472 239.1.1.100
 .Ed
 .Sh SECURITY
 .Nm
