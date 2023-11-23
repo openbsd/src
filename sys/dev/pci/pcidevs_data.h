@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2053 2023/11/14 02:25:48 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2054 2023/11/23 05:08:56 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3248,6 +3248,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Cyan Skillfish",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VANGOGH_0932,
+	    "Van Gogh",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CYAN_SKILLFISH_2,
 	    "Cyan Skillfish",
 	},
@@ -3300,7 +3304,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Cezanne",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VANGOGH,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VANGOGH_0405,
 	    "Van Gogh",
 	},
 	{

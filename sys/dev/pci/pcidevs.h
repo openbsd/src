@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2053 2023/11/14 02:25:48 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2054 2023/11/23 05:08:56 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1282,6 +1282,7 @@
 #define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
 #define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_1	0x13fe		/* Cyan Skillfish */
+#define	PCI_PRODUCT_ATI_VANGOGH_0932	0x1435		/* Van Gogh */
 #define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_2	0x143f		/* Cyan Skillfish */
 #define	PCI_PRODUCT_ATI_PPB_1	0x1478		/* PCIE */
 #define	PCI_PRODUCT_ATI_PPB_2	0x1479		/* PCIE */
@@ -1295,7 +1296,7 @@
 #define	PCI_PRODUCT_ATI_RENOIR	0x1636		/* Renoir */
 #define	PCI_PRODUCT_ATI_RENOIR_HDA	0x1637		/* Renoir HD Audio */
 #define	PCI_PRODUCT_ATI_CEZANNE	0x1638		/* Cezanne */
-#define	PCI_PRODUCT_ATI_VANGOGH	0x163f		/* Van Gogh */
+#define	PCI_PRODUCT_ATI_VANGOGH_0405	0x163f		/* Van Gogh */
 #define	PCI_PRODUCT_ATI_VANGOGH_HDA	0x1640		/* Van Gogh HD Audio */
 #define	PCI_PRODUCT_ATI_LUCIENNE	0x164c		/* Lucienne */
 #define	PCI_PRODUCT_ATI_YELLOW_CARP_1	0x164d		/* Rembrandt */
