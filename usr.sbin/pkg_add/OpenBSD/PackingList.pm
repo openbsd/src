@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.152 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.153 2023/11/23 09:44:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -409,7 +409,7 @@ sub match_pkgpath($self, $plist2)
 }
 
 our @unique_categories =
-    (qw(name url version signer digital-signature no-default-conflict manual-installation firmware always-update is-branch extrainfo localbase arch));
+    (qw(name url version signer digital-signature no-default-conflict manual-installation firmware always-update updatedb is-branch extrainfo localbase arch));
 
 our @list_categories =
     (qw(conflict pkgpath ask-update libset depend
