@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2053 2023/11/14 02:25:48 jsg Exp $
+$OpenBSD: pcidevs,v 1.2054 2023/11/23 05:08:56 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1277,6 +1277,7 @@ product ATI KAVERI_20		0x131b	Kaveri Radeon R4
 product ATI KAVERI_21		0x131c	Kaveri Radeon R7
 product ATI KAVERI_22		0x131d	Kaveri Radeon R6
 product ATI CYAN_SKILLFISH_1	0x13fe	Cyan Skillfish
+product ATI VANGOGH_0932	0x1435	Van Gogh
 product ATI CYAN_SKILLFISH_2	0x143f	Cyan Skillfish
 product ATI PPB_1		0x1478	PCIE
 product ATI PPB_2		0x1479	PCIE
@@ -1290,7 +1291,7 @@ product ATI BARCELO		0x15e7	Barcelo
 product ATI RENOIR		0x1636	Renoir
 product ATI RENOIR_HDA		0x1637	Renoir HD Audio
 product ATI CEZANNE		0x1638	Cezanne
-product ATI VANGOGH		0x163f	Van Gogh
+product ATI VANGOGH_0405	0x163f	Van Gogh
 product ATI VANGOGH_HDA		0x1640	Van Gogh HD Audio
 product ATI LUCIENNE		0x164c	Lucienne
 product ATI YELLOW_CARP_1	0x164d	Rembrandt

@@ -142,7 +142,8 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x73BF },
 
 	/* Van Gogh */
-	{0x1002, 0x163F },
+	{0x1002, 0x1435 },	/* Custom GPU 0932 */
+	{0x1002, 0x163F },	/* Custom GPU 0405 */
 
 	/* Yellow Carp */
 	{0x1002, 0x164D },
