@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.99 2023/10/24 13:20:09 claudio Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.100 2023/11/23 01:00:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -17,6 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "kstat.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -25,6 +27,7 @@
 #include <sys/sysctl.h>
 #include <sys/task.h>
 #include <sys/user.h>
+#include <sys/kstat.h>
 
 #include <uvm/uvm.h>
 
@@ -249,6 +252,11 @@ void	cpu_psci_init(struct cpu_info *);
 
 void	cpu_flush_bp_noop(void);
 void	cpu_flush_bp_psci(void);
+
+#if NKSTAT > 0
+void	cpu_kstat_attach(struct cpu_info *ci);
+void	cpu_opp_kstat_attach(struct cpu_info *ci);
+#endif
 
 void
 cpu_identify(struct cpu_info *ci)
@@ -937,6 +945,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		}
 
 		cpu_init();
+
+#if NKSTAT > 0
+		cpu_kstat_attach(ci);
+#endif
 #ifdef MULTIPROCESSOR
 	}
 #endif
@@ -1180,6 +1192,10 @@ cpu_init_secondary(struct cpu_info *ci)
 	__asm volatile("dsb sy; sev" ::: "memory");
 
 	spllower(IPL_NONE);
+
+#if NKSTAT > 0
+	cpu_kstat_attach(ci);
+#endif
 
 	sched_toidle();
 }
@@ -1534,6 +1550,10 @@ cpu_opp_mountroot(struct device *self)
 		if (ot == NULL)
 			continue;
 
+#if NKSTAT > 0
+		cpu_opp_kstat_attach(ci);
+#endif
+
 		/* Skip if this table is shared and we're not the master. */
 		if (ot->ot_master && ot->ot_master != ci)
 			continue;
@@ -1817,3 +1837,153 @@ cpu_psci_init(struct cpu_info *ci)
 	ci->ci_psci_suspend_param =
 		OF_getpropint(node, "arm,psci-suspend-param", 0);
 }
+
+#if NKSTAT > 0
+
+struct cpu_kstats {
+	struct kstat_kv		ck_impl;
+	struct kstat_kv		ck_part;
+	struct kstat_kv		ck_rev;
+};
+
+void
+cpu_kstat_attach(struct cpu_info *ci)
+{
+	struct kstat *ks;
+	struct cpu_kstats *ck;
+
+	uint64_t midr, impl, part;
+	const char *impl_name = NULL, *part_name = NULL;
+	const struct cpu_cores *coreselecter = cpu_cores_none;
+	size_t i;
+
+	ks = kstat_create(ci->ci_dev->dv_xname, 0, "mach", 0, KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		printf("%s: unable to create cpu kstats\n",
+		    ci->ci_dev->dv_xname);
+		/* printf? */
+		return;
+	}
+
+	ck = malloc(sizeof(*ck), M_DEVBUF, M_WAITOK);
+
+	midr = READ_SPECIALREG(midr_el1);
+	impl = CPU_IMPL(midr);
+	part = CPU_PART(midr);
+
+	for (i = 0; cpu_implementers[i].name; i++) {
+		if (impl == cpu_implementers[i].id) {
+			impl_name = cpu_implementers[i].name;
+			coreselecter = cpu_implementers[i].corelist;
+			break;
+		}
+	}
+
+	if (impl_name) {
+		kstat_kv_init(&ck->ck_impl, "impl", KSTAT_KV_T_ISTR);
+		strlcpy(kstat_kv_istr(&ck->ck_impl), impl_name,
+		    sizeof(kstat_kv_istr(&ck->ck_impl)));
+	} else
+		kstat_kv_init(&ck->ck_impl, "impl", KSTAT_KV_T_NULL);
+
+	for (i = 0; coreselecter[i].name; i++) {
+		if (part == coreselecter[i].id) {
+			part_name = coreselecter[i].name;
+			break;
+		}
+	}
+
+	if (part_name) {
+		kstat_kv_init(&ck->ck_part, "part", KSTAT_KV_T_ISTR);
+		strlcpy(kstat_kv_istr(&ck->ck_part), part_name,
+		    sizeof(kstat_kv_istr(&ck->ck_part)));
+	} else
+		kstat_kv_init(&ck->ck_part, "part", KSTAT_KV_T_NULL);
+
+	kstat_kv_init(&ck->ck_rev, "rev", KSTAT_KV_T_ISTR);
+	snprintf(kstat_kv_istr(&ck->ck_rev), sizeof(kstat_kv_istr(&ck->ck_rev)),
+	    "r%llup%llu", CPU_VAR(midr), CPU_REV(midr));
+
+	ks->ks_softc = ci;
+	ks->ks_data = ck;
+	ks->ks_datalen = sizeof(*ck);
+	ks->ks_read = kstat_read_nop;
+
+	kstat_install(ks);
+
+	/* XXX should we have a ci->ci_kstat = ks? */
+}
+
+struct cpu_opp_kstats {
+	struct kstat_kv		coppk_freq;
+	struct kstat_kv		coppk_supply_v;
+};
+
+int
+cpu_opp_kstat_read(struct kstat *ks)
+{
+	struct cpu_info *ci = ks->ks_softc;
+	struct cpu_opp_kstats *coppk = ks->ks_data;
+
+	struct opp_table *ot = ci->ci_opp_table;
+	struct cpu_info *oci = ot->ot_master;
+	struct timespec now, diff;
+
+	/* rate limit */
+	getnanouptime(&now);
+	timespecsub(&now, &ks->ks_updated, &diff);
+	if (diff.tv_sec < 1)
+		return (0);
+
+	if (oci == NULL)
+		oci = ci;
+
+	kstat_kv_freq(&coppk->coppk_freq) =
+	    clock_get_frequency(oci->ci_node, NULL);
+
+	if (oci->ci_cpu_supply) {
+		kstat_kv_volts(&coppk->coppk_supply_v) =
+		    regulator_get_voltage(oci->ci_cpu_supply);
+	}
+
+	ks->ks_updated = now;
+
+	return (0);
+}
+
+void
+cpu_opp_kstat_attach(struct cpu_info *ci)
+{
+	struct kstat *ks;
+	struct cpu_opp_kstats *coppk;
+	struct opp_table *ot = ci->ci_opp_table;
+	struct cpu_info *oci = ot->ot_master;
+
+	if (oci == NULL)
+		oci = ci;
+
+	ks = kstat_create(ci->ci_dev->dv_xname, 0, "dt-opp", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		printf("%s: unable to create cpu dt-opp kstats\n",
+		    ci->ci_dev->dv_xname);
+		return;
+	}
+
+	coppk = malloc(sizeof(*coppk), M_DEVBUF, M_WAITOK);
+
+	kstat_kv_init(&coppk->coppk_freq, "freq", KSTAT_KV_T_FREQ);
+	kstat_kv_init(&coppk->coppk_supply_v, "supply",
+	    oci->ci_cpu_supply ? KSTAT_KV_T_VOLTS_DC : KSTAT_KV_T_NULL);
+
+	ks->ks_softc = oci;
+	ks->ks_data = coppk;
+	ks->ks_datalen = sizeof(*coppk);
+	ks->ks_read = cpu_opp_kstat_read;
+
+	kstat_install(ks);
+
+	/* XXX should we have a ci->ci_opp_kstat = ks? */
+}
+
+#endif /* NKSTAT > 0 */
