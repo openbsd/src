@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.h,v 1.4 2021/11/11 09:39:16 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.h,v 1.5 2023/11/23 03:38:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -48,6 +48,7 @@ void bridge_delspan(const char *, int);
 void bridge_flush(const char *, int);
 void bridge_flushall(const char *, int);
 void bridge_addaddr(const char *, const char *);
+void bridge_addendpoint(const char *, const char *);
 void bridge_deladdr(const char *, int);
 void bridge_maxaddr(const char *, int);
 void bridge_addrs(const char *, int);

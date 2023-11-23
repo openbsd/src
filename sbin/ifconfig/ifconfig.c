@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.469 2023/11/23 03:22:14 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.470 2023/11/23 03:38:34 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -577,6 +577,7 @@ const struct	cmd {
 	{ "flush",	0,		0,		bridge_flush },
 	{ "flushall",	0,		0,		bridge_flushall },
 	{ "static",	NEXTARG2,	0,		NULL, bridge_addaddr },
+	{ "endpoint",	NEXTARG2,	0,		NULL, bridge_addendpoint },
 	{ "deladdr",	NEXTARG,	0,		bridge_deladdr },
 	{ "maxaddr",	NEXTARG,	0,		bridge_maxaddr },
 	{ "addr",	0,		0,		bridge_addrs },

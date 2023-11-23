@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.31 2022/07/08 07:04:54 jsg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.32 2023/11/23 03:38:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -654,6 +654,42 @@ bridge_addaddr(const char *ifsname, const char *addr)
 
 	if (ioctl(sock, SIOCBRDGSADDR, &ifba) == -1)
 		err(1, "%s: %s", ifname, addr);
+}
+
+void
+bridge_addendpoint(const char *endpoint, const char *addr)
+{
+	struct ifbareq ifba;
+	struct ether_addr *ea;
+	struct addrinfo *res;
+	int ecode;
+
+	/* should we handle ports? */
+	ecode = getaddrinfo(endpoint, NULL, NULL, &res);
+	if (ecode != 0) {
+                errx(1, "%s endpoint %s: %s", ifname, endpoint,
+                    gai_strerror(ecode));
+	}
+	if (res->ai_addrlen > sizeof(ifba.ifba_dstsa))
+		errx(1, "%s: addrlen > dstsa", __func__);
+
+	ea = ether_aton(addr);
+	if (ea == NULL) {
+		errx(1, "%s endpoint %s %s: invalid Ethernet address",
+		    ifname, endpoint, addr);
+	}
+
+	memset(&ifba, 0, sizeof(ifba));
+	strlcpy(ifba.ifba_name, ifname, sizeof(ifba.ifba_name));
+	strlcpy(ifba.ifba_ifsname, ifname, sizeof(ifba.ifba_ifsname));
+	memcpy(&ifba.ifba_dst, ea, sizeof(struct ether_addr));
+	memcpy(&ifba.ifba_dstsa, res->ai_addr, res->ai_addrlen);
+	ifba.ifba_flags = IFBAF_STATIC;
+
+	freeaddrinfo(res);
+
+	if (ioctl(sock, SIOCBRDGSADDR, &ifba) == -1)
+		err(1, "%s endpoint %s %s", ifname, endpoint, addr);
 }
 
 void
