@@ -1,4 +1,4 @@
-/*	$OpenBSD: uploader.c,v 1.34 2023/04/28 10:24:39 claudio Exp $ */
+/*	$OpenBSD: uploader.c,v 1.35 2023/11/23 11:59:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -608,19 +608,21 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 	 * FIXME: run rsync_set_metadata()?
 	 */
 
-	if (u->newdir[idx] ||
-	    (sess->opts->preserve_times &&
-	     st.st_mtime != f->st.mtime)) {
-		tv[0].tv_sec = time(NULL);
-		tv[0].tv_nsec = 0;
-		tv[1].tv_sec = f->st.mtime;
-		tv[1].tv_nsec = 0;
-		rc = utimensat(u->rootfd, f->path, tv, 0);
-		if (rc == -1) {
-			ERR("%s: utimensat", f->path);
-			return 0;
+	if (!sess->opts->ignore_dir_times) {
+		if (u->newdir[idx] ||
+		    (sess->opts->preserve_times &&
+		     st.st_mtime != f->st.mtime)) {
+			tv[0].tv_sec = time(NULL);
+			tv[0].tv_nsec = 0;
+			tv[1].tv_sec = f->st.mtime;
+			tv[1].tv_nsec = 0;
+			rc = utimensat(u->rootfd, f->path, tv, 0);
+			if (rc == -1) {
+				ERR("%s: utimensat", f->path);
+				return 0;
+			}
+			LOG4("%s: updated date", f->path);
 		}
-		LOG4("%s: updated date", f->path);
 	}
 
 	/*
