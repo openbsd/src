@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2055 2023/11/23 14:21:47 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2056 2023/11/24 04:34:09 jmatthew Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -786,11 +786,30 @@
 #define	PCI_PRODUCT_AMD_17_3X_CCP	0x1486		/* 17h Crypto */
 #define	PCI_PRODUCT_AMD_17_3X_HDA	0x1487		/* 17h HD Audio */
 #define	PCI_PRODUCT_AMD_17_7X_XHCI	0x149c		/* 17h xHCI */
+#define	PCI_PRODUCT_AMD_19_1X_IOMMU	0x149e		/* 19h/1xh IOMMU */
+#define	PCI_PRODUCT_AMD_19_1X_PCIE	0x149f		/* 19h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_19_1X_RC	0x14a4		/* 19h/1xh Root Complex */
+#define	PCI_PRODUCT_AMD_19_1X_PCIE_1	0x14a5		/* 19h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_19_1X_RCEC	0x14a6		/* 19h/1xh RCEC */
+#define	PCI_PRODUCT_AMD_19_1X_PCIE_2	0x14a7		/* 19h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_19_1X_PCIE_3	0x14aa		/* 19h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_19_1X_PCIE_4	0x14ac		/* 19h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_19_1X_PCIE_5	0x14ab		/* 19h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_19_1X_DF_1	0x14ad		/* 19h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_1X_DF_2	0x14ae		/* 19h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_1X_DF_3	0x14af		/* 19h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_1X_DF_4	0x14b0		/* 19h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_1X_DF_5	0x14b1		/* 19h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_1X_DF_6	0x14b2		/* 19h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_1X_DF_7	0x14b3		/* 19h/1xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_1X_DF_8	0x14b4		/* 19h/1xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_4X_RC	0x14b5		/* 19h/4xh Root Complex */
 #define	PCI_PRODUCT_AMD_19_4X_IOMMU	0x14b6		/* 19h/4xh IOMMU */
 #define	PCI_PRODUCT_AMD_19_4X_HB_1	0x14b7		/* 19h/4xh Host */
 #define	PCI_PRODUCT_AMD_19_4X_PCIE_1	0x14b9		/* 19h/4xh PCIE */
 #define	PCI_PRODUCT_AMD_19_4X_PCIE_2	0x14ba		/* 19h/4xh PCIE */
+#define	PCI_PRODUCT_AMD_19_1X_XHCI	0x14c9		/* 19h/1xh xHCI */
+#define	PCI_PRODUCT_AMD_19_1X_PSP	0x14ca		/* 19h/1xh PSP */
 #define	PCI_PRODUCT_AMD_19_6X_RC	0x14d8		/* 19h/6xh Root Complex */
 #define	PCI_PRODUCT_AMD_19_6X_IOMMU	0x14d9		/* 19h/6xh IOMMU */
 #define	PCI_PRODUCT_AMD_19_6X_HB	0x14da		/* 19h/6xh Host */
