@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.74 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: State.pm,v 1.75 2023/11/24 18:19:25 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -191,6 +191,47 @@ sub do_options($state, $sub)
 	};
 }
 
+sub validate_usage($state, $string, @usage)
+{
+	my $h = {};
+	my $h2 = {};
+	my $previous;
+	for my $letter (split //, $string) {
+		if ($letter eq ':') {
+			$h->{$previous} = 1;
+		} else {
+			$previous = $letter;
+			$h->{$previous} = 0;
+		}
+	}
+	for my $u (@usage) {
+		while ($u =~ s/\[\-(.*?)\]//) {
+			my $opts = $1;
+			if ($opts =~ m/^[A-Za-z]+$/) {
+				for my $o (split //, $opts) {
+					$h2->{$o} = 0;
+				}
+			} else {
+				$opts =~ m/./;
+				$h2->{$&} = 1;
+			}
+		}
+	}
+	for my $k (keys %$h) {
+		if (!exists $h2->{$k}) {
+			    $state->errsay("Option #1 #2is not in usage", $k,
+				$h->{$k} ? "(with params) " : "");
+		} elsif ($h2->{$k} != $h->{$k}) {
+			$state->errsay("Discrepancy for option #1", $k);
+		}
+	}
+	for my $k (keys %$h2) {
+		if (!exists $h->{$k}) {
+			$state->errsay("Option #1 does not exist", $k);
+		}
+	}
+}
+
 sub handle_options($state, $opt_string, @usage)
 {
 	require OpenBSD::Getopt;
@@ -218,6 +259,9 @@ sub handle_options($state, $opt_string, @usage)
 		$state->{signature_style} //= 'new';
 	}
 
+	if ($state->defines('VALIDATE_USAGE')) {
+		$state->validate_usage($opt_string.'vD:', @usage);
+	}
 	return if $state->{no_exports};
 	# TODO make sure nothing uses this
 	no strict "refs";
