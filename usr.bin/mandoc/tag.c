@@ -1,6 +1,6 @@
-/* $OpenBSD: tag.c,v 1.37 2022/04/26 11:28:35 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.38 2023/11/24 04:48:02 schwarze Exp $ */
 /*
- * Copyright (c) 2015, 2016, 2018, 2019, 2020, 2022
+ * Copyright (c) 2015, 2016, 2018, 2019, 2020, 2022, 2023
  *               Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -24,11 +24,13 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "mandoc_aux.h"
 #include "mandoc_ohash.h"
+#include "mandoc.h"
 #include "roff.h"
 #include "mdoc.h"
 #include "roff_int.h"
@@ -86,9 +88,11 @@ tag_put(const char *s, int prio, struct roff_node *n)
 {
 	struct tag_entry	*entry;
 	struct roff_node	*nold;
-	const char		*se;
+	const char		*se, *src;
+	char			*cpy;
 	size_t			 len;
 	unsigned int		 slot;
+	int			 changed;
 
 	assert(prio <= TAG_FALLBACK);
 
@@ -104,6 +108,7 @@ tag_put(const char *s, int prio, struct roff_node *n)
 
 	/* Determine the implicit tag. */
 
+	changed = 1;
 	if (s == NULL) {
 		if (n->child == NULL || n->child->type != ROFFT_TEXT)
 			return;
@@ -120,27 +125,53 @@ tag_put(const char *s, int prio, struct roff_node *n)
 				s += 2;
 				break;
 			default:
-				break;
+				return;
 			}
 			break;
 		default:
+			changed = 0;
 			break;
 		}
 	}
 
 	/*
+	 * Translate \- and ASCII_HYPH to plain '-'.
 	 * Skip whitespace and escapes and whatever follows,
 	 * and if there is any, downgrade the priority.
 	 */
 
-	len = strcspn(s, " \t\\");
+	cpy = mandoc_malloc(strlen(s) + 1);
+	for (src = s, len = 0; *src != '\0'; src++, len++) {
+		switch (*src) {
+		case '\t':
+		case ' ':
+			changed = 1;
+			break;
+		case ASCII_HYPH:
+			cpy[len] = '-';
+			changed = 1;
+			continue;
+		case '\\':
+			if (src[1] != '-')
+				break;
+			src++;
+			changed = 1;
+			/* FALLTHROUGH */
+		default:
+			cpy[len] = *src;
+			continue;
+		}
+		break;
+	}
 	if (len == 0)
-		return;
+		goto out;
+	cpy[len] = '\0';
 
-	se = s + len;
-	if (*se != '\0' && prio < TAG_WEAK)
+	if (*src != '\0' && prio < TAG_WEAK)
 		prio = TAG_WEAK;
 
+	s = cpy;
+	se = cpy + len;
 	slot = ohash_qlookupi(&tag_data, s, &se);
 	entry = ohash_find(&tag_data, slot);
 
@@ -148,8 +179,7 @@ tag_put(const char *s, int prio, struct roff_node *n)
 
 	if (entry == NULL) {
 		entry = mandoc_malloc(sizeof(*entry) + len + 1);
-		memcpy(entry->s, s, len);
-		entry->s[len] = '\0';
+		memcpy(entry->s, s, len + 1);
 		entry->nodes = NULL;
 		entry->maxnodes = entry->nnodes = 0;
 		ohash_insert(&tag_data, slot, entry);
@@ -161,7 +191,7 @@ tag_put(const char *s, int prio, struct roff_node *n)
 	 */
 
 	else if (entry->prio < prio)
-		return;
+		goto out;
 
 	/*
 	 * If the existing entry is worse, clear it.
@@ -178,7 +208,7 @@ tag_put(const char *s, int prio, struct roff_node *n)
 		}
 		if (prio == TAG_FALLBACK) {
 			entry->prio = TAG_DELETE;
-			return;
+			goto out;
 		}
 	}
 
@@ -192,10 +222,13 @@ tag_put(const char *s, int prio, struct roff_node *n)
 	entry->nodes[entry->nnodes++] = n;
 	entry->prio = prio;
 	n->flags |= NODE_ID;
-	if (n->child == NULL || n->child->string != s || *se != '\0') {
+	if (changed) {
 		assert(n->tag == NULL);
 		n->tag = mandoc_strndup(s, len);
 	}
+
+ out:
+	free(cpy);
 }
 
 int
