@@ -4,6 +4,8 @@
   <dd>text</dd>
   <dt id="three-with-hyphens"><a class="permalink" href="#three-with-hyphens"><i class="Em">three-with-hyphens</i></a></dt>
   <dd>text</dd>
+  <dt id="minus-sign"><a class="permalink" href="#minus-sign"><i class="Em">minus-sign</i></a></dt>
+  <dd>text</dd>
 </dl>
 <a class="permalink" href="#four"><i class="Em" id="four">four</i></a>
   <i class="Em">one</i>

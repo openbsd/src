@@ -12,7 +12,7 @@ BEGINTEST
 
 > text
 
-**three**
+**three-with&#45;hyphens**
 
 > text
 
@@ -22,4 +22,4 @@ BEGINTEST
 
 ENDTEST
 
-OpenBSD - March 13, 2020
+OpenBSD - November 24, 2023

@@ -3,3 +3,6 @@ DESCRIPTION tag.mandoc_ascii 6
 plain tag.mandoc_ascii 11
 strong tag.mandoc_ascii 17
 weak tag.mandoc_ascii 19
+hyphen-minus tag.mandoc_ascii 21
+minus-sign tag.mandoc_ascii 24
+strong tag.mandoc_ascii 27

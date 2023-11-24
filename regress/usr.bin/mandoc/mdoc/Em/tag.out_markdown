@@ -16,10 +16,14 @@ BEGINTEST
 
 > text
 
+*minus&#45;sign*
+
+> text
+
 *four*
 *one*
 *five*
 
 ENDTEST
 
-OpenBSD - April 2, 2020
+OpenBSD - November 24, 2023

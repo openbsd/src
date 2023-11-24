@@ -1,5 +1,5 @@
-.\" $OpenBSD: tag.in,v 1.1 2020/03/13 00:31:06 schwarze Exp $
-.Dd $Mdocdate: March 13 2020 $
+.\" $OpenBSD: tag.in,v 1.2 2023/11/24 04:53:39 schwarze Exp $
+.Dd $Mdocdate: November 24 2023 $
 .Dt SY-TAG 1
 .Os
 .Sh NAME
@@ -11,7 +11,7 @@ BEGINTEST
 .It Sy one | two
 text
 .It Xo
-.Sy three
+.Sy three-with\-hyphens
 .Xc
 text
 .El

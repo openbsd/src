@@ -3,5 +3,6 @@ DESCRIPTION tag.mandoc_ascii 6
 one tag.mandoc_ascii 9
 two tag.mandoc_ascii 9
 three-with-hyphens tag.mandoc_ascii 12
-four tag.mandoc_ascii 14
-explicit tag.mandoc_ascii 14
+minus-sign tag.mandoc_ascii 15
+four tag.mandoc_ascii 17
+explicit tag.mandoc_ascii 17
