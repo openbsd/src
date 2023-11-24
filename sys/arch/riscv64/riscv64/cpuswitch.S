@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch.S,v 1.8 2023/10/24 13:20:10 claudio Exp $	*/
+/*	$OpenBSD: cpuswitch.S,v 1.9 2023/11/24 07:57:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -65,8 +65,7 @@ ENTRY(cpu_switchto_asm)
 
 	ld	s1, PCB_SP(a5)		// load new stack pointer
 	mv	a0, a1
-	la	t0, pmap_set_satp
-	jalr	t0
+	call	pmap_set_satp
 
 	mv	a7, s0			// move retguard random
 	mv	sp, s1			// restore stack pointer
@@ -92,8 +91,7 @@ ENTRY(cpu_switchto_asm)
 END(cpu_switch_asm)
 
 ENTRY(proc_trampoline)
-	la	t0, proc_trampoline_mi
-	jalr	t0
+	call	proc_trampoline_mi
 	mv	a0, s2
 	jalr	s1
 	la	t0, syscall_return
