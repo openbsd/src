@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2021/07/02 10:42:22 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2023/11/24 16:41:12 miod Exp $
 #
 # Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
 # All rights reserved.
@@ -41,8 +41,6 @@ struct	switchframe
 member	sf_s
 member	sf_ra
 
-export	IPL_NONE
-
 struct	proc
 member	p_stat
 member	p_cpu
@@ -52,43 +50,19 @@ member	p_astpending	p_md.md_astpending
 export	SONPROC
 
 struct	sigframe
-member	sf_signum
 member	sf_sc
-member	sf_si
 
 struct	pcb
-member	pcb_flags
-member	pcb_tf
 member	pcb_sp
 member	pcb_onfault
-member	pcb_fpstate
 
 struct	cpu_info
-member	ci_dev
-member	ci_next
-member	ci_schedstate
-member	ci_cpuid
 member	ci_self
 member	ci_curproc
-member	ci_curpm
-member	ci_randseed
 member	ci_curpcb
-member	ci_idle_pcb
-member	ci_ipending
-member	ci_idepth
-ifdef DIAGNOSTIC
-member	ci_mutex_level
-endif
-member	ci_want_resched
 ifdef MULTIPROCESSOR
-member	ci_srp_hazards
-member	ci_flags
 member	ci_satp
 member	ci_initstack_end
-member	ci_ddb_paused
-endif
-ifdef GPROF
-member	ci_gmon
 endif
 
 struct	riscv_bootparams
