@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.47 2020/02/20 16:26:01 krw Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.48 2023/11/24 00:15:42 asou Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -113,8 +113,8 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 			/*
 			 * Because iov_len is size_t (unsigned) but b_bcount is
 			 * long (signed), an overflow is possible. Therefore
-			 * limit b_bcount to LONG_MAX before calling the provided
-			 * minphys.
+			 * limit b_bcount to LONG_MAX before calling the
+			 * provided minphys.
 			 */
 			if (iovp->iov_len > LONG_MAX)
 				bp->b_bcount = LONG_MAX;
