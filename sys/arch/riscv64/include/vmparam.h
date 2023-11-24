@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2023/03/19 20:32:13 kettenis Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.8 2023/11/24 07:18:49 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -131,49 +131,10 @@
 #define	DMAP_MIN_PHYSADDR	(dmap_phys_base)
 #define	DMAP_MAX_PHYSADDR	(dmap_phys_max)
 
-/* True if pa is in the dmap range */
-#define	PHYS_IN_DMAP(pa)	((pa) >= DMAP_MIN_PHYSADDR && \
-    (pa) < DMAP_MAX_PHYSADDR)
-/* True if va is in the dmap range */
-#define	VIRT_IN_DMAP(va)	((va) >= DMAP_MIN_ADDRESS && \
-    (va) < (dmap_max_addr))
-
-#define	PMAP_HAS_DMAP	1
-#if 0	// XXX KASSERT missing. Find a better way to enforce boundary.
-#define	PHYS_TO_DMAP(pa)						\
-({									\
-	KASSERT(PHYS_IN_DMAP(pa),					\
-	    ("%s: PA out of range, PA: 0x%lx", __func__,		\
-	    (vm_paddr_t)(pa)));						\
-	((pa) - dmap_phys_base) + DMAP_MIN_ADDRESS;			\
-})
-#else
-#define	PHYS_TO_DMAP(pa)						\
-({									\
-	((pa) - dmap_phys_base) + DMAP_MIN_ADDRESS;			\
-})
-#endif
-
-#if 0	// XXX KASSERT missing. Find a better way to enforce boundary.
-#define	DMAP_TO_PHYS(va)						\
-({									\
-	KASSERT(VIRT_IN_DMAP(va),					\
-	    ("%s: VA out of range, VA: 0x%lx", __func__,		\
-	    (vm_offset_t)(va)));					\
-	((va) - DMAP_MIN_ADDRESS) + dmap_phys_base;			\
-})
-#else
-#define	DMAP_TO_PHYS(va)						\
-({									\
-	((va) - DMAP_MIN_ADDRESS) + dmap_phys_base;			\
-})
-#endif
-
 #define	VM_MIN_USER_ADDRESS	(0x0000000000000000UL)
 #define	VM_MAX_USER_ADDRESS	(0x0000004000000000UL)  // 39 User Space Bits
 
 #define	VM_MINUSER_ADDRESS	(VM_MIN_USER_ADDRESS)
-// XXX OpenBSD/arm64 saves 8 * PAGE_SIZE at top of VM_MAXUSER_ADDRESS. Why?
 #define	VM_MAXUSER_ADDRESS	(VM_MAX_USER_ADDRESS)
 #ifdef _KERNEL
 #define	VM_MIN_STACK_ADDRESS	(VM_MAXUSER_ADDRESS * 3 / 4)
