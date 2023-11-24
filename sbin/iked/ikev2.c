@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.379 2023/11/10 08:03:02 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.380 2023/11/24 14:43:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4034,10 +4034,10 @@ ikev2_send_ike_e(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
 	if ((e = ibuf_static()) == NULL)
 		goto done;
 
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-
 	if (buf) {
+		if ((pld = ikev2_add_payload(e)) == NULL)
+			goto done;
+
 		if (ibuf_add_buf(e, buf) != 0)
 			goto done;
 
