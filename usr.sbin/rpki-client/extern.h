@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.194 2023/11/16 11:10:59 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.195 2023/11/24 14:05:47 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -930,7 +930,8 @@ int	mkpathat(int, const char *);
 /* Maximum acceptable URI length */
 #define MAX_URI_LENGTH		2048
 
-/* Maximum acceptable file size */
+/* Min/Max acceptable file size */
+#define MIN_FILE_SIZE		100
 #define MAX_FILE_SIZE		4000000
 
 /* Maximum number of FileNameAndHash entries per RSC checklist. */
