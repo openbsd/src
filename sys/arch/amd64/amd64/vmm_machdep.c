@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.9 2023/11/13 19:15:01 jasper Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.10 2023/11/24 21:48:25 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3949,14 +3949,14 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 {
 	int ret = 0, exitinfo;
 	struct region_descriptor gdt;
-	struct cpu_info *ci = curcpu();
+	struct cpu_info *ci = NULL;
 	uint64_t exit_reason, cr3, insn_error;
 	struct schedstate_percpu *spc;
 	struct vmx_invvpid_descriptor vid;
 	uint64_t eii, procbased, int_st;
 	uint16_t irq, ldt_sel;
 	u_long s;
-	struct region_descriptor gdtr, idtr;
+	struct region_descriptor idtr;
 
 	rw_assert_wrlock(&vcpu->vc_lock);
 
@@ -4033,26 +4033,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
 	}
 
-	setregion(&gdt, ci->ci_gdt, GDT_SIZE - 1);
-	if (gdt.rd_base == 0) {
-		printf("%s: setregion\n", __func__);
-		return (EINVAL);
-	}
-
-	/* Host GDTR base */
-	if (vmwrite(VMCS_HOST_IA32_GDTR_BASE, gdt.rd_base)) {
-		printf("%s: vmwrite(0x%04X, 0x%llx)\n", __func__,
-		    VMCS_HOST_IA32_GDTR_BASE, gdt.rd_base);
-		return (EINVAL);
-	}
-
-	/* Host TR base */
-	if (vmwrite(VMCS_HOST_IA32_TR_BASE, (uint64_t)ci->ci_tss)) {
-		printf("%s: vmwrite(0x%04X, 0x%llx)\n", __func__,
-		    VMCS_HOST_IA32_TR_BASE, (uint64_t)ci->ci_tss);
-		return (EINVAL);
-	}
-
 	/* Host CR3 */
 	cr3 = rcr3();
 	if (vmwrite(VMCS_HOST_IA32_CR3, cr3)) {
@@ -4110,6 +4090,34 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		vmm_update_pvclock(vcpu);
 
+		if (ci != curcpu()) {
+			ci = curcpu();
+			vcpu->vc_last_pcpu = ci;
+
+			setregion(&gdt, ci->ci_gdt, GDT_SIZE - 1);
+			if (gdt.rd_base == 0) {
+				printf("%s: setregion\n", __func__);
+				return (EINVAL);
+			}
+
+			/* Host GDTR base */
+			if (vmwrite(VMCS_HOST_IA32_GDTR_BASE, gdt.rd_base)) {
+				printf("%s: vmwrite(0x%04X, 0x%llx)\n",
+				    __func__, VMCS_HOST_IA32_GDTR_BASE,
+				    gdt.rd_base);
+				return (EINVAL);
+			}
+
+			/* Host TR base */
+			if (vmwrite(VMCS_HOST_IA32_TR_BASE,
+			    (uint64_t)ci->ci_tss)) {
+				printf("%s: vmwrite(0x%04X, 0x%llx)\n",
+				    __func__, VMCS_HOST_IA32_TR_BASE,
+				    (uint64_t)ci->ci_tss);
+				return (EINVAL);
+			}
+		}
+
 		/* Inject event if present */
 		if (vcpu->vc_event != 0) {
 			eii = (vcpu->vc_event & 0xFF);
@@ -4161,7 +4169,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			break;
 		}
 
-		sgdt(&gdtr);
 		sidt(&idtr);
 		sldt(&ldt_sel);
 
@@ -4182,7 +4189,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			wrpkru(PGK_VALUE);
 		}
 
-		bare_lgdt(&gdtr);
 		lidt(&idtr);
 		lldt(ldt_sel);
 
