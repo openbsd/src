@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.53 2023/11/25 11:01:22 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.54 2023/11/25 11:02:23 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -538,7 +538,7 @@ sub parse_and_run($self, $cmd)
 		    }
 	    };
 	$state->{no_exports} = 1;
-	$state->handle_options('cCdfF:IKLmPQ:qr:RsSUe:E:Ml:aAtz',
+	$state->handle_options('cCdfIKLmPQ:qr:RsSUe:E:Ml:aAtz',
 	    '[-AaCcdfIKLMmPqRSstUvz] [-D nolock][-E filename] [-e pkg-name] ',
 	    '[-l str] [-Q query] [-r pkgspec] [pkg-name ...]');
 
