@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.5 2023/11/25 12:00:39 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.6 2023/11/25 13:00:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -127,7 +127,7 @@ print_config(struct dhcpleased_conf *conf)
 
 		}
 		if (iface->prefer_ipv6)
-			printf("\t prefer ipv6\n");
+			printf("\tprefer ipv6\n");
 		printf("}\n");
 	}
 }
