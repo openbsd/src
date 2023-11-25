@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.5,v 1.26 2022/03/31 17:27:23 naddy Exp $
+.\"	$OpenBSD: hosts.5,v 1.27 2023/11/25 08:14:43 florian Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: November 25 2023 $
 .Dt HOSTS 5
 .Os
 .Sh NAME
@@ -76,6 +76,9 @@ dot notation (IPv4) or colon separated notation (IPv6) as described in
 .Xr inet_pton 3 .
 Host names may contain any printable character other than a field delimiter,
 newline, or comment character.
+.Pp
+The host "localhost" and all names underneath the localhost domain will
+always resolve to the loopback addresses 127.0.0.1 or ::1.
 .Sh FILES
 .Bl -tag -width /etc/hosts -compact
 .It Pa /etc/hosts

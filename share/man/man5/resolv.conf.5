@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.64 2021/11/23 06:58:36 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.65 2023/11/25 08:14:43 florian Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: November 23 2021 $
+.Dd $Mdocdate: November 25 2023 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -49,6 +49,9 @@ file does not exist, only the local host file
 .Pa /etc/hosts
 will be consulted,
 i.e. the Domain Name System will not be used to resolve hosts.
+.Pp
+The host "localhost" and all names underneath the localhost domain will
+always resolve to the loopback addresses 127.0.0.1 or ::1.
 .Pp
 The file is designed to be human readable and contains a list of
 keywords with values that provide various types of resolver information.
