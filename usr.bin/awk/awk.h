@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.30 2023/09/18 19:32:19 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.31 2023/11/25 16:31:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -257,14 +257,19 @@ typedef struct rrow {
 	int	*lfollow;
 } rrow;
 
-typedef struct gtt { /* gototab entry */
+typedef struct gtte { /* gototab entry */
 	unsigned int ch;
 	unsigned int state;
+} gtte;
+
+typedef struct gtt {	/* gototab */
+	size_t	allocated;
+	size_t	inuse;
+	gtte	*entries;
 } gtt;
 
 typedef struct fa {
-	gtt	**gototab;
-	int	gototab_len;
+	gtt	*gototab;
 	uschar	*out;
 	uschar	*restr;
 	int	**posns;

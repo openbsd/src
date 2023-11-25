@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.48 2023/11/22 01:01:21 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.49 2023/11/25 16:31:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -97,9 +97,8 @@ extern int u8_nextlen(const char *s);
    mechanism of the goto table used 8-bit byte indices into the
    gototab entries to compute the next state.  Unicode is a lot
    bigger, so the gototab entries are now structs with a character
-   and a next state, and there is a linear search of the characters
-   to find the state.  (Yes, this is slower, by a significant
-   amount.  Tough.)
+   and a next state. These are sorted by code point and binary
+   searched.
 
    Throughout the RE mechanism in b.c, utf-8 characters are
    converted to their utf-32 value.  This mostly shows up in
@@ -114,9 +113,10 @@ extern int u8_nextlen(const char *s);
 
  */
 
+static int entry_cmp(const void *l, const void *r);
 static int get_gototab(fa*, int, int);
 static int set_gototab(fa*, int, int, int);
-static void reset_gototab(fa*, int);
+static void clear_gototab(fa*, int);
 extern int u8_rune(int *, const uschar *);
 
 static int *
@@ -151,7 +151,7 @@ resizesetvec(const char *f)
 static void
 resize_state(fa *f, int state)
 {
-	gtt **p;
+	gtt *p;
 	uschar *p2;
 	int **p3;
 	int i, new_count;
@@ -161,7 +161,7 @@ resize_state(fa *f, int state)
 
 	new_count = state + 10; /* needs to be tuned */
 
-	p = (gtt **) reallocarray(f->gototab, new_count, sizeof(f->gototab[0]));
+	p = (gtt *) reallocarray(f->gototab, new_count, sizeof(gtt));
 	if (p == NULL)
 		goto out;
 	f->gototab = p;
@@ -177,13 +177,14 @@ resize_state(fa *f, int state)
 	f->posns = p3;
 
 	for (i = f->state_count; i < new_count; ++i) {
-		f->gototab[i] = (gtt *) calloc(NCHARS, sizeof(**f->gototab));
-		if (f->gototab[i] == NULL)
+		f->gototab[i].entries = (gtte *) calloc(NCHARS, sizeof(gtte));
+		if (f->gototab[i].entries == NULL)
 			goto out;
-		f->out[i]  = 0;
+		f->gototab[i].allocated = NCHARS;
+		f->gototab[i].inuse = 0;
+		f->out[i] = 0;
 		f->posns[i] = NULL;
 	}
-	f->gototab_len = NCHARS; /* should be variable, growable */
 	f->state_count = new_count;
 	return;
 out:
@@ -277,7 +278,7 @@ int makeinit(fa *f, bool anchor)
 	}
 	if ((f->posns[2])[1] == f->accept)
 		f->out[2] = 1;
-	reset_gototab(f, 2);
+	clear_gototab(f, 2);
 	f->curstat = cgoto(f, 2, HAT);
 	if (anchor) {
 		*f->posns[2] = k-1;	/* leave out position 0 */
@@ -601,35 +602,102 @@ int member(int c, int *sarg)	/* is c in s? */
 	return(0);
 }
 
-static int get_gototab(fa *f, int state, int ch) /* hide gototab inplementation */
+static void resize_gototab(fa *f, int state)
 {
-	int i;
-	for (i = 0; i < f->gototab_len; i++) {
-		if (f->gototab[state][i].ch == 0)
-			break;
-		if (f->gototab[state][i].ch == ch)
-			return f->gototab[state][i].state;
-	}
-	return 0;
+	size_t new_size = f->gototab[state].allocated * 2;
+	gtte *p = (gtte *) realloc(f->gototab[state].entries, new_size * sizeof(gtte));
+	if (p == NULL)
+		overflo(__func__);
+
+	// need to initialized the new memory to zero
+	size_t orig_size = f->gototab[state].allocated;		// 2nd half of new mem is this size
+	memset(p + orig_size, 0, orig_size * sizeof(gtte));	// clean it out
+
+	f->gototab[state].allocated = new_size;			// update gotottab info
+	f->gototab[state].entries = p;
 }
 
-static void reset_gototab(fa *f, int state) /* hide gototab inplementation */
+static int get_gototab(fa *f, int state, int ch) /* hide gototab inplementation */
 {
-	memset(f->gototab[state], 0, f->gototab_len * sizeof(**f->gototab));
+	gtte key;
+	gtte *item;
+
+	key.ch = ch;
+	key.state = 0;	/* irrelevant */
+	item = bsearch(& key, f->gototab[state].entries,
+			f->gototab[state].inuse, sizeof(gtte),
+			entry_cmp);
+
+	if (item == NULL)
+		return 0;
+	else
+		return item->state;
+}
+
+static int entry_cmp(const void *l, const void *r)
+{
+	const gtte *left, *right;
+
+	left = (const gtte *) l;
+	right = (const gtte *) r;
+
+	return left->ch - right->ch;
 }
 
 static int set_gototab(fa *f, int state, int ch, int val) /* hide gototab inplementation */
 {
-	int i;
-	for (i = 0; i < f->gototab_len; i++) {
-		if (f->gototab[state][i].ch == 0 || f->gototab[state][i].ch == ch) {
-			f->gototab[state][i].ch = ch;
-			f->gototab[state][i].state = val;
-			return val;
+	if (f->gototab[state].inuse == 0) {
+		f->gototab[state].entries[0].ch = ch;
+		f->gototab[state].entries[0].state = val;
+		f->gototab[state].inuse++;
+		return val;
+	} else if (ch > f->gototab[state].entries[f->gototab[state].inuse-1].ch) {
+		// not seen yet, insert and return
+		gtt *tab = & f->gototab[state];
+		if (tab->inuse + 1 >= tab->allocated)
+			resize_gototab(f, state);
+
+		f->gototab[state].entries[f->gototab[state].inuse-1].ch = ch;
+		f->gototab[state].entries[f->gototab[state].inuse-1].state = val;
+		f->gototab[state].inuse++;
+		return val;
+	} else {
+		// maybe we have it, maybe we don't
+		gtte key;
+		gtte *item;
+
+		key.ch = ch;
+		key.state = 0;	/* irrelevant */
+		item = bsearch(& key, f->gototab[state].entries,
+				f->gototab[state].inuse, sizeof(gtte),
+				entry_cmp);
+
+		if (item != NULL) {
+			// we have it, update state and return
+			item->state = val;
+			return item->state;
 		}
+		// otherwise, fall through to insert and reallocate.
 	}
-	overflo(__func__);
+
+	gtt *tab = & f->gototab[state];
+	if (tab->inuse + 1 >= tab->allocated)
+		resize_gototab(f, state);
+	++tab->inuse;
+	f->gototab[state].entries[tab->inuse].ch = ch;
+	f->gototab[state].entries[tab->inuse].state = val;
+
+	qsort(f->gototab[state].entries,
+		f->gototab[state].inuse, sizeof(gtte), entry_cmp);
+
 	return val; /* not used anywhere at the moment */
+}
+
+static void clear_gototab(fa *f, int state)
+{
+	memset(f->gototab[state].entries, 0,
+		f->gototab[state].allocated * sizeof(gtte));
+	f->gototab[state].inuse = 0;
 }
 
 int match(fa *f, const char *p0)	/* shortest match ? */
@@ -1460,6 +1528,7 @@ int cgoto(fa *f, int s, int c)
 	/* add tmpset to current set of states */
 	++(f->curstat);
 	resize_state(f, f->curstat);
+	clear_gototab(f, f->curstat);
 	xfree(f->posns[f->curstat]);
 	p = intalloc(setcnt + 1, __func__);
 
@@ -1483,7 +1552,8 @@ void freefa(fa *f)	/* free a finite automaton */
 	if (f == NULL)
 		return;
 	for (i = 0; i < f->state_count; i++)
-		xfree(f->gototab[i])
+		xfree(f->gototab[i].entries);
+	xfree(f->gototab);
 	for (i = 0; i <= f->curstat; i++)
 		xfree(f->posns[i]);
 	for (i = 0; i <= f->accept; i++) {

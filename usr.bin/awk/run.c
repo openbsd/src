@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.81 2023/11/22 01:01:21 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.82 2023/11/25 16:31:33 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1541,8 +1541,9 @@ Cell *assign(Node **a, int n)	/* a[0] = a[1], a[0] += a[1], etc. */
 		if (x == y && !(x->tval & (FLD|REC)) && x != nfloc)
 			;	/* self-assignment: leave alone unless it's a field or NF */
 		else if ((y->tval & (STR|NUM)) == (STR|NUM)) {
+			yf = getfval(y);
 			setsval(x, getsval(y));
-			x->fval = getfval(y);
+			x->fval = yf;
 			x->tval |= NUM;
 		}
 		else if (isstr(y))
