@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.315 2023/11/19 15:51:49 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.316 2023/11/25 12:05:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1515,18 +1515,6 @@ SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	}
 }
 LSSL_ALIAS(SSL_CTX_callback_ctrl);
-
-int
-ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b)
-{
-	long	l;
-
-	l = a->id - b->id;
-	if (l == 0L)
-		return (0);
-	else
-		return ((l > 0) ? 1:-1);
-}
 
 STACK_OF(SSL_CIPHER) *
 SSL_get_ciphers(const SSL *s)
@@ -3650,6 +3638,18 @@ SSL_set_quic_use_legacy_codepoint(SSL *ssl, int use_legacy)
 	/* Not supported. */
 }
 LSSL_ALIAS(SSL_set_quic_use_legacy_codepoint);
+
+static int
+ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b)
+{
+	long	l;
+
+	l = a->id - b->id;
+	if (l == 0L)
+		return (0);
+	else
+		return ((l > 0) ? 1:-1);
+}
 
 static int
 ssl_cipher_id_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)

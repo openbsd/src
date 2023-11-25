@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.8 2023/11/19 15:51:49 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.9 2023/11/25 12:05:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1304,7 +1304,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int include_ticket);
 int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block,
     int *alert);
-int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 SSL_CIPHER *OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base,
     int num);
 int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb);
