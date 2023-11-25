@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.12 2023/04/07 09:31:59 jsg Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.13 2023/11/25 18:12:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -77,9 +77,14 @@
 #define RTKIT_IOREPORT_UNKNOWN2		12
 
 #define RTKIT_OSLOG_TYPE(x)		(((x) >> 56) & 0xff)
-#define RTKIT_OSLOG_TYPE_SHIFT		56
-#define RTKIT_OSLOG_INIT		1ULL
-#define RTKIT_OSLOG_ACK			3ULL
+#define RTKIT_OSLOG_TYPE_SHIFT		(56 - RTKIT_MGMT_TYPE_SHIFT)
+#define RTKIT_OSLOG_BUFFER_REQUEST	1
+#define RTKIT_OSLOG_BUFFER_ADDR(x)	(((x) >> 0) & 0xfffffffff)
+#define RTKIT_OSLOG_BUFFER_SIZE(x)	(((x) >> 36) & 0xfffff)
+#define RTKIT_OSLOG_BUFFER_SIZE_SHIFT	36
+#define RTKIT_OSLOG_UNKNOWN1		3
+#define RTKIT_OSLOG_UNKNOWN2		4
+#define RTKIT_OSLOG_UNKNOWN3		5
 
 /* Versions we support. */
 #define RTKIT_MINVER			11
@@ -253,7 +258,7 @@ rtkit_handle_mgmt(struct rtkit_state *state, struct aplmbox_msg *msg)
 	default:
 		printf("%s: unhandled management event 0x%016lld\n",
 		    __func__, msg->data0);
-		return EIO;
+		break;
 	}
 
 	return 0;
@@ -289,7 +294,7 @@ rtkit_handle_crashlog(struct rtkit_state *state, struct aplmbox_msg *msg)
 	default:
 		printf("%s: unhandled crashlog event 0x%016llx\n",
 		    __func__, msg->data0);
-		return EIO;
+		break;
 	}
 
 	return 0;
@@ -333,7 +338,7 @@ rtkit_handle_syslog(struct rtkit_state *state, struct aplmbox_msg *msg)
 	default:
 		printf("%s: unhandled syslog event 0x%016llx\n",
 		    __func__, msg->data0);
-		return EIO;
+		break;
 	}
 
 	return 0;
@@ -377,7 +382,7 @@ rtkit_handle_ioreport(struct rtkit_state *state, struct aplmbox_msg *msg)
 	default:
 		printf("%s: unhandled ioreport event 0x%016llx\n",
 		    __func__, msg->data0);
-		return EIO;
+		break;
 	}
 
 	return 0;
@@ -387,19 +392,39 @@ int
 rtkit_handle_oslog(struct rtkit_state *state, struct aplmbox_msg *msg)
 {
 	struct mbox_channel *mc = state->mc;
+	struct rtkit *rk = state->rk;
+	bus_addr_t addr;
+	bus_size_t size;
 	int error;
 
 	switch (RTKIT_OSLOG_TYPE(msg->data0)) {
-	case RTKIT_OSLOG_INIT:
+	case RTKIT_OSLOG_BUFFER_REQUEST:
+		addr = RTKIT_OSLOG_BUFFER_ADDR(msg->data0) << PAGE_SHIFT;
+		size = RTKIT_OSLOG_BUFFER_SIZE(msg->data0);
+		if (addr)
+			break;
+
+		if (rk) {
+			addr = rtkit_alloc(state, size);
+			if (addr == (bus_addr_t)-1)
+				return ENOMEM;
+		}
+
 		error = rtkit_send(mc, RTKIT_EP_OSLOG,
-		    0, RTKIT_OSLOG_ACK << RTKIT_OSLOG_TYPE_SHIFT);
+		    (RTKIT_OSLOG_BUFFER_REQUEST << RTKIT_OSLOG_TYPE_SHIFT),
+		    (size << RTKIT_OSLOG_BUFFER_SIZE_SHIFT) |
+		    (addr >> PAGE_SHIFT));
 		if (error)
 			return error;
+		break;
+	case RTKIT_OSLOG_UNKNOWN1:
+	case RTKIT_OSLOG_UNKNOWN2:
+	case RTKIT_OSLOG_UNKNOWN3:
 		break;
 	default:
 		printf("%s: unhandled oslog event 0x%016llx\n",
 		    __func__, msg->data0);
-		return EIO;
+		break;
 	}
 
 	return 0;
@@ -456,7 +481,7 @@ rtkit_poll(struct rtkit_state *state)
 		}
 
 		printf("%s: unhandled endpoint %d\n", __func__, msg.data1);
-		return EIO;
+		break;
 	}
 
 	return 0;
@@ -549,8 +574,9 @@ rtkit_set_ap_pwrstate(struct rtkit_state *state, uint16_t pwrstate)
 			delay(10);
 			continue;
 		}
+		if (error)
+			return error;
 
-		KASSERT(error == 0);
 		if (state->ap_pwrstate == pwrstate)
 			break;
 	}
@@ -578,8 +604,9 @@ rtkit_set_iop_pwrstate(struct rtkit_state *state, uint16_t pwrstate)
 			delay(10);
 			continue;
 		}
+		if (error)
+			return error;
 
-		KASSERT(error == 0);
 		if (state->iop_pwrstate == pwrstate)
 			break;
 	}
