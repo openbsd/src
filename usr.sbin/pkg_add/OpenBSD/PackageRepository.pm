@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.176 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.177 2023/11/25 10:29:23 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -420,12 +420,22 @@ sub uncompress($self, $object, @p)
 	return $fh;
 }
 
+sub keytype($self)
+{
+	if ($self->{state}->defines("FW_UPDATE")) {
+		return "fw";
+	} else {
+		return "pkg";
+	}
+}
+
 sub signify_pipe($self, $object, @p)
 {
 	CORE::open STDERR, ">>", $object->{errors};
 	exec {OpenBSD::Paths->signify}
 	    ("signify",
 	    "-zV",
+	    "-t", $self->keytype,
 	    @p)
 	or $self->{state}->fatal("Can't run #1: #2",
 	    OpenBSD::Paths->signify, $!);
