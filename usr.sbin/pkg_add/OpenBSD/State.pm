@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.76 2023/11/25 10:17:38 espie Exp $
+# $OpenBSD: State.pm,v 1.77 2023/11/25 10:18:40 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -251,6 +251,7 @@ sub handle_options($state, $opt_string, @usage)
 	});
 	$state->{v} = $state->opt('v');
 
+	# XXX don't try to move to AddCreateDelete, PkgInfo needs this too
 	if ($state->defines('unsigned')) {
 		$state->{signature_style} //= 'unsigned';
 	} elsif ($state->defines('oldsign')) {
