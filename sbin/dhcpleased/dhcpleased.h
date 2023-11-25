@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.14 2022/03/21 04:35:41 dlg Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.15 2023/11/25 12:00:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -132,6 +132,7 @@
 #define	DHO_NDS_SERVERS			85
 #define	DHO_NDS_TREE_NAME		86
 #define	DHO_NDS_CONTEXT			87
+#define	DHO_IPV6_ONLY_PREFERRED		108
 #define	DHO_DOMAIN_SEARCH		119
 #define	DHO_CLASSLESS_STATIC_ROUTES	121
 #define	DHO_TFTP_CONFIG_FILE		144
@@ -258,6 +259,7 @@ struct iface_conf {
 	int				 ignore;
 	struct in_addr			 ignore_servers[MAX_SERVERS];
 	int				 ignore_servers_len;
+	int				 prefer_ipv6;
 };
 
 struct dhcpleased_conf {

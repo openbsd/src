@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.12 2023/03/02 17:09:52 jmc Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.13 2023/11/25 12:00:39 florian Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: November 25 2023 $
 .Dt DHCPLEASED.CONF 5
 .Os
 .Sh NAME
@@ -68,6 +68,9 @@ Ignore leases from
 .Ar server-ip .
 This option can be listed multiple times.
 The default is to not ignore servers.
+.It Ic prefer ipv6
+Send the IPv6-Only preferred option to the server.
+If the server responds with the option, no lease is configured.
 .It Ic send client id Ar client-id
 Send the DHCP client identifier option with a value of
 .Ar client-id .

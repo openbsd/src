@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2022/03/21 04:35:41 dlg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2023/11/25 12:00:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -109,7 +109,7 @@ typedef struct {
 %}
 
 %token	DHCP_IFACE ERROR SEND VENDOR CLASS ID CLIENT IGNORE DNS ROUTES HOST NAME
-%token	NO
+%token	NO PREFER IPV6
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -324,6 +324,9 @@ ifaceoptsl	: SEND VENDOR CLASS ID STRING {
 			}
 			free($2);
 		}
+		| PREFER IPV6 {
+			iface_conf->prefer_ipv6 = 1;
+		}
 		;
 %%
 
@@ -366,8 +369,10 @@ lookup(char *s)
 		{"id",			ID},
 		{"ignore",		IGNORE},
 		{"interface",		DHCP_IFACE},
+		{"ipv6",		IPV6},
 		{"name",		NAME},
 		{"no",			NO},
+		{"prefer",		PREFER},
 		{"routes",		ROUTES},
 		{"send",		SEND},
 		{"vendor",		VENDOR},

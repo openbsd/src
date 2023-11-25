@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.39 2023/11/03 15:02:06 tb Exp $	*/
+/*	$OpenBSD: engine.c,v 1.40 2023/11/25 12:00:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -70,6 +70,7 @@ enum if_state {
 	IF_REBINDING,
 	/* IF_INIT_REBOOT, */
 	IF_REBOOTING,
+	IF_IPV6_ONLY,
 };
 
 const char* if_state_name[] = {
@@ -82,6 +83,7 @@ const char* if_state_name[] = {
 	"Rebinding",
 	/* "Init-Reboot", */
 	"Rebooting",
+	"IPv6 only",
 };
 
 struct dhcpleased_iface {
@@ -113,6 +115,7 @@ struct dhcpleased_iface {
 	uint32_t			 lease_time;
 	uint32_t			 renewal_time;
 	uint32_t			 rebinding_time;
+	uint32_t			 ipv6_only_time;
 };
 
 LIST_HEAD(, dhcpleased_iface) dhcpleased_interfaces;
@@ -339,6 +342,7 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				case IF_REBINDING:
 				case IF_REBOOTING:
 				case IF_BOUND:
+				case IF_IPV6_ONLY:
 					state_transition(iface, IF_REBOOTING);
 					break;
 				}
@@ -727,6 +731,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	size_t			 rem, i;
 	uint32_t		 sum, usum, lease_time = 0, renewal_time = 0;
 	uint32_t		 rebinding_time = 0;
+	uint32_t		 ipv6_only_time = 0;
 	uint8_t			*p, dho = DHO_PAD, dho_len, slen;
 	uint8_t			 dhcp_message_type = 0;
 	int			 routes_len = 0, routers = 0, csr = 0;
@@ -1173,6 +1178,18 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			}
 			break;
 		}
+		case DHO_IPV6_ONLY_PREFERRED:
+			if (dho_len != sizeof(ipv6_only_time))
+				goto wrong_length;
+			memcpy(&ipv6_only_time, p, sizeof(ipv6_only_time));
+			ipv6_only_time = ntohl(ipv6_only_time);
+			if (log_getverbose() > 1) {
+				log_debug("DHO_IPV6_ONLY_PREFERRED %us",
+				    ipv6_only_time);
+			}
+			p += dho_len;
+			rem -= dho_len;
+			break;
 		default:
 			if (log_getverbose() > 1)
 				log_debug("DHO_%u, len: %u", dho, dho_len);
@@ -1207,6 +1224,14 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			    "offered IP address", __func__);
 			return;
 		}
+#ifndef SMALL
+		if (iface_conf != NULL && iface_conf->prefer_ipv6 &&
+		    ipv6_only_time > 0) {
+			iface->ipv6_only_time = ipv6_only_time;
+			state_transition(iface, IF_IPV6_ONLY);
+			break;
+		}
+#endif
 		iface->server_identifier = server_identifier;
 		iface->dhcp_server = server_identifier;
 		iface->requested_ip = dhcp_hdr->yiaddr;
@@ -1307,6 +1332,14 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		strlcpy(iface->domainname, domainname,
 		    sizeof(iface->domainname));
 		strlcpy(iface->hostname, hostname, sizeof(iface->hostname));
+#ifndef SMALL
+		if (iface_conf != NULL && iface_conf->prefer_ipv6 &&
+		    ipv6_only_time > 0) {
+			iface->ipv6_only_time = ipv6_only_time;
+			state_transition(iface, IF_IPV6_ONLY);
+			break;
+		}
+#endif
 		state_transition(iface, IF_BOUND);
 		break;
 	case DHCPNAK:
@@ -1386,6 +1419,7 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 			send_deconfigure_interface(iface);
 			/* fall through */
 		case IF_DOWN:
+		case IF_IPV6_ONLY:
 			iface->timo.tv_sec = START_EXP_BACKOFF;
 			break;
 		case IF_BOUND:
@@ -1434,6 +1468,25 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 			iface->timo.tv_sec /= 2;
 		request_dhcp_request(iface);
 		break;
+	case IF_IPV6_ONLY:
+		switch (old_state) {
+		case IF_REQUESTING:
+		case IF_RENEWING:
+		case IF_REBINDING:
+		case IF_REBOOTING:
+			/* going IPv6 only: delete legacy IP */
+			send_rdns_withdraw(iface);
+			send_deconfigure_interface(iface);
+			/* fall through */
+		case IF_INIT:
+		case IF_DOWN:
+		case IF_IPV6_ONLY:
+			iface->timo.tv_sec = iface->ipv6_only_time;
+			break;
+		case IF_BOUND:
+			fatal("invalid transition Bound -> IPv6 only");
+			break;
+		}
 	}
 
 	if_name = if_indextoname(iface->if_index, ifnamebuf);
@@ -1498,6 +1551,9 @@ iface_timeout(int fd, short events, void *arg)
 			state_transition(iface, IF_INIT);
 		else
 			state_transition(iface, IF_REBINDING);
+		break;
+	case IF_IPV6_ONLY:
+		state_transition(iface, IF_REQUESTING);
 		break;
 	}
 }
@@ -1583,6 +1639,9 @@ request_dhcp_request(struct dhcpleased_iface *iface)
 		imsg.server_identifier.s_addr = INADDR_ANY;	/* MUST NOT */
 		imsg.requested_ip.s_addr = INADDR_ANY;		/* MUST NOT */
 		imsg.ciaddr = iface->requested_ip;		/* IP address */
+		break;
+	case IF_IPV6_ONLY:
+		fatalx("invalid state IF_IPV6_ONLY in %s", __func__);
 		break;
 	}
 
