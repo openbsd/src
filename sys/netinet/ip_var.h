@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.109 2023/04/05 21:51:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.110 2023/11/26 22:08:10 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ struct mbuf*
 int	 ip_mforward(struct mbuf *, struct ifnet *);
 int	 ip_optcopy(struct ip *, struct ip *);
 int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
-	    struct ip_moptions *, struct inpcb *, u_int32_t);
+	    struct ip_moptions *, const u_char[], u_int32_t);
 u_int16_t
 	 ip_randomid(void);
 void	 ip_send(struct mbuf *);

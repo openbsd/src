@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.137 2023/11/12 23:19:15 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.138 2023/11/26 22:08:10 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ struct inpcb {
 	} inp_mou;
 #define inp_moptions inp_mou.mou_mo
 #define inp_moptions6 inp_mou.mou_mo6
-	u_char	  inp_seclevel[4];
+	u_char	  inp_seclevel[4];	/* [N] IPsec level of socket */
 #define SL_AUTH           0             /* Authentication level */
 #define SL_ESP_TRANS      1             /* ESP transport level */
 #define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */

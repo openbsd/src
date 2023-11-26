@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.279 2023/07/07 08:05:02 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.280 2023/11/26 22:08:10 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ struct idgen32_ctx ip6_id_ctx;
  */
 int
 ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
-    int flags, struct ip6_moptions *im6o, struct inpcb *inp)
+    int flags, struct ip6_moptions *im6o, const u_char seclevel[])
 {
 	struct ip6_hdr *ip6;
 	struct ifnet *ifp = NULL;
@@ -183,11 +183,6 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
 	u_char nextproto;
 #ifdef IPSEC
 	struct tdb *tdb = NULL;
-#endif /* IPSEC */
-
-#ifdef IPSEC
-	if (inp && (inp->inp_flags & INP_IPV6) == 0)
-		panic("%s: IPv4 pcb is passed", __func__);
 #endif /* IPSEC */
 
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -218,8 +213,8 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
 	}
 
 #ifdef IPSEC
-	if (ipsec_in_use || inp != NULL) {
-		error = ip6_output_ipsec_lookup(m, inp, &tdb);
+	if (ipsec_in_use || seclevel != NULL) {
+		error = ip6_output_ipsec_lookup(m, seclevel, &tdb);
 		if (error) {
 			/*
 			 * -EINVAL is used to indicate that the packet should
@@ -2751,7 +2746,8 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 
 #ifdef IPSEC
 int
-ip6_output_ipsec_lookup(struct mbuf *m, struct inpcb *inp, struct tdb **tdbout)
+ip6_output_ipsec_lookup(struct mbuf *m, const u_char seclevel[],
+    struct tdb **tdbout)
 {
 	struct tdb *tdb;
 	struct m_tag *mtag;
@@ -2765,7 +2761,7 @@ ip6_output_ipsec_lookup(struct mbuf *m, struct inpcb *inp, struct tdb **tdbout)
 
 	/* Do we have any pending SAs to apply ? */
 	error = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
-	    IPSP_DIRECTION_OUT, NULL, inp, &tdb, NULL);
+	    IPSP_DIRECTION_OUT, NULL, seclevel, &tdb, NULL);
 	if (error || tdb == NULL) {
 		*tdbout = NULL;
 		return error;

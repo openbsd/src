@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.390 2023/07/07 08:05:02 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.391 2023/11/26 22:08:10 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 static u_int16_t in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
 
-int ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
+int ip_output_ipsec_lookup(struct mbuf *m, int hlen, const u_char seclevel[],
     struct tdb **, int ipsecflowinfo);
 void ip_output_ipsec_pmtu_update(struct tdb *, struct route *, struct in_addr,
     int, int);
@@ -98,7 +98,7 @@ int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
  */
 int
 ip_output(struct mbuf *m, struct mbuf *opt, struct route *ro, int flags,
-    struct ip_moptions *imo, struct inpcb *inp, u_int32_t ipsecflowinfo)
+    struct ip_moptions *imo, const u_char seclevel[], u_int32_t ipsecflowinfo)
 {
 	struct ip *ip;
 	struct ifnet *ifp = NULL;
@@ -114,11 +114,6 @@ ip_output(struct mbuf *m, struct mbuf *opt, struct route *ro, int flags,
 #endif
 
 	NET_ASSERT_LOCKED();
-
-#ifdef IPSEC
-	if (inp && (inp->inp_flags & INP_IPV6) != 0)
-		panic("ip_output: IPv6 pcb is passed");
-#endif /* IPSEC */
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -240,9 +235,9 @@ reroute:
 	}
 
 #ifdef IPSEC
-	if (ipsec_in_use || inp != NULL) {
+	if (ipsec_in_use || seclevel != NULL) {
 		/* Do we have any pending SAs to apply ? */
-		error = ip_output_ipsec_lookup(m, hlen, inp, &tdb,
+		error = ip_output_ipsec_lookup(m, hlen, seclevel, &tdb,
 		    ipsecflowinfo);
 		if (error) {
 			/* Should silently drop packet */
@@ -514,7 +509,7 @@ bad:
 
 #ifdef IPSEC
 int
-ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
+ip_output_ipsec_lookup(struct mbuf *m, int hlen, const u_char seclevel[],
     struct tdb **tdbout, int ipsecflowinfo)
 {
 	struct m_tag *mtag;
@@ -527,7 +522,7 @@ ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
 	if (ipsecflowinfo)
 		ids = ipsp_ids_lookup(ipsecflowinfo);
 	error = ipsp_spd_lookup(m, AF_INET, hlen, IPSP_DIRECTION_OUT,
-	    NULL, inp, &tdb, ids);
+	    NULL, seclevel, &tdb, ids);
 	ipsp_ids_free(ids);
 	if (error || tdb == NULL) {
 		*tdbout = NULL;

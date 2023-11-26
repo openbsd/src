@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.306 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.307 2023/11/26 22:08:10 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -543,7 +543,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		} else
 			tdb = NULL;
 		error = ipsp_spd_lookup(m, af, iphlen, IPSP_DIRECTION_IN,
-		    tdb, inp, NULL, NULL);
+		    tdb, inp->inp_seclevel, NULL, NULL);
 		if (error) {
 			udpstat_inc(udps_nosec);
 			tdb_unref(tdb);
@@ -1065,7 +1065,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    (inp->inp_socket->so_options & SO_BROADCAST), inp->inp_moptions,
-	    inp, ipsecflowinfo);
+	    inp->inp_seclevel, ipsecflowinfo);
 
 bail:
 	m_freem(control);

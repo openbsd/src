@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.243 2023/10/11 22:13:16 tobhe Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.244 2023/11/26 22:08:10 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -671,7 +671,7 @@ int	checkreplaywindow(struct tdb *, u_int64_t, u_int32_t, u_int32_t *, int);
 int	ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
 int	ipsp_process_done(struct mbuf *, struct tdb *);
 int	ipsp_spd_lookup(struct mbuf *, int, int, int, struct tdb *,
-	    struct inpcb *, struct tdb **, struct ipsec_ids *);
+	    const u_char[], struct tdb **, struct ipsec_ids *);
 int	ipsp_is_unspecified(union sockaddr_union);
 int	ipsp_aux_match(struct tdb *, struct ipsec_ids *,
 	    struct sockaddr_encap *, struct sockaddr_encap *);

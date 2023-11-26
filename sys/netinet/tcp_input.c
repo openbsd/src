@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.392 2023/11/16 18:27:48 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.393 2023/11/26 22:08:10 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -586,7 +586,7 @@ findpcb:
 			    &tdbi->dst, tdbi->proto);
 		}
 		error = ipsp_spd_lookup(m, af, iphlen, IPSP_DIRECTION_IN,
-		    tdb, inp, NULL, NULL);
+		    tdb, inp->inp_seclevel, NULL, NULL);
 		tdb_unref(tdb);
 		if (error) {
 			tcpstat_inc(tcps_rcvnosec);
@@ -4162,7 +4162,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 			ip->ip_tos = inp->inp_ip.ip_tos;
 
 		error = ip_output(m, sc->sc_ipopts, &sc->sc_route4,
-		    (ip_mtudisc ? IP_MTUDISC : 0),  NULL, inp, 0);
+		    (ip_mtudisc ? IP_MTUDISC : 0),  NULL, inp->inp_seclevel, 0);
 		break;
 #ifdef INET6
 	case AF_INET6:

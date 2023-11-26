@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.118 2023/04/22 20:51:56 mvs Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.119 2023/11/26 22:08:10 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -39,7 +39,7 @@
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 
-int	ipsp_spd_inp(struct mbuf *, struct inpcb *, struct ipsec_policy *,
+int	ipsp_spd_inp(struct mbuf *, const u_char *, struct ipsec_policy *,
 	    struct tdb **);
 int	ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 	    union sockaddr_union *, struct sockaddr_encap *, struct mbuf *);
@@ -153,7 +153,7 @@ spd_table_walk(unsigned int rtableid,
  */
 int
 ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
-    struct tdb *tdbin, struct inpcb *inp, struct tdb **tdbout,
+    struct tdb *tdbin, const u_char seclevel[], struct tdb **tdbout,
     struct ipsec_ids *ipsecflowinfo_ids)
 {
 	struct radix_node_head *rnh;
@@ -172,15 +172,15 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 	 * continuing with the SPD lookup.
 	 */
 	if (!ipsec_in_use)
-		return ipsp_spd_inp(m, inp, NULL, tdbout);
+		return ipsp_spd_inp(m, seclevel, NULL, tdbout);
 
 	/*
 	 * If an input packet is destined to a BYPASS socket, just accept it.
 	 */
-	if ((inp != NULL) && (direction == IPSP_DIRECTION_IN) &&
-	    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
-	    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
-	    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
+	if ((seclevel != NULL) && (direction == IPSP_DIRECTION_IN) &&
+	    (seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
+	    (seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
+	    (seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
 		if (tdbout != NULL)
 			*tdbout = NULL;
 		return 0;
@@ -311,13 +311,13 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 		 * Return whatever the socket requirements are, there are no
 		 * system-wide policies.
 		 */
-		return ipsp_spd_inp(m, inp, NULL, tdbout);
+		return ipsp_spd_inp(m, seclevel, NULL, tdbout);
 	}
 	ipo = (struct ipsec_policy *)rn;
 
 	switch (ipo->ipo_type) {
 	case IPSP_PERMIT:
-		return ipsp_spd_inp(m, inp, ipo, tdbout);
+		return ipsp_spd_inp(m, seclevel, ipo, tdbout);
 
 	case IPSP_DENY:
 		return EHOSTUNREACH;
@@ -384,11 +384,10 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 		 * gateway/endhost, and the socket has the BYPASS
 		 * option set, skip IPsec processing.
 		 */
-		if ((inp != NULL) &&
-		    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
-		    (inp->inp_seclevel[SL_ESP_NETWORK] ==
-			IPSEC_LEVEL_BYPASS) &&
-		    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
+		if ((seclevel != NULL) &&
+		    (seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
+		    (seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
+		    (seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
 			/* Direct match. */
 			if (dignore ||
 			    !memcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len)) {
@@ -414,7 +413,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 				goto nomatchout;
 
 			/* Cached entry is good. */
-			error = ipsp_spd_inp(m, inp, ipo, tdbout);
+			error = ipsp_spd_inp(m, seclevel, ipo, tdbout);
 			mtx_leave(&ipo_tdb_mtx);
 			return error;
 
@@ -475,7 +474,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 				TAILQ_INSERT_TAIL(
 				    &ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
-				error = ipsp_spd_inp(m, inp, ipo, tdbout);
+				error = ipsp_spd_inp(m, seclevel, ipo, tdbout);
 				mtx_leave(&ipo_tdb_mtx);
 				return error;
 			}
@@ -503,7 +502,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 
 			/* FALLTHROUGH */
 		case IPSP_IPSEC_USE:
-			return ipsp_spd_inp(m, inp, ipo, tdbout);
+			return ipsp_spd_inp(m, seclevel, ipo, tdbout);
 		}
 	} else { /* IPSP_DIRECTION_IN */
 		if (tdbin != NULL) {
@@ -528,7 +527,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 			/* Direct match in the cache. */
 			mtx_enter(&ipo_tdb_mtx);
 			if (ipo->ipo_tdb == tdbin) {
-				error = ipsp_spd_inp(m, inp, ipo, tdbout);
+				error = ipsp_spd_inp(m, seclevel, ipo, tdbout);
 				mtx_leave(&ipo_tdb_mtx);
 				return error;
 			}
@@ -556,7 +555,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 			ipo->ipo_tdb = tdb_ref(tdbin);
 			TAILQ_INSERT_TAIL(&tdbin->tdb_policy_head, ipo,
 			    ipo_tdb_next);
-			error = ipsp_spd_inp(m, inp, ipo, tdbout);
+			error = ipsp_spd_inp(m, seclevel, ipo, tdbout);
 			mtx_leave(&ipo_tdb_mtx);
 			return error;
 
@@ -647,7 +646,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 		case IPSP_IPSEC_ACQUIRE:
 			/* If appropriate SA exists, don't acquire another. */
 			if (ipo->ipo_tdb != NULL)
-				return ipsp_spd_inp(m, inp, ipo, tdbout);
+				return ipsp_spd_inp(m, seclevel, ipo, tdbout);
 
 			/* Acquire SA through key management. */
 			ipsp_acquire_sa(ipo, dignore ? &ssrc : &ipo->ipo_dst,
@@ -655,7 +654,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 
 			/* FALLTHROUGH */
 		case IPSP_IPSEC_USE:
-			return ipsp_spd_inp(m, inp, ipo, tdbout);
+			return ipsp_spd_inp(m, seclevel, ipo, tdbout);
 		}
 	}
 
@@ -905,23 +904,23 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
  * Deal with PCB security requirements.
  */
 int
-ipsp_spd_inp(struct mbuf *m, struct inpcb *inp, struct ipsec_policy *ipo,
+ipsp_spd_inp(struct mbuf *m, const u_char seclevel[], struct ipsec_policy *ipo,
     struct tdb **tdbout)
 {
 	/* Sanity check. */
-	if (inp == NULL)
+	if (seclevel == NULL)
 		goto justreturn;
 
 	/* We only support IPSEC_LEVEL_BYPASS or IPSEC_LEVEL_AVAIL */
 
-	if (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS &&
-	    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
-	    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)
+	if (seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS &&
+	    seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
+	    seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)
 		goto justreturn;
 
-	if (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_AVAIL &&
-	    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_AVAIL &&
-	    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_AVAIL)
+	if (seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_AVAIL &&
+	    seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_AVAIL &&
+	    seclevel[SL_AUTH] == IPSEC_LEVEL_AVAIL)
 		goto justreturn;
 
 	return -EINVAL;  /* Silently drop packet. */
