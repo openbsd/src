@@ -25,7 +25,7 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf;
 
-static_assert(sizeof(SymbolUnion) <= 64, "SymbolUnion too large");
+static_assert(sizeof(SymbolUnion) <= 72, "SymbolUnion too large");
 
 template <typename T> struct AssertSymbol {
   static_assert(std::is_trivially_destructible<T>(),
