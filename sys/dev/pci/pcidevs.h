@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2056 2023/11/24 04:34:09 jmatthew Exp 
+ *	OpenBSD: pcidevs,v 1.2057 2023/11/26 05:47:21 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7031,7 +7031,7 @@
 #define	PCI_PRODUCT_INTEL_RPL_XHCI	0xa71e		/* Core 13G xHCI */
 #define	PCI_PRODUCT_INTEL_RPL_TBT_PCIE3	0xa71f		/* Core 13G PCIE */
 #define	PCI_PRODUCT_INTEL_RPL_P_GT_1	0xa720		/* Graphics */
-#define	PCI_PRODUCT_INTEL_RPL_P_GT_2	0xa721		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_U_GT_1	0xa721		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_HX_HB_4	0xa728		/* Core 13G Host */
 #define	PCI_PRODUCT_INTEL_RPL_HX_HB_5	0xa729		/* Core 13G Host */
 #define	PCI_PRODUCT_INTEL_RPL_HX_HB_6	0xa72a		/* Core 13G Host */
@@ -7055,10 +7055,14 @@
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_6	0xa789		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_7	0xa78a		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_8	0xa78b		/* Graphics */
-#define	PCI_PRODUCT_INTEL_RPL_P_GT_3	0xa7a0		/* Graphics */
-#define	PCI_PRODUCT_INTEL_RPL_P_GT_4	0xa7a1		/* Graphics */
-#define	PCI_PRODUCT_INTEL_RPL_P_GT_5	0xa7a8		/* Graphics */
-#define	PCI_PRODUCT_INTEL_RPL_P_GT_6	0xa7a9		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_2	0xa7a0		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_U_GT_2	0xa7a1		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_3	0xa7a8		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_U_GT_3	0xa7a9		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_4	0xa7aa		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_5	0xa7ab		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_U_GT_4	0xa7ac		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_U_GT_5	0xa7ad		/* Graphics */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* 21154AE/BE */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_0	0xd130		/* Core DMI */

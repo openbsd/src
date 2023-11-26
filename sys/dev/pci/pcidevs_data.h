@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2056 2023/11/24 04:34:09 jmatthew Exp 
+ *	OpenBSD: pcidevs,v 1.2057 2023/11/26 05:47:21 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -25464,7 +25464,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_P_GT_2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_U_GT_1,
 	    "Graphics",
 	},
 	{
@@ -25560,7 +25560,19 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Graphics",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_P_GT_2,
+	    "Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_U_GT_2,
+	    "Graphics",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_P_GT_3,
+	    "Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_U_GT_3,
 	    "Graphics",
 	},
 	{
@@ -25572,7 +25584,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_P_GT_6,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_U_GT_4,
+	    "Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RPL_U_GT_5,
 	    "Graphics",
 	},
 	{
