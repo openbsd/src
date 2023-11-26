@@ -24250,7 +24250,7 @@ S_parse_uniprop_string(pTHX_
      * compile perl to know about them) */
     bool is_nv_type = FALSE;
 
-    unsigned int i, j = 0;
+    unsigned int i = 0, i_zero = 0, j = 0;
     int equals_pos = -1;    /* Where the '=' is found, or negative if none */
     int slash_pos  = -1;    /* Where the '/' is found, or negative if none */
     int table_index = 0;    /* The entry number for this property in the table
@@ -24384,9 +24384,13 @@ S_parse_uniprop_string(pTHX_
      * all of them are considered to be for that package.  For the purposes of
      * parsing the rest of the property, strip it off */
     if (non_pkg_begin == STRLENs("utf8::") && memBEGINPs(name, name_len, "utf8::")) {
-        lookup_name +=  STRLENs("utf8::");
-        j -=  STRLENs("utf8::");
-        equals_pos -=  STRLENs("utf8::");
+        lookup_name += STRLENs("utf8::");
+        j           -= STRLENs("utf8::");
+        equals_pos  -= STRLENs("utf8::");
+        i_zero       = STRLENs("utf8::");   /* When resetting 'i' to reparse
+                                               from the beginning, it has to be
+                                               set past what we're stripping
+                                               off */
         stripped_utf8_pkg = TRUE;
     }
 
@@ -24800,7 +24804,8 @@ S_parse_uniprop_string(pTHX_
 
             /* We set the inputs back to 0 and the code below will reparse,
              * using strict */
-            i = j = 0;
+            i = i_zero;
+            j = 0;
         }
     }
 
@@ -24821,7 +24826,7 @@ S_parse_uniprop_string(pTHX_
          * separates two digits */
         if (cur == '_') {
             if (    stricter
-                && (     i == 0 || (int) i == equals_pos || i == name_len- 1
+                && (   i == i_zero || (int) i == equals_pos || i == name_len- 1
                     || ! isDIGIT_A(name[i-1]) || ! isDIGIT_A(name[i+1])))
             {
                 lookup_name[j++] = '_';
