@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.83 2023/09/29 15:51:48 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.84 2023/11/26 13:47:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4108,6 +4108,11 @@ const struct rkclock rk3588_clocks[] = {
 		SET_PARENT
 	},
 	{
+		RK3588_CCLK_SRC_SDIO, RK3588_CRU_CLKSEL_CON(172),
+		SEL(9, 8), DIV(7, 2),
+		{ RK3588_PLL_GPLL, RK3588_PLL_CPLL, RK3588_XIN24M }
+	},
+	{
 		RK3588_ACLK_VOP_ROOT, RK3588_CRU_CLKSEL_CON(110),
 		SEL(7, 5), DIV(4, 0),
 		{ RK3588_PLL_GPLL, RK3588_PLL_CPLL, RK3588_PLL_AUPLL,
@@ -4292,6 +4297,9 @@ rk3588_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 	case 1188000000U:
 		p = 2; m = 198; s = 1; k = 0;
 		break;
+	case 1100000000U:
+		p = 3; m = 550; s = 2; k = 0;
+		break;
 	case 850000000U:
 		p = 3; m = 425; s = 2; k = 0;
 		break;
@@ -4475,6 +4483,10 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 	case RK3588_SRST_P_PCIE4:
 		reg = RK3588_CRU_SOFTRST_CON(34);
 		bit = 0;
+		break;
+	case RK3588_SRST_A_USB3OTG2:
+		reg = RK3588_CRU_SOFTRST_CON(35);
+		bit = 7;
 		break;
 	case RK3588_SRST_A_USB3OTG0:
 		reg = RK3588_CRU_SOFTRST_CON(42);
