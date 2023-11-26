@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.10 2023/11/24 21:48:25 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.11 2023/11/26 13:02:44 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4155,7 +4155,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		if (vcpu->vc_vmx_vpid_enabled) {
 			/* Invalidate old TLB mappings */
-			vid.vid_vpid = vcpu->vc_parent->vm_id;
+			vid.vid_vpid = vcpu->vc_vpid;
 			vid.vid_addr = 0;
 			invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
 		}
@@ -5447,7 +5447,7 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 		/* Paging was disabled (prev. enabled) - Flush TLB */
 		if (vmm_softc->mode == VMM_MODE_EPT &&
 		    vcpu->vc_vmx_vpid_enabled) {
-			vid.vid_vpid = vcpu->vc_parent->vm_id;
+			vid.vid_vpid = vcpu->vc_vpid;
 			vid.vid_addr = 0;
 			invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
 		}
