@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.60 2020/03/23 20:04:19 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.61 2023/11/26 16:04:17 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -92,8 +92,6 @@ int wr_skip(off_t);
 int wr_rdfile(ARCHD *, int, off_t *);
 int rd_wrfile(ARCHD *, int, off_t *);
 void cp_file(ARCHD *, int, int);
-int buf_fill(void);
-int buf_flush(int);
 
 /*
  * cpio.c
@@ -127,16 +125,10 @@ int lnk_creat(ARCHD *);
 int cross_lnk(ARCHD *);
 int chk_same(ARCHD *);
 int node_creat(ARCHD *);
-int unlnk_exist(char *, int);
-int chk_path(char *, uid_t, gid_t, int);
 void set_ftime(const char *, const struct timespec *,
     const struct timespec *, int);
-void fset_ftime(const char *, int, const struct timespec *,
-    const struct timespec *, int);
 int set_ids(char *, uid_t, gid_t);
-int fset_ids(char *, int, uid_t, gid_t);
 void set_pmode(char *, mode_t);
-void fset_pmode(char *, int, mode_t);
 int set_attr(const struct file_times *, int _force_times, mode_t, int _do_mode,
     int _in_sig);
 int file_write(int, char *, int, int *, int *, int, char *);
@@ -178,8 +170,6 @@ extern FSUB fsub[];
 extern int ford[];
 void options(int, char **);
 OPLIST * opt_next(void);
-int opt_add(const char *);
-int bad_opt(void);
 extern char *chdname;
 
 /*
@@ -235,7 +225,6 @@ extern char *tempfile;
 extern char *tempbase;
 extern int havechd;
 
-void sig_cleanup(int);
 
 /*
  * sel_subs.c
@@ -279,7 +268,6 @@ int dir_start(void);
 void add_dir(char *, struct stat *, int);
 void delete_dir(dev_t, ino_t);
 void proc_dir(int _in_sig);
-u_int st_hash(const char *, int, int);
 
 /*
  * tar.c

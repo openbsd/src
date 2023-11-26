@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.56 2023/11/09 18:54:15 kn Exp $	*/
+/*	$OpenBSD: pax.c,v 1.57 2023/11/26 16:04:17 espie Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
 #include "pax.h"
 #include "extern.h"
 static int gen_init(void);
+static void sig_cleanup(int);
 
 /*
  * PAX main routines, general globals and some simple start up routines
@@ -337,7 +338,7 @@ main(int argc, char **argv)
  *	never....
  */
 
-void
+static void
 sig_cleanup(int which_sig)
 {
 	/*

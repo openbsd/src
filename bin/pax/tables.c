@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.54 2019/06/28 05:35:34 deraadt Exp $	*/
+/*	$OpenBSD: tables.c,v 1.55 2023/11/26 16:04:17 espie Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 
 #include "pax.h"
 #include "extern.h"
+static u_int st_hash(const char *, int, int);
 
 /*
  * Routines for controlling the contents of all the different databases pax
@@ -1723,7 +1724,7 @@ proc_dir(int in_sig)
  *	the hash value of the string MOD (%) the table size.
  */
 
-u_int
+static u_int
 st_hash(const char *name, int len, int tabsz)
 {
 	const char *pt;

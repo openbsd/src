@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.55 2020/03/23 20:04:19 espie Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.56 2023/11/26 16:04:17 espie Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -46,8 +46,13 @@
 #include "pax.h"
 #include "extern.h"
 
-static int
-mk_link(char *, struct stat *, char *, int);
+static int fset_ids(char *, int, uid_t, gid_t);
+static int unlnk_exist(char *, int);
+static int chk_path(char *, uid_t, gid_t, int);
+static int mk_link(char *, struct stat *, char *, int);
+static void fset_ftime(const char *, int, const struct timespec *,
+    const struct timespec *, int);
+static void fset_pmode(char *, int, mode_t);
 
 /*
  * routines that deal with file operations such as: creating, removing;
@@ -537,7 +542,7 @@ badlink:
  *	1 we found a directory and we were going to create a directory.
  */
 
-int
+static int
 unlnk_exist(char *name, int type)
 {
 	struct stat sb;
@@ -715,7 +720,7 @@ set_ftime(const char *fnm, const struct timespec *mtimp,
 		    fnm);
 }
 
-void
+static void
 fset_ftime(const char *fnm, int fd, const struct timespec *mtimp,
     const struct timespec *atimp, int frc)
 {
@@ -797,7 +802,7 @@ set_pmode(char *fnm, mode_t mode)
 		syswarn(1, errno, "Could not set permissions on %s", fnm);
 }
 
-void
+static void
 fset_pmode(char *fnm, int fd, mode_t mode)
 {
 	mode &= ABITS;

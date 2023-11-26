@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.105 2023/01/17 16:20:28 tb Exp $	*/
+/*	$OpenBSD: options.c,v 1.106 2023/11/26 16:04:17 espie Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -49,6 +49,8 @@
 #include "tar.h"
 #include "extern.h"
 
+static int bad_opt(void);
+static int opt_add(const char *);
 /*
  * argv[0] names. Used for tar and cpio emulation
  */
@@ -1104,9 +1106,9 @@ tar_options(int argc, char **argv)
 	}
 }
 
-int mkpath(char *);
+static int mkpath(char *);
 
-int
+static int
 mkpath(char *path)
 {
 	struct stat sb;
@@ -1474,7 +1476,7 @@ opt_next(void)
  *	when the format does not support options.
  */
 
-int
+static int
 bad_opt(void)
 {
 	OPLIST *opt;
@@ -1500,7 +1502,7 @@ bad_opt(void)
  *	0 if format in name=value format, -1 if -o is passed junk
  */
 
-int
+static int
 opt_add(const char *str)
 {
 	OPLIST *opt;
