@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.61 2023/09/05 14:59:00 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.62 2023/11/27 11:52:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -477,8 +477,8 @@ OBJ_txt2obj(const char *s, int no_name)
 	int nid;
 
 	if (!no_name) {
-		if (((nid = OBJ_sn2nid(s)) != NID_undef) ||
-		    ((nid = OBJ_ln2nid(s)) != NID_undef) )
+		if ((nid = OBJ_sn2nid(s)) != NID_undef ||
+		    (nid = OBJ_ln2nid(s)) != NID_undef)
 			return OBJ_nid2obj(nid);
 	}
 
