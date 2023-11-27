@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.126 2023/11/13 10:33:00 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.127 2023/11/27 00:51:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2200,20 +2200,6 @@ X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set0_crls);
 
-int
-X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
-{
-	return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
-}
-LCRYPTO_ALIAS(X509_STORE_CTX_set_purpose);
-
-int
-X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
-{
-	return X509_STORE_CTX_purpose_inherit(ctx, 0, 0, trust);
-}
-LCRYPTO_ALIAS(X509_STORE_CTX_set_trust);
-
 /* This function is used to set the X509_STORE_CTX purpose and trust
  * values. This is intended to be used when another structure has its
  * own trust and purpose values which (if set) will be inherited by
@@ -2269,6 +2255,20 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 	return 1;
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_purpose_inherit);
+
+int
+X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
+{
+	return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
+}
+LCRYPTO_ALIAS(X509_STORE_CTX_set_purpose);
+
+int
+X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
+{
+	return X509_STORE_CTX_purpose_inherit(ctx, 0, 0, trust);
+}
+LCRYPTO_ALIAS(X509_STORE_CTX_set_trust);
 
 X509_STORE_CTX *
 X509_STORE_CTX_new(void)
