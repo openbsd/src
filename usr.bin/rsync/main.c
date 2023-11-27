@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.70 2023/11/27 10:14:19 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.71 2023/11/27 11:30:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -323,7 +323,10 @@ const struct option	 lopts[] = {
     { "numeric-ids",	no_argument,	&opts.numeric_ids,	1 },
     { "omit-dir-times",	no_argument,	&opts.ignore_dir_times,	1 },
     { "no-O",		no_argument,	&opts.ignore_dir_times,	0 },
-    { "no-omit-dir-times",	no_argument,	&opts.ignore_dir_times,	0 },
+    { "no-omit-dir-times",	no_argument,	&opts.ignore_dir_times, 0 },
+    { "omit-link-times",	no_argument,	&opts.ignore_link_times, 1 },
+    { "no-J",		no_argument,	&opts.ignore_link_times, 0 },
+    { "no-omit-link-times",	no_argument,	&opts.ignore_link_times, 0 },
     { "owner",		no_argument,	&opts.preserve_uids,	1 },
     { "no-owner",	no_argument,	&opts.preserve_uids,	0 },
     { "perms",		no_argument,	&opts.preserve_perms,	1 },
@@ -366,8 +369,8 @@ main(int argc, char *argv[])
 
 	opts.max_size = opts.min_size = -1;
 
-	while ((c = getopt_long(argc, argv, "aDe:ghIlnOoprtVvxz", lopts, &lidx))
-	    != -1) {
+	while ((c = getopt_long(argc, argv, "aDe:ghIJlnOoprtVvxz",
+	    lopts, &lidx)) != -1) {
 		switch (c) {
 		case 'D':
 			opts.devices = 1;
@@ -391,6 +394,9 @@ main(int argc, char *argv[])
 			break;
 		case 'I':
 			opts.ignore_times = 1;
+			break;
+		case 'J':
+			opts.ignore_link_times = 1;
 			break;
 		case 'l':
 			opts.preserve_links = 1;
@@ -643,7 +649,7 @@ basedir:
 	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s"
-	    " [-aDgIlnOoprtVvx] [-e program] [--address=sourceaddr]\n"
+	    " [-aDgIJlnOoprtVvx] [-e program] [--address=sourceaddr]\n"
 	    "\t[--contimeout=seconds] [--compare-dest=dir] [--del] [--exclude]\n"
 	    "\t[--exclude-from=file] [--include] [--include-from=file]\n"
 	    "\t[--no-motd] [--numeric-ids] [--port=portnumber]\n"

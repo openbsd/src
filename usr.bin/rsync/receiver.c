@@ -1,4 +1,4 @@
-/*	$OpenBSD: receiver.c,v 1.31 2021/10/24 21:24:17 deraadt Exp $ */
+/*	$OpenBSD: receiver.c,v 1.32 2023/11/27 11:30:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -114,7 +114,8 @@ rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
 
 	/* Conditionally adjust file modification time. */
 
-	if (sess->opts->preserve_times) {
+	if (sess->opts->preserve_times &&
+	    !(S_ISLNK(f->st.mode) && sess->opts->ignore_link_times)) {
 		ts[0].tv_nsec = UTIME_NOW;
 		ts[1].tv_sec = f->st.mtime;
 		ts[1].tv_nsec = 0;
