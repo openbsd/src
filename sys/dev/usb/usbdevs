@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.759 2023/09/09 14:23:37 kevlo Exp $
+$OpenBSD: usbdevs,v 1.760 2023/11/27 20:03:50 miod Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -654,6 +654,7 @@ vendor DYNABOOK		0x30f3	Dynabook
 vendor LINKINSTRUMENTS	0x3195	Link Instruments
 vendor AEI		0x3334	AEI
 vendor PQI		0x3538	PQI
+vendor RDING		0x3553	RDing TECH
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
 vendor MICRONET		0x3980	Micronet Communications
@@ -3772,6 +3773,9 @@ product RALINK RT2573_2		0x9021	RT2573
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
 product RATOC REXUSB60F		0xb020	REX-USB60F
+
+/* RDing TECH products */
+product RDING TEMPER		0xa001	TEMPer sensor
 
 /* Realtek products */
 product REALTEK RTL8188ETV	0x0179	RTL8188ETV
