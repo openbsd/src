@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacctl.8,v 1.6 2023/03/02 17:09:53 jmc Exp $
+.\"	$OpenBSD: slaacctl.8,v 1.7 2023/11/27 09:29:48 kn Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: November 27 2023 $
 .Dt SLAACCTL 8
 .Os
 .Sh NAME
@@ -51,15 +51,15 @@ The following commands are available:
 Disable verbose debug logging.
 .It Cm log verbose
 Enable verbose debug logging.
-.It Cm send solicitation Ar interfacename
+.It Cm send solicitation Ar interface
 Send a router solicitation on interface
-.Ar interfacename .
-.It Cm show interface Op Ar interfacename
+.Ar interface .
+.It Cm show interface Op Ar interface
 Display status about network interfaces.
 If
-.Ar interfacename
+.Ar interface
 is specified, only information relative to
-.Ar interfacename
+.Ar interface
 is shown.
 Otherwise information on all interfaces is shown.
 .El
