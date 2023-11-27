@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.8 2023/11/27 22:29:51 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.9 2023/11/27 22:39:26 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -20,10 +20,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
 #include <openssl/ossl_typ.h>
-
-#include "evp_local.h"
 
 static int
 evp_asn1_method_test(void)
