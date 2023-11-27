@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.34 2023/11/23 11:59:53 job Exp $
+.\"	$OpenBSD: rsync.1,v 1.35 2023/11/27 11:32:34 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2023 $
+.Dd $Mdocdate: November 27 2023 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd synchronise local and remote files
 .Sh SYNOPSIS
 .Nm openrsync
-.Op Fl aDgIlnOoprtVvx
+.Op Fl aDgIJlnOoprtVvx
 .Op Fl e Ar program
 .Op Fl -address Ns = Ns Ar sourceaddr
 .Op Fl -compare-dest Ns = Ns Ar directory
@@ -132,6 +132,8 @@ and
 .Em rules
 from
 .Em file .
+.It Fl J , -omit-link-times
+Don't set symlink modification times to match the source.
 .It Fl l , -links
 Also transfer symbolic links.
 The link is transferred as a standalone file: if the destination does
@@ -167,8 +169,6 @@ or
 is also given.
 .It Fl O , -omit-dir-times
 Don't set directory modification times to match the source.
-Takes precedence over
-.Fl t .
 .It Fl o , -owner
 Set the user name to match the source, with similar matching logic as for
 .Fl g .
