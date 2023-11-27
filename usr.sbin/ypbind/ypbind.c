@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.78 2023/03/08 04:43:15 guenther Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.79 2023/11/27 18:37:53 tb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -341,8 +341,7 @@ main(int argc, char *argv[])
 	DIR *dirp;
 	struct dirent *dent;
 
-	yp_get_default_domain(&domain);
-	if (domain[0] == '\0') {
+	if (yp_get_default_domain(&domain) != 0 || domain[0] == '\0') {
 		fprintf(stderr, "domainname not set. Aborting.\n");
 		exit(1);
 	}
