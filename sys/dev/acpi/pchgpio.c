@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.14 2022/10/20 20:40:57 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.15 2023/11/27 00:39:42 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -115,6 +115,9 @@ const char *pchgpio_hids[] = {
 	"INT34C5",
 	"INT34C6",
 	"INTC1055",
+	"INTC1056",
+	"INTC1057",
+	"INTC1085",
 	NULL
 };
 
@@ -311,6 +314,78 @@ const struct pchgpio_device tgl_h_device =
 	.npins = 480,
 };
 
+/* Alder Lake-S */
+
+const struct pchgpio_group adl_s_groups[] =
+{
+	/* Community 0 */
+	{ 0, 0, 0, 24, 0 },		/* GPP_I */
+	{ 0, 1, 25, 47, 32 },		/* GPP_R */
+	{ 0, 2, 48, 59, 64 },		/* GPP_J */
+
+	/* Community 1 */
+	{ 1, 0, 95, 118, 160 },		/* GPP_B */
+	{ 1, 1, 119, 126, 192 },	/* GPP_G */
+	{ 1, 2, 127, 150, 224 },	/* GPP_H */
+
+	/* Community 3 */
+	{ 2, 1, 160, 175, 256 },	/* GPP_A */
+	{ 2, 2, 176, 199, 288 },	/* GPP_C */
+
+	/* Community 4 */
+	{ 3, 0, 200, 207, 320 },	/* GPP_S */
+	{ 3, 1, 208, 230, 352 },	/* GPP_E */
+	{ 3, 2, 231, 245, 384 },	/* GPP_K */
+	{ 3, 3, 246, 269, 416 },	/* GPP_F */
+
+	/* Community 5 */
+	{ 4, 0, 270, 294, 448 },	/* GPP_D */
+};
+
+const struct pchgpio_device adl_s_device =
+{
+	.pad_size = 16,
+	.gpi_is = 0x200,
+	.gpi_ie = 0x220,
+	.groups = adl_s_groups,
+	.ngroups = nitems(adl_s_groups),
+	.npins = 480,
+};
+
+/* Alder Lake-N */
+
+const struct pchgpio_group adl_n_groups[] =
+{
+	/* Community 0 */
+	{ 0, 0, 0, 25, 0 },		/* GPP_B */
+	{ 0, 1, 26, 41, 32 },		/* GPP_T */
+	{ 0, 2, 42, 66, 64 },		/* GPP_A */
+
+	/* Community 1 */
+	{ 1, 0, 67, 74, 96 },		/* GPP_S */
+	{ 1, 1, 75, 94, 128 },		/* GPP_I */
+	{ 1, 2, 95, 118, 160 },		/* GPP_H */
+	{ 1, 3, 119, 139, 192 },	/* GPP_D */
+
+	/* Community 4 */
+	{ 2, 0, 169, 192, 256 },	/* GPP_C */
+	{ 2, 1, 193, 217, 288 },	/* GPP_F */
+	{ 2, 3, 224, 248, 320 },	/* GPP_E */
+
+	/* Community 5 */
+	{ 3, 0, 249, 256, 352 },	/* GPP_R */
+};
+
+const struct pchgpio_device adl_n_device =
+{
+	.pad_size = 16,
+	.gpi_is = 0x100,
+	.gpi_ie = 0x120,
+	.groups = adl_n_groups,
+	.ngroups = nitems(adl_n_groups),
+	.npins = 384,
+};
+
 struct pchgpio_match pchgpio_devices[] = {
 	{ "INT344B", &spt_lp_device },
 	{ "INT3450", &cnl_h_device },
@@ -320,6 +395,9 @@ struct pchgpio_match pchgpio_devices[] = {
 	{ "INT34C5", &tgl_lp_device },
 	{ "INT34C6", &tgl_h_device },
 	{ "INTC1055", &tgl_lp_device },
+	{ "INTC1056", &adl_s_device },
+	{ "INTC1057", &adl_n_device },
+	{ "INTC1085", &adl_s_device },
 };
 
 int	pchgpio_read_pin(void *, int);
