@@ -1,6 +1,7 @@
-/*	$OpenBSD: evp_test.c,v 1.7 2023/09/29 06:53:05 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.8 2023/11/27 22:29:51 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +18,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/evp.h>
 #include <openssl/ossl_typ.h>
@@ -404,6 +406,133 @@ evp_pkey_iv_len_test(void)
 	return failure;
 }
 
+struct do_all_arg {
+	const char *previous;
+	int failure;
+};
+
+static void
+evp_do_all_cb_common(const char *descr, const void *ptr, const char *from,
+    const char *to, struct do_all_arg *arg)
+{
+	const char *previous = arg->previous;
+
+	assert(from != NULL);
+	arg->previous = from;
+
+	if (ptr == NULL && to == NULL) {
+		arg->failure |= 1;
+		fprintf(stderr, "FAIL: %s %s: method and alias both NULL\n",
+		    descr, from);
+	}
+	if (ptr != NULL && to != NULL) {
+		arg->failure |= 1;
+		fprintf(stderr, "FAIL: %s %s has method and alias \"%s\"\n",
+		    descr, from, to);
+	}
+
+	if (previous == NULL)
+		return;
+
+	if (strcmp(previous, from) >= 0) {
+		arg->failure |= 1;
+		fprintf(stderr, "FAIL: %ss %s and %s out of order\n", descr,
+		    previous, from);
+	}
+	arg->previous = from;
+}
+
+static void
+evp_cipher_do_all_cb(const EVP_CIPHER *cipher, const char *from, const char *to,
+    void *arg)
+{
+	evp_do_all_cb_common("cipher", cipher, from, to, arg);
+}
+
+static void
+evp_md_do_all_cb(const EVP_MD *md, const char *from, const char *to, void *arg)
+{
+	evp_do_all_cb_common("digest", md, from, to, arg);
+}
+
+static int
+evp_do_all_test(void)
+{
+	struct do_all_arg arg;
+	int failure = 0;
+
+	memset(&arg, 0, sizeof(arg));
+	/* XXX - replace with EVP_CIPHER_do_all() after next bump. */
+	EVP_CIPHER_do_all_sorted(evp_cipher_do_all_cb, &arg);
+	failure |= arg.failure;
+
+	memset(&arg, 0, sizeof(arg));
+	/* XXX - replace with EVP_MD_do_all() after next bump. */
+	EVP_MD_do_all_sorted(evp_md_do_all_cb, &arg);
+	failure |= arg.failure;
+
+	return failure;
+}
+
+static void
+evp_cipher_aliases_cb(const EVP_CIPHER *cipher, const char *from, const char *to,
+    void *arg)
+{
+	struct do_all_arg *do_all = arg;
+	const EVP_CIPHER *from_cipher, *to_cipher;
+
+	if (to == NULL)
+		return;
+
+	from_cipher = EVP_get_cipherbyname(from);
+	to_cipher = EVP_get_cipherbyname(to);
+
+	if (from_cipher != NULL && from_cipher == to_cipher)
+		return;
+
+	fprintf(stderr, "FAIL: cipher mismatch from \"%s\" to \"%s\": "
+	    "from: %p, to: %p\n", from, to, from_cipher, to_cipher);
+	do_all->failure |= 1;
+}
+
+static void
+evp_digest_aliases_cb(const EVP_MD *digest, const char *from, const char *to,
+    void *arg)
+{
+	struct do_all_arg *do_all = arg;
+	const EVP_MD *from_digest, *to_digest;
+
+	if (to == NULL)
+		return;
+
+	from_digest = EVP_get_digestbyname(from);
+	to_digest = EVP_get_digestbyname(to);
+
+	if (from_digest != NULL && from_digest == to_digest)
+		return;
+
+	fprintf(stderr, "FAIL: digest mismatch from \"%s\" to \"%s\": "
+	    "from: %p, to: %p\n", from, to, from_digest, to_digest);
+	do_all->failure |= 1;
+}
+
+static int
+evp_aliases_test(void)
+{
+	struct do_all_arg arg;
+	int failure = 0;
+
+	memset(&arg, 0, sizeof(arg));
+	EVP_CIPHER_do_all(evp_cipher_aliases_cb, &arg);
+	failure |= arg.failure;
+
+	memset(&arg, 0, sizeof(arg));
+	EVP_MD_do_all(evp_digest_aliases_cb, &arg);
+	failure |= arg.failure;
+
+	return failure;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -412,6 +541,8 @@ main(int argc, char **argv)
 	failed |= evp_asn1_method_test();
 	failed |= evp_pkey_method_test();
 	failed |= evp_pkey_iv_len_test();
+	failed |= evp_do_all_test();
+	failed |= evp_aliases_test();
 
 	OPENSSL_cleanup();
 
