@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.40 2022/11/26 16:08:56 tb Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.41 2023/11/28 13:19:04 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -322,8 +322,6 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	s->method = tls_legacy_method();
-
 	if (!ssl3_setup_init_buffer(s))
 		goto err;
 	if (!ssl3_setup_buffers(s))
@@ -369,6 +367,12 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 	s->s3->hs.tls12.reuse_message = 1;
 	s->s3->hs.tls12.message_type = tls13_handshake_msg_type(ctx->hs_msg);
 	s->s3->hs.tls12.message_size = CBS_len(&cbs) - SSL3_HM_HEADER_LENGTH;
+
+	/*
+	 * Only switch the method after initialization is complete
+	 * as we start part way into the legacy state machine.
+	 */
+	s->method = tls_legacy_method();
 
 	return 1;
 
