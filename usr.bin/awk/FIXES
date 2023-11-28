@@ -25,6 +25,12 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the 
 second edition of the AWK book was published in September 2023.
 
+Nov 27, 2023:
+	Fix exit status of system on MacOS. update to REGRESS.
+	Thanks to Arnold Robbins. 
+	Fix inconsistent handling of -F and --csv, and loss of csv
+	mode when FS is set. Thanks to Wilbert van der Poel.
+	
 Nov 24, 2023:
         Fix issue #199: gototab improvements to dynamically resize the
         table, qsort and bsearch to improve the lookup speed as the

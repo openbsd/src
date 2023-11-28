@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.54 2023/10/30 17:52:54 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.55 2023/11/28 20:54:38 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -396,7 +396,7 @@ void fldbld(void)	/* create fields from current record */
 	i = 0;	/* number of fields accumulated here */
 	if (inputFS == NULL)	/* make sure we have a copy of FS */
 		savefs();
-	if (strlen(inputFS) > 1) {	/* it's a regular expression */
+	if (!CSV && strlen(inputFS) > 1) {	/* it's a regular expression */
 		i = refldbld(r, inputFS);
 	} else if (!CSV && (sep = *inputFS) == ' ') {	/* default whitespace */
 		for (i = 0; ; ) {

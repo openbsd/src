@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.82 2023/11/25 16:31:33 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.83 2023/11/28 20:54:38 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -2069,6 +2069,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 	int status = 0;
 	time_t tv;
 	struct tm *tm, tmbuf;
+	int estatus = 0;
 
 	t = ptoi(a[0]);
 	x = execute(a[1]);
@@ -2169,20 +2170,21 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		break;
 	case FSYSTEM:
 		fflush(stdout);		/* in case something is buffered already */
-		status = system(getsval(x));
-		u = status;
+		estatus = status = system(getsval(x));
 		if (status != -1) {
 			if (WIFEXITED(status)) {
-				u = WEXITSTATUS(status);
+				estatus = WEXITSTATUS(status);
 			} else if (WIFSIGNALED(status)) {
-				u = WTERMSIG(status) + 256;
+				estatus = WTERMSIG(status) + 256;
 #ifdef WCOREDUMP
 				if (WCOREDUMP(status))
-					u += 256;
+					estatus += 256;
 #endif
 			} else	/* something else?!? */
-				u = 0;
+				estatus = 0;
 		}
+		/* else estatus was set to -1 */
+		u = estatus;
 		break;
 	case FRAND:
 		/* random() returns numbers in [0..2^31-1]
