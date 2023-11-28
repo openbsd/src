@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.60 2023/11/26 22:08:10 bluhm Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.61 2023/11/28 13:23:20 bluhm Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -143,7 +143,8 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 		fport = sin6->sin6_port; /* allow 0 port */
 
 		/* KAME hack: embed scopeid */
-		if (in6_embedscope(&sin6->sin6_addr, sin6, in6p) != 0) {
+		if (in6_embedscope(&sin6->sin6_addr, sin6,
+		    in6p->inp_outputopts6, in6p->inp_moptions6) != 0) {
 			error = EINVAL;
 			goto release;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.95 2023/11/18 00:23:38 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.96 2023/11/28 13:23:20 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1385,12 +1385,12 @@ vxlan_set_tunnel(struct vxlan_softc *sc, const struct if_laddrreq *req)
 			/* all good */
 			mode = IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr) ?
 			    VXLAN_TMODE_LEARNING : VXLAN_TMODE_P2P;
-			error = in6_embedscope(&daddr.in6, dst6, NULL);
+			error = in6_embedscope(&daddr.in6, dst6, NULL, NULL);
 			if (error != 0)
 				return (error);
 		}
 
-		error = in6_embedscope(&saddr.in6, src6, NULL);
+		error = in6_embedscope(&saddr.in6, src6, NULL, NULL);
 		if (error != 0)
 			return (error);
 
@@ -1703,7 +1703,7 @@ vxlan_add_addr(struct vxlan_softc *sc, const struct ifbareq *ifba)
 		if (sin6->sin6_port != htons(0))
 			return (EADDRNOTAVAIL);
 
-		error = in6_embedscope(&endpoint.in6, sin6, NULL);
+		error = in6_embedscope(&endpoint.in6, sin6, NULL, NULL);
 		if (error != 0)
 			return (error);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.280 2023/11/26 22:08:10 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.281 2023/11/28 13:23:20 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2808,7 +2808,7 @@ ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route_in6 *ro,
 		sin6.sin6_len = sizeof(sin6);
 		sin6.sin6_addr = *dst;
 		sin6.sin6_scope_id = in6_addr2scopeid(ifidx, dst);
-		error = in6_embedscope(dst, &sin6, NULL);
+		error = in6_embedscope(dst, &sin6, NULL, NULL);
 		if (error) {
 			/* should be impossible */
 			return error;

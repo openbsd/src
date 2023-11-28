@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.175 2023/10/27 20:56:47 jan Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.176 2023/11/28 13:23:20 bluhm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -2379,7 +2379,7 @@ mgre_set_tunnel(struct mgre_softc *sc, struct if_laddrreq *req)
 		    IN6_IS_ADDR_MULTICAST(&addr6->sin6_addr))
 			return (EINVAL);
 
-		error = in6_embedscope(&tunnel->t_src6, addr6, NULL);
+		error = in6_embedscope(&tunnel->t_src6, addr6, NULL, NULL);
 		if (error != 0)
 			return (error);
 
@@ -3122,11 +3122,11 @@ gre_set_tunnel(struct gre_tunnel *tunnel, struct if_laddrreq *req, int ucast)
 		if (src6->sin6_scope_id != dst6->sin6_scope_id)
 			return (EINVAL);
 
-		error = in6_embedscope(&tunnel->t_src6, src6, NULL);
+		error = in6_embedscope(&tunnel->t_src6, src6, NULL, NULL);
 		if (error != 0)
 			return (error);
 
-		error = in6_embedscope(&tunnel->t_dst6, dst6, NULL);
+		error = in6_embedscope(&tunnel->t_dst6, dst6, NULL, NULL);
 		if (error != 0)
 			return (error);
 
@@ -3609,7 +3609,7 @@ nvgre_add_addr(struct nvgre_softc *sc, const struct ifbareq *ifba)
 		if (src6.sin6_scope_id != sin6->sin6_scope_id)
 			return (EADDRNOTAVAIL);
 
-		error = in6_embedscope(&endpoint.in6, sin6, NULL);
+		error = in6_embedscope(&endpoint.in6, sin6, NULL, NULL);
 		if (error != 0)
 			return (error);
 

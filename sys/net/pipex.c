@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.149 2023/09/16 09:33:27 mpi Exp $ */
+/*	$OpenBSD: pipex.c,v 1.150 2023/11/28 13:23:20 bluhm Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -1920,8 +1920,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		ip6->ip6_vfc |= IPV6_VERSION;
 		ip6->ip6_nxt = IPPROTO_UDP;
 		ip6->ip6_src = session->local.sin6.sin6_addr;
-		(void)in6_embedscope(&ip6->ip6_dst,
-		    &session->peer.sin6, NULL);
+		in6_embedscope(&ip6->ip6_dst, &session->peer.sin6, NULL, NULL);
 		/* ip6->ip6_plen will be filled in ip6_output. */
 
 		ip6_send(m0);

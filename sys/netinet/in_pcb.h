@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.138 2023/11/26 22:08:10 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.139 2023/11/28 13:23:20 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -136,11 +136,11 @@ struct inpcb {
 	struct ip6_pktopts *inp_outputopts6; /* IP6 options for outgoing packets */
 	int inp_hops;
 	union {
-		struct ip_moptions *mou_mo;    /* IPv4 multicast options */
-		struct ip6_moptions *mou_mo6; /* IPv6 multicast options */
+		struct ip_moptions *mou_mo;
+		struct ip6_moptions *mou_mo6;
 	} inp_mou;
-#define inp_moptions inp_mou.mou_mo
-#define inp_moptions6 inp_mou.mou_mo6
+#define inp_moptions inp_mou.mou_mo	/* [N] IPv4 multicast options */
+#define inp_moptions6 inp_mou.mou_mo6	/* [N] IPv6 multicast options */
 	u_char	  inp_seclevel[4];	/* [N] IPsec level of socket */
 #define SL_AUTH           0             /* Authentication level */
 #define SL_ESP_TRANS      1             /* ESP transport level */

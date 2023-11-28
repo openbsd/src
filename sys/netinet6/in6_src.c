@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.86 2022/02/22 01:15:02 guenther Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.87 2023/11/28 13:23:20 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -447,13 +447,11 @@ in6_selecthlim(struct inpcb *in6p)
  */
 int
 in6_embedscope(struct in6_addr *in6, const struct sockaddr_in6 *sin6,
-    struct inpcb *in6p)
+    const struct ip6_pktopts *outputopts6, const struct ip6_moptions *moptions6)
 {
-	struct ifnet *ifp = NULL;
 	u_int32_t scopeid;
 
 	*in6 = sin6->sin6_addr;
-	scopeid = sin6->sin6_scope_id;
 
 	/*
 	 * don't try to read sin6->sin6_addr beyond here, since the caller may
@@ -467,25 +465,25 @@ in6_embedscope(struct in6_addr *in6, const struct sockaddr_in6 *sin6,
 		 * KAME assumption: link id == interface id
 		 */
 
-		if (in6p && in6p->inp_outputopts6 &&
-		    (pi = in6p->inp_outputopts6->ip6po_pktinfo) &&
-		    pi->ipi6_ifindex) {
-			ifp = if_get(pi->ipi6_ifindex);
-			if (ifp == NULL)
-				return ENXIO;  /* XXX EINVAL? */
-			in6->s6_addr16[1] = htons(pi->ipi6_ifindex);
-		} else if (in6p && IN6_IS_ADDR_MULTICAST(in6) &&
-		    in6p->inp_moptions6 &&
-		    (ifp = if_get(in6p->inp_moptions6->im6o_ifidx))) {
-			in6->s6_addr16[1] = htons(ifp->if_index);
-		} else if (scopeid) {
+		if (outputopts6 && (pi = outputopts6->ip6po_pktinfo) &&
+		    pi->ipi6_ifindex)
+			scopeid = pi->ipi6_ifindex;
+		else if (moptions6 && IN6_IS_ADDR_MULTICAST(in6) &&
+		    moptions6->im6o_ifidx)
+			scopeid = moptions6->im6o_ifidx;
+		else
+			scopeid = sin6->sin6_scope_id;
+
+		if (scopeid) {
+			struct ifnet *ifp;
+
 			ifp = if_get(scopeid);
 			if (ifp == NULL)
 				return ENXIO;  /* XXX EINVAL? */
 			/*XXX assignment to 16bit from 32bit variable */
 			in6->s6_addr16[1] = htons(scopeid & 0xffff);
+			if_put(ifp);
 		}
-		if_put(ifp);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.223 2023/11/16 18:27:48 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.224 2023/11/28 13:23:20 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1154,11 +1154,11 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 #ifdef INET6
 	case AF_INET6:
 		fin6 = (struct sockaddr_in6 *)&tir.faddr;
-		error = in6_embedscope(&f6, fin6, NULL);
+		error = in6_embedscope(&f6, fin6, NULL, NULL);
 		if (error)
 			return EINVAL;	/*?*/
 		lin6 = (struct sockaddr_in6 *)&tir.laddr;
-		error = in6_embedscope(&l6, lin6, NULL);
+		error = in6_embedscope(&l6, lin6, NULL, NULL);
 		if (error)
 			return EINVAL;	/*?*/
 		break;

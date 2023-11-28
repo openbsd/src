@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.249 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.250 2023/11/28 13:23:20 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -910,7 +910,8 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 			icmp6dst.sin6_addr = *finaldst;
 		icmp6dst.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
 		    &icmp6dst.sin6_addr);
-		if (in6_embedscope(&icmp6dst.sin6_addr, &icmp6dst, NULL)) {
+		if (in6_embedscope(&icmp6dst.sin6_addr, &icmp6dst,
+		    NULL, NULL)) {
 			/* should be impossible */
 			nd6log((LOG_DEBUG,
 			    "icmp6_notify_error: in6_embedscope failed\n"));
@@ -927,7 +928,8 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		icmp6src.sin6_addr = eip6->ip6_src;
 		icmp6src.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
 		    &icmp6src.sin6_addr);
-		if (in6_embedscope(&icmp6src.sin6_addr, &icmp6src, NULL)) {
+		if (in6_embedscope(&icmp6src.sin6_addr, &icmp6src,
+		    NULL, NULL)) {
 			/* should be impossible */
 			nd6log((LOG_DEBUG,
 			    "icmp6_notify_error: in6_embedscope failed\n"));

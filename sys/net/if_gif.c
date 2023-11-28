@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.133 2021/05/16 15:10:20 deraadt Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.134 2023/11/28 13:23:20 bluhm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -687,11 +687,11 @@ gif_set_tunnel(struct gif_softc *sc, struct if_laddrreq *req)
 		if (IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr))
 			return (EINVAL);
 
-		error = in6_embedscope(&tunnel->t_src6, src6, NULL);
+		error = in6_embedscope(&tunnel->t_src6, src6, NULL, NULL);
 		if (error != 0)
 			return (error);
 
-		error = in6_embedscope(&tunnel->t_dst6, dst6, NULL);
+		error = in6_embedscope(&tunnel->t_dst6, dst6, NULL, NULL);
 		if (error != 0)
 			return (error);
 

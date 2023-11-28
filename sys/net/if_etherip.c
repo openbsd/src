@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.51 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.52 2023/11/28 13:23:20 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -422,11 +422,11 @@ etherip_set_tunnel(struct etherip_softc *sc, struct if_laddrreq *req)
 		    IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr))
 			return (EINVAL);
 
-		error = in6_embedscope(&sc->sc_tunnel.t_src6, src6, NULL);
+		error = in6_embedscope(&sc->sc_tunnel.t_src6, src6, NULL, NULL);
 		if (error != 0)
 			return (error);
 
-		error = in6_embedscope(&sc->sc_tunnel.t_dst6, dst6, NULL);
+		error = in6_embedscope(&sc->sc_tunnel.t_dst6, dst6, NULL, NULL);
 		if (error != 0)
 			return (error);
 
