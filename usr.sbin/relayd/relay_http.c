@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.84 2022/12/28 21:38:29 jmc Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.85 2023/11/28 18:36:55 millert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -161,6 +161,20 @@ relay_httpdesc_free(struct http_descriptor *desc)
 	desc->http_lastheader = NULL;
 }
 
+static int
+relay_http_header_name_valid(const char *name)
+{
+	/*
+	 * RFC 9110 specifies that only the following characters are
+	 * permitted within HTTP header field names.
+	 */
+	const char token_chars[] = "!#$%&'*+-.^_`|~0123456789"
+	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	const size_t len = strspn(name, token_chars);
+
+	return (name[len] == '\0');
+}
+
 void
 relay_read_http(struct bufferevent *bev, void *arg)
 {
@@ -215,28 +229,39 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		/* Limit the total header length minus \r\n */
 		cre->headerlen += linelen;
 		if (cre->headerlen > proto->httpheaderlen) {
-			free(line);
 			relay_abort_http(con, 413,
 			    "request headers too large", 0);
-			return;
+			goto abort;
+		}
+
+		/* Reject requests with an embedded NUL byte. */
+		if (memchr(line, '\0', linelen) != NULL) {
+			relay_abort_http(con, 400, "malformed", 0);
+			goto abort;
 		}
 
 		/*
 		 * The first line is the GET/POST/PUT/... request,
 		 * subsequent lines are HTTP headers.
 		 */
-		if (++cre->line == 1)
-			value = strchr(key, ' ');
-		else if (*key == ' ' || *key == '\t')
+		if (++cre->line == 1) {
+			if ((value = strchr(key, ' ')) == NULL) {
+				relay_abort_http(con, 400, "malformed", 0);
+				goto abort;
+			}
+		} else if (*key == ' ' || *key == '\t') {
 			/* Multiline headers wrap with a space or tab */
 			value = NULL;
-		else
-			value = strchr(key, ':');
+		} else {
+			if ((value = strchr(key, ':')) == NULL) {
+				relay_abort_http(con, 400, "malformed", 0);
+				goto abort;
+			}
+		}
 		if (value == NULL) {
 			if (cre->line <= 2) {
-				free(line);
 				relay_abort_http(con, 400, "malformed", 0);
-				return;
+				goto abort;
 			}
 
 			/* Append line to the last header, if present */
@@ -252,6 +277,11 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		if (*value == ':') {
 			*value++ = '\0';
 			value += strspn(value, " \t\r\n");
+
+			if (!relay_http_header_name_valid(key)) {
+				relay_abort_http(con, 400, "malformed", 0);
+				goto abort;
+			}
 		} else {
 			*value++ = '\0';
 		}
@@ -398,8 +428,12 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				 * seem to include the line length in the
 				 * content-length.
 				 */
-				cre->toread = strtonum(value, 0, LLONG_MAX,
-				    &errstr);
+				if (*value == '+' || *value == '-') {
+					errstr = "invalid";
+				} else {
+					cre->toread = strtonum(value, 0,
+					    LLONG_MAX, &errstr);
+				}
 				if (errstr) {
 					relay_abort_http(con, 500, errstr, 0);
 					goto abort;
@@ -424,9 +458,15 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			}
 		}
  lookup:
-		if (strcasecmp("Transfer-Encoding", key) == 0 &&
-		    strcasecmp("chunked", value) == 0)
+		if (strcasecmp("Transfer-Encoding", key) == 0) {
+			/* We don't support other encodings. */
+			if (strcasecmp("chunked", value) != 0) {
+				relay_abort_http(con, 400,
+				    "malformed", 0);
+				goto abort;
+			}
 			desc->http_chunked = 1;
+		}
 
 		/* The following header should only occur once */
 		if (strcasecmp("Host", key) == 0) {
@@ -721,7 +761,7 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 	struct rsession		*con = cre->con;
 	struct protocol		*proto = con->se_relay->rl_proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
-	char			*line;
+	char			*line, *ep;
 	long long		 llval;
 	size_t			 size, linelen;
 
@@ -766,10 +806,19 @@ relay_read_httpchunks(struct bufferevent *bev, void *arg)
 		}
 
 		/*
-		 * Read prepended chunk size in hex, ignore the trailer.
+		 * Read prepended chunk size in hex without leading +0[Xx].
 		 * The returned signed value must not be negative.
 		 */
-		if (sscanf(line, "%llx", &llval) != 1 || llval < 0) {
+		if (line[0] == '+' || line[0] == '-' ||
+		    (line[0] == '0' && (line[1] == 'x' || line[1] == 'X'))) {
+			/* Reject values like 0xdead and 0XBEEF or +FEED. */
+			ep = line;
+		} else {
+			errno = 0;
+			llval = strtoll(line, &ep, 16);
+		}
+		if (ep == line || *ep != '\0' || llval < 0 ||
+		    (errno == ERANGE && llval == LLONG_MAX)) {
 			free(line);
 			relay_close(con, "invalid chunk size", 1);
 			return;
