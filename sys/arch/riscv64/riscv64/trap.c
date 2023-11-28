@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2022/03/23 23:48:30 jca Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2023/11/28 09:10:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -251,7 +251,7 @@ kdata_abort(struct trapframe *frame)
 
 	va = trunc_page(stval);
 
-	if (stval >= VM_MAX_USER_ADDRESS)
+	if (stval >= VM_MAXUSER_ADDRESS)
 		map = kernel_map;
 	else {
 		map = &p->p_vmspace->vm_map;

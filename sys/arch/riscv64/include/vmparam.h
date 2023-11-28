@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.8 2023/11/24 07:18:49 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.9 2023/11/28 09:10:18 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -108,7 +108,7 @@
  * VM_MIN_KERNEL_ADDRESS and VM_MAX_KERNEL_ADDRESS define the start and end of
  * mappable kernel virtual address space.
  *
- * VM_MIN_USER_ADDRESS and VM_MAX_USER_ADDRESS define the start and end of the
+ * VM_MIN_ADDRESS and VM_MAXUSER_ADDRESS define the start and end of the
  * user address space.
  */
 #define	VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
@@ -117,25 +117,19 @@
 #define	VM_MIN_KERNEL_ADDRESS	(0xffffffc000000000UL)
 #define	VM_MAX_KERNEL_ADDRESS	(0xffffffc800000000UL)
 
-// Kernel L1 Page Table Range
+/* Kernel L1 Page Table Range */
 #define	L1_KERN_BASE		(256)
 #define	L1_KERN_ENTRIES		(288 - L1_KERN_BASE)
 
 #define	DMAP_MIN_ADDRESS	(0xffffffd000000000UL)
 #define	DMAP_MAX_ADDRESS	(0xfffffff000000000UL)
 
-// DMAP L1 Page Table Range
+/* DMAP L1 Page Table Range */
 #define	L1_DMAP_BASE		(320)
 #define	L1_DMAP_ENTRIES		(448 - L1_DMAP_BASE)
 
-#define	DMAP_MIN_PHYSADDR	(dmap_phys_base)
-#define	DMAP_MAX_PHYSADDR	(dmap_phys_max)
+#define	VM_MAXUSER_ADDRESS	(0x0000004000000000UL)  /* 39 bits */
 
-#define	VM_MIN_USER_ADDRESS	(0x0000000000000000UL)
-#define	VM_MAX_USER_ADDRESS	(0x0000004000000000UL)  // 39 User Space Bits
-
-#define	VM_MINUSER_ADDRESS	(VM_MIN_USER_ADDRESS)
-#define	VM_MAXUSER_ADDRESS	(VM_MAX_USER_ADDRESS)
 #ifdef _KERNEL
 #define	VM_MIN_STACK_ADDRESS	(VM_MAXUSER_ADDRESS * 3 / 4)
 #endif
@@ -144,9 +138,6 @@
 
 #ifndef _LOCORE
 extern paddr_t dmap_phys_base;
-extern paddr_t dmap_phys_max;
-extern vaddr_t dmap_virt_max;
-extern vaddr_t vm_max_kernel_address;
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */

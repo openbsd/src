@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2023/09/24 18:49:29 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2023/11/28 09:10:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -1155,8 +1155,6 @@ extern char __text_start[], _etext[];
 extern char __rodata_start[], _erodata[];
 
 paddr_t dmap_phys_base;
-paddr_t dmap_phys_max;
-vaddr_t dmap_virt_max;
 
 void
 pmap_bootstrap_dmap(vaddr_t kern_l1, paddr_t min_pa, paddr_t max_pa)
@@ -1183,10 +1181,6 @@ pmap_bootstrap_dmap(vaddr_t kern_l1, paddr_t min_pa, paddr_t max_pa)
 		entry |= (pn << PTE_PPN0_S);
 		atomic_store_64(&l1[l1_slot], entry);
 	}
-
-	/* set the upper limit of the dmap region */
-	dmap_phys_max = pa;
-	dmap_virt_max = va;
 
 	sfence_vma();
 }
