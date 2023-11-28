@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.199 2023/03/31 12:35:24 jsg Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.200 2023/11/28 09:29:20 jsg Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -718,7 +718,7 @@ uipc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    name + 1, namelen - 1, oldp, oldlenp, newp, newlen);
 	case NET_UNIX_INFLIGHT:
 		valp = &unp_rights;
-		/* FALLTHOUGH */
+		/* FALLTHROUGH */
 	case NET_UNIX_DEFERRED:
 		if (namelen != 1)
 			return (ENOTDIR);
