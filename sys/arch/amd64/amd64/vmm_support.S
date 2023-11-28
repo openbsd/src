@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.23 2023/04/14 23:56:57 dv Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.24 2023/11/28 00:17:48 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -129,9 +129,19 @@ ENTRY(vmread)
 	lfence
 END(vmread)
 
+/*
+ * Intel SDM Vol 3C, 31.2 defines different "vmfail" types, but there's no
+ * need to distinguish between CF=1 and ZF=1 for invvpid or invept.
+ */
 ENTRY(invvpid)
 	RETGUARD_SETUP(invvpid, r11)
 	invvpid (%rsi), %rdi
+        jbe     invvpid_fail
+        xorq    %rax, %rax
+        jmp     invvpid_ret
+invvpid_fail:
+        movq    $1, %rax
+invvpid_ret:
 	RETGUARD_CHECK(invvpid, r11)
 	ret
 	lfence
@@ -139,7 +149,13 @@ END(invvpid)
 
 ENTRY(invept)
 	RETGUARD_SETUP(invept, r11)
-	invept (%rsi), %rdi
+	invept  (%rsi), %rdi
+        jbe     invept_fail
+        xorq    %rax, %rax
+        jmp     invept_ret
+invept_fail:
+        movq    $1, %rax
+invept_ret:
 	RETGUARD_CHECK(invept, r11)
 	ret
 	lfence

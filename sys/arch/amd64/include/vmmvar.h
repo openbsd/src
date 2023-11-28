@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.94 2023/09/06 03:35:57 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.95 2023/11/28 00:17:48 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -919,8 +919,8 @@ int	vmptrld(paddr_t *);
 int	vmptrst(paddr_t *);
 int	vmwrite(uint64_t, uint64_t);
 int	vmread(uint64_t, uint64_t *);
-void	invvpid(uint64_t, struct vmx_invvpid_descriptor *);
-void	invept(uint64_t, struct vmx_invept_descriptor *);
+int	invvpid(uint64_t, struct vmx_invvpid_descriptor *);
+int	invept(uint64_t, struct vmx_invept_descriptor *);
 int	vmx_enter_guest(paddr_t *, struct vcpu_gueststate *, int, uint8_t);
 int	svm_enter_guest(uint64_t, struct vcpu_gueststate *,
     struct region_descriptor *);
