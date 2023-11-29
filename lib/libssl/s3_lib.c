@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.247 2023/11/29 13:29:34 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.248 2023/11/29 13:39:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,6 +150,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <openssl/bn.h>
 #include <openssl/curve25519.h>
@@ -1413,18 +1414,26 @@ ssl3_get_cipher(unsigned int u)
 		return (NULL);
 }
 
+static int
+ssl3_cipher_id_cmp(const void *id, const void *cipher)
+{
+	unsigned long a = *(const unsigned long *)id;
+	unsigned long b = ((const SSL_CIPHER *)cipher)->id;
+
+	return a < b ? -1 : a > b;
+}
+
 const SSL_CIPHER *
 ssl3_get_cipher_by_id(unsigned long id)
 {
-	const SSL_CIPHER *cp;
-	SSL_CIPHER c;
+	const SSL_CIPHER *cipher;
 
-	c.id = id;
-	cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
-	if (cp != NULL && cp->valid == 1)
-		return (cp);
+	cipher = bsearch(&id, ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof(*cipher),
+	    ssl3_cipher_id_cmp);
+	if (cipher != NULL && cipher->valid == 1)
+		return cipher;
 
-	return (NULL);
+	return NULL;
 }
 
 const SSL_CIPHER *
