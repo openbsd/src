@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.146 2023/07/06 10:17:43 visa Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.147 2023/11/29 06:54:09 jmatthew Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -162,6 +162,7 @@ struct mpii_softc {
 	int			sc_flags;
 #define MPII_F_RAID		(1<<1)
 #define MPII_F_SAS3		(1<<2)
+#define MPII_F_AERO		(1<<3)
 
 	struct scsibus_softc	*sc_scsibus;
 	unsigned int		sc_pending;
@@ -433,7 +434,11 @@ static const struct pci_matchid mpii_devices[] = {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3508 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3508_1 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3516 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3516_1 }
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS3516_1 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS38XX },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS38XX_1 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS39XX },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS39XX_1 },
 };
 
 int
@@ -493,6 +498,15 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 	printf(": %s\n", pci_intr_string(sc->sc_pc, ih));
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_SYMBIOS_SAS38XX:
+	case PCI_PRODUCT_SYMBIOS_SAS38XX_1:
+	case PCI_PRODUCT_SYMBIOS_SAS39XX:
+	case PCI_PRODUCT_SYMBIOS_SAS39XX_1:
+		SET(sc->sc_flags, MPII_F_AERO);
+		break;
+	}
 
 	if (mpii_iocfacts(sc) != 0) {
 		printf("%s: unable to get iocfacts\n", DEVNAME(sc));
@@ -963,10 +977,24 @@ u_int32_t
 mpii_read(struct mpii_softc *sc, bus_size_t r)
 {
 	u_int32_t			rv;
+	int				i;
 
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
-	    BUS_SPACE_BARRIER_READ);
-	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
+	if (ISSET(sc->sc_flags, MPII_F_AERO)) {
+		i = 0;
+		do {
+			if (i > 0)
+				DNPRINTF(MPII_D_RW, "%s: mpii_read retry %d\n",
+				    DEVNAME(sc), i);
+			bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+			    BUS_SPACE_BARRIER_READ);
+			rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
+			i++;
+		} while (rv == 0 && i < 3);
+	} else {
+		bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+		    BUS_SPACE_BARRIER_READ);
+		rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
+	}
 
 	DNPRINTF(MPII_D_RW, "%s: mpii_read %#lx %#x\n", DEVNAME(sc), r, rv);
 
