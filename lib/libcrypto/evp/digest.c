@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.39 2023/11/19 15:46:09 tb Exp $ */
+/* $OpenBSD: digest.c,v 1.40 2023/11/29 21:35:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -271,7 +271,7 @@ EVP_Digest(const void *data, size_t count,
 
 	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_ONESHOT);
-	ret = EVP_DigestInit_ex(&ctx, type, impl) &&
+	ret = EVP_DigestInit_ex(&ctx, type, NULL) &&
 	    EVP_DigestUpdate(&ctx, data, count) &&
 	    EVP_DigestFinal_ex(&ctx, md, size);
 	EVP_MD_CTX_cleanup(&ctx);

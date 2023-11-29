@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.33 2023/11/19 15:46:09 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.34 2023/11/29 21:35:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -158,6 +158,9 @@ EVP_PKEY_asn1_find(ENGINE **pe, int type)
 {
 	const EVP_PKEY_ASN1_METHOD *mp;
 
+	if (pe != NULL)
+		*pe = NULL;
+
 	for (;;) {
 		if ((mp = pkey_asn1_find(type)) == NULL)
 			break;
@@ -165,9 +168,7 @@ EVP_PKEY_asn1_find(ENGINE **pe, int type)
 			break;
 		type = mp->pkey_base_id;
 	}
-	if (pe) {
-		*pe = NULL;
-	}
+
 	return mp;
 }
 
@@ -179,9 +180,8 @@ EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
 
 	if (len == -1)
 		len = strlen(str);
-	if (pe) {
+	if (pe != NULL)
 		*pe = NULL;
-	}
 	for (i = EVP_PKEY_asn1_get_count() - 1; i >= 0; i--) {
 		ameth = EVP_PKEY_asn1_get0(i);
 		if (ameth->pkey_flags & ASN1_PKEY_ALIAS)

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_local.h,v 1.6 2023/08/09 12:09:06 tb Exp $ */
+/* $OpenBSD: rsa_local.h,v 1.7 2023/11/29 21:35:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,8 +108,6 @@ struct rsa_st {
 	long version;
 	const RSA_METHOD *meth;
 
-	/* functional reference if 'meth' is ENGINE-provided */
-	ENGINE *engine;
 	BIGNUM *n;
 	BIGNUM *e;
 	BIGNUM *d;

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_local.h,v 1.2 2023/03/04 20:54:52 tb Exp $ */
+/* $OpenBSD: dsa_local.h,v 1.3 2023/11/29 21:35:57 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
@@ -106,8 +106,6 @@ struct dsa_st {
 	int references;
 	CRYPTO_EX_DATA ex_data;
 	const DSA_METHOD *meth;
-	/* functional reference if 'meth' is ENGINE-provided */
-	ENGINE *engine;
 } /* DSA */;
 
 int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,

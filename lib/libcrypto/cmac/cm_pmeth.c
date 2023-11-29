@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_pmeth.c,v 1.10 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cm_pmeth.c,v 1.11 2023/11/29 21:35:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -143,7 +143,7 @@ pkey_cmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		break;
 
 	case EVP_PKEY_CTRL_CIPHER:
-		if (!CMAC_Init(cmctx, NULL, 0, p2, ctx->engine))
+		if (!CMAC_Init(cmctx, NULL, 0, p2, NULL))
 			return 0;
 		break;
 

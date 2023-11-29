@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.15 2023/11/29 18:11:10 tb Exp $ */
+/* $OpenBSD: cmac.c,v 1.16 2023/11/29 21:35:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -178,7 +178,7 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 	int bl;
 
 	/* All zeros means restart */
-	if (key == NULL && cipher == NULL && impl == NULL && keylen == 0) {
+	if (key == NULL && cipher == NULL && keylen == 0) {
 		/* Not initialised */
 		if (ctx->nlast_block == -1)
 			return 0;
@@ -191,7 +191,7 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 
 	/* Initialise context. */
 	if (cipher != NULL) {
-		if (!EVP_EncryptInit_ex(&ctx->cctx, cipher, impl, NULL, NULL))
+		if (!EVP_EncryptInit_ex(&ctx->cctx, cipher, NULL, NULL, NULL))
 			return 0;
 	}
 

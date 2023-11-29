@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.38 2023/11/19 15:46:10 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.39 2023/11/29 21:35:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -206,7 +206,6 @@ EVP_PKEY_new(void)
 	ret->save_type = EVP_PKEY_NONE;
 	ret->references = 1;
 	ret->ameth = NULL;
-	ret->engine = NULL;
 	ret->pkey.ptr = NULL;
 	ret->attributes = NULL;
 	ret->save_parameters = 1;
@@ -220,18 +219,14 @@ EVP_PKEY_up_ref(EVP_PKEY *pkey)
 	return ((refs > 1) ? 1 : 0);
 }
 
-/* Setup a public key ASN1 method and ENGINE from a NID or a string.
+/* Setup a public key ASN1 method from a NID or a string.
  * If pkey is NULL just return 1 or 0 if the algorithm exists.
  */
 
 static int
-pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str, int len)
+pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 {
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	ENGINE **eptr = NULL;
-
-	if (e == NULL)
-		eptr = &e;
 
 	if (pkey) {
 		if (pkey->pkey.ptr)
@@ -242,17 +237,16 @@ pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str, int len)
 		if ((type == pkey->save_type) && pkey->ameth)
 			return 1;
 	}
-	if (str)
-		ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
+	if (str != NULL)
+		ameth = EVP_PKEY_asn1_find_str(NULL, str, len);
 	else
-		ameth = EVP_PKEY_asn1_find(eptr, type);
+		ameth = EVP_PKEY_asn1_find(NULL, type);
 	if (!ameth) {
 		EVPerror(EVP_R_UNSUPPORTED_ALGORITHM);
 		return 0;
 	}
 	if (pkey) {
 		pkey->ameth = ameth;
-		pkey->engine = e;
 
 		pkey->type = pkey->ameth->pkey_id;
 		pkey->save_type = type;
@@ -263,7 +257,7 @@ pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str, int len)
 int
 EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 {
-	return pkey_set_type(pkey, NULL, type, NULL, -1);
+	return pkey_set_type(pkey, type, NULL, -1);
 }
 
 EVP_PKEY *
@@ -275,7 +269,7 @@ EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
 	if ((ret = EVP_PKEY_new()) == NULL)
 		goto err;
 
-	if (!pkey_set_type(ret, engine, type, NULL, -1))
+	if (!pkey_set_type(ret, type, NULL, -1))
 		goto err;
 
 	if (ret->ameth->set_priv_key == NULL) {
@@ -304,7 +298,7 @@ EVP_PKEY_new_raw_public_key(int type, ENGINE *engine,
 	if ((ret = EVP_PKEY_new()) == NULL)
 		goto err;
 
-	if (!pkey_set_type(ret, engine, type, NULL, -1))
+	if (!pkey_set_type(ret, type, NULL, -1))
 		goto err;
 
 	if (ret->ameth->set_pub_key == NULL) {
@@ -368,10 +362,10 @@ EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv, size_t len,
 	if ((cmctx = CMAC_CTX_new()) == NULL)
 		goto err;
 
-	if (!pkey_set_type(ret, e, EVP_PKEY_CMAC, NULL, -1))
+	if (!pkey_set_type(ret, EVP_PKEY_CMAC, NULL, -1))
 		goto err;
 
-	if (!CMAC_Init(cmctx, priv, len, cipher, e)) {
+	if (!CMAC_Init(cmctx, priv, len, cipher, NULL)) {
 		EVPerror(EVP_R_KEY_SETUP_FAILED);
 		goto err;
 	}
@@ -389,7 +383,7 @@ EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv, size_t len,
 int
 EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 {
-	return pkey_set_type(pkey, NULL, EVP_PKEY_NONE, str, len);
+	return pkey_set_type(pkey, EVP_PKEY_NONE, str, len);
 }
 
 int
@@ -563,15 +557,12 @@ EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 int
 EVP_PKEY_type(int type)
 {
-	int ret;
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	ENGINE *e;
-	ameth = EVP_PKEY_asn1_find(&e, type);
-	if (ameth)
-		ret = ameth->pkey_id;
-	else
-		ret = NID_undef;
-	return ret;
+
+	if ((ameth = EVP_PKEY_asn1_find(NULL, type)) != NULL)
+		return ameth->pkey_id;
+
+	return NID_undef;
 }
 
 int

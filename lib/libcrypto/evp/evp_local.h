@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.5 2023/09/28 11:29:10 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.6 2023/11/29 21:35:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -97,7 +97,6 @@ struct evp_pkey_st {
 	int save_type;
 	int references;
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	ENGINE *engine;
 	union	{
 		void *ptr;
 #ifndef OPENSSL_NO_RSA
@@ -140,7 +139,6 @@ struct evp_md_st {
 
 struct evp_md_ctx_st {
 	const EVP_MD *digest;
-	ENGINE *engine; /* functional reference if 'digest' is ENGINE-provided */
 	unsigned long flags;
 	void *md_data;
 	/* Public key context for sign/verify */
@@ -169,7 +167,6 @@ struct evp_cipher_st {
 
 struct evp_cipher_ctx_st {
 	const EVP_CIPHER *cipher;
-	ENGINE *engine;	/* functional reference if 'cipher' is ENGINE-provided */
 	int encrypt;		/* encrypt or decrypt */
 	int buf_len;		/* number we have left */
 
@@ -205,8 +202,6 @@ struct evp_Encode_Ctx_st {
 struct evp_pkey_ctx_st {
 	/* Method associated with this operation */
 	const EVP_PKEY_METHOD *pmeth;
-	/* Engine that implements this method or NULL if builtin */
-	ENGINE *engine;
 	/* Key: may be NULL */
 	EVP_PKEY *pkey;
 	/* Peer key for key agreement, may be NULL */

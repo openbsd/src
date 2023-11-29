@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.55 2023/11/19 15:46:09 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.56 2023/11/29 21:35:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,7 +93,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 	if (cipher) {
 		/* Ensure a context left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
-		 * ENGINE and EVP_CIPHER could be used). */
+		 * EVP_CIPHER could be used). */
 		if (ctx->cipher) {
 			unsigned long flags = ctx->flags;
 			EVP_CIPHER_CTX_cleanup(ctx);
@@ -236,7 +236,7 @@ int
 EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
     const unsigned char *key, const unsigned char *iv)
 {
-	return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 1);
+	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1);
 }
 
 int
@@ -250,7 +250,7 @@ int
 EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
     const unsigned char *key, const unsigned char *iv)
 {
-	return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 0);
+	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
 }
 
 int

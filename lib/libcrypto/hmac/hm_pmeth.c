@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_pmeth.c,v 1.15 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: hm_pmeth.c,v 1.16 2023/11/29 21:35:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -204,7 +204,7 @@ pkey_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	case EVP_PKEY_CTRL_DIGESTINIT:
 		key = ctx->pkey->pkey.ptr;
 		if (!HMAC_Init_ex(&hctx->ctx, key->data, key->length, hctx->md,
-		    ctx->engine))
+		    NULL))
 			return 0;
 		break;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.13 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.14 2023/11/29 21:35:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -74,10 +74,10 @@ update_oneshot_only(EVP_MD_CTX *ctx, const void *data, size_t datalen)
 
 static int
 do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
-    ENGINE *e, EVP_PKEY *pkey, int ver)
+    EVP_PKEY *pkey, int ver)
 {
 	if (ctx->pctx == NULL)
-		ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
+		ctx->pctx = EVP_PKEY_CTX_new(pkey, NULL);
 	if (ctx->pctx == NULL)
 		return 0;
 
@@ -122,7 +122,7 @@ do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 		*pctx = ctx->pctx;
 	if (ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)
 		return 1;
-	if (!EVP_DigestInit_ex(ctx, type, e))
+	if (!EVP_DigestInit_ex(ctx, type, NULL))
 		return 0;
 	return 1;
 }
@@ -131,14 +131,14 @@ int
 EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
     ENGINE *e, EVP_PKEY *pkey)
 {
-	return do_sigver_init(ctx, pctx, type, e, pkey, 0);
+	return do_sigver_init(ctx, pctx, type, pkey, 0);
 }
 
 int
 EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
     ENGINE *e, EVP_PKEY *pkey)
 {
-	return do_sigver_init(ctx, pctx, type, e, pkey, 1);
+	return do_sigver_init(ctx, pctx, type, pkey, 1);
 }
 
 int

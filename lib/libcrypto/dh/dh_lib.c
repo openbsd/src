@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.42 2023/11/19 15:46:09 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.43 2023/11/29 21:35:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,7 +230,7 @@ LCRYPTO_ALIAS(DH_security_bits);
 ENGINE *
 DH_get0_engine(DH *dh)
 {
-	return dh->engine;
+	return NULL;
 }
 LCRYPTO_ALIAS(DH_get0_engine);
 

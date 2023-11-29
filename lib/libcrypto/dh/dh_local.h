@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_local.h,v 1.3 2022/01/14 08:25:44 tb Exp $ */
+/* $OpenBSD: dh_local.h,v 1.4 2023/11/29 21:35:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,7 +100,6 @@ struct dh_st {
 	int references;
 	CRYPTO_EX_DATA ex_data;
 	const DH_METHOD *meth;
-	ENGINE *engine;
 };
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.34 2023/11/19 15:43:52 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.35 2023/11/29 21:35:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -147,7 +147,7 @@ EVP_PKEY_meth_find(int type)
 }
 
 static EVP_PKEY_CTX *
-evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *engine, int id)
+evp_pkey_ctx_new(EVP_PKEY *pkey, int id)
 {
 	EVP_PKEY_CTX *pkey_ctx = NULL;
 	const EVP_PKEY_METHOD *pmeth;
@@ -167,8 +167,6 @@ evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *engine, int id)
 		EVPerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	pkey_ctx->engine = engine;
-	engine = NULL;
 	pkey_ctx->pmeth = pmeth;
 	pkey_ctx->operation = EVP_PKEY_OP_UNDEFINED;
 	if ((pkey_ctx->pkey = pkey) != NULL)
@@ -234,13 +232,13 @@ EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *engine)
 {
-	return evp_pkey_ctx_new(pkey, engine, -1);
+	return evp_pkey_ctx_new(pkey, -1);
 }
 
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_new_id(int id, ENGINE *engine)
 {
-	return evp_pkey_ctx_new(NULL, engine, id);
+	return evp_pkey_ctx_new(NULL, id);
 }
 
 EVP_PKEY_CTX *

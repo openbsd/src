@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.54 2023/11/19 15:46:10 tb Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.55 2023/11/29 21:35:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -220,8 +220,7 @@ check_pem(const char *nm, const char *name)
 		const EVP_PKEY_ASN1_METHOD *ameth;
 		slen = pem_check_suffix(nm, "PARAMETERS");
 		if (slen > 0) {
-			ENGINE *e;
-			ameth = EVP_PKEY_asn1_find_str(&e, nm, slen);
+			ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
 			if (ameth) {
 				int r;
 				if (ameth->param_decode)
