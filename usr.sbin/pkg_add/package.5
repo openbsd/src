@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.32 2022/12/28 21:30:18 jmc Exp $
+.\"	$OpenBSD: package.5,v 1.33 2023/11/29 14:32:01 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,12 +12,14 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 28 2022 $
+.Dd $Mdocdate: November 29 2023 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
-.Nm package
-.Nd format for OpenBSD binary packages
+.Nm package ,
+.Nm packing-list ,
+.Nm plist
+.Nd format for OpenBSD binary packages and packing-lists
 .Sh DESCRIPTION
 Binary packages for
 .Ox
@@ -54,12 +56,19 @@ devices.
 .Pp
 In order to allow just-in-time extraction,
 packages always begin with a table of contents, named
-.Pa +CONTENTS .
+.Pa +CONTENTS ,
+nicknamed
+.Nm packing-list
+.Po
+.Nm plist
+for short
+.Pc .
 This table of contents can be read using the API described in
 .Xr OpenBSD::PackingList 3p .
 .Pp
-All the remaining information in the archive should be referenced in
-the packing-list, including all relevant information: symlinks destinations,
+All the remaining information in the archive should be referenced in the
+.Nm packing-list ,
+including symlinks destinations,
 special permissions, and file owners
 .Po
 .Xr pkg_create 1
@@ -97,13 +106,17 @@ Starting with
 .Ox 5.6 ,
 tarballs are stored
 .Qq out-of-order :
-each archive entry will match an entry in the packing-list (and all file-like
-entries will be matched), but the order will be adjusted so that most recently
-changed files come first, in order to allow faster updates.
+each archive entry will match an entry in the
+.Nm packing-list
+(and all file-like entries will be matched), but the order will be adjusted
+so that most recently changed files come first, in order to allow
+faster updates.
 .Pp
 Starting with
 .Ox 5.7 ,
-by default, timestamps are stored directly in the packing-list as
+by default, timestamps are stored directly in the
+.Nm packing-list
+as
 .Cm @ts
 annotations.
 The files in the archive will have a null timestamp.
@@ -185,7 +198,8 @@ Some options are automatically inserted/modified by the package tools:
 .Bl -tag -width indent
 .It Ar always-update
 .Xr pkg_create 1
-will complete the option line with a sha256 digest of the whole packing-list
+will complete the option line with a sha256 digest of the whole
+.Nm packing-list
 encoded in base64.
 .It Ar firmware
 Set by
@@ -259,12 +273,9 @@ All information within a package is checksummed, using SHA256 since
 .Ox 4.4 .
 During creation and installation, meta-information, such as file owners and
 permissions, are also checked: any important stuff that isn't recorded
-in the packing-list is an error.
-.Pp
-Packing-lists can be signed.
-If a signature is found, then it will be checked
-during installation, and failure to verify will prevent the package from
-installing correctly.
+in the
+.Nm packing-list
+is an error.
 .Pp
 Starting with
 .Ox 6.1 ,
@@ -288,4 +299,5 @@ Packages are valid gzip'ed ustar archives that can be extracted using
 In particular, hardlink names should be valid, and all items will
 extract to different names.
 However, it may be a bit difficult to make sense of the package contents
-without peeking at the packing-list.
+without peeking at the
+.Nm packing-list .
