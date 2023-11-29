@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.148 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.149 2023/11/29 11:47:15 claudio Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -88,18 +88,13 @@ struct vm_map *kmem_map = NULL;
 u_int	nkmempages = NKMEMPAGES;
 
 /*
- * Defaults for lower- and upper-bounds for the kmem_map page count.
+ * Defaults for upper-bounds for the kmem_map page count.
  * Can be overridden by kernel config options.
  */
-#ifndef	NKMEMPAGES_MIN
-#define	NKMEMPAGES_MIN	0
-#endif
-u_int	nkmempages_min = 0;
-
 #ifndef NKMEMPAGES_MAX
 #define	NKMEMPAGES_MAX	NKMEMPAGES_MAX_DEFAULT
 #endif
-u_int	nkmempages_max = 0;
+u_int	nkmempages_max = NKMEMPAGES_MAX;
 
 struct mutex malloc_mtx = MUTEX_INITIALIZER(IPL_VM);
 struct kmembuckets bucket[MINBUCKET + 16];
@@ -518,17 +513,6 @@ kmeminit_nkmempages(void)
 	}
 
 	/*
-	 * We can't initialize these variables at compilation time, since
-	 * the page size may not be known (on sparc GENERIC kernels, for
-	 * example). But we still want the MD code to be able to provide
-	 * better values.
-	 */
-	if (nkmempages_min == 0)
-		nkmempages_min = NKMEMPAGES_MIN;
-	if (nkmempages_max == 0)
-		nkmempages_max = NKMEMPAGES_MAX;
-
-	/*
 	 * We use the following (simple) formula:
 	 *
 	 *	- Starting point is physical memory / 4.
@@ -541,9 +525,6 @@ kmeminit_nkmempages(void)
 
 	if (npages > nkmempages_max)
 		npages = nkmempages_max;
-
-	if (npages < nkmempages_min)
-		npages = nkmempages_min;
 
 	nkmempages = npages;
 }
