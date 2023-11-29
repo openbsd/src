@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.14 2023/07/08 14:27:14 beck Exp $ */
+/* $OpenBSD: cmac.c,v 1.15 2023/11/29 18:11:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -59,37 +59,52 @@
 
 #include "evp_local.h"
 
+/*
+ * This implementation follows https://doi.org/10.6028/NIST.SP.800-38B
+ */
+
+/*
+ * CMAC context. k1 and k2 are the secret subkeys, computed as in section 6.1.
+ * The temporary block tbl is a scratch buffer that holds intermediate secrets.
+ */
 struct CMAC_CTX_st {
-	/* Cipher context to use */
 	EVP_CIPHER_CTX cctx;
-	/* Keys k1 and k2 */
 	unsigned char k1[EVP_MAX_BLOCK_LENGTH];
 	unsigned char k2[EVP_MAX_BLOCK_LENGTH];
-	/* Temporary block */
 	unsigned char tbl[EVP_MAX_BLOCK_LENGTH];
-	/* Last (possibly partial) block */
 	unsigned char last_block[EVP_MAX_BLOCK_LENGTH];
-	/* Number of bytes in last block: -1 means context not initialised */
+	/* Bytes in last block. -1 means not initialized. */
 	int nlast_block;
 };
 
-
-/* Make temporary keys K1 and K2 */
-
+/*
+ * SP 800-38B, section 6.1, steps 2 and 3: given the input key l, calculate
+ * the subkeys k1 and k2: shift l one bit to the left. If the most significant
+ * bit of l was 1, additionally xor the result with Rb to get kn.
+ *
+ * Step 2: calculate k1 with l being the intermediate block CIPH_K(0),
+ * Step 3: calculate k2 from l == k1.
+ *
+ * Per 5.3, Rb is the lexically first irreducible polynomial of degree b with
+ * the minimum number of non-zero terms. This gives R128 = (1 << 128) | 0x87
+ * and R64 = (1 << 64) | 0x1b for the only supported block sizes 128 and 64.
+ */
 static void
-make_kn(unsigned char *k1, unsigned char *l, int bl)
+make_kn(unsigned char *kn, const unsigned char *l, int bl)
 {
+	unsigned char mask, Rb;
 	int i;
 
-	/* Shift block to left, including carry */
-	for (i = 0; i < bl; i++) {
-		k1[i] = l[i] << 1;
-		if (i < bl - 1 && l[i + 1] & 0x80)
-			k1[i] |= 1;
-	}
-	/* If MSB set fixup with R */
-	if (l[0] & 0x80)
-		k1[bl - 1] ^= bl == 16 ? 0x87 : 0x1b;
+	/* Choose Rb according to the block size in bytes. */
+	Rb = bl == 16 ? 0x87 : 0x1b;
+
+	/* Compute l << 1 up to last byte. */
+	for (i = 0; i < bl - 1; i++)
+		kn[i] = (l[i] << 1) | (l[i + 1] >> 7);
+
+	/* Only xor with Rb if the MSB is one. */
+	mask = 0 - (l[0] >> 7);
+	kn[bl - 1] = (l[bl - 1] << 1) ^ (Rb & mask);
 }
 
 CMAC_CTX *
@@ -160,44 +175,61 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
     const EVP_CIPHER *cipher, ENGINE *impl)
 {
 	static unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH];
+	int bl;
 
 	/* All zeros means restart */
-	if (!key && !cipher && !impl && keylen == 0) {
+	if (key == NULL && cipher == NULL && impl == NULL && keylen == 0) {
 		/* Not initialised */
 		if (ctx->nlast_block == -1)
 			return 0;
 		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
-		memset(ctx->tbl, 0, EVP_CIPHER_CTX_block_size(&ctx->cctx));
+		explicit_bzero(ctx->tbl, sizeof(ctx->tbl));
 		ctx->nlast_block = 0;
 		return 1;
 	}
-	/* Initialise context */
-	if (cipher && !EVP_EncryptInit_ex(&ctx->cctx, cipher, impl, NULL, NULL))
-		return 0;
-	/* Non-NULL key means initialisation complete */
-	if (key) {
-		int bl;
 
-		if (!EVP_CIPHER_CTX_cipher(&ctx->cctx))
+	/* Initialise context. */
+	if (cipher != NULL) {
+		if (!EVP_EncryptInit_ex(&ctx->cctx, cipher, impl, NULL, NULL))
 			return 0;
+	}
+
+	/* Non-NULL key means initialisation is complete. */
+	if (key != NULL) {
+		if (EVP_CIPHER_CTX_cipher(&ctx->cctx) == NULL)
+			return 0;
+
+		/* make_kn() only supports block sizes of 8 and 16 bytes. */
+		bl = EVP_CIPHER_CTX_block_size(&ctx->cctx);
+		if (bl != 8 && bl != 16)
+			return 0;
+
+		/*
+		 * Section 6.1, step 1: store the intermediate secret CIPH_K(0)
+		 * in ctx->tbl.
+		 */
 		if (!EVP_CIPHER_CTX_set_key_length(&ctx->cctx, keylen))
 			return 0;
 		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, key, zero_iv))
 			return 0;
-		bl = EVP_CIPHER_CTX_block_size(&ctx->cctx);
 		if (!EVP_Cipher(&ctx->cctx, ctx->tbl, zero_iv, bl))
 			return 0;
+
+		/* Section 6.1, step 2: compute k1 from intermediate secret. */
 		make_kn(ctx->k1, ctx->tbl, bl);
+		/* Section 6.1, step 3: compute k2 from k1. */
 		make_kn(ctx->k2, ctx->k1, bl);
-		explicit_bzero(ctx->tbl, bl);
-		/* Reset context again ready for first data block */
+
+		/* Destroy intermediate secret and reset last block count. */
+		explicit_bzero(ctx->tbl, sizeof(ctx->tbl));
+		ctx->nlast_block = 0;
+
+		/* Reset context again to get ready for the first data block. */
 		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
-		/* Zero tbl so resume works */
-		memset(ctx->tbl, 0, bl);
-		ctx->nlast_block = 0;
 	}
+
 	return 1;
 }
 LCRYPTO_ALIAS(CMAC_Init);
