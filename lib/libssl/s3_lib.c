@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.246 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.247 2023/11/29 13:29:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1414,7 +1414,7 @@ ssl3_get_cipher(unsigned int u)
 }
 
 const SSL_CIPHER *
-ssl3_get_cipher_by_id(unsigned int id)
+ssl3_get_cipher_by_id(unsigned long id)
 {
 	const SSL_CIPHER *cp;
 	SSL_CIPHER c;
