@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.394 2023/11/27 20:37:15 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.395 2023/11/29 19:19:25 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3360,7 +3360,7 @@ syn_cache_timer(void *arg)
 	 * than the keep alive timer would allow, expire it.
 	 */
 	sc->sc_rxttot += sc->sc_rxtcur;
-	if (sc->sc_rxttot >= tcptv_keep_init)
+	if (sc->sc_rxttot >= READ_ONCE(tcptv_keep_init))
 		goto dropit;
 
 	/* Advance the timer back-off. */
@@ -3867,7 +3867,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		return (-1);
 	}
 	refcnt_init_trace(&sc->sc_refcnt, DT_REFCNT_IDX_SYNCACHE);
-	timeout_set_proc(&sc->sc_timer, syn_cache_timer, sc);
+	timeout_set_flags(&sc->sc_timer, syn_cache_timer, sc,
+	    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
 
 	/*
 	 * Fill in the cache, and put the necessary IP and TCP
