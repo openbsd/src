@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.124 2023/07/07 07:37:59 claudio Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.125 2023/11/29 03:41:31 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -69,9 +69,9 @@ struct acpi_attach_args {
 	struct aml_node *aaa_node;
 	const char	*aaa_dev;
 	const char	*aaa_cdev;
-	uint64_t	 aaa_addr[4];
-	uint64_t	 aaa_size[4];
-	bus_space_tag_t	 aaa_bst[4];
+	uint64_t	 aaa_addr[8];
+	uint64_t	 aaa_size[8];
+	bus_space_tag_t	 aaa_bst[8];
 	int		 aaa_naddr;
 	uint32_t	 aaa_irq[8];
 	uint32_t	 aaa_irq_flags[8];
