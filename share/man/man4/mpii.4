@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpii.4,v 1.16 2022/10/18 07:04:20 kn Exp $
+.\"	$OpenBSD: mpii.4,v 1.17 2023/11/29 06:59:23 jmatthew Exp $
 .\"
 .\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
 .\" Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 18 2022 $
+.Dd $Mdocdate: November 29 2023 $
 .Dt MPII 4
 .Os
 .Sh NAME
@@ -43,24 +43,30 @@ LSISAS3108,
 LSISAS3408,
 LSISAS3416,
 LSISAS3508,
-LSISAS3516
+LSISAS3516,
+LSISAS3808,
+LSISAS3816,
+LSISAS3908,
+LSISAS3916
 .El
 .Pp
 These chipsets can be found on the following controllers:
 .Pp
 .Bl -dash -offset indent -compact
 .It
-Dell PERC H200, HBA330, 12Gbps SAS HBA
+Dell PERC H200, HBA330, HBA345, HBA350, HBA355, 12Gbps SAS HBA
 .It
 IBM ServeRAID H1110
 .It
-Lenovo N2215, ThinkSystem 430
+Lenovo N2215, ThinkSystem 430, ThinkSystem 440
 .It
 LSI SAS 9200-8e, SAS 9207-8i, SAS 9211-4i, SAS 9211-8i
 .It
-Broadcom SAS 9300, HBA 9400
+Broadcom SAS 9300, HBA 9400, HBA 9500
 .It
 Oracle SPARC T Series Platforms
+.It
+Supermicro AOC-S3808, AOC-S3816
 .El
 .Pp
 Some models of these controllers carry an Integrated RAID (IR) firmware
