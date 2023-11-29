@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.193 2023/11/26 22:08:10 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.194 2023/11/29 18:30:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -691,8 +691,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		}
 		if (inp) {
 			seq = ntohl(th.th_seq);
-			if (inp->inp_socket &&
-			    (tp = intotcpcb(inp)) &&
+			if ((tp = intotcpcb(inp)) &&
 			    SEQ_GEQ(seq, tp->snd_una) &&
 			    SEQ_LT(seq, tp->snd_max))
 				notify(inp, inet6ctlerrmap[cmd]);
@@ -816,8 +815,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		    rdomain);
 		if (inp) {
 			seq = ntohl(th->th_seq);
-			if (inp->inp_socket &&
-			    (tp = intotcpcb(inp)) &&
+			if ((tp = intotcpcb(inp)) &&
 			    SEQ_GEQ(seq, tp->snd_una) &&
 			    SEQ_LT(seq, tp->snd_max))
 				notify(inp, errno);

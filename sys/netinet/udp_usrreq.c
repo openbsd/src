@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.309 2023/11/28 13:23:20 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.310 2023/11/29 18:30:48 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -898,7 +898,7 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		inp = in_pcblookup(&udbtable,
 		    ip->ip_dst, uhp->uh_dport, ip->ip_src, uhp->uh_sport,
 		    rdomain);
-		if (inp && inp->inp_socket != NULL)
+		if (inp != NULL)
 			notify(inp, errno);
 		in_pcbunref(inp);
 	} else
