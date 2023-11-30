@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.141 2023/11/22 02:20:54 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.142 2023/11/30 14:51:32 kn Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -616,13 +616,6 @@ main(volatile int argc, char *argv[])
 	if (argc > 0) {
 		if (isurl(argv[0])) {
 			if (pipeout) {
-#ifndef SMALL
-			    if (!resume) {
-				if (pledge("stdio rpath dns tty inet fattr",
-				    NULL) == -1)
-					err(1, "pledge");
-			    } else
-#endif /* !SMALL */
 				if (pledge("stdio rpath dns tty inet fattr",
 				    NULL) == -1)
 					err(1, "pledge");
