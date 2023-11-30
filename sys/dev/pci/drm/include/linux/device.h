@@ -112,6 +112,9 @@ dev_driver_string(struct device *dev)
 	return dev->dv_cfdata->cf_driver->cd_name;
 }
 
+/* XXX return true for thunderbolt/USB4 */
+#define dev_is_removable(x)	false
+
 /* should be bus id as string, ie 0000:00:02.0 */
 #define dev_name(dev)		""
 
