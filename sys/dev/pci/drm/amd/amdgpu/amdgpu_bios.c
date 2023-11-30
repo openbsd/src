@@ -29,6 +29,7 @@
 #include "amdgpu.h"
 #include "atom.h"
 
+#include <linux/device.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/acpi.h>
@@ -404,6 +405,10 @@ static bool amdgpu_atrm_get_bios(struct amdgpu_device *adev)
 
 	/* ATRM is for the discrete card only */
 	if (adev->flags & AMD_IS_APU)
+		return false;
+
+	/* ATRM is for on-platform devices only */
+	if (dev_is_removable(&adev->pdev->dev))
 		return false;
 
 #ifdef notyet
