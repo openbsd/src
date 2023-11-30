@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.10 2023/11/22 18:19:25 tobhe Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.11 2023/11/30 12:50:41 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -421,8 +421,11 @@ hidkbd_input(struct hidkbd *kbd, uint8_t *data, u_int len)
 		    &kbd->sc_var[i].loc);
 
 	/* extract keycodes */
-	memcpy(ud->keycode, data + kbd->sc_keycodeloc.pos / 8,
-	    kbd->sc_nkeycode);
+	if (kbd->sc_keycodeloc.pos / 8 + kbd->sc_nkeycode <= len)
+		memcpy(ud->keycode, data + kbd->sc_keycodeloc.pos / 8,
+		    kbd->sc_nkeycode);
+	else
+		memset(ud->keycode, 0, kbd->sc_nkeycode);
 
 	if (kbd->sc_debounce && !kbd->sc_polling) {
 		/*
