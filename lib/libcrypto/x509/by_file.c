@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.28 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: by_file.c,v 1.29 2023/11/30 17:01:04 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,28 +95,22 @@ static int
 by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     char **ret)
 {
-	int ok = 0;
+	const char *file = argp;
+	int type = argl;
 
-	switch (cmd) {
-	case X509_L_FILE_LOAD:
-		if (argl == X509_FILETYPE_DEFAULT) {
-			ok = (X509_load_cert_crl_file(ctx,
-			    X509_get_default_cert_file(),
-			    X509_FILETYPE_PEM) != 0);
-			if (!ok) {
-				X509error(X509_R_LOADING_DEFAULTS);
-			}
-		} else {
-			if (argl == X509_FILETYPE_PEM)
-				ok = (X509_load_cert_crl_file(ctx, argp,
-				    X509_FILETYPE_PEM) != 0);
-			else
-				ok = (X509_load_cert_file(ctx,
-				    argp, (int)argl) != 0);
-		}
-		break;
+	if (cmd != X509_L_FILE_LOAD)
+		return 0;
+
+	if (argl == X509_FILETYPE_DEFAULT) {
+		file = X509_get_default_cert_file();
+		type = X509_FILETYPE_PEM;
 	}
-	return ok;
+	if (X509_load_cert_crl_file(ctx, file, type) != 0)
+		return 1;
+	if (argl == X509_FILETYPE_DEFAULT)
+		X509error(X509_R_LOADING_DEFAULTS);
+
+	return 0;
 }
 
 int
