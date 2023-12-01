@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.150 2023/11/28 13:23:20 bluhm Exp $ */
+/*	$OpenBSD: pipex.c,v 1.151 2023/12/01 20:30:22 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -716,7 +716,8 @@ pipex_lookup_by_session_id(int protocol, int session_id)
 void
 pipex_timer_start(void)
 {
-	timeout_set_proc(&pipex_timer_ch, pipex_timer, NULL);
+	timeout_set_flags(&pipex_timer_ch, pipex_timer, NULL,
+	    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
 	timeout_add_sec(&pipex_timer_ch, pipex_prune);
 }
 
@@ -730,8 +731,6 @@ void
 pipex_timer(void *ignored_arg)
 {
 	struct pipex_session *session, *session_tmp;
-
-	timeout_add_sec(&pipex_timer_ch, pipex_prune);
 
 	mtx_enter(&pipex_list_mtx);
 	/* walk through */
@@ -766,6 +765,9 @@ pipex_timer(void *ignored_arg)
 			break;
 		}
 	}
+
+	if (LIST_FIRST(&pipex_session_list))
+		timeout_add_sec(&pipex_timer_ch, pipex_prune);
 
 	mtx_leave(&pipex_list_mtx);
 }
