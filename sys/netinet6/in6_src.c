@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.87 2023/11/28 13:23:20 bluhm Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.88 2023/12/01 14:08:04 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ int in6_selectif(struct sockaddr_in6 *, struct ip6_pktopts *,
  * the values set at pcb level can be overridden via cmsg.
  */
 int
-in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
+in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
     struct inpcb *inp, struct ip6_pktopts *opts)
 {
 	struct ip6_moptions *mopts = inp->inp_moptions6;
@@ -249,7 +249,7 @@ in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
  * an entry to the caller for later use.
  */
 int
-in6_selectsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
+in6_selectsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
     struct ip6_moptions *mopts, unsigned int rtableid)
 {
 	struct ifnet *ifp = NULL;

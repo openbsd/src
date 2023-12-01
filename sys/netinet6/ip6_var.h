@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.107 2023/11/26 22:08:10 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.108 2023/12/01 14:08:04 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -365,9 +365,9 @@ int	rip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	dest6_input(struct mbuf **, int *, int, int);
 int	none_input(struct mbuf **, int *, int);
 
-int	in6_pcbselsrc(struct in6_addr **, struct sockaddr_in6 *,
+int	in6_pcbselsrc(const struct in6_addr **, struct sockaddr_in6 *,
 	    struct inpcb *, struct ip6_pktopts *);
-int	in6_selectsrc(struct in6_addr **, struct sockaddr_in6 *,
+int	in6_selectsrc(const struct in6_addr **, struct sockaddr_in6 *,
 	    struct ip6_moptions *, unsigned int);
 struct rtentry *in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 	    struct route_in6 *, unsigned int rtableid);

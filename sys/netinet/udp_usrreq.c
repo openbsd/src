@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.310 2023/11/29 18:30:48 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.311 2023/12/01 14:08:03 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1153,15 +1153,13 @@ udp_connect(struct socket *so, struct mbuf *addr)
 	if (inp->inp_flags & INP_IPV6) {
 		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
 			return (EISCONN);
-		error = in6_pcbconnect(inp, addr);
 	} else
 #endif /* INET6 */
 	{
 		if (inp->inp_faddr.s_addr != INADDR_ANY)
 			return (EISCONN);
-		error = in_pcbconnect(inp, addr);
 	}
-
+	error = in_pcbconnect(inp, addr);
 	if (error)
 		return (error);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.175 2023/11/28 13:23:20 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.176 2023/12/01 14:08:04 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -451,7 +451,7 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	 * Source address selection.
 	 */
 	{
-		struct in6_addr *in6a;
+		const struct in6_addr *in6a;
 
 		error = in6_pcbselsrc(&in6a, satosin6(dstaddr), in6p, optp);
 		if (error)
@@ -683,7 +683,7 @@ rip6_connect(struct socket *so, struct mbuf *nam)
 {
 	struct inpcb *in6p = sotoinpcb(so);
 	struct sockaddr_in6 *addr;
-	struct in6_addr *in6a = NULL;
+	const struct in6_addr *in6a;
 	int error;
 
 	soassertlocked(so);

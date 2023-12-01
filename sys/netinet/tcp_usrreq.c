@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.224 2023/11/28 13:23:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.225 2023/12/01 14:08:03 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -635,7 +635,6 @@ tcp_connect(struct socket *so, struct mbuf *nam)
 			error = EINVAL;
 			goto out;
 		}
-		error = in6_pcbconnect(inp, nam);
 	} else
 #endif /* INET6 */
 	{
@@ -650,8 +649,8 @@ tcp_connect(struct socket *so, struct mbuf *nam)
 			error = EINVAL;
 			goto out;
 		}
-		error = in_pcbconnect(inp, nam);
 	}
+	error = in_pcbconnect(inp, nam);
 	if (error)
 		goto out;
 
