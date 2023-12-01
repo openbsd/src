@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.56 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.57 2023/12/01 06:53:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -198,8 +198,8 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
 	if (ctx->encrypt)
 		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
-	else
-		return EVP_DecryptUpdate(ctx, out, outl, in, inl);
+
+	return EVP_DecryptUpdate(ctx, out, outl, in, inl);
 }
 
 int
@@ -207,8 +207,8 @@ EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
 	if (ctx->encrypt)
 		return EVP_EncryptFinal_ex(ctx, out, outl);
-	else
-		return EVP_DecryptFinal_ex(ctx, out, outl);
+
+	return EVP_DecryptFinal_ex(ctx, out, outl);
 }
 
 __warn_references(EVP_CipherFinal,
@@ -217,12 +217,10 @@ __warn_references(EVP_CipherFinal,
 int
 EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
-	int ret;
 	if (ctx->encrypt)
-		ret = EVP_EncryptFinal_ex(ctx, out, outl);
-	else
-		ret = EVP_DecryptFinal_ex(ctx, out, outl);
-	return ret;
+		return EVP_EncryptFinal_ex(ctx, out, outl);
+
+	return EVP_DecryptFinal_ex(ctx, out, outl);
 }
 
 int
@@ -341,10 +339,7 @@ __warn_references(EVP_EncryptFinal,
 int
 EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
-	int ret;
-
-	ret = EVP_EncryptFinal_ex(ctx, out, outl);
-	return ret;
+	return EVP_EncryptFinal_ex(ctx, out, outl);
 }
 
 int
@@ -469,10 +464,7 @@ __warn_references(EVP_DecryptFinal,
 int
 EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
-	int ret;
-
-	ret = EVP_DecryptFinal_ex(ctx, out, outl);
-	return ret;
+	return EVP_DecryptFinal_ex(ctx, out, outl);
 }
 
 int
