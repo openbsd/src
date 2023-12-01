@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.292 2023/05/10 07:19:49 op Exp $	*/
+/*	$OpenBSD: parse.y,v 1.293 2023/12/01 09:25:49 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -251,7 +251,7 @@ varset		: STRING '=' STRING		{
 		}
 		;
 
-comma		: ','
+comma		: ',' optnl
 		| nl
 		| /* empty */
 		;
@@ -277,7 +277,7 @@ keyval		: STRING assign STRING		{
 		}
 		;
 
-keyval_list	: keyval
+keyval_list	: keyval optnl
 		| keyval comma keyval_list
 		;
 
@@ -287,7 +287,7 @@ stringel	: STRING			{
 		}
 		;
 
-string_list	: stringel
+string_list	: stringel optnl
 		| stringel comma string_list
 		;
 
@@ -936,7 +936,7 @@ HELO STRING {
 	filter_config->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_OUT;
 	dict_init(&filter_config->chain_procs);
 	dsp->u.remote.filtername = filtername;
-} '{' filter_list '}' {
+} '{' optnl filter_list '}' {
 	dict_set(conf->sc_filters_dict, dsp->u.remote.filtername, filter_config);
 	filter_config = NULL;
 }
@@ -1887,7 +1887,7 @@ STRING	{
 ;
 
 filter_list:
-filterel
+filterel optnl
 | filterel comma filter_list
 ;
 
@@ -1959,7 +1959,7 @@ FILTER STRING CHAIN {
 	filter_config = xcalloc(1, sizeof *filter_config);
 	filter_config->filter_type = FILTER_TYPE_CHAIN;
 	dict_init(&filter_config->chain_procs);
-} '{' filter_list '}' {
+} '{' optnl filter_list '}' {
 	dict_set(conf->sc_filters_dict, $2, filter_config);
 	filter_config = NULL;
 }
@@ -2140,7 +2140,7 @@ opt_sock_listen : FILTER STRING {
 			filter_config->filter_type = FILTER_TYPE_CHAIN;
 			filter_config->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_IN;
 			dict_init(&filter_config->chain_procs);
-		} '{' filter_list '}' {
+		} '{' optnl filter_list '}' {
 			dict_set(conf->sc_filters_dict, listen_opts.filtername, filter_config);
 			filter_config = NULL;
 		}
@@ -2278,7 +2278,7 @@ opt_if_listen : INET4 {
 			filter_config->filter_type = FILTER_TYPE_CHAIN;
 			filter_config->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_IN;
 			dict_init(&filter_config->chain_procs);
-		} '{' filter_list '}' {
+		} '{' optnl filter_list '}' {
 			dict_set(conf->sc_filters_dict, listen_opts.filtername, filter_config);
 			filter_config = NULL;
 		}
@@ -2567,7 +2567,7 @@ table		: TABLE STRING STRING	{
 		| TABLE STRING {
 			table = table_create(conf, "static", $2, NULL);
 			free($2);
-		} '{' tableval_list '}' {
+		} '{' optnl tableval_list '}' {
 			table = NULL;
 		}
 		;
@@ -2580,7 +2580,7 @@ tablenew	: STRING			{
 			free($1);
 			$$ = t;
 		}
-		| '{'				{
+		| '{' optnl			{
 			table = table_create(conf, "static", NULL, NULL);
 		} tableval_list '}'		{
 			$$ = table;
