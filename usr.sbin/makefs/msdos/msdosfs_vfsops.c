@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.13 2021/10/06 00:40:41 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.14 2023/12/01 16:23:03 miod Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -278,7 +278,8 @@ msdosfs_mount(struct mkfsvnode *devvp, int flags)
 		DPRINTF(("%s(bread %lu)\n", __func__,
 		    (unsigned long)de_bn2kb(pmp, pmp->pm_fsinfo)));
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, 0, &bp)) != 0)
+		    roundup(sizeof(struct fsinfo), pmp->pm_BytesPerSec),
+		    0, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)
