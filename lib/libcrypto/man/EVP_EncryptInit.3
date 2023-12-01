@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.48 2023/08/31 17:27:41 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.49 2023/12/01 10:40:21 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -69,14 +69,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 31 2023 $
+.Dd $Mdocdate: December 1 2023 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
 .Nm EVP_CIPHER_CTX_new ,
 .Nm EVP_CIPHER_CTX_reset ,
-.Nm EVP_CIPHER_CTX_cleanup ,
-.Nm EVP_CIPHER_CTX_init ,
 .Nm EVP_CIPHER_CTX_free ,
 .Nm EVP_CIPHER_CTX_copy ,
 .Nm EVP_EncryptInit_ex ,
@@ -94,7 +92,6 @@
 .Nm EVP_DecryptFinal ,
 .Nm EVP_CipherInit ,
 .Nm EVP_CipherFinal ,
-.Nm EVP_Cipher ,
 .Nm EVP_CIPHER_CTX_encrypting ,
 .Nm EVP_get_cipherbyname ,
 .Nm EVP_get_cipherbynid ,
@@ -130,14 +127,6 @@
 .Fn EVP_CIPHER_CTX_new void
 .Ft int
 .Fo EVP_CIPHER_CTX_reset
-.Fa "EVP_CIPHER_CTX *ctx"
-.Fc
-.Ft int
-.Fo EVP_CIPHER_CTX_cleanup
-.Fa "EVP_CIPHER_CTX *ctx"
-.Fc
-.Ft void
-.Fo EVP_CIPHER_CTX_init
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fc
 .Ft void
@@ -257,13 +246,6 @@
 .Fa "int *outl"
 .Fc
 .Ft int
-.Fo EVP_Cipher
-.Fa "EVP_CIPHER_CTX *ctx"
-.Fa "unsigned char *out"
-.Fa "const unsigned char *in"
-.Fa "unsigned int inl"
-.Fc
-.Ft int
 .Fo EVP_CIPHER_CTX_encrypting
 .Fa "const EVP_CIPHER_CTX *ctx"
 .Fc
@@ -300,16 +282,6 @@ object itself, such that it can be reused for another series of calls to
 .Fn EVP_CipherUpdate ,
 and
 .Fn EVP_CipherFinal .
-.Fn EVP_CIPHER_CTX_cleanup
-is a deprecated alias for
-.Fn EVP_CIPHER_CTX_reset .
-.Pp
-.Fn EVP_CIPHER_CTX_init
-is a deprecated function to clear a cipher context on the stack
-before use.
-Do not use it on a cipher context returned from
-.Fn EVP_CIPHER_CTX_new
-or one that was already used.
 .Pp
 .Fn EVP_CIPHER_CTX_free
 clears all information from
@@ -507,28 +479,6 @@ or
 .Fn EVP_CIPHER_CTX_free
 must be called to free any context resources.
 .Pp
-.Fn EVP_Cipher
-encrypts or decrypts aligned blocks of data
-whose lengths match the cipher block size.
-It requires that the previous encryption or decryption operation
-using the same
-.Fa ctx ,
-if there was any, ended exactly on a block boundary and that
-.Fa inl
-is an integer multiple of the cipher block size.
-If either of these conditions is violated,
-.Fn EVP_Cipher
-silently produces incorrect results.
-For that reason, using the function
-.Fn EVP_CipherUpdate
-instead is strongly recommended.
-The latter can safely handle partial blocks, and even if
-.Fa inl
-actually is a multiple of the cipher block size for all calls,
-the overhead incurred by using
-.Fn EVP_CipherUpdate
-is minimal.
-.Pp
 .Fn EVP_get_cipherbyname ,
 .Fn EVP_get_cipherbynid ,
 and
@@ -602,7 +552,6 @@ for success or
 for failure.
 .Pp
 .Fn EVP_CIPHER_CTX_reset ,
-.Fn EVP_CIPHER_CTX_cleanup ,
 .Fn EVP_CIPHER_CTX_copy ,
 .Fn EVP_EncryptInit_ex ,
 .Fn EVP_EncryptUpdate ,
@@ -618,9 +567,8 @@ for failure.
 .Fn EVP_DecryptInit ,
 .Fn EVP_DecryptFinal ,
 .Fn EVP_CipherInit ,
-.Fn EVP_CipherFinal ,
 and
-.Fn EVP_Cipher
+.Fn EVP_CipherFinal
 return 1 for success or 0 for failure.
 .Pp
 .Fn EVP_CIPHER_CTX_encrypting
@@ -729,7 +677,9 @@ To specify any additional authenticated data (AAD), a call to
 .Fn EVP_EncryptUpdate ,
 or
 .Fn EVP_DecryptUpdate
-should be made with the output parameter out set to
+should be made with the output parameter
+.Fa out
+set to
 .Dv NULL .
 .Pp
 When decrypting, the return value of
@@ -775,7 +725,9 @@ by calling
 .Fn EVP_EncryptUpdate ,
 or
 .Fn EVP_DecryptUpdate
-with the output parameter out set to
+with the output parameter
+.Fa out
+set to
 .Dv NULL .
 Additionally, the total
 plaintext or ciphertext length MUST be passed to
@@ -929,6 +881,7 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 .Xr EVP_chacha20 3 ,
 .Xr EVP_CIPHER_CTX_ctrl 3 ,
 .Xr EVP_CIPHER_CTX_get_cipher_data 3 ,
+.Xr EVP_CIPHER_CTX_init 3 ,
 .Xr EVP_CIPHER_CTX_set_flags 3 ,
 .Xr EVP_CIPHER_nid 3 ,
 .Xr EVP_des_cbc 3 ,
@@ -959,15 +912,12 @@ first appeared in SSLeay 0.5.1.
 and
 .Fn EVP_rc2_ofb
 first appeared in SSLeay 0.5.2.
-.Fn EVP_Cipher
-first appeared in SSLeay 0.6.5.
 .Fn EVP_bf_cbc ,
 .Fn EVP_bf_ecb ,
 .Fn EVP_bf_cfb ,
 and
 .Fn EVP_bf_ofb
 first appeared in SSLeay 0.6.6.
-.Fn EVP_CIPHER_CTX_cleanup ,
 .Fn EVP_get_cipherbyobj ,
 .Fn EVP_CIPHER_CTX_cipher ,
 and
@@ -975,8 +925,6 @@ and
 first appeared in SSLeay 0.8.0.
 .Fn EVP_get_cipherbynid
 first appeared in SSLeay 0.8.1.
-.Fn EVP_CIPHER_CTX_init
-first appeared in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
 .Pp
