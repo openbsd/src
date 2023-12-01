@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2058 2023/11/29 06:46:29 jmatthew Exp 
+ *	OpenBSD: pcidevs,v 1.2059 2023/12/01 05:48:39 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -823,6 +823,22 @@
 #define	PCI_PRODUCT_AMD_19_6X_DF_6	0x14e5		/* 19h/6xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_6X_DF_7	0x14e6		/* 19h/6xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_6X_DF_8	0x14e7		/* 19h/6xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_RC	0x14e8		/* 19h/7xh Root Complex */
+#define	PCI_PRODUCT_AMD_19_7X_IOMMU	0x14e9		/* 19h/7xh IOMMU */
+#define	PCI_PRODUCT_AMD_19_7X_HB	0x14ea		/* 19h/7xh Host */
+#define	PCI_PRODUCT_AMD_19_7X_PCIE_1	0x14eb		/* 19h/7xh PCIE */
+#define	PCI_PRODUCT_AMD_19_7X_PCIE_2	0x14ed		/* 19h/7xh PCIE */
+#define	PCI_PRODUCT_AMD_19_7X_PCIE_3	0x14ee		/* 19h/7xh PCIE */
+#define	PCI_PRODUCT_AMD_19_7X_PCIE_4	0x14ef		/* 19h/7xh PCIE */
+#define	PCI_PRODUCT_AMD_19_7X_DF_1	0x14f0		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_DF_2	0x14f1		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_DF_3	0x14f2		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_DF_4	0x14f3		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_DF_5	0x14f4		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_DF_6	0x14f5		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_DF_7	0x14f6		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_DF_8	0x14f7		/* 19h/7xh Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_IPU	0x1502		/* 19h/7xh IPU */
 #define	PCI_PRODUCT_AMD_14_HB	0x1510		/* 14h Host */
 #define	PCI_PRODUCT_AMD_14_PCIE_1	0x1512		/* 14h PCIE */
 #define	PCI_PRODUCT_AMD_14_PCIE_2	0x1513		/* 14h PCIE */
@@ -860,6 +876,11 @@
 #define	PCI_PRODUCT_AMD_19_6X_XHCI_1	0x15b6		/* 19h/6xh xHCI */
 #define	PCI_PRODUCT_AMD_19_6X_XHCI_2	0x15b7		/* 19h/6xh xHCI */
 #define	PCI_PRODUCT_AMD_19_6X_XHCI_3	0x15b8		/* 19h/6xh xHCI */
+#define	PCI_PRODUCT_AMD_19_7X_XHCI_1	0x15b9		/* 19h/7xh xHCI */
+#define	PCI_PRODUCT_AMD_19_7X_XHCI_2	0x15ba		/* 19h/7xh xHCI */
+#define	PCI_PRODUCT_AMD_19_7X_XHCI_3	0x15c0		/* 19h/7xh xHCI */
+#define	PCI_PRODUCT_AMD_19_7X_XHCI_4	0x15c1		/* 19h/7xh xHCI */
+#define	PCI_PRODUCT_AMD_19_7X_PSP	0x15c7		/* 19h/7xh PSP */
 #define	PCI_PRODUCT_AMD_17_1X_RC	0x15d0		/* 17h/1xh Root Complex */
 #define	PCI_PRODUCT_AMD_17_1X_IOMMU	0x15d1		/* 17h/1xh IOMMU */
 #define	PCI_PRODUCT_AMD_17_1X_PCIE_1	0x15d3		/* 17h/1xh PCIE */
@@ -911,6 +932,8 @@
 #define	PCI_PRODUCT_AMD_17_90_DF_5	0x1665		/* 17h/90h Data Fabric */
 #define	PCI_PRODUCT_AMD_17_90_DF_6	0x1666		/* 17h/90h Data Fabric */
 #define	PCI_PRODUCT_AMD_17_90_DF_7	0x1667		/* 17h/90h Data Fabric */
+#define	PCI_PRODUCT_AMD_19_7X_USB4_1	0x1668		/* 19h/7xh USB4 */
+#define	PCI_PRODUCT_AMD_19_7X_USB4_2	0x1669		/* 19h/7xh USB4 */
 #define	PCI_PRODUCT_AMD_19_5X_DF_0	0x166a		/* 19h/5xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_5X_DF_1	0x166b		/* 19h/5xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_5X_DF_2	0x166c		/* 19h/5xh Data Fabric */

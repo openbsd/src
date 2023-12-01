@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2058 2023/11/29 06:46:29 jmatthew Exp 
+ *	OpenBSD: pcidevs,v 1.2059 2023/12/01 05:48:39 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1536,6 +1536,70 @@ static const struct pci_known_product pci_known_products[] = {
 	    "19h/6xh Data Fabric",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_RC,
+	    "19h/7xh Root Complex",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_IOMMU,
+	    "19h/7xh IOMMU",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_HB,
+	    "19h/7xh Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_PCIE_1,
+	    "19h/7xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_PCIE_2,
+	    "19h/7xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_PCIE_3,
+	    "19h/7xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_PCIE_4,
+	    "19h/7xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_DF_1,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_DF_2,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_DF_3,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_DF_4,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_DF_5,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_DF_6,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_DF_7,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_DF_8,
+	    "19h/7xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_IPU,
+	    "19h/7xh IPU",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_14_HB,
 	    "14h Host",
 	},
@@ -1682,6 +1746,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_6X_XHCI_3,
 	    "19h/6xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_XHCI_1,
+	    "19h/7xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_XHCI_2,
+	    "19h/7xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_XHCI_3,
+	    "19h/7xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_XHCI_4,
+	    "19h/7xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_PSP,
+	    "19h/7xh PSP",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_1X_RC,
@@ -1886,6 +1970,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_7,
 	    "17h/90h Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_USB4_1,
+	    "19h/7xh USB4",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_7X_USB4_2,
+	    "19h/7xh USB4",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_0,
