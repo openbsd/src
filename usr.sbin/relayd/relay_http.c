@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.86 2023/11/29 15:35:07 millert Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.87 2023/12/01 16:48:40 millert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -413,24 +413,41 @@ relay_read_http(struct bufferevent *bev, void *arg)
 
 			if (desc->http_method != HTTP_METHOD_NONE &&
 			    strcasecmp("Content-Length", key) == 0) {
-				/*
-				 * These methods should not have a body
-				 * and thus no Content-Length header.
-				 */
-				if (desc->http_method == HTTP_METHOD_TRACE ||
-				    desc->http_method == HTTP_METHOD_CONNECT) {
+				switch (desc->http_method) {
+				case HTTP_METHOD_TRACE:
+				case HTTP_METHOD_CONNECT:
+					/*
+					 * These methods should not have a body
+					 * and thus no Content-Length header.
+					 */
 					relay_abort_http(con, 400, "malformed",
 					    0);
 					goto abort;
-				}
-				/*
-				 * HEAD responses may provide a Content-Length
-				 * header, but if so it should just be ignored,
-				 * since there is no actual payload in the
-				 * response.
-				 */
-				if (desc->http_method != HTTP_METHOD_RESPONSE
-				    || request_method != HTTP_METHOD_HEAD) {
+				case HTTP_METHOD_GET:
+				case HTTP_METHOD_HEAD:
+				case HTTP_METHOD_COPY:
+				case HTTP_METHOD_MOVE:
+					/*
+					 * We strip the body (if present) from
+					 * the GET, HEAD, COPY and MOVE methods
+					 * so strip Content-Length too.
+					 */
+					kv_delete(&desc->http_headers,
+					    desc->http_lastheader);
+					break;
+				case HTTP_METHOD_RESPONSE:
+					/*
+					 * Strip Content-Length header from
+					 * HEAD responses since there is no
+					 * actual payload in the response.
+					 */
+					if (request_method == HTTP_METHOD_HEAD) {
+						kv_delete(&desc->http_headers,
+						    desc->http_lastheader);
+						break;
+					}
+					/* FALLTHROUGH */
+				default:
 					/*
 					 * Need to read data from the client
 					 * after the HTTP header.
@@ -450,6 +467,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 						    errstr, 0);
 						goto abort;
 					}
+					break;
 				}
 				/*
 				 * Response with a status code of 1xx
