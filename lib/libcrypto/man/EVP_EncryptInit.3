@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.49 2023/12/01 10:40:21 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.50 2023/12/01 13:43:37 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -308,15 +308,13 @@ to
 .Fa out ,
 except that the
 .Vt EVP_CIPHER
-and
-.Vt ENGINE
-objects used by
+object used by
 .Fa in
 and any application specific data set with
 .Xr EVP_CIPHER_CTX_set_app_data 3
 are not copied and
 .Fa out
-will point to the same three objects.
+will point to the same two objects.
 The algorithm- and implementation-specific cipher data described in
 .Xr EVP_CIPHER_CTX_get_cipher_data 3
 is copied with
@@ -346,28 +344,27 @@ are used by some of the ciphers documented in the
 .Xr EVP_aes_256_gcm 3
 manual page.
 .Pp
+.Fn EVP_EncryptInit
+and
 .Fn EVP_EncryptInit_ex
-sets up the cipher context
+set up the cipher context
 .Fa ctx
 for encryption with cipher
-.Fa type
-from
-.Vt ENGINE
-.Fa impl .
+.Fa type .
 .Fa type
 is normally supplied by a function such as
 .Xr EVP_aes_256_cbc 3 .
-If
-.Fa impl
-is
-.Dv NULL ,
-then the default implementation is used.
 .Fa key
 is the symmetric key to use and
 .Fa iv
 is the IV to use (if necessary).
 The actual number of bytes used for the
 key and IV depends on the cipher.
+The
+.Fa ENGINE *impl
+argument is always ignored and passing
+.Dv NULL
+is recommended.
 It is possible to set all parameters to
 .Dv NULL
 except
@@ -397,8 +394,11 @@ The actual number of bytes written is placed in
 .Fa outl .
 .Pp
 If padding is enabled (the default) then
-.Fn EVP_EncryptFinal_ex
-encrypts the "final" data, that is any data that remains in a partial
+.Fn EVP_EncryptFinal
+and
+.Fn EVP_EncryptFinal_ex ,
+which behave identically,
+encrypt the "final" data, that is any data that remains in a partial
 block.
 It uses NOTES (aka PKCS padding).
 The encrypted final data is written to
@@ -412,18 +412,24 @@ no further calls to
 should be made.
 .Pp
 If padding is disabled then
+.Fn EVP_EncryptFinal
+and
 .Fn EVP_EncryptFinal_ex
-will not encrypt any more data and it will return an error if any data
+do not encrypt any more data and return an error if any data
 remains in a partial block: that is if the total data length is not a
 multiple of the block size.
 .Pp
+.Fn EVP_DecryptInit ,
 .Fn EVP_DecryptInit_ex ,
 .Fn EVP_DecryptUpdate ,
+.Fn EVP_DecryptFinal ,
 and
 .Fn EVP_DecryptFinal_ex
 are the corresponding decryption operations.
 .Fn EVP_DecryptFinal
-will return an error code if padding is enabled and the final block is
+and
+.Fn EVP_DecryptFinal_ex
+return an error code if padding is enabled and the final block is
 not correctly formatted.
 The parameters and restrictions are identical to the encryption
 operations except that if padding is enabled the decrypted data buffer
@@ -435,8 +441,10 @@ unless the cipher block size is 1 in which case
 .Fa inl
 bytes is sufficient.
 .Pp
+.Fn EVP_CipherInit ,
 .Fn EVP_CipherInit_ex ,
 .Fn EVP_CipherUpdate ,
+.Fn EVP_CipherFinal ,
 and
 .Fn EVP_CipherFinal_ex
 are functions that can be used for decryption or encryption.
@@ -447,37 +455,6 @@ It should be set to 1 for encryption, 0 for decryption and -1 to leave
 the value unchanged (the actual value of
 .Fa enc
 being supplied in a previous call).
-.Pp
-.Fn EVP_EncryptInit ,
-.Fn EVP_DecryptInit ,
-and
-.Fn EVP_CipherInit
-are deprecated functions behaving like
-.Fn EVP_EncryptInit_ex ,
-.Fn EVP_DecryptInit_ex ,
-and
-.Fn EVP_CipherInit_ex
-except that they always use the default cipher implementation
-and that they require
-.Fn EVP_CIPHER_CTX_reset
-before they can be used on a context that was already used.
-.Pp
-.Fn EVP_EncryptFinal ,
-.Fn EVP_DecryptFinal ,
-and
-.Fn EVP_CipherFinal
-are identical to
-.Fn EVP_EncryptFinal_ex ,
-.Fn EVP_DecryptFinal_ex ,
-and
-.Fn EVP_CipherFinal_ex .
-In previous releases of OpenSSL, they also used to clean up the
-.Fa ctx ,
-but this is no longer done and
-.Fn EVP_CIPHER_CTX_reset
-or
-.Fn EVP_CIPHER_CTX_free
-must be called to free any context resources.
 .Pp
 .Fn EVP_get_cipherbyname ,
 .Fn EVP_get_cipherbynid ,
@@ -519,25 +496,6 @@ final decrypt error.
 .Pp
 If padding is disabled then the decryption operation will always succeed
 if the total amount of data decrypted is a multiple of the block size.
-.Pp
-The functions
-.Fn EVP_EncryptInit ,
-.Fn EVP_EncryptFinal ,
-.Fn EVP_DecryptInit ,
-.Fn EVP_CipherInit ,
-and
-.Fn EVP_CipherFinal
-are obsolete but are retained for compatibility with existing code.
-New code should use
-.Fn EVP_EncryptInit_ex ,
-.Fn EVP_EncryptFinal_ex ,
-.Fn EVP_DecryptInit_ex ,
-.Fn EVP_DecryptFinal_ex ,
-.Fn EVP_CipherInit_ex ,
-and
-.Fn EVP_CipherFinal_ex
-because they can reuse an existing context without allocating and
-freeing it up on each call.
 .Pp
 .Fn EVP_get_cipherbynid
 and
@@ -683,9 +641,11 @@ set to
 .Dv NULL .
 .Pp
 When decrypting, the return value of
-.Fn EVP_DecryptFinal
+.Fn EVP_DecryptFinal ,
+.Fn EVP_DecryptFinal_ex ,
+.Fn EVP_CipherFinal ,
 or
-.Fn EVP_CipherFinal
+.Fn EVP_CipherFinal_ex
 indicates if the operation was successful.
 If it does not indicate success, the authentication operation has
 failed and any output data MUST NOT be used as it is corrupted.
@@ -704,6 +664,8 @@ bytes of the tag value to the buffer indicated by
 This call can only be made when encrypting data and after all data has
 been processed, e.g. after an
 .Fn EVP_EncryptFinal
+or
+.Fn EVP_EncryptFinal_ex
 call.
 .It Fn EVP_CIPHER_CTX_ctrl ctx EVP_CTRL_GCM_SET_TAG taglen tag
 Sets the expected tag to
