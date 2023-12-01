@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.311 2023/12/01 14:08:03 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.312 2023/12/01 15:30:47 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1184,14 +1184,7 @@ udp_disconnect(struct socket *so)
 		if (inp->inp_faddr.s_addr == INADDR_ANY)
 			return (ENOTCONN);
 	}
-
-#ifdef INET6
-	if (inp->inp_flags & INP_IPV6)
-		inp->inp_laddr6 = in6addr_any;
-	else
-#endif /* INET6 */
-		inp->inp_laddr.s_addr = INADDR_ANY;
-
+	in_pcbunset_laddr(inp);
 	in_pcbdisconnect(inp);
 	so->so_state &= ~SS_ISCONNECTED;		/* XXX */
 

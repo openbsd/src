@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.127 2023/12/01 14:08:04 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.128 2023/12/01 15:30:47 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -245,6 +245,7 @@ in6_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in6 *sin6, int wild,
 int
 in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 {
+	struct inpcbtable *table = inp->inp_table;
 	const struct in6_addr *in6a;
 	struct sockaddr_in6 *sin6;
 	struct inpcb *t;
@@ -312,6 +313,10 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	}
 	inp->inp_faddr6 = sin6->sin6_addr;
 	inp->inp_fport = sin6->sin6_port;
+	mtx_enter(&table->inpt_mtx);
+	in_pcbrehash(inp);
+	mtx_leave(&table->inpt_mtx);
+
 	inp->inp_flowinfo &= ~IPV6_FLOWLABEL_MASK;
 	if (ip6_auto_flowlabel)
 		inp->inp_flowinfo |=
@@ -320,7 +325,6 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	inp->inp_flowid = stoeplitz_ip6port(&inp->inp_faddr6,
 	    &inp->inp_laddr6, inp->inp_fport, inp->inp_lport);
 #endif
-	in_pcbrehash(inp);
 	return (0);
 }
 

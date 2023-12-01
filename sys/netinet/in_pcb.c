@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.279 2023/11/29 18:30:48 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.280 2023/12/01 15:30:46 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -268,6 +268,7 @@ in_pcballoc(struct socket *so, struct inpcbtable *table, int wait)
 int
 in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 {
+	struct inpcbtable *table = inp->inp_table;
 	struct socket *so = inp->inp_socket;
 	u_int16_t lport = 0;
 	int wild = 0;
@@ -341,7 +342,10 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 		}
 	}
 	inp->inp_lport = lport;
+	mtx_enter(&table->inpt_mtx);
 	in_pcbrehash(inp);
+	mtx_leave(&table->inpt_mtx);
+
 	return (0);
 }
 
@@ -480,6 +484,7 @@ in_pcbpickport(u_int16_t *lport, const void *laddr, int wild,
 int
 in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 {
+	struct inpcbtable *table = inp->inp_table;
 	struct in_addr ina;
 	struct sockaddr_in *sin;
 	struct inpcb *t;
@@ -526,7 +531,10 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	}
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
+	mtx_enter(&table->inpt_mtx);
 	in_pcbrehash(inp);
+	mtx_leave(&table->inpt_mtx);
+
 #if NSTOEPLITZ > 0
 	inp->inp_flowid = stoeplitz_ip4port(inp->inp_faddr.s_addr,
 	    inp->inp_laddr.s_addr, inp->inp_fport, inp->inp_lport);
@@ -544,20 +552,7 @@ in_pcbdisconnect(struct inpcb *inp)
 		pf_inp_unlink(inp);
 	}
 #endif
-	switch (sotopf(inp->inp_socket)) {
-#ifdef INET6
-	case PF_INET6:
-		inp->inp_faddr6 = in6addr_any;
-		break;
-#endif
-	case PF_INET:
-		inp->inp_faddr.s_addr = INADDR_ANY;
-		break;
-	}
-
-	inp->inp_fport = 0;
 	inp->inp_flowid = 0;
-	in_pcbrehash(inp);
 	if (inp->inp_socket->so_state & SS_NOFDREF)
 		in_pcbdetach(inp);
 }
@@ -1044,11 +1039,11 @@ in_pcbrehash(struct inpcb *inp)
 {
 	struct inpcbtable *table = inp->inp_table;
 
-	mtx_enter(&table->inpt_mtx);
+	MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
+
 	LIST_REMOVE(inp, inp_lhash);
 	LIST_REMOVE(inp, inp_hash);
 	in_pcbhash_insert(inp);
-	mtx_leave(&table->inpt_mtx);
 }
 
 void
@@ -1265,4 +1260,88 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 	}
 #endif
 	return (inp);
+}
+
+int
+in_pcbset_rtableid(struct inpcb *inp, u_int rtableid)
+{
+	struct inpcbtable *table = inp->inp_table;
+
+	mtx_enter(&table->inpt_mtx);
+	if (inp->inp_lport) {
+		mtx_leave(&table->inpt_mtx);
+		return (EBUSY);
+	}
+	inp->inp_rtableid = rtableid;
+	in_pcbrehash(inp);
+	mtx_leave(&table->inpt_mtx);
+
+	return (0);
+}
+
+void
+in_pcbset_laddr(struct inpcb *inp, const struct sockaddr *sa, u_int rtableid)
+{
+	struct inpcbtable *table = inp->inp_table;
+
+	mtx_enter(&table->inpt_mtx);
+	inp->inp_rtableid = rtableid;
+#ifdef INET6
+	if (ISSET(inp->inp_flags, INP_IPV6)) {
+		const struct sockaddr_in6 *sin6;
+
+		KASSERT(sa->sa_family == AF_INET6);
+		sin6 = satosin6_const(sa);
+		inp->inp_lport = sin6->sin6_port;
+		inp->inp_laddr6 = sin6->sin6_addr;
+	} else
+#endif
+	{
+		const struct sockaddr_in *sin;
+
+		KASSERT(sa->sa_family == AF_INET);
+		sin = satosin_const(sa);
+		inp->inp_lport = sin->sin_port;
+		inp->inp_laddr = sin->sin_addr;
+	}
+	in_pcbrehash(inp);
+	mtx_leave(&table->inpt_mtx);
+}
+
+void
+in_pcbunset_faddr(struct inpcb *inp)
+{
+	struct inpcbtable *table = inp->inp_table;
+
+	mtx_enter(&table->inpt_mtx);
+#ifdef INET6
+	if (ISSET(inp->inp_flags, INP_IPV6))
+		inp->inp_faddr6 = in6addr_any;
+	else
+#endif
+		inp->inp_faddr.s_addr = INADDR_ANY;
+	inp->inp_fport = 0;
+	in_pcbrehash(inp);
+	mtx_leave(&table->inpt_mtx);
+}
+
+void
+in_pcbunset_laddr(struct inpcb *inp)
+{
+	struct inpcbtable *table = inp->inp_table;
+
+	mtx_enter(&table->inpt_mtx);
+#ifdef INET6
+	if (ISSET(inp->inp_flags, INP_IPV6)) {
+		inp->inp_faddr6 = in6addr_any;
+		inp->inp_laddr6 = in6addr_any;
+	} else
+#endif
+	{
+		inp->inp_faddr.s_addr = INADDR_ANY;
+		inp->inp_laddr.s_addr = INADDR_ANY;
+	}
+	inp->inp_fport = 0;
+	in_pcbrehash(inp);
+	mtx_leave(&table->inpt_mtx);
 }

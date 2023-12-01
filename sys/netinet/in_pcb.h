@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.140 2023/11/29 18:30:48 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.141 2023/12/01 15:30:46 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -335,5 +335,10 @@ void	in6_pcbnotify(struct inpcbtable *, struct sockaddr_in6 *,
 int	in6_selecthlim(struct inpcb *);
 int	in_pcbpickport(u_int16_t *, const void *, int, const struct inpcb *,
 	    struct proc *);
+int	in_pcbset_rtableid(struct inpcb *, u_int);
+void	in_pcbset_laddr(struct inpcb *, const struct sockaddr *, u_int);
+void	in_pcbunset_faddr(struct inpcb *);
+void	in_pcbunset_laddr(struct inpcb *);
+
 #endif /* _KERNEL */
 #endif /* _NETINET_IN_PCB_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.396 2023/11/30 10:21:56 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.397 2023/12/01 15:30:47 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3489,6 +3489,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	struct tcpcb *tp = NULL;
 	struct mbuf *am;
 	struct socket *oso;
+	u_int rtableid;
 
 	NET_ASSERT_LOCKED();
 
@@ -3553,37 +3554,25 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #endif /* INET6 */
 	{
 		inp->inp_ip.ip_ttl = oldinp->inp_ip.ip_ttl;
+		inp->inp_options = ip_srcroute(m);
+		if (inp->inp_options == NULL) {
+			inp->inp_options = sc->sc_ipopts;
+			sc->sc_ipopts = NULL;
+		}
 	}
 
+	/* inherit rtable from listening socket */
+	rtableid = sc->sc_rtableid;
 #if NPF > 0
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
 		divert = pf_find_divert(m);
 		KASSERT(divert != NULL);
-		inp->inp_rtableid = divert->rdomain;
-	} else
-#endif
-	/* inherit rtable from listening socket */
-	inp->inp_rtableid = sc->sc_rtableid;
-
-	inp->inp_lport = th->th_dport;
-	switch (src->sa_family) {
-#ifdef INET6
-	case AF_INET6:
-		inp->inp_laddr6 = satosin6(dst)->sin6_addr;
-		break;
-#endif /* INET6 */
-	case AF_INET:
-		inp->inp_laddr = satosin(dst)->sin_addr;
-		inp->inp_options = ip_srcroute(m);
-		if (inp->inp_options == NULL) {
-			inp->inp_options = sc->sc_ipopts;
-			sc->sc_ipopts = NULL;
-		}
-		break;
+		rtableid = divert->rdomain;
 	}
-	in_pcbrehash(inp);
+#endif
+	in_pcbset_laddr(inp, dst, rtableid);
 
 	/*
 	 * Give the new socket our cached route reference.
