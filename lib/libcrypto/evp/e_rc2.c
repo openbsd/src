@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.24 2023/11/18 10:46:58 tb Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.25 2023/12/02 19:06:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -383,15 +383,9 @@ rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 static int
 rc2_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
-	int iv_len;
-
 	switch (type) {
 	case EVP_CTRL_INIT:
-		data(c)->key_bits = 0;
-		/* XXX - upper bound? */
-		if ((iv_len = EVP_CIPHER_CTX_key_length(c)) < 0)
-			return -1;
-		data(c)->key_bits = iv_len * 8;
+		data(c)->key_bits = EVP_CIPHER_CTX_key_length(c) * 8;
 		return 1;
 
 	case EVP_CTRL_GET_RC2_KEY_BITS:
