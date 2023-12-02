@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.15 2023/07/07 10:23:39 patrick Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.16 2023/12/02 10:01:35 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ struct virtqueue {
 };
 
 struct virtio_feature_name {
-	uint32_t	 bit;
+	uint64_t	 bit;
 	const char	*name;
 };
 
@@ -203,7 +203,7 @@ struct virtio_softc {
 #define	virtio_device_reset(sc)			virtio_set_status((sc), 0)
 
 static inline int
-virtio_has_feature(struct virtio_softc *sc, unsigned int fbit)
+virtio_has_feature(struct virtio_softc *sc, uint64_t fbit)
 {
 	if (sc->sc_active_features & fbit)
 		return 1;

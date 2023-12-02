@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.23 2023/07/07 10:23:39 patrick Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.24 2023/12/02 10:01:35 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ virtio_log_features(uint64_t host, uint64_t neg,
 	const struct virtio_feature_name *namep;
 	int i;
 	char c;
-	uint32_t bit;
+	uint64_t bit;
 
 	for (i = 0; i < 64; i++) {
 		if (i == 30) {
@@ -107,13 +107,17 @@ virtio_log_features(uint64_t host, uint64_t neg,
 			 */
 			continue;
 		}
-		bit = 1 << i;
+		bit = 1ULL << i;
 		if ((host&bit) == 0)
 			continue;
-		namep = (i < 24 || i > 37) ? guest_feature_names :
-		    transport_feature_names;
+		namep = guest_feature_names;
 		while (namep->bit && namep->bit != bit)
 			namep++;
+		if (namep->name == NULL) {
+			namep = transport_feature_names;
+			while (namep->bit && namep->bit != bit)
+				namep++;
+		}
 		c = (neg&bit) ? '+' : '-';
 		if (namep->name)
 			printf(" %c%s", c, namep->name);
