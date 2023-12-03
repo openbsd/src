@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.250 2023/11/28 13:23:20 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.251 2023/12/03 20:36:24 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1693,7 +1693,7 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf *m)
 {
 	int error = 0;
-	struct inpcb *in6p = sotoinpcb(so);
+	struct inpcb *inp = sotoinpcb(so);
 
 	if (level != IPPROTO_ICMPV6)
 		return EINVAL;
@@ -1710,11 +1710,11 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 				break;
 			}
 			p = mtod(m, struct icmp6_filter *);
-			if (!p || !in6p->inp_icmp6filt) {
+			if (!p || !inp->inp_icmp6filt) {
 				error = EINVAL;
 				break;
 			}
-			bcopy(p, in6p->inp_icmp6filt,
+			bcopy(p, inp->inp_icmp6filt,
 				sizeof(struct icmp6_filter));
 			error = 0;
 			break;
@@ -1732,13 +1732,13 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 		    {
 			struct icmp6_filter *p;
 
-			if (!in6p->inp_icmp6filt) {
+			if (!inp->inp_icmp6filt) {
 				error = EINVAL;
 				break;
 			}
 			m->m_len = sizeof(struct icmp6_filter);
 			p = mtod(m, struct icmp6_filter *);
-			bcopy(in6p->inp_icmp6filt, p,
+			bcopy(inp->inp_icmp6filt, p,
 				sizeof(struct icmp6_filter));
 			error = 0;
 			break;

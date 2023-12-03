@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.108 2023/12/01 14:08:04 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.109 2023/12/03 20:36:24 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -301,7 +301,6 @@ extern uint8_t	ip6_soiikey[IP6_SOIIKEY_LEN];
 
 extern const struct pr_usrreqs rip6_usrreqs;
 
-struct in6pcb;
 struct inpcb;
 
 int	icmp6_ctloutput(int, struct socket *, int, int, struct mbuf *);

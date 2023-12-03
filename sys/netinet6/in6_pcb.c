@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.129 2023/12/03 20:24:17 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.130 2023/12/03 20:36:24 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -373,10 +373,10 @@ in6_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
 int
 in6_sockaddr(struct socket *so, struct mbuf *nam)
 {
-	struct inpcb *in6p;
+	struct inpcb *inp;
 
-	in6p = sotoinpcb(so);
-	in6_setsockaddr(in6p, nam);
+	inp = sotoinpcb(so);
+	in6_setsockaddr(inp, nam);
 
 	return (0);
 }
@@ -384,10 +384,10 @@ in6_sockaddr(struct socket *so, struct mbuf *nam)
 int
 in6_peeraddr(struct socket *so, struct mbuf *nam)
 {
-	struct inpcb *in6p;
+	struct inpcb *inp;
 
-	in6p = sotoinpcb(so);
-	in6_setpeeraddr(in6p, nam);
+	inp = sotoinpcb(so);
+	in6_setpeeraddr(inp, nam);
 
 	return (0);
 }

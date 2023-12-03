@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.62 2023/12/01 14:08:04 bluhm Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.63 2023/12/03 20:36:24 bluhm Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -93,7 +93,7 @@
  * Per RFC 768, August, 1980.
  */
 int
-udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
+udp6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr6,
 	struct mbuf *control)
 {
 	u_int32_t ulen = m->m_pkthdr.len;
@@ -107,15 +107,15 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	struct proc *p = curproc;	/* XXX */
 	u_short fport;
 
-	if ((in6p->inp_socket->so_state & SS_PRIV) != 0)
+	if ((inp->inp_socket->so_state & SS_PRIV) != 0)
 		priv = 1;
 	if (control) {
 		if ((error = ip6_setpktopts(control, &opt,
-		    in6p->inp_outputopts6, priv, IPPROTO_UDP)) != 0)
+		    inp->inp_outputopts6, priv, IPPROTO_UDP)) != 0)
 			goto release;
 		optp = &opt;
 	} else
-		optp = in6p->inp_outputopts6;
+		optp = inp->inp_outputopts6;
 
 	if (addr6) {
 		struct sockaddr_in6 *sin6;
@@ -130,7 +130,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			error = EADDRNOTAVAIL;
 			goto release;
 		}
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_faddr6)) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
 			error = EISCONN;
 			goto release;
 		}
@@ -144,40 +144,40 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 
 		/* KAME hack: embed scopeid */
 		if (in6_embedscope(&sin6->sin6_addr, sin6,
-		    in6p->inp_outputopts6, in6p->inp_moptions6) != 0) {
+		    inp->inp_outputopts6, inp->inp_moptions6) != 0) {
 			error = EINVAL;
 			goto release;
 		}
 
-		error = in6_pcbselsrc(&laddr, sin6, in6p, optp);
+		error = in6_pcbselsrc(&laddr, sin6, inp, optp);
 		if (error)
 			goto release;
 
-		if (in6p->inp_lport == 0){
-			error = in_pcbbind(in6p, NULL, p);
+		if (inp->inp_lport == 0){
+			error = in_pcbbind(inp, NULL, p);
 			if (error)
 				goto release;
 		}
 
-		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_laddr6) &&
-		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_laddr6, laddr)) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) &&
+		    !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, laddr)) {
 			valid.sin6_addr = *laddr;
-			valid.sin6_port = in6p->inp_lport;
+			valid.sin6_port = inp->inp_lport;
 			valid.sin6_scope_id = 0;
 			valid.sin6_family = AF_INET6;
 			valid.sin6_len = sizeof(valid);
-			error = in6_pcbaddrisavail(in6p, &valid, 0, p);
+			error = in6_pcbaddrisavail(inp, &valid, 0, p);
 			if (error)
 				goto release;
 		}
 	} else {
-		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->inp_faddr6)) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
 			error = ENOTCONN;
 			goto release;
 		}
-		laddr = &in6p->inp_laddr6;
-		faddr = &in6p->inp_faddr6;
-		fport = in6p->inp_fport;
+		laddr = &inp->inp_laddr6;
+		faddr = &inp->inp_faddr6;
+		fport = inp->inp_fport;
 	}
 
 	hlen = sizeof(struct ip6_hdr);
@@ -196,7 +196,7 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	 * Stuff checksum and output datagram.
 	 */
 	udp6 = (struct udphdr *)(mtod(m, caddr_t) + hlen);
-	udp6->uh_sport = in6p->inp_lport; /* lport is always set in the PCB */
+	udp6->uh_sport = inp->inp_lport; /* lport is always set in the PCB */
 	udp6->uh_dport = fport;
 	if (plen <= 0xffff)
 		udp6->uh_ulen = htons((u_short)plen);
@@ -205,35 +205,35 @@ udp6_output(struct inpcb *in6p, struct mbuf *m, struct mbuf *addr6,
 	udp6->uh_sum = 0;
 
 	ip6 = mtod(m, struct ip6_hdr *);
-	ip6->ip6_flow	= in6p->inp_flowinfo & IPV6_FLOWINFO_MASK;
+	ip6->ip6_flow	= inp->inp_flowinfo & IPV6_FLOWINFO_MASK;
 	ip6->ip6_vfc	&= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc	|= IPV6_VERSION;
 #if 0	/* ip6_plen will be filled in ip6_output. */
 	ip6->ip6_plen	= htons((u_short)plen);
 #endif
 	ip6->ip6_nxt	= IPPROTO_UDP;
-	ip6->ip6_hlim	= in6_selecthlim(in6p);
+	ip6->ip6_hlim	= in6_selecthlim(inp);
 	ip6->ip6_src	= *laddr;
 	ip6->ip6_dst	= *faddr;
 
 	m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
 
 	flags = 0;
-	if (in6p->inp_flags & IN6P_MINMTU)
+	if (inp->inp_flags & IN6P_MINMTU)
 		flags |= IPV6_MINMTU;
 
 	udpstat_inc(udps_opackets);
 
 	/* force routing table */
-	m->m_pkthdr.ph_rtableid = in6p->inp_rtableid;
+	m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
 
 #if NPF > 0
-	if (in6p->inp_socket->so_state & SS_ISCONNECTED)
-		pf_mbuf_link_inpcb(m, in6p);
+	if (inp->inp_socket->so_state & SS_ISCONNECTED)
+		pf_mbuf_link_inpcb(m, inp);
 #endif
 
-	error = ip6_output(m, optp, &in6p->inp_route6,
-	    flags, in6p->inp_moptions6, in6p->inp_seclevel);
+	error = ip6_output(m, optp, &inp->inp_route6,
+	    flags, inp->inp_moptions6, inp->inp_seclevel);
 	goto releaseopt;
 
 release:
