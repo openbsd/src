@@ -2388,6 +2388,11 @@ SmallVector<PhdrEntry *, 0> Writer<ELFT>::createPhdrs(Partition &part) {
   if (OutputSection *cmd = findSection(".openbsd.randomdata", partNo))
     addHdr(PT_OPENBSD_RANDOMIZE, cmd->getPhdrFlags())->add(cmd);
 
+  // PT_OPENBSD_SYSCALLS is an OpenBSD-specific feature. That makes
+  // the kernel and dynamic linker register system call sites.
+  if (OutputSection *cmd = findSection(".openbsd.syscalls", partNo))
+    addHdr(PT_OPENBSD_SYSCALLS, cmd->getPhdrFlags())->add(cmd);
+
   if (config->zGnustack != GnuStackKind::None) {
     // PT_GNU_STACK is a special section to tell the loader to make the
     // pages for the stack non-executable. If you really want an executable

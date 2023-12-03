@@ -259,6 +259,9 @@ static void printProgramHeaders(const ELFFile<ELFT> &Obj, StringRef FileName) {
     case ELF::PT_OPENBSD_RANDOMIZE:
       outs() << "OPENBSD_RANDOMIZE ";
       break;
+    case ELF::PT_OPENBSD_SYSCALLS:
+      outs() << "OPENBSD_SYSCALLS ";
+      break;
     case ELF::PT_OPENBSD_WXNEEDED:
       outs() << "OPENBSD_WXNEEDED ";
       break;
