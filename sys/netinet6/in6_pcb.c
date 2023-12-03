@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.128 2023/12/01 15:30:47 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.129 2023/12/03 20:24:17 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -252,7 +252,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	int error;
 	struct sockaddr_in6 tmp;
 
-	KASSERT(inp->inp_flags & INP_IPV6);
+	KASSERT(ISSET(inp->inp_flags, INP_IPV6));
 
 	if ((error = in6_nam2sin6(nam, &sin6)))
 		return (error);
@@ -461,7 +461,7 @@ in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
 	rw_enter_write(&table->inpt_notify);
 	mtx_enter(&table->inpt_mtx);
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
-		if ((inp->inp_flags & INP_IPV6) == 0)
+		if (!ISSET(inp->inp_flags, INP_IPV6))
 			continue;
 
 		/*
