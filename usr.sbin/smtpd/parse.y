@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.294 2023/12/03 11:48:52 op Exp $	*/
+/*	$OpenBSD: parse.y,v 1.295 2023/12/03 11:50:50 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -3123,6 +3123,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	/* If the socket listener was not configured, create a default one. */
 	if (!conf->sc_sock_listener) {
 		memset(&listen_opts, 0, sizeof listen_opts);
+		listen_opts.family = AF_UNSPEC;
 		listen_opts.flags |= F_EXT_DSN;
 		create_sock_listener(&listen_opts);
 	}
