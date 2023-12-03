@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.372 2023/11/12 17:51:41 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.373 2023/12/03 10:51:17 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -234,7 +234,8 @@ route_attach(struct socket *so, int proto, int wait)
 		return (ENOBUFS);
 	so->so_pcb = rop;
 	/* Init the timeout structure */
-	timeout_set_proc(&rop->rop_timeout, rtm_senddesync_timer, so);
+	timeout_set_flags(&rop->rop_timeout, rtm_senddesync_timer, so,
+	    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
 	refcnt_init(&rop->rop_refcnt);
 
 	rop->rop_socket = so;
