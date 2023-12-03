@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.295 2023/12/03 11:50:50 op Exp $	*/
+/*	$OpenBSD: parse.y,v 1.296 2023/12/03 11:52:16 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2148,6 +2148,14 @@ opt_sock_listen : FILTER STRING {
 			if (config_lo_mask_source(&listen_opts)) {
 				YYERROR;
 			}
+		}
+		| NO_DSN	{
+			if (listen_opts.options & LO_NODSN) {
+				yyerror("no-dsn already specified");
+				YYERROR;
+			}
+			listen_opts.options |= LO_NODSN;
+			listen_opts.flags &= ~F_EXT_DSN;
 		}
 		| TAG STRING			{
 			if (listen_opts.options & LO_TAG) {
