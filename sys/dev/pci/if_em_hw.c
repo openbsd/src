@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.118 2023/09/05 13:06:42 naddy Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.119 2023/12/03 00:19:25 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -660,11 +660,23 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_PCH_ADP_I219_V16:
 	case E1000_DEV_ID_PCH_ADP_I219_LM17:
 	case E1000_DEV_ID_PCH_ADP_I219_V17:
+	case E1000_DEV_ID_PCH_RPL_I219_LM22:
+	case E1000_DEV_ID_PCH_RPL_I219_V22:
+	case E1000_DEV_ID_PCH_RPL_I219_LM23:
+	case E1000_DEV_ID_PCH_RPL_I219_V23:
+		hw->mac_type = em_pch_adp;
+		break;
 	case E1000_DEV_ID_PCH_MTP_I219_LM18:
 	case E1000_DEV_ID_PCH_MTP_I219_V18:
 	case E1000_DEV_ID_PCH_MTP_I219_LM19:
 	case E1000_DEV_ID_PCH_MTP_I219_V19:
-		hw->mac_type = em_pch_adp;
+	case E1000_DEV_ID_PCH_LNP_I219_LM20:
+	case E1000_DEV_ID_PCH_LNP_I219_V20:
+	case E1000_DEV_ID_PCH_LNP_I219_LM21:
+	case E1000_DEV_ID_PCH_LNP_I219_V21:
+	case E1000_DEV_ID_PCH_ARL_I219_LM24:
+	case E1000_DEV_ID_PCH_ARL_I219_V24:
+		hw->mac_type = em_pch_adp;	/* pch_mtp */
 		break;
 	case E1000_DEV_ID_EP80579_LAN_1:
 		hw->mac_type = em_icp_xxxx;
