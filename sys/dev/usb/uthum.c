@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.38 2022/01/09 05:43:02 jsg Exp $   */
+/*	$OpenBSD: uthum.c,v 1.39 2023/12/04 05:28:25 mglocker Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -742,8 +742,16 @@ uthum_refresh_temperntc(struct uthum_softc *sc, int sensor)
 int
 uthum_ds75_temp(uint8_t msb, uint8_t lsb)
 {
+	int val;
+
 	/* DS75: 12bit precision mode : 0.0625 degrees Celsius ticks */
-	return (msb * 100) + ((lsb >> 4) * 25 / 4);
+
+	val = (msb << 8) | lsb;
+	if (val >= 32768)
+		val = val - 65536;
+	val = (val * 100) >> 8;
+
+	return val;
 }
 
 /* return C-degree * 100 value */
