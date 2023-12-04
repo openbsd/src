@@ -67,7 +67,9 @@ std::string lld::toString(const InputFile *f) {
 
 // .gnu.warning.SYMBOL are treated as warning symbols for the given symbol
 void lld::parseGNUWarning(StringRef name, ArrayRef<char> data, size_t size) {
+  static std::mutex mu;
   if (!name.empty() && name.startswith(".gnu.warning.")) {
+    std::lock_guard<std::mutex> lock(mu);
     StringRef wsym = name.substr(13);
     StringRef s(data.begin());
     StringRef wng(s.substr(0, size));

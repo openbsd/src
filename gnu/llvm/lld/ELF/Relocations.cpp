@@ -792,6 +792,7 @@ void elf::reportUndefinedSymbols() {
 
 static void reportGNUWarning(Symbol &sym, InputSectionBase &sec,
                                  uint64_t offset) {
+  std::lock_guard<std::mutex> lock(relocMutex);
   if (sym.gwarn) {
     StringRef gnuWarning = gnuWarnings.lookup(sym.getName());
     // report first occurance only
