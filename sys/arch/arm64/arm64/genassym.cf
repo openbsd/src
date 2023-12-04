@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.9 2022/12/10 10:13:58 patrick Exp $
+#	$OpenBSD: genassym.cf,v 1.10 2023/12/04 21:19:26 miod Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -44,6 +44,7 @@ member	sf_sc
 
 struct	cpu_info
 member	ci_curproc
+member	ci_curpcb
 member	ci_el1_stkend
 member	ci_trampoline_vectors
 member	ci_ttbr1
@@ -63,16 +64,11 @@ member	pcb_flags
 member	pcb_sp
 member	pcb_tcb
 
-export	PCB_FPU
-
 struct	trapframe
 member	tf_x
 member	tf_sp
 member	tf_elr
 define	TF_SIZE		sizeof(struct trapframe)
-
-struct	cpu_info
-member	ci_curpcb
 
 struct	switchframe
 member	sf_x19
@@ -82,5 +78,3 @@ member	sf_x25
 member	sf_x27
 member	sf_x29
 define	SWITCHFRAME_SZ sizeof(struct switchframe)
-
-export	IPL_NONE
