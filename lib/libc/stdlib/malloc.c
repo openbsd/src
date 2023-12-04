@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.293 2023/11/04 11:02:35 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.294 2023/12/04 07:01:45 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -139,6 +139,16 @@ struct bigcache {
 	size_t psize;
 };
 
+#ifdef MALLOC_STATS
+#define NUM_FRAMES		4
+struct btnode {
+	RBT_ENTRY(btnode) entry;
+	void *caller[NUM_FRAMES];
+};
+RBT_HEAD(btshead, btnode);
+RBT_PROTOTYPE(btshead, btnode, entry, btcmp);
+#endif /* MALLOC_STATS */
+
 struct dir_info {
 	u_int32_t canary1;
 	int active;			/* status of malloc */
@@ -175,6 +185,9 @@ struct dir_info {
 	size_t cheap_reallocs;
 	size_t malloc_used;		/* bytes allocated */
 	size_t malloc_guarded;		/* bytes used for guards */
+	struct btshead btraces;		/* backtraces seen */
+	struct btnode *btnodes;		/* store of backtrace nodes */
+	size_t btnodesused;
 #define STATS_ADD(x,y)	((x) += (y))
 #define STATS_SUB(x,y)	((x) -= (y))
 #define STATS_INC(x)	((x)++)
@@ -261,38 +274,52 @@ void malloc_dump(void);
 PROTO_NORMAL(malloc_dump);
 static void malloc_exit(void);
 static void print_chunk_details(struct dir_info *, void *, size_t, size_t);
-#endif
+static void* store_caller(struct dir_info *, struct btnode *);
 
+/* below are the arches for which deeper caller info has been tested */
 #if defined(__aarch64__) || \
 	defined(__amd64__) || \
-	defined(__arm__)
-static inline void* caller(void)
+	defined(__arm__) || \
+	defined(__i386__) || \
+	defined(__powerpc__)
+__attribute__((always_inline))
+static inline void*
+caller(struct dir_info *d)
 {
-	void *p;
-
-	switch (DO_STATS) {
-	case 0:
-	default:
+	struct btnode p;
+	int level = DO_STATS;
+	if (level == 0)
 		return NULL;
-	case 1:
-		p = __builtin_return_address(0);
-		break;
-	case 2:
-		p = __builtin_return_address(1);
-		break;
-	case 3:
-		p = __builtin_return_address(2);
-		break;
-	}
-	return __builtin_extract_return_addr(p);
+
+	memset(&p.caller, 0, sizeof(p.caller));
+	if (level >= 1)
+		p.caller[0] = __builtin_extract_return_addr(
+		    __builtin_return_address(0));
+	if (p.caller[0] != NULL && level >= 2)
+		p.caller[1] = __builtin_extract_return_addr(
+		    __builtin_return_address(1));
+	if (p.caller[1] != NULL && level >= 3)
+		p.caller[2] = __builtin_extract_return_addr(
+		    __builtin_return_address(2));
+	if (p.caller[2] != NULL && level >= 4)
+		p.caller[3] = __builtin_extract_return_addr(
+		    __builtin_return_address(3));
+	return store_caller(d, &p);
 }
 #else
-static inline void* caller(void)
+__attribute__((always_inline))
+static inline void* caller(struct dir_info *d)
 {
-	return DO_STATS == 0 ? NULL :
-	    __builtin_extract_return_addr(__builtin_return_address(0));
+	struct btnode p;
+
+	if (DO_STATS == 0)
+		return NULL;
+	memset(&p.caller, 0, sizeof(p.caller));
+	p.caller[0] = __builtin_extract_return_addr(__builtin_return_address(0));
+	return store_caller(d, &p);
 }
 #endif
+#endif /* MALLOC_STATS */
 
 /* low bits of r->p determine size: 0 means >= page size and r->size holding
  * real size, otherwise low bits is the bucket + 1
@@ -411,6 +438,9 @@ omalloc_parseopt(char opt)
 	case '3':
 		mopts.malloc_stats = 3;
 		break;
+	case '4':
+		mopts.malloc_stats = 4;
+		break;
 #endif /* MALLOC_STATS */
 	case 'f':
 		mopts.malloc_freecheck = 0;
@@ -525,7 +555,7 @@ omalloc_init(void)
 
 #ifdef MALLOC_STATS
 	if (DO_STATS && (atexit(malloc_exit) == -1)) {
-		dprintf(STDERR_FILENO, "malloc() warning: atexit(2) failed."
+		dprintf(STDERR_FILENO, "malloc() warning: atexit(3) failed."
 		    " Will not be able to dump stats on exit\n");
 	}
 #endif
@@ -555,6 +585,9 @@ omalloc_poolinit(struct dir_info *d, int mmap_flag)
 	}
 	d->mmap_flag = mmap_flag;
 	d->malloc_junk = mopts.def_malloc_junk;
+#ifdef MALLOC_STATS
+	RBT_INIT(btshead, &d->btraces);
+#endif
 	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
 	d->canary2 = ~d->canary1;
 }
@@ -1091,15 +1124,13 @@ bin_of(unsigned int size)
 	const unsigned int linear = 6;
 	const unsigned int subbin = 2;
 
-	unsigned int mask, range, rounded, sub_index, rounded_size;
+	unsigned int mask, rounded, rounded_size;
 	unsigned int n_bits, shift;
 
 	n_bits = lb(size | (1U << linear));
 	shift = n_bits - subbin;
 	mask = (1ULL << shift) - 1;
 	rounded = size + mask; /* XXX: overflow. */
-	sub_index = rounded >> shift;
-	range = n_bits - linear;
 
 	rounded_size = rounded & ~mask;
 	return rounded_size;
@@ -1135,6 +1166,7 @@ static void *
 malloc_bytes(struct dir_info *d, size_t size)
 {
 	u_int i, k, r, bucket, listnum;
+	int j;
 	u_short	*lp;
 	struct chunk_info *bp;
 	void *p;
@@ -1155,7 +1187,7 @@ malloc_bytes(struct dir_info *d, size_t size)
 			return NULL;
 	}
 
-	if (bp->canary != (u_short)d->canary1)
+	if (bp->canary != (u_short)d->canary1 || bucket != bp->bucket)
 		wrterror(d, "chunk info corrupted");
 
 	/* bias, as bp->total is not a power of 2 */
@@ -1163,8 +1195,8 @@ malloc_bytes(struct dir_info *d, size_t size)
 
 	/* potentially start somewhere in a short */
 	lp = &bp->bits[i / MALLOC_BITS];
-	if (*lp) {
-		int j = i % MALLOC_BITS; /* j must be signed */
+	j = i % MALLOC_BITS; /* j must be signed */
+	if (*lp >> j) {
 		k = ffs(*lp >> j);
 		if (k != 0) {
 			k += j - 1;
@@ -1200,13 +1232,13 @@ found:
 		STATS_SETFN(r, k, d->caller);
 	}
 
-	k *= B2ALLOC(bp->bucket);
+	k *= B2ALLOC(bucket);
 
 	p = (char *)bp->page + k;
-	if (bp->bucket > 0) {
-		validate_junk(d, p, B2SIZE(bp->bucket));
+	if (bucket > 0) {
+		validate_junk(d, p, B2SIZE(bucket));
 		if (mopts.chunk_canaries)
-			fill_canary(p, size, B2SIZE(bp->bucket));
+			fill_canary(p, size, B2SIZE(bucket));
 	}
 	return p;
 }
@@ -1511,7 +1543,7 @@ malloc(size_t size)
 	int saved_errno = errno;
 
 	PROLOGUE(getpool(), "malloc")
-	SET_CALLER(d, caller());
+	SET_CALLER(d, caller(d));
 	r = omalloc(d, size, 0);
 	EPILOGUE()
 	return r;
@@ -1526,7 +1558,7 @@ malloc_conceal(size_t size)
 	int saved_errno = errno;
 
 	PROLOGUE(mopts.malloc_pool[0], "malloc_conceal")
-	SET_CALLER(d, caller());
+	SET_CALLER(d, caller(d));
 	r = omalloc(d, size, 0);
 	EPILOGUE()
 	return r;
@@ -1937,7 +1969,7 @@ realloc(void *ptr, size_t size)
 	int saved_errno = errno;
 
 	PROLOGUE(getpool(), "realloc")
-	SET_CALLER(d, caller());
+	SET_CALLER(d, caller(d));
 	r = orealloc(&d, ptr, size);
 	EPILOGUE()
 	return r;
@@ -1958,7 +1990,7 @@ calloc(size_t nmemb, size_t size)
 	int saved_errno = errno;
 
 	PROLOGUE(getpool(), "calloc")
-	SET_CALLER(d, caller());
+	SET_CALLER(d, caller(d));
 	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
 	    nmemb > 0 && SIZE_MAX / nmemb < size) {
 		d->active--;
@@ -1984,7 +2016,7 @@ calloc_conceal(size_t nmemb, size_t size)
 	int saved_errno = errno;
 
 	PROLOGUE(mopts.malloc_pool[0], "calloc_conceal")
-	SET_CALLER(d, caller());
+	SET_CALLER(d, caller(d));
 	if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
 	    nmemb > 0 && SIZE_MAX / nmemb < size) {
 		d->active--;
@@ -2130,7 +2162,7 @@ recallocarray(void *ptr, size_t oldnmemb, size_t newnmemb, size_t size)
 		return recallocarray_p(ptr, oldnmemb, newnmemb, size);
 
 	PROLOGUE(getpool(), "recallocarray")
-	SET_CALLER(d, caller());
+	SET_CALLER(d, caller(d));
 
 	if ((newnmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
 	    newnmemb > 0 && SIZE_MAX / newnmemb < size) {
@@ -2289,7 +2321,7 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
 		malloc_recurse(d);
 		goto err;
 	}
-	SET_CALLER(d, caller());
+	SET_CALLER(d, caller(d));
 	r = omemalign(d, alignment, size, 0);
 	d->active--;
 	_MALLOC_UNLOCK(d->mutex);
@@ -2328,7 +2360,7 @@ aligned_alloc(size_t alignment, size_t size)
 	}
 
 	PROLOGUE(getpool(), "aligned_alloc")
-	SET_CALLER(d, caller());
+	SET_CALLER(d, caller(d));
 	r = omemalign(d, alignment, size, 0);
 	EPILOGUE()
 	return r;
@@ -2337,43 +2369,74 @@ DEF_STRONG(aligned_alloc);
 
 #ifdef MALLOC_STATS
 
+static int
+btcmp(const struct btnode *e1, const struct btnode *e2)
+{
+	return memcmp(e1->caller, e2->caller, sizeof(e1->caller));
+}
+
+RBT_GENERATE(btshead, btnode, entry, btcmp);
+
+static void*
+store_caller(struct dir_info *d, struct btnode *f)
+{
+	struct btnode *p;
+
+	if (DO_STATS == 0 || d->btnodes == MAP_FAILED)
+		return NULL;
+
+	p = RBT_FIND(btshead, &d->btraces, f);
+	if (p != NULL)
+		return p;
+	if (d->btnodes == NULL ||
+	    d->btnodesused >= MALLOC_PAGESIZE / sizeof(struct btnode)) {
+		d->btnodes = map(d, MALLOC_PAGESIZE, 0);
+		if (d->btnodes == MAP_FAILED)
+			return NULL;
+		d->btnodesused = 0;
+	}
+	p = &d->btnodes[d->btnodesused++];
+	memcpy(p->caller, f->caller, sizeof(p->caller[0]) * DO_STATS);
+	RBT_INSERT(btshead, &d->btraces, p);
+	return p;
+}
+
+static void fabstorel(const void *, char *, size_t);
+
 static void
-print_chunk_details(struct dir_info *pool, void *p, size_t sz, size_t i)
+print_chunk_details(struct dir_info *pool, void *p, size_t sz, size_t index)
 {
 	struct region_info *r;
 	struct chunk_info *chunkinfo;
+	struct btnode* btnode;
 	uint32_t chunknum;
-	Dl_info info;
-	const char *caller, *pcaller = NULL;
-	const char *object = ".";
-	const char *pobject = ".";
+	int frame;
+	char buf1[128];
+	char buf2[128];
 	const char *msg = "";
 
 	r = find(pool, p);
 	chunkinfo = (struct chunk_info *)r->size;
 	chunknum = find_chunknum(pool, chunkinfo, p, 0);
-	caller = r->f[chunknum];
-	if (dladdr(caller, &info) != 0) {
-		caller -= (uintptr_t)info.dli_fbase;
-		object = info.dli_fname;
-	}
+	btnode = (struct btnode *)r->f[chunknum];
+	frame = DO_STATS - 1;
+	if (btnode != NULL)
+		fabstorel(btnode->caller[frame], buf1, sizeof(buf1));
+	strlcpy(buf2, ". 0x0", sizeof(buf2));
 	if (chunknum > 0) {
 		chunknum--;
-		pcaller = r->f[chunknum];
-		if (dladdr(pcaller, &info) != 0) {
-			pcaller -= (uintptr_t)info.dli_fbase;
-			pobject = info.dli_fname;
-		}
+		btnode = (struct btnode *)r->f[chunknum];
+		if (btnode != NULL)
+			fabstorel(btnode->caller[frame], buf2, sizeof(buf2));
 		if (CHUNK_FREE(chunkinfo, chunknum))
 			msg = " (now free)";
 	}
 
 	wrterror(pool,
-	    "write to free chunk %p[%zu..%zu]@%zu allocated at %s %p "
-	    "(preceding chunk %p allocated at %s %p%s)",
-	    p, i * sizeof(uint64_t),
-	    (i + 1) * sizeof(uint64_t) - 1, sz, object, caller, p - sz,
-	    pobject, pcaller, msg);
+	    "write to free chunk %p[%zu..%zu]@%zu allocated at %s "
+	    "(preceding chunk %p allocated at %s%s)",
+	    p, index * sizeof(uint64_t), (index + 1) * sizeof(uint64_t) - 1,
+	    sz, buf1, p - sz, buf2, msg);
 }
 
 static void
@@ -2476,6 +2539,52 @@ putleakinfo(struct leaktree *leaks, void *f, size_t sz, int cnt)
 }
 
 static void
+fabstorel(const void *f, char *buf, size_t size)
+{
+	Dl_info info;
+	const char *object = ".";
+	const char *caller;
+
+	caller = f;
+	if (caller != NULL && dladdr(f, &info) != 0) {
+		caller -= (uintptr_t)info.dli_fbase;
+		object = info.dli_fname;
+	}
+	snprintf(buf, size, "%s %p", object, caller);
+}
+
+static void
+dump_leak(struct leaknode *p)
+{
+	int i;
+	char buf[128];
+
+	if (p->d.f == NULL) {
+		fabstorel(NULL, buf, sizeof(buf));
+		ulog("%18p %7zu %6u %6zu addr2line -e %s\n",
+		    p->d.f, p->d.total_size, p->d.count,
+		    p->d.total_size / p->d.count, buf);
+		return;
+	}
+
+	for (i = 0; i < DO_STATS; i++) {
+		const char *abscaller;
+
+		abscaller = ((struct btnode*)p->d.f)->caller[i];
+		if (abscaller == NULL)
+			break;
+		fabstorel(abscaller, buf, sizeof(buf));
+		if (i == 0)
+			ulog("%18p %7zu %6u %6zu addr2line -e %s\n",
+			    abscaller, p->d.total_size, p->d.count,
+			    p->d.total_size / p->d.count, buf);
+		else
+			ulog("%*p %*s %6s %6s addr2line -e %s\n",
+			    i + 18, abscaller, 7 - i, "-", "-", "-", buf);
+	}
+}
+
+static void
 dump_leaks(struct leaktree *leaks)
 {
 	struct leaknode *p;
@@ -2483,22 +2592,8 @@ dump_leaks(struct leaktree *leaks)
 	ulog("Leak report:\n");
 	ulog("                 f     sum      #    avg\n");
 
-	RBT_FOREACH(p, leaktree, leaks) {
-		Dl_info info;
-		const char *caller = p->d.f;
-		const char *object = ".";
-
-		if (caller != NULL) {
-			if (dladdr(p->d.f, &info) != 0) {
-				caller -= (uintptr_t)info.dli_fbase;
-				object = info.dli_fname;
-			}
-		}
-		ulog("%18p %7zu %6u %6zu addr2line -e %s %p\n",
-		    p->d.f, p->d.total_size, p->d.count,
-		    p->d.total_size / p->d.count,
-		    object, caller);
-	}
+	RBT_FOREACH(p, leaktree, leaks) 
+		dump_leak(p);
 }
 
 static void

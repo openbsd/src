@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.139 2023/10/22 14:04:52 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.140 2023/12/04 07:01:45 otto Exp $
 .\"
-.Dd $Mdocdate: October 22 2023 $
+.Dd $Mdocdate: December 4 2023 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -298,11 +298,12 @@ To view the leak report:
 By default, the immediate caller of a
 .Nm
 function will be recorded.
-Use malloc options
-.Cm 2
-or
+Use malloc option
+.Cm 2 , 
 .Cm 3
-to record the caller one or two stack frames deeper instead.
+or
+.Cm 4
+to record deeper call stacks.
 These malloc options imply
 .Cm D .
 .It Cm F
@@ -843,9 +844,10 @@ to avoid these problems on
 .Ox .
 .Pp
 The mechanism to record caller functions when using malloc options
-.Cm 2
+.Cm 2 ,
+.Cm 3 ,
 or
-.Cm 3
+.Cm 4
 is not guaranteed to work for all platforms, compilers or compilation
 options,
 and might even crash your program.
