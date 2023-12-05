@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.167 2023/10/27 19:18:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.168 2023/12/05 15:50:45 claudio Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1548,7 +1548,7 @@ uvm_swapisfull(void)
 
 	mtx_enter(&uvm_swap_data_lock);
 	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-	result = (uvmexp.swpgonly >= (uvmexp.swpages * 99 / 100));
+	result = (uvmexp.swpgonly >= ((long)uvmexp.swpages * 99 / 100));
 	mtx_leave(&uvm_swap_data_lock);
 
 	return result;
