@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc5322.c,v 1.3 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: rfc5322.c,v 1.4 2023/12/05 13:38:25 op Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -149,7 +149,8 @@ _rfc5322_next(struct rfc5322_parser *parser, struct rfc5322_result *res)
 
 	case RFC5322_NONE:
 	case RFC5322_HEADER_END:
-		if (line && (pos = strchr(line, ':'))) {
+		if (line && line[0] != ' ' && line[0] != '\t' &&
+		    (pos = strchr(line, ':'))) {
 			len = pos - line;
 			if (buf_grow(&parser->hdr, len + 1) == -1)
 				return -1;
