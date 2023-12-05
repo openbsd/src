@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.88 2022/10/04 19:38:20 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.89 2023/12/05 20:49:31 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -180,6 +180,17 @@ const struct cfattach ukbd_ca = {
 void	ukbd_gdium_munge(void *, uint8_t *, u_int);
 #endif
 
+const struct usb_devno ukbd_never_console[] = {
+	/* Apple HID-proxy is always detected before any real USB keyboard */
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH_HCI },
+	/* ugold(4) devices, which also present themselves as ukbd */
+	{ USB_VENDOR_MICRODIA, USB_PRODUCT_MICRODIA_TEMPER },
+	{ USB_VENDOR_MICRODIA, USB_PRODUCT_MICRODIA_TEMPERHUM },
+	{ USB_VENDOR_PCSENSORS, USB_PRODUCT_PCSENSORS_TEMPER },
+	{ USB_VENDOR_RDING, USB_PRODUCT_RDING_TEMPER },
+	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_TEMPER },
+};
+
 int
 ukbd_match(struct device *parent, void *match, void *aux)
 {
@@ -225,11 +236,9 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_fsize = hid_report_size(desc, dlen, hid_feature, repid);
 
 	 /*
-	  * Since the HID-Proxy is always detected before any
-	  * real keyboard, do not let it grab the console.
+	  * Do not allow unwanted devices to claim the console.
 	  */
-	if (uha->uaa->vendor == USB_VENDOR_APPLE &&
-	    uha->uaa->product == USB_PRODUCT_APPLE_BLUETOOTH_HCI)
+	if (usb_lookup(ukbd_never_console, uha->uaa->vendor, uha->uaa->product))
 		console = 0;
 
 	quirks = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
