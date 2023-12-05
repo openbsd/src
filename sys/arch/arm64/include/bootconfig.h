@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootconfig.h,v 1.3 2018/05/28 19:39:15 kettenis Exp $	*/
+/*	$OpenBSD: bootconfig.h,v 1.4 2023/12/05 05:27:26 jsg Exp $	*/
 /*	$NetBSD: bootconfig.h,v 1.2 2001/06/21 22:08:28 chris Exp $	*/
 
 /*-
@@ -43,7 +43,5 @@ struct arm64_bootparams {
 };
 
 void initarm(struct arm64_bootparams *);
-
-extern char *boot_file;
 
 #endif /* _MACHINE_BOOTCONFIG_H_ */
