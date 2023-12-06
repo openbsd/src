@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.137 2023/06/14 14:30:08 mvs Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.138 2023/12/06 09:27:17 bluhm Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -853,11 +853,18 @@ del_m6fc(struct socket *so, struct mf6cctl *mfccp)
 }
 
 int
-socket6_send(struct socket *s, struct mbuf *mm, struct sockaddr_in6 *src)
+socket6_send(struct socket *so, struct mbuf *mm, struct sockaddr_in6 *src)
 {
-	if (s) {
-		if (sbappendaddr(s, &s->so_rcv, sin6tosa(src), mm, NULL) != 0) {
-			sorwakeup(s);
+	if (so != NULL) {
+		struct inpcb *inp = sotoinpcb(so);
+		int ret;
+
+		mtx_enter(&inp->inp_mtx);
+		ret = sbappendaddr(so, &so->so_rcv, sin6tosa(src), mm, NULL);
+		mtx_leave(&inp->inp_mtx);
+
+		if (ret != 0) {
+			sorwakeup(so);
 			return 0;
 		}
 	}
