@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.170 2022/11/27 13:19:00 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.171 2023/12/06 15:51:53 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -75,6 +75,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 	int			 nullfd, pipe_dns[2], idx_clients;
 	int			 ctls;
 	int			 fd_ctl;
+	int			 clear_cdns;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt, sent_cnt, trial_cnt;
 	u_int			 ctl_cnt;
@@ -89,7 +90,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 	struct stat		 stb;
 	struct ctl_conn		*cc;
 	time_t			 nextaction, last_sensor_scan = 0, now;
-	time_t			 last_action = 0, interval;
+	time_t			 last_action = 0, interval, last_cdns_reset = 0;
 	void			*newp;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
@@ -326,9 +327,11 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		    (peer_cnt == 0 && sensors_cnt == 0)))
 			priv_settime(0, "no valid peers configured");
 
+		clear_cdns = 1;
 		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
-			if (constraint_query(cstr, conf->status.synced) == -1)
-				continue;
+			constraint_query(cstr, conf->status.synced);
+			if (cstr->state <= STATE_QUERY_SENT)
+				clear_cdns = 0;
 		}
 
 		if (ibuf_main->w.queued > 0)
@@ -346,6 +349,13 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		ctls = i;
 
 		now = getmonotime();
+		if (conf->constraint_median == 0 && clear_cdns &&
+		    now - last_cdns_reset > CONSTRAINT_SCAN_INTERVAL) {
+			log_debug("Reset constraint info");
+			constraint_reset();
+			last_cdns_reset = now;
+			nextaction = now + CONSTRAINT_RETRY_INTERVAL;
+		}
 		timeout = nextaction - now;
 		if (timeout < 0)
 			timeout = 0;
