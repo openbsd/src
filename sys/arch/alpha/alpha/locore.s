@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.52 2023/10/24 13:20:09 claudio Exp $ */
+/* $OpenBSD: locore.s,v 1.53 2023/12/06 06:15:33 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -201,11 +201,13 @@ NESTED(sigcode,0,0,ra,0,0)
 	jsr	ra, (t12)		/* call the signal handler (t12==pv) */
 	ldq	a0, 0(sp)		/* get the sigcontext pointer */
 	lda	sp, 16(sp)
-	CALLSYS_NOERROR(sigreturn)	/* and call sigreturn() with it. */
+	ldiq	v0, SYS_sigreturn	/* and call sigreturn() with it. */
+	call_pal PAL_OSF1_callsys
 	.globl  sigcoderet
 sigcoderet:
 	mov	v0, a0			/* if that failed, get error code */
-	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
+	ldiq	v0, SYS_exit		/* and call exit() with it. */
+	call_pal PAL_OSF1_callsys
 XNESTED(esigcode,0)
 	END(sigcode)
 

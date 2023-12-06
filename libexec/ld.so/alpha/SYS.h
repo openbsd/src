@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 2019/02/03 02:20:36 guenther Exp $ */
+/*	$OpenBSD: SYS.h,v 1.3 2023/12/06 06:15:33 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -63,7 +63,8 @@
 
 #define	DL_SYSCALL(c)							\
 LEAF_NOPROFILE(_dl_##c, irrelevant);					\
-	CALLSYS_NOERROR(c);						\
+	ldiq	v0, SYS_##c;						\
+	call_pal PAL_OSF1_callsys;					\
 	beq	a3, 1f;							\
 	subq	zero, v0, v0;	/* return -errno */			\
 1:									\

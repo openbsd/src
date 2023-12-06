@@ -1,4 +1,4 @@
-/* $OpenBSD: asm.h,v 1.15 2022/08/30 16:26:29 miod Exp $ */
+/* $OpenBSD: asm.h,v 1.16 2023/12/06 06:15:33 miod Exp $ */
 /* $NetBSD: asm.h,v 1.23 2000/06/23 12:18:45 kleink Exp $ */
 
 /* 
@@ -589,23 +589,6 @@ label:	ASCIZ msg;						\
 
 /* Pull in PAL "function" codes. */
 #include <machine/pal.h>
-
-/*
- * System call glue.
- */
-#define	SYSCALLNUM(name)					\
-	___CONCAT(SYS_,name)
-
-#define	CALLSYS_NOERROR(name)					\
-	ldiq	v0, SYSCALLNUM(name);				\
-	call_pal PAL_OSF1_callsys
-
-#define NETBSD_SYSCALLNUM(name)					\
-	___CONCAT(NETBSD_SYS_,name)
-
-#define NETBSD_CALLSYS_NOERROR(name)				\
-	ldiq	v0, NETBSD_SYSCALLNUM(name);			\
-	call_pal PAL_OSF1_callsys
 
 /*
  * Load the global pointer.

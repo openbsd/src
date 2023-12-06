@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.15 2016/05/16 16:25:06 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.16 2023/12/06 06:15:33 miod Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -65,6 +65,9 @@
 			_END(_HIDDEN(x))
 #define	END_WEAK(x)	END_STRONG(x); .weak x
 
+#define	CALLSYS_NOERROR(name)					\
+	ldiq	v0, ___CONCAT(SYS_,name);			\
+	call_pal PAL_OSF1_callsys
 
 #define	CALLSYS_ERROR(name)					\
 	CALLSYS_NOERROR(name);					\
