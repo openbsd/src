@@ -1,0 +1,18 @@
+Stress test bind(2) and connect(2) system calls in OpenBSD regress.
+
+bindconnect [-b bind] [-c connect] [-n num] [-o close] [-s socket] [-t time]
+    -b bind     threads binding sockets, default 1
+    -c connect  threads connecting sockets, default 1
+    -n num      number of file descriptors, default 100
+    -o close    threads closing sockets, default 1
+    -s socket   threads creating sockets, default 1
+    -t time     run time in seconds, default 10
+
+Separate threads are started to run socket(2), close(2), bind(2),
+and connect(2) system calls concurrently.  The number of sockets
+is controlled by the process limit of open file descriptors.  All
+system calls operate on random file descriptors.  By setting the
+number of threads for each system call and the number of available
+file descriptors, the focus for the stress test can be changed.
+
+Currently only IPv4 UDP sockets with 127.0.0.1 are supported.
