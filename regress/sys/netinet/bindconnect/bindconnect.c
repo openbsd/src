@@ -1,4 +1,4 @@
-/*	$OpenBSD: bindconnect.c,v 1.2 2023/12/06 22:57:14 bluhm Exp $	*/
+/*	$OpenBSD: bindconnect.c,v 1.3 2023/12/07 23:47:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023 Alexander Bluhm <bluhm@openbsd.org>
@@ -33,14 +33,30 @@
 
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 
+#define s6_addr8	__u6_addr.__u6_addr8
+#define s6_addr16	__u6_addr.__u6_addr16
+#define s6_addr32	__u6_addr.__u6_addr32
+
+union sockaddr_union {
+	struct sockaddr		su_sa;
+	struct sockaddr_in	su_sin;
+	struct sockaddr_in6	su_sin6;
+};
+
+union inaddr_union {
+	struct in_addr	au_inaddr;
+	struct in6_addr	au_in6addr;
+};
+
 int fd_base;
 unsigned int fd_num = 128;
 unsigned int run_time = 10;
 unsigned int socket_num = 1, close_num = 1, bind_num = 1, connect_num = 1,
     delroute_num = 0;
 int reuse_port = 0;
-struct in_addr addr, mask;
-int prefix = -1, route_sock = -1;
+const char *family = "inet";
+union inaddr_union addr, mask;
+int af, prefix = -1, route_sock = -1;
 
 static void __dead
 usage(void)
@@ -51,21 +67,16 @@ usage(void)
 	    "    -b bind      threads binding sockets, default %u\n"
 	    "    -c connect   threads connecting sockets, default %u\n"
 	    "    -d delroute  threads deleting cloned routes, default %u\n"
+	    "    -f family    address family inet or inet6, default %s\n"
 	    "    -N addr/net  connect to any address within network\n"
 	    "    -n num       number of file descriptors, default %u\n"
 	    "    -o close     threads closing sockets, default %u\n"
 	    "    -r           set reuse port socket option\n"
 	    "    -s socket    threads creating sockets, default %u\n"
 	    "    -t time      run time in seconds, default %u\n",
-	    bind_num, connect_num, delroute_num, fd_num, close_num, socket_num,
-	    run_time);
+	    bind_num, connect_num, delroute_num, family, fd_num, close_num,
+	    socket_num, run_time);
 	exit(2);
-}
-
-static inline struct sockaddr *
-sintosa(struct sockaddr_in *sin)
-{
-	return ((struct sockaddr *)(sin));
 }
 
 static void
@@ -75,6 +86,72 @@ in_prefixlen2mask(struct in_addr *maskp, int plen)
 		maskp->s_addr = 0;
 	else
 		maskp->s_addr = htonl(0xffffffff << (32 - plen));
+}
+
+static void
+in6_prefixlen2mask(struct in6_addr *maskp, int len)
+{
+	u_char maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
+	int bytelen, bitlen, i;
+
+	bzero(maskp, sizeof(*maskp));
+	bytelen = len / 8;
+	bitlen = len % 8;
+	for (i = 0; i < bytelen; i++)
+		maskp->s6_addr[i] = 0xff;
+	/* len == 128 is ok because bitlen == 0 then */
+	if (bitlen)
+		maskp->s6_addr[bytelen] = maskarray[bitlen - 1];
+}
+
+static void
+fill_sockaddr(union sockaddr_union *su)
+{
+	memset(su, 0, sizeof(*su));
+	su->su_sa.sa_family = af;
+	if (af == AF_INET) {
+		su->su_sin.sin_len = sizeof(su->su_sin);
+		if (prefix >= 0)
+			su->su_sin.sin_addr = addr.au_inaddr;
+		else
+			su->su_sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	}
+	if (af == AF_INET6) {
+		su->su_sin6.sin6_len = sizeof(su->su_sin6);
+		if (prefix >= 0)
+			su->su_sin6.sin6_addr = addr.au_in6addr;
+		else
+			su->su_sin6.sin6_addr = in6addr_loopback;
+	}
+}
+
+static void
+mask_sockaddr(union sockaddr_union *su)
+{
+	if (af == AF_INET) {
+		if (prefix >=0 && prefix != 32) {
+			su->su_sin.sin_addr.s_addr &=
+			    mask.au_inaddr.s_addr;
+			/* do only 8 bits variation, routes should be reused */
+			su->su_sin.sin_addr.s_addr |= htonl(255) &
+			    ~mask.au_inaddr.s_addr & arc4random();
+		}
+	}
+	if (af == AF_INET6) {
+		if (prefix >=0 && prefix != 128) {
+			su->su_sin6.sin6_addr.s6_addr32[0] &=
+			    mask.au_in6addr.s6_addr32[0];
+			su->su_sin6.sin6_addr.s6_addr32[1] &=
+			    mask.au_in6addr.s6_addr32[1];
+			su->su_sin6.sin6_addr.s6_addr32[2] &=
+			    mask.au_in6addr.s6_addr32[2];
+			su->su_sin6.sin6_addr.s6_addr32[3] &=
+			    mask.au_in6addr.s6_addr32[3];
+			/* do only 8 bits variation, routes should be reused */
+			su->su_sin6.sin6_addr.s6_addr32[3] |= htonl(255) &
+			    ~mask.au_in6addr.s6_addr32[3] & arc4random();
+		}
+	}
 }
 
 static void *
@@ -87,7 +164,7 @@ thread_socket(void *arg)
 	for (count = 0; *run; count++) {
 		int opt;
 
-		fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		fd = socket(af, SOCK_DGRAM, IPPROTO_UDP);
 		if (fd < 0 || !reuse_port)
 			continue;
 		opt = 1;
@@ -118,19 +195,13 @@ thread_bind(void *arg)
 	volatile int *run = arg;
 	unsigned long count;
 	int fd;
-	struct sockaddr_in sin;
+	union sockaddr_union su;
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-	if (prefix >= 0)
-		sin.sin_addr = addr;
+	fill_sockaddr(&su);
 
 	for (count = 0; *run; count++) {
 		fd = fd_base + arc4random_uniform(fd_num);
-		bind(fd, sintosa(&sin), sizeof(sin));
+		bind(fd, &su.su_sa, su.su_sa.sa_len);
 	}
 
 	return (void *)count;
@@ -142,24 +213,18 @@ thread_connect(void *arg)
 	volatile int *run = arg;
 	unsigned long count;
 	int fd;
-	struct sockaddr_in sin;
+	union sockaddr_union su;
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-	if (prefix >= 0)
-		sin.sin_addr = addr;
+	fill_sockaddr(&su);
 
 	for (count = 0; *run; count++) {
 		fd = fd_base + arc4random_uniform(fd_num);
-		if (prefix >=0 && prefix != 32) {
-			sin.sin_addr.s_addr &= mask.s_addr;
-			sin.sin_addr.s_addr |= ~mask.s_addr & arc4random();
-		}
-		sin.sin_port = arc4random();
-		connect(fd, sintosa(&sin), sizeof(sin));
+		mask_sockaddr(&su);
+		if (af == AF_INET)
+			su.su_sin.sin_port = arc4random();
+		if (af == AF_INET6)
+			su.su_sin6.sin6_port = arc4random();
+		connect(fd, &su.su_sa, su.su_sa.sa_len);
 	}
 
 	return (void *)count;
@@ -175,7 +240,7 @@ thread_delroute(void *arg)
 		struct rt_msghdr	m_rtm;
 		char			m_space[512];
 	} m_rtmsg;
-	struct sockaddr_in sin;
+	union sockaddr_union su;
 
 #define rtm \
 	m_rtmsg.m_rtm
@@ -185,8 +250,8 @@ thread_delroute(void *arg)
 	(x += ROUNDUP((n)->sa_len))
 #define NEXTADDR(w, sa)				\
 	if (rtm.rtm_addrs & (w)) {		\
-		int l = ROUNDUP(sa->sa_len);	\
-		memcpy(cp, sa, l);		\
+		int l = ROUNDUP((sa)->sa_len);	\
+		memcpy(cp, (sa), l);		\
 		cp += l;			\
 	}
 
@@ -195,21 +260,16 @@ thread_delroute(void *arg)
 	rtm.rtm_flags = RTF_HOST;
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_addrs = RTA_DST;
-	rtm.rtm_priority = 0;  /* XXX */
 	rtm.rtm_hdrlen = sizeof(rtm);
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr = addr;
+	fill_sockaddr(&su);
 
 	for (count = 0; *run; count++) {
 		char *cp = m_rtmsg.m_space;
 
 		rtm.rtm_seq = ++seq;
-		sin.sin_addr.s_addr &= mask.s_addr;
-		sin.sin_addr.s_addr |= ~mask.s_addr & arc4random();
-		NEXTADDR(RTA_DST, sintosa(&sin));
+		mask_sockaddr(&su);
+		NEXTADDR(RTA_DST, &su.su_sa);
 		rtm.rtm_msglen = cp - (char *)&m_rtmsg;
 		write(route_sock, &m_rtmsg, rtm.rtm_msglen);
 	}
@@ -228,12 +288,14 @@ main(int argc, char *argv[])
 	struct rlimit rlim;
 	pthread_t *tsocket, *tclose, *tbind, *tconnect, *tdelroute;
 	const char *errstr, *addr_net = NULL;
+	char buf[128], *p;
 	int ch, run;
 	unsigned int n;
 	unsigned long socket_count, close_count, bind_count, connect_count,
 	    delroute_count;
+	union sockaddr_union su;
 
-	while ((ch = getopt(argc, argv, "b:c:d:N:n:o:rs:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:d:f:N:n:o:rs:t:")) != -1) {
 		switch (ch) {
 		case 'b':
 			bind_num = strtonum(optarg, 0, UINT_MAX, &errstr);
@@ -249,6 +311,9 @@ main(int argc, char *argv[])
 			delroute_num = strtonum(optarg, 0, UINT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "delroute is %s: %s", errstr, optarg);
+			break;
+		case 'f':
+			family = optarg;
 			break;
 		case 'N':
 			addr_net = optarg;
@@ -285,27 +350,58 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
+	if (strcmp(family, "inet") == 0)
+		af = AF_INET;
+	else if (strcmp(family, "inet6") == 0)
+		af = AF_INET6;
+	else
+		errx(1, "bad address family %s", family);
+
+	/* split addr/net into addr, mask, prefix */
 	if (addr_net != NULL) {
-		prefix = inet_net_pton(AF_INET, addr_net, &addr, sizeof(addr));
+		prefix = inet_net_pton(af, addr_net, &addr, sizeof(addr));
 		if (prefix < 0)
 			err(1, "inet_net_pton %s", addr_net);
-		in_prefixlen2mask(&mask, prefix);
+		if (af == AF_INET6) {
+			/*
+			 * Man page says inet_net_pton() preserves lower
+			 * bits.  That is not true, call inet_pton() again.
+			 */
+			if (strlcpy(buf, addr_net, sizeof(buf)) >= sizeof(buf))
+				err(1, "strlcpy %s", addr_net);
+			p = strchr(buf, '/');
+			if (p != NULL ) {
+				*p = '\0';
+				if (inet_pton(af, buf, &addr) < 0)
+					err(1, "inet_pton %s", buf);
+			}
+		}
+		if (af == AF_INET)
+			in_prefixlen2mask(&mask.au_inaddr, prefix);
+		if (af == AF_INET6)
+			in6_prefixlen2mask(&mask.au_in6addr, prefix);
 	}
+
+	/* preopen route socket before file descriptor limits are set */
 	if (delroute_num > 0) {
 		if (prefix < 0 || prefix == 32)
 			errx(1, "delroute %u needs addr/net", delroute_num);
-		route_sock = socket(AF_ROUTE, SOCK_RAW, AF_INET);
+		route_sock = socket(AF_ROUTE, SOCK_RAW, af);
 		if (route_sock < 0)
 			err(1, "socket route");
 		if (shutdown(route_sock, SHUT_RD) < 0)
 			err(1, "shutdown read route");
 	}
 
-	fd_base = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	/* detect lowest file desciptor, test bind, close everything above */
+	fd_base = socket(af, SOCK_DGRAM, IPPROTO_UDP);
 	if (fd_base < 0)
 		err(1, "socket fd_base");
 	if (fd_base > INT_MAX - (int)fd_num)
 		err(1, "fd base %d and num %u overflow", fd_base, fd_num);
+	fill_sockaddr(&su);
+	if (bind(fd_base, &su.su_sa, su.su_sa.sa_len) < 0)
+		err(1, "bind %s", inet_ntop(af, &addr, buf, sizeof(buf)));
 	if (closefrom(fd_base) < 0)
 		err(1, "closefrom %d", fd_base);
 

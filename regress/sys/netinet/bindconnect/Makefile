@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2023/12/06 22:57:14 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2023/12/07 23:47:48 bluhm Exp $
 
 PROG=		bindconnect
 LDADD=		-lpthread
@@ -8,6 +8,7 @@ WARNINGS=	yes
 CLEANFILES=	ktrace.out
 
 LOCAL_NET ?=
+LOCAL_NET6 ?=
 
 REGRESS_ROOT_TARGETS +=	setup-maxfiles run-100000 run-localnet-connect-delete
 
@@ -18,52 +19,68 @@ setup-maxfiles:
 
 REGRESS_SETUP +=	${PROG}
 
-.if ! empty(LOCAL_NET)
-REGRESS_CLEANUP +=	cleanup-delete
-.endif
-cleanup-delete:
-	-${SUDO} time ./${PROG} -s 0 -o 0 -b 0 -c 0 -d 1 -N ${LOCAL_NET} -t 1
-
 REGRESS_TARGETS +=	run-default
 run-default:
 	time ${KTRACE} ./${PROG}
 
-REGRESS_TARGETS +=	run-bind
-run-bind:
-	time ${KTRACE} ./${PROG} -n 16 -s 2 -o 1 -b 5 -c 0
+NET_inet =	${LOCAL_NET}
+NET_inet6 =	${LOCAL_NET6}
 
-REGRESS_TARGETS +=	run-connect
-run-connect:
-	time ${KTRACE} ./${PROG} -n 16 -s 2 -o 1 -b 0 -c 5
+.for af in inet inet6
 
-REGRESS_TARGETS +=	run-bind-connect
-run-bind-connect:
-	time ${KTRACE} ./${PROG} -n 16 -s 2 -o 1 -b 3 -c 3
+.if ! empty(NET_${af})
+REGRESS_CLEANUP +=	cleanup-${af}-delete
+.endif
+cleanup-${af}-delete:
+	-${SUDO} time ./${PROG} \
+	    -f ${af} -s 0 -o 0 -b 0 -c 0 -d 1 -N ${NET_${af}} -t 1
 
-REGRESS_TARGETS +=	run-100000
-run-100000:
-	${SUDO} time ${KTRACE} ./${PROG} -n 100000 -s 2 -o 1 -b 3 -c 3
+REGRESS_TARGETS +=	run-${af}-bind
+run-${af}-bind:
+	time ${KTRACE} ./${PROG} \
+	    -f ${af} -n 16 -s 2 -o 1 -b 6 -c 0
 
-REGRESS_TARGETS +=	run-reuseport
-run-reuseport:
-	time ${KTRACE} ./${PROG} -n 16 -s 2 -o 1 -b 3 -c 3 -r
+REGRESS_TARGETS +=	run-${af}-connect
+run-${af}-connect:
+	time ${KTRACE} ./${PROG} \
+	    -f ${af} -n 16 -s 2 -o 1 -b 0 -c 6
 
-.if empty(LOCAL_NET)
-REGRESS_SKIP_TARGETS +=	run-localnet-connect run-localnet-bind-connect \
-			run-localnet-connect-delete
+REGRESS_TARGETS +=	run-${af}-bind-connect
+run-${af}-bind-connect:
+	time ${KTRACE} ./${PROG} \
+	    -f ${af} -n 16 -s 2 -o 1 -b 3 -c 3
+
+REGRESS_TARGETS +=	run-${af}-100000
+run-${af}-100000:
+	${SUDO} time ${KTRACE} ./${PROG} \
+	    -f ${af} -n 100000 -s 2 -o 1 -b 3 -c 3
+
+REGRESS_TARGETS +=	run-${af}-reuseport
+run-${af}-reuseport:
+	time ${KTRACE} ./${PROG} \
+	    -f ${af} -n 16 -s 2 -o 1 -b 3 -c 3 -r
+
+.if empty(NET_${af})
+REGRESS_SKIP_TARGETS +=	run-${af}-localnet-connect \
+			run-${af}-localnet-bind-connect \
+			run-${af}-localnet-connect-delete
 .endif
 
-REGRESS_TARGETS +=	run-localnet-connect
-run-localnet-connect:
-	time ${KTRACE} ./${PROG} -n 16 -s 2 -o 1 -c 5 -N ${LOCAL_NET}
+REGRESS_TARGETS +=	run-${af}-localnet-connect
+run-${af}-localnet-connect:
+	time ${KTRACE} ./${PROG} \
+	    -f ${af} -n 16 -s 2 -o 1 -c 6 -N ${NET_${af}}
 
-REGRESS_TARGETS +=	run-localnet-bind-connect
-run-localnet-bind-connect:
-	time ${KTRACE} ./${PROG} -n 16 -s 2 -o 1 -b 3 -c 3 -N ${LOCAL_NET}
+REGRESS_TARGETS +=	run-${af}-localnet-bind-connect
+run-${af}-localnet-bind-connect:
+	time ${KTRACE} ./${PROG} \
+	    -f ${af} -n 16 -s 2 -o 1 -b 3 -c 3 -N ${NET_${af}}
 
-REGRESS_TARGETS +=	run-localnet-connect-delete
-run-localnet-connect-delete:
-	${SUDO} time ${KTRACE} \
-	    ./${PROG} -n 16 -s 2 -o 1 -b 0 -c 5 -d 3 -N ${LOCAL_NET}
+REGRESS_TARGETS +=	run-${af}-localnet-connect-delete
+run-${af}-localnet-connect-delete:
+	${SUDO} time ${KTRACE} ./${PROG} \
+	    -f ${af} -n 16 -s 2 -o 1 -b 0 -c 6 -d 3 -N ${NET_${af}}
+
+.endfor
 
 .include <bsd.regress.mk>
