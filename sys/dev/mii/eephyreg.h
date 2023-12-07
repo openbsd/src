@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephyreg.h,v 1.9 2022/01/09 05:42:44 jsg Exp $	*/
+/*	$OpenBSD: eephyreg.h,v 1.10 2023/12/07 09:46:58 uwe Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -284,6 +284,7 @@
 #define E1000_ISR_SPEED_CHANGED		0x4000
 #define E1000_ISR_AUTO_NEG_ERR		0x8000
 
+/* page any */
 #define E1000_ESCR			0x14	/* extended special control reg */
 #define E1000_ESCR_FIBER_LOOPBACK	0x4000
 #define E1000_ESCR_DOWN_NO_IDLE		0x8000

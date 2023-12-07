@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.61 2023/12/05 11:06:05 uwe Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.62 2023/12/07 09:46:58 uwe Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -276,10 +276,13 @@ eephy_reset(struct mii_softc *sc)
 
 	PHY_WRITE(sc, E1000_SCR, reg);
 
-	/* 25 MHz TX_CLK should always work. */
-	reg = PHY_READ(sc, E1000_ESCR);
-	reg |= E1000_ESCR_TX_CLK_25;
-	PHY_WRITE(sc, E1000_ESCR, reg);
+	if (sc->mii_model != MII_MODEL_MARVELL_E1512 &&
+	    sc->mii_model != MII_MODEL_MARVELL_E1545) {
+		/* 25 MHz TX_CLK should always work. */
+		reg = PHY_READ(sc, E1000_ESCR);
+		reg |= E1000_ESCR_TX_CLK_25;
+		PHY_WRITE(sc, E1000_ESCR, reg);
+	}
 
 	/* Configure LEDs if they were left unconfigured. */
 	if (sc->mii_model == MII_MODEL_MARVELL_E3016 &&
