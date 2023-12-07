@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.251 2023/11/29 20:40:06 bluhm Exp $
+;	$OpenBSD: syscalls.master,v 1.252 2023/12/07 13:59:04 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -306,7 +306,8 @@
 #endif
 156	OBSOL		ogetdirentries
 157	OBSOL		statfs25
-158	OBSOL		fstatfs25
+158	STD		{ int sys_pinsyscalls(void *base, size_t len, \
+			    void *pins, size_t pinslen); }
 159	STD		{ int sys_mimmutable(void *addr, size_t len); }
 160	STD		{ int sys_waitid(int idtype, id_t id, \
 			    siginfo_t *info, int options); }
