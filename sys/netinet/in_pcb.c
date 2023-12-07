@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.281 2023/12/03 20:24:17 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.282 2023/12/07 16:08:30 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -130,6 +130,13 @@ int	in_pcbresize(struct inpcbtable *, int);
 uint64_t in_pcbhash(struct inpcbtable *, u_int,
     const struct in_addr *, u_short, const struct in_addr *, u_short);
 uint64_t in_pcblhash(struct inpcbtable *, u_int, u_short);
+
+struct inpcb *in_pcblookup_lock(struct inpcbtable *, struct in_addr, u_int,
+    struct in_addr, u_int, u_int, int);
+int	in_pcbaddrisavail_lock(struct inpcb *, struct sockaddr_in *, int,
+    struct proc *, int);
+int	in_pcbpickport(u_int16_t *, const void *, int, const struct inpcb *,
+    struct proc *);
 
 /*
  * in_pcb is used for inet and inet6.  in6_pcb only contains special
@@ -269,9 +276,8 @@ in_pcballoc(struct socket *so, struct inpcbtable *table, int wait)
 }
 
 int
-in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
+in_pcbbind_locked(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 {
-	struct inpcbtable *table = inp->inp_table;
 	struct socket *so = inp->inp_socket;
 	u_int16_t lport = 0;
 	int wild = 0;
@@ -297,7 +303,8 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 
 			if ((error = in6_nam2sin6(nam, &sin6)))
 				return (error);
-			if ((error = in6_pcbaddrisavail(inp, sin6, wild, p)))
+			if ((error = in6_pcbaddrisavail_lock(inp, sin6, wild,
+			    p, IN_PCBLOCK_HOLD)))
 				return (error);
 			laddr = &sin6->sin6_addr;
 			lport = sin6->sin6_port;
@@ -313,7 +320,8 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 
 			if ((error = in_nam2sin(nam, &sin)))
 				return (error);
-			if ((error = in_pcbaddrisavail(inp, sin, wild, p)))
+			if ((error = in_pcbaddrisavail_lock(inp, sin, wild,
+			    p, IN_PCBLOCK_HOLD)))
 				return (error);
 			laddr = &sin->sin_addr;
 			lport = sin->sin_port;
@@ -337,16 +345,28 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			inp->inp_laddr = *(struct in_addr *)laddr;
 	}
 	inp->inp_lport = lport;
-	mtx_enter(&table->inpt_mtx);
 	in_pcbrehash(inp);
-	mtx_leave(&table->inpt_mtx);
 
 	return (0);
 }
 
 int
-in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
-    struct proc *p)
+in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
+{
+	struct inpcbtable *table = inp->inp_table;
+	int error;
+
+	/* keep lookup, modification, and rehash in sync */
+	mtx_enter(&table->inpt_mtx);
+	error = in_pcbbind_locked(inp, nam, p);
+	mtx_leave(&table->inpt_mtx);
+
+	return error;
+}
+
+int
+in_pcbaddrisavail_lock(struct inpcb *inp, struct sockaddr_in *sin, int wild,
+    struct proc *p, int lock)
 {
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
@@ -393,24 +413,33 @@ in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
 		int error = 0;
 
 		if (so->so_euid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
-			t = in_pcblookup_local(table, &sin->sin_addr, lport,
-			    INPLOOKUP_WILDCARD, inp->inp_rtableid);
+			t = in_pcblookup_local_lock(table, &sin->sin_addr,
+			    lport, INPLOOKUP_WILDCARD, inp->inp_rtableid, lock);
 			if (t && (so->so_euid != t->inp_socket->so_euid))
 				error = EADDRINUSE;
-			in_pcbunref(t);
+			if (lock == IN_PCBLOCK_GRAB)
+				in_pcbunref(t);
 			if (error)
 				return (error);
 		}
-		t = in_pcblookup_local(table, &sin->sin_addr, lport,
-		    wild, inp->inp_rtableid);
+		t = in_pcblookup_local_lock(table, &sin->sin_addr, lport,
+		    wild, inp->inp_rtableid, lock);
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			error = EADDRINUSE;
-		in_pcbunref(t);
+		if (lock == IN_PCBLOCK_GRAB)
+			in_pcbunref(t);
 		if (error)
 			return (error);
 	}
 
 	return (0);
+}
+
+int
+in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
+    struct proc *p)
+{
+	return in_pcbaddrisavail_lock(inp, sin, wild, p, IN_PCBLOCK_GRAB);
 }
 
 int
@@ -422,6 +451,8 @@ in_pcbpickport(u_int16_t *lport, const void *laddr, int wild,
 	struct inpcb *t;
 	u_int16_t first, last, lower, higher, candidate, localport;
 	int count;
+
+	MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
 
 	if (inp->inp_flags & INP_HIGHPORT) {
 		first = ipport_hifirstauto;	/* sysctl */
@@ -451,9 +482,7 @@ in_pcbpickport(u_int16_t *lport, const void *laddr, int wild,
 	count = higher - lower;
 	candidate = lower + arc4random_uniform(count);
 
-	t = NULL;
 	do {
-		in_pcbunref(t);
 		do {
 			if (count-- < 0)	/* completely used? */
 				return (EADDRNOTAVAIL);
@@ -462,8 +491,8 @@ in_pcbpickport(u_int16_t *lport, const void *laddr, int wild,
 				candidate = lower;
 			localport = htons(candidate);
 		} while (in_baddynamic(candidate, so->so_proto->pr_protocol));
-		t = in_pcblookup_local(table, laddr, localport, wild,
-		    inp->inp_rtableid);
+		t = in_pcblookup_local_lock(table, laddr, localport, wild,
+		    inp->inp_rtableid, IN_PCBLOCK_HOLD);
 	} while (t != NULL);
 	*lport = localport;
 
@@ -498,10 +527,13 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	if (error)
 		return (error);
 
-	t = in_pcblookup(inp->inp_table, sin->sin_addr, sin->sin_port,
-	    ina, inp->inp_lport, inp->inp_rtableid);
+	/* keep lookup, modification, and rehash in sync */
+	mtx_enter(&table->inpt_mtx);
+
+	t = in_pcblookup_lock(inp->inp_table, sin->sin_addr, sin->sin_port,
+	    ina, inp->inp_lport, inp->inp_rtableid, IN_PCBLOCK_HOLD);
 	if (t != NULL) {
-		in_pcbunref(t);
+		mtx_leave(&table->inpt_mtx);
 		return (EADDRINUSE);
 	}
 
@@ -509,15 +541,17 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL, curproc);
-			if (error)
+			error = in_pcbbind_locked(inp, NULL, curproc);
+			if (error) {
+				mtx_leave(&table->inpt_mtx);
 				return (error);
-			t = in_pcblookup(inp->inp_table, sin->sin_addr,
+			}
+			t = in_pcblookup_lock(inp->inp_table, sin->sin_addr,
 			    sin->sin_port, ina, inp->inp_lport,
-			    inp->inp_rtableid);
+			    inp->inp_rtableid, IN_PCBLOCK_HOLD);
 			if (t != NULL) {
 				inp->inp_lport = 0;
-				in_pcbunref(t);
+				mtx_leave(&table->inpt_mtx);
 				return (EADDRINUSE);
 			}
 		}
@@ -525,8 +559,8 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	}
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
-	mtx_enter(&table->inpt_mtx);
 	in_pcbrehash(inp);
+
 	mtx_leave(&table->inpt_mtx);
 
 #if NSTOEPLITZ > 0
@@ -539,6 +573,11 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 void
 in_pcbdisconnect(struct inpcb *inp)
 {
+	/*
+	 * XXXSMP pf lock sleeps, so we cannot use table->inpt_mtx
+	 * to keep inp_pf_sk in sync with pcb.  Use net lock for now.
+	 */
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 #if NPF > 0
 	if (inp->inp_pf_sk) {
 		pf_remove_divert_state(inp->inp_pf_sk);
@@ -576,6 +615,12 @@ in_pcbdetach(struct inpcb *inp)
 	} else
 #endif
 		ip_freemoptions(inp->inp_moptions);
+
+	/*
+	 * XXXSMP pf lock sleeps, so we cannot use table->inpt_mtx
+	 * to keep inp_pf_sk in sync with pcb.  Use net lock for now.
+	 */
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 #if NPF > 0
 	if (inp->inp_pf_sk) {
 		pf_remove_divert_state(inp->inp_pf_sk);
@@ -791,8 +836,8 @@ in_rtchange(struct inpcb *inp, int errno)
 }
 
 struct inpcb *
-in_pcblookup_local(struct inpcbtable *table, const void *laddrp,
-    u_int lport_arg, int flags, u_int rtable)
+in_pcblookup_local_lock(struct inpcbtable *table, const void *laddrp,
+    u_int lport_arg, int flags, u_int rtable, int lock)
 {
 	struct inpcb *inp, *match = NULL;
 	int matchwild = 3, wildcard;
@@ -808,7 +853,12 @@ in_pcblookup_local(struct inpcbtable *table, const void *laddrp,
 	rdomain = rtable_l2(rtable);
 	lhash = in_pcblhash(table, rdomain, lport);
 
-	mtx_enter(&table->inpt_mtx);
+	if (lock == IN_PCBLOCK_GRAB) {
+		mtx_enter(&table->inpt_mtx);
+	} else {
+		KASSERT(lock == IN_PCBLOCK_HOLD);
+		MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
+	}
 	head = &table->inpt_lhashtbl[lhash & table->inpt_lmask];
 	LIST_FOREACH(inp, head, inp_lhash) {
 		if (rtable_l2(inp->inp_rtableid) != rdomain)
@@ -859,8 +909,10 @@ in_pcblookup_local(struct inpcbtable *table, const void *laddrp,
 				break;
 		}
 	}
-	in_pcbref(match);
-	mtx_leave(&table->inpt_mtx);
+	if (lock == IN_PCBLOCK_GRAB) {
+		in_pcbref(match);
+		mtx_leave(&table->inpt_mtx);
+	}
 
 	return (match);
 }
@@ -1029,10 +1081,6 @@ in_pcbselsrc(struct in_addr *insrc, struct sockaddr_in *sin,
 void
 in_pcbrehash(struct inpcb *inp)
 {
-	struct inpcbtable *table = inp->inp_table;
-
-	MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
-
 	LIST_REMOVE(inp, inp_lhash);
 	LIST_REMOVE(inp, inp_hash);
 	in_pcbhash_insert(inp);
@@ -1154,8 +1202,8 @@ int	in_pcbnotifymiss = 0;
  * After those two lookups no other are necessary.
  */
 struct inpcb *
-in_pcblookup(struct inpcbtable *table, struct in_addr faddr,
-    u_int fport, struct in_addr laddr, u_int lport, u_int rtable)
+in_pcblookup_lock(struct inpcbtable *table, struct in_addr faddr,
+    u_int fport, struct in_addr laddr, u_int lport, u_int rtable, int lock)
 {
 	struct inpcb *inp;
 	uint64_t hash;
@@ -1164,11 +1212,18 @@ in_pcblookup(struct inpcbtable *table, struct in_addr faddr,
 	rdomain = rtable_l2(rtable);
 	hash = in_pcbhash(table, rdomain, &faddr, fport, &laddr, lport);
 
-	mtx_enter(&table->inpt_mtx);
+	if (lock == IN_PCBLOCK_GRAB) {
+		mtx_enter(&table->inpt_mtx);
+	} else {
+		KASSERT(lock == IN_PCBLOCK_HOLD);
+		MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
+	}
 	inp = in_pcbhash_lookup(table, hash, rdomain,
 	    &faddr, fport, &laddr, lport);
-	in_pcbref(inp);
-	mtx_leave(&table->inpt_mtx);
+	if (lock == IN_PCBLOCK_GRAB) {
+		in_pcbref(inp);
+		mtx_leave(&table->inpt_mtx);
+	}
 
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
@@ -1178,6 +1233,14 @@ in_pcblookup(struct inpcbtable *table, struct in_addr faddr,
 	}
 #endif
 	return (inp);
+}
+
+struct inpcb *
+in_pcblookup(struct inpcbtable *table, struct in_addr faddr,
+    u_int fport, struct in_addr laddr, u_int lport, u_int rtable)
+{
+	return in_pcblookup_lock(table, faddr, fport, laddr, lport, rtable,
+	    IN_PCBLOCK_GRAB);
 }
 
 /*

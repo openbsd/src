@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.142 2023/12/03 20:24:17 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.143 2023/12/07 16:08:30 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -268,6 +268,9 @@ struct baddynamicports {
 
 #ifdef _KERNEL
 
+#define IN_PCBLOCK_HOLD	1
+#define IN_PCBLOCK_GRAB	2
+
 extern struct inpcbtable rawcbtable, rawin6pcbtable;
 extern struct baddynamicports baddynamicports;
 extern struct baddynamicports rootonlyports;
@@ -276,6 +279,7 @@ extern int in_pcbnotifymiss;
 void	 in_init(void);
 void	 in_losing(struct inpcb *);
 int	 in_pcballoc(struct socket *, struct inpcbtable *, int);
+int	 in_pcbbind_locked(struct inpcb *, struct mbuf *, struct proc *);
 int	 in_pcbbind(struct inpcb *, struct mbuf *, struct proc *);
 int	 in_pcbaddrisavail(struct inpcb *, struct sockaddr_in *, int,
 	    struct proc *);
@@ -296,10 +300,12 @@ uint64_t in6_pcbhash(struct inpcbtable *, u_int, const struct in6_addr *,
 	    u_short, const struct in6_addr *, u_short);
 struct inpcb *
 	 in6_pcblookup(struct inpcbtable *, const struct in6_addr *,
-			       u_int, const struct in6_addr *, u_int, u_int);
+	    u_int, const struct in6_addr *, u_int, u_int);
 struct inpcb *
 	 in6_pcblookup_listen(struct inpcbtable *, struct in6_addr *, u_int,
 	    struct mbuf *, u_int);
+int	 in6_pcbaddrisavail_lock(struct inpcb *, struct sockaddr_in6 *, int,
+	    struct proc *, int);
 int	 in6_pcbaddrisavail(struct inpcb *, struct sockaddr_in6 *, int,
 	    struct proc *);
 int	 in6_pcbconnect(struct inpcb *, struct mbuf *);
@@ -310,8 +316,8 @@ int	 in6_peeraddr(struct socket *, struct mbuf *);
 #endif /* INET6 */
 void	 in_pcbinit(struct inpcbtable *, int);
 struct inpcb *
-	 in_pcblookup_local(struct inpcbtable *, const void *, u_int, int,
-	    u_int);
+	 in_pcblookup_local_lock(struct inpcbtable *, const void *, u_int, int,
+	    u_int, int);
 void	 in_pcbnotifyall(struct inpcbtable *, struct sockaddr *,
 	    u_int, int, void (*)(struct inpcb *, int));
 void	 in_pcbrehash(struct inpcb *);
@@ -331,8 +337,6 @@ void	in6_pcbnotify(struct inpcbtable *, struct sockaddr_in6 *,
 	u_int, const struct sockaddr_in6 *, u_int, u_int, int, void *,
 	void (*)(struct inpcb *, int));
 int	in6_selecthlim(struct inpcb *);
-int	in_pcbpickport(u_int16_t *, const void *, int, const struct inpcb *,
-	    struct proc *);
 int	in_pcbset_rtableid(struct inpcb *, u_int);
 void	in_pcbset_laddr(struct inpcb *, const struct sockaddr *, u_int);
 void	in_pcbunset_faddr(struct inpcb *);
