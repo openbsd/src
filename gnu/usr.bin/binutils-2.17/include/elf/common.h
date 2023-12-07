@@ -315,6 +315,7 @@
 #define PT_OPENBSD_NOBTCFI	0x65a3dbe8 /* no branch target CFI */
 #define PT_OPENBSD_BOOTDATA	0x65a41be6 /* Section for boot arguments */
 #define PT_OPENBSD_MUTABLE	0x65a3dbe5 /* Like bss, but not immutable */
+#define PT_OPENBSD_SYSCALLS	0x65a3dbe9 /* System call sites */
 
 /* Program segment permissions, in program header p_flags field.  */
 

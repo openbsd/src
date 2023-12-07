@@ -1105,6 +1105,7 @@ get_segment_type (unsigned int p_type)
     case PT_OPENBSD_NOBTCFI: pt = "OPENBSD_NOBTCFI"; break;
     case PT_OPENBSD_BOOTDATA: pt = "OPENBSD_BOOTDATA"; break;
     case PT_OPENBSD_MUTABLE: pt = "OPENBSD_MUTABLE"; break;
+    case PT_OPENBSD_SYSCALLS: pt = "OPENBSD_SYSCALLS"; break;
     default: pt = NULL; break;
     }
   return pt;
@@ -2654,6 +2655,11 @@ bfd_section_from_phdr (bfd *abfd, Elf_Internal_Phdr *hdr, int index)
     case PT_OPENBSD_MUTABLE:
       return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
 					      "openbsd_mutable");
+
+    case PT_OPENBSD_SYSCALLS:
+      return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
+					      "openbsd_syscalls");
+
     default:
       /* Check for any processor-specific program segment types.  */
       bed = get_elf_backend_data (abfd);
@@ -3659,6 +3665,7 @@ map_sections_to_segments (bfd *abfd)
   int tls_count = 0;
   asection *first_tls = NULL;
   asection *dynsec, *eh_frame_hdr, *randomdata, *mutabledata;
+  asection *syscalls;
   bfd_size_type amt;
 
   if (elf_tdata (abfd)->segment_map != NULL)
@@ -4039,6 +4046,24 @@ map_sections_to_segments (bfd *abfd)
       m->p_type = PT_OPENBSD_MUTABLE;
       m->count = 1;
       m->sections[0] = mutabledata->output_section;
+
+      *pm = m;
+      pm = &m->next;
+    }
+
+  /* If there is a .openbsd.syscalls section, throw in a PT_OPENBSD_SYSCALLS
+     segment.  */
+  syscalls = bfd_get_section_by_name (abfd, ".openbsd.syscalls");
+  if (syscalls != NULL && (syscalls->flags & SEC_LOAD) == 0)
+    {
+      amt = sizeof (struct elf_segment_map);
+      m = bfd_zalloc (abfd, amt);
+      if (m == NULL)
+	goto error_return;
+      m->next = NULL;
+      m->p_type = PT_OPENBSD_SYSCALLS;
+      m->count = 1;
+      m->sections[0] = syscalls->output_section;
 
       *pm = m;
       pm = &m->next;
@@ -4594,6 +4619,12 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
 	      else if (p->p_type == PT_NOTE
 		  && (flags & SEC_HAS_CONTENTS) != 0)
 		p->p_filesz += sec->size;
+	      else if (p->p_type == PT_OPENBSD_SYSCALLS)
+	        {
+		  sec->filepos = off;
+		  off += sec->size;
+		  p->p_filesz += sec->size;
+		}
 
 	      /* .tbss is special.  It doesn't contribute to p_memsz of
 		 normal segments.  */
@@ -4793,6 +4824,12 @@ get_program_header_size (bfd *abfd)
   if (bfd_get_section_by_name (abfd, ".openbsd.mutable") != NULL)
     {
       /* We need a PT_OPENBSD_MUTABLE segment.  */
+      ++segs;
+    }
+
+  if (bfd_get_section_by_name (abfd, ".openbsd.syscalls") != NULL)
+    {
+      /* We need a PT_OPENBSD_SYSCALLS segment.  */
       ++segs;
     }
 

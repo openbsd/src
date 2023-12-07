@@ -1101,6 +1101,8 @@ phdr_type:
 			    $$ = exp_intop (0x65a41be6);
 			  else if (strcmp (s, "PT_OPENBSD_MUTABLE") == 0)
 			    $$ = exp_intop (0x65a3dbe5);
+			  else if (strcmp (s, "PT_OPENBSD_SYSCALLS") == 0)
+			    $$ = exp_intop (0x65a3dbe9);
 			  else
 			    {
 			      einfo (_("\
