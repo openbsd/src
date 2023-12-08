@@ -32,10 +32,8 @@
 
 __dso_hidden void *allocate_tib(size_t);
 
-#define MAX(a,b)	(((a)>(b))?(a):(b))
-
 #ifdef TIB_EXTRA_ALIGN
-# define TIB_ALIGN	MAX(__alignof__(struct tib), TIB_EXTRA_ALIGN)
+# define TIB_ALIGN	MAXIMUM(__alignof__(struct tib), TIB_EXTRA_ALIGN)
 #else
 # define TIB_ALIGN	__alignof__(struct tib)
 #endif
@@ -170,7 +168,7 @@ allocate_tls_offset(Elf_Addr msize, Elf_Addr align, int for_exe)
 		 * - need to offset the TIB 12 bytes from the start
 		 * - to place ths TLS data at offset 64
 		 */
-		static_tls_align = MAX(align, TIB_ALIGN);
+		static_tls_align = MAXIMUM(align, TIB_ALIGN);
 		static_tls_align_offset =
 		    ELF_ROUND(sizeof(struct tib), static_tls_align) -
 		    sizeof(struct tib);

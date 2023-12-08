@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.39 2023/08/15 06:26:34 guenther Exp $	*/
+/*	$OpenBSD: util.h,v 1.40 2023/12/08 12:58:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
@@ -34,6 +34,8 @@
 #include <sys/utsname.h>
 #include <stdarg.h>
 #include <stddef.h>		/* for NULL */
+
+#define MAXIMUM(a,b)	(((a)>(b))?(a):(b))
 
 #ifndef __boot
 # if DO_CLEAN_BOOT
