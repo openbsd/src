@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.9 2023/11/27 22:39:26 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.10 2023/12/08 08:30:04 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -439,7 +439,6 @@ evp_do_all_cb_common(const char *descr, const void *ptr, const char *from,
 		fprintf(stderr, "FAIL: %ss %s and %s out of order\n", descr,
 		    previous, from);
 	}
-	arg->previous = from;
 }
 
 static void
@@ -533,6 +532,103 @@ evp_aliases_test(void)
 	return failure;
 }
 
+static void
+obj_name_cb(const OBJ_NAME *obj_name, void *do_all_arg)
+{
+	struct do_all_arg *arg = do_all_arg;
+	struct do_all_arg arg_copy = *arg;
+	const char *previous = arg->previous;
+	const char *descr = "OBJ_NAME unknown";
+
+	assert(obj_name->name != NULL);
+	arg->previous = obj_name->name;
+
+	if (obj_name->type == OBJ_NAME_TYPE_CIPHER_METH) {
+		descr = "OBJ_NAME cipher";
+
+		if (obj_name->alias == 0) {
+			const EVP_CIPHER *cipher;
+
+			if ((cipher = EVP_get_cipherbyname(obj_name->name)) !=
+			    (const EVP_CIPHER *)obj_name->data) {
+				arg->failure |= 1;
+				fprintf(stderr, "FAIL: %s by name %p != %p\n",
+				    descr, cipher, obj_name->data);
+			}
+
+			evp_do_all_cb_common(descr, obj_name->data,
+			    obj_name->name, NULL, &arg_copy);
+		} else if (obj_name->alias == OBJ_NAME_ALIAS) {
+			evp_cipher_aliases_cb(NULL, obj_name->name,
+			    obj_name->data, &arg_copy);
+		} else {
+			fprintf(stderr, "FAIL %s %s: unexpected alias value %d\n",
+			    descr, obj_name->name, obj_name->alias);
+			arg->failure |= 1;
+		}
+	} else if (obj_name->type == OBJ_NAME_TYPE_MD_METH) {
+		descr = "OBJ_NAME digest";
+
+		if (obj_name->alias == 0) {
+			const EVP_MD *evp_md;
+
+			if ((evp_md = EVP_get_digestbyname(obj_name->name)) !=
+			    (const EVP_MD *)obj_name->data) {
+				arg->failure |= 1;
+				fprintf(stderr, "FAIL: %s by name %p != %p\n",
+				    descr, evp_md, obj_name->data);
+			}
+
+			evp_do_all_cb_common(descr, obj_name->data,
+			    obj_name->name, NULL, &arg_copy);
+		} else if (obj_name->alias == OBJ_NAME_ALIAS) {
+			evp_digest_aliases_cb(NULL, obj_name->name,
+			    obj_name->data, &arg_copy);
+		} else {
+			fprintf(stderr, "FAIL: %s %s: unexpected alias value %d\n",
+			    descr, obj_name->name, obj_name->alias);
+			arg->failure |= 1;
+		}
+	} else {
+		fprintf(stderr, "FAIL: unexpected OBJ_NAME type %d\n",
+		    obj_name->type);
+		arg->failure |= 1;
+	}
+
+	if (previous != NULL && strcmp(previous, obj_name->name) >= 0) {
+		arg->failure |= 1;
+		fprintf(stderr, "FAIL: %ss %s and %s out of order\n", descr,
+		    previous, obj_name->name);
+	}
+
+
+	arg->failure |= arg_copy.failure;
+}
+
+static int
+obj_name_do_all_test(void)
+{
+	struct do_all_arg arg;
+	int failure = 0;
+
+	memset(&arg, 0, sizeof(arg));
+	/* XXX - replace with OBJ_NAME_do_all() after next bump. */
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, obj_name_cb, &arg);
+	failure |= arg.failure;
+
+	memset(&arg, 0, sizeof(arg));
+	/* XXX - replace with OBJ_NAME_do_all() after next bump. */
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, obj_name_cb, &arg);
+	failure |= arg.failure;
+
+	memset(&arg, 0, sizeof(arg));
+	/* XXX - replace with OBJ_NAME_do_all() after next bump. */
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_PKEY_METH, obj_name_cb, &arg);
+	failure |= arg.failure;
+
+	return failure;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -543,6 +639,7 @@ main(int argc, char **argv)
 	failed |= evp_pkey_iv_len_test();
 	failed |= evp_do_all_test();
 	failed |= evp_aliases_test();
+	failed |= obj_name_do_all_test();
 
 	OPENSSL_cleanup();
 
