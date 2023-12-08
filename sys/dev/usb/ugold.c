@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.24 2023/11/30 20:08:23 miod Exp $   */
+/*	$OpenBSD: ugold.c,v 1.25 2023/12/08 06:33:48 miod Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -453,7 +453,8 @@ ugold_si700x_type(struct ugold_softc *sc)
 	}
 	if (sc->sc_model_len >= 9 &&
 	    memcmp(sc->sc_model, "TEMPerHUM", 9) == 0) {
-		if (memcmp(sc->sc_model + 9, "_V4.0  ", 16 - 9) == 0) {
+		if (memcmp(sc->sc_model + 9, "_V3.9  ", 16 - 9) == 0 ||
+		    memcmp(sc->sc_model + 9, "_V4.0  ", 16 - 9) == 0) {
 			sc->sc_type = UGOLD_TYPE_TEMPERX;
 			descr = "temperx (temperature and humidity)";
 			goto identified;
