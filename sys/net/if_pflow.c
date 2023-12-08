@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.101 2023/12/08 23:13:40 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.102 2023/12/08 23:15:44 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -513,7 +513,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			mtx_enter(&sc->sc_mtx);
-			sc->sc_gcounter=pflowstats.pflow_flows;
+			sc->sc_gcounter = pflowstats.pflow_flows;
 			/* send templates on startup */
 			if (sc->sc_version == PFLOW_PROTO_10)
 				pflow_sendout_ipfix_tmpl(sc);
@@ -577,7 +577,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			mtx_enter(&sc->sc_mtx);
-			sc->sc_gcounter=pflowstats.pflow_flows;
+			sc->sc_gcounter = pflowstats.pflow_flows;
 			if (sc->sc_version == PFLOW_PROTO_10)
 				pflow_sendout_ipfix_tmpl(sc);
 			mtx_leave(&sc->sc_mtx);
