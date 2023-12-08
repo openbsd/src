@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.100 2023/11/09 08:53:20 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.101 2023/12/08 23:13:40 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -29,6 +29,7 @@
 #include <sys/kernel.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
+#include <sys/mutex.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -147,6 +148,7 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 
 	pflowif = malloc(sizeof(*pflowif), M_DEVBUF, M_WAITOK|M_ZERO);
 	rw_init(&pflowif->sc_lock, "pflowlk");
+	mtx_init(&pflowif->sc_mtx, IPL_MPFLOOR);
 	MGET(pflowif->send_nam, M_WAIT, MT_SONAME);
 	pflowif->sc_version = PFLOW_PROTO_DEFAULT;
 
@@ -347,6 +349,8 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 		}
 	}
 
+	rw_assert_wrlock(&sc->sc_lock);
+
 	pflow_flush(sc);
 
 	if (pflowr->addrmask & PFLOW_MASK_DSTIP) {
@@ -461,6 +465,8 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 		sc->so = NULL;
 	}
 
+	mtx_enter(&sc->sc_mtx);
+
 	/* error check is above */
 	if (pflowr->addrmask & PFLOW_MASK_VERSION)
 		sc->sc_version = pflowr->version;
@@ -478,6 +484,8 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 	default: /* NOTREACHED */
 		break;
 	}
+
+	mtx_leave(&sc->sc_mtx);
 
 	return (0);
 }
@@ -504,10 +512,12 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		NET_LOCK();
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
+			mtx_enter(&sc->sc_mtx);
 			sc->sc_gcounter=pflowstats.pflow_flows;
 			/* send templates on startup */
 			if (sc->sc_version == PFLOW_PROTO_10)
 				pflow_sendout_ipfix_tmpl(sc);
+			mtx_leave(&sc->sc_mtx);
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 		rw_exit_read(&sc->sc_lock);
@@ -519,19 +529,28 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifr->ifr_mtu = MCLBYTES;
 		if (ifr->ifr_mtu < ifp->if_mtu)
 			pflow_flush(sc);
+		mtx_enter(&sc->sc_mtx);
 		pflow_setmtu(sc, ifr->ifr_mtu);
+		mtx_leave(&sc->sc_mtx);
 		break;
 
 	case SIOCGETPFLOW:
 		bzero(&pflowr, sizeof(pflowr));
 
+		/* XXXSMP: enforce lock order */
+		NET_UNLOCK();
+		rw_enter_read(&sc->sc_lock);
+		NET_LOCK();
 		if (sc->sc_flowsrc != NULL)
 			memcpy(&pflowr.flowsrc, sc->sc_flowsrc,
 			    sc->sc_flowsrc->sa_len);
 		if (sc->sc_flowdst != NULL)
 			memcpy(&pflowr.flowdst, sc->sc_flowdst,
 			    sc->sc_flowdst->sa_len);
+		rw_exit_read(&sc->sc_lock);
+		mtx_enter(&sc->sc_mtx);
 		pflowr.version = sc->sc_version;
+		mtx_leave(&sc->sc_mtx);
 
 		if ((error = copyout(&pflowr, ifr->ifr_data,
 		    sizeof(pflowr))))
@@ -557,9 +576,11 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
+			mtx_enter(&sc->sc_mtx);
 			sc->sc_gcounter=pflowstats.pflow_flows;
 			if (sc->sc_version == PFLOW_PROTO_10)
 				pflow_sendout_ipfix_tmpl(sc);
+			mtx_leave(&sc->sc_mtx);
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 		rw_exit_write(&sc->sc_lock);
@@ -575,7 +596,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 int
 pflow_calc_mtu(struct pflow_softc *sc, int mtu, int hdrsz)
 {
-
 	sc->sc_maxcount4 = (mtu - hdrsz -
 	    sizeof(struct udpiphdr)) / sizeof(struct pflow_ipfix_flow4);
 	sc->sc_maxcount6 = (mtu - hdrsz -
@@ -621,6 +641,8 @@ pflow_get_mbuf(struct pflow_softc *sc, u_int16_t set_id)
 	struct pflow_set_header	 set_hdr;
 	struct pflow_header	 h;
 	struct mbuf		*m;
+
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
@@ -791,6 +813,7 @@ export_pflow(struct pf_state *st)
 	sk = st->key[st->direction == PF_IN ? PF_SK_WIRE : PF_SK_STACK];
 
 	SLIST_FOREACH(sc, &pflowif_list, sc_next) {
+		mtx_enter(&sc->sc_mtx);
 		switch (sc->sc_version) {
 		case PFLOW_PROTO_5:
 			if( sk->af == AF_INET )
@@ -803,6 +826,7 @@ export_pflow(struct pf_state *st)
 		default: /* NOTREACHED */
 			break;
 		}
+		mtx_leave(&sc->sc_mtx);
 	}
 
 	return (0);
@@ -864,6 +888,8 @@ copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc)
 {
 	int		ret = 0;
 
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
+
 	if (sc->sc_mbuf == NULL) {
 		if ((sc->sc_mbuf = pflow_get_mbuf(sc, 0)) == NULL)
 			return (ENOBUFS);
@@ -887,6 +913,8 @@ int
 copy_flow_ipfix_4_to_m(struct pflow_ipfix_flow4 *flow, struct pflow_softc *sc)
 {
 	int		ret = 0;
+
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
 	if (sc->sc_mbuf == NULL) {
 		if ((sc->sc_mbuf =
@@ -914,6 +942,8 @@ int
 copy_flow_ipfix_6_to_m(struct pflow_ipfix_flow6 *flow, struct pflow_softc *sc)
 {
 	int		ret = 0;
+
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
 	if (sc->sc_mbuf6 == NULL) {
 		if ((sc->sc_mbuf6 =
@@ -1011,6 +1041,7 @@ pflow_timeout(void *v)
 {
 	struct pflow_softc	*sc = v;
 
+	mtx_enter(&sc->sc_mtx);
 	switch (sc->sc_version) {
 	case PFLOW_PROTO_5:
 		pflow_sendout_v5(sc);
@@ -1021,6 +1052,7 @@ pflow_timeout(void *v)
 	default: /* NOTREACHED */
 		break;
 	}
+	mtx_leave(&sc->sc_mtx);
 }
 
 void
@@ -1028,7 +1060,9 @@ pflow_timeout6(void *v)
 {
 	struct pflow_softc	*sc = v;
 
+	mtx_enter(&sc->sc_mtx);
 	pflow_sendout_ipfix(sc, AF_INET6);
+	mtx_leave(&sc->sc_mtx);
 }
 
 void
@@ -1036,12 +1070,15 @@ pflow_timeout_tmpl(void *v)
 {
 	struct pflow_softc	*sc = v;
 
+	mtx_enter(&sc->sc_mtx);
 	pflow_sendout_ipfix_tmpl(sc);
+	mtx_leave(&sc->sc_mtx);
 }
 
 void
 pflow_flush(struct pflow_softc *sc)
 {
+	mtx_enter(&sc->sc_mtx);
 	switch (sc->sc_version) {
 	case PFLOW_PROTO_5:
 		pflow_sendout_v5(sc);
@@ -1053,6 +1090,7 @@ pflow_flush(struct pflow_softc *sc)
 	default: /* NOTREACHED */
 		break;
 	}
+	mtx_leave(&sc->sc_mtx);
 }
 
 int
@@ -1062,6 +1100,8 @@ pflow_sendout_v5(struct pflow_softc *sc)
 	struct pflow_header	*h;
 	struct ifnet		*ifp = &sc->sc_if;
 	struct timespec		tv;
+
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
 	timeout_del(&sc->sc_tmo);
 
@@ -1098,6 +1138,8 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 	struct ifnet			*ifp = &sc->sc_if;
 	u_int32_t			 count;
 	int				 set_length;
+
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
 	switch (af) {
 	case AF_INET:
@@ -1158,12 +1200,14 @@ pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 	struct pflow_v10_header		*h10;
 	struct ifnet			*ifp = &sc->sc_if;
 
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
+
 	timeout_del(&sc->sc_tmo_tmpl);
 
 	if (!(ifp->if_flags & IFF_RUNNING)) {
 		return (0);
 	}
-	m = pflow_get_mbuf(NULL, 0);
+	m = pflow_get_mbuf(sc, 0);
 	if (m == NULL)
 		return (0);
 	if (m_copyback(m, 0, sizeof(struct pflow_ipfix_tmpl),
@@ -1196,6 +1240,8 @@ pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 int
 pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 {
+	rw_assert_anylock(&sc->sc_lock);
+
 	counters_pkt(sc->sc_if.if_counters,
 	            ifc_opackets, ifc_obytes, m->m_pkthdr.len);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.19 2022/11/23 15:12:27 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.20 2023/12/08 23:13:40 mvs Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -171,37 +171,42 @@ struct pflow_ipfix_flow6 {
 
 /*
  * Locks used to protect struct members and global data
+ *       I       immutable after creation
  *       N       net lock
+ *       m       this pflow_softc' `sc_mtx'
  *       p       this pflow_softc' `sc_lock'
  */
 
 struct pflow_softc {
+	struct mutex		 sc_mtx;
 	struct rwlock		 sc_lock;
 
 	int			 sc_dying;	/* [N] */
 	struct ifnet		 sc_if;
 
-	unsigned int		 sc_count;
-	unsigned int		 sc_count4;
-	unsigned int		 sc_count6;
-	unsigned int		 sc_maxcount;
-	unsigned int		 sc_maxcount4;
-	unsigned int		 sc_maxcount6;
-	u_int64_t		 sc_gcounter;
-	u_int32_t		 sc_sequence;
+	unsigned int		 sc_count;	/* [m] */
+	unsigned int		 sc_count4;	/* [m] */
+	unsigned int		 sc_count6;	/* [m] */
+	unsigned int		 sc_maxcount;	/* [m] */
+	unsigned int		 sc_maxcount4;	/* [m] */
+	unsigned int		 sc_maxcount6;	/* [m] */
+	u_int64_t		 sc_gcounter;	/* [m] */
+	u_int32_t		 sc_sequence;	/* [m] */
 	struct timeout		 sc_tmo;
 	struct timeout		 sc_tmo6;
 	struct timeout		 sc_tmo_tmpl;
 	struct mbuf_queue	 sc_outputqueue;
 	struct task		 sc_outputtask;
 	struct socket		*so;		/* [p] */
-	struct mbuf		*send_nam;
-	struct sockaddr		*sc_flowsrc;
-	struct sockaddr		*sc_flowdst;
-	struct pflow_ipfix_tmpl	 sc_tmpl_ipfix;
-	u_int8_t		 sc_version;
-	struct mbuf		*sc_mbuf;	/* current cumulative mbuf */
-	struct mbuf		*sc_mbuf6;	/* current cumulative mbuf */
+	struct mbuf		*send_nam;	/* [p] */
+	struct sockaddr		*sc_flowsrc;	/* [p] */
+	struct sockaddr		*sc_flowdst;	/* [p] */
+	struct pflow_ipfix_tmpl	 sc_tmpl_ipfix;	/* [I] */
+	u_int8_t		 sc_version;	/* [m] */
+	struct mbuf		*sc_mbuf;	/* [m] current cumulative
+						    mbuf */
+	struct mbuf		*sc_mbuf6;	/* [m] current cumulative
+						    mbuf */
 	SLIST_ENTRY(pflow_softc) sc_next;
 };
 
