@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.h,v 1.9 2022/12/27 07:44:56 jmc Exp $	*/
+/*	$OpenBSD: tib.h,v 1.10 2023/12/08 19:14:36 miod Exp $	*/
 /*
  * Copyright (c) 2011,2014 Philip Guenther <guenther@openbsd.org>
  *
@@ -216,6 +216,7 @@ struct tib {
 		(tib)->tib_canceled	= 0;		\
 		(tib)->tib_dtv		= (dtv);	\
 		(tib)->tib_errno	= 0;		\
+		(tib)->tib_thread_flags = 0;		\
 		_TIB_PREP(tib);				\
 	} while (0)
 
