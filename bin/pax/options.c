@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.106 2023/11/26 16:04:17 espie Exp $	*/
+/*	$OpenBSD: options.c,v 1.107 2023/12/09 23:00:11 jca Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -216,6 +216,8 @@ FSUB fsub[] = {
 	{ },
 /* 9: gzip, to detect failure to use -z */
 	{ },
+/* 10: POSIX PAX */
+	{ },
 #else
 /* 6: compress, to detect failure to use -Z */
 	{NULL, 0, 4, 0, 0, 0, 0, compress_id},
@@ -225,6 +227,10 @@ FSUB fsub[] = {
 	{NULL, 0, 4, 0, 0, 0, 0, bzip2_id},
 /* 9: gzip, to detect failure to use -z */
 	{NULL, 0, 4, 0, 0, 0, 0, gzip_id},
+/* 10: POSIX PAX */
+	{"pax", 5120, BLKMULT, 0, 1, BLKMULT, 0, ustar_id, no_op,
+	ustar_rd, tar_endrd, no_op, pax_wr, tar_endwr, tar_trail,
+	tar_opt},
 #endif
 };
 #define	F_OCPIO	0	/* format when called as cpio -6 */

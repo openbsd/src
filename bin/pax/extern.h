@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.61 2023/11/26 16:04:17 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.62 2023/12/09 23:00:11 jca Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -284,6 +284,7 @@ int tar_wr(ARCHD *);
 int ustar_id(char *, int);
 int ustar_rd(ARCHD *, char *);
 int ustar_wr(ARCHD *);
+int pax_wr(ARCHD *);
 
 /*
  * tty_subs.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.73 2023/09/04 17:05:34 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.74 2023/12/09 23:00:11 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -35,10 +35,12 @@
  */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
+#include <libgen.h>
 #include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -50,6 +52,19 @@
 #include "extern.h"
 #include "tar.h"
 
+SLIST_HEAD(xheader, xheader_record);
+struct xheader_record {
+	SLIST_ENTRY(xheader_record)	 entry;
+	size_t				 reclen;
+	char				*record;
+};
+
+/* shortest possible extended record: "5 a=\n" */
+#define MINXHDRSZ	5
+
+/* longest record we'll accept */
+#define MAXXHDRSZ	BLKMULT
+
 /*
  * Routines for reading, writing and header identify of various versions of tar
  */
@@ -60,6 +75,9 @@ static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
 static int ull_oct(unsigned long long, char *, int, int);
 static int rd_xheader(ARCHD *arcn, int, off_t);
+#ifndef SMALL
+static int wr_xheader(ARCHD *, struct xheader *);
+#endif
 
 static uid_t uid_nobody;
 static uid_t uid_warn;
@@ -891,24 +909,121 @@ reset:
 	return(0);
 }
 
-/*
- * ustar_wr()
- *	write a ustar header for the file specified in the ARCHD to the archive
- *	Have to check for file types that cannot be stored and file names that
- *	are too long. Be careful of the term (last arg) to ul_oct, we only use
- *	'\0' for the termination character (this is different than picky tar)
- *	ASSUMED: space after header in header block is zero filled
- * Return:
- *	0 if file has data to be written after the header, 1 if file has NO
- *	data to write after the header, -1 if archive write failed
- */
+#ifndef SMALL
+static int
+xheader_add(struct xheader *xhdr, const char *keyword,
+    const char *value)
+{
+	struct xheader_record *rec;
+	int reclen, tmplen;
+	char *s;
 
-int
-ustar_wr(ARCHD *arcn)
+	tmplen = MINXHDRSZ;
+	do {
+		reclen = tmplen;
+		tmplen = snprintf(NULL, 0, "%d %s=%s\n", reclen, keyword,
+		    value);
+	} while (tmplen >= 0 && tmplen != reclen);
+	if (tmplen < 0)
+		return -1;
+
+	rec = calloc(1, sizeof(*rec));
+	if (rec == NULL)
+		return -1;
+	rec->reclen = reclen;
+	if (asprintf(&s, "%d %s=%s\n", reclen, keyword, value) < 0) {
+		free(rec);
+		return -1;
+	}
+	rec->record = s;
+
+	SLIST_INSERT_HEAD(xhdr, rec, entry);
+
+	return 0;
+}
+
+static void
+xheader_free(struct xheader *xhdr)
+{
+	struct xheader_record *rec;
+
+	while (!SLIST_EMPTY(xhdr)) {
+		rec = SLIST_FIRST(xhdr);
+		SLIST_REMOVE_HEAD(xhdr, entry);
+		free(rec->record);
+		free(rec);
+	}
+}
+
+static int
+wr_xheader(ARCHD *arcn, struct xheader *xhdr)
+{
+	char hdblk[sizeof(HD_USTAR)];
+	HD_USTAR *hd;
+	char buf[sizeof(hd->name) + 1];
+	struct xheader_record *rec;
+	size_t size;
+
+	size = 0;
+	SLIST_FOREACH(rec, xhdr, entry)
+		size += rec->reclen;
+
+	memset(hdblk, 0, sizeof(hdblk));
+	hd = (HD_USTAR *)hdblk;
+	hd->typeflag = XHDRTYPE;
+	strncpy(hd->magic, TMAGIC, TMAGLEN);
+	strncpy(hd->version, TVERSION, TVERSLEN);
+	if (ul_oct(size, hd->size, sizeof(hd->size), 3))
+		return -1;
+
+	/*
+	 * Best effort attempt at providing a useful file name for
+	 * implementations that don't support pax format. Don't bother
+	 * with truncation if the resulting file name doesn't fit.
+	 * XXX dirname/basename portability (check return value?)
+	 */
+	(void)snprintf(buf, sizeof(buf), "%s/PaxHeaders.%ld/%s",
+	    dirname(arcn->name), (long)getpid(), basename(arcn->name));
+	fieldcpy(hd->name, sizeof(hd->name), buf, sizeof(buf));
+
+	if (ul_oct(arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
+	    ull_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
+		sizeof(hd->mtime), 1) ||
+	    ul_oct(arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
+	    ul_oct(arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0))
+		return -1;
+
+	if (ul_oct(tar_chksm(hdblk, sizeof(HD_USTAR)), hd->chksum,
+	   sizeof(hd->chksum), 3))
+		return -1;
+
+	/* write out extended header */
+	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0)
+		return -1;
+	if (wr_skip(BLKMULT - sizeof(HD_USTAR)) < 0)
+		return -1;
+
+	/* write out extended header records */
+	SLIST_FOREACH(rec, xhdr, entry)
+		if (wr_rdbuf(rec->record, rec->reclen) < 0)
+			return -1;
+
+	if (wr_skip(TAR_PAD(size)) < 0)
+		return -1;
+
+	return 0;
+}
+#endif
+
+static int
+wr_ustar_or_pax(ARCHD *arcn, int ustar)
 {
 	HD_USTAR *hd;
 	const char *name;
 	char *pt, hdblk[sizeof(HD_USTAR)];
+#ifndef SMALL
+	struct xheader xhdr = SLIST_HEAD_INITIALIZER(xhdr);
+#endif
 
 	/*
 	 * check for those file system types ustar cannot store
@@ -929,8 +1044,19 @@ ustar_wr(ARCHD *arcn)
 	 */
 	if (PAX_IS_LINK(arcn->type) &&
 	    ((size_t)arcn->ln_nlen > sizeof(hd->linkname))) {
-		paxwarn(1, "Link name too long for ustar %s", arcn->ln_name);
-		return(1);
+		if (ustar) {
+			paxwarn(1, "Link name too long for ustar %s",
+			    arcn->ln_name);
+			return(1);
+		}
+#ifndef SMALL
+		else if (xheader_add(&xhdr, "linkpath", arcn->name) == -1) {
+			paxwarn(1, "Link name too long for pax %s",
+			    arcn->ln_name);
+			xheader_free(&xhdr);
+			return(1);
+		}
+#endif
 	}
 
 	/*
@@ -938,8 +1064,21 @@ ustar_wr(ARCHD *arcn)
 	 * pt != arcn->name, the name has to be split
 	 */
 	if ((pt = name_split(arcn->name, arcn->nlen)) == NULL) {
-		paxwarn(1, "File name too long for ustar %s", arcn->name);
-		return(1);
+		if (ustar) {
+			paxwarn(1, "File name too long for ustar %s",
+			    arcn->name);
+			return(1);
+		}
+#ifndef SMALL
+		else if (xheader_add(&xhdr, "path", arcn->name) == -1) {
+			paxwarn(1, "File name too long for pax %s",
+			    arcn->ln_name);
+			xheader_free(&xhdr);
+			return(1);
+		}
+		/* PAX format, we don't need to split the path */
+		pt = arcn->name;
+#endif
 	}
 
 	/*
@@ -1074,6 +1213,18 @@ ustar_wr(ARCHD *arcn)
 			strncpy(hd->gname, name, sizeof(hd->gname));
 	}
 
+#ifndef SMALL
+	/* write out a pax extended header if needed */
+	if (!SLIST_EMPTY(&xhdr)) {
+		int ret;
+
+		ret = wr_xheader(arcn, &xhdr);
+		xheader_free(&xhdr);
+		if (ret == -1)
+			return(-1);
+	}
+#endif
+
 	/*
 	 * calculate and store the checksum write the header to the archive
 	 * return 0 tells the caller to now write the file data, 1 says no data
@@ -1091,12 +1242,51 @@ ustar_wr(ARCHD *arcn)
 	return(1);
 
     out:
+#ifndef SMALL
+	xheader_free(&xhdr);
+#endif
 	/*
 	 * header field is out of range
 	 */
 	paxwarn(1, "Ustar header field is too small for %s", arcn->org_name);
 	return(1);
 }
+
+/*
+ * ustar_wr()
+ *	Write out a ustar format archive.
+ *	Have to check for file types that cannot be stored and file names that
+ *	are too long. Be careful of the term (last arg) to ul_oct, we only use
+ *	'\0' for the termination character (this is different than picky tar).
+ *	ASSUMED: space after header in header block is zero filled
+ * Return:
+ *	0 if file has data to be written after the header, 1 if file has NO
+ *	data to write after the header, -1 if archive write failed
+ */
+int
+ustar_wr(ARCHD *arcn)
+{
+	return wr_ustar_or_pax(arcn, 1);
+}
+
+/*
+ * pax_wr()
+ *	Write out a pax format archive.
+ *	Have to check for file types that cannot be stored.  Be careful of the
+ *      term (last arg) to ul_oct, we only use '\0' for the termination
+ *      character (this is different than picky tar).
+ *	ASSUMED: space after header in header block is zero filled
+ * Return:
+ *	0 if file has data to be written after the header, 1 if file has NO
+ *	data to write after the header, -1 if archive write failed
+ */
+#ifndef SMALL
+int
+pax_wr(ARCHD *arcn)
+{
+	return wr_ustar_or_pax(arcn, 0);
+}
+#endif
 
 /*
  * name_split()
@@ -1183,12 +1373,6 @@ expandname(char *buf, size_t len, char **gnu_name, const char *name,
 		nlen = fieldcpy(buf, len, name, limit);
 	return(nlen);
 }
-
-/* shortest possible extended record: "5 a=\n" */
-#define MINXHDRSZ	5
-
-/* longest record we'll accept */
-#define MAXXHDRSZ	BLKMULT
 
 static int
 rd_time(struct timespec *ts, const char *keyword, char *p)

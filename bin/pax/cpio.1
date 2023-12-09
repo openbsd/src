@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpio.1,v 1.36 2020/01/16 16:46:46 schwarze Exp $
+.\"	$OpenBSD: cpio.1,v 1.37 2023/12/09 23:00:11 jca Exp $
 .\"
 .\" Copyright (c) 1997 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: December 9 2023 $
 .Dt CPIO 1
 .Os
 .Sh NAME
@@ -98,6 +98,8 @@ format.
 Old octal character
 .Nm
 format.
+.It Ar pax
+POSIX pax format.
 .It Ar sv4cpio
 SVR4 hex
 .Nm
@@ -173,6 +175,8 @@ format.
 Old octal character
 .Nm
 format.
+.It Ar pax
+POSIX pax format.
 .It Ar sv4cpio
 SVR4 hex
 .Nm
@@ -298,6 +302,8 @@ be used for larger files.
 .It bcpio Ta "4 Gigabytes"
 .It sv4cpio Ta "4 Gigabytes"
 .It cpio Ta "8 Gigabytes"
+.\" XXX should be "unlimited"
+.It pax Ta "8 Gigabytes"
 .It tar Ta "8 Gigabytes"
 .It ustar Ta "8 Gigabytes"
 .El

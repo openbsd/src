@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.76 2022/03/31 17:27:14 naddy Exp $
+.\"	$OpenBSD: pax.1,v 1.77 2023/12/09 23:00:11 jca Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: December 9 2023 $
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -868,6 +868,11 @@ standard.
 The default blocksize for this format is 10240 bytes.
 Filenames stored by this format must be 100 characters or less in length;
 the total pathname must be 256 characters or less.
+.It Cm pax
+The pax interchange format specified in the
+.St -p1003.1-2001
+standard.
+The default blocksize for this format is 5120 bytes.
 .El
 .Pp
 .Nm
@@ -1081,9 +1086,10 @@ utility is compliant with the
 specification,
 except that the
 .Cm pax
-archive format and the
+archive format is only partially supported,
+and the
 .Cm listopt
-keyword are unsupported.
+keyword is unsupported.
 .Pp
 The flags
 .Op Fl 0BDEGjOPTUYZz ,
