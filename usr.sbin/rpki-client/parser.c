@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.100 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.101 2023/12/09 00:44:18 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -310,7 +310,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
  */
 static struct mft *
 proc_parser_mft_post(char *file, struct mft *mft, const char *path,
-    const char *errstr)
+    const char *errstr, int *warned)
 {
 	/* check that now is not before from */
 	time_t now = get_current_time();
@@ -318,6 +318,8 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
 	if (mft == NULL) {
 		if (errstr == NULL)
 			errstr = "no valid mft available";
+		if ((*warned)++ > 0)
+			return NULL;
 		warnx("%s: %s", file, errstr);
 		return NULL;
 	}
@@ -359,13 +361,14 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 	struct crl	*crl, *crl1, *crl2;
 	char		*file, *file1, *file2, *crl1file, *crl2file;
 	const char	*err1, *err2;
+	int		 warned = 0;
 
 	*mp = NULL;
 	*crlmtime = 0;
 
-	mft1 = proc_parser_mft_pre(entp, DIR_VALID, &file1, &crl1, &crl1file,
+	mft1 = proc_parser_mft_pre(entp, DIR_TEMP, &file1, &crl1, &crl1file,
 	    &err1);
-	mft2 = proc_parser_mft_pre(entp, DIR_TEMP, &file2, &crl2, &crl2file,
+	mft2 = proc_parser_mft_pre(entp, DIR_VALID, &file2, &crl2, &crl2file,
 	    &err2);
 
 	/* overload error from temp file if it is set */
@@ -374,20 +377,36 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 			err1 = err2;
 
 	if (mft_compare(mft1, mft2) == 1) {
+		*mp = proc_parser_mft_post(file1, mft1, entp->path, err1,
+		    &warned);
+		if (*mp == NULL) {
+			mft1 = NULL;
+			if (mft2 != NULL)
+				warnx("%s: failed fetch, continuing with #%s",
+				    file2, mft2->seqnum);
+		}
+	}
+
+	if (*mp != NULL) {
 		mft_free(mft2);
 		crl_free(crl2);
 		free(crl2file);
 		free(file2);
-		*mp = proc_parser_mft_post(file1, mft1, entp->path, err1);
+
 		crl = crl1;
 		file = file1;
 		*crlfile = crl1file;
 	} else {
+		if (err2 == NULL)
+			err2 = err1;
+		*mp = proc_parser_mft_post(file2, mft2, entp->path, err2,
+		    &warned);
+
 		mft_free(mft1);
 		crl_free(crl1);
 		free(crl1file);
 		free(file1);
-		*mp = proc_parser_mft_post(file2, mft2, entp->path, err2);
+
 		crl = crl2;
 		file = file2;
 		*crlfile = crl2file;
