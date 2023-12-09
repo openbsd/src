@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.26 2023/11/10 15:51:24 bluhm Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.27 2023/12/09 10:36:05 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -145,6 +145,7 @@ struct virtio_net_hdr {
 } __packed;
 
 #define VIRTIO_NET_HDR_F_NEEDS_CSUM	1 /* flags */
+#define VIRTIO_NET_HDR_F_DATA_VALID	2 /* flags */
 #define VIRTIO_NET_HDR_GSO_NONE		0 /* gso_type */
 #define VIRTIO_NET_HDR_GSO_TCPV4	1 /* gso_type */
 #define VIRTIO_NET_HDR_GSO_UDP		3 /* gso_type */
@@ -533,7 +534,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_driver_features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
 	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |
 	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM |
-	    VIRTIO_F_RING_EVENT_IDX;
+	    VIRTIO_F_RING_EVENT_IDX | VIRTIO_NET_F_GUEST_CSUM;
 
 	virtio_negotiate_features(vsc, virtio_net_feature_names);
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_MAC)) {
@@ -986,6 +987,31 @@ vio_populate_rx_mbufs(struct vio_softc *sc)
 	timeout_add_sec(&sc->sc_rxtick, 1);
 }
 
+void
+vio_rx_offload(struct mbuf *m, struct virtio_net_hdr *hdr)
+{
+	struct ether_extracted ext;
+
+	if (!ISSET(hdr->flags, VIRTIO_NET_HDR_F_DATA_VALID) &&
+	    !ISSET(hdr->flags, VIRTIO_NET_HDR_F_NEEDS_CSUM))
+		return;
+
+	ether_extract_headers(m, &ext);
+
+	if (ext.ip4)
+		SET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK);
+
+	if (ext.tcp) {
+		SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK);
+		if (ISSET(hdr->flags, VIRTIO_NET_HDR_F_NEEDS_CSUM))
+			SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
+	} else if (ext.udp) {
+		SET(m->m_pkthdr.csum_flags, M_UDP_CSUM_IN_OK);
+		if (ISSET(hdr->flags, VIRTIO_NET_HDR_F_NEEDS_CSUM))
+			SET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT);
+	}
+}
+
 /* dequeue received packets */
 int
 vio_rxeof(struct vio_softc *sc)
@@ -1019,6 +1045,8 @@ vio_rxeof(struct vio_softc *sc)
 				bufs_left = hdr->num_buffers - 1;
 			else
 				bufs_left = 0;
+			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM))
+				vio_rx_offload(m, hdr);
 		} else {
 			m->m_flags &= ~M_PKTHDR;
 			m0->m_pkthdr.len += m->m_len;
