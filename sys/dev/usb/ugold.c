@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.25 2023/12/08 06:33:48 miod Exp $   */
+/*	$OpenBSD: ugold.c,v 1.26 2023/12/10 19:03:37 miod Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -609,6 +609,18 @@ ugold_intr(struct uhidev *addr, void *ibuf, u_int len)
 		break;
 	default:
 		if (!sc->sc_type) {
+			/*
+			 * During initialization, some devices need a bit
+			 * more time to submit their identification string.
+			 */
+			if (len == sc->sc_model_len &&
+			    !memcmp(sc->sc_model, buf, len)) {
+#ifdef UGOLD_DEBUG
+				printf("%s: duplicate string component\n",
+				    sc->sc_hdev.sc_dev.dv_xname);
+#endif
+				break;
+			}
 			/*
 			 * Exact sensor type is not known yet, type command
 			 * returns arbitrary string.
