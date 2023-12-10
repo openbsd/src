@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.173 2023/06/27 09:28:08 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.174 2023/12/10 06:32:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2584,7 +2584,6 @@ uaudio_process_as(struct uaudio_softc *sc,
 		}
 	}
 
-
 	while (p->rptr != p->wptr) {
 		savep = p->rptr;
 		if (!uaudio_getdesc(p, &dp))
@@ -2710,6 +2709,7 @@ int
 uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 {
 	struct uaudio_blob dp;
+	struct uaudio_alt *a;
 	unsigned int type, ifnum, altnum, nep, class, subclass;
 
 	while (p->rptr != p->wptr) {
@@ -2736,7 +2736,10 @@ uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 
 		switch (subclass) {
 		case UISUBCLASS_AUDIOCONTROL:
-			usbd_claim_iface(sc->udev, ifnum);
+			if (usbd_iface_claimed(sc->udev, ifnum)) {
+				DPRINTF("%s: %d: AC already claimed\n", __func__, ifnum);
+				break;
+			}
 			if (sc->unit_list != NULL) {
 				DPRINTF("%s: >1 AC ifaces\n", __func__);
 				goto done;
@@ -2745,7 +2748,10 @@ uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 				return 0;
 			break;
 		case UISUBCLASS_AUDIOSTREAM:
-			usbd_claim_iface(sc->udev, ifnum);
+			if (usbd_iface_claimed(sc->udev, ifnum)) {
+				DPRINTF("%s: %d: AS already claimed\n", __func__, ifnum);
+				break;
+			}
 			if (nep == 0) {
 				DPRINTF("%s: "
 				    "stop altnum %d\n", __func__, altnum);
@@ -2757,6 +2763,15 @@ uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 	}
 done:
 	uaudio_fixup_params(sc);
+
+	/*
+	 * Claim all interfaces we use. This prevents other uaudio(4)
+	 * devices from trying to use them.
+	 */
+	for (a = sc->alts; a != NULL; a = a->next)
+		usbd_claim_iface(sc->udev, a->ifnum);
+
+	usbd_claim_iface(sc->udev, sc->ctl_ifnum);
 
 	return 1;
 }
