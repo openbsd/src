@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.11 2023/11/26 13:02:44 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.12 2023/12/10 21:25:14 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1055,6 +1055,7 @@ start_vmm_on_cpu(struct cpu_info *ci)
 {
 	uint64_t msr;
 	uint32_t cr4;
+	struct vmx_invept_descriptor vid;
 
 	/* No VMM mode? exit. */
 	if ((ci->ci_vmm_flags & CI_VMM_VMX) == 0 &&
@@ -1081,11 +1082,6 @@ start_vmm_on_cpu(struct cpu_info *ci)
 			ci->ci_vmxon_region->vr_revision =
 			    ci->ci_vmm_cap.vcc_vmx.vmx_vmxon_revision;
 
-			/* Set CR4.VMXE */
-			cr4 = rcr4();
-			cr4 |= CR4_VMXE;
-			lcr4(cr4);
-
 			/* Enable VMX */
 			msr = rdmsr(MSR_IA32_FEATURE_CONTROL);
 			if (msr & IA32_FEATURE_CONTROL_LOCK) {
@@ -1097,9 +1093,18 @@ start_vmm_on_cpu(struct cpu_info *ci)
 				wrmsr(MSR_IA32_FEATURE_CONTROL, msr);
 			}
 
-			/* Enter VMX mode */
+			/* Set CR4.VMXE */
+			cr4 = rcr4();
+			cr4 |= CR4_VMXE;
+			lcr4(cr4);
+
+			/* Enter VMX mode and clear EPTs on this cpu */
 			if (vmxon((uint64_t *)&ci->ci_vmxon_region_pa))
-				return;
+				panic("vmxon failed");
+
+			memset(&vid, 0, sizeof(vid));
+			if (invept(IA32_VMX_INVEPT_GLOBAL_CTX, &vid))
+				panic("invept failed");
 		}
 	}
 
