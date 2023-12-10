@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.141 2023/10/24 13:20:09 claudio Exp $	*/
+/*	$OpenBSD: locore.S,v 1.142 2023/12/10 16:56:01 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -176,6 +176,8 @@ sigcode:
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
 	movq	$SYS_sigreturn,%rax
+	.globl sigcodecall
+sigcodecall:
 	syscall
 	.globl	sigcoderet
 sigcoderet:

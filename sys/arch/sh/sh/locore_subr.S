@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.17 2023/10/24 13:20:10 claudio Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.18 2023/12/10 16:56:02 deraadt Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -497,6 +497,8 @@ NENTRY(proc_trampoline)
 NENTRY(sigcode)
 	mov	r15, r4			/* get pointer to sigcontext */
 	mov.l	.L_SYS_sigreturn, r0
+	.globl	sigcodecall
+sigcodecall:
 	trapa	#0x80			/* and call sigreturn() */
 	.globl	sigcoderet
 sigcoderet:

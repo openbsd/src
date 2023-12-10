@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.62 2023/10/24 13:20:10 claudio Exp $	*/
+/*	$OpenBSD: locore.S,v 1.63 2023/12/10 16:56:01 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1175,6 +1175,8 @@ sigcode:
 	lfd	%f13,104(%r6)
 	addi	%r3,%r1,((16+FPSIG_SIZEOF+15)&~0xf)+SF_SC	/* compute &sf_sc */
 	li	%r0,SYS_sigreturn
+	.globl	sigcodecall
+sigcodecall:
 	sc				/* sigreturn(scp) */
 	.globl	sigcoderet
 sigcoderet:

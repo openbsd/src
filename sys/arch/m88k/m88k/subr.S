@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.29 2023/01/31 15:18:54 deraadt Exp $	*/
+/* $OpenBSD: subr.S,v 1.30 2023/12/10 16:56:01 deraadt Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1131,6 +1131,7 @@ ENTRY(longjmp)
 GLOBAL(sigcode)			/* r31 points to sigframe */
 	ld	%r2,  %r31, 0	/* pick sigcontext* */
 	or	%r13, %r0,  SYS_sigreturn
+GLOBAL(sigcodecall)
 GLOBAL(sigcoderet)
 	tb0	0,    %r0,  450	/* syscall trap, calling sigreturn */
 	NOP			| failure return

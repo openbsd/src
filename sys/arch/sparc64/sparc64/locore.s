@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.202 2023/10/24 13:20:11 claudio Exp $	*/
+/*	$OpenBSD: locore.s,v 1.203 2023/12/10 16:56:02 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5399,6 +5399,8 @@ sigcode:
 !	andn	%o0, 0x0f, %o0
 	.globl	sigcoderet
 sigcoderet:
+	.globl	sigcodecall
+sigcodecall:
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.12 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.13 2023/12/10 16:56:01 deraadt Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -56,6 +56,8 @@ sigcode:
 /*	mov	r0, sp */
 	add	r0, sp, #SIGF_SC
 	mov	r12, #SYS_sigreturn
+	.globl	sigcodecall
+sigcodecall:
 	swi	0
 	dsb	nsh
 	isb

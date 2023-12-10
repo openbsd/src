@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.53 2023/12/06 06:15:33 miod Exp $ */
+/* $OpenBSD: locore.s,v 1.54 2023/12/10 16:56:01 deraadt Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -202,6 +202,8 @@ NESTED(sigcode,0,0,ra,0,0)
 	ldq	a0, 0(sp)		/* get the sigcontext pointer */
 	lda	sp, 16(sp)
 	ldiq	v0, SYS_sigreturn	/* and call sigreturn() with it. */
+	.globl	sigcodecall
+sigcodecall:
 	call_pal PAL_OSF1_callsys
 	.globl  sigcoderet
 sigcoderet:
