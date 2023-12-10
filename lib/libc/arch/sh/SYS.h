@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.13 2023/02/11 06:10:39 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.14 2023/12/10 16:45:52 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -85,6 +85,12 @@
 #define	__END(x)					\
 	__END_HIDDEN(x); SET_ENTRY_SIZE(x)
 
+#define PINSYSCALL(sysno, label)					\
+	.pushsection .openbsd.syscalls,"",@progbits;			\
+	.long label;							\
+	.long sysno;							\
+	.popsection;
+
 #ifdef __ASSEMBLER__
 /*
  * If the system call number fits in a 8-bit signed value (i.e. fits in 7 bits),
@@ -94,10 +100,12 @@
 .macro systrap num
 .iflt \num - 128
 	mov	# \num, r0
-	trapa	#0x80
+97:	trapa	#0x80
+	PINSYSCALL(\num, 97b)
 .else
 	mov.l	903f, r0
-	trapa	#0x80
+97:	trapa	#0x80
+	PINSYSCALL(\num, 97b)
 	bra	904f
 	 nop
 	.align	2

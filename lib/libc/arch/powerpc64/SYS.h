@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.5 2022/12/07 23:25:59 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.6 2023/12/10 16:45:52 deraadt Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -69,7 +69,8 @@
 				ENTRY(_thread_sys_ ## x) \
 				RETGUARD_SETUP(_thread_sys_ ## x, %r11); \
 				li %r0, SYS_ ## y ; \
-				sc ; \
+			97:	sc ; \
+				PINSYSCALL(SYS_ ## y, 97b); \
 				RETGUARD_CHECK(_thread_sys_ ## x, %r11); \
 				blr; \
 				__END(_thread_sys_,x)
@@ -77,7 +78,8 @@
 #define PSEUDO_HIDDEN(x,y) 	ENTRY(_thread_sys_ ## x) \
 				RETGUARD_SETUP(_thread_sys_ ## x, %r11); \
 				li %r0, SYS_ ## y ; \
-				sc ; \
+			97:	sc ; \
+				PINSYSCALL(SYS_ ## y, 97b); \
 				cmpwi %r0, 0 ; \
 				beq .L_ret ; \
 				stw	%r0, R13_OFFSET_ERRNO(%r13); \

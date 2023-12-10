@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.12 2016/05/07 19:05:22 guenther Exp $ 
+ *      $OpenBSD: SYS.h,v 1.13 2023/12/10 16:45:51 deraadt Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -59,15 +59,16 @@
 			.size _HIDDEN(x), . - _HIDDEN(x)
 #define	END_WEAK(x)	END_STRONG(x); .weak x
 
-
 #define CERROR		__cerror
 	.hidden	CERROR
 
 # define __ENTRY(p,x)		ENTRY(p ## x)
 
-# define __DO_SYSCALL(x)				\
-				li	v0,SYS_ ## x;	\
-				syscall
+# define __DO_SYSCALL(x)					\
+				li	v0,SYS_ ## x;		\
+			97:	syscall;			\
+				PINSYSCALL(SYS_ ## x, 97b)	\
+
 
 # define __LEAF2(p,x,sz)	LEAF(p ## x, sz) \
 				WEAK_ALIAS(x, p ## x);
@@ -124,3 +125,8 @@
 #define	SYSCALL_END(x)		__END2(_thread_sys_,x)
 #define	SYSCALL_END_HIDDEN(x)	__END2_HIDDEN(_thread_sys_,x)
 
+#define PINSYSCALL(sysno, label)					\
+	.pushsection .openbsd.syscalls,"",@progbits;			\
+	.long label;							\
+	.long sysno;							\
+	.popsection;

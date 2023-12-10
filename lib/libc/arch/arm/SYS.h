@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.19 2022/12/08 01:25:43 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.20 2023/12/10 16:45:51 deraadt Exp $	*/
 /*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
 
 /*-
@@ -54,7 +54,8 @@
 
 #define SYSTRAP(x) \
 	ldr	r12, =SYS_ ## x;			\
-	swi	0;					\
+97:	swi	0;					\
+	PINSYSCALL(SYS_ ## x, 97b);			\
 	dsb	nsh;					\
 	isb
 

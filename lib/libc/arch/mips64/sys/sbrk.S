@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.10 2022/12/08 01:25:43 guenther Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.11 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,8 @@ LEAF(sbrk, FRAMESZ)
 	PTR_L	v1, __curbrk
 	li	v0, SYS_break
 	PTR_ADDU a0, a0, v1	# compute current break
-	syscall
+99:	syscall
+	PINSYSCALL(SYS_break, 99b)
 
 	bne	a3, zero, 1f
 	move	v0, v1		# return old val of curbrk from above

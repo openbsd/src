@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.4 2022/09/02 06:19:04 miod Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.5 2023/12/10 16:45:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -29,7 +29,8 @@ ENTRY(__tfork_thread)
 #else
 	mov	#SYS___tfork, r0
 #endif
-	trapa	#0x80
+99:	trapa	#0x80
+	PINSYSCALL(SYS___tfork, 99b)
 	bf	9f
 
 	tst	r0, r0
@@ -53,7 +54,8 @@ ENTRY(__tfork_thread)
 #else
 	mov	#SYS___threxit, r0
 #endif
-	trapa	#0x80
+98:	trapa	#0x80
+	PINSYSCALL(SYS___threxit, 98b)
 
 9:
 	/*

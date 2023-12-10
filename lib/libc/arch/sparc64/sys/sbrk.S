@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.9 2023/01/13 17:52:08 miod Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.10 2023/12/10 16:45:52 deraadt Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
@@ -59,7 +59,8 @@ ENTRY_NB(sbrk)
 	add	%o3, %o0, %o4			/* %o4 = new break */
 	mov	%o4, %o0			/* copy for syscall */
 	mov	SYS_break, %g1
-	t	ST_SYSCALL			/* break(new_break) */
+99:	t	ST_SYSCALL			/* break(new_break) */
+	PINSYSCALL(SYS_break, 99b)
 	bcc,a	1f				/* if success, */
 	 mov	%o3, %o0			/*    set return value */
 	ERROR()
@@ -72,7 +73,8 @@ ENTRY_NB(sbrk)
 	add	%o3, %o0, %o4			/* %o4 = new break */
 	mov	%o4, %o0			/* copy for syscall */
 	mov	SYS_break, %g1
-	t	ST_SYSCALL			/* break(new_break) */
+98:	t	ST_SYSCALL			/* break(new_break) */
+	PINSYSCALL(SYS_break, 98b)
 	bcc,a	1f				/* if success, */
 	 mov	%o3, %o0			/*    set return value */
 	ERROR()

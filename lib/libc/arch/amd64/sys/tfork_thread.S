@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.11 2023/01/11 01:55:17 mortimer Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.12 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -56,7 +56,8 @@ ENTRY(__tfork_thread)
 	 */
 	movl	$SYS___tfork, %eax
 	.cfi_endproc
-	syscall
+99:	syscall
+	PINSYSCALL(SYS___tfork, 99b)
 	jb 	2f
 
 	/*
@@ -90,7 +91,8 @@ ENTRY(__tfork_thread)
 	 */
 	movl	$SYS___threxit, %eax
 	xorl	%edi, %edi
-	syscall
+98:	syscall
+	PINSYSCALL(SYS___threxit, 98b)
 	int3
 
 	/*

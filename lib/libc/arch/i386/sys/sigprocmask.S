@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.12 2016/05/07 19:05:21 guenther Exp $ */
+/*	$OpenBSD: sigprocmask.S,v 1.13 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -43,7 +43,8 @@ SYSENTRY_HIDDEN(sigprocmask)
 1:	movl	(%ecx),%ecx		# fetch indirect  ...
 	movl	%ecx,8(%esp)		# to new mask arg
 2:	movl	$(SYS_sigprocmask),%eax
-	int	$0x80
+99:	int	$0x80
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	jc	1f
 	movl	12(%esp),%ecx		# fetch old mask requested
 	testl	%ecx,%ecx		# test if old mask requested

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.3 2023/12/06 06:15:33 miod Exp $ */
+/*	$OpenBSD: SYS.h,v 1.4 2023/12/10 16:45:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -61,10 +61,17 @@
  * further register saving.
  */
 
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
 #define	DL_SYSCALL(c)							\
 LEAF_NOPROFILE(_dl_##c, irrelevant);					\
 	ldiq	v0, SYS_##c;						\
-	call_pal PAL_OSF1_callsys;					\
+99:	call_pal PAL_OSF1_callsys;					\
+	PINSYSCALL(SYS_##c, 99b);					\
 	beq	a3, 1f;							\
 	subq	zero, v0, v0;	/* return -errno */			\
 1:									\

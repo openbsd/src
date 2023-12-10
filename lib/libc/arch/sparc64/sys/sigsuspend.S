@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.4 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.5 2023/12/10 16:45:52 deraadt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
 SYSENTRY_HIDDEN(sigsuspend)
 	ld	[%o0], %o0		/* indirect to mask argument */
 	mov	SYS_sigsuspend, %g1
-	t	ST_SYSCALL
+99:	t	ST_SYSCALL
+	PINSYSCALL(SYS_sigsuspend, 99b)
 	ERROR()				/* always terminates with EINTR */
 SYSCALL_END_HIDDEN(sigsuspend)

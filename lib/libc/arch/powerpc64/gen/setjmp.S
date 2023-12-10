@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.4 2020/10/18 17:51:39 mortimer Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.5 2023/12/10 16:45:52 deraadt Exp $ */
 /*
  * Copyright (c) 2020 Dale Rahn. All rights reserved.
  *
@@ -70,7 +70,8 @@ ENTRY(setjmp)
 	li	%r3, 1			/* how = SIG_BLOCK */
 	li	%r4, 0			/* oset = empty */
 	li	%r0, SYS_sigprocmask
-	sc
+99:	sc
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	std	%r3, JMP_sig(%r5)
 	b	1f
 	nop
@@ -130,7 +131,8 @@ ENTRY(longjmp)
 	li	%r3, 3			/* how = SIG_SETMASK */
 	ld	%r4, JMP_sig(%r5)	/* oset from the jmpbuf */
 	li	%r0, SYS_sigprocmask
-	sc
+98:	sc
+	PINSYSCALL(SYS_sigprocmask, 98b)
 	nop
 	b	1f
 	nop

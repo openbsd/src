@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.14 2020/12/13 21:21:32 bluhm Exp $ */
+/* $OpenBSD: setjmp.S,v 1.15 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -59,7 +59,8 @@ ENTRY(setjmp)
 	pushl	$1			/* how = SIG_BLOCK */
 	call	1f
 1:	movl	$(SYS_sigprocmask),%eax
-	int	$0x80			/* leave oset in %eax */
+99:	int	$0x80			/* leave oset in %eax */
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	popl	%edx
 	addl	$8,%esp
 	addl	$__jmpxor-1b,%edx	# load cookie address
@@ -89,7 +90,8 @@ ENTRY(longjmp)
 	pushl	$3			/* how = SIG_SETMASK */
 	call	1f			/* get our eip */
 1:	movl	$(SYS_sigprocmask),%eax
-	int	$0x80
+98:	int	$0x80
+	PINSYSCALL(SYS_sigprocmask, 98b)
 	popl	%ecx
 	addl	$8,%esp
 	addl	$__jmpxor-1b,%ecx	# load cookie address

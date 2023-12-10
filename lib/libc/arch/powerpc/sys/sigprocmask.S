@@ -1,4 +1,4 @@
-/* $OpenBSD: sigprocmask.S,v 1.14 2020/11/28 19:49:30 gkoehler Exp $ */
+/* $OpenBSD: sigprocmask.S,v 1.15 2023/12/10 16:45:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -46,8 +46,9 @@ SYSENTRY_HIDDEN(sigprocmask)
 .L_do_call:
 
 	li	0, SYS_sigprocmask
-	sc
-	
+99:	sc
+	PINSYSCALL(SYS_sigprocmask, 99b)
+
 	/* didnt work? */
 	cmpwi	0, 0
 	beq+	.L_sigprocmask_ok

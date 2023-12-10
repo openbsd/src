@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.16 2023/12/06 06:15:33 miod Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.17 2023/12/10 16:45:50 deraadt Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -56,6 +56,12 @@
  */
 #define _END(x)		.size x, . - x
 
+#define PINSYSCALL(sysno, label)					\
+	.pushsection .openbsd.syscalls,"",@progbits;			\
+	.long label;							\
+	.long sysno;							\
+	.popsection;
+
 /*
  * For functions implemented in ASM that aren't syscalls.
  *   END_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
@@ -67,7 +73,8 @@
 
 #define	CALLSYS_NOERROR(name)					\
 	ldiq	v0, ___CONCAT(SYS_,name);			\
-	call_pal PAL_OSF1_callsys
+97:	call_pal PAL_OSF1_callsys;				\
+	PINSYSCALL(___CONCAT(SYS_,name), 97b)
 
 #define	CALLSYS_ERROR(name)					\
 	CALLSYS_NOERROR(name);					\

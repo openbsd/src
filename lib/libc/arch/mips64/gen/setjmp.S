@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.12 2018/01/08 16:44:32 visa Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.13 2023/12/10 16:45:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -60,7 +60,8 @@ LEAF(setjmp, FRAMESZ)
 	li	a0, 1				# how = SIG_BLOCK
 	move	a1, zero			# get current signal mask
 	li	v0, SYS_sigprocmask
-	syscall					# mask in v0
+99:	syscall				# mask in v0
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	bne	a3, zero, botch
 	REG_S	v0, _JB_MASK(a2)		# save sc_mask
 
@@ -132,7 +133,8 @@ LEAF(longjmp, FRAMESZ)
 	REG_L	a1, _JB_MASK(a2)		# load sc_mask
 	li	a0, 3				# how = SIG_SETMASK
 	li	v0, SYS_sigprocmask
-	syscall
+98:	syscall
+	PINSYSCALL(SYS_sigprocmask, 98b)
 	bne	a3, zero, botch
 
 	REG_L	v0, _JB_REGS+ZERO*REGSZ(a2)

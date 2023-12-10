@@ -1,4 +1,4 @@
-/*	$OpenBSD: DEFS.h,v 1.3 2016/09/22 18:19:59 guenther Exp $ */
+/*	$OpenBSD: DEFS.h,v 1.4 2023/12/10 16:45:51 deraadt Exp $ */
 
 #include <machine/asm.h>
 
@@ -23,3 +23,9 @@
  */
 #define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
 #define	END_WEAK(x)	END_STRONG(x); .weak x
+
+#define PINSYSCALL(sysno, label)					\
+	.pushsection .openbsd.syscalls,"",@progbits;			\
+	.long label;							\
+	.long sysno;							\
+	.popsection;

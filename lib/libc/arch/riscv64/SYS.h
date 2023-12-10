@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2022/12/02 12:27:08 jca Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2023/12/10 16:45:52 deraadt Exp $	*/
 /*-
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,9 +56,10 @@
 #define __END(x)					\
 	__END_HIDDEN(x); END(x)
 
-#define SYSTRAP(x) \
-	li	t0, SYS_ ## x;		\
-	ecall
+#define SYSTRAP(x)					\
+	li	t0, SYS_ ## x;				\
+97:	ecall;						\
+	PINSYSCALL(SYS_ ## x, 97b)
 
 #define HANDLE_ERROR()							\
 	beqz	t0, 200f;						\

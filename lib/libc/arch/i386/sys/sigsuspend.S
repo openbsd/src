@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.10 2016/05/07 19:05:21 guenther Exp $ */
+/*	$OpenBSD: sigsuspend.S,v 1.11 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,8 @@ SYSENTRY_HIDDEN(sigsuspend)
 	movl	(%eax),%eax		# indirect to mask arg
 	movl	%eax,4(%esp)
 	movl	$(SYS_sigsuspend),%eax
-	int	$0x80
+99:	int	$0x80
+	PINSYSCALL(SYS_sigsuspend, 99b)
 	SET_ERRNO()
 	ret
 SYSCALL_END_HIDDEN(sigsuspend)

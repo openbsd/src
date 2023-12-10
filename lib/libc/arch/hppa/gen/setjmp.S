@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.11 2016/05/29 07:59:36 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.12 2023/12/10 16:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,8 @@ ALTENTRY(setjmp)
 	copy	%r0, %arg1		; set = empty
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)
 	ldil	L%SYSCALLGATE, %r1
-	ble	4(%sr7, %r1)
+99:	ble	4(%sr7, %r1)
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	 ldi	SYS_sigprocmask, %t1
 	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
 
@@ -129,7 +130,8 @@ ALTENTRY(longjmp)
 	ldi	3, %arg0		; how = SIG_SETMASK
 	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)
 	ldil	L%SYSCALLGATE, %r1
-	ble	4(%sr7, %r1)
+98:	ble	4(%sr7, %r1)
+	PINSYSCALL(SYS_sigprocmask, 98b)
 	 ldi	SYS_sigprocmask, %t1
 	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
 

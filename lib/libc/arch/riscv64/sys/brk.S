@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.4 2022/12/03 15:02:30 jca Exp $	*/
+/*	$OpenBSD: brk.S,v 1.5 2023/12/10 16:45:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Dale Rahn <drahn@openbsd.org>
  *
@@ -38,7 +38,8 @@ ENTRY_NB(brk)
 	lla	t1, __curbrk
 
 	li t0, SYS_break
-	ecall
+99:	ecall
+	PINSYSCALL(SYS_break, 99b)
 
 	/* check for error */
 	beqz	t0, .L_brk_ok

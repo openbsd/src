@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.7 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: sigsuspend.S,v 1.8 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,8 @@ SYSLEAF_HIDDEN(sigsuspend, FRAMESZ)
 	.set	reorder
 	lw	a0, 0(a0)		# indirect to mask arg
 	li	v0, SYS_sigsuspend
-	syscall
+99:	syscall
+	PINSYSCALL(SYS_sigsuspend, 99b)
 	bne	a3, zero, 1f
 	move	v0, zero		# should not happen
 	RESTORE_GP64

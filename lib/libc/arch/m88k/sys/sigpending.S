@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.10 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.11 2023/12/10 16:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,8 @@
 SYSENTRY(sigpending)
 	or	%r4,%r2,0		/* save r2 */
 	or	%r13,%r0,SYS_sigpending
-	tb0	0,%r0,450
+99:	tb0	0,%r0,450
+	PINSYSCALL(SYS_sigpending, 99b)
 	br	CERROR
 	st	%r2,%r4,0
 	jmp.n	%r1

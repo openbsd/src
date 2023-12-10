@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 2022/09/02 06:19:05 miod Exp $ */
+/*	$OpenBSD: SYS.h,v 1.3 2023/12/10 16:45:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn
@@ -29,6 +29,12 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
 #ifdef __ASSEMBLER__
 /*
  * If the system call number fits in a 8-bit signed value (i.e. fits in 7 bits),
@@ -38,10 +44,12 @@
 .macro systrap num
 .iflt \num - 128
 	mov	# \num, r0
-	trapa	#0x80
+99:	trapa	#0x80
+	PINSYSCALL(\num, 99b)
 .else
 	mov.l	903f, r0
-	trapa	#0x80
+99:	trapa	#0x80
+	PINSYSCALL(\num, 99b)
 	bra	904f
 	 nop
 	.align	2
@@ -51,17 +59,17 @@
 .endm
 #endif
 
-#define SYSTRAP(x)					\
-		systrap	SYS_ ## x
+#define SYSTRAP(x)						\
+	systrap	SYS_ ## x
 
-#define DL_SYSCALL(n)					\
-	.global		__CONCAT(_dl_,n)		;\
-	.type		__CONCAT(_dl_,n)%function	;\
-__CONCAT(_dl_,n):					;\
-	SYSTRAP(n)					;\
-	bf	.L_cerr					;\
-	 nop						;\
-	rts						;\
+#define DL_SYSCALL(n)						\
+	.global		__CONCAT(_dl_,n)			;\
+	.type		__CONCAT(_dl_,n)%function		;\
+__CONCAT(_dl_,n):						;\
+	SYSTRAP(n)						;\
+	bf	.L_cerr						;\
+	 nop							;\
+	rts							;\
 	 nop
 
 .L_cerr:

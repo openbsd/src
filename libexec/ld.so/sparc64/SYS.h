@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2021/12/14 07:20:16 deraadt Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2023/12/10 16:45:50 deraadt Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -68,14 +68,21 @@
 #include <machine/trap.h>
 #include <machine/asm.h>
 
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
 #define __CONCAT(x,y) x##y
 
-#define DL_SYSCALL(n)					\
-_ENTRY(__CONCAT(_dl_,n))				\
-	mov __CONCAT(SYS_,n) | SYSCALL_G2RFLAG, %g1	;\
-	add %o7, 8, %g2					;\
-	t ST_SYSCALL					;\
-	retl						;\
+#define DL_SYSCALL(n)						\
+_ENTRY(__CONCAT(_dl_,n))					\
+	mov __CONCAT(SYS_,n) | SYSCALL_G2RFLAG, %g1		;\
+	add %o7, 8, %g2						;\
+99:	t ST_SYSCALL						;\
+	PINSYSCALL(__CONCAT(SYS_,n), 99b)			;\
+	retl							;\
 	 sub %g0, %o0, %o0
 
 

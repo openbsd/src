@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.27 2023/02/11 06:10:39 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.28 2023/12/10 16:45:51 deraadt Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -64,7 +64,8 @@
 #define	PSEUDO_NOERROR(x,y)	SYSENTRY(x)				\
 				RETGUARD_SETUP(x, %r11, %r12);		\
 				li	%r0, SYS_ ## y ;		\
-				sc;					\
+			97:	sc;					\
+				PINSYSCALL(SYS_ ## y, 97b);		\
 				RETGUARD_CHECK(x, %r11, %r12);		\
 				blr;					\
 				__END(x)
@@ -72,7 +73,8 @@
 #define	PSEUDO_HIDDEN(x,y)	SYSENTRY_HIDDEN(x)			\
 				RETGUARD_SETUP(x, %r11, %r12);		\
 				li	%r0, SYS_ ## y;			\
-				sc;					\
+			97:	sc;					\
+				PINSYSCALL(SYS_ ## y, 97b);		\
 				cmpwi	%r0, 0;				\
 				beq+	.L_ret;				\
 				stw	%r0, R2_OFFSET_ERRNO(2);	\

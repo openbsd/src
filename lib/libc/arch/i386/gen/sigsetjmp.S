@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsetjmp.S,v 1.13 2020/12/13 21:21:32 bluhm Exp $ */
+/* $OpenBSD: sigsetjmp.S,v 1.14 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -47,7 +47,8 @@ ENTRY(sigsetjmp)
 	pushl	$1			/* how = SIG_BLOCK */
 	subl	$4,%esp
 	movl	$(SYS_sigprocmask),%eax
-	int	$0x80			/* leave oset in %eax */
+99:	int	$0x80			/* leave oset in %eax */
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	addl	$12,%esp
 	movl	%eax,(_JB_SIGMASK * 4)(%ecx)
 
@@ -81,7 +82,8 @@ ENTRY(siglongjmp)
 	pushl	$3			/* how = SIG_SETMASK */
 	subl	$4,%esp
 	movl	$(SYS_sigprocmask),%eax
-	int	$0x80
+98:	int	$0x80
+	PINSYSCALL(SYS_sigprocmask, 98b)
 	addl	$12,%esp
 
 1:	call	2f

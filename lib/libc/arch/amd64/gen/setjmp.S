@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.9 2020/10/21 17:22:59 kettenis Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.10 2023/12/10 16:45:51 deraadt Exp $	*/
 /*	$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -64,7 +64,8 @@ ENTRY(setjmp)
 	movl	$1,%edi			/* how = SIG_BLOCK */
 	xorl	%esi,%esi		/* set = empty */
 	movl	$SYS_sigprocmask,%eax
-	syscall
+99:	syscall
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	movq	%r8,%rdi		/* restore jmpbuf addr */
 	movq	%rax,(_JB_SIGMASK * 8)(%rdi)
 
@@ -100,7 +101,8 @@ ENTRY(longjmp)
 	movq	(_JB_SIGMASK * 8)(%rdi),%rsi	/* get set from sc_mask */
 	movl	$3,%edi				/* how = SIG_SETMASK */
 	movl	$SYS_sigprocmask,%eax
-	syscall
+98:	syscall
+	PINSYSCALL(SYS_sigprocmask, 98b)
 	movl	%r8d,%eax
 
 	leaq	 __jmpxor(%rip),%rcx

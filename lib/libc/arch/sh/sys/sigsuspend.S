@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.5 2022/09/02 06:19:04 miod Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.6 2023/12/10 16:45:52 deraadt Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:21 agc Exp $	*/
 
 /*-
@@ -46,7 +46,8 @@ SYSENTRY_HIDDEN(sigsuspend)
 #else
 	mov	#SYS_sigsuspend, r0
 #endif
-	trapa	#0x80
+99:	trapa	#0x80
+	PINSYSCALL(SYS_sigsuspend, 99b)
 	SET_ERRNO_AND_RETURN
 
 	.align	2

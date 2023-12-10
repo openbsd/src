@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.2 2023/12/10 16:45:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -30,6 +30,12 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
 #define DL_SYSCALL(n)						\
 	.section	".text"					;\
 	.align		16,0xcc					;\
@@ -37,7 +43,8 @@
 	.type		__CONCAT(_dl_,n),@function		;\
 __CONCAT(_dl_,n):						;\
 	movl $__CONCAT(SYS_, n),%eax;				;\
-	int $0x80						;\
+99:	int $0x80						;\
+	PINSYSCALL(__CONCAT(SYS_, n), 99b)			;\
 	jb	.L_cerr						;\
 	ret
 

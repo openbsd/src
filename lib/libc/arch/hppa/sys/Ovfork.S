@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.15 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.16 2023/12/10 16:45:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999,2002 Michael Shalayeff
@@ -32,8 +32,9 @@ SYSENTRY_HIDDEN(vfork)
 	.import errno, data
 	copy	rp, t4
 	ldil	L%SYSCALLGATE, r1
-	ble	4(sr7, r1)
-	ldi	__CONCAT(SYS_,vfork), t1
+99:	ble	4(sr7, r1)
+	PINSYSCALL(__CONCAT(SYS_,vfork), 99b)
+	 ldi	__CONCAT(SYS_,vfork), t1
 	comb,=	r0, t1, 1f
 	copy	t4, rp
 	/* set errno */

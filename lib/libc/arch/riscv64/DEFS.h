@@ -1,4 +1,4 @@
-/*	$OpenBSD: DEFS.h,v 1.1 2021/04/29 18:39:53 drahn Exp $	*/
+/*	$OpenBSD: DEFS.h,v 1.2 2023/12/10 16:45:52 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -58,3 +58,8 @@
 #define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
 #define	END_WEAK(x)	END_STRONG(x); .weak x
 
+#define PINSYSCALL(sysno, label)					\
+	.pushsection .openbsd.syscalls,"",@progbits;			\
+	.long label;							\
+	.long sysno;							\
+	.popsection;

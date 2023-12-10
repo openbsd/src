@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2021/04/28 15:16:26 drahn Exp $ */
+/*	$OpenBSD: SYS.h,v 1.2 2023/12/10 16:45:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@openbsd.org>
@@ -29,19 +29,26 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-#define SYSTRAP(x)					\
-	li	t0, SYS_ ## x				;\
-	ecall						;\
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
+#define SYSTRAP(x)						\
+	li	t0, SYS_ ## x					;\
+99:	ecall							;\
+	PINSYSCALL(SYS_ ## x, 99b)
 	/* XXX fence */
 
-#define DL_SYSCALL(n)					\
-	.global		__CONCAT(_dl_,n)		;\
-	.type		__CONCAT(_dl_,n)%function	;\
-__CONCAT(_dl_,n):					;\
-	RETGUARD_SETUP(__CONCAT(_dl_,n), x15)		;\
-	SYSTRAP(n)					;\
-	beqz	t0, 1f					;\
-	sub	a0, zero, a0	/* r0 = -errno */	;\
-1:							;\
-	RETGUARD_CHECK(__CONCAT(_dl_,n), x15)	 	;\
+#define DL_SYSCALL(n)						\
+	.global		__CONCAT(_dl_,n)			;\
+	.type		__CONCAT(_dl_,n)%function		;\
+__CONCAT(_dl_,n):						;\
+	RETGUARD_SETUP(__CONCAT(_dl_,n), x15)			;\
+	SYSTRAP(n)						;\
+	beqz	t0, 1f						;\
+	sub	a0, zero, a0	/* r0 = -errno */		;\
+1:								;\
+	RETGUARD_CHECK(__CONCAT(_dl_,n), x15)	 		;\
 	ret

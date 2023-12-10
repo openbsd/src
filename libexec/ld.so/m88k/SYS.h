@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2019/10/23 19:55:09 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2023/12/10 16:45:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -44,22 +44,29 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
 #define	__CONCAT(p,x)		p##x
 #define	__ENTRY(p,x)		ENTRY(__CONCAT(p,x))
 #define	__SYSCALLNAME(p,x)	__CONCAT(p,x)
 
-#define	__DO_SYSCALL(x)					\
-	or %r13, %r0, __SYSCALLNAME(SYS_,x);		\
-	tb0 0, %r0, 450
+#define	__DO_SYSCALL(x)						\
+	or %r13, %r0, __SYSCALLNAME(SYS_,x)			;\
+99:	tb0 0, %r0, 450						;\
+	PINSYSCALL(__SYSCALLNAME(SYS_,x), 99b)
 
 /*
  * m88k syscall return ABI requires the same amount of ASM
  * whether or not the syscall can possibly fail, so there's
  * no benefit to a DL_SYSCALL_NOERR() macro.
  */
-#define DL_SYSCALL(n)					\
-	__ENTRY(_dl_,n);				\
-	__DO_SYSCALL(n);				\
-	subu	%r2, %r0, %r2;	/* return -errno; */	\
-	jmp	%r1;					\
+#define DL_SYSCALL(n)						\
+	__ENTRY(_dl_,n)						;\
+	__DO_SYSCALL(n)						;\
+	subu	%r2, %r0, %r2	/* return -errno; */		;\
+	jmp	%r1						;\
 	END(_dl_##n)

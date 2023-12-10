@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.13 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.14 2023/12/10 16:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,7 +45,8 @@
 SYSENTRY_HIDDEN(sigsuspend)
 	ld	%r2,%r2,0		/* dereference the pointer mask */
 	or	%r13,%r0,SYS_sigsuspend
-	tb0	0,%r0,450
+99:	tb0	0,%r0,450
+	PINSYSCALL(SYS_sigsuspend, 99b)
 	br	CERROR
 	jmp.n	%r1
 	 or	%r2,%r0,0

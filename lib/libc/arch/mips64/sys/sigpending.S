@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.7 2015/10/23 04:39:24 guenther Exp $ */
+/*	$OpenBSD: sigpending.S,v 1.8 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,8 @@ SYSLEAF(sigpending, FRAMESZ)
 	SETUP_GP64(GPOFF, _HIDDEN(sigpending))
 	.set	reorder
 	li	v0, SYS_sigpending
-	syscall
+99:	syscall
+	PINSYSCALL(SYS_sigpending, 99b)
 	bne	a3, zero, 1f
 	sw	v0, 0(a0)
 	move	v0, zero

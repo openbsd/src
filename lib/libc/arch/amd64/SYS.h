@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.21 2023/01/11 01:55:17 mortimer Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.22 2023/12/10 16:45:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,11 @@
 /* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
 #define	TCB_OFFSET_ERRNO	32
 
-#define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
+#define SYSTRAP(x)							\
+	movl $(SYS_ ## x),%eax;						\
+	movq %rcx, %r10;						\
+97:	syscall;							\
+	PINSYSCALL(SYS_ ## x, 97b)
 
 #define SYSENTRY(x)							\
 	SYSENTRY_HIDDEN(x);						\

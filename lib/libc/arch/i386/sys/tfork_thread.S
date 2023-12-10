@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.10 2020/10/18 14:28:17 deraadt Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.11 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * All rights reserved.
@@ -62,7 +62,8 @@ ENTRY(__tfork_thread)
 	pushl	8(%ebp)		# push param
 	pushl	$0		# slot for return address, ignored by kernel
 	movl	$SYS___tfork, %eax
-	int	$0x80
+99:	int	$0x80
+	PINSYSCALL(SYS___tfork, 99b)
 	jb 	2f
 
 	/*
@@ -98,7 +99,8 @@ ENTRY(__tfork_thread)
 	pushl	$0		# NULL pointer argument to __threxit
 	pushl	$0		# slot for return address, ignored by kernel
 	movl	$SYS___threxit, %eax
-	int	$0x80
+98:	int	$0x80
+	PINSYSCALL(SYS___threxit, 98b)
 	int3
 
 	/*

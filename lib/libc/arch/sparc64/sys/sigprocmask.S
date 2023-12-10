@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.4 2015/10/23 04:39:25 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.5 2023/12/10 16:45:52 deraadt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,8 @@ SYSENTRY_HIDDEN(sigprocmask)
 	mov	1, %o0		/* ... using sigprocmask(SIG_BLOCK) */
 1:
 	mov	SYS_sigprocmask, %g1
-	t	ST_SYSCALL
+99:	t	ST_SYSCALL
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	bcc	2f		/* if success, */
 	 tst	%o2		/*    check to see if oset requested */
 	ERROR()

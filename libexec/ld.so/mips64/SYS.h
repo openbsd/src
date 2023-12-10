@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.2 2023/12/10 16:45:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -29,14 +29,21 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#define	DL_SYSCALL(c)							\
-NLEAF(_dl_##c,0)							\
-	li      v0,SYS_##c;						\
-	syscall;							\
-	bnez	a3, 1f;							\
-	j	ra;							\
-1:		;							\
-	subu	v0, zero, v0;						\
-	j	ra	;						\
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
+#define	DL_SYSCALL(c)						\
+NLEAF(_dl_##c,0)						\
+	li      v0,SYS_##c;					\
+99:	syscall;						\
+	PINSYSCALL(SYS_##c, 99b);				\
+	bnez	a3, 1f;						\
+	j	ra;						\
+1:	;							\
+	subu	v0, zero, v0;					\
+	j	ra;						\
 END(_dl_##c)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.15 2022/12/04 08:22:13 tb Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.16 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -51,7 +51,8 @@ ENTRY_NB(sbrk)
 	movl	(%edx),%eax
 	addl	%eax,4(%esp)
 	movl	$(SYS_break),%eax
-	int	$0x80
+99:	int	$0x80
+	PINSYSCALL(SYS_break, 99b)
 	jc	2f
 	PIC_PROLOGUE
 	movl	PIC_GOT(__curbrk),%edx
@@ -65,7 +66,8 @@ ENTRY_NB(sbrk)
 	movl	__curbrk,%eax
 	addl	%eax,4(%esp)
 	movl	$(SYS_break),%eax
-	int	$0x80
+98:	int	$0x80
+	PINSYSCALL(SYS_break, 98b)
 	jc	2f
 	movl	__curbrk,%eax
 	addl	%ecx,__curbrk

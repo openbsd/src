@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2020/11/28 19:49:30 gkoehler Exp $ */
+/*	$OpenBSD: SYS.h,v 1.5 2023/12/10 16:45:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -29,14 +29,21 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#define	DL_SYSCALL(n)							\
-ENTRY(_dl_##n)								\
-	RETGUARD_SETUP(_dl_##n, %r11, %r12)				;\
-	li	0, SYS_##n						;\
-	sc								;\
-	cmpwi	0, 0							;\
-	beq+	.L_end##n						;\
-	neg	3, 3							;\
-.L_end##n:								;\
-	RETGUARD_CHECK(_dl_##n, %r11, %r12)				;\
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
+#define	DL_SYSCALL(n)						\
+ENTRY(_dl_##n)							\
+	RETGUARD_SETUP(_dl_##n, %r11, %r12)			;\
+	li	0, SYS_##n					;\
+99:	sc							;\
+	PINSYSCALL(SYS_##n, 99b)				;\
+	cmpwi	0, 0						;\
+	beq+	.L_end##n					;\
+	neg	3, 3						;\
+.L_end##n:							;\
+	RETGUARD_CHECK(_dl_##n, %r11, %r12)			;\
 	blr

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.14 2015/09/10 13:29:09 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.15 2023/12/10 16:45:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,7 +64,8 @@ ENTRY(sbrk)
 	add	%r2,%r2,%r5
 	or	%r4,%r2,0
 	or	%r13,%r0,SYS_break
-	tb0	0,%r0,450
+99:	tb0	0,%r0,450
+	PINSYSCALL(SYS_break, 99b)
 #ifdef __PIC__
 	br	9f
 #else

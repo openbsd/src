@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.4 2020/10/18 14:28:18 deraadt Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.5 2023/12/10 16:45:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -36,7 +36,8 @@ ENTRY(__tfork_thread)
 	 * different return paths.
 	 */
 	mov	SYS___tfork, %g1
-	t	ST_SYSCALL
+99:	t	ST_SYSCALL
+	PINSYSCALL(SYS___tfork, 99b)
 	bcs	9f
 	 nop
 
@@ -59,7 +60,8 @@ ENTRY(__tfork_thread)
 
 	mov	SYS___threxit, %g1
 	clr	%o0
-	t	ST_SYSCALL	/* will not return */
+98:	t	ST_SYSCALL	/* will not return */
+	PINSYSCALL(SYS___threxit, 98b)
 	unimp
 
 9:

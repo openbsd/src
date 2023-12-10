@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.10 2022/12/08 01:25:43 guenther Exp $ */
+/*	$OpenBSD: brk.S,v 1.11 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,8 @@ LEAF(brk, FRAMESZ)
 	move	a0, v0		# dont allow break < minbrk
 1:
 	li	v0, SYS_break
-	syscall
+99:	syscall
+	PINSYSCALL(SYS_break, 99b)
 	bne	a3, zero, 2f
 	PTR_S	a0, __curbrk
 	move	v0, zero

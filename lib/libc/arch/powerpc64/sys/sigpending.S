@@ -1,4 +1,4 @@
-/* $OpenBSD: sigpending.S,v 1.2 2020/10/16 23:42:16 deraadt Exp $ */
+/* $OpenBSD: sigpending.S,v 1.3 2023/12/10 16:45:52 deraadt Exp $ */
 /*
  * Copyright (c) 2012 Mark Kettenis
  *
@@ -25,7 +25,8 @@ SYSENTRY(sigpending)
 	li	%r0, SYS_sigpending
 
 	mr	%r5, %r3
-	sc
+99:	sc
+	PINSYSCALL(SYS_sigpending, 99b)
 	stw	%r3, 0(%r5)
 	li	%r3, 0
 	RETGUARD_CHECK(sigpending, %r11)

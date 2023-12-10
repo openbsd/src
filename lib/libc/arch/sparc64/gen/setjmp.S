@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.6 2016/04/28 12:53:47 kettenis Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.7 2023/12/10 16:45:52 deraadt Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.4 2000/08/28 00:45:59 eeh Exp $	*/
 
 /*
@@ -53,7 +53,8 @@ ENTRY(setjmp)
 	mov	1, %o0			/* SIG_BLOCK */
 	mov	SYS_sigprocmask, %g1	
 	clr	%o1			/* sigprocmask(SIG_BLOCK, 0) */
-	t	ST_SYSCALL
+99:	t	ST_SYSCALL
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	stx	%o0, [%o3 + 0x10]
 
 	stx	%sp, [%o3 + 0x00]	/* store caller's stack pointer */
@@ -68,7 +69,8 @@ ENTRY(longjmp)
 	mov	3, %o0			/* SIG_SETMASK */
 	ldx	[%i0 + 0x10], %o1
 	mov	SYS_sigprocmask, %g1	
-	t	ST_SYSCALL
+98:	t	ST_SYSCALL
+	PINSYSCALL(SYS_sigprocmask, 98b)
 	
 	ldx	[%i0 + 0x00], %fp
 	ldx	[%i0 + 0x08], %i7

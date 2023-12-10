@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.8 2022/12/08 02:11:27 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.9 2023/12/10 16:45:52 deraadt Exp $	*/
 /*	$NetBSD: brk.S,v 1.10 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -69,7 +69,8 @@ ENTRY(brk)
 #else
 	mov	#SYS_break, r0
 #endif
-	trapa	#0x80
+99:	trapa	#0x80
+	PINSYSCALL(SYS_break, 99b)
 	bf	2f
 #ifdef __PIC__
 	mov.l	Lcurbrk, r0

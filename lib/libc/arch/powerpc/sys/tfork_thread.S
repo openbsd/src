@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.10 2020/11/28 19:49:30 gkoehler Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.11 2023/12/10 16:45:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -22,7 +22,8 @@ ENTRY(__tfork_thread)
 	RETGUARD_SETUP(__tfork_thread, %r11, %r12)
 	/* call __tfork */
 	li	%r0, SYS___tfork
-	sc
+99:	sc
+	PINSYSCALL(SYS___tfork, 99b)
 	cmpwi	%r0, 0
 	bne	1f
 	
@@ -38,7 +39,8 @@ ENTRY(__tfork_thread)
 	
 	/* child returned, call __threxit */
 	li	%r0, SYS___threxit
-	sc
+98:	sc
+	PINSYSCALL(SYS___threxit, 98b)
 	.long	0		/* illegal */
 
 1:

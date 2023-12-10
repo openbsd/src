@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.3 2023/04/25 04:11:10 deraadt Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.4 2023/12/10 16:45:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -30,19 +30,26 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#define	DL_SYSCALL(n)					\
-	.global	__CONCAT(_dl_,n)			;\
-	.type	__CONCAT(_dl_,n), @function		;\
-	.align	16,0xcc					;\
-__CONCAT(_dl_,n):					;\
-	endbr64						;\
-	RETGUARD_SETUP(_dl_##n, r11)			;\
-	RETGUARD_PUSH(r11)				;\
-	movl	$(__CONCAT(SYS_,n)), %eax		;\
-	movq	%rcx, %r10				;\
-	syscall						;\
-	jnc	1f					;\
-	neg	%rax					;\
-1:	RETGUARD_POP(r11)				;\
-	RETGUARD_CHECK(_dl_##n, r11)			;\
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		;\
+	.long label						;\
+	.long sysno						;\
+	.popsection
+
+#define	DL_SYSCALL(n)						\
+	.global	__CONCAT(_dl_,n)				;\
+	.type	__CONCAT(_dl_,n), @function			;\
+	.align	16,0xcc						;\
+__CONCAT(_dl_,n):						;\
+	endbr64							;\
+	RETGUARD_SETUP(_dl_##n, r11)				;\
+	RETGUARD_PUSH(r11)					;\
+	movl	$(__CONCAT(SYS_,n)), %eax			;\
+	movq	%rcx, %r10					;\
+99:	syscall							;\
+	PINSYSCALL(__CONCAT(SYS_,n), 99b)			;\
+	jnc	1f						;\
+	neg	%rax						;\
+1:	RETGUARD_POP(r11)					;\
+	RETGUARD_CHECK(_dl_##n, r11)				;\
 	ret

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.7 2015/10/23 04:39:24 guenther Exp $ */
+/*	$OpenBSD: sigprocmask.S,v 1.8 2023/12/10 16:45:51 deraadt Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,8 @@ SYSLEAF_HIDDEN(sigprocmask, FRAMESZ)
 	lw	a1, 0(a1)		# indirect to new mask arg
 .Ldoit:
 	li	v0, SYS_sigprocmask
-	syscall
+99:	syscall
+	PINSYSCALL(SYS_sigprocmask, 99b)
 	bne	a3, zero, .Lerr
 	beq	a2, zero, .Lout		# test if old mask requested
 	sw	v0, 0(a2)		# store old mask

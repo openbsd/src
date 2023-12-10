@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.17 2022/12/08 01:25:43 guenther Exp $ */
+/* $OpenBSD: sbrk.S,v 1.18 2023/12/10 16:45:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -57,7 +57,8 @@ ENTRY_NB(sbrk)
 	mr	7, 3
 
 	li	0, SYS_break
-	sc
+99:	sc
+	PINSYSCALL(SYS_break, 99b)
 
 	/* check for error */
 	cmpwi	0, 0

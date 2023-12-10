@@ -6,6 +6,7 @@ PHDRS
 	pltgot	PT_LOAD;
 	data	PT_LOAD;
 	random	PT_OPENBSD_RANDOMIZE;
+	syscalls PT_OPENBSD_SYSCALLS;
 	relro	PT_GNU_RELRO;
 	dynamic	PT_DYNAMIC;
 	note	PT_NOTE;
@@ -45,6 +46,10 @@ SECTIONS
     {
 	*(.openbsd.randomdata .openbsd.randomdata.*)
     } :data :relro :random
+    .openbsd.syscalls :
+    {
+	*(.openbsd.syscalls .openbsd.syscalls.*)
+    } :syscalls
     .data.rel.ro : { *(.data.rel.ro.local*) *(.data.rel.ro*) } :data :relro
     .dynamic	: { *(.dynamic) } :data :relro :dynamic
     . = DATA_SEGMENT_RELRO_END (0, .);

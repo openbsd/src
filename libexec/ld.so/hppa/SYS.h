@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.2 2023/12/10 16:45:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -33,17 +33,24 @@
 #include <machine/vmparam.h>
 #undef  _LOCORE
 
-#define	DL_SYSCALL(x)				\
-ENTRY(__CONCAT(_dl_,x),0)			!\
-	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
-	ldil	L%SYSCALLGATE, r1		!\
-	ble	4(sr7, r1)			!\
-	ldi	__CONCAT(SYS_,x), t1		!\
-	comb,<>	r0, t1, _dl_sysexit		!\
-	ldw	HPPA_FRAME_ERP(sr0,sp), rp	!\
-	bv	r0(rp)				!\
-	nop					!\
-_dl_sysexit					!\
-	bv	r0(rp)				!\
-	sub	r0, ret0, ret0			!\
+#define PINSYSCALL(sysno, label)				\
+	.pushsection .openbsd.syscalls,"",@progbits		!\
+	.long label						!\
+	.long sysno						!\
+	.popsection
+
+#define	DL_SYSCALL(x)						\
+ENTRY(__CONCAT(_dl_,x),0)					!\
+	stw	rp, HPPA_FRAME_ERP(sr0,sp)			!\
+	ldil	L%SYSCALLGATE, r1				!\
+99:	ble	4(sr7, r1)					!\
+	PINSYSCALL(__CONCAT(SYS_,x), 99b)			!\
+	 ldi	__CONCAT(SYS_,x), t1				!\
+	comb,<>	r0, t1, _dl_sysexit				!\
+	ldw	HPPA_FRAME_ERP(sr0,sp), rp			!\
+	bv	r0(rp)						!\
+	nop							!\
+_dl_sysexit							!\
+	bv	r0(rp)						!\
+	sub	r0, ret0, ret0					!\
 EXIT(__CONCAT(_dl_,x))

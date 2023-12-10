@@ -5,6 +5,7 @@ PHDRS
 	btext	PT_LOAD FLAGS (0x08000005);
 	data	PT_LOAD;
 	random	PT_OPENBSD_RANDOMIZE;
+	syscalls PT_OPENBSD_SYSCALLS;
 	relro	PT_GNU_RELRO;
 	dynamic	PT_DYNAMIC;
 	note	PT_NOTE;
@@ -42,6 +43,11 @@ SECTIONS
     .dynamic	: { *(.dynamic) } :data :relro :dynamic
     .got	: { *(.got.plt) *(.got) } :data :relro
     . = DATA_SEGMENT_RELRO_END (0, .);
+
+    .openbsd.syscalls :
+    {
+	*(.openbsd.syscalls .openbsd.syscalls.*)
+    } :syscalls
 
     /* BOOTDATA */
     . = ALIGN(0x1000);
