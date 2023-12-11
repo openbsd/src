@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.93 2023/04/13 15:23:22 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.94 2023/12/11 22:12:53 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -210,6 +210,7 @@ extern struct pool pmap_pv_pool;
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 #define pmap_unuse_final(p)		/* nothing */
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 

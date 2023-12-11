@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.24 2023/06/10 19:30:48 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.25 2023/12/11 22:12:53 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -101,6 +101,9 @@ extern struct pmap kernel_pmap_;
 
 vaddr_t pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart,
     long kernelend, long ram_start, long ram_end);
+void pmap_postinit(void);
+void pmap_init_percpu(void);
+
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 void pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot);
 void pmap_page_rw(pmap_t pm, vaddr_t va);
@@ -118,7 +121,6 @@ struct pv_entry;
 /* investigate */
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t);
-void pmap_postinit(void);
 
 #define __HAVE_PMAP_MPSAFE_ENTER_COW
 

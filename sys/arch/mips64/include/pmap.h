@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.53 2023/01/31 15:18:55 deraadt Exp $ */
+/*      $OpenBSD: pmap.h,v 1.54 2023/12/11 22:12:53 kettenis Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -165,6 +165,7 @@ int	pmap_copyinsn(pmap_t, vaddr_t, uint32_t *);
 int	pmap_emulate_modify(pmap_t, vaddr_t);
 void	pmap_page_cache(vm_page_t, u_int);
 
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 #define	pmap_unuse_final(p)		do { /* nothing yet */ } while (0)
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 

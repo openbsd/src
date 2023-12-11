@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.322 2023/08/29 16:19:34 claudio Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.323 2023/12/11 22:12:53 kettenis Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -399,6 +399,7 @@ main(void *framep)
 	/* Enable per-CPU data. */
 	mbcpuinit();
 	kqueue_init_percpu();
+	pmap_init_percpu();
 	uvm_init_percpu();
 	evcount_init_percpu();
 

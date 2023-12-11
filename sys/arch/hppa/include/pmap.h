@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.55 2023/04/13 15:23:22 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.56 2023/12/11 22:12:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -111,6 +111,7 @@ struct vm_page *pmap_unmap_direct(vaddr_t);
 #define pmap_is_modified(pg)	pmap_testbit(pg, PG_PMAP_MOD)
 #define pmap_is_referenced(pg)	pmap_testbit(pg, PG_PMAP_REF)
 
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 #define pmap_unuse_final(p)		/* nothing */
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 

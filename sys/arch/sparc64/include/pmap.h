@@ -158,6 +158,7 @@ extern struct pmap kernel_pmap_;
 #define	pmap_update(pm)			/* nothing (yet) */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 
 void	pmap_bootstrap(u_long, u_long, u_int, u_int);
 int	pmap_copyinsn(pmap_t, vaddr_t, uint32_t *);

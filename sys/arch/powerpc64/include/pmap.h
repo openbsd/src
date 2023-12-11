@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.18 2021/10/12 18:06:15 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.19 2023/12/11 22:12:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -64,6 +64,7 @@ extern struct pmap kernel_pmap_store;
 #define pmap_resident_count(pm) ((pm)->pm_stats.resident_count)
 #define pmap_wired_count(pm)	((pm)->pm_stats.wired_count)
 
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 #define pmap_unuse_final(p)
 #define pmap_remove_holes(vm)
 #define pmap_update(pm)

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.45 2023/04/13 15:23:21 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.46 2023/12/11 22:12:52 kettenis Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -158,6 +158,7 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define pmap_update(pmap)		/* nothing (yet) */
 
 #define pmap_proc_iflush(p, va, len)	/* nothing */
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 #define pmap_unuse_final(p)		/* nothing */
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 

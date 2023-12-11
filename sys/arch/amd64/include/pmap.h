@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.86 2023/04/13 15:23:21 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.87 2023/12/11 22:12:52 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -375,6 +375,7 @@ extern const long nbpd[], nkptpmax[];
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 #define pmap_unuse_final(p)		/* nothing */
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 

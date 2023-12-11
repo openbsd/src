@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.54 2023/04/13 15:23:22 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.55 2023/12/11 22:12:53 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -241,6 +241,7 @@ extern struct pmap	kernel_pmap_store;
 
 #define	pmap_deactivate(p)		do { /* nothing */ } while (0)
 
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 

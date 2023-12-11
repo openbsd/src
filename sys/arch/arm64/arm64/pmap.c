@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.99 2023/08/10 19:29:32 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.100 2023/12/11 22:12:53 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1870,6 +1870,13 @@ pmap_postinit(void)
 	minaddr = vm_map_min(kernel_map);
 	pmap_kvp_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    npages * PAGE_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
+}
+
+void
+pmap_init_percpu(void)
+{
+	pool_cache_init(&pmap_pted_pool);
+	pool_cache_init(&pmap_vp_pool);
 }
 
 void

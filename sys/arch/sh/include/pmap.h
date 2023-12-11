@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.20 2023/04/13 15:23:22 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.21 2023/12/11 22:12:53 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -60,6 +60,7 @@ typedef struct pmap {
 extern struct pmap __pmap_kernel;
 
 void pmap_bootstrap(void);
+#define pmap_init_percpu()		do { /* nothing */ } while (0)
 #define	pmap_unuse_final(p)		do { /* nothing */ } while (0)
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 #define	pmap_kernel()			(&__pmap_kernel)
