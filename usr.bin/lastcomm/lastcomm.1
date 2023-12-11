@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lastcomm.1,v 1.25 2023/02/21 14:31:07 deraadt Exp $
+.\"	$OpenBSD: lastcomm.1,v 1.26 2023/12/11 00:40:31 deraadt Exp $
 .\"	$NetBSD: lastcomm.1,v 1.5 1995/10/22 01:43:41 ghudson Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)lastcomm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 21 2023 $
+.Dd $Mdocdate: December 11 2023 $
 .Dt LASTCOMM 1
 .Os
 .Sh NAME
@@ -122,6 +122,10 @@ pointer was not in stack memory.
 The command was terminated due to a
 .Xr pledge 2
 violation.
+.It Li S
+The command tried to execute a system call from the wrong
+system call instruction, see
+.Xr pinsyscalls 2 .
 .It Li T
 The command did a memory access violation detected by a
 processor trap.
