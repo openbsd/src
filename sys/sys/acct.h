@@ -1,4 +1,4 @@
-/*	$OpenBSD: acct.h,v 1.13 2023/02/21 14:31:07 deraadt Exp $	*/
+/*	$OpenBSD: acct.h,v 1.14 2023/12/11 00:39:43 deraadt Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@ struct acct {
 #define	ATRAP	0x00000040		/* memory access violation */
 #define	AUNVEIL	0x00000080		/* unveil access violation */
 #define	AEXECVE	0x00000100		/* execve from wrong libc stub */
+#define	APINSYS	0x00000200		/* syscall pin violation */
 	u_int32_t ac_flag;		/* accounting flags */
 };
 
