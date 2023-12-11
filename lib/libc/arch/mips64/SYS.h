@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.13 2023/12/10 16:45:51 deraadt Exp $ 
+ *      $OpenBSD: SYS.h,v 1.14 2023/12/11 22:24:16 kettenis Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -127,6 +127,7 @@
 
 #define PINSYSCALL(sysno, label)					\
 	.pushsection .openbsd.syscalls,"",@progbits;			\
+	.p2align 2;							\
 	.long label;							\
 	.long sysno;							\
 	.popsection;

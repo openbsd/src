@@ -1,4 +1,4 @@
-/*	$OpenBSD: DEFS.h,v 1.4 2023/12/10 16:45:51 deraadt Exp $ */
+/*	$OpenBSD: DEFS.h,v 1.5 2023/12/11 22:24:15 kettenis Exp $ */
 
 #include <machine/asm.h>
 
@@ -26,6 +26,7 @@
 
 #define PINSYSCALL(sysno, label)					\
 	.pushsection .openbsd.syscalls,"",@progbits;			\
+	.p2align 2;							\
 	.long label;							\
 	.long sysno;							\
 	.popsection;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.25 2023/12/11 02:30:36 deraadt Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.26 2023/12/11 22:24:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -69,6 +69,7 @@
  
 #define PINSYSCALL(sysno, label)			\
 	.pushsection .openbsd.syscalls,"",@progbits	!\
+	.p2align 2					!\
 	.long label					!\
 	.long sysno					!\
 	.popsection
