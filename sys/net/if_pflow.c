@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.102 2023/12/08 23:15:44 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.103 2023/12/11 14:25:09 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -62,7 +62,7 @@
 #define DPRINTF(x)
 #endif
 
-SLIST_HEAD(, pflow_softc) pflowif_list;
+SMR_SLIST_HEAD(, pflow_softc) pflowif_list;
 struct pflowstats	 pflowstats;
 
 void	pflowattach(int);
@@ -113,7 +113,7 @@ struct if_clone	pflow_cloner =
 void
 pflowattach(int npflow)
 {
-	SLIST_INIT(&pflowif_list);
+	SMR_SLIST_INIT(&pflowif_list);
 	if_clone_attach(&pflow_cloner);
 }
 
@@ -268,9 +268,8 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	task_set(&pflowif->sc_outputtask, pflow_output_process, pflowif);
 
 	/* Insert into list of pflows */
-	NET_LOCK();
-	SLIST_INSERT_HEAD(&pflowif_list, pflowif, sc_next);
-	NET_UNLOCK();
+	KERNEL_ASSERT_LOCKED();
+	SMR_SLIST_INSERT_HEAD_LOCKED(&pflowif_list, pflowif, sc_next);
 	return (0);
 }
 
@@ -284,8 +283,11 @@ pflow_clone_destroy(struct ifnet *ifp)
 
 	NET_LOCK();
 	sc->sc_dying = 1;
-	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
 	NET_UNLOCK();
+
+	KERNEL_ASSERT_LOCKED();
+	SMR_SLIST_REMOVE_LOCKED(&pflowif_list, sc, pflow_softc, sc_next);
+	smr_barrier();
 
 	timeout_del(&sc->sc_tmo);
 	timeout_del(&sc->sc_tmo6);
@@ -812,7 +814,7 @@ export_pflow(struct pf_state *st)
 
 	sk = st->key[st->direction == PF_IN ? PF_SK_WIRE : PF_SK_STACK];
 
-	SLIST_FOREACH(sc, &pflowif_list, sc_next) {
+	SMR_SLIST_FOREACH(sc, &pflowif_list, sc_next) {
 		mtx_enter(&sc->sc_mtx);
 		switch (sc->sc_version) {
 		case PFLOW_PROTO_5:
