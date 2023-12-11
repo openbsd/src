@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.66 2023/01/14 12:11:11 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.67 2023/12/11 11:15:44 claudio Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -278,6 +278,10 @@ file	arch/arm64/dev/acpipci.c		acpipci
 
 attach	smmu at acpiiort with smmu_acpi
 file	arch/arm64/dev/smmu_acpi.c		smmu_acpi
+
+device	ampchwm
+attach	ampchwm at acpi
+file	arch/arm64/dev/ampchwm.c		ampchwm
 
 device  apm
 attach  apm at mainbus
