@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.27 2023/12/09 10:36:05 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.28 2023/12/11 09:40:42 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -749,27 +749,22 @@ again:
 		hdr = &sc->sc_tx_hdrs[slot];
 		memset(hdr, 0, sc->sc_hdr_size);
 		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
-			struct mbuf *mip;
-			struct ip *ip;
-			int ehdrlen = ETHER_HDR_LEN;
-			int ipoff;
+			struct ether_extracted ext;
+
+			ether_extract_headers(m, &ext);
+			hdr->csum_start = sizeof(*ext.eh);
 #if NVLAN > 0
-			struct ether_vlan_header *eh;
-
-			eh = mtod(m, struct ether_vlan_header *);
-			if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN))
-				ehdrlen += ETHER_VLAN_ENCAP_LEN;
+			if (ext.evh)
+				hdr->csum_start = sizeof(*ext.evh);
 #endif
-
 			if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 				hdr->csum_offset = offsetof(struct tcphdr, th_sum);
 			else
 				hdr->csum_offset = offsetof(struct udphdr, uh_sum);
 
-			mip = m_getptr(m, ehdrlen, &ipoff);
-			KASSERT(mip != NULL && mip->m_len - ipoff >= sizeof(*ip));
-			ip = (struct ip *)(mip->m_data + ipoff);
-			hdr->csum_start = ehdrlen + (ip->ip_hl << 2);
+			if (ext.ip4)
+				hdr->csum_start += ext.ip4->ip_hl << 2;
+
 			hdr->flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
 		}
 
