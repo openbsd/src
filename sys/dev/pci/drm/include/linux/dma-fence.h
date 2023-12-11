@@ -113,6 +113,14 @@ dma_fence_is_later(struct dma_fence *a, struct dma_fence *b)
 	return __dma_fence_is_later(a->seqno, b->seqno, a->ops);
 }
 
+static inline bool
+dma_fence_is_later_or_same(struct dma_fence *a, struct dma_fence *b)
+{
+	if (a == b)
+		return true;
+	return dma_fence_is_later(a, b);
+}
+
 static inline void
 dma_fence_set_error(struct dma_fence *fence, int error)
 {
