@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.143 2023/11/30 14:52:00 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.144 2023/12/12 22:00:43 kn Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -502,14 +502,8 @@ main(volatile int argc, char *argv[])
 
 		case 'o':
 			outfile = optarg;
-			if (*outfile == '\0') {
-				pipeout = 0;
-				outfile = NULL;
-				ttyout = stdout;
-			} else {
-				pipeout = strcmp(outfile, "-") == 0;
-				ttyout = pipeout ? stderr : stdout;
-			}
+			pipeout = strcmp(outfile, "-") == 0;
+			ttyout = pipeout ? stderr : stdout;
 			break;
 
 		case 'p':
