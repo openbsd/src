@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.116 2023/12/12 15:30:56 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.117 2023/12/12 23:43:35 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1109,7 +1109,7 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	int64_t *ap;
 	const struct sysent *callp;
 	struct proc *p = curproc;
-	int error = ENOSYS, new, indirect = -1;
+	int error = ENOSYS, new;
 	register_t args[8];
 	register_t rval[2];
 	register_t *argp;
@@ -1162,7 +1162,7 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = mi_syscall(p, code, indirect, callp, args, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 		vaddr_t dest;
