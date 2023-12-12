@@ -434,7 +434,6 @@ symlink
 symlinkat
 sync
 sysarch
-syscall
 timer_create
 timer_delete
 timer_getoverrun

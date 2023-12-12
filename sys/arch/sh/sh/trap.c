@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2023/02/11 23:07:27 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2023/12/12 15:30:56 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -515,44 +515,22 @@ void
 syscall(struct proc *p, struct trapframe *tf)
 {
 	caddr_t params;
-	const struct sysent *callp;
-	int error, opc, indirect = -1;
-	int argoff, argsize;
+	const struct sysent *callp = sysent;
+	int error, opc;
+	int argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
 
 	opc = tf->tf_spc;
-	code = tf->tf_r0;
-
 	params = (caddr_t)tf->tf_r15;
 
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		indirect = code;
-	        code = tf->tf_r4;
-		argoff = 1;
-		break;
-	default:
-		argoff = 0;
-		break;
-	}
-
-	callp = sysent;
-	if (code < 0 || code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else
+	code = tf->tf_r0;
+	// XXX out of range stays on syscall0, which we assume is enosys
+	if (code >= 0 || code <= SYS_MAXSYSCALL)
 		callp += code;
+
 	argsize = callp->sy_argsize;
-#ifdef DIAGNOSTIC
-	if (argsize > sizeof args) {
-		callp += SYS_syscall - code;
-		argsize = callp->sy_argsize;
-	}
-#endif
 
 	if (argsize) {
 		register_t *ap;
@@ -570,20 +548,18 @@ syscall(struct proc *p, struct trapframe *tf)
 		}
 
 		ap = args;
-		switch (argoff) {
-		case 0:	*ap++ = tf->tf_r4; argsize -= sizeof(int);
-		case 1:	*ap++ = tf->tf_r5; argsize -= sizeof(int);
-		case 2: *ap++ = tf->tf_r6; argsize -= sizeof(int);
-			/*
-			 * off_t args aren't split between register
-			 * and stack, but rather r7 is skipped and
-			 * the entire off_t is on the stack.
-			 */
-			if (argoff + off_t_arg == 3)
-				break;
-			*ap++ = tf->tf_r7; argsize -= sizeof(int);
+
+		*ap++ = tf->tf_r4; argsize -= sizeof(int);
+		*ap++ = tf->tf_r5; argsize -= sizeof(int);
+		*ap++ = tf->tf_r6; argsize -= sizeof(int);
+		/*
+		 * off_t args aren't split between register
+		 * and stack, but rather r7 is skipped and
+		 * the entire off_t is on the stack.
+		 */
+		if (off_t_arg == 3)
 			break;
-		}
+		*ap++ = tf->tf_r7; argsize -= sizeof(int);
 
 		if (argsize > 0) {
 			if ((error = copyin(params, ap, argsize)))
@@ -594,7 +570,7 @@ syscall(struct proc *p, struct trapframe *tf)
 	rval[0] = 0;
 	rval[1] = tf->tf_r1;
 
-	error = mi_syscall(p, code, indirect, callp, args, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:

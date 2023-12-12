@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.162 2023/04/16 06:43:49 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.163 2023/12/12 15:30:55 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -516,9 +516,9 @@ void
 syscall(struct trapframe *frame)
 {
 	caddr_t params;
-	const struct sysent *callp;
-	struct proc *p;
-	int error, indirect = -1;
+	const struct sysent *callp = sysent;
+	struct proc *p = curproc;
+	int error;
 	register_t code, args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int ocpl = lapic_tpr;
@@ -540,38 +540,22 @@ syscall(struct trapframe *frame)
 	}
 #endif
 
-	p = curproc;
 	p->p_md.md_regs = frame;
+
 	code = frame->tf_eax;
-
-	params = (caddr_t)frame->tf_esp + sizeof(int);
-
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		indirect = code;
-		copyin(params, &code, sizeof(int));
-		params += sizeof(int);
-		break;
-	default:
-		break;
-	}
-
-	callp = sysent;
-	if (code < 0 || code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else
+	// XXX out of range stays on syscall0, which we assume is enosys
+	if (code >= 0 || code <= SYS_MAXSYSCALL)
 		callp += code;
+
 	argsize = callp->sy_argsize;
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 	if (argsize && (error = copyin(params, args, argsize)))
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = frame->tf_edx;
 
-	error = mi_syscall(p, code, indirect, callp, args, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:

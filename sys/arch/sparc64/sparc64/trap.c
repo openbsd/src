@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.115 2023/02/11 23:07:28 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.116 2023/12/12 15:30:56 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1109,9 +1109,10 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	int64_t *ap;
 	const struct sysent *callp;
 	struct proc *p = curproc;
-	int error, new, indirect = -1;
+	int error = ENOSYS, new, indirect = -1;
 	register_t args[8];
 	register_t rval[2];
+	register_t *argp;
 
 	if ((tf->tf_out[6] & 1) == 0)
 		sigexit(p, SIGILL);
@@ -1137,39 +1138,26 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	ap = &tf->tf_out[0];
 	nap = 6;
 
-	switch (code) {
-	case SYS_syscall:
-		indirect = code;
-		code = *ap++;
-		nap--;
-		break;
-	}
-
-	callp = sysent;
 	if (code < 0 || code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else {
-		register_t *argp;
-
-		callp += code;
-		i = callp->sy_narg; /* Why divide? */
-		if (i > nap) {	/* usually false */
-			if (i > 8)
-				panic("syscall nargs");
-			/* Read the whole block in */
-			if ((error = copyin((caddr_t)tf->tf_out[6]
-			    + BIAS + offsetof(struct frame, fr_argx),
-			    &args[nap], (i - nap) * sizeof(register_t))))
-				goto bad;
-			i = nap;
-		}
-		/*
-		 * It should be faster to do <= 6 longword copies than
-		 * to call bcopy
-		 */
-		for (argp = args; i--;)
-			*argp++ = *ap++;
+		goto bad;
+	callp = sysent + code;
+	i = callp->sy_narg; /* Why divide? */
+	if (i > nap) {	/* usually false */
+		if (i > 8)
+			panic("syscall nargs");
+		/* Read the whole block in */
+		if ((error = copyin((caddr_t)tf->tf_out[6]
+		    + BIAS + offsetof(struct frame, fr_argx),
+		    &args[nap], (i - nap) * sizeof(register_t))))
+			goto bad;
+		i = nap;
 	}
+	/*
+	 * It should be faster to do <= 6 longword copies than
+	 * to call bcopy
+	 */
+	for (argp = args; i--;)
+		*argp++ = *ap++;
 
 	rval[0] = 0;
 	rval[1] = 0;

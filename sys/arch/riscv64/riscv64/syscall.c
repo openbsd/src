@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.16 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.17 2023/12/12 15:30:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -39,33 +39,20 @@ void
 svc_handler(trapframe_t *frame)
 {
 	struct proc *p = curproc;
-	const struct sysent *callp;
-	int code, error, indirect = -1;
+	const struct sysent *callp = sysent;
+	int code, error;
 	u_int nap = 8, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
 	uvmexp.syscalls++;
 
-	/* Re-enable interrupts if they were enabled previously */
-	if (__predict_true(frame->tf_scause & EXCP_INTR))
-		intr_enable();
-
 	ap = &frame->tf_a[0];
 	code = frame->tf_t[0];
 
-	switch (code) {
-	case SYS_syscall:
-		indirect = code;
-		code = *ap++;
-		nap--;
-		break;
-	}
-
-	callp = sysent;
-	if (code < 0 || code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else
+	// XXX out of range stays on syscall0, which we assume is enosys
+	if (code >= 0 || code <= SYS_MAXSYSCALL)
 		callp += code;
+
 	nargs = callp->sy_argsize / sizeof(register_t);
 	if (nargs <= nap) {
 		args = ap;
@@ -81,21 +68,18 @@ svc_handler(trapframe_t *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = mi_syscall(p, code, indirect, callp, args, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:
 		frame->tf_a[0] = rval[0];
 		frame->tf_t[0] = 0;		/* syscall succeeded */
 		break;
-
 	case ERESTART:
 		frame->tf_sepc -= 4;		/* prev instruction */
 		break;
-
 	case EJUSTRETURN:
 		break;
-
 	default:
 	bad:
 		frame->tf_a[0] = error;

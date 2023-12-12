@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.108 2023/03/08 04:43:07 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.109 2023/12/12 15:30:55 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -497,17 +497,15 @@ dopanic:
  * a3, and v0 from the frame before returning to the user process.
  */
 void
-syscall(code, framep)
-	u_int64_t code;
-	struct trapframe *framep;
+syscall(u_int64_t code, struct trapframe *framep)
 {
-	const struct sysent *callp;
+	const struct sysent *callp = sysent;
 	struct proc *p;
-	int error, indirect = -1;
+	int error;
 	u_int64_t opc;
 	u_long rval[2];
 	u_long args[10];					/* XXX */
-	u_int hidden, nargs;
+	u_int nargs;
 
 	atomic_add_int(&uvmexp.syscalls, 1);
 	p = curproc;
@@ -515,24 +513,11 @@ syscall(code, framep)
 	framep->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 	opc = framep->tf_regs[FRAME_PC] - 4;
 
-	switch(code) {
-	case SYS_syscall:
-		indirect = code;
-		code = framep->tf_regs[FRAME_A0];
-		hidden = 1;
-		break;
-	default:
-		hidden = 0;
-	}
-
-	error = 0;
-	callp = sysent;
-	if (code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else
+	// XXX out of range stays on syscall0, which we assume is enosys
+	if (code >= 0 || code <= SYS_MAXSYSCALL)
 		callp += code;
 
-	nargs = callp->sy_narg + hidden;
+	nargs = callp->sy_narg;
 	switch (nargs) {
 	default:
 		if (nargs > 10)		/* XXX */
@@ -559,7 +544,7 @@ syscall(code, framep)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = mi_syscall(p, code, indirect, callp, args + hidden, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:

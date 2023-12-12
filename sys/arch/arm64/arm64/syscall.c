@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.14 2023/04/13 02:19:04 jsg Exp $ */
+/* $OpenBSD: syscall.c,v 1.15 2023/12/12 15:30:55 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -33,7 +33,7 @@ svc_handler(trapframe_t *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp;
-	int code, error, indirect = -1;
+	int code, error = ENOSYS, indirect = -1;
 	u_int nap = 8, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
@@ -50,20 +50,10 @@ svc_handler(trapframe_t *frame)
 
 	ap = &frame->tf_x[0];
 
-	switch (code) {	
-	case SYS_syscall:
-		indirect = code;
-		code = *ap++;
-		nap--;
-		break;
-	}
-
-	callp = sysent;
 	if (code < 0 || code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else
-		callp += code;
+		goto bad;
 
+	callp = sysent + code;
 	nargs = callp->sy_argsize / sizeof(register_t);
 	if (nargs <= nap) {
 		args = ap;
@@ -79,25 +69,22 @@ svc_handler(trapframe_t *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = mi_syscall(p, code, indirect, callp, args, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:
 		frame->tf_x[0] = rval[0];
 		frame->tf_spsr &= ~PSR_C;	/* carry bit */
 		break;
-
 	case ERESTART:
 		/*
 		 * Reconstruct the pc to point at the svc.
 		 */
 		frame->tf_elr -= 12;
 		break;
-
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
-
 	default:
 	bad:
 		frame->tf_x[0] = error;

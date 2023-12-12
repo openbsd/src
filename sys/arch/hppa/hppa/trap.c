@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.161 2023/02/11 23:07:26 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.162 2023/12/12 15:30:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -764,8 +764,8 @@ void
 syscall(struct trapframe *frame)
 {
 	struct proc *p = curproc;
-	const struct sysent *callp;
-	int retq, code, argsize, argoff, error, indirect = -1;
+	const struct sysent *callp = sysent;
+	int retq, code, argsize, argoff, error;
 	register_t args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int oldcpl = curcpu()->ci_cpl;
@@ -779,27 +779,13 @@ syscall(struct trapframe *frame)
 	p->p_md.md_regs = frame;
 
 	argoff = 4; retq = 0;
-	switch (code = frame->tf_t1) {
-	case SYS_syscall:
-		indirect = code;
-		code = frame->tf_arg0;
-		args[0] = frame->tf_arg1;
-		args[1] = frame->tf_arg2;
-		args[2] = frame->tf_arg3;
-		argoff = 3;
-		break;
-	default:
-		args[0] = frame->tf_arg0;
-		args[1] = frame->tf_arg1;
-		args[2] = frame->tf_arg2;
-		args[3] = frame->tf_arg3;
-		break;
-	}
+	args[0] = frame->tf_arg0;
+	args[1] = frame->tf_arg1;
+	args[2] = frame->tf_arg2;
+	args[3] = frame->tf_arg3;
 
-	callp = sysent;
-	if (code < 0 || code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else
+	// XXX out of range stays on syscall0, which we assume is enosys
+	if (code >= 0 || code <= SYS_MAXSYSCALL)
 		callp += code;
 
 	if ((argsize = callp->sy_argsize)) {
@@ -851,7 +837,7 @@ syscall(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = frame->tf_ret1;
 
-	error = mi_syscall(p, code, indirect, callp, args, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:
@@ -872,7 +858,7 @@ syscall(struct trapframe *frame)
 		break;
 	}
 
-	ast(p);
+	ast(p);		// XXX why?
 
 	mi_syscall_return(p, code, error, rval);
 

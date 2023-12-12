@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.143 2023/12/12 07:37:20 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.144 2023/12/12 15:30:55 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -507,6 +507,7 @@ ENTRY(savectx)
 	lfence
 END(savectx)
 
+// XXX this should not behave like a nop
 IDTVEC(syscall32)
 	sysret		/* go away please */
 END(Xsyscall32)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.131 2023/02/11 23:07:27 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.132 2023/12/12 15:30:56 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -239,11 +239,11 @@ trap(struct trapframe *frame)
 	struct vm_map *map;
 	vaddr_t va;
 	int access_type;
-	const struct sysent *callp;
+	const struct sysent *callp = sysent;
 	size_t argsize;
 	register_t code, error;
 	register_t *params, rval[2], args[10];
-	int n, indirect = -1;
+	int n;
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
@@ -360,27 +360,13 @@ trap(struct trapframe *frame)
 	case EXC_SC|EXC_USER:
 		uvmexp.syscalls++;
 
-		code = frame->fixreg[0];
 		params = frame->fixreg + FIRSTARG;
 
-		switch (code) {
-		case SYS_syscall:
-			/*
-			 * code is first argument,
-			 * followed by actual args.
-			 */
-			indirect = code;
-			code = *params++;
-			break;
-		default:
-			break;
-		}
+		code = frame->fixreg[0];
+	        // XXX out of range stays on syscall0, which we assume is enosys
+	        if (code >= 0 || code <= SYS_MAXSYSCALL)
+	                callp += code;
 
-		callp = sysent;
-		if (code < 0 || code >= SYS_MAXSYSCALL)
-			callp += SYS_syscall;
-		else
-			callp += code;
 		argsize = callp->sy_argsize;
 		n = NARGREG - (params - (frame->fixreg + FIRSTARG));
 		if (argsize > n * sizeof(register_t)) {
@@ -395,7 +381,7 @@ trap(struct trapframe *frame)
 		rval[0] = 0;
 		rval[1] = frame->fixreg[FIRSTARG + 1];
 
-		error = mi_syscall(p, code, indirect, callp, params, rval);
+		error = mi_syscall(p, code, callp, params, rval);
 
 		switch (error) {
 		case 0:

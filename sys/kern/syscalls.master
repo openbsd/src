@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.253 2023/12/10 16:59:09 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.254 2023/12/12 15:30:55 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -48,7 +48,7 @@
 ; redistributions should be placed in the reserved range at the end
 ; of the current calls.
 
-0	INDIR		{ int sys_syscall(int number, ...); }
+0	UNIMPL		syscall
 1	STD		{ void sys_exit(int rval); }
 2	STD		{ int sys_fork(void); }
 3	STD NOLOCK	{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }

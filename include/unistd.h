@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.107 2023/01/07 05:24:58 guenther Exp $ */
+/*	$OpenBSD: unistd.h,v 1.108 2023/12/12 15:30:55 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -522,7 +522,6 @@ int	 setthrname(pid_t, const char *);
 void	 setusershell(void);
 int	 strtofflags(char **, u_int32_t *, u_int32_t *);
 int	 swapctl(int cmd, const void *arg, int misc);
-int	 syscall(int, ...);
 int	 getentropy(void *, size_t);
 int	 pledge(const char *, const char *);
 int	 unveil(const char *, const char *);

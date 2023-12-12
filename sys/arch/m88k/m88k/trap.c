@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.128 2023/08/02 06:14:46 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.129 2023/12/12 15:30:56 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1153,9 +1153,9 @@ void
 m88100_syscall(register_t code, struct trapframe *tf)
 {
 	int i, nap;
-	const struct sysent *callp;
+	const struct sysent *callp = sysent;
 	struct proc *p = curproc;
-	int error, indirect = -1;
+	int error;
 	register_t args[8] __aligned(8);
 	register_t rval[2] __aligned(8);
 	register_t *ap;
@@ -1172,18 +1172,8 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	ap = &tf->tf_r[2];
 	nap = 8; /* r2-r9 */
 
-	switch (code) {
-	case SYS_syscall:
-		indirect = code;
-		code = *ap++;
-		nap--;
-		break;
-	}
-
-	callp = sysent;
-	if (code < 0 || code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else
+	// XXX out of range stays on syscall0, which we assume is enosys
+	if (code >= 0 || code <= SYS_MAXSYSCALL)
 		callp += code;
 
 	i = callp->sy_argsize / sizeof(register_t);
@@ -1200,7 +1190,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
 
-	error = mi_syscall(p, code, indirect, callp, args, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	/*
 	 * system call will look like:
@@ -1266,7 +1256,7 @@ void
 m88110_syscall(register_t code, struct trapframe *tf)
 {
 	int i, nap;
-	const struct sysent *callp;
+	const struct sysent *callp = sysent;
 	struct proc *p = curproc;
 	int error;
 	register_t args[8] __aligned(8);
@@ -1285,17 +1275,8 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	ap = &tf->tf_r[2];
 	nap = 8;	/* r2-r9 */
 
-	switch (code) {
-	case SYS_syscall:
-		code = *ap++;
-		nap--;
-		break;
-	}
-
-	callp = sysent;
-	if (code < 0 || code >= SYS_MAXSYSCALL)
-		callp += SYS_syscall;
-	else
+	// XXX out of range stays on syscall0, which we assume is enosys
+	if (code >= 0 || code <= SYS_MAXSYSCALL)
 		callp += code;
 
 	i = callp->sy_argsize / sizeof(register_t);

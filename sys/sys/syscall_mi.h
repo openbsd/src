@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.28 2023/02/11 23:07:23 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.29 2023/12/12 15:30:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,8 +51,8 @@
  * The MD setup for a system call has been done; here's the MI part.
  */
 static inline int
-mi_syscall(struct proc *p, register_t code, int indirect,
-    const struct sysent *callp, register_t *argp, register_t retval[2])
+mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
+    register_t *argp, register_t retval[2])
 {
 	uint64_t tval;
 	int lock = !(callp->sy_flags & SY_NOLOCK);
@@ -73,15 +73,8 @@ mi_syscall(struct proc *p, register_t code, int indirect,
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL)) {
 		/* convert to mask, then include with code */
-		switch (indirect) {
-		case SYS_syscall:
-			indirect = KTRC_CODE_SYSCALL;
-			break;
-		default:
-			indirect = 0;
-		}
 		KERNEL_LOCK();
-		ktrsyscall(p, code | indirect, callp->sy_argsize, argp);
+		ktrsyscall(p, code, callp->sy_argsize, argp);
 		KERNEL_UNLOCK();
 	}
 #endif

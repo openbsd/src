@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.167 2023/04/26 16:53:59 claudio Exp $	*/
+/*	$OpenBSD: trap.c,v 1.168 2023/12/12 15:30:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -396,8 +396,8 @@ fault_common_no_miss:
 	case T_SYSCALL+T_USER:
 	    {
 		struct trapframe *locr0 = p->p_md.md_regs;
-		const struct sysent *callp;
-		unsigned int code, indirect = -1;
+		const struct sysent *callp = sysent;
+		unsigned int code;
 		register_t tpc;
 		uint32_t branch = 0;
 		int error, numarg;
@@ -422,51 +422,22 @@ fault_common_no_miss:
 			    trapframe->pc, 0, branch);
 		} else
 			locr0->pc += 4;
-		callp = sysent;
 		code = locr0->v0;
-		switch (code) {
-		case SYS_syscall:
-			/*
-			 * Code is first argument, followed by actual args.
-			 */
-			indirect = code;
-			code = locr0->a0;
-			if (code >= SYS_MAXSYSCALL)
-				callp += SYS_syscall;
-			else
-				callp += code;
-			numarg = callp->sy_argsize / sizeof(register_t);
-			args.i[0] = locr0->a1;
-			args.i[1] = locr0->a2;
-			args.i[2] = locr0->a3;
-			if (numarg > 3) {
-				args.i[3] = locr0->a4;
-				args.i[4] = locr0->a5;
-				args.i[5] = locr0->a6;
-				args.i[6] = locr0->a7;
-				if (numarg > 7)
-					if ((error = copyin((void *)locr0->sp,
-					    &args.i[7], sizeof(register_t))))
-						goto bad;
-			}
-			break;
-		default:
-			if (code >= SYS_MAXSYSCALL)
-				callp += SYS_syscall;
-			else
-				callp += code;
 
-			numarg = callp->sy_narg;
-			args.i[0] = locr0->a0;
-			args.i[1] = locr0->a1;
-			args.i[2] = locr0->a2;
-			args.i[3] = locr0->a3;
-			if (numarg > 4) {
-				args.i[4] = locr0->a4;
-				args.i[5] = locr0->a5;
-				args.i[6] = locr0->a6;
-				args.i[7] = locr0->a7;
-			}
+		// XXX out of range stays on syscall0, which we assume is enosys
+		if (code >= 0 || code <= SYS_MAXSYSCALL)
+			callp += code;
+
+		numarg = callp->sy_narg;
+		args.i[0] = locr0->a0;
+		args.i[1] = locr0->a1;
+		args.i[2] = locr0->a2;
+		args.i[3] = locr0->a3;
+		if (numarg > 4) {
+			args.i[4] = locr0->a4;
+			args.i[5] = locr0->a5;
+			args.i[6] = locr0->a6;
+			args.i[7] = locr0->a7;
 		}
 
 		rval[0] = 0;
@@ -477,21 +448,18 @@ fault_common_no_miss:
 		    TRAPSIZE : trppos[ci->ci_cpuid]) - 1].code = code;
 #endif
 
-		error = mi_syscall(p, code, indirect, callp, args.i, rval);
+		error = mi_syscall(p, code, callp, args.i, rval);
 
 		switch (error) {
 		case 0:
 			locr0->v0 = rval[0];
 			locr0->a3 = 0;
 			break;
-
 		case ERESTART:
 			locr0->pc = tpc;
 			break;
-
 		case EJUSTRETURN:
 			break;	/* nothing to do */
-
 		default:
 		bad:
 			locr0->v0 = error;
@@ -499,7 +467,6 @@ fault_common_no_miss:
 		}
 
 		mi_syscall_return(p, code, error, rval);
-
 		return;
 	    }
 
