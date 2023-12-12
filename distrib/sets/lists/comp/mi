@@ -1740,7 +1740,6 @@
 ./usr/share/man/man2/symlink.2
 ./usr/share/man/man2/sync.2
 ./usr/share/man/man2/sysarch.2
-./usr/share/man/man2/syscall.2
 ./usr/share/man/man2/sysctl.2
 ./usr/share/man/man2/thrkill.2
 ./usr/share/man/man2/truncate.2
