@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.214 2023/08/15 06:26:34 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.215 2023/12/12 15:44:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -465,6 +465,29 @@ _dl_self_relro(long loff)
 #define PFLAGS(X) ((((X) & PF_R) ? PROT_READ : 0) | \
 		   (((X) & PF_W) ? PROT_WRITE : 0) | \
 		   (((X) & PF_X) ? PROT_EXEC : 0))
+
+/*
+ * To avoid kbind(2) becoming a powerful gadget, it is called inline to a
+ * function.  Therefore we cannot create a precise pinsyscall label.  Instead
+ * create a duplicate entry to force the kernel's pinsyscall code to skip
+ * validation, rather than labelling it illegal.  kbind(2) remains safe
+ * because it self-protects by checking its calling address.
+ */
+#define __STRINGIFY(x)  #x
+#define STRINGIFY(x)    __STRINGIFY(x)
+#ifdef __arm__
+__asm__(".pushsection openbsd.syscalls,\"\",%progbits;"
+    ".p2align 2;"
+    ".long 0;"
+    ".long " STRINGIFY(SYS_kbind) ";"
+    ".popsection");
+#else
+__asm__(".pushsection openbsd.syscalls,\"\",@progbits;"
+    ".long 0;"
+    ".p2align 2;"
+    ".long " STRINGIFY(SYS_kbind) ";"
+    ".popsection");
+#endif
 
 /*
  * This is the dynamic loader entrypoint. When entering here, depending
