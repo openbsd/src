@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.23 2023/06/20 15:15:14 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.24 2023/12/12 15:54:18 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -100,15 +100,10 @@ io_close_buffer(struct msgbuf *msgbuf, struct ibuf *b)
 void
 io_read_buf(struct ibuf *b, void *res, size_t sz)
 {
-	char	*tmp;
-
 	if (sz == 0)
 		return;
-	tmp = ibuf_seek(b, b->rpos, sz);
-	if (tmp == NULL)
-		errx(1, "bad internal framing, buffer too short");
-	b->rpos += sz;
-	memcpy(res, tmp, sz);
+	if (ibuf_get(b, res, sz) == -1)
+		err(1, "bad internal framing");
 }
 
 /*
