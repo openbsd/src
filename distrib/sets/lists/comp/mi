@@ -2663,6 +2663,7 @@
 ./usr/share/man/man3/i2a_ASN1_STRING.3
 ./usr/share/man/man3/i2d_CMS_bio_stream.3
 ./usr/share/man/man3/i2d_PKCS7_bio_stream.3
+./usr/share/man/man3/ibuf_add.3
 ./usr/share/man/man3/if_indextoname.3
 ./usr/share/man/man3/ilogb.3
 ./usr/share/man/man3/imaxabs.3
