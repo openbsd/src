@@ -1,5 +1,6 @@
-.\" $OpenBSD: imsg_init.3,v 1.30 2023/09/28 17:00:21 schwarze Exp $
+.\" $OpenBSD: imsg_init.3,v 1.31 2023/12/12 15:49:21 claudio Exp $
 .\"
+.\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -14,50 +15,30 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 28 2023 $
+.Dd $Mdocdate: December 12 2023 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
 .Nm imsg_init ,
 .Nm imsg_read ,
 .Nm imsg_get ,
+.Nm imsg_get_ibuf ,
+.Nm imsg_get_data ,
+.Nm imsg_get_fd ,
+.Nm imsg_get_id ,
+.Nm imsg_get_len ,
+.Nm imsg_get_pid ,
+.Nm imsg_get_type ,
 .Nm imsg_compose ,
 .Nm imsg_composev ,
 .Nm imsg_compose_ibuf ,
 .Nm imsg_create ,
 .Nm imsg_add ,
 .Nm imsg_close ,
+.Nm imsg_forward ,
 .Nm imsg_free ,
 .Nm imsg_flush ,
-.Nm imsg_clear ,
-.Nm ibuf_open ,
-.Nm ibuf_dynamic ,
-.Nm ibuf_add ,
-.Nm ibuf_add_buf ,
-.Nm ibuf_add_n8 ,
-.Nm ibuf_add_n16 ,
-.Nm ibuf_add_n32 ,
-.Nm ibuf_add_n64 ,
-.Nm ibuf_add_zero ,
-.Nm ibuf_reserve ,
-.Nm ibuf_seek ,
-.Nm ibuf_set ,
-.Nm ibuf_set_n8 ,
-.Nm ibuf_set_n16 ,
-.Nm ibuf_set_n32 ,
-.Nm ibuf_set_n64 ,
-.Nm ibuf_data ,
-.Nm ibuf_size ,
-.Nm ibuf_left ,
-.Nm ibuf_close ,
-.Nm ibuf_free ,
-.Nm ibuf_fd_avail ,
-.Nm ibuf_fd_get ,
-.Nm ibuf_fd_set ,
-.Nm ibuf_write ,
-.Nm msgbuf_init ,
-.Nm msgbuf_clear ,
-.Nm msgbuf_write
+.Nm imsg_clear
 .Nd IPC messaging functions
 .Sh SYNOPSIS
 .In sys/types.h
@@ -66,90 +47,49 @@
 .In stdint.h
 .In imsg.h
 .Ft void
-.Fn imsg_init "struct imsgbuf *ibuf" "int fd"
+.Fn imsg_init "struct imsgbuf *imsgbuf" "int fd"
 .Ft ssize_t
-.Fn imsg_read "struct imsgbuf *ibuf"
+.Fn imsg_read "struct imsgbuf *imsgbuf"
 .Ft ssize_t
-.Fn imsg_get "struct imsgbuf *ibuf" "struct imsg *imsg"
+.Fn imsg_get "struct imsgbuf *imsgbuf" "struct imsg *imsg"
 .Ft int
-.Fn imsg_compose "struct imsgbuf *ibuf" "uint32_t type" "uint32_t peerid" \
-    "pid_t pid" "int fd" "const void *data" "uint16_t datalen"
+.Fn imsg_get_ibuf "struct imsg *imsg" "struct ibuf *ibuf"
 .Ft int
-.Fn imsg_composev "struct imsgbuf *ibuf" "uint32_t type" "uint32_t peerid" \
+.Fn imsg_get_data "struct imsg *imsg" "void *data" "size_t len"
+.Ft int
+.Fn imsg_get_fd "struct imsg *imsg"
+.Ft uint32_t
+.Fn imsg_get_id "struct imsg *imsg"
+.Ft size_t
+.Fn imsg_get_len "struct imsg *imsg"
+.Ft pid_t
+.Fn imsg_get_pid "struct imsg *imsg"
+.Ft uint32_t
+.Fn imsg_get_type "struct imsg *imsg"
+.Ft int
+.Fn imsg_compose "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
+    "pid_t pid" "int fd" "const void *data" "size_t datalen"
+.Ft int
+.Fn imsg_composev "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
     "pid_t pid" "int fd" "const struct iovec *iov" "int iovcnt"
 .Ft int
-.Fn imsg_compose_ibuf "struct imsgbuf *ibuf" "uint32_t type" "uint32_t peerid" \
-    "pid_t pid" "struct ibuf *buf"
+.Fn imsg_compose_ibuf "struct imsgbuf *imsgbuf" "uint32_t type" \
+    "uint32_t id" "pid_t pid" "struct ibuf *buf"
 .Ft "struct ibuf *"
-.Fn imsg_create "struct imsgbuf *ibuf" "uint32_t type" "uint32_t peerid" \
-    "pid_t pid" "uint16_t datalen"
+.Fn imsg_create "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
+    "pid_t pid" "size_t datalen"
 .Ft int
-.Fn imsg_add "struct ibuf *msg" "const void *data" "uint16_t datalen"
+.Fn imsg_add "struct ibuf *msg" "const void *data" "size_t datalen"
 .Ft void
-.Fn imsg_close "struct imsgbuf *ibuf" "struct ibuf *msg"
+.Fn imsg_close "struct imsgbuf *imsgbuf" "struct ibuf *msg"
 .Ft void
 .Fn imsg_free "struct imsg *imsg"
 .Ft int
-.Fn imsg_flush "struct imsgbuf *ibuf"
+.Fn imsg_forward "struct imsgbuf *imsgbuf" "struct imsg *msg"
+.Ft int
+.Fn imsg_flush "struct imsgbuf *imsgbuf"
 .Ft void
-.Fn imsg_clear "struct imsgbuf *ibuf"
-.Ft "struct ibuf *"
-.Fn ibuf_open "size_t len"
-.Ft "struct ibuf *"
-.Fn ibuf_dynamic "size_t len" "size_t max"
-.Ft int
-.Fn ibuf_add "struct ibuf *buf" "const void *data" "size_t len"
-.Ft int
-.Fn ibuf_add_buf "struct ibuf *buf" "const struct ibuf *from"
-.Ft int
-.Fn ibuf_add_n8 "struct ibuf *buf" "uint64_t value"
-.Ft int
-.Fn ibuf_add_n16 "struct ibuf *buf" "uint64_t value"
-.Ft int
-.Fn ibuf_add_n32 "struct ibuf *buf" "uint64_t value"
-.Ft int
-.Fn ibuf_add_n64 "struct ibuf *buf" "uint64_t value"
-.Ft int
-.Fn ibuf_add_zero "struct ibuf *buf" "size_t len"
-.Ft "void *"
-.Fn ibuf_reserve "struct ibuf *buf" "size_t len"
-.Ft "void *"
-.Fn ibuf_seek "struct ibuf *buf" "size_t pos" "size_t len"
-.Ft int
-.Fn ibuf_set "struct ibuf *buf" "size_t pos" "const void *data" \
-    "size_t len"
-.Ft int
-.Fn ibuf_set_n8 "struct ibuf *buf" "size_t pos" "uint64_t value"
-.Ft int
-.Fn ibuf_set_n16 "struct ibuf *buf" "size_t pos" "uint64_t value"
-.Ft int
-.Fn ibuf_set_n32 "struct ibuf *buf" "size_t pos" "uint64_t value"
-.Ft int
-.Fn ibuf_set_n64 "struct ibuf *buf" "size_t pos" "uint64_t value"
-.Ft "void *"
-.Fn ibuf_data "struct ibuf *buf"
-.Ft size_t
-.Fn ibuf_size "struct ibuf *buf"
-.Ft size_t
-.Fn ibuf_left "struct ibuf *buf"
-.Ft void
-.Fn ibuf_close "struct msgbuf *msgbuf" "struct ibuf *buf"
-.Ft void
-.Fn ibuf_free "struct ibuf *buf"
-.Ft int
-.Fn ibuf_fd_avail "struct ibuf *buf"
-.Ft int
-.Fn ibuf_fd_get "struct ibuf *buf"
-.Ft void
-.Fn ibuf_fd_set "struct ibuf *buf" "int fd"
-.Ft int
-.Fn ibuf_write "struct msgbuf *msgbuf"
-.Ft void
-.Fn msgbuf_init "struct msgbuf *msgbuf"
-.Ft void
-.Fn msgbuf_clear "struct msgbuf *msgbuf"
-.Ft int
-.Fn msgbuf_write "struct msgbuf *msgbuf"
+.Fn imsg_clear "struct imsgbuf *imsgbuf"
 .Sh DESCRIPTION
 The
 .Nm imsg
@@ -181,7 +121,7 @@ struct imsgbuf {
 .Pp
 .Fn imsg_init
 initializes
-.Fa ibuf
+.Fa imsgbuf
 as one side of a channel associated with
 .Fa fd .
 The file descriptor is used to send and receive messages,
@@ -208,7 +148,7 @@ imsgbuf.
 .Fn imsg_create
 creates a new message with header specified by
 .Fa type ,
-.Fa peerid
+.Fa id
 and
 .Fa pid .
 A
@@ -216,7 +156,7 @@ A
 of zero uses the process ID returned by
 .Xr getpid 2
 when
-.Fa ibuf
+.Fa imsgbuf
 was initialized.
 In addition to this common imsg header,
 .Fa datalen
@@ -242,7 +182,7 @@ is freed and \-1 is returned.
 completes creation of
 .Fa msg
 by adding it to
-.Fa ibuf
+.Fa imsgbuf
 output buffer.
 .Pp
 .Fn imsg_compose
@@ -281,6 +221,13 @@ In either case the buffer
 .Fa buf
 is consumed by the function.
 .Pp
+.Fn imsg_forward
+forwards a just received
+.Fa msg
+unaltered on
+.Fa imsgbuf .
+Any attached filedescriptor is closed.
+.Pp
 .Fn imsg_flush
 calls
 .Fn msgbuf_write
@@ -313,268 +260,54 @@ Received messages are returned as a
 which must be freed by
 .Fn imsg_free
 when no longer required.
-.Em struct imsg
-has this form:
-.Bd -literal -offset indent
-struct imsg {
-	struct imsg_hdr	 hdr;
-	int		 fd;
-	void		*data;
-};
-
-struct imsg_hdr {
-	uint32_t	 type;
-	uint16_t	 len;
-	uint16_t	 flags;
-	uint32_t	 peerid;
-	uint32_t	 pid;
-};
-.Ed
 .Pp
-The header members are:
-.Bl -tag -width Ds -offset indent
-.It type
-A integer identifier, typically used to express the meaning of the message.
-.It len
-The total length of the imsg, including the header and any ancillary data
-transmitted with the message (pointed to by the
-.Em data
-member of the message itself).
-.It flags
-Flags used internally by the imsg functions: should not be used by application
-programs.
-.It peerid, pid
-32-bit values specified on message creation and free for any use by the
-caller, normally used to identify the message sender.
-.El
+The accessors
+.Fn imsg_get_type ,
+.Fn imsg_get_pid ,
+.Fn imsg_get_id ,
+and
+.Fn imsg_get_len ,
+return the
+.Fa type ,
+.Fa pid ,
+.Fa id ,
+and payload length used in
+.Fn imsg_create
+to build the
+.Fa imsg .
+If there is no payload
+.Fn imsg_get_len
+returns 0.
 .Pp
-In addition,
-.Em struct imsg
-has the following:
-.Bl -tag -width Ds -offset indent
-.It fd
-The file descriptor specified when the message was created and passed using the
-socket control message API, or \-1 if no file descriptor was sent.
-.It data
-A pointer to the ancillary data transmitted with the imsg.
-.El
+.Fn imsg_get_fd
+returns the file descriptor and passes the responsibility to track the
+descriptor back to the program.
 .Pp
-The IMSG_HEADER_SIZE define is the size of the imsg message header, which
-may be subtracted from the
-.Fa len
-member of
-.Em struct imsg_hdr
-to obtain the length of any additional data passed with the message.
+.Fn imsg_get_data
+and
+.Fn imsg_get_ibuf
+are used to extract the payload of an
+.Fa imsg .
+.Fn imsg_get_data
+can be used if the structure of the payload is known and can be extracted
+in one go.
+0 is returned on success and \-1 on failure.
+.Fn imsg_get_ibuf
+initializes the passed
+.Fa ibuf
+to hold the payload which can be read using
+.Xr ibuf_get 3 .
+The
+.Fa ibuf
+remains valid until
+.Fn imsg_free
+is called and there is no need to call
+.Fn ibuf_free
+on this stack based buffer.
+The function returns 0 on success, \-1 otherwise.
 .Pp
 MAX_IMSGSIZE is defined as the maximum size of a single imsg, currently
 16384 bytes.
-.Sh BUFFERS
-The imsg API defines functions to manipulate buffers, used internally and during
-construction of imsgs with
-.Fn imsg_create .
-A
-.Em struct ibuf
-is a single buffer and a
-.Em struct msgbuf
-a queue of output buffers for transmission:
-.Bd -literal -offset indent
-struct ibuf {
-	TAILQ_ENTRY(ibuf)	 entry;
-	unsigned char		*buf;
-	size_t			 size;
-	size_t			 max;
-	size_t			 wpos;
-	size_t			 rpos;
-	int			 fd;
-};
-
-struct msgbuf {
-	TAILQ_HEAD(, ibuf)	 bufs;
-	uint32_t		 queued;
-	int			 fd;
-};
-.Ed
-.Pp
-The
-.Fn ibuf_open
-function allocates a fixed-length buffer.
-The buffer may not be resized and may contain a maximum of
-.Fa len
-bytes.
-On success
-.Fn ibuf_open
-returns a pointer to the buffer; on failure it returns NULL.
-.Pp
-.Fn ibuf_dynamic
-allocates a resizeable buffer of initial length
-.Fa len
-and maximum size
-.Fa max .
-Buffers allocated with
-.Fn ibuf_dynamic
-are automatically grown if necessary when data is added.
-.Pp
-.Fn ibuf_add
-appends a block of data to
-.Fa buf .
-0 is returned on success and \-1 on failure.
-.Pp
-.Fn ibuf_add_buf
-appends the buffer
-.Fa from
-to
-.Fa buf .
-0 is returned on success and \-1 on failure.
-.Pp
-.Fn ibuf_add_n8 ,
-.Fn ibuf_add_n16 ,
-.Fn ibuf_add_n32 ,
-and
-.Fn ibuf_add_n64
-add a 1-byte, 2-byte, 4-byte, and 8-byte
-.Fa value
-to
-.Fa buf
-in network byte order.
-This function checks
-.Fa value
-to not overflow.
-0 is returned on success and \-1 on failure.
-.Pp
-.Fn ibuf_add_zero
-appends a block of zeros to
-.Fa buf .
-0 is returned on success and \-1 on failure.
-.Pp
-.Fn ibuf_reserve
-is used to reserve
-.Fa len
-bytes in
-.Fa buf .
-A pointer to the start of the reserved space is returned, or NULL on error.
-.Pp
-.Fn ibuf_seek
-returns a pointer to the part of the buffer at offset
-.Fa pos
-and of extent
-.Fa len .
-NULL is returned if the requested range is outside the part of the buffer
-in use.
-.Pp
-.Fn ibuf_set
-replaces a part of
-.Fa buf
-at offset
-.Fa pos
-with the
-.Fa data
-of extent
-.Fa len .
-0 is returned on success and \-1 on failure.
-.Pp
-.Fn ibuf_set_n8 ,
-.Fn ibuf_set_n16 ,
-.Fn ibuf_set_n32
-and
-.Fn ibuf_set_n64
-replace a 1-byte, 2-byte, 4-byte or 8-byte
-.Fa value
-at offset
-.Fa pos
-in the buffer
-.Fa buf
-in network byte order.
-This function checks
-.Fa value
-to not overflow.
-0 is returned on success and \-1 on failure.
-.Pp
-.Fn ibuf_data
-returns the pointer to the internal buffer.
-This function should only be used together with
-.Fn ibuf_size
-to process a previously generated buffer.
-.Pp
-.Fn ibuf_size
-and
-.Fn ibuf_left
-are functions which return the total bytes used and available in
-.Fa buf
-respectively.
-.Pp
-.Fn ibuf_close
-appends
-.Fa buf
-to
-.Fa msgbuf
-ready to be sent.
-.Pp
-.Fn ibuf_fd_avail ,
-.Fn ibuf_fd_get
-and
-.Fn ibuf_fd_set
-are functions to check, get and set the file descriptor assigned to
-.Fa buf .
-After calling
-.Fn ibuf_fd_set
-the file descriptor is part of the
-.Fa buf
-and will be transmitted or closed by the ibuf API.
-Any previously set file descriptor will be closed before assigning a
-new descriptor.
-.Fn ibuf_fd_get
-returns the file descriptor and passes the responsibility to track the
-descriptor back to the program.
-.Fn ibuf_fd_avail
-returns true if there is a file descriptor set on
-.Fa buf .
-.Pp
-.Fn ibuf_free
-frees
-.Fa buf
-and any associated storage, and closes any file descriptor set with
-.Fn ibuf_fd_set .
-If
-.Fa buf
-is a NULL pointer, no action occurs.
-.Pp
-The
-.Fn ibuf_write
-routine transmits as many pending buffers as possible from
-.Fa msgbuf
-using
-.Xr writev 2 .
-It returns 1 if it succeeds, \-1 on error and 0 when no buffers were
-pending or an EOF condition on the socket is detected.
-Temporary resource shortages are returned with errno
-.Er EAGAIN
-and require the application to retry again in the future.
-.Pp
-The
-.Fn msgbuf_init
-function initializes
-.Fa msgbuf
-so that buffers may be appended to it.
-The
-.Em fd
-member should also be set directly before
-.Fn msgbuf_write
-is used.
-.Pp
-.Fn msgbuf_clear
-empties a msgbuf, removing and discarding any queued buffers.
-.Pp
-The
-.Fn msgbuf_write
-routine calls
-.Xr sendmsg 2
-to transmit buffers queued in
-.Fa msgbuf .
-It returns 1 if it succeeds, \-1 on error, and 0 when the queue was empty
-or an EOF condition on the socket is detected.
-Temporary resource shortages are returned with errno
-.Er EAGAIN
-and require the application to retry again in the future.
 .Sh EXAMPLES
 In a typical program, a channel between two processes is created with
 .Xr socketpair 2 ,
@@ -616,12 +349,12 @@ enum imsg_type {
 };
 
 int
-child_main(struct imsgbuf *ibuf)
+child_main(struct imsgbuf *imsgbuf)
 {
 	int	idata;
 	...
 	idata = 42;
-	imsg_compose(ibuf, IMSG_A_MESSAGE,
+	imsg_compose(imsgbuf, IMSG_A_MESSAGE,
 	    0, 0, -1, &idata, sizeof idata);
 	...
 }
@@ -635,7 +368,7 @@ library is used to monitor the socket file descriptor.
 When the socket is ready for writing, queued messages are transmitted with
 .Fn msgbuf_write :
 .Bd -literal -offset indent
-	if ((n = msgbuf_write(&ibuf-\*(Gtw)) == -1 && errno != EAGAIN) {
+	if ((n = msgbuf_write(&imsgbuf-\*(Gtw)) == -1 && errno != EAGAIN) {
 		/* handle write failure */
 	}
 	if (n == 0) {
@@ -649,13 +382,13 @@ and then extracted with
 .Fn imsg_get :
 .Bd -literal -offset indent
 void
-dispatch_imsg(struct imsgbuf *ibuf)
+dispatch_imsg(struct imsgbuf *imsgbuf)
 {
 	struct imsg	imsg;
-	ssize_t         n, datalen;
+	ssize_t         n;
 	int		idata;
 
-	if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN) {
+	if ((n = imsg_read(imsgbuf)) == -1 && errno != EAGAIN) {
 		/* handle read error */
 	}
 	if (n == 0) {
@@ -663,19 +396,18 @@ dispatch_imsg(struct imsgbuf *ibuf)
 	}
 
 	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1) {
 			/* handle read error */
 		}
 		if (n == 0)	/* no more messages */
 			return;
-		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
 
-		switch (imsg.hdr.type) {
+		switch (imsg_get_type(&imsg)) {
 		case IMSG_A_MESSAGE:
-			if (datalen \*(Lt sizeof idata) {
+			if (imsg_get_data(&imsg, &idata,
+			    sizeof(idata)) == -1) {
 				/* handle corrupt message */
 			}
-			memcpy(&idata, imsg.data, sizeof idata);
 			/* handle message received */
 			break;
 		...
@@ -687,4 +419,5 @@ dispatch_imsg(struct imsgbuf *ibuf)
 .Ed
 .Sh SEE ALSO
 .Xr socketpair 2 ,
+.Xr ibuf_add 3 ,
 .Xr unix 4
