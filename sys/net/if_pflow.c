@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.104 2023/12/12 00:03:31 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.105 2023/12/12 12:38:52 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -832,11 +832,11 @@ export_pflow(struct pf_state *st)
 		mtx_enter(&sc->sc_mtx);
 		switch (sc->sc_version) {
 		case PFLOW_PROTO_5:
-			if( sk->af == AF_INET )
+			if (sk->af == AF_INET)
 				export_pflow_if(st, sk, sc);
 			break;
 		case PFLOW_PROTO_10:
-			if( sk->af == AF_INET || sk->af == AF_INET6 )
+			if (sk->af == AF_INET || sk->af == AF_INET6)
 				export_pflow_if(st, sk, sc);
 			break;
 		default: /* NOTREACHED */
