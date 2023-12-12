@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.8 2023/11/12 16:03:41 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.9 2023/12/12 20:15:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -206,8 +206,7 @@ appl_internal_init(void)
 		oid.bo_id[oid.bo_n++] = 0;
 		if (appl_register(NULL, 150, 1, &oid,
 		    1, 1, 0, 0, &appl_config) != APPL_ERROR_NOERROR) {
-			if (obj->stringval != NULL)
-				free(obj->stringval);
+			free(obj->stringval);
 			free(obj);
 		} else
 			RB_INSERT(appl_internal_objects, &appl_internal_objects,
@@ -223,10 +222,12 @@ appl_internal_shutdown(void)
 	while ((object = RB_ROOT(&appl_internal_objects)) != NULL) {
 		RB_REMOVE(appl_internal_objects, &appl_internal_objects,
 		    object);
+		free(object->stringval);
 		free(object);
 	}
 
 	appl_close(&appl_internal);
+	appl_close(&appl_config);
 }
 
 void
@@ -258,6 +259,7 @@ appl_internal_object(struct ber_oid *oid,
 	obj->oid = *oid;
 	obj->get = get;
 	obj->getnext = getnext;
+	obj->stringval = NULL;
 
 	RB_INSERT(appl_internal_objects, &appl_internal_objects, obj);
 }
