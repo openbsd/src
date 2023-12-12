@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.21 2023/07/18 15:07:41 claudio Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.22 2023/12/12 15:52:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -80,13 +80,12 @@ ibuf_length(struct ibuf *buf)
 struct ibuf *
 ibuf_getdata(struct ibuf *buf, size_t len)
 {
-	void	*data;
+	struct ibuf tmp;
 
-	if ((data = ibuf_seek(buf, buf->rpos, len)) == NULL)
+	if (ibuf_get_ibuf(buf, len, &tmp) == -1)
 		return (NULL);
-	buf->rpos += len;
 
-	return (ibuf_new(data, len));
+	return (ibuf_new(ibuf_data(&tmp), ibuf_size(&tmp)));
 }
 
 struct ibuf *
