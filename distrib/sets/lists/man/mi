@@ -1248,6 +1248,7 @@
 ./usr/share/man/man4/arm64
 ./usr/share/man/man4/arm64/agintc.4
 ./usr/share/man/man4/arm64/agtimer.4
+./usr/share/man/man4/arm64/ampchwm.4
 ./usr/share/man/man4/arm64/ampintc.4
 ./usr/share/man/man4/arm64/aplaudio.4
 ./usr/share/man/man4/arm64/aplcpu.4
