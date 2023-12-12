@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.142 2023/12/10 16:56:01 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.143 2023/12/12 07:37:20 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -181,13 +181,10 @@ sigcodecall:
 	syscall
 	.globl	sigcoderet
 sigcoderet:
-	movq	$SYS_exit,%rax
-	syscall
-	_ALIGN_TRAPS
+	int3
 1:	JMP_RETPOLINE(rax)
 	.globl	esigcode
 esigcode:
-
 	.globl	sigfill
 sigfill:
 	int3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.35 2023/12/10 16:56:01 deraadt Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.36 2023/12/12 07:37:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -80,11 +80,9 @@ sigcodecall:
 	syscall
 	.globl	sigcoderet
 sigcoderet:
-	LI	v0, SYS_exit		# just in case sigreturn fails
-	syscall
 	.globl	esigcode
 esigcode:
-
+	/* FALLTHROUGH */
 	.globl	sigfill
 sigfill:
 	teq	zero, zero, 0x52

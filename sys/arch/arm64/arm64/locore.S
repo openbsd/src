@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.44 2023/12/10 16:56:01 deraadt Exp $ */
+/* $OpenBSD: locore.S,v 1.45 2023/12/12 07:37:20 deraadt Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -372,16 +372,10 @@ sigcodecall:
 	isb
 	.globl  sigcoderet
 sigcoderet:
-
-	/* sigreturn failed, exit */
-	mov	x8, #SYS_exit
-	svc	0
-	dsb	nsh
-	isb
 END(sigcode)
 	.global esigcode
 esigcode:
-
+	/* FALLTHROUGH */
 	.globl	sigfill
 sigfill:
 	udf	#0

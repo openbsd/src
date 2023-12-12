@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.13 2023/12/10 16:56:01 deraadt Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.14 2023/12/12 07:37:20 deraadt Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -63,14 +63,9 @@ sigcodecall:
 	isb
 	.globl  sigcoderet
 sigcoderet:
-	/* Well if that failed we better exit quick ! */
-	mov	r12, #SYS_exit
-	swi	0
-	dsb	nsh
-	isb
 	.global esigcode
 esigcode:
-
+	/* FALLTHROUGH */
 	.globl	sigfill
 sigfill:
 	udf	#0

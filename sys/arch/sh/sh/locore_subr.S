@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.18 2023/12/10 16:56:02 deraadt Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.19 2023/12/12 07:37:21 deraadt Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #include "assym.h"
 
-#include <sys/syscall.h>	/* SYS_sigreturn, SYS_exit */
+#include <sys/syscall.h>	/* SYS_sigreturn */
 #include <sh/asm.h>
 #include <sh/locore.h>
 #include <sh/param.h>		/* UPAGES */
@@ -502,13 +502,11 @@ sigcodecall:
 	trapa	#0x80			/* and call sigreturn() */
 	.globl	sigcoderet
 sigcoderet:
-	mov.l	.L_SYS_exit, r0
-	trapa	#0x80			/* exit if sigreturn fails */
+	sleep		/* privileged -> illegal? */
 	/* NOTREACHED */
 
 	.align	2
 .L_SYS_sigreturn:	.long	SYS_sigreturn
-.L_SYS_exit:		.long	SYS_exit
 
 /* LINTSTUB: Var: char esigcode[1] */
 .globl	esigcode

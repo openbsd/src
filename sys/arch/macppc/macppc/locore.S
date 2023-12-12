@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.63 2023/12/10 16:56:01 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.64 2023/12/12 07:37:21 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1180,10 +1180,8 @@ sigcodecall:
 	sc				/* sigreturn(scp) */
 	.globl	sigcoderet
 sigcoderet:
-	li	%r0,SYS_exit
-	sc				/* exit(errno) */
 esigcode:
-
+	/* FALLTHROUGH */
 	.globl	sigfill
 sigfill:
 	.long	0		# illegal

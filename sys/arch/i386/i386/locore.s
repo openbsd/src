@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.203 2023/12/10 16:56:01 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.204 2023/12/12 07:37:20 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -346,11 +346,9 @@ sigcodecall:
 	int	$0x80			# enter kernel with args on stack
 	.globl	sigcoderet
 sigcoderet:
-	movl	$SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
 	.globl	esigcode
 esigcode:
-
+	/* FALLTHROUGH */
 	.globl	sigfill
 sigfill:
 	int3

@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.30 2023/12/10 16:56:01 deraadt Exp $	*/
+/* $OpenBSD: subr.S,v 1.31 2023/12/12 07:37:21 deraadt Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1138,16 +1138,8 @@ GLOBAL(sigcoderet)
 #ifdef dontbother		/* sigreturn will not return unless it fails */
 	NOP			| success return
 #endif
-	or	%r13, %r0,  SYS_exit
-	tb0	0,    %r0,  450	/* syscall trap, exit */
-	/*
-	 * this never returns, but we need to provide fetchable instructions
-	 * for the 88100 pipeline.
-	 */
-	NOP
-	NOP
 GLOBAL(esigcode)
-
+	/* FALLTHROUGH */
 GLOBAL(sigfill)
 	tb0	0, %r0, 130	/* breakpoint */
 GLOBAL(sigfillsiz)

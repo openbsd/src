@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.47 2023/12/10 16:56:01 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.48 2023/12/12 07:37:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -42,11 +42,9 @@ sigcodecall:
 	sc
 	.globl sigcoderet
 sigcoderet:
-	li	%r0, SYS_exit
-	sc
 	.globl esigcode
 esigcode:
-
+	/* FALLTHROUGH */
 	.globl sigfill
 sigfill:
 	.long	0
