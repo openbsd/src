@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2023/11/12 20:02:05 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2023/12/12 20:18:39 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,7 @@ trap_init(void)
 	 * Send a coldStart to notify that the daemon has been
 	 * started and re-initialized.
 	 */
-	trap_send(&OID(MIB_coldStart, 0), NULL);
+	trap_send(&OID(MIB_coldStart), NULL);
 }
 
 int
