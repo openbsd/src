@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.26 2023/12/11 22:24:15 kettenis Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.27 2023/12/13 09:01:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -26,7 +26,7 @@
  */
 
 #include <sys/syscall.h>
-#include <machine/asm.h>
+#include "DEFS.h"
 #undef _LOCORE
 #define _LOCORE
 #include <machine/frame.h>
@@ -37,55 +37,28 @@
 #define TCB_OFFSET_ERRNO	-8
 
 /*
- * We define a hidden alias with the prefix "_libc_" for each global symbol
- * that may be used internally.  By referencing _libc_x instead of x, other
- * parts of libc prevent overriding by the application and avoid unnecessary
- * relocations.
- */
-#define _HIDDEN(x)		_libc_##x
-#define _HIDDEN_ALIAS(x,y)			\
-	STRONG_ALIAS(_HIDDEN(x),y)		!\
-	.hidden _HIDDEN(x)
-#define _HIDDEN_FALIAS(x,y)			\
-	_HIDDEN_ALIAS(x,y)			!\
-	.type _HIDDEN(x),@function
-
-/*
  * For functions implemented in ASM that aren't syscalls.
  *   EXIT_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
  *   EXIT_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
- *   ALTEXIT_STRONG(x) and ALTEXIT_WEAK()
- *			Matching macros for ALTENTRY functions
  */
-#define	ALTEXIT_STRONG(x)					\
-			_HIDDEN_FALIAS(x,x)			!\
-			.size _HIDDEN(x), . - _HIDDEN(x)
-#define	ALTEXIT_WEAK(x)	ALTEXIT_STRONG(x)			!\
-			.weak x
-#define	EXIT_STRONG(x)	EXIT(x)					!\
-			ALTEXIT_STRONG(x)
-#define	EXIT_WEAK(x)	EXIT_STRONG(x)				!\
-			.weak x
+#define	EXIT_STRONG(x)	EXIT(x)			!\
+	_HIDDEN_FALIAS(x,x)			!\
+	_END(_HIDDEN(x))
+#define	EXIT_WEAK(x)	EXIT_STRONG(x)		!\
+	.weak x
  
-#define PINSYSCALL(sysno, label)			\
-	.pushsection .openbsd.syscalls,"",@progbits	!\
-	.p2align 2					!\
-	.long label					!\
-	.long sysno					!\
-	.popsection
-
 #define SYSENTRY(x)				!\
-LEAF_ENTRY(__CONCAT(_thread_sys_,x))		!\
+	LEAF_ENTRY(__CONCAT(_thread_sys_,x))	!\
 	WEAK_ALIAS(x,__CONCAT(_thread_sys_,x))
 #define SYSENTRY_HIDDEN(x)			!\
-LEAF_ENTRY(__CONCAT(_thread_sys_,x))
+	LEAF_ENTRY(__CONCAT(_thread_sys_,x))
 #define	SYSEXIT(x)				!\
 	SYSEXIT_HIDDEN(x)			!\
-	.size x, . - x
+	_END(x)
 #define	SYSEXIT_HIDDEN(x)			!\
 	EXIT(__CONCAT(_thread_sys_,x))		!\
 	_HIDDEN_FALIAS(x,_thread_sys_##x)	!\
-	.size _HIDDEN(x), . - _HIDDEN(x)
+	_END(_HIDDEN(x))
 
 #define	SYSCALL(x)				!\
 	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
@@ -130,4 +103,3 @@ SYSEXIT(x)
 
 #define	RSYSCALL(x)		PSEUDO(x,x)
 #define	RSYSCALL_HIDDEN(x)	PSEUDO_HIDDEN(x,x)
-

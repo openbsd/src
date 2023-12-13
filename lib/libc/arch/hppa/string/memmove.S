@@ -151,7 +151,7 @@ $bcopy_r.done
 
 	bv	0(rp)
 	nop
-EXIT_WEAK(bcopy)
-ALTEXIT_STRONG(memmove)
+END_WEAK(bcopy)
+ALTEND_STRONG(memmove)
 
 	.end
