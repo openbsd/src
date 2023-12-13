@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.162 2023/12/12 15:30:55 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.163 2023/12/13 11:20:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -779,6 +779,7 @@ syscall(struct trapframe *frame)
 	p->p_md.md_regs = frame;
 
 	argoff = 4; retq = 0;
+	code = frame->tf_t1;
 	args[0] = frame->tf_arg0;
 	args[1] = frame->tf_arg1;
 	args[2] = frame->tf_arg2;
