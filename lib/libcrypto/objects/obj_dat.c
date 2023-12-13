@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.63 2023/12/13 23:28:47 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.64 2023/12/13 23:31:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,9 +75,6 @@
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #include "obj_dat.h"
 
-static int sn_cmp_BSEARCH_CMP_FN(const void *, const void *);
-static int sn_cmp(const ASN1_OBJECT * const *, unsigned int const *);
-static unsigned int *OBJ_bsearch_sn(const ASN1_OBJECT * *key, unsigned int const *base, int num);
 static int ln_cmp_BSEARCH_CMP_FN(const void *, const void *);
 static int ln_cmp(const ASN1_OBJECT * const *, unsigned int const *);
 static unsigned int *OBJ_bsearch_ln(const ASN1_OBJECT * *key, unsigned int const *base, int num);
@@ -96,32 +93,10 @@ DECLARE_LHASH_OF(ADDED_OBJ);
 static int new_nid = NUM_NID;
 static LHASH_OF(ADDED_OBJ) *added = NULL;
 
-static int sn_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
-{
-	return (strcmp((*a)->sn, nid_objs[*b].sn));
-}
-
-
-static int
-sn_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
-{
-	const ASN1_OBJECT * const *a = a_;
-	unsigned int const *b = b_;
-	return sn_cmp(a, b);
-}
-
-static unsigned int *
-OBJ_bsearch_sn(const ASN1_OBJECT * *key, unsigned int const *base, int num)
-{
-	return (unsigned int *)OBJ_bsearch_(key, base, num, sizeof(unsigned int),
-	    sn_cmp_BSEARCH_CMP_FN);
-}
-
 static int ln_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
 {
 	return (strcmp((*a)->ln, nid_objs[*b].ln));
 }
-
 
 static int
 ln_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
@@ -518,26 +493,40 @@ OBJ_ln2nid(const char *s)
 }
 LCRYPTO_ALIAS(OBJ_ln2nid);
 
-int
-OBJ_sn2nid(const char *s)
+static int
+sn_objs_cmp(const void *a, const void *b)
 {
-	ASN1_OBJECT o;
-	const ASN1_OBJECT *oo = &o;
-	ADDED_OBJ ad, *adp;
-	const unsigned int *op;
+	const unsigned int *nid = b;
 
-	o.sn = s;
+	return strcmp(a, nid_objs[*nid].sn);
+}
+
+int
+OBJ_sn2nid(const char *sn)
+{
+	const unsigned int *nid;
+
+	/* XXX - locking. OpenSSL 3 moved this after built-in object lookup. */
 	if (added != NULL) {
-		ad.type = ADDED_SNAME;
-		ad.obj = &o;
-		adp = lh_ADDED_OBJ_retrieve(added, &ad);
-		if (adp != NULL)
-			return (adp->obj->nid);
+		ASN1_OBJECT aobj = {
+			.sn = sn,
+		};
+		ADDED_OBJ needle = {
+			.type = ADDED_SNAME,
+			.obj = &aobj,
+		};
+		ADDED_OBJ *found;
+
+		if ((found = lh_ADDED_OBJ_retrieve(added, &needle)) != NULL)
+			return found->obj->nid;
 	}
-	op = OBJ_bsearch_sn(&oo, sn_objs, NUM_SN);
-	if (op == NULL)
-		return (NID_undef);
-	return (nid_objs[*op].nid);
+
+	/* sn_objs holds NIDs in ascending alphabetical order of SN. */
+	nid = bsearch(sn, sn_objs, NUM_SN, sizeof(unsigned int), sn_objs_cmp);
+	if (nid != NULL)
+		return *nid;
+
+	return NID_undef;
 }
 LCRYPTO_ALIAS(OBJ_sn2nid);
 
