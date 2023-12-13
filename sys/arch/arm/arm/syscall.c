@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.27 2023/12/12 15:30:55 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.28 2023/12/13 15:57:22 miod Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ swi_handler(trapframe_t *frame)
 
 	code = frame->tf_r12;
 	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code >= 0 || code <= SYS_MAXSYSCALL)
+	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
 	nargs = callp->sy_argsize / sizeof(register_t);

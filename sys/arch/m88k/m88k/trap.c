@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.129 2023/12/12 15:30:56 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.130 2023/12/13 15:57:22 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1173,7 +1173,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	nap = 8; /* r2-r9 */
 
 	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code >= 0 || code <= SYS_MAXSYSCALL)
+	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
 	i = callp->sy_argsize / sizeof(register_t);
@@ -1276,7 +1276,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	nap = 8;	/* r2-r9 */
 
 	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code >= 0 || code <= SYS_MAXSYSCALL)
+	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
 	i = callp->sy_argsize / sizeof(register_t);

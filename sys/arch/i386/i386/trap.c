@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.163 2023/12/12 15:30:55 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.164 2023/12/13 15:57:22 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -544,7 +544,7 @@ syscall(struct trapframe *frame)
 
 	code = frame->tf_eax;
 	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code >= 0 || code <= SYS_MAXSYSCALL)
+	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
 	argsize = callp->sy_argsize;

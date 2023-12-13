@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.109 2023/12/12 15:30:55 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.110 2023/12/13 15:57:22 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -514,7 +514,7 @@ syscall(u_int64_t code, struct trapframe *framep)
 	opc = framep->tf_regs[FRAME_PC] - 4;
 
 	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code >= 0 || code <= SYS_MAXSYSCALL)
+	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
 	nargs = callp->sy_narg;

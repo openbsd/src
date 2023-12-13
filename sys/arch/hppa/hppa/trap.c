@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.163 2023/12/13 11:20:18 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.164 2023/12/13 15:57:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -786,7 +786,7 @@ syscall(struct trapframe *frame)
 	args[3] = frame->tf_arg3;
 
 	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code >= 0 || code <= SYS_MAXSYSCALL)
+	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
 	if ((argsize = callp->sy_argsize)) {

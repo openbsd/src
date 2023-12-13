@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.16 2023/12/12 23:43:35 deraadt Exp $ */
+/* $OpenBSD: syscall.c,v 1.17 2023/12/13 15:57:22 miod Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -50,7 +50,7 @@ svc_handler(trapframe_t *frame)
 
 	ap = &frame->tf_x[0];
 
-	if (code < 0 || code >= SYS_MAXSYSCALL)
+	if (code <= 0 || code >= SYS_MAXSYSCALL)
 		goto bad;
 
 	callp = sysent + code;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.12 2023/12/12 15:30:56 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.13 2023/12/13 15:57:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -39,7 +39,7 @@ syscall(struct trapframe *frame)
 
 	code = frame->fixreg[0];
 	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code >= 0 || code <= SYS_MAXSYSCALL)
+	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
 	nargs = callp->sy_argsize / sizeof(register_t);

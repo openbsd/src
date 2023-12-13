@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2023/12/13 12:41:31 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.57 2023/12/13 15:57:22 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -527,7 +527,7 @@ syscall(struct proc *p, struct trapframe *tf)
 
 	code = tf->tf_r0;
 	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code >= 0 || code <= SYS_MAXSYSCALL)
+	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
 	argsize = callp->sy_argsize;

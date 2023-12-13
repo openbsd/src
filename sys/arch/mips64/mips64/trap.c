@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.169 2023/12/13 02:31:15 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.170 2023/12/13 15:57:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -425,7 +425,7 @@ fault_common_no_miss:
 		code = locr0->v0;
 
 		// XXX out of range stays on syscall0, which we assume is enosys
-		if (code >= 0 || code <= SYS_MAXSYSCALL)
+		if (code > 0 && code < SYS_MAXSYSCALL)
 			callp += code;
 
 		numarg = callp->sy_narg;

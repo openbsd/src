@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.117 2023/12/12 23:43:35 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.118 2023/12/13 15:57:22 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1138,7 +1138,7 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	ap = &tf->tf_out[0];
 	nap = 6;
 
-	if (code < 0 || code >= SYS_MAXSYSCALL)
+	if (code <= 0 || code >= SYS_MAXSYSCALL)
 		goto bad;
 	callp = sysent + code;
 	i = callp->sy_narg; /* Why divide? */
