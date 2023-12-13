@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.167 2020/12/07 21:19:28 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.168 2023/12/13 17:50:23 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -34,7 +34,7 @@ usage()
 
 apply_patch()
 {
-	local _edir _file _files _patch=$1 _rc=0 _s _upself=false
+	local _edir _file _files _kernel _patch=$1 _rc=0 _s _upself=false
 	[[ -n ${_patch} ]]
 
 	_edir=${_TMP}/${_patch}
@@ -45,7 +45,8 @@ apply_patch()
 	echo "Installing patch ${_patch##${_OSrev}-}"
 	install -d ${_edir} ${_PDIR}/${_patch}
 
-	(($(sysctl -n hw.ncpufound) > 1)) &&
+	_kernel=$(sysctl -n kern.osversion)
+	[[ ${_kernel%#*} == "GENERIC.MP" ]] &&
 		_s="-s @usr/share/relink/kernel/GENERIC/.*@@g" ||
 		_s="-s @usr/share/relink/kernel/GENERIC.MP/.*@@g"
 	_files="$(tar -xvzphf ${_TMP}/syspatch${_patch}.tgz -C ${_edir} \
