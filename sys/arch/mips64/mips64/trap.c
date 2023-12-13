@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.168 2023/12/12 15:30:56 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.169 2023/12/13 02:31:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -461,7 +461,6 @@ fault_common_no_miss:
 		case EJUSTRETURN:
 			break;	/* nothing to do */
 		default:
-		bad:
 			locr0->v0 = error;
 			locr0->a3 = 1;
 		}
