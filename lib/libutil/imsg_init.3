@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.31 2023/12/12 15:49:21 claudio Exp $
+.\" $OpenBSD: imsg_init.3,v 1.32 2023/12/13 00:37:42 jsg Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2023 $
+.Dd $Mdocdate: December 13 2023 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -226,7 +226,7 @@ forwards a just received
 .Fa msg
 unaltered on
 .Fa imsgbuf .
-Any attached filedescriptor is closed.
+Any attached file descriptor is closed.
 .Pp
 .Fn imsg_flush
 calls
