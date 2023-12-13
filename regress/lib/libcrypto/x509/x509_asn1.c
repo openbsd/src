@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.20 2023/06/05 18:32:06 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.21 2023/12/13 05:57:37 tb Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -29,37 +29,6 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
-static const struct fnnames {
-	char *name;
-	void (*fn);
-} fnnames[] = {
-	{ "X509_set_version", X509_set_version },
-	{ "X509_set_serialNumber", X509_set_serialNumber },
-	{ "X509_set_issuer_name", X509_set_issuer_name },
-	{ "X509_set_subject_name", X509_set_subject_name },
-	{ "X509_set_notBefore", X509_set_notBefore },
-	{ "X509_set_notAfter", X509_set_notAfter },
-	{ "X509_set_pubkey", X509_set_pubkey },
-	{ "X509_CRL_set_version", X509_CRL_set_version },
-	{ "X509_CRL_set_issuer_name", X509_CRL_set_issuer_name },
-	{ "X509_CRL_set_lastUpdate", X509_CRL_set_lastUpdate },
-	{ "X509_CRL_set_nextUpdate", X509_CRL_set_nextUpdate },
-	{ "X509_REQ_add_extensions", X509_REQ_add_extensions },
-	{ "X509_REQ_add1_attr", X509_REQ_add1_attr },
-	{ NULL, NULL }
-};
-
-static void
-lookup_and_err(void (*fn))
-{
-	int i;
-
-	for (i = 0; fnnames[i].name; i++) {
-		if (fnnames[i].fn == fn)
-			errx(1, "%s failed", fnnames[i].name);
-	}
-}
-
 static void
 x509_setup(unsigned char **der, unsigned char **der2, X509 **x,
     long dersz, long *der2sz)
@@ -83,7 +52,8 @@ x509_cleanup(X509 **x, unsigned char **der)
 }
 
 static void
-x509_set_integer(int (*f)(X509 *, ASN1_INTEGER *), X509 **x, int i)
+x509_set_integer(const char *descr, int (*f)(X509 *, ASN1_INTEGER *), X509 **x,
+    int i)
 {
 	ASN1_INTEGER *ai;
 
@@ -92,13 +62,13 @@ x509_set_integer(int (*f)(X509 *, ASN1_INTEGER *), X509 **x, int i)
 	if (!ASN1_INTEGER_set(ai, i))
 		errx(1, "ASN1_INTEGER_set");
 	if (!f(*x, ai))
-		lookup_and_err(f);
+		errx(1, "%s: %s failed", __func__, descr);
 
 	ASN1_INTEGER_free(ai);
 }
 
 static void
-x509_set_name(int (*f)(X509 *, X509_NAME *), X509 **x,
+x509_set_name(const char *descr, int (*f)(X509 *, X509_NAME *), X509 **x,
     const unsigned char *n)
 {
 	X509_NAME *xn;
@@ -108,20 +78,21 @@ x509_set_name(int (*f)(X509 *, X509_NAME *), X509 **x,
 	if (!X509_NAME_add_entry_by_txt(xn, "C", MBSTRING_ASC, n, -1, -1, 0))
 		errx(1, "X509_NAME_add_entry_by_txt");
 	if (!f(*x, xn))
-		lookup_and_err(f);
+		errx(1, "%s: %s failed", __func__, descr);
 
 	X509_NAME_free(xn);
 }
 
 static void
-x509_set_time(int (*f)(X509 *, const ASN1_TIME *), X509 **x, int t)
+x509_set_time(const char *descr, int (*f)(X509 *, const ASN1_TIME *), X509 **x,
+    int t)
 {
 	ASN1_TIME *at;
 
 	if ((at = X509_gmtime_adj(NULL, t)) == NULL)
 		errx(1, "X509_gmtime_adj");
 	if (!f(*x, at))
-		lookup_and_err(f);
+		errx(1, "%s: %s failed", __func__, descr);
 
 	ASN1_TIME_free(at);
 }
@@ -172,8 +143,8 @@ x509_crl_cleanup(X509_CRL **xc, unsigned char **der)
 }
 
 static void
-x509_crl_set_name(int (*f)(X509_CRL *, X509_NAME *), X509_CRL **xc,
-    const unsigned char *n)
+x509_crl_set_name(const char *descr, int (*f)(X509_CRL *, X509_NAME *),
+    X509_CRL **xc, const unsigned char *n)
 {
 	X509_NAME *xn;
 
@@ -182,20 +153,21 @@ x509_crl_set_name(int (*f)(X509_CRL *, X509_NAME *), X509_CRL **xc,
 	if (!X509_NAME_add_entry_by_txt(xn, "C", MBSTRING_ASC, n, -1, -1, 0))
 		errx(1, "X509_NAME_add_entry_by_txt");
 	if (!f(*xc, xn))
-		lookup_and_err(f);
+		errx(1, "%s: %s failed", __func__, descr);
 
 	X509_NAME_free(xn);
 }
 
 static void
-x509_crl_set_time(int (*f)(X509_CRL *, const ASN1_TIME *), X509_CRL **xc, int t)
+x509_crl_set_time(const char *descr, int (*f)(X509_CRL *, const ASN1_TIME *),
+    X509_CRL **xc, int t)
 {
 	ASN1_TIME *at;
 
 	if ((at = X509_gmtime_adj(NULL, t)) == NULL)
 		errx(1, "X509_gmtime_adj");
 	if (!f(*xc, at))
-		lookup_and_err(f);
+		errx(1, "%s: %s failed", __func__, descr);
 
 	ASN1_TIME_free(at);
 }
@@ -247,11 +219,11 @@ test_x509_setters(void)
 	if (X509_set_pubkey(x, pkey) != 1)
 		errx(1, "X509_set_pubkey");
 
-	x509_set_integer(X509_set_serialNumber, &x, 1);
-	x509_set_time(X509_set_notBefore, &x, 0);
-	x509_set_time(X509_set_notAfter, &x, 60);
-	x509_set_name(X509_set_issuer_name, &x, "NL");
-	x509_set_name(X509_set_subject_name, &x, "BE");
+	x509_set_integer("X509_set_serialNumber", X509_set_serialNumber, &x, 1);
+	x509_set_time("X509_set_notBefore", X509_set_notBefore, &x, 0);
+	x509_set_time("X509_set_notAfter", X509_set_notAfter, &x, 60);
+	x509_set_name("X509_set_issuer_name", X509_set_issuer_name, &x, "NL");
+	x509_set_name("X509_set_subject_name", X509_set_subject_name, &x, "BE");
 
 	/* one time creation of the original DER */
 	if (!X509_sign(x, pkey, EVP_sha256()))
@@ -268,31 +240,31 @@ test_x509_setters(void)
 
 	/* test X509_set_serialNumber */
 	x509_setup(&der, &der2, &a, dersz, &der2sz);
-	x509_set_integer(X509_set_serialNumber, &a, 2);
+	x509_set_integer("X509_set_serialNumber", X509_set_serialNumber, &a, 2);
 	failed |= x509_compare("X509_set_serialNumber", a, der2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_issuer_name */
 	x509_setup(&der, &der2, &a, dersz, &der2sz);
-	x509_set_name(X509_set_issuer_name, &a, "DE");
+	x509_set_name("X509_set_issuer_name", X509_set_issuer_name, &a, "DE");
 	failed |= x509_compare("X509_set_issuer_name", a, der2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_subject_name */
 	x509_setup(&der, &der2, &a, dersz, &der2sz);
-	x509_set_name(X509_set_subject_name, &a, "FR");
+	x509_set_name("X509_set_subject_name", X509_set_subject_name, &a, "FR");
 	failed |= x509_compare("X509_set_subject_name", a, der2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_notBefore */
 	x509_setup(&der, &der2, &a, dersz, &der2sz);
-	x509_set_time(X509_set_notBefore, &a, 120);
+	x509_set_time("X509_set_notBefore", X509_set_notBefore, &a, 120);
 	failed |= x509_compare("X509_set_notBefore", a, der2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_notAfter */
 	x509_setup(&der, &der2, &a, dersz, &der2sz);
-	x509_set_time(X509_set_notAfter, &a, 180);
+	x509_set_time("X509_set_notAfter", X509_set_notAfter, &a, 180);
 	failed |= x509_compare("X509_set_notAfter", a, der2, der2sz);
 	x509_cleanup(&a, &der2);
 
@@ -335,9 +307,12 @@ test_x509_crl_setters(void)
 	if (EVP_PKEY_keygen(pkey_ctx, &pkey) <= 0)
 		errx(1, "EVP_PKEY_keygen");
 
-	x509_crl_set_time(X509_CRL_set_lastUpdate, &xc, 0);
-	x509_crl_set_time(X509_CRL_set_nextUpdate, &xc, 60);
-	x509_crl_set_name(X509_CRL_set_issuer_name, &xc, "NL");
+	x509_crl_set_time("X509_CRL_set_lastUpdate", X509_CRL_set_lastUpdate,
+	    &xc, 0);
+	x509_crl_set_time("X509_CRL_set_nextUpdate", X509_CRL_set_nextUpdate,
+	    &xc, 60);
+	x509_crl_set_name("X509_CRL_set_issuer_name", X509_CRL_set_issuer_name,
+	    &xc, "NL");
 
 	/* one time creation of the original DER */
 	if (!X509_CRL_sign(xc, pkey, EVP_sha256()))
@@ -354,20 +329,23 @@ test_x509_crl_setters(void)
 
 	/* test X509_CRL_set_issuer_name */
 	x509_crl_setup(&der, &der2, &ac, dersz, &der2sz);
-	x509_crl_set_name(X509_CRL_set_issuer_name, &ac, "DE");
+	x509_crl_set_name("X509_CRL_set_issuer_name", X509_CRL_set_issuer_name,
+	    &ac, "DE");
 	failed |= x509_crl_compare("X509_CRL_set_issuer_name", ac, der2,
 	    der2sz);
 	x509_crl_cleanup(&ac, &der2);
 
 	/* test X509_CRL_set_lastUpdate */
 	x509_crl_setup(&der, &der2, &ac, dersz, &der2sz);
-	x509_crl_set_time(X509_CRL_set_lastUpdate, &ac, 120);
+	x509_crl_set_time("X509_CRL_set_lastUpdate", X509_CRL_set_lastUpdate,
+	    &ac, 120);
 	failed |= x509_crl_compare("X509_CRL_set_lastUpdate", ac, der2, der2sz);
 	x509_crl_cleanup(&ac, &der2);
 
 	/* test X509_CRL_set_nextUpdate */
 	x509_crl_setup(&der, &der2, &ac, dersz, &der2sz);
-	x509_crl_set_time(X509_CRL_set_nextUpdate, &ac, 180);
+	x509_crl_set_time("X509_CRL_set_nextUpdate", X509_CRL_set_nextUpdate,
+	    &ac, 180);
 	failed |= x509_crl_compare("X509_CRL_set_nextUpdate", ac, der2, der2sz);
 	x509_crl_cleanup(&ac, &der2);
 
