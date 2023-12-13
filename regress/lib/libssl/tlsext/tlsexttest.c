@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.82 2023/07/05 17:30:14 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.83 2023/12/13 06:00:28 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -4367,7 +4367,7 @@ static const struct tls_sni_test tls_sni_tests[] = {
 		.valid = 0,
 	},
 	{
-		.hostname = "open\178bsd.org",
+		.hostname = "open\177bsd.org",
 		.valid = 0,
 	},
 	{
