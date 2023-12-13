@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.70 2023/07/03 09:51:38 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.71 2023/12/13 15:34:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -401,7 +401,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			control_imsg_relay(&imsg);
 			break;
 		case IMSG_CONTROLFD:
-			if ((fd = imsg.fd) == -1)
+			if ((fd = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg control"
 				    "fd but didn't receive any", __func__);
 			/* Listen on control socket. */
