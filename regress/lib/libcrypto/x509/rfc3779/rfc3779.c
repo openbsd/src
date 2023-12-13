@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.9 2023/04/20 07:39:17 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.10 2023/12/13 07:19:37 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -361,10 +361,10 @@ IPAddrBlocks_free(IPAddrBlocks *addr)
  * extensions on each call.
  */
 
-static const ASN1_ITEM_EXP *
+static ASN1_ITEM_EXP *
 get_IPAddrBlocks_it(void)
 {
-	static const ASN1_ITEM_EXP *my_IPAddrBlocks_it;
+	static ASN1_ITEM_EXP *my_IPAddrBlocks_it;
 	const X509V3_EXT_METHOD *v3_addr;
 
 	if (my_IPAddrBlocks_it != NULL)
@@ -383,7 +383,7 @@ get_IPAddrBlocks_it(void)
 static IPAddrBlocks *
 d2i_IPAddrBlocks(IPAddrBlocks **addrs, const unsigned char **in, long len)
 {
-	const ASN1_ITEM_EXP *my_IPAddrBlocks_it;
+	ASN1_ITEM_EXP *my_IPAddrBlocks_it;
 
 	if ((my_IPAddrBlocks_it = get_IPAddrBlocks_it()) == NULL)
 		return NULL;
@@ -395,7 +395,7 @@ d2i_IPAddrBlocks(IPAddrBlocks **addrs, const unsigned char **in, long len)
 static int
 i2d_IPAddrBlocks(IPAddrBlocks *addrs, unsigned char **out)
 {
-	const ASN1_ITEM_EXP *my_IPAddrBlocks_it;
+	ASN1_ITEM_EXP *my_IPAddrBlocks_it;
 
 	if ((my_IPAddrBlocks_it = get_IPAddrBlocks_it()) == NULL)
 		return -1;
