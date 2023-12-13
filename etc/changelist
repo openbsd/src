@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.137 2023/09/19 15:02:54 naddy Exp $
+#	$OpenBSD: changelist,v 1.138 2023/12/13 11:34:56 job Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -112,10 +112,15 @@
 /etc/resolv.conf
 /etc/ripd.conf
 /etc/rpc
+/etc/rpki/afrinic.constraints
 /etc/rpki/afrinic.tal
+/etc/rpki/apnic.constraints
 /etc/rpki/apnic.tal
+/etc/rpki/arin.constraints
 /etc/rpki/arin.tal
+/etc/rpki/lacnic.constraints
 /etc/rpki/lacnic.tal
+/etc/rpki/ripe.constraints
 /etc/rpki/ripe.tal
 /etc/rpki/skiplist
 /etc/sasyncd.conf

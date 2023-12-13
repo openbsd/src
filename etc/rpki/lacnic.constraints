@@ -1,0 +1,74 @@
+# From https://www.iana.org/assignments/ipv6-unicast-address-assignments
+allow 2001:1200::/23
+allow 2800::/12
+
+# AFRINIC Internet Number Resources cannot be transferred
+# From https://www.iana.org/assignments/ipv4-address-space/
+deny 41.0.0.0/8
+deny 102.0.0.0/8
+deny 105.0.0.0/8
+deny 154.0.0.0/16
+deny 154.16.0.0/16
+deny 154.65.0.0 - 154.255.255.255
+deny 196.0.0.0/16
+deny 196.1.0.0/24
+# hole for 196.1.1.0/24
+deny 196.1.2.0 - 196.1.67.255
+# hole for 196.1.68.0/24
+deny 196.1.69.0 - 196.1.103.255
+# hole for 196.1.104.0 - 196.1.106.255
+deny 196.1.107.0/24
+# hole for 196.1.108.0/22
+deny 196.1.112.0/24
+# hole for 196.1.113.0 - 196.1.114.255
+deny 196.1.115.0 - 196.1.133.255
+# hole for 196.1.134.0/24
+deny 196.1.135.0 - 196.3.64.255
+# hole for 196.3.65.0/24
+deny 196.3.66.0 - 196.3.71.255
+# hole for 196.3.72.0/24
+deny 196.3.73.0 - 196.12.31.255
+# hole for 196.12.32.0/19
+deny 196.12.64.0 - 196.15.15.255
+# hole for 196.15.16.0/20
+deny 196.15.32.0 - 196.29.63.255
+# hole for 196.29.64.0/19
+deny 196.29.96.0 - 196.32.31.255
+# hole for 196.32.32.0/19
+# hole for 196.32.64.0/19
+deny 196.32.96.0 - 196.39.255.255
+# hole for 196.40.0.0 - 196.40.95.255
+deny 196.40.96.0 - 197.255.255.254
+
+# From https://www.iana.org/assignments/as-numbers/
+deny 36864 - 37887
+deny 327680 - 328703
+deny 328704 - 329727
+
+# Private use IPv4 & IPv6 addresses and ASNs
+deny 0.0.0.0/8               # RFC 1122 Local Identification
+deny 10.0.0.0/8              # RFC 1918 private space
+deny 100.64.0.0/10           # RFC 6598 Carrier Grade NAT
+deny 127.0.0.0/8             # RFC 1122 localhost
+deny 169.254.0.0/16          # RFC 3927 link local
+deny 172.16.0.0/12           # RFC 1918 private space
+deny 192.0.2.0/24            # RFC 5737 TEST-NET-1
+deny 192.88.99.0/24          # RFC 7526 6to4 anycast relay
+deny 192.168.0.0/16          # RFC 1918 private space
+deny 198.18.0.0/15           # RFC 2544 benchmarking
+deny 198.51.100.0/24         # RFC 5737 TEST-NET-2
+deny 203.0.113.0/24          # RFC 5737 TEST-NET-3
+deny 224.0.0.0/4             # Multicast
+deny 240.0.0.0/4             # Reserved
+deny 23456                   # RFC 4893 AS_TRANS
+deny 64496 - 64511           # RFC 5398
+deny 64512 - 65534           # RFC 6996
+deny 65535                   # RFC 7300
+deny 65536 - 65551           # RFC 5398
+deny 65552 - 131071          # IANA Reserved
+deny 4200000000 - 4294967294 # RFC 6996
+deny 4294967295              # RFC 7300
+
+# Allow the complement of what is denied
+allow 0.0.0.0/0
+allow 1 - 4199999999
