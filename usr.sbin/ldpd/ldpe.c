@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.81 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.82 2023/12/14 11:10:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -296,7 +296,7 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 				    "to lde", __func__);
 				break;
 			}
-			if ((fd = imsg.fd) == -1) {
+			if ((fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("%s: expected to receive imsg fd to "
 				    "lde but didn't receive any", __func__);
 				break;
@@ -340,13 +340,13 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 
 			switch (*socket_type) {
 			case LDP_SOCKET_DISC:
-				disc_socket = imsg.fd;
+				disc_socket = imsg_get_fd(&imsg);
 				break;
 			case LDP_SOCKET_EDISC:
-				edisc_socket = imsg.fd;
+				edisc_socket = imsg_get_fd(&imsg);
 				break;
 			case LDP_SOCKET_SESSION:
-				session_socket = imsg.fd;
+				session_socket = imsg_get_fd(&imsg);
 				break;
 			}
 			break;
