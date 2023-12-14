@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.71 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.72 2023/12/14 07:52:53 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -104,7 +104,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	RouteOriginAttestation		*roa;
 	const ROAIPAddressFamily	*addrfam;
 	const STACK_OF(ROAIPAddress)	*addrs;
-	int				 addrsz;
+	int				 addrsz, ipv4_seen = 0, ipv6_seen = 0;
 	enum afi			 afi;
 	const ROAIPAddress		*addr;
 	uint64_t			 maxlen;
@@ -129,8 +129,8 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	}
 
 	ipaddrblocksz = sk_ROAIPAddressFamily_num(roa->ipAddrBlocks);
-	if (ipaddrblocksz > 2) {
-		warnx("%s: draft-rfc6482bis: too many ipAddrBlocks "
+	if (ipaddrblocksz != 1 && ipaddrblocksz != 2) {
+		warnx("%s: draft-rfc6482bis: unexpected number of ipAddrBlocks "
 		    "(got %d, expected 1 or 2)", p->fn, ipaddrblocksz);
 		goto out;
 	}
@@ -143,6 +143,29 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		if (!ip_addr_afi_parse(p->fn, addrfam->addressFamily, &afi)) {
 			warnx("%s: RFC 6482 section 3.3: addressFamily: "
 			    "invalid", p->fn);
+			goto out;
+		}
+
+		switch(afi) {
+		case AFI_IPV4:
+			if (ipv4_seen++ > 0) {
+				warnx("%s: RFC 6482bis section 4.3.2: "
+				    "IPv4 appears twice", p->fn);
+				goto out;
+			}
+			break;
+		case AFI_IPV6:
+			if (ipv6_seen++ > 0) {
+				warnx("%s: RFC 6482bis section 4.3.2: "
+				    "IPv6 appears twice", p->fn);
+				goto out;
+			}
+			break;
+		}
+
+		if (addrsz == 0) {
+			warnx("%s: RFC 6482bis, section 4.3.2: "
+			    "empty ROAIPAddressFamily", p->fn);
 			goto out;
 		}
 

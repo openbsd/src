@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.120 2023/12/10 14:18:23 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.121 2023/12/14 07:52:53 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -362,11 +362,20 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 	enum afi		 afi;
 	struct cert_ip		*ips = NULL;
 	size_t			 ipsz = 0, sz;
-	int			 i, j;
+	int			 ipv4_seen = 0, ipv6_seen = 0;
+	int			 i, j, ipaddrblocksz;
 
 	assert(*out_ips == NULL && *out_ipsz == 0);
 
-	for (i = 0; i < sk_IPAddressFamily_num(addrblk); i++) {
+	ipaddrblocksz = sk_IPAddressFamily_num(addrblk);
+	if (ipaddrblocksz != 1 && ipaddrblocksz != 2) {
+		warnx("%s: RFC 6487 section 4.8.10: unexpected number of "
+		    "ipAddrBlocks (got %d, expected 1 or 2)",
+		    fn, ipaddrblocksz);
+		goto out;
+	}
+
+	for (i = 0; i < ipaddrblocksz; i++) {
 		af = sk_IPAddressFamily_value(addrblk, i);
 
 		switch (af->ipAddressChoice->type) {
@@ -398,6 +407,23 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 		if (!ip_addr_afi_parse(fn, af->addressFamily, &afi)) {
 			warnx("%s: RFC 3779: invalid AFI", fn);
 			goto out;
+		}
+
+		switch(afi) {
+		case AFI_IPV4:
+			if (ipv4_seen++ > 0) {
+				warnx("%s: RFC 6487 section 4.8.10: "
+				    "IPv4 appears twice", fn);
+				goto out;
+			}
+			break;
+		case AFI_IPV6:
+			if (ipv6_seen++ > 0) {
+				warnx("%s: RFC 6487 section 4.8.10: "
+				    "IPv6 appears twice", fn);
+				goto out;
+			}
+			break;
 		}
 
 		if (aors == NULL) {
