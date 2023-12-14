@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.79 2023/09/05 15:44:39 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.80 2023/12/14 09:59:27 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -340,7 +340,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				    "to frontend", __func__);
 				break;
 			}
-			if ((fd = imsg.fd) == -1) {
+			if ((fd = imsg_get_fd(&imsg)) == -1) {
 				fatalx("%s: expected to receive imsg fd to "
 				   "frontend but didn't receive any",
 				   __func__);
@@ -382,7 +382,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			if (udp6sock != -1)
 				fatalx("%s: received unexpected udp6sock",
 				    __func__);
-			if ((udp6sock = imsg.fd) == -1)
+			if ((udp6sock = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "UDP6 fd but didn't receive any", __func__);
 			event_set(&udp6ev.ev, udp6sock, EV_READ | EV_PERSIST,
@@ -393,7 +393,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			if (udp4sock != -1)
 				fatalx("%s: received unexpected udp4sock",
 				    __func__);
-			if ((udp4sock = imsg.fd) == -1)
+			if ((udp4sock = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "UDP4 fd but didn't receive any", __func__);
 			event_set(&udp4ev.ev, udp4sock, EV_READ | EV_PERSIST,
@@ -404,7 +404,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			if (tcp4sock != -1)
 				fatalx("%s: received unexpected tcp4sock",
 				    __func__);
-			if ((tcp4sock = imsg.fd) == -1)
+			if ((tcp4sock = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "TCP4 fd but didn't receive any", __func__);
 			event_set(&tcp4ev.ev, tcp4sock, EV_READ | EV_PERSIST,
@@ -416,7 +416,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			if (tcp6sock != -1)
 				fatalx("%s: received unexpected tcp6sock",
 				    __func__);
-			if ((tcp6sock = imsg.fd) == -1)
+			if ((tcp6sock = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "TCP6 fd but didn't receive any", __func__);
 			event_set(&tcp6ev.ev, tcp6sock, EV_READ | EV_PERSIST,
@@ -430,7 +430,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			if (routesock != -1)
 				fatalx("%s: received unexpected routesock",
 				    __func__);
-			if ((fd = imsg.fd) == -1)
+			if ((fd = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "routesocket fd but didn't receive any",
 				    __func__);
@@ -443,20 +443,20 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			frontend_startup();
 			break;
 		case IMSG_CONTROLFD:
-			if ((fd = imsg.fd) == -1)
+			if ((fd = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg control "
 				    "fd but didn't receive any", __func__);
 			/* Listen on control socket. */
 			control_listen(fd);
 			break;
 		case IMSG_TAFD:
-			if ((ta_fd = imsg.fd) != -1)
+			if ((ta_fd = imsg_get_fd(&imsg)) != -1)
 				parse_trust_anchor(&trust_anchors, ta_fd);
 			if (!TAILQ_EMPTY(&trust_anchors))
 				send_trust_anchors(&trust_anchors);
 			break;
 		case IMSG_BLFD:
-			if ((fd = imsg.fd) == -1)
+			if ((fd = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg block "
 				   "list fd but didn't receive any", __func__);
 			parse_blocklist(fd);
