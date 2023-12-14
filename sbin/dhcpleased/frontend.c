@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.31 2023/11/25 12:00:39 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.32 2023/12/14 09:58:37 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -269,7 +269,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatalx("%s: received unexpected imsg fd "
 				    "to frontend", __func__);
 
-			if ((fd = imsg.fd) == -1)
+			if ((fd = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg fd to "
 				   "frontend but didn't receive any",
 				   __func__);
@@ -287,7 +287,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_engine->ev, NULL);
 			break;
 		case IMSG_BPFSOCK:
-			if ((bpfsock = imsg.fd) == -1)
+			if ((bpfsock = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "bpf fd but didn't receive any",
 				    __func__);
@@ -298,7 +298,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			set_bpfsock(bpfsock, if_index);
 			break;
 		case IMSG_UDPSOCK:
-			if ((udpsock = imsg.fd) == -1)
+			if ((udpsock = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "udpsocket fd but didn't receive any",
 				    __func__);
@@ -327,7 +327,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_ROUTESOCK:
-			if ((fd = imsg.fd) == -1)
+			if ((fd = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "routesocket fd but didn't receive any",
 				    __func__);
@@ -430,7 +430,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			break;
 		}
 		case IMSG_CONTROLFD:
-			if ((fd = imsg.fd) == -1)
+			if ((fd = imsg_get_fd(&imsg)) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "control fd but didn't receive any",
 				    __func__);
