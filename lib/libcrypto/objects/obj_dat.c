@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.74 2023/12/14 18:09:35 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.75 2023/12/14 18:10:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -589,10 +589,10 @@ LCRYPTO_ALIAS(OBJ_create_objects);
 int
 OBJ_create(const char *oid, const char *sn, const char *ln)
 {
-	int ok = 0;
 	ASN1_OBJECT *op = NULL;
 	unsigned char *buf;
 	int len;
+	int ret = 0;
 
 	len = a2d_ASN1_OBJECT(NULL, 0, oid, -1);
 	if (len <= 0)
@@ -608,12 +608,12 @@ OBJ_create(const char *oid, const char *sn, const char *ln)
 	op = ASN1_OBJECT_create(OBJ_new_nid(1), buf, len, sn, ln);
 	if (op == NULL)
 		goto err;
-	ok = OBJ_add_object(op);
+	ret = OBJ_add_object(op);
 
  err:
 	ASN1_OBJECT_free(op);
 	free(buf);
-	return ok;
+	return ret;
 }
 LCRYPTO_ALIAS(OBJ_create);
 
