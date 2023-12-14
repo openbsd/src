@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.66 2023/12/14 14:01:42 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.67 2023/12/14 14:02:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -308,31 +308,34 @@ OBJ_nid2obj(int n)
 LCRYPTO_ALIAS(OBJ_nid2obj);
 
 const char *
-OBJ_nid2sn(int n)
+OBJ_nid2sn(int nid)
 {
-	ADDED_OBJ ad, *adp;
-	ASN1_OBJECT ob;
+	if (nid >= 0 && nid < NUM_NID) {
+		if (nid == NID_undef || nid_objs[nid].nid != NID_undef)
+			return nid_objs[nid].sn;
 
-	if ((n >= 0) && (n < NUM_NID)) {
-		if ((n != NID_undef) && (nid_objs[n].nid == NID_undef)) {
-			OBJerror(OBJ_R_UNKNOWN_NID);
-			return (NULL);
-		}
-		return (nid_objs[n].sn);
-	} else if (added == NULL)
-		return (NULL);
-	else {
-		ad.type = ADDED_NID;
-		ad.obj = &ob;
-		ob.nid = n;
-		adp = lh_ADDED_OBJ_retrieve(added, &ad);
-		if (adp != NULL)
-			return (adp->obj->sn);
-		else {
-			OBJerror(OBJ_R_UNKNOWN_NID);
-			return (NULL);
-		}
+		goto unknown;
 	}
+
+	/* XXX - locking. */
+	if (added != NULL) {
+		ASN1_OBJECT aobj = {
+			.nid = nid,
+		};
+		ADDED_OBJ needle = {
+			.type = ADDED_NID,
+			.obj = &aobj,
+		};
+		ADDED_OBJ *found;
+
+		if ((found = lh_ADDED_OBJ_retrieve(added, &needle)) != NULL)
+			return found->obj->sn;
+	}
+
+ unknown:
+	OBJerror(OBJ_R_UNKNOWN_NID);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(OBJ_nid2sn);
 
