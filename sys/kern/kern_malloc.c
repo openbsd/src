@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.149 2023/11/29 11:47:15 claudio Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.150 2023/12/14 11:58:09 claudio Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -86,15 +86,6 @@ struct vm_map *kmem_map = NULL;
 #define	NKMEMPAGES	0
 #endif
 u_int	nkmempages = NKMEMPAGES;
-
-/*
- * Defaults for upper-bounds for the kmem_map page count.
- * Can be overridden by kernel config options.
- */
-#ifndef NKMEMPAGES_MAX
-#define	NKMEMPAGES_MAX	NKMEMPAGES_MAX_DEFAULT
-#endif
-u_int	nkmempages_max = NKMEMPAGES_MAX;
 
 struct mutex malloc_mtx = MUTEX_INITIALIZER(IPL_VM);
 struct kmembuckets bucket[MINBUCKET + 16];
@@ -515,16 +506,26 @@ kmeminit_nkmempages(void)
 	/*
 	 * We use the following (simple) formula:
 	 *
-	 *	- Starting point is physical memory / 4.
+	 * Up to 1G physmem use physical memory / 4,
+	 * above 1G add an extra 16MB per 1G of memory.
 	 *
-	 *	- Clamp it down to nkmempages_max.
-	 *
-	 *	- Round it up to nkmempages_min.
+	 * Clamp it down depending on VM_KERNEL_SPACE_SIZE
+	 * - up and including 512M -> 64MB
+	 * - between 512M and 1024M -> 128MB
+	 * - over 1024M clamping to VM_KERNEL_SPACE_SIZE / 4
 	 */
-	npages = physmem / 4;
+	npages = MIN(physmem, atop(1024 * 1024 * 1024)) / 4;
+	if (physmem > atop(1024 * 1024 * 1024))
+		npages += (physmem - atop(1024 * 1024 * 1024)) / 64;
 
-	if (npages > nkmempages_max)
-		npages = nkmempages_max;
+	if (VM_KERNEL_SPACE_SIZE <= 512 * 1024 * 1024) {
+		if (npages > atop(64 * 1024 * 1024))
+			npages = atop(64 * 1024 * 1024);
+	} else if (VM_KERNEL_SPACE_SIZE <= 1024 * 1024 * 1024) {
+		if (npages > atop(128 * 1024 * 1024))
+			npages = atop(128 * 1024 * 1024);
+	} else if (npages > atop(VM_KERNEL_SPACE_SIZE) / 4)
+		npages = atop(VM_KERNEL_SPACE_SIZE) / 4;
 
 	nkmempages = npages;
 }
@@ -573,7 +574,8 @@ kmeminit(void)
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)
-		kmemstats[indx].ks_limit = nkmempages * PAGE_SIZE * 6 / 10;
+		kmemstats[indx].ks_limit =
+		    (long)nkmempages * PAGE_SIZE * 6 / 10;
 #endif
 }
 
