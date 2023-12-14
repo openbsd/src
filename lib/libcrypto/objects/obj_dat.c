@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.71 2023/12/14 15:33:09 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.72 2023/12/14 18:06:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -605,7 +605,7 @@ OBJ_create(const char *oid, const char *sn, const char *ln)
 	i = a2d_ASN1_OBJECT(buf, i, oid, -1);
 	if (i == 0)
 		goto err;
-	op = (ASN1_OBJECT *)ASN1_OBJECT_create(OBJ_new_nid(1), buf, i, sn, ln);
+	op = ASN1_OBJECT_create(OBJ_new_nid(1), buf, i, sn, ln);
 	if (op == NULL)
 		goto err;
 	ok = OBJ_add_object(op);
