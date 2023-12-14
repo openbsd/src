@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.150 2023/12/14 11:58:09 claudio Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.151 2023/12/14 14:04:57 claudio Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ struct vm_map *kmem_map = NULL;
  * config file.
  */
 #ifndef NKMEMPAGES
-#define	NKMEMPAGES	0
+#define	NKMEMPAGES	-1
 #endif
 u_int	nkmempages = NKMEMPAGES;
 
@@ -495,7 +495,7 @@ kmeminit_nkmempages(void)
 {
 	u_int npages;
 
-	if (nkmempages != 0) {
+	if (nkmempages != -1) {
 		/*
 		 * It's already been set (by us being here before, or
 		 * by patching or kernel config options), bail out now.
