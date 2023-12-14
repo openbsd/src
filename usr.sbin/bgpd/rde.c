@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.612 2023/11/07 11:18:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.613 2023/12/14 13:52:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -854,7 +854,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 		case IMSG_SOCKET_CONN:
 		case IMSG_SOCKET_CONN_CTL:
 		case IMSG_SOCKET_CONN_RTR:
-			if ((fd = imsg.fd) == -1) {
+			if ((fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("expected to receive imsg fd "
 				    "but didn't receive any");
 				break;
@@ -1229,7 +1229,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				break;
 			}
 			memcpy(&xmrt, imsg.data, sizeof(xmrt));
-			if ((fd = imsg.fd) == -1)
+			if ((fd = imsg_get_fd(&imsg)) == -1)
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
 			else if (xmrt.type == MRT_TABLE_DUMP ||

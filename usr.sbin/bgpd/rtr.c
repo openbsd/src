@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.17 2023/11/07 11:18:35 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.18 2023/12/14 13:52:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -319,7 +319,7 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 
 		switch (imsg.hdr.type) {
 		case IMSG_SOCKET_CONN_RTR:
-			if ((fd = imsg.fd) == -1) {
+			if ((fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("expected to receive imsg fd "
 				    "but didn't receive any");
 				break;
@@ -335,7 +335,7 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			imsg_init(ibuf_rde, fd);
 			break;
 		case IMSG_SOCKET_CONN:
-			if ((fd = imsg.fd) == -1) {
+			if ((fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("expected to receive imsg fd "
 				    "but didn't receive any");
 				break;
