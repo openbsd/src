@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.69 2023/12/14 14:33:23 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.70 2023/12/14 14:45:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -374,47 +374,6 @@ OBJ_obj2nid(const ASN1_OBJECT *aobj)
 }
 LCRYPTO_ALIAS(OBJ_obj2nid);
 
-/* Convert an object name into an ASN1_OBJECT
- * if "noname" is not set then search for short and long names first.
- * This will convert the "dotted" form into an object: unlike OBJ_txt2nid
- * it can be used with any objects, not just registered ones.
- */
-
-ASN1_OBJECT *
-OBJ_txt2obj(const char *s, int no_name)
-{
-	int nid;
-
-	if (!no_name) {
-		if ((nid = OBJ_sn2nid(s)) != NID_undef ||
-		    (nid = OBJ_ln2nid(s)) != NID_undef)
-			return OBJ_nid2obj(nid);
-	}
-
-	return t2i_ASN1_OBJECT_internal(s);
-}
-LCRYPTO_ALIAS(OBJ_txt2obj);
-
-int
-OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *aobj, int no_name)
-{
-	return i2t_ASN1_OBJECT_internal(aobj, buf, buf_len, no_name);
-}
-LCRYPTO_ALIAS(OBJ_obj2txt);
-
-int
-OBJ_txt2nid(const char *s)
-{
-	ASN1_OBJECT *obj;
-	int nid;
-
-	obj = OBJ_txt2obj(s, 0);
-	nid = OBJ_obj2nid(obj);
-	ASN1_OBJECT_free(obj);
-	return nid;
-}
-LCRYPTO_ALIAS(OBJ_txt2nid);
-
 static int
 ln_objs_cmp(const void *ln, const void *b)
 {
@@ -529,6 +488,47 @@ OBJ_bsearch_ex_(const void *key, const void *base_, int num, int size,
 	}
 	return (p);
 }
+
+/* Convert an object name into an ASN1_OBJECT
+ * if "noname" is not set then search for short and long names first.
+ * This will convert the "dotted" form into an object: unlike OBJ_txt2nid
+ * it can be used with any objects, not just registered ones.
+ */
+
+ASN1_OBJECT *
+OBJ_txt2obj(const char *s, int no_name)
+{
+	int nid;
+
+	if (!no_name) {
+		if ((nid = OBJ_sn2nid(s)) != NID_undef ||
+		    (nid = OBJ_ln2nid(s)) != NID_undef)
+			return OBJ_nid2obj(nid);
+	}
+
+	return t2i_ASN1_OBJECT_internal(s);
+}
+LCRYPTO_ALIAS(OBJ_txt2obj);
+
+int
+OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *aobj, int no_name)
+{
+	return i2t_ASN1_OBJECT_internal(aobj, buf, buf_len, no_name);
+}
+LCRYPTO_ALIAS(OBJ_obj2txt);
+
+int
+OBJ_txt2nid(const char *s)
+{
+	ASN1_OBJECT *obj;
+	int nid;
+
+	obj = OBJ_txt2obj(s, 0);
+	nid = OBJ_obj2nid(obj);
+	ASN1_OBJECT_free(obj);
+	return nid;
+}
+LCRYPTO_ALIAS(OBJ_txt2nid);
 
 int
 OBJ_create_objects(BIO *in)
