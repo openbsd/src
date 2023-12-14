@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.73 2023/12/14 18:08:18 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.74 2023/12/14 18:09:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -592,20 +592,20 @@ OBJ_create(const char *oid, const char *sn, const char *ln)
 	int ok = 0;
 	ASN1_OBJECT *op = NULL;
 	unsigned char *buf;
-	int i;
+	int len;
 
-	i = a2d_ASN1_OBJECT(NULL, 0, oid, -1);
-	if (i <= 0)
+	len = a2d_ASN1_OBJECT(NULL, 0, oid, -1);
+	if (len <= 0)
 		return 0;
 
-	if ((buf = malloc(i)) == NULL) {
+	if ((buf = malloc(len)) == NULL) {
 		OBJerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	i = a2d_ASN1_OBJECT(buf, i, oid, -1);
-	if (i == 0)
+	len = a2d_ASN1_OBJECT(buf, len, oid, -1);
+	if (len == 0)
 		goto err;
-	op = ASN1_OBJECT_create(OBJ_new_nid(1), buf, i, sn, ln);
+	op = ASN1_OBJECT_create(OBJ_new_nid(1), buf, len, sn, ln);
 	if (op == NULL)
 		goto err;
 	ok = OBJ_add_object(op);
