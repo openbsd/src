@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.75 2023/12/14 18:10:32 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.76 2023/12/14 18:12:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -590,17 +590,17 @@ int
 OBJ_create(const char *oid, const char *sn, const char *ln)
 {
 	ASN1_OBJECT *op = NULL;
-	unsigned char *buf;
+	unsigned char *buf = NULL;
 	int len;
 	int ret = 0;
 
 	len = a2d_ASN1_OBJECT(NULL, 0, oid, -1);
 	if (len <= 0)
-		return 0;
+		goto err;
 
 	if ((buf = malloc(len)) == NULL) {
 		OBJerror(ERR_R_MALLOC_FAILURE);
-		return 0;
+		goto err;
 	}
 	len = a2d_ASN1_OBJECT(buf, len, oid, -1);
 	if (len == 0)
@@ -613,6 +613,7 @@ OBJ_create(const char *oid, const char *sn, const char *ln)
  err:
 	ASN1_OBJECT_free(op);
 	free(buf);
+
 	return ret;
 }
 LCRYPTO_ALIAS(OBJ_create);
