@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.77 2023/12/14 18:15:21 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.78 2023/12/14 18:16:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -597,7 +597,7 @@ OBJ_create(const char *oid, const char *sn, const char *ln)
 	if ((len = a2d_ASN1_OBJECT(NULL, 0, oid, -1)) <= 0)
 		goto err;
 
-	if ((buf = malloc(len)) == NULL) {
+	if ((buf = calloc(1, len)) == NULL) {
 		OBJerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
