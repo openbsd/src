@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.46 2023/07/08 08:28:23 beck Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.47 2023/12/14 15:31:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -355,7 +355,7 @@ OPENSSL_showfatal(const char *fmta, ...)
 	va_list ap;
 
 	va_start(ap, fmta);
-	vsyslog_r(LOG_INFO|LOG_LOCAL2, &sdata, fmta, ap);
+	vsyslog_r(LOG_CONS|LOG_LOCAL2, &sdata, fmta, ap);
 	va_end(ap);
 }
 
