@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.22 2023/07/03 10:34:31 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.23 2023/12/14 10:02:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -24,6 +24,7 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,26 +161,39 @@ send_packet(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
 {
 	struct eigrp		*eigrp = ei->eigrp;
 	struct iface		*iface = ei->iface;
-	struct eigrp_hdr	*eigrp_hdr;
+	struct ibuf		 ebuf;
+	struct eigrp_hdr	 eigrp_hdr;
 
 	if (!(iface->flags & IFF_UP) || !LINK_STATE_IS_UP(iface->linkstate))
 		return (-1);
 
 	/* update ack number, flags and checksum */
-	if ((eigrp_hdr = ibuf_seek(buf, 0, sizeof(*eigrp_hdr))) == NULL)
-                fatalx("send_packet: buf_seek failed");
 	if (nbr) {
-		eigrp_hdr->ack_num = htonl(nbr->recv_seq);
+		if (ibuf_set_n32(buf, offsetof(struct eigrp_hdr, ack_num),
+		    nbr->recv_seq) == -1)
+			fatalx("send_packet: set of ack_num failed");
 		rtp_ack_stop_timer(nbr);
 	}
-	if (flags)
-		eigrp_hdr->flags |= htonl(flags);
-	
-	eigrp_hdr->chksum = 0;
-	eigrp_hdr->chksum = in_cksum(ibuf_data(buf), ibuf_size(buf));
+
+	ibuf_from_ibuf(buf, &ebuf);
+	if (ibuf_get(&ebuf, &eigrp_hdr, sizeof(eigrp_hdr)) == -1)
+		fatalx("send_packet: get hdr failed");
+
+	if (flags) {
+		flags |= ntohl(eigrp_hdr.flags);
+		if (ibuf_set_n32(buf, offsetof(struct eigrp_hdr, flags),
+		    flags) == -1)
+			fatalx("send_packet: set of flags failed");
+	}
+
+	if (ibuf_set_n16(buf, offsetof(struct eigrp_hdr, chksum), 0) == -1)
+		fatalx("send_packet: set of chksum failed");
+	if (ibuf_set_n16(buf, offsetof(struct eigrp_hdr, chksum),
+	    in_cksum(ibuf_data(buf), ibuf_size(buf))) == -1)
+		fatalx("send_packet: set of chksum failed");
 
 	/* log packet being sent */
-	if (eigrp_hdr->opcode != EIGRP_OPC_HELLO) {
+	if (eigrp_hdr.opcode != EIGRP_OPC_HELLO) {
 		char	buffer[64];
 
 		if (nbr)
@@ -189,9 +203,9 @@ send_packet(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
 			snprintf(buffer, sizeof(buffer), "(multicast)");
 
 		log_debug("%s: type %s iface %s %s AS %u seq %u ack %u",
-		    __func__, opcode_name(eigrp_hdr->opcode), iface->name,
-		    buffer, ntohs(eigrp_hdr->as), ntohl(eigrp_hdr->seq_num),
-		    ntohl(eigrp_hdr->ack_num));
+		    __func__, opcode_name(eigrp_hdr.opcode), iface->name,
+		    buffer, ntohs(eigrp_hdr.as), ntohl(eigrp_hdr.seq_num),
+		    ntohl(eigrp_hdr.ack_num));
 	}
 
 	switch (eigrp->af) {
@@ -207,9 +221,9 @@ send_packet(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
 		fatalx("send_packet: unknown af");
 	}
 
-	switch (eigrp_hdr->opcode) {
+	switch (eigrp_hdr.opcode) {
 	case EIGRP_OPC_HELLO:
-		if (ntohl(eigrp_hdr->ack_num) == 0)
+		if (ntohl(eigrp_hdr.ack_num) == 0)
 			ei->eigrp->stats.hellos_sent++;
 		else
 			ei->eigrp->stats.acks_sent++;
