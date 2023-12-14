@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.38 2018/09/14 13:58:20 claudio Exp $	*/
+/*	$OpenBSD: param.h,v 1.39 2023/12/14 13:26:49 claudio Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -59,12 +59,6 @@
 #define	USPACE_ALIGN	0			/* u-area alignment 0-none */
 
 #define	NMBCLUSTERS	(32 * 1024)		/* max cluster allocation */
-
-/*
- * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Fixed segments

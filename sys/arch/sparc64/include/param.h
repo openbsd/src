@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.41 2018/09/14 13:58:20 claudio Exp $	*/
+/*	$OpenBSD: param.h,v 1.42 2023/12/14 13:26:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,12 +140,6 @@
 #ifndef	MSGBUFSIZE
 #define	MSGBUFSIZE	(1 * PAGE_SIZE)
 #endif
-
-/*
- * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 #ifndef _LOCORE
 

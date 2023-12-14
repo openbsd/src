@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2018/09/14 13:58:20 claudio Exp $ */
+/*	$OpenBSD: param.h,v 1.22 2023/12/14 13:26:49 claudio Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -69,12 +69,6 @@
 #ifndef MSGBUFSIZE
 #define	MSGBUFSIZE	PAGE_SIZE
 #endif
-
-/*
- * Mmaximum size of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * Get interrupt glue.

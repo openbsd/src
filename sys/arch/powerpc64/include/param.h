@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1 2020/05/16 17:11:14 kettenis Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 2023/12/14 13:26:49 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,12 +68,6 @@
 #ifndef	MSGBUFSIZE
 #define	MSGBUFSIZE	(16 * PAGE_SIZE)	/* default message buffer size */
 #endif
-
-/*
- * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 #define	STACKALIGNBYTES		(32 - 1)
 #define	STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 2018/09/14 13:58:20 claudio Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 2023/12/14 13:26:49 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -85,12 +85,6 @@
 #ifndef MSGBUFSIZE
 #define	MSGBUFSIZE	PAGE_SIZE		/* default message buffer size */
 #endif
-
-/*
- * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
 
 #endif /* _KERNEL */
 
