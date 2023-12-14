@@ -8,6 +8,9 @@ allow 2001:a000::/20
 allow 2001:b000::/20
 allow 2400::/12
 
+# IX Assignments
+allow 2001:7fa::/32
+
 # AFRINIC Internet Number Resources cannot be transferred
 # From https://www.iana.org/assignments/ipv4-address-space/
 deny 41.0.0.0/8
