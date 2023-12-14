@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.269 2022/09/11 06:38:11 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.270 2023/12/14 13:34:23 claudio Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: December 14 2023 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -461,7 +461,6 @@ The default value is machine dependent, often calculated as
 between 5% and 10% of total available RAM.
 .Pp
 .It Cd option NKMEMPAGES= Ns Ar value
-.It Cd option NKMEMPAGES_MAX= Ns Ar value
 Size of kernel malloc area in PAGE_SIZE-sized logical pages.
 This area is covered by the kernel submap
 .Em kmem_map .
@@ -472,15 +471,6 @@ which may be viewed with the
 .Xr sysctl 8
 variable
 .Em vm.nkmempages .
-See
-.Pa /usr/include/machine/param.h
-for the default upper bound.
-The related option
-.Sq NKMEMPAGES_MAX
-allows the bounds to be overridden in the kernel configuration file
-in the event the computed value is insufficient resulting in an
-.Dq out of space in kmem_map
-panic.
 .El
 .Sh SCSI SUBSYSTEM OPTIONS
 See
