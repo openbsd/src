@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.144 2023/12/12 22:00:43 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.145 2023/12/15 10:28:57 kn Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -627,7 +627,8 @@ main(volatile int argc, char *argv[])
 			}
 
 			rval = auto_fetch(argc, argv, outfile);
-			if (rval >= 0 || pipeout) /* -1 == connected and cd-ed */
+			/* -1 == connected and cd-ed */
+			if (rval >= 0 || outfile != NULL)
 				exit(rval);
 		} else {
 #ifndef SMALL
