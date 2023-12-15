@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.81 2023/12/15 01:47:50 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.82 2023/12/15 01:51:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -377,45 +377,6 @@ OBJ_obj2nid(const ASN1_OBJECT *aobj)
 LCRYPTO_ALIAS(OBJ_obj2nid);
 
 static int
-ln_objs_cmp(const void *ln, const void *b)
-{
-	const unsigned int *nid = b;
-
-	OPENSSL_assert(*nid < NUM_NID);
-
-	return strcmp(ln, nid_objs[*nid].ln);
-}
-
-int
-OBJ_ln2nid(const char *ln)
-{
-	const unsigned int *nid;
-
-	/* XXX - locking. OpenSSL 3 moved this after built-in object lookup. */
-	if (added != NULL) {
-		ASN1_OBJECT aobj = {
-			.ln = ln,
-		};
-		ADDED_OBJ needle = {
-			.type = ADDED_LNAME,
-			.obj = &aobj,
-		};
-		ADDED_OBJ *found;
-
-		if ((found = lh_ADDED_OBJ_retrieve(added, &needle)) != NULL)
-			return found->obj->nid;
-	}
-
-	/* ln_objs holds NIDs in ascending alphabetical order of LN. */
-	nid = bsearch(ln, ln_objs, NUM_LN, sizeof(unsigned int), ln_objs_cmp);
-	if (nid != NULL)
-		return *nid;
-
-	return NID_undef;
-}
-LCRYPTO_ALIAS(OBJ_ln2nid);
-
-static int
 sn_objs_cmp(const void *sn, const void *b)
 {
 	const unsigned int *nid = b;
@@ -453,6 +414,45 @@ OBJ_sn2nid(const char *sn)
 	return NID_undef;
 }
 LCRYPTO_ALIAS(OBJ_sn2nid);
+
+static int
+ln_objs_cmp(const void *ln, const void *b)
+{
+	const unsigned int *nid = b;
+
+	OPENSSL_assert(*nid < NUM_NID);
+
+	return strcmp(ln, nid_objs[*nid].ln);
+}
+
+int
+OBJ_ln2nid(const char *ln)
+{
+	const unsigned int *nid;
+
+	/* XXX - locking. OpenSSL 3 moved this after built-in object lookup. */
+	if (added != NULL) {
+		ASN1_OBJECT aobj = {
+			.ln = ln,
+		};
+		ADDED_OBJ needle = {
+			.type = ADDED_LNAME,
+			.obj = &aobj,
+		};
+		ADDED_OBJ *found;
+
+		if ((found = lh_ADDED_OBJ_retrieve(added, &needle)) != NULL)
+			return found->obj->nid;
+	}
+
+	/* ln_objs holds NIDs in ascending alphabetical order of LN. */
+	nid = bsearch(ln, ln_objs, NUM_LN, sizeof(unsigned int), ln_objs_cmp);
+	if (nid != NULL)
+		return *nid;
+
+	return NID_undef;
+}
+LCRYPTO_ALIAS(OBJ_ln2nid);
 
 const void *
 OBJ_bsearch_(const void *key, const void *base, int num, int size,
