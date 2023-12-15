@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2023/04/24 17:07:33 krw Exp $
+#	$OpenBSD: Makefile,v 1.47 2023/12/15 06:03:00 jmatthew Exp $
 
 FS=		install${OSrev}.img
 FSSIZE=		1359872
@@ -18,6 +18,8 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
 
 EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI
+EFICDBOOT=	eficdboot
+EFICDBOOTSIZE=	350K
 MSDOSSIZE=	960
 TOTALSIZE!=	expr ${FSSIZE} + ${MSDOSSIZE}
 
@@ -55,7 +57,14 @@ ${FS}: ${BASE} ${XBASE} bsd.rd
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-${CDROM}: ${BASE} ${XBASE}
+${EFICDBOOT}: ${EFIBOOT}
+	rm -rf ${.OBJDIR}/eficdboot-dir
+	mkdir -p ${.OBJDIR}/eficdboot-dir/efi/boot
+	cp ${EFIBOOT} ${.OBJDIR}/eficdboot-dir/efi/boot
+	makefs -t msdos -o create_size=${EFICDBOOTSIZE} ${EFICDBOOT} \
+	    ${.OBJDIR}/eficdboot-dir
+
+${CDROM}: ${BASE} ${XBASE} ${EFICDBOOT}
 	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkdir -p ${.OBJDIR}/cd-dir/etc
@@ -70,6 +79,7 @@ ${CDROM}: ${BASE} ${XBASE}
 
 	cp -p ${RELDIR}/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/cdboot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/cdboot
+	cp -p ${.OBJDIR}/${EFICDBOOT} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
@@ -77,14 +87,15 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE}   ${OSREV} Install CD" \
 	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
+	    -e ${OSREV}/${MACHINE}/${EFICDBOOT} \
 	    ${.OBJDIR}/cd-dir
 
 install:
 	cp ${CDROM} ${FS} ${RELDIR}/
 
 clean cleandir:
-	rm -f ${CDROM} ${FS}
-	rm -rf cd-dir
+	rm -f ${CDROM} ${FS} ${EFICDBOOT}
+	rm -rf cd-dir eficdboot-dir
 
 bsd.rd: ${BSDRD}
 	cp ${BSDRD} bsd.rd

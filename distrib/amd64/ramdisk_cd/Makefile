@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.38 2023/04/28 08:45:25 krw Exp $
+#	$OpenBSD: Makefile,v 1.39 2023/12/15 06:03:00 jmatthew Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		11392
+EFICDBOOT=	eficdboot
+EFICDBOOTSIZE=	350K
 CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
@@ -37,7 +39,14 @@ ${FS}: bsd.gz
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-${CDROM}: bsd.rd
+${EFICDBOOT}: ${EFIBOOT}
+	rm -rf ${.OBJDIR}/eficdboot-dir
+	mkdir -p ${.OBJDIR}/eficdboot-dir/efi/boot
+	cp ${EFIBOOT} ${.OBJDIR}/eficdboot-dir/efi/boot
+	makefs -t msdos -o create_size=${EFICDBOOTSIZE} ${EFICDBOOT} \
+	    ${.OBJDIR}/eficdboot-dir
+
+${CDROM}: bsd.rd ${EFICDBOOT}
 	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkdir -p ${.OBJDIR}/cd-dir/etc
@@ -45,12 +54,14 @@ ${CDROM}: bsd.rd
 	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp ${DESTDIR}/usr/mdec/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/cdboot
+	cp ${.OBJDIR}/${EFICDBOOT} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE}   ${OSREV} boot-only CD" \
 	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
+	    -e ${OSREV}/${MACHINE}/${EFICDBOOT} \
 	    ${.OBJDIR}/cd-dir
 
 MRDISKTYPE=	rdrootb
@@ -108,7 +119,7 @@ clean cleandir:
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.img \
 	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
 	rm -rf mr.fs.d
-	rm -f ${CDROM}
-	rm -rf cd-dir
+	rm -f ${CDROM} ${EFICDBOOT}
+	rm -rf cd-dir eficdboot-dir
 
 .include <bsd.obj.mk>
