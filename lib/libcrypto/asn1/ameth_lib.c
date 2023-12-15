@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.34 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.35 2023/12/15 08:16:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -62,6 +62,7 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/asn1t.h>
+#include <openssl/err.h>
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
@@ -100,36 +101,21 @@ static const EVP_PKEY_ASN1_METHOD *asn1_methods[] = {
 	&x25519_asn1_meth,
 };
 
-static const size_t asn1_methods_count =
-    sizeof(asn1_methods) / sizeof(asn1_methods[0]);
-
-DECLARE_STACK_OF(EVP_PKEY_ASN1_METHOD)
-static STACK_OF(EVP_PKEY_ASN1_METHOD) *asn1_app_methods = NULL;
+#define N_ASN1_METHODS (sizeof(asn1_methods) / sizeof(asn1_methods[0]))
 
 int
 EVP_PKEY_asn1_get_count(void)
 {
-	int num = asn1_methods_count;
-
-	if (asn1_app_methods != NULL)
-		num += sk_EVP_PKEY_ASN1_METHOD_num(asn1_app_methods);
-
-	return num;
+	return N_ASN1_METHODS;
 }
 
 const EVP_PKEY_ASN1_METHOD *
 EVP_PKEY_asn1_get0(int idx)
 {
-	int num = asn1_methods_count;
-
-	if (idx < 0)
+	if (idx < 0 || idx >= N_ASN1_METHODS)
 		return NULL;
-	if (idx < num)
-		return asn1_methods[idx];
 
-	idx -= num;
-
-	return sk_EVP_PKEY_ASN1_METHOD_value(asn1_app_methods, idx);
+	return asn1_methods[idx];
 }
 
 static const EVP_PKEY_ASN1_METHOD *
@@ -196,33 +182,15 @@ EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
 int
 EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 {
-	if (asn1_app_methods == NULL) {
-		asn1_app_methods = sk_EVP_PKEY_ASN1_METHOD_new(NULL);
-		if (asn1_app_methods == NULL)
-			return 0;
-	}
-
-	if (!sk_EVP_PKEY_ASN1_METHOD_push(asn1_app_methods, ameth))
-		return 0;
-
-	return 1;
+	EVPerror(ERR_R_DISABLED);
+	return 0;
 }
 
 int
 EVP_PKEY_asn1_add_alias(int to, int from)
 {
-	EVP_PKEY_ASN1_METHOD *ameth;
-
-	ameth = EVP_PKEY_asn1_new(from, ASN1_PKEY_ALIAS, NULL, NULL);
-	if (ameth == NULL)
-		return 0;
-
-	ameth->pkey_base_id = to;
-	if (!EVP_PKEY_asn1_add0(ameth)) {
-		EVP_PKEY_asn1_free(ameth);
-		return 0;
-	}
-	return 1;
+	EVPerror(ERR_R_DISABLED);
+	return 0;
 }
 
 int
