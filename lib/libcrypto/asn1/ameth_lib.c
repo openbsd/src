@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.35 2023/12/15 08:16:54 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.36 2023/12/15 08:22:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -56,14 +56,12 @@
  *
  */
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
-#include <openssl/opensslconf.h>
-
-#include <openssl/asn1t.h>
 #include <openssl/err.h>
-#include <openssl/x509.h>
+#include <openssl/evp.h>
 
 #include "asn1_local.h"
 #include "evp_local.h"
