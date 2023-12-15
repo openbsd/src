@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.30 2023/12/15 14:16:44 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.31 2023/12/15 14:21:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -198,22 +198,6 @@ OBJ_bsearch_pbe2(EVP_PBE_CTL *key, EVP_PBE_CTL const *base, int num)
 }
 
 int
-EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
-    EVP_PBE_KEYGEN *keygen)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-
-int
-EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
-    EVP_PBE_KEYGEN *keygen)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-
-int
 EVP_PBE_find(int type, int pbe_nid,
     int *pcnid, int *pmnid, EVP_PBE_KEYGEN **pkeygen)
 {
@@ -236,6 +220,22 @@ EVP_PBE_find(int type, int pbe_nid,
 	if (pkeygen)
 		*pkeygen = pbetmp->keygen;
 	return 1;
+}
+
+int
+EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
+    EVP_PBE_KEYGEN *keygen)
+{
+	EVPerror(ERR_R_DISABLED);
+	return 0;
+}
+
+int
+EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
+    EVP_PBE_KEYGEN *keygen)
+{
+	EVPerror(ERR_R_DISABLED);
+	return 0;
 }
 
 void
