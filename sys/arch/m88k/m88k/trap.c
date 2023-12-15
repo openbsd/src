@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.130 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.131 2023/12/15 15:20:16 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1167,7 +1167,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	/*
 	 * For 88k, all the arguments are passed in the registers (r2-r9),
 	 * and further arguments (if any) on stack.
-	 * For syscall, r2 has the actual code.
 	 */
 	ap = &tf->tf_r[2];
 	nap = 8; /* r2-r9 */
@@ -1270,7 +1269,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	/*
 	 * For 88k, all the arguments are passed in the registers (r2-r9),
 	 * and further arguments (if any) on stack.
-	 * For syscall, r2 has the actual code.
 	 */
 	ap = &tf->tf_r[2];
 	nap = 8;	/* r2-r9 */
