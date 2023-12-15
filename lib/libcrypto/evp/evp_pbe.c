@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.29 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.30 2023/12/15 14:16:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -69,11 +69,6 @@
 #include "evp_local.h"
 
 /* Password based encryption (PBE) functions */
-
-DECLARE_STACK_OF(EVP_PBE_CTL)
-static STACK_OF(EVP_PBE_CTL) *pbe_algs;
-
-/* Setup a cipher context from a PBE algorithm */
 
 typedef struct {
 	int pbe_type;
@@ -202,68 +197,20 @@ OBJ_bsearch_pbe2(EVP_PBE_CTL *key, EVP_PBE_CTL const *base, int num)
 	    pbe2_cmp_BSEARCH_CMP_FN);
 }
 
-static int
-pbe_cmp(const EVP_PBE_CTL * const *a, const EVP_PBE_CTL * const *b)
-{
-	int ret = (*a)->pbe_type - (*b)->pbe_type;
-
-	if (ret)
-		return ret;
-	else
-		return (*a)->pbe_nid - (*b)->pbe_nid;
-}
-
-/* Add a PBE algorithm */
-
 int
 EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
     EVP_PBE_KEYGEN *keygen)
 {
-	EVP_PBE_CTL *pbe_tmp;
-
-	if (pbe_algs == NULL) {
-		pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
-		if (pbe_algs == NULL) {
-			EVPerror(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-	}
-	pbe_tmp = malloc(sizeof(EVP_PBE_CTL));
-	if (pbe_tmp == NULL) {
-		EVPerror(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	pbe_tmp->pbe_type = pbe_type;
-	pbe_tmp->pbe_nid = pbe_nid;
-	pbe_tmp->cipher_nid = cipher_nid;
-	pbe_tmp->md_nid = md_nid;
-	pbe_tmp->keygen = keygen;
-
-	if (sk_EVP_PBE_CTL_push(pbe_algs, pbe_tmp) == 0) {
-		free(pbe_tmp);
-		EVPerror(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	return 1;
+	EVPerror(ERR_R_DISABLED);
+	return 0;
 }
 
 int
 EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
     EVP_PBE_KEYGEN *keygen)
 {
-	int cipher_nid, md_nid;
-
-	if (cipher)
-		cipher_nid = EVP_CIPHER_nid(cipher);
-	else
-		cipher_nid = -1;
-	if (md)
-		md_nid = EVP_MD_type(md);
-	else
-		md_nid = -1;
-
-	return EVP_PBE_alg_add_type(EVP_PBE_TYPE_OUTER, nid,
-	    cipher_nid, md_nid, keygen);
+	EVPerror(ERR_R_DISABLED);
+	return 0;
 }
 
 int
@@ -271,22 +218,15 @@ EVP_PBE_find(int type, int pbe_nid,
     int *pcnid, int *pmnid, EVP_PBE_KEYGEN **pkeygen)
 {
 	EVP_PBE_CTL *pbetmp = NULL, pbelu;
-	int i;
+
 	if (pbe_nid == NID_undef)
 		return 0;
 
 	pbelu.pbe_type = type;
 	pbelu.pbe_nid = pbe_nid;
 
-	if (pbe_algs) {
-		i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
-		if (i != -1)
-			pbetmp = sk_EVP_PBE_CTL_value (pbe_algs, i);
-	}
-	if (pbetmp == NULL) {
-		pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe,
-		    sizeof(builtin_pbe)/sizeof(EVP_PBE_CTL));
-	}
+	pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe,
+	    sizeof(builtin_pbe)/sizeof(EVP_PBE_CTL));
 	if (pbetmp == NULL)
 		return 0;
 	if (pcnid)
@@ -298,15 +238,7 @@ EVP_PBE_find(int type, int pbe_nid,
 	return 1;
 }
 
-static void
-free_evp_pbe_ctl(EVP_PBE_CTL *pbe)
-{
-	free(pbe);
-}
-
 void
 EVP_PBE_cleanup(void)
 {
-	sk_EVP_PBE_CTL_pop_free(pbe_algs, free_evp_pbe_ctl);
-	pbe_algs = NULL;
 }
