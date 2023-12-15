@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.32 2023/09/28 11:29:10 tb Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.33 2023/12/15 13:48:59 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
@@ -477,7 +477,7 @@ chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	if (len > SIZE_MAX - cpx->in_len) {
 		EVPerror(EVP_R_TOO_LARGE);
-		return 0;
+		return -1;
 	}
 
 	/* Disallow authenticated data after plaintext/ciphertext. */
