@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.16 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: cmac.c,v 1.17 2023/12/15 13:45:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -191,6 +191,13 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 
 	/* Initialise context. */
 	if (cipher != NULL) {
+		/*
+		 * Disallow ciphers for which EVP_Cipher() behaves differently.
+		 * These are AEAD ciphers (or AES keywrap) for which the CMAC
+		 * construction makes little sense.
+		 */
+		if ((cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
+			return 0;
 		if (!EVP_EncryptInit_ex(&ctx->cctx, cipher, NULL, NULL, NULL))
 			return 0;
 	}
