@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.177 2023/12/03 20:36:24 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.178 2023/12/15 00:24:56 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -674,7 +674,10 @@ rip6_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 	if ((error = in6_pcbaddrisavail(inp, addr, 0, p)))
 		return (error);
 
+	mtx_enter(&rawin6pcbtable.inpt_mtx);
 	inp->inp_laddr6 = addr->sin6_addr;
+	mtx_leave(&rawin6pcbtable.inpt_mtx);
+
 	return (0);
 }
 
@@ -696,9 +699,12 @@ rip6_connect(struct socket *so, struct mbuf *nam)
 	if (error)
 		return (error);
 
+	mtx_enter(&rawin6pcbtable.inpt_mtx);
 	inp->inp_laddr6 = *in6a;
 	inp->inp_faddr6 = addr->sin6_addr;
+	mtx_leave(&rawin6pcbtable.inpt_mtx);
 	soisconnected(so);
+
 	return (0);
 }
 
@@ -712,8 +718,11 @@ rip6_disconnect(struct socket *so)
 	if ((so->so_state & SS_ISCONNECTED) == 0)
 		return (ENOTCONN);
 
-	inp->inp_faddr6 = in6addr_any;
 	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
+	mtx_enter(&rawin6pcbtable.inpt_mtx);
+	inp->inp_faddr6 = in6addr_any;
+	mtx_leave(&rawin6pcbtable.inpt_mtx);
+
 	return (0);
 }
 

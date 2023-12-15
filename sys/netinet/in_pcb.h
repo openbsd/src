@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.143 2023/12/07 16:08:30 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.144 2023/12/15 00:24:56 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -107,14 +107,14 @@ struct inpcb {
 	TAILQ_ENTRY(inpcb) inp_queue;		/* [t] inet PCB queue */
 	SIMPLEQ_ENTRY(inpcb) inp_notify;	/* [y] notify or udp append */
 	struct	  inpcbtable *inp_table;	/* [I] inet queue/hash table */
-	union	  inpaddru inp_faddru;		/* Foreign address. */
-	union	  inpaddru inp_laddru;		/* Local address. */
+	union	  inpaddru inp_faddru;		/* [t] Foreign address. */
+	union	  inpaddru inp_laddru;		/* [t] Local address. */
 #define	inp_faddr	inp_faddru.iau_a4u.inaddr
 #define	inp_faddr6	inp_faddru.iau_addr6
 #define	inp_laddr	inp_laddru.iau_a4u.inaddr
 #define	inp_laddr6	inp_laddru.iau_addr6
-	u_int16_t inp_fport;		/* foreign port */
-	u_int16_t inp_lport;		/* local port */
+	u_int16_t inp_fport;		/* [t] foreign port */
+	u_int16_t inp_lport;		/* [t] local port */
 	struct	  socket *inp_socket;	/* [I] back pointer to socket */
 	caddr_t	  inp_ppcb;		/* pointer to per-protocol pcb */
 	union {				/* Route (notice increased size). */
@@ -159,7 +159,7 @@ struct inpcb {
 	struct	mbuf *(*inp_upcall)(void *, struct mbuf *,
 		    struct ip *, struct ip6_hdr *, void *, int);
 	void	*inp_upcall_arg;
-	u_int	inp_rtableid;
+	u_int	inp_rtableid;		/* [t] */
 	int	inp_pipex;		/* pipex indication */
 	uint16_t inp_flowid;
 };

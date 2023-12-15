@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.89 2023/12/03 20:36:24 bluhm Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.90 2023/12/15 00:24:56 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 {
 	struct ip6_moptions *mopts = inp->inp_moptions6;
 	struct route_in6 *ro = &inp->inp_route6;
-	struct in6_addr *laddr = &inp->inp_laddr6;
+	const struct in6_addr *laddr = &inp->inp_laddr6;
 	u_int rtableid = inp->inp_rtableid;
 	struct ifnet *ifp = NULL;
 	struct sockaddr	*ip6_source = NULL;
