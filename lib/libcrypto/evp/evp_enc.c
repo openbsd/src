@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.58 2023/12/03 11:18:30 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.59 2023/12/15 13:28:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,6 +244,13 @@ EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
     const unsigned char *key, const unsigned char *iv)
 {
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
+}
+
+int
+EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
+    unsigned int inl)
+{
+	return ctx->cipher->do_cipher(ctx, out, in, inl);
 }
 
 int

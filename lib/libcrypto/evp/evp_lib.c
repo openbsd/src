@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.29 2023/11/18 09:37:15 tb Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.30 2023/12/15 13:28:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,13 +195,6 @@ int
 EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->block_size;
-}
-
-int
-EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
-    unsigned int inl)
-{
-	return ctx->cipher->do_cipher(ctx, out, in, inl);
 }
 
 const EVP_CIPHER *
