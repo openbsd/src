@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.80 2023/12/14 18:32:49 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.81 2023/12/15 01:47:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,7 +339,7 @@ obj_objs_cmp(const void *aobj, const void *b)
 {
 	const unsigned int *nid = b;
 
-	OPENSSL_assert(*nid >= 0 && *nid < NUM_NID);
+	OPENSSL_assert(*nid < NUM_NID);
 
 	return OBJ_cmp(aobj, &nid_objs[*nid]);
 }
@@ -381,7 +381,7 @@ ln_objs_cmp(const void *ln, const void *b)
 {
 	const unsigned int *nid = b;
 
-	OPENSSL_assert(*nid >= 0 && *nid < NUM_NID);
+	OPENSSL_assert(*nid < NUM_NID);
 
 	return strcmp(ln, nid_objs[*nid].ln);
 }
@@ -420,7 +420,7 @@ sn_objs_cmp(const void *sn, const void *b)
 {
 	const unsigned int *nid = b;
 
-	OPENSSL_assert(*nid >= 0 && *nid < NUM_NID);
+	OPENSSL_assert(*nid < NUM_NID);
 
 	return strcmp(sn, nid_objs[*nid].sn);
 }
