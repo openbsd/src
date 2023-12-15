@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.59 2023/12/15 13:28:30 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.60 2023/12/15 13:33:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -246,6 +246,18 @@ EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
 }
 
+/*
+ * EVP_Cipher() is an implementation detail of EVP_Cipher{Update,Final}().
+ * Behavior depends on EVP_CIPH_FLAG_CUSTOM_CIPHER being set on ctx->cipher.
+ *
+ * If the flag is set, do_cipher() operates in update mode if in != NULL and
+ * in final mode if in == NULL. It returns the number of bytes written to out
+ * (which may be 0) or -1 on error.
+ *
+ * If the flag is not set, do_cipher() assumes properly aligned data and that
+ * padding is handled correctly by the caller. Most do_cipher() methods will
+ * silently produce garbage and succeed. Returns 1 on success, 0 on error.
+ */
 int
 EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
     unsigned int inl)
