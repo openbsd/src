@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.21 2023/08/26 02:59:13 tb Exp $ */
+/* $OpenBSD: names.c,v 1.22 2023/12/15 14:22:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,7 +141,6 @@ EVP_cleanup(void)
 	   does that part.  -- Richard Levitte */
 	OBJ_NAME_cleanup(-1);
 
-	EVP_PBE_cleanup();
 	if (obj_cleanup_defer == 2) {
 		obj_cleanup_defer = 0;
 		OBJ_cleanup();
