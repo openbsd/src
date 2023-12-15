@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.39 2023/11/09 15:43:28 kn Exp $
+.\"	$OpenBSD: kdump.1,v 1.40 2023/12/15 15:12:08 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 9 2023 $
+.Dd $Mdocdate: December 15 2023 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -124,6 +124,9 @@ trace violation of
 restrictions
 .It Cm s
 trace signal processing
+.It Cm S
+trace violation of
+.Xr pinsyscalls 2
 .It Cm t
 trace various structures
 .It Cm u
