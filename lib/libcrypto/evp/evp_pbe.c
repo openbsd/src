@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.31 2023/12/15 14:21:14 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.32 2023/12/16 14:04:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -70,48 +70,155 @@
 
 /* Password based encryption (PBE) functions */
 
-typedef struct {
-	int pbe_type;
+struct pbe_config {
 	int pbe_nid;
 	int cipher_nid;
 	int md_nid;
 	EVP_PBE_KEYGEN *keygen;
-} EVP_PBE_CTL;
-
-static const EVP_PBE_CTL builtin_pbe[] = {
-	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD2AndDES_CBC, NID_des_cbc, NID_md2, PKCS5_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD5AndDES_CBC, NID_des_cbc, NID_md5, PKCS5_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbeWithSHA1AndRC2_CBC, NID_rc2_64_cbc, NID_sha1, PKCS5_PBE_keyivgen},
-
-#ifndef OPENSSL_NO_HMAC
-	{EVP_PBE_TYPE_OUTER, NID_id_pbkdf2, -1, -1, PKCS5_v2_PBKDF2_keyivgen},
-#endif
-
-	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And128BitRC4, NID_rc4, NID_sha1, PKCS12_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And40BitRC4, NID_rc4_40, NID_sha1, PKCS12_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And3_Key_TripleDES_CBC, NID_des_ede3_cbc, NID_sha1, PKCS12_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And2_Key_TripleDES_CBC, NID_des_ede_cbc, NID_sha1, PKCS12_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And128BitRC2_CBC, NID_rc2_cbc, NID_sha1, PKCS12_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And40BitRC2_CBC, NID_rc2_40_cbc, NID_sha1, PKCS12_PBE_keyivgen},
-
-#ifndef OPENSSL_NO_HMAC
-	{EVP_PBE_TYPE_OUTER, NID_pbes2, -1, -1, PKCS5_v2_PBE_keyivgen},
-#endif
-	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD2AndRC2_CBC, NID_rc2_64_cbc, NID_md2, PKCS5_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD5AndRC2_CBC, NID_rc2_64_cbc, NID_md5, PKCS5_PBE_keyivgen},
-	{EVP_PBE_TYPE_OUTER, NID_pbeWithSHA1AndDES_CBC, NID_des_cbc, NID_sha1, PKCS5_PBE_keyivgen},
-
-
-	{EVP_PBE_TYPE_PRF, NID_hmacWithSHA1, -1, NID_sha1, 0},
-	{EVP_PBE_TYPE_PRF, NID_hmacWithMD5, -1, NID_md5, 0},
-	{EVP_PBE_TYPE_PRF, NID_hmacWithSHA224, -1, NID_sha224, 0},
-	{EVP_PBE_TYPE_PRF, NID_hmacWithSHA256, -1, NID_sha256, 0},
-	{EVP_PBE_TYPE_PRF, NID_hmacWithSHA384, -1, NID_sha384, 0},
-	{EVP_PBE_TYPE_PRF, NID_hmacWithSHA512, -1, NID_sha512, 0},
-	{EVP_PBE_TYPE_PRF, NID_id_HMACGostR3411_94, -1, NID_id_GostR3411_94, 0},
-	{EVP_PBE_TYPE_PRF, NID_id_tc26_hmac_gost_3411_12_256, -1, NID_id_tc26_gost3411_2012_256, 0},
-	{EVP_PBE_TYPE_PRF, NID_id_tc26_hmac_gost_3411_12_512, -1, NID_id_tc26_gost3411_2012_512, 0},
 };
+
+static const struct pbe_config pbe_outer[] = {
+	{
+		.pbe_nid = NID_pbeWithMD2AndDES_CBC,
+		.cipher_nid = NID_des_cbc,
+		.md_nid = NID_md2,
+		.keygen = PKCS5_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbeWithMD5AndDES_CBC,
+		.cipher_nid = NID_des_cbc,
+		.md_nid = NID_md5,
+		.keygen = PKCS5_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbeWithSHA1AndRC2_CBC,
+		.cipher_nid = NID_rc2_64_cbc,
+		.md_nid = NID_sha1,
+		.keygen = PKCS5_PBE_keyivgen,
+	},
+#ifndef OPENSSL_NO_HMAC
+	{
+		.pbe_nid = NID_id_pbkdf2,
+		.cipher_nid = -1,
+		.md_nid = -1,
+		.keygen = PKCS5_v2_PBKDF2_keyivgen,
+	},
+#endif
+	{
+		.pbe_nid = NID_pbe_WithSHA1And128BitRC4,
+		.cipher_nid = NID_rc4,
+		.md_nid = NID_sha1,
+		.keygen = PKCS12_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbe_WithSHA1And40BitRC4,
+		.cipher_nid = NID_rc4_40,
+		.md_nid = NID_sha1,
+		.keygen = PKCS12_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+		.cipher_nid = NID_des_ede3_cbc,
+		.md_nid = NID_sha1,
+		.keygen = PKCS12_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbe_WithSHA1And2_Key_TripleDES_CBC,
+		.cipher_nid = NID_des_ede_cbc,
+		.md_nid = NID_sha1,
+		.keygen = PKCS12_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbe_WithSHA1And128BitRC2_CBC,
+		.cipher_nid = NID_rc2_cbc,
+		.md_nid = NID_sha1,
+		.keygen = PKCS12_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbe_WithSHA1And40BitRC2_CBC,
+		.cipher_nid = NID_rc2_40_cbc,
+		.md_nid = NID_sha1,
+		.keygen = PKCS12_PBE_keyivgen,
+	},
+#ifndef OPENSSL_NO_HMAC
+	{
+		.pbe_nid = NID_pbes2,
+		.cipher_nid = -1,
+		.md_nid = -1,
+		.keygen = PKCS5_v2_PBE_keyivgen,
+	},
+#endif
+	{
+		.pbe_nid = NID_pbeWithMD2AndRC2_CBC,
+		.cipher_nid = NID_rc2_64_cbc,
+		.md_nid = NID_md2,
+		.keygen = PKCS5_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbeWithMD5AndRC2_CBC,
+		.cipher_nid = NID_rc2_64_cbc,
+		.md_nid = NID_md5,
+		.keygen = PKCS5_PBE_keyivgen,
+	},
+	{
+		.pbe_nid = NID_pbeWithSHA1AndDES_CBC,
+		.cipher_nid = NID_des_cbc,
+		.md_nid = NID_sha1,
+		.keygen = PKCS5_PBE_keyivgen,
+	},
+};
+
+#define N_PBE_OUTER (sizeof(pbe_outer) / sizeof(pbe_outer[0]))
+
+static const struct pbe_config pbe_prf[] = {
+	{
+		.pbe_nid = NID_hmacWithSHA1,
+		.cipher_nid = -1,
+		.md_nid = NID_sha1,
+	},
+	{
+		.pbe_nid = NID_hmacWithMD5,
+		.cipher_nid = -1,
+		.md_nid = NID_md5,
+	},
+	{
+		.pbe_nid = NID_hmacWithSHA224,
+		.cipher_nid = -1,
+		.md_nid = NID_sha224,
+	},
+	{
+		.pbe_nid = NID_hmacWithSHA256,
+		.cipher_nid = -1,
+		.md_nid = NID_sha256,
+	},
+	{
+		.pbe_nid = NID_hmacWithSHA384,
+		.cipher_nid = -1,
+		.md_nid = NID_sha384,
+	},
+	{
+		.pbe_nid = NID_hmacWithSHA512,
+		.cipher_nid = -1,
+		.md_nid = NID_sha512,
+	},
+	{
+		.pbe_nid = NID_id_HMACGostR3411_94,
+		.cipher_nid = -1,
+		.md_nid = NID_id_GostR3411_94,
+	},
+	{
+		.pbe_nid = NID_id_tc26_hmac_gost_3411_12_256,
+		.cipher_nid = -1,
+		.md_nid = NID_id_tc26_gost3411_2012_256,
+	},
+	{
+		.pbe_nid = NID_id_tc26_hmac_gost_3411_12_512,
+		.cipher_nid = -1,
+		.md_nid = NID_id_tc26_gost3411_2012_512,
+	},
+};
+
+#define N_PBE_PRF (sizeof(pbe_prf) / sizeof(pbe_prf[0]))
 
 int
 EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
@@ -166,59 +273,48 @@ EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	return 1;
 }
 
-static int pbe2_cmp_BSEARCH_CMP_FN(const void *, const void *);
-static int pbe2_cmp(EVP_PBE_CTL const *, EVP_PBE_CTL const *);
-static EVP_PBE_CTL *OBJ_bsearch_pbe2(EVP_PBE_CTL *key, EVP_PBE_CTL const *base, int num);
-
-static int
-pbe2_cmp(const EVP_PBE_CTL *pbe1, const EVP_PBE_CTL *pbe2)
-{
-	int ret = pbe1->pbe_type - pbe2->pbe_type;
-
-	if (ret)
-		return ret;
-	else
-		return pbe1->pbe_nid - pbe2->pbe_nid;
-}
-
-
-static int
-pbe2_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
-{
-	EVP_PBE_CTL const *a = a_;
-	EVP_PBE_CTL const *b = b_;
-	return pbe2_cmp(a, b);
-}
-
-static EVP_PBE_CTL *
-OBJ_bsearch_pbe2(EVP_PBE_CTL *key, EVP_PBE_CTL const *base, int num)
-{
-	return (EVP_PBE_CTL *)OBJ_bsearch_(key, base, num, sizeof(EVP_PBE_CTL),
-	    pbe2_cmp_BSEARCH_CMP_FN);
-}
-
 int
-EVP_PBE_find(int type, int pbe_nid,
-    int *pcnid, int *pmnid, EVP_PBE_KEYGEN **pkeygen)
+EVP_PBE_find(int type, int pbe_nid, int *out_cipher_nid, int *out_md_nid,
+    EVP_PBE_KEYGEN **out_keygen)
 {
-	EVP_PBE_CTL *pbetmp = NULL, pbelu;
+	const struct pbe_config *pbe = NULL;
+	size_t i;
+
+	if (out_cipher_nid != NULL)
+		*out_cipher_nid = NID_undef;
+	if (out_md_nid != NULL)
+		*out_md_nid = NID_undef;
+	if (out_keygen != NULL)
+		*out_keygen = NULL;
 
 	if (pbe_nid == NID_undef)
 		return 0;
 
-	pbelu.pbe_type = type;
-	pbelu.pbe_nid = pbe_nid;
-
-	pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe,
-	    sizeof(builtin_pbe)/sizeof(EVP_PBE_CTL));
-	if (pbetmp == NULL)
+	if (type == EVP_PBE_TYPE_OUTER) {
+		for (i = 0; i < N_PBE_OUTER; i++) {
+			if (pbe_nid == pbe_outer[i].pbe_nid) {
+				pbe = &pbe_outer[i];
+				break;
+			}
+		}
+	} else if (type == EVP_PBE_TYPE_PRF) {
+		for (i = 0; i < N_PBE_PRF; i++) {
+			if (pbe_nid == pbe_prf[i].pbe_nid) {
+				pbe = &pbe_prf[i];
+				break;
+			}
+		}
+	}
+	if (pbe == NULL)
 		return 0;
-	if (pcnid)
-		*pcnid = pbetmp->cipher_nid;
-	if (pmnid)
-		*pmnid = pbetmp->md_nid;
-	if (pkeygen)
-		*pkeygen = pbetmp->keygen;
+
+	if (out_cipher_nid != NULL)
+		*out_cipher_nid = pbe->cipher_nid;
+	if (out_md_nid != NULL)
+		*out_md_nid = pbe->md_nid;
+	if (out_keygen != NULL)
+		*out_keygen = pbe->keygen;
+
 	return 1;
 }
 
