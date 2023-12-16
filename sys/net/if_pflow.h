@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.22 2023/12/12 00:03:31 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.23 2023/12/16 22:16:02 mvs Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -174,7 +174,6 @@ struct pflow_ipfix_flow6 {
 /*
  * Locks used to protect struct members and global data
  *       I       immutable after creation
- *       N       net lock
  *       m       this pflow_softc' `sc_mtx'
  *       p       this pflow_softc' `sc_lock'
  */
@@ -183,7 +182,7 @@ struct pflow_softc {
 	struct mutex		 sc_mtx;
 	struct rwlock		 sc_lock;
 
-	int			 sc_dying;	/* [N] */
+	int			 sc_dying;	/* [p] */
 	struct ifnet		 sc_if;
 
 	unsigned int		 sc_count;	/* [m] */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.105 2023/12/12 12:38:52 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.106 2023/12/16 22:16:02 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -297,9 +297,9 @@ pflow_clone_destroy(struct ifnet *ifp)
 
 	error = 0;
 
-	NET_LOCK();
+	rw_enter_write(&sc->sc_lock);
 	sc->sc_dying = 1;
-	NET_UNLOCK();
+	rw_exit_write(&sc->sc_lock);
 
 	KERNEL_ASSERT_LOCKED();
 	SMR_SLIST_REMOVE_LOCKED(&pflowif_list, sc, pflow_softc, sc_next);
@@ -483,6 +483,7 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 		sc->so = NULL;
 	}
 
+	NET_LOCK();
 	mtx_enter(&sc->sc_mtx);
 
 	/* error check is above */
@@ -504,6 +505,7 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 	}
 
 	mtx_leave(&sc->sc_mtx);
+	NET_UNLOCK();
 
 	return (0);
 }
@@ -515,18 +517,33 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct pflow_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct pflowreq		 pflowr;
-	int			 error;
-
-	if (sc->sc_dying)
-		return ENXIO;
+	int			 error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFFLAGS:
-		/* XXXSMP: enforce lock order */
-		NET_UNLOCK();
-		rw_enter_read(&sc->sc_lock);
+	case SIOCSIFMTU:
+	case SIOCGETPFLOW:
+	case SIOCSETPFLOW:
+		break;
+	default:
+		return (ENOTTY);
+	}
+
+	/* XXXSMP: enforce lock order */
+	NET_UNLOCK();
+	rw_enter_write(&sc->sc_lock);
+
+	if (sc->sc_dying) {
+		error = ENXIO;
+		goto out;
+	}
+
+	switch (cmd) {
+	case SIOCSIFADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCSIFFLAGS:
 		NET_LOCK();
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
@@ -537,60 +554,53 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			mtx_leave(&sc->sc_mtx);
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
-		rw_exit_read(&sc->sc_lock);
+		NET_UNLOCK();
 		break;
+
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < PFLOW_MINMTU)
-			return (EINVAL);
+		if (ifr->ifr_mtu < PFLOW_MINMTU) {
+			error = EINVAL;
+			goto out;
+		}
 		if (ifr->ifr_mtu > MCLBYTES)
 			ifr->ifr_mtu = MCLBYTES;
+		NET_LOCK();
 		if (ifr->ifr_mtu < ifp->if_mtu)
 			pflow_flush(sc);
 		mtx_enter(&sc->sc_mtx);
 		pflow_setmtu(sc, ifr->ifr_mtu);
 		mtx_leave(&sc->sc_mtx);
+		NET_UNLOCK();
 		break;
 
 	case SIOCGETPFLOW:
 		bzero(&pflowr, sizeof(pflowr));
 
-		/* XXXSMP: enforce lock order */
-		NET_UNLOCK();
-		rw_enter_read(&sc->sc_lock);
-		NET_LOCK();
 		if (sc->sc_flowsrc != NULL)
 			memcpy(&pflowr.flowsrc, sc->sc_flowsrc,
 			    sc->sc_flowsrc->sa_len);
 		if (sc->sc_flowdst != NULL)
 			memcpy(&pflowr.flowdst, sc->sc_flowdst,
 			    sc->sc_flowdst->sa_len);
-		rw_exit_read(&sc->sc_lock);
 		mtx_enter(&sc->sc_mtx);
 		pflowr.version = sc->sc_version;
 		mtx_leave(&sc->sc_mtx);
 
-		if ((error = copyout(&pflowr, ifr->ifr_data,
-		    sizeof(pflowr))))
-			return (error);
+		if ((error = copyout(&pflowr, ifr->ifr_data, sizeof(pflowr))))
+			goto out;
 		break;
 
 	case SIOCSETPFLOW:
 		if ((error = suser(p)) != 0)
-			return (error);
-		if ((error = copyin(ifr->ifr_data, &pflowr,
-		    sizeof(pflowr))))
-			return (error);
+			goto out;
+		if ((error = copyin(ifr->ifr_data, &pflowr, sizeof(pflowr))))
+			goto out;
 
-		/* XXXSMP breaks atomicity */
-		NET_UNLOCK();
-		rw_enter_write(&sc->sc_lock);
 		error = pflow_set(sc, &pflowr);
-		NET_LOCK();
-		if (error != 0) {
-			rw_exit_write(&sc->sc_lock);
-			return (error);
-		}
+		if (error != 0)
+			goto out;
 
+		NET_LOCK();
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			mtx_enter(&sc->sc_mtx);
@@ -599,14 +609,16 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			mtx_leave(&sc->sc_mtx);
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
-		rw_exit_write(&sc->sc_lock);
+		NET_UNLOCK();
 
 		break;
-
-	default:
-		return (ENOTTY);
 	}
-	return (0);
+
+out:
+	rw_exit_write(&sc->sc_lock);
+	NET_LOCK();
+
+	return (error);
 }
 
 int
