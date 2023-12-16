@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_STRING_TABLE_add.3,v 1.9 2021/12/15 20:07:51 schwarze Exp $
+.\" $OpenBSD: ASN1_STRING_TABLE_add.3,v 1.10 2023/12/16 10:22:56 tb Exp $
 .\" checked up to:
 .\" OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
 .\"
@@ -16,38 +16,26 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2021 $
-.Dt ASN1_STRING_TABLE_ADD 3
+.Dd $Mdocdate: December 16 2023 $
+.Dt ASN1_STRING_TABLE_GET 3
 .Os
 .Sh NAME
-.Nm ASN1_STRING_TABLE_add ,
-.Nm ASN1_STRING_TABLE_get ,
-.Nm ASN1_STRING_TABLE_cleanup
-.Nd maintain the global ASN.1 string table
+.Nm ASN1_STRING_TABLE_get
+.Nd retrieve an entry from the global ASN.1 string table
 .Sh SYNOPSIS
 .In openssl/asn1.h
-.Ft int
-.Fo ASN1_STRING_TABLE_add
-.Fa "int nid"
-.Fa "long minsize"
-.Fa "long maxsize"
-.Fa "unsigned long mask"
-.Fa "unsigned long flags"
-.Fc
 .Ft ASN1_STRING_TABLE *
 .Fo ASN1_STRING_TABLE_get
 .Fa "int nid"
 .Fc
-.Ft void
-.Fn ASN1_STRING_TABLE_cleanup void
 .Sh DESCRIPTION
 The ASN.1 string table is a unique global object.
 Each entry is of the type
 .Vt ASN1_STRING_TABLE
 and contains information about one NID object.
-Some entries are predefined according to RFC 3280 appendix A.1.
+The entries are predefined according to RFC 5280 appendix A.1.
 .Pp
-By default, the upper bounds for the number of characters in various kinds of
+The upper bounds for the number of characters in various kinds of
 .Vt ASN1_STRING
 objects are:
 .Pp
@@ -68,58 +56,16 @@ objects are:
 .El
 .Pp
 The function
-.Fn ASN1_STRING_TABLE_add
-changes the existing entry for
-.Fa nid
-or, if there is none, allocates a new entry.
-The fields of the entry are overwritten with the function arguments
-of the same name.
-If
-.Fa minsize
-or
-.Fa maxsize
-is negative or
-.Fa mask
-is 0, that argument is ignored and the respective field remains unchanged,
-or for a new entry, it is set to \-1, \-1, 0, or
-.Dv STABLE_FLAGS_MALLOC ,
-respectively.
-.Pp
-The bits set in the
-.Fa flags
-argument are OR'ed into the existing field rather than overwriting it.
-The only useful flag is
-.Dv STABLE_NO_MASK .
-If it is set,
-.Xr ASN1_STRING_set_by_NID 3
-skips applying the global mask that can be set with
-.Xr ASN1_STRING_set_default_mask 3 .
-Otherwise, the table entry only accepts types
-permitted by both the global mask and the
-.Fa mask
-argument.
-Setting
-.Dv STABLE_FLAGS_MALLOC
-or any other bit in the
-.Fa mask
-argument has no effect.
-.Pp
-The function
 .Fn ASN1_STRING_TABLE_get
 retrieves the entry for
 .Fa nid .
-.Pp
-The function
-.Fn ASN1_STRING_TABLE_cleanup
-removes and frees all entries except the predefined ones
-and restores the predefined ones to their default state.
+If the
+.Dv STABLE_NO_MASK
+flag is set,
+.Xr ASN1_STRING_set_by_NID 3
+skips applying the global mask that can be set with
+.Xr ASN1_STRING_set_default_mask 3 .
 .Sh RETURN VALUES
-The
-.Fn ASN1_STRING_TABLE_add
-function returns 1 if successful; otherwise 0 is returned
-and an error code can be retrieved with
-.Xr ERR_get_error 3 .
-.Pp
 .Fn ASN1_STRING_TABLE_get
 returns a valid
 .Vt ASN1_STRING_TABLE
@@ -132,10 +78,7 @@ if nothing is found.
 .Xr OBJ_create 3 ,
 .Xr OBJ_nid2obj 3
 .Sh HISTORY
-.Fn ASN1_STRING_TABLE_add ,
-.Fn ASN1_STRING_TABLE_get ,
-and
-.Fn ASN1_STRING_TABLE_cleanup
+.Fn ASN1_STRING_TABLE_get
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
 .Sh BUGS
