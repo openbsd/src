@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.27 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.28 2023/12/16 12:40:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,20 +65,13 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 
-static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
-
-static ASN1_STRING_TABLE *stable_get(int nid);
-static void st_free(ASN1_STRING_TABLE *tbl);
-static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
-    const ASN1_STRING_TABLE * const *b);
-
-
 /*
+ * XXX - unprotected global state
+ *
  * This is the global mask for the mbstring functions: this is used to
  * mask out certain types (such as BMPString and UTF8String) because
  * certain software (e.g. Netscape) has problems with them.
  */
-
 static unsigned long global_mask = B_ASN1_UTF8STRING;
 
 void
@@ -171,12 +164,7 @@ ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in, int inlen,
 }
 LCRYPTO_ALIAS(ASN1_STRING_set_by_NID);
 
-/*
- * Now the tables and helper functions for the string table:
- */
-
-/* size limits: this stuff is taken straight from RFC3280 */
-
+/* From RFC 5280, Appendix A.1. */
 #define ub_name				32768
 #define ub_common_name			64
 #define ub_locality_name		128
@@ -186,9 +174,6 @@ LCRYPTO_ALIAS(ASN1_STRING_set_by_NID);
 #define ub_title			64
 #define ub_email_address		128
 #define ub_serial_number		64
-
-
-/* This table must be kept in NID order */
 
 static const ASN1_STRING_TABLE tbl_standard[] = {
 	{
@@ -326,138 +311,36 @@ static const ASN1_STRING_TABLE tbl_standard[] = {
 	},
 };
 
-static int
-sk_table_cmp(const ASN1_STRING_TABLE * const *a,
-    const ASN1_STRING_TABLE * const *b)
-{
-	return (*a)->nid - (*b)->nid;
-}
+#define N_STRING_TABLE_ENTRIES (sizeof(tbl_standard) / sizeof(tbl_standard[0]))
 
-static int table_cmp_BSEARCH_CMP_FN(const void *, const void *);
-static int table_cmp(ASN1_STRING_TABLE const *, ASN1_STRING_TABLE const *);
-static ASN1_STRING_TABLE *OBJ_bsearch_table(ASN1_STRING_TABLE *key, ASN1_STRING_TABLE const *base, int num);
-
-static int
-table_cmp(const ASN1_STRING_TABLE *a, const ASN1_STRING_TABLE *b)
-{
-	return a->nid - b->nid;
-}
-
-
-static int
-table_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
-{
-	ASN1_STRING_TABLE const *a = a_;
-	ASN1_STRING_TABLE const *b = b_;
-	return table_cmp(a, b);
-}
-
-static ASN1_STRING_TABLE *
-OBJ_bsearch_table(ASN1_STRING_TABLE *key, ASN1_STRING_TABLE const *base, int num)
-{
-	return (ASN1_STRING_TABLE *)OBJ_bsearch_(key, base, num, sizeof(ASN1_STRING_TABLE),
-	    table_cmp_BSEARCH_CMP_FN);
-}
-
+/* XXX - const */
 ASN1_STRING_TABLE *
 ASN1_STRING_TABLE_get(int nid)
 {
-	int idx;
-	ASN1_STRING_TABLE fnd;
+	size_t i;
 
-	fnd.nid = nid;
-	if (stable != NULL) {
-		idx = sk_ASN1_STRING_TABLE_find(stable, &fnd);
-		if (idx >= 0)
-			return sk_ASN1_STRING_TABLE_value(stable, idx);
+	for (i = 0; i < N_STRING_TABLE_ENTRIES; i++) {
+		const ASN1_STRING_TABLE *entry = &tbl_standard[i];
+		if (entry->nid == nid)
+			return (ASN1_STRING_TABLE *)entry;
 	}
-	return OBJ_bsearch_table(&fnd, tbl_standard,
-	    sizeof(tbl_standard) / sizeof(tbl_standard[0]));
+
+	return NULL;
 }
 LCRYPTO_ALIAS(ASN1_STRING_TABLE_get);
-
-/*
- * Return a string table pointer which can be modified: either directly
- * from table or a copy of an internal value added to the table.
- */
-
-static ASN1_STRING_TABLE *
-stable_get(int nid)
-{
-	ASN1_STRING_TABLE *tmp, *rv;
-
-	/* Always need a string table so allocate one if NULL */
-	if (stable == NULL) {
-		stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
-		if (stable == NULL)
-			return NULL;
-	}
-	tmp = ASN1_STRING_TABLE_get(nid);
-	if (tmp != NULL && (tmp->flags & STABLE_FLAGS_MALLOC) != 0)
-		return tmp;
-
-	if ((rv = calloc(1, sizeof(*rv))) == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	if (!sk_ASN1_STRING_TABLE_push(stable, rv)) {
-		free(rv);
-		return NULL;
-	}
-	if (tmp != NULL) {
-		rv->nid = tmp->nid;
-		rv->minsize = tmp->minsize;
-		rv->maxsize = tmp->maxsize;
-		rv->mask = tmp->mask;
-		rv->flags = tmp->flags | STABLE_FLAGS_MALLOC;
-	} else {
-		rv->nid = nid;
-		rv->minsize = -1;
-		rv->maxsize = -1;
-		rv->flags = STABLE_FLAGS_MALLOC;
-	}
-	return rv;
-}
 
 int
 ASN1_STRING_TABLE_add(int nid, long minsize, long maxsize, unsigned long mask,
     unsigned long flags)
 {
-	ASN1_STRING_TABLE *tmp;
-
-	if ((tmp = stable_get(nid)) == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	if (minsize >= 0)
-		tmp->minsize = minsize;
-	if (maxsize >= 0)
-		tmp->maxsize = maxsize;
-	if (mask != 0)
-		tmp->mask = mask;
-	if (flags != 0)
-		tmp->flags = flags | STABLE_FLAGS_MALLOC;
-
-	return 1;
+	ASN1error(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(ASN1_STRING_TABLE_add);
 
 void
 ASN1_STRING_TABLE_cleanup(void)
 {
-	STACK_OF(ASN1_STRING_TABLE) *tmp;
-
-	tmp = stable;
-	if (tmp == NULL)
-		return;
-	stable = NULL;
-	sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
+	ASN1error(ERR_R_DISABLED);
 }
 LCRYPTO_ALIAS(ASN1_STRING_TABLE_cleanup);
-
-static void
-st_free(ASN1_STRING_TABLE *tbl)
-{
-	if (tbl->flags & STABLE_FLAGS_MALLOC)
-		free(tbl);
-}
