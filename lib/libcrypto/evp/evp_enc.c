@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.62 2023/12/16 15:22:40 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.63 2023/12/16 17:40:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -296,8 +296,8 @@ int
 EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
-	int block_size = ctx->cipher->block_size;
-	int block_mask = ctx->block_mask;
+	const int block_size = ctx->cipher->block_size;
+	const int block_mask = ctx->block_mask;
 	int buf_offset = ctx->buf_len;
 	int len = 0, total_len = 0;
 
