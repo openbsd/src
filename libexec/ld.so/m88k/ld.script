@@ -5,7 +5,7 @@ PHDRS
   btext   PT_LOAD FLAGS (0x08000005);
   data    PT_LOAD;
   random  PT_OPENBSD_RANDOMIZE;
-  scalls PT_OPENBSD_SYSCALLS;
+  syscalls PT_OPENBSD_SYSCALLS;
   relro   PT_GNU_RELRO;
   dynamic PT_DYNAMIC;
   note    PT_NOTE;
