@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.61 2023/12/16 09:46:06 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.62 2023/12/16 15:22:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -296,7 +296,9 @@ int
 EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
-	int i, j, bl;
+	int block_size = ctx->cipher->block_size;
+	int block_mask = ctx->block_mask;
+	int buf_offset = ctx->buf_len;
 	int len = 0, total_len = 0;
 
 	*outl = 0;
@@ -310,49 +312,48 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
 		return evp_cipher(ctx, out, outl, in, inl);
 
-	if (ctx->buf_len == 0 && (inl & ctx->block_mask) == 0)
+	if (buf_offset == 0 && (inl & block_mask) == 0)
 		return evp_cipher(ctx, out, outl, in, inl);
 
-	i = ctx->buf_len;
-	bl = ctx->cipher->block_size;
-	if ((size_t)bl > sizeof(ctx->buf)) {
+	/* XXX - check that block_size > buf_offset. */
+	if (block_size > sizeof(ctx->buf)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
-	if (i != 0) {
-		if (bl - i > inl) {
-			memcpy(&(ctx->buf[i]), in, inl);
+
+	if (buf_offset != 0) {
+		int buf_avail;
+
+		if ((buf_avail = block_size - buf_offset) > inl) {
+			memcpy(&ctx->buf[buf_offset], in, inl);
 			ctx->buf_len += inl;
 			return 1;
-		} else {
-			j = bl - i;
-
-			/*
-			 * Once we've processed the first j bytes from in, the
-			 * amount of data left that is a multiple of the block
-			 * length is (inl - j) & ~(bl - 1).  Ensure this plus
-			 * the block processed from ctx-buf doesn't overflow.
-			 */
-			if (((inl - j) & ~(bl - 1)) > INT_MAX - bl) {
-				EVPerror(EVP_R_TOO_LARGE);
-				return 0;
-			}
-			memcpy(&(ctx->buf[i]), in, j);
-
-			len = 0;
-			if (!evp_cipher(ctx, out, &len, ctx->buf, bl))
-				return 0;
-			total_len = len;
-
-			inl -= j;
-			in += j;
-			out += len;
 		}
+
+		/*
+		 * Once the first buf_avail bytes from in are processed, the
+		 * amount of data left that is a multiple of the block length is
+		 * (inl - buf_avail) & ~block_mask.  Ensure that this plus the
+		 * block processed from ctx->buf doesn't overflow.
+		 */
+		if (((inl - buf_avail) & ~block_mask) > INT_MAX - block_size) {
+			EVPerror(EVP_R_TOO_LARGE);
+			return 0;
+		}
+		memcpy(&ctx->buf[buf_offset], in, buf_avail);
+
+		len = 0;
+		if (!evp_cipher(ctx, out, &len, ctx->buf, block_size))
+			return 0;
+		total_len = len;
+
+		inl -= buf_avail;
+		in += buf_avail;
+		out += len;
 	}
 
-	i = inl&(bl - 1);
-	inl -= i;
-	if (inl > 0) {
+	buf_offset = inl & block_mask;
+	if ((inl -= buf_offset) > 0) {
 		if (INT_MAX - inl < total_len)
 			return 0;
 		len = 0;
@@ -363,9 +364,9 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		total_len += len;
 	}
 
-	if (i != 0)
-		memcpy(ctx->buf, &(in[inl]), i);
-	ctx->buf_len = i;
+	if (buf_offset != 0)
+		memcpy(ctx->buf, &in[inl], buf_offset);
+	ctx->buf_len = buf_offset;
 
 	*outl = total_len;
 
