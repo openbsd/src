@@ -1761,7 +1761,7 @@
 ./usr/share/man/man3/ASN1_NULL_new.3
 ./usr/share/man/man3/ASN1_OBJECT_new.3
 ./usr/share/man/man3/ASN1_PRINTABLE_type.3
-./usr/share/man/man3/ASN1_STRING_TABLE_add.3
+./usr/share/man/man3/ASN1_STRING_TABLE_get.3
 ./usr/share/man/man3/ASN1_STRING_length.3
 ./usr/share/man/man3/ASN1_STRING_new.3
 ./usr/share/man/man3/ASN1_STRING_print_ex.3
