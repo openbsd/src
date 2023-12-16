@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.32 2023/12/16 14:04:59 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.33 2023/12/16 14:09:33 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -221,6 +221,51 @@ static const struct pbe_config pbe_prf[] = {
 #define N_PBE_PRF (sizeof(pbe_prf) / sizeof(pbe_prf[0]))
 
 int
+EVP_PBE_find(int type, int pbe_nid, int *out_cipher_nid, int *out_md_nid,
+    EVP_PBE_KEYGEN **out_keygen)
+{
+	const struct pbe_config *pbe = NULL;
+	size_t i;
+
+	if (out_cipher_nid != NULL)
+		*out_cipher_nid = NID_undef;
+	if (out_md_nid != NULL)
+		*out_md_nid = NID_undef;
+	if (out_keygen != NULL)
+		*out_keygen = NULL;
+
+	if (pbe_nid == NID_undef)
+		return 0;
+
+	if (type == EVP_PBE_TYPE_OUTER) {
+		for (i = 0; i < N_PBE_OUTER; i++) {
+			if (pbe_nid == pbe_outer[i].pbe_nid) {
+				pbe = &pbe_outer[i];
+				break;
+			}
+		}
+	} else if (type == EVP_PBE_TYPE_PRF) {
+		for (i = 0; i < N_PBE_PRF; i++) {
+			if (pbe_nid == pbe_prf[i].pbe_nid) {
+				pbe = &pbe_prf[i];
+				break;
+			}
+		}
+	}
+	if (pbe == NULL)
+		return 0;
+
+	if (out_cipher_nid != NULL)
+		*out_cipher_nid = pbe->cipher_nid;
+	if (out_md_nid != NULL)
+		*out_md_nid = pbe->md_nid;
+	if (out_keygen != NULL)
+		*out_keygen = pbe->keygen;
+
+	return 1;
+}
+
+int
 EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
 {
@@ -270,51 +315,6 @@ EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 		EVPerror(EVP_R_KEYGEN_FAILURE);
 		return 0;
 	}
-	return 1;
-}
-
-int
-EVP_PBE_find(int type, int pbe_nid, int *out_cipher_nid, int *out_md_nid,
-    EVP_PBE_KEYGEN **out_keygen)
-{
-	const struct pbe_config *pbe = NULL;
-	size_t i;
-
-	if (out_cipher_nid != NULL)
-		*out_cipher_nid = NID_undef;
-	if (out_md_nid != NULL)
-		*out_md_nid = NID_undef;
-	if (out_keygen != NULL)
-		*out_keygen = NULL;
-
-	if (pbe_nid == NID_undef)
-		return 0;
-
-	if (type == EVP_PBE_TYPE_OUTER) {
-		for (i = 0; i < N_PBE_OUTER; i++) {
-			if (pbe_nid == pbe_outer[i].pbe_nid) {
-				pbe = &pbe_outer[i];
-				break;
-			}
-		}
-	} else if (type == EVP_PBE_TYPE_PRF) {
-		for (i = 0; i < N_PBE_PRF; i++) {
-			if (pbe_nid == pbe_prf[i].pbe_nid) {
-				pbe = &pbe_prf[i];
-				break;
-			}
-		}
-	}
-	if (pbe == NULL)
-		return 0;
-
-	if (out_cipher_nid != NULL)
-		*out_cipher_nid = pbe->cipher_nid;
-	if (out_md_nid != NULL)
-		*out_md_nid = pbe->md_nid;
-	if (out_keygen != NULL)
-		*out_keygen = pbe->keygen;
-
 	return 1;
 }
 
