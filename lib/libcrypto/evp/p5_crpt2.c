@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.27 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.28 2023/12/16 13:23:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -270,7 +270,7 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	else
 		prf_nid = NID_hmacWithSHA1;
 
-	if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, prf_nid, NULL, &hmac_md_nid, 0)) {
+	if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, prf_nid, NULL, &hmac_md_nid, NULL)) {
 		EVPerror(EVP_R_UNSUPPORTED_PRF);
 		goto err;
 	}
