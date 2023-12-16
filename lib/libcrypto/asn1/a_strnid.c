@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.28 2023/12/16 12:40:02 tb Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.29 2023/12/16 12:56:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -172,7 +172,7 @@ LCRYPTO_ALIAS(ASN1_STRING_set_by_NID);
 #define ub_organization_name		64
 #define ub_organization_unit_name	64
 #define ub_title			64
-#define ub_email_address		128
+#define ub_email_address		128 /* XXX - bumped to 255 in RFC 5280 */
 #define ub_serial_number		64
 
 static const ASN1_STRING_TABLE tbl_standard[] = {

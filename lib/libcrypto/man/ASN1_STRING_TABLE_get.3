@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_STRING_TABLE_get.3,v 1.1 2023/12/16 10:26:10 tb Exp $
+.\" $OpenBSD: ASN1_STRING_TABLE_get.3,v 1.2 2023/12/16 12:56:20 tb Exp $
 .\" checked up to:
 .\" OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
 .\"
@@ -83,3 +83,8 @@ first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
 .Sh BUGS
 Most aspects of the semantics considerably differ from OpenSSL.
+.Pp
+.Dv ub_email_address ,
+which should really be called
+.Dv ub_emailaddress_length ,
+was changed in RFC 5280 from 128 to 255 to match PKCS#9 (RFC 2985).
