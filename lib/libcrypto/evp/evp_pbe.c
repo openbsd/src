@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.33 2023/12/16 14:09:33 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.34 2023/12/18 13:12:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -269,43 +269,35 @@ int
 EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
 {
-	const EVP_CIPHER *cipher;
-	const EVP_MD *md;
-	int cipher_nid, md_nid;
+	const EVP_CIPHER *cipher = NULL;
+	const EVP_MD *md = NULL;
+	int pbe_nid, cipher_nid, md_nid;
 	EVP_PBE_KEYGEN *keygen;
 
-	if (!EVP_PBE_find(EVP_PBE_TYPE_OUTER, OBJ_obj2nid(pbe_obj),
-	    &cipher_nid, &md_nid, &keygen)) {
-		char obj_tmp[80];
+	if ((pbe_nid = OBJ_obj2nid(pbe_obj)) == NID_undef) {
 		EVPerror(EVP_R_UNKNOWN_PBE_ALGORITHM);
-		if (!pbe_obj)
-			strlcpy(obj_tmp, "NULL", sizeof obj_tmp);
-		else
-			i2t_ASN1_OBJECT(obj_tmp, sizeof obj_tmp, pbe_obj);
-		ERR_asprintf_error_data("TYPE=%s", obj_tmp);
+		return 0;
+	}
+	if (!EVP_PBE_find(EVP_PBE_TYPE_OUTER, pbe_nid, &cipher_nid, &md_nid,
+	    &keygen)) {
+		EVPerror(EVP_R_UNKNOWN_PBE_ALGORITHM);
+		ERR_asprintf_error_data("NID=%d", pbe_nid);
 		return 0;
 	}
 
-	if (!pass)
+	if (pass == NULL)
 		passlen = 0;
-	else if (passlen == -1)
+	if (passlen == -1)
 		passlen = strlen(pass);
 
-	if (cipher_nid == -1)
-		cipher = NULL;
-	else {
-		cipher = EVP_get_cipherbynid(cipher_nid);
-		if (!cipher) {
+	if (cipher_nid != -1) {
+		if ((cipher = EVP_get_cipherbynid(cipher_nid)) == NULL) {
 			EVPerror(EVP_R_UNKNOWN_CIPHER);
 			return 0;
 		}
 	}
-
-	if (md_nid == -1)
-		md = NULL;
-	else {
-		md = EVP_get_digestbynid(md_nid);
-		if (!md) {
+	if (md_nid != -1) {
+		if ((md = EVP_get_digestbynid(md_nid)) == NULL) {
 			EVPerror(EVP_R_UNKNOWN_DIGEST);
 			return 0;
 		}
@@ -315,6 +307,7 @@ EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 		EVPerror(EVP_R_KEYGEN_FAILURE);
 		return 0;
 	}
+
 	return 1;
 }
 
