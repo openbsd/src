@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.144 2023/12/15 00:24:56 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.145 2023/12/18 13:11:20 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -82,6 +82,38 @@
  *	t	inpt_mtx		pcb table mutex
  *	y	inpt_notify		pcb table rwlock for notify
  *	p	inpcb_mtx		pcb mutex
+ */
+
+/*
+ * The pcb table mutex guarantees that all inpcb are consistent and
+ * that bind(2) and connect(2) create unique combinations of
+ * laddr/faddr/lport/fport/rtalbleid.  This mutex is used to protect
+ * both address consistency and inpcb lookup during protocol input.
+ * All writes to inp_[lf]addr take table mutex.  A per socket lock is
+ * needed, so that socket layer input have a consistent view at these
+ * values.
+ *
+ * In soconnect() and sosend() pcb mutex cannot be used.  They eventually
+ * can call IP output which takes pf lock which is a sleeping lock.
+ * Also connect(2) does a route lookup for source selection.  There
+ * route resolve happens, which creates a route, which sends a route
+ * message, which needs route lock, which is a rw-lock.
+ *
+ * On the other hand a mutex should be used in protocol input.  It
+ * does not make sense to do a process switch per packet.  Better spin
+ * until the packet can be processed.
+ *
+ * So there are three locks.  Table mutex is for writing inp_[lf]addr/port
+ * and lookup, socket rw-lock to separate sockets in system calls, and
+ * pcb mutex to protect socket receive buffer.  Changing inp_[lf]addr/port
+ * takes both per socket rw-lock and global table mutex.  Protocol
+ * input only reads inp_[lf]addr/port during lookup and is safe.  System
+ * call only reads when holding socket rw-lock and is safe.  The socket
+ * layer needs pcb mutex only in soreceive().
+ *
+ * Function pru_lock() grabs the pcb mutex and its existence indicates
+ * that a protocol is MP safe.  Otherwise the exclusive net lock is
+ * used.
  */
 
 struct pf_state_key;

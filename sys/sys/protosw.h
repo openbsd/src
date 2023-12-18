@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.62 2023/05/18 09:59:44 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.63 2023/12/18 13:11:20 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -284,13 +284,15 @@ pru_detach(struct socket *so)
 static inline void
 pru_lock(struct socket *so)
 {
-	(*so->so_proto->pr_usrreqs->pru_lock)(so);
+	if (so->so_proto->pr_usrreqs->pru_lock)
+		(*so->so_proto->pr_usrreqs->pru_lock)(so);
 }
 
 static inline void
 pru_unlock(struct socket *so)
 {
-	(*so->so_proto->pr_usrreqs->pru_unlock)(so);
+	if (so->so_proto->pr_usrreqs->pru_unlock)
+		(*so->so_proto->pr_usrreqs->pru_unlock)(so);
 }
 
 static inline int

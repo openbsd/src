@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.309 2023/08/08 22:07:25 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.310 2023/12/18 13:11:20 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -832,8 +832,10 @@ bad:
 		*mp = NULL;
 
 	solock_shared(so);
+	pru_lock(so);
 restart:
 	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0) {
+		pru_unlock(so);
 		sounlock_shared(so);
 		return (error);
 	}
@@ -900,11 +902,13 @@ restart:
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 		sbunlock(so, &so->so_rcv);
+		pru_unlock(so);
 		error = sbwait(so, &so->so_rcv);
 		if (error) {
 			sounlock_shared(so);
 			return (error);
 		}
+		pru_lock(so);
 		goto restart;
 	}
 dontblock:
@@ -971,11 +975,13 @@ dontblock:
 			sbsync(&so->so_rcv, nextrecord);
 			if (controlp) {
 				if (pr->pr_domain->dom_externalize) {
+					pru_unlock(so);
 					sounlock_shared(so);
 					error =
 					    (*pr->pr_domain->dom_externalize)
 					    (cm, controllen, flags);
 					solock_shared(so);
+					pru_lock(so);
 				}
 				*controlp = cm;
 			} else {
@@ -1049,9 +1055,11 @@ dontblock:
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive uiomove");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			resid = uio->uio_resid;
+			pru_unlock(so);
 			sounlock_shared(so);
 			uio_error = uiomove(mtod(m, caddr_t) + moff, len, uio);
 			solock_shared(so);
+			pru_lock(so);
 			if (uio_error)
 				uio->uio_resid = resid - len;
 		} else
@@ -1136,6 +1144,7 @@ dontblock:
 			error = sbwait(so, &so->so_rcv);
 			if (error) {
 				sbunlock(so, &so->so_rcv);
+				pru_unlock(so);
 				sounlock_shared(so);
 				return (0);
 			}
@@ -1182,6 +1191,7 @@ dontblock:
 		*flagsp |= flags;
 release:
 	sbunlock(so, &so->so_rcv);
+	pru_unlock(so);
 	sounlock_shared(so);
 	return (error);
 }
