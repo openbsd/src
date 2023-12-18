@@ -9,25 +9,7 @@
 
 #include "fido.h"
 
-#if defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x3050200fL
-static EVP_MD *
-rs1_get_EVP_MD(void)
-{
-	const EVP_MD *from;
-	EVP_MD *to = NULL;
-
-	if ((from = EVP_sha1()) != NULL && (to = malloc(sizeof(*to))) != NULL)
-		memcpy(to, from, sizeof(*to));
-
-	return (to);
-}
-
-static void
-rs1_free_EVP_MD(EVP_MD *md)
-{
-	freezero(md, sizeof(*md));
-}
-#elif OPENSSL_VERSION_NUMBER >= 0x30000000
+#if OPENSSL_VERSION_NUMBER >= 0x30000000
 static EVP_MD *
 rs1_get_EVP_MD(void)
 {
@@ -43,20 +25,15 @@ rs1_free_EVP_MD(EVP_MD *md)
 static EVP_MD *
 rs1_get_EVP_MD(void)
 {
-	const EVP_MD *md;
-
-	if ((md = EVP_sha1()) == NULL)
-		return (NULL);
-
-	return (EVP_MD_meth_dup(md));
+	return ((EVP_MD *)EVP_sha1());
 }
 
 static void
 rs1_free_EVP_MD(EVP_MD *md)
 {
-	EVP_MD_meth_free(md);
+	(void)md;
 }
-#endif /* LIBRESSL_VERSION_NUMBER */
+#endif /* OPENSSL_VERSION_NUMBER */
 
 int
 rs1_verify_sig(const fido_blob_t *dgst, EVP_PKEY *pkey,
