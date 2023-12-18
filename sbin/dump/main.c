@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2022/06/02 15:35:55 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.64 2023/12/18 13:23:52 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -465,6 +465,9 @@ main(int argc, char *argv[])
 	usedinomap = calloc((unsigned) mapsize, sizeof(char));
 	dumpdirmap = calloc((unsigned) mapsize, sizeof(char));
 	dumpinomap = calloc((unsigned) mapsize, sizeof(char));
+	if (usedinomap == NULL || dumpdirmap == NULL || dumpinomap == NULL)
+		quit("Failed to allocate tables");
+
 	tapesize = 3 * (howmany(mapsize * sizeof(char), TP_BSIZE) + 1);
 
 	nonodump = spcl.c_level < honorlevel;
