@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.103 2023/12/11 19:05:20 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.104 2023/12/18 23:42:20 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -382,7 +382,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 
 	r = mft_compare(mft1, mft2);
 	if (r == -1 && mft1 != NULL && mft2 != NULL)
-		warnx("%s: manifest replay detected (expected >= #%s, got #%s)",
+		warnx("%s: unexpected manifest number (want >= #%s, got #%s)",
 		    file1, mft2->seqnum, mft1->seqnum);
 
 	if (r == 0 && memcmp(mft1->mfthash, mft2->mfthash,
@@ -394,10 +394,11 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 		*mp = proc_parser_mft_post(file1, mft1, entp->path, err1,
 		    &warned);
 		if (*mp == NULL) {
-			mft1 = NULL;
 			if (mft2 != NULL)
-				warnx("%s: failed fetch, continuing with #%s",
-				    file2, mft2->seqnum);
+				warnx("%s#%s: failed fetch, continuing with #%s"
+				    " from cache", file1, mft1->seqnum,
+				    mft2->seqnum);
+			mft1 = NULL;
 		}
 	}
 
