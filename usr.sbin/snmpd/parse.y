@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.83 2023/11/21 08:47:04 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.84 2023/12/18 16:56:01 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1033,8 +1033,9 @@ hostdef		: STRING hostoid hostauth srcaddr	{
 			free($1);
 			memcpy(&(tr->ta_ss), &ss, sizeof(ss));
 			if ($4 != NULL) {
-				if (host($1, "0", SOCK_DGRAM, &ss, 1) <= 0) {
-					yyerror("invalid host: %s", $1);
+				if (host($4, "0", SOCK_DGRAM, &ss, 1) <= 0) {
+					yyerror("invalid source-address: %s",
+					    $4);
 					free($2);
 					free($3.data);
 					free($4);
