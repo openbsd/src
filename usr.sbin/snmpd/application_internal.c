@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.9 2023/12/12 20:15:49 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.10 2023/12/18 09:42:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -130,8 +130,6 @@ appl_internal_init(void)
 	    NULL);
 	appl_internal_object(&OID(MIB_snmpInReadOnlys), appl_internal_snmp,
 	    NULL);
-	appl_internal_object(&OID(MIB_snmpInReadOnlys), appl_internal_snmp,
-	    NULL);
 	appl_internal_object(&OID(MIB_snmpInGenErrs), appl_internal_snmp, NULL);
 	appl_internal_object(&OID(MIB_snmpInTotalReqVars), appl_internal_snmp,
 	    NULL);
@@ -253,6 +251,7 @@ appl_internal_object(struct ber_oid *oid,
     struct ber_element *(*getnext)(int8_t, struct ber_oid *))
 {
 	struct appl_internal_object *obj;
+	char buf[1024];
 
 	if ((obj = calloc(1, sizeof(*obj))) == NULL)
 		fatal(NULL);
@@ -261,7 +260,10 @@ appl_internal_object(struct ber_oid *oid,
 	obj->getnext = getnext;
 	obj->stringval = NULL;
 
-	RB_INSERT(appl_internal_objects, &appl_internal_objects, obj);
+	if (RB_INSERT(appl_internal_objects,
+	    &appl_internal_objects, obj) != NULL)
+		fatalx("%s: %s already registered", __func__,
+		    smi_oid2string(oid, buf, sizeof(buf), 0));
 }
 
 const char *
@@ -351,6 +353,8 @@ appl_internal_get(struct appl_backend *backend, __unused int32_t transactionid,
 	resp[i - 1].av_next = NULL;
 
 	appl_response(backend, requestid, APPL_ERROR_NOERROR, 0, resp);
+
+	free(resp);
 	return;
 
  fail:
@@ -434,6 +438,8 @@ appl_internal_getnext(struct appl_backend *backend,
 	resp[i - 1].av_next = NULL;
 
 	appl_response(backend, requestid, APPL_ERROR_NOERROR, 0, resp);
+
+	free(resp);
 	return;
 
  fail:
