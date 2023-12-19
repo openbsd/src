@@ -27,6 +27,11 @@
 ./etc/ppp/options
 ./etc/ppp/pap-secrets
 ./etc/pwd.db
+./etc/rpki/afrinic.constraints
+./etc/rpki/apnic.constraints
+./etc/rpki/arin.constraints
+./etc/rpki/lacnic.constraints
+./etc/rpki/ripe.constraints
 ./etc/shells
 ./etc/skel/.Xdefaults
 ./etc/skel/.cshrc

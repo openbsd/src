@@ -292,14 +292,9 @@
 ./etc/rmt
 ./etc/rpc
 ./etc/rpki
-./etc/rpki/afrinic.constraints
 ./etc/rpki/afrinic.tal
-./etc/rpki/apnic.constraints
 ./etc/rpki/apnic.tal
-./etc/rpki/arin.constraints
-./etc/rpki/lacnic.constraints
 ./etc/rpki/lacnic.tal
-./etc/rpki/ripe.constraints
 ./etc/rpki/ripe.tal
 ./etc/services
 ./etc/signify
