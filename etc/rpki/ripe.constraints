@@ -1,3 +1,5 @@
+#	$OpenBSD: ripe.constraints,v 1.2 2023/12/19 08:10:19 job Exp $
+
 # From https://www.iana.org/assignments/ipv6-unicast-address-assignments
 allow 2001:600::/23
 allow 2001:800::/22
