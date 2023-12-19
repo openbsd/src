@@ -1,4 +1,4 @@
-.\" $OpenBSD: pinsyscalls.2,v 1.3 2023/12/19 07:24:42 jmc Exp $
+.\" $OpenBSD: pinsyscalls.2,v 1.4 2023/12/19 19:39:52 deraadt Exp $
 .\"
 .\" Copyright (c) 2023 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -64,13 +64,11 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er E2BIG
 Implausible number of system calls provided.
-.It Bq Er EINVAL
-Process already has a system call pinning table loaded.
 .It Bq Er ENOMEM
 Insufficient memory to service the request.
 .It Bq Er EPERM
 A static binary tried to call
-.Fn pinsyscalls .
+.Fn pinsyscalls , or it was called a second time.
 .It Bq Er ERANGE
 At least one system call offset is beyond the bounds of
 .Ar len .
