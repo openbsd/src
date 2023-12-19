@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.311 2023/12/19 01:11:21 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.312 2023/12/19 21:34:22 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1139,13 +1139,14 @@ dontblock:
 				break;
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
+			pru_unlock(so);
 			error = sbwait(so, &so->so_rcv);
 			if (error) {
 				sbunlock(so, &so->so_rcv);
-				pru_unlock(so);
 				sounlock_shared(so);
 				return (0);
 			}
+			pru_lock(so);
 			if ((m = so->so_rcv.sb_mb) != NULL)
 				nextrecord = m->m_nextpkt;
 		}
