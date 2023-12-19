@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.294 2023/12/04 07:01:45 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.295 2023/12/19 06:59:28 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -288,6 +288,7 @@ caller(struct dir_info *d)
 {
 	struct btnode p;
 	int level = DO_STATS;
+
 	if (level == 0)
 		return NULL;
 
@@ -1165,8 +1166,7 @@ fill_canary(char *ptr, size_t sz, size_t allocated)
 static void *
 malloc_bytes(struct dir_info *d, size_t size)
 {
-	u_int i, k, r, bucket, listnum;
-	int j;
+	u_int i, j, k, r, bucket, listnum;
 	u_short	*lp;
 	struct chunk_info *bp;
 	void *p;
@@ -1177,7 +1177,7 @@ malloc_bytes(struct dir_info *d, size_t size)
 
 	bucket = find_bucket(size);
 
-	r = ((u_int)getrbyte(d) << 8) | getrbyte(d);
+	r = getrbyte(d);
 	listnum = r % MALLOC_CHUNK_LISTS;
 
 	/* If it's empty, make a page more of that size chunks */
@@ -1190,39 +1190,39 @@ malloc_bytes(struct dir_info *d, size_t size)
 	if (bp->canary != (u_short)d->canary1 || bucket != bp->bucket)
 		wrterror(d, "chunk info corrupted");
 
+	r /= MALLOC_CHUNK_LISTS;
+	/* do we need more random bits? */
+	if (bp->total > 256 / MALLOC_CHUNK_LISTS)
+		r = r << 8 | getrbyte(d);
 	/* bias, as bp->total is not a power of 2 */
-	i = (r / MALLOC_CHUNK_LISTS) % bp->total;
+	i = r % bp->total;
 
-	/* potentially start somewhere in a short */
-	lp = &bp->bits[i / MALLOC_BITS];
-	j = i % MALLOC_BITS; /* j must be signed */
-	if (*lp >> j) {
-		k = ffs(*lp >> j);
-		if (k != 0) {
-			k += j - 1;
-			goto found;
-		}
-	}
-	/* no bit halfway, go to next full short */
+	j = i % MALLOC_BITS;
 	i /= MALLOC_BITS;
-	for (;;) {
-		if (++i >= bp->offset)
-			i = 0;
-		lp = &bp->bits[i];
-		if (*lp) {
-			k = ffs(*lp) - 1;
-			break;
+	lp = &bp->bits[i];
+	/* potentially start somewhere in a short */
+	if (j > 0 && *lp >> j)
+		k = ffs(*lp >> j) + j;
+	else {
+		/* no bit halfway, go to next full short */
+		for (;;) {
+			if (*lp) {
+				k = ffs(*lp);
+				break;
+			}
+			if (++i >= bp->offset)
+				i = 0;
+			lp = &bp->bits[i];
 		}
 	}
-found:
-	*lp ^= 1 << k;
+	*lp ^= 1 << --k;
 
 	/* If there are no more free, remove from free-list */
 	if (--bp->free == 0)
 		LIST_REMOVE(bp, entries);
 
 	/* Adjust to the real offset of that chunk */
-	k += (lp - bp->bits) * MALLOC_BITS;
+	k += i * MALLOC_BITS;
 
 	if (mopts.chunk_canaries && size > 0)
 		bp->bits[bp->offset + k] = size;
@@ -1232,9 +1232,7 @@ found:
 		STATS_SETFN(r, k, d->caller);
 	}
 
-	k *= B2ALLOC(bucket);
-
-	p = (char *)bp->page + k;
+	p = (char *)bp->page + k * B2ALLOC(bucket);
 	if (bucket > 0) {
 		validate_junk(d, p, B2SIZE(bucket));
 		if (mopts.chunk_canaries)
