@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.92 2023/08/15 06:23:31 guenther Exp $ */
+/*	$OpenBSD: library.c,v 1.93 2023/12/19 16:13:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -316,7 +316,6 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 			_dl_push_range_size(&mut, phdp->p_vaddr + loff,
 			    phdp->p_memsz);
 			break;
-
 		default:
 			break;
 		}

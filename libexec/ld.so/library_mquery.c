@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.72 2023/08/15 06:23:31 guenther Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.73 2023/12/19 16:13:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -60,7 +60,6 @@ _dl_load_list_free(struct load_list *load_list)
 	}
 }
 
-
 void
 _dl_unload_shlib(elf_object_t *object)
 {
@@ -98,7 +97,6 @@ unload:
 		_dl_remove_object(object);
 	}
 }
-
 
 elf_object_t *
 _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
