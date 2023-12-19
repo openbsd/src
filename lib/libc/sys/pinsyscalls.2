@@ -1,4 +1,4 @@
-.\" $OpenBSD: pinsyscalls.2,v 1.2 2023/12/19 06:57:12 deraadt Exp $
+.\" $OpenBSD: pinsyscalls.2,v 1.3 2023/12/19 07:24:42 jmc Exp $
 .\"
 .\" Copyright (c) 2023 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -39,9 +39,9 @@ which are offsets from the
 .Va start .
 .Pp
 This provides the precise location for the system call instruction
-required for each system call number.  Attempting to use a different
-system call entry instruction to perform a non-corresponding system call
-operation will fail with signal
+required for each system call number.
+Attempting to use a different system call entry instruction to perform
+a non-corresponding system call operation will fail with signal
 .Dv SIGABRT .
 .Pp
 .Fn pinsyscalls
@@ -56,7 +56,6 @@ A similar setup operation is done automatically by the kernel for
 the system calls found in
 .Xr ld.so 1
 and in static executables.
-.Pp
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
