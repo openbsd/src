@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.106 2023/12/16 22:16:02 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.107 2023/12/19 20:34:10 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -277,11 +277,11 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	timeout_set_proc(&pflowif->sc_tmo6, pflow_timeout6, pflowif);
 	timeout_set_proc(&pflowif->sc_tmo_tmpl, pflow_timeout_tmpl, pflowif);
 
+	task_set(&pflowif->sc_outputtask, pflow_output_process, pflowif);
+
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-
-	task_set(&pflowif->sc_outputtask, pflow_output_process, pflowif);
 
 	/* Insert into list of pflows */
 	KERNEL_ASSERT_LOCKED();
