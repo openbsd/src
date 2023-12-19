@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.310 2023/12/18 13:11:20 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.311 2023/12/19 01:11:21 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -832,13 +832,12 @@ bad:
 		*mp = NULL;
 
 	solock_shared(so);
-	pru_lock(so);
 restart:
 	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0) {
-		pru_unlock(so);
 		sounlock_shared(so);
 		return (error);
 	}
+	pru_lock(so);
 
 	m = so->so_rcv.sb_mb;
 #ifdef SOCKET_SPLICE
@@ -908,7 +907,6 @@ restart:
 			sounlock_shared(so);
 			return (error);
 		}
-		pru_lock(so);
 		goto restart;
 	}
 dontblock:
@@ -1181,6 +1179,7 @@ dontblock:
 	    (flags & MSG_EOR) == 0 &&
 	    (so->so_rcv.sb_state & SS_CANTRCVMORE) == 0) {
 		sbunlock(so, &so->so_rcv);
+		pru_unlock(so);
 		goto restart;
 	}
 
