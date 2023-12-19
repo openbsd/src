@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.125 2023/07/03 06:45:44 guenther Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.126 2023/12/19 14:40:04 deraadt Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -134,7 +134,7 @@
 /* 93-97 - free */
 #define	M_UVMAMAP	98	/* UVM amap and related */
 #define	M_UVMAOBJ	99	/* UVM aobj and related */
-/* 100 - free */
+#define	M_PINSYSCALL	100	/* pinsyscall */
 #define	M_USB		101	/* USB general */
 #define	M_USBDEV	102	/* USB device driver */
 #define	M_USBHC		103	/* USB host controller */
@@ -270,7 +270,7 @@
 	NULL, NULL, NULL, NULL, NULL, \
 	"UVM amap",	/* 98 M_UVMAMAP */ \
 	"UVM aobj",	/* 99 M_UVMAOBJ */ \
-	NULL, \
+	"pinsyscall",	/* 100 M_PINSYSCALL */ \
 	"USB",		/* 101 M_USB */ \
 	"USB device",	/* 102 M_USBDEV */ \
 	"USB HC",	/* 103 M_USBHC */ \
