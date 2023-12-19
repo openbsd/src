@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.42 2023/11/20 14:18:21 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.43 2023/12/19 10:32:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1176,8 +1176,8 @@ show_rtr(struct ctl_show_rtr *rtr)
 	if (rtr->local_addr.aid != AID_UNSPEC)
 		printf(" Local Address: %s\n", log_addr(&rtr->local_addr));
 	if (rtr->session_id != -1)
-		printf(" Session ID: %d Serial #: %u\n",
-		    rtr->session_id, rtr->serial);
+		printf("Version: %u Session ID: %d Serial #: %u\n",
+		    rtr->version, rtr->session_id, rtr->serial);
 	printf(" Refresh: %u, Retry: %u, Expire: %u\n",
 	    rtr->refresh, rtr->retry, rtr->expire);
 
