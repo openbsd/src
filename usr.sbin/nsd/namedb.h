@@ -329,7 +329,6 @@ struct namedb
 	region_type*       region;
 	domain_table_type* domains;
 	struct radtree*    zonetree;
-	struct udb_base*   udb;
 	/* the timestamp on the ixfr.db file */
 	struct timeval	  diff_timestamp;
 	/* if diff_skip=1, diff_pos contains the nsd.diff place to continue */
@@ -369,12 +368,7 @@ zone_type *namedb_find_zone(namedb_type *db, const dname_type *dname);
  */
 void domain_table_deldomain(namedb_type* db, domain_type* domain);
 
-
 /** dbcreate.c */
-int udb_write_rr(struct udb_base* udb, struct udb_ptr* z, rr_type* rr);
-void udb_del_rr(struct udb_base* udb, struct udb_ptr* z, rr_type* rr);
-int write_zone_to_udb(struct udb_base* udb, zone_type* zone,
-	struct timespec* mtime, const char* file_str);
 int print_rrs(FILE* out, struct zone* zone);
 /** marshal rdata into buffer, must be MAX_RDLENGTH in size */
 size_t rr_marshal_rdata(rr_type* rr, uint8_t* rdata, size_t sz);
@@ -384,8 +378,7 @@ int namedb_lookup (struct namedb* db,
 		   domain_type     **closest_match,
 		   domain_type     **closest_encloser);
 /* pass number of children (to alloc in dirty array */
-struct namedb *namedb_open(const char *filename, struct nsd_options* opt);
-void namedb_close_udb(struct namedb* db);
+struct namedb *namedb_open(struct nsd_options* opt);
 void namedb_close(struct namedb* db);
 /* free ixfr data stored for zones */
 void namedb_free_ixfr(struct namedb* db);

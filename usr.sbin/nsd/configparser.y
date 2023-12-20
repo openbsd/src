@@ -125,6 +125,7 @@ struct component {
 %token VAR_TLS_SERVICE_OCSP
 %token VAR_TLS_PORT
 %token VAR_TLS_CERT_BUNDLE
+%token VAR_PROXY_PROTOCOL_PORT
 %token VAR_CPU_AFFINITY
 %token VAR_XFRD_CPU_AFFINITY
 %token <llng> VAR_SERVER_CPU_AFFINITY
@@ -280,7 +281,7 @@ server_option:
   | VAR_DEBUG_MODE boolean
     { cfg_parser->opt->debug_mode = $2; }
   | VAR_USE_SYSTEMD boolean
-    { /* ignored, deprecated */ }
+    { /* ignored, obsolete */ }
   | VAR_HIDE_VERSION boolean
     { cfg_parser->opt->hide_version = $2; }
   | VAR_HIDE_IDENTITY boolean
@@ -296,14 +297,7 @@ server_option:
   | VAR_DO_IP6 boolean
     { cfg_parser->opt->do_ip6 = $2; }
   | VAR_DATABASE STRING
-    {
-      cfg_parser->opt->database = region_strdup(cfg_parser->opt->region, $2);
-      if(cfg_parser->opt->database[0] == 0 &&
-         cfg_parser->opt->zonefiles_write == 0)
-      {
-        cfg_parser->opt->zonefiles_write = ZONEFILES_WRITE_INTERVAL;
-      }
-    }
+    { /* ignored, obsolete */ }
   | VAR_IDENTITY STRING
     { cfg_parser->opt->identity = region_strdup(cfg_parser->opt->region, $2); }
   | VAR_VERSION STRING
@@ -386,7 +380,7 @@ server_option:
   | VAR_ZONELISTFILE STRING
     { cfg_parser->opt->zonelistfile = region_strdup(cfg_parser->opt->region, $2); }
   | VAR_DIFFFILE STRING
-    { /* ignored, deprecated */ }
+    { /* ignored, obsolete */ }
   | VAR_XFRDFILE STRING
     { cfg_parser->opt->xfrdfile = region_strdup(cfg_parser->opt->region, $2); }
   | VAR_XFRDIR STRING
@@ -481,6 +475,14 @@ server_option:
     }
   | VAR_TLS_CERT_BUNDLE STRING
     { cfg_parser->opt->tls_cert_bundle = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_PROXY_PROTOCOL_PORT number
+    {
+      struct proxy_protocol_port_list* elem = region_alloc_zero(
+	cfg_parser->opt->region, sizeof(*elem));
+      elem->port = $2;
+      elem->next = cfg_parser->opt->proxy_protocol_port;
+      cfg_parser->opt->proxy_protocol_port = elem;
+    }
   | VAR_ANSWER_COOKIE boolean
     { cfg_parser->opt->answer_cookie = $2; }
   | VAR_COOKIE_SECRET STRING

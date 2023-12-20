@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Jun  7, 2023" "NLnet Labs" "nsd 4.7.0"
+.TH "nsd.conf" "5" "Dec  6, 2023" "NLnet Labs" "nsd 4.8.0"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -99,7 +99,7 @@ There must be whitespace between keywords. Attribute keywords end
 with a colon ':'. An attribute is followed by its containing 
 attributes, or a value. 
 .P
-At the top level only 
+At the top level, only 
 .BR server: ,
 .BR verify: ,
 .BR key: ,
@@ -129,7 +129,7 @@ Files can be included using the
 .B include:
 directive. It can appear anywhere, and takes a single filename as an
 argument. Processing continues as if the text from the included file
-was copied into the config file at that point.  If a chroot is used
+were copied into the config file at that point.  If a chroot is used,
 an absolute filename is needed (with the chroot prepended), so that
 the include can be parsed before and after application of the chroot (and
 the knowledge of what that chroot is).  You can use '*' to include a
@@ -206,15 +206,6 @@ If yes, NSD listens to IPv4 connections.  Default yes.
 .TP
 .B do\-ip6:\fR <yes or no>
 If yes, NSD listens to IPv6 connections.  Default yes.
-.TP
-.B database:\fR <filename>
-By default 
-.I '@dbfile@'
-is used. The specified file is used to store the compiled 
-zone information. Same as commandline option 
-.BR \-f.
-If set to "" then no database is used.  This uses less memory but
-zone updates are not (immediately) spooled to disk.
 .TP
 .B zonelistfile:\fR <filename>
 By default 
@@ -570,6 +561,12 @@ interfaces configured with that port number as @number get DNS over TLS service.
 If null or "", the default verify locations are used. Set it to the certificate
 bundle file, for example "/etc/pki/tls/certs/ca-bundle.crt". These certificates
 are used for authenticating Transfer over TLS (XoT) connections.
+.TP
+.B proxy\-protocol\-port:\fR <number>
+The port number for proxy protocol service. If the statement is given multiple
+times, additional port numbers can be used for proxy protocol service. The
+interface definitions that use this port number expect PROXYv2 proxy protocol
+traffic, for UDP, TCP and for TLS service.
 .SS "Remote Control"
 The
 .B remote\-control:
@@ -652,7 +649,7 @@ Verify zones by default.
 .TP
 .B verifier:\fR <command>
 When an update is received for the zone (by IXFR or AXFR) this program will be
-run to assess the zone with the update. When the program exists with a status
+run to assess the zone with the update. If the program exits with a status
 code of 0, the zone is considered good and will be served. Any other status
 code will designate the zone bad and the received update will be discarded.
 The zone will continue to be served but without the update.
@@ -874,13 +871,11 @@ when sending notifies.
 .TP
 .B provide\-xfr:\fR <ip\-spec> <key\-name | NOKEY | BLOCKED>
 Access control list. The listed address (a secondary) is allowed to 
-request AXFR from this server. Zone data will be provided to the 
-address. The specified key is used during AXFR. For unlisted or 
-BLOCKED addresses no data is provided, requests are discarded.
-BLOCKED supersedes other entries, other entries are scanned for a match
+request XFR from this server. Zone data will be provided to the 
+address. The specified key is used during XFR. For unlisted or 
+BLOCKED addresses no data is provided and requests are discarded.
+BLOCKED supersedes other entries and other entries are scanned for a match
 in the order of the statements.
-NSD provides AXFR for its secondaries, but IXFR is not implemented (IXFR
-is implemented for request\-xfr, but not for provide\-xfr).
 .P
 .RS
 The ip\-spec is either a plain IP address (IPv4 or IPv6), or can be 
@@ -903,8 +898,8 @@ A port number can be added using a suffix of @number, for example
 .TP
 .B store\-ixfr:\fR <yes or no>
 If enabled, IXFR contents are stored and provided to the set of clients
-specified in the provide\-xfr statement. Default is no. IXFR contents is
-a smaller set of changes that differ between zone versions, where an AXFR
+specified in the provide\-xfr statement. Default is no. IXFR content is
+a smaller set of changes that differ between zone versions, whereas an AXFR
 contains the full contents of the zone.
 .TP
 .B ixfr\-number:\fR <number>
@@ -912,21 +907,20 @@ The number of IXFR versions to store for this zone, at most. Default is 5.
 .TP
 .B ixfr\-size:\fR <number>
 The max storage to use for IXFR versions for this zone, in bytes.
-Default is 1048576. A value of 0 means unlimited, if you want to turn off
-IXFR storage, use the store\-ixfr option.
+Default is 1048576. A value of 0 means unlimited. If you want to turn off
+IXFR storage, set the store\-ixfr option to no.
 NSD does not elide IXFR contents from versions that add and remove the same
-data, that merges version changes together to shorten the data, but leaves
-the data and change sequence as it was transmitted by another server.
+data. It stores and transmits IXFRs as they were transmitted by the upstream server.
 .TP
 .B create\-ixfr:\fR <yes or no>
 If enabled, IXFR data is created when a zonefile is read by the server.
-Also set store\-ixfr enabled, so that the contents are stored, when you use
-this. Default is off. If the server is not running, the nsd\-checkzone \-i
+This requires store\-ixfr to be set to yes, so that the IXFR contents are saved to disk.
+Default is off. If the server is not running, the nsd\-checkzone \-i
 option can be used to create an IXFR file. When an IXFR is created, the server
 spools a version of the zone to a temporary file, at the location where the
 ixfr files are stored. This creates IXFR data when the zone is read from file,
 but not when a zone is read by AXFR transfer from a server, because then
-the topmost server that originates the data is the one place where ixfr
+the topmost server that originates the data is the one place where IXFR
 differences are computed and those differences are then transmitted verbatim
 to all the other servers.
 .TP

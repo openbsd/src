@@ -54,7 +54,7 @@ check_zone(struct nsd* nsd, const char* name, const char* fname, FILE *out,
 	struct ixfr_create* ixfrcr = NULL;
 
 	/* init*/
-	nsd->db = namedb_open("", nsd->options);
+	nsd->db = namedb_open(nsd->options);
 	dname = dname_parse(nsd->options->region, name);
 	if(!dname) {
 		/* parse failure */

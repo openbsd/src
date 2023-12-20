@@ -945,8 +945,7 @@ static int ixfr_perform_init(struct ixfr_create* ixfrcr, struct zone* zone,
 		return 0;
 	}
 	ixfrcr->new_serial = zone_get_current_serial(zone);
-	*store = ixfr_store_start(zone, store_mem, ixfrcr->old_serial,
-		ixfrcr->new_serial);
+	*store = ixfr_store_start(zone, store_mem);
 	if(!ixfr_create_store_newsoa(*store, zone)) {
 		fclose(*spool);
 		ixfr_store_free(*store);

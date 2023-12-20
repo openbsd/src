@@ -18,6 +18,7 @@ struct dname;
 struct tsig_key;
 struct buffer;
 struct nsd;
+struct proxy_protocol_port_list;
 
 typedef struct nsd_options nsd_options_type;
 typedef struct pattern_options pattern_options_type;
@@ -81,7 +82,6 @@ struct nsd_options {
 	int drop_updates;
 	int do_ip4;
 	int do_ip6;
-	const char* database;
 	const char* identity;
 	const char* version;
 	const char* logfile;
@@ -131,6 +131,9 @@ struct nsd_options {
 	const char* tls_port;
 	/* TLS certificate bundle */
 	const char* tls_cert_bundle;
+
+	/* proxy protocol port list */
+	struct proxy_protocol_port_list* proxy_protocol_port;
 
 	/** remote control section. enable toggle. */
 	int control_enable;
@@ -396,6 +399,12 @@ struct tls_auth_options {
 	char* client_key_pw;
 };
 
+/* proxy protocol port option list */
+struct proxy_protocol_port_list {
+	struct proxy_protocol_port_list* next;
+	int port;
+};
+
 /** zone list free space */
 struct zonelist_free {
 	struct zonelist_free* next;
@@ -513,10 +522,15 @@ int acl_check_incoming(struct acl_options* acl, struct query* q,
 	struct acl_options** reason);
 int acl_addr_matches_host(struct acl_options* acl, struct acl_options* host);
 int acl_addr_matches(struct acl_options* acl, struct query* q);
+int acl_addr_matches_proxy(struct acl_options* acl, struct query* q);
 int acl_key_matches(struct acl_options* acl, struct query* q);
 int acl_addr_match_mask(uint32_t* a, uint32_t* b, uint32_t* mask, size_t sz);
 int acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
 int acl_addr_match_range_v4(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);
+
+/* check acl list for blocks on address, return 0 if none, -1 if blocked. */
+int acl_check_incoming_block_proxy(struct acl_options* acl, struct query* q,
+	struct acl_options** reason);
 
 /* returns true if acls are both from the same host */
 int acl_same_host(struct acl_options* a, struct acl_options* b);
@@ -561,5 +575,9 @@ void warn_if_directory(const char* filetype, FILE* f, const char* fname);
  * and "control-interface:" into the ip-addresses associated with those
  * names. */
 void resolve_interface_names(struct nsd_options* options);
+
+/* See if the sockaddr port number is listed in the proxy protocol ports. */
+int sockaddr_uses_proxy_protocol_port(struct nsd_options* options,
+	struct sockaddr* addr);
 
 #endif /* OPTIONS_H */

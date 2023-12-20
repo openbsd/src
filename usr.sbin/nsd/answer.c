@@ -67,7 +67,7 @@ encode_answer(query_type *q, const answer_type *answer)
 	int done = 0;
 
 #if defined(INET6) && defined(MINIMAL_RESPONSES)
-	if (q->addr.ss_family == AF_INET6)
+	if (q->client_addr.ss_family == AF_INET6)
 		minimal_respsize = IPV6_MINIMAL_RESPONSE_SIZE;
 #endif
 

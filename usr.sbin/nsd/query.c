@@ -218,7 +218,9 @@ query_reset(query_type *q, size_t maxlen, int is_tcp)
 	 *     one proof per wildcard and for nx domain).
 	 */
 	region_free_all(q->region);
-	q->addrlen = sizeof(q->addr);
+	q->remote_addrlen = (socklen_t)sizeof(q->remote_addr);
+	q->client_addrlen = (socklen_t)sizeof(q->client_addr);
+	q->is_proxied = 0;
 	q->maxlen = maxlen;
 	q->reserved_space = 0;
 	buffer_clear(q->packet);
@@ -342,7 +344,7 @@ process_edns(nsd_type* nsd, struct query *q)
 		if (!q->tcp && q->edns.maxlen > UDP_MAX_MESSAGE_LEN) {
 			size_t edns_size;
 #if defined(INET6)
-			if (q->addr.ss_family == AF_INET6) {
+			if (q->client_addr.ss_family == AF_INET6) {
 				edns_size = nsd->ipv6_edns_size;
 			} else
 #endif
@@ -361,7 +363,7 @@ process_edns(nsd_type* nsd, struct query *q)
 			 * IPv6 will not automatically fragment in
 			 * this case (unlike IPv4).
 			 */
-			if (q->addr.ss_family == AF_INET6
+			if (q->client_addr.ss_family == AF_INET6
 			    && q->maxlen > IPV6_MIN_MTU)
 			{
 				q->maxlen = IPV6_MIN_MTU;
@@ -389,7 +391,7 @@ process_tsig(struct query* q)
 	if(q->tsig.status == TSIG_OK) {
 		if(!tsig_from_query(&q->tsig)) {
 			char a[128];
-			addr2str(&q->addr, a, sizeof(a));
+			addr2str(&q->client_addr, a, sizeof(a));
 			log_msg(LOG_ERR, "query: bad tsig (%s) for key %s from %s",
 				tsig_error(q->tsig.error_code),
 				dname_to_string(q->tsig.key_name, NULL), a);
@@ -401,7 +403,7 @@ process_tsig(struct query* q)
 		tsig_update(&q->tsig, q->packet, buffer_limit(q->packet));
 		if(!tsig_verify(&q->tsig)) {
 			char a[128];
-			addr2str(&q->addr, a, sizeof(a));
+			addr2str(&q->client_addr, a, sizeof(a));
 			log_msg(LOG_ERR, "query: bad tsig signature for key %s from %s",
 				dname_to_string(q->tsig.key->name, NULL), a);
 			return NSD_RC_NOTAUTH;
@@ -442,6 +444,24 @@ answer_notify(struct nsd* nsd, struct query *query)
 		return query_error(query, rc);
 
 	/* check if it passes acl */
+	if(query->is_proxied && acl_check_incoming_block_proxy(
+		zone_opt->pattern->allow_notify, query, &why) == -1) {
+		/* the proxy address is blocked */
+		if (verbosity >= 2) {
+			char address[128], proxy[128];
+			addr2str(&query->client_addr, address, sizeof(address));
+			addr2str(&query->remote_addr, proxy, sizeof(proxy));
+			VERBOSITY(2, (LOG_INFO, "notify for %s from %s via proxy %s refused because of proxy, %s %s",
+				dname_to_string(query->qname, NULL),
+				address, proxy,
+				(why?why->ip_address_spec:"."),
+				(why ? ( why->nokey    ? "NOKEY"
+				       : why->blocked  ? "BLOCKED"
+				       : why->key_name )
+				     : "no acl matches")));
+		}
+		return query_error(query, NSD_RC_REFUSE);
+	}
 	if((acl_num = acl_check_incoming(zone_opt->pattern->allow_notify, query,
 		&why)) != -1)
 	{
@@ -483,7 +503,7 @@ answer_notify(struct nsd* nsd, struct query *query)
 		if(verbosity >= 1) {
 			uint32_t serial = 0;
 			char address[128];
-			addr2str(&query->addr, address, sizeof(address));
+			addr2str(&query->client_addr, address, sizeof(address));
 			if(packet_find_notify_serial(query->packet, &serial))
 			  VERBOSITY(1, (LOG_INFO, "notify for %s from %s serial %u",
 				dname_to_string(query->qname, NULL), address,
@@ -510,12 +530,15 @@ answer_notify(struct nsd* nsd, struct query *query)
 
 	if (verbosity >= 2) {
 		char address[128];
-		addr2str(&query->addr, address, sizeof(address));
-		VERBOSITY(2, (LOG_INFO, "notify for %s from %s refused, %s%s",
+		addr2str(&query->client_addr, address, sizeof(address));
+		VERBOSITY(2, (LOG_INFO, "notify for %s from %s refused, %s %s",
 			dname_to_string(query->qname, NULL),
 			address,
-			why?why->key_name:"no acl matches",
-			why?why->ip_address_spec:"."));
+			(why?why->ip_address_spec:"."),
+			(why ? ( why->nokey    ? "NOKEY"
+			       : why->blocked  ? "BLOCKED"
+			       : why->key_name )
+			     : "no acl matches")));
 	}
 
 	return query_error(query, NSD_RC_REFUSE);
@@ -745,7 +768,7 @@ add_rrset(struct query   *query,
 #if defined(INET6)
 		/* if query over IPv6, swap A and AAAA; put AAAA first */
 		add_additional_rrsets(query, answer, rrset, 0, 1,
-			(query->addr.ss_family == AF_INET6)?
+			(query->client_addr.ss_family == AF_INET6)?
 			swap_aaaa_additional_rr_types:
 			default_additional_rr_types);
 #else
@@ -1309,6 +1332,31 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 		struct acl_options *why = NULL;
 
 		/* check if it passes acl */
+		if(q->is_proxied && acl_check_incoming_block_proxy(
+			q->zone->opts->pattern->allow_query, q, &why) == -1) {
+			/* the proxy address is blocked */
+			if (verbosity >= 2) {
+				char address[128], proxy[128];
+				addr2str(&q->client_addr, address, sizeof(address));
+				addr2str(&q->remote_addr, proxy, sizeof(proxy));
+				VERBOSITY(2, (LOG_INFO, "query %s from %s via proxy %s refused because of proxy, %s %s",
+					dname_to_string(q->qname, NULL),
+					address, proxy,
+					(why?why->ip_address_spec:"."),
+					(why ? ( why->nokey    ? "NOKEY"
+					      : why->blocked  ? "BLOCKED"
+					      : why->key_name )
+					    : "no acl matches")));
+			}
+			/* no zone for this */
+			if(q->cname_count == 0) {
+				RCODE_SET(q->packet, RCODE_REFUSE);
+				/* RFC8914 - Extended DNS Errors
+				 * 4.19. Extended DNS Error Code 18 - Prohibited */
+				q->edns.ede = EDE_PROHIBITED;
+			}
+			return;
+		}
 		if(acl_check_incoming(
 		   q->zone->opts->pattern->allow_query, q, &why) != -1) {
 			assert(why);
@@ -1317,16 +1365,16 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 				why->ip_address_spec,
 				why->nokey?"NOKEY":
 				(why->blocked?"BLOCKED":why->key_name)));
-		} else { 
+		} else {
 			if (verbosity >= 2) {
 				char address[128];
-				addr2str(&q->addr, address, sizeof(address));
+				addr2str(&q->client_addr, address, sizeof(address));
 				VERBOSITY(2, (LOG_INFO, "query %s from %s refused, %s %s",
 					dname_to_string(q->qname, NULL),
 					address,
 					why ? ( why->nokey    ? "NOKEY"
 					      : why->blocked  ? "BLOCKED"
-					      : why->key_name ) 
+					      : why->key_name )
 					    : "no acl matches",
 					why?why->ip_address_spec:"."));
 			}
@@ -1695,7 +1743,7 @@ query_add_optional(query_type *q, nsd_type *nsd, uint32_t *now_p)
 {
 	struct edns_data *edns = &nsd->edns_ipv4;
 #if defined(INET6)
-	if (q->addr.ss_family == AF_INET6) {
+	if (q->client_addr.ss_family == AF_INET6) {
 		edns = &nsd->edns_ipv6;
 	}
 #endif

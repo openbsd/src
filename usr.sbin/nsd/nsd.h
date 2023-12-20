@@ -64,12 +64,6 @@ struct dt_collector;
  */
 #define NSD_QUIT_SYNC 9
 /*
- * QUIT_WITH_STATS is sent during a reload when BIND8_STATS is defined,
- * from parent to children.  The stats are transferred too from child to
- * parent with this commandvalue, when the child is exiting.
- */
-#define NSD_QUIT_WITH_STATS 10
-/*
  * QUIT_CHILD is sent at exit, to make sure the child has exited so that
  * port53 is free when all of nsd's processes have exited at shutdown time
  */
@@ -99,11 +93,11 @@ typedef	unsigned long stc_type;
 
 #define	LASTELEM(arr)	(sizeof(arr) / sizeof(arr[0]) - 1)
 
-#define	STATUP(nsd, stc) nsd->st.stc++
-/* #define	STATUP2(nsd, stc, i)  ((i) <= (LASTELEM(nsd->st.stc) - 1)) ? nsd->st.stc[(i)]++ : \
-				nsd->st.stc[LASTELEM(nsd->st.stc)]++ */
+#define	STATUP(nsd, stc) nsd->st->stc++
+/* #define	STATUP2(nsd, stc, i)  ((i) <= (LASTELEM(nsd->st->stc) - 1)) ? nsd->st->stc[(i)]++ : \
+				nsd->st.stc[LASTELEM(nsd->st->stc)]++ */
 
-#define	STATUP2(nsd, stc, i) nsd->st.stc[(i) <= (LASTELEM(nsd->st.stc) - 1) ? i : LASTELEM(nsd->st.stc)]++
+#define	STATUP2(nsd, stc, i) nsd->st->stc[(i) <= (LASTELEM(nsd->st->stc) - 1) ? i : LASTELEM(nsd->st->stc)]++
 #else	/* BIND8_STATS */
 
 #define	STATUP(nsd, stc) /* Nothing */
@@ -125,6 +119,23 @@ typedef	unsigned long stc_type;
 #define	ZTATUP(nsd, zone, stc) /* Nothing */
 #define	ZTATUP2(nsd, zone, stc, i) /* Nothing */
 #endif /* USE_ZONE_STATS */
+
+#ifdef	BIND8_STATS
+/* Data structure to keep track of statistics */
+struct nsdst {
+	time_t	boot;
+	stc_type qtype[257];	/* Counters per qtype */
+	stc_type qclass[4];	/* Class IN or Class CH or other */
+	stc_type qudp, qudp6;	/* Number of queries udp and udp6 */
+	stc_type ctcp, ctcp6;	/* Number of tcp and tcp6 connections */
+	stc_type ctls, ctls6;	/* Number of tls and tls6 connections */
+	stc_type rcode[17], opcode[6]; /* Rcodes & opcodes */
+	/* Dropped, truncated, queries for nonconfigured zone, tx errors */
+	stc_type dropped, truncated, wrongzone, txerr, rxerr;
+	stc_type edns, ednserr, raxfr, nona, rixfr;
+	uint64_t db_disk, db_mem;
+};
+#endif /* BIND8_STATS */
 
 #define NSD_SOCKET_IS_OPTIONAL (1<<0)
 #define NSD_BIND_DEVICE (1<<1)
@@ -244,7 +255,6 @@ struct	nsd
 	struct daemon_remote* rc;
 
 	/* Configuration */
-	const char		*dbfile;
 	const char		*pidfile;
 	const char		*log_filename;
 	const char		*username;
@@ -300,21 +310,10 @@ struct	nsd
 	size_t ipv6_edns_size;
 
 #ifdef	BIND8_STATS
-
-	struct nsdst {
-		time_t	boot;
-		int	period;		/* Produce statistics dump every st_period seconds */
-		stc_type qtype[257];	/* Counters per qtype */
-		stc_type qclass[4];	/* Class IN or Class CH or other */
-		stc_type qudp, qudp6;	/* Number of queries udp and udp6 */
-		stc_type ctcp, ctcp6;	/* Number of tcp and tcp6 connections */
-		stc_type ctls, ctls6;	/* Number of tls and tls6 connections */
-		stc_type rcode[17], opcode[6]; /* Rcodes & opcodes */
-		/* Dropped, truncated, queries for nonconfigured zone, tx errors */
-		stc_type dropped, truncated, wrongzone, txerr, rxerr;
-		stc_type edns, ednserr, raxfr, nona, rixfr;
-		uint64_t db_disk, db_mem;
-	} st;
+	/* statistics for this server */
+	struct nsdst* st;
+	/* Produce statistics dump every st_period seconds */
+	int st_period;
 	/* per zone stats, each an array per zone-stat-idx, stats per zone is
 	 * add of [0][zoneidx] and [1][zoneidx]. */
 	struct nsdst* zonestat[2];
@@ -327,6 +326,20 @@ struct	nsd
 	size_t zonestatsize[2], zonestatdesired, zonestatsizenow;
 	/* current zonestat array to use */
 	struct nsdst* zonestatnow;
+	/* filenames for stat file mappings */
+	char* statfname;
+	/* fd for stat mapping (otherwise mmaps cannot be shared between
+	 * processes and resized) */
+	int statfd;
+	/* statistics array, of size child_count*2, twice for old and new
+	 * server processes. */
+	struct nsdst* stat_map;
+	/* statistics array of size child_count, twice */
+	struct nsdst* stats_per_child[2];
+	/* current stats_per_child array that is in use for the child set */
+	int stat_current;
+	/* start value for per process statistics printout, to clear it */
+	struct nsdst stat_proc;
 #endif /* BIND8_STATS */
 #ifdef USE_DNSTAP
 	/* the dnstap collector process info */
@@ -394,6 +407,10 @@ void server_zonestat_alloc(struct nsd* nsd);
 /* remap the mmaps for zonestat isx, to bytesize sz.  Caller has to set
  * the zonestatsize */
 void zonestat_remap(struct nsd* nsd, int idx, size_t sz);
+/* allocate stat structures */
+void server_stat_alloc(struct nsd* nsd);
+/* free stat mmap file, unlinks it */
+void server_stat_free(struct nsd* nsd);
 /* allocate and init xfrd variables */
 void server_prepare_xfrd(struct nsd *nsd);
 /* start xfrdaemon (again) */

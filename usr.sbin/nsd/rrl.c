@@ -153,20 +153,20 @@ static uint64_t rrl_get_source(query_type* query, uint16_t* c2)
 	 * to the same buckets as IPv4 space, but there is a flag in c2
 	 * that makes the hash different */
 #ifdef INET6
-	if( ((struct sockaddr_in*)&query->addr)->sin_family == AF_INET) {
+	if( ((struct sockaddr_in*)&query->client_addr)->sin_family == AF_INET) {
 		*c2 = 0;
-		return ((struct sockaddr_in*)&query->addr)->
+		return ((struct sockaddr_in*)&query->client_addr)->
 			sin_addr.s_addr & htonl(0xffffffff << (32-rrl_ipv4_prefixlen));
 	} else {
 		uint64_t s;
 		*c2 = rrl_ip6;
-		memmove(&s, &((struct sockaddr_in6*)&query->addr)->sin6_addr,
+		memmove(&s, &((struct sockaddr_in6*)&query->client_addr)->sin6_addr,
 			sizeof(s));
 		return s & rrl_ipv6_mask;
 	}
 #else
 	*c2 = 0;
-	return query->addr.sin_addr.s_addr & htonl(0xffffffff << (32-rrl_ipv4_prefixlen));
+	return query->client_addr.sin_addr.s_addr & htonl(0xffffffff << (32-rrl_ipv4_prefixlen));
 #endif
 }
 
@@ -359,7 +359,7 @@ rrl_msg(query_type* query, const char* str)
 	uint64_t s;
 	char address[128];
 	if(verbosity < 1) return;
-	addr2str(&query->addr, address, sizeof(address));
+	addr2str(&query->client_addr, address, sizeof(address));
 	s = rrl_get_source(query, &c2);
 	c = rrl_classify(query, &d, &d_len) | c2;
 	if(query->zone && query->zone->opts &&
@@ -394,7 +394,7 @@ uint32_t rrl_update(query_type* query, uint32_t hash, uint64_t source,
 		if(verbosity >= 1 &&
 			used_to_block(b->rate, b->counter, rrl_ratelimit)) {
 			char address[128];
-			addr2str(&query->addr, address, sizeof(address));
+			addr2str(&query->client_addr, address, sizeof(address));
 			log_msg(LOG_INFO, "ratelimit unblock ~ type %s target %s query %s %s (%s collision)",
 				rrltype2str(b->flags),
 				rrlsource2str(b->source, b->flags),

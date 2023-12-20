@@ -5,7 +5,7 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT([NSD],[4.7.0],[nsd-bugs@nlnetlabs.nl])
+AC_INIT([NSD],[4.8.0],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
@@ -96,20 +96,8 @@ AC_ARG_WITH([pidfile],
 AC_SUBST(pidfile)
 AC_DEFINE_UNQUOTED(PIDFILE, ["`eval echo $pidfile`"], [Pathname to the NSD pidfile])
 
-#
-# Determine location of nsd.db
-#
-dbfile=${dbdir}/nsd.db
 AC_ARG_WITH([dbfile],
-	AS_HELP_STRING([--with-dbfile=path],[Pathname to the NSD database]),
-	[dbfile=$withval])
-AC_SUBST(dbfile)
-AC_DEFINE_UNQUOTED(DBFILE, ["`eval echo $dbfile`"], [Pathname to the NSD database])
-
-if test -n "$dbfile"; then
-	dbdir=`dirname $dbfile`
-fi
-AC_SUBST(dbdir)
+	AS_HELP_STRING([--with-dbfile=path],[Pathname to the NSD database (obsolete)]),[])
 
 piddir=`dirname $pidfile`
 AC_SUBST(piddir)
@@ -569,7 +557,8 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 int main(void) { struct tm tm; char *res;
 res = strptime("20070207111842", "%Y%m%d%H%M%S", &tm);
 if (!res) return 1; return 0; }
-]])] , [eval "ac_cv_c_strptime_works=yes"], [eval "ac_cv_c_strptime_works=no"])
+]])] , [eval "ac_cv_c_strptime_works=yes"], [eval "ac_cv_c_strptime_works=no"],
+[eval "ac_cv_c_strptime_works=maybe"])
 else
 eval "ac_cv_c_strptime_works=maybe"
 fi
@@ -1261,6 +1250,7 @@ AH_BOTTOM([
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 
 #ifdef HAVE_TIME_H
 #include <time.h>

@@ -72,6 +72,8 @@ struct xfrd_state {
 	size_t zonestat_clear_num;
 	/* array of malloced entries with cumulative cleared stat values */
 	struct nsdst** zonestat_clear;
+	/* array of child_count size with cumulative cleared stat values */
+	struct nsdst* stat_clear;
 
 	/* timer for NSD reload */
 	struct timeval reload_timeout;

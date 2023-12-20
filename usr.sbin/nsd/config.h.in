@@ -28,9 +28,6 @@
    */
 #undef DARWIN_BROKEN_SETREUID
 
-/* Pathname to the NSD database */
-#undef DBFILE
-
 /* Whether ERR_load_SSL_strings is deprecated */
 #undef DEPRECATED_ERR_LOAD_SSL_STRINGS
 
@@ -863,6 +860,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
 
 #ifdef HAVE_TIME_H
 #include <time.h>

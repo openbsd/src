@@ -100,7 +100,7 @@ server:
 	# username: @user@
 
 	# Run NSD in a chroot-jail.
-	# make sure to have pidfile and database reachable from there.
+	# make sure to have pidfile reachable from there.
 	# by default, no chroot-jail is used.
 	# chroot: "@configdir@"
 
@@ -109,10 +109,6 @@ server:
 
 	# the list of dynamically added zones.
 	# zonelistfile: "@zonelistfile@"
-
-	# the database to use
-	# if set to "" then no disk-database is used, less memory usage.
-	# database: "@dbfile@"
 
 	# log messages to file. Default to stderr and syslog (with
 	# facility LOG_DAEMON).  stderr disappears when daemon goes to bg.
@@ -217,7 +213,7 @@ server:
 	# zonefiles-check: yes
 
 	# write changed zonefiles to disk, every N seconds.
-	# default is 0(disabled) or 3600(if database is "").
+	# default is 3600.
 	# zonefiles-write: 3600
 
 	# RRLconfig
@@ -263,6 +259,10 @@ server:
 	# Certificates used to authenticate connections made upstream for
 	# Transfers over TLS (XoT). Default is "" (default verify locations).
 	# tls-cert-bundle: "path/to/ca-bundle.pem"
+
+	# The interfaces that use these listed port numbers will support and
+	# expect PROXYv2. For UDP and TCP/TLS interfaces.
+	# proxy-protocol-port: portno for each of the port numbers.
 
 verify:
 	# Enable zone verification. Default is no.

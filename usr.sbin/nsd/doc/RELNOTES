@@ -1,5 +1,42 @@
 NSD RELEASE NOTES
 
+4.8.0
+================
+FEATURES:
+	- Merge #281: Proxy protocol. An implementation of PROXYv2 for NSD.
+	  It can be configured with proxy-protocol-port: portnum with the
+	  port number of the interface on which proxy traffic is handled.
+	  The interface can support proxy traffic for UDP, TCP and TLS.
+	- Merge #301: improve the logging of ixfr fallbacks to axfr.
+	- Merge #305: faster stats. Statistics can be gathered while a reload
+	  is in progress.
+BUG FIXES:
+	- Merge #282: Improve nsd.conf man page.
+	- Fix unused but set variable warning.
+	- Fix #283: Compile failure in remote.c when --disable-bind8-stats
+	  and --without-ssl are specified.
+	- Fix #284: dnstap_collector.c: SOCK_NONBLOCK is not available on
+	  Mac/Darwin.
+	- Fix unused variable warning in unit test of udb.
+	- Merge #287: Update nsd.conf.5.in.
+	- Fix autoconf 2.69 warnings in configure.
+	- Merge #295: Update e-mail addresses, add ref to support contracts
+	- Fix for interprocess communication to set quit sync command from
+	  main process explicitly.
+	- Fix processing of consolidated IXFRs.
+	- Remove on-disk database.
+	- Answer first query for connections accepted just before reload.
+	- Fix: Always instate write handler after reading a query over TCP.
+	- Fix #14: Set timeout to 3s when servicing remaining TCP connections.
+	- Merge #302: Test package fixes. Correct Auxfiles, kill_from_pidfile
+	  function and fix drop_updates, rr-test and xfr_update tests.
+	- Fix unit test kill_from_pidfile function for nonexistent files
+	  because the argument is evaluated before the test expression.
+	- Fix rr-test to also convert the contents of the just written output
+	  file.
+	- Fix test set to remove -f nsd.db and rm nsd.db commands.
+	- Fix test set to remove difffile option.
+
 4.7.0
 ================
 FEATURES:

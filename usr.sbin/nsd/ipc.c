@@ -95,20 +95,6 @@ child_handle_parent_command(int fd, short event, void* arg)
 		}
 		ipc_child_quit(data->nsd);
 		break;
-	case NSD_QUIT_WITH_STATS:
-#ifdef BIND8_STATS
-		DEBUG(DEBUG_IPC, 2, (LOG_INFO, "quit QUIT_WITH_STATS"));
-		/* reply with ack and stats and then quit */
-		if(!write_socket(fd, &mode, sizeof(mode))) {
-			log_msg(LOG_ERR, "cannot write quitwst to parent");
-		}
-		if(!write_socket(fd, &data->nsd->st, sizeof(data->nsd->st))) {
-			log_msg(LOG_ERR, "cannot write stats to parent");
-		}
-		fsync(fd);
-#endif /* BIND8_STATS */
-		ipc_child_quit(data->nsd);
-		break;
 	default:
 		log_msg(LOG_ERR, "handle_parent_command: bad mode %d",
 			(int) mode);
@@ -208,11 +194,7 @@ debug_print_fwd_name(int ATTR_UNUSED(len), buffer_type* packet, int acl_num)
 static void
 send_quit_to_child(struct main_ipc_handler_data* data, int fd)
 {
-#ifdef BIND8_STATS
-	sig_atomic_t cmd = NSD_QUIT_WITH_STATS;
-#else
 	sig_atomic_t cmd = NSD_QUIT;
-#endif
 	if(write(fd, &cmd, sizeof(cmd)) == -1) {
 		if(errno == EAGAIN || errno == EINTR)
 			return; /* try again later */
@@ -319,26 +301,6 @@ stats_subtract(struct nsdst* total, struct nsdst* s)
 	total->raxfr -= s->raxfr;
 	total->nona -= s->nona;
 	total->rixfr -= s->rixfr;
-}
-
-#define FINAL_STATS_TIMEOUT 10 /* seconds */
-static void
-read_child_stats(struct nsd* nsd, struct nsd_child* child, int fd)
-{
-	struct nsdst s;
-	errno=0;
-	if(block_read(nsd, fd, &s, sizeof(s), FINAL_STATS_TIMEOUT)!=sizeof(s)) {
-		log_msg(LOG_ERR, "problems reading finalstats from server "
-			"%d: %s", (int)child->pid, strerror(errno));
-	} else {
-		stats_add(&nsd->st, &s);
-		child->query_count = s.qudp + s.qudp6 + s.ctcp + s.ctcp6
-			+ s.ctls + s.ctls6;
-		/* we know that the child is going to close the connection
-		 * now (this is an ACK of the QUIT_W_STATS so we know the
-		 * child is done, no longer sending e.g. NOTIFY contents) */
-		child_is_done(nsd, fd);
-	}
 }
 #endif /* BIND8_STATS */
 
@@ -475,11 +437,6 @@ parent_handle_child_command(netio_type *ATTR_UNUSED(netio),
 	case NSD_QUIT:
 		data->nsd->mode = mode;
 		break;
-#ifdef BIND8_STATS
-	case NSD_QUIT_WITH_STATS:
-		read_child_stats(data->nsd, data->child, handler->fd);
-		break;
-#endif /* BIND8_STATS */
 	case NSD_STATS:
 		data->nsd->signal_hint_stats = 1;
 		break;

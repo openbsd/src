@@ -1,6 +1,73 @@
+29 November 2023: Wouter
+	- Tag for 4.8.0rc1.
+
+28 November 2023: Wouter
+	- Set up doc/RELNOTES for upcoming release.
+	- Fix unit test kill_from_pidfile function for nonexistent files
+	  because the argument is evaluated before the test expression.
+	- Fix rr-test to also convert the contents of the just written output
+	  file.
+	- Fix test set to remove -f nsd.db and rm nsd.db commands.
+	- Fix test set to remove difffile option.
+
+27 November 2023: Jeroen
+	- Fix #14: Set timeout to 3s when servicing remaining TCP connections.
+	- Fix: Always instate write handler after reading queries from TCP.
+	- Answer first query on connections accepted just before reload.
+
+27 November 2023: Wouter
+	- Merge #305: faster stats. Statistics can be gathered while a reload
+	  is in progress.
+
+27 November 2023: Willem
+	- Merge #302: Test package fixes. Correct Auxfiles, kill_from_pidfile
+	  function and fix drop_updates, rr-test and xfr_update tests.
+
+1 November 2023: Jeroen
+	- Remove on-disk database.
+
+31 October 2023: Wouter
+	- Merge #301: improve the logging of ixfr fallbacks to axfr.
+
+30 October 2023: Jeroen
+	- Fix processing of consolidated IXFRs.
+
+30 October 2023: Wouter
+	- Fix for interprocess communication to set quit sync command from
+	  main process explicitly.
+
+3 October 2023: Wouter
+	- Merge #281: Proxy protocol. An implementation of PROXYv2 for NSD.
+	  It can be configured with proxy-protocol-port: portnum with the
+	  port number of the interface on which proxy traffic is handled.
+	  The interface can support proxy traffic for UDP, TCP and TLS.
+
+21 September 2023: Wouter
+	- Merge #295: Update e-mail addresses, add ref to support contracts
+
+31 August 2023: Wouter
+	- Fix autoconf 2.69 warnings in configure.
+
+14 July 2023: Wouter
+	- Merge #287: Update nsd.conf.5.in.
+
+11 July 2023: Wouter
+	- Fix unused variable warning in unit test of udb.
+
+22 June 2023: Wouter
+	- Fix #284: dnstap_collector.c: SOCK_NONBLOCK is not available on
+	  Mac/Darwin.
+
+7 June 2023: Wouter
+	- Merge #282: Improve nsd.conf man page.
+	- Fix unused but set variable warning.
+	- Fix #283: Compile failure in remote.c when --disable-bind8-stats
+	  and --without-ssl are specified.
+
 31 May 2023: Wouter
 	- Add missing items to doc/RELNOTES.
-	- Tag for 4.7.0rc1.
+	- Tag for 4.7.0rc1. It became release 4.7.0 on 7 june 2023. The code
+	  repository continues with 4.7.1.
 
 30 May 2023: Jeroen
 	- Fix #240: Prefix messages originating from verifier.

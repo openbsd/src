@@ -66,7 +66,6 @@ nsd_options_create(region_type* region)
 	opt->drop_updates = 0;
 	opt->do_ip4 = 1;
 	opt->do_ip6 = 1;
-	opt->database = DBFILE;
 	opt->identity = 0;
 	opt->version = 0;
 	opt->nsid = 0;
@@ -131,15 +130,14 @@ nsd_options_create(region_type* region)
 	opt->dnstap_log_auth_response_messages = 0;
 #endif
 	opt->zonefiles_check = 1;
-	if(opt->database == NULL || opt->database[0] == 0)
-		opt->zonefiles_write = ZONEFILES_WRITE_INTERVAL;
-	else	opt->zonefiles_write = 0;
+	opt->zonefiles_write = ZONEFILES_WRITE_INTERVAL;
 	opt->xfrd_reload_timeout = 1;
 	opt->tls_service_key = NULL;
 	opt->tls_service_ocsp = NULL;
 	opt->tls_service_pem = NULL;
 	opt->tls_port = TLS_PORT;
 	opt->tls_cert_bundle = NULL;
+	opt->proxy_protocol_port = NULL;
 	opt->answer_cookie = 1;
 	opt->cookie_secret = NULL;
 	opt->cookie_secret_file = CONFIGDIR"/nsd_cookiesecrets.txt";
@@ -1681,6 +1679,32 @@ key_options_add_modify(struct nsd_options* opt, struct key_options* key)
 }
 
 int
+acl_check_incoming_block_proxy(struct acl_options* acl, struct query* q,
+	struct acl_options** reason)
+{
+	/* check each acl element.
+	 * if it is blocked, return -1.
+	 * return false if no matches for blocked elements. */
+	if(reason)
+		*reason = NULL;
+
+	while(acl)
+	{
+		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "proxy testing acl %s %s",
+			acl->ip_address_spec, acl->nokey?"NOKEY":
+			(acl->blocked?"BLOCKED":acl->key_name)));
+		if(acl_addr_matches_proxy(acl, q) && acl->blocked) {
+			if(reason)
+				*reason = acl;
+			return -1;
+		}
+		acl = acl->next;
+	}
+
+	return 0;
+}
+
+int
 acl_check_incoming(struct acl_options* acl, struct query* q,
 	struct acl_options** reason)
 {
@@ -1807,7 +1831,7 @@ acl_addr_matches(struct acl_options* acl, struct query* q)
 	if(acl->is_ipv6)
 	{
 #ifdef INET6
-		struct sockaddr_storage* addr = (struct sockaddr_storage*)&q->addr;
+		struct sockaddr_storage* addr = (struct sockaddr_storage*)&q->client_addr;
 		if(addr->ss_family != AF_INET6)
 			return 0;
 		return acl_addr_matches_ipv6host(acl, addr, ntohs(((struct sockaddr_in6*)addr)->sin6_port));
@@ -1817,7 +1841,32 @@ acl_addr_matches(struct acl_options* acl, struct query* q)
 	}
 	else
 	{
-		struct sockaddr_in* addr = (struct sockaddr_in*)&q->addr;
+		struct sockaddr_in* addr = (struct sockaddr_in*)&q->client_addr;
+		if(addr->sin_family != AF_INET)
+			return 0;
+		return acl_addr_matches_ipv4host(acl, addr, ntohs(addr->sin_port));
+	}
+	/* ENOTREACH */
+	return 0;
+}
+
+int
+acl_addr_matches_proxy(struct acl_options* acl, struct query* q)
+{
+	if(acl->is_ipv6)
+	{
+#ifdef INET6
+		struct sockaddr_storage* addr = (struct sockaddr_storage*)&q->remote_addr;
+		if(addr->ss_family != AF_INET6)
+			return 0;
+		return acl_addr_matches_ipv6host(acl, addr, ntohs(((struct sockaddr_in6*)addr)->sin6_port));
+#else
+		return 0; /* no inet6, no match */
+#endif
+	}
+	else
+	{
+		struct sockaddr_in* addr = (struct sockaddr_in*)&q->remote_addr;
 		if(addr->sin_family != AF_INET)
 			return 0;
 		return acl_addr_matches_ipv4host(acl, addr, ntohs(addr->sin_port));
@@ -2577,4 +2626,37 @@ resolve_interface_names(struct nsd_options* options)
 #else
 	(void)options;
 #endif /* HAVE_GETIFADDRS */
+}
+
+int
+sockaddr_uses_proxy_protocol_port(struct nsd_options* options,
+	struct sockaddr* addr)
+{
+	struct proxy_protocol_port_list* p;
+	int port;
+#ifdef INET6
+	struct sockaddr_storage* ss = (struct sockaddr_storage*)addr;
+	if(ss->ss_family == AF_INET6) {
+		struct sockaddr_in6* a6 = (struct sockaddr_in6*)addr;
+		port = ntohs(a6->sin6_port);
+	} else if(ss->ss_family == AF_INET) {
+#endif
+		struct sockaddr_in* a = (struct sockaddr_in*)addr;
+#ifndef INET6
+		if(a->sin_family != AF_INET)
+			return 0; /* unknown family */
+#endif
+		port = ntohs(a->sin_port);
+#ifdef INET6
+	} else {
+		return 0; /* unknown family */
+	}
+#endif
+	p = options->proxy_protocol_port;
+	while(p) {
+		if(p->port == port)
+			return 1;
+		p = p->next;
+	}
+	return 0;
 }

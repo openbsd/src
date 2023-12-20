@@ -21,8 +21,7 @@
 #include "tsig.h"
 #include "options.h"
 #include "namedb.h"
-#include "udb.h"
-#include "udbzone.h"
+#include "difffile.h"
 #include "util.h"
 
 struct nsd nsd;
@@ -45,10 +44,6 @@ struct zone_mem {
 	size_t data;
 	/* unused space (in db.region) due to alignment */
 	size_t data_unused;
-	/* udb data allocated */
-	size_t udb_data;
-	/* udb overhead (chunk2**x - data) */
-	size_t udb_overhead;
 
 	/* count of number of domains */
 	size_t domaincount;
@@ -60,10 +55,6 @@ struct tot_mem {
 	size_t data;
 	/* unused space (in db.region) due to alignment */
 	size_t data_unused;
-	/* udb data allocated */
-	size_t udb_data;
-	/* udb overhead (chunk2**x - data) */
-	size_t udb_overhead;
 
 	/* count of number of domains */
 	size_t domaincount;
@@ -81,8 +72,6 @@ struct tot_mem {
 
 	/* total ram usage */
 	size_t ram;
-	/* total nsd.db disk usage */
-	size_t disk;
 };
 
 static void
@@ -90,11 +79,6 @@ account_zone(struct namedb* db, struct zone_mem* zmem)
 {
 	zmem->data = region_get_mem(db->region);
 	zmem->data_unused = region_get_mem_unused(db->region);
-	if(db->udb) {
-		zmem->udb_data = (size_t)db->udb->alloc->disk->stat_data;
-		zmem->udb_overhead = (size_t)(db->udb->alloc->disk->stat_alloc -
-			db->udb->alloc->disk->stat_data);
-	}
 	zmem->domaincount = domain_table_count(db->domains);
 }
 
@@ -119,8 +103,6 @@ print_zone_mem(struct zone_mem* z)
 {
 	pretty_mem(z->data, "zone data");
 	pretty_mem(z->data_unused, "zone unused space (due to alignment)");
-	pretty_mem(z->udb_data, "data in nsd.db");
-	pretty_mem(z->udb_overhead, "overhead in nsd.db");
 }
 
 static void
@@ -143,7 +125,6 @@ account_total(struct nsd_options* opt, struct tot_mem* t)
 #ifdef RATELIMIT
 	t->ram += t->rrl;
 #endif
-	t->disk = t->udb_data + t->udb_overhead;
 }
 
 static void
@@ -158,12 +139,9 @@ print_tot_mem(struct tot_mem* t)
 #ifdef RATELIMIT
 	pretty_mem(t->rrl, "RRL table (depends on servercount)");
 #endif
-	pretty_mem(t->udb_data, "data in nsd.db");
-	pretty_mem(t->udb_overhead, "overhead in nsd.db");
 	printf("\nsummary\n");
 
 	pretty_mem(t->ram, "ram usage (excl space for buffers)");
-	pretty_mem(t->disk, "disk usage (excl 12% space claimed for growth)");
 }
 
 static void
@@ -171,13 +149,11 @@ add_mem(struct tot_mem* t, struct zone_mem* z)
 {
 	t->data += z->data;
 	t->data_unused += z->data_unused;
-	t->udb_data += z->udb_data;
-	t->udb_overhead += z->udb_overhead;
 	t->domaincount += z->domaincount;
 }
 
 static void
-check_zone_mem(const char* tf, const char* df, struct zone_options* zo,
+check_zone_mem(const char* tf, struct zone_options* zo,
 	struct nsd_options* opt, struct tot_mem* totmem)
 {
 	struct nsd nsd;
@@ -193,10 +169,10 @@ check_zone_mem(const char* tf, const char* df, struct zone_options* zo,
 	/* init*/
 	memset(&zmem, 0, sizeof(zmem));
 	memset(&nsd, 0, sizeof(nsd));
-	nsd.db = db = namedb_open(df, opt);
-	if(!db) error("cannot open %s: %s", df, strerror(errno));
+	nsd.db = db = namedb_open(opt);
+	if(!db) error("cannot open namedb");
 	zone = namedb_zone_create(db, dname, zo);
-	taskudb = udb_base_create_new(tf, &namedb_walkfunc, NULL);
+	taskudb = task_file_create(tf);
 	udb_ptr_init(&last_task, taskudb);
 
 	/* read the zone */
@@ -211,7 +187,6 @@ check_zone_mem(const char* tf, const char* df, struct zone_options* zo,
 	/* delete the zone from memory */
 	namedb_close(db);
 	udb_base_free(taskudb);
-	unlink(df);
 	unlink(tf);
 
 	/* add up totals */
@@ -224,30 +199,18 @@ check_mem(struct nsd_options* opt)
 	struct tot_mem totmem;
 	struct zone_options* zo;
 	char tf[512];
-	char df[512];
 	memset(&totmem, 0, sizeof(totmem));
 	snprintf(tf, sizeof(tf), "./nsd-mem-task-%u.db", (unsigned)getpid());
-	if(opt->database == NULL || opt->database[0] == 0)
-		df[0] = 0;
-	else snprintf(df, sizeof(df), "./nsd-mem-db-%u.db", (unsigned)getpid());
 
 	/* read all zones and account memory */
 	RBTREE_FOR(zo, struct zone_options*, opt->zone_options) {
-		check_zone_mem(tf, df, zo, opt, &totmem);
+		check_zone_mem(tf, zo, opt, &totmem);
 	}
 
 	/* calculate more total statistics */
 	account_total(opt, &totmem);
 	/* print statistics */
 	print_tot_mem(&totmem);
-
-	/* final advice */
-	if(opt->database != NULL && opt->database[0] != 0) {
-		printf("\nFinal advice estimate:\n");
-		printf("(The partial mmap causes reload&AXFR to take longer(disk access))\n");
-		pretty_mem(totmem.ram + totmem.disk, "data and big mmap");
-		pretty_mem(totmem.ram + totmem.disk/6, "data and partial mmap");
-	}
 }
 
 /* dummy functions to link */

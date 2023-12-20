@@ -39,11 +39,22 @@ struct query {
 	 * The address the query was received from.
 	 */
 #ifdef INET6
-	struct sockaddr_storage addr;
+	struct sockaddr_storage remote_addr;
 #else
-	struct sockaddr_in addr;
+	struct sockaddr_in remote_addr;
 #endif
-	socklen_t addrlen;
+	socklen_t remote_addrlen;
+
+	/* if set, the request came through a proxy */
+	int is_proxied;
+	/* the client address
+	 * the same as remote_addr if not proxied */
+#ifdef INET6
+	struct sockaddr_storage client_addr;
+#else
+	struct sockaddr_in client_addr;
+#endif
+	socklen_t client_addrlen;
 
 	/*
 	 * Maximum supported query size.

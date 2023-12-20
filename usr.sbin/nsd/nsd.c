@@ -53,9 +53,11 @@
 #include "tsig.h"
 #include "remote.h"
 #include "xfrd-disk.h"
+#include "ipc.h"
 #ifdef USE_DNSTAP
 #include "dnstap/dnstap_collector.h"
 #endif
+#include "util/proxy_protocol.h"
 
 /* The server handler... */
 struct nsd nsd;
@@ -83,7 +85,6 @@ usage (void)
 #ifndef NDEBUG
 		"  -F facilities        Specify the debug facilities.\n"
 #endif /* NDEBUG */
-		"  -f database          Specify the database to load.\n"
 		"  -h                   Print this help information.\n"
 		, CONFIGFILE);
 	fprintf(stderr,
@@ -832,16 +833,20 @@ bind8_stats (struct nsd *nsd)
 	char buf[MAXSYSLOGMSGLEN];
 	char *msg, *t;
 	int i, len;
+	struct nsdst st;
 
 	/* Current time... */
 	time_t now;
-	if(!nsd->st.period)
+	if(!nsd->st_period)
 		return;
 	time(&now);
 
+	memcpy(&st, nsd->st, sizeof(st));
+	stats_subtract(&st, &nsd->stat_proc);
+
 	/* NSTATS */
 	t = msg = buf + snprintf(buf, MAXSYSLOGMSGLEN, "NSTATS %lld %lu",
-				 (long long) now, (unsigned long) nsd->st.boot);
+				 (long long) now, (unsigned long) st.boot);
 	for (i = 0; i <= 255; i++) {
 		/* How much space left? */
 		if ((len = buf + MAXSYSLOGMSGLEN - t) < 32) {
@@ -850,8 +855,8 @@ bind8_stats (struct nsd *nsd)
 			len = buf + MAXSYSLOGMSGLEN - t;
 		}
 
-		if (nsd->st.qtype[i] != 0) {
-			t += snprintf(t, len, " %s=%lu", rrtype_to_string(i), nsd->st.qtype[i]);
+		if (st.qtype[i] != 0) {
+			t += snprintf(t, len, " %s=%lu", rrtype_to_string(i), st.qtype[i]);
 		}
 	}
 	if (t > msg)
@@ -860,27 +865,27 @@ bind8_stats (struct nsd *nsd)
 	/* XSTATS */
 	/* Only print it if we're in the main daemon or have anything to report... */
 	if (nsd->server_kind == NSD_SERVER_MAIN
-	    || nsd->st.dropped || nsd->st.raxfr || nsd->st.rixfr || (nsd->st.qudp + nsd->st.qudp6 - nsd->st.dropped)
-	    || nsd->st.txerr || nsd->st.opcode[OPCODE_QUERY] || nsd->st.opcode[OPCODE_IQUERY]
-	    || nsd->st.wrongzone || nsd->st.ctcp + nsd->st.ctcp6 || nsd->st.rcode[RCODE_SERVFAIL]
-	    || nsd->st.rcode[RCODE_FORMAT] || nsd->st.nona || nsd->st.rcode[RCODE_NXDOMAIN]
-	    || nsd->st.opcode[OPCODE_UPDATE]) {
+	    || st.dropped || st.raxfr || st.rixfr || (st.qudp + st.qudp6 - st.dropped)
+	    || st.txerr || st.opcode[OPCODE_QUERY] || st.opcode[OPCODE_IQUERY]
+	    || st.wrongzone || st.ctcp + st.ctcp6 || st.rcode[RCODE_SERVFAIL]
+	    || st.rcode[RCODE_FORMAT] || st.nona || st.rcode[RCODE_NXDOMAIN]
+	    || st.opcode[OPCODE_UPDATE]) {
 
 		log_msg(LOG_INFO, "XSTATS %lld %lu"
 			" RR=%lu RNXD=%lu RFwdR=%lu RDupR=%lu RFail=%lu RFErr=%lu RErr=%lu RAXFR=%lu RIXFR=%lu"
 			" RLame=%lu ROpts=%lu SSysQ=%lu SAns=%lu SFwdQ=%lu SDupQ=%lu SErr=%lu RQ=%lu"
 			" RIQ=%lu RFwdQ=%lu RDupQ=%lu RTCP=%lu SFwdR=%lu SFail=%lu SFErr=%lu SNaAns=%lu"
 			" SNXD=%lu RUQ=%lu RURQ=%lu RUXFR=%lu RUUpd=%lu",
-			(long long) now, (unsigned long) nsd->st.boot,
-			nsd->st.dropped, (unsigned long)0, (unsigned long)0, (unsigned long)0, (unsigned long)0,
-			(unsigned long)0, (unsigned long)0, nsd->st.raxfr, nsd->st.rixfr, (unsigned long)0, (unsigned long)0,
-			(unsigned long)0, nsd->st.qudp + nsd->st.qudp6 - nsd->st.dropped, (unsigned long)0,
-			(unsigned long)0, nsd->st.txerr,
-			nsd->st.opcode[OPCODE_QUERY], nsd->st.opcode[OPCODE_IQUERY], nsd->st.wrongzone,
-			(unsigned long)0, nsd->st.ctcp + nsd->st.ctcp6,
-			(unsigned long)0, nsd->st.rcode[RCODE_SERVFAIL], nsd->st.rcode[RCODE_FORMAT],
-			nsd->st.nona, nsd->st.rcode[RCODE_NXDOMAIN],
-			(unsigned long)0, (unsigned long)0, (unsigned long)0, nsd->st.opcode[OPCODE_UPDATE]);
+			(long long) now, (unsigned long) st.boot,
+			st.dropped, (unsigned long)0, (unsigned long)0, (unsigned long)0, (unsigned long)0,
+			(unsigned long)0, (unsigned long)0, st.raxfr, st.rixfr, (unsigned long)0, (unsigned long)0,
+			(unsigned long)0, st.qudp + st.qudp6 - st.dropped, (unsigned long)0,
+			(unsigned long)0, st.txerr,
+			st.opcode[OPCODE_QUERY], st.opcode[OPCODE_IQUERY], st.wrongzone,
+			(unsigned long)0, st.ctcp + st.ctcp6,
+			(unsigned long)0, st.rcode[RCODE_SERVFAIL], st.rcode[RCODE_FORMAT],
+			st.nona, st.rcode[RCODE_NXDOMAIN],
+			(unsigned long)0, (unsigned long)0, (unsigned long)0, st.opcode[OPCODE_UPDATE]);
 	}
 
 }
@@ -950,7 +955,6 @@ main(int argc, char *argv[])
 	/* Initialize the server handler... */
 	memset(&nsd, 0, sizeof(struct nsd));
 	nsd.region      = region_create(xalloc, free);
-	nsd.dbfile	= 0;
 	nsd.pidfile	= 0;
 	nsd.server_kind = NSD_SERVER_MAIN;
 	memset(&hints, 0, sizeof(hints));
@@ -1018,7 +1022,6 @@ main(int argc, char *argv[])
 			nsd.debug = 1;
 			break;
 		case 'f':
-			nsd.dbfile = optarg;
 			break;
 		case 'h':
 			usage();
@@ -1077,7 +1080,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 #ifdef BIND8_STATS
-			nsd.st.period = atoi(optarg);
+			nsd.st_period = atoi(optarg);
 #else /* !BIND8_STATS */
 			error("BIND 8 statistics not enabled.");
 #endif /* BIND8_STATS */
@@ -1128,6 +1131,7 @@ main(int argc, char *argv[])
 	}
 	if(!tsig_init(nsd.region))
 		error("init tsig failed");
+	pp_init(&write_uint16, &write_uint32);
 
 	/* Read options */
 	if(!parse_options_file(nsd.options, configfile, NULL, NULL)) {
@@ -1152,13 +1156,6 @@ main(int argc, char *argv[])
 		verbosity = nsd_debug_level;
 #endif /* NDEBUG */
 	if(nsd.options->debug_mode) nsd.debug=1;
-	if(!nsd.dbfile)
-	{
-		if(nsd.options->database)
-			nsd.dbfile = nsd.options->database;
-		else
-			nsd.dbfile = DBFILE;
-	}
 	if(!nsd.pidfile)
 	{
 		if(nsd.options->pidfile)
@@ -1215,8 +1212,8 @@ main(int argc, char *argv[])
 		verify_port = VERIFY_PORT;
 	}
 #ifdef BIND8_STATS
-	if(nsd.st.period == 0) {
-		nsd.st.period = nsd.options->statistics;
+	if(nsd.st_period == 0) {
+		nsd.st_period = nsd.options->statistics;
 	}
 #endif /* BIND8_STATS */
 #ifdef HAVE_CHROOT
@@ -1463,9 +1460,6 @@ main(int argc, char *argv[])
 		} else if (!file_inside_chroot(nsd.pidfile, nsd.chrootdir)) {
 			error("pidfile %s is not relative to %s: chroot not possible",
 				nsd.pidfile, nsd.chrootdir);
-		} else if (!file_inside_chroot(nsd.dbfile, nsd.chrootdir)) {
-			error("database %s is not relative to %s: chroot not possible",
-				nsd.dbfile, nsd.chrootdir);
 		} else if (!file_inside_chroot(nsd.options->xfrdfile, nsd.chrootdir)) {
 			error("xfrdfile %s is not relative to %s: chroot not possible",
 				nsd.options->xfrdfile, nsd.chrootdir);
@@ -1643,8 +1637,6 @@ main(int argc, char *argv[])
 		}
 		if (nsd.pidfile && nsd.pidfile[0] == '/')
 			nsd.pidfile += l;
-		if (nsd.dbfile[0] == '/')
-			nsd.dbfile += l;
 		if (nsd.options->xfrdfile[0] == '/')
 			nsd.options->xfrdfile += l;
 		if (nsd.options->zonelistfile[0] == '/')
@@ -1734,6 +1726,9 @@ main(int argc, char *argv[])
 	options_zonestatnames_create(nsd.options);
 	server_zonestat_alloc(&nsd);
 #endif /* USE_ZONE_STATS */
+#ifdef BIND8_STATS
+	server_stat_alloc(&nsd);
+#endif /* BIND8_STATS */
 	if(nsd.server_kind == NSD_SERVER_MAIN) {
 		server_prepare_xfrd(&nsd);
 		/* xfrd forks this before reading database, so it does not get

@@ -24,8 +24,6 @@
 #include "options.h"
 #include "rdata.h"
 #include "udb.h"
-#include "udbradtree.h"
-#include "udbzone.h"
 #include "zonec.h"
 #include "nsec3.h"
 #include "difffile.h"
@@ -33,33 +31,12 @@
 #include "ixfr.h"
 #include "ixfrcreate.h"
 
-static time_t udb_time = 0;
-static unsigned long udb_rrsets = 0;
-static unsigned long udb_rrset_count = 0;
-
 void
 namedb_close(struct namedb* db)
 {
 	if(db) {
-		if(db->udb) {
-			udb_base_close(db->udb);
-			udb_base_free(db->udb);
-			db->udb = NULL;
-		}
 		zonec_desetup_parser();
 		region_destroy(db->region);
-	}
-}
-
-void
-namedb_close_udb(struct namedb* db)
-{
-	if(db) {
-		/* we cannot actually munmap the data, because other
-		 * processes still need to access the udb, so cleanup the
-		 * udb */
-		udb_base_free_keep_mmap(db->udb);
-		db->udb = NULL;
 	}
 }
 
@@ -70,148 +47,6 @@ namedb_free_ixfr(struct namedb* db)
 	for(n=radix_first(db->zonetree); n; n=radix_next(n)) {
 		zone_ixfr_free(((zone_type*)n->elem)->ixfr);
 	}
-}
-
-/** read rr */
-static void
-read_rr(namedb_type* db, rr_type* rr, udb_ptr* urr, domain_type* domain)
-{
-	buffer_type buffer;
-	ssize_t c;
-	assert(udb_ptr_get_type(urr) == udb_chunk_type_rr);
-	rr->owner = domain;
-	rr->type = RR(urr)->type;
-	rr->klass = RR(urr)->klass;
-	rr->ttl = RR(urr)->ttl;
-
-	buffer_create_from(&buffer, RR(urr)->wire, RR(urr)->len);
-	c = rdata_wireformat_to_rdata_atoms(db->region, db->domains,
-		rr->type, RR(urr)->len, &buffer, &rr->rdatas);
-	if(c == -1) {
-		/* safe on error */
-		rr->rdata_count = 0;
-		rr->rdatas = NULL;
-		return;
-	}
-	rr->rdata_count = c;
-}
-
-/** calculate rr count */
-static uint16_t
-calculate_rr_count(udb_base* udb, udb_ptr* rrset)
-{
-	udb_ptr rr;
-	uint16_t num = 0;
-	udb_ptr_new(&rr, udb, &RRSET(rrset)->rrs);
-	while(rr.data) {
-		num++;
-		udb_ptr_set_rptr(&rr, udb, &RR(&rr)->next);
-	}
-	udb_ptr_unlink(&rr, udb);
-	return num;
-}
-
-/** read rrset */
-static void
-read_rrset(udb_base* udb, namedb_type* db, zone_type* zone,
-	domain_type* domain, udb_ptr* urrset)
-{
-	rrset_type* rrset;
-	udb_ptr urr;
-	unsigned i;
-	assert(udb_ptr_get_type(urrset) == udb_chunk_type_rrset);
-	/* if no RRs, do not create anything (robust) */
-	if(RRSET(urrset)->rrs.data == 0)
-		return;
-	rrset = (rrset_type *) region_alloc(db->region, sizeof(rrset_type));
-	rrset->zone = zone;
-	rrset->rr_count = calculate_rr_count(udb, urrset);
-	rrset->rrs = (rr_type *) region_alloc_array(
-		db->region, rrset->rr_count, sizeof(rr_type));
-	/* add the RRs */
-	udb_ptr_new(&urr, udb, &RRSET(urrset)->rrs);
-	for(i=0; i<rrset->rr_count; i++) {
-		read_rr(db, &rrset->rrs[i], &urr, domain);
-		udb_ptr_set_rptr(&urr, udb, &RR(&urr)->next);
-	}
-	udb_ptr_unlink(&urr, udb);
-	domain_add_rrset(domain, rrset);
-	if(domain == zone->apex)
-		apex_rrset_checks(db, rrset, domain);
-}
-
-/** read one elem from db, of type domain_d */
-static void read_node_elem(udb_base* udb, namedb_type* db, 
-	region_type* dname_region, zone_type* zone, struct domain_d* d)
-{
-	const dname_type* dname;
-	domain_type* domain;
-	udb_ptr urrset;
-
-	dname = dname_make(dname_region, d->name, 0);
-	if(!dname) return;
-	domain = domain_table_insert(db->domains, dname);
-	assert(domain); /* domain_table_insert should always return non-NULL */
-
-	/* add rrsets */
-	udb_ptr_init(&urrset, udb);
-	udb_ptr_set_rptr(&urrset, udb, &d->rrsets);
-	while(urrset.data) {
-		read_rrset(udb, db, zone, domain, &urrset);
-		udb_ptr_set_rptr(&urrset, udb, &RRSET(&urrset)->next);
-
-		if(++udb_rrsets % ZONEC_PCT_COUNT == 0 && time(NULL) > udb_time + ZONEC_PCT_TIME) {
-			udb_time = time(NULL);
-			VERBOSITY(1, (LOG_INFO, "read %s %d %%",
-				zone->opts->name,
-				(int)(udb_rrsets*((unsigned long)100)/udb_rrset_count)));
-		}
-	}
-	region_free_all(dname_region);
-	udb_ptr_unlink(&urrset, udb);
-}
-
-/** recurse read radix from disk. This radix tree is by domain name, so max of
- * 256 depth, and thus the stack usage is small. */
-static void read_zone_recurse(udb_base* udb, namedb_type* db,
-	region_type* dname_region, zone_type* zone, struct udb_radnode_d* node)
-{
-	if(node->elem.data) {
-		/* pre-order process of node->elem, for radix tree this is
-		 * also in-order processing (identical to order tree_next()) */
-		read_node_elem(udb, db, dname_region, zone, (struct domain_d*)
-			((char*)udb->base + node->elem.data));
-	}
-	if(node->lookup.data) {
-		uint16_t i;
-		struct udb_radarray_d* a = (struct udb_radarray_d*)
-			((char*)udb->base + node->lookup.data);
-		/* we do not care for what the exact radix key is, we want
-		 * to add all of them and the read routine does not need
-		 * the radix-key, it has it stored */
-		for(i=0; i<a->len; i++) {
-			if(a->array[i].node.data) {
-				read_zone_recurse(udb, db, dname_region, zone,
-					(struct udb_radnode_d*)((char*)udb->base +
-						a->array[i].node.data));
-			}
-		}
-	}
-}
-
-/** read zone data */
-static void
-read_zone_data(udb_base* udb, namedb_type* db, region_type* dname_region,
-	udb_ptr* z, zone_type* zone)
-{
-	udb_ptr dtree;
-	/* recursively read domains, we only read so ptrs stay valid */
-	udb_ptr_new(&dtree, udb, &ZONE(z)->domains);
-	if(RADTREE(&dtree)->root.data)
-		read_zone_recurse(udb, db, dname_region, zone,
-			(struct udb_radnode_d*)
-			((char*)udb->base + RADTREE(&dtree)->root.data));
-	udb_ptr_unlink(&dtree, udb);
 }
 
 /** create a zone */
@@ -294,103 +129,8 @@ namedb_zone_delete(namedb_type* db, zone_type* zone)
 	region_recycle(db->region, zone, sizeof(zone_type));
 }
 
-#ifdef HAVE_MMAP
-/** read a zone */
-static void
-read_zone(udb_base* udb, namedb_type* db, struct nsd_options* opt,
-	region_type* dname_region, udb_ptr* z)
-{
-	/* construct dname */
-	const dname_type* dname = dname_make(dname_region, ZONE(z)->name, 0);
-	struct zone_options* zo = dname?zone_options_find(opt, dname):NULL;
-	zone_type* zone;
-	if(!dname) return;
-	if(!zo) {
-		/* deleted from the options, remove it from the nsd.db too */
-		VERBOSITY(2, (LOG_WARNING, "zone %s is deleted",
-			dname_to_string(dname, NULL)));
-		udb_zone_delete(udb, z);
-		region_free_all(dname_region);
-		return;
-	}
-	assert(udb_ptr_get_type(z) == udb_chunk_type_zone);
-	udb_rrsets = 0;
-	udb_rrset_count = ZONE(z)->rrset_count;
-	zone = namedb_zone_create(db, dname, zo);
-	region_free_all(dname_region);
-	read_zone_data(udb, db, dname_region, z, zone);
-	zone->is_changed = (ZONE(z)->is_changed != 0);
-#ifdef NSEC3
-	prehash_zone_complete(db, zone);
-#endif
-}
-#endif /* HAVE_MMAP */
-
-#ifdef HAVE_MMAP
-/** read zones from nsd.db */
-static void
-read_zones(udb_base* udb, namedb_type* db, struct nsd_options* opt,
-	region_type* dname_region)
-{
-	udb_ptr ztree, n, z;
-	udb_ptr_init(&z, udb);
-	udb_ptr_new(&ztree, udb, udb_base_get_userdata(udb));
-	udb_radix_first(udb,&ztree,&n);
-	udb_time = time(NULL);
-	while(n.data) {
-		udb_ptr_set_rptr(&z, udb, &RADNODE(&n)->elem);
-		udb_radix_next(udb, &n); /* store in case n is deleted */
-		read_zone(udb, db, opt, dname_region, &z);
-		udb_ptr_zero(&z, udb);
-		if(nsd.signal_hint_shutdown) break;
-	}
-	udb_ptr_unlink(&ztree, udb);
-	udb_ptr_unlink(&n, udb);
-	udb_ptr_unlink(&z, udb);
-}
-#endif /* HAVE_MMAP */
-
-#ifdef HAVE_MMAP
-/** try to read the udb file or fail */
-static int
-try_read_udb(namedb_type* db, int fd, const char* filename,
-	struct nsd_options* opt)
-{
-	/*
-	 * Temporary region used while loading domain names from the
-	 * database.  The region is freed after each time a dname is
-	 * read from the database.
-	 */
-	region_type* dname_region;
-
-	assert(fd != -1);
-	if(!(db->udb=udb_base_create_fd(filename, fd, &namedb_walkfunc,
-		NULL))) {
-		/* fd is closed by failed udb create call */
-		VERBOSITY(1, (LOG_ERR, "can not use %s, "
-			"will create anew", filename));
-		return 0;
-	}
-	/* sanity check if can be opened */
-	if(udb_base_get_userflags(db->udb) != 0) {
-		log_msg(LOG_ERR, "%s was not closed properly, it might "
-			"be corrupted, will create anew", filename);
-		udb_base_free(db->udb);
-		db->udb = NULL;
-		return 0;
-	}
-	/* read if it can be opened */
-	dname_region = region_create(xalloc, free);
-	/* this operation does not fail, we end up with
-	 * something, even if that is an empty namedb */
-	read_zones(db->udb, db, opt, dname_region);
-	region_destroy(dname_region);
-	return 1;
-}
-#endif /* HAVE_MMAP */
-
 struct namedb *
-namedb_open (const char* filename, struct nsd_options* opt)
+namedb_open (struct nsd_options* opt)
 {
 	namedb_type* db;
 
@@ -399,7 +139,8 @@ namedb_open (const char* filename, struct nsd_options* opt)
 	 * freed in namedb_close.
 	 */
 	region_type* db_region;
-	int fd;
+
+	(void)opt;
 
 #ifdef USE_MMAP_ALLOC
 	db_region = region_create_custom(mmap_alloc, mmap_free, MMAP_ALLOC_CHUNK_SIZE,
@@ -417,54 +158,12 @@ namedb_open (const char* filename, struct nsd_options* opt)
 	zonec_setup_parser(db);
 
 	if (gettimeofday(&(db->diff_timestamp), NULL) != 0) {
-		log_msg(LOG_ERR, "unable to load %s: cannot initialize"
-				 "timestamp", filename);
+		log_msg(LOG_ERR, "unable to load namedb: cannot initialize timestamp");
 		region_destroy(db_region);
 		return NULL;
-        }
-
-	/* in dbless mode there is no file to read or mmap */
-	if(filename == NULL || filename[0] == 0) {
-		db->udb = NULL;
-		return db;
 	}
 
-#ifndef HAVE_MMAP
-	/* no mmap() system call, use dbless mode */
-	VERBOSITY(1, (LOG_INFO, "no mmap(), ignoring database %s", filename));
-	db->udb = NULL;
-	(void)fd; (void)opt;
 	return db;
-#else /* HAVE_MMAP */
-
-	/* attempt to open, if does not exist, create a new one */
-	fd = open(filename, O_RDWR);
-	if(fd == -1) {
-		if(errno != ENOENT) {
-			log_msg(LOG_ERR, "%s: %s", filename, strerror(errno));
-			region_destroy(db_region);
-			return NULL;
-		}
-	}
-	/* attempt to read the file (if it exists) */
-	if(fd != -1) {
-		if(!try_read_udb(db, fd, filename, opt))
-			fd = -1;
-	}
-	/* attempt to create the file (if necessary or failed read) */
-	if(fd == -1) {
-		if(!(db->udb=udb_base_create_new(filename, &namedb_walkfunc,
-			NULL))) {
-			region_destroy(db_region);
-			return NULL;
-		}
-		if(!udb_dns_init_file(db->udb)) {
-			region_destroy(db->region);
-			return NULL;
-		}
-	}
-	return db;
-#endif /* HAVE_MMAP */
 }
 
 /** get the file mtime stat (or nonexist or error) */
@@ -527,15 +226,6 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 	} else {
 		const char* zone_fname = zone->filename;
 		struct timespec zone_mtime = zone->mtime;
-		if(nsd->db->udb) {
-			zone_fname = udb_zone_get_file_str(nsd->db->udb,
-				dname_name(domain_dname(zone->apex)),
-				domain_dname(zone->apex)->name_size);
-			udb_zone_get_mtime(nsd->db->udb,
-				dname_name(domain_dname(zone->apex)),
-				domain_dname(zone->apex)->name_size,
-				&zone_mtime);
-		}
 		/* if no zone_fname, then it was acquired in zone transfer,
 		 * see if the file is newer than the zone transfer
 		 * (regardless if this is a different file), because the
@@ -582,60 +272,29 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		zone->nsec3_param = NULL;
 #endif
 		delete_zone_rrs(nsd->db, zone);
-		if(nsd->db->udb) {
-			region_type* dname_region;
-			udb_ptr z;
-			/* see if we can revert to the udb stored version */
-			if(!udb_zone_search(nsd->db->udb, &z, dname_name(domain_dname(
-				zone->apex)), domain_dname(zone->apex)->name_size)) {
-				/* tell that zone contents has been lost */
-				if(taskudb) task_new_soainfo(taskudb, last_task, zone, 0);
-				ixfr_create_cancel(ixfrcr);
-				return;
-			}
-			/* read from udb */
-			dname_region = region_create(xalloc, free);
-			udb_rrsets = 0;
-			udb_rrset_count = ZONE(&z)->rrset_count;
-			udb_time = time(NULL);
-			read_zone_data(nsd->db->udb, nsd->db, dname_region, &z, zone);
-			region_destroy(dname_region);
-			udb_ptr_unlink(&z, nsd->db->udb);
-		} else {
-			if(zone->filename)
-				region_recycle(nsd->db->region, zone->filename,
-					strlen(zone->filename)+1);
-			zone->filename = NULL;
-			if(zone->logstr)
-				region_recycle(nsd->db->region, zone->logstr,
-					strlen(zone->logstr)+1);
-			zone->logstr = NULL;
-		}
+		if(zone->filename)
+			region_recycle(nsd->db->region, zone->filename,
+				strlen(zone->filename)+1);
+		zone->filename = NULL;
+		if(zone->logstr)
+			region_recycle(nsd->db->region, zone->logstr,
+				strlen(zone->logstr)+1);
+		zone->logstr = NULL;
 	} else {
 		VERBOSITY(1, (LOG_INFO, "zone %s read with success",
 			zone->opts->name));
 		zone->is_ok = 1;
 		zone->is_changed = 0;
 		/* store zone into udb */
-		if(nsd->db->udb) {
-			if(!write_zone_to_udb(nsd->db->udb, zone, &mtime,
-				fname)) {
-				log_msg(LOG_ERR, "failed to store zone in db");
-			} else {
-				VERBOSITY(2, (LOG_INFO, "zone %s written to db",
-					zone->opts->name));
-			}
-		} else {
-			zone->mtime = mtime;
-			if(zone->filename)
-				region_recycle(nsd->db->region, zone->filename,
-					strlen(zone->filename)+1);
-			zone->filename = region_strdup(nsd->db->region, fname);
-			if(zone->logstr)
-				region_recycle(nsd->db->region, zone->logstr,
-					strlen(zone->logstr)+1);
-			zone->logstr = NULL;
-		}
+		zone->mtime = mtime;
+		if(zone->filename)
+			region_recycle(nsd->db->region, zone->filename,
+				strlen(zone->filename)+1);
+		zone->filename = region_strdup(nsd->db->region, fname);
+		if(zone->logstr)
+			region_recycle(nsd->db->region, zone->logstr,
+				strlen(zone->logstr)+1);
+		zone->logstr = NULL;
 		if(ixfr_create_already_done) {
 			ixfr_readup_exist(zone, nsd, fname);
 		} else if(ixfrcr) {

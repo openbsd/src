@@ -1,9 +1,9 @@
-.TH "NSD" "8" "Jun  7, 2023" "NLnet Labs" "NSD 4.7.0"
+.TH "NSD" "8" "Dec  6, 2023" "NLnet Labs" "NSD 4.8.0"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd
-\- Name Server Daemon (NSD) version 4.7.0.
+\- Name Server Daemon (NSD) version 4.8.0.
 .SH "SYNOPSIS"
 .B nsd
 .RB [ \-4 ] 
@@ -111,16 +111,6 @@ For format description see nsd.conf(5).
 .B \-d
 Do not fork, stay in the foreground.
 .TP
-.B \-f\fI database
-Use the specified
-.I database
-instead of the default of
-.IR '@dbfile@' .
-If a 
-.B zonesdir: 
-is specified in the config file this path can be relative to that 
-directory.
-.TP
 .B \-h
 Print help information and exit.
 .TP
@@ -223,11 +213,6 @@ them in.  Also reopens the logfile (assists logrotation).
 SIGUSR1
 Dump BIND8\-style statistics into the log. Ignored otherwise.
 .SH "FILES"
-.TP
-"@dbfile@"
-default
-.B NSD
-database
 .TP
 @pidfile@
 the process id of the name server.

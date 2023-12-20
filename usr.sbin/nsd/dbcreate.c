@@ -19,8 +19,6 @@
 
 #include "namedb.h"
 #include "udb.h"
-#include "udbradtree.h"
-#include "udbzone.h"
 #include "options.h"
 #include "nsd.h"
 #include "ixfr.h"
@@ -64,121 +62,6 @@ rr_marshal_rdata(rr_type* rr, uint8_t* rdata, size_t sz)
 		len += add_rdata(rr, i, rdata+len, sz-len);
 	}
 	return len;
-}
-
-/** delete an RR */
-void
-udb_del_rr(udb_base* udb, udb_ptr* z, rr_type* rr)
-{
-	/* marshal the rdata (uncompressed) into a buffer */
-	uint8_t rdata[MAX_RDLENGTH];
-	size_t rdatalen = rr_marshal_rdata(rr, rdata, sizeof(rdata));
-	assert(udb);
-	udb_zone_del_rr(udb, z, dname_name(domain_dname(rr->owner)),
-		domain_dname(rr->owner)->name_size, rr->type, rr->klass,
-		rdata, rdatalen);
-}
-
-/** write rr */
-int
-udb_write_rr(udb_base* udb, udb_ptr* z, rr_type* rr)
-{
-	/* marshal the rdata (uncompressed) into a buffer */
-	uint8_t rdata[MAX_RDLENGTH];
-	size_t rdatalen = 0;
-	unsigned i;
-	assert(rr);
-	for(i=0; i<rr->rdata_count; i++) {
-		rdatalen += add_rdata(rr, i, rdata+rdatalen,
-			sizeof(rdata)-rdatalen);
-	}
-	assert(udb);
-	return udb_zone_add_rr(udb, z, dname_name(domain_dname(rr->owner)),
-		domain_dname(rr->owner)->name_size, rr->type, rr->klass,
-		rr->ttl, rdata, rdatalen);
-}
-
-/** write rrset */
-static int
-write_rrset(udb_base* udb, udb_ptr* z, rrset_type* rrset)
-{
-	unsigned i;
-	for(i=0; i<rrset->rr_count; i++) {
-		if(!udb_write_rr(udb, z, &rrset->rrs[i]))
-			return 0;
-	}
-	return 1;
-}
-
-/** write a zone */
-static int
-write_zone(udb_base* udb, udb_ptr* z, zone_type* zone)
-{
-	/* write all domains in the zone */
-	domain_type* walk;
-	rrset_type* rrset;
-	unsigned long n = 0, c = 0;
-	time_t t = time(NULL);
-
-	/* count domains: for pct logging */
-	for(walk=zone->apex; walk && domain_is_subdomain(walk, zone->apex);
-		walk=domain_next(walk)) {
-		n++;
-	}
-	/* write them */
-	for(walk=zone->apex; walk && domain_is_subdomain(walk, zone->apex);
-		walk=domain_next(walk)) {
-		/* write all rrsets (in the zone) for this domain */
-		for(rrset=walk->rrsets; rrset; rrset=rrset->next) {
-			if(rrset->zone == zone) {
-				if(!write_rrset(udb, z, rrset))
-					return 0;
-			}
-		}
-		/* only check every ... domains, and print pct */
-		if(++c % ZONEC_PCT_COUNT == 0 && time(NULL) > t + ZONEC_PCT_TIME) {
-			t = time(NULL);
-			VERBOSITY(1, (LOG_INFO, "write %s %d %%",
-				zone->opts->name, (n==0)?0:(int)(c*((unsigned long)100)/n)));
-		}
-	}
-	return 1;
-}
-
-/** create and write a zone */
-int
-write_zone_to_udb(udb_base* udb, zone_type* zone, struct timespec* mtime,
-	const char* file_str)
-{
-	udb_ptr z;
-	/* make udb dirty */
-	udb_base_set_userflags(udb, 1);
-	/* find or create zone */
-	if(udb_zone_search(udb, &z, dname_name(domain_dname(zone->apex)),
-		domain_dname(zone->apex)->name_size)) {
-		/* wipe existing contents */
-		udb_zone_clear(udb, &z);
-	} else {
-		if(!udb_zone_create(udb, &z, dname_name(domain_dname(
-			zone->apex)), domain_dname(zone->apex)->name_size)) {
-			udb_base_set_userflags(udb, 0);
-			return 0;
-		}
-	}
-	/* set mtime */
-	ZONE(&z)->mtime = (uint64_t)mtime->tv_sec;
-	ZONE(&z)->mtime_nsec = (uint64_t)mtime->tv_nsec;
-	ZONE(&z)->is_changed = 0;
-	udb_zone_set_log_str(udb, &z, NULL);
-	udb_zone_set_file_str(udb, &z, file_str);
-	/* write zone */
-	if(!write_zone(udb, &z, zone)) {
-		udb_base_set_userflags(udb, 0);
-		return 0;
-	}
-	udb_ptr_unlink(&z, udb);
-	udb_base_set_userflags(udb, 0);
-	return 1;
 }
 
 int
@@ -354,36 +237,21 @@ namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt)
 		char logs[4096];
 		char bakfile[4096];
 		struct timespec mtime;
-		udb_ptr zudb;
-		if(nsd->db->udb) {
-			if(!udb_zone_search(nsd->db->udb, &zudb,
-				dname_name(domain_dname(zone->apex)),
-				domain_dname(zone->apex)->name_size))
-				return; /* zone does not exist in db */
-		}
 		/* write to zfile~ first, then rename if that works */
 		snprintf(bakfile, sizeof(bakfile), "%s~", zfile);
-		if(nsd->db->udb && ZONE(&zudb)->log_str.data) {
-			udb_ptr s;
-			udb_ptr_new(&s, nsd->db->udb, &ZONE(&zudb)->log_str);
-			strlcpy(logs, (char*)udb_ptr_data(&s), sizeof(logs));
-			udb_ptr_unlink(&s, nsd->db->udb);
-		} else if(zone->logstr) {
+		if(zone->logstr)
 			strlcpy(logs, zone->logstr, sizeof(logs));
-		} else logs[0] = 0;
+		else
+			logs[0] = 0;
 		VERBOSITY(1, (LOG_INFO, "writing zone %s to file %s",
 			zone->opts->name, zfile));
 		if(!write_to_zonefile(zone, bakfile, logs)) {
-			if(nsd->db->udb)
-				udb_ptr_unlink(&zudb, nsd->db->udb);
 			(void)unlink(bakfile); /* delete failed file */
 			return; /* error already printed */
 		}
 		if(rename(bakfile, zfile) == -1) {
 			log_msg(LOG_ERR, "rename(%s to %s) failed: %s",
 				bakfile, zfile, strerror(errno));
-			if(nsd->db->udb)
-				udb_ptr_unlink(&zudb, nsd->db->udb);
 			(void)unlink(bakfile); /* delete failed file */
 			return;
 		}
@@ -393,23 +261,15 @@ namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt)
 		if(!file_get_mtime(zfile, &mtime, &notexist)) {
 			get_time(&mtime);
 		}
-		if(nsd->db->udb) {
-			ZONE(&zudb)->mtime = (uint64_t)mtime.tv_sec;
-			ZONE(&zudb)->mtime_nsec = (uint64_t)mtime.tv_nsec;
-			ZONE(&zudb)->is_changed = 0;
-			udb_zone_set_log_str(nsd->db->udb, &zudb, NULL);
-			udb_ptr_unlink(&zudb, nsd->db->udb);
-		} else {
-			zone->mtime = mtime;
-			if(zone->filename)
-				region_recycle(nsd->db->region, zone->filename,
-					strlen(zone->filename)+1);
-			zone->filename = region_strdup(nsd->db->region, zfile);
-			if(zone->logstr)
-				region_recycle(nsd->db->region, zone->logstr,
-					strlen(zone->logstr)+1);
-			zone->logstr = NULL;
-		}
+		zone->mtime = mtime;
+		if(zone->filename)
+			region_recycle(nsd->db->region, zone->filename,
+				strlen(zone->filename)+1);
+		zone->filename = region_strdup(nsd->db->region, zfile);
+		if(zone->logstr)
+			region_recycle(nsd->db->region, zone->logstr,
+				strlen(zone->logstr)+1);
+		zone->logstr = NULL;
 		if(zone_is_ixfr_enabled(zone) && zone->ixfr)
 			ixfr_write_to_file(zone, zfile);
 	}

@@ -5,7 +5,6 @@
  */
 
 #include "config.h"
-#include "udbzone.h"
 #include "util.h"
 #include "buffer.h"
 #include "packet.h"

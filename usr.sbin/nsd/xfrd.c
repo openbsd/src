@@ -570,7 +570,10 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 	xfrd_xfr_type* xfr;
 	xfrd_xfr_type* prev_xfr;
 	enum soainfo_hint hint;
-	time_t before, acquired = 0;
+#ifndef NDEBUG
+	time_t before;
+#endif
+	time_t acquired = 0;
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: process SOAINFO %s",
 		dname_to_string(task->zname, 0)));
 	zone = (xfrd_zone_type*)rbtree_search(xfrd->zones, task->zname);
@@ -582,7 +585,9 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 			hint == soainfo_bad ? "kept" : "lost"));
 		soa_ptr = NULL;
 		/* discard all updates */
+#ifndef NDEBUG
 		before = xfrd_time();
+#endif
 	} else {
 		uint8_t* p = (uint8_t*)task->zname + dname_total_size(
 			task->zname);
@@ -617,7 +622,9 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 			(unsigned)ntohl(soa.serial)));
 		/* discard all updates received before initial reload unless
 		   reload was successful */
+#ifndef NDEBUG
 		before = xfrd->reload_cmd_first_sent;
+#endif
 	}
 
 	if(!zone) {
@@ -862,7 +869,6 @@ xfrd_del_slave_zone(xfrd_state_type* xfrd, const dname_type* dname)
 void
 xfrd_free_namedb(struct nsd* nsd)
 {
-	namedb_close_udb(nsd->db);
 	namedb_close(nsd->db);
 	nsd->db = 0;
 }
@@ -2684,22 +2690,6 @@ xfrd_get_temp_buffer()
 	return xfrd->packet;
 }
 
-#ifdef BIND8_STATS
-/** process stat info task */
-static void
-xfrd_process_stat_info_task(xfrd_state_type* xfrd, struct task_list_d* task)
-{
-	size_t i;
-	stc_type* p = (void*)((char*)task->zname + sizeof(struct nsdst));
-	stats_add(&xfrd->nsd->st, (struct nsdst*)task->zname);
-	for(i=0; i<xfrd->nsd->child_count; i++) {
-		xfrd->nsd->children[i].query_count += *p++;
-	}
-	/* got total, now see if users are interested in these statistics */
-	daemon_remote_process_stats(xfrd->nsd->rc);
-}
-#endif /* BIND8_STATS */
-
 #ifdef USE_ZONE_STATS
 /** process zonestat inc task */
 static void
@@ -2716,18 +2706,13 @@ xfrd_process_zonestat_inc_task(xfrd_state_type* xfrd, struct task_list_d* task)
 static void
 xfrd_handle_taskresult(xfrd_state_type* xfrd, struct task_list_d* task)
 {
-#ifndef BIND8_STATS
+#ifndef USE_ZONE_STATS
 	(void)xfrd;
 #endif
 	switch(task->task_type) {
 	case task_soa_info:
 		xfrd_process_soa_info_task(task);
 		break;
-#ifdef BIND8_STATS
-	case task_stat_info:
-		xfrd_process_stat_info_task(xfrd, task);
-		break;
-#endif /* BIND8_STATS */
 #ifdef USE_ZONE_STATS
 	case task_zonestat_inc:
 		xfrd_process_zonestat_inc_task(xfrd, task);
