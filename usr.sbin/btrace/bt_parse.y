@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.55 2023/12/20 01:38:46 dv Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.56 2023/12/20 14:00:17 dv Exp $	*/
 
 /*
  * Copyright (c) 2019-2023 Martin Pieuchot <mpi@openbsd.org>
@@ -34,6 +34,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -925,17 +926,20 @@ again:
 				yyerror("line too long");
 				return ERROR;
 			}
-		} while ((c = lgetc()) != EOF && isdigit(c));
+		} while ((c = lgetc()) != EOF &&
+		    (isxdigit(c) || c == 'x' || c == 'X'));
 		lungetc();
 		if (c == EOF || allowed_to_end_number(c)) {
-			const char *errstr = NULL;
-
 			*p = '\0';
-			yylval.v.number = strtonum(buf, LONG_MIN, LONG_MAX,
-			    &errstr);
-			if (errstr) {
-				yyerror("invalid number '%s' (%s)", buf,
-				    errstr);
+			errno = 0;
+			yylval.v.number = strtol(buf, NULL, 0);
+			if (errno == ERANGE) {
+				/*
+				 * Characters are already validated, so only
+				 * check ERANGE.
+				 */
+				yyerror("%sflow", (yylval.v.number == LONG_MIN)
+				    ? "under" : "over");
 				return ERROR;
 			}
 			return NUMBER;
