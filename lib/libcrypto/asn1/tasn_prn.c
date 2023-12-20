@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.25 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.26 2023/12/20 14:26:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -395,15 +395,9 @@ static int
 asn1_print_fsname(BIO *out, int indent, const char *fname, const char *sname,
     const ASN1_PCTX *pctx)
 {
-	static char spaces[] = "                    ";
-	const int nspaces = sizeof(spaces) - 1;
-
-	while (indent > nspaces) {
-		if (BIO_write(out, spaces, nspaces) != nspaces)
-			return 0;
-		indent -= nspaces;
-	}
-	if (BIO_write(out, spaces, indent) != indent)
+	if (indent < 0)
+		return 0;
+	if (!BIO_indent(out, indent, indent))
 		return 0;
 	if (pctx->flags & ASN1_PCTX_FLAGS_NO_STRUCT_NAME)
 		sname = NULL;
