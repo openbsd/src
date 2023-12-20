@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.7 2023/12/20 11:31:17 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.8 2023/12/20 14:10:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -180,7 +180,6 @@ struct evp_cipher_ctx_st {
 	unsigned long flags;	/* Various flags */
 	void *cipher_data; /* per EVP data */
 	int final_used;
-	int block_mask;
 	unsigned char final[EVP_MAX_BLOCK_LENGTH];/* possible final block */
 } /* EVP_CIPHER_CTX */;
 

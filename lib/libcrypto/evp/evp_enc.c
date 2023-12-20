@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.68 2023/12/20 11:33:52 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.69 2023/12/20 14:10:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,7 +122,8 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 		EVPerror(EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
-	/* we assume block size is a power of 2 in *cryptUpdate */
+
+	/* Block sizes must be a power of 2 due to the use of block_mask. */
 	if (ctx->cipher->block_size != 1 &&
 	    ctx->cipher->block_size != 8 &&
 	    ctx->cipher->block_size != 16) {
@@ -184,9 +185,10 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 		if (!ctx->cipher->init(ctx, key, iv, enc))
 			return 0;
 	}
+
 	ctx->partial_len = 0;
 	ctx->final_used = 0;
-	ctx->block_mask = ctx->cipher->block_size - 1;
+
 	return 1;
 }
 
@@ -297,11 +299,14 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
 	const int block_size = ctx->cipher->block_size;
-	const int block_mask = ctx->block_mask;
+	const int block_mask = block_size - 1;
 	int partial_len = ctx->partial_len;
 	int len = 0, total_len = 0;
 
 	*outl = 0;
+
+	if ((block_size & block_mask) != 0)
+		return 0;
 
 	if (inl < 0)
 		return 0;
@@ -418,9 +423,13 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
 	const int block_size = ctx->cipher->block_size;
+	const int block_mask = block_size - 1;
 	int len = 0, total_len = 0;
 
 	*outl = 0;
+
+	if ((block_size & block_mask) != 0)
+		return 0;
 
 	if (inl < 0)
 		return 0;
@@ -445,7 +454,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		 * length output from EVP_EncryptUpdate() is inl & ~block_mask.
 		 * Ensure (inl & ~block_mask) + block_size doesn't overflow.
 		 */
-		if ((inl & ~ctx->block_mask) > INT_MAX - block_size) {
+		if ((inl & ~block_mask) > INT_MAX - block_size) {
 			EVPerror(EVP_R_TOO_LARGE);
 			return 0;
 		}
