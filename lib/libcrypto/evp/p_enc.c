@@ -1,4 +1,4 @@
-/* $OpenBSD: p_enc.c,v 1.16 2023/12/20 10:14:14 tb Exp $ */
+/* $OpenBSD: p_enc.c,v 1.17 2023/12/20 13:34:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,14 +64,14 @@
 #include "evp_local.h"
 
 int
-EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key, int key_len,
-    EVP_PKEY *pubk)
+EVP_PKEY_encrypt_old(unsigned char *to, const unsigned char *from, int from_len,
+    EVP_PKEY *pkey)
 {
-	if (pubk->type != EVP_PKEY_RSA) {
+	if (pkey->type != EVP_PKEY_RSA) {
 		EVPerror(EVP_R_PUBLIC_KEY_NOT_RSA);
 		return 0;
 	}
 
-	return RSA_public_encrypt(key_len, key, ek, pubk->pkey.rsa,
+	return RSA_public_encrypt(from_len, from, to, pkey->pkey.rsa,
 	    RSA_PKCS1_PADDING);
 }
