@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.85 2023/07/08 11:03:45 jasper Exp $
+#	$OpenBSD: Makefile,v 1.86 2023/12/20 14:54:29 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -29,7 +29,8 @@ SRCS+=	malloc.c reallocarray.c tib.c ffs.c
 
 syscall=close exit fstat getdents getentropy getthrid issetugid kbind \
 	mimmutable mmap mprotect munmap msyscall open pledge pinsyscall \
-	read __realpath sendsyslog __set_tcb sysctl thrkill utrace write
+	pinsyscalls read __realpath sendsyslog __set_tcb sysctl thrkill \
+	utrace write
 
 .if (${MACHINE_ARCH} == "i386")
 syscall+=mquery
