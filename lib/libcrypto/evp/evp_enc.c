@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.65 2023/12/20 10:42:43 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.66 2023/12/20 11:01:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -487,50 +487,53 @@ EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 int
 EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
-	int i, n;
-	unsigned int b;
+	const int block_size = ctx->cipher->block_size;
+	int buf_offset = ctx->buf_len;
+	int i, pad, plain_len;
 
 	*outl = 0;
 
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
 		return evp_cipher(ctx, out, outl, NULL, 0);
 
-	b = ctx->cipher->block_size;
-	if (ctx->flags & EVP_CIPH_NO_PADDING) {
-		if (ctx->buf_len) {
+	if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
+		if (buf_offset != 0) {
 			EVPerror(EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
 			return 0;
 		}
-		*outl = 0;
 		return 1;
 	}
-	if (b > 1) {
-		if (ctx->buf_len || !ctx->final_used) {
-			EVPerror(EVP_R_WRONG_FINAL_BLOCK_LENGTH);
-			return (0);
-		}
-		if (b > sizeof ctx->final) {
-			EVPerror(EVP_R_BAD_BLOCK_LENGTH);
+
+	if (block_size == 1)
+		return 1;
+
+	if (buf_offset != 0 || !ctx->final_used) {
+		EVPerror(EVP_R_WRONG_FINAL_BLOCK_LENGTH);
+		return 0;
+	}
+
+	if (block_size > sizeof(ctx->final)) {
+		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
+		return 0;
+	}
+
+	pad = ctx->final[block_size - 1];
+	if (pad <= 0 || pad > block_size) {
+		EVPerror(EVP_R_BAD_DECRYPT);
+		return 0;
+	}
+	plain_len = block_size - pad;
+	for (i = plain_len; i < block_size; i++) {
+		if (ctx->final[i] != pad) {
+			EVPerror(EVP_R_BAD_DECRYPT);
 			return 0;
 		}
-		n = ctx->final[b - 1];
-		if (n == 0 || n > (int)b) {
-			EVPerror(EVP_R_BAD_DECRYPT);
-			return (0);
-		}
-		for (i = 0; i < n; i++) {
-			if (ctx->final[--b] != n) {
-				EVPerror(EVP_R_BAD_DECRYPT);
-				return (0);
-			}
-		}
-		n = ctx->cipher->block_size - n;
-		for (i = 0; i < n; i++)
-			out[i] = ctx->final[i];
-		*outl = n;
-	} else
-		*outl = 0;
-	return (1);
+	}
+
+	memcpy(out, ctx->final, plain_len);
+	*outl = plain_len;
+
+	return 1;
 }
 
 EVP_CIPHER_CTX *
