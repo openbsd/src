@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.412 2023/11/06 08:34:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.413 2023/12/20 07:32:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7704,6 +7704,7 @@ iwm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 				return ENOBUFS;
 			frm = ieee80211_add_vhtcaps(frm, ic);
 			remain -= frm - pos;
+			preq->band_data[1].len = htole16(frm - pos);
 		}
 	}
 
