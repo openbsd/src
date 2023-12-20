@@ -1,4 +1,4 @@
-/* $OpenBSD: set_key.c,v 1.25 2023/12/20 06:28:04 tb Exp $ */
+/* $OpenBSD: set_key.c,v 1.26 2023/12/20 06:30:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,13 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* set_key.c v 1.4 eay 24/9/91
- * 1.4 Speed up by 400% :-)
- * 1.3 added register declarations.
- * 1.2 unrolled make_key_sched a bit more
- * 1.1 added norm_expand_bits
- * 1.0 First working version
- */
 #include <stdlib.h>
 
 #include <openssl/crypto.h>
