@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.28 2023/12/11 09:40:42 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.29 2023/12/20 09:51:06 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -47,6 +47,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
@@ -592,7 +593,8 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = vio_ioctl;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM))
-		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|
+		    IFCAP_CSUM_TCPv6|IFCAP_CSUM_UDPv6;
 	ifq_init_maxlen(&ifp->if_snd, vsc->sc_vqs[1].vq_num - 1);
 	ifmedia_init(&sc->sc_media, 0, vio_media_change, vio_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -764,7 +766,10 @@ again:
 
 			if (ext.ip4)
 				hdr->csum_start += ext.ip4->ip_hl << 2;
-
+#ifdef INET6
+			else if (ext.ip6)
+				hdr->csum_start += sizeof(*ext.ip6);
+#endif
 			hdr->flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
 		}
 
