@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.72 2023/12/20 14:14:39 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.73 2023/12/20 14:15:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,7 +78,7 @@ EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 }
 
 int
-EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
+EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
     const unsigned char *key, const unsigned char *iv, int enc)
 {
 	if (enc == -1)
@@ -228,7 +228,7 @@ EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 }
 
 int
-EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
+EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
     const unsigned char *key, const unsigned char *iv)
 {
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1);
@@ -242,7 +242,7 @@ EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 }
 
 int
-EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
+EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
     const unsigned char *key, const unsigned char *iv)
 {
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
