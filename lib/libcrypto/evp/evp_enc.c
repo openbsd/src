@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.71 2023/12/20 14:13:07 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.72 2023/12/20 14:14:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,12 +194,12 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 
 int
 EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
-    const unsigned char *in, int inl)
+    const unsigned char *in, int in_len)
 {
 	if (ctx->encrypt)
-		return EVP_EncryptUpdate(ctx, out, out_len, in, inl);
+		return EVP_EncryptUpdate(ctx, out, out_len, in, in_len);
 
-	return EVP_DecryptUpdate(ctx, out, out_len, in, inl);
+	return EVP_DecryptUpdate(ctx, out, out_len, in, in_len);
 }
 
 int
@@ -262,9 +262,9 @@ EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
  */
 int
 EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
-    unsigned int inl)
+    unsigned int in_len)
 {
-	return ctx->cipher->do_cipher(ctx, out, in, inl);
+	return ctx->cipher->do_cipher(ctx, out, in, in_len);
 }
 
 static int
@@ -296,7 +296,7 @@ evp_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 
 int
 EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
-    const unsigned char *in, int inl)
+    const unsigned char *in, int in_len)
 {
 	const int block_size = ctx->cipher->block_size;
 	const int block_mask = block_size - 1;
@@ -308,17 +308,17 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 	if ((block_size & block_mask) != 0)
 		return 0;
 
-	if (inl < 0)
+	if (in_len < 0)
 		return 0;
 
-	if (inl == 0 && EVP_CIPHER_mode(ctx->cipher) != EVP_CIPH_CCM_MODE)
+	if (in_len == 0 && EVP_CIPHER_mode(ctx->cipher) != EVP_CIPH_CCM_MODE)
 		return 1;
 
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
-		return evp_cipher(ctx, out, out_len, in, inl);
+		return evp_cipher(ctx, out, out_len, in, in_len);
 
-	if (partial_len == 0 && (inl & block_mask) == 0)
-		return evp_cipher(ctx, out, out_len, in, inl);
+	if (partial_len == 0 && (in_len & block_mask) == 0)
+		return evp_cipher(ctx, out, out_len, in, in_len);
 
 	/* XXX - check that block_size > partial_len. */
 	if (block_size > sizeof(ctx->buf)) {
@@ -329,19 +329,19 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 	if (partial_len != 0) {
 		int partial_needed;
 
-		if ((partial_needed = block_size - partial_len) > inl) {
-			memcpy(&ctx->buf[partial_len], in, inl);
-			ctx->partial_len += inl;
+		if ((partial_needed = block_size - partial_len) > in_len) {
+			memcpy(&ctx->buf[partial_len], in, in_len);
+			ctx->partial_len += in_len;
 			return 1;
 		}
 
 		/*
 		 * Once the first partial_needed bytes from in are processed,
 		 * the number of multiples of block_size of data remaining is
-		 * (inl - partial_needed) & ~block_mask.  Ensure that this
+		 * (in_len - partial_needed) & ~block_mask.  Ensure that this
 		 * plus the block processed from ctx->buf doesn't overflow.
 		 */
-		if (((inl - partial_needed) & ~block_mask) > INT_MAX - block_size) {
+		if (((in_len - partial_needed) & ~block_mask) > INT_MAX - block_size) {
 			EVPerror(EVP_R_TOO_LARGE);
 			return 0;
 		}
@@ -352,17 +352,17 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 			return 0;
 		total_len = len;
 
-		inl -= partial_needed;
+		in_len -= partial_needed;
 		in += partial_needed;
 		out += len;
 	}
 
-	partial_len = inl & block_mask;
-	if ((inl -= partial_len) > 0) {
-		if (INT_MAX - inl < total_len)
+	partial_len = in_len & block_mask;
+	if ((in_len -= partial_len) > 0) {
+		if (INT_MAX - in_len < total_len)
 			return 0;
 		len = 0;
-		if (!evp_cipher(ctx, out, &len, in, inl))
+		if (!evp_cipher(ctx, out, &len, in, in_len))
 			return 0;
 		if (INT_MAX - len < total_len)
 			return 0;
@@ -370,7 +370,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 	}
 
 	if (partial_len != 0)
-		memcpy(ctx->buf, &in[inl], partial_len);
+		memcpy(ctx->buf, &in[in_len], partial_len);
 	ctx->partial_len = partial_len;
 
 	*out_len = total_len;
@@ -420,7 +420,7 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 
 int
 EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
-    const unsigned char *in, int inl)
+    const unsigned char *in, int in_len)
 {
 	const int block_size = ctx->cipher->block_size;
 	const int block_mask = block_size - 1;
@@ -431,17 +431,17 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 	if ((block_size & block_mask) != 0)
 		return 0;
 
-	if (inl < 0)
+	if (in_len < 0)
 		return 0;
 
-	if (inl == 0 && EVP_CIPHER_mode(ctx->cipher) != EVP_CIPH_CCM_MODE)
+	if (in_len == 0 && EVP_CIPHER_mode(ctx->cipher) != EVP_CIPH_CCM_MODE)
 		return 1;
 
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
-		return evp_cipher(ctx, out, out_len, in, inl);
+		return evp_cipher(ctx, out, out_len, in, in_len);
 
 	if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0)
-		return EVP_EncryptUpdate(ctx, out, out_len, in, inl);
+		return EVP_EncryptUpdate(ctx, out, out_len, in, in_len);
 
 	if (block_size > sizeof(ctx->final)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
@@ -451,10 +451,10 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 	if (ctx->final_used) {
 		/*
 		 * final_used is only set if partial_len is 0. Therefore the
-		 * output from EVP_EncryptUpdate() is inl & ~block_mask.
-		 * Ensure (inl & ~block_mask) + block_size doesn't overflow.
+		 * output from EVP_EncryptUpdate() is in_len & ~block_mask.
+		 * Ensure (in_len & ~block_mask) + block_size doesn't overflow.
 		 */
-		if ((inl & ~block_mask) > INT_MAX - block_size) {
+		if ((in_len & ~block_mask) > INT_MAX - block_size) {
 			EVPerror(EVP_R_TOO_LARGE);
 			return 0;
 		}
@@ -466,7 +466,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 	ctx->final_used = 0;
 
 	len = 0;
-	if (!EVP_EncryptUpdate(ctx, out, &len, in, inl))
+	if (!EVP_EncryptUpdate(ctx, out, &len, in, in_len))
 		return 0;
 
 	/* Keep copy of last block if a multiple of block_size was decrypted. */
