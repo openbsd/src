@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.63 2023/12/16 17:40:22 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.64 2023/12/20 10:35:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -420,8 +420,8 @@ int
 EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
-	int fix_len;
-	unsigned int b;
+	const int block_size = ctx->cipher->block_size;
+	int len = 0, total_len = 0;
 
 	*outl = 0;
 
@@ -434,47 +434,49 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
 		return evp_cipher(ctx, out, outl, in, inl);
 
-	if (ctx->flags & EVP_CIPH_NO_PADDING)
+	if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0)
 		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
 
-	b = ctx->cipher->block_size;
-	if (b > sizeof ctx->final) {
+	if (block_size > sizeof(ctx->final)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
 
 	if (ctx->final_used) {
 		/*
-		 * final_used is only ever set if buf_len is 0. Therefore the
-		 * maximum length output we will ever see from EVP_EncryptUpdate
-		 * is inl & ~(b - 1). Since final_used is set, the final output
-		 * length is (inl & ~(b - 1)) + b. Ensure it doesn't overflow.
+		 * final_used is only set if buf_len is 0. Therefore the maximum
+		 * length output from EVP_EncryptUpdate() is inl & ~block_mask.
+		 * Ensure (inl & ~block_mask) + block_size doesn't overflow.
 		 */
-		if ((inl & ~(b - 1)) > INT_MAX - b) {
+		if ((inl & ~ctx->block_mask) > INT_MAX - block_size) {
 			EVPerror(EVP_R_TOO_LARGE);
 			return 0;
 		}
-		memcpy(out, ctx->final, b);
-		out += b;
-		fix_len = 1;
-	} else
-		fix_len = 0;
+		memcpy(out, ctx->final, block_size);
+		out += block_size;
+		total_len = block_size;
+	}
 
+	ctx->final_used = 0;
 
-	if (!EVP_EncryptUpdate(ctx, out, outl, in, inl))
+	len = 0;
+	if (!EVP_EncryptUpdate(ctx, out, &len, in, inl))
 		return 0;
 
-	/* if we have 'decrypted' a multiple of block size, make sure
-	 * we have a copy of this last block */
-	if (b > 1 && !ctx->buf_len) {
-		*outl -= b;
+	/* Keep copy of last block if a multiple of block_size was decrypted. */
+	if (block_size > 1 && ctx->buf_len == 0) {
+		if (len < block_size)
+			return 0;
+		len -= block_size;
+		memcpy(ctx->final, &out[len], block_size);
 		ctx->final_used = 1;
-		memcpy(ctx->final, &out[*outl], b);
-	} else
-		ctx->final_used = 0;
+	}
 
-	if (fix_len)
-		*outl += b;
+	if (len > INT_MAX - total_len)
+		return 0;
+	total_len += len;
+
+	*outl = total_len;
 
 	return 1;
 }
