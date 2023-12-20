@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.66 2023/12/20 11:01:34 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.67 2023/12/20 11:31:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,7 +184,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 		if (!ctx->cipher->init(ctx, key, iv, enc))
 			return 0;
 	}
-	ctx->buf_len = 0;
+	ctx->partial_len = 0;
 	ctx->final_used = 0;
 	ctx->block_mask = ctx->cipher->block_size - 1;
 	return 1;
@@ -298,7 +298,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
 	const int block_size = ctx->cipher->block_size;
 	const int block_mask = ctx->block_mask;
-	int buf_offset = ctx->buf_len;
+	int buf_offset = ctx->partial_len;
 	int len = 0, total_len = 0;
 
 	*outl = 0;
@@ -326,7 +326,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 		if ((buf_avail = block_size - buf_offset) > inl) {
 			memcpy(&ctx->buf[buf_offset], in, inl);
-			ctx->buf_len += inl;
+			ctx->partial_len += inl;
 			return 1;
 		}
 
@@ -366,7 +366,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 	if (buf_offset != 0)
 		memcpy(ctx->buf, &in[inl], buf_offset);
-	ctx->buf_len = buf_offset;
+	ctx->partial_len = buf_offset;
 
 	*outl = total_len;
 
@@ -383,7 +383,7 @@ int
 EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
 	const int block_size = ctx->cipher->block_size;
-	int buf_offset = ctx->buf_len;
+	int buf_offset = ctx->partial_len;
 	int pad;
 
 	*outl = 0;
@@ -441,7 +441,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 	if (ctx->final_used) {
 		/*
-		 * final_used is only set if buf_len is 0. Therefore the maximum
+		 * final_used is only set if partial_len is 0. Therefore the maximum
 		 * length output from EVP_EncryptUpdate() is inl & ~block_mask.
 		 * Ensure (inl & ~block_mask) + block_size doesn't overflow.
 		 */
@@ -461,7 +461,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return 0;
 
 	/* Keep copy of last block if a multiple of block_size was decrypted. */
-	if (block_size > 1 && ctx->buf_len == 0) {
+	if (block_size > 1 && ctx->partial_len == 0) {
 		if (len < block_size)
 			return 0;
 		len -= block_size;
@@ -488,7 +488,7 @@ int
 EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
 	const int block_size = ctx->cipher->block_size;
-	int buf_offset = ctx->buf_len;
+	int buf_offset = ctx->partial_len;
 	int i, pad, plain_len;
 
 	*outl = 0;
