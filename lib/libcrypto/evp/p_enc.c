@@ -1,4 +1,4 @@
-/* $OpenBSD: p_enc.c,v 1.15 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: p_enc.c,v 1.16 2023/12/20 10:14:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,18 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
-
-#include <openssl/opensslconf.h>
-
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
 
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
 
 #include "evp_local.h"
 
@@ -75,17 +67,11 @@ int
 EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key, int key_len,
     EVP_PKEY *pubk)
 {
-	int ret = 0;
-
-#ifndef OPENSSL_NO_RSA
 	if (pubk->type != EVP_PKEY_RSA) {
-#endif
 		EVPerror(EVP_R_PUBLIC_KEY_NOT_RSA);
-#ifndef OPENSSL_NO_RSA
-		goto err;
+		return 0;
 	}
-	ret = RSA_public_encrypt(key_len, key, ek, pubk->pkey.rsa, RSA_PKCS1_PADDING);
-err:
-#endif
-	return (ret);
+
+	return RSA_public_encrypt(key_len, key, ek, pubk->pkey.rsa,
+	    RSA_PKCS1_PADDING);
 }
