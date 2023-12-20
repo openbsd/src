@@ -1,4 +1,4 @@
-/* $OpenBSD: set_key.c,v 1.23 2023/07/08 07:34:34 jsing Exp $ */
+/* $OpenBSD: set_key.c,v 1.24 2023/12/20 06:22:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -398,10 +398,3 @@ DES_key_sched(const_DES_cblock *key, DES_key_schedule *schedule)
 {
 	return (DES_set_key(key, schedule));
 }
-/*
-#undef des_fixup_key_parity
-void des_fixup_key_parity(des_cblock *key)
-	{
-	des_set_odd_parity(key);
-	}
-*/
