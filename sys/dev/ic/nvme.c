@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.106 2022/11/25 03:20:09 dlg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.107 2023/12/20 13:37:25 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -83,6 +83,7 @@ void	nvme_scsi_cmd(struct scsi_xfer *);
 void	nvme_minphys(struct buf *, struct scsi_link *);
 int	nvme_scsi_probe(struct scsi_link *);
 void	nvme_scsi_free(struct scsi_link *);
+uint64_t nvme_scsi_size(struct nvm_identify_namespace *);
 
 #ifdef HIBERNATE
 #include <uvm/uvm_extern.h>
@@ -470,7 +471,7 @@ nvme_scsi_probe(struct scsi_link *link)
 
 	identify = NVME_DMA_KVA(mem);
 	if (rv == 0) {
-		if (lemtoh64(&identify->nsze) > 0) {
+		if (nvme_scsi_size(identify) > 0) {
 			/* Commit namespace if it has a size greater than zero. */
 			identify = malloc(sizeof(*identify), M_DEVBUF, M_WAITOK);
 			memcpy(identify, NVME_DMA_KVA(mem), sizeof(*identify));
@@ -812,7 +813,7 @@ nvme_scsi_capacity16(struct scsi_xfer *xs)
 	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvm_identify_namespace *ns;
 	struct nvm_namespace_format *f;
-	u_int64_t nsze;
+	u_int64_t addr;
 	u_int16_t tpe = READ_CAP_16_TPE;
 
 	ns = sc->sc_namespaces[link->target].ident;
@@ -823,12 +824,11 @@ nvme_scsi_capacity16(struct scsi_xfer *xs)
 		return;
 	}
 
-	/* sd_read_cap_16() will add one */
-	nsze = lemtoh64(&ns->nsze) - 1;
+	addr = nvme_scsi_size(ns) - 1;
 	f = &ns->lbaf[NVME_ID_NS_FLBAS(ns->flbas)];
 
 	memset(&rcd, 0, sizeof(rcd));
-	_lto8b(nsze, rcd.addr);
+	_lto8b(addr, rcd.addr);
 	_lto4b(1 << f->lbads, rcd.length);
 	_lto2b(tpe, rcd.lowest_aligned);
 
@@ -846,7 +846,7 @@ nvme_scsi_capacity(struct scsi_xfer *xs)
 	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvm_identify_namespace *ns;
 	struct nvm_namespace_format *f;
-	u_int64_t nsze;
+	u_int64_t addr;
 
 	ns = sc->sc_namespaces[link->target].ident;
 
@@ -856,15 +856,14 @@ nvme_scsi_capacity(struct scsi_xfer *xs)
 		return;
 	}
 
-	/* sd_read_cap_10() will add one */
-	nsze = lemtoh64(&ns->nsze) - 1;
-	if (nsze > 0xffffffff)
-		nsze = 0xffffffff;
+	addr = nvme_scsi_size(ns) - 1;
+	if (addr > 0xffffffff)
+		addr = 0xffffffff;
 
 	f = &ns->lbaf[NVME_ID_NS_FLBAS(ns->flbas)];
 
 	memset(&rcd, 0, sizeof(rcd));
-	_lto4b(nsze, rcd.addr);
+	_lto4b(addr, rcd.addr);
 	_lto4b(1 << f->lbads, rcd.length);
 
 	memcpy(xs->data, &rcd, MIN(sizeof(rcd), xs->datalen));
@@ -883,6 +882,20 @@ nvme_scsi_free(struct scsi_link *link)
 	sc->sc_namespaces[link->target].ident = NULL;
 
 	free(identify, M_DEVBUF, sizeof(*identify));
+}
+
+uint64_t
+nvme_scsi_size(struct nvm_identify_namespace *ns)
+{
+	uint64_t		ncap, nsze;
+
+	ncap = lemtoh64(&ns->ncap); /* Max allowed allocation. */
+	nsze = lemtoh64(&ns->nsze);
+
+	if ((ns->nsfeat & NVME_ID_NS_NSFEAT_THIN_PROV) && ncap < nsze)
+		return ncap;
+	else
+		return nsze;
 }
 
 uint32_t

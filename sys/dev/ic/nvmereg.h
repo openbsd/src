@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.12 2023/12/11 14:27:09 krw Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.13 2023/12/20 13:37:25 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -363,6 +363,7 @@ struct nvm_identify_namespace {
 	u_int64_t	nuse;		/* Namespace Utilization */
 
 	u_int8_t	nsfeat;		/* Namespace Features */
+#define	NVME_ID_NS_NSFEAT_THIN_PROV	(1 << 0)
 	u_int8_t	nlbaf;		/* Number of LBA Formats */
 	u_int8_t	flbas;		/* Formatted LBA Size */
 #define NVME_ID_NS_FLBAS(_f)			((_f) & 0x0f)
