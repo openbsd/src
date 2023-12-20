@@ -1,4 +1,4 @@
-/* $OpenBSD: p_seal.c,v 1.17 2023/11/18 09:37:15 tb Exp $ */
+/* $OpenBSD: p_seal.c,v 1.18 2023/12/20 10:15:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,18 +102,6 @@ EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 	}
 	return (npubk);
 }
-
-/* MACRO
-void EVP_SealUpdate(ctx,out,outl,in,inl)
-EVP_CIPHER_CTX *ctx;
-unsigned char *out;
-int *outl;
-unsigned char *in;
-int inl;
-	{
-	EVP_EncryptUpdate(ctx,out,outl,in,inl);
-	}
-*/
 
 int
 EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
