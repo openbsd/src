@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.67 2023/12/20 11:31:17 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.68 2023/12/20 11:33:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -298,7 +298,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
 	const int block_size = ctx->cipher->block_size;
 	const int block_mask = ctx->block_mask;
-	int buf_offset = ctx->partial_len;
+	int partial_len = ctx->partial_len;
 	int len = 0, total_len = 0;
 
 	*outl = 0;
@@ -312,48 +312,48 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
 		return evp_cipher(ctx, out, outl, in, inl);
 
-	if (buf_offset == 0 && (inl & block_mask) == 0)
+	if (partial_len == 0 && (inl & block_mask) == 0)
 		return evp_cipher(ctx, out, outl, in, inl);
 
-	/* XXX - check that block_size > buf_offset. */
+	/* XXX - check that block_size > partial_len. */
 	if (block_size > sizeof(ctx->buf)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
 
-	if (buf_offset != 0) {
-		int buf_avail;
+	if (partial_len != 0) {
+		int partial_needed;
 
-		if ((buf_avail = block_size - buf_offset) > inl) {
-			memcpy(&ctx->buf[buf_offset], in, inl);
+		if ((partial_needed = block_size - partial_len) > inl) {
+			memcpy(&ctx->buf[partial_len], in, inl);
 			ctx->partial_len += inl;
 			return 1;
 		}
 
 		/*
-		 * Once the first buf_avail bytes from in are processed, the
-		 * amount of data left that is a multiple of the block length is
-		 * (inl - buf_avail) & ~block_mask.  Ensure that this plus the
-		 * block processed from ctx->buf doesn't overflow.
+		 * Once the first partial_needed bytes from in are processed,
+		 * the number of multiples of block_size of data remaining is
+		 * (inl - partial_needed) & ~block_mask.  Ensure that this
+		 * plus the block processed from ctx->buf doesn't overflow.
 		 */
-		if (((inl - buf_avail) & ~block_mask) > INT_MAX - block_size) {
+		if (((inl - partial_needed) & ~block_mask) > INT_MAX - block_size) {
 			EVPerror(EVP_R_TOO_LARGE);
 			return 0;
 		}
-		memcpy(&ctx->buf[buf_offset], in, buf_avail);
+		memcpy(&ctx->buf[partial_len], in, partial_needed);
 
 		len = 0;
 		if (!evp_cipher(ctx, out, &len, ctx->buf, block_size))
 			return 0;
 		total_len = len;
 
-		inl -= buf_avail;
-		in += buf_avail;
+		inl -= partial_needed;
+		in += partial_needed;
 		out += len;
 	}
 
-	buf_offset = inl & block_mask;
-	if ((inl -= buf_offset) > 0) {
+	partial_len = inl & block_mask;
+	if ((inl -= partial_len) > 0) {
 		if (INT_MAX - inl < total_len)
 			return 0;
 		len = 0;
@@ -364,9 +364,9 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		total_len += len;
 	}
 
-	if (buf_offset != 0)
-		memcpy(ctx->buf, &in[inl], buf_offset);
-	ctx->partial_len = buf_offset;
+	if (partial_len != 0)
+		memcpy(ctx->buf, &in[inl], partial_len);
+	ctx->partial_len = partial_len;
 
 	*outl = total_len;
 
@@ -383,7 +383,7 @@ int
 EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
 	const int block_size = ctx->cipher->block_size;
-	int buf_offset = ctx->partial_len;
+	int partial_len = ctx->partial_len;
 	int pad;
 
 	*outl = 0;
@@ -391,7 +391,7 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
 		return evp_cipher(ctx, out, outl, NULL, 0);
 
-	/* XXX - check that block_size > buf_offset. */
+	/* XXX - check that block_size > partial_len. */
 	if (block_size > sizeof(ctx->buf)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
@@ -400,15 +400,15 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		return 1;
 
 	if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-		if (buf_offset != 0) {
+		if (partial_len != 0) {
 			EVPerror(EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
 			return 0;
 		}
 		return 1;
 	}
 
-	pad = block_size - buf_offset;
-	memset(&ctx->buf[buf_offset], pad, pad);
+	pad = block_size - partial_len;
+	memset(&ctx->buf[partial_len], pad, pad);
 
 	return evp_cipher(ctx, out, outl, ctx->buf, block_size);
 }
@@ -488,7 +488,7 @@ int
 EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
 	const int block_size = ctx->cipher->block_size;
-	int buf_offset = ctx->partial_len;
+	int partial_len = ctx->partial_len;
 	int i, pad, plain_len;
 
 	*outl = 0;
@@ -497,7 +497,7 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		return evp_cipher(ctx, out, outl, NULL, 0);
 
 	if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-		if (buf_offset != 0) {
+		if (partial_len != 0) {
 			EVPerror(EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
 			return 0;
 		}
@@ -507,7 +507,7 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	if (block_size == 1)
 		return 1;
 
-	if (buf_offset != 0 || !ctx->final_used) {
+	if (partial_len != 0 || !ctx->final_used) {
 		EVPerror(EVP_R_WRONG_FINAL_BLOCK_LENGTH);
 		return 0;
 	}
