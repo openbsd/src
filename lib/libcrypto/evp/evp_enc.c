@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.64 2023/12/20 10:35:25 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.65 2023/12/20 10:42:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -382,38 +382,35 @@ EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 int
 EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 {
-	int n;
-	unsigned int i, b, bl;
+	const int block_size = ctx->cipher->block_size;
+	int buf_offset = ctx->buf_len;
+	int pad;
 
 	*outl = 0;
 
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
 		return evp_cipher(ctx, out, outl, NULL, 0);
 
-	b = ctx->cipher->block_size;
-	if (b > sizeof ctx->buf) {
+	/* XXX - check that block_size > buf_offset. */
+	if (block_size > sizeof(ctx->buf)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
-	if (b == 1) {
-		*outl = 0;
+	if (block_size == 1)
 		return 1;
-	}
-	bl = ctx->buf_len;
-	if (ctx->flags & EVP_CIPH_NO_PADDING) {
-		if (bl) {
+
+	if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
+		if (buf_offset != 0) {
 			EVPerror(EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
 			return 0;
 		}
-		*outl = 0;
 		return 1;
 	}
 
-	n = b - bl;
-	for (i = bl; i < b; i++)
-		ctx->buf[i] = n;
+	pad = block_size - buf_offset;
+	memset(&ctx->buf[buf_offset], pad, pad);
 
-	return evp_cipher(ctx, out, outl, ctx->buf, b);
+	return evp_cipher(ctx, out, outl, ctx->buf, block_size);
 }
 
 int
