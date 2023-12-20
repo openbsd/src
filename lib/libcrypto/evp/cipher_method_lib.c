@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_method_lib.c,v 1.10 2023/07/07 19:37:53 beck Exp $ */
+/*	$OpenBSD: cipher_method_lib.c,v 1.11 2023/12/20 14:05:58 tb Exp $ */
 /*
  * Written by Richard Levitte (levitte@openssl.org) for the OpenSSL project
  * 2015.
@@ -67,6 +67,13 @@ EVP_CIPHER *
 EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
 {
 	EVP_CIPHER *cipher;
+
+	if (cipher_type < 0 || key_len < 0)
+		return NULL;
+
+	/* EVP_CipherInit() will fail for any other value. */
+	if (block_size != 1 && block_size != 8 && block_size != 16)
+		return NULL;
 
 	if ((cipher = calloc(1, sizeof(*cipher))) == NULL)
 		return NULL;
