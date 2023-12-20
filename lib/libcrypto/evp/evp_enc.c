@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.70 2023/12/20 14:11:41 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.71 2023/12/20 14:13:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,31 +193,31 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 }
 
 int
-EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
     const unsigned char *in, int inl)
 {
 	if (ctx->encrypt)
-		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
+		return EVP_EncryptUpdate(ctx, out, out_len, in, inl);
 
-	return EVP_DecryptUpdate(ctx, out, outl, in, inl);
+	return EVP_DecryptUpdate(ctx, out, out_len, in, inl);
 }
 
 int
-EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
 	if (ctx->encrypt)
-		return EVP_EncryptFinal_ex(ctx, out, outl);
+		return EVP_EncryptFinal_ex(ctx, out, out_len);
 
-	return EVP_DecryptFinal_ex(ctx, out, outl);
+	return EVP_DecryptFinal_ex(ctx, out, out_len);
 }
 
 int
-EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
 	if (ctx->encrypt)
-		return EVP_EncryptFinal_ex(ctx, out, outl);
+		return EVP_EncryptFinal_ex(ctx, out, out_len);
 
-	return EVP_DecryptFinal_ex(ctx, out, outl);
+	return EVP_DecryptFinal_ex(ctx, out, out_len);
 }
 
 int
@@ -295,7 +295,7 @@ evp_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 }
 
 int
-EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
     const unsigned char *in, int inl)
 {
 	const int block_size = ctx->cipher->block_size;
@@ -303,7 +303,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	int partial_len = ctx->partial_len;
 	int len = 0, total_len = 0;
 
-	*outl = 0;
+	*out_len = 0;
 
 	if ((block_size & block_mask) != 0)
 		return 0;
@@ -315,10 +315,10 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return 1;
 
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
-		return evp_cipher(ctx, out, outl, in, inl);
+		return evp_cipher(ctx, out, out_len, in, inl);
 
 	if (partial_len == 0 && (inl & block_mask) == 0)
-		return evp_cipher(ctx, out, outl, in, inl);
+		return evp_cipher(ctx, out, out_len, in, inl);
 
 	/* XXX - check that block_size > partial_len. */
 	if (block_size > sizeof(ctx->buf)) {
@@ -373,28 +373,28 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		memcpy(ctx->buf, &in[inl], partial_len);
 	ctx->partial_len = partial_len;
 
-	*outl = total_len;
+	*out_len = total_len;
 
 	return 1;
 }
 
 int
-EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
-	return EVP_EncryptFinal_ex(ctx, out, outl);
+	return EVP_EncryptFinal_ex(ctx, out, out_len);
 }
 
 int
-EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
 	const int block_size = ctx->cipher->block_size;
 	int partial_len = ctx->partial_len;
 	int pad;
 
-	*outl = 0;
+	*out_len = 0;
 
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
-		return evp_cipher(ctx, out, outl, NULL, 0);
+		return evp_cipher(ctx, out, out_len, NULL, 0);
 
 	/* XXX - check that block_size > partial_len. */
 	if (block_size > sizeof(ctx->buf)) {
@@ -415,18 +415,18 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	pad = block_size - partial_len;
 	memset(&ctx->buf[partial_len], pad, pad);
 
-	return evp_cipher(ctx, out, outl, ctx->buf, block_size);
+	return evp_cipher(ctx, out, out_len, ctx->buf, block_size);
 }
 
 int
-EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
+EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
     const unsigned char *in, int inl)
 {
 	const int block_size = ctx->cipher->block_size;
 	const int block_mask = block_size - 1;
 	int len = 0, total_len = 0;
 
-	*outl = 0;
+	*out_len = 0;
 
 	if ((block_size & block_mask) != 0)
 		return 0;
@@ -438,10 +438,10 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return 1;
 
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
-		return evp_cipher(ctx, out, outl, in, inl);
+		return evp_cipher(ctx, out, out_len, in, inl);
 
 	if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0)
-		return EVP_EncryptUpdate(ctx, out, outl, in, inl);
+		return EVP_EncryptUpdate(ctx, out, out_len, in, inl);
 
 	if (block_size > sizeof(ctx->final)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
@@ -482,28 +482,28 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return 0;
 	total_len += len;
 
-	*outl = total_len;
+	*out_len = total_len;
 
 	return 1;
 }
 
 int
-EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
-	return EVP_DecryptFinal_ex(ctx, out, outl);
+	return EVP_DecryptFinal_ex(ctx, out, out_len);
 }
 
 int
-EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
 	const int block_size = ctx->cipher->block_size;
 	int partial_len = ctx->partial_len;
 	int i, pad, plain_len;
 
-	*outl = 0;
+	*out_len = 0;
 
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
-		return evp_cipher(ctx, out, outl, NULL, 0);
+		return evp_cipher(ctx, out, out_len, NULL, 0);
 
 	if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
 		if (partial_len != 0) {
@@ -540,7 +540,7 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	}
 
 	memcpy(out, ctx->final, plain_len);
-	*outl = plain_len;
+	*out_len = plain_len;
 
 	return 1;
 }
