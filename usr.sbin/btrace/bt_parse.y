@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.54 2023/10/12 15:16:44 cheloha Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.55 2023/12/20 01:38:46 dv Exp $	*/
 
 /*
  * Copyright (c) 2019-2023 Martin Pieuchot <mpi@openbsd.org>
@@ -897,7 +897,7 @@ again:
 			}
 			*p++ = c;
 			if (p == ebuf) {
-				yyerror("too long line");
+				yyerror("line too long");
 				return ERROR;
 			}
 		}
@@ -922,7 +922,7 @@ again:
 		do {
 			*p++ = c;
 			if (p == ebuf) {
-				yyerror("too long line");
+				yyerror("line too long");
 				return ERROR;
 			}
 		} while ((c = lgetc()) != EOF && isdigit(c));
@@ -956,7 +956,7 @@ again:
 		do {
 			*p++ = c;
 			if (p == ebuf) {
-				yyerror("too long line");
+				yyerror("line too long");
 				return ERROR;
 			}
 		} while ((c = lgetc()) != EOF && (allowed_in_string(c)));
