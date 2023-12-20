@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.69 2023/12/20 14:10:03 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.70 2023/12/20 14:11:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -450,8 +450,8 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 	if (ctx->final_used) {
 		/*
-		 * final_used is only set if partial_len is 0. Therefore the maximum
-		 * length output from EVP_EncryptUpdate() is inl & ~block_mask.
+		 * final_used is only set if partial_len is 0. Therefore the
+		 * output from EVP_EncryptUpdate() is inl & ~block_mask.
 		 * Ensure (inl & ~block_mask) + block_size doesn't overflow.
 		 */
 		if ((inl & ~block_mask) > INT_MAX - block_size) {
