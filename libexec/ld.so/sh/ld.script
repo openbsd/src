@@ -1,8 +1,8 @@
 PHDRS
 {
 	rodata	PT_LOAD FILEHDR PHDRS FLAGS (4);
-	text	PT_LOAD FLAGS (5);  /* architecturally required data islands */
 	btext	PT_LOAD FLAGS (0x08000005);
+	text	PT_LOAD FLAGS (5);  /* architecturally required data islands */
 	data	PT_LOAD;
 	random	PT_OPENBSD_RANDOMIZE;
 	syscalls PT_OPENBSD_SYSCALLS;
@@ -23,14 +23,14 @@ SECTIONS
 
   /* TEXT */
   . = ALIGN (0x1000);
-  .text           : { *(.text .text.*) } :text =0xc3c3c3c3
-  . = ALIGN (0x1000);
   .boot.text      :
   {
     boot_text_start = .;
     *(.boot.text)
     boot_text_end = .;
   } :btext
+  . = ALIGN (0x1000);
+  .text           : { *(.text .text.*) } :text =0xc3c3c3c3
 
   /* RELRO DATA */
   . = DATA_SEGMENT_ALIGN (0x10000, 0x1000);

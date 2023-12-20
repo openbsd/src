@@ -23,8 +23,6 @@ SECTIONS
 
     /* TEXT */
     . = ALIGN(0x10000);
-    .text	: { *(.text .text.*) } :text
-    . = ALIGN(0x2000);
     .boot.text	:
     {
 	. = ALIGN(0x2000);
@@ -33,6 +31,8 @@ SECTIONS
 	*(.boot.text)
 	boot_text_end = .;
     } :btext
+    . = ALIGN(0x2000);
+    .text	: { *(.text .text.*) } :text
 
     /* RELRO DATA */
     . = DATA_SEGMENT_ALIGN (0x10000, 0x2000);
