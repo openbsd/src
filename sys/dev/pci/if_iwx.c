@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.178 2023/12/20 07:32:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.179 2023/12/20 07:33:32 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -402,7 +402,6 @@ void	iwx_tx_update_byte_tbl(struct iwx_softc *, struct iwx_tx_ring *, int,
 	    uint16_t, uint16_t);
 int	iwx_tx(struct iwx_softc *, struct mbuf *, struct ieee80211_node *);
 int	iwx_flush_sta_tids(struct iwx_softc *, int, uint16_t);
-int	iwx_wait_tx_queues_empty(struct iwx_softc *);
 int	iwx_drain_sta(struct iwx_softc *sc, struct iwx_node *, int);
 int	iwx_flush_sta(struct iwx_softc *, struct iwx_node *);
 int	iwx_beacon_filter_send_cmd(struct iwx_softc *,
@@ -6387,10 +6386,7 @@ iwx_flush_sta_tids(struct iwx_softc *sc, int sta_id, uint16_t tids)
 	}
 
 	resp_len = iwx_rx_packet_payload_len(pkt);
-	/* Some firmware versions don't provide a response. */
-	if (resp_len == 0)
-		goto out;
-	else if (resp_len != sizeof(*resp)) {
+	if (resp_len != sizeof(*resp)) {
 		err = EIO;
 		goto out;
 	}
@@ -6430,28 +6426,6 @@ out:
 }
 
 #define IWX_FLUSH_WAIT_MS	2000
-
-int
-iwx_wait_tx_queues_empty(struct iwx_softc *sc)
-{
-	int i, err;
-
-	for (i = 0; i < nitems(sc->txq); i++) {
-		struct iwx_tx_ring *ring = &sc->txq[i];
-
-		if (i == IWX_DQA_CMD_QUEUE)
-			continue;
-
-		while (ring->queued > 0) {
-			err = tsleep_nsec(ring, 0, "iwxflush",
-			    MSEC_TO_NSEC(IWX_FLUSH_WAIT_MS));
-			if (err)
-				return err;
-		}
-	}
-
-	return 0;
-}
 
 int
 iwx_drain_sta(struct iwx_softc *sc, struct iwx_node* in, int drain)
@@ -6506,13 +6480,6 @@ iwx_flush_sta(struct iwx_softc *sc, struct iwx_node *in)
 	err = iwx_flush_sta_tids(sc, IWX_STATION_ID, 0xffff);
 	if (err) {
 		printf("%s: could not flush Tx path (error %d)\n",
-		    DEVNAME(sc), err);
-		goto done;
-	}
-
-	err = iwx_wait_tx_queues_empty(sc);
-	if (err) {
-		printf("%s: Could not empty Tx queues (error %d)\n",
 		    DEVNAME(sc), err);
 		goto done;
 	}
