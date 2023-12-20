@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.19 2021/04/21 09:38:11 bluhm Exp $ */
+/*	$OpenBSD: control.c,v 1.20 2023/12/20 15:36:36 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -347,7 +347,7 @@ build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 	now = getmonotime();
 
 	if (p->addr) {
-		a = log_sockaddr((struct sockaddr *)&p->addr->ss);
+		a = log_ntp_addr(p->addr);
 		if (p->addr->notauth)
 			auth = " (non-dnssec lookup)";
 	}

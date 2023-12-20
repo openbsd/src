@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.27 2023/11/19 10:41:25 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.28 2023/12/20 15:36:36 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -161,6 +161,14 @@ log_sockaddr(struct sockaddr *sa)
 		return ("(unknown)");
 	else
 		return (buf);
+}
+
+const char *
+log_ntp_addr(struct ntp_addr *addr)
+{
+	if (addr == NULL)
+		return ("(unknown)");
+	return log_sockaddr((struct sockaddr *)&addr->ss);
 }
 
 pid_t

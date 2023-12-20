@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.55 2023/12/06 15:51:53 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.56 2023/12/20 15:36:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -469,8 +469,7 @@ priv_constraint_check_child(pid_t pid, int status)
 				    strsignal(sig) : "unknown";
 				log_warnx("constraint %s; "
 				    "terminated with signal %d (%s)",
-				    log_sockaddr((struct sockaddr *)
-				    &cstr->addr->ss), sig, signame);
+				    log_ntp_addr(cstr->addr), sig, signame);
 			}
 			fail = 1;
 		}
@@ -679,7 +678,7 @@ constraint_msg_result(u_int32_t id, u_int8_t *data, size_t len)
 	    gettime_from_timeval(&tv[1]);
 
 	log_info("constraint reply from %s: offset %f",
-	    log_sockaddr((struct sockaddr *)&cstr->addr->ss),
+	    log_ntp_addr(cstr->addr),
 	    offset);
 
 	cstr->state = STATE_REPLY_RECEIVED;
@@ -711,8 +710,8 @@ constraint_msg_close(u_int32_t id, u_int8_t *data, size_t len)
 	if (fail) {
 		log_debug("no constraint reply from %s"
 		    " received in time, next query %ds",
-		    log_sockaddr((struct sockaddr *)
-		    &cstr->addr->ss), CONSTRAINT_SCAN_INTERVAL);
+		    log_ntp_addr(cstr->addr),
+		    CONSTRAINT_SCAN_INTERVAL);
 		
 		cnt = 0;
 		TAILQ_FOREACH(tmp, &conf->constraints, entry)

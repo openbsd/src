@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.171 2023/12/06 15:51:53 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.172 2023/12/20 15:36:36 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -261,13 +261,12 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 			if (p->deadline > 0 && p->deadline <= getmonotime()) {
 				timeout = 300;
 				log_debug("no reply from %s received in time, "
-				    "next query %ds", log_sockaddr(
-				    (struct sockaddr *)&p->addr->ss), timeout);
+				    "next query %ds", log_ntp_addr( p->addr),
+				    timeout);
 				if (p->trustlevel >= TRUSTLEVEL_BADPEER &&
 				    (p->trustlevel /= 2) < TRUSTLEVEL_BADPEER)
 					log_info("peer %s now invalid",
-					    log_sockaddr(
-					    (struct sockaddr *)&p->addr->ss));
+					    log_ntp_addr(p->addr));
 				if (client_nextaddr(p) == 1) {
 					peer_addr_head_clear(p);
 					client_nextaddr(p);
@@ -276,8 +275,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 			}
 			if (p->senderrors > MAX_SEND_ERRORS) {
 				log_debug("failed to send query to %s, "
-				    "next query %ds", log_sockaddr(
-				    (struct sockaddr *)&p->addr->ss),
+				    "next query %ds", log_ntp_addr(p->addr),
 				    INTERVAL_QUERY_PATHETIC);
 				p->senderrors = 0;
 				if (client_nextaddr(p) == 1) {
@@ -419,16 +417,13 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 				    conf->automatic)) {
 				case -1:
 					log_debug("no reply from %s "
-					    "received", log_sockaddr(
-					    (struct sockaddr *) &pp->addr->ss));
+					    "received", log_ntp_addr(pp->addr));
 					if (pp->trustlevel >=
 					    TRUSTLEVEL_BADPEER &&
 					    (pp->trustlevel /= 2) <
 					    TRUSTLEVEL_BADPEER)
 						log_info("peer %s now invalid",
-						    log_sockaddr(
-						    (struct sockaddr *)
-						    &pp->addr->ss));
+						    log_ntp_addr(pp->addr));
 					break;
 				case 0: /* invalid replies are ignored */
 					break;
@@ -634,8 +629,7 @@ ntp_dispatch_imsg_dns(void)
 						continue;
 					}
 					log_debug("Adding address %s to %s",
-					    log_sockaddr((struct sockaddr *)
-					    &h->ss), peer->addr_head.name);
+					    log_ntp_addr(h), peer->addr_head.name);
 					npeer = new_peer();
 					npeer->weight = peer->weight;
 					npeer->query_addr4 = peer->query_addr4;

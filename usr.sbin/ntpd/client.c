@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.117 2022/03/24 07:37:19 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.118 2023/12/20 15:36:36 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -351,8 +351,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		interval = error_interval();
 		set_next(p, interval);
 		log_info("reply from %s: not synced (%s), next query %llds",
-		    log_sockaddr((struct sockaddr *)&p->addr->ss), s,
-			(long long)interval);
+		    log_ntp_addr(p->addr), s, (long long)interval);
 		return (0);
 	}
 
@@ -379,7 +378,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	if (!p->trusted && conf->constraint_median != 0 &&
 	    (constraint_check(T2) != 0 || constraint_check(T3) != 0)) {
 		log_info("reply from %s: constraint check failed",
-		    log_sockaddr((struct sockaddr *)&p->addr->ss));
+		    log_ntp_addr(p->addr));
 		set_next(p, error_interval());
 		return (0);
 	}
@@ -392,7 +391,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		set_next(p, interval);
 		log_info("reply from %s: negative delay %fs, "
 		    "next query %llds",
-		    log_sockaddr((struct sockaddr *)&p->addr->ss),
+		    log_ntp_addr(p->addr),
 		    p->reply[p->shift].delay, (long long)interval);
 		return (0);
 	}
@@ -431,7 +430,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		if (p->trustlevel < TRUSTLEVEL_BADPEER &&
 		    p->trustlevel + 1 >= TRUSTLEVEL_BADPEER)
 			log_info("peer %s now valid",
-			    log_sockaddr((struct sockaddr *)&p->addr->ss));
+			    log_ntp_addr(p->addr));
 		p->trustlevel++;
 	}
 
@@ -456,10 +455,8 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		interval = scale_interval(INTERVAL_QUERY_NORMAL);
 
 	log_debug("reply from %s: offset %f delay %f, "
-	    "next query %llds",
-	    log_sockaddr((struct sockaddr *)&p->addr->ss),
-	    offset, delay,
-	    (long long)interval);
+	    "next query %llds", log_ntp_addr(p->addr),
+	    offset, delay, (long long)interval);
 
 	set_next(p, interval);
 
@@ -506,7 +503,7 @@ client_log_error(struct ntp_peer *peer, const char *operation, int error)
 {
 	const char *address;
 
-	address = log_sockaddr((struct sockaddr *)&peer->addr->ss);
+	address = log_ntp_addr(peer->addr);
 	if (peer->lasterror == error) {
 		log_debug("%s %s: %s", operation, address, strerror(error));
 		return;
