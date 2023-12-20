@@ -31,7 +31,7 @@ SECTIONS
 	. = ALIGN(0x2000);
 	boot_text_end = .;
     } :btext =0
-    . = ALIGN(0x100000);
+    . = ALIGN(0x2000);
     .text	: { *(.text .text.*) } :text =0
 
     /* RELRO DATA */
