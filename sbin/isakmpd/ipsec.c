@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.153 2023/08/07 04:01:29 dlg Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.154 2023/12/20 00:34:13 tobhe Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -392,8 +392,6 @@ ipsec_sa_iface(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 {
 	char *section, *value;
 	const char *errstr = NULL;
-
-	sa->tag = NULL;
 
 	if (exchange->name == NULL ||
 	    (section = exchange->name) == NULL ||
