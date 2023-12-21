@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.74 2023/12/09 23:00:11 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.75 2023/12/21 01:20:54 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1072,7 +1072,7 @@ wr_ustar_or_pax(ARCHD *arcn, int ustar)
 #ifndef SMALL
 		else if (xheader_add(&xhdr, "path", arcn->name) == -1) {
 			paxwarn(1, "File name too long for pax %s",
-			    arcn->ln_name);
+			    arcn->name);
 			xheader_free(&xhdr);
 			return(1);
 		}
