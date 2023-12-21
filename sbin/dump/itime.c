@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.25 2021/01/21 00:16:36 mortimer Exp $	*/
+/*	$OpenBSD: itime.c,v 1.26 2023/12/21 08:01:21 otto Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -99,6 +99,8 @@ readdumptimes(FILE *df)
 
 	for (;;) {
 		dtwalk = calloc(1, sizeof(struct dumptime));
+		if (dtwalk == NULL)
+			quit("allocation failed");
 		if (getrecord(df, &(dtwalk->dt_value)) < 0) {
 			free(dtwalk);
 			break;
@@ -114,6 +116,8 @@ readdumptimes(FILE *df)
 	 *	record that we may have to add to the ddate structure
 	 */
 	ddatev = calloc((unsigned) (nddates + 1), sizeof(struct dumpdates *));
+	if (ddatev == NULL)
+		quit("allocation failed");
 	dtwalk = dthead;
 	for (i = nddates - 1; i >= 0; i--, dtwalk = dtwalk->dt_next)
 		ddatev[i] = &dtwalk->dt_value;
@@ -192,6 +196,8 @@ putdumptime(void)
 	 *	Enough room has been allocated.
 	 */
 	dtwalk = ddatev[nddates] = calloc(1, sizeof(struct dumpdates));
+	if (dtwalk == NULL)
+		quit("allocation failed");
 	nddates += 1;
   found:
 	(void) strlcpy(dtwalk->dd_name, fname, sizeof(dtwalk->dd_name));
