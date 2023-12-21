@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.20 2023/04/07 09:43:38 tb Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.21 2023/12/21 19:34:07 miod Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -296,10 +296,6 @@ function parseline() {
 	# arguments, they must still have arguments specified for
 	# the remaining argument "positions," because of the way the
 	# kernel system call argument handling works.
-	#
-	# Indirect system calls, e.g. syscall(), are exceptions to this
-	# rule, since they are handled entirely by machine-dependent code
-	# and do not need argument structures built.
 
 	isvarargs = 0;
 	while (f <= end) {
@@ -326,59 +322,50 @@ function parseline() {
 	}
 	# must see another argument after varargs notice.
 	if (isvarargs) {
-		if (argc == varargc && $2 != "INDIR")
+		if (argc == varargc)
 			parserr($f, "argument definition")
 	} else
 		varargc = argc;
 }
 function putent(nodefs, compatwrap) {
-	# output syscall declaration for switch table.  INDIR functions
-	# get none, since they always have sys_nosys() for their table
-	# entries.
-	if (nodefs != "INDIR") {
-		prototype = "(struct proc *, void *, register_t *)"
-		if (compatwrap == "")
-			printf("int\t%s%s;\n", funcname,
-			    prototype) > sysprotos
-		else
-			printf("int\t%s_%s%s;\n", compatwrap, funcname,
-			    prototype) > sysprotos
-	}
+	# output syscall declaration for switch table.
+	prototype = "(struct proc *, void *, register_t *)"
+	if (compatwrap == "")
+		printf("int\t%s%s;\n", funcname,
+		    prototype) > sysprotos
+	else
+		printf("int\t%s_%s%s;\n", compatwrap, funcname,
+		    prototype) > sysprotos
 
 	# output syscall switch entry
-	if (nodefs == "INDIR") {
-		printf("\t{ 0, 0, %s,\n\t    sys_nosys },\t\t\t/* %d = %s (indir) */\n", \
-		    sycall_flags, syscall, funcalias) > sysent
-	} else {
-#		printf("\t{ { %d", argc) > sysent
-#		for (i = 1; i <= argc; i++) {
-#			if (i == 5) 		# wrap the line
-#				printf(",\n\t    ") > sysent
-#			else
-#				printf(", ") > sysent
-#			printf("s(%s)", argtypenospc[i]) > sysent
-#		}
-		printf("\t{ %d, ", argc) > sysent
-		if (argc == 0)
-			printf("0") > sysent
-		else if (compatwrap == "")
-			printf("s(struct %s_args)", funcname) > sysent
-		else
-			printf("s(struct %s_%s_args)", compatwrap,
-			    funcname) > sysent
-		if (compatwrap == "")
-			wfn = sprintf("%s", funcname);
-		else
-			wfn = sprintf("%s(%s)", compatwrap, funcname);
-		printf(", %s,\n\t    %s },", sycall_flags, wfn) > sysent
-		for (i = 0; i < (33 - length(wfn)) / 8; i++)
-			printf("\t") > sysent
-		if (compatwrap == "")
-			printf("/* %d = %s */\n", syscall, funcalias) > sysent
-		else
-			printf("/* %d = %s %s */\n", syscall, compatwrap,
-			    funcalias) > sysent
-	}
+#	printf("\t{ { %d", argc) > sysent
+#	for (i = 1; i <= argc; i++) {
+#		if (i == 5) 		# wrap the line
+#			printf(",\n\t    ") > sysent
+#		else
+#			printf(", ") > sysent
+#		printf("s(%s)", argtypenospc[i]) > sysent
+#	}
+	printf("\t{ %d, ", argc) > sysent
+	if (argc == 0)
+		printf("0") > sysent
+	else if (compatwrap == "")
+		printf("s(struct %s_args)", funcname) > sysent
+	else
+		printf("s(struct %s_%s_args)", compatwrap,
+		    funcname) > sysent
+	if (compatwrap == "")
+		wfn = sprintf("%s", funcname);
+	else
+		wfn = sprintf("%s(%s)", compatwrap, funcname);
+	printf(", %s,\n\t    %s },", sycall_flags, wfn) > sysent
+	for (i = 0; i < (33 - length(wfn)) / 8; i++)
+		printf("\t") > sysent
+	if (compatwrap == "")
+		printf("/* %d = %s */\n", syscall, funcalias) > sysent
+	else
+		printf("/* %d = %s %s */\n", syscall, compatwrap,
+		    funcalias) > sysent
 
 	# output syscall name for names table
 	if (compatwrap == "")
@@ -389,7 +376,7 @@ function putent(nodefs, compatwrap) {
 		    funcalias, syscall, compatwrap, funcalias) > sysnames
 
 	# output syscall number of header, if appropriate
-	if (nodefs == "" || nodefs == "NOARGS" || nodefs == "INDIR") {
+	if (nodefs == "" || nodefs == "NOARGS") {
 		# output a prototype, to be used to generate lint stubs in
 		# libc.
 		printf("/* syscall: \"%s\" ret: \"%s\" args:", funcalias,
@@ -410,7 +397,7 @@ function putent(nodefs, compatwrap) {
 		    compatwrap, funcalias) > sysnumhdr
 
 	# output syscall argument structure, if it has arguments
-	if (argc != 0 && nodefs != "NOARGS" && nodefs != "INDIR") {
+	if (argc != 0 && nodefs != "NOARGS") {
 		if (compatwrap == "")
 			printf("\nstruct %s_args {\n", funcname) > sysarghdr
 		else
@@ -428,7 +415,7 @@ $2 == "STD" {
 	syscall++
 	next
 }
-$2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
+$2 == "NODEF" || $2 == "NOARGS" {
 	parseline()
 	putent($2, "")
 	syscall++

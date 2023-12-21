@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.255 2023/12/19 06:58:36 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.256 2023/12/21 19:34:07 miod Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -12,8 +12,6 @@
 ;		compatibility options defined in syscalls.conf
 ;
 ; types:
-;	INDIR	included, but don't define the syscall args structure,
-;		and allow it to be "really" varargs
 ;	NOARGS	included, but don't define the syscall args structure
 ;	NODEF	included, but don't define the syscall number
 ;	NOLOCK	don't acquire the kernel lock when calling this syscall
