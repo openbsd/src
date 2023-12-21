@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.36 2020/02/26 14:23:15 visa Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.37 2023/12/21 02:57:14 jsg Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -167,5 +167,6 @@ size_t	 getsn(char *, size_t)
 char	*strchr(const char *, int);
 char	*strrchr(const char *, int);
 int	 timingsafe_bcmp(const void *, const void *, size_t);
+char	*strnstr(const char *, const char *, size_t);
 
 #endif /* __LIBKERN_H__ */
