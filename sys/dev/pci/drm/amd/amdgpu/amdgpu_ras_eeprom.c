@@ -149,44 +149,29 @@ static bool __get_eeprom_i2c_addr(struct amdgpu_device *adev,
 		/* VEGA20 and ARCTURUS */
 		if (adev->asic_type == CHIP_VEGA20)
 			control->i2c_address = EEPROM_I2C_MADDR_0;
-#ifdef notyet
 		else if (strnstr(atom_ctx->vbios_version,
 				 "D342",
 				 sizeof(atom_ctx->vbios_version)))
 			control->i2c_address = EEPROM_I2C_MADDR_0;
 		else
 			control->i2c_address = EEPROM_I2C_MADDR_4;
-#else
-		STUB();
-		control->i2c_address = EEPROM_I2C_MADDR_4;
-#endif
 		return true;
 	case IP_VERSION(11, 0, 7):
 		control->i2c_address = EEPROM_I2C_MADDR_0;
 		return true;
 	case IP_VERSION(13, 0, 2):
-#ifdef notyet
 		if (strnstr(atom_ctx->vbios_version, "D673",
 			    sizeof(atom_ctx->vbios_version)))
 			control->i2c_address = EEPROM_I2C_MADDR_4;
 		else
 			control->i2c_address = EEPROM_I2C_MADDR_0;
-#else
-		STUB();
-		control->i2c_address = EEPROM_I2C_MADDR_0;
-#endif
 		return true;
 	case IP_VERSION(13, 0, 0):
-#ifdef notyet
 		if (strnstr(atom_ctx->vbios_pn, "D707",
 			    sizeof(atom_ctx->vbios_pn)))
 			control->i2c_address = EEPROM_I2C_MADDR_0;
 		else
 			control->i2c_address = EEPROM_I2C_MADDR_4;
-#else
-		STUB();
-		control->i2c_address = EEPROM_I2C_MADDR_4;
-#endif
 		return true;
 	case IP_VERSION(13, 0, 6):
 	case IP_VERSION(13, 0, 10):
