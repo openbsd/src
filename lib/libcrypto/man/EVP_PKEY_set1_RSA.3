@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.20 2023/08/27 13:08:15 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.21 2023/12/21 21:32:01 tb Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 27 2023 $
+.Dd $Mdocdate: December 21 2023 $
 .Dt EVP_PKEY_SET1_RSA 3
 .Os
 .Sh NAME
@@ -314,9 +314,6 @@ according to the following table:
 .It Dv EVP_PKEY_RSA_PSS  Ta = Dv NID_rsassaPss            Ta RSA-PSS
 .El
 .Pp
-Application programs can support additional key types by calling
-.Xr EVP_PKEY_asn1_add0 3 .
-.Pp
 .Fn EVP_PKEY_id
 returns the actual OID associated with
 .Fa pkey .
@@ -333,9 +330,6 @@ The following deprecated aliases are still supported:
 .It Dv EVP_PKEY_GOSTR12_512 Ta = Dv NID_id_tc26_gost3410_2012_512 Ta GOST2001
 .It Dv EVP_PKEY_RSA2        Ta = Dv NID_rsa                       Ta RSA
 .El
-.Pp
-Application programs can support additional alternative OIDs by calling
-.Xr EVP_PKEY_asn1_add_alias 3 .
 .Pp
 Most applications wishing to know a key type will simply call
 .Fn EVP_PKEY_base_id
