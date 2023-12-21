@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.92 2023/11/20 10:32:45 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.93 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -18,27 +18,27 @@
  */
 
 #include <sys/queue.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#include <sys/time.h>
 #include <sys/tree.h>
+#include <sys/types.h>
 
-#include <net/if.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 
+#include <ber.h>
+#include <event.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <imsg.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
-#include <event.h>
-#include <fcntl.h>
-#include <locale.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
-#include <pwd.h>
 
 #include "application.h"
+#include "log.h"
 #include "snmpd.h"
 #include "snmpe.h"
 #include "mib.h"

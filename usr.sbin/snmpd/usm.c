@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.28 2023/11/08 20:09:18 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.29 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -18,30 +18,24 @@
 
 #include <sys/queue.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/tree.h>
-
-#include <net/if.h>
-
-#include <errno.h>
-#include <event.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <signal.h>
-#ifdef DEBUG
-#include <assert.h>
-#endif
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+#ifdef DEBUG
+#include <assert.h>
+#endif
+#include <ber.h>
+#include <endian.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+
 #include "application.h"
-#include "snmpd.h"
+#include "log.h"
 #include "mib.h"
+#include "snmp.h"
+#include "snmpd.h"
 
 SLIST_HEAD(, usmuser)	usmuserlist;
 

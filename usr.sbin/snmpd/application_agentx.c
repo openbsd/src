@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.14 2023/11/06 11:04:41 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.15 2023/12/21 12:43:30 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -18,15 +18,16 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
+#include <sys/tree.h>
 #include <sys/un.h>
 
+#include <ber.h>
 #include <errno.h>
 #include <event.h>
 #include <inttypes.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

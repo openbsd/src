@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.h,v 1.2 2023/10/24 08:54:52 martijn Exp $ */
+/*	$OpenBSD: ax.h,v 1.3 2023/12/21 12:43:31 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -15,6 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+
+#include <endian.h>
 #include <stdint.h>
 
 #define AX_PDU_FLAG_INSTANCE_REGISTRATION (1 << 0)

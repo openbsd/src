@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.85 2023/12/18 16:58:26 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.86 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -23,40 +23,41 @@
  */
 
 %{
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/queue.h>
-#include <sys/tree.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #include <sys/utsname.h>
-
-#include <netinet/in.h>
-#include <net/if.h>
 
 #include <arpa/inet.h>
 
+#include <netinet/in.h>
+
 #include <openssl/sha.h>
 
+#include <ber.h>
 #include <ctype.h>
-#include <unistd.h>
 #include <err.h>
 #include <errno.h>
-#include <event.h>
 #include <grp.h>
 #include <inttypes.h>
 #include <limits.h>
-#include <stdint.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <string.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <strings.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "application.h"
-#include "snmpd.h"
+#include "log.h"
 #include "mib.h"
+#include "snmpd.h"
+#include "snmp.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {

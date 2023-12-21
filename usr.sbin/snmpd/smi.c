@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.38 2023/11/12 20:14:39 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.39 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -16,37 +16,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/queue.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/tree.h>
-#include <sys/sysctl.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
-#include <net/if.h>
-#include <net/if_dl.h>
-#include <net/if_arp.h>
-#include <net/if_media.h>
-#include <net/route.h>
-#include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <ber.h>
 #include <errno.h>
-#include <event.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
 #include <limits.h>
-#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 #include <vis.h>
 
-#include "snmpd.h"
+#include "log.h"
 #include "mib.h"
-#include "application.h"
+#include "smi.h"
+#include "snmp.h"
+#include "snmpd.h"
 
 struct oid {
 	struct ber_oid		 o_id;

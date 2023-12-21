@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.48 2022/10/06 14:41:08 martijn Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.49 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -17,29 +17,20 @@
  */
 
 #include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/socket.h>
 #include <sys/wait.h>
-#include <sys/tree.h>
-
-#include <net/if.h>
 
 #include <dirent.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <getopt.h>
 #include <err.h>
 #include <errno.h>
-#include <event.h>
+#include <pwd.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <pwd.h>
 
+#include "log.h"
 #include "snmpd.h"
-#include "mib.h"
 
 __dead void	 usage(void);
 

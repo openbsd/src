@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.10 2023/12/18 09:42:57 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.11 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -17,17 +17,21 @@
  */
 
 #include <sys/tree.h>
+#include <sys/types.h>
 
+#include <stddef.h>
+
+#include <ber.h>
 #include <errno.h>
-#include <event.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "application.h"
 #include "log.h"
 #include "mib.h"
 #include "smi.h"
+#include "snmp.h"
 #include "snmpd.h"
 
 struct appl_internal_object {

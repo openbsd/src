@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.28 2023/02/15 20:44:01 tobhe Exp $	*/
+/*	$OpenBSD: proc.c,v 1.29 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -17,14 +17,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -34,6 +33,7 @@
 #include <event.h>
 #include <imsg.h>
 
+#include "log.h"
 #include "snmpd.h"
 
 void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int, int,

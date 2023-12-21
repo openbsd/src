@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.24 2022/12/28 21:30:19 jmc Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.25 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -18,30 +18,25 @@
 
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/uio.h>
+#include <sys/tree.h>
 #include <sys/wait.h>
-
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include <ber.h>
 #include <errno.h>
-#include <event.h>
-#include <fcntl.h>
 #include <imsg.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <pwd.h>
 
+#include "log.h"
+#include "smi.h"
+#include "snmp.h"
 #include "snmpd.h"
-#include "mib.h"
 
 int	 traphandler_priv_recvmsg(struct privsep_proc *, struct imsg *);
 int	 traphandler_fork_handler(struct privsep_proc *, struct imsg *);

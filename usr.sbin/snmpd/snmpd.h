@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.114 2023/11/13 15:05:14 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.115 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -20,24 +20,22 @@
 #ifndef SNMPD_H
 #define SNMPD_H
 
+#include <sys/queue.h>
+#include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/tree.h>
+#include <sys/types.h>
 #include <sys/un.h>
 
-#include <net/if.h>
-#include <net/if_dl.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
-#include <net/pfvar.h>
-#include <net/route.h>
 
 #include <ber.h>
-#include <stdio.h>
+#include <event.h>
+#include <limits.h>
 #include <imsg.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include "log.h"
-#include "smi.h"
 #include "snmp.h"
 
 #ifndef nitems

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.19 2022/06/30 09:42:19 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.20 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,6 @@
 #define SNMPD_SNMP_H
 
 #include <sys/types.h>
-#include <endian.h>
 
 /*
  * SNMP IMSG interface

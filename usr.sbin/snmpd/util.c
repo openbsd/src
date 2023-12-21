@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2022/10/06 14:41:08 martijn Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2023/12/21 12:43:31 martijn Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -15,21 +15,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 
-#include <net/if.h>
+#include <netinet/in.h>
 
-#include <ber.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include <netdb.h>
-#include <event.h>
 
-#include "snmp.h"
 #include "snmpd.h"
 
 ssize_t

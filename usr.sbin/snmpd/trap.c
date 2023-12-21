@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2023/12/12 20:18:39 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.41 2023/12/21 12:43:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -17,27 +17,18 @@
  */
 
 #include <sys/queue.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/tree.h>
 
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
+#include <ber.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <event.h>
-#include <fcntl.h>
 #include <string.h>
-#include <unistd.h>
-#include <pwd.h>
 
-#include "snmpd.h"
+#include "log.h"
 #include "mib.h"
+#include "smi.h"
+#include "snmp.h"
+#include "snmpd.h"
 
 void
 trap_init(void)
