@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.73 2023/12/20 14:15:19 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.74 2023/12/21 20:50:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -601,7 +601,7 @@ EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 		    keylen, NULL);
 	if (c->key_len == keylen)
 		return 1;
-	if ((keylen > 0) && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
+	if (keylen > 0 && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
 		c->key_len = keylen;
 		return 1;
 	}
@@ -654,7 +654,7 @@ EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 int
 EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 {
-	if ((in == NULL) || (in->cipher == NULL)) {
+	if (in == NULL || in->cipher == NULL) {
 		EVPerror(EVP_R_INPUT_NOT_INITIALIZED);
 		return 0;
 	}
