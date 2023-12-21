@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.26 2023/12/10 19:03:37 miod Exp $   */
+/*	$OpenBSD: ugold.c,v 1.27 2023/12/21 19:40:47 miod Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -498,8 +498,14 @@ ugold_si700x_type(struct ugold_softc *sc)
 	/* TEMPerGold prefix */
 	if (sc->sc_model_len >= 11 &&
 	    memcmp(sc->sc_model, "TEMPerGold_", 11) == 0) {
+		/*
+		 * All V3.something models ought to work, but better be
+		 * safe than sorry, and TEMPerHum models have been known
+		 * to use slightly different sensors between models.
+		 */
 		if (memcmp(sc->sc_model + 11, "V3.1 ", 16 - 11) == 0 ||
-		    memcmp(sc->sc_model + 11, "V3.4 ", 16 - 11) == 0) {
+		    memcmp(sc->sc_model + 11, "V3.4 ", 16 - 11) == 0 ||
+		    memcmp(sc->sc_model + 11, "V3.5 ", 16 - 11) == 0) {
 			sc->sc_type = UGOLD_TYPE_GOLD;
 			sc->sc_num_sensors = 1;
 			descr = "gold (temperature only)";
