@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.115 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.116 2023/12/21 13:54:05 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -174,10 +174,6 @@ struct privsep_fd {
 
 #define OID(...)		(struct ber_oid){ { __VA_ARGS__ },	\
     (sizeof((uint32_t []) { __VA_ARGS__ }) / sizeof(uint32_t)) }
-#define MIBDECL(...)		{ { MIB_##__VA_ARGS__ },		\
-    (sizeof((uint32_t []) { MIB_##__VA_ARGS__ }) / sizeof(uint32_t))}, #__VA_ARGS__
-#define MIB(...)		{ { MIB_##__VA_ARGS__ } }, NULL
-#define MIBEND			{ { 0 } }, NULL
 
 /*
  * daemon structures

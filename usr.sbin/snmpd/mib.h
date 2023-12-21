@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.42 2023/11/08 19:43:29 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.43 2023/12/21 13:54:05 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -18,6 +18,10 @@
 
 #ifndef SNMPD_MIB_H
 #define SNMPD_MIB_H
+
+#define MIBDECL(...)		{ { MIB_##__VA_ARGS__ },		\
+    (sizeof((uint32_t []) { MIB_##__VA_ARGS__ }) / sizeof(uint32_t))}, #__VA_ARGS__
+#define MIBEND			{ { 0 } }, NULL
 
 /*
  * Adding new MIBs:
@@ -1394,7 +1398,5 @@
 	{ MIBDECL(ipfRouteEntStatus) },			\
 	{ MIBEND }					\
 }
-
- void	 mib_init(void);
 
 #endif /* SNMPD_MIB_H */
