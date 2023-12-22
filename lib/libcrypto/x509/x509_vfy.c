@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.133 2023/12/22 13:45:28 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.134 2023/12/22 13:46:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,7 +176,7 @@ check_id_error(X509_STORE_CTX *ctx, int errcode)
 }
 
 static int
-check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
+x509_vfy_check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
 	int i, n;
 	char *name;
@@ -200,7 +200,7 @@ x509_vfy_check_id(X509_STORE_CTX *ctx)
 	X509_VERIFY_PARAM *vpm = ctx->param;
 	X509 *x = ctx->cert;
 
-	if (vpm->hosts && check_hosts(x, vpm) <= 0) {
+	if (vpm->hosts && x509_vfy_check_hosts(x, vpm) <= 0) {
 		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
 			return 0;
 	}
