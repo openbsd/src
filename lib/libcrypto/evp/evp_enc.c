@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.77 2023/12/22 14:58:05 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.78 2023/12/22 17:37:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -324,7 +324,6 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 	if (partial_len == 0 && (in_len & block_mask) == 0)
 		return evp_cipher(ctx, out, out_len, in, in_len);
 
-	/* XXX - check that block_size > partial_len. */
 	if (partial_len < 0 || partial_len >= block_size ||
 	    block_size > sizeof(ctx->buf)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
@@ -400,7 +399,6 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
 		return evp_cipher(ctx, out, out_len, NULL, 0);
 
-	/* XXX - check that block_size > partial_len. */
 	if (partial_len < 0 || partial_len >= block_size ||
 	    block_size > sizeof(ctx->buf)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
