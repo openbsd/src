@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.74 2023/12/21 20:50:43 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.75 2023/12/22 10:20:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -131,13 +131,13 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
 		return 0;
 	}
 
-	if (!(ctx->flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW) &&
+	if ((ctx->flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW) == 0 &&
 	    EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_WRAP_MODE) {
 		EVPerror(EVP_R_WRAP_MODE_NOT_ALLOWED);
 		return 0;
 	}
 
-	if (!(EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV)) {
+	if ((EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV) == 0) {
 		int iv_len;
 
 		switch (EVP_CIPHER_CTX_mode(ctx)) {
@@ -181,7 +181,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
 		}
 	}
 
-	if (key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
+	if (key != NULL || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT) != 0) {
 		if (!ctx->cipher->init(ctx, key, iv, enc))
 			return 0;
 	}
