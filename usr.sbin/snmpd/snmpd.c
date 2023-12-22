@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.49 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.50 2023/12/22 13:04:30 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -191,6 +191,8 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc > 0)
 		usage();
+
+	log_setverbose(verbose);
 
 	if ((env = parse_config(conffile, flags)) == NULL)
 		exit(1);
