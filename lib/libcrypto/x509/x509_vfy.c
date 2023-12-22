@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.127 2023/11/27 00:51:12 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.128 2023/12/22 07:35:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2338,52 +2338,16 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *leaf,
 	else
 		ctx->verify_cb = null_callback;
 
-	if (store && store->get_issuer)
-		ctx->get_issuer = store->get_issuer;
-	else
-		ctx->get_issuer = X509_STORE_CTX_get1_issuer;
-
-	if (store && store->check_issued)
-		ctx->check_issued = store->check_issued;
-	else
-		ctx->check_issued = check_issued;
-
-	if (store && store->check_revocation)
-		ctx->check_revocation = store->check_revocation;
-	else
-		ctx->check_revocation = check_revocation;
-
-	if (store && store->get_crl)
-		ctx->get_crl = store->get_crl;
-	else
-		ctx->get_crl = NULL;
-
-	if (store && store->check_crl)
-		ctx->check_crl = store->check_crl;
-	else
-		ctx->check_crl = check_crl;
-
-	if (store && store->cert_crl)
-		ctx->cert_crl = store->cert_crl;
-	else
-		ctx->cert_crl = cert_crl;
-
+	ctx->get_issuer = X509_STORE_CTX_get1_issuer;
+	ctx->check_issued = check_issued;
+	ctx->check_revocation = check_revocation;
+	ctx->get_crl = NULL;				/* XXX - remove */
+	ctx->check_crl = check_crl;
+	ctx->cert_crl = cert_crl;
 	ctx->check_policy = check_policy;
-
-	if (store && store->lookup_certs)
-		ctx->lookup_certs = store->lookup_certs;
-	else
-		ctx->lookup_certs = X509_STORE_CTX_get1_certs;
-
-	if (store && store->lookup_crls)
-		ctx->lookup_crls = store->lookup_crls;
-	else
-		ctx->lookup_crls = X509_STORE_CTX_get1_crls;
-
-	if (store && store->cleanup)
-		ctx->cleanup = store->cleanup;
-	else
-		ctx->cleanup = NULL;
+	ctx->lookup_certs = X509_STORE_CTX_get1_certs;
+	ctx->lookup_crls = X509_STORE_CTX_get1_crls;
+	ctx->cleanup = NULL;				/* XXX - remove */
 
 	ctx->param = X509_VERIFY_PARAM_new();
 	if (!ctx->param) {

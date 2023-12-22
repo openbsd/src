@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.11 2023/11/01 20:37:42 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.12 2023/12/22 07:35:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -299,15 +299,7 @@ struct x509_store_st {
 	/* Callbacks for various operations */
 	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */
 	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);	/* error callback */
-	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
 	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
-	int (*check_revocation)(X509_STORE_CTX *ctx); /* Check revocation status of chain */
-	int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x); /* retrieve CRL */
-	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
-	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
-	STACK_OF(X509) * (*lookup_certs)(X509_STORE_CTX *ctx, X509_NAME *nm);
-	STACK_OF(X509_CRL) * (*lookup_crls)(X509_STORE_CTX *ctx, X509_NAME *nm);
-	int (*cleanup)(X509_STORE_CTX *ctx);
 
 	CRYPTO_EX_DATA ex_data;
 	int references;
