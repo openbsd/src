@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.8 2023/12/20 13:30:51 sthen Exp $
+.\"	$OpenBSD: python-module.5,v 1.9 2023/12/22 12:51:53 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 20 2023 $
+.Dd $Mdocdate: December 22 2023 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -113,8 +113,8 @@ If the port provides a
 .Pa pyproject.toml
 file, check the "build-backend" line in the [build-system] section.
 .Nm
-currently supports flit_core, hatchling, hatch-vcs, poetry-core, setuptools
-and setuptools_scm.
+currently supports flit_core, hatchling, hatch-vcs, jupyter_packaging,
+poetry-core, setuptools and setuptools_scm.
 If no
 .Pa pyproject.toml
 is provided then it probably uses setuptools.
