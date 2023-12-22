@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.131 2023/12/22 13:36:20 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.132 2023/12/22 13:42:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,7 +123,6 @@ static int null_callback(int ok, X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *subject, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x,
     int allow_expired);
-static int check_chain_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx, STACK_OF(X509) *chain, int depth);
@@ -528,7 +527,7 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 		goto end;
 
 	/* We have the chain complete: now we need to check its purpose */
-	ok = check_chain_extensions(ctx);
+	ok = x509_vfy_check_chain_extensions(ctx);
 	if (!ok)
 		goto end;
 
@@ -807,11 +806,6 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 end:
 	return ok;
 #endif
-}
-
-static int
-check_chain_extensions(X509_STORE_CTX *ctx) {
-	return x509_vfy_check_chain_extensions(ctx);
 }
 
 static int
