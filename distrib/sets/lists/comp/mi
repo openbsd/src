@@ -3209,6 +3209,7 @@
 ./usr/share/man/man9/startuphook_establish.9
 ./usr/share/man/man9/stoeplitz_to_key.9
 ./usr/share/man/man9/strcmp.9
+./usr/share/man/man9/strnstr.9
 ./usr/share/man/man9/style.9
 ./usr/share/man/man9/syscall.9
 ./usr/share/man/man9/sysctl_int.9
