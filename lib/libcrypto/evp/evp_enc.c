@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.76 2023/12/22 12:35:22 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.77 2023/12/22 14:58:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -325,12 +325,13 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 		return evp_cipher(ctx, out, out_len, in, in_len);
 
 	/* XXX - check that block_size > partial_len. */
-	if (block_size > sizeof(ctx->buf)) {
+	if (partial_len < 0 || partial_len >= block_size ||
+	    block_size > sizeof(ctx->buf)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
 
-	if (partial_len != 0) {
+	if (partial_len > 0) {
 		int partial_needed;
 
 		if ((partial_needed = block_size - partial_len) > in_len) {
@@ -373,9 +374,8 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 		total_len += len;
 	}
 
-	if (partial_len != 0)
+	if ((ctx->partial_len = partial_len) > 0)
 		memcpy(ctx->buf, &in[in_len], partial_len);
-	ctx->partial_len = partial_len;
 
 	*out_len = total_len;
 
@@ -401,7 +401,8 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 		return evp_cipher(ctx, out, out_len, NULL, 0);
 
 	/* XXX - check that block_size > partial_len. */
-	if (block_size > sizeof(ctx->buf)) {
+	if (partial_len < 0 || partial_len >= block_size ||
+	    block_size > sizeof(ctx->buf)) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
 		return 0;
 	}
