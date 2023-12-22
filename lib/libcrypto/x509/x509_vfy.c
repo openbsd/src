@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.130 2023/12/22 13:31:35 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.131 2023/12/22 13:36:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -196,8 +196,8 @@ check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 	return n == 0;
 }
 
-static int
-check_id(X509_STORE_CTX *ctx)
+int
+x509_vfy_check_id(X509_STORE_CTX *ctx)
 {
 	X509_VERIFY_PARAM *vpm = ctx->param;
 	X509 *x = ctx->cert;
@@ -216,11 +216,6 @@ check_id(X509_STORE_CTX *ctx)
 			return 0;
 	}
 	return 1;
-}
-
-int
-x509_vfy_check_id(X509_STORE_CTX *ctx) {
-	return check_id(ctx);
 }
 
 /*
@@ -557,7 +552,7 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 		goto end;
 #endif
 
-	ok = check_id(ctx);
+	ok = x509_vfy_check_id(ctx);
 	if (!ok)
 		goto end;
 
