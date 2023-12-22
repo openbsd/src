@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.76 2023/12/22 20:29:27 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.77 2023/12/22 20:32:29 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1461,8 +1461,7 @@ rd_size(off_t *size, const char *keyword, char *p)
 	const char *errstr;
 
 	/* Assume off_t is a long long. */
-	*size = strtonum(p, 0, LLONG_MAX,
-	    &errstr);
+	*size = strtonum(p, 0, LLONG_MAX, &errstr);
 	if (errstr != NULL) {
 		paxwarn(1, "%s is %s: %s", keyword, errstr, p);
 		return -1;
