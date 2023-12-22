@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: xargs-L.sh,v 1.3 2017/10/16 13:48:22 anton Exp $
+# $OpenBSD: xargs-L.sh,v 1.4 2023/12/22 17:12:13 millert Exp $
 #
 # written by Ingo Schwarze <schwarze@openbsd.org> 2010
 # and placed in the public domain
@@ -97,3 +97,11 @@ test_xargs 'a\n\\\nb\0c' '-0 -L 1' 'a\n\\\nb|\nc|'
 test_xargs 'a \\\nb\0c'  '-0 -L 1' 'a \\\nb|\nc|'
 test_xargs 'a\\\n b\0c'  '-0 -L 1' 'a\\\n b|\nc|'
 test_xargs 'a \\\n b\0c' '-0 -L 1' 'a \\\n b|\nc|'
+
+test_xargs 'a'           '-0 -L 1' 'a|\n'
+test_xargs 'a\0'         '-0 -L 1' 'a|\n'
+test_xargs 'a\0\0'       '-0 -L 1' 'a|\n|\n'
+test_xargs 'a\0\0b'      '-0 -L 2' 'a||\nb|'
+test_xargs 'a\0\0b'      '-0 -L 1' 'a|\n|\nb|'
+test_xargs 'a\0\0b'      '-0 -L 3' 'a||b|'
+test_xargs 'a\0\0b'      '-0 -L 9' 'a||b|'

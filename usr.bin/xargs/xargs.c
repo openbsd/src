@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.36 2022/12/04 23:50:50 cheloha Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.37 2023/12/22 17:12:13 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -297,7 +297,7 @@ arg2:
 		    strcmp(argp, eofstr) == 0;
 
 		/* Do not make empty args unless they are quoted */
-		if ((argp != p || wasquoted) && !foundeof) {
+		if ((zflag || argp != p || wasquoted) && !foundeof) {
 			*p++ = '\0';
 			*xp++ = argp;
 			if (Iflag) {
