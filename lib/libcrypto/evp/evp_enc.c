@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.75 2023/12/22 10:20:33 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.76 2023/12/22 12:35:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,44 +83,48 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
 {
 	if (enc == -1)
 		enc = ctx->encrypt;
-	else {
-		if (enc)
-			enc = 1;
-		ctx->encrypt = enc;
-	}
-	if (cipher) {
-		/* Ensure a context left lying around from last time is cleared
-		 * (the previous check attempted to avoid this if the same
-		 * EVP_CIPHER could be used). */
-		if (ctx->cipher) {
-			unsigned long flags = ctx->flags;
-			EVP_CIPHER_CTX_cleanup(ctx);
-			/* Restore encrypt and flags */
-			ctx->encrypt = enc;
-			ctx->flags = flags;
-		}
+	if (enc != 0)
+		enc = 1;
+	ctx->encrypt = enc;
 
+	if (cipher == NULL && ctx->cipher == NULL) {
+		EVPerror(EVP_R_NO_CIPHER_SET);
+		return 0;
+	}
+
+	/*
+	 * If the ctx is reused and a cipher is passed in, reset the ctx but
+	 * remember enc and whether key wrap was enabled.
+	 */
+	if (cipher != NULL && ctx->cipher != NULL) {
+		unsigned long flags = ctx->flags;
+
+		EVP_CIPHER_CTX_cleanup(ctx);
+
+		ctx->encrypt = enc;
+		ctx->flags = flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW;
+	}
+
+	/* Set up cipher. Allocate cipher data and initialize if necessary. */
+	if (cipher != NULL) {
 		ctx->cipher = cipher;
-		if (ctx->cipher->ctx_size) {
+		ctx->key_len = cipher->key_len;
+		ctx->flags &= EVP_CIPHER_CTX_FLAG_WRAP_ALLOW;
+
+		if (ctx->cipher->ctx_size != 0) {
 			ctx->cipher_data = calloc(1, ctx->cipher->ctx_size);
 			if (ctx->cipher_data == NULL) {
 				EVPerror(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
-		} else {
-			ctx->cipher_data = NULL;
 		}
-		ctx->key_len = cipher->key_len;
-		ctx->flags &= EVP_CIPHER_CTX_FLAG_WRAP_ALLOW;
-		if (ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
+
+		if ((ctx->cipher->flags & EVP_CIPH_CTRL_INIT) != 0) {
 			if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL)) {
 				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				return 0;
 			}
 		}
-	} else if (!ctx->cipher) {
-		EVPerror(EVP_R_NO_CIPHER_SET);
-		return 0;
 	}
 
 	/* Block sizes must be a power of 2 due to the use of block_mask. */
