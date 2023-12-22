@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.75 2023/12/21 01:20:54 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.76 2023/12/22 20:29:27 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -741,6 +741,7 @@ reset:
 	memset(arcn, 0, sizeof(*arcn));
 	arcn->org_name = arcn->name;
 	arcn->sb.st_nlink = 1;
+	arcn->sb.st_size = (off_t)-1;
 
 	/* Process Extended headers. */
 	if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE) {
@@ -795,7 +796,10 @@ reset:
 	 */
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
-	arcn->sb.st_size = (off_t)asc_ull(hd->size, sizeof(hd->size), OCT);
+	if (arcn->sb.st_size == (off_t)-1) {
+		arcn->sb.st_size =
+		    (off_t)asc_ull(hd->size, sizeof(hd->size), OCT);
+	}
 	if (arcn->sb.st_mtime == 0) {
 		val = asc_ull(hd->mtime, sizeof(hd->mtime), OCT);
 		if (val > MAX_TIME_T)
@@ -932,6 +936,38 @@ xheader_add(struct xheader *xhdr, const char *keyword,
 		return -1;
 	rec->reclen = reclen;
 	if (asprintf(&s, "%d %s=%s\n", reclen, keyword, value) < 0) {
+		free(rec);
+		return -1;
+	}
+	rec->record = s;
+
+	SLIST_INSERT_HEAD(xhdr, rec, entry);
+
+	return 0;
+}
+
+static int
+xheader_add_ull(struct xheader *xhdr, const char *keyword,
+    unsigned long long value)
+{
+	struct xheader_record *rec;
+	int reclen, tmplen;
+	char *s;
+
+	tmplen = MINXHDRSZ;
+	do {
+		reclen = tmplen;
+		tmplen = snprintf(NULL, 0, "%d %s=%llu\n", reclen, keyword,
+		    value);
+	} while (tmplen >= 0 && tmplen != reclen);
+	if (tmplen < 0)
+		return -1;
+
+	rec = calloc(1, sizeof(*rec));
+	if (rec == NULL)
+		return -1;
+	rec->reclen = reclen;
+	if (asprintf(&s, "%d %s=%llu\n", reclen, keyword, value) < 0) {
 		free(rec);
 		return -1;
 	}
@@ -1160,9 +1196,20 @@ wr_ustar_or_pax(ARCHD *arcn, int ustar)
 			hd->typeflag = REGTYPE;
 		arcn->pad = TAR_PAD(arcn->sb.st_size);
 		if (ull_oct(arcn->sb.st_size, hd->size, sizeof(hd->size), 3)) {
-			paxwarn(1, "File is too long for ustar %s",
-			    arcn->org_name);
-			return(1);
+			if (ustar) {
+				paxwarn(1, "File is too long for ustar %s",
+				    arcn->org_name);
+				return(1);
+			}
+#ifndef SMALL
+			else if (xheader_add_ull(&xhdr, "size",
+			    arcn->sb.st_size) == -1) {
+				paxwarn(1, "File is too long for pax %s",
+				    arcn->org_name);
+				xheader_free(&xhdr);
+				return(1);
+			}
+#endif
 		}
 		break;
 	}
@@ -1409,6 +1456,22 @@ rd_time(struct timespec *ts, const char *keyword, char *p)
 }
 
 static int
+rd_size(off_t *size, const char *keyword, char *p)
+{
+	const char *errstr;
+
+	/* Assume off_t is a long long. */
+	*size = strtonum(p, 0, LLONG_MAX,
+	    &errstr);
+	if (errstr != NULL) {
+		paxwarn(1, "%s is %s: %s", keyword, errstr, p);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
 rd_xheader(ARCHD *arcn, int global, off_t size)
 {
 	char buf[MAXXHDRSZ];
@@ -1496,6 +1559,10 @@ rd_xheader(ARCHD *arcn, int global, off_t size)
 					break;
 			} else if (!strcmp(keyword, "ctime")) {
 				ret = rd_time(&arcn->sb.st_ctim, keyword, p);
+				if (ret < 0)
+					break;
+			} else if (!strcmp(keyword, "size")) {
+				ret = rd_size(&arcn->sb.st_size, keyword, p);
 				if (ret < 0)
 					break;
 			}
