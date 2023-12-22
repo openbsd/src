@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.7 2023/08/15 09:46:30 dlg Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.8 2023/12/22 23:01:50 mvs Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -147,7 +147,6 @@ sec_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = sec_ioctl;
 	ifp->if_rtrequest = p2p_rtrequest;
 
-	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 

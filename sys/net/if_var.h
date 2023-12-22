@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.130 2023/11/11 14:24:03 bluhm Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.131 2023/12/22 23:01:50 mvs Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -378,9 +378,6 @@ u_int	if_rxr_get(struct if_rxring *, u_int);
 int	if_rxr_info_ioctl(struct if_rxrinfo *, u_int, struct if_rxring_info *);
 int	if_rxr_ioctl(struct if_rxrinfo *, const char *, u_int,
 	    struct if_rxring *);
-
-void	if_counters_alloc(struct ifnet *);
-void	if_counters_free(struct ifnet *);
 
 int	if_txhprio_l2_check(int);
 int	if_txhprio_l3_check(int);

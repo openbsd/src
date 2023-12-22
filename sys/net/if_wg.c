@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.32 2023/10/23 10:22:05 mvs Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.33 2023/12/22 23:01:50 mvs Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -2693,7 +2693,6 @@ wg_clone_create(struct if_clone *ifc, int unit)
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	if_counters_alloc(ifp);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.152 2021/08/02 21:10:55 mvs Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.153 2023/12/22 23:01:50 mvs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -193,7 +193,6 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	 * Attach as an ordinary ethernet device, children will be attached
 	 * as special device IFT_IEEE8023ADLAG.
 	 */
-	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.32 2023/11/23 23:45:10 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.33 2023/12/22 23:01:50 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -314,7 +314,6 @@ veb_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 
-	if_counters_alloc(ifp);
 	if_attach(ifp);
 
 	if_alloc_sadl(ifp);
@@ -2348,7 +2347,6 @@ vport_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 	ether_fakeaddr(ifp);
 
-	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 

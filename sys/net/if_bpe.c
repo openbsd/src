@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.20 2023/10/27 20:56:47 jan Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.21 2023/12/22 23:01:50 mvs Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -182,7 +182,6 @@ bpe_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_xflags = IFXF_CLONED;
 	ether_fakeaddr(ifp);
 
-	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 

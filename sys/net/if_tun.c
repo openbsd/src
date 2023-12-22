@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.238 2023/02/10 14:39:18 visa Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.239 2023/12/22 23:01:50 mvs Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -245,8 +245,6 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	ifp->if_start = tun_start;
 	ifp->if_hardmtu = TUNMRU;
 	ifp->if_link_state = LINK_STATE_DOWN;
-
-	if_counters_alloc(ifp);
 
 	if ((flags & TUN_LAYER2) == 0) {
 #if NBPFILTER > 0

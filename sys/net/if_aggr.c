@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.40 2023/05/16 14:32:54 jan Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.41 2023/12/22 23:01:50 mvs Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -562,7 +562,6 @@ aggr_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_link_state = LINK_STATE_DOWN;
 	ether_fakeaddr(ifp);
 
-	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
