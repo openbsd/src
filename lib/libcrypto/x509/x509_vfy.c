@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.132 2023/12/22 13:42:18 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.133 2023/12/22 13:45:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -124,7 +124,6 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *subject, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x,
     int allow_expired);
 static int check_name_constraints(X509_STORE_CTX *ctx);
-static int check_trust(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx, STACK_OF(X509) *chain, int depth);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
@@ -425,7 +424,7 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 		}
 
 		/* we now have our chain, lets check it... */
-		trust = check_trust(ctx);
+		trust = x509_vfy_check_trust(ctx);
 
 		/* If explicitly rejected error */
 		if (trust == X509_TRUST_REJECTED) {
@@ -858,8 +857,8 @@ x509_vfy_lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 	return lookup_cert_match(ctx, x);
 }
 
-static int
-check_trust(X509_STORE_CTX *ctx)
+int
+x509_vfy_check_trust(X509_STORE_CTX *ctx)
 {
 	size_t i;
 	int ok;
@@ -911,12 +910,6 @@ check_trust(X509_STORE_CTX *ctx)
 	 * standard (no issuer cert) etc errors to be indicated.
 	 */
 	return X509_TRUST_UNTRUSTED;
-}
-
-int
-x509_vfy_check_trust(X509_STORE_CTX *ctx)
-{
-	return check_trust(ctx);
 }
 
 int
