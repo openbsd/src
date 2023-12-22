@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.29 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.30 2023/12/22 13:03:16 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -208,8 +208,6 @@ usm_finduser(char *name)
 int
 usm_checkuser(struct usmuser *up, const char **errp)
 {
-	char	*auth = NULL, *priv = NULL;
-
 	if (up->uu_auth != AUTH_NONE && up->uu_authkey == NULL) {
 		*errp = "missing auth passphrase";
 		goto fail;
@@ -230,45 +228,26 @@ usm_checkuser(struct usmuser *up, const char **errp)
 
 	switch (up->uu_auth) {
 	case AUTH_NONE:
-		auth = "none";
 		break;
 	case AUTH_MD5:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "HMAC-MD5-96";
-		break;
 	case AUTH_SHA1:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "HMAC-SHA1-96";
-		break;
 	case AUTH_SHA224:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "usmHMAC128SHA224AuthProtocol";
 	case AUTH_SHA256:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "usmHMAC192SHA256AuthProtocol";
 	case AUTH_SHA384:
-		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "usmHMAC256SHA384AuthProtocol";
 	case AUTH_SHA512:
 		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
-		auth = "usmHMAC384SHA512AuthProtocol";
+		break;
 	}
 
 	switch (up->uu_priv) {
 	case PRIV_NONE:
-		priv = "none";
 		break;
 	case PRIV_DES:
-		up->uu_seclevel |= SNMP_MSGFLAG_PRIV;
-		priv = "CBC-DES";
-		break;
 	case PRIV_AES:
 		up->uu_seclevel |= SNMP_MSGFLAG_PRIV;
-		priv = "CFB128-AES-128";
 		break;
 	}
 
-	log_debug("user \"%s\" auth %s enc %s", up->uu_name, auth, priv);
 	return 0;
 
 fail:
