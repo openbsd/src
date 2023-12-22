@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.8 2023/12/20 14:10:03 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.9 2023/12/22 17:25:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -170,8 +170,8 @@ struct evp_cipher_ctx_st {
 	int encrypt;		/* encrypt or decrypt */
 	int partial_len;	/* number of bytes written to buf */
 
-	unsigned char  oiv[EVP_MAX_IV_LENGTH];	/* original iv */
-	unsigned char  iv[EVP_MAX_IV_LENGTH];	/* working iv */
+	unsigned char oiv[EVP_MAX_IV_LENGTH];	/* original iv */
+	unsigned char iv[EVP_MAX_IV_LENGTH];	/* working iv */
 	unsigned char buf[EVP_MAX_BLOCK_LENGTH];/* saved partial block */
 	int num;				/* used by cfb/ofb/ctr mode */
 
