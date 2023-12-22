@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.129 2023/12/22 09:40:14 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.130 2023/12/22 13:31:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,6 +116,9 @@
 
 #define CRL_SCORE_TIME_DELTA	0x002
 
+static int x509_vfy_check_crl(X509_STORE_CTX *ctx, X509_CRL *crl);
+static int x509_vfy_cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
+
 static int null_callback(int ok, X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *subject, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x,
@@ -123,9 +126,7 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x,
 static int check_chain_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
-static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx, STACK_OF(X509) *chain, int depth);
-static int check_policy(X509_STORE_CTX *ctx);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     unsigned int *preasons, X509_CRL *crl, X509 *x);
@@ -564,7 +565,7 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 	 * Check revocation status: we do this after copying parameters because
 	 * they may be needed for CRL signature verification.
 	 */
-	ok = ctx->check_revocation(ctx);
+	ok = x509_vfy_check_revocation(ctx);
 	if (!ok)
 		goto end;
 
@@ -578,7 +579,7 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 
 	/* If we get this far evaluate policies */
 	if (!bad_chain)
-		ok = ctx->check_policy(ctx);
+		ok = x509_vfy_check_policy(ctx);
 
  end:
 	/* Safety net, error returns must set ctx->error */
@@ -840,7 +841,7 @@ lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 	size_t i;
 
 	/* Lookup all certs with matching subject name */
-	certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
+	certs = X509_STORE_CTX_get1_certs(ctx, X509_get_subject_name(x));
 	if (certs == NULL)
 		return NULL;
 
@@ -863,8 +864,7 @@ lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 X509 *
 x509_vfy_lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 {
-	if (ctx->lookup_certs == NULL || ctx->store == NULL ||
-	    ctx->store->objs == NULL)
+	if (ctx->store == NULL || ctx->store->objs == NULL)
 		return NULL;
 	return lookup_cert_match(ctx, x);
 }
@@ -930,8 +930,8 @@ x509_vfy_check_trust(X509_STORE_CTX *ctx)
 	return check_trust(ctx);
 }
 
-static int
-check_revocation(X509_STORE_CTX *ctx)
+int
+x509_vfy_check_revocation(X509_STORE_CTX *ctx)
 {
 	int i, last, ok;
 
@@ -951,12 +951,6 @@ check_revocation(X509_STORE_CTX *ctx)
 			return ok;
 	}
 	return 1;
-}
-
-int
-x509_vfy_check_revocation(X509_STORE_CTX *ctx)
-{
-	return check_revocation(ctx);
 }
 
 static int
@@ -983,15 +977,15 @@ check_cert(X509_STORE_CTX *ctx, STACK_OF(X509) *chain, int depth)
 			goto err;
 		}
 		ctx->current_crl = crl;
-		ok = ctx->check_crl(ctx, crl);
+		ok = x509_vfy_check_crl(ctx, crl);
 		if (!ok)
 			goto err;
 
 		if (dcrl) {
-			ok = ctx->check_crl(ctx, dcrl);
+			ok = x509_vfy_check_crl(ctx, dcrl);
 			if (!ok)
 				goto err;
-			ok = ctx->cert_crl(ctx, dcrl, x);
+			ok = x509_vfy_cert_crl(ctx, dcrl, x);
 			if (!ok)
 				goto err;
 		} else
@@ -999,7 +993,7 @@ check_cert(X509_STORE_CTX *ctx, STACK_OF(X509) *chain, int depth)
 
 		/* Don't look in full CRL if delta reason is removefromCRL */
 		if (ok != 2) {
-			ok = ctx->cert_crl(ctx, crl, x);
+			ok = x509_vfy_cert_crl(ctx, crl, x);
 			if (!ok)
 				goto err;
 		}
@@ -1553,7 +1547,7 @@ get_crl_delta(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x)
 		goto done;
 
 	/* Lookup CRLs from store */
-	skcrl = ctx->lookup_crls(ctx, nm);
+	skcrl = X509_STORE_CTX_get1_crls(ctx, nm);
 
 	/* If no CRLs found and a near match from get_crl_sk use that */
 	if (!skcrl && crl)
@@ -1580,7 +1574,7 @@ done:
 
 /* Check CRL validity */
 static int
-check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
+x509_vfy_check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 {
 	X509 *issuer = NULL;
 	EVP_PKEY *ikey = NULL;
@@ -1683,7 +1677,7 @@ err:
 
 /* Check certificate against CRL */
 static int
-cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
+x509_vfy_cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 {
 	int ok;
 	X509_REVOKED *rev;
@@ -1748,12 +1742,6 @@ x509_vfy_check_policy(X509_STORE_CTX *ctx)
 	}
 
 	return 1;
-}
-
-static int
-check_policy(X509_STORE_CTX *ctx)
-{
-	return x509_vfy_check_policy(ctx);
 }
 
 /*
@@ -2334,12 +2322,6 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *leaf,
 
 	ctx->get_issuer = X509_STORE_CTX_get1_issuer;
 	ctx->check_issued = check_issued;
-	ctx->check_revocation = check_revocation;
-	ctx->check_crl = check_crl;
-	ctx->cert_crl = cert_crl;
-	ctx->check_policy = check_policy;
-	ctx->lookup_certs = X509_STORE_CTX_get1_certs;
-	ctx->lookup_crls = X509_STORE_CTX_get1_crls;
 
 	ctx->param = X509_VERIFY_PARAM_new();
 	if (!ctx->param) {

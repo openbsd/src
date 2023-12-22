@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.13 2023/12/22 09:40:14 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.14 2023/12/22 13:31:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -336,12 +336,6 @@ struct x509_store_ctx_st {
 	int (*verify_cb)(int ok,X509_STORE_CTX *ctx);		/* error callback */
 	int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);	/* get issuers cert from ctx */
 	int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer); /* check issued */
-	int (*check_revocation)(X509_STORE_CTX *ctx); /* Check revocation status of chain */
-	int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl); /* Check CRL validity */
-	int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x); /* Check certificate against CRL */
-	int (*check_policy)(X509_STORE_CTX *ctx);
-	STACK_OF(X509) * (*lookup_certs)(X509_STORE_CTX *ctx, X509_NAME *nm);
-	STACK_OF(X509_CRL) * (*lookup_crls)(X509_STORE_CTX *ctx, X509_NAME *nm);
 
 	/* The following is built up */
 	int valid;		/* if 0, rebuild chain */
