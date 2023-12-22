@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.128 2023/12/22 07:35:09 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.129 2023/12/22 09:40:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -976,13 +976,7 @@ check_cert(X509_STORE_CTX *ctx, STACK_OF(X509) *chain, int depth)
 	while (ctx->current_reasons != CRLDP_ALL_REASONS) {
 		last_reasons = ctx->current_reasons;
 		/* Try to retrieve relevant CRL */
-		if (ctx->get_crl)
-			ok = ctx->get_crl(ctx, &crl, x);
-		else
-			ok = get_crl_delta(ctx, &crl, &dcrl, x);
-		/* If error looking up CRL, nothing we can do except
-		 * notify callback
-		 */
+		ok = get_crl_delta(ctx, &crl, &dcrl, x);
 		if (!ok) {
 			ctx->error = X509_V_ERR_UNABLE_TO_GET_CRL;
 			ok = ctx->verify_cb(0, ctx);
@@ -2341,13 +2335,11 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *leaf,
 	ctx->get_issuer = X509_STORE_CTX_get1_issuer;
 	ctx->check_issued = check_issued;
 	ctx->check_revocation = check_revocation;
-	ctx->get_crl = NULL;				/* XXX - remove */
 	ctx->check_crl = check_crl;
 	ctx->cert_crl = cert_crl;
 	ctx->check_policy = check_policy;
 	ctx->lookup_certs = X509_STORE_CTX_get1_certs;
 	ctx->lookup_crls = X509_STORE_CTX_get1_crls;
-	ctx->cleanup = NULL;				/* XXX - remove */
 
 	ctx->param = X509_VERIFY_PARAM_new();
 	if (!ctx->param) {
@@ -2403,8 +2395,6 @@ LCRYPTO_ALIAS(X509_STORE_CTX_set0_trusted_stack);
 void
 X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 {
-	if (ctx->cleanup)
-		ctx->cleanup(ctx);
 	if (ctx->param != NULL) {
 		if (ctx->parent == NULL)
 			X509_VERIFY_PARAM_free(ctx->param);
