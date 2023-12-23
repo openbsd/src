@@ -137,11 +137,11 @@ You may need to set up a foreign symbol for the unpacking utility of
 choice.  Once you have done so, use a command like the following to
 unpack the archive:
 
-    vmstar -xvf perl-5^.36^.1.tar
+    vmstar -xvf perl-5^.36^.3.tar
 
 Then set default to the top-level source directory like so:
 
-    set default [.perl-5^.36^.1]
+    set default [.perl-5^.36^.3]
 
 and proceed with configuration as described in the next section.
 

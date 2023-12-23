@@ -31,11 +31,11 @@
 # mkdir -p /opt/perl-catamount
 # mkdir -p /opt/perl-catamount/include
 # mkdir -p /opt/perl-catamount/lib
-# mkdir -p /opt/perl-catamount/lib/perl5/5.36.1
+# mkdir -p /opt/perl-catamount/lib/perl5/5.36.3
 # mkdir -p /opt/perl-catamount/bin
 # cp *.h /opt/perl-catamount/include
 # cp libperl.a /opt/perl-catamount/lib
-# cp -pr lib/* /opt/perl-catamount/lib/perl5/5.36.1
+# cp -pr lib/* /opt/perl-catamount/lib/perl5/5.36.3
 # cp miniperl perl run.sh cc.sh /opt/perl-catamount/lib
 #
 # With the headers and the libperl.a you can embed Perl to your Catamount

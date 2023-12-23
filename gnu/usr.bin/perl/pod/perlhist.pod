@@ -35,7 +35,7 @@ Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs, Tony Cook,
 Dominic Hargreaves, Aaron Crane, Aristotle Pagaltzis, Matthew Horsfall,
 Peter Martini, Sawyer X, Chad 'Exodist' Granum, Renee Bäcker, Eric Herman,
 John SJ Anderson, Karen Etheridge, Zak B. Elep, Tom Hukins, Richard Leach,
-Neil Bowers and Yves Orton.
+Neil Bowers, Yves Orton, Paul Evans, and Graham Knop.
 
 =head2 PUMPKIN?
 
@@ -716,6 +716,8 @@ the strings?).
  Steve     5.34.1-RC1   2022-Feb-27
  Steve     5.34.1-RC2   2022-Mar-06
  Steve     5.34.1       2022-Mar-13
+ Paul E    5.34.2       2023-Nov-25
+ Paul E    5.34.3       2023-Nov-29
 
  Ricardo   5.35.0       2021-May-20     The 5.35 development track
  Max       5.35.1       2021-Jun-20
@@ -738,6 +740,8 @@ the strings?).
  Steve     5.36.1-RC2   2023-Apr-11
  Steve     5.36.1-RC3   2023-Apr-16
  Steve     5.36.1       2023-Apr-23
+ Paul E    5.36.2       2023-Nov-25
+ Paul E    5.36.3       2023-Nov-29
 
  Ricardo   5.37.0       2022-May-27     The 5.37 development track
  Matthew H 5.37.1       2022-Jun-20
@@ -751,6 +755,19 @@ the strings?).
  Ether     5.37.9       2023-Feb-20
  Yves      5.37.10      2023-Mar-20
  Steve     5.37.11      2023-Apr-20
+
+ Ricardo   5.38.0-RC1   2023-Jun-15     The 5.38 maintenance track
+ Ricardo   5.38.0-RC2   2023-Jun-23
+ Ricardo   5.38.0       2023-Jul-02
+ Paul E    5.38.1       2023-Nov-25
+ Paul E    5.38.2       2023-Nov-29
+
+ Ricardo   5.39.0       2023-Jun-30     The 5.39 development track
+ Steve     5.39.1       2023-Jul-20
+ Paul E    5.39.2       2023-Aug-20
+ Matthew H 5.39.3       2023-Sep-20
+ Graham K  5.39.4       2023-Oct-25
+ Ether     5.39.5       2023-Nov-20
 
 =head2 SELECTED RELEASE SIZES
 
@@ -840,6 +857,7 @@ explained below.
  5.32.0        14147 127  25562 1255 40869 3098  11334 2734   8407 225
  5.34.0        14620 126  28150 1262 42711 3138  11535 2774   8791 228
  5.36.0        15300 129  27899 1270 48275 3236  11899 2863   8858 224
+ 5.38.0        15793 139  29070 1270 48250 3219  11950 2863   9129 239
 
 The "core"..."doc" mean the following files from the Perl source code
 distribution.  The glob notation ** means recursively, (.) means
@@ -1204,18 +1222,20 @@ the Perl source distribution for somewhat more selected releases.
  vos           12      7        12      7         8      7
  win32       1011     47      1001     46       966     45
 
+                  5.38.0
 
-
-
-
-
-
-
-
-
-
-
-
+ Configure    604      1
+ Cross        122     15
+ h2pl          13     15
+ hints        358     83
+ os2          538     70
+ plan9        322     20
+ Porting     1640     80
+ qnx            1      4
+ utils        606     52
+ vms          544     12
+ vos            8      7
+ win32        982     45
 
 =head2 SELECTED PATCH SIZES
 

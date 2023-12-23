@@ -39,7 +39,7 @@ Instead use one of the version comparison macros.  See C<L</PERL_VERSION_EQ>>.
 
 #define PERL_REVISION	5		/* age */
 #define PERL_VERSION	36		/* epoch */
-#define PERL_SUBVERSION	1		/* generation */
+#define PERL_SUBVERSION	3		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API

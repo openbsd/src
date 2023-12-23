@@ -148,7 +148,7 @@ my $passthru_headers = qr/^= (?: over | item | back | cut )/xms;
 
 # version used when generating diffs (acknowledgements, Module::CoreList etc)
 # 5.36.0 -> 5.34.0
-# 5.36.1 -> 5.36.0
+# 5.36.3 -> 5.36.0
 my ($major, $minor, $point) = split(/\./, $version);
 my $last_version = join('.', $major, ($point == 0 ? ($minor - 2, 0) : ($minor, $point-1)));
 

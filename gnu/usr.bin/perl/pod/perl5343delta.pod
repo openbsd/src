@@ -2,20 +2,20 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.36.3
+perl5343delta - what is new for perl v5.34.3
 
 =head1 DESCRIPTION
 
-This document describes differences between the 5.36.1 release and the 5.36.3
-release.  B<Please note:> This document ignores Perl 5.36.2, a broken release
+This document describes differences between the 5.34.1 release and the 5.34.3
+release.  B<Please note:> This document ignores Perl 5.34.2, a broken release
 which existed for a couple of days only.
 
-If you are upgrading from an earlier release such as 5.36.0, first read
-L<perl5361delta>, which describes differences between 5.36.0 and 5.36.1.
+If you are upgrading from an earlier release such as 5.34.0, first read
+L<perl5341delta>, which describes differences between 5.34.0 and 5.34.1.
 
 =head1 Security
 
-This release fixes the following security issues. 
+This release fixes the following security issues.
 
 =head2 CVE-2023-47038 - Write past buffer end via illegal user-defined Unicode property
 
@@ -47,16 +47,16 @@ be executed.
 
 =head1 Acknowledgements
 
-Perl 5.36.3 represents approximately 1 month of development since Perl
-5.36.1 and contains approximately 2,300 lines of changes across 38 files
+Perl 5.34.3 represents approximately 1 month of development since Perl
+5.34.1 and contains approximately 3,700 lines of changes across 40 files
 from 4 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
-approximately 1,400 lines of changes to 8 .pm, .t, .c and .h files.
+approximately 2,800 lines of changes to 9 .pm, .t, .c and .h files.
 
 Perl continues to flourish into its fourth decade thanks to a vibrant
 community of users and developers. The following people are known to have
-contributed the improvements that became Perl 5.36.3:
+contributed the improvements that became Perl 5.34.3:
 
 Karl Williamson, Paul Evans, Steve Hay, Tony Cook.
 

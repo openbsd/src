@@ -118,6 +118,14 @@ L<Announced on 2022-05-27 by Ricardo Signes|https://www.nntp.perl.org/group/perl
 
 I have nothing to say, and I am saying it.
 
+=head2 v5.36.1 - Louis Kentner, "Piano"
+
+L<Announced on 2023-04-23 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2023/04/msg266251.html>
+
+Pianists can be divided into the following three categories: those who
+practice a lot and admit it; those who practice a lot but deny it; and
+those who do not practice and, therefore, are no pianists.
+
 =head2 v5.36.1-RC3 - Karl Leimer & Walter Gieseking, trans. Frederick C. Rauser, "Rhythmics, Dynamics, Pedal and Other Problems of Piano Playing"
 
 L<Announced on 2023-04-16 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2023/04/msg266232.html>

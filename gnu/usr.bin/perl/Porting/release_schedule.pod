@@ -14,7 +14,7 @@ deemed necessary by the Steering Council.
 =head2 Perl 5.36
 
   2022-05-27  5.36.0  ✓       Ricardo Signes
-  2022-04-23  5.36.1           Steve Hay
+  2023-04-23  5.36.1  ✓       Steve Hay
 
 =head2 Perl 5.34
 

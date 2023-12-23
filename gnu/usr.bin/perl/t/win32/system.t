@@ -82,6 +82,7 @@ close $F;
 chdir($testdir);
 END {
     chdir($cwd) && rmtree("$cwd/$testdir") if -d "$cwd/$testdir";
+    unlink "cmd.exe";
 }
 if (open(my $EIN, "$cwd/win32/${exename}_exe.uu")) {
     note "Unpacking $exename.exe";
@@ -104,21 +105,20 @@ else {
      }
     note "Compiling $exename.c";
     note "$Config{cc} $Config{ccflags} $exename.c";
-    if (system("$Config{cc} $Config{ccflags} $minus_o $exename.c >log 2>&1") != 0) {
+    if (system("$Config{cc} $Config{ccflags} $minus_o $exename.c >log 2>&1") != 0 ||
+        !-f "$exename.exe") {
 	note "Could not compile $exename.c, status $?";
-    note "Where is your C compiler?";
-    skip_all "can't build test executable";
-    }
-    unless (-f "$exename.exe") {
-	if (open(LOG,'<log'))
-         {
-          while(<LOG>) {
-              note $_;
-          } 
-         }
-        else {
-	  warn "Cannot open log (in $testdir):$!";
+        note "Where is your C compiler?";
+        if (open(LOG,'<log'))
+        {
+            while(<LOG>) {
+                note $_;
+            }
         }
+        else {
+            warn "Cannot open log (in $testdir):$!";
+        }
+        skip_all "can't build test executable";
     }
 }
 copy("$plxname.bat","$plxname.cmd");
@@ -127,6 +127,12 @@ unless (-x "$testdir/$exename.exe") {
     note "Could not build $exename.exe";
     skip_all "can't build test executable";
 }
+
+# test we only look for cmd.exe in the standard place
+delete $ENV{PERLSHELL};
+copy("$testdir/$exename.exe", "$testdir/cmd.exe") or die $!;
+copy("$testdir/$exename.exe", "cmd.exe") or die $!;
+$ENV{PATH} = qq("$testdir";$ENV{PATH});
 
 open my $T, "$^X -I../lib -w win32/system_tests |"
     or die "Can't spawn win32/system_tests: $!";
