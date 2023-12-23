@@ -40,7 +40,12 @@ jiffies_to_nsecs(const unsigned long x)
 #define usecs_to_jiffies(x)	(((uint64_t)(x)) * hz / 1000000)
 #define nsecs_to_jiffies(x)	(((uint64_t)(x)) * hz / 1000000000)
 #define nsecs_to_jiffies64(x)	(((uint64_t)(x)) * hz / 1000000000)
-#define get_jiffies_64()	jiffies
+
+static inline uint64_t
+get_jiffies_64(void)
+{
+	return jiffies;
+}
 
 static inline int
 time_after(const unsigned long a, const unsigned long b)
@@ -53,6 +58,12 @@ static inline int
 time_after_eq(const unsigned long a, const unsigned long b)
 {
 	return((long)(b - a) <= 0);
+}
+
+static inline int
+time_after_eq64(const unsigned long long a, const unsigned long long b)
+{
+	return((long long)(b - a) <= 0);
 }
 
 #define time_after32(a,b)	((int32_t)((uint32_t)(b) - (uint32_t)(a)) < 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.104 2023/10/20 03:38:58 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.105 2023/12/23 14:18:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1501,6 +1501,9 @@ acpi_format_exception(acpi_status status)
 
 #endif
 
+SLIST_HEAD(,backlight_device) backlight_device_list =
+    SLIST_HEAD_INITIALIZER(backlight_device_list);
+
 void
 backlight_do_update_status(void *arg)
 {
@@ -1509,7 +1512,7 @@ backlight_do_update_status(void *arg)
 
 struct backlight_device *
 backlight_device_register(const char *name, void *kdev, void *data,
-    const struct backlight_ops *ops, struct backlight_properties *props)
+    const struct backlight_ops *ops, const struct backlight_properties *props)
 {
 	struct backlight_device *bd;
 
@@ -1519,6 +1522,9 @@ backlight_device_register(const char *name, void *kdev, void *data,
 	bd->data = data;
 
 	task_set(&bd->task, backlight_do_update_status, bd);
+
+	SLIST_INSERT_HEAD(&backlight_device_list, bd, next);
+	bd->name = name;
 	
 	return bd;
 }
@@ -1526,16 +1532,8 @@ backlight_device_register(const char *name, void *kdev, void *data,
 void
 backlight_device_unregister(struct backlight_device *bd)
 {
+	SLIST_REMOVE(&backlight_device_list, bd, backlight_device, next);
 	free(bd, M_DRM, sizeof(*bd));
-}
-
-struct backlight_device *
-devm_backlight_device_register(void *dev, const char *name, void *parent,
-    void *data, const struct backlight_ops *bo,
-    const struct backlight_properties *bp)
-{
-	STUB();
-	return NULL;
 }
 
 void
@@ -1544,7 +1542,7 @@ backlight_schedule_update_status(struct backlight_device *bd)
 	task_add(systq, &bd->task);
 }
 
-inline int
+int
 backlight_enable(struct backlight_device *bd)
 {
 	if (bd == NULL)
@@ -1555,7 +1553,7 @@ backlight_enable(struct backlight_device *bd)
 	return bd->ops->update_status(bd);
 }
 
-inline int
+int
 backlight_disable(struct backlight_device *bd)
 {
 	if (bd == NULL)
@@ -1564,6 +1562,62 @@ backlight_disable(struct backlight_device *bd)
 	bd->props.power = FB_BLANK_POWERDOWN;
 
 	return bd->ops->update_status(bd);
+}
+
+struct backlight_device *
+backlight_device_get_by_name(const char *name)
+{
+	struct backlight_device *bd;
+
+	SLIST_FOREACH(bd, &backlight_device_list, next) {
+		if (strcmp(name, bd->name) == 0)
+			return bd;
+	}
+
+	return NULL;
+}
+
+struct drvdata {
+	struct device *dev;
+	void *data;
+	SLIST_ENTRY(drvdata) next;
+};
+
+SLIST_HEAD(,drvdata) drvdata_list = SLIST_HEAD_INITIALIZER(drvdata_list);
+
+void
+dev_set_drvdata(struct device *dev, void *data)
+{
+	struct drvdata *drvdata;
+
+	SLIST_FOREACH(drvdata, &drvdata_list, next) {
+		if (drvdata->dev == dev) {
+			drvdata->data = data;
+			return;
+		}
+	}
+
+	if (data == NULL)
+		return;
+
+	drvdata = malloc(sizeof(*drvdata), M_DRM, M_WAITOK);
+	drvdata->dev = dev;
+	drvdata->data = data;
+
+	SLIST_INSERT_HEAD(&drvdata_list, drvdata, next);
+}
+
+void *
+dev_get_drvdata(struct device *dev)
+{
+	struct drvdata *drvdata;
+
+	SLIST_FOREACH(drvdata, &drvdata_list, next) {
+		if (drvdata->dev == dev)
+			return drvdata->data;
+	}
+
+	return NULL;
 }
 
 void

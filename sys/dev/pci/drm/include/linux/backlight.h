@@ -11,24 +11,32 @@ struct device;
 
 struct backlight_properties {
 	int type;
+#define BACKLIGHT_RAW		0
+#define BACKLIGHT_FIRMWARE	1
+#define BACKLIGHT_PLATFORM	2
 	int max_brightness;
 	int brightness;
 	int power;
+	int scale;
+#define BACKLIGHT_SCALE_LINEAR	0
+	int state;
+#define BL_CORE_SUSPENDED	0x00000001
 };
 
 struct backlight_ops {
 	int options;
+#define BL_CORE_SUSPENDRESUME	0x00000001
 	int (*update_status)(struct backlight_device *);
 	int (*get_brightness)(struct backlight_device *);
 };
-
-#define BL_CORE_SUSPENDRESUME	1
 
 struct backlight_device {
 	const struct backlight_ops *ops;
 	struct backlight_properties props;
 	struct task task;
 	void *data;
+	SLIST_ENTRY(backlight_device) next;
+	const char *name;
 };
 
 static inline void *
@@ -37,18 +45,25 @@ bl_get_data(struct backlight_device *bd)
 	return bd->data;
 }
 
-#define BACKLIGHT_RAW		0
-#define BACKLIGHT_FIRMWARE	1
+static inline int
+backlight_get_brightness(struct backlight_device *bd)
+{
+	return bd->props.brightness;
+}
 
 #define BACKLIGHT_UPDATE_HOTKEY	0
 
 struct backlight_device *backlight_device_register(const char *, void *,
-    void *, const struct backlight_ops *, struct backlight_properties *);
+    void *, const struct backlight_ops *, const struct backlight_properties *);
 void backlight_device_unregister(struct backlight_device *);
 
-struct backlight_device *devm_backlight_device_register(void *, const char *,
-    void *, void *, const struct backlight_ops *,
-    const struct backlight_properties *);
+static inline struct backlight_device *
+devm_backlight_device_register(void *dev, const char *name, void *parent,
+    void *data, const struct backlight_ops *bo,
+    const struct backlight_properties *bp)
+{
+	return backlight_device_register(name, dev, data, bo, bp);
+}
 
 static inline void
 backlight_update_status(struct backlight_device *bd)
@@ -82,10 +97,6 @@ devm_of_find_backlight(struct device *dev)
 	return NULL;
 }
 
-static inline struct backlight_device *
-backlight_device_get_by_name(const char *name)
-{
-	return NULL;
-}
+struct backlight_device *backlight_device_get_by_name(const char *);
 
 #endif

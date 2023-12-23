@@ -169,6 +169,9 @@ iowrite64(u64 val, volatile void __iomem *addr)
 #define readq(p) ioread64(p)
 #define writeq(v, p) iowrite64(v, p)
 
+#define readl_relaxed(p) readl(p)
+#define writel_relaxed(v, p) writel(v, p)
+
 int	drm_mtrr_add(unsigned long, size_t, int);
 int	drm_mtrr_del(int, unsigned long, size_t, int);
 

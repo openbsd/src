@@ -5,6 +5,8 @@
 
 #include <linux/types.h>
 
+#define IORESOURCE_MEM	0x0001
+
 struct resource {
 	u_long	start;
 	u_long	end;

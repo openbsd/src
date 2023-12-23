@@ -73,9 +73,7 @@ struct drm_minor {
 	/* private: */
 	int index;			/* Minor device number */
 	int type;                       /* Control or render */
-#ifdef __linux__
 	struct device *kdev;		/* Linux device */
-#endif
 	struct drm_device *dev;
 
 	struct dentry *debugfs_root;

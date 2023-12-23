@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.14 2023/09/13 12:31:49 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.15 2023/12/23 14:18:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -478,6 +478,14 @@ pci_free_irq_vectors(struct pci_dev *pdev)
 
 static inline int
 pci_set_power_state(struct pci_dev *dev, int state)
+{
+	return 0;
+}
+
+struct pci_driver;
+
+static inline int
+pci_register_driver(struct pci_driver *pci_drv)
 {
 	return 0;
 }

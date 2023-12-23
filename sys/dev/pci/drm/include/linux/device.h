@@ -16,6 +16,9 @@
 
 struct device_node;
 
+struct bus_type {
+};
+
 struct device_driver {
 	struct device *dev;
 };
@@ -33,12 +36,13 @@ struct device_attribute {
 #define device_create_file(a, b)	0
 #define device_remove_file(a, b)
 
-#define dev_get_drvdata(x)	NULL
-#define dev_set_drvdata(x, y)
+void	*dev_get_drvdata(struct device *);
+void	dev_set_drvdata(struct device *, void *);
 
 #define dev_pm_set_driver_flags(x, y)
 
 #define devm_kzalloc(x, y, z)	kzalloc(y, z)
+#define devm_kfree(x, y)	kfree(y)
 
 #define dev_warn(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
@@ -78,6 +82,10 @@ struct device_attribute {
 #define dev_err_once(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
+	
+#define dev_err_probe(dev, err, fmt, arg...)				\
+	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
+	       __func__ , ## arg), err
 
 #ifdef DRMDEBUG
 #define dev_info(dev, fmt, arg...)				\
