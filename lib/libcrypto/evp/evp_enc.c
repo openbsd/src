@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.78 2023/12/22 17:37:14 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.79 2023/12/23 13:05:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,7 +207,7 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 }
 
 int
-EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
+EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
 	if (ctx->encrypt)
 		return EVP_EncryptFinal_ex(ctx, out, out_len);
@@ -216,7 +216,7 @@ EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 }
 
 int
-EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
+EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
 	if (ctx->encrypt)
 		return EVP_EncryptFinal_ex(ctx, out, out_len);
@@ -236,20 +236,6 @@ EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine
     const unsigned char *key, const unsigned char *iv)
 {
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1);
-}
-
-int
-EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
-    const unsigned char *key, const unsigned char *iv)
-{
-	return EVP_CipherInit(ctx, cipher, key, iv, 0);
-}
-
-int
-EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
-    const unsigned char *key, const unsigned char *iv)
-{
-	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
 }
 
 /*
@@ -419,6 +405,20 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 	memset(&ctx->buf[partial_len], pad, pad);
 
 	return evp_cipher(ctx, out, out_len, ctx->buf, block_size);
+}
+
+int
+EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+    const unsigned char *key, const unsigned char *iv)
+{
+	return EVP_CipherInit(ctx, cipher, key, iv, 0);
+}
+
+int
+EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
+    const unsigned char *key, const unsigned char *iv)
+{
+	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
 }
 
 int
