@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.145 2023/12/15 10:28:57 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.146 2023/12/23 23:03:00 kn Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ main(volatile int argc, char *argv[])
 					err(1, "pledge");
 			} else {
 #ifndef SMALL
-			    if (!resume) {
+			    if (outfile == NULL) {
 				if (pledge("stdio rpath wpath cpath dns tty inet proc exec fattr",
 				    NULL) == -1)
 					err(1, "pledge");
