@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.17 2023/12/22 23:01:50 mvs Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.18 2023/12/23 10:52:54 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -121,6 +121,7 @@ mpip_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_hardmtu = 65535;
 
 	if_attach(ifp);
+	if_counters_alloc(ifp);
 	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0

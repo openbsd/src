@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.64 2023/12/22 23:01:50 mvs Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.65 2023/12/23 10:52:54 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -115,6 +115,7 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_dead = 0;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 

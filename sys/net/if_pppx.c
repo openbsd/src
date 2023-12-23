@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.127 2023/12/22 23:01:50 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.128 2023/12/23 10:52:54 bluhm Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -684,6 +684,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifp->if_type = IFT_PPP;
 	ifp->if_softc = pxi;
 	/* ifp->if_rdomain = req->pr_rdomain; */
+	if_counters_alloc(ifp);
 
 	if_attach(ifp);
 
@@ -1079,6 +1080,7 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 	ifp->if_qstart = pppac_qstart;
 	ifp->if_ioctl = pppac_ioctl;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 

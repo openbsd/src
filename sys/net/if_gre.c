@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.177 2023/12/22 23:01:50 mvs Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.178 2023/12/23 10:52:54 bluhm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -592,6 +592,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	timeout_set_proc(&sc->sc_ka_hold, gre_keepalive_hold, sc);
 	sc->sc_ka_state = GRE_KA_NONE;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
@@ -658,6 +659,7 @@ mgre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_tunnel.t_df = htons(0);
 	sc->sc_tunnel.t_ecn = ECN_ALLOWED;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
@@ -714,6 +716,7 @@ egre_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -791,6 +794,7 @@ nvgre_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -854,6 +858,7 @@ eoip_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 

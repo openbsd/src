@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.323 2023/12/22 23:01:50 mvs Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.324 2023/12/23 10:52:54 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -444,6 +444,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 #endif
 	}
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
