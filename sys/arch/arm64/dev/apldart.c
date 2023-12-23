@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.18 2023/09/25 19:23:34 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.19 2023/12/23 18:28:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -25,6 +25,8 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
@@ -170,6 +172,8 @@ struct apldart_softc {
 	struct apldart_stream	**sc_as;
 	struct iommu_device	sc_id;
 
+	int			sc_locked;
+	int			sc_translating;
 	int			sc_do_suspend;
 };
 
@@ -300,16 +304,12 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	/* Skip locked DARTs for now. */
 	if (OF_is_compatible(sc->sc_node, "apple,t8110-dart")) {
 		config = HREAD4(sc, DART_T8110_PROTECT);
-		if (config & DART_T8110_PROTECT_TTBR_TCR) {
-			printf(": locked\n");
-			return;
-		}
+		if (config & DART_T8110_PROTECT_TTBR_TCR)
+			sc->sc_locked = 1;
 	} else {
 		config = HREAD4(sc, DART_T8020_CONFIG);
-		if (config & DART_T8020_CONFIG_LOCK) {
-			printf(": locked\n");
-			return;
-		}
+		if (config & DART_T8020_CONFIG_LOCK)
+			sc->sc_locked = 1;
 	}
 
 	/*
@@ -325,17 +325,15 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 
 		for (idx = 0; idx < sc->sc_nttbr; idx++) {
 			ttbr = HREAD4(sc, DART_TTBR(sc, sid, idx));
-			if (ttbr & sc->sc_ttbr_valid) {
-				printf(": translating\n");
-				return;
-			}
+			if (ttbr & sc->sc_ttbr_valid)
+				sc->sc_translating = 1;
 		}
 	}
 
 	/*
-	 * We have full control over this DART, so do suspend it.
+	 * If we have full control over this DART, do suspend it.
 	 */
-	sc->sc_do_suspend = 1;
+	sc->sc_do_suspend = !sc->sc_locked && !sc->sc_translating;
 
 	/*
 	 * Use bypass mode if supported.  This avoids an issue with
@@ -344,14 +342,20 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	 * current kernel interfaces.
 	 */
 	params2 = HREAD4(sc, DART_PARAMS2);
-	if (params2 & DART_PARAMS2_BYPASS_SUPPORT) {
+	if ((params2 & DART_PARAMS2_BYPASS_SUPPORT) &&
+	    !sc->sc_locked && !sc->sc_translating) {
 		for (sid = 0; sid < sc->sc_nsid; sid++)
 			HWRITE4(sc, DART_TCR(sc, sid), sc->sc_tcr_bypass);
 		printf(": bypass\n");
 		return;
 	}
 
-	printf("\n");
+	if (sc->sc_locked)
+		printf(": locked\n");
+	else if (sc->sc_translating)
+		printf(": translating\n");
+	else
+		printf("\n");
 
 	/*
 	 * Skip the first page to help catching bugs where a device is
@@ -362,16 +366,18 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dvabase = DART_PAGE_SIZE;
 	sc->sc_dvaend = 0xffffffff - DART_PAGE_SIZE;
 
-	/* Disable translations. */
-	for (sid = 0; sid < sc->sc_nsid; sid++)
-		HWRITE4(sc, DART_TCR(sc, sid), 0);
+	if (!sc->sc_locked && !sc->sc_translating) {
+		/* Disable translations. */
+		for (sid = 0; sid < sc->sc_nsid; sid++)
+			HWRITE4(sc, DART_TCR(sc, sid), 0);
 
-	/* Remove page tables. */
-	for (sid = 0; sid < sc->sc_nsid; sid++) {
-		for (idx = 0; idx < sc->sc_nttbr; idx++)
-			HWRITE4(sc, DART_TTBR(sc, sid, idx), 0);
+		/* Remove page tables. */
+		for (sid = 0; sid < sc->sc_nsid; sid++) {
+			for (idx = 0; idx < sc->sc_nttbr; idx++)
+				HWRITE4(sc, DART_TTBR(sc, sid, idx), 0);
+		}
+		sc->sc_flush_tlb(sc, -1);
 	}
-	sc->sc_flush_tlb(sc, -1);
 
 	if (OF_is_compatible(sc->sc_node, "apple,t8110-dart")) {
 		HWRITE4(sc, DART_T8110_ERROR, HREAD4(sc, DART_T8110_ERROR));
@@ -482,6 +488,90 @@ apldart_activate(struct device *self, int act)
 	return 0;
 }
 
+void
+apldart_init_locked_stream(struct apldart_stream *as)
+{
+	struct apldart_softc *sc = as->as_sc;
+	uint32_t ttbr;
+	vaddr_t startva, endva, va;
+	paddr_t pa;
+	bus_addr_t dva, dvaend;
+	volatile uint64_t *l1;
+	int nl1, nl2, ntte;
+	int idx;
+
+	for (idx = 0; idx < sc->sc_nttbr; idx++) {
+		ttbr = HREAD4(sc, DART_TTBR(sc, as->as_sid, idx));
+		if ((ttbr & sc->sc_ttbr_valid) == 0)
+			break;
+	}
+	KASSERT(idx > 0);
+
+	nl2 = idx * (DART_PAGE_SIZE / sizeof(uint64_t));
+	ntte = nl2 * (DART_PAGE_SIZE / sizeof(uint64_t));
+
+	dvaend = (bus_addr_t)ntte * DART_PAGE_SIZE;
+	if (dvaend < sc->sc_dvaend)
+		sc->sc_dvaend = dvaend;
+
+	as->as_dvamap = extent_create(sc->sc_dev.dv_xname,
+	    sc->sc_dvabase, sc->sc_dvaend, M_DEVBUF,
+	    NULL, 0, EX_WAITOK | EX_NOCOALESCE);
+
+	ntte = howmany(sc->sc_dvaend, DART_PAGE_SIZE);
+	nl2 = howmany(ntte, DART_PAGE_SIZE / sizeof(uint64_t));
+	nl1 = howmany(nl2, DART_PAGE_SIZE / sizeof(uint64_t));
+
+	as->as_l2 = mallocarray(nl2, sizeof(*as->as_l2),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+
+	l1 = km_alloc(nl1 * DART_PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
+	KASSERT(l1);
+
+	for (idx = 0; idx < nl1; idx++) {
+		startva = (vaddr_t)l1 + idx * DART_PAGE_SIZE;
+		endva = startva + DART_PAGE_SIZE;
+		ttbr = HREAD4(sc, DART_TTBR(sc, as->as_sid, idx));
+		pa = (paddr_t)(ttbr & ~sc->sc_ttbr_valid) << DART_TTBR_SHIFT;
+		for (va = startva; va < endva; va += PAGE_SIZE) {
+			pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE,
+			    PMAP_CACHE_CI);
+			pa += PAGE_SIZE;
+		}
+	}
+
+	for (idx = 0; idx < nl2; idx++) {
+		if (l1[idx] & DART_L1_TABLE) {
+			dva = idx * (DART_PAGE_SIZE / sizeof(uint64_t)) *
+			    DART_PAGE_SIZE;
+			dvaend = dva + DART_PAGE_SIZE * DART_PAGE_SIZE - 1;
+			if (dva < sc->sc_dvabase)
+				dva = sc->sc_dvabase;
+			if (dvaend > sc->sc_dvaend)
+				dvaend = sc->sc_dvaend;
+			extent_alloc_region(as->as_dvamap, dva,
+			    dvaend - dva + 1, EX_CONFLICTOK);
+		} else {
+			as->as_l2[idx] = apldart_dmamem_alloc(sc->sc_dmat,
+			    DART_PAGE_SIZE, DART_PAGE_SIZE);
+			pa = APLDART_DMA_DVA(as->as_l2[idx]);
+			l1[idx] = (pa >> sc->sc_shift) | DART_L1_TABLE;
+		}
+	}
+	sc->sc_flush_tlb(sc, as->as_sid);
+
+	memcpy(&as->as_dmat, sc->sc_dmat, sizeof(*sc->sc_dmat));
+	as->as_dmat._cookie = as;
+	as->as_dmat._dmamap_create = apldart_dmamap_create;
+	as->as_dmat._dmamap_destroy = apldart_dmamap_destroy;
+	as->as_dmat._dmamap_load = apldart_dmamap_load;
+	as->as_dmat._dmamap_load_mbuf = apldart_dmamap_load_mbuf;
+	as->as_dmat._dmamap_load_uio = apldart_dmamap_load_uio;
+	as->as_dmat._dmamap_load_raw = apldart_dmamap_load_raw;
+	as->as_dmat._dmamap_unload = apldart_dmamap_unload;
+	as->as_dmat._flags |= BUS_DMA_COHERENT;
+}
+
 struct apldart_stream *
 apldart_alloc_stream(struct apldart_softc *sc, int sid)
 {
@@ -490,16 +580,22 @@ apldart_alloc_stream(struct apldart_softc *sc, int sid)
 	volatile uint64_t *l1;
 	int idx, ntte, nl1, nl2;
 	uint32_t mask;
-	
+
 	as = malloc(sizeof(*as), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	as->as_sc = sc;
 	as->as_sid = sid;
 
+	mtx_init(&as->as_dvamap_mtx, IPL_HIGH);
+
+	if (sc->sc_locked || sc->sc_translating) {
+		apldart_init_locked_stream(as);
+		return as;
+	}
+
 	as->as_dvamap = extent_create(sc->sc_dev.dv_xname,
 	    sc->sc_dvabase, sc->sc_dvaend, M_DEVBUF,
-	    NULL, 0, EX_NOCOALESCE);
-	mtx_init(&as->as_dvamap_mtx, IPL_HIGH);
+	    NULL, 0, EX_WAITOK | EX_NOCOALESCE);
 
 	/*
 	 * Build translation tables.  We pre-allocate the translation
