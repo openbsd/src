@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.17 2023/09/11 04:51:24 jsg Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.18 2023/12/23 22:40:42 kettenis Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -345,8 +345,6 @@ rkdrm_doswitch(void *v)
 {
 	struct rasops_info *ri = v;
 	struct rkdrm_softc *sc = ri->ri_hw;
-	struct rkdrm_crtc *rkdrm_crtc;
-	int i, crtc;
 
 	rasops_show_screen(ri, sc->switchcookie, 0, NULL, NULL);
 	drm_fb_helper_restore_fbdev_mode_unlocked(&sc->helper);
