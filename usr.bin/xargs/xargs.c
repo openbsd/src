@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.37 2023/12/22 17:12:13 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.38 2023/12/23 15:58:58 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -296,8 +296,12 @@ arg2:
 		foundeof = *eofstr != '\0' &&
 		    strcmp(argp, eofstr) == 0;
 
-		/* Do not make empty args unless they are quoted */
-		if ((zflag || argp != p || wasquoted) && !foundeof) {
+		/*
+		 * Do not make empty args unless they are quoted or
+		 * we are run as "find -0" and not at EOF.
+		 */
+		if (((zflag && ch != EOF) || argp != p || wasquoted) &&
+		    !foundeof) {
 			*p++ = '\0';
 			*xp++ = argp;
 			if (Iflag) {
