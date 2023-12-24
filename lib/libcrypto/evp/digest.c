@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.40 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: digest.c,v 1.41 2023/12/24 22:17:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,6 +201,23 @@ EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 }
 
 int
+EVP_Digest(const void *data, size_t count,
+    unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl)
+{
+	EVP_MD_CTX ctx;
+	int ret;
+
+	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_ONESHOT);
+	ret = EVP_DigestInit_ex(&ctx, type, NULL) &&
+	    EVP_DigestUpdate(&ctx, data, count) &&
+	    EVP_DigestFinal_ex(&ctx, md, size);
+	EVP_MD_CTX_cleanup(&ctx);
+
+	return ret;
+}
+
+int
 EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 {
 	EVP_MD_CTX_init(out);
@@ -260,23 +277,6 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 		return out->digest->copy(out, in);
 
 	return 1;
-}
-
-int
-EVP_Digest(const void *data, size_t count,
-    unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl)
-{
-	EVP_MD_CTX ctx;
-	int ret;
-
-	EVP_MD_CTX_init(&ctx);
-	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_ONESHOT);
-	ret = EVP_DigestInit_ex(&ctx, type, NULL) &&
-	    EVP_DigestUpdate(&ctx, data, count) &&
-	    EVP_DigestFinal_ex(&ctx, md, size);
-	EVP_MD_CTX_cleanup(&ctx);
-
-	return ret;
 }
 
 EVP_MD_CTX *
