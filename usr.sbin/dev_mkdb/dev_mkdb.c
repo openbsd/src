@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_mkdb.c,v 1.19 2022/12/04 23:50:50 cheloha Exp $	*/
+/*	$OpenBSD: dev_mkdb.c,v 1.20 2023/12/24 06:35:05 gnezdo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -32,10 +32,10 @@
 #include <sys/stat.h>
 
 #include <db.h>
-#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fts.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,9 +47,9 @@ void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	DIR *dirp;
-	struct dirent *dp;
-	struct stat sb;
+	FTS *fts;
+	FTSENT *dp;
+	char *paths[] = { ".", NULL };
 	struct {
 		mode_t type;
 		dev_t dev;
@@ -58,7 +58,6 @@ main(int argc, char *argv[])
 	DBT data, key;
 	HASHINFO info;
 	int ch;
-	u_char buf[MAXNAMLEN + 1];
 	char dbtmp[PATH_MAX], dbname[PATH_MAX];
 
 	(void)snprintf(dbtmp, sizeof(dbtmp), "%sdev.tmp", _PATH_VARRUN);
@@ -87,7 +86,10 @@ main(int argc, char *argv[])
 	if (chdir(_PATH_DEV))
 		err(1, "%s", _PATH_DEV);
 
-	dirp = opendir(".");
+	fts = fts_open(paths, FTS_PHYSICAL | FTS_NOCHDIR, NULL);
+	if (!fts)
+		err(1, "fts_open");
+
 
 	bzero(&info, sizeof(info));
 	info.bsize = 8192;
@@ -105,35 +107,31 @@ main(int argc, char *argv[])
 	bzero(&bkey, sizeof(bkey));
 	key.data = &bkey;
 	key.size = sizeof(bkey);
-	data.data = buf;
-	while ((dp = readdir(dirp))) {
-		if (strcmp(dp->d_name, "..") == 0)
+	while ((dp = fts_read(fts))) {
+		if (dp->fts_info != FTS_DEFAULT)
 			continue;
-
-		if (lstat(dp->d_name, &sb)) {
-			warn("%s", dp->d_name);
-			continue;
-		}
 
 		/* Create the key. */
-		if (S_ISCHR(sb.st_mode))
+		if (S_ISCHR(dp->fts_statp->st_mode))
 			bkey.type = S_IFCHR;
-		else if (S_ISBLK(sb.st_mode))
+		else if (S_ISBLK(dp->fts_statp->st_mode))
 			bkey.type = S_IFBLK;
 		else
 			continue;
-		bkey.dev = sb.st_rdev;
+		bkey.dev = dp->fts_statp->st_rdev;
 
 		/*
 		 * Create the data; nul terminate the name so caller doesn't
-		 * have to.
+		 * have to. strlen("./") is 2, which is stripped to remove the
+		 * traversal root name.
 		 */
-		bcopy(dp->d_name, buf, dp->d_namlen);
-		buf[dp->d_namlen] = '\0';
-		data.size = dp->d_namlen + 1;
+		data.data = dp->fts_path + 2;
+		data.size = dp->fts_pathlen - 2 + 1;
 		if ((db->put)(db, &key, &data, 0))
 			err(1, "dbput %s", dbtmp);
 	}
+	fts_close(fts);
+
 	(void)(db->close)(db);
 	if (rename(dbtmp, dbname))
 		err(1, "rename %s to %s", dbtmp, dbname);
