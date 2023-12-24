@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.9 2023/01/04 14:22:43 claudio Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.10 2023/12/24 10:48:58 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -45,13 +45,6 @@ struct delta_xml {
 	long long		 serial;
 	int			 version;
 	enum delta_scope	 scope;
-};
-
-enum validate_return {
-	VALIDATE_RETURN_NO_FILE,
-	VALIDATE_RETURN_FILE_DEL,
-	VALIDATE_RETURN_HASH_MISMATCH,
-	VALIDATE_RETURN_HASH_MATCH
 };
 
 static void
