@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.36 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.37 2023/12/24 11:12:34 jsg Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -126,7 +126,7 @@ extern int bus_space_debug;
  * PCI spaces are non-cached and little endian
  */
 
-enum bus_type { 
+enum sparc_bus_type { 
 	UPA_BUS_SPACE,
 	SBUS_BUS_SPACE,
 	PCI_CONFIG_BUS_SPACE,
@@ -166,7 +166,7 @@ typedef struct _bus_space_handle {
 struct sparc_bus_space_tag {
 	void	*cookie;
 	bus_space_tag_t	parent;
-	enum bus_type default_type;
+	enum sparc_bus_type default_type;
         u_int8_t	asi;
         u_int8_t	sasi;
 	char	name[32];
