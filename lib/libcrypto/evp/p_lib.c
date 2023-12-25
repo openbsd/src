@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.44 2023/12/25 21:33:50 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.45 2023/12/25 21:36:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -211,7 +211,7 @@ EVP_PKEY_new(void)
 int
 EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
-	return CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY) > 0;
+	return CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY) > 1;
 }
 
 static void
