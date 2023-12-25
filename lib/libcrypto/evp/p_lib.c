@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.45 2023/12/25 21:36:05 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.46 2023/12/25 21:37:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,6 +222,24 @@ evp_pkey_free_pkey_ptr(EVP_PKEY *pkey)
 
 	pkey->ameth->pkey_free(pkey);
 	pkey->pkey.ptr = NULL;
+}
+
+void
+EVP_PKEY_free(EVP_PKEY *x)
+{
+	int i;
+
+	if (x == NULL)
+		return;
+
+	i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_EVP_PKEY);
+	if (i > 0)
+		return;
+
+	evp_pkey_free_pkey_ptr(x);
+	if (x->attributes)
+		sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
+	free(x);
 }
 
 /* Setup a public key ASN1 method from a NID or a string.
@@ -580,24 +598,6 @@ int
 EVP_PKEY_base_id(const EVP_PKEY *pkey)
 {
 	return EVP_PKEY_type(pkey->type);
-}
-
-void
-EVP_PKEY_free(EVP_PKEY *x)
-{
-	int i;
-
-	if (x == NULL)
-		return;
-
-	i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_EVP_PKEY);
-	if (i > 0)
-		return;
-
-	evp_pkey_free_pkey_ptr(x);
-	if (x->attributes)
-		sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
-	free(x);
 }
 
 static int
