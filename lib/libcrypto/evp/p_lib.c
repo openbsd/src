@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.48 2023/12/25 21:51:57 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.49 2023/12/25 21:55:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,19 +193,19 @@ EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 EVP_PKEY *
 EVP_PKEY_new(void)
 {
-	EVP_PKEY *ret;
+	EVP_PKEY *pkey;
 
-	if ((ret = calloc(1, sizeof(*ret))) == NULL) {
+	if ((pkey = calloc(1, sizeof(*pkey))) == NULL) {
 		EVPerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
-	ret->type = EVP_PKEY_NONE;
-	ret->save_type = EVP_PKEY_NONE;
-	ret->references = 1;
-	ret->save_parameters = 1;
+	pkey->type = EVP_PKEY_NONE;
+	pkey->save_type = EVP_PKEY_NONE;
+	pkey->references = 1;
+	pkey->save_parameters = 1;
 
-	return ret;
+	return pkey;
 }
 
 int
@@ -282,27 +282,27 @@ EVP_PKEY *
 EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
     const unsigned char *private_key, size_t len)
 {
-	EVP_PKEY *ret;
+	EVP_PKEY *pkey;
 
-	if ((ret = EVP_PKEY_new()) == NULL)
+	if ((pkey = EVP_PKEY_new()) == NULL)
 		goto err;
 
-	if (!EVP_PKEY_set_type(ret, type))
+	if (!EVP_PKEY_set_type(pkey, type))
 		goto err;
 
-	if (ret->ameth->set_priv_key == NULL) {
+	if (pkey->ameth->set_priv_key == NULL) {
 		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		goto err;
 	}
-	if (!ret->ameth->set_priv_key(ret, private_key, len)) {
+	if (!pkey->ameth->set_priv_key(pkey, private_key, len)) {
 		EVPerror(EVP_R_KEY_SETUP_FAILED);
 		goto err;
 	}
 
-	return ret;
+	return pkey;
 
  err:
-	EVP_PKEY_free(ret);
+	EVP_PKEY_free(pkey);
 
 	return NULL;
 }
@@ -311,27 +311,27 @@ EVP_PKEY *
 EVP_PKEY_new_raw_public_key(int type, ENGINE *engine,
     const unsigned char *public_key, size_t len)
 {
-	EVP_PKEY *ret;
+	EVP_PKEY *pkey;
 
-	if ((ret = EVP_PKEY_new()) == NULL)
+	if ((pkey = EVP_PKEY_new()) == NULL)
 		goto err;
 
-	if (!EVP_PKEY_set_type(ret, type))
+	if (!EVP_PKEY_set_type(pkey, type))
 		goto err;
 
-	if (ret->ameth->set_pub_key == NULL) {
+	if (pkey->ameth->set_pub_key == NULL) {
 		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		goto err;
 	}
-	if (!ret->ameth->set_pub_key(ret, public_key, len)) {
+	if (!pkey->ameth->set_pub_key(pkey, public_key, len)) {
 		EVPerror(EVP_R_KEY_SETUP_FAILED);
 		goto err;
 	}
 
-	return ret;
+	return pkey;
 
  err:
-	EVP_PKEY_free(ret);
+	EVP_PKEY_free(pkey);
 
 	return NULL;
 }
@@ -372,15 +372,15 @@ EVP_PKEY *
 EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv, size_t len,
     const EVP_CIPHER *cipher)
 {
-	EVP_PKEY *ret = NULL;
+	EVP_PKEY *pkey = NULL;
 	CMAC_CTX *cmctx = NULL;
 
-	if ((ret = EVP_PKEY_new()) == NULL)
+	if ((pkey = EVP_PKEY_new()) == NULL)
 		goto err;
 	if ((cmctx = CMAC_CTX_new()) == NULL)
 		goto err;
 
-	if (!EVP_PKEY_set_type(ret, EVP_PKEY_CMAC))
+	if (!EVP_PKEY_set_type(pkey, EVP_PKEY_CMAC))
 		goto err;
 
 	if (!CMAC_Init(cmctx, priv, len, cipher, NULL)) {
@@ -388,13 +388,14 @@ EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv, size_t len,
 		goto err;
 	}
 
-	ret->pkey.ptr = cmctx;
+	pkey->pkey.ptr = cmctx;
 
-	return ret;
+	return pkey;
 
  err:
-	EVP_PKEY_free(ret);
+	EVP_PKEY_free(pkey);
 	CMAC_CTX_free(cmctx);
+
 	return NULL;
 }
 
