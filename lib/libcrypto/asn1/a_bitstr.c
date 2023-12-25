@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.41 2023/07/28 10:33:13 tb Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.42 2023/12/25 22:02:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,20 +120,24 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	int w, v, iv;
 	unsigned char *c;
 
-	w = n/8;
-	v = 1 << (7 - (n & 0x07));
-	iv = ~v;
-	if (!value)
-		v = 0;
-
 	if (a == NULL)
 		return 0;
+	if (n < 0)
+		return 0;
+
+	w = n / 8;
+	v = 1 << (7 - (n & 0x07));
+	iv = ~v;
+
+	if (value == 0)
+		v = 0;
 
 	asn1_abs_clear_unused_bits(a);
 
-	if ((a->length < (w + 1)) || (a->data == NULL)) {
-		if (!value)
-			return(1); /* Don't need to set */
+	if (a->length < w + 1 || a->data == NULL) {
+		/* Don't expand if there's no bit to set. */
+		if (value == 0)
+			return 1;
 		if ((c = recallocarray(a->data, a->length, w + 1, 1)) == NULL) {
 			ASN1error(ERR_R_MALLOC_FAILURE);
 			return 0;
@@ -141,11 +145,12 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 		a->data = c;
 		a->length = w + 1;
 	}
+
 	a->data[w] = ((a->data[w]) & iv) | v;
-	while ((a->length > 0) && (a->data[a->length - 1] == 0))
+	while (a->length > 0 && a->data[a->length - 1] == 0)
 		a->length--;
 
-	return (1);
+	return 1;
 }
 LCRYPTO_ALIAS(ASN1_BIT_STRING_set_bit);
 
@@ -154,11 +159,18 @@ ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n)
 {
 	int w, v;
 
+	if (a == NULL)
+		return 0;
+	if (n < 0)
+		return 0;
+
 	w = n / 8;
 	v = 1 << (7 - (n & 0x07));
-	if ((a == NULL) || (a->length < (w + 1)) || (a->data == NULL))
-		return (0);
-	return ((a->data[w] & v) != 0);
+
+	if (a->length < w + 1 || a->data == NULL)
+		return 0;
+
+	return (a->data[w] & v) != 0;
 }
 LCRYPTO_ALIAS(ASN1_BIT_STRING_get_bit);
 
