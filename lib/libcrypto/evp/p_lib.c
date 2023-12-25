@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.43 2023/12/25 21:31:58 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.44 2023/12/25 21:33:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,12 +215,13 @@ EVP_PKEY_up_ref(EVP_PKEY *pkey)
 }
 
 static void
-evp_pkey_free_pkey_ptr(EVP_PKEY *x)
+evp_pkey_free_pkey_ptr(EVP_PKEY *pkey)
 {
-	if (x->ameth && x->ameth->pkey_free) {
-		x->ameth->pkey_free(x);
-		x->pkey.ptr = NULL;
-	}
+	if (pkey == NULL || pkey->ameth == NULL || pkey->ameth->pkey_free == NULL)
+		return;
+
+	pkey->ameth->pkey_free(pkey);
+	pkey->pkey.ptr = NULL;
 }
 
 /* Setup a public key ASN1 method from a NID or a string.
