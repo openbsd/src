@@ -1,4 +1,4 @@
-/* $OpenBSD: by_mem.c,v 1.8 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: by_mem.c,v 1.9 2023/12/25 22:14:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,13 +76,8 @@ static X509_LOOKUP_METHOD x509_mem_lookup = {
 	.name = "Load cert from memory",
 	.new_item = NULL,
 	.free = NULL,
-	.init = NULL,
-	.shutdown = NULL,
 	.ctrl = by_mem_ctrl,
 	.get_by_subject = NULL,
-	.get_by_issuer_serial = NULL,
-	.get_by_fingerprint = NULL,
-	.get_by_alias = NULL,
 };
 
 X509_LOOKUP_METHOD *

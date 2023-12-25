@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.14 2023/12/22 13:31:35 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.15 2023/12/25 22:14:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -248,18 +248,10 @@ struct x509_lookup_method_st {
 	const char *name;
 	int (*new_item)(X509_LOOKUP *ctx);
 	void (*free)(X509_LOOKUP *ctx);
-	int (*init)(X509_LOOKUP *ctx);
-	int (*shutdown)(X509_LOOKUP *ctx);
 	int (*ctrl)(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
 	    char **ret);
 	int (*get_by_subject)(X509_LOOKUP *ctx, int type, X509_NAME *name,
 	    X509_OBJECT *ret);
-	int (*get_by_issuer_serial)(X509_LOOKUP *ctx, int type, X509_NAME *name,
-	    ASN1_INTEGER *serial,X509_OBJECT *ret);
-	int (*get_by_fingerprint)(X509_LOOKUP *ctx, int type,
-	    const unsigned char *bytes, int len, X509_OBJECT *ret);
-	int (*get_by_alias)(X509_LOOKUP *ctx, int type, const char *str,
-	    int len, X509_OBJECT *ret);
 } /* X509_LOOKUP_METHOD */;
 
 struct X509_VERIFY_PARAM_st {

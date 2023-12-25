@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.29 2023/11/30 17:01:04 beck Exp $ */
+/* $OpenBSD: by_file.c,v 1.30 2023/12/25 22:14:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,13 +75,8 @@ static X509_LOOKUP_METHOD x509_file_lookup = {
 	.name = "Load file into cache",
 	.new_item = NULL,
 	.free = NULL,
-	.init = NULL,
-	.shutdown = NULL,
 	.ctrl = by_file_ctrl,
 	.get_by_subject = NULL,
-	.get_by_issuer_serial = NULL,
-	.get_by_fingerprint = NULL,
-	.get_by_alias = NULL,
 };
 
 X509_LOOKUP_METHOD *

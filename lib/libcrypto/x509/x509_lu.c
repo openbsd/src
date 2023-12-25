@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.60 2023/04/25 18:32:42 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.61 2023/12/25 22:14:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,9 +102,8 @@ X509_LOOKUP_init(X509_LOOKUP *ctx)
 {
 	if (ctx->method == NULL)
 		return 0;
-	if (ctx->method->init == NULL)
-		return 1;
-	return ctx->method->init(ctx);
+	/* Historical behavior: make init succeed even without method. */
+	return 1;
 }
 LCRYPTO_ALIAS(X509_LOOKUP_init);
 
@@ -113,9 +112,8 @@ X509_LOOKUP_shutdown(X509_LOOKUP *ctx)
 {
 	if (ctx->method == NULL)
 		return 0;
-	if (ctx->method->shutdown == NULL)
-		return 1;
-	return ctx->method->shutdown(ctx);
+	/* Historical behavior: make shutdown succeed even without method. */
+	return 1;
 }
 LCRYPTO_ALIAS(X509_LOOKUP_shutdown);
 
@@ -145,9 +143,7 @@ int
 X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     X509_NAME *name, ASN1_INTEGER *serial, X509_OBJECT *ret)
 {
-	if (ctx->method == NULL || ctx->method->get_by_issuer_serial == NULL)
-		return 0;
-	return ctx->method->get_by_issuer_serial(ctx, type, name, serial, ret);
+	return 0;
 }
 LCRYPTO_ALIAS(X509_LOOKUP_by_issuer_serial);
 
@@ -155,9 +151,7 @@ int
 X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const unsigned char *bytes, int len, X509_OBJECT *ret)
 {
-	if (ctx->method == NULL || ctx->method->get_by_fingerprint == NULL)
-		return 0;
-	return ctx->method->get_by_fingerprint(ctx, type, bytes, len, ret);
+	return 0;
 }
 LCRYPTO_ALIAS(X509_LOOKUP_by_fingerprint);
 
@@ -165,9 +159,7 @@ int
 X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, const char *str,
     int len, X509_OBJECT *ret)
 {
-	if (ctx->method == NULL || ctx->method->get_by_alias == NULL)
-		return 0;
-	return ctx->method->get_by_alias(ctx, type, str, len, ret);
+	return 0;
 }
 LCRYPTO_ALIAS(X509_LOOKUP_by_alias);
 

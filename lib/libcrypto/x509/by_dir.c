@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.44 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: by_dir.c,v 1.45 2023/12/25 22:14:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,13 +103,8 @@ static X509_LOOKUP_METHOD x509_dir_lookup = {
 	.name = "Load certs from files in a directory",
 	.new_item = new_dir,
 	.free = free_dir,
-	.init = NULL,
-	.shutdown = NULL,
 	.ctrl = dir_ctrl,
 	.get_by_subject = get_cert_by_subject,
-	.get_by_issuer_serial = NULL,
-	.get_by_fingerprint = NULL,
-	.get_by_alias = NULL,
 };
 
 X509_LOOKUP_METHOD *
