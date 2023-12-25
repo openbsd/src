@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.42 2023/12/25 21:30:53 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.43 2023/12/25 21:31:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,7 +215,7 @@ EVP_PKEY_up_ref(EVP_PKEY *pkey)
 }
 
 static void
-EVP_PKEY_free_it(EVP_PKEY *x)
+evp_pkey_free_pkey_ptr(EVP_PKEY *x)
 {
 	if (x->ameth && x->ameth->pkey_free) {
 		x->ameth->pkey_free(x);
@@ -234,7 +234,7 @@ pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 
 	if (pkey) {
 		if (pkey->pkey.ptr)
-			EVP_PKEY_free_it(pkey);
+			evp_pkey_free_pkey_ptr(pkey);
 		/* If key type matches and a method exists then this
 		 * lookup has succeeded once so just indicate success.
 		 */
@@ -593,7 +593,7 @@ EVP_PKEY_free(EVP_PKEY *x)
 	if (i > 0)
 		return;
 
-	EVP_PKEY_free_it(x);
+	evp_pkey_free_pkey_ptr(x);
 	if (x->attributes)
 		sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
 	free(x);
