@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.39 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.40 2023/12/25 21:25:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -197,19 +197,17 @@ EVP_PKEY_new(void)
 {
 	EVP_PKEY *ret;
 
-	ret = malloc(sizeof(EVP_PKEY));
-	if (ret == NULL) {
+	if ((ret = calloc(1, sizeof(*ret))) == NULL) {
 		EVPerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
+		return NULL;
 	}
+
 	ret->type = EVP_PKEY_NONE;
 	ret->save_type = EVP_PKEY_NONE;
 	ret->references = 1;
-	ret->ameth = NULL;
-	ret->pkey.ptr = NULL;
-	ret->attributes = NULL;
 	ret->save_parameters = 1;
-	return (ret);
+
+	return ret;
 }
 
 int
