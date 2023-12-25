@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.49 2023/12/25 21:55:31 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.50 2023/12/25 22:41:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,6 +278,15 @@ EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 	return 1;
 }
 
+int
+EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
+{
+	if (!EVP_PKEY_set_type(pkey, type))
+		return 0;
+
+	return (pkey->pkey.ptr = key) != NULL;
+}
+
 EVP_PKEY *
 EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
     const unsigned char *private_key, size_t len)
@@ -397,15 +406,6 @@ EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv, size_t len,
 	CMAC_CTX_free(cmctx);
 
 	return NULL;
-}
-
-int
-EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
-{
-	if (!EVP_PKEY_set_type(pkey, type))
-		return 0;
-	pkey->pkey.ptr = key;
-	return (key != NULL);
 }
 
 void *
