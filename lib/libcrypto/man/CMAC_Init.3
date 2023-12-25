@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMAC_Init.3,v 1.4 2020/08/06 22:17:49 schwarze Exp $
+.\" $OpenBSD: CMAC_Init.3,v 1.5 2023/12/25 15:52:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 6 2020 $
+.Dd $Mdocdate: December 25 2023 $
 .Dt CMAC_INIT 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Fa "const void *key"
 .Fa "size_t key_len"
 .Fa "const EVP_CIPHER *cipher"
-.Fa "ENGINE *impl"
+.Fa "ENGINE *engine"
 .Fc
 .Ft int
 .Fo CMAC_Update
@@ -127,22 +127,21 @@ and initializes
 .Fa ctx
 for subsequently feeding in data with
 .Fn CMAC_Update .
-To use the default cipher implementations provided by the library, pass
+The
+.Fa engine
+argument is ignored; passing
 .Dv NULL
-as the
-.Fa impl
-argument.
+is recommended.
 .Pp
 If
 .Fa ctx
 is already initialized,
 .Fn CMAC_Init
 can be called again with
-.Fa key ,
-.Fa cipher ,
+.Fa key
 and
-.Fa impl
-all set to
+.Fa cipher
+both set to
 .Dv NULL
 and
 .Fa key_len
