@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.41 2023/12/25 21:27:03 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.42 2023/12/25 21:30:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,8 +79,6 @@
 
 #include "asn1_local.h"
 #include "evp_local.h"
-
-static void EVP_PKEY_free_it(EVP_PKEY *x);
 
 int
 EVP_PKEY_bits(const EVP_PKEY *pkey)
@@ -214,6 +212,15 @@ int
 EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
 	return CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY) > 0;
+}
+
+static void
+EVP_PKEY_free_it(EVP_PKEY *x)
+{
+	if (x->ameth && x->ameth->pkey_free) {
+		x->ameth->pkey_free(x);
+		x->pkey.ptr = NULL;
+	}
 }
 
 /* Setup a public key ASN1 method from a NID or a string.
@@ -590,15 +597,6 @@ EVP_PKEY_free(EVP_PKEY *x)
 	if (x->attributes)
 		sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
 	free(x);
-}
-
-static void
-EVP_PKEY_free_it(EVP_PKEY *x)
-{
-	if (x->ameth && x->ameth->pkey_free) {
-		x->ameth->pkey_free(x);
-		x->pkey.ptr = NULL;
-	}
 }
 
 static int
