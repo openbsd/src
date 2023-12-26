@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.101 2023/11/23 19:54:30 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.102 2023/12/26 09:19:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -252,6 +252,7 @@ void	cpu_psci_init(struct cpu_info *);
 
 void	cpu_flush_bp_noop(void);
 void	cpu_flush_bp_psci(void);
+void	cpu_serror_apple(void);
 
 #if NKSTAT > 0
 void	cpu_kstat_attach(struct cpu_info *ci);
@@ -398,7 +399,6 @@ cpu_identify(struct cpu_info *ci)
 	 * The architecture has been updated to explicitly tell us if
 	 * we're not vulnerable to regular Spectre.
 	 */
-
 	id = READ_SPECIALREG(id_aa64pfr0_el1);
 	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_IMPL)
 		ci->ci_flush_bp = cpu_flush_bp_noop;
@@ -407,7 +407,6 @@ cpu_identify(struct cpu_info *ci)
 	 * But we might still be vulnerable to Spectre-BHB.  If we know the
 	 * CPU, we can add a branchy loop that cleans the BHB.
 	 */
-
 	if (impl == CPU_IMPL_ARM) {
 		switch (part) {
 		case CPU_PART_CORTEX_A72:
@@ -453,13 +452,11 @@ cpu_identify(struct cpu_info *ci)
 #endif
 
 	/* Prefer CLRBHB to mitigate Spectre-BHB. */
-
 	id = READ_SPECIALREG(id_aa64isar2_el1);
 	if (ID_AA64ISAR2_CLRBHB(id) >= ID_AA64ISAR2_CLRBHB_IMPL)
 		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_clrbhb;
 
 	/* ECBHB tells us Spectre-BHB is mitigated. */
-
 	id = READ_SPECIALREG(id_aa64mmfr1_el1);
 	if (ID_AA64MMFR1_ECBHB(id) >= ID_AA64MMFR1_ECBHB_IMPL)
 		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
@@ -468,12 +465,17 @@ cpu_identify(struct cpu_info *ci)
 	 * The architecture has been updated to explicitly tell us if
 	 * we're not vulnerable.
 	 */
-
 	id = READ_SPECIALREG(id_aa64pfr0_el1);
 	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_HCXT) {
 		ci->ci_flush_bp = cpu_flush_bp_noop;
 		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
 	}
+
+	/*
+	 * Apple CPUs provide detailed information for SError.
+	 */
+	if (impl == CPU_IMPL_APPLE)
+		ci->ci_serror = cpu_serror_apple;
 
 	/*
 	 * Print CPU features encoded in the ID registers.
@@ -1016,6 +1018,15 @@ cpu_flush_bp_psci(void)
 #if NPSCI > 0
 	psci_flush_bp();
 #endif
+}
+
+void
+cpu_serror_apple(void)
+{
+	__asm volatile("dsb sy; isb" ::: "memory");
+	printf("l2c_err_sts 0x%llx\n", READ_SPECIALREG(s3_3_c15_c8_0));
+	printf("l2c_err_adr 0x%llx\n", READ_SPECIALREG(s3_3_c15_c9_0));
+	printf("l2c_err_inf 0x%llx\n", READ_SPECIALREG(s3_3_c15_c10_0));
 }
 
 int

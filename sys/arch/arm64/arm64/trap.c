@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.46 2023/06/10 19:30:48 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.47 2023/12/26 09:19:15 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -338,10 +338,34 @@ do_el0_sync(struct trapframe *frame)
 	userret(p);
 }
 
+static void
+serror(struct trapframe *frame)
+{
+	struct cpu_info *ci = curcpu();
+	uint64_t esr, far;
+
+	esr = READ_SPECIALREG(esr_el1);
+	far = READ_SPECIALREG(far_el1);
+
+	printf("SError: %lx esr %llx far %0llx\n",
+	    frame->tf_elr, esr, far);
+
+	if (ci->ci_serror)
+		ci->ci_serror();
+}
+
 void
 do_el0_error(struct trapframe *frame)
 {
+	serror(frame);
 	panic("do_el0_error");
+}
+
+void
+do_el1h_error(struct trapframe *frame)
+{
+	serror(frame);
+	panic("do_el1h_error");
 }
 
 void

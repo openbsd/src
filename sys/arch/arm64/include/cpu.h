@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.39 2023/08/23 01:55:46 cheloha Exp $ */
+/* $OpenBSD: cpu.h,v 1.40 2023/12/26 09:19:15 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -143,6 +143,7 @@ struct cpu_info {
 	int			ci_want_resched;
 
 	void			(*ci_flush_bp)(void);
+	void			(*ci_serror)(void);
 
 	uint64_t		ci_ttbr1;
 	vaddr_t			ci_el1_stkend;

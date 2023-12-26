@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.15 2022/12/10 10:13:58 patrick Exp $ */
+/* $OpenBSD: exception.S,v 1.16 2023/12/26 09:19:15 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -191,7 +191,11 @@ handle_el1h_fiq:
 	.globl handle_el1h_error
 	.type handle_el1h_error,@function
 handle_el1h_error:
+	save_registers 1
+	mov	x0, sp
+	bl	do_el1h_error
 	brk	0xf13
+	1: b 1b
 
 .macro	return
 	msr	tpidrro_el0, x18
