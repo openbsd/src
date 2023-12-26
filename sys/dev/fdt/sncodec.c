@@ -1,4 +1,4 @@
-/*	$OpenBSD: sncodec.c,v 1.3 2023/07/09 12:32:22 kettenis Exp $	*/
+/*	$OpenBSD: sncodec.c,v 1.4 2023/12/26 09:25:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -136,6 +137,8 @@ sncodec_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	regulator_enable(OF_getpropint(node, "SDZ-supply", 0));
+
 	sdz_gpiolen = OF_getproplen(node, "shutdown-gpios");
 	if (sdz_gpiolen > 0) {
 		sdz_gpio = malloc(sdz_gpiolen, M_TEMP, M_WAITOK);
@@ -146,7 +149,7 @@ sncodec_attach(struct device *parent, struct device *self, void *aux)
 		free(sdz_gpio, M_TEMP, sdz_gpiolen);
 		delay(1000);
 	}
-
+	
 	/* Set volume to a reasonable level. */
 	sc->sc_dvc = DVC_LVL_30DB;
 	sc->sc_mute = MODE_CTRL_MODE_ACTIVE;
