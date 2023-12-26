@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.79 2023/12/23 13:05:06 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.80 2023/12/26 08:39:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,23 +93,18 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
 	}
 
 	/*
-	 * If the ctx is reused and a cipher is passed in, reset the ctx but
-	 * remember enc and whether key wrap was enabled.
+	 * Set up cipher and context. Allocate cipher data and initialize ctx.
+	 * On ctx reuse only retain encryption direction and key wrap flag.
 	 */
-	if (cipher != NULL && ctx->cipher != NULL) {
+	if (cipher != NULL) {
 		unsigned long flags = ctx->flags;
 
 		EVP_CIPHER_CTX_cleanup(ctx);
-
 		ctx->encrypt = enc;
 		ctx->flags = flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW;
-	}
 
-	/* Set up cipher. Allocate cipher data and initialize if necessary. */
-	if (cipher != NULL) {
 		ctx->cipher = cipher;
 		ctx->key_len = cipher->key_len;
-		ctx->flags &= EVP_CIPHER_CTX_FLAG_WRAP_ALLOW;
 
 		if (ctx->cipher->ctx_size != 0) {
 			ctx->cipher_data = calloc(1, ctx->cipher->ctx_size);
