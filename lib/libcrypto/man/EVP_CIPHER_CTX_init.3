@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_CIPHER_CTX_init.3,v 1.2 2023/12/26 19:09:08 schwarze Exp $
+.\" $OpenBSD: EVP_CIPHER_CTX_init.3,v 1.3 2023/12/26 22:13:00 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL EVP_EncryptInit.pod 0874d7f2 Oct 11 13:13:47 2022 +0100
 .\"
@@ -91,7 +91,7 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
 .Fa "const unsigned char *in"
-.Fa "unsigned int inl"
+.Fa "unsigned int in_len"
 .Fc
 .Sh DESCRIPTION
 .Fn EVP_CIPHER_CTX_init
@@ -133,11 +133,11 @@ behaviour depends on
 If that argument is
 .Dv NULL
 and
-.Fa inl
+.Fa in_len
 is 0, behaviour is similar to
 .Xr EVP_CipherFinal 3 ;
 if
-.Fa inl
+.Fa in_len
 is not 0, behaviour is undefined.
 If
 .Fa in
@@ -158,7 +158,7 @@ It requires that the previous encryption or decryption operation
 using the same
 .Fa ctx ,
 if there was any, ended exactly on a block boundary and that
-.Fa inl
+.Fa in_len
 is an integer multiple of the cipher block size.
 If either of these conditions is violated,
 .Fn EVP_Cipher
@@ -167,7 +167,7 @@ For that reason, using the function
 .Xr EVP_CipherUpdate 3
 instead is strongly recommended.
 The latter can safely handle partial blocks, and even if
-.Fa inl
+.Fa in_len
 actually is a multiple of the cipher block size for all calls,
 the overhead incurred by using
 .Xr EVP_CipherUpdate 3

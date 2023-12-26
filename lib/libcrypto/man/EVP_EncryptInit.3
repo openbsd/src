@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.50 2023/12/01 13:43:37 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.51 2023/12/26 22:13:00 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -69,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 1 2023 $
+.Dd $Mdocdate: December 26 2023 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -150,15 +150,15 @@
 .Fo EVP_EncryptUpdate
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
-.Fa "int *outl"
+.Fa "int *out_len"
 .Fa "const unsigned char *in"
-.Fa "int inl"
+.Fa "int in_len"
 .Fc
 .Ft int
 .Fo EVP_EncryptFinal_ex
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
-.Fa "int *outl"
+.Fa "int *out_len"
 .Fc
 .Ft int
 .Fo EVP_DecryptInit_ex
@@ -172,15 +172,15 @@
 .Fo EVP_DecryptUpdate
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
-.Fa "int *outl"
+.Fa "int *out_len"
 .Fa "const unsigned char *in"
-.Fa "int inl"
+.Fa "int in_len"
 .Fc
 .Ft int
 .Fo EVP_DecryptFinal_ex
 .Fa "EVP_CIPHER_CTX *ctx"
-.Fa "unsigned char *outm"
-.Fa "int *outl"
+.Fa "unsigned char *out"
+.Fa "int *out_len"
 .Fc
 .Ft int
 .Fo EVP_CipherInit_ex
@@ -195,15 +195,15 @@
 .Fo EVP_CipherUpdate
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
-.Fa "int *outl"
+.Fa "int *out_len"
 .Fa "const unsigned char *in"
-.Fa "int inl"
+.Fa "int in_len"
 .Fc
 .Ft int
 .Fo EVP_CipherFinal_ex
 .Fa "EVP_CIPHER_CTX *ctx"
-.Fa "unsigned char *outm"
-.Fa "int *outl"
+.Fa "unsigned char *out"
+.Fa "int *out_len"
 .Fc
 .Ft int
 .Fo EVP_EncryptInit
@@ -216,7 +216,7 @@
 .Fo EVP_EncryptFinal
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *out"
-.Fa "int *outl"
+.Fa "int *out_len"
 .Fc
 .Ft int
 .Fo EVP_DecryptInit
@@ -228,8 +228,8 @@
 .Ft int
 .Fo EVP_DecryptFinal
 .Fa "EVP_CIPHER_CTX *ctx"
-.Fa "unsigned char *outm"
-.Fa "int *outl"
+.Fa "unsigned char *out"
+.Fa "int *out_len"
 .Fc
 .Ft int
 .Fo EVP_CipherInit
@@ -242,8 +242,8 @@
 .Ft int
 .Fo EVP_CipherFinal
 .Fa "EVP_CIPHER_CTX *ctx"
-.Fa "unsigned char *outm"
-.Fa "int *outl"
+.Fa "unsigned char *out"
+.Fa "int *out_len"
 .Fc
 .Ft int
 .Fo EVP_CIPHER_CTX_encrypting
@@ -378,7 +378,7 @@ This is done when the default cipher parameters are not appropriate.
 .Pp
 .Fn EVP_EncryptUpdate
 encrypts
-.Fa inl
+.Fa in_len
 bytes from the buffer
 .Fa in
 and writes the encrypted version to
@@ -387,11 +387,13 @@ This function can be called multiple times to encrypt successive blocks
 of data.
 The amount of data written depends on the block alignment of the
 encrypted data: as a result the amount of data written may be anything
-from zero bytes to (inl + cipher_block_size - 1) so
+from zero bytes to
+.Pq Fa in_len No + cipher_block_size - 1
+so
 .Fa out
 should contain sufficient room.
 The actual number of bytes written is placed in
-.Fa outl .
+.Pf * Fa out_len .
 .Pp
 If padding is enabled (the default) then
 .Fn EVP_EncryptFinal
@@ -405,7 +407,7 @@ The encrypted final data is written to
 .Fa out
 which should have sufficient space for one cipher block.
 The number of bytes written is placed in
-.Fa outl .
+.Pf * Fa out_len .
 After this function is called, the encryption operation is finished and
 no further calls to
 .Fn EVP_EncryptUpdate
@@ -436,9 +438,10 @@ operations except that if padding is enabled the decrypted data buffer
 .Fa out
 passed to
 .Fn EVP_DecryptUpdate
-should have sufficient room for (inl + cipher_block_size) bytes
-unless the cipher block size is 1 in which case
-.Fa inl
+should have sufficient room for
+.Pq Fa in_len No + cipher_block_size
+bytes unless the cipher block size is 1 in which case
+.Fa in_len
 bytes is sufficient.
 .Pp
 .Fn EVP_CipherInit ,
@@ -703,7 +706,7 @@ parameters
 set to
 .Dv NULL
 and the length passed in the
-.Fa inl
+.Fa in_len
 parameter.
 .Pp
 The following ctrls are supported in CCM mode:
@@ -729,25 +732,25 @@ The nonce length is given by 15 - L so it is 7 by default for AES.
 Encrypt a string using blowfish:
 .Bd -literal -offset 3n
 int
-do_crypt(char *outfile)
+do_crypt(char *out_filename)
 {
-	unsigned char outbuf[1024];
-	int outlen, tmplen;
+	unsigned char out_buf[1024];
+	int out_len, tmp_len;
 	/*
 	 * Bogus key and IV: we'd normally set these from
 	 * another source.
 	 */
 	unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
 	unsigned char iv[] = {1,2,3,4,5,6,7,8};
-	const char intext[] = "Some Crypto Text";
+	const char in_text[] = "Some Crypto Text";
 	EVP_CIPHER_CTX *ctx;
-	FILE *out;
+	FILE *out_fileptr;
 
 	ctx = EVP_CIPHER_CTX_new();
 	EVP_EncryptInit_ex(ctx, EVP_bf_cbc(), NULL, key, iv);
 
-	if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext,
-	    strlen(intext))) {
+	if (!EVP_EncryptUpdate(ctx, out_buf, &out_len, in_text,
+	    strlen(in_text))) {
 		/* Error */
 		EVP_CIPHER_CTX_free(ctx);
 		return 0;
@@ -756,12 +759,12 @@ do_crypt(char *outfile)
 	 * Buffer passed to EVP_EncryptFinal() must be after data just
 	 * encrypted to avoid overwriting it.
 	 */
-	if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)) {
+	if (!EVP_EncryptFinal_ex(ctx, out_buf + out_len, &tmp_len)) {
 		/* Error */
 		EVP_CIPHER_CTX_free(ctx);
 		return 0;
 	}
-	outlen += tmplen;
+	out_len += tmp_len;
 	EVP_CIPHER_CTX_free(ctx);
 	/*
 	 * Need binary mode for fopen because encrypted data is
@@ -769,13 +772,13 @@ do_crypt(char *outfile)
 	 * it won't be NUL terminated and may contain embedded
 	 * NULs.
 	 */
-	out = fopen(outfile, "wb");
-	if (out == NULL) {
+	out_fileptr = fopen(out_filename, "wb");
+	if (out_fileptr == NULL) {
 		/* Error */
 		return 0;
 	}
-	fwrite(outbuf, 1, outlen, out);
-	fclose(out);
+	fwrite(out_buf, 1, out_len, out_fileptr);
+	fclose(out_fileptr);
 	return 1;
 }
 .Ed
@@ -792,11 +795,11 @@ General encryption, decryption function example using FILE I/O and AES128
 with a 128-bit key:
 .Bd -literal
 int
-do_crypt(FILE *in, FILE *out, int do_encrypt)
+do_crypt(FILE *in_fileptr, FILE *out_fileptr, int do_encrypt)
 {
 	/* Allow enough space in output buffer for additional block */
-	unsigned char inbuf[1024], outbuf[1024 + EVP_MAX_BLOCK_LENGTH];
-	int inlen, outlen;
+	unsigned char in_buf[1024], out_buf[1024 + EVP_MAX_BLOCK_LENGTH];
+	int in_len, out_len;
 	EVP_CIPHER_CTX *ctx;
 
 	/*
@@ -812,23 +815,23 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 	EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, do_encrypt);
 
 	for (;;) {
-		inlen = fread(inbuf, 1, 1024, in);
-		if (inlen <= 0)
+		in_len = fread(in_buf, 1, 1024, in_fileptr);
+		if (in_len <= 0)
 			break;
-		if (!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf,
-		    inlen)) {
+		if (!EVP_CipherUpdate(ctx, out_buf, &out_len, in_buf,
+		    in_len)) {
 			/* Error */
 			EVP_CIPHER_CTX_free(ctx);
 			return 0;
 		}
-		fwrite(outbuf, 1, outlen, out);
+		fwrite(out_buf, 1, out_len, out_fileptr);
 	}
-	if (!EVP_CipherFinal_ex(ctx, outbuf, &outlen)) {
+	if (!EVP_CipherFinal_ex(ctx, out_buf, &out_len)) {
 		/* Error */
 		EVP_CIPHER_CTX_free(ctx);
 		return 0;
 	}
-	fwrite(outbuf, 1, outlen, out);
+	fwrite(out_buf, 1, out_len, out_fileptr);
 
 	EVP_CIPHER_CTX_free(ctx);
 	return 1;
