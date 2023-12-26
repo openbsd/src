@@ -1,4 +1,4 @@
-/*	$OpenBSD: asms.c,v 1.8 2022/03/13 12:33:01 mpi Exp $	*/
+/*	$OpenBSD: asms.c,v 1.9 2023/12/26 14:04:50 miod Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 /*
  * A driver for the Apple Sudden Motion Sensor based on notes from
- * http://johannes.sipsolutions.net/PowerBook/Apple_Motion_Sensor_Specification
+ * https://johannes.sipsolutions.net/PowerBook/apple-motion-sensor-specification
  */
 
 #include <sys/param.h>
