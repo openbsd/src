@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.31 2023/10/18 07:10:24 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.32 2023/12/27 07:15:55 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -154,8 +154,8 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 		if (!quiet) {
 			warnx("%s: RFC 3779 section 2.2.3.5: "
 			    "cannot have overlapping IP addresses", fn);
-			ip_warn(fn, ip, "certificate IP");
-			ip_warn(fn, &ips[i], "offending IP");
+			ip_warn(fn, "certificate IP", ip);
+			ip_warn(fn, "offending IP", &ips[i]);
 		}
 		return 0;
 	}
@@ -246,10 +246,11 @@ ip_addr_print(const struct ip_addr *addr,
  * Convert a ip_addr into a NUL-terminated range notation string.
  * The size of the buffer must be at least 95 (inclusive).
  */
-void
+static void
 ip_addr_range_print(const struct ip_addr_range *range,
     enum afi afi, char *buf, size_t bufsz)
 {
+	struct cert_ip ip;
 	char min[INET6_ADDRSTRLEN], max[INET6_ADDRSTRLEN];
 	int ret, af;
 
@@ -264,9 +265,17 @@ ip_addr_range_print(const struct ip_addr_range *range,
 		errx(1, "unsupported address family identifier");
 	}
 
-	if (inet_ntop(af, &range->min, min, sizeof(min)) == NULL)
+	memset(&ip, 0, sizeof(ip));
+
+	ip.afi = afi;
+	ip.type = CERT_IP_RANGE;
+	ip.range = *range;
+	if (!ip_cert_compose_ranges(&ip))
+		errx(1, "failed to compose ranges");
+
+	if (inet_ntop(af, ip.min, min, sizeof(min)) == NULL)
 		err(1, "inet_ntop");
-	if (inet_ntop(af, &range->max, max, sizeof(max)) == NULL)
+	if (inet_ntop(af, ip.max, max, sizeof(max)) == NULL)
 		err(1, "inet_ntop");
 
 	ret = snprintf(buf, bufsz, "%s--%s", min, max);
@@ -311,7 +320,7 @@ ip_cert_compose_ranges(struct cert_ip *p)
 		return 1;
 	}
 
-	sz = AFI_IPV4 == p->afi ? 4 : 16;
+	sz = p->afi == AFI_IPV4 ? 4 : 16;
 	return memcmp(p->min, p->max, sz) <= 0;
 }
 
@@ -333,21 +342,21 @@ ip_roa_compose_ranges(struct roa_ip *p)
 }
 
 void
-ip_warn(const char *fn, const struct cert_ip *cert, const char *msg)
+ip_warn(const char *fn, const char *msg, const struct cert_ip *ip)
 {
 	char buf[128];
 
-	switch (cert->type) {
+	switch (ip->type) {
 	case CERT_IP_ADDR:
-		ip_addr_print(&cert->ip, cert->afi, buf, sizeof(buf));
-		warnx("%s: %s: %s", fn, buf, msg);
+		ip_addr_print(&ip->ip, ip->afi, buf, sizeof(buf));
+		warnx("%s: %s: %s", fn, msg, buf);
 		break;
 	case CERT_IP_RANGE:
-		ip_addr_range_print(&cert->range, cert->afi, buf, sizeof(buf));
-		warnx("%s: %s: %s", fn, buf, msg);
+		ip_addr_range_print(&ip->range, ip->afi, buf, sizeof(buf));
+		warnx("%s: %s: %s", fn, msg, buf);
 		break;
 	case CERT_IP_INHERIT:
-		warnx("%s: (inherit): %s", fn, msg);
+		warnx("%s: %s: IP (inherit)", fn, msg);
 		break;
 	default:
 		warnx("%s: corrupt cert", fn);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraints.c,v 1.1 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: constraints.c,v 1.2 2023/12/27 07:15:55 tb Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -578,7 +578,7 @@ constraints_validate(const char *fn, const struct cert *cert)
 		    deny_as, deny_asz))
 			continue;
 
-		as_warn(fn, &cert->as[i], "violates trust anchor constraints");
+		as_warn(fn, "trust anchor constraints violation", &cert->as[i]);
 		return 0;
 	}
 
@@ -592,7 +592,8 @@ constraints_validate(const char *fn, const struct cert *cert)
 		    allow_ipsz, deny_ips, deny_ipsz))
 			continue;
 
-		ip_warn(fn, &cert->ips[i], "violates trust anchor constraints");
+		ip_warn(fn, "trust anchor constraints violation",
+		    &cert->ips[i]);
 		return 0;
 	}
 

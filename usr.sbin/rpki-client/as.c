@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.15 2023/10/18 07:10:24 tb Exp $ */
+/*	$OpenBSD: as.c,v 1.16 2023/12/27 07:15:55 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -137,18 +137,18 @@ as_check_covered(uint32_t min, uint32_t max,
 }
 
 void
-as_warn(const char *fn, const struct cert_as *cert, const char *msg)
+as_warn(const char *fn, const char *msg, const struct cert_as *as)
 {
-	switch (cert->type) {
+	switch (as->type) {
 	case CERT_AS_ID:
-		warnx("%s: AS %u: %s", fn, cert->id, msg);
+		warnx("%s: %s: AS %u", fn, msg, as->id);
 		break;
 	case CERT_AS_RANGE:
-		warnx("%s: AS range %u--%u: %s", fn, cert->range.min,
-		    cert->range.max, msg);
+		warnx("%s: %s: AS range %u--%u", fn, msg, as->range.min,
+		    as->range.max);
 		break;
 	case CERT_AS_INHERIT:
-		warnx("%s: AS (inherit): %s", fn, msg);
+		warnx("%s: %s: AS (inherit)", fn, msg);
 		break;
 	default:
 		warnx("%s: corrupt cert", fn);

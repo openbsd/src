@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.68 2023/10/19 17:05:55 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.69 2023/12/27 07:15:55 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -135,7 +135,6 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 {
 	size_t		 i;
 	uint32_t	 min, max;
-	char		 buf[128];
 
 	for (i = 0; i < cert->asz; i++) {
 		if (cert->as[i].type == CERT_AS_INHERIT)
@@ -152,19 +151,7 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 		if (valid_as(a, min, max))
 			continue;
 
-		switch (cert->as[i].type) {
-		case CERT_AS_ID:
-			warnx("%s: RFC 6487: uncovered AS: %u", fn, min);
-			break;
-		case CERT_AS_RANGE:
-			warnx("%s: RFC 6487: uncovered AS: %u--%u", fn,
-			    min, max);
-			break;
-		case CERT_AS_INHERIT:
-			warnx("%s: RFC 6487: uncovered AS: (inherit)", fn);
-			break;
-		}
-
+		as_warn(fn, "RFC 6487: uncovered resource", &cert->as[i]);
 		return 0;
 	}
 
@@ -176,22 +163,7 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 		    cert->ips[i].max))
 			continue;
 
-		switch (cert->ips[i].type) {
-		case CERT_IP_ADDR:
-			ip_addr_print(&cert->ips[i].ip,
-			    cert->ips[i].afi, buf, sizeof(buf));
-			warnx("%s: RFC 6487: uncovered IP: %s", fn, buf);
-			break;
-		case CERT_IP_RANGE:
-			ip_addr_range_print(&cert->ips[i].range,
-			    cert->ips[i].afi, buf, sizeof(buf));
-			warnx("%s: RFC 6487: uncovered IP: %s", fn, buf);
-			break;
-		case CERT_IP_INHERIT:
-			warnx("%s: RFC 6487: uncovered IP: (inherit)", fn);
-			break;
-		}
-
+		ip_warn(fn, "RFC 6487: uncovered resource", &cert->ips[i]);
 		return 0;
 	}
 
@@ -473,7 +445,6 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 {
 	size_t		i;
 	uint32_t	min, max;
-	char		buf[128];
 
 	for (i = 0; i < rsc->asz; i++) {
 		if (rsc->as[i].type == CERT_AS_ID) {
@@ -487,18 +458,7 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 		if (as_check_covered(min, max, cert->as, cert->asz) > 0)
 			continue;
 
-		switch (rsc->as[i].type) {
-		case CERT_AS_ID:
-			warnx("%s: RSC resourceBlock: uncovered AS: %u", fn,
-			    min);
-			break;
-		case CERT_AS_RANGE:
-			warnx("%s: RSC resourceBlock: uncovered AS: %u--%u",
-			    fn, min, max);
-			break;
-		default:
-			break;
-		}
+		as_warn(fn, "RSC ResourceBlock uncovered", &rsc->as[i]);
 		return 0;
 	}
 
@@ -507,22 +467,7 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 		    rsc->ips[i].max, cert->ips, cert->ipsz) > 0)
 			continue;
 
-		switch (rsc->ips[i].type) {
-		case CERT_IP_ADDR:
-			ip_addr_print(&rsc->ips[i].ip, rsc->ips[i].afi, buf,
-			    sizeof(buf));
-			warnx("%s: RSC ResourceBlock: uncovered IP: %s", fn,
-			    buf);
-			break;
-		case CERT_IP_RANGE:
-			ip_addr_range_print(&rsc->ips[i].range, rsc->ips[i].afi,
-			    buf, sizeof(buf));
-			warnx("%s: RSC ResourceBlock: uncovered IP: %s", fn,
-			    buf);
-			break;
-		default:
-			break;
-		}
+		ip_warn(fn, "RSC ResourceBlock uncovered", &rsc->ips[i]);
 		return 0;
 	}
 
