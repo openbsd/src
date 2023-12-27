@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.61 2023/12/25 22:14:23 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.62 2023/12/27 01:55:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -262,7 +262,6 @@ X509_STORE_free(X509_STORE *store)
 	sk = store->get_cert_methods;
 	for (i = 0; i < sk_X509_LOOKUP_num(sk); i++) {
 		lu = sk_X509_LOOKUP_value(sk, i);
-		X509_LOOKUP_shutdown(lu);
 		X509_LOOKUP_free(lu);
 	}
 	sk_X509_LOOKUP_free(sk);
