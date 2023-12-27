@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.83 2023/09/19 08:35:44 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.84 2023/12/27 20:17:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -83,6 +83,7 @@ screen_init(struct screen *s, u_int sx, u_int sy, u_int hlimit)
 
 	s->cstyle = SCREEN_CURSOR_DEFAULT;
 	s->default_cstyle = SCREEN_CURSOR_DEFAULT;
+	s->mode = MODE_CURSOR;
 	s->default_mode = 0;
 	s->ccolour = -1;
 	s->default_ccolour = -1;
