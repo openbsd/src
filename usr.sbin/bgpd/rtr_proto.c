@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.19 2023/10/19 13:14:19 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.20 2023/12/27 12:00:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -792,6 +792,7 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 	uint8_t *msg;
 	char *str = NULL;
 	uint16_t errcode;
+	int rv = -1;
 
 	memcpy(&rh, buf, sizeof(rh));
 	buf += sizeof(struct rtr_header);
@@ -832,13 +833,12 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 
 	if (errcode == NO_DATA_AVAILABLE) {
 		rtr_fsm(rs, RTR_EVNT_NO_DATA);
-		free(str);
-		return 0;
-	}
-	if (errcode == UNSUPP_PROTOCOL_VERS)
+		rv = 0;
+	} else if (errcode == UNSUPP_PROTOCOL_VERS)
 		rtr_fsm(rs, RTR_EVNT_UNSUPP_PROTO_VERSION);
 	else
 		rtr_fsm(rs, RTR_EVNT_RESET_AND_CLOSE);
+
 	rs->last_recv_error = errcode;
 	if (str)
 		strlcpy(rs->last_recv_msg, str,
@@ -848,7 +848,7 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 		    sizeof(rs->last_recv_msg));
 
 	free(str);
-	return -1;
+	return rv;
 }
 
 /*
