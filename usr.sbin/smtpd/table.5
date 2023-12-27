@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.12 2021/02/13 08:05:57 jmc Exp $
+.\"	$OpenBSD: table.5,v 1.13 2023/12/27 11:29:56 op Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 13 2021 $
+.Dd $Mdocdate: December 27 2023 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -42,9 +42,6 @@ table mymapping { key1 = value1, key2 = value2, key3 = value3 }
 When using a
 .Ql file
 table, a list will be written with each value on a line by itself.
-Comments can be put anywhere in the file using a hash mark
-.Pq Sq # ,
-and extend to the end of the current line.
 .Bd -literal -offset indent
 value1
 value2
@@ -52,12 +49,21 @@ value3
 .Ed
 .Pp
 A mapping will be written with each key and value on a line,
-whitespaces separating both columns:
+whitespace and an optional colon separating both columns:
 .Bd -literal -offset indent
-key1	value1
+key1:	value1
 key2	value2
 key3	value3
 .Ed
+.Pp
+Blank lines, leading and trailing spaces and tabs are ignored.
+Lines whose first non-space character is a hash mark
+.Pq Sq #
+are comments and are ignored.
+To force the parsing of a file table as a list rather than a mapping, use
+this special comment:
+.Pp
+.Dl # @list
 .Pp
 A file table can be converted to a Berkeley database using the
 .Xr makemap 8
