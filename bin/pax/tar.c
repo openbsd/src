@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.77 2023/12/22 20:32:29 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.78 2023/12/27 08:29:41 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -978,6 +978,39 @@ xheader_add_ull(struct xheader *xhdr, const char *keyword,
 	return 0;
 }
 
+static int
+xheader_add_ts(struct xheader *xhdr, const char *keyword,
+    const struct timespec *value)
+{
+	struct xheader_record *rec;
+	int reclen, tmplen;
+	char *s;
+
+	tmplen = MINXHDRSZ;
+	do {
+		reclen = tmplen;
+		tmplen = snprintf(NULL, 0, "%d %s=%lld.%09ld\n", reclen,
+		    keyword, (long long)value->tv_sec, (long)value->tv_nsec);
+	} while (tmplen >= 0 && tmplen != reclen);
+	if (tmplen < 0)
+		return -1;
+
+	rec = calloc(1, sizeof(*rec));
+	if (rec == NULL)
+		return -1;
+	rec->reclen = reclen;
+	if (asprintf(&s, "%d %s=%lld.%09ld\n", reclen, keyword,
+	    (long long)value->tv_sec, (long)value->tv_nsec) < 0) {
+		free(rec);
+		return -1;
+	}
+	rec->record = s;
+
+	SLIST_INSERT_HEAD(xhdr, rec, entry);
+
+	return 0;
+}
+
 static void
 xheader_free(struct xheader *xhdr)
 {
@@ -1060,6 +1093,7 @@ wr_ustar_or_pax(ARCHD *arcn, int ustar)
 #ifndef SMALL
 	struct xheader xhdr = SLIST_HEAD_INITIALIZER(xhdr);
 #endif
+	int bad_mtime;
 
 	/*
 	 * check for those file system types ustar cannot store
@@ -1249,9 +1283,35 @@ wr_ustar_or_pax(ARCHD *arcn, int ustar)
 		if (ul_oct(gid_nobody, hd->gid, sizeof(hd->gid), 3))
 			goto out;
 	}
-	if (ull_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
-		sizeof(hd->mtime), 3) ||
-	    ul_oct(arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
+	bad_mtime = ull_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime,
+	    hd->mtime, sizeof(hd->mtime), 3);
+	if (bad_mtime && ustar)
+		goto out;
+#ifndef SMALL
+	if (!ustar) {
+		/*
+		 * The pax format can preserve atime and store
+		 * a possibly more accurate mtime.
+		 *
+		 * ctime isn't specified by POSIX so omit it.
+		 */
+		if (xheader_add_ts(&xhdr, "atime", &arcn->sb.st_atim) == -1) {
+			paxwarn(1, "Couldn't preserve %s in pax format for %s",
+			    "atime", arcn->org_name);
+			xheader_free(&xhdr);
+			return (1);
+		}
+		if ((bad_mtime || arcn->sb.st_mtime < 0 ||
+			arcn->sb.st_mtim.tv_nsec != 0) &&
+		    xheader_add_ts(&xhdr, "mtime", &arcn->sb.st_mtim) == -1) {
+			paxwarn(1, "Couldn't preserve %s in pax format for %s",
+			    "mtime", arcn->org_name);
+			xheader_free(&xhdr);
+			return (1);
+		}
+	}
+#endif
+	if (ul_oct(arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3))
 		goto out;
 	if (!Nflag) {
 		if ((name = user_from_uid(arcn->sb.st_uid, 1)) != NULL)
