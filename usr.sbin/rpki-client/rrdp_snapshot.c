@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_snapshot.c,v 1.7 2023/01/04 14:22:43 claudio Exp $ */
+/*	$OpenBSD: rrdp_snapshot.c,v 1.8 2023/12/27 07:17:39 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -248,6 +248,7 @@ free_snapshot_xml(struct snapshot_xml *sxml)
 	free(sxml);
 }
 
+/* Used in regress. */
 void
 log_snapshot_xml(struct snapshot_xml *sxml)
 {
