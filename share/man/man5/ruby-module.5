@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.45 2023/10/13 23:16:58 jeremy Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.46 2023/12/27 23:46:42 jeremy Exp $
 .\"
 .\" Copyright (c) 2011-2015, 2023 Jeremy Evans <jeremy@openbsd.org>
 .\" Copyright (c) 2008, 2011 Marc Espie <espie@openbsd.org>
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 13 2023 $
+.Dd $Mdocdate: December 27 2023 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ those via
 .Ev CONFIGURE_STYLE Ns = Ns Qq ruby gem
 and
 .Ev CONFIGURE_STYLE Ns = Ns Qq ruby gem ext
-both add ruby31 and ruby32
+both add ruby31, ruby32, and ruby33
 .Ev FLAVOR Ns s
 to the port.
 They also cause the
@@ -79,10 +79,10 @@ The ports system defaults to using Ruby 3.2 if the version of Ruby is not
 specified.
 To specify a version for a gem port, use a specific
 .Ev FLAVOR ,
-such as ruby31 to use Ruby 3.1.
+such as ruby33 to use Ruby 3.3.
 To specify the Ruby version to use for a non Ruby-gem port, set
 .Ev MODRUBY_REV
-to 3.1 or 3.2.
+to 3.1, 3.2, or 3.3.
 .Pp
 To ensure that dependencies use the same Ruby implementation as the
 current port, all Ruby gem dependencies specified in the port
@@ -108,7 +108,7 @@ is
 .Cm Yes ,
 the ports system automatically adds the appropriate prefix to the
 .Ev FULLPKGNAME
-(e.g. ruby31\- for ruby 3.1, ruby32\- for ruby 3.2).
+(e.g. ruby32\- for ruby 3.2, ruby33\- for ruby 3.3).
 .Pp
 For Ruby gem ports that can work on multiple Ruby versions, append
 .Ev GEM_BIN_SUFFIX
