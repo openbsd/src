@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.17 2023/04/25 15:48:48 tb Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.18 2023/12/28 22:07:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -314,19 +314,28 @@ static int
 pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
 	DSA *dsa = NULL;
+	int ret = 0;
 
 	if (ctx->pkey == NULL) {
 		DSAerror(DSA_R_NO_PARAMETERS_SET);
-		return 0;
+		goto err;
 	}
-	dsa = DSA_new();
-	if (!dsa)
-		return 0;
-	EVP_PKEY_assign_DSA(pkey, dsa);
-	/* Note: if error return, pkey is freed by parent routine */
+	if ((dsa = DSA_new()) == NULL)
+		goto err;
+	if (!EVP_PKEY_set1_DSA(pkey, dsa))
+		goto err;
+
 	if (!EVP_PKEY_copy_parameters(pkey, ctx->pkey))
-		return 0;
-	return DSA_generate_key(pkey->pkey.dsa);
+		goto err;
+	if (!DSA_generate_key(dsa))
+		goto err;
+
+	ret = 1;
+
+ err:
+	DSA_free(dsa);
+
+	return ret;
 }
 
 const EVP_PKEY_METHOD dsa_pkey_meth = {
