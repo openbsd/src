@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.75 2022/08/15 09:40:14 op Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.76 2023/12/28 18:05:32 espie Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -49,6 +49,7 @@ int		 server_file_modified_since(struct http_descriptor *,
 int		 server_file_method(struct client *);
 int		 parse_range_spec(char *, size_t, struct range *);
 int		 parse_ranges(struct client *, char *, size_t);
+static int	 select_visible(const struct dirent *);
 
 int
 server_file_access(struct httpd *env, struct client *clt,
@@ -466,6 +467,17 @@ server_partial_file_request(struct httpd *env, struct client *clt, char *path,
 	return (-1);
 }
 
+/* ignore hidden files starting with a dot */
+static int 
+select_visible(const struct dirent *dp)
+{
+    if (dp->d_name[0] == '.' &&
+	!(dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
+	    return 0;
+    else
+	    return 1;
+}
+
 int
 server_file_index(struct httpd *env, struct client *clt)
 {
@@ -536,7 +548,8 @@ server_file_index(struct httpd *env, struct client *clt)
 
 	free(escapedpath);
 
-	if ((namesize = scandir(path, &namelist, NULL, alphasort)) == -1)
+	if ((namesize = scandir(path, &namelist, select_visible, 
+	    alphasort)) == -1)
 		goto abort;
 
 	/* Indicate failure but continue going through the list */
@@ -570,10 +583,7 @@ server_file_index(struct httpd *env, struct client *clt)
 			continue;
 		}
 
-		if (dp->d_name[0] == '.' &&
-		    !(dp->d_name[1] == '.' && dp->d_name[2] == '\0')) {
-			/* ignore hidden files starting with a dot */
-		} else if (S_ISDIR(subst.st_mode)) {
+		if (S_ISDIR(subst.st_mode)) {
 			namewidth -= 1; /* trailing slash */
 			if (evbuffer_add_printf(evb,
 			    "<a href=\"%s%s/\">%s/</a>%*s%s%20s\n",
