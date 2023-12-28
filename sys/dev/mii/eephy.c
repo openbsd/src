@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.62 2023/12/07 09:46:58 uwe Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.63 2023/12/28 14:03:21 uwe Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -188,16 +188,28 @@ eephy_attach(struct device *parent, struct device *self, void *aux)
 		PHY_WRITE(sc, E1000_EADR, page);
 	}
 
-	/* Switch to SGMII-to-copper mode if necessary. */
-	if (sc->mii_model == MII_MODEL_MARVELL_E1512 &&
-	    sc->mii_flags & MIIF_SGMII) {
+	/*
+	 * GCR1 MII mode defaults to an invalid value on E1512/E1514
+	 * and must be programmed with the desired mode of operation.
+	 */
+	if (sc->mii_model == MII_MODEL_MARVELL_E1512) {
+		uint32_t mode;
+
 		page = PHY_READ(sc, E1000_EADR);
 		PHY_WRITE(sc, E1000_EADR, 18);
+
 		reg = PHY_READ(sc, E1000_GCR1);
+		mode = reg & E1000_GCR1_MODE_MASK;
+
+		if (mode == E1000_GCR1_MODE_UNSET)
+			mode = E1000_GCR1_MODE_RGMII;
+		if (sc->mii_flags & MIIF_SGMII)
+			mode = E1000_GCR1_MODE_SGMII;
+
 		reg &= ~E1000_GCR1_MODE_MASK;
-		reg |= E1000_GCR1_MODE_SGMII;
-		reg |= E1000_GCR1_RESET;
+		reg |= E1000_GCR1_RESET | mode;
 		PHY_WRITE(sc, E1000_GCR1, reg);
+
 		PHY_WRITE(sc, E1000_EADR, page);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephyreg.h,v 1.10 2023/12/07 09:46:58 uwe Exp $	*/
+/*	$OpenBSD: eephyreg.h,v 1.11 2023/12/28 14:03:21 uwe Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -331,4 +331,9 @@
 #define E1000_GCR1			0x14	/* General Control Register 1 */
 #define E1000_GCR1_RESET		0x8000
 #define E1000_GCR1_MODE_MASK		0x0007
+#define E1000_GCR1_MODE_RGMII		0x0000
 #define E1000_GCR1_MODE_SGMII		0x0001
+#define E1000_GCR1_MODE_RGMII_1000X	0x0002
+#define E1000_GCR1_MODE_RGMII_100FX	0x0003
+#define E1000_GCR1_MODE_RGMII_TO_SGMII	0x0004
+#define E1000_GCR1_MODE_UNSET		0x0007
