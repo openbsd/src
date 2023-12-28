@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.18 2023/12/28 22:07:23 tb Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.19 2023/12/28 22:11:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -288,25 +288,30 @@ out_of_range:
 static int
 pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-	DSA *dsa = NULL;
+	DSA *dsa;
 	DSA_PKEY_CTX *dctx = ctx->data;
-	BN_GENCB *pcb, cb;
-	int ret;
+	BN_GENCB *pcb = NULL;
+	BN_GENCB cb = {0};
+	int ret = 0;
 
-	if (ctx->pkey_gencb) {
+	if ((dsa = DSA_new()) == NULL)
+		goto err;
+	if (ctx->pkey_gencb != NULL) {
 		pcb = &cb;
 		evp_pkey_set_cb_translate(pcb, ctx);
-	} else
-		pcb = NULL;
-	dsa = DSA_new();
-	if (!dsa)
-		return 0;
-	ret = dsa_builtin_paramgen(dsa, dctx->nbits, dctx->qbits, dctx->pmd,
-	    NULL, 0, NULL, NULL, NULL, pcb);
-	if (ret)
-		EVP_PKEY_assign_DSA(pkey, dsa);
-	else
-		DSA_free(dsa);
+	}
+	if (!dsa_builtin_paramgen(dsa, dctx->nbits, dctx->qbits, dctx->pmd,
+	    NULL, 0, NULL, NULL, NULL, pcb))
+		goto err;
+	if (!EVP_PKEY_assign_DSA(pkey, dsa))
+		goto err;
+	dsa = NULL;
+
+	ret = 1;
+
+ err:
+	DSA_free(dsa);
+
 	return ret;
 }
 
