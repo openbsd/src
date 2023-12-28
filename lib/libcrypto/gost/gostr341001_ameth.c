@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.20 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.21 2023/12/28 21:49:07 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -101,8 +101,10 @@ decode_gost01_algor_params(EVP_PKEY *pkey, const unsigned char **p, int len)
 			GOSTerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
-		if (EVP_PKEY_assign_GOST(pkey, ec) == 0)
+		if (EVP_PKEY_assign_GOST(pkey, ec) == 0) {
+			GOST_KEY_free(ec);
 			return 0;
+		}
 	}
 
 	group = EC_GROUP_new_by_curve_name(param_nid);
