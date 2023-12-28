@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.20 2023/12/28 22:09:10 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.21 2023/12/28 22:12:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -458,18 +458,25 @@ pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	EC_KEY *ec = NULL;
 	EC_PKEY_CTX *dctx = ctx->data;
 	int ret = 0;
+
 	if (dctx->gen_group == NULL) {
 		ECerror(EC_R_NO_PARAMETERS_SET);
-		return 0;
+		goto err;
 	}
-	ec = EC_KEY_new();
-	if (!ec)
-		return 0;
-	ret = EC_KEY_set_group(ec, dctx->gen_group);
-	if (ret)
-		EVP_PKEY_assign_EC_KEY(pkey, ec);
-	else
-		EC_KEY_free(ec);
+
+	if ((ec = EC_KEY_new()) == NULL)
+		goto err;
+	if (!EC_KEY_set_group(ec, dctx->gen_group))
+		goto err;
+	if (!EVP_PKEY_assign_EC_KEY(pkey, ec))
+		goto err;
+	ec = NULL;
+
+	ret = 1;
+
+ err:
+	EC_KEY_free(ec);
+
 	return ret;
 }
 
