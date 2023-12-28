@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1189 2023/12/01 10:28:32 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1190 2023/12/28 16:21:08 aisha Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1731,11 +1731,8 @@ pf_purge_expired_src_nodes(void)
 
 	PF_ASSERT_LOCKED();
 
-	for (cur = RB_MIN(pf_src_tree, &tree_src_tracking); cur; cur = next) {
-		next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
-
+	RB_FOREACH_SAFE(cur, pf_src_tree, &tree_src_tracking, next) {
 		if (cur->states == 0 && cur->expire <= getuptime()) {
-			next = RB_NEXT(pf_src_tree, &tree_src_tracking, cur);
 			pf_remove_src_node(cur);
 		}
 	}
