@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_pmeth.c,v 1.11 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: cm_pmeth.c,v 1.12 2023/12/28 21:56:12 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -92,18 +92,23 @@ pkey_cmac_cleanup(EVP_PKEY_CTX *ctx)
 static int
 pkey_cmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-	CMAC_CTX *cmkey = CMAC_CTX_new();
-	CMAC_CTX *cmctx = ctx->data;
+	CMAC_CTX *cmkey;
+	int ret = 0;
 
-	if (!cmkey)
-		return 0;
-	if (!CMAC_CTX_copy(cmkey, cmctx)) {
-		CMAC_CTX_free(cmkey);
-		return 0;
-	}
-	EVP_PKEY_assign(pkey, EVP_PKEY_CMAC, cmkey);
+	if ((cmkey = CMAC_CTX_new()) == NULL)
+		goto err;
+	if (!CMAC_CTX_copy(cmkey, ctx->data))
+		goto err;
+	if (!EVP_PKEY_assign(pkey, EVP_PKEY_CMAC, cmkey))
+		goto err;
+	cmkey = NULL;
 
-	return 1;
+	ret = 1;
+
+ err:
+	CMAC_CTX_free(cmkey);
+
+	return ret;
 }
 
 static int
