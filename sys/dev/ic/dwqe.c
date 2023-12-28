@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.15 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.16 2023/12/28 14:30:28 uwe Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -338,11 +338,18 @@ dwqe_start(struct ifqueue *ifq)
 #endif
 	}
 
-	if (sc->sc_tx_prod != idx) {
+	if (used > 0) {
 		sc->sc_tx_prod = idx;
 
 		/* Set a timeout in case the chip goes out to lunch. */
 		ifp->if_timer = 5;
+
+		/*
+		 * Start the transmit process after the last in-use Tx
+		 * descriptor's OWN bit has been updated.
+		 */
+		dwqe_write(sc, GMAC_CHAN_TX_END_ADDR(0), DWQE_DMA_DVA(sc->sc_txring) +
+		    idx * sizeof(struct dwqe_desc));
 	}
 }
 
@@ -1054,9 +1061,6 @@ dwqe_encap(struct dwqe_softc *sc, struct mbuf *m, int *idx, int *used)
 	txd_start->sd_tdes3 |= TDES3_OWN;
 	bus_dmamap_sync(sc->sc_dmat, DWQE_DMA_MAP(sc->sc_txring),
 	    *idx * sizeof(*txd), sizeof(*txd), BUS_DMASYNC_PREWRITE);
-
-	dwqe_write(sc, GMAC_CHAN_TX_END_ADDR(0), DWQE_DMA_DVA(sc->sc_txring) +
-	    frag * sizeof(*txd));
 
 	KASSERT(sc->sc_txbuf[cur].tb_m == NULL);
 	sc->sc_txbuf[*idx].tb_map = sc->sc_txbuf[cur].tb_map;
