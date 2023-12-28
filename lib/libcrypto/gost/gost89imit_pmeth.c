@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89imit_pmeth.c,v 1.5 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: gost89imit_pmeth.c,v 1.6 2023/12/28 21:47:17 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -107,22 +107,29 @@ static int
 pkey_gost_mac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
 	struct gost_mac_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
-	unsigned char *keydata;
+	unsigned char *keydata = NULL;
+	int ret = 0;
 
 	if (!data->key_set) {
 		GOSTerror(GOST_R_MAC_KEY_NOT_SET);
-		return 0;
+		goto err;
 	}
 
-	keydata = malloc(32);
-	if (keydata == NULL) {
+	if ((keydata = malloc(32)) == NULL) {
 		GOSTerror(ERR_R_MALLOC_FAILURE);
-		return 0;
+		goto err;
 	}
 	memcpy(keydata, data->key, 32);
-	EVP_PKEY_assign(pkey, NID_id_Gost28147_89_MAC, keydata);
+	if (!EVP_PKEY_assign(pkey, NID_id_Gost28147_89_MAC, keydata))
+		goto err;
+	keydata = NULL;
 
-	return 1;
+	ret = 1;
+
+ err:
+	freezero(keydata, 32);
+
+	return ret;
 }
 
 static int
