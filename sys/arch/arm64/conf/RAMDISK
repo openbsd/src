@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.211 2023/11/13 12:49:41 jsg Exp $
+# $OpenBSD: RAMDISK,v 1.212 2023/12/28 17:36:29 stsp Exp $
 
 machine		arm64
 maxusers	4
@@ -312,6 +312,7 @@ vmx*		at pci?			# VMware VMXNET3 virtual interface
 athn*		at pci?			# Atheros AR9k (802.11a/g/n)
 bwfm*		at pci?			# Broadcom FullMAC
 iwx*		at pci?			# Intel WiFi Link 22xxx
+#qwx*		at pci?			# Qualcomm 802.11ax
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers

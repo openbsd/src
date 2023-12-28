@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.362 2023/10/11 12:52:00 stsp Exp $
+#	$OpenBSD: files.pci,v 1.363 2023/12/28 17:36:29 stsp Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -554,6 +554,10 @@ file	dev/pci/if_iwm.c		iwm
 device	iwx: ifnet, wlan, firmload
 attach	iwx at pci
 file	dev/pci/if_iwx.c		iwx
+
+# Qualcomm 802.11ax
+attach	qwx at pci with qwx_pci
+file	dev/pci/if_qwx_pci.c		qwx_pci
 
 # C-Media CMI8x38 Audio Chip
 device	cmpci {}: audio
