@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.15 2023/12/25 22:14:23 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.16 2023/12/29 05:17:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -299,7 +299,6 @@ struct x509_store_st {
 
 /* This is the functions plus an instance of the local variables. */
 struct x509_lookup_st {
-	int init;			/* have we been started */
 	X509_LOOKUP_METHOD *method;	/* the functions */
 	char *method_data;		/* method data */
 
