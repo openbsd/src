@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_encode.c,v 1.1 2023/12/29 05:57:24 tb Exp $ */
+/* $OpenBSD: evp_encode.c,v 1.2 2023/12/29 10:31:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,7 +92,7 @@ abcdefghijklmnopqrstuvwxyz0123456789+/";
 #define B64_CR			0xF1
 #define B64_EOF			0xF2
 #define B64_WS			0xE0
-#define B64_ERROR       	0xFF
+#define B64_ERROR		0xFF
 #define B64_NOT_BASE64(a)	(((a)|0x13) == 0xF3)
 #define B64_BASE64(a)		!B64_NOT_BASE64(a)
 
