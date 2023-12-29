@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.49 2023/12/29 18:48:25 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.50 2023/12/29 18:49:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -571,29 +571,26 @@ eckey_param_decode(EVP_PKEY *pkey, const unsigned char **param, int param_len)
 }
 
 static int
-eckey_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
+eckey_param_encode(const EVP_PKEY *pkey, unsigned char **param)
 {
-	return i2d_ECParameters(pkey->pkey.ec, pder);
+	return i2d_ECParameters(pkey->pkey.ec, param);
 }
 
 static int
-eckey_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-    ASN1_PCTX *ctx)
+eckey_param_print(BIO *bp, const EVP_PKEY *pkey, int indent, ASN1_PCTX *ctx)
 {
 	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 0);
 }
 
 static int
-eckey_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-    ASN1_PCTX *ctx)
+eckey_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent, ASN1_PCTX *ctx)
 {
 	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 1);
 }
 
 
 static int
-eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-    ASN1_PCTX *ctx)
+eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent, ASN1_PCTX *ctx)
 {
 	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 2);
 }
@@ -619,9 +616,9 @@ old_ec_priv_decode(EVP_PKEY *pkey, const unsigned char **priv, int priv_len)
 }
 
 static int
-old_ec_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
+old_ec_priv_encode(const EVP_PKEY *pkey, unsigned char **priv)
 {
-	return i2d_ECPrivateKey(pkey->pkey.ec, pder);
+	return i2d_ECPrivateKey(pkey->pkey.ec, priv);
 }
 
 static int
