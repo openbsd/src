@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.47 2023/12/29 18:46:24 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.48 2023/12/29 18:47:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -551,16 +551,23 @@ do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 }
 
 static int
-eckey_param_decode(EVP_PKEY *pkey,
-    const unsigned char **pder, int derlen)
+eckey_param_decode(EVP_PKEY *pkey, const unsigned char **param, int param_len)
 {
 	EC_KEY *eckey;
-	if (!(eckey = d2i_ECParameters(NULL, pder, derlen))) {
-		ECerror(ERR_R_EC_LIB);
-		return 0;
-	}
-	EVP_PKEY_assign_EC_KEY(pkey, eckey);
-	return 1;
+	int ret = 0;
+
+	if ((eckey = d2i_ECParameters(NULL, param, param_len)) == NULL)
+		goto err;
+	if (!EVP_PKEY_assign_EC_KEY(pkey, eckey))
+		goto err;
+	eckey = NULL;
+
+	ret = 1;
+
+ err:
+	EC_KEY_free(eckey);
+
+	return ret;
 }
 
 static int
