@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.62 2023/07/03 08:03:56 beck Exp $ */
+/* $OpenBSD: s_client.c,v 1.63 2023/12/29 12:06:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -223,7 +223,6 @@ static struct {
 	char *npn_in;
 	unsigned int off;
 	char *passarg;
-	int pause;
 	int peekaboo;
 	char *port;
 	int prexit;
@@ -659,9 +658,7 @@ static const struct option s_client_options[] = {
 	},
 	{
 		.name = "pause",
-		.desc = "Pause 1 second between each read and write call",
-		.type = OPTION_FLAG,
-		.opt.flag = &cfg.pause,
+		.type = OPTION_DISCARD,
 	},
 	{
 		.name = "peekaboo",
@@ -832,7 +829,7 @@ sc_usage(void)
 	    "    [-keymatexport label] [-keymatexportlen len] [-legacy_server_connect]\n"
 	    "    [-msg] [-mtu mtu] [-nbio] [-nbio_test] [-no_comp] [-no_ign_eof]\n"
 	    "    [-no_legacy_server_connect] [-no_ticket] \n"
-	    "    [-no_tls1_2] [-no_tls1_3] [-pass arg] [-pause] [-policy_check]\n"
+	    "    [-no_tls1_2] [-no_tls1_3] [-pass arg] [-policy_check]\n"
 	    "    [-port port] [-prexit] [-proxy host:port] [-quiet] [-reconnect]\n"
 	    "    [-servername name] [-serverpref] [-sess_in file] [-sess_out file]\n"
 	    "    [-showcerts] [-starttls protocol] [-state] [-status] [-timeout]\n"
@@ -1088,8 +1085,6 @@ s_client_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (cfg.pause & 0x01)
-		SSL_set_debug(con, 1);
 
 	if (SSL_is_dtls(con)) {
 		sbio = BIO_new_dgram(s, BIO_NOCLOSE);
