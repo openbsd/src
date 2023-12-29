@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.32 2023/12/13 00:37:42 jsg Exp $
+.\" $OpenBSD: imsg_init.3,v 1.33 2023/12/29 11:48:47 claudio Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 13 2023 $
+.Dd $Mdocdate: December 29 2023 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -41,10 +41,7 @@
 .Nm imsg_clear
 .Nd IPC messaging functions
 .Sh SYNOPSIS
-.In sys/types.h
 .In sys/queue.h
-.In sys/uio.h
-.In stdint.h
 .In imsg.h
 .Ft void
 .Fn imsg_init "struct imsgbuf *imsgbuf" "int fd"
@@ -70,9 +67,6 @@
 .Fn imsg_compose "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
     "pid_t pid" "int fd" "const void *data" "size_t datalen"
 .Ft int
-.Fn imsg_composev "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
-    "pid_t pid" "int fd" "const struct iovec *iov" "int iovcnt"
-.Ft int
 .Fn imsg_compose_ibuf "struct imsgbuf *imsgbuf" "uint32_t type" \
     "uint32_t id" "pid_t pid" "struct ibuf *buf"
 .Ft "struct ibuf *"
@@ -90,6 +84,10 @@
 .Fn imsg_flush "struct imsgbuf *imsgbuf"
 .Ft void
 .Fn imsg_clear "struct imsgbuf *imsgbuf"
+.In sys/uio.h
+.Ft int
+.Fn imsg_composev "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
+    "pid_t pid" "int fd" "const struct iovec *iov" "int iovcnt"
 .Sh DESCRIPTION
 The
 .Nm imsg
