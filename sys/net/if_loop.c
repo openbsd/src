@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.97 2023/07/21 22:24:41 bluhm Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.98 2023/12/29 11:43:04 bluhm Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -185,6 +185,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_output = looutput;
 	ifp->if_type = IFT_LOOP;
 	ifp->if_hdrlen = sizeof(u_int32_t);
+	if_counters_alloc(ifp);
 	if (unit == 0) {
 		if_attachhead(ifp);
 		if_addgroup(ifp, ifc->ifc_name);
@@ -250,7 +251,7 @@ loinput(struct ifnet *ifp, struct mbuf *m)
 
 	error = if_input_local(ifp, m, m->m_pkthdr.ph_family);
 	if (error)
-		ifp->if_ierrors++;
+		counters_inc(ifp->if_counters, ifc_ierrors);
 }
 
 int

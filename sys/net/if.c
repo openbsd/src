@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.713 2023/12/23 10:52:54 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.714 2023/12/29 11:43:04 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -839,11 +839,14 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	if (ISSET(keepcksum, M_ICMP_CSUM_OUT))
 		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_IN_OK;
 
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
-
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
+	if (ifp->if_counters == NULL) {
+		/* XXXSMP multicast loopback and simplex interfaces */
+		ifp->if_opackets++;
+		ifp->if_obytes += m->m_pkthdr.len;
+	} else {
+		counters_pkt(ifp->if_counters, ifc_opackets, ifc_obytes,
+		    m->m_pkthdr.len);
+	}
 
 	switch (af) {
 	case AF_INET:
