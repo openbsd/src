@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.2 2023/12/29 06:08:01 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.3 2023/12/29 06:59:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -217,68 +217,6 @@ EVP_Digest(const void *data, size_t count,
 	return ret;
 }
 
-int
-EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
-{
-	EVP_MD_CTX_init(out);
-	return EVP_MD_CTX_copy_ex(out, in);
-}
-
-int
-EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
-{
-	unsigned char *tmp_buf;
-
-	if ((in == NULL) || (in->digest == NULL)) {
-		EVPerror(EVP_R_INPUT_NOT_INITIALIZED);
-		return 0;
-	}
-
-	if (out->digest == in->digest) {
-		tmp_buf = out->md_data;
-		EVP_MD_CTX_set_flags(out, EVP_MD_CTX_FLAG_REUSE);
-	} else
-		tmp_buf = NULL;
-	EVP_MD_CTX_cleanup(out);
-	memcpy(out, in, sizeof *out);
-	out->md_data = NULL;
-	out->pctx = NULL;
-
-	/*
-	 * Because of the EVP_PKEY_CTX_dup() below, EVP_MD_CTX_cleanup() needs
-	 * to free out->pctx in all cases (even if this flag is set on in).
-	 */
-	EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
-
-	if (in->md_data && out->digest->ctx_size) {
-		if (tmp_buf) {
-			out->md_data = tmp_buf;
-		} else {
-			out->md_data = calloc(1, out->digest->ctx_size);
-			if (out->md_data == NULL) {
-				EVPerror(ERR_R_MALLOC_FAILURE);
-				return 0;
-			}
-		}
-		memcpy(out->md_data, in->md_data, out->digest->ctx_size);
-	}
-
-	out->update = in->update;
-
-	if (in->pctx) {
-		out->pctx = EVP_PKEY_CTX_dup(in->pctx);
-		if (!out->pctx) {
-			EVP_MD_CTX_cleanup(out);
-			return 0;
-		}
-	}
-
-	if (out->digest->copy)
-		return out->digest->copy(out, in);
-
-	return 1;
-}
-
 EVP_MD_CTX *
 EVP_MD_CTX_new(void)
 {
@@ -344,6 +282,69 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 
 	return 1;
 }
+
+int
+EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
+{
+	EVP_MD_CTX_init(out);
+	return EVP_MD_CTX_copy_ex(out, in);
+}
+
+int
+EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
+{
+	unsigned char *tmp_buf;
+
+	if ((in == NULL) || (in->digest == NULL)) {
+		EVPerror(EVP_R_INPUT_NOT_INITIALIZED);
+		return 0;
+	}
+
+	if (out->digest == in->digest) {
+		tmp_buf = out->md_data;
+		EVP_MD_CTX_set_flags(out, EVP_MD_CTX_FLAG_REUSE);
+	} else
+		tmp_buf = NULL;
+	EVP_MD_CTX_cleanup(out);
+	memcpy(out, in, sizeof *out);
+	out->md_data = NULL;
+	out->pctx = NULL;
+
+	/*
+	 * Because of the EVP_PKEY_CTX_dup() below, EVP_MD_CTX_cleanup() needs
+	 * to free out->pctx in all cases (even if this flag is set on in).
+	 */
+	EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+
+	if (in->md_data && out->digest->ctx_size) {
+		if (tmp_buf) {
+			out->md_data = tmp_buf;
+		} else {
+			out->md_data = calloc(1, out->digest->ctx_size);
+			if (out->md_data == NULL) {
+				EVPerror(ERR_R_MALLOC_FAILURE);
+				return 0;
+			}
+		}
+		memcpy(out->md_data, in->md_data, out->digest->ctx_size);
+	}
+
+	out->update = in->update;
+
+	if (in->pctx) {
+		out->pctx = EVP_PKEY_CTX_dup(in->pctx);
+		if (!out->pctx) {
+			EVP_MD_CTX_cleanup(out);
+			return 0;
+		}
+	}
+
+	if (out->digest->copy)
+		return out->digest->copy(out, in);
+
+	return 1;
+}
+
 
 int
 EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
