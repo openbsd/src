@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.45 2023/09/24 08:08:54 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.46 2023/12/29 18:45:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -264,8 +264,8 @@ eckey_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
 	if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
 		goto err;
-	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
+	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 	if (!eckey_from_params(ptype, pval, &eckey))
 		goto err;
 
