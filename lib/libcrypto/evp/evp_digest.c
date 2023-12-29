@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.3 2023/12/29 06:59:24 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.4 2023/12/29 07:02:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,18 +234,6 @@ EVP_MD_CTX_free(EVP_MD_CTX *ctx)
 	free(ctx);
 }
 
-void
-EVP_MD_CTX_init(EVP_MD_CTX *ctx)
-{
-	memset(ctx, 0, sizeof(*ctx));
-}
-
-int
-EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
-{
-	return EVP_MD_CTX_cleanup(ctx);
-}
-
 EVP_MD_CTX *
 EVP_MD_CTX_create(void)
 {
@@ -256,6 +244,18 @@ void
 EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 {
 	EVP_MD_CTX_free(ctx);
+}
+
+void
+EVP_MD_CTX_init(EVP_MD_CTX *ctx)
+{
+	memset(ctx, 0, sizeof(*ctx));
+}
+
+int
+EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
+{
+	return EVP_MD_CTX_cleanup(ctx);
 }
 
 /* This call frees resources associated with the context */
