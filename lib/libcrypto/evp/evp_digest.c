@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.6 2023/12/29 07:14:02 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.7 2023/12/29 07:22:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -430,12 +430,6 @@ EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 }
 
 int
-EVP_MD_block_size(const EVP_MD *md)
-{
-	return md->block_size;
-}
-
-int
 EVP_MD_type(const EVP_MD *md)
 {
 	return md->type;
@@ -462,6 +456,16 @@ EVP_MD_flags(const EVP_MD *md)
 {
 	return md->flags;
 }
+
+int
+EVP_MD_block_size(const EVP_MD *md)
+{
+	return md->block_size;
+}
+
+/*
+ * XXX - remove everything below in the next bump.
+ */
 
 EVP_MD *
 EVP_MD_meth_new(int md_type, int pkey_type)
