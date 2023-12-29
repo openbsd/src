@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.4 2023/12/29 07:02:28 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.5 2023/12/29 07:09:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -345,7 +345,6 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	return 1;
 }
 
-
 int
 EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
 {
@@ -367,6 +366,67 @@ EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
 		return 0;
 	}
 	return ret;
+}
+
+const EVP_MD *
+EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
+{
+	if (!ctx)
+		return NULL;
+	return ctx->digest;
+}
+
+void *
+EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
+{
+	return ctx->md_data;
+}
+
+EVP_PKEY_CTX *
+EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
+{
+	return ctx->pctx;
+}
+
+void
+EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
+{
+	if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX)) {
+		EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+	} else {
+		EVP_PKEY_CTX_free(ctx->pctx);
+	}
+
+	ctx->pctx = pctx;
+
+	if (pctx != NULL) {
+		/*
+		 * For unclear reasons it was decided that the caller keeps
+		 * ownership of pctx. So a flag was invented to make sure we
+		 * don't free it in EVP_MD_CTX_cleanup(). We also need to
+		 * unset it in EVP_MD_CTX_copy_ex(). Fortunately, the flag
+		 * isn't public...
+		 */
+		EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+	}
+}
+
+void
+EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
+{
+	ctx->flags |= flags;
+}
+
+void
+EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
+{
+	ctx->flags &= ~flags;
+}
+
+int
+EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
+{
+	return (ctx->flags & flags);
 }
 
 int
@@ -509,65 +569,4 @@ EVP_MD_meth_set_ctrl(EVP_MD *md,
 {
 	md->md_ctrl = ctrl;
 	return 1;
-}
-
-const EVP_MD *
-EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
-{
-	if (!ctx)
-		return NULL;
-	return ctx->digest;
-}
-
-void *
-EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
-{
-	return ctx->md_data;
-}
-
-EVP_PKEY_CTX *
-EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
-{
-	return ctx->pctx;
-}
-
-void
-EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
-{
-	if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX)) {
-		EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
-	} else {
-		EVP_PKEY_CTX_free(ctx->pctx);
-	}
-
-	ctx->pctx = pctx;
-
-	if (pctx != NULL) {
-		/*
-		 * For unclear reasons it was decided that the caller keeps
-		 * ownership of pctx. So a flag was invented to make sure we
-		 * don't free it in EVP_MD_CTX_cleanup(). We also need to
-		 * unset it in EVP_MD_CTX_copy_ex(). Fortunately, the flag
-		 * isn't public...
-		 */
-		EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
-	}
-}
-
-void
-EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
-{
-	ctx->flags |= flags;
-}
-
-void
-EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
-{
-	ctx->flags &= ~flags;
-}
-
-int
-EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
-{
-	return (ctx->flags & flags);
 }
