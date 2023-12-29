@@ -1556,9 +1556,6 @@ struct drm_device *
 drm_get_device_from_kdev(dev_t kdev)
 {
 	int unit = minor(kdev) & ((1 << CLONE_SHIFT) - 1);
-	/* control */
-	if (unit >= 64 && unit < 128)
-		unit -= 64;
 	/* render */
 	if (unit >= 128)
 		unit -= 128;
@@ -1701,12 +1698,18 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	realminor =  dminor & ((1 << CLONE_SHIFT) - 1);
 	if (realminor < 64)
 		minor_type = DRM_MINOR_PRIMARY;
-	else if (realminor >= 64 && realminor < 128)
-		minor_type = DRM_MINOR_CONTROL;
-	else
+	else if (realminor >= 128 && realminor < 192)
 		minor_type = DRM_MINOR_RENDER;
+	else {
+		ret = ENXIO;
+		goto err;
+	}
 
 	dm = *drm_minor_get_slot(dev, minor_type);
+	if (dm == NULL) {
+		ret = ENXIO;
+		goto err;
+	}
 	dm->index = minor(kdev);
 
 	file_priv = drm_file_alloc(dm);
