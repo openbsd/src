@@ -354,6 +354,8 @@
 ./usr/include/dev/ic/qlavar.h
 ./usr/include/dev/ic/qlwreg.h
 ./usr/include/dev/ic/qlwvar.h
+./usr/include/dev/ic/qwxreg.h
+./usr/include/dev/ic/qwxvar.h
 ./usr/include/dev/ic/r92creg.h
 ./usr/include/dev/ic/ramdac.h
 ./usr/include/dev/ic/revar.h
