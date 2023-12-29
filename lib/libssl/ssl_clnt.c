@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.162 2023/11/19 15:50:29 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.163 2023/12/29 12:24:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -631,11 +631,6 @@ ssl3_connect(SSL *s)
 
 		/* did we do anything */
 		if (!s->s3->hs.tls12.reuse_message && !skip) {
-			if (s->debug) {
-				if ((ret = BIO_flush(s->wbio)) <= 0)
-					goto end;
-			}
-
 			if (s->s3->hs.state != state) {
 				new_state = s->s3->hs.state;
 				s->s3->hs.state = state;

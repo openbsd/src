@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.317 2023/11/29 13:39:34 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.318 2023/12/29 12:24:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2933,8 +2933,6 @@ SSL_dup(SSL *s)
 
 	SSL_set_info_callback(ret, SSL_get_info_callback(s));
 
-	ret->debug = s->debug;
-
 	/* copy app data, a little dangerous perhaps */
 	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL,
 	    &ret->ex_data, &s->ex_data))
@@ -3488,7 +3486,7 @@ LSSL_ALIAS(SSL_set_msg_callback);
 void
 SSL_set_debug(SSL *s, int debug)
 {
-	s->debug = debug;
+	SSLerror(s, ERR_R_DISABLED);
 }
 LSSL_ALIAS(SSL_set_debug);
 

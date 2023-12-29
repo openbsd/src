@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.11 2023/11/29 13:39:34 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.12 2023/12/29 12:24:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1074,9 +1074,6 @@ struct ssl_st {
 	/* for server side, keep the list of CA_dn we can use */
 	STACK_OF(X509_NAME) *client_CA;
 
-	/* set this flag to 1 and a sleep(1) is put into all SSL_read()
-	 * and SSL_write() calls, good for nbio debugging :-) */
-	int debug;
 	long max_cert_list;
 	int first_packet;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.157 2023/11/18 10:51:09 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.158 2023/12/29 12:24:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -740,12 +740,6 @@ ssl3_accept(SSL *s)
 		}
 
 		if (!s->s3->hs.tls12.reuse_message && !skip) {
-			if (s->debug) {
-				if ((ret = BIO_flush(s->wbio)) <= 0)
-					goto end;
-			}
-
-
 			if (s->s3->hs.state != state) {
 				new_state = s->s3->hs.state;
 				s->s3->hs.state = state;
