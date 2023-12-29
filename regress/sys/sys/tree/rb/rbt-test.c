@@ -1,4 +1,3 @@
-/*	$OpenBSD: rb-test.c,v 1.5 2023/12/29 02:37:39 aisha Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -59,13 +58,13 @@ struct timespec start, end, diff, rstart, rend, rdiff, rtot = {0, 0};
 	} while (0)
 #endif
 
-//#define RB_SMALL
-//#define RB_TEST_RANK
-//#define RB_TEST_DIAGNOSTIC
-//#define _RB_DIAGNOSTIC
+//#define RBT_SMALL
+//#define RBT_TEST_RANK
+//#define RBT_TEST_DIAGNOSTIC
+//#define _RBT_DIAGNOSTIC
 
 #ifdef DOAUGMENT
-#define RB_AUGMENT(elm) tree_augment(elm)
+#define RBT_AUGMENT(elm) tree_augment(elm)
 #endif
 
 #include <sys/tree.h>
@@ -98,7 +97,7 @@ static int tree_augment(struct node *);
 #define tree_augment(x) (0)
 #endif
 
-#ifdef RB_TEST_DIAGNOSTIC
+#ifdef RBT_TEST_DIAGNOSTIC
 static void print_helper(const struct node *, int);
 static void print_tree(const struct tree *);
 #else
@@ -108,24 +107,24 @@ static void print_tree(const struct tree *);
 
 /* definitions */
 struct node {
-	RB_ENTRY(node)   node_link;
+	RBT_ENTRY(node)   node_link;
 	int		 key;
 	size_t		 height;
 	size_t		 size;
 };
 
-RB_HEAD(tree, node);
-struct tree root = RB_INITIALIZER(&root);
+RBT_HEAD(tree, node);
+struct tree root = RBT_INITIALIZER(&root);
 
-RB_PROTOTYPE(tree, node, node_link, compare)
+RBT_PROTOTYPE(tree, node, node_link, compare)
 
-RB_GENERATE(tree, node, node_link, compare)
+RBT_GENERATE(tree, node, node_link, compare);
 
-#ifndef RB_RANK
-#define RB_RANK(x, y)   0
+#ifndef RBT_RANK
+#define RBT_RANK(x, y)   0
 #endif
-#ifndef _RB_GET_RDIFF
-#define _RB_GET_RDIFF(x, y, z) 0
+#ifndef _RBT_GET_RDIFF
+#define _RBT_GET_RDIFF(x, y, z) 0
 #endif
 
 int
@@ -186,7 +185,7 @@ main(int argc, char **argv)
 	TDEBUGF("done generating a 'random' permutation in: %llu.%09llu s",
 	    (unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-	RB_INIT(&root);
+	RBT_INIT(tree, &root);
 
 	// testing random inserts
 	// due to codependency between inserts and removals, this also tests
@@ -203,13 +202,13 @@ main(int argc, char **argv)
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
 #ifdef DOAUGMENT
-		ins = RB_ROOT(&root);
+		ins = RBT_ROOT(tree, &root);
 		assert(ITER + 1 == ins->size);
 #endif
 
 		TDEBUGF("getting min");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-		ins = RB_MIN(tree, &root);
+		ins = RBT_MIN(tree, &root);
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
 		TDEBUGF("done getting min in: %lld.%09llu s",
@@ -218,38 +217,38 @@ main(int argc, char **argv)
 
 		TDEBUGF("getting max");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-		ins = RB_MAX(tree, &root);
+		ins = RBT_MAX(tree, &root);
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
 		TDEBUGF("done getting max in: %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 		assert(ITER + 5 == ins->key);
 
-		ins = RB_ROOT(&root);
+		ins = RBT_ROOT(tree, &root);
 		TDEBUGF("getting root");
-		assert(RB_REMOVE(tree, &root, ins) == ins);
+		assert(RBT_REMOVE(tree, &root, ins) == ins);
 
 #ifdef DOAUGMENT
-		assert(ITER == (RB_ROOT(&root))->size);
+		assert(ITER == (RBT_ROOT(tree, &root))->size);
 #endif
 
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < ITER; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			assert(NULL != tmp);
-			assert(RB_REMOVE(tree, &root, tmp) == tmp);
-#ifdef RB_TEST_RANK
+			assert(RBT_REMOVE(tree, &root, tmp) == tmp);
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				assert(-2 != rank);
 				print_tree(&root);
 			}
 #endif
 
 #ifdef DOAUGMENT
-			if (!(RB_EMPTY(&root)) && (RB_ROOT(&root))->size != ITER - 1 - i)
-				errx(1, "RB_REMOVE size error");
+			if (!(RBT_EMPTY(&root)) && (RBT_ROOT(tree, &root))->size != ITER - 1 - i)
+				errx(1, "RBT_REMOVE size error");
 #endif
 
 		}
@@ -275,12 +274,12 @@ main(int argc, char **argv)
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < ITER + 1; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			assert(NULL != tmp);
-			assert(RB_REMOVE(tree, &root, tmp) == tmp);
-#ifdef RB_TEST_RANK
+			assert(RBT_REMOVE(tree, &root, tmp) == tmp);
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -292,7 +291,7 @@ main(int argc, char **argv)
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 	}
 
-	// testing the RB_FIND function and using it to do removals in
+	// testing the RBT_FIND function and using it to do removals in
 	// sequential order
 	// insertions are done using sequential insertions (separate test)
 	if (test_target == NULL ||
@@ -311,12 +310,12 @@ main(int argc, char **argv)
 		tmp = malloc(sizeof(struct node));
 		for(i = 0; i < ITER; i++) {
 			tmp->key = i;
-			ins = RB_FIND(tree, &root, tmp);
+			ins = RBT_FIND(tree, &root, tmp);
 			assert(NULL != tmp);
-			assert(RB_REMOVE(tree, &root, ins) == ins);
-#ifdef RB_TEST_RANK
+			assert(RBT_REMOVE(tree, &root, ins) == ins);
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -328,15 +327,15 @@ main(int argc, char **argv)
 		TDEBUGF("done removals in: %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-		ins = RB_ROOT(&root);
+		ins = RBT_ROOT(tree, &root);
 		if (ins == NULL)
-			errx(1, "RB_ROOT error");
-		if (RB_REMOVE(tree, &root, ins) != ins)
-			errx(1, "RB_REMOVE failed");
+			errx(1, "RBT_ROOT error");
+		if (RBT_REMOVE(tree, &root, ins) != ins)
+			errx(1, "RBT_REMOVE failed");
 	}
 
 	// testing removals in random order
-	// the elements are found using RB_FIND
+	// the elements are found using RBT_FIND
 	// insertions are done using sequential insertions (separate test)
 	if (test_target == NULL ||
 	    strcmp(test_target, "random-removes") == 0
@@ -355,15 +354,15 @@ main(int argc, char **argv)
 		tmp = malloc(sizeof(struct node));
 		for(i = 0; i < ITER; i++) {
 			tmp->key = perm[i];
-			ins = RB_FIND(tree, &root, tmp);
+			ins = RBT_FIND(tree, &root, tmp);
 			if (ins == NULL) {
-				errx(1, "RB_FIND %d failed: %d", i, perm[i]);
+				errx(1, "RBT_FIND %d failed: %d", i, perm[i]);
 			}
-			if (RB_REMOVE(tree, &root, ins) == NULL)
-				errx(1, "RB_REMOVE failed: %d", i);
-#ifdef RB_TEST_RANK
+			if (RBT_REMOVE(tree, &root, ins) == NULL)
+				errx(1, "RBT_REMOVE failed: %d", i);
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -375,15 +374,15 @@ main(int argc, char **argv)
 		TDEBUGF("done removals in: %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-		ins = RB_ROOT(&root);
+		ins = RBT_ROOT(tree, &root);
 		if (ins == NULL)
-			errx(1, "RB_ROOT error");
-		if (RB_REMOVE(tree, &root, ins) != ins)
-			errx(1, "RB_REMOVE failed");
+			errx(1, "RBT_ROOT error");
+		if (RBT_REMOVE(tree, &root, ins) != ins)
+			errx(1, "RBT_REMOVE failed");
 	}
 
 	// testing removals by finding the next largest element
-	// this is testing the RB_NFIND macro
+	// this is testing the RBT_NFIND macro
 	// insertions are done using sequential insertions (separate test)
 	if (test_target == NULL ||
 	    strcmp(test_target, "remove-nfind") == 0
@@ -401,14 +400,14 @@ main(int argc, char **argv)
 		tmp = malloc(sizeof(struct node));
 		for(i = 0; i < ITER + 1; i++) {
 			tmp->key = i;
-			ins = RB_NFIND(tree, &root, tmp);
+			ins = RBT_NFIND(tree, &root, tmp);
 			if (ins == NULL)
-				errx(1, "RB_NFIND failed");
-			if (RB_REMOVE(tree, &root, ins) == NULL)
-				errx(1, "RB_REMOVE failed: %d", i);
-#ifdef RB_TEST_RANK
+				errx(1, "RBT_NFIND failed");
+			if (RBT_REMOVE(tree, &root, ins) == NULL)
+				errx(1, "RBT_REMOVE failed: %d", i);
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -421,9 +420,9 @@ main(int argc, char **argv)
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 	}
 
-#ifdef RB_PFIND
+#ifdef RBT_PFIND
 	// testing removals by finding the previous element
-	// this is testing the RB_PFIND macro
+	// this is testing the RBT_PFIND macro
 	// insertions are done using sequential insertions (separate test)
 	if (test_target == NULL ||
 	    strcmp(test_target, "remove-pfind") == 0
@@ -441,14 +440,14 @@ main(int argc, char **argv)
 		tmp = malloc(sizeof(struct node));
 		for(i = 0; i < ITER + 1; i++) {
 			tmp->key = ITER + 6;
-			ins = RB_PFIND(tree, &root, tmp);
+			ins = RBT_PFIND(tree, &root, tmp);
 			if (ins == NULL)
-				errx(1, "RB_PFIND failed");
-			if (RB_REMOVE(tree, &root, ins) == NULL)
-				errx(1, "RB_REMOVE failed: %d", i);
-#ifdef RB_TEST_RANK
+				errx(1, "RBT_PFIND failed");
+			if (RBT_REMOVE(tree, &root, ins) == NULL)
+				errx(1, "RBT_REMOVE failed: %d", i);
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -462,7 +461,7 @@ main(int argc, char **argv)
 	}
 #endif
 
-	// iterate over the tree using RB_NEXT/RB_PREV
+	// iterate over the tree using RBT_NEXT/RBT_PREV
 	// insertions and removals have separate tests
 	if (test_target == NULL ||
 	    strcmp(test_target, "node-iterations") == 0
@@ -475,13 +474,13 @@ main(int argc, char **argv)
 		TDEBUGF("done sequential insertions in: %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-		TDEBUGF("iterating over tree with RB_NEXT");
+		TDEBUGF("iterating over tree with RBT_NEXT");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-		tmp = RB_MIN(tree, &root);
+		tmp = RBT_MIN(tree, &root);
 		assert(tmp != NULL);
 		assert(tmp->key == 0);
 		for(i = 1; i < ITER; i++) {
-			tmp = RB_NEXT(tree, &root, tmp);
+			tmp = RBT_NEXT(tree, tmp);
 			assert(tmp != NULL);
 			assert(tmp->key == i);
 		}
@@ -490,13 +489,13 @@ main(int argc, char **argv)
 		TDEBUGF("done iterations in %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-		TDEBUGF("iterating over tree with RB_PREV");
+		TDEBUGF("iterating over tree with RBT_PREV");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-		tmp = RB_MAX(tree, &root);
+		tmp = RBT_MAX(tree, &root);
 		assert(tmp != NULL);
 		assert(tmp->key == ITER + 5);
 		for(i = 0; i < ITER; i++) {
-			tmp = RB_PREV(tree, &root, tmp);
+			tmp = RBT_PREV(tree, tmp);
 			assert(tmp != NULL);
 			assert(tmp->key == ITER - 1 - i);
 		}
@@ -508,12 +507,12 @@ main(int argc, char **argv)
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < ITER + 1; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			assert(NULL != tmp);
-			assert(RB_REMOVE(tree, &root, tmp) == tmp);
-#ifdef RB_TEST_RANK
+			assert(RBT_REMOVE(tree, &root, tmp) == tmp);
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -525,7 +524,7 @@ main(int argc, char **argv)
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 	}
 
-	// iterate over the tree using RB_FOREACH* macros
+	// iterate over the tree using RBT_FOREACH* macros
 	// the *_SAFE macros are tested by using them to clear the tree
 	// insertions and removals have separate tests
 	if (test_target == NULL ||
@@ -539,11 +538,11 @@ main(int argc, char **argv)
 		TDEBUGF("done sequential insertions in: %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-#ifdef RB_FOREACH
-		TDEBUGF("iterating over tree with RB_FOREACH");
+#ifdef RBT_FOREACH
+		TDEBUGF("iterating over tree with RBT_FOREACH");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		i = 0;
-		RB_FOREACH(ins, tree, &root) {
+		RBT_FOREACH(ins, tree, &root) {
 			if (i < ITER)
 				assert(ins->key == i);
 			else
@@ -556,11 +555,11 @@ main(int argc, char **argv)
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 #endif
 
-#ifdef RB_FOREACH_REVERSE
-		TDEBUGF("iterating over tree with RB_FOREACH_REVERSE");
+#ifdef RBT_FOREACH_REVERSE
+		TDEBUGF("iterating over tree with RBT_FOREACH_REVERSE");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		i = ITER + 5;
-		RB_FOREACH_REVERSE(ins, tree, &root) {
+		RBT_FOREACH_REVERSE(ins, tree, &root) {
 			assert(ins->key == i);
 			if (i > ITER)
 				i = ITER - 1;
@@ -576,12 +575,12 @@ main(int argc, char **argv)
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < ITER + 1; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			assert(NULL != tmp);
-			assert(RB_REMOVE(tree, &root, tmp) == tmp);
-#ifdef RB_TEST_RANK
+			assert(RBT_REMOVE(tree, &root, tmp) == tmp);
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -592,7 +591,7 @@ main(int argc, char **argv)
 		TDEBUGF("done root removals in: %llu.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-#ifdef RB_FOREACH_SAFE
+#ifdef RBT_FOREACH_SAFE
 		TDEBUGF("starting sequential insertions");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		mix_operations(nums, ITER, nodes, ITER, ITER, 0, 0);
@@ -601,16 +600,16 @@ main(int argc, char **argv)
 		TDEBUGF("done sequential insertions in: %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-		TDEBUGF("iterating over tree and clearing with RB_FOREACH_SAFE");
+		TDEBUGF("iterating over tree and clearing with RBT_FOREACH_SAFE");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		i = 0;
-		RB_FOREACH_SAFE(ins, tree, &root, tmp) {
+		RBT_FOREACH_SAFE(ins, tree, &root, tmp) {
 			if (i < ITER)
 				assert(ins->key == i);
 			else
 				assert(ins->key == ITER + 5);
 			i++;
-			assert(RB_REMOVE(tree, &root, ins) == ins);
+			assert(RBT_REMOVE(tree, &root, ins) == ins);
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -618,7 +617,7 @@ main(int argc, char **argv)
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 #endif
 
-#ifdef RB_FOREACH_REVERSE_SAFE
+#ifdef RBT_FOREACH_REVERSE_SAFE
 		TDEBUGF("starting sequential insertions");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		mix_operations(nums, ITER, nodes, ITER, ITER, 0, 0);
@@ -627,16 +626,16 @@ main(int argc, char **argv)
 		TDEBUGF("done sequential insertions in: %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-		TDEBUGF("iterating over tree and clearing with RB_FOREACH_REVERSE_SAFE");
+		TDEBUGF("iterating over tree and clearing with RBT_FOREACH_REVERSE_SAFE");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		i = ITER + 5;
-		RB_FOREACH_REVERSE_SAFE(ins, tree, &root, tmp) {
+		RBT_FOREACH_REVERSE_SAFE(ins, tree, &root, tmp) {
 			assert(ins->key == i);
 			if (i > ITER)
 				i = ITER - 1;
 			else
 				i--;
-			assert(RB_REMOVE(tree, &root, ins) == ins);
+			assert(RBT_REMOVE(tree, &root, ins) == ins);
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -645,7 +644,7 @@ main(int argc, char **argv)
 #endif
 	}
 
-#ifdef RB_INSERT_NEXT
+#ifdef RBT_INSERT_NEXT
 	// testing insertions at specific points in the tree
 	// the insertions are done at the next position in the tree at a give node
 	// this assumes that the location is correct for the given ordering
@@ -658,20 +657,20 @@ main(int argc, char **argv)
 		tmp->size = 1;
 		tmp->height = 1;
 		tmp->key = 0;
-		if (RB_INSERT(tree, &root, tmp) != NULL)
-			errx(1, "RB_INSERT failed");
+		if (RBT_INSERT(tree, &root, tmp) != NULL)
+			errx(1, "RBT_INSERT failed");
 		ins = tmp;
 		for(i = 1; i < ITER; i++) {
 			tmp = &(nodes[i]);
 			tmp->size = 1;
 			tmp->height = 1;
 			tmp->key = i;
-			if (RB_INSERT_NEXT(tree, &root, ins, tmp) != NULL)
-				errx(1, "RB_INSERT failed");
+			if (RBT_INSERT_NEXT(tree, &root, ins, tmp) != NULL)
+				errx(1, "RBT_INSERT failed");
 			ins = tmp;
-#ifdef RB_TEST_RANK
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -682,10 +681,10 @@ main(int argc, char **argv)
 		TDEBUGF("done insertions in %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-		TDEBUGF("iterating over tree and clearing with RB_FOREACH_REVERSE_SAFE");
+		TDEBUGF("iterating over tree and clearing with RBT_FOREACH_REVERSE_SAFE");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-		RB_FOREACH_REVERSE_SAFE(ins, tree, &root, tmp) {
-			assert(RB_REMOVE(tree, &root, ins) == ins);
+		RBT_FOREACH_REVERSE_SAFE(ins, tree, &root, tmp) {
+			assert(RBT_REMOVE(tree, &root, ins) == ins);
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -694,7 +693,7 @@ main(int argc, char **argv)
 	}
 #endif
 
-#ifdef RB_INSERT_PREV
+#ifdef RBT_INSERT_PREV
 	// testing insertions at specific points in the tree
 	// the insertions are done at the next position in the tree at a give node
 	// this assumes that the location is correct for the given ordering
@@ -707,20 +706,20 @@ main(int argc, char **argv)
 		tmp->size = 1;
 		tmp->height = 1;
 		tmp->key = ITER;
-		if (RB_INSERT(tree, &root, tmp) != NULL)
-			errx(1, "RB_INSERT failed");
+		if (RBT_INSERT(tree, &root, tmp) != NULL)
+			errx(1, "RBT_INSERT failed");
 		ins = tmp;
 		for(i = ITER - 1; i >= 0; i--) {
 			tmp = &(nodes[i]);
 			tmp->size = 1;
 			tmp->height = 1;
 			tmp->key = i;
-			if (RB_INSERT_PREV(tree, &root, ins, tmp) != NULL)
-				errx(1, "RB_INSERT failed");
+			if (RBT_INSERT_PREV(tree, &root, ins, tmp) != NULL)
+				errx(1, "RBT_INSERT failed");
 			ins = tmp;
-#ifdef RB_TEST_RANK
+#ifdef RBT_TEST_RANK
 			if (i % RANK_TEST_ITERATIONS == 0) {
-				rank = RB_RANK(tree, RB_ROOT(&root));
+				rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 				if (rank == -2)
 					errx(1, "rank error");
 			}
@@ -731,10 +730,10 @@ main(int argc, char **argv)
 		TDEBUGF("done insertions in %lld.%09llu s",
 		(unsigned long long)diff.tv_sec, (unsigned long long)diff.tv_nsec);
 
-		TDEBUGF("iterating over tree and clearing with RB_FOREACH_REVERSE_SAFE");
+		TDEBUGF("iterating over tree and clearing with RBT_FOREACH_REVERSE_SAFE");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
-		RB_FOREACH_REVERSE_SAFE(ins, tree, &root, tmp) {
-			assert(RB_REMOVE(tree, &root, ins) == ins);
+		RBT_FOREACH_REVERSE_SAFE(ins, tree, &root, tmp) {
+			assert(RBT_REMOVE(tree, &root, ins) == ins);
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -757,11 +756,11 @@ main(int argc, char **argv)
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < ITER / 2 + 1; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			if (tmp == NULL)
-				errx(1, "RB_ROOT error");
-			if (RB_REMOVE(tree, &root, tmp) != tmp)
-				errx(1, "RB_REMOVE error");
+				errx(1, "RBT_ROOT error");
+			if (RBT_REMOVE(tree, &root, tmp) != tmp)
+				errx(1, "RBT_REMOVE error");
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -779,11 +778,11 @@ main(int argc, char **argv)
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < ITER / 5 + 1; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			if (tmp == NULL)
-				errx(1, "RB_ROOT error");
-			if (RB_REMOVE(tree, &root, tmp) != tmp)
-				errx(1, "RB_REMOVE error");
+				errx(1, "RBT_ROOT error");
+			if (RBT_REMOVE(tree, &root, tmp) != tmp)
+				errx(1, "RBT_REMOVE error");
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -801,11 +800,11 @@ main(int argc, char **argv)
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < ITER / 10 + 1; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			if (tmp == NULL)
-				errx(1, "RB_ROOT error");
-			if (RB_REMOVE(tree, &root, tmp) != tmp)
-				errx(1, "RB_REMOVE error");
+				errx(1, "RBT_ROOT error");
+			if (RBT_REMOVE(tree, &root, tmp) != tmp)
+				errx(1, "RBT_REMOVE error");
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -825,11 +824,11 @@ main(int argc, char **argv)
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < 5 * (ITER / 100) + 1; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			if (tmp == NULL)
-				errx(1, "RB_ROOT error");
-			if (RB_REMOVE(tree, &root, tmp) != tmp)
-				errx(1, "RB_REMOVE error");
+				errx(1, "RBT_ROOT error");
+			if (RBT_REMOVE(tree, &root, tmp) != tmp)
+				errx(1, "RBT_REMOVE error");
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -849,11 +848,11 @@ main(int argc, char **argv)
 		TDEBUGF("doing root removals");
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start);
 		for (i = 0; i < 2 * (ITER / 100) + 1; i++) {
-			tmp = RB_ROOT(&root);
+			tmp = RBT_ROOT(tree, &root);
 			if (tmp == NULL)
-				errx(1, "RB_ROOT error");
-			if (RB_REMOVE(tree, &root, tmp) != tmp)
-				errx(1, "RB_REMOVE error");
+				errx(1, "RBT_ROOT error");
+			if (RBT_REMOVE(tree, &root, tmp) != tmp)
+				errx(1, "RBT_REMOVE error");
 		}
 		clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end);
 		timespecsub(&end, &start, &diff);
@@ -875,24 +874,24 @@ compare(const struct node *a, const struct node *b)
 	return a->key - b->key;
 }
 
-#ifdef RB_TEST_DIAGNOSTIC
+#ifdef RBT_TEST_DIAGNOSTIC
 static void
 print_helper(const struct node *n, int indent)
 {
-	if (RB_RIGHT(n, node_link))
-  		print_helper(RB_RIGHT(n, node_link), indent + 4);
+	if (RBT_RIGHT(n, node_link))
+  		print_helper(RBT_RIGHT(n, node_link), indent + 4);
 	TDEBUGF("%*s key=%d :: size=%zu :: rank=%d :: rdiff %lu:%lu",
-	    indent, "", n->key, n->size, RB_RANK(tree, n),
-	    _RB_GET_RDIFF(n, _RB_LDIR, node_link),
-	    _RB_GET_RDIFF(n, _RB_RDIR, node_link));
-	if (RB_LEFT(n, node_link))
-  		print_helper(RB_LEFT(n, node_link), indent + 4);
+	    indent, "", n->key, n->size, RBT_RANK(tree, n),
+	    _RBT_GET_RDIFF(n, _RBT_LDIR, node_link),
+	    _RBT_GET_RDIFF(n, _RBT_RDIR, node_link));
+	if (RBT_LEFT(n, node_link))
+  		print_helper(RBT_LEFT(n, node_link), indent + 4);
 }
 
 static void
 print_tree(const struct tree *t)
 {
-	if (RB_ROOT(t)) print_helper(RB_ROOT(t), 0);
+	if (RBT_ROOT(tree, t)) print_helper(RBT_ROOT(tree, t), 0);
 }
 #endif
 
@@ -901,13 +900,13 @@ static int
 tree_augment(struct node *elm)
 {
 	size_t newsize = 1, newheight = 0;
-	if ((RB_LEFT(elm, node_link))) {
-		newsize += (RB_LEFT(elm, node_link))->size;
-		newheight = MAX((RB_LEFT(elm, node_link))->height, newheight);
+	if ((RBT_LEFT(elm, node_link))) {
+		newsize += (RBT_LEFT(elm, node_link))->size;
+		newheight = MAX((RBT_LEFT(elm, node_link))->height, newheight);
 	}
-	if ((RB_RIGHT(elm, node_link))) {
-		newsize += (RB_RIGHT(elm, node_link))->size;
-		newheight = MAX((RB_RIGHT(elm, node_link))->height, newheight);
+	if ((RBT_RIGHT(elm, node_link))) {
+		newsize += (RBT_RIGHT(elm, node_link))->size;
+		newheight = MAX((RBT_RIGHT(elm, node_link))->height, newheight);
 	}
 	newheight += 1;
 	if (elm->size != newsize || elm->height != newheight) {
@@ -938,17 +937,17 @@ mix_operations(int *perm, int psize, struct node *nodes, int nsize,
 		tmp->height = 1;
 		tmp->key = perm[i];
 		//TDEBUGF("inserting %d", tmp->key);
-		if (RB_INSERT(tree, &root, tmp) != NULL)
-			errx(1, "RB_INSERT failed");
+		if (RBT_INSERT(tree, &root, tmp) != NULL)
+			errx(1, "RBT_INSERT failed");
                 print_tree(&root);
 #ifdef DOAUGMENT
-                //TDEBUGF("size = %zu", RB_ROOT(&root)->size);
-                assert(RB_ROOT(&root)->size == i + 1);
+                //TDEBUGF("size = %zu", RBT_ROOT(tree, &root)->size);
+                assert(RBT_ROOT(tree, &root)->size == i + 1);
 #endif
 
-#ifdef RB_TEST_RANK
+#ifdef RBT_TEST_RANK
 		if (i % RANK_TEST_ITERATIONS == 0) {
-			rank = RB_RANK(tree, RB_ROOT(&root));
+			rank = RBT_RANK(tree, RBT_ROOT(tree, &root));
 			if (rank == -2)
 				errx(1, "rank error");
 		}
@@ -958,19 +957,19 @@ mix_operations(int *perm, int psize, struct node *nodes, int nsize,
 	tmp->key = ITER + 5;
 	tmp->size = 1;
 	tmp->height = 1;
-	RB_INSERT(tree, &root, tmp);
+	RBT_INSERT(tree, &root, tmp);
 	if (do_reads) {
 		for (i = 0; i < insertions; i++) {
 			it.key = perm[i];
-			ins = RB_FIND(tree, &root, &it);
+			ins = RBT_FIND(tree, &root, &it);
 			if ((ins == NULL) || ins->key != it.key)
-				errx(1, "RB_FIND failed");
+				errx(1, "RBT_FIND failed");
 		}
 		for (i = insertions; i < insertions + reads; i++) {
 			it.key = perm[i];
-			ins = RB_NFIND(tree, &root, &it);
+			ins = RBT_NFIND(tree, &root, &it);
 			if (ins->key < it.key)
-				errx(1, "RB_NFIND failed");
+				errx(1, "RBT_NFIND failed");
 		}
 	}
 }
