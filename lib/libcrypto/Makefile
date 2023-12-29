@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.159 2023/12/20 13:52:17 tb Exp $
+# $OpenBSD: Makefile,v 1.160 2023/12/29 05:57:24 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -350,7 +350,6 @@ SRCS+= bio_enc.c
 SRCS+= bio_md.c
 SRCS+= c_all.c
 SRCS+= cipher_method_lib.c
-SRCS+= digest.c
 SRCS+= e_aes.c
 SRCS+= e_aes_cbc_hmac_sha1.c
 SRCS+= e_bf.c
@@ -368,9 +367,10 @@ SRCS+= e_rc4.c
 SRCS+= e_rc4_hmac_md5.c
 SRCS+= e_sm4.c
 SRCS+= e_xcbc_d.c
-SRCS+= encode.c
 SRCS+= evp_aead.c
-SRCS+= evp_enc.c
+SRCS+= evp_cipher.c
+SRCS+= evp_digest.c
+SRCS+= evp_encode.c
 SRCS+= evp_err.c
 SRCS+= evp_key.c
 SRCS+= evp_lib.c

@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.41 2023/12/24 22:17:05 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.1 2023/12/29 05:57:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

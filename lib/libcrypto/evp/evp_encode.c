@@ -1,4 +1,4 @@
-/* $OpenBSD: encode.c,v 1.32 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: evp_encode.c,v 1.1 2023/12/29 05:57:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
