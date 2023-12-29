@@ -1,4 +1,4 @@
-/* $OpenBSD: ibuf_test.c,v 1.4 2023/06/19 17:22:46 claudio Exp $ */
+/* $OpenBSD: ibuf_test.c,v 1.5 2023/12/29 16:02:29 claudio Exp $ */
 /*
  * Copyright (c) Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/queue.h>
 #include <sys/types.h>
-#include <sys/uio.h>
 
 #include <imsg.h>
 #include <limits.h>
