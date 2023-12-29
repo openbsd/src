@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DSA_generate_parameters.3,v 1.13 2023/05/14 09:27:15 tb Exp $
+.\"	$OpenBSD: DSA_generate_parameters.3,v 1.14 2023/12/29 19:12:47 tb Exp $
 .\"	OpenSSL 9b86974e Aug 7 22:14:47 2015 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>,
@@ -49,12 +49,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 14 2023 $
-.Dt DSA_GENERATE_PARAMETERS 3
+.Dd $Mdocdate: December 29 2023 $
+.Dt DSA_GENERATE_PARAMETERS_EX 3
 .Os
 .Sh NAME
-.Nm DSA_generate_parameters_ex ,
-.Nm DSA_generate_parameters
+.\" .Nm DSA_generate_parameters is intentionally undocumented
+.\" because it will be removed in the next major bump
+.Nm DSA_generate_parameters_ex
 .Nd generate DSA parameters
 .Sh SYNOPSIS
 .In openssl/dsa.h
@@ -67,19 +68,6 @@
 .Fa "int *counter_ret"
 .Fa "unsigned long *h_ret"
 .Fa "BN_GENCB *cb"
-.Fc
-.Pp
-Deprecated:
-.Pp
-.Ft DSA *
-.Fo DSA_generate_parameters
-.Fa "int bits"
-.Fa "unsigned char *seed"
-.Fa "int seed_len"
-.Fa "int *counter_ret"
-.Fa "unsigned long *h_ret"
-.Fa "void (*callback)(int, int, void *)"
-.Fa "void *cb_arg"
 .Fc
 .Sh DESCRIPTION
 .Fn DSA_generate_parameters_ex
@@ -168,31 +156,9 @@ When the generator has been found,
 .Fn BN_GENCB_call cb 3 1
 is called.
 .El
-.Pp
-.Fn DSA_generate_parameters
-(deprecated) works in much the same way as for
-.Fn DSA_generate_parameters_ex ,
-except that no
-.Fa dsa
-parameter is passed and instead a newly allocated
-.Vt DSA
-structure is returned.
-Additionally "old style" callbacks are used instead of the newer
-.Vt BN_GENCB
-based approach.
-Refer to
-.Xr BN_generate_prime 3
-for further information.
 .Sh RETURN VALUES
 .Fn DSA_generate_parameters_ex
 returns a 1 on success, or 0 otherwise.
-.Pp
-.Fn DSA_generate_parameters
-returns a pointer to the
-.Vt DSA
-structure, or
-.Dv NULL
-if the parameter generation fails.
 .Pp
 The error codes can be obtained by
 .Xr ERR_get_error 3 .
@@ -201,24 +167,6 @@ The error codes can be obtained by
 .Xr DSA_get0_pqg 3 ,
 .Xr DSA_new 3
 .Sh HISTORY
-.Fn DSA_generate_parameters
-first appeared in SSLeay 0.8.0 and had its
-.Fa cb_arg
-argument added in SSLeay 0.9.0.
-It has been available since
-.Ox 2.4 .
-.Pp
-In versions up to OpenSSL 0.9.4,
-.Fn callback 1 ...\&
-was called in the inner loop of the Miller-Rabin test whenever it
-reached the squaring step (the parameters to
-.Fn callback
-did not reveal how many witnesses had been tested); since OpenSSL 0.9.5,
-.Fn callback 1 ...\&
-is called as in
-.Xr BN_is_prime_ex 3 ,
-i.e. once for each witness.
-.Pp
 .Fn DSA_generate_parameters_ex
 first appeared in OpenSSL 0.9.8 and has been available since
 .Ox 4.5 .
