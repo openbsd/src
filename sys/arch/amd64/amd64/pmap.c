@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.164 2023/04/13 15:23:21 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.165 2023/12/29 13:23:27 jca Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -911,6 +911,12 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	tlbflush();
 
 	return first_avail;
+}
+
+void
+pmap_init_percpu(void)
+{
+	pool_cache_init(&pmap_pv_pool);
 }
 
 /*
