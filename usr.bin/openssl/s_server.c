@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.58 2023/07/03 08:03:56 beck Exp $ */
+/* $OpenBSD: s_server.c,v 1.59 2023/12/29 12:15:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1548,7 +1548,6 @@ sv_body(int s, unsigned char *context)
 	/* SSL_set_fd(con,s); */
 
 	if (cfg.debug) {
-		SSL_set_debug(con, 1);
 		BIO_set_callback(SSL_get_rbio(con), bio_dump_callback);
 		BIO_set_callback_arg(SSL_get_rbio(con), (char *) bio_s_out);
 	}
@@ -1949,7 +1948,6 @@ www_body(int s, unsigned char *context)
 	BIO_push(io, ssl_bio);
 
 	if (cfg.debug) {
-		SSL_set_debug(con, 1);
 		BIO_set_callback(SSL_get_rbio(con), bio_dump_callback);
 		BIO_set_callback_arg(SSL_get_rbio(con), (char *) bio_s_out);
 	}

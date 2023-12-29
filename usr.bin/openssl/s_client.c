@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.63 2023/12/29 12:06:48 tb Exp $ */
+/* $OpenBSD: s_client.c,v 1.64 2023/12/29 12:15:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1125,7 +1125,6 @@ s_client_main(int argc, char **argv)
 		sbio = BIO_push(test, sbio);
 	}
 	if (cfg.debug) {
-		SSL_set_debug(con, 1);
 		BIO_set_callback(sbio, bio_dump_callback);
 		BIO_set_callback_arg(sbio, (char *) bio_c_out);
 	}
