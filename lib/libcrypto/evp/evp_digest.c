@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.5 2023/12/29 07:09:44 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.6 2023/12/29 07:14:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -376,6 +376,24 @@ EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 	return ctx->digest;
 }
 
+void
+EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
+{
+	ctx->flags &= ~flags;
+}
+
+void
+EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
+{
+	ctx->flags |= flags;
+}
+
+int
+EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
+{
+	return (ctx->flags & flags);
+}
+
 void *
 EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
 {
@@ -409,24 +427,6 @@ EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 		 */
 		EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
 	}
-}
-
-void
-EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
-{
-	ctx->flags |= flags;
-}
-
-void
-EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
-{
-	ctx->flags &= ~flags;
-}
-
-int
-EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
-{
-	return (ctx->flags & flags);
 }
 
 int
