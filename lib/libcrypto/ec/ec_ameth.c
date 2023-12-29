@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.46 2023/12/29 18:45:39 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.47 2023/12/29 18:46:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -302,68 +302,72 @@ eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 static int
+eckey_compute_pubkey(EC_KEY *eckey)
+{
+	const BIGNUM *priv_key;
+	const EC_GROUP *group;
+	EC_POINT *pub_key = NULL;
+	int ret = 0;
+
+	if ((priv_key = EC_KEY_get0_private_key(eckey)) == NULL)
+		goto err;
+	if ((group = EC_KEY_get0_group(eckey)) == NULL)
+		goto err;
+	if ((pub_key = EC_POINT_new(group)) == NULL)
+		goto err;
+	if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, NULL))
+		goto err;
+	if (!EC_KEY_set_public_key(eckey, pub_key))
+		goto err;
+	pub_key = NULL;
+
+	ret = 1;
+
+ err:
+	EC_POINT_free(pub_key);
+
+	return ret;
+}
+
+static int
 eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
-	const unsigned char *p = NULL;
+	const unsigned char *priv = NULL;
+	int priv_len;
 	const void *pval;
-	int ptype, pklen;
+	int ptype;
 	EC_KEY *eckey = NULL;
 	const X509_ALGOR *palg;
+	int ret = 0;
 
-	if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
-		return 0;
+	if (!PKCS8_pkey_get0(NULL, &priv, &priv_len, &palg, p8))
+		goto err;
+
 	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
-
 	if (!eckey_from_params(ptype, pval, &eckey))
-		goto ecliberr;
+		goto err;
 
-	/* We have parameters now set private key */
-	if (!d2i_ECPrivateKey(&eckey, &p, pklen)) {
+	/* Decode private key into eckey. */
+	if (d2i_ECPrivateKey(&eckey, &priv, priv_len) == NULL) {
 		ECerror(EC_R_DECODE_ERROR);
-		goto ecerr;
+		goto err;
 	}
-	/* calculate public key (if necessary) */
+	/* If public key was missing from SEC1 key, compute it. */
 	if (EC_KEY_get0_public_key(eckey) == NULL) {
-		const BIGNUM *priv_key;
-		const EC_GROUP *group;
-		EC_POINT *pub_key;
-		/*
-		 * the public key was not included in the SEC1 private key =>
-		 * calculate the public key
-		 */
-		group = EC_KEY_get0_group(eckey);
-		pub_key = EC_POINT_new(group);
-		if (pub_key == NULL) {
-			ECerror(ERR_R_EC_LIB);
-			goto ecliberr;
-		}
-		if (!EC_POINT_copy(pub_key, EC_GROUP_get0_generator(group))) {
-			EC_POINT_free(pub_key);
-			ECerror(ERR_R_EC_LIB);
-			goto ecliberr;
-		}
-		priv_key = EC_KEY_get0_private_key(eckey);
-		if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, NULL)) {
-			EC_POINT_free(pub_key);
-			ECerror(ERR_R_EC_LIB);
-			goto ecliberr;
-		}
-		if (EC_KEY_set_public_key(eckey, pub_key) == 0) {
-			EC_POINT_free(pub_key);
-			ECerror(ERR_R_EC_LIB);
-			goto ecliberr;
-		}
-		EC_POINT_free(pub_key);
+		if (!eckey_compute_pubkey(eckey))
+			goto err;
 	}
-	EVP_PKEY_assign_EC_KEY(pkey, eckey);
-	return 1;
 
- ecliberr:
-	ECerror(ERR_R_EC_LIB);
- ecerr:
-	if (eckey)
-		EC_KEY_free(eckey);
-	return 0;
+	if (!EVP_PKEY_assign_EC_KEY(pkey, eckey))
+		goto err;
+	eckey = NULL;
+
+	ret = 1;
+
+ err:
+	EC_KEY_free(eckey);
+
+	return ret;
 }
 
 static int
