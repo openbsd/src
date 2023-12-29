@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.37 2023/12/15 21:55:47 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.38 2023/12/29 10:08:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -177,20 +177,6 @@ EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
 }
 
 int
-EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-
-int
-EVP_PKEY_asn1_add_alias(int to, int from)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-
-int
 EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,
     const char **pinfo, const char **ppem_str,
     const EVP_PKEY_ASN1_METHOD *ameth)
@@ -215,6 +201,10 @@ EVP_PKEY_get0_asn1(const EVP_PKEY *pkey)
 {
 	return pkey->ameth;
 }
+
+/*
+ * XXX - remove all the API below here in the next major bump.
+ */
 
 EVP_PKEY_ASN1_METHOD*
 EVP_PKEY_asn1_new(int id, int flags, const char *pem_str, const char *info)
@@ -364,3 +354,18 @@ EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
 {
 	ameth->pkey_param_check = pkey_param_check;
 }
+
+int
+EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
+{
+	EVPerror(ERR_R_DISABLED);
+	return 0;
+}
+
+int
+EVP_PKEY_asn1_add_alias(int to, int from)
+{
+	EVPerror(ERR_R_DISABLED);
+	return 0;
+}
+
