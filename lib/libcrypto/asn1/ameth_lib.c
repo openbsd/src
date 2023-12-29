@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.40 2023/12/29 10:59:00 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.41 2023/12/29 19:00:31 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -230,4 +230,3 @@ EVP_PKEY_asn1_add_alias(int to, int from)
 	EVPerror(ERR_R_DISABLED);
 	return 0;
 }
-
