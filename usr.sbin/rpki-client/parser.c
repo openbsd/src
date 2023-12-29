@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.105 2023/12/29 14:35:43 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.106 2023/12/29 17:15:10 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -397,7 +397,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 			mft1 = NULL;
 			if (mft2 != NULL)
 				warnx("%s: failed fetch, continuing with #%s"
-				    " from cache", file1, mft2->seqnum);
+				    " from cache", file2, mft2->seqnum);
 		}
 	}
 
