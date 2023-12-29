@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.45 2023/12/25 22:14:23 tb Exp $ */
+/* $OpenBSD: by_dir.c,v 1.46 2023/12/29 05:33:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,10 +118,8 @@ static int
 dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     char **retp)
 {
+	BY_DIR *ld = ctx->method_data;
 	int ret = 0;
-	BY_DIR *ld;
-
-	ld = (BY_DIR *)ctx->method_data;
 
 	switch (cmd) {
 	case X509_L_ADD_DIR:
@@ -153,7 +151,7 @@ new_dir(X509_LOOKUP *lu)
 		return 0;
 	}
 	a->dirs = NULL;
-	lu->method_data = (char *)a;
+	lu->method_data = a;
 	return 1;
 }
 
@@ -187,7 +185,7 @@ free_dir(X509_LOOKUP *lu)
 {
 	BY_DIR *a;
 
-	a = (BY_DIR *)lu->method_data;
+	a = lu->method_data;
 	sk_BY_DIR_ENTRY_pop_free(a->dirs, by_dir_entry_free);
 	BUF_MEM_free(a->buffer);
 	free(a);
@@ -300,7 +298,7 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 		goto finish;
 	}
 
-	ctx = (BY_DIR *)xl->method_data;
+	ctx = xl->method_data;
 
 	h = X509_NAME_hash(name);
 	for (i = 0; i < sk_BY_DIR_ENTRY_num(ctx->dirs); i++) {
