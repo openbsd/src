@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.9 2023/12/22 17:25:47 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.10 2023/12/29 10:59:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -88,6 +88,68 @@ struct ecx_key_st {
 	uint8_t *pub_key;
 	size_t pub_key_len;
 };
+
+struct evp_pkey_asn1_method_st {
+	int pkey_id;
+	int pkey_base_id;
+	unsigned long pkey_flags;
+
+	char *pem_str;
+	char *info;
+
+	int (*pub_decode)(EVP_PKEY *pk, X509_PUBKEY *pub);
+	int (*pub_encode)(X509_PUBKEY *pub, const EVP_PKEY *pk);
+	int (*pub_cmp)(const EVP_PKEY *a, const EVP_PKEY *b);
+	int (*pub_print)(BIO *out, const EVP_PKEY *pkey, int indent,
+	    ASN1_PCTX *pctx);
+
+	int (*priv_decode)(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf);
+	int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk);
+	int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
+	    ASN1_PCTX *pctx);
+
+	int (*pkey_size)(const EVP_PKEY *pk);
+	int (*pkey_bits)(const EVP_PKEY *pk);
+	int (*pkey_security_bits)(const EVP_PKEY *pk);
+
+	int (*param_decode)(EVP_PKEY *pkey, const unsigned char **pder,
+	    int derlen);
+	int (*param_encode)(const EVP_PKEY *pkey, unsigned char **pder);
+	int (*param_missing)(const EVP_PKEY *pk);
+	int (*param_copy)(EVP_PKEY *to, const EVP_PKEY *from);
+	int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b);
+	int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
+	    ASN1_PCTX *pctx);
+	int (*sig_print)(BIO *out, const X509_ALGOR *sigalg,
+	    const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx);
+
+	void (*pkey_free)(EVP_PKEY *pkey);
+	int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2);
+
+	/* Legacy functions for old PEM */
+
+	int (*old_priv_decode)(EVP_PKEY *pkey, const unsigned char **pder,
+	    int derlen);
+	int (*old_priv_encode)(const EVP_PKEY *pkey, unsigned char **pder);
+	/* Custom ASN1 signature verification */
+	int (*item_verify)(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+	    X509_ALGOR *a, ASN1_BIT_STRING *sig, EVP_PKEY *pkey);
+	int (*item_sign)(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+	    X509_ALGOR *alg1, X509_ALGOR *alg2, ASN1_BIT_STRING *sig);
+
+	int (*pkey_check)(const EVP_PKEY *pk);
+	int (*pkey_public_check)(const EVP_PKEY *pk);
+	int (*pkey_param_check)(const EVP_PKEY *pk);
+
+	int (*set_priv_key)(EVP_PKEY *pk, const unsigned char *private_key,
+	    size_t len);
+	int (*set_pub_key)(EVP_PKEY *pk, const unsigned char *public_key,
+	    size_t len);
+	int (*get_priv_key)(const EVP_PKEY *pk, unsigned char *out_private_key,
+	    size_t *out_len);
+	int (*get_pub_key)(const EVP_PKEY *pk, unsigned char *out_public_key,
+	    size_t *out_len);
+} /* EVP_PKEY_ASN1_METHOD */;
 
 /* Type needs to be a bit field
  * Sub-type needs to be for variations on the method, as in, can it do

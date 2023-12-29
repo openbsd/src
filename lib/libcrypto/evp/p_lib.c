@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.50 2023/12/25 22:41:50 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.51 2023/12/29 10:59:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,13 +55,62 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    licensing@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <openssl/opensslconf.h>
-
-#include <openssl/bn.h>
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
 #include <openssl/cmac.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -73,12 +122,151 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
+#endif
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
 
-#include "asn1_local.h"
 #include "evp_local.h"
+
+extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD gostimit_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD gostr01_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD x25519_asn1_meth;
+
+static const EVP_PKEY_ASN1_METHOD *asn1_methods[] = {
+	&cmac_asn1_meth,
+	&dh_asn1_meth,
+	&dsa_asn1_meths[0],
+	&dsa_asn1_meths[1],
+	&dsa_asn1_meths[2],
+	&dsa_asn1_meths[3],
+	&dsa_asn1_meths[4],
+	&eckey_asn1_meth,
+	&ed25519_asn1_meth,
+	&gostimit_asn1_meth,
+	&gostr01_asn1_meths[0],
+	&gostr01_asn1_meths[1],
+	&gostr01_asn1_meths[2],
+	&hmac_asn1_meth,
+	&rsa_asn1_meths[0],
+	&rsa_asn1_meths[1],
+	&rsa_pss_asn1_meth,
+	&x25519_asn1_meth,
+};
+
+#define N_ASN1_METHODS (sizeof(asn1_methods) / sizeof(asn1_methods[0]))
+
+int
+EVP_PKEY_asn1_get_count(void)
+{
+	return N_ASN1_METHODS;
+}
+
+const EVP_PKEY_ASN1_METHOD *
+EVP_PKEY_asn1_get0(int idx)
+{
+	if (idx < 0 || idx >= N_ASN1_METHODS)
+		return NULL;
+
+	return asn1_methods[idx];
+}
+
+static const EVP_PKEY_ASN1_METHOD *
+pkey_asn1_find(int pkey_id)
+{
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	int i;
+
+	for (i = EVP_PKEY_asn1_get_count() - 1; i >= 0; i--) {
+		ameth = EVP_PKEY_asn1_get0(i);
+		if (ameth->pkey_id == pkey_id)
+			return ameth;
+	}
+
+	return NULL;
+}
+
+/*
+ * XXX - fix this. In what looks like an infinite loop, this API only makes two
+ * calls to pkey_asn1_find(): If the type resolves to an aliased ASN.1 method,
+ * the second call will find the method it aliases. Codify this in regress and
+ * make this explicit in code.
+ */
+const EVP_PKEY_ASN1_METHOD *
+EVP_PKEY_asn1_find(ENGINE **pe, int type)
+{
+	const EVP_PKEY_ASN1_METHOD *mp;
+
+	if (pe != NULL)
+		*pe = NULL;
+
+	for (;;) {
+		if ((mp = pkey_asn1_find(type)) == NULL)
+			break;
+		if ((mp->pkey_flags & ASN1_PKEY_ALIAS) == 0)
+			break;
+		type = mp->pkey_base_id;
+	}
+
+	return mp;
+}
+
+const EVP_PKEY_ASN1_METHOD *
+EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
+{
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	int i;
+
+	if (len == -1)
+		len = strlen(str);
+	if (pe != NULL)
+		*pe = NULL;
+	for (i = EVP_PKEY_asn1_get_count() - 1; i >= 0; i--) {
+		ameth = EVP_PKEY_asn1_get0(i);
+		if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
+			continue;
+		if (((int)strlen(ameth->pem_str) == len) &&
+		    !strncasecmp(ameth->pem_str, str, len))
+			return ameth;
+	}
+	return NULL;
+}
+
+int
+EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,
+    const char **pinfo, const char **ppem_str,
+    const EVP_PKEY_ASN1_METHOD *ameth)
+{
+	if (!ameth)
+		return 0;
+	if (ppkey_id)
+		*ppkey_id = ameth->pkey_id;
+	if (ppkey_base_id)
+		*ppkey_base_id = ameth->pkey_base_id;
+	if (ppkey_flags)
+		*ppkey_flags = ameth->pkey_flags;
+	if (pinfo)
+		*pinfo = ameth->info;
+	if (ppem_str)
+		*ppem_str = ameth->pem_str;
+	return 1;
+}
+
+const EVP_PKEY_ASN1_METHOD*
+EVP_PKEY_get0_asn1(const EVP_PKEY *pkey)
+{
+	return pkey->ameth;
+}
 
 int
 EVP_PKEY_bits(const EVP_PKEY *pkey)
