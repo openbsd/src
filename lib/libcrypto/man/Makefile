@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.279 2023/12/16 10:26:10 tb Exp $
+# $OpenBSD: Makefile,v 1.280 2023/12/29 19:15:15 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -123,7 +123,7 @@ MAN=	\
 	DSA_do_sign.3 \
 	DSA_dup_DH.3 \
 	DSA_generate_key.3 \
-	DSA_generate_parameters.3 \
+	DSA_generate_parameters_ex.3 \
 	DSA_get0_pqg.3 \
 	DSA_get_ex_new_index.3 \
 	DSA_meth_new.3 \
