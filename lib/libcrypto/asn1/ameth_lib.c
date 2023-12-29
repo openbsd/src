@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.38 2023/12/29 10:08:44 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.39 2023/12/29 10:17:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -131,10 +131,10 @@ pkey_asn1_find(int pkey_id)
 }
 
 /*
- * Find an implementation of an ASN1 algorithm. If 'pe' is not NULL
- * also search through engines and set *pe to a functional reference
- * to the engine implementing 'type' or NULL if no engine implements
- * it.
+ * XXX - fix this. In what looks like an infinite loop, this API only makes two
+ * calls to pkey_asn1_find(): If the type resolves to an aliased ASN.1 method,
+ * the second call will find the method it aliases. Codify this in regress and
+ * make this explicit in code.
  */
 const EVP_PKEY_ASN1_METHOD *
 EVP_PKEY_asn1_find(ENGINE **pe, int type)
