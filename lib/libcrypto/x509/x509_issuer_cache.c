@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_issuer_cache.c,v 1.4 2022/12/26 07:18:53 jmc Exp $ */
+/* $OpenBSD: x509_issuer_cache.c,v 1.5 2023/12/30 18:06:59 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -98,7 +98,7 @@ x509_issuer_cache_free_oldest()
  * Free the entire issuer cache, discarding all entries.
  */
 void
-x509_issuer_cache_free()
+x509_issuer_cache_free(void)
 {
 	if (pthread_mutex_lock(&x509_issuer_tree_mutex) != 0)
 		return;
