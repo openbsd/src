@@ -3,6 +3,7 @@
 #define RTKIT_MGMT_PWR_STATE_SLEEP	0x0001
 #define RTKIT_MGMT_PWR_STATE_QUIESCED	0x0010
 #define RTKIT_MGMT_PWR_STATE_ON		0x0020
+#define RTKIT_MGMT_PWR_STATE_INIT	0x0220
 
 struct rtkit_state;
 
@@ -11,9 +12,12 @@ struct rtkit {
 	bus_dma_tag_t rk_dmat;
 	int (*rk_map)(void *, bus_addr_t, bus_size_t);
 	int (*rk_unmap)(void *, bus_addr_t, bus_size_t);
+	paddr_t (*rk_logmap)(void *, bus_addr_t);
 };
 
 #define RK_WAKEUP	0x00000001
+#define RK_DEBUG	0x00000002
+#define RK_SYSLOG	0x00000004
 
 struct rtkit_state *rtkit_init(int, const char *, int, struct rtkit *);
 int	rtkit_boot(struct rtkit_state *);
