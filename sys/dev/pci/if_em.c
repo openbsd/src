@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.368 2023/12/03 00:19:25 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.369 2023/12/30 12:44:43 bluhm Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -285,6 +285,7 @@ int  em_allocate_transmit_structures(struct em_softc *);
 int  em_allocate_desc_rings(struct em_softc *);
 int  em_rxfill(struct em_queue *);
 void em_rxrefill(void *);
+void em_rxrefill_locked(struct em_queue *);
 int  em_rxeof(struct em_queue *);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
@@ -1022,7 +1023,7 @@ em_intr(void *arg)
 	if (ifp->if_flags & IFF_RUNNING) {
 		em_txeof(que);
 		if (em_rxeof(que))
-			em_rxrefill(que);
+			em_rxrefill_locked(que);
 	}
 
 	/* Link status change */
@@ -2958,6 +2959,16 @@ void
 em_rxrefill(void *arg)
 {
 	struct em_queue *que = arg;
+	int s;
+
+	s = splnet();
+	em_rxrefill_locked(que);
+	splx(s);
+}
+
+void
+em_rxrefill_locked(struct em_queue *que)
+{
 	struct em_softc *sc = que->sc;
 
 	if (em_rxfill(que))
@@ -3954,7 +3965,7 @@ em_queue_intr_msix(void *vque)
 	if (ifp->if_flags & IFF_RUNNING) {
 		em_txeof(que);
 		if (em_rxeof(que))
-			em_rxrefill(que);
+			em_rxrefill_locked(que);
 	}
 
 	em_enable_queue_intr_msix(que);
