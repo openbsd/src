@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.179 2023/12/20 07:33:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.180 2023/12/30 16:55:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10696,7 +10696,7 @@ static const struct iwx_dev_info iwx_dev_info_table[] = {
 	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
 		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
 		      IWX_CFG_RF_TYPE_HR1, IWX_CFG_ANY,
-		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      IWX_CFG_NO_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
 		      iwx_cfg_so_a0_hr_b0), /* ax101 */
 	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
 		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
@@ -10713,7 +10713,7 @@ static const struct iwx_dev_info iwx_dev_info_table[] = {
 	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
 		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
 		      IWX_CFG_RF_TYPE_HR1, IWX_CFG_ANY,
-		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      IWX_CFG_NO_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
 		      iwx_cfg_so_a0_hr_b0), /* AX101 */
 	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
 		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
