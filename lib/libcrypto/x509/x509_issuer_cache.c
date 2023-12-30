@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_issuer_cache.c,v 1.6 2023/12/30 18:22:52 tb Exp $ */
+/* $OpenBSD: x509_issuer_cache.c,v 1.7 2023/12/30 18:26:13 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -78,7 +78,7 @@ x509_issuer_cache_set_max(size_t max)
  * if an entry was successfully freed, 0 otherwise. Must
  * be called with x509_issuer_tree_mutex held.
  */
-void
+static void
 x509_issuer_cache_free_oldest(void)
 {
 	struct x509_issuer *old;
