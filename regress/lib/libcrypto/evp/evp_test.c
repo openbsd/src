@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.11 2023/12/10 19:20:06 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.12 2023/12/30 08:58:18 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -102,6 +102,151 @@ evp_asn1_method_test(void)
 	failed = 0;
 
  failure:
+
+	return failed;
+}
+
+/* EVP_PKEY_asn1_find() by hand. Allows cross-checking and finding duplicates. */
+static const EVP_PKEY_ASN1_METHOD *
+evp_pkey_asn1_find(int nid, int skip_id)
+{
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	int count, i, pkey_id;
+
+	count = EVP_PKEY_asn1_get_count();
+	for (i = 0; i < count; i++) {
+		if (i == skip_id)
+			continue;
+		if ((ameth = EVP_PKEY_asn1_get0(i)) == NULL)
+			return NULL;
+		if (!EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL,
+		    NULL, NULL, ameth))
+			return NULL;
+		if (pkey_id == nid)
+			return ameth;
+	}
+
+	return NULL;
+}
+
+static int
+evp_asn1_method_aliases_test(void)
+{
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	int id, base_id, flags;
+	const char *info, *pem_str;
+	int count, i;
+	int failed = 0;
+
+	if ((count = EVP_PKEY_asn1_get_count()) <= 0) {
+		fprintf(stderr, "FAIL: EVP_PKEY_asn1_get_count(): %d\n", count);
+		failed |= 1;
+	}
+	for (i = 0; i < count; i++) {
+		if ((ameth = EVP_PKEY_asn1_get0(i)) == NULL) {
+			fprintf(stderr, "FAIL: no ameth for index %d < %d\n",
+			    i, count);
+			failed |= 1;
+			continue;
+		}
+		if (!EVP_PKEY_asn1_get0_info(&id, &base_id, &flags,
+		    &info, &pem_str, ameth)) {
+			fprintf(stderr, "FAIL: no info for ameth %d\n", i);
+			failed |= 1;
+			continue;
+		}
+
+		/*
+		 * The following are all true or all false for any ameth:
+		 * 1. ASN1_PKEY_ALIAS is set	2. id != base_id
+		 * 3. info == NULL		4. pem_str == NULL
+		 */
+
+		if ((flags & ASN1_PKEY_ALIAS) == 0) {
+			size_t pem_str_len;
+
+			if (id != base_id) {
+				fprintf(stderr, "FAIL: non-alias with "
+				    "id %d != base_id %d\n", id, base_id);
+				failed |= 1;
+			}
+			if (info == NULL || strlen(info) == 0) {
+				fprintf(stderr, "FAIL: missing or empty info %d\n", id);
+				failed |= 1;
+			}
+			if (pem_str == NULL) {
+				fprintf(stderr, "FAIL: missing pem_str %d\n", id);
+				failed |= 1;
+			}
+			if ((pem_str_len = strlen(pem_str)) == 0) {
+				fprintf(stderr, "FAIL: empty pem_str %d\n", id);
+				failed |= 1;
+			}
+
+			if (evp_pkey_asn1_find(id, i) != NULL) {
+				fprintf(stderr, "FAIL: duplicate ameth %d\n", id);
+				failed |= 1;
+			}
+
+			if (ameth != EVP_PKEY_asn1_find(NULL, id)) {
+				fprintf(stderr, "FAIL: EVP_PKEY_asn1_find(%d) "
+				    "returned different ameth\n", id);
+				failed |= 1;
+			}
+			if (ameth != EVP_PKEY_asn1_find_str(NULL, pem_str, -1)) {
+				fprintf(stderr, "FAIL: EVP_PKEY_asn1_find_str(%s) "
+				    "returned different ameth\n", pem_str);
+				failed |= 1;
+			}
+			if (ameth != EVP_PKEY_asn1_find_str(NULL,
+			    pem_str, pem_str_len)) {
+				fprintf(stderr, "FAIL: EVP_PKEY_asn1_find_str(%s, %zu) "
+				    "returned different ameth\n", pem_str, pem_str_len);
+				failed |= 1;
+			}
+			if (EVP_PKEY_asn1_find_str(NULL, pem_str,
+			    pem_str_len - 1) != NULL) {
+				fprintf(stderr, "FAIL: EVP_PKEY_asn1_find_str(%s, %zu) "
+				    "returned an ameth\n", pem_str, pem_str_len - 1);
+				failed |= 1;
+			}
+			continue;
+		}
+
+		if (id == base_id) {
+			fprintf(stderr, "FAIL: alias with id %d == base_id %d\n",
+			    id, base_id);
+			failed |= 1;
+		}
+		if (info != NULL) {
+			fprintf(stderr, "FAIL: alias %d with info %s\n", id, info);
+			failed |= 1;
+		}
+		if (pem_str != NULL) {
+			fprintf(stderr, "FAIL: alias %d with pem_str %s\n",
+			    id, pem_str);
+			failed |= 1;
+		}
+
+		/* Check that ameth resolves to a non-alias. */
+		if ((ameth = evp_pkey_asn1_find(base_id, -1)) == NULL) {
+			fprintf(stderr, "FAIL: no ameth with pkey_id %d\n",
+			    base_id);
+			failed |= 1;
+			continue;
+		}
+		if (!EVP_PKEY_asn1_get0_info(NULL, NULL, &flags, NULL, NULL, ameth)) {
+			fprintf(stderr, "FAIL: no info for ameth with pkey_id %d\n",
+			    base_id);
+			failed |= 1;
+			continue;
+		}
+		if ((flags & ASN1_PKEY_ALIAS) != 0) {
+			fprintf(stderr, "FAIL: ameth with pkey_id %d "
+			    "resolves to another alias\n", base_id);
+			failed |= 1;
+		}
+	}
 
 	return failed;
 }
@@ -634,6 +779,7 @@ main(int argc, char **argv)
 	int failed = 0;
 
 	failed |= evp_asn1_method_test();
+	failed |= evp_asn1_method_aliases_test();
 	failed |= evp_pkey_method_test();
 	failed |= evp_pkey_iv_len_test();
 	failed |= evp_do_all_test();
