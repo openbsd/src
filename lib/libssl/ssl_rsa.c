@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.50 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.51 2023/12/30 06:25:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,24 +150,28 @@ LSSL_ALIAS(SSL_use_certificate_ASN1);
 int
 SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 {
-	EVP_PKEY *pkey;
-	int ret;
+	EVP_PKEY *pkey = NULL;
+	int ret = 0;
 
 	if (rsa == NULL) {
 		SSLerror(ssl, ERR_R_PASSED_NULL_PARAMETER);
-		return (0);
+		goto err;
 	}
 	if ((pkey = EVP_PKEY_new()) == NULL) {
 		SSLerror(ssl, ERR_R_EVP_LIB);
-		return (0);
+		goto err;
 	}
+	if (!EVP_PKEY_set1_RSA(pkey, rsa))
+		goto err;
+	if (!ssl_set_pkey(NULL, ssl, pkey))
+		goto err;
 
-	RSA_up_ref(rsa);
-	EVP_PKEY_assign_RSA(pkey, rsa);
+	ret = 1;
 
-	ret = ssl_set_pkey(NULL, ssl, pkey);
+ err:
 	EVP_PKEY_free(pkey);
-	return (ret);
+
+	return ret;
 }
 LSSL_ALIAS(SSL_use_RSAPrivateKey);
 
@@ -508,24 +512,28 @@ LSSL_ALIAS(SSL_CTX_use_certificate_ASN1);
 int
 SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 {
-	int ret;
-	EVP_PKEY *pkey;
+	EVP_PKEY *pkey = NULL;
+	int ret = 0;
 
 	if (rsa == NULL) {
 		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
-		return (0);
+		goto err;
 	}
 	if ((pkey = EVP_PKEY_new()) == NULL) {
 		SSLerrorx(ERR_R_EVP_LIB);
-		return (0);
+		goto err;
 	}
+	if (!EVP_PKEY_set1_RSA(pkey, rsa))
+		goto err;
+	if (!ssl_set_pkey(ctx, NULL, pkey))
+		goto err;
 
-	RSA_up_ref(rsa);
-	EVP_PKEY_assign_RSA(pkey, rsa);
+	ret = 1;
 
-	ret = ssl_set_pkey(ctx, NULL, pkey);
+ err:
 	EVP_PKEY_free(pkey);
-	return (ret);
+
+	return ret;
 }
 LSSL_ALIAS(SSL_CTX_use_RSAPrivateKey);
 
