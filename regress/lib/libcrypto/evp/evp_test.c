@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.12 2023/12/30 08:58:18 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.13 2023/12/31 01:31:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -169,46 +169,55 @@ evp_asn1_method_aliases_test(void)
 				fprintf(stderr, "FAIL: non-alias with "
 				    "id %d != base_id %d\n", id, base_id);
 				failed |= 1;
+				continue;
 			}
 			if (info == NULL || strlen(info) == 0) {
 				fprintf(stderr, "FAIL: missing or empty info %d\n", id);
 				failed |= 1;
+				continue;
 			}
 			if (pem_str == NULL) {
 				fprintf(stderr, "FAIL: missing pem_str %d\n", id);
 				failed |= 1;
+				continue;
 			}
 			if ((pem_str_len = strlen(pem_str)) == 0) {
 				fprintf(stderr, "FAIL: empty pem_str %d\n", id);
 				failed |= 1;
+				continue;
 			}
 
 			if (evp_pkey_asn1_find(id, i) != NULL) {
 				fprintf(stderr, "FAIL: duplicate ameth %d\n", id);
 				failed |= 1;
+				continue;
 			}
 
 			if (ameth != EVP_PKEY_asn1_find(NULL, id)) {
 				fprintf(stderr, "FAIL: EVP_PKEY_asn1_find(%d) "
 				    "returned different ameth\n", id);
 				failed |= 1;
+				continue;
 			}
 			if (ameth != EVP_PKEY_asn1_find_str(NULL, pem_str, -1)) {
 				fprintf(stderr, "FAIL: EVP_PKEY_asn1_find_str(%s) "
 				    "returned different ameth\n", pem_str);
 				failed |= 1;
+				continue;
 			}
 			if (ameth != EVP_PKEY_asn1_find_str(NULL,
 			    pem_str, pem_str_len)) {
 				fprintf(stderr, "FAIL: EVP_PKEY_asn1_find_str(%s, %zu) "
 				    "returned different ameth\n", pem_str, pem_str_len);
 				failed |= 1;
+				continue;
 			}
 			if (EVP_PKEY_asn1_find_str(NULL, pem_str,
 			    pem_str_len - 1) != NULL) {
 				fprintf(stderr, "FAIL: EVP_PKEY_asn1_find_str(%s, %zu) "
 				    "returned an ameth\n", pem_str, pem_str_len - 1);
 				failed |= 1;
+				continue;
 			}
 			continue;
 		}
