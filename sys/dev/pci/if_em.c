@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.369 2023/12/30 12:44:43 bluhm Exp $ */
+/* $OpenBSD: if_em.c,v 1.370 2023/12/31 08:42:33 mglocker Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -291,6 +291,8 @@ void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
 u_int	em_transmit_checksum_setup(struct em_queue *, struct mbuf *, u_int,
 	    u_int32_t *, u_int32_t *);
+u_int	em_tso_setup(struct em_queue *, struct mbuf *, u_int, u_int32_t *,
+	    u_int32_t *);
 u_int	em_tx_ctx_setup(struct em_queue *, struct mbuf *, u_int, u_int32_t *,
 	    u_int32_t *);
 void em_iff(struct em_softc *);
@@ -1188,7 +1190,7 @@ em_flowstatus(struct em_softc *sc)
  *
  *  This routine maps the mbufs to tx descriptors.
  *
- *  return 0 on success, positive on failure
+ *  return 0 on failure, positive on success
  **********************************************************************/
 u_int
 em_encap(struct em_queue *que, struct mbuf *m)
@@ -1236,7 +1238,15 @@ em_encap(struct em_queue *que, struct mbuf *m)
 	}
 
 	if (sc->hw.mac_type >= em_82575 && sc->hw.mac_type <= em_i210) {
-		used += em_tx_ctx_setup(que, m, head, &txd_upper, &txd_lower);
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			used += em_tso_setup(que, m, head, &txd_upper,
+			    &txd_lower);
+			if (!used)
+				return (used);
+		} else {
+			used += em_tx_ctx_setup(que, m, head, &txd_upper,
+			    &txd_lower);
+		}
 	} else if (sc->hw.mac_type >= em_82543) {
 		used += em_transmit_checksum_setup(que, m, head,
 		    &txd_upper, &txd_lower);
@@ -1568,6 +1578,21 @@ em_update_link_status(struct em_softc *sc)
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
 		if_link_state_change(ifp);
+	}
+
+	/* Disable TSO for 10/100 speeds to avoid some hardware issues */
+	switch (sc->link_speed) {
+	case SPEED_10:
+	case SPEED_100:
+		if (sc->hw.mac_type >= em_82575 && sc->hw.mac_type <= em_i210) {
+			ifp->if_capabilities &= ~IFCAP_TSOv4;
+			ifp->if_capabilities &= ~IFCAP_TSOv6;
+		}
+		break;
+	case SPEED_1000:
+		if (sc->hw.mac_type >= em_82575 && sc->hw.mac_type <= em_i210)
+			ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
+		break;
 	}
 }
 
@@ -1988,6 +2013,7 @@ em_setup_interface(struct em_softc *sc)
 	if (sc->hw.mac_type >= em_82575 && sc->hw.mac_type <= em_i210) {
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
+		ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 	}
 
 	/* 
@@ -2231,9 +2257,9 @@ em_setup_transmit_structures(struct em_softc *sc)
 
 		for (i = 0; i < sc->sc_tx_slots; i++) {
 			pkt = &que->tx.sc_tx_pkts_ring[i];
-			error = bus_dmamap_create(sc->sc_dmat, MAX_JUMBO_FRAME_SIZE,
+			error = bus_dmamap_create(sc->sc_dmat, EM_TSO_SIZE,
 			    EM_MAX_SCATTER / (sc->pcix_82544 ? 2 : 1),
-			    MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &pkt->pkt_map);
+			    EM_TSO_SEG_SIZE, 0, BUS_DMA_NOWAIT, &pkt->pkt_map);
 			if (error != 0) {
 				printf("%s: Unable to create TX DMA map\n",
 				    DEVNAME(sc));
@@ -2403,6 +2429,81 @@ em_free_transmit_structures(struct em_softc *sc)
 		    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
+}
+
+u_int
+em_tso_setup(struct em_queue *que, struct mbuf *mp, u_int head,
+    u_int32_t *olinfo_status, u_int32_t *cmd_type_len)
+{
+	struct ether_extracted ext;
+	struct e1000_adv_tx_context_desc *TD;
+	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0, mss_l4len_idx = 0;
+	uint32_t paylen = 0;
+	uint8_t iphlen = 0;
+
+	*olinfo_status = 0;
+	*cmd_type_len = 0;
+	TD = (struct e1000_adv_tx_context_desc *)&que->tx.sc_tx_desc_ring[head];
+
+#if NVLAN > 0
+	if (ISSET(mp->m_flags, M_VLANTAG)) {
+		uint32_t vtag = mp->m_pkthdr.ether_vtag;
+		vlan_macip_lens |= vtag << E1000_ADVTXD_VLAN_SHIFT;
+		*cmd_type_len |= E1000_ADVTXD_DCMD_VLE;
+	}
+#endif
+
+	ether_extract_headers(mp, &ext);
+	if (ext.tcp == NULL)
+		goto out;
+
+	vlan_macip_lens |= (sizeof(*ext.eh) << E1000_ADVTXD_MACLEN_SHIFT);
+
+	if (ext.ip4) {
+		iphlen = ext.ip4->ip_hl << 2;
+
+		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_IPV4;
+		*olinfo_status |= E1000_TXD_POPTS_IXSM << 8;
+#ifdef INET6
+	} else if (ext.ip6) {
+		iphlen = sizeof(*ext.ip6);
+
+		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_IPV6;
+#endif
+	} else {
+		goto out;
+	}
+
+	*cmd_type_len |= E1000_ADVTXD_DTYP_DATA | E1000_ADVTXD_DCMD_IFCS;
+	*cmd_type_len |= E1000_ADVTXD_DCMD_DEXT | E1000_ADVTXD_DCMD_TSE;
+	paylen = mp->m_pkthdr.len - sizeof(*ext.eh) - iphlen -
+	    (ext.tcp->th_off << 2);
+	*olinfo_status |= paylen << E1000_ADVTXD_PAYLEN_SHIFT;
+	vlan_macip_lens |= iphlen;
+	type_tucmd_mlhl |= E1000_ADVTXD_DCMD_DEXT | E1000_ADVTXD_DTYP_CTXT;
+
+	type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_L4T_TCP;
+	*olinfo_status |= E1000_TXD_POPTS_TXSM << 8;
+
+	mss_l4len_idx |= mp->m_pkthdr.ph_mss << E1000_ADVTXD_MSS_SHIFT;
+	mss_l4len_idx |= (ext.tcp->th_off << 2) << E1000_ADVTXD_L4LEN_SHIFT;
+	/* 82575 needs the queue index added */
+	if (que->sc->hw.mac_type == em_82575)
+		mss_l4len_idx |= (que->me & 0xff) << 4;
+
+	htolem32(&TD->vlan_macip_lens, vlan_macip_lens);
+	htolem32(&TD->type_tucmd_mlhl, type_tucmd_mlhl);
+	htolem32(&TD->u.seqnum_seed, 0);
+	htolem32(&TD->mss_l4len_idx, mss_l4len_idx);
+
+	tcpstat_add(tcps_outpkttso, (paylen + mp->m_pkthdr.ph_mss - 1) /
+	    mp->m_pkthdr.ph_mss);
+
+	return 1;
+
+out:
+	tcpstat_inc(tcps_outbadtso);
+	return 0;
 }
 
 u_int

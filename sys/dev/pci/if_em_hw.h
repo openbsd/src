@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.90 2023/12/03 00:19:25 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.91 2023/12/31 08:42:33 mglocker Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2150,6 +2150,7 @@ struct e1000_adv_tx_context_desc {
 #define E1000_ADVTXD_DCMD_IFCS	0x02000000 /* Insert FCS (Ethernet CRC) */
 #define E1000_ADVTXD_DCMD_DEXT	0x20000000 /* Descriptor extension (1=Adv) */
 #define E1000_ADVTXD_DCMD_VLE	0x40000000 /* VLAN pkt enable */
+#define E1000_ADVTXD_DCMD_TSE	0x80000000 /* TCP Seg enable */
 #define E1000_ADVTXD_PAYLEN_SHIFT	14 /* Adv desc PAYLEN shift */
 
 /* Adv Transmit Descriptor Config Masks */
@@ -2159,6 +2160,10 @@ struct e1000_adv_tx_context_desc {
 #define E1000_ADVTXD_TUCMD_IPV6		0x00000000  /* IP Packet Type: 0=IPv6 */
 #define E1000_ADVTXD_TUCMD_L4T_UDP	0x00000000  /* L4 Packet TYPE of UDP */
 #define E1000_ADVTXD_TUCMD_L4T_TCP	0x00000800  /* L4 Packet TYPE of TCP */
+
+/* Req requires Markers and CRC */
+#define E1000_ADVTXD_L4LEN_SHIFT	8  /* Adv ctxt L4LEN shift */
+#define E1000_ADVTXD_MSS_SHIFT		16 /* Adv ctxt MSS shift */
 
 /* Multiple Receive Queue Control */
 #define E1000_MRQC_ENABLE_MASK              0x00000003

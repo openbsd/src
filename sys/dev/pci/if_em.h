@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.80 2022/01/09 05:42:50 jsg Exp $ */
+/* $OpenBSD: if_em.h,v 1.81 2023/12/31 08:42:33 mglocker Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -55,11 +55,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 #include <netinet/udp.h>
 
 #if NBPFILTER > 0
@@ -269,6 +272,7 @@ typedef int	boolean_t;
 
 #define EM_MAX_SCATTER		64
 #define EM_TSO_SIZE		65535
+#define EM_TSO_SEG_SIZE		4096	/* Max dma segment size */
 
 struct em_packet {
 	int		 pkt_eop;	/* Index of the desc to watch */
