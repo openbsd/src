@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.32 2023/12/31 07:14:42 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.33 2023/12/31 07:19:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -394,7 +394,7 @@ LCRYPTO_ALIAS(X509_PURPOSE_get_trust);
 int
 X509_supported_extension(X509_EXTENSION *ext)
 {
-	switch(OBJ_obj2nid(X509_EXTENSION_get_object(ext))) {
+	switch (OBJ_obj2nid(X509_EXTENSION_get_object(ext))) {
 	case NID_basic_constraints:
 	case NID_certificate_policies:
 	case NID_ext_key_usage:
