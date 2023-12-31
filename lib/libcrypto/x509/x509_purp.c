@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.31 2023/12/31 07:10:50 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.32 2023/12/31 07:14:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -395,20 +395,20 @@ int
 X509_supported_extension(X509_EXTENSION *ext)
 {
 	switch(OBJ_obj2nid(X509_EXTENSION_get_object(ext))) {
-	case NID_netscape_cert_type:
-	case NID_key_usage:
-	case NID_subject_alt_name:
 	case NID_basic_constraints:
 	case NID_certificate_policies:
 	case NID_ext_key_usage:
+	case NID_inhibit_any_policy:
+	case NID_key_usage:
+	case NID_name_constraints:
+	case NID_netscape_cert_type:
+	case NID_policy_constraints:
+	case NID_policy_mappings:
 #ifndef OPENSSL_NO_RFC3779
 	case NID_sbgp_ipAddrBlock:
 	case NID_sbgp_autonomousSysNum:
 #endif
-	case NID_policy_constraints:
-	case NID_name_constraints:
-	case NID_policy_mappings:
-	case NID_inhibit_any_policy:
+	case NID_subject_alt_name:
 		return 1;
 	default:
 		return 0;
