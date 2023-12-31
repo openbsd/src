@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.30 2023/11/13 10:33:00 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.31 2023/12/31 07:10:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -386,68 +386,33 @@ X509_PURPOSE_get_trust(const X509_PURPOSE *xp)
 }
 LCRYPTO_ALIAS(X509_PURPOSE_get_trust);
 
-static int
-nid_cmp(const int *a, const int *b)
-{
-	return *a - *b;
-}
-
-static int nid_cmp_BSEARCH_CMP_FN(const void *, const void *);
-static int nid_cmp(int const *, int const *);
-static int *OBJ_bsearch_nid(int *key, int const *base, int num);
-
-static int
-nid_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
-{
-	int const *a = a_;
-	int const *b = b_;
-	return nid_cmp(a, b);
-}
-
-static int *
-OBJ_bsearch_nid(int *key, int const *base, int num)
-{
-	return (int *)OBJ_bsearch_(key, base, num, sizeof(int),
-	    nid_cmp_BSEARCH_CMP_FN);
-}
-
+/*
+ * List of NIDs of extensions supported by the verifier. If an extension
+ * is critical and doesn't appear in this list, then the certificate will
+ * normally be rejected.
+ */
 int
-X509_supported_extension(X509_EXTENSION *ex)
+X509_supported_extension(X509_EXTENSION *ext)
 {
-	/* This table is a list of the NIDs of supported extensions:
-	 * that is those which are used by the verify process. If
-	 * an extension is critical and doesn't appear in this list
-	 * then the verify process will normally reject the certificate.
-	 * The list must be kept in numerical order because it will be
-	 * searched using bsearch.
-	 */
-
-	static const int supported_nids[] = {
-		NID_netscape_cert_type, /* 71 */
-		NID_key_usage,		/* 83 */
-		NID_subject_alt_name,	/* 85 */
-		NID_basic_constraints,	/* 87 */
-		NID_certificate_policies, /* 89 */
-		NID_ext_key_usage,	/* 126 */
+	switch(OBJ_obj2nid(X509_EXTENSION_get_object(ext))) {
+	case NID_netscape_cert_type:
+	case NID_key_usage:
+	case NID_subject_alt_name:
+	case NID_basic_constraints:
+	case NID_certificate_policies:
+	case NID_ext_key_usage:
 #ifndef OPENSSL_NO_RFC3779
-		NID_sbgp_ipAddrBlock,   /* 290 */
-		NID_sbgp_autonomousSysNum, /* 291 */
+	case NID_sbgp_ipAddrBlock:
+	case NID_sbgp_autonomousSysNum:
 #endif
-		NID_policy_constraints,	/* 401 */
-		NID_name_constraints,	/* 666 */
-		NID_policy_mappings,	/* 747 */
-		NID_inhibit_any_policy	/* 748 */
-	};
-
-	int ex_nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
-
-	if (ex_nid == NID_undef)
-		return 0;
-
-	if (OBJ_bsearch_nid(&ex_nid, supported_nids,
-	    sizeof(supported_nids) / sizeof(int)))
+	case NID_policy_constraints:
+	case NID_name_constraints:
+	case NID_policy_mappings:
+	case NID_inhibit_any_policy:
 		return 1;
-	return 0;
+	default:
+		return 0;
+	}
 }
 LCRYPTO_ALIAS(X509_supported_extension);
 
