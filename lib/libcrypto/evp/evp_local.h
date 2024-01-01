@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.10 2023/12/29 10:59:00 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.11 2024/01/01 15:23:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -156,7 +156,6 @@ struct evp_pkey_asn1_method_st {
  * arbitrary encryption.... */
 struct evp_pkey_st {
 	int type;
-	int save_type;
 	int references;
 	const EVP_PKEY_ASN1_METHOD *ameth;
 	union	{

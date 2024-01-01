@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.51 2023/12/29 10:59:00 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.52 2024/01/01 15:23:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -389,7 +389,6 @@ EVP_PKEY_new(void)
 	}
 
 	pkey->type = EVP_PKEY_NONE;
-	pkey->save_type = EVP_PKEY_NONE;
 	pkey->references = 1;
 	pkey->save_parameters = 1;
 
@@ -440,7 +439,6 @@ EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 	if (pkey != NULL) {
 		pkey->ameth = ameth;
 		pkey->type = pkey->ameth->pkey_id;
-		pkey->save_type = type;
 	}
 
 	return 1;
@@ -460,7 +458,6 @@ EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 	if (pkey != NULL) {
 		pkey->ameth = ameth;
 		pkey->type = pkey->ameth->pkey_id;
-		pkey->save_type = EVP_PKEY_NONE;
 	}
 
 	return 1;
