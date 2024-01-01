@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.104 2023/12/23 10:52:54 bluhm Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.105 2024/01/01 18:47:02 mvs Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -117,9 +117,9 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_dead = 0;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	if_counters_alloc(ifp);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));

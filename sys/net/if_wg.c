@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.34 2023/12/23 10:52:54 bluhm Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.35 2024/01/01 18:47:02 mvs Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -2691,9 +2691,9 @@ wg_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_type = IFT_WIREGUARD;
 	ifp->if_rtrequest = p2p_rtrequest;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	if_counters_alloc(ifp);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));

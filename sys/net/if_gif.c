@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.136 2023/12/23 10:52:54 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.137 2024/01/01 18:47:02 mvs Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -174,9 +174,9 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_type   = IFT_GIF;
 	ifp->if_softc = sc;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	if_counters_alloc(ifp);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
