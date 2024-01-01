@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_pmeth.c,v 1.15 2023/12/28 22:10:33 tb Exp $ */
+/* $OpenBSD: dh_pmeth.c,v 1.16 2024/01/01 16:01:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -98,7 +98,7 @@ pkey_dh_init(EVP_PKEY_CTX *ctx)
 	ctx->data = dctx;
 	ctx->keygen_info = dctx->gentmp;
 	ctx->keygen_info_count = 2;
-	
+
 	return 1;
 }
 
@@ -109,7 +109,7 @@ pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 
 	if (!pkey_dh_init(dst))
 		return 0;
-       	sctx = src->data;
+	sctx = src->data;
 	dctx = dst->data;
 	dctx->prime_len = sctx->prime_len;
 	dctx->generator = sctx->generator;
@@ -149,11 +149,11 @@ pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return -2;
 	}
 }
-			
+
 static int
 pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 {
- 	long lval;
+	long lval;
 	char *ep;
 	int len;
 
