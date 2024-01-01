@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.14 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.15 2024/01/01 18:33:04 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -197,7 +197,7 @@ EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)
 {
 	if (idx == -1)
 		return ctx->keygen_info_count;
-	if (idx < 0 || idx > ctx->keygen_info_count)
+	if (idx < 0 || idx >= ctx->keygen_info_count)
 		return 0;
 	return ctx->keygen_info[idx];
 }
