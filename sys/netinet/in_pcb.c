@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.282 2023/12/07 16:08:30 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.283 2024/01/01 22:16:51 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -573,17 +573,9 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 void
 in_pcbdisconnect(struct inpcb *inp)
 {
-	/*
-	 * XXXSMP pf lock sleeps, so we cannot use table->inpt_mtx
-	 * to keep inp_pf_sk in sync with pcb.  Use net lock for now.
-	 */
-	NET_ASSERT_LOCKED_EXCLUSIVE();
 #if NPF > 0
-	if (inp->inp_pf_sk) {
-		pf_remove_divert_state(inp->inp_pf_sk);
-		/* pf_remove_divert_state() may have detached the state */
-		pf_inp_unlink(inp);
-	}
+	pf_remove_divert_state(inp);
+	pf_inp_unlink(inp);
 #endif
 	inp->inp_flowid = 0;
 	if (inp->inp_socket->so_state & SS_NOFDREF)
@@ -616,17 +608,9 @@ in_pcbdetach(struct inpcb *inp)
 #endif
 		ip_freemoptions(inp->inp_moptions);
 
-	/*
-	 * XXXSMP pf lock sleeps, so we cannot use table->inpt_mtx
-	 * to keep inp_pf_sk in sync with pcb.  Use net lock for now.
-	 */
-	NET_ASSERT_LOCKED_EXCLUSIVE();
 #if NPF > 0
-	if (inp->inp_pf_sk) {
-		pf_remove_divert_state(inp->inp_pf_sk);
-		/* pf_remove_divert_state() may have detached the state */
-		pf_inp_unlink(inp);
-	}
+	pf_remove_divert_state(inp);
+	pf_inp_unlink(inp);
 #endif
 	mtx_enter(&table->inpt_mtx);
 	LIST_REMOVE(inp, inp_lhash);

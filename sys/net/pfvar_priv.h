@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.34 2023/07/06 04:55:05 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.35 2024/01/01 22:16:51 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -41,6 +41,11 @@
 #include <sys/mutex.h>
 #include <sys/percpu.h>
 
+/*
+ * Locks used to protect struct members in this file:
+ *	L	pf_inp_mtx		link pf to inp mutex
+ */
+
 struct pfsync_deferral;
 
 /*
@@ -70,7 +75,7 @@ struct pf_state_key {
 	RB_ENTRY(pf_state_key)	 sk_entry;
 	struct pf_statelisthead	 sk_states;
 	struct pf_state_key	*sk_reverse;
-	struct inpcb		*sk_inp;
+	struct inpcb		*sk_inp;	/* [L] */
 	pf_refcnt_t		 sk_refcnt;
 	u_int8_t		 sk_removed;
 };
@@ -365,6 +370,7 @@ void			 pf_state_unref(struct pf_state *);
 
 extern struct rwlock	pf_lock;
 extern struct rwlock	pf_state_lock;
+extern struct mutex	pf_inp_mtx;
 
 #define PF_LOCK()		do {			\
 		rw_enter_write(&pf_lock);		\
