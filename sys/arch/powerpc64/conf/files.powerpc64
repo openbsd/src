@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.27 2021/10/05 04:55:53 deraadt Exp $
+# $OpenBSD: files.powerpc64,v 1.28 2024/01/01 18:25:50 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -45,8 +45,6 @@ file	arch/powerpc64/dev/kexec_subr.S		kexec needs-flag
 
 pseudo-device	openprom
 file	arch/powerpc64/powerpc64/openprom.c	openprom needs-flag
-
-define	fdt {[early = 0]}
 
 # mainbus files
 define	mainbus {}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.58 2020/10/25 10:31:33 visa Exp $
+#	$OpenBSD: files.octeon,v 1.59 2024/01/01 18:25:50 kettenis Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -74,7 +74,6 @@ file	arch/octeon/dev/cn30xxipd.c			iobus
 file	arch/octeon/dev/cn30xxpko.c			iobus
 file	arch/octeon/dev/cn30xxasx.c			iobus
 
-define	fdt {[early = 0]}
 define	fdt_octeon {[early = 0]}
 
 device	simplebus: fdt, fdt_octeon

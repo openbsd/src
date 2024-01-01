@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.27 2023/09/23 18:29:55 kettenis Exp $
+#	$OpenBSD: files.riscv64,v 1.28 2024/01/01 18:25:50 kettenis Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -45,8 +45,6 @@ file	arch/riscv64/dev/pci_machdep.c
 
 pseudo-device	openprom
 file	arch/riscv64/riscv64/openprom.c		openprom needs-flag
-
-define	fdt {[early = 0]}
 
 #
 # mainbus

@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.67 2023/12/11 11:15:44 claudio Exp $
+# $OpenBSD: files.arm64,v 1.68 2024/01/01 18:25:50 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -50,8 +50,6 @@ file	arch/arm64/arm64/disasm.c		ddb
 
 pseudo-device	openprom
 file	arch/arm64/arm64/openprom.c		openprom needs-flag
-
-define	fdt {[early = 0]}
 
 # mainbus files
 define	mainbus {}

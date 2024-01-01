@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.728 2023/12/28 17:36:29 stsp Exp $
+#	$OpenBSD: files,v 1.729 2024/01/01 18:25:50 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -22,6 +22,7 @@ define	gpiobus {}
 define	onewirebus {}
 define	video {}
 define	intrmap {}
+define	fdt {[early = 0]}
 
 # filesystem firmware loading attribute
 define firmload
