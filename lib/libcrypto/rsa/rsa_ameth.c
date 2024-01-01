@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.53 2023/12/28 21:58:12 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.54 2024/01/01 15:43:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -73,6 +73,10 @@
 #include "evp_local.h"
 #include "rsa_local.h"
 #include "x509_local.h"
+
+/* Macros to test if a pkey or ctx is for a PSS key */
+#define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
+#define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);
