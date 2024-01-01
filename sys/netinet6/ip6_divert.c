@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.90 2023/09/16 09:33:27 mpi Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.91 2024/01/01 18:52:09 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -33,6 +33,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
+#include <netinet/ip_divert.h>
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_divert.h>
@@ -65,11 +66,11 @@ const struct sysctl_bounded_args divert6ctl_vars[] = {
 
 const struct pr_usrreqs divert6_usrreqs = {
 	.pru_attach	= divert6_attach,
-	.pru_detach	= divert6_detach,
-	.pru_lock	= divert6_lock,
-	.pru_unlock	= divert6_unlock,
-	.pru_bind	= divert6_bind,
-	.pru_shutdown	= divert6_shutdown,
+	.pru_detach	= divert_detach,
+	.pru_lock	= divert_lock,
+	.pru_unlock	= divert_unlock,
+	.pru_bind	= divert_bind,
+	.pru_shutdown	= divert_shutdown,
 	.pru_send	= divert6_send,
 	.pru_control	= in6_control,
 	.pru_sockaddr	= in6_sockaddr,
@@ -272,7 +273,6 @@ divert6_attach(struct socket *so, int proto, int wait)
 
 	if (so->so_pcb != NULL)
 		return EINVAL;
-
 	if ((so->so_state & SS_PRIV) == 0)
 		return EACCES;
 
@@ -283,57 +283,6 @@ divert6_attach(struct socket *so, int proto, int wait)
 	error = soreserve(so, divert6_sendspace, divert6_recvspace);
 	if (error)
 		return (error);
-	sotoinpcb(so)->inp_flags |= INP_HDRINCL;
-	return (0);
-}
-
-int
-divert6_detach(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	soassertlocked(so);
-
-	if (inp == NULL)
-		return (EINVAL);
-
-	in_pcbdetach(inp);
-
-	return (0);
-}
-
-void
-divert6_lock(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	NET_ASSERT_LOCKED();
-	mtx_enter(&inp->inp_mtx);
-}
-
-void
-divert6_unlock(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	NET_ASSERT_LOCKED();
-	mtx_leave(&inp->inp_mtx);
-}
-
-int
-divert6_bind(struct socket *so, struct mbuf *addr, struct proc *p)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	soassertlocked(so);
-	return in_pcbbind(inp, addr, p);
-}
-
-int
-divert6_shutdown(struct socket *so)
-{
-	soassertlocked(so);
-	socantsendmore(so);
 
 	return (0);
 }
