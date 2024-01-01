@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1190 2023/12/28 16:21:08 aisha Exp $ */
+/*	$OpenBSD: pf.c,v 1.1191 2024/01/01 17:00:57 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1605,11 +1605,11 @@ pf_purge_states_tick(void *null)
 		timeout_add_sec(&pf_purge_states_to, 1);
 		return;
 	}
- 
+
 	/*
 	 * process a fraction of the state table every second
 	 */
- 
+
 	if (interval > 1)
 		limit /= interval;
 
@@ -1662,12 +1662,12 @@ pf_purge(void *null)
 	pf_purge_expired_src_nodes();
 
 	PF_UNLOCK();
- 
+
 	/*
 	 * Fragments don't require PF_LOCK(), they use their own lock.
 	 */
 	pf_purge_expired_fragments();
- 
+
 	/* interpret the interval as idle time between runs */
 	timeout_add_sec(&pf_purge_to, interval);
 }
@@ -4285,8 +4285,8 @@ enter_ruleset:
 			if (r->anchor_wildcard) {
 				RB_FOREACH(child, pf_anchor_node,
 				    &r->anchor->children) {
-					if (pf_anchor_stack_push(ruleset, r, child,
-					    PF_NEXT_CHILD) != 0)
+					if (pf_anchor_stack_push(ruleset, r,
+					    child, PF_NEXT_CHILD) != 0)
 						return (PF_TEST_FAIL);
 
 					ruleset = &child->ruleset;
