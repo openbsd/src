@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.9 2024/01/02 20:00:45 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.10 2024/01/02 20:48:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -741,12 +741,6 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 }
 
 int
-EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
-{
-	return cipher->block_size;
-}
-
-int
 EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->block_size;
@@ -762,12 +756,6 @@ int
 EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->encrypt;
-}
-
-unsigned long
-EVP_CIPHER_flags(const EVP_CIPHER *cipher)
-{
-	return cipher->flags;
 }
 
 unsigned long
@@ -806,12 +794,6 @@ EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 }
 
 int
-EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
-{
-	return cipher->iv_len;
-}
-
-int
 EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
 	int iv_length = 0;
@@ -837,21 +819,9 @@ EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
 }
 
 int
-EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
-{
-	return cipher->key_len;
-}
-
-int
 EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->key_len;
-}
-
-int
-EVP_CIPHER_nid(const EVP_CIPHER *cipher)
-{
-	return cipher->nid;
 }
 
 int
@@ -1034,6 +1004,40 @@ EVP_CIPHER_type(const EVP_CIPHER *cipher)
 
 		return nid;
 	}
+}
+
+/*
+ * Accessors. First the trivial getters, then the setters for the method API.
+ */
+
+int
+EVP_CIPHER_nid(const EVP_CIPHER *cipher)
+{
+	return cipher->nid;
+}
+
+int
+EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
+{
+	return cipher->block_size;
+}
+
+int
+EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
+{
+	return cipher->key_len;
+}
+
+int
+EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
+{
+	return cipher->iv_len;
+}
+
+unsigned long
+EVP_CIPHER_flags(const EVP_CIPHER *cipher)
+{
+	return cipher->flags;
 }
 
 EVP_CIPHER *
