@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.199 2024/01/02 16:32:47 bluhm Exp $
+#	$OpenBSD: newvers.sh,v 1.200 2024/01/02 16:40:03 bluhm Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -42,7 +42,6 @@ fi
 touch version
 v=`cat version` u=`logname` d=${PWD%/obj} h=`hostname` t=`date`
 id=`basename "${d}"`
-git=`git rev-parse --abbrev-ref HEAD`
 
 # additional things which need version number upgrades:
 #	sys/sys/param.h:
@@ -85,7 +84,7 @@ const char osversion[] = "${id}#${v}";
 const char sccs[] =
     "    @(#)${ost} ${osr}" STATUS " (${id}) #${v}: ${t}\n";
 const char version[512] =
-    "${ost} ${osr}" STATUS " (${id}) #${v}: ${t}\n    ${u}@${h}:${d}*${git}\n";
+    "${ost} ${osr}" STATUS " (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
 eof
 
 expr ${v} + 1 > version
