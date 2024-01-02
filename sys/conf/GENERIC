@@ -1,8 +1,9 @@
-#	$OpenBSD: GENERIC,v 1.291 2023/10/04 18:07:13 bluhm Exp $
+#	$OpenBSD: GENERIC,v 1.292 2024/01/02 16:32:47 bluhm Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
 
+option		HZ=50		# qemu cannot handle more
 option		DDB		# in-kernel debugger
 #option		DDBPROF		# ddb(4) based profiling
 #option		DDB_SAFE_CONSOLE # allow break into ddb during boot

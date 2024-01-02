@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.28 2023/07/14 07:07:08 claudio Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.29 2024/01/02 16:32:48 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -160,12 +160,12 @@ int
 dtopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct dt_softc *sc;
+	struct dt_evt *queue;
+	size_t qlen;
 	int unit = minor(dev);
 
 	if (!allowdt)
 		return EPERM;
-
-	KASSERT(dtlookup(unit) == NULL);
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
 	if (sc == NULL)
@@ -174,16 +174,26 @@ dtopen(dev_t dev, int flags, int mode, struct proc *p)
 	/*
 	 * Enough space to empty 2 full rings of events in a single read.
 	 */
-	sc->ds_bufqlen = 2 * DT_EVTRING_SIZE;
-	sc->ds_bufqueue = mallocarray(sc->ds_bufqlen, sizeof(*sc->ds_bufqueue),
-	    M_DEVBUF, M_WAITOK|M_CANFAIL);
-	if (sc->ds_bufqueue == NULL)
-		goto bad;
+	qlen = 2 * DT_EVTRING_SIZE;
+	queue = mallocarray(qlen, sizeof(*queue), M_DEVBUF, M_WAITOK|M_CANFAIL);
+	if (queue == NULL) {
+		free(sc, M_DEVBUF, sizeof(*sc));
+		return ENOMEM;
+	}
+
+	/* no sleep after this point */
+	if (dtlookup(unit) != NULL) {
+		free(queue, M_DEVBUF, qlen * sizeof(*queue));
+		free(sc, M_DEVBUF, sizeof(*sc));
+		return EBUSY;
+	}
 
 	sc->ds_unit = unit;
 	sc->ds_pid = p->p_p->ps_pid;
 	TAILQ_INIT(&sc->ds_pcbs);
 	mtx_init(&sc->ds_mtx, IPL_HIGH);
+	sc->ds_bufqlen = qlen;
+	sc->ds_bufqueue = queue;
 	sc->ds_evtcnt = 0;
 	sc->ds_readevt = 0;
 	sc->ds_dropevt = 0;
@@ -193,10 +203,6 @@ dtopen(dev_t dev, int flags, int mode, struct proc *p)
 	DPRINTF("dt%d: pid %d open\n", sc->ds_unit, sc->ds_pid);
 
 	return 0;
-
-bad:
-	free(sc, M_DEVBUF, sizeof(*sc));
-	return ENOMEM;
 }
 
 int
