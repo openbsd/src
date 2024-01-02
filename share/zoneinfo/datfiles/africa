@@ -1,4 +1,4 @@
-# $OpenBSD: africa,v 1.73 2023/03/23 16:12:10 millert Exp $
+# $OpenBSD: africa,v 1.74 2024/01/02 22:43:20 millert Exp $
 # tzdb data for Africa and environs
 
 # This file is in the public domain, so clarified as of
@@ -340,13 +340,6 @@ Rule	Egypt	2007	only	-	Sep	Thu>=1	24:00	0	-
 # o'clock on the evening of Thursday, 31 JUL 2014."  This statement has been
 # reproduced by other (more accessible) sites[, e.g.,]...
 # http://elgornal.net/news/news.aspx?id=4699258
-
-# From Paul Eggert (2014-06-04):
-# Sarah El Deeb and Lee Keath of AP report that the Egyptian government says
-# the change is because of blackouts in Cairo, even though Ahram Online (cited
-# above) says DST had no affect on electricity consumption.  There is
-# no information about when DST will end this fall.  See:
-# http://abcnews.go.com/International/wireStory/el-sissi-pushes-egyptians-line-23614833
 
 # From Steffen Thorsen (2015-04-08):
 # Egypt will start DST on midnight after Thursday, April 30, 2015.

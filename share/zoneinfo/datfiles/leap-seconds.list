@@ -1,4 +1,4 @@
-#	$OpenBSD: leap-seconds.list,v 1.1 2023/11/17 21:51:37 millert Exp $
+#	$OpenBSD: leap-seconds.list,v 1.2 2024/01/02 22:43:20 millert Exp $
 #
 #	In the following text, the symbol '#' introduces
 #	a comment, which continues from that symbol until
@@ -205,10 +205,10 @@
 #	current -- the update time stamp, the data and the name of the file
 #	will not change.
 #
-#	Updated through IERS Bulletin C65
-#	File expires on:  28 December 2023
+#	Updated through IERS Bulletin C66
+#	File expires on:  28 June 2024
 #
-#@	3912710400
+#@	3928521600
 #
 2272060800	10	# 1 Jan 1972
 2287785600	11	# 1 Jul 1972
@@ -253,4 +253,4 @@
 #	the hash line is also ignored in the
 #	computation.
 #
-#h 	e76a99dc 65f15cc7 e613e040 f5078b5e b23834fe
+#h 	16edd0f0 3666784f 37db6bdd e74ced87 59af48f1
