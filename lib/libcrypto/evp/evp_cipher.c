@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.10 2024/01/02 20:48:40 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.11 2024/01/02 21:12:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -740,12 +740,6 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 	return 1;
 }
 
-int
-EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
-{
-	return ctx->cipher->block_size;
-}
-
 const EVP_CIPHER *
 EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 {
@@ -756,12 +750,6 @@ int
 EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->encrypt;
-}
-
-unsigned long
-EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
-{
-	return ctx->cipher->flags;
 }
 
 void *
@@ -793,25 +781,6 @@ EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 	return old_cipher_data;
 }
 
-int
-EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
-{
-	int iv_length = 0;
-
-	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_IV_LENGTH) == 0)
-		return ctx->cipher->iv_len;
-
-	/*
-	 * XXX - sanity would suggest to pass the size of the pointer along,
-	 * but unfortunately we have to match the other crowd.
-	 */
-	if (EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN, 0,
-	    &iv_length) != 1)
-		return -1;
-
-	return iv_length;
-}
-
 unsigned char *
 EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
 {
@@ -822,12 +791,6 @@ int
 EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->key_len;
-}
-
-int
-EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
-{
-	return ctx->cipher->nid;
 }
 
 int
@@ -884,6 +847,47 @@ int
 EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 {
 	return (ctx->flags & flags);
+}
+
+/*
+ * EVP_CIPHER_CTX getters that reach into the cipher attachted to the contex.
+ */
+
+int
+EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
+{
+	return ctx->cipher->nid;
+}
+
+int
+EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
+{
+	return ctx->cipher->block_size;
+}
+
+int
+EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
+{
+	int iv_length = 0;
+
+	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_IV_LENGTH) == 0)
+		return ctx->cipher->iv_len;
+
+	/*
+	 * XXX - sanity would suggest to pass the size of the pointer along,
+	 * but unfortunately we have to match the other crowd.
+	 */
+	if (EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN, 0,
+	    &iv_length) != 1)
+		return -1;
+
+	return iv_length;
+}
+
+unsigned long
+EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
+{
+	return ctx->cipher->flags;
 }
 
 /*
