@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.11 2024/01/02 21:12:25 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.12 2024/01/02 21:24:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -643,33 +643,6 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *ctx)
 }
 
 int
-EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *ctx, int key_len)
-{
-	/* XXX - remove this. It's unused. */
-	if (ctx->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
-		return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_KEY_LENGTH,
-		    key_len, NULL);
-	if (ctx->key_len == key_len)
-		return 1;
-	if (key_len > 0 && (ctx->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
-		ctx->key_len = key_len;
-		return 1;
-	}
-	EVPerror(EVP_R_INVALID_KEY_LENGTH);
-	return 0;
-}
-
-int
-EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
-{
-	if (pad)
-		ctx->flags &= ~EVP_CIPH_NO_PADDING;
-	else
-		ctx->flags |= EVP_CIPH_NO_PADDING;
-	return 1;
-}
-
-int
 EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
 	int ret;
@@ -740,6 +713,10 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 	return 1;
 }
 
+/*
+ * EVP_CIPHER_CTX accessors.
+ */
+
 const EVP_CIPHER *
 EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 {
@@ -750,47 +727,6 @@ int
 EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->encrypt;
-}
-
-void *
-EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
-{
-	return ctx->app_data;
-}
-
-void
-EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
-{
-	ctx->app_data = data;
-}
-
-void *
-EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx)
-{
-	return ctx->cipher_data;
-}
-
-void *
-EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
-{
-	void *old_cipher_data;
-
-	old_cipher_data = ctx->cipher_data;
-	ctx->cipher_data = cipher_data;
-
-	return old_cipher_data;
-}
-
-unsigned char *
-EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
-{
-	return ctx->buf;
-}
-
-int
-EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
-{
-	return ctx->key_len;
 }
 
 int
@@ -831,6 +767,57 @@ EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
 	return 1;
 }
 
+unsigned char *
+EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
+{
+	return ctx->buf;
+}
+
+void *
+EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
+{
+	return ctx->app_data;
+}
+
+void
+EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
+{
+	ctx->app_data = data;
+}
+
+int
+EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
+{
+	return ctx->key_len;
+}
+
+int
+EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *ctx, int key_len)
+{
+	/* XXX - remove this. It's unused. */
+	if (ctx->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
+		return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_KEY_LENGTH,
+		    key_len, NULL);
+	if (ctx->key_len == key_len)
+		return 1;
+	if (key_len > 0 && (ctx->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
+		ctx->key_len = key_len;
+		return 1;
+	}
+	EVPerror(EVP_R_INVALID_KEY_LENGTH);
+	return 0;
+}
+
+int
+EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
+{
+	if (pad)
+		ctx->flags &= ~EVP_CIPH_NO_PADDING;
+	else
+		ctx->flags |= EVP_CIPH_NO_PADDING;
+	return 1;
+}
+
 void
 EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags)
 {
@@ -847,6 +834,23 @@ int
 EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 {
 	return (ctx->flags & flags);
+}
+
+void *
+EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx)
+{
+	return ctx->cipher_data;
+}
+
+void *
+EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
+{
+	void *old_cipher_data;
+
+	old_cipher_data = ctx->cipher_data;
+	ctx->cipher_data = cipher_data;
+
+	return old_cipher_data;
 }
 
 /*
