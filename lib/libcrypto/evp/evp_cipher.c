@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.12 2024/01/02 21:24:42 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.13 2024/01/02 21:27:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -854,7 +854,7 @@ EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 }
 
 /*
- * EVP_CIPHER_CTX getters that reach into the cipher attachted to the contex.
+ * EVP_CIPHER_CTX getters that reach into the cipher attached to the context.
  */
 
 int
