@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.1 2023/12/28 17:36:29 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.2 2024/01/02 17:39:08 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -208,6 +208,8 @@ qwx_init(struct ifnet *ifp)
 
 		ieee80211_begin_scan(ifp);
 	} else {
+		sc->attached = 1;
+
 		/* Configure MAC address at boot-time. */
 		error = if_setlladdr(ifp, ic->ic_myaddr);
 		if (error)
@@ -18328,8 +18330,6 @@ qwx_attach(struct qwx_softc *sc)
 	error = qwx_init(ifp);
 	if (error)
 		return error;
-
-	sc->attached = 1;
 
 	/* Turn device off until interface comes up. */
 	qwx_core_deinit(sc);
