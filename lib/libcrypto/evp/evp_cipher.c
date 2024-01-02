@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.7 2024/01/02 18:48:02 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.8 2024/01/02 19:56:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -741,126 +741,6 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 }
 
 int
-EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
-{
-	int ret;
-
-	if (ctx->cipher->set_asn1_parameters != NULL)
-		ret = ctx->cipher->set_asn1_parameters(ctx, type);
-	else if (ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
-		ret = EVP_CIPHER_set_asn1_iv(ctx, type);
-	else
-		ret = -1;
-	return (ret);
-}
-
-int
-EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
-{
-	int ret;
-
-	if (ctx->cipher->get_asn1_parameters != NULL)
-		ret = ctx->cipher->get_asn1_parameters(ctx, type);
-	else if (ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
-		ret = EVP_CIPHER_get_asn1_iv(ctx, type);
-	else
-		ret = -1;
-	return (ret);
-}
-
-int
-EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
-{
-	int i = 0;
-	int l;
-
-	if (type != NULL) {
-		l = EVP_CIPHER_CTX_iv_length(ctx);
-		if (l < 0 || l > sizeof(ctx->iv)) {
-			EVPerror(EVP_R_IV_TOO_LARGE);
-			return 0;
-		}
-		i = ASN1_TYPE_get_octetstring(type, ctx->oiv, l);
-		if (i != l)
-			return (-1);
-		else if (i > 0)
-			memcpy(ctx->iv, ctx->oiv, l);
-	}
-	return (i);
-}
-
-int
-EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
-{
-	int i = 0;
-	int j;
-
-	if (type != NULL) {
-		j = EVP_CIPHER_CTX_iv_length(ctx);
-		if (j < 0 || j > sizeof(ctx->iv)) {
-			EVPerror(EVP_R_IV_TOO_LARGE);
-			return 0;
-		}
-		i = ASN1_TYPE_set_octetstring(type, ctx->oiv, j);
-	}
-	return (i);
-}
-
-/* Convert the various cipher NIDs and dummies to a proper OID NID */
-int
-EVP_CIPHER_type(const EVP_CIPHER *cipher)
-{
-	ASN1_OBJECT *aobj;
-	int nid;
-
-	nid = EVP_CIPHER_nid(cipher);
-	switch (nid) {
-	case NID_rc2_cbc:
-	case NID_rc2_64_cbc:
-	case NID_rc2_40_cbc:
-		return NID_rc2_cbc;
-
-	case NID_rc4:
-	case NID_rc4_40:
-		return NID_rc4;
-
-	case NID_aes_128_cfb128:
-	case NID_aes_128_cfb8:
-	case NID_aes_128_cfb1:
-		return NID_aes_128_cfb128;
-
-	case NID_aes_192_cfb128:
-	case NID_aes_192_cfb8:
-	case NID_aes_192_cfb1:
-		return NID_aes_192_cfb128;
-
-	case NID_aes_256_cfb128:
-	case NID_aes_256_cfb8:
-	case NID_aes_256_cfb1:
-		return NID_aes_256_cfb128;
-
-	case NID_des_cfb64:
-	case NID_des_cfb8:
-	case NID_des_cfb1:
-		return NID_des_cfb64;
-
-	case NID_des_ede3_cfb64:
-	case NID_des_ede3_cfb8:
-	case NID_des_ede3_cfb1:
-		return NID_des_cfb64;
-
-	default:
-		/* Check it has an OID and it is valid */
-		if (((aobj = OBJ_nid2obj(nid)) == NULL) || aobj->data == NULL)
-			nid = NID_undef;
-
-		ASN1_OBJECT_free(aobj);
-
-		return nid;
-	}
-}
-
-int
 EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
 {
 	return cipher->block_size;
@@ -1034,6 +914,130 @@ int
 EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 {
 	return (ctx->flags & flags);
+}
+
+/*
+ * Used by CMS and its predecessors. Only GOST and RC2 have a custom method.
+ */
+
+int
+EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+{
+	int ret;
+
+	if (ctx->cipher->set_asn1_parameters != NULL)
+		ret = ctx->cipher->set_asn1_parameters(ctx, type);
+	else if (ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret = EVP_CIPHER_set_asn1_iv(ctx, type);
+	else
+		ret = -1;
+	return (ret);
+}
+
+int
+EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+{
+	int ret;
+
+	if (ctx->cipher->get_asn1_parameters != NULL)
+		ret = ctx->cipher->get_asn1_parameters(ctx, type);
+	else if (ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret = EVP_CIPHER_get_asn1_iv(ctx, type);
+	else
+		ret = -1;
+	return (ret);
+}
+
+int
+EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+{
+	int i = 0;
+	int l;
+
+	if (type != NULL) {
+		l = EVP_CIPHER_CTX_iv_length(ctx);
+		if (l < 0 || l > sizeof(ctx->iv)) {
+			EVPerror(EVP_R_IV_TOO_LARGE);
+			return 0;
+		}
+		i = ASN1_TYPE_get_octetstring(type, ctx->oiv, l);
+		if (i != l)
+			return (-1);
+		else if (i > 0)
+			memcpy(ctx->iv, ctx->oiv, l);
+	}
+	return (i);
+}
+
+int
+EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+{
+	int i = 0;
+	int j;
+
+	if (type != NULL) {
+		j = EVP_CIPHER_CTX_iv_length(ctx);
+		if (j < 0 || j > sizeof(ctx->iv)) {
+			EVPerror(EVP_R_IV_TOO_LARGE);
+			return 0;
+		}
+		i = ASN1_TYPE_set_octetstring(type, ctx->oiv, j);
+	}
+	return (i);
+}
+
+/* Convert the various cipher NIDs and dummies to a proper OID NID */
+int
+EVP_CIPHER_type(const EVP_CIPHER *cipher)
+{
+	ASN1_OBJECT *aobj;
+	int nid;
+
+	nid = EVP_CIPHER_nid(cipher);
+	switch (nid) {
+	case NID_rc2_cbc:
+	case NID_rc2_64_cbc:
+	case NID_rc2_40_cbc:
+		return NID_rc2_cbc;
+
+	case NID_rc4:
+	case NID_rc4_40:
+		return NID_rc4;
+
+	case NID_aes_128_cfb128:
+	case NID_aes_128_cfb8:
+	case NID_aes_128_cfb1:
+		return NID_aes_128_cfb128;
+
+	case NID_aes_192_cfb128:
+	case NID_aes_192_cfb8:
+	case NID_aes_192_cfb1:
+		return NID_aes_192_cfb128;
+
+	case NID_aes_256_cfb128:
+	case NID_aes_256_cfb8:
+	case NID_aes_256_cfb1:
+		return NID_aes_256_cfb128;
+
+	case NID_des_cfb64:
+	case NID_des_cfb8:
+	case NID_des_cfb1:
+		return NID_des_cfb64;
+
+	case NID_des_ede3_cfb64:
+	case NID_des_ede3_cfb8:
+	case NID_des_ede3_cfb1:
+		return NID_des_cfb64;
+
+	default:
+		/* Check it has an OID and it is valid */
+		if (((aobj = OBJ_nid2obj(nid)) == NULL) || aobj->data == NULL)
+			nid = NID_undef;
+
+		ASN1_OBJECT_free(aobj);
+
+		return nid;
+	}
 }
 
 EVP_CIPHER *
