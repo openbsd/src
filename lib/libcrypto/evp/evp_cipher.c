@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.4 2024/01/02 18:21:02 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.5 2024/01/02 18:28:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -807,12 +807,12 @@ EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
 int
-EVP_CIPHER_type(const EVP_CIPHER *ctx)
+EVP_CIPHER_type(const EVP_CIPHER *cipher)
 {
+	ASN1_OBJECT *aobj;
 	int nid;
-	ASN1_OBJECT *otmp;
-	nid = EVP_CIPHER_nid(ctx);
 
+	nid = EVP_CIPHER_nid(cipher);
 	switch (nid) {
 	case NID_rc2_cbc:
 	case NID_rc2_64_cbc:
@@ -850,10 +850,11 @@ EVP_CIPHER_type(const EVP_CIPHER *ctx)
 
 	default:
 		/* Check it has an OID and it is valid */
-		otmp = OBJ_nid2obj(nid);
-		if (!otmp || !otmp->data)
+		if (((aobj = OBJ_nid2obj(nid)) == NULL) || aobj->data == NULL)
 			nid = NID_undef;
-		ASN1_OBJECT_free(otmp);
+
+		ASN1_OBJECT_free(aobj);
+
 		return nid;
 	}
 }
