@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.6 2024/01/02 18:30:27 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.7 2024/01/02 18:48:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -643,15 +643,16 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *ctx)
 }
 
 int
-EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *ctx, int keylen)
+EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *ctx, int key_len)
 {
+	/* XXX - remove this. It's unused. */
 	if (ctx->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
 		return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_KEY_LENGTH,
-		    keylen, NULL);
-	if (ctx->key_len == keylen)
+		    key_len, NULL);
+	if (ctx->key_len == key_len)
 		return 1;
-	if (keylen > 0 && (ctx->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
-		ctx->key_len = keylen;
+	if (key_len > 0 && (ctx->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
+		ctx->key_len = key_len;
 		return 1;
 	}
 	EVPerror(EVP_R_INVALID_KEY_LENGTH);
