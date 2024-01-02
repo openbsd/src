@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.8 2024/01/02 19:56:43 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.9 2024/01/02 20:00:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -923,29 +923,25 @@ EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 int
 EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
-	int ret;
-
 	if (ctx->cipher->set_asn1_parameters != NULL)
-		ret = ctx->cipher->set_asn1_parameters(ctx, type);
-	else if (ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
-		ret = EVP_CIPHER_set_asn1_iv(ctx, type);
-	else
-		ret = -1;
-	return (ret);
+		return ctx->cipher->set_asn1_parameters(ctx, type);
+
+	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) != 0)
+		return EVP_CIPHER_set_asn1_iv(ctx, type);
+
+	return -1;
 }
 
 int
 EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
-	int ret;
-
 	if (ctx->cipher->get_asn1_parameters != NULL)
-		ret = ctx->cipher->get_asn1_parameters(ctx, type);
-	else if (ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
-		ret = EVP_CIPHER_get_asn1_iv(ctx, type);
-	else
-		ret = -1;
-	return (ret);
+		return ctx->cipher->get_asn1_parameters(ctx, type);
+
+	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) != 0)
+		return EVP_CIPHER_get_asn1_iv(ctx, type);
+
+	return -1;
 }
 
 int
