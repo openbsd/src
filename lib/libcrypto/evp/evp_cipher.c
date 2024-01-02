@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.5 2024/01/02 18:28:35 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.6 2024/01/02 18:30:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -860,9 +860,9 @@ EVP_CIPHER_type(const EVP_CIPHER *cipher)
 }
 
 int
-EVP_CIPHER_block_size(const EVP_CIPHER *e)
+EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
 {
-	return e->block_size;
+	return cipher->block_size;
 }
 
 int
