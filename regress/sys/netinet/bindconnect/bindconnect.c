@@ -1,4 +1,4 @@
-/*	$OpenBSD: bindconnect.c,v 1.3 2023/12/07 23:47:48 bluhm Exp $	*/
+/*	$OpenBSD: bindconnect.c,v 1.4 2024/01/02 15:06:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2023 Alexander Bluhm <bluhm@openbsd.org>
@@ -25,13 +25,14 @@
 
 #include <err.h>
 #include <errno.h>
+#include <netdb.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#define MAX(a, b)	((a) > (b) ? (a) : (b))
+#define MAXIMUM(a, b)	((a) > (b) ? (a) : (b))
 
 #define s6_addr8	__u6_addr.__u6_addr8
 #define s6_addr16	__u6_addr.__u6_addr16
@@ -54,27 +55,28 @@ unsigned int run_time = 10;
 unsigned int socket_num = 1, close_num = 1, bind_num = 1, connect_num = 1,
     delroute_num = 0;
 int reuse_port = 0;
-const char *family = "inet";
 union inaddr_union addr, mask;
-int af, prefix = -1, route_sock = -1;
+int af = AF_INET, type, proto = IPPROTO_UDP, prefix = -1, route_sock = -1;
 
 static void __dead
 usage(void)
 {
 	fprintf(stderr,
 	    "bindconnect [-r] [-b bind] [-c connect] [-d delroute]\n"
-	    "[-N addr/net] [-n num] [-o close] [-s socket] [-t time]\n"
+	    "[-f family] [-N addr/net] [-n num] [-o close] [-s socket]\n"
+	    "[-t time]\n"
 	    "    -b bind      threads binding sockets, default %u\n"
 	    "    -c connect   threads connecting sockets, default %u\n"
 	    "    -d delroute  threads deleting cloned routes, default %u\n"
-	    "    -f family    address family inet or inet6, default %s\n"
+	    "    -f family    address family inet or inet6, default inet\n"
 	    "    -N addr/net  connect to any address within network\n"
 	    "    -n num       number of file descriptors, default %u\n"
 	    "    -o close     threads closing sockets, default %u\n"
+	    "    -p proto     protocol udp, tcp, name or number, default udp\n"
 	    "    -r           set reuse port socket option\n"
 	    "    -s socket    threads creating sockets, default %u\n"
 	    "    -t time      run time in seconds, default %u\n",
-	    bind_num, connect_num, delroute_num, family, fd_num, close_num,
+	    bind_num, connect_num, delroute_num, fd_num, close_num,
 	    socket_num, run_time);
 	exit(2);
 }
@@ -164,7 +166,7 @@ thread_socket(void *arg)
 	for (count = 0; *run; count++) {
 		int opt;
 
-		fd = socket(af, SOCK_DGRAM, IPPROTO_UDP);
+		fd = socket(af, type | SOCK_NONBLOCK, proto);
 		if (fd < 0 || !reuse_port)
 			continue;
 		opt = 1;
@@ -286,6 +288,7 @@ int
 main(int argc, char *argv[])
 {
 	struct rlimit rlim;
+	struct protoent *pent;
 	pthread_t *tsocket, *tclose, *tbind, *tconnect, *tdelroute;
 	const char *errstr, *addr_net = NULL;
 	char buf[128], *p;
@@ -295,7 +298,7 @@ main(int argc, char *argv[])
 	    delroute_count;
 	union sockaddr_union su;
 
-	while ((ch = getopt(argc, argv, "b:c:d:f:N:n:o:rs:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:c:d:f:N:n:o:p:rs:t:")) != -1) {
 		switch (ch) {
 		case 'b':
 			bind_num = strtonum(optarg, 0, UINT_MAX, &errstr);
@@ -313,7 +316,12 @@ main(int argc, char *argv[])
 				errx(1, "delroute is %s: %s", errstr, optarg);
 			break;
 		case 'f':
-			family = optarg;
+			if (strcmp(optarg, "inet") == 0)
+				af = AF_INET;
+			else if (strcmp(optarg, "inet6") == 0)
+				af = AF_INET6;
+			else
+				errx(1, "bad address family %s", optarg);
 			break;
 		case 'N':
 			addr_net = optarg;
@@ -327,6 +335,16 @@ main(int argc, char *argv[])
 			close_num = strtonum(optarg, 0, UINT_MAX, &errstr);
 			if (errstr != NULL)
 				errx(1, "close is %s: %s", errstr, optarg);
+			break;
+		case 'p':
+			pent = getprotobyname(optarg);
+			if (pent != NULL) {
+				proto = pent->p_proto;
+				break;
+			}
+			proto = strtonum(optarg, 0, IPPROTO_MAX -1 , &errstr);
+			if (errstr != NULL)
+				errx(1, "proto is %s: %s", errstr, optarg);
 			break;
 		case 'r':
 			reuse_port = 1;
@@ -349,13 +367,6 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc > 0)
 		usage();
-
-	if (strcmp(family, "inet") == 0)
-		af = AF_INET;
-	else if (strcmp(family, "inet6") == 0)
-		af = AF_INET6;
-	else
-		errx(1, "bad address family %s", family);
 
 	/* split addr/net into addr, mask, prefix */
 	if (addr_net != NULL) {
@@ -394,7 +405,18 @@ main(int argc, char *argv[])
 	}
 
 	/* detect lowest file desciptor, test bind, close everything above */
-	fd_base = socket(af, SOCK_DGRAM, IPPROTO_UDP);
+	switch (proto) {
+	case IPPROTO_TCP:
+		type = SOCK_STREAM;
+		break;
+	case IPPROTO_UDP:
+		type = SOCK_DGRAM;
+		break;
+	default:
+		type = SOCK_RAW;
+		break;
+	}
+	fd_base = socket(af, type, proto);
 	if (fd_base < 0)
 		err(1, "socket fd_base");
 	if (fd_base > INT_MAX - (int)fd_num)
@@ -407,7 +429,7 @@ main(int argc, char *argv[])
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim) < 0)
 		err(1, "getrlimit");
-	rlim.rlim_max = MAX(rlim.rlim_max, fd_base + fd_num);
+	rlim.rlim_max = MAXIMUM(rlim.rlim_max, fd_base + fd_num);
 	rlim.rlim_cur = fd_base + fd_num;
 	if (setrlimit(RLIMIT_NOFILE, &rlim) < 0)
 		err(1, "setrlimit %llu", rlim.rlim_cur);
