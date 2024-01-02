@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.3 2023/12/29 06:56:38 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.4 2024/01/02 18:21:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -618,40 +618,40 @@ EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 }
 
 int
-EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *a)
+EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 {
-	return EVP_CIPHER_CTX_cleanup(a);
+	return EVP_CIPHER_CTX_cleanup(ctx);
 }
 
 int
-EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
+EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *ctx)
 {
-	if (c->cipher != NULL) {
+	if (ctx->cipher != NULL) {
 		/* XXX - Avoid leaks, so ignore return value of cleanup()... */
-		if (c->cipher->cleanup != NULL)
-			c->cipher->cleanup(c);
-		if (c->cipher_data != NULL)
-			explicit_bzero(c->cipher_data, c->cipher->ctx_size);
+		if (ctx->cipher->cleanup != NULL)
+			ctx->cipher->cleanup(ctx);
+		if (ctx->cipher_data != NULL)
+			explicit_bzero(ctx->cipher_data, ctx->cipher->ctx_size);
 	}
 
 	/* XXX - store size of cipher_data so we can always freezero(). */
-	free(c->cipher_data);
+	free(ctx->cipher_data);
 
-	explicit_bzero(c, sizeof(EVP_CIPHER_CTX));
+	explicit_bzero(ctx, sizeof(EVP_CIPHER_CTX));
 
 	return 1;
 }
 
 int
-EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
+EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *ctx, int keylen)
 {
-	if (c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
-		return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH,
+	if (ctx->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH)
+		return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_KEY_LENGTH,
 		    keylen, NULL);
-	if (c->key_len == keylen)
+	if (ctx->key_len == keylen)
 		return 1;
-	if (keylen > 0 && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
-		c->key_len = keylen;
+	if (keylen > 0 && (ctx->cipher->flags & EVP_CIPH_VARIABLE_LENGTH)) {
+		ctx->key_len = keylen;
 		return 1;
 	}
 	EVPerror(EVP_R_INVALID_KEY_LENGTH);
@@ -740,67 +740,67 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 }
 
 int
-EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
 	int ret;
 
-	if (c->cipher->set_asn1_parameters != NULL)
-		ret = c->cipher->set_asn1_parameters(c, type);
-	else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
-		ret = EVP_CIPHER_set_asn1_iv(c, type);
+	if (ctx->cipher->set_asn1_parameters != NULL)
+		ret = ctx->cipher->set_asn1_parameters(ctx, type);
+	else if (ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret = EVP_CIPHER_set_asn1_iv(ctx, type);
 	else
 		ret = -1;
 	return (ret);
 }
 
 int
-EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
 	int ret;
 
-	if (c->cipher->get_asn1_parameters != NULL)
-		ret = c->cipher->get_asn1_parameters(c, type);
-	else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
-		ret = EVP_CIPHER_get_asn1_iv(c, type);
+	if (ctx->cipher->get_asn1_parameters != NULL)
+		ret = ctx->cipher->get_asn1_parameters(ctx, type);
+	else if (ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret = EVP_CIPHER_get_asn1_iv(ctx, type);
 	else
 		ret = -1;
 	return (ret);
 }
 
 int
-EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
 	int i = 0;
 	int l;
 
 	if (type != NULL) {
-		l = EVP_CIPHER_CTX_iv_length(c);
-		if (l < 0 || l > sizeof(c->iv)) {
+		l = EVP_CIPHER_CTX_iv_length(ctx);
+		if (l < 0 || l > sizeof(ctx->iv)) {
 			EVPerror(EVP_R_IV_TOO_LARGE);
 			return 0;
 		}
-		i = ASN1_TYPE_get_octetstring(type, c->oiv, l);
+		i = ASN1_TYPE_get_octetstring(type, ctx->oiv, l);
 		if (i != l)
 			return (-1);
 		else if (i > 0)
-			memcpy(c->iv, c->oiv, l);
+			memcpy(ctx->iv, ctx->oiv, l);
 	}
 	return (i);
 }
 
 int
-EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
 	int i = 0;
 	int j;
 
 	if (type != NULL) {
-		j = EVP_CIPHER_CTX_iv_length(c);
-		if (j < 0 || j > sizeof(c->iv)) {
+		j = EVP_CIPHER_CTX_iv_length(ctx);
+		if (j < 0 || j > sizeof(ctx->iv)) {
 			EVPerror(EVP_R_IV_TOO_LARGE);
 			return 0;
 		}
-		i = ASN1_TYPE_set_octetstring(type, c->oiv, j);
+		i = ASN1_TYPE_set_octetstring(type, ctx->oiv, j);
 	}
 	return (i);
 }
