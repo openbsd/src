@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.11 2023/11/30 12:50:41 miod Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.12 2024/01/03 21:41:44 tobhe Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -126,9 +126,9 @@ static const struct hidkbd_translation apple_tb_trans[] = {
 static const struct hidkbd_translation apple_fn_trans[] = {
 	{ 40, 73 },	/* return -> insert */
 	{ 42, 76 },	/* backspace -> delete */
+	{ 58, 233 },	/* F1 -> screen brightness down */
+	{ 59, 232 },	/* F2 -> screen brightness up */
 #ifdef notyet
-	{ 58, 0 },	/* F1 -> screen brightness down */
-	{ 59, 0 },	/* F2 -> screen brightness up */
 	{ 60, 0 },	/* F3 */
 	{ 61, 0 },	/* F4 */
 	{ 62, 0 },	/* F5 -> keyboard backlight down */
@@ -138,8 +138,6 @@ static const struct hidkbd_translation apple_fn_trans[] = {
 	{ 66, 0 },	/* F9 -> audio next */
 #endif
 #ifdef __macppc__
-	{ 58, 233 },	/* F1 -> screen brightness down */
-	{ 59, 232 },	/* F2 -> screen brightness up */
 	{ 60, 127 },	/* F3 -> audio mute */
 	{ 61, 129 },	/* F4 -> audio lower */
 	{ 62, 128 },	/* F5 -> audio raise */
