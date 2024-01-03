@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.51 2023/02/06 18:35:52 semarie Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.52 2024/01/03 08:11:15 op Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -443,7 +443,8 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 		return ascii_load_uint8(&ep->dsn_notify, buf);
 
 	if (strcasecmp("dsn-orcpt", field) == 0)
-		return ascii_load_mailaddr(&ep->dsn_orcpt, buf);
+		return ascii_load_string(ep->dsn_orcpt, buf,
+		    sizeof(ep->dsn_orcpt));
 
 	if (strcasecmp("dsn-ret", field) == 0)
 		return ascii_load_dsn_ret(&ep->dsn_ret, buf);
@@ -703,11 +704,8 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 	if (strcasecmp(field, "dsn-ret") == 0)
 		return ascii_dump_dsn_ret(ep->dsn_ret, buf, len);
 
-	if (strcasecmp(field, "dsn-orcpt") == 0) {
-		if (ep->dsn_orcpt.user[0] && ep->dsn_orcpt.domain[0])
-			return ascii_dump_mailaddr(&ep->dsn_orcpt, buf, len);
-		return 1;
-	}
+	if (strcasecmp(field, "dsn-orcpt") == 0)
+		return ascii_dump_string(ep->dsn_orcpt, buf, len);
 
 	if (strcasecmp(field, "dsn-envid") == 0)
 		return ascii_dump_string(ep->dsn_envid, buf, len);

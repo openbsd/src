@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.154 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: util.c,v 1.155 2024/01/03 08:11:15 op Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -526,6 +526,30 @@ valid_smtp_response(const char *s)
 	    (s[2] < '0' || s[2] > '9') ||
 	    (s[3] != ' '))
 		return 0;
+
+	return 1;
+}
+
+int
+valid_xtext(const char *s)
+{
+	for (; *s != '\0'; ++s) {
+		if (*s < '!' || *s > '~' || *s == '=')
+			return 0;
+
+		if (*s != '+')
+			continue;
+
+		s++;
+		if (!isdigit((unsigned char)*s) &&
+		    !(*s >= 'A' && *s <= 'F'))
+			return 0;
+
+		s++;
+		if (!isdigit((unsigned char)*s) &&
+		    !(*s >= 'A' && *s <= 'F'))
+			return 0;
+	}
 
 	return 1;
 }

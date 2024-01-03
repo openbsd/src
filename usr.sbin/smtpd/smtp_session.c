@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.438 2023/12/23 10:29:05 op Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.439 2024/01/03 08:11:15 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2471,16 +2471,15 @@ smtp_tx_rcpt_to(struct smtp_tx *tx, const char *line)
 				    " combined with other options");
 				return;
 			}
-		} else if (ADVERTISE_EXT_DSN(tx->session) && strncasecmp(opt, "ORCPT=", 6) == 0) {
+		} else if (ADVERTISE_EXT_DSN(tx->session) &&
+		    strncasecmp(opt, "ORCPT=", 6) == 0) {
+			size_t len = sizeof(tx->evp.dsn_orcpt);
+
 			opt += 6;
 
-			if (strncasecmp(opt, "rfc822;", 7) == 0)
-				opt += 7;
-
-			if (!text_to_mailaddr(&tx->evp.dsn_orcpt, opt) ||
-			    !valid_localpart(tx->evp.dsn_orcpt.user) ||
-			    (strlen(tx->evp.dsn_orcpt.domain) != 0 &&
-			     !valid_domainpart(tx->evp.dsn_orcpt.domain))) {
+			if ((p = strchr(opt, ';')) == NULL ||
+			    !valid_xtext(p + 1) ||
+			    strlcpy(opt, tx->evp.dsn_orcpt, len) >= len) {
 				smtp_reply(tx->session,
 				    "553 ORCPT address syntax error");
 				return;
