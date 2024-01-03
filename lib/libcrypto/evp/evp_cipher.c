@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.13 2024/01/02 21:27:39 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.14 2024/01/03 09:13:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -899,30 +899,6 @@ EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
  */
 
 int
-EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
-{
-	if (ctx->cipher->set_asn1_parameters != NULL)
-		return ctx->cipher->set_asn1_parameters(ctx, type);
-
-	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) != 0)
-		return EVP_CIPHER_set_asn1_iv(ctx, type);
-
-	return -1;
-}
-
-int
-EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
-{
-	if (ctx->cipher->get_asn1_parameters != NULL)
-		return ctx->cipher->get_asn1_parameters(ctx, type);
-
-	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) != 0)
-		return EVP_CIPHER_get_asn1_iv(ctx, type);
-
-	return -1;
-}
-
-int
 EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
 	int i = 0;
@@ -944,6 +920,18 @@ EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 }
 
 int
+EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+{
+	if (ctx->cipher->get_asn1_parameters != NULL)
+		return ctx->cipher->get_asn1_parameters(ctx, type);
+
+	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) != 0)
+		return EVP_CIPHER_get_asn1_iv(ctx, type);
+
+	return -1;
+}
+
+int
 EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
 	int i = 0;
@@ -958,6 +946,18 @@ EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 		i = ASN1_TYPE_set_octetstring(type, ctx->oiv, j);
 	}
 	return (i);
+}
+
+int
+EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+{
+	if (ctx->cipher->set_asn1_parameters != NULL)
+		return ctx->cipher->set_asn1_parameters(ctx, type);
+
+	if ((ctx->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) != 0)
+		return EVP_CIPHER_set_asn1_iv(ctx, type);
+
+	return -1;
 }
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
