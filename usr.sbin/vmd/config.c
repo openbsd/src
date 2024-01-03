@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.72 2023/07/13 18:31:59 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.73 2024/01/03 22:34:39 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -417,7 +417,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			s = ifname;
 		}
 		if (tapfds[i] == -1) {
-			log_warnx("%s: can't open tap %s", __func__, s);
+			ret = errno;
+			log_warnx("%s: can't open /dev/%s", __func__, s);
 			goto fail;
 		}
 		if ((vif->vif_name = strdup(s)) == NULL) {
