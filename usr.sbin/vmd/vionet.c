@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.6 2023/09/26 01:53:54 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.7 2024/01/03 03:14:16 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -506,7 +506,7 @@ vionet_notify_tx(struct virtio_dev *dev)
 	uint16_t idx, pkt_desc_idx, hdr_desc_idx, dxx, cnt;
 	size_t pktsz, chunk_size = 0;
 	ssize_t dhcpsz = 0;
-	int num_enq, ofs, spc = 0;
+	int ofs, spc = 0;
 	char *vr = NULL, *pkt = NULL, *dhcppkt = NULL;
 	struct vionet_dev *vionet = &dev->vionet;
 	struct vring_desc *desc, *pkt_desc, *hdr_desc;
@@ -530,8 +530,6 @@ vionet_notify_tx(struct virtio_dev *dev)
 	desc = (struct vring_desc *)(vr);
 	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
 	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
-
-	num_enq = 0;
 
 	idx = vq_info->last_avail & VIONET_QUEUE_MASK;
 
@@ -661,8 +659,6 @@ vionet_notify_tx(struct virtio_dev *dev)
 
 		vq_info->last_avail = avail->idx & VIONET_QUEUE_MASK;
 		idx = (idx + 1) & VIONET_QUEUE_MASK;
-
-		num_enq++;
 
 		free(pkt);
 		pkt = NULL;
