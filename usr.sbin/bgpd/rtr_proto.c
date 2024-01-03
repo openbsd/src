@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.20 2023/12/27 12:00:30 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.21 2024/01/03 16:07:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -133,16 +133,16 @@ enum rtr_state {
 	RTR_STATE_CLOSED,
 	RTR_STATE_ERROR,
 	/* sessions with a state below this line will poll for incoming data */
-	RTR_STATE_IDLE,
-	RTR_STATE_ACTIVE,
+	RTR_STATE_ESTABLISHED,
+	RTR_STATE_EXCHANGE,
 	RTR_STATE_NEGOTIATION,
 };
 
 static const char *rtr_statenames[] = {
 	"closed",
 	"error",
-	"idle",
-	"active",
+	"established",
+	"exchange",
 	"negotiation",
 };
 
@@ -465,7 +465,7 @@ rtr_parse_header(struct rtr_session *rs, void *buf,
 static int
 rtr_parse_notify(struct rtr_session *rs, uint8_t *buf, size_t len)
 {
-	if (rs->state == RTR_STATE_ACTIVE ||
+	if (rs->state == RTR_STATE_EXCHANGE ||
 	    rs->state == RTR_STATE_NEGOTIATION) {
 		log_warnx("rtr %s: received %s: while in state %s (ignored)",
 		    log_rtr(rs), log_rtr_type(SERIAL_NOTIFY),
@@ -480,7 +480,8 @@ rtr_parse_notify(struct rtr_session *rs, uint8_t *buf, size_t len)
 static int
 rtr_parse_cache_response(struct rtr_session *rs, uint8_t *buf, size_t len)
 {
-	if (rs->state != RTR_STATE_IDLE && rs->state != RTR_STATE_NEGOTIATION) {
+	if (rs->state != RTR_STATE_ESTABLISHED &&
+	    rs->state != RTR_STATE_NEGOTIATION) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(CACHE_RESPONSE));
 		return -1;
@@ -503,7 +504,7 @@ rtr_parse_ipv4_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 		return -1;
 	}
 
-	if (rs->state != RTR_STATE_ACTIVE) {
+	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
 		rtr_send_error(rs, CORRUPT_DATA, NULL, buf, len);
@@ -572,7 +573,7 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 		return -1;
 	}
 
-	if (rs->state != RTR_STATE_ACTIVE) {
+	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
 		rtr_send_error(rs, CORRUPT_DATA, NULL, buf, len);
@@ -646,7 +647,7 @@ rtr_parse_aspa(struct rtr_session *rs, uint8_t *buf, size_t len)
 		return -1;
 	}
 
-	if (rs->state != RTR_STATE_ACTIVE) {
+	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(ASPA));
 		rtr_send_error(rs, CORRUPT_DATA, NULL, buf, len);
@@ -732,7 +733,7 @@ rtr_parse_end_of_data(struct rtr_session *rs, uint8_t *buf, size_t len)
 		return -1;
 	}
 
-	if (rs->state != RTR_STATE_ACTIVE) {
+	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(END_OF_DATA));
 		return -1;
@@ -769,7 +770,7 @@ bad:
 static int
 rtr_parse_cache_reset(struct rtr_session *rs, uint8_t *buf, size_t len)
 {
-	if (rs->state != RTR_STATE_IDLE) {
+	if (rs->state != RTR_STATE_ESTABLISHED) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(CACHE_RESET));
 		return -1;
@@ -1048,7 +1049,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		rs->active_lock = 0;
 		break;
 	case RTR_EVNT_CACHE_RESPONSE:
-		rs->state = RTR_STATE_ACTIVE;
+		rs->state = RTR_STATE_EXCHANGE;
 		timer_stop(&rs->timers, Timer_Rtr_Refresh);
 		timer_stop(&rs->timers, Timer_Rtr_Retry);
 		timer_set(&rs->timers, Timer_Rtr_Active, rs->active);
@@ -1061,7 +1062,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		timer_set(&rs->timers, Timer_Rtr_Refresh, rs->refresh);
 		timer_set(&rs->timers, Timer_Rtr_Expire, rs->expire);
 		timer_stop(&rs->timers, Timer_Rtr_Active);
-		rs->state = RTR_STATE_IDLE;
+		rs->state = RTR_STATE_ESTABLISHED;
 		rtr_sem_release(rs->active_lock);
 		rtr_recalc();
 		rs->active_lock = 0;
@@ -1078,7 +1079,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
 		/* stop refresh timer just to be sure */
 		timer_stop(&rs->timers, Timer_Rtr_Refresh);
-		rs->state = RTR_STATE_IDLE;
+		rs->state = RTR_STATE_ESTABLISHED;
 		break;
 	case RTR_EVNT_SEND_ERROR:
 		rtr_reset_cache(rs);
@@ -1232,7 +1233,7 @@ rtr_poll_events(struct pollfd *pfds, size_t npfds, time_t *timeout)
 
 		if (rs->w.queued)
 			pfd->events |= POLLOUT;
-		if (rs->state >= RTR_STATE_IDLE)
+		if (rs->state >= RTR_STATE_ESTABLISHED)
 			pfd->events |= POLLIN;
 	}
 
