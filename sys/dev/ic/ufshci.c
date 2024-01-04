@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.5 2024/01/04 13:30:20 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.6 2024/01/04 21:35:56 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -84,7 +84,6 @@ int			 ufshci_utr_cmd_write(struct ufshci_softc *,
 int			 ufshci_utr_cmd_sync(struct ufshci_softc *,
 			     struct ufshci_ccb *, int, uint32_t, uint16_t);
 int			 ufshci_xfer_complete(struct ufshci_softc *);
-void			 ufshci_hexdump(void *, int, char *, int);
 
 /* SCSI */
 int			 ufshci_ccb_alloc(struct ufshci_softc *, int);
@@ -107,12 +106,6 @@ void			 ufshci_scsi_io_done(struct ufshci_softc *,
 void			 ufshci_scsi_done(struct ufshci_softc *,
 			     struct ufshci_ccb *);
 
-#if 0
-const struct scsi_adapter ufshci_switch = {
-	ufshci_scsi_cmd, ufshci_minphys, ufshci_scsi_probe, ufshci_scsi_free,
-	NULL
-};
-#endif
 const struct scsi_adapter ufshci_switch = {
 	ufshci_scsi_cmd, NULL, NULL, NULL, NULL
 };
@@ -1415,51 +1408,6 @@ ufshci_xfer_complete(struct ufshci_softc *sc)
 	return 0;
 }
 
-#ifdef UFSHCI_DEBUG
-void
-ufshci_hexdump(void *buf, int len, char *title, int dbglvl)
-{
-	u_char b[16];
-	int i, j, l;
-
-	if (dbglvl > ufshci_dbglvl)
-		return;
-
-	printf("hexdump for %s (size=%d bytes)\n", title, len);
-
-	for (i = 0; i < len; i += l) {
-		printf("%4i:", i);
-		l = min(sizeof(b), len - i);
-		bcopy(buf + i, b, l);
-
-		for (j = 0; j < sizeof(b); j++) {
-			if (j % 2 == 0)
-				printf(" "); 
-			if (j % 8 == 0)
-				printf(" ");
-			if (j < l)
-				printf("%02x", (int)b[j]);
-			else
-				printf("  ");
-		}
-		printf("  |");
-		for (j = 0; j < l; j++) {
-			if (b[j] >= 0x20 && b[j] <= 0x7e)
-				printf("%c", b[j]);
-			else
-				printf(".");
-		}
-		printf("|\n");
-	}
-}
-#else
-void
-ufshci_hexdump(void *buf, int len, char *title, int dbglvl)
-{
-
-}
-#endif
-
 /* SCSI */
 
 int
@@ -1910,33 +1858,11 @@ ufshci_scsi_io_done(struct ufshci_softc *sc, struct ufshci_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_cookie;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
-#if 0
-	struct ufshci_utrd *utrd;
-	struct ufshci_ucd *ucd;
-	int slot = ccb->ccb_slot;
-#endif
+
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    ISSET(xs->flags, SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 	    BUS_DMASYNC_POSTWRITE);
-#if 0
-	ufshci_hexdump(xs->data, xs->datalen, "xs->data", 1);
 
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
-
-	printf("ucd rsp tc=0x%02x\n", ucd->rsp.hdr.tc);
-	printf("ucd rsp flags=0x%02x\n", ucd->rsp.hdr.flags);
-	printf("ucd rsp lun=%d\n", ucd->rsp.hdr.lun);
-	printf("ucd rsp taskid=%d\n", ucd->rsp.hdr.taskid);
-	printf("ucd rsp cmd_set_type=0x%02x\n", ucd->rsp.hdr.cmd_set_type);
-	printf("ucd rsp query=0x%02x\n", ucd->rsp.hdr.query);
-	printf("ucd rsp response=0x%02x\n", ucd->rsp.hdr.response);
-	printf("ucd rsp status=0x%02x\n", ucd->rsp.hdr.status);
-	printf("ucd rsp ehs_len=%d\n", ucd->rsp.hdr.ehs_len);
-	printf("ucd rsp device_info=0x%02x\n", ucd->rsp.hdr.device_info);
-	printf("ucd rsp ds_len=%d\n", ucd->rsp.hdr.ds_len);
-	printf("ucd rsp rxl=%d\n", be32toh(ucd->rsp.residual_xfer_len));
-#endif
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 
 	ccb->ccb_cookie = NULL;
@@ -1953,29 +1879,7 @@ void
 ufshci_scsi_done(struct ufshci_softc *sc, struct ufshci_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_cookie;
-#if 0
-	struct ufshci_utrd *utrd;
-	struct ufshci_ucd *ucd;
-	int slot = ccb->ccb_slot;
 
-	ufshci_hexdump(xs->data, xs->datalen, "xs->data", 1);
-
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
-
-	printf("ucd rsp tc=0x%02x\n", ucd->rsp.hdr.tc);
-	printf("ucd rsp flags=0x%02x\n", ucd->rsp.hdr.flags);
-	printf("ucd rsp lun=%d\n", ucd->rsp.hdr.lun);
-	printf("ucd rsp taskid=%d\n", ucd->rsp.hdr.taskid);
-	printf("ucd rsp cmd_set_type=0x%02x\n", ucd->rsp.hdr.cmd_set_type);
-	printf("ucd rsp query=0x%02x\n", ucd->rsp.hdr.query);
-	printf("ucd rsp response=0x%02x\n", ucd->rsp.hdr.response);
-	printf("ucd rsp status=0x%02x\n", ucd->rsp.hdr.status);
-	printf("ucd rsp ehs_len=%d\n", ucd->rsp.hdr.ehs_len);
-	printf("ucd rsp device_info=0x%02x\n", ucd->rsp.hdr.device_info);
-	printf("ucd rsp ds_len=%d\n", ucd->rsp.hdr.ds_len);
-	printf("ucd rsp rxl=%d\n", be32toh(ucd->rsp.residual_xfer_len));
-#endif
 	ccb->ccb_cookie = NULL;
 	ccb->ccb_slot = -1;
 	ccb->ccb_done = NULL;
