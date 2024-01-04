@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.41 2023/12/29 19:00:31 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.42 2024/01/04 16:50:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -71,60 +71,20 @@
 EVP_PKEY_ASN1_METHOD*
 EVP_PKEY_asn1_new(int id, int flags, const char *pem_str, const char *info)
 {
-	EVP_PKEY_ASN1_METHOD *ameth;
-
-	if ((ameth = calloc(1, sizeof(EVP_PKEY_ASN1_METHOD))) == NULL)
-		return NULL;
-
-	ameth->pkey_id = id;
-	ameth->pkey_base_id = id;
-	ameth->pkey_flags = flags | ASN1_PKEY_DYNAMIC;
-
-	if (info != NULL) {
-		if ((ameth->info = strdup(info)) == NULL)
-			goto err;
-	}
-
-	if (pem_str != NULL) {
-		if ((ameth->pem_str = strdup(pem_str)) == NULL)
-			goto err;
-	}
-
-	return ameth;
-
- err:
-	EVP_PKEY_asn1_free(ameth);
+	EVPerror(ERR_R_DISABLED);
 	return NULL;
 }
 
 void
 EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst, const EVP_PKEY_ASN1_METHOD *src)
 {
-	EVP_PKEY_ASN1_METHOD preserve;
-
-	preserve.pkey_id = dst->pkey_id;
-	preserve.pkey_base_id = dst->pkey_base_id;
-	preserve.pkey_flags = dst->pkey_flags;
-	preserve.pem_str = dst->pem_str;
-	preserve.info = dst->info;
-
-	*dst = *src;
-
-	dst->pkey_id = preserve.pkey_id;
-	dst->pkey_base_id = preserve.pkey_base_id;
-	dst->pkey_flags = preserve.pkey_flags;
-	dst->pem_str = preserve.pem_str;
-	dst->info = preserve.info;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
 EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
 {
-	if (ameth && (ameth->pkey_flags & ASN1_PKEY_DYNAMIC)) {
-		free(ameth->pem_str);
-		free(ameth->info);
-		free(ameth);
-	}
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
@@ -137,12 +97,7 @@ EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_size)(const EVP_PKEY *pk),
     int (*pkey_bits)(const EVP_PKEY *pk))
 {
-	ameth->pub_decode = pub_decode;
-	ameth->pub_encode = pub_encode;
-	ameth->pub_cmp = pub_cmp;
-	ameth->pub_print = pub_print;
-	ameth->pkey_size = pkey_size;
-	ameth->pkey_bits = pkey_bits;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
@@ -152,9 +107,7 @@ EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
     int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 	ASN1_PCTX *pctx))
 {
-	ameth->priv_decode = priv_decode;
-	ameth->priv_encode = priv_encode;
-	ameth->priv_print = priv_print;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
@@ -167,54 +120,49 @@ EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
     int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 	ASN1_PCTX *pctx))
 {
-	ameth->param_decode = param_decode;
-	ameth->param_encode = param_encode;
-	ameth->param_missing = param_missing;
-	ameth->param_copy = param_copy;
-	ameth->param_cmp = param_cmp;
-	ameth->param_print = param_print;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
 EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
     void (*pkey_free)(EVP_PKEY *pkey))
 {
-	ameth->pkey_free = pkey_free;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
 EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2))
 {
-	ameth->pkey_ctrl = pkey_ctrl;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
 EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_security_bits)(const EVP_PKEY *pkey))
 {
-	ameth->pkey_security_bits = pkey_security_bits;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
 EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_check)(const EVP_PKEY *pk))
 {
-	ameth->pkey_check = pkey_check;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
 EVP_PKEY_asn1_set_public_check(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_public_check)(const EVP_PKEY *pk))
 {
-	ameth->pkey_public_check = pkey_public_check;
+	EVPerror(ERR_R_DISABLED);
 }
 
 void
 EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_param_check)(const EVP_PKEY *pk))
 {
-	ameth->pkey_param_check = pkey_param_check;
+	EVPerror(ERR_R_DISABLED);
 }
 
 int
