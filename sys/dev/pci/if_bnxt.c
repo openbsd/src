@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.39 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.40 2024/01/04 07:08:47 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1158,12 +1158,16 @@ bnxt_down(struct bnxt_softc *sc)
 
 	CLR(ifp->if_flags, IFF_RUNNING);
 
+	intr_barrier(sc->sc_ih);
+
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		ifq_clr_oactive(ifp->if_ifqs[i]);
 		ifq_barrier(ifp->if_ifqs[i]);
-		/* intr barrier? */
 
-		timeout_del(&sc->sc_queues[i].q_rx.rx_refill);
+		timeout_del_barrier(&sc->sc_queues[i].q_rx.rx_refill);
+
+		if (sc->sc_intrmap != NULL)
+			intr_barrier(sc->sc_queues[i].q_ihc);
 	}
 
 	bnxt_hwrm_free_filter(sc, &sc->sc_vnic);
