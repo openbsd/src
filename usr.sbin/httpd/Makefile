@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2017/07/03 22:21:47 espie Exp $
+#	$OpenBSD: Makefile,v 1.31 2024/01/04 18:17:47 espie Exp $
 
 PROG=		httpd
 SRCS=		parse.y
@@ -12,11 +12,20 @@ MAN+=		patterns.7
 LDADD=		-levent -ltls -lssl -lcrypto -lutil
 DPADD=		${LIBEVENT} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
 #DEBUG=		-g -DDEBUG=3 -O0
-CFLAGS+=	-Wall -I${.CURDIR}
+CFLAGS+=	-Wall -I${.CURDIR} -I${.OBJDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith
 CFLAGS+=	-Wsign-compare -Wcast-qual
 YFLAGS=
+
+.for h in css.h js.h
+$h: $h.in
+	sed -f ${.CURDIR}/toheader.sed <${.CURDIR}/$h.in >$@.tmp && mv $@.tmp $@
+.endfor
+
+server_file.o: css.h js.h
+
+CLEANFILES += css.h js.h
 
 .include <bsd.prog.mk>
