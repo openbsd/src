@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sm4.c,v 1.11 2024/01/02 19:54:43 tb Exp $	*/
+/*	$OpenBSD: e_sm4.c,v 1.12 2024/01/04 17:38:36 tb Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -157,7 +157,6 @@ static const EVP_CIPHER sm4_cbc = {
 	.set_asn1_parameters = NULL,
 	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -179,7 +178,6 @@ static const EVP_CIPHER sm4_cfb128 = {
 	.set_asn1_parameters = NULL,
 	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -201,7 +199,6 @@ static const EVP_CIPHER sm4_ofb = {
 	.set_asn1_parameters = NULL,
 	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -223,7 +220,6 @@ static const EVP_CIPHER sm4_ecb = {
 	.set_asn1_parameters = NULL,
 	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -256,7 +252,6 @@ static const EVP_CIPHER sm4_ctr_mode = {
 	.set_asn1_parameters = NULL,
 	.get_asn1_parameters = NULL,
 	.ctrl = NULL,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.28 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_des3.c,v 1.29 2024/01/04 17:38:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -266,7 +266,6 @@ static const EVP_CIPHER des_ede_cbc = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -288,7 +287,6 @@ static const EVP_CIPHER des_ede_cfb64 = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -310,7 +308,6 @@ static const EVP_CIPHER des_ede_ofb = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -332,7 +329,6 @@ static const EVP_CIPHER des_ede_ecb = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -360,7 +356,6 @@ static const EVP_CIPHER des_ede3_cbc = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -382,7 +377,6 @@ static const EVP_CIPHER des_ede3_cfb64 = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -404,7 +398,6 @@ static const EVP_CIPHER des_ede3_ofb = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -426,7 +419,6 @@ static const EVP_CIPHER des_ede3_ecb = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -449,7 +441,6 @@ static const EVP_CIPHER des_ede3_cfb1 = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -472,7 +463,6 @@ static const EVP_CIPHER des_ede3_cfb8 = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des3_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_xcbc_d.c,v 1.15 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_xcbc_d.c,v 1.16 2024/01/04 17:38:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,7 +94,6 @@ static const EVP_CIPHER d_xcbc_cipher = {
 	EVP_CIPHER_set_asn1_iv,
 	EVP_CIPHER_get_asn1_iv,
 	NULL,
-	NULL
 };
 
 const EVP_CIPHER *

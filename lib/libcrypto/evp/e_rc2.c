@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.25 2023/12/02 19:06:22 tb Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.26 2024/01/04 17:38:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,7 +172,6 @@ static const EVP_CIPHER rc2_cbc = {
 	.set_asn1_parameters = rc2_set_asn1_type_and_iv,
 	.get_asn1_parameters = rc2_get_asn1_type_and_iv,
 	.ctrl = rc2_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -194,7 +193,6 @@ static const EVP_CIPHER rc2_cfb64 = {
 	.set_asn1_parameters = rc2_set_asn1_type_and_iv,
 	.get_asn1_parameters = rc2_get_asn1_type_and_iv,
 	.ctrl = rc2_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -216,7 +214,6 @@ static const EVP_CIPHER rc2_ofb = {
 	.set_asn1_parameters = rc2_set_asn1_type_and_iv,
 	.get_asn1_parameters = rc2_get_asn1_type_and_iv,
 	.ctrl = rc2_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -238,7 +235,6 @@ static const EVP_CIPHER rc2_ecb = {
 	.set_asn1_parameters = rc2_set_asn1_type_and_iv,
 	.get_asn1_parameters = rc2_get_asn1_type_and_iv,
 	.ctrl = rc2_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -262,7 +258,6 @@ static const EVP_CIPHER r2_64_cbc_cipher = {
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
 	rc2_ctrl,
-	NULL
 };
 
 static const EVP_CIPHER r2_40_cbc_cipher = {
@@ -276,7 +271,6 @@ static const EVP_CIPHER r2_40_cbc_cipher = {
 	rc2_set_asn1_type_and_iv,
 	rc2_get_asn1_type_and_iv,
 	rc2_ctrl,
-	NULL
 };
 
 const EVP_CIPHER *

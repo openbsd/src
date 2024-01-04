@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4_hmac_md5.c,v 1.12 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_rc4_hmac_md5.c,v 1.13 2024/01/04 17:38:36 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -296,7 +296,6 @@ static EVP_CIPHER r4_hmac_md5_cipher = {
 	NULL,
 	NULL,
 	rc4_hmac_md5_ctrl,
-	NULL
 };
 
 const EVP_CIPHER *

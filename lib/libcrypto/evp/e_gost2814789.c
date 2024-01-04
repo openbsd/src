@@ -1,4 +1,4 @@
-/* $OpenBSD: e_gost2814789.c,v 1.13 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_gost2814789.c,v 1.14 2024/01/04 17:38:36 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -260,7 +260,6 @@ static const EVP_CIPHER gost2814789_ecb = {
 	.set_asn1_parameters = gost2814789_set_asn1_params,
 	.get_asn1_parameters = gost2814789_get_asn1_params,
 	.ctrl = gost2814789_ctl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -282,7 +281,6 @@ static const EVP_CIPHER gost2814789_cfb64 = {
 	.set_asn1_parameters = gost2814789_set_asn1_params,
 	.get_asn1_parameters = gost2814789_get_asn1_params,
 	.ctrl = gost2814789_ctl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -304,7 +302,6 @@ static const EVP_CIPHER gost2814789_cnt = {
 	.set_asn1_parameters = gost2814789_set_asn1_params,
 	.get_asn1_parameters = gost2814789_get_asn1_params,
 	.ctrl = gost2814789_ctl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *

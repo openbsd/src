@@ -1,4 +1,4 @@
-/* $OpenBSD: e_null.c,v 1.18 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_null.c,v 1.19 2024/01/04 17:38:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,6 @@ static const EVP_CIPHER n_cipher = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
 };
 
 const EVP_CIPHER *

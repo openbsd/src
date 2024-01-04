@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.22 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_des.c,v 1.23 2024/01/04 17:38:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,7 +234,6 @@ static const EVP_CIPHER des_cbc = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -256,7 +255,6 @@ static const EVP_CIPHER des_cfb64 = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -278,7 +276,6 @@ static const EVP_CIPHER des_ofb = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -300,7 +297,6 @@ static const EVP_CIPHER des_ecb = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -322,7 +318,6 @@ static const EVP_CIPHER des_cfb1 = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
@@ -344,7 +339,6 @@ static const EVP_CIPHER des_cfb8 = {
 	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
 	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
 	.ctrl = des_ctrl,
-	.app_data = NULL,
 };
 
 const EVP_CIPHER *
