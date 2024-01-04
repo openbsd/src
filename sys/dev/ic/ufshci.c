@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.4 2024/01/04 12:22:35 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.5 2024/01/04 13:30:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1274,7 +1274,7 @@ ufshci_utr_cmd_write(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		    UFSHCI_REG_UTRIACR_IAEN |
 		    UFSHCI_REG_UTRIACR_IAPWEN |
 		    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_COUNT));
+		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
 	}
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
