@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.18 2023/12/14 13:52:38 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.19 2024/01/04 16:38:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -307,8 +307,11 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 {
 	static struct aspa_set	*aspa;
 	struct imsg		 imsg;
-	struct roa		*roa;
+	struct bgpd_config	 tconf;
+	struct roa		 roa;
+	char			 descr[PEER_DESCR_LEN];
 	struct rtr_session	*rs;
+	uint32_t		 rtrid;
 	int			 n, fd;
 
 	while (imsgbuf) {
@@ -317,7 +320,8 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		rtrid = imsg_get_id(&imsg);
+		switch (imsg_get_type(&imsg)) {
 		case IMSG_SOCKET_CONN_RTR:
 			if ((fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("expected to receive imsg fd "
@@ -340,50 +344,46 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				    "but didn't receive any");
 				break;
 			}
-			if ((rs = rtr_get(imsg.hdr.peerid)) == NULL) {
+			if ((rs = rtr_get(rtrid)) == NULL) {
 				log_warnx("IMSG_SOCKET_CONN: unknown rtr id %d",
-				    imsg.hdr.peerid);
+				    rtrid);
 				close(fd);
 				break;
 			}
 			rtr_open(rs, fd);
 			break;
 		case IMSG_RECONF_CONF:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct bgpd_config))
-				fatalx("IMSG_RECONF_CONF bad len");
+			if (imsg_get_data(&imsg, &tconf, sizeof(tconf)) == -1)
+				fatal("imsg_get_data");
+
 			nconf = new_config();
-			copy_config(nconf, imsg.data);
+			copy_config(nconf, &tconf);
 			rtr_config_prep();
 			break;
 		case IMSG_RECONF_ROA_ITEM:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(*roa))
-				fatalx("IMSG_RECONF_ROA_ITEM bad len");
-			rtr_roa_insert(&nconf->roa, imsg.data);
+			if (imsg_get_data(&imsg, &roa, sizeof(roa)) == -1)
+				fatal("imsg_get_data");
+			rtr_roa_insert(&nconf->roa, &roa);
 			break;
 		case IMSG_RECONF_ASPA:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    offsetof(struct aspa_set, tas))
-				fatalx("IMSG_RECONF_ASPA bad len");
 			if (aspa != NULL)
 				fatalx("unexpected IMSG_RECONF_ASPA");
 			if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
 				fatal("aspa alloc");
-			memcpy(aspa, imsg.data, offsetof(struct aspa_set, tas));
+			if (imsg_get_data(&imsg, aspa,
+			    offsetof(struct aspa_set, tas)) == -1)
+				fatal("imsg_get_data");
 			break;
 		case IMSG_RECONF_ASPA_TAS:
 			if (aspa == NULL)
 				fatalx("unexpected IMSG_RECONF_ASPA_TAS");
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    aspa->num * sizeof(*aspa->tas))
-				fatalx("IMSG_RECONF_ASPA_TAS bad len");
 			aspa->tas = reallocarray(NULL, aspa->num,
 			    sizeof(*aspa->tas));
 			if (aspa->tas == NULL)
 				fatal("aspa tas alloc");
-			memcpy(aspa->tas, imsg.data,
-			    aspa->num * sizeof(*aspa->tas));
+			if (imsg_get_data(&imsg, aspa->tas,
+			    aspa->num * sizeof(*aspa->tas)) == -1)
+				fatal("imsg_get_data");
 			break;
 		case IMSG_RECONF_ASPA_DONE:
 			if (aspa == NULL)
@@ -395,11 +395,11 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			aspa = NULL;
 			break;
 		case IMSG_RECONF_RTR_CONFIG:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != PEER_DESCR_LEN)
-				fatalx("IMSG_RECONF_RTR_CONFIG bad len");
-			rs = rtr_get(imsg.hdr.peerid);
+			if (imsg_get_data(&imsg, descr, sizeof(descr)) == -1)
+				fatal("imsg_get_data");
+			rs = rtr_get(rtrid);
 			if (rs == NULL)
-				rtr_new(imsg.hdr.peerid, imsg.data);
+				rtr_new(rtrid, descr);
 			else
 				rtr_config_keep(rs);
 			break;
@@ -433,16 +433,16 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			nconf = NULL;
 			break;
 		case IMSG_CTL_SHOW_RTR:
-			if ((rs = rtr_get(imsg.hdr.peerid)) == NULL) {
+			if ((rs = rtr_get(rtrid)) == NULL) {
 				log_warnx("IMSG_CTL_SHOW_RTR: "
-				    "unknown rtr id %d", imsg.hdr.peerid);
+				    "unknown rtr id %d", rtrid);
 				break;
 			}
-			rtr_show(rs, imsg.hdr.pid);
+			rtr_show(rs, imsg_get_pid(&imsg));
 			break;
 		case IMSG_CTL_END:
-			imsg_compose(ibuf_main, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
+			imsg_compose(ibuf_main, IMSG_CTL_END, 0,
+			    imsg_get_pid(&imsg), -1, NULL, 0);
 			break;
 		}
 		imsg_free(&imsg);
