@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.23 2024/01/04 16:41:56 tb Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.24 2024/01/04 17:01:26 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -683,8 +683,8 @@ pkey_ctrl_gost01(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 }
 
 const EVP_PKEY_ASN1_METHOD gostr01_asn1_meth = {
+	.base_method = &gostr01_asn1_meth,
 	.pkey_id = EVP_PKEY_GOSTR01,
-	.pkey_base_id = EVP_PKEY_GOSTR01,
 	.pkey_flags = ASN1_PKEY_SIGPARAM_NULL,
 
 	.pem_str = "GOST2001",
@@ -713,14 +713,14 @@ const EVP_PKEY_ASN1_METHOD gostr01_asn1_meth = {
 };
 
 const EVP_PKEY_ASN1_METHOD gostr12_256_asn1_meth = {
+	.base_method = &gostr01_asn1_meth,
 	.pkey_id = EVP_PKEY_GOSTR12_256,
-	.pkey_base_id = EVP_PKEY_GOSTR01,
 	.pkey_flags = ASN1_PKEY_ALIAS,
 };
 
 const EVP_PKEY_ASN1_METHOD gostr12_512_asn1_meth = {
+	.base_method = &gostr01_asn1_meth,
 	.pkey_id = EVP_PKEY_GOSTR12_512,
-	.pkey_base_id = EVP_PKEY_GOSTR01,
 	.pkey_flags = ASN1_PKEY_ALIAS,
 };
 

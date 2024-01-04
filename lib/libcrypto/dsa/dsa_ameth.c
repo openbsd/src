@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.56 2024/01/04 16:41:56 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.57 2024/01/04 17:01:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -675,8 +675,8 @@ dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 }
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meth = {
+	.base_method = &dsa_asn1_meth,
 	.pkey_id = EVP_PKEY_DSA,
-	.pkey_base_id = EVP_PKEY_DSA,
 
 	.pem_str = "DSA",
 	.info = "OpenSSL DSA method",
@@ -709,25 +709,25 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meth = {
 };
 
 const EVP_PKEY_ASN1_METHOD dsa1_asn1_meth = {
+	.base_method = &dsa_asn1_meth,
 	.pkey_id = EVP_PKEY_DSA1,
-	.pkey_base_id = EVP_PKEY_DSA,
 	.pkey_flags = ASN1_PKEY_ALIAS,
 };
 
 const EVP_PKEY_ASN1_METHOD dsa2_asn1_meth = {
+	.base_method = &dsa_asn1_meth,
 	.pkey_id = EVP_PKEY_DSA2,
-	.pkey_base_id = EVP_PKEY_DSA,
 	.pkey_flags = ASN1_PKEY_ALIAS,
 };
 
 const EVP_PKEY_ASN1_METHOD dsa3_asn1_meth = {
+	.base_method = &dsa_asn1_meth,
 	.pkey_id = EVP_PKEY_DSA3,
-	.pkey_base_id = EVP_PKEY_DSA,
 	.pkey_flags = ASN1_PKEY_ALIAS,
 };
 
 const EVP_PKEY_ASN1_METHOD dsa4_asn1_meth = {
+	.base_method = &dsa_asn1_meth,
 	.pkey_id = EVP_PKEY_DSA4,
-	.pkey_base_id = EVP_PKEY_DSA,
 	.pkey_flags = ASN1_PKEY_ALIAS,
 };

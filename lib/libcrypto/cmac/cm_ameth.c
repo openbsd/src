@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_ameth.c,v 1.10 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cm_ameth.c,v 1.11 2024/01/04 17:01:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -77,8 +77,8 @@ cmac_key_free(EVP_PKEY *pkey)
 }
 
 const EVP_PKEY_ASN1_METHOD cmac_asn1_meth = {
+	.base_method = &cmac_asn1_meth,
 	.pkey_id = EVP_PKEY_CMAC,
-	.pkey_base_id = EVP_PKEY_CMAC,
 
 	.pem_str = "CMAC",
 	.info = "OpenSSL CMAC method",

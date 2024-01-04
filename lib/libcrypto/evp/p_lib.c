@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.53 2024/01/04 16:41:56 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.54 2024/01/04 17:01:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,7 +222,7 @@ EVP_PKEY_asn1_find(ENGINE **pe, int type)
 			break;
 		if ((mp->pkey_flags & ASN1_PKEY_ALIAS) == 0)
 			break;
-		type = mp->pkey_base_id;
+		type = mp->base_method->pkey_id;
 	}
 
 	return mp;
@@ -259,7 +259,7 @@ EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,
 	if (ppkey_id)
 		*ppkey_id = ameth->pkey_id;
 	if (ppkey_base_id)
-		*ppkey_base_id = ameth->pkey_base_id;
+		*ppkey_base_id = ameth->base_method->pkey_id;
 	if (ppkey_flags)
 		*ppkey_flags = ameth->pkey_flags;
 	if (pinfo)

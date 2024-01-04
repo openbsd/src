@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.19 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.20 2024/01/04 17:01:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -153,8 +153,8 @@ hmac_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv, size_t *len)
 }
 
 const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
+	.base_method = &hmac_asn1_meth,
 	.pkey_id = EVP_PKEY_HMAC,
-	.pkey_base_id = EVP_PKEY_HMAC,
 
 	.pem_str = "HMAC",
 	.info = "OpenSSL HMAC method",

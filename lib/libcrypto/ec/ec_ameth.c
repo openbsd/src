@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.50 2023/12/29 18:49:06 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.51 2024/01/04 17:01:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -1049,8 +1049,8 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 #endif
 
 const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
+	.base_method = &eckey_asn1_meth,
 	.pkey_id = EVP_PKEY_EC,
-	.pkey_base_id = EVP_PKEY_EC,
 
 	.pem_str = "EC",
 	.info = "OpenSSL EC algorithm",

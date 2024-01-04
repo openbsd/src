@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.10 2023/11/09 11:39:13 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.11 2024/01/04 17:01:26 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -813,8 +813,8 @@ pkey_ecx_ed_ctrl(EVP_PKEY_CTX *pkey_ctx, int op, int arg1, void *arg2)
 }
 
 const EVP_PKEY_ASN1_METHOD x25519_asn1_meth = {
+	.base_method = &x25519_asn1_meth,
 	.pkey_id = EVP_PKEY_X25519,
-	.pkey_base_id = EVP_PKEY_X25519,
 	.pkey_flags = 0,
 	.pem_str = "X25519",
 	.info = "OpenSSL X25519 algorithm",
@@ -851,8 +851,8 @@ const EVP_PKEY_METHOD x25519_pkey_meth = {
 };
 
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
+	.base_method = &ed25519_asn1_meth,
 	.pkey_id = EVP_PKEY_ED25519,
-	.pkey_base_id = EVP_PKEY_ED25519,
 	.pkey_flags = 0,
 	.pem_str = "ED25519",
 	.info = "OpenSSL ED25519 algorithm",

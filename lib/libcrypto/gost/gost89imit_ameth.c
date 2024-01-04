@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89imit_ameth.c,v 1.4 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: gost89imit_ameth.c,v 1.5 2024/01/04 17:01:26 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -75,8 +75,8 @@ mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 }
 
 const EVP_PKEY_ASN1_METHOD gostimit_asn1_meth = {
+	.base_method = &gostimit_asn1_meth,
 	.pkey_id = EVP_PKEY_GOSTIMIT,
-	.pkey_base_id = EVP_PKEY_GOSTIMIT,
 	.pkey_flags = ASN1_PKEY_SIGPARAM_NULL,
 
 	.pem_str = "GOST-MAC",

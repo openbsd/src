@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.55 2024/01/04 16:41:56 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.56 2024/01/04 17:01:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -1149,8 +1149,8 @@ rsa_cms_encrypt(CMS_RecipientInfo *ri)
 #endif
 
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meth = {
+	.base_method = &rsa_asn1_meth,
 	.pkey_id = EVP_PKEY_RSA,
-	.pkey_base_id = EVP_PKEY_RSA,
 	.pkey_flags = ASN1_PKEY_SIGPARAM_NULL,
 
 	.pem_str = "RSA",
@@ -1182,16 +1182,16 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meth = {
 };
 
 const EVP_PKEY_ASN1_METHOD rsa2_asn1_meth = {
+	.base_method = &rsa_asn1_meth,
 	.pkey_id = EVP_PKEY_RSA2,
-	.pkey_base_id = EVP_PKEY_RSA,
 	.pkey_flags = ASN1_PKEY_ALIAS,
 
 	.pkey_check = rsa_pkey_check,
 };
 
 const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
+	.base_method = &rsa_pss_asn1_meth,
 	.pkey_id = EVP_PKEY_RSA_PSS,
-	.pkey_base_id = EVP_PKEY_RSA_PSS,
 	.pkey_flags = ASN1_PKEY_SIGPARAM_NULL,
 
 	.pem_str = "RSA-PSS",

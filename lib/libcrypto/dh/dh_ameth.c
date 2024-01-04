@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.39 2023/08/12 07:59:48 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.40 2024/01/04 17:01:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -523,8 +523,8 @@ dh_pkey_param_check(const EVP_PKEY *pkey)
 }
 
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
+	.base_method = &dh_asn1_meth,
 	.pkey_id = EVP_PKEY_DH,
-	.pkey_base_id = EVP_PKEY_DH,
 
 	.pem_str = "DH",
 	.info = "OpenSSL PKCS#3 DH method",
