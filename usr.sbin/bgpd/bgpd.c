@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.260 2023/11/07 11:18:35 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.261 2024/01/04 10:26:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1295,7 +1295,7 @@ getsockpair(int pipe[2])
 }
 
 int
-imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde, struct imsgbuf *roa)
+imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde, struct imsgbuf *rtr)
 {
 	int pipe_s2r[2];
 	int pipe_s2r_ctl[2];
@@ -1319,7 +1319,7 @@ imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde, struct imsgbuf *roa)
 	    NULL, 0) == -1)
 		return (-1);
 
-	if (imsg_compose(roa, IMSG_SOCKET_CONN_RTR, 0, 0, pipe_r2r[0],
+	if (imsg_compose(rtr, IMSG_SOCKET_CONN_RTR, 0, 0, pipe_r2r[0],
 	    NULL, 0) == -1)
 		return (-1);
 	if (imsg_compose(rde, IMSG_SOCKET_CONN_RTR, 0, 0, pipe_r2r[1],
