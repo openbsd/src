@@ -846,7 +846,7 @@ kvp_get_ip_info(struct hv_kvp *kvp, const uint8_t *mac, uint8_t *family,
 	struct sockaddr_in6 *sin6, sa6;
 	uint8_t	enaddr[ETHER_ADDR_LEN];
 	uint8_t ipaddr[INET6_ADDRSTRLEN];
-	int i, j, lo, hi, af;
+	int i, j, lo, hi, s, af;
 
 	/* Convert from the UTF-16LE string format to binary */
 	for (i = 0, j = 0; j < ETHER_ADDR_LEN; i += 6) {
@@ -870,14 +870,16 @@ kvp_get_ip_info(struct hv_kvp *kvp, const uint8_t *mac, uint8_t *family,
 		return (-1);
 	}
 
-	NET_LOCK_SHARED();
+	KERNEL_LOCK();
+	s = splnet();
 
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (!memcmp(LLADDR(ifp->if_sadl), enaddr, ETHER_ADDR_LEN))
 			break;
 	}
 	if (ifp == NULL) {
-		NET_UNLOCK_SHARED();
+		splx(s);
+		KERNEL_UNLOCK();
 		return (-1);
 	}
 
@@ -917,7 +919,8 @@ kvp_get_ip_info(struct hv_kvp *kvp, const uint8_t *mac, uint8_t *family,
 		else if (ifa6ll != NULL)
 			ifa = ifa6ll;
 		else {
-			NET_UNLOCK_SHARED();
+			splx(s);
+			KERNEL_UNLOCK();
 			return (-1);
 		}
 	}
@@ -953,7 +956,8 @@ kvp_get_ip_info(struct hv_kvp *kvp, const uint8_t *mac, uint8_t *family,
 		break;
 	}
 
-	NET_UNLOCK_SHARED();
+	splx(s);
+	KERNEL_UNLOCK();
 
 	return (0);
 }
