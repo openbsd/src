@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.31 2022/01/09 05:43:00 jsg Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.32 2024/01/04 08:41:59 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -17,8 +17,8 @@
  */
 
 /*
- * ASIX Electronics AX88178a USB 2.0 ethernet and AX88179 USB 3.0 Ethernet
- * driver.
+ * ASIX Electronics AX88178a USB 2.0 ethernet and 
+ * AX88179/AX88179a USB 3.0 Ethernet driver.
  */
 
 #include "bpfilter.h"
@@ -600,6 +600,7 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg	*uaa = aux;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
+	usb_device_descriptor_t *dd;
 	struct mii_data		*mii;
 	u_char			 eaddr[ETHER_ADDR_LEN];
 	char			*devname = sc->axen_dev.dv_xname;
@@ -658,6 +659,10 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	dd = usbd_get_device_descriptor(sc->axen_udev);
+	if (UGETW(dd->bcdDevice) == 0x200)
+		sc->axen_flags = AX179A;
+
 	s = splnet();
 
 	sc->axen_phyno = AXEN_PHY_ID;
@@ -680,6 +685,8 @@ axen_attach(struct device *parent, struct device *self, void *aux)
 		printf(" AX88178a");
 	else if (sc->axen_flags & AX179)
 		printf(" AX88179");
+	else
+		printf(" AX88179A");
 	printf(", address %s\n", ether_sprintf(eaddr));
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
@@ -885,7 +892,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	u_int16_t		hdr_offset, pkt_count;
 	size_t			pkt_len;
 	size_t			temp;
-	int			s;
+	int			padlen, s;
 
 	DPRINTFN(10,("%s: %s: enter\n", sc->axen_dev.dv_xname,__func__));
 
@@ -916,7 +923,14 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	/* 
 	 * buffer map
+	 *
+	 * for ax88179
 	 * [packet #0]...[packet #n][pkt hdr#0]..[pkt hdr#n][recv_hdr]
+	 *
+	 * for ax88179a
+	 * [packet #0]...[packet #n][pkt hdr#0][dummy_hdr]..
+	 * [pkt hdr#n][dummy_hdr][recv_hdr]
+	 *
 	 * each packet has 0xeeee as pseudo header..
 	 */
 	hdr_p = (u_int32_t *)(buf + total_len - sizeof(u_int32_t));
@@ -953,19 +967,29 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 #endif
 
+	/* skip pseudo header (2byte) */
+	padlen = 2;
+	/* skip trailer padding (4Byte) for ax88179 */
+	if (!(sc->axen_flags & AX179A))
+		padlen += 4;
+
 	do {
+		pkt_hdr = letoh32(*hdr_p);
+		pkt_len = (pkt_hdr >> 16) & 0x1fff;
+
+		DPRINTFN(10,("rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
+		   pkt_count, pkt_hdr, pkt_len));
+
+		/* skip dummy packet header */
+		if (pkt_len == 0)
+			goto nextpkt;
+
 		if ((buf[0] != 0xee) || (buf[1] != 0xee)){
 			printf("%s: invalid buffer(pkt#%d), continue\n",
 			    sc->axen_dev.dv_xname, pkt_count);
 	    		ifp->if_ierrors += pkt_count;
 			goto done;
 		}
-
-		pkt_hdr = letoh32(*hdr_p);
-		pkt_len = (pkt_hdr >> 16) & 0x1fff;
-
-		DPRINTFN(10,("rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
-		   pkt_count, pkt_hdr, pkt_len));
 
 		if ((pkt_hdr & AXEN_RXHDR_CRC_ERR) ||
 	    	    (pkt_hdr & AXEN_RXHDR_DROP_ERR)) {
@@ -983,8 +1007,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto nextpkt;
 		}
 
-		/* skip pseudo header (2byte) and trailer padding (4Byte) */
-		m->m_pkthdr.len = m->m_len = pkt_len - 6;
+		m->m_pkthdr.len = m->m_len = pkt_len - padlen;
 
 #ifdef AXEN_TOE
 		/* checksum err */
@@ -1007,7 +1030,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			    M_UDP_CSUM_IN_OK;
 #endif
 
-		memcpy(mtod(m, char *), buf + 2, pkt_len - 6);
+		memcpy(mtod(m, char *), buf + 2, pkt_len - padlen);
 
 		ml_enqueue(&ml, m);
 

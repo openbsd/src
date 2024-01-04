@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.81 2023/04/27 08:33:59 gerhard Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.82 2024/01/04 08:41:59 kevlo Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -59,11 +59,8 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <machine/bus.h>
-
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbcdc.h>
@@ -93,19 +90,18 @@ void	 cdce_stop(struct cdce_softc *);
 void	 cdce_intr(struct usbd_xfer *, void *, usbd_status);
 
 const struct cdce_type cdce_devs[] = {
-    {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, 0, 0, -1 },
-    {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, 0, 0, -1 },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5500 }, 0, CDCE_CRC32, -1 },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_A300 }, 0, CDCE_CRC32, -1 },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5600 }, 0, CDCE_CRC32, -1 },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C700 }, 0, CDCE_CRC32, -1 },
-    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C750 }, 0, CDCE_CRC32, -1 },
-    {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, 0, CDCE_CRC32, -1 },
-    {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, 0, CDCE_CRC32, -1 },
-    {{ USB_VENDOR_GMATE, USB_PRODUCT_GMATE_YP3X00 }, 0, 0, -1 },
-    {{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQLINUX }, 0, 0, -1 },
-    {{ USB_VENDOR_AMBIT, USB_PRODUCT_AMBIT_NTL_250 }, 0, CDCE_SWAPUNION, -1 },
-    {{ USB_VENDOR_ASIX, USB_PRODUCT_ASIX_AX88179 }, 0x0200, CDCE_MATCHREV, 3 },
+    {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, 0 },
+    {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, 0 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5500 }, CDCE_CRC32 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_A300 }, CDCE_CRC32 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5600 }, CDCE_CRC32 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C700 }, CDCE_CRC32 },
+    {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_C750 }, CDCE_CRC32 },
+    {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN }, CDCE_CRC32 },
+    {{ USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_USBLAN2 }, CDCE_CRC32 },
+    {{ USB_VENDOR_GMATE, USB_PRODUCT_GMATE_YP3X00 }, 0 },
+    {{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQLINUX }, 0 },
+    {{ USB_VENDOR_AMBIT, USB_PRODUCT_AMBIT_NTL_250 }, CDCE_SWAPUNION },
 };
 #define cdce_lookup(v, p) \
     ((const struct cdce_type *)usb_lookup(cdce_devs, v, p))
@@ -127,15 +123,6 @@ cdce_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
-	const struct cdce_type *type;
-
-	if ((type = cdce_lookup(uaa->vendor, uaa->product)) != NULL) {
-		if (type->cdce_flags & CDCE_MATCHREV) {
-			if (type->cdce_rev == uaa->release)
-				return (UMATCH_VENDOR_PRODUCT_REV);
-		} else
-			return (UMATCH_VENDOR_PRODUCT);
-	}
 
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
@@ -143,6 +130,9 @@ cdce_match(struct device *parent, void *match, void *aux)
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL)
 		return (UMATCH_NONE);
+
+	if (cdce_lookup(uaa->vendor, uaa->product) != NULL)
+		return (UMATCH_VENDOR_PRODUCT);
 
 	if (id->bInterfaceClass == UICLASS_CDC &&
 	    (id->bInterfaceSubClass ==
@@ -160,6 +150,7 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_attach_arg		*uaa = aux;
 	int				 s;
 	struct ifnet			*ifp = GET_IFP(sc);
+	struct usbd_device		*dev = uaa->device;
 	const struct cdce_type		*t;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -172,51 +163,19 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	int				 i, j, numalts, len;
 	int				 ctl_ifcno = -1;
 	int				 data_ifcno = -1;
-	usbd_status			 err;
-
-	t = cdce_lookup(uaa->vendor, uaa->product);
-	if (uaa->configno < 0) {
-		if (t == NULL || t->cdce_cfgno < 0) {
-			printf("%s: unknown configuration for vid/pid match\n",
-			    sc->cdce_dev.dv_xname);
-			return;
-		}
-		uaa->configno = t->cdce_cfgno;
-		DPRINTF(("%s: switching to config #%d\n",
-		    sc->cdce_dev.dv_xname));
-		err = usbd_set_config_no(uaa->device, uaa->configno, 1);
-		if (err) {
-			printf("%s: failed to switch to config #%d: %s\n",
-			    sc->cdce_dev.dv_xname, uaa->configno,
-			    usbd_errstr(err));
-			return;
-		}
-		for (i = 0; i <  uaa->device->cdesc->bNumInterfaces; i++) {
-			if (usbd_iface_claimed(uaa->device, i))
-				continue;
-			id = usbd_get_interface_descriptor(
-			    &uaa->device->ifaces[i]);
-			if (id != NULL && id->bInterfaceClass == UICLASS_CDC &&
-			    id->bInterfaceSubClass ==
-			    UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL) {
-				uaa->iface = &uaa->device->ifaces[i];
-				uaa->ifaceno = uaa->iface->idesc->bInterfaceNumber;
-				break;
-			}
-		}
-	}
 
 	sc->cdce_udev = uaa->device;
 	sc->cdce_ctl_iface = uaa->iface;
 	id = usbd_get_interface_descriptor(sc->cdce_ctl_iface);
 	ctl_ifcno = id->bInterfaceNumber;
 
+	t = cdce_lookup(uaa->vendor, uaa->product);
 	if (t)
 		sc->cdce_flags = t->cdce_flags;
 
 	/* Get the data interface no. and capabilities */
 	ethd = NULL;
-	usbd_desc_iter_init(sc->cdce_udev, &iter);
+	usbd_desc_iter_init(dev, &iter);
 	desc = usbd_desc_iter_next(&iter);
 	while (desc) {
 		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
@@ -251,13 +210,12 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		DPRINTF(("cdce_attach: union interface: ctl=%d, data=%d\n",
 		    ctl_ifcno, data_ifcno));
-		for (i = 0; i < uaa->device->cdesc->bNumInterfaces; i++) {
+		for (i = 0; i < uaa->nifaces; i++) {
 			if (usbd_iface_claimed(sc->cdce_udev, i))
 				continue;
-			id = usbd_get_interface_descriptor(
-			    &uaa->device->ifaces[i]);
+			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
 			if (id != NULL && id->bInterfaceNumber == data_ifcno) {
-				sc->cdce_data_iface = &uaa->device->ifaces[i];
+				sc->cdce_data_iface = uaa->ifaces[i];
 				usbd_claim_iface(sc->cdce_udev, i);
 			}
 		}
@@ -345,8 +303,8 @@ cdce_attach(struct device *parent, struct device *self, void *aux)
 found:
 	s = splnet();
 
-	if (!ethd || usbd_get_string_desc(sc->cdce_udev, ethd->iMacAddress,
-	    sc->cdce_udev->langid, &eaddr_str, &len)) {
+	if (!ethd || usbd_get_string_desc(sc->cdce_udev, ethd->iMacAddress, 0,
+	    &eaddr_str, &len)) {
 		ether_fakeaddr(ifp);
 	} else {
 		for (i = 0; i < ETHER_ADDR_LEN * 2; i++) {

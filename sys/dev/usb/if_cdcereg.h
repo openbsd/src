@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdcereg.h,v 1.8 2023/04/27 08:33:59 gerhard Exp $ */
+/*	$OpenBSD: if_cdcereg.h,v 1.9 2024/01/04 08:41:59 kevlo Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,12 +40,9 @@
 
 struct cdce_type {
 	struct usb_devno	 cdce_dev;
-	u_int16_t		 cdce_rev;
 	u_int16_t		 cdce_flags;
 #define CDCE_CRC32	1
 #define CDCE_SWAPUNION	2
-#define CDCE_MATCHREV	4
-	int			 cdce_cfgno;
 };
 
 struct cdce_softc;

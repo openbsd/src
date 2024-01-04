@@ -1,4 +1,4 @@
-.\"	$OpenBSD: axen.4,v 1.9 2021/09/08 20:29:21 jmc Exp $
+.\"	$OpenBSD: axen.4,v 1.10 2024/01/04 08:41:59 kevlo Exp $
 .\"
 .\" Copyright (c) 2013 Yojiro UO <yuo@nui.org>
 .\"
@@ -14,20 +14,21 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 8 2021 $
+.Dd $Mdocdate: January 4 2024 $
 .Dt AXEN 4
 .Os
 .Sh NAME
 .Nm axen
-.Nd ASIX Electronics AX88179 10/100/1Gb USB Ethernet device
+.Nd ASIX Electronics AX88179/AX88179A 10/100/1Gb USB Ethernet device
 .Sh SYNOPSIS
 .Cd "axen*   at uhub?"
 .Cd "rgephy* at mii?"
+.Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for USB Ethernet adapters based on the ASIX
-Electronics AX88179 USB 3.0 chipset, including the following:
+Electronics AX88179/AX88179A USB 3.0 chipset, including the following:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It D-Link DUB-1312
@@ -35,6 +36,8 @@ Electronics AX88179 USB 3.0 chipset, including the following:
 .It Logitec LAN-GTJU3
 .It Sitecom LN-032
 .It StarTech USB31000S
+.It TP-LINK UE300C v2
+.It TP-Link UE306
 .El
 .Pp
 The
@@ -63,6 +66,7 @@ For more information on configuring this device, see
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr rgephy 4 ,
+.Xr ukphy 4 ,
 .Xr usb 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
