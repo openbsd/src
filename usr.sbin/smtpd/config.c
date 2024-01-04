@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.57 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: config.c,v 1.58 2024/01/04 09:30:09 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -171,7 +171,6 @@ set_localaddrs(struct smtpd *conf, struct table *localnames)
 	struct sockaddr_in	*sain;
 	struct sockaddr_in6	*sin6;
 	struct table		*t;
-	char buf[NI_MAXHOST + 5];
 
 	t = table_create(conf, "static", "<anyhost>", NULL);
 	table_add(t, "local", NULL);
@@ -194,8 +193,6 @@ set_localaddrs(struct smtpd *conf, struct table *localnames)
 			sain->sin_len = sizeof(struct sockaddr_in);
 			table_add(t, ss_to_text(&ss), NULL);
 			table_add(localnames, ss_to_text(&ss), NULL);
-			(void)snprintf(buf, sizeof buf, "[%s]", ss_to_text(&ss));
-			table_add(localnames, buf, NULL);
 			break;
 
 		case AF_INET6:
@@ -215,10 +212,6 @@ set_localaddrs(struct smtpd *conf, struct table *localnames)
 #endif
 			table_add(t, ss_to_text(&ss), NULL);
 			table_add(localnames, ss_to_text(&ss), NULL);
-			(void)snprintf(buf, sizeof buf, "[%s]", ss_to_text(&ss));
-			table_add(localnames, buf, NULL);
-			(void)snprintf(buf, sizeof buf, "[ipv6:%s]", ss_to_text(&ss));
-			table_add(localnames, buf, NULL);
 			break;
 		}
 	}
