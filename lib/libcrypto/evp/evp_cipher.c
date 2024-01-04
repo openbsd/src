@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.14 2024/01/03 09:13:32 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.15 2024/01/04 09:47:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -204,7 +204,8 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
 
 		case EVP_CIPH_CBC_MODE:
 			iv_len = EVP_CIPHER_CTX_iv_length(ctx);
-			if (iv_len < 0 || iv_len > sizeof(ctx->oiv)) {
+			if (iv_len < 0 || iv_len > sizeof(ctx->oiv) ||
+			    iv_len > sizeof(ctx->iv)) {
 				EVPerror(EVP_R_IV_TOO_LARGE);
 				return 0;
 			}
@@ -906,7 +907,7 @@ EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 
 	if (type != NULL) {
 		l = EVP_CIPHER_CTX_iv_length(ctx);
-		if (l < 0 || l > sizeof(ctx->iv)) {
+		if (l < 0 || l > sizeof(ctx->oiv) || l > sizeof(ctx->iv)) {
 			EVPerror(EVP_R_IV_TOO_LARGE);
 			return 0;
 		}
@@ -939,7 +940,7 @@ EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 
 	if (type != NULL) {
 		j = EVP_CIPHER_CTX_iv_length(ctx);
-		if (j < 0 || j > sizeof(ctx->iv)) {
+		if (j < 0 || j > sizeof(ctx->oiv)) {
 			EVPerror(EVP_R_IV_TOO_LARGE);
 			return 0;
 		}
