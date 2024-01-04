@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.56 2024/01/04 17:17:40 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.57 2024/01/04 17:22:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -235,22 +235,24 @@ EVP_PKEY_asn1_find_str(ENGINE **engine, const char *str, int len)
 }
 
 int
-EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,
-    const char **pinfo, const char **ppem_str,
+EVP_PKEY_asn1_get0_info(int *pkey_id, int *pkey_base_id, int *pkey_flags,
+    const char **info, const char **pem_str,
     const EVP_PKEY_ASN1_METHOD *ameth)
 {
-	if (!ameth)
+	if (ameth == NULL)
 		return 0;
-	if (ppkey_id)
-		*ppkey_id = ameth->pkey_id;
-	if (ppkey_base_id)
-		*ppkey_base_id = ameth->base_method->pkey_id;
-	if (ppkey_flags)
-		*ppkey_flags = ameth->pkey_flags;
-	if (pinfo)
-		*pinfo = ameth->info;
-	if (ppem_str)
-		*ppem_str = ameth->pem_str;
+
+	if (pkey_id != NULL)
+		*pkey_id = ameth->pkey_id;
+	if (pkey_base_id != NULL)
+		*pkey_base_id = ameth->base_method->pkey_id;
+	if (pkey_flags != NULL)
+		*pkey_flags = ameth->pkey_flags;
+	if (info != NULL)
+		*info = ameth->info;
+	if (pem_str != NULL)
+		*pem_str = ameth->pem_str;
+
 	return 1;
 }
 
