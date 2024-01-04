@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.22 2021/08/31 17:40:59 dv Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.23 2024/01/04 20:50:43 kettenis Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _AMD64_INTRDEFS_H
@@ -19,10 +19,10 @@
  *
  */
 #define	IPL_NONE	0x0	/* nothing */
-#define	IPL_SOFTCLOCK	0x4	/* timeouts */
-#define	IPL_SOFTNET	0x5	/* protocol stacks */
-#define	IPL_BIO		0x6	/* block I/O */
-#define	IPL_NET		0x7	/* network */
+#define	IPL_SOFTCLOCK	0x1	/* timeouts */
+#define	IPL_SOFTNET	0x2	/* protocol stacks */
+#define	IPL_BIO		0x3	/* block I/O */
+#define	IPL_NET		0x4	/* network */
 #define	IPL_SOFTTTY	0x8	/* delayed terminal handling */
 #define	IPL_TTY		0x9	/* terminal */
 #define	IPL_VM		0xa	/* memory allocation */
