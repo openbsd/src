@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.137 2023/11/19 15:51:49 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.138 2024/01/04 20:02:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,6 +142,7 @@
 
 #include <stdio.h>
 
+#include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/opensslconf.h>
 
@@ -655,10 +656,10 @@ ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth,
 	 * algorithms. If they are not available disable the associated
 	 * authentication and key exchange algorithms.
 	 */
-	if (EVP_PKEY_meth_find(NID_id_GostR3410_2001) == NULL) {
-		*auth |= SSL_aGOST01;
-		*mkey |= SSL_kGOST;
-	}
+#if defined(OPENSSL_NO_GOST) || !defined(EVP_PKEY_GOSTR01)
+	*auth |= SSL_aGOST01;
+	*mkey |= SSL_kGOST;
+#endif
 
 #ifdef SSL_FORBID_ENULL
 	*enc |= SSL_eNULL;
