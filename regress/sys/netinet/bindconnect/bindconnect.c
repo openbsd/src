@@ -1,7 +1,7 @@
-/*	$OpenBSD: bindconnect.c,v 1.4 2024/01/02 15:06:48 bluhm Exp $	*/
+/*	$OpenBSD: bindconnect.c,v 1.5 2024/01/04 00:19:17 bluhm Exp $	*/
 
 /*
- * Copyright (c) 2023 Alexander Bluhm <bluhm@openbsd.org>
+ * Copyright (c) 2023-2024 Alexander Bluhm <bluhm@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -62,9 +62,9 @@ static void __dead
 usage(void)
 {
 	fprintf(stderr,
-	    "bindconnect [-r] [-b bind] [-c connect] [-d delroute]\n"
-	    "[-f family] [-N addr/net] [-n num] [-o close] [-s socket]\n"
-	    "[-t time]\n"
+	    "bindconnect [-r] [-b bind] [-c connect] [-d delroute] "
+	    "[-f family] [-N addr/net] [-n num] [-o close] [-p proto] "
+	    "[-s socket] [-t time]\n"
 	    "    -b bind      threads binding sockets, default %u\n"
 	    "    -c connect   threads connecting sockets, default %u\n"
 	    "    -d delroute  threads deleting cloned routes, default %u\n"

@@ -1,7 +1,7 @@
 Stress test bind(2) and connect(2) system calls in OpenBSD regress.
 
-bindconnect [-r] [-b bind] [-c connect] [-d delroute]
-[-N addr/net] [-n num] [-o close] [-s socket] [-t time]
+bindconnect [-r] [-b bind] [-c connect] [-d delroute] [-f family] [-N addr/net]
+[-n num] [-o close] [-p proto] [-s socket] [-t time]
     -b bind      threads binding sockets, default 1
     -c connect   threads connecting sockets, default 1
     -d delroute  threads deleting cloned routes, default 0
@@ -9,6 +9,7 @@ bindconnect [-r] [-b bind] [-c connect] [-d delroute]
     -N addr/net  connect to any address within network
     -n num       number of file descriptors, default 128
     -o close     threads closing sockets, default 1
+    -p proto     protocol udp, tcp, name or number, default udp
     -r           set reuse port socket option
     -s socket    threads creating sockets, default 1
     -t time      run time in seconds, default 10

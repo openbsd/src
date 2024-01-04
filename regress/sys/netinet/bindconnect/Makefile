@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2024/01/02 15:06:48 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2024/01/04 00:19:17 bluhm Exp $
 
 PROG=		bindconnect
 LDADD=		-lpthread
@@ -10,6 +10,7 @@ CLEANFILES=	ktrace.out
 LOCAL_NET ?=
 LOCAL_NET6 ?=
 
+REGRESS_ROOT_TARGETS +=	setup-maxfiles
 REGRESS_SETUP_ONCE +=	setup-maxfiles
 setup-maxfiles:
 	[[ $$(sysctl -n kern.maxfiles) -ge 110000 ]] || \
@@ -56,6 +57,11 @@ run-${af}-${proto}-bind-connect:
 	${SUDO_${proto}} time ${KTRACE} ./${PROG} \
 	    -f ${af} -p ${proto} -n 16 -s 2 -o 1 -b 3 -c 3
 
+# skip test on armv7, it fails with malloc: out of space in kmem_map
+.if "${MACHINE}" == armv7
+REGRESS_SKIP_TARGETS +=	run-${af}-${proto}-100000
+.endif
+REGRESS_ROOT_TARGETS +=	run-${af}-${proto}-100000
 REGRESS_TARGETS +=	run-${af}-${proto}-100000
 run-${af}-${proto}-100000:
 	${SUDO} time ${KTRACE} ./${PROG} \
@@ -82,6 +88,7 @@ run-${af}-${proto}-localnet-bind-connect:
 	${SUDO_${proto}} time ${KTRACE} ./${PROG} \
 	    -f ${af} -p ${proto} -n 16 -s 2 -o 1 -b 3 -c 3 -N ${NET_${af}}
 
+REGRESS_ROOT_TARGETS +=	run-${af}-${proto}-localnet-connect-delete
 REGRESS_TARGETS +=	run-${af}-${proto}-localnet-connect-delete
 run-${af}-${proto}-localnet-connect-delete:
 	${SUDO} time ${KTRACE} ./${PROG} \
@@ -90,7 +97,6 @@ run-${af}-${proto}-localnet-connect-delete:
 .endfor
 .endfor
 
-REGRESS_ROOT_TARGETS +=	setup-maxfiles run-100000 run-localnet-connect-delete
-REGRESS_ROOT_TARGETS +=	${REGRESS_TARGETS:N*-udp-*:N*-tcp-*}
+REGRESS_ROOT_TARGETS +=	${REGRESS_TARGETS:M*-any-*}
 
 .include <bsd.regress.mk>
