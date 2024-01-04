@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.54 2024/01/04 17:01:26 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.55 2024/01/04 17:08:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,44 +188,20 @@ EVP_PKEY_asn1_get0(int idx)
 	return asn1_methods[idx];
 }
 
-static const EVP_PKEY_ASN1_METHOD *
-pkey_asn1_find(int pkey_id)
+const EVP_PKEY_ASN1_METHOD *
+EVP_PKEY_asn1_find(ENGINE **engine, int pkey_id)
 {
-	const EVP_PKEY_ASN1_METHOD *ameth;
-	int i;
+	size_t i;
 
-	for (i = EVP_PKEY_asn1_get_count() - 1; i >= 0; i--) {
-		ameth = EVP_PKEY_asn1_get0(i);
-		if (ameth->pkey_id == pkey_id)
-			return ameth;
+	if (engine != NULL)
+		*engine = NULL;
+
+	for (i = 0; i < N_ASN1_METHODS; i++) {
+		if (asn1_methods[i]->pkey_id == pkey_id)
+			return asn1_methods[i]->base_method;
 	}
 
 	return NULL;
-}
-
-/*
- * XXX - fix this. In what looks like an infinite loop, this API only makes two
- * calls to pkey_asn1_find(): If the type resolves to an aliased ASN.1 method,
- * the second call will find the method it aliases. Codify this in regress and
- * make this explicit in code.
- */
-const EVP_PKEY_ASN1_METHOD *
-EVP_PKEY_asn1_find(ENGINE **pe, int type)
-{
-	const EVP_PKEY_ASN1_METHOD *mp;
-
-	if (pe != NULL)
-		*pe = NULL;
-
-	for (;;) {
-		if ((mp = pkey_asn1_find(type)) == NULL)
-			break;
-		if ((mp->pkey_flags & ASN1_PKEY_ALIAS) == 0)
-			break;
-		type = mp->base_method->pkey_id;
-	}
-
-	return mp;
 }
 
 const EVP_PKEY_ASN1_METHOD *
