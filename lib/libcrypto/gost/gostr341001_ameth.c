@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.22 2023/12/28 21:53:09 tb Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.23 2024/01/04 16:41:56 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -682,46 +682,46 @@ pkey_ctrl_gost01(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	return 1;
 }
 
-const EVP_PKEY_ASN1_METHOD gostr01_asn1_meths[] = {
-	{
-		.pkey_id = EVP_PKEY_GOSTR01,
-		.pkey_base_id = EVP_PKEY_GOSTR01,
-		.pkey_flags = ASN1_PKEY_SIGPARAM_NULL,
+const EVP_PKEY_ASN1_METHOD gostr01_asn1_meth = {
+	.pkey_id = EVP_PKEY_GOSTR01,
+	.pkey_base_id = EVP_PKEY_GOSTR01,
+	.pkey_flags = ASN1_PKEY_SIGPARAM_NULL,
 
-		.pem_str = "GOST2001",
-		.info = "GOST R 34.10-2001",
+	.pem_str = "GOST2001",
+	.info = "GOST R 34.10-2001",
 
-		.pkey_free = pkey_free_gost01,
-		.pkey_ctrl = pkey_ctrl_gost01,
+	.pkey_free = pkey_free_gost01,
+	.pkey_ctrl = pkey_ctrl_gost01,
 
-		.priv_decode = priv_decode_gost01,
-		.priv_encode = priv_encode_gost01,
-		.priv_print = priv_print_gost01,
+	.priv_decode = priv_decode_gost01,
+	.priv_encode = priv_encode_gost01,
+	.priv_print = priv_print_gost01,
 
-		.param_decode = param_decode_gost01,
-		.param_encode = param_encode_gost01,
-		.param_missing = param_missing_gost01,
-		.param_copy = param_copy_gost01,
-		.param_cmp = param_cmp_gost01,
-		.param_print = param_print_gost01,
+	.param_decode = param_decode_gost01,
+	.param_encode = param_encode_gost01,
+	.param_missing = param_missing_gost01,
+	.param_copy = param_copy_gost01,
+	.param_cmp = param_cmp_gost01,
+	.param_print = param_print_gost01,
 
-		.pub_decode = pub_decode_gost01,
-		.pub_encode = pub_encode_gost01,
-		.pub_cmp = pub_cmp_gost01,
-		.pub_print = pub_print_gost01,
-		.pkey_size = pkey_size_gost01,
-		.pkey_bits = pkey_bits_gost01,
-	},
-	{
-		.pkey_id = EVP_PKEY_GOSTR12_256,
-		.pkey_base_id = EVP_PKEY_GOSTR01,
-		.pkey_flags = ASN1_PKEY_ALIAS
-	},
-	{
-		.pkey_id = EVP_PKEY_GOSTR12_512,
-		.pkey_base_id = EVP_PKEY_GOSTR01,
-		.pkey_flags = ASN1_PKEY_ALIAS
-	},
+	.pub_decode = pub_decode_gost01,
+	.pub_encode = pub_encode_gost01,
+	.pub_cmp = pub_cmp_gost01,
+	.pub_print = pub_print_gost01,
+	.pkey_size = pkey_size_gost01,
+	.pkey_bits = pkey_bits_gost01,
+};
+
+const EVP_PKEY_ASN1_METHOD gostr12_256_asn1_meth = {
+	.pkey_id = EVP_PKEY_GOSTR12_256,
+	.pkey_base_id = EVP_PKEY_GOSTR01,
+	.pkey_flags = ASN1_PKEY_ALIAS,
+};
+
+const EVP_PKEY_ASN1_METHOD gostr12_512_asn1_meth = {
+	.pkey_id = EVP_PKEY_GOSTR12_512,
+	.pkey_base_id = EVP_PKEY_GOSTR01,
+	.pkey_flags = ASN1_PKEY_ALIAS,
 };
 
 #endif

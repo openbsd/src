@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.55 2023/08/12 07:59:48 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.56 2024/01/04 16:41:56 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -674,64 +674,60 @@ dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	}
 }
 
-/* NB these are sorted in pkey_id order, lowest first */
+const EVP_PKEY_ASN1_METHOD dsa_asn1_meth = {
+	.pkey_id = EVP_PKEY_DSA,
+	.pkey_base_id = EVP_PKEY_DSA,
 
-const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = {
-	{
-		.pkey_id = EVP_PKEY_DSA2,
-		.pkey_base_id = EVP_PKEY_DSA,
-		.pkey_flags = ASN1_PKEY_ALIAS
-	},
+	.pem_str = "DSA",
+	.info = "OpenSSL DSA method",
 
-	{
-		.pkey_id = EVP_PKEY_DSA1,
-		.pkey_base_id = EVP_PKEY_DSA,
-		.pkey_flags = ASN1_PKEY_ALIAS
-	},
+	.pub_decode = dsa_pub_decode,
+	.pub_encode = dsa_pub_encode,
+	.pub_cmp = dsa_pub_cmp,
+	.pub_print = dsa_pub_print,
 
-	{
-		.pkey_id = EVP_PKEY_DSA4,
-		.pkey_base_id = EVP_PKEY_DSA,
-		.pkey_flags = ASN1_PKEY_ALIAS
-	},
+	.priv_decode = dsa_priv_decode,
+	.priv_encode = dsa_priv_encode,
+	.priv_print = dsa_priv_print,
 
-	{
-		.pkey_id = EVP_PKEY_DSA3,
-		.pkey_base_id = EVP_PKEY_DSA,
-		.pkey_flags = ASN1_PKEY_ALIAS
-	},
+	.pkey_size = dsa_size,
+	.pkey_bits = dsa_bits,
+	.pkey_security_bits = dsa_security_bits,
 
-	{
-		.pkey_id = EVP_PKEY_DSA,
-		.pkey_base_id = EVP_PKEY_DSA,
+	.param_decode = dsa_param_decode,
+	.param_encode = dsa_param_encode,
+	.param_missing = dsa_missing_parameters,
+	.param_copy = dsa_copy_parameters,
+	.param_cmp = dsa_cmp_parameters,
+	.param_print = dsa_param_print,
+	.sig_print = dsa_sig_print,
 
-		.pem_str = "DSA",
-		.info = "OpenSSL DSA method",
+	.pkey_free = dsa_free,
+	.pkey_ctrl = dsa_pkey_ctrl,
+	.old_priv_decode = old_dsa_priv_decode,
+	.old_priv_encode = old_dsa_priv_encode
+};
 
-		.pub_decode = dsa_pub_decode,
-		.pub_encode = dsa_pub_encode,
-		.pub_cmp = dsa_pub_cmp,
-		.pub_print = dsa_pub_print,
+const EVP_PKEY_ASN1_METHOD dsa1_asn1_meth = {
+	.pkey_id = EVP_PKEY_DSA1,
+	.pkey_base_id = EVP_PKEY_DSA,
+	.pkey_flags = ASN1_PKEY_ALIAS,
+};
 
-		.priv_decode = dsa_priv_decode,
-		.priv_encode = dsa_priv_encode,
-		.priv_print = dsa_priv_print,
+const EVP_PKEY_ASN1_METHOD dsa2_asn1_meth = {
+	.pkey_id = EVP_PKEY_DSA2,
+	.pkey_base_id = EVP_PKEY_DSA,
+	.pkey_flags = ASN1_PKEY_ALIAS,
+};
 
-		.pkey_size = dsa_size,
-		.pkey_bits = dsa_bits,
-		.pkey_security_bits = dsa_security_bits,
+const EVP_PKEY_ASN1_METHOD dsa3_asn1_meth = {
+	.pkey_id = EVP_PKEY_DSA3,
+	.pkey_base_id = EVP_PKEY_DSA,
+	.pkey_flags = ASN1_PKEY_ALIAS,
+};
 
-		.param_decode = dsa_param_decode,
-		.param_encode = dsa_param_encode,
-		.param_missing = dsa_missing_parameters,
-		.param_copy = dsa_copy_parameters,
-		.param_cmp = dsa_cmp_parameters,
-		.param_print = dsa_param_print,
-		.sig_print = dsa_sig_print,
-
-		.pkey_free = dsa_free,
-		.pkey_ctrl = dsa_pkey_ctrl,
-		.old_priv_decode = old_dsa_priv_decode,
-		.old_priv_encode = old_dsa_priv_encode
-	}
+const EVP_PKEY_ASN1_METHOD dsa4_asn1_meth = {
+	.pkey_id = EVP_PKEY_DSA4,
+	.pkey_base_id = EVP_PKEY_DSA,
+	.pkey_flags = ASN1_PKEY_ALIAS,
 };

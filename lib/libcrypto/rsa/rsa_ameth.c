@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.54 2024/01/01 15:43:02 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.55 2024/01/04 16:41:56 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -1148,47 +1148,45 @@ rsa_cms_encrypt(CMS_RecipientInfo *ri)
 }
 #endif
 
-const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] = {
-	{
-		.pkey_id = EVP_PKEY_RSA,
-		.pkey_base_id = EVP_PKEY_RSA,
-		.pkey_flags = ASN1_PKEY_SIGPARAM_NULL,
+const EVP_PKEY_ASN1_METHOD rsa_asn1_meth = {
+	.pkey_id = EVP_PKEY_RSA,
+	.pkey_base_id = EVP_PKEY_RSA,
+	.pkey_flags = ASN1_PKEY_SIGPARAM_NULL,
 
-		.pem_str = "RSA",
-		.info = "OpenSSL RSA method",
+	.pem_str = "RSA",
+	.info = "OpenSSL RSA method",
 
-		.pub_decode = rsa_pub_decode,
-		.pub_encode = rsa_pub_encode,
-		.pub_cmp = rsa_pub_cmp,
-		.pub_print = rsa_pub_print,
+	.pub_decode = rsa_pub_decode,
+	.pub_encode = rsa_pub_encode,
+	.pub_cmp = rsa_pub_cmp,
+	.pub_print = rsa_pub_print,
 
-		.priv_decode = rsa_priv_decode,
-		.priv_encode = rsa_priv_encode,
-		.priv_print = rsa_priv_print,
+	.priv_decode = rsa_priv_decode,
+	.priv_encode = rsa_priv_encode,
+	.priv_print = rsa_priv_print,
 
-		.pkey_size = rsa_size,
-		.pkey_bits = rsa_bits,
-		.pkey_security_bits = rsa_security_bits,
+	.pkey_size = rsa_size,
+	.pkey_bits = rsa_bits,
+	.pkey_security_bits = rsa_security_bits,
 
-		.sig_print = rsa_sig_print,
+	.sig_print = rsa_sig_print,
 
-		.pkey_free = rsa_free,
-		.pkey_ctrl = rsa_pkey_ctrl,
-		.old_priv_decode = old_rsa_priv_decode,
-		.old_priv_encode = old_rsa_priv_encode,
-		.item_verify = rsa_item_verify,
-		.item_sign = rsa_item_sign,
+	.pkey_free = rsa_free,
+	.pkey_ctrl = rsa_pkey_ctrl,
+	.old_priv_decode = old_rsa_priv_decode,
+	.old_priv_encode = old_rsa_priv_encode,
+	.item_verify = rsa_item_verify,
+	.item_sign = rsa_item_sign,
 
-		.pkey_check = rsa_pkey_check,
-	},
+	.pkey_check = rsa_pkey_check,
+};
 
-	{
-		.pkey_id = EVP_PKEY_RSA2,
-		.pkey_base_id = EVP_PKEY_RSA,
-		.pkey_flags = ASN1_PKEY_ALIAS,
+const EVP_PKEY_ASN1_METHOD rsa2_asn1_meth = {
+	.pkey_id = EVP_PKEY_RSA2,
+	.pkey_base_id = EVP_PKEY_RSA,
+	.pkey_flags = ASN1_PKEY_ALIAS,
 
-		.pkey_check = rsa_pkey_check,
-	},
+	.pkey_check = rsa_pkey_check,
 };
 
 const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {

@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.52 2024/01/01 15:23:00 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.53 2024/01/04 16:41:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,33 +133,40 @@
 
 extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD dsa1_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD dsa2_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD dsa3_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD dsa4_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD gostimit_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD gostr01_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD gostr01_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD gostr12_256_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD gostr12_512_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD x25519_asn1_meth;
 
 static const EVP_PKEY_ASN1_METHOD *asn1_methods[] = {
 	&cmac_asn1_meth,
 	&dh_asn1_meth,
-	&dsa_asn1_meths[0],
-	&dsa_asn1_meths[1],
-	&dsa_asn1_meths[2],
-	&dsa_asn1_meths[3],
-	&dsa_asn1_meths[4],
+	&dsa_asn1_meth,
+	&dsa1_asn1_meth,
+	&dsa2_asn1_meth,
+	&dsa3_asn1_meth,
+	&dsa4_asn1_meth,
 	&eckey_asn1_meth,
 	&ed25519_asn1_meth,
 	&gostimit_asn1_meth,
-	&gostr01_asn1_meths[0],
-	&gostr01_asn1_meths[1],
-	&gostr01_asn1_meths[2],
+	&gostr01_asn1_meth,
+	&gostr12_256_asn1_meth,
+	&gostr12_512_asn1_meth,
 	&hmac_asn1_meth,
-	&rsa_asn1_meths[0],
-	&rsa_asn1_meths[1],
+	&rsa_asn1_meth,
+	&rsa2_asn1_meth,
 	&rsa_pss_asn1_meth,
 	&x25519_asn1_meth,
 };
