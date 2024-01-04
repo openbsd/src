@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.3 2023/04/05 17:23:30 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.4 2024/01/04 12:22:35 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -76,9 +76,11 @@ int			 ufshci_utr_cmd_capacity16(struct ufshci_softc *,
 int			 ufshci_utr_cmd_capacity(struct ufshci_softc *,
 			     struct ufshci_ccb *, int, int);
 int			 ufshci_utr_cmd_read(struct ufshci_softc *,
-			     struct ufshci_ccb *, int, int, uint32_t, uint16_t);
+			     struct ufshci_ccb *, int, int,
+			     struct scsi_generic *);
 int			 ufshci_utr_cmd_write(struct ufshci_softc *,
-			     struct ufshci_ccb *, int, int, uint32_t, uint16_t);
+			     struct ufshci_ccb *, int, int,
+			     struct scsi_generic *);
 int			 ufshci_utr_cmd_sync(struct ufshci_softc *,
 			     struct ufshci_ccb *, int, uint32_t, uint16_t);
 int			 ufshci_xfer_complete(struct ufshci_softc *);
@@ -1067,7 +1069,7 @@ ufshci_utr_cmd_capacity(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 int
 ufshci_utr_cmd_read(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
-    int rsp_size, int flags, uint32_t lba, uint16_t blocks)
+    int rsp_size, int flags, struct scsi_generic *scsi_cmd)
 {
 	int slot, off, len, i;
 	uint64_t dva;
@@ -1112,14 +1114,8 @@ ufshci_utr_cmd_read(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	ucd->cmd.expected_xfer_len = htobe32(rsp_size);
 
-	ucd->cmd.cdb[0] = READ_10; /* 0x28 */
+	memcpy(ucd->cmd.cdb, scsi_cmd, sizeof(ucd->cmd.cdb));
 	//ucd->cmd.cdb[1] = (1 << 3); /* FUA: Force Unit Access */
-	ucd->cmd.cdb[2] = (lba >> 24) & 0xff;
-	ucd->cmd.cdb[3] = (lba >> 16) & 0xff;
-	ucd->cmd.cdb[4] = (lba >>  8) & 0xff;
-	ucd->cmd.cdb[5] = (lba >>  0) & 0xff;
-	ucd->cmd.cdb[7] = (blocks >> 8) & 0xff;
-	ucd->cmd.cdb[8] = (blocks >> 0) & 0xff;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2g) */
 	/* Already done with above memset */
@@ -1181,7 +1177,7 @@ ufshci_utr_cmd_read(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 int
 ufshci_utr_cmd_write(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
-    int rsp_size, int flags, uint32_t lba, uint16_t blocks)
+    int rsp_size, int flags, struct scsi_generic *scsi_cmd)
 {
 	int slot, off, len, i;
 	uint64_t dva;
@@ -1226,14 +1222,8 @@ ufshci_utr_cmd_write(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	ucd->cmd.expected_xfer_len = htobe32(rsp_size);
 
-	ucd->cmd.cdb[0] = WRITE_10; /* 0x2a */
+	memcpy(ucd->cmd.cdb, scsi_cmd, sizeof(ucd->cmd.cdb));
 	ucd->cmd.cdb[1] = (1 << 3); /* FUA: Force Unit Access */
-	ucd->cmd.cdb[2] = (lba >> 24) & 0xff;
-	ucd->cmd.cdb[3] = (lba >> 16) & 0xff;
-	ucd->cmd.cdb[4] = (lba >>  8) & 0xff;
-	ucd->cmd.cdb[5] = (lba >>  0) & 0xff;
-	ucd->cmd.cdb[7] = (blocks >> 8) & 0xff;
-	ucd->cmd.cdb[8] = (blocks >> 0) & 0xff;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2g) */
 	/* Already done with above memset */
@@ -1859,14 +1849,10 @@ ufshci_scsi_io(struct scsi_xfer *xs, int dir)
 	struct ufshci_softc *sc = link->bus->sb_adapter_softc;
 	struct ufshci_ccb *ccb = xs->io;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
-	uint64_t lba;
-	uint32_t blocks;
 	int error;
 
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) != dir)
 		goto error1;
-
-	scsi_cmd_rw_decode(&xs->cmd, &lba, &blocks);
 
 	DPRINTF("%s: %s, lba=%llu, blocks=%u, datalen=%d (%s)\n",
 	    __func__,
@@ -1890,10 +1876,10 @@ ufshci_scsi_io(struct scsi_xfer *xs, int dir)
 
 	if (dir == SCSI_DATA_IN) {
 		ccb->ccb_slot = ufshci_utr_cmd_read(sc, ccb, xs->datalen,
-		    xs->flags, (uint32_t)lba, (uint16_t)blocks);
+		    xs->flags, &xs->cmd);
 	} else {
 		ccb->ccb_slot = ufshci_utr_cmd_write(sc, ccb, xs->datalen,
-		    xs->flags, (uint32_t)lba, (uint16_t)blocks);
+		    xs->flags, &xs->cmd);
 	}
 
 	if (ccb->ccb_slot == -1)
