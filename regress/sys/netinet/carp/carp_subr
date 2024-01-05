@@ -55,6 +55,19 @@ test()
 	fi
 }
 
+wait_until() {
+	local _i=0
+
+	while [ "$_i" -lt 8 ]; do
+		sh -c "$@" && return 0
+		sleep 0.5
+		_i="$((_i + 1))"
+	done
+	echo timeout
+	return 1
+}
+
+
 RDOMAINS=""
 IFACE_NUMS=""
 while getopts 'cvR:I:' ch "$@"; do
