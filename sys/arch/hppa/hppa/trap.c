@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.164 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.165 2024/01/05 19:34:19 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -765,7 +765,7 @@ syscall(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp = sysent;
-	int retq, code, argsize, argoff, error;
+	int code, argsize, argoff, error;
 	register_t args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int oldcpl = curcpu()->ci_cpl;
@@ -778,7 +778,7 @@ syscall(struct trapframe *frame)
 
 	p->p_md.md_regs = frame;
 
-	argoff = 4; retq = 0;
+	argoff = 4;
 	code = frame->tf_t1;
 	args[0] = frame->tf_arg0;
 	args[1] = frame->tf_arg1;
@@ -817,7 +817,7 @@ syscall(struct trapframe *frame)
 		 */
 		i = 0;
 		switch (code) {
-		case SYS_lseek:		retq = 0;
+		case SYS_lseek:
 		case SYS_truncate:
 		case SYS_ftruncate:	i = 2;	break;
 		case SYS_preadv:
@@ -843,7 +843,7 @@ syscall(struct trapframe *frame)
 	switch (error) {
 	case 0:
 		frame->tf_ret0 = rval[0];
-		frame->tf_ret1 = rval[!retq];
+		frame->tf_ret1 = rval[1];
 		frame->tf_t1 = 0;
 		break;
 	case ERESTART:
