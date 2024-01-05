@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.57 2024/01/04 17:22:29 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.58 2024/01/05 21:22:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -208,8 +208,7 @@ const EVP_PKEY_ASN1_METHOD *
 EVP_PKEY_asn1_find_str(ENGINE **engine, const char *str, int len)
 {
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	size_t str_len;
-	int i;
+	size_t i, str_len;
 
 	if (engine != NULL)
 		*engine = NULL;
@@ -223,7 +222,7 @@ EVP_PKEY_asn1_find_str(ENGINE **engine, const char *str, int len)
 
 	for (i = 0; i < N_ASN1_METHODS; i++) {
 		ameth = asn1_methods[i];
-		if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
+		if ((ameth->pkey_flags & ASN1_PKEY_ALIAS) != 0)
 			continue;
 		if (strlen(ameth->pem_str) != str_len)
 			continue;
