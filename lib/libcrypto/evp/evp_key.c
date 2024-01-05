@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.32 2024/01/05 10:15:36 tb Exp $ */
+/* $OpenBSD: evp_key.c,v 1.33 2024/01/05 10:18:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,18 +75,17 @@ EVP_set_pw_prompt(const char *prompt)
 {
 	if (prompt == NULL)
 		prompt_string[0] = '\0';
-	else {
+	else
 		strlcpy(prompt_string, prompt, sizeof(prompt_string));
-	}
 }
 
 char *
 EVP_get_pw_prompt(void)
 {
 	if (prompt_string[0] == '\0')
-		return (NULL);
-	else
-		return (prompt_string);
+		return NULL;
+
+	return prompt_string;
 }
 
 int
@@ -155,7 +154,7 @@ EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 	}
 
 	if (data == NULL)
-		return (nkey);
+		return nkey;
 
 	EVP_MD_CTX_init(&c);
 	for (;;) {
