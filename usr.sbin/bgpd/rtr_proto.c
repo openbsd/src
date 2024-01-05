@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.22 2024/01/04 14:30:09 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.23 2024/01/05 11:02:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -299,8 +299,8 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 		goto fail;
 	ibuf_close(&rs->w, buf);
 
-	log_warnx("rtr %s: sending error report[%u] %s", log_rtr(rs), err,
-	    msg ? msg : "");
+	log_warnx("rtr %s: sending error: %s%s%s", log_rtr(rs),
+	    log_rtr_error(err), msg ? ": " : "", msg ? msg : "");
 
 	rtr_fsm(rs, RTR_EVNT_SEND_ERROR);
 	return;
@@ -1096,7 +1096,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		break;
 	}
 
-	log_info("rtr %s: state change %s -> %s, reason: %s",
+	log_debug("rtr %s: state change %s -> %s, reason: %s",
 	    log_rtr(rs), rtr_statenames[prev_state], rtr_statenames[rs->state],
 	    rtr_eventnames[event]);
 }
