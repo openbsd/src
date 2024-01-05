@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.30 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: evp_key.c,v 1.31 2024/01/05 10:14:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,30 +99,35 @@ int
 EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
     int verify)
 {
-	int ret;
+	UI *ui = NULL;
 	char buff[BUFSIZ];
-	UI *ui;
+	int ret = -1;
 
 	if (len > BUFSIZ)
 		len = BUFSIZ;
 	/* Ensure that 0 <= min <= len - 1. In particular, 1 <= len. */
 	if (min < 0 || len - 1 < min)
-		return -1;
+		goto err;
+
 	if ((prompt == NULL) && (prompt_string[0] != '\0'))
 		prompt = prompt_string;
-	ui = UI_new();
-	if (ui == NULL)
-		return -1;
+
+	if ((ui = UI_new()) == NULL)
+		goto err;
 	if (UI_add_input_string(ui, prompt, 0, buf, min, len - 1) < 0)
-		return -1;
+		goto err;
 	if (verify) {
 		if (UI_add_verify_string(ui, prompt, 0, buff, min, len - 1, buf)
 		    < 0)
-			return -1;
+			goto err;
 	}
+
 	ret = UI_process(ui);
+
+ err:
 	UI_free(ui);
 	explicit_bzero(buff, BUFSIZ);
+
 	return ret;
 }
 
