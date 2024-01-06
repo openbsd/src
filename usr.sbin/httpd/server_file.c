@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.77 2024/01/04 18:17:47 espie Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.78 2024/01/06 11:29:00 espie Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -596,7 +596,7 @@ server_file_index(struct httpd *env, struct client *clt)
 			   (evbuffer_add_printf(evb,
 			    "<tr><td><a href=\"%s%s\">%s</a></td>\n"
 			    "    <td data-o=\"%lld\">%s</td>"
-			    "<td data-o=\"%llu\">%s</td></tr>\n",
+			    "<td title=\"%llu\">%s</td></tr>\n",
 			    strchr(escapeduri, ':') != NULL ? "./" : "",
 			    escapeduri, escapedhtml,
 			    (long long)t, tmstr, 

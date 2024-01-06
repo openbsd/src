@@ -1,6 +1,7 @@
 static const char *js = 
-const rowValue = (tr, idx) => tr.children[idx].getAttribute('data-o') || tr.children[idx].innerText || tr.children[idx].textContent;
-
+const cellVal = (e) => e.getAttribute('title') || e.getAttribute('data-o') || 
+    e.innerText || e.textContent;
+const rowValue = (tr, idx) => cellVal(tr.children[idx]);
 const compare = (idx, asc) => (a, b) => ((v1, v2) => 
     v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
     )(rowValue(asc ? a : b, idx), rowValue(asc ? b : a, idx));
