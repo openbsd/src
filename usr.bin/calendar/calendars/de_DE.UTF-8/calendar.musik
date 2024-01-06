@@ -1,7 +1,7 @@
 /*
  * Musik
  *
- * $OpenBSD: calendar.musik,v 1.2 2016/03/27 18:15:51 tim Exp $
+ * $OpenBSD: calendar.musik,v 1.3 2024/01/06 15:38:45 schwarze Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_musik_
@@ -52,6 +52,6 @@ LANG=de_DE.UTF-8
 12/28	Paul Hindemith in Frankfurt am Main gestorben, 1963
 
 /* Pop */
-09/18	Jimi Hendrix gestorben
+09/18	Jimi Hendrix gestorben, 1970
 
 #endif /* !_de_DE_ISO_8859_1_musik_ */
