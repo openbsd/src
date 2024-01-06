@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.185 2023/06/28 11:49:49 kn Exp $	*/
+/*	$OpenBSD: in.c,v 1.186 2024/01/06 10:58:45 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -260,8 +260,8 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 			return (error);
 	}
 
-	KERNEL_LOCK();
 	NET_LOCK();
+	KERNEL_LOCK();
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -331,8 +331,8 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 	}
 err:
-	NET_UNLOCK();
 	KERNEL_UNLOCK();
+	NET_UNLOCK();
 	return (error);
 }
 
@@ -353,8 +353,8 @@ in_ioctl_set_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 	if (error)
 		return (error);
 
-	KERNEL_LOCK();
 	NET_LOCK();
+	KERNEL_LOCK();
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -387,8 +387,8 @@ in_ioctl_set_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 	if (!error)
 		if_addrhooks_run(ifp);
 
-	NET_UNLOCK();
 	KERNEL_UNLOCK();
+	NET_UNLOCK();
 	return error;
 }
 
@@ -409,8 +409,8 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (error);
 	}
 
-	KERNEL_LOCK();
 	NET_LOCK();
+	KERNEL_LOCK();
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -527,8 +527,8 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 		panic("%s: invalid ioctl %lu", __func__, cmd);
 	}
 
-	NET_UNLOCK();
 	KERNEL_UNLOCK();
+	NET_UNLOCK();
 	return (error);
 }
 
