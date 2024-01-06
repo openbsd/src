@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci_acpi.c,v 1.1 2023/02/04 23:11:59 mglocker Exp $ */
+/*	$OpenBSD: ufshci_acpi.c,v 1.2 2024/01/06 17:47:43 mglocker Exp $ */
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
  *
@@ -100,10 +100,7 @@ ufshci_acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't establish interrupt\n");
 		return;
 	}
-#if 0
-	/* XXX: Only for testing */
-	config_mountroot(self, ufshci_attach_hook);
-#endif
+
 	error = ufshci_attach(&sc->sc);
 	if (error) {
 		printf("%s: attach failed, error=%d\n",
