@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.279 2023/10/19 22:16:10 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.280 2024/01/06 19:34:54 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1427,6 +1427,7 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 		tls_free(f->f_un.f_forw.f_ctx);
 		f->f_un.f_forw.f_ctx = NULL;
 	}
+	bufferevent_disable(bufev, EV_READ|EV_WRITE);
 	close(f->f_file);
 	f->f_file = -1;
 
@@ -1521,6 +1522,7 @@ tcp_connectcb(int fd, short event, void *arg)
 		tls_free(f->f_un.f_forw.f_ctx);
 		f->f_un.f_forw.f_ctx = NULL;
 	}
+	bufferevent_disable(bufev, EV_READ|EV_WRITE);
 	close(f->f_file);
 	f->f_file = -1;
 	loghost_retry(f);
@@ -2421,9 +2423,14 @@ init(void)
 			/* FALLTHROUGH */
 		case F_FORWTCP:
 			evtimer_del(&f->f_un.f_forw.f_ev);
-			tcpbuf_dropped += f->f_dropped +
-			     tcpbuf_countmsg(f->f_un.f_forw.f_bufev);
-			bufferevent_free(f->f_un.f_forw.f_bufev);
+			tcpbuf_dropped += f->f_dropped;
+			if (f->f_un.f_forw.f_bufev) {
+				bufferevent_disable(f->f_un.f_forw.f_bufev,
+				    EV_READ|EV_WRITE);
+				tcpbuf_dropped +=
+				     tcpbuf_countmsg(f->f_un.f_forw.f_bufev);
+				bufferevent_free(f->f_un.f_forw.f_bufev);
+			}
 			free(f->f_un.f_forw.f_ipproto);
 			free(f->f_un.f_forw.f_host);
 			free(f->f_un.f_forw.f_port);
