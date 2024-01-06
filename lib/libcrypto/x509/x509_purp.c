@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.33 2023/12/31 07:19:13 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.34 2024/01/06 17:17:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -95,9 +95,6 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
 static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca);
 static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca);
 
-static int xp_cmp(const X509_PURPOSE * const *a, const X509_PURPOSE * const *b);
-static void xptable_free(X509_PURPOSE *p);
-
 static X509_PURPOSE xstandard[] = {
 	{
 		.purpose = X509_PURPOSE_SSL_CLIENT,
@@ -166,14 +163,6 @@ static X509_PURPOSE xstandard[] = {
 
 #define X509_PURPOSE_COUNT (sizeof(xstandard) / sizeof(xstandard[0]))
 
-static STACK_OF(X509_PURPOSE) *xptable = NULL;
-
-static int
-xp_cmp(const X509_PURPOSE * const *a, const X509_PURPOSE * const *b)
-{
-	return (*a)->purpose - (*b)->purpose;
-}
-
 /* As much as I'd like to make X509_check_purpose use a "const" X509*
  * I really can't because it does recalculate hashes and do other non-const
  * things. */
@@ -211,20 +200,17 @@ LCRYPTO_ALIAS(X509_PURPOSE_set);
 int
 X509_PURPOSE_get_count(void)
 {
-	if (!xptable)
-		return X509_PURPOSE_COUNT;
-	return sk_X509_PURPOSE_num(xptable) + X509_PURPOSE_COUNT;
+	return X509_PURPOSE_COUNT;
 }
 LCRYPTO_ALIAS(X509_PURPOSE_get_count);
 
 X509_PURPOSE *
 X509_PURPOSE_get0(int idx)
 {
-	if (idx < 0)
+	if (idx < 0 || (size_t)idx >= X509_PURPOSE_COUNT)
 		return NULL;
-	if (idx < (int)X509_PURPOSE_COUNT)
-		return xstandard + idx;
-	return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
+
+	return &xstandard[idx];
 }
 LCRYPTO_ALIAS(X509_PURPOSE_get0);
 
@@ -246,18 +232,11 @@ LCRYPTO_ALIAS(X509_PURPOSE_get_by_sname);
 int
 X509_PURPOSE_get_by_id(int purpose)
 {
-	X509_PURPOSE tmp;
-	int idx;
+	/* X509_PURPOSE_MIN == 1, so the bounds are correct. */
+	if (purpose < X509_PURPOSE_MIN || purpose > X509_PURPOSE_MAX)
+		return -1;
 
-	if ((purpose >= X509_PURPOSE_MIN) && (purpose <= X509_PURPOSE_MAX))
-		return purpose - X509_PURPOSE_MIN;
-	tmp.purpose = purpose;
-	if (!xptable)
-		return -1;
-	idx = sk_X509_PURPOSE_find(xptable, &tmp);
-	if (idx == -1)
-		return -1;
-	return idx + X509_PURPOSE_COUNT;
+	return purpose - X509_PURPOSE_MIN;
 }
 LCRYPTO_ALIAS(X509_PURPOSE_get_by_id);
 
@@ -266,95 +245,14 @@ X509_PURPOSE_add(int id, int trust, int flags,
     int (*ck)(const X509_PURPOSE *, const X509 *, int), const char *name,
     const char *sname, void *arg)
 {
-	int idx;
-	X509_PURPOSE *ptmp;
-	char *name_dup, *sname_dup;
-
-	name_dup = sname_dup = NULL;
-
-	if (name == NULL || sname == NULL) {
-		X509V3error(X509V3_R_INVALID_NULL_ARGUMENT);
-		return 0;
-	}
-
-	/* This is set according to what we change: application can't set it */
-	flags &= ~X509_PURPOSE_DYNAMIC;
-	/* This will always be set for application modified trust entries */
-	flags |= X509_PURPOSE_DYNAMIC_NAME;
-	/* Get existing entry if any */
-	idx = X509_PURPOSE_get_by_id(id);
-	/* Need a new entry */
-	if (idx == -1) {
-		if ((ptmp = malloc(sizeof(X509_PURPOSE))) == NULL) {
-			X509V3error(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		ptmp->flags = X509_PURPOSE_DYNAMIC;
-	} else
-		ptmp = X509_PURPOSE_get0(idx);
-
-	if ((name_dup = strdup(name)) == NULL)
-		goto err;
-	if ((sname_dup = strdup(sname)) == NULL)
-		goto err;
-
-	/* free existing name if dynamic */
-	if (ptmp->flags & X509_PURPOSE_DYNAMIC_NAME) {
-		free(ptmp->name);
-		free(ptmp->sname);
-	}
-	/* dup supplied name */
-	ptmp->name = name_dup;
-	ptmp->sname = sname_dup;
-	/* Keep the dynamic flag of existing entry */
-	ptmp->flags &= X509_PURPOSE_DYNAMIC;
-	/* Set all other flags */
-	ptmp->flags |= flags;
-
-	ptmp->purpose = id;
-	ptmp->trust = trust;
-	ptmp->check_purpose = ck;
-	ptmp->usr_data = arg;
-
-	/* If its a new entry manage the dynamic table */
-	if (idx == -1) {
-		if (xptable == NULL &&
-		    (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL)
-			goto err;
-		if (sk_X509_PURPOSE_push(xptable, ptmp) == 0)
-			goto err;
-	}
-	return 1;
-
-err:
-	free(name_dup);
-	free(sname_dup);
-	if (idx == -1)
-		free(ptmp);
-	X509V3error(ERR_R_MALLOC_FAILURE);
+	X509error(ERR_R_DISABLED);
 	return 0;
 }
 LCRYPTO_ALIAS(X509_PURPOSE_add);
 
-static void
-xptable_free(X509_PURPOSE *p)
-{
-	if (!p)
-		return;
-	if (p->flags & X509_PURPOSE_DYNAMIC) {
-		if (p->flags & X509_PURPOSE_DYNAMIC_NAME) {
-			free(p->name);
-			free(p->sname);
-		}
-		free(p);
-	}
-}
-
 void
 X509_PURPOSE_cleanup(void)
 {
-	sk_X509_PURPOSE_pop_free(xptable, xptable_free);
-	xptable = NULL;
 }
 LCRYPTO_ALIAS(X509_PURPOSE_cleanup);
 
