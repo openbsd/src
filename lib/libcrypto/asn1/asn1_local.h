@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_local.h,v 1.6 2024/01/06 17:37:23 tb Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.7 2024/01/06 20:47:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -88,15 +88,6 @@ struct asn1_pctx_st {
 	unsigned long oid_flags;
 	unsigned long str_flags;
 } /* ASN1_PCTX */;
-
-/* Method to handle CRL access.
- * In general a CRL could be very large (several Mb) and can consume large
- * amounts of resources if stored in memory by multiple processes.
- * This method allows general CRL operations to be redirected to more
- * efficient callbacks: for example a CRL entry database.
- */
-
-#define X509_CRL_METHOD_DYNAMIC		1
 
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_set_choice_selector(ASN1_VALUE **pval, int value, const ASN1_ITEM *it);
