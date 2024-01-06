@@ -19,4 +19,7 @@
 struct address_space;
 struct seq_file;
 
+struct file_operations {
+};
+
 #endif

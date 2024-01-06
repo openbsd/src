@@ -35,7 +35,6 @@ struct drm_gem_dma_object {
 
 #define to_drm_gem_dma_obj(gem_obj) container_of(gem_obj, struct drm_gem_dma_object, base)
 
-struct file_operations { int dummy; };
 #define DEFINE_DRM_GEM_DMA_FOPS(name) struct file_operations name = {};
 
 #define DRM_GEM_DMA_DRIVER_OPS_WITH_DUMB_CREATE(x)	\
