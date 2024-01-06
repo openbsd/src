@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_local.h,v 1.5 2023/12/29 10:59:00 tb Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.6 2024/01/06 17:37:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -97,15 +97,6 @@ struct asn1_pctx_st {
  */
 
 #define X509_CRL_METHOD_DYNAMIC		1
-
-struct x509_crl_method_st {
-	int flags;
-	int (*crl_init)(X509_CRL *crl);
-	int (*crl_free)(X509_CRL *crl);
-	int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret,
-	    ASN1_INTEGER *ser, X509_NAME *issuer);
-	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk);
-};
 
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_set_choice_selector(ASN1_VALUE **pval, int value, const ASN1_ITEM *it);

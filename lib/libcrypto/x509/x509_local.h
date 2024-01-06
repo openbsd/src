@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.17 2023/12/29 05:33:32 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.18 2024/01/06 17:37:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -224,8 +224,6 @@ struct X509_crl_st {
 	ASN1_INTEGER *base_crl_number;
 	unsigned char hash[X509_CRL_HASH_LEN];
 	STACK_OF(GENERAL_NAMES) *issuers;
-	const X509_CRL_METHOD *meth;
-	void *meth_data;
 } /* X509_CRL */;
 
 struct pkcs8_priv_key_info_st {
