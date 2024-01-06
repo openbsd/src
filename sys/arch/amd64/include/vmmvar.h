@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.95 2023/11/28 00:17:48 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.96 2024/01/06 13:17:20 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -397,12 +397,12 @@ struct vcpu_segment_info {
 #define VCPU_REGS_PDPTE3 	9
 #define VCPU_REGS_NCRS		(VCPU_REGS_PDPTE3 + 1)
 
-#define VCPU_REGS_CS		0
-#define VCPU_REGS_DS		1
-#define VCPU_REGS_ES		2
-#define VCPU_REGS_FS		3
-#define VCPU_REGS_GS		4
-#define VCPU_REGS_SS		5
+#define VCPU_REGS_ES		0
+#define VCPU_REGS_CS		1
+#define VCPU_REGS_SS		2
+#define VCPU_REGS_DS		3
+#define VCPU_REGS_FS		4
+#define VCPU_REGS_GS		5
 #define VCPU_REGS_LDTR		6
 #define VCPU_REGS_TR		7
 #define VCPU_REGS_NSREGS	(VCPU_REGS_TR + 1)
