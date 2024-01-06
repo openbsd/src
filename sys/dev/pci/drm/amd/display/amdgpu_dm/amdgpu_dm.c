@@ -985,12 +985,10 @@ static void amdgpu_dm_audio_component_unbind(struct device *kdev,
 	adev->dm.audio_component = NULL;
 }
 
-#ifdef notyet
 static const struct component_ops amdgpu_dm_audio_component_bind_ops = {
 	.bind	= amdgpu_dm_audio_component_bind,
 	.unbind	= amdgpu_dm_audio_component_unbind,
 };
-#endif
 
 static int amdgpu_dm_audio_init(struct amdgpu_device *adev)
 {

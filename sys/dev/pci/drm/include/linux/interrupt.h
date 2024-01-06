@@ -13,7 +13,12 @@
 
 struct seq_file;
 
-#define IRQF_SHARED	0
+#define IRQF_SHARED	0x0001
+#define IRQF_ONESHOT	0x0002
+#define IRQF_NO_AUTOEN	0x0004
+
+#define IRQF_TRIGGER_RISING	0x1000
+#define IRQF_TRIGGER_FALLING	0x2000
 
 #define request_irq(irq, hdlr, flags, name, dev)	(0)
 
@@ -22,7 +27,24 @@ free_irq(unsigned int irq, void *dev)
 {
 }
 
+static inline void
+disable_irq(u_int irq)
+{
+}
+
+static inline void
+enable_irq(u_int irq)
+{
+}
+
 typedef irqreturn_t (*irq_handler_t)(int, void *);
+
+static inline int
+devm_request_threaded_irq(struct device *dev, u_int irq, irq_handler_t handler,
+    irq_handler_t thread_fn, u_int irqflags, const char *devname, void *arg)
+{
+	return 0;
+}
 
 struct tasklet_struct {
 	union {

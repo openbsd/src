@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.4 2020/08/03 07:02:08 jsg Exp $	*/
+/*	$OpenBSD: time.h,v 1.5 2024/01/06 09:33:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -28,6 +28,8 @@
 
 #define USEC_PER_MSEC	1000L
 #define USEC_PER_SEC	1000000L
+
+#define MSEC_PER_SEC	1000L
 
 struct timespec64 {
 	time_t	tv_sec;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: completion.h,v 1.9 2020/06/22 14:19:35 jsg Exp $	*/
+/*	$OpenBSD: completion.h,v 1.10 2024/01/06 09:33:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2015, 2018 Mark Kettenis
  *
@@ -27,6 +27,9 @@ struct completion {
 	u_int done;
 	struct mutex lock;
 };
+
+#define DECLARE_COMPLETION_ONSTACK(name) \
+	struct completion name = { 0, MUTEX_INITIALIZER(IPL_TTY) }
 
 static inline void
 init_completion(struct completion *x)

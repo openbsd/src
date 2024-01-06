@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.5 2023/01/01 01:34:58 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.6 2024/01/06 09:33:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -18,6 +18,7 @@
 #ifndef _LINUX_BITMAP_H
 #define _LINUX_BITMAP_H
 
+#include <linux/align.h>
 #include <linux/bitops.h>
 #include <linux/string.h>
 
@@ -138,6 +139,26 @@ bitmap_weight(const void *p, u_int n)
 	for (b = 0; b < n; b += 32)
 		sum += hweight32(ptr[b >> 5]);
 	return sum;
+}
+
+static inline int
+bitmap_find_free_region(void *p, u_int n, int o)
+{
+	int b;
+
+	KASSERT(o == 0);
+	b = find_first_zero_bit(p, n);
+	if (b == n)
+		return -ENOMEM;
+	__set_bit(b, p);
+	return b;
+}
+
+static inline void
+bitmap_release_region(void *p, u_int b, int o)
+{
+	KASSERT(o == 0);
+	__clear_bit(b, p);
 }
 
 void *bitmap_zalloc(u_int, gfp_t);

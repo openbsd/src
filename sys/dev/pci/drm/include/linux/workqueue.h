@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.10 2023/03/21 09:44:35 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.11 2024/01/06 09:33:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -35,9 +35,10 @@ extern struct workqueue_struct *system_highpri_wq;
 extern struct workqueue_struct *system_unbound_wq;
 extern struct workqueue_struct *system_long_wq;
 
-#define WQ_HIGHPRI	1
-#define WQ_FREEZABLE	2
-#define WQ_UNBOUND	4
+#define WQ_HIGHPRI	(1 << 1)
+#define WQ_FREEZABLE	(1 << 2)
+#define WQ_UNBOUND	(1 << 3)
+#define WQ_MEM_RECLAIM	(1 << 4)
 
 #define WQ_UNBOUND_MAX_ACTIVE	4	/* matches nthreads in drm_linux.c */
 
@@ -49,7 +50,7 @@ alloc_workqueue(const char *name, int flags, int max_active)
 }
 
 static inline struct workqueue_struct *
-alloc_ordered_workqueue(const char *name, int flags)
+alloc_ordered_workqueue(const char *name, int flags, ...)
 {
 	struct taskq *tq = taskq_create(name, 1, IPL_TTY, 0);
 	return (struct workqueue_struct *)tq;

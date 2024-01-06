@@ -126,4 +126,9 @@ dev_driver_string(struct device *dev)
 /* should be bus id as string, ie 0000:00:02.0 */
 #define dev_name(dev)		""
 
+static inline void
+device_set_wakeup_path(struct device *dev)
+{
+}
+
 #endif

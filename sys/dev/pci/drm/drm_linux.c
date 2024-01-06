@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.105 2023/12/23 14:18:27 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.106 2024/01/06 09:33:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3182,3 +3182,634 @@ drm_firmware_drivers_only(void)
 {
 	return false;
 }
+
+
+void *
+memremap(phys_addr_t phys_addr, size_t size, int flags)
+{
+	STUB();
+	return NULL;
+}
+
+void
+memunmap(void *addr)
+{
+	STUB();
+}
+
+#include <linux/platform_device.h>
+
+bus_dma_tag_t
+dma_tag_lookup(struct device *dev)
+{
+	extern struct cfdriver drm_cd;
+	struct drm_device *drm;
+	int i;
+
+	for (i = 0; i < drm_cd.cd_ndevs; i++) {
+		drm = drm_cd.cd_devs[i];
+		if (drm && drm->dev == dev)
+			return drm->dmat;
+	}
+
+	return ((struct platform_device *)dev)->dmat;
+}
+
+LIST_HEAD(, drm_dmamem) dmamem_list = LIST_HEAD_INITIALIZER(dmamem_list);
+
+void *
+dma_alloc_coherent(struct device *dev, size_t size, dma_addr_t *dma_handle,
+    int gfp)
+{
+	bus_dma_tag_t dmat = dma_tag_lookup(dev);
+	struct drm_dmamem *mem;
+
+	mem = drm_dmamem_alloc(dmat, size, PAGE_SIZE, 1, size,
+	    BUS_DMA_COHERENT, 0);
+	if (mem == NULL)
+		return NULL;
+	*dma_handle = mem->map->dm_segs[0].ds_addr;
+	LIST_INSERT_HEAD(&dmamem_list, mem, next);
+	return mem->kva;
+}
+
+void
+dma_free_coherent(struct device *dev, size_t size, void *cpu_addr,
+    dma_addr_t dma_handle)
+{
+	bus_dma_tag_t dmat = dma_tag_lookup(dev);
+	struct drm_dmamem *mem;
+
+	LIST_FOREACH(mem, &dmamem_list, next) {
+		if (mem->kva == cpu_addr)
+			break;
+	}
+	KASSERT(mem);
+	KASSERT(mem->size == size);
+	KASSERT(mem->map->dm_segs[0].ds_addr == dma_handle);
+
+	LIST_REMOVE(mem, next);
+	drm_dmamem_free(dmat, mem);
+}
+
+int
+dma_get_sgtable(struct device *dev, struct sg_table *sgt, void *cpu_addr,
+    dma_addr_t dma_addr, size_t size)
+{
+	paddr_t pa;
+	int ret;
+
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)cpu_addr, &pa))
+		return -EINVAL;
+
+	ret = sg_alloc_table(sgt, 1, GFP_KERNEL);
+	if (ret)
+		return ret;
+
+	sg_set_page(sgt->sgl, PHYS_TO_VM_PAGE(pa), size, 0);
+	return 0;
+}
+
+dma_addr_t
+dma_map_resource(struct device *dev, phys_addr_t phys_addr, size_t size,
+    enum dma_data_direction dir, u_long attr)
+{
+	bus_dma_tag_t dmat= dma_tag_lookup(dev);
+	bus_dmamap_t map;
+	bus_dma_segment_t seg;
+
+	if (bus_dmamap_create(dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &map))
+		return DMA_MAPPING_ERROR;
+	seg.ds_addr = phys_addr;
+	seg.ds_len = size;
+	if (bus_dmamap_load_raw(dmat, map, &seg, 1, size, BUS_DMA_WAITOK)) {
+		bus_dmamap_destroy(dmat, map);
+		return DMA_MAPPING_ERROR;
+	}
+
+	return map->dm_segs[0].ds_addr;
+}
+
+#ifdef BUS_DMA_FIXED
+
+#include <linux/iommu.h>
+
+size_t
+iommu_map_sgtable(struct iommu_domain *domain, u_long iova,
+    struct sg_table *sgt, int prot)
+{
+	bus_dma_segment_t seg;
+	int error;
+
+	error = bus_dmamap_create(domain->dmat, sgt->sgl->length, 1,
+	    sgt->sgl->length, 0, BUS_DMA_WAITOK, &sgt->dmamap);
+	if (error)
+		return -ENOMEM;
+
+	sgt->dmamap->dm_segs[0].ds_addr = iova;
+	sgt->dmamap->dm_segs[0].ds_len = sgt->sgl->length;
+	sgt->dmamap->dm_nsegs = 1;
+	seg.ds_addr = VM_PAGE_TO_PHYS(sgt->sgl->__page);
+	seg.ds_len = sgt->sgl->length;
+	error = bus_dmamap_load_raw(domain->dmat, sgt->dmamap, &seg, 1,
+	    sgt->sgl->length, BUS_DMA_WAITOK | BUS_DMA_FIXED);
+	if (error)
+		return -ENOMEM;
+
+	return sg_dma_len(sgt->sgl);
+}
+
+size_t
+iommu_unmap(struct iommu_domain *domain, u_long iova, size_t size)
+{
+	STUB();
+	return 0;
+}
+
+struct iommu_domain *
+iommu_get_domain_for_dev(struct device *dev)
+{
+	STUB();
+	return NULL;
+}
+
+phys_addr_t
+iommu_iova_to_phys(struct iommu_domain *domain, dma_addr_t iova)
+{
+	STUB();
+	return 0;
+}
+
+struct iommu_domain *
+iommu_domain_alloc(struct bus_type *type)
+{
+	return malloc(sizeof(struct iommu_domain), M_DEVBUF, M_WAITOK | M_ZERO);
+}
+
+int
+iommu_attach_device(struct iommu_domain *domain, struct device *dev)
+{
+	struct platform_device *pdev = (struct platform_device *)dev;
+
+	domain->dmat = pdev->dmat;
+	return 0;
+}
+
+#endif
+
+#include <linux/component.h>
+
+struct component_match {
+	struct device *dev;
+};
+
+int
+component_compare_of(struct device *dev, void *data)
+{
+	STUB();
+	return 0;
+}
+
+void
+drm_of_component_match_add(struct device *master,
+			   struct component_match **matchptr,
+			   int (*compare)(struct device *, void *),
+			   struct device_node *np)
+{
+	struct component_match *match;
+
+	if (*matchptr == NULL) {
+		match = malloc(sizeof(struct component_match),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		match->dev = master;
+		*matchptr = match;
+	}
+}
+
+int
+component_master_add_with_match(struct device *dev,
+    const struct component_master_ops *ops, struct component_match *match)
+{
+	ops->bind(match->dev);
+	return 0;
+}
+
+#ifdef __HAVE_FDT
+
+#include <linux/platform_device.h>
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
+#include <machine/fdt.h>
+
+LIST_HEAD(, platform_device) pdev_list = LIST_HEAD_INITIALIZER(pdev_list);
+
+void
+platform_device_register(struct platform_device *pdev)
+{
+	pdev->num_resources = pdev->faa->fa_nreg;
+
+	pdev->parent = pdev->dev.dv_parent;
+	pdev->node = pdev->faa->fa_node;
+	pdev->dmat = pdev->faa->fa_dmat;
+	LIST_INSERT_HEAD(&pdev_list, pdev, next);
+}
+
+
+struct resource *
+platform_get_resource(struct platform_device *pdev, u_int type, u_int num)
+{
+	struct fdt_attach_args *faa = pdev->faa;
+
+	if (pdev->resource == NULL) {
+		pdev->resource = mallocarray(pdev->num_resources,
+		    sizeof(*pdev->resource), M_DEVBUF, M_WAITOK | M_ZERO);
+	}
+
+	pdev->resource[num].start = faa->fa_reg[num].addr;
+	pdev->resource[num].end = faa->fa_reg[num].addr +
+	    faa->fa_reg[num].size - 1;
+
+	return &pdev->resource[num];
+}
+
+void __iomem *
+devm_platform_ioremap_resource_byname(struct platform_device *pdev,
+				      const char *name)
+{
+	struct fdt_attach_args *faa = pdev->faa;
+	bus_space_handle_t ioh;
+	int err, idx;
+
+	idx = OF_getindex(faa->fa_node, name, "reg-names");
+	if (idx == -1 || idx >= faa->fa_nreg)
+		return ERR_PTR(-EINVAL);
+
+	err = bus_space_map(faa->fa_iot, faa->fa_reg[idx].addr,
+	    faa->fa_reg[idx].size, BUS_SPACE_MAP_LINEAR, &ioh);
+	if (err)
+		return ERR_PTR(-err);
+
+	return bus_space_vaddr(faa->fa_iot, ioh);
+}
+
+#include <dev/ofw/ofw_clock.h>
+#include <linux/clk.h>
+
+struct clk *
+devm_clk_get(struct device *dev, const char *name)
+{
+	struct platform_device *pdev = (struct platform_device *)dev;
+	struct clk *clk;
+
+	clk = malloc(sizeof(*clk), M_DEVBUF, M_WAITOK);
+	clk->freq = clock_get_frequency(pdev->node, name);
+	return clk;
+}
+
+u_long
+clk_get_rate(struct clk *clk)
+{
+	return clk->freq;
+}
+
+#include <linux/gpio/consumer.h>
+#include <dev/ofw/ofw_gpio.h>
+
+struct gpio_desc {
+	uint32_t gpios[4];
+};
+
+struct gpio_desc *
+devm_gpiod_get_optional(struct device *dev, const char *name, int flags)
+{
+	struct platform_device *pdev = (struct platform_device *)dev;
+	struct gpio_desc *desc;
+	char fullname[128];
+	int len;
+
+	snprintf(fullname, sizeof(fullname), "%s-gpios", name);
+
+	desc = malloc(sizeof(*desc), M_DEVBUF, M_WAITOK | M_ZERO);
+	len = OF_getpropintarray(pdev->node, fullname, desc->gpios,
+	     sizeof(desc->gpios));
+	KASSERT(len <= sizeof(desc->gpios));
+	if (len < 0) {
+		free(desc, M_DEVBUF, sizeof(*desc));
+		return NULL;
+	}
+
+	switch (flags) {
+	case GPIOD_IN:
+		gpio_controller_config_pin(desc->gpios, GPIO_CONFIG_INPUT);
+		break;
+	case GPIOD_OUT_HIGH:
+		gpio_controller_config_pin(desc->gpios, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(desc->gpios, 1);
+		break;
+	default:
+		panic("%s: unimplemented flags 0x%x", __func__, flags);
+	}
+
+	return desc;
+}
+
+int
+gpiod_get_value_cansleep(const struct gpio_desc *desc)
+{
+	return gpio_controller_get_pin(((struct gpio_desc *)desc)->gpios);
+}
+
+struct phy {
+	int node;
+	const char *name;
+};
+
+struct phy *
+devm_phy_optional_get(struct device *dev, const char *name)
+{
+	struct platform_device *pdev = (struct platform_device *)dev;
+	struct phy *phy;
+	int idx;
+
+	idx = OF_getindex(pdev->node, name, "phy-names");
+	if (idx == -1)
+		return NULL;
+
+	phy = malloc(sizeof(*phy), M_DEVBUF, M_WAITOK);
+	phy->node = pdev->node;
+	phy->name = name;
+
+	return phy;
+}
+
+struct bus_type platform_bus_type;
+
+#include <dev/ofw/ofw_misc.h>
+
+#include <linux/of.h>
+#include <linux/platform_device.h>
+
+struct device_node *
+__of_devnode(void *arg)
+{
+	struct device *dev = container_of(arg, struct device, of_node);
+	struct platform_device *pdev = (struct platform_device *)dev;
+
+	return (struct device_node *)(uintptr_t)pdev->node;
+}
+
+int
+__of_device_is_compatible(struct device_node *np, const char *compatible)
+{
+	return OF_is_compatible((uintptr_t)np, compatible);
+}
+
+int
+__of_property_present(struct device_node *np, const char *propname)
+{
+	return OF_getpropbool((uintptr_t)np, (char *)propname);
+}
+
+int
+__of_property_read_variable_u32_array(struct device_node *np,
+    const char *propname, uint32_t *out_values, size_t sz_min, size_t sz_max)
+{
+	int len;
+
+	len = OF_getpropintarray((uintptr_t)np, (char *)propname, out_values,
+	    sz_max * sizeof(*out_values));
+	if (len < 0)
+		return -EINVAL;
+	if (len == 0)
+		return -ENODATA;
+	if (len < sz_min * sizeof(*out_values) ||
+	    len > sz_max * sizeof(*out_values))
+		return -EOVERFLOW;
+	if (sz_min == 1 && sz_max == 1)
+		return 0;
+	return len / sizeof(*out_values);
+}
+
+int
+__of_property_read_variable_u64_array(struct device_node *np,
+    const char *propname, uint64_t *out_values, size_t sz_min, size_t sz_max)
+{
+	int len;
+
+	len = OF_getpropint64array((uintptr_t)np, (char *)propname, out_values,
+	    sz_max * sizeof(*out_values));
+	if (len < 0)
+		return -EINVAL;
+	if (len == 0)
+		return -ENODATA;
+	if (len < sz_min * sizeof(*out_values) ||
+	    len > sz_max * sizeof(*out_values))
+		return -EOVERFLOW;
+	if (sz_min == 1 && sz_max == 1)
+		return 0;
+	return len / sizeof(*out_values);
+}
+
+int
+__of_property_match_string(struct device_node *np,
+    const char *propname, const char *str)
+{
+	int idx;
+
+	idx = OF_getindex((uintptr_t)np, str, propname);
+	if (idx == -1)
+		return -ENODATA;
+	return idx;
+}
+
+struct device_node *
+__of_parse_phandle(struct device_node *np, const char *propname, int idx)
+{
+	uint32_t phandles[16] = {};
+	int len, node;
+
+	len = OF_getpropintarray((uintptr_t)np, (char *)propname, phandles,
+	    sizeof(phandles));
+	if (len < (idx + 1) * sizeof(uint32_t))
+		return NULL;
+
+	node = OF_getnodebyphandle(phandles[idx]);
+	if (node == 0)
+		return NULL;
+
+	return (struct device_node *)(uintptr_t)node;
+}
+
+int
+__of_parse_phandle_with_args(struct device_node *np, const char *propname,
+    const char *cellsname, int idx, struct of_phandle_args *args)
+{
+	uint32_t phandles[16] = {};
+	int i, len, node;
+
+	len = OF_getpropintarray((uintptr_t)np, (char *)propname, phandles,
+	    sizeof(phandles));
+	if (len < (idx + 1) * sizeof(uint32_t))
+		return -ENOENT;
+
+	node = OF_getnodebyphandle(phandles[idx]);
+	if (node == 0)
+		return -ENOENT;
+
+	args->np = (struct device_node *)(uintptr_t)node;
+	args->args_count = OF_getpropint(node, (char *)cellsname, 0);
+	for (i = 0; i < args->args_count; i++)
+		args->args[i] = phandles[i + 1];
+
+	return 0;
+}
+
+int
+of_address_to_resource(struct device_node *np, int idx, struct resource *res)
+{
+	uint64_t reg[16] = {};
+	int len;
+
+	KASSERT(idx < 8);
+
+	len = OF_getpropint64array((uintptr_t)np, "reg", reg, sizeof(reg));
+	if (len < 0 || idx >= (len / (2 * sizeof(uint64_t))))
+		return -EINVAL;
+
+	res->start = reg[2 * idx];
+	res->end = reg[2 * idx] + reg[2 * idx + 1] - 1;
+
+	return 0;
+}
+
+static int
+next_node(int node)
+{
+	int peer = OF_peer(node);
+
+	while (node && !peer) {
+		node = OF_parent(node);
+		if (node)
+			peer = OF_peer(node);
+	}
+
+	return peer;
+}
+
+static int
+find_matching_node(int node, const struct of_device_id *id)
+{
+	int child, match;
+	int i;
+
+	for (child = OF_child(node); child; child = OF_peer(child)) {
+		match = find_matching_node(child, id);
+		if (match)
+			return match;
+	}
+
+	for (i = 0; id[i].compatible; i++) {
+		if (OF_is_compatible(node, id[i].compatible))
+			return node;
+	}
+
+	return 0;
+}
+
+struct device_node *
+__matching_node(struct device_node *np, const struct of_device_id *id)
+{
+	int node = OF_peer(0);
+	int match;
+
+	if (np)
+		node = next_node((uintptr_t)np);
+	while (node) {
+		match = find_matching_node(node, id);
+		if (match)
+			return (struct device_node *)(uintptr_t)match;
+		node = next_node(node);
+	}
+
+	return NULL;
+}
+
+struct platform_device *
+of_platform_device_create(struct device_node *np, const char *bus_id,
+    struct device *parent)
+{
+	struct platform_device *pdev;
+
+	pdev = malloc(sizeof(*pdev), M_DEVBUF, M_WAITOK | M_ZERO);
+	pdev->node = (intptr_t)np;
+	pdev->parent = parent;
+
+	LIST_INSERT_HEAD(&pdev_list, pdev, next);
+
+	return pdev;
+}
+
+struct platform_device *
+of_find_device_by_node(struct device_node *np)
+{
+	struct platform_device *pdev;
+
+	LIST_FOREACH(pdev, &pdev_list, next) {
+		if (pdev->node == (intptr_t)np)
+			return pdev;
+	}
+
+	return NULL;
+}
+
+int
+of_device_is_available(struct device_node *np)
+{
+	char status[32];
+
+	if (OF_getprop((uintptr_t)np, "status", status, sizeof(status)) > 0 &&
+	    strcmp(status, "disabled") == 0)
+		return 0;
+
+	return 1;
+}
+
+int
+of_dma_configure(struct device *dev, struct device_node *np, int force_dma)
+{
+	struct platform_device *pdev = (struct platform_device *)dev;
+	bus_dma_tag_t dmat = dma_tag_lookup(pdev->parent);
+
+	pdev->dmat = iommu_device_map(pdev->node, dmat);
+	return 0;
+}
+
+struct device_node *
+__of_get_compatible_child(void *p, const char *compat)
+{
+	struct device *dev = container_of(p, struct device, of_node);
+	struct platform_device *pdev = (struct platform_device *)dev;
+	int child;
+
+	for (child = OF_child(pdev->node); child; child = OF_peer(child)) {
+		if (OF_is_compatible(child, compat))
+			return (struct device_node *)(uintptr_t)child;
+	}
+	return NULL;
+}
+
+struct device_node *
+__of_get_child_by_name(void *p, const char *name)
+{
+	struct device *dev = container_of(p, struct device, of_node);
+	struct platform_device *pdev = (struct platform_device *)dev;
+	int child;
+
+	child = OF_getnodebyname(pdev->node, name);
+	if (child == 0)
+		return NULL;
+	return (struct device_node *)(uintptr_t)child;
+}
+
+#endif

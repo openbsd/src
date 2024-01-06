@@ -100,6 +100,7 @@ struct drm_dmamem {
 	bus_size_t		size;
 	int			nsegs;
 	bus_dma_segment_t	segs[1];
+	LIST_ENTRY(drm_dmamem)	next;
 };
 
 typedef struct drm_dma_handle {

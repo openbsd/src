@@ -183,4 +183,9 @@ IOMEM_ERR_PTR(long error)
 	return (void *) error;
 }
 
+#define MEMREMAP_WB	(1 << 0)
+
+void	*memremap(phys_addr_t, size_t, int);
+void	memunmap(void *);
+
 #endif
