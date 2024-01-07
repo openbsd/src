@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.135 2023/12/23 00:52:13 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.136 2024/01/07 18:15:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2163,7 +2163,8 @@ X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set0_crls);
 
-/* This function is used to set the X509_STORE_CTX purpose and trust
+/*
+ * This function is used to set the X509_STORE_CTX purpose and trust
  * values. This is intended to be used when another structure has its
  * own trust and purpose values which (if set) will be inherited by
  * the ctx. If they aren't set then we will usually have a default
@@ -2172,7 +2173,6 @@ LCRYPTO_ALIAS(X509_STORE_CTX_set0_crls);
  * purpose and trust settings which the application can set: if they
  * aren't set then we use the default of SSL client/server.
  */
-
 int
 X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
     int purpose, int trust)
@@ -2180,10 +2180,10 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 	int idx;
 
 	/* If purpose not set use default */
-	if (!purpose)
+	if (purpose == 0)
 		purpose = def_purpose;
 	/* If we have a purpose then check it is valid */
-	if (purpose) {
+	if (purpose != 0) {
 		X509_PURPOSE *ptmp;
 		idx = X509_PURPOSE_get_by_id(purpose);
 		if (idx == -1) {
@@ -2200,10 +2200,10 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 			ptmp = X509_PURPOSE_get0(idx);
 		}
 		/* If trust not set then get from purpose default */
-		if (!trust)
+		if (trust == 0)
 			trust = ptmp->trust;
 	}
-	if (trust) {
+	if (trust != 0) {
 		idx = X509_TRUST_get_by_id(trust);
 		if (idx == -1) {
 			X509error(X509_R_UNKNOWN_TRUST_ID);
@@ -2211,10 +2211,11 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 		}
 	}
 
-	if (purpose && !ctx->param->purpose)
+	if (purpose != 0 && ctx->param->purpose == 0)
 		ctx->param->purpose = purpose;
-	if (trust && !ctx->param->trust)
+	if (trust != 0 && ctx->param->trust == 0)
 		ctx->param->trust = trust;
+
 	return 1;
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_purpose_inherit);
