@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.69 2023/12/27 07:15:55 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.70 2024/01/07 09:48:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -372,6 +372,29 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 }
 
 /*
+ * Attempt to upgrade the generic 'certificate revoked' message to include
+ * a timestamp.
+ */
+static void
+pretty_revocation_time(X509 *x509, X509_CRL *crl, const char **errstr)
+{
+	static char		 buf[64];
+	X509_REVOKED		*revoked;
+	const ASN1_TIME		*atime;
+	time_t			 t;
+
+	if (X509_CRL_get0_by_cert(crl, &revoked, x509) != 1)
+		return;
+	if ((atime = X509_REVOKED_get0_revocationDate(revoked)) == NULL)
+		return;
+	if (!x509_get_time(atime, &t))
+		return;
+
+	snprintf(buf, sizeof(buf), "certificate revoked on %s", time2str(t));
+	*errstr = buf;
+}
+
+/*
  * Validate the X509 certificate. Returns 1 for valid certificates,
  * returns 0 if there is a verify error and sets *errstr to the error
  * returned by X509_verify_cert_error_string().
@@ -422,6 +445,8 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 	if (X509_verify_cert(store_ctx) <= 0) {
 		error = X509_STORE_CTX_get_error(store_ctx);
 		*errstr = X509_verify_cert_error_string(error);
+		if (filemode && error == X509_V_ERR_CERT_REVOKED)
+			pretty_revocation_time(x509, crl->x509_crl, errstr);
 		X509_STORE_CTX_cleanup(store_ctx);
 		sk_X509_free(intermediates);
 		sk_X509_free(root);
