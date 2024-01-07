@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_init.c,v 1.14 2024/01/06 17:43:39 tb Exp $ */
+/*	$OpenBSD: crypto_init.c,v 1.15 2024/01/07 19:59:32 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -84,7 +84,6 @@ OPENSSL_cleanup(void)
 	EVP_cleanup();
 
 	X509V3_EXT_cleanup();
-	X509_TRUST_cleanup();
 	X509_VERIFY_PARAM_table_cleanup();
 
 	x509_issuer_cache_free();
