@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.32 2023/07/02 17:12:17 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.33 2024/01/07 14:50:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,9 +64,6 @@
 
 #include "x509_local.h"
 
-static int tr_cmp(const X509_TRUST * const *a, const X509_TRUST * const *b);
-static void trtable_free(X509_TRUST *p);
-
 static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags);
 static int trust_1oid(X509_TRUST *trust, X509 *x, int flags);
 static int trust_compat(X509_TRUST *trust, X509 *x, int flags);
@@ -131,14 +128,6 @@ static X509_TRUST trstandard[] = {
 
 #define X509_TRUST_COUNT	(sizeof(trstandard) / sizeof(trstandard[0]))
 
-static STACK_OF(X509_TRUST) *trtable = NULL;
-
-static int
-tr_cmp(const X509_TRUST * const *a, const X509_TRUST * const *b)
-{
-	return (*a)->trust - (*b)->trust;
-}
-
 int
 (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int)
 {
@@ -185,38 +174,28 @@ LCRYPTO_ALIAS(X509_check_trust);
 int
 X509_TRUST_get_count(void)
 {
-	if (!trtable)
-		return X509_TRUST_COUNT;
-	return sk_X509_TRUST_num(trtable) + X509_TRUST_COUNT;
+	return X509_TRUST_COUNT;
 }
 LCRYPTO_ALIAS(X509_TRUST_get_count);
 
 X509_TRUST *
 X509_TRUST_get0(int idx)
 {
-	if (idx < 0)
+	if (idx < 0 || (size_t)idx >= X509_TRUST_COUNT)
 		return NULL;
-	if (idx < (int)X509_TRUST_COUNT)
-		return trstandard + idx;
-	return sk_X509_TRUST_value(trtable, idx - X509_TRUST_COUNT);
+
+	return &trstandard[idx];
 }
 LCRYPTO_ALIAS(X509_TRUST_get0);
 
 int
 X509_TRUST_get_by_id(int id)
 {
-	X509_TRUST tmp;
-	int idx;
+	/* X509_TRUST_MIN == 1, so the bounds are correct. */
+	if (id < X509_TRUST_MIN && id > X509_TRUST_MAX)
+		return -1;
 
-	if ((id >= X509_TRUST_MIN) && (id <= X509_TRUST_MAX))
-		return id - X509_TRUST_MIN;
-	tmp.trust = id;
-	if (!trtable)
-		return -1;
-	idx = sk_X509_TRUST_find(trtable, &tmp);
-	if (idx == -1)
-		return -1;
-	return idx + X509_TRUST_COUNT;
+	return id - X509_TRUST_MIN;
 }
 LCRYPTO_ALIAS(X509_TRUST_get_by_id);
 
@@ -236,85 +215,14 @@ int
 X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
     const char *name, int arg1, void *arg2)
 {
-	int idx;
-	X509_TRUST *trtmp;
-	char *name_dup;
-
-	/* This is set according to what we change: application can't set it */
-	flags &= ~X509_TRUST_DYNAMIC;
-	/* This will always be set for application modified trust entries */
-	flags |= X509_TRUST_DYNAMIC_NAME;
-	/* Get existing entry if any */
-	idx = X509_TRUST_get_by_id(id);
-	/* Need a new entry */
-	if (idx == -1) {
-		if (!(trtmp = malloc(sizeof(X509_TRUST)))) {
-			X509error(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		trtmp->flags = X509_TRUST_DYNAMIC;
-	} else {
-		trtmp = X509_TRUST_get0(idx);
-		if (trtmp == NULL) {
-			X509error(X509_R_INVALID_TRUST);
-			return 0;
-		}
-	}
-
-	if ((name_dup = strdup(name)) == NULL)
-		goto err;
-
-	/* free existing name if dynamic */
-	if (trtmp->flags & X509_TRUST_DYNAMIC_NAME)
-		free(trtmp->name);
-	/* dup supplied name */
-	trtmp->name = name_dup;
-	/* Keep the dynamic flag of existing entry */
-	trtmp->flags &= X509_TRUST_DYNAMIC;
-	/* Set all other flags */
-	trtmp->flags |= flags;
-
-	trtmp->trust = id;
-	trtmp->check_trust = ck;
-	trtmp->arg1 = arg1;
-	trtmp->arg2 = arg2;
-
-	/* If it's a new entry, manage the dynamic table */
-	if (idx == -1) {
-		if (trtable == NULL &&
-		    (trtable = sk_X509_TRUST_new(tr_cmp)) == NULL)
-			goto err;
-		if (sk_X509_TRUST_push(trtable, trtmp) == 0)
-			goto err;
-	}
-	return 1;
-
-err:
-	free(name_dup);
-	if (idx == -1)
-		free(trtmp);
-	X509error(ERR_R_MALLOC_FAILURE);
+	X509error(ERR_R_DISABLED);
 	return 0;
 }
 LCRYPTO_ALIAS(X509_TRUST_add);
 
-static void
-trtable_free(X509_TRUST *p)
-{
-	if (!p)
-		return;
-	if (p->flags & X509_TRUST_DYNAMIC) {
-		if (p->flags & X509_TRUST_DYNAMIC_NAME)
-			free(p->name);
-		free(p);
-	}
-}
-
 void
 X509_TRUST_cleanup(void)
 {
-	sk_X509_TRUST_pop_free(trtable, trtable_free);
-	trtable = NULL;
 }
 LCRYPTO_ALIAS(X509_TRUST_cleanup);
 
