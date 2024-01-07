@@ -1,4 +1,4 @@
-/* $OpenBSD: e_xcbc_d.c,v 1.16 2024/01/04 17:38:36 tb Exp $ */
+/* $OpenBSD: e_xcbc_d.c,v 1.17 2024/01/07 15:42:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,16 +84,18 @@ typedef struct {
 #define data(ctx) ((DESX_CBC_KEY *)(ctx)->cipher_data)
 
 static const EVP_CIPHER d_xcbc_cipher = {
-	NID_desx_cbc,
-	8, 24, 8,
-	EVP_CIPH_CBC_MODE,
-	desx_cbc_init_key,
-	desx_cbc_cipher,
-	NULL,
-	sizeof(DESX_CBC_KEY),
-	EVP_CIPHER_set_asn1_iv,
-	EVP_CIPHER_get_asn1_iv,
-	NULL,
+	.nid = NID_desx_cbc,
+	.block_size = 8,
+	.key_len = 24,
+	.iv_len = 8,
+	.flags = EVP_CIPH_CBC_MODE,
+	.init = desx_cbc_init_key,
+	.do_cipher = desx_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DESX_CBC_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
 };
 
 const EVP_CIPHER *

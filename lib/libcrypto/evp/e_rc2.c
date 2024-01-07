@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.26 2024/01/04 17:38:36 tb Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.27 2024/01/07 15:42:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -248,29 +248,33 @@ EVP_rc2_ecb(void)
 #define RC2_128_MAGIC	0x3a
 
 static const EVP_CIPHER r2_64_cbc_cipher = {
-	NID_rc2_64_cbc,
-	8, 8 /* 64 bit */, 8,
-	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
-	rc2_init_key,
-	rc2_cbc_cipher,
-	NULL,
-	sizeof(EVP_RC2_KEY),
-	rc2_set_asn1_type_and_iv,
-	rc2_get_asn1_type_and_iv,
-	rc2_ctrl,
+	.nid = NID_rc2_64_cbc,
+	.block_size = 8,
+	.key_len = 8,
+	.iv_len = 8,
+	.flags = EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
+	.init = rc2_init_key,
+	.do_cipher = rc2_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_RC2_KEY),
+	.set_asn1_parameters = rc2_set_asn1_type_and_iv,
+	.get_asn1_parameters = rc2_get_asn1_type_and_iv,
+	.ctrl = rc2_ctrl,
 };
 
 static const EVP_CIPHER r2_40_cbc_cipher = {
-	NID_rc2_40_cbc,
-	8, 5 /* 40 bit */, 8,
-	EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
-	rc2_init_key,
-	rc2_cbc_cipher,
-	NULL,
-	sizeof(EVP_RC2_KEY),
-	rc2_set_asn1_type_and_iv,
-	rc2_get_asn1_type_and_iv,
-	rc2_ctrl,
+	.nid = NID_rc2_40_cbc,
+	.block_size = 8,
+	.key_len = 5,
+	.iv_len = 8,
+	.flags = EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
+	.init = rc2_init_key,
+	.do_cipher = rc2_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_RC2_KEY),
+	.set_asn1_parameters = rc2_set_asn1_type_and_iv,
+	.get_asn1_parameters = rc2_get_asn1_type_and_iv,
+	.ctrl = rc2_ctrl,
 };
 
 const EVP_CIPHER *

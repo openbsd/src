@@ -1,4 +1,4 @@
-/* $OpenBSD: e_null.c,v 1.19 2024/01/04 17:38:36 tb Exp $ */
+/* $OpenBSD: e_null.c,v 1.20 2024/01/07 15:42:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,16 +70,18 @@ static int null_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl);
 
 static const EVP_CIPHER n_cipher = {
-	NID_undef,
-	1, 0, 0,
-	0,
-	null_init_key,
-	null_cipher,
-	NULL,
-	0,
-	NULL,
-	NULL,
-	NULL,
+	.nid = NID_undef,
+	.block_size = 1,
+	.key_len = 0,
+	.iv_len = 0,
+	.flags = 0,
+	.init = null_init_key,
+	.do_cipher = null_cipher,
+	.cleanup = NULL,
+	.ctx_size = 0,
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
+	.ctrl = NULL,
 };
 
 const EVP_CIPHER *

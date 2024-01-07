@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4.c,v 1.18 2024/01/04 17:38:36 tb Exp $ */
+/* $OpenBSD: e_rc4.c,v 1.19 2024/01/07 15:42:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,29 +83,33 @@ static int rc4_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl);
 
 static const EVP_CIPHER r4_cipher = {
-	NID_rc4,
-	1, EVP_RC4_KEY_SIZE, 0,
-	EVP_CIPH_VARIABLE_LENGTH,
-	rc4_init_key,
-	rc4_cipher,
-	NULL,
-	sizeof(EVP_RC4_KEY),
-	NULL,
-	NULL,
-	NULL,
+	.nid = NID_rc4,
+	.block_size = 1,
+	.key_len = EVP_RC4_KEY_SIZE,
+	.iv_len = 0,
+	.flags = EVP_CIPH_VARIABLE_LENGTH,
+	.init = rc4_init_key,
+	.do_cipher = rc4_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_RC4_KEY),
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
+	.ctrl = NULL,
 };
 
 static const EVP_CIPHER r4_40_cipher = {
-	NID_rc4_40,
-	1, 5 /* 40 bit */, 0,
-	EVP_CIPH_VARIABLE_LENGTH,
-	rc4_init_key,
-	rc4_cipher,
-	NULL,
-	sizeof(EVP_RC4_KEY),
-	NULL,
-	NULL,
-	NULL,
+	.nid = NID_rc4_40,
+	.block_size = 1,
+	.key_len = 5,
+	.iv_len = 0,
+	.flags = EVP_CIPH_VARIABLE_LENGTH,
+	.init = rc4_init_key,
+	.do_cipher = rc4_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_RC4_KEY),
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
+	.ctrl = NULL,
 };
 
 const EVP_CIPHER *

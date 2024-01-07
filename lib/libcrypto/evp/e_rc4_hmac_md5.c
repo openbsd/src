@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4_hmac_md5.c,v 1.13 2024/01/04 17:38:36 tb Exp $ */
+/* $OpenBSD: e_rc4_hmac_md5.c,v 1.14 2024/01/07 15:42:57 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -283,19 +283,21 @@ rc4_hmac_md5_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
 static EVP_CIPHER r4_hmac_md5_cipher = {
 #ifdef NID_rc4_hmac_md5
-	NID_rc4_hmac_md5,
+	.nid = NID_rc4_hmac_md5,
 #else
-	NID_undef,
+	.nid = NID_undef,
 #endif
-	1, EVP_RC4_KEY_SIZE, 0,
-	EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH|EVP_CIPH_FLAG_AEAD_CIPHER,
-	rc4_hmac_md5_init_key,
-	rc4_hmac_md5_cipher,
-	NULL,
-	sizeof(EVP_RC4_HMAC_MD5),
-	NULL,
-	NULL,
-	rc4_hmac_md5_ctrl,
+	.block_size = 1,
+	.key_len = EVP_RC4_KEY_SIZE,
+	.iv_len = 0,
+	.flags = EVP_CIPH_STREAM_CIPHER|EVP_CIPH_VARIABLE_LENGTH|EVP_CIPH_FLAG_AEAD_CIPHER,
+	.init = rc4_hmac_md5_init_key,
+	.do_cipher = rc4_hmac_md5_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_RC4_HMAC_MD5),
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
+	.ctrl = rc4_hmac_md5_ctrl,
 };
 
 const EVP_CIPHER *
