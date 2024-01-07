@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.94 2023/12/30 17:52:27 bluhm Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.95 2024/01/07 21:01:45 bluhm Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1881,6 +1881,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 		goto free_hmc;
 	}
 
+	mtx_init(&sc->sc_link_state_mtx, IPL_NET);
 	if (ixl_get_link_status(sc) != 0) {
 		/* error printed by ixl_get_link_status */
 		goto free_hmc;
@@ -1987,7 +1988,6 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	if_attach_queues(ifp, nqueues);
 	if_attach_iqueues(ifp, nqueues);
 
-	mtx_init(&sc->sc_link_state_mtx, IPL_NET);
 	task_set(&sc->sc_link_state_task, ixl_link_state_update, sc);
 	ixl_wr(sc, I40E_PFINT_ICR0_ENA,
 	    I40E_PFINT_ICR0_ENA_LINK_STAT_CHANGE_MASK |
