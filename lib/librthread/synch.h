@@ -1,4 +1,4 @@
-/*	$OpenBSD: synch.h,v 1.9 2023/11/08 15:51:28 cheloha Exp $ */
+/*	$OpenBSD: synch.h,v 1.10 2024/01/07 19:44:28 cheloha Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot
  *
@@ -28,7 +28,7 @@ _wake(volatile uint32_t *p, int n)
 static inline int
 _twait(volatile uint32_t *p, int val, clockid_t clockid, const struct timespec *abs)
 {
-	struct timespec rel;
+	struct timespec now, rel;
 	int saved_errno = errno;
 	int error;
 
@@ -41,16 +41,12 @@ _twait(volatile uint32_t *p, int val, clockid_t clockid, const struct timespec *
 		return error;
 	}
 
-	if (!timespecisvalid(abs) || clock_gettime(clockid, &rel))
+	if (!timespecisvalid(abs) || clock_gettime(clockid, &now))
 		return EINVAL;
 
-	rel.tv_sec = abs->tv_sec - rel.tv_sec;
-	if ((rel.tv_nsec = abs->tv_nsec - rel.tv_nsec) < 0) {
-		rel.tv_sec--;
-		rel.tv_nsec += 1000000000;
-	}
-	if (rel.tv_sec < 0)
+	if (timespeccmp(abs, &now, <=))
 		return ETIMEDOUT;
+	timespecsub(abs, &now, &rel);
 
 	error = futex(p, FUTEX_WAIT, val, &rel, NULL);
 	if (error == -1) {
