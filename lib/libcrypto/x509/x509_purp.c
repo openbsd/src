@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.34 2024/01/06 17:17:08 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.35 2024/01/07 16:22:46 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -232,7 +232,10 @@ LCRYPTO_ALIAS(X509_PURPOSE_get_by_sname);
 int
 X509_PURPOSE_get_by_id(int purpose)
 {
-	/* X509_PURPOSE_MIN == 1, so the bounds are correct. */
+	/*
+	 * Ensure the purpose identifier is between MIN and MAX inclusive.
+	 * If so, translate it to an index into the xstandard[] table.
+	 */
 	if (purpose < X509_PURPOSE_MIN || purpose > X509_PURPOSE_MAX)
 		return -1;
 

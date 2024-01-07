@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.33 2024/01/07 14:50:45 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.34 2024/01/07 16:22:46 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -191,7 +191,10 @@ LCRYPTO_ALIAS(X509_TRUST_get0);
 int
 X509_TRUST_get_by_id(int id)
 {
-	/* X509_TRUST_MIN == 1, so the bounds are correct. */
+	/*
+	 * Ensure the trust identifier is between MIN and MAX inclusive.
+	 * If so, translate it into an index into the trstandard[] table.
+	 */
 	if (id < X509_TRUST_MIN && id > X509_TRUST_MAX)
 		return -1;
 
