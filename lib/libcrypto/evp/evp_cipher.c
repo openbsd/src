@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.15 2024/01/04 09:47:54 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.16 2024/01/07 15:21:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -902,22 +902,23 @@ EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
 int
 EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
-	int i = 0;
-	int l;
+	int iv_len;
 
-	if (type != NULL) {
-		l = EVP_CIPHER_CTX_iv_length(ctx);
-		if (l < 0 || l > sizeof(ctx->oiv) || l > sizeof(ctx->iv)) {
-			EVPerror(EVP_R_IV_TOO_LARGE);
-			return 0;
-		}
-		i = ASN1_TYPE_get_octetstring(type, ctx->oiv, l);
-		if (i != l)
-			return (-1);
-		else if (i > 0)
-			memcpy(ctx->iv, ctx->oiv, l);
+	if (type == NULL)
+		return 0;
+
+	iv_len = EVP_CIPHER_CTX_iv_length(ctx);
+	if (iv_len < 0 || iv_len > sizeof(ctx->oiv) || iv_len > sizeof(ctx->iv)) {
+		EVPerror(EVP_R_IV_TOO_LARGE);
+		return 0; /* XXX */
 	}
-	return (i);
+	if (ASN1_TYPE_get_octetstring(type, ctx->oiv, iv_len) != iv_len)
+		return -1;
+
+	if (iv_len > 0)
+		memcpy(ctx->iv, ctx->oiv, iv_len);
+
+	return iv_len;
 }
 
 int
@@ -935,18 +936,18 @@ EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 int
 EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
 {
-	int i = 0;
-	int j;
+	int iv_len;
 
-	if (type != NULL) {
-		j = EVP_CIPHER_CTX_iv_length(ctx);
-		if (j < 0 || j > sizeof(ctx->oiv)) {
-			EVPerror(EVP_R_IV_TOO_LARGE);
-			return 0;
-		}
-		i = ASN1_TYPE_set_octetstring(type, ctx->oiv, j);
+	if (type == NULL)
+		return 0;
+
+	iv_len = EVP_CIPHER_CTX_iv_length(ctx);
+	if (iv_len < 0 || iv_len > sizeof(ctx->oiv)) {
+		EVPerror(EVP_R_IV_TOO_LARGE);
+		return 0;
 	}
-	return (i);
+
+	return ASN1_TYPE_set_octetstring(type, ctx->oiv, iv_len);
 }
 
 int
