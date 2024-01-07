@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.21 2023/12/21 19:34:07 miod Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.22 2024/01/07 20:52:44 miod Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -326,6 +326,11 @@ function parseline() {
 			parserr($f, "argument definition")
 	} else
 		varargc = argc;
+	if (argc > 6) {
+		printf "%s: line %d: too many syscall arguments (%d > 6)\n", \
+		    infile, NR, argc
+		exit 1
+	}
 }
 function putent(nodefs, compatwrap) {
 	# output syscall declaration for switch table.
