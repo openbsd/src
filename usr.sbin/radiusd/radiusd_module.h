@@ -41,7 +41,7 @@ struct module_handlers {
 	    size_t pktlen);
 
 	void (*response_decoration)(void *ctx, u_int query_id,
-	    const u_char *pkt, size_t pktlen);
+	    const u_char *req, size_t reqlen, const u_char *res, size_t reslen);
 };
 
 #define SYNTAX_ASSERT(_cond, _msg)				\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_standard.c,v 1.1 2023/09/08 05:56:22 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_standard.c,v 1.2 2024/01/08 04:16:48 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -52,7 +52,8 @@ struct module_standard {
 static void	 module_standard_config_set(void *, const char *, int,
 		    char * const *);
 static void	 module_standard_reqdeco(void *, u_int, const u_char *, size_t);
-static void	 module_standard_resdeco(void *, u_int, const u_char *, size_t);
+static void	 module_standard_resdeco(void *, u_int, const u_char *, size_t,
+		    const u_char *, size_t);
 
 int
 main(int argc, char *argv[])
@@ -261,38 +262,39 @@ module_standard_reqdeco(void *ctx, u_int q_id, const u_char *pkt, size_t pktlen)
 
 /* response message decoration */
 static void
-module_standard_resdeco(void *ctx, u_int q_id, const u_char *pkt, size_t pktlen)
+module_standard_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
+    const u_char *res, size_t reslen)
 {
 	struct module_standard	*module = ctx;
-	RADIUS_PACKET		*radpkt = NULL;
+	RADIUS_PACKET		*radres = NULL;
 	struct attr		*attr;
 
 	TAILQ_FOREACH(attr, &module->remove_reqattrs, next) {
-		if (radpkt == NULL &&
-		    (radpkt = radius_convert_packet(pkt, pktlen)) == NULL) {
-			syslog(LOG_ERR,
+		if (radres == NULL &&
+		    (radres = radius_convert_packet(res, reslen)) == NULL) {
+			 syslog(LOG_ERR,
 			    "%s: radius_convert_packet() failed: %m", __func__);
 			module_stop(module->base);
 			return;
 		}
 		if (attr->type != RADIUS_TYPE_VENDOR_SPECIFIC)
-			radius_del_attr_all(radpkt, attr->type);
+			radius_del_attr_all(radres, attr->type);
 		else
-			radius_del_vs_attr_all(radpkt, attr->vendor,
+			radius_del_vs_attr_all(radres, attr->vendor,
 			    attr->vtype);
 	}
-	if (radpkt == NULL) {
-		pkt = NULL;
-		pktlen = 0;
+	if (radres == NULL) {
+		res = NULL;
+		reslen = 0;
 	} else {
-		pkt = radius_get_data(radpkt);
-		pktlen = radius_get_length(radpkt);
+		res = radius_get_data(radres);
+		reslen = radius_get_length(radres);
 	}
-	if (module_resdeco_done(module->base, q_id, pkt, pktlen) == -1) {
+	if (module_resdeco_done(module->base, q_id, res, reslen) == -1) {
 		syslog(LOG_ERR, "%s: module_resdeco_done() failed: %m",
 		    __func__);
 		module_stop(module->base);
 	}
-	if (radpkt != NULL)
-		radius_delete_packet(radpkt);
+	if (radres != NULL)
+		radius_delete_packet(radres);
 }

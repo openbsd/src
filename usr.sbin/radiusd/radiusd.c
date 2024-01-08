@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.33 2023/10/23 00:58:32 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.34 2024/01/08 04:16:48 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1542,6 +1542,13 @@ radiusd_module_response_decoration(struct radiusd_module *module,
 	if (module->fd < 0) {
 		log_warnx("q=%u Could not send RESDECO to `%s': module is "
 		    "not running?", q->id, module->name);
+		radiusd_access_request_aborted(q);
+		return;
+	}
+	if (imsg_compose_radius_packet(&module->ibuf,
+	    IMSG_RADIUSD_MODULE_RESDECO0_REQ, q->id, q->req) == -1) {
+		log_warn("q=%u Could not send RESDECO0_REQ to `%s'", q->id,
+		    module->name);
 		radiusd_access_request_aborted(q);
 		return;
 	}

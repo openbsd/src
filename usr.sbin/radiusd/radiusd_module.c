@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.14 2023/09/08 05:56:22 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.15 2024/01/08 04:16:48 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -49,7 +49,7 @@ static void	(*module_access_request) (void *, u_int, const u_char *,
 static void	(*module_request_decoration) (void *, u_int, const u_char *,
 		    size_t) = NULL;
 static void	(*module_response_decoration) (void *, u_int, const u_char *,
-		    size_t) = NULL;
+		    size_t, const u_char *, size_t) = NULL;
 
 struct module_base {
 	void			*ctx;
@@ -60,6 +60,9 @@ struct module_base {
 	u_char			*radpkt;
 	int			 radpktsiz;
 	int			 radpktoff;
+	u_char			*radpkt2;
+	int			 radpkt2siz;	/* allocated size */
+	int			 radpkt2len;	/* actual size */
 
 #ifdef USE_LIBEVENT
 	struct module_imsgbuf	*module_imsgbuf;
@@ -131,7 +134,11 @@ module_run(struct module_base *base)
 void
 module_destroy(struct module_base *base)
 {
-	imsg_clear(&base->ibuf);
+	if (base != NULL) {
+		free(base->radpkt);
+		free(base->radpkt2);
+		imsg_clear(&base->ibuf);
+	}
 	free(base);
 }
 
@@ -438,6 +445,7 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 	    }
 	case IMSG_RADIUSD_MODULE_ACCSREQ:
 	case IMSG_RADIUSD_MODULE_REQDECO:
+	case IMSG_RADIUSD_MODULE_RESDECO0_REQ:
 	case IMSG_RADIUSD_MODULE_RESDECO:
 	    {
 		struct radiusd_module_radpkt_arg	*accessreq;
@@ -464,7 +472,10 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 				    "module doesn't support");
 				break;
 			}
-			typestr = "RESDECO";
+			if (imsg->hdr.type == IMSG_RADIUSD_MODULE_RESDECO0_REQ)
+				typestr = "RESDECO0_REQ";
+			else
+				typestr = "RESDECO";
 		}
 
 		if (datalen <
@@ -512,9 +523,28 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 		else if (imsg->hdr.type == IMSG_RADIUSD_MODULE_REQDECO)
 			module_request_decoration(base->ctx, accessreq->q_id,
 			    base->radpkt, base->radpktoff);
-		else
+		else if (imsg->hdr.type == IMSG_RADIUSD_MODULE_RESDECO0_REQ) {
+			/* preserve request */
+			if (base->radpktoff > base->radpkt2siz) {
+				u_char *nradpkt;
+				if ((nradpkt = realloc(base->radpkt2,
+				    base->radpktoff)) == NULL) {
+					syslog(LOG_ERR, "Could not handle "
+					    "received %s message: %m", typestr);
+					base->radpktoff = 0;
+					goto accsreq_out;
+				}
+				base->radpkt2 = nradpkt;
+				base->radpkt2siz = base->radpktoff;
+			}
+			memcpy(base->radpkt2, base->radpkt, base->radpktoff);
+			base->radpkt2len = base->radpktoff;
+		} else {
 			module_response_decoration(base->ctx, accessreq->q_id,
-			    base->radpkt, base->radpktoff);
+			    base->radpkt2, base->radpkt2len, base->radpkt,
+			    base->radpktoff);
+			base->radpkt2len = 0;
+		}
 		base->radpktoff = 0;
 accsreq_out:
 		break;
