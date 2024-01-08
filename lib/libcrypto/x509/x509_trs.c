@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.34 2024/01/07 16:22:46 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.35 2024/01/08 03:32:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -195,7 +195,7 @@ X509_TRUST_get_by_id(int id)
 	 * Ensure the trust identifier is between MIN and MAX inclusive.
 	 * If so, translate it into an index into the trstandard[] table.
 	 */
-	if (id < X509_TRUST_MIN && id > X509_TRUST_MAX)
+	if (id < X509_TRUST_MIN || id > X509_TRUST_MAX)
 		return -1;
 
 	return id - X509_TRUST_MIN;
