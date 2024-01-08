@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.19 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.20 2024/01/08 09:31:09 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -541,7 +541,7 @@ aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	}
 }
 
-static EVP_CIPHER aesni_128_cbc_hmac_sha1_cipher = {
+static const EVP_CIPHER aesni_128_cbc_hmac_sha1_cipher = {
 #ifdef NID_aes_128_cbc_hmac_sha1
 	.nid = NID_aes_128_cbc_hmac_sha1,
 #else
@@ -558,7 +558,7 @@ static EVP_CIPHER aesni_128_cbc_hmac_sha1_cipher = {
 	.ctrl = aesni_cbc_hmac_sha1_ctrl
 };
 
-static EVP_CIPHER aesni_256_cbc_hmac_sha1_cipher = {
+static const EVP_CIPHER aesni_256_cbc_hmac_sha1_cipher = {
 #ifdef NID_aes_256_cbc_hmac_sha1
 	.nid = NID_aes_256_cbc_hmac_sha1,
 #else
