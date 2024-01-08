@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.23 2024/01/05 11:02:57 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.24 2024/01/08 16:39:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -33,7 +33,7 @@ struct rtr_header {
 	uint8_t		type;
 	uint16_t	session_id; /* or error code */
 	uint32_t	length;
-};
+} __packed;
 
 #define RTR_MAX_VERSION		2
 #define RTR_MAX_LEN		2048
@@ -56,42 +56,71 @@ enum rtr_pdu_type {
 	ASPA = 11,
 };
 
+struct rtr_notify {
+	struct rtr_header	hdr;
+	uint32_t		serial;
+} __packed;
+
+struct rtr_query {
+	struct rtr_header	hdr;
+	uint32_t		serial;
+} __packed;
+
+struct rtr_reset {
+	struct rtr_header	hdr;
+} __packed;
+
+struct rtr_response {
+	struct rtr_header	hdr;
+} __packed;
+
 #define FLAG_ANNOUNCE	0x1
 #define FLAG_MASK	FLAG_ANNOUNCE
 struct rtr_ipv4 {
-	uint8_t		flags;
-	uint8_t		prefixlen;
-	uint8_t		maxlen;
-	uint8_t		zero;
-	uint32_t	prefix;
-	uint32_t	asnum;
-};
+	struct rtr_header	hdr;
+	uint8_t			flags;
+	uint8_t			prefixlen;
+	uint8_t			maxlen;
+	uint8_t			zero;
+	uint32_t		prefix;
+	uint32_t		asnum;
+} __packed;
 
 struct rtr_ipv6 {
-	uint8_t		flags;
-	uint8_t		prefixlen;
-	uint8_t		maxlen;
-	uint8_t		zero;
-	uint32_t	prefix[4];
-	uint32_t	asnum;
-};
+	struct rtr_header	hdr;
+	uint8_t			flags;
+	uint8_t			prefixlen;
+	uint8_t			maxlen;
+	uint8_t			zero;
+	uint32_t		prefix[4];
+	uint32_t		asnum;
+} __packed;
+
+struct rtr_routerkey {
+	struct rtr_header	hdr;
+	uint8_t			ski[20];
+	uint32_t		asnum;
+	/* followed by Subject Public Key Info */
+} __packed;
 
 #define FLAG_AFI_V6	0x1
 #define FLAG_AFI_MASK	FLAG_AFI_V6
 struct rtr_aspa {
-	uint8_t		flags;
-	uint8_t		afi_flags;
-	uint16_t	cnt;
-	uint32_t	cas;
+	struct rtr_header	hdr;
+	uint8_t			flags;
+	uint8_t			afi_flags;
+	uint16_t		cnt;
+	uint32_t		cas;
 	/* array of spas with cnt elements follows */
-};
+} __packed;
 
 struct rtr_endofdata {
-	uint32_t	serial;
-	uint32_t	refresh;
-	uint32_t	retry;
-	uint32_t	expire;
-};
+	struct rtr_header	hdr;
+	uint32_t		serial;
+	uint32_t		refresh;
+	uint32_t		retry;
+	uint32_t		expire;
+} __packed;
 
 enum rtr_event {
 	RTR_EVNT_START,
@@ -109,6 +138,7 @@ enum rtr_event {
 	RTR_EVNT_NO_DATA,
 	RTR_EVNT_RESET_AND_CLOSE,
 	RTR_EVNT_UNSUPP_PROTO_VERSION,
+	RTR_EVNT_NEGOTIATION_DONE,
 };
 
 static const char *rtr_eventnames[] = {
@@ -127,6 +157,7 @@ static const char *rtr_eventnames[] = {
 	"no data",
 	"connection closed with reset",
 	"unsupported protocol version",
+	"negotiation done",
 };
 
 enum rtr_state {
@@ -344,7 +375,25 @@ rtr_send_serial_query(struct rtr_session *rs)
 }
 
 /*
- * Validate the common rtr header (first 8 bytes) including the
+ * Check the session_id of the rtr_header to match the expected value.
+ * Returns -1 on failure and 0 on success.
+ */
+static int
+rtr_check_session_id(struct rtr_session *rs, uint16_t session_id,
+    struct rtr_header *rh, struct ibuf *pdu)
+{
+	if (session_id != ntohs(rh->session_id)) {
+		log_warnx("rtr %s: received %s: bad session_id: %d != %d",
+		    log_rtr(rs), log_rtr_type(rh->type), ntohs(rh->session_id),
+		    session_id);
+		rtr_send_error(rs, CORRUPT_DATA, "bad session_id", pdu);
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * Parse the common rtr header (first 8 bytes) including the
  * included length field.
  * Returns -1 on failure. On success msgtype and msglen are set
  * and the function return 0.
@@ -354,88 +403,82 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
     size_t *msglen, enum rtr_pdu_type *msgtype)
 {
 	struct rtr_header rh;
-	uint32_t len = 16;	/* default for ERROR_REPORT */
-	int session_id;
+	size_t len;
 
 	if (ibuf_get(hdr, &rh, sizeof(rh)) == -1)
 		fatal("%s: ibuf_get", __func__);
 
-	if (rh.version != rs->version && rh.type != ERROR_REPORT) {
- badversion:
-		log_warnx("rtr %s: received %s message: unexpected version %d",
-		    log_rtr(rs), log_rtr_type(rh.type), rh.version);
-		rtr_send_error(rs, UNEXP_PROTOCOL_VERS, NULL, hdr);
+	len = ntohl(rh.length);
+
+	if (len > RTR_MAX_LEN) {
+		log_warnx("rtr %s: received %s: msg too big: %zu byte",
+		    log_rtr(rs), log_rtr_type(rh.type), len);
+		rtr_send_error(rs, CORRUPT_DATA, "too big", hdr);
 		return -1;
 	}
 
-	*msgtype = rh.type;
-	*msglen = ntohl(rh.length);
+	if (rs->state == RTR_STATE_NEGOTIATION) {
+		switch (rh.type) {
+		case CACHE_RESPONSE:
+		case CACHE_RESET:
+		case ERROR_REPORT:
+			if (rh.version < rs->version)
+				rs->version = rh.version;
+			rtr_fsm(rs, RTR_EVNT_NEGOTIATION_DONE);
+			break;
+		case SERIAL_NOTIFY:
+			/* ignore SERIAL_NOTIFY */
+			break;
+		default:
+			log_warnx("rtr %s: received %s: out of context",
+			    log_rtr(rs), log_rtr_type(rh.type));
+			rtr_send_error(rs, CORRUPT_DATA, NULL, hdr);
+			return -1;
+		}
+	} else if (rh.version != rs->version && rh.type != ERROR_REPORT) {
+		goto badversion;
+	}
 
 	switch (rh.type) {
 	case SERIAL_NOTIFY:
-		session_id = rs->session_id;
-		len = 12;
+		if (len != sizeof(struct rtr_notify))
+			goto badlen;
 		break;
 	case CACHE_RESPONSE:
-		/* set session_id if not yet happened */
-		if (rs->session_id == -1)
-			rs->session_id = ntohs(rh.session_id);
-		session_id = rs->session_id;
-		len = 8;
+		if (len != sizeof(struct rtr_response))
+			goto badlen;
 		break;
 	case IPV4_PREFIX:
-		session_id = 0;
-		len = 20;
+		if (len != sizeof(struct rtr_ipv4))
+			goto badlen;
 		break;
 	case IPV6_PREFIX:
-		session_id = 0;
-		len = 32;
+		if (len != sizeof(struct rtr_ipv6))
+			goto badlen;
 		break;
 	case END_OF_DATA:
-		session_id = rs->session_id;
-		len = 24;
+		if (len != sizeof(struct rtr_endofdata))
+			goto badlen;
 		break;
 	case CACHE_RESET:
-		session_id = 0;
-		len = 8;
+		if (len != sizeof(struct rtr_reset))
+			goto badlen;
 		break;
 	case ROUTER_KEY:
+		if (len < sizeof(struct rtr_routerkey))
+			goto badlen;
 		if (rs->version < 1)
 			goto badversion;
-		len = 36;	/* XXX probably too small, but we ignore it */
-		/* FALLTHROUGH */
+		break;
 	case ERROR_REPORT:
-		if (*msglen > RTR_MAX_LEN) {
- toobig:
-			log_warnx("rtr %s: received %s: msg too big: %zu byte",
-			    log_rtr(rs), log_rtr_type(rh.type), *msglen);
-			rtr_send_error(rs, CORRUPT_DATA, "too big", hdr);
-			return -1;
-		}
-		if (*msglen < len) {
- toosmall:
-			log_warnx("rtr %s: received %s: msg too small: "
-			    "%zu byte", log_rtr(rs), log_rtr_type(rh.type),
-			    *msglen);
-			rtr_send_error(rs, CORRUPT_DATA, "too small", hdr);
-			return -1;
-		}
-		/*
-		 * session_id check omitted since ROUTER_KEY and ERROR_REPORT
-		 * use the field for different things.
-		 */
-		return 0;
+		if (len < 16)
+			goto badlen;
+		break;
 	case ASPA:
+		if (len < sizeof(struct rtr_aspa) || (len % 4) != 0)
+			goto badlen;
 		if (rs->version < 2)
 			goto badversion;
-		session_id = 0;
-		/* unlike all other messages ASPA is variable sized */
-		if (*msglen > RTR_MAX_LEN)
-			goto toobig;
-		if (*msglen < sizeof(struct rtr_aspa))
-			goto toosmall;
-		/* len must be a multiple of 4 */
-		len = *msglen & ~0x3;
 		break;
 	default:
 		log_warnx("rtr %s: received unknown message: type %s",
@@ -444,33 +487,44 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 		return -1;
 	}
 
-	if (len != *msglen) {
-		log_warnx("rtr %s: received %s: illegal len: %zu byte not %u",
-		    log_rtr(rs), log_rtr_type(rh.type), *msglen, len);
-		rtr_send_error(rs, CORRUPT_DATA, "bad length", hdr);
-		return -1;
-	}
-
-	if (session_id != ntohs(rh.session_id)) {
-		/* ignore SERIAL_NOTIFY during startup */
-		if (rs->session_id == -1 && rh.type == SERIAL_NOTIFY)
-			return 0;
-
-		log_warnx("rtr %s: received %s: bad session_id: %d != %d",
-		    log_rtr(rs), log_rtr_type(rh.type), ntohs(rh.session_id),
-		    session_id);
-		rtr_send_error(rs, CORRUPT_DATA, "bad session_id", hdr);
-		return -1;
-	}
+	*msglen = len;
+	*msgtype = rh.type;
 
 	return 0;
+
+ badlen:
+	log_warnx("rtr %s: received %s: bad PDU length: %zu bytes",
+	    log_rtr(rs), log_rtr_type(rh.type), len);
+	rtr_send_error(rs, CORRUPT_DATA, "bad length", hdr);
+	return -1;
+
+ badversion:
+	log_warnx("rtr %s: received %s message: unexpected version %d",
+	    log_rtr(rs), log_rtr_type(rh.type), rh.version);
+	rtr_send_error(rs, UNEXP_PROTOCOL_VERS, NULL, hdr);
+	return -1;
 }
 
 static int
 rtr_parse_notify(struct rtr_session *rs, struct ibuf *pdu)
 {
-	if (rs->state == RTR_STATE_EXCHANGE ||
-	    rs->state == RTR_STATE_NEGOTIATION) {
+	struct rtr_notify notify;
+
+	/* ignore SERIAL_NOTIFY during startup */
+	if (rs->state == RTR_STATE_NEGOTIATION)
+		return 0;
+
+	if (ibuf_get(pdu, &notify, sizeof(notify)) == -1) {
+		log_warnx("rtr %s: received %s: bad pdu len",
+		    log_rtr(rs), log_rtr_type(SERIAL_NOTIFY));
+		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
+		return -1;
+	}
+
+	if (rtr_check_session_id(rs, rs->session_id, &notify.hdr, pdu) == -1)
+		return -1;
+
+	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: while in state %s (ignored)",
 		    log_rtr(rs), log_rtr_type(SERIAL_NOTIFY),
 		    rtr_statenames[rs->state]);
@@ -484,8 +538,23 @@ rtr_parse_notify(struct rtr_session *rs, struct ibuf *pdu)
 static int
 rtr_parse_cache_response(struct rtr_session *rs, struct ibuf *pdu)
 {
-	if (rs->state != RTR_STATE_ESTABLISHED &&
-	    rs->state != RTR_STATE_NEGOTIATION) {
+	struct rtr_response resp;
+
+	if (ibuf_get(pdu, &resp, sizeof(resp)) == -1) {
+		log_warnx("rtr %s: received %s: bad pdu len",
+		    log_rtr(rs), log_rtr_type(CACHE_RESPONSE));
+		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
+		return -1;
+	}
+
+	/* set session_id if not yet happened */
+	if (rs->session_id == -1)
+		rs->session_id = ntohs(resp.hdr.session_id);
+
+	if (rtr_check_session_id(rs, rs->session_id, &resp.hdr, pdu) == -1)
+		return -1;
+
+	if (rs->state != RTR_STATE_ESTABLISHED) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(CACHE_RESPONSE));
 		return -1;
@@ -501,13 +570,15 @@ rtr_parse_ipv4_prefix(struct rtr_session *rs, struct ibuf *pdu)
 	struct rtr_ipv4 ip4;
 	struct roa *roa;
 
-	if (ibuf_skip(pdu, sizeof(struct rtr_header)) == -1 ||
-	    ibuf_get(pdu, &ip4, sizeof(ip4)) == -1) {
+	if (ibuf_get(pdu, &ip4, sizeof(ip4)) == -1) {
 		log_warnx("rtr %s: received %s: bad pdu len",
 		    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
 		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
 		return -1;
 	}
+
+	if (rtr_check_session_id(rs, 0, &ip4.hdr, pdu) == -1)
+		return -1;
 
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
@@ -569,13 +640,15 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, struct ibuf *pdu)
 	struct rtr_ipv6 ip6;
 	struct roa *roa;
 
-	if (ibuf_skip(pdu, sizeof(struct rtr_header)) == -1 ||
-	    ibuf_get(pdu, &ip6, sizeof(ip6)) == -1) {
+	if (ibuf_get(pdu, &ip6, sizeof(ip6)) == -1) {
 		log_warnx("rtr %s: received %s: bad pdu len",
 		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
 		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
 		return -1;
 	}
+
+	if (rtr_check_session_id(rs, 0, &ip6.hdr, pdu) == -1)
+		return -1;
 
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
@@ -638,8 +711,7 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 	struct aspa_set *aspa, *a;
 	uint16_t cnt, i;
 
-	if (ibuf_skip(pdu, sizeof(struct rtr_header)) == -1 ||
-	    ibuf_get(pdu, &rtr_aspa, sizeof(rtr_aspa)) == -1) {
+	if (ibuf_get(pdu, &rtr_aspa, sizeof(rtr_aspa)) == -1) {
 		log_warnx("rtr %s: received %s: bad pdu len",
 		    log_rtr(rs), log_rtr_type(ASPA));
 		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
@@ -733,12 +805,14 @@ rtr_parse_end_of_data(struct rtr_session *rs, struct ibuf *pdu)
 	struct rtr_endofdata eod;
 	uint32_t t;
 
-	if (ibuf_skip(pdu, sizeof(struct rtr_header)) == -1 ||
-	    ibuf_get(pdu, &eod, sizeof(eod)) == -1) {
+	if (ibuf_get(pdu, &eod, sizeof(eod)) == -1) {
 		log_warnx("rtr %s: received %s: bad pdu len",
 		    log_rtr(rs), log_rtr_type(END_OF_DATA));
 		return -1;
 	}
+
+	if (rtr_check_session_id(rs, rs->session_id, &eod.hdr, pdu) == -1)
+		return -1;
 
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
@@ -775,6 +849,17 @@ bad:
 static int
 rtr_parse_cache_reset(struct rtr_session *rs, struct ibuf *pdu)
 {
+	struct rtr_reset reset;
+
+	if (ibuf_get(pdu, &reset, sizeof(reset)) == -1) {
+		log_warnx("rtr %s: received %s: bad pdu len",
+		    log_rtr(rs), log_rtr_type(CACHE_RESET));
+		return -1;
+	}
+
+	if (rtr_check_session_id(rs, 0, &reset.hdr, pdu) == -1)
+		return -1;
+
 	if (rs->state != RTR_STATE_ESTABLISHED) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(CACHE_RESET));
@@ -1093,6 +1178,9 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		rs->state = RTR_STATE_ERROR;
 		/* flush receive buffer */
 		rs->r.wpos = 0;
+		break;
+	case RTR_EVNT_NEGOTIATION_DONE:
+		rs->state = RTR_STATE_ESTABLISHED;
 		break;
 	}
 
