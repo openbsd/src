@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.298 2023/11/20 14:41:55 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.299 2024/01/08 15:09:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -194,19 +194,13 @@ main(int argc, char *argv[])
 		break;
 	case SHOW_FIB:
 		if (!res->addr.aid) {
-			struct ibuf	*msg;
-			sa_family_t	 af;
+			struct ctl_kroute_req	req = { 0 };
 
-			af = aid2af(res->aid);
-			if ((msg = imsg_create(imsgbuf, IMSG_CTL_KROUTE,
-			    res->rtableid, 0, sizeof(res->flags) +
-			    sizeof(af))) == NULL)
-				errx(1, "imsg_create failure");
-			if (imsg_add(msg, &res->flags, sizeof(res->flags)) ==
-			    -1 ||
-			    imsg_add(msg, &af, sizeof(af)) == -1)
-				errx(1, "imsg_add failure");
-			imsg_close(imsgbuf, msg);
+			req.af = aid2af(res->aid);
+			req.flags = res->flags;
+
+			imsg_compose(imsgbuf, IMSG_CTL_KROUTE, res->rtableid,
+			    0, -1, &req, sizeof(req));
 		} else
 			imsg_compose(imsgbuf, IMSG_CTL_KROUTE_ADDR,
 			    res->rtableid, 0, -1,
