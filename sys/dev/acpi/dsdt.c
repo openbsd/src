@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.264 2021/12/09 20:21:35 patrick Exp $ */
+/* $OpenBSD: dsdt.c,v 1.265 2024/01/08 19:52:29 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -634,8 +634,9 @@ __aml_search(struct aml_node *root, uint8_t *nameseg, int create)
 
 		SIMPLEQ_INIT(&node->son);
 		SIMPLEQ_INSERT_TAIL(&root->son, node, sib);
+		return node;
 	}
-	return node;
+	return NULL;
 }
 
 /* Get absolute pathname of AML node */
@@ -3742,8 +3743,6 @@ aml_loadtable(struct acpi_softc *sc, const char *signature,
 	struct acpi_dsdt *p_dsdt;
 	struct acpi_q *entry;
 
-	if (strlen(rootpath) > 0)
-		aml_die("LoadTable: RootPathString unsupported");
 	if (strlen(parameterpath) > 0)
 		aml_die("LoadTable: ParameterPathString unsupported");
 
@@ -3755,8 +3754,8 @@ aml_loadtable(struct acpi_softc *sc, const char *signature,
 		    strncmp(hdr->oemtableid, oemtableid,
 		    sizeof(hdr->oemtableid)) == 0) {
 			p_dsdt = entry->q_table;
-			acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
-			    sizeof(p_dsdt->hdr));
+			acpi_parse_aml(sc, rootpath, p_dsdt->aml,
+			    p_dsdt->hdr_length - sizeof(p_dsdt->hdr));
 			return aml_allocvalue(AML_OBJTYPE_DDBHANDLE, 0, 0);
 		}
 	}
@@ -4520,10 +4519,18 @@ parse_error:
 }
 
 int
-acpi_parse_aml(struct acpi_softc *sc, uint8_t *start, uint32_t length)
+acpi_parse_aml(struct acpi_softc *sc, const char *rootpath,
+    uint8_t *start, uint32_t length)
 {
+	struct aml_node *root = &aml_root;
 	struct aml_scope *scope;
 	struct aml_value res;
+
+	if (rootpath) {
+		root = aml_searchname(&aml_root, rootpath);
+		if (root == NULL)
+			aml_die("Invalid RootPathName %s\n", rootpath);
+	}
 
 	aml_root.start = start;
 	memset(&res, 0, sizeof(res));

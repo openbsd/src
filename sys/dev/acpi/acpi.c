@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.425 2023/07/08 08:01:10 tobhe Exp $ */
+/* $OpenBSD: acpi.c,v 1.426 2024/01/08 19:52:29 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1104,16 +1104,16 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 		printf(" !DSDT");
 
 	p_dsdt = entry->q_table;
-	acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
-	    sizeof(p_dsdt->hdr));
+	acpi_parse_aml(sc, NULL, p_dsdt->aml,
+	    p_dsdt->hdr_length - sizeof(p_dsdt->hdr));
 
 	/* Load SSDT's */
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
 		if (memcmp(entry->q_table, SSDT_SIG,
 		    sizeof(SSDT_SIG) - 1) == 0) {
 			p_dsdt = entry->q_table;
-			acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
-			    sizeof(p_dsdt->hdr));
+			acpi_parse_aml(sc, NULL, p_dsdt->aml,
+			    p_dsdt->hdr_length - sizeof(p_dsdt->hdr));
 		}
 	}
 
