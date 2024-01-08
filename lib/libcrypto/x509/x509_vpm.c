@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.41 2023/12/14 12:02:10 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.42 2024/01/08 09:51:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -61,6 +61,7 @@
 
 #include <openssl/buffer.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/lhash.h>
 #include <openssl/stack.h>
 #include <openssl/x509.h>
@@ -408,14 +409,26 @@ LCRYPTO_ALIAS(X509_VERIFY_PARAM_get_flags);
 int
 X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose)
 {
-	return X509_PURPOSE_set(&param->purpose, purpose);
+	if (purpose < X509_PURPOSE_MIN || purpose > X509_PURPOSE_MAX) {
+		X509V3error(X509V3_R_INVALID_PURPOSE);
+		return 0;
+	}
+
+	param->purpose = purpose;
+	return 1;
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_set_purpose);
 
 int
 X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust)
 {
-	return X509_TRUST_set(&param->trust, trust);
+	if (trust < X509_TRUST_MIN || trust > X509_TRUST_MAX) {
+		X509error(X509_R_INVALID_TRUST);
+		return 0;
+	}
+
+	param->trust = trust;
+	return 1;
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_set_trust);
 
