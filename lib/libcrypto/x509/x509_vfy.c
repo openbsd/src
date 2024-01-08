@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.136 2024/01/07 18:15:42 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.137 2024/01/08 10:06:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2177,35 +2177,35 @@ int
 X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
     int purpose, int trust)
 {
-	int idx;
+	X509error(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(X509_STORE_CTX_purpose_inherit);
 
-	/* If purpose not set use default */
-	if (purpose == 0)
-		purpose = def_purpose;
+static int
+x509_vfy_purpose_inherit(X509_STORE_CTX *ctx, int purpose, int trust)
+{
 	/* If we have a purpose then check it is valid */
 	if (purpose != 0) {
-		X509_PURPOSE *ptmp;
-		idx = X509_PURPOSE_get_by_id(purpose);
-		if (idx == -1) {
+		const X509_PURPOSE *purp;
+		int purpose_idx;
+
+		if (purpose < X509_PURPOSE_MIN || purpose > X509_TRUST_MAX) {
 			X509error(X509_R_UNKNOWN_PURPOSE_ID);
 			return 0;
 		}
-		ptmp = X509_PURPOSE_get0(idx);
-		if (ptmp->trust == X509_TRUST_DEFAULT) {
-			idx = X509_PURPOSE_get_by_id(def_purpose);
-			if (idx == -1) {
-				X509error(X509_R_UNKNOWN_PURPOSE_ID);
-				return 0;
-			}
-			ptmp = X509_PURPOSE_get0(idx);
+		purpose_idx = purpose - X509_PURPOSE_MIN;
+		if ((purp = X509_PURPOSE_get0(purpose_idx)) == NULL) {
+			X509error(X509_R_UNKNOWN_PURPOSE_ID);
+			return 0;
 		}
-		/* If trust not set then get from purpose default */
+
+		/* If trust is unset, use the purpose's trust. */
 		if (trust == 0)
-			trust = ptmp->trust;
+			trust = purp->trust;
 	}
 	if (trust != 0) {
-		idx = X509_TRUST_get_by_id(trust);
-		if (idx == -1) {
+		if (trust < X509_TRUST_MIN || trust > X509_TRUST_MAX) {
 			X509error(X509_R_UNKNOWN_TRUST_ID);
 			return 0;
 		}
@@ -2218,19 +2218,18 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 
 	return 1;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_purpose_inherit);
 
 int
 X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
 {
-	return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
+	return x509_vfy_purpose_inherit(ctx, purpose, 0);
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set_purpose);
 
 int
 X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
 {
-	return X509_STORE_CTX_purpose_inherit(ctx, 0, 0, trust);
+	return x509_vfy_purpose_inherit(ctx, 0, trust);
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set_trust);
 
