@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.478 2023/10/16 10:25:45 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.479 2024/01/08 15:08:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -972,6 +972,11 @@ struct ctl_show_rib_request {
 	uint8_t			validation_state;
 	uint8_t			prefixlen;
 	uint8_t			aid;
+};
+
+struct ctl_kroute_req {
+	int			flags;
+	sa_family_t		af;
 };
 
 enum filter_actions {

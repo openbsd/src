@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.307 2023/10/17 17:59:59 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.308 2024/01/08 15:08:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -884,8 +884,7 @@ kr_show_route(struct imsg *imsg)
 	struct kroute6		*kr6, *kn6;
 	struct kroute_full	*kf;
 	struct bgpd_addr	*addr;
-	int			 flags;
-	sa_family_t		 af;
+	struct ctl_kroute_req	 req;
 	struct ctl_show_nexthop	 snh;
 	struct knexthop		*h;
 	struct kif		*kif;
@@ -894,8 +893,7 @@ kr_show_route(struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_KROUTE:
-		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(flags) +
-		    sizeof(af)) {
+		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
 			log_warnx("%s: wrong imsg len", __func__);
 			break;
 		}
@@ -905,11 +903,10 @@ kr_show_route(struct imsg *imsg)
 			    imsg->hdr.peerid);
 			break;
 		}
-		memcpy(&flags, imsg->data, sizeof(flags));
-		memcpy(&af, (char *)imsg->data + sizeof(flags), sizeof(af));
-		if (!af || af == AF_INET)
+		memcpy(&req, imsg->data, sizeof(req));
+		if (!req.af || req.af == AF_INET)
 			RB_FOREACH(kr, kroute_tree, &kt->krt) {
-				if (flags && (kr->flags & flags) == 0)
+				if (req.flags && (kr->flags & req.flags) == 0)
 					continue;
 				kn = kr;
 				do {
@@ -919,9 +916,9 @@ kr_show_route(struct imsg *imsg)
 					    imsg->hdr.pid, kf, sizeof(*kf));
 				} while ((kn = kn->next) != NULL);
 			}
-		if (!af || af == AF_INET6)
+		if (!req.af || req.af == AF_INET6)
 			RB_FOREACH(kr6, kroute6_tree, &kt->krt6) {
-				if (flags && (kr6->flags & flags) == 0)
+				if (req.flags && (kr6->flags & req.flags) == 0)
 					continue;
 				kn6 = kr6;
 				do {
