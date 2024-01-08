@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.106 2023/12/29 17:15:10 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.107 2024/01/08 19:46:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -37,6 +37,8 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+extern int noop;
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
@@ -390,7 +392,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 		warnx("%s: manifest misissuance, #%s was recycled",
 		    file1, mft1->seqnum);
 
-	if (r == 1) {
+	if (!noop && r == 1) {
 		*mp = proc_parser_mft_post(file1, mft1, entp->path, err1,
 		    &warned);
 		if (*mp == NULL) {
