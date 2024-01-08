@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.35 2023/10/13 12:12:05 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.36 2024/01/08 08:26:38 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -92,7 +92,7 @@ run-regress-test-tak: test-tak
 SRCS_test-rrdp+=	test-rrdp.c rrdp_delta.c rrdp_notification.c cms.c \
 			rrdp_snapshot.c rrdp_util.c cert.c as.c mft.c io.c \
 			encoding.c ip.c validate.c crl.c x509.c \
-			constraints-dummy.c rfc3779.c
+			constraints-dummy.c rfc3779.c print.c json.c
 LDADD_test-rrdp+=	-lexpat ${LDADD}
 DPADD_test-rrdp+=	${LIBEXPAT} ${DPADD}
 run-regress-test-rrdp: test-rrdp
