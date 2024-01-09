@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.26 2024/01/09 14:43:41 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.27 2024/01/09 15:13:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -120,6 +120,11 @@ struct rtr_endofdata {
 	uint32_t		refresh;
 	uint32_t		retry;
 	uint32_t		expire;
+} __packed;
+
+struct rtr_endofdata_v0 {
+	struct rtr_header	hdr;
+	uint32_t		serial;
 } __packed;
 
 enum rtr_event {
@@ -457,8 +462,13 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 			goto badlen;
 		break;
 	case END_OF_DATA:
-		if (len != sizeof(struct rtr_endofdata))
-			goto badlen;
+		if (rs->version == 0) {
+			if (len != sizeof(struct rtr_endofdata_v0))
+				goto badlen;
+		} else {
+			if (len != sizeof(struct rtr_endofdata))
+				goto badlen;
+		}
 		break;
 	case CACHE_RESET:
 		if (len != sizeof(struct rtr_reset))
@@ -801,10 +811,42 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 }
 
 static int
+rtr_parse_end_of_data_v0(struct rtr_session *rs, struct ibuf *pdu)
+{
+	struct rtr_endofdata_v0 eod;
+
+	if (ibuf_get(pdu, &eod, sizeof(eod)) == -1) {
+		log_warnx("rtr %s: received %s: bad pdu length",
+		    log_rtr(rs), log_rtr_type(END_OF_DATA));
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
+		return -1;
+	}
+
+	if (rtr_check_session_id(rs, rs->session_id, &eod.hdr, pdu) == -1)
+		return -1;
+
+	if (rs->state != RTR_STATE_EXCHANGE) {
+		log_warnx("rtr %s: received %s: out of context",
+		    log_rtr(rs), log_rtr_type(END_OF_DATA));
+		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
+		return -1;
+	}
+
+	rs->serial = ntohl(eod.serial);
+
+	rtr_fsm(rs, RTR_EVNT_END_OF_DATA);
+	return 0;
+}
+
+static int
 rtr_parse_end_of_data(struct rtr_session *rs, struct ibuf *pdu)
 {
 	struct rtr_endofdata eod;
 	uint32_t t;
+
+	/* version 0 does not have the timing values */
+	if (rs->version == 0)
+		return rtr_parse_end_of_data_v0(rs, pdu);
 
 	if (ibuf_get(pdu, &eod, sizeof(eod)) == -1) {
 		log_warnx("rtr %s: received %s: bad pdu length",
