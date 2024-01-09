@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.308 2024/01/08 15:08:34 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.309 2024/01/09 13:41:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -883,27 +883,30 @@ kr_show_route(struct imsg *imsg)
 	struct kroute		*kr, *kn;
 	struct kroute6		*kr6, *kn6;
 	struct kroute_full	*kf;
-	struct bgpd_addr	*addr;
+	struct bgpd_addr	 addr;
 	struct ctl_kroute_req	 req;
 	struct ctl_show_nexthop	 snh;
 	struct knexthop		*h;
 	struct kif		*kif;
+	uint32_t		 tableid;
+	pid_t			 pid;
 	u_int			 i;
 	u_short			 ifindex = 0;
 
-	switch (imsg->hdr.type) {
+	tableid = imsg_get_id(imsg);
+	pid = imsg_get_pid(imsg);
+	switch (imsg_get_type(imsg)) {
 	case IMSG_CTL_KROUTE:
-		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
+		if (imsg_get_data(imsg, &req, sizeof(req)) == -1) {
 			log_warnx("%s: wrong imsg len", __func__);
 			break;
 		}
-		kt = ktable_get(imsg->hdr.peerid);
+		kt = ktable_get(tableid);
 		if (kt == NULL) {
 			log_warnx("%s: table %u does not exist", __func__,
-			    imsg->hdr.peerid);
+			    tableid);
 			break;
 		}
-		memcpy(&req, imsg->data, sizeof(req));
 		if (!req.af || req.af == AF_INET)
 			RB_FOREACH(kr, kroute_tree, &kt->krt) {
 				if (req.flags && (kr->flags & req.flags) == 0)
@@ -913,7 +916,7 @@ kr_show_route(struct imsg *imsg)
 					kf = kr_tofull(kn);
 					kf->priority = kr_priority(kf);
 					send_imsg_session(IMSG_CTL_KROUTE,
-					    imsg->hdr.pid, kf, sizeof(*kf));
+					    pid, kf, sizeof(*kf));
 				} while ((kn = kn->next) != NULL);
 			}
 		if (!req.af || req.af == AF_INET6)
@@ -925,50 +928,48 @@ kr_show_route(struct imsg *imsg)
 					kf = kr6_tofull(kn6);
 					kf->priority = kr_priority(kf);
 					send_imsg_session(IMSG_CTL_KROUTE,
-					    imsg->hdr.pid, kf, sizeof(*kf));
+					    pid, kf, sizeof(*kf));
 				} while ((kn6 = kn6->next) != NULL);
 			}
 		break;
 	case IMSG_CTL_KROUTE_ADDR:
-		if (imsg->hdr.len != IMSG_HEADER_SIZE +
-		    sizeof(struct bgpd_addr)) {
+		if (imsg_get_data(imsg, &addr, sizeof(addr)) == -1) {
 			log_warnx("%s: wrong imsg len", __func__);
 			break;
 		}
-		kt = ktable_get(imsg->hdr.peerid);
+		kt = ktable_get(tableid);
 		if (kt == NULL) {
 			log_warnx("%s: table %u does not exist", __func__,
-			    imsg->hdr.peerid);
+			    tableid);
 			break;
 		}
-		addr = imsg->data;
 		kr = NULL;
-		switch (addr->aid) {
+		switch (addr.aid) {
 		case AID_INET:
-			kr = kroute_match(kt, addr, 1);
+			kr = kroute_match(kt, &addr, 1);
 			if (kr != NULL) {
 				kf = kr_tofull(kr);
 				kf->priority = kr_priority(kf);
 				send_imsg_session(IMSG_CTL_KROUTE,
-				    imsg->hdr.pid, kf, sizeof(*kf));
+				    pid, kf, sizeof(*kf));
 			}
 			break;
 		case AID_INET6:
-			kr6 = kroute6_match(kt, addr, 1);
+			kr6 = kroute6_match(kt, &addr, 1);
 			if (kr6 != NULL) {
 				kf = kr6_tofull(kr6);
 				kf->priority = kr_priority(kf);
 				send_imsg_session(IMSG_CTL_KROUTE,
-				    imsg->hdr.pid, kf, sizeof(*kf));
+				    pid, kf, sizeof(*kf));
 			}
 			break;
 		}
 		break;
 	case IMSG_CTL_SHOW_NEXTHOP:
-		kt = ktable_get(imsg->hdr.peerid);
+		kt = ktable_get(tableid);
 		if (kt == NULL) {
 			log_warnx("%s: table %u does not exist", __func__,
-			    imsg->hdr.peerid);
+			    tableid);
 			break;
 		}
 		RB_FOREACH(h, knexthop_tree, KT2KNT(kt)) {
@@ -997,14 +998,14 @@ kr_show_route(struct imsg *imsg)
 					    kr_show_interface(kif),
 					    sizeof(snh.iface));
 			}
-			send_imsg_session(IMSG_CTL_SHOW_NEXTHOP, imsg->hdr.pid,
+			send_imsg_session(IMSG_CTL_SHOW_NEXTHOP, pid,
 			    &snh, sizeof(snh));
 		}
 		break;
 	case IMSG_CTL_SHOW_INTERFACE:
 		RB_FOREACH(kif, kif_tree, &kit)
 			send_imsg_session(IMSG_CTL_SHOW_INTERFACE,
-			    imsg->hdr.pid, kr_show_interface(kif),
+			    pid, kr_show_interface(kif),
 			    sizeof(struct ctl_show_interface));
 		break;
 	case IMSG_CTL_SHOW_FIB_TABLES:
@@ -1022,14 +1023,14 @@ kr_show_route(struct imsg *imsg)
 			TAILQ_INIT(&ktab.krn);
 
 			send_imsg_session(IMSG_CTL_SHOW_FIB_TABLES,
-			    imsg->hdr.pid, &ktab, sizeof(ktab));
+			    pid, &ktab, sizeof(ktab));
 		}
 		break;
 	default:	/* nada */
 		break;
 	}
 
-	send_imsg_session(IMSG_CTL_END, imsg->hdr.pid, NULL, 0);
+	send_imsg_session(IMSG_CTL_END, pid, NULL, 0);
 }
 
 static void
