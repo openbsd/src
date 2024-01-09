@@ -783,7 +783,9 @@ void *__devm_drm_dev_alloc(struct device *parent,
 {
 	void *container;
 	struct drm_device *drm;
+#ifdef notyet
 	int ret;
+#endif
 
 	container = kzalloc(size, GFP_KERNEL);
 	if (!container)
