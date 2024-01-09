@@ -82,6 +82,4 @@ struct device_node *__matching_node(struct device_node *,
 #define for_each_matching_node(a, b) \
 	for (a = __matching_node(NULL, b); a; a = __matching_node(a, b))
 
-static const void *of_device_get_match_data(const struct device *);
-
 #endif
