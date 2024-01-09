@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.137 2024/01/08 10:06:50 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.138 2024/01/09 07:25:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2190,7 +2190,7 @@ x509_vfy_purpose_inherit(X509_STORE_CTX *ctx, int purpose, int trust)
 		const X509_PURPOSE *purp;
 		int purpose_idx;
 
-		if (purpose < X509_PURPOSE_MIN || purpose > X509_TRUST_MAX) {
+		if (purpose < X509_PURPOSE_MIN || purpose > X509_PURPOSE_MAX) {
 			X509error(X509_R_UNKNOWN_PURPOSE_ID);
 			return 0;
 		}
