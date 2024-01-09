@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.24 2024/01/08 16:39:17 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.25 2024/01/09 14:15:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -411,9 +411,9 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 	len = ntohl(rh.length);
 
 	if (len > RTR_MAX_LEN) {
-		log_warnx("rtr %s: received %s: msg too big: %zu byte",
+		log_warnx("rtr %s: received %s: pdu too big: %zu byte",
 		    log_rtr(rs), log_rtr_type(rh.type), len);
-		rtr_send_error(rs, CORRUPT_DATA, "too big", hdr);
+		rtr_send_error(rs, CORRUPT_DATA, "pdu too big", hdr);
 		return -1;
 	}
 
@@ -432,7 +432,7 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 		default:
 			log_warnx("rtr %s: received %s: out of context",
 			    log_rtr(rs), log_rtr_type(rh.type));
-			rtr_send_error(rs, CORRUPT_DATA, NULL, hdr);
+			rtr_send_error(rs, CORRUPT_DATA, "out of context", hdr);
 			return -1;
 		}
 	} else if (rh.version != rs->version && rh.type != ERROR_REPORT) {
@@ -465,23 +465,23 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 			goto badlen;
 		break;
 	case ROUTER_KEY:
-		if (len < sizeof(struct rtr_routerkey))
-			goto badlen;
 		if (rs->version < 1)
 			goto badversion;
+		if (len < sizeof(struct rtr_routerkey))
+			goto badlen;
 		break;
 	case ERROR_REPORT:
 		if (len < 16)
 			goto badlen;
 		break;
 	case ASPA:
-		if (len < sizeof(struct rtr_aspa) || (len % 4) != 0)
-			goto badlen;
 		if (rs->version < 2)
 			goto badversion;
+		if (len < sizeof(struct rtr_aspa) || (len % 4) != 0)
+			goto badlen;
 		break;
 	default:
-		log_warnx("rtr %s: received unknown message: type %s",
+		log_warnx("rtr %s: received unsupported pdu: type %s",
 		    log_rtr(rs), log_rtr_type(rh.type));
 		rtr_send_error(rs, UNSUPP_PDU_TYPE, NULL, hdr);
 		return -1;
@@ -493,7 +493,7 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 	return 0;
 
  badlen:
-	log_warnx("rtr %s: received %s: bad PDU length: %zu bytes",
+	log_warnx("rtr %s: received %s: bad pdu length: %zu bytes",
 	    log_rtr(rs), log_rtr_type(rh.type), len);
 	rtr_send_error(rs, CORRUPT_DATA, "bad length", hdr);
 	return -1;
@@ -515,9 +515,9 @@ rtr_parse_notify(struct rtr_session *rs, struct ibuf *pdu)
 		return 0;
 
 	if (ibuf_get(pdu, &notify, sizeof(notify)) == -1) {
-		log_warnx("rtr %s: received %s: bad pdu len",
+		log_warnx("rtr %s: received %s: bad pdu length",
 		    log_rtr(rs), log_rtr_type(SERIAL_NOTIFY));
-		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
 		return -1;
 	}
 
@@ -528,6 +528,7 @@ rtr_parse_notify(struct rtr_session *rs, struct ibuf *pdu)
 		log_warnx("rtr %s: received %s: while in state %s (ignored)",
 		    log_rtr(rs), log_rtr_type(SERIAL_NOTIFY),
 		    rtr_statenames[rs->state]);
+		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
 		return 0;
 	}
 
@@ -541,9 +542,9 @@ rtr_parse_cache_response(struct rtr_session *rs, struct ibuf *pdu)
 	struct rtr_response resp;
 
 	if (ibuf_get(pdu, &resp, sizeof(resp)) == -1) {
-		log_warnx("rtr %s: received %s: bad pdu len",
+		log_warnx("rtr %s: received %s: bad pdu length",
 		    log_rtr(rs), log_rtr_type(CACHE_RESPONSE));
-		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
 		return -1;
 	}
 
@@ -557,6 +558,7 @@ rtr_parse_cache_response(struct rtr_session *rs, struct ibuf *pdu)
 	if (rs->state != RTR_STATE_ESTABLISHED) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(CACHE_RESPONSE));
+		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
 		return -1;
 	}
 
@@ -571,9 +573,9 @@ rtr_parse_ipv4_prefix(struct rtr_session *rs, struct ibuf *pdu)
 	struct roa *roa;
 
 	if (ibuf_get(pdu, &ip4, sizeof(ip4)) == -1) {
-		log_warnx("rtr %s: received %s: bad pdu len",
+		log_warnx("rtr %s: received %s: bad pdu length",
 		    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
-		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
 		return -1;
 	}
 
@@ -583,7 +585,7 @@ rtr_parse_ipv4_prefix(struct rtr_session *rs, struct ibuf *pdu)
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
-		rtr_send_error(rs, CORRUPT_DATA, NULL, pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
 		return -1;
 	}
 
@@ -641,9 +643,9 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, struct ibuf *pdu)
 	struct roa *roa;
 
 	if (ibuf_get(pdu, &ip6, sizeof(ip6)) == -1) {
-		log_warnx("rtr %s: received %s: bad pdu len",
+		log_warnx("rtr %s: received %s: bad pdu length",
 		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
-		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
 		return -1;
 	}
 
@@ -653,7 +655,7 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, struct ibuf *pdu)
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
-		rtr_send_error(rs, CORRUPT_DATA, NULL, pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
 		return -1;
 	}
 
@@ -712,23 +714,23 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 	uint16_t cnt, i;
 
 	if (ibuf_get(pdu, &rtr_aspa, sizeof(rtr_aspa)) == -1) {
-		log_warnx("rtr %s: received %s: bad pdu len",
+		log_warnx("rtr %s: received %s: bad pdu length",
 		    log_rtr(rs), log_rtr_type(ASPA));
-		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
 		return -1;
 	}
 	cnt = ntohs(rtr_aspa.cnt);
 	if (ibuf_size(pdu) != cnt * sizeof(uint32_t)) {
-		log_warnx("rtr %s: received %s: bad pdu len",
+		log_warnx("rtr %s: received %s: bad pdu length",
 		    log_rtr(rs), log_rtr_type(ASPA));
-		rtr_send_error(rs, CORRUPT_DATA, "bad len", pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
 		return -1;
 	}
 
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(ASPA));
-		rtr_send_error(rs, CORRUPT_DATA, NULL, pdu);
+		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
 		return -1;
 	}
 
@@ -758,9 +760,9 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 		}
 		for (i = 0; i < cnt; i++) {
 			if (ibuf_get_n32(pdu, &aspa->tas[i]) == -1) {
-				log_warnx("rtr %s: received %s: bad pdu len",
+				log_warnx("rtr %s: received %s: bad pdu length",
 				    log_rtr(rs), log_rtr_type(ASPA));
-				rtr_send_error(rs, CORRUPT_DATA, "bad len",
+				rtr_send_error(rs, CORRUPT_DATA, "bad length",
 				    pdu);
 				return -1;
 			}
@@ -806,8 +808,9 @@ rtr_parse_end_of_data(struct rtr_session *rs, struct ibuf *pdu)
 	uint32_t t;
 
 	if (ibuf_get(pdu, &eod, sizeof(eod)) == -1) {
-		log_warnx("rtr %s: received %s: bad pdu len",
+		log_warnx("rtr %s: received %s: bad pdu length",
 		    log_rtr(rs), log_rtr_type(END_OF_DATA));
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
 		return -1;
 	}
 
@@ -817,6 +820,7 @@ rtr_parse_end_of_data(struct rtr_session *rs, struct ibuf *pdu)
 	if (rs->state != RTR_STATE_EXCHANGE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(END_OF_DATA));
+		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
 		return -1;
 	}
 
@@ -843,6 +847,7 @@ rtr_parse_end_of_data(struct rtr_session *rs, struct ibuf *pdu)
 bad:
 	log_warnx("rtr %s: received %s: bad timeout values",
 	    log_rtr(rs), log_rtr_type(END_OF_DATA));
+	rtr_send_error(rs, CORRUPT_DATA, "bad timeout values", pdu);
 	return -1;
 }
 
@@ -852,8 +857,9 @@ rtr_parse_cache_reset(struct rtr_session *rs, struct ibuf *pdu)
 	struct rtr_reset reset;
 
 	if (ibuf_get(pdu, &reset, sizeof(reset)) == -1) {
-		log_warnx("rtr %s: received %s: bad pdu len",
+		log_warnx("rtr %s: received %s: bad pdu length",
 		    log_rtr(rs), log_rtr_type(CACHE_RESET));
+		rtr_send_error(rs, CORRUPT_DATA, "bad length", pdu);
 		return -1;
 	}
 
@@ -863,6 +869,7 @@ rtr_parse_cache_reset(struct rtr_session *rs, struct ibuf *pdu)
 	if (rs->state != RTR_STATE_ESTABLISHED) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(CACHE_RESET));
+		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
 		return -1;
 	}
 
@@ -977,38 +984,28 @@ rtr_process_msg(struct rtr_session *rs)
 
 		switch (msgtype) {
 		case SERIAL_NOTIFY:
-			if (rtr_parse_notify(rs, &msg) == -1) {
-				rtr_send_error(rs, CORRUPT_DATA, NULL, &msg);
+			if (rtr_parse_notify(rs, &msg) == -1)
 				return;
-			}
 			break;
 		case CACHE_RESPONSE:
-			if (rtr_parse_cache_response(rs, &msg) == -1) {
-				rtr_send_error(rs, CORRUPT_DATA, NULL, &msg);
+			if (rtr_parse_cache_response(rs, &msg) == -1)
 				return;
-			}
 			break;
 		case IPV4_PREFIX:
-			if (rtr_parse_ipv4_prefix(rs, &msg) == -1) {
+			if (rtr_parse_ipv4_prefix(rs, &msg) == -1)
 				return;
-			}
 			break;
 		case IPV6_PREFIX:
-			if (rtr_parse_ipv6_prefix(rs, &msg) == -1) {
+			if (rtr_parse_ipv6_prefix(rs, &msg) == -1)
 				return;
-			}
 			break;
 		case END_OF_DATA:
-			if (rtr_parse_end_of_data(rs, &msg) == -1) {
-				rtr_send_error(rs, CORRUPT_DATA, NULL, &msg);
+			if (rtr_parse_end_of_data(rs, &msg) == -1)
 				return;
-			}
 			break;
 		case CACHE_RESET:
-			if (rtr_parse_cache_reset(rs, &msg) == -1) {
-				rtr_send_error(rs, CORRUPT_DATA, NULL, &msg);
+			if (rtr_parse_cache_reset(rs, &msg) == -1)
 				return;
-			}
 			break;
 		case ROUTER_KEY:
 			/* silently ignore router key */
@@ -1020,14 +1017,13 @@ rtr_process_msg(struct rtr_session *rs)
 			}
 			break;
 		case ASPA:
-			if (rtr_parse_aspa(rs, &msg) == -1) {
+			if (rtr_parse_aspa(rs, &msg) == -1)
 				return;
-			}
 			break;
 		default:
-			log_warnx("rtr %s: received %s: unexpected pdu type",
+			log_warnx("rtr %s: received %s: unsupported pdu type",
 			    log_rtr(rs), log_rtr_type(msgtype));
-			rtr_send_error(rs, INVALID_REQUEST, NULL, &msg);
+			rtr_send_error(rs, UNSUPP_PDU_TYPE, NULL, &msg);
 			return;
 		}
 	}
