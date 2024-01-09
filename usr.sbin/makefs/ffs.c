@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.38 2023/08/08 04:45:44 guenther Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.39 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -550,9 +550,9 @@ ffs_size_dir(fsnode *root, fsinfo_t *fsopts)
 
 #define	ADDDIRENT(e) do {						\
 	tmpdir.d_namlen = strlen((e));					\
-	this = DIRSIZ(NEWDIRFMT, &tmpdir);				\
-	if (this + curdirsize > roundup(curdirsize, DIRBLKSIZ))	\
-		curdirsize = roundup(curdirsize, DIRBLKSIZ);	\
+	this = DIRSIZ(&tmpdir);						\
+	if (this + curdirsize > roundup(curdirsize, DIRBLKSIZ))		\
+		curdirsize = roundup(curdirsize, DIRBLKSIZ);		\
 	curdirsize += this;						\
 } while (0);
 
@@ -887,12 +887,12 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node)
 	de.d_type = IFTODT(node->type);
 	de.d_namlen = (uint8_t)strlen(name);
 	strlcpy(de.d_name, name, sizeof de.d_name);
-	de.d_reclen = DIRSIZ(NEWDIRFMT, &de);
+	de.d_reclen = DIRSIZ(&de);
 
 	dp = (struct direct *)(dbuf->buf + dbuf->cur);
 	llen = 0;
 	if (dp != NULL)
-		llen = DIRSIZ(NEWDIRFMT, dp);
+		llen = DIRSIZ(dp);
 
 	if (de.d_reclen + dbuf->cur + llen > roundup(dbuf->size, DIRBLKSIZ)) {
 		newbuf = erealloc(dbuf->buf, dbuf->size + DIRBLKSIZ);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.35 2022/07/22 09:04:44 jsg Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.36 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -601,7 +601,7 @@ chnamefunc(struct inodesc *idesc)
 	if (slotcount++ == desired) {
 		/* will name fit? */
 		testdir.d_namlen = strlen(idesc->id_name);
-		if (DIRSIZ(NEWDIRFMT, &testdir) <= dirp->d_reclen) {
+		if (DIRSIZ(&testdir) <= dirp->d_reclen) {
 			dirp->d_namlen = testdir.d_namlen;
 			strlcpy(dirp->d_name, idesc->id_name, sizeof dirp->d_name);
 			return STOP|ALTERED|FOUND;

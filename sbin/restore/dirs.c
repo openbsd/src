@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.42 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.43 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ extractdirs(int genmode)
 	nulldir.d_namlen = 1;
 	nulldir.d_name[0] = '/';
 	nulldir.d_name[1] = '\0';
-	nulldir.d_reclen = DIRSIZ(0, &nulldir);
+	nulldir.d_reclen = DIRSIZ(&nulldir);
 	for (;;) {
 		curfile.name = "<directory file - name unknown>";
 		curfile.action = USING;
@@ -364,17 +364,17 @@ putdir(char *buf, size_t size)
 			i = DIRBLKSIZ - (loc & (DIRBLKSIZ - 1));
 			if ((dp->d_reclen & 0x3) != 0 ||
 			    dp->d_reclen > i ||
-			    dp->d_reclen < DIRSIZ(0, dp) ||
+			    dp->d_reclen < DIRSIZ(dp) ||
 			    dp->d_namlen > NAME_MAX) {
 				Vprintf(stdout, "Mangled directory: ");
 				if ((dp->d_reclen & 0x3) != 0)
 					Vprintf(stdout,
 					   "reclen not multiple of 4 ");
-				if (dp->d_reclen < DIRSIZ(0, dp))
+				if (dp->d_reclen < DIRSIZ(dp))
 					Vprintf(stdout,
 					   "reclen less than DIRSIZ (%u < %u) ",
 					   (unsigned)dp->d_reclen,
-					   (unsigned)DIRSIZ(0, dp));
+					   (unsigned)DIRSIZ(dp));
 				if (dp->d_namlen > NAME_MAX)
 					Vprintf(stdout,
 					   "reclen name too big (%u > %u) ",
@@ -404,7 +404,7 @@ long prev = 0;
 static void
 putent(struct direct *dp)
 {
-	dp->d_reclen = DIRSIZ(0, dp);
+	dp->d_reclen = DIRSIZ(dp);
 	if (dirloc + dp->d_reclen > DIRBLKSIZ) {
 		((struct direct *)(dirbuf + prev))->d_reclen =
 		    DIRBLKSIZ - prev;
@@ -440,7 +440,7 @@ dcvt(struct odirect *odp, struct direct *ndp)
 	ndp->d_type = DT_UNKNOWN;
 	(void)strncpy(ndp->d_name, odp->d_name, ODIRSIZ);
 	ndp->d_namlen = strlen(ndp->d_name);
-	ndp->d_reclen = DIRSIZ(0, ndp);
+	ndp->d_reclen = DIRSIZ(ndp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.12 2019/05/04 15:38:12 deraadt Exp $	*/
+/*	$OpenBSD: dir.h,v 1.13 2024/01/09 03:15:59 guenther Exp $	*/
 /*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
 
 /*
@@ -61,9 +61,9 @@
  * with null bytes.  All names are guaranteed null terminated.
  * The maximum length of a name in a directory is MAXNAMLEN.
  *
- * The macro DIRSIZ(fmt, dp) gives the amount of space required to represent
+ * The macro DIRSIZ(dp) gives the amount of space required to represent
  * a directory entry.  Free space in a directory is represented by
- * entries which have dp->d_reclen > DIRSIZ(fmt, dp).  All DIRBLKSIZ bytes
+ * entries which have dp->d_reclen > DIRSIZ(dp).  All DIRBLKSIZ bytes
  * in a directory block are claimed by the directory entries.  This
  * usually results in the last entry in a directory having a large
  * dp->d_reclen.  When entries are deleted from a directory, the
@@ -112,17 +112,8 @@ struct	direct {
 #define DIRECTSIZ(namlen)						\
 	((offsetof(struct direct, d_name) +				\
 	  ((namlen)+1)*sizeof(((struct direct *)0)->d_name[0]) + 3) & ~3)
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-#define DIRSIZ(oldfmt, dp) \
-    ((oldfmt) ? \
-    ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_type+1 + 3) &~ 3)) : \
-    ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3)))
-#else
-#define DIRSIZ(oldfmt, dp) \
+#define DIRSIZ(dp) \
     ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
-#endif
-#define OLDDIRFMT	1
-#define NEWDIRFMT	0
 
 /*
  * Template for manipulating directories.  Should use struct direct's,
@@ -138,20 +129,6 @@ struct dirtemplate {
 	int16_t		dotdot_reclen;
 	u_int8_t	dotdot_type;
 	u_int8_t	dotdot_namlen;
-	char		dotdot_name[4];	/* ditto */
-};
-
-/*
- * This is the old format of directories, sanz type element.
- */
-struct odirtemplate {
-	u_int32_t	dot_ino;
-	int16_t		dot_reclen;
-	u_int16_t	dot_namlen;
-	char		dot_name[4];	/* must be multiple of 4 */
-	u_int32_t	dotdot_ino;
-	int16_t		dotdot_reclen;
-	u_int16_t	dotdot_namlen;
 	char		dotdot_name[4];	/* ditto */
 };
 #endif /* !_DIR_H_ */

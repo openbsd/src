@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.158 2023/09/08 20:00:28 mvs Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.159 2024/01/09 03:15:59 guenther Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -81,13 +81,9 @@ void filt_ufsdetach(struct knote *);
 /*
  * A virgin directory (no blushing please).
  */
-static struct dirtemplate mastertemplate = {
+static const struct dirtemplate mastertemplate = {
 	0, 12, DT_DIR, 1, ".",
 	0, DIRBLKSIZ - 12, DT_DIR, 2, ".."
-};
-static struct odirtemplate omastertemplate = {
-	0, 12, 1, ".",
-	0, DIRBLKSIZ - 12, 2, ".."
 };
 
 /*
@@ -1127,7 +1123,7 @@ ufs_mkdir(void *v)
 	struct vnode *tvp;
 	struct buf *bp;
 	struct direct newdir;
-	struct dirtemplate dirtemplate, *dtp;
+	struct dirtemplate dirtemplate;
 	int error, dmode, blkoff;
 
 #ifdef DIAGNOSTIC
@@ -1187,11 +1183,7 @@ ufs_mkdir(void *v)
 	/* 
 	 * Initialize directory with "." and ".." from static template.
 	 */
-	if (dp->i_ump->um_maxsymlinklen > 0)
-		dtp = &mastertemplate;
-	else
-		dtp = (struct dirtemplate *)&omastertemplate;
-	dirtemplate = *dtp;
+	dirtemplate = mastertemplate;
 	dirtemplate.dot_ino = ip->i_number;
 	dirtemplate.dotdot_ino = dp->i_number;
 
@@ -1411,9 +1403,6 @@ ufs_readdir(void *v)
 	caddr_t diskbuf;
 	size_t count, entries;
 	int bufsize, readcnt, error;
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-	int ofmt = VTOI(ap->a_vp)->i_ump->um_maxsymlinklen == 0;
-#endif
 
 	if (uio->uio_rw != UIO_READ)
 		return (EINVAL);
@@ -1468,16 +1457,8 @@ ufs_readdir(void *v)
 		off += dp->d_reclen;
 		u.dn.d_off = off;
 		u.dn.d_fileno = dp->d_ino;
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-		if (ofmt) {
-			u.dn.d_type = dp->d_namlen;
-			u.dn.d_namlen = dp->d_type;
-		} else
-#endif
-		{
-			u.dn.d_type = dp->d_type;
-			u.dn.d_namlen = dp->d_namlen;
-		}
+		u.dn.d_type = dp->d_type;
+		u.dn.d_namlen = dp->d_namlen;
 		memcpy(u.dn.d_name, dp->d_name, u.dn.d_namlen);
 		memset(u.dn.d_name + u.dn.d_namlen, 0, u.dn.d_reclen
 		    - u.dn.d_namlen - offsetof(struct dirent, d_name));
@@ -1513,10 +1494,8 @@ ufs_readlink(void *v)
 	u_int64_t isize;
 
 	isize = DIP(ip, size);
-	if (isize < ip->i_ump->um_maxsymlinklen ||
-	    (ip->i_ump->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
+	if (isize < ip->i_ump->um_maxsymlinklen)
 		return (uiomove((char *)SHORTLINK(ip), isize, ap->a_uio));
-	}
 	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
 }
 

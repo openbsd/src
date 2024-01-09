@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.42 2019/03/15 05:42:38 kevlo Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.43 2024/01/09 03:15:59 guenther Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -50,7 +50,6 @@
 
 #define WRAPINCR(val, limit)	(((val) + 1 == (limit)) ? 0 : ((val) + 1))
 #define WRAPDECR(val, limit)	(((val) == 0) ? ((limit) - 1) : ((val) - 1))
-#define OFSFMT(ip)		((ip)->i_ump->um_maxsymlinklen == 0)
 #define BLKFREE2IDX(n)		((n) > DH_NFSTATS ? DH_NFSTATS : (n))
 
 int ufs_mindirhashsize;
@@ -112,7 +111,7 @@ ufsdirhash_build(struct inode *ip)
 
 	/* Check if we can/should use dirhash. */
 	if (ip->i_dirhash == NULL) {
-		if (DIP(ip, size) < ufs_mindirhashsize || OFSFMT(ip))
+		if (DIP(ip, size) < ufs_mindirhashsize)
 			return (-1);
 	} else {
 		/* Hash exists, but sysctls could have changed. */
@@ -224,7 +223,7 @@ ufsdirhash_build(struct inode *ip)
 				slot = WRAPINCR(slot, dh->dh_hlen);
 			dh->dh_hused++;
 			DH_ENTRY(dh, slot) = pos;
-			ufsdirhash_adjfree(dh, pos, -DIRSIZ(0, ep));
+			ufsdirhash_adjfree(dh, pos, -DIRSIZ(ep));
 		}
 		pos += ep->d_reclen;
 	}
@@ -430,7 +429,7 @@ restart:
 			/* Check for sequential access, and update offset. */
 			if (dh->dh_seqopt == 0 && dh->dh_seqoff == offset)
 				dh->dh_seqopt = 1;
-			dh->dh_seqoff = offset + DIRSIZ(0, dp);
+			dh->dh_seqoff = offset + DIRSIZ(dp);
 
 			*bpp = bp;
 			*offp = offset;
@@ -519,7 +518,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 			brelse(bp);
 			return (-1);
 		}
-		if (dp->d_ino == 0 || dp->d_reclen > DIRSIZ(0, dp))
+		if (dp->d_ino == 0 || dp->d_reclen > DIRSIZ(dp))
 			break;
 		i += dp->d_reclen;
 		dp = (struct direct *)((char *)dp + dp->d_reclen);
@@ -535,7 +534,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	while (i < DIRBLKSIZ && freebytes < slotneeded) {
 		freebytes += dp->d_reclen;
 		if (dp->d_ino != 0)
-			freebytes -= DIRSIZ(0, dp);
+			freebytes -= DIRSIZ(dp);
 		if (dp->d_reclen == 0) {
 			brelse(bp);
 			return (-1);
@@ -627,7 +626,7 @@ ufsdirhash_add(struct inode *ip, struct direct *dirp, doff_t offset)
 	DH_ENTRY(dh, slot) = offset;
 
 	/* Update the per-block summary info. */
-	ufsdirhash_adjfree(dh, offset, -DIRSIZ(0, dirp));
+	ufsdirhash_adjfree(dh, offset, -DIRSIZ(dirp));
 	DIRHASH_UNLOCK(dh);
 }
 
@@ -660,7 +659,7 @@ ufsdirhash_remove(struct inode *ip, struct direct *dirp, doff_t offset)
 	ufsdirhash_delslot(dh, slot);
 
 	/* Update the per-block summary info. */
-	ufsdirhash_adjfree(dh, offset, DIRSIZ(0, dirp));
+	ufsdirhash_adjfree(dh, offset, DIRSIZ(dirp));
 	DIRHASH_UNLOCK(dh);
 }
 
@@ -835,7 +834,7 @@ ufsdirhash_checkblock(struct inode *ip, char *buf, doff_t offset)
 		/* Check that the entry	exists (will panic if it doesn't). */
 		ufsdirhash_findslot(dh, dp->d_name, dp->d_namlen, offset + i);
 
-		nfree += dp->d_reclen - DIRSIZ(0, dp);
+		nfree += dp->d_reclen - DIRSIZ(dp);
 	}
 	if (i != DIRBLKSIZ)
 		panic("ufsdirhash_checkblock: bad dir end");

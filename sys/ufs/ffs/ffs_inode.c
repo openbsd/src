@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.81 2021/12/12 09:14:59 visa Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.82 2024/01/09 03:15:59 guenther Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -152,9 +152,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		return (0);
 
 	if (ovp->v_type == VLNK &&
-	    (DIP(oip, size) < oip->i_ump->um_maxsymlinklen ||
-	     (oip->i_ump->um_maxsymlinklen == 0 &&
-	      oip->i_din1->di_blocks == 0))) {
+	    DIP(oip, size) < oip->i_ump->um_maxsymlinklen) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
 			panic("ffs_truncate: partial truncate of symlink");

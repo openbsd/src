@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.40 2023/02/08 08:25:44 tb Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.41 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -547,13 +547,7 @@ dumpino(union dinode *dp, ino_t ino)
 		 * Check for short symbolic link.
 		 */
 		if (DIP(dp, di_size) > 0 &&
-#ifdef FS_44INODEFMT
-		    (DIP(dp, di_size) < sblock->fs_maxsymlinklen ||
-		     (sblock->fs_maxsymlinklen == 0 &&
-			 DIP(dp, di_blocks) == 0))) {
-#else
-		    DIP(dp, di_blocks) == 0) {
-#endif
+		    DIP(dp, di_size) < sblock->fs_maxsymlinklen) {
 			void *shortlink;
 
 			spcl.c_addr[0] = 1;

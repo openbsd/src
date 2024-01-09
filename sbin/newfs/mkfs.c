@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.101 2020/06/20 07:49:04 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.102 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -279,13 +279,8 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		sblock.fs_sblockloc = SBLOCK_UFS1;
 		sblock.fs_nindir = sblock.fs_bsize / sizeof(int32_t);
 		sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
-		if (Oflag == 0) {
-			sblock.fs_maxsymlinklen = 0;
-			sblock.fs_inodefmt = FS_42INODEFMT;
-		} else {
-			sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
-			sblock.fs_inodefmt = FS_44INODEFMT;
-		}
+		sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
+		sblock.fs_inodefmt = FS_44INODEFMT;
 		sblock.fs_cgoffset = 0;
 		sblock.fs_cgmask = 0xffffffff;
 		sblock.fs_ffs1_size = sblock.fs_size;
@@ -778,15 +773,6 @@ struct direct root_dir[] = {
 	{ ROOTINO, sizeof(struct direct), DT_DIR, 1, "." },
 	{ ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
 };
-struct odirect {
-	u_int32_t d_ino;
-	u_int16_t d_reclen;
-	u_int16_t d_namlen;
-	u_char	d_name[MAXNAMLEN + 1];
-} oroot_dir[] = {
-	{ ROOTINO, sizeof(struct direct), 1, "." },
-	{ ROOTINO, sizeof(struct direct), 2, ".." },
-};
 
 int
 fsinit1(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
@@ -814,11 +800,7 @@ fsinit1(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp1.di_gid = getegid();
 	}
 	node.dp1.di_nlink = PREDEFDIR;
-	if (Oflag == 0)
-		node.dp1.di_size = makedir((struct direct *)oroot_dir,
-		    PREDEFDIR);
-	else
-		node.dp1.di_size = makedir(root_dir, PREDEFDIR);
+	node.dp1.di_size = makedir(root_dir, PREDEFDIR);
 	node.dp1.di_db[0] = alloc(sblock.fs_fsize, node.dp1.di_mode);
 	if (node.dp1.di_db[0] == 0)
 		return (1);
@@ -919,13 +901,13 @@ makedir(struct direct *protodir, int entries)
 
 	spcleft = DIRBLKSIZ;
 	for (cp = iobuf, i = 0; i < entries - 1; i++) {
-		protodir[i].d_reclen = DIRSIZ(0, &protodir[i]);
+		protodir[i].d_reclen = DIRSIZ(&protodir[i]);
 		memcpy(cp, &protodir[i], protodir[i].d_reclen);
 		cp += protodir[i].d_reclen;
 		spcleft -= protodir[i].d_reclen;
 	}
 	protodir[i].d_reclen = spcleft;
-	memcpy(cp, &protodir[i], DIRSIZ(0, &protodir[i]));
+	memcpy(cp, &protodir[i], DIRSIZ(&protodir[i]));
 	return (DIRBLKSIZ);
 }
 

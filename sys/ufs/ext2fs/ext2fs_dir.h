@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_dir.h,v 1.11 2014/07/11 07:59:04 pelikan Exp $	*/
+/*	$OpenBSD: ext2fs_dir.h,v 1.12 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: ext2fs_dir.h,v 1.4 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -61,9 +61,9 @@
  * with null bytes.  All names are guaranteed null terminated.
  * The maximum length of a name in a directory is EXT2FS_MAXNAMLEN.
  *
- * The macro EXT2FS_DIRSIZ(fmt, dp) gives the amount of space required to
+ * The macro EXT2FS_DIRSIZ(dp) gives the amount of space required to
  * represent a directory entry.  Free space in a directory is represented by
- * entries which have dp->e2d_reclen > DIRSIZ(fmt, dp).  All d2fs_bsize bytes
+ * entries which have dp->e2d_reclen > DIRSIZ(dp).  All d2fs_bsize bytes
  * in a directory block are claimed by the directory entries.  This
  * usually results in the last entry in a directory having a large
  * dp->e2d_reclen.  When entries are deleted from a directory, the

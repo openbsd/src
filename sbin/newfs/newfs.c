@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.117 2022/12/04 23:50:47 cheloha Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.118 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ u_short	dkcksum(struct disklabel *);
 
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
-int	Oflag = 2;		/* 0 = 4.3BSD ffs, 1 = 4.4BSD ffs, 2 = ffs2 */
+int	Oflag = 2;		/* 1 = 4.4BSD ffs, 2 = ffs2 */
 daddr_t	fssize;			/* file system size in 512-byte blocks */
 long long	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 			Nflag = 1;
 			break;
 		case 'O':
-			Oflag = strtonum(optarg, 0, 2, &errstr);
+			Oflag = strtonum(optarg, 1, 2, &errstr);
 			if (errstr)
 				fatal("%s: invalid ffs version", optarg);
 			oflagset = 1;

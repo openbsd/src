@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.47 2020/07/13 06:52:53 otto Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.48 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -266,8 +266,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		 * Fake ndb value so direct/indirect block checks below
 		 * will detect any garbage after symlink string.
 		 */
-		if (DIP(dp, di_size) < sblock.fs_maxsymlinklen ||
-		    (sblock.fs_maxsymlinklen == 0 && DIP(dp, di_blocks) == 0)) {
+		if (DIP(dp, di_size) < sblock.fs_maxsymlinklen) {
 			if (sblock.fs_magic == FS_UFS1_MAGIC)
 				ndb = howmany(DIP(dp, di_size),
 				    sizeof(int32_t));

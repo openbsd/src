@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.64 2023/12/18 13:23:52 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.65 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -455,11 +455,9 @@ main(int argc, char *argv[])
 	tp_bshift = ffs(TP_BSIZE) - 1;
 	if (TP_BSIZE != (1 << tp_bshift))
 		quit("TP_BSIZE (%d) is not a power of 2\n", TP_BSIZE);
-#ifdef FS_44INODEFMT
 	if (sblock->fs_magic == FS_UFS2_MAGIC ||
 	    sblock->fs_inodefmt >= FS_44INODEFMT)
 		spcl.c_flags |= DR_NEWINODEFMT;
-#endif
 	maxino = (ino_t)sblock->fs_ipg * sblock->fs_ncg;
 	mapsize = roundup(howmany(maxino, NBBY), TP_BSIZE);
 	usedinomap = calloc((unsigned) mapsize, sizeof(char));

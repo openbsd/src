@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.79 2022/11/19 08:02:11 sthen Exp $
+.\"	$OpenBSD: newfs.8,v 1.80 2024/01/09 03:16:00 guenther Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: November 19 2022 $
+.Dd $Mdocdate: January 9 2024 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -186,11 +186,6 @@ without really creating the file system.
 Select the filesystem format:
 .Pp
 .Bl -tag -width 3n -offset indent -compact
-.It 0
-.Bx 4.3
-format file system.
-This option is primarily used to build root file systems that can
-be understood by older boot ROMs.
 .It 1
 Fast File System (FFS), the default for
 .Nm mount_mfs .

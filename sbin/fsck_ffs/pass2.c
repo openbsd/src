@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.37 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.38 2024/01/09 03:16:00 guenther Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ pass2check(struct inodesc *idesc)
 	proto.d_type = DT_DIR;
 	proto.d_namlen = 1;
 	(void)strlcpy(proto.d_name, ".", sizeof proto.d_name);
-	entrysize = DIRSIZ(0, &proto);
+	entrysize = DIRSIZ(&proto);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 			dirp->d_name);
@@ -314,9 +314,9 @@ chk1:
 	proto.d_type = DT_DIR;
 	proto.d_namlen = 2;
 	(void)strlcpy(proto.d_name, "..", sizeof proto.d_name);
-	entrysize = DIRSIZ(0, &proto);
+	entrysize = DIRSIZ(&proto);
 	if (idesc->id_entryno == 0) {
-		n = DIRSIZ(0, dirp);
+		n = DIRSIZ(dirp);
 		if (dirp->d_reclen < n + entrysize)
 			goto chk2;
 		proto.d_reclen = dirp->d_reclen - n;
