@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.147 2024/01/03 11:07:04 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.148 2024/01/09 19:57:00 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ void	 in_losing(struct inpcb *);
 int	 in_pcballoc(struct socket *, struct inpcbtable *, int);
 int	 in_pcbbind_locked(struct inpcb *, struct mbuf *, struct proc *);
 int	 in_pcbbind(struct inpcb *, struct mbuf *, struct proc *);
-int	 in_pcbaddrisavail(struct inpcb *, struct sockaddr_in *, int,
+int	 in_pcbaddrisavail(const struct inpcb *, struct sockaddr_in *, int,
 	    struct proc *);
 int	 in_pcbconnect(struct inpcb *, struct mbuf *);
 void	 in_pcbdetach(struct inpcb *);
@@ -338,9 +338,9 @@ struct inpcb *
 struct inpcb *
 	 in6_pcblookup_listen(struct inpcbtable *, struct in6_addr *, u_int,
 	    struct mbuf *, u_int);
-int	 in6_pcbaddrisavail_lock(struct inpcb *, struct sockaddr_in6 *, int,
-	    struct proc *, int);
-int	 in6_pcbaddrisavail(struct inpcb *, struct sockaddr_in6 *, int,
+int	 in6_pcbaddrisavail_lock(const struct inpcb *, struct sockaddr_in6 *,
+	    int, struct proc *, int);
+int	 in6_pcbaddrisavail(const struct inpcb *, struct sockaddr_in6 *, int,
 	    struct proc *);
 int	 in6_pcbconnect(struct inpcb *, struct mbuf *);
 void	 in6_setsockaddr(struct inpcb *, struct mbuf *);
@@ -370,7 +370,7 @@ struct rtentry *
 void	in6_pcbnotify(struct inpcbtable *, struct sockaddr_in6 *,
 	u_int, const struct sockaddr_in6 *, u_int, u_int, int, void *,
 	void (*)(struct inpcb *, int));
-int	in6_selecthlim(struct inpcb *);
+int	in6_selecthlim(const struct inpcb *);
 int	in_pcbset_rtableid(struct inpcb *, u_int);
 void	in_pcbset_laddr(struct inpcb *, const struct sockaddr *, u_int);
 void	in_pcbunset_faddr(struct inpcb *);
