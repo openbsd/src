@@ -29,19 +29,19 @@ extern struct bus_type platform_bus_type;
 void __iomem *
 devm_platform_ioremap_resource_byname(struct platform_device *, const char *);
 
-inline void
+static inline void
 platform_set_drvdata(struct platform_device *pdev, void *data)
 {
 	dev_set_drvdata(&pdev->dev, data);
 }
 
-inline void *
+static inline void *
 platform_get_drvdata(struct platform_device *pdev)
 {
 	return dev_get_drvdata(&pdev->dev);
 }
 
-inline int
+static inline int
 platform_driver_register(struct platform_driver *platform_drv)
 {
 	return 0;
