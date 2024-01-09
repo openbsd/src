@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.40 2024/01/04 07:08:47 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.41 2024/01/09 04:29:46 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -742,6 +742,8 @@ bnxt_free_slots(struct bnxt_softc *sc, struct bnxt_slot *slots, int allocated,
 	while (i-- > 0) {
 		bs = &slots[i];
 		bus_dmamap_destroy(sc->sc_dmat, bs->bs_map);
+		if (bs->bs_m != NULL)
+			m_freem(bs->bs_m);
 	}
 	free(slots, M_DEVBUF, total * sizeof(*bs));
 }
