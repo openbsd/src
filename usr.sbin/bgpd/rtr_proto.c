@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.25 2024/01/09 14:15:15 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.26 2024/01/09 14:43:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -524,11 +524,10 @@ rtr_parse_notify(struct rtr_session *rs, struct ibuf *pdu)
 	if (rtr_check_session_id(rs, rs->session_id, &notify.hdr, pdu) == -1)
 		return -1;
 
-	if (rs->state != RTR_STATE_EXCHANGE) {
+	if (rs->state != RTR_STATE_ESTABLISHED) {
 		log_warnx("rtr %s: received %s: while in state %s (ignored)",
 		    log_rtr(rs), log_rtr_type(SERIAL_NOTIFY),
 		    rtr_statenames[rs->state]);
-		rtr_send_error(rs, CORRUPT_DATA, "out of context", pdu);
 		return 0;
 	}
 
