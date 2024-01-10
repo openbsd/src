@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.96 2024/01/06 13:17:20 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.97 2024/01/10 04:13:59 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -338,6 +338,7 @@ struct vm_exit_inout {
 	uint8_t			vei_encoding;	/* operand encoding */
 	uint16_t		vei_port;	/* port */
 	uint32_t		vei_data;	/* data */
+	uint8_t			vei_insn_len;	/* Count of instruction bytes */
 };
 /*
  *  vm_exit_eptviolation	: describes an EPT VIOLATION exit

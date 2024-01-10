@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.94 2023/09/26 01:53:54 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.95 2024/01/10 04:13:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1749,6 +1749,8 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 		intr = ioports_map[vei->vei.vei_port](vrp);
 	else if (vei->vei.vei_dir == VEI_DIR_IN)
 		set_return_data(vei, 0xFFFFFFFF);
+
+	vei->vrs.vrs_gprs[VCPU_REGS_RIP] += vei->vei.vei_insn_len;
 
 	if (intr != 0xFF)
 		vcpu_assert_pic_irq(vrp->vrp_vm_id, vrp->vrp_vcpu_id, intr);
