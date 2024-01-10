@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.38 2024/01/10 21:19:56 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.39 2024/01/10 21:34:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,9 +57,11 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 
+#include <openssl/asn1.h>
 #include <openssl/err.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "x509_local.h"
