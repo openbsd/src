@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.456 2023/12/14 13:52:38 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.457 2024/01/10 11:08:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3576,14 +3576,25 @@ session_up(struct peer *p)
 }
 
 int
-imsg_ctl_parent(int type, uint32_t peerid, pid_t pid, void *data,
-    uint16_t datalen)
+imsg_ctl_parent(struct imsg *imsg)
 {
-	return imsg_compose(ibuf_main, type, peerid, pid, -1, data, datalen);
+	return imsg_forward(ibuf_main, imsg);
 }
 
 int
-imsg_ctl_rde(int type, uint32_t peerid, pid_t pid, void *data, uint16_t datalen)
+imsg_ctl_rde(struct imsg *imsg)
+{
+	if (ibuf_rde_ctl == NULL)
+		return (0);
+	/*
+	 * Use control socket to talk to RDE to bypass the queue of the
+	 * regular imsg socket.
+	 */
+	return imsg_forward(ibuf_rde_ctl, imsg);
+}
+
+int
+imsg_ctl_rde_msg(int type, uint32_t peerid, pid_t pid)
 {
 	if (ibuf_rde_ctl == NULL)
 		return (0);
@@ -3592,7 +3603,7 @@ imsg_ctl_rde(int type, uint32_t peerid, pid_t pid, void *data, uint16_t datalen)
 	 * Use control socket to talk to RDE to bypass the queue of the
 	 * regular imsg socket.
 	 */
-	return imsg_compose(ibuf_rde_ctl, type, peerid, pid, -1, data, datalen);
+	return imsg_compose(ibuf_rde_ctl, type, peerid, pid, -1, NULL, 0);
 }
 
 int
