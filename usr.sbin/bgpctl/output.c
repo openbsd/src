@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.43 2023/12/19 10:32:20 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.44 2024/01/10 14:59:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1185,14 +1185,14 @@ show_rtr(struct ctl_show_rtr *rtr)
 		printf(" Last sent error: %s\n",
 		    log_rtr_error(rtr->last_sent_error));
 		if (rtr->last_sent_msg[0])
-			printf("   with reason \"%s\"",
+			printf("   with reason \"%s\"\n",
 			    log_reason(rtr->last_sent_msg));
 	}
 	if (rtr->last_recv_error != NO_ERROR) {
 		printf(" Last received error: %s\n",
 		    log_rtr_error(rtr->last_recv_error));
 		if (rtr->last_recv_msg[0])
-			printf("   with reason \"%s\"",
+			printf("   with reason \"%s\"\n",
 			    log_reason(rtr->last_recv_msg));
 	}
 
