@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.37 2024/01/10 21:14:14 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.38 2024/01/10 21:19:56 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,19 +64,6 @@
 
 #include "x509_local.h"
 
-static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags);
-static int trust_1oid(X509_TRUST *trust, X509 *x, int flags);
-
-static int
-trust_compat(X509_TRUST *trust, X509 *x, int flags)
-{
-	X509_check_purpose(x, -1, 0);
-	if (x->ex_flags & EXFLAG_SS)
-		return X509_TRUST_TRUSTED;
-	else
-		return X509_TRUST_UNTRUSTED;
-}
-
 static int
 obj_trust(int id, X509 *x, int flags)
 {
@@ -103,6 +90,35 @@ obj_trust(int id, X509 *x, int flags)
 				return X509_TRUST_TRUSTED;
 		}
 	}
+	return X509_TRUST_UNTRUSTED;
+}
+
+static int
+trust_compat(X509_TRUST *trust, X509 *x, int flags)
+{
+	X509_check_purpose(x, -1, 0);
+	if (x->ex_flags & EXFLAG_SS)
+		return X509_TRUST_TRUSTED;
+	else
+		return X509_TRUST_UNTRUSTED;
+}
+
+static int
+trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
+{
+	if (x->aux && (x->aux->trust || x->aux->reject))
+		return obj_trust(trust->arg1, x, flags);
+	/* we don't have any trust settings: for compatibility
+	 * we return trusted if it is self signed
+	 */
+	return trust_compat(trust, x, flags);
+}
+
+static int
+trust_1oid(X509_TRUST *trust, X509 *x, int flags)
+{
+	if (x->aux)
+		return obj_trust(trust->arg1, x, flags);
 	return X509_TRUST_UNTRUSTED;
 }
 
@@ -286,22 +302,3 @@ X509_TRUST_get_trust(const X509_TRUST *xp)
 	return xp->trust;
 }
 LCRYPTO_ALIAS(X509_TRUST_get_trust);
-
-static int
-trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
-{
-	if (x->aux && (x->aux->trust || x->aux->reject))
-		return obj_trust(trust->arg1, x, flags);
-	/* we don't have any trust settings: for compatibility
-	 * we return trusted if it is self signed
-	 */
-	return trust_compat(trust, x, flags);
-}
-
-static int
-trust_1oid(X509_TRUST *trust, X509 *x, int flags)
-{
-	if (x->aux)
-		return obj_trust(trust->arg1, x, flags);
-	return X509_TRUST_UNTRUSTED;
-}
