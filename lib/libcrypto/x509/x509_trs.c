@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.36 2024/01/10 21:11:37 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.37 2024/01/10 21:14:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -66,7 +66,16 @@
 
 static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags);
 static int trust_1oid(X509_TRUST *trust, X509 *x, int flags);
-static int trust_compat(X509_TRUST *trust, X509 *x, int flags);
+
+static int
+trust_compat(X509_TRUST *trust, X509 *x, int flags)
+{
+	X509_check_purpose(x, -1, 0);
+	if (x->ex_flags & EXFLAG_SS)
+		return X509_TRUST_TRUSTED;
+	else
+		return X509_TRUST_UNTRUSTED;
+}
 
 static int
 obj_trust(int id, X509 *x, int flags)
@@ -295,14 +304,4 @@ trust_1oid(X509_TRUST *trust, X509 *x, int flags)
 	if (x->aux)
 		return obj_trust(trust->arg1, x, flags);
 	return X509_TRUST_UNTRUSTED;
-}
-
-static int
-trust_compat(X509_TRUST *trust, X509 *x, int flags)
-{
-	X509_check_purpose(x, -1, 0);
-	if (x->ex_flags & EXFLAG_SS)
-		return X509_TRUST_TRUSTED;
-	else
-		return X509_TRUST_UNTRUSTED;
 }
