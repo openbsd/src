@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.56 2024/01/04 17:01:26 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.57 2024/01/10 14:59:19 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -73,10 +73,6 @@
 #include "evp_local.h"
 #include "rsa_local.h"
 #include "x509_local.h"
-
-/* Macros to test if a pkey or ctx is for a PSS key */
-#define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
-#define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);
@@ -453,7 +449,8 @@ pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
 	if (!BIO_indent(bp, off, 128))
 		goto err;
 
-	if (BIO_printf(bp, "%s ", pkey_is_pss(pkey) ?  "RSA-PSS" : "RSA") <= 0)
+	if (BIO_printf(bp, "%s ",
+	    pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS ? "RSA-PSS" : "RSA") <= 0)
 		goto err;
 
 	if (priv && x->d != NULL) {
@@ -485,7 +482,8 @@ pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
 		if (!bn_printf(bp, x->iqmp, off, "coefficient:"))
 			goto err;
 	}
-	if (pkey_is_pss(pkey) && !rsa_pss_param_print(bp, 1, x->pss, off))
+	if (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS &&
+	    !rsa_pss_param_print(bp, 1, x->pss, off))
 		goto err;
 	ret = 1;
  err:
@@ -539,7 +537,7 @@ rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 		break;
 
 	case ASN1_PKEY_CTRL_PKCS7_ENCRYPT:
-		if (pkey_is_pss(pkey))
+		if (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
 			return -2;
 		if (arg1 == 0)
 			PKCS7_RECIP_INFO_get0_alg(arg2, &alg);
@@ -553,7 +551,7 @@ rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 		break;
 
 	case ASN1_PKEY_CTRL_CMS_ENVELOPE:
-		if (pkey_is_pss(pkey))
+		if (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
 			return -2;
 		if (arg1 == 0)
 			return rsa_cms_encrypt(arg2);
@@ -562,7 +560,7 @@ rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 		break;
 
 	case ASN1_PKEY_CTRL_CMS_RI_TYPE:
-		if (pkey_is_pss(pkey))
+		if (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
 			return -2;
 		*(int *)arg2 = CMS_RECIPINFO_TRANS;
 		return 1;
@@ -852,7 +850,7 @@ rsa_cms_verify(CMS_SignerInfo *si)
 	if (nid == EVP_PKEY_RSA_PSS)
 		return rsa_pss_to_ctx(NULL, pkey_ctx, alg, NULL);
 	/* Only PSS allowed for PSS keys */
-	if (pkey_ctx_is_pss(pkey_ctx)) {
+	if (pkey_ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS) {
 		RSAerror(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
 		return 0;
 	}
