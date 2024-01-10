@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.5 2018/04/24 16:28:42 pirofti Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.6 2024/01/10 04:28:43 cheloha Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -317,7 +317,7 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 			abort();
 	}
 
-	if (abstime == NULL || abstime->tv_sec < 0 || abstime->tv_nsec < 0 ||
+	if (abstime == NULL || abstime->tv_nsec < 0 ||
 	    abstime->tv_nsec >= 1000000000)
 		return (EINVAL);
 

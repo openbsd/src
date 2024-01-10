@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_cond.c,v 1.5 2019/01/29 17:40:26 mpi Exp $ */
+/*	$OpenBSD: rthread_cond.c,v 1.6 2024/01/10 04:28:43 cheloha Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -142,8 +142,7 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 	}
 
 	cond = *condp;
-	if (abs == NULL || abs->tv_sec < 0 || abs->tv_nsec < 0 ||
-	    abs->tv_nsec >= 1000000000)
+	if (abs == NULL || abs->tv_nsec < 0 || abs->tv_nsec >= 1000000000)
 		return (EINVAL);
 
 	return (_rthread_cond_timedwait(cond, mutexp, abs));
