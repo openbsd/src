@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.138 2024/01/09 07:25:57 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.139 2024/01/10 17:31:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2182,54 +2182,53 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_purpose_inherit);
 
-static int
-x509_vfy_purpose_inherit(X509_STORE_CTX *ctx, int purpose, int trust)
+int
+X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose_id)
 {
-	/* If we have a purpose then check it is valid */
-	if (purpose != 0) {
-		const X509_PURPOSE *purp;
-		int purpose_idx;
+	const X509_PURPOSE *purpose;
+	int idx;
 
-		if (purpose < X509_PURPOSE_MIN || purpose > X509_PURPOSE_MAX) {
-			X509error(X509_R_UNKNOWN_PURPOSE_ID);
-			return 0;
-		}
-		purpose_idx = purpose - X509_PURPOSE_MIN;
-		if ((purp = X509_PURPOSE_get0(purpose_idx)) == NULL) {
-			X509error(X509_R_UNKNOWN_PURPOSE_ID);
-			return 0;
-		}
+	/* XXX - Match wacky/documented behavior. Do we need to keep this? */
+	if (purpose_id == 0)
+		return 1;
 
-		/* If trust is unset, use the purpose's trust. */
-		if (trust == 0)
-			trust = purp->trust;
+	if (purpose_id < X509_PURPOSE_MIN || purpose_id > X509_PURPOSE_MAX) {
+		X509error(X509_R_UNKNOWN_PURPOSE_ID);
+		return 0;
 	}
-	if (trust != 0) {
-		if (trust < X509_TRUST_MIN || trust > X509_TRUST_MAX) {
-			X509error(X509_R_UNKNOWN_TRUST_ID);
-			return 0;
-		}
+	idx = purpose_id - X509_PURPOSE_MIN;
+	if ((purpose = X509_PURPOSE_get0(idx)) == NULL) {
+		X509error(X509_R_UNKNOWN_PURPOSE_ID);
+		return 0;
 	}
 
-	if (purpose != 0 && ctx->param->purpose == 0)
-		ctx->param->purpose = purpose;
-	if (trust != 0 && ctx->param->trust == 0)
-		ctx->param->trust = trust;
+	/* XXX - Succeeding while ignoring purpose_id and trust is awful. */
+	if (ctx->param->purpose == 0)
+		ctx->param->purpose = purpose_id;
+	if (ctx->param->trust == 0)
+		ctx->param->trust = purpose->trust;
 
 	return 1;
-}
-
-int
-X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
-{
-	return x509_vfy_purpose_inherit(ctx, purpose, 0);
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set_purpose);
 
 int
-X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
+X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust_id)
 {
-	return x509_vfy_purpose_inherit(ctx, 0, trust);
+	/* XXX - Match wacky/documented behavior. Do we need to keep this? */
+	if (trust_id == 0)
+		return 1;
+
+	if (trust_id < X509_TRUST_MIN || trust_id > X509_TRUST_MAX) {
+		X509error(X509_R_UNKNOWN_TRUST_ID);
+		return 0;
+	}
+
+	/* XXX - Succeeding while ignoring the trust_id is awful. */
+	if (ctx->param->trust == 0)
+		ctx->param->trust = trust_id;
+
+	return 1;
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set_trust);
 
