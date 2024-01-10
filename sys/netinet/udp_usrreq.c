@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.312 2023/12/01 15:30:47 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.313 2024/01/10 16:44:30 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -161,6 +161,9 @@ const struct sysctl_bounded_args udpctl_vars[] = {
 };
 
 struct	inpcbtable udbtable;
+#ifdef INET6
+struct	inpcbtable udb6table;
+#endif
 struct	cpumem *udpcounters;
 
 void	udp_sbappend(struct inpcb *, struct mbuf *, struct ip *,
@@ -179,6 +182,9 @@ udp_init(void)
 {
 	udpcounters = counters_alloc(udps_ncounters);
 	in_pcbinit(&udbtable, UDB_INITIAL_HASH_SIZE);
+#ifdef INET6
+	in_pcbinit(&udb6table, UDB_INITIAL_HASH_SIZE);
+#endif
 }
 
 int
@@ -375,6 +381,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
 		SIMPLEQ_HEAD(, inpcb) inpcblist;
+		struct inpcbtable *tb;
 
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
@@ -397,17 +404,24 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		 * (Algorithm copied from raw_intr().)
 		 */
 		SIMPLEQ_INIT(&inpcblist);
-		rw_enter_write(&udbtable.inpt_notify);
-		mtx_enter(&udbtable.inpt_mtx);
-		TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
+#ifdef INET6
+		if (ip6)
+			tb = &udb6table;
+		else
+#endif
+			tb = &udbtable;
+
+		rw_enter_write(&tb->inpt_notify);
+		mtx_enter(&tb->inpt_mtx);
+		TAILQ_FOREACH(inp, &tb->inpt_queue, inp_queue) {
 			if (inp->inp_socket->so_rcv.sb_state & SS_CANTRCVMORE)
 				continue;
 #ifdef INET6
-			/* don't accept it if AF does not match */
-			if (ip6 && !(inp->inp_flags & INP_IPV6))
-				continue;
-			if (!ip6 && (inp->inp_flags & INP_IPV6))
-				continue;
+			/* table is per AF, panic if it does not match */
+			if (ip6)
+				KASSERT(ISSET(inp->inp_flags, INP_IPV6));
+			else
+				KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
 #endif
 			if (rtable_l2(inp->inp_rtableid) !=
 			    rtable_l2(m->m_pkthdr.ph_rtableid))
@@ -467,10 +481,10 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			    SO_REUSEADDR)) == 0)
 				break;
 		}
-		mtx_leave(&udbtable.inpt_mtx);
+		mtx_leave(&tb->inpt_mtx);
 
 		if (SIMPLEQ_EMPTY(&inpcblist)) {
-			rw_exit_write(&udbtable.inpt_notify);
+			rw_exit_write(&tb->inpt_notify);
 
 			/*
 			 * No matching pcb found; discard datagram.
@@ -495,7 +509,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			}
 			in_pcbunref(inp);
 		}
-		rw_exit_write(&udbtable.inpt_notify);
+		rw_exit_write(&tb->inpt_notify);
 
 		return IPPROTO_DONE;
 	}
@@ -507,25 +521,30 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 #endif
 	if (inp == NULL) {
 #ifdef INET6
-		if (ip6)
-			inp = in6_pcblookup(&udbtable, &ip6->ip6_src,
+		if (ip6) {
+			inp = in6_pcblookup(&udb6table, &ip6->ip6_src,
 			    uh->uh_sport, &ip6->ip6_dst, uh->uh_dport,
 			    m->m_pkthdr.ph_rtableid);
-		else
+		} else
 #endif /* INET6 */
-		inp = in_pcblookup(&udbtable, ip->ip_src, uh->uh_sport,
-		    ip->ip_dst, uh->uh_dport, m->m_pkthdr.ph_rtableid);
+		{
+			inp = in_pcblookup(&udbtable, ip->ip_src,
+			    uh->uh_sport, ip->ip_dst, uh->uh_dport,
+			    m->m_pkthdr.ph_rtableid);
+		}
 	}
 	if (inp == NULL) {
 		udpstat_inc(udps_pcbhashmiss);
 #ifdef INET6
 		if (ip6) {
-			inp = in6_pcblookup_listen(&udbtable, &ip6->ip6_dst,
+			inp = in6_pcblookup_listen(&udb6table, &ip6->ip6_dst,
 			    uh->uh_dport, m, m->m_pkthdr.ph_rtableid);
 		} else
 #endif /* INET6 */
-		inp = in_pcblookup_listen(&udbtable, ip->ip_dst,
-		    uh->uh_dport, m, m->m_pkthdr.ph_rtableid);
+		{
+			inp = in_pcblookup_listen(&udbtable, ip->ip_dst,
+			    uh->uh_dport, m, m->m_pkthdr.ph_rtableid);
+		}
 	}
 
 #ifdef IPSEC
@@ -809,7 +828,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			inp = in6_pcblookup(&udbtable, &sa6.sin6_addr,
+			inp = in6_pcblookup(&udb6table, &sa6.sin6_addr,
 			    uh.uh_dport, &sa6_src.sin6_addr, uh.uh_sport,
 			    rdomain);
 #if 0
@@ -821,7 +840,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 * is really ours.
 			 */
 			if (inp == NULL) {
-				inp = in6_pcblookup_listen(&udbtable,
+				inp = in6_pcblookup_listen(&udb6table,
 				    &sa6_src.sin6_addr, uh.uh_sport, NULL,
 				    rdomain))
 			}
@@ -847,10 +866,10 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 */
 		}
 
-		in6_pcbnotify(&udbtable, &sa6, uh.uh_dport,
+		in6_pcbnotify(&udb6table, &sa6, uh.uh_dport,
 		    &sa6_src, uh.uh_sport, rdomain, cmd, cmdarg, notify);
 	} else {
-		in6_pcbnotify(&udbtable, &sa6, 0,
+		in6_pcbnotify(&udb6table, &sa6, 0,
 		    &sa6_any, 0, rdomain, cmd, cmdarg, notify);
 	}
 }
@@ -1079,6 +1098,7 @@ release:
 int
 udp_attach(struct socket *so, int proto, int wait)
 {
+	struct inpcbtable *tb;
 	int error;
 
 	if (so->so_pcb != NULL)
@@ -1088,7 +1108,13 @@ udp_attach(struct socket *so, int proto, int wait)
 		return error;
 
 	NET_ASSERT_LOCKED();
-	if ((error = in_pcballoc(so, &udbtable, wait)))
+#ifdef INET6
+	if (so->so_proto->pr_domain->dom_family == PF_INET6)
+		tb = &udb6table;
+	else
+#endif
+		tb = &udbtable;
+	if ((error = in_pcballoc(so, tb, wait)))
 		return error;
 #ifdef INET6
 	if (sotoinpcb(so)->inp_flags & INP_IPV6)

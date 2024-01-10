@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1192 2024/01/01 22:16:51 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1193 2024/01/10 16:44:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3841,6 +3841,8 @@ pf_socket_lookup(struct pf_pdesc *pd)
 		break;
 #ifdef INET6
 	case AF_INET6:
+		if (pd->virtual_proto == IPPROTO_UDP)
+			tb = &udb6table;
 		inp = in6_pcblookup(tb, &saddr->v6, sport, &daddr->v6,
 		    dport, pd->rdomain);
 		if (inp == NULL) {
