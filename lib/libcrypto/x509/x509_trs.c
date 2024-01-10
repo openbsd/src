@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.35 2024/01/08 03:32:01 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.36 2024/01/10 21:11:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,8 +68,34 @@ static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags);
 static int trust_1oid(X509_TRUST *trust, X509 *x, int flags);
 static int trust_compat(X509_TRUST *trust, X509 *x, int flags);
 
-static int obj_trust(int id, X509 *x, int flags);
-static int (*default_trust)(int id, X509 *x, int flags) = obj_trust;
+static int
+obj_trust(int id, X509 *x, int flags)
+{
+	ASN1_OBJECT *obj;
+	int i, nid;
+	X509_CERT_AUX *ax;
+
+	ax = x->aux;
+	if (!ax)
+		return X509_TRUST_UNTRUSTED;
+	if (ax->reject) {
+		for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
+			obj = sk_ASN1_OBJECT_value(ax->reject, i);
+			nid = OBJ_obj2nid(obj);
+			if (nid == id || nid == NID_anyExtendedKeyUsage)
+				return X509_TRUST_REJECTED;
+		}
+	}
+	if (ax->trust) {
+		for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
+			obj = sk_ASN1_OBJECT_value(ax->trust, i);
+			nid = OBJ_obj2nid(obj);
+			if (nid == id || nid == NID_anyExtendedKeyUsage)
+				return X509_TRUST_TRUSTED;
+		}
+	}
+	return X509_TRUST_UNTRUSTED;
+}
 
 /* WARNING: the following table should be kept in order of trust
  * and without any gaps so we can just subtract the minimum trust
@@ -127,6 +153,8 @@ static X509_TRUST trstandard[] = {
 };
 
 #define X509_TRUST_COUNT	(sizeof(trstandard) / sizeof(trstandard[0]))
+
+static int (*default_trust)(int id, X509 *x, int flags) = obj_trust;
 
 int
 (*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int)
@@ -277,33 +305,4 @@ trust_compat(X509_TRUST *trust, X509 *x, int flags)
 		return X509_TRUST_TRUSTED;
 	else
 		return X509_TRUST_UNTRUSTED;
-}
-
-static int
-obj_trust(int id, X509 *x, int flags)
-{
-	ASN1_OBJECT *obj;
-	int i, nid;
-	X509_CERT_AUX *ax;
-
-	ax = x->aux;
-	if (!ax)
-		return X509_TRUST_UNTRUSTED;
-	if (ax->reject) {
-		for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
-			obj = sk_ASN1_OBJECT_value(ax->reject, i);
-			nid = OBJ_obj2nid(obj);
-			if (nid == id || nid == NID_anyExtendedKeyUsage)
-				return X509_TRUST_REJECTED;
-		}
-	}
-	if (ax->trust) {
-		for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
-			obj = sk_ASN1_OBJECT_value(ax->trust, i);
-			nid = OBJ_obj2nid(obj);
-			if (nid == id || nid == NID_anyExtendedKeyUsage)
-				return X509_TRUST_TRUSTED;
-		}
-	}
-	return X509_TRUST_UNTRUSTED;
 }
