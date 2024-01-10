@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.168 2023/08/16 08:26:35 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.169 2024/01/10 13:31:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -687,22 +687,13 @@ void
 print_roa(struct roa_tree *r)
 {
 	struct roa	*roa;
-	struct bgpd_addr addr;
 
 	if (RB_EMPTY(r))
 		return;
 
 	printf("roa-set {");
 	RB_FOREACH(roa, roa_tree, r) {
-		printf("\n\t");
-		addr.aid = roa->aid;
-		addr.v6 = roa->prefix.inet6;
-		printf("%s/%u", log_addr(&addr), roa->prefixlen);
-		if (roa->prefixlen != roa->maxlen)
-			printf(" maxlen %u", roa->maxlen);
-		printf(" source-as %u", roa->asnum);
-		if (roa->expires != 0)
-			printf(" expires %lld", (long long)roa->expires);
+		printf("\n\t%s", log_roa(roa));
 	}
 	printf("\n}\n\n");
 }
@@ -711,21 +702,13 @@ void
 print_aspa(struct aspa_tree *a)
 {
 	struct aspa_set	*aspa;
-	uint32_t i;
 
 	if (RB_EMPTY(a))
 		return;
 
 	printf("aspa-set {");
 	RB_FOREACH(aspa, aspa_tree, a) {
-		printf("\n\t");
-		printf("customer-as %s", log_as(aspa->as));
-		if (aspa->expires != 0)
-			printf(" expires %lld", (long long)aspa->expires);
-		printf(" provider-as { ");
-		for (i = 0; i < aspa->num; i++)
-			printf("%s ", log_as(aspa->tas[i]));
-		printf("}");
+		printf("\n\t%s", log_aspa(aspa));
 	}
 	printf("\n}\n\n");
 }

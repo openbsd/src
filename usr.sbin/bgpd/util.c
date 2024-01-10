@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.77 2023/04/17 08:02:21 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.78 2024/01/10 13:31:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -163,6 +163,76 @@ log_reason(const char *communication) {
 	strnvis(buf, communication, sizeof(buf), VIS_NL | VIS_OCTAL);
 
 	return buf;
+}
+
+static const char *
+log_expires(time_t expires)
+{
+	static char buf[32];
+
+	buf[0] = '\0';
+	if (expires != 0)
+		snprintf(buf, sizeof(buf), " expires %lld", (long long)expires);
+	return buf;
+}
+
+const char *
+log_roa(struct roa *roa)
+{
+	static char buf[256];
+	struct bgpd_addr addr = { .aid = roa->aid, .v6 = roa->prefix.inet6 };
+	char maxbuf[32];
+
+	maxbuf[0] = '\0';
+	if (roa->prefixlen != roa->maxlen)
+		snprintf(maxbuf, sizeof(maxbuf), " maxlen %u", roa->maxlen);
+	snprintf(buf, sizeof(buf), "%s/%u%s source-as %u%s", log_addr(&addr),
+	    roa->prefixlen, maxbuf, roa->asnum, log_expires(roa->expires));
+	return buf;
+}
+
+const char *
+log_aspa(struct aspa_set *aspa)
+{
+	static char errbuf[256];
+	static char *buf;
+	static size_t len;
+	char asbuf[16];
+	size_t needed;
+	uint32_t i;
+
+	/* include enough space for header and trailer */
+	if ((uint64_t)aspa->num > (SIZE_MAX / sizeof(asbuf) - 72))
+		goto fail;
+	needed = aspa->num * sizeof(asbuf) + 72;
+	if (needed > len) {
+		char *nbuf;
+
+		if ((nbuf = realloc(buf, needed)) == NULL)
+			goto fail;
+		len = needed;
+		buf = nbuf;
+	}
+
+	snprintf(buf, len, "customer-as %s%s provider-as { ",
+	    log_as(aspa->as), log_expires(aspa->expires));
+
+	for (i = 0; i < aspa->num; i++) {
+		snprintf(asbuf, sizeof(asbuf), "%s ", log_as(aspa->tas[i]));
+		if (strlcat(buf, asbuf, len) >= len)
+			goto fail;
+	}
+	if (strlcat(buf, "}", len) >= len)
+		goto fail;
+	return buf;
+
+ fail:
+	free(buf);
+	buf = NULL;
+	len = 0;
+	snprintf(errbuf, sizeof(errbuf), "customer-as %s%s provider-as { ... }",
+	    log_as(aspa->as), log_expires(aspa->expires));
+	return errbuf;
 }
 
 const char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.479 2024/01/08 15:08:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.480 2024/01/10 13:31:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1541,6 +1541,8 @@ const char	*log_as(uint32_t);
 const char	*log_rd(uint64_t);
 const char	*log_ext_subtype(int, uint8_t);
 const char	*log_reason(const char *);
+const char	*log_roa(struct roa *);
+const char	*log_aspa(struct aspa_set *);
 const char	*log_rtr_error(enum rtr_error);
 const char	*log_policy(enum role);
 int		 aspath_snprint(char *, size_t, void *, uint16_t);
