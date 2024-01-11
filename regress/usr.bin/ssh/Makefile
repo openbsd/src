@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.132 2024/01/11 01:45:58 djm Exp $
+#	$OpenBSD: Makefile,v 1.133 2024/01/11 04:50:28 djm Exp $
 
 OPENSSL?=	yes
 
@@ -176,9 +176,7 @@ t6:
 	fi
 
 t7.out:
-	set -xe ; if ssh -Q key | grep -q ^ssh-dss ; then \
-		ssh-keygen -q -t rsa -N '' -f $@ ; \
-	fi
+	ssh-keygen -q -t rsa -N '' -f $@ ; \
 
 t7: t7.out
 	ssh-keygen -lf t7.out > /dev/null
