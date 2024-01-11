@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.194 2023/11/29 18:30:48 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.195 2024/01/11 13:49:49 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgements:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 	This product includes software developed at the Information
- * 	Technology Division, US Naval Research Laboratory.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed at the Information
+ *	Technology Division, US Naval Research Laboratory.
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -396,7 +396,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 	case AF_INET6:
 		ip6->ip6_flow = htonl(0x60000000);
 		ip6->ip6_nxt  = IPPROTO_TCP;
-		ip6->ip6_hlim = in6_selecthlim(tp ? tp->t_inpcb : NULL);	/*XXX*/
+		ip6->ip6_hlim = in6_selecthlim(tp ? tp->t_inpcb : NULL); /*XXX*/
 		ip6->ip6_plen = tlen - sizeof(struct ip6_hdr);
 		ip6->ip6_plen = htons(ip6->ip6_plen);
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
@@ -455,10 +455,10 @@ tcp_newtcpcb(struct inpcb *inp, int wait)
 	    TCPTV_MIN, TCPTV_REXMTMAX);
 	tp->snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT;
 	tp->snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT;
-	
+
 	tp->t_pmtud_mtu_sent = 0;
 	tp->t_pmtud_mss_acked = 0;
-	
+
 #ifdef INET6
 	/* we disallow IPv4 mapped address completely. */
 	if ((inp->inp_flags & INP_IPV6) == 0)
@@ -628,7 +628,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
 	else if (cmd == PRC_QUENCH) {
-		/* 
+		/*
 		 * Don't honor ICMP Source Quench messages meant for
 		 * TCP connections.
 		 */
@@ -731,7 +731,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		return;
 	errno = inetctlerrmap[cmd];
 	if (cmd == PRC_QUENCH)
-		/* 
+		/*
 		 * Don't honor ICMP Source Quench messages meant for
 		 * TCP connections.
 		 */
@@ -755,7 +755,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			icp = (struct icmp *)((caddr_t)ip -
 					      offsetof(struct icmp, icmp_ip));
 
-			/* 
+			/*
 			 * If the ICMP message advertises a Next-Hop MTU
 			 * equal or larger than the maximum packet size we have
 			 * ever sent, drop the message.
@@ -766,7 +766,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 				return;
 			}
 			if (mtu >= tcp_hdrsz(tp) + tp->t_pmtud_mss_acked) {
-				/* 
+				/*
 				 * Calculate new MTU, and create corresponding
 				 * route (traditional PMTUD).
 				 */
@@ -1074,7 +1074,7 @@ tcp_signature(struct tdb *tdb, int af, struct mbuf *m, struct tcphdr *th,
 	if (len > 0 &&
 	    m_apply(m, iphlen + th->th_off * sizeof(uint32_t), len,
 	    tcp_signature_apply, (caddr_t)&ctx))
-		return (-1); 
+		return (-1);
 
 	MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
 	MD5Final(sig, &ctx);

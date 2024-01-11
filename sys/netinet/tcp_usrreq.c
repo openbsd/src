@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.227 2023/12/03 20:24:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.228 2024/01/11 13:49:49 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ int	tcp_fill_info(struct tcpcb *, struct socket *, struct mbuf *);
 int	tcp_ident(void *, size_t *, void *, size_t, int);
 
 static inline int tcp_sogetpcb(struct socket *, struct inpcb **,
-                      struct tcpcb **);
+		    struct tcpcb **);
 
 static inline int
 tcp_sogetpcb(struct socket *so, struct inpcb **rinp, struct tcpcb **rtp)
@@ -579,7 +579,7 @@ tcp_listen(struct socket *so)
 	if (inp->inp_lport == 0)
 		if ((error = in_pcbbind(inp, NULL, curproc)))
 			goto out;
-	
+
 	/*
 	 * If the in_pcbbind() above is called, the tp->pf
 	 * should still be whatever it was before.

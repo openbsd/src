@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.73 2023/07/06 09:15:24 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.74 2024/01/11 13:49:49 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -367,7 +367,9 @@ tcp_timer_rexmt(void *arg)
 	 * to go below this.)
 	 */
 	{
-		u_long win = ulmin(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_maxseg;
+		u_long win;
+
+		win = ulmin(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_maxseg;
 		if (win < 2)
 			win = 2;
 		tp->snd_cwnd = tp->t_maxseg;

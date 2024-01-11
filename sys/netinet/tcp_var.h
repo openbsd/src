@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.173 2023/11/29 19:19:25 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.174 2024/01/11 13:49:49 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 
 struct sackblk {
 	tcp_seq start;		/* start seq no. of sack block */
-	tcp_seq end; 		/* end seq no. */
+	tcp_seq end;		/* end seq no. */
 };
 
 struct sackhole {
@@ -334,7 +334,8 @@ struct syn_cache_set {
  * is the same as the multiplier for rttvar.
  */
 #define	TCP_REXMTVAL(tp) \
-	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> TCP_RTT_BASE_SHIFT)
+	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) \
+	    >> TCP_RTT_BASE_SHIFT)
 
 /*
  * TCP statistics.
@@ -406,8 +407,8 @@ struct	tcpstat {
 
 	u_int32_t tcps_rcvbadsig;	/* rcvd bad/missing TCP signatures */
 	u_int64_t tcps_rcvgoodsig;	/* rcvd good TCP signatures */
-	u_int32_t tcps_inswcsum;	/* input software-checksummed packets */
-	u_int32_t tcps_outswcsum;	/* output software-checksummed packets */
+	u_int32_t tcps_inswcsum;	/* input software-checksummed pkts */
+	u_int32_t tcps_outswcsum;	/* output software-checksummed pkts */
 
 	/* ECN stats */
 	u_int32_t tcps_ecn_accepts;	/* ecn connections accepted */
@@ -465,8 +466,8 @@ struct	tcpstat {
  * Names for TCP sysctl objects.
  */
 
-#define	TCPCTL_RFC1323		1 /* enable/disable RFC1323 timestamps/scaling */
-#define	TCPCTL_KEEPINITTIME	2 /* TCPT_KEEP value */
+#define TCPCTL_RFC1323		1 /* enable RFC1323 timestamps/scaling */
+#define TCPCTL_KEEPINITTIME	2 /* TCPT_KEEP value */
 #define TCPCTL_KEEPIDLE		3 /* allow tcp_keepidle to be changed */
 #define TCPCTL_KEEPINTVL	4 /* allow tcp_keepintvl to be changed */
 #define TCPCTL_SLOWHZ		5 /* return kernel idea of PR_SLOWHZ */
@@ -503,23 +504,23 @@ struct	tcpstat {
 	{ "baddynamic", CTLTYPE_STRUCT }, \
 	{ NULL,	0 }, \
 	{ NULL,	0 }, \
-	{ "ident", 	CTLTYPE_STRUCT }, \
+	{ "ident",	CTLTYPE_STRUCT }, \
 	{ "sack",	CTLTYPE_INT }, \
 	{ "mssdflt",	CTLTYPE_INT }, \
 	{ "rstppslimit",	CTLTYPE_INT }, \
 	{ "ackonpush",	CTLTYPE_INT }, \
-	{ "ecn", 	CTLTYPE_INT }, \
-	{ "syncachelimit", 	CTLTYPE_INT }, \
-	{ "synbucketlimit", 	CTLTYPE_INT }, \
-	{ "rfc3390", 	CTLTYPE_INT }, \
-	{ "reasslimit", 	CTLTYPE_INT }, \
-	{ "drop", 	CTLTYPE_STRUCT }, \
-	{ "sackholelimit", 	CTLTYPE_INT }, \
+	{ "ecn",	CTLTYPE_INT }, \
+	{ "syncachelimit",	CTLTYPE_INT }, \
+	{ "synbucketlimit",	CTLTYPE_INT }, \
+	{ "rfc3390",	CTLTYPE_INT }, \
+	{ "reasslimit",	CTLTYPE_INT }, \
+	{ "drop",	CTLTYPE_STRUCT }, \
+	{ "sackholelimit",	CTLTYPE_INT }, \
 	{ "stats",	CTLTYPE_STRUCT }, \
 	{ "always_keepalive",	CTLTYPE_INT }, \
-	{ "synuselimit", 	CTLTYPE_INT }, \
+	{ "synuselimit",	CTLTYPE_INT }, \
 	{ "rootonly",	CTLTYPE_STRUCT }, \
-	{ "synhashsize", 	CTLTYPE_INT }, \
+	{ "synhashsize",	CTLTYPE_INT }, \
 	{ "tso",	CTLTYPE_INT }, \
 }
 

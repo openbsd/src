@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.397 2023/12/01 15:30:47 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.398 2024/01/11 13:49:49 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3932,7 +3932,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (syn_cache_respond(sc, m, now) == 0) {
 		mtx_enter(&syn_cache_mtx);
 		/*
-		 * XXXSMP Currently exclusive netlock prevents another insert 
+		 * XXXSMP Currently exclusive netlock prevents another insert
 		 * after our syn_cache_lookup() and before syn_cache_insert().
 		 * Double insert should be handled and not rely on netlock.
 		 */
