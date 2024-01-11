@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.17 2023/12/13 15:57:22 miod Exp $ */
+/* $OpenBSD: syscall.c,v 1.18 2024/01/11 19:16:26 miod Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -26,16 +26,14 @@
 
 #include <uvm/uvm_extern.h>
 
-#define MAXARGS 8
-
 void
 svc_handler(trapframe_t *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp;
 	int code, error = ENOSYS;
-	u_int nap = 8, nargs;
-	register_t *ap, *args, copyargs[MAXARGS], rval[2];
+	u_int nargs;
+	register_t *args, rval[2];
 
 	uvmexp.syscalls++;
 
@@ -47,24 +45,12 @@ svc_handler(trapframe_t *frame)
 	frame->tf_elr += 8;
 
 	code = frame->tf_x[8];
-
-	ap = &frame->tf_x[0];
-
 	if (code <= 0 || code >= SYS_MAXSYSCALL)
 		goto bad;
 
 	callp = sysent + code;
-	nargs = callp->sy_argsize / sizeof(register_t);
-	if (nargs <= nap) {
-		args = ap;
-	} else {
-		KASSERT(nargs <= MAXARGS);
-		memcpy(copyargs, ap, nap * sizeof(register_t));
-		if ((error = copyin((void *)frame->tf_sp, copyargs + nap,
-		    (nargs - nap) * sizeof(register_t))))
-			goto bad;
-		args = copyargs;
-	}
+	nargs = callp->sy_narg;
+	args = &frame->tf_x[0];
 
 	rval[0] = 0;
 	rval[1] = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.110 2023/12/13 15:57:22 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.111 2024/01/11 19:16:26 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -501,10 +501,10 @@ syscall(u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp = sysent;
 	struct proc *p;
-	int error;
+	int error = ENOSYS;
 	u_int64_t opc;
 	u_long rval[2];
-	u_long args[10];					/* XXX */
+	u_long args[6];
 	u_int nargs;
 
 	atomic_add_int(&uvmexp.syscalls, 1);
@@ -513,18 +513,13 @@ syscall(u_int64_t code, struct trapframe *framep)
 	framep->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 	opc = framep->tf_regs[FRAME_PC] - 4;
 
-	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code > 0 && code < SYS_MAXSYSCALL)
-		callp += code;
+	if (code <= 0 || code >= SYS_MAXSYSCALL)
+		goto bad;
+
+	callp += code;
 
 	nargs = callp->sy_narg;
 	switch (nargs) {
-	default:
-		if (nargs > 10)		/* XXX */
-			panic("syscall: too many args (%d)", nargs);
-		if ((error = copyin((caddr_t)(framep->tf_regs[FRAME_SP]), &args[6],
-		    (nargs - 6) * sizeof(u_long))))
-			goto bad;
 	case 6:
 		args[5] = framep->tf_regs[FRAME_A5];
 	case 5:

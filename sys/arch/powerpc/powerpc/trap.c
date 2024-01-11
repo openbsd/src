@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.133 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.134 2024/01/11 19:16:27 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -61,10 +61,8 @@ static int fix_unaligned(struct proc *p, struct trapframe *frame);
 int badaddr(char *addr, u_int32_t len);
 void trap(struct trapframe *frame);
 
-/* These definitions should probably be somewhere else				XXX */
-#define	FIRSTARG	3		/* first argument is in reg 3 */
-#define	NARGREG		8		/* 8 args are in registers */
-#define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
+/* XXX This definition should probably be somewhere else */
+#define	FIRSTARG	3		/* first syscall argument is in reg 3 */
 
 #ifdef ALTIVEC
 static int altivec_assist(struct proc *p, vaddr_t);
@@ -240,10 +238,8 @@ trap(struct trapframe *frame)
 	vaddr_t va;
 	int access_type;
 	const struct sysent *callp = sysent;
-	size_t argsize;
 	register_t code, error;
-	register_t *params, rval[2], args[10];
-	int n;
+	register_t *params, rval[2];
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
@@ -360,23 +356,15 @@ trap(struct trapframe *frame)
 	case EXC_SC|EXC_USER:
 		uvmexp.syscalls++;
 
-		params = frame->fixreg + FIRSTARG;
-
 		code = frame->fixreg[0];
-	        // XXX out of range stays on syscall0, which we assume is enosys
-	        if (code > 0 && code < SYS_MAXSYSCALL)
-	                callp += code;
-
-		argsize = callp->sy_argsize;
-		n = NARGREG - (params - (frame->fixreg + FIRSTARG));
-		if (argsize > n * sizeof(register_t)) {
-			bcopy(params, args, n * sizeof(register_t));
-
-			if ((error = copyin(MOREARGS(frame->fixreg[1]),
-			   args + n, argsize - n * sizeof(register_t))))
-				goto bad;
-			params = args;
+	        if (code <= 0 || code >= SYS_MAXSYSCALL) {
+			error = ENOSYS;
+			goto bad;
 		}
+
+	        callp += code;
+
+		params = frame->fixreg + FIRSTARG;
 
 		rval[0] = 0;
 		rval[1] = frame->fixreg[FIRSTARG + 1];

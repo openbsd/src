@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.102 2023/12/12 15:30:55 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.103 2024/01/11 19:16:26 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -550,12 +550,10 @@ ast(struct trapframe *frame)
 void
 syscall(struct trapframe *frame)
 {
-	caddr_t params;
 	const struct sysent *callp;
 	struct proc *p;
 	int error = ENOSYS;
-	size_t argsize, argoff;
-	register_t code, args[9], rval[2], *argp;
+	register_t code, args[6], rval[2], *argp;
 
 	verify_smap(__func__);
 	uvmexp.syscalls++;
@@ -568,36 +566,23 @@ syscall(struct trapframe *frame)
 
 	code = frame->tf_rax;
 	argp = &args[0];
-	argoff = 0;
 
 	if (code <= 0 || code >= SYS_MAXSYSCALL)
 		goto bad;
 	callp = sysent + code;
-	argsize = (callp->sy_argsize >> 3) + argoff;
-	if (argsize) {
-		switch (MIN(argsize, 6)) {
-		case 6:
-			args[5] = frame->tf_r9;
-		case 5:
-			args[4] = frame->tf_r8;
-		case 4:
-			args[3] = frame->tf_r10;
-		case 3:
-			args[2] = frame->tf_rdx;
-		case 2:
-			args[1] = frame->tf_rsi;
-		case 1:
-			args[0] = frame->tf_rdi;
-			break;
-		default:
-			panic("impossible syscall argsize");
-		}
-		if (argsize > 6) {
-			argsize -= 6;
-			params = (caddr_t)frame->tf_rsp + sizeof(register_t);
-			if ((error = copyin(params, &args[6], argsize << 3)))
-				goto bad;
-		}
+	switch (callp->sy_narg) {
+	case 6:
+		args[5] = frame->tf_r9;
+	case 5:
+		args[4] = frame->tf_r8;
+	case 4:
+		args[3] = frame->tf_r10;
+	case 3:
+		args[2] = frame->tf_rdx;
+	case 2:
+		args[1] = frame->tf_rsi;
+	case 1:
+		args[0] = frame->tf_rdi;
 	}
 
 	rval[0] = 0;

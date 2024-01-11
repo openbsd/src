@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.170 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.171 2024/01/11 19:16:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -400,11 +400,8 @@ fault_common_no_miss:
 		unsigned int code;
 		register_t tpc;
 		uint32_t branch = 0;
-		int error, numarg;
-		struct args {
-			register_t i[8];
-		} args;
-		register_t rval[2];
+		int error;
+		register_t *args, rval[2];
 
 		atomic_inc_int(&uvmexp.syscalls);
 
@@ -428,17 +425,10 @@ fault_common_no_miss:
 		if (code > 0 && code < SYS_MAXSYSCALL)
 			callp += code;
 
-		numarg = callp->sy_narg;
-		args.i[0] = locr0->a0;
-		args.i[1] = locr0->a1;
-		args.i[2] = locr0->a2;
-		args.i[3] = locr0->a3;
-		if (numarg > 4) {
-			args.i[4] = locr0->a4;
-			args.i[5] = locr0->a5;
-			args.i[6] = locr0->a6;
-			args.i[7] = locr0->a7;
-		}
+		/*
+		 * This relies upon a0-a5 being contiguous in struct trapframe.
+		 */
+		args = &locr0->a0;
 
 		rval[0] = 0;
 		rval[1] = 0;
@@ -448,7 +438,7 @@ fault_common_no_miss:
 		    TRAPSIZE : trppos[ci->ci_cpuid]) - 1].code = code;
 #endif
 
-		error = mi_syscall(p, code, callp, args.i, rval);
+		error = mi_syscall(p, code, callp, args, rval);
 
 		switch (error) {
 		case 0:

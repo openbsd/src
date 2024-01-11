@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.13 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.14 2024/01/11 19:16:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -24,35 +24,21 @@
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
 
-#define MAXARGS 8
-
 void
 syscall(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp = sysent;
-	int code, error;
-	int nap = 8, nargs;
-	register_t *ap, *args, copyargs[MAXARGS], rval[2];
-
-	ap = &frame->fixreg[3];
+	int code, error = ENOSYS;
+	register_t *args, rval[2];
 
 	code = frame->fixreg[0];
-	// XXX out of range stays on syscall0, which we assume is enosys
-	if (code > 0 && code < SYS_MAXSYSCALL)
-		callp += code;
+	if (code <= 0 || code >= SYS_MAXSYSCALL)
+		goto bad;
 
-	nargs = callp->sy_argsize / sizeof(register_t);
-	if (nargs <= nap) {
-		args = ap;
-	} else {
-		KASSERT(nargs <= MAXARGS);
-		memcpy(copyargs, ap, nap * sizeof(register_t));
-		if ((error = copyin((register_t *)frame->fixreg[1] + 8,
-		    copyargs + nap, (nargs - nap) * sizeof(register_t))))
-			goto bad;
-		args = copyargs;
-	}
+	callp += code;
+
+	args = &frame->fixreg[3];
 
 	rval[0] = 0;
 	rval[1] = 0;

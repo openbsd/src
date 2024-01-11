@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.118 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.119 2024/01/11 19:16:27 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1105,14 +1105,11 @@ out:
 void
 syscall(struct trapframe *tf, register_t code, register_t pc)
 {
-	int i, nap;
-	int64_t *ap;
 	const struct sysent *callp;
 	struct proc *p = curproc;
 	int error = ENOSYS, new;
-	register_t args[8];
 	register_t rval[2];
-	register_t *argp;
+	register_t *args;
 
 	if ((tf->tf_out[6] & 1) == 0)
 		sigexit(p, SIGILL);
@@ -1130,34 +1127,17 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	new = code & SYSCALL_G2RFLAG;
 	code &= ~SYSCALL_G2RFLAG;
 
-	/*
-	 * The first six system call arguments are in the six %o registers.
-	 * Any arguments beyond that are in the `argument extension' area
-	 * of the user's stack frame (see <machine/frame.h>).
-	 */
-	ap = &tf->tf_out[0];
-	nap = 6;
-
 	if (code <= 0 || code >= SYS_MAXSYSCALL)
 		goto bad;
 	callp = sysent + code;
-	i = callp->sy_narg; /* Why divide? */
-	if (i > nap) {	/* usually false */
-		if (i > 8)
-			panic("syscall nargs");
-		/* Read the whole block in */
-		if ((error = copyin((caddr_t)tf->tf_out[6]
-		    + BIAS + offsetof(struct frame, fr_argx),
-		    &args[nap], (i - nap) * sizeof(register_t))))
-			goto bad;
-		i = nap;
-	}
+
 	/*
-	 * It should be faster to do <= 6 longword copies than
-	 * to call bcopy
+	 * The first six system call arguments are in the six %o registers.
+	 * Any arguments beyond that are in the `argument extension' area
+	 * of the user's stack frame (see <machine/frame.h>), but no system
+	 * call currently uses more than six arguments.
 	 */
-	for (argp = args; i--;)
-		*argp++ = *ap++;
+	args = (register_t *)&tf->tf_out[0];
 
 	rval[0] = 0;
 	rval[1] = 0;

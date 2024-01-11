@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.131 2023/12/15 15:20:16 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.132 2024/01/11 19:16:26 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1152,39 +1152,24 @@ error_fatal(struct trapframe *frame)
 void
 m88100_syscall(register_t code, struct trapframe *tf)
 {
-	int i, nap;
 	const struct sysent *callp = sysent;
 	struct proc *p = curproc;
 	int error;
-	register_t args[8] __aligned(8);
+	register_t *args;
 	register_t rval[2] __aligned(8);
-	register_t *ap;
 
 	uvmexp.syscalls++;
 
 	p->p_md.md_tf = tf;
 
-	/*
-	 * For 88k, all the arguments are passed in the registers (r2-r9),
-	 * and further arguments (if any) on stack.
-	 */
-	ap = &tf->tf_r[2];
-	nap = 8; /* r2-r9 */
-
 	// XXX out of range stays on syscall0, which we assume is enosys
 	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
-	i = callp->sy_argsize / sizeof(register_t);
-	if (i > sizeof(args) / sizeof(register_t))
-		panic("syscall nargs");
-	if (i > nap) {
-		bcopy((caddr_t)ap, (caddr_t)args, nap * sizeof(register_t));
-		if ((error = copyin((caddr_t)tf->tf_r[31], args + nap,
-		    (i - nap) * sizeof(register_t))))
-			goto bad;
-	} else
-		bcopy((caddr_t)ap, (caddr_t)args, i * sizeof(register_t));
+	/*
+	 * For 88k, all the arguments are passed in the registers (r2-r9).
+	 */
+	args = &tf->tf_r[2];
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
@@ -1254,39 +1239,24 @@ m88100_syscall(register_t code, struct trapframe *tf)
 void
 m88110_syscall(register_t code, struct trapframe *tf)
 {
-	int i, nap;
 	const struct sysent *callp = sysent;
 	struct proc *p = curproc;
 	int error;
-	register_t args[8] __aligned(8);
 	register_t rval[2] __aligned(8);
-	register_t *ap;
+	register_t *args;
 
 	uvmexp.syscalls++;
 
 	p->p_md.md_tf = tf;
 
-	/*
-	 * For 88k, all the arguments are passed in the registers (r2-r9),
-	 * and further arguments (if any) on stack.
-	 */
-	ap = &tf->tf_r[2];
-	nap = 8;	/* r2-r9 */
-
 	// XXX out of range stays on syscall0, which we assume is enosys
 	if (code > 0 && code < SYS_MAXSYSCALL)
 		callp += code;
 
-	i = callp->sy_argsize / sizeof(register_t);
-	if (i > sizeof(args) / sizeof(register_t))
-		panic("syscall nargs");
-	if (i > nap) {
-		bcopy((caddr_t)ap, (caddr_t)args, nap * sizeof(register_t));
-		if ((error = copyin((caddr_t)tf->tf_r[31], args + nap,
-		    (i - nap) * sizeof(register_t))))
-			goto bad;
-	} else
-		bcopy((caddr_t)ap, (caddr_t)args, i * sizeof(register_t));
+	/*
+	 * For 88k, all the arguments are passed in the registers (r2-r9).
+	 */
+	ap = &tf->tf_r[2];
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
