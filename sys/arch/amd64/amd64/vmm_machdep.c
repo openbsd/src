@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.14 2024/01/10 04:13:59 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.15 2024/01/11 17:13:48 jan Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -158,7 +158,6 @@ static int vmx_remote_vmclear(struct cpu_info*, struct vcpu *);
 #endif
 
 #ifdef VMM_DEBUG
-void dump_vcpu(struct vcpu *);
 void vmx_vcpu_dump_regs(struct vcpu *);
 void vmx_dump_vmcs(struct vcpu *);
 const char *msr_name_decode(uint32_t);

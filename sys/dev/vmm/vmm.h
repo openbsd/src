@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.3 2023/05/13 23:15:28 dv Exp $ */
+/* $OpenBSD: vmm.h,v 1.4 2024/01/11 17:13:48 jan Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -202,6 +202,10 @@ int vm_terminate(struct vm_terminate_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
 int vcpu_must_stop(struct vcpu *);
 int vm_share_mem(struct vm_sharemem_params *, struct proc *);
+
+#ifdef VMM_DEBUG
+void dump_vcpu(struct vcpu *);
+#endif
 
 #endif /* _KERNEL */
 #endif /* DEV_VMM_H */
