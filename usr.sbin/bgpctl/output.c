@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.44 2024/01/10 14:59:41 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.45 2024/01/11 13:09:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1171,12 +1171,13 @@ show_rtr(struct ctl_show_rtr *rtr)
 
 	printf("RTR neighbor is %s, port %u\n",
 	    log_addr(&rtr->remote_addr), rtr->remote_port);
+	printf(" State: %s\n", rtr->state);
 	if (rtr->descr[0])
 		printf(" Description: %s\n", rtr->descr);
 	if (rtr->local_addr.aid != AID_UNSPEC)
 		printf(" Local Address: %s\n", log_addr(&rtr->local_addr));
 	if (rtr->session_id != -1)
-		printf("Version: %u Session ID: %d Serial #: %u\n",
+		printf(" Version: %u Session ID: %d Serial #: %u\n",
 		    rtr->version, rtr->session_id, rtr->serial);
 	printf(" Refresh: %u, Retry: %u, Expire: %u\n",
 	    rtr->refresh, rtr->retry, rtr->expire);
