@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.30 2024/01/11 13:08:39 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.31 2024/01/11 15:38:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1174,6 +1174,11 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		rtr_sem_release(rs->active_lock);
 		rtr_recalc();
 		rs->active_lock = 0;
+		/* clear the last errors */
+		rs->last_sent_error = NO_ERROR;
+		rs->last_recv_error = NO_ERROR;
+		rs->last_sent_msg[0] = '\0';
+		rs->last_recv_msg[0] = '\0';
 		break;
 	case RTR_EVNT_CACHE_RESET:
 		rtr_reset_cache(rs);
