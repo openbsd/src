@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.165 2024/01/10 11:08:04 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.166 2024/01/11 15:46:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -130,7 +130,7 @@ struct bgpd_sysdep {
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
-	struct imsgbuf		ibuf;
+	struct imsgbuf		imsgbuf;
 	int			restricted;
 	int			throttled;
 	int			terminate;

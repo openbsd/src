@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.115 2024/01/10 11:08:04 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.116 2024/01/11 15:46:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -145,9 +145,9 @@ control_fill_pfds(struct pollfd *pfd, size_t size)
 	size_t i = 0;
 
 	TAILQ_FOREACH(ctl_conn, &ctl_conns, entry) {
-		pfd[i].fd = ctl_conn->ibuf.fd;
+		pfd[i].fd = ctl_conn->imsgbuf.fd;
 		pfd[i].events = POLLIN;
-		if (ctl_conn->ibuf.w.queued > 0)
+		if (ctl_conn->imsgbuf.w.queued > 0)
 			pfd[i].events |= POLLOUT;
 		i++;
 	}
@@ -181,7 +181,7 @@ control_accept(int listenfd, int restricted)
 		return (0);
 	}
 
-	imsg_init(&ctl_conn->ibuf, connfd);
+	imsg_init(&ctl_conn->imsgbuf, connfd);
 	ctl_conn->restricted = restricted;
 
 	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entry);
@@ -195,7 +195,7 @@ control_connbyfd(int fd)
 	struct ctl_conn	*c;
 
 	TAILQ_FOREACH(c, &ctl_conns, entry) {
-		if (c->ibuf.fd == fd)
+		if (c->imsgbuf.fd == fd)
 			break;
 	}
 
@@ -208,7 +208,7 @@ control_connbypid(pid_t pid)
 	struct ctl_conn	*c;
 
 	TAILQ_FOREACH(c, &ctl_conns, entry) {
-		if (c->ibuf.pid == pid)
+		if (c->imsgbuf.pid == pid)
 			break;
 	}
 
@@ -218,13 +218,13 @@ control_connbypid(pid_t pid)
 int
 control_close(struct ctl_conn *c)
 {
-	if (c->terminate && c->ibuf.pid)
-		imsg_ctl_rde_msg(IMSG_CTL_TERMINATE, 0, c->ibuf.pid);
+	if (c->terminate && c->imsgbuf.pid)
+		imsg_ctl_rde_msg(IMSG_CTL_TERMINATE, 0, c->imsgbuf.pid);
 
-	msgbuf_clear(&c->ibuf.w);
+	msgbuf_clear(&c->imsgbuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 
-	close(c->ibuf.fd);
+	close(c->imsgbuf.fd);
 	free(c);
 	pauseaccept = 0;
 	return (1);
@@ -249,10 +249,10 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 	}
 
 	if (pfd->revents & POLLOUT) {
-		if (msgbuf_write(&c->ibuf.w) <= 0 && errno != EAGAIN)
+		if (msgbuf_write(&c->imsgbuf.w) <= 0 && errno != EAGAIN)
 			return control_close(c);
-		if (c->throttled && c->ibuf.w.queued < CTL_MSG_LOW_MARK) {
-			if (imsg_ctl_rde_msg(IMSG_XON, 0, c->ibuf.pid) != -1)
+		if (c->throttled && c->imsgbuf.w.queued < CTL_MSG_LOW_MARK) {
+			if (imsg_ctl_rde_msg(IMSG_XON, 0, c->imsgbuf.pid) != -1)
 				c->throttled = 0;
 		}
 	}
@@ -260,12 +260,12 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 	if (!(pfd->revents & POLLIN))
 		return (0);
 
-	if (((n = imsg_read_nofd(&c->ibuf)) == -1 && errno != EAGAIN) ||
+	if (((n = imsg_read_nofd(&c->imsgbuf)) == -1 && errno != EAGAIN) ||
 	    n == 0)
 		return control_close(c);
 
 	for (;;) {
-		if ((n = imsg_get(&c->ibuf, &imsg)) == -1)
+		if ((n = imsg_get(&c->imsgbuf, &imsg)) == -1)
 			return control_close(c);
 
 		if (n == 0)
@@ -301,7 +301,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 		 * The imsg.hdr.pid is from the remote end and should not
 		 * be trusted.
 		 */
-		c->ibuf.pid = pid;
+		c->imsgbuf.pid = pid;
 		switch (type) {
 		case IMSG_NONE:
 			/* message was filtered out, nothing to do */
@@ -312,9 +312,11 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			break;
 		case IMSG_CTL_SHOW_TERSE:
 			RB_FOREACH(p, peer_head, peers)
-				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_NEIGHBOR,
-				    0, 0, -1, p, sizeof(struct peer));
-			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+				imsg_compose(&c->imsgbuf,
+				    IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
+				    p, sizeof(struct peer));
+			imsg_compose(&c->imsgbuf, IMSG_CTL_END, 0, 0, -1,
+			    NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			if (imsg_get_data(&imsg, &neighbor,
@@ -335,7 +337,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 					time_t			 d;
 					struct ctl_timer	 ct;
 
-					imsg_compose(&c->ibuf,
+					imsg_compose(&c->imsgbuf,
 					    IMSG_CTL_SHOW_NEIGHBOR,
 					    0, 0, -1, p, sizeof(*p));
 					for (i = 1; i < Timer_Max; i++) {
@@ -344,7 +346,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 							continue;
 						ct.type = i;
 						ct.val = d;
-						imsg_compose(&c->ibuf,
+						imsg_compose(&c->imsgbuf,
 						    IMSG_CTL_SHOW_TIMER,
 						    0, 0, -1, &ct, sizeof(ct));
 					}
@@ -355,8 +357,8 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			} else if (!neighbor.show_timers) {
 				imsg_ctl_rde_msg(IMSG_CTL_END, 0, pid);
 			} else {
-				imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1,
-				    NULL, 0);
+				imsg_compose(&c->imsgbuf, IMSG_CTL_END, 0, 0,
+				    -1, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_NEIGHBOR_UP:
@@ -566,25 +568,26 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 		p->stats.pending_update = stats.pending_update;
 		p->stats.pending_withdraw = stats.pending_withdraw;
 
-		return imsg_compose(&c->ibuf, type, 0, pid, -1, p, sizeof(*p));
+		return imsg_compose(&c->imsgbuf, type, 0, pid, -1,
+		    p, sizeof(*p));
 	}
 
 	/* if command finished no need to send exit message */
 	if (type == IMSG_CTL_END || type == IMSG_CTL_RESULT)
 		c->terminate = 0;
 
-	if (!c->throttled && c->ibuf.w.queued > CTL_MSG_HIGH_MARK) {
+	if (!c->throttled && c->imsgbuf.w.queued > CTL_MSG_HIGH_MARK) {
 		if (imsg_ctl_rde_msg(IMSG_XOFF, 0, pid) != -1)
 			c->throttled = 1;
 	}
 
-	return (imsg_forward(&c->ibuf, imsg));
+	return (imsg_forward(&c->imsgbuf, imsg));
 }
 
 void
 control_result(struct ctl_conn *c, u_int code)
 {
-	imsg_compose(&c->ibuf, IMSG_CTL_RESULT, 0, c->ibuf.pid, -1,
+	imsg_compose(&c->imsgbuf, IMSG_CTL_RESULT, 0, c->imsgbuf.pid, -1,
 	    &code, sizeof(code));
 }
 
