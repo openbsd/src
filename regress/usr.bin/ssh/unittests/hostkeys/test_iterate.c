@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_iterate.c,v 1.8 2021/12/14 21:25:27 deraadt Exp $ */
+/* 	$OpenBSD: test_iterate.c,v 1.9 2024/01/11 01:45:58 djm Exp $ */
 /*
  * Regress test for hostfile.h hostkeys_foreach()
  *
@@ -52,7 +52,7 @@ check(struct hostkey_foreach_line *l, void *_ctx)
 	int parse_key = (ctx->flags & HKF_WANT_PARSE_KEY) != 0;
 	const int matching = (ctx->flags & HKF_WANT_MATCH) != 0;
 	u_int expected_status, expected_match;
-	int expected_keytype;
+	int expected_keytype, skip = 0;
 
 	test_subtest_info("entry %zu/%zu, file line %ld",
 	    ctx->i + 1, ctx->nexpected, l->linenum);
@@ -85,6 +85,17 @@ check(struct hostkey_foreach_line *l, void *_ctx)
 	expected_keytype = (parse_key || expected->no_parse_keytype < 0) ?
 	    expected->l.keytype : expected->no_parse_keytype;
 
+#ifndef WITH_DSA
+	if (expected->l.keytype == KEY_DSA ||
+	    expected->no_parse_keytype == KEY_DSA)
+		skip = 1;
+#endif
+
+	if (skip) {
+		expected_status = HKF_STATUS_INVALID;
+		expected_keytype = KEY_UNSPEC;
+		parse_key = 0;
+	}
 	UPDATE_MATCH_STATUS(match_host_p);
 	UPDATE_MATCH_STATUS(match_host_s);
 	UPDATE_MATCH_STATUS(match_ipv4);
@@ -128,6 +139,10 @@ prepare_expected(struct expected *expected, size_t n)
 	for (i = 0; i < n; i++) {
 		if (expected[i].key_file == NULL)
 			continue;
+#ifndef WITH_DSA
+		if (expected[i].l.keytype == KEY_DSA)
+			continue;
+#endif
 		ASSERT_INT_EQ(sshkey_load_public(
 		    test_data_file(expected[i].key_file), &expected[i].l.key,
 		    NULL), 0);

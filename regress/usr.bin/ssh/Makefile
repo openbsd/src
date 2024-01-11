@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.131 2023/12/18 14:50:08 djm Exp $
+#	$OpenBSD: Makefile,v 1.132 2024/01/11 01:45:58 djm Exp $
 
 OPENSSL?=	yes
 
@@ -168,24 +168,32 @@ t5:
 		awk '{print $$2}' | diff - ${.CURDIR}/t5.ok
 
 t6:
-	ssh-keygen -if ${.CURDIR}/dsa_ssh2.prv > t6.out1
-	ssh-keygen -if ${.CURDIR}/dsa_ssh2.pub > t6.out2
-	chmod 600 t6.out1
-	ssh-keygen -yf t6.out1 | diff - t6.out2
+	set -xe ; if ssh -Q key | grep -q ^ssh-dss ; then \
+		ssh-keygen -if ${.CURDIR}/dsa_ssh2.prv > t6.out1 ; \
+		ssh-keygen -if ${.CURDIR}/dsa_ssh2.pub > t6.out2 ; \
+		chmod 600 t6.out1 ; \
+		ssh-keygen -yf t6.out1 | diff - t6.out2 ; \
+	fi
 
 t7.out:
-	ssh-keygen -q -t rsa -N '' -f $@
+	set -xe ; if ssh -Q key | grep -q ^ssh-dss ; then \
+		ssh-keygen -q -t rsa -N '' -f $@ ; \
+	fi
 
 t7: t7.out
 	ssh-keygen -lf t7.out > /dev/null
 	ssh-keygen -Bf t7.out > /dev/null
 
 t8.out:
-	ssh-keygen -q -t dsa -N '' -f $@
+	set -xe ; if ssh -Q key | grep -q ^ssh-dss ; then \
+		ssh-keygen -q -t dsa -N '' -f $@ ; \
+	fi
 
 t8: t8.out
-	ssh-keygen -lf t8.out > /dev/null
-	ssh-keygen -Bf t8.out > /dev/null
+	set -xe ; if ssh -Q key | grep -q ^ssh-dss ; then \
+		ssh-keygen -lf t8.out > /dev/null ; \
+		ssh-keygen -Bf t8.out > /dev/null ; \
+	fi
 
 t9.out:
 	ssh-keygen -q -t ecdsa -N '' -f $@
