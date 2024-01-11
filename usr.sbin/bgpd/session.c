@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.457 2024/01/10 11:08:04 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.458 2024/01/11 14:11:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -607,11 +607,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 
 			/* init write buffer */
 			msgbuf_init(&peer->wbuf);
-
-			peer->stats.last_sent_errcode = 0;
-			peer->stats.last_sent_suberr = 0;
-			peer->stats.last_rcvd_errcode = 0;
-			peer->stats.last_rcvd_suberr = 0;
 
 			if (!peer->depend_ok)
 				timer_stop(&peer->timers, Timer_ConnectRetry);
@@ -3552,6 +3547,13 @@ void
 session_up(struct peer *p)
 {
 	struct session_up	 sup;
+
+	/* clear last errors, now that the session is up */
+	p->stats.last_sent_errcode = 0;
+	p->stats.last_sent_suberr = 0;
+	p->stats.last_rcvd_errcode = 0;
+	p->stats.last_rcvd_suberr = 0;
+	memset(p->stats.last_reason, 0, sizeof(p->stats.last_reason));
 
 	if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
 	    &p->conf, sizeof(p->conf)) == -1)
