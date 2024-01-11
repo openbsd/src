@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.1 2023/12/28 17:36:29 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.2 2024/01/11 09:52:19 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -455,6 +455,7 @@ int	qwx_mhi_await_device_ready(struct qwx_softc *);
 void	qwx_mhi_ready_state_transition(struct qwx_pci_softc *);
 void	qwx_mhi_ee_amss_state_transition(struct qwx_pci_softc *);
 void	qwx_mhi_mission_mode_state_transition(struct qwx_pci_softc *);
+void	qwx_mhi_low_power_mode_state_transition(struct qwx_pci_softc *);
 void	qwx_mhi_set_state(struct qwx_softc *, uint32_t);
 void	qwx_mhi_init_mmio(struct qwx_pci_softc *);
 int	qwx_mhi_fw_load_bhi(struct qwx_pci_softc *, uint8_t *, size_t);
@@ -2921,6 +2922,14 @@ qwx_mhi_mission_mode_state_transition(struct qwx_pci_softc *psc)
 }
 
 void
+qwx_mhi_low_power_mode_state_transition(struct qwx_pci_softc *psc)
+{
+	struct qwx_softc *sc = &psc->sc_sc;
+
+	qwx_mhi_set_state(sc, MHI_STATE_M2);
+}
+
+void
 qwx_mhi_set_state(struct qwx_softc *sc, uint32_t state)
 {
 	uint32_t reg;
@@ -3396,6 +3405,12 @@ qwx_mhi_state_change(void *arg)
 				    sc->sc_dev.dv_xname);
 				psc->mhi_state = mhi_state;
 				qwx_mhi_mission_mode_state_transition(psc);
+				break;
+			case MHI_STATE_M1:
+				DNPRINTF(QWX_D_MHI, "%s: new MHI state M1\n",
+				    sc->sc_dev.dv_xname);
+				psc->mhi_state = mhi_state;
+				qwx_mhi_low_power_mode_state_transition(psc);
 				break;
 			case MHI_STATE_SYS_ERR:
 				DNPRINTF(QWX_D_MHI,
