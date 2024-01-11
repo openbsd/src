@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.121 2023/12/14 07:52:53 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.122 2024/01/11 11:55:14 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1016,6 +1016,7 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 {
 	ASN1_TIME	*notBefore, *notAfter;
 	EVP_PKEY	*pk, *opk;
+	time_t		 now = get_current_time();
 
 	if (p == NULL)
 		return NULL;
@@ -1044,11 +1045,11 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		warnx("%s: certificate has invalid notAfter", fn);
 		goto badcert;
 	}
-	if (X509_cmp_current_time(notBefore) != -1) {
+	if (X509_cmp_time(notBefore, &now) != -1) {
 		warnx("%s: certificate not yet valid", fn);
 		goto badcert;
 	}
-	if (X509_cmp_current_time(notAfter) != 1) {
+	if (X509_cmp_time(notAfter, &now) != 1) {
 		warnx("%s: certificate has expired", fn);
 		goto badcert;
 	}
