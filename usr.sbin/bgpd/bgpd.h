@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.480 2024/01/10 13:31:09 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.481 2024/01/11 13:08:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -562,6 +562,7 @@ struct rtr_config {
 
 struct ctl_show_rtr {
 	char			descr[PEER_DESCR_LEN];
+	char			state[PEER_DESCR_LEN];
 	struct bgpd_addr	remote_addr;
 	struct bgpd_addr	local_addr;
 	uint32_t		serial;

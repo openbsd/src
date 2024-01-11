@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.29 2024/01/11 11:43:07 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.30 2024/01/11 13:08:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1509,6 +1509,7 @@ rtr_show(struct rtr_session *rs, pid_t pid)
 	msg.session_id = rs->session_id;
 	msg.last_sent_error = rs->last_sent_error;
 	msg.last_recv_error = rs->last_recv_error;
+	strlcpy(msg.state, rtr_statenames[rs->state], sizeof(msg.state));
 	strlcpy(msg.last_sent_msg, rs->last_sent_msg,
 	    sizeof(msg.last_sent_msg));
 	strlcpy(msg.last_recv_msg, rs->last_recv_msg,
