@@ -2699,6 +2699,7 @@ in the instruction.  */
   BFD_RELOC_386_TLS_GOTDESC,
   BFD_RELOC_386_TLS_DESC_CALL,
   BFD_RELOC_386_TLS_DESC,
+  BFD_RELOC_386_GOT32X,
 
 /* x86-64/elf relocations  */
   BFD_RELOC_X86_64_GOT32,

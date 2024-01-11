@@ -1313,6 +1313,7 @@ tc_i386_fix_adjustable (fixP)
   if (fixP->fx_r_type == BFD_RELOC_386_GOTOFF
       || fixP->fx_r_type == BFD_RELOC_386_PLT32
       || fixP->fx_r_type == BFD_RELOC_386_GOT32
+      || fixP->fx_r_type == BFD_RELOC_386_GOT32X
       || fixP->fx_r_type == BFD_RELOC_386_TLS_GD
       || fixP->fx_r_type == BFD_RELOC_386_TLS_LDM
       || fixP->fx_r_type == BFD_RELOC_386_TLS_LDO_32
@@ -5142,6 +5143,7 @@ md_apply_fix (fixP, valP, seg)
 	return;
 
       case BFD_RELOC_386_GOT32:
+      case BFD_RELOC_386_GOT32X:
       case BFD_RELOC_X86_64_GOT32:
 	value = 0; /* Fully resolved at runtime.  No addend.  */
 	break;
@@ -5708,6 +5710,7 @@ tc_gen_reloc (section, fixp)
     case BFD_RELOC_X86_64_GOTPCREL:
     case BFD_RELOC_386_PLT32:
     case BFD_RELOC_386_GOT32:
+    case BFD_RELOC_386_GOT32X:
     case BFD_RELOC_386_GOTOFF:
     case BFD_RELOC_386_GOTPC:
     case BFD_RELOC_386_TLS_GD:
