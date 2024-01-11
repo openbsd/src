@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.141 2023/12/20 00:06:25 jsg Exp $ */
+/* $OpenBSD: sshkey.c,v 1.142 2024/01/11 01:45:36 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -108,8 +108,10 @@ extern const struct sshkey_impl sshkey_rsa_sha256_impl;
 extern const struct sshkey_impl sshkey_rsa_sha256_cert_impl;
 extern const struct sshkey_impl sshkey_rsa_sha512_impl;
 extern const struct sshkey_impl sshkey_rsa_sha512_cert_impl;
+# ifdef WITH_DSA
 extern const struct sshkey_impl sshkey_dss_impl;
 extern const struct sshkey_impl sshkey_dsa_cert_impl;
+# endif
 #endif /* WITH_OPENSSL */
 #ifdef WITH_XMSS
 extern const struct sshkey_impl sshkey_xmss_impl;
@@ -131,8 +133,10 @@ const struct sshkey_impl * const keyimpls[] = {
 	&sshkey_ecdsa_sk_impl,
 	&sshkey_ecdsa_sk_cert_impl,
 	&sshkey_ecdsa_sk_webauthn_impl,
+# ifdef WITH_DSA
 	&sshkey_dss_impl,
 	&sshkey_dsa_cert_impl,
+# endif
 	&sshkey_rsa_impl,
 	&sshkey_rsa_cert_impl,
 	&sshkey_rsa_sha256_impl,
@@ -3197,6 +3201,7 @@ sshkey_private_to_blob_pem_pkcs8(struct sshkey *key, struct sshbuf *buf,
 		goto out;
 
 	switch (key->type) {
+#ifdef WITH_DSA
 	case KEY_DSA:
 		if (format == SSHKEY_PRIVATE_PEM) {
 			success = PEM_write_bio_DSAPrivateKey(bio, key->dsa,
@@ -3205,6 +3210,7 @@ sshkey_private_to_blob_pem_pkcs8(struct sshkey *key, struct sshbuf *buf,
 			success = EVP_PKEY_set1_DSA(pkey, key->dsa);
 		}
 		break;
+#endif
 	case KEY_ECDSA:
 		if (format == SSHKEY_PRIVATE_PEM) {
 			success = PEM_write_bio_ECPrivateKey(bio, key->ecdsa,
@@ -3411,6 +3417,7 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 		}
 		if ((r = sshkey_check_rsa_length(prv, 0)) != 0)
 			goto out;
+#ifdef WITH_DSA
 	} else if (EVP_PKEY_base_id(pk) == EVP_PKEY_DSA &&
 	    (type == KEY_UNSPEC || type == KEY_DSA)) {
 		if ((prv = sshkey_new(KEY_UNSPEC)) == NULL) {
@@ -3421,6 +3428,7 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 		prv->type = KEY_DSA;
 #ifdef DEBUG_PK
 		DSA_print_fp(stderr, prv->dsa, 8);
+#endif
 #endif
 	} else if (EVP_PKEY_base_id(pk) == EVP_PKEY_EC &&
 	    (type == KEY_UNSPEC || type == KEY_ECDSA)) {

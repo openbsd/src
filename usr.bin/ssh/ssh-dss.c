@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-dss.c,v 1.49 2023/03/05 05:34:09 dtucker Exp $ */
+/* $OpenBSD: ssh-dss.c,v 1.50 2024/01/11 01:45:36 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -35,6 +35,8 @@
 #include "digest.h"
 #define SSHKEY_INTERNAL
 #include "sshkey.h"
+
+#ifdef WITH_DSA
 
 #define INTBLOB_LEN	20
 #define SIGBLOB_LEN	(2*INTBLOB_LEN)
@@ -445,3 +447,5 @@ const struct sshkey_impl sshkey_dsa_cert_impl = {
 	/* .keybits = */	0,
 	/* .funcs = */		&sshkey_dss_funcs,
 };
+
+#endif /* WITH_DSA */

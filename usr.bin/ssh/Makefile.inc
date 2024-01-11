@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.88 2023/01/15 23:05:32 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.89 2024/01/11 01:45:36 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,7 @@ WARNINGS=yes
 
 OPENSSL?=	yes
 ZLIB?=		yes
+DSAKEY?=	yes
 
 .if (${OPENSSL:L} == "yes")
 CFLAGS+=	-DWITH_OPENSSL
@@ -41,6 +42,10 @@ CFLAGS+=	-DWITH_OPENSSL
 
 .if (${ZLIB:L} == "yes")
 CFLAGS+=	-DWITH_ZLIB
+.endif
+
+.if (${DSAKEY:L} == "yes")
+CFLAGS+=	-DWITH_DSA
 .endif
 
 CFLAGS+=	-DENABLE_PKCS11
@@ -78,10 +83,12 @@ SRCS_KEY+=	cipher.c
 SRCS_KEY+=	chacha.c
 SRCS_KEY+=	poly1305.c
 .if (${OPENSSL:L} == "yes")
-SRCS_KEY+=	ssh-dss.c
 SRCS_KEY+=	ssh-ecdsa.c
 SRCS_KEY+=	ssh-ecdsa-sk.c
 SRCS_KEY+=	ssh-rsa.c
+.if (${DSAKEY:L} == "yes")
+SRCS_KEY+=	ssh-dss.c
+.endif
 SRCS_KEY+=	sshbuf-getput-crypto.c
 SRCS_KEY+=	digest-openssl.c
 SRCS_KEY+=	cipher-chachapoly-libcrypto.c
