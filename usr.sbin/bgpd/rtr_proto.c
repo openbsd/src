@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.28 2024/01/10 16:08:36 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.29 2024/01/11 11:43:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -207,6 +207,7 @@ struct rtr_session {
 	char				last_sent_msg[REASON_LEN];
 	char				last_recv_msg[REASON_LEN];
 	uint8_t				version;
+	uint8_t				prev_version;
 };
 
 TAILQ_HEAD(, rtr_session) rtrs = TAILQ_HEAD_INITIALIZER(rtrs);
@@ -434,10 +435,15 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 		switch (rh.type) {
 		case CACHE_RESPONSE:
 		case CACHE_RESET:
-		case ERROR_REPORT:
-			if (rh.version < rs->version)
+			/* implicit downgrade */
+			if (rh.version < rs->version) {
+				rs->prev_version = rs->version;
 				rs->version = rh.version;
+			}
 			rtr_fsm(rs, RTR_EVNT_NEGOTIATION_DONE);
+			break;
+		case ERROR_REPORT:
+			/* version handled in rtr_parse_error() */
 			break;
 		case SERIAL_NOTIFY:
 			/* ignore SERIAL_NOTIFY */
@@ -953,9 +959,14 @@ rtr_parse_error(struct rtr_session *rs, struct ibuf *pdu)
 	if (errcode == NO_DATA_AVAILABLE) {
 		rtr_fsm(rs, RTR_EVNT_NO_DATA);
 		rv = 0;
-	} else if (errcode == UNSUPP_PROTOCOL_VERS)
+	} else if (errcode == UNSUPP_PROTOCOL_VERS) {
+		if (rh.version < rs->version) {
+			rs->prev_version = rs->version;
+			rs->version = rh.version;
+		}
 		rtr_fsm(rs, RTR_EVNT_UNSUPP_PROTO_VERSION);
-	else
+		rv = 0;
+	} else
 		rtr_fsm(rs, RTR_EVNT_RESET_AND_CLOSE);
 
 	rs->last_recv_error = errcode;
@@ -1062,45 +1073,28 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 
 	switch (event) {
 	case RTR_EVNT_UNSUPP_PROTO_VERSION:
-		if (rs->state == RTR_STATE_NEGOTIATION) {
-			if (rs->version > 0)
-				rs->version--;
-			else {
-				/*
-				 * can't downgrade anymore, fail connection
-				 * RFC requires to send the error with our
-				 * highest version number.
-				 */
-				rs->version = RTR_MAX_VERSION;
-				rtr_send_error(rs, NULL, UNSUPP_PROTOCOL_VERS,
-				    "negotiation failed");
-				return;
-			}
-
-			if (rs->fd != -1) {
-				/* flush buffers */
-				msgbuf_clear(&rs->w);
-				rs->r.wpos = 0;
-				close(rs->fd);
-				rs->fd = -1;
-			}
-
-			/* retry connection with lower version */
-			timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
-			rtr_imsg_compose(IMSG_SOCKET_CONN, rs->id, 0, NULL, 0);
-			break;
+		if (rs->prev_version == rs->version) {
+			/*
+			 * Can't downgrade anymore, fail connection.
+			 * RFC requires sending the error with the
+			 * highest supported version number.
+			 */
+			rs->version = RTR_MAX_VERSION;
+			rtr_send_error(rs, NULL, UNSUPP_PROTOCOL_VERS,
+			    "negotiation failed");
+			return;
 		}
-		/* FALLTHROUGH */
+		/* try again with new version */
+		if (rs->session_id == -1)
+			rtr_send_reset_query(rs);
+		else
+			rtr_send_serial_query(rs);
+		break;
 	case RTR_EVNT_RESET_AND_CLOSE:
 		rtr_reset_cache(rs);
 		rtr_recalc();
 		/* FALLTHROUGH */
 	case RTR_EVNT_CON_CLOSE:
-		if (rs->state == RTR_STATE_NEGOTIATION) {
-			/* consider any close event as a version failure. */
-			rtr_fsm(rs, RTR_EVNT_UNSUPP_PROTO_VERSION);
-			break;
-		}
 		if (rs->fd != -1) {
 			/* flush buffers */
 			msgbuf_clear(&rs->w);
@@ -1108,27 +1102,37 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 			close(rs->fd);
 			rs->fd = -1;
 		}
-		rs->state = RTR_STATE_CLOSED;
 		/* try to reopen session */
 		timer_set(&rs->timers, Timer_Rtr_Retry,
 		    arc4random_uniform(10));
+		/*
+		 * A close event during version negotiation needs to remain
+		 * in the negotiation state else the same error will happen
+		 * over and over again. The RFC is utterly underspecified
+		 * and some RTR caches close the connection after sending
+		 * the error PDU.
+		 */
+		if (rs->state != RTR_STATE_NEGOTIATION)
+			rs->state = RTR_STATE_CLOSED;
 		break;
 	case RTR_EVNT_START:
 	case RTR_EVNT_TIMER_RETRY:
 		switch (rs->state) {
 		case RTR_STATE_ERROR:
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
-			return;
+			break;
 		case RTR_STATE_CLOSED:
+		case RTR_STATE_NEGOTIATION:
 			timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
 			rtr_imsg_compose(IMSG_SOCKET_CONN, rs->id, 0, NULL, 0);
-			return;
+			break;
 		default:
 			break;
 		}
-		/* FALLTHROUGH */
+		break;
 	case RTR_EVNT_CON_OPEN:
 		timer_stop(&rs->timers, Timer_Rtr_Retry);
+		rs->state = RTR_STATE_NEGOTIATION;
 		if (rs->session_id == -1)
 			rtr_send_reset_query(rs);
 		else
@@ -1140,7 +1144,6 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		    arc4random_uniform(10));
 		break;
 	case RTR_EVNT_TIMER_REFRESH:
-		/* send serial query */
 		rtr_send_serial_query(rs);
 		break;
 	case RTR_EVNT_TIMER_EXPIRE:
@@ -1279,8 +1282,6 @@ rtr_check_events(struct pollfd *pfds, size_t npfds)
 	now = getmonotime();
 	TAILQ_FOREACH(rs, &rtrs, entry)
 		if ((t = timer_nextisdue(&rs->timers, now)) != NULL) {
-			log_debug("rtr %s: %s triggered", log_rtr(rs),
-			    timernames[t->type]);
 			/* stop timer so it does not trigger again */
 			timer_stop(&rs->timers, t->type);
 			switch (t->type) {
@@ -1366,6 +1367,7 @@ rtr_new(uint32_t id, char *descr)
 	rs->id = id;
 	rs->session_id = -1;
 	rs->version = RTR_MAX_VERSION;
+	rs->prev_version = RTR_MAX_VERSION;
 	rs->refresh = RTR_DEFAULT_REFRESH;
 	rs->retry = RTR_DEFAULT_RETRY;
 	rs->expire = RTR_DEFAULT_EXPIRE;
@@ -1417,11 +1419,12 @@ rtr_open(struct rtr_session *rs, int fd)
 		rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	}
 
-	if (rs->state == RTR_STATE_CLOSED)
+	if (rs->state == RTR_STATE_CLOSED) {
 		rs->version = RTR_MAX_VERSION;
+		rs->prev_version = RTR_MAX_VERSION;
+	}
 
 	rs->fd = rs->w.fd = fd;
-	rs->state = RTR_STATE_NEGOTIATION;
 	rtr_fsm(rs, RTR_EVNT_CON_OPEN);
 }
 
