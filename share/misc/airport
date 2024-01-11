@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.92 2023/08/07 08:22:52 mbuhl Exp $
+#	$OpenBSD: airport,v 1.93 2024/01/11 07:59:43 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1116,7 +1116,6 @@ MKL:Mc Kellar Field, Jackson, Tennessee, USA
 MKM:Mukah, Sarawak, Malaysia
 MKW:Rendani, Manokwari, Indonesia
 MKY:Mackay, Queensland, Australia
-MLN:Melilla, Spain
 MLA:Luqa, Malta, Malta
 MLB:Melbourne, Florida, USA
 MLE:Male International, Maldives
@@ -1124,6 +1123,7 @@ MLG:Malang, Indonesia
 MLH:Mulhouse/Basel Euroairport, France
 MLI:Moline Quad City, Alabama, USA
 MLM:Morelia Municipal, Michoacan, Mexico
+MLN:Melilla, Spain
 MLO:Milos, Greece
 MLS:Miles City, Montana, USA
 MLU:Monroe, Louisiana, USA
@@ -1859,6 +1859,7 @@ XDM:Drummondville, Quebec, Canada
 XFD:Stratford, Ontario, Canada
 XFW:Hamburg-Finkenwerder, Hamburg, Germany
 XIY:Xianyang, Xi An, China
+XKH:Xieng Khouang, Phonsavan, Laos
 XLV:Niagara Falls, Ontario, Canada
 XLZ:Truro, Nova Scotia, Canada
 XMN:Xiamen International, China
