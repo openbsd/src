@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.112 2022/11/23 14:48:28 kn Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.113 2024/01/11 14:15:12 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -332,7 +332,7 @@ const struct protosw inet6sw[] = {
 
 const struct domain inet6domain = {
   .dom_family = AF_INET6,
-  .dom_name = "internet6",
+  .dom_name = "inet6",
   .dom_protosw = inet6sw,
   .dom_protoswNPROTOSW = &inet6sw[nitems(inet6sw)],
   .dom_sasize = sizeof(struct sockaddr_in6),

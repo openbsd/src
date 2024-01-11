@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.312 2023/12/19 21:34:22 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.313 2024/01/11 14:15:11 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ soinit(void)
 }
 
 struct socket *
-soalloc(int wait)
+soalloc(const struct domain *dp, int wait)
 {
 	struct socket *so;
 
@@ -156,7 +156,7 @@ soalloc(int wait)
 	    PR_ZERO);
 	if (so == NULL)
 		return (NULL);
-	rw_init_flags(&so->so_lock, "solock", RWL_DUPOK);
+	rw_init_flags(&so->so_lock, dp->dom_name, RWL_DUPOK);
 	refcnt_init(&so->so_refcnt);
 	klist_init(&so->so_rcv.sb_klist, &socket_klistops, so);
 	klist_init(&so->so_snd.sb_klist, &socket_klistops, so);
@@ -190,7 +190,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	so = soalloc(M_WAIT);
+	so = soalloc(pffinddomain(dom), M_WAIT);
 	so->so_type = type;
 	if (suser(p) == 0)
 		so->so_state = SS_PRIV;

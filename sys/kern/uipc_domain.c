@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.64 2023/05/18 10:23:19 mvs Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.65 2024/01/11 14:15:11 bluhm Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -62,7 +62,6 @@ const struct domain *const domains[] = {
 
 void		pffasttimo(void *);
 void		pfslowtimo(void *);
-const struct domain *	pffinddomain(int);
 
 void
 domaininit(void)

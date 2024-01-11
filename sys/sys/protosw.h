@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.63 2023/12/18 13:11:20 bluhm Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.64 2024/01/11 14:15:12 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -259,6 +259,7 @@ struct ifnet;
 struct sockaddr;
 const struct protosw *pffindproto(int, int, int);
 const struct protosw *pffindtype(int, int);
+const struct domain *pffinddomain(int);
 void pfctlinput(int, struct sockaddr *);
 
 extern u_char ip_protox[];
