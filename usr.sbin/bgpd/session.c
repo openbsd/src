@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.458 2024/01/11 14:11:03 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.459 2024/01/12 11:19:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2953,9 +2953,11 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 	struct mrt		*mrt;
 	struct imsgbuf		*i;
 	struct peer		*p;
-	struct listen_addr	*la, *nla;
-	struct session_dependon	*sdon;
+	struct listen_addr	*la, *next, nla;
+	struct session_dependon	 sdon;
+	struct bgpd_config	 tconf;
 	u_char			*data;
+	uint32_t		 peerid;
 	int			 n, fd, depend_ok, restricted;
 	uint16_t		 t;
 	uint8_t			 aid, errcode, subcode;
@@ -2967,7 +2969,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		peerid = imsg_get_id(&imsg);
+		switch (imsg_get_type(&imsg)) {
 		case IMSG_SOCKET_CONN:
 		case IMSG_SOCKET_CONN_CTL:
 			if (idx != PFD_PIPE_MAIN)
@@ -2980,7 +2983,7 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			if ((i = malloc(sizeof(struct imsgbuf))) == NULL)
 				fatal(NULL);
 			imsg_init(i, fd);
-			if (imsg.hdr.type == IMSG_SOCKET_CONN) {
+			if (imsg_get_type(&imsg) == IMSG_SOCKET_CONN) {
 				if (ibuf_rde) {
 					log_warnx("Unexpected imsg connection "
 					    "to RDE received");
@@ -3001,9 +3004,11 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
-			nconf = new_config();
+			if (imsg_get_data(&imsg, &tconf, sizeof(tconf)) == -1)
+				fatal("imsg_get_data");
 
-			copy_config(nconf, imsg.data);
+			nconf = new_config();
+			copy_config(nconf, &tconf);
 			pending_reconf = 1;
 			break;
 		case IMSG_RECONF_PEER:
@@ -3011,7 +3016,9 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				fatalx("reconf request not from parent");
 			if ((p = calloc(1, sizeof(struct peer))) == NULL)
 				fatal("new_peer");
-			memcpy(&p->conf, imsg.data, sizeof(struct peer_config));
+			if (imsg_get_data(&imsg, &p->conf, sizeof(p->conf)) ==
+			    -1)
+				fatal("imsg_get_data");
 			p->state = p->prev_state = STATE_NONE;
 			p->reconf_action = RECONF_REINIT;
 			if (RB_INSERT(peer_head, &nconf->peers, p) != NULL)
@@ -3022,33 +3029,34 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				fatalx("reconf request not from parent");
 			if (nconf == NULL)
 				fatalx("IMSG_RECONF_LISTENER but no config");
-			nla = imsg.data;
+			if (imsg_get_data(&imsg, &nla, sizeof(nla)) == -1)
+				fatal("imsg_get_data");
 			TAILQ_FOREACH(la, conf->listen_addrs, entry)
-				if (!la_cmp(la, nla))
+				if (!la_cmp(la, &nla))
 					break;
 
 			if (la == NULL) {
-				if (nla->reconf != RECONF_REINIT)
+				if (nla.reconf != RECONF_REINIT)
 					fatalx("king bula sez: "
 					    "expected REINIT");
 
-				if ((nla->fd = imsg_get_fd(&imsg)) == -1)
+				if ((nla.fd = imsg_get_fd(&imsg)) == -1)
 					log_warnx("expected to receive fd for "
 					    "%s but didn't receive any",
 					    log_sockaddr((struct sockaddr *)
-					    &nla->sa, nla->sa_len));
+					    &nla.sa, nla.sa_len));
 
 				la = calloc(1, sizeof(struct listen_addr));
 				if (la == NULL)
 					fatal(NULL);
-				memcpy(&la->sa, &nla->sa, sizeof(la->sa));
-				la->flags = nla->flags;
-				la->fd = nla->fd;
+				memcpy(&la->sa, &nla.sa, sizeof(la->sa));
+				la->flags = nla.flags;
+				la->fd = nla.fd;
 				la->reconf = RECONF_REINIT;
 				TAILQ_INSERT_TAIL(nconf->listen_addrs, la,
 				    entry);
 			} else {
-				if (nla->reconf != RECONF_KEEP)
+				if (nla.reconf != RECONF_KEEP)
 					fatalx("king bula sez: expected KEEP");
 				la->reconf = RECONF_KEEP;
 			}
@@ -3057,10 +3065,10 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_RECONF_CTRL:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(restricted))
-				fatalx("RECONF_CTRL imsg with wrong len");
-			memcpy(&restricted, imsg.data, sizeof(restricted));
+
+			if (imsg_get_data(&imsg, &restricted,
+			    sizeof(restricted)) == -1)
+				fatal("imsg_get_data");
 			if ((fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("expected to receive fd for control "
 				    "socket but didn't receive any");
@@ -3103,9 +3111,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			merge_peers(conf, nconf);
 
 			/* delete old listeners */
-			for (la = TAILQ_FIRST(conf->listen_addrs); la != NULL;
-			    la = nla) {
-				nla = TAILQ_NEXT(la, entry);
+			TAILQ_FOREACH_SAFE(la, conf->listen_addrs, entry,
+			    next) {
 				if (la->reconf == RECONF_NONE) {
 					log_info("not listening on %s any more",
 					    log_sockaddr((struct sockaddr *)
@@ -3134,14 +3141,12 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_SESSION_DEPENDON:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("IFINFO message not from parent");
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct session_dependon))
+			if (imsg_get_data(&imsg, &sdon, sizeof(sdon)) == -1)
 				fatalx("DEPENDON imsg with wrong len");
-			sdon = imsg.data;
-			depend_ok = sdon->depend_state;
+			depend_ok = sdon.depend_state;
 
 			RB_FOREACH(p, peer_head, &conf->peers)
-				if (!strcmp(p->conf.if_depend, sdon->ifname)) {
+				if (!strcmp(p->conf.if_depend, sdon.ifname)) {
 					if (depend_ok && !p->depend_ok) {
 						p->depend_ok = depend_ok;
 						bgp_fsm(p, EVNT_START);
@@ -3154,16 +3159,18 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:
-			if (imsg.hdr.len > IMSG_HEADER_SIZE +
-			    sizeof(struct mrt)) {
-				log_warnx("wrong imsg len");
+			if (idx != PFD_PIPE_MAIN)
+				fatalx("mrt request not from parent");
+			if (imsg_get_data(&imsg, &xmrt, sizeof(xmrt)) == -1) {
+				log_warnx("mrt open, wrong imsg len");
 				break;
 			}
 
-			memcpy(&xmrt, imsg.data, sizeof(struct mrt));
-			if ((xmrt.wbuf.fd = imsg_get_fd(&imsg)) == -1)
+			if ((xmrt.wbuf.fd = imsg_get_fd(&imsg)) == -1) {
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
+				break;
+			}
 
 			mrt = mrt_get(&mrthead, &xmrt);
 			if (mrt == NULL) {
@@ -3181,13 +3188,13 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			}
 			break;
 		case IMSG_MRT_CLOSE:
-			if (imsg.hdr.len > IMSG_HEADER_SIZE +
-			    sizeof(struct mrt)) {
-				log_warnx("wrong imsg len");
+			if (idx != PFD_PIPE_MAIN)
+				fatalx("mrt request not from parent");
+			if (imsg_get_data(&imsg, &xmrt, sizeof(xmrt)) == -1) {
+				log_warnx("mrt close, wrong imsg len");
 				break;
 			}
 
-			memcpy(&xmrt, imsg.data, sizeof(struct mrt));
 			mrt = mrt_get(&mrthead, &xmrt);
 			if (mrt != NULL)
 				mrt_done(mrt);
@@ -3206,7 +3213,7 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			if (idx != PFD_PIPE_ROUTE_CTL)
 				fatalx("ctl rib request not from RDE");
-			p = getpeerbyid(conf, imsg.hdr.peerid);
+			p = getpeerbyid(conf, peerid);
 			control_imsg_relay(&imsg, p);
 			break;
 		case IMSG_CTL_SHOW_RIB:
@@ -3285,33 +3292,29 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_REFRESH:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("route refresh request not from RDE");
-			if (imsg.hdr.len < IMSG_HEADER_SIZE + sizeof(rr)) {
+			if (imsg_get_data(&imsg, &rr, sizeof(rr)) == -1) {
 				log_warnx("RDE sent invalid refresh msg");
 				break;
 			}
-			if ((p = getpeerbyid(conf, imsg.hdr.peerid)) == NULL) {
-				log_warnx("no such peer: id=%u",
-				    imsg.hdr.peerid);
+			if ((p = getpeerbyid(conf, peerid)) == NULL) {
+				log_warnx("no such peer: id=%u", peerid);
 				break;
 			}
-			memcpy(&rr, imsg.data, sizeof(rr));
 			if (rr.aid >= AID_MAX)
 				fatalx("IMSG_REFRESH: bad AID");
 			session_rrefresh(p, rr.aid, rr.subtype);
 			break;
 		case IMSG_SESSION_RESTARTED:
 			if (idx != PFD_PIPE_ROUTE)
-				fatalx("update request not from RDE");
-			if (imsg.hdr.len < IMSG_HEADER_SIZE + sizeof(aid)) {
+				fatalx("session restart not from RDE");
+			if (imsg_get_data(&imsg, &aid, sizeof(aid)) == -1) {
 				log_warnx("RDE sent invalid restart msg");
 				break;
 			}
-			if ((p = getpeerbyid(conf, imsg.hdr.peerid)) == NULL) {
-				log_warnx("no such peer: id=%u",
-				    imsg.hdr.peerid);
+			if ((p = getpeerbyid(conf, peerid)) == NULL) {
+				log_warnx("no such peer: id=%u", peerid);
 				break;
 			}
-			memcpy(&aid, imsg.data, sizeof(aid));
 			if (aid >= AID_MAX)
 				fatalx("IMSG_SESSION_RESTARTED: bad AID");
 			if (p->capa.neg.grestart.flags[aid] &
@@ -3325,17 +3328,16 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 
 				/* signal back to RDE to cleanup stale routes */
 				if (imsg_rde(IMSG_SESSION_RESTARTED,
-				    imsg.hdr.peerid, &aid, sizeof(aid)) == -1)
+				    peerid, &aid, sizeof(aid)) == -1)
 					fatal("imsg_compose: "
 					    "IMSG_SESSION_RESTARTED");
 			}
 			break;
 		case IMSG_SESSION_DOWN:
 			if (idx != PFD_PIPE_ROUTE)
-				fatalx("update request not from RDE");
-			if ((p = getpeerbyid(conf, imsg.hdr.peerid)) == NULL) {
-				log_warnx("no such peer: id=%u",
-				    imsg.hdr.peerid);
+				fatalx("session down not from RDE");
+			if ((p = getpeerbyid(conf, peerid)) == NULL) {
+				log_warnx("no such peer: id=%u", peerid);
 				break;
 			}
 			session_stop(p, ERR_CEASE_ADMIN_DOWN);
