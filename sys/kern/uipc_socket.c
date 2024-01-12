@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.313 2024/01/11 14:15:11 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.314 2024/01/12 10:48:03 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -582,7 +582,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 
 #define	snderr(errno)	{ error = errno; goto release; }
 
-	solock(so);
+	solock_shared(so);
 restart:
 	if ((error = sblock(so, &so->so_snd, SBLOCKWAIT(flags))) != 0)
 		goto out;
@@ -635,9 +635,9 @@ restart:
 				if (flags & MSG_EOR)
 					top->m_flags |= M_EOR;
 			} else {
-				sounlock(so);
+				sounlock_shared(so);
 				error = m_getuio(&top, atomic, space, uio);
-				solock(so);
+				solock_shared(so);
 				if (error)
 					goto release;
 				space -= top->m_pkthdr.len;
@@ -665,7 +665,7 @@ release:
 	so->so_snd.sb_state &= ~SS_ISSENDING;
 	sbunlock(so, &so->so_snd);
 out:
-	sounlock(so);
+	sounlock_shared(so);
 	m_freem(top);
 	m_freem(control);
 	return (error);
