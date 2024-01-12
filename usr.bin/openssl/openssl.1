@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.153 2023/12/29 12:06:48 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.154 2024/01/12 11:24:03 job Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: December 29 2023 $
+.Dd $Mdocdate: January 12 2024 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6100,6 +6100,7 @@ version.
 .Op Fl extensions Ar section
 .Op Fl extfile Ar file
 .Op Fl fingerprint
+.Op Fl force_pubkey Ar key
 .Op Fl hash
 .Op Fl in Ar file
 .Op Fl inform Cm der | net | pem
@@ -6109,6 +6110,7 @@ version.
 .Op Fl keyform Cm der | pem
 .Op Fl md5 | sha1
 .Op Fl modulus
+.Op Fl multivalue-rdn
 .Op Fl nameopt Ar option
 .Op Fl next_serial
 .Op Fl noout
@@ -6121,7 +6123,9 @@ version.
 .Op Fl purpose
 .Op Fl req
 .Op Fl serial
+.Op Fl set_issuer Ar name
 .Op Fl set_serial Ar n
+.Op Fl set_subject Ar name
 .Op Fl setalias Ar arg
 .Op Fl signkey Ar file
 .Op Fl sigopt Ar nm:v
@@ -6131,6 +6135,7 @@ version.
 .Op Fl subject_hash_old
 .Op Fl text
 .Op Fl trustout
+.Op Fl utf8
 .Op Fl x509toreq
 .Ek
 .El
@@ -6254,6 +6259,16 @@ using the older algorithm as used by
 versions before 1.0.0.
 .It Fl modulus
 Print the value of the modulus of the public key contained in the certificate.
+.It Fl multivalue-rdn
+This option causes the
+.Fl subj
+argument to be interpreted with full support for multivalued RDNs,
+for example
+.Qq "/DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe" .
+If
+.Fl multivalue-rdn
+is not used, the UID value is set to
+.Qq "123456+CN=John Doe" .
 .It Fl nameopt Ar option
 Customise how the subject or issuer names are displayed,
 either using a list of comma-separated options or by specifying
@@ -6686,12 +6701,25 @@ which contains the section to use.
 .It Fl extfile Ar file
 File containing certificate extensions to use.
 If not specified, no extensions are added to the certificate.
+.It Fl force_pubkey Ar key
+Set the public key of the certificate to the public key contained in
+.Ar key .
 .It Fl keyform Cm der | pem
-The format of the private key file used in the
+The format of the key file used in the
+.Fl force_pubkey
+and
 .Fl signkey
-option.
+options.
 .It Fl req
 Expect a certificate request on input instead of a certificate.
+.It Fl set_issuer Ar name
+The issuer name to use.
+.Ar name
+must be formatted as /type0=value0/type1=value1/type2=...;
+characters may be escaped by
+.Sq \e
+(backslash);
+no spaces are skipped.
 .It Fl set_serial Ar n
 The serial number to use.
 This option can be used with either the
@@ -6710,6 +6738,14 @@ options) is not used.
 The serial number can be decimal or hex (if preceded by
 .Sq 0x ) .
 Negative serial numbers can also be specified but their use is not recommended.
+.It Fl set_subject Ar name
+The subject name to use.
+.Ar name
+must be formatted as /type0=value0/type1=value1/type2=...;
+characters may be escaped by
+.Sq \e
+(backslash);
+no spaces are skipped.
 .It Fl signkey Ar file
 Self-sign
 .Ar file
@@ -6730,6 +6766,10 @@ option is supplied.
 If the input is a certificate request, a self-signed certificate
 is created using the supplied private key using the subject name in
 the request.
+.It Fl utf8
+Interpret field values read from a terminal or obtained from a configuration
+file as UTF-8 strings.
+By default, they are interpreted as ASCII.
 .It Fl x509toreq
 Convert a certificate into a certificate request.
 The

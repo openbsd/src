@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.58 2023/07/24 05:54:12 tb Exp $
+# $OpenBSD: appstest.sh,v 1.59 2024/01/12 11:24:02 job Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -834,12 +834,37 @@ __EOF__
 
 	start_message "x509 ... issue cert for server csr#2"
 
+	$openssl_bin genrsa -out $server_dir/testkey.pem 2>&1
+	check_exit_status $?
+	$openssl_bin rsa -in $server_dir/testkey.pem -pubout \
+		-out $server_dir/testpubkey.pem 2>&1
+	check_exit_status $?
+
 	revoke_cert=$server_dir/revoke_cert.pem
 	$openssl_bin x509 -req -in $revoke_csr -CA $ca_cert -CAform pem \
 		-CAkey $ca_key -CAkeyform pem \
 		-CAserial $ca_dir/serial -set_serial 10 \
 		-passin pass:$ca_pass -CAcreateserial -out $revoke_cert \
+		-set_issuer /CN=issuer -set_subject /CN=subject \
+		-force_pubkey $server_dir/testpubkey.pem
 		> $revoke_cert.log 2>&1
+	check_exit_status $?
+	
+	start_message "x509 ... check if csr#2 cert has proper issuer & subject"
+	if [ "$($openssl_bin x509 -in $revoke_cert -issuer -noout)" != \
+		"issuer= /CN=issuer" ]; then
+		exit 1
+	fi
+	if [ "$($openssl_bin x509 -in $revoke_cert -subject -noout)" != \
+		"subject= /CN=subject" ]; then
+		exit 1
+	fi
+	check_exit_status 0
+
+	start_message "x509 ... check if csr#2 cert pubkey was forced"
+	$openssl_bin x509 -in $revoke_cert -pubkey -noout > $revoke_cert.pub
+	check_exit_status $?
+	diff $server_dir/testpubkey.pem $revoke_cert.pub
 	check_exit_status $?
 
 	start_message "ca ... issue cert for server csr#3"
