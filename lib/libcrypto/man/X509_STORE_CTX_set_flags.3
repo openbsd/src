@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_set_flags.3,v 1.6 2021/11/17 16:08:32 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_set_flags.3,v 1.7 2024/01/12 19:28:02 tb Exp $
 .\" full merge up to: OpenSSL aae41f8c Jun 25 09:47:15 2015 +0100
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 17 2021 $
+.Dd $Mdocdate: January 12 2024 $
 .Dt X509_STORE_CTX_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -76,7 +76,8 @@
 .Nm X509_STORE_CTX_set_depth ,
 .Nm X509_STORE_CTX_set_trust ,
 .Nm X509_STORE_CTX_set_purpose ,
-.Nm X509_STORE_CTX_purpose_inherit ,
+.\" .Nm X509_STORE_CTX_purpose_inherit is intentionally undocumented
+.\" because it will be removed in the next major bump.
 .Nm X509_STORE_CTX_get0_param ,
 .Nm X509_STORE_CTX_set0_param ,
 .Nm X509_STORE_CTX_set_default
@@ -108,13 +109,6 @@
 .Fo X509_STORE_CTX_set_purpose
 .Fa "X509_STORE_CTX *ctx"
 .Fa "int purpose"
-.Fc
-.Ft int
-.Fo X509_STORE_CTX_purpose_inherit
-.Fa "X509_STORE_CTX *ctx"
-.Fa "int def_purpose"
-.Fa "int purpose"
-.Fa "int trust"
 .Fc
 .Ft X509_VERIFY_PARAM *
 .Fo X509_STORE_CTX_get0_param
@@ -178,9 +172,6 @@ argument is 0 or invalid
 or the trust identifier is already set to a non-zero value in the
 .Vt X509_VERIFY_PARAM
 object, no action occurs.
-Here and in the following,
-.Dv X509_TRUST_DEFAULT
-counts as invalid.
 .Pp
 .Fn X509_STORE_CTX_set_purpose
 sets the
@@ -200,7 +191,7 @@ is called the
 .Pp
 The function fails if the
 .Fa purpose
-argument or the associated trust is not 0 but invalid; otherwise,
+argument or the associated trust is invalid but not 0; otherwise,
 .Fn X509_STORE_CTX_set_purpose
 also does the equivalent of calling
 .Fn X509_STORE_CTX_set_trust
@@ -211,62 +202,6 @@ If the purpose identifier is already set to a non-zero value in the
 object, it is not changed, even if the
 .Fa purpose
 argument is valid, too.
-.Pp
-.Fn X509_STORE_CTX_purpose_inherit
-is similar to
-.Fn X509_STORE_CTX_set_purpose ,
-with the following modifications:
-.Bl -bullet
-.It
-If the
-.Fa purpose
-argument is 0,
-.Fa def_purpose
-is used instead.
-.It
-If the associated trust is
-.Dv X509_TRUST_DEFAULT ,
-the trust associated with
-.Fa def_purpose
-is used instead, or if
-.Fa def_purpose
-is 0 or invalid, the function fails.
-.It
-If the
-.Fa trust
-argument is not 0, it is used instead of the associated trust,
-and the equivalent of calling
-.Fn X509_STORE_CTX_set_trust
-is done even if both
-.Fa purpose
-and
-.Fa def_purpose
-are 0.
-Even if the
-.Fa trust
-argument is not 0, if the (then unused) associated trust is
-.Dv X509_TRUST_DEFAULT ,
-.Fa def_purpose
-is still required to be valid.
-.El
-.Pp
-Note that, even if all arguments are valid and the return value is 1,
-it is possible that nothing changed, or that only either one of the
-purpose and trust identifiers were set, or that both were set.
-It can also happen that the purpose identifier gets set according to the
-.Fa purpose
-argument, but the trust identifier gets set according to the
-.Fa def_purpose
-argument in the same call.
-.Pp
-The intended way of using this function is to pass the purpose and
-trust attributes of another structure of an arbitrary type as the
-.Fa purpose
-and
-.Fa trust
-arguments, and to provide
-.Fa def_purpose
-as a fallback in case the settings in the other structure are incomplete.
 .Pp
 .Fn X509_STORE_CTX_get0_param
 retrieves an internal pointer to the verification parameters associated
@@ -293,7 +228,7 @@ and copies them using
 .Fn X509_STORE_CTX_set_trust
 returns 1 if the
 .Fa trust
-argument is 0 or valid or 0 if it is not 0 but invalid.
+argument is 0 or valid or 0 if it is invalid but not 0.
 A return value of 1 does
 .Em not
 imply that the trust identifier stored in the
@@ -306,44 +241,8 @@ returns 1 if both the
 argument and the associated trust are 0 or valid.
 It returns 0 if either the
 .Fa purpose
-argument or the associated trust is not 0 but invalid.
+argument or the associated trust is invalid but not 0.
 A return value of 1 does not imply that any data was changed.
-.Pp
-.Fn X509_STORE_CTX_purpose_inherit
-returns 0 if:
-.Bl -bullet
-.It
-The
-.Fa purpose
-argument is not 0 and invalid.
-.It
-The
-.Fa purpose
-argument is 0 and the
-.Fa def_purpose
-argument is not 0 and invalid.
-.It
-The associated trust is
-.Dv X509_TRUST_DEFAULT
-and the
-.Fa def_purpose
-argument is 0 or invalid,
-or the trust identifier associated with it is not 0 but invalid.
-.It
-The
-.Fa trust
-argument is not 0 and invalid.
-.It
-The
-.Fa trust
-argument is 0 and the associated trust is neither 0 nor
-.Dv X509_TRUST_DEFAULT
-but invalid.
-.El
-.Pp
-Otherwise,
-.Fn X509_STORE_CTX_purpose_inherit
-returns 1, which does not imply that any data was changed.
 .Pp
 .Fn X509_STORE_CTX_get0_param
 returns a pointer to an
@@ -355,37 +254,26 @@ if an error occurred.
 .Fn X509_STORE_CTX_set_default
 returns 1 for success or 0 if an error occurred.
 .Sh ERRORS
-For
-.Fn X509_STORE_CTX_set_trust ,
-.Fn X509_STORE_CTX_set_purpose ,
-and
-.Fn X509_STORE_CTX_purpose_inherit ,
-the following diagnostics can be retrieved with
+The following diagnostics can be retrieved with
 .Xr ERR_get_error 3 ,
 .Xr ERR_GET_REASON 3 ,
 and
 .Xr ERR_reason_error_string 3 :
 .Bl -tag -width Ds
 .It Dv X509_R_UNKNOWN_TRUST_ID Qq "unknown trust id"
-The
+.Fn X509_STORE_CTX_set_trust
+was called with a
 .Fa trust
-argument or the trust identifier associated with
+argument that is invalid but not 0.
+Other implementations may also return this when
+.Fn X509_STORE_CTX_set_purpose
+is called with a
 .Fa purpose
-or
-.Fa def_purpose
-is not 0 but invalid,
+argument with invalid associated trust.
 .It Dv X509_R_UNKNOWN_PURPOSE_ID Qq "unknown purpose id"
 The
 .Fa purpose
-argument is not 0 and invalid.
-Or it is 0 and the
-.Fa def_purpose
-argument is not 0 and invalid.
-Or the associated trust is
-.Dv X509_TRUST_DEFAULT
-and
-.Fa def_purpose
-is 0 or invalid.
+argument is invalid but not 0.
 .El
 .Pp
 The other functions provide no diagnostics.
@@ -405,10 +293,9 @@ The other functions provide no diagnostics.
 first appeared in OpenSSL 0.9.3 and has been available since
 .Ox 2.4 .
 .Pp
-.Fn X509_STORE_CTX_set_trust ,
-.Fn X509_STORE_CTX_set_purpose ,
+.Fn X509_STORE_CTX_set_trust
 and
-.Fn X509_STORE_CTX_purpose_inherit
+.Fn X509_STORE_CTX_set_purpose
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
 .Pp
@@ -424,3 +311,26 @@ and
 .Fn X509_STORE_CTX_set_default
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
+.Sh CAVEATS
+The precise effect of a successful call to
+.Fn X509_STORE_CTX_set_trust
+and
+.Fn X509_STORE_CTX_set_purpose
+is unclear unless only one of these functions is used immediately after
+.Xr X509_STORE_CTX_init 3 .
+It is therefore recommended to use
+.Fn X509_STORE_CTX_get0_param ,
+.Xr X509_VERIFY_PARAM_set_trust 3 ,
+and
+.Xr X509_VERIFY_PARAM_set_purpose 3
+instead.
+.Pp
+The confusingly named
+.Dv X509_TRUST_DEFAULT
+is less than
+.Dv X509_TRUST_MIN
+and different implementations treat it as valid or invalid
+when used as an associated trust or as a
+.Fa trust
+argument for
+.Fn X509_STORE_CTX_set_trust .
