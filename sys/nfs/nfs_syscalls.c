@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.119 2023/08/03 09:49:09 mvs Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.120 2024/01/12 08:47:46 ratchov Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -331,14 +331,15 @@ loop:
 		slp = nfsd->nfsd_slp;
 
 		if (ISSET(slp->ns_flag, SLP_VALID)) {
-			if (ISSET(slp->ns_flag, SLP_DISCONN)) {
-				nfsrv_zapsock(slp);
-			} else if (ISSET(slp->ns_flag, SLP_NEEDQ)) {
+			if ((slp->ns_flag & (SLP_DISCONN | SLP_NEEDQ)) ==
+			    SLP_NEEDQ) {
 				CLR(slp->ns_flag, SLP_NEEDQ);
 				nfs_sndlock(&slp->ns_solock, NULL);
 				nfsrv_rcv(slp->ns_so, (caddr_t)slp, M_WAIT);
 				nfs_sndunlock(&slp->ns_solock);
 			}
+			if (ISSET(slp->ns_flag, SLP_DISCONN))
+				nfsrv_zapsock(slp);
 
 			error = nfsrv_dorec(slp, nfsd, &nd);
 			SET(nfsd->nfsd_flag, NFSD_REQINPROG);
