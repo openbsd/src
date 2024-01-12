@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.59 2024/01/12 11:24:02 job Exp $
+# $OpenBSD: appstest.sh,v 1.60 2024/01/12 13:16:48 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -849,7 +849,7 @@ __EOF__
 		-force_pubkey $server_dir/testpubkey.pem
 		> $revoke_cert.log 2>&1
 	check_exit_status $?
-	
+
 	start_message "x509 ... check if csr#2 cert has proper issuer & subject"
 	if [ "$($openssl_bin x509 -in $revoke_cert -issuer -noout)" != \
 		"issuer= /CN=issuer" ]; then
