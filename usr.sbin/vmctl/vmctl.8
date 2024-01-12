@@ -1,6 +1,6 @@
-.\"	$OpenBSD: vmctl.8,v 1.74 2023/04/28 20:13:56 dv Exp $
+.\"	$OpenBSD: vmctl.8,v 1.75 2024/01/12 23:50:11 mlarkin Exp $
 .\"
-.\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
+.\" Copyright (c) 2015-2024 Mike Larkin <mlarkin@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2023 $
+.Dd $Mdocdate: January 12 2024 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -122,7 +122,9 @@ Receive a VM from standard input and start it with the specified
 .Ar name .
 .It Cm reload
 Remove all stopped VMs and reload the configuration from the default
-configuration file.
+configuration file. VMs that are currently running will not have their
+configuration reloaded. To reload configurations for currently running
+VMs, stop those VMs before issuing the reload command.
 .It Cm reset Op Cm all | switches | vms
 Reset the running state,
 reset
@@ -218,7 +220,8 @@ option.
 Memory
 .Ar size
 of the VM, rounded to megabytes.
-The default is 512M.
+The default is 512M. The maximum amount of memory assignable to a VM is
+governed by the datasize parameter for the vmd user in /etc/login.conf.
 .It Fl n Ar switch
 Add a network interface that is attached to the specified virtual
 .Ar switch .
