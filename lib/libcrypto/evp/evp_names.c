@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.6 2024/01/13 12:15:27 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.7 2024/01/13 12:18:52 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
@@ -1787,3 +1788,51 @@ EVP_add_digest(const EVP_MD *md)
 {
 	return 1;
 }
+
+int
+OBJ_NAME_init(void)
+{
+	OBJerror(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(OBJ_NAME_init);
+
+int
+OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
+    int (*cmp_func)(const char *, const char *),
+    void (*free_func)(const char *, int, const char *))
+{
+	OBJerror(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(OBJ_NAME_new_index);
+
+const char *
+OBJ_NAME_get(const char *name, int type)
+{
+	OBJerror(ERR_R_DISABLED);
+	return NULL;
+}
+LCRYPTO_ALIAS(OBJ_NAME_get);
+
+int
+OBJ_NAME_add(const char *name, int type, const char *data)
+{
+	/* No error to avoid polluting xca's error stack. */
+	return 0;
+}
+LCRYPTO_ALIAS(OBJ_NAME_add);
+
+int
+OBJ_NAME_remove(const char *name, int type)
+{
+	OBJerror(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(OBJ_NAME_remove);
+
+void
+OBJ_NAME_cleanup(int type)
+{
+}
+LCRYPTO_ALIAS(OBJ_NAME_cleanup);
