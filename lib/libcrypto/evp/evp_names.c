@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.1 2024/01/13 10:57:08 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.2 2024/01/13 11:00:09 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -19,13 +19,20 @@
 #include <openssl/objects.h>
 
 /*
- * The .name is the lookup name used by EVP_get_cipherbyname() while .alias
+ * In the following two structs, .name is the lookup name that is used
+ * for EVP_get_cipherbyname() and EVP_get_digestbyname(), while .alias
  * keeps track of the aliased name.
  */
 
 struct cipher_name {
 	const char *name;
 	const EVP_CIPHER *(*cipher)(void);
+	const char *alias;
+};
+
+struct digest_name {
+	const char *name;
+	const EVP_MD *(*digest)(void);
 	const char *alias;
 };
 
@@ -1086,3 +1093,469 @@ const struct cipher_name cipher_names[] = {
 };
 
 #define N_CIPHER_NAMES (sizeof(cipher_names) / sizeof(cipher_names[0]))
+
+/*
+ * Keep this table alphabetically sorted by increasing .name.
+ * regresss/lib/libcrypto/evp/evp_test.c checks that.
+ */
+
+const struct digest_name digest_names[] = {
+#ifndef OPENSSL_NO_GOST
+	{
+		.name = LN_id_Gost28147_89_MAC,
+		.digest = EVP_gost2814789imit,
+	},
+	{
+		.name = LN_id_tc26_gost3411_2012_512,
+		.digest = EVP_streebog512,
+	},
+	{
+		.name = LN_id_tc26_gost3411_2012_256,
+		.digest = EVP_streebog256,
+	},
+	{
+		.name = LN_id_GostR3411_94,
+		.digest = EVP_gostr341194,
+	},
+#endif /* OPENSSL_NO_GOST */
+
+#ifndef OPENSSL_NO_MD4
+	{
+		.name = SN_md4,
+		.digest = EVP_md4,
+	},
+#endif /* OPENSSL_NO_MD4 */
+
+#ifndef OPENSSL_NO_MD5
+	{
+		.name = SN_md5,
+		.digest = EVP_md5,
+	},
+#endif /* OPENSSL_NO_MD5 */
+
+#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_SHA1)
+	{
+		.name = SN_md5_sha1,
+		.digest = EVP_md5_sha1,
+	},
+#endif /* OPENSSL_NO_MD5 && OPENSSL_NO_SHA1 */
+
+#ifndef OPENSSL_NO_RIPEMD
+	{
+		.name = SN_ripemd160,
+		.digest = EVP_ripemd160,
+	},
+#endif /* OPENSSL_NO_RIPEMD */
+
+#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_MD4
+	{
+		.name = SN_md4WithRSAEncryption,
+		.digest = EVP_md4,
+		.alias = SN_md4,
+	},
+#endif /* OPENSSL_NO_MD4 */
+#ifndef OPENSSL_NO_MD5
+	{
+		.name = SN_md5WithRSAEncryption,
+		.digest = EVP_md5,
+		.alias = SN_md5,
+	},
+#endif /* OPENSSL_NO_MD5 */
+#ifndef OPENSSL_NO_RIPEMD
+	{
+		.name = SN_ripemd160WithRSA,
+		.digest = EVP_ripemd160,
+		.alias = SN_ripemd160,
+	},
+#endif /* OPENSSL_NO_RIPEMD */
+#ifndef OPENSSL_NO_SHA1
+	{
+		.name = SN_sha1WithRSAEncryption,
+		.digest = EVP_sha1,
+		.alias = SN_sha1,
+	},
+	{
+		.name = SN_sha1WithRSA,
+		.digest = EVP_sha1,
+		.alias = SN_sha1, /* XXX - alias to SN_sha1WithRSAEncryption? */
+	},
+#endif /* OPENSSL_NO_SHA1 */
+#ifndef OPENSSL_NO_SHA256
+	{
+		.name = SN_sha224WithRSAEncryption,
+		.digest = EVP_sha224,
+		.alias = SN_sha224,
+	},
+	{
+		.name = SN_sha256WithRSAEncryption,
+		.digest = EVP_sha256,
+		.alias = SN_sha256,
+	},
+#endif /* OPENSSL_NO_SHA256 */
+#ifndef OPENSSL_NO_SHA3
+	{
+		.name = LN_RSA_SHA3_224,
+		.digest = EVP_sha3_224,
+		.alias = SN_sha3_224,
+	},
+	{
+		.name = LN_RSA_SHA3_256,
+		.digest = EVP_sha3_256,
+		.alias = SN_sha3_256,
+	},
+	{
+		.name = LN_RSA_SHA3_384,
+		.digest = EVP_sha3_384,
+		.alias = SN_sha3_384,
+	},
+	{
+		.name = LN_RSA_SHA3_512,
+		.digest = EVP_sha3_512,
+		.alias = SN_sha3_512,
+	},
+#endif /* OPENSSL_NO_SHA3 */
+#ifndef OPENSSL_NO_SHA512
+	{
+		.name = SN_sha384WithRSAEncryption,
+		.digest = EVP_sha384,
+		.alias = SN_sha384,
+	},
+	{
+		.name = SN_sha512WithRSAEncryption,
+		.digest = EVP_sha512,
+		.alias = SN_sha512,
+	},
+	{
+		.name = SN_sha512_224WithRSAEncryption,
+		.digest = EVP_sha512_224,
+		.alias = SN_sha512_224,
+	},
+	{
+		.name = SN_sha512_256WithRSAEncryption,
+		.digest = EVP_sha512_256,
+		.alias = SN_sha512_256,
+	},
+#endif /* OPENSSL_NO_SHA256 */
+#ifndef OPENSSL_NO_SM4
+	{
+		.name = SN_sm3WithRSAEncryption,
+		.digest = EVP_sm3,
+		.alias = SN_sm3,
+	},
+#endif
+#endif /* OPENSSL_NO_RSA */
+
+#ifndef OPENSSL_NO_SHA1
+	{
+		.name = SN_sha1,
+		.digest = EVP_sha1,
+	},
+#endif /* OPENSSL_NO_SHA1 */
+#ifndef OPENSSL_NO_SHA256
+	{
+		.name = SN_sha224,
+		.digest = EVP_sha224,
+	},
+	{
+		.name = SN_sha256,
+		.digest = EVP_sha256,
+	},
+#endif /* OPENSSL_NO_SHA256 */
+#ifndef OPENSSL_NO_SHA3
+	{
+		.name = SN_sha3_224,
+		.digest = EVP_sha3_224,
+	},
+	{
+		.name = SN_sha3_256,
+		.digest = EVP_sha3_256,
+	},
+	{
+		.name = SN_sha3_384,
+		.digest = EVP_sha3_384,
+	},
+	{
+		.name = SN_sha3_512,
+		.digest = EVP_sha3_512,
+	},
+#endif /* OPENSSL_NO_SHA3 */
+
+#ifndef OPENSSL_NO_SHA512
+	{
+		.name = SN_sha384,
+		.digest = EVP_sha384,
+	},
+	{
+		.name = SN_sha512,
+		.digest = EVP_sha512,
+	},
+	{
+		.name = SN_sha512_224,
+		.digest = EVP_sha512_224,
+	},
+	{
+		.name = SN_sha512_256,
+		.digest = EVP_sha512_256,
+	},
+#endif /* OPENSSL_NO_SHA512 */
+#ifndef OPENSSL_NO_SM3
+	{
+		.name = SN_sm3,
+		.digest = EVP_sm3,
+	},
+#endif /* OPENSSL_NO_SM3 */
+
+#ifndef OPENSSL_NO_GOST
+	{
+		.name = SN_id_Gost28147_89_MAC,
+		.digest = EVP_gost2814789imit,
+	},
+#endif /* OPENSSL_NO_GOST */
+
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_SHA3)
+	{
+		.name = SN_RSA_SHA3_224,
+		.digest = EVP_sha3_224,
+		.alias = SN_sha3_224,
+	},
+	{
+		.name = SN_RSA_SHA3_256,
+		.digest = EVP_sha3_256,
+		.alias = SN_sha3_256,
+	},
+	{
+		.name = SN_RSA_SHA3_384,
+		.digest = EVP_sha3_384,
+		.alias = SN_sha3_384,
+	},
+	{
+		.name = SN_RSA_SHA3_512,
+		.digest = EVP_sha3_512,
+		.alias = SN_sha3_512,
+	},
+#endif /* OPENSSL_NO_RSA && OPENSSL_NO_SHA3 */
+
+#ifndef OPENSSL_NO_MD4
+	{
+		.name = LN_md4,
+		.digest = EVP_md4,
+	},
+#endif /* OPENSSL_NO_MD4 */
+#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_RSA)
+	{
+		.name = LN_md4WithRSAEncryption,
+		.digest = EVP_md4,
+		.alias = SN_md4,
+	},
+#endif /* OPENSSL_NO_MD4 */
+
+#if !defined(OPENSSL_NO_MD5)
+	{
+		.name = LN_md5,
+		.digest = EVP_md5,
+	},
+#endif /* OPENSSL_NO_MD5 */
+#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_SHA1)
+	{
+		.name = LN_md5_sha1,
+		.digest = EVP_md5_sha1,
+	},
+#endif /* OPENSSL_NO_MD5 && OPENSSL_NO_SHA1 */
+#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_RSA)
+	{
+		.name = LN_md5WithRSAEncryption,
+		.digest = EVP_md5,
+		.alias = SN_md5,
+	},
+#endif
+
+#ifndef OPENSSL_NO_GOST
+	{
+		.name = SN_id_GostR3411_94,
+		.digest = EVP_gostr341194,
+	},
+#endif /* OPENSSL_NO_GOST */
+
+#ifndef OPENSSL_NO_RIPEMD
+	{
+		.name = "ripemd",
+		.digest = EVP_ripemd160,
+		.alias = SN_ripemd160,
+	},
+	{
+		.name = LN_ripemd160,
+		.digest = EVP_ripemd160,
+	},
+#ifndef OPENSSL_NO_RSA
+	{
+		.name = LN_ripemd160WithRSA,
+		.digest = EVP_ripemd160,
+		.alias = SN_ripemd160,
+	},
+#endif /* OPENSSL_NO_RSA */
+	{
+		.name = "rmd160",
+		.digest = EVP_ripemd160,
+		.alias = SN_ripemd160,
+	},
+#endif /* OPENSSL_NO_RIPEMD */
+
+#ifndef OPENSSL_NO_SHA1
+	{
+		.name = LN_sha1,
+		.digest = EVP_sha1,
+	},
+#endif /* OPENSSL_NO_SHA1 */
+#if !defined(OPENSSL_NO_SHA1) && !defined(OPENSSL_NO_RSA)
+	{
+		.name = LN_sha1WithRSAEncryption,
+		.digest = EVP_sha1,
+		.alias = SN_sha1,
+	},
+#endif /* OPENSSL_NO_SHA1 && OPENSSL_NO_RSA */
+
+#ifndef OPENSSL_NO_SHA256
+	{
+		.name = LN_sha224,
+		.digest = EVP_sha224,
+	},
+#ifndef OPENSSL_NO_RSA
+	{
+		.name = LN_sha224WithRSAEncryption,
+		.digest = EVP_sha224,
+		.alias = SN_sha224,
+	},
+#endif /* OPENSSL_NO_RSA */
+	{
+		.name = LN_sha256,
+		.digest = EVP_sha256,
+	},
+#ifndef OPENSSL_NO_RSA
+	{
+		.name = LN_sha256WithRSAEncryption,
+		.digest = EVP_sha256,
+		.alias = SN_sha256,
+	},
+#endif /* OPENSSL_NO_RSA */
+#endif /* OPENSSL_NO_SHA256 */
+
+#ifndef OPENSSL_NO_SHA3
+	{
+		.name = LN_sha3_224,
+		.digest = EVP_sha3_224,
+	},
+	{
+		.name = LN_sha3_256,
+		.digest = EVP_sha3_256,
+	},
+	{
+		.name = LN_sha3_384,
+		.digest = EVP_sha3_384,
+	},
+	{
+		.name = LN_sha3_512,
+		.digest = EVP_sha3_512,
+	},
+#endif /* OPENSSL_NO_SHA3 */
+
+#ifndef OPENSSL_NO_SHA512
+	{
+		.name = LN_sha384,
+		.digest = EVP_sha384,
+	},
+#ifndef OPENSSL_NO_RSA
+	{
+		.name = LN_sha384WithRSAEncryption,
+		.digest = EVP_sha384,
+		.alias = SN_sha384,
+	},
+#endif /* OPENSSL_NO_RSA */
+	{
+		.name = LN_sha512,
+		.digest = EVP_sha512,
+	},
+	{
+		.name = LN_sha512_224,
+		.digest = EVP_sha512_224,
+	},
+#ifndef OPENSSL_NO_RSA
+	{
+		.name = LN_sha512_224WithRSAEncryption,
+		.digest = EVP_sha512_224,
+		.alias = SN_sha512_224,
+	},
+#endif
+	{
+		.name = LN_sha512_256,
+		.digest = EVP_sha512_256,
+	},
+#ifndef OPENSSL_NO_RSA
+	{
+		.name = LN_sha512_256WithRSAEncryption,
+		.digest = EVP_sha512_256,
+		.alias = SN_sha512_256,
+	},
+	{
+		.name = LN_sha512WithRSAEncryption,
+		.digest = EVP_sha512,
+		.alias = SN_sha512,
+	},
+#endif
+#endif /* OPENSSL_NO_SHA512 */
+
+#ifndef OPENSSL_NO_SM3
+	{
+		.name = LN_sm3,
+		.digest = EVP_sm3,
+	},
+#endif /* OPENSSL_NO_SM3 */
+#if !defined(OPENSSL_NO_SM3) && !defined(OPENSSL_NO_RSA)
+	{
+		.name = LN_sm3WithRSAEncryption,
+		.digest = EVP_sm3,
+		.alias = SN_sm3,
+	},
+#endif /* OPENSSL_NO_SM3 && OPENSSL_NO_RSA */
+
+#ifndef OPENSSL_NO_MD5
+	{
+		.name = "ssl2-md5",
+		.digest = EVP_md5,
+		.alias = SN_md5,
+	},
+	{
+		.name = "ssl3-md5",
+		.digest = EVP_md5,
+		.alias = SN_md5,
+	},
+#endif /* OPENSSL_NO_MD5 */
+
+#ifndef OPENSSL_NO_SHA1
+	{
+		.name = "ssl3-sha1",
+		.digest = EVP_sha1,
+		.alias = SN_sha1,
+	},
+#endif /* OPENSSL_NO_SHA1 */
+
+#ifndef OPENSSL_NO_GOST
+	{
+		.name = SN_id_tc26_gost3411_2012_256,
+		.digest = EVP_streebog256,
+	},
+	{
+		.name = SN_id_tc26_gost3411_2012_512,
+		.digest = EVP_streebog512,
+	},
+#endif /* OPENSSL_NO_GOST */
+
+#ifndef OPENSSL_NO_WHIRLPOOL
+	{
+		.name = SN_whirlpool,
+		.digest = EVP_whirlpool,
+	},
+#endif
+};
+
+#define N_DIGEST_NAMES (sizeof(digest_names) / sizeof(digest_names[0]))
