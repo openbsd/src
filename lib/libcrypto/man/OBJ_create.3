@@ -1,4 +1,4 @@
-.\" $OpenBSD: OBJ_create.3,v 1.8 2023/09/06 12:26:59 schwarze Exp $
+.\" $OpenBSD: OBJ_create.3,v 1.9 2024/01/13 19:06:20 tb Exp $
 .\" full merge up to:
 .\" OpenSSL OBJ_nid2obj.pod 9b86974e Aug 17 15:21:33 2015 -0400
 .\" selective merge up to:
@@ -69,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 6 2023 $
+.Dd $Mdocdate: January 13 2024 $
 .Dt OBJ_CREATE 3
 .Os
 .Sh NAME
@@ -78,9 +78,7 @@
 .Nm OBJ_create ,
 .\" OBJ_create_and_add_object is a deprecated, unused alias for OBJ_create(3).
 .Nm OBJ_create_objects ,
-.Nm obj_cleanup_defer ,
-.Nm OBJ_cleanup ,
-.Nm check_defer
+.Nm OBJ_cleanup
 .Nd modify the table of ASN.1 object identifiers
 .Sh SYNOPSIS
 .In openssl/objects.h
@@ -96,11 +94,8 @@
 .Fc
 .Ft int
 .Fn OBJ_create_objects "BIO *in_bio"
-.Vt extern int obj_cleanup_defer ;
 .Ft void
 .Fn OBJ_cleanup void
-.Ft void
-.Fn check_defer "int nid"
 .Sh DESCRIPTION
 .Fn OBJ_new_nid
 returns the smallest currently unassigned ASN.1 numeric
@@ -154,16 +149,6 @@ or a similar function and then calling
 .Xr ASN1_OBJECT_free 3
 on the returned pointer will have no effect.
 .Pp
-The global variable
-.Va obj_cleanup_defer
-controls the behaviour of
-.Fn OBJ_cleanup
-and
-.Xr EVP_cleanup 3 .
-.Pp
-If
-.Va obj_cleanup_defer
-has the default value of 0,
 .Fn OBJ_cleanup
 resets the internal object table to its default state,
 removing and freeing all objects that were added with
@@ -171,47 +156,6 @@ removing and freeing all objects that were added with
 .Fn OBJ_create ,
 or
 .Fn OBJ_create_objects .
-Otherwise,
-.Fn OBJ_cleanup
-only sets
-.Va obj_cleanup_defer
-to 2, which defers the cleanup of the internal object table
-to the next call of
-.Xr EVP_cleanup 3 .
-.Pp
-By default,
-.Xr EVP_cleanup 3
-has no effect on the internal object table.
-Only if
-.Va obj_cleanup_defer
-is 2, it resets
-.Va obj_cleanup_defer
-to 0 and calls
-.Fn OBJ_cleanup ,
-which then resets the table to its default state.
-.Pp
-The function
-.Fn check_defer
-sets
-.Va obj_cleanup_defer
-to 1 unless
-.Fa nid
-is a built-in numeric identifier, but it has no effect if
-.Va obj_cleanup_defer
-already differs from 0.
-This function is called internally by various functions
-in the EVP library, in particular by subroutines of
-.Xr OpenSSL_add_all_ciphers 3
-and
-.Xr OpenSSL_add_all_digests 3 .
-.Pp
-To reliably reset the internal object table no matter what the
-current state may be, an application program needs to call both
-.Fn OBJ_cleanup
-and
-.Xr EVP_cleanup 3 ,
-in this order.
-The opposite order will usually not work.
 .Sh RETURN VALUES
 .Fn OBJ_new_nid
 returns the new NID.
@@ -256,7 +200,6 @@ obj = OBJ_nid2obj(new_nid);
 .Ed
 .Sh SEE ALSO
 .Xr ASN1_OBJECT_new 3 ,
-.Xr EVP_cleanup 3 ,
 .Xr OBJ_NAME_add 3 ,
 .Xr OBJ_nid2obj 3
 .Sh HISTORY
@@ -269,12 +212,6 @@ first appeared in SSLeay 0.8.0 and
 in SSLeay 0.9.0.
 These functions have been available since
 .Ox 2.4 .
-.Pp
-.Va obj_cleanup_defer
-and
-.Fn check_defer
-first appeared in OpenSSL 1.0.0 and have been available since
-.Ox 4.9 .
 .Sh CAVEATS
 .Fn OBJ_add_object
 indicates success even after adding an incomplete object that was created with
