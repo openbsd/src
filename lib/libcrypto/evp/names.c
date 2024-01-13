@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.26 2024/01/13 11:45:03 tb Exp $ */
+/* $OpenBSD: names.c,v 1.27 2024/01/13 11:48:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,22 +70,12 @@ void check_defer(int nid);
 int
 EVP_add_cipher(const EVP_CIPHER *c)
 {
-	if (c == NULL)
-		return 0;
-
-	check_defer(c->nid);
-
 	return 1;
 }
 
 int
 EVP_add_digest(const EVP_MD *md)
 {
-	check_defer(md->type);
-
-	if (md->pkey_type && md->type != md->pkey_type)
-		check_defer(md->pkey_type);
-
 	return 1;
 }
 
