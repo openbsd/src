@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.3 2024/01/13 11:08:39 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.4 2024/01/13 11:12:32 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -17,6 +17,9 @@
 
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * In the following two structs, .name is the lookup name that is used
@@ -1715,3 +1718,45 @@ OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *), void *arg)
 	OBJ_NAME_do_all_sorted(type, fn, arg);
 }
 LCRYPTO_ALIAS(OBJ_NAME_do_all);
+
+static int
+cipher_cmp(const void *a, const void *b)
+{
+	return strcmp(a, ((const struct cipher_name *)b)->name);
+}
+
+const EVP_CIPHER *
+EVP_get_cipherbyname(const char *name)
+{
+	const struct cipher_name *cipher;
+
+	if (!OPENSSL_init_crypto(0, NULL))
+		return NULL;
+
+	if ((cipher = bsearch(name, cipher_names, N_CIPHER_NAMES,
+	    sizeof(*cipher), cipher_cmp)) == NULL)
+		return NULL;
+
+	return cipher->cipher();
+}
+
+static int
+digest_cmp(const void *a, const void *b)
+{
+	return strcmp(a, ((const struct digest_name *)b)->name);
+}
+
+const EVP_MD *
+EVP_get_digestbyname(const char *name)
+{
+	const struct digest_name *digest;
+
+	if (!OPENSSL_init_crypto(0, NULL))
+		return NULL;
+
+	if ((digest = bsearch(name, digest_names, N_DIGEST_NAMES,
+	    sizeof(*digest), digest_cmp)) == NULL)
+		return NULL;
+
+	return digest->digest();
+}

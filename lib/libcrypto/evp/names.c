@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.23 2024/01/13 11:08:39 tb Exp $ */
+/* $OpenBSD: names.c,v 1.24 2024/01/13 11:12:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,24 +111,6 @@ EVP_add_digest(const EVP_MD *md)
 		    OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS, name);
 	}
 	return (r);
-}
-
-const EVP_CIPHER *
-EVP_get_cipherbyname(const char *name)
-{
-	if (!OPENSSL_init_crypto(0, NULL))
-		return NULL;
-
-	return (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
-}
-
-const EVP_MD *
-EVP_get_digestbyname(const char *name)
-{
-	if (!OPENSSL_init_crypto(0, NULL))
-		return NULL;
-
-	return (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
 }
 
 void
