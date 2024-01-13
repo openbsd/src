@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.28 2024/01/13 11:55:31 tb Exp $ */
+/* $OpenBSD: names.c,v 1.29 2024/01/13 11:57:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,8 +64,6 @@
 
 #include "evp_local.h"
 
-extern int obj_cleanup_defer;
-
 int
 EVP_add_cipher(const EVP_CIPHER *c)
 {
@@ -81,8 +79,4 @@ EVP_add_digest(const EVP_MD *md)
 void
 EVP_cleanup(void)
 {
-	if (obj_cleanup_defer == 2) {
-		obj_cleanup_defer = 0;
-		OBJ_cleanup();
-	}
 }

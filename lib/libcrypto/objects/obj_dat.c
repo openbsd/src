@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.83 2024/01/13 11:55:31 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.84 2024/01/13 11:57:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -183,20 +183,9 @@ static IMPLEMENT_LHASH_DOALL_FN(cleanup1, ADDED_OBJ)
 static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ)
 static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ)
 
-/* The purpose of obj_cleanup_defer is to avoid EVP_cleanup() attempting
- * to use freed up OIDs. If necessary the actual freeing up of OIDs is
- * delayed.
- */
-
-int obj_cleanup_defer = 0;
-
 void
 OBJ_cleanup(void)
 {
-	if (obj_cleanup_defer) {
-		obj_cleanup_defer = 2;
-		return;
-	}
 	if (added == NULL)
 		return;
 	lh_ADDED_OBJ_down_load(added) = 0;
