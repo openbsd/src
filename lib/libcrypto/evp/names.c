@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.27 2024/01/13 11:48:16 tb Exp $ */
+/* $OpenBSD: names.c,v 1.28 2024/01/13 11:55:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,7 +65,6 @@
 #include "evp_local.h"
 
 extern int obj_cleanup_defer;
-void check_defer(int nid);
 
 int
 EVP_add_cipher(const EVP_CIPHER *c)

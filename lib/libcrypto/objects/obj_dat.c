@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.82 2023/12/15 01:51:23 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.83 2024/01/13 11:55:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -189,13 +189,6 @@ static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ)
  */
 
 int obj_cleanup_defer = 0;
-
-void
-check_defer(int nid)
-{
-	if (!obj_cleanup_defer && nid >= NUM_NID)
-		obj_cleanup_defer = 1;
-}
 
 void
 OBJ_cleanup(void)
