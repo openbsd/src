@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.24 2024/01/13 11:12:32 tb Exp $ */
+/* $OpenBSD: names.c,v 1.25 2024/01/13 11:41:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,13 +116,6 @@ EVP_add_digest(const EVP_MD *md)
 void
 EVP_cleanup(void)
 {
-	OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
-	OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
-	/* The above calls will only clean out the contents of the name
-	   hash table, but not the hash table itself.  The following line
-	   does that part.  -- Richard Levitte */
-	OBJ_NAME_cleanup(-1);
-
 	if (obj_cleanup_defer == 2) {
 		obj_cleanup_defer = 0;
 		OBJ_cleanup();
