@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.18 2023/11/09 11:36:39 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.19 2024/01/13 13:59:18 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,13 +222,20 @@ int
 ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
     ASN1_BIT_STRING *signature, void *asn, EVP_PKEY *pkey, const EVP_MD *type)
 {
-	EVP_MD_CTX ctx;
-	EVP_MD_CTX_init(&ctx);
-	if (!EVP_DigestSignInit(&ctx, NULL, type, NULL, pkey)) {
-		EVP_MD_CTX_cleanup(&ctx);
-		return 0;
-	}
-	return ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, &ctx);
+	EVP_MD_CTX *md_ctx = NULL;
+	int ret = 0;
+
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestSignInit(md_ctx, NULL, type, NULL, pkey))
+		goto err;
+
+	ret = ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, md_ctx);
+
+ err:
+	EVP_MD_CTX_free(md_ctx);
+
+	return ret;
 }
 
 static int
