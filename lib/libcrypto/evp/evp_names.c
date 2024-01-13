@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.2 2024/01/13 11:00:09 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.3 2024/01/13 11:08:39 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -41,7 +41,7 @@ struct digest_name {
  * regress/lib/libcrypto/evp/evp_test.c checks that.
  */
 
-const struct cipher_name cipher_names[] = {
+static const struct cipher_name cipher_names[] = {
 #ifndef OPENSSL_NO_AES
 	{
 		.name = SN_aes_128_cbc,
@@ -1099,7 +1099,7 @@ const struct cipher_name cipher_names[] = {
  * regresss/lib/libcrypto/evp/evp_test.c checks that.
  */
 
-const struct digest_name digest_names[] = {
+static const struct digest_name digest_names[] = {
 #ifndef OPENSSL_NO_GOST
 	{
 		.name = LN_id_Gost28147_89_MAC,
@@ -1559,3 +1559,159 @@ const struct digest_name digest_names[] = {
 };
 
 #define N_DIGEST_NAMES (sizeof(digest_names) / sizeof(digest_names[0]))
+
+void
+EVP_CIPHER_do_all_sorted(void (*fn)(const EVP_CIPHER *, const char *,
+    const char *, void *), void *arg)
+{
+	size_t i;
+
+	/* Prayer and clean living lets you ignore errors, OpenSSL style. */
+	(void)OPENSSL_init_crypto(0, NULL);
+
+	for (i = 0; i < N_CIPHER_NAMES; i++) {
+		const struct cipher_name *cipher = &cipher_names[i];
+		const EVP_CIPHER *evp_cipher;
+
+		if ((evp_cipher = cipher->cipher()) == NULL)
+			continue;
+
+		if (cipher->alias != NULL)
+			fn(NULL, cipher->name, cipher->alias, arg);
+		else
+			fn(evp_cipher, cipher->name, NULL, arg);
+	}
+}
+
+void
+EVP_CIPHER_do_all(void (*fn)(const EVP_CIPHER *, const char *, const char *,
+    void *), void *arg)
+{
+	EVP_CIPHER_do_all_sorted(fn, arg);
+}
+
+void
+EVP_MD_do_all_sorted(void (*fn)(const EVP_MD *, const char *, const char *,
+    void *), void *arg)
+{
+	size_t i;
+
+	/* Prayer and clean living lets you ignore errors, OpenSSL style. */
+	(void)OPENSSL_init_crypto(0, NULL);
+
+	for (i = 0; i < N_DIGEST_NAMES; i++) {
+		const struct digest_name *digest = &digest_names[i];
+		const EVP_MD *evp_md;
+
+		if ((evp_md = digest->digest()) == NULL)
+			continue;
+
+		if (digest->alias != NULL)
+			fn(NULL, digest->name, digest->alias, arg);
+		else
+			fn(evp_md, digest->name, NULL, arg);
+	}
+}
+
+void
+EVP_MD_do_all(void (*fn)(const EVP_MD *, const char *, const char *, void *),
+    void *arg)
+{
+	EVP_MD_do_all_sorted(fn, arg);
+}
+
+/*
+ * The OBJ_NAME API is completely misnamed. It has little to do with objects
+ * and a lot to do with EVP. Therefore we implement a saner replacement for
+ * the part of the old madness that we need to keep in the evp directory.
+ */
+
+static int
+OBJ_NAME_from_cipher_name(OBJ_NAME *obj_name, const struct cipher_name *cipher)
+{
+	const EVP_CIPHER *evp_cipher;
+
+	if ((evp_cipher = cipher->cipher()) == NULL)
+		return 0;
+
+	obj_name->type = OBJ_NAME_TYPE_CIPHER_METH;
+	obj_name->name = cipher->name;
+	if (cipher->alias != NULL) {
+		obj_name->alias = OBJ_NAME_ALIAS;
+		obj_name->data = cipher->alias;
+	} else {
+		obj_name->alias = 0;
+		obj_name->data = (const char *)evp_cipher;
+	}
+
+	return 1;
+}
+
+static void
+OBJ_NAME_do_all_ciphers(void (*fn)(const OBJ_NAME *, void *), void *arg)
+{
+	size_t i;
+
+	for (i = 0; i < N_CIPHER_NAMES; i++) {
+		const struct cipher_name *cipher = &cipher_names[i];
+		OBJ_NAME name;
+
+		if (OBJ_NAME_from_cipher_name(&name, cipher))
+			fn(&name, arg);
+	}
+}
+
+static int
+OBJ_NAME_from_digest_name(OBJ_NAME *obj_name, const struct digest_name *digest)
+{
+	const EVP_MD *evp_md;
+
+	if ((evp_md = digest->digest()) == NULL)
+		return 0;
+
+	obj_name->type = OBJ_NAME_TYPE_MD_METH;
+	obj_name->name = digest->name;
+	if (digest->alias != NULL) {
+		obj_name->alias = OBJ_NAME_ALIAS;
+		obj_name->data = digest->alias;
+	} else {
+		obj_name->alias = 0;
+		obj_name->data = (const char *)evp_md;
+	}
+
+	return 1;
+}
+
+static void
+OBJ_NAME_do_all_digests(void (*fn)(const OBJ_NAME *, void *), void *arg)
+{
+	size_t i;
+
+	for (i = 0; i < N_DIGEST_NAMES; i++) {
+		const struct digest_name *digest = &digest_names[i];
+		OBJ_NAME name;
+
+		if (OBJ_NAME_from_digest_name(&name, digest))
+			fn(&name, arg);
+	}
+}
+
+void
+OBJ_NAME_do_all_sorted(int type, void (*fn)(const OBJ_NAME *, void *), void *arg)
+{
+	/* Prayer and clean living lets you ignore errors, OpenSSL style. */
+	(void)OPENSSL_init_crypto(0, NULL);
+
+	if (type == OBJ_NAME_TYPE_CIPHER_METH)
+		OBJ_NAME_do_all_ciphers(fn, arg);
+	if (type == OBJ_NAME_TYPE_MD_METH)
+		OBJ_NAME_do_all_digests(fn, arg);
+}
+LCRYPTO_ALIAS(OBJ_NAME_do_all_sorted);
+
+void
+OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *), void *arg)
+{
+	OBJ_NAME_do_all_sorted(type, fn, arg);
+}
+LCRYPTO_ALIAS(OBJ_NAME_do_all);

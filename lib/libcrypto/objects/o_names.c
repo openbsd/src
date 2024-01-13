@@ -1,4 +1,4 @@
-/* $OpenBSD: o_names.c,v 1.24 2023/07/08 12:27:51 beck Exp $ */
+/* $OpenBSD: o_names.c,v 1.25 2024/01/13 11:08:39 tb Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -239,85 +239,6 @@ OBJ_NAME_remove(const char *name, int type)
 		return (0);
 }
 LCRYPTO_ALIAS(OBJ_NAME_remove);
-
-struct doall {
-	int type;
-	void (*fn)(const OBJ_NAME *, void *arg);
-	void *arg;
-};
-
-static void
-do_all_fn_doall_arg(const OBJ_NAME *name, struct doall *d)
-{
-	if (name->type == d->type)
-		d->fn(name, d->arg);
-}
-
-static IMPLEMENT_LHASH_DOALL_ARG_FN(do_all_fn, const OBJ_NAME, struct doall)
-
-void
-OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *arg), void *arg)
-{
-	struct doall d;
-
-	d.type = type;
-	d.fn = fn;
-	d.arg = arg;
-
-	lh_OBJ_NAME_doall_arg(names_lh, LHASH_DOALL_ARG_FN(do_all_fn),
-	    struct doall, &d);
-}
-LCRYPTO_ALIAS(OBJ_NAME_do_all);
-
-struct doall_sorted {
-	int type;
-	int n;
-	const OBJ_NAME **names;
-};
-
-static void
-do_all_sorted_fn(const OBJ_NAME *name, void *d_)
-{
-	struct doall_sorted *d = d_;
-
-	if (name->type != d->type)
-		return;
-
-	d->names[d->n++] = name;
-}
-
-static int
-do_all_sorted_cmp(const void *n1_, const void *n2_)
-{
-	const OBJ_NAME * const *n1 = n1_;
-	const OBJ_NAME * const *n2 = n2_;
-
-	return strcmp((*n1)->name, (*n2)->name);
-}
-
-void
-OBJ_NAME_do_all_sorted(int type, void (*fn)(const OBJ_NAME *, void *arg),
-    void *arg)
-{
-	struct doall_sorted d;
-	int n;
-
-	d.type = type;
-	d.names = reallocarray(NULL, lh_OBJ_NAME_num_items(names_lh),
-	    sizeof *d.names);
-	d.n = 0;
-	if (d.names != NULL) {
-		OBJ_NAME_do_all(type, do_all_sorted_fn, &d);
-
-		qsort((void *)d.names, d.n, sizeof *d.names, do_all_sorted_cmp);
-
-		for (n = 0; n < d.n; ++n)
-			fn(d.names[n], arg);
-
-		free(d.names);
-	}
-}
-LCRYPTO_ALIAS(OBJ_NAME_do_all_sorted);
 
 static int free_type;
 
