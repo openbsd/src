@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.4 2024/01/13 11:12:32 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.5 2024/01/13 12:13:17 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -1759,4 +1759,15 @@ EVP_get_digestbyname(const char *name)
 		return NULL;
 
 	return digest->digest();
+}
+
+/*
+ * XXX - this is here because most of its job was to clean up the dynamic
+ * tables of ciphers and digests. If we get an evp_lib.c again, it should
+ * probably move there.
+ */
+
+void
+EVP_cleanup(void)
+{
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.29 2024/01/13 11:57:51 tb Exp $ */
+/* $OpenBSD: names.c,v 1.30 2024/01/13 12:13:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,9 +74,4 @@ int
 EVP_add_digest(const EVP_MD *md)
 {
 	return 1;
-}
-
-void
-EVP_cleanup(void)
-{
 }
