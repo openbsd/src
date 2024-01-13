@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.23 2023/04/24 15:35:22 beck Exp $ */
+/* $OpenBSD: stack.c,v 1.24 2024/01/13 16:32:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -64,8 +65,6 @@
 
 #undef MIN_NODES
 #define MIN_NODES	4
-
-#include <errno.h>
 
 int
 (*sk_set_cmp_func(_STACK *sk, int (*c)(const void *, const void *)))(
