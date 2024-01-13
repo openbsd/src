@@ -18,15 +18,10 @@ struct component_master_ops {
 	void (*unbind)(struct device *);
 };
 
+int	component_add(struct device *, const struct component_ops *);
 #define component_del(a, b)
-#define component_add(a, b)	0
 
-static inline int
-component_bind_all(struct device *dev, void *data)
-{
-	return 0;
-}
-
+int	component_bind_all(struct device *, void *);
 #define component_unbind_all(a, b)
 
 int	component_compare_of(struct device *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.106 2024/01/06 09:33:08 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.107 2024/01/13 10:00:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3360,38 +3360,70 @@ iommu_attach_device(struct iommu_domain *domain, struct device *dev)
 
 #include <linux/component.h>
 
-struct component_match {
+struct component {
 	struct device *dev;
+	struct device *adev;
+	const struct component_ops *ops;
+	SLIST_ENTRY(component) next;
 };
 
+SLIST_HEAD(,component) component_list = SLIST_HEAD_INITIALIZER(component_list);
+
 int
-component_compare_of(struct device *dev, void *data)
+component_add(struct device *dev, const struct component_ops *ops)
 {
-	STUB();
+	struct component *component;
+
+	component = malloc(sizeof(*component), M_DEVBUF, M_WAITOK | M_ZERO);
+	component->dev = dev;
+	component->ops = ops;
+	SLIST_INSERT_HEAD(&component_list, component, next);
 	return 0;
 }
 
-void
-drm_of_component_match_add(struct device *master,
-			   struct component_match **matchptr,
-			   int (*compare)(struct device *, void *),
-			   struct device_node *np)
+int
+component_bind_all(struct device *dev, void *data)
 {
-	struct component_match *match;
+	struct component *component;
+	int ret = 0;
 
-	if (*matchptr == NULL) {
-		match = malloc(sizeof(struct component_match),
-		    M_DEVBUF, M_WAITOK | M_ZERO);
-		match->dev = master;
-		*matchptr = match;
+	SLIST_FOREACH(component, &component_list, next) {
+		if (component->adev == dev) {
+			ret = component->ops->bind(component->dev, NULL, data);
+			if (ret)
+				break;
+		}
 	}
+
+	return ret;
 }
+
+struct component_match {
+	int (*compare)(struct device *, void *);
+	void *data;
+};
 
 int
 component_master_add_with_match(struct device *dev,
     const struct component_master_ops *ops, struct component_match *match)
 {
-	ops->bind(match->dev);
+	struct component *component;
+	int found = 0;
+	int ret;
+
+	SLIST_FOREACH(component, &component_list, next) {
+		if (match->compare(component->dev, match->data)) {
+			component->adev = dev;
+			found = 1;
+		}
+	}
+
+	if (found) {
+		ret = ops->bind(dev);
+		if (ret)
+			return ret;
+	}
+
 	return 0;
 }
 
@@ -3407,10 +3439,22 @@ LIST_HEAD(, platform_device) pdev_list = LIST_HEAD_INITIALIZER(pdev_list);
 void
 platform_device_register(struct platform_device *pdev)
 {
+	int i;
+
 	pdev->num_resources = pdev->faa->fa_nreg;
+	if (pdev->faa->fa_nreg > 0) {
+		pdev->resource = mallocarray(pdev->faa->fa_nreg,
+		    sizeof(*pdev->resource), M_DEVBUF, M_WAITOK | M_ZERO);
+		for (i = 0; i < pdev->faa->fa_nreg; i++) {
+			pdev->resource[i].start = pdev->faa->fa_reg[i].addr;
+			pdev->resource[i].end = pdev->faa->fa_reg[i].addr +
+			    pdev->faa->fa_reg[i].size - 1;
+		}
+	}
 
 	pdev->parent = pdev->dev.dv_parent;
 	pdev->node = pdev->faa->fa_node;
+	pdev->iot = pdev->faa->fa_iot;
 	pdev->dmat = pdev->faa->fa_dmat;
 	LIST_INSERT_HEAD(&pdev_list, pdev, next);
 }
@@ -3419,17 +3463,7 @@ platform_device_register(struct platform_device *pdev)
 struct resource *
 platform_get_resource(struct platform_device *pdev, u_int type, u_int num)
 {
-	struct fdt_attach_args *faa = pdev->faa;
-
-	if (pdev->resource == NULL) {
-		pdev->resource = mallocarray(pdev->num_resources,
-		    sizeof(*pdev->resource), M_DEVBUF, M_WAITOK | M_ZERO);
-	}
-
-	pdev->resource[num].start = faa->fa_reg[num].addr;
-	pdev->resource[num].end = faa->fa_reg[num].addr +
-	    faa->fa_reg[num].size - 1;
-
+	KASSERT(num < pdev->num_resources);
 	return &pdev->resource[num];
 }
 
@@ -3437,20 +3471,20 @@ void __iomem *
 devm_platform_ioremap_resource_byname(struct platform_device *pdev,
 				      const char *name)
 {
-	struct fdt_attach_args *faa = pdev->faa;
 	bus_space_handle_t ioh;
 	int err, idx;
 
-	idx = OF_getindex(faa->fa_node, name, "reg-names");
-	if (idx == -1 || idx >= faa->fa_nreg)
+	idx = OF_getindex(pdev->node, name, "reg-names");
+	if (idx == -1 || idx >= pdev->num_resources)
 		return ERR_PTR(-EINVAL);
 
-	err = bus_space_map(faa->fa_iot, faa->fa_reg[idx].addr,
-	    faa->fa_reg[idx].size, BUS_SPACE_MAP_LINEAR, &ioh);
+	err = bus_space_map(pdev->iot, pdev->resource[idx].start,
+	    pdev->resource[idx].end - pdev->resource[idx].start + 1,
+	    BUS_SPACE_MAP_LINEAR, &ioh);
 	if (err)
 		return ERR_PTR(-err);
 
-	return bus_space_vaddr(faa->fa_iot, ioh);
+	return bus_space_vaddr(pdev->iot, ioh);
 }
 
 #include <dev/ofw/ofw_clock.h>
@@ -3810,6 +3844,31 @@ __of_get_child_by_name(void *p, const char *name)
 	if (child == 0)
 		return NULL;
 	return (struct device_node *)(uintptr_t)child;
+}
+
+int
+component_compare_of(struct device *dev, void *data)
+{
+	struct platform_device *pdev = (struct platform_device *)dev;
+
+	return (pdev->node == (intptr_t)data);
+}
+
+void
+drm_of_component_match_add(struct device *master,
+			   struct component_match **matchptr,
+			   int (*compare)(struct device *, void *),
+			   struct device_node *np)
+{
+	struct component_match *match;
+
+	if (*matchptr == NULL) {
+		match = malloc(sizeof(struct component_match),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		match->compare = compare;
+		match->data = np;
+		*matchptr = match;
+	}
 }
 
 #endif

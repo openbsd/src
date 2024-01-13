@@ -12,6 +12,7 @@ struct platform_device {
 	int num_resources;
 	struct resource *resource;
 	struct device *parent;
+	bus_space_tag_t iot;
 	bus_dma_tag_t dmat;
 	int node;
 
