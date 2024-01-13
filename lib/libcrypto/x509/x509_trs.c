@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.39 2024/01/10 21:34:53 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.40 2024/01/13 19:57:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,6 +64,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "crypto_internal.h"
 #include "x509_local.h"
 
 static int
@@ -129,7 +130,7 @@ trust_1oid(X509_TRUST *trust, X509 *x, int flags)
  * value to get an index into the table
  */
 
-static X509_TRUST trstandard[] = {
+static const X509_TRUST trstandard[] = {
 	{
 		.trust = X509_TRUST_COMPAT,
 		.check_trust = trust_compat,
@@ -181,27 +182,17 @@ static X509_TRUST trstandard[] = {
 
 #define X509_TRUST_COUNT	(sizeof(trstandard) / sizeof(trstandard[0]))
 
-static int (*default_trust)(int id, X509 *x, int flags) = obj_trust;
+CTASSERT(X509_TRUST_MIN == 1 && X509_TRUST_MAX == X509_TRUST_COUNT);
 
 int
-(*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int)
+X509_check_trust(X509 *x, int trust_id, int flags)
 {
-	int (*oldtrust)(int , X509 *, int);
-
-	oldtrust = default_trust;
-	default_trust = trust;
-	return oldtrust;
-}
-LCRYPTO_ALIAS(X509_TRUST_set_default);
-
-int
-X509_check_trust(X509 *x, int id, int flags)
-{
-	X509_TRUST *pt;
+	const X509_TRUST *trust;
 	int idx;
 
-	if (id == -1)
+	if (trust_id == -1)
 		return 1;
+
 	/*
 	 * XXX beck/jsing This enables self signed certs to be trusted for
 	 * an unspecified id/trust flag value (this is NOT the
@@ -211,20 +202,35 @@ X509_check_trust(X509 *x, int id, int flags)
 	 * This should be revisited, but changing the default "not default"
 	 * may break things.
 	 */
-	if (id == 0) {
+	if (trust_id == 0) {
 		int rv;
 		rv = obj_trust(NID_anyExtendedKeyUsage, x, 0);
 		if (rv != X509_TRUST_UNTRUSTED)
 			return rv;
 		return trust_compat(NULL, x, 0);
 	}
-	idx = X509_TRUST_get_by_id(id);
-	if (idx == -1)
-		return default_trust(id, x, flags);
-	pt = X509_TRUST_get0(idx);
-	return pt->check_trust(pt, x, flags);
+
+	if (trust_id < X509_TRUST_MIN || trust_id > X509_TRUST_MAX)
+		return obj_trust(trust_id, x, flags);
+
+	idx = trust_id - X509_TRUST_MIN;
+	trust = &trstandard[idx];
+
+	return trust->check_trust((X509_TRUST *)trust, x, flags);
 }
 LCRYPTO_ALIAS(X509_check_trust);
+
+/*
+ * Remove all the functions below in the next bump.
+ */
+
+int
+(*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int)
+{
+	X509error(ERR_R_DISABLED);
+	return NULL;
+}
+LCRYPTO_ALIAS(X509_TRUST_set_default);
 
 int
 X509_TRUST_get_count(void)
@@ -236,36 +242,24 @@ LCRYPTO_ALIAS(X509_TRUST_get_count);
 X509_TRUST *
 X509_TRUST_get0(int idx)
 {
-	if (idx < 0 || (size_t)idx >= X509_TRUST_COUNT)
-		return NULL;
-
-	return &trstandard[idx];
+	X509error(ERR_R_DISABLED);
+	return NULL;
 }
 LCRYPTO_ALIAS(X509_TRUST_get0);
 
 int
 X509_TRUST_get_by_id(int id)
 {
-	/*
-	 * Ensure the trust identifier is between MIN and MAX inclusive.
-	 * If so, translate it into an index into the trstandard[] table.
-	 */
-	if (id < X509_TRUST_MIN || id > X509_TRUST_MAX)
-		return -1;
-
-	return id - X509_TRUST_MIN;
+	X509error(ERR_R_DISABLED);
+	return -1;
 }
 LCRYPTO_ALIAS(X509_TRUST_get_by_id);
 
 int
 X509_TRUST_set(int *t, int trust)
 {
-	if (X509_TRUST_get_by_id(trust) == -1) {
-		X509error(X509_R_INVALID_TRUST);
-		return 0;
-	}
-	*t = trust;
-	return 1;
+	X509error(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(X509_TRUST_set);
 
