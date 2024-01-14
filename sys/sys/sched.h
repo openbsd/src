@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.68 2024/01/14 17:11:55 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.69 2024/01/14 17:23:56 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -69,8 +69,6 @@
 #ifndef	_SYS_SCHED_H_
 #define	_SYS_SCHED_H_
 
-#include <sys/queue.h>
-
 /*
  * Posix defines a <sched.h> which may want to include <sys/sched.h>
  */
@@ -96,6 +94,8 @@ struct cpustats {
 #define CPUSTATS_ONLINE		0x0001	/* CPU is schedulable */
 
 #ifdef	_KERNEL
+
+#include <sys/queue.h>
 
 #define	SCHED_NQS	32			/* 32 run queues. */
 
