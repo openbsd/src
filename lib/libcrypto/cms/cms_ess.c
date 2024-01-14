@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.23 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.24 2024/01/14 18:40:24 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -54,15 +54,15 @@
 
 #include <string.h>
 
-#include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
-#include "cms_local.h"
 
+#include "cms_local.h"
+#include "x509_local.h"
 
 CMS_ReceiptRequest *
 d2i_CMS_ReceiptRequest(CMS_ReceiptRequest **a, const unsigned char **in, long len)
