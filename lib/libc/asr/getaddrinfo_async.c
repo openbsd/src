@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.61 2023/11/21 15:26:56 florian Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.62 2024/01/15 18:03:39 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -258,7 +258,8 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 					    !is_localhost) ? "::" : "::1";
 				 /* This can't fail */
 				_asr_sockaddr_from_str(&sa.sa, family, str);
-				if ((r = addrinfo_add(as, &sa.sa, NULL))) {
+				if ((r = addrinfo_add(as, &sa.sa,
+				    "localhost."))) {
 					ar->ar_gai_errno = r;
 					break;
 				}
