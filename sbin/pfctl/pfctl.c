@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.392 2023/10/26 16:26:01 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.393 2024/01/15 07:23:32 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -118,6 +118,7 @@ int	pfctl_recurse(int, int, const char *,
 int	pfctl_call_clearrules(int, int, struct pfr_anchoritem *);
 int	pfctl_call_cleartables(int, int, struct pfr_anchoritem *);
 int	pfctl_call_clearanchors(int, int, struct pfr_anchoritem *);
+int	pfctl_call_showtables(int, int, struct pfr_anchoritem *);
 
 const char	*clearopt;
 char		*rulesopt;
@@ -2301,6 +2302,13 @@ pfctl_call_clearrules(int dev, int opts, struct pfr_anchoritem *pfra)
 }
 
 int
+pfctl_call_showtables(int dev, int opts, struct pfr_anchoritem *pfra)
+{
+	pfctl_show_tables(pfra->pfra_anchorname, opts);
+	return (0);
+}
+
+int
 pfctl_call_clearanchors(int dev, int opts, struct pfr_anchoritem *pfra)
 {
 	int	rv = 0;
@@ -2325,10 +2333,12 @@ pfctl_recurse(int dev, int opts, const char *anchorname,
 	 * so that failures on one anchor do not prevent clearing others.
 	 */
 	opts |= PF_OPT_IGNFAIL;
-	printf("Removing:\n");
+	if ((opts & PF_OPT_CALLSHOW) == 0)
+		printf("Removing:\n");
 	SLIST_FOREACH_SAFE(pfra, anchors, pfra_sle, pfra_save) {
-		printf("  %s\n", (*pfra->pfra_anchorname == '\0') ?
-		    "/" : pfra->pfra_anchorname);
+		if ((opts & PF_OPT_CALLSHOW) == 0)
+			printf("  %s\n", (*pfra->pfra_anchorname == '\0') ?
+			    "/" : pfra->pfra_anchorname);
 		rv |= walkf(dev, opts, pfra);
 		SLIST_REMOVE(anchors, pfra, pfr_anchoritem, pfra_sle);
 		free(pfra->pfra_anchorname);
@@ -2747,7 +2757,12 @@ main(int argc, char *argv[])
 			pfctl_show_fingerprints(opts);
 			break;
 		case 'T':
-			pfctl_show_tables(anchorname, opts);
+			if (opts & PF_OPT_RECURSE) {
+				opts |= PF_OPT_CALLSHOW;
+				pfctl_recurse(dev, opts, anchorname,
+				    pfctl_call_showtables);
+			} else
+				pfctl_show_tables(anchorname, opts);
 			break;
 		case 'o':
 			pfctl_load_fingerprints(dev, opts);

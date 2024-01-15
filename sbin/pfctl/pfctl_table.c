@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.86 2023/10/26 16:26:01 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.87 2024/01/15 07:23:32 sashan Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -369,21 +369,21 @@ print_table(struct pfr_table *ta, int verbose, int debug)
 {
 	if (!debug && !(ta->pfrt_flags & PFR_TFLAG_ACTIVE))
 		return;
-	if (verbose) {
-		printf("%c%c%c%c%c%c%c\t%s",
+	if (verbose)
+		printf("%c%c%c%c%c%c%c\t",
 		    (ta->pfrt_flags & PFR_TFLAG_CONST) ? 'c' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_PERSIST) ? 'p' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_ACTIVE) ? 'a' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_INACTIVE) ? 'i' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_REFERENCED) ? 'r' : '-',
 		    (ta->pfrt_flags & PFR_TFLAG_REFDANCHOR) ? 'h' : '-',
-		    (ta->pfrt_flags & PFR_TFLAG_COUNTERS) ? 'C' : '-',
-		    ta->pfrt_name);
-		if (ta->pfrt_anchor[0])
-			printf("\t%s", ta->pfrt_anchor);
-		puts("");
-	} else
-		puts(ta->pfrt_name);
+		    (ta->pfrt_flags & PFR_TFLAG_COUNTERS) ? 'C' : '-');
+
+	printf("%s", ta->pfrt_name);
+	if (ta->pfrt_anchor[0] != '\0')
+		printf("@%s", ta->pfrt_anchor);
+
+	printf("\n");
 }
 
 void

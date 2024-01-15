@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.118 2021/10/25 14:50:29 sashan Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.119 2024/01/15 07:23:32 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -52,6 +52,7 @@
 #define PF_OPT_RECURSE		0x04000
 #define PF_OPT_PORTNAMES	0x08000
 #define PF_OPT_IGNFAIL		0x10000
+#define PF_OPT_CALLSHOW		0x20000
 
 #define PF_TH_ALL		0xFF
 
