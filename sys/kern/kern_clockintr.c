@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.62 2023/10/17 00:04:02 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.63 2024/01/15 01:15:37 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -220,8 +220,8 @@ clockintr_dispatch(void *frame)
 
 		mtx_enter(&cq->cq_mtx);
 		cq->cq_running = NULL;
-		if (ISSET(cl->cl_flags, CLST_IGNORE_REQUEST)) {
-			CLR(cl->cl_flags, CLST_IGNORE_REQUEST);
+		if (ISSET(cq->cq_flags, CQ_IGNORE_REQUEST)) {
+			CLR(cq->cq_flags, CQ_IGNORE_REQUEST);
 			CLR(request->cr_flags, CR_RESCHEDULE);
 		}
 		if (ISSET(request->cr_flags, CR_RESCHEDULE)) {
@@ -333,7 +333,7 @@ clockintr_cancel(struct clockintr *cl)
 		}
 	}
 	if (cl == cq->cq_running)
-		SET(cl->cl_flags, CLST_IGNORE_REQUEST);
+		SET(cq->cq_flags, CQ_IGNORE_REQUEST);
 	mtx_leave(&cq->cq_mtx);
 }
 
@@ -384,7 +384,7 @@ clockintr_schedule_locked(struct clockintr *cl, uint64_t expiration)
 		}
 	}
 	if (cl == cq->cq_running)
-		SET(cl->cl_flags, CLST_IGNORE_REQUEST);
+		SET(cq->cq_flags, CQ_IGNORE_REQUEST);
 }
 
 void

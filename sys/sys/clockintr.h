@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.23 2023/10/17 00:04:02 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.24 2024/01/15 01:15:37 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -68,7 +68,6 @@ struct clockintr {
 };
 
 #define CLST_PENDING		0x00000001	/* scheduled to run */
-#define CLST_IGNORE_REQUEST	0x00000002	/* ignore callback requests */
 
 /*
  * Interface for callback rescheduling requests.
@@ -108,12 +107,13 @@ struct clockintr_queue {
 	struct clockintr_stat cq_stat;	/* [o] dispatch statistics */
 	volatile uint32_t cq_gen;	/* [o] cq_stat update generation */ 
 	volatile uint32_t cq_dispatch;	/* [o] dispatch is running */
-	uint32_t cq_flags;		/* [I] CQ_* flags; see below */
+	uint32_t cq_flags;		/* [m] CQ_* flags; see below */
 };
 
 #define CQ_INIT			0x00000001	/* clockintr_cpu_init() done */
 #define CQ_INTRCLOCK		0x00000002	/* intrclock installed */
-#define CQ_STATE_MASK		0x00000003
+#define CQ_IGNORE_REQUEST	0x00000004	/* ignore callback requests */
+#define CQ_STATE_MASK		0x00000007
 
 void clockintr_cpu_init(const struct intrclock *);
 int clockintr_dispatch(void *);
