@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.95 2023/09/19 11:35:30 claudio Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.96 2024/01/15 15:47:37 mvs Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -229,6 +229,26 @@ prfind(pid_t pid)
 		if (pr->ps_pid == pid)
 			return (pr);
 	return (NULL);
+}
+
+struct process *
+priterator(struct process *ps)
+{
+	struct process *nps;
+
+	KERNEL_ASSERT_LOCKED();
+
+	if (ps == NULL)
+		nps = LIST_FIRST(&allprocess);
+	else
+		nps = LIST_NEXT(ps, ps_list);
+
+	if (nps)
+		refcnt_take(&nps->ps_refcnt);
+	if (ps)
+		refcnt_rele_wake(&ps->ps_refcnt);
+
+	return nps;
 }
 
 /*
