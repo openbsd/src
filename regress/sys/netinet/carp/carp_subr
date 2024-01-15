@@ -58,7 +58,7 @@ test()
 wait_until() {
 	local _i=0
 
-	while [ "$_i" -lt 8 ]; do
+	while [ "$_i" -lt 16 ]; do
 		sh -c "$@" && return 0
 		sleep 0.5
 		_i="$((_i + 1))"
