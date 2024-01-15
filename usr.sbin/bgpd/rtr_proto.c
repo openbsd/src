@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.31 2024/01/11 15:38:05 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.32 2024/01/15 11:55:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -419,6 +419,7 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 {
 	struct rtr_header rh;
 	size_t len;
+	uint16_t errcode;
 
 	if (ibuf_get(hdr, &rh, sizeof(rh)) == -1)
 		fatal("%s: ibuf_get", __func__);
@@ -443,7 +444,14 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 			rtr_fsm(rs, RTR_EVNT_NEGOTIATION_DONE);
 			break;
 		case ERROR_REPORT:
-			/* version handled in rtr_parse_error() */
+			errcode = ntohs(rh.session_id);
+			if (errcode == UNSUPP_PROTOCOL_VERS ||
+			    errcode == NO_DATA_AVAILABLE) {
+				if (rh.version < rs->version) {
+					rs->prev_version = rs->version;
+					rs->version = rh.version;
+				}
+			}
 			break;
 		case SERIAL_NOTIFY:
 			/* ignore SERIAL_NOTIFY */
@@ -536,6 +544,10 @@ rtr_parse_notify(struct rtr_session *rs, struct ibuf *pdu)
 
 	if (ibuf_get(pdu, &notify, sizeof(notify)) == -1)
 		goto badlen;
+
+	/* set session_id if not yet happened */
+	if (rs->session_id == -1)
+		rs->session_id = ntohs(notify.hdr.session_id);
 
 	if (rtr_check_session_id(rs, rs->session_id, &notify.hdr, pdu) == -1)
 		return -1;
@@ -960,10 +972,6 @@ rtr_parse_error(struct rtr_session *rs, struct ibuf *pdu)
 		rtr_fsm(rs, RTR_EVNT_NO_DATA);
 		rv = 0;
 	} else if (errcode == UNSUPP_PROTOCOL_VERS) {
-		if (rh.version < rs->version) {
-			rs->prev_version = rs->version;
-			rs->version = rh.version;
-		}
 		rtr_fsm(rs, RTR_EVNT_UNSUPP_PROTO_VERSION);
 		rv = 0;
 	} else
@@ -1126,6 +1134,11 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 			timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
 			rtr_imsg_compose(IMSG_SOCKET_CONN, rs->id, 0, NULL, 0);
 			break;
+		case RTR_STATE_ESTABLISHED:
+			if (rs->session_id == -1)
+				rtr_send_reset_query(rs);
+			else
+				rtr_send_serial_query(rs);
 		default:
 			break;
 		}
