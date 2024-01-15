@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.381 2024/01/15 15:29:00 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.382 2024/01/15 21:37:58 jan Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -657,6 +657,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	    initiator);
 	msg->msg_msgid = betoh32(hdr->ike_msgid);
 	if (policy_lookup(env, msg, NULL, NULL, 0) != 0) {
+		log_debug("%s: no compatible policy found", __func__);
 		ikestat_inc(env, ikes_msg_rcvd_dropped);
 		return;
 	}
