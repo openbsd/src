@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.11 2023/05/29 08:13:35 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.12 2024/01/15 02:35:23 dv Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -200,11 +200,19 @@ virtio_mmio_set_status(struct virtio_softc *vsc, int status)
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
 	int old = 0;
 
-	if (status != 0)
+	if (status == 0) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_STATUS,
+		    0);
+		while (bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_MMIO_STATUS) != 0) {
+			CPU_BUSY_CYCLE();
+		}
+	} else  {
 		old = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-				       VIRTIO_MMIO_STATUS);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_STATUS,
-			  status|old);
+		    VIRTIO_MMIO_STATUS);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_STATUS,
+		    status|old);
+	}
 }
 
 int

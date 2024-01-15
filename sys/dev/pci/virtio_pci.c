@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.35 2023/07/07 10:23:39 patrick Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.36 2024/01/15 02:35:23 dv Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -282,15 +282,29 @@ virtio_pci_set_status(struct virtio_softc *vsc, int status)
 	int old = 0;
 
 	if (sc->sc_sc.sc_version_1) {
-		if (status != 0)
+		if (status == 0) {
+			CWRITE(sc, device_status, 0);
+			while (CREAD(sc, device_status) != 0) {
+				CPU_BUSY_CYCLE();
+			}
+		} else {
 			old = CREAD(sc, device_status);
-		CWRITE(sc, device_status, status|old);
+			CWRITE(sc, device_status, status|old);
+		}
 	} else {
-		if (status != 0)
+		if (status == 0) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_CONFIG_DEVICE_STATUS, status|old);
+			while (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_CONFIG_DEVICE_STATUS) != 0) {
+				CPU_BUSY_CYCLE();
+			}
+		} else {
 			old = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 			    VIRTIO_CONFIG_DEVICE_STATUS);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    VIRTIO_CONFIG_DEVICE_STATUS, status|old);
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    VIRTIO_CONFIG_DEVICE_STATUS, status|old);
+		}
 	}
 }
 
