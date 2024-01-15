@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.43 2024/01/10 05:06:00 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.44 2024/01/15 08:56:45 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -92,7 +92,7 @@
 
 #define BNXT_CP_PAGES		4
 
-#define BNXT_MAX_TX_SEGS	32	/* a bit much? */
+#define BNXT_MAX_TX_SEGS	31
 #define BNXT_TX_SLOTS(bs)	(bs->bs_map->dm_nsegs + 1)
 
 #define BNXT_HWRM_SHORT_REQ_LEN	sizeof(struct hwrm_short_input)
@@ -1395,8 +1395,9 @@ bnxt_start(struct ifqueue *ifq)
 		else
 			txflags = TX_BD_LONG_FLAGS_LHINT_GTE2K;
 		txflags |= TX_BD_LONG_TYPE_TX_BD_LONG |
-		    TX_BD_LONG_FLAGS_NO_CMPL |
-		    (BNXT_TX_SLOTS(bs) << TX_BD_LONG_FLAGS_BD_CNT_SFT);
+		    TX_BD_LONG_FLAGS_NO_CMPL;
+		txflags |= (BNXT_TX_SLOTS(bs) << TX_BD_LONG_FLAGS_BD_CNT_SFT) &
+		    TX_BD_LONG_FLAGS_BD_CNT_MASK;
 		if (map->dm_nsegs == 1)
 			txflags |= TX_BD_SHORT_FLAGS_PACKET_END;
 		txring[idx].flags_type = htole16(txflags);
