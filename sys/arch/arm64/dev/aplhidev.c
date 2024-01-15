@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.12 2023/07/02 21:44:04 bru Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.13 2024/01/15 13:27:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
@@ -62,6 +62,16 @@
 #define APLHIDEV_SET_MODE	0x0252
 #define  APLHIDEV_MODE_HID	0x00
 #define  APLHIDEV_MODE_RAW	0x01
+#define APLHIDEV_GET_DIMENSIONS	0xd932
+
+struct aplhidev_dim {
+	uint32_t width;
+	uint32_t height;
+	int16_t x_min;
+	int16_t y_min;
+	int16_t x_max;
+	int16_t y_max;
+};
 
 struct aplhidev_attach_args {
 	uint8_t	aa_reportid;
@@ -144,6 +154,14 @@ struct aplhidev_softc {
 	struct device		*sc_ms;
 	uint8_t			sc_tpdesc[APLHIDEV_DESC_MAX];
 	size_t			sc_tpdesclen;
+	uint8_t			sc_dimdesc[APLHIDEV_DESC_MAX];
+	size_t			sc_dimdesclen;
+	int			sc_x_min;
+	int			sc_x_max;
+	int			sc_y_min;
+	int			sc_y_max;
+	int			sc_h_res;
+	int			sc_v_res;
 };
 
 int	 aplhidev_match(struct device *, void *, void *);
@@ -161,6 +179,7 @@ void	aplhidev_get_info(struct aplhidev_softc *);
 void	aplhidev_get_descriptor(struct aplhidev_softc *, uint8_t);
 void	aplhidev_set_leds(struct aplhidev_softc *, uint8_t);
 void	aplhidev_set_mode(struct aplhidev_softc *, uint8_t);
+void	aplhidev_get_dimensions(struct aplhidev_softc *);
 
 int	aplhidev_intr(void *);
 void	aplkbd_intr(struct device *, uint8_t *, size_t);
@@ -183,6 +202,7 @@ aplhidev_attach(struct device *parent, struct device *self, void *aux)
 	struct aplhidev_softc *sc = (struct aplhidev_softc *)self;
 	struct spi_attach_args *sa = aux;
 	struct aplhidev_attach_args aa;
+	struct aplhidev_dim dim;
 	int retry;
 
 	sc->sc_spi_tag = sa->sa_tag;
@@ -248,7 +268,25 @@ aplhidev_attach(struct device *parent, struct device *self, void *aux)
 			break;
 	}
 
+	aplhidev_get_dimensions(sc);
+	for (retry = 10; retry > 0; retry--) {
+		aplhidev_intr(sc);
+		delay(1000);
+		if (sc->sc_dimdesclen > 0)
+			break;
+	}
+
 	printf("\n");
+
+	if (sc->sc_dimdesclen == sizeof(dim) + 1) {
+		memcpy(&dim, &sc->sc_dimdesc[1], sizeof(dim));
+		sc->sc_x_min = dim.x_min;
+		sc->sc_x_max = dim.x_max;
+		sc->sc_y_min = dim.y_min;
+		sc->sc_y_max = dim.y_max;
+		sc->sc_h_res = (100 * (dim.x_max - dim.x_min)) / dim.width;
+		sc->sc_v_res = (100 * (dim.y_max - dim.y_min)) / dim.height;
+	}
 
 	if (sc->sc_kbddesclen > 0) {
 		aa.aa_reportid = APLHIDEV_KBD_DEVICE;
@@ -406,6 +444,39 @@ aplhidev_set_mode(struct aplhidev_softc *sc, uint8_t mode)
 	delay(1000);
 }
 
+void
+aplhidev_get_dimensions(struct aplhidev_softc *sc)
+{
+	struct aplhidev_spi_packet packet;
+	struct aplhidev_get_desc *msg;
+	struct aplhidev_spi_status status;
+
+	memset(&packet, 0, sizeof(packet));
+	packet.flags = APLHIDEV_WRITE_PACKET;
+	packet.device = APLHIDEV_TP_DEVICE;
+	packet.len = sizeof(*msg);
+
+	msg = (void *)&packet.data[0];
+	msg->hdr.type = APLHIDEV_GET_DIMENSIONS;
+	msg->hdr.device = 0;
+	msg->hdr.msgid = sc->sc_msgid++;
+	msg->hdr.cmdlen = 0;
+	msg->hdr.rsplen = APLHIDEV_DESC_MAX;
+	msg->crc = crc16(0, (void *)msg, sizeof(*msg) - 2);
+
+	packet.crc = crc16(0, (void *)&packet, sizeof(packet) - 2);
+
+	spi_acquire_bus(sc->sc_spi_tag, 0);
+	spi_config(sc->sc_spi_tag, &sc->sc_spi_conf);
+	spi_transfer(sc->sc_spi_tag, (char *)&packet, NULL, sizeof(packet),
+	    SPI_KEEP_CS);
+	delay(100);
+	spi_read(sc->sc_spi_tag, (char *)&status, sizeof(status));
+	spi_release_bus(sc->sc_spi_tag, 0);
+
+	delay(1000);
+}
+
 int
 aplhidev_intr(void *arg)
 {
@@ -474,6 +545,13 @@ aplhidev_intr(void *arg)
 	    packet.device == APLHIDEV_TP_DEVICE &&
 	    hdr->type == APLHIDEV_SET_MODE) {
 		sc->sc_mode = APLHIDEV_MODE_RAW;
+		return 1;
+	}
+	if (packet.flags == APLHIDEV_WRITE_PACKET &&
+	    packet.device == APLHIDEV_TP_DEVICE &&
+	    hdr->type == APLHIDEV_GET_DIMENSIONS) {
+		memcpy(sc->sc_dimdesc, &packet.data[8], hdr->cmdlen);
+		sc->sc_dimdesclen = hdr->cmdlen;
 		return 1;
 	}
 
@@ -688,17 +766,18 @@ static struct wsmouse_param aplms_wsmousecfg[] = {
 };
 
 struct aplms_softc {
-	struct device	sc_dev;
-	struct device	*sc_wsmousedev;
+	struct device		sc_dev;
+	struct aplhidev_softc	*sc_hidev;
+	struct device		*sc_wsmousedev;
 
-	int		sc_enabled;
+	int			sc_enabled;
 
-	int		tp_offset;
-	int		tp_fingerpad;
+	int			tp_offset;
+	int			tp_fingerpad;
 
-	struct mtpoint	frame[UBCMTP_MAX_FINGERS];
-	int		contacts;
-	int		btn;
+	struct mtpoint		frame[UBCMTP_MAX_FINGERS];
+	int			contacts;
+	int			btn;
 };
 
 int	aplms_enable(void *);
@@ -738,6 +817,8 @@ aplms_attach(struct device *parent, struct device *self, void *aux)
 	struct aplms_softc *sc = (struct aplms_softc *)self;
 	struct wsmousedev_attach_args aa;
 
+	sc->sc_hidev = (struct aplhidev_softc *)parent;
+
 	printf("\n");
 
 	sc->tp_offset = UBCMTP_TYPE4_TPOFF;
@@ -756,13 +837,14 @@ aplms_configure(struct aplms_softc *sc)
 {
 	struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
 
-	/* The values below are for the MacBookPro17,1 */
 	hw->type = WSMOUSE_TYPE_TOUCHPAD;
 	hw->hw_type = WSMOUSEHW_CLICKPAD;
-	hw->x_min = -6046;
-	hw->x_max = 6536;
-	hw->y_min = -164;
-	hw->y_max = 7439;
+	hw->x_min = sc->sc_hidev->sc_x_min;
+	hw->x_max = sc->sc_hidev->sc_x_max;
+	hw->y_min = sc->sc_hidev->sc_y_min;
+	hw->y_max = sc->sc_hidev->sc_y_max;
+	hw->h_res = sc->sc_hidev->sc_h_res;
+	hw->v_res = sc->sc_hidev->sc_v_res;
 	hw->mt_slots = UBCMTP_MAX_FINGERS;
 	hw->flags = WSMOUSEHW_MT_TRACKING;
 
@@ -846,8 +928,8 @@ aplms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wsmc->miny = hw->y_min;
 		wsmc->maxy = hw->y_max;
 		wsmc->swapxy = 0;
-		wsmc->resx = 0;
-		wsmc->resy = 0;
+		wsmc->resx = hw->h_res;
+		wsmc->resy = hw->v_res;
 		break;
 
 	case WSMOUSEIO_SETMODE:
