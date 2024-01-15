@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.613 2023/12/14 13:52:37 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.614 2024/01/15 15:44:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,7 +56,7 @@ void		 rde_update_withdraw(struct rde_peer *, uint32_t,
 		    struct bgpd_addr *, uint8_t);
 int		 rde_attr_parse(u_char *, uint16_t, struct rde_peer *,
 		    struct filterstate *, struct mpattr *);
-int		 rde_attr_add(struct filterstate *, u_char *, uint16_t);
+int		 rde_attr_add(struct filterstate *, struct ibuf *);
 uint8_t		 rde_attr_missing(struct rde_aspath *, int, uint16_t);
 int		 rde_get_mp_nexthop(u_char *, uint16_t, uint8_t,
 		    struct rde_peer *, struct filterstate *);
@@ -364,21 +364,22 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 {
 	static struct flowspec	*curflow;
 	struct imsg		 imsg;
+	struct ibuf		 ibuf;
 	struct rde_peer_stats	 stats;
 	struct ctl_show_set	 cset;
 	struct ctl_show_rib	 csr;
 	struct ctl_show_rib_request	req;
 	struct session_up	 sup;
+	struct peer_config	 pconf;
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp;
 	struct filter_set	*s;
 	struct as_set		*aset;
 	struct rde_prefixset	*pset;
-	uint8_t			*asdata;
 	ssize_t			 n;
-	size_t			 aslen;
+	uint32_t		 peerid;
+	pid_t			 pid;
 	int			 verbose;
-	uint16_t		 len;
 	uint8_t			 aid;
 
 	while (imsgbuf) {
@@ -387,43 +388,43 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		peerid = imsg_get_id(&imsg);
+		pid = imsg_get_pid(&imsg);
+		switch (imsg_get_type(&imsg)) {
 		case IMSG_UPDATE:
 		case IMSG_REFRESH:
-			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+			if ((peer = peer_get(peerid)) == NULL) {
 				log_warnx("rde_dispatch: unknown peer id %d",
-				    imsg.hdr.peerid);
+				    peerid);
 				break;
 			}
 			peer_imsg_push(peer, &imsg);
 			break;
 		case IMSG_SESSION_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct peer_config))
+			if (imsg_get_data(&imsg, &pconf, sizeof(pconf)) == -1)
 				fatalx("incorrect size of session request");
-			peer = peer_add(imsg.hdr.peerid, imsg.data, out_rules);
+			peer = peer_add(peerid, &pconf, out_rules);
 			/* make sure rde_eval_all is on if needed. */
 			if (peer->conf.flags & PEERFLAG_EVALUATE_ALL)
 				rde_eval_all = 1;
 			break;
 		case IMSG_SESSION_UP:
-			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+			if ((peer = peer_get(peerid)) == NULL) {
 				log_warnx("%s: unknown peer id %d",
-				    "IMSG_SESSION_UP", imsg.hdr.peerid);
+				    "IMSG_SESSION_UP", peerid);
 				break;
 			}
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
+			if (imsg_get_data(&imsg, &sup, sizeof(sup)) == -1)
 				fatalx("incorrect size of session request");
-			memcpy(&sup, imsg.data, sizeof(sup));
 			peer_up(peer, &sup);
 			/* make sure rde_eval_all is on if needed. */
 			if (peer_has_add_path(peer, AID_UNSPEC, CAPA_AP_SEND))
 				rde_eval_all = 1;
 			break;
 		case IMSG_SESSION_DOWN:
-			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+			if ((peer = peer_get(peerid)) == NULL) {
 				log_warnx("%s: unknown peer id %d",
-				    "IMSG_SESSION_DOWN", imsg.hdr.peerid);
+				    "IMSG_SESSION_DOWN", peerid);
 				break;
 			}
 			peer_down(peer, NULL);
@@ -432,26 +433,25 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 		case IMSG_SESSION_NOGRACE:
 		case IMSG_SESSION_FLUSH:
 		case IMSG_SESSION_RESTARTED:
-			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+			if ((peer = peer_get(peerid)) == NULL) {
 				log_warnx("%s: unknown peer id %d",
-				    "graceful restart", imsg.hdr.peerid);
+				    "graceful restart", peerid);
 				break;
 			}
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
+			if (imsg_get_data(&imsg, &aid, sizeof(aid)) == -1) {
 				log_warnx("%s: wrong imsg len", __func__);
 				break;
 			}
-			memcpy(&aid, imsg.data, sizeof(aid));
 			if (aid >= AID_MAX) {
 				log_warnx("%s: bad AID", __func__);
 				break;
 			}
 
-			switch (imsg.hdr.type) {
+			switch (imsg_get_type(&imsg)) {
 			case IMSG_SESSION_STALE:
 			case IMSG_SESSION_NOGRACE:
 				peer_stale(peer, aid,
-				    imsg.hdr.type == IMSG_SESSION_NOGRACE);
+				    imsg_get_type(&imsg) == IMSG_SESSION_NOGRACE);
 				break;
 			case IMSG_SESSION_FLUSH:
 				peer_flush(peer, aid, peer->staletime[aid]);
@@ -464,12 +464,11 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 			}
 			break;
 		case IMSG_NETWORK_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct network_config)) {
+			if (imsg_get_data(&imsg, &netconf_s,
+			    sizeof(netconf_s)) == -1) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
 			TAILQ_INIT(&netconf_s.attrset);
 			rde_filterstate_init(&netconf_state);
 			asp = &netconf_state.aspath;
@@ -480,16 +479,16 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 			    F_ANN_DYNAMIC;
 			break;
 		case IMSG_NETWORK_ASPATH:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE <
-			    sizeof(csr)) {
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1) {
+				log_warnx("rde_dispatch: bad imsg");
+				memset(&netconf_s, 0, sizeof(netconf_s));
+				break;
+			}
+			if (ibuf_get(&ibuf, &csr, sizeof(csr)) == -1) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				memset(&netconf_s, 0, sizeof(netconf_s));
 				break;
 			}
-			aslen = imsg.hdr.len - IMSG_HEADER_SIZE - sizeof(csr);
-			asdata = imsg.data;
-			asdata += sizeof(struct ctl_show_rib);
-			memcpy(&csr, imsg.data, sizeof(csr));
 			asp = &netconf_state.aspath;
 			asp->lpref = csr.local_pref;
 			asp->med = csr.med;
@@ -498,17 +497,13 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 			asp->origin = csr.origin;
 			asp->flags |= F_PREFIX_ANNOUNCED | F_ANN_DYNAMIC;
 			aspath_put(asp->aspath);
-			asp->aspath = aspath_get(asdata, aslen);
+			asp->aspath = aspath_get(ibuf_data(&ibuf),
+			    ibuf_size(&ibuf));
 			break;
 		case IMSG_NETWORK_ATTR:
-			if (imsg.hdr.len <= IMSG_HEADER_SIZE) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			/* parse optional path attributes */
-			len = imsg.hdr.len - IMSG_HEADER_SIZE;
-			if (rde_attr_add(&netconf_state, imsg.data,
-			    len) == -1) {
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    rde_attr_add(&netconf_state, &ibuf) == -1) {
 				log_warnx("rde_dispatch: bad network "
 				    "attribute");
 				rde_filterstate_clean(&netconf_state);
@@ -517,10 +512,6 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 			}
 			break;
 		case IMSG_NETWORK_DONE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			TAILQ_CONCAT(&netconf_s.attrset, &session_set, entry);
 			switch (netconf_s.prefix.aid) {
 			case AID_INET:
@@ -544,12 +535,11 @@ badnet:
 			rde_filterstate_clean(&netconf_state);
 			break;
 		case IMSG_NETWORK_REMOVE:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct network_config)) {
+			if (imsg_get_data(&imsg, &netconf_s,
+			    sizeof(netconf_s)) == -1) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
 			TAILQ_INIT(&netconf_s.attrset);
 
 			switch (netconf_s.prefix.aid) {
@@ -570,32 +560,27 @@ badnetdel:
 			}
 			break;
 		case IMSG_NETWORK_FLUSH:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			if (rib_dump_new(RIB_ADJ_IN, AID_UNSPEC,
 			    RDE_RUNNER_ROUNDS, NULL, network_flush_upcall,
 			    NULL, NULL) == -1)
 				log_warn("rde_dispatch: IMSG_NETWORK_FLUSH");
 			break;
 		case IMSG_FLOWSPEC_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE <= FLOWSPEC_SIZE) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			if (curflow != NULL) {
 				log_warnx("rde_dispatch: "
 				    "unexpected flowspec add");
 				break;
 			}
-			curflow = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    ibuf_size(&ibuf) <= FLOWSPEC_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			curflow = malloc(ibuf_size(&ibuf));
 			if (curflow == NULL)
 				fatal(NULL);
-			memcpy(curflow, imsg.data,
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-			if (curflow->len + FLOWSPEC_SIZE !=
-			    imsg.hdr.len - IMSG_HEADER_SIZE) {
+			memcpy(curflow, ibuf_data(&ibuf), ibuf_size(&ibuf));
+			if (curflow->len + FLOWSPEC_SIZE != ibuf_size(&ibuf)) {
 				free(curflow);
 				curflow = NULL;
 				log_warnx("rde_dispatch: wrong flowspec len");
@@ -630,22 +615,21 @@ badnetdel:
 			curflow = NULL;
 			break;
 		case IMSG_FLOWSPEC_REMOVE:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE <= FLOWSPEC_SIZE) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			if (curflow != NULL) {
 				log_warnx("rde_dispatch: "
 				    "unexpected flowspec remove");
 				break;
 			}
-			curflow = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    ibuf_size(&ibuf) <= FLOWSPEC_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			curflow = malloc(ibuf_size(&ibuf));
 			if (curflow == NULL)
 				fatal(NULL);
-			memcpy(curflow, imsg.data,
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-			if (curflow->len + FLOWSPEC_SIZE !=
-			    imsg.hdr.len - IMSG_HEADER_SIZE) {
+			memcpy(curflow, ibuf_data(&ibuf), ibuf_size(&ibuf));
+			if (curflow->len + FLOWSPEC_SIZE != ibuf_size(&ibuf)) {
 				free(curflow);
 				curflow = NULL;
 				log_warnx("rde_dispatch: wrong flowspec len");
@@ -663,22 +647,18 @@ badnetdel:
 			curflow = NULL;
 			break;
 		case IMSG_FLOWSPEC_FLUSH:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			prefix_flowspec_dump(AID_UNSPEC, NULL,
 			    flowspec_flush_upcall, NULL);
 			break;
 		case IMSG_FILTER_SET:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct filter_set)) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
-			memcpy(s, imsg.data, sizeof(struct filter_set));
+			if (imsg_get_data(&imsg, s, sizeof(struct filter_set))
+			    == -1) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				free(s);
+				break;
+			}
 			if (s->type == ACTION_SET_NEXTHOP) {
 				s->action.nh_ref =
 				    nexthop_get(&s->action.nexthop);
@@ -689,39 +669,32 @@ badnetdel:
 		case IMSG_CTL_SHOW_NETWORK:
 		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_SHOW_RIB_PREFIX:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
+			if (imsg_get_data(&imsg, &req, sizeof(req)) == -1) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&req, imsg.data, sizeof(req));
-			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
+			rde_dump_ctx_new(&req, pid, imsg_get_type(&imsg));
 			break;
 		case IMSG_CTL_SHOW_FLOWSPEC:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
+			if (imsg_get_data(&imsg, &req, sizeof(req)) == -1) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&req, imsg.data, sizeof(req));
-			prefix_flowspec_dump(req.aid, &imsg.hdr.pid,
+			prefix_flowspec_dump(req.aid, &pid,
 			    flowspec_dump_upcall, flowspec_dump_done);
 			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != 0) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
-			peer = peer_get(imsg.hdr.peerid);
+			peer = peer_get(peerid);
 			if (peer != NULL)
 				memcpy(&stats, &peer->stats, sizeof(stats));
 			else
 				memset(&stats, 0, sizeof(stats));
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NEIGHBOR,
-			    imsg.hdr.peerid, imsg.hdr.pid, -1,
-			    &stats, sizeof(stats));
+			    peerid, pid, -1, &stats, sizeof(stats));
 			break;
 		case IMSG_CTL_SHOW_RIB_MEM:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
-			    imsg.hdr.pid, -1, &rdemem, sizeof(rdemem));
+			    pid, -1, &rdemem, sizeof(rdemem));
 			break;
 		case IMSG_CTL_SHOW_SET:
 			/* first roa set */
@@ -733,7 +706,7 @@ badnetdel:
 			cset.v4_cnt = pset->th.v4_cnt;
 			cset.v6_cnt = pset->th.v6_cnt;
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_SET, 0,
-			    imsg.hdr.pid, -1, &cset, sizeof(cset));
+			    pid, -1, &cset, sizeof(cset));
 
 			/* then aspa set */
 			memset(&cset, 0, sizeof(cset));
@@ -741,7 +714,7 @@ badnetdel:
 			strlcpy(cset.name, "RPKI ASPA", sizeof(cset.name));
 			aspa_table_stats(rde_aspa, &cset);
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_SET, 0,
-			    imsg.hdr.pid, -1, &cset, sizeof(cset));
+			    pid, -1, &cset, sizeof(cset));
 
 			SIMPLEQ_FOREACH(aset, &conf->as_sets, entry) {
 				memset(&cset, 0, sizeof(cset));
@@ -751,7 +724,7 @@ badnetdel:
 				cset.lastchange = aset->lastchange;
 				cset.as_cnt = set_nmemb(aset->set);
 				imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_SET, 0,
-				    imsg.hdr.pid, -1, &cset, sizeof(cset));
+				    pid, -1, &cset, sizeof(cset));
 			}
 			SIMPLEQ_FOREACH(pset, &conf->rde_prefixsets, entry) {
 				memset(&cset, 0, sizeof(cset));
@@ -762,7 +735,7 @@ badnetdel:
 				cset.v4_cnt = pset->th.v4_cnt;
 				cset.v6_cnt = pset->th.v6_cnt;
 				imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_SET, 0,
-				    imsg.hdr.pid, -1, &cset, sizeof(cset));
+				    pid, -1, &cset, sizeof(cset));
 			}
 			SIMPLEQ_FOREACH(pset, &conf->rde_originsets, entry) {
 				memset(&cset, 0, sizeof(cset));
@@ -773,39 +746,43 @@ badnetdel:
 				cset.v4_cnt = pset->th.v4_cnt;
 				cset.v6_cnt = pset->th.v6_cnt;
 				imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_SET, 0,
-				    imsg.hdr.pid, -1, &cset, sizeof(cset));
+				    pid, -1, &cset, sizeof(cset));
 			}
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, imsg.hdr.pid,
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, pid,
 			    -1, NULL, 0);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
 			/* already checked by SE */
-			memcpy(&verbose, imsg.data, sizeof(verbose));
+			if (imsg_get_data(&imsg, &verbose, sizeof(verbose)) ==
+			    -1) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
 			log_setverbose(verbose);
 			break;
 		case IMSG_CTL_END:
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, imsg.hdr.pid,
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, pid,
 			    -1, NULL, 0);
 			break;
 		case IMSG_CTL_TERMINATE:
-			rde_dump_ctx_terminate(imsg.hdr.pid);
+			rde_dump_ctx_terminate(pid);
 			break;
 		case IMSG_XON:
-			if (imsg.hdr.peerid) {
-				peer = peer_get(imsg.hdr.peerid);
+			if (peerid) {
+				peer = peer_get(peerid);
 				if (peer)
 					peer->throttled = 0;
 			} else {
-				rde_dump_ctx_throttle(imsg.hdr.pid, 0);
+				rde_dump_ctx_throttle(pid, 0);
 			}
 			break;
 		case IMSG_XOFF:
-			if (imsg.hdr.peerid) {
-				peer = peer_get(imsg.hdr.peerid);
+			if (peerid) {
+				peer = peer_get(peerid);
 				if (peer)
 					peer->throttled = 1;
 			} else {
-				rde_dump_ctx_throttle(imsg.hdr.pid, 1);
+				rde_dump_ctx_throttle(pid, 1);
 			}
 			break;
 		case IMSG_RECONF_DRAIN:
@@ -827,10 +804,15 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 	static struct l3vpn	*vpn;
 	static struct flowspec	*curflow;
 	struct imsg		 imsg;
-	struct mrt		 xmrt;
-	struct roa		 roa;
-	struct rde_rib		 rr;
+	struct ibuf		 ibuf;
+	struct bgpd_config	 tconf;
 	struct filterstate	 state;
+	struct kroute_nexthop	 knext;
+	struct mrt		 xmrt;
+	struct prefixset_item	 psi;
+	struct rde_rib		 rr;
+	struct roa		 roa;
+	char			 name[SET_NAME_LEN];
 	struct imsgbuf		*i;
 	struct filter_head	*nr;
 	struct filter_rule	*r;
@@ -838,8 +820,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 	struct rib		*rib;
 	struct rde_prefixset	*ps;
 	struct rde_aspath	*asp;
-	struct prefixset_item	 psi;
-	char			*name;
 	size_t			 nmemb;
 	int			 n, fd, rv;
 	uint16_t		 rid;
@@ -850,7 +830,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		switch (imsg_get_type(&imsg)) {
 		case IMSG_SOCKET_CONN:
 		case IMSG_SOCKET_CONN_CTL:
 		case IMSG_SOCKET_CONN_RTR:
@@ -862,7 +842,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			if ((i = malloc(sizeof(struct imsgbuf))) == NULL)
 				fatal(NULL);
 			imsg_init(i, fd);
-			switch (imsg.hdr.type) {
+			switch (imsg_get_type(&imsg)) {
 			case IMSG_SOCKET_CONN:
 				if (ibuf_se) {
 					log_warnx("Unexpected imsg connection "
@@ -893,12 +873,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			}
 			break;
 		case IMSG_NETWORK_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct network_config)) {
+			if (imsg_get_data(&imsg, &netconf_p,
+			    sizeof(netconf_p)) == -1) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
 			TAILQ_INIT(&netconf_p.attrset);
 			break;
 		case IMSG_NETWORK_DONE:
@@ -915,32 +894,30 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			rde_filterstate_clean(&state);
 			break;
 		case IMSG_NETWORK_REMOVE:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct network_config)) {
+			if (imsg_get_data(&imsg, &netconf_p,
+			    sizeof(netconf_p)) == -1) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
 			TAILQ_INIT(&netconf_p.attrset);
 			network_delete(&netconf_p);
 			break;
 		case IMSG_FLOWSPEC_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE <= FLOWSPEC_SIZE) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			if (curflow != NULL) {
 				log_warnx("rde_dispatch: "
 				    "unexpected flowspec add");
 				break;
 			}
-			curflow = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    ibuf_size(&ibuf) <= FLOWSPEC_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			curflow = malloc(ibuf_size(&ibuf));
 			if (curflow == NULL)
 				fatal(NULL);
-			memcpy(curflow, imsg.data,
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-			if (curflow->len + FLOWSPEC_SIZE !=
-			    imsg.hdr.len - IMSG_HEADER_SIZE) {
+			memcpy(curflow, ibuf_data(&ibuf), ibuf_size(&ibuf));
+			if (curflow->len + FLOWSPEC_SIZE != ibuf_size(&ibuf)) {
 				free(curflow);
 				curflow = NULL;
 				log_warnx("rde_dispatch: wrong flowspec len");
@@ -974,22 +951,21 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			curflow = NULL;
 			break;
 		case IMSG_FLOWSPEC_REMOVE:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE <= FLOWSPEC_SIZE) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
 			if (curflow != NULL) {
 				log_warnx("rde_dispatch: "
 				    "unexpected flowspec remove");
 				break;
 			}
-			curflow = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    ibuf_size(&ibuf) <= FLOWSPEC_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			curflow = malloc(ibuf_size(&ibuf));
 			if (curflow == NULL)
 				fatal(NULL);
-			memcpy(curflow, imsg.data,
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
-			if (curflow->len + FLOWSPEC_SIZE !=
-			    imsg.hdr.len - IMSG_HEADER_SIZE) {
+			memcpy(curflow, ibuf_data(&ibuf), ibuf_size(&ibuf));
+			if (curflow->len + FLOWSPEC_SIZE != ibuf_size(&ibuf)) {
 				free(curflow);
 				curflow = NULL;
 				log_warnx("rde_dispatch: wrong flowspec len");
@@ -1007,15 +983,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			curflow = NULL;
 			break;
 		case IMSG_RECONF_CONF:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct bgpd_config))
+			if (imsg_get_data(&imsg, &tconf, sizeof(tconf)) == -1)
 				fatalx("IMSG_RECONF_CONF bad len");
 			out_rules_tmp = calloc(1, sizeof(struct filter_head));
 			if (out_rules_tmp == NULL)
 				fatal(NULL);
 			TAILQ_INIT(out_rules_tmp);
 			nconf = new_config();
-			copy_config(nconf, imsg.data);
+			copy_config(nconf, &tconf);
 
 			for (rid = 0; rid < rib_size; rid++) {
 				if ((rib = rib_byid(rid)) == NULL)
@@ -1025,10 +1000,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			}
 			break;
 		case IMSG_RECONF_RIB:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct rde_rib))
+			if (imsg_get_data(&imsg, &rr, sizeof(rr)) == -1)
 				fatalx("IMSG_RECONF_RIB bad len");
-			memcpy(&rr, imsg.data, sizeof(rr));
 			rib = rib_byid(rib_find(rr.name));
 			if (rib == NULL) {
 				rib = rib_new(rr.name, rr.rtableid, rr.flags);
@@ -1044,12 +1017,10 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			}
 			break;
 		case IMSG_RECONF_FILTER:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct filter_rule))
-				fatalx("IMSG_RECONF_FILTER bad len");
 			if ((r = malloc(sizeof(struct filter_rule))) == NULL)
 				fatal(NULL);
-			memcpy(r, imsg.data, sizeof(struct filter_rule));
+			if (imsg_get_data(&imsg, r, sizeof(*r)) == -1)
+				fatalx("IMSG_RECONF_FILTER bad len");
 			if (r->match.prefixset.name[0] != '\0') {
 				r->match.prefixset.ps =
 				    rde_find_prefixset(r->match.prefixset.name,
@@ -1106,14 +1077,13 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			break;
 		case IMSG_RECONF_PREFIX_SET:
 		case IMSG_RECONF_ORIGIN_SET:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(ps->name))
-				fatalx("IMSG_RECONF_PREFIX_SET bad len");
 			ps = calloc(1, sizeof(struct rde_prefixset));
 			if (ps == NULL)
 				fatal(NULL);
-			memcpy(ps->name, imsg.data, sizeof(ps->name));
-			if (imsg.hdr.type == IMSG_RECONF_ORIGIN_SET) {
+			if (imsg_get_data(&imsg, ps->name, sizeof(ps->name)) ==
+			    -1)
+				fatalx("IMSG_RECONF_PREFIX_SET bad len");
+			if (imsg_get_type(&imsg) == IMSG_RECONF_ORIGIN_SET) {
 				SIMPLEQ_INSERT_TAIL(&nconf->rde_originsets, ps,
 				    entry);
 			} else {
@@ -1123,15 +1093,13 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			last_prefixset = ps;
 			break;
 		case IMSG_RECONF_ROA_ITEM:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(roa))
+			if (imsg_get_data(&imsg, &roa, sizeof(roa)) == -1)
 				fatalx("IMSG_RECONF_ROA_ITEM bad len");
-			memcpy(&roa, imsg.data, sizeof(roa));
 			rv = trie_roa_add(&last_prefixset->th, &roa);
 			break;
 		case IMSG_RECONF_PREFIX_SET_ITEM:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(psi))
+			if (imsg_get_data(&imsg, &psi, sizeof(psi)) == -1)
 				fatalx("IMSG_RECONF_PREFIX_SET_ITEM bad len");
-			memcpy(&psi, imsg.data, sizeof(psi));
 			if (last_prefixset == NULL)
 				fatalx("King Bula has no prefixset");
 			rv = trie_add(&last_prefixset->th,
@@ -1143,20 +1111,21 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				    psi.p.len);
 			break;
 		case IMSG_RECONF_AS_SET:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(nmemb) + SET_NAME_LEN)
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    ibuf_get(&ibuf, &nmemb, sizeof(nmemb)) == -1 ||
+			    ibuf_get(&ibuf, name, sizeof(name)) == -1)
 				fatalx("IMSG_RECONF_AS_SET bad len");
-			memcpy(&nmemb, imsg.data, sizeof(nmemb));
-			name = (char *)imsg.data + sizeof(nmemb);
 			if (as_sets_lookup(&nconf->as_sets, name) != NULL)
 				fatalx("duplicate as-set %s", name);
 			last_as_set = as_sets_new(&nconf->as_sets, name, nmemb,
 			    sizeof(uint32_t));
 			break;
 		case IMSG_RECONF_AS_SET_ITEMS:
-			nmemb = imsg.hdr.len - IMSG_HEADER_SIZE;
-			nmemb /= sizeof(uint32_t);
-			if (set_add(last_as_set->set, imsg.data, nmemb) != 0)
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1)
+				fatalx("IMSG_RECONF_AS_SET_ITEMS bad len");
+			nmemb = ibuf_size(&ibuf) / sizeof(uint32_t);
+			if (set_add(last_as_set->set, ibuf_data(&ibuf),
+			    nmemb) != 0)
 				fatal(NULL);
 			break;
 		case IMSG_RECONF_AS_SET_DONE:
@@ -1164,12 +1133,10 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			last_as_set = NULL;
 			break;
 		case IMSG_RECONF_VPN:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct l3vpn))
-				fatalx("IMSG_RECONF_VPN bad len");
-			if ((vpn = malloc(sizeof(struct l3vpn))) == NULL)
+			if ((vpn = malloc(sizeof(*vpn))) == NULL)
 				fatal(NULL);
-			memcpy(vpn, imsg.data, sizeof(struct l3vpn));
+			if (imsg_get_data(&imsg, vpn, sizeof(*vpn)) == -1)
+				fatalx("IMSG_RECONF_VPN bad len");
 			TAILQ_INIT(&vpn->import);
 			TAILQ_INIT(&vpn->export);
 			TAILQ_INIT(&vpn->net_l);
@@ -1205,15 +1172,15 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			rde_reload_done();
 			break;
 		case IMSG_NEXTHOP_UPDATE:
-			nexthop_update(imsg.data);
+			if (imsg_get_data(&imsg, &knext, sizeof(knext)) == -1)
+				fatalx("IMSG_NEXTHOP_UPDATE bad len");
+			nexthop_update(&knext);
 			break;
 		case IMSG_FILTER_SET:
-			if (imsg.hdr.len > IMSG_HEADER_SIZE +
-			    sizeof(struct filter_set))
-				fatalx("IMSG_FILTER_SET bad len");
-			if ((s = malloc(sizeof(struct filter_set))) == NULL)
+			if ((s = malloc(sizeof(*s))) == NULL)
 				fatal(NULL);
-			memcpy(s, imsg.data, sizeof(struct filter_set));
+			if (imsg_get_data(&imsg, s, sizeof(*s)) == -1)
+				fatalx("IMSG_FILTER_SET bad len");
 			if (s->type == ACTION_SET_NEXTHOP) {
 				s->action.nh_ref =
 				    nexthop_get(&s->action.nexthop);
@@ -1223,19 +1190,18 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:
-			if (imsg.hdr.len > IMSG_HEADER_SIZE +
-			    sizeof(struct mrt)) {
+			if (imsg_get_data(&imsg, &xmrt, sizeof(xmrt)) == -1) {
 				log_warnx("wrong imsg len");
 				break;
 			}
-			memcpy(&xmrt, imsg.data, sizeof(xmrt));
 			if ((fd = imsg_get_fd(&imsg)) == -1)
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
 			else if (xmrt.type == MRT_TABLE_DUMP ||
 			    xmrt.type == MRT_TABLE_DUMP_MP ||
 			    xmrt.type == MRT_TABLE_DUMP_V2) {
-				rde_dump_mrt_new(&xmrt, imsg.hdr.pid, fd);
+				rde_dump_mrt_new(&xmrt, imsg_get_pid(&imsg),
+				    fd);
 			} else
 				close(fd);
 			break;
@@ -1243,7 +1209,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			/* ignore end message because a dump is atomic */
 			break;
 		default:
-			fatalx("unhandled IMSG %u", imsg.hdr.type);
+			fatalx("unhandled IMSG %u", imsg_get_type(&imsg));
 		}
 		imsg_free(&imsg);
 	}
@@ -1264,16 +1230,14 @@ rde_dispatch_imsg_rtr(struct imsgbuf *imsgbuf)
 		if (n == 0)
 			break;
 
-		switch (imsg.hdr.type) {
+		switch (imsg_get_type(&imsg)) {
 		case IMSG_RECONF_ROA_SET:
 			/* start of update */
 			trie_free(&roa_new.th);	/* clear new roa */
 			break;
 		case IMSG_RECONF_ROA_ITEM:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(roa))
+			if (imsg_get_data(&imsg, &roa, sizeof(roa)) == -1)
 				fatalx("IMSG_RECONF_ROA_ITEM bad len");
-			memcpy(&roa, imsg.data, sizeof(roa));
 			if (trie_roa_add(&roa_new.th, &roa) != 0) {
 				struct bgpd_addr p = {
 					.aid = roa.aid,
@@ -1284,11 +1248,10 @@ rde_dispatch_imsg_rtr(struct imsgbuf *imsgbuf)
 			}
 			break;
 		case IMSG_RECONF_ASPA_PREP:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(ap))
+			if (imsg_get_data(&imsg, &ap, sizeof(ap)) == -1)
 				fatalx("IMSG_RECONF_ASPA_PREP bad len");
 			if (aspa_new)
 				fatalx("unexpected IMSG_RECONF_ASPA_PREP");
-			memcpy(&ap, imsg.data, sizeof(ap));
 			aspa_new = aspa_table_prep(ap.entries, ap.datasize);
 			break;
 		case IMSG_RECONF_ASPA:
@@ -1296,28 +1259,24 @@ rde_dispatch_imsg_rtr(struct imsgbuf *imsgbuf)
 				fatalx("unexpected IMSG_RECONF_ASPA");
 			if (aspa != NULL)
 				fatalx("IMSG_RECONF_ASPA already sent");
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(uint32_t) * 2)
-				fatalx("IMSG_RECONF_ASPA bad len");
-
 			if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
 				fatal("IMSG_RECONF_ASPA");
-			memcpy(&aspa->as, imsg.data, sizeof(aspa->as));
-			memcpy(&aspa->num, (char *)imsg.data + sizeof(aspa->as),
-			    sizeof(aspa->num));
+			if (imsg_get_data(&imsg, aspa,
+			    offsetof(struct aspa_set, tas)) == -1)
+				fatal("IMSG_RECONF_ASPA bad len");
 			break;
 		case IMSG_RECONF_ASPA_TAS:
 			if (aspa == NULL)
 				fatalx("unexpected IMSG_RECONF_ASPA_TAS");
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    aspa->num * sizeof(uint32_t))
+			if (imsg_get_len(&imsg) != aspa->num * sizeof(uint32_t))
 				fatalx("IMSG_RECONF_ASPA_TAS bad len");
 			aspa->tas = reallocarray(NULL, aspa->num,
 			    sizeof(uint32_t));
 			if (aspa->tas == NULL)
 				fatal("IMSG_RECONF_ASPA_TAS");
-			memcpy(aspa->tas, imsg.data,
-			    aspa->num * sizeof(uint32_t));
+			if (imsg_get_data(&imsg, aspa->tas,
+			    aspa->num * sizeof(uint32_t)) == -1)
+				fatal("IMSG_RECONF_ASPA_TAS bad len");
 			break;
 		case IMSG_RECONF_ASPA_DONE:
 			if (aspa_new == NULL)
@@ -1346,18 +1305,17 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 	if (!peer_imsg_pop(peer, &imsg))
 		return;
 
-	switch (imsg.hdr.type) {
+	switch (imsg_get_type(&imsg)) {
 	case IMSG_UPDATE:
 		if (peer->state != PEER_UP)
 			break;
 		rde_update_dispatch(peer, &imsg);
 		break;
 	case IMSG_REFRESH:
-		if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rr)) {
+		if (imsg_get_data(&imsg, &rr, sizeof(rr)) == -1) {
 			log_warnx("route refresh: wrong imsg len");
 			break;
 		}
-		memcpy(&rr, imsg.data, sizeof(rr));
 		if (rr.aid >= AID_MAX) {
 			log_peer_warnx(&peer->conf,
 			    "route refresh: bad AID %d", rr.aid);
@@ -1401,7 +1359,7 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 		break;
 	default:
 		log_warnx("%s: unhandled imsg type %d", __func__,
-		    imsg.hdr.type);
+		    imsg_get_type(&imsg));
 		break;
 	}
 
@@ -2413,52 +2371,50 @@ bad_list:
 	return (plen);
 }
 
+#undef UPD_READ
+#undef CHECK_FLAGS
+
 int
-rde_attr_add(struct filterstate *state, u_char *p, uint16_t len)
+rde_attr_add(struct filterstate *state, struct ibuf *buf)
 {
 	uint16_t	 attr_len;
-	uint16_t	 plen = 0;
 	uint8_t		 flags;
 	uint8_t		 type;
 	uint8_t		 tmp8;
 
-	if (len < 3)
+	if (ibuf_get_n8(buf, &flags) == -1 ||
+	    ibuf_get_n8(buf, &type) == -1)
 		return (-1);
 
-	UPD_READ(&flags, p, plen, 1);
-	UPD_READ(&type, p, plen, 1);
-
 	if (flags & ATTR_EXTLEN) {
-		if (len - plen < 2)
+		if (ibuf_get_n16(buf, &attr_len) == -1)
 			return (-1);
-		UPD_READ(&attr_len, p, plen, 2);
-		attr_len = ntohs(attr_len);
 	} else {
-		UPD_READ(&tmp8, p, plen, 1);
+		if (ibuf_get_n8(buf, &tmp8) == -1)
+			return (-1);
 		attr_len = tmp8;
 	}
 
-	if (len - plen < attr_len)
+	if (ibuf_size(buf) != attr_len)
 		return (-1);
 
 	switch (type) {
 	case ATTR_COMMUNITIES:
-		return community_add(&state->communities, flags, p, attr_len);
+		return community_add(&state->communities, flags,
+		    ibuf_data(buf), attr_len);
 	case ATTR_LARGE_COMMUNITIES:
-		return community_large_add(&state->communities, flags, p,
-		    attr_len);
+		return community_large_add(&state->communities, flags,
+		    ibuf_data(buf), attr_len);
 	case ATTR_EXT_COMMUNITIES:
 		return community_ext_add(&state->communities, flags, 0,
-		    p, attr_len);
+		    ibuf_data(buf), attr_len);
 	}
 
-	if (attr_optadd(&state->aspath, flags, type, p, attr_len) == -1)
+	if (attr_optadd(&state->aspath, flags, type, ibuf_data(buf),
+	    attr_len) == -1)
 		return (-1);
 	return (0);
 }
-
-#undef UPD_READ
-#undef CHECK_FLAGS
 
 uint8_t
 rde_attr_missing(struct rde_aspath *a, int ebgp, uint16_t nlrilen)
