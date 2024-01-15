@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.14 2024/01/11 16:45:26 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.15 2024/01/15 15:00:13 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -579,13 +579,11 @@ evp_do_all_test(void)
 	int failure = 0;
 
 	memset(&arg, 0, sizeof(arg));
-	/* XXX - replace with EVP_CIPHER_do_all() after next bump. */
-	EVP_CIPHER_do_all_sorted(evp_cipher_do_all_cb, &arg);
+	EVP_CIPHER_do_all(evp_cipher_do_all_cb, &arg);
 	failure |= arg.failure;
 
 	memset(&arg, 0, sizeof(arg));
-	/* XXX - replace with EVP_MD_do_all() after next bump. */
-	EVP_MD_do_all_sorted(evp_md_do_all_cb, &arg);
+	EVP_MD_do_all(evp_md_do_all_cb, &arg);
 	failure |= arg.failure;
 
 	return failure;
