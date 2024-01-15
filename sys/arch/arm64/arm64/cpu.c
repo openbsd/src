@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.102 2023/12/26 09:19:15 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.103 2024/01/15 11:58:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -275,6 +275,7 @@ cpu_identify(struct cpu_info *ci)
 	midr = READ_SPECIALREG(midr_el1);
 	impl = CPU_IMPL(midr);
 	part = CPU_PART(midr);
+	ci->ci_midr = midr;
 
 	for (i = 0; cpu_implementers[i].name; i++) {
 		if (impl == cpu_implementers[i].id) {
@@ -947,12 +948,12 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		}
 
 		cpu_init();
-
-#if NKSTAT > 0
-		cpu_kstat_attach(ci);
-#endif
 #ifdef MULTIPROCESSOR
 	}
+#endif
+
+#if NKSTAT > 0
+	cpu_kstat_attach(ci);
 #endif
 
 	opp = OF_getpropint(ci->ci_node, "operating-points-v2", 0);
@@ -1203,10 +1204,6 @@ cpu_init_secondary(struct cpu_info *ci)
 	__asm volatile("dsb sy; sev" ::: "memory");
 
 	spllower(IPL_NONE);
-
-#if NKSTAT > 0
-	cpu_kstat_attach(ci);
-#endif
 
 	sched_toidle();
 }
@@ -1862,25 +1859,22 @@ cpu_kstat_attach(struct cpu_info *ci)
 {
 	struct kstat *ks;
 	struct cpu_kstats *ck;
-
-	uint64_t midr, impl, part;
+	uint64_t impl, part;
 	const char *impl_name = NULL, *part_name = NULL;
 	const struct cpu_cores *coreselecter = cpu_cores_none;
-	size_t i;
+	int i;
 
 	ks = kstat_create(ci->ci_dev->dv_xname, 0, "mach", 0, KSTAT_T_KV, 0);
 	if (ks == NULL) {
 		printf("%s: unable to create cpu kstats\n",
 		    ci->ci_dev->dv_xname);
-		/* printf? */
 		return;
 	}
 
 	ck = malloc(sizeof(*ck), M_DEVBUF, M_WAITOK);
 
-	midr = READ_SPECIALREG(midr_el1);
-	impl = CPU_IMPL(midr);
-	part = CPU_PART(midr);
+	impl = CPU_IMPL(ci->ci_midr);
+	part = CPU_PART(ci->ci_midr);
 
 	for (i = 0; cpu_implementers[i].name; i++) {
 		if (impl == cpu_implementers[i].id) {
@@ -1913,7 +1907,7 @@ cpu_kstat_attach(struct cpu_info *ci)
 
 	kstat_kv_init(&ck->ck_rev, "rev", KSTAT_KV_T_ISTR);
 	snprintf(kstat_kv_istr(&ck->ck_rev), sizeof(kstat_kv_istr(&ck->ck_rev)),
-	    "r%llup%llu", CPU_VAR(midr), CPU_REV(midr));
+	    "r%llup%llu", CPU_VAR(ci->ci_midr), CPU_REV(ci->ci_midr));
 
 	ks->ks_softc = ci;
 	ks->ks_data = ck;
