@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.93 2023/08/04 19:06:25 claudio Exp $	*/
+/*	$OpenBSD: config.c,v 1.94 2024/01/15 15:29:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -900,6 +900,8 @@ config_setstatic(struct iked *env)
 {
 	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_STATIC,
 	    &env->sc_static, sizeof(env->sc_static));
+	proc_compose(&env->sc_ps, PROC_CERT, IMSG_CTL_STATIC,
+	    &env->sc_static, sizeof(env->sc_static));
 	return (0);
 }
 
@@ -981,28 +983,6 @@ config_getocsp(struct iked *env, struct imsg *imsg)
 	log_debug("%s: ocsp_url %s tolerate %ld maxage %ld", __func__,
 	    env->sc_ocsp_url ? env->sc_ocsp_url : "none",
 	    env->sc_ocsp_tolerate, env->sc_ocsp_maxage);
-	return (0);
-}
-
-int
-config_setcertpartialchain(struct iked *env)
-{
-	unsigned int boolval;
-
-	boolval = env->sc_cert_partial_chain;
-	proc_compose(&env->sc_ps, PROC_CERT, IMSG_CERT_PARTIAL_CHAIN,
-	    &boolval, sizeof(boolval));
-	return (0);
-}
-
-int
-config_getcertpartialchain(struct iked *env, struct imsg *imsg)
-{
-	unsigned int boolval;
-
-	IMSG_SIZE_CHECK(imsg, &boolval);
-	memcpy(&boolval, imsg->data, sizeof(boolval));
-	env->sc_cert_partial_chain = boolval;
 	return (0);
 }
 

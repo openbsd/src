@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.97 2023/09/02 18:16:02 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.98 2024/01/15 15:29:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -351,8 +351,8 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_PUBKEY:
 		config_getkey(env, imsg);
 		break;
-	case IMSG_CERT_PARTIAL_CHAIN:
-		config_getcertpartialchain(env, imsg);
+	case IMSG_CTL_STATIC:
+		config_getstatic(env, imsg);
 		break;
 	default:
 		return (-1);
