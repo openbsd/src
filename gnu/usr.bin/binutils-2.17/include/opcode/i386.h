@@ -1534,6 +1534,10 @@ static const template i386_optab[] =
 {"invpcid", 2, 0x660f3882, X, CpuNEW|CpuNo64, Modrm|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_xSuf|NoRex64, { BaseIndex|Disp8|Disp16|Disp32|Disp32S, Reg32 } },
 {"invpcid", 2, 0x660f3882, X, CpuNEW|Cpu64, Modrm|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_xSuf|NoRex64, { BaseIndex|Disp8|Disp16|Disp32|Disp32S, Reg64 } },
 
+/* Intel Indirect Branch Tracking extensions */
+{"endbr64", 0, 0xF30F1E, 0xFA, Cpu64, NoSuf|ImmExt, { 0, 0, 0 } },
+{"endbr32", 0, 0xF30F1E, 0xFB, CpuNo64, NoSuf|ImmExt, { 0, 0, 0 } },
+
 /* sentinel */
 {NULL, 0, 0, 0, 0, 0, { 0, 0, 0} }
 };
