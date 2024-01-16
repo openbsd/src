@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.166 2024/01/11 15:46:25 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.167 2024/01/16 13:15:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -273,7 +273,7 @@ char	*log_fmt_peer(const struct peer_config *);
 void	 log_statechange(struct peer *, enum session_state,
 	    enum session_events);
 void	 log_notification(const struct peer *, uint8_t, uint8_t,
-	    u_char *, uint16_t, const char *);
+	    struct ibuf *, const char *);
 void	 log_conn_attempt(const struct peer *, struct sockaddr *,
 	    socklen_t);
 
