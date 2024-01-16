@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.22 2022/05/30 12:48:57 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.23 2024/01/16 13:09:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -92,8 +92,9 @@ proc_event_cb(__unused int fd, short events, void *arg)
 			log_debug("peer %p message %d", peer, imsg.hdr.type);
 
 			if (peer_check_version(peer, &imsg) != 0) {
-				if (imsg.fd != -1)
-					close(imsg.fd);
+				int fd = imsg_get_fd(&imsg);
+				if (fd != -1)
+					close(fd);
 				imsg_free(&imsg);
 				break;
 			}
