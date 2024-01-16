@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.52 2023/04/19 15:37:36 kettenis Exp $	*/
+/*	$OpenBSD: exec.h,v 1.53 2024/01/16 19:05:00 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -131,6 +131,9 @@ struct exec_package {
 	struct	elf_args *ep_args;	/* ELF info */
 	void	*ep_auxinfo;		/* userspace auxinfo address */
 	char	*ep_interp;		/* name of interpreter if any */
+	vaddr_t	ep_pinstart, ep_pinend;	/* executable region */
+	u_int	*ep_pins;		/* array of system call offsets */
+	int	ep_npins;		/* entries in array */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */

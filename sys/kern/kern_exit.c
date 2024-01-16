@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.218 2024/01/15 15:47:37 mvs Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.219 2024/01/16 19:05:01 deraadt Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -216,6 +216,11 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 #endif
 
 		unveil_destroy(pr);
+
+		free(pr->ps_pin.pn_pins, M_PINSYSCALL,
+		    pr->ps_pin.pn_npins * sizeof(u_int));
+		free(pr->ps_libcpin.pn_pins, M_PINSYSCALL,
+		    pr->ps_libcpin.pn_npins * sizeof(u_int));
 
 		/*
 		 * If parent has the SAS_NOCLDWAIT flag set, we're not

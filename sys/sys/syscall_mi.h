@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.29 2023/12/12 15:30:55 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.30 2024/01/16 19:05:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,8 +33,11 @@
 
 #include <sys/param.h>
 #include <sys/pledge.h>
+#include <sys/acct.h>
+#include <sys/syslog.h>
 #include <sys/tracepoint.h>
 #include <sys/syscall.h>
+#include <sys/signalvar.h>
 #include <uvm/uvm_extern.h>
 
 #ifdef KTRACE
@@ -46,6 +49,79 @@
 #include <dev/dt/dtvar.h>
 #endif
 
+/*
+ * Check if a system call is entered from precisely correct location
+ */
+static inline int
+pin_check(struct proc *p, register_t code)
+{
+	extern char sigcodecall[], sigcoderet[], sigcodecall[];
+	struct pinsyscall *pin = NULL, *ppin, *plibcpin;
+	struct process *pr = p->p_p;
+	vaddr_t addr;
+	int error = 0;
+
+	/* point at start of syscall instruction */
+	addr = (vaddr_t)PROC_PC(p) - (vaddr_t)(sigcoderet - sigcodecall);
+	ppin = &pr->ps_pin;
+	plibcpin = &pr->ps_libcpin;
+
+	/*
+	 * System calls come from the following places, checks are ordered
+	 * by most common case:
+	 * 1) dynamic binary: syscalls in libc.so (in the ps_libcpin region)
+	 * 2a) static binary: syscalls in main program (in the ps_pin region)
+	 * 2b) dynamic binary: sysalls in ld.so (in the ps_pin region)
+	 * 3) sigtramp, containing only sigreturn(2)
+	 */
+	if (plibcpin->pn_pins &&
+	    addr >= plibcpin->pn_start && addr < plibcpin->pn_end)
+		pin = plibcpin;
+	else if (ppin->pn_pins &&
+	    addr >= ppin->pn_start && addr < ppin->pn_end)
+		pin = ppin;
+	else if (PROC_PC(p) == pr->ps_sigcoderet) {
+		if (code == SYS_sigreturn)
+			return (0);
+		error = EPERM;
+	}
+	if (pin) {
+		if (code >= pin->pn_npins || pin->pn_pins[code] == 0)
+			error = ENOSYS;
+		else if (pin->pn_pins[code] + pin->pn_start == addr)
+			; /* correct location */
+		else if (pin->pn_pins[code] == (u_int)-1)
+			; /* multiple locations, hopefully a boring operation */
+		else
+			error = ENOSYS;
+	}
+	if (error == 0)
+		return (0);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_PINSYSCALL))
+		ktrpinsyscall(p, error, code, addr);
+#endif
+	KERNEL_LOCK();
+	log(LOG_ERR,
+	    "%s[%d]: pinsyscalls addr %lx code %ld, pinoff 0x%x "
+	    "(pin%s %d %lx-%lx %lx) (libcpin%s %d %lx-%lx %lx) error %d\n",
+	    p->p_p->ps_comm, p->p_p->ps_pid, addr, code,
+	    (pin && code < pin->pn_npins) ? pin->pn_pins[code] : -1,
+	    pin == ppin ? "(Y)" : "", ppin->pn_npins,
+	    ppin->pn_start, ppin->pn_end, ppin->pn_end - ppin->pn_start,
+	    pin == plibcpin ? "(Y)" : "", plibcpin->pn_npins,
+	    plibcpin->pn_start, plibcpin->pn_end, plibcpin->pn_end - plibcpin->pn_start,
+	    error);
+        p->p_p->ps_acflag |= APINSYS;
+
+	/* Try to stop threads immediately, because this process is suspect */
+	if (P_HASSIBLING(p))
+		single_thread_set(p, SINGLE_UNWIND | SINGLE_DEEP);
+	/* Send uncatchable SIGABRT for coredump */
+	sigabort(p);
+	KERNEL_UNLOCK();
+	return (error);
+}
 
 /*
  * The MD setup for a system call has been done; here's the MI part.
@@ -90,6 +166,9 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 	    "[%s]%d/%d pc=%lx inside %lx-%lx: bogus syscall\n",
 	    uvm_map_inentry_pc, p->p_vmspace->vm_map.wserial))
 		return (EPERM);
+
+	if ((error = pin_check(p, code)))
+		return (error);
 
 	pledged = (p->p_p->ps_flags & PS_PLEDGE);
 	if (pledged && (error = pledge_syscall(p, code, &tval))) {

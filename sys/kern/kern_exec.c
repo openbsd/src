@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.252 2023/10/30 07:13:10 claudio Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.253 2024/01/16 19:05:01 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -314,6 +314,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	VMCMDSET_INIT(&pack.ep_vmcmds);
 	pack.ep_vap = &attr;
 	pack.ep_flags = 0;
+	pack.ep_pins = NULL;
+	pack.ep_npins = 0;
 
 	/* see if we can run it. */
 	if ((error = check_exec(p, &pack)) != 0) {
@@ -513,6 +515,30 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *)pr->ps_strings, sizeof(arginfo)))
 		goto exec_abort;
+
+	free(pr->ps_pin.pn_pins, M_PINSYSCALL,
+	    pr->ps_pin.pn_npins * sizeof(u_int));
+	if (pack.ep_npins) {
+		pr->ps_pin.pn_start = pack.ep_pinstart;
+		pr->ps_pin.pn_end = pack.ep_pinend;
+		pr->ps_pin.pn_pins = pack.ep_pins;
+		pack.ep_pins = NULL;
+		pr->ps_pin.pn_npins = pack.ep_npins;
+		pr->ps_flags |= PS_PIN;
+	} else {
+		pr->ps_pin.pn_start = pr->ps_pin.pn_end = 0;
+		pr->ps_pin.pn_pins = NULL;
+		pr->ps_pin.pn_npins = 0;
+		pr->ps_flags &= ~PS_PIN;
+	}
+	if (pr->ps_libcpin.pn_pins) {
+		free(pr->ps_libcpin.pn_pins, M_PINSYSCALL,
+		    pr->ps_libcpin.pn_npins * sizeof(u_int));
+		pr->ps_libcpin.pn_start = pr->ps_libcpin.pn_end = 0;
+		pr->ps_libcpin.pn_pins = NULL;
+		pr->ps_libcpin.pn_npins = 0;
+		pr->ps_flags &= ~PS_LIBCPIN;
+	}
 
 	stopprofclock(pr);	/* stop profiling */
 	fdcloseexec(p);		/* handle close on exec */
@@ -752,6 +778,7 @@ bad:
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
 	free(pack.ep_args, M_TEMP, sizeof *pack.ep_args);
+	free(pack.ep_pins, M_PINSYSCALL, pack.ep_npins * sizeof(u_int));
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.319 2023/08/02 09:19:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.320 2024/01/16 19:05:01 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3407,7 +3407,8 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 		 * when a process execs another program image.
 		 */
 		vm_map_lock(map);
-		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE|VM_MAP_SYSCALL_ONCE);
+		vm_map_modflags(map, 0, VM_MAP_WIREFUTURE |
+		    VM_MAP_SYSCALL_ONCE | VM_MAP_PINSYSCALL_ONCE);
 
 		/*
 		 * now unmap the old program
@@ -3944,7 +3945,8 @@ uvmspace_fork(struct process *pr)
 			    new_map, new_entry->start, new_entry->end);
 		}
 	}
-	new_map->flags |= old_map->flags & VM_MAP_SYSCALL_ONCE;
+	new_map->flags |= old_map->flags &
+	    (VM_MAP_SYSCALL_ONCE | VM_MAP_PINSYSCALL_ONCE);
 #ifdef PMAP_CHECK_COPYIN
 	if (PMAP_CHECK_COPYIN) {
 		memcpy(&new_map->check_copyin, &old_map->check_copyin,

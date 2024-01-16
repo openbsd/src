@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.87 2023/08/02 09:19:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.88 2024/01/16 19:05:01 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -329,6 +329,7 @@ struct vm_map {
 #define	VM_MAP_GUARDPAGES	0x20		/* rw: add guard pgs to map */
 #define	VM_MAP_ISVMSPACE	0x40		/* ro: map is a vmspace */
 #define	VM_MAP_SYSCALL_ONCE	0x80		/* rw: libc syscall registered */
+#define	VM_MAP_PINSYSCALL_ONCE	0x100		/* rw: pinsyscall done */
 
 /* Number of kernel maps and entries to statically allocate */
 #define	MAX_KMAPENT	1024	/* Sufficient to make it to the scheduler. */

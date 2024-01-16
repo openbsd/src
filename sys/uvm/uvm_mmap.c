@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.183 2023/12/07 13:59:05 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.184 2024/01/16 19:05:01 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -644,13 +644,65 @@ sys_pinsyscall(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
- /*
- * sys_pinsyscalls
+/*
+ * sys_pinsyscalls.  The caller is required to normalize base,len
+ * to the minimum .text region, and adjust pintable offsets relative
+ * to that base.
  */
 int
 sys_pinsyscalls(struct proc *p, void *v, register_t *retval)
 {
-	/* STUB until other parts are ready */
+	struct sys_pinsyscalls_args /* {
+		syscallarg(void *) base;
+		syscallarg(size_t) len;
+		syscallarg(u_int *) pins;
+		syscallarg(int) npins;
+	} */ *uap = v;
+	struct process *pr = p->p_p;
+	int npins, error = 0, i;
+	vaddr_t base;
+	size_t len;
+	u_int *pins;
+
+	if (pr->ps_libcpin.pn_start ||
+	    (pr->ps_vmspace->vm_map.flags & VM_MAP_PINSYSCALL_ONCE))
+		return (EPERM);
+	base = (vaddr_t)SCARG(uap, base);
+	len = (vsize_t)SCARG(uap, len);
+	if (base > SIZE_MAX - len)
+		return (EINVAL);	/* disallow wrap-around. */
+
+	/* XXX MP unlock */
+
+	npins = SCARG(uap, npins);
+	if (npins < 1 || npins > SYS_MAXSYSCALL)
+		return (E2BIG);
+	pins = malloc(npins * sizeof(u_int), M_PINSYSCALL, M_WAITOK|M_ZERO);
+	if (pins == NULL)
+		return (ENOMEM);
+	error = copyin(SCARG(uap, pins), pins, npins * sizeof(u_int));
+	if (error)
+		goto err;
+
+	/* Range-check pintable offsets */
+	for (i = 0; i < npins; i++) {
+		if (pins[i] == (u_int)-1 || pins[i] == 0)
+			continue;
+		if (pins[i] > SCARG(uap, len)) {
+			error = ERANGE;
+			break;
+		}
+	}
+	if (error) {
+err:
+		free(pins, M_PINSYSCALL, npins * sizeof(u_int));
+		return (error);
+	}
+	pr->ps_libcpin.pn_start = base;
+	pr->ps_libcpin.pn_end = base + len;
+	pr->ps_libcpin.pn_pins = pins;
+	pr->ps_libcpin.pn_npins = npins;
+	pr->ps_flags |= PS_LIBCPIN;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.353 2024/01/15 15:47:37 mvs Exp $	*/
+/*	$OpenBSD: proc.h,v 1.354 2024/01/16 19:05:00 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -117,6 +117,13 @@ struct proc;
 struct tslpentry;
 TAILQ_HEAD(tslpqueue, tslpentry);
 struct unveil;
+
+struct pinsyscall {
+	vaddr_t		pn_start;
+	vaddr_t		pn_end;
+	u_int		*pn_pins; /* array of offsets indexed by syscall# */
+	int		pn_npins; /* number of entries in table */
+};
 
 /*
  * Locks used to protect struct members in this file:
@@ -242,6 +249,9 @@ struct process {
 /* an address that can't be in userspace or kernelspace */
 #define	BOGO_PC	(u_long)-1
 
+	struct pinsyscall ps_pin;	/* static or ld.so */
+	struct pinsyscall ps_libcpin;	/* libc.so, from pinsyscalls(2) */
+
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_threadcnt
 	u_int	ps_threadcnt;		/* Number of threads. */
@@ -285,6 +295,8 @@ struct process {
 #define	PS_CHROOT	0x01000000	/* Process is chrooted */
 #define	PS_NOBTCFI	0x02000000	/* No Branch Target CFI */
 #define	PS_ITIMER	0x04000000	/* Virtual interval timers running */
+#define	PS_PIN		0x08000000	/* ld.so or static syscall pin */
+#define	PS_LIBCPIN	0x10000000	/* libc.so syscall pin */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \

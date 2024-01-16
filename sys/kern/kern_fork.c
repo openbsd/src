@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.254 2024/01/15 15:47:37 mvs Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.255 2024/01/16 19:05:01 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -248,6 +248,21 @@ process_new(struct proc *p, struct process *parent, int flags)
 	    PS_WXNEEDED | PS_CHROOT);
 	if (parent->ps_session->s_ttyvp != NULL)
 		pr->ps_flags |= parent->ps_flags & PS_CONTROLT;
+
+	if (parent->ps_pin.pn_pins) {
+		pr->ps_pin.pn_pins = mallocarray(parent->ps_pin.pn_npins,
+		    sizeof(u_int), M_PINSYSCALL, M_WAITOK);
+		memcpy(pr->ps_pin.pn_pins, parent->ps_pin.pn_pins,
+		    parent->ps_pin.pn_npins * sizeof(u_int));
+		pr->ps_flags |= PS_PIN;
+	}
+	if (parent->ps_libcpin.pn_pins) {
+		pr->ps_libcpin.pn_pins = mallocarray(parent->ps_libcpin.pn_npins,
+		    sizeof(u_int), M_PINSYSCALL, M_WAITOK);
+		memcpy(pr->ps_libcpin.pn_pins, parent->ps_libcpin.pn_pins,
+		    parent->ps_libcpin.pn_npins * sizeof(u_int));
+		pr->ps_flags |= PS_LIBCPIN;
+	}
 
 	/*
 	 * Duplicate sub-structures as needed.
