@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.73 2023/12/19 16:13:22 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.74 2024/01/16 19:07:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -102,15 +102,15 @@ elf_object_t *
 _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 {
 	struct range_vector imut, mut;
-	int libfile, i;
+	int libfile, libc = -1, i;
 	struct load_list *ld, *lowld = NULL;
 	elf_object_t *object;
 	Elf_Dyn *dynp = NULL;
 	Elf_Ehdr *ehdr;
-	Elf_Phdr *phdp;
+	Elf_Phdr *phdp, *ptls = NULL;
+	Elf_Phdr *syscall_phdp = NULL;
 	Elf_Addr load_end = 0;
 	Elf_Addr align = _dl_pagesz - 1, off, size;
-	Elf_Phdr *ptls = NULL;
 	Elf_Addr relro_addr = 0, relro_size = 0;
 	struct stat sb;
 	char hbuf[4096], *exec_start;
@@ -325,9 +325,28 @@ retry:
 			_dl_push_range_size(&mut, phdp->p_vaddr + LOFF,
 			    phdp->p_memsz);
 			break;
+		case PT_OPENBSD_SYSCALLS:
+			syscall_phdp = phdp;
+			break;
 		}
 	}
 
+	libc = _dl_islibc(dynp, LOFF);
+	if (libc) {
+		if (syscall_phdp)
+			_dl_pin(libfile, syscall_phdp, lowld->start,
+			    (size_t)((exec_start + exec_size) - LOFF),
+			    exec_start, exec_size);
+
+		/*
+		 * XXX msyscall() can be removed once pinsyscalls()
+		 * is fully operational
+		 */
+		/* Request permission for system calls in libc.so's text segment */
+		if (_dl_msyscall(exec_start, exec_size) == -1)
+			_dl_printf("msyscall %lx %lx error\n",
+			    exec_start, exec_size);
+	}
 	_dl_close(libfile);
 
 	dynp = (Elf_Dyn *)((unsigned long)dynp + LOFF);
@@ -335,8 +354,6 @@ retry:
 	    (Elf_Phdr *)((char *)lowld->start + ehdr->e_phoff), ehdr->e_phnum,
 	    type, (Elf_Addr)lowld->start, LOFF);
 	if (object) {
-		char *soname = (char *)object->Dyn.info[DT_SONAME];
-
 		object->load_size = (Elf_Addr)load_end - (Elf_Addr)lowld->start;
 		object->load_list = lowld;
 		/* set inode, dev from stat info */
@@ -346,18 +363,11 @@ retry:
 		object->nodelete = nodelete;
 		object->relro_addr = relro_addr;
 		object->relro_size = relro_size;
+		object->islibc = libc;
 		_dl_set_sod(object->load_name, &object->sod);
 		if (ptls != NULL && ptls->p_memsz)
 			_dl_set_tls(object, ptls, (Elf_Addr)lowld->start,
 			    libname);
-
-		/* Request permission for system calls in libc.so's text segment */
-		if (soname != NULL && !_dl_traceld &&
-		    _dl_strncmp(soname, "libc.so.", 8) == 0) {
-			if (_dl_msyscall(exec_start, exec_size) == -1)
-				_dl_printf("msyscall %lx %lx error\n",
-				    exec_start, exec_size);
-		}
 		_dl_bcopy(&mut, &object->mut, sizeof mut);
 		_dl_bcopy(&imut, &object->imut, sizeof imut);
 	} else {

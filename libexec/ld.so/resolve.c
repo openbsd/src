@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.100 2023/07/08 14:09:43 jasper Exp $ */
+/*	$OpenBSD: resolve.c,v 1.101 2024/01/16 19:07:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -29,6 +29,8 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
 
 #include <limits.h>
 #include <link.h>
@@ -36,6 +38,7 @@
 #include "util.h"
 #include "path.h"
 #include "resolve.h"
+#include "syscall.h"
 
 /* substitution types */
 typedef enum {
@@ -744,4 +747,83 @@ void
 _dl_debug_state(void)
 {
 	/* Debugger stub */
+}
+
+/*
+ * Search for DT_SONAME, and check if this is libc
+ */
+int
+_dl_islibc(Elf_Dyn *_dynp, Elf_Addr loff)
+{
+	Elf_Dyn *d, *dynp = (Elf_Dyn *)((unsigned long)_dynp + loff);
+	long base = 0;
+
+	for (d = dynp; d->d_tag != DT_NULL; d++)
+		if (d->d_tag == DT_STRTAB) {
+			base = d->d_un.d_ptr + loff;
+			break;
+		}
+	if (base == 0)
+		return 0;
+	for (d = dynp; d->d_tag != DT_NULL; d++)
+		if (d->d_tag == DT_SONAME) {
+			if (_dl_strncmp((char *)(base + d->d_un.d_ptr),
+			    "libc.so.", 8) == 0)
+				return 1;
+			break;
+		}
+	return 0;
+}
+
+void
+_dl_pin(int file, Elf_Phdr *phdp, void *base, size_t len,
+    void *exec_base, size_t exec_size)
+{
+	struct pinsyscalls {
+		u_int offset;
+		u_int sysno;
+	} *syscalls;
+	int npins = 0, nsyscalls, i;
+	u_int *pins = NULL;
+	vaddr_t offset;
+
+	if (phdp->p_filesz > SYS_MAXSYSCALL * 2 * sizeof(*syscalls) ||
+	    phdp->p_filesz % sizeof(*syscalls) != 0 ||
+	    phdp->p_offset & 0x3)
+		return;
+	syscalls = _dl_mmap(NULL, phdp->p_filesz, PROT_READ,
+	    MAP_PRIVATE|MAP_FILE, file, phdp->p_offset);
+	if (syscalls == MAP_FAILED)
+		return;
+
+	/* Validate, and calculate pintable size */
+	nsyscalls = phdp->p_filesz / sizeof(*syscalls);
+	for (i = 0; i < nsyscalls; i++) {
+		if (syscalls[i].sysno < 0 ||
+		    syscalls[i].sysno >= SYS_MAXSYSCALL ||
+		    syscalls[i].offset >= len)
+			goto bad;
+		npins = MAXIMUM(npins, syscalls[i].sysno);
+	}
+	npins++;
+
+	/*
+	 * Fill pintable: 0 = invalid, -1 = accept, else offset
+	 * from base, rebase to text_start while at it
+	 */
+	pins = _dl_calloc(npins, sizeof(u_int));
+	offset = exec_base - base;
+	for (i = 0; i < nsyscalls; i++) {
+		if (pins[syscalls[i].sysno])
+			pins[syscalls[i].sysno] = (u_int)-1; /* duplicated */
+		else
+			pins[syscalls[i].sysno] = syscalls[i].offset - offset;
+	}
+	base += offset;
+	len = len - offset;
+bad:
+	_dl_munmap(syscalls, phdp->p_filesz);
+	if (pins)
+		_dl_pinsyscalls(base, len, pins, npins);
+	_dl_free(pins);
 }

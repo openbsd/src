@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.219 2024/01/14 09:39:03 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.220 2024/01/16 19:07:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -440,11 +440,14 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 
 	_dl_cache_grpsym_list_setup(object);
 
+	/*
+	 * XXX pinsyscall(SYS_execve,...) can be removed once pinsyscalls()
+	 * is fully operational
+	 */
 	for (obj = _dl_objects; booting && obj != NULL; obj = obj->next) {
-		char *soname = (char *)obj->Dyn.info[DT_SONAME];
 		struct sym_res sr;
 
-		if (!soname || _dl_strncmp(soname, "libc.so.", 8))
+		if (!obj->islibc)
 			continue;
 		sr = _dl_find_symbol("execve",
 		    SYM_SEARCH_SELF|SYM_PLT|SYM_WARNNOTFOUND, NULL, obj);
