@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.68 2022/03/19 10:26:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.69 2024/01/16 12:21:02 kevlo Exp $	*/
 
 /******************************************************************************
  *
@@ -3361,7 +3361,7 @@ struct iwm_rx_mpdu_desc_v1 {
 			uint32_t phy_data0;
 			uint32_t phy_data1;
 		};
-	};
+	} __packed;
 } __packed;
 
 #define IWM_RX_REORDER_DATA_INVALID_BAID	0x7f
