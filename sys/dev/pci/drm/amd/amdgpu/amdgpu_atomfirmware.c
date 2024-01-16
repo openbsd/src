@@ -58,7 +58,7 @@ uint32_t amdgpu_atomfirmware_query_firmware_capability(struct amdgpu_device *ade
 	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context,
 				index, &size, &frev, &crev, &data_offset)) {
 		/* support firmware_info 3.1 + */
-		if ((frev == 3 && crev >=1) || (frev > 3)) {
+		if ((frev == 3 && crev >= 1) || (frev > 3)) {
 			firmware_info = (union firmware_info *)
 				(mode_info->atom_context->bios + data_offset);
 			fw_cap = le32_to_cpu(firmware_info->v31.firmware_capability);
@@ -104,7 +104,7 @@ void amdgpu_atomfirmware_scratch_regs_init(struct amdgpu_device *adev)
 static int amdgpu_atomfirmware_allocate_fb_v2_1(struct amdgpu_device *adev,
 	struct vram_usagebyfirmware_v2_1 *fw_usage, int *usage_bytes)
 {
-	uint32_t start_addr, fw_size, drv_size;
+	u32 start_addr, fw_size, drv_size;
 
 	start_addr = le32_to_cpu(fw_usage->start_address_in_kb);
 	fw_size = le16_to_cpu(fw_usage->used_by_firmware_in_kb);
@@ -116,7 +116,7 @@ static int amdgpu_atomfirmware_allocate_fb_v2_1(struct amdgpu_device *adev,
 			  drv_size);
 
 	if ((start_addr & ATOM_VRAM_OPERATION_FLAGS_MASK) ==
-		(uint32_t)(ATOM_VRAM_BLOCK_SRIOV_MSG_SHARE_RESERVATION <<
+		(u32)(ATOM_VRAM_BLOCK_SRIOV_MSG_SHARE_RESERVATION <<
 		ATOM_VRAM_OPERATION_FLAGS_SHIFT)) {
 		/* Firmware request VRAM reservation for SR-IOV */
 		adev->mman.fw_vram_usage_start_offset = (start_addr &
@@ -133,7 +133,7 @@ static int amdgpu_atomfirmware_allocate_fb_v2_1(struct amdgpu_device *adev,
 static int amdgpu_atomfirmware_allocate_fb_v2_2(struct amdgpu_device *adev,
 		struct vram_usagebyfirmware_v2_2 *fw_usage, int *usage_bytes)
 {
-	uint32_t fw_start_addr, fw_size, drv_start_addr, drv_size;
+	u32 fw_start_addr, fw_size, drv_start_addr, drv_size;
 
 	fw_start_addr = le32_to_cpu(fw_usage->fw_region_start_address_in_kb);
 	fw_size = le16_to_cpu(fw_usage->used_by_firmware_in_kb);
@@ -147,14 +147,18 @@ static int amdgpu_atomfirmware_allocate_fb_v2_2(struct amdgpu_device *adev,
 			  drv_start_addr,
 			  drv_size);
 
-	if ((fw_start_addr & (ATOM_VRAM_BLOCK_NEEDS_NO_RESERVATION << 30)) == 0) {
+	if (amdgpu_sriov_vf(adev) &&
+	    ((fw_start_addr & (ATOM_VRAM_BLOCK_NEEDS_NO_RESERVATION <<
+		ATOM_VRAM_OPERATION_FLAGS_SHIFT)) == 0)) {
 		/* Firmware request VRAM reservation for SR-IOV */
 		adev->mman.fw_vram_usage_start_offset = (fw_start_addr &
 			(~ATOM_VRAM_OPERATION_FLAGS_MASK)) << 10;
 		adev->mman.fw_vram_usage_size = fw_size << 10;
 	}
 
-	if ((drv_start_addr & (ATOM_VRAM_BLOCK_NEEDS_NO_RESERVATION << 30)) == 0) {
+	if (amdgpu_sriov_vf(adev) &&
+	    ((drv_start_addr & (ATOM_VRAM_BLOCK_NEEDS_NO_RESERVATION <<
+		ATOM_VRAM_OPERATION_FLAGS_SHIFT)) == 0)) {
 		/* driver request VRAM reservation for SR-IOV */
 		adev->mman.drv_vram_usage_start_offset = (drv_start_addr &
 			(~ATOM_VRAM_OPERATION_FLAGS_MASK)) << 10;
@@ -172,8 +176,8 @@ int amdgpu_atomfirmware_allocate_fb_scratch(struct amdgpu_device *adev)
 						vram_usagebyfirmware);
 	struct vram_usagebyfirmware_v2_1 *fw_usage_v2_1;
 	struct vram_usagebyfirmware_v2_2 *fw_usage_v2_2;
-	uint16_t data_offset;
-	uint8_t frev, crev;
+	u16 data_offset;
+	u8 frev, crev;
 	int usage_bytes = 0;
 
 	if (amdgpu_atom_parse_data_header(ctx, index, NULL, &frev, &crev, &data_offset)) {
@@ -213,6 +217,7 @@ union umc_info {
 	struct atom_umc_info_v3_1 v31;
 	struct atom_umc_info_v3_2 v32;
 	struct atom_umc_info_v3_3 v33;
+	struct atom_umc_info_v4_0 v40;
 };
 
 union vram_info {
@@ -268,6 +273,7 @@ static int convert_atom_mem_type_to_vram_type(struct amdgpu_device *adev,
 			break;
 		case ATOM_DGPU_VRAM_TYPE_HBM2:
 		case ATOM_DGPU_VRAM_TYPE_HBM2E:
+		case ATOM_DGPU_VRAM_TYPE_HBM3:
 			vram_type = AMDGPU_VRAM_TYPE_HBM;
 			break;
 		case ATOM_DGPU_VRAM_TYPE_GDDR6:
@@ -322,10 +328,13 @@ amdgpu_atomfirmware_get_vram_info(struct amdgpu_device *adev,
 					mem_channel_number = igp_info->v11.umachannelnumber;
 					if (!mem_channel_number)
 						mem_channel_number = 1;
-					/* channel width is 64 */
-					if (vram_width)
-						*vram_width = mem_channel_number * 64;
 					mem_type = igp_info->v11.memorytype;
+					if (mem_type == LpDdr5MemType)
+						mem_channel_width = 32;
+					else
+						mem_channel_width = 64;
+					if (vram_width)
+						*vram_width = mem_channel_number * mem_channel_width;
 					if (vram_type)
 						*vram_type = convert_atom_mem_type_to_vram_type(adev, mem_type);
 					break;
@@ -340,10 +349,13 @@ amdgpu_atomfirmware_get_vram_info(struct amdgpu_device *adev,
 					mem_channel_number = igp_info->v21.umachannelnumber;
 					if (!mem_channel_number)
 						mem_channel_number = 1;
-					/* channel width is 64 */
-					if (vram_width)
-						*vram_width = mem_channel_number * 64;
 					mem_type = igp_info->v21.memorytype;
+					if (mem_type == LpDdr5MemType)
+						mem_channel_width = 32;
+					else
+						mem_channel_width = 64;
+					if (vram_width)
+						*vram_width = mem_channel_number * mem_channel_width;
 					if (vram_type)
 						*vram_type = convert_atom_mem_type_to_vram_type(adev, mem_type);
 					break;
@@ -497,9 +509,8 @@ bool amdgpu_atomfirmware_mem_ecc_supported(struct amdgpu_device *adev)
 
 	if (amdgpu_atom_parse_data_header(mode_info->atom_context,
 				index, &size, &frev, &crev, &data_offset)) {
+		umc_info = (union umc_info *)(mode_info->atom_context->bios + data_offset);
 		if (frev == 3) {
-			umc_info = (union umc_info *)
-				(mode_info->atom_context->bios + data_offset);
 			switch (crev) {
 			case 1:
 				umc_config = le32_to_cpu(umc_info->v31.umc_config);
@@ -522,6 +533,20 @@ bool amdgpu_atomfirmware_mem_ecc_supported(struct amdgpu_device *adev)
 				/* unsupported crev */
 				return false;
 			}
+		} else if (frev == 4) {
+			switch (crev) {
+			case 0:
+				umc_config1 = le32_to_cpu(umc_info->v40.umc_config1);
+				ecc_default_enabled =
+					(umc_config1 & UMC_CONFIG1__ENABLE_ECC_CAPABLE) ? true : false;
+				break;
+			default:
+				/* unsupported crev */
+				return false;
+			}
+		} else {
+			/* unsupported frev */
+			return false;
 		}
 	}
 
@@ -586,7 +611,7 @@ bool amdgpu_atomfirmware_ras_rom_addr(struct amdgpu_device *adev,
 					  index, &size, &frev, &crev,
 					  &data_offset)) {
 		/* support firmware_info 3.4 + */
-		if ((frev == 3 && crev >=4) || (frev > 3)) {
+		if ((frev == 3 && crev >= 4) || (frev > 3)) {
 			firmware_info = (union firmware_info *)
 				(mode_info->atom_context->bios + data_offset);
 			/* The ras_rom_i2c_slave_addr should ideally
@@ -839,7 +864,7 @@ int amdgpu_atomfirmware_get_fw_reserved_fb_size(struct amdgpu_device *adev)
 
 	firmware_info = (union firmware_info *)(ctx->bios + data_offset);
 
-	if (frev !=3)
+	if (frev != 3)
 		return -EINVAL;
 
 	switch (crev) {
@@ -898,7 +923,7 @@ int amdgpu_atomfirmware_asic_init(struct amdgpu_device *adev, bool fb_reset)
 	}
 
 	index = get_index_into_master_table(atom_master_list_of_command_functions_v2_1,
-                                            asic_init);
+					asic_init);
 	if (amdgpu_atom_parse_cmd_header(mode_info->atom_context, index, &frev, &crev)) {
 		if (frev == 2 && crev >= 1) {
 			memset(&asic_init_ps_v2_1, 0, sizeof(asic_init_ps_v2_1));

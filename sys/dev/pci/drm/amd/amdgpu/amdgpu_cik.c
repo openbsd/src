@@ -1025,7 +1025,7 @@ static bool cik_read_bios_from_rom(struct amdgpu_device *adev,
 		return false;
 
 	dw_ptr = (u32 *)bios;
-	length_dw = roundup2(length_bytes, 4) / 4;
+	length_dw = ALIGN(length_bytes, 4) / 4;
 	/* take the smc lock since we are using the smc index */
 	spin_lock_irqsave(&adev->smc_idx_lock, flags);
 	/* set rom index to 0 */
@@ -1141,12 +1141,12 @@ static uint32_t cik_get_register_value(struct amdgpu_device *adev,
 
 		mutex_lock(&adev->grbm_idx_mutex);
 		if (se_num != 0xffffffff || sh_num != 0xffffffff)
-			amdgpu_gfx_select_se_sh(adev, se_num, sh_num, 0xffffffff);
+			amdgpu_gfx_select_se_sh(adev, se_num, sh_num, 0xffffffff, 0);
 
 		val = RREG32(reg_offset);
 
 		if (se_num != 0xffffffff || sh_num != 0xffffffff)
-			amdgpu_gfx_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
+			amdgpu_gfx_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff, 0);
 		mutex_unlock(&adev->grbm_idx_mutex);
 		return val;
 	} else {

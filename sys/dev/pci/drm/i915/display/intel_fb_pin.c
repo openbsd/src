@@ -91,7 +91,7 @@ intel_pin_fb_obj_dpt(struct drm_framebuffer *fb,
 		goto err;
 	}
 
-	vma->display_alignment = max_t(u64, vma->display_alignment, alignment);
+	vma->display_alignment = max(vma->display_alignment, alignment);
 
 	i915_gem_object_flush_if_display(obj);
 
@@ -167,7 +167,6 @@ retry:
 		ret = i915_gem_object_attach_phys(obj, alignment);
 	else if (!ret && HAS_LMEM(dev_priv))
 		ret = i915_gem_object_migrate(obj, &ww, INTEL_REGION_LMEM_0);
-	/* TODO: Do we need to sync when migration becomes async? */
 	if (!ret)
 		ret = i915_gem_object_pin_pages(obj);
 	if (ret)
@@ -244,7 +243,7 @@ int intel_plane_pin_fb(struct intel_plane_state *plane_state)
 	struct i915_vma *vma;
 	bool phys_cursor =
 		plane->id == PLANE_CURSOR &&
-		INTEL_INFO(dev_priv)->display.cursor_needs_physical;
+		DISPLAY_INFO(dev_priv)->cursor_needs_physical;
 
 	if (!intel_fb_uses_dpt(fb)) {
 		vma = intel_pin_and_fence_fb_obj(fb, phys_cursor,

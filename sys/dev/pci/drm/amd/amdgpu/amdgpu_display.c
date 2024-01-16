@@ -41,10 +41,46 @@
 #include <drm/drm_damage_helper.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_edid.h>
-#include <drm/drm_gem_framebuffer_helper.h>
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
 #include <drm/drm_fourcc.h>
+#include <drm/drm_modeset_helper.h>
 #include <drm/drm_vblank.h>
+
+/**
+ * amdgpu_display_hotplug_work_func - work handler for display hotplug event
+ *
+ * @work: work struct pointer
+ *
+ * This is the hotplug event work handler (all ASICs).
+ * The work gets scheduled from the IRQ handler if there
+ * was a hotplug interrupt.  It walks through the connector table
+ * and calls hotplug handler for each connector. After this, it sends
+ * a DRM hotplug event to alert userspace.
+ *
+ * This design approach is required in order to defer hotplug event handling
+ * from the IRQ handler to a work handler because hotplug handler has to use
+ * mutexes which cannot be locked in an IRQ handler (since &mutex_lock may
+ * sleep).
+ */
+void amdgpu_display_hotplug_work_func(struct work_struct *work)
+{
+	struct amdgpu_device *adev = container_of(work, struct amdgpu_device,
+						  hotplug_work.work);
+	struct drm_device *dev = adev_to_drm(adev);
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	struct drm_connector *connector;
+	struct drm_connector_list_iter iter;
+
+	mutex_lock(&mode_config->mutex);
+	drm_connector_list_iter_begin(dev, &iter);
+	drm_for_each_connector_iter(connector, &iter)
+		amdgpu_connector_hotplug(connector);
+	drm_connector_list_iter_end(&iter);
+	mutex_unlock(&mode_config->mutex);
+	/* Just fire off a uevent and let userspace tell us what to do */
+	drm_helper_hpd_irq_event(dev);
+}
 
 static int amdgpu_display_framebuffer_init(struct drm_device *dev,
 					   struct amdgpu_framebuffer *rfb,
@@ -64,7 +100,7 @@ static void amdgpu_display_flip_callback(struct dma_fence *f,
 static bool amdgpu_display_flip_handle_fence(struct amdgpu_flip_work *work,
 					     struct dma_fence **f)
 {
-	struct dma_fence *fence= *f;
+	struct dma_fence *fence = *f;
 
 	if (fence == NULL)
 		return false;
@@ -534,7 +570,7 @@ uint32_t amdgpu_display_supported_domains(struct amdgpu_device *adev,
 	 */
 	if ((bo_flags & AMDGPU_GEM_CREATE_CPU_GTT_USWC) &&
 	    amdgpu_bo_support_uswc(bo_flags) &&
-	    amdgpu_device_asic_has_dc_support(adev->asic_type) &&
+	    adev->dc_enabled &&
 	    adev->mode_info.gpu_vm_support)
 		domain |= AMDGPU_GEM_DOMAIN_GTT;
 #endif
@@ -851,7 +887,7 @@ static int convert_tiling_flags_to_modifier(struct amdgpu_framebuffer *afb)
 				}
 
 				dcc_block_bits -= ilog2(afb->base.format->cpp[0]);
-				afb->base.pitches[2] = roundup2(afb->base.width,
+				afb->base.pitches[2] = ALIGN(afb->base.width,
 							     1u << ((dcc_block_bits + 1) / 2));
 			}
 			format_info = amdgpu_lookup_format_info(afb->base.format->format,
@@ -943,7 +979,7 @@ static int amdgpu_display_verify_plane(struct amdgpu_framebuffer *rfb, int plane
 		((plane && plane < format->num_planes) ? format->vsub : 1);
 	unsigned int cpp = plane < format->num_planes ? format->cpp[plane] : 1;
 	unsigned int block_pitch = block_width * cpp;
-	unsigned int min_pitch = roundup2(width * cpp, block_pitch);
+	unsigned int min_pitch = ALIGN(width * cpp, block_pitch);
 	unsigned int block_size = 1 << block_size_log2;
 	uint64_t size;
 
@@ -1242,21 +1278,21 @@ const struct drm_mode_config_funcs amdgpu_mode_funcs = {
 	.fb_create = amdgpu_display_user_framebuffer_create,
 };
 
-static const struct drm_prop_enum_list amdgpu_underscan_enum_list[] =
-{	{ UNDERSCAN_OFF, "off" },
+static const struct drm_prop_enum_list amdgpu_underscan_enum_list[] = {
+	{ UNDERSCAN_OFF, "off" },
 	{ UNDERSCAN_ON, "on" },
 	{ UNDERSCAN_AUTO, "auto" },
 };
 
-static const struct drm_prop_enum_list amdgpu_audio_enum_list[] =
-{	{ AMDGPU_AUDIO_DISABLE, "off" },
+static const struct drm_prop_enum_list amdgpu_audio_enum_list[] = {
+	{ AMDGPU_AUDIO_DISABLE, "off" },
 	{ AMDGPU_AUDIO_ENABLE, "on" },
 	{ AMDGPU_AUDIO_AUTO, "auto" },
 };
 
 /* XXX support different dither options? spatial, temporal, both, etc. */
-static const struct drm_prop_enum_list amdgpu_dither_enum_list[] =
-{	{ AMDGPU_FMT_DITHER_DISABLE, "off" },
+static const struct drm_prop_enum_list amdgpu_dither_enum_list[] = {
+	{ AMDGPU_FMT_DITHER_DISABLE, "off" },
 	{ AMDGPU_FMT_DITHER_ENABLE, "on" },
 };
 
@@ -1306,7 +1342,7 @@ int amdgpu_display_modeset_create_props(struct amdgpu_device *adev)
 					 "dither",
 					 amdgpu_dither_enum_list, sz);
 
-	if (amdgpu_device_has_dc_support(adev)) {
+	if (adev->dc_enabled) {
 		adev->mode_info.abm_level_property =
 			drm_property_create_range(adev_to_drm(adev), 0,
 						  "abm level", 0, 4);
@@ -1487,8 +1523,7 @@ int amdgpu_display_get_crtc_scanoutpos(struct drm_device *dev,
 		ret |= DRM_SCANOUTPOS_ACCURATE;
 		vbl_start = vbl & 0x1fff;
 		vbl_end = (vbl >> 16) & 0x1fff;
-	}
-	else {
+	} else {
 		/* No: Fake something reasonable which gives at least ok results. */
 		vbl_start = mode->crtc_vdisplay;
 		vbl_end = 0;
@@ -1609,6 +1644,8 @@ int amdgpu_display_suspend_helper(struct amdgpu_device *adev)
 	struct drm_connector_list_iter iter;
 	int r;
 
+	drm_kms_helper_poll_disable(dev);
+
 	/* turn off display hw */
 	drm_modeset_lock_all(dev);
 	drm_connector_list_iter_begin(dev, &iter);
@@ -1686,6 +1723,8 @@ int amdgpu_display_resume_helper(struct amdgpu_device *adev)
 	drm_connector_list_iter_end(&iter);
 
 	drm_modeset_unlock_all(dev);
+
+	drm_kms_helper_poll_enable(dev);
 
 	return 0;
 }

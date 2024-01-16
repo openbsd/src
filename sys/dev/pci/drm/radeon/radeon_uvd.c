@@ -362,13 +362,13 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 	unsigned pitch = msg[28];
 
 	unsigned width_in_mb = width / 16;
-	unsigned height_in_mb = roundup2(height / 16, 2);
+	unsigned height_in_mb = ALIGN(height / 16, 2);
 
 	unsigned image_size, tmp, min_dpb_size;
 
 	image_size = width * height;
 	image_size += image_size / 2;
-	image_size = roundup2(image_size, 1024);
+	image_size = ALIGN(image_size, 1024);
 
 	switch (stream_type) {
 	case 0: /* H264 */
@@ -399,7 +399,7 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 
 		/* BP */
 		tmp = max(width_in_mb, height_in_mb);
-		min_dpb_size += roundup2(tmp * 7 * 16, 64);
+		min_dpb_size += ALIGN(tmp * 7 * 16, 64);
 		break;
 
 	case 3: /* MPEG2 */
@@ -417,7 +417,7 @@ static int radeon_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 		min_dpb_size += width_in_mb * height_in_mb * 64;
 
 		/* IT surface buffer */
-		min_dpb_size += roundup2(width_in_mb * height_in_mb * 32, 64);
+		min_dpb_size += ALIGN(width_in_mb * height_in_mb * 32, 64);
 		break;
 
 	default:

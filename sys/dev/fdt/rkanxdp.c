@@ -1,4 +1,4 @@
-/* $OpenBSD: rkanxdp.c,v 1.5 2022/04/06 18:59:28 naddy Exp $ */
+/* $OpenBSD: rkanxdp.c,v 1.6 2024/01/16 23:37:50 jsg Exp $ */
 /* $NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -41,6 +41,7 @@
 #include <dev/ofw/fdt.h>
 
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_atomic_helper.h>
 
 #include <dev/ic/anxdp.h>
 

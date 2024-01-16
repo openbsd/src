@@ -9,6 +9,9 @@
 
 #define PAGEVEC_SIZE 15
 
+struct folio_batch {
+};
+
 struct pagevec {
 	uint8_t	nr;
 	struct vm_page *pages[PAGEVEC_SIZE];

@@ -110,6 +110,7 @@
 #include <linux/string_helpers.h>
 
 #include "i915_drv.h"
+#include "i915_reg.h"
 #include "i915_trace.h"
 #include "i915_vgpu.h"
 #include "gen8_engine_cs.h"
@@ -2329,6 +2330,7 @@ static u32 active_ccid(struct intel_engine_cs *engine)
 
 static void execlists_capture(struct intel_engine_cs *engine)
 {
+	struct drm_i915_private *i915 = engine->i915;
 	struct execlists_capture *cap;
 
 	if (!IS_ENABLED(CONFIG_DRM_I915_CAPTURE_ERROR))
@@ -2377,7 +2379,7 @@ static void execlists_capture(struct intel_engine_cs *engine)
 		goto err_rq;
 
 	INIT_WORK(&cap->work, execlists_capture_work);
-	schedule_work(&cap->work);
+	queue_work(i915->unordered_wq, &cap->work);
 	return;
 
 err_rq:
@@ -2721,7 +2723,7 @@ static int emit_pdps(struct i915_request *rq)
 	int err, i;
 	u32 *cs;
 
-	GEM_BUG_ON(intel_vgpu_active(rq->engine->i915));
+	GEM_BUG_ON(intel_vgpu_active(rq->i915));
 
 	/*
 	 * Beware ye of the dragons, this sequence is magic!
@@ -3001,10 +3003,12 @@ static void execlists_reset_prepare(struct intel_engine_cs *engine)
 	intel_engine_stop_cs(engine);
 
 	/*
-	 * Wa_22011802037:gen11/gen12: In addition to stopping the cs, we need
+	 * Wa_22011802037: In addition to stopping the cs, we need
 	 * to wait for any pending mi force wakeups
 	 */
-	if (IS_GRAPHICS_VER(engine->i915, 11, 12))
+	if (IS_MTL_GRAPHICS_STEP(engine->i915, M, STEP_A0, STEP_B0) ||
+	    (GRAPHICS_VER(engine->i915) >= 11 &&
+	    GRAPHICS_VER_FULL(engine->i915) < IP_VER(12, 70)))
 		intel_engine_wait_for_pending_mi_fw(engine);
 
 	engine->execlists.reset_ccid = active_ccid(engine);
@@ -3484,9 +3488,9 @@ logical_ring_default_vfuncs(struct intel_engine_cs *engine)
 
 	if (GRAPHICS_VER_FULL(engine->i915) >= IP_VER(12, 50)) {
 		if (intel_engine_has_preemption(engine))
-			engine->emit_bb_start = gen125_emit_bb_start;
+			engine->emit_bb_start = xehp_emit_bb_start;
 		else
-			engine->emit_bb_start = gen125_emit_bb_start_noarb;
+			engine->emit_bb_start = xehp_emit_bb_start_noarb;
 	} else {
 		if (intel_engine_has_preemption(engine))
 			engine->emit_bb_start = gen8_emit_bb_start;
@@ -3566,16 +3570,16 @@ int intel_execlists_submission_setup(struct intel_engine_cs *engine)
 	lrc_init_wa_ctx(engine);
 
 	if (HAS_LOGICAL_RING_ELSQ(i915)) {
-		execlists->submit_reg = uncore->regs +
+		execlists->submit_reg = intel_uncore_regs(uncore) +
 			i915_mmio_reg_offset(RING_EXECLIST_SQ_CONTENTS(base));
-		execlists->ctrl_reg = uncore->regs +
+		execlists->ctrl_reg = intel_uncore_regs(uncore) +
 			i915_mmio_reg_offset(RING_EXECLIST_CONTROL(base));
 
 		engine->fw_domain = intel_uncore_forcewake_for_reg(engine->uncore,
 				    RING_EXECLIST_CONTROL(engine->mmio_base),
 				    FW_REG_WRITE);
 	} else {
-		execlists->submit_reg = uncore->regs +
+		execlists->submit_reg = intel_uncore_regs(uncore) +
 			i915_mmio_reg_offset(RING_ELSP(base));
 	}
 
@@ -3691,7 +3695,7 @@ static void virtual_context_destroy(struct kref *kref)
 	 * lock, we can delegate the free of the engine to an RCU worker.
 	 */
 	INIT_RCU_WORK(&ve->rcu, rcu_virtual_context_destroy);
-	queue_rcu_work(system_wq, &ve->rcu);
+	queue_rcu_work(ve->context.engine->i915->unordered_wq, &ve->rcu);
 }
 
 static void virtual_engine_initial_hint(struct virtual_engine *ve)
@@ -3711,7 +3715,7 @@ static void virtual_engine_initial_hint(struct virtual_engine *ve)
 	 * NB This does not force us to execute on this engine, it will just
 	 * typically be the first we inspect for submission.
 	 */
-	swp = prandom_u32_max(ve->num_siblings);
+	swp = get_random_u32_below(ve->num_siblings);
 	if (swp)
 		swap(ve->siblings[swp], ve->siblings[0]);
 }
@@ -3943,6 +3947,7 @@ static struct intel_context *
 execlists_create_virtual(struct intel_engine_cs **siblings, unsigned int count,
 			 unsigned long flags)
 {
+	struct drm_i915_private *i915 = siblings[0]->i915;
 	struct virtual_engine *ve;
 	unsigned int n;
 	int err;
@@ -3951,7 +3956,7 @@ execlists_create_virtual(struct intel_engine_cs **siblings, unsigned int count,
 	if (!ve)
 		return ERR_PTR(-ENOMEM);
 
-	ve->base.i915 = siblings[0]->i915;
+	ve->base.i915 = i915;
 	ve->base.gt = siblings[0]->gt;
 	ve->base.uncore = siblings[0]->uncore;
 	ve->base.id = -1;
@@ -4010,8 +4015,9 @@ execlists_create_virtual(struct intel_engine_cs **siblings, unsigned int count,
 
 		GEM_BUG_ON(!is_power_of_2(sibling->mask));
 		if (sibling->mask & ve->base.mask) {
-			DRM_DEBUG("duplicate %s entry in load balancer\n",
-				  sibling->name);
+			drm_dbg(&i915->drm,
+				"duplicate %s entry in load balancer\n",
+				sibling->name);
 			err = -EINVAL;
 			goto err_put;
 		}
@@ -4045,8 +4051,9 @@ execlists_create_virtual(struct intel_engine_cs **siblings, unsigned int count,
 		 */
 		if (ve->base.class != OTHER_CLASS) {
 			if (ve->base.class != sibling->class) {
-				DRM_DEBUG("invalid mixing of engine class, sibling %d, already %d\n",
-					  sibling->class, ve->base.class);
+				drm_dbg(&i915->drm,
+					"invalid mixing of engine class, sibling %d, already %d\n",
+					sibling->class, ve->base.class);
 				err = -EINVAL;
 				goto err_put;
 			}
@@ -4166,17 +4173,6 @@ void intel_execlists_show_requests(struct intel_engine_cs *engine,
 	spin_unlock_irqrestore(&sched_engine->lock, flags);
 }
 
-static unsigned long list_count(struct list_head *list)
-{
-	struct list_head *pos;
-	unsigned long count = 0;
-
-	list_for_each(pos, list)
-		count++;
-
-	return count;
-}
-
 void intel_execlists_dump_active_requests(struct intel_engine_cs *engine,
 					  struct i915_request *hung_rq,
 					  struct drm_printer *m)
@@ -4187,8 +4183,8 @@ void intel_execlists_dump_active_requests(struct intel_engine_cs *engine,
 
 	intel_engine_dump_active_requests(&engine->sched_engine->requests, hung_rq, m);
 
-	drm_printf(m, "\tOn hold?: %lu\n",
-		   list_count(&engine->sched_engine->hold));
+	drm_printf(m, "\tOn hold?: %zu\n",
+		   list_count_nodes(&engine->sched_engine->hold));
 
 	spin_unlock_irqrestore(&engine->sched_engine->lock, flags);
 }

@@ -29,7 +29,6 @@
 #include "link_encoder.h"
 #include "dcn10_link_encoder.h"
 #include "stream_encoder.h"
-#include "i2caux_interface.h"
 #include "dc_bios_types.h"
 
 #include "gpio_service_interface.h"
@@ -1057,7 +1056,7 @@ void dcn10_link_encoder_disable_output(
 	struct bp_transmitter_control cntl = { 0 };
 	enum bp_result result;
 
-	if (!dcn10_is_dig_enabled(enc)) {
+	if (enc->funcs->is_dig_enabled && !enc->funcs->is_dig_enabled(enc)) {
 		/* OF_SKIP_POWER_DOWN_INACTIVE_ENCODER */
 	/*in DP_Alt_No_Connect case, we turn off the dig already,
 	after excuation the PHY w/a sequence, not allow touch PHY any more*/
@@ -1220,7 +1219,6 @@ void dcn10_link_encoder_update_mst_stream_allocation_table(
 	const struct link_mst_stream_allocation_table *table)
 {
 	struct dcn10_link_encoder *enc10 = TO_DCN10_LINK_ENC(enc);
-	uint32_t value0 = 0;
 	uint32_t value1 = 0;
 	uint32_t value2 = 0;
 	uint32_t slots = 0;
@@ -1322,7 +1320,7 @@ void dcn10_link_encoder_update_mst_stream_allocation_table(
 	do {
 		udelay(10);
 
-		value0 = REG_READ(DP_MSE_SAT_UPDATE);
+		REG_READ(DP_MSE_SAT_UPDATE);
 
 		REG_GET(DP_MSE_SAT_UPDATE,
 				DP_MSE_SAT_UPDATE, &value1);

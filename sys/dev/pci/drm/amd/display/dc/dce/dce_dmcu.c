@@ -76,9 +76,9 @@ static bool dce_dmcu_init(struct dmcu *dmcu)
 }
 
 static bool dce_dmcu_load_iram(struct dmcu *dmcu,
-		unsigned int start_offset,
-		const char *src,
-		unsigned int bytes)
+			       unsigned int start_offset,
+			       const char *src,
+			       unsigned int bytes)
 {
 	struct dce_dmcu *dmcu_dce = TO_DCE_DMCU(dmcu);
 	unsigned int count = 0;
@@ -586,6 +586,7 @@ static void dcn10_dmcu_set_psr_enable(struct dmcu *dmcu, bool enable, bool wait)
 				if (state == PSR_STATE0)
 					break;
 			}
+			/* must *not* be fsleep - this can be called from high irq levels */
 			udelay(500);
 		}
 
@@ -927,19 +928,20 @@ static bool dcn10_recv_edid_cea_ack(struct dmcu *dmcu, int *offset)
 
 #if defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
 static void dcn10_forward_crc_window(struct dmcu *dmcu,
-					struct crc_region *crc_win,
+					struct rect *rect,
 					struct otg_phy_mux *mux_mapping)
 {
 	struct dce_dmcu *dmcu_dce = TO_DCE_DMCU(dmcu);
 	unsigned int dmcu_max_retry_on_wait_reg_ready = 801;
 	unsigned int dmcu_wait_reg_ready_interval = 100;
 	unsigned int crc_start = 0, crc_end = 0, otg_phy_mux = 0;
+	int x_start, y_start, x_end, y_end;
 
 	/* If microcontroller is not running, do nothing */
 	if (dmcu->dmcu_state != DMCU_RUNNING)
 		return;
 
-	if (!crc_win)
+	if (!rect)
 		return;
 
 	/* waitDMCUReadyForCmd */
@@ -947,9 +949,14 @@ static void dcn10_forward_crc_window(struct dmcu *dmcu,
 				dmcu_wait_reg_ready_interval,
 				dmcu_max_retry_on_wait_reg_ready);
 
+	x_start = rect->x;
+	y_start = rect->y;
+	x_end = x_start + rect->width;
+	y_end = y_start + rect->height;
+
 	/* build up nitification data */
-	crc_start = (((unsigned int) crc_win->x_start) << 16) | crc_win->y_start;
-	crc_end = (((unsigned int) crc_win->x_end) << 16) | crc_win->y_end;
+	crc_start = (((unsigned int) x_start) << 16) | y_start;
+	crc_end = (((unsigned int) x_end) << 16) | y_end;
 	otg_phy_mux =
 		(((unsigned int) mux_mapping->otg_output_num) << 16) | mux_mapping->phy_output_num;
 
@@ -1087,11 +1094,9 @@ static void dcn21_dmcu_construct(
 
 	dce_dmcu_construct(dmcu_dce, ctx, regs, dmcu_shift, dmcu_mask);
 
-	if (!IS_FPGA_MAXIMUS_DC(ctx->dce_environment)) {
-		psp_version = dm_read_reg(ctx, mmMP0_SMN_C2PMSG_58);
-		dmcu_dce->base.auto_load_dmcu = ((psp_version & 0x00FF00FF) > 0x00110029);
-		dmcu_dce->base.psp_version = psp_version;
-	}
+	psp_version = dm_read_reg(ctx, mmMP0_SMN_C2PMSG_58);
+	dmcu_dce->base.auto_load_dmcu = ((psp_version & 0x00FF00FF) > 0x00110029);
+	dmcu_dce->base.psp_version = psp_version;
 }
 
 struct dmcu *dce_dmcu_create(

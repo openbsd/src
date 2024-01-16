@@ -63,7 +63,7 @@ static int render_state_setup(struct intel_renderstate *so,
 		u32 s = rodata->batch[i];
 
 		if (i * 4  == rodata->reloc[reloc_index]) {
-			u64 r = s + so->vma->node.start;
+			u64 r = s + i915_vma_offset(so->vma);
 
 			s = lower_32_bits(r);
 			if (HAS_64BIT_RELOC(i915)) {
@@ -128,7 +128,7 @@ static int render_state_setup(struct intel_renderstate *so,
 	 * Since we are sending length, we need to strictly conform to
 	 * all requirements. For Gen2 this must be a multiple of 8.
 	 */
-	so->aux_size = roundup2(so->aux_size, 8);
+	so->aux_size = ALIGN(so->aux_size, 8);
 
 	ret = 0;
 out:
@@ -215,9 +215,7 @@ int intel_renderstate_emit(struct intel_renderstate *so,
 	if (!so->vma)
 		return 0;
 
-	err = i915_request_await_object(rq, so->vma->obj, false);
-	if (err == 0)
-		err = i915_vma_move_to_active(so->vma, rq, 0);
+	err = i915_vma_move_to_active(so->vma, rq, 0);
 	if (err)
 		return err;
 

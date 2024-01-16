@@ -27,8 +27,10 @@
 #include <linux/mutex.h>
 
 #include <drm/drm_atomic_state_helper.h>
+#include <drm/drm_debugfs.h>
 #include <drm/drm_bridge.h>
 #include <drm/drm_encoder.h>
+#include <drm/drm_file.h>
 #include <drm/drm_of.h>
 #include <drm/drm_print.h>
 
@@ -151,6 +153,45 @@
  * At this point, we're now certain that both the upstream driver and
  * the bridge driver are functional and we can't have a deadlock-like
  * situation when probing.
+ */
+
+/**
+ * DOC: dsi bridge operations
+ *
+ * DSI host interfaces are expected to be implemented as bridges rather than
+ * encoders, however there are a few aspects of their operation that need to
+ * be defined in order to provide a consistent interface.
+ *
+ * A DSI host should keep the PHY powered down until the pre_enable operation is
+ * called. All lanes are in an undefined idle state up to this point, and it
+ * must not be assumed that it is LP-11.
+ * pre_enable should initialise the PHY, set the data lanes to LP-11, and the
+ * clock lane to either LP-11 or HS depending on the mode_flag
+ * %MIPI_DSI_CLOCK_NON_CONTINUOUS.
+ *
+ * Ordinarily the downstream bridge DSI peripheral pre_enable will have been
+ * called before the DSI host. If the DSI peripheral requires LP-11 and/or
+ * the clock lane to be in HS mode prior to pre_enable, then it can set the
+ * &pre_enable_prev_first flag to request the pre_enable (and
+ * post_disable) order to be altered to enable the DSI host first.
+ *
+ * Either the CRTC being enabled, or the DSI host enable operation should switch
+ * the host to actively transmitting video on the data lanes.
+ *
+ * The reverse also applies. The DSI host disable operation or stopping the CRTC
+ * should stop transmitting video, and the data lanes should return to the LP-11
+ * state. The DSI host &post_disable operation should disable the PHY.
+ * If the &pre_enable_prev_first flag is set, then the DSI peripheral's
+ * bridge &post_disable will be called before the DSI host's post_disable.
+ *
+ * Whilst it is valid to call &host_transfer prior to pre_enable or after
+ * post_disable, the exact state of the lanes is undefined at this point. The
+ * DSI host should initialise the interface, transmit the data, and then disable
+ * the interface again.
+ *
+ * Ultra Low Power State (ULPS) is not explicitly supported by DRM. If
+ * implemented, it therefore needs to be handled entirely within the DSI Host
+ * driver.
  */
 
 static DEFINE_MUTEX(bridge_lock);
@@ -517,61 +558,6 @@ drm_bridge_chain_mode_valid(struct drm_bridge *bridge,
 EXPORT_SYMBOL(drm_bridge_chain_mode_valid);
 
 /**
- * drm_bridge_chain_disable - disables all bridges in the encoder chain
- * @bridge: bridge control structure
- *
- * Calls &drm_bridge_funcs.disable op for all the bridges in the encoder
- * chain, starting from the last bridge to the first. These are called before
- * calling the encoder's prepare op.
- *
- * Note: the bridge passed should be the one closest to the encoder
- */
-void drm_bridge_chain_disable(struct drm_bridge *bridge)
-{
-	struct drm_encoder *encoder;
-	struct drm_bridge *iter;
-
-	if (!bridge)
-		return;
-
-	encoder = bridge->encoder;
-	list_for_each_entry_reverse(iter, &encoder->bridge_chain, chain_node) {
-		if (iter->funcs->disable)
-			iter->funcs->disable(iter);
-
-		if (iter == bridge)
-			break;
-	}
-}
-EXPORT_SYMBOL(drm_bridge_chain_disable);
-
-/**
- * drm_bridge_chain_post_disable - cleans up after disabling all bridges in the
- *				   encoder chain
- * @bridge: bridge control structure
- *
- * Calls &drm_bridge_funcs.post_disable op for all the bridges in the
- * encoder chain, starting from the first bridge to the last. These are called
- * after completing the encoder's prepare op.
- *
- * Note: the bridge passed should be the one closest to the encoder
- */
-void drm_bridge_chain_post_disable(struct drm_bridge *bridge)
-{
-	struct drm_encoder *encoder;
-
-	if (!bridge)
-		return;
-
-	encoder = bridge->encoder;
-	list_for_each_entry_from(bridge, &encoder->bridge_chain, chain_node) {
-		if (bridge->funcs->post_disable)
-			bridge->funcs->post_disable(bridge);
-	}
-}
-EXPORT_SYMBOL(drm_bridge_chain_post_disable);
-
-/**
  * drm_bridge_chain_mode_set - set proposed mode for all bridges in the
  *			       encoder chain
  * @bridge: bridge control structure
@@ -599,61 +585,6 @@ void drm_bridge_chain_mode_set(struct drm_bridge *bridge,
 	}
 }
 EXPORT_SYMBOL(drm_bridge_chain_mode_set);
-
-/**
- * drm_bridge_chain_pre_enable - prepares for enabling all bridges in the
- *				 encoder chain
- * @bridge: bridge control structure
- *
- * Calls &drm_bridge_funcs.pre_enable op for all the bridges in the encoder
- * chain, starting from the last bridge to the first. These are called
- * before calling the encoder's commit op.
- *
- * Note: the bridge passed should be the one closest to the encoder
- */
-void drm_bridge_chain_pre_enable(struct drm_bridge *bridge)
-{
-	struct drm_encoder *encoder;
-	struct drm_bridge *iter;
-
-	if (!bridge)
-		return;
-
-	encoder = bridge->encoder;
-	list_for_each_entry_reverse(iter, &encoder->bridge_chain, chain_node) {
-		if (iter->funcs->pre_enable)
-			iter->funcs->pre_enable(iter);
-
-		if (iter == bridge)
-			break;
-	}
-}
-EXPORT_SYMBOL(drm_bridge_chain_pre_enable);
-
-/**
- * drm_bridge_chain_enable - enables all bridges in the encoder chain
- * @bridge: bridge control structure
- *
- * Calls &drm_bridge_funcs.enable op for all the bridges in the encoder
- * chain, starting from the first bridge to the last. These are called
- * after completing the encoder's commit op.
- *
- * Note that the bridge passed should be the one closest to the encoder
- */
-void drm_bridge_chain_enable(struct drm_bridge *bridge)
-{
-	struct drm_encoder *encoder;
-
-	if (!bridge)
-		return;
-
-	encoder = bridge->encoder;
-	list_for_each_entry_from(bridge, &encoder->bridge_chain, chain_node) {
-		if (bridge->funcs->enable)
-			bridge->funcs->enable(bridge);
-	}
-}
-EXPORT_SYMBOL(drm_bridge_chain_enable);
 
 /**
  * drm_atomic_bridge_chain_disable - disables all bridges in the encoder chain
@@ -1421,6 +1352,50 @@ struct drm_bridge *of_drm_find_bridge(struct device_node *np)
 	return NULL;
 }
 EXPORT_SYMBOL(of_drm_find_bridge);
+#endif
+
+#ifdef CONFIG_DEBUG_FS
+static int drm_bridge_chains_info(struct seq_file *m, void *data)
+{
+	struct drm_debugfs_entry *entry = m->private;
+	struct drm_device *dev = entry->dev;
+	struct drm_printer p = drm_seq_file_printer(m);
+	struct drm_mode_config *config = &dev->mode_config;
+	struct drm_encoder *encoder;
+	unsigned int bridge_idx = 0;
+
+	list_for_each_entry(encoder, &config->encoder_list, head) {
+		struct drm_bridge *bridge;
+
+		drm_printf(&p, "encoder[%u]\n", encoder->base.id);
+
+		drm_for_each_bridge_in_chain(encoder, bridge) {
+			drm_printf(&p, "\tbridge[%u] type: %u, ops: %#x",
+				   bridge_idx, bridge->type, bridge->ops);
+
+#ifdef CONFIG_OF
+			if (bridge->of_node)
+				drm_printf(&p, ", OF: %pOFfc", bridge->of_node);
+#endif
+
+			drm_printf(&p, "\n");
+
+			bridge_idx++;
+		}
+	}
+
+	return 0;
+}
+
+static const struct drm_debugfs_info drm_bridge_debugfs_list[] = {
+	{ "bridge_chains", drm_bridge_chains_info, 0 },
+};
+
+void drm_bridge_debugfs_init(struct drm_minor *minor)
+{
+	drm_debugfs_add_files(minor->dev, drm_bridge_debugfs_list,
+			      ARRAY_SIZE(drm_bridge_debugfs_list));
+}
 #endif
 
 MODULE_AUTHOR("Ajay Kumar <ajaykumar.rs@samsung.com>");

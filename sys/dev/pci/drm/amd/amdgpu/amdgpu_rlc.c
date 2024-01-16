@@ -31,12 +31,13 @@
  * amdgpu_gfx_rlc_enter_safe_mode - Set RLC into safe mode
  *
  * @adev: amdgpu_device pointer
+ * @xcc_id: xcc accelerated compute core id
  *
  * Set RLC enter into safe mode if RLC is enabled and haven't in safe mode.
  */
-void amdgpu_gfx_rlc_enter_safe_mode(struct amdgpu_device *adev)
+void amdgpu_gfx_rlc_enter_safe_mode(struct amdgpu_device *adev, int xcc_id)
 {
-	if (adev->gfx.rlc.in_safe_mode)
+	if (adev->gfx.rlc.in_safe_mode[xcc_id])
 		return;
 
 	/* if RLC is not enabled, do nothing */
@@ -46,8 +47,8 @@ void amdgpu_gfx_rlc_enter_safe_mode(struct amdgpu_device *adev)
 	if (adev->cg_flags &
 	    (AMD_CG_SUPPORT_GFX_CGCG | AMD_CG_SUPPORT_GFX_MGCG |
 	     AMD_CG_SUPPORT_GFX_3D_CGCG)) {
-		adev->gfx.rlc.funcs->set_safe_mode(adev);
-		adev->gfx.rlc.in_safe_mode = true;
+		adev->gfx.rlc.funcs->set_safe_mode(adev, xcc_id);
+		adev->gfx.rlc.in_safe_mode[xcc_id] = true;
 	}
 }
 
@@ -55,12 +56,13 @@ void amdgpu_gfx_rlc_enter_safe_mode(struct amdgpu_device *adev)
  * amdgpu_gfx_rlc_exit_safe_mode - Set RLC out of safe mode
  *
  * @adev: amdgpu_device pointer
+ * @xcc_id: xcc accelerated compute core id
  *
  * Set RLC exit safe mode if RLC is enabled and have entered into safe mode.
  */
-void amdgpu_gfx_rlc_exit_safe_mode(struct amdgpu_device *adev)
+void amdgpu_gfx_rlc_exit_safe_mode(struct amdgpu_device *adev, int xcc_id)
 {
-	if (!(adev->gfx.rlc.in_safe_mode))
+	if (!(adev->gfx.rlc.in_safe_mode[xcc_id]))
 		return;
 
 	/* if RLC is not enabled, do nothing */
@@ -70,8 +72,8 @@ void amdgpu_gfx_rlc_exit_safe_mode(struct amdgpu_device *adev)
 	if (adev->cg_flags &
 	    (AMD_CG_SUPPORT_GFX_CGCG | AMD_CG_SUPPORT_GFX_MGCG |
 	     AMD_CG_SUPPORT_GFX_3D_CGCG)) {
-		adev->gfx.rlc.funcs->unset_safe_mode(adev);
-		adev->gfx.rlc.in_safe_mode = false;
+		adev->gfx.rlc.funcs->unset_safe_mode(adev, xcc_id);
+		adev->gfx.rlc.in_safe_mode[xcc_id] = false;
 	}
 }
 
@@ -93,7 +95,8 @@ int amdgpu_gfx_rlc_init_sr(struct amdgpu_device *adev, u32 dws)
 
 	/* allocate save restore block */
 	r = amdgpu_bo_create_reserved(adev, dws * 4, PAGE_SIZE,
-				      AMDGPU_GEM_DOMAIN_VRAM,
+				      AMDGPU_GEM_DOMAIN_VRAM |
+				      AMDGPU_GEM_DOMAIN_GTT,
 				      &adev->gfx.rlc.save_restore_obj,
 				      &adev->gfx.rlc.save_restore_gpu_addr,
 				      (void **)&adev->gfx.rlc.sr_ptr);
@@ -130,7 +133,8 @@ int amdgpu_gfx_rlc_init_csb(struct amdgpu_device *adev)
 	/* allocate clear state block */
 	adev->gfx.rlc.clear_state_size = dws = adev->gfx.rlc.funcs->get_csb_size(adev);
 	r = amdgpu_bo_create_kernel(adev, dws * 4, PAGE_SIZE,
-				      AMDGPU_GEM_DOMAIN_VRAM,
+				      AMDGPU_GEM_DOMAIN_VRAM |
+				      AMDGPU_GEM_DOMAIN_GTT,
 				      &adev->gfx.rlc.clear_state_obj,
 				      &adev->gfx.rlc.clear_state_gpu_addr,
 				      (void **)&adev->gfx.rlc.cs_ptr);
@@ -156,7 +160,8 @@ int amdgpu_gfx_rlc_init_cpt(struct amdgpu_device *adev)
 	int r;
 
 	r = amdgpu_bo_create_reserved(adev, adev->gfx.rlc.cp_table_size,
-				      PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM,
+				      PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM |
+				      AMDGPU_GEM_DOMAIN_GTT,
 				      &adev->gfx.rlc.cp_table_obj,
 				      &adev->gfx.rlc.cp_table_gpu_addr,
 				      (void **)&adev->gfx.rlc.cp_table_ptr);
@@ -330,7 +335,7 @@ static int amdgpu_gfx_rlc_init_microcode_v2_0(struct amdgpu_device *adev)
 		if (info->fw) {
 			common_hdr = (const struct common_firmware_header *)info->fw->data;
 			adev->firmware.fw_size +=
-				roundup2(le32_to_cpu(common_hdr->ucode_size_bytes), PAGE_SIZE);
+				ALIGN(le32_to_cpu(common_hdr->ucode_size_bytes), PAGE_SIZE);
 		}
 	}
 
@@ -364,7 +369,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_1(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_RLC_RESTORE_LIST_CNTL;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.save_restore_list_cntl_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.save_restore_list_cntl_size_bytes, PAGE_SIZE);
 		}
 
 		if (adev->gfx.rlc.save_restore_list_gpm_size_bytes) {
@@ -372,7 +377,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_1(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_RLC_RESTORE_LIST_GPM_MEM;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.save_restore_list_gpm_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.save_restore_list_gpm_size_bytes, PAGE_SIZE);
 		}
 
 		if (adev->gfx.rlc.save_restore_list_srm_size_bytes) {
@@ -380,7 +385,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_1(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_RLC_RESTORE_LIST_SRM_MEM;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.save_restore_list_srm_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.save_restore_list_srm_size_bytes, PAGE_SIZE);
 		}
 	}
 }
@@ -402,7 +407,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_2(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_RLC_IRAM;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.rlc_iram_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.rlc_iram_ucode_size_bytes, PAGE_SIZE);
 		}
 
 		if (adev->gfx.rlc.rlc_dram_ucode_size_bytes) {
@@ -410,7 +415,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_2(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_RLC_DRAM;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.rlc_dram_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.rlc_dram_ucode_size_bytes, PAGE_SIZE);
 		}
 	}
 }
@@ -437,7 +442,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_3(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_RLC_P;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.rlcp_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.rlcp_ucode_size_bytes, PAGE_SIZE);
 		}
 
 		if (adev->gfx.rlc.rlcv_ucode_size_bytes) {
@@ -445,7 +450,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_3(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_RLC_V;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.rlcv_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.rlcv_ucode_size_bytes, PAGE_SIZE);
 		}
 	}
 }
@@ -473,7 +478,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_4(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_GLOBAL_TAP_DELAYS;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.global_tap_delays_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.global_tap_delays_ucode_size_bytes, PAGE_SIZE);
 		}
 
 		if (adev->gfx.rlc.se0_tap_delays_ucode_size_bytes) {
@@ -481,7 +486,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_4(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_SE0_TAP_DELAYS;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.se0_tap_delays_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.se0_tap_delays_ucode_size_bytes, PAGE_SIZE);
 		}
 
 		if (adev->gfx.rlc.se1_tap_delays_ucode_size_bytes) {
@@ -489,7 +494,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_4(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_SE1_TAP_DELAYS;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.se1_tap_delays_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.se1_tap_delays_ucode_size_bytes, PAGE_SIZE);
 		}
 
 		if (adev->gfx.rlc.se2_tap_delays_ucode_size_bytes) {
@@ -497,7 +502,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_4(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_SE2_TAP_DELAYS;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.se2_tap_delays_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.se2_tap_delays_ucode_size_bytes, PAGE_SIZE);
 		}
 
 		if (adev->gfx.rlc.se3_tap_delays_ucode_size_bytes) {
@@ -505,7 +510,7 @@ static void amdgpu_gfx_rlc_init_microcode_v2_4(struct amdgpu_device *adev)
 			info->ucode_id = AMDGPU_UCODE_ID_SE3_TAP_DELAYS;
 			info->fw = adev->gfx.rlc_fw;
 			adev->firmware.fw_size +=
-				roundup2(adev->gfx.rlc.se3_tap_delays_ucode_size_bytes, PAGE_SIZE);
+				ALIGN(adev->gfx.rlc.se3_tap_delays_ucode_size_bytes, PAGE_SIZE);
 		}
 	}
 }

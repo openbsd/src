@@ -1393,7 +1393,7 @@ bool radeon_atombios_get_ppll_ss_info(struct radeon_device *rdev,
 
 		num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
 			sizeof(ATOM_SPREAD_SPECTRUM_ASSIGNMENT);
-		ss_assign = (struct _ATOM_SPREAD_SPECTRUM_ASSIGNMENT*)
+		ss_assign = (struct _ATOM_SPREAD_SPECTRUM_ASSIGNMENT *)
 			((u8 *)&ss_info->asSS_Info[0]);
 		for (i = 0; i < num_indices; i++) {
 			if (ss_assign->ucSS_Id == id) {
@@ -1406,7 +1406,7 @@ bool radeon_atombios_get_ppll_ss_info(struct radeon_device *rdev,
 				ss->refdiv = ss_assign->ucRecommendedRef_Div;
 				return true;
 			}
-			ss_assign = (struct _ATOM_SPREAD_SPECTRUM_ASSIGNMENT*)
+			ss_assign = (struct _ATOM_SPREAD_SPECTRUM_ASSIGNMENT *)
 				((u8 *)ss_assign + sizeof(struct _ATOM_SPREAD_SPECTRUM_ASSIGNMENT));
 		}
 	}
@@ -1731,8 +1731,11 @@ struct radeon_encoder_atom_dig *radeon_atombios_get_lvds_info(struct
 						}
 					}
 					record += fake_edid_record->ucFakeEDIDLength ?
-						fake_edid_record->ucFakeEDIDLength + 2 :
-						sizeof(ATOM_FAKE_EDID_PATCH_RECORD);
+						  struct_size(fake_edid_record,
+							      ucFakeEDIDString,
+							      fake_edid_record->ucFakeEDIDLength) :
+						  /* empty fake edid record must be 3 bytes long */
+						  sizeof(ATOM_FAKE_EDID_PATCH_RECORD) + 1;
 					break;
 				case LCD_PANEL_RESOLUTION_RECORD_TYPE:
 					panel_res_record = (ATOM_PANEL_RESOLUTION_PATCH_RECORD *)record;
@@ -2107,7 +2110,7 @@ static int radeon_atombios_parse_power_table_1_3(struct radeon_device *rdev)
 			const char *name = thermal_controller_names[power_info->info.
 								    ucOverdriveThermalController];
 			info.addr = power_info->info.ucOverdriveControllerAddress >> 1;
-			strlcpy(info.type, name, sizeof(info.type));
+			strscpy(info.type, name, sizeof(info.type));
 			i2c_new_client_device(&rdev->pm.i2c_bus->adapter, &info);
 		}
 #endif
@@ -2359,7 +2362,7 @@ static void radeon_atombios_add_pplib_thermal_controller(struct radeon_device *r
 				struct i2c_board_info info = { };
 				const char *name = pp_lib_thermal_controller_names[controller->ucType];
 				info.addr = controller->ucI2cAddress >> 1;
-				strlcpy(info.type, name, sizeof(info.type));
+				strscpy(info.type, name, sizeof(info.type));
 				i2c_new_client_device(&rdev->pm.i2c_bus->adapter, &info);
 			}
 #endif
@@ -3411,7 +3414,7 @@ static ATOM_VOLTAGE_OBJECT_V2 *atom_lookup_voltage_object_v2(ATOM_VOLTAGE_OBJECT
 {
 	u32 size = le16_to_cpu(v2->sHeader.usStructureSize);
 	u32 offset = offsetof(ATOM_VOLTAGE_OBJECT_INFO_V2, asVoltageObj[0]);
-	u8 *start = (u8*)v2;
+	u8 *start = (u8 *)v2;
 
 	while (offset < size) {
 		ATOM_VOLTAGE_OBJECT_V2 *vo = (ATOM_VOLTAGE_OBJECT_V2 *)(start + offset);
@@ -3428,7 +3431,7 @@ static ATOM_VOLTAGE_OBJECT_V3 *atom_lookup_voltage_object_v3(ATOM_VOLTAGE_OBJECT
 {
 	u32 size = le16_to_cpu(v3->sHeader.usStructureSize);
 	u32 offset = offsetof(ATOM_VOLTAGE_OBJECT_INFO_V3_1, asVoltageObj[0]);
-	u8 *start = (u8*)v3;
+	u8 *start = (u8 *)v3;
 
 	while (offset < size) {
 		ATOM_VOLTAGE_OBJECT_V3 *vo = (ATOM_VOLTAGE_OBJECT_V3 *)(start + offset);

@@ -2474,50 +2474,50 @@ int r600_init_microcode(struct radeon_device *rdev)
 		chip_name = "RV770";
 		rlc_chip_name = "R700";
 		smc_chip_name = "RV770";
-		smc_req_size = roundup2(RV770_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(RV770_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_RV730:
 		chip_name = "RV730";
 		rlc_chip_name = "R700";
 		smc_chip_name = "RV730";
-		smc_req_size = roundup2(RV730_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(RV730_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_RV710:
 		chip_name = "RV710";
 		rlc_chip_name = "R700";
 		smc_chip_name = "RV710";
-		smc_req_size = roundup2(RV710_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(RV710_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_RV740:
 		chip_name = "RV730";
 		rlc_chip_name = "R700";
 		smc_chip_name = "RV740";
-		smc_req_size = roundup2(RV740_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(RV740_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_CEDAR:
 		chip_name = "CEDAR";
 		rlc_chip_name = "CEDAR";
 		smc_chip_name = "CEDAR";
-		smc_req_size = roundup2(CEDAR_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(CEDAR_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_REDWOOD:
 		chip_name = "REDWOOD";
 		rlc_chip_name = "REDWOOD";
 		smc_chip_name = "REDWOOD";
-		smc_req_size = roundup2(REDWOOD_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(REDWOOD_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_JUNIPER:
 		chip_name = "JUNIPER";
 		rlc_chip_name = "JUNIPER";
 		smc_chip_name = "JUNIPER";
-		smc_req_size = roundup2(JUNIPER_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(JUNIPER_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
 		chip_name = "CYPRESS";
 		rlc_chip_name = "CYPRESS";
 		smc_chip_name = "CYPRESS";
-		smc_req_size = roundup2(CYPRESS_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(CYPRESS_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_PALM:
 		chip_name = "PALM";
@@ -2918,7 +2918,7 @@ void r600_fence_ring_emit(struct radeon_device *rdev,
  * @rdev: radeon_device pointer
  * @ring: radeon ring buffer object
  * @semaphore: radeon semaphore object
- * @emit_wait: Is this a sempahore wait?
+ * @emit_wait: Is this a semaphore wait?
  *
  * Emits a semaphore signal/wait packet to the CP ring and prevents the PFP
  * from running ahead of semaphore waits.
@@ -4347,7 +4347,7 @@ restart_ih:
 
 static int r600_debugfs_mc_info_show(struct seq_file *m, void *unused)
 {
-	struct radeon_device *rdev = (struct radeon_device *)m->private;
+	struct radeon_device *rdev = m->private;
 
 	DREG32_SYS(m, rdev, R_000E50_SRBM_STATUS);
 	DREG32_SYS(m, rdev, VM_L2_STATUS);

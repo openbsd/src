@@ -42,12 +42,15 @@ void intel_engine_add_user(struct intel_engine_cs *engine)
 		  (struct llist_head *)&engine->i915->uabi_engines);
 }
 
-static const u8 uabi_classes[] = {
+#define I915_NO_UABI_CLASS ((u16)(-1))
+
+static const u16 uabi_classes[] = {
 	[RENDER_CLASS] = I915_ENGINE_CLASS_RENDER,
 	[COPY_ENGINE_CLASS] = I915_ENGINE_CLASS_COPY,
 	[VIDEO_DECODE_CLASS] = I915_ENGINE_CLASS_VIDEO,
 	[VIDEO_ENHANCEMENT_CLASS] = I915_ENGINE_CLASS_VIDEO_ENHANCE,
 	[COMPUTE_CLASS] = I915_ENGINE_CLASS_COMPUTE,
+	[OTHER_CLASS] = I915_NO_UABI_CLASS, /* Not exposed to users, no uabi class. */
 };
 
 static int engine_cmp(void *priv, const struct list_head *A,
@@ -118,7 +121,7 @@ static void set_scheduler_caps(struct drm_i915_private *i915)
 			disabled |= (I915_SCHEDULER_CAP_ENABLED |
 				     I915_SCHEDULER_CAP_PRIORITY);
 
-		if (intel_uc_uses_guc_submission(&to_gt(i915)->uc))
+		if (intel_uc_uses_guc_submission(&engine->gt->uc))
 			enabled |= I915_SCHEDULER_CAP_STATIC_PRIORITY_MAP;
 
 		for (i = 0; i < ARRAY_SIZE(map); i++) {
@@ -186,6 +189,7 @@ const char *intel_engine_class_repr(u8 class)
 		[COPY_ENGINE_CLASS] = "bcs",
 		[VIDEO_DECODE_CLASS] = "vcs",
 		[VIDEO_ENHANCEMENT_CLASS] = "vecs",
+		[OTHER_CLASS] = "other",
 		[COMPUTE_CLASS] = "ccs",
 	};
 
@@ -236,8 +240,18 @@ static void add_legacy_ring(struct legacy_ring *ring,
 		ring->instance++;
 }
 
+static void engine_rename(struct intel_engine_cs *engine, const char *name, u16 instance)
+{
+	char old[sizeof(engine->name)];
+
+	memcpy(old, engine->name, sizeof(engine->name));
+	scnprintf(engine->name, sizeof(engine->name), "%s%u", name, instance);
+	drm_dbg(&engine->i915->drm, "renamed %s to %s\n", old, engine->name);
+}
+
 void intel_engines_driver_register(struct drm_i915_private *i915)
 {
+	u16 name_instance, other_instance = 0;
 	struct legacy_ring ring = {};
 	struct list_head *it, *next;
 	struct rb_node **p, *prev;
@@ -251,25 +265,32 @@ void intel_engines_driver_register(struct drm_i915_private *i915)
 		struct intel_engine_cs *engine =
 			container_of((struct rb_node *)it, typeof(*engine),
 				     uabi_node);
-		char old[sizeof(engine->name)];
 
 		if (intel_gt_has_unrecoverable_error(engine->gt))
 			continue; /* ignore incomplete engines */
 
 		GEM_BUG_ON(engine->class >= ARRAY_SIZE(uabi_classes));
 		engine->uabi_class = uabi_classes[engine->class];
+		if (engine->uabi_class == I915_NO_UABI_CLASS) {
+			name_instance = other_instance++;
+		} else {
+			GEM_BUG_ON(engine->uabi_class >=
+				   ARRAY_SIZE(i915->engine_uabi_class_count));
+			name_instance =
+				i915->engine_uabi_class_count[engine->uabi_class]++;
+		}
+		engine->uabi_instance = name_instance;
 
-		GEM_BUG_ON(engine->uabi_class >=
-			   ARRAY_SIZE(i915->engine_uabi_class_count));
-		engine->uabi_instance =
-			i915->engine_uabi_class_count[engine->uabi_class]++;
+		/*
+		 * Replace the internal name with the final user and log facing
+		 * name.
+		 */
+		engine_rename(engine,
+			      intel_engine_class_repr(engine->class),
+			      name_instance);
 
-		/* Replace the internal name with the final user facing name */
-		memcpy(old, engine->name, sizeof(engine->name));
-		scnprintf(engine->name, sizeof(engine->name), "%s%u",
-			  intel_engine_class_repr(engine->class),
-			  engine->uabi_instance);
-		DRM_DEBUG_DRIVER("renamed %s to %s\n", old, engine->name);
+		if (engine->uabi_class == I915_NO_UABI_CLASS)
+			continue;
 
 		rb_link_node(&engine->uabi_node, prev, p);
 		rb_insert_color(&engine->uabi_node, &i915->uabi_engines);

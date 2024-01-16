@@ -39,6 +39,8 @@
 #define PSP_TMR_ALIGNMENT	0x100000
 #define PSP_FW_NAME_LEN		0x24
 
+extern const struct attribute_group amdgpu_flash_attr_group;
+
 enum psp_shared_mem_size {
 	PSP_ASD_SHARED_MEM_SIZE				= 0x0,
 	PSP_XGMI_SHARED_MEM_SIZE			= 0x4000,
@@ -78,8 +80,7 @@ enum psp_bootloader_cmd {
 	PSP_BL__LOAD_TOS_SPL_TABLE	= 0x10000000,
 };
 
-enum psp_ring_type
-{
+enum psp_ring_type {
 	PSP_RING_TYPE__INVALID = 0,
 	/*
 	 * These values map to the way the PSP kernel identifies the
@@ -89,8 +90,7 @@ enum psp_ring_type
 	PSP_RING_TYPE__KM = 2  /* Kernel mode ring (formerly called GPCOM) */
 };
 
-struct psp_ring
-{
+struct psp_ring {
 	enum psp_ring_type		ring_type;
 	struct psp_gfx_rb_frame		*ring_mem;
 	uint64_t			ring_mem_mc_addr;
@@ -107,9 +107,9 @@ enum psp_reg_prog_id {
 	PSP_REG_LAST
 };
 
-struct psp_funcs
-{
+struct psp_funcs {
 	int (*init_microcode)(struct psp_context *psp);
+	int (*wait_for_bootloader)(struct psp_context *psp);
 	int (*bootloader_load_kdb)(struct psp_context *psp);
 	int (*bootloader_load_spl)(struct psp_context *psp);
 	int (*bootloader_load_sysdrv)(struct psp_context *psp);
@@ -118,7 +118,6 @@ struct psp_funcs
 	int (*bootloader_load_dbg_drv)(struct psp_context *psp);
 	int (*bootloader_load_ras_drv)(struct psp_context *psp);
 	int (*bootloader_load_sos)(struct psp_context *psp);
-	int (*ring_init)(struct psp_context *psp, enum psp_ring_type ring_type);
 	int (*ring_create)(struct psp_context *psp,
 			   enum psp_ring_type ring_type);
 	int (*ring_stop)(struct psp_context *psp,
@@ -134,6 +133,13 @@ struct psp_funcs
 	int (*read_usbc_pd_fw)(struct psp_context *psp, uint32_t *fw_ver);
 	int (*update_spirom)(struct psp_context *psp, uint64_t fw_pri_mc_addr);
 	int (*vbflash_stat)(struct psp_context *psp);
+	int (*fatal_error_recovery_quirk)(struct psp_context *psp);
+};
+
+struct ta_funcs {
+	int (*fn_ta_initialize)(struct psp_context *psp);
+	int (*fn_ta_invoke)(struct psp_context *psp, uint32_t ta_cmd_id);
+	int (*fn_ta_terminate)(struct psp_context *psp);
 };
 
 #define AMDGPU_XGMI_MAX_CONNECTED_NODES		64
@@ -302,13 +308,13 @@ struct psp_runtime_scpm_entry {
 	enum psp_runtime_scpm_authentication scpm_status;
 };
 
-struct psp_context
-{
-	struct amdgpu_device            *adev;
-	struct psp_ring                 km_ring;
+struct psp_context {
+	struct amdgpu_device		*adev;
+	struct psp_ring			km_ring;
 	struct psp_gfx_cmd_resp		*cmd;
 
 	const struct psp_funcs		*funcs;
+	const struct ta_funcs		*ta_funcs;
 
 	/* firmware buffer */
 	struct amdgpu_bo		*fw_pri_bo;
@@ -333,7 +339,7 @@ struct psp_context
 	uint64_t			tmr_mc_addr;
 
 	/* asd firmware */
-	const struct firmware	*asd_fw;
+	const struct firmware		*asd_fw;
 
 	/* toc firmware */
 	const struct firmware		*toc_fw;
@@ -378,9 +384,13 @@ struct psp_context
 
 	uint32_t			boot_cfg_bitmask;
 
-	char *vbflash_tmp_buf;
-	size_t vbflash_image_size;
-	bool vbflash_done;
+	/* firmware upgrades supported */
+	bool				sup_pd_fw_up;
+	bool				sup_ifwi_up;
+
+	char				*vbflash_tmp_buf;
+	size_t				vbflash_image_size;
+	bool				vbflash_done;
 };
 
 struct amdgpu_psp_funcs {
@@ -389,7 +399,6 @@ struct amdgpu_psp_funcs {
 };
 
 
-#define psp_ring_init(psp, type) (psp)->funcs->ring_init((psp), (type))
 #define psp_ring_create(psp, type) (psp)->funcs->ring_create((psp), (type))
 #define psp_ring_stop(psp, type) (psp)->funcs->ring_stop((psp), (type))
 #define psp_ring_destroy(psp, type) ((psp)->funcs->ring_destroy((psp), (type)))
@@ -438,6 +447,10 @@ struct amdgpu_psp_funcs {
 	((psp)->funcs->vbflash_stat ? \
 	(psp)->funcs->vbflash_stat((psp)) : -EINVAL)
 
+#define psp_fatal_error_recovery_quirk(psp) \
+	((psp)->funcs->fatal_error_recovery_quirk ? \
+	(psp)->funcs->fatal_error_recovery_quirk((psp)) : 0)
+
 extern const struct amd_ip_funcs psp_ip_funcs;
 
 extern const struct amdgpu_ip_block_version psp_v3_1_ip_block;
@@ -450,10 +463,13 @@ extern const struct amdgpu_ip_block_version psp_v13_0_4_ip_block;
 
 extern int psp_wait_for(struct psp_context *psp, uint32_t reg_index,
 			uint32_t field_val, uint32_t mask, bool check_changed);
+extern int psp_wait_for_spirom_update(struct psp_context *psp, uint32_t reg_index,
+			uint32_t field_val, uint32_t mask, uint32_t msec_timeout);
+
+int psp_execute_ip_fw_load(struct psp_context *psp,
+			   struct amdgpu_firmware_info *ucode);
 
 int psp_gpu_reset(struct amdgpu_device *adev);
-int psp_update_vcn_sram(struct amdgpu_device *adev, int inst_idx,
-			uint64_t cmd_gpu_addr, int cmd_size);
 
 int psp_ta_init_shared_buf(struct psp_context *psp,
 				  struct ta_mem_context *mem_ctx);
@@ -463,9 +479,6 @@ int psp_ta_load(struct psp_context *psp, struct ta_context *context);
 int psp_ta_invoke(struct psp_context *psp,
 			uint32_t ta_cmd_id,
 			struct ta_context *context);
-int psp_ta_invoke_indirect(struct psp_context *psp,
-		  uint32_t ta_cmd_id,
-		  struct ta_context *context);
 
 int psp_xgmi_initialize(struct psp_context *psp, bool set_extended_data, bool load_ta);
 int psp_xgmi_terminate(struct psp_context *psp);
@@ -479,12 +492,12 @@ int psp_xgmi_get_topology_info(struct psp_context *psp,
 int psp_xgmi_set_topology_info(struct psp_context *psp,
 			       int number_devices,
 			       struct psp_xgmi_topology_info *topology);
-
+int psp_ras_initialize(struct psp_context *psp);
 int psp_ras_invoke(struct psp_context *psp, uint32_t ta_cmd_id);
 int psp_ras_enable_features(struct psp_context *psp,
 		union ta_ras_cmd_input *info, bool enable);
 int psp_ras_trigger_error(struct psp_context *psp,
-			  struct ta_ras_trigger_error_input *info);
+			  struct ta_ras_trigger_error_input *info, uint32_t instance_mask);
 int psp_ras_terminate(struct psp_context *psp);
 
 int psp_hdcp_invoke(struct psp_context *psp, uint32_t ta_cmd_id);
@@ -517,8 +530,10 @@ int psp_load_fw_list(struct psp_context *psp,
 		     struct amdgpu_firmware_info **ucode_list, int ucode_count);
 void psp_copy_fw(struct psp_context *psp, uint8_t *start_addr, uint32_t bin_size);
 
+int psp_spatial_partition(struct psp_context *psp, int mode);
+
 int is_psp_fw_valid(struct psp_bin_desc bin);
 
-int amdgpu_psp_sysfs_init(struct amdgpu_device *adev);
-void amdgpu_psp_sysfs_fini(struct amdgpu_device *adev);
+int amdgpu_psp_wait_for_bootloader(struct amdgpu_device *adev);
+
 #endif

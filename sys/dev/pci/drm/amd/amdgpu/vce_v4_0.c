@@ -454,7 +454,7 @@ static int vce_v4_0_sw_init(void *handle)
 		adev->firmware.ucode[AMDGPU_UCODE_ID_VCE].ucode_id = AMDGPU_UCODE_ID_VCE;
 		adev->firmware.ucode[AMDGPU_UCODE_ID_VCE].fw = adev->vce.fw;
 		adev->firmware.fw_size +=
-			roundup2(le32_to_cpu(hdr->ucode_size_bytes), PAGE_SIZE);
+			ALIGN(le32_to_cpu(hdr->ucode_size_bytes), PAGE_SIZE);
 		DRM_INFO("PSP loading VCE firmware\n");
 	} else {
 		r = amdgpu_vce_resume(adev);
@@ -466,6 +466,7 @@ static int vce_v4_0_sw_init(void *handle)
 		enum amdgpu_ring_priority_level hw_prio = amdgpu_vce_get_ring_prio(i);
 
 		ring = &adev->vce.ring[i];
+		ring->vm_hub = AMDGPU_MMHUB0(0);
 		snprintf(ring->name, sizeof(ring->name), "vce%d", i);
 		if (amdgpu_sriov_vf(adev)) {
 			/* DOORBELL only works under SRIOV */
@@ -1021,7 +1022,7 @@ static void vce_v4_0_emit_reg_wait(struct amdgpu_ring *ring, uint32_t reg,
 static void vce_v4_0_emit_vm_flush(struct amdgpu_ring *ring,
 				   unsigned int vmid, uint64_t pd_addr)
 {
-	struct amdgpu_vmhub *hub = &ring->adev->vmhub[ring->funcs->vmhub];
+	struct amdgpu_vmhub *hub = &ring->adev->vmhub[ring->vm_hub];
 
 	pd_addr = amdgpu_gmc_emit_flush_gpu_tlb(ring, vmid, pd_addr);
 
@@ -1103,7 +1104,6 @@ static const struct amdgpu_ring_funcs vce_v4_0_ring_vm_funcs = {
 	.nop = VCE_CMD_NO_OP,
 	.support_64bit_ptrs = false,
 	.no_user_fence = true,
-	.vmhub = AMDGPU_MMHUB_0,
 	.get_rptr = vce_v4_0_ring_get_rptr,
 	.get_wptr = vce_v4_0_ring_get_wptr,
 	.set_wptr = vce_v4_0_ring_set_wptr,

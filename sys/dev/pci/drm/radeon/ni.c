@@ -716,7 +716,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 		me_req_size = EVERGREEN_PM4_UCODE_SIZE * 4;
 		rlc_req_size = EVERGREEN_RLC_UCODE_SIZE * 4;
 		mc_req_size = BTC_MC_UCODE_SIZE * 4;
-		smc_req_size = roundup2(BARTS_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(BARTS_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_TURKS:
 		chip_name = "TURKS";
@@ -725,7 +725,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 		me_req_size = EVERGREEN_PM4_UCODE_SIZE * 4;
 		rlc_req_size = EVERGREEN_RLC_UCODE_SIZE * 4;
 		mc_req_size = BTC_MC_UCODE_SIZE * 4;
-		smc_req_size = roundup2(TURKS_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(TURKS_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_CAICOS:
 		chip_name = "CAICOS";
@@ -734,7 +734,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 		me_req_size = EVERGREEN_PM4_UCODE_SIZE * 4;
 		rlc_req_size = EVERGREEN_RLC_UCODE_SIZE * 4;
 		mc_req_size = BTC_MC_UCODE_SIZE * 4;
-		smc_req_size = roundup2(CAICOS_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(CAICOS_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_CAYMAN:
 		chip_name = "CAYMAN";
@@ -743,7 +743,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 		me_req_size = CAYMAN_PM4_UCODE_SIZE * 4;
 		rlc_req_size = CAYMAN_RLC_UCODE_SIZE * 4;
 		mc_req_size = CAYMAN_MC_UCODE_SIZE * 4;
-		smc_req_size = roundup2(CAYMAN_SMC_UCODE_SIZE, 4);
+		smc_req_size = ALIGN(CAYMAN_SMC_UCODE_SIZE, 4);
 		break;
 	case CHIP_ARUBA:
 		chip_name = "ARUBA";

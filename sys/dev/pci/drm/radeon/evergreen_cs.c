@@ -443,7 +443,7 @@ static int evergreen_cs_track_validate_cb(struct radeon_cs_parser *p, unsigned i
 	offset += surf.layer_size * mslice;
 	if (offset > radeon_bo_size(track->cb_color_bo[id])) {
 		/* old ddx are broken they allocate bo with w*h*bpp but
-		 * program slice with roundup2(h, 8), catch this and patch
+		 * program slice with ALIGN(h, 8), catch this and patch
 		 * command stream.
 		 */
 		if (!surf.mode) {
@@ -822,7 +822,7 @@ static int evergreen_cs_track_validate_texture(struct radeon_cs_parser *p,
 
 	/* align height */
 	evergreen_surface_check(p, &surf, NULL);
-	surf.nby = roundup2(surf.nby, surf.halign);
+	surf.nby = ALIGN(surf.nby, surf.halign);
 
 	r = evergreen_surface_check(p, &surf, "texture");
 	if (r) {
@@ -895,8 +895,8 @@ static int evergreen_cs_track_validate_texture(struct radeon_cs_parser *p,
 				 __func__, __LINE__, surf.mode);
 			return -EINVAL;
 		}
-		surf.nbx = roundup2(surf.nbx, surf.palign);
-		surf.nby = roundup2(surf.nby, surf.halign);
+		surf.nbx = ALIGN(surf.nbx, surf.palign);
+		surf.nby = ALIGN(surf.nby, surf.halign);
 
 		r = evergreen_surface_check(p, &surf, "mipmap");
 		if (r) {

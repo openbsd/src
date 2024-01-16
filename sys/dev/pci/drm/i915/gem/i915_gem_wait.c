@@ -161,7 +161,7 @@ i915_gem_object_wait_priority(struct drm_i915_gem_object *obj,
 }
 
 /**
- * Waits for rendering to the object to be completed
+ * i915_gem_object_wait - Waits for rendering to the object to be completed
  * @obj: i915 gem object
  * @flags: how to wait (under a lock, for all rendering or just for writes etc)
  * @timeout: how long to wait
@@ -186,7 +186,7 @@ i915_gem_object_wait(struct drm_i915_gem_object *obj,
 static inline unsigned long nsecs_to_jiffies_timeout(const u64 n)
 {
 	/* nsecs_to_jiffies64() does not guard against overflow */
-	if (NSEC_PER_SEC % HZ &&
+	if ((NSEC_PER_SEC % HZ) != 0 &&
 	    div_u64(n, NSEC_PER_SEC) >= MAX_JIFFY_OFFSET / HZ)
 		return MAX_JIFFY_OFFSET;
 

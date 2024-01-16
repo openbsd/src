@@ -37,6 +37,7 @@
 #include "dwb.h"
 #include "mcif_wb.h"
 #include "panel_cntl.h"
+#include "dmub/inc/dmub_cmd.h"
 
 #define MAX_CLOCK_SOURCES 7
 #define MAX_SVP_PHANTOM_STREAMS 2
@@ -51,38 +52,9 @@ void enable_surface_flip_reporting(struct dc_plane_state *plane_state,
 #include "clock_source.h"
 #include <hw/audio.h>
 #include "dm_pp_smu.h"
-#ifdef CONFIG_DRM_AMD_DC_HDCP
 #include "dm_cp_psp.h"
-#endif
 #include "link_hwss.h"
 
-/************ link *****************/
-struct link_init_data {
-	const struct dc *dc;
-	struct dc_context *ctx; /* TODO: remove 'dal' when DC is complete. */
-	uint32_t connector_index; /* this will be mapped to the HPD pins */
-	uint32_t link_index; /* this is mapped to DAL display_index
-				TODO: remove it when DC is complete. */
-	bool is_dpia_link;
-};
-
-struct dc_link *link_create(const struct link_init_data *init_params);
-void link_destroy(struct dc_link **link);
-
-enum dc_status dc_link_validate_mode_timing(
-		const struct dc_stream_state *stream,
-		struct dc_link *link,
-		const struct dc_crtc_timing *timing);
-
-void core_link_resume(struct dc_link *link);
-
-void core_link_enable_stream(
-		struct dc_state *state,
-		struct pipe_ctx *pipe_ctx);
-
-void core_link_disable_stream(struct pipe_ctx *pipe_ctx);
-
-void core_link_set_avmute(struct pipe_ctx *pipe_ctx, bool enable);
 /********** DAL Core*********************/
 #include "transform.h"
 #include "dpp.h"
@@ -93,6 +65,7 @@ struct resource_context;
 struct clk_bw_params;
 
 struct resource_funcs {
+	enum engine_id (*get_preferred_eng_id_dpia)(unsigned int dpia_index);
 	void (*destroy)(struct resource_pool **pool);
 	void (*link_init)(struct dc_link *link);
 	struct panel_cntl*(*panel_cntl_create)(
@@ -153,39 +126,15 @@ struct resource_funcs {
 		struct dc *dc,
 		struct dc_state *context);
 
-	/*
-	 * Acquires a free pipe for the head pipe.
-	 * The head pipe is first pipe in the current context that matches the stream
-	 *  and does not have a top pipe or prev_odm_pipe.
-	 */
-	struct pipe_ctx *(*acquire_idle_pipe_for_layer)(
-			struct dc_state *context,
+	struct pipe_ctx *(*acquire_free_pipe_as_secondary_dpp_pipe)(
+			const struct dc_state *cur_ctx,
+			struct dc_state *new_ctx,
 			const struct resource_pool *pool,
-			struct dc_stream_state *stream);
+			const struct pipe_ctx *opp_head_pipe);
 
-	/*
-	 * Acquires a free pipe for the head pipe with some additional checks for odm.
-	 * The head pipe is passed in as an argument unlike acquire_idle_pipe_for_layer
-	 *  where it is read from the context.  So this allows us look for different
-	 *  idle_pipe if the head_pipes are different ( ex. in odm 2:1 when we have
-	 *  a left and right pipe ).
-	 *
-	 * It also checks the old context to see if:
-	 *
-	 * 1. a pipe has already been allocated for the head pipe.  If so, it will
-	 *  try to select that pipe as the idle pipe if it is available in the current
-	 *  context.
-	 * 2. if the head_pipe is on the left, it will check if the right pipe has
-	 *  a pipe already allocated.  If so, it will not use that pipe if it is
-	 *  selected as the idle pipe.
-	 */
-	struct pipe_ctx *(*acquire_idle_pipe_for_head_pipe_in_layer)(
-			struct dc_state *context,
-			const struct resource_pool *pool,
-			struct dc_stream_state *stream,
-			struct pipe_ctx *head_pipe);
-
-	enum dc_status (*validate_plane)(const struct dc_plane_state *plane_state, struct dc_caps *caps);
+	enum dc_status (*validate_plane)(
+			const struct dc_plane_state *plane_state,
+			struct dc_caps *caps);
 
 	enum dc_status (*add_stream_to_ctx)(
 			struct dc *dc,
@@ -240,9 +189,11 @@ struct resource_funcs {
 			unsigned int pipe_cnt,
             unsigned int index);
 
-	bool (*remove_phantom_pipes)(struct dc *dc, struct dc_state *context);
+	bool (*remove_phantom_pipes)(struct dc *dc, struct dc_state *context, bool fast_update);
 	void (*retain_phantom_pipes)(struct dc *dc, struct dc_state *context);
 	void (*get_panel_config_defaults)(struct dc_panel_config *panel_config);
+	void (*save_mall_state)(struct dc *dc, struct dc_state *context, struct mall_temp_config *temp_config);
+	void (*restore_mall_state)(struct dc *dc, struct dc_state *context, struct mall_temp_config *temp_config);
 };
 
 struct audio_support{
@@ -330,6 +281,8 @@ struct resource_pool {
 	struct dmcu *dmcu;
 	struct dmub_psr *psr;
 
+	struct dmub_replay *replay;
+
 	struct abm *multiple_abms[MAX_PIPES];
 
 	const struct resource_funcs *funcs;
@@ -401,6 +354,7 @@ union pipe_update_flags {
 		uint32_t viewport : 1;
 		uint32_t plane_changed : 1;
 		uint32_t det_size : 1;
+		uint32_t unbounded_req : 1;
 	} bits;
 	uint32_t raw;
 };
@@ -421,7 +375,10 @@ struct pipe_ctx {
 
 	struct pll_settings pll_settings;
 
-	/* link config records software decision for what link config should be
+	/**
+	 * @link_config:
+	 *
+	 * link config records software decision for what link config should be
 	 * enabled given current link capability and stream during hw resource
 	 * mapping. This is to decouple the dependency on link capability during
 	 * dc commit or update.
@@ -445,10 +402,13 @@ struct pipe_ctx {
 	struct _vcs_dpi_display_e2e_pipe_params_st dml_input;
 	int det_buffer_size_kb;
 	bool unbounded_req;
+	unsigned int surface_size_in_mall_bytes;
 
-	union pipe_update_flags update_flags;
 	struct dwbc *dwbc;
 	struct mcif_wb *mcif_wb;
+	union pipe_update_flags update_flags;
+	struct tg_color visual_confirm_color;
+	bool has_vactive_margin;
 };
 
 /* Data used for dynamic link encoder assignment.
@@ -502,6 +462,9 @@ struct dcn_bw_output {
 	struct dcn_watermark_set watermarks;
 	struct dcn_bw_writeback bw_writeback;
 	int compbuf_size_kb;
+	unsigned int mall_ss_size_bytes;
+	unsigned int mall_ss_psr_active_size_bytes;
+	unsigned int mall_subvp_size_bytes;
 	unsigned int legacy_svp_drr_stream_index;
 	bool legacy_svp_drr_stream_index_valid;
 };
@@ -515,38 +478,94 @@ struct bw_context {
 	union bw_output bw;
 	struct display_mode_lib dml;
 };
+
+struct dc_dmub_cmd {
+	union dmub_rb_cmd dmub_cmd;
+	enum dm_dmub_wait_type wait_type;
+};
+
 /**
- * struct dc_state - The full description of a state requested by a user
- *
- * @streams: Stream properties
- * @stream_status: The planes on a given stream
- * @res_ctx: Persistent state of resources
- * @bw_ctx: The output from bandwidth and watermark calculations and the DML
- * @pp_display_cfg: PowerPlay clocks and settings
- * @dcn_bw_vars: non-stack memory to support bandwidth calculations
- *
+ * struct dc_state - The full description of a state requested by users
  */
 struct dc_state {
+	/**
+	 * @streams: Stream state properties
+	 */
 	struct dc_stream_state *streams[MAX_PIPES];
+
+	/**
+	 * @stream_status: Planes status on a given stream
+	 */
 	struct dc_stream_status stream_status[MAX_PIPES];
+
+	/**
+	 * @stream_count: Total of streams in use
+	 */
 	uint8_t stream_count;
 	uint8_t stream_mask;
 
+	/**
+	 * @res_ctx: Persistent state of resources
+	 */
 	struct resource_context res_ctx;
 
-	struct bw_context bw_ctx;
-
-	/* Note: these are big structures, do *not* put on stack! */
+	/**
+	 * @pp_display_cfg: PowerPlay clocks and settings
+	 * Note: this is a big struct, do *not* put on stack!
+	 */
 	struct dm_pp_display_configuration pp_display_cfg;
+
+	/**
+	 * @dcn_bw_vars: non-stack memory to support bandwidth calculations
+	 * Note: this is a big struct, do *not* put on stack!
+	 */
 	struct dcn_bw_internal_vars dcn_bw_vars;
 
 	struct clk_mgr *clk_mgr;
 
+	/**
+	 * @bw_ctx: The output from bandwidth and watermark calculations and the DML
+	 *
+	 * Each context must have its own instance of VBA, and in order to
+	 * initialize and obtain IP and SOC, the base DML instance from DC is
+	 * initially copied into every context.
+	 */
+	struct bw_context bw_ctx;
+
+	struct block_sequence block_sequence[50];
+	unsigned int block_sequence_steps;
+	struct dc_dmub_cmd dc_dmub_cmd[10];
+	unsigned int dmub_cmd_count;
+
+	/**
+	 * @refcount: refcount reference
+	 *
+	 * Notice that dc_state is used around the code to capture the current
+	 * context, so we need to pass it everywhere. That's why we want to use
+	 * kref in this struct.
+	 */
 	struct kref refcount;
 
 	struct {
 		unsigned int stutter_period_us;
 	} perf_params;
+};
+
+struct replay_context {
+	/* ddc line */
+	enum channel_id aux_inst;
+	/* Transmitter id */
+	enum transmitter digbe_inst;
+	/* Engine Id is used for Dig Be source select */
+	enum engine_id digfe_inst;
+	/* Controller Id used for Dig Fe source select */
+	enum controller_id controllerId;
+	unsigned int line_time_in_ns;
+};
+
+enum dc_replay_enable {
+	DC_REPLAY_DISABLE			= 0,
+	DC_REPLAY_ENABLE			= 1,
 };
 
 struct dc_bounding_box_max_clk {

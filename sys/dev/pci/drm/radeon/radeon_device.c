@@ -1221,7 +1221,7 @@ static void radeon_check_arguments(struct radeon_device *rdev)
  * @pdev: pci dev pointer
  * @state: vga_switcheroo state
  *
- * Callback for the switcheroo driver.  Suspends or resumes the
+ * Callback for the switcheroo driver.  Suspends or resumes
  * the asics before or after it is powered up using ACPI methods.
  */
 #ifdef notyet
@@ -1328,6 +1328,7 @@ int radeon_device_init(struct radeon_device *rdev,
 	rw_init(&rdev->pm.mutex, "pm");
 	rw_init(&rdev->gpu_clock_mutex, "gpuclk");
 	rw_init(&rdev->srbm_mutex, "srbm");
+	rw_init(&rdev->audio.component_mutex, "racm");
 	rw_init(&rdev->pm.mclk_lock, "mclk");
 	rw_init(&rdev->exclusive_lock, "rdnexc");
 	init_waitqueue_head(&rdev->irq.vblank_queue);
@@ -1473,6 +1474,8 @@ int radeon_device_init(struct radeon_device *rdev,
 			goto failed;
 	}
 
+	radeon_audio_component_init(rdev);
+
 	r = radeon_ib_ring_tests(rdev);
 	if (r)
 		DRM_ERROR("ib ring test failed (%d).\n", r);
@@ -1535,6 +1538,7 @@ void radeon_device_fini(struct radeon_device *rdev)
 	rdev->shutdown = true;
 	/* evict vram memory */
 	radeon_bo_evict_vram(rdev);
+	radeon_audio_component_fini(rdev);
 	radeon_fini(rdev);
 	if (!pci_is_thunderbolt_attached(rdev->pdev))
 		vga_switcheroo_unregister_client(rdev->pdev);
@@ -1815,7 +1819,6 @@ int radeon_gpu_reset(struct radeon_device *rdev)
 	bool saved = false;
 
 	int i, r;
-	int resched;
 
 	down_write(&rdev->exclusive_lock);
 
@@ -1827,8 +1830,6 @@ int radeon_gpu_reset(struct radeon_device *rdev)
 	atomic_inc(&rdev->gpu_reset_counter);
 
 	radeon_save_bios_scratch_regs(rdev);
-	/* block TTM */
-	resched = ttm_bo_lock_delayed_workqueue(&rdev->mman.bdev);
 	radeon_suspend(rdev);
 	radeon_hpd_fini(rdev);
 
@@ -1886,8 +1887,6 @@ int radeon_gpu_reset(struct radeon_device *rdev)
 	}
 	/* reset hpd state */
 	radeon_hpd_init(rdev);
-
-	ttm_bo_unlock_delayed_workqueue(&rdev->mman.bdev, resched);
 
 	rdev->in_reset = true;
 	rdev->needs_reset = false;

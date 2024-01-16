@@ -3,9 +3,9 @@
 #define _INTEL_DISPLAY_TRACE_H
 
 #include "i915_drv.h"
-#include "i915_irq.h"
 #include "intel_crtc.h"
 #include "intel_display_types.h"
+#include "intel_vblank.h"
 
 #define trace_g4x_wm(a, b)
 #define trace_intel_cpu_fifo_underrun(a, b)
@@ -14,8 +14,8 @@
 #define trace_intel_fbc_activate(a)
 #define trace_intel_fbc_deactivate(a)
 #define trace_intel_fbc_nuke(a)
-#define trace_intel_frontbuffer_flush(a, b)
-#define trace_intel_frontbuffer_invalidate(a, b)
+#define trace_intel_frontbuffer_flush(a, b, c)
+#define trace_intel_frontbuffer_invalidate(a, b, c)
 #define trace_intel_memory_cxsr(a, b, c)
 #define trace_intel_pch_fifo_underrun(a, b)
 #define trace_intel_pipe_crc(a, b)

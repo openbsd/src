@@ -16,6 +16,16 @@ preempt_disable(void)
 {
 }
 
+static inline void
+migrate_enable(void)
+{
+}
+
+static inline void
+migrate_disable(void)
+{
+}
+
 static inline bool
 in_irq(void)
 {

@@ -88,6 +88,7 @@ struct amdgpu_virt_ops {
 	int (*wait_reset)(struct amdgpu_device *adev);
 	void (*trans_msg)(struct amdgpu_device *adev, enum idh_request req,
 			  u32 data1, u32 data2, u32 data3);
+	void (*ras_poison_handler)(struct amdgpu_device *adev);
 };
 
 /*
@@ -123,6 +124,8 @@ enum AMDGIM_FEATURE_FLAG {
 	AMDGIM_FEATURE_PP_ONE_VF = (1 << 4),
 	/* Indirect Reg Access enabled */
 	AMDGIM_FEATURE_INDIRECT_REG_ACCESS = (1 << 5),
+	/* AV1 Support MODE*/
+	AMDGIM_FEATURE_AV1_SUPPORT = (1 << 6),
 };
 
 enum AMDGIM_REG_ACCESS_FLAG {
@@ -321,6 +324,8 @@ static inline bool is_virtual_machine(void)
 	((!amdgpu_in_reset(adev)) && adev->virt.tdr_debug)
 #define amdgpu_sriov_is_normal(adev) \
 	((!amdgpu_in_reset(adev)) && (!adev->virt.tdr_debug))
+#define amdgpu_sriov_is_av1_support(adev) \
+	((adev)->virt.gim_feature & AMDGIM_FEATURE_AV1_SUPPORT)
 bool amdgpu_virt_mmio_blocked(struct amdgpu_device *adev);
 void amdgpu_virt_init_setting(struct amdgpu_device *adev);
 void amdgpu_virt_kiq_reg_write_reg_wait(struct amdgpu_device *adev,
@@ -350,9 +355,10 @@ void amdgpu_virt_update_sriov_video_codec(struct amdgpu_device *adev,
 			struct amdgpu_video_codec_info *decode, uint32_t decode_array_size);
 void amdgpu_sriov_wreg(struct amdgpu_device *adev,
 		       u32 offset, u32 value,
-		       u32 acc_flags, u32 hwip);
+		       u32 acc_flags, u32 hwip, u32 xcc_id);
 u32 amdgpu_sriov_rreg(struct amdgpu_device *adev,
-		      u32 offset, u32 acc_flags, u32 hwip);
+		      u32 offset, u32 acc_flags, u32 hwip, u32 xcc_id);
 bool amdgpu_virt_fw_load_skip_check(struct amdgpu_device *adev,
 			uint32_t ucode_id);
+void amdgpu_virt_post_reset(struct amdgpu_device *adev);
 #endif

@@ -42,7 +42,7 @@
 #include "dcn30/dcn30_hubp.h"
 #include "irq/dcn30/irq_service_dcn30.h"
 #include "dcn30/dcn30_dpp.h"
-#include "dcn30/dcn30_optc.h"
+#include "dcn301/dcn301_optc.h"
 #include "dcn20/dcn20_hwseq.h"
 #include "dcn30/dcn30_hwseq.h"
 #include "dce110/dce110_hw_sequencer.h"
@@ -107,8 +107,6 @@ enum dcn301_clk_src_array_id {
  */
 
 /* DCN */
-/* TODO awful hack. fixup dcn20_dwb.h */
-#undef BASE_INNER
 #define BASE_INNER(seg) DCN_BASE__INST0_SEG ## seg
 
 #define BASE(seg) BASE_INNER(seg)
@@ -145,6 +143,9 @@ enum dcn301_clk_src_array_id {
 #define SRII_DWB(reg_name, temp_name, block, id)\
 	.reg_name[id] = BASE(mm ## block ## id ## _ ## temp_name ## _BASE_IDX) + \
 					mm ## block ## id ## _ ## temp_name
+
+#define SF_DWB2(reg_name, block, id, field_name, post_fix)	\
+	.field_name = reg_name ## __ ## field_name ## post_fix
 
 #define DCCG_SRII(reg_name, block, id)\
 	.block ## _ ## reg_name[id] = BASE(mm ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
@@ -650,8 +651,6 @@ static struct resource_caps res_cap_dcn301 = {
 
 static const struct dc_plane_cap plane_cap = {
 	.type = DC_PLANE_TYPE_DCN_UNIVERSAL,
-	.blends_with_above = true,
-	.blends_with_below = true,
 	.per_pixel_alpha = true,
 
 	.pixel_format_support = {
@@ -688,7 +687,7 @@ static const struct dc_debug_options debug_defaults_drv = {
 	.disable_clock_gate = true,
 	.disable_pplib_clock_request = true,
 	.disable_pplib_wm_range = true,
-	.pipe_split_policy = MPC_SPLIT_AVOID,
+	.pipe_split_policy = MPC_SPLIT_DYNAMIC,
 	.force_single_disp_pipe_split = false,
 	.disable_dcc = DCC_ENABLE,
 	.vsr_support = true,
@@ -701,23 +700,6 @@ static const struct dc_debug_options debug_defaults_drv = {
 	.dmub_command_table = true,
 	.use_max_lb = false,
 	.exit_idle_opt_for_cursor_updates = true
-};
-
-static const struct dc_debug_options debug_defaults_diags = {
-	.disable_dmcu = true,
-	.force_abm_enable = false,
-	.timing_trace = true,
-	.clock_trace = true,
-	.disable_dpp_power_gate = false,
-	.disable_hubp_power_gate = false,
-	.disable_clock_gate = true,
-	.disable_pplib_clock_request = true,
-	.disable_pplib_wm_range = true,
-	.disable_stutter = true,
-	.scl_reset_length10 = true,
-	.dwb_fi_phase = -1, // -1 = disable
-	.dmub_command_table = true,
-	.use_max_lb = false,
 };
 
 static void dcn301_dpp_destroy(struct dpp **dpp)
@@ -873,7 +855,7 @@ static struct timing_generator *dcn301_timing_generator_create(
 	tgn10->tg_shift = &optc_shift;
 	tgn10->tg_mask = &optc_mask;
 
-	dcn30_timing_generator_init(tgn10);
+	dcn301_timing_generator_init(tgn10);
 
 	return &tgn10->base;
 }
@@ -1045,13 +1027,6 @@ static const struct resource_create_funcs res_create_funcs = {
 	.read_dce_straps = read_dce_straps,
 	.create_audio = dcn301_create_audio,
 	.create_stream_encoder = dcn301_stream_encoder_create,
-	.create_hwseq = dcn301_hwseq_create,
-};
-
-static const struct resource_create_funcs res_create_maximus_funcs = {
-	.read_dce_straps = NULL,
-	.create_audio = NULL,
-	.create_stream_encoder = NULL,
 	.create_hwseq = dcn301_hwseq_create,
 };
 
@@ -1288,6 +1263,7 @@ static struct clock_source *dcn301_clock_source_create(
 		return &clk_src->base;
 	}
 
+	kfree(clk_src);
 	BREAK_TO_DEBUGGER();
 	return NULL;
 }
@@ -1403,7 +1379,7 @@ static struct resource_funcs dcn301_res_pool_funcs = {
 	.calculate_wm_and_dlg = dcn301_calculate_wm_and_dlg,
 	.update_soc_for_wm_a = dcn30_update_soc_for_wm_a,
 	.populate_dml_pipes = dcn30_populate_dml_pipes_from_context,
-	.acquire_idle_pipe_for_layer = dcn20_acquire_idle_pipe_for_layer,
+	.acquire_free_pipe_as_secondary_dpp_pipe = dcn20_acquire_free_pipe_for_layer,
 	.add_stream_to_ctx = dcn30_add_stream_to_ctx,
 	.add_dsc_to_stream_resource = dcn20_add_dsc_to_stream_resource,
 	.remove_stream_from_ctx = dcn20_remove_stream_from_ctx,
@@ -1412,7 +1388,8 @@ static struct resource_funcs dcn301_res_pool_funcs = {
 	.find_first_free_match_stream_enc_for_link = dcn10_find_first_free_match_stream_enc_for_link,
 	.acquire_post_bldn_3dlut = dcn30_acquire_post_bldn_3dlut,
 	.release_post_bldn_3dlut = dcn30_release_post_bldn_3dlut,
-	.update_bw_bounding_box = dcn301_update_bw_bounding_box
+	.update_bw_bounding_box = dcn301_update_bw_bounding_box,
+	.patch_unknown_plane_state = dcn20_patch_unknown_plane_state
 };
 
 static bool dcn301_resource_construct(
@@ -1448,9 +1425,9 @@ static bool dcn301_resource_construct(
 	dc->caps.max_cursor_size = 256;
 	dc->caps.min_horizontal_blanking_period = 80;
 	dc->caps.dmdata_alloc_size = 2048;
-	dc->caps.max_slave_planes = 1;
-	dc->caps.max_slave_yuv_planes = 1;
-	dc->caps.max_slave_rgb_planes = 1;
+	dc->caps.max_slave_planes = 2;
+	dc->caps.max_slave_yuv_planes = 2;
+	dc->caps.max_slave_rgb_planes = 2;
 	dc->caps.is_apu = true;
 	dc->caps.post_blend_color_processing = true;
 	dc->caps.force_dp_tps4_for_cp2520 = true;
@@ -1491,6 +1468,8 @@ static bool dcn301_resource_construct(
 	dc->caps.color.mpc.ogam_rom_caps.hlg = 0;
 	dc->caps.color.mpc.ocsc = 1;
 
+	dc->caps.dp_hdmi21_pcon_support = true;
+
 	/* read VBIOS LTTPR caps */
 	if (ctx->dc_bios->funcs->get_lttpr_caps) {
 		enum bp_result bp_query_result;
@@ -1510,10 +1489,7 @@ static bool dcn301_resource_construct(
 
 	if (dc->ctx->dce_environment == DCE_ENV_PRODUCTION_DRV)
 		dc->debug = debug_defaults_drv;
-	else if (dc->ctx->dce_environment == DCE_ENV_FPGA_MAXIMUS) {
-		dc->debug = debug_defaults_diags;
-	} else
-		dc->debug = debug_defaults_diags;
+
 	// Init the vm_helper
 	if (dc->vm_helper)
 		vm_helper_init(dc->vm_helper, 16);
@@ -1707,9 +1683,8 @@ static bool dcn301_resource_construct(
 
 	/* Audio, Stream Encoders including HPO and virtual, MPC 3D LUTs */
 	if (!resource_construct(num_virtual_links, dc, &pool->base,
-			(!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment) ?
-			&res_create_funcs : &res_create_maximus_funcs)))
-			goto create_fail;
+			&res_create_funcs))
+		goto create_fail;
 
 	/* HW Sequencer and Plane caps */
 	dcn301_hw_sequencer_construct(dc);

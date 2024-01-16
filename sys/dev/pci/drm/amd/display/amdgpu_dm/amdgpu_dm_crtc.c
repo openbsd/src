@@ -29,12 +29,13 @@
 #include "dc.h"
 #include "amdgpu.h"
 #include "amdgpu_dm_psr.h"
+#include "amdgpu_dm_replay.h"
 #include "amdgpu_dm_crtc.h"
 #include "amdgpu_dm_plane.h"
 #include "amdgpu_dm_trace.h"
 #include "amdgpu_dm_debugfs.h"
 
-void dm_crtc_handle_vblank(struct amdgpu_crtc *acrtc)
+void amdgpu_dm_crtc_handle_vblank(struct amdgpu_crtc *acrtc)
 {
 	struct drm_crtc *crtc = &acrtc->base;
 	struct drm_device *dev = crtc->dev;
@@ -54,14 +55,14 @@ void dm_crtc_handle_vblank(struct amdgpu_crtc *acrtc)
 	spin_unlock_irqrestore(&dev->event_lock, flags);
 }
 
-bool modeset_required(struct drm_crtc_state *crtc_state,
+bool amdgpu_dm_crtc_modeset_required(struct drm_crtc_state *crtc_state,
 			     struct dc_stream_state *new_stream,
 			     struct dc_stream_state *old_stream)
 {
 	return crtc_state->active && drm_atomic_crtc_needs_modeset(crtc_state);
 }
 
-bool amdgpu_dm_vrr_active_irq(struct amdgpu_crtc *acrtc)
+bool amdgpu_dm_crtc_vrr_active_irq(struct amdgpu_crtc *acrtc)
 
 {
 	return acrtc->dm_irq_params.freesync_config.state ==
@@ -70,7 +71,7 @@ bool amdgpu_dm_vrr_active_irq(struct amdgpu_crtc *acrtc)
 		       VRR_STATE_ACTIVE_FIXED;
 }
 
-int dm_set_vupdate_irq(struct drm_crtc *crtc, bool enable)
+int amdgpu_dm_crtc_set_vupdate_irq(struct drm_crtc *crtc, bool enable)
 {
 	enum dc_irq_source irq_source;
 	struct amdgpu_crtc *acrtc = to_amdgpu_crtc(crtc);
@@ -89,7 +90,7 @@ int dm_set_vupdate_irq(struct drm_crtc *crtc, bool enable)
 	return rc;
 }
 
-bool amdgpu_dm_vrr_active(struct dm_crtc_state *dm_state)
+bool amdgpu_dm_crtc_vrr_active(struct dm_crtc_state *dm_state)
 {
 	return dm_state->freesync_config.state == VRR_STATE_ACTIVE_VARIABLE ||
 	       dm_state->freesync_config.state == VRR_STATE_ACTIVE_FIXED;
@@ -108,8 +109,7 @@ static void vblank_control_worker(struct work_struct *work)
 	else if (dm->active_vblank_irq_count)
 		dm->active_vblank_irq_count--;
 
-	dc_allow_idle_optimizations(
-		dm->dc, dm->active_vblank_irq_count == 0 ? true : false);
+	dc_allow_idle_optimizations(dm->dc, dm->active_vblank_irq_count == 0);
 
 	DRM_DEBUG_KMS("Allow idle optimizations (MALL): %d\n", dm->active_vblank_irq_count == 0);
 
@@ -124,12 +124,21 @@ static void vblank_control_worker(struct work_struct *work)
 	 * fill_dc_dirty_rects().
 	 */
 	if (vblank_work->stream && vblank_work->stream->link) {
-		if (vblank_work->enable) {
+		/*
+		 * Prioritize replay, instead of psr
+		 */
+		if (vblank_work->stream->link->replay_settings.replay_feature_enabled)
+			amdgpu_dm_replay_enable(vblank_work->stream, false);
+		else if (vblank_work->enable) {
 			if (vblank_work->stream->link->psr_settings.psr_version < DC_PSR_VERSION_SU_1 &&
 			    vblank_work->stream->link->psr_settings.psr_allow_active)
 				amdgpu_dm_psr_disable(vblank_work->stream);
 		} else if (vblank_work->stream->link->psr_settings.psr_feature_enabled &&
 			   !vblank_work->stream->link->psr_settings.psr_allow_active &&
+#ifdef CONFIG_DRM_AMD_SECURE_DISPLAY
+			   !amdgpu_dm_crc_window_is_activated(&vblank_work->acrtc->base) &&
+#endif
+			   vblank_work->stream->link->panel_config.psr.disallow_replay &&
 			   vblank_work->acrtc->dm_irq_params.allow_psr_entry) {
 			amdgpu_dm_psr_enable(vblank_work->stream);
 		}
@@ -144,7 +153,6 @@ static void vblank_control_worker(struct work_struct *work)
 
 static inline int dm_set_vblank(struct drm_crtc *crtc, bool enable)
 {
-	enum dc_irq_source irq_source;
 	struct amdgpu_crtc *acrtc = to_amdgpu_crtc(crtc);
 	struct amdgpu_device *adev = drm_to_adev(crtc->dev);
 	struct dm_crtc_state *acrtc_state = to_dm_crtc_state(crtc->state);
@@ -157,28 +165,19 @@ static inline int dm_set_vblank(struct drm_crtc *crtc, bool enable)
 
 	if (enable) {
 		/* vblank irq on -> Only need vupdate irq in vrr mode */
-		if (amdgpu_dm_vrr_active(acrtc_state))
-			rc = dm_set_vupdate_irq(crtc, true);
+		if (amdgpu_dm_crtc_vrr_active(acrtc_state))
+			rc = amdgpu_dm_crtc_set_vupdate_irq(crtc, true);
 	} else {
 		/* vblank irq off -> vupdate irq off */
-		rc = dm_set_vupdate_irq(crtc, false);
+		rc = amdgpu_dm_crtc_set_vupdate_irq(crtc, false);
 	}
 
 	if (rc)
 		return rc;
 
-	if (amdgpu_in_reset(adev)) {
-		irq_source = IRQ_TYPE_VBLANK + acrtc->otg_inst;
-		/* During gpu-reset we disable and then enable vblank irq, so
-		 * don't use amdgpu_irq_get/put() to avoid refcount change.
-		 */
-		if (!dc_interrupt_set(adev->dm.dc, irq_source, enable))
-			rc = -EBUSY;
-	} else {
-		rc = (enable)
-			? amdgpu_irq_get(adev, &adev->crtc_irq, acrtc->crtc_id)
-			: amdgpu_irq_put(adev, &adev->crtc_irq, acrtc->crtc_id);
-	}
+	rc = (enable)
+		? amdgpu_irq_get(adev, &adev->crtc_irq, acrtc->crtc_id)
+		: amdgpu_irq_put(adev, &adev->crtc_irq, acrtc->crtc_id);
 
 	if (rc)
 		return rc;
@@ -208,12 +207,12 @@ skip:
 	return 0;
 }
 
-int dm_enable_vblank(struct drm_crtc *crtc)
+int amdgpu_dm_crtc_enable_vblank(struct drm_crtc *crtc)
 {
 	return dm_set_vblank(crtc, true);
 }
 
-void dm_disable_vblank(struct drm_crtc *crtc)
+void amdgpu_dm_crtc_disable_vblank(struct drm_crtc *crtc)
 {
 	dm_set_vblank(crtc, false);
 }
@@ -309,8 +308,8 @@ static const struct drm_crtc_funcs amdgpu_dm_crtc_funcs = {
 	.verify_crc_source = amdgpu_dm_crtc_verify_crc_source,
 	.get_crc_sources = amdgpu_dm_crtc_get_crc_sources,
 	.get_vblank_counter = amdgpu_get_vblank_counter_kms,
-	.enable_vblank = dm_enable_vblank,
-	.disable_vblank = dm_disable_vblank,
+	.enable_vblank = amdgpu_dm_crtc_enable_vblank,
+	.disable_vblank = amdgpu_dm_crtc_disable_vblank,
 	.get_vblank_timestamp = drm_crtc_vblank_helper_get_vblank_timestamp,
 #if defined(CONFIG_DEBUG_FS)
 	.late_register = amdgpu_dm_crtc_late_register,
@@ -390,7 +389,7 @@ static int dm_crtc_helper_atomic_check(struct drm_crtc *crtc,
 	dm_update_crtc_active_planes(crtc, crtc_state);
 
 	if (WARN_ON(unlikely(!dm_crtc_state->stream &&
-			modeset_required(crtc_state, NULL, dm_crtc_state->stream)))) {
+			amdgpu_dm_crtc_modeset_required(crtc_state, NULL, dm_crtc_state->stream)))) {
 		return ret;
 	}
 
@@ -403,6 +402,18 @@ static int dm_crtc_helper_atomic_check(struct drm_crtc *crtc,
 	if (crtc_state->enable &&
 		!(crtc_state->plane_mask & drm_plane_mask(crtc->primary))) {
 		DRM_DEBUG_ATOMIC("Can't enable a CRTC without enabling the primary plane\n");
+		return -EINVAL;
+	}
+
+	/*
+	 * Only allow async flips for fast updates that don't change the FB
+	 * pitch, the DCC state, rotation, etc.
+	 */
+	if (crtc_state->async_flip &&
+	    dm_crtc_state->update_type != UPDATE_TYPE_FAST) {
+		drm_dbg_atomic(crtc->dev,
+			       "[CRTC:%d:%s] async flips are only supported for fast updates\n",
+			       crtc->base.id, crtc->name);
 		return -EINVAL;
 	}
 

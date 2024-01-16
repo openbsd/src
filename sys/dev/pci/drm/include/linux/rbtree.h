@@ -153,6 +153,26 @@ rb_replace_node(struct rb_node *victim, struct rb_node *new,
 	*new = *victim;
 }
 
+static inline void
+rb_add_cached(struct rb_node *node, struct rb_root_cached *root,
+    bool (*less)(struct rb_node *, const struct rb_node *))
+{
+	struct rb_node **iter = &root->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+
+	while (*iter) {
+		parent = *iter;
+
+		if (less(node, parent))
+			iter = &(*iter)->rb_left;
+		else
+			iter = &(*iter)->rb_right;
+	}
+
+	rb_link_node(node, parent, iter);
+	rb_insert_color_cached(node, root, false);
+}
+
 #undef RB_ROOT
 #define RB_ROOT		(struct rb_root) { NULL }
 #ifdef __clang__

@@ -570,9 +570,8 @@ retry:
 			if (gmadr_bytes == 8)
 				bb->bb_start_cmd_va[2] = 0;
 
-			ret = i915_vma_move_to_active(bb->vma,
-						      workload->req,
-						      0);
+			ret = i915_vma_move_to_active(bb->vma, workload->req,
+						      __EXEC_OBJECT_NO_REQUEST_AWAIT);
 			if (ret)
 				goto err;
 
@@ -867,7 +866,8 @@ pick_next_workload(struct intel_gvt *gvt, struct intel_engine_cs *engine)
 		goto out;
 	}
 
-	if (!scheduler->current_vgpu->active ||
+	if (!test_bit(INTEL_VGPU_STATUS_ACTIVE,
+		      scheduler->current_vgpu->status) ||
 	    list_empty(workload_q_head(scheduler->current_vgpu, engine)))
 		goto out;
 
@@ -974,7 +974,7 @@ static void update_guest_context(struct intel_vgpu_workload *workload)
 	context_page_num = rq->engine->context_size;
 	context_page_num = context_page_num >> PAGE_SHIFT;
 
-	if (IS_BROADWELL(rq->engine->i915) && rq->engine->id == RCS0)
+	if (IS_BROADWELL(rq->i915) && rq->engine->id == RCS0)
 		context_page_num = 19;
 
 	context_base = (void *) ctx->lrc_reg_state -

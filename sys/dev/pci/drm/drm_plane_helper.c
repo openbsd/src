@@ -28,7 +28,6 @@
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_atomic_uapi.h>
-#include <drm/drm_crtc_helper.h>
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_encoder.h>
@@ -41,8 +40,8 @@
 /**
  * DOC: overview
  *
- * This helper library has two parts. The first part has support to implement
- * primary plane support on top of the normal CRTC configuration interface.
+ * This helper library contains helpers to implement primary plane support on
+ * top of the normal CRTC configuration interface.
  * Since the legacy &drm_mode_config_funcs.set_config interface ties the primary
  * plane together with the CRTC state this does not allow userspace to disable
  * the primary plane itself. The default primary plane only expose XRBG8888 and
@@ -51,14 +50,6 @@
  * Drivers are highly recommended to implement proper support for primary
  * planes, and newly merged drivers must not rely upon these transitional
  * helpers.
- *
- * The second part also implements transitional helpers which allow drivers to
- * gradually switch to the atomic helper infrastructure for plane updates. Once
- * that switch is complete drivers shouldn't use these any longer, instead using
- * the proper legacy implementations for update and disable plane hooks provided
- * by the atomic helpers.
- *
- * Again drivers are strongly urged to switch to the new interfaces.
  *
  * The plane helpers share the function table structures with other helpers,
  * specifically also the atomic helpers. See &struct drm_plane_helper_funcs for
@@ -298,7 +289,9 @@ EXPORT_SYMBOL(drm_plane_helper_destroy);
  * scale and positioning are not expected to change since the plane is always
  * a fullscreen scanout buffer.
  *
- * This is often the case for the primary plane of simple framebuffers.
+ * This is often the case for the primary plane of simple framebuffers. See
+ * also drm_crtc_helper_atomic_check() for the respective CRTC-state check
+ * helper function.
  *
  * RETURNS:
  * Zero on success, or an errno code otherwise.

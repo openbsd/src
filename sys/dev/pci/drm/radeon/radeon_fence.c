@@ -829,7 +829,7 @@ int radeon_fence_driver_start_ring(struct radeon_device *rdev, int ring)
 
 		} else {
 			/* put fence directly behind firmware */
-			index = roundup2(rdev->uvd_fw->size, 8);
+			index = ALIGN(rdev->uvd_fw->size, 8);
 			rdev->fence_drv[ring].cpu_addr = rdev->uvd.cpu_addr + index;
 			rdev->fence_drv[ring].gpu_addr = rdev->uvd.gpu_addr + index;
 		}
@@ -955,7 +955,7 @@ void radeon_fence_driver_force_completion(struct radeon_device *rdev, int ring)
 #if defined(CONFIG_DEBUG_FS)
 static int radeon_debugfs_fence_info_show(struct seq_file *m, void *data)
 {
-	struct radeon_device *rdev = (struct radeon_device *)m->private;
+	struct radeon_device *rdev = m->private;
 	int i, j;
 
 	for (i = 0; i < RADEON_NUM_RINGS; ++i) {

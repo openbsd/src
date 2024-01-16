@@ -19,7 +19,7 @@ resource_size(const struct resource *r)
 }
 
 #define DEFINE_RES_MEM(_start, _size)		\
-	{					\
+(struct resource) {				\
 		.start = (_start),		\
 		.end = (_start) + (_size) - 1,	\
 	}

@@ -10,6 +10,7 @@
 
 #include "intel_display_power_map.h"
 #include "intel_display_power_well.h"
+#include "intel_display_types.h"
 
 #define __LIST_INLINE_ELEMS(__elem_type, ...) \
 	((__elem_type[]) { __VA_ARGS__ })
@@ -170,6 +171,8 @@ I915_DECL_PW_DOMAINS(vlv_pwdoms_display,
 	POWER_DOMAIN_VGA,
 	POWER_DOMAIN_AUDIO_MMIO,
 	POWER_DOMAIN_AUDIO_PLAYBACK,
+	POWER_DOMAIN_AUX_IO_B,
+	POWER_DOMAIN_AUX_IO_C,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_GMBUS,
@@ -179,6 +182,8 @@ I915_DECL_PW_DOMAINS(vlv_pwdoms_dpio_cmn_bc,
 	POWER_DOMAIN_PORT_DDI_LANES_B,
 	POWER_DOMAIN_PORT_DDI_LANES_C,
 	POWER_DOMAIN_PORT_CRT,
+	POWER_DOMAIN_AUX_IO_B,
+	POWER_DOMAIN_AUX_IO_C,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_INIT);
@@ -186,6 +191,8 @@ I915_DECL_PW_DOMAINS(vlv_pwdoms_dpio_cmn_bc,
 I915_DECL_PW_DOMAINS(vlv_pwdoms_dpio_tx_bc_lanes,
 	POWER_DOMAIN_PORT_DDI_LANES_B,
 	POWER_DOMAIN_PORT_DDI_LANES_C,
+	POWER_DOMAIN_AUX_IO_B,
+	POWER_DOMAIN_AUX_IO_C,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_INIT);
@@ -243,6 +250,9 @@ I915_DECL_PW_DOMAINS(chv_pwdoms_display,
 	POWER_DOMAIN_VGA,
 	POWER_DOMAIN_AUDIO_MMIO,
 	POWER_DOMAIN_AUDIO_PLAYBACK,
+	POWER_DOMAIN_AUX_IO_B,
+	POWER_DOMAIN_AUX_IO_C,
+	POWER_DOMAIN_AUX_IO_D,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_AUX_D,
@@ -252,12 +262,15 @@ I915_DECL_PW_DOMAINS(chv_pwdoms_display,
 I915_DECL_PW_DOMAINS(chv_pwdoms_dpio_cmn_bc,
 	POWER_DOMAIN_PORT_DDI_LANES_B,
 	POWER_DOMAIN_PORT_DDI_LANES_C,
+	POWER_DOMAIN_AUX_IO_B,
+	POWER_DOMAIN_AUX_IO_C,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(chv_pwdoms_dpio_cmn_d,
 	POWER_DOMAIN_PORT_DDI_LANES_D,
+	POWER_DOMAIN_AUX_IO_D,
 	POWER_DOMAIN_AUX_D,
 	POWER_DOMAIN_INIT);
 
@@ -305,6 +318,9 @@ static const struct i915_power_well_desc_list chv_power_wells[] = {
 	POWER_DOMAIN_VGA, \
 	POWER_DOMAIN_AUDIO_MMIO, \
 	POWER_DOMAIN_AUDIO_PLAYBACK, \
+	POWER_DOMAIN_AUX_IO_B, \
+	POWER_DOMAIN_AUX_IO_C, \
+	POWER_DOMAIN_AUX_IO_D, \
 	POWER_DOMAIN_AUX_B, \
 	POWER_DOMAIN_AUX_C, \
 	POWER_DOMAIN_AUX_D
@@ -318,6 +334,7 @@ I915_DECL_PW_DOMAINS(skl_pwdoms_dc_off,
 	POWER_DOMAIN_AUX_A,
 	POWER_DOMAIN_MODESET,
 	POWER_DOMAIN_GT_IRQ,
+	POWER_DOMAIN_DC_OFF,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(skl_pwdoms_ddi_io_a_e,
@@ -407,6 +424,8 @@ static const struct i915_power_well_desc_list skl_power_wells[] = {
 	POWER_DOMAIN_VGA, \
 	POWER_DOMAIN_AUDIO_MMIO, \
 	POWER_DOMAIN_AUDIO_PLAYBACK, \
+	POWER_DOMAIN_AUX_IO_B, \
+	POWER_DOMAIN_AUX_IO_C, \
 	POWER_DOMAIN_AUX_B, \
 	POWER_DOMAIN_AUX_C
 
@@ -420,16 +439,20 @@ I915_DECL_PW_DOMAINS(bxt_pwdoms_dc_off,
 	POWER_DOMAIN_GMBUS,
 	POWER_DOMAIN_MODESET,
 	POWER_DOMAIN_GT_IRQ,
+	POWER_DOMAIN_DC_OFF,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(bxt_pwdoms_dpio_cmn_a,
 	POWER_DOMAIN_PORT_DDI_LANES_A,
+	POWER_DOMAIN_AUX_IO_A,
 	POWER_DOMAIN_AUX_A,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(bxt_pwdoms_dpio_cmn_bc,
 	POWER_DOMAIN_PORT_DDI_LANES_B,
 	POWER_DOMAIN_PORT_DDI_LANES_C,
+	POWER_DOMAIN_AUX_IO_B,
+	POWER_DOMAIN_AUX_IO_C,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_INIT);
@@ -483,6 +506,8 @@ static const struct i915_power_well_desc_list bxt_power_wells[] = {
 	POWER_DOMAIN_VGA, \
 	POWER_DOMAIN_AUDIO_MMIO, \
 	POWER_DOMAIN_AUDIO_PLAYBACK, \
+	POWER_DOMAIN_AUX_IO_B, \
+	POWER_DOMAIN_AUX_IO_C, \
 	POWER_DOMAIN_AUX_B, \
 	POWER_DOMAIN_AUX_C
 
@@ -496,6 +521,7 @@ I915_DECL_PW_DOMAINS(glk_pwdoms_dc_off,
 	POWER_DOMAIN_GMBUS,
 	POWER_DOMAIN_MODESET,
 	POWER_DOMAIN_GT_IRQ,
+	POWER_DOMAIN_DC_OFF,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(glk_pwdoms_ddi_io_a,	POWER_DOMAIN_PORT_DDI_IO_A);
@@ -504,29 +530,34 @@ I915_DECL_PW_DOMAINS(glk_pwdoms_ddi_io_c,	POWER_DOMAIN_PORT_DDI_IO_C);
 
 I915_DECL_PW_DOMAINS(glk_pwdoms_dpio_cmn_a,
 	POWER_DOMAIN_PORT_DDI_LANES_A,
+	POWER_DOMAIN_AUX_IO_A,
 	POWER_DOMAIN_AUX_A,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(glk_pwdoms_dpio_cmn_b,
 	POWER_DOMAIN_PORT_DDI_LANES_B,
+	POWER_DOMAIN_AUX_IO_B,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(glk_pwdoms_dpio_cmn_c,
 	POWER_DOMAIN_PORT_DDI_LANES_C,
+	POWER_DOMAIN_AUX_IO_C,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(glk_pwdoms_aux_a,
-	POWER_DOMAIN_AUX_A,
 	POWER_DOMAIN_AUX_IO_A,
+	POWER_DOMAIN_AUX_A,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(glk_pwdoms_aux_b,
+	POWER_DOMAIN_AUX_IO_B,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(glk_pwdoms_aux_c,
+	POWER_DOMAIN_AUX_IO_C,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_INIT);
 
@@ -617,6 +648,11 @@ I915_DECL_PW_DOMAINS(icl_pwdoms_pw_4,
 	POWER_DOMAIN_VGA, \
 	POWER_DOMAIN_AUDIO_MMIO, \
 	POWER_DOMAIN_AUDIO_PLAYBACK, \
+	POWER_DOMAIN_AUX_IO_B, \
+	POWER_DOMAIN_AUX_IO_C, \
+	POWER_DOMAIN_AUX_IO_D, \
+	POWER_DOMAIN_AUX_IO_E, \
+	POWER_DOMAIN_AUX_IO_F, \
 	POWER_DOMAIN_AUX_B, \
 	POWER_DOMAIN_AUX_C, \
 	POWER_DOMAIN_AUX_D, \
@@ -658,13 +694,23 @@ I915_DECL_PW_DOMAINS(icl_pwdoms_ddi_io_e,	POWER_DOMAIN_PORT_DDI_IO_E);
 I915_DECL_PW_DOMAINS(icl_pwdoms_ddi_io_f,	POWER_DOMAIN_PORT_DDI_IO_F);
 
 I915_DECL_PW_DOMAINS(icl_pwdoms_aux_a,
-	POWER_DOMAIN_AUX_A,
-	POWER_DOMAIN_AUX_IO_A);
-I915_DECL_PW_DOMAINS(icl_pwdoms_aux_b,		POWER_DOMAIN_AUX_B);
-I915_DECL_PW_DOMAINS(icl_pwdoms_aux_c,		POWER_DOMAIN_AUX_C);
-I915_DECL_PW_DOMAINS(icl_pwdoms_aux_d,		POWER_DOMAIN_AUX_D);
-I915_DECL_PW_DOMAINS(icl_pwdoms_aux_e,		POWER_DOMAIN_AUX_E);
-I915_DECL_PW_DOMAINS(icl_pwdoms_aux_f,		POWER_DOMAIN_AUX_F);
+	POWER_DOMAIN_AUX_IO_A,
+	POWER_DOMAIN_AUX_A);
+I915_DECL_PW_DOMAINS(icl_pwdoms_aux_b,
+	POWER_DOMAIN_AUX_IO_B,
+	POWER_DOMAIN_AUX_B);
+I915_DECL_PW_DOMAINS(icl_pwdoms_aux_c,
+	POWER_DOMAIN_AUX_IO_C,
+	POWER_DOMAIN_AUX_C);
+I915_DECL_PW_DOMAINS(icl_pwdoms_aux_d,
+	POWER_DOMAIN_AUX_IO_D,
+	POWER_DOMAIN_AUX_D);
+I915_DECL_PW_DOMAINS(icl_pwdoms_aux_e,
+	POWER_DOMAIN_AUX_IO_E,
+	POWER_DOMAIN_AUX_E);
+I915_DECL_PW_DOMAINS(icl_pwdoms_aux_f,
+	POWER_DOMAIN_AUX_IO_F,
+	POWER_DOMAIN_AUX_F);
 I915_DECL_PW_DOMAINS(icl_pwdoms_aux_tbt1,	POWER_DOMAIN_AUX_TBT1);
 I915_DECL_PW_DOMAINS(icl_pwdoms_aux_tbt2,	POWER_DOMAIN_AUX_TBT2);
 I915_DECL_PW_DOMAINS(icl_pwdoms_aux_tbt3,	POWER_DOMAIN_AUX_TBT3);
@@ -816,6 +862,7 @@ I915_DECL_PW_DOMAINS(tgl_pwdoms_dc_off,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_AUX_C,
 	POWER_DOMAIN_MODESET,
+	POWER_DOMAIN_DC_OFF,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(tgl_pwdoms_ddi_io_tc1,	POWER_DOMAIN_PORT_DDI_IO_TC1);
@@ -1012,6 +1059,7 @@ I915_DECL_PW_DOMAINS(rkl_pwdoms_dc_off,
 	POWER_DOMAIN_AUX_A,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_MODESET,
+	POWER_DOMAIN_DC_OFF,
 	POWER_DOMAIN_INIT);
 
 static const struct i915_power_well_desc rkl_power_wells_main[] = {
@@ -1094,6 +1142,7 @@ I915_DECL_PW_DOMAINS(dg1_pwdoms_dc_off,
 	POWER_DOMAIN_AUX_A,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_MODESET,
+	POWER_DOMAIN_DC_OFF,
 	POWER_DOMAIN_INIT);
 
 I915_DECL_PW_DOMAINS(dg1_pwdoms_pw_2,
@@ -1202,10 +1251,7 @@ I915_DECL_PW_DOMAINS(xelpd_pwdoms_pw_a,
 	POWER_DOMAIN_PIPE_PANEL_FITTER_A,
 	POWER_DOMAIN_INIT);
 
-#define XELPD_PW_2_POWER_DOMAINS \
-	XELPD_PW_B_POWER_DOMAINS, \
-	XELPD_PW_C_POWER_DOMAINS, \
-	XELPD_PW_D_POWER_DOMAINS, \
+#define XELPD_DC_OFF_PORT_POWER_DOMAINS \
 	POWER_DOMAIN_PORT_DDI_LANES_C, \
 	POWER_DOMAIN_PORT_DDI_LANES_D, \
 	POWER_DOMAIN_PORT_DDI_LANES_E, \
@@ -1215,6 +1261,9 @@ I915_DECL_PW_DOMAINS(xelpd_pwdoms_pw_a,
 	POWER_DOMAIN_PORT_DDI_LANES_TC4, \
 	POWER_DOMAIN_VGA, \
 	POWER_DOMAIN_AUDIO_PLAYBACK, \
+	POWER_DOMAIN_AUX_IO_C, \
+	POWER_DOMAIN_AUX_IO_D, \
+	POWER_DOMAIN_AUX_IO_E, \
 	POWER_DOMAIN_AUX_C, \
 	POWER_DOMAIN_AUX_D, \
 	POWER_DOMAIN_AUX_E, \
@@ -1226,6 +1275,12 @@ I915_DECL_PW_DOMAINS(xelpd_pwdoms_pw_a,
 	POWER_DOMAIN_AUX_TBT2, \
 	POWER_DOMAIN_AUX_TBT3, \
 	POWER_DOMAIN_AUX_TBT4
+
+#define XELPD_PW_2_POWER_DOMAINS \
+	XELPD_PW_B_POWER_DOMAINS, \
+	XELPD_PW_C_POWER_DOMAINS, \
+	XELPD_PW_D_POWER_DOMAINS, \
+	XELPD_DC_OFF_PORT_POWER_DOMAINS
 
 I915_DECL_PW_DOMAINS(xelpd_pwdoms_pw_2,
 	XELPD_PW_2_POWER_DOMAINS,
@@ -1249,22 +1304,29 @@ I915_DECL_PW_DOMAINS(xelpd_pwdoms_pw_2,
  */
 
 I915_DECL_PW_DOMAINS(xelpd_pwdoms_dc_off,
-	XELPD_PW_2_POWER_DOMAINS,
+	XELPD_DC_OFF_PORT_POWER_DOMAINS,
+	XELPD_PW_C_POWER_DOMAINS,
+	XELPD_PW_D_POWER_DOMAINS,
 	POWER_DOMAIN_PORT_DSI,
 	POWER_DOMAIN_AUDIO_MMIO,
 	POWER_DOMAIN_AUX_A,
 	POWER_DOMAIN_AUX_B,
 	POWER_DOMAIN_MODESET,
+	POWER_DOMAIN_DC_OFF,
 	POWER_DOMAIN_INIT);
 
-static const struct i915_power_well_desc xelpd_power_wells_main[] = {
+static const struct i915_power_well_desc xelpd_power_wells_dc_off[] = {
 	{
 		.instances = &I915_PW_INSTANCES(
 			I915_PW("DC_off", &xelpd_pwdoms_dc_off,
 				.id = SKL_DISP_DC_OFF),
 		),
 		.ops = &gen9_dc_off_power_well_ops,
-	}, {
+	}
+};
+
+static const struct i915_power_well_desc xelpd_power_wells_main[] = {
+	{
 		.instances = &I915_PW_INSTANCES(
 			I915_PW("PW_2", &xelpd_pwdoms_pw_2,
 				.hsw.idx = ICL_PW_CTL_IDX_PW_2,
@@ -1325,6 +1387,11 @@ static const struct i915_power_well_desc xelpd_power_wells_main[] = {
 			I915_PW("AUX_C", &icl_pwdoms_aux_c, .hsw.idx = ICL_PW_CTL_IDX_AUX_C),
 			I915_PW("AUX_D", &icl_pwdoms_aux_d, .hsw.idx = XELPD_PW_CTL_IDX_AUX_D),
 			I915_PW("AUX_E", &icl_pwdoms_aux_e, .hsw.idx = XELPD_PW_CTL_IDX_AUX_E),
+		),
+		.ops = &icl_aux_power_well_ops,
+		.fixed_enable_delay = true,
+	}, {
+		.instances = &I915_PW_INSTANCES(
 			I915_PW("AUX_USBC1", &tgl_pwdoms_aux_usbc1, .hsw.idx = TGL_PW_CTL_IDX_AUX_TC1),
 			I915_PW("AUX_USBC2", &tgl_pwdoms_aux_usbc2, .hsw.idx = TGL_PW_CTL_IDX_AUX_TC2),
 			I915_PW("AUX_USBC3", &tgl_pwdoms_aux_usbc3, .hsw.idx = TGL_PW_CTL_IDX_AUX_TC3),
@@ -1332,6 +1399,8 @@ static const struct i915_power_well_desc xelpd_power_wells_main[] = {
 		),
 		.ops = &icl_aux_power_well_ops,
 		.fixed_enable_delay = true,
+		/* WA_14017248603: adlp */
+		.enable_timeout = 500,
 	}, {
 		.instances = &I915_PW_INSTANCES(
 			I915_PW("AUX_TBT1", &icl_pwdoms_aux_tbt1, .hsw.idx = TGL_PW_CTL_IDX_AUX_TBT1),
@@ -1347,6 +1416,34 @@ static const struct i915_power_well_desc xelpd_power_wells_main[] = {
 static const struct i915_power_well_desc_list xelpd_power_wells[] = {
 	I915_PW_DESCRIPTORS(i9xx_power_wells_always_on),
 	I915_PW_DESCRIPTORS(icl_power_wells_pw_1),
+	I915_PW_DESCRIPTORS(xelpd_power_wells_dc_off),
+	I915_PW_DESCRIPTORS(xelpd_power_wells_main),
+};
+
+I915_DECL_PW_DOMAINS(xehpd_pwdoms_dc_off,
+	XELPD_PW_2_POWER_DOMAINS,
+	POWER_DOMAIN_PORT_DSI,
+	POWER_DOMAIN_AUDIO_MMIO,
+	POWER_DOMAIN_AUX_A,
+	POWER_DOMAIN_AUX_B,
+	POWER_DOMAIN_MODESET,
+	POWER_DOMAIN_DC_OFF,
+	POWER_DOMAIN_INIT);
+
+static const struct i915_power_well_desc xehpd_power_wells_dc_off[] = {
+	{
+		.instances = &I915_PW_INSTANCES(
+			I915_PW("DC_off", &xehpd_pwdoms_dc_off,
+				.id = SKL_DISP_DC_OFF),
+		),
+		.ops = &gen9_dc_off_power_well_ops,
+	}
+};
+
+static const struct i915_power_well_desc_list xehpd_power_wells[] = {
+	I915_PW_DESCRIPTORS(i9xx_power_wells_always_on),
+	I915_PW_DESCRIPTORS(icl_power_wells_pw_1),
+	I915_PW_DESCRIPTORS(xehpd_power_wells_dc_off),
 	I915_PW_DESCRIPTORS(xelpd_power_wells_main),
 };
 
@@ -1370,14 +1467,6 @@ I915_DECL_PW_DOMAINS(xelpdp_pwdoms_pw_2,
 	XELPDP_PW_2_POWER_DOMAINS,
 	POWER_DOMAIN_INIT);
 
-I915_DECL_PW_DOMAINS(xelpdp_pwdoms_dc_off,
-	XELPDP_PW_2_POWER_DOMAINS,
-	POWER_DOMAIN_AUDIO_MMIO,
-	POWER_DOMAIN_MODESET,
-	POWER_DOMAIN_AUX_A,
-	POWER_DOMAIN_AUX_B,
-	POWER_DOMAIN_INIT);
-
 I915_DECL_PW_DOMAINS(xelpdp_pwdoms_aux_tc1,
 	POWER_DOMAIN_AUX_USBC1,
 	POWER_DOMAIN_AUX_TBT1);
@@ -1396,12 +1485,6 @@ I915_DECL_PW_DOMAINS(xelpdp_pwdoms_aux_tc4,
 
 static const struct i915_power_well_desc xelpdp_power_wells_main[] = {
 	{
-		.instances = &I915_PW_INSTANCES(
-			I915_PW("DC_off", &xelpdp_pwdoms_dc_off,
-				.id = SKL_DISP_DC_OFF),
-		),
-		.ops = &gen9_dc_off_power_well_ops,
-	}, {
 		.instances = &I915_PW_INSTANCES(
 			I915_PW("PW_2", &xelpdp_pwdoms_pw_2,
 				.hsw.idx = ICL_PW_CTL_IDX_PW_2,
@@ -1458,6 +1541,7 @@ static const struct i915_power_well_desc xelpdp_power_wells_main[] = {
 static const struct i915_power_well_desc_list xelpdp_power_wells[] = {
 	I915_PW_DESCRIPTORS(i9xx_power_wells_always_on),
 	I915_PW_DESCRIPTORS(icl_power_wells_pw_1),
+	I915_PW_DESCRIPTORS(xelpd_power_wells_dc_off),
 	I915_PW_DESCRIPTORS(xelpdp_power_wells_main),
 };
 
@@ -1570,6 +1654,8 @@ int intel_display_power_map_init(struct i915_power_domains *power_domains)
 
 	if (DISPLAY_VER(i915) >= 14)
 		return set_power_wells(power_domains, xelpdp_power_wells);
+	else if (IS_DG2(i915))
+		return set_power_wells(power_domains, xehpd_power_wells);
 	else if (DISPLAY_VER(i915) >= 13)
 		return set_power_wells(power_domains, xelpd_power_wells);
 	else if (IS_DG1(i915))

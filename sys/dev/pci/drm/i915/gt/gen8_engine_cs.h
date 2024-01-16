@@ -33,12 +33,12 @@ int gen8_emit_bb_start(struct i915_request *rq,
 		       u64 offset, u32 len,
 		       const unsigned int flags);
 
-int gen125_emit_bb_start_noarb(struct i915_request *rq,
-			       u64 offset, u32 len,
-			       const unsigned int flags);
-int gen125_emit_bb_start(struct i915_request *rq,
-			 u64 offset, u32 len,
-			 const unsigned int flags);
+int xehp_emit_bb_start_noarb(struct i915_request *rq,
+			     u64 offset, u32 len,
+			     const unsigned int flags);
+int xehp_emit_bb_start(struct i915_request *rq,
+		       u64 offset, u32 len,
+		       const unsigned int flags);
 
 u32 *gen8_emit_fini_breadcrumb_xcs(struct i915_request *rq, u32 *cs);
 u32 *gen12_emit_fini_breadcrumb_xcs(struct i915_request *rq, u32 *cs);
@@ -50,25 +50,29 @@ u32 *gen12_emit_fini_breadcrumb_rcs(struct i915_request *rq, u32 *cs);
 u32 *gen12_emit_aux_table_inv(struct intel_engine_cs *engine, u32 *cs);
 
 static inline u32 *
-__gen8_emit_pipe_control(u32 *batch, u32 flags0, u32 flags1, u32 offset)
+__gen8_emit_pipe_control(u32 *batch, u32 bit_group_0,
+			 u32 bit_group_1, u32 offset)
 {
 	memset(batch, 0, 6 * sizeof(u32));
 
-	batch[0] = GFX_OP_PIPE_CONTROL(6) | flags0;
-	batch[1] = flags1;
+	batch[0] = GFX_OP_PIPE_CONTROL(6) | bit_group_0;
+	batch[1] = bit_group_1;
 	batch[2] = offset;
 
 	return batch + 6;
 }
 
-static inline u32 *gen8_emit_pipe_control(u32 *batch, u32 flags, u32 offset)
+static inline u32 *gen8_emit_pipe_control(u32 *batch,
+					  u32 bit_group_1, u32 offset)
 {
-	return __gen8_emit_pipe_control(batch, 0, flags, offset);
+	return __gen8_emit_pipe_control(batch, 0, bit_group_1, offset);
 }
 
-static inline u32 *gen12_emit_pipe_control(u32 *batch, u32 flags0, u32 flags1, u32 offset)
+static inline u32 *gen12_emit_pipe_control(u32 *batch, u32 bit_group_0,
+					   u32 bit_group_1, u32 offset)
 {
-	return __gen8_emit_pipe_control(batch, flags0, flags1, offset);
+	return __gen8_emit_pipe_control(batch, bit_group_0,
+					bit_group_1, offset);
 }
 
 static inline u32 *

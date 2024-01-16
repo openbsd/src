@@ -30,6 +30,7 @@
 #include "dc_dmub_srv.h"
 
 #include "dml/dcn30/dcn30_fpu.h"
+#include "dc_trace.h"
 
 #define REG(reg)\
 	optc1->tg_regs->reg
@@ -54,10 +55,11 @@ void optc3_triplebuffer_lock(struct timing_generator *optc)
 	REG_SET(OTG_MASTER_UPDATE_LOCK, 0,
 		OTG_MASTER_UPDATE_LOCK, 1);
 
-	if (optc->ctx->dce_environment != DCE_ENV_FPGA_MAXIMUS)
-		REG_WAIT(OTG_MASTER_UPDATE_LOCK,
-				UPDATE_LOCK_STATUS, 1,
-				1, 10);
+	REG_WAIT(OTG_MASTER_UPDATE_LOCK,
+			UPDATE_LOCK_STATUS, 1,
+			1, 10);
+
+	TRACE_OPTC_LOCK_UNLOCK_STATE(optc1, optc->inst, true);
 }
 
 void optc3_lock_doublebuffer_enable(struct timing_generator *optc)
@@ -93,6 +95,8 @@ void optc3_lock_doublebuffer_enable(struct timing_generator *optc)
 		MASTER_UPDATE_LOCK_VUPDATE_KEEPOUT_START_OFFSET, 0,
 		MASTER_UPDATE_LOCK_VUPDATE_KEEPOUT_END_OFFSET, 100,
 		OTG_MASTER_UPDATE_LOCK_VUPDATE_KEEPOUT_EN, 1);
+
+	TRACE_OPTC_LOCK_UNLOCK_STATE(optc1, optc->inst, true);
 }
 
 void optc3_lock_doublebuffer_disable(struct timing_generator *optc)
@@ -108,6 +112,8 @@ void optc3_lock_doublebuffer_disable(struct timing_generator *optc)
 
 	REG_UPDATE(OTG_GLOBAL_CONTROL2, GLOBAL_UPDATE_LOCK_EN, 0);
 	REG_UPDATE(OTG_GLOBAL_CONTROL0, MASTER_UPDATE_LOCK_DB_EN, 0);
+
+	TRACE_OPTC_LOCK_UNLOCK_STATE(optc1, optc->inst, true);
 }
 
 void optc3_lock(struct timing_generator *optc)
@@ -122,6 +128,8 @@ void optc3_lock(struct timing_generator *optc)
 	REG_WAIT(OTG_MASTER_UPDATE_LOCK,
 			UPDATE_LOCK_STATUS, 1,
 			1, 10);
+
+	TRACE_OPTC_LOCK_UNLOCK_STATE(optc1, optc->inst, true);
 }
 
 void optc3_set_out_mux(struct timing_generator *optc, enum otg_out_mux_dest dest)
@@ -207,7 +215,7 @@ void optc3_set_odm_bypass(struct timing_generator *optc,
 	optc1->opp_count = 1;
 }
 
-static void optc3_set_odm_combine(struct timing_generator *optc, int *opp_id, int opp_cnt,
+void optc3_set_odm_combine(struct timing_generator *optc, int *opp_id, int opp_cnt,
 		struct dc_crtc_timing *timing)
 {
 	struct optc *optc1 = DCN10TG_FROM_TG(optc);
@@ -270,6 +278,9 @@ static void optc3_set_odm_combine(struct timing_generator *optc, int *opp_id, in
  *
  * Sets double buffer point for V_TOTAL, H_TOTAL, VTOTAL_MIN,
  * VTOTAL_MAX, VTOTAL_MIN_SEL and VTOTAL_MAX_SEL registers.
+ *
+ * @optc: timing_generator instance.
+ * @enable: Enable DRR double buffering control if true, disable otherwise.
  *
  * Options: any time,  start of frame, dp start of frame (range timing)
  */

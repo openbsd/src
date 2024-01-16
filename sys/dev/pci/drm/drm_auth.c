@@ -240,7 +240,8 @@ static int
 drm_master_check_perm(struct drm_device *dev, struct drm_file *file_priv)
 {
 #ifdef __linux__
-	if (file_priv->pid == task_pid(current) && file_priv->was_master)
+	if (file_priv->was_master &&
+	    rcu_access_pointer(file_priv->pid) == task_tgid(current))
 		return 0;
 #endif
 

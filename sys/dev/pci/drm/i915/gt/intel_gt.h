@@ -6,6 +6,7 @@
 #ifndef __INTEL_GT__
 #define __INTEL_GT__
 
+#include "i915_drv.h"
 #include "intel_engine_types.h"
 #include "intel_gt_types.h"
 #include "intel_reset.h"
@@ -24,6 +25,11 @@ static inline bool gt_is_root(struct intel_gt *gt)
 	return !gt->info.id;
 }
 
+static inline bool intel_gt_needs_wa_22016122933(struct intel_gt *gt)
+{
+	return MEDIA_VER_FULL(gt->i915) == IP_VER(13, 0) && gt->type == GT_MEDIA;
+}
+
 static inline struct intel_gt *uc_to_gt(struct intel_uc *uc)
 {
 	return container_of(uc, struct intel_gt, uc);
@@ -37,6 +43,11 @@ static inline struct intel_gt *guc_to_gt(struct intel_guc *guc)
 static inline struct intel_gt *huc_to_gt(struct intel_huc *huc)
 {
 	return container_of(huc, struct intel_gt, uc.huc);
+}
+
+static inline struct intel_gt *gsc_uc_to_gt(struct intel_gsc_uc *gsc_uc)
+{
+	return container_of(gsc_uc, struct intel_gt, uc.gsc);
 }
 
 static inline struct intel_gt *gsc_to_gt(struct intel_gsc *gsc)
@@ -60,6 +71,7 @@ void intel_gt_driver_late_release_all(struct drm_i915_private *i915);
 int intel_gt_wait_for_idle(struct intel_gt *gt, long timeout);
 
 void intel_gt_check_and_clear_faults(struct intel_gt *gt);
+i915_reg_t intel_gt_perf_limit_reasons_reg(struct intel_gt *gt);
 void intel_gt_clear_error_registers(struct intel_gt *gt,
 				    intel_engine_mask_t engine_mask);
 
@@ -101,16 +113,8 @@ void intel_gt_info_print(const struct intel_gt_info *info,
 
 void intel_gt_watchdog_work(struct work_struct *work);
 
-static inline u32 intel_gt_tlb_seqno(const struct intel_gt *gt)
-{
-	return seqprop_sequence(&gt->tlb.seqno);
-}
-
-static inline u32 intel_gt_next_invalidate_tlb_full(const struct intel_gt *gt)
-{
-	return intel_gt_tlb_seqno(gt) | 1;
-}
-
-void intel_gt_invalidate_tlb(struct intel_gt *gt, u32 seqno);
+enum i915_map_type intel_gt_coherent_map_type(struct intel_gt *gt,
+					      struct drm_i915_gem_object *obj,
+					      bool always_coherent);
 
 #endif /* __INTEL_GT_H__ */

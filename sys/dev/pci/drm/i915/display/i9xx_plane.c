@@ -8,14 +8,16 @@
 #include <drm/drm_blend.h>
 #include <drm/drm_fourcc.h>
 
+#include "i915_reg.h"
+#include "i9xx_plane.h"
 #include "intel_atomic.h"
 #include "intel_atomic_plane.h"
 #include "intel_de.h"
+#include "intel_display_irq.h"
 #include "intel_display_types.h"
 #include "intel_fb.h"
 #include "intel_fbc.h"
 #include "intel_sprite.h"
-#include "i9xx_plane.h"
 
 /* Primary plane formats for gen <= 3 */
 static const u32 i8xx_primary_formats[] = {
@@ -1031,9 +1033,12 @@ i9xx_get_initial_plane_config(struct intel_crtc *crtc,
 					       DSPLINOFF(i9xx_plane));
 		base = intel_de_read(dev_priv, DSPSURF(i9xx_plane)) & DISP_ADDR_MASK;
 	} else {
+		offset = 0;
 		base = intel_de_read(dev_priv, DSPADDR(i9xx_plane));
 	}
 	plane_config->base = base;
+
+	drm_WARN_ON(&dev_priv->drm, offset != 0);
 
 	val = intel_de_read(dev_priv, PIPESRC(pipe));
 	fb->width = REG_FIELD_GET(PIPESRC_WIDTH_MASK, val) + 1;

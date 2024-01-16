@@ -33,11 +33,15 @@
 #define AMDGPU_PL_GWS		(TTM_PL_PRIV + 1)
 #define AMDGPU_PL_OA		(TTM_PL_PRIV + 2)
 #define AMDGPU_PL_PREEMPT	(TTM_PL_PRIV + 3)
+#define AMDGPU_PL_DOORBELL	(TTM_PL_PRIV + 4)
 
 #define AMDGPU_GTT_MAX_TRANSFER_SIZE	512
 #define AMDGPU_GTT_NUM_TRANSFER_WINDOWS	2
 
 #define AMDGPU_POISON	0xd0bed0be
+
+extern const struct attribute_group amdgpu_vram_mgr_attr_group;
+extern const struct attribute_group amdgpu_gtt_mgr_attr_group;
 
 struct hmm_range;
 
@@ -49,6 +53,7 @@ struct amdgpu_gtt_mgr {
 
 struct amdgpu_mman {
 	struct ttm_device		bdev;
+	struct ttm_pool			*ttm_pools;
 	bool				initialized;
 	void __iomem			*aper_base_kaddr;
 	bus_space_handle_t		aper_bsh;
@@ -59,8 +64,10 @@ struct amdgpu_mman {
 	bool					buffer_funcs_enabled;
 
 	struct rwlock				gtt_window_lock;
-	/* Scheduler entity for buffer moves */
-	struct drm_sched_entity			entity;
+	/* High priority scheduler entity for buffer moves */
+	struct drm_sched_entity			high_pr;
+	/* Low priority scheduler entity for VRAM clearing */
+	struct drm_sched_entity			low_pr;
 
 	struct amdgpu_vram_mgr vram_mgr;
 	struct amdgpu_gtt_mgr gtt_mgr;
@@ -92,6 +99,7 @@ struct amdgpu_mman {
 	u64		drv_vram_usage_start_offset;
 	u64		drv_vram_usage_size;
 	struct amdgpu_bo	*drv_vram_usage_reserved_bo;
+	void		*drv_vram_usage_va;
 
 	/* PAGE_SIZE'd BO for process memory r/w over SDMA. */
 	struct amdgpu_bo	*sdma_access_bo;
@@ -151,7 +159,8 @@ int amdgpu_ttm_copy_mem_to_mem(struct amdgpu_device *adev,
 int amdgpu_fill_buffer(struct amdgpu_bo *bo,
 			uint32_t src_data,
 			struct dma_resv *resv,
-			struct dma_fence **fence);
+			struct dma_fence **fence,
+			bool delayed);
 
 int amdgpu_ttm_alloc_gart(struct ttm_buffer_object *bo);
 void amdgpu_ttm_recover_gart(struct ttm_buffer_object *tbo);
@@ -160,6 +169,8 @@ uint64_t amdgpu_ttm_domain_start(struct amdgpu_device *adev, uint32_t type);
 #if IS_ENABLED(CONFIG_DRM_AMDGPU_USERPTR)
 int amdgpu_ttm_tt_get_user_pages(struct amdgpu_bo *bo, struct page **pages,
 				 struct hmm_range **range);
+void amdgpu_ttm_tt_discard_user_pages(struct ttm_tt *ttm,
+				      struct hmm_range *range);
 bool amdgpu_ttm_tt_get_user_pages_done(struct ttm_tt *ttm,
 				       struct hmm_range *range);
 #else
@@ -168,6 +179,10 @@ static inline int amdgpu_ttm_tt_get_user_pages(struct amdgpu_bo *bo,
 					       struct hmm_range **range)
 {
 	return -EPERM;
+}
+static inline void amdgpu_ttm_tt_discard_user_pages(struct ttm_tt *ttm,
+						    struct hmm_range *range)
+{
 }
 static inline bool amdgpu_ttm_tt_get_user_pages_done(struct ttm_tt *ttm,
 						     struct hmm_range *range)

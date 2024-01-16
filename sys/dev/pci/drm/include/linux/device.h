@@ -13,6 +13,7 @@
 #include <linux/pm.h>
 #include <linux/kobject.h>
 #include <linux/ratelimit.h> /* dev_printk.h -> ratelimit.h */
+#include <linux/module.h> /* via device/driver.h */
 
 struct device_node;
 
@@ -44,11 +45,17 @@ void	dev_set_drvdata(struct device *, void *);
 #define devm_kzalloc(x, y, z)	kzalloc(y, z)
 #define devm_kfree(x, y)	kfree(y)
 
+static inline int
+devm_device_add_group(struct device *dev, const struct attribute_group *g)
+{
+	return 0;
+}
+
 #define dev_warn(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
-#define dev_WARN(dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
+#define dev_WARN(dev, fmt, arg...)					\
+	WARN(1, "drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 #define dev_notice(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *NOTICE* " fmt, curproc->p_p->ps_pid,	\
@@ -78,6 +85,9 @@ void	dev_set_drvdata(struct device *, void *);
 
 #define dev_warn_once(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
+	    __func__ , ## arg)
+#define dev_WARN_ONCE(dev, cond, fmt, arg...)					\
+	WARN_ONCE(cond, "drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 #define dev_err_once(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\

@@ -587,11 +587,6 @@ void vi_srbm_select(struct amdgpu_device *adev,
 	WREG32(mmSRBM_GFX_CNTL, srbm_gfx_cntl);
 }
 
-static void vi_vga_set_state(struct amdgpu_device *adev, bool state)
-{
-	/* todo */
-}
-
 static bool vi_read_disabled_bios(struct amdgpu_device *adev)
 {
 	u32 bus_cntl;
@@ -653,7 +648,7 @@ static bool vi_read_bios_from_rom(struct amdgpu_device *adev,
 		return false;
 
 	dw_ptr = (u32 *)bios;
-	length_dw = roundup2(length_bytes, 4) / 4;
+	length_dw = ALIGN(length_bytes, 4) / 4;
 	/* take the smc lock since we are using the smc index */
 	spin_lock_irqsave(&adev->smc_idx_lock, flags);
 	/* set rom index to 0 */
@@ -769,12 +764,12 @@ static uint32_t vi_get_register_value(struct amdgpu_device *adev,
 
 		mutex_lock(&adev->grbm_idx_mutex);
 		if (se_num != 0xffffffff || sh_num != 0xffffffff)
-			amdgpu_gfx_select_se_sh(adev, se_num, sh_num, 0xffffffff);
+			amdgpu_gfx_select_se_sh(adev, se_num, sh_num, 0xffffffff, 0);
 
 		val = RREG32(reg_offset);
 
 		if (se_num != 0xffffffff || sh_num != 0xffffffff)
-			amdgpu_gfx_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
+			amdgpu_gfx_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff, 0);
 		mutex_unlock(&adev->grbm_idx_mutex);
 		return val;
 	} else {
@@ -1106,24 +1101,6 @@ static int vi_set_vce_clocks(struct amdgpu_device *adev, u32 evclk, u32 ecclk)
 		return -ETIMEDOUT;
 
 	return 0;
-}
-
-static void vi_pcie_gen3_enable(struct amdgpu_device *adev)
-{
-	if (pci_is_root_bus(adev->pdev->bus))
-		return;
-
-	if (amdgpu_pcie_gen2 == 0)
-		return;
-
-	if (adev->flags & AMD_IS_APU)
-		return;
-
-	if (!(adev->pm.pcie_gen_mask & (CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2 |
-					CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3)))
-		return;
-
-	/* todo */
 }
 
 static void vi_enable_aspm(struct amdgpu_device *adev)
@@ -1460,7 +1437,6 @@ static const struct amdgpu_asic_funcs vi_asic_funcs =
 	.read_register = &vi_read_register,
 	.reset = &vi_asic_reset,
 	.reset_method = &vi_asic_reset_method,
-	.set_vga_state = &vi_vga_set_state,
 	.get_xclk = &vi_get_xclk,
 	.set_uvd_clocks = &vi_set_uvd_clocks,
 	.set_vce_clocks = &vi_set_vce_clocks,
@@ -1735,8 +1711,6 @@ static int vi_common_hw_init(void *handle)
 
 	/* move the golden regs per IP block */
 	vi_init_golden_registers(adev);
-	/* enable pcie gen2/3 link */
-	vi_pcie_gen3_enable(adev);
 	/* enable aspm */
 	vi_program_aspm(adev);
 	/* enable the doorbell aperture */
@@ -2103,6 +2077,8 @@ void vi_set_virt_ops(struct amdgpu_device *adev)
 
 int vi_set_ip_blocks(struct amdgpu_device *adev)
 {
+	amdgpu_device_set_sriov_virtual_display(adev);
+
 	switch (adev->asic_type) {
 	case CHIP_TOPAZ:
 		/* topaz has no DCE, UVD, VCE */
@@ -2122,7 +2098,7 @@ int vi_set_ip_blocks(struct amdgpu_device *adev)
 		amdgpu_device_ip_block_add(adev, &gfx_v8_0_ip_block);
 		amdgpu_device_ip_block_add(adev, &sdma_v3_0_ip_block);
 		amdgpu_device_ip_block_add(adev, &pp_smu_ip_block);
-		if (adev->enable_virtual_display || amdgpu_sriov_vf(adev))
+		if (adev->enable_virtual_display)
 			amdgpu_device_ip_block_add(adev, &amdgpu_vkms_ip_block);
 #if defined(CONFIG_DRM_AMD_DC)
 		else if (amdgpu_device_has_dc_support(adev))
@@ -2142,7 +2118,7 @@ int vi_set_ip_blocks(struct amdgpu_device *adev)
 		amdgpu_device_ip_block_add(adev, &gfx_v8_0_ip_block);
 		amdgpu_device_ip_block_add(adev, &sdma_v3_0_ip_block);
 		amdgpu_device_ip_block_add(adev, &pp_smu_ip_block);
-		if (adev->enable_virtual_display || amdgpu_sriov_vf(adev))
+		if (adev->enable_virtual_display)
 			amdgpu_device_ip_block_add(adev, &amdgpu_vkms_ip_block);
 #if defined(CONFIG_DRM_AMD_DC)
 		else if (amdgpu_device_has_dc_support(adev))

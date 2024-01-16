@@ -29,10 +29,10 @@
 
 #include <linux/mm.h>
 
+#include <drm/ttm/ttm_bo.h>
 #include <drm/ttm/ttm_device.h>
 #include <drm/ttm/ttm_tt.h>
 #include <drm/ttm/ttm_placement.h>
-#include <drm/ttm/ttm_bo_api.h>
 
 #include "ttm_module.h"
 
@@ -133,7 +133,6 @@ int ttm_global_swapout(struct ttm_operation_ctx *ctx, gfp_t gfp_flags)
 	mutex_unlock(&ttm_global_mutex);
 	return ret;
 }
-EXPORT_SYMBOL(ttm_global_swapout);
 
 int ttm_device_swapout(struct ttm_device *bdev, struct ttm_operation_ctx *ctx,
 		       gfp_t gfp_flags)
@@ -171,16 +170,6 @@ int ttm_device_swapout(struct ttm_device *bdev, struct ttm_operation_ctx *ctx,
 }
 EXPORT_SYMBOL(ttm_device_swapout);
 
-static void ttm_device_delayed_workqueue(struct work_struct *work)
-{
-	struct ttm_device *bdev =
-		container_of(work, struct ttm_device, wq.work);
-
-	if (!ttm_bo_delayed_delete(bdev, false))
-		schedule_delayed_work(&bdev->wq,
-				      ((HZ / 100) < 1) ? 1 : HZ / 100);
-}
-
 /**
  * ttm_device_init
  *
@@ -196,7 +185,7 @@ static void ttm_device_delayed_workqueue(struct work_struct *work)
  * Returns:
  * !0: Failure.
  */
-int ttm_device_init(struct ttm_device *bdev, struct ttm_device_funcs *funcs,
+int ttm_device_init(struct ttm_device *bdev, const struct ttm_device_funcs *funcs,
 		    struct device *dev, struct address_space *mapping,
 		    struct drm_vma_offset_manager *vma_manager,
 		    bool use_dma_alloc, bool use_dma32)
@@ -211,15 +200,19 @@ int ttm_device_init(struct ttm_device *bdev, struct ttm_device_funcs *funcs,
 	if (ret)
 		return ret;
 
+	bdev->wq = alloc_workqueue("ttm", WQ_MEM_RECLAIM | WQ_HIGHPRI, 16);
+	if (!bdev->wq) {
+		ttm_global_release();
+		return -ENOMEM;
+	}
+
 	bdev->funcs = funcs;
 
 	ttm_sys_man_init(bdev);
-	ttm_pool_init(&bdev->pool, dev, use_dma_alloc, use_dma32);
+	ttm_pool_init(&bdev->pool, dev, NUMA_NO_NODE, use_dma_alloc, use_dma32);
 
 	bdev->vma_manager = vma_manager;
-	INIT_DELAYED_WORK(&bdev->wq, ttm_device_delayed_workqueue);
 	mtx_init(&bdev->lru_lock, IPL_NONE);
-	INIT_LIST_HEAD(&bdev->ddestroy);
 	INIT_LIST_HEAD(&bdev->pinned);
 	bdev->dev_mapping = mapping;
 	mutex_lock(&ttm_global_mutex);
@@ -239,10 +232,8 @@ void ttm_device_fini(struct ttm_device *bdev)
 	list_del(&bdev->device_list);
 	mutex_unlock(&ttm_global_mutex);
 
-	cancel_delayed_work_sync(&bdev->wq);
-
-	if (ttm_bo_delayed_delete(bdev, true))
-		pr_debug("Delayed destroy list was clean\n");
+	drain_workqueue(bdev->wq);
+	destroy_workqueue(bdev->wq);
 
 	man = ttm_manager_type(bdev, TTM_PL_SYSTEM);
 	ttm_resource_manager_set_used(man, false);

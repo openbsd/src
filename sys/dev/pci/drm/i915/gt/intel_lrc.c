@@ -20,6 +20,30 @@
 #include "intel_ring.h"
 #include "shmem_utils.h"
 
+/*
+ * The per-platform tables are u8-encoded in @data. Decode @data and set the
+ * addresses' offset and commands in @regs. The following encoding is used
+ * for each byte. There are 2 steps: decoding commands and decoding addresses.
+ *
+ * Commands:
+ * [7]: create NOPs - number of NOPs are set in lower bits
+ * [6]: When creating MI_LOAD_REGISTER_IMM command, allow to set
+ *      MI_LRI_FORCE_POSTED
+ * [5:0]: Number of NOPs or registers to set values to in case of
+ *        MI_LOAD_REGISTER_IMM
+ *
+ * Addresses: these are decoded after a MI_LOAD_REGISTER_IMM command by "count"
+ * number of registers. They are set by using the REG/REG16 macros: the former
+ * is used for offsets smaller than 0x200 while the latter is for values bigger
+ * than that. Those macros already set all the bits documented below correctly:
+ *
+ * [7]: When a register offset needs more than 6 bits, use additional bytes, to
+ *      follow, for the lower bits
+ * [6:0]: Register offset, without considering the engine base.
+ *
+ * This function only tweaks the commands and register offsets. Values are not
+ * filled out.
+ */
 static void set_offsets(u32 *regs,
 			const u8 *data,
 			const struct intel_engine_cs *engine,
@@ -606,6 +630,49 @@ static const u8 dg2_rcs_offsets[] = {
 	END
 };
 
+static const u8 mtl_rcs_offsets[] = {
+	NOP(1),
+	LRI(15, POSTED),
+	REG16(0x244),
+	REG(0x034),
+	REG(0x030),
+	REG(0x038),
+	REG(0x03c),
+	REG(0x168),
+	REG(0x140),
+	REG(0x110),
+	REG(0x1c0),
+	REG(0x1c4),
+	REG(0x1c8),
+	REG(0x180),
+	REG16(0x2b4),
+	REG(0x120),
+	REG(0x124),
+
+	NOP(1),
+	LRI(9, POSTED),
+	REG16(0x3a8),
+	REG16(0x28c),
+	REG16(0x288),
+	REG16(0x284),
+	REG16(0x280),
+	REG16(0x27c),
+	REG16(0x278),
+	REG16(0x274),
+	REG16(0x270),
+
+	NOP(2),
+	LRI(2, POSTED),
+	REG16(0x5a8),
+	REG16(0x5ac),
+
+	NOP(6),
+	LRI(1, 0),
+	REG(0x0c8),
+
+	END
+};
+
 #undef END
 #undef REG16
 #undef REG
@@ -624,7 +691,9 @@ static const u8 *reg_offsets(const struct intel_engine_cs *engine)
 		   !intel_engine_has_relative_mmio(engine));
 
 	if (engine->flags & I915_ENGINE_HAS_RCS_REG_STATE) {
-		if (GRAPHICS_VER_FULL(engine->i915) >= IP_VER(12, 55))
+		if (GRAPHICS_VER_FULL(engine->i915) >= IP_VER(12, 70))
+			return mtl_rcs_offsets;
+		else if (GRAPHICS_VER_FULL(engine->i915) >= IP_VER(12, 55))
 			return dg2_rcs_offsets;
 		else if (GRAPHICS_VER_FULL(engine->i915) >= IP_VER(12, 50))
 			return xehp_rcs_offsets;
@@ -745,19 +814,18 @@ static int lrc_ring_cmd_buf_cctl(const struct intel_engine_cs *engine)
 static u32
 lrc_ring_indirect_offset_default(const struct intel_engine_cs *engine)
 {
-	switch (GRAPHICS_VER(engine->i915)) {
-	default:
-		MISSING_CASE(GRAPHICS_VER(engine->i915));
-		fallthrough;
-	case 12:
+	if (GRAPHICS_VER(engine->i915) >= 12)
 		return GEN12_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	case 11:
+	else if (GRAPHICS_VER(engine->i915) >= 11)
 		return GEN11_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	case 9:
+	else if (GRAPHICS_VER(engine->i915) >= 9)
 		return GEN9_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	case 8:
+	else if (GRAPHICS_VER(engine->i915) >= 8)
 		return GEN8_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	}
+
+	GEM_BUG_ON(GRAPHICS_VER(engine->i915) < 8);
+
+	return 0;
 }
 
 static void
@@ -1017,7 +1085,7 @@ __lrc_alloc_state(struct intel_context *ce, struct intel_engine_cs *engine)
 	if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
 		context_size += I915_GTT_PAGE_SIZE; /* for redzone */
 
-	if (GRAPHICS_VER(engine->i915) == 12) {
+	if (GRAPHICS_VER(engine->i915) >= 12) {
 		ce->wa_bb_page = context_size / PAGE_SIZE;
 		context_size += PAGE_SIZE;
 	}
@@ -1029,10 +1097,19 @@ __lrc_alloc_state(struct intel_context *ce, struct intel_engine_cs *engine)
 
 	obj = i915_gem_object_create_lmem(engine->i915, context_size,
 					  I915_BO_ALLOC_PM_VOLATILE);
-	if (IS_ERR(obj))
+	if (IS_ERR(obj)) {
 		obj = i915_gem_object_create_shmem(engine->i915, context_size);
-	if (IS_ERR(obj))
-		return ERR_CAST(obj);
+		if (IS_ERR(obj))
+			return ERR_CAST(obj);
+
+		/*
+		 * Wa_22016122933: For Media version 13.0, all Media GT shared
+		 * memory needs to be mapped as WC on CPU side and UC (PAT
+		 * index 2) on GPU side.
+		 */
+		if (intel_gt_needs_wa_22016122933(engine->gt))
+			i915_gem_object_set_cache_coherency(obj, I915_CACHE_NONE);
+	}
 
 	vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, NULL);
 	if (IS_ERR(vma)) {
@@ -1121,9 +1198,9 @@ lrc_pre_pin(struct intel_context *ce,
 	GEM_BUG_ON(!i915_vma_is_pinned(ce->state));
 
 	*vaddr = i915_gem_object_pin_map(ce->state->obj,
-					 i915_coherent_map_type(ce->engine->i915,
-								ce->state->obj,
-								false) |
+					 intel_gt_coherent_map_type(ce->engine->gt,
+								    ce->state->obj,
+								    false) |
 					 I915_MAP_OVERRIDE);
 
 	return PTR_ERR_OR_ZERO(*vaddr);
@@ -1253,16 +1330,16 @@ static u32 *
 dg2_emit_rcs_hang_wabb(const struct intel_context *ce, u32 *cs)
 {
 	*cs++ = MI_LOAD_REGISTER_IMM(1);
-	*cs++ = i915_mmio_reg_offset(GEN12_STATE_ACK_DEBUG);
+	*cs++ = i915_mmio_reg_offset(GEN12_STATE_ACK_DEBUG(ce->engine->mmio_base));
 	*cs++ = 0x21;
 
 	*cs++ = MI_LOAD_REGISTER_REG;
 	*cs++ = i915_mmio_reg_offset(RING_NOPID(ce->engine->mmio_base));
-	*cs++ = i915_mmio_reg_offset(GEN12_CULLBIT1);
+	*cs++ = i915_mmio_reg_offset(XEHP_CULLBIT1);
 
 	*cs++ = MI_LOAD_REGISTER_REG;
 	*cs++ = i915_mmio_reg_offset(RING_NOPID(ce->engine->mmio_base));
-	*cs++ = i915_mmio_reg_offset(GEN12_CULLBIT2);
+	*cs++ = i915_mmio_reg_offset(XEHP_CULLBIT2);
 
 	return cs;
 }
@@ -1304,7 +1381,9 @@ gen12_emit_indirect_ctx_rcs(const struct intel_context *ce, u32 *cs)
 	cs = gen12_emit_aux_table_inv(ce->engine, cs);
 
 	/* Wa_16014892111 */
-	if (IS_DG2(ce->engine->i915))
+	if (IS_MTL_GRAPHICS_STEP(ce->engine->i915, M, STEP_A0, STEP_B0) ||
+	    IS_MTL_GRAPHICS_STEP(ce->engine->i915, P, STEP_A0, STEP_B0) ||
+	    IS_DG2(ce->engine->i915))
 		cs = dg2_emit_draw_watermark_setting(cs);
 
 	return cs;
@@ -1710,24 +1789,16 @@ void lrc_init_wa_ctx(struct intel_engine_cs *engine)
 	unsigned int i;
 	int err;
 
-	if (!(engine->flags & I915_ENGINE_HAS_RCS_REG_STATE))
+	if (GRAPHICS_VER(engine->i915) >= 11 ||
+	    !(engine->flags & I915_ENGINE_HAS_RCS_REG_STATE))
 		return;
 
-	switch (GRAPHICS_VER(engine->i915)) {
-	case 12:
-	case 11:
-		return;
-	case 9:
+	if (GRAPHICS_VER(engine->i915) == 9) {
 		wa_bb_fn[0] = gen9_init_indirectctx_bb;
 		wa_bb_fn[1] = NULL;
-		break;
-	case 8:
+	} else if (GRAPHICS_VER(engine->i915) == 8) {
 		wa_bb_fn[0] = gen8_init_indirectctx_bb;
 		wa_bb_fn[1] = NULL;
-		break;
-	default:
-		MISSING_CASE(GRAPHICS_VER(engine->i915));
-		return;
 	}
 
 	err = lrc_create_wa_ctx(engine);

@@ -9,6 +9,7 @@
 struct drm_device;
 struct drm_file;
 struct drm_i915_error_state_buf;
+#define drm_i915_private inteldrm_softc
 struct drm_i915_private;
 struct intel_overlay;
 struct intel_overlay_error_state;

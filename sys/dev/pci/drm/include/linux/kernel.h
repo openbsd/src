@@ -17,6 +17,8 @@
 #include <linux/printk.h>
 #include <linux/typecheck.h>
 #include <linux/container_of.h>
+#include <linux/stddef.h>
+#include <linux/align.h>
 #include <asm/byteorder.h>
 
 #define swap(a, b) \
@@ -61,9 +63,12 @@
 #define min3(x, y, z) MIN(x, MIN(y, z))
 #define max3(x, y, z) MAX(x, MAX(y, z))
 
+#define min_not_zero(a, b) (a == 0) ? b : ((b == 0) ? a : min(a, b))
+
 #define mult_frac(x, n, d) (((x) * (n)) / (d))
 
 #define roundup2(x, y) (((x) + ((y) - 1)) & (~((__typeof(x))(y) - 1)))
+#define rounddown2(x, y) ((x) & ~((__typeof(x))(y) - 1))
 #define round_up(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
 #define round_down(x, y) (((x) / (y)) * (y)) /* y is power of two */
 #define rounddown(x, y) (((x) / (y)) * (y)) /* arbitrary y */
@@ -76,6 +81,7 @@
 
 #define IS_ALIGNED(x, y)	(((x) & ((y) - 1)) == 0)
 #define PTR_ALIGN(x, y)		((__typeof(x))roundup2((unsigned long)(x), (y)))
+#define ALIGN_DOWN(x, y)	((__typeof(x))rounddown2((unsigned long)(x), (y)))
 
 static inline char *
 kvasprintf(int flags, const char *fmt, va_list ap)
@@ -150,5 +156,7 @@ _in_dbg_master(void)
 #define STUB() do { printf("%s: stub\n", __func__); } while(0)
 
 #define CONCATENATE(x, y)	__CONCAT(x, y)
+
+#define PTR_IF(c, p)		((c) ? (p) : NULL)
 
 #endif

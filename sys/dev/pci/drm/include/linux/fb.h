@@ -31,8 +31,14 @@ struct fb_ops {
 	int (*fb_set_par)(struct fb_info *);
 };
 
+struct fb_fix_screeninfo {
+	paddr_t	smem_start;
+	psize_t smem_len;
+};
+
 struct fb_info {
 	struct fb_var_screeninfo var;
+	struct fb_fix_screeninfo fix;
 	const struct fb_ops *fbops;
 	char *screen_buffer;
 	char *screen_base;
@@ -64,6 +70,8 @@ struct fb_info {
 #define FB_ROTATE_CW		1
 #define FB_ROTATE_UD		2
 #define FB_ROTATE_CCW		3
+
+#define FB_GEN_DEFAULT_DEFERRED_IOMEM_OPS(a, b, c)
 
 static inline struct fb_info *
 framebuffer_alloc(size_t size, void *dev)

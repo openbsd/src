@@ -127,7 +127,7 @@ TRACE_EVENT(amdgpu_bo_create,
 
 	    TP_fast_assign(
 			   __entry->bo = bo;
-			   __entry->pages = bo->tbo.resource->num_pages;
+			   __entry->pages = PFN_UP(bo->tbo.resource->size);
 			   __entry->type = bo->tbo.resource->mem_type;
 			   __entry->prefer = bo->preferred_domains;
 			   __entry->allow = bo->allowed_domains;
@@ -233,7 +233,7 @@ TRACE_EVENT(amdgpu_vm_grab_id,
 			   __entry->pasid = vm->pasid;
 			   __assign_str(ring, ring->name);
 			   __entry->vmid = job->vmid;
-			   __entry->vm_hub = ring->funcs->vmhub,
+			   __entry->vm_hub = ring->vm_hub,
 			   __entry->pd_addr = job->vm_pd_addr;
 			   __entry->needs_flush = job->vm_needs_flush;
 			   ),
@@ -427,12 +427,12 @@ TRACE_EVENT(amdgpu_vm_flush,
 	    TP_fast_assign(
 			   __assign_str(ring, ring->name);
 			   __entry->vmid = vmid;
-			   __entry->vm_hub = ring->funcs->vmhub;
+			   __entry->vm_hub = ring->vm_hub;
 			   __entry->pd_addr = pd_addr;
 			   ),
 	    TP_printk("ring=%s, id=%u, hub=%u, pd_addr=%010Lx",
 		      __get_str(ring), __entry->vmid,
-		      __entry->vm_hub,__entry->pd_addr)
+		      __entry->vm_hub, __entry->pd_addr)
 );
 
 DECLARE_EVENT_CLASS(amdgpu_pasid,
@@ -494,7 +494,7 @@ TRACE_EVENT(amdgpu_cs_bo_status,
 );
 
 TRACE_EVENT(amdgpu_bo_move,
-	    TP_PROTO(struct amdgpu_bo* bo, uint32_t new_placement, uint32_t old_placement),
+	    TP_PROTO(struct amdgpu_bo *bo, uint32_t new_placement, uint32_t old_placement),
 	    TP_ARGS(bo, new_placement, old_placement),
 	    TP_STRUCT__entry(
 			__field(struct amdgpu_bo *, bo)

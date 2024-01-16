@@ -46,6 +46,11 @@
  * properties that specify how the pixels are positioned and blended, like
  * rotation or Z-position. All these properties are stored in &drm_plane_state.
  *
+ * Unless explicitly specified (via CRTC property or otherwise), the active area
+ * of a CRTC will be black by default. This means portions of the active area
+ * which are not covered by a plane will be black, and alpha blending of any
+ * planes with the CRTC background will blend with black at the lowest zpos.
+ *
  * To create a plane, a KMS drivers allocates and zeroes an instances of
  * &struct drm_plane (possibly as part of a larger structure) and registers it
  * with a call to drm_universal_plane_init().
@@ -184,7 +189,7 @@ static int create_in_format_blob(struct drm_device *dev, struct drm_plane *plane
 	 * should be naturally aligned to 8B.
 	 */
 	BUILD_BUG_ON(sizeof(struct drm_format_modifier_blob) % 8);
-	blob_size += roundup2(formats_size, 8);
+	blob_size += ALIGN(formats_size, 8);
 	blob_size += modifiers_size;
 
 	blob = drm_property_create_blob(dev, blob_size, NULL);
@@ -198,7 +203,7 @@ static int create_in_format_blob(struct drm_device *dev, struct drm_plane *plane
 	blob_data->count_modifiers = plane->modifier_count;
 
 	blob_data->modifiers_offset =
-		roundup2(blob_data->formats_offset + formats_size, 8);
+		ALIGN(blob_data->formats_offset + formats_size, 8);
 
 	memcpy(formats_ptr(blob_data), plane->format_types, formats_size);
 

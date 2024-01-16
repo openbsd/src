@@ -1442,6 +1442,8 @@ static void atom_get_vbios_pn(struct atom_context *ctx)
 
 		ctx->vbios_pn[count] = 0;
 	}
+
+	pr_info("ATOM BIOS: %s\n", ctx->vbios_pn);
 }
 
 static void atom_get_vbios_version(struct atom_context *ctx)
@@ -1464,11 +1466,9 @@ struct atom_context *amdgpu_atom_parse(struct card_info *card, void *bios)
 	int base;
 	struct atom_context *ctx =
 	    kzalloc(sizeof(struct atom_context), GFP_KERNEL);
-	char *str;
 	struct _ATOM_ROM_HEADER *atom_rom_header;
 	struct _ATOM_MASTER_DATA_TABLE *master_table;
 	struct _ATOM_FIRMWARE_INFO *atom_fw_info;
-	u16 idx;
 
 	if (!ctx)
 		return NULL;
@@ -1504,16 +1504,6 @@ struct atom_context *amdgpu_atom_parse(struct card_info *card, void *bios)
 	if (!ctx->iio) {
 		amdgpu_atom_destroy(ctx);
 		return NULL;
-	}
-
-	idx = CU16(ATOM_ROM_PART_NUMBER_PTR);
-	if (idx == 0)
-		idx = 0x80;
-
-	str = CSTR(idx);
-	if (*str != '\0') {
-		pr_info("ATOM BIOS: %s\n", str);
-		strlcpy(ctx->vbios_version, str, sizeof(ctx->vbios_version));
 	}
 
 	atom_rom_header = (struct _ATOM_ROM_HEADER *)CSTR(base);

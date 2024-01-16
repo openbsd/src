@@ -42,8 +42,9 @@ static inline bool i915_ttm_is_ghost_object(struct ttm_buffer_object *bo)
 /**
  * i915_ttm_to_gem - Convert a struct ttm_buffer_object to an embedding
  * struct drm_i915_gem_object.
+ * @bo: Pointer to the ttm buffer object
  *
- * Return: Pointer to the embedding struct ttm_buffer_object.
+ * Return: Pointer to the embedding struct drm_i915_gem_object.
  */
 static inline struct drm_i915_gem_object *
 i915_ttm_to_gem(struct ttm_buffer_object *bo)
@@ -98,7 +99,7 @@ static inline bool i915_ttm_gtt_binds_lmem(struct ttm_resource *mem)
 static inline bool i915_ttm_cpu_maps_iomem(struct ttm_resource *mem)
 {
 	/* Once / if we support GGTT, this is also false for cached ttm_tts */
-	return mem->mem_type != I915_PL_SYSTEM;
+	return mem && mem->mem_type != I915_PL_SYSTEM;
 }
 
 bool i915_ttm_resource_mappable(struct ttm_resource *res);

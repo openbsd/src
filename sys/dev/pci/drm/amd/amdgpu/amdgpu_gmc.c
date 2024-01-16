@@ -35,6 +35,7 @@
 #include "amdgpu_xgmi.h"
 
 #include <drm/drm_drv.h>
+#include <drm/ttm/ttm_tt.h>
 
 /**
  * amdgpu_gmc_pdb0_alloc - allocate vram for pdb0
@@ -201,12 +202,19 @@ uint64_t amdgpu_gmc_agp_addr(struct ttm_buffer_object *bo)
 void amdgpu_gmc_vram_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc,
 			      u64 base)
 {
+	uint64_t vis_limit = (uint64_t)amdgpu_vis_vram_limit << 20;
 	uint64_t limit = (uint64_t)amdgpu_vram_limit << 20;
 
 	mc->vram_start = base;
 	mc->vram_end = mc->vram_start + mc->mc_vram_size - 1;
-	if (limit && limit < mc->real_vram_size)
+	if (limit < mc->real_vram_size)
 		mc->real_vram_size = limit;
+
+	if (vis_limit && vis_limit < mc->visible_vram_size)
+		mc->visible_vram_size = vis_limit;
+
+	if (mc->real_vram_size < mc->visible_vram_size)
+		mc->visible_vram_size = mc->real_vram_size;
 
 	if (mc->xgmi.num_physical_nodes == 0) {
 		mc->fb_start = mc->vram_start;
@@ -271,7 +279,7 @@ void amdgpu_gmc_gart_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc)
 	 * the GART base on a 4GB boundary as well.
 	 */
 	size_bf = mc->fb_start;
-	size_af = max_mc_address + 1 - roundup2(mc->fb_end + 1, four_gb);
+	size_af = max_mc_address + 1 - ALIGN(mc->fb_end + 1, four_gb);
 
 	if (mc->gart_size > max(size_bf, size_af)) {
 		dev_warn(adev->dev, "limiting GART\n");
@@ -317,19 +325,19 @@ void amdgpu_gmc_agp_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc)
 
 	if (mc->fb_start > mc->gart_start) {
 		size_bf = (mc->fb_start & sixteen_gb_mask) -
-			roundup2(mc->gart_end + 1, sixteen_gb);
-		size_af = mc->mc_mask + 1 - roundup2(mc->fb_end + 1, sixteen_gb);
+			ALIGN(mc->gart_end + 1, sixteen_gb);
+		size_af = mc->mc_mask + 1 - ALIGN(mc->fb_end + 1, sixteen_gb);
 	} else {
 		size_bf = mc->fb_start & sixteen_gb_mask;
 		size_af = (mc->gart_start & sixteen_gb_mask) -
-			roundup2(mc->fb_end + 1, sixteen_gb);
+			ALIGN(mc->fb_end + 1, sixteen_gb);
 	}
 
 	if (size_bf > size_af) {
 		mc->agp_start = (mc->fb_start - size_bf) & sixteen_gb_mask;
 		mc->agp_size = size_bf;
 	} else {
-		mc->agp_start = roundup2(mc->fb_end + 1, sixteen_gb);
+		mc->agp_start = ALIGN(mc->fb_end + 1, sixteen_gb);
 		mc->agp_size = size_af;
 	}
 
@@ -387,8 +395,21 @@ bool amdgpu_gmc_filter_faults(struct amdgpu_device *adev,
 	while (fault->timestamp >= stamp) {
 		uint64_t tmp;
 
-		if (atomic64_read(&fault->key) == key)
-			return true;
+		if (atomic64_read(&fault->key) == key) {
+			/*
+			 * if we get a fault which is already present in
+			 * the fault_ring and the timestamp of
+			 * the fault is after the expired timestamp,
+			 * then this is a new fault that needs to be added
+			 * into the fault ring.
+			 */
+			if (fault->timestamp_expiry != 0 &&
+			    amdgpu_ih_ts_after(fault->timestamp_expiry,
+					       timestamp))
+				break;
+			else
+				return true;
+		}
 
 		tmp = fault->timestamp;
 		fault = &gmc->fault_ring[fault->next];
@@ -424,28 +445,74 @@ void amdgpu_gmc_filter_faults_remove(struct amdgpu_device *adev, uint64_t addr,
 {
 	struct amdgpu_gmc *gmc = &adev->gmc;
 	uint64_t key = amdgpu_gmc_fault_key(addr, pasid);
+	struct amdgpu_ih_ring *ih;
 	struct amdgpu_gmc_fault *fault;
+	uint32_t last_wptr;
+	uint64_t last_ts;
 	uint32_t hash;
 	uint64_t tmp;
+
+	ih = adev->irq.retry_cam_enabled ? &adev->irq.ih_soft : &adev->irq.ih1;
+	/* Get the WPTR of the last entry in IH ring */
+	last_wptr = amdgpu_ih_get_wptr(adev, ih);
+	/* Order wptr with ring data. */
+	rmb();
+	/* Get the timetamp of the last entry in IH ring */
+	last_ts = amdgpu_ih_decode_iv_ts(adev, ih, last_wptr, -1);
 
 	hash = hash_64(key, AMDGPU_GMC_FAULT_HASH_ORDER);
 	fault = &gmc->fault_ring[gmc->fault_hash[hash].idx];
 	do {
-		if (atomic64_cmpxchg(&fault->key, key, 0) == key)
+		if (atomic64_read(&fault->key) == key) {
+			/*
+			 * Update the timestamp when this fault
+			 * expired.
+			 */
+			fault->timestamp_expiry = last_ts;
 			break;
+		}
 
 		tmp = fault->timestamp;
 		fault = &gmc->fault_ring[fault->next];
 	} while (fault->timestamp < tmp);
 }
 
-int amdgpu_gmc_ras_early_init(struct amdgpu_device *adev)
+int amdgpu_gmc_ras_sw_init(struct amdgpu_device *adev)
 {
-	if (!adev->gmc.xgmi.connected_to_cpu) {
-		adev->gmc.xgmi.ras = &xgmi_ras;
-		amdgpu_ras_register_ras_block(adev, &adev->gmc.xgmi.ras->ras_block);
-		adev->gmc.xgmi.ras_if = &adev->gmc.xgmi.ras->ras_block.ras_comm;
-	}
+	int r;
+
+	/* umc ras block */
+	r = amdgpu_umc_ras_sw_init(adev);
+	if (r)
+		return r;
+
+	/* mmhub ras block */
+	r = amdgpu_mmhub_ras_sw_init(adev);
+	if (r)
+		return r;
+
+	/* hdp ras block */
+	r = amdgpu_hdp_ras_sw_init(adev);
+	if (r)
+		return r;
+
+	/* mca.x ras block */
+	r = amdgpu_mca_mp0_ras_sw_init(adev);
+	if (r)
+		return r;
+
+	r = amdgpu_mca_mp1_ras_sw_init(adev);
+	if (r)
+		return r;
+
+	r = amdgpu_mca_mpio_ras_sw_init(adev);
+	if (r)
+		return r;
+
+	/* xgmi ras block */
+	r = amdgpu_xgmi_ras_sw_init(adev);
+	if (r)
+		return r;
 
 	return 0;
 }
@@ -467,27 +534,26 @@ void amdgpu_gmc_ras_fini(struct amdgpu_device *adev)
 	 *                    subject to change when ring number changes
 	 * Engine 17: Gart flushes
 	 */
-#define GFXHUB_FREE_VM_INV_ENGS_BITMAP		0x1FFF3
-#define MMHUB_FREE_VM_INV_ENGS_BITMAP		0x1FFF3
+#define AMDGPU_VMHUB_INV_ENG_BITMAP		0x1FFF3
 
 int amdgpu_gmc_allocate_vm_inv_eng(struct amdgpu_device *adev)
 {
 	struct amdgpu_ring *ring;
-	unsigned vm_inv_engs[AMDGPU_MAX_VMHUBS] =
-		{GFXHUB_FREE_VM_INV_ENGS_BITMAP, MMHUB_FREE_VM_INV_ENGS_BITMAP,
-		GFXHUB_FREE_VM_INV_ENGS_BITMAP};
+	unsigned vm_inv_engs[AMDGPU_MAX_VMHUBS] = {0};
 	unsigned i;
 	unsigned vmhub, inv_eng;
 
-	if (adev->enable_mes) {
+	/* init the vm inv eng for all vmhubs */
+	for_each_set_bit(i, adev->vmhubs_mask, AMDGPU_MAX_VMHUBS) {
+		vm_inv_engs[i] = AMDGPU_VMHUB_INV_ENG_BITMAP;
 		/* reserve engine 5 for firmware */
-		for (vmhub = 0; vmhub < AMDGPU_MAX_VMHUBS; vmhub++)
-			vm_inv_engs[vmhub] &= ~(1 << 5);
+		if (adev->enable_mes)
+			vm_inv_engs[i] &= ~(1 << 5);
 	}
 
 	for (i = 0; i < adev->num_rings; ++i) {
 		ring = adev->rings[i];
-		vmhub = ring->funcs->vmhub;
+		vmhub = ring->vm_hub;
 
 		if (ring == &adev->mes.ring)
 			continue;
@@ -503,7 +569,7 @@ int amdgpu_gmc_allocate_vm_inv_eng(struct amdgpu_device *adev)
 		vm_inv_engs[vmhub] &= ~(1 << ring->vm_inv_eng);
 
 		dev_info(adev->dev, "ring %s uses VM inv eng %u on hub %u\n",
-			 ring->name, ring->vm_inv_eng, ring->funcs->vmhub);
+			 ring->name, ring->vm_inv_eng, ring->vm_hub);
 	}
 
 	return 0;
@@ -546,6 +612,7 @@ void amdgpu_gmc_tmz_set(struct amdgpu_device *adev)
 	case IP_VERSION(10, 3, 2):
 	case IP_VERSION(10, 3, 4):
 	case IP_VERSION(10, 3, 5):
+	case IP_VERSION(10, 3, 6):
 	/* VANGOGH */
 	case IP_VERSION(10, 3, 1):
 	/* YELLOW_CARP*/
@@ -587,6 +654,7 @@ void amdgpu_gmc_noretry_set(struct amdgpu_device *adev)
 				gc_ver == IP_VERSION(9, 4, 0) ||
 				gc_ver == IP_VERSION(9, 4, 1) ||
 				gc_ver == IP_VERSION(9, 4, 2) ||
+				gc_ver == IP_VERSION(9, 4, 3) ||
 				gc_ver >= IP_VERSION(10, 3, 0));
 
 	gmc->noretry = (amdgpu_noretry == -1) ? noretry_default : amdgpu_noretry;
@@ -602,7 +670,7 @@ void amdgpu_gmc_set_vm_fault_masks(struct amdgpu_device *adev, int hub_type,
 	for (i = 0; i < 16; i++) {
 		reg = hub->vm_context0_cntl + hub->ctx_distance * i;
 
-		tmp = (hub_type == AMDGPU_GFXHUB_0) ?
+		tmp = (hub_type == AMDGPU_GFXHUB(0)) ?
 			RREG32_SOC15_IP(GC, reg) :
 			RREG32_SOC15_IP(MMHUB, reg);
 
@@ -611,7 +679,7 @@ void amdgpu_gmc_set_vm_fault_masks(struct amdgpu_device *adev, int hub_type,
 		else
 			tmp &= ~hub->vm_cntx_cntl_vm_fault;
 
-		(hub_type == AMDGPU_GFXHUB_0) ?
+		(hub_type == AMDGPU_GFXHUB(0)) ?
 			WREG32_SOC15_IP(GC, reg, tmp) :
 			WREG32_SOC15_IP(MMHUB, reg, tmp);
 	}
@@ -832,4 +900,48 @@ int amdgpu_gmc_vram_checking(struct amdgpu_device *adev)
 			&vram_ptr);
 
 	return 0;
+}
+
+static ssize_t current_memory_partition_show(
+	struct device *dev, struct device_attribute *addr, char *buf)
+{
+	struct drm_device *ddev = dev_get_drvdata(dev);
+	struct amdgpu_device *adev = drm_to_adev(ddev);
+	enum amdgpu_memory_partition mode;
+
+	mode = adev->gmc.gmc_funcs->query_mem_partition_mode(adev);
+	switch (mode) {
+	case AMDGPU_NPS1_PARTITION_MODE:
+		return sysfs_emit(buf, "NPS1\n");
+	case AMDGPU_NPS2_PARTITION_MODE:
+		return sysfs_emit(buf, "NPS2\n");
+	case AMDGPU_NPS3_PARTITION_MODE:
+		return sysfs_emit(buf, "NPS3\n");
+	case AMDGPU_NPS4_PARTITION_MODE:
+		return sysfs_emit(buf, "NPS4\n");
+	case AMDGPU_NPS6_PARTITION_MODE:
+		return sysfs_emit(buf, "NPS6\n");
+	case AMDGPU_NPS8_PARTITION_MODE:
+		return sysfs_emit(buf, "NPS8\n");
+	default:
+		return sysfs_emit(buf, "UNKNOWN\n");
+	}
+
+	return sysfs_emit(buf, "UNKNOWN\n");
+}
+
+static DEVICE_ATTR_RO(current_memory_partition);
+
+int amdgpu_gmc_sysfs_init(struct amdgpu_device *adev)
+{
+	if (!adev->gmc.gmc_funcs->query_mem_partition_mode)
+		return 0;
+
+	return device_create_file(adev->dev,
+				  &dev_attr_current_memory_partition);
+}
+
+void amdgpu_gmc_sysfs_fini(struct amdgpu_device *adev)
+{
+	device_remove_file(adev->dev, &dev_attr_current_memory_partition);
 }

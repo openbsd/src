@@ -167,6 +167,7 @@ struct _vcs_dpi_voltage_scaling_st {
 	double phyclk_mhz;
 	double dppclk_mhz;
 	double dtbclk_mhz;
+	float net_bw_in_kbytes_sec;
 };
 
 /**
@@ -246,6 +247,7 @@ struct _vcs_dpi_soc_bounding_box_st {
 	bool disable_dram_clock_change_vactive_support;
 	bool allow_dram_clock_one_display_vactive;
 	enum self_refresh_affinity allow_dram_self_refresh_or_dram_clock_change_in_vblank;
+	double max_vratio_pre;
 };
 
 /**

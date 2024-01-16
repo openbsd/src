@@ -11,5 +11,7 @@ struct drm_framebuffer *drm_gem_fb_create(struct drm_device *,
 void drm_gem_fb_destroy(struct drm_framebuffer *);
 int drm_gem_fb_create_handle(struct drm_framebuffer *, struct drm_file *,
     unsigned int *);
+struct drm_gem_object *drm_gem_fb_get_obj(struct drm_framebuffer *,
+    unsigned int);
 
 #endif

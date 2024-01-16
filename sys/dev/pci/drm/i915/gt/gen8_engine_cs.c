@@ -39,11 +39,11 @@ int gen8_emit_flush_rcs(struct i915_request *rq, u32 mode)
 		 * On GEN9: before VF_CACHE_INVALIDATE we need to emit a NULL
 		 * pipe control.
 		 */
-		if (GRAPHICS_VER(rq->engine->i915) == 9)
+		if (GRAPHICS_VER(rq->i915) == 9)
 			vf_flush_wa = true;
 
 		/* WaForGAMHang:kbl */
-		if (IS_KBL_GRAPHICS_STEP(rq->engine->i915, 0, STEP_C0))
+		if (IS_KABYLAKE(rq->i915) && IS_GRAPHICS_STEP(rq->i915, 0, STEP_C0))
 			dc_flush_wa = true;
 	}
 
@@ -223,6 +223,27 @@ u32 *gen12_emit_aux_table_inv(struct intel_engine_cs *engine, u32 *cs)
 	return cs;
 }
 
+static int mtl_dummy_pipe_control(struct i915_request *rq)
+{
+	/* Wa_14016712196 */
+	if (IS_MTL_GRAPHICS_STEP(rq->i915, M, STEP_A0, STEP_B0) ||
+	    IS_MTL_GRAPHICS_STEP(rq->i915, P, STEP_A0, STEP_B0)) {
+		u32 *cs;
+
+		/* dummy PIPE_CONTROL + depth flush */
+		cs = intel_ring_begin(rq, 6);
+		if (IS_ERR(cs))
+			return PTR_ERR(cs);
+		cs = gen12_emit_pipe_control(cs,
+					     0,
+					     PIPE_CONTROL_DEPTH_CACHE_FLUSH,
+					     LRC_PPHWSP_SCRATCH_ADDR);
+		intel_ring_advance(rq, cs);
+	}
+
+	return 0;
+}
+
 int gen12_emit_flush_rcs(struct i915_request *rq, u32 mode)
 {
 	struct intel_engine_cs *engine = rq->engine;
@@ -232,8 +253,23 @@ int gen12_emit_flush_rcs(struct i915_request *rq, u32 mode)
 	 * table requires quiescing memory traffic beforehand
 	 */
 	if (mode & EMIT_FLUSH || gen12_needs_ccs_aux_inv(engine)) {
-		u32 flags = 0;
+		u32 bit_group_0 = 0;
+		u32 bit_group_1 = 0;
+		int err;
 		u32 *cs;
+
+		err = mtl_dummy_pipe_control(rq);
+		if (err)
+			return err;
+
+		bit_group_0 |= PIPE_CONTROL0_HDC_PIPELINE_FLUSH;
+
+		/*
+		 * When required, in MTL and beyond platforms we
+		 * need to set the CCS_FLUSH bit in the pipe control
+		 */
+		if (GRAPHICS_VER_FULL(rq->i915) >= IP_VER(12, 70))
+			bit_group_0 |= PIPE_CONTROL_CCS_FLUSH;
 
 		/*
 		 * L3 fabric flush is needed for AUX CCS invalidation
@@ -243,39 +279,43 @@ int gen12_emit_flush_rcs(struct i915_request *rq, u32 mode)
 		 * AUX CCS invalidation and lead to unwanted side effects.
 		 */
 		if (mode & EMIT_FLUSH)
-			flags |= PIPE_CONTROL_FLUSH_L3;
+			bit_group_1 |= PIPE_CONTROL_FLUSH_L3;
 
-		flags |= PIPE_CONTROL_TILE_CACHE_FLUSH;
-		flags |= PIPE_CONTROL_RENDER_TARGET_CACHE_FLUSH;
-		flags |= PIPE_CONTROL_DEPTH_CACHE_FLUSH;
+		bit_group_1 |= PIPE_CONTROL_TILE_CACHE_FLUSH;
+		bit_group_1 |= PIPE_CONTROL_RENDER_TARGET_CACHE_FLUSH;
+		bit_group_1 |= PIPE_CONTROL_DEPTH_CACHE_FLUSH;
 		/* Wa_1409600907:tgl,adl-p */
-		flags |= PIPE_CONTROL_DEPTH_STALL;
-		flags |= PIPE_CONTROL_DC_FLUSH_ENABLE;
-		flags |= PIPE_CONTROL_FLUSH_ENABLE;
+		bit_group_1 |= PIPE_CONTROL_DEPTH_STALL;
+		bit_group_1 |= PIPE_CONTROL_DC_FLUSH_ENABLE;
+		bit_group_1 |= PIPE_CONTROL_FLUSH_ENABLE;
 
-		flags |= PIPE_CONTROL_STORE_DATA_INDEX;
-		flags |= PIPE_CONTROL_QW_WRITE;
+		bit_group_1 |= PIPE_CONTROL_STORE_DATA_INDEX;
+		bit_group_1 |= PIPE_CONTROL_QW_WRITE;
 
-		flags |= PIPE_CONTROL_CS_STALL;
+		bit_group_1 |= PIPE_CONTROL_CS_STALL;
 
 		if (!HAS_3D_PIPELINE(engine->i915))
-			flags &= ~PIPE_CONTROL_3D_ARCH_FLAGS;
+			bit_group_1 &= ~PIPE_CONTROL_3D_ARCH_FLAGS;
 		else if (engine->class == COMPUTE_CLASS)
-			flags &= ~PIPE_CONTROL_3D_ENGINE_FLAGS;
+			bit_group_1 &= ~PIPE_CONTROL_3D_ENGINE_FLAGS;
 
 		cs = intel_ring_begin(rq, 6);
 		if (IS_ERR(cs))
 			return PTR_ERR(cs);
 
-		cs = gen12_emit_pipe_control(cs,
-					     PIPE_CONTROL0_HDC_PIPELINE_FLUSH,
-					     flags, LRC_PPHWSP_SCRATCH_ADDR);
+		cs = gen12_emit_pipe_control(cs, bit_group_0, bit_group_1,
+					     LRC_PPHWSP_SCRATCH_ADDR);
 		intel_ring_advance(rq, cs);
 	}
 
 	if (mode & EMIT_INVALIDATE) {
 		u32 flags = 0;
 		u32 *cs, count;
+		int err;
+
+		err = mtl_dummy_pipe_control(rq);
+		if (err)
+			return err;
 
 		flags |= PIPE_CONTROL_COMMAND_CACHE_INVALIDATE;
 		flags |= PIPE_CONTROL_TLB_INVALIDATE;
@@ -354,6 +394,10 @@ int gen12_emit_flush_xcs(struct i915_request *rq, u32 mode)
 		cmd |= MI_INVALIDATE_TLB;
 		if (rq->engine->class == VIDEO_DECODE_CLASS)
 			cmd |= MI_INVALIDATE_BSD;
+
+		if (gen12_needs_ccs_aux_inv(rq->engine) &&
+		    rq->engine->class == COPY_ENGINE_CLASS)
+			cmd |= MI_FLUSH_DW_CCS;
 	}
 
 	*cs++ = cmd;
@@ -436,14 +480,16 @@ int gen8_emit_init_breadcrumb(struct i915_request *rq)
 	return 0;
 }
 
-static int __gen125_emit_bb_start(struct i915_request *rq,
-				  u64 offset, u32 len,
-				  const unsigned int flags,
-				  u32 arb)
+static int __xehp_emit_bb_start(struct i915_request *rq,
+				u64 offset, u32 len,
+				const unsigned int flags,
+				u32 arb)
 {
 	struct intel_context *ce = rq->context;
 	u32 wa_offset = lrc_indirect_bb(ce);
 	u32 *cs;
+
+	GEM_BUG_ON(!ce->wa_bb_page);
 
 	cs = intel_ring_begin(rq, 12);
 	if (IS_ERR(cs))
@@ -475,18 +521,18 @@ static int __gen125_emit_bb_start(struct i915_request *rq,
 	return 0;
 }
 
-int gen125_emit_bb_start_noarb(struct i915_request *rq,
-			       u64 offset, u32 len,
-			       const unsigned int flags)
+int xehp_emit_bb_start_noarb(struct i915_request *rq,
+			     u64 offset, u32 len,
+			     const unsigned int flags)
 {
-	return __gen125_emit_bb_start(rq, offset, len, flags, MI_ARB_DISABLE);
+	return __xehp_emit_bb_start(rq, offset, len, flags, MI_ARB_DISABLE);
 }
 
-int gen125_emit_bb_start(struct i915_request *rq,
-			 u64 offset, u32 len,
-			 const unsigned int flags)
+int xehp_emit_bb_start(struct i915_request *rq,
+		       u64 offset, u32 len,
+		       const unsigned int flags)
 {
-	return __gen125_emit_bb_start(rq, offset, len, flags, MI_ARB_ENABLE);
+	return __xehp_emit_bb_start(rq, offset, len, flags, MI_ARB_ENABLE);
 }
 
 int gen8_emit_bb_start_noarb(struct i915_request *rq,
@@ -623,6 +669,8 @@ u32 *gen8_emit_fini_breadcrumb_xcs(struct i915_request *rq, u32 *cs)
 u32 *gen8_emit_fini_breadcrumb_rcs(struct i915_request *rq, u32 *cs)
 {
 	cs = gen8_emit_pipe_control(cs,
+				    PIPE_CONTROL_CS_STALL |
+				    PIPE_CONTROL_TLB_INVALIDATE |
 				    PIPE_CONTROL_RENDER_TARGET_CACHE_FLUSH |
 				    PIPE_CONTROL_DEPTH_CACHE_FLUSH |
 				    PIPE_CONTROL_DC_FLUSH_ENABLE,
@@ -640,15 +688,21 @@ u32 *gen8_emit_fini_breadcrumb_rcs(struct i915_request *rq, u32 *cs)
 
 u32 *gen11_emit_fini_breadcrumb_rcs(struct i915_request *rq, u32 *cs)
 {
+	cs = gen8_emit_pipe_control(cs,
+				    PIPE_CONTROL_CS_STALL |
+				    PIPE_CONTROL_TLB_INVALIDATE |
+				    PIPE_CONTROL_TILE_CACHE_FLUSH |
+				    PIPE_CONTROL_RENDER_TARGET_CACHE_FLUSH |
+				    PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+				    PIPE_CONTROL_DC_FLUSH_ENABLE,
+				    0);
+
+	/*XXX: Look at gen8_emit_fini_breadcrumb_rcs */
 	cs = gen8_emit_ggtt_write_rcs(cs,
 				      rq->fence.seqno,
 				      hwsp_offset(rq),
-				      PIPE_CONTROL_CS_STALL |
-				      PIPE_CONTROL_TILE_CACHE_FLUSH |
-				      PIPE_CONTROL_RENDER_TARGET_CACHE_FLUSH |
-				      PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-				      PIPE_CONTROL_DC_FLUSH_ENABLE |
-				      PIPE_CONTROL_FLUSH_ENABLE);
+				      PIPE_CONTROL_FLUSH_ENABLE |
+				      PIPE_CONTROL_CS_STALL);
 
 	return gen8_emit_fini_breadcrumb_tail(rq, cs);
 }
@@ -753,8 +807,9 @@ u32 *gen12_emit_fini_breadcrumb_xcs(struct i915_request *rq, u32 *cs)
 
 u32 *gen12_emit_fini_breadcrumb_rcs(struct i915_request *rq, u32 *cs)
 {
-	struct drm_i915_private *i915 = rq->engine->i915;
+	struct drm_i915_private *i915 = rq->i915;
 	u32 flags = (PIPE_CONTROL_CS_STALL |
+		     PIPE_CONTROL_TLB_INVALIDATE |
 		     PIPE_CONTROL_TILE_CACHE_FLUSH |
 		     PIPE_CONTROL_FLUSH_L3 |
 		     PIPE_CONTROL_RENDER_TARGET_CACHE_FLUSH |
@@ -762,20 +817,31 @@ u32 *gen12_emit_fini_breadcrumb_rcs(struct i915_request *rq, u32 *cs)
 		     PIPE_CONTROL_DC_FLUSH_ENABLE |
 		     PIPE_CONTROL_FLUSH_ENABLE);
 
+	/* Wa_14016712196 */
+	if (IS_MTL_GRAPHICS_STEP(i915, M, STEP_A0, STEP_B0) ||
+	    IS_MTL_GRAPHICS_STEP(i915, P, STEP_A0, STEP_B0))
+		/* dummy PIPE_CONTROL + depth flush */
+		cs = gen12_emit_pipe_control(cs, 0,
+					     PIPE_CONTROL_DEPTH_CACHE_FLUSH, 0);
+
 	if (GRAPHICS_VER(i915) == 12 && GRAPHICS_VER_FULL(i915) < IP_VER(12, 50))
 		/* Wa_1409600907 */
 		flags |= PIPE_CONTROL_DEPTH_STALL;
 
-	if (!HAS_3D_PIPELINE(rq->engine->i915))
+	if (!HAS_3D_PIPELINE(rq->i915))
 		flags &= ~PIPE_CONTROL_3D_ARCH_FLAGS;
 	else if (rq->engine->class == COMPUTE_CLASS)
 		flags &= ~PIPE_CONTROL_3D_ENGINE_FLAGS;
 
+	cs = gen12_emit_pipe_control(cs, PIPE_CONTROL0_HDC_PIPELINE_FLUSH, flags, 0);
+
+	/*XXX: Look at gen8_emit_fini_breadcrumb_rcs */
 	cs = gen12_emit_ggtt_write_rcs(cs,
 				       rq->fence.seqno,
 				       hwsp_offset(rq),
-				       PIPE_CONTROL0_HDC_PIPELINE_FLUSH,
-				       flags);
+				       0,
+				       PIPE_CONTROL_FLUSH_ENABLE |
+				       PIPE_CONTROL_CS_STALL);
 
 	return gen12_emit_fini_breadcrumb_tail(rq, cs);
 }

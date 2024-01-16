@@ -31,6 +31,7 @@ struct drm_gem_dma_object {
 	dma_addr_t		dma_addr;
 	caddr_t			vaddr;
 	struct sg_table		*sgt;
+	bool			map_noncoherent;
 };
 
 #define to_drm_gem_dma_obj(gem_obj) container_of(gem_obj, struct drm_gem_dma_object, base)

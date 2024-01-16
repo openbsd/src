@@ -41,6 +41,7 @@ struct dma_fence_ops {
 	bool (*signaled)(struct dma_fence *);
 	long (*wait)(struct dma_fence *, bool, long);
 	void (*release)(struct dma_fence *);
+	void (*set_deadline)(struct dma_fence *, ktime_t);
 	bool use_64bit_seqno;
 };
 
@@ -77,6 +78,7 @@ int dma_fence_add_callback(struct dma_fence *, struct dma_fence_cb *,
     dma_fence_func_t);
 bool dma_fence_remove_callback(struct dma_fence *, struct dma_fence_cb *);
 bool dma_fence_is_container(struct dma_fence *);
+void dma_fence_set_deadline(struct dma_fence *, ktime_t);
 
 struct dma_fence *dma_fence_get_stub(void);
 struct dma_fence *dma_fence_allocate_private_stub(ktime_t);

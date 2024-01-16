@@ -310,6 +310,19 @@ struct dcn32_mpc_registers {
 	MPC_REG_VARIABLE_LIST_DCN3_0;
 	MPC_REG_VARIABLE_LIST_DCN32;
 };
+void mpc32_mpc_init(struct mpc *mpc);
+bool mpc32_program_3dlut(
+		struct mpc *mpc,
+		const struct tetrahedral_params *params,
+		int mpcc_id);
+bool mpc32_program_post1dlut(
+		struct mpc *mpc,
+		const struct pwl_params *params,
+		uint32_t mpcc_id);
+bool mpc32_program_shaper(
+		struct mpc *mpc,
+		const struct pwl_params *params,
+		uint32_t mpcc_id);
 
 void dcn32_mpc_construct(struct dcn30_mpc *mpc30,
 	struct dc_context *ctx,
@@ -319,4 +332,65 @@ void dcn32_mpc_construct(struct dcn30_mpc *mpc30,
 	int num_mpcc,
 	int num_rmu);
 
+void mpc32_power_on_blnd_lut(
+	struct mpc *mpc,
+	uint32_t mpcc_id,
+	bool power_on);
+void mpc32_program_post1dlut_pwl(
+		struct mpc *mpc,
+		uint32_t mpcc_id,
+		const struct pwl_result_data *rgb,
+		uint32_t num);
+void mpc32_program_post1dlutb_settings(
+		struct mpc *mpc,
+		uint32_t mpcc_id,
+		const struct pwl_params *params);
+void mpc32_program_post1dluta_settings(
+		struct mpc *mpc,
+		uint32_t mpcc_id,
+		const struct pwl_params *params);
+void mpc32_configure_post1dlut(
+		struct mpc *mpc,
+		uint32_t mpcc_id,
+		bool is_ram_a);
+void mpc32_program_shaper_lut(
+		struct mpc *mpc,
+		const struct pwl_result_data *rgb,
+		uint32_t num,
+		uint32_t mpcc_id);
+void mpc32_program_shaper_lutb_settings(
+		struct mpc *mpc,
+		const struct pwl_params *params,
+		uint32_t mpcc_id);
+void mpc32_program_shaper_luta_settings(
+		struct mpc *mpc,
+		const struct pwl_params *params,
+		uint32_t mpcc_id);
+void mpc32_configure_shaper_lut(
+		struct mpc *mpc,
+		bool is_ram_a,
+		uint32_t mpcc_id);
+void mpc32_power_on_shaper_3dlut(
+		struct mpc *mpc,
+		uint32_t mpcc_id,
+		bool power_on);
+void mpc32_set3dlut_ram10(
+		struct mpc *mpc,
+		const struct dc_rgb *lut,
+		uint32_t entries,
+		uint32_t mpcc_id);
+void mpc32_set3dlut_ram12(
+		struct mpc *mpc,
+		const struct dc_rgb *lut,
+		uint32_t entries,
+		uint32_t mpcc_id);
+void mpc32_select_3dlut_ram_mask(
+		struct mpc *mpc,
+		uint32_t ram_selection_mask,
+		uint32_t mpcc_id);
+void mpc32_select_3dlut_ram(
+		struct mpc *mpc,
+		enum dc_lut_mode mode,
+		bool is_color_channel_12bits,
+		uint32_t mpcc_id);
 #endif		//__DC_MPCC_DCN32_H__

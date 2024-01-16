@@ -766,11 +766,11 @@ static int smu8_smu_init(struct pp_hwmgr *hwmgr)
 
 	smu8_smu->toc_buffer.data_size = 4096;
 	smu8_smu->smu_buffer.data_size =
-		roundup2(UCODE_ID_RLC_SCRATCH_SIZE_BYTE, 32) +
-		roundup2(UCODE_ID_RLC_SRM_ARAM_SIZE_BYTE, 32) +
-		roundup2(UCODE_ID_RLC_SRM_DRAM_SIZE_BYTE, 32) +
-		roundup2(sizeof(struct SMU8_MultimediaPowerLogData), 32) +
-		roundup2(sizeof(struct SMU8_Fusion_ClkTable), 32);
+		ALIGN(UCODE_ID_RLC_SCRATCH_SIZE_BYTE, 32) +
+		ALIGN(UCODE_ID_RLC_SRM_ARAM_SIZE_BYTE, 32) +
+		ALIGN(UCODE_ID_RLC_SRM_DRAM_SIZE_BYTE, 32) +
+		ALIGN(sizeof(struct SMU8_MultimediaPowerLogData), 32) +
+		ALIGN(sizeof(struct SMU8_Fusion_ClkTable), 32);
 
 	ret = amdgpu_bo_create_kernel((struct amdgpu_device *)hwmgr->adev,
 				smu8_smu->toc_buffer.data_size,

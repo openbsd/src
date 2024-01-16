@@ -676,8 +676,11 @@ struct drm_gem_open {
  * Bitfield of supported PRIME sharing capabilities. See &DRM_PRIME_CAP_IMPORT
  * and &DRM_PRIME_CAP_EXPORT.
  *
- * PRIME buffers are exposed as dma-buf file descriptors. See
- * Documentation/gpu/drm-mm.rst, section "PRIME Buffer Sharing".
+ * Starting from kernel version 6.6, both &DRM_PRIME_CAP_IMPORT and
+ * &DRM_PRIME_CAP_EXPORT are always advertised.
+ *
+ * PRIME buffers are exposed as dma-buf file descriptors.
+ * See :ref:`prime_buffer_sharing`.
  */
 #define DRM_CAP_PRIME			0x5
 /**
@@ -685,6 +688,8 @@ struct drm_gem_open {
  *
  * If this bit is set in &DRM_CAP_PRIME, the driver supports importing PRIME
  * buffers via the &DRM_IOCTL_PRIME_FD_TO_HANDLE ioctl.
+ *
+ * Starting from kernel version 6.6, this bit is always set in &DRM_CAP_PRIME.
  */
 #define  DRM_PRIME_CAP_IMPORT		0x1
 /**
@@ -692,6 +697,8 @@ struct drm_gem_open {
  *
  * If this bit is set in &DRM_CAP_PRIME, the driver supports exporting PRIME
  * buffers via the &DRM_IOCTL_PRIME_HANDLE_TO_FD ioctl.
+ *
+ * Starting from kernel version 6.6, this bit is always set in &DRM_CAP_PRIME.
  */
 #define  DRM_PRIME_CAP_EXPORT		0x2
 /**
@@ -759,15 +766,14 @@ struct drm_gem_open {
 /**
  * DRM_CAP_SYNCOBJ
  *
- * If set to 1, the driver supports sync objects. See
- * Documentation/gpu/drm-mm.rst, section "DRM Sync Objects".
+ * If set to 1, the driver supports sync objects. See :ref:`drm_sync_objects`.
  */
 #define DRM_CAP_SYNCOBJ		0x13
 /**
  * DRM_CAP_SYNCOBJ_TIMELINE
  *
  * If set to 1, the driver supports timeline operations on sync objects. See
- * Documentation/gpu/drm-mm.rst, section "DRM Sync Objects".
+ * :ref:`drm_sync_objects`.
  */
 #define DRM_CAP_SYNCOBJ_TIMELINE	0x14
 
@@ -912,6 +918,27 @@ struct drm_syncobj_timeline_wait {
 	__u32 pad;
 };
 
+/**
+ * struct drm_syncobj_eventfd
+ * @handle: syncobj handle.
+ * @flags: Zero to wait for the point to be signalled, or
+ *         &DRM_SYNCOBJ_WAIT_FLAGS_WAIT_AVAILABLE to wait for a fence to be
+ *         available for the point.
+ * @point: syncobj timeline point (set to zero for binary syncobjs).
+ * @fd: Existing eventfd to sent events to.
+ * @pad: Must be zero.
+ *
+ * Register an eventfd to be signalled by a syncobj. The eventfd counter will
+ * be incremented by one.
+ */
+struct drm_syncobj_eventfd {
+	__u32 handle;
+	__u32 flags;
+	__u64 point;
+	__s32 fd;
+	__u32 pad;
+};
+
 
 struct drm_syncobj_array {
 	__u64 handles;
@@ -975,6 +1002,19 @@ extern "C" {
 #define DRM_IOCTL_GET_STATS             DRM_IOR( 0x06, struct drm_stats)
 #define DRM_IOCTL_SET_VERSION		DRM_IOWR(0x07, struct drm_set_version)
 #define DRM_IOCTL_MODESET_CTL           DRM_IOW(0x08, struct drm_modeset_ctl)
+/**
+ * DRM_IOCTL_GEM_CLOSE - Close a GEM handle.
+ *
+ * GEM handles are not reference-counted by the kernel. User-space is
+ * responsible for managing their lifetime. For example, if user-space imports
+ * the same memory object twice on the same DRM file description, the same GEM
+ * handle is returned by both imports, and user-space needs to ensure
+ * &DRM_IOCTL_GEM_CLOSE is performed once only. The same situation can happen
+ * when a memory object is allocated, then exported and imported again on the
+ * same DRM file description. The &DRM_IOCTL_MODE_GETFB2 IOCTL is an exception
+ * and always returns fresh new GEM handles even if an existing GEM handle
+ * already refers to the same memory object before the IOCTL is performed.
+ */
 #define DRM_IOCTL_GEM_CLOSE		DRM_IOW (0x09, struct drm_gem_close)
 #define DRM_IOCTL_GEM_FLINK		DRM_IOWR(0x0a, struct drm_gem_flink)
 #define DRM_IOCTL_GEM_OPEN		DRM_IOWR(0x0b, struct drm_gem_open)
@@ -1019,7 +1059,37 @@ extern "C" {
 #define DRM_IOCTL_UNLOCK		DRM_IOW( 0x2b, struct drm_lock)
 #define DRM_IOCTL_FINISH		DRM_IOW( 0x2c, struct drm_lock)
 
+/**
+ * DRM_IOCTL_PRIME_HANDLE_TO_FD - Convert a GEM handle to a DMA-BUF FD.
+ *
+ * User-space sets &drm_prime_handle.handle with the GEM handle to export and
+ * &drm_prime_handle.flags, and gets back a DMA-BUF file descriptor in
+ * &drm_prime_handle.fd.
+ *
+ * The export can fail for any driver-specific reason, e.g. because export is
+ * not supported for this specific GEM handle (but might be for others).
+ *
+ * Support for exporting DMA-BUFs is advertised via &DRM_PRIME_CAP_EXPORT.
+ */
 #define DRM_IOCTL_PRIME_HANDLE_TO_FD    DRM_IOWR(0x2d, struct drm_prime_handle)
+/**
+ * DRM_IOCTL_PRIME_FD_TO_HANDLE - Convert a DMA-BUF FD to a GEM handle.
+ *
+ * User-space sets &drm_prime_handle.fd with a DMA-BUF file descriptor to
+ * import, and gets back a GEM handle in &drm_prime_handle.handle.
+ * &drm_prime_handle.flags is unused.
+ *
+ * If an existing GEM handle refers to the memory object backing the DMA-BUF,
+ * that GEM handle is returned. Therefore user-space which needs to handle
+ * arbitrary DMA-BUFs must have a user-space lookup data structure to manually
+ * reference-count duplicated GEM handles. For more information see
+ * &DRM_IOCTL_GEM_CLOSE.
+ *
+ * The import can fail for any driver-specific reason, e.g. because import is
+ * only supported for DMA-BUFs allocated on this DRM device.
+ *
+ * Support for importing DMA-BUFs is advertised via &DRM_PRIME_CAP_IMPORT.
+ */
 #define DRM_IOCTL_PRIME_FD_TO_HANDLE    DRM_IOWR(0x2e, struct drm_prime_handle)
 
 #define DRM_IOCTL_AGP_ACQUIRE		DRM_IO(  0x30)
@@ -1111,8 +1181,13 @@ extern "C" {
  * struct as the output.
  *
  * If the client is DRM master or has &CAP_SYS_ADMIN, &drm_mode_fb_cmd2.handles
- * will be filled with GEM buffer handles. Planes are valid until one has a
- * zero handle -- this can be used to compute the number of planes.
+ * will be filled with GEM buffer handles. Fresh new GEM handles are always
+ * returned, even if another GEM handle referring to the same memory object
+ * already exists on the DRM file description. The caller is responsible for
+ * removing the new handles, e.g. via the &DRM_IOCTL_GEM_CLOSE IOCTL. The same
+ * new handle will be returned for multiple planes in case they use the same
+ * memory object. Planes are valid until one has a zero handle -- this can be
+ * used to compute the number of planes.
  *
  * Otherwise, &drm_mode_fb_cmd2.handles will be zeroed and planes are valid
  * until one has a zero &drm_mode_fb_cmd2.pitches.
@@ -1120,8 +1195,15 @@ extern "C" {
  * If the framebuffer has a format modifier, &DRM_MODE_FB_MODIFIERS will be set
  * in &drm_mode_fb_cmd2.flags and &drm_mode_fb_cmd2.modifier will contain the
  * modifier. Otherwise, user-space must ignore &drm_mode_fb_cmd2.modifier.
+ *
+ * To obtain DMA-BUF FDs for each plane without leaking GEM handles, user-space
+ * can export each handle via &DRM_IOCTL_PRIME_HANDLE_TO_FD, then immediately
+ * close each unique handle via &DRM_IOCTL_GEM_CLOSE, making sure to not
+ * double-close handles which are specified multiple times in the array.
  */
 #define DRM_IOCTL_MODE_GETFB2		DRM_IOWR(0xCE, struct drm_mode_fb_cmd2)
+
+#define DRM_IOCTL_SYNCOBJ_EVENTFD	DRM_IOWR(0xCF, struct drm_syncobj_eventfd)
 
 /*
  * Device specific ioctls should only be in their respective headers
@@ -1134,25 +1216,50 @@ extern "C" {
 #define DRM_COMMAND_BASE                0x40
 #define DRM_COMMAND_END			0xA0
 
-/*
- * Header for events written back to userspace on the drm fd.  The
- * type defines the type of event, the length specifies the total
- * length of the event (including the header), and user_data is
- * typically a 64 bit value passed with the ioctl that triggered the
- * event.  A read on the drm fd will always only return complete
- * events, that is, if for example the read buffer is 100 bytes, and
- * there are two 64 byte events pending, only one will be returned.
+/**
+ * struct drm_event - Header for DRM events
+ * @type: event type.
+ * @length: total number of payload bytes (including header).
  *
- * Event types 0 - 0x7fffffff are generic drm events, 0x80000000 and
- * up are chipset specific.
+ * This struct is a header for events written back to user-space on the DRM FD.
+ * A read on the DRM FD will always only return complete events: e.g. if the
+ * read buffer is 100 bytes large and there are two 64 byte events pending,
+ * only one will be returned.
+ *
+ * Event types 0 - 0x7fffffff are generic DRM events, 0x80000000 and
+ * up are chipset specific. Generic DRM events include &DRM_EVENT_VBLANK,
+ * &DRM_EVENT_FLIP_COMPLETE and &DRM_EVENT_CRTC_SEQUENCE.
  */
 struct drm_event {
 	__u32 type;
 	__u32 length;
 };
 
+/**
+ * DRM_EVENT_VBLANK - vertical blanking event
+ *
+ * This event is sent in response to &DRM_IOCTL_WAIT_VBLANK with the
+ * &_DRM_VBLANK_EVENT flag set.
+ *
+ * The event payload is a struct drm_event_vblank.
+ */
 #define DRM_EVENT_VBLANK 0x01
+/**
+ * DRM_EVENT_FLIP_COMPLETE - page-flip completion event
+ *
+ * This event is sent in response to an atomic commit or legacy page-flip with
+ * the &DRM_MODE_PAGE_FLIP_EVENT flag set.
+ *
+ * The event payload is a struct drm_event_vblank.
+ */
 #define DRM_EVENT_FLIP_COMPLETE 0x02
+/**
+ * DRM_EVENT_CRTC_SEQUENCE - CRTC sequence event
+ *
+ * This event is sent in response to &DRM_IOCTL_CRTC_QUEUE_SEQUENCE.
+ *
+ * The event payload is a struct drm_event_crtc_sequence.
+ */
 #define DRM_EVENT_CRTC_SEQUENCE	0x03
 
 struct drm_event_vblank {

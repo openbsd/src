@@ -153,7 +153,7 @@ void i915_unaligned_memcpy_from_wc(void *dst, const void *src, unsigned long len
 
 	addr = (unsigned long)src;
 	if (!IS_ALIGNED(addr, 16)) {
-		unsigned long x = min(roundup2(addr, 16) - addr, len);
+		unsigned long x = min(ALIGN(addr, 16) - addr, len);
 
 		memcpy(dst, src, x);
 

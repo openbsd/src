@@ -95,4 +95,10 @@ totalram_pages(void)
 	return uvmexp.npages;
 }
 
+static inline bool
+want_init_on_free(void)
+{
+	return false;
+}
+
 #endif

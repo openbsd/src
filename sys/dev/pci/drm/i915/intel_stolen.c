@@ -32,7 +32,7 @@ i830_stolen_size(struct inteldrm_softc *dev_priv)
 {
 	uint16_t gmch_ctl, gms;
 
-	pci_read_config_word(dev_priv->bridge_dev, I830_GMCH_CTRL,
+	pci_read_config_word(dev_priv->gmch.pdev, I830_GMCH_CTRL,
 	    &gmch_ctl);
 	gms = gmch_ctl & I830_GMCH_GMS_MASK;
 
@@ -53,7 +53,7 @@ gen3_stolen_size(struct inteldrm_softc *dev_priv)
 {
 	uint16_t gmch_ctl, gms;
 
-	pci_read_config_word(dev_priv->bridge_dev, I830_GMCH_CTRL,
+	pci_read_config_word(dev_priv->gmch.pdev, I830_GMCH_CTRL,
 	    &gmch_ctl);
 	gms = gmch_ctl & I855_GMCH_GMS_MASK;
 

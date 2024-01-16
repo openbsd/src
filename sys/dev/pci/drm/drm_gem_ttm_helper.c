@@ -7,7 +7,7 @@
 #include <linux/kernel.h>
 #include <linux/iosys-map.h>
 #include <drm/drm_gem.h>
-#include <drm/ttm/ttm_bo_api.h>
+#include <drm/ttm/ttm_bo.h>
 
 int
 drm_gem_ttm_mmap(struct drm_gem_object *obj,

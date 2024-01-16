@@ -97,7 +97,7 @@ int igt_spinner_pin(struct igt_spinner *spin,
 	if (!spin->batch) {
 		unsigned int mode;
 
-		mode = i915_coherent_map_type(spin->gt->i915, spin->obj, false);
+		mode = intel_gt_coherent_map_type(spin->gt, spin->obj, false);
 		vaddr = igt_spinner_pin_obj(ce, ww, spin->obj, mode, &spin->batch_vma);
 		if (IS_ERR(vaddr))
 			return PTR_ERR(vaddr);
@@ -116,23 +116,7 @@ static unsigned int seqno_offset(u64 fence)
 static u64 hws_address(const struct i915_vma *hws,
 		       const struct i915_request *rq)
 {
-	return hws->node.start + seqno_offset(rq->fence.context);
-}
-
-static int move_to_active(struct i915_vma *vma,
-			  struct i915_request *rq,
-			  unsigned int flags)
-{
-	int err;
-
-	i915_vma_lock(vma);
-	err = i915_request_await_object(rq, vma->obj,
-					flags & EXEC_OBJECT_WRITE);
-	if (err == 0)
-		err = i915_vma_move_to_active(vma, rq, flags);
-	i915_vma_unlock(vma);
-
-	return err;
+	return i915_vma_offset(hws) + seqno_offset(rq->fence.context);
 }
 
 struct i915_request *
@@ -165,25 +149,25 @@ igt_spinner_create_request(struct igt_spinner *spin,
 	if (IS_ERR(rq))
 		return ERR_CAST(rq);
 
-	err = move_to_active(vma, rq, 0);
+	err = igt_vma_move_to_active_unlocked(vma, rq, 0);
 	if (err)
 		goto cancel_rq;
 
-	err = move_to_active(hws, rq, 0);
+	err = igt_vma_move_to_active_unlocked(hws, rq, 0);
 	if (err)
 		goto cancel_rq;
 
 	batch = spin->batch;
 
-	if (GRAPHICS_VER(rq->engine->i915) >= 8) {
+	if (GRAPHICS_VER(rq->i915) >= 8) {
 		*batch++ = MI_STORE_DWORD_IMM_GEN4;
 		*batch++ = lower_32_bits(hws_address(hws, rq));
 		*batch++ = upper_32_bits(hws_address(hws, rq));
-	} else if (GRAPHICS_VER(rq->engine->i915) >= 6) {
+	} else if (GRAPHICS_VER(rq->i915) >= 6) {
 		*batch++ = MI_STORE_DWORD_IMM_GEN4;
 		*batch++ = 0;
 		*batch++ = hws_address(hws, rq);
-	} else if (GRAPHICS_VER(rq->engine->i915) >= 4) {
+	} else if (GRAPHICS_VER(rq->i915) >= 4) {
 		*batch++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*batch++ = 0;
 		*batch++ = hws_address(hws, rq);
@@ -195,16 +179,16 @@ igt_spinner_create_request(struct igt_spinner *spin,
 
 	*batch++ = arbitration_command;
 
-	if (GRAPHICS_VER(rq->engine->i915) >= 8)
+	if (GRAPHICS_VER(rq->i915) >= 8)
 		*batch++ = MI_BATCH_BUFFER_START | BIT(8) | 1;
-	else if (IS_HASWELL(rq->engine->i915))
+	else if (IS_HASWELL(rq->i915))
 		*batch++ = MI_BATCH_BUFFER_START | MI_BATCH_PPGTT_HSW;
-	else if (GRAPHICS_VER(rq->engine->i915) >= 6)
+	else if (GRAPHICS_VER(rq->i915) >= 6)
 		*batch++ = MI_BATCH_BUFFER_START;
 	else
 		*batch++ = MI_BATCH_BUFFER_START | MI_BATCH_GTT;
-	*batch++ = lower_32_bits(vma->node.start);
-	*batch++ = upper_32_bits(vma->node.start);
+	*batch++ = lower_32_bits(i915_vma_offset(vma));
+	*batch++ = upper_32_bits(i915_vma_offset(vma));
 
 	*batch++ = MI_BATCH_BUFFER_END; /* not reached */
 
@@ -217,9 +201,9 @@ igt_spinner_create_request(struct igt_spinner *spin,
 	}
 
 	flags = 0;
-	if (GRAPHICS_VER(rq->engine->i915) <= 5)
+	if (GRAPHICS_VER(rq->i915) <= 5)
 		flags |= I915_DISPATCH_SECURE;
-	err = engine->emit_bb_start(rq, vma->node.start, PAGE_SIZE, flags);
+	err = engine->emit_bb_start(rq, i915_vma_offset(vma), PAGE_SIZE, flags);
 
 cancel_rq:
 	if (err) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: dwhdmi.c,v 1.4 2021/07/07 02:38:21 jsg Exp $ */
+/* $OpenBSD: dwhdmi.c,v 1.5 2024/01/16 23:37:50 jsg Exp $ */
 /* $NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
@@ -35,6 +35,7 @@
 #include <dev/ic/dwhdmi.h>
 
 #include <dev/i2c/i2cvar.h>
+#include <linux/i2c.h>
 
 #ifdef notyet
 #include <dev/audio/audio_dai.h>

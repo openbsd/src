@@ -16,5 +16,7 @@
 #define EMULTIHOP	EIPSEC
 #define EBADSLT		EINVAL
 #define ENOKEY		ENOENT
+#define EPROBE_DEFER	EAGAIN
+#define ENOLINK		EIO
 
 #endif

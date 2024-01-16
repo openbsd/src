@@ -10,6 +10,7 @@
 #define CONFIG_DRM_AMD_DC			1
 #if defined(__amd64__) || defined(__i386__)
 #define CONFIG_DRM_AMD_DC_DCN			1
+#define CONFIG_DRM_AMD_DC_FP			1
 #endif
 #if 0
 #define CONFIG_DRM_AMDGPU_SI			1
@@ -27,6 +28,7 @@
 #define CONFIG_DRM_I915_STOP_TIMEOUT		100	/* ms */
 #define CONFIG_DRM_I915_FENCE_TIMEOUT		10000	/* ms */
 #define CONFIG_DRM_I915_USERFAULT_AUTOSUSPEND	250	/* ms */
+#define CONFIG_DRM_I915_PREEMPT_TIMEOUT_COMPUTE	7500	/* ms */
 #define CONFIG_DRM_I915_FORCE_PROBE		""
 
 #ifdef __HAVE_ACPI

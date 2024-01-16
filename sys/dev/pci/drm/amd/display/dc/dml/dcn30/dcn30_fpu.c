@@ -386,8 +386,37 @@ void dcn30_fpu_calculate_wm_and_dlg(
 	int i, pipe_idx;
 	double dcfclk = context->bw_ctx.dml.vba.DCFCLKState[vlevel][maxMpcComb];
 	bool pstate_en = context->bw_ctx.dml.vba.DRAMClockChangeSupport[vlevel][maxMpcComb] != dm_dram_clock_change_unsupported;
+	unsigned int dummy_latency_index = 0;
 
 	dc_assert_fp_enabled();
+
+	context->bw_ctx.bw.dcn.clk.fw_based_mclk_switching = false;
+    for (i = 0; i < context->stream_count; i++) {
+		if (context->streams[i])
+			context->streams[i]->fpo_in_use = false;
+	}
+
+	if (!pstate_en) {
+		/* only when the mclk switch can not be natural, is the fw based vblank stretch attempted */
+		context->bw_ctx.bw.dcn.clk.fw_based_mclk_switching =
+			dcn30_can_support_mclk_switch_using_fw_based_vblank_stretch(dc, context);
+
+		if (context->bw_ctx.bw.dcn.clk.fw_based_mclk_switching) {
+			dummy_latency_index = dcn30_find_dummy_latency_index_for_fw_based_mclk_switch(dc,
+				context, pipes, pipe_cnt, vlevel);
+
+			/* After calling dcn30_find_dummy_latency_index_for_fw_based_mclk_switch
+			 * we reinstate the original dram_clock_change_latency_us on the context
+			 * and all variables that may have changed up to this point, except the
+			 * newly found dummy_latency_index
+			 */
+			context->bw_ctx.dml.soc.dram_clock_change_latency_us = dc->clk_mgr->bw_params->wm_table.nv_entries[WM_A].dml_input.pstate_latency_us;
+			dcn30_internal_validate_bw(dc, context, pipes, &pipe_cnt, &vlevel, false, true);
+			maxMpcComb = context->bw_ctx.dml.vba.maxMpcComb;
+			dcfclk = context->bw_ctx.dml.vba.DCFCLKState[vlevel][context->bw_ctx.dml.vba.maxMpcComb];
+			pstate_en = context->bw_ctx.dml.vba.DRAMClockChangeSupport[vlevel][maxMpcComb] != dm_dram_clock_change_unsupported;
+		}
+	}
 
 	if (context->bw_ctx.dml.soc.min_dcfclk > dcfclk)
 		dcfclk = context->bw_ctx.dml.soc.min_dcfclk;
@@ -451,15 +480,29 @@ void dcn30_fpu_calculate_wm_and_dlg(
 		unsigned int min_dram_speed_mts = context->bw_ctx.dml.vba.DRAMSpeed;
 		unsigned int min_dram_speed_mts_margin = 160;
 
-		if (context->bw_ctx.dml.vba.DRAMClockChangeSupport[vlevel][context->bw_ctx.dml.vba.maxMpcComb] == dm_dram_clock_change_unsupported)
-			min_dram_speed_mts = dc->clk_mgr->bw_params->clk_table.entries[dc->clk_mgr->bw_params->clk_table.num_entries - 1].memclk_mhz * 16;
+		context->bw_ctx.dml.soc.dram_clock_change_latency_us =
+			dc->clk_mgr->bw_params->dummy_pstate_table[0].dummy_pstate_latency_us;
 
-		/* find largest table entry that is lower than dram speed, but lower than DPM0 still uses DPM0 */
-		for (i = 3; i > 0; i--)
-			if (min_dram_speed_mts + min_dram_speed_mts_margin > dc->clk_mgr->bw_params->dummy_pstate_table[i].dram_speed_mts)
-				break;
+		if (context->bw_ctx.dml.vba.DRAMClockChangeSupport[vlevel][maxMpcComb] ==
+			dm_dram_clock_change_unsupported) {
+			int min_dram_speed_mts_offset = dc->clk_mgr->bw_params->clk_table.num_entries - 1;
 
-		context->bw_ctx.dml.soc.dram_clock_change_latency_us = dc->clk_mgr->bw_params->dummy_pstate_table[i].dummy_pstate_latency_us;
+			min_dram_speed_mts =
+				dc->clk_mgr->bw_params->clk_table.entries[min_dram_speed_mts_offset].memclk_mhz * 16;
+		}
+
+		if (!context->bw_ctx.bw.dcn.clk.fw_based_mclk_switching) {
+			/* find largest table entry that is lower than dram speed,
+			 * but lower than DPM0 still uses DPM0
+			 */
+			for (dummy_latency_index = 3; dummy_latency_index > 0; dummy_latency_index--)
+				if (min_dram_speed_mts + min_dram_speed_mts_margin >
+					dc->clk_mgr->bw_params->dummy_pstate_table[dummy_latency_index].dram_speed_mts)
+					break;
+		}
+
+		context->bw_ctx.dml.soc.dram_clock_change_latency_us =
+			dc->clk_mgr->bw_params->dummy_pstate_table[dummy_latency_index].dummy_pstate_latency_us;
 
 		context->bw_ctx.dml.soc.sr_enter_plus_exit_time_us = dc->clk_mgr->bw_params->wm_table.nv_entries[WM_C].dml_input.sr_enter_plus_exit_time_us;
 		context->bw_ctx.dml.soc.sr_exit_time_us = dc->clk_mgr->bw_params->wm_table.nv_entries[WM_C].dml_input.sr_exit_time_us;
@@ -631,10 +674,19 @@ void dcn30_fpu_update_bw_bounding_box(struct dc *dc,
 }
 
 /**
- * Finds dummy_latency_index when MCLK switching using firmware based
- * vblank stretch is enabled. This function will iterate through the
- * table of dummy pstate latencies until the lowest value that allows
+ * dcn30_find_dummy_latency_index_for_fw_based_mclk_switch() - Finds
+ * dummy_latency_index when MCLK switching using firmware based vblank stretch
+ * is enabled. This function will iterate through the table of dummy pstate
+ * latencies until the lowest value that allows
  * dm_allow_self_refresh_and_mclk_switch to happen is found
+ *
+ * @dc: Current DC state
+ * @context: new dc state
+ * @pipes: DML pipe params
+ * @pipe_cnt: number of DML pipes
+ * @vlevel: Voltage level calculated by DML
+ *
+ * Return: lowest dummy_latency_index value
  */
 int dcn30_find_dummy_latency_index_for_fw_based_mclk_switch(struct dc *dc,
 							    struct dc_state *context,

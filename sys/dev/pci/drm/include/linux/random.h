@@ -12,6 +12,12 @@ get_random_u32(void)
 	return arc4random();
 }
 
+static inline uint32_t
+get_random_u32_below(uint32_t x)
+{
+	return arc4random_uniform(x);
+}
+
 static inline unsigned int
 get_random_int(void)
 {

@@ -145,7 +145,7 @@ struct test_pattern {
 	unsigned int cust_pattern_size;
 };
 
-#define SUBVP_DRR_MARGIN_US 500 // 500us for DRR margin (SubVP + DRR)
+#define SUBVP_DRR_MARGIN_US 100 // 100us for DRR margin (SubVP + DRR)
 
 enum mall_stream_type {
 	SUBVP_NONE, // subvp not in use
@@ -161,6 +161,21 @@ struct mall_stream_config {
 	struct dc_stream_state *paired_stream;	// master / slave stream
 };
 
+/* Temp struct used to save and restore MALL config
+ * during validation.
+ *
+ * TODO: Move MALL config into dc_state instead of stream struct
+ * to avoid needing to save/restore.
+ */
+struct mall_temp_config {
+	struct mall_stream_config mall_stream_config[MAX_PIPES];
+	bool is_phantom_plane[MAX_PIPES];
+};
+
+struct dc_stream_debug_options {
+	char force_odm_combine_segments;
+};
+
 struct dc_stream_state {
 	// sink is deprecated, new code should not reference
 	// this pointer
@@ -171,6 +186,7 @@ struct dc_stream_state {
 	 * a stream via the volatile dc_state rather than the static dc_link.
 	 */
 	struct link_encoder *link_enc;
+	struct dc_stream_debug_options debug;
 	struct dc_panel_patch sink_patches;
 	union display_content_support content_support;
 	struct dc_crtc_timing timing;
@@ -180,6 +196,7 @@ struct dc_stream_state {
 	struct dc_info_packet vsp_infopacket;
 	struct dc_info_packet hfvsif_infopacket;
 	struct dc_info_packet vtem_infopacket;
+	struct dc_info_packet adaptive_sync_infopacket;
 	uint8_t dsc_packed_pps[128];
 	struct rect src; /* composition area */
 	struct rect dst; /* stream addressable area */
@@ -216,6 +233,7 @@ struct dc_stream_state {
 	 */
 	bool vrr_active_variable;
 	bool freesync_on_desktop;
+	bool vrr_active_fixed;
 
 	bool converter_disable_audio;
 	uint8_t qs_bit;
@@ -282,6 +300,7 @@ struct dc_stream_state {
 
 	bool has_non_synchronizable_pclk;
 	bool vblank_synchronized;
+	bool fpo_in_use;
 	struct mall_stream_config mall_stream_config;
 };
 
@@ -303,10 +322,12 @@ struct dc_stream_update {
 	struct dc_info_packet *vsp_infopacket;
 	struct dc_info_packet *hfvsif_infopacket;
 	struct dc_info_packet *vtem_infopacket;
+	struct dc_info_packet *adaptive_sync_infopacket;
 	bool *dpms_off;
 	bool integer_scaling_update;
 	bool *allow_freesync;
 	bool *vrr_active_variable;
+	bool *vrr_active_fixed;
 
 	struct colorspace_transform *gamut_remap;
 	enum dc_color_space *output_color_space;
@@ -533,10 +554,9 @@ bool dc_stream_get_crtc_position(struct dc *dc,
 				 unsigned int *nom_v_pos);
 
 #if defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
-bool dc_stream_forward_dmcu_crc_window(struct dc *dc, struct dc_stream_state *stream,
-			     struct crc_params *crc_window);
-bool dc_stream_stop_dmcu_crc_win_update(struct dc *dc,
-				 struct dc_stream_state *stream);
+bool dc_stream_forward_crc_window(struct dc_stream_state *stream,
+		struct rect *rect,
+		bool is_stop);
 #endif
 
 bool dc_stream_configure_crc(struct dc *dc,

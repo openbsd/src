@@ -57,7 +57,6 @@
 #include "dcn31/dcn31_hpo_dp_stream_encoder.h"
 #include "dcn31/dcn31_hpo_dp_link_encoder.h"
 #include "dcn32/dcn32_hpo_dp_link_encoder.h"
-#include "dc_link_dp.h"
 #include "dcn31/dcn31_apg.h"
 #include "dcn31/dcn31_dio_link_encoder.h"
 #include "dcn32/dcn32_dio_link_encoder.h"
@@ -69,7 +68,7 @@
 #include "dml/display_mode_vba.h"
 #include "dcn32/dcn32_dccg.h"
 #include "dcn10/dcn10_resource.h"
-#include "dc_link_ddc.h"
+#include "link.h"
 #include "dcn31/dcn31_panel_cntl.h"
 
 #include "dcn30/dcn30_dwb.h"
@@ -106,8 +105,6 @@ enum dcn32_clk_src_array_id {
  */
 
 /* DCN */
-/* TODO awful hack. fixup dcn20_dwb.h */
-#undef BASE_INNER
 #define BASE_INNER(seg) ctx->dcn_reg_offsets[seg]
 
 #define BASE(seg) BASE_INNER(seg)
@@ -166,6 +163,9 @@ enum dcn32_clk_src_array_id {
 #define SRII_DWB(reg_name, temp_name, block, id)\
 	REG_STRUCT.reg_name[id] = BASE(reg ## block ## id ## _ ## temp_name ## _BASE_IDX) + \
 		reg ## block ## id ## _ ## temp_name
+
+#define SF_DWB2(reg_name, block, id, field_name, post_fix)	\
+	.field_name = reg_name ## __ ## field_name ## post_fix
 
 #define DCCG_SRII(reg_name, block, id)\
 	REG_STRUCT.block ## _ ## reg_name[id] = BASE(reg ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
@@ -324,7 +324,6 @@ static const struct dcn10_link_enc_shift le_shift = {
 
 static const struct dcn10_link_enc_mask le_mask = {
 	LINK_ENCODER_MASK_SH_LIST_DCN31(_MASK), \
-
 	//DPCS_DCN31_MASK_SH_LIST(_MASK)
 };
 
@@ -657,8 +656,6 @@ static const struct resource_caps res_cap_dcn32 = {
 
 static const struct dc_plane_cap plane_cap = {
 	.type = DC_PLANE_TYPE_DCN_UNIVERSAL,
-	.blends_with_above = true,
-	.blends_with_below = true,
 	.per_pixel_alpha = true,
 
 	.pixel_format_support = {
@@ -722,29 +719,20 @@ static const struct dc_debug_options debug_defaults_drv = {
 	/* Must match enable_single_display_2to1_odm_policy to support dynamic ODM transitions*/
 	.enable_double_buffered_dsc_pg_support = true,
 	.enable_dp_dig_pixel_rate_div_policy = 1,
-	.allow_sw_cursor_fallback = false,
+	.allow_sw_cursor_fallback = false, // Linux can't do SW cursor "fallback"
 	.alloc_extra_way_for_cursor = true,
 	.min_prefetch_in_strobe_ns = 60000, // 60us
-};
-
-static const struct dc_debug_options debug_defaults_diags = {
-	.disable_dmcu = true,
-	.force_abm_enable = false,
-	.timing_trace = true,
-	.clock_trace = true,
-	.disable_dpp_power_gate = true,
-	.disable_hubp_power_gate = true,
-	.disable_dsc_power_gate = true,
-	.disable_clock_gate = true,
-	.disable_pplib_clock_request = true,
-	.disable_pplib_wm_range = true,
-	.disable_stutter = false,
-	.scl_reset_length10 = true,
-	.dwb_fi_phase = -1, // -1 = disable
-	.dmub_command_table = true,
-	.enable_tri_buf = true,
-	.use_max_lb = true,
-	.force_disable_subvp = true
+	.disable_unbounded_requesting = false,
+	.override_dispclk_programming = true,
+	.disable_fpo_optimizations = false,
+	.fpo_vactive_margin_us = 2000, // 2000us
+	.disable_fpo_vactive = false,
+	.disable_boot_optimizations = false,
+	.disable_subvp_high_refresh = false,
+	.disable_dp_plus_plus_wa = true,
+	.fpo_vactive_min_active_margin_us = 200,
+	.fpo_vactive_max_blank_us = 1000,
+	.enable_legacy_fast_update = false,
 };
 
 static struct dce_aux *dcn32_aux_engine_create(
@@ -830,6 +818,7 @@ static struct clock_source *dcn32_clock_source_create(
 		return &clk_src->base;
 	}
 
+	kfree(clk_src);
 	BREAK_TO_DEBUGGER();
 	return NULL;
 }
@@ -1349,15 +1338,6 @@ static const struct resource_create_funcs res_create_funcs = {
 	.create_hwseq = dcn32_hwseq_create,
 };
 
-static const struct resource_create_funcs res_create_maximus_funcs = {
-	.read_dce_straps = NULL,
-	.create_audio = NULL,
-	.create_stream_encoder = NULL,
-	.create_hpo_dp_stream_encoder = dcn32_hpo_dp_stream_encoder_create,
-	.create_hpo_dp_link_encoder = dcn32_hpo_dp_link_encoder_create,
-	.create_hwseq = dcn32_hwseq_create,
-};
-
 static void dcn32_resource_destruct(struct dcn32_resource_pool *pool)
 {
 	unsigned int i;
@@ -1504,8 +1484,11 @@ static void dcn32_resource_destruct(struct dcn32_resource_pool *pool)
 	if (pool->base.dccg != NULL)
 		dcn_dccg_destroy(&pool->base.dccg);
 
-	if (pool->base.oem_device != NULL)
-		dal_ddc_service_destroy(&pool->base.oem_device);
+	if (pool->base.oem_device != NULL) {
+		struct dc *dc = pool->base.oem_device->ctx->dc;
+
+		dc->link_srv->destroy_ddc_service(&pool->base.oem_device);
+	}
 }
 
 
@@ -1609,7 +1592,6 @@ bool dcn32_acquire_post_bldn_3dlut(
 		struct dc_transfer_func **shaper)
 {
 	bool ret = false;
-	union dc_3dlut_state *state;
 
 	ASSERT(*lut == NULL && *shaper == NULL);
 	*lut = NULL;
@@ -1618,7 +1600,6 @@ bool dcn32_acquire_post_bldn_3dlut(
 	if (!res_ctx->is_mpc_3dlut_acquired[mpcc_id]) {
 		*lut = pool->mpc_lut[mpcc_id];
 		*shaper = pool->mpc_shaper[mpcc_id];
-		state = &pool->mpc_lut[mpcc_id]->state;
 		res_ctx->is_mpc_3dlut_acquired[mpcc_id] = true;
 		ret = true;
 	}
@@ -1679,7 +1660,7 @@ static void dcn32_enable_phantom_plane(struct dc *dc,
 
 		/* Shadow pipe has small viewport. */
 		phantom_plane->clip_rect.y = 0;
-		phantom_plane->clip_rect.height = phantom_stream->timing.v_addressable;
+		phantom_plane->clip_rect.height = phantom_stream->src.height;
 
 		phantom_plane->is_phantom = true;
 
@@ -1728,8 +1709,8 @@ void dcn32_retain_phantom_pipes(struct dc *dc, struct dc_state *context)
 	for (i = 0; i < dc->res_pool->pipe_count; i++) {
 		struct pipe_ctx *pipe = &context->res_ctx.pipe_ctx[i];
 
-		if (!pipe->top_pipe && !pipe->prev_odm_pipe &&
-				pipe->plane_state && pipe->stream &&
+		if (resource_is_pipe_type(pipe, OTG_MASTER) &&
+				resource_is_pipe_type(pipe, DPP_PIPE) &&
 				pipe->stream->mall_stream_config.type == SUBVP_PHANTOM) {
 			phantom_plane = pipe->plane_state;
 			phantom_stream = pipe->stream;
@@ -1741,7 +1722,7 @@ void dcn32_retain_phantom_pipes(struct dc *dc, struct dc_state *context)
 }
 
 // return true if removed piped from ctx, false otherwise
-bool dcn32_remove_phantom_pipes(struct dc *dc, struct dc_state *context)
+bool dcn32_remove_phantom_pipes(struct dc *dc, struct dc_state *context, bool fast_update)
 {
 	int i;
 	bool removed_pipe = false;
@@ -1768,14 +1749,23 @@ bool dcn32_remove_phantom_pipes(struct dc *dc, struct dc_state *context)
 			removed_pipe = true;
 		}
 
-		// Clear all phantom stream info
-		if (pipe->stream) {
-			pipe->stream->mall_stream_config.type = SUBVP_NONE;
-			pipe->stream->mall_stream_config.paired_stream = NULL;
-		}
+		/* For non-full updates, a shallow copy of the current state
+		 * is created. In this case we don't want to erase the current
+		 * state (there can be 2 HIRQL threads, one in flip, and one in
+		 * checkMPO) that can cause a race condition.
+		 *
+		 * This is just a workaround, needs a proper fix.
+		 */
+		if (!fast_update) {
+			// Clear all phantom stream info
+			if (pipe->stream) {
+				pipe->stream->mall_stream_config.type = SUBVP_NONE;
+				pipe->stream->mall_stream_config.paired_stream = NULL;
+			}
 
-		if (pipe->plane_state) {
-			pipe->plane_state->is_phantom = false;
+			if (pipe->plane_state) {
+				pipe->plane_state->is_phantom = false;
+			}
 		}
 	}
 	return removed_pipe;
@@ -1874,6 +1864,8 @@ bool dcn32_validate_bandwidth(struct dc *dc,
 
 	dc->res_pool->funcs->calculate_wm_and_dlg(dc, context, pipes, pipe_cnt, vlevel);
 
+	dcn32_override_min_req_memclk(dc, context);
+
 	BW_VAL_TRACE_END_WATERMARKS();
 
 	goto validate_out;
@@ -1900,9 +1892,8 @@ int dcn32_populate_dml_pipes_from_context(
 {
 	int i, pipe_cnt;
 	struct resource_context *res_ctx = &context->res_ctx;
-	struct pipe_ctx *pipe;
+	struct pipe_ctx *pipe = NULL;
 	bool subvp_in_use = false;
-	uint8_t is_pipe_split_expected[MAX_PIPES] = {0};
 	struct dc_crtc_timing *timing;
 	bool vsr_odm_support = false;
 
@@ -1952,23 +1943,28 @@ int dcn32_populate_dml_pipes_from_context(
 		pipes[pipe_cnt].pipe.src.unbounded_req_mode = false;
 		pipes[pipe_cnt].pipe.scale_ratio_depth.lb_depth = dm_lb_19;
 
-		switch (pipe->stream->mall_stream_config.type) {
-		case SUBVP_MAIN:
-			pipes[pipe_cnt].pipe.src.use_mall_for_pstate_change = dm_use_mall_pstate_change_sub_viewport;
-			subvp_in_use = true;
-			break;
-		case SUBVP_PHANTOM:
-			pipes[pipe_cnt].pipe.src.use_mall_for_pstate_change = dm_use_mall_pstate_change_phantom_pipe;
-			pipes[pipe_cnt].pipe.src.use_mall_for_static_screen = dm_use_mall_static_screen_disable;
-			// Disallow unbounded req for SubVP according to DCHUB programming guide
-			pipes[pipe_cnt].pipe.src.unbounded_req_mode = false;
-			break;
-		case SUBVP_NONE:
-			pipes[pipe_cnt].pipe.src.use_mall_for_pstate_change = dm_use_mall_pstate_change_disable;
-			pipes[pipe_cnt].pipe.src.use_mall_for_static_screen = dm_use_mall_static_screen_disable;
-			break;
-		default:
-			break;
+		/* Only populate DML input with subvp info for full updates.
+		 * This is just a workaround -- needs a proper fix.
+		 */
+		if (!fast_validate) {
+			switch (pipe->stream->mall_stream_config.type) {
+			case SUBVP_MAIN:
+				pipes[pipe_cnt].pipe.src.use_mall_for_pstate_change = dm_use_mall_pstate_change_sub_viewport;
+				subvp_in_use = true;
+				break;
+			case SUBVP_PHANTOM:
+				pipes[pipe_cnt].pipe.src.use_mall_for_pstate_change = dm_use_mall_pstate_change_phantom_pipe;
+				pipes[pipe_cnt].pipe.src.use_mall_for_static_screen = dm_use_mall_static_screen_disable;
+				// Disallow unbounded req for SubVP according to DCHUB programming guide
+				pipes[pipe_cnt].pipe.src.unbounded_req_mode = false;
+				break;
+			case SUBVP_NONE:
+				pipes[pipe_cnt].pipe.src.use_mall_for_pstate_change = dm_use_mall_pstate_change_disable;
+				pipes[pipe_cnt].pipe.src.use_mall_for_static_screen = dm_use_mall_static_screen_disable;
+				break;
+			default:
+				break;
+			}
 		}
 
 		pipes[pipe_cnt].dout.dsc_input_bpc = 0;
@@ -1990,7 +1986,7 @@ int dcn32_populate_dml_pipes_from_context(
 		}
 
 		DC_FP_START();
-		is_pipe_split_expected[i] = dcn32_predict_pipe_split(context, &pipes[pipe_cnt]);
+		dcn32_predict_pipe_split(context, &pipes[pipe_cnt]);
 		DC_FP_END();
 
 		pipe_cnt++;
@@ -2042,7 +2038,7 @@ static struct resource_funcs dcn32_res_pool_funcs = {
 	.validate_bandwidth = dcn32_validate_bandwidth,
 	.calculate_wm_and_dlg = dcn32_calculate_wm_and_dlg,
 	.populate_dml_pipes = dcn32_populate_dml_pipes_from_context,
-	.acquire_idle_pipe_for_head_pipe_in_layer = dcn32_acquire_idle_pipe_for_head_pipe_in_layer,
+	.acquire_free_pipe_as_secondary_dpp_pipe = dcn32_acquire_free_pipe_as_secondary_dpp_pipe,
 	.add_stream_to_ctx = dcn30_add_stream_to_ctx,
 	.add_dsc_to_stream_resource = dcn20_add_dsc_to_stream_resource,
 	.remove_stream_from_ctx = dcn20_remove_stream_from_ctx,
@@ -2057,6 +2053,8 @@ static struct resource_funcs dcn32_res_pool_funcs = {
 	.add_phantom_pipes = dcn32_add_phantom_pipes,
 	.remove_phantom_pipes = dcn32_remove_phantom_pipes,
 	.retain_phantom_pipes = dcn32_retain_phantom_pipes,
+	.save_mall_state = dcn32_save_mall_state,
+	.restore_mall_state = dcn32_restore_mall_state,
 };
 
 static uint32_t read_pipe_fuses(struct dc_context *ctx)
@@ -2080,27 +2078,28 @@ static bool dcn32_resource_construct(
 	uint32_t pipe_fuses = 0;
 	uint32_t num_pipes  = 4;
 
-	#undef REG_STRUCT
-	#define REG_STRUCT bios_regs
-		bios_regs_init();
+#undef REG_STRUCT
+#define REG_STRUCT bios_regs
+	bios_regs_init();
 
-	#undef REG_STRUCT
-	#define REG_STRUCT clk_src_regs
-		clk_src_regs_init(0, A),
-		clk_src_regs_init(1, B),
-		clk_src_regs_init(2, C),
-		clk_src_regs_init(3, D),
-		clk_src_regs_init(4, E);
-	#undef REG_STRUCT
-	#define REG_STRUCT abm_regs
-		abm_regs_init(0),
-		abm_regs_init(1),
-		abm_regs_init(2),
-		abm_regs_init(3);
+#undef REG_STRUCT
+#define REG_STRUCT clk_src_regs
+	clk_src_regs_init(0, A),
+	clk_src_regs_init(1, B),
+	clk_src_regs_init(2, C),
+	clk_src_regs_init(3, D),
+	clk_src_regs_init(4, E);
 
-	#undef REG_STRUCT
-	#define REG_STRUCT dccg_regs
-		dccg_regs_init();
+#undef REG_STRUCT
+#define REG_STRUCT abm_regs
+	abm_regs_init(0),
+	abm_regs_init(1),
+	abm_regs_init(2),
+	abm_regs_init(3);
+
+#undef REG_STRUCT
+#define REG_STRUCT dccg_regs
+	dccg_regs_init();
 
 	DC_FP_START();
 
@@ -2157,22 +2156,27 @@ static bool dcn32_resource_construct(
 	dc->caps.mall_size_total = dc->caps.max_cab_allocation_bytes;
 
 	dc->caps.subvp_fw_processing_delay_us = 15;
+	dc->caps.subvp_drr_max_vblank_margin_us = 40;
 	dc->caps.subvp_prefetch_end_to_mall_start_us = 15;
 	dc->caps.subvp_swath_height_margin_lines = 16;
 	dc->caps.subvp_pstate_allow_width_us = 20;
 	dc->caps.subvp_vertical_int_margin_us = 30;
+	dc->caps.subvp_drr_vblank_start_margin_us = 100; // 100us margin
 
 	dc->caps.max_slave_planes = 2;
 	dc->caps.max_slave_yuv_planes = 2;
 	dc->caps.max_slave_rgb_planes = 2;
 	dc->caps.post_blend_color_processing = true;
 	dc->caps.force_dp_tps4_for_cp2520 = true;
+	if (dc->config.forceHBR2CP2520)
+		dc->caps.force_dp_tps4_for_cp2520 = false;
 	dc->caps.dp_hpo = true;
 	dc->caps.dp_hdmi21_pcon_support = true;
 	dc->caps.edp_dsc_support = true;
 	dc->caps.extended_aux_timeout_support = true;
 	dc->caps.dmcub_support = true;
 	dc->caps.seamless_odm = true;
+	dc->caps.max_v_total = (1 << 15) - 1;
 
 	/* Color pipeline capabilities */
 	dc->caps.color.dpp.dcn_arch = 1;
@@ -2211,6 +2215,7 @@ static bool dcn32_resource_construct(
 	/* Use pipe context based otg sync logic */
 	dc->config.use_pipe_ctx_sync_logic = true;
 
+	dc->config.dc_mode_clk_limit_support = true;
 	/* read VBIOS LTTPR caps */
 	{
 		if (ctx->dc_bios->funcs->get_lttpr_caps) {
@@ -2229,10 +2234,7 @@ static bool dcn32_resource_construct(
 
 	if (dc->ctx->dce_environment == DCE_ENV_PRODUCTION_DRV)
 		dc->debug = debug_defaults_drv;
-	else if (dc->ctx->dce_environment == DCE_ENV_FPGA_MAXIMUS) {
-		dc->debug = debug_defaults_diags;
-	} else
-		dc->debug = debug_defaults_diags;
+
 	// Init the vm_helper
 	if (dc->vm_helper)
 		vm_helper_init(dc->vm_helper, 16);
@@ -2288,8 +2290,7 @@ static bool dcn32_resource_construct(
 	}
 
 	/* DML */
-	if (!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment))
-		dml_init_instance(&dc->dml, &dcn3_2_soc, &dcn3_2_ip, DML_PROJECT_DCN32);
+	dml_init_instance(&dc->dml, &dcn3_2_soc, &dcn3_2_ip, DML_PROJECT_DCN32);
 
 	/* IRQ Service */
 	init_data.ctx = dc->ctx;
@@ -2426,9 +2427,8 @@ static bool dcn32_resource_construct(
 
 	/* Audio, HWSeq, Stream Encoders including HPO and virtual, MPC 3D LUTs */
 	if (!resource_construct(num_virtual_links, dc, &pool->base,
-			(!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment) ?
-			&res_create_funcs : &res_create_maximus_funcs)))
-			goto create_fail;
+			&res_create_funcs))
+		goto create_fail;
 
 	/* HW Sequencer init functions and Plane caps */
 	dcn32_hw_sequencer_init_functions(dc);
@@ -2446,10 +2446,13 @@ static bool dcn32_resource_construct(
 		ddc_init_data.id.id = dc->ctx->dc_bios->fw_info.oem_i2c_obj_id;
 		ddc_init_data.id.enum_id = 0;
 		ddc_init_data.id.type = OBJECT_TYPE_GENERIC;
-		pool->base.oem_device = dal_ddc_service_create(&ddc_init_data);
+		pool->base.oem_device = dc->link_srv->create_ddc_service(&ddc_init_data);
 	} else {
 		pool->base.oem_device = NULL;
 	}
+
+	if (ASICREV_IS_GC_11_0_3(dc->ctx->asic_id.hw_internal_rev) && (dc->config.sdpif_request_limit_words_per_umc == 0))
+		dc->config.sdpif_request_limit_words_per_umc = 16;
 
 	DC_FP_END();
 
@@ -2480,6 +2483,85 @@ struct resource_pool *dcn32_create_resource_pool(
 	BREAK_TO_DEBUGGER();
 	kfree(pool);
 	return NULL;
+}
+
+/*
+ * Find the most optimal free pipe from res_ctx, which could be used as a
+ * secondary dpp pipe for input opp head pipe.
+ *
+ * a free pipe - a pipe in input res_ctx not yet used for any streams or
+ * planes.
+ * secondary dpp pipe - a pipe gets inserted to a head OPP pipe's MPC blending
+ * tree. This is typical used for rendering MPO planes or additional offset
+ * areas in MPCC combine.
+ *
+ * Hardware Transition Minimization Algorithm for Finding a Secondary DPP Pipe
+ * -------------------------------------------------------------------------
+ *
+ * PROBLEM:
+ *
+ * 1. There is a hardware limitation that a secondary DPP pipe cannot be
+ * transferred from one MPC blending tree to the other in a single frame.
+ * Otherwise it could cause glitches on the screen.
+ *
+ * For instance, we cannot transition from state 1 to state 2 in one frame. This
+ * is because PIPE1 is transferred from PIPE0's MPC blending tree over to
+ * PIPE2's MPC blending tree, which is not supported by hardware.
+ * To support this transition we need to first remove PIPE1 from PIPE0's MPC
+ * blending tree in one frame and then insert PIPE1 to PIPE2's MPC blending tree
+ * in the next frame. This is not optimal as it will delay the flip for two
+ * frames.
+ *
+ *	State 1:
+ *	PIPE0 -- secondary DPP pipe --> (PIPE1)
+ *	PIPE2 -- secondary DPP pipe --> NONE
+ *
+ *	State 2:
+ *	PIPE0 -- secondary DPP pipe --> NONE
+ *	PIPE2 -- secondary DPP pipe --> (PIPE1)
+ *
+ * 2. We want to in general minimize the unnecessary changes in pipe topology.
+ * If a pipe is already added in current blending tree and there are no changes
+ * to plane topology, we don't want to swap it with another free pipe
+ * unnecessarily in every update. Powering up and down a pipe would require a
+ * full update which delays the flip for 1 frame. If we use the original pipe
+ * we don't have to toggle its power. So we can flip faster.
+ */
+static int find_optimal_free_pipe_as_secondary_dpp_pipe(
+		const struct resource_context *cur_res_ctx,
+		struct resource_context *new_res_ctx,
+		const struct resource_pool *pool,
+		const struct pipe_ctx *new_opp_head)
+{
+	const struct pipe_ctx *cur_opp_head;
+	int free_pipe_idx;
+
+	cur_opp_head = &cur_res_ctx->pipe_ctx[new_opp_head->pipe_idx];
+	free_pipe_idx = resource_find_free_pipe_used_in_cur_mpc_blending_tree(
+			cur_res_ctx, new_res_ctx, cur_opp_head);
+
+	/* Up until here if we have not found a free secondary pipe, we will
+	 * need to wait for at least one frame to complete the transition
+	 * sequence.
+	 */
+	if (free_pipe_idx == FREE_PIPE_INDEX_NOT_FOUND)
+		free_pipe_idx = recource_find_free_pipe_not_used_in_cur_res_ctx(
+				cur_res_ctx, new_res_ctx, pool);
+
+	/* Up until here if we have not found a free secondary pipe, we will
+	 * need to wait for at least two frames to complete the transition
+	 * sequence. It really doesn't matter which pipe we decide take from
+	 * current enabled pipes. It won't save our frame time when we swap only
+	 * one pipe or more pipes.
+	 */
+	if (free_pipe_idx == FREE_PIPE_INDEX_NOT_FOUND)
+		free_pipe_idx = resource_find_free_pipe_used_as_cur_sec_dpp_in_mpcc_combine(
+				cur_res_ctx, new_res_ctx, pool);
+
+	if (free_pipe_idx == FREE_PIPE_INDEX_NOT_FOUND)
+		free_pipe_idx = resource_find_any_free_pipe(new_res_ctx, pool);
+
+	return free_pipe_idx;
 }
 
 static struct pipe_ctx *find_idle_secondary_pipe_check_mpo(
@@ -2544,11 +2626,11 @@ static struct pipe_ctx *find_idle_secondary_pipe_check_mpo(
 	return secondary_pipe;
 }
 
-struct pipe_ctx *dcn32_acquire_idle_pipe_for_head_pipe_in_layer(
+static struct pipe_ctx *dcn32_acquire_idle_pipe_for_head_pipe_in_layer(
 		struct dc_state *state,
 		const struct resource_pool *pool,
 		struct dc_stream_state *stream,
-		struct pipe_ctx *head_pipe)
+		const struct pipe_ctx *head_pipe)
 {
 	struct resource_context *res_ctx = &state->res_ctx;
 	struct pipe_ctx *idle_pipe, *pipe;
@@ -2585,6 +2667,43 @@ struct pipe_ctx *dcn32_acquire_idle_pipe_for_head_pipe_in_layer(
 	idle_pipe->plane_res.mpcc_inst = pool->dpps[idle_pipe->pipe_idx]->inst;
 
 	return idle_pipe;
+}
+
+struct pipe_ctx *dcn32_acquire_free_pipe_as_secondary_dpp_pipe(
+		const struct dc_state *cur_ctx,
+		struct dc_state *new_ctx,
+		const struct resource_pool *pool,
+		const struct pipe_ctx *opp_head_pipe)
+{
+
+	int free_pipe_idx;
+	struct pipe_ctx *free_pipe;
+
+	if (!opp_head_pipe->stream->ctx->dc->config.enable_windowed_mpo_odm)
+		return dcn32_acquire_idle_pipe_for_head_pipe_in_layer(
+				new_ctx, pool, opp_head_pipe->stream, opp_head_pipe);
+
+	free_pipe_idx = find_optimal_free_pipe_as_secondary_dpp_pipe(
+					&cur_ctx->res_ctx, &new_ctx->res_ctx,
+					pool, opp_head_pipe);
+	if (free_pipe_idx >= 0) {
+		free_pipe = &new_ctx->res_ctx.pipe_ctx[free_pipe_idx];
+		free_pipe->pipe_idx = free_pipe_idx;
+		free_pipe->stream = opp_head_pipe->stream;
+		free_pipe->stream_res.tg = opp_head_pipe->stream_res.tg;
+		free_pipe->stream_res.opp = opp_head_pipe->stream_res.opp;
+
+		free_pipe->plane_res.hubp = pool->hubps[free_pipe->pipe_idx];
+		free_pipe->plane_res.ipp = pool->ipps[free_pipe->pipe_idx];
+		free_pipe->plane_res.dpp = pool->dpps[free_pipe->pipe_idx];
+		free_pipe->plane_res.mpcc_inst =
+				pool->dpps[free_pipe->pipe_idx]->inst;
+	} else {
+		ASSERT(opp_head_pipe);
+		free_pipe = NULL;
+	}
+
+	return free_pipe;
 }
 
 unsigned int dcn32_calc_num_avail_chans_for_mall(struct dc *dc, int num_chans)

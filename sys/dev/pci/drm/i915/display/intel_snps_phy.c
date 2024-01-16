@@ -5,6 +5,7 @@
 
 #include <linux/util_macros.h>
 
+#include "i915_reg.h"
 #include "intel_ddi.h"
 #include "intel_ddi_buf_trans.h"
 #include "intel_de.h"
@@ -39,22 +40,22 @@ void intel_snps_phy_wait_for_calibration(struct drm_i915_private *i915)
 		 */
 		if (intel_de_wait_for_clear(i915, DG2_PHY_MISC(phy),
 					    DG2_PHY_DP_TX_ACK_MASK, 25))
-			i915->snps_phy_failed_calibration |= BIT(phy);
+			i915->display.snps.phy_failed_calibration |= BIT(phy);
 	}
 }
 
-void intel_snps_phy_update_psr_power_state(struct drm_i915_private *dev_priv,
+void intel_snps_phy_update_psr_power_state(struct drm_i915_private *i915,
 					   enum phy phy, bool enable)
 {
 	u32 val;
 
-	if (!intel_phy_is_snps(dev_priv, phy))
+	if (!intel_phy_is_snps(i915, phy))
 		return;
 
 	val = REG_FIELD_PREP(SNPS_PHY_TX_REQ_LN_DIS_PWR_STATE_PSR,
 			     enable ? 2 : 3);
-	intel_uncore_rmw(&dev_priv->uncore, SNPS_PHY_TX_REQ(phy),
-			 SNPS_PHY_TX_REQ_LN_DIS_PWR_STATE_PSR, val);
+	intel_de_rmw(i915, SNPS_PHY_TX_REQ(phy),
+		     SNPS_PHY_TX_REQ_LN_DIS_PWR_STATE_PSR, val);
 }
 
 void intel_snps_phy_set_signal_levels(struct intel_encoder *encoder,
@@ -1846,7 +1847,7 @@ void intel_mpllb_enable(struct intel_encoder *encoder,
 	 */
 
 	/* 5. Software sets DPLL_ENABLE [PLL Enable] to "1". */
-	intel_uncore_rmw(&dev_priv->uncore, enable_reg, 0, PLL_ENABLE);
+	intel_de_rmw(dev_priv, enable_reg, 0, PLL_ENABLE);
 
 	/*
 	 * 9. Software sets SNPS_PHY_MPLLB_DIV dp_mpllb_force_en to "1". This
@@ -1891,14 +1892,13 @@ void intel_mpllb_disable(struct intel_encoder *encoder)
 	 */
 
 	/* 2. Software programs DPLL_ENABLE [PLL Enable] to "0" */
-	intel_uncore_rmw(&i915->uncore, enable_reg, PLL_ENABLE, 0);
+	intel_de_rmw(i915, enable_reg, PLL_ENABLE, 0);
 
 	/*
 	 * 4. Software programs SNPS_PHY_MPLLB_DIV dp_mpllb_force_en to "0".
 	 * This will allow the PLL to stop running.
 	 */
-	intel_uncore_rmw(&i915->uncore, SNPS_PHY_MPLLB_DIV(phy),
-			 SNPS_PHY_MPLLB_FORCE_EN, 0);
+	intel_de_rmw(i915, SNPS_PHY_MPLLB_DIV(phy), SNPS_PHY_MPLLB_FORCE_EN, 0);
 
 	/*
 	 * 5. Software polls DPLL_ENABLE [PLL Lock] for PHY acknowledgment
@@ -2007,11 +2007,16 @@ void intel_mpllb_state_verify(struct intel_atomic_state *state,
 	if (!new_crtc_state->hw.active)
 		return;
 
+	/* intel_get_crtc_new_encoder() only works for modeset/fastset commits */
+	if (!intel_crtc_needs_modeset(new_crtc_state) &&
+	    !intel_crtc_needs_fastset(new_crtc_state))
+		return;
+
 	encoder = intel_get_crtc_new_encoder(state, new_crtc_state);
 	intel_mpllb_readout_hw_state(encoder, &mpllb_hw_state);
 
 #define MPLLB_CHECK(__name)						\
-	I915_STATE_WARN(mpllb_sw_state->__name != mpllb_hw_state.__name,	\
+	I915_STATE_WARN(i915, mpllb_sw_state->__name != mpllb_hw_state.__name, \
 			"[CRTC:%d:%s] mismatch in MPLLB: %s (expected 0x%08x, found 0x%08x)", \
 			crtc->base.base.id, crtc->base.name,		\
 			__stringify(__name),				\

@@ -504,8 +504,6 @@ static const struct resource_caps rv2_res_cap = {
 
 static const struct dc_plane_cap plane_cap = {
 	.type = DC_PLANE_TYPE_DCN_UNIVERSAL,
-	.blends_with_above = true,
-	.blends_with_below = true,
 	.per_pixel_alpha = true,
 
 	.pixel_format_support = {
@@ -544,8 +542,8 @@ static const struct dc_debug_options debug_defaults_drv = {
 		.disable_pplib_clock_request = false,
 		.disable_pplib_wm_range = false,
 		.pplib_wm_report_mode = WM_REPORT_DEFAULT,
-		.pipe_split_policy = MPC_SPLIT_AVOID,
-		.force_single_disp_pipe_split = false,
+		.pipe_split_policy = MPC_SPLIT_DYNAMIC,
+		.force_single_disp_pipe_split = true,
 		.disable_dcc = DCC_ENABLE,
 		.voltage_align_fclk = true,
 		.disable_stereo_support = true,
@@ -555,6 +553,7 @@ static const struct dc_debug_options debug_defaults_drv = {
 		.recovery_enabled = false, /*enable this by default after testing.*/
 		.max_downscale_src_width = 3840,
 		.underflow_assert_delay_us = 0xFFFFFFFF,
+		.enable_legacy_fast_update = true,
 };
 
 static const struct dc_debug_options debug_defaults_diags = {
@@ -888,13 +887,6 @@ static const struct resource_create_funcs res_create_funcs = {
 	.create_hwseq = dcn10_hwseq_create,
 };
 
-static const struct resource_create_funcs res_create_maximus_funcs = {
-	.read_dce_straps = NULL,
-	.create_audio = NULL,
-	.create_stream_encoder = NULL,
-	.create_hwseq = dcn10_hwseq_create,
-};
-
 static void dcn10_clock_source_destroy(struct clock_source **clk_src)
 {
 	kfree(TO_DCE110_CLK_SRC(*clk_src));
@@ -1063,7 +1055,7 @@ static enum dc_status build_mapped_resource(
 		struct dc_state *context,
 		struct dc_stream_state *stream)
 {
-	struct pipe_ctx *pipe_ctx = resource_get_head_pipe_for_stream(&context->res_ctx, stream);
+	struct pipe_ctx *pipe_ctx = resource_get_otg_master_for_stream(&context->res_ctx, stream);
 
 	if (!pipe_ctx)
 		return DC_ERROR_UNEXPECTED;
@@ -1091,14 +1083,15 @@ static enum dc_status dcn10_add_stream_to_ctx(
 	return result;
 }
 
-static struct pipe_ctx *dcn10_acquire_idle_pipe_for_layer(
-		struct dc_state *context,
+static struct pipe_ctx *dcn10_acquire_free_pipe_for_layer(
+		const struct dc_state *cur_ctx,
+		struct dc_state *new_ctx,
 		const struct resource_pool *pool,
-		struct dc_stream_state *stream)
+		const struct pipe_ctx *opp_head_pipe)
 {
-	struct resource_context *res_ctx = &context->res_ctx;
-	struct pipe_ctx *head_pipe = resource_get_head_pipe_for_stream(res_ctx, stream);
-	struct pipe_ctx *idle_pipe = find_idle_secondary_pipe(res_ctx, pool, head_pipe);
+	struct resource_context *res_ctx = &new_ctx->res_ctx;
+	struct pipe_ctx *head_pipe = resource_get_otg_master_for_stream(res_ctx, opp_head_pipe->stream);
+	struct pipe_ctx *idle_pipe = resource_find_free_secondary_pipe_legacy(res_ctx, pool, head_pipe);
 
 	if (!head_pipe) {
 		ASSERT(0);
@@ -1279,7 +1272,7 @@ static const struct resource_funcs dcn10_res_pool_funcs = {
 	.link_enc_create = dcn10_link_encoder_create,
 	.panel_cntl_create = dcn10_panel_cntl_create,
 	.validate_bandwidth = dcn10_validate_bandwidth,
-	.acquire_idle_pipe_for_layer = dcn10_acquire_idle_pipe_for_layer,
+	.acquire_free_pipe_as_secondary_dpp_pipe = dcn10_acquire_free_pipe_for_layer,
 	.validate_plane = dcn10_validate_plane,
 	.validate_global = dcn10_validate_global,
 	.add_stream_to_ctx = dcn10_add_stream_to_ctx,
@@ -1293,47 +1286,6 @@ static uint32_t read_pipe_fuses(struct dc_context *ctx)
 	/* RV1 support max 4 pipes */
 	value = value & 0xf;
 	return value;
-}
-
-/*
- * Some architectures don't support soft-float (e.g. aarch64), on those
- * this function has to be called with hardfloat enabled, make sure not
- * to inline it so whatever fp stuff is done stays inside
- */
-static noinline void dcn10_resource_construct_fp(
-	struct dc *dc)
-{
-	if (dc->ctx->dce_version == DCN_VERSION_1_01) {
-		struct dcn_soc_bounding_box *dcn_soc = dc->dcn_soc;
-		struct dcn_ip_params *dcn_ip = dc->dcn_ip;
-		struct display_mode_lib *dml = &dc->dml;
-
-		dml->ip.max_num_dpp = 3;
-		/* TODO how to handle 23.84? */
-		dcn_soc->dram_clock_change_latency = 23;
-		dcn_ip->max_num_dpp = 3;
-	}
-	if (ASICREV_IS_RV1_F0(dc->ctx->asic_id.hw_internal_rev)) {
-		dc->dcn_soc->urgent_latency = 3;
-		dc->debug.disable_dmcu = true;
-		dc->dcn_soc->fabric_and_dram_bandwidth_vmax0p9 = 41.60f;
-	}
-
-
-	dc->dcn_soc->number_of_channels = dc->ctx->asic_id.vram_width / ddr4_dram_width;
-	ASSERT(dc->dcn_soc->number_of_channels < 3);
-	if (dc->dcn_soc->number_of_channels == 0)/*old sbios bug*/
-		dc->dcn_soc->number_of_channels = 2;
-
-	if (dc->dcn_soc->number_of_channels == 1) {
-		dc->dcn_soc->fabric_and_dram_bandwidth_vmax0p9 = 19.2f;
-		dc->dcn_soc->fabric_and_dram_bandwidth_vnom0p8 = 17.066f;
-		dc->dcn_soc->fabric_and_dram_bandwidth_vmid0p72 = 14.933f;
-		dc->dcn_soc->fabric_and_dram_bandwidth_vmin0p65 = 12.8f;
-		if (ASICREV_IS_RV1_F0(dc->ctx->asic_id.hw_internal_rev)) {
-			dc->dcn_soc->fabric_and_dram_bandwidth_vmax0p9 = 20.80f;
-		}
-	}
 }
 
 static bool verify_clock_values(struct dm_pp_clock_levels_with_voltage *clks)
@@ -1510,8 +1462,9 @@ static bool dcn10_resource_construct(
 	memcpy(dc->dcn_ip, &dcn10_ip_defaults, sizeof(dcn10_ip_defaults));
 	memcpy(dc->dcn_soc, &dcn10_soc_defaults, sizeof(dcn10_soc_defaults));
 
-	/* Other architectures we build for build this with soft-float */
+	DC_FP_START();
 	dcn10_resource_construct_fp(dc);
+	DC_FP_END();
 
 	if (!dc->config.is_vmin_only_asic)
 		if (ASICREV_IS_RAVEN2(dc->ctx->asic_id.hw_internal_rev))
@@ -1693,9 +1646,8 @@ static bool dcn10_resource_construct(
 	}
 
 	if (!resource_construct(num_virtual_links, dc, &pool->base,
-			(!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment) ?
-			&res_create_funcs : &res_create_maximus_funcs)))
-			goto fail;
+			&res_create_funcs))
+		goto fail;
 
 	dcn10_hw_sequencer_construct(dc);
 	dc->caps.max_planes =  pool->base.pipe_count;

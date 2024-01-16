@@ -202,6 +202,7 @@ dml_get_pipe_attr_func(vm_group_size_in_bytes, mode_lib->vba.vm_group_bytes);
 dml_get_pipe_attr_func(dpte_row_height_linear_l, mode_lib->vba.dpte_row_height_linear);
 dml_get_pipe_attr_func(pte_buffer_mode, mode_lib->vba.PTE_BUFFER_MODE);
 dml_get_pipe_attr_func(subviewport_lines_needed_in_mall, mode_lib->vba.SubViewportLinesNeededInMALL);
+dml_get_pipe_attr_func(surface_size_in_mall, mode_lib->vba.SurfaceSizeInMALL)
 
 double get_total_immediate_flip_bytes(
 		struct display_mode_lib *mode_lib,
@@ -411,6 +412,7 @@ static void fetch_socbb_params(struct display_mode_lib *mode_lib)
 		soc->urgent_latency_adjustment_fabric_clock_component_us;
 	mode_lib->vba.UrgentLatencyAdjustmentFabricClockReference =
 		soc->urgent_latency_adjustment_fabric_clock_reference_mhz;
+	mode_lib->vba.MaxVRatioPre = soc->max_vratio_pre;
 }
 
 static void fetch_ip_params(struct display_mode_lib *mode_lib)
@@ -931,18 +933,16 @@ static void fetch_pipe_params(struct display_mode_lib *mode_lib)
 }
 
 /**
- * ********************************************************************************************
  * cache_debug_params: Cache any params that needed to be maintained from the initial validation
  * for debug purposes.
  *
  * The DML getters can modify some of the VBA params that we are interested in (for example when
  * calculating with dummy p-state latency), so cache any params here that we want for debugging
  *
- * @param [in] mode_lib: mode_lib input/output of validate call
+ * @mode_lib: mode_lib input/output of validate call
  *
- * @return: void
+ * Return: void
  *
- * ********************************************************************************************
  */
 static void cache_debug_params(struct display_mode_lib *mode_lib)
 {

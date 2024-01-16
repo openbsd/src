@@ -226,7 +226,7 @@ static int tonga_start_smu(struct pp_hwmgr *hwmgr)
 
 static int tonga_smu_init(struct pp_hwmgr *hwmgr)
 {
-	struct tonga_smumgr *tonga_priv = NULL;
+	struct tonga_smumgr *tonga_priv;
 
 	tonga_priv = kzalloc(sizeof(struct tonga_smumgr), GFP_KERNEL);
 	if (tonga_priv == NULL)
@@ -2554,7 +2554,7 @@ static int tonga_program_mem_timing_parameters(struct pp_hwmgr *hwmgr)
 	struct smu7_hwmgr *data = (struct smu7_hwmgr *)(hwmgr->backend);
 
 	if (data->need_update_smu7_dpm_table &
-		(DPMTABLE_OD_UPDATE_SCLK + DPMTABLE_OD_UPDATE_MCLK))
+		(DPMTABLE_OD_UPDATE_SCLK | DPMTABLE_OD_UPDATE_MCLK))
 		return tonga_program_memory_timing_parameters(hwmgr);
 
 	return 0;

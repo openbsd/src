@@ -25,6 +25,11 @@
 		mtx_leave(_mtxp);				\
 	} while (0)
 
+#define spin_trylock(_mtxp)					\
+({								\
+	mtx_enter_try(_mtxp) ? 1 : 0;				\
+})
+
 #define spin_trylock_irqsave(_mtxp, _flags)			\
 ({								\
 	(void)(_flags);						\

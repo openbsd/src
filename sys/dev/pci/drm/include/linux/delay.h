@@ -34,6 +34,12 @@ mdelay(unsigned long msecs)
 
 #define drm_msleep(x)		mdelay(x)
 
+static inline void
+fsleep(unsigned long usecs)
+{
+	DELAY(usecs);
+}
+
 static inline unsigned int
 msleep_interruptible(unsigned int msecs)
 {

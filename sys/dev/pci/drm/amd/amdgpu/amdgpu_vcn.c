@@ -37,26 +37,27 @@
 #include "soc15d.h"
 
 /* Firmware Names */
-#define FIRMWARE_RAVEN		"amdgpu/raven_vcn.bin"
-#define FIRMWARE_PICASSO	"amdgpu/picasso_vcn.bin"
-#define FIRMWARE_RAVEN2		"amdgpu/raven2_vcn.bin"
-#define FIRMWARE_ARCTURUS	"amdgpu/arcturus_vcn.bin"
-#define FIRMWARE_RENOIR		"amdgpu/renoir_vcn.bin"
-#define FIRMWARE_GREEN_SARDINE	"amdgpu/green_sardine_vcn.bin"
-#define FIRMWARE_NAVI10		"amdgpu/navi10_vcn.bin"
-#define FIRMWARE_NAVI14		"amdgpu/navi14_vcn.bin"
-#define FIRMWARE_NAVI12		"amdgpu/navi12_vcn.bin"
-#define FIRMWARE_SIENNA_CICHLID	"amdgpu/sienna_cichlid_vcn.bin"
-#define FIRMWARE_NAVY_FLOUNDER	"amdgpu/navy_flounder_vcn.bin"
-#define FIRMWARE_VANGOGH	"amdgpu/vangogh_vcn.bin"
+#define FIRMWARE_RAVEN			"amdgpu/raven_vcn.bin"
+#define FIRMWARE_PICASSO		"amdgpu/picasso_vcn.bin"
+#define FIRMWARE_RAVEN2			"amdgpu/raven2_vcn.bin"
+#define FIRMWARE_ARCTURUS		"amdgpu/arcturus_vcn.bin"
+#define FIRMWARE_RENOIR			"amdgpu/renoir_vcn.bin"
+#define FIRMWARE_GREEN_SARDINE		"amdgpu/green_sardine_vcn.bin"
+#define FIRMWARE_NAVI10			"amdgpu/navi10_vcn.bin"
+#define FIRMWARE_NAVI14			"amdgpu/navi14_vcn.bin"
+#define FIRMWARE_NAVI12			"amdgpu/navi12_vcn.bin"
+#define FIRMWARE_SIENNA_CICHLID		"amdgpu/sienna_cichlid_vcn.bin"
+#define FIRMWARE_NAVY_FLOUNDER		"amdgpu/navy_flounder_vcn.bin"
+#define FIRMWARE_VANGOGH		"amdgpu/vangogh_vcn.bin"
 #define FIRMWARE_DIMGREY_CAVEFISH	"amdgpu/dimgrey_cavefish_vcn.bin"
-#define FIRMWARE_ALDEBARAN	"amdgpu/aldebaran_vcn.bin"
-#define FIRMWARE_BEIGE_GOBY	"amdgpu/beige_goby_vcn.bin"
-#define FIRMWARE_YELLOW_CARP	"amdgpu/yellow_carp_vcn.bin"
-#define FIRMWARE_VCN_3_1_2	"amdgpu/vcn_3_1_2.bin"
-#define FIRMWARE_VCN4_0_0	"amdgpu/vcn_4_0_0.bin"
-#define FIRMWARE_VCN4_0_2	"amdgpu/vcn_4_0_2.bin"
-#define FIRMWARE_VCN4_0_4      "amdgpu/vcn_4_0_4.bin"
+#define FIRMWARE_ALDEBARAN		"amdgpu/aldebaran_vcn.bin"
+#define FIRMWARE_BEIGE_GOBY		"amdgpu/beige_goby_vcn.bin"
+#define FIRMWARE_YELLOW_CARP		"amdgpu/yellow_carp_vcn.bin"
+#define FIRMWARE_VCN_3_1_2		"amdgpu/vcn_3_1_2.bin"
+#define FIRMWARE_VCN4_0_0		"amdgpu/vcn_4_0_0.bin"
+#define FIRMWARE_VCN4_0_2		"amdgpu/vcn_4_0_2.bin"
+#define FIRMWARE_VCN4_0_3		"amdgpu/vcn_4_0_3.bin"
+#define FIRMWARE_VCN4_0_4		"amdgpu/vcn_4_0_4.bin"
 
 MODULE_FIRMWARE(FIRMWARE_RAVEN);
 MODULE_FIRMWARE(FIRMWARE_PICASSO);
@@ -77,14 +78,29 @@ MODULE_FIRMWARE(FIRMWARE_YELLOW_CARP);
 MODULE_FIRMWARE(FIRMWARE_VCN_3_1_2);
 MODULE_FIRMWARE(FIRMWARE_VCN4_0_0);
 MODULE_FIRMWARE(FIRMWARE_VCN4_0_2);
+MODULE_FIRMWARE(FIRMWARE_VCN4_0_3);
 MODULE_FIRMWARE(FIRMWARE_VCN4_0_4);
 
 static void amdgpu_vcn_idle_work_handler(struct work_struct *work);
 
+int amdgpu_vcn_early_init(struct amdgpu_device *adev)
+{
+	char ucode_prefix[30];
+	char fw_name[40];
+	int r;
+
+	amdgpu_ucode_ip_version_decode(adev, UVD_HWIP, ucode_prefix, sizeof(ucode_prefix));
+	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s.bin", ucode_prefix);
+	r = amdgpu_ucode_request(adev, &adev->vcn.fw, fw_name);
+	if (r)
+		amdgpu_ucode_release(&adev->vcn.fw);
+
+	return r;
+}
+
 int amdgpu_vcn_sw_init(struct amdgpu_device *adev)
 {
 	unsigned long bo_size;
-	const char *fw_name;
 	const struct common_firmware_header *hdr;
 	unsigned char fw_check;
 	unsigned int fw_shared_size, log_offset;
@@ -97,130 +113,26 @@ int amdgpu_vcn_sw_init(struct amdgpu_device *adev)
 	for (i = 0; i < adev->vcn.num_vcn_inst; i++)
 		atomic_set(&adev->vcn.inst[i].dpg_enc_submission_cnt, 0);
 
-	switch (adev->ip_versions[UVD_HWIP][0]) {
-	case IP_VERSION(1, 0, 0):
-	case IP_VERSION(1, 0, 1):
-		if (adev->apu_flags & AMD_APU_IS_RAVEN2)
-			fw_name = FIRMWARE_RAVEN2;
-		else if (adev->apu_flags & AMD_APU_IS_PICASSO)
-			fw_name = FIRMWARE_PICASSO;
-		else
-			fw_name = FIRMWARE_RAVEN;
-		break;
-	case IP_VERSION(2, 5, 0):
-		fw_name = FIRMWARE_ARCTURUS;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(2, 2, 0):
-		if (adev->apu_flags & AMD_APU_IS_RENOIR)
-			fw_name = FIRMWARE_RENOIR;
-		else
-			fw_name = FIRMWARE_GREEN_SARDINE;
+	if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
+	    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
+		adev->vcn.indirect_sram = true;
 
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(2, 6, 0):
-		fw_name = FIRMWARE_ALDEBARAN;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(2, 0, 0):
-		fw_name = FIRMWARE_NAVI10;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(2, 0, 2):
-		if (adev->asic_type == CHIP_NAVI12)
-			fw_name = FIRMWARE_NAVI12;
-		else
-			fw_name = FIRMWARE_NAVI14;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(3, 0, 0):
-	case IP_VERSION(3, 0, 64):
-	case IP_VERSION(3, 0, 192):
-		if (adev->ip_versions[GC_HWIP][0] == IP_VERSION(10, 3, 0))
-			fw_name = FIRMWARE_SIENNA_CICHLID;
-		else
-			fw_name = FIRMWARE_NAVY_FLOUNDER;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(3, 0, 2):
-		fw_name = FIRMWARE_VANGOGH;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(3, 0, 16):
-		fw_name = FIRMWARE_DIMGREY_CAVEFISH;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(3, 0, 33):
-		fw_name = FIRMWARE_BEIGE_GOBY;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(3, 1, 1):
-		fw_name = FIRMWARE_YELLOW_CARP;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(3, 1, 2):
-		fw_name = FIRMWARE_VCN_3_1_2;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-		    (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(4, 0, 0):
-		fw_name = FIRMWARE_VCN4_0_0;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-			(adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(4, 0, 2):
-		fw_name = FIRMWARE_VCN4_0_2;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-			(adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	case IP_VERSION(4, 0, 4):
-		fw_name = FIRMWARE_VCN4_0_4;
-		if ((adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) &&
-			(adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG))
-			adev->vcn.indirect_sram = true;
-		break;
-	default:
-		return -EINVAL;
-	}
+	/*
+	 * Some Steam Deck's BIOS versions are incompatible with the
+	 * indirect SRAM mode, leading to amdgpu being unable to get
+	 * properly probed (and even potentially crashing the kernel).
+	 * Hence, check for these versions here - notice this is
+	 * restricted to Vangogh (Deck's APU).
+	 */
+	if (adev->ip_versions[UVD_HWIP][0] == IP_VERSION(3, 0, 2)) {
+		const char *bios_ver = dmi_get_system_info(DMI_BIOS_VERSION);
 
-	r = request_firmware(&adev->vcn.fw, fw_name, adev->dev);
-	if (r) {
-		dev_err(adev->dev, "amdgpu_vcn: Can't load firmware \"%s\"\n",
-			fw_name);
-		return r;
-	}
-
-	r = amdgpu_ucode_validate(adev->vcn.fw);
-	if (r) {
-		dev_err(adev->dev, "amdgpu_vcn: Can't validate firmware \"%s\"\n",
-			fw_name);
-		release_firmware(adev->vcn.fw);
-		adev->vcn.fw = NULL;
-		return r;
+		if (bios_ver && (!strncmp("F7A0113", bios_ver, 7) ||
+		     !strncmp("F7A0114", bios_ver, 7))) {
+			adev->vcn.indirect_sram = false;
+			dev_info(adev->dev,
+				"Steam Deck quirk: indirect SRAM disabled on BIOS %s\n", bios_ver);
+		}
 	}
 
 	/*
@@ -275,7 +187,7 @@ int amdgpu_vcn_sw_init(struct amdgpu_device *adev)
 	if (adev->firmware.load_type != AMDGPU_FW_LOAD_PSP)
 		bo_size += AMDGPU_GPU_PAGE_ALIGN(le32_to_cpu(hdr->ucode_size_bytes) + 8);
 
-	if (adev->ip_versions[UVD_HWIP][0] >= IP_VERSION(4, 0, 0)){
+	if (adev->ip_versions[UVD_HWIP][0] >= IP_VERSION(4, 0, 0)) {
 		fw_shared_size = AMDGPU_GPU_PAGE_ALIGN(sizeof(struct amdgpu_vcn4_fw_shared));
 		log_offset = offsetof(struct amdgpu_vcn4_fw_shared, fw_log);
 	} else {
@@ -293,8 +205,11 @@ int amdgpu_vcn_sw_init(struct amdgpu_device *adev)
 			continue;
 
 		r = amdgpu_bo_create_kernel(adev, bo_size, PAGE_SIZE,
-						AMDGPU_GEM_DOMAIN_VRAM, &adev->vcn.inst[i].vcpu_bo,
-						&adev->vcn.inst[i].gpu_addr, &adev->vcn.inst[i].cpu_addr);
+					    AMDGPU_GEM_DOMAIN_VRAM |
+					    AMDGPU_GEM_DOMAIN_GTT,
+					    &adev->vcn.inst[i].vcpu_bo,
+					    &adev->vcn.inst[i].gpu_addr,
+					    &adev->vcn.inst[i].cpu_addr);
 		if (r) {
 			dev_err(adev->dev, "(%d) failed to allocate vcn bo\n", r);
 			return r;
@@ -315,8 +230,11 @@ int amdgpu_vcn_sw_init(struct amdgpu_device *adev)
 
 		if (adev->vcn.indirect_sram) {
 			r = amdgpu_bo_create_kernel(adev, 64 * 2 * 4, PAGE_SIZE,
-					AMDGPU_GEM_DOMAIN_VRAM, &adev->vcn.inst[i].dpg_sram_bo,
-					&adev->vcn.inst[i].dpg_sram_gpu_addr, &adev->vcn.inst[i].dpg_sram_cpu_addr);
+					AMDGPU_GEM_DOMAIN_VRAM |
+					AMDGPU_GEM_DOMAIN_GTT,
+					&adev->vcn.inst[i].dpg_sram_bo,
+					&adev->vcn.inst[i].dpg_sram_gpu_addr,
+					&adev->vcn.inst[i].dpg_sram_cpu_addr);
 			if (r) {
 				dev_err(adev->dev, "VCN %d (%d) failed to allocate DPG bo\n", i, r);
 				return r;
@@ -335,11 +253,11 @@ int amdgpu_vcn_sw_fini(struct amdgpu_device *adev)
 		if (adev->vcn.harvest_config & (1 << j))
 			continue;
 
-		if (adev->vcn.indirect_sram) {
-			amdgpu_bo_free_kernel(&adev->vcn.inst[j].dpg_sram_bo,
-						  &adev->vcn.inst[j].dpg_sram_gpu_addr,
-						  (void **)&adev->vcn.inst[j].dpg_sram_cpu_addr);
-		}
+		amdgpu_bo_free_kernel(
+			&adev->vcn.inst[j].dpg_sram_bo,
+			&adev->vcn.inst[j].dpg_sram_gpu_addr,
+			(void **)&adev->vcn.inst[j].dpg_sram_cpu_addr);
+
 		kvfree(adev->vcn.inst[j].saved_bo);
 
 		amdgpu_bo_free_kernel(&adev->vcn.inst[j].vcpu_bo,
@@ -352,7 +270,7 @@ int amdgpu_vcn_sw_fini(struct amdgpu_device *adev)
 			amdgpu_ring_fini(&adev->vcn.inst[j].ring_enc[i]);
 	}
 
-	release_firmware(adev->vcn.fw);
+	amdgpu_ucode_release(&adev->vcn.fw);
 	mutex_destroy(&adev->vcn.vcn1_jpeg1_workaround);
 	mutex_destroy(&adev->vcn.vcn_pg_lock);
 
@@ -376,20 +294,19 @@ bool amdgpu_vcn_is_disabled_vcn(struct amdgpu_device *adev, enum vcn_ring_type t
 	bool ret = false;
 	int vcn_config = adev->vcn.vcn_config[vcn_instance];
 
-	if ((type == VCN_ENCODE_RING) && (vcn_config & VCN_BLOCK_ENCODE_DISABLE_MASK)) {
+	if ((type == VCN_ENCODE_RING) && (vcn_config & VCN_BLOCK_ENCODE_DISABLE_MASK))
 		ret = true;
-	} else if ((type == VCN_DECODE_RING) && (vcn_config & VCN_BLOCK_DECODE_DISABLE_MASK)) {
+	else if ((type == VCN_DECODE_RING) && (vcn_config & VCN_BLOCK_DECODE_DISABLE_MASK))
 		ret = true;
-	} else if ((type == VCN_UNIFIED_RING) && (vcn_config & VCN_BLOCK_QUEUE_DISABLE_MASK)) {
+	else if ((type == VCN_UNIFIED_RING) && (vcn_config & VCN_BLOCK_QUEUE_DISABLE_MASK))
 		ret = true;
-	}
 
 	return ret;
 }
 
 int amdgpu_vcn_suspend(struct amdgpu_device *adev)
 {
-	unsigned size;
+	unsigned int size;
 	void *ptr;
 	int i, idx;
 
@@ -425,7 +342,7 @@ int amdgpu_vcn_suspend(struct amdgpu_device *adev)
 
 int amdgpu_vcn_resume(struct amdgpu_device *adev)
 {
-	unsigned size;
+	unsigned int size;
 	void *ptr;
 	int i, idx;
 
@@ -447,7 +364,7 @@ int amdgpu_vcn_resume(struct amdgpu_device *adev)
 			adev->vcn.inst[i].saved_bo = NULL;
 		} else {
 			const struct common_firmware_header *hdr;
-			unsigned offset;
+			unsigned int offset;
 
 			hdr = (const struct common_firmware_header *)adev->vcn.fw->data;
 			if (adev->firmware.load_type != AMDGPU_FW_LOAD_PSP) {
@@ -478,9 +395,8 @@ static void amdgpu_vcn_idle_work_handler(struct work_struct *work)
 		if (adev->vcn.harvest_config & (1 << j))
 			continue;
 
-		for (i = 0; i < adev->vcn.num_enc_rings; ++i) {
+		for (i = 0; i < adev->vcn.num_enc_rings; ++i)
 			fence[j] += amdgpu_fence_count_emitted(&adev->vcn.inst[j].ring_enc[i]);
-		}
 
 		if (adev->pg_flags & AMD_PG_SUPPORT_VCN_DPG)	{
 			struct dpg_pause_state new_state;
@@ -567,7 +483,7 @@ int amdgpu_vcn_dec_ring_test_ring(struct amdgpu_ring *ring)
 {
 	struct amdgpu_device *adev = ring->adev;
 	uint32_t tmp = 0;
-	unsigned i;
+	unsigned int i;
 	int r;
 
 	/* VCN in SRIOV does not support direct register read/write */
@@ -629,15 +545,16 @@ static int amdgpu_vcn_dec_send_msg(struct amdgpu_ring *ring,
 				   struct amdgpu_ib *ib_msg,
 				   struct dma_fence **fence)
 {
+	u64 addr = AMDGPU_GPU_PAGE_ALIGN(ib_msg->gpu_addr);
 	struct amdgpu_device *adev = ring->adev;
 	struct dma_fence *f = NULL;
 	struct amdgpu_job *job;
 	struct amdgpu_ib *ib;
-	uint64_t addr = AMDGPU_GPU_PAGE_ALIGN(ib_msg->gpu_addr);
 	int i, r;
 
-	r = amdgpu_job_alloc_with_ib(adev, 64,
-					AMDGPU_IB_POOL_DIRECT, &job);
+	r = amdgpu_job_alloc_with_ib(ring->adev, NULL, NULL,
+				     64, AMDGPU_IB_POOL_DIRECT,
+				     &job);
 	if (r)
 		goto err;
 
@@ -816,8 +733,9 @@ static int amdgpu_vcn_dec_sw_send_msg(struct amdgpu_ring *ring,
 	if (sq)
 		ib_size_dw += 8;
 
-	r = amdgpu_job_alloc_with_ib(adev, ib_size_dw * 4,
-				AMDGPU_IB_POOL_DIRECT, &job);
+	r = amdgpu_job_alloc_with_ib(ring->adev, NULL, NULL,
+				     ib_size_dw * 4, AMDGPU_IB_POOL_DIRECT,
+				     &job);
 	if (r)
 		goto err;
 
@@ -902,7 +820,7 @@ int amdgpu_vcn_enc_ring_test_ring(struct amdgpu_ring *ring)
 {
 	struct amdgpu_device *adev = ring->adev;
 	uint32_t rptr;
-	unsigned i;
+	unsigned int i;
 	int r;
 
 	if (amdgpu_sriov_vf(adev))
@@ -945,8 +863,9 @@ static int amdgpu_vcn_enc_get_create_msg(struct amdgpu_ring *ring, uint32_t hand
 	if (sq)
 		ib_size_dw += 8;
 
-	r = amdgpu_job_alloc_with_ib(ring->adev, ib_size_dw * 4,
-					AMDGPU_IB_POOL_DIRECT, &job);
+	r = amdgpu_job_alloc_with_ib(ring->adev, NULL, NULL,
+				     ib_size_dw * 4, AMDGPU_IB_POOL_DIRECT,
+				     &job);
 	if (r)
 		return r;
 
@@ -1011,8 +930,9 @@ static int amdgpu_vcn_enc_get_destroy_msg(struct amdgpu_ring *ring, uint32_t han
 	if (sq)
 		ib_size_dw += 8;
 
-	r = amdgpu_job_alloc_with_ib(ring->adev, ib_size_dw * 4,
-					AMDGPU_IB_POOL_DIRECT, &job);
+	r = amdgpu_job_alloc_with_ib(ring->adev, NULL, NULL,
+				     ib_size_dw * 4, AMDGPU_IB_POOL_DIRECT,
+				     &job);
 	if (r)
 		return r;
 
@@ -1098,11 +1018,14 @@ error:
 
 int amdgpu_vcn_unified_ring_test_ib(struct amdgpu_ring *ring, long timeout)
 {
+	struct amdgpu_device *adev = ring->adev;
 	long r;
 
-	r = amdgpu_vcn_enc_ring_test_ib(ring, timeout);
-	if (r)
-		goto error;
+	if (adev->ip_versions[UVD_HWIP][0] != IP_VERSION(4, 0, 3)) {
+		r = amdgpu_vcn_enc_ring_test_ib(ring, timeout);
+		if (r)
+			goto error;
+	}
 
 	r =  amdgpu_vcn_dec_sw_ring_test_ib(ring, timeout);
 
@@ -1112,7 +1035,7 @@ error:
 
 enum amdgpu_ring_priority_level amdgpu_vcn_get_enc_ring_prio(int ring)
 {
-	switch(ring) {
+	switch (ring) {
 	case 0:
 		return AMDGPU_RING_PRIO_0;
 	case 1:
@@ -1131,6 +1054,7 @@ void amdgpu_vcn_setup_ucode(struct amdgpu_device *adev)
 
 	if (adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) {
 		const struct common_firmware_header *hdr;
+
 		hdr = (const struct common_firmware_header *)adev->vcn.fw->data;
 
 		for (i = 0; i < adev->vcn.num_vcn_inst; i++) {
@@ -1145,7 +1069,10 @@ void amdgpu_vcn_setup_ucode(struct amdgpu_device *adev)
 			adev->firmware.ucode[idx].ucode_id = idx;
 			adev->firmware.ucode[idx].fw = adev->vcn.fw;
 			adev->firmware.fw_size +=
-				roundup2(le32_to_cpu(hdr->ucode_size_bytes), PAGE_SIZE);
+				ALIGN(le32_to_cpu(hdr->ucode_size_bytes), PAGE_SIZE);
+
+			if (adev->ip_versions[UVD_HWIP][0] == IP_VERSION(4, 0, 3))
+				break;
 		}
 		dev_info(adev->dev, "Will use PSP to load VCN firmware\n");
 	}
@@ -1156,7 +1083,7 @@ void amdgpu_vcn_setup_ucode(struct amdgpu_device *adev)
  */
 #if defined(CONFIG_DEBUG_FS)
 static ssize_t amdgpu_debugfs_vcn_fwlog_read(struct file *f, char __user *buf,
-                                             size_t size, loff_t *pos)
+					     size_t size, loff_t *pos)
 {
 	struct amdgpu_vcn_inst *vcn;
 	void *log_buf;
@@ -1202,7 +1129,7 @@ static ssize_t amdgpu_debugfs_vcn_fwlog_read(struct file *f, char __user *buf,
 			if (read_pos == AMDGPU_VCNFW_LOG_SIZE)
 				read_pos = plog->header_size;
 			if (read_num[i] == copy_to_user((buf + read_bytes),
-			                                (log_buf + read_pos), read_num[i]))
+							(log_buf + read_pos), read_num[i]))
 				return -EFAULT;
 
 			read_bytes += read_num[i];
@@ -1223,7 +1150,7 @@ static const struct file_operations amdgpu_debugfs_vcnfwlog_fops = {
 #endif
 
 void amdgpu_debugfs_vcn_fwlog_init(struct amdgpu_device *adev, uint8_t i,
-                                   struct amdgpu_vcn_inst *vcn)
+				   struct amdgpu_vcn_inst *vcn)
 {
 #if defined(CONFIG_DEBUG_FS)
 	struct drm_minor *minor = adev_to_drm(adev)->primary;
@@ -1231,7 +1158,7 @@ void amdgpu_debugfs_vcn_fwlog_init(struct amdgpu_device *adev, uint8_t i,
 	char name[32];
 
 	sprintf(name, "amdgpu_vcn_%d_fwlog", i);
-	debugfs_create_file_size(name, S_IFREG | S_IRUGO, root, vcn,
+	debugfs_create_file_size(name, S_IFREG | 0444, root, vcn,
 				 &amdgpu_debugfs_vcnfwlog_fops,
 				 AMDGPU_VCNFW_LOG_SIZE);
 #endif
@@ -1245,7 +1172,7 @@ void amdgpu_vcn_fwlog_init(struct amdgpu_vcn_inst *vcn)
 	uint64_t fw_log_gpu_addr = vcn->fw_shared.gpu_addr + vcn->fw_shared.mem_size;
 	volatile struct amdgpu_vcn_fwlog *log_buf = fw_log_cpu_addr;
 	volatile struct amdgpu_fw_shared_fw_logging *fw_log = vcn->fw_shared.cpu_addr
-                                                         + vcn->fw_shared.log_offset;
+							 + vcn->fw_shared.log_offset;
 	*flag |= cpu_to_le32(AMDGPU_VCN_FW_LOGGING_FLAG);
 	fw_log->is_enabled = 1;
 	fw_log->addr_lo = cpu_to_le32(fw_log_gpu_addr & 0xFFFFFFFF);
@@ -1272,8 +1199,84 @@ int amdgpu_vcn_process_poison_irq(struct amdgpu_device *adev,
 	if (!ras_if)
 		return 0;
 
-	ih_data.head = *ras_if;
-	amdgpu_ras_interrupt_dispatch(adev, &ih_data);
+	if (!amdgpu_sriov_vf(adev)) {
+		ih_data.head = *ras_if;
+		amdgpu_ras_interrupt_dispatch(adev, &ih_data);
+	} else {
+		if (adev->virt.ops && adev->virt.ops->ras_poison_handler)
+			adev->virt.ops->ras_poison_handler(adev);
+		else
+			dev_warn(adev->dev,
+				"No ras_poison_handler interface in SRIOV for VCN!\n");
+	}
 
 	return 0;
+}
+
+int amdgpu_vcn_ras_late_init(struct amdgpu_device *adev, struct ras_common_if *ras_block)
+{
+	int r, i;
+
+	r = amdgpu_ras_block_late_init(adev, ras_block);
+	if (r)
+		return r;
+
+	if (amdgpu_ras_is_supported(adev, ras_block->block)) {
+		for (i = 0; i < adev->vcn.num_vcn_inst; i++) {
+			if (adev->vcn.harvest_config & (1 << i) ||
+			    !adev->vcn.inst[i].ras_poison_irq.funcs)
+				continue;
+
+			r = amdgpu_irq_get(adev, &adev->vcn.inst[i].ras_poison_irq, 0);
+			if (r)
+				goto late_fini;
+		}
+	}
+	return 0;
+
+late_fini:
+	amdgpu_ras_block_late_fini(adev, ras_block);
+	return r;
+}
+
+int amdgpu_vcn_ras_sw_init(struct amdgpu_device *adev)
+{
+	int err;
+	struct amdgpu_vcn_ras *ras;
+
+	if (!adev->vcn.ras)
+		return 0;
+
+	ras = adev->vcn.ras;
+	err = amdgpu_ras_register_ras_block(adev, &ras->ras_block);
+	if (err) {
+		dev_err(adev->dev, "Failed to register vcn ras block!\n");
+		return err;
+	}
+
+	strlcpy(ras->ras_block.ras_comm.name, "vcn",
+	    sizeof(ras->ras_block.ras_comm.name));
+	ras->ras_block.ras_comm.block = AMDGPU_RAS_BLOCK__VCN;
+	ras->ras_block.ras_comm.type = AMDGPU_RAS_ERROR__POISON;
+	adev->vcn.ras_if = &ras->ras_block.ras_comm;
+
+	if (!ras->ras_block.ras_late_init)
+		ras->ras_block.ras_late_init = amdgpu_vcn_ras_late_init;
+
+	return 0;
+}
+
+int amdgpu_vcn_psp_update_sram(struct amdgpu_device *adev, int inst_idx,
+			       enum AMDGPU_UCODE_ID ucode_id)
+{
+	struct amdgpu_firmware_info ucode = {
+		.ucode_id = (ucode_id ? ucode_id :
+			    (inst_idx ? AMDGPU_UCODE_ID_VCN1_RAM :
+					AMDGPU_UCODE_ID_VCN0_RAM)),
+		.mc_addr = adev->vcn.inst[inst_idx].dpg_sram_gpu_addr,
+		.ucode_size = ((uintptr_t)adev->vcn.inst[inst_idx].dpg_sram_curr_addr -
+			      (uintptr_t)adev->vcn.inst[inst_idx].dpg_sram_cpu_addr),
+	};
+
+	return psp_execute_ip_fw_load(&adev->psp, &ucode);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.22 2024/01/06 12:52:20 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.23 2024/01/16 23:38:13 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -217,7 +217,7 @@ atomic64_add_return(int i, atomic64_t *v)
 	return val;
 }
 
-#define atomic64_inc_return(p)		atomic64_add_return(p, 1)
+#define atomic64_inc_return(p)		atomic64_add_return(1, p)
 
 static inline void
 atomic64_sub(int i, atomic64_t *v)
@@ -426,6 +426,7 @@ find_next_bit(const volatile void *p, int max, int b)
 #define dma_rmb() __membar("dmb oshld")
 #define dma_wmb() __membar("dmb oshst")
 #define dma_mb() __membar("dmb osh")
+#define smp_mb() __membar("dmb ish")
 #elif defined(__arm__)
 #define rmb()	__membar("dsb sy")
 #define wmb()	__membar("dsb sy")
@@ -440,6 +441,7 @@ find_next_bit(const volatile void *p, int max, int b)
 #define mb()	__membar("sync")
 #define smp_rmb()	__membar("lwsync")
 #define smp_wmb()	__membar("lwsync")
+#define smp_mb()	__membar("sync")
 #elif defined(__powerpc__)
 #define rmb()	__membar("sync")
 #define wmb()	__membar("sync")
@@ -480,6 +482,19 @@ find_next_bit(const volatile void *p, int max, int b)
 
 #ifndef smp_store_mb
 #define smp_store_mb(x, v)	do { x = v; mb(); } while (0)
+#endif
+
+#ifndef smp_store_release
+#define smp_store_release(x, v)	do { smp_mb(); WRITE_ONCE(*x, v); } while(0)
+#endif
+
+#ifndef smp_load_acquire
+#define smp_load_acquire(x)			\
+({						\
+	__typeof(*x) _v = READ_ONCE(*x);	\
+	smp_mb();				\
+	_v;					\
+})
 #endif
 
 #endif

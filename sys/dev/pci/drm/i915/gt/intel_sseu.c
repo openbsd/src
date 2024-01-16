@@ -6,6 +6,7 @@
 #include <linux/string_helpers.h>
 
 #include "i915_drv.h"
+#include "i915_perf_types.h"
 #include "intel_engine_regs.h"
 #include "intel_gt_regs.h"
 #include "intel_sseu.h"
@@ -304,7 +305,7 @@ static void gen11_sseu_info_init(struct intel_gt *gt)
 	u8 eu_en;
 	u8 s_en;
 
-	if (IS_JSL_EHL(gt->i915))
+	if (IS_JASPERLAKE(gt->i915) || IS_ELKHARTLAKE(gt->i915))
 		intel_sseu_set_info(sseu, 1, 4, 8);
 	else
 		intel_sseu_set_info(sseu, 1, 8, 8);
@@ -680,8 +681,8 @@ u32 intel_sseu_make_rpcs(struct intel_gt *gt,
 	 * If i915/perf is active, we want a stable powergating configuration
 	 * on the system. Use the configuration pinned by i915/perf.
 	 */
-	if (i915->perf.exclusive_stream)
-		req_sseu = &i915->perf.sseu;
+	if (gt->perf.group && gt->perf.group[PERF_GROUP_OAG].exclusive_stream)
+		req_sseu = &gt->perf.sseu;
 
 	slices = hweight8(req_sseu->slice_mask);
 	subslices = hweight8(req_sseu->subslice_mask);

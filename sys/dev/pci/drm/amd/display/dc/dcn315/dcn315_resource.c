@@ -154,8 +154,6 @@ enum dcn31_clk_src_array_id {
  */
 
 /* DCN */
-/* TODO awful hack. fixup dcn20_dwb.h */
-#undef BASE_INNER
 #define BASE_INNER(seg) DCN_BASE__INST0_SEG ## seg
 
 #define BASE(seg) BASE_INNER(seg)
@@ -187,6 +185,9 @@ enum dcn31_clk_src_array_id {
 #define SRII_DWB(reg_name, temp_name, block, id)\
 	.reg_name[id] = BASE(reg ## block ## id ## _ ## temp_name ## _BASE_IDX) + \
 					reg ## block ## id ## _ ## temp_name
+
+#define SF_DWB2(reg_name, block, id, field_name, post_fix)	\
+	.field_name = reg_name ## __ ## field_name ## post_fix
 
 #define DCCG_SRII(reg_name, block, id)\
 	.block ## _ ## reg_name[id] = BASE(reg ## block ## id ## _ ## reg_name ## _BASE_IDX) + \
@@ -826,8 +827,6 @@ static const struct resource_caps res_cap_dcn31 = {
 
 static const struct dc_plane_cap plane_cap = {
 	.type = DC_PLANE_TYPE_DCN_UNIVERSAL,
-	.blends_with_above = true,
-	.blends_with_below = true,
 	.per_pixel_alpha = true,
 
 	.pixel_format_support = {
@@ -888,31 +887,15 @@ static const struct dc_debug_options debug_defaults_drv = {
 			.afmt = true,
 		}
 	},
+	.enable_legacy_fast_update = true,
 	.psr_power_use_phy_fsm = 0,
-};
-
-static const struct dc_debug_options debug_defaults_diags = {
-	.disable_dmcu = true,
-	.force_abm_enable = false,
-	.timing_trace = true,
-	.clock_trace = true,
-	.disable_dpp_power_gate = true,
-	.disable_hubp_power_gate = true,
-	.disable_clock_gate = true,
-	.disable_pplib_clock_request = true,
-	.disable_pplib_wm_range = true,
-	.disable_stutter = false,
-	.scl_reset_length10 = true,
-	.dwb_fi_phase = -1, // -1 = disable
-	.dmub_command_table = true,
-	.enable_tri_buf = true,
-	.use_max_lb = true
 };
 
 static const struct dc_panel_config panel_config_defaults = {
 	.psr = {
 		.disable_psr = false,
 		.disallow_psrsu = false,
+		.disallow_replay = false,
 	},
 	.ilr = {
 		.optimize_edp_link_rate = true,
@@ -1343,13 +1326,6 @@ static struct dce_hwseq *dcn31_hwseq_create(
 		hws->regs = &hwseq_reg;
 		hws->shifts = &hwseq_shift;
 		hws->masks = &hwseq_mask;
-		/* DCN3.1 FPGA Workaround
-		 * Need to enable HPO DP Stream Encoder before setting OTG master enable.
-		 * To do so, move calling function enable_stream_timing to only be done AFTER calling
-		 * function core_link_enable_stream
-		 */
-		if (IS_FPGA_MAXIMUS_DC(ctx->dce_environment))
-			hws->wa.dp_hpo_and_otg_sequence = true;
 	}
 	return hws;
 }
@@ -1357,15 +1333,6 @@ static const struct resource_create_funcs res_create_funcs = {
 	.read_dce_straps = read_dce_straps,
 	.create_audio = dcn31_create_audio,
 	.create_stream_encoder = dcn315_stream_encoder_create,
-	.create_hpo_dp_stream_encoder = dcn31_hpo_dp_stream_encoder_create,
-	.create_hpo_dp_link_encoder = dcn31_hpo_dp_link_encoder_create,
-	.create_hwseq = dcn31_hwseq_create,
-};
-
-static const struct resource_create_funcs res_create_maximus_funcs = {
-	.read_dce_straps = NULL,
-	.create_audio = NULL,
-	.create_stream_encoder = NULL,
 	.create_hpo_dp_stream_encoder = dcn31_hpo_dp_stream_encoder_create,
 	.create_hpo_dp_link_encoder = dcn31_hpo_dp_link_encoder_create,
 	.create_hwseq = dcn31_hwseq_create,
@@ -1630,6 +1597,7 @@ static struct clock_source *dcn31_clock_source_create(
 		return &clk_src->base;
 	}
 
+	kfree(clk_src);
 	BREAK_TO_DEBUGGER();
 	return NULL;
 }
@@ -1643,7 +1611,7 @@ static int source_format_to_bpp (enum source_format_class SourcePixelFormat)
 {
 	if (SourcePixelFormat == dm_444_64)
 		return 8;
-	else if (SourcePixelFormat == dm_444_16 || SourcePixelFormat == dm_444_16)
+	else if (SourcePixelFormat == dm_444_16)
 		return 2;
 	else if (SourcePixelFormat == dm_444_8)
 		return 1;
@@ -1670,6 +1638,14 @@ static bool allow_pixel_rate_crb(struct dc *dc, struct dc_state *context)
 		if (!res_ctx->pipe_ctx[i].stream)
 			continue;
 
+		/*Don't apply if scaling*/
+		if (res_ctx->pipe_ctx[i].stream->src.width != res_ctx->pipe_ctx[i].stream->dst.width ||
+				res_ctx->pipe_ctx[i].stream->src.height != res_ctx->pipe_ctx[i].stream->dst.height ||
+				(res_ctx->pipe_ctx[i].plane_state && (res_ctx->pipe_ctx[i].plane_state->src_rect.width
+														!= res_ctx->pipe_ctx[i].plane_state->dst_rect.width ||
+					res_ctx->pipe_ctx[i].plane_state->src_rect.height
+														!= res_ctx->pipe_ctx[i].plane_state->dst_rect.height)))
+			return false;
 		/*Don't apply if MPO to avoid transition issues*/
 		if (res_ctx->pipe_ctx[i].top_pipe && res_ctx->pipe_ctx[i].top_pipe->plane_state != res_ctx->pipe_ctx[i].plane_state)
 			return false;
@@ -1684,13 +1660,13 @@ static int dcn315_populate_dml_pipes_from_context(
 {
 	int i, pipe_cnt, crb_idx, crb_pipes;
 	struct resource_context *res_ctx = &context->res_ctx;
-	struct pipe_ctx *pipe;
+	struct pipe_ctx *pipe = NULL;
 	const int max_usable_det = context->bw_ctx.dml.ip.config_return_buffer_size_in_kbytes - DCN3_15_MIN_COMPBUF_SIZE_KB;
 	int remaining_det_segs = max_usable_det / DCN3_15_CRB_SEGMENT_SIZE_KB;
 	bool pixel_rate_crb = allow_pixel_rate_crb(dc, context);
 
 	DC_FP_START();
-	dcn20_populate_dml_pipes_from_context(dc, context, pipes, fast_validate);
+	dcn31x_populate_dml_pipes_from_context(dc, context, pipes, fast_validate);
 	DC_FP_END();
 
 	for (i = 0, pipe_cnt = 0, crb_pipes = 0; i < dc->res_pool->pipe_count; i++) {
@@ -1709,7 +1685,6 @@ static int dcn315_populate_dml_pipes_from_context(
 		pipes[pipe_cnt].pipe.src.immediate_flip = true;
 
 		pipes[pipe_cnt].pipe.src.unbounded_req_mode = false;
-		pipes[pipe_cnt].pipe.src.gpuvm = true;
 		pipes[pipe_cnt].pipe.dest.vfront_porch = timing->v_front_porch;
 		pipes[pipe_cnt].pipe.src.dcc_rate = 3;
 		pipes[pipe_cnt].dout.dsc_input_bpc = 0;
@@ -1720,10 +1695,15 @@ static int dcn315_populate_dml_pipes_from_context(
 			/* Ceil to crb segment size */
 			int approx_det_segs_required_for_pstate = dcn_get_approx_det_segs_required_for_pstate(
 					&context->bw_ctx.dml.soc, timing->pix_clk_100hz, bpp, DCN3_15_CRB_SEGMENT_SIZE_KB);
+
 			if (approx_det_segs_required_for_pstate <= 2 * DCN3_15_MAX_DET_SEGS) {
 				bool split_required = approx_det_segs_required_for_pstate > DCN3_15_MAX_DET_SEGS;
 				split_required = split_required || timing->pix_clk_100hz >= dcn_get_max_non_odm_pix_rate_100hz(&dc->dml.soc);
 				split_required = split_required || (pipe->plane_state && pipe->plane_state->src_rect.width > 5120);
+
+				/* Minimum 2 segments to allow mpc/odm combine if its used later */
+				if (approx_det_segs_required_for_pstate < 2)
+					approx_det_segs_required_for_pstate = 2;
 				if (split_required)
 					approx_det_segs_required_for_pstate += approx_det_segs_required_for_pstate % 2;
 				pipes[pipe_cnt].pipe.src.det_size_override = approx_det_segs_required_for_pstate;
@@ -1763,6 +1743,7 @@ static int dcn315_populate_dml_pipes_from_context(
 			/* Do not use asymetric crb if not enough for pstate support */
 			if (remaining_det_segs < 0) {
 				pipes[pipe_cnt].pipe.src.det_size_override = 0;
+				pipe_cnt++;
 				continue;
 			}
 
@@ -1837,7 +1818,7 @@ static struct resource_funcs dcn315_res_pool_funcs = {
 	.calculate_wm_and_dlg = dcn31_calculate_wm_and_dlg,
 	.update_soc_for_wm_a = dcn315_update_soc_for_wm_a,
 	.populate_dml_pipes = dcn315_populate_dml_pipes_from_context,
-	.acquire_idle_pipe_for_layer = dcn20_acquire_idle_pipe_for_layer,
+	.acquire_free_pipe_as_secondary_dpp_pipe = dcn20_acquire_free_pipe_for_layer,
 	.add_stream_to_ctx = dcn30_add_stream_to_ctx,
 	.add_dsc_to_stream_resource = dcn20_add_dsc_to_stream_resource,
 	.remove_stream_from_ctx = dcn20_remove_stream_from_ctx,
@@ -1883,6 +1864,8 @@ static bool dcn315_resource_construct(
 	dc->caps.max_slave_rgb_planes = 2;
 	dc->caps.post_blend_color_processing = true;
 	dc->caps.force_dp_tps4_for_cp2520 = true;
+	if (dc->config.forceHBR2CP2520)
+		dc->caps.force_dp_tps4_for_cp2520 = false;
 	dc->caps.dp_hpo = true;
 	dc->caps.dp_hdmi21_pcon_support = true;
 	dc->caps.edp_dsc_support = true;
@@ -1942,10 +1925,7 @@ static bool dcn315_resource_construct(
 
 	if (dc->ctx->dce_environment == DCE_ENV_PRODUCTION_DRV)
 		dc->debug = debug_defaults_drv;
-	else if (dc->ctx->dce_environment == DCE_ENV_FPGA_MAXIMUS) {
-		dc->debug = debug_defaults_diags;
-	} else
-		dc->debug = debug_defaults_diags;
+
 	// Init the vm_helper
 	if (dc->vm_helper)
 		vm_helper_init(dc->vm_helper, 16);
@@ -2126,9 +2106,8 @@ static bool dcn315_resource_construct(
 
 	/* Audio, Stream Encoders including HPO and virtual, MPC 3D LUTs */
 	if (!resource_construct(num_virtual_links, dc, &pool->base,
-			(!IS_FPGA_MAXIMUS_DC(dc->ctx->dce_environment) ?
-			&res_create_funcs : &res_create_maximus_funcs)))
-			goto create_fail;
+			&res_create_funcs))
+		goto create_fail;
 
 	/* HW Sequencer and Plane caps */
 	dcn31_hw_sequencer_construct(dc);

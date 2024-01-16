@@ -213,7 +213,7 @@ static int uvd_v7_0_enc_ring_test_ring(struct amdgpu_ring *ring)
  *
  * Open up a stream for HW test
  */
-static int uvd_v7_0_enc_get_create_msg(struct amdgpu_ring *ring, uint32_t handle,
+static int uvd_v7_0_enc_get_create_msg(struct amdgpu_ring *ring, u32 handle,
 				       struct amdgpu_bo *bo,
 				       struct dma_fence **fence)
 {
@@ -224,8 +224,8 @@ static int uvd_v7_0_enc_get_create_msg(struct amdgpu_ring *ring, uint32_t handle
 	uint64_t addr;
 	int i, r;
 
-	r = amdgpu_job_alloc_with_ib(ring->adev, ib_size_dw * 4,
-					AMDGPU_IB_POOL_DIRECT, &job);
+	r = amdgpu_job_alloc_with_ib(ring->adev, NULL, NULL, ib_size_dw * 4,
+				     AMDGPU_IB_POOL_DIRECT, &job);
 	if (r)
 		return r;
 
@@ -276,7 +276,7 @@ err:
  *
  * Close up a stream for HW test or if userspace failed to do so
  */
-static int uvd_v7_0_enc_get_destroy_msg(struct amdgpu_ring *ring, uint32_t handle,
+static int uvd_v7_0_enc_get_destroy_msg(struct amdgpu_ring *ring, u32 handle,
 					struct amdgpu_bo *bo,
 					struct dma_fence **fence)
 {
@@ -287,8 +287,8 @@ static int uvd_v7_0_enc_get_destroy_msg(struct amdgpu_ring *ring, uint32_t handl
 	uint64_t addr;
 	int i, r;
 
-	r = amdgpu_job_alloc_with_ib(ring->adev, ib_size_dw * 4,
-					AMDGPU_IB_POOL_DIRECT, &job);
+	r = amdgpu_job_alloc_with_ib(ring->adev, NULL, NULL, ib_size_dw * 4,
+				     AMDGPU_IB_POOL_DIRECT, &job);
 	if (r)
 		return r;
 
@@ -428,13 +428,13 @@ static int uvd_v7_0_sw_init(void *handle)
 		adev->firmware.ucode[AMDGPU_UCODE_ID_UVD].ucode_id = AMDGPU_UCODE_ID_UVD;
 		adev->firmware.ucode[AMDGPU_UCODE_ID_UVD].fw = adev->uvd.fw;
 		adev->firmware.fw_size +=
-			roundup2(le32_to_cpu(hdr->ucode_size_bytes), PAGE_SIZE);
+			ALIGN(le32_to_cpu(hdr->ucode_size_bytes), PAGE_SIZE);
 
 		if (adev->uvd.num_uvd_inst == UVD7_MAX_HW_INSTANCES_VEGA20) {
 			adev->firmware.ucode[AMDGPU_UCODE_ID_UVD1].ucode_id = AMDGPU_UCODE_ID_UVD1;
 			adev->firmware.ucode[AMDGPU_UCODE_ID_UVD1].fw = adev->uvd.fw;
 			adev->firmware.fw_size +=
-				roundup2(le32_to_cpu(hdr->ucode_size_bytes), PAGE_SIZE);
+				ALIGN(le32_to_cpu(hdr->ucode_size_bytes), PAGE_SIZE);
 		}
 		DRM_INFO("PSP loading UVD firmware\n");
 	}
@@ -444,6 +444,7 @@ static int uvd_v7_0_sw_init(void *handle)
 			continue;
 		if (!amdgpu_sriov_vf(adev)) {
 			ring = &adev->uvd.inst[j].ring;
+			ring->vm_hub = AMDGPU_MMHUB0(0);
 			snprintf(ring->name, sizeof(ring->name), "uvd_%d", ring->me);
 			r = amdgpu_ring_init(adev, ring, 512,
 					     &adev->uvd.inst[j].irq, 0,
@@ -454,6 +455,7 @@ static int uvd_v7_0_sw_init(void *handle)
 
 		for (i = 0; i < adev->uvd.num_enc_rings; ++i) {
 			ring = &adev->uvd.inst[j].ring_enc[i];
+			ring->vm_hub = AMDGPU_MMHUB0(0);
 			snprintf(ring->name, sizeof(ring->name), "uvd_enc_%d.%d", ring->me, i);
 			if (amdgpu_sriov_vf(adev)) {
 				ring->use_doorbell = true;
@@ -677,11 +679,11 @@ static void uvd_v7_0_mc_resume(struct amdgpu_device *adev)
 		if (adev->firmware.load_type == AMDGPU_FW_LOAD_PSP) {
 			WREG32_SOC15(UVD, i, mmUVD_LMI_VCPU_CACHE_64BIT_BAR_LOW,
 				i == 0 ?
-				adev->firmware.ucode[AMDGPU_UCODE_ID_UVD].tmr_mc_addr_lo:
+				adev->firmware.ucode[AMDGPU_UCODE_ID_UVD].tmr_mc_addr_lo :
 				adev->firmware.ucode[AMDGPU_UCODE_ID_UVD1].tmr_mc_addr_lo);
 			WREG32_SOC15(UVD, i, mmUVD_LMI_VCPU_CACHE_64BIT_BAR_HIGH,
 				i == 0 ?
-				adev->firmware.ucode[AMDGPU_UCODE_ID_UVD].tmr_mc_addr_hi:
+				adev->firmware.ucode[AMDGPU_UCODE_ID_UVD].tmr_mc_addr_hi :
 				adev->firmware.ucode[AMDGPU_UCODE_ID_UVD1].tmr_mc_addr_hi);
 			WREG32_SOC15(UVD, i, mmUVD_VCPU_CACHE_OFFSET0, 0);
 			offset = 0;
@@ -1397,7 +1399,7 @@ static void uvd_v7_0_ring_emit_reg_wait(struct amdgpu_ring *ring, uint32_t reg,
 static void uvd_v7_0_ring_emit_vm_flush(struct amdgpu_ring *ring,
 					unsigned vmid, uint64_t pd_addr)
 {
-	struct amdgpu_vmhub *hub = &ring->adev->vmhub[ring->funcs->vmhub];
+	struct amdgpu_vmhub *hub = &ring->adev->vmhub[ring->vm_hub];
 	uint32_t data0, data1, mask;
 
 	pd_addr = amdgpu_gmc_emit_flush_gpu_tlb(ring, vmid, pd_addr);
@@ -1440,7 +1442,7 @@ static void uvd_v7_0_enc_ring_emit_reg_wait(struct amdgpu_ring *ring,
 static void uvd_v7_0_enc_ring_emit_vm_flush(struct amdgpu_ring *ring,
 					    unsigned int vmid, uint64_t pd_addr)
 {
-	struct amdgpu_vmhub *hub = &ring->adev->vmhub[ring->funcs->vmhub];
+	struct amdgpu_vmhub *hub = &ring->adev->vmhub[ring->vm_hub];
 
 	pd_addr = amdgpu_gmc_emit_flush_gpu_tlb(ring, vmid, pd_addr);
 
@@ -1802,7 +1804,6 @@ static const struct amdgpu_ring_funcs uvd_v7_0_ring_vm_funcs = {
 	.align_mask = 0xf,
 	.support_64bit_ptrs = false,
 	.no_user_fence = true,
-	.vmhub = AMDGPU_MMHUB_0,
 	.get_rptr = uvd_v7_0_ring_get_rptr,
 	.get_wptr = uvd_v7_0_ring_get_wptr,
 	.set_wptr = uvd_v7_0_ring_set_wptr,
@@ -1835,7 +1836,6 @@ static const struct amdgpu_ring_funcs uvd_v7_0_enc_ring_vm_funcs = {
 	.nop = HEVC_ENC_CMD_NO_OP,
 	.support_64bit_ptrs = false,
 	.no_user_fence = true,
-	.vmhub = AMDGPU_MMHUB_0,
 	.get_rptr = uvd_v7_0_enc_ring_get_rptr,
 	.get_wptr = uvd_v7_0_enc_ring_get_wptr,
 	.set_wptr = uvd_v7_0_enc_ring_set_wptr,
@@ -1908,8 +1908,7 @@ static void uvd_v7_0_set_irq_funcs(struct amdgpu_device *adev)
 	}
 }
 
-const struct amdgpu_ip_block_version uvd_v7_0_ip_block =
-{
+const struct amdgpu_ip_block_version uvd_v7_0_ip_block = {
 		.type = AMD_IP_BLOCK_TYPE_UVD,
 		.major = 7,
 		.minor = 0,

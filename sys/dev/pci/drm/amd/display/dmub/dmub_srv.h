@@ -126,7 +126,19 @@ enum dmub_notification_type {
 	DMUB_NOTIFICATION_HPD,
 	DMUB_NOTIFICATION_HPD_IRQ,
 	DMUB_NOTIFICATION_SET_CONFIG_REPLY,
+	DMUB_NOTIFICATION_DPIA_NOTIFICATION,
 	DMUB_NOTIFICATION_MAX
+};
+
+/**
+ * DPIA NOTIFICATION Response Type
+ */
+enum dpia_notify_bw_alloc_status {
+
+	DPIA_BW_REQ_FAILED = 0,
+	DPIA_BW_REQ_SUCCESS,
+	DPIA_EST_BW_CHANGED,
+	DPIA_BW_ALLOC_CAPS_CHANGED
 };
 
 /**
@@ -255,6 +267,8 @@ struct dmub_srv_hw_params {
 	bool usb4_cm_version;
 	bool fw_in_system_memory;
 	bool dpia_hpd_int_enable_supported;
+	bool disable_clock_gate;
+	bool disallow_dispclk_dppclk_ds;
 };
 
 /**
@@ -263,7 +277,7 @@ struct dmub_srv_hw_params {
  */
 struct dmub_diagnostic_data {
 	uint32_t dmcub_version;
-	uint32_t scratch[16];
+	uint32_t scratch[17];
 	uint32_t pc;
 	uint32_t undefined_address_fault_addr;
 	uint32_t inst_fetch_fault_addr;
@@ -274,6 +288,7 @@ struct dmub_diagnostic_data {
 	uint32_t inbox0_rptr;
 	uint32_t inbox0_wptr;
 	uint32_t inbox0_size;
+	uint32_t gpint_datain0;
 	uint8_t is_dmcub_enabled : 1;
 	uint8_t is_dmcub_soft_reset : 1;
 	uint8_t is_dmcub_secure_reset : 1;
@@ -362,7 +377,6 @@ struct dmub_srv_hw_funcs {
 
 	bool (*is_hw_init)(struct dmub_srv *dmub);
 
-	bool (*is_phy_init)(struct dmub_srv *dmub);
 	void (*enable_dmub_boot_options)(struct dmub_srv *dmub,
 				const struct dmub_srv_hw_params *params);
 
@@ -370,6 +384,7 @@ struct dmub_srv_hw_funcs {
 
 	union dmub_fw_boot_status (*get_fw_status)(struct dmub_srv *dmub);
 
+	union dmub_fw_boot_options (*get_fw_boot_option)(struct dmub_srv *dmub);
 
 	void (*set_gpint)(struct dmub_srv *dmub,
 			  union dmub_gpint_data_register reg);
@@ -463,6 +478,7 @@ struct dmub_srv {
  * @pending_notification: Indicates there are other pending notifications
  * @aux_reply: aux reply
  * @hpd_status: hpd status
+ * @bw_alloc_reply: BW Allocation reply from CM/DPIA
  */
 struct dmub_notification {
 	enum dmub_notification_type type;
@@ -473,6 +489,10 @@ struct dmub_notification {
 		struct aux_reply_data aux_reply;
 		enum dp_hpd_status hpd_status;
 		enum set_config_status sc_status;
+		/**
+		 * DPIA notification command.
+		 */
+		struct dmub_rb_cmd_dpia_notification dpia_notification;
 	};
 };
 
@@ -765,8 +785,14 @@ void dmub_flush_buffer_mem(const struct dmub_fb *fb);
 enum dmub_status dmub_srv_get_fw_boot_status(struct dmub_srv *dmub,
 					     union dmub_fw_boot_status *status);
 
+enum dmub_status dmub_srv_get_fw_boot_option(struct dmub_srv *dmub,
+					     union dmub_fw_boot_options *option);
+
 enum dmub_status dmub_srv_cmd_with_reply_data(struct dmub_srv *dmub,
 					      union dmub_rb_cmd *cmd);
+
+enum dmub_status dmub_srv_set_skip_panel_power_sequence(struct dmub_srv *dmub,
+					     bool skip);
 
 bool dmub_srv_get_outbox0_msg(struct dmub_srv *dmub, struct dmcub_trace_buf_entry *entry);
 

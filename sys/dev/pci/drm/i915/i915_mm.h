@@ -9,7 +9,9 @@
 #include <linux/bug.h>
 #include <linux/types.h>
 
+#ifdef __linux__
 struct vm_area_struct;
+#endif
 struct io_mapping;
 struct scatterlist;
 
@@ -30,8 +32,10 @@ int remap_io_mapping(struct vm_area_struct *vma,
 #endif
 #endif /* notyet */
 
+#ifdef __linux__
 int remap_io_sg(struct vm_area_struct *vma,
 		unsigned long addr, unsigned long size,
 		struct scatterlist *sgl, resource_size_t iobase);
+#endif
 
 #endif /* __I915_MM_H__ */

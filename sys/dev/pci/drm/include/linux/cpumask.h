@@ -6,5 +6,6 @@
 #include <linux/kernel.h>
 #include <linux/bitmap.h>
 #include <linux/bug.h>
+#include <linux/numa.h>
 
 #endif

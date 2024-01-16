@@ -1597,9 +1597,9 @@ bool amdgpu_atombios_scratch_need_asic_init(struct amdgpu_device *adev)
  * data to or from atom. Note that atom operates on dw units.
  *
  * Use to_le=true when sending data to atom and provide at least
- * roundup2(num_bytes,4) bytes in the dst buffer.
+ * ALIGN(num_bytes,4) bytes in the dst buffer.
  *
- * Use to_le=false when receiving data from atom and provide roundup2(num_bytes,4)
+ * Use to_le=false when receiving data from atom and provide ALIGN(num_bytes,4)
  * byes in the src buffer.
  */
 void amdgpu_atombios_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
@@ -1607,7 +1607,7 @@ void amdgpu_atombios_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
 #ifdef __BIG_ENDIAN
 	u32 src_tmp[5], dst_tmp[5];
 	int i;
-	u8 align_num_bytes = roundup2(num_bytes, 4);
+	u8 align_num_bytes = ALIGN(num_bytes, 4);
 
 	if (to_le) {
 		memcpy(src_tmp, src, num_bytes);
@@ -1776,7 +1776,7 @@ static ssize_t amdgpu_atombios_get_vbios_version(struct device *dev,
 	struct amdgpu_device *adev = drm_to_adev(ddev);
 	struct atom_context *ctx = adev->mode_info.atom_context;
 
-	return sysfs_emit(buf, "%s\n", ctx->vbios_version);
+	return sysfs_emit(buf, "%s\n", ctx->vbios_pn);
 }
 
 static DEVICE_ATTR(vbios_version, 0444, amdgpu_atombios_get_vbios_version,
@@ -1790,6 +1790,15 @@ static struct attribute *amdgpu_vbios_version_attrs[] = {
 const struct attribute_group amdgpu_vbios_version_attr_group = {
 	.attrs = amdgpu_vbios_version_attrs
 };
+
+int amdgpu_atombios_sysfs_init(struct amdgpu_device *adev)
+{
+	if (adev->mode_info.atom_context)
+		return devm_device_add_group(adev->dev,
+					     &amdgpu_vbios_version_attr_group);
+
+	return 0;
+}
 
 /**
  * amdgpu_atombios_fini - free the driver info and callbacks for atombios

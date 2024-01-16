@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdwhdmi.c,v 1.6 2022/04/06 18:59:28 naddy Exp $ */
+/* $OpenBSD: rkdwhdmi.c,v 1.7 2024/01/16 23:37:50 jsg Exp $ */
 /* $NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
 
 /*-
@@ -42,6 +42,7 @@
 #include <dev/ofw/fdt.h>
 
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_atomic_helper.h>
 
 #include <dev/ic/dwhdmi.h>
 

@@ -31,6 +31,7 @@ struct attribute_group {
 #define sysfs_remove_file_from_group(x, y, z)
 #define sysfs_create_files(x, y)	0
 #define sysfs_remove_files(x, y)
+#define sysfs_bin_attr_init(x)
 
 static inline int
 sysfs_emit(char *str, const char *format, ...)

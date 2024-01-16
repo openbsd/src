@@ -654,9 +654,11 @@ void intel_runtime_pm_init_early(struct intel_runtime_pm *rpm)
 	rpm->kdev = kdev;
 #endif
 	rpm->available = HAS_RUNTIME_PM(i915);
+	rpm->suspended = false;
+	atomic_set(&rpm->wakeref_count, 0);
 
 	init_intel_runtime_pm_wakeref(rpm);
 	INIT_LIST_HEAD(&rpm->lmem_userfault_list);
 	mtx_init(&rpm->lmem_userfault_lock, IPL_NONE);
-	intel_wakeref_auto_init(&rpm->userfault_wakeref, rpm);
+	intel_wakeref_auto_init(&rpm->userfault_wakeref, i915);
 }

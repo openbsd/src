@@ -153,6 +153,24 @@ static const struct amdgpu_video_codecs rn_video_codecs_decode =
 	.codec_array = rn_video_codecs_decode_array,
 };
 
+static const struct amdgpu_video_codec_info vcn_4_0_3_video_codecs_decode_array[] = {
+	{codec_info_build(AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_MPEG4_AVC, 4096, 4096, 52)},
+	{codec_info_build(AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_HEVC, 8192, 4352, 186)},
+	{codec_info_build(AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_JPEG, 4096, 4096, 0)},
+	{codec_info_build(AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_VP9, 8192, 4352, 0)},
+	{codec_info_build(AMDGPU_INFO_VIDEO_CAPS_CODEC_IDX_AV1, 8192, 4352, 0)},
+};
+
+static const struct amdgpu_video_codecs vcn_4_0_3_video_codecs_decode = {
+	.codec_count = ARRAY_SIZE(vcn_4_0_3_video_codecs_decode_array),
+	.codec_array = vcn_4_0_3_video_codecs_decode_array,
+};
+
+static const struct amdgpu_video_codecs vcn_4_0_3_video_codecs_encode = {
+	.codec_count = 0,
+	.codec_array = NULL,
+};
+
 static int soc15_query_video_codecs(struct amdgpu_device *adev, bool encode,
 				    const struct amdgpu_video_codecs **codecs)
 {
@@ -185,51 +203,16 @@ static int soc15_query_video_codecs(struct amdgpu_device *adev, bool encode,
 			else
 				*codecs = &rn_video_codecs_decode;
 			return 0;
+		case IP_VERSION(4, 0, 3):
+			if (encode)
+				*codecs = &vcn_4_0_3_video_codecs_encode;
+			else
+				*codecs = &vcn_4_0_3_video_codecs_decode;
+			return 0;
 		default:
 			return -EINVAL;
 		}
 	}
-}
-
-/*
- * Indirect registers accessor
- */
-static u32 soc15_pcie_rreg(struct amdgpu_device *adev, u32 reg)
-{
-	unsigned long address, data;
-	address = adev->nbio.funcs->get_pcie_index_offset(adev);
-	data = adev->nbio.funcs->get_pcie_data_offset(adev);
-
-	return amdgpu_device_indirect_rreg(adev, address, data, reg);
-}
-
-static void soc15_pcie_wreg(struct amdgpu_device *adev, u32 reg, u32 v)
-{
-	unsigned long address, data;
-
-	address = adev->nbio.funcs->get_pcie_index_offset(adev);
-	data = adev->nbio.funcs->get_pcie_data_offset(adev);
-
-	amdgpu_device_indirect_wreg(adev, address, data, reg, v);
-}
-
-static u64 soc15_pcie_rreg64(struct amdgpu_device *adev, u32 reg)
-{
-	unsigned long address, data;
-	address = adev->nbio.funcs->get_pcie_index_offset(adev);
-	data = adev->nbio.funcs->get_pcie_data_offset(adev);
-
-	return amdgpu_device_indirect_rreg64(adev, address, data, reg);
-}
-
-static void soc15_pcie_wreg64(struct amdgpu_device *adev, u32 reg, u64 v)
-{
-	unsigned long address, data;
-
-	address = adev->nbio.funcs->get_pcie_index_offset(adev);
-	data = adev->nbio.funcs->get_pcie_data_offset(adev);
-
-	amdgpu_device_indirect_wreg64(adev, address, data, reg, v);
 }
 
 static u32 soc15_uvd_ctx_rreg(struct amdgpu_device *adev, u32 reg)
@@ -342,7 +325,8 @@ static u32 soc15_get_xclk(struct amdgpu_device *adev)
 	u32 reference_clock = adev->clock.spll.reference_freq;
 
 	if (adev->ip_versions[MP1_HWIP][0] == IP_VERSION(12, 0, 0) ||
-	    adev->ip_versions[MP1_HWIP][0] == IP_VERSION(12, 0, 1))
+	    adev->ip_versions[MP1_HWIP][0] == IP_VERSION(12, 0, 1) ||
+	    adev->ip_versions[MP1_HWIP][0] == IP_VERSION(13, 0, 6))
 		return 10000;
 	if (adev->ip_versions[MP1_HWIP][0] == IP_VERSION(10, 0, 0) ||
 	    adev->ip_versions[MP1_HWIP][0] == IP_VERSION(10, 0, 1))
@@ -353,7 +337,7 @@ static u32 soc15_get_xclk(struct amdgpu_device *adev)
 
 
 void soc15_grbm_select(struct amdgpu_device *adev,
-		     u32 me, u32 pipe, u32 queue, u32 vmid)
+		     u32 me, u32 pipe, u32 queue, u32 vmid, int xcc_id)
 {
 	u32 grbm_gfx_cntl = 0;
 	grbm_gfx_cntl = REG_SET_FIELD(grbm_gfx_cntl, GRBM_GFX_CNTL, PIPEID, pipe);
@@ -361,12 +345,7 @@ void soc15_grbm_select(struct amdgpu_device *adev,
 	grbm_gfx_cntl = REG_SET_FIELD(grbm_gfx_cntl, GRBM_GFX_CNTL, VMID, vmid);
 	grbm_gfx_cntl = REG_SET_FIELD(grbm_gfx_cntl, GRBM_GFX_CNTL, QUEUEID, queue);
 
-	WREG32_SOC15_RLC_SHADOW(GC, 0, mmGRBM_GFX_CNTL, grbm_gfx_cntl);
-}
-
-static void soc15_vga_set_state(struct amdgpu_device *adev, bool state)
-{
-	/* todo */
+	WREG32_SOC15_RLC_SHADOW(GC, xcc_id, mmGRBM_GFX_CNTL, grbm_gfx_cntl);
 }
 
 static bool soc15_read_disabled_bios(struct amdgpu_device *adev)
@@ -405,12 +384,12 @@ static uint32_t soc15_read_indexed_register(struct amdgpu_device *adev, u32 se_n
 
 	mutex_lock(&adev->grbm_idx_mutex);
 	if (se_num != 0xffffffff || sh_num != 0xffffffff)
-		amdgpu_gfx_select_se_sh(adev, se_num, sh_num, 0xffffffff);
+		amdgpu_gfx_select_se_sh(adev, se_num, sh_num, 0xffffffff, 0);
 
 	val = RREG32(reg_offset);
 
 	if (se_num != 0xffffffff || sh_num != 0xffffffff)
-		amdgpu_gfx_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff);
+		amdgpu_gfx_select_se_sh(adev, 0xffffffff, 0xffffffff, 0xffffffff, 0);
 	mutex_unlock(&adev->grbm_idx_mutex);
 	return val;
 }
@@ -574,6 +553,17 @@ soc15_asic_reset_method(struct amdgpu_device *adev)
 		if (connected_to_cpu)
 			return AMD_RESET_METHOD_MODE2;
 		break;
+	case IP_VERSION(13, 0, 6):
+		/* Use gpu_recovery param to target a reset method.
+		 * Enable triggering of GPU reset only if specified
+		 * by module parameter.
+		 */
+		if (amdgpu_gpu_recovery == 4 || amdgpu_gpu_recovery == 5)
+			return AMD_RESET_METHOD_MODE2;
+		else if (!(adev->flags & AMD_IS_APU))
+			return AMD_RESET_METHOD_MODE1;
+		else
+			return AMD_RESET_METHOD_MODE2;
 	default:
 		break;
 	}
@@ -651,24 +641,6 @@ static int soc15_set_vce_clocks(struct amdgpu_device *adev, u32 evclk, u32 ecclk
 	return 0;
 }
 
-static void soc15_pcie_gen3_enable(struct amdgpu_device *adev)
-{
-	if (pci_is_root_bus(adev->pdev->bus))
-		return;
-
-	if (amdgpu_pcie_gen2 == 0)
-		return;
-
-	if (adev->flags & AMD_IS_APU)
-		return;
-
-	if (!(adev->pm.pcie_gen_mask & (CAIL_PCIE_LINK_SPEED_SUPPORT_GEN2 |
-					CAIL_PCIE_LINK_SPEED_SUPPORT_GEN3)))
-		return;
-
-	/* todo */
-}
-
 static void soc15_program_aspm(struct amdgpu_device *adev)
 {
 	if (!amdgpu_device_should_use_aspm(adev))
@@ -679,13 +651,6 @@ static void soc15_program_aspm(struct amdgpu_device *adev)
 		adev->nbio.funcs->program_aspm(adev);
 }
 
-static void soc15_enable_doorbell_aperture(struct amdgpu_device *adev,
-					   bool enable)
-{
-	adev->nbio.funcs->enable_doorbell_aperture(adev, enable);
-	adev->nbio.funcs->enable_doorbell_selfring_aperture(adev, enable);
-}
-
 const struct amdgpu_ip_block_version vega10_common_ip_block =
 {
 	.type = AMD_IP_BLOCK_TYPE_COMMON,
@@ -694,11 +659,6 @@ const struct amdgpu_ip_block_version vega10_common_ip_block =
 	.rev = 0,
 	.funcs = &soc15_common_ip_funcs,
 };
-
-static uint32_t soc15_get_rev_id(struct amdgpu_device *adev)
-{
-	return adev->nbio.funcs->get_rev_id(adev);
-}
 
 static void soc15_reg_base_init(struct amdgpu_device *adev)
 {
@@ -888,7 +848,6 @@ static const struct amdgpu_asic_funcs soc15_asic_funcs =
 	.read_register = &soc15_read_register,
 	.reset = &soc15_asic_reset,
 	.reset_method = &soc15_asic_reset_method,
-	.set_vga_state = &soc15_vga_set_state,
 	.get_xclk = &soc15_get_xclk,
 	.set_uvd_clocks = &soc15_set_uvd_clocks,
 	.set_vce_clocks = &soc15_set_vce_clocks,
@@ -910,7 +869,6 @@ static const struct amdgpu_asic_funcs vega20_asic_funcs =
 	.read_register = &soc15_read_register,
 	.reset = &soc15_asic_reset,
 	.reset_method = &soc15_asic_reset_method,
-	.set_vga_state = &soc15_vga_set_state,
 	.get_xclk = &soc15_get_xclk,
 	.set_uvd_clocks = &soc15_set_uvd_clocks,
 	.set_vce_clocks = &soc15_set_vce_clocks,
@@ -925,6 +883,28 @@ static const struct amdgpu_asic_funcs vega20_asic_funcs =
 	.query_video_codecs = &soc15_query_video_codecs,
 };
 
+static const struct amdgpu_asic_funcs aqua_vanjaram_asic_funcs =
+{
+	.read_disabled_bios = &soc15_read_disabled_bios,
+	.read_bios_from_rom = &amdgpu_soc15_read_bios_from_rom,
+	.read_register = &soc15_read_register,
+	.reset = &soc15_asic_reset,
+	.reset_method = &soc15_asic_reset_method,
+	.get_xclk = &soc15_get_xclk,
+	.set_uvd_clocks = &soc15_set_uvd_clocks,
+	.set_vce_clocks = &soc15_set_vce_clocks,
+	.get_config_memsize = &soc15_get_config_memsize,
+	.need_full_reset = &soc15_need_full_reset,
+	.init_doorbell_index = &aqua_vanjaram_doorbell_index_init,
+	.get_pcie_usage = &amdgpu_nbio_get_pcie_usage,
+	.need_reset_on_init = &soc15_need_reset_on_init,
+	.get_pcie_replay_count = &amdgpu_nbio_get_pcie_replay_count,
+	.supports_baco = &soc15_supports_baco,
+	.pre_asic_init = &soc15_pre_asic_init,
+	.query_video_codecs = &soc15_query_video_codecs,
+	.encode_ext_smn_addressing = &aqua_vanjaram_encode_ext_smn_addressing,
+};
+
 static int soc15_common_early_init(void *handle)
 {
 #define MMIO_REG_HOLE_OFFSET (0x80000 - PAGE_SIZE)
@@ -936,10 +916,12 @@ static int soc15_common_early_init(void *handle)
 	}
 	adev->smc_rreg = NULL;
 	adev->smc_wreg = NULL;
-	adev->pcie_rreg = &soc15_pcie_rreg;
-	adev->pcie_wreg = &soc15_pcie_wreg;
-	adev->pcie_rreg64 = &soc15_pcie_rreg64;
-	adev->pcie_wreg64 = &soc15_pcie_wreg64;
+	adev->pcie_rreg = &amdgpu_device_indirect_rreg;
+	adev->pcie_wreg = &amdgpu_device_indirect_wreg;
+	adev->pcie_rreg_ext = &amdgpu_device_indirect_rreg_ext;
+	adev->pcie_wreg_ext = &amdgpu_device_indirect_wreg_ext;
+	adev->pcie_rreg64 = &amdgpu_device_indirect_rreg64;
+	adev->pcie_wreg64 = &amdgpu_device_indirect_wreg64;
 	adev->uvd_ctx_rreg = &soc15_uvd_ctx_rreg;
 	adev->uvd_ctx_wreg = &soc15_uvd_ctx_wreg;
 	adev->didt_rreg = &soc15_didt_rreg;
@@ -949,7 +931,7 @@ static int soc15_common_early_init(void *handle)
 	adev->se_cac_rreg = &soc15_se_cac_rreg;
 	adev->se_cac_wreg = &soc15_se_cac_wreg;
 
-	adev->rev_id = soc15_get_rev_id(adev);
+	adev->rev_id = amdgpu_device_get_rev_id(adev);
 	adev->external_rev_id = 0xFF;
 	/* TODO: split the GC and PG flags based on the relevant IP version for which
 	 * they are relevant.
@@ -1165,6 +1147,20 @@ static int soc15_common_early_init(void *handle)
 		adev->pg_flags = AMD_PG_SUPPORT_VCN_DPG;
 		adev->external_rev_id = adev->rev_id + 0x3c;
 		break;
+	case IP_VERSION(9, 4, 3):
+		adev->asic_funcs = &aqua_vanjaram_asic_funcs;
+		adev->cg_flags =
+			AMD_CG_SUPPORT_GFX_MGCG | AMD_CG_SUPPORT_GFX_CGCG |
+			AMD_CG_SUPPORT_GFX_CGLS | AMD_CG_SUPPORT_SDMA_MGCG |
+			AMD_CG_SUPPORT_GFX_FGCG | AMD_CG_SUPPORT_REPEATER_FGCG |
+			AMD_CG_SUPPORT_VCN_MGCG | AMD_CG_SUPPORT_JPEG_MGCG |
+			AMD_CG_SUPPORT_IH_CG;
+		adev->pg_flags =
+			AMD_PG_SUPPORT_VCN |
+			AMD_PG_SUPPORT_VCN_DPG |
+			AMD_PG_SUPPORT_JPEG;
+		adev->external_rev_id = adev->rev_id + 0x46;
+		break;
 	default:
 		/* FIXME: not supported yet */
 		return -EINVAL;
@@ -1184,6 +1180,11 @@ static int soc15_common_late_init(void *handle)
 
 	if (amdgpu_sriov_vf(adev))
 		xgpu_ai_mailbox_get_irq(adev);
+
+	/* Enable selfring doorbell aperture late because doorbell BAR
+	 * aperture will change if resize BAR successfully in gmc sw_init.
+	 */
+	adev->nbio.funcs->enable_doorbell_selfring_aperture(adev, true);
 
 	return 0;
 }
@@ -1230,8 +1231,6 @@ static int soc15_common_hw_init(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	/* enable pcie gen2/3 link */
-	soc15_pcie_gen3_enable(adev);
 	/* enable aspm */
 	soc15_program_aspm(adev);
 	/* setup nbio registers */
@@ -1244,7 +1243,8 @@ static int soc15_common_hw_init(void *handle)
 		adev->nbio.funcs->remap_hdp_registers(adev);
 
 	/* enable the doorbell aperture */
-	soc15_enable_doorbell_aperture(adev, true);
+	adev->nbio.funcs->enable_doorbell_aperture(adev, true);
+
 	/* HW doorbell routing policy: doorbell writing not
 	 * in SDMA/IH/MM/ACV range will be routed to CP. So
 	 * we need to init SDMA doorbell range prior
@@ -1260,8 +1260,14 @@ static int soc15_common_hw_fini(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	/* disable the doorbell aperture */
-	soc15_enable_doorbell_aperture(adev, false);
+	/* Disable the doorbell aperture and selfring doorbell aperture
+	 * separately in hw_fini because soc15_enable_doorbell_aperture
+	 * has been removed and there is no need to delay disabling
+	 * selfring doorbell.
+	 */
+	adev->nbio.funcs->enable_doorbell_aperture(adev, false);
+	adev->nbio.funcs->enable_doorbell_selfring_aperture(adev, false);
+
 	if (amdgpu_sriov_vf(adev))
 		xgpu_ai_mailbox_put_irq(adev);
 

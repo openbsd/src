@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.18 2023/12/23 22:40:42 kettenis Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.19 2024/01/16 23:37:50 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -364,7 +364,7 @@ rkdrm_enter_ddb(void *v, void *cookie)
 		return;
 
 	rasops_show_screen(ri, cookie, 0, NULL, NULL);
-	drm_fb_helper_debug_enter(fb_helper->fbdev);
+	drm_fb_helper_debug_enter(fb_helper->info);
 }
 
 void
@@ -420,7 +420,8 @@ rkdrm_attachhook(struct device *dev)
 
 	drm_mode_config_reset(&sc->sc_ddev);
 
-	drm_fb_helper_prepare(&sc->sc_ddev, &sc->helper, &rkdrm_fb_helper_funcs);
+	drm_fb_helper_prepare(&sc->sc_ddev, &sc->helper, 32,
+	    &rkdrm_fb_helper_funcs);
 	if (drm_fb_helper_init(&sc->sc_ddev, &sc->helper)) {
 		printf("%s: can't initialize framebuffer helper\n",
 		    sc->sc_dev.dv_xname);
@@ -431,7 +432,7 @@ rkdrm_attachhook(struct device *dev)
 	sc->helper.fb = malloc(sizeof(struct rkdrm_framebuffer),
 	    M_DRM, M_WAITOK | M_ZERO);
 
-	drm_fb_helper_initial_config(&sc->helper, 32);
+	drm_fb_helper_initial_config(&sc->helper);
 
 	task_set(&sc->switchtask, rkdrm_doswitch, ri);
 
@@ -524,7 +525,7 @@ rkdrm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size *
 		return error;
 	}
 
-	info = drm_fb_helper_alloc_fbi(helper);
+	info = drm_fb_helper_alloc_info(helper);
 	if (IS_ERR(info)) {
 		DRM_ERROR("Failed to allocate fb_info\n");
 		return error;
