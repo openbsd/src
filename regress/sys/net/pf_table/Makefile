@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2023/08/13 21:21:53 sashan Exp $
+#	$OpenBSD: Makefile,v 1.6 2024/01/16 06:40:07 anton Exp $
 
 REGRESS_TARGETS=	hit miss cleanup flags
 CLEANFILES=		stamp-*	\
@@ -58,31 +58,31 @@ pf-reftab.conf:
 # exists before pf-instab.conf gets loaded.
 #
 table-pgone.out:
-	@echo '--a-r--	instance	regress/ttest' > $@
-	@echo '----r--	reference	regress/ttest' >> $@
+	@echo '--a-r--	instance@regress/ttest' > $@
+	@echo '----r--	reference@regress/ttest' >> $@
 
 #
 # verify table <instance> got persistent flag after we
 # run 'pfctl -t instance -T add ...'
 #
 table-persist.out:
-	@echo '-pa-r--	instance	regress/ttest' > $@
-	@echo '----r--	reference	regress/ttest' >> $@
+	@echo '-pa-r--	instance@regress/ttest' > $@
+	@echo '----r--	reference@regress/ttest' >> $@
 
 #
 # verify tables <instance> and <reference> are created on behalf of
 # reference by rule after pf-reftab.conf got loaded.
 #
 table-ref.out:
-	@echo '----r--	instance	regress/ttest' > $@
-	@echo '----r--	reference	regress/ttest' >> $@
+	@echo '----r--	instance@regress/ttest' > $@
+	@echo '----r--	reference@regress/ttest' >> $@
 
 #
 # verify reference to <instance> table (persistent) is gone
 # after rules got flushed
 #
 table-refgone.out:
-	@echo '-pa----	instance	regress/ttest' > $@
+	@echo '-pa----	instance@regress/ttest' > $@
 
 flags: pf-instab.conf pf-reftab.conf table-pgone.out table-persist.out \
     table-ref.out table-refgone.out
