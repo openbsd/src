@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.93 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.94 2024/01/16 13:33:13 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -138,7 +138,7 @@ snmpe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
 	case IMSG_AX_FD:
-		appl_agentx_backend(imsg->fd);
+		appl_agentx_backend(imsg_get_fd(imsg));
 		return 0;
 	default:
 		return -1;
