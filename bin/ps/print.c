@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.86 2023/03/08 14:47:02 tobhe Exp $	*/
+/*	$OpenBSD: print.c,v 1.87 2024/01/16 19:08:37 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -303,6 +303,10 @@ printstate(const struct pinfo *pi, VARENT *ve)
 		*cp++ = '+';
 	if (kp->p_psflags & PS_PLEDGE)
 		*cp++ = 'p';
+	if (kp->p_psflags & PS_PIN)
+		*cp++ = 'l';
+	if (kp->p_psflags & PS_LIBCPIN)
+		*cp++ = 'L';
 	if (kp->p_eflag & EPROC_UNVEIL) {
 		if (kp->p_eflag & EPROC_LKUNVEIL)
 			*cp++ = 'U';
