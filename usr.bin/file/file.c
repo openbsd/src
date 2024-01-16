@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.69 2019/11/30 14:01:45 mestre Exp $ */
+/* $OpenBSD: file.c,v 1.70 2024/01/16 13:07:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -418,12 +418,12 @@ child(int fd, pid_t parent, int argc, char **argv)
 		inf.msg = msg;
 
 		inf.path = argv[idx];
-		inf.fd = imsg.fd;
+		inf.fd = imsg_get_fd(&imsg);
 
 		test_file(&inf, width);
 
-		if (imsg.fd != -1)
-			close(imsg.fd);
+		if (inf.fd != -1)
+			close(inf.fd);
 		imsg_free(&imsg);
 
 		ack.idx = idx;
