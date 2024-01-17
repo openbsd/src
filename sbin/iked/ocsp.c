@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.24 2022/12/03 22:34:35 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.25 2024/01/17 08:25:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -364,9 +364,7 @@ ocsp_receive_fd(struct iked *env, struct imsg *imsg)
 	uint8_t			*ptr;
 	char			*path = NULL;
 	size_t			 len;
-	int			 ret = -1;
-
-	log_debug("%s: received socket fd %d", __func__, imsg->fd);
+	int			 fd, ret = -1;
 
 	IMSG_SIZE_CHECK(imsg, &sh);
 
@@ -385,30 +383,32 @@ ocsp_receive_fd(struct iked *env, struct imsg *imsg)
 	}
 	if (ioe == NULL) {
 		log_debug("%s: no pending request found", __func__);
-		if (imsg->fd != -1)
-			close(imsg->fd);
+		if ((fd = imsg_get_fd(imsg)) != -1)	/* XXX */
+			close(fd);
 		return (-1);
 	}
 	TAILQ_REMOVE(&env->sc_ocsp, ioe, ioe_entry);
 	ocsp = ioe->ioe_ocsp;
 	free(ioe);
 
-	if (imsg->fd == -1)
+	if ((fd = imsg_get_fd(imsg)) == -1)
 		goto done;
 
 	if ((sock = calloc(1, sizeof(*sock))) == NULL)
 		fatal("ocsp_receive_fd: calloc sock");
 
 	/* note that sock_addr is not set */
-	sock->sock_fd = imsg->fd;
+	sock->sock_fd = fd;
 	sock->sock_env = env;
 	ocsp->ocsp_sock = sock;
+
+	log_debug("%s: received socket fd %d", __func__, sock->sock_fd);
 
 	/* fetch 'path' and 'fd' from imsg */
 	if ((path = get_string(ptr, len)) == NULL)
 		goto done;
 
-	BIO_set_fd(ocsp->ocsp_cbio, imsg->fd, BIO_NOCLOSE);
+	BIO_set_fd(ocsp->ocsp_cbio, sock->sock_fd, BIO_NOCLOSE);
 
 	if ((ocsp->ocsp_req_ctx = OCSP_sendreq_new(ocsp->ocsp_cbio,
 	    path, NULL, -1)) == NULL)
