@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.63 2022/12/28 21:30:16 jmc Exp $	*/
+/*	$OpenBSD: config.c,v 1.64 2024/01/17 08:20:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -668,14 +668,6 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 	SPLAY_INIT(&srv->srv_clients);
 	TAILQ_INIT(&srv->srv_hosts);
 
-	TAILQ_INSERT_TAIL(&srv->srv_hosts, &srv->srv_conf, entry);
-	TAILQ_INSERT_TAIL(env->sc_servers, srv, srv_entry);
-
-	DPRINTF("%s: %s %d configuration \"%s[%u]\", flags: %s", __func__,
-	    ps->ps_title[privsep_process], ps->ps_instance,
-	    srv->srv_conf.name, srv->srv_conf.id,
-	    printb_flags(srv->srv_conf.flags, SRVFLAG_BITS));
-
 	/*
 	 * Get all variable-length values for the parent server.
 	 */
@@ -684,6 +676,14 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 		    srv->srv_conf.return_uri_len)) == NULL)
 			goto fail;
 	}
+
+	TAILQ_INSERT_TAIL(&srv->srv_hosts, &srv->srv_conf, entry);
+	TAILQ_INSERT_TAIL(env->sc_servers, srv, srv_entry);
+
+	DPRINTF("%s: %s %d configuration \"%s[%u]\", flags: %s", __func__,
+	    ps->ps_title[privsep_process], ps->ps_instance,
+	    srv->srv_conf.name, srv->srv_conf.id,
+	    printb_flags(srv->srv_conf.flags, SRVFLAG_BITS));
 
 	return (0);
 
