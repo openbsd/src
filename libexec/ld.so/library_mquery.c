@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.74 2024/01/16 19:07:31 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.75 2024/01/17 13:00:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -126,7 +126,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 		return(0);
 	}
 
-	if ( _dl_fstat(libfile, &sb) < 0) {
+	if (_dl_fstat(libfile, &sb) < 0) {
 		_dl_errno = DL_CANT_OPEN;
 		return(0);
 	}
