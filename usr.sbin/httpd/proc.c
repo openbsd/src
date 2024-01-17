@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.42 2023/02/15 20:44:01 tobhe Exp $	*/
+/*	$OpenBSD: proc.c,v 1.43 2024/01/17 08:22:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -668,7 +668,7 @@ proc_dispatch(int fd, short event, void *arg)
 		case IMSG_CTL_PROCFD:
 			IMSG_SIZE_CHECK(&imsg, &pf);
 			memcpy(&pf, imsg.data, sizeof(pf));
-			proc_accept(ps, imsg.fd, pf.pf_procid,
+			proc_accept(ps, imsg_get_fd(&imsg), pf.pf_procid,
 			    pf.pf_instance);
 			break;
 		default:
@@ -799,7 +799,7 @@ proc_forward_imsg(struct privsep *ps, struct imsg *imsg,
     enum privsep_procid id, int n)
 {
 	return (proc_compose_imsg(ps, id, n, imsg->hdr.type,
-	    imsg->hdr.peerid, imsg->fd, imsg->data, IMSG_DATA_SIZE(imsg)));
+	    imsg->hdr.peerid, -1, imsg->data, IMSG_DATA_SIZE(imsg)));
 }
 
 struct imsgbuf *

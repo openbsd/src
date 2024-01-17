@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.24 2021/01/27 07:21:53 deraadt Exp $	*/
+/*	$OpenBSD: logger.c,v 1.25 2024/01/17 08:22:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -144,9 +144,9 @@ logger_open_fd(struct imsg *imsg)
 
 	TAILQ_FOREACH(log, &log_files, log_entry) {
 		if (log->log_id == id) {
+			log->log_fd = imsg_get_fd(imsg);
 			DPRINTF("%s: received log fd %d, file %s",
-			    __func__, imsg->fd, log->log_name);
-			log->log_fd = imsg->fd;
+			    __func__, log->log_fd, log->log_name);
 			return (0);
 		}
 	}
