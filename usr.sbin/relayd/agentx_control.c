@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx_control.c,v 1.6 2022/08/31 16:17:18 dv Exp $	*/
+/*	$OpenBSD: agentx_control.c,v 1.7 2024/01/17 10:01:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
@@ -462,16 +462,18 @@ void
 agentx_getsock(struct imsg *imsg)
 {
 	struct timeval		 tv = AGENTX_RECONNECT_TIMEOUT;
+	int 			 fd;
 
-	if (imsg->fd == -1)
+	fd = imsg_get_fd(imsg);
+	if (fd == -1)
 		goto retry;
 
 	event_del(&(env->sc_agentxev));
-	event_set(&(env->sc_agentxev), imsg->fd, EV_READ | EV_PERSIST,
+	event_set(&(env->sc_agentxev), fd, EV_READ | EV_PERSIST,
 	    agentx_sock, env);
 	event_add(&(env->sc_agentxev), NULL);
 
-	agentx_connect(sa, imsg->fd);
+	agentx_connect(sa, fd);
 
  retry:
 	evtimer_set(&env->sc_agentxev, agentx_sock, env);

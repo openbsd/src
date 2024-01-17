@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.258 2023/10/29 11:27:11 kn Exp $	*/
+/*	$OpenBSD: relay.c,v 1.259 2024/01/17 10:01:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1993,7 +1993,7 @@ relay_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 
 		/* Will validate the result later */
-		con->se_bnds = imsg->fd;
+		con->se_bnds = imsg_get_fd(imsg);
 
 		evtimer_del(&con->se_ev);
 		evtimer_set(&con->se_ev, relay_bindany, con);

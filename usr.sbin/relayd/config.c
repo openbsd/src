@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.44 2023/06/25 08:07:38 op Exp $	*/
+/*	$OpenBSD: config.c,v 1.45 2024/01/17 10:01:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1030,7 +1030,7 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 	memcpy(&rlay->rl_conf, p, sizeof(rlay->rl_conf));
 	s = sizeof(rlay->rl_conf);
 
-	rlay->rl_s = imsg->fd;
+	rlay->rl_s = imsg_get_fd(imsg);
 	rlay->rl_tls_ca_fd = -1;
 	rlay->rl_tls_cacert_fd = -1;
 
@@ -1148,19 +1148,19 @@ config_getrelayfd(struct relayd *env, struct imsg *imsg)
 
 	switch (crfd.type) {
 	case RELAY_FD_CERT:
-		cert->cert_fd = imsg->fd;
+		cert->cert_fd = imsg_get_fd(imsg);
 		break;
 	case RELAY_FD_KEY:
-		cert->cert_key_fd = imsg->fd;
+		cert->cert_key_fd = imsg_get_fd(imsg);
 		break;
 	case RELAY_FD_OCSP:
-		cert->cert_ocsp_fd = imsg->fd;
+		cert->cert_ocsp_fd = imsg_get_fd(imsg);
 		break;
 	case RELAY_FD_CACERT:
-		rlay->rl_tls_ca_fd = imsg->fd;
+		rlay->rl_tls_ca_fd = imsg_get_fd(imsg);
 		break;
 	case RELAY_FD_CAFILE:
-		rlay->rl_tls_cacert_fd = imsg->fd;
+		rlay->rl_tls_cacert_fd = imsg_get_fd(imsg);
 		break;
 	}
 
