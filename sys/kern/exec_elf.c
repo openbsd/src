@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.184 2024/01/16 19:05:01 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.185 2024/01/17 22:22:25 kurt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1154,7 +1154,7 @@ coredump_elf(struct proc *p, void *cookie)
 		goto out;
 
 	error = coredump_write(cookie, UIO_SYSSPACE, ws.psections,
-	    ws.psectionslen);
+	    ws.psectionslen, 0);
 	if (error)
 		goto out;
 
@@ -1193,10 +1193,11 @@ coredump_elf(struct proc *p, void *cookie)
 		if (pent->p_vaddr == p->p_p->ps_sigcode &&
 		    pent->p_filesz == sigcode_sz) {
 			error = coredump_write(cookie, UIO_SYSSPACE,
-			    (void *)sigcode_va, sigcode_sz);
+			    (void *)sigcode_va, sigcode_sz, 0);
 		} else {
 			error = coredump_write(cookie, UIO_USERSPACE,
-			    (void *)(vaddr_t)pent->p_vaddr, pent->p_filesz);
+			    (void *)(vaddr_t)pent->p_vaddr, pent->p_filesz,
+			    (pent->p_flags & PF_ISVNODE));
 		}
 		if (error)
 			goto out;
@@ -1298,7 +1299,7 @@ coredump_setup_elf(int segment_count, void *cookie)
 	}
 
 	/* Write out the ELF header. */
-	error = coredump_write(ws->iocookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
+	error = coredump_write(ws->iocookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr), 0);
 	if (error)
 		return error;
 
@@ -1309,11 +1310,11 @@ coredump_setup_elf(int segment_count, void *cookie)
 	if (ehdr.e_shnum != 0) {
 		Elf_Shdr shdr = { .sh_info = ws->npsections };
 		error = coredump_write(ws->iocookie, UIO_SYSSPACE, &shdr,
-		    sizeof shdr);
+		    sizeof shdr, 0);
 		if (error)
 			return error;
 		error = coredump_write(ws->iocookie, UIO_SYSSPACE, &shstrtab,
-		    sizeof(shstrtab.shdr) + sizeof(shstrtab.shstrtab));
+		    sizeof(shstrtab.shdr) + sizeof(shstrtab.shstrtab), 0);
 		if (error)
 			return error;
 	}
@@ -1348,7 +1349,7 @@ coredump_setup_elf(int segment_count, void *cookie)
 
 int
 coredump_walk_elf(vaddr_t start, vaddr_t realend, vaddr_t end, vm_prot_t prot,
-    int nsegment, void *cookie)
+    int isvnode, int nsegment, void *cookie)
 {
 	struct writesegs_state *ws = cookie;
 	Elf_Phdr phdr;
@@ -1370,6 +1371,8 @@ coredump_walk_elf(vaddr_t start, vaddr_t realend, vaddr_t end, vm_prot_t prot,
 		phdr.p_flags |= PF_W;
 	if (prot & PROT_EXEC)
 		phdr.p_flags |= PF_X;
+	if (isvnode)
+		phdr.p_flags |= PF_ISVNODE;
 	phdr.p_align = PAGE_SIZE;
 
 	ws->secoff += phdr.p_filesz;
@@ -1446,17 +1449,17 @@ coredump_notes_elf(struct proc *p, void *iocookie, size_t *sizep)
 		nhdr.type = NT_OPENBSD_AUXV;
 
 		error = coredump_write(iocookie, UIO_SYSSPACE,
-		    &nhdr, sizeof(nhdr));
+		    &nhdr, sizeof(nhdr), 0);
 		if (error)
 			return (error);
 
 		error = coredump_write(iocookie, UIO_SYSSPACE,
-		    "OpenBSD", elfround(nhdr.namesz));
+		    "OpenBSD", elfround(nhdr.namesz), 0);
 		if (error)
 			return (error);
 
 		error = coredump_write(iocookie, UIO_USERSPACE,
-		    (caddr_t)pr->ps_auxinfo, nhdr.descsz);
+		    (caddr_t)pr->ps_auxinfo, nhdr.descsz, 0);
 		if (error)
 			return (error);
 	}
@@ -1596,15 +1599,15 @@ coredump_writenote_elf(struct proc *p, void *cookie, Elf_Note *nhdr,
 {
 	int error;
 
-	error = coredump_write(cookie, UIO_SYSSPACE, nhdr, sizeof(*nhdr));
+	error = coredump_write(cookie, UIO_SYSSPACE, nhdr, sizeof(*nhdr), 0);
 	if (error)
 		return error;
 
 	error = coredump_write(cookie, UIO_SYSSPACE, name,
-	    elfround(nhdr->namesz));
+	    elfround(nhdr->namesz), 0);
 	if (error)
 		return error;
 
-	return coredump_write(cookie, UIO_SYSSPACE, data, nhdr->descsz);
+	return coredump_write(cookie, UIO_SYSSPACE, data, nhdr->descsz, 0);
 }
 #endif /* !SMALL_KERNEL */

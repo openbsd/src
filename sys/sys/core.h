@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.h,v 1.8 2022/02/22 17:14:13 deraadt Exp $	*/
+/*	$OpenBSD: core.h,v 1.9 2024/01/17 22:22:25 kurt Exp $	*/
 /*	$NetBSD: core.h,v 1.4 1994/10/29 08:20:14 cgd Exp $	*/
 
 /*
@@ -94,6 +94,6 @@ struct coreseg {
 };
 
 #else
-int	coredump_write(void *, enum uio_seg, const void *, size_t);
+int	coredump_write(void *, enum uio_seg, const void *, size_t, int);
 void	coredump_unmap(void *, vaddr_t, vaddr_t);
 #endif

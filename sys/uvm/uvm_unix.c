@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.72 2023/01/13 23:02:44 kettenis Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.73 2024/01/17 22:22:25 kurt Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ uvm_coredump_walk_amap(struct vm_map_entry *entry, int *nsegmentp,
 			end = pos + (i << PAGE_SHIFT);
 			if (start != end) {
 				error = (*walk)(start, realend, end, prot,
-				    nsegment, cookie);
+				    0, nsegment, cookie);
 				if (error)
 					return error;
 				nsegment++;
@@ -210,7 +210,7 @@ uvm_coredump_walk_amap(struct vm_map_entry *entry, int *nsegmentp,
 
 	if (!absent)
 		realend = entry_end;
-	error = (*walk)(start, realend, entry_end, prot, nsegment, cookie);
+	error = (*walk)(start, realend, entry_end, prot, 0, nsegment, cookie);
 	*nsegmentp = nsegment + 1;
 	return error;
 }
@@ -257,7 +257,7 @@ uvm_should_coredump(struct proc *p, struct vm_map_entry *entry)
 /* do nothing callback for uvm_coredump_walk_amap() */
 static int
 noop(vaddr_t start, vaddr_t realend, vaddr_t end, vm_prot_t prot,
-    int nsegment, void *cookie)
+    int isvnode, int nsegment, void *cookie)
 {
 	return 0;
 }
@@ -280,7 +280,7 @@ uvm_coredump_walkmap(struct proc *p, uvm_coredump_setup_cb *setup,
 	struct vm_map_entry *entry;
 	vaddr_t end;
 	int refed_amaps = 0;
-	int nsegment, error;
+	int nsegment, error, isvnode;
 
 	/*
 	 * Walk the map once to count the segments.  If an amap is
@@ -350,8 +350,10 @@ uvm_coredump_walkmap(struct proc *p, uvm_coredump_setup_cb *setup,
 		if (end > VM_MAXUSER_ADDRESS)
 			end = VM_MAXUSER_ADDRESS;
 
+		isvnode = (entry->object.uvm_obj != NULL &&
+		    UVM_OBJ_IS_VNODE(entry->object.uvm_obj));
 		error = (*walk)(entry->start, end, end, entry->protection,
-		    nsegment, cookie);
+		    isvnode, nsegment, cookie);
 		if (error)
 			break;
 		nsegment++;

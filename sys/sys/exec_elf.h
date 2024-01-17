@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.102 2023/12/08 13:58:41 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.103 2024/01/17 22:22:25 kurt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -495,6 +495,10 @@ typedef struct {
 					/*  specific segment flags */
 
 #define PF_OPENBSD_MUTABLE	0x08000000	/* Mutable */
+
+#ifdef	_KERNEL
+#define PF_ISVNODE	0x00100000	/* For coredump segments */
+#endif
 
 /* Dynamic structure */
 typedef struct {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.320 2023/10/06 08:58:13 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.321 2024/01/17 22:22:25 kurt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1745,7 +1745,8 @@ out:
 
 #ifndef SMALL_KERNEL
 int
-coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
+coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len,
+    int isvnode)
 {
 	struct coredump_iostate *io = cookie;
 	off_t coffset = 0;
@@ -1766,7 +1767,7 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 		    (caddr_t)data + coffset, chunk,
 		    io->io_offset + coffset, segflg,
 		    IO_UNIT, io->io_cred, NULL, io->io_proc);
-		if (error) {
+		if (error && (error != EFAULT || !isvnode)) {
 			struct process *pr = io->io_proc->p_p;
 
 			if (error == ENOSPC)
