@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.37 2023/03/01 08:17:53 claudio Exp $ */
+/*	$OpenBSD: ldape.c,v 1.38 2024/01/17 08:28:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -541,6 +541,7 @@ ldape_open_result(struct imsg *imsg)
 {
 	struct namespace	*ns;
 	struct open_req		*oreq = imsg->data;
+	int			 fd;
 
 	if (imsg->hdr.len != sizeof(*oreq) + IMSG_HEADER_SIZE)
 		fatal("invalid size of open result");
@@ -548,24 +549,25 @@ ldape_open_result(struct imsg *imsg)
 	if (oreq->path[PATH_MAX-1] != '\0')
 		fatal("bogus path");
 
-	log_debug("open(%s) returned fd %d", oreq->path, imsg->fd);
+	fd = imsg_get_fd(imsg);
+	log_debug("open(%s) returned fd %d", oreq->path, fd);
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
 		if (namespace_has_referrals(ns))
 			continue;
 		if (strcmp(oreq->path, ns->data_path) == 0) {
-			namespace_set_data_fd(ns, imsg->fd);
+			namespace_set_data_fd(ns, fd);
 			break;
 		}
 		if (strcmp(oreq->path, ns->indx_path) == 0) {
-			namespace_set_indx_fd(ns, imsg->fd);
+			namespace_set_indx_fd(ns, fd);
 			break;
 		}
 	}
 
 	if (ns == NULL) {
 		log_warnx("spurious open result");
-		close(imsg->fd);
+		close(fd);
 	} else
 		namespace_queue_schedule(ns, 0);
 }
