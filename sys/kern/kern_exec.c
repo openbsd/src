@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.253 2024/01/16 19:05:01 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.254 2024/01/17 18:56:13 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -268,20 +268,10 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #ifdef MACHINE_STACK_GROWS_UP
 	size_t slen;
 #endif
-	vaddr_t pc = PROC_PC(p);
 	char *stack;
 	struct ps_strings arginfo;
 	struct vmspace *vm = p->p_vmspace;
 	struct vnode *otvp;
-
-	if (vm->vm_execve &&
-	    (pc >= vm->vm_execve_end || pc < vm->vm_execve)) {
-		printf("%s(%d): execve %lx outside %lx-%lx\n", pr->ps_comm,
-		    pr->ps_pid, pc, vm->vm_execve, vm->vm_execve_end);
-		p->p_p->ps_acflag |= AEXECVE;
-		sigabort(p);
-		return (0);
-	}
 
 	/*
 	 * Get other threads to stop, if contested return ERESTART,
