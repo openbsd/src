@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.198 2024/01/07 09:48:29 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.199 2024/01/18 14:34:26 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -435,7 +435,7 @@ struct crl {
 	char		*aki;
 	char		*number;
 	X509_CRL	*x509_crl;
-	time_t		 lastupdate;	/* do not use before */
+	time_t		 thisupdate;	/* do not use before */
 	time_t		 nextupdate;	/* do not use after */
 };
 /*

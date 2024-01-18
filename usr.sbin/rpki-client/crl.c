@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.30 2023/12/10 14:18:23 job Exp $ */
+/*	$OpenBSD: crl.c,v 1.31 2024/01/18 14:34:26 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -96,7 +96,7 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 		warnx("%s: X509_CRL_get0_lastUpdate failed", fn);
 		goto out;
 	}
-	if (!x509_get_time(at, &crl->lastupdate)) {
+	if (!x509_get_time(at, &crl->thisupdate)) {
 		warnx("%s: ASN1_TIME_to_tm failed", fn);
 		goto out;
 	}

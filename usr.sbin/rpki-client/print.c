@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.44 2023/11/16 11:18:47 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.45 2024/01/18 14:34:26 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -352,12 +352,12 @@ crl_print(const struct crl *p)
 	free(issuer);
 
 	if (outformats & FORMAT_JSON) {
-		json_do_int("valid_since", p->lastupdate);
+		json_do_int("valid_since", p->thisupdate);
 		json_do_int("valid_until", p->nextupdate);
 		json_do_array("revoked_certs");
 	} else {
-		printf("CRL last update:          %s\n",
-		    time2str(p->lastupdate));
+		printf("CRL this update:          %s\n",
+		    time2str(p->thisupdate));
 		printf("CRL next update:          %s\n",
 		    time2str(p->nextupdate));
 		printf("Revoked Certificates:\n");
