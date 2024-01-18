@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.299 2024/01/08 15:09:14 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.300 2024/01/18 14:46:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -459,15 +459,15 @@ main(int argc, char *argv[])
 int
 show(struct imsg *imsg, struct parse_result *res)
 {
-	struct peer		*p;
+	struct peer		 p;
 	struct ctl_timer	 t;
-	struct ctl_show_interface	*iface;
-	struct ctl_show_nexthop	*nh;
+	struct ctl_show_interface iface;
+	struct ctl_show_nexthop	 nh;
 	struct ctl_show_set	 set;
 	struct ctl_show_rtr	 rtr;
-	struct kroute_full	*kf;
-	struct ktable		*kt;
-	struct flowspec		*f;
+	struct kroute_full	 kf;
+	struct ktable		 kt;
+	struct flowspec		 f;
 	struct ctl_show_rib	 rib;
 	struct rde_memstats	 stats;
 	u_char			*asdata;
@@ -478,60 +478,60 @@ show(struct imsg *imsg, struct parse_result *res)
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		if (output->neighbor == NULL)
 			break;
-		p = imsg->data;
-		output->neighbor(p, res);
+		if (imsg_get_data(imsg, &p, sizeof(p)) == -1)
+			err(1, "imsg_get_data");
+		output->neighbor(&p, res);
 		break;
 	case IMSG_CTL_SHOW_TIMER:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(t))
-			errx(1, "wrong imsg len");
 		if (output->timer == NULL)
 			break;
-		memcpy(&t, imsg->data, sizeof(t));
+		if (imsg_get_data(imsg, &t, sizeof(t)) == -1)
+			err(1, "imsg_get_data");
 		if (t.type > 0 && t.type < Timer_Max)
 			output->timer(&t);
 		break;
 	case IMSG_CTL_SHOW_INTERFACE:
 		if (output->interface == NULL)
 			break;
-		iface = imsg->data;
-		output->interface(iface);
+		if (imsg_get_data(imsg, &iface, sizeof(iface)) == -1)
+			err(1, "imsg_get_data");
+		output->interface(&iface);
 		break;
 	case IMSG_CTL_SHOW_NEXTHOP:
 		if (output->nexthop == NULL)
 			break;
-		nh = imsg->data;
-		output->nexthop(nh);
+		if (imsg_get_data(imsg, &nh, sizeof(nh)) == -1)
+			err(1, "imsg_get_data");
+		output->nexthop(&nh);
 		break;
 	case IMSG_CTL_KROUTE:
 	case IMSG_CTL_SHOW_NETWORK:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*kf))
-			errx(1, "wrong imsg len");
 		if (output->fib == NULL)
 			break;
-		kf = imsg->data;
-		output->fib(kf);
+		if (imsg_get_data(imsg, &kf, sizeof(kf)) == -1)
+			err(1, "imsg_get_data");
+		output->fib(&kf);
 		break;
 	case IMSG_CTL_SHOW_FLOWSPEC:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*f))
-			errx(1, "wrong imsg len");
 		if (output->flowspec == NULL)
 			break;
-		f = imsg->data;
-		output->flowspec(f);
+		if (imsg_get_data(imsg, &f, sizeof(f)) == -1)
+			err(1, "imsg_get_data");
+		output->flowspec(&f);
 		break;
 	case IMSG_CTL_SHOW_FIB_TABLES:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*kt))
-			errx(1, "wrong imsg len");
 		if (output->fib_table == NULL)
 			break;
-		kt = imsg->data;
-		output->fib_table(kt);
+		if (imsg_get_data(imsg, &kt, sizeof(kt)) == -1)
+			err(1, "imsg_get_data");
+		output->fib_table(&kt);
 		break;
 	case IMSG_CTL_SHOW_RIB:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(rib))
 			errx(1, "wrong imsg len");
 		if (output->rib == NULL)
 			break;
+		/* XXX */
 		memcpy(&rib, imsg->data, sizeof(rib));
 		aslen = imsg->hdr.len - IMSG_HEADER_SIZE - sizeof(rib);
 		asdata = imsg->data;
@@ -559,37 +559,31 @@ show(struct imsg *imsg, struct parse_result *res)
 		output->attr(imsg->data, ilen, res->flags, 0);
 		break;
 	case IMSG_CTL_SHOW_RIB_MEM:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(stats))
-			errx(1, "wrong imsg len");
 		if (output->rib_mem == NULL)
 			break;
-		memcpy(&stats, imsg->data, sizeof(stats));
+		if (imsg_get_data(imsg, &stats, sizeof(stats)) == -1)
+			err(1, "imsg_get_data");
 		output->rib_mem(&stats);
 		return (1);
 	case IMSG_CTL_SHOW_SET:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(set))
-			errx(1, "wrong imsg len");
 		if (output->set == NULL)
 			break;
-		memcpy(&set, imsg->data, sizeof(set));
+		if (imsg_get_data(imsg, &set, sizeof(set)) == -1)
+			err(1, "imsg_get_data");
 		output->set(&set);
 		break;
 	case IMSG_CTL_SHOW_RTR:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(rtr))
-			errx(1, "wrong imsg len");
 		if (output->rtr == NULL)
 			break;
-		memcpy(&rtr, imsg->data, sizeof(rtr));
+		if (imsg_get_data(imsg, &rtr, sizeof(rtr)) == -1)
+			err(1, "imsg_get_data");
 		output->rtr(&rtr);
 		break;
 	case IMSG_CTL_RESULT:
-		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(rescode)) {
-			warnx("got IMSG_CTL_RESULT with wrong len");
-			break;
-		}
 		if (output->result == NULL)
 			break;
-		memcpy(&rescode, imsg->data, sizeof(rescode));
+		if (imsg_get_data(imsg, &rescode, sizeof(rescode)) == -1)
+			err(1, "imsg_get_data");
 		output->result(rescode);
 		return (1);
 	case IMSG_CTL_END:
