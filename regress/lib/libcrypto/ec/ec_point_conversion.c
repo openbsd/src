@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.14 2023/08/01 17:19:49 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.15 2024/01/18 16:49:40 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -55,7 +55,6 @@ hexdump(const unsigned char *buf, size_t len)
 
 	for (i = 1; i <= len; i++)
 		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
-
 	if (len % 8)
 		fprintf(stderr, "\n");
 }
