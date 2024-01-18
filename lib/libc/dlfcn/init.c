@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.19 2023/10/12 16:37:05 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.20 2024/01/18 19:00:11 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -34,11 +34,6 @@
 #include <unistd.h>
 
 #include "init.h"
-
-#if defined(APIWARN)
-__warn_references(syscall,
-    "syscall() may go away, please rewrite code to use direct calls");
-#endif
 
 #define MAX(a,b)	(((a)>(b))?(a):(b))
 
