@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.460 2024/01/16 13:15:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.461 2024/01/18 14:56:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,7 @@ struct bgp_msg	*session_newmsg(enum msg_type, uint16_t);
 int	session_sendmsg(struct bgp_msg *, struct peer *);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
-void	session_update(uint32_t, void *, size_t);
+void	session_update(uint32_t, struct ibuf *);
 void	session_notification(struct peer *, uint8_t, uint8_t, struct ibuf *);
 void	session_notification_data(struct peer *, uint8_t, uint8_t, void *,
 	    size_t);
@@ -1640,7 +1640,7 @@ session_keepalive(struct peer *p)
 }
 
 void
-session_update(uint32_t peerid, void *data, size_t datalen)
+session_update(uint32_t peerid, struct ibuf *ibuf)
 {
 	struct peer		*p;
 	struct bgp_msg		*buf;
@@ -1653,12 +1653,13 @@ session_update(uint32_t peerid, void *data, size_t datalen)
 	if (p->state != STATE_ESTABLISHED)
 		return;
 
-	if ((buf = session_newmsg(UPDATE, MSGSIZE_HEADER + datalen)) == NULL) {
+	if ((buf = session_newmsg(UPDATE, MSGSIZE_HEADER + ibuf_size(ibuf))) ==
+	    NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
-	if (ibuf_add(buf->buf, data, datalen)) {
+	if (ibuf_add_buf(buf->buf, ibuf)) {
 		ibuf_free(buf->buf);
 		free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
@@ -2973,6 +2974,7 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 	struct listen_addr	*la, *next, nla;
 	struct session_dependon	 sdon;
 	struct bgpd_config	 tconf;
+	size_t			 len;
 	uint32_t		 peerid;
 	int			 n, fd, depend_ok, restricted;
 	uint16_t		 t;
@@ -3251,14 +3253,13 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_UPDATE:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("update request not from RDE");
-			if (imsg.hdr.len > IMSG_HEADER_SIZE +
-			    MAX_PKTSIZE - MSGSIZE_HEADER ||
-			    imsg.hdr.len < IMSG_HEADER_SIZE +
-			    MSGSIZE_UPDATE_MIN - MSGSIZE_HEADER)
+			len = imsg_get_len(&imsg);
+			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
+			    len > MAX_PKTSIZE - MSGSIZE_HEADER ||
+			    len < MSGSIZE_UPDATE_MIN - MSGSIZE_HEADER)
 				log_warnx("RDE sent invalid update");
 			else
-				session_update(imsg.hdr.peerid, imsg.data,
-				    imsg.hdr.len - IMSG_HEADER_SIZE);
+				session_update(peerid, &ibuf);
 			break;
 		case IMSG_UPDATE_ERR:
 			if (idx != PFD_PIPE_ROUTE)
