@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.152 2023/09/26 01:53:54 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.153 2024/01/18 14:49:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -97,6 +97,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
 	int				 res = 0, ret = 0, cmd = 0, verbose;
+	int				 ifd;
 	unsigned int			 v = 0, flags;
 	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
@@ -111,7 +112,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		vmc.vmc_kernel = imsg->fd;
+		vmc.vmc_kernel = imsg_get_fd(imsg);
 
 		/* Try registering our VM in our list of known VMs. */
 		if (vm_register(ps, &vmc, &vm, 0, vmc.vmc_owner.uid)) {
@@ -257,11 +258,12 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &vid);
 		memcpy(&vid, imsg->data, sizeof(vid));
 		id = vid.vid_id;
+		ifd = imsg_get_fd(imsg);
 		if (vid.vid_id == 0) {
 			if ((vm = vm_getbyname(vid.vid_name)) == NULL) {
 				res = ENOENT;
 				cmd = IMSG_VMDOP_SEND_VM_RESPONSE;
-				close(imsg->fd);
+				close(ifd);
 				break;
 			} else {
 				vid.vid_id = vm->vm_vmid;
@@ -269,43 +271,42 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		} else if ((vm = vm_getbyvmid(vid.vid_id)) == NULL) {
 			res = ENOENT;
 			cmd = IMSG_VMDOP_SEND_VM_RESPONSE;
-			close(imsg->fd);
+			close(ifd);
 			break;
 		}
 		vmr.vmr_id = vid.vid_id;
 		log_debug("%s: sending fd to vmm", __func__);
 		proc_compose_imsg(ps, PROC_VMM, -1, imsg->hdr.type,
-		    imsg->hdr.peerid, imsg->fd, &vid, sizeof(vid));
+		    imsg->hdr.peerid, ifd, &vid, sizeof(vid));
 		break;
 	case IMSG_VMDOP_RECEIVE_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vid);
 		memcpy(&vid, imsg->data, sizeof(vid));
-		if (imsg->fd == -1) {
+		ifd = imsg_get_fd(imsg);
+		if (ifd == -1) {
 			log_warnx("%s: invalid fd", __func__);
 			return (-1);
 		}
-		if (atomicio(read, imsg->fd, &vmh, sizeof(vmh)) !=
-		    sizeof(vmh)) {
+		if (atomicio(read, ifd, &vmh, sizeof(vmh)) != sizeof(vmh)) {
 			log_warnx("%s: error reading vmh from received vm",
 			    __func__);
 			res = EIO;
-			close(imsg->fd);
+			close(ifd);
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 			break;
 		}
 
 		if (vmd_check_vmh(&vmh)) {
 			res = ENOENT;
-			close(imsg->fd);
+			close(ifd);
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 			break;
 		}
-		if (atomicio(read, imsg->fd, &vmc, sizeof(vmc)) !=
-		    sizeof(vmc)) {
+		if (atomicio(read, ifd, &vmc, sizeof(vmc)) != sizeof(vmc)) {
 			log_warnx("%s: error reading vmc from received vm",
 			    __func__);
 			res = EIO;
-			close(imsg->fd);
+			close(ifd);
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 			break;
 		}
@@ -317,14 +318,14 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (ret != 0) {
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-			close(imsg->fd);
+			close(ifd);
 		} else {
 			vm->vm_state |= VM_STATE_RECEIVED;
 			config_setvm(ps, vm, imsg->hdr.peerid,
 			    vmc.vmc_owner.uid);
 			log_debug("%s: sending fd to vmm", __func__);
 			proc_compose_imsg(ps, PROC_VMM, -1,
-			    IMSG_VMDOP_RECEIVE_VM_END, vm->vm_vmid, imsg->fd,
+			    IMSG_VMDOP_RECEIVE_VM_END, vm->vm_vmid, ifd,
 			    NULL, 0);
 		}
 		break;

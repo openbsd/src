@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.41 2023/04/28 19:46:42 dv Exp $	*/
+/*	$OpenBSD: control.c,v 1.42 2024/01/18 14:49:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -440,7 +440,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_VMDOP_RELOAD:
 		case IMSG_CTL_RESET:
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, imsg.fd,
+			    imsg.hdr.type, fd, imsg_get_fd(&imsg),
 			    imsg.data, IMSG_DATA_SIZE(&imsg)) == -1)
 				goto fail;
 			break;
@@ -453,7 +453,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 			/* imsg.fd may contain kernel image fd. */
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, imsg.fd, &vmc,
+			    imsg.hdr.type, fd, imsg_get_fd(&imsg), &vmc,
 			    sizeof(vmc)) == -1) {
 				control_close(fd, cs);
 				return;
@@ -508,7 +508,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			    vid.vid_uid);
 
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, imsg.fd,
+			    imsg.hdr.type, fd, imsg_get_fd(&imsg),
 			    &vid, sizeof(vid)) == -1)
 				goto fail;
 			break;

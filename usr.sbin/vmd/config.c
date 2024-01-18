@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.73 2024/01/03 22:34:39 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.74 2024/01/18 14:49:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -552,10 +552,12 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 {
 	struct vmop_create_params	 vmc;
 	struct vmd_vm			*vm = NULL;
+	int				 fd;
 
 	IMSG_SIZE_CHECK(imsg, &vmc);
 	memcpy(&vmc, imsg->data, sizeof(vmc));
-	vmc.vmc_kernel = imsg->fd;
+	fd = imsg_get_fd(imsg);
+	vmc.vmc_kernel = fd;
 
 	errno = 0;
 	if (vm_register(ps, &vmc, &vm, imsg->hdr.peerid, 0) == -1)
@@ -563,14 +565,12 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 
 	vm->vm_state |= VM_STATE_RUNNING;
 	vm->vm_peerid = (uint32_t)-1;
-	vm->vm_kernel = imsg->fd;
+	vm->vm_kernel = fd;
 	return (0);
 
  fail:
-	if (imsg->fd != -1) {
-		close(imsg->fd);
-		imsg->fd = -1;
-	}
+	if (fd != -1)
+		close(fd);
 
 	vm_remove(vm, __func__);
 	if (errno == 0)
@@ -584,6 +584,7 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 {
 	struct vmd_vm	*vm;
 	unsigned int	 n, idx;
+	int		 fd;
 
 	errno = 0;
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
@@ -593,8 +594,9 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
+	fd = imsg_get_fd(imsg);
 
-	if (n >= vm->vm_params.vmc_ndisks || imsg->fd == -1) {
+	if (n >= vm->vm_params.vmc_ndisks || fd == -1) {
 		log_warnx("invalid disk id");
 		errno = EINVAL;
 		return (-1);
@@ -605,7 +607,7 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 		errno = EINVAL;
 		return (-1);
 	}
-	vm->vm_disks[n][idx] = imsg->fd;
+	vm->vm_disks[n][idx] = fd;
 	return (0);
 }
 
@@ -614,6 +616,7 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 {
 	struct vmd_vm	*vm;
 	unsigned int	 n;
+	int		 fd;
 
 	errno = 0;
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
@@ -623,16 +626,18 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
+	fd = imsg_get_fd(imsg);
+
 	if (n >= vm->vm_params.vmc_nnics ||
-	    vm->vm_ifs[n].vif_fd != -1 || imsg->fd == -1) {
+	    vm->vm_ifs[n].vif_fd != -1 || fd == -1) {
 		log_warnx("invalid interface id");
 		goto fail;
 	}
-	vm->vm_ifs[n].vif_fd = imsg->fd;
+	vm->vm_ifs[n].vif_fd = fd;
 	return (0);
  fail:
-	if (imsg->fd != -1)
-		close(imsg->fd);
+	if (fd != -1)
+		close(fd);
 	errno = EINVAL;
 	return (-1);
 }
@@ -641,6 +646,7 @@ int
 config_getcdrom(struct privsep *ps, struct imsg *imsg)
 {
 	struct vmd_vm	*vm;
+	int		 fd;
 
 	errno = 0;
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
@@ -648,16 +654,15 @@ config_getcdrom(struct privsep *ps, struct imsg *imsg)
 		return (-1);
 	}
 
-	if (imsg->fd == -1) {
+	fd = imsg_get_fd(imsg);
+	if (fd == -1) {
 		log_warnx("invalid cdrom id");
 		goto fail;
 	}
 
-	vm->vm_cdrom = imsg->fd;
+	vm->vm_cdrom = fd;
 	return (0);
  fail:
-	if (imsg->fd != -1)
-		close(imsg->fd);
 	errno = EINVAL;
 	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.23 2023/07/13 18:31:59 dv Exp $	*/
+/*	$OpenBSD: priv.c,v 1.24 2024/01/18 14:49:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -94,6 +94,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vmop_addr_req	 vareq;
 	struct vmop_addr_result	 varesult;
 	char			 type[IF_NAMESIZE];
+	int			 ifd;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_PRIV_IFDESCR:
@@ -254,14 +255,15 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		varesult.var_vmid = vareq.var_vmid;
 		varesult.var_nic_idx = vareq.var_nic_idx;
 
+		ifd = imsg_get_fd(imsg);
 		/* resolve lladdr for the tap(4) and send back to parent */
-		if (ioctl(imsg->fd, SIOCGIFADDR, &varesult.var_addr) != 0)
+		if (ioctl(ifd, SIOCGIFADDR, &varesult.var_addr) != 0)
 			log_warn("SIOCGIFADDR");
 		else
 			proc_compose_imsg(ps, PROC_PARENT, -1,
 			    IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE, imsg->hdr.peerid,
 			    -1, &varesult, sizeof(varesult));
-		close(imsg->fd);
+		close(ifd);
 		break;
 	case IMSG_VMDOP_CONFIG:
 		config_getconfig(env, imsg);
