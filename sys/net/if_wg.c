@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.35 2024/01/01 18:47:02 mvs Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.36 2024/01/18 08:46:41 mvs Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -518,7 +518,7 @@ wg_peer_destroy(struct wg_peer *peer)
 			continue;
 		}
 		NET_UNLOCK();
-		tsleep_nsec(sc, PWAIT, "wg_ifq", 1000);
+		tsleep_nsec(&nowake, PWAIT, "wg_ifq", 1000);
 		NET_LOCK();
 	}
 	NET_UNLOCK();
