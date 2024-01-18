@@ -719,9 +719,7 @@ static const struct i2c_algorithm smu_v11_0_i2c_algo = {
 };
 
 static const struct i2c_adapter_quirks smu_v11_0_i2c_control_quirks = {
-#ifdef notyet
 	.flags = I2C_AQ_NO_ZERO_LEN,
-#endif
 };
 
 int smu_v11_0_i2c_control_init(struct amdgpu_device *adev)
