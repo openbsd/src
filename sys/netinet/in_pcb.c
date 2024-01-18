@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.284 2024/01/09 19:57:00 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.285 2024/01/18 11:03:16 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1305,6 +1305,10 @@ int
 in_pcbset_rtableid(struct inpcb *inp, u_int rtableid)
 {
 	struct inpcbtable *table = inp->inp_table;
+
+	/* table must exist */
+	if (!rtable_exists(rtableid))
+		return (EINVAL);
 
 	mtx_enter(&table->inpt_mtx);
 	if (inp->inp_lport) {

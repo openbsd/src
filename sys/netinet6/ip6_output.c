@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.282 2023/12/01 15:30:47 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.283 2024/01/18 11:03:16 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1376,11 +1376,6 @@ do { \
 			if (rtableid != rtid && rtableid != 0 &&
 			    (error = suser(p)) != 0)
 				break;
-			/* table must exist */
-			if (!rtable_exists(rtid)) {
-				error = EINVAL;
-				break;
-			}
 			error = in_pcbset_rtableid(inp, rtid);
 			break;
 		case IPV6_PIPEX:
