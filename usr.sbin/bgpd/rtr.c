@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.19 2024/01/04 16:38:18 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.20 2024/01/18 09:39:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -530,12 +530,10 @@ rtr_recalc(void)
 
 	/* walk tree in reverse because aspa_add_set requires that */
 	RB_FOREACH_REVERSE(aspa, aspa_tree, &at) {
-		uint32_t	as[2];
-		as[0] = aspa->as;
-		as[1] = aspa->num;
+		struct aspa_set	as = { .as = aspa->as, .num = aspa->num };
 
 		imsg_compose(ibuf_rde, IMSG_RECONF_ASPA, 0, 0, -1,
-		    &as, sizeof(as));
+		    &as, offsetof(struct aspa_set, tas));
 		imsg_compose(ibuf_rde, IMSG_RECONF_ASPA_TAS, 0, 0, -1,
 		    aspa->tas, aspa->num * sizeof(*aspa->tas));
 		imsg_compose(ibuf_rde, IMSG_RECONF_ASPA_DONE, 0, 0, -1,
