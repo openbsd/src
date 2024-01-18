@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.24 2020/01/23 00:17:27 dlg Exp $ */
+/*	$OpenBSD: privsep.c,v 1.25 2024/01/18 09:58:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Yasuoka Masahiko <yasuoka@openbsd.org>
@@ -526,7 +526,7 @@ privsep_recvfd(void)
 		if (r->retval != 0)
 			errno = r->rerrno;
 		else
-			retval = imsg.fd;
+			retval = imsg_get_fd(&imsg);
 	}
 	imsg_free(&imsg);
 
@@ -646,18 +646,19 @@ privsep_priv_dispatch_imsg(struct imsgbuf *ibuf)
 		case PRIVSEP_BIND: {
 			struct PRIVSEP_BIND_ARG	*a = imsg.data;
 			struct PRIVSEP_COMMON_RESP r = { -1, 0 };
+			int fd;
 
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(*a) ||
-			    imsg.fd < 0)
+			    (fd = imsg_get_fd(&imsg)) < 0)
 				r.rerrno = EINVAL;
 			else if (privsep_npppd_check_bind(a))
 				r.rerrno = EACCES;
 			else {
-				if ((r.retval = bind(imsg.fd,
+				if ((r.retval = bind(fd,
 				    (struct sockaddr *)&a->name, a->namelen))
 				    != 0)
 					r.rerrno = errno;
-				close(imsg.fd);
+				close(fd);
 			}
 			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
 			    &r, sizeof(r));
@@ -744,28 +745,29 @@ on_broken_entry:
 		case PRIVSEP_SENDTO: {
 			struct PRIVSEP_SENDTO_ARG *a = imsg.data;
 			struct PRIVSEP_COMMON_RESP r = { -1, 0 };
+			int fd;
 
 			if (imsg.hdr.len < IMSG_HEADER_SIZE + sizeof(*a) ||
 			    imsg.hdr.len < IMSG_HEADER_SIZE +
 				offsetof(struct PRIVSEP_SENDTO_ARG,
 					msg[a->len]))
 				r.rerrno = EMSGSIZE;
-			else if (imsg.fd < 0)
+			else if ((fd = imsg_get_fd(&imsg)) < 0)
 				r.rerrno = EINVAL;
 			else if (privsep_npppd_check_sendto(a))
 				r.rerrno = EACCES;
 			else {
 				if (a->tolen > 0)
-					r.retval = sendto(imsg.fd, a->msg,
+					r.retval = sendto(fd, a->msg,
 					    a->len, a->flags,
 					    (struct sockaddr *)&a->to,
 					    a->tolen);
 				else
-					r.retval = send(imsg.fd, a->msg, a->len,
+					r.retval = send(fd, a->msg, a->len,
 					    a->flags);
 				if (r.retval < 0)
 					r.rerrno = errno;
-				close(imsg.fd);
+				close(fd);
 			}
 			(void)imsg_compose(ibuf, PRIVSEP_OK, 0, 0, -1,
 			    &r, sizeof(r));
