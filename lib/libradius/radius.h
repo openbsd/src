@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.h,v 1.2 2023/07/08 08:53:26 yasuoka Exp $ */
+/*	$OpenBSD: radius.h,v 1.3 2024/01/19 06:32:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -141,7 +141,14 @@
 #define RADIUS_TYPE_FRAMED_IPV6_PREFIX        97
 #define RADIUS_TYPE_LOGIN_IPV6_HOST           98
 #define RADIUS_TYPE_FRAMED_IPV6_ROUTE         99
-#define RADIUS_TYPE_FRAMED_IPV6_POOL          100
+#define RADIUS_TYPE_FRAMED_IPV6_POOL         100
+
+/* RFC 6911 3. Attributes */
+#define RADIUS_TYPE_FRAMED_IPV6_ADDRESS      168
+#define RADIUS_TYPE_DNS_SERVER_IPV6_ADDRESS  169
+#define RADIUS_TYPE_ROUTE_IPV6_INFORMATION   170
+#define RADIUS_TYPE_DELEGATED_IPV6_PREFIX_POOL 171
+#define RADIUS_TYPE_STATEFUL_IPV6_ADDRESS_POOL 172
 
 
 /* RFC 2865 5.7. Framed-Protocol */
