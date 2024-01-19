@@ -1695,7 +1695,6 @@
 ./usr/share/man/man2/nfssvc.2
 ./usr/share/man/man2/open.2
 ./usr/share/man/man2/pathconf.2
-./usr/share/man/man2/pinsyscall.2
 ./usr/share/man/man2/pinsyscalls.2
 ./usr/share/man/man2/pipe.2
 ./usr/share/man/man2/pledge.2
