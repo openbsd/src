@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.423 2024/01/18 08:48:32 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.424 2024/01/19 01:43:27 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1529,7 +1529,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			break;
 		}
 		matched = 0;
-		for (pr = priterator(NULL); pr != NULL; pr = priterator(pr)) {
+		LIST_FOREACH(pr, &allprocess, ps_list) {
 			/*
 			 * skip system, exiting, embryonic and undead
 			 * processes
@@ -1561,7 +1561,7 @@ sysctl_file(int *name, u_int namelen, char *where, size_t *sizep,
 			error = ESRCH;
 		break;
 	case KERN_FILE_BYUID:
-		for (pr = priterator(NULL); pr != NULL; pr = priterator(pr)) {
+		LIST_FOREACH(pr, &allprocess, ps_list) {
 			/*
 			 * skip system, exiting, embryonic and undead
 			 * processes

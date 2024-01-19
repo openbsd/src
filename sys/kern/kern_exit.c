@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.219 2024/01/16 19:05:01 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.220 2024/01/19 01:43:26 bluhm Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -165,8 +165,6 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		/* main thread gotta wait because it has the pid, et al */
 		while (pr->ps_threadcnt > 1)
 			tsleep_nsec(&pr->ps_threads, PWAIT, "thrdeath", INFSLP);
-		LIST_REMOVE(pr, ps_list);
-		refcnt_finalize(&pr->ps_refcnt, "psdtor");
 	}
 
 	rup = pr->ps_ru;
@@ -259,6 +257,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 
 	if ((p->p_flag & P_THREAD) == 0) {
 		LIST_REMOVE(pr, ps_hash);
+		LIST_REMOVE(pr, ps_list);
 
 		if ((pr->ps_flags & PS_NOZOMBIE) == 0)
 			LIST_INSERT_HEAD(&zombprocess, pr, ps_list);

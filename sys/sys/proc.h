@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.354 2024/01/16 19:05:00 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.355 2024/01/19 01:43:27 bluhm Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@
 #include <sys/resource.h>		/* For struct rusage */
 #include <sys/rwlock.h>			/* For struct rwlock */
 #include <sys/sigio.h>			/* For struct sigio */
-#include <sys/refcnt.h>
 
 #ifdef _KERNEL
 #include <sys/atomic.h>
@@ -172,7 +171,6 @@ struct process {
 
 	struct	futex_list ps_ftlist;	/* futexes attached to this process */
 	struct	tslpqueue ps_tslpqueue;	/* [p] queue of threads in thrsleep */
-	struct	refcnt	ps_refcnt;
 	struct	rwlock	ps_lock;	/* per-process rwlock */
 	struct  mutex	ps_mtx;		/* per-process mutex */
 
@@ -540,7 +538,6 @@ void	freepid(pid_t);
 
 struct process *prfind(pid_t);	/* Find process by id. */
 struct process *zombiefind(pid_t); /* Find zombie process by id. */
-struct process *priterator(struct process *);
 struct proc *tfind(pid_t);	/* Find thread by id. */
 struct pgrp *pgfind(pid_t);	/* Find process group by id. */
 struct proc *tfind_user(pid_t, struct process *);
