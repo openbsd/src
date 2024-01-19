@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.44 2024/01/15 08:56:45 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.45 2024/01/19 03:25:13 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -68,6 +68,7 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/route.h>
 #include <net/toeplitz.h>
 
 #if NBPFILTER > 0
@@ -75,7 +76,12 @@
 #endif
 
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/if_ether.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 
 #define BNXT_HWRM_BAR		0x10
 #define BNXT_DOORBELL_BAR	0x18
@@ -642,6 +648,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv6 |
 	    IFCAP_CSUM_TCPv6;
+	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
@@ -929,7 +936,7 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 
 	for (i = 0; i < tx->tx_ring.ring_size; i++) {
 		bs = &tx->tx_slots[i];
-		if (bus_dmamap_create(sc->sc_dmat, BNXT_MAX_MTU, BNXT_MAX_TX_SEGS,
+		if (bus_dmamap_create(sc->sc_dmat, MAXMCLBYTES, BNXT_MAX_TX_SEGS,
 		    BNXT_MAX_MTU, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &bs->bs_map) != 0) {
 			printf("%s: failed to allocate tx dma maps\n",
@@ -1337,11 +1344,12 @@ bnxt_start(struct ifqueue *ifq)
 	struct bnxt_tx_queue *tx = ifq->ifq_softc;
 	struct bnxt_softc *sc = tx->tx_softc;
 	struct bnxt_slot *bs;
+	struct ether_extracted ext;
 	bus_dmamap_t map;
 	struct mbuf *m;
 	u_int idx, free, used, laststart;
-	uint16_t txflags;
-	int i;
+	uint16_t txflags, lflags;
+	int i, slen;
 
 	txring = (struct tx_bd_short *)BNXT_DMA_KVA(tx->tx_ring_mem);
 
@@ -1385,12 +1393,16 @@ bnxt_start(struct ifqueue *ifq)
 		txring[idx].len = htole16(map->dm_segs[0].ds_len);
 		txring[idx].opaque = tx->tx_prod;
 		txring[idx].addr = htole64(map->dm_segs[0].ds_addr);
+		if (m->m_pkthdr.csum_flags & M_TCP_TSO)
+			slen = m->m_pkthdr.ph_mss;
+		else
+			slen = map->dm_mapsize;
 
-		if (map->dm_mapsize < 512)
+		if (slen < 512)
 			txflags = TX_BD_LONG_FLAGS_LHINT_LT512;
-		else if (map->dm_mapsize < 1024)
+		else if (slen < 1024)
 			txflags = TX_BD_LONG_FLAGS_LHINT_LT1K;
-		else if (map->dm_mapsize < 2048)
+		else if (slen < 2048)
 			txflags = TX_BD_LONG_FLAGS_LHINT_LT2K;
 		else
 			txflags = TX_BD_LONG_FLAGS_LHINT_GTE2K;
@@ -1409,12 +1421,44 @@ bnxt_start(struct ifqueue *ifq)
 		/* long tx descriptor */
 		txhi = (struct tx_bd_long_hi *)&txring[idx];
 		memset(txhi, 0, sizeof(*txhi));
-		txflags = 0;
-		if (m->m_pkthdr.csum_flags & (M_UDP_CSUM_OUT | M_TCP_CSUM_OUT))
-			txflags |= TX_BD_LONG_LFLAGS_TCP_UDP_CHKSUM;
-		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-			txflags |= TX_BD_LONG_LFLAGS_IP_CHKSUM;
-		txhi->lflags = htole16(txflags);
+
+		lflags = 0;
+		if (m->m_pkthdr.csum_flags & M_TCP_TSO) {
+			uint16_t hdrsize;
+			uint32_t outlen;
+			uint32_t paylen;
+
+			ether_extract_headers(m, &ext);
+			if (ext.tcp) {
+				lflags |= TX_BD_LONG_LFLAGS_LSO;
+				hdrsize = sizeof(*ext.eh);
+				if (ext.ip4)
+					hdrsize += ext.ip4->ip_hl << 2;
+				else if (ext.ip6)
+					hdrsize += sizeof(*ext.ip6);
+				else
+					tcpstat_inc(tcps_outbadtso);
+
+				hdrsize += ext.tcp->th_off << 2;
+				txhi->hdr_size = htole16(hdrsize / 2);
+
+				outlen = m->m_pkthdr.ph_mss;
+				txhi->mss = htole32(outlen);
+
+				paylen = m->m_pkthdr.len - hdrsize;
+				tcpstat_add(tcps_outpkttso,
+				    (paylen + outlen + 1) / outlen);
+			} else {
+				tcpstat_inc(tcps_outbadtso);
+			}
+		} else {
+			if (m->m_pkthdr.csum_flags & (M_UDP_CSUM_OUT |
+			    M_TCP_CSUM_OUT))
+				lflags |= TX_BD_LONG_LFLAGS_TCP_UDP_CHKSUM;
+			if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+				lflags |= TX_BD_LONG_LFLAGS_IP_CHKSUM;
+		}
+		txhi->lflags = htole16(lflags);
 
 #if NVLAN > 0
 		if (m->m_flags & M_VLANTAG) {
