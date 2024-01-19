@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.18 2023/05/27 04:33:00 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.19 2024/01/19 19:45:02 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 #include_next <stdlib.h>
 
 __BEGIN_HIDDEN_DECLS
+int	__mktemp4(char *, int, int, int (*)(const char *, int));
 char	*__findenv(const char *, int, int *);
 void	__atexit_register_cleanup(void (*)(void));
 __END_HIDDEN_DECLS

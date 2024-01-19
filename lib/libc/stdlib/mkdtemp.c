@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.2 2024/01/19 19:45:02 millert Exp $ */
+/*	$OpenBSD: mkdtemp.c,v 1.1 2024/01/19 19:45:02 millert Exp $ */
 /*
  * Copyright (c) 2024 Todd C. Miller
  *
@@ -16,33 +16,18 @@
  */
 
 #include <sys/stat.h>
-#include <errno.h>
 #include <stdlib.h>
 
 static int
-mktemp_cb(const char *path, int flags)
+mkdtemp_cb(const char *path, int flags)
 {
-	struct stat sb;
-
-	if (lstat(path, &sb) == 0)
-		errno = EEXIST;
-	return (errno == ENOENT ? 0 : -1);
+	return mkdir(path, S_IRUSR|S_IWUSR|S_IXUSR);
 }
 
-/* Also called via tmpnam(3) and tempnam(3). */
 char *
-_mktemp(char *path)
+mkdtemp(char *path)
 {
-	if (__mktemp4(path, 0, 0, mktemp_cb) == 0)
+	if (__mktemp4(path, 0, 0, mkdtemp_cb) == 0)
 		return path;
 	return NULL;
-}
-
-__warn_references(mktemp,
-    "mktemp() possibly used unsafely; consider using mkstemp()");
-
-char *
-mktemp(char *path)
-{
-	return _mktemp(path);
 }
