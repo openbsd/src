@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.20 2024/01/18 19:00:11 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.21 2024/01/19 14:15:51 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -71,9 +71,6 @@ extern Elf_Ehdr __executable_start[] __attribute__((weak));
 /* provide definitions for these */
 const dl_cb *_dl_cb __relro = NULL;
 
-int	pinsyscall(int, void *, size_t);
-PROTO_NORMAL(pinsyscall);
-
 int	HIDDEN(execve)(const char *, char *const *, char *const *)
 	__attribute__((weak));
 
@@ -141,22 +138,8 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 	_static_phdr_info.dlpi_phnum = phnum;
 
 	/* static libc in a static link? */
-	if (cb == NULL) {
+	if (cb == NULL)
 		setup_static_tib(phdr, phnum);
-
-#if !defined(__hppa__)
-		if (&HIDDEN(execve)) {
-			extern const int _execve_size;
-
-			pinsyscall(SYS_execve, &HIDDEN(execve), _execve_size);
-		} else {
-			static const int not_syscall;
-
-			/* Static binary which does not use execve() */
-			pinsyscall(SYS_execve, (void *)&not_syscall, 1);
-		}
-#endif
-	}
 
 	/*
 	 * If a static binary has text relocations (DT_TEXT), then un-writeable

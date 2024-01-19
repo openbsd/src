@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.176 2023/12/12 15:30:55 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.177 2024/01/19 14:15:51 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -22,23 +22,6 @@ SRCS+=	ptrace.c semctl.c \
 
 # stack protector helper functions
 SRCS+=	stack_protector.c
-
-# Extract execve stub size for static binary pinsyscall(2) in dlfcn/init.c
-SRCS+=	_execvesize.c
-CLEANFILES+=_execvesize.c
-_execvesize.c: execve.o execve.po
-	readelf -s execve.po | awk \
-	    '/ execve$$/{ printf("#ifdef _PROFILE\nconst int _execve_size = %d;\n", $$3); }' > $@
-	readelf -s execve.o | awk \
-	    '/ execve$$/{ printf("#else\nconst int _execve_size = %d;\n#endif\n", $$3); }' >> $@
-
-# _libc_preinit() needs to know if compiled with or without profiling
-_execvesize.po:
-	@echo "${COMPILE.c} -D_PROFILE ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${DFLAGS} -D_PROFILE ${.IMPSRC} -o ${.TARGET}.o
-	@-mv $@.d $*.d
-	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
-	@rm -f ${.TARGET}.o
 
 # cancelation details
 SRCS+=	canceled.c
@@ -79,7 +62,7 @@ ASM=	__semctl.o __thrsigdivert.o \
 	mknod.o mknodat.o mlock.o mlockall.o mmap.o mount.o mprotect.o \
 	mquery.o msgctl.o msgget.o munlock.o munlockall.o munmap.o \
 	nfssvc.o \
-	pathconf.o pipe.o pipe2.o pinsyscall.o pledge.o profil.o \
+	pathconf.o pipe.o pipe2.o pledge.o profil.o \
 	quotactl.o \
 	readlink.o readlinkat.o reboot.o \
 	rename.o renameat.o revoke.o rmdir.o \
@@ -208,7 +191,7 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	mimmutable.2 minherit.2 mkdir.2 mkfifo.2 mknod.2 mlock.2 \
 	mlockall.2 mmap.2 mount.2 mprotect.2 mquery.2 msyscall.2 msgctl.2 \
 	msgget.2 msgrcv.2 msgsnd.2 msync.2 munmap.2 nanosleep.2 \
-	nfssvc.2 open.2 pathconf.2 pinsyscall.2 pinsyscalls.2 pipe.2 pledge.2 \
+	nfssvc.2 open.2 pathconf.2 pinsyscalls.2 pipe.2 pledge.2 \
 	poll.2 profil.2 ptrace.2 quotactl.2 read.2 readlink.2 reboot.2 recv.2 \
 	rename.2 revoke.2 rmdir.2 sched_yield.2 select.2 semctl.2 semget.2 \
 	semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
