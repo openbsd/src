@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.196 2024/01/09 03:16:00 guenther Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.197 2024/01/19 18:58:17 deraadt Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -886,7 +886,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	strlcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, sizeof(fs->fs_fsmnt));
 
 #if 0
-	if( mp->mnt_flag & MNT_ROOTFS) {
+	if (mp->mnt_flag & MNT_ROOTFS) {
 		/*
 		 * Root mount; update timestamp in mount structure.
 		 * this will be used by the common root mount code
