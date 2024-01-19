@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.279 2023/12/28 17:36:29 stsp Exp $
+# $OpenBSD: GENERIC,v 1.280 2024/01/19 06:59:10 mlarkin Exp $
 #
 # GENERIC machine description file
 #
@@ -390,6 +390,7 @@ vmx*		at pci?			# VMware VMXNET3 virtual interface
 # PCI WiFi
 athn*		at pci?			# Atheros AR9k (802.11a/g/n)
 bwfm*		at pci?			# Broadcom FullMAC
+iwn*		at pci?			# Intel WiFi Link 4965/5000/1000/6000
 iwx*		at pci?			# Intel WiFi Link 22xxx
 #qwx*		at pci?			# Qualcomm 802.11ax
 
