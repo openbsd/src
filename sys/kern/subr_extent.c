@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.64 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.65 2024/01/19 22:12:24 kettenis Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -398,9 +398,10 @@ extent_insert_and_optimize(struct extent *ex, u_long start, u_long size,
  * Allocate a specific region in an extent map.
  */
 int
-extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
+extent_do_alloc_region(struct extent *ex, u_long start, u_long size,
+    int flags, struct extent_region *myrp)
 {
-	struct extent_region *rp, *last, *myrp;
+	struct extent_region *rp, *last;
 	u_long end = start + (size - 1);
 	int error;
 
@@ -435,21 +436,9 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 		    __func__, start, end);
 		panic("%s: region lies outside extent", __func__);
 #else
+		extent_free_region_descriptor(ex, myrp);
 		return (EINVAL);
 #endif
-	}
-
-	/*
-	 * Allocate the region descriptor.  It will be freed later
-	 * if we can coalesce with another region.
-	 */
-	myrp = extent_alloc_region_descriptor(ex, flags);
-	if (myrp == NULL) {
-#ifdef DIAGNOSTIC
-		printf(
-		    "%s: can't allocate region descriptor\n", __func__);
-#endif
-		return (ENOMEM);
 	}
 
  alloc_start:
@@ -565,6 +554,39 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 	 */
 	extent_insert_and_optimize(ex, start, size, last, myrp);
 	return (0);
+}
+
+int
+extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
+{
+	struct extent_region *rp;
+
+	/*
+	 * Allocate the region descriptor.  It will be freed later
+	 * if we can coalesce with another region.
+	 */
+	rp = extent_alloc_region_descriptor(ex, flags);
+	if (rp == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: can't allocate region descriptor\n", __func__);
+#endif
+		return (ENOMEM);
+	}
+
+	return extent_do_alloc_region(ex, start, size, flags, rp);
+}
+
+int
+extent_alloc_region_with_descr(struct extent *ex, u_long start,
+    u_long size, int flags, struct extent_region *rp)
+{
+#ifdef DIAGNOSTIC
+	if ((ex->ex_flags & EXF_NOCOALESCE) == 0)
+		panic("%s: EX_NOCOALESCE not set", __func__);
+#endif
+
+	rp->er_flags = ER_DISCARD;
+	return extent_do_alloc_region(ex, start, size, flags, rp);
 }
 
 /*

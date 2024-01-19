@@ -1,4 +1,4 @@
-/*	$OpenBSD: extent.h,v 1.14 2014/02/08 20:29:01 kettenis Exp $	*/
+/*	$OpenBSD: extent.h,v 1.15 2024/01/19 22:12:24 kettenis Exp $	*/
 /*	$NetBSD: extent.h,v 1.6 1997/10/09 07:43:05 jtc Exp $	*/
 
 /*-
@@ -110,6 +110,8 @@ int	extent_alloc_subregion_with_descr(struct extent *, u_long, u_long,
 	    u_long, u_long, u_long, u_long, int, struct extent_region *,
 	    u_long *);
 int	extent_alloc_region(struct extent *, u_long, u_long, int);
+int	extent_alloc_region_with_descr(struct extent *, u_long, u_long,
+	    int, struct extent_region *);
 int	extent_free(struct extent *, u_long, u_long, int);
 void	extent_print(struct extent *);
 

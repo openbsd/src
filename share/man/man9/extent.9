@@ -1,4 +1,4 @@
-.\"	$OpenBSD: extent.9,v 1.19 2015/11/01 21:26:48 jmc Exp $
+.\"	$OpenBSD: extent.9,v 1.20 2024/01/19 22:12:24 kettenis Exp $
 .\"	$NetBSD: extent.9,v 1.15 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 1 2015 $
+.Dd $Mdocdate: January 19 2024 $
 .Dt EXTENT 9
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nm extent_alloc_subregion ,
 .Nm extent_alloc_subregion_with_descr ,
 .Nm extent_alloc_region ,
+.Nm extent_alloc_region_with_descr ,
 .Nm extent_free ,
 .Nm extent_print
 .Nd general purpose extent manager
@@ -82,6 +83,8 @@
 .Fc
 .Ft int
 .Fn extent_alloc_region "struct extent *ex" "u_long start" "u_long size" "int flags"
+.Ft int
+.Fn extent_alloc_region_with_descr "struct extent *ex" "u_long start" "u_long size" "int flags" "struct extent_region *rp"
 .Ft int
 .Fn extent_free "struct extent *ex" "u_long start" "u_long size" "int flags"
 .Ft void
@@ -289,6 +292,15 @@ nor
 .Dv EX_CONFLICTOK
 is set, the allocation will fail if the request cannot be
 satisfied without sleeping.
+.Pp
+.Fn extent_alloc_region_with_descr
+is similar to
+.Fn extent_alloc_region
+but allows the caller to provide a pre-allocated region descriptor instead
+of having the function allocate one.
+This function can only be used with extents that have the
+.Dv EX_NOCOALESCE
+property.
 .Pp
 .Fn extent_free
 frees a region of
