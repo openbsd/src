@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.39 2017/11/28 06:55:49 tb Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.1 2024/01/19 16:30:28 millert Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
