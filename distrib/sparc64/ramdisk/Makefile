@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2023/04/28 12:26:43 krw Exp $
+#	$OpenBSD: Makefile,v 1.58 2024/01/19 20:06:00 miod Exp $
 
 FS=		floppy${OSrev}.img
 FSSIZE=		2880
@@ -77,8 +77,8 @@ install:
 
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
-	    lib*.a lib*.olist instbin.map \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz ${FS}
+	    lib*.a lib*.olist instbin.map instbin.conf \
+	    *.o *.lo *.c bsd bsd.rd bsd.strip bsd.gz ${FS}
 	rm -rf mr.fs.d
 
 .include <bsd.obj.mk>
