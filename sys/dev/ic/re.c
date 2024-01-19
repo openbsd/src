@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.216 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: re.c,v 1.217 2024/01/19 03:46:14 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -199,6 +199,7 @@ int	re_wol(struct ifnet*, int);
 #endif
 #if NKSTAT > 0
 void	re_kstat_attach(struct rl_softc *);
+void	re_kstat_detach(struct rl_softc *);
 #endif
 
 void	in_delayed_cksum(struct mbuf *);
@@ -1128,6 +1129,27 @@ fail_0:
 	return (1);
 }
 
+void
+re_detach(struct rl_softc *sc)
+{
+	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
+
+#if NKSTAT > 0
+	re_kstat_detach(sc);
+#endif
+
+	/* Remove timeout handler */
+	timeout_del(&sc->timer_handle);
+
+	/* Detach PHY */
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete media stuff */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+}
 
 int
 re_newbuf(struct rl_softc *sc)
@@ -2604,10 +2626,33 @@ unmap:
 	bus_dmamem_unmap(sc->sc_dmat,
 	    (caddr_t)re_ks_sc->re_ks_sc_stats, sizeof(struct re_stats));
 freedma:
-	bus_dmamem_free(sc->sc_dmat, &re_ks_sc->re_ks_sc_seg, 1);
+	bus_dmamem_free(sc->sc_dmat, &re_ks_sc->re_ks_sc_seg,
+	    re_ks_sc->re_ks_sc_nsegs);
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, re_ks_sc->re_ks_sc_map);
 free:
+	free(re_ks_sc, M_DEVBUF, sizeof(*re_ks_sc));
+}
+
+void
+re_kstat_detach(struct rl_softc *sc)
+{
+	struct kstat *ks = sc->rl_kstat;
+	struct re_kstat_softc *re_ks_sc;
+
+	if (ks == NULL)
+		return;
+
+	kstat_remove(ks);
+	re_ks_sc = ks->ks_ptr;
+	kstat_destroy(ks);
+
+	bus_dmamap_unload(sc->sc_dmat, re_ks_sc->re_ks_sc_map);
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)re_ks_sc->re_ks_sc_stats, sizeof(struct re_stats));
+	bus_dmamem_free(sc->sc_dmat, &re_ks_sc->re_ks_sc_seg,
+	    re_ks_sc->re_ks_sc_nsegs);
+	bus_dmamap_destroy(sc->sc_dmat, re_ks_sc->re_ks_sc_map);
 	free(re_ks_sc, M_DEVBUF, sizeof(*re_ks_sc));
 }
 #endif /* NKSTAT > 0 */
