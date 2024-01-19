@@ -1,4 +1,4 @@
-/*	$OpenBSD: pic.h,v 1.7 2014/12/16 21:20:23 tedu Exp $	*/
+/*	$OpenBSD: pic.h,v 1.8 2024/01/19 18:38:16 kettenis Exp $	*/
 /*	$NetBSD: pic.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 #ifndef _X86_PIC_H
@@ -22,6 +22,7 @@ struct pic {
         void (*pic_hwunmask)(struct pic *, int);
 	void (*pic_addroute)(struct pic *, struct cpu_info *, int, int, int);
 	void (*pic_delroute)(struct pic *, struct cpu_info *, int, int, int);
+	int (*pic_allocidtvec)(struct pic *, int, int, int);
 	struct intrstub *pic_level_stubs;
 	struct intrstub *pic_edge_stubs;
 };

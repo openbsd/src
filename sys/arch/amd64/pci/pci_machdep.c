@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.77 2021/03/11 11:16:55 jsg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.78 2024/01/19 18:38:16 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -315,10 +315,21 @@ pci_msix_table_unmap(pci_chipset_tag_t pc, pcitag_t tag,
 	_bus_space_unmap(memt, memh, tblsz * 16, NULL);
 }
 
+/*
+ * We pack the MSI vector number into the lower 8 bits of the PCI tag
+ * and use that as the MSI/MSI-X "PIC" pin number.  This allows us to
+ * address 256 MSI vectors which ought to be enough for anybody.
+ */
+#define PCI_MSI_VEC_MASK	0xff
+#define PCI_MSI_VEC(pin)	((pin) & PCI_MSI_VEC_MASK)
+#define PCI_MSI_TAG(pin)	((pin) & ~PCI_MSI_VEC_MASK)
+#define PCI_MSI_PIN(tag, vec)	((tag) | (vec))
+
 void msi_hwmask(struct pic *, int);
 void msi_hwunmask(struct pic *, int);
 void msi_addroute(struct pic *, struct cpu_info *, int, int, int);
 void msi_delroute(struct pic *, struct cpu_info *, int, int, int);
+int msi_allocidtvec(struct pic *, int, int, int);
 
 struct pic msi_pic = {
 	{0, {NULL}, NULL, 0, "msi", NULL, 0, 0},
@@ -330,6 +341,7 @@ struct pic msi_pic = {
 	msi_hwunmask,
 	msi_addroute,
 	msi_delroute,
+	msi_allocidtvec,
 	NULL,
 	ioapic_edge_stubs
 };
@@ -345,39 +357,110 @@ msi_hwunmask(struct pic *pic, int pin)
 }
 
 void
-msi_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
+msi_addroute(struct pic *pic, struct cpu_info *ci, int pin, int idtvec,
+    int type)
 {
 	pci_chipset_tag_t pc = NULL; /* XXX */
-	pcitag_t tag = pin;
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int vec = PCI_MSI_VEC(pin);
 	pcireg_t reg, addr;
 	int off;
 
 	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
 		panic("%s: no msi capability", __func__);
 
+	if (vec != 0)
+		return;
+
 	addr = 0xfee00000UL | (ci->ci_apicid << 12);
 
 	if (reg & PCI_MSI_MC_C64) {
 		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
 		pci_conf_write(pc, tag, off + PCI_MSI_MAU32, 0);
-		pci_conf_write(pc, tag, off + PCI_MSI_MD64, vec);
+		pci_conf_write(pc, tag, off + PCI_MSI_MD64, idtvec);
 	} else {
 		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
-		pci_conf_write(pc, tag, off + PCI_MSI_MD32, vec);
+		pci_conf_write(pc, tag, off + PCI_MSI_MD32, idtvec);
 	}
 	pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
 }
 
 void
-msi_delroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
+msi_delroute(struct pic *pic, struct cpu_info *ci, int pin, int idtvec,
+    int type)
 {
 	pci_chipset_tag_t pc = NULL; /* XXX */
-	pcitag_t tag = pin;
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int vec = PCI_MSI_VEC(pin);
 	pcireg_t reg;
 	int off;
 
+	if (vec != 0)
+		return;
+
 	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg))
 		pci_conf_write(pc, tag, off, reg & ~PCI_MSI_MC_MSIE);
+}
+
+int
+msi_allocidtvec(struct pic *pic, int pin, int low, int high)
+{
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int vec = PCI_MSI_VEC(pin);
+	int idtvec, mme, off;
+	pcireg_t reg;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		panic("%s: no msi capability", __func__);
+
+	reg = pci_conf_read(pc, tag, off);
+	mme = ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT);
+	if (vec >= (1 << mme))
+		return 0;
+
+	if (vec == 0) {
+		idtvec = idt_vec_alloc_range(low, high, (1 << mme));
+		if (reg & PCI_MSI_MC_C64)
+			pci_conf_write(pc, tag, off + PCI_MSI_MD64, idtvec);
+		else
+			pci_conf_write(pc, tag, off + PCI_MSI_MD32, idtvec);
+	} else {
+		if (reg & PCI_MSI_MC_C64)
+			reg = pci_conf_read(pc, tag, off + PCI_MSI_MD64);
+		else
+			reg = pci_conf_read(pc, tag, off + PCI_MSI_MD32);
+		KASSERT(reg > 0);
+		idtvec = reg + vec;
+	}
+
+	return idtvec;
+}
+
+int
+pci_intr_enable_msivec(struct pci_attach_args *pa, int num_vec)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t reg;
+	int mmc, mme, off;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 || mp_busses == NULL ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		return 1;
+
+	mmc = ((reg & PCI_MSI_MC_MMC_MASK) >> PCI_MSI_MC_MMC_SHIFT);
+	if (num_vec > (1 << mmc))
+		return 1;
+
+	mme = ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT);
+	while ((1 << mme) < num_vec)
+		mme++;
+	reg &= ~PCI_MSI_MC_MME_MASK;
+	reg |= (mme << PCI_MSI_MC_MME_SHIFT);
+	pci_conf_write(pc, tag, off, reg);
+
+	return 0;
 }
 
 int
@@ -385,12 +468,41 @@ pci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
+	pcireg_t reg;
+	int off;
 
 	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 || mp_busses == NULL ||
-	    pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
 		return 1;
 
+	/* Make sure we only enable one MSI vector. */
+	reg &= ~PCI_MSI_MC_MME_MASK;
+	pci_conf_write(pc, tag, off, reg);
+
 	ihp->tag = tag;
+	ihp->line = APIC_INT_VIA_MSG;
+	ihp->pin = 0;
+	return 0;
+}
+
+int
+pci_intr_map_msivec(struct pci_attach_args *pa, int vec,
+    pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t reg;
+	int mme, off;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 || mp_busses == NULL ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		return 1;
+
+	mme = ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT);
+	if (vec > (1 << mme))
+		return 0;
+
+	ihp->tag = PCI_MSI_PIN(tag, vec);
 	ihp->line = APIC_INT_VIA_MSG;
 	ihp->pin = 0;
 	return 0;
@@ -412,18 +524,9 @@ struct pic msix_pic = {
 	msix_addroute,
 	msix_delroute,
 	NULL,
+	NULL,
 	ioapic_edge_stubs
 };
-
-/*
- * We pack the MSI-X vector number into the lower 8 bits of the PCI
- * tag and use that as the MSI-X "PIC" pin number.  This allows us to
- * address 256 MSI-X vectors which ought to be enough for anybody.
- */
-#define PCI_MSIX_VEC_MASK	0xff
-#define PCI_MSIX_VEC(pin)	((pin) & PCI_MSIX_VEC_MASK)
-#define PCI_MSIX_TAG(pin)	((pin) & ~PCI_MSIX_VEC_MASK)
-#define PCI_MSIX_PIN(tag, vec)	((tag) | (vec))
 
 void
 msix_hwmask(struct pic *pic, int pin)
@@ -436,13 +539,14 @@ msix_hwunmask(struct pic *pic, int pin)
 }
 
 void
-msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
+msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int idtvec,
+    int type)
 {
 	pci_chipset_tag_t pc = NULL; /* XXX */
 	bus_space_tag_t memt = X86_BUS_SPACE_MEM; /* XXX */
 	bus_space_handle_t memh;
-	pcitag_t tag = PCI_MSIX_TAG(pin);
-	int entry = PCI_MSIX_VEC(pin);
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int entry = PCI_MSI_VEC(pin);
 	pcireg_t reg, addr;
 	uint32_t ctrl;
 	int off;
@@ -459,7 +563,7 @@ msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 
 	bus_space_write_4(memt, memh, PCI_MSIX_MA(entry), addr);
 	bus_space_write_4(memt, memh, PCI_MSIX_MAU32(entry), 0);
-	bus_space_write_4(memt, memh, PCI_MSIX_MD(entry), vec);
+	bus_space_write_4(memt, memh, PCI_MSIX_MD(entry), idtvec);
 	bus_space_barrier(memt, memh, PCI_MSIX_MA(entry), 16,
 	    BUS_SPACE_BARRIER_WRITE);
 	ctrl = bus_space_read_4(memt, memh, PCI_MSIX_VC(entry));
@@ -472,13 +576,14 @@ msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 }
 
 void
-msix_delroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
+msix_delroute(struct pic *pic, struct cpu_info *ci, int pin, int idtvec,
+    int type)
 {
 	pci_chipset_tag_t pc = NULL; /* XXX */
 	bus_space_tag_t memt = X86_BUS_SPACE_MEM; /* XXX */
 	bus_space_handle_t memh;
-	pcitag_t tag = PCI_MSIX_TAG(pin);
-	int entry = PCI_MSIX_VEC(pin);
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int entry = PCI_MSI_VEC(pin);
 	pcireg_t reg;
 	uint32_t ctrl;
 
@@ -504,7 +609,7 @@ pci_intr_map_msix(struct pci_attach_args *pa, int vec, pci_intr_handle_t *ihp)
 	pcitag_t tag = pa->pa_tag;
 	pcireg_t reg;
 
-	KASSERT(PCI_MSIX_VEC(vec) == vec);
+	KASSERT(PCI_MSI_VEC(vec) == vec);
 
 	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 || mp_busses == NULL ||
 	    pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
@@ -513,7 +618,7 @@ pci_intr_map_msix(struct pci_attach_args *pa, int vec, pci_intr_handle_t *ihp)
 	if (vec > PCI_MSIX_MC_TBLSZ(reg))
 		return 1;
 
-	ihp->tag = PCI_MSIX_PIN(tag, vec);
+	ihp->tag = PCI_MSI_PIN(tag, vec);
 	ihp->line = APIC_INT_VIA_MSGX;
 	ihp->pin = 0;
 	return 0;

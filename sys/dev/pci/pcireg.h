@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.61 2022/06/17 10:08:36 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.62 2024/01/19 18:38:16 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -516,8 +516,10 @@ typedef u_int8_t pci_revision_t;
  */
 #define PCI_MSI_MC		0x00
 #define PCI_MSI_MC_C64		0x00800000
-#define PCI_MSI_MC_MME		0x00700000
-#define PCI_MSI_MC_MMC		0x000e0000
+#define PCI_MSI_MC_MME_MASK	0x00700000
+#define PCI_MSI_MC_MME_SHIFT	20
+#define PCI_MSI_MC_MMC_MASK	0x000e0000
+#define PCI_MSI_MC_MMC_SHIFT	17
 #define PCI_MSI_MC_MSIE		0x00010000
 #define PCI_MSI_MA		0x04
 #define PCI_MSI_MAU32		0x08

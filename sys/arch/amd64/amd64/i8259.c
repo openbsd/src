@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.11 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.12 2024/01/19 18:38:16 kettenis Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ struct pic i8259_pic = {
 	i8259_hwunmask,
 	i8259_setup,
 	i8259_setup,
+	NULL,
 	i8259_stubs,
 	i8259_stubs,
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.288 2023/09/08 20:47:22 kn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.289 2024/01/19 18:38:16 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1912,6 +1912,29 @@ idt_vec_alloc(int low, int high)
 	for (vec = low; vec <= high; vec++) {
 		if (idt_allocmap[vec] == 0) {
 			idt_allocmap[vec] = 1;
+			return vec;
+		}
+	}
+	return 0;
+}
+
+int
+idt_vec_alloc_range(int low, int high, int num)
+{
+	int i, vec;
+
+	KASSERT(powerof2(num));
+	low = (low + num - 1) & ~(num - 1);
+	high = ((high + 1) & ~(num - 1)) - 1;
+
+	for (vec = low; vec <= high; vec += num) {
+		for (i = 0; i < num; i++) {
+			if (idt_allocmap[vec + i] != 0)
+				break;
+		}
+		if (i == num) {
+			for (i = 0; i < num; i++)
+				idt_allocmap[vec + i] = 1;
 			return vec;
 		}
 	}

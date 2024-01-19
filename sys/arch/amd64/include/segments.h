@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.15 2018/03/29 01:21:02 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.16 2024/01/19 18:38:16 kettenis Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -160,6 +160,7 @@ void set_sys_segment(struct sys_segment_descriptor *, void *, size_t,
 void set_mem_segment(struct mem_segment_descriptor *, void *, size_t,
 			  int, int, int, int, int);
 int idt_vec_alloc(int, int);
+int idt_vec_alloc_range(int, int, int);
 void idt_vec_set(int, void (*)(void));
 void idt_vec_free(int);
 void cpu_init_idt(void);
