@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.86 2023/12/20 14:54:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.87 2024/01/19 14:16:41 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -28,7 +28,7 @@ SRCS+=	dl_uname.c dl_dirname.c strlcat.c strlen.c trace.c
 SRCS+=	malloc.c reallocarray.c tib.c ffs.c
 
 syscall=close exit fstat getdents getentropy getthrid issetugid kbind \
-	mimmutable mmap mprotect munmap msyscall open pledge pinsyscall \
+	mimmutable mmap mprotect munmap msyscall open pledge \
 	pinsyscalls read __realpath sendsyslog __set_tcb sysctl thrkill \
 	utrace write
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.221 2024/01/17 13:00:05 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.222 2024/01/19 14:16:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -317,7 +317,7 @@ _dl_setup_env(const char *argv0, char **envp)
 int
 _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 {
-	elf_object_t *dynobj, *obj;
+	elf_object_t *dynobj;
 	Elf_Dyn *dynp;
 	unsigned int loop;
 	int libcount;
@@ -439,25 +439,6 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 	}
 
 	_dl_cache_grpsym_list_setup(object);
-
-	/*
-	 * XXX pinsyscall(SYS_execve,...) can be removed once pinsyscalls()
-	 * is fully operational
-	 */
-	for (obj = _dl_objects; booting && obj != NULL; obj = obj->next) {
-		struct sym_res sr;
-
-		if (!obj->islibc)
-			continue;
-		sr = _dl_find_symbol("execve",
-		    SYM_SEARCH_SELF|SYM_PLT|SYM_WARNNOTFOUND, NULL, obj);
-		if (sr.sym)
-			_dl_pinsyscall(SYS_execve,
-			    (void *)sr.obj->obj_base + sr.sym->st_value,
-			    sr.sym->st_size);
-		_dl_memset(&sr, 0, sizeof sr);
-		break;
-	}
 	return(0);
 }
 
