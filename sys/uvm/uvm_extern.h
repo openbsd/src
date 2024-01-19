@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.172 2024/01/17 22:22:25 kurt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.173 2024/01/19 21:20:35 deraadt Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -214,8 +214,6 @@ struct vmspace {
 	caddr_t	vm_daddr;	/* [I] user virtual address of data */
 	caddr_t vm_maxsaddr;	/* [I] user VA at max stack growth */
 	caddr_t vm_minsaddr;	/* [I] user VA at top of stack */
-	vaddr_t	vm_execve;	/* [v] execve systemcall stub region */
-	vaddr_t vm_execve_end;	/* [v] execve systemcall stub region */
 };
 
 /*
