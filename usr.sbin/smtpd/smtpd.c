@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.346 2023/06/18 17:28:42 op Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.347 2024/01/20 09:01:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -917,7 +917,8 @@ setup_proc(void)
 			env->sc_queue_key = strdup(imsg.data);
 			break;
 		case IMSG_SETUP_PEER:
-			setup_peer(imsg.hdr.peerid, imsg.hdr.pid, imsg.fd);
+			setup_peer(imsg.hdr.peerid, imsg.hdr.pid,
+			    imsg_get_fd(&imsg));
 			break;
 		case IMSG_SETUP_DONE:
 			setup = 0;
@@ -1866,19 +1867,11 @@ log_imsg(int to, int from, struct imsg *imsg)
 	if (to == PROC_CONTROL && imsg->hdr.type == IMSG_STAT_SET)
 		return;
 
-	if (imsg->fd != -1)
-		log_trace(TRACE_IMSG, "imsg: %s <- %s: %s (len=%zu, fd=%d)",
-		    proc_name(to),
-		    proc_name(from),
-		    imsg_to_str(imsg->hdr.type),
-		    imsg->hdr.len - IMSG_HEADER_SIZE,
-		    imsg->fd);
-	else
-		log_trace(TRACE_IMSG, "imsg: %s <- %s: %s (len=%zu)",
-		    proc_name(to),
-		    proc_name(from),
-		    imsg_to_str(imsg->hdr.type),
-		    imsg->hdr.len - IMSG_HEADER_SIZE);
+	log_trace(TRACE_IMSG, "imsg: %s <- %s: %s (len=%zu)",
+	    proc_name(to),
+	    proc_name(from),
+	    imsg_to_str(imsg->hdr.type),
+	    imsg->hdr.len - IMSG_HEADER_SIZE);
 }
 
 const char *

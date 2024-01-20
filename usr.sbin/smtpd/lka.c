@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.247 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.248 2024/01/20 09:01:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,7 +47,7 @@ static void
 lka_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct table		*table;
-	int			 ret;
+	int			 ret, fd;
 	struct sockaddr_storage	 ss;
 	struct userinfo		 userinfo;
 	struct addrname		 addrname;
@@ -305,7 +305,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		return;
 
 	case IMSG_LKA_OPEN_FORWARD:
-		lka_session_forward_reply(imsg->data, imsg->fd);
+		lka_session_forward_reply(imsg->data, imsg_get_fd(imsg));
 		return;
 
 	case IMSG_LKA_AUTHENTICATE:
@@ -351,7 +351,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_add_string(p, procname);
 		m_close(p);
 
-		lka_proc_forked(procname, subsystems, imsg->fd);
+		lka_proc_forked(procname, subsystems, imsg_get_fd(imsg));
 		return;
 
 	case IMSG_LKA_PROCESSOR_ERRFD:
@@ -359,8 +359,9 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &procname);
 		m_end(&m);
 
-		lka_proc_errfd(procname, imsg->fd);
-		shutdown(imsg->fd, SHUT_WR);
+		fd = imsg_get_fd(imsg);
+		lka_proc_errfd(procname, fd);
+		shutdown(fd, SHUT_WR);
 		return;
 
 	case IMSG_REPORT_SMTP_LINK_CONNECT:

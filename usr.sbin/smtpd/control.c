@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.130 2023/05/31 16:51:46 op Exp $	*/
+/*	$OpenBSD: control.c,v 1.131 2024/01/20 09:01:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -107,7 +107,8 @@ control_imsg(struct mproc *p, struct imsg *imsg)
 		c = tree_get(&ctl_conns, imsg->hdr.peerid);
 		if (c == NULL)
 			return;
-		m_compose(&c->mproc, IMSG_CTL_OK, 0, 0, imsg->fd, NULL, 0);
+		m_compose(&c->mproc, IMSG_CTL_OK, 0, 0, imsg_get_fd(imsg),
+		    NULL, 0);
 		return;
 
 	case IMSG_STAT_INCREMENT:

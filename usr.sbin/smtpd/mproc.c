@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.39 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.40 2024/01/20 09:01:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -223,7 +223,7 @@ void
 m_forward(struct mproc *p, struct imsg *imsg)
 {
 	imsg_compose(&p->imsgbuf, imsg->hdr.type, imsg->hdr.peerid,
-	    imsg->hdr.pid, imsg->fd, imsg->data,
+	    imsg->hdr.pid, imsg_get_fd(imsg), imsg->data,
 	    imsg->hdr.len - sizeof(imsg->hdr));
 
 	if (imsg->hdr.type != IMSG_STAT_DECREMENT &&

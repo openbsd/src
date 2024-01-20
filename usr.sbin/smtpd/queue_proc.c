@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.9 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.10 2024/01/20 09:01:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -170,7 +170,7 @@ queue_proc_message_fd_r(uint32_t msgid)
 	queue_proc_call();
 	queue_proc_end();
 
-	return (imsg.fd);
+	return (imsg_get_fd(&imsg));
 }
 
 static int

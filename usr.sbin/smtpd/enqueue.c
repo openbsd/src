@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.121 2023/05/31 16:51:46 op Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.122 2024/01/20 09:01:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -808,7 +808,7 @@ open_connection(void)
 			errx(1, "unexpected imsg reply type");
 		}
 
-		fd = imsg.fd;
+		fd = imsg_get_fd(&imsg);
 		imsg_free(&imsg);
 
 		break;
