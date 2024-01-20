@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.19 2023/12/23 18:28:38 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.20 2024/01/20 11:22:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -61,6 +61,10 @@
 #define DART_T8020_TTBR_BASE		0x0200
 #define  DART_T8020_TTBR_VALID			(1U << 31)
 
+#define DART_T8110_PARAMS3		0x0008
+#define  DART_T8110_PARAMS3_REV_MIN(x)		(((x) >> 0) & 0xff)
+#define  DART_T8110_PARAMS3_REV_MAJ(x)		(((x) >> 8) & 0xff)
+#define  DART_T8110_PARAMS3_VA_WIDTH(x)		(((x) >> 16) & 0x3f)
 #define DART_T8110_PARAMS4		0x000c
 #define  DART_T8110_PARAMS4_NSID_MASK		(0x1ff << 0)
 #define DART_T8110_TLB_CMD		0x0080
@@ -155,6 +159,7 @@ struct apldart_softc {
 	bus_dma_tag_t		sc_dmat;
 	int			sc_node;
 
+	int			sc_ias;
 	int			sc_nsid;
 	int			sc_nttbr;
 	int			sc_shift;
@@ -168,6 +173,7 @@ struct apldart_softc {
 
 	bus_addr_t		sc_dvabase;
 	bus_addr_t		sc_dvaend;
+	bus_addr_t		sc_dvamask;
 
 	struct apldart_stream	**sc_as;
 	struct iommu_device	sc_id;
@@ -219,7 +225,7 @@ int	apldart_t8110_intr(void *);
 
 void	apldart_t8020_flush_tlb(struct apldart_softc *, int);
 void	apldart_t8110_flush_tlb(struct apldart_softc *, int);
-int	apldart_load_map(struct apldart_stream *, bus_dmamap_t);
+int	apldart_load_map(struct apldart_stream *, bus_dmamap_t, int);
 void	apldart_unload_map(struct apldart_stream *, bus_dmamap_t);
 
 int	apldart_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
@@ -252,7 +258,8 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct apldart_softc *sc = (struct apldart_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	uint32_t config, params2, params4, tcr, ttbr;
+	uint64_t dva_range[2];
+	uint32_t config, maj, min, params2, params3, params4, tcr, ttbr;
 	int sid, idx;
 
 	if (faa->fa_nreg < 1) {
@@ -273,7 +280,9 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	power_domain_enable(sc->sc_node);
 
 	if (OF_is_compatible(sc->sc_node, "apple,t8110-dart")) {
+		params3 = HREAD4(sc, DART_T8110_PARAMS3);
 		params4 = HREAD4(sc, DART_T8110_PARAMS4);
+		sc->sc_ias = DART_T8110_PARAMS3_VA_WIDTH(params3);
 		sc->sc_nsid = params4 & DART_T8110_PARAMS4_NSID_MASK;
 		sc->sc_nttbr = 1;
 		sc->sc_sid_enable_base = DART_T8110_SID_ENABLE_BASE;
@@ -284,7 +293,10 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ttbr_base = DART_T8110_TTBR_BASE;
 		sc->sc_ttbr_valid = DART_T8110_TTBR_VALID;
 		sc->sc_flush_tlb = apldart_t8110_flush_tlb;
+		maj = DART_T8110_PARAMS3_REV_MAJ(params3);
+		min = DART_T8110_PARAMS3_REV_MIN(params3);
 	} else {
+		sc->sc_ias = 32;
 		sc->sc_nsid = 16;
 		sc->sc_nttbr = 4;
 		sc->sc_sid_enable_base = DART_T8020_SID_ENABLE;
@@ -295,6 +307,7 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ttbr_base = DART_T8020_TTBR_BASE;
 		sc->sc_ttbr_valid = DART_T8020_TTBR_VALID;
 		sc->sc_flush_tlb = apldart_t8020_flush_tlb;
+		maj = min = 0;
 	}
 
 	if (OF_is_compatible(sc->sc_node, "apple,t6000-dart") ||
@@ -311,6 +324,19 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 		if (config & DART_T8020_CONFIG_LOCK)
 			sc->sc_locked = 1;
 	}
+
+	if (maj != 0 || min != 0)
+		printf(" rev %d.%d", maj, min);
+
+	printf(": %d bits", sc->sc_ias);
+
+	/*
+	 * Anything over 36 bits requires 4-level page tables which we
+	 * don't implement yet.  So limit to 36 bits.
+	 */
+	if (sc->sc_ias > 36)
+		sc->sc_ias = 36;
+	sc->sc_dvamask = (1ULL << sc->sc_ias) - 1;
 
 	/*
 	 * Resetting the DART used for the display controller will
@@ -346,25 +372,33 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	    !sc->sc_locked && !sc->sc_translating) {
 		for (sid = 0; sid < sc->sc_nsid; sid++)
 			HWRITE4(sc, DART_TCR(sc, sid), sc->sc_tcr_bypass);
-		printf(": bypass\n");
+		printf(", bypass\n");
 		return;
 	}
 
 	if (sc->sc_locked)
-		printf(": locked\n");
+		printf(", locked\n");
 	else if (sc->sc_translating)
-		printf(": translating\n");
+		printf(", translating\n");
 	else
 		printf("\n");
 
-	/*
-	 * Skip the first page to help catching bugs where a device is
-	 * doing DMA to/from address zero because we didn't properly
-	 * set up the DMA transfer.  Skip the last page to avoid using
-	 * the address reserved for MSIs.
-	 */
-	sc->sc_dvabase = DART_PAGE_SIZE;
-	sc->sc_dvaend = 0xffffffff - DART_PAGE_SIZE;
+	if (OF_getpropint64array(sc->sc_node, "apple,dma-range",
+	    dva_range, sizeof(dva_range)) == sizeof(dva_range)) {
+		sc->sc_dvabase = dva_range[0];
+		sc->sc_dvaend = dva_range[0] + dva_range[1] - 1;
+	} else {
+		/*
+		 * Restrict ourselves to 32-bit addresses to cater for
+		 * devices that don't do 64-bit DMA.  Skip the first
+		 * page to help catching bugs where a device is doing
+		 * DMA to/from address zero because we didn't properly
+		 * set up the DMA transfer.  Skip the last page to
+		 * avoid using the address reserved for MSIs.
+		 */
+		sc->sc_dvabase = DART_PAGE_SIZE;
+		sc->sc_dvaend = 0xffffffff - DART_PAGE_SIZE;
+	}
 
 	if (!sc->sc_locked && !sc->sc_translating) {
 		/* Disable translations. */
@@ -430,7 +464,7 @@ apldart_resume(struct apldart_softc *sc)
 		return;
 	}
 
-	ntte = howmany(sc->sc_dvaend, DART_PAGE_SIZE);
+	ntte = howmany((sc->sc_dvaend & sc->sc_dvamask), DART_PAGE_SIZE);
 	nl2 = howmany(ntte, DART_PAGE_SIZE / sizeof(uint64_t));
 	nl1 = howmany(nl2, DART_PAGE_SIZE / sizeof(uint64_t));
 
@@ -495,7 +529,7 @@ apldart_init_locked_stream(struct apldart_stream *as)
 	uint32_t ttbr;
 	vaddr_t startva, endva, va;
 	paddr_t pa;
-	bus_addr_t dva, dvaend;
+	bus_addr_t dva, dvaend, dvabase;
 	volatile uint64_t *l1;
 	int nl1, nl2, ntte;
 	int idx;
@@ -510,15 +544,23 @@ apldart_init_locked_stream(struct apldart_stream *as)
 	nl2 = idx * (DART_PAGE_SIZE / sizeof(uint64_t));
 	ntte = nl2 * (DART_PAGE_SIZE / sizeof(uint64_t));
 
-	dvaend = (bus_addr_t)ntte * DART_PAGE_SIZE;
+	dvabase = sc->sc_dvabase & ~sc->sc_dvamask;
+	dvaend = dvabase + (bus_addr_t)ntte * DART_PAGE_SIZE;
 	if (dvaend < sc->sc_dvaend)
 		sc->sc_dvaend = dvaend;
 
-	as->as_dvamap = extent_create(sc->sc_dev.dv_xname,
-	    sc->sc_dvabase, sc->sc_dvaend, M_DEVBUF,
-	    NULL, 0, EX_WAITOK | EX_NOCOALESCE);
+	as->as_dvamap = extent_create(sc->sc_dev.dv_xname, 0, ULONG_MAX,
+	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_NOCOALESCE);
+	if (sc->sc_dvabase > 0) {
+		extent_alloc_region(as->as_dvamap, 0, sc->sc_dvabase,
+		    EX_WAITOK);
+	}
+	if (sc->sc_dvaend < ULONG_MAX) {
+		extent_alloc_region(as->as_dvamap, sc->sc_dvaend + 1,
+		    ULONG_MAX - sc->sc_dvaend, EX_WAITOK);
+	}
 
-	ntte = howmany(sc->sc_dvaend, DART_PAGE_SIZE);
+	ntte = howmany((sc->sc_dvaend & sc->sc_dvamask), DART_PAGE_SIZE);
 	nl2 = howmany(ntte, DART_PAGE_SIZE / sizeof(uint64_t));
 	nl1 = howmany(nl2, DART_PAGE_SIZE / sizeof(uint64_t));
 
@@ -545,12 +587,8 @@ apldart_init_locked_stream(struct apldart_stream *as)
 			dva = idx * (DART_PAGE_SIZE / sizeof(uint64_t)) *
 			    DART_PAGE_SIZE;
 			dvaend = dva + DART_PAGE_SIZE * DART_PAGE_SIZE - 1;
-			if (dva < sc->sc_dvabase)
-				dva = sc->sc_dvabase;
-			if (dvaend > sc->sc_dvaend)
-				dvaend = sc->sc_dvaend;
-			extent_alloc_region(as->as_dvamap, dva,
-			    dvaend - dva + 1, EX_CONFLICTOK);
+			extent_alloc_region(as->as_dvamap, dvabase + dva,
+			    dvaend - dva + 1, EX_WAITOK | EX_CONFLICTOK);
 		} else {
 			as->as_l2[idx] = apldart_dmamem_alloc(sc->sc_dmat,
 			    DART_PAGE_SIZE, DART_PAGE_SIZE);
@@ -593,9 +631,16 @@ apldart_alloc_stream(struct apldart_softc *sc, int sid)
 		return as;
 	}
 
-	as->as_dvamap = extent_create(sc->sc_dev.dv_xname,
-	    sc->sc_dvabase, sc->sc_dvaend, M_DEVBUF,
-	    NULL, 0, EX_WAITOK | EX_NOCOALESCE);
+	as->as_dvamap = extent_create(sc->sc_dev.dv_xname, 0, ULONG_MAX,
+	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_NOCOALESCE);
+	if (sc->sc_dvabase > 0) {
+		extent_alloc_region(as->as_dvamap, 0, sc->sc_dvabase,
+		    EX_WAITOK);
+	}
+	if (sc->sc_dvaend < ULONG_MAX) {
+		extent_alloc_region(as->as_dvamap, sc->sc_dvaend + 1,
+		    ULONG_MAX - sc->sc_dvaend, EX_WAITOK);
+	}
 
 	/*
 	 * Build translation tables.  We pre-allocate the translation
@@ -603,7 +648,7 @@ apldart_alloc_stream(struct apldart_softc *sc, int sid)
 	 * worry about growing them in an mpsafe manner later.
 	 */
 
-	ntte = howmany(sc->sc_dvaend, DART_PAGE_SIZE);
+	ntte = howmany((sc->sc_dvaend & sc->sc_dvamask), DART_PAGE_SIZE);
 	nl2 = howmany(ntte, DART_PAGE_SIZE / sizeof(uint64_t));
 	nl1 = howmany(nl2, DART_PAGE_SIZE / sizeof(uint64_t));
 
@@ -730,7 +775,7 @@ apldart_t8110_flush_tlb(struct apldart_softc *sc, int sid)
 volatile uint64_t *
 apldart_lookup_tte(struct apldart_stream *as, bus_addr_t dva)
 {
-	int idx = dva / DART_PAGE_SIZE;
+	int idx = (dva & as->as_sc->sc_dvamask) / DART_PAGE_SIZE;
 	int l2_idx = idx / (DART_PAGE_SIZE / sizeof(uint64_t));
 	int tte_idx = idx % (DART_PAGE_SIZE / sizeof(uint64_t));
 	volatile uint64_t *l2;
@@ -740,7 +785,7 @@ apldart_lookup_tte(struct apldart_stream *as, bus_addr_t dva)
 }
 
 int
-apldart_load_map(struct apldart_stream *as, bus_dmamap_t map)
+apldart_load_map(struct apldart_stream *as, bus_dmamap_t map, int flags)
 {
 	struct apldart_softc *sc = as->as_sc;
 	struct apldart_map_state *ams = map->_dm_cookie;
@@ -757,8 +802,18 @@ apldart_load_map(struct apldart_stream *as, bus_dmamap_t map)
 		len = apldart_round_page(map->dm_segs[seg].ds_len + off);
 
 		mtx_enter(&as->as_dvamap_mtx);
-		error = extent_alloc_with_descr(as->as_dvamap, len,
-		    DART_PAGE_SIZE, 0, 0, EX_NOWAIT, &ams[seg].ams_er, &dva);
+		if (flags & BUS_DMA_FIXED) {
+			dva = apldart_trunc_page(map->dm_segs[seg].ds_addr);
+			/* XXX truncate because "apple,dma-range" mismatch */
+			if (dva > sc->sc_dvaend)
+				dva &= sc->sc_dvamask;
+			error = extent_alloc_region_with_descr(as->as_dvamap,
+			    dva, len, EX_NOWAIT, &ams[seg].ams_er);
+		} else {
+			error = extent_alloc_with_descr(as->as_dvamap, len,
+			    DART_PAGE_SIZE, 0, 0, EX_NOWAIT, &ams[seg].ams_er,
+			    &dva);
+		}
 		mtx_leave(&as->as_dvamap_mtx);
 		if (error) {
 			apldart_unload_map(as, map);
@@ -887,7 +942,7 @@ apldart_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error)
 		return error;
 
-	error = apldart_load_map(as, map);
+	error = apldart_load_map(as, map, flags);
 	if (error)
 		sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 
@@ -907,7 +962,7 @@ apldart_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error)
 		return error;
 
-	error = apldart_load_map(as, map);
+	error = apldart_load_map(as, map, flags);
 	if (error)
 		sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 
@@ -927,7 +982,7 @@ apldart_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error)
 		return error;
 
-	error = apldart_load_map(as, map);
+	error = apldart_load_map(as, map, flags);
 	if (error)
 		sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 
@@ -940,14 +995,25 @@ apldart_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 {
 	struct apldart_stream *as = t->_cookie;
 	struct apldart_softc *sc = as->as_sc;
-	int error;
+	int i, error;
 
-	error = sc->sc_dmat->_dmamap_load_raw(sc->sc_dmat, map,
-	     segs, nsegs, size, flags);
-	if (error)
-		return error;
+	if (flags & BUS_DMA_FIXED) {
+		if (map->dm_nsegs != nsegs)
+			return EINVAL;
+		for (i = 0; i < nsegs; i++) {
+			if (map->dm_segs[i].ds_len != segs[i].ds_len)
+				return EINVAL;
+			map->dm_segs[i]._ds_paddr = segs[i].ds_addr;
+			map->dm_segs[i]._ds_vaddr = segs[i]._ds_vaddr;
+		}
+	} else {
+		error = sc->sc_dmat->_dmamap_load_raw(sc->sc_dmat, map,
+		     segs, nsegs, size, flags);
+		if (error)
+			return error;
+	}
 
-	error = apldart_load_map(as, map);
+	error = apldart_load_map(as, map, flags);
 	if (error)
 		sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 
