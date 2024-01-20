@@ -1,4 +1,4 @@
-/*	$OpenBSD: acct.h,v 1.14 2023/12/11 00:39:43 deraadt Exp $	*/
+/*	$OpenBSD: acct.h,v 1.15 2024/01/20 12:16:55 deraadt Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@ struct acct {
 #define	APLEDGE	0x00000020		/* killed due to pledge violation */
 #define	ATRAP	0x00000040		/* memory access violation */
 #define	AUNVEIL	0x00000080		/* unveil access violation */
-#define	AEXECVE	0x00000100		/* execve from wrong libc stub */
 #define	APINSYS	0x00000200		/* syscall pin violation */
 	u_int32_t ac_flag;		/* accounting flags */
 };
