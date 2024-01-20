@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.11 2023/09/22 01:10:43 jsg Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.12 2024/01/20 08:00:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -299,6 +299,12 @@ struct apldchidev_softc {
 	uint8_t			sc_mtdesc[APLDCHIDEV_DESC_MAX];
 	size_t			sc_mtdesclen;
 	int			sc_mt_ready;
+	int			sc_x_min;
+	int			sc_x_max;
+	int			sc_y_min;
+	int			sc_y_max;
+	int			sc_h_res;
+	int			sc_v_res;
 
 	struct apldchidev_gpio	sc_gpio[APLDCHIDEV_NUM_GPIOS];
 	u_int			sc_ngpios;
@@ -307,6 +313,8 @@ struct apldchidev_softc {
 
 	uint8_t			sc_cmd_iface;
 	uint8_t			sc_cmd_seq;
+	uint8_t			sc_data[APLDCHIDEV_DESC_MAX];
+	size_t			sc_data_len;
 	uint32_t		sc_retcode;
 	int			sc_busy;
 };
@@ -555,10 +563,20 @@ struct mtp_gpio_ack {
 	uint8_t cmd[512];
 } __packed;
 
+struct mtp_dim {
+	uint32_t width;
+	uint32_t height;
+	int16_t x_min;
+	int16_t y_min;
+	int16_t x_max;
+	int16_t y_max;
+};
+
 #define MTP_CMD_RESET_INTERFACE	0x40
 #define MTP_CMD_SEND_FIRMWARE		0x95
 #define MTP_CMD_ENABLE_INTERFACE	0xb4
 #define MTP_CMD_ACK_GPIO_CMD		0xa1
+#define MTP_CMD_GET_DIMENSIONS		0xd9
 
 void
 apldchidev_handle_gpio_req(struct apldchidev_softc *sc, uint8_t iface,
@@ -769,6 +787,13 @@ apldchidev_rx_intr(void *arg)
 		if (hdr.seq != sc->sc_cmd_seq) {
 			printf("%s: got ack with unexpected seq\n",
 			    sc->sc_dev.dv_xname);
+		}
+		if (MTP_REQ(shdr->flags) == MTP_REQ_GET_REPORT &&
+		    shdr->len <= sizeof(sc->sc_data)) {
+			memcpy(sc->sc_data, (shdr + 1), shdr->len);
+			sc->sc_data_len = shdr->len;
+		} else {
+			sc->sc_data_len = 0;
 		}
 		sc->sc_retcode = shdr->retcode;
 		sc->sc_busy = 0;
@@ -1022,6 +1047,30 @@ apldchidev_load_firmware(struct apldchidev_softc *sc, const char *name)
 }
 
 void
+apldchidev_get_dimensions(struct apldchidev_softc *sc)
+{
+	uint8_t cmd[1] = { MTP_CMD_GET_DIMENSIONS };
+	struct mtp_dim dim;
+	uint8_t flags;
+
+	flags = MTP_GROUP_CMD << MTP_GROUP_SHIFT;
+	flags |= MTP_REQ_GET_REPORT << MTP_REQ_SHIFT;
+	apldchidev_cmd(sc, sc->sc_iface_mt, flags, cmd, sizeof(cmd));
+	apldchidev_wait(sc);
+
+	if (sc->sc_retcode == 0 && sc->sc_data_len == sizeof(dim) + 1 &&
+	    sc->sc_data[0] == MTP_CMD_GET_DIMENSIONS) {
+		memcpy(&dim, &sc->sc_data[1], sizeof(dim));
+		sc->sc_x_min = dim.x_min;
+		sc->sc_x_max = dim.x_max;
+		sc->sc_y_min = dim.y_min;
+		sc->sc_y_max = dim.y_max;
+		sc->sc_h_res = (100 * (dim.x_max - dim.x_min)) / dim.width;
+		sc->sc_v_res = (100 * (dim.y_max - dim.y_min)) / dim.height;
+	}		
+}
+
+void
 apldchidev_attachhook(struct device *self)
 {
 	struct apldchidev_softc *sc = (struct apldchidev_softc *)self;
@@ -1058,6 +1107,8 @@ apldchidev_attachhook(struct device *self)
 	}
 	if (error)
 		goto out;
+
+	apldchidev_get_dimensions(sc);
 
 	aa.aa_name = "multi-touch";
 	aa.aa_desc = sc->sc_mtdesc;
@@ -1277,17 +1328,18 @@ struct ubcmtp_finger {
 #define DEFAULT_PRESSURE	40
 
 struct apldcms_softc {
-	struct device	sc_dev;
-	struct device	*sc_wsmousedev;
+	struct device		sc_dev;
+	struct apldchidev_softc	*sc_hidev;
+	struct device		*sc_wsmousedev;
 
-	int		sc_enabled;
+	int			sc_enabled;
 
-	int		tp_offset;
-	int		tp_fingerpad;
+	int			tp_offset;
+	int			tp_fingerpad;
 
-	struct mtpoint	frame[UBCMTP_MAX_FINGERS];
-	int		contacts;
-	int		btn;
+	struct mtpoint		frame[UBCMTP_MAX_FINGERS];
+	int			contacts;
+	int			btn;
 };
 
 int	apldcms_enable(void *);
@@ -1331,6 +1383,8 @@ apldcms_attach(struct device *parent, struct device *self, void *aux)
 	struct apldcms_softc *sc = (struct apldcms_softc *)self;
 	struct wsmousedev_attach_args aa;
 
+	sc->sc_hidev = (struct apldchidev_softc *)parent;
+
 	printf("\n");
 
 	sc->tp_offset = UBCMTP_TYPE4_TPOFF;
@@ -1349,13 +1403,14 @@ apldcms_configure(struct apldcms_softc *sc)
 {
 	struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
 
-	/* The values below are for the MacBookPro17,1 */
 	hw->type = WSMOUSE_TYPE_TOUCHPAD;
 	hw->hw_type = WSMOUSEHW_CLICKPAD;
-	hw->x_min = -6046;
-	hw->x_max = 6536;
-	hw->y_min = -164;
-	hw->y_max = 7439;
+	hw->x_min = sc->sc_hidev->sc_x_min;
+	hw->x_max = sc->sc_hidev->sc_x_max;
+	hw->y_min = sc->sc_hidev->sc_y_min;
+	hw->y_max = sc->sc_hidev->sc_y_max;
+	hw->h_res = sc->sc_hidev->sc_h_res;
+	hw->v_res = sc->sc_hidev->sc_v_res;
 	hw->mt_slots = UBCMTP_MAX_FINGERS;
 	hw->flags = WSMOUSEHW_MT_TRACKING;
 
