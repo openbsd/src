@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.25 2023/08/18 06:08:19 tb Exp $
+.\"	$OpenBSD: compress.3,v 1.26 2024/01/20 11:16:27 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -23,7 +23,7 @@
 .\"
 .\" This page corresponds to zlib version 1.2.3
 .\"
-.Dd $Mdocdate: August 18 2023 $
+.Dd $Mdocdate: January 20 2024 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -95,7 +95,9 @@
 .Nm adler32_combine ,
 .Nm crc32 ,
 .Nm crc32_z ,
-.Nm crc32_combine
+.Nm crc32_combine ,
+.Nm crc32_combine_gen ,
+.Nm crc32_combine_op
 .Nd zlib general purpose compression library
 .Sh SYNOPSIS
 .In zlib.h
@@ -251,6 +253,8 @@ Checksum functions
 .Fn crc32_z "uLong adler" "const Bytef *buf" "z_size_t len"
 .Ft uLong
 .Fn crc32_combine "uLong crc1" "uLong crc2" "z_off_t len2"
+.Fn crc32_combine_gen "z_off_t len2"
+.Fn crc32_combine_op "uLong crc1" "uLong crc2" "uLong op"
 .Sh DESCRIPTION
 This manual page describes the
 .Nm zlib
@@ -3433,6 +3437,33 @@ CRC-32 check values are calculated for each, crc1 and crc2.
 .Fn crc32_combine
 returns the CRC-32 check value of seq1 and seq2 concatenated,
 requiring only crc1, crc2, and len2.
+len2 must be non-negative.
+.It Xo
+.Fa uLong
+.Fn crc32_combine_gen "z_off_t len2" ;
+.Xc
+.Pp
+The
+.Fn crc32_combine_gen
+function returns the operator corresponding to the length len2,
+to be used with
+.Fn crc32_combine_op .
+len2 must be non-negative.
+.It Xo
+.Fa uLong
+.Fn crc32_combine_op "uLong crc1" "uLong crc2" "uLong op" ;
+.Xc
+.Pp
+The
+.Fn crc32_combine_op
+function gives the same result as
+.Fn crc32_combine ,
+using op in place of len2.
+op is generated from len2 by
+.Fn crc32_combine_gen .
+This is faster than
+.Fn crc32_combine
+if the generated op is used more than once.
 .El
 .Sh STRUCTURES
 .Bd -unfilled
