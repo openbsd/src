@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.78 2023/12/27 08:29:41 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.79 2024/01/20 17:34:50 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -984,13 +984,28 @@ xheader_add_ts(struct xheader *xhdr, const char *keyword,
 {
 	struct xheader_record *rec;
 	int reclen, tmplen;
+	char frac[sizeof(".111222333")] = "";
 	char *s;
+
+	/* Only write subsecond part if non-zero */
+	if (value->tv_nsec != 0) {
+		int n;
+
+		n = snprintf(frac, sizeof(frac), ".%09ld",
+		    (long)value->tv_nsec);
+		if (n <= 0)
+			return -1;
+
+		/* Zap trailing zeros */
+		for (n--; n > 1 && frac[n] == '0'; n--)
+			frac[n] = '\0';
+	}
 
 	tmplen = MINXHDRSZ;
 	do {
 		reclen = tmplen;
-		tmplen = snprintf(NULL, 0, "%d %s=%lld.%09ld\n", reclen,
-		    keyword, (long long)value->tv_sec, (long)value->tv_nsec);
+		tmplen = snprintf(NULL, 0, "%d %s=%lld%s\n", reclen,
+		    keyword, (long long)value->tv_sec, frac);
 	} while (tmplen >= 0 && tmplen != reclen);
 	if (tmplen < 0)
 		return -1;
@@ -999,8 +1014,8 @@ xheader_add_ts(struct xheader *xhdr, const char *keyword,
 	if (rec == NULL)
 		return -1;
 	rec->reclen = reclen;
-	if (asprintf(&s, "%d %s=%lld.%09ld\n", reclen, keyword,
-	    (long long)value->tv_sec, (long)value->tv_nsec) < 0) {
+	if (asprintf(&s, "%d %s=%lld%s\n", reclen, keyword,
+	    (long long)value->tv_sec, frac) < 0) {
 		free(rec);
 		return -1;
 	}
