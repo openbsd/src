@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2022/03/29 23:12:30 tb Exp $
+# $OpenBSD: Makefile,v 1.5 2024/01/20 11:29:40 tb Exp $
 
 # compile and run zlib test files from upstream
 # https://github.com/madler/zlib/tree/master/test
@@ -13,6 +13,9 @@ DPADD=		${LIBZ}
 CPPFLAGS=	-I${.CURDIR}/../../../lib/libz
 WARNINGS=	Yes
 CLEANFILES=	foo.gz in out out.gz
+
+# infcover uses the internal inflate_table, so link it statically
+LDADD_infcover = -Wl,-Bstatic -lz -Wl,-Bdynamic
 
 REGRESS_TARGETS=	run-regress-example run-regress-infcover
 
