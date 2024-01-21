@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.322 2024/01/21 00:23:29 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.323 2024/01/21 00:26:14 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3149,7 +3149,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 			if (iter->protection == (PROT_READ | PROT_WRITE) &&
 			    new_prot == PROT_READ) {
 				/* Permit RW to R as a data-locking mechanism */
-				goto ok;
+				;
 			} else
 #endif
 			{
