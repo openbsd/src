@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.15 2024/01/15 15:00:13 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.16 2024/01/21 19:08:59 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -727,18 +727,15 @@ obj_name_do_all_test(void)
 	int failure = 0;
 
 	memset(&arg, 0, sizeof(arg));
-	/* XXX - replace with OBJ_NAME_do_all() after next bump. */
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, obj_name_cb, &arg);
+	OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH, obj_name_cb, &arg);
 	failure |= arg.failure;
 
 	memset(&arg, 0, sizeof(arg));
-	/* XXX - replace with OBJ_NAME_do_all() after next bump. */
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, obj_name_cb, &arg);
+	OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH, obj_name_cb, &arg);
 	failure |= arg.failure;
 
 	memset(&arg, 0, sizeof(arg));
-	/* XXX - replace with OBJ_NAME_do_all() after next bump. */
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_PKEY_METH, obj_name_cb, &arg);
+	OBJ_NAME_do_all(OBJ_NAME_TYPE_PKEY_METH, obj_name_cb, &arg);
 	failure |= arg.failure;
 
 	return failure;
