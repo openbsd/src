@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.108 2024/01/16 23:37:51 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.109 2024/01/21 13:36:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -3421,9 +3421,14 @@ component_bind_all(struct device *dev, void *data)
 	return ret;
 }
 
-struct component_match {
+struct component_match_entry {
 	int (*compare)(struct device *, void *);
 	void *data;
+};
+
+struct component_match {
+	struct component_match_entry match[4];
+	int nmatches;
 };
 
 int
@@ -3432,12 +3437,16 @@ component_master_add_with_match(struct device *dev,
 {
 	struct component *component;
 	int found = 0;
-	int ret;
+	int i, ret;
 
 	SLIST_FOREACH(component, &component_list, next) {
-		if (match->compare(component->dev, match->data)) {
-			component->adev = dev;
-			found = 1;
+		for (i = 0; i < match->nmatches; i++) {
+			struct component_match_entry *m = &match->match[i];
+			if (m->compare(component->dev, m->data)) {
+				component->adev = dev;
+				found = 1;
+				break;
+			}
 		}
 	}
 
@@ -3883,15 +3892,18 @@ drm_of_component_match_add(struct device *master,
 			   int (*compare)(struct device *, void *),
 			   struct device_node *np)
 {
-	struct component_match *match;
+	struct component_match *match = *matchptr;
 
-	if (*matchptr == NULL) {
+	if (match == NULL) {
 		match = malloc(sizeof(struct component_match),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
-		match->compare = compare;
-		match->data = np;
 		*matchptr = match;
 	}
+
+	KASSERT(match->nmatches < nitems(match->match));
+	match->match[match->nmatches].compare = compare;
+	match->match[match->nmatches].data = np;
+	match->nmatches++;
 }
 
 #endif
