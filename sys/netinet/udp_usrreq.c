@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.314 2024/01/19 02:24:07 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.315 2024/01/21 01:17:20 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
 		SIMPLEQ_HEAD(, inpcb) inpcblist;
-		struct inpcbtable *tb;
+		struct inpcbtable *table;
 
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
@@ -406,23 +406,21 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		SIMPLEQ_INIT(&inpcblist);
 #ifdef INET6
 		if (ip6)
-			tb = &udb6table;
+			table = &udb6table;
 		else
 #endif
-			tb = &udbtable;
+			table = &udbtable;
 
-		rw_enter_write(&tb->inpt_notify);
-		mtx_enter(&tb->inpt_mtx);
-		TAILQ_FOREACH(inp, &tb->inpt_queue, inp_queue) {
-			if (inp->inp_socket->so_rcv.sb_state & SS_CANTRCVMORE)
-				continue;
-#ifdef INET6
-			/* table is per AF, panic if it does not match */
+		rw_enter_write(&table->inpt_notify);
+		mtx_enter(&table->inpt_mtx);
+		TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
 			if (ip6)
 				KASSERT(ISSET(inp->inp_flags, INP_IPV6));
 			else
 				KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
-#endif
+
+			if (inp->inp_socket->so_rcv.sb_state & SS_CANTRCVMORE)
+				continue;
 			if (rtable_l2(inp->inp_rtableid) !=
 			    rtable_l2(m->m_pkthdr.ph_rtableid))
 				continue;
@@ -481,10 +479,10 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			    SO_REUSEADDR)) == 0)
 				break;
 		}
-		mtx_leave(&tb->inpt_mtx);
+		mtx_leave(&table->inpt_mtx);
 
 		if (SIMPLEQ_EMPTY(&inpcblist)) {
-			rw_exit_write(&tb->inpt_notify);
+			rw_exit_write(&table->inpt_notify);
 
 			/*
 			 * No matching pcb found; discard datagram.
@@ -509,7 +507,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			}
 			in_pcbunref(inp);
 		}
-		rw_exit_write(&tb->inpt_notify);
+		rw_exit_write(&table->inpt_notify);
 
 		return IPPROTO_DONE;
 	}
@@ -1098,7 +1096,7 @@ release:
 int
 udp_attach(struct socket *so, int proto, int wait)
 {
-	struct inpcbtable *tb;
+	struct inpcbtable *table;
 	int error;
 
 	if (so->so_pcb != NULL)
@@ -1110,11 +1108,11 @@ udp_attach(struct socket *so, int proto, int wait)
 	NET_ASSERT_LOCKED();
 #ifdef INET6
 	if (so->so_proto->pr_domain->dom_family == PF_INET6)
-		tb = &udb6table;
+		table = &udb6table;
 	else
 #endif
-		tb = &udbtable;
-	if ((error = in_pcballoc(so, tb, wait)))
+		table = &udbtable;
+	if ((error = in_pcballoc(so, table, wait)))
 		return error;
 #ifdef INET6
 	if (sotoinpcb(so)->inp_flags & INP_IPV6)

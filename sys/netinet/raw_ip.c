@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.153 2023/12/15 00:24:56 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.154 2024/01/21 01:17:20 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -171,12 +171,10 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	rw_enter_write(&rawcbtable.inpt_notify);
 	mtx_enter(&rawcbtable.inpt_mtx);
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
+		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
+
 		if (inp->inp_socket->so_rcv.sb_state & SS_CANTRCVMORE)
 			continue;
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			continue;
-#endif
 		if (rtable_l2(inp->inp_rtableid) !=
 		    rtable_l2(m->m_pkthdr.ph_rtableid))
 			continue;
