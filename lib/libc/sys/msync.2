@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msync.2,v 1.29 2021/06/30 18:46:49 schwarze Exp $
+.\"	$OpenBSD: msync.2,v 1.30 2024/01/21 17:46:03 deraadt Exp $
 .\"	$NetBSD: msync.2,v 1.8 1995/10/12 15:41:09 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)msync.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: June 30 2021 $
+.Dd $Mdocdate: January 21 2024 $
 .Dt MSYNC 2
 .Os
 .Sh NAME
@@ -88,6 +88,12 @@ parameter was not page aligned or
 and
 .Fa size
 specify a region that would extend beyond the end of the address space.
+.It Bq Er EPERM
+The
+.Fa addr
+and
+.Fa len
+parameters specify a region which contains at least one page marked immutable.
 .It Bq Er ENOMEM
 Addresses in the specified region are outside the range allowed
 for the address space of the process, or specify one or more pages
@@ -97,6 +103,7 @@ An I/O error occurred while writing.
 .El
 .Sh SEE ALSO
 .Xr madvise 2 ,
+.Xr mimmutable 2 ,
 .Xr minherit 2 ,
 .Xr mprotect 2 ,
 .Xr munmap 2
