@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2021/07/04 14:24:49 tb Exp $
+#	$OpenBSD: Makefile,v 1.22 2024/01/21 07:33:46 tb Exp $
 
 LIB=	z
 HDRS=	zconf.h zlib.h
@@ -9,6 +9,8 @@ MAN=	compress.3
 
 PC_FILES=zlib.pc
 CLEANFILES+=${PC_FILES}
+
+CFLAGS += -DHAVE_HIDDEN
 
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
