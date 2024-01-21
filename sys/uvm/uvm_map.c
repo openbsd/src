@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.324 2024/01/21 16:57:06 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.325 2024/01/21 16:59:15 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4198,6 +4198,9 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	entry1 = entry;
 	while (entry1 != NULL && entry1->start < end) {
 		if (entry1->etype & UVM_ET_IMMUTABLE)
+			goto out;
+		if (new_inheritance == MAP_INHERIT_ZERO &&
+		    (entry1->protection & PROT_WRITE) == 0)
 			goto out;
 		entry1 = RBT_NEXT(uvm_map_addr, entry1);
 	}
