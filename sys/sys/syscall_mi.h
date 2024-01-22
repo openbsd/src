@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.30 2024/01/16 19:05:00 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.31 2024/01/22 04:38:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -102,6 +102,7 @@ pin_check(struct proc *p, register_t code)
 		ktrpinsyscall(p, error, code, addr);
 #endif
 	KERNEL_LOCK();
+	/* XXX remove or simplify this log() call after OpenBSD 7.5 release */
 	log(LOG_ERR,
 	    "%s[%d]: pinsyscalls addr %lx code %ld, pinoff 0x%x "
 	    "(pin%s %d %lx-%lx %lx) (libcpin%s %d %lx-%lx %lx) error %d\n",
