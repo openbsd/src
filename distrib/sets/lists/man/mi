@@ -1257,8 +1257,10 @@
 ./usr/share/man/man4/arm64/aplaudio.4
 ./usr/share/man/man4/arm64/aplcpu.4
 ./usr/share/man/man4/arm64/apldart.4
+./usr/share/man/man4/arm64/apldcp.4
 ./usr/share/man/man4/arm64/apldma.4
 ./usr/share/man/man4/arm64/apldog.4
+./usr/share/man/man4/arm64/apldrm.4
 ./usr/share/man/man4/arm64/aplefuse.4
 ./usr/share/man/man4/arm64/aplhidev.4
 ./usr/share/man/man4/arm64/apliic.4
@@ -1880,6 +1882,8 @@
 ./usr/share/man/man4/riscv64/sfgpio.4
 ./usr/share/man/man4/riscv64/sfuart.4
 ./usr/share/man/man4/riscv64/stfclock.4
+./usr/share/man/man4/riscv64/stfpcie.4
+./usr/share/man/man4/riscv64/stfpciephy.4
 ./usr/share/man/man4/riscv64/stfpinctrl.4
 ./usr/share/man/man4/riscv64/stfrng.4
 ./usr/share/man/man4/rkanxdp.4
