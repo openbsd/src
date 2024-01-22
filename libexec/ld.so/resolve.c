@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.101 2024/01/16 19:07:31 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.102 2024/01/22 02:08:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -321,7 +321,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 			gnu_hash = dynp->d_un.d_val;
 		dynp++;
 	}
-	DL_DEB((" flags %s = 0x%x\n", objname, object->obj_flags ));
+	DL_DEB((" flags %s = 0x%x\n", objname, object->obj_flags));
 	object->obj_type = objtype;
 
 	if (_dl_loading_object == NULL) {
@@ -441,7 +441,7 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	if (object->load_object == object)
 		DL_DEB(("head %s\n", object->load_name));
 	DL_DEB(("obj %s has %s as head\n", object->load_name,
-	    _dl_loading_object->load_name ));
+	    _dl_loading_object->load_name));
 	object->refcount = 0;
 	object->opencount = 0;	/* # dlopen() & exe */
 	object->grprefcount = 0;
@@ -733,7 +733,7 @@ found:
 
 	if (ref_sym != NULL && ref_sym->st_size != 0 &&
 	    (ref_sym->st_size != sl.sl_out.sym->st_size) &&
-	    (ELF_ST_TYPE(sl.sl_out.sym->st_info) != STT_FUNC) ) {
+	    (ELF_ST_TYPE(sl.sl_out.sym->st_info) != STT_FUNC)) {
 		_dl_printf("%s:%s: %s : WARNING: "
 		    "symbol(%s) size mismatch, relink your program\n",
 		    __progname, req_obj->load_name, sl.sl_out.obj->load_name,

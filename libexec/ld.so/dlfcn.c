@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.116 2023/12/19 16:13:22 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.117 2024/01/22 02:08:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -119,7 +119,7 @@ dlopen(const char *libname, int flags)
 	/* this add_object should not be here, XXX */
 	_dl_add_object(object);
 
-	DL_DEB(("head [%s]\n", object->load_name ));
+	DL_DEB(("head [%s]\n", object->load_name));
 
 	if ((failed = _dl_load_dep_libs(object, obj_flags, 0)) == 1) {
 		_dl_real_close(object);
@@ -127,7 +127,7 @@ dlopen(const char *libname, int flags)
 		_dl_errno = DL_CANT_LOAD_OBJ;
 	} else {
 		int err;
-		DL_DEB(("tail %s\n", object->load_name ));
+		DL_DEB(("tail %s\n", object->load_name));
 		if (_dl_traceld) {
 			_dl_show_objects(object);
 			_dl_unload_shlib(object);

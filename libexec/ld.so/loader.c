@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.222 2024/01/19 14:16:41 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.223 2024/01/22 02:08:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -157,7 +157,7 @@ _dl_run_all_dtors(void)
 		}
 		for (node = _dl_objects;
 		    node != NULL;
-		    node = node->next ) {
+		    node = node->next) {
 			if ((node->dyn.fini || node->dyn.fini_array) &&
 			    (OBJECT_REF_CNT(node) == 0) &&
 			    (node->status & STAT_INIT_DONE) &&
@@ -174,7 +174,7 @@ _dl_run_all_dtors(void)
 
 		for (node = _dl_objects;
 		    node != NULL;
-		    node = node->next ) {
+		    node = node->next) {
 			if (node->status & STAT_FINI_READY) {
 				fini_complete = 0;
 				node->status |= STAT_FINI_DONE;
