@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2015/11/26 19:01:47 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.42 2024/01/22 21:07:10 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCS=	local_passwd.c passwd.c getpwent.c \
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 DPADD+= ${LIBRPCSVC} ${LIBUTIL}
 LDADD+= -lrpcsvc -lutil
-CFLAGS+= -I${.CURDIR}
+CFLAGS+= -I${.CURDIR} -DFORCE_DBOPEN
 
 CFLAGS+=-I${.CURDIR}/../../lib/libc/include
 
