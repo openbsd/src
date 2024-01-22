@@ -90,3 +90,7 @@
 #ifdef __LP64__
 #define CONFIG_64BIT				1
 #endif
+
+#if defined(SUSPEND) || defined(HIBERNATE)
+#define CONFIG_PM_SLEEP
+#endif

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.280 2024/01/19 06:59:10 mlarkin Exp $
+# $OpenBSD: GENERIC,v 1.281 2024/01/22 18:54:01 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -161,8 +161,12 @@ apldckbd*	at apldchidev?
 wskbd*		at apldckbd? mux 1
 apldcms*	at apldchidev?
 wsmouse*	at apldcms? mux 0
+apldcp*		at fdt?
 apldma*		at fdt?
 apldog*		at fdt? early 1
+apldrm*		at fdt?
+drm*		at apldrm?
+wsdisplay*	at apldrm?
 aplefuse*	at fdt? early 1
 apliic*		at fdt?
 iic*		at apliic?

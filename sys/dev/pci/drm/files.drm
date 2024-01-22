@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.61 2024/01/16 23:37:51 jsg Exp $
+# $OpenBSD: files.drm,v 1.62 2024/01/22 18:54:01 kettenis Exp $
 
 #file	dev/pci/drm/aperture.c			drm
 file	dev/pci/drm/dma-resv.c			drm
@@ -32,6 +32,7 @@ file	dev/pci/drm/drm_encoder.c		drm
 file	dev/pci/drm/drm_encoder_slave.c		drm
 file	dev/pci/drm/drm_exec.c			drm
 file	dev/pci/drm/drm_fb_helper.c		drm
+file	dev/pci/drm/drm_fb_dma_helper.c		drm
 file	dev/pci/drm/drm_fbdev_dma.c		drm
 file	dev/pci/drm/drm_fbdev_generic.c		drm
 file	dev/pci/drm/drm_file.c			drm
@@ -1354,3 +1355,20 @@ file	dev/pci/drm/amd/pm/swsmu/smu13/smu_v13_0_6_ppt.c	amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu13/smu_v13_0_7_ppt.c	amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu13/yellow_carp_ppt.c	amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu_cmn.c			amdgpu
+
+device	apldcp
+attach	apldcp at fdt
+file	dev/pci/drm/apple/apldcp.c				apldcp
+file	dev/pci/drm/apple/afk.c					apldcp
+file	dev/pci/drm/apple/dcp_backlight.c			apldcp
+file	dev/pci/drm/apple/dptxep.c				apldcp
+file	dev/pci/drm/apple/ibootep.c				apldcp
+file	dev/pci/drm/apple/iomfb.c				apldcp
+file	dev/pci/drm/apple/iomfb_v12_3.c				apldcp
+file	dev/pci/drm/apple/iomfb_v13_3.c				apldcp
+file	dev/pci/drm/apple/parser.c				apldcp
+file	dev/pci/drm/apple/systemep.c				apldcp
+
+device	apldrm: drmbase, wsemuldisplaydev, rasops32
+attach	apldrm at fdt
+file	dev/pci/drm/apple/apldrm.c				apldrm
