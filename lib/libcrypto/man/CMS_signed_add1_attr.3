@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.1 2024/01/22 13:44:59 job Exp $
+.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.2 2024/01/22 13:54:46 tb Exp $
 .\"
 .\" Copyright (c) 2024 Job Snijders <job@openbsd.org>
 .\" Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -366,26 +366,5 @@ section 5.3: SignerInfo Type
 section 11: Useful Attributes
 .El
 .Sh HISTORY
-.Fn CMS_signed_add1_attr ,
-.Fn CMS_signed_add1_attr_by_NID ,
-.Fn CMS_signed_add1_attr_by_OBJ ,
-.Fn CMS_signed_add1_attr_by_txt ,
-.Fn CMS_signed_delete_attr ,
-.Fn CMS_signed_get0_data_by_OBJ ,
-.Fn CMS_signed_get_attr ,
-.Fn CMS_signed_get_attr_by_NID ,
-.Fn CMS_signed_get_attr_by_OBJ ,
-.Fn CMS_signed_get_attr_count ,
-.Fn CMS_unsigned_add1_attr ,
-.Fn CMS_unsigned_add1_attr_by_NID ,
-.Fn CMS_unsigned_add1_attr_by_OBJ ,
-.Fn CMS_unsigned_add1_attr_by_txt ,
-.Fn CMS_unsigned_delete_attr ,
-.Fn CMS_unsigned_get0_data_by_OBJ ,
-.Fn CMS_unsigned_get_attr ,
-.Fn CMS_unsigned_get_attr_by_NID ,
-.Fn CMS_unsigned_get_attr_by_OBJ
-and
-.Fn CMS_unsigned_get_attr_count
-first appeared in OpenSSL 0.9.9 and have been available since
+These functions first appeared in OpenSSL 0.9.9 and have been available since
 .Ox 6.6 .
