@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.280 2023/12/29 19:15:15 tb Exp $
+# $OpenBSD: Makefile,v 1.281 2024/01/22 13:44:59 job Exp $
 
 .include <bsd.own.mk>
 
@@ -100,6 +100,7 @@ MAN=	\
 	CMS_get1_ReceiptRequest.3 \
 	CMS_sign.3 \
 	CMS_sign_receipt.3 \
+	CMS_signed_add1_attr.3 \
 	CMS_uncompress.3 \
 	CMS_verify.3 \
 	CMS_verify_receipt.3 \
