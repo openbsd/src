@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyname.c,v 1.20 2017/04/14 15:02:51 deraadt Exp $ */
+/*	$OpenBSD: ttyname.c,v 1.21 2024/01/22 17:22:58 deraadt Exp $ */
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -87,7 +87,7 @@ ttyname_r(int fd, char *buf, size_t len)
 
 	memcpy(buf, _PATH_DEV, sizeof(_PATH_DEV));
 
-	if ((db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL))) {
+	if ((db = __hash_open(_PATH_DEVDB, O_RDONLY, 0, NULL, 0))) {
 		memset(&bkey, 0, sizeof(bkey));
 		bkey.type = S_IFCHR;
 		bkey.dev = sb.st_rdev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: devname.c,v 1.13 2016/07/06 04:35:12 guenther Exp $ */
+/*	$OpenBSD: devname.c,v 1.14 2024/01/22 17:22:58 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,7 @@ devname(dev_t dev, mode_t type)
 	char *name = NULL;
 
 	if (!db && !failure) {
-		if (!(db = dbopen(_PATH_DEVDB, O_RDONLY, 0, DB_HASH, NULL)))
+		if (!(db = __hash_open(_PATH_DEVDB, O_RDONLY, 0, NULL, 0)))
 			failure = true;
 	}
 	if (!failure) {
