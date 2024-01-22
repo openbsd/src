@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.33 2023/08/17 14:10:28 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.34 2024/01/22 16:34:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -242,7 +242,7 @@ style_tostring(struct style *sy)
 	int			 off = 0;
 	const char		*comma = "", *tmp = "";
 	static char		 s[256];
-	char			 b[16];
+	char			 b[21];
 
 	*s = '\0';
 
