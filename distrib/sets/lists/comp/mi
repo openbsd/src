@@ -1853,6 +1853,7 @@
 ./usr/share/man/man3/CMS_get1_ReceiptRequest.3
 ./usr/share/man/man3/CMS_sign.3
 ./usr/share/man/man3/CMS_sign_receipt.3
+./usr/share/man/man3/CMS_signed_add1_attr.3
 ./usr/share/man/man3/CMS_uncompress.3
 ./usr/share/man/man3/CMS_verify.3
 ./usr/share/man/man3/CMS_verify_receipt.3
