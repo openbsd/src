@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.40 2022/08/24 01:32:21 deraadt Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.41 2024/01/22 16:18:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -44,7 +44,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <errno.h>
-#include <rpc/pmap_clnt.h>
+#include "clnt_udp.h"
 
 /*
  * UDP bases client side rpc operations
@@ -66,31 +66,65 @@ static const struct clnt_ops udp_ops = {
 	clntudp_control
 };
 
-/* 
- * Private data kept per client handle
- */
-struct cu_data {
-	int		   cu_sock;
-	bool_t		   cu_closeit;
-	struct sockaddr_in cu_raddr;
-	int		   cu_connected;	/* use send() instead */
-	int		   cu_rlen;
-	struct timeval	   cu_wait;
-	struct timeval     cu_total;
-	struct rpc_err	   cu_error;
-	XDR		   cu_outxdrs;
-	u_int		   cu_xdrpos;
-	u_int		   cu_sendsz;
-	char		   *cu_outbuf;
-	u_int		   cu_recvsz;
-	char		   cu_inbuf[1];
-};
+int
+clntudp_bufcreate1(struct clntudp_bufcreate_args *args)
+{
+	args->cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
+	if (args->cl == NULL) {
+		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+		rpc_createerr.cf_error.re_errno = errno;
+		return -1;
+	}
+	args->sendsz = ((args->sendsz + 3) / 4) * 4;
+	args->recvsz = ((args->recvsz + 3) / 4) * 4;
+	args->cu = (struct cu_data *)mem_alloc(sizeof(args->cu) +
+	    args->sendsz + args->recvsz);
+	if (args->cu == NULL) {
+		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+		rpc_createerr.cf_error.re_errno = errno;
+		return -1;
+	}
+	args->cu->cu_outbuf = &args->cu->cu_inbuf[args->recvsz];
+	args->cl->cl_ops = &udp_ops;
+	args->cl->cl_private = (caddr_t)args->cu;
+	args->cu->cu_connected = 0;
+	args->cu->cu_rlen = sizeof (args->cu->cu_raddr);
+	args->cu->cu_wait = args->wait;
+	args->cu->cu_total.tv_sec = -1;
+	args->cu->cu_total.tv_usec = -1;
+	args->cu->cu_sendsz = args->sendsz;
+	args->cu->cu_recvsz = args->recvsz;
+	args->cu->cu_closeit = FALSE;
+	args->call_msg.rm_xid = arc4random();
+	args->call_msg.rm_direction = CALL;
+	args->call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
+	args->call_msg.rm_call.cb_prog = args->program;
+	args->call_msg.rm_call.cb_vers = args->version;
+	return 0;
+}
+
+int
+clntudp_bufcreate2(struct clntudp_bufcreate_args *args)
+{
+	xdrmem_create(&(args->cu->cu_outxdrs), args->cu->cu_outbuf,
+	    args->sendsz, XDR_ENCODE);
+	if (!xdr_callhdr(&(args->cu->cu_outxdrs), &args->call_msg))
+		return -1;
+	args->cu->cu_xdrpos = XDR_GETPOS(&(args->cu->cu_outxdrs));
+	args->cl->cl_auth = authnone_create();
+	if (args->cl->cl_auth == NULL) {
+		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+		rpc_createerr.cf_error.re_errno = errno;
+		return -1;
+	}
+	return 0;
+}
 
 /*
  * Create a UDP based client handle.
- * If *sockp<0, *sockp is set to a newly created UPD socket.
+ * If *sockp<0, *sockp is set to a newly created UPD socket.  (***)
  * If raddr->sin_port is 0 a binder on the remote machine
- * is consulted for the correct port number.
+ * is consulted for the correct port number.                  (***)
  * NB: It is the client's responsibility to close *sockp, unless
  *	clntudp_bufcreate() was called with *sockp = -1 (so it created
  *	the socket), and CLNT_DESTROY() is used.
@@ -103,100 +137,45 @@ struct cu_data {
  *
  * sendsz and recvsz are the maximum allowable packet sizes that can be
  * sent and received.
+ *
+ * This is a reduced-functionality version of clntudp_bufcreate() that
+ * does not allocate socket or binding (***, above).
+ * The official function clntudp_bufcreate(), which does perform those
+ * two steps, is in clnt_udp_bufcreate.c.  This split avoids pulling
+ * socket / portmap related code into programs only using getpwent / YP code.
  */
+
 CLIENT *
-clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
+clntudp_bufcreate_simple(struct sockaddr_in *raddr, u_long program, u_long version,
     struct timeval wait, int *sockp, u_int sendsz, u_int recvsz)
 {
-	CLIENT *cl;
-	struct cu_data *cu = NULL;
-	struct rpc_msg call_msg;
+	struct clntudp_bufcreate_args args;
 
-	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
-	if (cl == NULL) {
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-		rpc_createerr.cf_error.re_errno = errno;
-		goto fooy;
-	}
-	sendsz = ((sendsz + 3) / 4) * 4;
-	recvsz = ((recvsz + 3) / 4) * 4;
-	cu = (struct cu_data *)mem_alloc(sizeof(*cu) + sendsz + recvsz);
-	if (cu == NULL) {
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-		rpc_createerr.cf_error.re_errno = errno;
-		goto fooy;
-	}
-	cu->cu_outbuf = &cu->cu_inbuf[recvsz];
+	args.raddr = raddr;
+	args.program = program;
+	args.version = version;
+	args.wait = wait;
+	args.sockp = sockp;
+	args.sendsz = sendsz;
+	args.recvsz = recvsz;
+	args.cl = NULL;
+	args.cu = NULL;
 
-	if (raddr->sin_port == 0) {
-		u_short port;
-		if ((port =
-		    pmap_getport(raddr, program, version, IPPROTO_UDP)) == 0) {
-			goto fooy;
-		}
-		raddr->sin_port = htons(port);
-	}
-	cl->cl_ops = &udp_ops;
-	cl->cl_private = (caddr_t)cu;
-	cu->cu_raddr = *raddr;
-	cu->cu_connected = 0;
-	cu->cu_rlen = sizeof (cu->cu_raddr);
-	cu->cu_wait = wait;
-	cu->cu_total.tv_sec = -1;
-	cu->cu_total.tv_usec = -1;
-	cu->cu_sendsz = sendsz;
-	cu->cu_recvsz = recvsz;
-	call_msg.rm_xid = arc4random();
-	call_msg.rm_direction = CALL;
-	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
-	call_msg.rm_call.cb_prog = program;
-	call_msg.rm_call.cb_vers = version;
-	xdrmem_create(&(cu->cu_outxdrs), cu->cu_outbuf,
-	    sendsz, XDR_ENCODE);
-	if (!xdr_callhdr(&(cu->cu_outxdrs), &call_msg)) {
+	if (clntudp_bufcreate1(&args) == -1)
 		goto fooy;
-	}
-	cu->cu_xdrpos = XDR_GETPOS(&(cu->cu_outxdrs));
-	if (*sockp < 0) {
-		*sockp = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK,
-		    IPPROTO_UDP);
-		if (*sockp == -1) {
-			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-			rpc_createerr.cf_error.re_errno = errno;
-			goto fooy;
-		}
-		/* attempt to bind to priv port */
-		(void)bindresvport(*sockp, NULL);
-		cu->cu_closeit = TRUE;
-	} else {
-		cu->cu_closeit = FALSE;
-	}
-	cu->cu_sock = *sockp;
-	cl->cl_auth = authnone_create();
-	if (cl->cl_auth == NULL) {
-		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
-		rpc_createerr.cf_error.re_errno = errno;
+	args.cu->cu_raddr = *raddr;
+	args.cu->cu_sock = *sockp;
+	if (clntudp_bufcreate2(&args) == -1)
 		goto fooy;
-	}
-	return (cl);
+	return (args.cl);
 fooy:
-	if (cu)
-		mem_free((caddr_t)cu, sizeof(*cu) + sendsz + recvsz);
-	if (cl)
-		mem_free((caddr_t)cl, sizeof(CLIENT));
+	if (args.cu)
+		mem_free((caddr_t)args.cu,
+		    sizeof(*args.cu) + args.sendsz + args.recvsz);
+	if (args.cl)
+		mem_free((caddr_t)args.cl, sizeof(CLIENT));
 	return (NULL);
 }
-DEF_WEAK(clntudp_bufcreate);
-
-CLIENT *
-clntudp_create(struct sockaddr_in *raddr, u_long program, u_long version,
-    struct timeval wait, int *sockp)
-{
-
-	return(clntudp_bufcreate(raddr, program, version, wait, sockp,
-	    UDPMSGSIZE, UDPMSGSIZE));
-}
-DEF_WEAK(clntudp_create);
 
 static enum clnt_stat 
 clntudp_call(CLIENT *cl,	/* client handle */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.32 2022/08/02 16:59:29 deraadt Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.33 2024/01/22 16:18:06 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -46,6 +46,10 @@
 char _yp_domain[HOST_NAME_MAX+1];
 int _yplib_timeout = 10;
 
+extern CLIENT *
+clntudp_bufcreate_simple(struct sockaddr_in *raddr, u_long program, u_long version,
+    struct timeval wait, int *sockp, u_int sendsz, u_int recvsz);
+
 int
 _yp_dobind(const char *dom, struct dom_binding **ypdb)
 {
@@ -72,8 +76,8 @@ again:
 
 	tv.tv_sec = _yplib_timeout / 2;
 	tv.tv_usec = 0;
-	ypbinding->dom_client = clntudp_create(&ypbinding->dom_server_addr,
-	    YPPROG, YPVERS, tv, &ypbinding->dom_socket);
+	ypbinding->dom_client = clntudp_bufcreate_simple(&ypbinding->dom_server_addr,
+	    YPPROG, YPVERS, tv, &ypbinding->dom_socket, UDPMSGSIZE, UDPMSGSIZE);
 	if (ypbinding->dom_client == NULL) {
 		close(ypbinding->dom_socket);
 		ypbinding->dom_socket = -1;
