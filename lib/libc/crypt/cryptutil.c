@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptutil.c,v 1.12 2015/09/13 15:33:48 guenther Exp $ */
+/* $OpenBSD: cryptutil.c,v 1.13 2024/01/22 19:26:55 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -54,7 +54,7 @@ int
 crypt_newhash(const char *pass, const char *pref, char *hash, size_t hashlen)
 {
 	int rv = -1;
-	const char *defaultpref = "blowfish,8";
+	const char *defaultpref = "bcrypt,8";
 	const char *errstr;
 	const char *choices[] = { "blowfish", "bcrypt" };
 	size_t maxchoice = sizeof(choices) / sizeof(choices[0]);
