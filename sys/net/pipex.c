@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.152 2024/01/23 16:57:52 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.153 2024/01/23 17:57:21 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -151,6 +151,8 @@ pipex_destroy_all_sessions(void *ownersc)
 
 	LIST_FOREACH_SAFE(session, &pipex_session_list, session_list,
 	    session_tmp) {
+		if (session->flags & PIPEX_SFLAGS_ITERATOR)
+			continue;
 		if (session->ownersc == ownersc) {
 			KASSERT((session->flags & PIPEX_SFLAGS_PPPX) == 0);
 			pipex_unlink_session_locked(session);
@@ -594,6 +596,8 @@ pipex_get_closed(struct pipex_session_list_req *req, void *ownersc)
 
 	LIST_FOREACH_SAFE(session, &pipex_close_wait_list, state_list,
 	    session_tmp) {
+		if (session->flags & PIPEX_SFLAGS_ITERATOR)
+			continue;
 		if (session->ownersc != ownersc)
 			continue;
 		req->plr_ppp_id[req->plr_ppp_id_count++] = session->ppp_id;
@@ -730,6 +734,8 @@ pipex_timer(void *ignored_arg)
 	/* walk through */
 	LIST_FOREACH_SAFE(session, &pipex_session_list, session_list,
 	    session_tmp) {
+		if (session->flags & PIPEX_SFLAGS_ITERATOR)
+			continue;
 		switch (session->state) {
 		case PIPEX_STATE_OPENED:
 			if (session->timeout_sec == 0)
@@ -769,6 +775,47 @@ pipex_timer(void *ignored_arg)
 /***********************************************************************
  * Common network I/O functions.  (tunnel protocol independent)
  ***********************************************************************/
+
+struct pipex_session *
+pipex_iterator(struct pipex_session *session,
+    struct pipex_session_iterator *iter, void *ownersc)
+{
+	struct pipex_session *session_tmp;
+
+	mtx_enter(&pipex_list_mtx);
+
+	if (session)
+		session_tmp = LIST_NEXT(session, session_list);
+	else
+		session_tmp = LIST_FIRST(&pipex_session_list);
+
+	while (session_tmp) {
+		if (session_tmp->flags & PIPEX_SFLAGS_ITERATOR)
+			goto next;
+		if (session_tmp->ownersc != ownersc)
+			goto next;
+		break;
+next:
+		session_tmp = LIST_NEXT(session_tmp, session_list);
+	}
+
+	if (session)
+		LIST_REMOVE(iter, session_list);
+
+	if (session_tmp) {
+		LIST_INSERT_AFTER(session_tmp,
+		    (struct pipex_session *)&iter, session_list);
+		refcnt_take(&session_tmp->pxs_refcnt);
+	}
+
+	mtx_leave(&pipex_list_mtx);
+
+	if (session)
+		pipex_rele_session(session);
+
+	return (session_tmp); 
+}
+
 void
 pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 {
@@ -803,23 +850,17 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 
 		pipex_ppp_output(m0, session, PPP_IP);
 	} else {
+		struct pipex_session_iterator iter = {
+			.flags = PIPEX_SFLAGS_ITERATOR,
+		};
+
 		struct pipex_session *session_tmp;
 		struct mbuf *m;
 
 		m0->m_flags &= ~(M_BCAST|M_MCAST);
 
-		mtx_enter(&pipex_list_mtx);
-
-		session_tmp = LIST_FIRST(&pipex_session_list);
-		while (session_tmp != NULL) {
-			struct pipex_session *session_save = NULL;
-
-			if (session_tmp->ownersc != session->ownersc)
-				goto next;
-
-			refcnt_take(&session_tmp->pxs_refcnt);
-			mtx_leave(&pipex_list_mtx);
-
+		session_tmp = pipex_iterator(NULL, &iter, session->ownersc);
+		while (session_tmp) {
 			m = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
 			if (m != NULL)
 				pipex_ppp_output(m, session_tmp, PPP_IP);
@@ -827,15 +868,9 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 				counters_inc(session_tmp->stat_counters,
 				    pxc_oerrors);
 
-			mtx_enter(&pipex_list_mtx);
-			session_save = session_tmp;
-next:
-			session_tmp = LIST_NEXT(session_tmp, session_list);
-			if (session_save != NULL)
-				pipex_rele_session(session_save);
+			session_tmp = pipex_iterator(session_tmp,
+			    &iter, session->ownersc);
 		}
-
-		mtx_leave(&pipex_list_mtx);
 
 		m_freem(m0);
 	}

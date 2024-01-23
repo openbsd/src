@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.50 2024/01/23 16:57:53 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.51 2024/01/23 17:57:21 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -156,19 +156,32 @@ struct pipex_l2tp_session {
 
 struct cpumem;
 
+/* special iterator session */
+struct pipex_session_iterator {
+	/* Fields below should be in sync with pipex_session structure */
+	struct radix_node	ps4_rn[2];
+	u_int		flags;			/* [I] flags, see below */
+	LIST_ENTRY(pipex_session) session_list;	/* [L] all session chain */
+};
+
 /* pppac ip-extension session table */
 struct pipex_session {
 	struct radix_node	ps4_rn[2];
 					/* [L] tree glue, and other values */
-
-	struct refcnt pxs_refcnt;
-	struct mutex pxs_mtx;
+	u_int		flags;		/* [I] flags, see below */
+#define PIPEX_SFLAGS_MULTICAST		0x01 /* virtual entry for multicast */
+#define PIPEX_SFLAGS_PPPX		0x02 /* interface is
+						point2point(pppx) */
+#define PIPEX_SFLAGS_ITERATOR		0x04 /* iterator session */
 
 	LIST_ENTRY(pipex_session) session_list;	/* [L] all session chain */
 	LIST_ENTRY(pipex_session) state_list;	/* [L] state list chain */
 	LIST_ENTRY(pipex_session) id_chain;	/* [L] id hash chain */
 	LIST_ENTRY(pipex_session) peer_addr_chain;
 					/* [L] peer's address hash chain */
+	struct refcnt pxs_refcnt;
+	struct mutex pxs_mtx;
+
 	u_int		state;		/* [L] pipex session state */
 #define PIPEX_STATE_INITIAL		0x0000
 #define PIPEX_STATE_OPENED		0x0001
@@ -177,11 +190,6 @@ struct pipex_session {
 #define PIPEX_STATE_CLOSED		0x0004
 
 	uint32_t	idle_time;	/* [L] idle time in seconds */
-
-	u_int		flags;		/* [I] flags, see below */
-#define PIPEX_SFLAGS_MULTICAST		0x01 /* virtual entry for multicast */
-#define PIPEX_SFLAGS_PPPX		0x02 /* interface is
-						point2point(pppx) */
 
 	uint16_t	protocol;		/* [I] tunnel protocol (PK) */
 	uint16_t	session_id;		/* [I] session-id (PK) */
@@ -464,3 +472,5 @@ int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, 
 void                  pipex_timer_start (void);
 void                  pipex_timer_stop (void);
 void                  pipex_timer (void *);
+struct pipex_session  *pipex_iterator(struct pipex_session *,
+                          struct pipex_session_iterator *, void *);
