@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.614 2024/01/15 15:44:50 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.615 2024/01/23 14:39:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -449,9 +449,10 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 
 			switch (imsg_get_type(&imsg)) {
 			case IMSG_SESSION_STALE:
+				peer_stale(peer, aid, 0);
+				break;
 			case IMSG_SESSION_NOGRACE:
-				peer_stale(peer, aid,
-				    imsg_get_type(&imsg) == IMSG_SESSION_NOGRACE);
+				peer_stale(peer, aid, 1);
 				break;
 			case IMSG_SESSION_FLUSH:
 				peer_flush(peer, aid, peer->staletime[aid]);
