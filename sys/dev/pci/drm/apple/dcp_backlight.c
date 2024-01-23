@@ -172,20 +172,8 @@ done:
 	return ret;
 }
 
-static int dcp_set_brightness(struct backlight_device *bd)
+int dcp_backlight_update(struct apple_dcp *dcp)
 {
-	int ret = 0;
-	struct apple_dcp *dcp = bl_get_data(bd);
-	struct drm_modeset_acquire_ctx ctx;
-	int brightness = backlight_get_brightness(bd);
-
-	DRM_MODESET_LOCK_ALL_BEGIN(dcp->crtc->base.dev, ctx, 0, ret);
-
-	dcp->brightness.dac = calculate_dac(dcp, brightness);
-	dcp->brightness.update = true;
-
-	DRM_MODESET_LOCK_ALL_END(dcp->crtc->base.dev, ctx, ret);
-
 	/*
 	 * Do not actively try to change brightness if no mode is set.
 	 * TODO: should this be reflected the in backlight's power property?
@@ -200,6 +188,23 @@ static int dcp_set_brightness(struct backlight_device *bd)
 	drm_msleep((1001 + 23) / 24); // 42ms for 23.976 fps
 
 	return drm_crtc_set_brightness(dcp);
+}
+
+static int dcp_set_brightness(struct backlight_device *bd)
+{
+	int ret = 0;
+	struct apple_dcp *dcp = bl_get_data(bd);
+	struct drm_modeset_acquire_ctx ctx;
+	int brightness = backlight_get_brightness(bd);
+
+	DRM_MODESET_LOCK_ALL_BEGIN(dcp->crtc->base.dev, ctx, 0, ret);
+
+	dcp->brightness.dac = calculate_dac(dcp, brightness);
+	dcp->brightness.update = true;
+
+	DRM_MODESET_LOCK_ALL_END(dcp->crtc->base.dev, ctx, ret);
+
+	return dcp_backlight_update(dcp);
 }
 
 static const struct backlight_ops dcp_backlight_ops = {

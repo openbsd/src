@@ -516,6 +516,15 @@ out_unlock:
 	mutex_unlock(&dcp->bl_register_mutex);
 }
 
+static void dcp_work_update_backlight(struct work_struct *work)
+{
+	struct apple_dcp *dcp;
+
+	dcp = container_of(work, struct apple_dcp, bl_update_wq);
+
+	dcp_backlight_update(dcp);
+}
+
 static int dcp_create_piodma_iommu_dev(struct apple_dcp *dcp)
 {
 	int ret;
@@ -836,6 +845,7 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 		dcp->connector_type = DRM_MODE_CONNECTOR_eDP;
 		INIT_WORK(&dcp->bl_register_wq, dcp_work_register_backlight);
 		rw_init(&dcp->bl_register_mutex, "dcpbl");
+		INIT_WORK(&dcp->bl_update_wq, dcp_work_update_backlight);
 	} else if (of_property_match_string(dev->of_node, "apple,connector-type", "HDMI-A") >= 0)
 		dcp->connector_type = DRM_MODE_CONNECTOR_HDMIA;
 	else if (of_property_match_string(dev->of_node, "apple,connector-type", "DP") >= 0)

@@ -212,6 +212,8 @@ struct apple_dcp {
 	/* Workqueue for updating the initial initial brightness */
 	struct work_struct bl_register_wq;
 	struct rwlock bl_register_mutex;
+	/* Workqueue for updating the brightness */
+	struct work_struct bl_update_wq;
 
 	/* integrated panel if present */
 	struct dcp_panel panel;
@@ -241,6 +243,7 @@ struct apple_dcp {
 };
 
 int dcp_backlight_register(struct apple_dcp *dcp);
+int dcp_backlight_update(struct apple_dcp *dcp);
 bool dcp_has_panel(struct apple_dcp *dcp);
 
 #define DCP_AUDIO_MAX_CHANS 15
