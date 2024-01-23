@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: pte.h,v 1.3 2024/01/23 19:51:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -39,8 +39,12 @@
 #define	PTE_RWX		(PTE_R | PTE_W | PTE_X)
 #define	PTE_RX		(PTE_R | PTE_X)
 #define	PTE_KERN	(PTE_V | PTE_R | PTE_W | PTE_A | PTE_D)
-#define	PTE_PROMOTE	(PTE_V | PTE_RWX | PTE_D | PTE_A | PTE_G | PTE_U | \
-			 PTE_SW_MANAGED | PTE_SW_WIRED
+
+/* T-Head extended page attributes */
+#define	PTE_THEAD_SO	(1ULL << 63)
+#define	PTE_THEAD_C	(1ULL << 62)
+#define	PTE_THEAD_B	(1ULL << 61)
+#define	PTE_THEAD_SH	(1ULL << 60)
 
 /* Level 0 table, 512GiB per entry */
 #define	 L0_SHIFT	39

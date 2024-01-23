@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 2023/12/13 18:26:41 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.38 2024/01/23 19:51:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -216,6 +216,8 @@ vaddr_t zero_page;
 vaddr_t copy_src_page;
 vaddr_t copy_dst_page;
 
+#define CPU_VENDOR_THEAD	0x5b7
+
 struct pool pmap_pmap_pool;
 struct pool pmap_pted_pool;
 struct pool pmap_vp_pool;
@@ -298,6 +300,11 @@ const pt_entry_t ap_bits_kern[8] = {
 	[PROT_EXEC|PROT_WRITE]			= PTE_A|PTE_X|PTE_R|PTE_D|PTE_W,
 	[PROT_EXEC|PROT_WRITE|PROT_READ]	= PTE_A|PTE_X|PTE_R|PTE_D|PTE_W,
 };
+
+/* PBMT encodings for the Svpmbt modes. */
+uint64_t pmap_pma;
+uint64_t pmap_nc;
+uint64_t pmap_io;
 
 /*
  * This is used for pmap_kernel() mappings, they are not to be removed
@@ -769,8 +776,6 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	switch (cache) {
 	case PMAP_CACHE_WB:
 		break;
-	case PMAP_CACHE_WT:
-		break;
 	case PMAP_CACHE_CI:
 		if (pa >= pmap_cached_start && pa <= pmap_cached_end)
 			pa += (pmap_uncached_start - pmap_cached_start);
@@ -778,7 +783,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	case PMAP_CACHE_DEV:
 		break;
 	default:
-		panic("pmap_fill_pte:invalid cache mode");
+		panic("%s: invalid cache mode", __func__);
 	}
 	pted->pted_va |= cache;
 
@@ -1177,9 +1182,9 @@ pmap_bootstrap_dmap(vaddr_t kern_l1, paddr_t min_pa, paddr_t max_pa)
 
 		/* gigapages */
 		pn = (pa / PAGE_SIZE);
-		entry = PTE_KERN;
+		entry = PTE_KERN | pmap_pma;
 		entry |= (pn << PTE_PPN0_S);
-		atomic_store_64(&l1[l1_slot], entry);
+		l1[l1_slot] = entry;
 	}
 
 	sfence_vma();
@@ -1198,7 +1203,26 @@ pmap_bootstrap(long kvo, vaddr_t l1pt, vaddr_t kernelstart, vaddr_t kernelend,
 	vaddr_t vstart;
 	int i, j, k;
 	int lb_idx2, ub_idx2;
+	uint64_t marchid, mimpid;
+	uint32_t mvendorid;
 	void *node;
+
+	mvendorid = sbi_get_mvendorid();
+	marchid = sbi_get_marchid();
+	mimpid = sbi_get_mimpid();
+
+	/*
+	 * The T-Head cores implement a page attributes extension that
+	 * violates the RISC-V privileged architecture specification.
+	 * Work around this as best as we can by adding the
+	 * appropriate page attributes in a way that is mostly
+	 * compatible with the Svpbmt extension.
+	 */
+	if (mvendorid == CPU_VENDOR_THEAD && marchid == 0 && mimpid == 0) {
+		pmap_pma = PTE_THEAD_C | PTE_THEAD_B | PTE_THEAD_SH;
+		pmap_nc = PTE_THEAD_B | PTE_THEAD_SH;
+		pmap_io = PTE_THEAD_SO | PTE_THEAD_SH;
+	}
 
 	node = fdt_find_node("/");
 	if (fdt_is_compatible(node, "starfive,jh7100")) {
@@ -1604,15 +1628,30 @@ pmap_pte_insert(struct pte_desc *pted)
 void
 pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 {
-	pt_entry_t pte, access_bits;
+	uint64_t pte, access_bits;
 	pmap_t pm = pted->pted_pmap;
+	uint64_t attr = 0;
+
+	switch (pted->pted_va & PMAP_CACHE_BITS) {
+	case PMAP_CACHE_WB:
+		attr |= pmap_pma;
+		break;
+	case PMAP_CACHE_CI:
+		attr |= pmap_nc;
+		break;
+	case PMAP_CACHE_DEV:
+		attr |= pmap_io;
+		break;
+	default:
+		panic("%s: invalid cache mode", __func__);
+	}
 
 	if (pm->pm_privileged)
 		access_bits = ap_bits_kern[pted->pted_pte & PROT_MASK];
 	else
 		access_bits = ap_bits_user[pted->pted_pte & PROT_MASK];
 
-	pte = VP_Lx(pted->pted_pte) | access_bits | PTE_V;
+	pte = VP_Lx(pted->pted_pte) | attr | access_bits | PTE_V;
 	*pl3 = access_bits ? pte : 0;
 }
 

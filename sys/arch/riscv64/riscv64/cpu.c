@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 2023/10/24 13:20:10 claudio Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.17 2024/01/23 19:51:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -37,9 +37,10 @@
 #include <dev/ofw/fdt.h>
 
 /* CPU Identification */
-
 #define CPU_VENDOR_SIFIVE	0x489
+#define CPU_VENDOR_THEAD	0x5b7
 
+/* SiFive */
 #define CPU_ARCH_U5		0x0000000000000001
 #define CPU_ARCH_U7		0x8000000000000007
 
@@ -66,6 +67,7 @@ const struct vendor {
 	struct arch	*archlist;
 } cpu_vendors[] = {
 	{ CPU_VENDOR_SIFIVE, "SiFive", cpu_arch_sifive },
+	{ CPU_VENDOR_THEAD, "T-Head", cpu_arch_none },
 	{ 0, NULL }
 };
 

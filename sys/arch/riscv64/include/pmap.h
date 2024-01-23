@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 2023/12/13 18:26:41 jca Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 2024/01/23 19:51:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -44,8 +44,7 @@
 /* cache flags */
 // XXX These are duplicated from arm64 and may need some reworking
 #define PMAP_CACHE_CI		(PMAP_MD0)		/* cache inhibit */
-#define PMAP_CACHE_WT		(PMAP_MD1)		/* writethru */
-#define PMAP_CACHE_WB		(PMAP_MD1|PMAP_MD0)	/* writeback */
+#define PMAP_CACHE_WB		(PMAP_MD1)		/* writeback */
 #define PMAP_CACHE_DEV		(PMAP_MD2)		/* device mapping */
 #define PMAP_CACHE_BITS		(PMAP_MD0|PMAP_MD1|PMAP_MD2)
 
