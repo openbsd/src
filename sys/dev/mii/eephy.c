@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.63 2023/12/28 14:03:21 uwe Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.64 2024/01/23 11:51:53 uwe Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -270,6 +270,7 @@ eephy_reset(struct mii_softc *sc)
 	case MII_MODEL_MARVELL_E1011:
 	case MII_MODEL_MARVELL_E1111:
 	case MII_MODEL_MARVELL_E1112:
+	case MII_MODEL_MARVELL_E1512:
 	case MII_MODEL_MARVELL_PHYG65G:
 		reg &= ~E1000_SCR_EN_DETECT_MASK;
 		break;
