@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.132 2024/01/11 19:16:26 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.133 2024/01/23 13:02:15 aoyama Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1222,7 +1222,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	case EJUSTRETURN:
 		break;
 	default:
-	bad:
 		tf->tf_r[2] = error;
 		tf->tf_epsr |= PSR_C;   /* fail */
 		tf->tf_snip = tf->tf_snip & ~NIP_E;
@@ -1309,7 +1308,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		m88110_skip_insn(tf);
 		break;
 	default:
-	bad:
 		tf->tf_r[2] = error;
 		tf->tf_epsr |= PSR_C;   /* fail */
 		/* skip one instruction */
