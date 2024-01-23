@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.20 2023/11/20 14:18:21 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.21 2024/01/23 16:16:15 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -398,7 +398,7 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 		/* prefix */
 		ret = mrt_extract_prefix(b, len, AID_INET, &r->prefix,
 		    &r->prefixlen, verbose);
-		if (ret == 1)
+		if (ret == -1)
 			goto fail;
 		break;
 	case MRT_DUMP_V2_RIB_IPV6_UNICAST_ADDPATH:
@@ -410,7 +410,7 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 		/* prefix */
 		ret = mrt_extract_prefix(b, len, AID_INET6, &r->prefix,
 		    &r->prefixlen, verbose);
-		if (ret == 1)
+		if (ret == -1)
 			goto fail;
 		break;
 	case MRT_DUMP_V2_RIB_GENERIC_ADDPATH:
@@ -439,7 +439,7 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 		/* prefix */
 		ret = mrt_extract_prefix(b, len, aid, &r->prefix,
 		    &r->prefixlen, verbose);
-		if (ret == 1)
+		if (ret == -1)
 			goto fail;
 		break;
 	default:
@@ -744,7 +744,7 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 	/* prefix */
 	ret = mrt_extract_prefix(b, len, aid, &r->prefix, &r->prefixlen,
 	    verbose);
-	if (ret == 1)
+	if (ret == -1)
 		goto fail;
 	b += ret;
 	len -= ret;
@@ -1032,23 +1032,25 @@ mrt_extract_addr(void *msg, u_int len, struct bgpd_addr *addr, uint8_t aid)
 }
 
 int
-mrt_extract_prefix(void *msg, u_int len, uint8_t aid,
+mrt_extract_prefix(void *m, u_int len, uint8_t aid,
     struct bgpd_addr *prefix, uint8_t *prefixlen, int verbose)
 {
+	struct ibuf buf, *msg = &buf;
 	int r;
 
+	ibuf_from_buffer(msg, m, len); /* XXX */
 	switch (aid) {
 	case AID_INET:
-		r = nlri_get_prefix(msg, len, prefix, prefixlen);
+		r = nlri_get_prefix(msg, prefix, prefixlen);
 		break;
 	case AID_INET6:
-		r = nlri_get_prefix6(msg, len, prefix, prefixlen);
+		r = nlri_get_prefix6(msg, prefix, prefixlen);
 		break;
 	case AID_VPN_IPv4:
-		r = nlri_get_vpn4(msg, len, prefix, prefixlen, 0);
+		r = nlri_get_vpn4(msg, prefix, prefixlen, 0);
 		break;
 	case AID_VPN_IPv6:
-		r = nlri_get_vpn6(msg, len, prefix, prefixlen, 0);
+		r = nlri_get_vpn6(msg, prefix, prefixlen, 0);
 		break;
 	default:
 		if (verbose)
@@ -1057,6 +1059,8 @@ mrt_extract_prefix(void *msg, u_int len, uint8_t aid,
 	}
 	if (r == -1 && verbose)
 		printf("failed to parse prefix of AID %d\n", aid);
+	if (r != -1)
+		r = len - ibuf_size(msg); /* XXX */
 	return r;
 }
 

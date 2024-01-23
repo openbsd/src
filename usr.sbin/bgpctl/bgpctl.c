@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.300 2024/01/18 14:46:21 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.301 2024/01/23 16:16:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1709,118 +1709,85 @@ static void
 show_mrt_update(u_char *p, uint16_t len, int reqflags, int addpath)
 {
 	struct bgpd_addr prefix;
-	int pos;
+	struct ibuf *b, buf, wbuf, abuf;
 	uint32_t pathid;
 	uint16_t wlen, alen;
 	uint8_t prefixlen;
 
-	if (len < sizeof(wlen)) {
-		printf("bad length");
-		return;
-	}
-	memcpy(&wlen, p, sizeof(wlen));
-	wlen = ntohs(wlen);
-	p += sizeof(wlen);
-	len -= sizeof(wlen);
-
-	if (len < wlen) {
-		printf("bad withdraw length");
-		return;
-	}
+	ibuf_from_buffer(&buf, p, len);
+	b = &buf;
+	if (ibuf_get_n16(b, &wlen) == -1 ||
+	    ibuf_get_ibuf(b, wlen, &wbuf) == -1)
+		goto trunc;
 	if (wlen > 0) {
 		printf("\n     Withdrawn prefixes:");
-		while (wlen > 0) {
-			if (addpath) {
-				if (wlen <= sizeof(pathid)) {
-					printf("bad withdraw prefix");
-					return;
-				}
-				memcpy(&pathid, p, sizeof(pathid));
-				pathid = ntohl(pathid);
-				p += sizeof(pathid);
-				len -= sizeof(pathid);
-				wlen -= sizeof(pathid);
-			}
-			if ((pos = nlri_get_prefix(p, wlen, &prefix,
-			    &prefixlen)) == -1) {
-				printf("bad withdraw prefix");
-				return;
-			}
+		while (ibuf_size(&wbuf) > 0) {
+			if (addpath)
+				if (ibuf_get_n32(&wbuf, &pathid) == -1)
+					goto trunc;
+			if (nlri_get_prefix(&wbuf, &prefix, &prefixlen) == -1)
+				goto trunc;
+
 			printf(" %s/%u", log_addr(&prefix), prefixlen);
 			if (addpath)
 				printf(" path-id %u", pathid);
-			p += pos;
-			len -= pos;
-			wlen -= pos;
 		}
 	}
 
-	if (len < sizeof(alen)) {
-		printf("bad length");
-		return;
-	}
-	memcpy(&alen, p, sizeof(alen));
-	alen = ntohs(alen);
-	p += sizeof(alen);
-	len -= sizeof(alen);
+	if (ibuf_get_n16(b, &alen) == -1 ||
+	    ibuf_get_ibuf(b, alen, &abuf) == -1)
+		goto trunc;
 
-	if (len < alen) {
-		printf("bad attribute length");
-		return;
-	}
 	printf("\n");
 	/* alen attributes here */
-	while (alen > 3) {
-		uint8_t flags;
+	while (ibuf_size(&abuf) > 0) {
+		struct ibuf attrbuf;
 		uint16_t attrlen;
+		uint8_t flags;
 
-		flags = p[0];
-		/* type = p[1]; */
+		ibuf_from_ibuf(&abuf, &attrbuf);
+		if (ibuf_get_n8(&attrbuf, &flags) == -1 ||
+		    ibuf_skip(&attrbuf, 1) == -1)
+			goto trunc;
 
 		/* get the attribute length */
 		if (flags & ATTR_EXTLEN) {
-			if (len < sizeof(attrlen) + 2)
-				printf("bad attribute length");
-			memcpy(&attrlen, &p[2], sizeof(attrlen));
-			attrlen = ntohs(attrlen);
-			attrlen += sizeof(attrlen) + 2;
+			if (ibuf_get_n16(&attrbuf, &attrlen) == -1)
+				goto trunc;
 		} else {
-			attrlen = p[2];
-			attrlen += 1 + 2;
+			uint8_t tmp;
+			if (ibuf_get_n8(&attrbuf, &tmp) == -1)
+				goto trunc;
+			attrlen = tmp;
 		}
+		if (ibuf_truncate(&attrbuf, attrlen) == -1)
+			goto trunc;
+		ibuf_rewind(&attrbuf);
+		if (ibuf_skip(&abuf, ibuf_size(&attrbuf)) == -1)
+			goto trunc;
 
-		output->attr(p, attrlen, reqflags, addpath);
-		p += attrlen;
-		alen -= attrlen;
-		len -= attrlen;
+		output->attr(ibuf_data(&attrbuf), ibuf_size(&attrbuf),
+		    reqflags, addpath);
 	}
 
-	if (len > 0) {
+	if (ibuf_size(b) > 0) {
 		printf("    NLRI prefixes:");
-		while (len > 0) {
-			if (addpath) {
-				if (len <= sizeof(pathid)) {
-					printf(" bad nlri prefix: pathid, "
-					    "len %d", len);
-					return;
-				}
-				memcpy(&pathid, p, sizeof(pathid));
-				pathid = ntohl(pathid);
-				p += sizeof(pathid);
-				len -= sizeof(pathid);
-			}
-			if ((pos = nlri_get_prefix(p, len, &prefix,
-			    &prefixlen)) == -1) {
-				printf(" bad nlri prefix");
-				return;
-			}
+		while (ibuf_size(b) > 0) {
+			if (addpath)
+				if (ibuf_get_n32(b, &pathid) == -1)
+					goto trunc;
+			if (nlri_get_prefix(b, &prefix, &prefixlen) == -1)
+				goto trunc;
+
 			printf(" %s/%u", log_addr(&prefix), prefixlen);
 			if (addpath)
 				printf(" path-id %u", pathid);
-			p += pos;
-			len -= pos;
 		}
 	}
+	return;
+
+ trunc:
+	printf("truncated message");
 }
 
 void

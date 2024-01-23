@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.46 2024/01/11 14:34:49 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.47 2024/01/23 16:16:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -772,11 +772,12 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 	u_char		*path;
 	struct in_addr	 id;
 	struct bgpd_addr prefix;
+	struct ibuf	 ibuf, *buf = &ibuf;
 	char		*aspath;
 	uint32_t	 as, pathid;
 	uint16_t	 alen, ioff, short_as, afi;
 	uint8_t		 flags, type, safi, aid, prefixlen;
-	int		 i, pos, e2, e4;
+	int		 i, e2, e4;
 
 	if (len < 3) {
 		warnx("Too short BGP attribute");
@@ -951,43 +952,35 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 			printf(" nexthop: %s", log_addr(&nexthop));
 		}
 
-		while (alen > 0) {
-			if (addpath) {
-				if (alen <= sizeof(pathid)) {
-					printf("bad nlri prefix");
-					return;
-				}
-				memcpy(&pathid, data, sizeof(pathid));
-				pathid = ntohl(pathid);
-				data += sizeof(pathid);
-				alen -= sizeof(pathid);
-			}
+		ibuf_from_buffer(buf, data, alen);
+
+		while (ibuf_size(buf) > 0) {
+			if (addpath)
+				if (ibuf_get_n32(buf, &pathid) == -1)
+					goto bad_len;
 			switch (aid) {
 			case AID_INET6:
-				pos = nlri_get_prefix6(data, alen, &prefix,
-				    &prefixlen);
+				if (nlri_get_prefix6(buf, &prefix,
+				    &prefixlen) == -1)
+					goto bad_len;
 				break;
 			case AID_VPN_IPv4:
-				pos = nlri_get_vpn4(data, alen, &prefix,
-				    &prefixlen, 1);
+				if (nlri_get_vpn4(buf, &prefix,
+				    &prefixlen, 1) == -1)
+					goto bad_len;
 				break;
 			case AID_VPN_IPv6:
-				pos = nlri_get_vpn6(data, alen, &prefix,
-				    &prefixlen, 1);
+				if (nlri_get_vpn6(buf, &prefix,
+				    &prefixlen, 1) == -1)
+					goto bad_len;
 				break;
 			default:
 				printf("unhandled AID #%u", aid);
 				goto done;
 			}
-			if (pos == -1) {
-				printf("bad %s prefix", aid2str(aid));
-				break;
-			}
 			printf(" %s/%u", log_addr(&prefix), prefixlen);
 			if (addpath)
 				printf(" path-id %u", pathid);
-			data += pos;
-			alen -= pos;
 		}
 		break;
 	case ATTR_EXT_COMMUNITIES:
