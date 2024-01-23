@@ -2,6 +2,7 @@
 /* Copyright 2021 Alyssa Rosenzweig <alyssa@rosenzweig.io> */
 
 #include <linux/align.h>
+#include <linux/bitfield.h>
 #include <linux/bitmap.h>
 #include <linux/clk.h>
 #include <linux/completion.h>

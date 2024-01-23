@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only OR MIT
 /* Copyright 2022 Sven Peter <sven@svenpeter.dev> */
 
+#include <linux/bitfield.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/workqueue.h>
