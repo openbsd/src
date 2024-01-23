@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.36 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.37 2024/01/23 09:32:57 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -477,7 +477,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			cert_free(eecert);
 		} else if (status) {
 			cert->talid = a->cert->talid;
-			status = constraints_validate(file, cert);
+			constraints_validate(file, cert);
 		}
 	} else if (is_ta) {
 		if ((tal = find_tal(cert)) != NULL) {
