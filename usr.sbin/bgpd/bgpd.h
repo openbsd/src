@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.482 2024/01/23 16:08:35 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.483 2024/01/23 16:13:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1557,14 +1557,12 @@ int		 aspath_verify(void *, uint16_t, int, int);
 #define		 AS_ERR_SOFT	-4
 u_char		*aspath_inflate(void *, uint16_t, uint16_t *);
 int		 extract_prefix(const u_char *, int, void *, uint8_t, uint8_t);
-int		 nlri_get_prefix(u_char *, uint16_t, struct bgpd_addr *,
-		    uint8_t *);
-int		 nlri_get_prefix6(u_char *, uint16_t, struct bgpd_addr *,
-		    uint8_t *);
-int		 nlri_get_vpn4(u_char *, uint16_t, struct bgpd_addr *,
-		    uint8_t *, int);
-int		 nlri_get_vpn6(u_char *, uint16_t, struct bgpd_addr *,
-		    uint8_t *, int);
+int		 nlri_get_prefix(struct ibuf *, struct bgpd_addr *, uint8_t *);
+int		 nlri_get_prefix6(struct ibuf *, struct bgpd_addr *, uint8_t *);
+int		 nlri_get_vpn4(struct ibuf *, struct bgpd_addr *, uint8_t *,
+		    int);
+int		 nlri_get_vpn6(struct ibuf *, struct bgpd_addr *, uint8_t *,
+		    int);
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
 void		 inet4applymask(struct in_addr *, const struct in_addr *, int);

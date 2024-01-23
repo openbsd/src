@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.297 2023/10/16 10:25:46 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.298 2024/01/23 16:13:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -169,13 +169,6 @@ struct attr {
 	uint8_t				 type;
 };
 
-struct mpattr {
-	void		*reach;
-	void		*unreach;
-	uint16_t	 reach_len;
-	uint16_t	 unreach_len;
-};
-
 struct rde_community {
 	RB_ENTRY(rde_community)		entry;
 	int				size;
@@ -341,7 +334,7 @@ void		mrt_dump_upcall(struct rib_entry *, void *);
 
 /* rde.c */
 void		 rde_update_err(struct rde_peer *, uint8_t , uint8_t,
-		    void *, uint16_t);
+		    struct ibuf *);
 void		 rde_update_log(const char *, uint16_t,
 		    const struct rde_peer *, const struct bgpd_addr *,
 		    const struct bgpd_addr *, uint8_t);

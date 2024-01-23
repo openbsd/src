@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.78 2024/01/10 13:31:09 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.79 2024/01/23 16:13:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -563,12 +563,13 @@ aspath_inflate(void *data, uint16_t len, uint16_t *newlen)
 	return (ndata);
 }
 
+static const u_char	addrmask[] = { 0x00, 0x80, 0xc0, 0xe0, 0xf0,
+			    0xf8, 0xfc, 0xfe, 0xff };
+
 /* NLRI functions to extract prefixes from the NLRI blobs */
 int
 extract_prefix(const u_char *p, int len, void *va, uint8_t pfxlen, uint8_t max)
 {
-	static u_char	 addrmask[] = {
-	    0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 	u_char		*a = va;
 	int		 plen;
 
@@ -588,187 +589,177 @@ extract_prefix(const u_char *p, int len, void *va, uint8_t pfxlen, uint8_t max)
 	return (plen);
 }
 
-int
-nlri_get_prefix(u_char *p, uint16_t len, struct bgpd_addr *prefix,
-    uint8_t *prefixlen)
+static int
+extract_prefix_buf(struct ibuf *buf, void *va, uint8_t pfxlen, uint8_t max)
 {
-	int	 plen;
+	u_char		*a = va;
+	unsigned int	 plen;
+	uint8_t		 tmp;
+
+	plen = PREFIX_SIZE(pfxlen) - 1;
+	if (ibuf_size(buf) < plen || max < plen)
+		return -1;
+
+	while (pfxlen > 0) {
+		if (ibuf_get_n8(buf, &tmp) == -1)
+			return -1;
+
+		if (pfxlen < 8) {
+			*a++ = tmp & addrmask[pfxlen];
+			break;
+		} else {
+			*a++ = tmp;
+			pfxlen -= 8;
+		}
+	}
+	return (0);
+}
+
+int
+nlri_get_prefix(struct ibuf *buf, struct bgpd_addr *prefix, uint8_t *prefixlen)
+{
 	uint8_t	 pfxlen;
 
-	if (len < 1)
+	if (ibuf_get_n8(buf, &pfxlen) == -1)
 		return (-1);
-
-	pfxlen = *p++;
-	len--;
+	if (pfxlen > 32)
+		return (-1);
 
 	memset(prefix, 0, sizeof(struct bgpd_addr));
 	prefix->aid = AID_INET;
+
+	if (extract_prefix_buf(buf, &prefix->v4, pfxlen,
+	    sizeof(prefix->v4)) == -1)
+		return (-1);
+
 	*prefixlen = pfxlen;
-
-	if (pfxlen > 32)
-		return (-1);
-	if ((plen = extract_prefix(p, len, &prefix->v4, pfxlen,
-	    sizeof(prefix->v4))) == -1)
-		return (-1);
-
-	return (plen + 1);	/* pfxlen needs to be added */
+	return (0);
 }
 
 int
-nlri_get_prefix6(u_char *p, uint16_t len, struct bgpd_addr *prefix,
-    uint8_t *prefixlen)
+nlri_get_prefix6(struct ibuf *buf, struct bgpd_addr *prefix, uint8_t *prefixlen)
 {
-	int	plen;
 	uint8_t	pfxlen;
 
-	if (len < 1)
+	if (ibuf_get_n8(buf, &pfxlen) == -1)
 		return (-1);
-
-	pfxlen = *p++;
-	len--;
+	if (pfxlen > 128)
+		return (-1);
 
 	memset(prefix, 0, sizeof(struct bgpd_addr));
 	prefix->aid = AID_INET6;
+
+	if (extract_prefix_buf(buf, &prefix->v6, pfxlen,
+	    sizeof(prefix->v6)) == -1)
+		return (-1);
+
 	*prefixlen = pfxlen;
-
-	if (pfxlen > 128)
-		return (-1);
-	if ((plen = extract_prefix(p, len, &prefix->v6, pfxlen,
-	    sizeof(prefix->v6))) == -1)
-		return (-1);
-
-	return (plen + 1);	/* pfxlen needs to be added */
+	return (0);
 }
 
 int
-nlri_get_vpn4(u_char *p, uint16_t len, struct bgpd_addr *prefix,
+nlri_get_vpn4(struct ibuf *buf, struct bgpd_addr *prefix,
     uint8_t *prefixlen, int withdraw)
 {
-	int		 rv, done = 0;
-	uint16_t	 plen;
+	int		 done = 0;
 	uint8_t		 pfxlen;
 
-	if (len < 1)
+	if (ibuf_get_n8(buf, &pfxlen) == -1)
 		return (-1);
 
-	memcpy(&pfxlen, p, 1);
-	p += 1;
-	plen = 1;
-
 	memset(prefix, 0, sizeof(struct bgpd_addr));
+	prefix->aid = AID_VPN_IPv4;
 
 	/* label stack */
 	do {
-		if (len - plen < 3 || pfxlen < 3 * 8)
-			return (-1);
-		if (prefix->labellen + 3U >
-		    sizeof(prefix->labelstack))
+		if (prefix->labellen + 3U > sizeof(prefix->labelstack) ||
+		    pfxlen < 3 * 8)
 			return (-1);
 		if (withdraw) {
 			/* on withdraw ignore the labelstack all together */
-			p += 3;
-			plen += 3;
+			if (ibuf_skip(buf, 3) == -1)
+				return (-1);
 			pfxlen -= 3 * 8;
 			break;
 		}
-		prefix->labelstack[prefix->labellen++] = *p++;
-		prefix->labelstack[prefix->labellen++] = *p++;
-		prefix->labelstack[prefix->labellen] = *p++;
-		if (prefix->labelstack[prefix->labellen] &
+		if (ibuf_get(buf, &prefix->labelstack[prefix->labellen], 3) ==
+		    -1)
+			return -1;
+		if (prefix->labelstack[prefix->labellen + 2] &
 		    BGP_MPLS_BOS)
 			done = 1;
-		prefix->labellen++;
-		plen += 3;
+		prefix->labellen += 3;
 		pfxlen -= 3 * 8;
 	} while (!done);
 
 	/* RD */
-	if (len - plen < (int)sizeof(uint64_t) ||
-	    pfxlen < sizeof(uint64_t) * 8)
+	if (pfxlen < sizeof(uint64_t) * 8 ||
+	    ibuf_get_h64(buf, &prefix->rd) == -1)
 		return (-1);
-	memcpy(&prefix->rd, p, sizeof(uint64_t));
 	pfxlen -= sizeof(uint64_t) * 8;
-	p += sizeof(uint64_t);
-	plen += sizeof(uint64_t);
 
 	/* prefix */
-	prefix->aid = AID_VPN_IPv4;
-	*prefixlen = pfxlen;
-
 	if (pfxlen > 32)
 		return (-1);
-	if ((rv = extract_prefix(p, len, &prefix->v4,
-	    pfxlen, sizeof(prefix->v4))) == -1)
+	if (extract_prefix_buf(buf, &prefix->v4, pfxlen,
+	    sizeof(prefix->v4)) == -1)
 		return (-1);
 
-	return (plen + rv);
+	*prefixlen = pfxlen;
+	return (0);
 }
 
 int
-nlri_get_vpn6(u_char *p, uint16_t len, struct bgpd_addr *prefix,
+nlri_get_vpn6(struct ibuf *buf, struct bgpd_addr *prefix,
     uint8_t *prefixlen, int withdraw)
 {
-	int		rv, done = 0;
-	uint16_t	plen;
+	int		done = 0;
 	uint8_t		pfxlen;
 
-	if (len < 1)
+	if (ibuf_get_n8(buf, &pfxlen) == -1)
 		return (-1);
 
-	memcpy(&pfxlen, p, 1);
-	p += 1;
-	plen = 1;
-
 	memset(prefix, 0, sizeof(struct bgpd_addr));
+	prefix->aid = AID_VPN_IPv6;
 
 	/* label stack */
 	do {
-		if (len - plen < 3 || pfxlen < 3 * 8)
-			return (-1);
-		if (prefix->labellen + 3U >
-		    sizeof(prefix->labelstack))
+		if (prefix->labellen + 3U > sizeof(prefix->labelstack) ||
+		    pfxlen < 3 * 8)
 			return (-1);
 		if (withdraw) {
 			/* on withdraw ignore the labelstack all together */
-			p += 3;
-			plen += 3;
+			if (ibuf_skip(buf, 3) == -1)
+				return (-1);
 			pfxlen -= 3 * 8;
 			break;
 		}
 
-		prefix->labelstack[prefix->labellen++] = *p++;
-		prefix->labelstack[prefix->labellen++] = *p++;
-		prefix->labelstack[prefix->labellen] = *p++;
-		if (prefix->labelstack[prefix->labellen] &
+		if (ibuf_get(buf, &prefix->labelstack[prefix->labellen], 3) ==
+		    -1)
+			return (-1);
+		if (prefix->labelstack[prefix->labellen + 2] &
 		    BGP_MPLS_BOS)
 			done = 1;
-		prefix->labellen++;
-		plen += 3;
+		prefix->labellen += 3;
 		pfxlen -= 3 * 8;
 	} while (!done);
 
 	/* RD */
-	if (len - plen < (int)sizeof(uint64_t) ||
-	    pfxlen < sizeof(uint64_t) * 8)
+	if (pfxlen < sizeof(uint64_t) * 8 ||
+	    ibuf_get_h64(buf, &prefix->rd) == -1)
 		return (-1);
-
-	memcpy(&prefix->rd, p, sizeof(uint64_t));
 	pfxlen -= sizeof(uint64_t) * 8;
-	p += sizeof(uint64_t);
-	plen += sizeof(uint64_t);
 
 	/* prefix */
-	prefix->aid = AID_VPN_IPv6;
-	*prefixlen = pfxlen;
-
 	if (pfxlen > 128)
 		return (-1);
-
-	if ((rv = extract_prefix(p, len, &prefix->v6,
-	    pfxlen, sizeof(prefix->v6))) == -1)
+	if (extract_prefix_buf(buf, &prefix->v6, pfxlen,
+	    sizeof(prefix->v6)) == -1)
 		return (-1);
 
-	return (plen + rv);
+	*prefixlen = pfxlen;
+	return (0);
 }
 
 static in_addr_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.615 2024/01/23 14:39:10 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.616 2024/01/23 16:13:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,16 +49,16 @@ void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 void		 rde_dispatch_imsg_rtr(struct imsgbuf *);
 void		 rde_dispatch_imsg_peer(struct rde_peer *, void *);
-void		 rde_update_dispatch(struct rde_peer *, struct imsg *);
+void		 rde_update_dispatch(struct rde_peer *, struct ibuf *);
 int		 rde_update_update(struct rde_peer *, uint32_t,
 		    struct filterstate *, struct bgpd_addr *, uint8_t);
 void		 rde_update_withdraw(struct rde_peer *, uint32_t,
 		    struct bgpd_addr *, uint8_t);
-int		 rde_attr_parse(u_char *, uint16_t, struct rde_peer *,
-		    struct filterstate *, struct mpattr *);
+int		 rde_attr_parse(struct ibuf *, struct rde_peer *,
+		    struct filterstate *, struct ibuf *, struct ibuf *);
 int		 rde_attr_add(struct filterstate *, struct ibuf *);
 uint8_t		 rde_attr_missing(struct rde_aspath *, int, uint16_t);
-int		 rde_get_mp_nexthop(u_char *, uint16_t, uint8_t,
+int		 rde_get_mp_nexthop(struct ibuf *, uint8_t,
 		    struct rde_peer *, struct filterstate *);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
 uint8_t		 rde_aspa_validity(struct rde_peer *, struct rde_aspath *,
@@ -1302,6 +1302,7 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 {
 	struct route_refresh rr;
 	struct imsg imsg;
+	struct ibuf ibuf;
 
 	if (!peer_imsg_pop(peer, &imsg))
 		return;
@@ -1310,7 +1311,10 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 	case IMSG_UPDATE:
 		if (peer->state != PEER_UP)
 			break;
-		rde_update_dispatch(peer, &imsg);
+		if (imsg_get_ibuf(&imsg, &ibuf) == -1)
+			log_warn("update: bad imsg");
+		else
+			rde_update_dispatch(peer, &ibuf);
 		break;
 	case IMSG_REFRESH:
 		if (imsg_get_data(&imsg, &rr, sizeof(rr)) == -1) {
@@ -1369,80 +1373,57 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 
 /* handle routing updates from the session engine. */
 void
-rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
+rde_update_dispatch(struct rde_peer *peer, struct ibuf *buf)
 {
 	struct filterstate	 state;
 	struct bgpd_addr	 prefix;
-	struct mpattr		 mpa;
-	u_char			*p, *mpp = NULL;
-	int			 pos = 0;
-	uint16_t		 afi, len, mplen;
-	uint16_t		 withdrawn_len;
-	uint16_t		 attrpath_len;
-	uint16_t		 nlri_len;
+	struct ibuf		 wdbuf, attrbuf, nlribuf, reachbuf, unreachbuf;
+	uint16_t		 afi, len;
 	uint8_t			 aid, prefixlen, safi, subtype;
 	uint32_t		 fas, pathid;
 
-	p = imsg->data;
-
-	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2) {
-		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
+	if (ibuf_get_n16(buf, &len) == -1 ||
+	    ibuf_get_ibuf(buf, len, &wdbuf) == -1 ||
+	    ibuf_get_n16(buf, &len) == -1 ||
+	    ibuf_get_ibuf(buf, len, &attrbuf) == -1 ||
+	    ibuf_get_ibuf(buf, ibuf_size(buf), &nlribuf) == -1) {
+		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL);
 		return;
 	}
 
-	memcpy(&len, p, 2);
-	withdrawn_len = ntohs(len);
-	p += 2;
-	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2 + withdrawn_len + 2) {
-		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
-		return;
-	}
-
-	p += withdrawn_len;
-	memcpy(&len, p, 2);
-	attrpath_len = len = ntohs(len);
-	p += 2;
-	if (imsg->hdr.len <
-	    IMSG_HEADER_SIZE + 2 + withdrawn_len + 2 + attrpath_len) {
-		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
-		return;
-	}
-
-	nlri_len =
-	    imsg->hdr.len - IMSG_HEADER_SIZE - 4 - withdrawn_len - attrpath_len;
-
-	if (attrpath_len == 0) {
+	if (ibuf_size(&attrbuf) == 0) {
 		/* 0 = no NLRI information in this message */
-		if (nlri_len != 0) {
+		if (ibuf_size(&nlribuf) != 0) {
 			/* crap at end of update which should not be there */
-			rde_update_err(peer, ERR_UPDATE,
-			    ERR_UPD_ATTRLIST, NULL, 0);
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST,
+			    NULL);
 			return;
 		}
-		if (withdrawn_len == 0) {
+		if (ibuf_size(&wdbuf) == 0) {
 			/* EoR marker */
 			rde_peer_recv_eor(peer, AID_INET);
 			return;
 		}
 	}
 
-	memset(&mpa, 0, sizeof(mpa));
+	ibuf_from_buffer(&reachbuf, NULL, 0);
+	ibuf_from_buffer(&unreachbuf, NULL, 0);
 	rde_filterstate_init(&state);
-	if (attrpath_len != 0) { /* 0 = no NLRI information in this message */
+	if (ibuf_size(&attrbuf) != 0) {
 		/* parse path attributes */
-		while (len > 0) {
-			if ((pos = rde_attr_parse(p, len, peer, &state,
-			    &mpa)) < 0)
+		while (ibuf_size(&attrbuf) > 0) {
+			if (rde_attr_parse(&attrbuf, peer, &state, &reachbuf,
+			    &unreachbuf) == -1)
 				goto done;
-			p += pos;
-			len -= pos;
 		}
 
 		/* check for missing but necessary attributes */
 		if ((subtype = rde_attr_missing(&state.aspath, peer->conf.ebgp,
-		    nlri_len))) {
+		    ibuf_size(&nlribuf)))) {
+			struct ibuf sbuf;
+			ibuf_from_buffer(&sbuf, &subtype, sizeof(subtype));
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_MISSNG_WK_ATTR,
-			    &subtype, sizeof(uint8_t));
+			    &sbuf);
 			goto done;
 		}
 
@@ -1453,12 +1434,13 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		    peer->conf.enforce_as == ENFORCE_AS_ON) {
 			fas = aspath_neighbor(state.aspath.aspath);
 			if (peer->conf.remote_as != fas) {
-			    log_peer_warnx(&peer->conf, "bad path, "
-				"starting with %s, "
-				"enforce neighbor-as enabled", log_as(fas));
-			    rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
-				    NULL, 0);
-			    goto done;
+				log_peer_warnx(&peer->conf, "bad path, "
+				    "starting with %s expected %u, "
+				    "enforce neighbor-as enabled",
+				    log_as(fas), peer->conf.remote_as);
+				rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
+				    NULL);
+				goto done;
 			}
 		}
 
@@ -1479,69 +1461,51 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		}
 	}
 
-	p = imsg->data;
-	len = withdrawn_len;
-	p += 2;
-
 	/* withdraw prefix */
-	if (len > 0) {
+	if (ibuf_size(&wdbuf) > 0) {
 		if (peer->capa.mp[AID_INET] == 0) {
 			log_peer_warnx(&peer->conf,
 			    "bad withdraw, %s disabled", aid2str(AID_INET));
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    NULL, 0);
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
+			    NULL);
 			goto done;
 		}
 	}
-	while (len > 0) {
+	while (ibuf_size(&wdbuf) > 0) {
 		if (peer_has_add_path(peer, AID_INET, CAPA_AP_RECV)) {
-			if (len <= sizeof(pathid)) {
+			if (ibuf_get_n32(&wdbuf, &pathid) == -1) {
 				log_peer_warnx(&peer->conf,
 				    "bad withdraw prefix");
 				rde_update_err(peer, ERR_UPDATE,
-				    ERR_UPD_NETWORK, NULL, 0);
+				    ERR_UPD_NETWORK, NULL);
 				goto done;
 			}
-			memcpy(&pathid, p, sizeof(pathid));
-			pathid = ntohl(pathid);
-			p += sizeof(pathid);
-			len -= sizeof(pathid);
 		} else
 			pathid = 0;
 
-		if ((pos = nlri_get_prefix(p, len, &prefix,
-		    &prefixlen)) == -1) {
+		if (nlri_get_prefix(&wdbuf, &prefix, &prefixlen) == -1) {
 			/*
 			 * the RFC does not mention what we should do in
 			 * this case. Let's do the same as in the NLRI case.
 			 */
 			log_peer_warnx(&peer->conf, "bad withdraw prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
-			    NULL, 0);
+			    NULL);
 			goto done;
 		}
-		p += pos;
-		len -= pos;
 
 		rde_update_withdraw(peer, pathid, &prefix, prefixlen);
 	}
 
 	/* withdraw MP_UNREACH_NLRI if available */
-	if (mpa.unreach_len != 0) {
-		mpp = mpa.unreach;
-		mplen = mpa.unreach_len;
-		memcpy(&afi, mpp, 2);
-		mpp += 2;
-		mplen -= 2;
-		afi = ntohs(afi);
-		safi = *mpp++;
-		mplen--;
-
-		if (afi2aid(afi, safi, &aid) == -1) {
+	if (ibuf_size(&unreachbuf) != 0) {
+		if (ibuf_get_n16(&unreachbuf, &afi) == -1 ||
+		    ibuf_get_n8(&unreachbuf, &safi) == -1 ||
+		    afi2aid(afi, safi, &aid) == -1) {
 			log_peer_warnx(&peer->conf,
 			    "bad AFI/SAFI pair in withdraw");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    NULL, 0);
+			    &unreachbuf);
 			goto done;
 		}
 
@@ -1549,65 +1513,58 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			log_peer_warnx(&peer->conf,
 			    "bad withdraw, %s disabled", aid2str(aid));
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    NULL, 0);
+			    &unreachbuf);
 			goto done;
 		}
 
 		if ((state.aspath.flags & ~F_ATTR_MP_UNREACH) == 0 &&
-		    mplen == 0) {
+		    ibuf_size(&unreachbuf) == 0) {
 			/* EoR marker */
 			rde_peer_recv_eor(peer, aid);
 		}
 
-		while (mplen > 0) {
+		while (ibuf_size(&unreachbuf) > 0) {
 			if (peer_has_add_path(peer, aid, CAPA_AP_RECV)) {
-				if (mplen <= sizeof(pathid)) {
+				if (ibuf_get_n32(&unreachbuf,
+				    &pathid) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad %s withdraw prefix",
 					    aid2str(aid));
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.unreach, mpa.unreach_len);
+					    ERR_UPD_OPTATTR, &unreachbuf);
 					goto done;
 				}
-				memcpy(&pathid, mpp, sizeof(pathid));
-				pathid = ntohl(pathid);
-				mpp += sizeof(pathid);
-				mplen -= sizeof(pathid);
 			} else
 				pathid = 0;
 
 			switch (aid) {
 			case AID_INET6:
-				if ((pos = nlri_get_prefix6(mpp, mplen,
-				    &prefix, &prefixlen)) == -1) {
+				if (nlri_get_prefix6(&unreachbuf,
+				    &prefix, &prefixlen) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad IPv6 withdraw prefix");
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.unreach, mpa.unreach_len);
+					    ERR_UPD_OPTATTR, &unreachbuf);
 					goto done;
 				}
 				break;
 			case AID_VPN_IPv4:
-				if ((pos = nlri_get_vpn4(mpp, mplen,
-				    &prefix, &prefixlen, 1)) == -1) {
+				if (nlri_get_vpn4(&unreachbuf,
+				    &prefix, &prefixlen, 1) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv4 withdraw prefix");
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.unreach, mpa.unreach_len);
+					    ERR_UPD_OPTATTR, &unreachbuf);
 					goto done;
 				}
 				break;
 			case AID_VPN_IPv6:
-				if ((pos = nlri_get_vpn6(mpp, mplen,
-				    &prefix, &prefixlen, 1)) == -1) {
+				if (nlri_get_vpn6(&unreachbuf,
+				    &prefix, &prefixlen, 1) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv6 withdraw prefix");
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR, mpa.unreach,
-					    mpa.unreach_len);
+					    ERR_UPD_OPTATTR, &unreachbuf);
 					goto done;
 				}
 				break;
@@ -1616,13 +1573,16 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 				/* ignore flowspec for now */
 			default:
 				/* ignore unsupported multiprotocol AF */
-				mpp += mplen;
-				mplen = 0;
+				if (ibuf_skip(&unreachbuf,
+				    ibuf_size(&unreachbuf)) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "bad VPNv6 withdraw prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR, &unreachbuf);
+					goto done;
+				}
 				continue;
 			}
-
-			mpp += pos;
-			mplen -= pos;
 
 			rde_update_withdraw(peer, pathid, &prefix, prefixlen);
 		}
@@ -1631,16 +1591,13 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			goto done;
 	}
 
-	/* shift to NLRI information */
-	p += 2 + attrpath_len;
-
 	/* parse nlri prefix */
-	if (nlri_len > 0) {
+	if (ibuf_size(&nlribuf) > 0) {
 		if (peer->capa.mp[AID_INET] == 0) {
 			log_peer_warnx(&peer->conf,
 			    "bad update, %s disabled", aid2str(AID_INET));
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    NULL, 0);
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
+			    NULL);
 			goto done;
 		}
 
@@ -1656,7 +1613,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 				    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_OTC,
 				    &tmp, sizeof(tmp)) == -1) {
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_ATTRLIST, NULL, 0);
+					    ERR_UPD_ATTRLIST, NULL);
 					goto done;
 				}
 				state.aspath.flags |= F_ATTR_OTC;
@@ -1666,54 +1623,39 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			}
 		}
 	}
-	while (nlri_len > 0) {
+	while (ibuf_size(&nlribuf) > 0) {
 		if (peer_has_add_path(peer, AID_INET, CAPA_AP_RECV)) {
-			if (nlri_len <= sizeof(pathid)) {
+			if (ibuf_get_n32(&nlribuf, &pathid) == -1) {
 				log_peer_warnx(&peer->conf,
 				    "bad nlri prefix");
 				rde_update_err(peer, ERR_UPDATE,
-				    ERR_UPD_NETWORK, NULL, 0);
+				    ERR_UPD_NETWORK, NULL);
 				goto done;
 			}
-			memcpy(&pathid, p, sizeof(pathid));
-			pathid = ntohl(pathid);
-			p += sizeof(pathid);
-			nlri_len -= sizeof(pathid);
 		} else
 			pathid = 0;
 
-		if ((pos = nlri_get_prefix(p, nlri_len, &prefix,
-		    &prefixlen)) == -1) {
+		if (nlri_get_prefix(&nlribuf, &prefix, &prefixlen) == -1) {
 			log_peer_warnx(&peer->conf, "bad nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
-			    NULL, 0);
+			    NULL);
 			goto done;
 		}
-		p += pos;
-		nlri_len -= pos;
 
 		if (rde_update_update(peer, pathid, &state,
 		    &prefix, prefixlen) == -1)
 			goto done;
-
 	}
 
 	/* add MP_REACH_NLRI if available */
-	if (mpa.reach_len != 0) {
-		mpp = mpa.reach;
-		mplen = mpa.reach_len;
-		memcpy(&afi, mpp, 2);
-		mpp += 2;
-		mplen -= 2;
-		afi = ntohs(afi);
-		safi = *mpp++;
-		mplen--;
-
-		if (afi2aid(afi, safi, &aid) == -1) {
+	if (ibuf_size(&reachbuf) != 0) {
+		if (ibuf_get_n16(&reachbuf, &afi) == -1 ||
+		    ibuf_get_n8(&reachbuf, &safi) == -1 ||
+		    afi2aid(afi, safi, &aid) == -1) {
 			log_peer_warnx(&peer->conf,
 			    "bad AFI/SAFI pair in update");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    NULL, 0);
+			    &reachbuf);
 			goto done;
 		}
 
@@ -1721,7 +1663,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			log_peer_warnx(&peer->conf,
 			    "bad update, %s disabled", aid2str(aid));
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    NULL, 0);
+			    &reachbuf);
 			goto done;
 		}
 
@@ -1739,7 +1681,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					    ATTR_OTC, &tmp,
 					    sizeof(tmp)) == -1) {
 						rde_update_err(peer, ERR_UPDATE,
-						    ERR_UPD_ATTRLIST, NULL, 0);
+						    ERR_UPD_ATTRLIST, NULL);
 						goto done;
 					}
 					state.aspath.flags |= F_ATTR_OTC;
@@ -1756,64 +1698,53 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		/* unlock the previously locked nexthop, it is no longer used */
 		nexthop_unref(state.nexthop);
 		state.nexthop = NULL;
-		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, peer,
-		    &state)) == -1) {
+		if (rde_get_mp_nexthop(&reachbuf, aid, peer, &state) == -1) {
 			log_peer_warnx(&peer->conf, "bad nlri nexthop");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    mpa.reach, mpa.reach_len);
+			    &reachbuf);
 			goto done;
 		}
-		mpp += pos;
-		mplen -= pos;
 
-		while (mplen > 0) {
+		while (ibuf_size(&reachbuf) > 0) {
 			if (peer_has_add_path(peer, aid, CAPA_AP_RECV)) {
-				if (mplen <= sizeof(pathid)) {
+				if (ibuf_get_n32(&reachbuf, &pathid) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad %s nlri prefix", aid2str(aid));
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.reach, mpa.reach_len);
+					    ERR_UPD_OPTATTR, &reachbuf);
 					goto done;
 				}
-				memcpy(&pathid, mpp, sizeof(pathid));
-				pathid = ntohl(pathid);
-				mpp += sizeof(pathid);
-				mplen -= sizeof(pathid);
 			} else
 				pathid = 0;
 
 			switch (aid) {
 			case AID_INET6:
-				if ((pos = nlri_get_prefix6(mpp, mplen,
-				    &prefix, &prefixlen)) == -1) {
+				if (nlri_get_prefix6(&reachbuf,
+				    &prefix, &prefixlen) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad IPv6 nlri prefix");
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.reach, mpa.reach_len);
+					    ERR_UPD_OPTATTR, &reachbuf);
 					goto done;
 				}
 				break;
 			case AID_VPN_IPv4:
-				if ((pos = nlri_get_vpn4(mpp, mplen,
-				    &prefix, &prefixlen, 0)) == -1) {
+				if (nlri_get_vpn4(&reachbuf,
+				    &prefix, &prefixlen, 0) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv4 nlri prefix");
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.reach, mpa.reach_len);
+					    ERR_UPD_OPTATTR, &reachbuf);
 					goto done;
 				}
 				break;
 			case AID_VPN_IPv6:
-				if ((pos = nlri_get_vpn6(mpp, mplen,
-				    &prefix, &prefixlen, 0)) == -1) {
+				if (nlri_get_vpn6(&reachbuf,
+				    &prefix, &prefixlen, 0) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "bad VPNv6 nlri prefix");
 					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_OPTATTR,
-					    mpa.reach, mpa.reach_len);
+					    ERR_UPD_OPTATTR, &reachbuf);
 					goto done;
 				}
 				break;
@@ -1822,13 +1753,16 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 				/* ignore flowspec for now */
 			default:
 				/* ignore unsupported multiprotocol AF */
-				mpp += mplen;
-				mplen = 0;
+				if (ibuf_skip(&reachbuf,
+				    ibuf_size(&reachbuf)) == -1) {
+					log_peer_warnx(&peer->conf,
+					    "bad VPNv6 withdraw prefix");
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_OPTATTR, &reachbuf);
+					goto done;
+				}
 				continue;
 			}
-
-			mpp += pos;
-			mplen -= pos;
 
 			if (rde_update_update(peer, pathid, &state,
 			    &prefix, prefixlen) == -1)
@@ -1921,7 +1855,7 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 	    peer->stats.prefix_cnt > peer->conf.max_prefix) {
 		log_peer_warnx(&peer->conf, "prefix limit reached (>%u/%u)",
 		    peer->stats.prefix_cnt, peer->conf.max_prefix);
-		rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX, NULL, 0);
+		rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX, NULL);
 		return (-1);
 	}
 
@@ -1993,63 +1927,63 @@ rde_update_withdraw(struct rde_peer *peer, uint32_t path_id,
 	(((s) & ~(ATTR_DEFMASK | (m))) == (t))
 
 int
-rde_attr_parse(u_char *p, uint16_t len, struct rde_peer *peer,
-    struct filterstate *state, struct mpattr *mpa)
+rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
+    struct filterstate *state, struct ibuf *reach, struct ibuf *unreach)
 {
 	struct bgpd_addr nexthop;
 	struct rde_aspath *a = &state->aspath;
-	u_char		*op = p, *npath;
+	struct ibuf	 attrbuf;
+	u_char		*p, *npath;
 	uint32_t	 tmp32, zero = 0;
 	int		 error;
-	uint16_t	 attr_len, nlen;
-	uint16_t	 plen = 0;
-	uint8_t		 flags, type, tmp8;
+	uint16_t	 nlen;
+	size_t		 attr_len, hlen, plen;
+	uint8_t		 flags, type;
 
-	if (len < 3) {
-bad_len:
-		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLEN, op, len);
-		return (-1);
-	}
+	ibuf_from_ibuf(&attrbuf, buf);
+	if (ibuf_get_n8(&attrbuf, &flags) == -1 ||
+	    ibuf_get_n8(&attrbuf, &type) == -1)
+		goto bad_list;
 
-	UPD_READ(&flags, p, plen, 1);
-	UPD_READ(&type, p, plen, 1);
 
 	if (flags & ATTR_EXTLEN) {
-		if (len - plen < 2)
-			goto bad_len;
-		UPD_READ(&attr_len, p, plen, 2);
-		attr_len = ntohs(attr_len);
+		uint16_t alen;
+		if (ibuf_get_n16(&attrbuf, &alen) == -1)
+			goto bad_list;
+		attr_len = alen;
+		hlen = 4;
 	} else {
-		UPD_READ(&tmp8, p, plen, 1);
-		attr_len = tmp8;
+		uint8_t alen;
+		if (ibuf_get_n8(&attrbuf, &alen) == -1)
+			goto bad_list;
+		attr_len = alen;
+		hlen = 3;
 	}
 
-	if (len - plen < attr_len)
-		goto bad_len;
+	if (ibuf_truncate(&attrbuf, attr_len) == -1)
+		goto bad_list;
+	/* consume the attribute in buf before moving forward */
+	if (ibuf_skip(buf, hlen + attr_len) == -1)
+		goto bad_list;
 
-	/* adjust len to the actual attribute size including header */
-	len = plen + attr_len;
+	p = ibuf_data(&attrbuf);
+	plen = ibuf_size(&attrbuf);
 
 	switch (type) {
 	case ATTR_UNDEF:
 		/* ignore and drop path attributes with a type code of 0 */
-		plen += attr_len;
 		break;
 	case ATTR_ORIGIN:
 		if (attr_len != 1)
 			goto bad_len;
 
-		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
-bad_flags:
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRFLAGS,
-			    op, len);
-			return (-1);
-		}
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
+			goto bad_flags;
 
 		UPD_READ(&a->origin, p, plen, 1);
 		if (a->origin > ORIGIN_INCOMPLETE) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ORIGIN,
-			    op, len);
+			    &attrbuf);
 			return (-1);
 		}
 		if (a->flags & F_ATTR_ORIGIN)
@@ -2070,7 +2004,7 @@ bad_flags:
 			a->flags |= F_ATTR_PARSE_ERR;
 		} else if (error != 0) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
-			    NULL, 0);
+			    NULL);
 			return (-1);
 		}
 		if (a->flags & F_ATTR_ASPATH)
@@ -2117,7 +2051,7 @@ bad_flags:
 		tmp32 = ntohl(nexthop.v4.s_addr);
 		if (IN_MULTICAST(tmp32)) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NEXTHOP,
-			    op, len);
+			    &attrbuf);
 			return (-1);
 		}
 		nexthop_unref(state->nexthop);	/* just to be sure */
@@ -2271,9 +2205,7 @@ bad_flags:
 			goto bad_list;
 		a->flags |= F_ATTR_MP_REACH;
 
-		mpa->reach = p;
-		mpa->reach_len = attr_len;
-		plen += attr_len;
+		*reach = attrbuf;
 		break;
 	case ATTR_MP_UNREACH_NLRI:
 		if (attr_len < 3)
@@ -2285,9 +2217,7 @@ bad_flags:
 			goto bad_list;
 		a->flags |= F_ATTR_MP_UNREACH;
 
-		mpa->unreach = p;
-		mpa->unreach_len = attr_len;
-		plen += attr_len;
+		*unreach = attrbuf;
 		break;
 	case ATTR_AS4_AGGREGATOR:
 		if (attr_len != 8) {
@@ -2354,22 +2284,29 @@ bad_flags:
 	default:
 		if ((flags & ATTR_OPTIONAL) == 0) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_UNKNWN_WK_ATTR,
-			    op, len);
+			    &attrbuf);
 			return (-1);
 		}
-optattr:
-		if (attr_optadd(a, flags, type, p, attr_len) == -1) {
-bad_list:
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST,
-			    NULL, 0);
-			return (-1);
-		}
+ optattr:
+		if (attr_optadd(a, flags, type, p, attr_len) == -1)
+			goto bad_list;
 
 		plen += attr_len;
 		break;
 	}
 
-	return (plen);
+	(void)plen;	/* XXX make compiler happy for now */
+	return (0);
+
+ bad_len:
+	rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLEN, &attrbuf);
+	return (-1);
+ bad_flags:
+	rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRFLAGS, &attrbuf);
+	return (-1);
+ bad_list:
+	rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL);
+	return (-1);
 }
 
 #undef UPD_READ
@@ -2439,20 +2376,19 @@ rde_attr_missing(struct rde_aspath *a, int ebgp, uint16_t nlrilen)
 }
 
 int
-rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
+rde_get_mp_nexthop(struct ibuf *buf, uint8_t aid,
     struct rde_peer *peer, struct filterstate *state)
 {
 	struct bgpd_addr	nexthop;
-	uint8_t			totlen, nhlen;
+	struct ibuf		nhbuf;
+	uint8_t			nhlen;
 
-	if (len == 0)
+	if (ibuf_get_n8(buf, &nhlen) == -1)
 		return (-1);
-
-	nhlen = *data++;
-	totlen = 1;
-	len--;
-
-	if (nhlen + 1 > len)
+	if (ibuf_get_ibuf(buf, nhlen, &nhbuf) == -1)
+		return (-1);
+	/* ignore reserved (old SNPA) field as per RFC4760 */
+	if (ibuf_skip(buf, 1) == -1)
 		return (-1);
 
 	memset(&nexthop, 0, sizeof(nexthop));
@@ -2471,7 +2407,8 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 			    "bad size %d", aid2str(aid), nhlen);
 			return (-1);
 		}
-		memcpy(&nexthop.v6.s6_addr, data, 16);
+		if (ibuf_get(&nhbuf, &nexthop.v6, sizeof(nexthop.v6)) == -1)
+			return (-1);
 		nexthop.aid = AID_INET6;
 		if (IN6_IS_ADDR_LINKLOCAL(&nexthop.v6)) {
 			if (peer->local_if_scope != 0) {
@@ -2503,9 +2440,10 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 			    "bad size %d", aid2str(aid), nhlen);
 			return (-1);
 		}
+		if (ibuf_skip(&nhbuf, sizeof(uint64_t)) == -1 ||
+		    ibuf_get(&nhbuf, &nexthop.v4, sizeof(nexthop.v4)) == -1)
+			return (-1);
 		nexthop.aid = AID_INET;
-		memcpy(&nexthop.v4, data + sizeof(uint64_t),
-		    sizeof(nexthop.v4));
 		break;
 	case AID_VPN_IPv6:
 		if (nhlen != 24) {
@@ -2513,8 +2451,9 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 			    "bad size %d", aid2str(aid), nhlen);
 			return (-1);
 		}
-		memcpy(&nexthop.v6, data + sizeof(uint64_t),
-		    sizeof(nexthop.v6));
+		if (ibuf_skip(&nhbuf, sizeof(uint64_t)) == -1 ||
+		    ibuf_get(&nhbuf, &nexthop.v6, sizeof(nexthop.v6)) == -1)
+			return (-1);
 		nexthop.aid = AID_INET6;
 		if (IN6_IS_ADDR_LINKLOCAL(&nexthop.v6)) {
 			if (peer->local_if_scope != 0) {
@@ -2535,8 +2474,7 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 			    "bad size %d", aid2str(aid), nhlen);
 			return (-1);
 		}
-		/* also ignore reserved (old SNPA) field as per RFC4760 */
-		return (totlen + 1);
+		return (0);
 	default:
 		log_peer_warnx(&peer->conf, "bad multiprotocol nexthop, "
 		    "bad AID");
@@ -2545,25 +2483,29 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 
 	state->nexthop = nexthop_get(&nexthop);
 
-	/* ignore reserved (old SNPA) field as per RFC4760 */
-	totlen += nhlen + 1;
-
-	return (totlen);
+	return (0);
 }
 
 void
 rde_update_err(struct rde_peer *peer, uint8_t error, uint8_t suberr,
-    void *data, uint16_t size)
+    struct ibuf *opt)
 {
-	struct ibuf	*wbuf;
+	struct ibuf *wbuf;
+	size_t size = 0;
 
+	if (opt != NULL) {
+		ibuf_rewind(opt);
+		size = ibuf_size(opt);
+	}
 	if ((wbuf = imsg_create(ibuf_se, IMSG_UPDATE_ERR, peer->conf.id, 0,
 	    size + sizeof(error) + sizeof(suberr))) == NULL)
 		fatal("%s %d imsg_create error", __func__, __LINE__);
 	if (imsg_add(wbuf, &error, sizeof(error)) == -1 ||
-	    imsg_add(wbuf, &suberr, sizeof(suberr)) == -1 ||
-	    imsg_add(wbuf, data, size) == -1)
+	    imsg_add(wbuf, &suberr, sizeof(suberr)) == -1)
 		fatal("%s %d imsg_add error", __func__, __LINE__);
+	if (opt != NULL)
+		if (ibuf_add_ibuf(wbuf, opt) == -1)
+			fatal("%s %d imsg_add error", __func__, __LINE__);
 	imsg_close(ibuf_se, wbuf);
 	peer->state = PEER_ERR;
 }
