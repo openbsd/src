@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.31 2022/03/31 17:27:23 naddy Exp $
+.\"	$OpenBSD: termcap.5,v 1.32 2024/01/23 22:28:20 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: January 23 2024 $
 .Dt TERMCAP 5
 .Os
 .Sh NAME
@@ -1827,12 +1827,9 @@ entry.
 Most programs now use the kernel information primarily; the information
 in this file is used only if the kernel does not have any information.
 .Pp
-.Xr vi 1
-allows only 256 characters for string capabilities, and the routines
-in
-.Xr termcap 3
-do not check for overflow of this buffer.
-The total length of a single entry (excluding only escaped newlines)
-may not exceed 1024.
+Historically, the total length of a single entry (excluding only
+escaped newlines) was limited to 1023 bytes, not including the NUL
+terminator.
+Larger entries may lead to a buffer overflow on some systems.
 .Pp
 Not all programs support all entries.
