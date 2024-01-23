@@ -809,7 +809,7 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 	if (dcp->notch_height > 0)
 		dev_info(dev, "Detected display with notch of %u pixel\n", dcp->notch_height);
 
-	/* intialize brightness scale to a sensible default to avoid divide by 0*/
+	/* initialize brightness scale to a sensible default to avoid divide by 0*/
 	dcp->brightness.scale = 65536;
 	panel_np = of_get_compatible_child(dev->of_node, "apple,panel-mini-led");
 	if (panel_np)
@@ -878,7 +878,7 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 	dcp->rtk = devm_apple_rtkit_init(dev, dcp, "mbox", 0, &rtkit_ops);
 	if (IS_ERR(dcp->rtk))
 		return dev_err_probe(dev, PTR_ERR(dcp->rtk),
-				     "Failed to intialize RTKit");
+				     "Failed to initialize RTKit");
 
 	ret = apple_rtkit_wake(dcp->rtk);
 	if (ret)

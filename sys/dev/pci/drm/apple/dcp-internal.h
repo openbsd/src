@@ -95,7 +95,7 @@ struct dcp_panel {
 	int width_mm;
 	/// panel height in millimeter
 	int height_mm;
-	/// panel has a mini-LED backllight
+	/// panel has a mini-LED backlight
 	bool has_mini_led;
 };
 

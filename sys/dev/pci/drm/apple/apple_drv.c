@@ -459,7 +459,7 @@ static int apple_drm_init_dcp(struct device *dev)
 		ret = dcp_wait_ready(dcp[i], wait);
 		/* There is nothing we can do if a dcp/dcpext does not boot
 		 * (successfully). Ignoring it should not do any harm now.
-		 * Needs to reevaluated whenn adding dcpext support.
+		 * Needs to reevaluated when adding dcpext support.
 		 */
 		if (ret)
 			dev_warn(dev, "DCP[%d] not ready: %d\n", i, ret);

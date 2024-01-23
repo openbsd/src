@@ -326,7 +326,7 @@ static void dcpep_cb_unmap_piodma(struct apple_dcp *dcp,
 
 /*
  * Allocate an IOVA contiguous buffer mapped to the DCP. The buffer need not be
- * physically contigiuous, however we should save the sgtable in case the
+ * physically contiguous, however we should save the sgtable in case the
  * buffer needs to be later mapped for PIODMA.
  */
 static struct dcp_allocate_buffer_resp

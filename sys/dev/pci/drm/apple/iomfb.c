@@ -274,7 +274,7 @@ static void dcpep_handle_cb(struct apple_dcp *dcp, enum dcp_context_id context,
 	out = in + hdr->in_len;
 
 	// TODO: verify that in_len and out_len match our prototypes
-	// for now just clear the out data to have at least consistant results
+	// for now just clear the out data to have at least consistent results
 	if (hdr->out_len)
 		memset(out, 0, hdr->out_len);
 
