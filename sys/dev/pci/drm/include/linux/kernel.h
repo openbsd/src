@@ -155,8 +155,6 @@ _in_dbg_master(void)
 
 #define STUB() do { printf("%s: stub\n", __func__); } while(0)
 
-#define CONCATENATE(x, y)	__CONCAT(x, y)
-
 #define PTR_IF(c, p)		((c) ? (p) : NULL)
 
 #endif
