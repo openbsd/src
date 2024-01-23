@@ -237,7 +237,7 @@ static void afk_recv_handle_init(struct apple_dcp_afkep *ep, u32 channel,
 		return;
 	}
 
-	strlcpy(name, payload, sizeof(name));
+	strscpy(name, payload, sizeof(name));
 
 	/*
 	 * in DCP firmware 13.2 DCP reports interface-name as name which starts
