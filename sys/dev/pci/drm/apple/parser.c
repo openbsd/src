@@ -694,7 +694,7 @@ int parse_epic_service_init(struct dcp_parse_ctx *handle, const char **name,
 	return ret;
 }
 
-int parse_sample_rate_bit(struct dcp_parse_ctx *handle, unsigned int *ratebit)
+static int parse_sample_rate_bit(struct dcp_parse_ctx *handle, unsigned int *ratebit)
 {
 	s64 rate;
 	int ret = parse_int(handle, &rate);
@@ -715,7 +715,7 @@ int parse_sample_rate_bit(struct dcp_parse_ctx *handle, unsigned int *ratebit)
 	return 0;
 }
 
-int parse_sample_fmtbit(struct dcp_parse_ctx *handle, u64 *fmtbit)
+static int parse_sample_fmtbit(struct dcp_parse_ctx *handle, u64 *fmtbit)
 {
 	s64 sample_size;
 	int ret = parse_int(handle, &sample_size);
