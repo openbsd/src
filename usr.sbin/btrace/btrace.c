@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.81 2023/11/10 18:56:21 jasper Exp $ */
+/*	$OpenBSD: btrace.c,v 1.82 2024/01/23 22:04:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -1631,7 +1631,7 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 		if (bv->bv_value == NULL)
 			return 0;
 		val = ba2long(map_get((struct map *)bv->bv_value,
-		    ba2str(ba->ba_key, dtev)), dtev);
+		    ba2hash(ba->ba_key, dtev)), dtev);
 		break;
 	case B_AT_NIL:
 		val = 0L;
@@ -1767,7 +1767,7 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 			break;
 		}
 		str = ba2str(map_get((struct map *)bv->bv_value,
-		    ba2str(ba->ba_key, dtev)), dtev);
+		    ba2hash(ba->ba_key, dtev)), dtev);
 		break;
 	case B_AT_VAR:
 		str = ba2str(ba_read(ba), dtev);
