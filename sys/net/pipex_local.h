@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.49 2022/07/15 22:56:13 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.50 2024/01/23 16:57:53 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -159,8 +159,6 @@ struct cpumem;
 /* pppac ip-extension session table */
 struct pipex_session {
 	struct radix_node	ps4_rn[2];
-					/* [L] tree glue, and other values */
-	struct radix_node	ps6_rn[2];
 					/* [L] tree glue, and other values */
 
 	struct refcnt pxs_refcnt;

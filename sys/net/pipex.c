@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.151 2023/12/01 20:30:22 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.152 2024/01/23 16:57:52 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -98,7 +98,6 @@ struct pipex_hash_head
     pipex_id_hashtable[PIPEX_HASH_SIZE];	/* [L] peer id hash */
 
 struct radix_node_head	*pipex_rd_head4 = NULL;	/* [L] */
-struct radix_node_head	*pipex_rd_head6 = NULL;	/* [L] */
 struct timeout pipex_timer_ch;		/* callout timer context */
 int pipex_prune = 1;			/* [I] walk list every seconds */
 
@@ -435,11 +434,6 @@ pipex_link_session(struct pipex_session *session, struct ifnet *ifp,
 	if (pipex_rd_head4 == NULL) {
 		if (!rn_inithead((void **)&pipex_rd_head4,
 		    offsetof(struct sockaddr_in, sin_addr)))
-			panic("rn_inithead() failed on pipex_link_session()");
-	}
-	if (pipex_rd_head6 == NULL) {
-		if (!rn_inithead((void **)&pipex_rd_head6,
-		    offsetof(struct sockaddr_in6, sin6_addr)))
 			panic("rn_inithead() failed on pipex_link_session()");
 	}
 	if (pipex_lookup_by_session_id_locked(session->protocol,
