@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.164 2023/10/12 14:16:28 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.165 2024/01/23 15:59:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -330,7 +330,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 /*
  * Generate updates for the add-path send all case. Since all prefixes
  * are distributed just remove old and add new.
- */ 
+ */
 void
 up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
     struct prefix *new, struct prefix *old)
@@ -964,7 +964,7 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
  *    |   Network Layer Reachability Information (variable) |
  *    +-----------------------------------------------------+
  *
- * Multiprotocol messages use MP_REACH_NLRI and MP_UNREACH_NLRI 
+ * Multiprotocol messages use MP_REACH_NLRI and MP_UNREACH_NLRI
  * the latter will be the only path attribute in a message.
  */
 
@@ -1017,7 +1017,7 @@ up_dump_withdraws(struct ibuf *buf, struct rde_peer *peer, uint8_t aid)
 		return -1;
 
 	if (aid != AID_INET) {
-		/* write MP_UNREACH_NLRI attribute length (always extended) */ 
+		/* write MP_UNREACH_NLRI attribute length (always extended) */
 		len -= 4; /* skip attribute header */
 		if (ibuf_set_n16(buf, off + sizeof(len) + 2, len) == -1)
 			return -1;

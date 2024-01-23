@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.32 2024/01/15 11:55:26 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.33 2024/01/23 15:59:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -323,7 +323,7 @@ rtr_send_error(struct rtr_session *rs, struct ibuf *pdu, enum rtr_error err,
 	}
 
 	log_warnx("rtr %s: sending error: %s%s%s", log_rtr(rs),
-	    log_rtr_error(err), mlen > 0 ? ": " : "", rs->last_sent_msg); 
+	    log_rtr_error(err), mlen > 0 ? ": " : "", rs->last_sent_msg);
 
 	if (pdu != NULL) {
 		ibuf_rewind(pdu);
