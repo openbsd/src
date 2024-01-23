@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.481 2024/01/11 13:08:39 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.482 2024/01/23 16:08:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1153,9 +1153,9 @@ extern const struct ext_comm_pairs iana_ext_comms[];
 #define FLOWSPEC_TYPE_FLOW		13
 #define FLOWSPEC_TYPE_MAX		14
 
-#define FLOWSPEC_TCP_FLAG_STRING 	"FSRPAUEW"
-#define FLOWSPEC_FRAG_STRING4 		"DIFL"
-#define FLOWSPEC_FRAG_STRING6 		" IFL"
+#define FLOWSPEC_TCP_FLAG_STRING	"FSRPAUEW"
+#define FLOWSPEC_FRAG_STRING4		"DIFL"
+#define FLOWSPEC_FRAG_STRING6		" IFL"
 
 struct filter_prefix {
 	struct bgpd_addr	addr;
