@@ -99,7 +99,7 @@ static u32 interpolate(int val, int min, int max, u32 *tbl, size_t tbl_size)
 
 	size_t index = interpolated / SCALE_FACTOR;
 
-	if (WARN(index + 1 >= tbl_size, "invalid index %zu for brightness %u", index, val))
+	if (WARN(index + 1 >= tbl_size, "invalid index %zu for brightness %u\n", index, val))
 		return tbl[tbl_size / 2];
 
 	frac = interpolated & (SCALE_FACTOR - 1);

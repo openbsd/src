@@ -299,7 +299,7 @@ static void dcpep_cb_unmap_piodma(struct apple_dcp *dcp,
 	struct dcp_mem_descriptor *memdesc;
 
 	if (resp->buffer >= ARRAY_SIZE(dcp->memdesc)) {
-		dev_warn(dcp->dev, "unmap request for out of range buffer %llu",
+		dev_warn(dcp->dev, "unmap request for out of range buffer %llu\n",
 			 resp->buffer);
 		return;
 	}
@@ -308,14 +308,14 @@ static void dcpep_cb_unmap_piodma(struct apple_dcp *dcp,
 
 	if (!memdesc->buf) {
 		dev_warn(dcp->dev,
-			 "unmap for non-mapped buffer %llu iova:0x%08llx",
+			 "unmap for non-mapped buffer %llu iova:0x%08llx\n",
 			 resp->buffer, resp->dva);
 		return;
 	}
 
 	if (memdesc->dva != resp->dva) {
 		dev_warn(dcp->dev, "unmap buffer %llu address mismatch "
-			 "memdesc.dva:%llx dva:%llx", resp->buffer,
+			 "memdesc.dva:%llx dva:%llx\n", resp->buffer,
 			 memdesc->dva, resp->dva);
 		return;
 	}
@@ -343,7 +343,7 @@ dcpep_cb_allocate_buffer(struct apple_dcp *dcp,
 		find_first_zero_bit(dcp->memdesc_map, DCP_MAX_MAPPINGS);
 
 	if (resp.mem_desc_id >= DCP_MAX_MAPPINGS) {
-		dev_warn(dcp->dev, "DCP overflowed mapping table, ignoring");
+		dev_warn(dcp->dev, "DCP overflowed mapping table, ignoring\n");
 		resp.dva_size = 0;
 		resp.mem_desc_id = 0;
 		return resp;
@@ -378,7 +378,7 @@ static u8 dcpep_cb_release_mem_desc(struct apple_dcp *dcp, u32 *mem_desc_id)
 	}
 
 	if (!test_and_clear_bit(id, dcp->memdesc_map)) {
-		dev_warn(dcp->dev, "unmap request for unused mem_desc_id %u",
+		dev_warn(dcp->dev, "unmap request for unused mem_desc_id %u\n",
 			 id);
 		return 0;
 	}
@@ -428,7 +428,7 @@ dcpep_cb_map_physical(struct apple_dcp *dcp, struct dcp_map_physical_req *req)
 	u32 id;
 
 	if (!is_disp_register(dcp, req->paddr, req->paddr + size - 1)) {
-		dev_err(dcp->dev, "refusing to map phys address %llx size %llx",
+		dev_err(dcp->dev, "refusing to map phys address %llx size %llx\n",
 			req->paddr, req->size);
 		return (struct dcp_map_physical_resp){};
 	}
@@ -457,7 +457,7 @@ static struct DCP_FW_NAME(dcp_map_reg_resp) dcpep_cb_map_reg(struct apple_dcp *d
 						struct DCP_FW_NAME(dcp_map_reg_req) *req)
 {
 	if (req->index >= dcp->nr_disp_registers) {
-		dev_warn(dcp->dev, "attempted to read invalid reg index %u",
+		dev_warn(dcp->dev, "attempted to read invalid reg index %u\n",
 			 req->index);
 
 		return (struct DCP_FW_NAME(dcp_map_reg_resp)){ .ret = 1 };
@@ -602,7 +602,7 @@ static void boot_done(struct apple_dcp *dcp, void *out, void *cookie)
 {
 	struct dcp_channel *ch = &dcp->ch_cb;
 	u8 *succ = ch->output[ch->depth - 1];
-	dev_dbg(dcp->dev, "boot done");
+	dev_dbg(dcp->dev, "boot done\n");
 
 	*succ = true;
 	dcp_ack(dcp, DCP_CONTEXT_CB);
@@ -717,7 +717,6 @@ static void release_swap_cookie(struct kref *ref)
 static void dcp_swap_cleared(struct apple_dcp *dcp, void *data, void *cookie)
 {
 	struct DCP_FW_NAME(dcp_swap_submit_resp) *resp = data;
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	if (cookie) {
 		struct dcp_swap_cookie *info = cookie;
@@ -748,7 +747,6 @@ static void dcp_swap_clear_started(struct apple_dcp *dcp, void *data,
 				   void *cookie)
 {
 	struct dcp_swap_start_resp *resp = data;
-	dev_dbg(dcp->dev, "%s swap_id: %u", __func__, resp->swap_id);
 	DCP_FW_UNION(dcp->swap).swap.swap_id = resp->swap_id;
 
 	if (cookie) {
@@ -762,7 +760,6 @@ static void dcp_swap_clear_started(struct apple_dcp *dcp, void *data,
 static void dcp_on_final(struct apple_dcp *dcp, void *out, void *cookie)
 {
 	struct dcp_wait_cookie *wait = cookie;
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	if (wait) {
 		complete(&wait->done);
@@ -775,7 +772,6 @@ static void dcp_on_set_power_state(struct apple_dcp *dcp, void *out, void *cooki
 	struct dcp_set_power_state_req req = {
 		.unklong = 1,
 	};
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	dcp_set_power_state(dcp, false, &req, dcp_on_final, cookie);
 }
@@ -791,7 +787,6 @@ static void dcp_on_set_parameter(struct apple_dcp *dcp, void *out, void *cookie)
 		.count = 1,
 #endif
 	};
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	dcp_set_parameter_dcp(dcp, false, &param, dcp_on_set_power_state, cookie);
 }
@@ -802,8 +797,6 @@ void DCP_FW_NAME(iomfb_poweron)(struct apple_dcp *dcp)
 	int ret;
 	u32 handle;
 	dev_err(dcp->dev, "dcp_poweron() starting\n");
-
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	cookie = kzalloc(sizeof(*cookie), GFP_KERNEL);
 	if (!cookie)
@@ -826,7 +819,7 @@ void DCP_FW_NAME(iomfb_poweron)(struct apple_dcp *dcp)
 	ret = wait_for_completion_timeout(&cookie->done, msecs_to_jiffies(500));
 
 	if (ret == 0)
-		dev_warn(dcp->dev, "wait for power timed out");
+		dev_warn(dcp->dev, "wait for power timed out\n");
 
 	kref_put(&cookie->refcount, release_wait_cookie);;
 
@@ -873,8 +866,6 @@ void DCP_FW_NAME(iomfb_poweroff)(struct apple_dcp *dcp)
 	struct dcp_wait_cookie *poff_cookie;
 	struct dcp_swap_start_req swap_req = { 0 };
 	struct DCP_FW_NAME(dcp_swap_submit_req) *swap = &DCP_FW_UNION(dcp->swap);
-
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	cookie = kzalloc(sizeof(*cookie), GFP_KERNEL);
 	if (!cookie)
@@ -923,7 +914,7 @@ void DCP_FW_NAME(iomfb_poweroff)(struct apple_dcp *dcp)
 		return;
 	}
 
-	dev_dbg(dcp->dev, "%s: clear swap submitted: %u", __func__, swap_id);
+	dev_dbg(dcp->dev, "%s: clear swap submitted: %u\n", __func__, swap_id);
 
 	poff_cookie = kzalloc(sizeof(*poff_cookie), GFP_KERNEL);
 	if (!poff_cookie)
@@ -939,14 +930,13 @@ void DCP_FW_NAME(iomfb_poweroff)(struct apple_dcp *dcp)
 					  msecs_to_jiffies(1000));
 
 	if (ret == 0)
-		dev_warn(dcp->dev, "setPowerState(0) timeout %u ms", 1000);
+		dev_warn(dcp->dev, "setPowerState(0) timeout %u ms\n", 1000);
 	else if (ret > 0)
 		dev_dbg(dcp->dev,
 			"setPowerState(0) finished with %d ms to spare",
 			jiffies_to_msecs(ret));
 
 	kref_put(&poff_cookie->refcount, release_wait_cookie);
-	dev_dbg(dcp->dev, "%s: setPowerState(0) done", __func__);
 
 	dev_err(dcp->dev, "dcp_poweroff() done\n");
 }
@@ -990,11 +980,9 @@ void DCP_FW_NAME(iomfb_sleep)(struct apple_dcp *dcp)
 					  msecs_to_jiffies(1000));
 
 	if (ret == 0)
-		dev_warn(dcp->dev, "setDCPPower(0) timeout %u ms", 1000);
+		dev_warn(dcp->dev, "setDCPPower(0) timeout %u ms\n", 1000);
 
 	kref_put(&cookie->refcount, release_wait_cookie);
-	dev_dbg(dcp->dev, "%s: setDCPPower(0) done", __func__);
-
 	dev_err(dcp->dev, "dcp_sleep() done\n");
 }
 
@@ -1163,7 +1151,6 @@ static void dcp_swap_started(struct apple_dcp *dcp, void *data, void *cookie)
 static void do_swap(struct apple_dcp *dcp, void *data, void *cookie)
 {
 	struct dcp_swap_start_req start_req = { 0 };
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	if (dcp->connector && dcp->connector->connected)
 		dcp_swap_start(dcp, false, &start_req, dcp_swap_started, NULL);
@@ -1175,7 +1162,6 @@ static void complete_set_digital_out_mode(struct apple_dcp *dcp, void *data,
 					  void *cookie)
 {
 	struct dcp_wait_cookie *wait = cookie;
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	if (wait) {
 		complete(&wait->done);
@@ -1242,7 +1228,6 @@ int DCP_FW_NAME(iomfb_modeset)(struct apple_dcp *dcp,
 	 * modesets. Add an extra 500ms to safe side that the modeset
 	 * call has returned.
 	 */
-	dev_dbg(dcp->dev, "%s - wait for modeset", __func__);
 	ret = wait_for_completion_timeout(&cookie->done,
 					  msecs_to_jiffies(8500));
 
@@ -1276,7 +1261,6 @@ void DCP_FW_NAME(iomfb_flush)(struct apple_dcp *dcp, struct drm_crtc *crtc, stru
 	struct DCP_FW_NAME(dcp_swap_submit_req) *req = &DCP_FW_UNION(dcp->swap);
 	int plane_idx, l;
 	int has_surface = 0;
-	dev_dbg(dcp->dev, "%s", __func__);
 
 	crtc_state = drm_atomic_get_new_crtc_state(state, crtc);
 

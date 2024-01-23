@@ -195,9 +195,7 @@ static void apple_crtc_atomic_enable(struct drm_crtc *crtc,
 
 	if (crtc_state->active_changed && crtc_state->active) {
 		struct apple_crtc *apple_crtc = to_apple_crtc(crtc);
-		dev_dbg(&apple_crtc->dcp->dev, "%s", __func__);
 		dcp_poweron(apple_crtc->dcp);
-		dev_dbg(&apple_crtc->dcp->dev, "%s finished", __func__);
 	}
 
 	if (crtc_state->active)
@@ -212,9 +210,7 @@ static void apple_crtc_atomic_disable(struct drm_crtc *crtc,
 
 	if (crtc_state->active_changed && !crtc_state->active) {
 		struct apple_crtc *apple_crtc = to_apple_crtc(crtc);
-		dev_dbg(&apple_crtc->dcp->dev, "%s", __func__);
 		dcp_poweroff(apple_crtc->dcp);
-		dev_dbg(&apple_crtc->dcp->dev, "%s finished", __func__);
 	}
 
 	if (crtc->state->event && !crtc->state->active) {

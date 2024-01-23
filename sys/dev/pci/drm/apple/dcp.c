@@ -129,7 +129,7 @@ static void dcp_recv_msg(void *cookie, u8 endpoint, u64 message)
 		afk_receive_message(dcp->dptxep, message);
 		return;
 	default:
-		WARN(endpoint, "unknown DCP endpoint %hhu", endpoint);
+		WARN(endpoint, "unknown DCP endpoint %hhu\n", endpoint);
 	}
 }
 
@@ -138,7 +138,7 @@ static void dcp_rtk_crashed(void *cookie)
 	struct apple_dcp *dcp = cookie;
 
 	dcp->crashed = true;
-	dev_err(dcp->dev, "DCP has crashed");
+	dev_err(dcp->dev, "DCP has crashed\n");
 	if (dcp->connector) {
 		dcp->connector->connected = 0;
 		schedule_work(&dcp->connector->hotplug_wq);
@@ -170,7 +170,7 @@ static int dcp_rtk_shmem_setup(void *cookie, struct apple_rtkit_shmem *bfr)
 
 		bfr->is_mapped = true;
 		dev_info(dcp->dev,
-			 "shmem_setup: iova: %lx -> pa: %lx -> iomem: %lx",
+			 "shmem_setup: iova: %lx -> pa: %lx -> iomem: %lx\n",
 			 (uintptr_t)bfr->iova, (uintptr_t)phy_addr,
 			 (uintptr_t)bfr->buffer);
 	} else {
@@ -179,7 +179,7 @@ static int dcp_rtk_shmem_setup(void *cookie, struct apple_rtkit_shmem *bfr)
 		if (!bfr->buffer)
 			return -ENOMEM;
 
-		dev_info(dcp->dev, "shmem_setup: iova: %lx, buffer: %lx",
+		dev_info(dcp->dev, "shmem_setup: iova: %lx, buffer: %lx\n",
 			 (uintptr_t)bfr->iova, (uintptr_t)bfr->buffer);
 	}
 
@@ -227,7 +227,7 @@ int dcp_crtc_atomic_check(struct drm_crtc *crtc, struct drm_atomic_state *state)
 
 	needs_modeset = drm_atomic_crtc_needs_modeset(crtc_state) || !dcp->valid_mode;
 	if (!needs_modeset && !dcp->connector->connected) {
-		dev_err(dcp->dev, "crtc_atomic_check: disconnected but no modeset");
+		dev_err(dcp->dev, "crtc_atomic_check: disconnected but no modeset\n");
 		return -EINVAL;
 	}
 
@@ -240,7 +240,7 @@ int dcp_crtc_atomic_check(struct drm_crtc *crtc, struct drm_atomic_state *state)
 	}
 
 	if (plane_count > DCP_MAX_PLANES) {
-		dev_err(dcp->dev, "crtc_atomic_check: Blend supports only 2 layers!");
+		dev_err(dcp->dev, "crtc_atomic_check: Blend supports only 2 layers!\n");
 		return -EINVAL;
 	}
 
@@ -356,17 +356,17 @@ int dcp_start(struct platform_device *pdev)
 	/* start RTKit endpoints */
 	ret = systemep_init(dcp);
 	if (ret)
-		dev_warn(dcp->dev, "Failed to start system endpoint: %d", ret);
+		dev_warn(dcp->dev, "Failed to start system endpoint: %d\n", ret);
 
 	if (dcp->phy && dcp->fw_compat >= DCP_FIRMWARE_V_13_5) {
 		ret = ibootep_init(dcp);
 		if (ret)
-			dev_warn(dcp->dev, "Failed to start IBOOT endpoint: %d",
+			dev_warn(dcp->dev, "Failed to start IBOOT endpoint: %d\n",
 				 ret);
 
 		ret = dptxep_init(dcp);
 		if (ret)
-			dev_warn(dcp->dev, "Failed to start DPTX endpoint: %d",
+			dev_warn(dcp->dev, "Failed to start DPTX endpoint: %d\n",
 				 ret);
 		else if (dcp->dptxport[0].enabled) {
 			bool connected;
@@ -389,7 +389,7 @@ int dcp_start(struct platform_device *pdev)
 
 	ret = iomfb_start_rtkit(dcp);
 	if (ret)
-		dev_err(dcp->dev, "Failed to start IOMFB endpoint: %d", ret);
+		dev_err(dcp->dev, "Failed to start IOMFB endpoint: %d\n", ret);
 
 	return ret;
 }
@@ -888,12 +888,12 @@ static int dcp_comp_bind(struct device *dev, struct device *main, void *data)
 	dcp->rtk = devm_apple_rtkit_init(dev, dcp, "mbox", 0, &rtkit_ops);
 	if (IS_ERR(dcp->rtk))
 		return dev_err_probe(dev, PTR_ERR(dcp->rtk),
-				     "Failed to initialize RTKit");
+				     "Failed to initialize RTKit\n");
 
 	ret = apple_rtkit_wake(dcp->rtk);
 	if (ret)
 		return dev_err_probe(dev, ret,
-				     "Failed to boot RTKit: %d", ret);
+				     "Failed to boot RTKit: %d\n", ret);
 	return ret;
 }
 
@@ -961,7 +961,7 @@ static int dcp_platform_probe(struct platform_device *pdev)
 
 	dcp->phy = devm_phy_optional_get(dev, "dp-phy");
 	if (IS_ERR(dcp->phy)) {
-		dev_err(dev, "Failed to get dp-phy: %ld", PTR_ERR(dcp->phy));
+		dev_err(dev, "Failed to get dp-phy: %ld\n", PTR_ERR(dcp->phy));
 		return PTR_ERR(dcp->phy);
 	}
 	if (dcp->phy) {
@@ -988,7 +988,7 @@ static int dcp_platform_probe(struct platform_device *pdev)
 						IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 						"dp2hdmi-hpd-irq", dcp);
 			if (ret < 0) {
-				dev_err(dev, "failed to request HDMI hpd irq %d: %d",
+				dev_err(dev, "failed to request HDMI hpd irq %d: %d\n",
 					irq, ret);
 				return ret;
 			}
@@ -1011,7 +1011,7 @@ static int dcp_platform_probe(struct platform_device *pdev)
 		if (!ret) {
 			dcp->xbar = devm_mux_control_get(dev, "dp-xbar");
 			if (IS_ERR(dcp->xbar)) {
-				dev_err(dev, "Failed to get dp-xbar: %ld", PTR_ERR(dcp->xbar));
+				dev_err(dev, "Failed to get dp-xbar: %ld\n", PTR_ERR(dcp->xbar));
 				return PTR_ERR(dcp->xbar);
 			}
 			ret = mux_control_select(dcp->xbar, mux_index);

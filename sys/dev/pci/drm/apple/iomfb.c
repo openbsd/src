@@ -326,7 +326,7 @@ static void dcpep_got_msg(struct apple_dcp *dcp, u64 message)
 	channel_offset = dcp_channel_offset(ctx_id);
 
 	if (channel_offset < 0) {
-		dev_warn(dcp->dev, "invalid context received %u", ctx_id);
+		dev_warn(dcp->dev, "invalid context received %u\n", ctx_id);
 		return;
 	}
 
@@ -482,7 +482,7 @@ void dcp_flush(struct drm_crtc *crtc, struct drm_atomic_state *state)
 
 	if (dcp_channel_busy(&dcp->ch_cmd))
 	{
-		dev_err(dcp->dev, "unexpected busy command channel");
+		dev_err(dcp->dev, "unexpected busy command channel\n");
 		/* HACK: issue a delayed vblank event to avoid timeouts in
 		 * drm_atomic_helper_wait_for_vblanks().
 		 */
