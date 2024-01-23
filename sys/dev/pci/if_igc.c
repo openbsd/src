@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.14 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.15 2024/01/23 08:48:12 kevlo Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -1523,16 +1523,16 @@ igc_media_change(struct ifnet *ifp)
 		sc->hw.phy.autoneg_advertised = ADVERTISE_1000_FULL;
 		break;
 	case IFM_100_TX:
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_HDX)
-			sc->hw.phy.autoneg_advertised = ADVERTISE_100_HALF;
-		else
+		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
 			sc->hw.phy.autoneg_advertised = ADVERTISE_100_FULL;
+		else
+			sc->hw.phy.autoneg_advertised = ADVERTISE_100_HALF;
 		break;
 	case IFM_10_T:
-		if ((ifm->ifm_media & IFM_GMASK) == IFM_HDX)
-			sc->hw.phy.autoneg_advertised = ADVERTISE_10_HALF;
-		else
+		if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
 			sc->hw.phy.autoneg_advertised = ADVERTISE_10_FULL;
+		else
+			sc->hw.phy.autoneg_advertised = ADVERTISE_10_HALF;
 		break;
 	default:
 		return EINVAL;
@@ -2179,6 +2179,8 @@ igc_setup_receive_ring(struct rx_ring *rxr)
  *  Enable receive unit.
  *
  **********************************************************************/
+#define BSIZEPKT_ROUNDUP	((1 << IGC_SRRCTL_BSIZEPKT_SHIFT) - 1)
+
 void
 igc_initialize_receive_unit(struct igc_softc *sc)
 {
@@ -2226,12 +2228,10 @@ igc_initialize_receive_unit(struct igc_softc *sc)
 	if (sc->sc_nqueues > 1)
 		igc_initialize_rss_mapping(sc);
 
-#if 0
-	srrctl |= 4096 >> IGC_SRRCTL_BSIZEPKT_SHIFT;
-	rctl |= IGC_RCTL_SZ_4096 | IGC_RCTL_BSEX;
-#endif
-
-	srrctl |= 2048 >> IGC_SRRCTL_BSIZEPKT_SHIFT;
+	/* Set maximum packet buffer len */
+	srrctl |= (sc->rx_mbuf_sz + BSIZEPKT_ROUNDUP) >>
+	    IGC_SRRCTL_BSIZEPKT_SHIFT;
+	/* srrctl above overrides this but set the register to a sane value */
 	rctl |= IGC_RCTL_SZ_2048;
 
 	/*
