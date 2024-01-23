@@ -69,4 +69,15 @@ struct va_format {
 	va_list *va;
 };
 
+static inline int
+_in_dbg_master(void)
+{
+#ifdef DDB
+	return (db_active);
+#endif
+	return (0);
+}
+
+#define oops_in_progress _in_dbg_master()
+
 #endif
