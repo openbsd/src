@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.12 2023/11/20 14:18:21 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.13 2024/01/23 15:55:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -41,9 +41,9 @@ struct ometric *peer_info, *peer_state, *peer_state_raw, *peer_last_change,
 struct ometric *peer_prefixes_transmit, *peer_prefixes_receive;
 struct ometric *peer_message_transmit, *peer_message_receive;
 struct ometric *peer_update_transmit, *peer_update_pending,
-		   *peer_update_receive;
+		    *peer_update_receive;
 struct ometric *peer_withdraw_transmit, *peer_withdraw_pending,
-		   *peer_withdraw_receive;
+		    *peer_withdraw_receive;
 struct ometric *peer_rr_req_transmit, *peer_rr_req_receive;
 struct ometric *peer_rr_borr_transmit, *peer_rr_borr_receive;
 struct ometric *peer_rr_eorr_transmit, *peer_rr_eorr_receive;
