@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.98 2024/01/15 15:29:00 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.99 2024/01/24 10:09:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -76,7 +76,7 @@ int	 ca_x509_subjectaltname_get(X509 *cert, struct iked_id *);
 int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_control(int, struct privsep_proc *, struct imsg *);
-void	 ca_store_info(struct iked *, const char *, X509_STORE *);
+void	 ca_store_info(struct iked *, struct imsg *, const char *, X509_STORE *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ca_dispatch_parent },
@@ -391,11 +391,12 @@ ca_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_CERTSTORE:
-		ca_store_info(env, "CA", store->ca_cas);
-		ca_store_info(env, "CERT", store->ca_certs);
+		ca_store_info(env, imsg, "CA", store->ca_cas);
+		ca_store_info(env, imsg, "CERT", store->ca_certs);
 		/* Send empty reply to indicate end of information. */
-		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_CERTSTORE,
-		    NULL, 0);
+		proc_compose_imsg(&env->sc_ps, PROC_CONTROL, -1,
+		    IMSG_CTL_SHOW_CERTSTORE, imsg->hdr.peerid,
+		    -1, NULL, 0);
 		break;
 	default:
 		return (-1);
@@ -1333,7 +1334,7 @@ ca_subjectpubkey_digest(X509 *x509, uint8_t *md, unsigned int *size)
 }
 
 void
-ca_store_info(struct iked *env, const char *msg, X509_STORE *ctx)
+ca_store_info(struct iked *env, struct imsg *imsg, const char *msg, X509_STORE *ctx)
 {
 	STACK_OF(X509_OBJECT)	*h;
 	X509_OBJECT		*xo;
@@ -1357,8 +1358,9 @@ ca_store_info(struct iked *env, const char *msg, X509_STORE *ctx)
 		OPENSSL_free(name);
 		if (buflen == -1)
 			continue;
-		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_CERTSTORE,
-		    buf, buflen + 1);
+		proc_compose_imsg(&env->sc_ps, PROC_CONTROL, -1,
+		    IMSG_CTL_SHOW_CERTSTORE, imsg->hdr.peerid,
+		    -1, buf, buflen + 1);
 		free(buf);
 	}
 }

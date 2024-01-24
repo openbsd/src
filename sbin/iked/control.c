@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.37 2023/03/08 04:43:06 guenther Exp $	*/
+/*	$OpenBSD: control.c,v 1.38 2024/01/24 10:09:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,7 @@
 #define	CONTROL_BACKLOG	5
 
 struct ctl_connlist ctl_conns = TAILQ_HEAD_INITIALIZER(ctl_conns);
+uint32_t ctl_peerid;
 
 void
 	 control_accept(int, short, void *);
@@ -45,6 +46,7 @@ void	 control_close(int, struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
 void	 control_dispatch_parent(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
+void	 control_imsg_forward_peerid(struct imsg *);
 void	 control_run(struct privsep *, struct privsep_proc *, void *);
 int	 control_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 int	 control_dispatch_ca(int, struct privsep_proc *, struct imsg *);
@@ -160,6 +162,7 @@ control_accept(int listenfd, short event, void *arg)
 	socklen_t		 len;
 	struct sockaddr_un	 s_un;
 	struct ctl_conn		*c;
+	struct ctl_conn		*other;
 
 	event_add(&cs->cs_ev, NULL);
 	if ((event & EV_TIMEOUT))
@@ -196,6 +199,12 @@ control_accept(int listenfd, short event, void *arg)
 	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
 	    c->iev.handler, c->iev.data);
 	event_add(&c->iev.ev, NULL);
+
+	/* O(n^2), but n is small */
+	c->peerid = ctl_peerid++;
+	TAILQ_FOREACH(other, &ctl_conns, entry)
+		if (c->peerid == other->peerid)
+			c->peerid = ctl_peerid++;
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 }
@@ -277,6 +286,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 		control_imsg_forward(&imsg);
 
+		/* record peerid of connection for reply */
+		imsg.hdr.peerid = c->peerid;
+
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_NOTIFY:
 			if (c->flags & CTL_CONN_NOTIFY) {
@@ -311,11 +323,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_SHOW_SA:
 		case IMSG_CTL_SHOW_STATS:
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
-			c->flags |= CTL_CONN_NOTIFY;
 			break;
 		case IMSG_CTL_SHOW_CERTSTORE:
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_CERT, -1);
-			c->flags |= CTL_CONN_NOTIFY;
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",
@@ -340,13 +350,25 @@ control_imsg_forward(struct imsg *imsg)
 			    imsg->hdr.len - IMSG_HEADER_SIZE);
 }
 
+void
+control_imsg_forward_peerid(struct imsg *imsg)
+{
+	struct ctl_conn *c;
+
+	TAILQ_FOREACH(c, &ctl_conns, entry)
+		if (c->peerid == imsg->hdr.peerid)
+			imsg_compose_event(&c->iev, imsg->hdr.type,
+			    0, imsg->hdr.pid, -1, imsg->data,
+			    imsg->hdr.len - IMSG_HEADER_SIZE);
+}
+
 int
 control_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_SA:
 	case IMSG_CTL_SHOW_STATS:
-		control_imsg_forward(imsg);
+		control_imsg_forward_peerid(imsg);
 		return (0);
 	default:
 		break;
@@ -360,7 +382,7 @@ control_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_CERTSTORE:
-		control_imsg_forward(imsg);
+		control_imsg_forward_peerid(imsg);
 		return (0);
 	default:
 		break;

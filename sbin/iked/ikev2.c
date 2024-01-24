@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.382 2024/01/15 21:37:58 jan Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.383 2024/01/24 10:09:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -48,10 +48,13 @@
 #include "chap_ms.h"
 #include "version.h"
 
-void	 ikev2_info(struct iked *, int);
-void	 ikev2_info_sa(struct iked *, int, const char *, struct iked_sa *);
-void	 ikev2_info_csa(struct iked *, int, const char *, struct iked_childsa *);
-void	 ikev2_info_flow(struct iked *, int, const char *, struct iked_flow *);
+void	 ikev2_info(struct iked *, struct imsg *, int);
+void	 ikev2_info_sa(struct iked *, struct imsg *, int, const char *,
+	    struct iked_sa *);
+void	 ikev2_info_csa(struct iked *, struct imsg *, int, const char *,
+	    struct iked_childsa *);
+void	 ikev2_info_flow(struct iked *, struct imsg *, int, const char *,
+	    struct iked_flow *);
 void	 ikev2_log_established(struct iked_sa *);
 void	 ikev2_log_proposal(struct iked_sa *, struct iked_proposals *);
 void	 ikev2_log_cert_info(const char *, struct iked_id *);
@@ -188,8 +191,8 @@ int	 ikev2_resp_informational(struct iked *, struct iked_sa *,
 	    struct iked_message *);
 
 void	ikev2_ctl_reset_id(struct iked *, struct imsg *, unsigned int);
-void	ikev2_ctl_show_sa(struct iked *);
-void	ikev2_ctl_show_stats(struct iked *);
+void	ikev2_ctl_show_sa(struct iked *, struct imsg *);
+void	ikev2_ctl_show_stats(struct iked *, struct imsg *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
@@ -512,10 +515,10 @@ ikev2_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		ikev2_ctl_reset_id(env, imsg, imsg->hdr.type);
 		break;
 	case IMSG_CTL_SHOW_SA:
-		ikev2_ctl_show_sa(env);
+		ikev2_ctl_show_sa(env, imsg);
 		break;
 	case IMSG_CTL_SHOW_STATS:
-		ikev2_ctl_show_stats(env);
+		ikev2_ctl_show_stats(env, imsg);
 		break;
 	default:
 		return (-1);
@@ -572,15 +575,16 @@ ikev2_ctl_reset_id(struct iked *env, struct imsg *imsg, unsigned int type)
 }
 
 void
-ikev2_ctl_show_sa(struct iked *env)
+ikev2_ctl_show_sa(struct iked *env, struct imsg *imsg)
 {
-	ikev2_info(env, 0);
+	ikev2_info(env, imsg, 0);
 }
 
 void
-ikev2_ctl_show_stats(struct iked *env)
+ikev2_ctl_show_stats(struct iked *env, struct imsg *imsg)
 {
-	proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_STATS,
+	proc_compose_imsg(&env->sc_ps, PROC_CONTROL, -1,
+	    IMSG_CTL_SHOW_STATS, imsg->hdr.peerid, -1,
 	    &env->sc_stats, sizeof(env->sc_stats));
 }
 
@@ -7444,7 +7448,8 @@ ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
 }
 
 void
-ikev2_info_sa(struct iked *env, int dolog, const char *msg, struct iked_sa *sa)
+ikev2_info_sa(struct iked *env, struct imsg *imsg, int dolog, const char *msg,
+    struct iked_sa *sa)
 {
 	char		 idstr[IKED_ID_SIZE];
 	char		*buf;
@@ -7476,13 +7481,15 @@ ikev2_info_sa(struct iked *env, int dolog, const char *msg, struct iked_sa *sa)
 			buf[buflen - 1] = '\0';
 		log_debug("%s", buf);
 	} else
-		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_SA,
+		proc_compose_imsg(&env->sc_ps, PROC_CONTROL, -1,
+		    IMSG_CTL_SHOW_SA, imsg->hdr.peerid, -1,
 		    buf, buflen + 1);
 	free(buf);
 }
 
 void
-ikev2_info_csa(struct iked *env, int dolog, const char *msg, struct iked_childsa *csa)
+ikev2_info_csa(struct iked *env, struct imsg *imsg, int dolog, const char *msg,
+    struct iked_childsa *csa)
 {
 	char		*buf;
 	int		 buflen;
@@ -7510,13 +7517,15 @@ ikev2_info_csa(struct iked *env, int dolog, const char *msg, struct iked_childsa
 			buf[buflen - 1] = '\0';
 		log_debug("%s", buf);
 	} else
-		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_SA,
+		proc_compose_imsg(&env->sc_ps, PROC_CONTROL, -1,
+		    IMSG_CTL_SHOW_SA, imsg->hdr.peerid, -1,
 		    buf, buflen + 1);
 	free(buf);
 }
 
 void
-ikev2_info_flow(struct iked *env, int dolog, const char *msg, struct iked_flow *flow)
+ikev2_info_flow(struct iked *env, struct imsg *imsg, int dolog, const char *msg,
+    struct iked_flow *flow)
 {
 	char		prenat_mask[10];
 	char		*buf;
@@ -7555,13 +7564,14 @@ ikev2_info_flow(struct iked *env, int dolog, const char *msg, struct iked_flow *
 			buf[buflen - 1] = '\0';
 		log_debug("%s", buf);
 	} else
-		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_SA,
+		proc_compose_imsg(&env->sc_ps, PROC_CONTROL, -1,
+		    IMSG_CTL_SHOW_SA, imsg->hdr.peerid, -1,
 		    buf, buflen + 1);
 	free(buf);
 }
 
 void
-ikev2_info(struct iked *env, int dolog)
+ikev2_info(struct iked *env, struct imsg *imsg, int dolog)
 {
 	struct iked_sa			*sa;
 	struct iked_childsa		*csa, *ipcomp;
@@ -7570,32 +7580,33 @@ ikev2_info(struct iked *env, int dolog)
 	log_debug("%s: called", __func__);
 
 	RB_FOREACH(sa, iked_sas, &env->sc_sas) {
-		ikev2_info_sa(env, dolog, "iked_sas", sa);
+		ikev2_info_sa(env, imsg, dolog, "iked_sas", sa);
 		TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
-			ikev2_info_csa(env, dolog, "  sa_childsas", csa);
+			ikev2_info_csa(env, imsg, dolog, "  sa_childsas", csa);
 			if ((ipcomp = csa->csa_bundled) != NULL)
-				ikev2_info_csa(env, dolog, "             ",
+				ikev2_info_csa(env, imsg, dolog, "             ",
 				    ipcomp);
 		}
 		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
-			ikev2_info_flow(env, dolog, "  sa_flows", flow);
+			ikev2_info_flow(env, imsg, dolog, "  sa_flows", flow);
 		}
 	}
 	RB_FOREACH(csa, iked_activesas, &env->sc_activesas) {
-		ikev2_info_csa(env, dolog, "iked_activesas", csa);
+		ikev2_info_csa(env, imsg, dolog, "iked_activesas", csa);
 		if ((ipcomp = csa->csa_bundled) != NULL)
-			ikev2_info_csa(env, dolog, "              ", ipcomp);
+			ikev2_info_csa(env, imsg, dolog, "              ", ipcomp);
 	}
 	RB_FOREACH(flow, iked_flows, &env->sc_activeflows) {
-		ikev2_info_flow(env, dolog, "iked_flows", flow);
+		ikev2_info_flow(env, imsg, dolog, "iked_flows", flow);
 	}
 	RB_FOREACH(sa, iked_dstid_sas, &env->sc_dstid_sas) {
-		ikev2_info_sa(env, dolog, "iked_dstid_sas", sa);
+		ikev2_info_sa(env, imsg, dolog, "iked_dstid_sas", sa);
 	}
 	if (dolog)
 		return;
 	/* Send empty reply to indicate end of information. */
-	proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_SA, NULL, 0);
+	proc_compose_imsg(&env->sc_ps, PROC_CONTROL, -1, IMSG_CTL_SHOW_SA,
+	    imsg->hdr.peerid, -1, NULL, 0);
 }
 
 const char *
