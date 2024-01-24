@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.9 2023/10/11 07:05:11 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.10 2024/01/24 14:51:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -43,9 +43,9 @@ dump(uint8_t *b, size_t len)
 }
 
 static int
-test_parsing(size_t num, uint8_t *in, size_t inlen, uint8_t *out, size_t outlen)
+test_parsing(size_t num, struct ibuf *in, struct ibuf *out)
 {
-	struct ibuf *buf;
+	struct ibuf *buf, abuf;
 	uint8_t flags, type, attr[256];
 	size_t skip;
 	uint16_t attr_len;
@@ -54,42 +54,40 @@ test_parsing(size_t num, uint8_t *in, size_t inlen, uint8_t *out, size_t outlen)
 	communities_clean(&comm);
 
 	do {
-		flags = in[0];
-		type = in[1];
-		skip = 2;
+		if (ibuf_get_n8(in, &flags) == -1 ||
+		    ibuf_get_n8(in, &type) == -1)
+			goto bad;
 		if (flags & ATTR_EXTLEN) {
-			memcpy(&attr_len, in + 2, sizeof(attr_len));
-			attr_len = ntohs(attr_len);
-			skip += 2;
+			if (ibuf_get_n16(in, &attr_len) == -1)
+				goto bad;
 		} else {
-			attr_len = in[2];
-			skip += 1;
+			uint8_t tmp;
+			if (ibuf_get_n8(in, &tmp) == -1)
+				goto bad;
+			attr_len = tmp;
 		}
-		if (skip + attr_len > inlen) {
+		if (ibuf_get_ibuf(in, attr_len, &abuf) == -1) {
+ bad:
 			printf("Test %zu: attribute parse failure\n", num);
 			return -1;
 		}
 
 		switch (type) {
 		case ATTR_COMMUNITIES:
-			r = community_add(&comm, flags, in + skip, attr_len);
+			r = community_add(&comm, flags, &abuf);
 			break;
 		case ATTR_EXT_COMMUNITIES:
-			r = community_ext_add(&comm, flags, 0, in + skip,
-			    attr_len);
+			r = community_ext_add(&comm, flags, 0, &abuf);
 			break;
 		case ATTR_LARGE_COMMUNITIES:
-			r = community_large_add(&comm, flags, in + skip,
-			    attr_len);
+			r = community_large_add(&comm, flags, &abuf);
 			break;
 		}
 		if (r == -1) {
 			printf("Test %zu: community_add failed\n", num);
 			return -1;
 		}
-		in += skip + attr_len;
-		inlen -= (skip + attr_len);
-	} while (inlen > 0);
+	} while (ibuf_size(in) > 0);
 
 	if ((buf = ibuf_dynamic(0, 4096)) == NULL) {
 		printf("Test %zu: ibuf_dynamic failed\n", num);
@@ -109,19 +107,19 @@ test_parsing(size_t num, uint8_t *in, size_t inlen, uint8_t *out, size_t outlen)
 		return -1;
 	}
 
-	if (ibuf_size(buf) != outlen) {
+	if (ibuf_size(buf) != ibuf_size(out)) {
 		printf("Test %zu: ibuf size value %zd != %zd:",
-		    num, ibuf_size(buf), outlen);
+		    num, ibuf_size(buf), ibuf_size(out));
 		dump(ibuf_data(buf), ibuf_size(buf));
 		printf("expected: ");
-		dump(out, outlen);
+		dump(ibuf_data(out), ibuf_size(out));
 		return -1;
 	}
-	if (memcmp(ibuf_data(buf), out, outlen) != 0) {
+	if (memcmp(ibuf_data(buf), ibuf_data(out), ibuf_size(out)) != 0) {
 		printf("Test %zu: unexpected encoding: ", num);
 		dump(ibuf_data(buf), ibuf_size(buf));
 		printf("expected: ");
-		dump(out, outlen);
+		dump(ibuf_data(out), ibuf_size(out));
 		return -1;
 	}
 
@@ -206,16 +204,17 @@ main(int argc, char *argv[])
 	int error = 0;
 
 	for (t = 0; t < sizeof(vectors) / sizeof(*vectors); t++) {
-		size_t outlen = vectors[t].expsize;
-		uint8_t *out = vectors[t].expected;
+		struct ibuf in, out;
 
-		if (vectors[t].expected == NULL) {
-			outlen = vectors[t].size;
-			out = vectors[t].data;
-		}
+		ibuf_from_buffer(&in, vectors[t].data, vectors[t].size);
+		if (vectors[t].expected == NULL)
+			ibuf_from_buffer(&out,
+			    vectors[t].data, vectors[t].size);
+		else 
+			ibuf_from_buffer(&out,
+			    vectors[t].expected, vectors[t].expsize);
 
-		if (test_parsing(t, vectors[t].data, vectors[t].size,
-		    out, outlen) == -1)
+		if (test_parsing(t, &in, &out) == -1)
 			error = 1;
 	}
 
