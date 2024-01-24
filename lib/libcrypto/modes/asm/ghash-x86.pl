@@ -714,7 +714,7 @@ sub mmx_loop() {
       }
 
 	&mov	(&LB($nlo),&LB($dat));
-	&mov	($dat,&DWP(528+$j,"esp"))		if (--$j%4==0);
+	&mov	($dat,&DWP(528+$j,"esp"))		if (--$j%4==0 && $j>=0);
 
 	&movd	($rem[0],$Zlo);
 	&movz	($rem[1],&LB($rem[1]))			if ($i>0);
