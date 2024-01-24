@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.14 2023/10/10 14:36:28 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.15 2024/01/24 14:51:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -418,24 +418,23 @@ struct rde_peer *peer)
  * - community_ext_add for ATTR_EXT_COMMUNITIES
  */
 int
-community_add(struct rde_community *comm, int flags, void *buf, size_t len)
+community_add(struct rde_community *comm, int flags, struct ibuf *buf)
 {
 	struct community set = { .flags = COMMUNITY_TYPE_BASIC };
-	uint8_t *b = buf;
-	uint16_t c;
-	size_t l;
+	uint16_t data1, data2;
 
-	if (len == 0 || len % 4 != 0)
+	if (ibuf_size(buf) == 0 || ibuf_size(buf) % 4 != 0)
 		return -1;
 
 	if (flags & ATTR_PARTIAL)
 		comm->flags |= PARTIAL_COMMUNITIES;
 
-	for (l = 0; l < len; l += 4, b += 4) {
-		memcpy(&c, b, sizeof(c));
-		set.data1 = ntohs(c);
-		memcpy(&c, b + 2, sizeof(c));
-		set.data2 = ntohs(c);
+	while (ibuf_size(buf) > 0) {
+		if (ibuf_get_n16(buf, &data1) == -1 ||
+		    ibuf_get_n16(buf, &data2) == -1)
+			return -1;
+		set.data1 = data1;
+		set.data2 = data2;
 		insert_community(comm, &set);
 	}
 
@@ -443,26 +442,21 @@ community_add(struct rde_community *comm, int flags, void *buf, size_t len)
 }
 
 int
-community_large_add(struct rde_community *comm, int flags, void *buf,
-    size_t len)
+community_large_add(struct rde_community *comm, int flags, struct ibuf *buf)
 {
 	struct community set = { .flags = COMMUNITY_TYPE_LARGE };
-	uint8_t *b = buf;
-	size_t l;
 
-	if (len == 0 || len % 12 != 0)
+	if (ibuf_size(buf) == 0 || ibuf_size(buf) % 12 != 0)
 		return -1;
 
 	if (flags & ATTR_PARTIAL)
 		comm->flags |= PARTIAL_LARGE_COMMUNITIES;
 
-	for (l = 0; l < len; l += 12, b += 12) {
-		memcpy(&set.data1, b, sizeof(set.data1));
-		memcpy(&set.data2, b + 4, sizeof(set.data2));
-		memcpy(&set.data3, b + 8, sizeof(set.data3));
-		set.data1 = ntohl(set.data1);
-		set.data2 = ntohl(set.data2);
-		set.data3 = ntohl(set.data3);
+	while (ibuf_size(buf) > 0) {
+		if (ibuf_get_n32(buf, &set.data1) == -1 ||
+		    ibuf_get_n32(buf, &set.data2) == -1 ||
+		    ibuf_get_n32(buf, &set.data3) == -1)
+			return -1;
 		insert_community(comm, &set);
 	}
 
@@ -471,23 +465,22 @@ community_large_add(struct rde_community *comm, int flags, void *buf,
 
 int
 community_ext_add(struct rde_community *comm, int flags, int ebgp,
-    void *buf, size_t len)
+    struct ibuf *buf)
 {
 	struct community set = { .flags = COMMUNITY_TYPE_EXT };
-	uint8_t *b = buf, type;
 	uint64_t c;
-	size_t l;
+	uint8_t type;
 
-	if (len == 0 || len % 8 != 0)
+	if (ibuf_size(buf) == 0 || ibuf_size(buf) % 8 != 0)
 		return -1;
 
 	if (flags & ATTR_PARTIAL)
 		comm->flags |= PARTIAL_EXT_COMMUNITIES;
 
-	for (l = 0; l < len; l += 8, b += 8) {
-		memcpy(&c, b, 8);
+	while (ibuf_size(buf) > 0) {
+		if (ibuf_get_n64(buf, &c) == -1)
+			return (-1);
 
-		c = be64toh(c);
 		type = c >> 56;
 		/* filter out non-transitive ext communuties from ebgp peers */
 		if (ebgp && (type & EXT_COMMUNITY_NON_TRANSITIVE))

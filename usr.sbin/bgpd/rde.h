@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.298 2024/01/23 16:13:35 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.299 2024/01/24 14:51:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -435,10 +435,9 @@ int	community_set(struct rde_community *, struct community *,
 void	community_delete(struct rde_community *, struct community *,
 	    struct rde_peer *);
 
-int	community_add(struct rde_community *, int, void *, size_t);
-int	community_large_add(struct rde_community *, int, void *, size_t);
-int	community_ext_add(struct rde_community *, int, int, void *, size_t);
-
+int	community_add(struct rde_community *, int, struct ibuf *);
+int	community_large_add(struct rde_community *, int, struct ibuf *);
+int	community_ext_add(struct rde_community *, int, int, struct ibuf *);
 int	community_writebuf(struct rde_community *, uint8_t, int, struct ibuf *);
 
 void			 communities_shutdown(void);

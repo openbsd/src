@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.616 2024/01/23 16:13:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.617 2024/01/24 14:51:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2139,8 +2139,8 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if (community_add(&state->communities, flags, p,
-		    attr_len) == -1) {
+		if (community_add(&state->communities, flags,
+		    &attrbuf) == -1) {
 			/*
 			 * mark update as bad and withdraw all routes as per
 			 * RFC 7606
@@ -2149,14 +2149,13 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 			log_peer_warnx(&peer->conf, "bad COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
 		}
-		plen += attr_len;
 		break;
 	case ATTR_LARGE_COMMUNITIES:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if (community_large_add(&state->communities, flags, p,
-		    attr_len) == -1) {
+		if (community_large_add(&state->communities, flags,
+		    &attrbuf) == -1) {
 			/*
 			 * mark update as bad and withdraw all routes as per
 			 * RFC 7606
@@ -2165,14 +2164,13 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 			log_peer_warnx(&peer->conf, "bad LARGE COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
 		}
-		plen += attr_len;
 		break;
 	case ATTR_EXT_COMMUNITIES:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
 		if (community_ext_add(&state->communities, flags,
-		    peer->conf.ebgp, p, attr_len) == -1) {
+		    peer->conf.ebgp, &attrbuf) == -1) {
 			/*
 			 * mark update as bad and withdraw all routes as per
 			 * RFC 7606
@@ -2181,7 +2179,6 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 			log_peer_warnx(&peer->conf, "bad EXT_COMMUNITIES, "
 			    "path invalidated and prefix withdrawn");
 		}
-		plen += attr_len;
 		break;
 	case ATTR_ORIGINATOR_ID:
 		if (attr_len != 4)
@@ -2338,14 +2335,11 @@ rde_attr_add(struct filterstate *state, struct ibuf *buf)
 
 	switch (type) {
 	case ATTR_COMMUNITIES:
-		return community_add(&state->communities, flags,
-		    ibuf_data(buf), attr_len);
+		return community_add(&state->communities, flags, buf);
 	case ATTR_LARGE_COMMUNITIES:
-		return community_large_add(&state->communities, flags,
-		    ibuf_data(buf), attr_len);
+		return community_large_add(&state->communities, flags, buf);
 	case ATTR_EXT_COMMUNITIES:
-		return community_ext_add(&state->communities, flags, 0,
-		    ibuf_data(buf), attr_len);
+		return community_ext_add(&state->communities, flags, 0, buf);
 	}
 
 	if (attr_optadd(&state->aspath, flags, type, ibuf_data(buf),
