@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.84 2024/01/13 11:57:51 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.85 2024/01/24 14:05:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,7 +188,7 @@ OBJ_cleanup(void)
 {
 	if (added == NULL)
 		return;
-	lh_ADDED_OBJ_down_load(added) = 0;
+
 	lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup1)); /* zero counters */
 	lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup2)); /* set counters */
 	lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup3)); /* free objects */

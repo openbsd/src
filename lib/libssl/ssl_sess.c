@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.123 2023/11/19 15:51:49 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.124 2024/01/24 14:05:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1159,7 +1159,6 @@ timeout_LHASH_DOALL_ARG(void *arg1, void *arg2)
 void
 SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 {
-	unsigned long i;
 	TIMEOUT_PARAM tp;
 
 	tp.ctx = s;
@@ -1167,12 +1166,10 @@ SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	if (tp.cache == NULL)
 		return;
 	tp.time = t;
+
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-	i = CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load;
-	CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = 0;
 	lh_SSL_SESSION_doall_arg(tp.cache, timeout_LHASH_DOALL_ARG,
-	TIMEOUT_PARAM, &tp);
-	CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = i;
+	    TIMEOUT_PARAM, &tp);
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 }
 LSSL_ALIAS(SSL_CTX_flush_sessions);
