@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.9 2023/12/23 10:52:54 bluhm Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.10 2024/01/24 00:17:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -314,6 +314,14 @@ sec_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			goto drop;
 		}
 	}
+
+	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(ifp->if_index), M_NOWAIT);
+	if (mtag == NULL) {
+		error = ENOBUFS;
+		goto drop;
+	}
+	*(int *)(mtag + 1) = ifp->if_index;
+	m_tag_prepend(m, mtag);
 
 	m->m_pkthdr.ph_family = dst->sa_family;
 
