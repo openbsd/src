@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.69 2024/01/14 17:23:56 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.70 2024/01/24 19:23:38 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -95,11 +95,11 @@ struct cpustats {
 
 #ifdef	_KERNEL
 
+#include <sys/clockintr.h>
 #include <sys/queue.h>
 
 #define	SCHED_NQS	32			/* 32 run queues. */
 
-struct clockintr;
 struct smr_entry;
 
 /*
@@ -115,10 +115,10 @@ struct schedstate_percpu {
 	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */
 
-	struct clockintr *spc_itimer;	/* [o] itimer_update handle */
-	struct clockintr *spc_profclock; /* [o] profclock handle */
-	struct clockintr *spc_roundrobin; /* [o] roundrobin handle */
-	struct clockintr *spc_statclock; /* [o] statclock handle */
+	struct clockintr spc_itimer;	/* [o] itimer_update handle */
+	struct clockintr spc_profclock;	/* [o] profclock handle */
+	struct clockintr spc_roundrobin;/* [o] roundrobin handle */
+	struct clockintr spc_statclock;	/* [o] statclock handle */
 
 	u_int spc_nrun;			/* procs on the run queues */
 

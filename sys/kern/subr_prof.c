@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.40 2023/10/17 00:04:02 cheloha Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.41 2024/01/24 19:23:38 cheloha Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -101,18 +101,15 @@ prof_init(void)
 
 	/* Allocate and initialize one profiling buffer per CPU. */
 	CPU_INFO_FOREACH(cii, ci) {
-		ci->ci_gmonclock = clockintr_establish(ci, gmonclock, NULL);
-		if (ci->ci_gmonclock == NULL) {
-			printf("%s: clockintr_establish gmonclock\n", __func__);
-			return;
-		}
-		clockintr_stagger(ci->ci_gmonclock, profclock_period,
-		    CPU_INFO_UNIT(ci), MAXCPUS);
 		cp = km_alloc(round_page(size), &kv_any, &kp_zero, &kd_nowait);
 		if (cp == NULL) {
 			printf("No memory for profiling.\n");
 			return;
 		}
+
+		clockintr_bind(&ci->ci_gmonclock, ci, gmonclock, NULL);
+		clockintr_stagger(&ci->ci_gmonclock, profclock_period,
+		    CPU_INFO_UNIT(ci), MAXCPUS);
 
 		p = (struct gmonparam *)cp;
 		cp += sizeof(*p);
@@ -159,7 +156,7 @@ prof_state_toggle(struct cpu_info *ci, int oldstate)
 		if (error == 0) {
 			if (++gmon_cpu_count == 1)
 				startprofclock(&process0);
-			clockintr_advance(ci->ci_gmonclock, profclock_period);
+			clockintr_advance(&ci->ci_gmonclock, profclock_period);
 		}
 		break;
 	default:
@@ -167,7 +164,7 @@ prof_state_toggle(struct cpu_info *ci, int oldstate)
 		gp->state = GMON_PROF_OFF;
 		/* FALLTHROUGH */
 	case GMON_PROF_OFF:
-		clockintr_cancel(ci->ci_gmonclock);
+		clockintr_cancel(&ci->ci_gmonclock);
 		if (--gmon_cpu_count == 0)
 			stopprofclock(&process0);
 #if !defined(GPROF)

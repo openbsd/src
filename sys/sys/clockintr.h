@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.24 2024/01/15 01:15:37 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.25 2024/01/24 19:23:38 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -102,7 +102,7 @@ struct clockintr_queue {
 	TAILQ_HEAD(, clockintr) cq_all;	/* [m] established clockintr list */
 	TAILQ_HEAD(, clockintr) cq_pend;/* [m] pending clockintr list */
 	struct clockintr *cq_running;	/* [m] running clockintr */
-	struct clockintr *cq_hardclock;	/* [o] hardclock handle */
+	struct clockintr cq_hardclock;	/* [o] hardclock handle */
 	struct intrclock cq_intrclock;	/* [I] local interrupt clock */
 	struct clockintr_stat cq_stat;	/* [o] dispatch statistics */
 	volatile uint32_t cq_gen;	/* [o] cq_stat update generation */ 
@@ -124,9 +124,9 @@ void clockintr_trigger(void);
  */
 
 uint64_t clockintr_advance(struct clockintr *, uint64_t);
-void clockintr_cancel(struct clockintr *);
-struct clockintr *clockintr_establish(struct cpu_info *,
+void clockintr_bind(struct clockintr *, struct cpu_info *,
     void (*)(struct clockrequest *, void *, void *), void *);
+void clockintr_cancel(struct clockintr *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_stagger(struct clockintr *, uint64_t, uint32_t, uint32_t);
 uint64_t clockrequest_advance(struct clockrequest *, uint64_t);

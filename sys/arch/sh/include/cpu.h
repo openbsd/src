@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2023/07/25 18:16:21 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.36 2024/01/24 19:23:39 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@ struct cpu_info {
 #endif
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
-	struct clockintr *ci_gmonclock;
+	struct clockintr ci_gmonclock;
 #endif
 
 	int	ci_want_resched;

@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.63 2024/01/15 01:15:37 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.64 2024/01/24 19:23:38 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -62,11 +62,9 @@ clockintr_cpu_init(const struct intrclock *ic)
 		clockqueue_intrclock_install(cq, ic);
 
 	/* TODO: Remove this from struct clockintr_queue. */
-	if (cq->cq_hardclock == NULL) {
-		cq->cq_hardclock = clockintr_establish(ci, clockintr_hardclock,
+	if (cq->cq_hardclock.cl_expiration == 0) {
+		clockintr_bind(&cq->cq_hardclock, ci, clockintr_hardclock,
 		    NULL);
-		if (cq->cq_hardclock == NULL)
-			panic("%s: failed to establish hardclock", __func__);
 	}
 
 	/*
@@ -96,16 +94,16 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * behalf.
 	 */
 	if (CPU_IS_PRIMARY(ci)) {
-		if (cq->cq_hardclock->cl_expiration == 0)
-			clockintr_schedule(cq->cq_hardclock, 0);
+		if (cq->cq_hardclock.cl_expiration == 0)
+			clockintr_schedule(&cq->cq_hardclock, 0);
 		else
-			clockintr_advance(cq->cq_hardclock, hardclock_period);
+			clockintr_advance(&cq->cq_hardclock, hardclock_period);
 	} else {
-		if (cq->cq_hardclock->cl_expiration == 0) {
-			clockintr_stagger(cq->cq_hardclock, hardclock_period,
+		if (cq->cq_hardclock.cl_expiration == 0) {
+			clockintr_stagger(&cq->cq_hardclock, hardclock_period,
 			     multiplier, MAXCPUS);
 		}
-		clockintr_advance(cq->cq_hardclock, hardclock_period);
+		clockintr_advance(&cq->cq_hardclock, hardclock_period);
 	}
 
 	/*
@@ -113,30 +111,30 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * stagger a randomized statclock.
 	 */
 	if (!statclock_is_randomized) {
-		if (spc->spc_statclock->cl_expiration == 0) {
-			clockintr_stagger(spc->spc_statclock, statclock_avg,
+		if (spc->spc_statclock.cl_expiration == 0) {
+			clockintr_stagger(&spc->spc_statclock, statclock_avg,
 			    multiplier, MAXCPUS);
 		}
 	}
-	clockintr_advance(spc->spc_statclock, statclock_avg);
+	clockintr_advance(&spc->spc_statclock, statclock_avg);
 
 	/*
 	 * XXX Need to find a better place to do this.  We can't do it in
 	 * sched_init_cpu() because initclocks() runs after it.
 	 */
-	if (spc->spc_itimer->cl_expiration == 0) {
-		clockintr_stagger(spc->spc_itimer, hardclock_period,
+	if (spc->spc_itimer.cl_expiration == 0) {
+		clockintr_stagger(&spc->spc_itimer, hardclock_period,
 		    multiplier, MAXCPUS);
 	}
-	if (spc->spc_profclock->cl_expiration == 0) {
-		clockintr_stagger(spc->spc_profclock, profclock_period,
+	if (spc->spc_profclock.cl_expiration == 0) {
+		clockintr_stagger(&spc->spc_profclock, profclock_period,
 		    multiplier, MAXCPUS);
 	}
-	if (spc->spc_roundrobin->cl_expiration == 0) {
-		clockintr_stagger(spc->spc_roundrobin, hardclock_period,
+	if (spc->spc_roundrobin.cl_expiration == 0) {
+		clockintr_stagger(&spc->spc_roundrobin, hardclock_period,
 		    multiplier, MAXCPUS);
 	}
-	clockintr_advance(spc->spc_roundrobin, roundrobin_period);
+	clockintr_advance(&spc->spc_roundrobin, roundrobin_period);
 
 	if (reset_cq_intrclock)
 		SET(cq->cq_flags, CQ_INTRCLOCK);
@@ -337,16 +335,12 @@ clockintr_cancel(struct clockintr *cl)
 	mtx_leave(&cq->cq_mtx);
 }
 
-struct clockintr *
-clockintr_establish(struct cpu_info *ci,
+void
+clockintr_bind(struct clockintr *cl, struct cpu_info *ci,
     void (*func)(struct clockrequest *, void *, void *), void *arg)
 {
-	struct clockintr *cl;
 	struct clockintr_queue *cq = &ci->ci_queue;
 
-	cl = malloc(sizeof *cl, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (cl == NULL)
-		return NULL;
 	cl->cl_arg = arg;
 	cl->cl_func = func;
 	cl->cl_queue = cq;
@@ -354,7 +348,6 @@ clockintr_establish(struct cpu_info *ci,
 	mtx_enter(&cq->cq_mtx);
 	TAILQ_INSERT_TAIL(&cq->cq_all, cl, cl_alink);
 	mtx_leave(&cq->cq_mtx);
-	return cl;
 }
 
 void

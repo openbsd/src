@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.256 2024/01/19 01:43:26 bluhm Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.257 2024/01/24 19:23:38 cheloha Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -704,11 +704,11 @@ proc_trampoline_mi(void)
 	/* Start any optional clock interrupts needed by the thread. */
 	if (ISSET(p->p_p->ps_flags, PS_ITIMER)) {
 		atomic_setbits_int(&spc->spc_schedflags, SPCF_ITIMER);
-		clockintr_advance(spc->spc_itimer, hardclock_period);
+		clockintr_advance(&spc->spc_itimer, hardclock_period);
 	}
 	if (ISSET(p->p_p->ps_flags, PS_PROFIL)) {
 		atomic_setbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
-		clockintr_advance(spc->spc_profclock, profclock_period);
+		clockintr_advance(&spc->spc_profclock, profclock_period);
 	}
 
 	nanouptime(&spc->spc_runtime);

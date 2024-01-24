@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.89 2023/10/17 00:04:02 cheloha Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.90 2024/01/24 19:23:38 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -396,11 +396,11 @@ mi_switch(void)
 	/* Stop any optional clock interrupts. */
 	if (ISSET(spc->spc_schedflags, SPCF_ITIMER)) {
 		atomic_clearbits_int(&spc->spc_schedflags, SPCF_ITIMER);
-		clockintr_cancel(spc->spc_itimer);
+		clockintr_cancel(&spc->spc_itimer);
 	}
 	if (ISSET(spc->spc_schedflags, SPCF_PROFCLOCK)) {
 		atomic_clearbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
-		clockintr_cancel(spc->spc_profclock);
+		clockintr_cancel(&spc->spc_profclock);
 	}
 
 	/*
@@ -451,11 +451,11 @@ mi_switch(void)
 	/* Start any optional clock interrupts needed by the thread. */
 	if (ISSET(p->p_p->ps_flags, PS_ITIMER)) {
 		atomic_setbits_int(&spc->spc_schedflags, SPCF_ITIMER);
-		clockintr_advance(spc->spc_itimer, hardclock_period);
+		clockintr_advance(&spc->spc_itimer, hardclock_period);
 	}
 	if (ISSET(p->p_p->ps_flags, PS_PROFIL)) {
 		atomic_setbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
-		clockintr_advance(spc->spc_profclock, profclock_period);
+		clockintr_advance(&spc->spc_profclock, profclock_period);
 	}
 
 	nanouptime(&spc->spc_runtime);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.93 2023/10/24 13:20:11 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.94 2024/01/24 19:23:38 cheloha Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -88,18 +88,10 @@ sched_init_cpu(struct cpu_info *ci)
 
 	spc->spc_idleproc = NULL;
 
-	spc->spc_itimer = clockintr_establish(ci, itimer_update, NULL);
-	if (spc->spc_itimer == NULL)
-		panic("%s: clockintr_establish itimer_update", __func__);
-	spc->spc_profclock = clockintr_establish(ci, profclock, NULL);
-	if (spc->spc_profclock == NULL)
-		panic("%s: clockintr_establish profclock", __func__);
-	spc->spc_roundrobin = clockintr_establish(ci, roundrobin, NULL);
-	if (spc->spc_roundrobin == NULL)
-		panic("%s: clockintr_establish roundrobin", __func__);
-	spc->spc_statclock = clockintr_establish(ci, statclock, NULL);
-	if (spc->spc_statclock == NULL)
-		panic("%s: clockintr_establish statclock", __func__);
+	clockintr_bind(&spc->spc_itimer, ci, itimer_update, NULL);
+	clockintr_bind(&spc->spc_profclock, ci, profclock, NULL);
+	clockintr_bind(&spc->spc_roundrobin, ci, roundrobin, NULL);
+	clockintr_bind(&spc->spc_statclock, ci, statclock, NULL);
 
 	kthread_create_deferred(sched_kthreads_create, ci);
 
@@ -244,11 +236,11 @@ sched_toidle(void)
 
 	if (ISSET(spc->spc_schedflags, SPCF_ITIMER)) {
 		atomic_clearbits_int(&spc->spc_schedflags, SPCF_ITIMER);
-		clockintr_cancel(spc->spc_itimer);
+		clockintr_cancel(&spc->spc_itimer);
 	}
 	if (ISSET(spc->spc_schedflags, SPCF_PROFCLOCK)) {
 		atomic_clearbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
-		clockintr_cancel(spc->spc_profclock);
+		clockintr_cancel(&spc->spc_profclock);
 	}
 
 	atomic_clearbits_int(&spc->spc_schedflags, SPCF_SWITCHCLEAR);

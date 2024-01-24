@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.183 2023/08/23 01:55:46 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.184 2024/01/24 19:23:39 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -168,7 +168,7 @@ struct cpu_info {
 	struct ksensor		ci_sensor;
 #if defined(GPROF) || defined(DDBPROF)
 	struct gmonparam	*ci_gmon;
-	struct clockintr	*ci_gmonclock;
+	struct clockintr	ci_gmonclock;
 #endif
 	struct clockintr_queue	ci_queue;
 	char			ci_panicbuf[512];
