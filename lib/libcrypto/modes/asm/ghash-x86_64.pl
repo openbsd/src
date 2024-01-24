@@ -285,7 +285,7 @@ $code.=".align	16\n.Louter_loop:\n";
 	    &shr	($Zlo,8);
 
 	    &movz	($rem[0],&LB($rem[0]));
-	    &mov	($dat,"$j($Xi)")			if (--$j%4==0);
+	    &mov	($dat,"$j($Xi)")			if (--$j%4==0 && $j>=0);
 	    &shr	($Zhi,8);
 
 	    &xor	($Zlo,"-128($Hshr4,$nhi[0],8)");
