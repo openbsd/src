@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.21 2024/01/25 10:44:39 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.22 2024/01/25 10:53:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -165,7 +165,7 @@ pkcs7_repack_encdata(PKCS7 *pkcs7, STACK_OF(PKCS7) *newsafes, const char *oldpas
 }
 
 static int
-pkcs12_repack_safe(PKCS12 *pkcs12, STACK_OF(PKCS7) *newsafes,
+pkcs12_repack_authsafes(PKCS12 *pkcs12, STACK_OF(PKCS7) *newsafes,
     const char *newpass)
 {
 	ASN1_OCTET_STRING *old_data;
@@ -234,7 +234,7 @@ newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 		}
 	}
 
-	if (!pkcs12_repack_safe(p12, newsafes, newpass))
+	if (!pkcs12_repack_authsafes(p12, newsafes, newpass))
 		goto err;
 
 	ret = 1;
