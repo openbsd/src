@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.39 2024/01/23 16:16:15 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.40 2024/01/25 09:54:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -465,19 +465,17 @@ json_interface(struct ctl_show_interface *iface)
 }
 
 static void
-json_communities(u_char *data, size_t len, struct parse_result *res)
+json_communities(struct ibuf *data, struct parse_result *res)
 {
 	struct community c;
-	size_t  i;
 	uint64_t ext;
 
-	if (len % sizeof(c)) {
-		warnx("communities: bad size");
-		return;
-	}
 
-	for (i = 0; i < len; i += sizeof(c)) {
-		memcpy(&c, data + i, sizeof(c));
+	while (ibuf_size(data) != 0) {
+		if (ibuf_get(data, &c, sizeof(c)) == -1) {
+			warn("communities");
+			return;
+		}
 
 		switch (c.flags) {
 		case COMMUNITY_TYPE_BASIC:
@@ -505,11 +503,9 @@ json_communities(u_char *data, size_t len, struct parse_result *res)
 				ext |= (uint64_t)c.data2 & 0xffff;
 				break;
 			}
-			ext = htobe64(ext);
 
 			json_do_array("extended_communities");
-			json_do_string("community",
-			    fmt_ext_community((void *)&ext));
+			json_do_string("community", fmt_ext_community(ext));
 			break;
 		}
 	}
@@ -569,6 +565,7 @@ json_do_large_community(u_char *data, uint16_t len)
 static void
 json_do_ext_community(u_char *data, uint16_t len)
 {
+	uint64_t ext;
 	uint16_t i;
 
 	if (len & 0x7) {
@@ -578,8 +575,11 @@ json_do_ext_community(u_char *data, uint16_t len)
 
 	json_do_array("extended_communities");
 
-	for (i = 0; i < len; i += 8)
-		json_do_string("community", fmt_ext_community(data + i));
+	for (i = 0; i < len; i += 8) {
+		memcpy(&ext, data + i, sizeof(ext));
+		ext = be64toh(ext);
+		json_do_string("community", fmt_ext_community(ext));
+	}
 
 	json_do_end();
 }

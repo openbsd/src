@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.47 2024/01/23 16:16:15 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.48 2024/01/25 09:54:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -646,18 +646,17 @@ show_interface(struct ctl_show_interface *iface)
 }
 
 static void
-show_communities(u_char *data, size_t len, struct parse_result *res)
+show_communities(struct ibuf *data, struct parse_result *res)
 {
 	struct community c;
-	size_t	i;
 	uint64_t ext;
 	uint8_t type = 0;
 
-	if (len % sizeof(c))
-		return;
-
-	for (i = 0; i < len; i += sizeof(c)) {
-		memcpy(&c, data + i, sizeof(c));
+	while (ibuf_size(data) != 0) {
+		if (ibuf_get(data, &c, sizeof(c)) == -1) {
+			warn("communities");
+			break;
+		}
 
 		if (type != c.flags) {
 			if (type != 0)
@@ -690,9 +689,7 @@ show_communities(u_char *data, size_t len, struct parse_result *res)
 				ext |= (uint64_t)c.data2 & 0xffff;
 				break;
 			}
-			ext = htobe64(ext);
-
-			printf(" %s", fmt_ext_community((void *)&ext));
+			printf(" %s", fmt_ext_community(ext));
 			break;
 		}
 	}
@@ -751,6 +748,7 @@ show_large_community(u_char *data, uint16_t len)
 static void
 show_ext_community(u_char *data, uint16_t len)
 {
+	uint64_t	ext;
 	uint16_t	i;
 
 	if (len & 0x7) {
@@ -759,7 +757,9 @@ show_ext_community(u_char *data, uint16_t len)
 	}
 
 	for (i = 0; i < len; i += 8) {
-		printf("%s", fmt_ext_community(data + i));
+		memcpy(&ext, data + i, sizeof(ext));
+		ext = be64toh(ext);
+		printf("%s", fmt_ext_community(ext));
 
 		if (i + 8 < len)
 			printf(" ");

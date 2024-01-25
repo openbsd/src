@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.301 2024/01/23 16:16:15 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.302 2024/01/25 09:54:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -470,6 +470,7 @@ show(struct imsg *imsg, struct parse_result *res)
 	struct flowspec		 f;
 	struct ctl_show_rib	 rib;
 	struct rde_memstats	 stats;
+	struct ibuf		 ibuf;
 	u_char			*asdata;
 	u_int			 rescode, ilen;
 	size_t			 aslen;
@@ -539,14 +540,11 @@ show(struct imsg *imsg, struct parse_result *res)
 		output->rib(&rib, asdata, aslen, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_COMMUNITIES:
-		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
-		if (ilen % sizeof(struct community)) {
-			warnx("bad IMSG_CTL_SHOW_RIB_COMMUNITIES received");
-			break;
-		}
 		if (output->communities == NULL)
 			break;
-		output->communities(imsg->data, ilen, res);
+		if (imsg_get_ibuf(imsg, &ibuf) == -1)
+			err(1, "imsg_get_ibuf");
+		output->communities(&ibuf, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_ATTR:
 		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
@@ -1044,53 +1042,47 @@ fmt_large_community(uint32_t d1, uint32_t d2, uint32_t d3)
 }
 
 const char *
-fmt_ext_community(uint8_t *data)
+fmt_ext_community(uint64_t ext)
 {
 	static char	buf[32];
-	uint64_t	ext;
 	struct in_addr	ip;
 	uint32_t	as4, u32;
 	uint16_t	as2, u16;
 	uint8_t		type, subtype;
 
-	type = data[0];
-	subtype = data[1];
+	type = ext >> 56;
+	subtype = ext >> 48;
 
 	switch (type) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
 	case EXT_COMMUNITY_GEN_TWO_AS:
-		memcpy(&as2, data + 2, sizeof(as2));
-		memcpy(&u32, data + 4, sizeof(u32));
+		as2 = ext >> 32;
+		u32 = ext;
 		snprintf(buf, sizeof(buf), "%s %s:%u",
-		    log_ext_subtype(type, subtype),
-		    log_as(ntohs(as2)), ntohl(u32));
+		    log_ext_subtype(type, subtype), log_as(as2), u32);
 		return buf;
 	case EXT_COMMUNITY_TRANS_IPV4:
 	case EXT_COMMUNITY_GEN_IPV4:
-		memcpy(&ip, data + 2, sizeof(ip));
-		memcpy(&u16, data + 6, sizeof(u16));
+		ip.s_addr = htonl(ext >> 16);
+		u16 = ext;
 		snprintf(buf, sizeof(buf), "%s %s:%hu",
-		    log_ext_subtype(type, subtype),
-		    inet_ntoa(ip), ntohs(u16));
+		    log_ext_subtype(type, subtype), inet_ntoa(ip), u16);
 		return buf;
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
 	case EXT_COMMUNITY_GEN_FOUR_AS:
-		memcpy(&as4, data + 2, sizeof(as4));
-		memcpy(&u16, data + 6, sizeof(u16));
+		as4 = ext >> 16;
+		u16 = ext;
 		snprintf(buf, sizeof(buf), "%s %s:%hu",
-		    log_ext_subtype(type, subtype),
-		    log_as(ntohl(as4)), ntohs(u16));
+		    log_ext_subtype(type, subtype), log_as(as4), u16);
 		return buf;
 	case EXT_COMMUNITY_TRANS_OPAQUE:
 	case EXT_COMMUNITY_TRANS_EVPN:
-		memcpy(&ext, data, sizeof(ext));
-		ext = be64toh(ext) & 0xffffffffffffLL;
+		ext &= 0xffffffffffffULL;
 		snprintf(buf, sizeof(buf), "%s 0x%llx",
 		    log_ext_subtype(type, subtype), (unsigned long long)ext);
 		return buf;
 	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
-		memcpy(&ext, data, sizeof(ext));
-		ext = be64toh(ext) & 0xffffffffffffLL;
+		ext &= 0xffffffffffffULL;
 		if (subtype == EXT_COMMUNITY_SUBTYPE_OVS) {
 			switch (ext) {
 			case EXT_COMMUNITY_OVS_VALID:
@@ -1119,10 +1111,7 @@ fmt_ext_community(uint8_t *data)
 		}
 		break;
 	default:
-		memcpy(&ext, data, sizeof(ext));
-		snprintf(buf, sizeof(buf), "%s 0x%llx",
-		    log_ext_subtype(type, subtype),
-		    (unsigned long long)be64toh(ext));
+		snprintf(buf, sizeof(buf), "0x%llx", (unsigned long long)ext);
 		return buf;
 	}
 }

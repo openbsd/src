@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.h,v 1.21 2023/04/20 14:01:50 claudio Exp $ */
+/*	$OpenBSD: bgpctl.h,v 1.22 2024/01/25 09:54:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -28,7 +28,7 @@ struct output {
 	void	(*nexthop)(struct ctl_show_nexthop *);
 	void	(*interface)(struct ctl_show_interface *);
 	void	(*attr)(u_char *, size_t, int, int);
-	void	(*communities)(u_char *, size_t, struct parse_result *);
+	void	(*communities)(struct ibuf *, struct parse_result *);
 	void	(*rib)(struct ctl_show_rib *, u_char *, size_t,
 		    struct parse_result *);
 	void	(*rib_mem)(struct rde_memstats *);
@@ -57,7 +57,7 @@ const char	*fmt_errstr(uint8_t, uint8_t);
 const char	*fmt_attr(uint8_t, int);
 const char	*fmt_community(uint16_t, uint16_t);
 const char	*fmt_large_community(uint32_t, uint32_t, uint32_t);
-const char	*fmt_ext_community(uint8_t *);
+const char	*fmt_ext_community(uint64_t);
 const char	*fmt_set_type(struct ctl_show_set *);
 
 #define MPLS_LABEL_OFFSET 12
