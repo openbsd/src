@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.23 2024/01/25 13:32:49 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.24 2024/01/25 14:08:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -79,39 +79,39 @@ static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
  */
 
 static int
-pkcs7_repack_data(PKCS7 *pkcs7, STACK_OF(PKCS7) *newsafes, const char *oldpass,
+pkcs7_repack_data(PKCS7 *pkcs7, STACK_OF(PKCS7) *safes, const char *oldpass,
     const char *newpass)
 {
 	STACK_OF(PKCS12_SAFEBAG) *bags;
-	PKCS7 *newdata = NULL;
+	PKCS7 *data = NULL;
 	int ret = 0;
 
 	if ((bags = PKCS12_unpack_p7data(pkcs7)) == NULL)
 		goto err;
 	if (!newpass_bags(bags, oldpass, newpass))
 		goto err;
-	if ((newdata = PKCS12_pack_p7data(bags)) == NULL)
+	if ((data = PKCS12_pack_p7data(bags)) == NULL)
 		goto err;
-	if (sk_PKCS7_push(newsafes, newdata) == 0)
+	if (sk_PKCS7_push(safes, data) == 0)
 		goto err;
-	newdata = NULL;
+	data = NULL;
 
 	ret = 1;
 
  err:
 	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-	PKCS7_free(newdata);
+	PKCS7_free(data);
 
 	return ret;
 }
 
 static int
-pkcs7_repack_encdata(PKCS7 *pkcs7, STACK_OF(PKCS7) *newsafes, const char *oldpass,
+pkcs7_repack_encdata(PKCS7 *pkcs7, STACK_OF(PKCS7) *safes, const char *oldpass,
     const char *newpass)
 {
 	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int pbe_nid = 0, pbe_iter = 0, pbe_saltlen = 0;
-	PKCS7 *newencdata = NULL;
+	PKCS7 *data = NULL;
 	int ret = 0;
 
 	if ((bags = PKCS12_unpack_p7encdata(pkcs7, oldpass, -1)) == NULL)
@@ -121,24 +121,24 @@ pkcs7_repack_encdata(PKCS7 *pkcs7, STACK_OF(PKCS7) *newsafes, const char *oldpas
 		goto err;
 	if (!newpass_bags(bags, oldpass, newpass))
 		goto err;
-	if ((newencdata = PKCS12_pack_p7encdata(pbe_nid, newpass, -1, NULL,
+	if ((data = PKCS12_pack_p7encdata(pbe_nid, newpass, -1, NULL,
 	    pbe_saltlen, pbe_iter, bags)) == NULL)
 		goto err;
-	if (!sk_PKCS7_push(newsafes, newencdata))
+	if (!sk_PKCS7_push(safes, data))
 		goto err;
-	newencdata = NULL;
+	data = NULL;
 
 	ret = 1;
 
  err:
 	sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
-	PKCS7_free(newencdata);
+	PKCS7_free(data);
 
 	return ret;
 }
 
 static int
-pkcs12_repack_authsafes(PKCS12 *pkcs12, STACK_OF(PKCS7) *newsafes,
+pkcs12_repack_authsafes(PKCS12 *pkcs12, STACK_OF(PKCS7) *safes,
     const char *newpass)
 {
 	ASN1_OCTET_STRING *old_data;
@@ -151,7 +151,7 @@ pkcs12_repack_authsafes(PKCS12 *pkcs12, STACK_OF(PKCS7) *newsafes,
 		goto err;
 	if ((pkcs12->authsafes->d.data = ASN1_OCTET_STRING_new()) == NULL)
 		goto err;
-	if (!PKCS12_pack_authsafes(pkcs12, newsafes))
+	if (!PKCS12_pack_authsafes(pkcs12, safes))
 		goto err;
 	if (!PKCS12_gen_mac(pkcs12, newpass, -1, mac, &maclen))
 		goto err;
@@ -183,7 +183,7 @@ pkcs12_repack_authsafes(PKCS12 *pkcs12, STACK_OF(PKCS7) *newsafes,
 int
 PKCS12_newpass(PKCS12 *pkcs12, const char *oldpass, const char *newpass)
 {
-	STACK_OF(PKCS7) *authsafes = NULL, *newsafes = NULL;
+	STACK_OF(PKCS7) *authsafes = NULL, *safes = NULL;
 	int i;
 	int ret = 0;
 
@@ -199,7 +199,7 @@ PKCS12_newpass(PKCS12 *pkcs12, const char *oldpass, const char *newpass)
 
 	if ((authsafes = PKCS12_unpack_authsafes(pkcs12)) == NULL)
 		goto err;
-	if ((newsafes = sk_PKCS7_new_null()) == NULL)
+	if ((safes = sk_PKCS7_new_null()) == NULL)
 		goto err;
 
 	for (i = 0; i < sk_PKCS7_num(authsafes); i++) {
@@ -207,24 +207,24 @@ PKCS12_newpass(PKCS12 *pkcs12, const char *oldpass, const char *newpass)
 
 		switch (OBJ_obj2nid(pkcs7->type)) {
 		case NID_pkcs7_data:
-			if (pkcs7_repack_data(pkcs7, newsafes, oldpass, newpass))
+			if (pkcs7_repack_data(pkcs7, safes, oldpass, newpass))
 				goto err;
 			break;
 		case NID_pkcs7_encrypted:
-			if (pkcs7_repack_encdata(pkcs7, newsafes, oldpass, newpass))
+			if (pkcs7_repack_encdata(pkcs7, safes, oldpass, newpass))
 				goto err;
 			break;
 		}
 	}
 
-	if (!pkcs12_repack_authsafes(pkcs12, newsafes, newpass))
+	if (!pkcs12_repack_authsafes(pkcs12, safes, newpass))
 		goto err;
 
 	ret = 1;
 
  err:
 	sk_PKCS7_pop_free(authsafes, PKCS7_free);
-	sk_PKCS7_pop_free(newsafes, PKCS7_free);
+	sk_PKCS7_pop_free(safes, PKCS7_free);
 
 	return ret;
 }
