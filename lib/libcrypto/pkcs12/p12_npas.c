@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.20 2024/01/25 09:40:09 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.21 2024/01/25 10:44:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -165,13 +165,54 @@ pkcs7_repack_encdata(PKCS7 *pkcs7, STACK_OF(PKCS7) *newsafes, const char *oldpas
 }
 
 static int
+pkcs12_repack_safe(PKCS12 *pkcs12, STACK_OF(PKCS7) *newsafes,
+    const char *newpass)
+{
+	ASN1_OCTET_STRING *old_data;
+	ASN1_OCTET_STRING *new_mac = NULL;
+	unsigned char mac[EVP_MAX_MD_SIZE];
+	unsigned int maclen;
+	int ret = 0;
+
+	if ((old_data = pkcs12->authsafes->d.data) == NULL)
+		goto err;
+	if ((pkcs12->authsafes->d.data = ASN1_OCTET_STRING_new()) == NULL)
+		goto err;
+	if (!PKCS12_pack_authsafes(pkcs12, newsafes))
+		goto err;
+	if (!PKCS12_gen_mac(pkcs12, newpass, -1, mac, &maclen))
+		goto err;
+	if ((new_mac = ASN1_OCTET_STRING_new()) == NULL)
+		goto err;
+	if (!ASN1_OCTET_STRING_set(new_mac, mac, maclen))
+		goto err;
+
+	ASN1_OCTET_STRING_free(pkcs12->mac->dinfo->digest);
+	pkcs12->mac->dinfo->digest = new_mac;
+	new_mac = NULL;
+
+	ASN1_OCTET_STRING_free(old_data);
+	old_data = NULL;
+
+	ret = 1;
+
+ err:
+	if (old_data != NULL) {
+		ASN1_OCTET_STRING_free(pkcs12->authsafes->d.data);
+		pkcs12->authsafes->d.data = old_data;
+	}
+	explicit_bzero(mac, sizeof(mac));
+	ASN1_OCTET_STRING_free(new_mac);
+
+	return ret;
+}
+
+static int
 newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 {
 	STACK_OF(PKCS7) *asafes = NULL, *newsafes = NULL;
-	ASN1_OCTET_STRING *p12_data_tmp = NULL, *macnew = NULL;
-	unsigned char mac[EVP_MAX_MD_SIZE];
-	unsigned int maclen;
 	int i;
+	int ret = 0;
 
 	if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
 		goto err;
@@ -192,43 +233,17 @@ newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 			break;
 		}
 	}
-	sk_PKCS7_pop_free(asafes, PKCS7_free);
-	asafes = NULL;
 
-	/* Repack safe: save old safe in case of error */
-
-	p12_data_tmp = p12->authsafes->d.data;
-	if (!(p12->authsafes->d.data = ASN1_OCTET_STRING_new())) {
-		p12->authsafes->d.data = p12_data_tmp;
+	if (!pkcs12_repack_safe(p12, newsafes, newpass))
 		goto err;
-	}
-	if (!PKCS12_pack_authsafes(p12, newsafes))
-		goto saferr;
 
-	if (!PKCS12_gen_mac(p12, newpass, -1, mac, &maclen))
-		goto saferr;
-	if (!(macnew = ASN1_OCTET_STRING_new()))
-		goto saferr;
-	if (!ASN1_OCTET_STRING_set(macnew, mac, maclen))
-		goto saferr;
-	ASN1_OCTET_STRING_free(p12->mac->dinfo->digest);
-	p12->mac->dinfo->digest = macnew;
-	ASN1_OCTET_STRING_free(p12_data_tmp);
+	ret = 1;
 
-	return 1;
-
-saferr:
-	/* Restore old safe */
-	ASN1_OCTET_STRING_free(p12->authsafes->d.data);
-	ASN1_OCTET_STRING_free(macnew);
-	p12->authsafes->d.data = p12_data_tmp;
-	return 0;
-
-err:
+ err:
 	sk_PKCS7_pop_free(asafes, PKCS7_free);
 	sk_PKCS7_pop_free(newsafes, PKCS7_free);
 
-	return 0;
+	return ret;
 }
 
 
