@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.82 2024/01/23 22:04:15 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.83 2024/01/25 20:50:58 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -797,13 +797,18 @@ const char *
 builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 {
 	static char buf[sizeof("18446744073709551615")]; /* UINT64_MAX */
-	unsigned int argn;
+	struct dtioc_probe_info *dtpi;
 	struct dtioc_arg_info *dtai;
 	const char *argtype, *fmt;
+	unsigned int argn;
 	long value;
 
-	dtai = dt_args[dtev->dtev_pbn - 1];
 	argn = dat - B_AT_BI_ARG0;
+	dtpi = &dt_dtpis[dtev->dtev_pbn - 1];
+	if (dtpi == NULL || argn >= dtpi->dtpi_nargs)
+		return "0";
+
+	dtai = dt_args[dtev->dtev_pbn - 1];
 	argtype = dtai[argn].dtai_argtype;
 
 	if (strncmp(argtype, "int", DTNAMESIZE) == 0) {
