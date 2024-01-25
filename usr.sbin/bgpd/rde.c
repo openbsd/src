@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.617 2024/01/24 14:51:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.618 2024/01/25 09:46:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1932,7 +1932,7 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 {
 	struct bgpd_addr nexthop;
 	struct rde_aspath *a = &state->aspath;
-	struct ibuf	 attrbuf;
+	struct ibuf	 attrbuf, tmpbuf;
 	u_char		*p, *npath;
 	uint32_t	 tmp32, zero = 0;
 	int		 error;
@@ -1974,20 +1974,19 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		/* ignore and drop path attributes with a type code of 0 */
 		break;
 	case ATTR_ORIGIN:
-		if (attr_len != 1)
-			goto bad_len;
-
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
-
-		UPD_READ(&a->origin, p, plen, 1);
+		if (ibuf_size(&attrbuf) != 1)
+			goto bad_len;
+		if (a->flags & F_ATTR_ORIGIN)
+			goto bad_list;
+		if (ibuf_get_n8(&attrbuf, &a->origin) == -1)
+			goto bad_len;
 		if (a->origin > ORIGIN_INCOMPLETE) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ORIGIN,
 			    &attrbuf);
 			return (-1);
 		}
-		if (a->flags & F_ATTR_ORIGIN)
-			goto bad_list;
 		a->flags |= F_ATTR_ORIGIN;
 		break;
 	case ATTR_ASPATH:
@@ -2033,17 +2032,19 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		plen += attr_len;
 		break;
 	case ATTR_NEXTHOP:
-		if (attr_len != 4)
-			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
+		if (ibuf_size(&attrbuf) != 4)
+			goto bad_len;
 		if (a->flags & F_ATTR_NEXTHOP)
 			goto bad_list;
 		a->flags |= F_ATTR_NEXTHOP;
 
 		memset(&nexthop, 0, sizeof(nexthop));
 		nexthop.aid = AID_INET;
-		UPD_READ(&nexthop.v4.s_addr, p, plen, 4);
+		if (ibuf_get_h32(&attrbuf, &nexthop.v4.s_addr) == -1)
+			goto bad_len;
+
 		/*
 		 * Check if the nexthop is a valid IP address. We consider
 		 * multicast addresses as invalid.
@@ -2058,80 +2059,77 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		state->nexthop = nexthop_get(&nexthop);
 		break;
 	case ATTR_MED:
-		if (attr_len != 4)
-			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
+		if (ibuf_size(&attrbuf) != 4)
+			goto bad_len;
 		if (a->flags & F_ATTR_MED)
 			goto bad_list;
+		if (ibuf_get_n32(&attrbuf, &a->med) == -1)
+			goto bad_len;
 		a->flags |= F_ATTR_MED;
-
-		UPD_READ(&tmp32, p, plen, 4);
-		a->med = ntohl(tmp32);
 		break;
 	case ATTR_LOCALPREF:
-		if (attr_len != 4)
-			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
+		if (ibuf_size(&attrbuf) != 4)
+			goto bad_len;
 		if (peer->conf.ebgp) {
 			/* ignore local-pref attr on non ibgp peers */
-			plen += attr_len;
 			break;
 		}
 		if (a->flags & F_ATTR_LOCALPREF)
 			goto bad_list;
+		if (ibuf_get_n32(&attrbuf, &a->lpref) == -1)
+			goto bad_len;
 		a->flags |= F_ATTR_LOCALPREF;
-
-		UPD_READ(&tmp32, p, plen, 4);
-		a->lpref = ntohl(tmp32);
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
-		if (attr_len != 0)
-			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
+		if (ibuf_size(&attrbuf) != 0)
+			goto bad_len;
 		goto optattr;
 	case ATTR_AGGREGATOR:
-		if ((!peer_has_as4byte(peer) && attr_len != 6) ||
-		    (peer_has_as4byte(peer) && attr_len != 8)) {
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
+		    ATTR_PARTIAL))
+			goto bad_flags;
+		if ((!peer_has_as4byte(peer) && ibuf_size(&attrbuf) != 6) ||
+		    (peer_has_as4byte(peer) && ibuf_size(&attrbuf) != 8)) {
 			/*
 			 * ignore attribute in case of error as per
 			 * RFC 7606
 			 */
 			log_peer_warnx(&peer->conf, "bad AGGREGATOR, "
 			    "attribute discarded");
-			plen += attr_len;
 			break;
 		}
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
-		    ATTR_PARTIAL))
-			goto bad_flags;
 		if (!peer_has_as4byte(peer)) {
 			/* need to inflate aggregator AS to 4-byte */
 			u_char	t[8];
 			t[0] = t[1] = 0;
-			UPD_READ(&t[2], p, plen, 2);
-			UPD_READ(&t[4], p, plen, 4);
+			if (ibuf_get(&attrbuf, &t[2], 6) == -1)
+				goto bad_list;
 			if (memcmp(t, &zero, sizeof(uint32_t)) == 0) {
 				/* As per RFC7606 use "attribute discard". */
 				log_peer_warnx(&peer->conf, "bad AGGREGATOR, "
 				    "AS 0 not allowed, attribute discarded");
 				break;
 			}
-			if (attr_optadd(a, flags, type, t,
-			    sizeof(t)) == -1)
+			if (attr_optadd(a, flags, type, t, sizeof(t)) == -1)
 				goto bad_list;
 			break;
 		}
 		/* 4-byte ready server take the default route */
-		if (memcmp(p, &zero, sizeof(uint32_t)) == 0) {
+		ibuf_from_ibuf(&tmpbuf, &attrbuf);
+		if (ibuf_get_n32(&tmpbuf, &tmp32) == -1)
+			goto bad_len;
+		if (tmp32 == 0) {
 			/* As per RFC7606 use "attribute discard" here. */
 			char *pfmt = log_fmt_peer(&peer->conf);
 			log_debug("%s: bad AGGREGATOR, "
 			    "AS 0 not allowed, attribute discarded", pfmt);
 			free(pfmt);
-			plen += attr_len;
 			break;
 		}
 		goto optattr;
@@ -2181,22 +2179,22 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		}
 		break;
 	case ATTR_ORIGINATOR_ID:
-		if (attr_len != 4)
-			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
+		if (ibuf_size(&attrbuf) != 4)
+			goto bad_len;
 		goto optattr;
 	case ATTR_CLUSTER_LIST:
-		if (attr_len % 4 != 0)
-			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
+		if (ibuf_size(&attrbuf) % 4 != 0)
+			goto bad_len;
 		goto optattr;
 	case ATTR_MP_REACH_NLRI:
-		if (attr_len < 5)
-			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
+		if (ibuf_size(&attrbuf) < 5)
+			goto bad_len;
 		/* the validity is checked in rde_update_dispatch() */
 		if (a->flags & F_ATTR_MP_REACH)
 			goto bad_list;
@@ -2205,10 +2203,10 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		*reach = attrbuf;
 		break;
 	case ATTR_MP_UNREACH_NLRI:
-		if (attr_len < 3)
-			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
+		if (ibuf_size(&attrbuf) < 3)
+			goto bad_len;
 		/* the validity is checked in rde_update_dispatch() */
 		if (a->flags & F_ATTR_MP_UNREACH)
 			goto bad_list;
@@ -2217,21 +2215,22 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		*unreach = attrbuf;
 		break;
 	case ATTR_AS4_AGGREGATOR:
-		if (attr_len != 8) {
-			/* see ATTR_AGGREGATOR ... */
-			log_peer_warnx(&peer->conf, "bad AS4_AGGREGATOR, "
-			    "attribute discarded");
-			plen += attr_len;
-			break;
-		}
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if (memcmp(p, &zero, sizeof(uint32_t)) == 0) {
+		if (ibuf_size(&attrbuf) != 8) {
+			/* see ATTR_AGGREGATOR ... */
+			log_peer_warnx(&peer->conf, "bad AS4_AGGREGATOR, "
+			    "attribute discarded");
+			break;
+		}
+		ibuf_from_ibuf(&tmpbuf, &attrbuf);
+		if (ibuf_get_n32(&tmpbuf, &tmp32) == -1)
+			goto bad_len;
+		if (tmp32 == 0) {
 			/* As per RFC6793 use "attribute discard" here. */
 			log_peer_warnx(&peer->conf, "bad AS4_AGGREGATOR, "
 			    "AS 0 not allowed, attribute discarded");
-			plen += attr_len;
 			break;
 		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;
@@ -2251,25 +2250,24 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		a->flags |= F_ATTR_AS4BYTE_NEW;
 		goto optattr;
 	case ATTR_OTC:
-		if (attr_len != 4) {
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
+		    ATTR_PARTIAL))
+			goto bad_flags;
+		if (ibuf_size(&attrbuf) != 4) {
 			/* treat-as-withdraw */
 			a->flags |= F_ATTR_PARSE_ERR;
 			log_peer_warnx(&peer->conf, "bad OTC, "
 			    "path invalidated and prefix withdrawn");
-			plen += attr_len;
 			break;
 		}
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
-		    ATTR_PARTIAL))
-			goto bad_flags;
 		switch (peer->role) {
 		case ROLE_PROVIDER:
 		case ROLE_RS:
 			a->flags |= F_ATTR_OTC_LEAK;
 			break;
 		case ROLE_PEER:
-			memcpy(&tmp32, p, sizeof(tmp32));
-			tmp32 = ntohl(tmp32);
+			if (ibuf_get_n32(&attrbuf, &tmp32) == -1)
+				goto bad_len;
 			if (tmp32 != peer->conf.remote_as)
 				a->flags |= F_ATTR_OTC_LEAK;
 			break;
@@ -2285,10 +2283,9 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 			return (-1);
 		}
  optattr:
-		if (attr_optadd(a, flags, type, p, attr_len) == -1)
+		if (attr_optadd(a, flags, type, ibuf_data(&attrbuf),
+		    ibuf_size(&attrbuf)) == -1)
 			goto bad_list;
-
-		plen += attr_len;
 		break;
 	}
 
