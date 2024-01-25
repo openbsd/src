@@ -3478,63 +3478,9 @@ amdgpu_attachhook(struct device *self)
 	struct drm_gem_object *obj;
 	struct amdgpu_bo *rbo;
 
-	/* from amdgpu_driver_load_kms() */
-
-	/* amdgpu_device_init should report only fatal error
-	 * like memory allocation failure or iomapping failure,
-	 * or memory manager initialization failure, it must
-	 * properly initialize the GPU MC controller and permit
-	 * VRAM allocation
-	 */
-	r = amdgpu_device_init(adev, adev->flags);
-	if (r) {
-		dev_err(&dev->pdev->dev, "Fatal error during GPU init\n");
+	r = amdgpu_driver_load_kms(adev, adev->flags);
+	if (r)
 		goto out;
-	}
-
-	adev->pm.rpm_mode = AMDGPU_RUNPM_NONE;
-	if (amdgpu_device_supports_px(dev) &&
-	    (amdgpu_runtime_pm != 0)) { /* enable PX as runtime mode */
-		adev->pm.rpm_mode = AMDGPU_RUNPM_PX;
-		dev_info(adev->dev, "Using ATPX for runtime pm\n");
-	} else if (amdgpu_device_supports_boco(dev) &&
-		   (amdgpu_runtime_pm != 0)) { /* enable boco as runtime mode */
-		adev->pm.rpm_mode = AMDGPU_RUNPM_BOCO;
-		dev_info(adev->dev, "Using BOCO for runtime pm\n");
-	} else if (amdgpu_device_supports_baco(dev) &&
-		   (amdgpu_runtime_pm != 0)) {
-		switch (adev->asic_type) {
-		case CHIP_VEGA20:
-		case CHIP_ARCTURUS:
-			/* enable BACO as runpm mode if runpm=1 */
-			if (amdgpu_runtime_pm > 0)
-				adev->pm.rpm_mode = AMDGPU_RUNPM_BACO;
-			break;
-		case CHIP_VEGA10:
-			/* enable BACO as runpm mode if noretry=0 */
-			if (!adev->gmc.noretry)
-				adev->pm.rpm_mode = AMDGPU_RUNPM_BACO;
-			break;
-		default:
-			/* enable BACO as runpm mode on CI+ */
-			adev->pm.rpm_mode = AMDGPU_RUNPM_BACO;
-			break;
-		}
-
-		if (adev->pm.rpm_mode == AMDGPU_RUNPM_BACO)
-			dev_info(adev->dev, "Using BACO for runtime pm\n");
-	}
-
-	/* Call ACPI methods: require modeset init
-	 * but failure is not fatal
-	 */
-
-	acpi_status = amdgpu_acpi_init(adev);
-	if (acpi_status)
-		dev_dbg(dev->dev, "Error during ACPI methods call\n");
-
-	if (amdgpu_acpi_smart_shift_update(dev, AMDGPU_SS_DRV_LOAD))
-		DRM_WARN("smart shift update failed\n");
 
 	/*
 	 * 1. don't init fbdev on hw without DCE
