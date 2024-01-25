@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12_local.h,v 1.3 2022/11/26 17:23:18 tb Exp $ */
+/* $OpenBSD: pkcs12_local.h,v 1.4 2024/01/25 13:44:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -95,6 +95,9 @@ struct pkcs12_bag_st {
 		ASN1_TYPE *other; /* Secret or other bag */
 	} value;
 };
+
+/* XXX - should go into pkcs7_local.h. */
+ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7);
 
 __END_HIDDEN_DECLS
 

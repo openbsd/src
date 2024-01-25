@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.35 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.36 2024/01/25 13:44:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -115,6 +115,7 @@ PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 {
 	const EVP_MD *md_type;
 	HMAC_CTX *hmac = NULL;
+	ASN1_OCTET_STRING *aos;
 	unsigned char key[EVP_MAX_MD_SIZE], *salt;
 	int saltlen, iter;
 	int md_size;
@@ -122,6 +123,10 @@ PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 
 	if (!PKCS7_type_is_data(p12->authsafes)) {
 		PKCS12error(PKCS12_R_CONTENT_TYPE_NOT_DATA);
+		goto err;
+	}
+	if ((aos = PKCS7_get_octet_string(p12->authsafes)) == NULL) {
+		PKCS12error(PKCS12_R_DECODE_ERROR);
 		goto err;
 	}
 
@@ -155,8 +160,7 @@ PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 		goto err;
 	if (!HMAC_Init_ex(hmac, key, md_size, md_type, NULL))
 		goto err;
-	if (!HMAC_Update(hmac, p12->authsafes->d.data->data,
-	    p12->authsafes->d.data->length))
+	if (!HMAC_Update(hmac, aos->data, aos->length))
 		goto err;
 	if (!HMAC_Final(hmac, mac, maclen))
 		goto err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_mime.c,v 1.19 2023/05/02 09:56:12 tb Exp $ */
+/* $OpenBSD: pk7_mime.c,v 1.20 2024/01/25 13:44:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -89,8 +89,11 @@ SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 	STACK_OF(X509_ALGOR) *mdalgs = NULL;
 	int ctype_nid;
 
-	if ((ctype_nid = OBJ_obj2nid(p7->type)) == NID_pkcs7_signed)
+	if ((ctype_nid = OBJ_obj2nid(p7->type)) == NID_pkcs7_signed) {
+		if (p7->d.sign == NULL)
+			return 0;
 		mdalgs = p7->d.sign->md_algs;
+	}
 
 	flags ^= SMIME_OLDMIME;
 
