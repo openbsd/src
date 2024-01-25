@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.22 2024/01/25 10:53:05 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.23 2024/01/25 13:32:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,7 +68,6 @@
 
 /* PKCS#12 password change routine */
 
-static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass);
 static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
     const char *newpass);
 static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
@@ -78,32 +77,6 @@ static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
 /*
  * Change the password on a PKCS#12 structure.
  */
-
-int
-PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass)
-{
-	/* Check for NULL PKCS12 structure */
-
-	if (!p12) {
-		PKCS12error(PKCS12_R_INVALID_NULL_PKCS12_POINTER);
-		return 0;
-	}
-
-	/* Check the mac */
-
-	if (!PKCS12_verify_mac(p12, oldpass, -1)) {
-		PKCS12error(PKCS12_R_MAC_VERIFY_FAILURE);
-		return 0;
-	}
-
-	if (!newpass_p12(p12, oldpass, newpass)) {
-		PKCS12error(PKCS12_R_PARSE_ERROR);
-		return 0;
-	}
-
-	return 1;
-}
-LCRYPTO_ALIAS(PKCS12_newpass);
 
 static int
 pkcs7_repack_data(PKCS7 *pkcs7, STACK_OF(PKCS7) *newsafes, const char *oldpass,
@@ -207,20 +180,30 @@ pkcs12_repack_authsafes(PKCS12 *pkcs12, STACK_OF(PKCS7) *newsafes,
 	return ret;
 }
 
-static int
-newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
+int
+PKCS12_newpass(PKCS12 *pkcs12, const char *oldpass, const char *newpass)
 {
-	STACK_OF(PKCS7) *asafes = NULL, *newsafes = NULL;
+	STACK_OF(PKCS7) *authsafes = NULL, *newsafes = NULL;
 	int i;
 	int ret = 0;
 
-	if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
+	if (pkcs12 == NULL) {
+		PKCS12error(PKCS12_R_INVALID_NULL_PKCS12_POINTER);
+		goto err;
+	}
+
+	if (!PKCS12_verify_mac(pkcs12, oldpass, -1)) {
+		PKCS12error(PKCS12_R_MAC_VERIFY_FAILURE);
+		goto err;
+	}
+
+	if ((authsafes = PKCS12_unpack_authsafes(pkcs12)) == NULL)
 		goto err;
 	if ((newsafes = sk_PKCS7_new_null()) == NULL)
 		goto err;
 
-	for (i = 0; i < sk_PKCS7_num(asafes); i++) {
-		PKCS7 *pkcs7 = sk_PKCS7_value(asafes, i);
+	for (i = 0; i < sk_PKCS7_num(authsafes); i++) {
+		PKCS7 *pkcs7 = sk_PKCS7_value(authsafes, i);
 
 		switch (OBJ_obj2nid(pkcs7->type)) {
 		case NID_pkcs7_data:
@@ -234,18 +217,18 @@ newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 		}
 	}
 
-	if (!pkcs12_repack_authsafes(p12, newsafes, newpass))
+	if (!pkcs12_repack_authsafes(pkcs12, newsafes, newpass))
 		goto err;
 
 	ret = 1;
 
  err:
-	sk_PKCS7_pop_free(asafes, PKCS7_free);
+	sk_PKCS7_pop_free(authsafes, PKCS7_free);
 	sk_PKCS7_pop_free(newsafes, PKCS7_free);
 
 	return ret;
 }
-
+LCRYPTO_ALIAS(PKCS12_newpass);
 
 static int
 newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
