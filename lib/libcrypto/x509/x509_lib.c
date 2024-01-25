@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.14 2023/04/25 10:56:58 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.15 2024/01/25 12:20:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,8 +64,6 @@
 #include <openssl/x509v3.h>
 
 #include "x509_local.h"
-
-static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
 extern const X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
 extern const X509V3_EXT_METHOD v3_pkey_usage_period, v3_info, v3_sinfo;
@@ -142,62 +140,17 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 
 #define STANDARD_EXTENSION_COUNT (sizeof(standard_exts) / sizeof(standard_exts[0]))
 
-static int
-ext_cmp(const X509V3_EXT_METHOD * const *a, const X509V3_EXT_METHOD * const *b)
-{
-	return ((*a)->ext_nid - (*b)->ext_nid);
-}
-
-int
-X509V3_EXT_add(X509V3_EXT_METHOD *ext)
-{
-	if (!ext_list && !(ext_list = sk_X509V3_EXT_METHOD_new(ext_cmp))) {
-		X509V3error(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	if (!sk_X509V3_EXT_METHOD_push(ext_list, ext)) {
-		X509V3error(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	return 1;
-}
-LCRYPTO_ALIAS(X509V3_EXT_add);
-
-static int
-ext_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
-{
-	const X509V3_EXT_METHOD * const *a = a_;
-	const X509V3_EXT_METHOD * const *b = b_;
-	return ext_cmp(a, b);
-}
-
-static const X509V3_EXT_METHOD **
-OBJ_bsearch_ext(const X509V3_EXT_METHOD **key,
-    const X509V3_EXT_METHOD *const *base, int num)
-{
-	return (const X509V3_EXT_METHOD **)OBJ_bsearch_(key, base, num,
-	    sizeof(const X509V3_EXT_METHOD *), ext_cmp_BSEARCH_CMP_FN);
-}
-
 const X509V3_EXT_METHOD *
 X509V3_EXT_get_nid(int nid)
 {
-	X509V3_EXT_METHOD tmp;
-	const X509V3_EXT_METHOD *t = &tmp, * const *ret;
-	int idx;
+	size_t i;
 
-	if (nid < 0)
-		return NULL;
-	tmp.ext_nid = nid;
-	ret = OBJ_bsearch_ext(&t, standard_exts, STANDARD_EXTENSION_COUNT);
-	if (ret)
-		return *ret;
-	if (!ext_list)
-		return NULL;
-	idx = sk_X509V3_EXT_METHOD_find(ext_list, &tmp);
-	if (idx == -1)
-		return NULL;
-	return sk_X509V3_EXT_METHOD_value(ext_list, idx);
+	for (i = 0; i < STANDARD_EXTENSION_COUNT; i++) {
+		if (standard_exts[i]->ext_nid == nid)
+			return standard_exts[i];
+	}
+
+	return NULL;
 }
 LCRYPTO_ALIAS(X509V3_EXT_get_nid);
 
@@ -211,56 +164,6 @@ X509V3_EXT_get(X509_EXTENSION *ext)
 	return X509V3_EXT_get_nid(nid);
 }
 LCRYPTO_ALIAS(X509V3_EXT_get);
-
-int
-X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
-{
-	for (; extlist->ext_nid!=-1; extlist++)
-		if (!X509V3_EXT_add(extlist))
-			return 0;
-	return 1;
-}
-LCRYPTO_ALIAS(X509V3_EXT_add_list);
-
-int
-X509V3_EXT_add_alias(int nid_to, int nid_from)
-{
-	const X509V3_EXT_METHOD *ext;
-	X509V3_EXT_METHOD *tmpext;
-
-	if (!(ext = X509V3_EXT_get_nid(nid_from))) {
-		X509V3error(X509V3_R_EXTENSION_NOT_FOUND);
-		return 0;
-	}
-	if (!(tmpext = malloc(sizeof(X509V3_EXT_METHOD)))) {
-		X509V3error(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	*tmpext = *ext;
-	tmpext->ext_nid = nid_to;
-	tmpext->ext_flags |= X509V3_EXT_DYNAMIC;
-	if (!X509V3_EXT_add(tmpext)) {
-		free(tmpext);
-		return 0;
-	}
-	return 1;
-}
-LCRYPTO_ALIAS(X509V3_EXT_add_alias);
-
-static void
-ext_list_free(X509V3_EXT_METHOD *ext)
-{
-	if (ext->ext_flags & X509V3_EXT_DYNAMIC)
-		free(ext);
-}
-
-void
-X509V3_EXT_cleanup(void)
-{
-	sk_X509V3_EXT_METHOD_pop_free(ext_list, ext_list_free);
-	ext_list = NULL;
-}
-LCRYPTO_ALIAS(X509V3_EXT_cleanup);
 
 int
 X509V3_add_standard_extensions(void)
@@ -434,3 +337,37 @@ err:
 	return 0;
 }
 LCRYPTO_ALIAS(X509V3_add1_i2d);
+
+/*
+ * XXX - remove all the functions below in the next major bump.
+ */
+
+int
+X509V3_EXT_add(X509V3_EXT_METHOD *ext)
+{
+	X509V3error(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(X509V3_EXT_add);
+
+int
+X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
+{
+	X509V3error(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(X509V3_EXT_add_list);
+
+int
+X509V3_EXT_add_alias(int nid_to, int nid_from)
+{
+	X509V3error(ERR_R_DISABLED);
+	return 0;
+}
+LCRYPTO_ALIAS(X509V3_EXT_add_alias);
+
+void
+X509V3_EXT_cleanup(void)
+{
+}
+LCRYPTO_ALIAS(X509V3_EXT_cleanup);
