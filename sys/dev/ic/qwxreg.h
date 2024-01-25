@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxreg.h,v 1.1 2023/12/28 17:36:29 stsp Exp $	*/
+/*	$OpenBSD: qwxreg.h,v 1.2 2024/01/25 10:11:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -2911,7 +2911,7 @@ struct wmi_vdev_start_req_arg {
 };
 
 struct peer_create_params {
-	const uint8_t *peer_addr;
+	uint8_t *peer_addr;
 	uint32_t peer_type;
 	uint32_t vdev_id;
 };
@@ -8257,6 +8257,85 @@ struct hal_reo_cmd_hdr {
 	uint32_t info0;
 } __packed;
 
+
+#define HAL_SRNG_DESC_LOOP_CNT		0xf0000000
+
+#define HAL_REO_CMD_FLG_NEED_STATUS		BIT(0)
+#define HAL_REO_CMD_FLG_STATS_CLEAR		BIT(1)
+#define HAL_REO_CMD_FLG_FLUSH_BLOCK_LATER	BIT(2)
+#define HAL_REO_CMD_FLG_FLUSH_RELEASE_BLOCKING	BIT(3)
+#define HAL_REO_CMD_FLG_FLUSH_NO_INVAL		BIT(4)
+#define HAL_REO_CMD_FLG_FLUSH_FWD_ALL_MPDUS	BIT(5)
+#define HAL_REO_CMD_FLG_FLUSH_ALL		BIT(6)
+#define HAL_REO_CMD_FLG_UNBLK_RESOURCE		BIT(7)
+#define HAL_REO_CMD_FLG_UNBLK_CACHE		BIT(8)
+
+/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO0_UPD_* feilds */
+#define HAL_REO_CMD_UPD0_RX_QUEUE_NUM		BIT(8)
+#define HAL_REO_CMD_UPD0_VLD			BIT(9)
+#define HAL_REO_CMD_UPD0_ALDC			BIT(10)
+#define HAL_REO_CMD_UPD0_DIS_DUP_DETECTION	BIT(11)
+#define HAL_REO_CMD_UPD0_SOFT_REORDER_EN	BIT(12)
+#define HAL_REO_CMD_UPD0_AC			BIT(13)
+#define HAL_REO_CMD_UPD0_BAR			BIT(14)
+#define HAL_REO_CMD_UPD0_RETRY			BIT(15)
+#define HAL_REO_CMD_UPD0_CHECK_2K_MODE		BIT(16)
+#define HAL_REO_CMD_UPD0_OOR_MODE		BIT(17)
+#define HAL_REO_CMD_UPD0_BA_WINDOW_SIZE		BIT(18)
+#define HAL_REO_CMD_UPD0_PN_CHECK		BIT(19)
+#define HAL_REO_CMD_UPD0_EVEN_PN		BIT(20)
+#define HAL_REO_CMD_UPD0_UNEVEN_PN		BIT(21)
+#define HAL_REO_CMD_UPD0_PN_HANDLE_ENABLE	BIT(22)
+#define HAL_REO_CMD_UPD0_PN_SIZE		BIT(23)
+#define HAL_REO_CMD_UPD0_IGNORE_AMPDU_FLG	BIT(24)
+#define HAL_REO_CMD_UPD0_SVLD			BIT(25)
+#define HAL_REO_CMD_UPD0_SSN			BIT(26)
+#define HAL_REO_CMD_UPD0_SEQ_2K_ERR		BIT(27)
+#define HAL_REO_CMD_UPD0_PN_ERR			BIT(28)
+#define HAL_REO_CMD_UPD0_PN_VALID		BIT(29)
+#define HAL_REO_CMD_UPD0_PN			BIT(30)
+
+/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO1_* feilds */
+#define HAL_REO_CMD_UPD1_VLD			BIT(16)
+#define HAL_REO_CMD_UPD1_ALDC			GENMASK(18, 17)
+#define HAL_REO_CMD_UPD1_DIS_DUP_DETECTION	BIT(19)
+#define HAL_REO_CMD_UPD1_SOFT_REORDER_EN	BIT(20)
+#define HAL_REO_CMD_UPD1_AC			GENMASK(22, 21)
+#define HAL_REO_CMD_UPD1_BAR			BIT(23)
+#define HAL_REO_CMD_UPD1_RETRY			BIT(24)
+#define HAL_REO_CMD_UPD1_CHECK_2K_MODE		BIT(25)
+#define HAL_REO_CMD_UPD1_OOR_MODE		BIT(26)
+#define HAL_REO_CMD_UPD1_PN_CHECK		BIT(27)
+#define HAL_REO_CMD_UPD1_EVEN_PN		BIT(28)
+#define HAL_REO_CMD_UPD1_UNEVEN_PN		BIT(29)
+#define HAL_REO_CMD_UPD1_PN_HANDLE_ENABLE	BIT(30)
+#define HAL_REO_CMD_UPD1_IGNORE_AMPDU_FLG	BIT(31)
+
+/* Should be matching with HAL_REO_UPD_RX_QUEUE_INFO2_* feilds */
+#define HAL_REO_CMD_UPD2_SVLD			BIT(10)
+#define HAL_REO_CMD_UPD2_SSN			GENMASK(22, 11)
+#define HAL_REO_CMD_UPD2_SEQ_2K_ERR		BIT(23)
+#define HAL_REO_CMD_UPD2_PN_ERR			BIT(24)
+
+#define HAL_REO_DEST_RING_CTRL_HASH_RING_MAP	GENMASK(31, 8)
+
+struct ath11k_hal_reo_cmd {
+	uint32_t addr_lo;
+	uint32_t flag;
+	uint32_t upd0;
+	uint32_t upd1;
+	uint32_t upd2;
+	uint32_t pn[4];
+	uint16_t rx_queue_num;
+	uint16_t min_rel;
+	uint16_t min_fwd;
+	uint8_t addr_hi;
+	uint8_t ac_list;
+	uint8_t blocking_idx;
+	uint16_t ba_window_size;
+	uint8_t pn_size;
+};
+
 #define HAL_REO_GET_QUEUE_STATS_INFO0_QUEUE_ADDR_HI	GENMASK(7, 0)
 #define HAL_REO_GET_QUEUE_STATS_INFO0_CLEAR_STATS	BIT(8)
 
@@ -9861,6 +9940,11 @@ struct hal_reo_desc_thresh_reached_status {
  *		A count value that indicates the number of times the producer of
  *		entries into this Ring has looped around the ring.
  */
+
+#define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_0 0xDDBEEF
+#define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_1 0xADBEEF
+#define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_2 0xBDBEEF
+#define REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_3 0xCDBEEF
 
 #define HAL_TX_ADDRX_EN			1
 #define HAL_TX_ADDRY_EN			2

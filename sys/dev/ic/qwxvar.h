@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.3 2024/01/25 09:51:33 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.4 2024/01/25 10:11:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -645,6 +645,13 @@ struct ath11k_hal {
 #endif
 };
 
+enum hal_pn_type {
+	HAL_PN_TYPE_NONE,
+	HAL_PN_TYPE_WPA,
+	HAL_PN_TYPE_WAPI_EVEN,
+	HAL_PN_TYPE_WAPI_UNEVEN,
+};
+
 enum hal_ce_desc {
 	HAL_CE_DESC_SRC,
 	HAL_CE_DESC_DST,
@@ -839,8 +846,9 @@ struct qwx_hp_update_timer {
 
 struct dp_rx_tid {
 	uint8_t tid;
+	struct qwx_dmamem *mem;
 	uint32_t *vaddr;
-	bus_addr_t paddr;
+	uint64_t paddr;
 	uint32_t size;
 	uint32_t ba_win_sz;
 	int active;
@@ -1512,8 +1520,8 @@ struct qwx_vif {
 	bool wpaie_present;
 	bool bcca_zero_sent;
 	bool do_not_send_tmpl;
+	struct ieee80211_channel *chan;
 #if 0
-	struct ieee80211_chanctx_conf chanctx;
 	struct ath11k_arp_ns_offload arp_ns_offload;
 	struct ath11k_rekey_data rekey_data;
 #endif
@@ -1615,6 +1623,9 @@ struct qwx_softc {
 	uint32_t			allocated_vdev_map;
 	uint32_t			free_vdev_map;
 	int				num_peers;
+	int				peer_mapped;
+	int				peer_delete_done;
+	int				vdev_setup_done;
 
 	struct qwx_dbring_cap	*db_caps;
 	uint32_t		 num_db_cap;
@@ -1632,7 +1643,7 @@ struct qwx_softc {
 		uint32_t pdev_id;
 	} target_pdev_ids[MAX_RADIOS];
 	uint8_t target_pdev_count;
-	struct qwx_pdev *pdevs_active[MAX_RADIOS];
+	uint32_t pdevs_active;
 	int pdevs_macaddr_valid;
 	struct ath11k_hal_reg_capabilities_ext hal_reg_cap[MAX_RADIOS];
 
@@ -1688,8 +1699,46 @@ void	qwx_init_task(void *);
 int	qwx_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	qwx_newstate_task(void *);
 
+struct ath11k_peer {
+#if 0
+	struct list_head list;
+	struct ieee80211_sta *sta;
+#endif
+	int vdev_id;
+#if 0
+	u8 addr[ETH_ALEN];
+#endif
+	int peer_id;
+	uint16_t ast_hash;
+	uint8_t pdev_id;
+	uint16_t hw_peer_id;
+#if 0
+	/* protected by ab->data_lock */
+	struct ieee80211_key_conf *keys[WMI_MAX_KEY_INDEX + 1];
+#endif
+	struct dp_rx_tid rx_tid[IEEE80211_NUM_TID + 1];
+#if 0
+	/* peer id based rhashtable list pointer */
+	struct rhash_head rhash_id;
+	/* peer addr based rhashtable list pointer */
+	struct rhash_head rhash_addr;
+
+	/* Info used in MMIC verification of
+	 * RX fragments
+	 */
+	struct crypto_shash *tfm_mmic;
+	u8 mcast_keyidx;
+	u8 ucast_keyidx;
+	u16 sec_type;
+	u16 sec_type_grp;
+	bool is_authorized;
+	bool dp_setup_done;
+#endif
+};
+
 struct qwx_node {
 	struct ieee80211_node ni;
+	struct ath11k_peer peer;
 };
 
 struct ieee80211_node *qwx_node_alloc(struct ieee80211com *);
@@ -1714,4 +1763,12 @@ qwx_ce_get_attr_flags(struct qwx_softc *sc, int ce_id)
 {
 	KASSERT(ce_id < sc->hw_params.ce_count);
 	return sc->hw_params.host_ce_config[ce_id].flags;
+}
+
+static inline enum ieee80211_edca_ac qwx_tid_to_ac(uint32_t tid)
+{
+	return (((tid == 0) || (tid == 3)) ? EDCA_AC_BE :
+		((tid == 1) || (tid == 2)) ? EDCA_AC_BK :
+		((tid == 4) || (tid == 5)) ? EDCA_AC_VI :
+		EDCA_AC_VO);
 }
