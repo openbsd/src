@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.618 2024/01/25 09:46:12 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.619 2024/01/25 11:13:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1983,8 +1983,14 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		if (ibuf_get_n8(&attrbuf, &a->origin) == -1)
 			goto bad_len;
 		if (a->origin > ORIGIN_INCOMPLETE) {
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ORIGIN,
-			    &attrbuf);
+			/*
+			 * mark update as bad and withdraw all routes as per
+			 * RFC 7606
+			 */
+			a->flags |= F_ATTR_PARSE_ERR;
+			log_peer_warnx(&peer->conf, "bad ORIGIN %u, "
+			    "path invalidated and prefix withdrawn",
+			    a->origin);
 			return (-1);
 		}
 		a->flags |= F_ATTR_ORIGIN;
