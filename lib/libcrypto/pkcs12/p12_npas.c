@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.24 2024/01/25 14:08:30 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.25 2024/01/25 14:09:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -144,7 +144,7 @@ pkcs12_repack_authsafes(PKCS12 *pkcs12, STACK_OF(PKCS7) *safes,
 	ASN1_OCTET_STRING *old_data;
 	ASN1_OCTET_STRING *new_mac = NULL;
 	unsigned char mac[EVP_MAX_MD_SIZE];
-	unsigned int maclen;
+	unsigned int mac_len;
 	int ret = 0;
 
 	if ((old_data = pkcs12->authsafes->d.data) == NULL)
@@ -153,11 +153,11 @@ pkcs12_repack_authsafes(PKCS12 *pkcs12, STACK_OF(PKCS7) *safes,
 		goto err;
 	if (!PKCS12_pack_authsafes(pkcs12, safes))
 		goto err;
-	if (!PKCS12_gen_mac(pkcs12, newpass, -1, mac, &maclen))
+	if (!PKCS12_gen_mac(pkcs12, newpass, -1, mac, &mac_len))
 		goto err;
 	if ((new_mac = ASN1_OCTET_STRING_new()) == NULL)
 		goto err;
-	if (!ASN1_OCTET_STRING_set(new_mac, mac, maclen))
+	if (!ASN1_OCTET_STRING_set(new_mac, mac, mac_len))
 		goto err;
 
 	ASN1_OCTET_STRING_free(pkcs12->mac->dinfo->digest);
