@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.25 2024/01/25 14:09:26 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.26 2024/01/25 14:15:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,15 +68,59 @@
 
 /* PKCS#12 password change routine */
 
-static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
-    const char *newpass);
-static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
-    const char *newpass);
-static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
+static int
+alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen)
+{
+	PBEPARAM *pbe;
+	const unsigned char *p;
 
-/*
- * Change the password on a PKCS#12 structure.
- */
+	p = alg->parameter->value.sequence->data;
+	pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
+	if (!pbe)
+		return 0;
+	*pnid = OBJ_obj2nid(alg->algorithm);
+	*piter = ASN1_INTEGER_get(pbe->iter);
+	*psaltlen = pbe->salt->length;
+	PBEPARAM_free(pbe);
+	return 1;
+}
+
+/* Change password of safebag: only needs handle shrouded keybags */
+static int
+newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass, const char *newpass)
+{
+	PKCS8_PRIV_KEY_INFO *p8;
+	X509_SIG *p8new;
+	int p8_nid, p8_saltlen, p8_iter;
+
+	if (OBJ_obj2nid(bag->type) != NID_pkcs8ShroudedKeyBag)
+		return 1;
+
+	if (!(p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)))
+		return 0;
+	if (!alg_get(bag->value.shkeybag->algor, &p8_nid, &p8_iter,
+	    &p8_saltlen))
+		return 0;
+	if (!(p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
+	    p8_iter, p8))) return 0;
+	X509_SIG_free(bag->value.shkeybag);
+	bag->value.shkeybag = p8new;
+	return 1;
+}
+
+static int
+newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
+    const char *newpass)
+{
+	int i;
+
+	for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
+		if (!newpass_bag(sk_PKCS12_SAFEBAG_value(bags, i),
+		    oldpass, newpass))
+			return 0;
+	}
+	return 1;
+}
 
 static int
 pkcs7_repack_data(PKCS7 *pkcs7, STACK_OF(PKCS7) *safes, const char *oldpass,
@@ -229,58 +273,3 @@ PKCS12_newpass(PKCS12 *pkcs12, const char *oldpass, const char *newpass)
 	return ret;
 }
 LCRYPTO_ALIAS(PKCS12_newpass);
-
-static int
-newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
-    const char *newpass)
-{
-	int i;
-
-	for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
-		if (!newpass_bag(sk_PKCS12_SAFEBAG_value(bags, i),
-		    oldpass, newpass))
-			return 0;
-	}
-	return 1;
-}
-
-/* Change password of safebag: only needs handle shrouded keybags */
-
-static int
-newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass, const char *newpass)
-{
-	PKCS8_PRIV_KEY_INFO *p8;
-	X509_SIG *p8new;
-	int p8_nid, p8_saltlen, p8_iter;
-
-	if (OBJ_obj2nid(bag->type) != NID_pkcs8ShroudedKeyBag)
-		return 1;
-
-	if (!(p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)))
-		return 0;
-	if (!alg_get(bag->value.shkeybag->algor, &p8_nid, &p8_iter,
-	    &p8_saltlen))
-		return 0;
-	if (!(p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
-	    p8_iter, p8))) return 0;
-	X509_SIG_free(bag->value.shkeybag);
-	bag->value.shkeybag = p8new;
-	return 1;
-}
-
-static int
-alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen)
-{
-	PBEPARAM *pbe;
-	const unsigned char *p;
-
-	p = alg->parameter->value.sequence->data;
-	pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
-	if (!pbe)
-		return 0;
-	*pnid = OBJ_obj2nid(alg->algorithm);
-	*piter = ASN1_INTEGER_get(pbe->iter);
-	*psaltlen = pbe->salt->length;
-	PBEPARAM_free(pbe);
-	return 1;
-}
