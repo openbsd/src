@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.15 2024/01/25 12:20:17 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.16 2024/01/25 15:09:22 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -77,10 +77,6 @@ extern const X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
 extern const X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp, v3_idp;
 extern const X509V3_EXT_METHOD v3_addr, v3_asid;
 extern const X509V3_EXT_METHOD v3_ct_scts[3];
-
-/*
- * This table needs to be sorted by increasing ext_nid values for OBJ_bsearch_.
- */
 
 static const X509V3_EXT_METHOD *standard_exts[] = {
 	&v3_nscert,
