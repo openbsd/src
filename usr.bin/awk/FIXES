@@ -25,11 +25,22 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the 
 second edition of the AWK book was published in September 2023.
 
+Jan 22, 2024:
+	Restore the ability to compile with g++. Thanks to
+	Arnold Robbins.
+
+Dec 24, 2023:
+	matchop dereference after free problem fix when the first
+	argument is a function call. thanks to Oguz Ismail Uysal.
+	Fix inconsistent handling of --csv and FS set in the
+	command line. Thanks to Wilbert van der Poel.
+	casting changes to int for is* functions. 
+
 Nov 27, 2023:
 	Fix exit status of system on MacOS. update to REGRESS.
 	Thanks to Arnold Robbins. 
 	Fix inconsistent handling of -F and --csv, and loss of csv
-	mode when FS is set. Thanks to Wilbert van der Poel.
+	mode when FS is set. 
 	
 Nov 24, 2023:
         Fix issue #199: gototab improvements to dynamically resize the
