@@ -3653,10 +3653,12 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 		adev->rmmio_base = pci_resource_start(adev->pdev, 2);
 		adev->rmmio_size = pci_resource_len(adev->pdev, 2);
 	}
+#endif
 
 	for (i = 0; i < AMD_IP_BLOCK_TYPE_NUM; i++)
 		atomic_set(&adev->pm.pwr_state[i], POWER_STATE_UNKNOWN);
 
+#ifdef __linux__
 	adev->rmmio = ioremap(adev->rmmio_base, adev->rmmio_size);
 	if (!adev->rmmio)
 		return -ENOMEM;
