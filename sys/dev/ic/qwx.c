@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.4 2024/01/25 09:51:33 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.5 2024/01/25 10:03:20 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -12260,7 +12260,9 @@ int
 qwx_dp_rx_pdev_srng_alloc(struct qwx_softc *sc)
 {
 	struct qwx_pdev_dp *dp = &sc->pdev_dp;
+#if 0
 	struct dp_srng *srng = NULL;
+#endif
 	int i;
 	int ret;
 
@@ -12295,7 +12297,7 @@ qwx_dp_rx_pdev_srng_alloc(struct qwx_softc *sc)
 			return ret;
 		}
 	}
-
+#if 0
 	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
 		srng = &dp->rx_mon_status_refill_ring[i].refill_buf_ring;
 		ret = qwx_dp_srng_setup(sc, srng, HAL_RXDMA_MONITOR_STATUS, 0,
@@ -12307,7 +12309,7 @@ qwx_dp_rx_pdev_srng_alloc(struct qwx_softc *sc)
 			return ret;
 		}
 	}
-
+#endif
 	/* if rxdma1_enable is false, then it doesn't need
 	 * to setup rxdam_mon_buf_ring, rxdma_mon_dst_ring
 	 * and rxdma_mon_desc_ring.
@@ -12554,7 +12556,10 @@ qwx_dp_rxdma_pdev_buf_setup(struct qwx_softc *sc)
 {
 	struct qwx_pdev_dp *dp = &sc->pdev_dp;
 	struct dp_rxdma_ring *rx_ring;
-	int ret, i;
+	int ret;
+#if 0
+	int i;
+#endif
 
 	rx_ring = &dp->rx_refill_buf_ring;
 	ret = qwx_dp_rxdma_ring_buf_setup(sc, rx_ring, HAL_RXDMA_BUF);
@@ -12568,7 +12573,7 @@ qwx_dp_rxdma_pdev_buf_setup(struct qwx_softc *sc)
 		if (ret)
 			return ret;
 	}
-
+#if 0
 	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
 		rx_ring = &dp->rx_mon_status_refill_ring[i];
 		ret = qwx_dp_rxdma_ring_buf_setup(sc, rx_ring,
@@ -12576,7 +12581,7 @@ qwx_dp_rxdma_pdev_buf_setup(struct qwx_softc *sc)
 		if (ret)
 			return ret;
 	}
-
+#endif
 	return 0;
 }
 
@@ -12979,6 +12984,7 @@ qwx_dp_rx_pdev_alloc(struct qwx_softc *sc, int mac_id)
 	}
 #endif
 config_refill_ring:
+#if 0
 	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
 		ret = qwx_dp_tx_htt_srng_setup(sc,
 		    dp->rx_mon_status_refill_ring[i].refill_buf_ring.ring_id,
@@ -12990,7 +12996,7 @@ config_refill_ring:
 			return ret;
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -17589,12 +17595,15 @@ int
 qwx_mac_config_mon_status_default(struct qwx_softc *sc, int enable)
 {
 	struct htt_rx_ring_tlv_filter tlv_filter = { 0 };
-	int i, ret = 0;
+	int ret = 0;
+#if 0
+	int i;
 	struct dp_rxdma_ring *ring;
+#endif
 
 	if (enable)
 		tlv_filter = qwx_mac_mon_status_filter_default;
-
+#if 0
 	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
 		ring = &sc->pdev_dp.rx_mon_status_refill_ring[i];
 		ret = qwx_dp_tx_htt_rx_filter_setup(sc,
@@ -17603,6 +17612,7 @@ qwx_mac_config_mon_status_default(struct qwx_softc *sc, int enable)
 		if (ret)
 			return ret;
 	}
+#endif
 #if 0
 	if (enable && !ar->ab->hw_params.rxdma1_enable)
 		mod_timer(&ar->ab->mon_reap_timer, jiffies +
