@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.4 2024/01/25 10:11:04 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.5 2024/01/25 17:00:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -69,12 +69,12 @@ struct ath11k_hw_ring_mask {
 #define ATH11K_FW_DIR			"qwx"
 
 #define ATH11K_BOARD_MAGIC		"QCA-ATH11K-BOARD"
-#define ATH11K_BOARD_API2_FILE		"board-2.bin"
-#define ATH11K_DEFAULT_BOARD_FILE	"board.bin"
-#define ATH11K_DEFAULT_CAL_FILE		"caldata.bin"
-#define ATH11K_AMSS_FILE		"amss.bin"
-#define ATH11K_M3_FILE			"m3.bin"
-#define ATH11K_REGDB_FILE		"regdb.bin"
+#define ATH11K_BOARD_API2_FILE		"board-2"
+#define ATH11K_DEFAULT_BOARD_FILE	"board"
+#define ATH11K_DEFAULT_CAL_FILE		"caldata"
+#define ATH11K_AMSS_FILE		"amss"
+#define ATH11K_M3_FILE			"m3"
+#define ATH11K_REGDB_FILE		"regdb"
 
 #define QWX_FW_BUILD_ID_MASK "QC_IMAGE_VERSION_STRING="
 

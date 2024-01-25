@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.7 2024/01/25 10:11:04 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.8 2024/01/25 17:00:20 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -2115,7 +2115,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.hw_rev = ATH11K_HW_IPQ8074,
 		.name = "ipq8074 hw2.0",
 		.fw = {
-			.dir = "IPQ8074/hw2.0",
+			.dir = "ipq8074-hw2.0",
 			.board_size = 256 * 1024,
 			.cal_offset = 128 * 1024,
 		},
@@ -2205,7 +2205,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.hw_rev = ATH11K_HW_IPQ6018_HW10,
 		.name = "ipq6018 hw1.0",
 		.fw = {
-			.dir = "IPQ6018/hw1.0",
+			.dir = "ipq6018-hw1.0",
 			.board_size = 256 * 1024,
 			.cal_offset = 128 * 1024,
 		},
@@ -2292,7 +2292,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.name = "qca6390 hw2.0",
 		.hw_rev = ATH11K_HW_QCA6390_HW20,
 		.fw = {
-			.dir = "QCA6390/hw2.0",
+			.dir = "qca6390-hw2.0",
 			.board_size = 256 * 1024,
 			.cal_offset = 128 * 1024,
 		},
@@ -2381,7 +2381,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.name = "qcn9074 hw1.0",
 		.hw_rev = ATH11K_HW_QCN9074_HW10,
 		.fw = {
-			.dir = "QCN9074/hw1.0",
+			.dir = "qcn9074-hw1.0",
 			.board_size = 256 * 1024,
 			.cal_offset = 128 * 1024,
 		},
@@ -2469,7 +2469,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.name = "wcn6855 hw2.0",
 		.hw_rev = ATH11K_HW_WCN6855_HW20,
 		.fw = {
-			.dir = "WCN6855/hw2.0",
+			.dir = "wcn6855-hw2.0",
 			.board_size = 256 * 1024,
 			.cal_offset = 128 * 1024,
 		},
@@ -2558,7 +2558,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.name = "wcn6855 hw2.1",
 		.hw_rev = ATH11K_HW_WCN6855_HW21,
 		.fw = {
-			.dir = "WCN6855/hw2.1",
+			.dir = "wcn6855-hw2.1",
 			.board_size = 256 * 1024,
 			.cal_offset = 128 * 1024,
 		},
@@ -2646,7 +2646,7 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.name = "wcn6750 hw1.0",
 		.hw_rev = ATH11K_HW_WCN6750_HW10,
 		.fw = {
-			.dir = "WCN6750/hw1.0",
+			.dir = "wcn6750-hw1.0",
 			.board_size = 256 * 1024,
 			.cal_offset = 128 * 1024,
 		},
@@ -7296,7 +7296,7 @@ qwx_core_fetch_bdf(struct qwx_softc *sc, u_char **data, size_t *len,
 	char boardname[200];
 	int ret;
 
-	ret = snprintf(path, sizeof(path), "%s/%s/%s",
+	ret = snprintf(path, sizeof(path), "%s-%s-%s",
 	    ATH11K_FW_DIR, sc->hw_params.fw.dir, filename);
 	if (ret < 0 || ret >= sizeof(path))
 		return ENOSPC;
@@ -7584,7 +7584,7 @@ qwx_qmi_m3_load(struct qwx_softc *sc)
 	char path[PATH_MAX];
 	int ret;
 
-	ret = snprintf(path, sizeof(path), "%s/%s/%s",
+	ret = snprintf(path, sizeof(path), "%s-%s-%s",
 	    ATH11K_FW_DIR, sc->hw_params.fw.dir, ATH11K_M3_FILE);
 	if (ret < 0 || ret >= sizeof(path))
 		return ENOSPC;

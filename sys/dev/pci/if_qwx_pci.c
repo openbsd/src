@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.3 2024/01/25 09:44:56 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.4 2024/01/25 17:00:21 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -3024,7 +3024,7 @@ qwx_mhi_fw_load_handler(struct qwx_pci_softc *psc)
 	u_char *data;
 	size_t len;
 
-	ret = snprintf(amss_path, sizeof(amss_path), "%s/%s/%s",
+	ret = snprintf(amss_path, sizeof(amss_path), "%s-%s-%s",
 	    ATH11K_FW_DIR, sc->hw_params.fw.dir, ATH11K_AMSS_FILE);
 	if (ret < 0 || ret >= sizeof(amss_path))
 		return ENOSPC;
