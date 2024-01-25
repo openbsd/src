@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.18 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.19 2024/01/25 08:10:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -110,7 +110,7 @@ LCRYPTO_ALIAS(PKCS12_newpass);
 static int
 newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 {
-	STACK_OF(PKCS7) *asafes, *newsafes;
+	STACK_OF(PKCS7) *asafes = NULL, *newsafes = NULL;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int i, bagnid, pbe_nid = 0, pbe_iter = 0, pbe_saltlen = 0;
 	PKCS7 *p7, *p7new;
@@ -118,10 +118,10 @@ newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 	unsigned char mac[EVP_MAX_MD_SIZE];
 	unsigned int maclen;
 
-	if (!(asafes = PKCS12_unpack_authsafes(p12)))
-		return 0;
-	if (!(newsafes = sk_PKCS7_new_null()))
-		return 0;
+	if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
+		goto err;
+	if ((newsafes = sk_PKCS7_new_null()) == NULL)
+		goto err;
 	for (i = 0; i < sk_PKCS7_num(asafes); i++) {
 		p7 = sk_PKCS7_value(asafes, i);
 		bagnid = OBJ_obj2nid(p7->type);
@@ -156,6 +156,7 @@ newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 			goto err;
 	}
 	sk_PKCS7_pop_free(asafes, PKCS7_free);
+	asafes = NULL;
 
 	/* Repack safe: save old safe in case of error */
 
@@ -189,6 +190,7 @@ saferr:
 err:
 	sk_PKCS7_pop_free(asafes, PKCS7_free);
 	sk_PKCS7_pop_free(newsafes, PKCS7_free);
+
 	return 0;
 }
 
