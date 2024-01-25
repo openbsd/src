@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.5 2024/01/25 10:03:20 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.6 2024/01/25 10:07:47 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -11303,12 +11303,8 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 #endif
 	case WMI_MGMT_RX_EVENTID:
 		DPRINTF("%s: 0x%x: mgmt rx event\n", __func__, id);
-#if 0
 		qwx_mgmt_rx_event(sc, m);
 		/* mgmt_rx_event() owns the skb now! */
-#else
-		m_freem(m);
-#endif
 		return;
 #if 0
 	case WMI_MGMT_TX_COMPLETION_EVENTID:
