@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.3 2024/01/25 09:44:56 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.4 2024/01/25 09:51:33 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -623,14 +623,37 @@ void qwx_init_wmi_config_ipq8074(struct qwx_softc *sc,
 	config->beacon_tx_offload_max_vdev += config->ema_max_vap_cnt;
 }
 
+int
+qwx_hw_mac_id_to_pdev_id_ipq8074(struct ath11k_hw_params *hw, int mac_id)
+{
+	return mac_id;
+}
+
+int
+qwx_hw_mac_id_to_srng_id_ipq8074(struct ath11k_hw_params *hw, int mac_id)
+{
+	return 0;
+}
+
+int qwx_hw_mac_id_to_pdev_id_qca6390(struct ath11k_hw_params *hw, int mac_id)
+{
+	return 0;
+}
+
+int
+qwx_hw_mac_id_to_srng_id_qca6390(struct ath11k_hw_params *hw, int mac_id)
+{
+	return mac_id;
+}
+
 const struct ath11k_hw_ops ipq8074_ops = {
 #if notyet
 	.get_hw_mac_from_pdev_id = ath11k_hw_ipq8074_mac_from_pdev_id,
 #endif
 	.wmi_init_config = qwx_init_wmi_config_ipq8074,
+	.mac_id_to_pdev_id = qwx_hw_mac_id_to_pdev_id_ipq8074,
+	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_ipq8074,
 #if notyet
-	.mac_id_to_pdev_id = ath11k_hw_mac_id_to_pdev_id_ipq8074,
-	.mac_id_to_srng_id = ath11k_hw_mac_id_to_srng_id_ipq8074,
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
 	.rx_desc_get_first_msdu = ath11k_hw_ipq8074_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
@@ -672,9 +695,9 @@ const struct ath11k_hw_ops ipq6018_ops = {
 	.get_hw_mac_from_pdev_id = ath11k_hw_ipq6018_mac_from_pdev_id,
 #endif
 	.wmi_init_config = qwx_init_wmi_config_ipq8074,
+	.mac_id_to_pdev_id = qwx_hw_mac_id_to_pdev_id_ipq8074,
+	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_ipq8074,
 #if notyet
-	.mac_id_to_pdev_id = ath11k_hw_mac_id_to_pdev_id_ipq8074,
-	.mac_id_to_srng_id = ath11k_hw_mac_id_to_srng_id_ipq8074,
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
 	.rx_desc_get_first_msdu = ath11k_hw_ipq8074_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
@@ -716,9 +739,9 @@ const struct ath11k_hw_ops qca6390_ops = {
 	.get_hw_mac_from_pdev_id = ath11k_hw_ipq8074_mac_from_pdev_id,
 #endif
 	.wmi_init_config = qwx_init_wmi_config_qca6390,
+	.mac_id_to_pdev_id = qwx_hw_mac_id_to_pdev_id_qca6390,
+	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_qca6390,
 #if notyet
-	.mac_id_to_pdev_id = ath11k_hw_mac_id_to_pdev_id_qca6390,
-	.mac_id_to_srng_id = ath11k_hw_mac_id_to_srng_id_qca6390,
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
 	.rx_desc_get_first_msdu = ath11k_hw_ipq8074_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
@@ -760,9 +783,9 @@ const struct ath11k_hw_ops qcn9074_ops = {
 	.get_hw_mac_from_pdev_id = ath11k_hw_ipq6018_mac_from_pdev_id,
 #endif
 	.wmi_init_config = qwx_init_wmi_config_ipq8074,
+	.mac_id_to_pdev_id = qwx_hw_mac_id_to_pdev_id_ipq8074,
+	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_ipq8074,
 #ifdef notyet
-	.mac_id_to_pdev_id = ath11k_hw_mac_id_to_pdev_id_ipq8074,
-	.mac_id_to_srng_id = ath11k_hw_mac_id_to_srng_id_ipq8074,
 	.tx_mesh_enable = ath11k_hw_qcn9074_tx_mesh_enable,
 	.rx_desc_get_first_msdu = ath11k_hw_qcn9074_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath11k_hw_qcn9074_rx_desc_get_last_msdu,
@@ -804,9 +827,9 @@ const struct ath11k_hw_ops wcn6855_ops = {
 	.get_hw_mac_from_pdev_id = ath11k_hw_ipq8074_mac_from_pdev_id,
 #endif
 	.wmi_init_config = qwx_init_wmi_config_qca6390,
+	.mac_id_to_pdev_id = qwx_hw_mac_id_to_pdev_id_qca6390,
+	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_qca6390,
 #ifdef notyet
-	.mac_id_to_pdev_id = ath11k_hw_mac_id_to_pdev_id_qca6390,
-	.mac_id_to_srng_id = ath11k_hw_mac_id_to_srng_id_qca6390,
 	.tx_mesh_enable = ath11k_hw_wcn6855_tx_mesh_enable,
 	.rx_desc_get_first_msdu = ath11k_hw_wcn6855_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath11k_hw_wcn6855_rx_desc_get_last_msdu,
@@ -848,9 +871,9 @@ const struct ath11k_hw_ops wcn6750_ops = {
 	.get_hw_mac_from_pdev_id = ath11k_hw_ipq8074_mac_from_pdev_id,
 #endif
 	.wmi_init_config = qwx_init_wmi_config_qca6390,
+	.mac_id_to_pdev_id = qwx_hw_mac_id_to_pdev_id_qca6390,
+	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_qca6390,
 #if notyet
-	.mac_id_to_pdev_id = ath11k_hw_mac_id_to_pdev_id_qca6390,
-	.mac_id_to_srng_id = ath11k_hw_mac_id_to_srng_id_qca6390,
 	.tx_mesh_enable = ath11k_hw_qcn9074_tx_mesh_enable,
 	.rx_desc_get_first_msdu = ath11k_hw_qcn9074_rx_desc_get_first_msdu,
 	.rx_desc_get_last_msdu = ath11k_hw_qcn9074_rx_desc_get_last_msdu,
@@ -7719,6 +7742,19 @@ qwx_hal_srng_src_get_next_reaped(struct qwx_softc *sc, struct hal_srng *srng)
 	return desc;
 }
 
+uint32_t *
+qwx_hal_srng_src_peek(struct qwx_softc *sc, struct hal_srng *srng)
+{
+#ifdef notyet
+	lockdep_assert_held(&srng->lock);
+#endif
+	if (((srng->u.src_ring.hp + srng->entry_size) % srng->ring_size) ==
+	    srng->u.src_ring.cached_tp)
+		return NULL;
+
+	return srng->ring_base_vaddr + srng->u.src_ring.hp;
+}
+
 void
 qwx_get_msi_address(struct qwx_softc *sc, uint32_t *addr_lo,
     uint32_t *addr_hi)
@@ -12378,6 +12414,19 @@ qwx_hal_rx_buf_addr_info_set(void *desc, uint64_t paddr, uint32_t cookie,
 	    FIELD_PREP(BUFFER_ADDR_INFO1_RET_BUF_MGR, manager);
 }
 
+void
+qwx_hal_rx_buf_addr_info_get(void *desc, uint64_t *paddr, uint32_t *cookie,
+    uint8_t *rbm)
+{
+	struct ath11k_buffer_addr *binfo = (struct ath11k_buffer_addr *)desc;
+
+	*paddr = (((uint64_t)FIELD_GET(BUFFER_ADDR_INFO1_ADDR,
+	    binfo->info1)) << 32) |
+	    FIELD_GET(BUFFER_ADDR_INFO0_ADDR, binfo->info0);
+	*cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE, binfo->info1);
+	*rbm = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR, binfo->info1);
+}
+
 /* Returns number of Rx buffers replenished */
 int
 qwx_dp_rxbufs_replenish(struct qwx_softc *sc, int mac_id,
@@ -13208,10 +13257,285 @@ exit:
 	return total_msdu_reaped;
 }
 
-int
-qwx_dp_rx_process_mon_rings(struct qwx_softc *sc)
+struct mbuf *
+qwx_dp_rx_alloc_mon_status_buf(struct qwx_softc *sc,
+    struct dp_rxdma_ring *rx_ring, int *buf_idx)
 {
-	return 0;
+	struct mbuf *m;
+	struct qwx_rx_data *rx_data;
+	const size_t size = DP_RX_BUFFER_SIZE;
+	int ret;
+
+	m = m_gethdr(M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return NULL;
+
+	if (size <= MCLBYTES)
+		MCLGET(m, M_DONTWAIT);
+	else
+		MCLGETL(m, M_DONTWAIT, size);
+	if ((m->m_flags & M_EXT) == 0)
+		goto fail_free_mbuf;
+
+	m->m_len = m->m_pkthdr.len = size;
+	rx_data = &rx_ring->rx_data[rx_ring->cur];
+	if (rx_data->m != NULL)
+		goto fail_free_mbuf;
+
+	if (rx_data->map == NULL) {
+		ret = bus_dmamap_create(sc->sc_dmat, size, 1,
+		    size, 0, BUS_DMA_NOWAIT, &rx_data->map);
+		if (ret)
+			goto fail_free_mbuf;
+	}
+	
+	ret = bus_dmamap_load_mbuf(sc->sc_dmat, rx_data->map, m,
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
+	if (ret) {
+		printf("%s: can't map mbuf (error %d)\n",
+		    sc->sc_dev.dv_xname, ret);
+		goto fail_free_mbuf;
+	}
+
+	*buf_idx = rx_ring->cur;
+	rx_data->m = m;
+	return m;
+
+fail_free_mbuf:
+	m_freem(m);
+	return NULL;
+}
+
+int
+qwx_dp_rx_reap_mon_status_ring(struct qwx_softc *sc, int mac_id,
+    struct mbuf_list *ml)
+{
+	const struct ath11k_hw_hal_params *hal_params;
+	struct qwx_pdev_dp *dp;
+	struct dp_rxdma_ring *rx_ring;
+	struct qwx_mon_data *pmon;
+	struct hal_srng *srng;
+	void *rx_mon_status_desc;
+	struct mbuf *m;
+	struct qwx_rx_data *rx_data;
+	struct hal_tlv_hdr *tlv;
+	uint32_t cookie;
+	int buf_idx, srng_id;
+	uint64_t paddr;
+	uint8_t rbm;
+	int num_buffs_reaped = 0;
+
+	dp = &sc->pdev_dp;
+	pmon = &dp->mon_data;
+
+	srng_id = sc->hw_params.hw_ops->mac_id_to_srng_id(&sc->hw_params,
+	    mac_id);
+	rx_ring = &dp->rx_mon_status_refill_ring[srng_id];
+
+	srng = &sc->hal.srng_list[rx_ring->refill_buf_ring.ring_id];
+#ifdef notyet
+	spin_lock_bh(&srng->lock);
+#endif
+	qwx_hal_srng_access_begin(sc, srng);
+	while (1) {
+		rx_mon_status_desc = qwx_hal_srng_src_peek(sc, srng);
+		if (!rx_mon_status_desc) {
+			pmon->buf_state = DP_MON_STATUS_REPLINISH;
+			break;
+		}
+
+		qwx_hal_rx_buf_addr_info_get(rx_mon_status_desc, &paddr,
+		    &cookie, &rbm);
+		if (paddr) {
+			buf_idx = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID, cookie);
+
+			rx_data = &rx_ring->rx_data[buf_idx];
+			if (rx_data->m == NULL) {
+				printf("%s: rx monitor status with invalid "
+				    "buf_idx %d\n", __func__, buf_idx);
+				pmon->buf_state = DP_MON_STATUS_REPLINISH;
+				goto move_next;
+			}
+
+			bus_dmamap_sync(sc->sc_dmat, rx_data->map, 0,
+			    m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+
+			tlv = mtod(m, struct hal_tlv_hdr *);
+			if (FIELD_GET(HAL_TLV_HDR_TAG, tlv->tl) !=
+					HAL_RX_STATUS_BUFFER_DONE) {
+				printf("%s: mon status DONE not set %lx, "
+				    "buf_idx %d\n", __func__,
+				    FIELD_GET(HAL_TLV_HDR_TAG, tlv->tl),
+				    buf_idx);
+				/* If done status is missing, hold onto status
+				 * ring until status is done for this status
+				 * ring buffer.
+				 * Keep HP in mon_status_ring unchanged,
+				 * and break from here.
+				 * Check status for same buffer for next time
+				 */
+				pmon->buf_state = DP_MON_STATUS_NO_DMA;
+				break;
+			}
+
+			bus_dmamap_unload(sc->sc_dmat, rx_data->map);
+			m = rx_data->m;
+			rx_data->m = NULL;
+#if 0
+			if (ab->hw_params.full_monitor_mode) {
+				ath11k_dp_rx_mon_update_status_buf_state(pmon, tlv);
+				if (paddr == pmon->mon_status_paddr)
+					pmon->buf_state = DP_MON_STATUS_MATCH;
+			}
+#endif
+			ml_enqueue(ml, m);
+		} else {
+			pmon->buf_state = DP_MON_STATUS_REPLINISH;
+		}
+move_next:
+		m = qwx_dp_rx_alloc_mon_status_buf(sc, rx_ring, &buf_idx);
+		if (!m) {
+			hal_params = sc->hw_params.hal_params;
+			qwx_hal_rx_buf_addr_info_set(rx_mon_status_desc, 0, 0,
+			    hal_params->rx_buf_rbm);
+			num_buffs_reaped++;
+			break;
+		}
+		rx_data = &rx_ring->rx_data[buf_idx];
+		KASSERT(rx_data->m == NULL);
+
+		cookie = FIELD_PREP(DP_RXDMA_BUF_COOKIE_PDEV_ID, mac_id) |
+		    FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, buf_idx);
+
+		paddr = rx_data->map->dm_segs[0].ds_addr;
+		qwx_hal_rx_buf_addr_info_set(rx_mon_status_desc, paddr,
+		    cookie, sc->hw_params.hal_params->rx_buf_rbm);
+		qwx_hal_srng_src_get_next_entry(sc, srng);
+		num_buffs_reaped++;
+	}
+	qwx_hal_srng_access_end(sc, srng);
+#ifdef notyet
+	spin_unlock_bh(&srng->lock);
+#endif
+	return num_buffs_reaped;
+}
+
+enum hal_rx_mon_status
+qwx_hal_rx_parse_mon_status(struct qwx_softc *sc,
+    struct hal_rx_mon_ppdu_info *ppdu_info, struct mbuf *m)
+{
+	/* TODO */
+	return HAL_RX_MON_STATUS_PPDU_NOT_DONE;
+}
+
+int
+qwx_dp_rx_process_mon_status(struct qwx_softc *sc, int mac_id)
+{
+	enum hal_rx_mon_status hal_status;
+	struct mbuf *m;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+#if 0
+	struct ath11k_peer *peer;
+	struct ath11k_sta *arsta;
+#endif
+	int num_buffs_reaped = 0;
+#if 0
+	uint32_t rx_buf_sz;
+	uint16_t log_type;
+#endif
+	struct qwx_mon_data *pmon = (struct qwx_mon_data *)&sc->pdev_dp.mon_data;
+#if  0
+	struct qwx_pdev_mon_stats *rx_mon_stats = &pmon->rx_mon_stats;
+#endif
+	struct hal_rx_mon_ppdu_info *ppdu_info = &pmon->mon_ppdu_info;
+
+	num_buffs_reaped = qwx_dp_rx_reap_mon_status_ring(sc, mac_id, &ml);
+	printf("%s: processing %d packets\n", __func__, num_buffs_reaped);
+	if (!num_buffs_reaped)
+		goto exit;
+
+	memset(ppdu_info, 0, sizeof(*ppdu_info));
+	ppdu_info->peer_id = HAL_INVALID_PEERID;
+
+	while ((m = ml_dequeue(&ml))) {
+#if 0
+		if (ath11k_debugfs_is_pktlog_lite_mode_enabled(ar)) {
+			log_type = ATH11K_PKTLOG_TYPE_LITE_RX;
+			rx_buf_sz = DP_RX_BUFFER_SIZE_LITE;
+		} else if (ath11k_debugfs_is_pktlog_rx_stats_enabled(ar)) {
+			log_type = ATH11K_PKTLOG_TYPE_RX_STATBUF;
+			rx_buf_sz = DP_RX_BUFFER_SIZE;
+		} else {
+			log_type = ATH11K_PKTLOG_TYPE_INVALID;
+			rx_buf_sz = 0;
+		}
+
+		if (log_type != ATH11K_PKTLOG_TYPE_INVALID)
+			trace_ath11k_htt_rxdesc(ar, skb->data, log_type, rx_buf_sz);
+#endif
+
+		memset(ppdu_info, 0, sizeof(*ppdu_info));
+		ppdu_info->peer_id = HAL_INVALID_PEERID;
+		hal_status = qwx_hal_rx_parse_mon_status(sc, ppdu_info, m);
+#if 0
+		if (test_bit(ATH11K_FLAG_MONITOR_STARTED, &ar->monitor_flags) &&
+		    pmon->mon_ppdu_status == DP_PPDU_STATUS_START &&
+		    hal_status == HAL_TLV_STATUS_PPDU_DONE) {
+			rx_mon_stats->status_ppdu_done++;
+			pmon->mon_ppdu_status = DP_PPDU_STATUS_DONE;
+			ath11k_dp_rx_mon_dest_process(ar, mac_id, budget, napi);
+			pmon->mon_ppdu_status = DP_PPDU_STATUS_START;
+		}
+#endif
+		if (ppdu_info->peer_id == HAL_INVALID_PEERID ||
+		    hal_status != HAL_RX_MON_STATUS_PPDU_DONE) {
+			m_freem(m);
+			continue;
+		}
+#if 0
+		rcu_read_lock();
+		spin_lock_bh(&ab->base_lock);
+		peer = ath11k_peer_find_by_id(ab, ppdu_info->peer_id);
+
+		if (!peer || !peer->sta) {
+			ath11k_dbg(ab, ATH11K_DBG_DATA,
+				   "failed to find the peer with peer_id %d\n",
+				   ppdu_info->peer_id);
+			goto next_skb;
+		}
+
+		arsta = (struct ath11k_sta *)peer->sta->drv_priv;
+		ath11k_dp_rx_update_peer_stats(arsta, ppdu_info);
+
+		if (ath11k_debugfs_is_pktlog_peer_valid(ar, peer->addr))
+			trace_ath11k_htt_rxdesc(ar, skb->data, log_type, rx_buf_sz);
+
+next_skb:
+		spin_unlock_bh(&ab->base_lock);
+		rcu_read_unlock();
+
+		dev_kfree_skb_any(skb);
+		memset(ppdu_info, 0, sizeof(*ppdu_info));
+		ppdu_info->peer_id = HAL_INVALID_PEERID;
+#endif
+	}
+exit:
+	return num_buffs_reaped;
+}
+
+int
+qwx_dp_rx_process_mon_rings(struct qwx_softc *sc, int mac_id)
+{
+	int ret = 0;
+#if 0
+	if (test_bit(ATH11K_FLAG_MONITOR_STARTED, &ar->monitor_flags) &&
+	    ab->hw_params.full_monitor_mode)
+		ret = ath11k_dp_full_mon_process_rx(ab, mac_id, napi, budget);
+	else
+#endif
+		ret = qwx_dp_rx_process_mon_status(sc, mac_id);
+
+	return ret;
 }
 
 int
@@ -13256,9 +13580,18 @@ qwx_dp_service_srng(struct qwx_softc *sc, int grp_id)
 			ret = 1;
 	}
 
-	if (sc->hw_params.ring_mask->rx_mon_status[grp_id] &&
-	    qwx_dp_rx_process_mon_rings(sc))
-		ret = 1;
+	for (i = 0; i < sc->num_radios; i++) {
+		for (j = 0; j < sc->hw_params.num_rxmda_per_pdev; j++) {
+			int id = i * sc->hw_params.num_rxmda_per_pdev + j;
+
+			if ((sc->hw_params.ring_mask->rx_mon_status[grp_id] &
+			   (1 << id)) == 0)
+				continue;
+
+			if (qwx_dp_rx_process_mon_rings(sc, id))
+				ret = 1;
+		}
+	}
 
 	if (sc->hw_params.ring_mask->reo_status[grp_id] &&
 	    qwx_dp_process_reo_status(sc))
