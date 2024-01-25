@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.2 2024/01/11 09:52:19 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.3 2024/01/25 09:44:56 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -330,6 +330,8 @@ struct qwx_mhi_newstate {
 	int queued;
 };
 
+#define QWX_NUM_MSI_VEC	32
+
 struct qwx_pci_softc {
 	struct qwx_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
@@ -337,7 +339,10 @@ struct qwx_pci_softc {
 	int			sc_cap_off;
 	int			sc_msi_off;
 	pcireg_t		sc_msi_cap;
-	void			*sc_ih;
+	void			*sc_ih[QWX_NUM_MSI_VEC];
+	char			sc_ivname[QWX_NUM_MSI_VEC][16];
+	struct qwx_ext_irq_grp	ext_irq_grp[ATH11K_EXT_IRQ_GRP_NUM_MAX];
+	int			mhi_irq[2];
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
 	bus_addr_t		sc_map;
@@ -414,6 +419,7 @@ void	 qwx_pcic_write32(struct qwx_softc *, uint32_t, uint32_t);
 
 void	qwx_pcic_ext_irq_enable(struct qwx_softc *);
 void	qwx_pcic_ext_irq_disable(struct qwx_softc *);
+int	qwx_pcic_config_irq(struct qwx_softc *, struct pci_attach_args *);
 
 int	qwx_pci_start(struct qwx_softc *);
 void	qwx_pci_stop(struct qwx_softc *);
@@ -475,6 +481,8 @@ void	qwx_pci_intr_data_event_tx(struct qwx_pci_softc *,
 	    struct qwx_mhi_ring_element *);
 int	qwx_pci_intr_data_event(struct qwx_pci_softc *,
 	    struct qwx_pci_event_ring *);
+int	qwx_pci_intr_mhi_ctrl(void *);
+int	qwx_pci_intr_mhi_data(void *);
 int	qwx_pci_intr(void *);
 
 struct qwx_pci_ops {
@@ -555,17 +563,95 @@ const struct qwx_msi_config qwx_msi_config_one_msi = {
 	},
 };
 
+const struct qwx_msi_config qwx_msi_config[] = {
+	{
+		.total_vectors = 32,
+		.total_users = 4,
+		.users = (struct qwx_msi_user[]) {
+			{ .name = "MHI", .num_vectors = 3, .base_vector = 0 },
+			{ .name = "CE", .num_vectors = 10, .base_vector = 3 },
+			{ .name = "WAKE", .num_vectors = 1, .base_vector = 13 },
+			{ .name = "DP", .num_vectors = 18, .base_vector = 14 },
+		},
+		.hw_rev = ATH11K_HW_QCA6390_HW20,
+	},
+	{
+		.total_vectors = 16,
+		.total_users = 3,
+		.users = (struct qwx_msi_user[]) {
+			{ .name = "MHI", .num_vectors = 3, .base_vector = 0 },
+			{ .name = "CE", .num_vectors = 5, .base_vector = 3 },
+			{ .name = "DP", .num_vectors = 8, .base_vector = 8 },
+		},
+		.hw_rev = ATH11K_HW_QCN9074_HW10,
+	},
+	{
+		.total_vectors = 32,
+		.total_users = 4,
+		.users = (struct qwx_msi_user[]) {
+			{ .name = "MHI", .num_vectors = 3, .base_vector = 0 },
+			{ .name = "CE", .num_vectors = 10, .base_vector = 3 },
+			{ .name = "WAKE", .num_vectors = 1, .base_vector = 13 },
+			{ .name = "DP", .num_vectors = 18, .base_vector = 14 },
+		},
+		.hw_rev = ATH11K_HW_WCN6855_HW20,
+	},
+	{
+		.total_vectors = 32,
+		.total_users = 4,
+		.users = (struct qwx_msi_user[]) {
+			{ .name = "MHI", .num_vectors = 3, .base_vector = 0 },
+			{ .name = "CE", .num_vectors = 10, .base_vector = 3 },
+			{ .name = "WAKE", .num_vectors = 1, .base_vector = 13 },
+			{ .name = "DP", .num_vectors = 18, .base_vector = 14 },
+		},
+		.hw_rev = ATH11K_HW_WCN6855_HW21,
+	},
+	{
+		.total_vectors = 28,
+		.total_users = 2,
+		.users = (struct qwx_msi_user[]) {
+			{ .name = "CE", .num_vectors = 10, .base_vector = 0 },
+			{ .name = "DP", .num_vectors = 18, .base_vector = 10 },
+		},
+		.hw_rev = ATH11K_HW_WCN6750_HW10,
+	},
+};
+
+int
+qwx_pcic_init_msi_config(struct qwx_softc *sc)
+{
+	const struct qwx_msi_config *msi_config;
+	int i;
+
+	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags)) {
+		sc->msi_cfg = &qwx_msi_config_one_msi;
+		return 0;
+	}
+	for (i = 0; i < nitems(qwx_msi_config); i++) {
+		msi_config = &qwx_msi_config[i];
+
+		if (msi_config->hw_rev == sc->sc_hw_rev)
+			break;
+	}
+
+	if (i == nitems(qwx_msi_config)) {
+		printf("%s: failed to fetch msi config, "
+		    "unsupported hw version: 0x%x\n",
+		    sc->sc_dev.dv_xname, sc->sc_hw_rev);
+		return EINVAL;
+	}
+
+	sc->msi_cfg = msi_config;
+	return 0;
+}
+
 int
 qwx_pci_alloc_msi(struct qwx_softc *sc)
 {
 	struct qwx_pci_softc *psc = (struct qwx_pci_softc *)sc;
 	uint64_t addr;
 	pcireg_t data;
-
-	/*
-	 * OpenBSD only supports one MSI vector at present.
-	 * Mulitple vectors are only supported with MSI-X.
-	 */
 
 	if (psc->sc_msi_cap & PCI_MSI_MC_C64) {
 		uint64_t addr_hi;
@@ -592,7 +678,6 @@ qwx_pci_alloc_msi(struct qwx_softc *sc)
 	DPRINTF("%s: MSI addr: 0x%llx MSI data: 0x%x\n", sc->sc_dev.dv_xname,
 	    addr, data);
 
-	sc->msi_cfg = &qwx_msi_config_one_msi;
 	return 0;
 }
 
@@ -661,6 +746,7 @@ qwx_pcic_get_user_msi_vector(struct qwx_softc *sc, char *user_name,
 
 	DPRINTF("%s: Failed to find MSI assignment for %s\n",
 	    sc->sc_dev.dv_xname, user_name);
+
 	return EINVAL;
 }
 
@@ -732,15 +818,31 @@ qwx_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->mem = psc->sc_map;
 
-	if (pci_intr_map_msi(pa, &ih)) {
-		printf(": can't map interrupt\n");
-		return;
+	sc->num_msivec = 32;
+	if (pci_intr_enable_msivec(pa, sc->num_msivec) != 0) {
+		sc->num_msivec = 1;
+		if (pci_intr_map_msi(pa, &ih) != 0) {
+			printf(": can't map interrupt\n");
+			return;
+		}
+		clear_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags);
+	} else {
+		if (pci_intr_map_msivec(pa, 0, &ih) != 0 &&
+		    pci_intr_map_msi(pa, &ih) != 0) {
+			printf(": can't map interrupt\n");
+			return;
+		}
+		set_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags);
+		psc->mhi_irq[MHI_ER_CTRL] = 1;
+		psc->mhi_irq[MHI_ER_DATA] = 2;
 	}
 
 	intrstr = pci_intr_string(psc->sc_pc, ih);
-	psc->sc_ih = pci_intr_establish(psc->sc_pc, ih, IPL_NET,
-	    qwx_pci_intr, psc, sc->sc_dev.dv_xname);
-	if (psc->sc_ih == NULL) {
+	snprintf(psc->sc_ivname[0], sizeof(psc->sc_ivname[0]), "%s:bhi",
+	    sc->sc_dev.dv_xname);
+	psc->sc_ih[0] = pci_intr_establish(psc->sc_pc, ih, IPL_NET,
+	    qwx_pci_intr, psc, psc->sc_ivname[0]);
+	if (psc->sc_ih[0] == NULL) {
 		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -748,6 +850,46 @@ qwx_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": %s\n", intrstr);
+
+	if (test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags)) {
+		int msivec;
+
+		msivec = psc->mhi_irq[MHI_ER_CTRL];
+		if (pci_intr_map_msivec(pa, msivec, &ih) != 0 &&
+		    pci_intr_map_msi(pa, &ih) != 0) {
+			printf(": can't map interrupt\n");
+			return;
+		}
+		snprintf(psc->sc_ivname[msivec],
+		    sizeof(psc->sc_ivname[msivec]),
+		    "%s:mhic", sc->sc_dev.dv_xname);
+		psc->sc_ih[msivec] = pci_intr_establish(psc->sc_pc, ih,
+		    IPL_NET, qwx_pci_intr_mhi_ctrl, psc,
+		    psc->sc_ivname[msivec]);
+		if (psc->sc_ih[msivec] == NULL) {
+			printf("%s: can't establish interrupt\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+
+		msivec = psc->mhi_irq[MHI_ER_DATA];
+		if (pci_intr_map_msivec(pa, msivec, &ih) != 0 &&
+		    pci_intr_map_msi(pa, &ih) != 0) {
+			printf(": can't map interrupt\n");
+			return;
+		}
+		snprintf(psc->sc_ivname[msivec],
+		    sizeof(psc->sc_ivname[msivec]),
+		    "%s:mhid", sc->sc_dev.dv_xname);
+		psc->sc_ih[msivec] = pci_intr_establish(psc->sc_pc, ih,
+		    IPL_NET, qwx_pci_intr_mhi_data, psc,
+		    psc->sc_ivname[msivec]);
+		if (psc->sc_ih[msivec] == NULL) {
+			printf("%s: can't establish interrupt\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	}
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
@@ -810,16 +952,10 @@ unsupported_wcn6855_soc:
 	/* register PCI ops */
 	psc->sc_pci_ops = pci_ops;
 
-	/* init MSI config */
-	clear_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags);
-
-#if notyet
-	ret = ath11k_pcic_init_msi_config(ab);
-	if (ret) {
-		ath11k_err(ab, "failed to init msi config: %d\n", ret);
+	error = qwx_pcic_init_msi_config(sc);
+	if (error)
 		goto err_pci_free_region;
-	}
-#endif
+
 	error = qwx_pci_alloc_msi(sc);
 	if (error) {
 		printf("%s: failed to enable msi: %d\n", sc->sc_dev.dv_xname,
@@ -891,17 +1027,17 @@ unsupported_wcn6855_soc:
 
 	sc->sc_nswq = taskq_create("qwxns", 1, IPL_NET, 0);
 	if (sc->sc_nswq == NULL)
-		goto err_hal_srng_deinit;
+		goto err_ce_free;
 
 	qwx_pci_init_qmi_ce_config(sc);
 
-#if notyet
-	ret = ath11k_pcic_config_irq(ab);
-	if (ret) {
-		ath11k_err(ab, "failed to config irq: %d\n", ret);
+	error = qwx_pcic_config_irq(sc, pa);
+	if (error) {
+		printf("%s: failed to config irq: %d\n",
+		    sc->sc_dev.dv_xname, error);
 		goto err_ce_free;
 	}
-
+#if notyet
 	ret = ath11k_pci_set_irq_affinity_hint(ab_pci, cpumask_of(0));
 	if (ret) {
 		ath11k_err(ab, "failed to set irq affinity %d\n", ret);
@@ -978,6 +1114,8 @@ unsupported_wcn6855_soc:
 	config_mountroot(self, qwx_pci_attach_hook);
 	return;
 
+err_ce_free:
+	qwx_ce_free_pipes(sc);
 err_hal_srng_deinit:
 err_mhi_unregister:
 err_pci_free_cmd_ring:
@@ -997,7 +1135,7 @@ err_pci_free_chan_ctxt:
 	psc->chan_ctxt = NULL;
 err_pci_disable_msi:
 err_pci_free_region:
-	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	pci_intr_disestablish(psc->sc_pc, psc->sc_ih[0]);
 	return;
 }
 
@@ -1007,9 +1145,9 @@ qwx_pci_detach(struct device *self, int flags)
 	struct qwx_pci_softc *psc = (struct qwx_pci_softc *)self;
 	struct qwx_softc *sc = &psc->sc_sc;
 
-	if (psc->sc_ih) {
-		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
-		psc->sc_ih = NULL;
+	if (psc->sc_ih[0]) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih[0]);
+		psc->sc_ih[0] = NULL;
 	}
 
 	qwx_detach(sc);
@@ -1289,12 +1427,12 @@ qwx_pci_alloc_event_rings(struct qwx_pci_softc *psc)
 	int ret;
 
 	ret = qwx_pci_alloc_event_ring(sc, &psc->event_rings[0],
-	    MHI_ER_CTRL, 0, 0, 32);
+	    MHI_ER_CTRL, psc->mhi_irq[MHI_ER_CTRL], 0, 32);
 	if (ret)
 		goto fail;
 
 	ret = qwx_pci_alloc_event_ring(sc, &psc->event_rings[1],
-	    MHI_ER_DATA, 0, 1, 256);
+	    MHI_ER_DATA, psc->mhi_irq[MHI_ER_DATA], 1, 256);
 	if (ret)
 		goto fail;
 
@@ -1449,7 +1587,8 @@ qwx_pcic_ce_irq_enable(struct qwx_softc *sc, uint16_t ce_id)
 	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags))
 		return;
 
-	printf("%s not implemented\n", __func__);
+	/* OpenBSD PCI stack does not yet implement MSI interrupt masking. */
+	sc->msi_ce_irqmask |= (1U << ce_id);
 }
 
 void
@@ -1461,7 +1600,145 @@ qwx_pcic_ce_irq_disable(struct qwx_softc *sc, uint16_t ce_id)
 	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags))
 		return;
 
-	printf("%s not implemented\n", __func__);
+	/* OpenBSD PCI stack does not yet implement MSI interrupt masking. */
+	sc->msi_ce_irqmask &= ~(1U << ce_id);
+}
+
+void
+qwx_pcic_ext_grp_disable(struct qwx_ext_irq_grp *irq_grp)
+{
+	struct qwx_softc *sc = irq_grp->sc;
+
+	/* In case of one MSI vector, we handle irq enable/disable
+	 * in a uniform way since we only have one irq
+	 */
+	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags))
+		return;
+}
+
+int
+qwx_pcic_ext_irq_config(struct qwx_softc *sc, struct pci_attach_args *pa)
+{
+	struct qwx_pci_softc *psc = (struct qwx_pci_softc *)sc;
+	int i, ret, num_vectors = 0;
+	uint32_t msi_data_start = 0;
+	uint32_t base_vector = 0;
+
+	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags))
+		return 0;
+
+	ret = qwx_pcic_get_user_msi_vector(sc, "DP", &num_vectors,
+	    &msi_data_start, &base_vector);
+	if (ret < 0)
+		return ret;
+
+	for (i = 0; i < nitems(sc->ext_irq_grp); i++) {
+		struct qwx_ext_irq_grp *irq_grp = &sc->ext_irq_grp[i];
+		uint32_t num_irq = 0;
+
+		irq_grp->sc = sc;
+		irq_grp->grp_id = i;
+#if 0	
+		init_dummy_netdev(&irq_grp->napi_ndev);
+		netif_napi_add(&irq_grp->napi_ndev, &irq_grp->napi,
+			       ath11k_pcic_ext_grp_napi_poll);
+#endif
+		if (sc->hw_params.ring_mask->tx[i] ||
+		    sc->hw_params.ring_mask->rx[i] ||
+		    sc->hw_params.ring_mask->rx_err[i] ||
+		    sc->hw_params.ring_mask->rx_wbm_rel[i] ||
+		    sc->hw_params.ring_mask->reo_status[i] ||
+		    sc->hw_params.ring_mask->rxdma2host[i] ||
+		    sc->hw_params.ring_mask->host2rxdma[i] ||
+		    sc->hw_params.ring_mask->rx_mon_status[i]) {
+			num_irq = 1;
+		}
+
+		irq_grp->num_irq = num_irq;
+		irq_grp->irqs[0] = ATH11K_PCI_IRQ_DP_OFFSET + i;
+
+		if (num_irq) {
+			int irq_idx = irq_grp->irqs[0];
+			pci_intr_handle_t ih;
+
+			if (pci_intr_map_msivec(pa, irq_idx, &ih) != 0 &&
+			    pci_intr_map(pa, &ih) != 0) {
+				printf("%s: can't map interrupt\n",
+				    sc->sc_dev.dv_xname);
+				return EIO;
+			}
+
+			snprintf(psc->sc_ivname[irq_idx], sizeof(psc->sc_ivname[0]),
+			    "%s:ex%d", sc->sc_dev.dv_xname, i);
+			psc->sc_ih[irq_idx] = pci_intr_establish(psc->sc_pc, ih,
+			    IPL_NET, qwx_ext_intr, irq_grp, psc->sc_ivname[irq_idx]);
+			if (psc->sc_ih[irq_idx] == NULL) {
+				printf("%s: failed to request irq %d\n",
+				    sc->sc_dev.dv_xname, irq_idx);
+				return EIO;
+			}
+		}
+
+		qwx_pcic_ext_grp_disable(irq_grp);
+	}
+
+	return 0;
+}
+
+int
+qwx_pcic_config_irq(struct qwx_softc *sc, struct pci_attach_args *pa)
+{
+	struct qwx_pci_softc *psc = (struct qwx_pci_softc *)sc;
+	struct qwx_ce_pipe *ce_pipe;
+	uint32_t msi_data_start;
+	uint32_t msi_data_count, msi_data_idx;
+	uint32_t msi_irq_start;
+	int i, ret, irq_idx;
+	pci_intr_handle_t ih;
+
+	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags))
+		return 0;
+
+	ret = qwx_pcic_get_user_msi_vector(sc, "CE", &msi_data_count,
+	    &msi_data_start, &msi_irq_start);
+	if (ret)
+		return ret;
+
+	/* Configure CE irqs */
+	for (i = 0, msi_data_idx = 0; i < sc->hw_params.ce_count; i++) {
+		if (qwx_ce_get_attr_flags(sc, i) & CE_ATTR_DIS_INTR)
+			continue;
+
+		ce_pipe = &sc->ce.ce_pipe[i];
+		irq_idx = ATH11K_PCI_IRQ_CE0_OFFSET + i;
+
+		if (pci_intr_map_msivec(pa, irq_idx, &ih) != 0 &&
+		    pci_intr_map(pa, &ih) != 0) {
+			printf("%s: can't map interrupt\n",
+			    sc->sc_dev.dv_xname);
+			return EIO;
+		}
+
+		snprintf(psc->sc_ivname[irq_idx], sizeof(psc->sc_ivname[0]),
+		    "%s:ce%d", sc->sc_dev.dv_xname, ce_pipe->pipe_num);
+		psc->sc_ih[irq_idx] = pci_intr_establish(psc->sc_pc, ih,
+		    IPL_NET, qwx_ce_intr, ce_pipe, psc->sc_ivname[irq_idx]);
+		if (psc->sc_ih[irq_idx] == NULL) {
+			printf("%s: failed to request irq %d\n",
+			    sc->sc_dev.dv_xname, irq_idx);
+			return EIO;
+		}
+
+		msi_data_idx++;
+
+		qwx_pcic_ce_irq_disable(sc, i);
+	}
+
+	ret = qwx_pcic_ext_irq_config(sc, pa);
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 void
@@ -3814,6 +4091,28 @@ qwx_pci_intr_data_event(struct qwx_pci_softc *psc, struct qwx_pci_event_ring *ri
 }
 
 int
+qwx_pci_intr_mhi_ctrl(void *arg)
+{
+	struct qwx_pci_softc *psc = arg;
+
+	if (qwx_pci_intr_ctrl_event(psc, &psc->event_rings[0]))
+		return 1;
+
+	return 0;
+}
+
+int
+qwx_pci_intr_mhi_data(void *arg)
+{
+	struct qwx_pci_softc *psc = arg;
+
+	if (qwx_pci_intr_data_event(psc, &psc->event_rings[1]))
+		return 1;
+
+	return 0;
+}
+
+int
 qwx_pci_intr(void *arg)
 {
 	struct qwx_pci_softc *psc = arg;
@@ -3834,7 +4133,7 @@ qwx_pci_intr(void *arg)
 	    MHI_STATUS_MHISTATE_SHFT;
 
 	DNPRINTF(QWX_D_MHI,
-	    "%s: MHI interrupt with EE: 0x%x -> 0x%x state: 0x%x -> 0x%x\n",
+	    "%s: BHI interrupt with EE: 0x%x -> 0x%x state: 0x%x -> 0x%x\n",
 	     sc->sc_dev.dv_xname, psc->bhi_ee, ee, psc->mhi_state, state);
 
 	if (ee == MHI_EE_RDDM) {
@@ -3860,13 +4159,26 @@ qwx_pci_intr(void *arg)
 		ret = 1;
 	}
 
-	if (qwx_pci_intr_ctrl_event(psc, &psc->event_rings[0]))
-		ret = 1;
-	if (qwx_pci_intr_data_event(psc, &psc->event_rings[1]))
-		ret = 1;
+	if (!test_bit(ATH11K_FLAG_MULTI_MSI_VECTORS, sc->sc_flags)) {
+		int i;
 
-	if (qwx_intr(sc))
-		ret = 1;
+		if (qwx_pci_intr_ctrl_event(psc, &psc->event_rings[0]))
+			ret = 1;
+		if (qwx_pci_intr_data_event(psc, &psc->event_rings[1]))
+			ret = 1;
+
+		for (i = 0; i < sc->hw_params.ce_count; i++) {
+			struct qwx_ce_pipe *ce_pipe = &sc->ce.ce_pipe[i];
+
+			if (qwx_ce_intr(ce_pipe))
+				ret = 1;
+		}
+
+		for (i = 0; i < nitems(sc->ext_irq_grp); i++) {
+			if (qwx_dp_service_srng(sc, i))
+				ret = 1;
+		}
+	}
 
 	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.2 2024/01/02 17:39:08 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.3 2024/01/25 09:44:56 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -122,7 +122,6 @@ int qwx_ce_send(struct qwx_softc *, struct mbuf *, uint8_t, uint16_t);
 int qwx_htc_connect_service(struct qwx_htc *, struct qwx_htc_svc_conn_req *,
     struct qwx_htc_svc_conn_resp *);
 void qwx_hal_srng_shadow_update_hp_tp(struct qwx_softc *, struct hal_srng *);
-int qwx_dp_service_srng(struct qwx_softc *);
 void qwx_wmi_free_dbring_caps(struct qwx_softc *);
 int qwx_core_init(struct qwx_softc *);
 int qwx_qmi_event_server_arrive(struct qwx_softc *);
@@ -4743,23 +4742,34 @@ const struct qmi_elem_info qmi_wlanfw_wlan_cfg_resp_msg_v01_ei[] = {
 };
 
 int
-qwx_intr(struct qwx_softc *sc)
+qwx_ce_intr(void *arg)
 {
-	int ret = 0, i;
+	struct qwx_ce_pipe *pipe = arg;
+	struct qwx_softc *sc = pipe->sc;
 
-	if (test_bit(ATH11K_FLAG_CE_IRQ_ENABLED, sc->sc_flags)) {
-		for (i = 0; i < sc->hw_params.ce_count; i++) {
-			if (qwx_ce_per_engine_service(sc, i))
-				ret = 1;
-		}
+	if (!test_bit(ATH11K_FLAG_CE_IRQ_ENABLED, sc->sc_flags) ||
+	    ((sc->msi_ce_irqmask & (1 << pipe->pipe_num)) == 0)) {
+		DPRINTF("%s: unexpected interrupt on pipe %d\n",
+		    __func__, pipe->pipe_num);
+		return 1;
 	}
 
-	if (test_bit(ATH11K_FLAG_EXT_IRQ_ENABLED, sc->sc_flags)) {
-		if (qwx_dp_service_srng(sc))
-			ret = 1;
+	return qwx_ce_per_engine_service(sc, pipe->pipe_num);
+}
+
+int
+qwx_ext_intr(void *arg)
+{
+	struct qwx_ext_irq_grp *irq_grp = arg;
+	struct qwx_softc *sc = irq_grp->sc;
+
+	if (!test_bit(ATH11K_FLAG_EXT_IRQ_ENABLED, sc->sc_flags)) {
+		DPRINTF("%s: unexpected interrupt for ext group %d\n",
+		    __func__, irq_grp->grp_id);
+		return 1;
 	}
 
-	return ret;
+	return qwx_dp_service_srng(sc, irq_grp->grp_id);
 }
 
 const char *qmi_data_type_name[QMI_NUM_DATA_TYPES] = {
@@ -13217,38 +13227,58 @@ qwx_dp_process_reo_status(struct qwx_softc *sc)
 }
 
 int
-qwx_dp_service_srng(struct qwx_softc *sc)
+qwx_dp_service_srng(struct qwx_softc *sc, int grp_id)
 {
 	struct qwx_pdev_dp *dp = &sc->pdev_dp;
-	int i, ret = 0;
+	int i, j, ret = 0;
 
 	for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
-		if (qwx_dp_tx_completion_handler(sc, i))
+		const struct ath11k_hw_tcl2wbm_rbm_map *map;
+
+		map = &sc->hw_params.hal_params->tcl2wbm_rbm_map[i];
+		if ((sc->hw_params.ring_mask->tx[grp_id]) &
+		    (1 << (map->wbm_ring_num)) &&
+		    qwx_dp_tx_completion_handler(sc, i))
 			ret = 1;
 	}
 
-	if (qwx_dp_process_rx_err(sc))
+	if (sc->hw_params.ring_mask->rx_err[grp_id] &&
+	    qwx_dp_process_rx_err(sc))
 		ret = 1;
 
-	if (qwx_dp_rx_process_wbm_err(sc))
+	if (sc->hw_params.ring_mask->rx_wbm_rel[grp_id] &&
+	    qwx_dp_rx_process_wbm_err(sc))
 		ret = 1;
 
-	for (i = 0; i < DP_REO_DST_RING_MAX; i++) {
+	if (sc->hw_params.ring_mask->rx[grp_id]) {
+		i = fls(sc->hw_params.ring_mask->rx[grp_id]) - 1;
 		if (qwx_dp_process_rx(sc, i))
 			ret = 1;
 	}
 
-	if (qwx_dp_rx_process_mon_rings(sc))
+	if (sc->hw_params.ring_mask->rx_mon_status[grp_id] &&
+	    qwx_dp_rx_process_mon_rings(sc))
 		ret = 1;
 
-	if (qwx_dp_process_reo_status(sc))
+	if (sc->hw_params.ring_mask->reo_status[grp_id] &&
+	    qwx_dp_process_reo_status(sc))
 		ret = 1;
 
-	if (qwx_dp_process_rxdma_err(sc))
-		ret = 1;
+	for (i = 0; i < sc->num_radios; i++) {
+		for (j = 0; j < sc->hw_params.num_rxmda_per_pdev; j++) {
+			int id = i * sc->hw_params.num_rxmda_per_pdev + j;
 
-	qwx_dp_rxbufs_replenish(sc, dp->mac_id, &dp->rx_refill_buf_ring, 0,
-	    sc->hw_params.hal_params->rx_buf_rbm);
+			if ((sc->hw_params.ring_mask->rxdma2host[grp_id] &
+			   (1 << (id))) == 0)
+				continue;
+
+			if (qwx_dp_process_rxdma_err(sc))
+				ret = 1;
+
+			qwx_dp_rxbufs_replenish(sc, id, &dp->rx_refill_buf_ring,
+			    0, sc->hw_params.hal_params->rx_buf_rbm);
+		}
+	}
 
 	return ret;
 }

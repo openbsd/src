@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.1 2023/12/28 17:36:29 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.2 2024/01/25 09:44:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1359,6 +1359,22 @@ struct qwx_survey_info {
 	uint64_t time_busy;
 };
 
+#define ATH11K_IRQ_NUM_MAX 52
+#define ATH11K_EXT_IRQ_NUM_MAX	16
+
+struct qwx_ext_irq_grp {
+	struct qwx_softc *sc;
+	uint32_t irqs[ATH11K_EXT_IRQ_NUM_MAX];
+	uint32_t num_irq;
+	uint32_t grp_id;
+	uint64_t timestamp;
+#if 0
+	bool napi_enabled;
+	struct napi_struct napi;
+	struct net_device napi_ndev;
+#endif
+};
+
 struct qwx_softc {
 	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
@@ -1409,6 +1425,8 @@ struct qwx_softc {
 	enum ath11k_firmware_mode	fw_mode;
 	enum ath11k_crypt_mode		crypto_mode;
 	enum ath11k_hw_txrx_mode	frame_mode;
+
+	struct qwx_ext_irq_grp		ext_irq_grp[ATH11K_EXT_IRQ_GRP_NUM_MAX];
 
 	uint16_t			qmi_txn_id;
 	int				qmi_cal_done;
@@ -1470,15 +1488,19 @@ struct qwx_softc {
 	enum ath11k_hw_rev		sc_hw_rev;
 	struct qwx_device_id		id;
 	char				sc_bus_str[4]; /* "pci" or "ahb" */
+	int				num_msivec;
 	uint32_t			msi_addr_lo;
 	uint32_t			msi_addr_hi;
 	uint32_t			msi_data_start;
 	const struct qwx_msi_config	*msi_cfg;
+	uint32_t			msi_ce_irqmask;
 
 	struct qmi_wlanfw_request_mem_ind_msg_v01 *sc_req_mem_ind;
 };
 
-int	qwx_intr(struct qwx_softc *);
+int	qwx_ce_intr(void *);
+int	qwx_ext_intr(void *);
+int	qwx_dp_service_srng(struct qwx_softc *, int);
 
 int	qwx_init_hw_params(struct qwx_softc *);
 int	qwx_attach(struct qwx_softc *);
@@ -1506,6 +1528,7 @@ void	qwx_qrtr_recv_msg(struct qwx_softc *, struct mbuf *);
 int	qwx_hal_srng_init(struct qwx_softc *);
 
 int	qwx_ce_alloc_pipes(struct qwx_softc *);
+void	qwx_ce_free_pipes(struct qwx_softc *);
 void	qwx_ce_rx_post_buf(struct qwx_softc *);
 void	qwx_ce_get_shadow_config(struct qwx_softc *, uint32_t **, uint32_t *);
 
