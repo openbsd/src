@@ -302,6 +302,37 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 	{ 0x000c, 16 },
 };
 
+/* D1 */
+
+#define D1_CLK_APB1		25
+#define D1_CLK_BUS_UART0	62
+#define D1_CLK_BUS_UART1	63
+#define D1_CLK_BUS_UART2	64
+#define D1_CLK_BUS_UART3	65
+#define D1_CLK_BUS_UART4	66
+#define D1_CLK_BUS_UART5	67
+#define D1_CLK_USB_OHCI0	97
+#define D1_CLK_USB_OHCI1	98
+#define D1_CLK_BUS_OHCI0	99
+#define D1_CLK_BUS_OHCI1	100
+#define D1_CLK_BUS_EHCI0	101
+#define D1_CLK_BUS_EHCI1	102
+
+const struct sxiccmu_ccu_bit sun20i_d1_gates[] = {
+	[D1_CLK_BUS_UART0] = { 0x090c, 0, D1_CLK_APB1 },
+	[D1_CLK_BUS_UART1] = { 0x090c, 1, D1_CLK_APB1 },
+	[D1_CLK_BUS_UART2] = { 0x090c, 2, D1_CLK_APB1 },
+	[D1_CLK_BUS_UART3] = { 0x090c, 3, D1_CLK_APB1 },
+	[D1_CLK_BUS_UART4] = { 0x090c, 4, D1_CLK_APB1 },
+	[D1_CLK_BUS_UART5] = { 0x090c, 5, D1_CLK_APB1 },
+	[D1_CLK_USB_OHCI0] = { 0x0a70, 31 },
+	[D1_CLK_USB_OHCI1] = { 0x0a74, 31 },
+	[D1_CLK_BUS_OHCI0] = { 0x0a8c, 0 },
+	[D1_CLK_BUS_OHCI1] = { 0x0a8c, 1 },
+	[D1_CLK_BUS_EHCI0] = { 0x0a8c, 4 },
+	[D1_CLK_BUS_EHCI1] = { 0x0a8c, 5 },
+};
+
 /* H3/H5 */
 
 #define H3_CLK_PLL_CPUX		0
@@ -766,6 +797,36 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_resets[] = {
 	{ 0x0004, 18 },
 	{ 0x0008, 18 },
 	{ 0x000c, 18 },
+};
+
+/* D1 */
+
+#define D1_RST_BUS_UART0	18
+#define D1_RST_BUS_UART1	19
+#define D1_RST_BUS_UART2	20
+#define D1_RST_BUS_UART3	21
+#define D1_RST_BUS_UART4	22
+#define D1_RST_BUS_UART5	23
+#define D1_RST_USB_PHY0		40
+#define D1_RST_USB_PHY1		41
+#define D1_RST_BUS_OHCI0	42
+#define D1_RST_BUS_OHCI1	43
+#define D1_RST_BUS_EHCI0	44
+#define D1_RST_BUS_EHCI1	45
+
+const struct sxiccmu_ccu_bit sun20i_d1_resets[] = {
+	[D1_RST_BUS_UART0] = { 0x090c, 16 },
+	[D1_RST_BUS_UART1] = { 0x090c, 17 },
+	[D1_RST_BUS_UART2] = { 0x090c, 18 },
+	[D1_RST_BUS_UART3] = { 0x090c, 19 },
+	[D1_RST_BUS_UART4] = { 0x090c, 20 },
+	[D1_RST_BUS_UART5] = { 0x090c, 21 },
+	[D1_RST_USB_PHY0] =  { 0x0a70, 30 },
+	[D1_RST_USB_PHY1] =  { 0x0a74, 30 },
+	[D1_RST_BUS_OHCI0] = { 0x0a8c, 16 },
+	[D1_RST_BUS_OHCI1] = { 0x0a8c, 17 },
+	[D1_RST_BUS_EHCI0] = { 0x0a8c, 20 },
+	[D1_RST_BUS_EHCI1] = { 0x0a8c, 21 },
 };
 
 /* H3/H5 */
