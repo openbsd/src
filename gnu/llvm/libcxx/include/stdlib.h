@@ -1,5 +1,5 @@
 // -*- C++ -*-
-//===--------------------------- stdlib.h ---------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -10,7 +10,7 @@
 #if defined(__need_malloc_and_calloc)
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 #include_next <stdlib.h>
@@ -87,43 +87,47 @@ void *aligned_alloc(size_t alignment, size_t size);                       // C11
 #include <__config>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
-#include_next <stdlib.h>
+#  if __has_include_next(<stdlib.h>)
+#    include_next <stdlib.h>
+#  endif
 
 #ifdef __cplusplus
 extern "C++" {
 // abs
 
-#undef abs
-#undef labs
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-#undef llabs
+#ifdef abs
+# undef abs
+#endif
+#ifdef labs
+# undef labs
+#endif
+#ifdef llabs
+# undef llabs
 #endif
 
 // MSVCRT already has the correct prototype in <stdlib.h> if __cplusplus is defined
 #if !defined(_LIBCPP_MSVCRT) && !defined(__sun__)
-inline _LIBCPP_INLINE_VISIBILITY long abs(long __x) _NOEXCEPT {
+_LIBCPP_NODISCARD_EXT inline _LIBCPP_INLINE_VISIBILITY long abs(long __x) _NOEXCEPT {
   return __builtin_labs(__x);
 }
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) _NOEXCEPT {
+_LIBCPP_NODISCARD_EXT inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) _NOEXCEPT {
   return __builtin_llabs(__x);
 }
-#endif // _LIBCPP_HAS_NO_LONG_LONG
 #endif // !defined(_LIBCPP_MSVCRT) && !defined(__sun__)
 
 #if !defined(__sun__)
-inline _LIBCPP_INLINE_VISIBILITY float abs(float __lcpp_x) _NOEXCEPT {
+_LIBCPP_NODISCARD_EXT inline _LIBCPP_INLINE_VISIBILITY float abs(float __lcpp_x) _NOEXCEPT {
   return __builtin_fabsf(__lcpp_x); // Use builtins to prevent needing math.h
 }
 
-inline _LIBCPP_INLINE_VISIBILITY double abs(double __lcpp_x) _NOEXCEPT {
+_LIBCPP_NODISCARD_EXT inline _LIBCPP_INLINE_VISIBILITY double abs(double __lcpp_x) _NOEXCEPT {
   return __builtin_fabs(__lcpp_x);
 }
 
-inline _LIBCPP_INLINE_VISIBILITY long double
+_LIBCPP_NODISCARD_EXT inline _LIBCPP_INLINE_VISIBILITY long double
 abs(long double __lcpp_x) _NOEXCEPT {
   return __builtin_fabsl(__lcpp_x);
 }
@@ -131,10 +135,14 @@ abs(long double __lcpp_x) _NOEXCEPT {
 
 // div
 
-#undef div
-#undef ldiv
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
-#undef lldiv
+#ifdef div
+# undef div
+#endif
+#ifdef ldiv
+# undef ldiv
+#endif
+#ifdef lldiv
+# undef lldiv
 #endif
 
 // MSVCRT already has the correct prototype in <stdlib.h> if __cplusplus is defined
@@ -142,12 +150,12 @@ abs(long double __lcpp_x) _NOEXCEPT {
 inline _LIBCPP_INLINE_VISIBILITY ldiv_t div(long __x, long __y) _NOEXCEPT {
   return ::ldiv(__x, __y);
 }
-#ifndef _LIBCPP_HAS_NO_LONG_LONG
+#if !(defined(__FreeBSD__) && !defined(__LONG_LONG_SUPPORTED))
 inline _LIBCPP_INLINE_VISIBILITY lldiv_t div(long long __x,
                                              long long __y) _NOEXCEPT {
   return ::lldiv(__x, __y);
 }
-#endif // _LIBCPP_HAS_NO_LONG_LONG
+#endif
 #endif // _LIBCPP_MSVCRT / __sun__
 } // extern "C++"
 #endif // __cplusplus
