@@ -1,4 +1,4 @@
-/* $OpenBSD: sxidog.c,v 1.3 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: sxidog.c,v 1.4 2024/01/26 17:03:45 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -55,6 +55,7 @@ struct sxidog_softc {
 	int			sc_type;
 #define SXIDOG_A10		0
 #define SXIDOG_A31		1
+	uint32_t		sc_key;
 };
 
 struct sxidog_softc *sxidog_sc = NULL;	/* for sxidog_reset() */
@@ -80,7 +81,8 @@ sxidog_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-wdt") ||
-	    OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-wdt"));
+	    OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-wdt") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun20i-d1-wdt"));
 }
 
 void
@@ -97,11 +99,18 @@ sxidog_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxidog_attach: bus_space_map failed!");
 
-	if (OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-wdt")) {
-		SXIWRITE4(sc, WDOG0_CFG_REG, WDOG0_RST_EN);
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun20i-d1-wdt"))
+		sc->sc_key = 0x16aa0000;
+
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-wdt") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun20i-d1-wdt")) {
+		SXIWRITE4(sc, WDOG0_MODE_REG, sc->sc_key);
+		SXIWRITE4(sc, WDOG0_CFG_REG, WDOG0_RST_EN | sc->sc_key);
 		sc->sc_type = SXIDOG_A31;
-	} else
+	} else {
+		SXIWRITE4(sc, WDOG_MODE_REG, 0);
 		sc->sc_type = SXIDOG_A10;
+	}
 
 	sxidog_sc = sc;
 	cpuresetfn = sxidog_reset;
@@ -152,7 +161,7 @@ sxidog_callback(void *arg, int period)
 	case SXIDOG_A31:
 		enable = (period > 0) ? WDOG0_EN : 0;
 		SXIWRITE4(sc, WDOG0_MODE_REG,
-		    enable | WDOG0_INTV_VALUE(period));
+		    enable | WDOG0_INTV_VALUE(period) | sc->sc_key);
 		SXIWRITE4(sc, WDOG0_CTRL_REG, WDOG0_KEY | WDOG0_RSTART);
 		break;
 	}
