@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.314 2024/01/12 10:48:03 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.315 2024/01/26 18:24:23 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -226,6 +226,8 @@ sobind(struct socket *so, struct mbuf *nam, struct proc *p)
 int
 solisten(struct socket *so, int backlog)
 {
+	int somaxconn_local = READ_ONCE(somaxconn);
+	int sominconn_local = READ_ONCE(sominconn);
 	int error;
 
 	soassertlocked(so);
@@ -241,10 +243,10 @@ solisten(struct socket *so, int backlog)
 		return (error);
 	if (TAILQ_FIRST(&so->so_q) == NULL)
 		so->so_options |= SO_ACCEPTCONN;
-	if (backlog < 0 || backlog > somaxconn)
-		backlog = somaxconn;
-	if (backlog < sominconn)
-		backlog = sominconn;
+	if (backlog < 0 || backlog > somaxconn_local)
+		backlog = somaxconn_local;
+	if (backlog < sominconn_local)
+		backlog = sominconn_local;
 	so->so_qlimit = backlog;
 	return (0);
 }
