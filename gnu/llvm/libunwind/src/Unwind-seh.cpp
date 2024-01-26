@@ -1,4 +1,4 @@
-//===--------------------------- Unwind-seh.cpp ---------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -104,7 +104,7 @@ _GCC_specific_handler(PEXCEPTION_RECORD ms_exc, PVOID frame, PCONTEXT ms_ctx,
   if (!ctx) {
     __unw_init_seh(&cursor, disp->ContextRecord);
     __unw_seh_set_disp_ctx(&cursor, disp);
-    __unw_set_reg(&cursor, UNW_REG_IP, disp->ControlPc - 1);
+    __unw_set_reg(&cursor, UNW_REG_IP, disp->ControlPc);
     ctx = (struct _Unwind_Context *)&cursor;
 
     if (!IS_UNWINDING(ms_exc->ExceptionFlags)) {
@@ -137,7 +137,7 @@ _GCC_specific_handler(PEXCEPTION_RECORD ms_exc, PVOID frame, PCONTEXT ms_ctx,
     // If we were called by __libunwind_seh_personality(), indicate that
     // a handler was found; otherwise, initiate phase 2 by unwinding.
     if (ours && ms_exc->NumberParameters > 1)
-      return 4 /* ExecptionExecuteHandler in mingw */;
+      return 4 /* ExceptionExecuteHandler in mingw */;
     // This should never happen in phase 2.
     if (IS_UNWINDING(ms_exc->ExceptionFlags))
       _LIBUNWIND_ABORT("Personality indicated exception handler in phase 2!");
@@ -155,7 +155,7 @@ _GCC_specific_handler(PEXCEPTION_RECORD ms_exc, PVOID frame, PCONTEXT ms_ctx,
     // a handler was found; otherwise, it's time to initiate a collided
     // unwind to the target.
     if (ours && !IS_UNWINDING(ms_exc->ExceptionFlags) && ms_exc->NumberParameters > 1)
-      return 4 /* ExecptionExecuteHandler in mingw */;
+      return 4 /* ExceptionExecuteHandler in mingw */;
     // This should never happen in phase 1.
     if (!IS_UNWINDING(ms_exc->ExceptionFlags))
       _LIBUNWIND_ABORT("Personality installed context during phase 1!");
@@ -169,8 +169,8 @@ _GCC_specific_handler(PEXCEPTION_RECORD ms_exc, PVOID frame, PCONTEXT ms_ctx,
     __unw_get_reg(&cursor, UNW_ARM_R1, &exc->private_[3]);
 #elif defined(__aarch64__)
     exc->private_[2] = disp->TargetPc;
-    __unw_get_reg(&cursor, UNW_ARM64_X0, &retval);
-    __unw_get_reg(&cursor, UNW_ARM64_X1, &exc->private_[3]);
+    __unw_get_reg(&cursor, UNW_AARCH64_X0, &retval);
+    __unw_get_reg(&cursor, UNW_AARCH64_X1, &exc->private_[3]);
 #endif
     __unw_get_reg(&cursor, UNW_REG_IP, &target);
     ms_exc->ExceptionCode = STATUS_GCC_UNWIND;
@@ -244,6 +244,7 @@ unwind_phase2_forced(unw_context_t *uc,
       return _URC_FATAL_PHASE2_ERROR;
     }
 
+#ifndef NDEBUG
     // When tracing, print state information.
     if (_LIBUNWIND_TRACING_UNWINDING) {
       char functionBuf[512];
@@ -254,11 +255,12 @@ unwind_phase2_forced(unw_context_t *uc,
           (frameInfo.start_ip + offset > frameInfo.end_ip))
         functionName = ".anonymous.";
       _LIBUNWIND_TRACE_UNWINDING(
-          "unwind_phase2_forced(ex_ojb=%p): start_ip=0x%" PRIx64
-          ", func=%s, lsda=0x%" PRIx64 ", personality=0x%" PRIx64,
+          "unwind_phase2_forced(ex_ojb=%p): start_ip=0x%" PRIxPTR
+          ", func=%s, lsda=0x%" PRIxPTR ", personality=0x%" PRIxPTR,
           (void *)exception_object, frameInfo.start_ip, functionName,
           frameInfo.lsda, frameInfo.handler);
     }
+#endif
 
     // Call stop function at each frame.
     _Unwind_Action action =
@@ -352,7 +354,7 @@ _Unwind_RaiseException(_Unwind_Exception *exception_object) {
 /// may force a jump to a landing pad in that function; the landing
 /// pad code may then call \c _Unwind_Resume() to continue with the
 /// unwinding.  Note: the call to \c _Unwind_Resume() is from compiler
-/// geneated user code.  All other \c _Unwind_* routines are called
+/// generated user code.  All other \c _Unwind_* routines are called
 /// by the C++ runtime \c __cxa_* routines.
 ///
 /// Note: re-throwing an exception (as opposed to continuing the unwind)
