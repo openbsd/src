@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.60 2024/01/12 13:16:48 tb Exp $
+# $OpenBSD: appstest.sh,v 1.61 2024/01/26 11:58:36 job Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -866,6 +866,55 @@ __EOF__
 	check_exit_status $?
 	diff $server_dir/testpubkey.pem $revoke_cert.pub
 	check_exit_status $?
+
+	start_message "x509 ... test -new"
+	$openssl_bin genrsa -out $server_dir/ca-new.key 2048
+	check_exit_status $?
+	$openssl_bin x509 -new -set_issuer '/CN=test-issuer' \
+		-set_subject '/CN=test-subject' \
+		-out $server_dir/new.pem -days 1 -key $server_dir/ca-new.key \
+		-force_pubkey $revoke_cert.pub
+	check_exit_status $?
+	$openssl_bin x509 -in $server_dir/new.pem -pubkey -noout \
+		> $server_dir/new.pem.pub
+	check_exit_status $?
+
+	start_message "x509 ... check if -new cert has proper pubkey"
+	diff $server_dir/testpubkey.pem $server_dir/new.pem.pub
+	check_exit_status $?
+
+	start_message "x509 ... check if -new cert has proper issuer & subject"
+	if [ "$($openssl_bin x509 -in $server_dir/new.pem -issuer -noout)" != \
+		"issuer= /CN=test-issuer" ]; then
+		exit 1
+	fi
+	if [ "$($openssl_bin x509 -in $server_dir/new.pem -subject -noout)" != \
+		"subject= /CN=test-subject" ]; then
+		exit 1
+	fi
+	check_exit_status 0
+
+	start_message "x509 ... test -new without -force_pubkey"
+	$openssl_bin x509 -new -set_subject '/CN=test-subject2' \
+		-out $server_dir/new2.pem -days 1 -key $server_dir/ca-new.key
+	check_exit_status $?
+	$openssl_bin x509 -in $server_dir/new2.pem -pubkey -noout \
+		> $server_dir/new2.pem.pub
+	check_exit_status $?
+	$openssl_bin rsa -in $server_dir/ca-new.key -pubout \
+		-out $server_dir/ca-new.pubkey
+	check_exit_status $?
+	diff $server_dir/new2.pem.pub $server_dir/ca-new.pubkey
+	check_exit_status $?
+	if [ "$($openssl_bin x509 -in $server_dir/new2.pem -issuer -noout)" \
+		!= "issuer= /CN=test-subject2" ]; then
+		exit 1
+	fi
+	if [ "$($openssl_bin x509 -in $server_dir/new2.pem -subject -noout)" \
+		!= "subject= /CN=test-subject2" ]; then
+		exit 1
+	fi
+	check_exit_status 0
 
 	start_message "ca ... issue cert for server csr#3"
 

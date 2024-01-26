@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.154 2024/01/12 11:24:03 job Exp $
+.\" $OpenBSD: openssl.1,v 1.155 2024/01/26 11:58:37 job Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: January 12 2024 $
+.Dd $Mdocdate: January 26 2024 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6112,6 +6112,7 @@ version.
 .Op Fl modulus
 .Op Fl multivalue-rdn
 .Op Fl nameopt Ar option
+.Op Fl new
 .Op Fl next_serial
 .Op Fl noout
 .Op Fl ocsp_uri
@@ -6153,10 +6154,14 @@ The following are x509 input, output, and general purpose options:
 .It Fl in Ar file
 The input file to read from,
 or standard input if not specified.
+This option cannot be used with
+.Fl new .
 .It Fl inform Cm der | net | pem
 The input format.
 Normally, the command will expect an X.509 certificate,
 but this can change if other options such as
+.Fl in
+or
 .Fl req
 are present.
 .It Fl md5 | sha1
@@ -6710,8 +6715,22 @@ The format of the key file used in the
 and
 .Fl signkey
 options.
+.It Fl new
+Generate a new certificate using the subject given by
+.Fl set_subject
+and signed by
+.Fl signkey .
+If no public key is provided with
+.Fl force_pubkey ,
+the resulting certificate is self-signed.
+This option cannot be used with
+.Fl in
+or
+.Fl req .
 .It Fl req
 Expect a certificate request on input instead of a certificate.
+This option cannot be used with
+.Fl new .
 .It Fl set_issuer Ar name
 The issuer name to use.
 .Ar name

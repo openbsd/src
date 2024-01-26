@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.36 2024/01/12 11:24:03 job Exp $ */
+/* $OpenBSD: x509.c,v 1.37 2024/01/26 11:58:37 job Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,7 +81,8 @@
 
 static int callb(int ok, X509_STORE_CTX *ctx);
 static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
-    const EVP_MD *digest, CONF *conf, char *section, X509_NAME *issuer);
+    const EVP_MD *digest, CONF *conf, char *section, X509_NAME *issuer,
+    char *force_pubkey);
 static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
     X509 *x, X509 *xca, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *sigopts,
     char *serial, int create, int days, int clrext, CONF *conf, char *section,
@@ -127,6 +128,7 @@ static struct {
 	const EVP_MD *md_alg;
 	int modulus;
 	int multirdn;
+	int new;
 	int next_serial;
 	unsigned long nmflag;
 	int noout;
@@ -531,6 +533,12 @@ static const struct option x509_options[] = {
 	},
 #endif
 	{
+		.name = "key",
+		.argname = "file",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = x509_opt_signkey,
+	},
+	{
 		.name = "keyform",
 		.argname = "fmt",
 		.desc = "Private key format - default PEM",
@@ -556,6 +564,12 @@ static const struct option x509_options[] = {
 		.desc = "Various certificate name options",
 		.type = OPTION_ARG_FUNC,
 		.opt.argfunc = x509_opt_nameopt,
+	},
+	{
+		.name = "new",
+		.desc = "Generate a new certificate",
+		.type = OPTION_FLAG,
+		.opt.flag = &cfg.new,
 	},
 	{
 		.name = "next_serial",
@@ -758,7 +772,7 @@ x509_usage(void)
 	    "    [-in file] [-inform der | net | pem] [-issuer]\n"
 	    "    [-issuer_hash] [-issuer_hash_old] [-keyform der | pem]\n"
 	    "    [-md5 | -sha1] [-modulus] [-multivalue-rdn]\n"
-	    "    [-nameopt option] [-next_serial] [-noout] [-ocsp_uri]\n"
+	    "    [-nameopt option] [-new] [-next_serial] [-noout] [-ocsp_uri]\n"
 	    "    [-ocspid] [-out file] [-outform der | net | pem]\n"
 	    "    [-passin arg] [-pubkey] [-purpose] [-req] [-serial]\n"
 	    "    [-set_issuer name] [-set_serial n] [-set_subject name]\n"
@@ -778,6 +792,7 @@ x509_main(int argc, char **argv)
 	X509 *x = NULL, *xca = NULL;
 	X509_NAME *iname = NULL, *sname = NULL;
 	EVP_PKEY *Fpkey = NULL, *Upkey = NULL, *CApkey = NULL;
+	EVP_PKEY *pkey;
 	int i;
 	BIO *out = NULL;
 	BIO *STDout = NULL;
@@ -869,8 +884,28 @@ x509_main(int argc, char **argv)
 		    cfg.keyformat, 0, NULL, "Forced key")) == NULL)
 			goto end;
 	}
+	if (cfg.new) {
+		if (cfg.infile != NULL) {
+			BIO_printf(bio_err, "Can't combine -new and -in\n");
+			goto end;
+		}
+		if (cfg.reqfile) {
+			BIO_printf(bio_err, "Can't combine -new and -req\n");
+			goto end;
+		}
+		if (cfg.set_subject == NULL) {
+			BIO_printf(bio_err, "Must use -set_subject with -new\n");
+			goto end;
+		}
+		if (cfg.keyfile == NULL) {
+			BIO_printf(bio_err, "Must use -signkey with -new\n");
+			goto end;
+		}
+		if ((Upkey = load_key(bio_err, cfg.keyfile, cfg.keyformat, 0,
+		    passin, "Private key")) == NULL)
+			goto end;
+	}
 	if (cfg.reqfile) {
-		EVP_PKEY *pkey;
 		BIO *in;
 
 		if (!cfg.sign_flag && !cfg.CA_flag) {
@@ -919,6 +954,8 @@ x509_main(int argc, char **argv)
 		print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
 		    cfg.nmflag);
 
+	}
+	if (cfg.reqfile || cfg.new) {
 		if ((x = X509_new()) == NULL)
 			goto end;
 
@@ -958,6 +995,8 @@ x509_main(int argc, char **argv)
 
 		if ((pkey = Fpkey) == NULL)
 			pkey = X509_REQ_get0_pubkey(req);
+		if (pkey == NULL)
+			pkey = Upkey;
 		if (pkey == NULL)
 			goto end;
 		if (!X509_set_pubkey(x, pkey))
@@ -1263,10 +1302,7 @@ x509_main(int argc, char **argv)
 					BIO_printf(STDout, "%02X%c", md[j],
 					    (j + 1 == (int)n) ? '\n' : ':');
 				}
-
-			/* should be in the library */
 			} else if (cfg.sign_flag == i && cfg.x509req == 0) {
-				BIO_printf(bio_err, "Getting Private key\n");
 				if (Upkey == NULL) {
 					Upkey = load_key(bio_err, cfg.keyfile,
 					    cfg.keyformat, 0, passin,
@@ -1276,10 +1312,10 @@ x509_main(int argc, char **argv)
 				}
 				if (!sign(x, Upkey, cfg.days,
 				    cfg.clrext, cfg.digest,
-				    extconf, cfg.extsect, iname))
+				    extconf, cfg.extsect, iname,
+				    cfg.force_pubkey))
 					goto end;
 			} else if (cfg.CA_flag == i) {
-				BIO_printf(bio_err, "Getting CA Private Key\n");
 				if (cfg.CAkeyfile != NULL) {
 					CApkey = load_key(bio_err, cfg.CAkeyfile,
 					    cfg.CAkeyformat, 0, passin,
@@ -1564,7 +1600,7 @@ callb(int ok, X509_STORE_CTX *ctx)
 /* self sign */
 static int
 sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
-    CONF *conf, char *section, X509_NAME *issuer)
+    CONF *conf, char *section, X509_NAME *issuer, char *force_pubkey)
 {
 	EVP_PKEY *pktmp;
 
@@ -1591,8 +1627,10 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 	    (long) 60 * 60 * 24 * days) == NULL)
 		goto err;
 
-	if (!X509_set_pubkey(x, pkey))
-		goto err;
+	if (force_pubkey == NULL) {
+		if (!X509_set_pubkey(x, pkey))
+			goto err;
+	}
 	if (clrext) {
 		while (X509_get_ext_count(x) > 0) {
 			if (X509_delete_ext(x, 0) == NULL)
