@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2024/01/26 11:51:45 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ CPPFLAGS+=  -DNDEBUG
 CXXFLAGS+=  -nostdlib -nostdinc++ -funwind-tables \
             -fno-exceptions -fno-rtti
 .if empty(CXXFLAGS:M-std=*)
-CXXFLAGS+=  -std=c++11
+CXXFLAGS+=  -std=c++20
 .endif
 
 SRCS+=unwind.c \
