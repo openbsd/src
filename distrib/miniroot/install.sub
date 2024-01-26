@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1257 2023/10/24 18:03:53 naddy Exp $
+#	$OpenBSD: install.sub,v 1.1258 2024/01/26 16:35:58 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1784,6 +1784,8 @@ install_files() {
 			rm -rf /mnt/usr/lib/{gcc-lib,clang}
 			rm -rf /mnt/usr/bin/{gcc,g++}
 			rm -rf /mnt/usr/include/g++
+			# file changed to dir in libc++
+			rm -rf /mnt/usr/include/c++/v1
 		fi
 		rm -rf /mnt/var/syspatch/*
 	fi
