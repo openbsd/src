@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.100 2023/12/11 22:12:53 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.101 2024/01/26 19:23:03 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -792,7 +792,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	case PMAP_CACHE_DEV_NGNRE:
 		break;
 	default:
-		panic("pmap_fill_pte:invalid cache mode");
+		panic("%s: invalid cache mode", __func__);
 	}
 	pted->pted_va |= cache;
 
@@ -1682,7 +1682,7 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		attr |= ATTR_SH(SH_INNER);
 		break;
 	default:
-		panic("pmap_pte_insert: invalid cache mode");
+		panic("%s: invalid cache mode", __func__);
 	}
 
 	if (pm->pm_privileged)
