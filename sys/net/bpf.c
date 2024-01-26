@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.221 2023/03/09 05:56:58 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.222 2024/01/26 21:14:08 jan Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1397,6 +1397,8 @@ _bpf_mtap(caddr_t arg, const struct mbuf *mp, const struct mbuf *m,
 					if (ISSET(mp->m_pkthdr.csum_flags,
 					    M_FLOWID))
 						SET(tbh.bh_flags, BPF_F_FLOWID);
+					tbh.bh_csumflags =
+					    mp->m_pkthdr.csum_flags;
 
 					m_microtime(mp, &tv);
 				} else

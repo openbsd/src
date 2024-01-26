@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.32 2023/12/14 09:58:37 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.33 2024/01/26 21:14:08 jan Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -890,6 +890,7 @@ bpf_receive(int fd, short events, void *arg)
 		}
 		memcpy(&imsg_dhcp.packet, p + hdr->bh_hdrlen, hdr->bh_caplen);
 		imsg_dhcp.len = hdr->bh_caplen;
+		imsg_dhcp.csumflags = hdr->bh_csumflags;
 		frontend_imsg_compose_engine(IMSG_DHCP, 0, 0, &imsg_dhcp,
 		    sizeof(imsg_dhcp));
  cont:

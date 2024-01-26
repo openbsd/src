@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.15 2023/11/25 12:00:39 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.16 2024/01/26 21:14:08 jan Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -287,7 +287,7 @@ struct imsg_propose_rdns {
 struct imsg_dhcp {
 	uint32_t		if_index;
 	ssize_t			len;
-	uint8_t			ether_align[2];
+	uint16_t		csumflags;
 	uint8_t			packet[1500];
 };
 

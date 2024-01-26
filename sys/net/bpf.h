@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.71 2023/03/09 05:56:58 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.72 2024/01/26 21:14:08 jan Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ struct bpf_hdr {
 #define BPF_F_DIR_IN		(BPF_DIRECTION_IN << BPF_F_DIR_SHIFT)
 #define BPF_F_DIR_OUT		(BPF_DIRECTION_OUT << BPF_F_DIR_SHIFT)
 	u_int8_t	bh_drops;
+	u_int16_t	bh_csumflags;	/* checksum flags */
 };
 
 #ifdef _KERNEL

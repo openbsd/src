@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.41 2023/12/14 09:58:37 claudio Exp $	*/
+/*	$OpenBSD: engine.c,v 1.42 2024/01/26 21:14:08 jan Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/uio.h>
+#include <sys/mbuf.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -788,7 +789,8 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	if (rem < (size_t)ip->ip_hl << 2)
 		goto too_short;
 
-	if (wrapsum(checksum((uint8_t *)ip, ip->ip_hl << 2, 0)) != 0) {
+	if ((dhcp->csumflags & M_IPV4_CSUM_IN_OK) == 0 &&
+	    wrapsum(checksum((uint8_t *)ip, ip->ip_hl << 2, 0)) != 0) {
 		log_warnx("%s: bad IP checksum", __func__);
 		return;
 	}
@@ -834,16 +836,19 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	p += sizeof(*udp);
 	rem -= sizeof(*udp);
 
-	usum = udp->uh_sum;
-	udp->uh_sum = 0;
+	if ((dhcp->csumflags & M_UDP_CSUM_IN_OK) == 0) {
+		usum = udp->uh_sum;
+		udp->uh_sum = 0;
 
-	sum = wrapsum(checksum((uint8_t *)udp, sizeof(*udp), checksum(p, rem,
-	    checksum((uint8_t *)&ip->ip_src, 2 * sizeof(ip->ip_src),
-	    IPPROTO_UDP + ntohs(udp->uh_ulen)))));
+		sum = wrapsum(checksum((uint8_t *)udp, sizeof(*udp),
+		    checksum(p, rem,
+		    checksum((uint8_t *)&ip->ip_src, 2 * sizeof(ip->ip_src),
+		    IPPROTO_UDP + ntohs(udp->uh_ulen)))));
 
-	if (usum != 0 && usum != sum) {
-		log_warnx("%s: bad UDP checksum", __func__);
-		return;
+		if (usum != 0 && usum != sum) {
+			log_warnx("%s: bad UDP checksum", __func__);
+			return;
+		}
 	}
 
 	if (log_getverbose() > 1) {
