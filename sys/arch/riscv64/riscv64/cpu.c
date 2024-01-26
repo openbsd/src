@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.17 2024/01/23 19:51:10 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.18 2024/01/26 16:59:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -27,6 +27,7 @@
 
 #include <uvm/uvm.h>
 
+#include <machine/cpufunc.h>
 #include <machine/fdt.h>
 #include <machine/sbi.h>
 
@@ -91,6 +92,12 @@ int cpu_errata_sifive_cip_1200;
 
 void	cpu_opp_init(struct cpu_info *, uint32_t);
 
+void	thead_dcache_wbinv_range(paddr_t, psize_t);
+void	thead_dcache_inv_range(paddr_t, psize_t);
+void	thead_dcache_wb_range(paddr_t, psize_t);
+
+size_t	thead_dcache_line_size;
+
 void
 cpu_identify(struct cpu_info *ci)
 {
@@ -141,6 +148,13 @@ cpu_identify(struct cpu_info *ci)
 	/* Handle errata. */
 	if (mvendorid == CPU_VENDOR_SIFIVE && marchid == CPU_ARCH_U7)
 		cpu_errata_sifive_cip_1200 = 1;
+	if (mvendorid == CPU_VENDOR_THEAD && marchid == 0 && mimpid == 0) {
+		cpu_dcache_wbinv_range = thead_dcache_wbinv_range;
+		cpu_dcache_inv_range = thead_dcache_inv_range;
+		cpu_dcache_wb_range = thead_dcache_wb_range;
+		thead_dcache_line_size =
+		    OF_getpropint(ci->ci_node, "d-cache-block-size", 64);
+	}
 }
 
 #ifdef MULTIPROCESSOR
@@ -307,6 +321,63 @@ cpu_clockspeed(int *freq)
 void
 cpu_cache_nop_range(paddr_t pa, psize_t len)
 {
+}
+
+void
+thead_dcache_wbinv_range(paddr_t pa, psize_t len)
+{
+	paddr_t end, mask;
+
+	mask = thead_dcache_line_size - 1;
+	end = (pa + len + mask) & ~mask;
+	pa &= ~mask;
+
+	while (pa != end) {
+		/* th.dcache.cipa a0 */
+		__asm volatile ("mv a0, %0; .long 0x02b5000b" :: "r"(pa)
+		    : "a0", "memory");
+		pa += thead_dcache_line_size;
+	}
+	/* th.sync.s */
+	__asm volatile (".long 0x0190000b" ::: "memory");
+}
+
+void
+thead_dcache_inv_range(paddr_t pa, psize_t len)
+{
+	paddr_t end, mask;
+
+	mask = thead_dcache_line_size - 1;
+	end = (pa + len + mask) & ~mask;
+	pa &= ~mask;
+
+	while (pa != end) {
+		/* th.dcache.ipa a0 */
+		__asm volatile ("mv a0, %0; .long 0x02a5000b" :: "r"(pa)
+		    : "a0", "memory");
+		pa += thead_dcache_line_size;
+	}
+	/* th.sync.s */
+	__asm volatile (".long 0x0190000b" ::: "memory");
+}
+
+void
+thead_dcache_wb_range(paddr_t pa, psize_t len)
+{
+	paddr_t end, mask;
+
+	mask = thead_dcache_line_size - 1;
+	end = (pa + len + mask) & ~mask;
+	pa &= ~mask;
+
+	while (pa != end) {
+		/* th.dcache.cpa a0 */
+		__asm volatile ("mv a0, %0; .long 0x0295000b" :: "r"(pa)
+		    : "a0", "memory");
+		pa += thead_dcache_line_size;
+	}
+	/* th.sync.s */
+	__asm volatile (".long 0x0190000b" ::: "memory");
 }
 
 void (*cpu_dcache_wbinv_range)(paddr_t, psize_t) = cpu_cache_nop_range;
