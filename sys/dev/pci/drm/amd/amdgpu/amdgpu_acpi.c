@@ -1085,9 +1085,6 @@ out:
 
 static int amdgpu_acpi_enumerate_xcc(void)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct amdgpu_acpi_dev_info *dev_info = NULL;
 	struct amdgpu_acpi_xcc_info *xcc_info;
 	struct acpi_device *acpi_dev;
@@ -1098,6 +1095,7 @@ static int amdgpu_acpi_enumerate_xcc(void)
 	INIT_LIST_HEAD(&amdgpu_acpi_dev_list);
 	xa_init(&numa_info_xa);
 
+#ifdef notyet
 	for (id = 0; id < AMD_XCC_MAX_HID; id++) {
 		snprintf(hid, sizeof(hid), "%s%d", "AMD", AMD_XCC_HID_START + id);
 		acpi_dev = acpi_dev_get_first_match_dev(hid, NULL, -1);
@@ -1142,9 +1140,9 @@ static int amdgpu_acpi_enumerate_xcc(void)
 
 		list_add_tail(&xcc_info->list, &dev_info->xcc_list);
 	}
+#endif
 
 	return 0;
-#endif
 }
 
 int amdgpu_acpi_get_tmr_info(struct amdgpu_device *adev, u64 *tmr_offset,

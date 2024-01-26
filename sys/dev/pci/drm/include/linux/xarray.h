@@ -176,4 +176,10 @@ xa_empty(const struct xarray *xa)
 	return SPLAY_EMPTY(&xa->xa_tree);
 }
 
+static inline void
+xa_init(struct xarray *xa)
+{
+	xa_init_flags(xa, 0);
+}
+
 #endif

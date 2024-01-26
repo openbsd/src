@@ -51,4 +51,6 @@ struct pci_device_id {
 	unsigned long driver_data;
 };
 
+#define ACPI_ID_LEN	16
+
 #endif
