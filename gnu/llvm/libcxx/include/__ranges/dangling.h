@@ -13,18 +13,15 @@
 #include <__config>
 #include <__ranges/access.h>
 #include <__ranges/concepts.h>
-#include <type_traits>
+#include <__type_traits/conditional.h>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
-
-_LIBCPP_PUSH_MACROS
-#include <__undef_macros>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if !defined(_LIBCPP_HAS_NO_RANGES)
+#if _LIBCPP_STD_VER > 17
 
 namespace ranges {
 struct dangling {
@@ -38,10 +35,8 @@ using borrowed_iterator_t = _If<borrowed_range<_Rp>, iterator_t<_Rp>, dangling>;
 // borrowed_subrange_t defined in <__ranges/subrange.h>
 } // namespace ranges
 
-#endif // !_LIBCPP_HAS_NO_RANGES
+#endif // _LIBCPP_STD_VER > 17
 
 _LIBCPP_END_NAMESPACE_STD
-
-_LIBCPP_POP_MACROS
 
 #endif // _LIBCPP___RANGES_DANGLING_H

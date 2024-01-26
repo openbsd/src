@@ -19,12 +19,27 @@ set(LIBCXX_SOURCES
   include/atomic_support.h
   include/config_elast.h
   include/refstring.h
+  include/ryu/common.h
+  include/ryu/d2fixed.h
+  include/ryu/d2fixed_full_table.h
+  include/ryu/d2s.h
+  include/ryu/d2s_full_table.h
+  include/ryu/d2s_intrinsics.h
+  include/ryu/digit_table.h
+  include/ryu/f2s.h
+  include/ryu/ryu.h
+  include/to_chars_floating_point.h
+  legacy_pointer_safety.cpp
   memory.cpp
+  memory_resource.cpp
   mutex.cpp
   mutex_destructor.cpp
   new.cpp
   optional.cpp
   random_shuffle.cpp
+  ryu/d2fixed.cpp
+  ryu/d2s.cpp
+  ryu/f2s.cpp
   shared_mutex.cpp
   stdexcept.cpp
   string.cpp
@@ -47,11 +62,13 @@ set(LIBCXX_SOURCES
   valarray.cpp
   variant.cpp
   vector.cpp
+  verbose_abort.cpp
   )
 
-if (LIBCXX_ENABLE_DEBUG_MODE_SUPPORT)
+if (LIBCXX_ENABLE_DEBUG_MODE OR LIBCXX_ENABLE_BACKWARDS_COMPATIBILITY_DEBUG_MODE_SYMBOLS)
   list(APPEND LIBCXX_SOURCES
     debug.cpp
+    legacy_debug_handler.cpp
     )
 endif()
 
@@ -73,12 +90,6 @@ if (LIBCXX_ENABLE_LOCALIZATION)
     )
 endif()
 
-if(LIBCXX_ENABLE_INCOMPLETE_FEATURES)
-  list(APPEND LIBCXX_SOURCES
-    format.cpp
-  )
-endif()
-
 if(WIN32)
   list(APPEND LIBCXX_SOURCES
     support/win32/locale_win32.cpp
@@ -98,6 +109,8 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")
     )
 elseif(ZOS)
   list(APPEND LIBCXX_SOURCES
+    support/ibm/mbsnrtowcs.cpp
+    support/ibm/wcsnrtombs.cpp
     support/ibm/xlocale_zos.cpp
     )
 endif()
@@ -138,11 +151,6 @@ if(NOT LIBCXX_INSTALL_LIBRARY)
   set(exclude_from_all EXCLUDE_FROM_ALL)
 endif()
 
-# If LIBCXX_CXX_ABI_LIBRARY_PATH is defined we want to add it to the search path.
-add_link_flags_if(LIBCXX_CXX_ABI_LIBRARY_PATH
-                  "${CMAKE_LIBRARY_PATH_FLAG}${LIBCXX_CXX_ABI_LIBRARY_PATH}")
-
-
 if (LIBCXX_GENERATE_COVERAGE AND NOT LIBCXX_COVERAGE_LIBRARY)
   find_compiler_rt_library(profile LIBCXX_COVERAGE_LIBRARY)
 endif()
@@ -161,7 +169,8 @@ if (APPLE AND LLVM_USE_SANITIZER)
     message(WARNING "LLVM_USE_SANITIZER=${LLVM_USE_SANITIZER} is not supported on OS X")
   endif()
   if (LIBFILE)
-    find_compiler_rt_dir(LIBDIR)
+    find_compiler_rt_library(builtins LIBCXX_BUILTINS_LIBRARY)
+    get_filename_component(LIBDIR "${LIBCXX_BUILTINS_LIBRARY}" DIRECTORY)
     if (NOT IS_DIRECTORY "${LIBDIR}")
       message(FATAL_ERROR "Cannot find compiler-rt directory on OS X required for LLVM_USE_SANITIZER")
     endif()
@@ -178,10 +187,6 @@ if (LIBCXX_ENABLE_PARALLEL_ALGORITHMS AND NOT TARGET pstl::ParallelSTL)
 endif()
 
 function(cxx_set_common_defines name)
-  if(LIBCXX_CXX_ABI_HEADER_TARGET)
-    add_dependencies(${name} ${LIBCXX_CXX_ABI_HEADER_TARGET})
-  endif()
-
   if (LIBCXX_ENABLE_PARALLEL_ALGORITHMS)
     target_link_libraries(${name} PUBLIC pstl::ParallelSTL)
   endif()
@@ -193,48 +198,42 @@ split_list(LIBCXX_LINK_FLAGS)
 # Build the shared library.
 if (LIBCXX_ENABLE_SHARED)
   add_library(cxx_shared SHARED ${exclude_from_all} ${LIBCXX_SOURCES} ${LIBCXX_HEADERS})
+  target_include_directories(cxx_shared PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_link_libraries(cxx_shared PUBLIC cxx-headers
                                    PRIVATE ${LIBCXX_LIBRARIES})
   set_target_properties(cxx_shared
     PROPERTIES
       COMPILE_FLAGS "${LIBCXX_COMPILE_FLAGS}"
       LINK_FLAGS    "${LIBCXX_LINK_FLAGS}"
-      OUTPUT_NAME   "c++"
-      VERSION       "${LIBCXX_ABI_VERSION}.0"
+      OUTPUT_NAME   "${LIBCXX_SHARED_OUTPUT_NAME}"
+      VERSION       "${LIBCXX_LIBRARY_VERSION}"
       SOVERSION     "${LIBCXX_ABI_VERSION}"
       DEFINE_SYMBOL ""
-      POSITION_INDEPENDENT_CODE ON
   )
   cxx_add_common_build_flags(cxx_shared)
   cxx_set_common_defines(cxx_shared)
 
-  # Link against LLVM libunwind
-  if (LIBCXXABI_USE_LLVM_UNWINDER)
-    if (NOT LIBCXXABI_STATICALLY_LINK_UNWINDER_IN_SHARED_LIBRARY AND (TARGET unwind_shared OR HAVE_LIBUNWIND))
-      target_link_libraries(cxx_shared PUBLIC unwind_shared)
-    elseif (LIBCXXABI_STATICALLY_LINK_UNWINDER_IN_SHARED_LIBRARY AND (TARGET unwind_static OR HAVE_LIBUNWIND))
-      # libunwind is already included in libc++abi
-    else()
-      target_link_libraries(cxx_shared PUBLIC unwind)
-    endif()
+  if(ZOS)
+    add_custom_command(TARGET cxx_shared POST_BUILD
+      COMMAND
+        ${LIBCXX_SOURCE_DIR}/utils/zos_rename_dll_side_deck.sh
+        $<TARGET_LINKER_FILE_NAME:cxx_shared> $<TARGET_FILE_NAME:cxx_shared> "${LIBCXX_DLL_NAME}"
+      COMMENT "Rename dll name inside the side deck file"
+      WORKING_DIRECTORY $<TARGET_FILE_DIR:cxx_shared>
+    )
   endif()
 
   # Link against libc++abi
   if (LIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY)
-    if (APPLE)
-      target_link_libraries(cxx_shared PRIVATE "-Wl,-force_load" "${LIBCXX_CXX_STATIC_ABI_LIBRARY}")
-    else()
-      target_link_libraries(cxx_shared PRIVATE "-Wl,--whole-archive,-Bstatic" "${LIBCXX_CXX_STATIC_ABI_LIBRARY}" "-Wl,-Bdynamic,--no-whole-archive")
-    endif()
+    target_link_libraries(cxx_shared PRIVATE libcxx-abi-shared-objects)
   else()
-    target_link_libraries(cxx_shared PUBLIC "${LIBCXX_CXX_SHARED_ABI_LIBRARY}")
+    target_link_libraries(cxx_shared PUBLIC libcxx-abi-shared)
   endif()
 
   # Maybe re-export symbols from libc++abi
   # In particular, we don't re-export the symbols if libc++abi is merged statically
   # into libc++ because in that case there's no dylib to re-export from.
-  if (APPLE AND (LIBCXX_CXX_ABI_LIBNAME STREQUAL "libcxxabi" OR
-                 LIBCXX_CXX_ABI_LIBNAME STREQUAL "default")
+  if (APPLE AND LIBCXX_CXX_ABI STREQUAL "libcxxabi"
             AND NOT DEFINED LIBCXX_OSX_REEXPORT_LIBCXXABI_SYMBOLS
             AND NOT LIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY)
     set(LIBCXX_OSX_REEXPORT_LIBCXXABI_SYMBOLS ON)
@@ -243,7 +242,7 @@ if (LIBCXX_ENABLE_SHARED)
   if (LIBCXX_OSX_REEXPORT_LIBCXXABI_SYMBOLS)
     target_link_libraries(cxx_shared PRIVATE
       "-Wl,-unexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/../lib/libc++unexp.exp"
-      "-Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/../lib/libc++abi.v${LIBCXX_LIBCPPABI_VERSION}.exp"
+      "-Wl,-reexported_symbols_list,${CMAKE_CURRENT_SOURCE_DIR}/../lib/libc++abi.exp"
       "-Wl,-force_symbols_not_weak_list,${CMAKE_CURRENT_SOURCE_DIR}/../lib/notweak.exp"
       "-Wl,-force_symbols_weak_list,${CMAKE_CURRENT_SOURCE_DIR}/../lib/weak.exp")
 
@@ -252,8 +251,30 @@ if (LIBCXX_ENABLE_SHARED)
 
   # Generate a linker script in place of a libc++.so symlink.
   if (LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
-      include(DefineLinkerScript)
-      define_linker_script(cxx_shared)
+    set(link_libraries)
+
+    set(imported_libname "$<TARGET_PROPERTY:libcxx-abi-shared,IMPORTED_LIBNAME>")
+    set(output_name "$<TARGET_PROPERTY:libcxx-abi-shared,OUTPUT_NAME>")
+    string(APPEND link_libraries "${CMAKE_LINK_LIBRARY_FLAG}$<IF:$<BOOL:${imported_libname}>,${imported_libname},${output_name}>")
+
+    # TODO: Move to the same approach as above for the unwind library
+    if (LIBCXXABI_USE_LLVM_UNWINDER)
+      if (LIBCXXABI_STATICALLY_LINK_UNWINDER_IN_SHARED_LIBRARY)
+        # libunwind is already included in libc++abi
+      elseif (TARGET unwind_shared OR HAVE_LIBUNWIND)
+        string(APPEND link_libraries " ${CMAKE_LINK_LIBRARY_FLAG}$<TARGET_PROPERTY:unwind_shared,OUTPUT_NAME>")
+      else()
+        string(APPEND link_libraries " ${CMAKE_LINK_LIBRARY_FLAG}unwind")
+      endif()
+    endif()
+
+    set(linker_script "INPUT($<TARGET_SONAME_FILE_NAME:cxx_shared> ${link_libraries})")
+    add_custom_command(TARGET cxx_shared POST_BUILD
+      COMMAND "${CMAKE_COMMAND}" -E remove "$<TARGET_LINKER_FILE:cxx_shared>"
+      COMMAND "${CMAKE_COMMAND}" -E echo "${linker_script}" > "$<TARGET_LINKER_FILE:cxx_shared>"
+      COMMENT "Generating linker script: '${linker_script}' as file $<TARGET_LINKER_FILE:cxx_shared>"
+      VERBATIM
+    )
   endif()
 
   list(APPEND LIBCXX_BUILD_TARGETS "cxx_shared")
@@ -271,14 +292,15 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
 # Build the static library.
 if (LIBCXX_ENABLE_STATIC)
   add_library(cxx_static STATIC ${exclude_from_all} ${LIBCXX_SOURCES} ${LIBCXX_HEADERS})
+  target_include_directories(cxx_static PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_link_libraries(cxx_static PUBLIC cxx-headers
-                                   PRIVATE ${LIBCXX_LIBRARIES})
+                                   PRIVATE ${LIBCXX_LIBRARIES}
+                                   PRIVATE libcxx-abi-static)
   set_target_properties(cxx_static
     PROPERTIES
       COMPILE_FLAGS "${LIBCXX_COMPILE_FLAGS}"
       LINK_FLAGS    "${LIBCXX_LINK_FLAGS}"
-      OUTPUT_NAME   "c++"
-      POSITION_INDEPENDENT_CODE ON
+      OUTPUT_NAME   "${LIBCXX_STATIC_OUTPUT_NAME}"
   )
   cxx_add_common_build_flags(cxx_static)
   cxx_set_common_defines(cxx_static)
@@ -291,65 +313,47 @@ if (LIBCXX_ENABLE_STATIC)
       append_flags_if_supported(CXX_STATIC_LIBRARY_FLAGS -fvisibility-global-new-delete-hidden)
     endif()
     target_compile_options(cxx_static PRIVATE ${CXX_STATIC_LIBRARY_FLAGS})
-    target_compile_definitions(cxx_static PRIVATE _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
+    # _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS can be defined in __config_site
+    # too. Define it in the same way here, to avoid redefinition conflicts.
+    target_compile_definitions(cxx_static PRIVATE _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS=)
   endif()
 
   list(APPEND LIBCXX_BUILD_TARGETS "cxx_static")
   # Attempt to merge the libc++.a archive and the ABI library archive into one.
   if (LIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY)
-    set(MERGE_ARCHIVES_SEARCH_PATHS "")
-    if (LIBCXX_CXX_ABI_LIBRARY_PATH)
-      set(MERGE_ARCHIVES_SEARCH_PATHS "-L${LIBCXX_CXX_ABI_LIBRARY_PATH}")
-    endif()
-    if (TARGET "${LIBCXX_CXX_STATIC_ABI_LIBRARY}" OR HAVE_LIBCXXABI)
-      set(MERGE_ARCHIVES_ABI_TARGET "$<TARGET_LINKER_FILE:${LIBCXX_CXX_STATIC_ABI_LIBRARY}>")
-    else()
-      set(MERGE_ARCHIVES_ABI_TARGET
-        "${CMAKE_STATIC_LIBRARY_PREFIX}${LIBCXX_CXX_STATIC_ABI_LIBRARY}${CMAKE_STATIC_LIBRARY_SUFFIX}")
-      if (LIBCXX_CXX_ABI_LIBRARY_PATH)
-        set(MERGE_ARCHIVES_ABI_TARGET "${LIBCXX_CXX_ABI_LIBRARY_PATH}/${MERGE_ARCHIVES_ABI_TARGET}")
-      endif ()
-    endif()
-    if (APPLE)
-      set(MERGE_ARCHIVES_LIBTOOL "--use-libtool" "--libtool" "${CMAKE_LIBTOOL}")
-    endif()
-    add_custom_command(TARGET cxx_static POST_BUILD
-    COMMAND
-      ${Python3_EXECUTABLE} ${LIBCXX_SOURCE_DIR}/utils/merge_archives.py
-    ARGS
-      -o $<TARGET_LINKER_FILE:cxx_static>
-      --ar "${CMAKE_AR}"
-      ${MERGE_ARCHIVES_LIBTOOL}
-      "$<TARGET_LINKER_FILE:cxx_static>"
-      "${MERGE_ARCHIVES_ABI_TARGET}"
-      "${MERGE_ARCHIVES_SEARCH_PATHS}"
-    WORKING_DIRECTORY ${LIBCXX_BUILD_DIR}
-    DEPENDS ${MERGE_ARCHIVES_ABI_TARGET}
-    )
+    target_link_libraries(cxx_static PRIVATE libcxx-abi-static-objects)
   endif()
 endif()
 
 # Add a meta-target for both libraries.
 add_custom_target(cxx DEPENDS ${LIBCXX_BUILD_TARGETS})
 
-if (LIBCXX_ENABLE_EXPERIMENTAL_LIBRARY)
-  set(LIBCXX_EXPERIMENTAL_SOURCES
-    experimental/memory_resource.cpp
-    )
-  add_library(cxx_experimental STATIC ${LIBCXX_EXPERIMENTAL_SOURCES})
-  if (LIBCXX_ENABLE_SHARED)
-    target_link_libraries(cxx_experimental PRIVATE cxx_shared)
-  else()
-    target_link_libraries(cxx_experimental PRIVATE cxx_static)
-  endif()
-
-  set_target_properties(cxx_experimental
-    PROPERTIES
-      COMPILE_FLAGS "${LIBCXX_COMPILE_FLAGS}"
-      OUTPUT_NAME   "c++experimental"
+set(LIBCXX_EXPERIMENTAL_SOURCES
+  experimental/memory_resource.cpp
+  format.cpp
   )
-  cxx_add_common_build_flags(cxx_experimental)
+
+add_library(cxx_experimental STATIC ${LIBCXX_EXPERIMENTAL_SOURCES})
+target_link_libraries(cxx_experimental PUBLIC cxx-headers)
+if (LIBCXX_ENABLE_SHARED)
+  target_link_libraries(cxx_experimental PRIVATE cxx_shared)
+else()
+  target_link_libraries(cxx_experimental PRIVATE cxx_static)
 endif()
+
+if (LIBCXX_HERMETIC_STATIC_LIBRARY)
+  # _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS can be defined in __config_site
+  # too. Define it in the same way here, to avoid redefinition conflicts.
+  target_compile_definitions(cxx_experimental PRIVATE _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS=)
+endif()
+
+set_target_properties(cxx_experimental
+  PROPERTIES
+    COMPILE_FLAGS "${LIBCXX_COMPILE_FLAGS}"
+    OUTPUT_NAME   "c++experimental"
+)
+cxx_add_common_build_flags(cxx_experimental)
+target_compile_options(cxx_experimental PUBLIC -D_LIBCPP_ENABLE_EXPERIMENTAL)
 
 
 if (LIBCXX_BUILD_EXTERNAL_THREAD_LIBRARY)
@@ -376,21 +380,21 @@ if (LIBCXX_INSTALL_SHARED_LIBRARY)
   install(TARGETS cxx_shared
     ARCHIVE DESTINATION ${LIBCXX_INSTALL_LIBRARY_DIR} COMPONENT cxx
     LIBRARY DESTINATION ${LIBCXX_INSTALL_LIBRARY_DIR} COMPONENT cxx
-    RUNTIME DESTINATION bin COMPONENT cxx)
+    RUNTIME DESTINATION ${LIBCXX_INSTALL_RUNTIME_DIR} COMPONENT cxx)
 endif()
 
 if (LIBCXX_INSTALL_STATIC_LIBRARY)
   install(TARGETS cxx_static
     ARCHIVE DESTINATION ${LIBCXX_INSTALL_LIBRARY_DIR} COMPONENT cxx
     LIBRARY DESTINATION ${LIBCXX_INSTALL_LIBRARY_DIR} COMPONENT cxx
-    RUNTIME DESTINATION bin COMPONENT cxx)
+    RUNTIME DESTINATION ${LIBCXX_INSTALL_RUNTIME_DIR} COMPONENT cxx)
 endif()
 
-if(LIBCXX_INSTALL_EXPERIMENTAL_LIBRARY)
+if (LIBCXX_INSTALL_LIBRARY)
   install(TARGETS cxx_experimental
     LIBRARY DESTINATION ${LIBCXX_INSTALL_LIBRARY_DIR} COMPONENT cxx
     ARCHIVE DESTINATION ${LIBCXX_INSTALL_LIBRARY_DIR} COMPONENT cxx
-    RUNTIME DESTINATION bin COMPONENT cxx)
+    RUNTIME DESTINATION ${LIBCXX_INSTALL_RUNTIME_DIR} COMPONENT cxx)
 endif()
 
 # NOTE: This install command must go after the cxx install command otherwise
@@ -403,10 +407,7 @@ endif()
 
 if (NOT CMAKE_CONFIGURATION_TYPES)
     if(LIBCXX_INSTALL_LIBRARY)
-      set(lib_install_target cxx)
-    endif()
-    if (LIBCXX_INSTALL_EXPERIMENTAL_LIBRARY)
-      set(experimental_lib_install_target cxx_experimental)
+      set(lib_install_target "cxx;cxx_experimental")
     endif()
     if(LIBCXX_INSTALL_HEADERS)
       set(header_install_target install-cxx-headers)
@@ -416,7 +417,7 @@ if (NOT CMAKE_CONFIGURATION_TYPES)
     endif()
     add_custom_target(install-cxx
                       DEPENDS ${lib_install_target}
-                              ${experimental_lib_install_target}
+                              cxx_experimental
                               ${header_install_target}
                               ${pstl_install_target}
                       COMMAND "${CMAKE_COMMAND}"
@@ -424,7 +425,7 @@ if (NOT CMAKE_CONFIGURATION_TYPES)
                       -P "${LIBCXX_BINARY_DIR}/cmake_install.cmake")
     add_custom_target(install-cxx-stripped
                       DEPENDS ${lib_install_target}
-                              ${experimental_lib_install_target}
+                              cxx_experimental
                               ${header_install_target}
                               ${pstl_install_target}
                       COMMAND "${CMAKE_COMMAND}"

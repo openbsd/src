@@ -11,34 +11,40 @@
 #define _LIBCPP___FUNCTIONAL_BIND_H
 
 #include <__config>
-#include <__functional/weak_result_type.h>
 #include <__functional/invoke.h>
+#include <__functional/weak_result_type.h>
 #include <cstddef>
 #include <tuple>
 #include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template<class _Tp> struct __is_bind_expression : public false_type {};
-template<class _Tp> struct _LIBCPP_TEMPLATE_VIS is_bind_expression
-    : public __is_bind_expression<typename remove_cv<_Tp>::type> {};
+template<class _Tp>
+struct is_bind_expression : _If<
+    _IsSame<_Tp, __remove_cvref_t<_Tp> >::value,
+    false_type,
+    is_bind_expression<__remove_cvref_t<_Tp> >
+> {};
 
 #if _LIBCPP_STD_VER > 14
 template <class _Tp>
-_LIBCPP_INLINE_VAR constexpr size_t is_bind_expression_v = is_bind_expression<_Tp>::value;
+inline constexpr size_t is_bind_expression_v = is_bind_expression<_Tp>::value;
 #endif
 
-template<class _Tp> struct __is_placeholder : public integral_constant<int, 0> {};
-template<class _Tp> struct _LIBCPP_TEMPLATE_VIS is_placeholder
-    : public __is_placeholder<typename remove_cv<_Tp>::type> {};
+template<class _Tp>
+struct is_placeholder : _If<
+    _IsSame<_Tp, __remove_cvref_t<_Tp> >::value,
+    integral_constant<int, 0>,
+    is_placeholder<__remove_cvref_t<_Tp> >
+> {};
 
 #if _LIBCPP_STD_VER > 14
 template <class _Tp>
-_LIBCPP_INLINE_VAR constexpr size_t is_placeholder_v = is_placeholder<_Tp>::value;
+inline constexpr size_t is_placeholder_v = is_placeholder<_Tp>::value;
 #endif
 
 namespace placeholders
@@ -58,22 +64,22 @@ _LIBCPP_FUNC_VIS extern const __ph<8>   _8;
 _LIBCPP_FUNC_VIS extern const __ph<9>   _9;
 _LIBCPP_FUNC_VIS extern const __ph<10> _10;
 #else
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<1>   _1{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<2>   _2{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<3>   _3{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<4>   _4{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<5>   _5{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<6>   _6{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<7>   _7{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<8>   _8{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<9>   _9{};
-/* _LIBCPP_INLINE_VAR */ constexpr __ph<10> _10{};
+/* inline */ constexpr __ph<1>   _1{};
+/* inline */ constexpr __ph<2>   _2{};
+/* inline */ constexpr __ph<3>   _3{};
+/* inline */ constexpr __ph<4>   _4{};
+/* inline */ constexpr __ph<5>   _5{};
+/* inline */ constexpr __ph<6>   _6{};
+/* inline */ constexpr __ph<7>   _7{};
+/* inline */ constexpr __ph<8>   _8{};
+/* inline */ constexpr __ph<9>   _9{};
+/* inline */ constexpr __ph<10> _10{};
 #endif // defined(_LIBCPP_CXX03_LANG) || defined(_LIBCPP_BUILDING_LIBRARY)
 
-}  // placeholders
+} // namespace placeholders
 
 template<int _Np>
-struct __is_placeholder<placeholders::__ph<_Np> >
+struct is_placeholder<placeholders::__ph<_Np> >
     : public integral_constant<int, _Np> {};
 
 
@@ -97,7 +103,7 @@ __mu_expand(_Ti& __ti, tuple<_Uj...>& __uj, __tuple_indices<_Indx...>)
 
 template <class _Ti, class ..._Uj>
 inline _LIBCPP_INLINE_VISIBILITY
-typename _EnableIf
+typename __enable_if_t
 <
     is_bind_expression<_Ti>::value,
     __invoke_of<_Ti&, _Uj...>
@@ -258,10 +264,7 @@ __apply_functor(_Fp& __f, _BoundArgs& __bound_args, __tuple_indices<_Indx...>,
 }
 
 template<class _Fp, class ..._BoundArgs>
-class __bind
-#if _LIBCPP_STD_VER <= 17 || !defined(_LIBCPP_ABI_NO_BINDER_BASES)
-    : public __weak_result_type<typename decay<_Fp>::type>
-#endif
+class __bind : public __weak_result_type<typename decay<_Fp>::type>
 {
 protected:
     typedef typename decay<_Fp>::type _Fd;
@@ -276,16 +279,16 @@ public:
               class = typename enable_if
                                <
                                   is_constructible<_Fd, _Gp>::value &&
-                                  !is_same<typename remove_reference<_Gp>::type,
+                                  !is_same<__libcpp_remove_reference_t<_Gp>,
                                            __bind>::value
                                >::type>
-      _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+      _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX20
       explicit __bind(_Gp&& __f, _BA&& ...__bound_args)
         : __f_(_VSTD::forward<_Gp>(__f)),
           __bound_args_(_VSTD::forward<_BA>(__bound_args)...) {}
 
     template <class ..._Args>
-        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX20
         typename __bind_return<_Fd, _Td, tuple<_Args&&...> >::type
         operator()(_Args&& ...__args)
         {
@@ -294,7 +297,7 @@ public:
         }
 
     template <class ..._Args>
-        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX20
         typename __bind_return<const _Fd, const _Td, tuple<_Args&&...> >::type
         operator()(_Args&& ...__args) const
         {
@@ -304,7 +307,7 @@ public:
 };
 
 template<class _Fp, class ..._BoundArgs>
-struct __is_bind_expression<__bind<_Fp, _BoundArgs...> > : public true_type {};
+struct is_bind_expression<__bind<_Fp, _BoundArgs...> > : public true_type {};
 
 template<class _Rp, class _Fp, class ..._BoundArgs>
 class __bind_r
@@ -321,16 +324,16 @@ public:
               class = typename enable_if
                                <
                                   is_constructible<_Fd, _Gp>::value &&
-                                  !is_same<typename remove_reference<_Gp>::type,
+                                  !is_same<__libcpp_remove_reference_t<_Gp>,
                                            __bind_r>::value
                                >::type>
-      _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+      _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX20
       explicit __bind_r(_Gp&& __f, _BA&& ...__bound_args)
         : base(_VSTD::forward<_Gp>(__f),
                _VSTD::forward<_BA>(__bound_args)...) {}
 
     template <class ..._Args>
-        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX20
         typename enable_if
         <
             is_convertible<typename __bind_return<_Fd, _Td, tuple<_Args&&...> >::type,
@@ -344,7 +347,7 @@ public:
         }
 
     template <class ..._Args>
-        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+        _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX20
         typename enable_if
         <
             is_convertible<typename __bind_return<const _Fd, const _Td, tuple<_Args&&...> >::type,
@@ -359,10 +362,10 @@ public:
 };
 
 template<class _Rp, class _Fp, class ..._BoundArgs>
-struct __is_bind_expression<__bind_r<_Rp, _Fp, _BoundArgs...> > : public true_type {};
+struct is_bind_expression<__bind_r<_Rp, _Fp, _BoundArgs...> > : public true_type {};
 
 template<class _Fp, class ..._BoundArgs>
-inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX20
 __bind<_Fp, _BoundArgs...>
 bind(_Fp&& __f, _BoundArgs&&... __bound_args)
 {
@@ -371,7 +374,7 @@ bind(_Fp&& __f, _BoundArgs&&... __bound_args)
 }
 
 template<class _Rp, class _Fp, class ..._BoundArgs>
-inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX17
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX20
 __bind_r<_Rp, _Fp, _BoundArgs...>
 bind(_Fp&& __f, _BoundArgs&&... __bound_args)
 {

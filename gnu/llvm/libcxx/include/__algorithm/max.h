@@ -9,13 +9,14 @@
 #ifndef _LIBCPP___ALGORITHM_MAX_H
 #define _LIBCPP___ALGORITHM_MAX_H
 
-#include <__config>
 #include <__algorithm/comp.h>
+#include <__algorithm/comp_ref_type.h>
 #include <__algorithm/max_element.h>
+#include <__config>
 #include <initializer_list>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
 
 _LIBCPP_PUSH_MACROS
@@ -25,7 +26,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Tp, class _Compare>
 _LIBCPP_NODISCARD_EXT inline
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX14
 const _Tp&
 max(const _Tp& __a, const _Tp& __b, _Compare __comp)
 {
@@ -34,7 +35,7 @@ max(const _Tp& __a, const _Tp& __b, _Compare __comp)
 
 template <class _Tp>
 _LIBCPP_NODISCARD_EXT inline
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX14
 const _Tp&
 max(const _Tp& __a, const _Tp& __b)
 {
@@ -45,16 +46,16 @@ max(const _Tp& __a, const _Tp& __b)
 
 template<class _Tp, class _Compare>
 _LIBCPP_NODISCARD_EXT inline
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX14
 _Tp
 max(initializer_list<_Tp> __t, _Compare __comp)
 {
-    return *_VSTD::max_element(__t.begin(), __t.end(), __comp);
+    return *_VSTD::__max_element<__comp_ref_type<_Compare> >(__t.begin(), __t.end(), __comp);
 }
 
 template<class _Tp>
 _LIBCPP_NODISCARD_EXT inline
-_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_SINCE_CXX14
 _Tp
 max(initializer_list<_Tp> __t)
 {

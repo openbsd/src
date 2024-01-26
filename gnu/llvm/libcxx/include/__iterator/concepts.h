@@ -10,28 +10,43 @@
 #ifndef _LIBCPP___ITERATOR_CONCEPTS_H
 #define _LIBCPP___ITERATOR_CONCEPTS_H
 
+#include <__concepts/arithmetic.h>
+#include <__concepts/assignable.h>
+#include <__concepts/common_reference_with.h>
+#include <__concepts/constructible.h>
+#include <__concepts/copyable.h>
+#include <__concepts/derived_from.h>
+#include <__concepts/equality_comparable.h>
+#include <__concepts/invocable.h>
+#include <__concepts/movable.h>
+#include <__concepts/predicate.h>
+#include <__concepts/regular.h>
+#include <__concepts/relation.h>
+#include <__concepts/same_as.h>
+#include <__concepts/semiregular.h>
+#include <__concepts/totally_ordered.h>
 #include <__config>
+#include <__functional/invoke.h>
 #include <__iterator/incrementable_traits.h>
 #include <__iterator/iter_move.h>
 #include <__iterator/iterator_traits.h>
 #include <__iterator/readable_traits.h>
 #include <__memory/pointer_traits.h>
+#include <__type_traits/add_pointer.h>
+#include <__type_traits/common_reference.h>
+#include <__type_traits/is_pointer.h>
+#include <__type_traits/is_reference.h>
+#include <__type_traits/remove_cv.h>
+#include <__type_traits/remove_cvref.h>
 #include <__utility/forward.h>
-#include <concepts>
-#include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
-
-_LIBCPP_PUSH_MACROS
-#include <__undef_macros>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if !defined(_LIBCPP_HAS_NO_RANGES)
-
-// clang-format off
+#if _LIBCPP_STD_VER > 17
 
 // [iterator.concept.readable]
 template<class _In>
@@ -72,6 +87,8 @@ concept __signed_integer_like = signed_integral<_Tp>;
 
 template<class _Ip>
 concept weakly_incrementable =
+  // TODO: remove this once the clang bug is fixed (bugs.llvm.org/PR48173).
+  !same_as<_Ip, bool> && // Currently, clang does not handle bool correctly.
   movable<_Ip> &&
   requires(_Ip __i) {
     typename iter_difference_t<_Ip>;
@@ -93,7 +110,7 @@ concept incrementable =
 template<class _Ip>
 concept input_or_output_iterator =
   requires(_Ip __i) {
-    { *__i } -> __referenceable;
+    { *__i } -> __can_reference;
   } &&
   weakly_incrementable<_Ip>;
 
@@ -172,7 +189,6 @@ concept contiguous_iterator =
   derived_from<_ITER_CONCEPT<_Ip>, contiguous_iterator_tag> &&
   is_lvalue_reference_v<iter_reference_t<_Ip>> &&
   same_as<iter_value_t<_Ip>, remove_cvref_t<iter_reference_t<_Ip>>> &&
-  (is_pointer_v<_Ip> || requires { sizeof(__pointer_traits_element_type<_Ip>); }) &&
   requires(const _Ip& __i) {
     { _VSTD::to_address(__i) } -> same_as<add_pointer_t<iter_reference_t<_Ip>>>;
   };
@@ -258,15 +274,27 @@ concept indirectly_movable_storable =
   constructible_from<iter_value_t<_In>, iter_rvalue_reference_t<_In>> &&
   assignable_from<iter_value_t<_In>&, iter_rvalue_reference_t<_In>>;
 
+template<class _In, class _Out>
+concept indirectly_copyable =
+  indirectly_readable<_In> &&
+  indirectly_writable<_Out, iter_reference_t<_In>>;
+
+template<class _In, class _Out>
+concept indirectly_copyable_storable =
+  indirectly_copyable<_In, _Out> &&
+  indirectly_writable<_Out, iter_value_t<_In>&> &&
+  indirectly_writable<_Out, const iter_value_t<_In>&> &&
+  indirectly_writable<_Out, iter_value_t<_In>&&> &&
+  indirectly_writable<_Out, const iter_value_t<_In>&&> &&
+  copyable<iter_value_t<_In>> &&
+  constructible_from<iter_value_t<_In>, iter_reference_t<_In>> &&
+  assignable_from<iter_value_t<_In>&, iter_reference_t<_In>>;
+
 // Note: indirectly_swappable is located in iter_swap.h to prevent a dependency cycle
 // (both iter_swap and indirectly_swappable require indirectly_readable).
 
-// clang-format on
-
-#endif // !defined(_LIBCPP_HAS_NO_RANGES)
+#endif // _LIBCPP_STD_VER > 17
 
 _LIBCPP_END_NAMESPACE_STD
-
-_LIBCPP_POP_MACROS
 
 #endif // _LIBCPP___ITERATOR_CONCEPTS_H

@@ -1,4 +1,4 @@
-//===------------------------- format.cpp ---------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,14 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "format"
+#include <format>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if _LIBCPP_STD_VER > 17
-
+#ifndef _LIBCPP_INLINE_FORMAT_ERROR_DTOR
 format_error::~format_error() noexcept = default;
-
-#endif //_LIBCPP_STD_VER > 17
+#endif
 
 _LIBCPP_END_NAMESPACE_STD

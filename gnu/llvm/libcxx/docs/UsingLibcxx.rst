@@ -34,27 +34,29 @@ matches that Standard in the library.
   library until the standard has been ratified.
 
 
-Using libc++experimental and ``<experimental/...>``
-===================================================
+Enabling experimental C++ Library features
+==========================================
 
-Libc++ provides implementations of experimental technical specifications
-in a separate library, ``libc++experimental.a``. Users of ``<experimental/...>``
-headers may be required to link ``-lc++experimental``. Note that not all
-vendors ship ``libc++experimental.a``, and as a result, you may not be
-able to use those experimental features.
-
-.. code-block:: bash
-
-  $ clang++ test.cpp -lc++experimental
+Libc++ provides implementations of some experimental features. Experimental features
+are either Technical Specifications (TSes) or official features that were voted to
+the Standard but whose implementation is not complete or stable yet in libc++. Those
+are disabled by default because they are neither API nor ABI stable. However, the
+``-fexperimental-library`` compiler flag can be defined to turn those features on.
 
 .. warning::
-  Experimental libraries are Experimental.
-    * The contents of the ``<experimental/...>`` headers and ``libc++experimental.a``
+  Experimental libraries are experimental.
+    * The contents of the ``<experimental/...>`` headers and the associated static
       library will not remain compatible between versions.
     * No guarantees of API or ABI stability are provided.
     * When the standardized version of an experimental feature is implemented,
       the experimental feature is removed two releases after the non-experimental
       version has shipped. The full policy is explained :ref:`here <experimental features>`.
+
+.. note::
+  On compilers that do not support the ``-fexperimental-library`` flag, users can
+  define the ``_LIBCPP_ENABLE_EXPERIMENTAL`` macro and manually link against the
+  appropriate static library (usually shipped as ``libc++experimental.a``) to get
+  access to experimental library features.
 
 
 Using libc++ when it is not the system default
@@ -120,6 +122,106 @@ provide pretty-printers itself. Those can be used as:
         -ex "python register_libcxx_printer_loader()" \
         <args>
 
+.. _include-what-you-use:
+
+include-what-you-use (IWYU)
+===========================
+
+libc++ provides an IWYU `mapping file <https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUMappings.md>`,
+which drastically improves the accuracy of the tool when using libc++. To use the mapping file with
+IWYU, you should run the tool like so:
+
+.. code-block:: bash
+
+  $ include-what-you-use -Xiwyu /path/to/libcxx/include/libcxx.imp file.cpp
+
+If you would prefer to not use that flag, then you can replace ``/path/to/include-what-you-use/share/libcxx.imp```
+file with the libc++-provided ``libcxx.imp`` file.
+
+.. _assertions-mode:
+
+Enabling the "safe libc++" mode
+===============================
+
+Libc++ contains a number of assertions whose goal is to catch undefined behavior in the
+library, usually caused by precondition violations. Those assertions do not aim to be
+exhaustive -- instead they aim to provide a good balance between safety and performance.
+In particular, these assertions do not change the complexity of algorithms. However, they
+might, in some cases, interfere with compiler optimizations.
+
+By default, these assertions are turned off. Vendors can decide to turn them on while building
+the compiled library by defining ``LIBCXX_ENABLE_ASSERTIONS=ON`` at CMake configuration time.
+When ``LIBCXX_ENABLE_ASSERTIONS`` is used, the compiled library will be built with assertions
+enabled, **and** user code will be built with assertions enabled by default. If
+``LIBCXX_ENABLE_ASSERTIONS=OFF`` at CMake configure time, the compiled library will not contain
+assertions and the default when building user code will be to have assertions disabled.
+As a user, you can consult your vendor to know whether assertions are enabled by default.
+
+Furthermore, independently of any vendor-selected default, users can always control whether
+assertions are enabled in their code by defining ``_LIBCPP_ENABLE_ASSERTIONS=0|1`` before
+including any libc++ header (we recommend passing ``-D_LIBCPP_ENABLE_ASSERTIONS=X`` to the
+compiler). Note that if the compiled library was built by the vendor without assertions,
+functions compiled inside the static or shared library won't have assertions enabled even
+if the user defines ``_LIBCPP_ENABLE_ASSERTIONS=1`` (the same is true for the inverse case
+where the static or shared library was compiled **with** assertions but the user tries to
+disable them). However, most of the code in libc++ is in the headers, so the user-selected
+value for ``_LIBCPP_ENABLE_ASSERTIONS`` (if any) will usually be respected.
+
+When an assertion fails, the program is aborted through a special verbose termination function. The
+library provides a default function that prints an error message and calls ``std::abort()``. Note
+that this function is provided by the static or shared library, so it is only available when deploying
+to a platform where the compiled library is sufficiently recent. On older platforms, the program will
+terminate in an unspecified unsuccessful manner, but the quality of diagnostics won't be great.
+However, users can also override that mechanism at two different levels. First, the mechanism can be
+overriden at compile-time by defining the ``_LIBCPP_VERBOSE_ABORT(format, args...)`` variadic macro.
+When that macro is defined, it will be called with a format string as the first argument, followed by
+a series of arguments to format using printf-style formatting. Compile-time customization may be
+interesting to get precise control over code generation, however it is also inconvenient to use in
+some cases. Indeed, compile-time customization of the verbose termination function requires that all
+translation units be compiled with a consistent definition for ``_LIBCPP_VERBOSE_ABORT`` to avoid ODR
+violations, which can add complexity in the build system of users.
+
+Otherwise, if compile-time customization is not necessary, link-time customization of the handler is also
+possible, similarly to how replacing ``operator new`` works. This mechanism trades off fine-grained control
+over the call site where the termination is initiated in exchange for more ergonomics. Link-time customization
+is done by simply defining the following function in exactly one translation unit of your program:
+
+.. code-block:: cpp
+
+  void __libcpp_verbose_abort(char const* format, ...)
+
+This mechanism is similar to how one can replace the default definition of ``operator new``
+and ``operator delete``. For example:
+
+.. code-block:: cpp
+
+  // In HelloWorldHandler.cpp
+  #include <version> // must include any libc++ header before defining the function (C compatibility headers excluded)
+
+  void std::__libcpp_verbose_abort(char const* format, ...) {
+    va_list list;
+    va_start(list, format);
+    std::vfprintf(stderr, format, list);
+    va_end(list);
+
+    std::abort();
+  }
+
+  // In HelloWorld.cpp
+  #include <vector>
+
+  int main() {
+    std::vector<int> v;
+    int& x = v[0]; // Your termination function will be called here if _LIBCPP_ENABLE_ASSERTIONS=1
+  }
+
+Also note that the verbose termination function should never return. Since assertions in libc++
+catch undefined behavior, your code will proceed with undefined behavior if your function is called
+and does return.
+
+Furthermore, exceptions should not be thrown from the function. Indeed, many functions in the
+library are ``noexcept``, and any exception thrown from the termination function will result
+in ``std::terminate`` being called.
 
 Libc++ Configuration Macros
 ===========================
@@ -127,9 +229,6 @@ Libc++ Configuration Macros
 Libc++ provides a number of configuration macros which can be used to enable
 or disable extended libc++ behavior, including enabling "debug mode" or
 thread safety annotations.
-
-**_LIBCPP_DEBUG**:
-  See :ref:`using-debug-mode` for more information.
 
 **_LIBCPP_ENABLE_THREAD_SAFETY_ANNOTATIONS**:
   This macro is used to enable -Wthread-safety annotations on libc++'s
@@ -141,11 +240,6 @@ thread safety annotations.
   Defining this macro and then building libc++ with hidden visibility gives a
   build of libc++ which does not export any symbols, which can be useful when
   building statically for inclusion into another library.
-
-**_LIBCPP_DISABLE_EXTERN_TEMPLATE**:
-  This macro is used to disable extern template declarations in the libc++
-  headers. The intended use case is for clients who wish to use the libc++
-  headers without taking a dependency on the libc++ library itself.
 
 **_LIBCPP_DISABLE_ADDITIONAL_DIAGNOSTICS**:
   This macro disables the additional diagnostics generated by libc++ using the
@@ -176,19 +270,9 @@ thread safety annotations.
   replacement scenarios from working, e.g. replacing `operator new` and
   expecting a non-replaced `operator new[]` to call the replaced `operator new`.
 
-**_LIBCPP_ENABLE_NODISCARD**:
-  Allow the library to add ``[[nodiscard]]`` attributes to entities not specified
-  as ``[[nodiscard]]`` by the current language dialect. This includes
-  backporting applications of ``[[nodiscard]]`` from newer dialects and
-  additional extended applications at the discretion of the library. All
-  additional applications of ``[[nodiscard]]`` are disabled by default.
-  See :ref:`Extended Applications of [[nodiscard]] <nodiscard extension>` for
-  more information.
-
 **_LIBCPP_DISABLE_NODISCARD_EXT**:
-  This macro prevents the library from applying ``[[nodiscard]]`` to entities
-  purely as an extension. See :ref:`Extended Applications of [[nodiscard]] <nodiscard extension>`
-  for more information.
+  This macro disables library-extensions of ``[[nodiscard]]``.
+  See :ref:`Extended Applications of [[nodiscard]] <nodiscard extension>` for more information.
 
 **_LIBCPP_DISABLE_DEPRECATION_WARNINGS**:
   This macro disables warnings when using deprecated components. For example,
@@ -220,8 +304,8 @@ C++17 Specific Configuration Macros
   This macro is used to re-enable `set_unexpected`, `get_unexpected`, and
   `unexpected`.
 
-C++20 Specific Configuration Macros:
-------------------------------------
+C++20 Specific Configuration Macros
+-----------------------------------
 **_LIBCPP_DISABLE_NODISCARD_AFTER_CXX17**:
   This macro can be used to disable diagnostics emitted from functions marked
   ``[[nodiscard]]`` in dialects after C++17.  See :ref:`Extended Applications of [[nodiscard]] <nodiscard extension>`
@@ -235,6 +319,12 @@ C++20 Specific Configuration Macros:
   This macro is used to re-enable redundant members of `allocator<T>`,
   including `pointer`, `reference`, `rebind`, `address`, `max_size`,
   `construct`, `destroy`, and the two-argument overload of `allocate`.
+
+**_LIBCPP_ENABLE_CXX20_REMOVED_ALLOCATOR_VOID_SPECIALIZATION**:
+  This macro is used to re-enable the library-provided specializations of
+  `allocator<void>` and `allocator<const void>`.
+  Use it in conjunction with `_LIBCPP_ENABLE_CXX20_REMOVED_ALLOCATOR_MEMBERS`
+  to ensure that removed members of `allocator<void>` can be accessed.
 
 **_LIBCPP_ENABLE_CXX20_REMOVED_BINDER_TYPEDEFS**:
   This macro is used to re-enable the `argument_type`, `result_type`,
@@ -272,25 +362,14 @@ Users who want help diagnosing misuses of STL functions may desire a more
 liberal application of ``[[nodiscard]]``.
 
 For this reason libc++ provides an extension that does just that! The
-extension must be enabled by defining ``_LIBCPP_ENABLE_NODISCARD``. The extended
-applications of ``[[nodiscard]]`` takes two forms:
+extension is enabled by default and can be disabled by defining ``_LIBCPP_DISABLE_NODISCARD_EXT``.
+The extended applications of ``[[nodiscard]]`` takes two forms:
 
 1. Backporting ``[[nodiscard]]`` to entities declared as such by the
    standard in newer dialects, but not in the present one.
 
 2. Extended applications of ``[[nodiscard]]``, at the library's discretion,
    applied to entities never declared as such by the standard.
-
-Users may also opt-out of additional applications ``[[nodiscard]]`` using
-additional macros.
-
-Applications of the first form, which backport ``[[nodiscard]]`` from a newer
-dialect, may be disabled using macros specific to the dialect in which it was
-added. For example, ``_LIBCPP_DISABLE_NODISCARD_AFTER_CXX17``.
-
-Applications of the second form, which are pure extensions, may be disabled
-by defining ``_LIBCPP_DISABLE_NODISCARD_EXT``.
-
 
 Entities declared with ``_LIBCPP_NODISCARD_EXT``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -336,11 +415,105 @@ which no dialect declares as such (See the second form described above).
 * ``search``
 * ``unique``
 * ``upper_bound``
+* ``ranges::adjacent_find``
+* ``ranges::all_of``
+* ``ranges::any_of``
+* ``ranges::binary_search``
+* ``ranges::clamp``
+* ``ranges::count_if``
+* ``ranges::count``
+* ``ranges::equal_range``
+* ``ranges::equal``
+* ``ranges::find_end``
+* ``ranges::find_first_of``
+* ``ranges::find_if_not``
+* ``ranges::find_if``
+* ``ranges::find``
+* ``ranges::get_temporary_buffer``
+* ``ranges::includes``
+* ``ranges::is_heap_until``
+* ``ranges::is_heap``
+* ``ranges::is_partitioned``
+* ``ranges::is_permutation``
+* ``ranges::is_sorted_until``
+* ``ranges::is_sorted``
+* ``ranges::lexicographical_compare``
+* ``ranges::lower_bound``
+* ``ranges::max_element``
+* ``ranges::max``
+* ``ranges::min_element``
+* ``ranges::min``
+* ``ranges::minmax_element``
+* ``ranges::minmax``
+* ``ranges::mismatch``
+* ``ranges::none_of``
+* ``ranges::remove_if``
+* ``ranges::remove``
+* ``ranges::search_n``
+* ``ranges::search``
+* ``ranges::unique``
+* ``ranges::upper_bound``
 * ``lock_guard``'s constructors
 * ``as_const``
+* ``bit_cast``
 * ``forward``
 * ``move``
 * ``move_if_noexcept``
 * ``identity::operator()``
 * ``to_integer``
 * ``to_underlying``
+* ``signbit``
+* ``fpclassify``
+* ``isfinite``
+* ``isinf``
+* ``isnan``
+* ``isnormal``
+* ``isgreater``
+* ``isgreaterequal``
+* ``isless``
+* ``islessequal``
+* ``islessgreater``
+* ``isunordered``
+* ``ceil``
+* ``fabs``
+* ``floor``
+* ``cbrt``
+* ``copysign``
+* ``fmax``
+* ``fmin``
+* ``nearbyint``
+* ``rint``
+* ``round``
+* ``trunc``
+
+Extended integral type support
+------------------------------
+
+Several platforms support types that are not specified in the Standard, such as
+the 128-bit integral types ``__int128_t`` and ``__uint128_t``. As an extension,
+libc++ does a best-effort attempt to support these types like other integral
+types, by supporting them notably in:
+
+* ``<bits>``
+* ``<charconv>``
+* ``<functional>``
+* ``<type_traits>``
+* ``<format>``
+* ``<random>``
+
+Additional types supported in random distributions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `C++ Standard <http://eel.is/c++draft/rand#req.genl-1.5>`_ mentions that instantiating several random number
+distributions with types other than ``short``, ``int``, ``long``, ``long long``, and their unsigned versions is
+undefined. As an extension, libc++ supports instantiating ``binomial_distribution``, ``discrete_distribution``,
+``geometric_distribution``, ``negative_binomial_distribution``, ``poisson_distribution``, and ``uniform_int_distribution``
+with ``int8_t``, ``__int128_t`` and their unsigned versions.
+
+Extensions to ``<format>``
+--------------------------
+
+The exposition only type ``basic-format-string`` and its typedefs
+``format-string`` and ``wformat-string`` became ``basic_format_string``,
+``format_string``, and ``wformat_string`` in C++23. Libc++ makes these types
+available in C++20 as an extension.

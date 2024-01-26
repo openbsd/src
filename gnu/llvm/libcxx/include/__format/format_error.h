@@ -11,18 +11,12 @@
 #define _LIBCPP___FORMAT_FORMAT_ERROR_H
 
 #include <__config>
+#include <cstdlib>
 #include <stdexcept>
 
-#ifdef _LIBCPP_NO_EXCEPTIONS
-#include <cstdlib>
-#endif
-
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
-#pragma GCC system_header
+#  pragma GCC system_header
 #endif
-
-_LIBCPP_PUSH_MACROS
-#include <__undef_macros>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -34,7 +28,14 @@ public:
       : runtime_error(__s) {}
   _LIBCPP_HIDE_FROM_ABI explicit format_error(const char* __s)
       : runtime_error(__s) {}
-  virtual ~format_error() noexcept;
+  // TODO FMT Remove when format is no longer experimental.
+  // Avoids linker errors when building the Clang-cl Windows DLL which doesn't
+  // support the experimental library.
+#  ifndef _LIBCPP_INLINE_FORMAT_ERROR_DTOR
+  ~format_error() noexcept override;
+#  else
+  ~format_error() noexcept  override {}
+#  endif
 };
 
 _LIBCPP_NORETURN inline _LIBCPP_HIDE_FROM_ABI void
@@ -50,7 +51,5 @@ __throw_format_error(const char* __s) {
 #endif //_LIBCPP_STD_VER > 17
 
 _LIBCPP_END_NAMESPACE_STD
-
-_LIBCPP_POP_MACROS
 
 #endif // _LIBCPP___FORMAT_FORMAT_ERROR_H
