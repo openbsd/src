@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgplgd.8,v 1.7 2023/03/13 17:31:28 claudio Exp $
+.\" $OpenBSD: bgplgd.8,v 1.8 2024/01/26 18:11:49 job Exp $
 .\"
 .\" Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 13 2023 $
+.Dd $Mdocdate: January 26 2024 $
 .Dt BGPLGD 8
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Op Fl S Ar socket
 .Op Fl s Ar socket
 .Op Fl U Ar user
+.Op Fl V
 .Sh DESCRIPTION
 .Nm
 is a server which implements the FastCGI Protocol to execute
@@ -80,6 +81,8 @@ Change the owner of
 to
 .Ar user
 and its primary group instead of the default www:www.
+.It Fl V
+Show the version and exit.
 .El
 .Pp
 .Nm

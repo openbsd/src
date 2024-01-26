@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.6 2023/03/31 09:55:39 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.7 2024/01/26 18:11:49 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -44,6 +44,7 @@
 #include "slowcgi.h"
 #include "bgplgd.h"
 #include "http.h"
+#include "version.h"
 
 #define TIMEOUT_DEFAULT		 30
 #define WWW_USER		 "www"
@@ -300,7 +301,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((c = getopt(argc, argv, "dp:S:s:U:u:")) != -1) {
+	while ((c = getopt(argc, argv, "dp:S:s:U:u:V")) != -1) {
 		switch (c) {
 		case 'd':
 			debug++;
@@ -317,6 +318,9 @@ main(int argc, char *argv[])
 		case 'U':
 			sock_user = optarg;
 			break;
+		case 'V':
+			fprintf(stderr, "OpenBGPD %s\n", BGPD_VERSION);
+			return 0;
 		default:
 			usage();
 			/* NOTREACHED */
