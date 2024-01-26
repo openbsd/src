@@ -91,12 +91,31 @@ void __clear_cache(void *start, void *end) {
 #else
   compilerrt_abort();
 #endif
-#elif defined(__linux__) && defined(__mips__)
+#elif defined(__linux__) && defined(__loongarch__)
+  __asm__ volatile("ibar 0");
+#elif defined(__mips__)
   const uintptr_t start_int = (uintptr_t)start;
   const uintptr_t end_int = (uintptr_t)end;
-  syscall(__NR_cacheflush, start, (end_int - start_int), BCACHE);
-#elif defined(__mips__) && defined(__OpenBSD__)
-  cacheflush(start, (uintptr_t)end - (uintptr_t)start, BCACHE);
+  uintptr_t synci_step;
+  __asm__ volatile("rdhwr %0, $1" : "=r"(synci_step));
+  if (synci_step != 0) {
+#if __mips_isa_rev >= 6
+    for (uintptr_t p = start_int; p < end_int; p += synci_step)
+      __asm__ volatile("synci 0(%0)" : : "r"(p));
+
+    // The last "move $at, $0" is the target of jr.hb instead of delay slot.
+    __asm__ volatile(".set noat\n"
+                     "sync\n"
+                     "addiupc $at, 12\n"
+                     "jr.hb $at\n"
+                     "move $at, $0\n"
+                     ".set at");
+#else
+    // Pre-R6 may not be globalized. And some implementations may give strange
+    // synci_step. So, let's use libc call for it.
+    cacheflush(start, end_int - start_int, BCACHE);
+#endif
+  }
 #elif defined(__aarch64__) && !defined(__APPLE__)
   uint64_t xstart = (uint64_t)(uintptr_t)start;
   uint64_t xend = (uint64_t)(uintptr_t)end;
@@ -130,7 +149,10 @@ void __clear_cache(void *start, void *end) {
     __asm __volatile("dsb ish");
   }
   __asm __volatile("isb sy");
-#elif defined(__powerpc64__)
+#elif defined(__powerpc__)
+  // Newer CPUs have a bigger line size made of multiple blocks, so the
+  // following value is a minimal common denominator for what used to be
+  // a single block cache line and is therefore inneficient.
   const size_t line_size = 32;
   const size_t len = (uintptr_t)end - (uintptr_t)start;
 
@@ -173,12 +195,12 @@ void __clear_cache(void *start, void *end) {
   arg.len = (uintptr_t)end - (uintptr_t)start;
 
   sysarch(RISCV_SYNC_ICACHE, &arg);
+#elif defined(__ve__)
+  __asm__ volatile("fencec 2");
 #else
 #if __APPLE__
   // On Darwin, sys_icache_invalidate() provides this functionality
   sys_icache_invalidate(start, end - start);
-#elif defined(__ve__)
-  __asm__ volatile("fencec 2");
 #else
   compilerrt_abort();
 #endif
