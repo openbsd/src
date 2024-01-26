@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2024/01/04 00:19:17 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2024/01/26 18:09:24 bluhm Exp $
 
 PROG=		bindconnect
 LDADD=		-lpthread
@@ -58,7 +58,7 @@ run-${af}-${proto}-bind-connect:
 	    -f ${af} -p ${proto} -n 16 -s 2 -o 1 -b 3 -c 3
 
 # skip test on armv7, it fails with malloc: out of space in kmem_map
-.if "${MACHINE}" == armv7
+.if "${MACHINE}" == armv7 || "${MACHINE}" == macppc
 REGRESS_SKIP_TARGETS +=	run-${af}-${proto}-100000
 .endif
 REGRESS_ROOT_TARGETS +=	run-${af}-${proto}-100000
