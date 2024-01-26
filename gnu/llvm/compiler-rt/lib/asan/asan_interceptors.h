@@ -114,7 +114,7 @@ void InitializePlatformInterceptors();
 
 #if SANITIZER_LINUX &&                                                \
     (defined(__arm__) || defined(__aarch64__) || defined(__i386__) || \
-     defined(__x86_64__) || SANITIZER_RISCV64)
+     defined(__x86_64__) || SANITIZER_RISCV64 || SANITIZER_LOONGARCH64)
 # define ASAN_INTERCEPT_VFORK 1
 #else
 # define ASAN_INTERCEPT_VFORK 0
@@ -133,29 +133,30 @@ DECLARE_REAL(char*, strncpy, char *to, const char *from, uptr size)
 DECLARE_REAL(uptr, strnlen, const char *s, uptr maxlen)
 DECLARE_REAL(char*, strstr, const char *s1, const char *s2)
 
-#if !SANITIZER_MAC
-#define ASAN_INTERCEPT_FUNC(name)                                        \
-  do {                                                                   \
-    if (!INTERCEPT_FUNCTION(name))                                       \
-      VReport(1, "AddressSanitizer: failed to intercept '%s'\n", #name); \
-  } while (0)
-#define ASAN_INTERCEPT_FUNC_VER(name, ver)                                  \
-  do {                                                                      \
-    if (!INTERCEPT_FUNCTION_VER(name, ver))                                 \
-      VReport(1, "AddressSanitizer: failed to intercept '%s@@%s'\n", #name, \
-              #ver);                                                        \
-  } while (0)
-#define ASAN_INTERCEPT_FUNC_VER_UNVERSIONED_FALLBACK(name, ver)              \
-  do {                                                                       \
-    if (!INTERCEPT_FUNCTION_VER(name, ver) && !INTERCEPT_FUNCTION(name))     \
-      VReport(1, "AddressSanitizer: failed to intercept '%s@@%s' or '%s'\n", \
-              #name, #ver, #name);                                           \
-  } while (0)
+#  if !SANITIZER_APPLE
+#    define ASAN_INTERCEPT_FUNC(name)                                        \
+      do {                                                                   \
+        if (!INTERCEPT_FUNCTION(name))                                       \
+          VReport(1, "AddressSanitizer: failed to intercept '%s'\n", #name); \
+      } while (0)
+#    define ASAN_INTERCEPT_FUNC_VER(name, ver)                           \
+      do {                                                               \
+        if (!INTERCEPT_FUNCTION_VER(name, ver))                          \
+          VReport(1, "AddressSanitizer: failed to intercept '%s@@%s'\n", \
+                  #name, ver);                                           \
+      } while (0)
+#    define ASAN_INTERCEPT_FUNC_VER_UNVERSIONED_FALLBACK(name, ver)           \
+      do {                                                                    \
+        if (!INTERCEPT_FUNCTION_VER(name, ver) && !INTERCEPT_FUNCTION(name))  \
+          VReport(1,                                                          \
+                  "AddressSanitizer: failed to intercept '%s@@%s' or '%s'\n", \
+                  #name, ver, #name);                                         \
+      } while (0)
 
-#else
+#  else
 // OS X interceptors don't need to be initialized with INTERCEPT_FUNCTION.
-#define ASAN_INTERCEPT_FUNC(name)
-#endif  // SANITIZER_MAC
+#    define ASAN_INTERCEPT_FUNC(name)
+#  endif  // SANITIZER_APPLE
 
 #endif  // !SANITIZER_FUCHSIA
 

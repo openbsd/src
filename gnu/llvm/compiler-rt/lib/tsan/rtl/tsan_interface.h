@@ -72,6 +72,13 @@ SANITIZER_INTERFACE_ATTRIBUTE void __tsan_vptr_read(void **vptr_p);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __tsan_vptr_update(void **vptr_p, void *new_val);
 
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__tsan_memcpy(void *dest, const void *src, uptr count);
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__tsan_memset(void *dest, int ch, uptr count);
+SANITIZER_INTERFACE_ATTRIBUTE
+void *__tsan_memmove(void *dest, const void *src, uptr count);
+
 SANITIZER_INTERFACE_ATTRIBUTE void __tsan_func_entry(void *call_pc);
 SANITIZER_INTERFACE_ATTRIBUTE void __tsan_func_exit();
 
@@ -95,9 +102,9 @@ SANITIZER_INTERFACE_ATTRIBUTE
 void __tsan_write_range(void *addr, unsigned long size);
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void __tsan_read_range_pc(void *addr, unsigned long size, void *pc);  // NOLINT
+void __tsan_read_range_pc(void *addr, unsigned long size, void *pc);
 SANITIZER_INTERFACE_ATTRIBUTE
-void __tsan_write_range_pc(void *addr, unsigned long size, void *pc);  // NOLINT
+void __tsan_write_range_pc(void *addr, unsigned long size, void *pc);
 
 // User may provide function that would be called right when TSan detects
 // an error. The argument 'report' is an opaque pointer that can be used to
@@ -416,12 +423,6 @@ void __tsan_go_atomic32_compare_exchange(ThreadState *thr, uptr cpc, uptr pc,
 SANITIZER_INTERFACE_ATTRIBUTE
 void __tsan_go_atomic64_compare_exchange(ThreadState *thr, uptr cpc, uptr pc,
                                          u8 *a);
-
-SANITIZER_INTERFACE_ATTRIBUTE
-void __tsan_on_initialize();
-
-SANITIZER_INTERFACE_ATTRIBUTE
-int __tsan_on_finalize(int failed);
 
 }  // extern "C"
 

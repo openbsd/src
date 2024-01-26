@@ -1,14 +1,15 @@
 
-#include "hwasan.h"
-#include "hwasan_mapping.h"
 #include "hwasan_thread.h"
-#include "hwasan_poisoning.h"
-#include "hwasan_interface_internal.h"
 
+#include "hwasan.h"
+#include "hwasan_interface_internal.h"
+#include "hwasan_mapping.h"
+#include "hwasan_poisoning.h"
+#include "hwasan_thread_list.h"
+#include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_file.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_tls_get_addr.h"
-
 
 namespace __hwasan {
 
@@ -27,6 +28,7 @@ static u32 RandomSeed() {
 
 void Thread::InitRandomState() {
   random_state_ = flags()->random_tags ? RandomSeed() : unique_id_;
+  random_state_inited_ = true;
 
   // Push a random number of zeros onto the ring buffer so that the first stack
   // tag base will be random.
@@ -40,18 +42,20 @@ void Thread::Init(uptr stack_buffer_start, uptr stack_buffer_size,
   CHECK_EQ(0, stack_top_);
   CHECK_EQ(0, stack_bottom_);
 
-  static u64 unique_id;
-  unique_id_ = unique_id++;
+  static atomic_uint64_t unique_id;
+  unique_id_ = atomic_fetch_add(&unique_id, 1, memory_order_relaxed);
+
   if (auto sz = flags()->heap_history_size)
     heap_allocations_ = HeapAllocationsRingBuffer::New(sz);
 
-  InitStackAndTls(state);
 #if !SANITIZER_FUCHSIA
   // Do not initialize the stack ring buffer just yet on Fuchsia. Threads will
   // be initialized before we enter the thread itself, so we will instead call
   // this later.
   InitStackRingBuffer(stack_buffer_start, stack_buffer_size);
 #endif
+  InitStackAndTls(state);
+  dtls_ = DTLS_Get();
 }
 
 void Thread::InitStackRingBuffer(uptr stack_buffer_start,
@@ -108,10 +112,9 @@ void Thread::Destroy() {
 }
 
 void Thread::Print(const char *Prefix) {
-  Printf("%sT%zd %p stack: [%p,%p) sz: %zd tls: [%p,%p)\n", Prefix,
-         unique_id_, this, stack_bottom(), stack_top(),
-         stack_top() - stack_bottom(),
-         tls_begin(), tls_end());
+  Printf("%sT%zd %p stack: [%p,%p) sz: %zd tls: [%p,%p)\n", Prefix, unique_id_,
+         (void *)this, stack_bottom(), stack_top(),
+         stack_top() - stack_bottom(), tls_begin(), tls_end());
 }
 
 static u32 xorshift(u32 state) {
@@ -124,17 +127,21 @@ static u32 xorshift(u32 state) {
 // Generate a (pseudo-)random non-zero tag.
 tag_t Thread::GenerateRandomTag(uptr num_bits) {
   DCHECK_GT(num_bits, 0);
-  if (tagging_disabled_) return 0;
+  if (tagging_disabled_)
+    return 0;
   tag_t tag;
   const uptr tag_mask = (1ULL << num_bits) - 1;
   do {
     if (flags()->random_tags) {
-      if (!random_buffer_)
+      if (!random_buffer_) {
+        EnsureRandomStateInited();
         random_buffer_ = random_state_ = xorshift(random_state_);
+      }
       CHECK(random_buffer_);
       tag = random_buffer_ & tag_mask;
       random_buffer_ >>= num_bits;
     } else {
+      EnsureRandomStateInited();
       random_state_ += 1;
       tag = random_state_ & tag_mask;
     }
@@ -143,3 +150,55 @@ tag_t Thread::GenerateRandomTag(uptr num_bits) {
 }
 
 } // namespace __hwasan
+
+// --- Implementation of LSan-specific functions --- {{{1
+namespace __lsan {
+
+static __hwasan::HwasanThreadList *GetHwasanThreadListLocked() {
+  auto &tl = __hwasan::hwasanThreadList();
+  tl.CheckLocked();
+  return &tl;
+}
+
+static __hwasan::Thread *GetThreadByOsIDLocked(tid_t os_id) {
+  return GetHwasanThreadListLocked()->FindThreadLocked(
+      [os_id](__hwasan::Thread *t) { return t->os_id() == os_id; });
+}
+
+void LockThreadRegistry() { __hwasan::hwasanThreadList().Lock(); }
+
+void UnlockThreadRegistry() { __hwasan::hwasanThreadList().Unlock(); }
+
+void EnsureMainThreadIDIsCorrect() {
+  auto *t = __hwasan::GetCurrentThread();
+  if (t && (t->IsMainThread()))
+    t->set_os_id(GetTid());
+}
+
+bool GetThreadRangesLocked(tid_t os_id, uptr *stack_begin, uptr *stack_end,
+                           uptr *tls_begin, uptr *tls_end, uptr *cache_begin,
+                           uptr *cache_end, DTLS **dtls) {
+  auto *t = GetThreadByOsIDLocked(os_id);
+  if (!t)
+    return false;
+  *stack_begin = t->stack_bottom();
+  *stack_end = t->stack_top();
+  *tls_begin = t->tls_begin();
+  *tls_end = t->tls_end();
+  // Fixme: is this correct for HWASan.
+  *cache_begin = 0;
+  *cache_end = 0;
+  *dtls = t->dtls();
+  return true;
+}
+
+void GetAllThreadAllocatorCachesLocked(InternalMmapVector<uptr> *caches) {}
+
+void GetThreadExtraStackRangesLocked(tid_t os_id,
+                                     InternalMmapVector<Range> *ranges) {}
+void GetThreadExtraStackRangesLocked(InternalMmapVector<Range> *ranges) {}
+
+void GetAdditionalThreadContextPtrsLocked(InternalMmapVector<uptr> *ptrs) {}
+void GetRunningThreadsLocked(InternalMmapVector<tid_t> *threads) {}
+
+}  // namespace __lsan

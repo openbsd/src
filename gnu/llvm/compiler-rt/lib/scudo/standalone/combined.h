@@ -18,6 +18,7 @@
 #include "options.h"
 #include "quarantine.h"
 #include "report.h"
+#include "rss_limit_checker.h"
 #include "secondary.h"
 #include "stack_depot.h"
 #include "string_utils.h"
@@ -147,6 +148,9 @@ public:
     initFlags();
     reportUnrecognizedFlags();
 
+    RssChecker.init(scudo::getFlags()->soft_rss_limit_mb,
+                    scudo::getFlags()->hard_rss_limit_mb);
+
     // Store some flags locally.
     if (getFlags()->may_return_null)
       Primary.Options.set(OptionBit::MayReturnNull);
@@ -173,6 +177,8 @@ public:
     Quarantine.init(
         static_cast<uptr>(getFlags()->quarantine_size_kb << 10),
         static_cast<uptr>(getFlags()->thread_local_quarantine_size_kb << 10));
+
+    initRingBuffer();
   }
 
   // Initialize the embedded GWP-ASan instance. Requires the main allocator to
@@ -185,6 +191,7 @@ public:
         getFlags()->GWP_ASAN_MaxSimultaneousAllocations;
     Opt.SampleRate = getFlags()->GWP_ASAN_SampleRate;
     Opt.InstallSignalHandlers = getFlags()->GWP_ASAN_InstallSignalHandlers;
+    Opt.Recoverable = getFlags()->GWP_ASAN_Recoverable;
     // Embedded GWP-ASan is locked through the Scudo atfork handler (via
     // Allocator::disable calling GWPASan.disable). Disable GWP-ASan's atfork
     // handler.
@@ -196,7 +203,8 @@ public:
       gwp_asan::segv_handler::installSignalHandlers(
           &GuardedAlloc, Printf,
           gwp_asan::backtrace::getPrintBacktraceFunction(),
-          gwp_asan::backtrace::getSegvBacktraceFunction());
+          gwp_asan::backtrace::getSegvBacktraceFunction(),
+          Opt.Recoverable);
 
     GuardedAllocSlotSize =
         GuardedAlloc.getAllocatorState()->maximumAllocationSize();
@@ -204,6 +212,16 @@ public:
                             GuardedAllocSlotSize);
 #endif // GWP_ASAN_HOOKS
   }
+
+#ifdef GWP_ASAN_HOOKS
+  const gwp_asan::AllocationMetadata *getGwpAsanAllocationMetadata() {
+    return GuardedAlloc.getMetadataRegion();
+  }
+
+  const gwp_asan::AllocatorState *getGwpAsanAllocatorState() {
+    return GuardedAlloc.getAllocatorState();
+  }
+#endif // GWP_ASAN_HOOKS
 
   ALWAYS_INLINE void initThreadMaybe(bool MinimalInit = false) {
     TSDRegistry.initThreadMaybe(this, MinimalInit);
@@ -335,6 +353,19 @@ public:
       reportAllocationSizeTooBig(Size, NeededSize, MaxAllowedMallocSize);
     }
     DCHECK_LE(Size, NeededSize);
+
+    switch (RssChecker.getRssLimitExceeded()) {
+    case RssLimitChecker::Neither:
+      break;
+    case RssLimitChecker::Soft:
+      if (Options.get(OptionBit::MayReturnNull))
+        return nullptr;
+      reportSoftRSSLimit(RssChecker.getSoftRssLimit());
+      break;
+    case RssLimitChecker::Hard:
+      reportHardRSSLimit(RssChecker.getHardRssLimit());
+      break;
+    }
 
     void *Block = nullptr;
     uptr ClassId = 0;
@@ -846,6 +877,13 @@ public:
            Header.State == Chunk::State::Allocated;
   }
 
+  void setRssLimitsTestOnly(int SoftRssLimitMb, int HardRssLimitMb,
+                            bool MayReturnNull) {
+    RssChecker.init(SoftRssLimitMb, HardRssLimitMb);
+    if (MayReturnNull)
+      Primary.Options.set(OptionBit::MayReturnNull);
+  }
+
   bool useMemoryTaggingTestOnly() const {
     return useMemoryTagging<Params>(Primary.Options.load());
   }
@@ -865,6 +903,10 @@ public:
 
   void setTrackAllocationStacks(bool Track) {
     initThreadMaybe();
+    if (getFlags()->allocation_ring_buffer_size == 0) {
+      DCHECK(!Primary.Options.load().get(OptionBit::TrackAllocationStacks));
+      return;
+    }
     if (Track)
       Primary.Options.set(OptionBit::TrackAllocationStacks);
     else
@@ -896,11 +938,29 @@ public:
     return PrimaryT::getRegionInfoArraySize();
   }
 
-  const char *getRingBufferAddress() const {
-    return reinterpret_cast<const char *>(&RingBuffer);
+  const char *getRingBufferAddress() {
+    initThreadMaybe();
+    return RawRingBuffer;
   }
 
-  static uptr getRingBufferSize() { return sizeof(RingBuffer); }
+  uptr getRingBufferSize() {
+    initThreadMaybe();
+    auto *RingBuffer = getRingBuffer();
+    return RingBuffer ? ringBufferSizeInBytes(RingBuffer->Size) : 0;
+  }
+
+  static bool setRingBufferSizeForBuffer(char *Buffer, size_t Size) {
+    // Need at least one entry.
+    if (Size < sizeof(AllocationRingBuffer) +
+                   sizeof(typename AllocationRingBuffer::Entry)) {
+      return false;
+    }
+    AllocationRingBuffer *RingBuffer =
+        reinterpret_cast<AllocationRingBuffer *>(Buffer);
+    RingBuffer->Size = (Size - sizeof(AllocationRingBuffer)) /
+                       sizeof(typename AllocationRingBuffer::Entry);
+    return true;
+  }
 
   static const uptr MaxTraceSize = 64;
 
@@ -910,7 +970,7 @@ public:
     if (!Depot->find(Hash, &RingPos, &Size))
       return;
     for (unsigned I = 0; I != Size && I != MaxTraceSize; ++I)
-      Trace[I] = (*Depot)[RingPos + I];
+      Trace[I] = static_cast<uintptr_t>((*Depot)[RingPos + I]);
   }
 
   static void getErrorInfo(struct scudo_error_info *ErrorInfo,
@@ -984,6 +1044,7 @@ private:
   QuarantineT Quarantine;
   TSDRegistryT TSDRegistry;
   pthread_once_t PostInitNonce = PTHREAD_ONCE_INIT;
+  RssLimitChecker RssChecker;
 
 #ifdef GWP_ASAN_HOOKS
   gwp_asan::GuardedPoolAllocator GuardedAlloc;
@@ -1003,14 +1064,13 @@ private:
     };
 
     atomic_uptr Pos;
-#ifdef SCUDO_FUZZ
-    static const uptr NumEntries = 2;
-#else
-    static const uptr NumEntries = 32768;
-#endif
-    Entry Entries[NumEntries];
+    u32 Size;
+    // An array of Size (at least one) elements of type Entry is immediately
+    // following to this struct.
   };
-  AllocationRingBuffer RingBuffer = {};
+  // Pointer to memory mapped area starting with AllocationRingBuffer struct,
+  // and immediately followed by Size elements of type Entry.
+  char *RawRingBuffer = {};
 
   // The following might get optimized out by the compiler.
   NOINLINE void performSanityChecks() {
@@ -1207,9 +1267,9 @@ private:
   void storeRingBufferEntry(void *Ptr, u32 AllocationTrace, u32 AllocationTid,
                             uptr AllocationSize, u32 DeallocationTrace,
                             u32 DeallocationTid) {
-    uptr Pos = atomic_fetch_add(&RingBuffer.Pos, 1, memory_order_relaxed);
+    uptr Pos = atomic_fetch_add(&getRingBuffer()->Pos, 1, memory_order_relaxed);
     typename AllocationRingBuffer::Entry *Entry =
-        &RingBuffer.Entries[Pos % AllocationRingBuffer::NumEntries];
+        getRingBufferEntry(RawRingBuffer, Pos % getRingBuffer()->Size);
 
     // First invalidate our entry so that we don't attempt to interpret a
     // partially written state in getSecondaryErrorInfo(). The fences below
@@ -1261,8 +1321,8 @@ private:
   }
 
   static const size_t NumErrorReports =
-      sizeof(((scudo_error_info *)0)->reports) /
-      sizeof(((scudo_error_info *)0)->reports[0]);
+      sizeof(((scudo_error_info *)nullptr)->reports) /
+      sizeof(((scudo_error_info *)nullptr)->reports[0]);
 
   static void getInlineErrorInfo(struct scudo_error_info *ErrorInfo,
                                  size_t &NextErrorReport, uintptr_t FaultAddr,
@@ -1353,12 +1413,14 @@ private:
                                      const char *RingBufferPtr) {
     auto *RingBuffer =
         reinterpret_cast<const AllocationRingBuffer *>(RingBufferPtr);
+    if (!RingBuffer || RingBuffer->Size == 0)
+      return;
     uptr Pos = atomic_load_relaxed(&RingBuffer->Pos);
 
-    for (uptr I = Pos - 1; I != Pos - 1 - AllocationRingBuffer::NumEntries &&
-                           NextErrorReport != NumErrorReports;
+    for (uptr I = Pos - 1;
+         I != Pos - 1 - RingBuffer->Size && NextErrorReport != NumErrorReports;
          --I) {
-      auto *Entry = &RingBuffer->Entries[I % AllocationRingBuffer::NumEntries];
+      auto *Entry = getRingBufferEntry(RingBufferPtr, I % RingBuffer->Size);
       uptr EntryPtr = atomic_load_relaxed(&Entry->Ptr);
       if (!EntryPtr)
         continue;
@@ -1422,6 +1484,45 @@ private:
     Secondary.getStats(Str);
     Quarantine.getStats(Str);
     return Str->length();
+  }
+
+  static typename AllocationRingBuffer::Entry *
+  getRingBufferEntry(char *RawRingBuffer, uptr N) {
+    return &reinterpret_cast<typename AllocationRingBuffer::Entry *>(
+        &RawRingBuffer[sizeof(AllocationRingBuffer)])[N];
+  }
+  static const typename AllocationRingBuffer::Entry *
+  getRingBufferEntry(const char *RawRingBuffer, uptr N) {
+    return &reinterpret_cast<const typename AllocationRingBuffer::Entry *>(
+        &RawRingBuffer[sizeof(AllocationRingBuffer)])[N];
+  }
+
+  void initRingBuffer() {
+    u32 AllocationRingBufferSize =
+        static_cast<u32>(getFlags()->allocation_ring_buffer_size);
+    if (AllocationRingBufferSize < 1)
+      return;
+    MapPlatformData Data = {};
+    RawRingBuffer = static_cast<char *>(
+        map(/*Addr=*/nullptr,
+            roundUpTo(ringBufferSizeInBytes(AllocationRingBufferSize), getPageSizeCached()),
+            "AllocatorRingBuffer", /*Flags=*/0, &Data));
+    auto *RingBuffer = reinterpret_cast<AllocationRingBuffer *>(RawRingBuffer);
+    RingBuffer->Size = AllocationRingBufferSize;
+    static_assert(sizeof(AllocationRingBuffer) %
+                          alignof(typename AllocationRingBuffer::Entry) ==
+                      0,
+                  "invalid alignment");
+  }
+
+  static constexpr size_t ringBufferSizeInBytes(u32 AllocationRingBufferSize) {
+    return sizeof(AllocationRingBuffer) +
+           AllocationRingBufferSize *
+               sizeof(typename AllocationRingBuffer::Entry);
+  }
+
+  inline AllocationRingBuffer *getRingBuffer() {
+    return reinterpret_cast<AllocationRingBuffer *>(RawRingBuffer);
   }
 };
 

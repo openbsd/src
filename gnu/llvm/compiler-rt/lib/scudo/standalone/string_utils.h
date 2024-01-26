@@ -26,15 +26,17 @@ public:
     String.push_back('\0');
   }
   void append(const char *Format, va_list Args);
-  void append(const char *Format, ...);
+  void append(const char *Format, ...) FORMAT(2, 3);
   void output() const { outputRaw(String.data()); }
+  void reserve(size_t Size) { String.reserve(Size + 1); }
 
 private:
   Vector<char> String;
 };
 
-int formatString(char *Buffer, uptr BufferLength, const char *Format, ...);
-void Printf(const char *Format, ...);
+int formatString(char *Buffer, uptr BufferLength, const char *Format, ...)
+    FORMAT(3, 4);
+void Printf(const char *Format, ...) FORMAT(1, 2);
 
 } // namespace scudo
 

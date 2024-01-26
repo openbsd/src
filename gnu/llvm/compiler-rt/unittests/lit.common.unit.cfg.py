@@ -47,12 +47,11 @@ if config.host_os == 'Darwin':
   # inefficient handling of large mmap'd regions (terabytes) by the kernel.
   lit_config.parallelism_groups["shadow-memory"] = 3
 
-  # The test config gets pickled and sent to multiprocessing workers, and that
-  # only works for code if it is stored at the top level of some module.
-  # Therefore, we have to put the code in a .py file, add it to path, and import
-  # it to store it in the config.
-  import site
-  site.addsitedir(os.path.dirname(__file__))
-  import lit_unittest_cfg_utils
-  config.darwin_sanitizer_parallelism_group_func = \
-    lit_unittest_cfg_utils.darwin_sanitizer_parallelism_group_func
+  # Disable libmalloc nano allocator due to crashes running on macOS 12.0.
+  # rdar://80086125
+  config.environment['MallocNanoZone'] = '0'
+
+  # We crash when we set DYLD_INSERT_LIBRARIES for unit tests, so interceptors
+  # don't work.
+  config.environment['ASAN_OPTIONS'] = 'verify_interceptors=0'
+  config.environment['TSAN_OPTIONS'] = 'verify_interceptors=0'

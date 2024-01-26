@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 // Asan interface list.
 //===----------------------------------------------------------------------===//
+
 INTERFACE_FUNCTION(__asan_addr_is_in_fake_stack)
 INTERFACE_FUNCTION(__asan_address_is_poisoned)
 INTERFACE_FUNCTION(__asan_after_dynamic_init)
@@ -107,6 +108,13 @@ INTERFACE_FUNCTION(__asan_report_store_n_noabort)
 INTERFACE_FUNCTION(__asan_set_death_callback)
 INTERFACE_FUNCTION(__asan_set_error_report_callback)
 INTERFACE_FUNCTION(__asan_set_shadow_00)
+INTERFACE_FUNCTION(__asan_set_shadow_01)
+INTERFACE_FUNCTION(__asan_set_shadow_02)
+INTERFACE_FUNCTION(__asan_set_shadow_03)
+INTERFACE_FUNCTION(__asan_set_shadow_04)
+INTERFACE_FUNCTION(__asan_set_shadow_05)
+INTERFACE_FUNCTION(__asan_set_shadow_06)
+INTERFACE_FUNCTION(__asan_set_shadow_07)
 INTERFACE_FUNCTION(__asan_set_shadow_f1)
 INTERFACE_FUNCTION(__asan_set_shadow_f2)
 INTERFACE_FUNCTION(__asan_set_shadow_f3)

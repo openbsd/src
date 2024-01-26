@@ -129,11 +129,11 @@ static void PrintHeapChunkAccess(uptr addr, const ChunkAccess &descr) {
   str.append("%s", d.Location());
   switch (descr.access_type) {
     case kAccessTypeLeft:
-      str.append("%p is located %zd bytes to the left of",
+      str.append("%p is located %zd bytes before",
                  (void *)descr.bad_addr, descr.offset);
       break;
     case kAccessTypeRight:
-      str.append("%p is located %zd bytes to the right of",
+      str.append("%p is located %zd bytes after",
                  (void *)descr.bad_addr, descr.offset);
       break;
     case kAccessTypeInside:
@@ -251,7 +251,7 @@ static void PrintAccessAndVarIntersection(const StackVarDescr &var, uptr addr,
   }
   str.append("'");
   if (var.line > 0) {
-    str.append(" (line %d)", var.line);
+    str.append(" (line %zd)", var.line);
   }
   if (pos_descr) {
     Decorator d;
@@ -279,17 +279,17 @@ static void DescribeAddressRelativeToGlobal(uptr addr, uptr access_size,
   Decorator d;
   str.append("%s", d.Location());
   if (addr < g.beg) {
-    str.append("%p is located %zd bytes to the left", (void *)addr,
+    str.append("%p is located %zd bytes before", (void *)addr,
                g.beg - addr);
   } else if (addr + access_size > g.beg + g.size) {
     if (addr < g.beg + g.size) addr = g.beg + g.size;
-    str.append("%p is located %zd bytes to the right", (void *)addr,
+    str.append("%p is located %zd bytes after", (void *)addr,
                addr - (g.beg + g.size));
   } else {
     // Can it happen?
-    str.append("%p is located %zd bytes inside", (void *)addr, addr - g.beg);
+    str.append("%p is located %zd bytes inside of", (void *)addr, addr - g.beg);
   }
-  str.append(" of global variable '%s' defined in '",
+  str.append(" global variable '%s' defined in '",
              MaybeDemangleGlobalName(g.name));
   PrintGlobalLocation(&str, g);
   str.append("' (0x%zx) of size %zu\n", g.beg, g.size);
@@ -318,7 +318,8 @@ bool DescribeAddressIfGlobal(uptr addr, uptr access_size,
 }
 
 void ShadowAddressDescription::Print() const {
-  Printf("Address %p is located in the %s area.\n", addr, ShadowNames[kind]);
+  Printf("Address %p is located in the %s area.\n", (void *)addr,
+         ShadowNames[kind]);
 }
 
 void GlobalAddressDescription::Print(const char *bug_type) const {
@@ -356,7 +357,7 @@ bool GlobalAddressDescription::PointsInsideTheSameVariable(
 void StackAddressDescription::Print() const {
   Decorator d;
   Printf("%s", d.Location());
-  Printf("Address %p is located in stack of thread %s", addr,
+  Printf("Address %p is located in stack of thread %s", (void *)addr,
          AsanThreadIdAndName(tid).c_str());
 
   if (!frame_descr) {
@@ -469,7 +470,7 @@ AddressDescription::AddressDescription(uptr addr, uptr access_size,
 
 void WildAddressDescription::Print() const {
   Printf("Address %p is a wild pointer inside of access range of size %p.\n",
-         addr, access_size);
+         (void *)addr, (void *)access_size);
 }
 
 void PrintAddressDescription(uptr addr, uptr access_size,

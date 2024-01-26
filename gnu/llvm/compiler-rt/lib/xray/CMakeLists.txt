@@ -73,6 +73,11 @@ set(powerpc64le_SOURCES
   xray_trampoline_powerpc64_asm.S
   )
 
+set(hexagon_SOURCES
+  xray_hexagon.cpp
+  xray_trampoline_hexagon.S
+  )
+
 set(XRAY_IMPL_HEADERS
   xray_allocator.h
   xray_basic_flags.h
@@ -111,6 +116,7 @@ set(XRAY_ALL_SOURCE_FILES
   ${x86_64_SOURCES}
   ${arm_SOURCES}
   ${armhf_SOURCES}
+  ${hexagon_SOURCES}
   ${mips_SOURCES}
   ${mipsel_SOURCES}
   ${mips64_SOURCES}
@@ -132,11 +138,21 @@ endforeach()
 include_directories(..)
 include_directories(../../include)
 
-set(XRAY_CFLAGS ${COMPILER_RT_COMMON_CFLAGS})
+set(XRAY_CFLAGS
+  ${COMPILER_RT_COMMON_CFLAGS}
+  ${COMPILER_RT_CXX_CFLAGS})
 set(XRAY_COMMON_DEFINITIONS XRAY_HAS_EXCEPTIONS=1)
+
+# Too many existing bugs, needs cleanup.
+append_list_if(COMPILER_RT_HAS_WNO_FORMAT -Wno-format XRAY_CFLAGS)
 
 # We don't need RTTI in XRay, so turn that off.
 append_rtti_flag(OFF XRAY_CFLAGS)
+
+set(XRAY_LINK_FLAGS ${COMPILER_RT_COMMON_LINK_FLAGS})
+set(XRAY_LINK_LIBS
+  ${COMPILER_RT_UNWINDER_LINK_LIBS}
+  ${COMPILER_RT_CXX_LINK_LIBS})
 
 append_list_if(
   COMPILER_RT_HAS_XRAY_COMPILER_FLAG XRAY_SUPPORTED=1 XRAY_COMMON_DEFINITIONS)
@@ -155,7 +171,6 @@ if (TARGET cxx-headers OR HAVE_LIBCXX)
 endif()
 
 if (APPLE)
-  set(XRAY_LINK_LIBS ${SANITIZER_COMMON_LINK_LIBS})
   add_asm_sources(XRAY_ASM_SOURCES xray_trampoline_x86_64.S)
 
   add_weak_symbols("sanitizer_common" WEAK_SYMBOL_LINK_FLAGS)
@@ -204,7 +219,7 @@ if (APPLE)
                 RTSanitizerCommonLibc
     CFLAGS ${XRAY_CFLAGS}
     DEFS ${XRAY_COMMON_DEFINITIONS}
-    LINK_FLAGS ${SANITIZER_COMMON_LINK_FLAGS} ${WEAK_SYMBOL_LINK_FLAGS}
+    LINK_FLAGS ${XRAY_LINK_FLAGS} ${WEAK_SYMBOL_LINK_FLAGS}
     LINK_LIBS ${XRAY_LINK_LIBS}
     PARENT_TARGET xray)
   add_compiler_rt_runtime(clang_rt.xray-fdr
@@ -214,7 +229,7 @@ if (APPLE)
     OBJECT_LIBS RTXrayFDR
     CFLAGS ${XRAY_CFLAGS}
     DEFS ${XRAY_COMMON_DEFINITIONS}
-    LINK_FLAGS ${SANITIZER_COMMON_LINK_FLAGS} ${WEAK_SYMBOL_LINK_FLAGS}
+    LINK_FLAGS ${XRAY_LINK_FLAGS} ${WEAK_SYMBOL_LINK_FLAGS}
     LINK_LIBS ${XRAY_LINK_LIBS}
     PARENT_TARGET xray)
   add_compiler_rt_runtime(clang_rt.xray-basic
@@ -224,7 +239,7 @@ if (APPLE)
     OBJECT_LIBS RTXrayBASIC
     CFLAGS ${XRAY_CFLAGS}
     DEFS ${XRAY_COMMON_DEFINITIONS}
-    LINK_FLAGS ${SANITIZER_COMMON_LINK_FLAGS} ${WEAK_SYMBOL_LINK_FLAGS}
+    LINK_FLAGS ${XRAY_LINK_FLAGS} ${WEAK_SYMBOL_LINK_FLAGS}
     LINK_LIBS ${XRAY_LINK_LIBS}
     PARENT_TARGET xray)
   add_compiler_rt_runtime(clang_rt.xray-profiling
@@ -234,7 +249,7 @@ if (APPLE)
     OBJECT_LIBS RTXrayPROFILING
     CFLAGS ${XRAY_CFLAGS}
     DEFS ${XRAY_COMMON_DEFINITIONS}
-    LINK_FLAGS ${SANITIZER_COMMON_LINK_FLAGS} ${WEAK_SYMBOL_LINK_FLAGS}
+    LINK_FLAGS ${XRAY_LINK_FLAGS} ${WEAK_SYMBOL_LINK_FLAGS}
     LINK_LIBS ${XRAY_LINK_LIBS}
     PARENT_TARGET xray)
 else() # not Apple
@@ -276,6 +291,8 @@ else() # not Apple
      STATIC
      ARCHS ${arch}
      CFLAGS ${XRAY_CFLAGS}
+     LINK_FLAGS ${XRAY_LINK_FLAGS}
+     LINK_LIBS ${XRAY_LINK_LIBS}
      DEFS ${XRAY_COMMON_DEFINITIONS}
      OBJECT_LIBS ${XRAY_COMMON_RUNTIME_OBJECT_LIBS} RTXray
      PARENT_TARGET xray)
@@ -284,6 +301,8 @@ else() # not Apple
       STATIC
       ARCHS ${arch}
       CFLAGS ${XRAY_CFLAGS}
+      LINK_FLAGS ${XRAY_LINK_FLAGS}
+      LINK_LIBS ${XRAY_LINK_LIBS}
       DEFS ${XRAY_COMMON_DEFINITIONS}
       OBJECT_LIBS RTXrayFDR
       PARENT_TARGET xray)
@@ -292,6 +311,8 @@ else() # not Apple
       STATIC
       ARCHS ${arch}
       CFLAGS ${XRAY_CFLAGS}
+      LINK_FLAGS ${XRAY_LINK_FLAGS}
+      LINK_LIBS ${XRAY_LINK_LIBS}
       DEFS ${XRAY_COMMON_DEFINITIONS}
       OBJECT_LIBS RTXrayBASIC
       PARENT_TARGET xray)
@@ -300,6 +321,8 @@ else() # not Apple
      STATIC
      ARCHS ${arch}
      CFLAGS ${XRAY_CFLAGS}
+     LINK_FLAGS ${XRAY_LINK_FLAGS}
+     LINK_LIBS ${XRAY_LINK_LIBS}
      DEFS ${XRAY_COMMON_DEFINITIONS}
      OBJECT_LIBS RTXrayPROFILING
      PARENT_TARGET xray)

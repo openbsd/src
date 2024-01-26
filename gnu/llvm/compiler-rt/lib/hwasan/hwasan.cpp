@@ -16,6 +16,7 @@
 #include "hwasan_checks.h"
 #include "hwasan_dynamic_shadow.h"
 #include "hwasan_globals.h"
+#include "hwasan_mapping.h"
 #include "hwasan_poisoning.h"
 #include "hwasan_report.h"
 #include "hwasan_thread.h"
@@ -24,6 +25,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flag_parser.h"
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_interface_internal.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
@@ -84,6 +86,8 @@ static void InitializeFlags() {
     cf.clear_shadow_mmap_threshold = 4096 * (SANITIZER_ANDROID ? 2 : 8);
     // Sigtrap is used in error reporting.
     cf.handle_sigtrap = kHandleSignalExclusive;
+    // FIXME: enable once all false positives have been fixed.
+    cf.detect_leaks = false;
 
 #if SANITIZER_ANDROID
     // Let platform handle other signals. It is better at reporting them then we
@@ -104,6 +108,15 @@ static void InitializeFlags() {
   RegisterHwasanFlags(&parser, f);
   RegisterCommonFlags(&parser);
 
+#if CAN_SANITIZE_LEAKS
+  __lsan::Flags *lf = __lsan::flags();
+  lf->SetDefaults();
+
+  FlagParser lsan_parser;
+  __lsan::RegisterLsanFlags(&lsan_parser, lf);
+  RegisterCommonFlags(&lsan_parser);
+#endif
+
 #if HWASAN_CONTAINS_UBSAN
   __ubsan::Flags *uf = __ubsan::flags();
   uf->SetDefaults();
@@ -122,6 +135,9 @@ static void InitializeFlags() {
 #endif
 
   parser.ParseStringFromEnv("HWASAN_OPTIONS");
+#if CAN_SANITIZE_LEAKS
+  lsan_parser.ParseStringFromEnv("LSAN_OPTIONS");
+#endif
 #if HWASAN_CONTAINS_UBSAN
   ubsan_parser.ParseStringFromEnv("UBSAN_OPTIONS");
 #endif
@@ -131,6 +147,12 @@ static void InitializeFlags() {
   if (Verbosity()) ReportUnrecognizedFlags();
 
   if (common_flags()->help) parser.PrintFlagDescriptions();
+  // Flag validation:
+  if (!CAN_SANITIZE_LEAKS && common_flags()->detect_leaks) {
+    Report("%s: detect_leaks is not supported on this platform.\n",
+           SanitizerToolName);
+    Die();
+  }
 }
 
 static void CheckUnwind() {
@@ -141,7 +163,7 @@ static void CheckUnwind() {
 static void HwasanFormatMemoryUsage(InternalScopedString &s) {
   HwasanThreadList &thread_list = hwasanThreadList();
   auto thread_stats = thread_list.GetThreadStats();
-  auto *sds = StackDepotGetStats();
+  auto sds = StackDepotGetStats();
   AllocatorStatCounters asc;
   GetAllocatorStats(asc);
   s.append(
@@ -151,7 +173,7 @@ static void HwasanFormatMemoryUsage(InternalScopedString &s) {
       internal_getpid(), GetRSS(), thread_stats.n_live_threads,
       thread_stats.total_stack_size,
       thread_stats.n_live_threads * thread_list.MemoryUsedPerThread(),
-      sds->allocated, sds->n_uniq_ids, asc[AllocatorStatMapped]);
+      sds.allocated, sds.n_uniq_ids, asc[AllocatorStatMapped]);
 }
 
 #if SANITIZER_ANDROID
@@ -216,8 +238,8 @@ void HandleTagMismatch(AccessInfo ai, uptr pc, uptr frame, void *uc,
                     registers_frame);
 }
 
-void HwasanTagMismatch(uptr addr, uptr access_info, uptr *registers_frame,
-                       size_t outsize) {
+void HwasanTagMismatch(uptr addr, uptr pc, uptr frame, uptr access_info,
+                       uptr *registers_frame, size_t outsize) {
   __hwasan::AccessInfo ai;
   ai.is_store = access_info & 0x10;
   ai.is_load = !ai.is_store;
@@ -228,9 +250,7 @@ void HwasanTagMismatch(uptr addr, uptr access_info, uptr *registers_frame,
   else
     ai.size = 1 << (access_info & 0xf);
 
-  HandleTagMismatch(ai, (uptr)__builtin_return_address(0),
-                    (uptr)__builtin_frame_address(0), nullptr, registers_frame);
-  __builtin_unreachable();
+  HandleTagMismatch(ai, pc, frame, nullptr, registers_frame);
 }
 
 Thread *GetCurrentThread() {
@@ -319,7 +339,7 @@ void __hwasan_init_static() {
     InitializeSingleGlobal(global);
 }
 
-void __hwasan_init() {
+__attribute__((constructor(0))) void __hwasan_init() {
   CHECK(!hwasan_init_is_running);
   if (hwasan_inited) return;
   hwasan_init_is_running = 1;
@@ -340,11 +360,17 @@ void __hwasan_init() {
   DisableCoreDumperIfNecessary();
 
   InitInstrumentation();
-  InitLoadedGlobals();
+  if constexpr (!SANITIZER_FUCHSIA) {
+    // Fuchsia's libc provides a hook (__sanitizer_module_loaded) that runs on
+    // the startup path which calls into __hwasan_library_loaded on all
+    // initially loaded modules, so explicitly registering the globals here
+    // isn't needed.
+    InitLoadedGlobals();
+  }
 
   // Needs to be called here because flags()->random_tags might not have been
   // initialized when InitInstrumentation() was called.
-  GetCurrentThread()->InitRandomState();
+  GetCurrentThread()->EnsureRandomStateInited();
 
   SetPrintfAndReportCallback(AppendToErrorMessageBuffer);
   // This may call libc -> needs initialized shadow.
@@ -360,10 +386,23 @@ void __hwasan_init() {
   HwasanTSDThreadInit();
 
   HwasanAllocatorInit();
+  HwasanInstallAtForkHandler();
+
+  if (CAN_SANITIZE_LEAKS) {
+    __lsan::InitCommonLsan();
+    InstallAtExitCheckLeaks();
+  }
 
 #if HWASAN_CONTAINS_UBSAN
   __ubsan::InitAsPlugin();
 #endif
+
+  if (CAN_SANITIZE_LEAKS) {
+    __lsan::ScopedInterceptorDisabler disabler;
+    Symbolizer::LateInitialize();
+  } else {
+    Symbolizer::LateInitialize();
+  }
 
   VPrintf(1, "HWAddressSanitizer init done\n");
 
@@ -390,8 +429,15 @@ void __hwasan_print_shadow(const void *p, uptr sz) {
   uptr shadow_last = MemToShadow(ptr_raw + sz - 1);
   Printf("HWASan shadow map for %zx .. %zx (pointer tag %x)\n", ptr_raw,
          ptr_raw + sz, GetTagFromPointer((uptr)p));
-  for (uptr s = shadow_first; s <= shadow_last; ++s)
-    Printf("  %zx: %x\n", ShadowToMem(s), *(tag_t *)s);
+  for (uptr s = shadow_first; s <= shadow_last; ++s) {
+    tag_t mem_tag = *reinterpret_cast<tag_t *>(s);
+    uptr granule_addr = ShadowToMem(s);
+    if (mem_tag && mem_tag < kShadowAlignment)
+      Printf("  %zx: %02x(%02x)\n", granule_addr, mem_tag,
+             *reinterpret_cast<tag_t *>(granule_addr + kShadowAlignment - 1));
+    else
+      Printf("  %zx: %02x\n", granule_addr, mem_tag);
+  }
 }
 
 sptr __hwasan_test_shadow(const void *p, uptr sz) {
@@ -566,6 +612,12 @@ u8 __hwasan_generate_tag() {
   return t->GenerateRandomTag();
 }
 
+void __hwasan_add_frame_record(u64 frame_record_info) {
+  Thread *t = GetCurrentThread();
+  if (t)
+    t->stack_allocations()->push(frame_record_info);
+}
+
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
@@ -584,7 +636,9 @@ void __sanitizer_print_stack_trace() {
 // rest of the mismatch handling code (C++).
 void __hwasan_tag_mismatch4(uptr addr, uptr access_info, uptr *registers_frame,
                             size_t outsize) {
-  __hwasan::HwasanTagMismatch(addr, access_info, registers_frame, outsize);
+  __hwasan::HwasanTagMismatch(addr, (uptr)__builtin_return_address(0),
+                              (uptr)__builtin_frame_address(0), access_info,
+                              registers_frame, outsize);
 }
 
 } // extern "C"

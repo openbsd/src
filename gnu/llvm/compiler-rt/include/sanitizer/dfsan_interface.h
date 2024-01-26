@@ -27,6 +27,18 @@ typedef uint32_t dfsan_origin;
 /// Signature of the callback argument to dfsan_set_write_callback().
 typedef void (*dfsan_write_callback_t)(int fd, const void *buf, size_t count);
 
+/// Signature of the callback argument to dfsan_set_conditional_callback().
+typedef void (*dfsan_conditional_callback_t)(dfsan_label label,
+                                             dfsan_origin origin);
+
+/// Signature of the callback argument to dfsan_set_reaches_function_callback().
+/// The description is intended to hold the name of the variable.
+typedef void (*dfsan_reaches_function_callback_t)(dfsan_label label,
+                                                  dfsan_origin origin,
+                                                  const char *file,
+                                                  unsigned int line,
+                                                  const char *function);
+
 /// Computes the union of \c l1 and \c l2, resulting in a union label.
 dfsan_label dfsan_union(dfsan_label l1, dfsan_label l2);
 
@@ -54,6 +66,10 @@ dfsan_origin dfsan_get_origin(long data);
 /// Retrieves the label associated with the data at the given address.
 dfsan_label dfsan_read_label(const void *addr, size_t size);
 
+/// Return the origin associated with the first taint byte in the size bytes
+/// from the address addr.
+dfsan_origin dfsan_read_origin_of_first_taint(const void *addr, size_t size);
+
 /// Returns whether the given label label contains the label elem.
 int dfsan_has_label(dfsan_label label, dfsan_label elem);
 
@@ -69,6 +85,31 @@ void dfsan_flush(void);
 /// before the write is done.  The write is not guaranteed to succeed when the
 /// callback executes.  Pass in NULL to remove any callback.
 void dfsan_set_write_callback(dfsan_write_callback_t labeled_write_callback);
+
+/// Sets a callback to be invoked on any conditional expressions which have a
+/// taint label set. This can be used to find where tainted data influences
+/// the behavior of the program.
+/// These callbacks will only be added when -dfsan-conditional-callbacks=true.
+void dfsan_set_conditional_callback(dfsan_conditional_callback_t callback);
+
+/// Conditional expressions occur during signal handlers.
+/// Making callbacks that handle signals well is tricky, so when
+/// -dfsan-conditional-callbacks=true, conditional expressions used in signal
+/// handlers will add the labels they see into a global (bitwise-or together).
+/// This function returns all label bits seen in signal handler conditions.
+dfsan_label dfsan_get_labels_in_signal_conditional();
+
+/// Sets a callback to be invoked when tainted data reaches a function.
+/// This could occur at function entry, or at a load instruction.
+/// These callbacks will only be added if -dfsan-reaches-function-callbacks=1.
+void dfsan_set_reaches_function_callback(
+    dfsan_reaches_function_callback_t callback);
+
+/// Making callbacks that handle signals well is tricky, so when
+/// -dfsan-reaches-function-callbacks=true, functions reached in signal
+/// handlers will add the labels they see into a global (bitwise-or together).
+/// This function returns all label bits seen during signal handlers.
+dfsan_label dfsan_get_labels_in_signal_reaches_function();
 
 /// Interceptor hooks.
 /// Whenever a dfsan's custom function is called the corresponding
@@ -87,6 +128,9 @@ void dfsan_weak_hook_strncmp(void *caller_pc, const char *s1, const char *s2,
 /// prints description at the beginning of the trace. If origin tracking is not
 /// on, or the address is not labeled, it prints nothing.
 void dfsan_print_origin_trace(const void *addr, const char *description);
+/// As above, but use an origin id from dfsan_get_origin() instead of address.
+/// Does not include header line with taint label and address information.
+void dfsan_print_origin_id_trace(dfsan_origin origin);
 
 /// Prints the origin trace of the label at the address \p addr to a
 /// pre-allocated output buffer. If origin tracking is not on, or the address is
@@ -124,6 +168,10 @@ void dfsan_print_origin_trace(const void *addr, const char *description);
 /// return value is not less than \p out_buf_size.
 size_t dfsan_sprint_origin_trace(const void *addr, const char *description,
                                  char *out_buf, size_t out_buf_size);
+/// As above, but use an origin id from dfsan_get_origin() instead of address.
+/// Does not include header line with taint label and address information.
+size_t dfsan_sprint_origin_id_trace(dfsan_origin origin, char *out_buf,
+                                    size_t out_buf_size);
 
 /// Prints the stack trace leading to this call to a pre-allocated output
 /// buffer.
@@ -150,8 +198,7 @@ int dfsan_get_track_origins(void);
 #ifdef __cplusplus
 }  // extern "C"
 
-template <typename T>
-void dfsan_set_label(dfsan_label label, T &data) { // NOLINT
+template <typename T> void dfsan_set_label(dfsan_label label, T &data) {
   dfsan_set_label(label, (void *)&data, sizeof(T));
 }
 
