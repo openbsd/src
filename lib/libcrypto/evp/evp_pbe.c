@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.35 2024/01/27 16:17:32 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.36 2024/01/27 16:18:25 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -225,6 +225,26 @@ static const struct pbe_config pbe_prf[] = {
 		.pbe_nid = NID_hmacWithSHA512_256,
 		.cipher_nid = -1,
 		.md_nid = NID_sha512_256,
+	},
+	{
+		.pbe_nid = NID_hmac_sha3_224,
+		.cipher_nid = -1,
+		.md_nid = NID_sha3_224,
+	},
+	{
+		.pbe_nid = NID_hmac_sha3_256,
+		.cipher_nid = -1,
+		.md_nid = NID_sha3_256,
+	},
+	{
+		.pbe_nid = NID_hmac_sha3_384,
+		.cipher_nid = -1,
+		.md_nid = NID_sha3_384,
+	},
+	{
+		.pbe_nid = NID_hmac_sha3_512,
+		.cipher_nid = -1,
+		.md_nid = NID_sha3_512,
 	},
 };
 
