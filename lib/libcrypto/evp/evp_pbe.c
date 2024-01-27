@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.36 2024/01/27 16:18:25 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.37 2024/01/27 16:22:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -340,6 +340,10 @@ EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 
 	return 1;
 }
+
+/*
+ * XXX - remove the functions below in the next major bump
+ */
 
 int
 EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
