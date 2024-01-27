@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.10 2023/07/22 03:46:09 jsg Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.11 2024/01/27 15:15:01 phessler Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -114,6 +114,7 @@ main(void)
 	printf("%s\n", "otus");
 	printf("%s\n", "pgt");
 	printf("%s\n", "qcpas");
+	printf("%s\n", "qwx");
 	printf("%s\n", "radeondrm");
 	print_devices("radeondrm", radeon_devices, nitems(radeon_devices));
 	printf("%s\n", "rsu");
