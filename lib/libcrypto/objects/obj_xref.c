@@ -1,4 +1,4 @@
-/*	$OpenBSD: obj_xref.c,v 1.13 2023/07/28 10:25:05 tb Exp $ */
+/*	$OpenBSD: obj_xref.c,v 1.14 2024/01/27 16:08:43 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -264,6 +264,26 @@ static const struct {
 		.sign_nid = NID_RSA_SHA3_512,
 		.hash_nid = NID_sha3_512,
 		.pkey_nid = NID_rsaEncryption,
+	},
+	{
+		.sign_nid = NID_ecdsa_with_SHA3_224,
+		.hash_nid = NID_sha3_224,
+		.pkey_nid = NID_X9_62_id_ecPublicKey,
+	},
+	{
+		.sign_nid = NID_ecdsa_with_SHA3_256,
+		.hash_nid = NID_sha3_256,
+		.pkey_nid = NID_X9_62_id_ecPublicKey,
+	},
+	{
+		.sign_nid = NID_ecdsa_with_SHA3_384,
+		.hash_nid = NID_sha3_384,
+		.pkey_nid = NID_X9_62_id_ecPublicKey,
+	},
+	{
+		.sign_nid = NID_ecdsa_with_SHA3_512,
+		.hash_nid = NID_sha3_512,
+		.pkey_nid = NID_X9_62_id_ecPublicKey,
 	},
 };
 
