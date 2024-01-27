@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 2023/09/23 18:29:55 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.48 2024/01/27 12:23:03 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -44,6 +44,14 @@ intc0		at cpu0
 # NS16550 compatible serial ports
 com*		at fdt?
 
+# Allwinner SoCs
+sxiccmu*	at fdt? early 1
+sxidog*		at fdt?
+sxipio*		at fdt? early 1
+gpio*		at sxipio?
+sxirtc*		at fdt?
+sxitimer*	at fdt?
+
 # PolarFire SoCs
 cdsdhc*		at fdt?
 sdmmc*		at cdsdhc?
@@ -84,6 +92,9 @@ plic*		at fdt? early 1
 syscon*		at fdt? early 1
 gfrtc*		at fdt?
 gpiorestart*	at fdt?
+
+ohci*		at fdt?
+ehci*		at fdt?
 
 cad*		at fdt?
 dwge*		at fdt?
@@ -139,6 +150,8 @@ uk*		at scsibus?
 xhci*		at pci?
 
 # USB bus support
+usb*		at ohci?
+usb*		at ehci?
 usb*		at xhci?
 
 # USB devices
