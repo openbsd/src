@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.42 2024/01/27 14:31:01 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.43 2024/01/27 14:34:28 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -486,44 +486,45 @@ tls13_legacy_shutdown(SSL *ssl)
 	 * We need to return 0 at the point that we have completed sending a
 	 * close-notify. We return 1 when we have sent and received close-notify
 	 * alerts. All other cases, including EOF, return -1 and set internal
-	 * state appropriately.
+	 * state appropriately. Note that all of this insanity can also be
+	 * externally controlled by manipulating the shutdown flags.
 	 */
 	if (ctx == NULL || ssl->quiet_shutdown) {
 		ssl->shutdown = SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN;
 		return 1;
 	}
 
-	if (!ctx->close_notify_sent) {
-		/* Enqueue and send close notify. */
-		if (!(ssl->shutdown & SSL_SENT_SHUTDOWN)) {
-			ssl->shutdown |= SSL_SENT_SHUTDOWN;
-			if ((ret = tls13_send_alert(ctx->rl,
-			    TLS13_ALERT_CLOSE_NOTIFY)) < 0)
-				return tls13_legacy_return_code(ssl, ret);
-		}
-		ret = tls13_record_layer_send_pending(ctx->rl);
+	if ((ssl->shutdown & SSL_SENT_SHUTDOWN) == 0) {
+		ssl->shutdown |= SSL_SENT_SHUTDOWN;
+		ret = tls13_send_alert(ctx->rl, TLS13_ALERT_CLOSE_NOTIFY);
 		if (ret == TLS13_IO_EOF)
 			return -1;
 		if (ret != TLS13_IO_SUCCESS)
 			return tls13_legacy_return_code(ssl, ret);
-	} else if (!ctx->close_notify_recv) {
+	}
+
+	ret = tls13_record_layer_send_pending(ctx->rl);
+	if (ret == TLS13_IO_EOF)
+		return -1;
+	if (ret != TLS13_IO_SUCCESS)
+		return tls13_legacy_return_code(ssl, ret);
+
+	if ((ssl->shutdown & SSL_RECEIVED_SHUTDOWN) == 0) {
 		/*
 		 * If there is no application data pending, attempt to read more
 		 * data in order to receive a close-notify. This should trigger
 		 * a record to be read from the wire, which may be application
-		 * handshake or alert data. Only one attempt is made to match
-		 * previous semantics.
+		 * handshake or alert data. Only one attempt is made with no
+		 * error handling, in order to match previous semantics.
 		 */
 		if (tls13_pending_application_data(ctx->rl) == 0) {
-			if ((ret = tls13_read_application_data(ctx->rl, buf,
-			    sizeof(buf))) < 0)
-				return tls13_legacy_return_code(ssl, ret);
+			(void)tls13_read_application_data(ctx->rl, buf, sizeof(buf));
 			if (!ctx->close_notify_recv)
 				return -1;
 		}
 	}
 
-	if (ctx->close_notify_recv)
+	if (ssl->shutdown == (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN))
 		return 1;
 
 	return 0;
