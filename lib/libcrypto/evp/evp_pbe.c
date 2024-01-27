@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.39 2024/01/27 17:14:33 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.40 2024/01/27 17:20:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -352,7 +352,7 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	unsigned char *salt;
 	const unsigned char *pbuf;
 	int mdsize;
-	int rv = 0;
+	int ret = 0;
 
 	/* Extract useful info from parameter */
 	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
@@ -421,12 +421,13 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	explicit_bzero(key, EVP_MAX_KEY_LENGTH);
 	explicit_bzero(iv, EVP_MAX_IV_LENGTH);
 
-	rv = 1;
+	ret = 1;
+
  err:
 	EVP_MD_CTX_cleanup(&ctx);
 	PBEPARAM_free(pbe);
 
-	return rv;
+	return ret;
 }
 
 /*
@@ -528,8 +529,7 @@ PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	int plen;
 	PBE2PARAM *pbe2 = NULL;
 	const EVP_CIPHER *cipher;
-
-	int rv = 0;
+	int ret = 0;
 
 	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
 	    param->value.sequence == NULL) {
@@ -566,13 +566,13 @@ PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		goto err;
 	}
 
-	rv = PKCS5_v2_PBKDF2_keyivgen(ctx, pass, passlen,
+	ret = PKCS5_v2_PBKDF2_keyivgen(ctx, pass, passlen,
 	    pbe2->keyfunc->parameter, c, md, en_de);
 
  err:
 	PBE2PARAM_free(pbe2);
 
-	return rv;
+	return ret;
 }
 
 int
@@ -582,11 +582,11 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
 	const unsigned char *pbuf;
 	int saltlen, iter, plen;
-	int rv = 0;
 	unsigned int keylen = 0;
 	int prf_nid, hmac_md_nid;
 	PBKDF2PARAM *kdf = NULL;
 	const EVP_MD *prfmd;
+	int ret = 0;
 
 	if (EVP_CIPHER_CTX_cipher(ctx) == NULL) {
 		EVPerror(EVP_R_NO_CIPHER_SET);
@@ -653,13 +653,13 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	    keylen, key))
 		goto err;
 
-	rv = EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
+	ret = EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
 
  err:
 	explicit_bzero(key, keylen);
 	PBKDF2PARAM_free(kdf);
 
-	return rv;
+	return ret;
 }
 
 void
