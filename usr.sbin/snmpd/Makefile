@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.25 2023/11/12 16:07:34 martijn Exp $
+#	$OpenBSD: Makefile,v 1.26 2024/01/27 09:53:59 martijn Exp $
 
 PROG=		snmpd
 MAN=		snmpd.8 snmpd.conf.5
-SRCS=		parse.y log.c snmpe.c application.c application_blocklist.c \
+SRCS=		mib.y parse.y log.c snmpe.c application.c application_blocklist.c \
 		    application_internal.c application_agentx.c ax.c \
 		    trap.c smi.c snmpd.c \
 		    proc.c usm.c traphandler.c util.c
@@ -15,5 +15,9 @@ CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
 YFLAGS=
+
+mib.c:		mib.y
+	${YACC.y} -pmib -o ${.TARGET} ${.IMPSRC}
+
 
 .include <bsd.prog.mk>

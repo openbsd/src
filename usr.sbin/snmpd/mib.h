@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.43 2023/12/21 13:54:05 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.44 2024/01/27 09:53:59 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -18,6 +18,22 @@
 
 #ifndef SNMPD_MIB_H
 #define SNMPD_MIB_H
+
+#include <stddef.h>
+
+struct ber_oid;
+enum mib_oidfmt {
+	MIB_OIDNUMERIC,
+	MIB_OIDSYMBOLIC
+};
+
+void		 mib_parsefile(const char *);
+void		 mib_parsedir(const char *);
+void		 mib_resolve(void);
+void		 mib_clear(void);
+char		*mib_oid2string(struct ber_oid *, char *, size_t,
+		    enum mib_oidfmt);
+const char	*mib_string2oid(const char *, struct ber_oid *);
 
 #define MIBDECL(...)		{ { MIB_##__VA_ARGS__ },		\
     (sizeof((uint32_t []) { MIB_##__VA_ARGS__ }) / sizeof(uint32_t))}, #__VA_ARGS__
