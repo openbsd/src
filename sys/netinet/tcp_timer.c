@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.74 2024/01/11 13:49:49 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.75 2024/01/27 21:35:13 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -198,30 +198,35 @@ void
 tcp_timer_rexmt(void *arg)
 {
 	struct tcpcb *otp = NULL, *tp = arg;
+	struct inpcb *inp;
 	uint32_t rto;
 	short ostate;
 
 	NET_LOCK();
+	inp = tp->t_inpcb;
+
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
 	if (!ISSET((tp)->t_flags, TF_TMR_REXMT) ||
 	    timeout_pending(&tp->t_timer[TCPT_REXMT]))
 		goto out;
 	CLR((tp)->t_flags, TF_TMR_REXMT);
 
-	if ((tp->t_flags & TF_PMTUD_PEND) && tp->t_inpcb &&
+	if ((tp->t_flags & TF_PMTUD_PEND) && inp &&
 	    SEQ_GEQ(tp->t_pmtud_th_seq, tp->snd_una) &&
 	    SEQ_LT(tp->t_pmtud_th_seq, (int)(tp->snd_una + tp->t_maxseg))) {
 		struct sockaddr_in sin;
 		struct icmp icmp;
 
+		/* TF_PMTUD_PEND is set in tcp_ctlinput() which is IPv4 only */
+		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
 		tp->t_flags &= ~TF_PMTUD_PEND;
 
 		/* XXX create fake icmp message with relevant entries */
 		icmp.icmp_nextmtu = tp->t_pmtud_nextmtu;
 		icmp.icmp_ip.ip_len = tp->t_pmtud_ip_len;
 		icmp.icmp_ip.ip_hl = tp->t_pmtud_ip_hl;
-		icmp.icmp_ip.ip_dst = tp->t_inpcb->inp_faddr;
-		icmp_mtudisc(&icmp, tp->t_inpcb->inp_rtableid);
+		icmp.icmp_ip.ip_dst = inp->inp_faddr;
+		icmp_mtudisc(&icmp, inp->inp_rtableid);
 
 		/*
 		 * Notify all connections to the same peer about
@@ -230,9 +235,9 @@ tcp_timer_rexmt(void *arg)
 		bzero(&sin, sizeof(sin));
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
-		sin.sin_addr = tp->t_inpcb->inp_faddr;
-		in_pcbnotifyall(&tcbtable, sintosa(&sin),
-		    tp->t_inpcb->inp_rtableid, EMSGSIZE, tcp_mtudisc);
+		sin.sin_addr = inp->inp_faddr;
+		in_pcbnotifyall(&tcbtable, sintosa(&sin), inp->inp_rtableid,
+		    EMSGSIZE, tcp_mtudisc);
 		goto out;
 	}
 
@@ -244,7 +249,7 @@ tcp_timer_rexmt(void *arg)
 		    tp->t_softerror : ETIMEDOUT);
 		goto out;
 	}
-	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+	if (inp->inp_socket->so_options & SO_DEBUG) {
 		otp = tp;
 		ostate = tp->t_state;
 	}
@@ -265,10 +270,9 @@ tcp_timer_rexmt(void *arg)
 	 * lots more sophisticated searching to find the right
 	 * value here...
 	 */
-	if (ip_mtudisc && tp->t_inpcb &&
+	if (ip_mtudisc && inp &&
 	    TCPS_HAVEESTABLISHED(tp->t_state) &&
 	    tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
-		struct inpcb *inp = tp->t_inpcb;
 		struct rtentry *rt = NULL;
 
 		/* No data to send means path mtu is not a problem */
@@ -319,7 +323,7 @@ tcp_timer_rexmt(void *arg)
 	 * retransmit times until then.
 	 */
 	if (tp->t_rxtshift > TCP_MAXRXTSHIFT / 4) {
-		in_losing(tp->t_inpcb);
+		in_losing(inp);
 		tp->t_rttvar += (tp->t_srtt >> TCP_RTT_SHIFT);
 		tp->t_srtt = 0;
 	}
