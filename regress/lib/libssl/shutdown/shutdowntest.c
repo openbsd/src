@@ -1,4 +1,4 @@
-/* $OpenBSD: shutdowntest.c,v 1.1 2024/01/19 08:29:08 jsing Exp $ */
+/* $OpenBSD: shutdowntest.c,v 1.2 2024/01/27 14:35:13 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021, 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -489,12 +489,10 @@ struct ssl_version ssl_versions[] = {
 		.version = TLS1_2_VERSION,
 		.name = SSL_TXT_TLSV1_2,
 	},
-#if 0
 	{
 		.version = TLS1_3_VERSION,
 		.name = SSL_TXT_TLSV1_3,
 	},
-#endif
 };
 
 #define N_SSL_VERSIONS (sizeof(ssl_versions) / sizeof(*ssl_versions))
