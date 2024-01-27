@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt.c,v 1.24 2024/01/27 16:26:25 tb Exp $ */
+/* $OpenBSD: p5_crpt.c,v 1.25 2024/01/27 16:36:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -147,9 +147,11 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	explicit_bzero(md_tmp, EVP_MAX_MD_SIZE);
 	explicit_bzero(key, EVP_MAX_KEY_LENGTH);
 	explicit_bzero(iv, EVP_MAX_IV_LENGTH);
+
 	rv = 1;
-err:
+ err:
 	EVP_MD_CTX_cleanup(&ctx);
 	PBEPARAM_free(pbe);
+
 	return rv;
 }
