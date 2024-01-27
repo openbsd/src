@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2024/01/24 19:23:39 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 2024/01/27 12:05:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -266,6 +266,8 @@ intr_restore(u_long s)
 
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)
+
+extern void (*cpu_startclock_fcn)(void);
 
 void fpu_save(struct proc *, struct trapframe *);
 void fpu_load(struct proc *);

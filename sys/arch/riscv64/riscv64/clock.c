@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2023/09/17 14:50:51 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2024/01/27 12:05:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -36,6 +36,7 @@ uint64_t timer_nsec_cycle_ratio;
 
 struct evcount clock_count;
 
+void timer_startclock(void);
 void timer_rearm(void *, uint64_t);
 void timer_trigger(void *);
 
@@ -56,6 +57,7 @@ static struct timecounter tb_timecounter = {
 	.tc_user = TC_TB,
 };
 
+void	(*cpu_startclock_fcn)(void) = timer_startclock;
 int	clock_intr(void *);
 
 void
@@ -87,26 +89,34 @@ cpu_initclocks(void)
 	tb_timecounter.tc_frequency = tb_freq;
 	tc_init(&tb_timecounter);
 
-	timer_nsec_cycle_ratio = tb_freq * (1ULL << 32) / 1000000000;
-	timer_nsec_max = UINT64_MAX / timer_nsec_cycle_ratio;
-
 	stathz = hz;
 	profhz = stathz * 10;
 	statclock_is_randomized = 1;
 
-	riscv_intc_intr_establish(IRQ_TIMER_SUPERVISOR, 0,
-	    clock_intr, NULL, NULL);
+	if (cpu_startclock_fcn == timer_startclock) {
+		timer_nsec_cycle_ratio = tb_freq * (1ULL << 32) / 1000000000;
+		timer_nsec_max = UINT64_MAX / timer_nsec_cycle_ratio;
 
-	evcount_attach(&clock_count, "clock", NULL);
-	evcount_percpu(&clock_count);
+		riscv_intc_intr_establish(IRQ_TIMER_SUPERVISOR, 0,
+		    clock_intr, NULL, NULL);
+
+		evcount_attach(&clock_count, "clock", NULL);
+		evcount_percpu(&clock_count);
+	}
+}
+
+void
+timer_startclock(void)
+{
+	clockintr_cpu_init(&timer_intrclock);
+	clockintr_trigger();
+	csr_set(sie, SIE_STIE);
 }
 
 void
 cpu_startclock(void)
 {
-	clockintr_cpu_init(&timer_intrclock);
-	clockintr_trigger();
-	csr_set(sie, SIE_STIE);
+	cpu_startclock_fcn();
 }
 
 int
