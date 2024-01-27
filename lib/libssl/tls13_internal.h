@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.101 2022/07/24 14:28:16 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.102 2024/01/27 14:23:51 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -87,7 +87,8 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_INFO_ACCEPT_EXIT				SSL_CB_ACCEPT_EXIT
 #define TLS13_INFO_CONNECT_EXIT				SSL_CB_CONNECT_EXIT
 
-typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
+typedef void (*tls13_alert_cb)(uint8_t _alert_level, uint8_t _alert_desc,
+    void *_cb_arg);
 typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg);
 typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
 typedef void (*tls13_handshake_message_cb)(void *_cb_arg);
@@ -291,6 +292,8 @@ struct tls13_ctx {
 	int phh_count;
 	time_t phh_last_seen;
 
+	tls13_alert_cb alert_sent_cb;
+	tls13_alert_cb alert_recv_cb;
 	tls13_handshake_message_cb handshake_message_sent_cb;
 	tls13_handshake_message_cb handshake_message_recv_cb;
 	tls13_info_cb info_cb;
@@ -309,8 +312,8 @@ void tls13_ctx_free(struct tls13_ctx *ctx);
 const EVP_AEAD *tls13_cipher_aead(const SSL_CIPHER *cipher);
 const EVP_MD *tls13_cipher_hash(const SSL_CIPHER *cipher);
 
-void tls13_alert_received_cb(uint8_t alert_desc, void *arg);
-void tls13_alert_sent_cb(uint8_t alert_desc, void *arg);
+void tls13_alert_received_cb(uint8_t alert_level, uint8_t alert_desc, void *arg);
+void tls13_alert_sent_cb(uint8_t alert_level, uint8_t alert_desc, void *arg);
 ssize_t tls13_phh_received_cb(void *cb_arg);
 void tls13_phh_done_cb(void *cb_arg);
 

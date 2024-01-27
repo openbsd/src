@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.76 2022/11/26 16:08:56 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.77 2024/01/27 14:23:51 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -110,10 +110,41 @@ tls13_cipher_hash(const SSL_CIPHER *cipher)
 	return NULL;
 }
 
+static void
+tls13_legacy_alert_cb(int sent, uint8_t alert_level, uint8_t alert_desc,
+    void *arg)
+{
+	uint8_t alert[] = {alert_level, alert_desc};
+	struct tls13_ctx *ctx = arg;
+	SSL *s = ctx->ssl;
+	CBS cbs;
+
+	if (s->msg_callback == NULL)
+		return;
+
+	CBS_init(&cbs, alert, sizeof(alert));
+	ssl_msg_callback_cbs(s, sent, SSL3_RT_ALERT, &cbs);
+}
+
+static void
+tls13_legacy_alert_recv_cb(uint8_t alert_level, uint8_t alert_desc, void *arg)
+{
+	tls13_legacy_alert_cb(0, alert_level, alert_desc, arg);
+}
+
+static void
+tls13_legacy_alert_sent_cb(uint8_t alert_level, uint8_t alert_desc, void *arg)
+{
+	tls13_legacy_alert_cb(1, alert_level, alert_desc, arg);
+}
+
 void
-tls13_alert_received_cb(uint8_t alert_desc, void *arg)
+tls13_alert_received_cb(uint8_t alert_level, uint8_t alert_desc, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
+
+	if (ctx->alert_recv_cb != NULL)
+		ctx->alert_recv_cb(alert_level, alert_desc, arg);
 
 	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
 		ctx->close_notify_recv = 1;
@@ -140,9 +171,12 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 }
 
 void
-tls13_alert_sent_cb(uint8_t alert_desc, void *arg)
+tls13_alert_sent_cb(uint8_t alert_level, uint8_t alert_desc, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
+
+	if (ctx->alert_sent_cb != NULL)
+		ctx->alert_sent_cb(alert_level, alert_desc, arg);
 
 	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
 		ctx->close_notify_sent = 1;
@@ -514,6 +548,8 @@ tls13_ctx_new(int mode, SSL *ssl)
 	if ((ctx->rl = tls13_record_layer_new(&tls13_rl_callbacks, ctx)) == NULL)
 		goto err;
 
+	ctx->alert_sent_cb = tls13_legacy_alert_sent_cb;
+	ctx->alert_recv_cb = tls13_legacy_alert_recv_cb;
 	ctx->handshake_message_sent_cb = tls13_legacy_handshake_message_sent_cb;
 	ctx->handshake_message_recv_cb = tls13_legacy_handshake_message_recv_cb;
 	ctx->info_cb = tls13_legacy_info_cb;
