@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.28 2023/12/16 13:23:20 tb Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.29 2024/01/27 16:50:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -72,10 +72,8 @@
 #include "evp_local.h"
 #include "hmac_local.h"
 
-/* This is an implementation of PKCS#5 v2.0 password based encryption key
- * derivation function PBKDF2.
- * SHA1 version verified against test vectors posted by Peter Gutmann
- * <pgut001@cs.auckland.ac.nz> to the PKCS-TNG <pkcs-tng@rsa.com> mailing list.
+/*
+ * PKCS#5 v2.0 password based encryption key derivation function PBKDF2.
  */
 
 int
@@ -107,7 +105,8 @@ PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
 			cplen = mdlen;
 		else
 			cplen = tkeylen;
-		/* We are unlikely to ever use more than 256 blocks (5120 bits!)
+		/*
+		 * We are unlikely to ever use more than 256 blocks (5120 bits!)
 		 * but just in case...
 		 */
 		itmp[0] = (unsigned char)((i >> 24) & 0xff);
@@ -158,7 +157,8 @@ PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen, const unsigned char *salt,
 	    EVP_sha1(), keylen, out);
 }
 
-/* Now the key derivation function itself. This is a bit evil because
+/*
+ * Now the key derivation function itself. This is a bit evil because
  * it has to check the ASN1 parameters are valid: and there are quite a
  * few of them...
  */
@@ -194,11 +194,8 @@ PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		goto err;
 	}
 
-	/* lets see if we recognise the encryption algorithm.
-	 */
-
+	/* Let's see if we recognise the encryption algorithm.  */
 	cipher = EVP_get_cipherbyobj(pbe2->encryption->algorithm);
-
 	if (!cipher) {
 		EVPerror(EVP_R_UNSUPPORTED_CIPHER);
 		goto err;
@@ -211,11 +208,13 @@ PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 		EVPerror(EVP_R_CIPHER_PARAMETER_ERROR);
 		goto err;
 	}
+
 	rv = PKCS5_v2_PBKDF2_keyivgen(ctx, pass, passlen,
 	    pbe2->keyfunc->parameter, c, md, en_de);
 
-err:
+ err:
 	PBE2PARAM_free(pbe2);
+
 	return rv;
 }
 
@@ -296,11 +295,13 @@ PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	if (!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, prfmd,
 	    keylen, key))
 		goto err;
+
 	rv = EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
 
-err:
+ err:
 	explicit_bzero(key, keylen);
 	PBKDF2PARAM_free(kdf);
+
 	return rv;
 }
 
