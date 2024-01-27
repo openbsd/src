@@ -490,6 +490,7 @@ id-pe 14		: proxyCertInfo		: Proxy Certificate Information
 id-pe 24		: tlsfeature		: TLS Feature
 id-pe 28		: sbgp-ipAddrBlockv2
 id-pe 29		: sbgp-autonomousSysNumv2
+id-pe 31		: acmeIdentifier	: ACME Identifier
 
 # PKIX policyQualifiers for Internet policy qualifiers
 id-qt 1			: id-qt-cps		: Policy Qualifier CPS
