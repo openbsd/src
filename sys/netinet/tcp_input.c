@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.398 2024/01/11 13:49:49 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.399 2024/01/27 21:13:46 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -201,8 +201,8 @@ int	 syn_cache_add(struct sockaddr *, struct sockaddr *, struct tcphdr *,
 struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int, struct socket *,
 		struct mbuf *, uint64_t);
-struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
-		struct syn_cache_head **, u_int);
+struct syn_cache *syn_cache_lookup(const struct sockaddr *,
+		const struct sockaddr *, struct syn_cache_head **, u_int);
 
 /*
  * Insert segment ti into reassembly queue of tcp with
@@ -3109,9 +3109,9 @@ struct mutex syn_cache_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 #ifndef INET6
 #define	SYN_HASHALL(hash, src, dst, rand) \
 do {									\
-	hash = SYN_HASH(&satosin(src)->sin_addr,			\
-		satosin(src)->sin_port,					\
-		satosin(dst)->sin_port, (rand));			\
+	hash = SYN_HASH(&satosin_const(src)->sin_addr,			\
+		satosin_const(src)->sin_port,				\
+		satosin_const(dst)->sin_port, (rand));			\
 } while (/*CONSTCOND*/ 0)
 #else
 #define SYN_HASH6(sa, sp, dp, rand) \
@@ -3125,14 +3125,14 @@ do {									\
 do {									\
 	switch ((src)->sa_family) {					\
 	case AF_INET:							\
-		hash = SYN_HASH(&satosin(src)->sin_addr,		\
-			satosin(src)->sin_port,				\
-			satosin(dst)->sin_port, (rand));		\
+		hash = SYN_HASH(&satosin_const(src)->sin_addr,		\
+			satosin_const(src)->sin_port,			\
+			satosin_const(dst)->sin_port, (rand));		\
 		break;							\
 	case AF_INET6:							\
-		hash = SYN_HASH6(&satosin6(src)->sin6_addr,		\
-			satosin6(src)->sin6_port,			\
-			satosin6(dst)->sin6_port, (rand));		\
+		hash = SYN_HASH6(&satosin6_const(src)->sin6_addr,	\
+			satosin6_const(src)->sin6_port,			\
+			satosin6_const(dst)->sin6_port, (rand));	\
 		break;							\
 	default:							\
 		hash = 0;						\
@@ -3423,7 +3423,7 @@ syn_cache_cleanup(struct tcpcb *tp)
  * Find an entry in the syn cache.
  */
 struct syn_cache *
-syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
+syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
     struct syn_cache_head **headp, u_int rtableid)
 {
 	struct syn_cache_set *sets[2];
@@ -3709,8 +3709,8 @@ syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 }
 
 void
-syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
-    u_int rtableid)
+syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
+    struct tcphdr *th, u_int rtableid)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;

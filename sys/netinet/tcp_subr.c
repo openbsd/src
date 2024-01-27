@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.195 2024/01/11 13:49:49 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.196 2024/01/27 21:13:46 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -698,8 +698,8 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		} else if (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
 		    inet6ctlerrmap[cmd] == ENETUNREACH ||
 		    inet6ctlerrmap[cmd] == EHOSTDOWN)
-			syn_cache_unreach((struct sockaddr *)sa6_src,
-			    sa, &th, rdomain);
+			syn_cache_unreach(sin6tosa_const(sa6_src), sa, &th,
+			    rdomain);
 		in_pcbunref(inp);
 	} else {
 		in6_pcbnotify(&tcbtable, sa6, 0,
