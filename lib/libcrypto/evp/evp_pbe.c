@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.37 2024/01/27 16:22:29 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.38 2024/01/27 16:26:25 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -363,5 +363,10 @@ EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 
 void
 EVP_PBE_cleanup(void)
+{
+}
+
+void
+PKCS5_PBE_add(void)
 {
 }
