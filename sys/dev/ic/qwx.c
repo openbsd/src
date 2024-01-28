@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.8 2024/01/25 17:00:20 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.9 2024/01/28 22:30:39 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -134,6 +134,8 @@ int qwx_qmi_event_server_arrive(struct qwx_softc *);
 int qwx_mac_register(struct qwx_softc *);
 int qwx_mac_start(struct qwx_softc *);
 void qwx_mac_scan_finish(struct qwx_softc *);
+int qwx_mac_mgmt_tx_wmi(struct qwx_softc *, struct qwx_vif *, uint8_t,
+    struct mbuf *);
 int qwx_dp_tx_send_reo_cmd(struct qwx_softc *, struct dp_rx_tid *,
     enum hal_reo_cmd_type , struct ath11k_hal_reo_cmd *,
     void (*func)(struct qwx_dp *, void *, enum hal_reo_cmd_status));
@@ -343,13 +345,86 @@ qwx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return err;
 }
 
+int
+qwx_tx(struct qwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
+{
+	struct ieee80211_frame *wh;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	uint8_t frame_type;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	frame_type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+
+	if (frame_type == IEEE80211_FC0_TYPE_MGT)
+		return qwx_mac_mgmt_tx_wmi(sc, arvif, pdev_id, m);
+
+	printf("%s: not implemented\n", sc->sc_dev.dv_xname);
+	m_freem(m);
+	return ENOTSUP;
+}
+
 void
 qwx_start(struct ifnet *ifp)
 {
+	struct qwx_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni;
+	struct ether_header *eh;
+	struct mbuf *m;
+
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	printf("%s: not implemented\n", __func__);
+	for (;;) {
+		/* why isn't this done per-queue? */
+		if (sc->qfullmsk != 0) {
+			ifq_set_oactive(&ifp->if_snd);
+			break;
+		}
+
+		/* need to send management frames even if we're not RUNning */
+		m = mq_dequeue(&ic->ic_mgtq);
+		if (m) {
+			ni = m->m_pkthdr.ph_cookie;
+			goto sendit;
+		}
+
+		if (ic->ic_state != IEEE80211_S_RUN ||
+		    (ic->ic_xflags & IEEE80211_F_TX_MGMT_ONLY))
+			break;
+
+		m = ifq_dequeue(&ifp->if_snd);
+		if (!m)
+			break;
+		if (m->m_len < sizeof (*eh) &&
+		    (m = m_pullup(m, sizeof (*eh))) == NULL) {
+			ifp->if_oerrors++;
+			continue;
+		}
+#if NBPFILTER > 0
+		if (ifp->if_bpf != NULL)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+		if ((m = ieee80211_encap(ifp, m, &ni)) == NULL) {
+			ifp->if_oerrors++;
+			continue;
+		}
+
+ sendit:
+#if NBPFILTER > 0
+		if (ic->ic_rawbpf != NULL)
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
+#endif
+		if (qwx_tx(sc, m, ni) != 0) {
+			ieee80211_release_node(ic, ni);
+			ifp->if_oerrors++;
+			continue;
+		}
+
+		if (ifp->if_flags & IFF_UP)
+			ifp->if_timer = 1;
+	}
 }
 
 void
@@ -11646,6 +11721,91 @@ exit:
 #endif
 }
 
+int
+qwx_pull_mgmt_tx_compl_param_tlv(struct qwx_softc *sc, struct mbuf *m,
+    struct wmi_mgmt_tx_compl_event *param)
+{
+	const void **tb;
+	const struct wmi_mgmt_tx_compl_event *ev;
+	int ret = 0;
+
+	tb = qwx_wmi_tlv_parse_alloc(sc, mtod(m, void *), m->m_pkthdr.len);
+	if (tb == NULL) {
+		ret = ENOMEM;
+		printf("%s: failed to parse tlv: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ENOMEM;
+	}
+
+	ev = tb[WMI_TAG_MGMT_TX_COMPL_EVENT];
+	if (!ev) {
+		printf("%s: failed to fetch mgmt tx compl ev\n",
+		    sc->sc_dev.dv_xname);
+		free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+		return EPROTO;
+	}
+
+	param->pdev_id = ev->pdev_id;
+	param->desc_id = ev->desc_id;
+	param->status = ev->status;
+	param->ack_rssi = ev->ack_rssi;
+
+	free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+	return 0;
+}
+
+void
+qwx_wmi_process_mgmt_tx_comp(struct qwx_softc *sc,
+    struct wmi_mgmt_tx_compl_event *tx_compl_param)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	struct ifnet *ifp = &ic->ic_if;
+	struct qwx_tx_data *tx_data;
+
+	if (tx_compl_param->desc_id >= nitems(arvif->txmgmt.data)) {
+		printf("%s: received mgmt tx compl for invalid buf_id: %d\n",
+		    sc->sc_dev.dv_xname, tx_compl_param->desc_id);
+		return;
+	}
+
+	tx_data = &arvif->txmgmt.data[tx_compl_param->desc_id];
+	if (tx_data->m == NULL) {
+		printf("%s: received mgmt tx compl for invalid buf_id: %d\n",
+		    sc->sc_dev.dv_xname, tx_compl_param->desc_id);
+		return;
+	}
+
+	bus_dmamap_unload(sc->sc_dmat, tx_data->map);
+	m_freem(tx_data->m);
+	tx_data->m = NULL;
+
+	if (arvif->txmgmt.queued > 0)
+		arvif->txmgmt.queued--;
+
+	if (tx_compl_param->status != 0)
+		ifp->if_oerrors++;
+}
+
+void
+qwx_mgmt_tx_compl_event(struct qwx_softc *sc, struct mbuf *m)
+{
+	struct wmi_mgmt_tx_compl_event tx_compl_param = { 0 };
+
+	if (qwx_pull_mgmt_tx_compl_param_tlv(sc, m, &tx_compl_param) != 0) {
+		printf("%s: failed to extract mgmt tx compl event\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	qwx_wmi_process_mgmt_tx_comp(sc, &tx_compl_param);
+
+	DNPRINTF(QWX_D_MGMT, "%s: event mgmt tx compl ev pdev_id %d, "
+	    "desc_id %d, status %d ack_rssi %d", __func__,
+	    tx_compl_param.pdev_id, tx_compl_param.desc_id,
+	    tx_compl_param.status, tx_compl_param.ack_rssi);
+}
+
 void
 qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 {
@@ -11696,11 +11856,9 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 		qwx_mgmt_rx_event(sc, m);
 		/* mgmt_rx_event() owns the skb now! */
 		return;
-#if 0
 	case WMI_MGMT_TX_COMPLETION_EVENTID:
-		ath11k_mgmt_tx_compl_event(ab, skb);
+		qwx_mgmt_tx_compl_event(sc, m);
 		break;
-#endif
 	case WMI_SCAN_EVENTID:
 		DPRINTF("%s: 0x%x: scan event\n", __func__, id);
 		qwx_scan_event(sc, m);
@@ -15250,6 +15408,66 @@ qwx_wmi_set_sta_ps_param(struct qwx_softc *sc, uint32_t vdev_id,
 }
 
 int
+qwx_wmi_mgmt_send(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
+    uint32_t buf_id, struct mbuf *frame, struct qwx_tx_data *tx_data)
+{
+	struct qwx_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
+	struct wmi_mgmt_send_cmd *cmd;
+	struct wmi_tlv *frame_tlv;
+	struct mbuf *m;
+	uint32_t buf_len;
+	int ret, len;
+	uint64_t paddr;
+
+	paddr = tx_data->map->dm_segs[0].ds_addr;
+
+	buf_len = frame->m_pkthdr.len < WMI_MGMT_SEND_DOWNLD_LEN ?
+	    frame->m_pkthdr.len : WMI_MGMT_SEND_DOWNLD_LEN;
+
+	len = sizeof(*cmd) + sizeof(*frame_tlv) + roundup(buf_len, 4);
+
+	m = qwx_wmi_alloc_mbuf(len);
+	if (!m)
+		return ENOMEM;
+
+	cmd = (struct wmi_mgmt_send_cmd *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
+	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_MGMT_TX_SEND_CMD) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->vdev_id = arvif->vdev_id;
+	cmd->desc_id = buf_id;
+	cmd->chanfreq = 0;
+	cmd->paddr_lo = paddr & 0xffffffff;
+	cmd->paddr_hi = paddr >> 32;
+	cmd->frame_len = frame->m_pkthdr.len;
+	cmd->buf_len = buf_len;
+	cmd->tx_params_valid = 0;
+
+	frame_tlv = (struct wmi_tlv *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr) +
+	    sizeof(*cmd));
+	frame_tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
+	    FIELD_PREP(WMI_TLV_LEN, buf_len);
+
+	memcpy(frame_tlv->value, mtod(frame, void *), buf_len);
+#if 0 /* Not needed on OpenBSD? */
+	ath11k_ce_byte_swap(frame_tlv->value, buf_len);
+#endif
+	ret = qwx_wmi_cmd_send(wmi, m, WMI_MGMT_TX_SEND_CMDID);
+	if (ret) {
+		printf("%s: failed to submit WMI_MGMT_TX_SEND_CMDID cmd\n",
+		    sc->sc_dev.dv_xname);
+		m_freem(m);
+		return ret;
+	}
+
+	DNPRINTF(QWX_D_WMI, "%s: cmd mgmt tx send", __func__);
+
+	tx_data->m = frame;
+	return 0;
+}
+
+int
 qwx_wmi_vdev_create(struct qwx_softc *sc, uint8_t *macaddr,
     struct vdev_create_params *param)
 {
@@ -18710,6 +18928,61 @@ qwx_mac_vdev_start(struct qwx_softc *sc, struct qwx_vif *arvif, int pdev_id)
 	return qwx_mac_vdev_start_restart(sc, arvif, pdev_id, 0);
 }
 
+void
+qwx_vif_free(struct qwx_softc *sc, struct qwx_vif *arvif)
+{
+	struct qwx_txmgmt_queue *txmgmt;
+	int i;
+
+	if (arvif == NULL)
+		return;
+
+	txmgmt = &arvif->txmgmt;
+	for (i = 0; i < nitems(txmgmt->data); i++) {
+		struct qwx_tx_data *tx_data = &txmgmt->data[i];
+
+		if (tx_data->m) {
+			m_freem(tx_data->m);
+			tx_data->m = NULL;
+		}
+		if (tx_data->map) {
+			bus_dmamap_destroy(sc->sc_dmat, tx_data->map);
+			tx_data->map = NULL;
+		}
+	}
+
+	free(arvif, M_DEVBUF, sizeof(*arvif));
+}
+
+struct qwx_vif *
+qwx_vif_alloc(struct qwx_softc *sc)
+{
+	struct qwx_vif *arvif;
+	struct qwx_txmgmt_queue *txmgmt; 
+	int i, ret = 0;
+	const bus_size_t size = IEEE80211_MAX_LEN;
+
+	arvif = malloc(sizeof(*arvif), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (arvif == NULL)
+		return NULL;
+
+	txmgmt = &arvif->txmgmt;
+	for (i = 0; i < nitems(txmgmt->data); i++) {
+		struct qwx_tx_data *tx_data = &txmgmt->data[i];
+
+		ret = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &tx_data->map);
+		if (ret) {
+			qwx_vif_free(sc, arvif);
+			return NULL;
+		}
+	}
+
+	arvif->sc = sc;
+
+	return arvif;
+}
+
 int
 qwx_mac_op_add_interface(struct qwx_pdev *pdev)
 {
@@ -18746,13 +19019,11 @@ qwx_mac_op_add_interface(struct qwx_pdev *pdev)
 		goto err;
 	}
 
-	arvif = malloc(sizeof(*arvif), M_DEVBUF, M_NOWAIT | M_ZERO);
+	arvif = qwx_vif_alloc(sc);
 	if (arvif == NULL) {
 		ret = ENOMEM;
 		goto err;
 	}
-
-	arvif->sc = sc;
 #if 0
 	INIT_DELAYED_WORK(&arvif->connection_loss_work,
 			  ath11k_mac_vif_sta_connection_loss_work);
@@ -18983,7 +19254,7 @@ err:
 #ifdef notyet
 	mutex_unlock(&ar->conf_mutex);
 #endif
-	free(arvif, M_DEVBUF, sizeof(*arvif));
+	qwx_vif_free(sc, arvif);
 	return ret;
 }
 
@@ -19904,6 +20175,57 @@ qwx_mac_station_add(struct qwx_softc *sc, struct qwx_vif *arvif,
 
 free_peer:
 	qwx_peer_delete(sc, arvif->vdev_id, pdev_id, ni->ni_macaddr);
+	return ret;
+}
+
+int
+qwx_mac_mgmt_tx_wmi(struct qwx_softc *sc, struct qwx_vif *arvif,
+    uint8_t pdev_id, struct mbuf *m)
+{
+	struct qwx_txmgmt_queue *txmgmt = &arvif->txmgmt;
+	struct qwx_tx_data *tx_data;
+	int buf_id;
+	int ret;
+
+	buf_id = txmgmt->cur;
+
+	DNPRINTF(QWX_D_MAC, "%s: tx mgmt frame, buf id %d\n", __func__, buf_id);
+
+	if (txmgmt->queued >= nitems(txmgmt->data))
+		return ENOSPC;
+
+	tx_data = &txmgmt->data[buf_id];
+#if 0
+	if (!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP)) {
+		if ((ieee80211_is_action(hdr->frame_control) ||
+		     ieee80211_is_deauth(hdr->frame_control) ||
+		     ieee80211_is_disassoc(hdr->frame_control)) &&
+		     ieee80211_has_protected(hdr->frame_control)) {
+			skb_put(skb, IEEE80211_CCMP_MIC_LEN);
+		}
+	}
+#endif
+	ret = bus_dmamap_load_mbuf(sc->sc_dmat, tx_data->map,
+	    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
+	if (ret) {
+		printf("%s: failed to map mgmt Tx buffer: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ret = qwx_wmi_mgmt_send(sc, arvif, pdev_id, buf_id, m, tx_data);
+	if (ret) {
+		printf("%s: failed to send mgmt frame: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		goto err_unmap_buf;
+	}
+
+	txmgmt->cur = (txmgmt->cur + 1) % nitems(txmgmt->data);
+	txmgmt->queued++;
+	return 0;
+
+err_unmap_buf:
+	bus_dmamap_unload(sc->sc_dmat, tx_data->map);
 	return ret;
 }
 

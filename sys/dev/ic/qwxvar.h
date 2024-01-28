@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.5 2024/01/25 17:00:21 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.6 2024/01/28 22:30:39 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -718,7 +718,7 @@ struct qwx_tx_data {
 	uint8_t eid;
 	uint8_t flags;
 	uint32_t cipher;
-} __packed;
+};
 
 struct qwx_ce_ring {
 	/* Number of entries in this ring; must be power of 2 */
@@ -1468,6 +1468,12 @@ struct qwx_pdev_dp {
 	struct qwx_mon_data mon_data;
 };
 
+struct qwx_txmgmt_queue {
+	struct qwx_tx_data data[8];
+	int cur;
+	int queued;
+};
+
 struct qwx_vif {
 	uint32_t vdev_id;
 	enum wmi_vdev_type vdev_type;
@@ -1528,6 +1534,8 @@ struct qwx_vif {
 #ifdef CONFIG_ATH11K_DEBUGFS
 	struct dentry *debugfs_twt;
 #endif /* CONFIG_ATH11K_DEBUGFS */
+
+	struct qwx_txmgmt_queue txmgmt;
 };
 
 TAILQ_HEAD(qwx_vif_list, qwx_vif);
@@ -1591,6 +1599,7 @@ struct qwx_softc {
 	int			have_firmware;
 
 	int			sc_tx_timer;
+	uint32_t		qfullmsk;
 
 	bus_addr_t			mem;
 	struct ath11k_hw_params		hw_params;
