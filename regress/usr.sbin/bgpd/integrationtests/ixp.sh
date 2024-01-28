@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: ixp.sh,v 1.1 2023/10/12 09:18:56 claudio Exp $
+#	$OpenBSD: ixp.sh,v 1.2 2024/01/28 12:36:21 anton Exp $
 
 set -e
 
@@ -43,6 +43,8 @@ if [ "$(id -u)" -ne 0 ]; then
 	exit 1
 fi
 
+. "${BGPDCONFIGDIR}/util.sh"
+
 trap 'error_notify $?' EXIT
 
 echo check if rdomains are busy
@@ -84,17 +86,15 @@ route -T ${RDOMAIN2} exec ${BGPD} \
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.ixp.rdomain2_4.conf
 
-sleep 3
-
+wait_until "route -T ${RDOMAIN1} exec bgpctl show rib detail | ! cmp /dev/null -"
 route -T ${RDOMAIN1} exec bgpctl show rib detail | grep -v 'Last update:' | \
 	tee ixp.rdomain1.out
-sleep .2
 diff -u ${BGPDCONFIGDIR}/ixp.rdomain1.ok ixp.rdomain1.out
 echo OK
 
+wait_until "route -T ${RDOMAIN2} exec bgpctl show rib detail | ! cmp /dev/null -"
 route -T ${RDOMAIN2} exec bgpctl show rib detail | grep -v 'Last update:' | \
 	tee ixp.rdomain2.out
-sleep .2
 diff -u ${BGPDCONFIGDIR}/ixp.rdomain2.ok ixp.rdomain2.out
 echo OK
 
