@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.118 2022/10/24 05:57:58 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.119 2024/01/28 03:01:39 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -301,6 +301,13 @@ const struct puc_device_description puc_devs[] = {
 	},
 	{	/* Atom S1200 UART */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_UART, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+	    },
+	},
+	{	/* Intel C3000 UART */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C3000_HSUART, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
 		{ PUC_PORT_COM, 0x10, 0x0000 },
