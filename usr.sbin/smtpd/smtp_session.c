@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.440 2024/01/20 09:01:03 claudio Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.441 2024/01/28 17:23:17 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -489,7 +489,7 @@ header_domain_append_callback(struct smtp_tx *tx, const char *hdr,
 				quote = !quote;
 			if (line[i] == ')' && !escape && !quote && comment)
 				comment--;
-			if (line[i] == '\\' && !escape && !comment && !quote)
+			if (line[i] == '\\' && !escape && !comment)
 				escape = 1;
 			else
 				escape = 0;
