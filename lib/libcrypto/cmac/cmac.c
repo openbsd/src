@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.18 2023/12/18 21:15:00 tb Exp $ */
+/* $OpenBSD: cmac.c,v 1.19 2024/01/28 14:55:40 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -68,7 +68,7 @@
  * The temporary block tbl is a scratch buffer that holds intermediate secrets.
  */
 struct CMAC_CTX_st {
-	EVP_CIPHER_CTX cctx;
+	EVP_CIPHER_CTX *cipher_ctx;
 	unsigned char k1[EVP_MAX_BLOCK_LENGTH];
 	unsigned char k2[EVP_MAX_BLOCK_LENGTH];
 	unsigned char tbl[EVP_MAX_BLOCK_LENGTH];
@@ -112,19 +112,26 @@ CMAC_CTX_new(void)
 {
 	CMAC_CTX *ctx;
 
-	ctx = malloc(sizeof(CMAC_CTX));
-	if (!ctx)
-		return NULL;
-	EVP_CIPHER_CTX_init(&ctx->cctx);
+	if ((ctx = calloc(1, sizeof(CMAC_CTX))) == NULL)
+		goto err;
+	if ((ctx->cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
+		goto err;
+
 	ctx->nlast_block = -1;
+
 	return ctx;
+
+ err:
+	CMAC_CTX_free(ctx);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(CMAC_CTX_new);
 
 void
 CMAC_CTX_cleanup(CMAC_CTX *ctx)
 {
-	EVP_CIPHER_CTX_cleanup(&ctx->cctx);
+	EVP_CIPHER_CTX_reset(ctx->cipher_ctx);
 	explicit_bzero(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
 	explicit_bzero(ctx->k1, EVP_MAX_BLOCK_LENGTH);
 	explicit_bzero(ctx->k2, EVP_MAX_BLOCK_LENGTH);
@@ -136,7 +143,7 @@ LCRYPTO_ALIAS(CMAC_CTX_cleanup);
 EVP_CIPHER_CTX *
 CMAC_CTX_get0_cipher_ctx(CMAC_CTX *ctx)
 {
-	return &ctx->cctx;
+	return ctx->cipher_ctx;
 }
 LCRYPTO_ALIAS(CMAC_CTX_get0_cipher_ctx);
 
@@ -147,7 +154,8 @@ CMAC_CTX_free(CMAC_CTX *ctx)
 		return;
 
 	CMAC_CTX_cleanup(ctx);
-	free(ctx);
+	EVP_CIPHER_CTX_free(ctx->cipher_ctx);
+	freezero(ctx, sizeof(CMAC_CTX));
 }
 LCRYPTO_ALIAS(CMAC_CTX_free);
 
@@ -158,9 +166,9 @@ CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 
 	if (in->nlast_block == -1)
 		return 0;
-	if (!EVP_CIPHER_CTX_copy(&out->cctx, &in->cctx))
+	if (!EVP_CIPHER_CTX_copy(out->cipher_ctx, in->cipher_ctx))
 		return 0;
-	block_size = EVP_CIPHER_CTX_block_size(&in->cctx);
+	block_size = EVP_CIPHER_CTX_block_size(in->cipher_ctx);
 	memcpy(out->k1, in->k1, block_size);
 	memcpy(out->k2, in->k2, block_size);
 	memcpy(out->tbl, in->tbl, block_size);
@@ -182,7 +190,7 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 		/* Not initialised */
 		if (ctx->nlast_block == -1)
 			return 0;
-		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
+		if (!EVP_EncryptInit_ex(ctx->cipher_ctx, NULL, NULL, NULL, zero_iv))
 			return 0;
 		explicit_bzero(ctx->tbl, sizeof(ctx->tbl));
 		ctx->nlast_block = 0;
@@ -198,17 +206,17 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 		 */
 		if ((cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0)
 			return 0;
-		if (!EVP_EncryptInit_ex(&ctx->cctx, cipher, NULL, NULL, NULL))
+		if (!EVP_EncryptInit_ex(ctx->cipher_ctx, cipher, NULL, NULL, NULL))
 			return 0;
 	}
 
 	/* Non-NULL key means initialisation is complete. */
 	if (key != NULL) {
-		if (EVP_CIPHER_CTX_cipher(&ctx->cctx) == NULL)
+		if (EVP_CIPHER_CTX_cipher(ctx->cipher_ctx) == NULL)
 			return 0;
 
 		/* make_kn() only supports block sizes of 8 and 16 bytes. */
-		block_size = EVP_CIPHER_CTX_block_size(&ctx->cctx);
+		block_size = EVP_CIPHER_CTX_block_size(ctx->cipher_ctx);
 		if (block_size != 8 && block_size != 16)
 			return 0;
 
@@ -216,11 +224,11 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 		 * Section 6.1, step 1: store the intermediate secret CIPH_K(0)
 		 * in ctx->tbl.
 		 */
-		if (!EVP_CIPHER_CTX_set_key_length(&ctx->cctx, keylen))
+		if (!EVP_CIPHER_CTX_set_key_length(ctx->cipher_ctx, keylen))
 			return 0;
-		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, key, zero_iv))
+		if (!EVP_EncryptInit_ex(ctx->cipher_ctx, NULL, NULL, key, zero_iv))
 			return 0;
-		if (!EVP_Cipher(&ctx->cctx, ctx->tbl, zero_iv, block_size))
+		if (!EVP_Cipher(ctx->cipher_ctx, ctx->tbl, zero_iv, block_size))
 			return 0;
 
 		/* Section 6.1, step 2: compute k1 from intermediate secret. */
@@ -233,7 +241,7 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 		ctx->nlast_block = 0;
 
 		/* Reset context again to get ready for the first data block. */
-		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
+		if (!EVP_EncryptInit_ex(ctx->cipher_ctx, NULL, NULL, NULL, zero_iv))
 			return 0;
 	}
 
@@ -251,7 +259,7 @@ CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 		return 0;
 	if (dlen == 0)
 		return 1;
-	block_size = EVP_CIPHER_CTX_block_size(&ctx->cctx);
+	block_size = EVP_CIPHER_CTX_block_size(ctx->cipher_ctx);
 	/* Copy into partial block if we need to */
 	if (ctx->nlast_block > 0) {
 		size_t nleft;
@@ -267,13 +275,13 @@ CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 			return 1;
 		data += nleft;
 		/* Else not final block so encrypt it */
-		if (!EVP_Cipher(&ctx->cctx, ctx->tbl, ctx->last_block,
+		if (!EVP_Cipher(ctx->cipher_ctx, ctx->tbl, ctx->last_block,
 		    block_size))
 			return 0;
 	}
 	/* Encrypt all but one of the complete blocks left */
 	while (dlen > block_size) {
-		if (!EVP_Cipher(&ctx->cctx, ctx->tbl, data, block_size))
+		if (!EVP_Cipher(ctx->cipher_ctx, ctx->tbl, data, block_size))
 			return 0;
 		dlen -= block_size;
 		data += block_size;
@@ -292,7 +300,7 @@ CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 
 	if (ctx->nlast_block == -1)
 		return 0;
-	block_size = EVP_CIPHER_CTX_block_size(&ctx->cctx);
+	block_size = EVP_CIPHER_CTX_block_size(ctx->cipher_ctx);
 	*poutlen = (size_t)block_size;
 	if (!out)
 		return 1;
@@ -308,7 +316,7 @@ CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 		for (i = 0; i < block_size; i++)
 			out[i] = ctx->last_block[i] ^ ctx->k2[i];
 	}
-	if (!EVP_Cipher(&ctx->cctx, out, out, block_size)) {
+	if (!EVP_Cipher(ctx->cipher_ctx, out, out, block_size)) {
 		explicit_bzero(out, block_size);
 		return 0;
 	}
@@ -327,6 +335,6 @@ CMAC_resume(CMAC_CTX *ctx)
 	 * So reinitialising using the last decrypted block will allow
 	 * CMAC to continue after calling CMAC_Final().
 	 */
-	return EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, ctx->tbl);
+	return EVP_EncryptInit_ex(ctx->cipher_ctx, NULL, NULL, NULL, ctx->tbl);
 }
 LCRYPTO_ALIAS(CMAC_resume);
