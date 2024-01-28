@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.106 2023/09/06 01:47:37 jsg Exp $
+#	$OpenBSD: Makefile.macppc,v 1.107 2024/01/28 00:40:22 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -66,7 +66,7 @@ HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
-NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -fno-ret-protector -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} ${PROF} -c $<
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.82 2021/01/28 17:39:03 deraadt Exp $
+#	$OpenBSD: Makefile.landisk,v 1.83 2024/01/28 00:40:22 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -51,7 +51,7 @@ HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
-NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -fno-stack-protector -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} ${PROF} -c $<
 
