@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2023/03/11 20:49:33 miod Exp $
+#	$OpenBSD: Makefile,v 1.20 2024/01/28 01:07:26 deraadt Exp $
 #	$NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -30,7 +30,7 @@ DEFNS= -DPRIMARY_BOOTBLOCK -DSUN_BOOTPARAMS
 
 AFLAGS += -DASSEMBLER ${DEFNS} -fno-pie
 CPPFLAGS += -I${.CURDIR}/../.. -I${S} ${DEFNS}
-CFLAGS = -Werror -mno-fp-regs -fno-pie
+CFLAGS = -Werror -mno-fp-regs -fno-pie -fno-stack-protector
 
 ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym

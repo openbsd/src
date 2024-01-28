@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2023/03/13 20:20:13 miod Exp $
+#	$OpenBSD: Makefile,v 1.3 2024/01/28 01:07:26 deraadt Exp $
 #	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
 MAN?=	boot.8
@@ -39,7 +39,8 @@ DEFNS= -DCOMPAT_UFS
 
 AFLAGS += -DASSEMBLER ${DEFNS} -fno-pie
 CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR} -I${S} ${DEFNS}
-CFLAGS = -Oz -Werror -mno-fp-regs -fno-pie -msmall-data -msmall-text
+CFLAGS = -Oz -Werror -mno-fp-regs -fno-pie -msmall-data -msmall-text \
+	-fno-stack-protector
 
 ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym
