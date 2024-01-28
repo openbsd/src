@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.19 2024/01/13 13:59:18 joshua Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.20 2024/01/28 14:43:48 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -381,7 +381,7 @@ int
 ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
     ASN1_BIT_STRING *signature, void *asn, EVP_PKEY *pkey)
 {
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *md_ctx = NULL;
 	unsigned char *in = NULL;
 	int mdnid, pknid;
 	int in_len = 0;
@@ -389,15 +389,16 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 
 	if (pkey == NULL) {
 		ASN1error(ERR_R_PASSED_NULL_PARAMETER);
-		return -1;
+		goto err;
 	}
 
 	if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7) {
 		ASN1error(ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
-		return -1;
+		goto err;
 	}
 
-	EVP_MD_CTX_init(&ctx);
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
 
 	/* Convert signature OID into digest and public key OIDs */
 	if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->algorithm), &mdnid, &pknid)) {
@@ -409,7 +410,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 			ASN1error(ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
 			goto err;
 		}
-		ret = pkey->ameth->item_verify(&ctx, it, asn, a,
+		ret = pkey->ameth->item_verify(md_ctx, it, asn, a,
 		    signature, pkey);
 		/* Return value of 2 means carry on, anything else means we
 		 * exit straight away: either a fatal error of the underlying
@@ -432,7 +433,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 			goto err;
 		}
 
-		if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey)) {
+		if (!EVP_DigestVerifyInit(md_ctx, NULL, type, NULL, pkey)) {
 			ASN1error(ERR_R_EVP_LIB);
 			ret = 0;
 			goto err;
@@ -446,7 +447,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 		goto err;
 	}
 
-	if (EVP_DigestVerify(&ctx, signature->data, signature->length,
+	if (EVP_DigestVerify(md_ctx, signature->data, signature->length,
 	    in, in_len) <= 0) {
 		ASN1error(ERR_R_EVP_LIB);
 		ret = 0;
@@ -456,7 +457,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	ret = 1;
 
  err:
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_free(md_ctx);
 	freezero(in, in_len);
 
 	return ret;
