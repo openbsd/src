@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.132 2024/01/09 19:57:01 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.133 2024/01/28 20:34:25 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -423,7 +423,7 @@ in6_peeraddr(struct socket *so, struct mbuf *nam)
  *    once PCB to be notified has been located.
  */
 void
-in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
+in6_pcbnotify(struct inpcbtable *table, const struct sockaddr_in6 *dst,
     uint fport_arg, const struct sockaddr_in6 *src, uint lport_arg,
     u_int rtable, int cmd, void *cmdarg, void (*notify)(struct inpcb *, int))
 {

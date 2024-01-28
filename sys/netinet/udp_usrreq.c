@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.315 2024/01/21 01:17:20 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.316 2024/01/28 20:34:25 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -919,7 +919,7 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			notify(inp, errno);
 		in_pcbunref(inp);
 	} else
-		in_pcbnotifyall(&udbtable, sa, rdomain, errno, notify);
+		in_pcbnotifyall(&udbtable, satosin(sa), rdomain, errno, notify);
 }
 
 int

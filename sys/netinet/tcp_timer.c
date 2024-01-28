@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.75 2024/01/27 21:35:13 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.76 2024/01/28 20:34:25 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -236,8 +236,8 @@ tcp_timer_rexmt(void *arg)
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		sin.sin_addr = inp->inp_faddr;
-		in_pcbnotifyall(&tcbtable, sintosa(&sin), inp->inp_rtableid,
-		    EMSGSIZE, tcp_mtudisc);
+		in_pcbnotifyall(&tcbtable, &sin, inp->inp_rtableid, EMSGSIZE,
+		    tcp_mtudisc);
 		goto out;
 	}
 
