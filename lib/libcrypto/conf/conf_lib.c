@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.16 2024/01/28 21:00:54 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -86,8 +86,8 @@ CONF_set_default_method(CONF_METHOD *meth)
 	return 1;
 }
 
-LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
-    long *eline)
+LHASH_OF(CONF_VALUE) *
+CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file, long *eline)
 {
 	LHASH_OF(CONF_VALUE) *ltmp;
 	BIO *in = NULL;
@@ -104,8 +104,8 @@ LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
 	return ltmp;
 }
 
-LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
-    long *eline)
+LHASH_OF(CONF_VALUE) *
+CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp, long *eline)
 {
 	BIO *btmp;
 	LHASH_OF(CONF_VALUE) *ltmp;
@@ -119,8 +119,8 @@ LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
 	return ltmp;
 }
 
-LHASH_OF(CONF_VALUE) *CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp,
-    long *eline)
+LHASH_OF(CONF_VALUE) *
+CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp, long *eline)
 {
 	CONF ctmp;
 	int ret;
@@ -133,8 +133,8 @@ LHASH_OF(CONF_VALUE) *CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp,
 	return NULL;
 }
 
-STACK_OF(CONF_VALUE) *CONF_get_section(LHASH_OF(CONF_VALUE) *conf,
-    const char *section)
+STACK_OF(CONF_VALUE) *
+CONF_get_section(LHASH_OF(CONF_VALUE) *conf, const char *section)
 {
 	if (conf == NULL) {
 		return NULL;
