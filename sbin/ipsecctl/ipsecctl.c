@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.86 2023/10/09 15:32:14 tobhe Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.87 2024/01/29 00:59:54 yasuoka Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -706,6 +706,10 @@ ipsecctl_show(int opts)
 		}
 	}
 
+	/* open /etc/{services,protocols} before pledge(2) */
+	setservent(1);
+	setprotoent(1);
+
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
@@ -781,6 +785,10 @@ ipsecctl_show(int opts)
 		ipsecctl_print_title("SAD:");
 		printf("No entries\n");
 	}
+
+	/* close /etc/{services,protocols} */
+	endservent();
+	endprotoent();
 }
 
 int
