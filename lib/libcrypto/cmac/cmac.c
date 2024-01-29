@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.20 2024/01/28 20:57:15 tb Exp $ */
+/* $OpenBSD: cmac.c,v 1.21 2024/01/29 06:05:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -132,7 +132,7 @@ void
 CMAC_CTX_cleanup(CMAC_CTX *ctx)
 {
 	if (ctx->cipher_ctx != NULL)
-		EVP_CIPHER_CTX_reset(ctx->cipher_ctx);
+		(void)EVP_CIPHER_CTX_reset(ctx->cipher_ctx);
 	explicit_bzero(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
 	explicit_bzero(ctx->k1, EVP_MAX_BLOCK_LENGTH);
 	explicit_bzero(ctx->k2, EVP_MAX_BLOCK_LENGTH);
