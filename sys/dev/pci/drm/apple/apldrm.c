@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldrm.c,v 1.1 2024/01/22 18:54:01 kettenis Exp $	*/
+/*	$OpenBSD: apldrm.c,v 1.2 2024/01/29 14:52:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -83,34 +83,8 @@ apldrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct apldrm_softc *sc = (struct apldrm_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int idx, len, node;
-	uint32_t *phandles;
-	uint64_t reg[2];
 
 	sc->sc_node = faa->fa_node;
-
-	/* Claim framebuffer to prevent attaching other drivers. */
-	len = OF_getproplen(faa->fa_node, "memory-region");
-	idx = OF_getindex(faa->fa_node, "framebuffer", "memory-region-names");
-	if (idx >= 0 && idx < len / sizeof(uint32_t)) {
-		phandles = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
-		OF_getpropintarray(faa->fa_node, "memory-region",
-		    phandles, len);
-		node = OF_getnodebyphandle(phandles[idx]);
-		if (node) {
-			if (OF_getpropint64array(node, "reg", reg,
-			    sizeof(reg)) == sizeof(reg))
-				rasops_claim_framebuffer(reg[0], reg[1], self);
-		}
-		free(phandles, M_TEMP, len);
-	}
-
-	/*
-	 * Update our understanding of the console output node if
-	 * we're using the framebuffer console.
-	 */
-	if (OF_is_compatible(stdout_node, "simple-framebuffer"))
-		stdout_node = sc->sc_node;
 
 	printf("\n");
 
@@ -324,7 +298,7 @@ apldrm_attachhook(struct device *self)
 	struct drm_fb_helper *fb_helper;
 	struct rasops_info *ri = &sc->sc_ri;
 	struct wsemuldisplaydev_attach_args waa;
-	int console = 0;
+	int idx, len, console = 0;
 	uint32_t defattr;
 	int error;
 
@@ -332,10 +306,45 @@ apldrm_attachhook(struct device *self)
 	if (error)
 		return;
 
+	/*
+	 * If no display coprocessors were registered with the
+	 * component framework, the call above will succeed without
+	 * setting up a framebuffer.  Bail if we don't have one.
+	 */
+	fb_helper = sc->sc_ddev.fb_helper;
+	if (fb_helper == NULL)
+		return;
+
+	/* Claim framebuffer to prevent attaching other drivers. */
+	len = OF_getproplen(sc->sc_node, "memory-region");
+	idx = OF_getindex(sc->sc_node, "framebuffer", "memory-region-names");
+	if (idx >= 0 && idx < len / sizeof(uint32_t)) {
+		uint32_t *phandles;
+		uint64_t reg[2];
+		int node;
+
+		phandles = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
+		OF_getpropintarray(sc->sc_node, "memory-region",
+		    phandles, len);
+		node = OF_getnodebyphandle(phandles[idx]);
+		if (node) {
+			if (OF_getpropint64array(node, "reg", reg,
+			    sizeof(reg)) == sizeof(reg))
+				rasops_claim_framebuffer(reg[0], reg[1], self);
+		}
+		free(phandles, M_TEMP, len);
+	}
+
+	/*
+	 * Update our understanding of the console output node if
+	 * we're using the framebuffer console.
+	 */
+	if (OF_is_compatible(stdout_node, "simple-framebuffer"))
+		stdout_node = sc->sc_node;
+
 	if (sc->sc_node == stdout_node)
 		console = 1;
 
-	fb_helper = sc->sc_ddev.fb_helper;
 	ri->ri_hw = sc;
 	ri->ri_bits = fb_helper->info->screen_buffer;
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;

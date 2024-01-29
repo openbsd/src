@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.28 2023/08/10 19:29:32 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.29 2024/01/29 14:52:25 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -160,7 +160,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_early = 0;
 
-	mainbus_attach_framebuffer(self);
+	/*
+	 * Delay attaching the framebuffer to give other drivers a
+	 * chance to claim it.
+	 */
+	config_mountroot(self, mainbus_attach_framebuffer);
 
 	thermal_init();
 }
