@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.20 2023/03/14 00:24:05 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.21 2024/01/29 22:47:13 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -117,7 +117,9 @@ const char *tcptimers[TCPT_NTIMERS] =
  * Init, arm, disarm, and test TCP timers.
  */
 #define	TCP_TIMER_INIT(tp, timer)					\
-	timeout_set_proc(&(tp)->t_timer[(timer)], tcp_timer_funcs[(timer)], tp)
+	timeout_set_flags(&(tp)->t_timer[(timer)],			\
+	    tcp_timer_funcs[(timer)], tp, KCLOCK_NONE, 			\
+	    TIMEOUT_PROC | TIMEOUT_MPSAFE)
 
 #define	TCP_TIMER_ARM(tp, timer, msecs)					\
 do {									\
