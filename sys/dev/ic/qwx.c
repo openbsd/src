@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.9 2024/01/28 22:30:39 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.10 2024/01/29 16:06:45 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -142,7 +142,6 @@ int qwx_dp_tx_send_reo_cmd(struct qwx_softc *, struct dp_rx_tid *,
 
 int qwx_scan(struct qwx_softc *);
 void qwx_scan_abort(struct qwx_softc *);
-int qwx_assoc(struct qwx_softc *);
 int qwx_disassoc(struct qwx_softc *);
 int qwx_auth(struct qwx_softc *);
 int qwx_deauth(struct qwx_softc *);
@@ -584,7 +583,6 @@ next_scan:
 		break;
 
 	case IEEE80211_S_ASSOC:
-		err = qwx_assoc(sc);
 		break;
 
 	case IEEE80211_S_RUN:
@@ -10491,6 +10489,56 @@ qwx_service_available_event(struct qwx_softc *sc, struct mbuf *m)
 }
 
 int
+qwx_pull_peer_assoc_conf_ev(struct qwx_softc *sc, struct mbuf *m,
+    struct wmi_peer_assoc_conf_arg *peer_assoc_conf)
+{
+	const void **tb;
+	const struct wmi_peer_assoc_conf_event *ev;
+	int ret;
+
+	tb = qwx_wmi_tlv_parse_alloc(sc, mtod(m, void *), m->m_pkthdr.len);
+	if (tb == NULL) {
+		ret = ENOMEM;
+		printf("%s: failed to parse tlv: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TAG_PEER_ASSOC_CONF_EVENT];
+	if (!ev) {
+		printf("%s: failed to fetch peer assoc conf ev\n",
+		    sc->sc_dev.dv_xname);
+		free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+		return EPROTO;
+	}
+
+	peer_assoc_conf->vdev_id = ev->vdev_id;
+	peer_assoc_conf->macaddr = ev->peer_macaddr.addr;
+
+	free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+	return 0;
+}
+
+void
+qwx_peer_assoc_conf_event(struct qwx_softc *sc, struct mbuf *m)
+{
+	struct wmi_peer_assoc_conf_arg peer_assoc_conf = {0};
+
+	if (qwx_pull_peer_assoc_conf_ev(sc, m, &peer_assoc_conf) != 0) {
+		printf("%s: failed to extract peer assoc conf event\n",
+		   sc->sc_dev.dv_xname);
+		return;
+	}
+
+	DNPRINTF(QWX_D_WMI, "%s: event peer assoc conf ev vdev id %d "
+	    "macaddr %s\n", __func__, peer_assoc_conf.vdev_id,
+	    ether_sprintf(peer_assoc_conf.macaddr));
+
+	sc->peer_assoc_done = 1;
+	wakeup(&sc->peer_assoc_done);
+}
+
+int
 qwx_wmi_tlv_rdy_parse(struct qwx_softc *sc, uint16_t tag, uint16_t len,
     const void *ptr, void *data)
 {
@@ -11886,10 +11934,10 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 	case WMI_SERVICE_AVAILABLE_EVENTID:
 		qwx_service_available_event(sc, m);
 		break;
-#if 0
 	case WMI_PEER_ASSOC_CONF_EVENTID:
-		ath11k_peer_assoc_conf_event(ab, skb);
+		qwx_peer_assoc_conf_event(sc, m);
 		break;
+#if 0
 	case WMI_UPDATE_STATS_EVENTID:
 		ath11k_update_stats_event(ab, skb);
 		break;
@@ -15097,6 +15145,253 @@ qwx_wmi_send_peer_delete_cmd(struct qwx_softc *sc, const uint8_t *peer_addr,
 }
 
 void
+qwx_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
+    struct peer_assoc_params *param, int hw_crypto_disabled)
+{
+	cmd->peer_flags = 0;
+
+	if (param->is_wme_set) {
+		if (param->qos_flag)
+			cmd->peer_flags |= WMI_PEER_QOS;
+		if (param->apsd_flag)
+			cmd->peer_flags |= WMI_PEER_APSD;
+		if (param->ht_flag)
+			cmd->peer_flags |= WMI_PEER_HT;
+		if (param->bw_40)
+			cmd->peer_flags |= WMI_PEER_40MHZ;
+		if (param->bw_80)
+			cmd->peer_flags |= WMI_PEER_80MHZ;
+		if (param->bw_160)
+			cmd->peer_flags |= WMI_PEER_160MHZ;
+
+		/* Typically if STBC is enabled for VHT it should be enabled
+		 * for HT as well
+		 **/
+		if (param->stbc_flag)
+			cmd->peer_flags |= WMI_PEER_STBC;
+
+		/* Typically if LDPC is enabled for VHT it should be enabled
+		 * for HT as well
+		 **/
+		if (param->ldpc_flag)
+			cmd->peer_flags |= WMI_PEER_LDPC;
+
+		if (param->static_mimops_flag)
+			cmd->peer_flags |= WMI_PEER_STATIC_MIMOPS;
+		if (param->dynamic_mimops_flag)
+			cmd->peer_flags |= WMI_PEER_DYN_MIMOPS;
+		if (param->spatial_mux_flag)
+			cmd->peer_flags |= WMI_PEER_SPATIAL_MUX;
+		if (param->vht_flag)
+			cmd->peer_flags |= WMI_PEER_VHT;
+		if (param->he_flag)
+			cmd->peer_flags |= WMI_PEER_HE;
+		if (param->twt_requester)
+			cmd->peer_flags |= WMI_PEER_TWT_REQ;
+		if (param->twt_responder)
+			cmd->peer_flags |= WMI_PEER_TWT_RESP;
+	}
+
+	/* Suppress authorization for all AUTH modes that need 4-way handshake
+	 * (during re-association).
+	 * Authorization will be done for these modes on key installation.
+	 */
+	if (param->auth_flag)
+		cmd->peer_flags |= WMI_PEER_AUTH;
+	if (param->need_ptk_4_way) {
+		cmd->peer_flags |= WMI_PEER_NEED_PTK_4_WAY;
+		if (!hw_crypto_disabled && param->is_assoc)
+			cmd->peer_flags &= ~WMI_PEER_AUTH;
+	}
+	if (param->need_gtk_2_way)
+		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
+	/* safe mode bypass the 4-way handshake */
+	if (param->safe_mode_enabled)
+		cmd->peer_flags &= ~(WMI_PEER_NEED_PTK_4_WAY |
+				     WMI_PEER_NEED_GTK_2_WAY);
+
+	if (param->is_pmf_enabled)
+		cmd->peer_flags |= WMI_PEER_PMF;
+
+	/* Disable AMSDU for station transmit, if user configures it */
+	/* Disable AMSDU for AP transmit to 11n Stations, if user configures
+	 * it
+	 * if (param->amsdu_disable) Add after FW support
+	 **/
+
+	/* Target asserts if node is marked HT and all MCS is set to 0.
+	 * Mark the node as non-HT if all the mcs rates are disabled through
+	 * iwpriv
+	 **/
+	if (param->peer_ht_rates.num_rates == 0)
+		cmd->peer_flags &= ~WMI_PEER_HT;
+}
+
+int
+qwx_wmi_send_peer_assoc_cmd(struct qwx_softc *sc, uint8_t pdev_id,
+    struct peer_assoc_params *param)
+{
+	struct qwx_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
+	struct wmi_peer_assoc_complete_cmd *cmd;
+	struct wmi_vht_rate_set *mcs;
+	struct wmi_he_rate_set *he_mcs;
+	struct mbuf *m;
+	struct wmi_tlv *tlv;
+	void *ptr;
+	uint32_t peer_legacy_rates_align;
+	uint32_t peer_ht_rates_align;
+	int i, ret, len;
+
+	peer_legacy_rates_align = roundup(param->peer_legacy_rates.num_rates,
+	    sizeof(uint32_t));
+	peer_ht_rates_align = roundup(param->peer_ht_rates.num_rates,
+	    sizeof(uint32_t));
+
+	len = sizeof(*cmd) +
+	      TLV_HDR_SIZE + (peer_legacy_rates_align * sizeof(uint8_t)) +
+	      TLV_HDR_SIZE + (peer_ht_rates_align * sizeof(uint8_t)) +
+	      sizeof(*mcs) + TLV_HDR_SIZE +
+	      (sizeof(*he_mcs) * param->peer_he_mcs_count);
+
+	m = qwx_wmi_alloc_mbuf(len);
+	if (!m)
+		return ENOMEM;
+
+	ptr = (void *)(mtod(m, uint8_t *) + sizeof(struct ath11k_htc_hdr) +
+	    sizeof(struct wmi_cmd_hdr));
+
+	cmd = ptr;
+	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
+	    WMI_TAG_PEER_ASSOC_COMPLETE_CMD) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+
+	cmd->vdev_id = param->vdev_id;
+
+	cmd->peer_new_assoc = param->peer_new_assoc;
+	cmd->peer_associd = param->peer_associd;
+
+	qwx_wmi_copy_peer_flags(cmd, param,
+	    test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags));
+
+	IEEE80211_ADDR_COPY(cmd->peer_macaddr.addr, param->peer_mac);
+
+	cmd->peer_rate_caps = param->peer_rate_caps;
+	cmd->peer_caps = param->peer_caps;
+	cmd->peer_listen_intval = param->peer_listen_intval;
+	cmd->peer_ht_caps = param->peer_ht_caps;
+	cmd->peer_max_mpdu = param->peer_max_mpdu;
+	cmd->peer_mpdu_density = param->peer_mpdu_density;
+	cmd->peer_vht_caps = param->peer_vht_caps;
+	cmd->peer_phymode = param->peer_phymode;
+
+	/* Update 11ax capabilities */
+	cmd->peer_he_cap_info = param->peer_he_cap_macinfo[0];
+	cmd->peer_he_cap_info_ext = param->peer_he_cap_macinfo[1];
+	cmd->peer_he_cap_info_internal = param->peer_he_cap_macinfo_internal;
+	cmd->peer_he_caps_6ghz = param->peer_he_caps_6ghz;
+	cmd->peer_he_ops = param->peer_he_ops;
+	memcpy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
+	       sizeof(param->peer_he_cap_phyinfo));
+	memcpy(&cmd->peer_ppet, &param->peer_ppet,
+	       sizeof(param->peer_ppet));
+
+	/* Update peer legacy rate information */
+	ptr += sizeof(*cmd);
+
+	tlv = ptr;
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
+	    FIELD_PREP(WMI_TLV_LEN, peer_legacy_rates_align);
+
+	ptr += TLV_HDR_SIZE;
+
+	cmd->num_peer_legacy_rates = param->peer_legacy_rates.num_rates;
+	memcpy(ptr, param->peer_legacy_rates.rates,
+	    param->peer_legacy_rates.num_rates);
+
+	/* Update peer HT rate information */
+	ptr += peer_legacy_rates_align;
+
+	tlv = ptr;
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
+	    FIELD_PREP(WMI_TLV_LEN, peer_ht_rates_align);
+	ptr += TLV_HDR_SIZE;
+	cmd->num_peer_ht_rates = param->peer_ht_rates.num_rates;
+	memcpy(ptr, param->peer_ht_rates.rates,
+	    param->peer_ht_rates.num_rates);
+
+	/* VHT Rates */
+	ptr += peer_ht_rates_align;
+
+	mcs = ptr;
+
+	mcs->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VHT_RATE_SET) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*mcs) - TLV_HDR_SIZE);
+
+	cmd->peer_nss = param->peer_nss;
+
+	/* Update bandwidth-NSS mapping */
+	cmd->peer_bw_rxnss_override = 0;
+	cmd->peer_bw_rxnss_override |= param->peer_bw_rxnss_override;
+
+	if (param->vht_capable) {
+		mcs->rx_max_rate = param->rx_max_rate;
+		mcs->rx_mcs_set = param->rx_mcs_set;
+		mcs->tx_max_rate = param->tx_max_rate;
+		mcs->tx_mcs_set = param->tx_mcs_set;
+	}
+
+	/* HE Rates */
+	cmd->peer_he_mcs = param->peer_he_mcs_count;
+	cmd->min_data_rate = param->min_data_rate;
+
+	ptr += sizeof(*mcs);
+
+	len = param->peer_he_mcs_count * sizeof(*he_mcs);
+
+	tlv = ptr;
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
+	    FIELD_PREP(WMI_TLV_LEN, len);
+	ptr += TLV_HDR_SIZE;
+
+	/* Loop through the HE rate set */
+	for (i = 0; i < param->peer_he_mcs_count; i++) {
+		he_mcs = ptr;
+		he_mcs->tlv_header = FIELD_PREP(WMI_TLV_TAG,
+		    WMI_TAG_HE_RATE_SET) |
+		    FIELD_PREP(WMI_TLV_LEN, sizeof(*he_mcs) - TLV_HDR_SIZE);
+
+		he_mcs->rx_mcs_set = param->peer_he_tx_mcs_set[i];
+		he_mcs->tx_mcs_set = param->peer_he_rx_mcs_set[i];
+		ptr += sizeof(*he_mcs);
+	}
+
+	ret = qwx_wmi_cmd_send(wmi, m, WMI_PEER_ASSOC_CMDID);
+	if (ret) {
+		printf("%s: failed to send WMI_PEER_ASSOC_CMDID\n",
+		    sc->sc_dev.dv_xname);
+		m_freem(m);
+		return ret;
+	}
+
+	DNPRINTF(QWX_D_WMI, "%s: cmd peer assoc vdev id %d assoc id %d "
+	    "peer mac %s peer_flags %x rate_caps %x peer_caps %x "
+	    "listen_intval %d ht_caps %x max_mpdu %d nss %d phymode %d "
+	    "peer_mpdu_density %d vht_caps %x he cap_info %x he ops %x "
+	    "he cap_info_ext %x he phy %x %x %x peer_bw_rxnss_override %x\n",
+	    __func__, cmd->vdev_id, cmd->peer_associd,
+	    ether_sprintf(param->peer_mac),
+	    cmd->peer_flags, cmd->peer_rate_caps, cmd->peer_caps,
+	    cmd->peer_listen_intval, cmd->peer_ht_caps,
+	    cmd->peer_max_mpdu, cmd->peer_nss, cmd->peer_phymode,
+	    cmd->peer_mpdu_density, cmd->peer_vht_caps, cmd->peer_he_cap_info,
+	    cmd->peer_he_ops, cmd->peer_he_cap_info_ext,
+	    cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
+	    cmd->peer_he_cap_phy[2], cmd->peer_bw_rxnss_override);
+
+	return 0;
+}
+
+void
 qwx_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
     struct target_resource_config *tg_cfg)
 {
@@ -15579,6 +15874,60 @@ qwx_wmi_vdev_set_param_cmd(struct qwx_softc *sc, uint32_t vdev_id,
 
 	DNPRINTF(QWX_D_WMI, "%s: cmd vdev set param vdev 0x%x param %d "
 	    "value %d\n", __func__, vdev_id, param_id, param_value);
+
+	return 0;
+}
+
+int
+qwx_wmi_vdev_up(struct qwx_softc *sc, uint32_t vdev_id, uint32_t pdev_id,
+    uint32_t aid, const uint8_t *bssid, uint8_t *tx_bssid,
+    uint32_t nontx_profile_idx, uint32_t nontx_profile_cnt)
+{
+	struct qwx_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
+	struct wmi_vdev_up_cmd *cmd;
+	struct mbuf *m;
+	int ret;
+
+	m = qwx_wmi_alloc_mbuf(sizeof(*cmd));
+	if (!m)
+		return ENOMEM;
+
+	cmd = (struct wmi_vdev_up_cmd *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
+
+	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_UP_CMD) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->vdev_id = vdev_id;
+	cmd->vdev_assoc_id = aid;
+
+	IEEE80211_ADDR_COPY(cmd->vdev_bssid.addr, bssid);
+
+	cmd->nontx_profile_idx = nontx_profile_idx;
+	cmd->nontx_profile_cnt = nontx_profile_cnt;
+	if (tx_bssid)
+		IEEE80211_ADDR_COPY(cmd->tx_vdev_bssid.addr, tx_bssid);
+#if 0
+	if (arvif && arvif->vif->type == NL80211_IFTYPE_STATION) {
+		bss_conf = &arvif->vif->bss_conf;
+
+		if (bss_conf->nontransmitted) {
+			ether_addr_copy(cmd->tx_vdev_bssid.addr,
+					bss_conf->transmitter_bssid);
+			cmd->nontx_profile_idx = bss_conf->bssid_index;
+			cmd->nontx_profile_cnt = bss_conf->bssid_indicator;
+		}
+	}
+#endif
+	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_UP_CMDID);
+	if (ret) {
+		printf("%s: failed to submit WMI_VDEV_UP cmd\n",
+		    sc->sc_dev.dv_xname);
+		m_freem(m);
+		return ret;
+	}
+
+	DNPRINTF(QWX_D_WMI, "%s: cmd vdev up id 0x%x assoc id %d bssid %s\n",
+	    __func__, vdev_id, aid, ether_sprintf(bssid));
 
 	return 0;
 }
@@ -20807,11 +21156,99 @@ qwx_deauth(struct qwx_softc *sc)
 	return ENOTSUP;
 }
 
-int
-qwx_assoc(struct qwx_softc *sc)
+void
+qwx_peer_assoc_h_basic(struct qwx_softc *sc, struct qwx_vif *arvif,
+    struct ieee80211_node *ni, struct peer_assoc_params *arg)
 {
-	printf("%s: not implemented\n", __func__);
-	return ENOTSUP;
+#ifdef notyet
+	lockdep_assert_held(&ar->conf_mutex);
+#endif
+
+	IEEE80211_ADDR_COPY(arg->peer_mac, ni->ni_macaddr);
+	arg->vdev_id = arvif->vdev_id;
+	arg->peer_associd = ni->ni_associd;
+	arg->auth_flag = 1;
+	arg->peer_listen_intval = ni->ni_intval;
+	arg->peer_nss = 1;
+	arg->peer_caps = ni->ni_capinfo;
+}
+
+int
+qwx_mac_rate_is_cck(uint8_t rate)
+{
+	return (rate == 2 || rate == 4 || rate == 11 || rate == 22);
+}
+
+void
+qwx_peer_assoc_h_rates(struct ieee80211_node *ni, struct peer_assoc_params *arg)
+{
+	struct wmi_rate_set_arg *rateset = &arg->peer_legacy_rates;
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+	int i;
+
+	for (i = 0, rateset->num_rates = 0;
+	    i < rs->rs_nrates && rateset->num_rates < nitems(rateset->rates);
+	    i++, rateset->num_rates++) {
+		uint8_t rate = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+		if (qwx_mac_rate_is_cck(rate))
+			rate |= 0x80;
+		rateset->rates[rateset->num_rates] = rate;
+	}
+}
+
+void
+qwx_peer_assoc_h_phymode(struct qwx_softc *sc, struct ieee80211_node *ni,
+    struct peer_assoc_params *arg)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	enum wmi_phy_mode phymode;
+
+	switch (ic->ic_curmode) {
+	case IEEE80211_MODE_11A:
+		phymode = MODE_11A;
+		break;
+	case IEEE80211_MODE_11B:
+		phymode = MODE_11B;
+		break;
+	case IEEE80211_MODE_11G:
+		phymode = MODE_11G;
+		break;
+	default:
+		phymode = MODE_UNKNOWN;
+		break;
+	}
+
+	DNPRINTF(QWX_D_MAC, "%s: peer %s phymode %s\n", __func__,
+	    ether_sprintf(ni->ni_macaddr), qwx_wmi_phymode_str(phymode));
+
+	arg->peer_phymode = phymode;
+}
+
+void
+qwx_peer_assoc_prepare(struct qwx_softc *sc, struct qwx_vif *arvif,
+    struct ieee80211_node *ni, struct peer_assoc_params *arg, int reassoc)
+{
+	memset(arg, 0, sizeof(*arg));
+
+	arg->peer_new_assoc = !reassoc;
+	qwx_peer_assoc_h_basic(sc, arvif, ni, arg);
+#if 0
+	qwx_peer_assoc_h_crypto(sc, arvif, ni, arg);
+#endif
+	qwx_peer_assoc_h_rates(ni, arg);
+	qwx_peer_assoc_h_phymode(sc, ni, arg);
+#if 0
+	qwx_peer_assoc_h_ht(sc, arvif, ni, arg);
+	qwx_peer_assoc_h_vht(sc, arvif, ni, arg);
+	qwx_peer_assoc_h_he(sc, arvif, ni, arg);
+	qwx_peer_assoc_h_he_6ghz(sc, arvif, ni, arg);
+	qwx_peer_assoc_h_qos(sc, arvif, ni, arg);
+	qwx_peer_assoc_h_smps(ni, arg);
+#endif
+#if 0
+	arsta->peer_nss = arg->peer_nss;
+#endif
+	/* TODO: amsdu_disable req? */
 }
 
 int
@@ -20824,8 +21261,90 @@ qwx_disassoc(struct qwx_softc *sc)
 int
 qwx_run(struct qwx_softc *sc)
 {
-	printf("%s: not implemented\n", __func__);
-	return ENOTSUP;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	struct peer_assoc_params peer_arg;
+	int ret;
+#ifdef notyet
+	lockdep_assert_held(&ar->conf_mutex);
+#endif
+
+	DNPRINTF(QWX_D_MAC, "%s: vdev %i assoc bssid %pM aid %d\n",
+	    __func__, arvif->vdev_id, arvif->bssid, arvif->aid);
+
+	qwx_peer_assoc_prepare(sc, arvif, ni, &peer_arg, 0);
+
+	peer_arg.is_assoc = 1;
+
+	sc->peer_assoc_done = 0;
+	ret = qwx_wmi_send_peer_assoc_cmd(sc, pdev_id, &peer_arg);
+	if (ret) {
+		printf("%s: failed to run peer assoc for %s vdev %i: %d\n",
+		    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_macaddr),
+		    arvif->vdev_id, ret);
+		return ret;
+	}
+
+	while (!sc->peer_assoc_done) {
+		ret = tsleep_nsec(&sc->peer_assoc_done, 0, "qwxassoc",
+		    SEC_TO_NSEC(1));
+		if (ret) {
+			printf("%s: failed to get peer assoc conf event "
+			    "for %s vdev %i\n", sc->sc_dev.dv_xname,
+			    ether_sprintf(ni->ni_macaddr), arvif->vdev_id);
+			return ret;
+		}
+	}
+#if 0
+	ret = ath11k_setup_peer_smps(ar, arvif, sta->addr,
+				     &sta->deflink.ht_cap,
+				     le16_to_cpu(sta->deflink.he_6ghz_capa.capa));
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to setup peer SMPS for vdev %d: %d\n",
+			    arvif->vdev_id, ret);
+		return ret;
+	}
+
+	if (!ath11k_mac_vif_recalc_sta_he_txbf(ar, vif, &he_cap)) {
+		ath11k_warn(ar->ab, "failed to recalc he txbf for vdev %i on bss %pM\n",
+			    arvif->vdev_id, bss_conf->bssid);
+		return;
+	}
+
+	WARN_ON(arvif->is_up);
+#endif
+
+	arvif->aid = ni->ni_associd;
+	IEEE80211_ADDR_COPY(arvif->bssid, ni->ni_bssid);
+
+	ret = qwx_wmi_vdev_up(sc, arvif->vdev_id, pdev_id, arvif->aid,
+	    arvif->bssid, NULL, 0, 0);
+	if (ret) {
+		printf("%s: failed to set vdev %d up: %d\n",
+		    sc->sc_dev.dv_xname, arvif->vdev_id, ret);
+		return ret;
+	}
+
+	arvif->is_up = 1;
+#if 0
+	arvif->rekey_data.enable_offload = 0;
+#endif
+
+	DNPRINTF(QWX_D_MAC, "%s: vdev %d up (associated) bssid %s aid %d\n",
+	    __func__, arvif->vdev_id, ether_sprintf(ni->ni_bssid),
+	    vif->cfg.aid);
+
+	ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr, arvif->vdev_id,
+	    pdev_id, WMI_PEER_AUTHORIZE, 1);
+	if (ret) {
+		printf("%s: unable to authorize BSS peer: %d\n",
+		   sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	return 0;
 }
 
 int

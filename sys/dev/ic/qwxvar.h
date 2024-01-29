@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.6 2024/01/28 22:30:39 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.7 2024/01/29 16:06:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1635,6 +1635,7 @@ struct qwx_softc {
 	int				peer_mapped;
 	int				peer_delete_done;
 	int				vdev_setup_done;
+	int				peer_assoc_done;
 
 	struct qwx_dbring_cap	*db_caps;
 	uint32_t		 num_db_cap;
