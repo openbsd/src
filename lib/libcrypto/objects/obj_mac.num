@@ -1051,3 +1051,4 @@ RSA_SHA3_256	1050
 RSA_SHA3_384	1051
 RSA_SHA3_512	1052
 acmeIdentifier	1053
+id_ct_rpkiSignedPrefixList	1054
