@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.302 2024/01/25 09:54:21 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.303 2024/01/30 13:51:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -471,9 +471,7 @@ show(struct imsg *imsg, struct parse_result *res)
 	struct ctl_show_rib	 rib;
 	struct rde_memstats	 stats;
 	struct ibuf		 ibuf;
-	u_char			*asdata;
 	u_int			 rescode, ilen;
-	size_t			 aslen;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
@@ -528,16 +526,13 @@ show(struct imsg *imsg, struct parse_result *res)
 		output->fib_table(&kt);
 		break;
 	case IMSG_CTL_SHOW_RIB:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(rib))
-			errx(1, "wrong imsg len");
 		if (output->rib == NULL)
 			break;
-		/* XXX */
-		memcpy(&rib, imsg->data, sizeof(rib));
-		aslen = imsg->hdr.len - IMSG_HEADER_SIZE - sizeof(rib);
-		asdata = imsg->data;
-		asdata += sizeof(rib);
-		output->rib(&rib, asdata, aslen, res);
+		if (imsg_get_ibuf(imsg, &ibuf) == -1)
+			err(1, "imsg_get_ibuf");
+		if (ibuf_get(&ibuf, &rib, sizeof(rib)) == -1)
+			err(1, "imsg_get_ibuf");
+		output->rib(&rib, &ibuf, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_COMMUNITIES:
 		if (output->communities == NULL)
@@ -1231,6 +1226,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	struct parse_result		 res;
 	struct ctl_show_rib_request	*req = arg;
 	struct mrt_rib_entry		*mre;
+	struct ibuf			 ibuf;
 	time_t				 now;
 	uint16_t			 i, j;
 
@@ -1296,7 +1292,8 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		    !match_aspath(mre->aspath, mre->aspath_len, &req->as))
 			continue;
 
-		output->rib(&ctl, mre->aspath, mre->aspath_len, &res);
+		ibuf_from_buffer(&ibuf, mre->aspath, mre->aspath_len);
+		output->rib(&ctl, &ibuf, &res);
 		if (req->flags & F_CTL_DETAIL) {
 			for (j = 0; j < mre->nattrs; j++)
 				output->attr(mre->attrs[j].attr,

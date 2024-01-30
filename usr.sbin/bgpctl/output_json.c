@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.40 2024/01/25 09:54:21 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.41 2024/01/30 13:51:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -589,9 +589,8 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 {
 	struct bgpd_addr prefix;
 	struct in_addr id;
-	struct ibuf ibuf, *buf = &ibuf;
+	struct ibuf ibuf, *buf = &ibuf, asbuf, *path = NULL;
 	char *aspath;
-	u_char *path;
 	uint32_t as, pathid;
 	uint16_t alen, afi, off, short_as;
 	uint8_t flags, type, safi, aid, prefixlen;
@@ -645,25 +644,28 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 		break;
 	case ATTR_ASPATH:
 	case ATTR_AS4_PATH:
+		ibuf_from_buffer(buf, data, alen);
 		/* prefer 4-byte AS here */
-		e4 = aspath_verify(data, alen, 1, 0);
-		e2 = aspath_verify(data, alen, 0, 0);
+		e4 = aspath_verify(buf, 1, 0);
+		e2 = aspath_verify(buf, 0, 0);
 		if (e4 == 0 || e4 == AS_ERR_SOFT) {
-			path = data;
+			ibuf_from_ibuf(&asbuf, buf);
 		} else if (e2 == 0 || e2 == AS_ERR_SOFT) {
-			path = aspath_inflate(data, alen, &alen);
-			if (path == NULL)
-				errx(1, "aspath_inflate failed");
+			if ((path = aspath_inflate(buf)) == NULL) {
+				json_do_string("error",
+				    "aspath_inflate failed");
+				break;
+			}
+			ibuf_from_ibuf(&asbuf, path);
 		} else {
 			json_do_string("error", "bad AS-Path");
 			break;
 		}
-		if (aspath_asprint(&aspath, path, alen) == -1)
+		if (aspath_asprint(&aspath, &asbuf) == -1)
 			err(1, NULL);
 		json_do_string("aspath", aspath);
 		free(aspath);
-		if (path != data)
-			free(path);
+		ibuf_free(path);
 		break;
 	case ATTR_NEXTHOP:
 		if (alen == 4) {
@@ -841,8 +843,7 @@ bad_len:
 }
 
 static void
-json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
-    struct parse_result *res)
+json_rib(struct ctl_show_rib *r, struct ibuf *asbuf, struct parse_result *res)
 {
 	struct in_addr id;
 	char *aspath;
@@ -853,7 +854,7 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 
 	json_do_printf("prefix", "%s/%u", log_addr(&r->prefix), r->prefixlen);
 
-	if (aspath_asprint(&aspath, asdata, aslen) == -1)
+	if (aspath_asprint(&aspath, asbuf) == -1)
 		err(1, NULL);
 	json_do_string("aspath", aspath);
 	free(aspath);

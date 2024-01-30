@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.48 2024/01/25 09:54:21 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.49 2024/01/30 13:51:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -769,10 +769,9 @@ show_ext_community(u_char *data, uint16_t len)
 static void
 show_attr(u_char *data, size_t len, int reqflags, int addpath)
 {
-	u_char		*path;
 	struct in_addr	 id;
 	struct bgpd_addr prefix;
-	struct ibuf	 ibuf, *buf = &ibuf;
+	struct ibuf	 ibuf, *buf = &ibuf, asbuf, *path = NULL;
 	char		*aspath;
 	uint32_t	 as, pathid;
 	uint16_t	 alen, ioff, short_as, afi;
@@ -820,25 +819,27 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 		break;
 	case ATTR_ASPATH:
 	case ATTR_AS4_PATH:
+		ibuf_from_buffer(buf, data, alen);
 		/* prefer 4-byte AS here */
-		e4 = aspath_verify(data, alen, 1, 0);
-		e2 = aspath_verify(data, alen, 0, 0);
+		e4 = aspath_verify(buf, 1, 0);
+		e2 = aspath_verify(buf, 0, 0);
 		if (e4 == 0 || e4 == AS_ERR_SOFT) {
-			path = data;
+			ibuf_from_ibuf(&asbuf, buf);
 		} else if (e2 == 0 || e2 == AS_ERR_SOFT) {
-			path = aspath_inflate(data, alen, &alen);
-			if (path == NULL)
-				errx(1, "aspath_inflate failed");
+			if ((path = aspath_inflate(buf)) == NULL) {
+				printf("aspath_inflate failed");
+				break;
+			}
+			ibuf_from_ibuf(&asbuf, path);
 		} else {
 			printf("bad AS-Path");
 			break;
 		}
-		if (aspath_asprint(&aspath, path, alen) == -1)
+		if (aspath_asprint(&aspath, &asbuf) == -1)
 			err(1, NULL);
 		printf("%s", aspath);
 		free(aspath);
-		if (path != data)
-			free(path);
+		ibuf_free(path);
 		break;
 	case ATTR_NEXTHOP:
 		if (alen == 4) {
@@ -1013,7 +1014,7 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 }
 
 static void
-show_rib_brief(struct ctl_show_rib *r, u_char *asdata, size_t aslen)
+show_rib_brief(struct ctl_show_rib *r, struct ibuf *asbuf)
 {
 	char *p, *aspath;
 
@@ -1025,7 +1026,7 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata, size_t aslen)
 	    log_addr(&r->exit_nexthop), r->local_pref, r->med);
 	free(p);
 
-	if (aspath_asprint(&aspath, asdata, aslen) == -1)
+	if (aspath_asprint(&aspath, asbuf) == -1)
 		err(1, NULL);
 	if (strlen(aspath) > 0)
 		printf("%s ", aspath);
@@ -1035,8 +1036,7 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata, size_t aslen)
 }
 
 static void
-show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
-    int flag0)
+show_rib_detail(struct ctl_show_rib *r, struct ibuf *asbuf, int flag0)
 {
 	struct in_addr		 id;
 	char			*aspath, *s;
@@ -1045,7 +1045,7 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	    log_addr(&r->prefix), r->prefixlen,
 	    EOL0(flag0));
 
-	if (aspath_asprint(&aspath, asdata, aslen) == -1)
+	if (aspath_asprint(&aspath, asbuf) == -1)
 		err(1, NULL);
 	if (strlen(aspath) > 0)
 		printf("    %s%c", aspath, EOL0(flag0));
@@ -1072,13 +1072,12 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 }
 
 static void
-show_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
-    struct parse_result *res)
+show_rib(struct ctl_show_rib *r, struct ibuf *aspath, struct parse_result *res)
 {
 	if (res->flags & F_CTL_DETAIL)
-		show_rib_detail(r, asdata, aslen, res->flags);
+		show_rib_detail(r, aspath, res->flags);
 	else
-		show_rib_brief(r, asdata, aslen);
+		show_rib_brief(r, aspath);
 }
 
 static void
