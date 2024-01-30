@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.7 2024/01/03 03:14:16 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.8 2024/01/30 23:01:49 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -16,9 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/mman.h>
-#include <sys/param.h> /* PAGE_SIZE */
 #include <sys/socket.h>
+#include <sys/types.h>
 
 #include <dev/pci/virtio_pcireg.h>
 #include <dev/pv/virtioreg.h>
@@ -26,7 +25,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
 
 #include <errno.h>
 #include <event.h>
@@ -36,7 +34,6 @@
 #include <unistd.h>
 
 #include "atomicio.h"
-#include "pci.h"
 #include "virtio.h"
 #include "vmd.h"
 
@@ -47,19 +44,35 @@
 extern char *__progname;
 extern struct vmd_vm *current_vm;
 
-/* Device Globals */
-struct event ev_tap;
+struct packet {
+	uint8_t	*buf;
+	size_t	 len;
+};
 
-static int vionet_rx(struct vionet_dev *);
+static int vionet_rx(struct vionet_dev *, int);
+static ssize_t vionet_rx_copy(struct vionet_dev *, int, const struct iovec *,
+    int, size_t);
+static ssize_t vionet_rx_zerocopy(struct vionet_dev *, int,
+    const struct iovec *, int);
 static void vionet_rx_event(int, short, void *);
 static uint32_t handle_io_read(struct viodev_msg *, struct virtio_dev *,
     int8_t *);
 static int handle_io_write(struct viodev_msg *, struct virtio_dev *);
-void vionet_notify_rx(struct virtio_dev *);
-int vionet_notifyq(struct virtio_dev *);
+static int vionet_notify_tx(struct virtio_dev *);
+static int vionet_notifyq(struct virtio_dev *);
 
 static void dev_dispatch_vm(int, short, void *);
 static void handle_sync_io(int, short, void *);
+
+/* Device Globals */
+struct event ev_tap;
+struct event ev_inject;
+int pipe_inject[2];
+#define READ	0
+#define WRITE	1
+struct iovec iov_rx[VIONET_QUEUE_SIZE];
+struct iovec iov_tx[VIONET_QUEUE_SIZE];
+
 
 __dead void
 vionet_main(int fd, int fd_vmm)
@@ -78,6 +91,10 @@ vionet_main(int fd, int fd_vmm)
 	 */
 	if (pledge("stdio vmm proc", NULL) == -1)
 		fatal("pledge");
+
+	/* Initialize iovec arrays. */
+	memset(iov_rx, 0, sizeof(iov_rx));
+	memset(iov_tx, 0, sizeof(iov_tx));
 
 	/* Receive our vionet_dev, mostly preconfigured. */
 	sz = atomicio(read, fd, &dev, sizeof(dev));
@@ -153,6 +170,12 @@ vionet_main(int fd, int fd_vmm)
 		}
 	}
 
+	/* Initialize our packet injection pipe. */
+	if (pipe2(pipe_inject, O_NONBLOCK) == -1) {
+		log_warn("%s: injection pipe", __func__);
+		goto fail;
+	}
+
 	/* Initialize libevent so we can start wiring event handlers. */
 	event_init();
 
@@ -169,6 +192,12 @@ vionet_main(int fd, int fd_vmm)
 	log_debug("%s: wiring in tap fd handler (fd=%d)", __func__,
 	    vionet->data_fd);
 	event_set(&ev_tap, vionet->data_fd, EV_READ | EV_PERSIST,
+	    vionet_rx_event, &dev);
+
+	/* Add an event for injected packets. */
+	log_debug("%s: wiring in packet injection handler (fd=%d)", __func__,
+	    pipe_inject[READ]);
+	event_set(&ev_inject, pipe_inject[READ], EV_READ | EV_PERSIST,
 	    vionet_rx_event, &dev);
 
 	/* Configure our sync channel event handler. */
@@ -209,6 +238,8 @@ vionet_main(int fd, int fd_vmm)
 		close_fd(dev.sync_fd);
 		close_fd(dev.async_fd);
 		close_fd(vionet->data_fd);
+		close_fd(pipe_inject[READ]);
+		close_fd(pipe_inject[WRITE]);
 		_exit(ret);
 		/* NOTREACHED */
 	}
@@ -223,6 +254,8 @@ fail:
 
 	close_fd(dev.sync_fd);
 	close_fd(dev.async_fd);
+	close_fd(pipe_inject[READ]);
+	close_fd(pipe_inject[WRITE]);
 	if (vionet != NULL)
 		close_fd(vionet->data_fd);
 
@@ -232,7 +265,7 @@ fail:
 /*
  * Update the gpa and hva of the virtqueue.
  */
-void
+static void
 vionet_update_qa(struct vionet_dev *dev)
 {
 	struct virtio_vq_info *vq_info;
@@ -259,7 +292,7 @@ vionet_update_qa(struct vionet_dev *dev)
 /*
  * Update the queue size.
  */
-void
+static void
 vionet_update_qs(struct vionet_dev *dev)
 {
 	struct virtio_vq_info *vq_info;
@@ -280,33 +313,27 @@ vionet_update_qs(struct vionet_dev *dev)
 }
 
 /*
- * vionet_enq_rx
+ * vionet_rx
  *
- * Take a given packet from the host-side tap and copy it into the guest's
- * buffers utilizing the rx virtio ring. If the packet length is invalid
- * (too small or too large) or if there are not enough buffers available,
- * the packet is dropped.
+ * Pull packet from the provided fd and fill the receive-side virtqueue. We
+ * selectively use zero-copy approaches when possible.
+ *
+ * Returns 1 if guest notification is needed. Otherwise, returns -1 on failure
+ * or 0 if no notification is needed.
  */
-int
-vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
+static int
+vionet_rx(struct vionet_dev *dev, int fd)
 {
-	uint16_t dxx, idx, hdr_desc_idx, chain_hdr_idx;
+	uint16_t idx, hdr_idx;
 	char *vr = NULL;
-	size_t bufsz = 0, off = 0, pkt_offset = 0, chunk_size = 0;
-	size_t chain_len = 0;
-	struct vring_desc *desc, *pkt_desc, *hdr_desc;
+	size_t chain_len = 0, iov_cnt;
+	struct vring_desc *desc, *table;
 	struct vring_avail *avail;
 	struct vring_used *used;
 	struct virtio_vq_info *vq_info;
-	struct virtio_net_hdr hdr;
-	size_t hdr_sz;
-
-	if (sz < VIONET_MIN_TXLEN || sz > VIONET_MAX_TXLEN) {
-		log_warnx("%s: invalid packet size", __func__);
-		return (0);
-	}
-
-	hdr_sz = sizeof(hdr);
+	struct iovec *iov;
+	int notify = 0;
+	ssize_t sz;
 
 	if (!(dev->cfg.device_status
 	    & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK)) {
@@ -315,132 +342,262 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 	}
 
 	vq_info = &dev->vq[RXQ];
+	idx = vq_info->last_avail;
 	vr = vq_info->q_hva;
 	if (vr == NULL)
 		fatalx("%s: vr == NULL", __func__);
 
-
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
-	desc = (struct vring_desc *)(vr);
+	table = (struct vring_desc *)(vr);
 	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
 	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
+	used->flags |= VRING_USED_F_NO_NOTIFY;
 
-	idx = vq_info->last_avail & VIONET_QUEUE_MASK;
-	if ((vq_info->notified_avail & VIONET_QUEUE_MASK) == idx) {
-		log_debug("%s: insufficient available buffer capacity, "
-		    "dropping packet.", __func__);
-		return (0);
-	}
+	while (idx != avail->idx) {
+		hdr_idx = avail->ring[idx & VIONET_QUEUE_MASK];
+		desc = &table[hdr_idx & VIONET_QUEUE_MASK];
+		if (!DESC_WRITABLE(desc)) {
+			log_warnx("%s: invalid descriptor state", __func__);
+			goto reset;
+		}
 
-	hdr_desc_idx = avail->ring[idx] & VIONET_QUEUE_MASK;
-	hdr_desc = &desc[hdr_desc_idx];
+		iov = &iov_rx[0];
+		iov_cnt = 1;
 
-	dxx = hdr_desc_idx;
-	chain_hdr_idx = dxx;
-	chain_len = 0;
+		/*
+		 * First descriptor should be at least as large as the
+		 * virtio_net_hdr. It's not technically required, but in
+		 * legacy devices it should be safe to assume.
+		 */
+		iov->iov_len = desc->len;
+		if (iov->iov_len < sizeof(struct virtio_net_hdr)) {
+			log_warnx("%s: invalid descriptor length", __func__);
+			goto reset;
+		}
 
-	/* Process the descriptor and walk any potential chain. */
-	do {
-		off = 0;
-		pkt_desc = &desc[dxx];
-		if (!(pkt_desc->flags & VRING_DESC_F_WRITE)) {
-			log_warnx("%s: invalid descriptor, not writable",
+		/*
+		 * Insert the virtio_net_hdr and adjust len/base. We do the
+		 * pointer math here before it's a void*.
+		 */
+		iov->iov_base = hvaddr_mem(desc->addr, iov->iov_len);
+		if (iov->iov_base == NULL)
+			goto reset;
+		memset(iov->iov_base, 0, sizeof(struct virtio_net_hdr));
+
+		/* Tweak the iovec to account for the virtio_net_hdr. */
+		iov->iov_len -= sizeof(struct virtio_net_hdr);
+		iov->iov_base = hvaddr_mem(desc->addr +
+		    sizeof(struct virtio_net_hdr), iov->iov_len);
+		if (iov->iov_base == NULL)
+			goto reset;
+		chain_len = iov->iov_len;
+
+		/*
+		 * Walk the remaining chain and collect remaining addresses
+		 * and lengths.
+		 */
+		while (desc->flags & VRING_DESC_F_NEXT) {
+			desc = &table[desc->next & VIONET_QUEUE_MASK];
+			if (!DESC_WRITABLE(desc)) {
+				log_warnx("%s: invalid descriptor state",
+				    __func__);
+				goto reset;
+			}
+
+			/* Collect our IO information. Translate gpa's. */
+			iov = &iov_rx[iov_cnt];
+			iov->iov_len = desc->len;
+			iov->iov_base = hvaddr_mem(desc->addr, iov->iov_len);
+			if (iov->iov_base == NULL)
+				goto reset;
+			chain_len += iov->iov_len;
+
+			/* Guard against infinitely looping chains. */
+			if (++iov_cnt >= nitems(iov_rx)) {
+				log_warnx("%s: infinite chain detected",
+				    __func__);
+				goto reset;
+			}
+		}
+
+		/* Make sure the driver gave us the bare minimum buffers. */
+		if (chain_len < VIONET_MIN_TXLEN) {
+			log_warnx("%s: insufficient buffers provided",
 			    __func__);
-			return (0);
+			goto reset;
 		}
 
-		/* How much data do we get to write? */
-		if (sz - bufsz > pkt_desc->len)
-			chunk_size = pkt_desc->len;
+		/*
+		 * If we're enforcing hardware address or handling an injected
+		 * packet, we need to use a copy-based approach.
+		 */
+		if (dev->lockedmac || fd != dev->data_fd)
+			sz = vionet_rx_copy(dev, fd, iov_rx, iov_cnt,
+			    chain_len);
 		else
-			chunk_size = sz - bufsz;
+			sz = vionet_rx_zerocopy(dev, fd, iov_rx, iov_cnt);
+		if (sz == -1)
+			goto reset;
+		if (sz == 0)	/* No packets, so bail out for now. */
+			break;
 
-		if (chain_len == 0) {
-			off = hdr_sz;
-			if (chunk_size == pkt_desc->len)
-				chunk_size -= off;
-		}
+		/*
+		 * Account for the prefixed header since it wasn't included
+		 * in the copy or zerocopy operations.
+		 */
+		sz += sizeof(struct virtio_net_hdr);
 
-		/* Write a chunk of data if we need to */
-		if (chunk_size && write_mem(pkt_desc->addr + off,
-			pkt + pkt_offset, chunk_size)) {
-			log_warnx("%s: failed to write to buffer 0x%llx",
-			    __func__, pkt_desc->addr);
-			return (0);
-		}
-
-		chain_len += chunk_size + off;
-		bufsz += chunk_size;
-		pkt_offset += chunk_size;
-
-		dxx = pkt_desc->next & VIONET_QUEUE_MASK;
-	} while (bufsz < sz && pkt_desc->flags & VRING_DESC_F_NEXT);
-
-	/* Move our marker in the ring...*/
-	vq_info->last_avail = (vq_info->last_avail + 1) &
-	    VIONET_QUEUE_MASK;
-
-	/* Prepend the virtio net header in the first buffer. */
-	memset(&hdr, 0, sizeof(hdr));
-	hdr.hdr_len = hdr_sz;
-	if (write_mem(hdr_desc->addr, &hdr, hdr_sz)) {
-	    log_warnx("vionet: rx enq header write_mem error @ 0x%llx",
-		hdr_desc->addr);
-	    return (0);
+		/* Mark our buffers as used. */
+		used->ring[used->idx & VIONET_QUEUE_MASK].id = hdr_idx;
+		used->ring[used->idx & VIONET_QUEUE_MASK].len = sz;
+		__sync_synchronize();
+		used->idx++;
+		idx++;
 	}
 
-	/* Update the index field in the used ring. This must be done last. */
-	dev->cfg.isr_status = 1;
-	*spc = (vq_info->notified_avail - vq_info->last_avail)
-	    & VIONET_QUEUE_MASK;
+	if (idx != vq_info->last_avail &&
+	    !(avail->flags & VRING_AVAIL_F_NO_INTERRUPT)) {
+		notify = 1;
+		dev->cfg.isr_status |= 1;
+	}
 
-	/* Update the list of used buffers. */
-	used->ring[used->idx & VIONET_QUEUE_MASK].id = chain_hdr_idx;
-	used->ring[used->idx & VIONET_QUEUE_MASK].len = chain_len;
-	__sync_synchronize();
-	used->idx++;
-
+	vq_info->last_avail = idx;
+	return (notify);
+reset:
+	log_warnx("%s: requesting device reset", __func__);
+	dev->cfg.device_status |= DEVICE_NEEDS_RESET;
+	dev->cfg.isr_status |= VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
 	return (1);
 }
 
 /*
- * vionet_rx
+ * vionet_rx_copy
  *
- * Enqueue data that was received on a tap file descriptor
- * to the vionet device queue.
+ * Read a packet off the provided file descriptor, validating packet
+ * characteristics, and copy into the provided buffers in the iovec array.
+ *
+ * It's assumed that the provided iovec array contains validated host virtual
+ * address translations and not guest physical addreses.
+ *
+ * Returns number of bytes copied on success, 0 if packet is dropped, and
+ * -1 on an error.
  */
-static int
-vionet_rx(struct vionet_dev *dev)
+ssize_t
+vionet_rx_copy(struct vionet_dev *dev, int fd, const struct iovec *iov,
+    int iov_cnt, size_t chain_len)
 {
-	char buf[PAGE_SIZE];
-	int num_enq = 0, spc = 0;
-	struct ether_header *eh;
-	ssize_t sz;
+	static uint8_t		 buf[VIONET_HARD_MTU];
+	struct packet		*pkt = NULL;
+	struct ether_header	*eh = NULL;
+	uint8_t			*payload = buf;
+	size_t			 i, chunk, nbytes, copied = 0;
+	ssize_t			 sz;
 
-	do {
-		sz = read(dev->data_fd, buf, sizeof(buf));
-		if (sz == -1) {
-			/*
-			 * If we get EAGAIN, No data is currently available.
-			 * Do not treat this as an error.
-			 */
-			if (errno != EAGAIN)
-				log_warn("%s: read error", __func__);
-		} else if (sz > 0) {
-			eh = (struct ether_header *)buf;
-			if (!dev->lockedmac ||
-			    ETHER_IS_MULTICAST(eh->ether_dhost) ||
-			    memcmp(eh->ether_dhost, dev->mac,
-			    sizeof(eh->ether_dhost)) == 0)
-				num_enq += vionet_enq_rx(dev, buf, sz, &spc);
-		} else if (sz == 0) {
-			log_debug("%s: no data", __func__);
-			break;
+	/* If reading from the tap(4), try to right-size the read. */
+	if (fd == dev->data_fd)
+		nbytes = MIN(chain_len, VIONET_HARD_MTU);
+	else if (fd == pipe_inject[READ])
+		nbytes = sizeof(struct packet);
+	else {
+		log_warnx("%s: invalid fd: %d", __func__, fd);
+		return (-1);
+	}
+
+	/*
+	 * Try to pull a packet. The fd should be non-blocking and we don't
+	 * care if we under-read (i.e. sz != nbytes) as we may not have a
+	 * packet large enough to fill the buffer.
+	 */
+	sz = read(fd, buf, nbytes);
+	if (sz == -1) {
+		if (errno != EAGAIN) {
+			log_warn("%s: error reading packet", __func__);
+			return (-1);
 		}
-	} while (spc > 0 && sz > 0);
+		return (0);
+	} else if (fd == dev->data_fd && sz < VIONET_MIN_TXLEN) {
+		/* If reading the tap(4), we should get valid ethernet. */
+		log_warnx("%s: invalid packet size", __func__);
+		return (0);
+	} else if (sz != sizeof(struct packet)) {
+		log_warnx("%s: invalid injected packet object", __func__);
+		return (0);
+	}
 
-	return (num_enq);
+	/* Decompose an injected packet, if that's what we're working with. */
+	if (fd == pipe_inject[READ]) {
+		pkt = (struct packet *)buf;
+		if (pkt->buf == NULL) {
+			log_warnx("%s: invalid injected packet, no buffer",
+			    __func__);
+			return (0);
+		}
+		if (sz < VIONET_MIN_TXLEN || sz > VIONET_MAX_TXLEN) {
+			log_warnx("%s: invalid injected packet size", __func__);
+			goto drop;
+		}
+		payload = pkt->buf;
+		sz = (ssize_t)pkt->len;
+	}
+
+	/* Validate the ethernet header, if required. */
+	if (dev->lockedmac) {
+		eh = (struct ether_header *)(payload);
+		if (!ETHER_IS_MULTICAST(eh->ether_dhost) &&
+		    memcmp(eh->ether_dhost, dev->mac,
+		    sizeof(eh->ether_dhost)) != 0)
+			goto drop;
+	}
+
+	/* Truncate one last time to the chain length, if shorter. */
+	sz = MIN(chain_len, (size_t)sz);
+
+	/*
+	 * Copy the packet into the provided buffers. We can use memcpy(3)
+	 * here as the gpa was validated and translated to an hva previously.
+	 */
+	for (i = 0; (int)i < iov_cnt && (size_t)sz > copied; i++) {
+		chunk = MIN(iov[i].iov_len, (size_t)(sz - copied));
+		memcpy(iov[i].iov_base, payload + copied, chunk);
+		copied += chunk;
+	}
+
+drop:
+	/* Free any injected packet buffer. */
+	if (pkt != NULL)
+		free(pkt->buf);
+
+	return (copied);
 }
+
+/*
+ * vionet_rx_zerocopy
+ *
+ * Perform a vectorized read from the given fd into the guest physical memory
+ * pointed to by iovecs.
+ *
+ * Returns number of bytes read on success, -1 on error, or 0 if EAGAIN was
+ * returned by readv.
+ *
+ */
+static ssize_t
+vionet_rx_zerocopy(struct vionet_dev *dev, int fd, const struct iovec *iov,
+    int iov_cnt)
+{
+	ssize_t		sz;
+
+	if (dev->lockedmac) {
+		log_warnx("%s: zerocopy not available for locked lladdr",
+		    __func__);
+		return (-1);
+	}
+
+	sz = readv(fd, iov, iov_cnt);
+	if (sz == -1 && errno == EAGAIN)
+		return (0);
+	return (sz);
+}
+
 
 /*
  * vionet_rx_event
@@ -448,45 +605,24 @@ vionet_rx(struct vionet_dev *dev)
  * Called when new data can be received on the tap fd of a vionet device.
  */
 static void
-vionet_rx_event(int fd, short kind, void *arg)
+vionet_rx_event(int fd, short event, void *arg)
 {
 	struct virtio_dev *dev = (struct virtio_dev *)arg;
 
-	if (vionet_rx(&dev->vionet) > 0)
+	if (!(event & EV_READ))
+		fatalx("%s: invalid event type", __func__);
+
+	if (vionet_rx(&dev->vionet, fd) > 0)
 		virtio_assert_pic_irq(dev, 0);
 }
 
-void
-vionet_notify_rx(struct virtio_dev *dev)
-{
-	struct vionet_dev *vionet = &dev->vionet;
-	struct vring_avail *avail;
-	struct virtio_vq_info *vq_info;
-	char *vr;
-
-	vq_info = &vionet->vq[RXQ];
-	vr = vq_info->q_hva;
-	if (vr == NULL)
-		fatalx("%s: vr == NULL", __func__);
-
-	/* Compute offset into avail ring */
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	vq_info->notified_avail = avail->idx - 1;
-}
-
-int
+static int
 vionet_notifyq(struct virtio_dev *dev)
 {
 	struct vionet_dev *vionet = &dev->vionet;
-	int ret = 0;
 
 	switch (vionet->cfg.queue_notify) {
-	case RXQ:
-		vionet_notify_rx(dev);
-		break;
-	case TXQ:
-		ret = vionet_notify_tx(dev);
-		break;
+	case TXQ: return vionet_notify_tx(dev);
 	default:
 		/*
 		 * Catch the unimplemented queue ID 2 (control queue) as
@@ -497,23 +633,25 @@ vionet_notifyq(struct virtio_dev *dev)
 		break;
 	}
 
-	return (ret);
+	return (0);
 }
 
-int
+static int
 vionet_notify_tx(struct virtio_dev *dev)
 {
-	uint16_t idx, pkt_desc_idx, hdr_desc_idx, dxx, cnt;
-	size_t pktsz, chunk_size = 0;
-	ssize_t dhcpsz = 0;
-	int ofs, spc = 0;
-	char *vr = NULL, *pkt = NULL, *dhcppkt = NULL;
+	uint16_t idx, hdr_idx;
+	size_t chain_len, iov_cnt;
+	ssize_t dhcpsz = 0, sz;
+	int notify = 0;
+	char *vr = NULL, *dhcppkt = NULL;
 	struct vionet_dev *vionet = &dev->vionet;
-	struct vring_desc *desc, *pkt_desc, *hdr_desc;
+	struct vring_desc *desc, *table;
 	struct vring_avail *avail;
 	struct vring_used *used;
 	struct virtio_vq_info *vq_info;
 	struct ether_header *eh;
+	struct iovec *iov;
+	struct packet pkt;
 
 	if (!(vionet->cfg.device_status
 	    & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK)) {
@@ -522,155 +660,161 @@ vionet_notify_tx(struct virtio_dev *dev)
 	}
 
 	vq_info = &vionet->vq[TXQ];
+	idx = vq_info->last_avail;
 	vr = vq_info->q_hva;
 	if (vr == NULL)
 		fatalx("%s: vr == NULL", __func__);
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
-	desc = (struct vring_desc *)(vr);
+	table = (struct vring_desc *)(vr);
 	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
 	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
 
-	idx = vq_info->last_avail & VIONET_QUEUE_MASK;
+	while (idx != avail->idx) {
+		hdr_idx = avail->ring[idx & VIONET_QUEUE_MASK];
+		desc = &table[hdr_idx & VIONET_QUEUE_MASK];
+		if (DESC_WRITABLE(desc)) {
+			log_warnx("%s: invalid descriptor state", __func__);
+			goto reset;
+		}
 
-	if ((avail->idx & VIONET_QUEUE_MASK) == idx)
-		return (0);
+		iov = &iov_tx[0];
+		iov_cnt = 0;
+		chain_len = 0;
 
-	while ((avail->idx & VIONET_QUEUE_MASK) != idx) {
-		hdr_desc_idx = avail->ring[idx] & VIONET_QUEUE_MASK;
-		hdr_desc = &desc[hdr_desc_idx];
-		pktsz = 0;
+		/*
+		 * As a legacy device, we most likely will receive a lead
+		 * descriptor sized to the virtio_net_hdr. However, the framing
+		 * is not guaranteed, so check for packet data.
+		 */
+		iov->iov_len = desc->len;
+		if (iov->iov_len < sizeof(struct virtio_net_hdr)) {
+			log_warnx("%s: invalid descriptor length", __func__);
+			goto reset;
+		} else if (iov->iov_len > sizeof(struct virtio_net_hdr)) {
+			/* Chop off the virtio header, leaving packet data. */
+			iov->iov_len -= sizeof(struct virtio_net_hdr);
+			chain_len += iov->iov_len;
+			iov->iov_base = hvaddr_mem(desc->addr +
+			    sizeof(struct virtio_net_hdr), iov->iov_len);
+			if (iov->iov_base == NULL)
+				goto reset;
+			iov_cnt++;
+		}
 
-		cnt = 0;
-		dxx = hdr_desc_idx;
-		do {
-			pktsz += desc[dxx].len;
-			dxx = desc[dxx].next & VIONET_QUEUE_MASK;
-
-			/*
-			 * Virtio 1.0, cs04, section 2.4.5:
-			 *  "The number of descriptors in the table is defined
-			 *   by the queue size for this virtqueue: this is the
-			 *   maximum possible descriptor chain length."
-			 */
-			if (++cnt >= VIONET_QUEUE_SIZE) {
-				log_warnx("%s: descriptor table invalid",
+		/*
+		 * Walk the chain and collect remaining addresses and lengths.
+		 */
+		while (desc->flags & VRING_DESC_F_NEXT) {
+			desc = &table[desc->next & VIONET_QUEUE_MASK];
+			if (DESC_WRITABLE(desc)) {
+				log_warnx("%s: invalid descriptor state",
 				    __func__);
-				goto out;
-			}
-		} while (desc[dxx].flags & VRING_DESC_F_NEXT);
-
-		pktsz += desc[dxx].len;
-
-		/* Remove virtio header descriptor len */
-		pktsz -= hdr_desc->len;
-
-		/* Drop packets violating device MTU-based limits */
-		if (pktsz < VIONET_MIN_TXLEN || pktsz > VIONET_MAX_TXLEN) {
-			log_warnx("%s: invalid packet size %lu", __func__,
-			    pktsz);
-			goto drop_packet;
-		}
-		pkt = malloc(pktsz);
-		if (pkt == NULL) {
-			log_warn("malloc error alloc packet buf");
-			goto out;
-		}
-
-		ofs = 0;
-		pkt_desc_idx = hdr_desc->next & VIONET_QUEUE_MASK;
-		pkt_desc = &desc[pkt_desc_idx];
-
-		while (pkt_desc->flags & VRING_DESC_F_NEXT) {
-			/* must be not writable */
-			if (pkt_desc->flags & VRING_DESC_F_WRITE) {
-				log_warnx("unexpected writable tx desc "
-				    "%d", pkt_desc_idx);
-				goto out;
+				goto reset;
 			}
 
-			/* Check we don't read beyond allocated pktsz */
-			if (pkt_desc->len > pktsz - ofs) {
-				log_warnx("%s: descriptor len past pkt len",
+			/* Collect our IO information, translating gpa's. */
+			iov = &iov_tx[iov_cnt];
+			iov->iov_len = desc->len;
+			iov->iov_base = hvaddr_mem(desc->addr, iov->iov_len);
+			if (iov->iov_base == NULL)
+				goto reset;
+			chain_len += iov->iov_len;
+
+			/* Guard against infinitely looping chains. */
+			if (++iov_cnt >= nitems(iov_tx)) {
+				log_warnx("%s: infinite chain detected",
 				    __func__);
-				chunk_size = pktsz - ofs;
-			} else
-				chunk_size = pkt_desc->len;
-
-			/* Read packet from descriptor ring */
-			if (read_mem(pkt_desc->addr, pkt + ofs, chunk_size)) {
-				log_warnx("vionet: packet read_mem error "
-				    "@ 0x%llx", pkt_desc->addr);
-				goto out;
+				goto reset;
 			}
-
-			ofs += pkt_desc->len;
-			pkt_desc_idx = pkt_desc->next & VIONET_QUEUE_MASK;
-			pkt_desc = &desc[pkt_desc_idx];
 		}
 
-		/* Now handle tail descriptor - must be not writable */
-		if (pkt_desc->flags & VRING_DESC_F_WRITE) {
-			log_warnx("unexpected writable tx descriptor %d",
-			    pkt_desc_idx);
-			goto out;
+		/* Check if we've got a minimum viable amount of data. */
+		if (chain_len < VIONET_MIN_TXLEN) {
+			sz = chain_len;
+			goto drop;
 		}
 
-		/* Check we don't read beyond allocated pktsz */
-		if (pkt_desc->len > pktsz - ofs) {
-			log_warnx("%s: descriptor len past pkt len", __func__);
-			chunk_size = pktsz - ofs - pkt_desc->len;
-		} else
-			chunk_size = pkt_desc->len;
-
-		/* Read packet from descriptor ring */
-		if (read_mem(pkt_desc->addr, pkt + ofs, chunk_size)) {
-			log_warnx("vionet: packet read_mem error @ "
-			    "0x%llx", pkt_desc->addr);
-			goto out;
+		/*
+		 * Packet inspection for ethernet header (if using a "local"
+		 * interface) for possibility of a DHCP packet or (if using
+		 * locked lladdr) for validating ethernet header.
+		 *
+		 * To help preserve zero-copy semantics, we require the first
+		 * descriptor with packet data contains a large enough buffer
+		 * for this inspection.
+		 */
+		iov = &iov_tx[0];
+		if (vionet->lockedmac) {
+			if (iov->iov_len < ETHER_HDR_LEN) {
+				log_warnx("%s: insufficient header data",
+				    __func__);
+				goto drop;
+			}
+			eh = (struct ether_header *)iov->iov_base;
+			if (memcmp(eh->ether_shost, vionet->mac,
+			    sizeof(eh->ether_shost)) != 0) {
+				log_warnx("%s: bad source address %s",
+				    __func__, ether_ntoa((struct ether_addr *)
+					eh->ether_shost));
+				sz = chain_len;
+				goto drop;
+			}
+		}
+		if (vionet->local) {
+			dhcpsz = dhcp_request(dev, iov->iov_base, iov->iov_len,
+			    &dhcppkt);
+			log_debug("%s: detected dhcp request of %zu bytes",
+			    __func__, dhcpsz);
 		}
 
-		/* reject other source addresses */
-		if (vionet->lockedmac && pktsz >= ETHER_HDR_LEN &&
-		    (eh = (struct ether_header *)pkt) &&
-		    memcmp(eh->ether_shost, vionet->mac,
-		    sizeof(eh->ether_shost)) != 0)
-			log_debug("vionet: wrong source address %s for vm %d",
-			    ether_ntoa((struct ether_addr *)
-			    eh->ether_shost), dev->vm_id);
-		else if (vionet->local &&
-		    (dhcpsz = dhcp_request(dev, pkt, pktsz, &dhcppkt)) != -1) {
-			log_debug("vionet: dhcp request,"
-			    " local response size %zd", dhcpsz);
-
-		/* XXX signed vs unsigned here, funky cast */
-		} else if (write(vionet->data_fd, pkt, pktsz) != (int)pktsz) {
-			log_warnx("vionet: tx failed writing to tap: "
-			    "%d", errno);
-			goto out;
+		/* Write our packet to the tap(4). */
+		sz = writev(vionet->data_fd, iov_tx, iov_cnt);
+		if (sz == -1 && errno != ENOBUFS) {
+			log_warn("%s", __func__);
+			goto reset;
 		}
-
-	drop_packet:
-		vionet->cfg.isr_status = 1;
-		used->ring[used->idx & VIONET_QUEUE_MASK].id = hdr_desc_idx;
-		used->ring[used->idx & VIONET_QUEUE_MASK].len = hdr_desc->len;
+		sz += sizeof(struct virtio_net_hdr);
+drop:
+		used->ring[used->idx & VIONET_QUEUE_MASK].id = hdr_idx;
+		used->ring[used->idx & VIONET_QUEUE_MASK].len = sz;
 		__sync_synchronize();
 		used->idx++;
+		idx++;
 
-		vq_info->last_avail = avail->idx & VIONET_QUEUE_MASK;
-		idx = (idx + 1) & VIONET_QUEUE_MASK;
-
-		free(pkt);
-		pkt = NULL;
+		/* Facilitate DHCP reply injection, if needed. */
+		if (dhcpsz > 0) {
+			pkt.buf = dhcppkt;
+			pkt.len = dhcpsz;
+			sz = write(pipe_inject[WRITE], &pkt, sizeof(pkt));
+			if (sz == -1 && errno != EAGAIN) {
+				log_warn("%s: packet injection", __func__);
+				free(pkt.buf);
+			} else if (sz == -1 && errno == EAGAIN) {
+				log_debug("%s: dropping dhcp reply", __func__);
+				free(pkt.buf);
+			} else if (sz != sizeof(pkt)) {
+				log_warnx("%s: failed packet injection",
+				    __func__);
+				free(pkt.buf);
+			}
+			log_debug("%s: injected dhcp reply with %ld bytes",
+			    __func__, sz);
+		}
 	}
 
-	if (dhcpsz > 0)
-		vionet_enq_rx(vionet, dhcppkt, dhcpsz, &spc);
+	if (idx != vq_info->last_avail &&
+	    !(avail->flags & VRING_AVAIL_F_NO_INTERRUPT)) {
+		notify = 1;
+		vionet->cfg.isr_status |= 1;
+	}
 
-out:
-	free(pkt);
-	free(dhcppkt);
-
+	vq_info->last_avail = idx;
+	return (notify);
+reset:
+	log_warnx("%s: requesting device reset", __func__);
+	vionet->cfg.device_status |= DEVICE_NEEDS_RESET;
+	vionet->cfg.isr_status |= VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
 	return (1);
 }
 
@@ -728,12 +872,15 @@ dev_dispatch_vm(int fd, short event, void *arg)
 		case IMSG_VMDOP_PAUSE_VM:
 			log_debug("%s: pausing", __func__);
 			event_del(&ev_tap);
+			event_del(&ev_inject);
 			break;
 		case IMSG_VMDOP_UNPAUSE_VM:
 			log_debug("%s: unpausing", __func__);
 			if (vionet->cfg.device_status
-			    & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK)
+			    & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK) {
 				event_add(&ev_tap, NULL);
+				event_add(&ev_inject, NULL);
+			}
 			break;
 		case IMSG_CTL_VERBOSE:
 			IMSG_SIZE_CHECK(&imsg, &verbose);
@@ -821,6 +968,7 @@ handle_sync_io(int fd, short event, void *arg)
 		case VIODEV_MSG_SHUTDOWN:
 			event_del(&dev->sync_iev.ev);
 			event_del(&ev_tap);
+			event_del(&ev_inject);
 			event_loopbreak();
 			return;
 		default:
@@ -881,11 +1029,11 @@ handle_io_write(struct viodev_msg *msg, struct virtio_dev *dev)
 			virtio_deassert_pic_irq(dev, msg->vcpu);
 		}
 		event_del(&ev_tap);
+		event_del(&ev_inject);
 		if (vionet->cfg.device_status
 		    & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK) {
-			if (event_add(&ev_tap, NULL))
-				log_warn("%s: could not initialize virtio tap "
-				    "event handler", __func__);
+			event_add(&ev_tap, NULL);
+			event_add(&ev_inject, NULL);
 		}
 		break;
 	default:

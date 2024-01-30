@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.49 2023/09/26 01:53:54 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.50 2024/01/30 23:01:49 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -366,13 +366,6 @@ int vioblk_restore(int, struct vmd_vm *, int[][VM_MAX_BASE_PER_DISK]);
 
 int vionet_dump(int);
 int vionet_restore(int, struct vmd_vm *, int *);
-void vionet_update_qs(struct vionet_dev *);
-void vionet_update_qa(struct vionet_dev *);
-int vionet_notifyq(struct virtio_dev *);
-void vionet_notify_rx(struct virtio_dev *);
-int vionet_notify_tx(struct virtio_dev *);
-void vionet_process_rx(uint32_t);
-int vionet_enq_rx(struct vionet_dev *, char *, size_t, int *);
 void vionet_set_hostmac(struct vmd_vm *, unsigned int, uint8_t *);
 
 int vmmci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
