@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.483 2024/01/23 16:13:35 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.484 2024/01/30 13:50:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1542,20 +1542,19 @@ const char	*log_as(uint32_t);
 const char	*log_rd(uint64_t);
 const char	*log_ext_subtype(int, uint8_t);
 const char	*log_reason(const char *);
+const char	*log_aspath_error(int);
 const char	*log_roa(struct roa *);
 const char	*log_aspa(struct aspa_set *);
 const char	*log_rtr_error(enum rtr_error);
 const char	*log_policy(enum role);
-int		 aspath_snprint(char *, size_t, void *, uint16_t);
-int		 aspath_asprint(char **, void *, uint16_t);
-size_t		 aspath_strlen(void *, uint16_t);
+int		 aspath_asprint(char **, struct ibuf *);
 uint32_t	 aspath_extract(const void *, int);
-int		 aspath_verify(void *, uint16_t, int, int);
+int		 aspath_verify(struct ibuf *, int, int);
 #define		 AS_ERR_LEN	-1
 #define		 AS_ERR_TYPE	-2
 #define		 AS_ERR_BAD	-3
 #define		 AS_ERR_SOFT	-4
-u_char		*aspath_inflate(void *, uint16_t, uint16_t *);
+struct ibuf	*aspath_inflate(struct ibuf *);
 int		 extract_prefix(const u_char *, int, void *, uint8_t, uint8_t);
 int		 nlri_get_prefix(struct ibuf *, struct bgpd_addr *, uint8_t *);
 int		 nlri_get_prefix6(struct ibuf *, struct bgpd_addr *, uint8_t *);

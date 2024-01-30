@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.619 2024/01/25 11:13:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.620 2024/01/30 13:50:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1916,13 +1916,6 @@ rde_update_withdraw(struct rde_peer *peer, uint32_t path_id,
  */
 
 /* attribute parser specific macros */
-#define UPD_READ(t, p, plen, n) \
-	do { \
-		memcpy(t, p, n); \
-		p += n; \
-		plen += n; \
-	} while (0)
-
 #define CHECK_FLAGS(s, t, m)	\
 	(((s) & ~(ATTR_DEFMASK | (m))) == (t))
 
@@ -1932,12 +1925,10 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 {
 	struct bgpd_addr nexthop;
 	struct rde_aspath *a = &state->aspath;
-	struct ibuf	 attrbuf, tmpbuf;
-	u_char		*p, *npath;
+	struct ibuf	 attrbuf, tmpbuf, *npath = NULL;
+	size_t		 alen, hlen;
 	uint32_t	 tmp32, zero = 0;
 	int		 error;
-	uint16_t	 nlen;
-	size_t		 attr_len, hlen, plen;
 	uint8_t		 flags, type;
 
 	ibuf_from_ibuf(&attrbuf, buf);
@@ -1945,29 +1936,25 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 	    ibuf_get_n8(&attrbuf, &type) == -1)
 		goto bad_list;
 
-
 	if (flags & ATTR_EXTLEN) {
-		uint16_t alen;
-		if (ibuf_get_n16(&attrbuf, &alen) == -1)
+		uint16_t attr_len;
+		if (ibuf_get_n16(&attrbuf, &attr_len) == -1)
 			goto bad_list;
-		attr_len = alen;
+		alen = attr_len;
 		hlen = 4;
 	} else {
-		uint8_t alen;
-		if (ibuf_get_n8(&attrbuf, &alen) == -1)
+		uint8_t attr_len;
+		if (ibuf_get_n8(&attrbuf, &attr_len) == -1)
 			goto bad_list;
-		attr_len = alen;
+		alen = attr_len;
 		hlen = 3;
 	}
 
-	if (ibuf_truncate(&attrbuf, attr_len) == -1)
+	if (ibuf_truncate(&attrbuf, alen) == -1)
 		goto bad_list;
 	/* consume the attribute in buf before moving forward */
-	if (ibuf_skip(buf, hlen + attr_len) == -1)
+	if (ibuf_skip(buf, hlen + alen) == -1)
 		goto bad_list;
-
-	p = ibuf_data(&attrbuf);
-	plen = ibuf_size(&attrbuf);
 
 	switch (type) {
 	case ATTR_UNDEF:
@@ -1998,44 +1985,43 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 	case ATTR_ASPATH:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
-		error = aspath_verify(p, attr_len, peer_has_as4byte(peer),
+		if (a->flags & F_ATTR_ASPATH)
+			goto bad_list;
+		error = aspath_verify(&attrbuf, peer_has_as4byte(peer),
 		    peer_accept_no_as_set(peer));
+		if (error != 0 && error != AS_ERR_SOFT) {
+			log_peer_warnx(&peer->conf, "bad ASPATH, %s",
+			    log_aspath_error(error));
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
+			    NULL);
+			return (-1);
+		}
+		if (peer_has_as4byte(peer)) {
+			ibuf_from_ibuf(&tmpbuf, &attrbuf);
+		} else {
+			if ((npath = aspath_inflate(&attrbuf)) == NULL)
+				fatal("aspath_inflate");
+			ibuf_from_ibuf(&tmpbuf, npath);
+		}
 		if (error == AS_ERR_SOFT) {
+			char *str;
+
 			/*
 			 * soft errors like unexpected segment types are
 			 * not considered fatal and the path is just
 			 * marked invalid.
 			 */
 			a->flags |= F_ATTR_PARSE_ERR;
-		} else if (error != 0) {
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
-			    NULL);
-			return (-1);
-		}
-		if (a->flags & F_ATTR_ASPATH)
-			goto bad_list;
-		if (peer_has_as4byte(peer)) {
-			npath = p;
-			nlen = attr_len;
-		} else {
-			npath = aspath_inflate(p, attr_len, &nlen);
-			if (npath == NULL)
-				fatal("aspath_inflate");
-		}
-		if (error == AS_ERR_SOFT) {
-			char *str;
 
-			aspath_asprint(&str, npath, nlen);
+			aspath_asprint(&str, &tmpbuf);
 			log_peer_warnx(&peer->conf, "bad ASPATH %s, "
 			    "path invalidated and prefix withdrawn",
 			    str ? str : "(bad aspath)");
 			free(str);
 		}
 		a->flags |= F_ATTR_ASPATH;
-		a->aspath = aspath_get(npath, nlen);
-		if (npath != p)
-			free(npath);
-		plen += attr_len;
+		a->aspath = aspath_get(ibuf_data(&tmpbuf), ibuf_size(&tmpbuf));
+		ibuf_free(npath);
 		break;
 	case ATTR_NEXTHOP:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
@@ -2050,7 +2036,6 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		nexthop.aid = AID_INET;
 		if (ibuf_get_h32(&attrbuf, &nexthop.v4.s_addr) == -1)
 			goto bad_len;
-
 		/*
 		 * Check if the nexthop is a valid IP address. We consider
 		 * multicast addresses as invalid.
@@ -2245,12 +2230,11 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if ((error = aspath_verify(p, attr_len, 1,
+		if ((error = aspath_verify(&attrbuf, 1,
 		    peer_accept_no_as_set(peer))) != 0) {
 			/* As per RFC6793 use "attribute discard" here. */
 			log_peer_warnx(&peer->conf, "bad AS4_PATH, "
 			    "attribute discarded");
-			plen += attr_len;
 			break;
 		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;
@@ -2295,7 +2279,6 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 		break;
 	}
 
-	(void)plen;	/* XXX make compiler happy for now */
 	return (0);
 
  bad_len:
@@ -2309,7 +2292,6 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 	return (-1);
 }
 
-#undef UPD_READ
 #undef CHECK_FLAGS
 
 int
