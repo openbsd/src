@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.21 2024/01/29 06:05:50 tb Exp $ */
+/* $OpenBSD: cmac.c,v 1.22 2024/01/30 17:43:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -131,8 +131,7 @@ LCRYPTO_ALIAS(CMAC_CTX_new);
 void
 CMAC_CTX_cleanup(CMAC_CTX *ctx)
 {
-	if (ctx->cipher_ctx != NULL)
-		(void)EVP_CIPHER_CTX_reset(ctx->cipher_ctx);
+	(void)EVP_CIPHER_CTX_reset(ctx->cipher_ctx);
 	explicit_bzero(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
 	explicit_bzero(ctx->k1, EVP_MAX_BLOCK_LENGTH);
 	explicit_bzero(ctx->k2, EVP_MAX_BLOCK_LENGTH);
