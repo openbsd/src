@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.7 2023/12/29 07:22:47 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.8 2024/01/30 17:41:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -258,10 +258,12 @@ EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 	return EVP_MD_CTX_cleanup(ctx);
 }
 
-/* This call frees resources associated with the context */
 int
 EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 {
+	if (ctx == NULL)
+		return 1;
+
 	/*
 	 * Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
 	 * because sometimes only copies of the context are ever finalised.

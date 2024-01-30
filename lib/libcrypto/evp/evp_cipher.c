@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.16 2024/01/07 15:21:04 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.17 2024/01/30 17:41:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -627,6 +627,9 @@ EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 int
 EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *ctx)
 {
+	if (ctx == NULL)
+		return 1;
+
 	if (ctx->cipher != NULL) {
 		/* XXX - Avoid leaks, so ignore return value of cleanup()... */
 		if (ctx->cipher->cleanup != NULL)
