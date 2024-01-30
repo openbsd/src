@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.78 2023/06/28 17:36:09 op Exp $ */
+/*	$OpenBSD: http.c,v 1.79 2024/01/30 10:16:13 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1836,6 +1836,8 @@ http_close(struct http_connection *conn)
 	assert(conn->state == STATE_IDLE || conn->state == STATE_CLOSE);
 
 	conn->state = STATE_CLOSE;
+	LIST_REMOVE(conn, entry);
+	LIST_INSERT_HEAD(&active, conn, entry);
 
 	if (conn->tls != NULL) {
 		switch (tls_close(conn->tls)) {
@@ -1985,6 +1987,8 @@ http_handle(struct http_connection *conn)
 		return http_close(conn);
 	case STATE_IDLE:
 		conn->state = STATE_RESPONSE_HEADER;
+		LIST_REMOVE(conn, entry);
+		LIST_INSERT_HEAD(&active, conn, entry);
 		return http_read(conn);
 	case STATE_FREE:
 		errx(1, "bad http state");
