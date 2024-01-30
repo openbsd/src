@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxreg.h,v 1.3 2024/01/28 22:30:39 stsp Exp $	*/
+/*	$OpenBSD: qwxreg.h,v 1.4 2024/01/30 15:32:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -9592,6 +9592,14 @@ enum hal_reo_exec_status {
 #define HAL_REO_STATUS_HDR_INFO0_STATUS_NUM	GENMASK(15, 0)
 #define HAL_REO_STATUS_HDR_INFO0_EXEC_TIME	GENMASK(25, 16)
 #define HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS	GENMASK(27, 26)
+
+#define HAL_HASH_ROUTING_RING_TCL 0
+#define HAL_HASH_ROUTING_RING_SW1 1
+#define HAL_HASH_ROUTING_RING_SW2 2
+#define HAL_HASH_ROUTING_RING_SW3 3
+#define HAL_HASH_ROUTING_RING_SW4 4
+#define HAL_HASH_ROUTING_RING_REL 5
+#define HAL_HASH_ROUTING_RING_FW  6
 
 struct hal_reo_status_hdr {
 	uint32_t info0;

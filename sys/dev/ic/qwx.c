@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.11 2024/01/30 15:30:13 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.12 2024/01/30 15:32:04 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -651,6 +651,49 @@ void qwx_init_wmi_config_qca6390(struct qwx_softc *sc,
 	config->flag1 |= WMI_RSRC_CFG_FLAG1_BSS_CHANNEL_INFO_64;
 }
 
+void
+qwx_hw_ipq8074_reo_setup(struct qwx_softc *sc)
+{
+	uint32_t reo_base = HAL_SEQ_WCSS_UMAC_REO_REG;
+	uint32_t val;
+	/* Each hash entry uses three bits to map to a particular ring. */
+	uint32_t ring_hash_map = HAL_HASH_ROUTING_RING_SW1 << 0 |
+	    HAL_HASH_ROUTING_RING_SW2 << 3 |
+	    HAL_HASH_ROUTING_RING_SW3 << 6 |
+	    HAL_HASH_ROUTING_RING_SW4 << 9 |
+	    HAL_HASH_ROUTING_RING_SW1 << 12 |
+	    HAL_HASH_ROUTING_RING_SW2 << 15 |
+	    HAL_HASH_ROUTING_RING_SW3 << 18 |
+	    HAL_HASH_ROUTING_RING_SW4 << 21;
+
+	val = sc->ops.read32(sc, reo_base + HAL_REO1_GEN_ENABLE);
+
+	val &= ~HAL_REO1_GEN_ENABLE_FRAG_DST_RING;
+	val |= FIELD_PREP(HAL_REO1_GEN_ENABLE_FRAG_DST_RING,
+	    HAL_SRNG_RING_ID_REO2SW1) |
+	    FIELD_PREP(HAL_REO1_GEN_ENABLE_AGING_LIST_ENABLE, 1) |
+	    FIELD_PREP(HAL_REO1_GEN_ENABLE_AGING_FLUSH_ENABLE, 1);
+	sc->ops.write32(sc, reo_base + HAL_REO1_GEN_ENABLE, val);
+
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_0(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_1(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_2(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_3(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_0,
+	    FIELD_PREP(HAL_REO_DEST_RING_CTRL_HASH_RING_MAP, ring_hash_map));
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_1,
+	    FIELD_PREP(HAL_REO_DEST_RING_CTRL_HASH_RING_MAP, ring_hash_map));
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_2,
+	    FIELD_PREP(HAL_REO_DEST_RING_CTRL_HASH_RING_MAP, ring_hash_map));
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_3,
+	    FIELD_PREP(HAL_REO_DEST_RING_CTRL_HASH_RING_MAP, ring_hash_map));
+}
+
 void qwx_init_wmi_config_ipq8074(struct qwx_softc *sc,
     struct target_resource_config *config)
 {
@@ -710,6 +753,90 @@ void qwx_init_wmi_config_ipq8074(struct qwx_softc *sc,
 	config->beacon_tx_offload_max_vdev += config->ema_max_vap_cnt;
 }
 
+void
+qwx_hw_wcn6855_reo_setup(struct qwx_softc *sc)
+{
+	uint32_t reo_base = HAL_SEQ_WCSS_UMAC_REO_REG;
+	uint32_t val;
+	/* Each hash entry uses four bits to map to a particular ring. */
+	uint32_t ring_hash_map = HAL_HASH_ROUTING_RING_SW1 << 0 |
+	    HAL_HASH_ROUTING_RING_SW2 << 4 |
+	    HAL_HASH_ROUTING_RING_SW3 << 8 |
+	    HAL_HASH_ROUTING_RING_SW4 << 12 |
+	    HAL_HASH_ROUTING_RING_SW1 << 16 |
+	    HAL_HASH_ROUTING_RING_SW2 << 20 |
+	    HAL_HASH_ROUTING_RING_SW3 << 24 |
+	    HAL_HASH_ROUTING_RING_SW4 << 28;
+
+	val = sc->ops.read32(sc, reo_base + HAL_REO1_GEN_ENABLE);
+	val |= FIELD_PREP(HAL_REO1_GEN_ENABLE_AGING_LIST_ENABLE, 1) |
+	    FIELD_PREP(HAL_REO1_GEN_ENABLE_AGING_FLUSH_ENABLE, 1);
+	sc->ops.write32(sc, reo_base + HAL_REO1_GEN_ENABLE, val);
+
+	val = sc->ops.read32(sc, reo_base + HAL_REO1_MISC_CTL(sc));
+	val &= ~HAL_REO1_MISC_CTL_FRAGMENT_DST_RING;
+	val |= FIELD_PREP(HAL_REO1_MISC_CTL_FRAGMENT_DST_RING,
+	    HAL_SRNG_RING_ID_REO2SW1);
+	sc->ops.write32(sc, reo_base + HAL_REO1_MISC_CTL(sc), val);
+
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_0(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_1(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_2(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_3(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_2,
+	    ring_hash_map);
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_3,
+	    ring_hash_map);
+}
+
+void
+qwx_hw_ipq5018_reo_setup(struct qwx_softc *sc)
+{
+	uint32_t reo_base = HAL_SEQ_WCSS_UMAC_REO_REG;
+	uint32_t val;
+
+	/* Each hash entry uses three bits to map to a particular ring. */
+	uint32_t ring_hash_map = HAL_HASH_ROUTING_RING_SW1 << 0 |
+	    HAL_HASH_ROUTING_RING_SW2 << 4 |
+	    HAL_HASH_ROUTING_RING_SW3 << 8 |
+	    HAL_HASH_ROUTING_RING_SW4 << 12 |
+	    HAL_HASH_ROUTING_RING_SW1 << 16 |
+	    HAL_HASH_ROUTING_RING_SW2 << 20 |
+	    HAL_HASH_ROUTING_RING_SW3 << 24 |
+	    HAL_HASH_ROUTING_RING_SW4 << 28;
+
+	val = sc->ops.read32(sc, reo_base + HAL_REO1_GEN_ENABLE);
+
+	val &= ~HAL_REO1_GEN_ENABLE_FRAG_DST_RING;
+	val |= FIELD_PREP(HAL_REO1_GEN_ENABLE_FRAG_DST_RING,
+	    HAL_SRNG_RING_ID_REO2SW1) |
+	    FIELD_PREP(HAL_REO1_GEN_ENABLE_AGING_LIST_ENABLE, 1) |
+	    FIELD_PREP(HAL_REO1_GEN_ENABLE_AGING_FLUSH_ENABLE, 1);
+	sc->ops.write32(sc, reo_base + HAL_REO1_GEN_ENABLE, val);
+
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_0(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_1(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_2(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+	sc->ops.write32(sc, reo_base + HAL_REO1_AGING_THRESH_IX_3(sc),
+	    HAL_DEFAULT_REO_TIMEOUT_USEC);
+
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_0,
+	    ring_hash_map);
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_1,
+	    ring_hash_map);
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_2,
+	    ring_hash_map);
+	sc->ops.write32(sc, reo_base + HAL_REO1_DEST_RING_CTRL_IX_3,
+	    ring_hash_map);
+}
 int
 qwx_hw_mac_id_to_pdev_id_ipq8074(struct ath11k_hw_params *hw, int mac_id)
 {
@@ -769,7 +896,9 @@ const struct ath11k_hw_ops ipq8074_ops = {
 	.rx_desc_set_msdu_len = ath11k_hw_ipq8074_rx_desc_set_msdu_len,
 	.rx_desc_get_attention = ath11k_hw_ipq8074_rx_desc_get_attention,
 	.rx_desc_get_msdu_payload = ath11k_hw_ipq8074_rx_desc_get_msdu_payload,
-	.reo_setup = ath11k_hw_ipq8074_reo_setup,
+#endif
+	.reo_setup = qwx_hw_ipq8074_reo_setup,
+#ifdef notyet
 	.mpdu_info_get_peerid = ath11k_hw_ipq8074_mpdu_info_get_peerid,
 	.rx_desc_mac_addr2_valid = ath11k_hw_ipq8074_rx_desc_mac_addr2_valid,
 	.rx_desc_mpdu_start_addr2 = ath11k_hw_ipq8074_rx_desc_mpdu_start_addr2,
@@ -813,7 +942,9 @@ const struct ath11k_hw_ops ipq6018_ops = {
 	.rx_desc_set_msdu_len = ath11k_hw_ipq8074_rx_desc_set_msdu_len,
 	.rx_desc_get_attention = ath11k_hw_ipq8074_rx_desc_get_attention,
 	.rx_desc_get_msdu_payload = ath11k_hw_ipq8074_rx_desc_get_msdu_payload,
-	.reo_setup = ath11k_hw_ipq8074_reo_setup,
+#endif
+	.reo_setup = qwx_hw_ipq8074_reo_setup,
+#ifdef notyet
 	.mpdu_info_get_peerid = ath11k_hw_ipq8074_mpdu_info_get_peerid,
 	.rx_desc_mac_addr2_valid = ath11k_hw_ipq8074_rx_desc_mac_addr2_valid,
 	.rx_desc_mpdu_start_addr2 = ath11k_hw_ipq8074_rx_desc_mpdu_start_addr2,
@@ -857,7 +988,9 @@ const struct ath11k_hw_ops qca6390_ops = {
 	.rx_desc_set_msdu_len = ath11k_hw_ipq8074_rx_desc_set_msdu_len,
 	.rx_desc_get_attention = ath11k_hw_ipq8074_rx_desc_get_attention,
 	.rx_desc_get_msdu_payload = ath11k_hw_ipq8074_rx_desc_get_msdu_payload,
-	.reo_setup = ath11k_hw_ipq8074_reo_setup,
+#endif
+	.reo_setup = qwx_hw_ipq8074_reo_setup,
+#ifdef notyet
 	.mpdu_info_get_peerid = ath11k_hw_ipq8074_mpdu_info_get_peerid,
 	.rx_desc_mac_addr2_valid = ath11k_hw_ipq8074_rx_desc_mac_addr2_valid,
 	.rx_desc_mpdu_start_addr2 = ath11k_hw_ipq8074_rx_desc_mpdu_start_addr2,
@@ -901,7 +1034,9 @@ const struct ath11k_hw_ops qcn9074_ops = {
 	.rx_desc_set_msdu_len = ath11k_hw_qcn9074_rx_desc_set_msdu_len,
 	.rx_desc_get_attention = ath11k_hw_qcn9074_rx_desc_get_attention,
 	.rx_desc_get_msdu_payload = ath11k_hw_qcn9074_rx_desc_get_msdu_payload,
-	.reo_setup = ath11k_hw_ipq8074_reo_setup,
+#endif
+	.reo_setup = qwx_hw_ipq8074_reo_setup,
+#ifdef notyet
 	.mpdu_info_get_peerid = ath11k_hw_ipq8074_mpdu_info_get_peerid,
 	.rx_desc_mac_addr2_valid = ath11k_hw_ipq9074_rx_desc_mac_addr2_valid,
 	.rx_desc_mpdu_start_addr2 = ath11k_hw_ipq9074_rx_desc_mpdu_start_addr2,
@@ -945,7 +1080,9 @@ const struct ath11k_hw_ops wcn6855_ops = {
 	.rx_desc_set_msdu_len = ath11k_hw_wcn6855_rx_desc_set_msdu_len,
 	.rx_desc_get_attention = ath11k_hw_wcn6855_rx_desc_get_attention,
 	.rx_desc_get_msdu_payload = ath11k_hw_wcn6855_rx_desc_get_msdu_payload,
-	.reo_setup = ath11k_hw_wcn6855_reo_setup,
+#endif
+	.reo_setup = qwx_hw_wcn6855_reo_setup,
+#ifdef notyet
 	.mpdu_info_get_peerid = ath11k_hw_wcn6855_mpdu_info_get_peerid,
 	.rx_desc_mac_addr2_valid = ath11k_hw_wcn6855_rx_desc_mac_addr2_valid,
 	.rx_desc_mpdu_start_addr2 = ath11k_hw_wcn6855_rx_desc_mpdu_start_addr2,
@@ -989,7 +1126,9 @@ const struct ath11k_hw_ops wcn6750_ops = {
 	.rx_desc_set_msdu_len = ath11k_hw_qcn9074_rx_desc_set_msdu_len,
 	.rx_desc_get_attention = ath11k_hw_qcn9074_rx_desc_get_attention,
 	.rx_desc_get_msdu_payload = ath11k_hw_qcn9074_rx_desc_get_msdu_payload,
-	.reo_setup = ath11k_hw_wcn6855_reo_setup,
+#endif
+	.reo_setup = qwx_hw_wcn6855_reo_setup,
+#ifdef notyet
 	.mpdu_info_get_peerid = ath11k_hw_ipq8074_mpdu_info_get_peerid,
 	.rx_desc_mac_addr2_valid = ath11k_hw_ipq9074_rx_desc_mac_addr2_valid,
 	.rx_desc_mpdu_start_addr2 = ath11k_hw_ipq9074_rx_desc_mpdu_start_addr2,
@@ -9145,12 +9284,11 @@ qwx_dp_srng_common_setup(struct qwx_softc *sc)
 		    sc->sc_dev.dv_xname, ret);
 		goto err;
 	}
-#ifdef notyet
+
 	/* When hash based routing of rx packet is enabled, 32 entries to map
 	 * the hash values to the ring will be configured.
 	 */
 	sc->hw_params.hw_ops->reo_setup(sc);
-#endif
 	return 0;
 
 err:

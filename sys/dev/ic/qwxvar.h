@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.7 2024/01/29 16:06:45 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.8 2024/01/30 15:32:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -247,7 +247,9 @@ struct ath11k_hw_ops {
 	void (*rx_desc_set_msdu_len)(struct hal_rx_desc *desc, uint16_t len);
 	struct rx_attention *(*rx_desc_get_attention)(struct hal_rx_desc *desc);
 	uint8_t *(*rx_desc_get_msdu_payload)(struct hal_rx_desc *desc);
-	void (*reo_setup)(struct ath11k_base *ab);
+#endif
+	void (*reo_setup)(struct qwx_softc *);
+#ifdef notyet
 	uint16_t (*mpdu_info_get_peerid)(uint8_t *tlv_data);
 	bool (*rx_desc_mac_addr2_valid)(struct hal_rx_desc *desc);
 	uint8_t* (*rx_desc_mpdu_start_addr2)(struct hal_rx_desc *desc);
