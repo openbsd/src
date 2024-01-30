@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.12 2024/01/30 15:32:04 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.13 2024/01/30 15:33:32 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -21482,12 +21482,17 @@ qwx_run(struct qwx_softc *sc)
 		return ret;
 	}
 
+	/* Enable "ext" IRQs for datapath. */
+	sc->ops.irq_enable(sc);
+
 	return 0;
 }
 
 int
 qwx_run_stop(struct qwx_softc *sc)
 {
+	sc->ops.irq_disable(sc);
+
 	printf("%s: not implemented\n", __func__);
 	return ENOTSUP;
 }
