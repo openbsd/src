@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.10 2024/01/29 16:06:45 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.11 2024/01/30 15:30:13 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16249,9 +16249,9 @@ qwx_core_pdev_create(struct qwx_softc *sc)
 		ath11k_err(ab, "failed to init spectral %d\n", ret);
 		goto err_thermal_unregister;
 	}
-
+#endif
 	return 0;
-
+#if 0
 err_thermal_unregister:
 	ath11k_thermal_unregister(ab);
 err_mac_unregister:
