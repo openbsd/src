@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.32 2021/03/15 15:49:20 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.33 2024/01/30 16:43:22 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 #ifndef	MAXTSIZ
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
+#define	MAXTSIZ		(128*1024*1024)		/* max text size */
 #endif
 
 #ifndef	DFLDSIZ
