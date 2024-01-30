@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.43 2024/01/27 14:34:28 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.44 2024/01/30 14:50:50 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -501,6 +501,7 @@ tls13_legacy_shutdown(SSL *ssl)
 			return -1;
 		if (ret != TLS13_IO_SUCCESS)
 			return tls13_legacy_return_code(ssl, ret);
+		goto done;
 	}
 
 	ret = tls13_record_layer_send_pending(ctx->rl);
@@ -524,6 +525,7 @@ tls13_legacy_shutdown(SSL *ssl)
 		}
 	}
 
+ done:
 	if (ssl->shutdown == (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN))
 		return 1;
 
