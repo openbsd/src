@@ -1,4 +1,4 @@
-/* $OpenBSD: shutdowntest.c,v 1.2 2024/01/27 14:35:13 jsing Exp $ */
+/* $OpenBSD: shutdowntest.c,v 1.3 2024/01/30 14:46:46 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021, 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -360,7 +360,7 @@ static const struct shutdown_test shutdown_tests[] = {
 #define N_TLS_TESTS (sizeof(shutdown_tests) / sizeof(*shutdown_tests))
 
 static int
-shutdowntest(uint16_t ssl_version, const char *ssl_version_name,
+shutdown_test(uint16_t ssl_version, const char *ssl_version_name,
     const struct shutdown_test *st)
 {
 	BIO *client_wbio = NULL, *server_wbio = NULL;
@@ -479,6 +479,135 @@ shutdowntest(uint16_t ssl_version, const char *ssl_version_name,
 	return failed;
 }
 
+static int
+shutdown_sequence_test(uint16_t ssl_version, const char *ssl_version_name)
+{
+	BIO *client_wbio = NULL, *server_wbio = NULL;
+	SSL *client = NULL, *server = NULL;
+	int shutdown, ret;
+	int failed = 1;
+
+	fprintf(stderr, "\n== Testing %s, shutdown sequence... ==\n",
+	    ssl_version_name);
+
+	if ((client_wbio = BIO_new(BIO_s_mem())) == NULL)
+		goto failure;
+	if (BIO_set_mem_eof_return(client_wbio, -1) <= 0)
+		goto failure;
+
+	if ((server_wbio = BIO_new(BIO_s_mem())) == NULL)
+		goto failure;
+	if (BIO_set_mem_eof_return(server_wbio, -1) <= 0)
+		goto failure;
+
+	if ((client = tls_client(server_wbio, client_wbio)) == NULL)
+		goto failure;
+	if (!SSL_set_min_proto_version(client, ssl_version))
+		goto failure;
+	if (!SSL_set_max_proto_version(client, ssl_version))
+		goto failure;
+
+	if ((server = tls_server(client_wbio, server_wbio)) == NULL)
+		goto failure;
+	if (!SSL_set_min_proto_version(server, ssl_version))
+		goto failure;
+	if (!SSL_set_max_proto_version(server, ssl_version))
+		goto failure;
+
+	if (!do_client_server_loop(client, do_connect, server, do_accept)) {
+		fprintf(stderr, "FAIL: client and server handshake failed\n");
+		goto failure;
+	}
+
+	if (!do_client_server_loop(client, do_write, server, do_read)) {
+		fprintf(stderr, "FAIL: client write and server read I/O failed\n");
+		goto failure;
+	}
+
+	if (!do_client_server_loop(client, do_read, server, do_write)) {
+		fprintf(stderr, "FAIL: client read and server write I/O failed\n");
+		goto failure;
+	}
+
+	/*
+	 * Shutdown in lock step and check return value and shutdown flags.
+	 *
+	 * It is not documented, however some software relies on SSL_shutdown()
+	 * to only send a close-notify on the first call, then indicate that a
+	 * close-notify was received on a second (or later) call.
+	 */
+
+	if ((shutdown = SSL_get_shutdown(client)) != 0) {
+		fprintf(stderr, "FAIL: client shutdown flags = %x, want %x\n",
+		    shutdown, 0);
+		goto failure;
+	}
+	if ((shutdown = SSL_get_shutdown(server)) != 0) {
+		fprintf(stderr, "FAIL: server shutdown flags = %x, want %x\n",
+		    shutdown, 0);
+		goto failure;
+	}
+
+	if ((ret = SSL_shutdown(client)) != 0) {
+		fprintf(stderr, "FAIL: client SSL_shutdown() = %d, want %d\n",
+		    ret, 0);
+		goto failure;
+	}
+	if ((shutdown = SSL_get_shutdown(client)) != SSL_SENT_SHUTDOWN) {
+		fprintf(stderr, "FAIL: client shutdown flags = %x, want %x\n",
+		    shutdown, SSL_SENT_SHUTDOWN);
+		goto failure;
+	}
+
+	if ((ret = SSL_shutdown(server)) != 0) {
+		fprintf(stderr, "FAIL: server SSL_shutdown() = %d, want %d\n",
+		    ret, 0);
+		goto failure;
+	}
+	if ((shutdown = SSL_get_shutdown(server)) != SSL_SENT_SHUTDOWN) {
+		fprintf(stderr, "FAIL: server shutdown flags = %x, want %x\n",
+		    shutdown, SSL_SENT_SHUTDOWN);
+		goto failure;
+	}
+
+	if ((ret = SSL_shutdown(client)) != 1) {
+		fprintf(stderr, "FAIL: client SSL_shutdown() = %d, want %d\n",
+		    ret, 0);
+		goto failure;
+	}
+	if ((shutdown = SSL_get_shutdown(client)) !=
+	    (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN)) {
+		fprintf(stderr, "FAIL: client shutdown flags = %x, want %x\n",
+		    shutdown, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
+		goto failure;
+	}
+
+	if ((ret = SSL_shutdown(server)) != 1) {
+		fprintf(stderr, "FAIL: server SSL_shutdown() = %d, want %d\n",
+		    ret, 0);
+		goto failure;
+	}
+	if ((shutdown = SSL_get_shutdown(server)) !=
+	    (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN)) {
+		fprintf(stderr, "FAIL: server shutdown flags = %x, want %x\n",
+		    shutdown, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
+		goto failure;
+	}
+
+	fprintf(stderr, "INFO: Done!\n");
+
+	failed = 0;
+
+ failure:
+	BIO_free(client_wbio);
+	BIO_free(server_wbio);
+
+	SSL_free(client);
+	SSL_free(server);
+
+	return failed;
+}
+
 struct ssl_version {
 	uint16_t version;
 	const char *name;
@@ -517,9 +646,10 @@ main(int argc, char **argv)
 	for (i = 0; i < N_SSL_VERSIONS; i++) {
 		sv = &ssl_versions[i];
 		for (j = 0; j < N_TLS_TESTS; j++) {
-			failed |= shutdowntest(sv->version, sv->name,
+			failed |= shutdown_test(sv->version, sv->name,
 			    &shutdown_tests[j]);
 		}
+		failed |= shutdown_sequence_test(sv->version, sv->name);
 	}
 
 	return failed;
