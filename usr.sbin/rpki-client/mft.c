@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.100 2023/12/11 15:50:23 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.101 2024/01/31 06:54:43 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -545,19 +545,12 @@ mft_read(struct ibuf *b)
 }
 
 /*
- * Compare the manifestNumber of two MFT files.
- * Returns 1 if first MFT should be used, 0 if both are equal, and -1 if the
- * second MFT should be used.
+ * Compare the manifestNumber of two mft files.
  */
 int
-mft_compare(const struct mft *a, const struct mft *b)
+mft_compare_seqnum(const struct mft *a, const struct mft *b)
 {
 	int r;
-
-	if (b == NULL)
-		return 1;
-	if (a == NULL)
-		return -1;
 
 	r = strlen(a->seqnum) - strlen(b->seqnum);
 	if (r > 0)	/* seqnum in a is longer -> higher */

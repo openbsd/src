@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.111 2024/01/31 06:53:21 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.112 2024/01/31 06:54:43 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -315,7 +315,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	 * a smaller sequence number.
 	 */
 
-	if ((seqnum_cmp = mft_compare(mft, cached_mft)) < 0) {
+	if ((seqnum_cmp = mft_compare_seqnum(mft, cached_mft)) < 0) {
 		warnx("%s: unexpected manifest number (want >= #%s, got #%s)",
 		    *file, cached_mft->seqnum, mft->seqnum);
 		goto err;
