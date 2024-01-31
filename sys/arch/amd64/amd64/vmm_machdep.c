@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.15 2024/01/11 17:13:48 jan Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.16 2024/01/31 05:49:33 guenther Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4187,7 +4187,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Restore any guest PKRU state. */
 		if (vmm_softc->sc_md.pkru_enabled)
-			wrpkru(vcpu->vc_pkru);
+			wrpkru(0, vcpu->vc_pkru);
 
 		ret = vmx_enter_guest(&vcpu->vc_control_pa,
 		    &vcpu->vc_gueststate,
@@ -4197,7 +4197,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		/* Restore host PKRU state. */
 		if (vmm_softc->sc_md.pkru_enabled) {
 			vcpu->vc_pkru = rdpkru(0);
-			wrpkru(PGK_VALUE);
+			wrpkru(0, PGK_VALUE);
 		}
 
 		lidt(&idtr);
@@ -6500,7 +6500,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Restore any guest PKRU state. */
 		if (vmm_softc->sc_md.pkru_enabled)
-			wrpkru(vcpu->vc_pkru);
+			wrpkru(0, vcpu->vc_pkru);
 
 		KASSERT(vmcb->v_intercept1 & SVM_INTERCEPT_INTR);
 		wrmsr(MSR_AMD_VM_HSAVE_PA, vcpu->vc_svm_hsa_pa);
@@ -6511,7 +6511,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		/* Restore host PKRU state. */
 		if (vmm_softc->sc_md.pkru_enabled) {
 			vcpu->vc_pkru = rdpkru(0);
-			wrpkru(PGK_VALUE);
+			wrpkru(0, PGK_VALUE);
 		}
 
 		/*
