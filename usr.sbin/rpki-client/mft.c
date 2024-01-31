@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.101 2024/01/31 06:54:43 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.102 2024/01/31 06:57:21 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -542,6 +542,19 @@ mft_read(struct ibuf *b)
 	}
 
 	return p;
+}
+
+/*
+ * Compare the thisupdate time of two mft files.
+ */
+int
+mft_compare_issued(const struct mft *a, const struct mft *b)
+{
+	if (a->thisupdate > b->thisupdate)
+		return 1;
+	if (a->thisupdate < b->thisupdate)
+		return -1;
+	return 0;
 }
 
 /*

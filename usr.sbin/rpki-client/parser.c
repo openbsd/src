@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.112 2024/01/31 06:54:43 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.113 2024/01/31 06:57:21 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -266,7 +266,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	struct auth	*a;
 	unsigned char	*der;
 	size_t		 len;
-	int		 seqnum_cmp;
+	int		 issued_cmp, seqnum_cmp;
 
 	*crl = NULL;
 	*crlfile = NULL;
@@ -311,16 +311,35 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 		return mft;
 
 	/*
-	 * Check that the cached manifest is older in the sense that it has
-	 * a smaller sequence number.
+	 * Check that the cached manifest is older in the sense that it was
+	 * issued earlier and that it has a smaller sequence number.
 	 */
 
+	if ((issued_cmp = mft_compare_issued(mft, cached_mft)) < 0) {
+		warnx("%s: unexpected manifest issuance time (want >= %lld, "
+		    "got %lld)", *file, (long long)cached_mft->thisupdate,
+		    (long long)mft->thisupdate);
+		goto err;
+	}
 	if ((seqnum_cmp = mft_compare_seqnum(mft, cached_mft)) < 0) {
 		warnx("%s: unexpected manifest number (want >= #%s, got #%s)",
 		    *file, cached_mft->seqnum, mft->seqnum);
 		goto err;
 	}
-	if (seqnum_cmp == 0 && memcmp(mft->mfthash,
+	if (issued_cmp > 0 && seqnum_cmp == 0) {
+		warnx("%s#%s: reissued manifest at %lld and %lld with same "
+		    "sequence number", *file, cached_mft->seqnum,
+		    (long long)mft->thisupdate,
+		    (long long)cached_mft->thisupdate);
+		goto err;
+	}
+	if (issued_cmp == 0 && seqnum_cmp > 0) {
+		warnx("%s#%s: reissued manifest same issuance time %lld as #%s",
+		    *file, mft->seqnum, (long long)mft->thisupdate,
+		    cached_mft->seqnum);
+		goto err;
+	}
+	if (issued_cmp == 0 && seqnum_cmp == 0 && memcmp(mft->mfthash,
 	    cached_mft->mfthash, SHA256_DIGEST_LENGTH) != 0) {
 		warnx("%s: manifest misissuance, #%s was recycled",
 		    *file, mft->seqnum);
