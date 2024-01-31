@@ -362,7 +362,7 @@ static int amd64obsd_tf_reg_offset[] =
 {
   14 * 8,			/* %rax */
   13 * 8,			/* %rbx */
-  3 * 8,			/* %rcx */
+  6 * 8,			/* %rcx */
   2 * 8,			/* %rdx */
   1 * 8,			/* %rsi */
   0 * 8,			/* %rdi */
@@ -370,7 +370,7 @@ static int amd64obsd_tf_reg_offset[] =
   20 * 8,			/* %rsp */
   4 * 8,			/* %r8 ... */
   5 * 8,
-  6 * 8,
+  3 * 8,
   7 * 8,
   8 * 8,
   9 * 8,

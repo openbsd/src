@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.103 2024/01/11 19:16:26 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.104 2024/01/31 06:06:28 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -553,7 +553,7 @@ syscall(struct trapframe *frame)
 	const struct sysent *callp;
 	struct proc *p;
 	int error = ENOSYS;
-	register_t code, args[6], rval[2], *argp;
+	register_t code, *args, rval[2];
 
 	verify_smap(__func__);
 	uvmexp.syscalls++;
@@ -565,30 +565,16 @@ syscall(struct trapframe *frame)
 	}
 
 	code = frame->tf_rax;
-	argp = &args[0];
+	args = (register_t *)&frame->tf_rdi;
 
 	if (code <= 0 || code >= SYS_MAXSYSCALL)
 		goto bad;
 	callp = sysent + code;
-	switch (callp->sy_narg) {
-	case 6:
-		args[5] = frame->tf_r9;
-	case 5:
-		args[4] = frame->tf_r8;
-	case 4:
-		args[3] = frame->tf_r10;
-	case 3:
-		args[2] = frame->tf_rdx;
-	case 2:
-		args[1] = frame->tf_rsi;
-	case 1:
-		args[0] = frame->tf_rdi;
-	}
 
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = mi_syscall(p, code, callp, argp, rval);
+	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:

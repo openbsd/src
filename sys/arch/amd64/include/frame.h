@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.10 2018/07/10 08:57:44 guenther Exp $	*/
+/*	$OpenBSD: frame.h,v 1.11 2024/01/31 06:06:28 guenther Exp $	*/
 /*	$NetBSD: frame.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 /*-
@@ -82,13 +82,13 @@
  * Exception/Trap Stack Frame
  */
 struct trapframe {
-	int64_t	tf_rdi;
+	int64_t	tf_rdi;		/* ordered by syscall args... */
 	int64_t	tf_rsi;
 	int64_t	tf_rdx;
-	int64_t	tf_rcx;
-	int64_t tf_r8;
-	int64_t tf_r9;
 	int64_t tf_r10;
+	int64_t tf_r8;
+	int64_t tf_r9;		/* ...to here */
+	int64_t	tf_rcx;
 	int64_t tf_r11;
 	int64_t tf_r12;
 	int64_t tf_r13;
@@ -115,10 +115,10 @@ struct intrframe {
 	int64_t	if_rdi;
 	int64_t	if_rsi;
 	int64_t	if_rdx;
-	int64_t	if_rcx;
+	int64_t if_r10;
 	int64_t if_r8;
 	int64_t if_r9;
-	int64_t if_r10;
+	int64_t	if_rcx;
 	int64_t if_r11;
 	int64_t if_r12;
 	int64_t if_r13;
