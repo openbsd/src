@@ -1,4 +1,4 @@
-.\" $OpenBSD: OBJ_NAME_add.3,v 1.5 2023/09/01 12:13:13 schwarze Exp $
+.\" $OpenBSD: OBJ_NAME_add.3,v 1.6 2024/01/31 08:02:53 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2023 $
+.Dd $Mdocdate: January 31 2024 $
 .Dt OBJ_NAME_ADD 3
 .Os
 .Sh NAME
@@ -23,9 +23,7 @@
 .Nm OBJ_NAME_get ,
 .Nm OBJ_NAME_new_index ,
 .Nm OBJ_NAME_init ,
-.Nm OBJ_NAME_cleanup ,
-.Nm OBJ_NAME_do_all ,
-.Nm OBJ_NAME_do_all_sorted
+.Nm OBJ_NAME_cleanup
 .Nd global associative array
 .Sh SYNOPSIS
 .In openssl/objects.h
@@ -63,19 +61,6 @@ typedef struct {
         const char *data;
 } OBJ_NAME;
 .Ed
-.Pp
-.Ft void
-.Fo OBJ_NAME_do_all
-.Fa "int type"
-.Fa "void (*fn)(const OBJ_NAME *pair, void *arg)"
-.Fa "void *arg"
-.Fc
-.Ft void
-.Fo OBJ_NAME_do_all_sorted
-.Fa "int type"
-.Fa "void (*fn)(const OBJ_NAME *pair, void *arg)"
-.Fa "void *arg"
-.Fc
 .Sh DESCRIPTION
 These functions implement a single, static associative array
 with the following properties:
@@ -264,25 +249,6 @@ If the
 field is 0, the
 .Fa data
 field contains the value; otherwise, it contains the alias target name.
-.Pp
-.Fn OBJ_NAME_do_all
-calls
-.Fa fn
-on every
-.Fa pair
-and alias in the array that has the given
-.Fa type ,
-also passing the
-.Fa arg
-pointer.
-.Fn OBJ_NAME_do_all_sorted
-is similar except that it processes the pairs and aliases
-in lexicographic order of their names as determined by
-.Xr strcmp 3 ,
-ignoring any
-.Fa cmp_func
-that may be defined for the
-.Fa type .
 .Sh RETURN VALUES
 .Fn OBJ_NAME_add
 and
@@ -339,8 +305,3 @@ that requires more cleanup than merely calling
 .Xr free 3
 on it, instances of the type need to begin with a magic number or string
 that cannot occur at the beginning of a name.
-.Pp
-.Fn OBJ_NAME_do_all_sorted
-is unable to report errors.
-If memory allocations fails, it does nothing at all
-without telling the caller about the problem.
