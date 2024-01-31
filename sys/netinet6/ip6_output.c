@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.283 2024/01/18 11:03:16 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.284 2024/01/31 12:27:57 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1486,7 +1486,7 @@ do { \
 			if (!(so->so_state & SS_ISCONNECTED))
 				return (ENOTCONN);
 
-			rt = in_pcbrtentry(inp);
+			rt = in6_pcbrtentry(inp);
 			if (!rtisvalid(rt))
 				return (EHOSTUNREACH);
 

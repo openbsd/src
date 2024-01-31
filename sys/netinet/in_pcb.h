@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.149 2024/01/28 20:34:25 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.150 2024/01/31 12:27:57 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -367,6 +367,8 @@ struct rtentry *
 	in_pcbrtentry(struct inpcb *);
 
 /* INET6 stuff */
+struct rtentry *
+	in6_pcbrtentry(struct inpcb *);
 void	in6_pcbnotify(struct inpcbtable *, const struct sockaddr_in6 *,
 	u_int, const struct sockaddr_in6 *, u_int, u_int, int, void *,
 	void (*)(struct inpcb *, int));
