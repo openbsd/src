@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.8 2023/08/15 07:56:27 miod Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.9 2024/01/31 01:01:10 hastings Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -55,6 +55,7 @@ com_fdt_init_cons(void)
 
 	if ((node = fdt_find_cons("brcm,bcm2835-aux-uart")) == NULL &&
 	    (node = fdt_find_cons("marvell,armada-38x-uart")) == NULL &&
+	    (node = fdt_find_cons("mediatek,mt6577-uart")) == NULL &&
 	    (node = fdt_find_cons("ns16550a")) == NULL &&
 	    (node = fdt_find_cons("snps,dw-apb-uart")) == NULL &&
 	    (node = fdt_find_cons("ti,omap3-uart")) == NULL &&
@@ -96,6 +97,7 @@ com_fdt_match(struct device *parent, void *match, void *aux)
 
 	return (OF_is_compatible(faa->fa_node, "brcm,bcm2835-aux-uart") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada-38x-uart") ||
+	    OF_is_compatible(faa->fa_node, "mediatek,mt6577-uart") ||
 	    OF_is_compatible(faa->fa_node, "ns16550a") ||
 	    OF_is_compatible(faa->fa_node, "snps,dw-apb-uart") ||
 	    OF_is_compatible(faa->fa_node, "ti,omap3-uart") ||
@@ -140,6 +142,9 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_reg_width = OF_getpropint(faa->fa_node, "reg-io-width", width);
 	sc->sc_reg_shift = OF_getpropint(faa->fa_node, "reg-shift", shift);
+
+	if (OF_is_compatible(faa->fa_node, "mediatek,mt6577-uart"))
+		sc->sc_uarttype = COM_UART_16550A;
 
 	if (OF_is_compatible(faa->fa_node, "snps,dw-apb-uart") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada-38x-uart")) {
