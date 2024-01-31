@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.75 2023/11/16 11:10:59 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.76 2024/01/31 15:01:13 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -956,7 +956,7 @@ x509_valid_subject(const char *fn, const X509 *x)
 			return 0;
 		default:
 			warnx("%s: RFC 6487 section 4.5: unexpected attribute "
-			    "%s", fn, OBJ_nid2sn(nid));
+			    "%d (%s)", fn, nid, OBJ_nid2ln(nid));
 			return 0;
 		}
 	}
