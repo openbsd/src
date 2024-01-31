@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.387 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.388 2024/01/31 14:56:42 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1475,7 +1475,6 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 {
 	struct mbuf mfake, *mcopy = NULL;
 	struct ip *ip = mtod(m, struct ip *);
-	struct sockaddr_in *sin;
 	struct route ro;
 	int error = 0, type = 0, code = 0, destmtu = 0, fake = 0, len;
 	u_int32_t dest;
@@ -1491,15 +1490,11 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		goto freecopy;
 	}
 
-	memset(&ro, 0, sizeof(ro));
-	sin = satosin(&ro.ro_dst);
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_addr = ip->ip_dst;
-
+	ro.ro_rt = NULL;
+	route_cache(&ro, ip->ip_dst, m->m_pkthdr.ph_rtableid);
 	if (!rtisvalid(rt)) {
 		rtfree(rt);
-		rt = rtalloc_mpath(sintosa(sin), &ip->ip_src.s_addr,
+		rt = rtalloc_mpath(&ro.ro_dst, &ip->ip_src.s_addr,
 		    m->m_pkthdr.ph_rtableid);
 		if (rt == NULL) {
 			ipstat_inc(ips_noroute);
@@ -1507,6 +1502,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 			return;
 		}
 	}
+	ro.ro_rt = rt;
 
 	/*
 	 * Save at most 68 bytes of the packet in case
@@ -1557,8 +1553,6 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		}
 	}
 
-	ro.ro_rt = rt;
-	ro.ro_tableid = m->m_pkthdr.ph_rtableid;
 	error = ip_output(m, NULL, &ro,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
 	    NULL, NULL, 0);

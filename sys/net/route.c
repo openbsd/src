@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.426 2023/11/13 17:18:27 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.427 2024/01/31 14:56:42 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -140,6 +140,7 @@
 
 /*
  * Locks used to protect struct members:
+ *      a       atomic operations
  *      I       immutable after creation
  *      L       rtlabel_mtx
  *      T       rttimer_mtx
@@ -152,8 +153,9 @@ static uint32_t		rt_hashjitter;
 
 extern unsigned int	rtmap_limit;
 
-struct cpumem *		rtcounters;
-int			rttrash;	/* routes not in table but not freed */
+struct cpumem	*rtcounters;
+int		 rttrash;	/* [a] routes not in table but not freed */
+u_long		 rtgeneration;	/* [a] generation number, routes changed */
 
 struct pool	rtentry_pool;		/* pool for rtentry structures */
 struct pool	rttimer_pool;		/* pool for rttimer structures */
@@ -197,6 +199,33 @@ route_init(void)
 #ifdef BFD
 	bfdinit();
 #endif
+}
+
+void
+route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
+{
+	u_long gen;
+
+	gen = atomic_load_long(&rtgeneration);
+	membar_consumer();
+
+	if (rtisvalid(ro->ro_rt) &&
+	    ro->ro_generation == gen &&
+	    ro->ro_tableid == rtableid &&
+	    ro->ro_dst.sa_family == AF_INET &&
+	    satosin(&ro->ro_dst)->sin_addr.s_addr == addr.s_addr) {
+		return;
+	}
+
+	rtfree(ro->ro_rt);
+	ro->ro_rt = NULL;
+	ro->ro_generation = gen;
+	ro->ro_tableid = rtableid;
+
+	memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
+	satosin(&ro->ro_dst)->sin_family = AF_INET;
+	satosin(&ro->ro_dst)->sin_len = sizeof(struct sockaddr_in);
+	satosin(&ro->ro_dst)->sin_addr = addr;
 }
 
 /*
@@ -824,6 +853,9 @@ rtrequest_delete(struct rt_addrinfo *info, u_int8_t prio, struct ifnet *ifp,
 	else
 		rtfree(rt);
 
+	membar_producer();
+	atomic_inc_long(&rtgeneration);
+
 	return (0);
 }
 
@@ -992,6 +1024,10 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			*ret_nrt = rt;
 		else
 			rtfree(rt);
+
+		membar_producer();
+		atomic_inc_long(&rtgeneration);
+
 		break;
 	}
 
@@ -1828,6 +1864,9 @@ rt_if_linkstate_change(struct rtentry *rt, void *arg, u_int id)
 		    rt->rt_priority | RTP_DOWN, rt);
 	}
 	if_group_routechange(rt_key(rt), rt_plen2mask(rt, &sa_mask));
+
+	membar_producer();
+	atomic_inc_long(&rtgeneration);
 
 	return (error);
 }
