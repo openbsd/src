@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.109 2024/01/31 06:46:31 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.110 2024/01/31 06:48:27 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -293,21 +293,24 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 		*crl = parse_load_crl_from_mft(entp, mft, DIR_VALID, crlfile);
 
 	a = valid_ski_aki(*file, &auths, mft->ski, mft->aki, NULL);
-	if (!valid_x509(*file, ctx, x509, a, *crl, errstr)) {
-		X509_free(x509);
-		mft_free(mft);
-		crl_free(*crl);
-		*crl = NULL;
-		free(*crlfile);
-		*crlfile = NULL;
-		return NULL;
-	}
+	if (!valid_x509(*file, ctx, x509, a, *crl, errstr))
+		goto err;
 	X509_free(x509);
+	x509 = NULL;
 
 	mft->repoid = entp->repoid;
 	mft->talid = a->cert->talid;
 
 	return mft;
+
+ err:
+	X509_free(x509);
+	mft_free(mft);
+	crl_free(*crl);
+	*crl = NULL;
+	free(*crlfile);
+	*crlfile = NULL;
+	return NULL;
 }
 
 /*
