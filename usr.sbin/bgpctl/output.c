@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.49 2024/01/30 13:51:13 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.50 2024/01/31 11:23:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -698,128 +698,103 @@ show_communities(struct ibuf *data, struct parse_result *res)
 }
 
 static void
-show_community(u_char *data, uint16_t len)
+show_community(struct ibuf *buf)
 {
 	uint16_t	a, v;
-	uint16_t	i;
 
-	if (len & 0x3) {
-		printf("bad length");
-		return;
-	}
-
-	for (i = 0; i < len; i += 4) {
-		memcpy(&a, data + i, sizeof(a));
-		memcpy(&v, data + i + 2, sizeof(v));
-		a = ntohs(a);
-		v = ntohs(v);
+	while (ibuf_size(buf) > 0) {
+		if (ibuf_get_n16(buf, &a) == -1 ||
+		    ibuf_get_n16(buf, &v) == -1) {
+			printf("bad length");
+			return;
+		}
 		printf("%s", fmt_community(a, v));
 
-		if (i + 4 < len)
+		if (ibuf_size(buf) > 0)
 			printf(" ");
 	}
 }
 
 static void
-show_large_community(u_char *data, uint16_t len)
+show_large_community(struct ibuf *buf)
 {
 	uint32_t	a, l1, l2;
-	uint16_t	i;
 
-	if (len % 12) {
-		printf("bad length");
-		return;
-	}
-
-	for (i = 0; i < len; i += 12) {
-		memcpy(&a, data + i, sizeof(a));
-		memcpy(&l1, data + i + 4, sizeof(l1));
-		memcpy(&l2, data + i + 8, sizeof(l2));
-		a = ntohl(a);
-		l1 = ntohl(l1);
-		l2 = ntohl(l2);
+	while (ibuf_size(buf) > 0) {
+		if (ibuf_get_n32(buf, &a) == -1 ||
+		    ibuf_get_n32(buf, &l1) == -1 ||
+		    ibuf_get_n32(buf, &l2) == -1) {
+			printf("bad length");
+			return;
+		}
 		printf("%s", fmt_large_community(a, l1, l2));
 
-		if (i + 12 < len)
+		if (ibuf_size(buf) > 0)
 			printf(" ");
 	}
 }
 
 static void
-show_ext_community(u_char *data, uint16_t len)
+show_ext_community(struct ibuf *buf)
 {
 	uint64_t	ext;
-	uint16_t	i;
 
-	if (len & 0x7) {
-		printf("bad length");
-		return;
-	}
-
-	for (i = 0; i < len; i += 8) {
-		memcpy(&ext, data + i, sizeof(ext));
-		ext = be64toh(ext);
+	while (ibuf_size(buf) > 0) {
+		if (ibuf_get_n64(buf, &ext) == -1) {
+			printf("bad length");
+			return;
+		}
 		printf("%s", fmt_ext_community(ext));
 
-		if (i + 8 < len)
+		if (ibuf_size(buf) > 0)
 			printf(" ");
 	}
 }
 
 static void
-show_attr(u_char *data, size_t len, int reqflags, int addpath)
+show_attr(struct ibuf *buf, int reqflags, int addpath)
 {
 	struct in_addr	 id;
 	struct bgpd_addr prefix;
-	struct ibuf	 ibuf, *buf = &ibuf, asbuf, *path = NULL;
+	struct ibuf	 asbuf, *path = NULL;
 	char		*aspath;
-	uint32_t	 as, pathid;
-	uint16_t	 alen, ioff, short_as, afi;
-	uint8_t		 flags, type, safi, aid, prefixlen;
-	int		 i, e2, e4;
+	size_t		 i, alen;
+	uint32_t	 as, pathid, val;
+	uint16_t	 short_as, afi;
+	uint8_t		 flags, type, safi, aid, prefixlen, origin, b;
+	int		 e2, e4;
 
-	if (len < 3) {
-		warnx("Too short BGP attribute");
-		return;
-	}
-
-	flags = data[0];
-	type = data[1];
+	if (ibuf_get_n8(buf, &flags) == -1 ||
+	    ibuf_get_n8(buf, &type) == -1)
+		goto bad_len;
 
 	/* get the attribute length */
 	if (flags & ATTR_EXTLEN) {
-		if (len < 4) {
-			warnx("Too short BGP attribute");
-			return;
-		}
-		memcpy(&alen, data+2, sizeof(uint16_t));
-		alen = ntohs(alen);
-		data += 4;
-		len -= 4;
+		uint16_t attr_len;
+		if (ibuf_get_n16(buf, &attr_len) == -1)
+			goto bad_len;
+		alen = attr_len;
 	} else {
-		alen = data[2];
-		data += 3;
-		len -= 3;
+		uint8_t attr_len;
+		if (ibuf_get_n8(buf, &attr_len) == -1)
+			goto bad_len;
+		alen = attr_len;
 	}
 
 	/* bad imsg len how can that happen!? */
-	if (alen > len) {
-		warnx("Bad BGP attribute length");
-		return;
-	}
+	if (alen > ibuf_size(buf))
+		goto bad_len;
 
 	printf("    %s: ", fmt_attr(type, flags));
 
 	switch (type) {
 	case ATTR_ORIGIN:
-		if (alen == 1)
-			printf("%s", fmt_origin(*data, 0));
-		else
-			printf("bad length");
+		if (alen != 1 || ibuf_get_n8(buf, &origin) == -1)
+			goto bad_len;
+		printf("%s", fmt_origin(origin, 0));
 		break;
 	case ATTR_ASPATH:
 	case ATTR_AS4_PATH:
-		ibuf_from_buffer(buf, data, alen);
 		/* prefer 4-byte AS here */
 		e4 = aspath_verify(buf, 1, 0);
 		e2 = aspath_verify(buf, 0, 0);
@@ -842,68 +817,48 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 		ibuf_free(path);
 		break;
 	case ATTR_NEXTHOP:
-		if (alen == 4) {
-			memcpy(&id, data, sizeof(id));
-			printf("%s", inet_ntoa(id));
-		} else
-			printf("bad length");
+	case ATTR_ORIGINATOR_ID:
+		if (alen != 4 || ibuf_get(buf, &id, sizeof(id)) == -1)
+			goto bad_len;
+		printf("%s", inet_ntoa(id));
 		break;
 	case ATTR_MED:
 	case ATTR_LOCALPREF:
-		if (alen == 4) {
-			uint32_t val;
-			memcpy(&val, data, sizeof(val));
-			val = ntohl(val);
-			printf("%u", val);
-		} else
-			printf("bad length");
+		if (alen != 4 || ibuf_get_n32(buf, &val) == -1)
+			goto bad_len;
+		printf("%u", val);
 		break;
 	case ATTR_AGGREGATOR:
 	case ATTR_AS4_AGGREGATOR:
 		if (alen == 8) {
-			memcpy(&as, data, sizeof(as));
-			memcpy(&id, data + sizeof(as), sizeof(id));
-			as = ntohl(as);
+			if (ibuf_get_n32(buf, &as) == -1 ||
+			    ibuf_get(buf, &id, sizeof(id)) == -1)
+				goto bad_len;
 		} else if (alen == 6) {
-			memcpy(&short_as, data, sizeof(short_as));
-			memcpy(&id, data + sizeof(short_as), sizeof(id));
-			as = ntohs(short_as);
+			if (ibuf_get_n16(buf, &short_as) == -1 ||
+			    ibuf_get(buf, &id, sizeof(id)) == -1)
+				goto bad_len;
+			as = short_as;
 		} else {
-			printf("bad length");
-			break;
+			goto bad_len;
 		}
 		printf("%s [%s]", log_as(as), inet_ntoa(id));
 		break;
 	case ATTR_COMMUNITIES:
-		show_community(data, alen);
-		break;
-	case ATTR_ORIGINATOR_ID:
-		if (alen == 4) {
-			memcpy(&id, data, sizeof(id));
-			printf("%s", inet_ntoa(id));
-		} else
-			printf("bad length");
+		show_community(buf);
 		break;
 	case ATTR_CLUSTER_LIST:
-		for (ioff = 0; ioff + sizeof(id) <= alen;
-		    ioff += sizeof(id)) {
-			memcpy(&id, data + ioff, sizeof(id));
+		while (ibuf_size(buf) > 0) {
+			if (ibuf_get(buf, &id, sizeof(id)) == -1)
+				goto bad_len;
 			printf(" %s", inet_ntoa(id));
 		}
 		break;
 	case ATTR_MP_REACH_NLRI:
 	case ATTR_MP_UNREACH_NLRI:
-		if (alen < 3) {
- bad_len:
-			printf("bad length");
-			break;
-		}
-		memcpy(&afi, data, 2);
-		data += 2;
-		alen -= 2;
-		afi = ntohs(afi);
-		safi = *data++;
-		alen--;
+		if (ibuf_get_n16(buf, &afi) == -1 ||
+		    ibuf_get_n8(buf, &safi) == -1)
+			goto bad_len;
 
 		if (afi2aid(afi, safi, &aid) == -1) {
 			printf("bad AFI/SAFI pair");
@@ -914,11 +869,7 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 		if (type == ATTR_MP_REACH_NLRI) {
 			struct bgpd_addr nexthop;
 			uint8_t nhlen;
-			if (len == 0)
-				goto bad_len;
-			nhlen = *data++;
-			alen--;
-			if (nhlen > len)
+			if (ibuf_get_n8(buf, &nhlen) == -1)
 				goto bad_len;
 			memset(&nexthop, 0, sizeof(nexthop));
 			switch (aid) {
@@ -926,34 +877,38 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 				nexthop.aid = aid;
 				if (nhlen != 16 && nhlen != 32)
 					goto bad_len;
-				memcpy(&nexthop.v6.s6_addr, data, 16);
+				if (ibuf_get(buf, &nexthop.v6,
+				    sizeof(nexthop.v6)) == -1)
+					goto bad_len;
 				break;
 			case AID_VPN_IPv4:
 				if (nhlen != 12)
 					goto bad_len;
 				nexthop.aid = AID_INET;
-				memcpy(&nexthop.v4, data + sizeof(uint64_t),
-				    sizeof(nexthop.v4));
+				if (ibuf_skip(buf, sizeof(uint64_t)) == -1 ||
+				    ibuf_get(buf, &nexthop.v4,
+				    sizeof(nexthop.v4)) == -1)
+					goto bad_len;
 				break;
 			case AID_VPN_IPv6:
 				if (nhlen != 24)
 					goto bad_len;
 				nexthop.aid = AID_INET6;
-				memcpy(&nexthop.v6, data + sizeof(uint64_t),
-				    sizeof(nexthop.v6));
+				if (ibuf_skip(buf, sizeof(uint64_t)) == -1 ||
+				    ibuf_get(buf, &nexthop.v6,
+				    sizeof(nexthop.v6)) == -1)
+					goto bad_len;
 				break;
 			default:
 				printf("unhandled AID #%u", aid);
 				goto done;
 			}
 			/* ignore reserved (old SNPA) field as per RFC4760 */
-			data += nhlen + 1;
-			alen -= nhlen + 1;
+			if (ibuf_skip(buf, 1) == -1)
+				goto bad_len;
 
 			printf(" nexthop: %s", log_addr(&nexthop));
 		}
-
-		ibuf_from_buffer(buf, data, alen);
 
 		while (ibuf_size(buf) > 0) {
 			if (addpath)
@@ -985,32 +940,36 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 		}
 		break;
 	case ATTR_EXT_COMMUNITIES:
-		show_ext_community(data, alen);
+		show_ext_community(buf);
 		break;
 	case ATTR_LARGE_COMMUNITIES:
-		show_large_community(data, alen);
+		show_large_community(buf);
 		break;
 	case ATTR_OTC:
-		if (alen == 4) {
-			memcpy(&as, data, sizeof(as));
-			as = ntohl(as);
-			printf("%s", log_as(as));
-		} else {
-			printf("bad length");
-		}
+		if (alen != 4 || ibuf_get_n32(buf, &as) == -1)
+			goto bad_len;
+		printf("%s", log_as(as));
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
 	default:
-		printf(" len %u", alen);
+		printf(" len %zu", alen);
 		if (alen) {
 			printf(":");
-			for (i=0; i < alen; i++)
-				printf(" %02x", *(data+i));
+			for (i = 0; i < alen; i++) {
+				if (ibuf_get_n8(buf, &b) == -1)
+					goto bad_len;
+				printf(" %02x", b);
+			}
 		}
 		break;
 	}
+
  done:
 	printf("%c", EOL0(reqflags));
+	return;
+
+ bad_len:
+	printf("bad length%c", EOL0(reqflags));
 }
 
 static void

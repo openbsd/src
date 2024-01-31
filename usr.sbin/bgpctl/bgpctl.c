@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.303 2024/01/30 13:51:13 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.304 2024/01/31 11:23:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -471,7 +471,7 @@ show(struct imsg *imsg, struct parse_result *res)
 	struct ctl_show_rib	 rib;
 	struct rde_memstats	 stats;
 	struct ibuf		 ibuf;
-	u_int			 rescode, ilen;
+	u_int			 rescode;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
@@ -542,14 +542,11 @@ show(struct imsg *imsg, struct parse_result *res)
 		output->communities(&ibuf, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_ATTR:
-		ilen = imsg->hdr.len - IMSG_HEADER_SIZE;
-		if (ilen < 3) {
-			warnx("bad IMSG_CTL_SHOW_RIB_ATTR received");
-			break;
-		}
 		if (output->attr == NULL)
 			break;
-		output->attr(imsg->data, ilen, res->flags, 0);
+		if (imsg_get_ibuf(imsg, &ibuf) == -1)
+			err(1, "imsg_get_ibuf");
+		output->attr(&ibuf, res->flags, 0);
 		break;
 	case IMSG_CTL_SHOW_RIB_MEM:
 		if (output->rib_mem == NULL)
@@ -1295,9 +1292,11 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		ibuf_from_buffer(&ibuf, mre->aspath, mre->aspath_len);
 		output->rib(&ctl, &ibuf, &res);
 		if (req->flags & F_CTL_DETAIL) {
-			for (j = 0; j < mre->nattrs; j++)
-				output->attr(mre->attrs[j].attr,
-				    mre->attrs[j].attr_len, req->flags, 0);
+			for (j = 0; j < mre->nattrs; j++) {
+				ibuf_from_buffer(&ibuf, mre->attrs[j].attr,
+				    mre->attrs[j].attr_len);
+				output->attr(&ibuf, req->flags, 0);
+			}
 		}
 	}
 }
@@ -1752,8 +1751,7 @@ show_mrt_update(u_char *p, uint16_t len, int reqflags, int addpath)
 		if (ibuf_skip(&abuf, ibuf_size(&attrbuf)) == -1)
 			goto trunc;
 
-		output->attr(ibuf_data(&attrbuf), ibuf_size(&attrbuf),
-		    reqflags, addpath);
+		output->attr(&attrbuf, reqflags, addpath);
 	}
 
 	if (ibuf_size(b) > 0) {
