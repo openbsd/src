@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.41 2023/12/10 14:18:23 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.42 2024/02/01 15:11:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -259,7 +259,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	nid = OBJ_obj2nid(obj);
 	if (nid != NID_sha256) {
 		warnx("%s: RFC 6488: wrong digest %s, want %s", fn,
-		    OBJ_nid2ln(nid), OBJ_nid2ln(NID_sha256));
+		    nid2str(nid), LN_sha256);
 		goto out;
 	}
 	X509_ALGOR_get0(&obj, NULL, NULL, psig);
@@ -271,7 +271,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	} else if (nid != NID_rsaEncryption &&
 	    nid != NID_sha256WithRSAEncryption) {
 		warnx("%s: RFC 6488: wrong signature algorithm %s, want %s",
-		    fn, OBJ_nid2ln(nid), OBJ_nid2ln(NID_rsaEncryption));
+		    fn, nid2str(nid), LN_rsaEncryption);
 		goto out;
 	}
 

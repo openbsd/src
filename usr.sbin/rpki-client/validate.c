@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.70 2024/01/07 09:48:03 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.71 2024/02/01 15:11:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -665,7 +665,7 @@ valid_ca_pkey_ec(const char *fn, EVP_PKEY *pkey)
 	nid = EC_GROUP_get_curve_name(group);
 	if (nid != NID_X9_62_prime256v1) {
 		if ((cname = EC_curve_nid2nist(nid)) == NULL)
-			cname = OBJ_nid2sn(nid);
+			cname = nid2str(nid);
 		warnx("%s: Expected P-256, got %s", fn, cname);
 		return 0;
 	}

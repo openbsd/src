@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.76 2024/01/31 15:01:13 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.77 2024/02/01 15:11:38 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -362,7 +362,7 @@ x509_get_pubkey(X509 *x, const char *fn)
 	nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
 	if (nid != NID_X9_62_prime256v1) {
 		if ((cname = EC_curve_nid2nist(nid)) == NULL)
-			cname = OBJ_nid2sn(nid);
+			cname = nid2str(nid);
 		warnx("%s: Expected P-256, got %s", fn, cname);
 		goto out;
 	}
@@ -955,8 +955,8 @@ x509_valid_subject(const char *fn, const X509 *x)
 			warnx("%s: OBJ_obj2nid failed", fn);
 			return 0;
 		default:
-			warnx("%s: RFC 6487 section 4.5: unexpected attribute "
-			    "%d (%s)", fn, nid, OBJ_nid2ln(nid));
+			warnx("%s: RFC 6487 section 4.5: unexpected attribute"
+			    " %s", fn, nid2str(nid));
 			return 0;
 		}
 	}

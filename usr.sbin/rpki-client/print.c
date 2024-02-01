@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.45 2024/01/18 14:34:26 job Exp $ */
+/*	$OpenBSD: print.c,v 1.46 2024/02/01 15:11:38 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -46,6 +46,22 @@ pretty_key_id(const char *hex)
 		memcpy(buf + sizeof(buf) - 4, "...", 4);
 	else
 		buf[i] = '\0';
+	return buf;
+}
+
+char *
+nid2str(int nid)
+{
+	static char buf[128];
+	const char *name;
+
+	if ((name = OBJ_nid2ln(nid)) == NULL)
+		name = OBJ_nid2sn(nid);
+	if (name == NULL)
+		name = "unknown";
+
+	snprintf(buf, sizeof(buf), "nid %d (%s)", nid, name);
+
 	return buf;
 }
 
