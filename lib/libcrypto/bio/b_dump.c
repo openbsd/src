@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.26 2023/07/29 02:32:00 tb Exp $ */
+/* $OpenBSD: b_dump.c,v 1.27 2024/02/01 17:04:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,21 +64,14 @@
 #include <string.h>
 
 #include <openssl/bio.h>
+#include <openssl/err.h>
 
 #define TRUNCATE
 #define DUMP_WIDTH	16
 #define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
 
 int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
-{
-	return BIO_dump_indent_cb(cb, u, s, len, 0);
-}
-
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
+BIO_dump_indent(BIO *bio, const char *s, int len, int indent)
 {
 	char buf[288 + 1], tmp[20], str[128 + 1];
 	int i, j, rows, trc, written;
@@ -132,7 +125,7 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 		/* if this is the last call then update the ddt_dump thing so
 		 * that we will move the selection point in the debug window
 		 */
-		if ((written = cb((void *)buf, strlen(buf), u)) < 0)
+		if ((written = BIO_write(bio, buf, strlen(buf))) < 0)
 			return -1;
 		ret += written;
 
@@ -141,50 +134,54 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 	if (trc > 0) {
 		snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n",
 		    str, len + trc);
-		if ((written = cb((void *)buf, strlen(buf), u)) < 0)
+		if ((written = BIO_write(bio, buf, strlen(buf))) < 0)
 			return -1;
 		ret += written;
 	}
 #endif
 	return (ret);
 }
+LCRYPTO_ALIAS(BIO_dump_indent);
 
-static int
-write_fp(const void *data, size_t len, void *fp)
+int
+BIO_dump(BIO *bio, const char *s, int len)
 {
-	return fwrite(data, 1, len, fp);
+	return BIO_dump_indent(bio, s, len, 0);
+}
+LCRYPTO_ALIAS(BIO_dump);
+
+/*
+ * XXX - remove the functions below in the next major bump.
+ */
+
+int
+BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
+    void *u, const char *s, int len)
+{
+	BIOerror(ERR_R_DISABLED);
+	return -1;
+}
+
+int
+BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
+    void *u, const char *s, int len, int indent)
+{
+	BIOerror(ERR_R_DISABLED);
+	return -1;
 }
 
 int
 BIO_dump_fp(FILE *fp, const char *s, int len)
 {
-	return BIO_dump_cb(write_fp, fp, s, len);
+	BIOerror(ERR_R_DISABLED);
+	return -1;
 }
 LCRYPTO_ALIAS(BIO_dump_fp);
 
 int
 BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
 {
-	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
+	BIOerror(ERR_R_DISABLED);
+	return -1;
 }
 LCRYPTO_ALIAS(BIO_dump_indent_fp);
-
-static int
-write_bio(const void *data, size_t len, void *bp)
-{
-	return BIO_write((BIO *)bp, (const char *)data, len);
-}
-
-int
-BIO_dump(BIO *bp, const char *s, int len)
-{
-	return BIO_dump_cb(write_bio, bp, s, len);
-}
-LCRYPTO_ALIAS(BIO_dump);
-
-int
-BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
-{
-	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
-}
-LCRYPTO_ALIAS(BIO_dump_indent);
