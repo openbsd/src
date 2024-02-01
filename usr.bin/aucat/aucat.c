@@ -220,7 +220,7 @@ static int
 slot_new(char *path, int mode, struct aparams *par, int hdr,
     int cmin, int cmax, int rate, int dup, int vol, long long pos)
 {
-	struct slot *s;
+	struct slot *s, **ps;
 
 	s = xmalloc(sizeof(struct slot));
 	if (!afile_open(&s->afile, path, hdr,
@@ -273,8 +273,10 @@ slot_new(char *path, int mode, struct aparams *par, int hdr,
 		}
 		log_puts("\n");
 	}
-	s->next = slot_list;
-	slot_list = s;
+	for (ps = &slot_list; *ps != NULL; ps = &(*ps)->next)
+		;
+	s->next = NULL;
+	*ps = s;
 	return 1;
 }
 
@@ -801,6 +803,7 @@ dev_slotvol(int midich, int val)
 #endif
 			break;
 		}
+		midich--;
 	}
 }
 
