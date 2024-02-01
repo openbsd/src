@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.h,v 1.6 2024/01/23 15:56:48 claudio Exp $ */
+/*	$OpenBSD: mrtparser.h,v 1.7 2024/02/01 11:37:10 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -76,9 +76,8 @@ struct mrt_bgp_msg {
 	struct bgpd_addr dst;
 	uint32_t	 src_as;
 	uint32_t	 dst_as;
-	uint16_t	 msg_len;
 	uint8_t		 add_path;
-	void		*msg;
+	struct ibuf	 msg;
 };
 
 #define MRT_ATTR_ORIGIN		1

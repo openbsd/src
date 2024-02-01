@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.21 2024/01/23 16:16:15 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.22 2024/02/01 11:37:10 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -29,50 +29,28 @@
 #include "mrt.h"
 #include "mrtparser.h"
 
-void	*mrt_read_msg(int, struct mrt_hdr *);
-size_t	 mrt_read_buf(int, void *, size_t);
-
-struct mrt_peer	*mrt_parse_v2_peer(struct mrt_hdr *, void *);
-struct mrt_rib	*mrt_parse_v2_rib(struct mrt_hdr *, void *, int);
-int	mrt_parse_dump(struct mrt_hdr *, void *, struct mrt_peer **,
+struct mrt_peer	*mrt_parse_v2_peer(struct mrt_hdr *, struct ibuf *);
+struct mrt_rib	*mrt_parse_v2_rib(struct mrt_hdr *, struct ibuf *, int);
+int	mrt_parse_dump(struct mrt_hdr *, struct ibuf *, struct mrt_peer **,
 	    struct mrt_rib **);
-int	mrt_parse_dump_mp(struct mrt_hdr *, void *, struct mrt_peer **,
+int	mrt_parse_dump_mp(struct mrt_hdr *, struct ibuf *, struct mrt_peer **,
 	    struct mrt_rib **, int);
-int	mrt_extract_attr(struct mrt_rib_entry *, u_char *, int, uint8_t, int);
+int	mrt_extract_attr(struct mrt_rib_entry *, struct ibuf *, uint8_t, int);
 
 void	mrt_free_peers(struct mrt_peer *);
 void	mrt_free_rib(struct mrt_rib *);
-void	mrt_free_bgp_state(struct mrt_bgp_state *);
-void	mrt_free_bgp_msg(struct mrt_bgp_msg *);
 
-u_char *mrt_aspath_inflate(void *, uint16_t, uint16_t *);
-int	mrt_extract_addr(void *, u_int, struct bgpd_addr *, uint8_t);
-int	mrt_extract_prefix(void *, u_int, uint8_t, struct bgpd_addr *,
+u_char *mrt_aspath_inflate(struct ibuf *, uint16_t *);
+int	mrt_extract_addr(struct ibuf *, struct bgpd_addr *, uint8_t);
+int	mrt_extract_prefix(struct ibuf *, uint8_t, struct bgpd_addr *,
 	    uint8_t *, int);
 
-struct mrt_bgp_state	*mrt_parse_state(struct mrt_hdr *, void *, int);
-struct mrt_bgp_msg	*mrt_parse_msg(struct mrt_hdr *, void *, int);
+int	mrt_parse_state(struct mrt_bgp_state *, struct mrt_hdr *,
+	    struct ibuf *, int);
+int	mrt_parse_msg(struct mrt_bgp_msg *, struct mrt_hdr *,
+	    struct ibuf *, int);
 
-void *
-mrt_read_msg(int fd, struct mrt_hdr *hdr)
-{
-	void *buf;
-
-	memset(hdr, 0, sizeof(*hdr));
-	if (mrt_read_buf(fd, hdr, sizeof(*hdr)) != sizeof(*hdr))
-		return (NULL);
-
-	if ((buf = malloc(ntohl(hdr->length))) == NULL)
-		err(1, "malloc(%d)", hdr->length);
-
-	if (mrt_read_buf(fd, buf, ntohl(hdr->length)) != ntohl(hdr->length)) {
-		free(buf);
-		return (NULL);
-	}
-	return (buf);
-}
-
-size_t
+static size_t
 mrt_read_buf(int fd, void *buf, size_t len)
 {
 	char *b = buf;
@@ -93,17 +71,41 @@ mrt_read_buf(int fd, void *buf, size_t len)
 	return (b - (char *)buf);
 }
 
+static struct ibuf *
+mrt_read_msg(int fd, struct mrt_hdr *hdr)
+{
+	struct ibuf *buf;
+	size_t len;
+
+	memset(hdr, 0, sizeof(*hdr));
+	if (mrt_read_buf(fd, hdr, sizeof(*hdr)) != sizeof(*hdr))
+		return (NULL);
+
+	len = ntohl(hdr->length);
+	if ((buf = ibuf_open(len)) == NULL)
+		err(1, "ibuf_open(%zu)", len);
+
+	if (mrt_read_buf(fd, ibuf_reserve(buf, len), len) != len) {
+		ibuf_free(buf);
+		return (NULL);
+	}
+	return (buf);
+}
+
 void
 mrt_parse(int fd, struct mrt_parser *p, int verbose)
 {
 	struct mrt_hdr		h;
+	struct mrt_bgp_state	s;
+	struct mrt_bgp_msg	m;
 	struct mrt_peer		*pctx = NULL;
 	struct mrt_rib		*r;
-	struct mrt_bgp_state	*s;
-	struct mrt_bgp_msg	*m;
-	void			*msg;
+	struct ibuf		*msg;
 
-	while ((msg = mrt_read_msg(fd, &h))) {
+	while ((msg = mrt_read_msg(fd, &h)) != NULL) {
+		if (ibuf_size(msg) != ntohl(h.length))
+			errx(1, "corrupt message, %zu vs %u", ibuf_size(msg),
+			    ntohl(h.length));
 		switch (ntohs(h.type)) {
 		case MSG_NULL:
 		case MSG_START:
@@ -188,10 +190,10 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			switch (ntohs(h.subtype)) {
 			case BGP4MP_STATE_CHANGE:
 			case BGP4MP_STATE_CHANGE_AS4:
-				if ((s = mrt_parse_state(&h, msg, verbose))) {
+				if (mrt_parse_state(&s, &h, msg,
+				    verbose) != -1) {
 					if (p->state)
-						p->state(s, p->arg);
-					free(s);
+						p->state(&s, p->arg);
 				}
 				break;
 			case BGP4MP_MESSAGE:
@@ -202,11 +204,9 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			case BGP4MP_MESSAGE_AS4_ADDPATH:
 			case BGP4MP_MESSAGE_LOCAL_ADDPATH:
 			case BGP4MP_MESSAGE_AS4_LOCAL_ADDPATH:
-				if ((m = mrt_parse_msg(&h, msg, verbose))) {
+				if (mrt_parse_msg(&m, &h, msg, verbose) != -1) {
 					if (p->message)
-						p->message(m, p->arg);
-					free(m->msg);
-					free(m);
+						p->message(&m, p->arg);
 				}
 				break;
 			case BGP4MP_ENTRY:
@@ -231,7 +231,7 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 				printf("unknown MRT type %d\n", ntohs(h.type));
 			break;
 		}
-		free(msg);
+		ibuf_free(msg);
 	}
 	if (pctx)
 		mrt_free_peers(pctx);
@@ -262,16 +262,14 @@ mrt_afi2aid(int afi, int safi, int verbose)
 }
 
 struct mrt_peer *
-mrt_parse_v2_peer(struct mrt_hdr *hdr, void *msg)
+mrt_parse_v2_peer(struct mrt_hdr *hdr, struct ibuf *msg)
 {
 	struct mrt_peer_entry	*peers = NULL;
 	struct mrt_peer	*p;
-	uint8_t		*b = msg;
-	uint32_t	bid, as4;
-	uint16_t	cnt, i, as2;
-	u_int		len = ntohl(hdr->length);
+	uint32_t	bid;
+	uint16_t	cnt, i;
 
-	if (len < 8)	/* min msg size */
+	if (ibuf_size(msg) < 8)	/* min msg size */
 		return NULL;
 
 	p = calloc(1, sizeof(struct mrt_peer));
@@ -279,38 +277,24 @@ mrt_parse_v2_peer(struct mrt_hdr *hdr, void *msg)
 		err(1, "calloc");
 
 	/* collector bgp id */
-	memcpy(&bid, b, sizeof(bid));
-	b += sizeof(bid);
-	len -= sizeof(bid);
-	p->bgp_id = ntohl(bid);
-
-	/* view name length */
-	memcpy(&cnt, b, sizeof(cnt));
-	b += sizeof(cnt);
-	len -= sizeof(cnt);
-	cnt = ntohs(cnt);
+	if (ibuf_get_n32(msg, &bid) == -1 ||
+	    ibuf_get_n16(msg, &cnt) == -1)
+		goto fail;
 
 	/* view name */
-	if (cnt > len)
-		goto fail;
 	if (cnt != 0) {
 		if ((p->view = malloc(cnt + 1)) == NULL)
 			err(1, "malloc");
-		memcpy(p->view, b, cnt);
+		if (ibuf_get(msg, p->view, cnt) == -1)
+			goto fail;
 		p->view[cnt] = 0;
 	} else
 		if ((p->view = strdup("")) == NULL)
 			err(1, "strdup");
-	b += cnt;
-	len -= cnt;
 
 	/* peer_count */
-	if (len < sizeof(cnt))
+	if (ibuf_get_n16(msg, &cnt) == -1)
 		goto fail;
-	memcpy(&cnt, b, sizeof(cnt));
-	b += sizeof(cnt);
-	len -= sizeof(cnt);
-	cnt = ntohs(cnt);
 
 	/* peer entries */
 	if ((peers = calloc(cnt, sizeof(struct mrt_peer_entry))) == NULL)
@@ -318,41 +302,30 @@ mrt_parse_v2_peer(struct mrt_hdr *hdr, void *msg)
 	for (i = 0; i < cnt; i++) {
 		uint8_t type;
 
-		if (len < sizeof(uint8_t) + sizeof(uint32_t))
+		if (ibuf_get_n8(msg, &type) == -1 ||
+		    ibuf_get_n32(msg, &peers[i].bgp_id) == -1)
 			goto fail;
-		type = *b++;
-		len -= 1;
-		memcpy(&bid, b, sizeof(bid));
-		b += sizeof(bid);
-		len -= sizeof(bid);
-		peers[i].bgp_id = ntohl(bid);
 
 		if (type & MRT_DUMP_V2_PEER_BIT_I) {
-			if (mrt_extract_addr(b, len, &peers[i].addr,
+			if (mrt_extract_addr(msg, &peers[i].addr,
 			    AID_INET6) == -1)
 				goto fail;
-			b += sizeof(struct in6_addr);
-			len -= sizeof(struct in6_addr);
 		} else {
-			if (mrt_extract_addr(b, len, &peers[i].addr,
+			if (mrt_extract_addr(msg, &peers[i].addr,
 			    AID_INET) == -1)
 				goto fail;
-			b += sizeof(struct in_addr);
-			len -= sizeof(struct in_addr);
 		}
 
 		if (type & MRT_DUMP_V2_PEER_BIT_A) {
-			memcpy(&as4, b, sizeof(as4));
-			b += sizeof(as4);
-			len -= sizeof(as4);
-			as4 = ntohl(as4);
+			if (ibuf_get_n32(msg, &peers[i].asnum) == -1)
+				goto fail;
 		} else {
-			memcpy(&as2, b, sizeof(as2));
-			b += sizeof(as2);
-			len -= sizeof(as2);
-			as4 = ntohs(as2);
+			uint16_t as2;
+
+			if (ibuf_get_n16(msg, &as2) == -1)
+				goto fail;
+			peers[i].asnum = as2;
 		}
-		peers[i].asnum = as4;
 	}
 	p->peers = peers;
 	p->npeers = cnt;
@@ -364,29 +337,20 @@ fail:
 }
 
 struct mrt_rib *
-mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
+mrt_parse_v2_rib(struct mrt_hdr *hdr, struct ibuf *msg, int verbose)
 {
 	struct mrt_rib_entry *entries = NULL;
 	struct mrt_rib	*r;
-	uint8_t		*b = msg;
-	u_int		len = ntohl(hdr->length);
-	uint32_t	snum, path_id = 0;
-	uint16_t	cnt, i, afi;
+	uint16_t	i, afi;
 	uint8_t		safi, aid;
-	int		ret;
-
-	if (len < sizeof(snum) + 1)
-		return NULL;
 
 	r = calloc(1, sizeof(struct mrt_rib));
 	if (r == NULL)
 		err(1, "calloc");
 
 	/* seq_num */
-	memcpy(&snum, b, sizeof(snum));
-	b += sizeof(snum);
-	len -= sizeof(snum);
-	r->seqnum = ntohl(snum);
+	if (ibuf_get_n32(msg, &r->seqnum) == -1)
+		goto fail;
 
 	switch (ntohs(hdr->subtype)) {
 	case MRT_DUMP_V2_RIB_IPV4_UNICAST_ADDPATH:
@@ -396,9 +360,8 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 	case MRT_DUMP_V2_RIB_IPV4_UNICAST:
 	case MRT_DUMP_V2_RIB_IPV4_MULTICAST:
 		/* prefix */
-		ret = mrt_extract_prefix(b, len, AID_INET, &r->prefix,
-		    &r->prefixlen, verbose);
-		if (ret == -1)
+		if (mrt_extract_prefix(msg, AID_INET, &r->prefix,
+		    &r->prefixlen, verbose) == -1)
 			goto fail;
 		break;
 	case MRT_DUMP_V2_RIB_IPV6_UNICAST_ADDPATH:
@@ -408,9 +371,8 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 	case MRT_DUMP_V2_RIB_IPV6_UNICAST:
 	case MRT_DUMP_V2_RIB_IPV6_MULTICAST:
 		/* prefix */
-		ret = mrt_extract_prefix(b, len, AID_INET6, &r->prefix,
-		    &r->prefixlen, verbose);
-		if (ret == -1)
+		if (mrt_extract_prefix(msg, AID_INET6, &r->prefix,
+		    &r->prefixlen, verbose) == -1)
 			goto fail;
 		break;
 	case MRT_DUMP_V2_RIB_GENERIC_ADDPATH:
@@ -423,86 +385,58 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 		/* FALLTHROUGH */
 	case MRT_DUMP_V2_RIB_GENERIC:
 		/* fetch AFI/SAFI pair */
-		if (len < 3)
+		if (ibuf_get_n16(msg, &afi) == -1 ||
+		    ibuf_get_n8(msg, &safi) == -1)
 			goto fail;
-		memcpy(&afi, b, sizeof(afi));
-		b += sizeof(afi);
-		len -= sizeof(afi);
-		afi = ntohs(afi);
-
-		safi = *b++;
-		len -= 1;
 
 		if ((aid = mrt_afi2aid(afi, safi, verbose)) == AID_UNSPEC)
 			goto fail;
 
 		/* prefix */
-		ret = mrt_extract_prefix(b, len, aid, &r->prefix,
-		    &r->prefixlen, verbose);
-		if (ret == -1)
+		if (mrt_extract_prefix(msg, aid, &r->prefix,
+		    &r->prefixlen, verbose) == -1)
 			goto fail;
 		break;
 	default:
 		errx(1, "unknown subtype %hd", ntohs(hdr->subtype));
 	}
 
-	/* adjust length */
-	b += ret;
-	len -= ret;
-
 	/* entries count */
-	if (len < sizeof(cnt))
+	if (ibuf_get_n16(msg, &r->nentries) == -1)
 		goto fail;
-	memcpy(&cnt, b, sizeof(cnt));
-	b += sizeof(cnt);
-	len -= sizeof(cnt);
-	cnt = ntohs(cnt);
-	r->nentries = cnt;
 
 	/* entries */
-	if ((entries = calloc(cnt, sizeof(struct mrt_rib_entry))) == NULL)
+	if ((entries = calloc(r->nentries, sizeof(struct mrt_rib_entry))) ==
+	    NULL)
 		err(1, "calloc");
-	for (i = 0; i < cnt; i++) {
+	for (i = 0; i < r->nentries; i++) {
+		struct ibuf	abuf;
 		uint32_t	otm;
-		uint16_t	pix, alen;
-		if (len < 2 * sizeof(uint16_t) + sizeof(uint32_t))
-			goto fail;
+		uint16_t	alen;
+
 		/* peer index */
-		memcpy(&pix, b, sizeof(pix));
-		b += sizeof(pix);
-		len -= sizeof(pix);
-		entries[i].peer_idx = ntohs(pix);
+		if (ibuf_get_n16(msg, &entries[i].peer_idx) == -1)
+			goto fail;
 
 		/* originated */
-		memcpy(&otm, b, sizeof(otm));
-		b += sizeof(otm);
-		len -= sizeof(otm);
-		entries[i].originated = ntohl(otm);
+		if (ibuf_get_n32(msg, &otm) == -1)
+			goto fail;
+		entries[i].originated = otm;
 
 		if (r->add_path) {
-			if (len < sizeof(path_id) + sizeof(alen))
+			if (ibuf_get_n32(msg, &entries[i].path_id) == -1)
 				goto fail;
-			memcpy(&path_id, b, sizeof(path_id));
-			b += sizeof(path_id);
-			len -= sizeof(path_id);
-			path_id = ntohl(path_id);
 		}
-		entries[i].path_id = path_id;
 
 		/* attr_len */
-		memcpy(&alen, b, sizeof(alen));
-		b += sizeof(alen);
-		len -= sizeof(alen);
-		alen = ntohs(alen);
+		if (ibuf_get_n16(msg, &alen) == -1 ||
+		    ibuf_get_ibuf(msg, alen, &abuf) == -1)
+			goto fail;
 
 		/* attr */
-		if (len < alen)
+		if (mrt_extract_attr(&entries[i], &abuf, r->prefix.aid,
+		    1) == -1)
 			goto fail;
-		if (mrt_extract_attr(&entries[i], b, alen,
-		    r->prefix.aid, 1) == -1)
-			goto fail;
-		b += alen;
-		len -= alen;
 	}
 	r->entries = entries;
 	return (r);
@@ -513,15 +447,15 @@ fail:
 }
 
 int
-mrt_parse_dump(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
+mrt_parse_dump(struct mrt_hdr *hdr, struct ibuf *msg, struct mrt_peer **pp,
     struct mrt_rib **rp)
 {
+	struct ibuf		 abuf;
 	struct mrt_peer		*p;
 	struct mrt_rib		*r;
 	struct mrt_rib_entry	*re;
-	uint8_t			*b = msg;
-	u_int			 len = ntohl(hdr->length);
-	uint16_t		 asnum, alen;
+	uint32_t		 tmp32;
+	uint16_t		 tmp16, alen;
 
 	if (*pp == NULL) {
 		*pp = calloc(1, sizeof(struct mrt_peer));
@@ -543,76 +477,48 @@ mrt_parse_dump(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 	r->nentries = 1;
 	r->entries = re;
 
-	if (len < 2 * sizeof(uint16_t))
+	if (ibuf_skip(msg, sizeof(uint16_t)) == -1 ||	/* view */
+	    ibuf_get_n16(msg, &tmp16) == -1)		/* seqnum */
 		goto fail;
-	/* view */
-	b += sizeof(uint16_t);
-	len -= sizeof(uint16_t);
-	/* seqnum */
-	memcpy(&r->seqnum, b, sizeof(uint16_t));
-	b += sizeof(uint16_t);
-	len -= sizeof(uint16_t);
-	r->seqnum = ntohs(r->seqnum);
+	r->seqnum = tmp16;
 
 	switch (ntohs(hdr->subtype)) {
 	case MRT_DUMP_AFI_IP:
-		if (mrt_extract_addr(b, len, &r->prefix, AID_INET) == -1)
+		if (mrt_extract_addr(msg, &r->prefix, AID_INET) == -1)
 			goto fail;
-		b += sizeof(struct in_addr);
-		len -= sizeof(struct in_addr);
 		break;
 	case MRT_DUMP_AFI_IPv6:
-		if (mrt_extract_addr(b, len, &r->prefix, AID_INET6) == -1)
+		if (mrt_extract_addr(msg, &r->prefix, AID_INET6) == -1)
 			goto fail;
-		b += sizeof(struct in6_addr);
-		len -= sizeof(struct in6_addr);
 		break;
 	}
-	if (len < 2 * sizeof(uint32_t) + 2 * sizeof(uint16_t) + 2)
+	if (ibuf_get_n8(msg, &r->prefixlen) == -1 ||	/* prefixlen */
+	    ibuf_skip(msg, 1) == -1 ||			/* status */
+	    ibuf_get_n32(msg, &tmp32) == -1)		/* originated */
 		goto fail;
-	r->prefixlen = *b++;
-	len -= 1;
-	/* status */
-	b += 1;
-	len -= 1;
-	/* originated */
-	memcpy(&re->originated, b, sizeof(uint32_t));
-	b += sizeof(uint32_t);
-	len -= sizeof(uint32_t);
-	re->originated = ntohl(re->originated);
+	re->originated = tmp32;
 	/* peer ip */
 	switch (ntohs(hdr->subtype)) {
 	case MRT_DUMP_AFI_IP:
-		if (mrt_extract_addr(b, len, &p->peers->addr, AID_INET) == -1)
+		if (mrt_extract_addr(msg, &p->peers->addr, AID_INET) == -1)
 			goto fail;
-		b += sizeof(struct in_addr);
-		len -= sizeof(struct in_addr);
 		break;
 	case MRT_DUMP_AFI_IPv6:
-		if (mrt_extract_addr(b, len, &p->peers->addr, AID_INET6) == -1)
+		if (mrt_extract_addr(msg, &p->peers->addr, AID_INET6) == -1)
 			goto fail;
-		b += sizeof(struct in6_addr);
-		len -= sizeof(struct in6_addr);
 		break;
 	}
-	memcpy(&asnum, b, sizeof(asnum));
-	b += sizeof(asnum);
-	len -= sizeof(asnum);
-	p->peers->asnum = ntohs(asnum);
+	if (ibuf_get_n16(msg, &tmp16) == -1)
+		goto fail;
+	p->peers->asnum = tmp16;
 
-	memcpy(&alen, b, sizeof(alen));
-	b += sizeof(alen);
-	len -= sizeof(alen);
-	alen = ntohs(alen);
+	if (ibuf_get_n16(msg, &alen) == -1 ||
+	    ibuf_get_ibuf(msg, alen, &abuf) == -1)
+		goto fail;
 
 	/* attr */
-	if (len < alen)
+	if (mrt_extract_attr(re, &abuf, r->prefix.aid, 0) == -1)
 		goto fail;
-	if (mrt_extract_attr(re, b, alen, r->prefix.aid, 0) == -1)
-		goto fail;
-	b += alen;
-	len -= alen;
-
 	return (0);
 fail:
 	mrt_free_rib(r);
@@ -620,23 +526,16 @@ fail:
 }
 
 int
-mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
+mrt_parse_dump_mp(struct mrt_hdr *hdr, struct ibuf *msg, struct mrt_peer **pp,
     struct mrt_rib **rp, int verbose)
 {
+	struct ibuf		 abuf;
 	struct mrt_peer		*p;
 	struct mrt_rib		*r;
 	struct mrt_rib_entry	*re;
-	uint8_t			*b = msg;
-	u_int			 len = ntohl(hdr->length);
+	uint32_t		 tmp32;
 	uint16_t		 asnum, alen, afi;
 	uint8_t			 safi, nhlen, aid;
-	int			 ret;
-
-	/* just ignore the microsec field for _ET header for now */
-	if (ntohs(hdr->type) == MSG_PROTOCOL_BGP4MP_ET) {
-		b = (char *)b + sizeof(uint32_t);
-		len -= sizeof(uint32_t);
-	}
 
 	if (*pp == NULL) {
 		*pp = calloc(1, sizeof(struct mrt_peer));
@@ -658,109 +557,68 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 	r->nentries = 1;
 	r->entries = re;
 
-	if (len < 4 * sizeof(uint16_t))
+	/* just ignore the microsec field for _ET header for now */
+	if (ntohs(hdr->type) == MSG_PROTOCOL_BGP4MP_ET) {
+		if (ibuf_skip(msg, sizeof(uint32_t)) == -1)
+			goto fail;
+	}
+
+	if (ibuf_skip(msg, sizeof(uint16_t)) == -1 ||	/* source AS */
+	    ibuf_get_n16(msg, &asnum) == -1 ||		/* dest AS */
+	    ibuf_skip(msg, sizeof(uint16_t)) == -1 ||	/* iface index */
+	    ibuf_get_n16(msg, &afi) == -1)
 		goto fail;
-	/* source AS */
-	b += sizeof(uint16_t);
-	len -= sizeof(uint16_t);
-	/* dest AS */
-	memcpy(&asnum, b, sizeof(asnum));
-	b += sizeof(asnum);
-	len -= sizeof(asnum);
-	p->peers->asnum = ntohs(asnum);
-	/* iface index */
-	b += sizeof(uint16_t);
-	len -= sizeof(uint16_t);
-	/* afi */
-	memcpy(&afi, b, sizeof(afi));
-	b += sizeof(afi);
-	len -= sizeof(afi);
-	afi = ntohs(afi);
+	p->peers->asnum = asnum;
 
 	/* source + dest ip */
 	switch (afi) {
 	case MRT_DUMP_AFI_IP:
-		if (len < 2 * sizeof(struct in_addr))
-			goto fail;
 		/* source IP */
-		b += sizeof(struct in_addr);
-		len -= sizeof(struct in_addr);
-		/* dest IP */
-		if (mrt_extract_addr(b, len, &p->peers->addr, AID_INET) == -1)
+		if (ibuf_skip(msg, sizeof(struct in_addr)) == -1)
 			goto fail;
-		b += sizeof(struct in_addr);
-		len -= sizeof(struct in_addr);
+		/* dest IP */
+		if (mrt_extract_addr(msg, &p->peers->addr, AID_INET) == -1)
+			goto fail;
 		break;
 	case MRT_DUMP_AFI_IPv6:
-		if (len < 2 * sizeof(struct in6_addr))
-			goto fail;
 		/* source IP */
-		b += sizeof(struct in6_addr);
-		len -= sizeof(struct in6_addr);
-		/* dest IP */
-		if (mrt_extract_addr(b, len, &p->peers->addr, AID_INET6) == -1)
+		if (ibuf_skip(msg, sizeof(struct in6_addr)) == -1)
 			goto fail;
-		b += sizeof(struct in6_addr);
-		len -= sizeof(struct in6_addr);
+		/* dest IP */
+		if (mrt_extract_addr(msg, &p->peers->addr, AID_INET6) == -1)
+			goto fail;
 		break;
 	}
 
-	if (len < 2 * sizeof(uint16_t) + 2 * sizeof(uint32_t))
+	if (ibuf_skip(msg, sizeof(uint16_t)) == -1 ||	/* view */
+	    ibuf_skip(msg, sizeof(uint16_t)) == -1 ||	/* status */
+	    ibuf_get_n32(msg, &tmp32) == -1)		/* originated */
 		goto fail;
-	/* view + status */
-	b += 2 * sizeof(uint16_t);
-	len -= 2 * sizeof(uint16_t);
-	/* originated */
-	memcpy(&re->originated, b, sizeof(uint32_t));
-	b += sizeof(uint32_t);
-	len -= sizeof(uint32_t);
-	re->originated = ntohl(re->originated);
+	re->originated = tmp32;
 
-	/* afi */
-	memcpy(&afi, b, sizeof(afi));
-	b += sizeof(afi);
-	len -= sizeof(afi);
-	afi = ntohs(afi);
-
-	/* safi */
-	safi = *b++;
-	len -= 1;
-
+	if (ibuf_get_n16(msg, &afi) == -1 ||		/* afi */
+	    ibuf_get_n8(msg, &safi) == -1)		/* safi */
+		goto fail;
 	if ((aid = mrt_afi2aid(afi, safi, verbose)) == AID_UNSPEC)
 		goto fail;
 
-	/* nhlen */
-	nhlen = *b++;
-	len -= 1;
+	if (ibuf_get_n8(msg, &nhlen) == -1)		/* nhlen */
+		goto fail;
 
 	/* nexthop */
-	if (mrt_extract_addr(b, len, &re->nexthop, aid) == -1)
+	if (mrt_extract_addr(msg, &re->nexthop, aid) == -1)
 		goto fail;
-	if (len < nhlen)
-		goto fail;
-	b += nhlen;
-	len -= nhlen;
 
 	/* prefix */
-	ret = mrt_extract_prefix(b, len, aid, &r->prefix, &r->prefixlen,
-	    verbose);
-	if (ret == -1)
+	if (mrt_extract_prefix(msg, aid, &r->prefix, &r->prefixlen,
+	    verbose) == -1)
 		goto fail;
-	b += ret;
-	len -= ret;
 
-	memcpy(&alen, b, sizeof(alen));
-	b += sizeof(alen);
-	len -= sizeof(alen);
-	alen = ntohs(alen);
-
-	/* attr */
-	if (len < alen)
+	if (ibuf_get_n16(msg, &alen) == -1 ||
+	    ibuf_get_ibuf(msg, alen, &abuf) == -1)
 		goto fail;
-	if (mrt_extract_attr(re, b, alen, r->prefix.aid, 0) == -1)
+	if (mrt_extract_attr(re, &abuf, r->prefix.aid, 0) == -1)
 		goto fail;
-	b += alen;
-	len -= alen;
 
 	return (0);
 fail:
@@ -769,73 +627,81 @@ fail:
 }
 
 int
-mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, uint8_t aid,
+mrt_extract_attr(struct mrt_rib_entry *re, struct ibuf *buf, uint8_t aid,
     int as4)
 {
+	struct ibuf	abuf;
 	struct mrt_attr	*ap;
-	uint32_t	tmp;
-	uint16_t	attr_len;
-	uint8_t		type, flags, *attr;
+	size_t		alen, hlen;
+	uint8_t		type, flags;
 
 	do {
-		if (alen < 3)
+		ibuf_from_ibuf(&abuf, buf);
+		if (ibuf_get_n8(&abuf, &flags) == -1 ||
+		    ibuf_get_n8(&abuf, &type) == -1)
 			return (-1);
-		attr = a;
-		flags = *a++;
-		alen -= 1;
-		type = *a++;
-		alen -= 1;
 
 		if (flags & MRT_ATTR_EXTLEN) {
-			if (alen < 2)
+			uint16_t tmp16;
+			if (ibuf_get_n16(&abuf, &tmp16) == -1)
 				return (-1);
-			memcpy(&attr_len, a, sizeof(attr_len));
-			attr_len = ntohs(attr_len);
-			a += sizeof(attr_len);
-			alen -= sizeof(attr_len);
+			alen = tmp16;
+			hlen = 4;
 		} else {
-			attr_len = *a++;
-			alen -= 1;
+			uint8_t tmp8;
+			if (ibuf_get_n8(&abuf, &tmp8) == -1)
+				return (-1);
+			alen = tmp8;
+			hlen = 3;
 		}
+		if (ibuf_truncate(&abuf, alen) == -1)
+			return (-1);
+		/* consume the attribute in buf before moving forward */
+		if (ibuf_skip(buf, hlen + alen) == -1)
+			return (-1);
+
 		switch (type) {
 		case MRT_ATTR_ORIGIN:
-			if (attr_len != 1)
+			if (alen != 1)
 				return (-1);
-			re->origin = *a;
+			if (ibuf_get_n8(&abuf, &re->origin) == -1)
+				return (-1);
 			break;
 		case MRT_ATTR_ASPATH:
 			if (as4) {
-				re->aspath_len = attr_len;
-				if ((re->aspath = malloc(attr_len)) == NULL)
+				re->aspath_len = alen;
+				if ((re->aspath = malloc(alen)) == NULL)
 					err(1, "malloc");
-				memcpy(re->aspath, a, attr_len);
+				if (ibuf_get(&abuf, re->aspath, alen) == -1)
+					return (-1);
 			} else {
-				re->aspath = mrt_aspath_inflate(a, attr_len,
+				re->aspath = mrt_aspath_inflate(&abuf,
 				    &re->aspath_len);
 				if (re->aspath == NULL)
 					return (-1);
 			}
 			break;
 		case MRT_ATTR_NEXTHOP:
-			if (attr_len != 4)
+			if (alen != 4)
 				return (-1);
 			if (aid != AID_INET)
 				break;
-			memcpy(&tmp, a, sizeof(tmp));
+			if (ibuf_get(&abuf, &re->nexthop.v4,
+			    sizeof(re->nexthop.v4)) == -1)
+				return (-1);
 			re->nexthop.aid = AID_INET;
-			re->nexthop.v4.s_addr = tmp;
 			break;
 		case MRT_ATTR_MED:
-			if (attr_len != 4)
+			if (alen != 4)
 				return (-1);
-			memcpy(&tmp, a, sizeof(tmp));
-			re->med = ntohl(tmp);
+			if (ibuf_get_n32(&abuf, &re->med) == -1)
+				return (-1);
 			break;
 		case MRT_ATTR_LOCALPREF:
-			if (attr_len != 4)
+			if (alen != 4)
 				return (-1);
-			memcpy(&tmp, a, sizeof(tmp));
-			re->local_pref = ntohl(tmp);
+			if (ibuf_get_n32(&abuf, &re->local_pref) == -1)
+				return (-1);
 			break;
 		case MRT_ATTR_MP_REACH_NLRI:
 			/*
@@ -848,47 +714,49 @@ mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, uint8_t aid,
 			 * or the high byte of the AFI (old form)). If the
 			 * first byte matches the expected nexthop length it
 			 * is expected to be the RFC 6396 encoding.
+			 *
+			 * Checking for the hack skips over the nhlen.
 			 */
-			if (*a != attr_len - 1) {
-				a += 3;
-				alen -= 3;
-				attr_len -= 3;
+			{
+				uint8_t	hack;
+				if (ibuf_get_n8(&abuf, &hack) == -1)
+					return (-1);
+				if (hack != alen - 1) {
+					if (ibuf_skip(&abuf, 3) == -1)
+						return (-1);
+				}
 			}
 			switch (aid) {
 			case AID_INET6:
-				if (attr_len < sizeof(struct in6_addr) + 1)
+				if (ibuf_get(&abuf, &re->nexthop.v6,
+				    sizeof(re->nexthop.v6)) == -1)
 					return (-1);
 				re->nexthop.aid = aid;
-				memcpy(&re->nexthop.v6, a + 1,
-				    sizeof(struct in6_addr));
 				break;
 			case AID_VPN_IPv4:
-				if (attr_len < sizeof(uint64_t) +
-				    sizeof(struct in_addr))
+				if (ibuf_skip(&abuf, sizeof(uint64_t)) == -1 ||
+				    ibuf_get(&abuf, &re->nexthop.v4,
+				    sizeof(re->nexthop.v4)) == -1)
 					return (-1);
 				re->nexthop.aid = aid;
-				memcpy(&tmp, a + 1 + sizeof(uint64_t),
-				    sizeof(tmp));
-				re->nexthop.v4.s_addr = tmp;
 				break;
 			case AID_VPN_IPv6:
-				if (attr_len < sizeof(uint64_t) +
-				    sizeof(struct in6_addr))
+				if (ibuf_skip(&abuf, sizeof(uint64_t)) == -1 ||
+				    ibuf_get(&abuf, &re->nexthop.v6,
+				    sizeof(re->nexthop.v6)) == -1)
 					return (-1);
 				re->nexthop.aid = aid;
-				memcpy(&re->nexthop.v6,
-				    a + 1 + sizeof(uint64_t),
-				    sizeof(struct in6_addr));
 				break;
 			}
 			break;
 		case MRT_ATTR_AS4PATH:
 			if (!as4) {
 				free(re->aspath);
-				re->aspath_len = attr_len;
-				if ((re->aspath = malloc(attr_len)) == NULL)
+				re->aspath_len = alen;
+				if ((re->aspath = malloc(alen)) == NULL)
 					err(1, "malloc");
-				memcpy(re->aspath, a, attr_len);
+				if (ibuf_get(&abuf, re->aspath, alen) == -1)
+					return (-1);
 				break;
 			}
 			/* FALLTHROUGH */
@@ -902,15 +770,15 @@ mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, uint8_t aid,
 				err(1, "realloc");
 			re->attrs = ap;
 			ap = re->attrs + re->nattrs - 1;
-			ap->attr_len = a + attr_len - attr;
+			ibuf_rewind(&abuf);
+			ap->attr_len = ibuf_size(&abuf);
 			if ((ap->attr = malloc(ap->attr_len)) == NULL)
 				err(1, "malloc");
-			memcpy(ap->attr, attr, ap->attr_len);
+			if (ibuf_get(&abuf, ap->attr, ap->attr_len) == -1)
+				return (-1);
 			break;
 		}
-		a += attr_len;
-		alen -= attr_len;
-	} while (alen > 0);
+	} while (ibuf_size(buf) > 0);
 
 	return (0);
 }
@@ -939,106 +807,68 @@ mrt_free_rib(struct mrt_rib *r)
 	free(r);
 }
 
-void
-mrt_free_bgp_state(struct mrt_bgp_state *s)
-{
-	free(s);
-}
-
-void
-mrt_free_bgp_msg(struct mrt_bgp_msg *m)
-{
-	free(m->msg);
-	free(m);
-}
-
 u_char *
-mrt_aspath_inflate(void *data, uint16_t len, uint16_t *newlen)
+mrt_aspath_inflate(struct ibuf *buf, uint16_t *newlen)
 {
-	uint8_t		*seg, *nseg, *ndata;
-	uint16_t	 seg_size, olen, nlen;
-	uint8_t		 seg_len;
+	struct ibuf *asbuf;
+	u_char *data;
+	size_t len;
 
-	/* first calculate the length of the aspath */
-	seg = data;
-	nlen = 0;
-	for (olen = len; olen > 0; olen -= seg_size, seg += seg_size) {
-		seg_len = seg[1];
-		seg_size = 2 + sizeof(uint16_t) * seg_len;
-		nlen += 2 + sizeof(uint32_t) * seg_len;
+	*newlen = 0;
+	asbuf = aspath_inflate(buf);
+	if (asbuf == NULL)
+		return NULL;
 
-		if (seg_size > olen)
-			return NULL;
-	}
-
-	*newlen = nlen;
-	if ((ndata = malloc(nlen)) == NULL)
+	len = ibuf_size(asbuf);
+	if ((data = malloc(len)) == NULL)
 		err(1, "malloc");
-
-	/* then copy the aspath */
-	seg = data;
-	for (nseg = ndata; nseg < ndata + nlen; ) {
-		*nseg++ = *seg++;
-		*nseg++ = seg_len = *seg++;
-		for (; seg_len > 0; seg_len--) {
-			*nseg++ = 0;
-			*nseg++ = 0;
-			*nseg++ = *seg++;
-			*nseg++ = *seg++;
-		}
+	if (ibuf_get(asbuf, data, len) == -1) {
+		ibuf_free(asbuf);
+		return (NULL);
 	}
-
-	return (ndata);
+	ibuf_free(asbuf);
+	*newlen = len;
+	return (data);
 }
 
 int
-mrt_extract_addr(void *msg, u_int len, struct bgpd_addr *addr, uint8_t aid)
+mrt_extract_addr(struct ibuf *msg, struct bgpd_addr *addr, uint8_t aid)
 {
-	uint8_t	*b = msg;
-
 	memset(addr, 0, sizeof(*addr));
 	switch (aid) {
 	case AID_INET:
-		if (len < sizeof(struct in_addr))
+		if (ibuf_get(msg, &addr->v4, sizeof(addr->v4)) == -1)
 			return (-1);
-		addr->aid = aid;
-		memcpy(&addr->v4, b, sizeof(struct in_addr));
-		return sizeof(struct in_addr);
+		break;
 	case AID_INET6:
-		if (len < sizeof(struct in6_addr))
+		if (ibuf_get(msg, &addr->v6, sizeof(addr->v6)) == -1)
 			return (-1);
-		addr->aid = aid;
-		memcpy(&addr->v6, b, sizeof(struct in6_addr));
-		return sizeof(struct in6_addr);
+		break;
 	case AID_VPN_IPv4:
-		if (len < sizeof(uint64_t) + sizeof(struct in_addr))
-			return (-1);
-		addr->aid = aid;
 		/* XXX labelstack and rd missing */
-		memcpy(&addr->v4, b + sizeof(uint64_t),
-		    sizeof(struct in_addr));
-		return (sizeof(uint64_t) + sizeof(struct in_addr));
+		if (ibuf_skip(msg, sizeof(uint64_t)) == -1 ||
+		    ibuf_get(msg, &addr->v4, sizeof(addr->v4)) == -1)
+			return (-1);
+		break;
 	case AID_VPN_IPv6:
-		if (len < sizeof(uint64_t) + sizeof(struct in6_addr))
-			return (-1);
-		addr->aid = aid;
 		/* XXX labelstack and rd missing */
-		memcpy(&addr->v6, b + sizeof(uint64_t),
-		    sizeof(struct in6_addr));
-		return (sizeof(uint64_t) + sizeof(struct in6_addr));
+		if (ibuf_skip(msg, sizeof(uint64_t)) == -1 ||
+		    ibuf_get(msg, &addr->v6, sizeof(addr->v6)) == -1)
+			return (-1);
+		break;
 	default:
 		return (-1);
 	}
+	addr->aid = aid;
+	return 0;
 }
 
 int
-mrt_extract_prefix(void *m, u_int len, uint8_t aid,
-    struct bgpd_addr *prefix, uint8_t *prefixlen, int verbose)
+mrt_extract_prefix(struct ibuf *msg, uint8_t aid, struct bgpd_addr *prefix,
+    uint8_t *prefixlen, int verbose)
 {
-	struct ibuf buf, *msg = &buf;
 	int r;
 
-	ibuf_from_buffer(msg, m, len); /* XXX */
 	switch (aid) {
 	case AID_INET:
 		r = nlri_get_prefix(msg, prefix, prefixlen);
@@ -1059,21 +889,16 @@ mrt_extract_prefix(void *m, u_int len, uint8_t aid,
 	}
 	if (r == -1 && verbose)
 		printf("failed to parse prefix of AID %d\n", aid);
-	if (r != -1)
-		r = len - ibuf_size(msg); /* XXX */
 	return r;
 }
 
-struct mrt_bgp_state *
-mrt_parse_state(struct mrt_hdr *hdr, void *msg, int verbose)
+int
+mrt_parse_state(struct mrt_bgp_state *s, struct mrt_hdr *hdr, struct ibuf *msg,
+    int verbose)
 {
 	struct timespec		 t;
-	struct mrt_bgp_state	*s;
-	uint8_t			*b = msg;
-	u_int			 len = ntohl(hdr->length);
 	uint32_t		 sas, das, usec;
-	uint16_t		 tmp16, afi;
-	int			 r;
+	uint16_t		 sas16, das16, afi;
 	uint8_t			 aid;
 
 	t.tv_sec = ntohl(hdr->timestamp);
@@ -1081,56 +906,27 @@ mrt_parse_state(struct mrt_hdr *hdr, void *msg, int verbose)
 
 	/* handle the microsec field for _ET header */
 	if (ntohs(hdr->type) == MSG_PROTOCOL_BGP4MP_ET) {
-		memcpy(&usec, b, sizeof(usec));
-		b += sizeof(usec);
-		len -= sizeof(usec);
-		t.tv_nsec = ntohl(usec) * 1000;
+		if (ibuf_get_n32(msg, &usec) == -1)
+			return (-1);
+		t.tv_nsec = usec * 1000;
 	}
 
 	switch (ntohs(hdr->subtype)) {
 	case BGP4MP_STATE_CHANGE:
-		if (len < 8)
-			return (0);
-		/* source as */
-		memcpy(&tmp16, b, sizeof(tmp16));
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		sas = ntohs(tmp16);
-		/* dest as */
-		memcpy(&tmp16, b, sizeof(tmp16));
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		das = ntohs(tmp16);
-		/* if_index, ignored */
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		/* afi */
-		memcpy(&tmp16, b, sizeof(tmp16));
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		afi = ntohs(tmp16);
+		if (ibuf_get_n16(msg, &sas16) == -1 ||	/* source as */
+		    ibuf_get_n16(msg, &das16) == -1 ||	/* dest as */
+		    ibuf_skip(msg, 2) == -1 ||		/* if_index */
+		    ibuf_get_n16(msg, &afi) == -1)	/* afi */
+			return (-1);
+		sas = sas16;
+		das = das16;
 		break;
 	case BGP4MP_STATE_CHANGE_AS4:
-		if (len < 12)
-			return (0);
-		/* source as */
-		memcpy(&sas, b, sizeof(sas));
-		b += sizeof(sas);
-		len -= sizeof(sas);
-		sas = ntohl(sas);
-		/* dest as */
-		memcpy(&das, b, sizeof(das));
-		b += sizeof(das);
-		len -= sizeof(das);
-		das = ntohl(das);
-		/* if_index, ignored */
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		/* afi */
-		memcpy(&tmp16, b, sizeof(tmp16));
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		afi = ntohs(tmp16);
+		if (ibuf_get_n32(msg, &sas) == -1 ||	/* source as */
+		    ibuf_get_n32(msg, &das) == -1 ||	/* dest as */
+		    ibuf_skip(msg, 2) == -1 ||		/* if_index */
+		    ibuf_get_n16(msg, &afi) == -1)	/* afi */
+			return (-1);
 		break;
 	default:
 		errx(1, "mrt_parse_state: bad subtype");
@@ -1138,50 +934,34 @@ mrt_parse_state(struct mrt_hdr *hdr, void *msg, int verbose)
 
 	/* src & dst addr */
 	if ((aid = mrt_afi2aid(afi, -1, verbose)) == AID_UNSPEC)
-		return (NULL);
+		return (-1);
 
-	if ((s = calloc(1, sizeof(struct mrt_bgp_state))) == NULL)
-		err(1, "calloc");
+	memset(s, 0, sizeof(*s));
 	s->time = t;
 	s->src_as = sas;
 	s->dst_as = das;
 
-	if ((r = mrt_extract_addr(b, len, &s->src, aid)) == -1)
-		goto fail;
-	b += r;
-	len -= r;
-	if ((r = mrt_extract_addr(b, len, &s->dst, aid)) == -1)
-		goto fail;
-	b += r;
-	len -= r;
+	if (mrt_extract_addr(msg, &s->src, aid) == -1)
+		return (-1);
+	if (mrt_extract_addr(msg, &s->dst, aid) == -1)
+		return (-1);
 
 	/* states */
-	memcpy(&tmp16, b, sizeof(tmp16));
-	b += sizeof(tmp16);
-	len -= sizeof(tmp16);
-	s->old_state = ntohs(tmp16);
-	memcpy(&tmp16, b, sizeof(tmp16));
-	b += sizeof(tmp16);
-	len -= sizeof(tmp16);
-	s->new_state = ntohs(tmp16);
+	if (ibuf_get_n16(msg, &s->old_state) == -1 ||
+	    ibuf_get_n16(msg, &s->new_state) == -1)
+		return (-1);
 
-	return (s);
-
-fail:
-	free(s);
-	return (NULL);
+	return (0);
 }
 
-struct mrt_bgp_msg *
-mrt_parse_msg(struct mrt_hdr *hdr, void *msg, int verbose)
+int
+mrt_parse_msg(struct mrt_bgp_msg *m, struct mrt_hdr *hdr, struct ibuf *msg,
+    int verbose)
 {
 	struct timespec		 t;
-	struct mrt_bgp_msg	*m;
-	uint8_t			*b = msg;
-	u_int			 len = ntohl(hdr->length);
 	uint32_t		 sas, das, usec;
-	uint16_t		 tmp16, afi;
-	int			 r, addpath = 0;
+	uint16_t		 sas16, das16, afi;
+	int			 addpath = 0;
 	uint8_t			 aid;
 
 	t.tv_sec = ntohl(hdr->timestamp);
@@ -1189,10 +969,9 @@ mrt_parse_msg(struct mrt_hdr *hdr, void *msg, int verbose)
 
 	/* handle the microsec field for _ET header */
 	if (ntohs(hdr->type) == MSG_PROTOCOL_BGP4MP_ET) {
-		memcpy(&usec, b, sizeof(usec));
-		b += sizeof(usec);
-		len -= sizeof(usec);
-		t.tv_nsec = ntohl(usec) * 1000;
+		if (ibuf_get_n32(msg, &usec) == -1)
+			return (-1);
+		t.tv_nsec = usec * 1000;
 	}
 
 	switch (ntohs(hdr->subtype)) {
@@ -1202,26 +981,13 @@ mrt_parse_msg(struct mrt_hdr *hdr, void *msg, int verbose)
 		/* FALLTHROUGH */
 	case BGP4MP_MESSAGE:
 	case BGP4MP_MESSAGE_LOCAL:
-		if (len < 8)
-			return (0);
-		/* source as */
-		memcpy(&tmp16, b, sizeof(tmp16));
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		sas = ntohs(tmp16);
-		/* dest as */
-		memcpy(&tmp16, b, sizeof(tmp16));
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		das = ntohs(tmp16);
-		/* if_index, ignored */
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		/* afi */
-		memcpy(&tmp16, b, sizeof(tmp16));
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		afi = ntohs(tmp16);
+		if (ibuf_get_n16(msg, &sas16) == -1 ||	/* source as */
+		    ibuf_get_n16(msg, &das16) == -1 ||	/* dest as */
+		    ibuf_skip(msg, 2) == -1 ||		/* if_index */
+		    ibuf_get_n16(msg, &afi) == -1)	/* afi */
+			return (-1);
+		sas = sas16;
+		das = das16;
 		break;
 	case BGP4MP_MESSAGE_AS4_ADDPATH:
 	case BGP4MP_MESSAGE_AS4_LOCAL_ADDPATH:
@@ -1229,26 +995,11 @@ mrt_parse_msg(struct mrt_hdr *hdr, void *msg, int verbose)
 		/* FALLTHROUGH */
 	case BGP4MP_MESSAGE_AS4:
 	case BGP4MP_MESSAGE_AS4_LOCAL:
-		if (len < 12)
-			return (0);
-		/* source as */
-		memcpy(&sas, b, sizeof(sas));
-		b += sizeof(sas);
-		len -= sizeof(sas);
-		sas = ntohl(sas);
-		/* dest as */
-		memcpy(&das, b, sizeof(das));
-		b += sizeof(das);
-		len -= sizeof(das);
-		das = ntohl(das);
-		/* if_index, ignored */
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		/* afi */
-		memcpy(&tmp16, b, sizeof(tmp16));
-		b += sizeof(tmp16);
-		len -= sizeof(tmp16);
-		afi = ntohs(tmp16);
+		if (ibuf_get_n32(msg, &sas) == -1 ||	/* source as */
+		    ibuf_get_n32(msg, &das) == -1 ||	/* dest as */
+		    ibuf_skip(msg, 2) == -1 ||		/* if_index */
+		    ibuf_get_n16(msg, &afi) == -1)	/* afi */
+			return (-1);
 		break;
 	default:
 		errx(1, "mrt_parse_msg: bad subtype");
@@ -1256,36 +1007,19 @@ mrt_parse_msg(struct mrt_hdr *hdr, void *msg, int verbose)
 
 	/* src & dst addr */
 	if ((aid = mrt_afi2aid(afi, -1, verbose)) == AID_UNSPEC)
-		return (NULL);
+		return (-1);
 
-	if ((m = calloc(1, sizeof(struct mrt_bgp_msg))) == NULL)
-		err(1, "calloc");
+	memset(m, 0, sizeof(*m));
 	m->time = t;
 	m->src_as = sas;
 	m->dst_as = das;
 	m->add_path = addpath;
 
-	if ((r = mrt_extract_addr(b, len, &m->src, aid)) == -1)
-		goto fail;
-	b += r;
-	len -= r;
-	if ((r = mrt_extract_addr(b, len, &m->dst, aid)) == -1)
-		goto fail;
-	b += r;
-	len -= r;
+	if (mrt_extract_addr(msg, &m->src, aid) == -1 ||
+	    mrt_extract_addr(msg, &m->dst, aid) == -1)
+		return (-1);
 
 	/* msg */
-	if (len > 0) {
-		m->msg_len = len;
-		if ((m->msg = malloc(len)) == NULL)
-			err(1, "malloc");
-		memcpy(m->msg, b, len);
-	}
-
-	return (m);
-
-fail:
-	free(m->msg);
-	free(m);
-	return (NULL);
+	ibuf_from_ibuf(&m->msg, msg);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.304 2024/01/31 11:23:19 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.305 2024/02/01 11:37:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1411,24 +1411,19 @@ show_mrt_state(struct mrt_bgp_state *ms, void *arg)
 }
 
 static void
-print_afi(u_char *p, uint8_t len)
+print_afi(struct ibuf *b)
 {
 	uint16_t afi;
 	uint8_t safi, aid;
 
-	if (len != 4) {
+	if (ibuf_get_n16(b, &afi) == -1 ||	/* afi, 2 byte */
+	    ibuf_skip(b, 1) == -1 ||		/* reserved, 1 byte */
+	    ibuf_get_n8(b, &safi) == -1 ||	/* safi, 1 byte */
+	    ibuf_size(b) != 0) {
 		printf("bad length");
 		return;
 	}
 
-	/* afi, 2 byte */
-	memcpy(&afi, p, sizeof(afi));
-	afi = ntohs(afi);
-	p += 2;
-	/* reserved, 1 byte */
-	p += 1;
-	/* safi, 1 byte */
-	memcpy(&safi, p, sizeof(safi));
 	if (afi2aid(afi, safi, &aid) == -1)
 		printf("unknown afi %u safi %u", afi, safi);
 	else
@@ -1436,12 +1431,14 @@ print_afi(u_char *p, uint8_t len)
 }
 
 static void
-print_capability(uint8_t capa_code, u_char *p, uint8_t len)
+print_capability(uint8_t capa_code, struct ibuf *b)
 {
+	uint32_t as;
+
 	switch (capa_code) {
 	case CAPA_MP:
 		printf("multiprotocol capability: ");
-		print_afi(p, len);
+		print_afi(b);
 		break;
 	case CAPA_REFRESH:
 		printf("route refresh capability");
@@ -1452,13 +1449,11 @@ print_capability(uint8_t capa_code, u_char *p, uint8_t len)
 		break;
 	case CAPA_AS4BYTE:
 		printf("4-byte AS num capability: ");
-		if (len == 4) {
-			uint32_t as;
-			memcpy(&as, p, sizeof(as));
-			as = ntohl(as);
-			printf("AS %u", as);
-		} else
+		if (ibuf_get_n32(b, &as) == -1 ||
+		    ibuf_size(b) != 0)
 			printf("bad length");
+		else
+			printf("AS %u", as);
 		break;
 	case CAPA_ADD_PATH:
 		printf("add-path capability");
@@ -1468,7 +1463,8 @@ print_capability(uint8_t capa_code, u_char *p, uint8_t len)
 		printf("enhanced route refresh capability");
 		break;
 	default:
-		printf("unknown capability %u length %u", capa_code, len);
+		printf("unknown capability %u length %zu",
+		    capa_code, ibuf_size(b));
 		break;
 	}
 }
@@ -1531,88 +1527,63 @@ print_notification(uint8_t errcode, uint8_t subcode)
 }
 
 static int
-show_mrt_capabilities(u_char *p, uint16_t len)
+show_mrt_capabilities(struct ibuf *b)
 {
-	uint16_t totlen = len;
 	uint8_t capa_code, capa_len;
+	struct ibuf cbuf;
 
-	while (len > 2) {
-		memcpy(&capa_code, p, sizeof(capa_code));
-		p += sizeof(capa_code);
-		len -= sizeof(capa_code);
-		memcpy(&capa_len, p, sizeof(capa_len));
-		p += sizeof(capa_len);
-		len -= sizeof(capa_len);
-		if (len < capa_len) {
-			printf("capa_len %u exceeds remaining length",
-			    capa_len);
+	while (ibuf_size(b) > 0) {
+		if (ibuf_get_n8(b, &capa_code) == -1 ||
+		    ibuf_get_n8(b, &capa_len) == -1 ||
+		    ibuf_get_ibuf(b, capa_len, &cbuf) == -1) {
+			printf("truncated capabilities");
 			return (-1);
 		}
 		printf("\n        ");
-		print_capability(capa_code, p, capa_len);
-		p += capa_len;
-		len -= capa_len;
+		print_capability(capa_code, &cbuf);
 	}
-	if (len != 0) {
-		printf("length mismatch while capability parsing");
-		return (-1);
-	}
-	return (totlen);
+	return (0);
 }
 
 static void
-show_mrt_open(u_char *p, uint16_t len)
+show_mrt_open(struct ibuf *b)
 {
 	uint16_t short_as, holdtime;
 	uint8_t version, optparamlen;
 	struct in_addr bgpid;
 
 	/* length check up to optparamlen already happened */
-	memcpy(&version, p, sizeof(version));
-	p += sizeof(version);
-	len -= sizeof(version);
-	memcpy(&short_as, p, sizeof(short_as));
-	p += sizeof(short_as);
-	len -= sizeof(short_as);
-	short_as = ntohs(short_as);
-	memcpy(&holdtime, p, sizeof(holdtime));
-	holdtime = ntohs(holdtime);
-	p += sizeof(holdtime);
-	len -= sizeof(holdtime);
-	memcpy(&bgpid, p, sizeof(bgpid));
-	p += sizeof(bgpid);
-	len -= sizeof(bgpid);
-	memcpy(&optparamlen, p, sizeof(optparamlen));
-	p += sizeof(optparamlen);
-	len -= sizeof(optparamlen);
+	if (ibuf_get_n8(b, &version) == -1 ||
+	    ibuf_get_n16(b, &short_as) == -1 ||
+	    ibuf_get_n16(b, &holdtime) == -1 ||
+	    ibuf_get(b, &bgpid, sizeof(bgpid)) == -1 ||
+	    ibuf_get_n8(b, &optparamlen) == -1) {
+ trunc:
+		printf("truncated message");
+		return;
+	}
 
 	printf("\n    ");
 	printf("Version: %d AS: %u Holdtime: %u BGP Id: %s Paramlen: %u",
 	    version, short_as, holdtime, inet_ntoa(bgpid), optparamlen);
-	if (optparamlen != len) {
+	if (optparamlen != ibuf_size(b)) {
+		/* XXX missing support for RFC9072 */
 		printf("optional parameter length mismatch");
 		return;
 	}
-	while (len > 2) {
+	while (ibuf_size(b) > 0) {
 		uint8_t op_type, op_len;
-		int r;
 
-		memcpy(&op_type, p, sizeof(op_type));
-		p += sizeof(op_type);
-		len -= sizeof(op_type);
-		memcpy(&op_len, p, sizeof(op_len));
-		p += sizeof(op_len);
-		len -= sizeof(op_len);
+		if (ibuf_get_n8(b, &op_type) == -1 ||
+		    ibuf_get_n8(b, &op_len) == -1)
+			goto trunc;
 
 		printf("\n    ");
 		switch (op_type) {
 		case OPT_PARAM_CAPABILITIES:
-			printf("Capabilities: size %u", op_len);
-			r = show_mrt_capabilities(p, op_len);
-			if (r == -1)
+			printf("Capabilities: %u bytes", op_len);
+			if (show_mrt_capabilities(b) == -1)
 				return;
-			p += r;
-			len -= r;
 			break;
 		case OPT_PARAM_AUTH:
 		default:
@@ -1621,89 +1592,71 @@ show_mrt_open(u_char *p, uint16_t len)
 			return;
 		}
 	}
-	if (len != 0) {
-		printf("optional parameter encoding error");
-		return;
-	}
 }
 
 static void
-show_mrt_notification(u_char *p, uint16_t len)
+show_mrt_notification(struct ibuf *b)
 {
-	uint16_t i;
-	uint8_t errcode, subcode;
-	size_t reason_len;
 	char reason[REASON_LEN];
+	uint8_t errcode, subcode, reason_len, c;
+	size_t i, len;
 
-	memcpy(&errcode, p, sizeof(errcode));
-	p += sizeof(errcode);
-	len -= sizeof(errcode);
-
-	memcpy(&subcode, p, sizeof(subcode));
-	p += sizeof(subcode);
-	len -= sizeof(subcode);
+	if (ibuf_get_n8(b, &errcode) == -1 ||
+	    ibuf_get_n8(b, &subcode) == -1) {
+ trunc:
+		printf("truncated message");
+		return;
+	}
 
 	printf("\n    ");
 	print_notification(errcode, subcode);
 
 	if (errcode == ERR_CEASE && (subcode == ERR_CEASE_ADMIN_DOWN ||
 	    subcode == ERR_CEASE_ADMIN_RESET)) {
-		if (len > 1) {
-			reason_len = *p++;
-			len--;
-			if (len < reason_len) {
-				printf("truncated shutdown reason");
-				return;
-			}
-			if (reason_len > REASON_LEN - 1) {
-				printf("overly long shutdown reason");
-				return;
-			}
-			memcpy(reason, p, reason_len);
+		if (ibuf_size(b) > 1) {
+			if (ibuf_get_n8(b, &reason_len) == -1)
+				goto trunc;
+			if (ibuf_get(b, reason, reason_len) == -1)
+				goto trunc;
 			reason[reason_len] = '\0';
 			printf("shutdown reason: \"%s\"",
 			    log_reason(reason));
-			p += reason_len;
-			len -= reason_len;
 		}
 	}
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_CAPA) {
-		int r;
-
-		r = show_mrt_capabilities(p, len);
-		if (r == -1)
+		if (show_mrt_capabilities(b) == -1)
 			return;
-		p += r;
-		len -= r;
 	}
 
-	if (len > 0) {
-		printf("\n    additional data %u bytes", len);
+	if (ibuf_size(b) > 0) {
+		len = ibuf_size(b);
+		printf("\n    additional data, %zu bytes", len);
 		for (i = 0; i < len; i++) {
 			if (i % 16 == 0)
 				printf("\n    ");
 			if (i % 8 == 0)
 				printf("   ");
-			printf(" %02X", *p++);
+			if (ibuf_get_n8(b, &c) == -1)
+				goto trunc;
+			printf(" %02X", c);
 		}
 	}
 }
 
 /* XXX this function does not handle JSON output */
 static void
-show_mrt_update(u_char *p, uint16_t len, int reqflags, int addpath)
+show_mrt_update(struct ibuf *b, int reqflags, int addpath)
 {
 	struct bgpd_addr prefix;
-	struct ibuf *b, buf, wbuf, abuf;
+	struct ibuf wbuf, abuf;
 	uint32_t pathid;
 	uint16_t wlen, alen;
 	uint8_t prefixlen;
 
-	ibuf_from_buffer(&buf, p, len);
-	b = &buf;
 	if (ibuf_get_n16(b, &wlen) == -1 ||
 	    ibuf_get_ibuf(b, wlen, &wbuf) == -1)
 		goto trunc;
+
 	if (wlen > 0) {
 		printf("\n     Withdrawn prefixes:");
 		while (ibuf_size(&wbuf) > 0) {
@@ -1780,35 +1733,34 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 	static const uint8_t marker[MSGSIZE_HEADER_MARKER] = {
 	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-	u_char *p;
+	uint8_t m[MSGSIZE_HEADER_MARKER];
+	struct ibuf *b;
 	uint16_t len;
 	uint8_t type;
 	struct ctl_show_rib_request *req = arg;
 
 	printf("%s %s[%u] -> ", fmt_time(&mm->time),
 	    log_addr(&mm->src), mm->src_as);
-	printf("%s[%u]: size %u%s ", log_addr(&mm->dst), mm->dst_as,
-	    mm->msg_len, mm->add_path ? " addpath" : "");
-	p = mm->msg;
-	len = mm->msg_len;
+	printf("%s[%u]: size %zu%s ", log_addr(&mm->dst), mm->dst_as,
+	    ibuf_size(&mm->msg), mm->add_path ? " addpath" : "");
+	b = &mm->msg;
 
-	if (len < MSGSIZE_HEADER) {
-		printf("illegal header length: %u byte\n", len);
+	if (ibuf_get(b, m, sizeof(m)) == -1) {
+		printf("bad message: short header\n");
 		return;
 	}
 
 	/* parse BGP message header */
-	if (memcmp(p, marker, sizeof(marker))) {
+	if (memcmp(m, marker, sizeof(marker))) {
 		printf("incorrect marker in BGP message\n");
 		return;
 	}
-	p += MSGSIZE_HEADER_MARKER;
 
-	memcpy(&len, p, 2);
-	len = ntohs(len);
-	p += 2;
-	memcpy(&type, p, 1);
-	p += 1;
+	if (ibuf_get_n16(b, &len) == -1 ||
+	    ibuf_get_n8(b, &type) == -1) {
+		printf("bad message: short header\n");
+		return;
+	}
 
 	if (len < MSGSIZE_HEADER || len > MAX_PKTSIZE) {
 		printf("illegal header length: %u byte\n", len);
@@ -1819,32 +1771,31 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 	case OPEN:
 		printf("%s ", msgtypenames[type]);
 		if (len < MSGSIZE_OPEN_MIN) {
-			printf("illegal length: %u byte\n", len);
+			printf("bad length: %u bytes\n", len);
 			return;
 		}
-		show_mrt_open(p, len - MSGSIZE_HEADER);
+		show_mrt_open(b);
 		break;
 	case NOTIFICATION:
 		printf("%s ", msgtypenames[type]);
 		if (len < MSGSIZE_NOTIFICATION_MIN) {
-			printf("illegal length: %u byte\n", len);
+			printf("bad length: %u bytes\n", len);
 			return;
 		}
-		show_mrt_notification(p, len - MSGSIZE_HEADER);
+		show_mrt_notification(b);
 		break;
 	case UPDATE:
 		printf("%s ", msgtypenames[type]);
 		if (len < MSGSIZE_UPDATE_MIN) {
-			printf("illegal length: %u byte\n", len);
+			printf("bad length: %u bytes\n", len);
 			return;
 		}
-		show_mrt_update(p, len - MSGSIZE_HEADER, req->flags,
-		    mm->add_path);
+		show_mrt_update(b, req->flags, mm->add_path);
 		break;
 	case KEEPALIVE:
 		printf("%s ", msgtypenames[type]);
 		if (len != MSGSIZE_KEEPALIVE) {
-			printf("illegal length: %u byte\n", len);
+			printf("bad length: %u bytes\n", len);
 			return;
 		}
 		/* nothing */
@@ -1852,10 +1803,10 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 	case RREFRESH:
 		printf("%s ", msgtypenames[type]);
 		if (len != MSGSIZE_RREFRESH) {
-			printf("illegal length: %u byte\n", len);
+			printf("bad length: %u bytes\n", len);
 			return;
 		}
-		print_afi(p, len);
+		print_afi(b);
 		break;
 	default:
 		printf("unknown type %u\n", type);
