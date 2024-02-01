@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.19 2018/03/05 01:39:13 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.20 2024/02/01 00:39:57 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -46,7 +46,8 @@
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 #define	KERNBASE	VM_MAXUSER_ADDRESS
 
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
+#define	MAXTSIZ		(128*1024*1024)		/* max text size */
+
 #ifndef	DFLDSIZ
 #define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
