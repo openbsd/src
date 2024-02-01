@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.69 2023/04/16 17:26:14 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.70 2024/02/01 18:26:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -606,7 +606,10 @@ dump_msi(int bus, int dev, int func, u_int8_t ptr)
 	if (pci_read(bus, dev, func, ptr, &reg) != 0)
 		return;
 
-	printf("\t\tEnabled: %s\n", reg & PCI_MSI_MC_MSIE ? "yes" : "no");
+	printf("\t\tEnabled: %s; %d vectors (%d enabled)\n",
+	    reg & PCI_MSI_MC_MSIE ? "yes" : "no",
+	    (1 << ((reg & PCI_MSI_MC_MMC_MASK) >> PCI_MSI_MC_MMC_SHIFT)),
+	    (1 << ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT)));
 }
 
 void
