@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.67 2023/11/13 10:33:00 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.68 2024/02/01 23:16:38 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -287,6 +287,18 @@ x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
 
 	/* Check by lookup if we have a legacy xsc */
 	if (ctx->xsc != NULL) {
+		/*
+		 * "alternative" lookup method, using the "trusted" stack in the
+		 * xsc as the source for roots.
+		 */
+		if (ctx->xsc->trusted != NULL) {
+			for (i = 0; i < sk_X509_num(ctx->xsc->trusted); i++) {
+				if (X509_cmp(sk_X509_value(ctx->xsc->trusted,
+				    i), cert) == 0)
+					return x509_verify_check_chain_end(cert,
+					    full_chain);
+			}
+		}
 		if ((match = x509_vfy_lookup_cert_match(ctx->xsc,
 		    cert)) != NULL) {
 			X509_free(match);
