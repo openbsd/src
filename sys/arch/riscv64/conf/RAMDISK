@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.41 2024/01/27 12:23:03 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.42 2024/02/02 12:09:18 kettenis Exp $
 
 machine		riscv64
 maxusers	4
@@ -39,6 +39,8 @@ com*		at fdt?
 # Allwinner SoCs
 sxiccmu*	at fdt? early 1
 sxidog*		at fdt?
+sximmc*		at fdt?
+sdmmc*		at sximmc?
 sxipio*		at fdt? early 1
 gpio*		at sxipio?
 sxirtc*		at fdt?

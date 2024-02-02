@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2024/01/27 12:23:03 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.49 2024/02/02 12:09:18 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -47,6 +47,8 @@ com*		at fdt?
 # Allwinner SoCs
 sxiccmu*	at fdt? early 1
 sxidog*		at fdt?
+sximmc*		at fdt?
+sdmmc*		at sximmc?
 sxipio*		at fdt? early 1
 gpio*		at sxipio?
 sxirtc*		at fdt?
