@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.119 2024/02/02 16:15:08 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.120 2024/02/02 16:41:41 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -426,11 +426,6 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 		    &err1);
 	}
 
-	/* overload error from temp file if it is set */
-	if (mft1 == NULL && mft2 == NULL)
-		if (err1 != NULL)
-			err2 = err1;
-
 	if (mft1 != NULL) {
 		*mp = proc_parser_mft_post(file1, mft1, err1, &warned);
 		if (*mp == NULL) {
@@ -451,6 +446,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 		file = file1;
 		*crlfile = crl1file;
 	} else {
+		/* overload error from temp file */
 		if (err2 == NULL)
 			err2 = err1;
 		*mp = proc_parser_mft_post(file2, mft2, err2, &warned);
