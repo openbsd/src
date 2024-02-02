@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.122 2024/02/02 18:22:45 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.123 2024/02/02 18:59:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -374,32 +374,6 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 }
 
 /*
- * Do the end of manifest validation.
- * Return the mft on success or NULL on failure.
- */
-static struct mft *
-proc_parser_mft_post(char *file, struct mft *mft, const char *errstr,
-    int *warned)
-{
-	if (mft == NULL) {
-		if (errstr == NULL)
-			errstr = "no valid mft available";
-		if ((*warned)++ > 0)
-			return NULL;
-		warnx("%s: %s", file, errstr);
-		return NULL;
-	}
-
-	if (!mft->stale)
-		if (!proc_parser_mft_check(file, mft)) {
-			mft_free(mft);
-			return NULL;
-		}
-
-	return mft;
-}
-
-/*
  * Load the most recent MFT by opening both options and comparing the two.
  */
 static char *
@@ -411,7 +385,6 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 	char		*file, *file1 = NULL, *file2 = NULL;
 	char		*crl1file = NULL, *crl2file = NULL;
 	const char	*err1 = NULL, *err2 = NULL;
-	int		 warned = 0;
 
 	*mp = NULL;
 	*crlmtime = 0;
@@ -453,10 +426,22 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 		file = file1;
 		*crlfile = crl1file;
 	} else {
-		/* overload error from temp file */
-		if (err2 == NULL)
-			err2 = err1;
-		*mp = proc_parser_mft_post(file2, mft2, err2, &warned);
+		if (mft2 != NULL) {
+			if (!mft2->stale) {
+				if (!proc_parser_mft_check(file2, mft2)) {
+					mft_free(mft2);
+					mft2 = NULL;
+				}
+			}
+			*mp = mft2;
+		} else {
+			if (err2 == NULL)
+				err2 = err1;
+			if (err2 == NULL)
+				err2 = "no valid mft available";
+			/* XXX - file2 == NULL is possible */
+			warnx("%s: %s", file2, err2);
+		}
 
 		mft_free(mft1);
 		crl_free(crl1);
