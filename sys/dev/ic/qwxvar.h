@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.8 2024/01/30 15:32:04 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.9 2024/02/02 15:44:19 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -221,21 +221,27 @@ struct ath11k_hw_ops {
 			       struct hal_tcl_data_cmd *tcl_cmd);
 	bool (*rx_desc_get_first_msdu)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_last_msdu)(struct hal_rx_desc *desc);
+#endif
 	uint8_t (*rx_desc_get_l3_pad_bytes)(struct hal_rx_desc *desc);
 	uint8_t *(*rx_desc_get_hdr_status)(struct hal_rx_desc *desc);
-	bool (*rx_desc_encrypt_valid)(struct hal_rx_desc *desc);
+	int (*rx_desc_encrypt_valid)(struct hal_rx_desc *desc);
 	uint32_t (*rx_desc_get_encrypt_type)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_decap_type)(struct hal_rx_desc *desc);
+#ifdef notyet
 	uint8_t (*rx_desc_get_mesh_ctl)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_ldpc_support)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_mpdu_seq_ctl_vld)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_mpdu_fc_valid)(struct hal_rx_desc *desc);
 	uint16_t (*rx_desc_get_mpdu_start_seq_no)(struct hal_rx_desc *desc);
+#endif
 	uint16_t (*rx_desc_get_msdu_len)(struct hal_rx_desc *desc);
+#ifdef notyet
 	uint8_t (*rx_desc_get_msdu_sgi)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_rate_mcs)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_rx_bw)(struct hal_rx_desc *desc);
+#endif
 	uint32_t (*rx_desc_get_msdu_freq)(struct hal_rx_desc *desc);
+#ifdef notyet
 	uint8_t (*rx_desc_get_msdu_pkt_type)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_nss)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_mpdu_tid)(struct hal_rx_desc *desc);
@@ -245,7 +251,9 @@ struct ath11k_hw_ops {
 	uint32_t (*rx_desc_get_mpdu_start_tag)(struct hal_rx_desc *desc);
 	uint32_t (*rx_desc_get_mpdu_ppdu_id)(struct hal_rx_desc *desc);
 	void (*rx_desc_set_msdu_len)(struct hal_rx_desc *desc, uint16_t len);
+#endif
 	struct rx_attention *(*rx_desc_get_attention)(struct hal_rx_desc *desc);
+#ifdef notyet
 	uint8_t *(*rx_desc_get_msdu_payload)(struct hal_rx_desc *desc);
 #endif
 	void (*reo_setup)(struct qwx_softc *);
@@ -695,9 +703,10 @@ struct ce_attr {
 
 #define CE_DESC_RING_ALIGN 8
 
-struct qwx_rx_data {
-	struct mbuf	*m;
-	bus_dmamap_t	map;
+struct qwx_rx_msdu {
+	TAILQ_ENTRY(qwx_rx_msdu) entry;
+	struct mbuf *m;
+	struct ieee80211_rxinfo rxi;
 	int is_first_msdu;
 	int is_last_msdu;
 	int is_continuation;
@@ -712,6 +721,14 @@ struct qwx_rx_data {
 	uint8_t tid;
 	uint16_t peer_id;
 	uint16_t seq_no;
+};
+
+TAILQ_HEAD(qwx_rx_msdu_list, qwx_rx_msdu);
+
+struct qwx_rx_data {
+	struct mbuf	*m;
+	bus_dmamap_t	map;
+	struct qwx_rx_msdu rx_msdu;
 };
 
 struct qwx_tx_data {
