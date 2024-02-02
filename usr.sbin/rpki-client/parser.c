@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.117 2024/02/02 13:40:50 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.118 2024/02/02 14:13:58 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -257,9 +257,8 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft_pre(struct entity *entp, enum location loc, char *file,
-    struct crl **crl, char **crlfile, struct mft *cached_mft,
-    const char **errstr)
+proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
+    char **crlfile, struct mft *cached_mft, const char **errstr)
 {
 	struct mft	*mft;
 	X509		*x509;
@@ -274,9 +273,6 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char *file,
 	*errstr = NULL;
 
 	if (file == NULL)
-		return NULL;
-
-	if (noop && loc == DIR_TEMP)
 		return NULL;
 
 	der = load_file(file, &len);
@@ -411,28 +407,31 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
     time_t *crlmtime)
 {
 	struct mft	*mft1 = NULL, *mft2 = NULL;
-	struct crl	*crl, *crl1, *crl2;
-	char		*file, *file1, *file2, *crl1file, *crl2file;
-	const char	*err1, *err2;
+	struct crl	*crl, *crl1 = NULL, *crl2 = NULL;
+	char		*file, *file1 = NULL, *file2 = NULL;
+	char		*crl1file = NULL, *crl2file = NULL;
+	const char	*err1 = NULL, *err2 = NULL;
 	int		 warned = 0;
 
 	*mp = NULL;
 	*crlmtime = 0;
 
 	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
-	mft2 = proc_parser_mft_pre(entp, DIR_VALID, file2, &crl2, &crl2file,
-	    NULL, &err2);
+	mft2 = proc_parser_mft_pre(entp, file2, &crl2, &crl2file, NULL, &err2);
 
-	file1 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_TEMP);
-	mft1 = proc_parser_mft_pre(entp, DIR_TEMP, file1, &crl1, &crl1file,
-	    mft2, &err1);
+	if (!noop) {
+		file1 = parse_filepath(entp->repoid, entp->path, entp->file,
+		    DIR_TEMP);
+		mft1 = proc_parser_mft_pre(entp, file1, &crl1, &crl1file, mft2,
+		    &err1);
+	}
 
 	/* overload error from temp file if it is set */
 	if (mft1 == NULL && mft2 == NULL)
 		if (err1 != NULL)
 			err2 = err1;
 
-	if (!noop && mft1 != NULL) {
+	if (mft1 != NULL) {
 		*mp = proc_parser_mft_post(file1, mft1, entp->path, err1,
 		    &warned);
 		if (*mp == NULL) {
