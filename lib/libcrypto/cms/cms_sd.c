@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.29 2023/10/18 07:30:49 tb Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.30 2024/02/02 14:13:11 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -744,7 +744,7 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 	}
 
 	if (si->pctx == NULL) {
-		EVP_MD_CTX_reset(si->mctx);
+		(void)EVP_MD_CTX_reset(si->mctx);
 		if (!EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, si->pkey))
 			goto err;
 	}
@@ -779,8 +779,7 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 	ret = 1;
 
  err:
-	if (si->mctx != NULL)
-		EVP_MD_CTX_reset(si->mctx);
+	(void)EVP_MD_CTX_reset(si->mctx);
 	freezero(buf, buf_len);
 	freezero(sig, sig_len);
 
@@ -831,8 +830,7 @@ CMS_SignerInfo_verify(CMS_SignerInfo *si)
 	}
 
  err:
-	if (si->mctx != NULL)
-		EVP_MD_CTX_reset(si->mctx);
+	(void)EVP_MD_CTX_reset(si->mctx);
 	freezero(buf, buf_len);
 
 	return ret;
