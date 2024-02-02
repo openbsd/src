@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.124 2024/02/02 19:26:26 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.125 2024/02/02 19:31:59 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -251,10 +251,9 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
 }
 
 /*
- * Parse and validate a manifest file. Skip checking the fileandhash
- * this is done in the post check. After this step we know the mft is
- * valid and can be compared.
- * Return the mft on success or NULL on failure.
+ * Parse and validate a manifest file.
+ * Don't check the fileandhash, this is done later on.
+ * Return the mft on success, or NULL on failure.
  */
 static struct mft *
 proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
