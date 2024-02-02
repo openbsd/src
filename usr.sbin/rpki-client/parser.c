@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.114 2024/02/01 09:50:15 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.115 2024/02/02 12:23:16 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -316,7 +316,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	 */
 
 	if ((issued_cmp = mft_compare_issued(mft, cached_mft)) < 0) {
-		warnx("%s: unexpected manifest issuance time (want >= %lld, "
+		warnx("%s: unexpected manifest issuance date (want >= %lld, "
 		    "got %lld)", *file, (long long)cached_mft->thisupdate,
 		    (long long)mft->thisupdate);
 		goto err;
@@ -327,22 +327,22 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 		goto err;
 	}
 	if (issued_cmp > 0 && seqnum_cmp == 0) {
-		warnx("%s#%s: manifest issued at %lld and %lld with same "
-		    "sequence number", *file, cached_mft->seqnum,
-		    (long long)mft->thisupdate,
-		    (long long)cached_mft->thisupdate);
+		warnx("%s: manifest issued at %lld and %lld with same "
+		    "manifest number #%s", *file, (long long)mft->thisupdate,
+		    (long long)cached_mft->thisupdate, cached_mft->seqnum);
 		goto err;
 	}
 	if (issued_cmp == 0 && seqnum_cmp > 0) {
-		warnx("%s#%s: reissued manifest same issuance time %lld as #%s",
-		    *file, mft->seqnum, (long long)mft->thisupdate,
-		    cached_mft->seqnum);
+		warnx("%s: #%s and #%s were issued at same issuance date %lld",
+		    *file, mft->seqnum, cached_mft->seqnum,
+		    (long long)mft->thisupdate);
 		goto err;
 	}
 	if (issued_cmp == 0 && seqnum_cmp == 0 && memcmp(mft->mfthash,
 	    cached_mft->mfthash, SHA256_DIGEST_LENGTH) != 0) {
-		warnx("%s: manifest misissuance, #%s was recycled",
-		    *file, mft->seqnum);
+		warnx("%s: misissuance, issuance date %lld and manifest number "
+		    "#%s were recycled", *file, (long long)mft->thisupdate,
+		    mft->seqnum);
 		goto err;
 	}
 
