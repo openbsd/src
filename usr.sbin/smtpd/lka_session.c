@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.99 2024/02/02 22:02:12 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.100 2024/02/02 23:33:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -404,6 +404,20 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			    "user, submitting");
 			lka_submit(lks, rule, xn);
 			break;
+		}
+
+
+		/* when alternate delivery user is provided,
+		 * skip other users forward files.
+		 */
+		if (dsp->u.local.user) {
+			if (strcmp(dsp->u.local.user, xn->u.user) != 0) {
+				log_trace(TRACE_EXPAND, "expand: lka_expand: "
+				    "alternate delivery user mismatch recipient "
+				    "user, skip .forward, submitting");
+				lka_submit(lks, rule, xn);
+				break;
+			}
 		}
 
 		/* no aliases found, query forward file */
