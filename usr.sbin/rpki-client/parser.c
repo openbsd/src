@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.115 2024/02/02 12:23:16 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.116 2024/02/02 12:35:15 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -266,6 +266,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	struct auth	*a;
 	unsigned char	*der;
 	size_t		 len;
+	time_t		 now;
 	int		 issued_cmp, seqnum_cmp;
 
 	*crl = NULL;
@@ -307,6 +308,21 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	mft->repoid = entp->repoid;
 	mft->talid = a->cert->talid;
 
+	now = get_current_time();
+	/* check that now is not before from */
+	if (now < mft->thisupdate) {
+		warnx("%s: manifest not yet valid %s", *file,
+		    time2str(mft->thisupdate));
+		mft->stale = 1;
+	}
+	/* check that now is not after until */
+	if (now > mft->nextupdate) {
+		warnx("%s: manifest expired on %s", *file,
+		    time2str(mft->nextupdate));
+		mft->stale = 1;
+	}
+
+	/* if there is nothing to compare to, return now */
 	if (cached_mft == NULL)
 		return mft;
 
@@ -366,9 +382,6 @@ static struct mft *
 proc_parser_mft_post(char *file, struct mft *mft, const char *path,
     const char *errstr, int *warned)
 {
-	/* check that now is not before from */
-	time_t now = get_current_time();
-
 	if (mft == NULL) {
 		if (errstr == NULL)
 			errstr = "no valid mft available";
@@ -378,18 +391,6 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
 		return NULL;
 	}
 
-	/* check that now is not before from */
-	if (now < mft->thisupdate) {
-		warnx("%s: mft not yet valid %s", file,
-		    time2str(mft->thisupdate));
-		mft->stale = 1;
-	}
-	/* check that now is not after until */
-	if (now > mft->nextupdate) {
-		warnx("%s: mft expired on %s", file,
-		    time2str(mft->nextupdate));
-		mft->stale = 1;
-	}
 
 	if (path != NULL)
 		if ((mft->path = strdup(path)) == NULL)
