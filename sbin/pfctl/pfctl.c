@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.393 2024/01/15 07:23:32 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.394 2024/02/02 08:23:29 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -514,7 +514,7 @@ pfctl_kill_src_nodes(int dev, int opts)
 
 				dests++;
 
-				copy_satopfaddr(&psnk.psnk_src.addr.v.a.addr,
+				copy_satopfaddr(&psnk.psnk_dst.addr.v.a.addr,
 				    resp[1]->ai_addr);
 
 				if (ioctl(dev, DIOCKILLSRCNODES, &psnk) == -1)
@@ -595,7 +595,7 @@ pfctl_net_kill_states(int dev, const char *iface, int opts, int rdomain)
 
 				dests++;
 
-				copy_satopfaddr(&psk.psk_src.addr.v.a.addr,
+				copy_satopfaddr(&psk.psk_dst.addr.v.a.addr,
 				    resp[1]->ai_addr);
 
 				if (ioctl(dev, DIOCKILLSTATES, &psk) == -1)
