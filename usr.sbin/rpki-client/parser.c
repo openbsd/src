@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.118 2024/02/02 14:13:58 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.119 2024/02/02 16:15:08 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -284,6 +284,11 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 		return NULL;
 	}
 
+	if (entp->path != NULL) {
+		if ((mft->path = strdup(entp->path)) == NULL)
+			err(1, NULL);
+	}
+
 	if (!EVP_Digest(der, len, mft->mfthash, NULL, EVP_sha256(), NULL))
 		errx(1, "EVP_Digest failed");
 
@@ -373,8 +378,8 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft_post(char *file, struct mft *mft, const char *path,
-    const char *errstr, int *warned)
+proc_parser_mft_post(char *file, struct mft *mft, const char *errstr,
+    int *warned)
 {
 	if (mft == NULL) {
 		if (errstr == NULL)
@@ -384,11 +389,6 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
 		warnx("%s: %s", file, errstr);
 		return NULL;
 	}
-
-
-	if (path != NULL)
-		if ((mft->path = strdup(path)) == NULL)
-			err(1, NULL);
 
 	if (!mft->stale)
 		if (!proc_parser_mft_check(file, mft)) {
@@ -432,8 +432,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 			err2 = err1;
 
 	if (mft1 != NULL) {
-		*mp = proc_parser_mft_post(file1, mft1, entp->path, err1,
-		    &warned);
+		*mp = proc_parser_mft_post(file1, mft1, err1, &warned);
 		if (*mp == NULL) {
 			mft1 = NULL;
 			if (mft2 != NULL)
@@ -454,8 +453,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 	} else {
 		if (err2 == NULL)
 			err2 = err1;
-		*mp = proc_parser_mft_post(file2, mft2, entp->path, err2,
-		    &warned);
+		*mp = proc_parser_mft_post(file2, mft2, err2, &warned);
 
 		mft_free(mft1);
 		crl_free(crl1);
