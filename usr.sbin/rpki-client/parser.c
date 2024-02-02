@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.120 2024/02/02 16:41:41 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.121 2024/02/02 18:11:12 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -427,12 +427,18 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 	}
 
 	if (mft1 != NULL) {
-		*mp = proc_parser_mft_post(file1, mft1, err1, &warned);
-		if (*mp == NULL) {
-			mft1 = NULL;
-			if (mft2 != NULL)
-				warnx("%s: failed fetch, continuing with #%s"
-				    " from cache", file2, mft2->seqnum);
+		if (!mft1->stale) {
+			if (!proc_parser_mft_check(file1, mft1)) {
+				mft_free(mft1);
+				mft1 = NULL;
+				if (mft2 != NULL)
+					warnx("%s: failed fetch, continuing "
+					    "with #%s from cache", file2,
+					    mft2->seqnum);
+			}
+		} else {
+			/* XXX - preserve behavior; this is probably wrong. */
+			*mp = mft1;
 		}
 	}
 
