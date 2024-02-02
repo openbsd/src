@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_dump.c,v 1.1 2024/02/02 06:22:01 tb Exp $ */
+/*	$OpenBSD: bio_dump.c,v 1.2 2024/02/02 06:39:58 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  *
@@ -218,6 +218,40 @@ static const struct bio_dump_testcase {
 "                                00c6 - 49 d5 1e 1e cc 1a b1 d8-f7   I........\n"
 "                                00cf - 91 1e 1e cc 1a               .....\n"
 "                                00f6 - <SPACES/NULS>\n",
+	},
+	{
+		.indent = 35,
+		.input = dump,
+		.inlen = DUMP_LEN,
+		.output =
+"                                   0000 - 74 45 c6 20 00 00 00 00-  tE. ....\n"
+"                                   0008 - 00 00 00 00 00 00 00 00-  ........\n"
+"                                   0010 - 36 d8 61 48 68 3c c0 68-  6.aHh<.h\n"
+"                                   0018 - aa 15 57 77 e3 ec b4 98-  ..Ww....\n"
+"                                   0020 - c6 08 fc 59 b3 4f 45 cf-  ...Y.OE.\n"
+"                                   0028 - 4b c2 ae 98 b5 eb e0 b5-  K.......\n"
+"                                   0030 - c1 68 ba cf 7c f7 7b 38-  .h..|.{8\n"
+"                                   0038 - 43 2f b9 0e 23 02 b9 4f-  C/..#..O\n"
+"                                   0040 - 8c 26 eb ef 70 98 82 a7-  .&..p...\n"
+"                                   0048 - b9 78 c5 08 96 99 b3 84-  .x......\n"
+"                                   0050 - a3 4f fb d7 38 a9 d9 d4-  .O..8...\n"
+"                                   0058 - 53 0f 4f 64 97 df cf f3-  S.Od....\n"
+"                                   0060 - 4f c8 d2 56 3f 0d 72 d4-  O..V?.r.\n"
+"                                   0068 - 55 98 89 b0 45 26 3f 7a-  U...E&?z\n"
+"                                   0070 - bd 9d 96 15 a2 10 14 85-  ........\n"
+"                                   0078 - aa a1 7c 84 fb c4 a5 7b-  ..|....{\n"
+"                                   0080 - c6 e3 ad 85 57 96 bb 81-  ....W...\n"
+"                                   0088 - 18 0c ed 2f f7 6a 4c 4d-  .../.jLM\n"
+"                                   0090 - 59 e1 cc c5 3a 9f 48 fc-  Y...:.H.\n"
+"                                   0098 - 1d 7c 0d a4 79 96 e7 2b-  .|..y..+\n"
+"                                   00a0 - 39 15 f9 3a 6a 5e 7c 4e-  9..:j^|N\n"
+"                                   00a8 - c9 3b af eb 3b cf 8d 6a-  .;..;..j\n"
+"                                   00b0 - 57 e6 c5 ba bd a6 a0 6b-  W......k\n"
+"                                   00b8 - 03 d5 a3 9f 99 2a ea 88-  .....*..\n"
+"                                   00c0 - 72 1b 66 6c 5e 1d 49 d5-  r.fl^.I.\n"
+"                                   00c8 - 1e 1e cc 1a b1 d8 f7 91-  ........\n"
+"                                   00d0 - 1e 1e cc 1a               ....\n"
+"                                   00f6 - <SPACES/NULS>\n",
 	},
 	{
 		.indent = 39,
@@ -713,7 +747,7 @@ bio_dump_test(const struct bio_dump_testcase *tc)
 	if ((got_len = BIO_get_mem_data(bio, &got)) < 0)
 		errx(1, "BIO_get_mem_data");
 	if (ret != got_len || strlen(tc->output) != (size_t)ret) {
-		fprintf(stderr, "indent %d: ret %d, got_len %ld, strlen %zu",
+		fprintf(stderr, "indent %d: ret %d, got_len %ld, strlen %zu\n",
 		    tc->indent, ret, got_len, strlen(tc->output));
 		goto err;
 	}
