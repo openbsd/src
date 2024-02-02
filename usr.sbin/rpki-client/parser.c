@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.123 2024/02/02 18:59:35 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.124 2024/02/02 19:26:26 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -400,19 +400,14 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 	}
 
 	if (mft1 != NULL) {
-		if (!mft1->stale) {
-			if (!proc_parser_mft_check(file1, mft1)) {
-				mft_free(mft1);
-				mft1 = NULL;
-				if (mft2 != NULL)
-					warnx("%s: failed fetch, continuing "
-					    "with #%s from cache", file2,
-					    mft2->seqnum);
-			}
+		if (proc_parser_mft_check(file1, mft1)) {
 			*mp = mft1;
 		} else {
-			/* XXX - preserve behavior; this is probably wrong. */
-			*mp = mft1;
+			mft_free(mft1);
+			mft1 = NULL;
+			if (mft2 != NULL)
+				warnx("%s: failed fetch, continuing with #%s "
+				    "from cache", file2, mft2->seqnum);
 		}
 	}
 
@@ -427,13 +422,12 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 		*crlfile = crl1file;
 	} else {
 		if (mft2 != NULL) {
-			if (!mft2->stale) {
-				if (!proc_parser_mft_check(file2, mft2)) {
-					mft_free(mft2);
-					mft2 = NULL;
-				}
+			if (proc_parser_mft_check(file2, mft2)) {
+				*mp = mft2;
+			} else {
+				mft_free(mft2);
+				mft2 = NULL;
 			}
-			*mp = mft2;
 		} else {
 			if (err2 == NULL)
 				err2 = err1;
