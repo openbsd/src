@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.125 2024/02/02 19:31:59 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.126 2024/02/02 22:09:56 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -168,6 +168,9 @@ proc_parser_mft_check(const char *fn, struct mft *p)
 	size_t	 i;
 	int	 rc = 1;
 	char	*path;
+
+	if (p == NULL)
+		return 0;
 
 	for (i = 0; i < p->filesz; i++) {
 		struct mftfile *m = &p->files[i];
@@ -398,41 +401,31 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 		    &err1);
 	}
 
-	if (mft1 != NULL) {
-		if (proc_parser_mft_check(file1, mft1)) {
-			*mp = mft1;
-		} else {
-			mft_free(mft1);
-			mft1 = NULL;
-			if (mft2 != NULL)
-				warnx("%s: failed fetch, continuing with #%s "
-				    "from cache", file2, mft2->seqnum);
-		}
-	}
-
-	if (*mp != NULL) {
+	if (proc_parser_mft_check(file1, mft1)) {
 		mft_free(mft2);
 		crl_free(crl2);
 		free(crl2file);
 		free(file2);
 
+		*mp = mft1;
 		crl = crl1;
 		file = file1;
 		*crlfile = crl1file;
 	} else {
-		if (mft2 != NULL) {
-			if (proc_parser_mft_check(file2, mft2)) {
-				*mp = mft2;
-			} else {
-				mft_free(mft2);
-				mft2 = NULL;
-			}
+		if (mft1 != NULL && mft2 != NULL)
+			warnx("%s: failed fetch, continuing with #%s "
+			    "from cache", file2, mft2->seqnum);
+
+		if (proc_parser_mft_check(file2, mft2)) {
+			*mp = mft2;
 		} else {
+			mft_free(mft2);
+			mft2 = NULL;
+
 			if (err2 == NULL)
 				err2 = err1;
 			if (err2 == NULL)
-				err2 = "no valid mft available";
-			/* XXX - file2 == NULL is possible */
+				err2 = "no valid manifest available";
 			warnx("%s: %s", file2, err2);
 		}
 
