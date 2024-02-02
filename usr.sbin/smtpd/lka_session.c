@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.98 2023/11/03 13:40:07 op Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.99 2024/02/02 22:02:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -397,6 +397,7 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 			break;
 		}
 		xn->realuser = 1;
+		xn->realuser_uid = lk.userinfo.uid;
 
 		if (xn->sameuser && xn->parent->forwarded) {
 			log_trace(TRACE_EXPAND, "expand: lka_expand: same "
@@ -423,6 +424,12 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_FILENAME:
+		if (xn->parent->realuser && xn->parent->realuser_uid == 0) {
+			log_trace(TRACE_EXPAND, "expand: filename not allowed in root's forward");
+			lks->error = LKA_TEMPFAIL;
+			break;
+		}
+
 		dsp = dict_xget(env->sc_dispatchers, rule->dispatcher);
 		if (dsp->u.local.forward_only) {
 			log_trace(TRACE_EXPAND, "expand: filename matched on forward-only rule");
@@ -451,6 +458,12 @@ lka_expand(struct lka_session *lks, struct rule *rule, struct expandnode *xn)
 		break;
 
 	case EXPAND_FILTER:
+		if (xn->parent->realuser && xn->parent->realuser_uid == 0) {
+			log_trace(TRACE_EXPAND, "expand: filter not allowed in root's forward");
+			lks->error = LKA_TEMPFAIL;
+			break;
+		}
+
 		dsp = dict_xget(env->sc_dispatchers, rule->dispatcher);
 		if (dsp->u.local.forward_only) {
 			log_trace(TRACE_EXPAND, "expand: filter matched on forward-only rule");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.680 2024/01/03 08:11:15 op Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.681 2024/02/02 22:02:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -428,6 +428,7 @@ struct expandnode {
 	enum expand_type	type;
 	int			sameuser;
 	int			realuser;
+	uid_t			realuser_uid;
 	int			forwarded;
 	struct rule	       *rule;
 	struct expandnode      *parent;

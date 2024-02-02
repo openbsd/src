@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.347 2024/01/20 09:01:03 claudio Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.348 2024/02/02 22:02:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1425,16 +1425,9 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		pw_dir = deliver->userinfo.directory;
 	}
 
-	if (pw_uid == 0 && deliver->mda_exec[0]) {
-		pw_name = deliver->userinfo.username;
-		pw_uid = deliver->userinfo.uid;
-		pw_gid = deliver->userinfo.gid;
-		pw_dir = deliver->userinfo.directory;
-	}
-
-	if (pw_uid == 0 && !dsp->u.local.is_mbox) {
-		(void)snprintf(ebuf, sizeof ebuf, "not allowed to deliver to: %s",
-		    deliver->userinfo.username);
+	if (pw_uid == 0 && (!dsp->u.local.is_mbox || deliver->mda_exec[0])) {
+		(void)snprintf(ebuf, sizeof ebuf, "MDA not allowed to deliver to: %s",
+			       deliver->userinfo.username);
 		m_create(p_dispatcher, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_dispatcher, id);
 		m_add_int(p_dispatcher, MDA_PERMFAIL);
