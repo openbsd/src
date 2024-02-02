@@ -304,7 +304,15 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 
 /* D1 */
 
+#define D1_CLK_PLL_CPU		0
+#define D1_CLK_PLL_PERIPH0	5
 #define D1_CLK_APB1		25
+#define D1_CLK_MMC0		56
+#define D1_CLK_MMC1		57
+#define D1_CLK_MMC2		58
+#define D1_CLK_BUS_MMC0		59
+#define D1_CLK_BUS_MMC1		60
+#define D1_CLK_BUS_MMC2		61
 #define D1_CLK_BUS_UART0	62
 #define D1_CLK_BUS_UART1	63
 #define D1_CLK_BUS_UART2	64
@@ -317,8 +325,17 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 #define D1_CLK_BUS_OHCI1	100
 #define D1_CLK_BUS_EHCI0	101
 #define D1_CLK_BUS_EHCI1	102
+#define D1_CLK_RISCV		132
+
+#define D1_CLK_HOSC		255
 
 const struct sxiccmu_ccu_bit sun20i_d1_gates[] = {
+	[D1_CLK_MMC0] =      { 0x0830, 31 },
+	[D1_CLK_MMC1] =      { 0x0834, 31 },
+	[D1_CLK_MMC2] =      { 0x0838, 31 },
+	[D1_CLK_BUS_MMC0] =  { 0x084c, 0 },
+	[D1_CLK_BUS_MMC1] =  { 0x084c, 1 },
+	[D1_CLK_BUS_MMC2] =  { 0x084c, 2 },
 	[D1_CLK_BUS_UART0] = { 0x090c, 0, D1_CLK_APB1 },
 	[D1_CLK_BUS_UART1] = { 0x090c, 1, D1_CLK_APB1 },
 	[D1_CLK_BUS_UART2] = { 0x090c, 2, D1_CLK_APB1 },
@@ -801,6 +818,9 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_resets[] = {
 
 /* D1 */
 
+#define D1_RST_BUS_MMC0		15
+#define D1_RST_BUS_MMC1		16
+#define D1_RST_BUS_MMC2		17
 #define D1_RST_BUS_UART0	18
 #define D1_RST_BUS_UART1	19
 #define D1_RST_BUS_UART2	20
@@ -815,6 +835,9 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_resets[] = {
 #define D1_RST_BUS_EHCI1	45
 
 const struct sxiccmu_ccu_bit sun20i_d1_resets[] = {
+	[D1_RST_BUS_MMC0] =  { 0x084c, 16 },
+	[D1_RST_BUS_MMC1] =  { 0x084c, 17 },
+	[D1_RST_BUS_MMC2] =  { 0x084c, 18 },
 	[D1_RST_BUS_UART0] = { 0x090c, 16 },
 	[D1_RST_BUS_UART1] = { 0x090c, 17 },
 	[D1_RST_BUS_UART2] = { 0x090c, 18 },

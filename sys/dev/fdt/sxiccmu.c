@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.33 2024/01/26 17:50:00 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.34 2024/02/02 12:01:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -1168,14 +1168,50 @@ sxiccmu_a80_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 }
 
 /* Allwinner D1 */
+#define D1_PLL_CPU_CTRL_REG		0x0000
+#define D1_PLL_CPU_FACTOR_M(x)		(((x) >> 0) & 0x3)
+#define D1_PLL_CPU_FACTOR_N(x)		(((x) >> 8) & 0xff)
+#define D1_RISCV_CLK_REG		0x0d00
+#define D1_RISCV_CLK_SEL		(7 << 24)
+#define D1_RISCV_CLK_SEL_HOSC		(0 << 24)
+#define D1_RISCV_CLK_SEL_PLL_CPU	(5 << 24)
+#define D1_RISCV_DIV_CFG_FACTOR_M(x)	(((x) >> 0) & 0x1f)
 
 uint32_t
 sxiccmu_d1_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
+	uint32_t parent;
+	uint32_t reg;
+	uint32_t m, n;
+
 	switch (idx) {
+	case D1_CLK_HOSC:
+		return clock_get_frequency(sc->sc_node, "hosc");
+	case D1_CLK_PLL_CPU:
+		reg = SXIREAD4(sc, D1_PLL_CPU_CTRL_REG);
+		m = D1_PLL_CPU_FACTOR_M(reg) + 1;
+		n = D1_PLL_CPU_FACTOR_N(reg) + 1;
+		return (24000000 * n) / m;
+	case D1_CLK_PLL_PERIPH0:
+		/* Not hardcoded, but recommended. */
+		return 600000000;
 	case D1_CLK_APB1:
 		/* XXX Controlled by a MUX. */
 		return 24000000;
+	case D1_CLK_RISCV:
+		reg = SXIREAD4(sc, D1_RISCV_CLK_REG);
+		switch (reg & D1_RISCV_CLK_SEL) {
+		case D1_RISCV_CLK_SEL_HOSC:
+			parent = D1_CLK_HOSC;
+			break;
+		case D1_RISCV_CLK_SEL_PLL_CPU:
+			parent = D1_CLK_PLL_CPU;
+			break;
+		default:
+			return 0;
+		}
+		m = D1_RISCV_DIV_CFG_FACTOR_M(reg) + 1;
+		return sxiccmu_ccu_get_frequency(sc, &parent) / m;
 	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
@@ -1671,9 +1707,72 @@ sxiccmu_a80_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 	return -1;
 }
 
+#define D1_SMHC0_CLK_REG		0x0830
+#define D1_SMHC1_CLK_REG		0x0834
+#define D1_SMHC2_CLK_REG		0x0838
+#define D1_SMHC_CLK_SRC_SEL			(0x3 << 24)
+#define D1_SMHC_CLK_SRC_SEL_HOSC		(0x0 << 24)
+#define D1_SMHC_CLK_SRC_SEL_PLL_PERIPH0		(0x1 << 24)
+#define D1_SMHC_FACTOR_N_MASK			(0x3 << 8)
+#define D1_SMHC_FACTOR_N_SHIFT			8
+#define D1_SMHC_FACTOR_M_MASK			(0xf << 0)
+#define D1_SMHC_FACTOR_M_SHIFT			0
+
+int
+sxiccmu_d1_mmc_set_frequency(struct sxiccmu_softc *sc, bus_size_t offset,
+    uint32_t freq)
+{
+	uint32_t parent_freq;
+	uint32_t reg, m, n;
+	uint32_t clk_src;
+
+	switch (freq) {
+	case 400000:
+		n = 2, m = 15;
+		clk_src = D1_SMHC_CLK_SRC_SEL_HOSC;
+		break;
+	case 20000000:
+	case 25000000:
+	case 26000000:
+	case 50000000:
+	case 52000000:
+		n = 0, m = 0;
+		clk_src = D1_SMHC_CLK_SRC_SEL_PLL_PERIPH0;
+		parent_freq =
+		    sxiccmu_d1_get_frequency(sc, D1_CLK_PLL_PERIPH0);
+		while ((parent_freq / (1 << n) / 16) > freq)
+			n++;
+		while ((parent_freq / (1 << n) / (m + 1)) > freq)
+			m++;
+		break;
+	default:
+		return -1;
+	}
+
+	reg = SXIREAD4(sc, offset);
+	reg &= ~D1_SMHC_CLK_SRC_SEL;
+	reg |= clk_src;
+	reg &= ~D1_SMHC_FACTOR_N_MASK;
+	reg |= n << D1_SMHC_FACTOR_N_SHIFT;
+	reg &= ~D1_SMHC_FACTOR_M_MASK;
+	reg |= m << D1_SMHC_FACTOR_M_SHIFT;
+	SXIWRITE4(sc, offset, reg);
+
+	return 0;
+}
+
 int
 sxiccmu_d1_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 {
+	switch (idx) {
+	case D1_CLK_MMC0:
+		return sxiccmu_d1_mmc_set_frequency(sc, D1_SMHC0_CLK_REG, freq);
+	case D1_CLK_MMC1:
+		return sxiccmu_d1_mmc_set_frequency(sc, D1_SMHC1_CLK_REG, freq);
+	case D1_CLK_MMC2:
+		return sxiccmu_d1_mmc_set_frequency(sc, D1_SMHC2_CLK_REG, freq);
+	}
+
 	printf("%s: 0x%08x\n", __func__, idx);
 	return -1;
 }
