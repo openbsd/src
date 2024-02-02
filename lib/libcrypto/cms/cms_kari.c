@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_kari.c,v 1.15 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: cms_kari.c,v 1.16 2024/02/02 14:11:45 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -279,7 +279,7 @@ cms_kek_cipher(unsigned char **pout, size_t *poutlen, const unsigned char *in,
 	explicit_bzero(kek, keklen);
 	if (!rv)
 		free(out);
-	EVP_CIPHER_CTX_reset(kari->ctx);
+	(void)EVP_CIPHER_CTX_reset(kari->ctx);
 	/* FIXME: WHY IS kari->pctx freed here?  /RL */
 	EVP_PKEY_CTX_free(kari->pctx);
 	kari->pctx = NULL;
