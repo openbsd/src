@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.7 2023/04/25 19:48:24 tb Exp $
+#	$OpenBSD: Makefile,v 1.8 2024/02/02 06:22:01 tb Exp $
 
 PROGS +=	bio_asn1
 PROGS +=	bio_chain
+PROGS +=	bio_dump
 PROGS +=	bio_host
 PROGS +=	bio_mem
 
