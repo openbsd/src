@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.80 2024/01/30 13:50:09 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.81 2024/02/02 16:14:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -547,8 +547,12 @@ aspath_inflate(struct ibuf *in)
 	uint16_t	 short_as;
 	uint8_t		 seg_type, seg_len;
 
-	/* allocate enough space for the worst case */
-	if ((out = ibuf_open(ibuf_size(in) * 2)) == NULL)
+	/*
+	 * Allocate enough space for the worst case.
+	 * XXX add 1 byte for the empty ASPATH case since we can't
+	 * allocate an ibuf of 0 length.
+	 */
+	if ((out = ibuf_open(ibuf_size(in) * 2 + 1)) == NULL)
 		return (NULL);
 
 	/* then copy the aspath */
