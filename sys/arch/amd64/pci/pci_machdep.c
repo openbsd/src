@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.78 2024/01/19 18:38:16 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.79 2024/02/02 21:13:35 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -499,8 +499,8 @@ pci_intr_map_msivec(struct pci_attach_args *pa, int vec,
 		return 1;
 
 	mme = ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT);
-	if (vec > (1 << mme))
-		return 0;
+	if (vec >= (1 << mme))
+		return 1;
 
 	ihp->tag = PCI_MSI_PIN(tag, vec);
 	ihp->line = APIC_INT_VIA_MSG;
