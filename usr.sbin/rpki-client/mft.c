@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.102 2024/01/31 06:57:21 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.103 2024/02/02 19:26:49 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -300,16 +300,6 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	p->res->seqnum = x509_convert_seqnum(p->fn, mft->manifestNumber);
 	if (p->res->seqnum == NULL)
 		goto out;
-
-	/*
-	 * Timestamps: this and next update time.
-	 * Validate that the current date falls into this interval.
-	 * This is required by section 4.4, (3).
-	 * If we're after the given date, then the MFT is stale.
-	 * This is made super complicated because it uses OpenSSL's
-	 * ASN1_GENERALIZEDTIME instead of ASN1_TIME, which we could
-	 * compare against the current time trivially.
-	 */
 
 	if (!mft_parse_time(mft->thisUpdate, mft->nextUpdate, p))
 		goto out;
