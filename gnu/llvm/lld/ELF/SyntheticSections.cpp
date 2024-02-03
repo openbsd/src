@@ -2500,6 +2500,10 @@ PltSection::PltSection()
   if ((config->emachine == EM_386 || config->emachine == EM_X86_64) &&
       (config->andFeatures & GNU_PROPERTY_X86_FEATURE_1_IBT))
     name = ".plt.sec";
+#ifdef __OpenBSD__
+  else if (config->emachine == EM_X86_64)
+    name = ".plt.sec";
+#endif
 
   // The PLT needs to be writable on SPARC as the dynamic linker will
   // modify the instructions in the PLT entries.

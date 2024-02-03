@@ -1186,6 +1186,10 @@ static TargetInfo *getTargetInfo() {
     return &t;
   }
 
+#ifdef __OpenBSD__
+  static IntelIBT t;
+  return &t;
+#else
   if (config->andFeatures & GNU_PROPERTY_X86_FEATURE_1_IBT) {
     static IntelIBT t;
     return &t;
@@ -1193,6 +1197,7 @@ static TargetInfo *getTargetInfo() {
 
   static X86_64 t;
   return &t;
+#endif
 }
 
 TargetInfo *elf::getX86_64TargetInfo() { return getTargetInfo(); }

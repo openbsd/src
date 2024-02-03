@@ -489,6 +489,12 @@ template <class ELFT> void elf::createSyntheticSections() {
     in.ibtPlt = std::make_unique<IBTPltSection>();
     add(*in.ibtPlt);
   }
+#ifdef __OpenBSD__
+  else if (config->emachine == EM_X86_64) {
+    in.ibtPlt = std::make_unique<IBTPltSection>();
+    add(*in.ibtPlt);
+  }
+#endif
 
   if (config->emachine == EM_PPC)
     in.plt = std::make_unique<PPC32GlinkSection>();
