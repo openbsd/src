@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.621 2024/02/02 16:10:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.622 2024/02/03 00:11:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4273,6 +4273,7 @@ rde_peer_send_rrefresh(struct rde_peer *peer, uint8_t aid, uint8_t subtype)
 
 	if (imsg_compose(ibuf_se, IMSG_REFRESH, peer->conf.id, 0, -1,
 	    &rr, sizeof(rr)) == -1)
+		fatal("%s %d imsg_compose error", __func__, __LINE__);
 
 	log_peer_info(&peer->conf, "sending %s %s marker",
 	    aid2str(aid), subtype == ROUTE_REFRESH_END_RR ? "EoRR" : "BoRR");
