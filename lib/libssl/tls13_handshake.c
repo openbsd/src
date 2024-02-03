@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.72 2022/11/26 16:08:56 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.73 2024/02/03 19:57:14 tb Exp $	*/
 /*
  * Copyright (c) 2018-2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -546,21 +546,23 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 		return TLS13_IO_FAILURE;
 
 	ret = TLS13_IO_FAILURE;
-	if (action->recv(ctx, &cbs)) {
-		if (CBS_len(&cbs) != 0) {
-			tls13_set_errorx(ctx, TLS13_ERR_TRAILING_DATA, 0,
-			    "trailing data in handshake message", NULL);
-			ctx->alert = TLS13_ALERT_DECODE_ERROR;
-		} else {
-			ret = TLS13_IO_SUCCESS;
-		}
+	if (!action->recv(ctx, &cbs))
+		goto err;
+
+	if (CBS_len(&cbs) != 0) {
+		tls13_set_errorx(ctx, TLS13_ERR_TRAILING_DATA, 0,
+		    "trailing data in handshake message", NULL);
+		ctx->alert = TLS13_ALERT_DECODE_ERROR;
+		goto err;
 	}
 
+	ret = TLS13_IO_SUCCESS;
+	if (ctx->ssl->method->version < TLS1_3_VERSION)
+		ret = TLS13_IO_USE_LEGACY;
+
+ err:
 	tls13_handshake_msg_free(ctx->hs_msg);
 	ctx->hs_msg = NULL;
-
-	if (ctx->ssl->method->version < TLS1_3_VERSION)
-		return TLS13_IO_USE_LEGACY;
 
 	return ret;
 }
