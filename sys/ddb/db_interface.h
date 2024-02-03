@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.h,v 1.26 2023/07/02 19:02:27 cheloha Exp $	*/
+/*	$OpenBSD: db_interface.h,v 1.27 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
@@ -77,11 +77,6 @@ void nfs_node_print(void *, int, int (*)(const char *, ...));
 
 /* uvm/uvm_swap.c */
 void swap_print_all(int (*)(const char *, ...));
-
-/* ufs/ffs/ffs_softdep.c */
-struct worklist;
-void worklist_print(struct worklist *, int, int (*)(const char *, ...));
-void softdep_print(struct buf *, int, int (*)(const char *, ...));
 
 /* arch/<arch>/<arch>/db_interface.c */
 void db_machine_init(void);

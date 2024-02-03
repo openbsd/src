@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.48 2024/01/09 03:16:00 guenther Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.49 2024/02/03 18:51:57 beck Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -110,31 +110,6 @@ pass1(void)
 		} else
 			inosused = sblock.fs_ipg;
 
-		/*
-		 * If we are using soft updates, then we can trust the
-		 * cylinder group inode allocation maps to tell us which
-		 * inodes are allocated. We will scan the used inode map
-		 * to find the inodes that are really in use, and then
-		 * read only those inodes in from disk.
-		 */
-		if (preen && usedsoftdep) {
-			cp = &cg_inosused(cgp)[(inosused - 1) / CHAR_BIT];
-			for ( ; inosused != 0; cp--) {
-				if (*cp == 0) {
-					if (inosused > CHAR_BIT)
-						inosused -= CHAR_BIT;
-					else
-						inosused = 0;
-					continue;
-				}
-				for (i = 1 << (CHAR_BIT - 1); i > 0; i >>= 1) {
-					if (*cp & i)
-						break;
-					inosused--;
-				}
-				break;
-			}
-		}
 		/*
 		 * Allocate inoinfo structures for the allocated inodes.
 		 */

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.69 2023/05/25 07:45:33 claudio Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.70 2024/02/03 18:51:58 beck Exp $  */
 
 /*
  *  Portions of this code are:
@@ -50,10 +50,6 @@
 #include <sys/malloc.h>
 #include <sys/time.h>
 
-#ifdef FFS_SOFTUPDATES
-int   softdep_process_worklist(struct mount *);
-#endif
-
 /*
  * The workitem queue.
  */
@@ -61,9 +57,6 @@ int   softdep_process_worklist(struct mount *);
 #define SYNCER_DEFAULT 30		/* default sync delay time */
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
 int syncdelay = SYNCER_DEFAULT;		/* time to delay syncing vnodes */
-
-int rushjob = 0;			/* number of slots to run ASAP */
-int stat_rush_requests = 0;		/* number of rush requests */
 
 int syncer_delayno = 0;
 long syncer_mask;
@@ -198,28 +191,6 @@ syncer_thread(void *arg)
 
 		splx(s);
 
-#ifdef FFS_SOFTUPDATES
-		/*
-		 * Do soft update processing.
-		 */
-		softdep_process_worklist(NULL);
-#endif
-
-		/*
-		 * The variable rushjob allows the kernel to speed up the
-		 * processing of the filesystem syncer process. A rushjob
-		 * value of N tells the filesystem syncer to process the next
-		 * N seconds worth of work on its queue ASAP. Currently rushjob
-		 * is used by the soft update code to speed up the filesystem
-		 * syncer process when the incore state is getting so far
-		 * ahead of the disk that the kernel memory pool is being
-		 * threatened with exhaustion.
-		 */
-		if (rushjob > 0) {
-			rushjob -= 1;
-			continue;
-		}
-
 		/*
 		 * If it has taken us less than a second to process the
 		 * current work, then wait. Otherwise start right over
@@ -234,24 +205,6 @@ syncer_thread(void *arg)
 			    SEC_TO_NSEC(1) - elapsed);
 		}
 	}
-}
-
-/*
- * Request the syncer daemon to speed up its work.
- * We never push it to speed up more than half of its
- * normal turn time, otherwise it could take over the cpu.
- */
-int
-speedup_syncer(void)
-{
-	if (syncerproc)
-		wakeup_one(&syncer_chan);
-	if (rushjob < syncdelay / 2) {
-		rushjob += 1;
-		stat_rush_requests += 1;
-		return 1;
-	}
-	return 0;
 }
 
 /* Routine to create and manage a filesystem syncer vnode. */

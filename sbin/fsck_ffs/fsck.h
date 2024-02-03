@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.34 2021/01/27 05:03:25 deraadt Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.35 2024/02/03 18:51:57 beck Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -229,7 +229,6 @@ extern char	yflag;			/* assume a yes response */
 extern daddr_t	bflag;			/* location of alternate super block */
 extern int	debug;			/* output debugging info */
 extern int	cvtlevel;		/* convert to newer file system format */
-extern char    usedsoftdep;            /* just fix soft dependency inconsistencies */
 extern int	preen;			/* just fix normal inconsistencies */
 extern char    resolved;               /* cleared if unresolved changes => not clean */
 extern char	havesb;			/* superblock has been read */

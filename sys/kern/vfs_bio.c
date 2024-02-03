@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.212 2023/04/26 15:13:52 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.213 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ int fliphigh;
 
 int nobuffers;
 int needbuffer;
-struct bio_ops bioops;
 
 /* private bufcache functions */
 void bufcache_init(void);
@@ -120,8 +119,6 @@ buf_put(struct buf *bp)
 	if (bp->b_vnbufs.le_next != NOLIST &&
 	    bp->b_vnbufs.le_next != (void *)-1)
 		panic("buf_put: still on the vnode list");
-	if (!LIST_EMPTY(&bp->b_dep))
-		panic("buf_put: b_dep is not empty");
 #endif
 
 	LIST_REMOVE(bp, b_list);
@@ -880,13 +877,6 @@ brelse(struct buf *bp)
 		KASSERT(bp->b_bufsize > 0);
 
 	/*
-	 * softdep is basically incompatible with not caching buffers
-	 * that have dependencies, so this buffer must be cached
-	 */
-	if (LIST_FIRST(&bp->b_dep) != NULL)
-		CLR(bp->b_flags, B_NOCACHE);
-
-	/*
 	 * Determine which queue the buffer should be on, then put it there.
 	 */
 
@@ -904,9 +894,6 @@ brelse(struct buf *bp)
 		 * If the buffer is invalid, free it now rather than leaving
 		 * it in a queue and wasting memory.
 		 */
-		if (LIST_FIRST(&bp->b_dep) != NULL)
-			buf_deallocate(bp);
-
 		if (ISSET(bp->b_flags, B_DELWRI)) {
 			CLR(bp->b_flags, B_DELWRI);
 		}
@@ -1150,7 +1137,6 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 
 	bp->b_freelist.tqe_next = NOLIST;
 	bp->b_dev = NODEV;
-	LIST_INIT(&bp->b_dep);
 	bp->b_bcount = size;
 
 	buf_acquire_nomap(bp);
@@ -1243,16 +1229,6 @@ buf_daemon(void *arg)
 			if (!ISSET(bp->b_flags, B_DELWRI))
 				panic("Clean buffer on dirty queue");
 #endif
-			if (LIST_FIRST(&bp->b_dep) != NULL &&
-			    !ISSET(bp->b_flags, B_DEFERRED) &&
-			    buf_countdeps(bp, 0, 0)) {
-				SET(bp->b_flags, B_DEFERRED);
-				s = splbio();
-				bufcache_release(bp);
-				buf_release(bp);
-				continue;
-			}
-
 			bawrite(bp);
 			pushed++;
 
@@ -1320,9 +1296,6 @@ biodone(struct buf *bp)
 
 	if (bp->b_bq)
 		bufq_done(bp->b_bq, bp);
-
-	if (LIST_FIRST(&bp->b_dep) != NULL)
-		buf_complete(bp);
 
 	if (!ISSET(bp->b_flags, B_READ)) {
 		CLR(bp->b_flags, B_WRITEINPROG);

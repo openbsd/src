@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.41 2019/06/28 13:32:45 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.42 2024/02/03 18:51:57 beck Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -303,30 +303,6 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 				inosused = cgblk.cg_initediblk;
 			else
 				inosused = sblock.fs_ipg;
-			/*
-			 * If we are using soft updates, then we can trust the
-			 * cylinder group inode allocation maps to tell us which
-			 * inodes are allocated. We will scan the used inode map
-			 * to find the inodes that are really in use, and then
-			 * read only those inodes in from disk.
-			 */
-			if (sblock.fs_flags & FS_DOSOFTDEP) {
-				if (!cg_chkmagic(&cgblk))
-					errx(1, "CG %d: BAD MAGIC NUMBER\n", cg);
-				cp = &cg_inosused(&cgblk)[(inosused - 1) / CHAR_BIT];
-				for ( ; inosused > 0; inosused -= CHAR_BIT, cp--) {
-					if (*cp == 0)
-						continue;
-					for (i = 1 << (CHAR_BIT - 1); i > 0; i >>= 1) {
-						if (*cp & i)
-							break;
-						inosused--;
-					}
-					break;
-				}
-				if (inosused <= 0)
-					continue;
-			}
 			for (i = 0; i < inosused; i++, ino++) {
 				if ((dp = getnextinode(ino)) == NULL ||
 				    ino < ROOTINO ||

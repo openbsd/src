@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.55 2022/12/04 23:50:46 cheloha Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.56 2024/02/03 18:51:57 beck Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -202,8 +202,6 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	printf("\tusing %u cylinder groups of %.2fMB, %d blks, %u inodes.\n",
 	    sblock.fs_ncg, (float)sblock.fs_fpg * sblock.fs_fsize * B2MBFACTOR,
 	    sblock.fs_fpg / sblock.fs_frag, sblock.fs_ipg);
-	if (sblock.fs_flags & FS_DOSOFTDEP)
-		printf("\twith soft updates\n");
 #undef B2MBFACTOR
 
 	/*
@@ -282,9 +280,6 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	sblock.fs_cgrotor = 0;
 	sblock.fs_state = 0;
 	memset(&sblock.fs_fsmnt, 0, sizeof(sblock.fs_fsmnt));
-	sblock.fs_flags &= FS_DOSOFTDEP;
-	if (sblock.fs_magic == FS_UFS1_MAGIC)
-		sblock.fs_ffs1_flags &= FS_DOSOFTDEP;
 
 	/*
 	 * XXX

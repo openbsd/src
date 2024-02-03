@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.44 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.45 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -87,21 +87,6 @@ ufs_inactive(void *v)
 		mode = DIP(ip, mode);
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-
-		/*
-		 * Setting the mode to zero needs to wait for the inode to be
-		 * written just as does a change to the link count. So, rather
-		 * than creating a new entry point to do the same thing, we
-		 * just use softdep_change_linkcnt(). Also, we can't let
-		 * softdep co-opt us to help on its worklist, as we may end up
-		 * trying to recycle vnodes and getting to this same point a
-		 * couple of times, blowing the kernel stack. However, this
-		 * could be optimized by checking if we are coming from
-		 * vrele(), vput() or vclean() (by checking for VXLOCK) and
-		 * just avoiding the co-opt to happen in the last case.
-		 */
-		if (DOINGSOFTDEP(vp))
-			softdep_change_linkcnt(ip, 1);
 
 		UFS_INODE_FREE(ip, ip->i_number, mode);
 	}

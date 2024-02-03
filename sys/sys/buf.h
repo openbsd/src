@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.113 2022/09/01 05:24:51 jsg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.114 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -50,12 +50,6 @@ struct buf;
 struct vnode;
 
 LIST_HEAD(bufhead, buf);
-
-/*
- * To avoid including <ufs/ffs/softdep.h>
- */
-
-LIST_HEAD(workhead, worklist);
 
 /*
  * Buffer queues
@@ -122,20 +116,6 @@ union bufq_data {
 	struct bufq_nscan	bufq_data_nscan;
 };
 
-/*
- * These are currently used only by the soft dependency code, hence
- * are stored once in a global variable. If other subsystems wanted
- * to use these hooks, a pointer to a set of bio_ops could be added
- * to each buffer.
- */
-extern struct bio_ops {
-	void	(*io_start)(struct buf *);
-	void	(*io_complete)(struct buf *);
-	void	(*io_deallocate)(struct buf *);
-	void	(*io_movedeps)(struct buf *, struct buf *);
-	int	(*io_countdeps)(struct buf *, int, int);
-} bioops;
-
 /* The buffer header describes an I/O operation in the kernel. */
 struct buf {
 	RBT_ENTRY(buf) b_rbbufs;	/* vnode "hash" tree */
@@ -172,7 +152,6 @@ struct buf {
 	int	b_dirtyend;		/* Offset of end of dirty region. */
 	int	b_validoff;		/* Offset in buffer of valid region. */
 	int	b_validend;		/* Offset of end of valid region. */
- 	struct	workhead b_dep;		/* List of filesystem dependencies. */
 };
 
 TAILQ_HEAD(bufqueue, buf);
@@ -323,43 +302,6 @@ void  buf_replacevnode(struct buf *, struct vnode *);
 void  buf_daemon(void *);
 void  buf_replacevnode(struct buf *, struct vnode *);
 int bread_cluster(struct vnode *, daddr_t, int, struct buf **);
-
-static __inline void
-buf_start(struct buf *bp)
-{
-	if (bioops.io_start)
-		(*bioops.io_start)(bp);
-}
-
-static __inline void
-buf_complete(struct buf *bp)
-{
-	if (bioops.io_complete)
-		(*bioops.io_complete)(bp);
-}
-
-static __inline void
-buf_deallocate(struct buf *bp)
-{
-	if (bioops.io_deallocate)
-		(*bioops.io_deallocate)(bp);
-}
-
-static __inline void
-buf_movedeps(struct buf *bp, struct buf *bp2)
-{
-	if (bioops.io_movedeps)
-		(*bioops.io_movedeps)(bp, bp2);
-}
-
-static __inline int
-buf_countdeps(struct buf *bp, int i, int islocked)
-{
-	if (bioops.io_countdeps)
-		return ((*bioops.io_countdeps)(bp, i, islocked));
-	else
-		return (0);
-}
 
 __END_DECLS
 #endif /* _KERNEL */

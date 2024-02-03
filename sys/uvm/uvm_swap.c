@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.168 2023/12/05 15:50:45 claudio Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.169 2024/02/03 18:51:59 beck Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1277,7 +1277,6 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
 		nbp->vb_buf.b_vp       = NULLVP;
 		nbp->vb_buf.b_vnbufs.le_next = NOLIST;
-		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		/*
 		 * set b_dirtyoff/end and b_validoff/end.   this is
@@ -1863,7 +1862,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		bp->b_data = (caddr_t)kva;
 	bp->b_bq = NULL;
 	bp->b_blkno = startblk;
-	LIST_INIT(&bp->b_dep);
 	s = splbio();
 	bp->b_vp = NULL;
 	buf_replacevnode(bp, swapdev_vp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.69 2022/09/01 13:37:57 krw Exp $	*/
+/*	$OpenBSD: setup.c,v 1.70 2024/02/03 18:51:57 beck Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -450,10 +450,6 @@ found:
 		goto badsblabel;
 	}
 	bufinit();
-	if (sblock.fs_flags & FS_DOSOFTDEP)
-		usedsoftdep = 1;
-	else
-		usedsoftdep = 0;
 	return (1);
 
 badsblabel:

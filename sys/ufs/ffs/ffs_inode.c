@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.82 2024/01/09 03:15:59 guenther Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.83 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -95,9 +95,7 @@ ffs_update(struct inode *ip, int waitfor)
 		return (error);
 	}
 
-	if (DOINGSOFTDEP(vp))
-		softdep_update_inodeblock(ip, bp, waitfor);
-	else if (ip->i_effnlink != DIP(ip, nlink))
+	if (ip->i_effnlink != DIP(ip, nlink))
 		panic("ffs_update: bad link cnt");
 
 #ifdef FFS2
@@ -174,30 +172,6 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	oip->i_ci.ci_lasta = oip->i_ci.ci_clen 
 	    = oip->i_ci.ci_cstart = oip->i_ci.ci_lastw = 0;
 
-	if (DOINGSOFTDEP(ovp)) {
-		if (length > 0 || softdep_slowdown(ovp)) {
-			/*
-			 * If a file is only partially truncated, then
-			 * we have to clean up the data structures
-			 * describing the allocation past the truncation
-			 * point. Finding and deallocating those structures
-			 * is a lot of work. Since partial truncation occurs
-			 * rarely, we solve the problem by syncing the file
-			 * so that it will have no data structures left.
-			 */
-			if ((error = VOP_FSYNC(ovp, cred, MNT_WAIT,
-					       curproc)) != 0)
-				return (error);
-		} else {
-			(void)ufs_quota_free_blocks(oip, DIP(oip, blocks),
-			    NOCRED);
-			softdep_setup_freeblocks(oip, length);
-			vinvalbuf(ovp, 0, cred, curproc, 0, INFSLP);
-			oip->i_flag |= IN_CHANGE | IN_UPDATE;
-			return (UFS_UPDATE(oip, 0));
-		}
-	}
-
 	osize = DIP(oip, size);
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -243,18 +217,6 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		error = UFS_BUF_ALLOC(oip, length - 1, 1,
 				   cred, aflags, &bp);
 		if (error)
-			return (error);
-		/*
-		 * When we are doing soft updates and the UFS_BALLOC
-		 * above fills in a direct block hole with a full sized
-		 * block that will be truncated down to a fragment below,
-		 * we must flush out the block dependency with an FSYNC
-		 * so that we do not get a soft updates inconsistency
-		 * when we create the fragment below.
-		 */
-		if (DOINGSOFTDEP(ovp) && lbn < NDADDR &&
-		    fragroundup(fs, blkoff(fs, length)) < fs->fs_bsize &&
-		    (error = VOP_FSYNC(ovp, cred, MNT_WAIT, curproc)) != 0)
 			return (error);
 		DIP_ASSIGN(oip, size, length);
 		size = blksize(fs, oip, lbn);

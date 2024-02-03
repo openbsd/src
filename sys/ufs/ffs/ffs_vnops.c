@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.101 2024/01/09 03:16:00 guenther Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.102 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -420,11 +420,6 @@ ffs_fsync(void *v)
 	struct buf *bp, *nbp;
 	int s, error, passes, skipmeta;
 
-	if (vp->v_type == VBLK &&
-	    vp->v_specmountpoint != NULL &&
-	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
-		softdep_fsync_mountdev(vp, ap->a_waitfor);
-
 	/*
 	 * Flush all dirty buffers associated with a vnode.
 	 */
@@ -452,13 +447,6 @@ loop:
 			panic("ffs_fsync: not dirty");
 		if (skipmeta && bp->b_lblkno < 0)
 			continue;
-		if (ap->a_waitfor != MNT_WAIT &&
-		    LIST_FIRST(&bp->b_dep) != NULL &&
-		    (bp->b_flags & B_DEFERRED) == 0 &&
-		    buf_countdeps(bp, 0, 1)) {
-			bp->b_flags |= B_DEFERRED;
-			continue;
-		}
 
 		bremfree(bp);
 		buf_acquire(bp);
@@ -492,8 +480,7 @@ loop:
 		 * with the vnode has been written.
 		 */
 		splx(s);
-		if ((error = softdep_sync_metadata(ap)) != 0)
-			return (error);
+		/* XXX softdep was here. reconsider this locking dance */
 		s = splbio();
 		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			/*

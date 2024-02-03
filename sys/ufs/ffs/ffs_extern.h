@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.45 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.46 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 #define FFS_CLUSTERWRITE	2	/* cluster writing enabled */
 #define FFS_REALLOCBLKS		3	/* block reallocation enabled */
 #define FFS_ASYNCFREE		4	/* asynchronous block freeing enabled */
-#define	FFS_MAX_SOFTDEPS	5	/* maximum structs before slowdown */
 #define	FFS_SD_TICKDELAY	6	/* ticks to pause during slowdown */
 #define	FFS_SD_WORKLIST_PUSH	7	/* # of worklist cleanups */
 #define	FFS_SD_BLK_LIMIT_PUSH	8	/* # of times block limit neared */
@@ -59,7 +58,6 @@
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "max_softdeps", CTLTYPE_INT }, \
 	{ "sd_tickdelay", CTLTYPE_INT }, \
 	{ "sd_worklist_push", CTLTYPE_INT }, \
 	{ "sd_blk_limit_push", CTLTYPE_INT }, \
@@ -166,28 +164,6 @@ int ffsfifo_reclaim(void *);
 
 struct vop_vfree_args;
 struct vop_fsync_args;
-
-void  softdep_initialize(void);
-int   softdep_process_worklist(struct mount *);
-int   softdep_mount(struct vnode *, struct mount *, struct fs *,
-          struct ucred *);
-int   softdep_flushworklist(struct mount *, int *, struct proc *);
-int   softdep_flushfiles(struct mount *, int, struct proc *);
-void  softdep_update_inodeblock(struct inode *, struct buf *, int);
-void  softdep_load_inodeblock(struct inode *);
-void  softdep_freefile(struct vnode *, ufsino_t, mode_t);
-void  softdep_setup_freeblocks(struct inode *, off_t);
-void  softdep_setup_inomapdep(struct buf *, struct inode *, ufsino_t);
-void  softdep_setup_blkmapdep(struct buf *, struct fs *, daddr_t);
-void  softdep_setup_allocdirect(struct inode *, daddr_t, daddr_t,
-            daddr_t, long, long, struct buf *);
-void  softdep_setup_allocindir_meta(struct buf *, struct inode *,
-            struct buf *, int, daddr_t);
-void  softdep_setup_allocindir_page(struct inode *, daddr_t,
-            struct buf *, int, daddr_t, daddr_t, struct buf *);
-void  softdep_fsync_mountdev(struct vnode *, int);
-int   softdep_sync_metadata(struct vop_fsync_args *);
-int   softdep_fsync(struct vnode *);
 
 extern struct pool ffs_ino_pool;	/* memory pool for inodes */
 extern struct pool ffs_dinode1_pool;	/* memory pool for UFS1 dinodes */

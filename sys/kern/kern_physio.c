@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.48 2023/11/24 00:15:42 asou Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.49 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -84,7 +84,6 @@ physio(void (*strategy)(struct buf *), dev_t dev, int flags,
 	bp->b_error = 0;
 	bp->b_proc = p;
 	bp->b_flags = B_BUSY;
-	LIST_INIT(&bp->b_dep);
 	splx(s);
 
 	/*

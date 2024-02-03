@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.50 2020/07/13 06:52:53 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.51 2024/02/03 18:51:57 beck Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -332,34 +332,6 @@ pass5(void)
 		    dofix(&idesc[2], "SUMMARY INFORMATION BAD")) {
 			memcpy(cg, newcg, (size_t)basesize);
 			dirty(cgbp);
-		}
-		if (usedsoftdep) {
-			for (i = 0; i < inomapsize; i++) {
-				j = cg_inosused(newcg)[i];
-				if ((cg_inosused(cg)[i] & j) == j)
-					continue;
-				for (k = 0; k < NBBY; k++) {
-					if ((j & (1 << k)) == 0)
-						continue;
-					if (cg_inosused(cg)[i] & (1 << k))
-						continue;
-					pwarn("ALLOCATED INODE %llu MARKED FREE\n",
-					      ((ino_t)c * fs->fs_ipg + i * 8) + k);
-				}
-			}
-			for (i = 0; i < blkmapsize; i++) {
-				j = cg_blksfree(cg)[i];
-				if ((cg_blksfree(newcg)[i] & j) == j)
-					continue;
-				for (k = 0; k < NBBY; k++) {
-					if ((j & (1 << k)) == 0)
-						continue;
-					if (cg_blksfree(newcg)[i] & (1 << k))
-						continue;
-					pwarn("ALLOCATED FRAG %lld MARKED FREE\n",
-					      ((long long)c * fs->fs_fpg + i * 8) + k);
-				}
-			}
 		}
 		if (memcmp(cg_inosused(newcg), cg_inosused(cg),
 			   mapsize) != 0 &&

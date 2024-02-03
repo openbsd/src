@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.197 2024/01/19 18:58:17 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.198 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -213,20 +213,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	int error = 0, flags;
 	int ronly;
 
-	/* Ask not for whom the bell tolls */
-	if (mp->mnt_flag & MNT_SOFTDEP) {
-		mp->mnt_flag &= ~MNT_SOFTDEP;
-	}
-
-	/*
-	 * Soft updates is incompatible with "async",
-	 * so if we are doing softupdates stop the user
-	 * from setting the async flag.
-	 */
-	if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
-	    (MNT_SOFTDEP | MNT_ASYNC)) {
-		return (EINVAL);
-	}
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
@@ -237,16 +223,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		devvp = ump->um_devvp;
 		error = 0;
 		ronly = fs->fs_ronly;
-
-		/*
-		 * Soft updates won't be set if read/write,
-		 * so "async" will be illegal.
-		 */
-		if (ronly == 0 && (mp->mnt_flag & MNT_ASYNC) &&
-		    (fs->fs_flags & FS_DOSOFTDEP)) {
-			error = EINVAL;
-			goto error_1;
-		}
 
 		if (ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/* Flush any dirty data */
@@ -260,44 +236,9 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 				flags |= IGNORECLEAN;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			if (fs->fs_flags & FS_DOSOFTDEP) {
-				error = softdep_flushfiles(mp, flags, p);
-				mp->mnt_flag &= ~MNT_SOFTDEP;
-			} else
-				error = ffs_flushfiles(mp, flags, p);
+			error = ffs_flushfiles(mp, flags, p);
 			mp->mnt_flag |= MNT_RDONLY;
 			ronly = 1;
-		}
-
-		/*
-		 * Flush soft dependencies if disabling it via an update
-		 * mount. This may leave some items to be processed,
-		 * so don't do this yet XXX.
-		 */
-		if ((fs->fs_flags & FS_DOSOFTDEP) &&
-		    !(mp->mnt_flag & MNT_SOFTDEP) &&
-		    !(mp->mnt_flag & MNT_RDONLY) && fs->fs_ronly == 0) {
-#if 0
-			flags = WRITECLOSE;
-			if (mp->mnt_flag & MNT_FORCE)
-				flags |= FORCECLOSE;
-			error = softdep_flushfiles(mp, flags, p);
-#endif
-		}
-		/*
-		 * When upgrading to a softdep mount, we must first flush
-		 * all vnodes. (not done yet -- see above)
-		 */
-		if (!(fs->fs_flags & FS_DOSOFTDEP) &&
-		    (mp->mnt_flag & MNT_SOFTDEP) && fs->fs_ronly == 0) {
-#if 0
-			flags = WRITECLOSE;
-			if (mp->mnt_flag & MNT_FORCE)
-				flags |= FORCECLOSE;
-			error = ffs_flushfiles(mp, flags, p);
-#else
-			mp->mnt_flag &= ~MNT_SOFTDEP;
-#endif
 		}
 
 		if (!error && (mp->mnt_flag & MNT_RELOAD))
@@ -307,19 +248,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 
 		if (ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
 			if (fs->fs_clean == 0) {
-#if 0
-				/*
-				 * It is safe to mount an unclean file system
-				 * if it was previously mounted with softdep
-				 * but we may lose space and must
-				 * sometimes run fsck manually.
-				 */
-				if (fs->fs_flags & FS_DOSOFTDEP)
-					printf(
-"WARNING: %s was not properly unmounted\n",
-					    fs->fs_fsmnt);
-				else
-#endif
 				if (mp->mnt_flag & MNT_FORCE) {
 					printf(
 "WARNING: %s was not properly unmounted\n",
@@ -333,12 +261,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 				}
 			}
 
-			if ((fs->fs_flags & FS_DOSOFTDEP)) {
-				error = softdep_mount(devvp, mp, fs,
-						      p->p_ucred);
-				if (error)
-					goto error_1;
-			}
 			fs->fs_contigdirs = malloc((u_long)fs->fs_ncg,
 			     M_UFSMNT, M_WAITOK|M_ZERO);
 
@@ -453,9 +375,6 @@ success:
 			    (fs->fs_flags & FS_UNCLEAN) == 0 ? 1 : 0;
 			if (ronly)
 				free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
-		}
-		if (!ronly) {
-			fs->fs_flags &= ~FS_DOSOFTDEP;
 		}
 		ffs_sbupdate(ump, MNT_WAIT);
 #if 0
@@ -627,8 +546,6 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 		space += size;
 		brelse(bp);
 	}
-	if ((fs->fs_flags & FS_DOSOFTDEP))
-		(void) softdep_mount(devvp, mountp, fs, cred);
 	/*
 	 * We no longer know anything about clusters per cylinder group.
 	 */
@@ -767,19 +684,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	fs->fs_fmod = 0;
 	fs->fs_flags &= ~FS_UNCLEAN;
 	if (fs->fs_clean == 0) {
-#if 0
-		/*
-		 * It is safe to mount an unclean file system
-		 * if it was previously mounted with softdep
-		 * but we may lose space and must
-		 * sometimes run fsck manually.
-		 */
-		if (fs->fs_flags & FS_DOSOFTDEP)
-			printf(
-"WARNING: %s was not properly unmounted\n",
-			    fs->fs_fsmnt);
-		else
-#endif
 		if (ronly || (mp->mnt_flag & MNT_FORCE)) {
 			printf(
 "WARNING: %s was not properly unmounted\n",
@@ -908,15 +812,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (fs->fs_maxfilesize > maxfilesize)			/* XXX */
 		fs->fs_maxfilesize = maxfilesize;		/* XXX */
 	if (ronly == 0) {
-		if ((fs->fs_flags & FS_DOSOFTDEP) &&
-		    (error = softdep_mount(devvp, mp, fs, cred)) != 0) {
-			free(fs->fs_csp, M_UFSMNT, 0);
-			free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
-			goto out;
-		}
 		fs->fs_fmod = 1;
 		fs->fs_clean = 0;
-		fs->fs_flags &= ~FS_DOSOFTDEP;
 		error = ffs_sbupdate(ump, MNT_WAIT);
 		if (error == EROFS)
 			goto out;
@@ -1028,10 +925,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	if (mp->mnt_flag & MNT_SOFTDEP)
-		error = softdep_flushfiles(mp, flags, p);
-	else
-		error = ffs_flushfiles(mp, flags, p);
+	error = ffs_flushfiles(mp, flags, p);
 	if (error != 0)
 		return (error);
 
@@ -1206,7 +1100,7 @@ ffs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct pr
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs;
-	int error, allerror = 0, count, clean, fmod;
+	int error, allerror = 0, clean, fmod;
 	struct ffs_sync_args fsa;
 
 	fs = ump->um_fs;
@@ -1219,7 +1113,7 @@ ffs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct pr
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
- loop:
+
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1241,13 +1135,6 @@ ffs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct pr
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if ((ump->um_mountp->mnt_flag & MNT_SOFTDEP) && waitfor == MNT_WAIT) {
-		if ((error = softdep_flushworklist(ump->um_mountp, &count, p)))
-			allerror = error;
-		/* Flushed work items may create new vnodes to clean */
-		if (count) 
-			goto loop;
-	}
 	if (waitfor != MNT_LAZY) {
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
@@ -1387,10 +1274,7 @@ retry:
 
 	brelse(bp);
 
-	if (DOINGSOFTDEP(vp))
-		softdep_load_inodeblock(ip);
-	else
-		ip->i_effnlink = DIP(ip, nlink);
+	ip->i_effnlink = DIP(ip, nlink);
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.
@@ -1556,32 +1440,10 @@ ffs_init(struct vfsconf *vfsp)
 	    PR_WAITOK, "dino2pl", NULL);
 #endif
 
-	softdep_initialize();
-
 	return (ufs_init(vfsp));
 }
 
-#ifdef FFS_SOFTUPDATES
-extern int max_softdeps, tickdelay, stat_worklist_push;
-extern int stat_blk_limit_push, stat_ino_limit_push, stat_blk_limit_hit;
-extern int stat_ino_limit_hit, stat_sync_limit_hit, stat_indir_blk_ptrs;
-extern int stat_inode_bitmap, stat_direct_blk_ptrs, stat_dir_entry;
-#endif
 const struct sysctl_bounded_args ffs_vars[] = {
-#ifdef FFS_SOFTUPDATES
-	{ FFS_MAX_SOFTDEPS, &max_softdeps, 0, INT_MAX },
-	{ FFS_SD_TICKDELAY, &tickdelay, 2, INT_MAX },
-	{ FFS_SD_WORKLIST_PUSH, &stat_worklist_push, SYSCTL_INT_READONLY },
-	{ FFS_SD_BLK_LIMIT_PUSH, &stat_blk_limit_push, SYSCTL_INT_READONLY },
-	{ FFS_SD_INO_LIMIT_PUSH, &stat_ino_limit_push, SYSCTL_INT_READONLY },
-	{ FFS_SD_BLK_LIMIT_HIT, &stat_blk_limit_hit, SYSCTL_INT_READONLY },
-	{ FFS_SD_INO_LIMIT_HIT, &stat_ino_limit_hit, SYSCTL_INT_READONLY },
-	{ FFS_SD_SYNC_LIMIT_HIT, &stat_sync_limit_hit, SYSCTL_INT_READONLY },
-	{ FFS_SD_INDIR_BLK_PTRS, &stat_indir_blk_ptrs, SYSCTL_INT_READONLY },
-	{ FFS_SD_INODE_BITMAP, &stat_inode_bitmap, SYSCTL_INT_READONLY },
-	{ FFS_SD_DIRECT_BLK_PTRS, &stat_direct_blk_ptrs, SYSCTL_INT_READONLY },
-	{ FFS_SD_DIR_ENTRY, &stat_dir_entry, SYSCTL_INT_READONLY },
-#endif
 #ifdef UFS_DIRHASH
 	{ FFS_DIRHASH_DIRSIZE, &ufs_mindirhashsize, 0, INT_MAX },
 	{ FFS_DIRHASH_MAXMEM, &ufs_dirhashmaxmem, 0, INT_MAX },

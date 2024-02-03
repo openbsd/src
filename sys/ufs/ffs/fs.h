@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.44 2022/01/11 03:13:59 jsg Exp $	*/
+/*	$OpenBSD: fs.h,v 1.45 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -328,7 +328,6 @@ struct fs {
  * Filesystem flags.
  */
 #define FS_UNCLEAN	0x01	/* filesystem not clean at mount */
-#define FS_DOSOFTDEP	0x02	/* filesystem using soft dependencies */
 /*
  * The following flag is used to detect a FFS1 file system that had its flags
  * moved to the new (FFS2) location for compatibility.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.114 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.115 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -291,8 +291,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		goto nospace;
 
 	(void) uvm_vnp_uncache(ITOV(ip));
-	if (!DOINGSOFTDEP(ITOV(ip)))
-		ffs_blkfree(ip, bprev, (long)osize);
+	ffs_blkfree(ip, bprev, (long)osize);
 	if (nsize < request)
 		ffs_blkfree(ip, bno + numfrags(fs, nsize),
 		    (long)(request - nsize));
@@ -921,8 +920,6 @@ ffs_fragextend(struct inode *ip, u_int cg, daddr_t bprev, int osize, int nsize)
 		fs->fs_cs(fs, cg).cs_nffree--;
 	}
 	fs->fs_fmod = 1;
-	if (DOINGSOFTDEP(ITOV(ip)))
-		softdep_setup_blkmapdep(bp, fs, bprev);
 
 	bdwrite(bp);
 	return (bprev);
@@ -1015,8 +1012,6 @@ ffs_alloccg(struct inode *ip, u_int cg, daddr_t bpref, int size)
 		cgp->cg_frsum[allocsiz - frags]++;
 
 	blkno = cgbase(fs, cg) + bno;
-	if (DOINGSOFTDEP(ITOV(ip)))
-		softdep_setup_blkmapdep(bp, fs, blkno);
 	bdwrite(bp);
 	return (blkno);
 }
@@ -1081,9 +1076,6 @@ gotit:
 
 	fs->fs_fmod = 1;
 	blkno = cgbase(fs, cgp->cg_cgx) + bno;
-
-	if (DOINGSOFTDEP(ITOV(ip)))
-		softdep_setup_blkmapdep(bp, fs, blkno);
 
 	return (blkno);
 }
@@ -1219,9 +1211,6 @@ gotit:
                 cgp->cg_initediblk += INOPB(fs);
         }
 #endif /* FFS2 */
-
-	if (DOINGSOFTDEP(ITOV(ip)))
-		softdep_setup_inomapdep(bp, ip, cg * fs->fs_ipg + ipref);
 
 	setbit(cg_inosused(cgp), ipref);
 
@@ -1363,13 +1352,6 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 int
 ffs_inode_free(struct inode *pip, ufsino_t ino, mode_t mode)
 {
-	struct vnode *pvp = ITOV(pip);
-
-	if (DOINGSOFTDEP(pvp)) {
-		softdep_freefile(pvp, ino, mode);
-		return (0);
-	}
-
 	return (ffs_freefile(pip, ino, mode));
 }
 

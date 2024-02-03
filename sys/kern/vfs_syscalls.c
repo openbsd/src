@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.362 2023/07/05 15:13:28 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.363 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2894,10 +2894,6 @@ sys_fsync(struct proc *p, void *v, register_t *retval)
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
-#ifdef FFS_SOFTUPDATES
-	if (error == 0 && vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		error = softdep_fsync(vp);
-#endif
 
 	VOP_UNLOCK(vp);
 	FRELE(fp, p);

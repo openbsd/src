@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.45 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.46 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -107,10 +107,6 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 			    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
-			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocdirect(ip, nb, newb,
-				    ip->i_ffs1_db[nb], fs->fs_bsize, osize,
-				    bpp ? *bpp : NULL);
 
 			ip->i_ffs1_size = lblktosize(fs, nb + 1);
 			uvm_vnp_setsize(vp, ip->i_ffs1_size);
@@ -179,10 +175,6 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 				    osize, nsize, cred, bpp, &newb);
 				if (error)
 					return (error);
-				if (DOINGSOFTDEP(vp))
-					softdep_setup_allocdirect(ip, lbn,
-					    newb, nb, nsize, osize,
-					    bpp ? *bpp : NULL);
 			}
 		} else {
 			/*
@@ -207,9 +199,6 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 				if (flags & B_CLRBUF)
 					clrbuf(*bpp);
 			}
-			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocdirect(ip, lbn, newb, 0,
-				    nsize, 0, bpp ? *bpp : NULL);
 		}
 		ip->i_ffs1_db[lbn] = newb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -247,18 +236,12 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
 
-		if (DOINGSOFTDEP(vp)) {
-			softdep_setup_allocdirect(ip, NDADDR + indirs[0].in_off,
-			    newb, 0, fs->fs_bsize, 0, bp);
-			bdwrite(bp);
-		} else {
-			/*
-			 * Write synchronously so that indirect blocks
-			 * never point at garbage.
-			 */
-			if ((error = bwrite(bp)) != 0)
-				goto fail;
-		}
+		/*
+		 * Write synchronously so that indirect blocks
+		 * never point at garbage.
+		 */
+		if ((error = bwrite(bp)) != 0)
+			goto fail;
 		allocib = &ip->i_ffs1_ib[indirs[0].in_off];
 		*allocib = nb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -296,19 +279,13 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
 
-		if (DOINGSOFTDEP(vp)) {
-			softdep_setup_allocindir_meta(nbp, ip, bp,
-			    indirs[i - 1].in_off, nb);
-			bdwrite(nbp);
-		} else {
-			/*
-			 * Write synchronously so that indirect blocks
-			 * never point at garbage.
-			 */
-			if ((error = bwrite(nbp)) != 0) {
-				brelse(bp);
-				goto fail;
-			}
+		/*
+		 * Write synchronously so that indirect blocks
+		 * never point at garbage.
+		 */
+		if ((error = bwrite(nbp)) != 0) {
+			brelse(bp);
+			goto fail;
 		}
 		bap[indirs[i - 1].in_off] = nb;
 		if (allocib == NULL && unwindidx < 0)
@@ -343,9 +320,6 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 				clrbuf(nbp);
 			*bpp = nbp;
 		}
-		if (DOINGSOFTDEP(vp))
-			softdep_setup_allocindir_page(ip, lbn, bp,
-			    indirs[i].in_off, nb, 0, bpp ? *bpp : NULL);
 		bap[indirs[i].in_off] = nb;
 		/*
 		 * If required, write synchronously, otherwise use
@@ -473,11 +447,6 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 			if (error)
 				return (error);
 
-			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocdirect(ip, nb, newb,
-				    ip->i_ffs2_db[nb], fs->fs_bsize, osize,
-				    bpp ? *bpp : NULL);
-
 			ip->i_ffs2_size = lblktosize(fs, nb + 1);
 			uvm_vnp_setsize(vp, ip->i_ffs2_size);
 			ip->i_ffs2_db[nb] = newb;
@@ -550,11 +519,6 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 				    bpp, &newb);
 				if (error)
 					return (error);
-
-				if (DOINGSOFTDEP(vp))
-					softdep_setup_allocdirect(ip, lbn,
-					    newb, nb, nsize, osize,
-					    bpp ? *bpp : NULL);
 			}
 		} else {
 			/*
@@ -580,10 +544,6 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 					clrbuf(bp);
 				*bpp = bp;
 			}
-
-			if (DOINGSOFTDEP(vp))
-				softdep_setup_allocdirect(ip, lbn, newb, 0,
-				    nsize, 0, bpp ? *bpp : NULL);
 		}
 
 		ip->i_ffs2_db[lbn] = newb;
@@ -626,19 +586,13 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
 
-		if (DOINGSOFTDEP(vp)) {
-			softdep_setup_allocdirect(ip, NDADDR + indirs[0].in_off,
-			    newb, 0, fs->fs_bsize, 0, bp);
-			bdwrite(bp);
-		} else {
-			/*
-			 * Write synchronously so that indirect blocks never
-			 * point at garbage.
-			 */
-			error = bwrite(bp);
-			if (error)
-				goto fail;
-		}
+		/*
+		 * Write synchronously so that indirect blocks never
+		 * point at garbage.
+		 */
+		error = bwrite(bp);
+		if (error)
+			goto fail;
 
 		unwindidx = 0;
 		allocib = &ip->i_ffs2_ib[indirs[0].in_off];
@@ -685,20 +639,14 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
 
-		if (DOINGSOFTDEP(vp)) {
-			softdep_setup_allocindir_meta(nbp, ip, bp,
-			    indirs[i - 1].in_off, nb);
-			bdwrite(nbp);
-		} else {
-			/*
-			 * Write synchronously so that indirect blocks never
-			 * point at garbage.
-			 */
-			error = bwrite(nbp);
-			if (error) {
-				brelse(bp);
-				goto fail;
-			}
+		/*
+		 * Write synchronously so that indirect blocks never
+		 * point at garbage.
+		 */
+		error = bwrite(nbp);
+		if (error) {
+			brelse(bp);
+			goto fail;
 		}
 
 		if (unwindidx < 0)
@@ -739,10 +687,6 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 				clrbuf(nbp);
 			*bpp = nbp;
 		}
-
-		if (DOINGSOFTDEP(vp))
-			softdep_setup_allocindir_page(ip, lbn, bp,
-			    indirs[num].in_off, nb, 0, bpp ? *bpp : NULL);
 
 		bap[indirs[num].in_off] = nb;
 
@@ -830,11 +774,6 @@ fail:
 			}
 		}
 
-		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
-			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			ffs_update(ip, 1);
-		}
-
 		/*
 		 * Now that any dependencies that we created have been
 		 * resolved, we can undo the partial allocation.
@@ -842,8 +781,6 @@ fail:
 		if (unwindidx == 0) {
 			*allocib = 0;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (DOINGSOFTDEP(vp))
-				ffs_update(ip, 1);
 		} else {
 			r = bread(vp, indirs[unwindidx].in_lbn,
 			    (int)fs->fs_bsize, &bp);

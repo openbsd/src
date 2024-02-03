@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.355 2024/01/19 01:43:27 bluhm Exp $	*/
+/*	$OpenBSD: proc.h,v 1.356 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -436,7 +436,6 @@ struct proc {
 #define P_CONTINUED	0x00800000	/* Proc has continued from a stopped state. */
 #define	P_THREAD	0x04000000	/* Only a thread, not a real process */
 #define	P_SUSPSIG	0x08000000	/* Stopped from signal. */
-#define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */
 #define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
 
 #define	P_BITS \

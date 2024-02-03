@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.60 2024/01/09 03:15:59 guenther Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.61 2024/02/03 18:51:58 beck Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -700,12 +700,9 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		if (dp->i_offset & (DIRBLKSIZ - 1))
 			panic("ufs_direnter: newblk");
 		flags = B_CLRBUF;
-		if (!DOINGSOFTDEP(dvp))
-			flags |= B_SYNC;
+		flags |= B_SYNC;
 		if ((error = UFS_BUF_ALLOC(dp, (off_t)dp->i_offset, DIRBLKSIZ,
 		    cr, flags, &bp)) != 0) {
-			if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
-				bdwrite(newdirbp);
 			return (error);
 		}
 		DIP_ASSIGN(dp, size, dp->i_offset + DIRBLKSIZ);
@@ -725,45 +722,8 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		}
 #endif
 
-		if (DOINGSOFTDEP(dvp)) {
-			/*
-			 * Ensure that the entire newly allocated block is a
-			 * valid directory so that future growth within the
-			 * block does not have to ensure that the block is
-			 * written before the inode.
-			 */
-			blkoff += DIRBLKSIZ;
-			while (blkoff < bp->b_bcount) {
-				((struct direct *)
-				   (bp->b_data + blkoff))->d_reclen = DIRBLKSIZ;
-				blkoff += DIRBLKSIZ;
-			}
-			if (softdep_setup_directory_add(bp, dp, dp->i_offset,
-			    dirp->d_ino, newdirbp, 1) == 0) {
-				bdwrite(bp);
-				return (UFS_UPDATE(dp, 0));
-			}
-			/* We have just allocated a directory block in an
-			 * indirect block. Rather than tracking when it gets
-			 * claimed by the inode, we simply do a VOP_FSYNC
-			 * now to ensure that it is there (in case the user
-			 * does a future fsync). Note that we have to unlock
-			 * the inode for the entry that we just entered, as
-			 * the VOP_FSYNC may need to lock other inodes which
-			 * can lead to deadlock if we also hold a lock on
-			 * the newly entered node.
-			 */
-			if ((error = VOP_BWRITE(bp)))
-				return (error);
-			if (tvp != NULL)
-				VOP_UNLOCK(tvp);
-			error = VOP_FSYNC(dvp, p->p_ucred, MNT_WAIT, p);
-			if (tvp != NULL)
-				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
-			return (error);
-		}
 		error = VOP_BWRITE(bp);
-		ret = UFS_UPDATE(dp, !DOINGSOFTDEP(dvp));
+		ret = UFS_UPDATE(dp, 1);
 		if (error == 0)
 			return (ret);
 		return (error);
@@ -792,8 +752,6 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	 */
 	if ((error = UFS_BUFATOFF(dp, (off_t)dp->i_offset, &dirbuf, &bp)) 
 	    != 0) {
-		if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
-			bdwrite(newdirbp);
 		return (error);
 	}
 	/*
@@ -836,11 +794,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			    dp->i_offset + ((char *)nep - dirbuf),
 			    dp->i_offset + ((char *)ep - dirbuf));
 #endif
-		if (DOINGSOFTDEP(dvp))
-			softdep_change_directoryentry_offset(dp, dirbuf,
-			    (caddr_t)nep, (caddr_t)ep, dsize); 
-		else
-			memmove(ep, nep, dsize);
+		memmove(ep, nep, dsize);
 	}
 	/*
 	 * Here, `ep' points to a directory entry containing `dsize' in-use
@@ -876,14 +830,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 		    dp->i_offset & ~(DIRBLKSIZ - 1));
 #endif
 
-	if (DOINGSOFTDEP(dvp)) {
-		(void)softdep_setup_directory_add(bp, dp,
-		    dp->i_offset + (caddr_t)ep - dirbuf,
-		    dirp->d_ino, newdirbp, 0);
-		bdwrite(bp);
-	} else {
-		error = VOP_BWRITE(bp);
-	}
+	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 
 	/*
@@ -960,30 +907,17 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 		    ((dp->i_offset - dp->i_count) & (DIRBLKSIZ - 1)),
 		    dp->i_offset & ~(DIRBLKSIZ - 1));
 #endif
-	if (DOINGSOFTDEP(dvp)) {
-		if (ip) {
-			ip->i_effnlink--;
-			softdep_change_linkcnt(ip, 0);
-			softdep_setup_remove(bp, dp, ip, isrmdir);
-		}
-		if (softdep_slowdown(dvp)) {
-			error = bwrite(bp);
-		} else {
-			bdwrite(bp);
-			error = 0;
-		}
- 	} else {
-		if (ip) {
-			ip->i_effnlink--;
-			DIP_ADD(ip, nlink, -1);
-			ip->i_flag |= IN_CHANGE;
-		}
-		if (DOINGASYNC(dvp) && dp->i_count != 0) {
-			bdwrite(bp);
-			error = 0;
-		} else
-			error = bwrite(bp);
+	if (ip) {
+		ip->i_effnlink--;
+		DIP_ADD(ip, nlink, -1);
+		ip->i_flag |= IN_CHANGE;
 	}
+	if (DOINGASYNC(dvp) && dp->i_count != 0) {
+		bdwrite(bp);
+		error = 0;
+	} else
+		error = bwrite(bp);
+
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);
 }
@@ -1008,19 +942,13 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ufsino_t newinum,
 	ep->d_ino = newinum;
 	ep->d_type = newtype;
 	oip->i_effnlink--;
-	if (DOINGSOFTDEP(vdp)) {
-		softdep_change_linkcnt(oip, 0);
-		softdep_setup_directory_change(bp, dp, oip, newinum, isrmdir);
+	DIP_ADD(oip, nlink, -1);
+	oip->i_flag |= IN_CHANGE;
+	if (DOINGASYNC(vdp)) {
 		bdwrite(bp);
+		error = 0;
 	} else {
-		DIP_ADD(oip, nlink, -1);
-		oip->i_flag |= IN_CHANGE;
-		if (DOINGASYNC(vdp)) {
-			bdwrite(bp);
-			error = 0;
-		} else {
-			error = VOP_BWRITE(bp);
-		}
+		error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	return (error);

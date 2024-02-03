@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.429 2022/12/21 09:54:23 kn Exp $ */
+/* $OpenBSD: softraid.c,v 1.430 2024/02/03 18:51:58 beck Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -445,7 +445,6 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t blkno,
 			splx(s);
 		}
 
-		LIST_INIT(&b.b_dep);
 		VOP_STRATEGY(vp, &b);
 		biowait(&b);
 
@@ -2017,8 +2016,6 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
 		ccb->ccb_buf.b_vp->v_numoutput++;
 		splx(s);
 	}
-
-	LIST_INIT(&ccb->ccb_buf.b_dep);
 
 	DNPRINTF(SR_D_DIS, "%s: %s %s ccb "
 	    "b_bcount %ld b_blkno %lld b_flags 0x%0lx b_data %p\n",

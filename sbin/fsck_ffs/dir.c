@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.34 2024/01/09 03:16:00 guenther Exp $	*/
+/*	$OpenBSD: dir.c,v 1.35 2024/02/03 18:51:57 beck Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -265,7 +265,7 @@ adjust(struct inodesc *idesc, short lcnt)
 		pinode(idesc->id_number);
 		printf(" COUNT %d SHOULD BE %d", DIP(dp, di_nlink),
 		    DIP(dp, di_nlink) - lcnt);
-		if (preen || usedsoftdep) {
+		if (preen) {
 			if (lcnt < 0) {
 				printf("\n");
 				pfatal("LINK COUNT INCREASING");
@@ -332,7 +332,7 @@ linkup(ino_t orphan, ino_t parentdir)
 	lostdir = (DIP(dp, di_mode) & IFMT) == IFDIR;
 	pwarn("UNREF %s ", lostdir ? "DIR" : "FILE");
 	pinode(orphan);
-	if ((preen || usedsoftdep) && DIP(dp, di_size) == 0)
+	if (preen && DIP(dp, di_size) == 0)
 		return (0);
 	if (preen)
 		printf(" (RECONNECTED)\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.38 2024/01/09 03:16:00 guenther Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.39 2024/02/03 18:51:57 beck Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -162,14 +162,9 @@ pass2(void)
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, sizeof pathbuf,
 			    inp->i_number, inp->i_number);
-			if (usedsoftdep)
-			        pfatal("%s %s: LENGTH %zu NOT MULTIPLE of %d",
-				       "DIRECTORY", pathbuf, inp->i_isize,
-				       DIRBLKSIZ);
-			else
-				pwarn("%s %s: LENGTH %zu NOT MULTIPLE OF %d",
-				      "DIRECTORY", pathbuf, inp->i_isize,
-				      DIRBLKSIZ);
+			pwarn("%s %s: LENGTH %zu NOT MULTIPLE OF %d",
+			    "DIRECTORY", pathbuf, inp->i_isize,
+			    DIRBLKSIZ);
 			if (preen)
 				printf(" (ADJUSTED)\n");
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
@@ -403,7 +398,7 @@ again:
 				break;
 			if (GET_ISTATE(dirp->d_ino) == FCLEAR)
 				errmsg = "DUP/BAD";
-			else if (!preen && !usedsoftdep)
+			else if (!preen)
 				errmsg = "ZERO LENGTH DIRECTORY";
 			else {
 				n = 1;
