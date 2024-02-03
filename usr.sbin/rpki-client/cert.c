@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.123 2024/02/01 15:11:38 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.124 2024/02/03 14:43:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -737,8 +737,7 @@ struct cert *
 cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 {
 	const unsigned char	*oder;
-	int			 extsz;
-	size_t			 i;
+	int			 i;
 	X509			*x = NULL;
 	X509_EXTENSION		*ext = NULL;
 	const X509_ALGOR	*palg;
@@ -810,10 +809,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 
 	/* Look for X509v3 extensions. */
 
-	if ((extsz = X509_get_ext_count(x)) < 0)
-		errx(1, "X509_get_ext_count");
-
-	for (i = 0; i < (size_t)extsz; i++) {
+	for (i = 0; i < X509_get_ext_count(x); i++) {
 		ext = X509_get_ext(x, i);
 		assert(ext != NULL);
 		obj = X509_EXTENSION_get_object(ext);
@@ -942,7 +938,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			    p.fn);
 			goto out;
 		}
-		for (i = 0; i < p.res->asz; i++) {
+		for (i = 0; (size_t)i < p.res->asz; i++) {
 			if (p.res->as[i].type == CERT_AS_INHERIT) {
 				warnx("%s: inherit elements not allowed in EE"
 				    " cert", p.fn);
