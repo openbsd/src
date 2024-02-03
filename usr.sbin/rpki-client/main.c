@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.247 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: main.c,v 1.248 2024/02/03 14:30:47 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -621,10 +621,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 			break;
 		}
 		mft = mft_read(b);
-		if (!mft->stale)
-			queue_add_from_mft(mft);
-		else
-			repo_stat_inc(rp, talid, type, STYPE_STALE);
+		queue_add_from_mft(mft);
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
@@ -732,7 +729,6 @@ sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 
 	out->mfts += in->mfts;
 	out->mfts_fail += in->mfts_fail;
-	out->mfts_stale += in->mfts_stale;
 	out->certs += in->certs;
 	out->certs_fail += in->certs_fail;
 	out->roas += in->roas;
@@ -1451,9 +1447,8 @@ main(int argc, char *argv[])
 	    stats.repo_tal_stats.certs, stats.repo_tal_stats.certs_fail);
 	printf("Trust Anchor Locators: %u (%u invalid)\n",
 	    stats.tals, talsz - stats.tals);
-	printf("Manifests: %u (%u failed parse, %u stale)\n",
-	    stats.repo_tal_stats.mfts, stats.repo_tal_stats.mfts_fail,
-	    stats.repo_tal_stats.mfts_stale);
+	printf("Manifests: %u (%u failed parse)\n",
+	    stats.repo_tal_stats.mfts, stats.repo_tal_stats.mfts_fail);
 	printf("Certificate revocation lists: %u\n", stats.repo_tal_stats.crls);
 	printf("Ghostbuster records: %u\n", stats.repo_tal_stats.gbrs);
 	printf("Trust Anchor Keys: %u\n", stats.repo_tal_stats.taks);
