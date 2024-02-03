@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.164 2024/02/03 15:58:33 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.165 2024/02/03 18:03:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -454,12 +454,6 @@ ssl3_connect(SSL *s)
 			} else {
 				s->s3->hs.state = SSL3_ST_CW_CHANGE_A;
 				s->s3->change_cipher_spec = 0;
-			}
-			if (!SSL_is_dtls(s)) {
-				if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
-					s->s3->hs.state = SSL3_ST_CW_CHANGE_A;
-					s->s3->change_cipher_spec = 0;
-				}
 			}
 
 			s->init_num = 0;
