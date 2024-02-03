@@ -2120,8 +2120,10 @@ static struct edid *edid_filter_invalid_blocks(struct edid *edid,
 		kfree(edid);
 #else
 	new = kmalloc(*alloc_size, GFP_KERNEL);
-	if (!new)
+	if (!new) {
 		kfree(edid);
+		return NULL;
+	}
 	memcpy(new, edid, EDID_LENGTH);
 	kfree(edid);
 #endif
