@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.8 2024/01/30 23:01:49 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.9 2024/02/03 21:41:35 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -622,7 +622,12 @@ vionet_notifyq(struct virtio_dev *dev)
 	struct vionet_dev *vionet = &dev->vionet;
 
 	switch (vionet->cfg.queue_notify) {
-	case TXQ: return vionet_notify_tx(dev);
+	case RXQ:
+		event_add(&ev_tap, NULL);
+		event_add(&ev_inject, NULL);
+		break;
+	case TXQ:
+		return vionet_notify_tx(dev);
 	default:
 		/*
 		 * Catch the unimplemented queue ID 2 (control queue) as
@@ -1027,16 +1032,10 @@ handle_io_write(struct viodev_msg *msg, struct virtio_dev *dev)
 			vionet->vq[TXQ].last_avail = 0;
 			vionet->vq[TXQ].notified_avail = 0;
 			virtio_deassert_pic_irq(dev, msg->vcpu);
+
+			event_del(&ev_tap);
+			event_del(&ev_inject);
 		}
-		event_del(&ev_tap);
-		event_del(&ev_inject);
-		if (vionet->cfg.device_status
-		    & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK) {
-			event_add(&ev_tap, NULL);
-			event_add(&ev_inject, NULL);
-		}
-		break;
-	default:
 		break;
 	}
 	return (intr);
