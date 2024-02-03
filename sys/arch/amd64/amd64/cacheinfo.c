@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.11 2022/07/12 04:46:00 jsg Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.12 2024/02/03 09:53:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
@@ -43,10 +43,7 @@ amd64_print_l1_cacheinfo(struct cpu_info *ci)
 
 	printf("%s: ", ci->ci_dev->dv_xname);
 
-	if (totalsize < 1024)
-		printf("%dKB ", totalsize);
-	else
-		printf("%dMB ", totalsize >> 10);
+	printf("%dKB ", totalsize);
 	printf("%db/line ", linesize);
 
 	switch (ways) {
@@ -70,10 +67,7 @@ amd64_print_l1_cacheinfo(struct cpu_info *ci)
 	ways = (edx >> 16) & 0xff;
 	totalsize = (edx >> 24) & 0xff; /* KB */
 
-	if (totalsize < 1024)
-		printf("%dKB ", totalsize);
-	else
-		printf("%dMB ", totalsize >> 10);
+	printf("%dKB ", totalsize);
 	printf("%db/line ", linesize);
 
 	switch (ways) {
