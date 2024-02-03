@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.9 2023/09/26 01:53:54 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.10 2024/02/03 00:28:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -67,7 +67,7 @@ __dead void
 vioblk_main(int fd, int fd_vmm)
 {
 	struct virtio_dev	 dev;
-	struct vioblk_dev	*vioblk;
+	struct vioblk_dev	*vioblk = NULL;
 	struct viodev_msg 	 msg;
 	struct vmd_vm		 vm;
 	struct vm_create_params	*vcp;
@@ -210,7 +210,7 @@ vioblk_main(int fd, int fd_vmm)
 		/* Clean shutdown. */
 		close_fd(dev.sync_fd);
 		close_fd(dev.async_fd);
-		for (i = 0; i < (int)sizeof(vioblk->disk_fd); i++)
+		for (i = 0; i < vioblk->ndisk_fd; i++)
 			close_fd(vioblk->disk_fd[i]);
 		_exit(0);
 		/* NOTREACHED */
@@ -227,8 +227,10 @@ fail:
 
 	close_fd(dev.sync_fd);
 	close_fd(dev.async_fd);
-	for (i = 0; i < (int)sizeof(vioblk->disk_fd); i++)
-		close_fd(vioblk->disk_fd[i]);
+	if (vioblk != NULL) {
+		for (i = 0; i < vioblk->ndisk_fd; i++)
+			close_fd(vioblk->disk_fd[i]);
+	}
 	_exit(ret);
 	/* NOTREACHED */
 }
