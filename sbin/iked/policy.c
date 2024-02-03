@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.97 2023/11/10 08:03:02 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.98 2024/02/03 00:54:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -1091,7 +1091,7 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
 
 	for (i = 0; i < peer->prop_nxforms; i++) {
 		tpeer = peer->prop_xforms + i;
-		if (tpeer->xform_type > IKEV2_XFORMTYPE_MAX)
+		if (tpeer->xform_type >= IKEV2_XFORMTYPE_MAX)
 			continue;
 		if (noauth && tpeer->xform_type == IKEV2_XFORMTYPE_INTEGR)
 			return (0);
