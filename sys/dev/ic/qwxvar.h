@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.10 2024/02/03 10:03:18 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.11 2024/02/03 20:07:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1628,6 +1628,7 @@ struct qwx_softc {
 	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
 	uint32_t			sc_flags;
+	int				sc_node;
 
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
 

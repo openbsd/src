@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.15 2024/02/03 10:03:18 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.16 2024/02/03 20:07:19 kettenis Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -67,6 +67,10 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#ifdef __HAVE_FDT
+#include <dev/ofw/openfirm.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -7847,7 +7851,15 @@ qwx_core_check_smbios(struct qwx_softc *sc)
 int
 qwx_core_check_dt(struct qwx_softc *sc)
 {
-	return 0; /* TODO */
+#ifdef __HAVE_FDT
+	if (sc->sc_node == 0)
+		return 0;
+	
+	OF_getprop(sc->sc_node, "qcom,ath11k-calibration-variant",
+	    sc->qmi_target.bdf_ext, sizeof(sc->qmi_target.bdf_ext) - 1);
+#endif
+
+	return 0;
 }
 
 int
