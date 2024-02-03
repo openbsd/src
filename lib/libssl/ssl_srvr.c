@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.159 2024/02/03 15:58:34 beck Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.160 2024/02/03 17:39:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1126,7 +1126,7 @@ ssl3_get_client_hello(SSL *s)
 		goto err;
 
 	if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER))
-		tls1_transcript_free(s); 
+		tls1_transcript_free(s);
 
 	/*
 	 * We now have the following setup.
