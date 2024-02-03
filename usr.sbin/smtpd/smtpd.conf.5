@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.266 2023/12/03 11:52:16 op Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.267 2024/02/03 15:41:02 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 3 2023 $
+.Dd $Mdocdate: February 3 2024 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -193,6 +193,10 @@ is in charge of handling delivery for all virtual users.
 This option is not usable with the
 .Cm mbox
 delivery method.
+.Pp
+Only the delivery user'
+.Pa .forward
+file will be processed.
 .It Cm userbase Pf < Ar table Ns >
 Use the mapping
 .Ar table
