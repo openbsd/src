@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_key_schedule.c,v 1.3 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: tls12_key_schedule.c,v 1.4 2024/02/03 15:58:34 beck Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -124,10 +124,6 @@ tls12_key_block_generate(struct tls12_key_block *kb, SSL *s,
 		mac_key_len = EVP_MD_size(mac_hash);
 		key_len = EVP_CIPHER_key_length(cipher);
 		iv_len = EVP_CIPHER_iv_length(cipher);
-
-		/* Special handling for GOST... */
-		if (EVP_MD_type(mac_hash) == NID_id_Gost28147_89_MAC)
-			mac_key_len = 32;
 	}
 
 	if (mac_key_len > EVP_MAX_MD_SIZE)

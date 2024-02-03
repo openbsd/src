@@ -1,21 +1,10 @@
-# $OpenBSD: Makefile,v 1.13 2023/10/30 17:15:21 tb Exp $
+# $OpenBSD: Makefile,v 1.14 2024/02/03 15:58:34 beck Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or 3.0.  Create lists of supported ciphers
 # and pin client and server to one of the ciphers.  Use server
 # certificate with compatible type.  Check that client and server
 # have used correct cipher by grepping in their session print out.
-
-run-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl \
-run-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl \
-client-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl.out \
-client-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl.out \
-server-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl.out \
-server-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl.out \
-check-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl \
-check-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl:
-	# gost does not work with libressl TLS 1.3 right now
-	@echo DISABLED
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl11)
@@ -96,8 +85,6 @@ LEVEL_openssl30 = ,@SECLEVEL=0
 TYPE_${cipher} =	dsa
 .elif "${cipher:M*-ECDSA-*}" != ""
 TYPE_${cipher} =	ec
-.elif "${cipher:M*-GOST89-*}" != ""
-TYPE_${cipher} =	gost
 .elif "${cipher:M*-RSA-*}" != ""
 TYPE_${cipher} =	rsa
 .else

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.318 2023/12/29 12:24:33 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.319 2024/02/03 15:58:34 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2297,12 +2297,6 @@ ssl_set_cert_masks(SSL_CERT *c, const SSL_CIPHER *cipher)
 			mask_a |= SSL_aECDSA;
 	}
 
-	cpk = &(c->pkeys[SSL_PKEY_GOST01]);
-	if (cpk->x509 != NULL && cpk->privatekey != NULL) {
-		mask_k |= SSL_kGOST;
-		mask_a |= SSL_aGOST01;
-	}
-
 	cpk = &(c->pkeys[SSL_PKEY_RSA]);
 	if (cpk->x509 != NULL && cpk->privatekey != NULL) {
 		mask_a |= SSL_aRSA;
@@ -2363,8 +2357,6 @@ ssl_get_server_send_pkey(const SSL *s)
 		i = SSL_PKEY_ECC;
 	} else if (alg_a & SSL_aRSA) {
 		i = SSL_PKEY_RSA;
-	} else if (alg_a & SSL_aGOST01) {
-		i = SSL_PKEY_GOST01;
 	} else { /* if (alg_a & SSL_aNULL) */
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		return (NULL);

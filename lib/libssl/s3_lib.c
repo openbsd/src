@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.248 2023/11/29 13:39:34 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.249 2024/02/03 15:58:33 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -575,41 +575,6 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.algorithm2 = SSL_HANDSHAKE_MAC_SHA256|TLS1_PRF_SHA256,
 		.strength_bits = 256,
 		.alg_bits = 256,
-	},
-
-	/* GOST Ciphersuites */
-
-	/* Cipher 81 */
-	{
-		.valid = 1,
-		.name = "GOST2001-GOST89-GOST89",
-		.id = 0x3000081,
-		.algorithm_mkey = SSL_kGOST,
-		.algorithm_auth = SSL_aGOST01,
-		.algorithm_enc = SSL_eGOST2814789CNT,
-		.algorithm_mac = SSL_GOST89MAC,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_GOST94|TLS1_PRF_GOST94|
-		    TLS1_STREAM_MAC,
-		.strength_bits = 256,
-		.alg_bits = 256
-	},
-
-	/* Cipher 83 */
-	{
-		.valid = 1,
-		.name = "GOST2001-NULL-GOST94",
-		.id = 0x3000083,
-		.algorithm_mkey = SSL_kGOST,
-		.algorithm_auth = SSL_aGOST01,
-		.algorithm_enc = SSL_eNULL,
-		.algorithm_mac = SSL_GOST94,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_STRONG_NONE,
-		.algorithm2 = SSL_HANDSHAKE_MAC_GOST94|TLS1_PRF_GOST94,
-		.strength_bits = 0,
-		.alg_bits = 0
 	},
 
 #ifndef OPENSSL_NO_CAMELLIA
@@ -1361,40 +1326,6 @@ const SSL_CIPHER ssl3_ciphers[] = {
 		.strength_bits = 256,
 		.alg_bits = 256,
 	},
-
-	/* Cipher FF85 FIXME IANA */
-	{
-		.valid = 1,
-		.name = "GOST2012256-GOST89-GOST89",
-		.id = 0x300ff85, /* FIXME IANA */
-		.algorithm_mkey = SSL_kGOST,
-		.algorithm_auth = SSL_aGOST01,
-		.algorithm_enc = SSL_eGOST2814789CNT,
-		.algorithm_mac = SSL_GOST89MAC,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_HIGH,
-		.algorithm2 = SSL_HANDSHAKE_MAC_STREEBOG256|TLS1_PRF_STREEBOG256|
-		    TLS1_STREAM_MAC,
-		.strength_bits = 256,
-		.alg_bits = 256
-	},
-
-	/* Cipher FF87 FIXME IANA */
-	{
-		.valid = 1,
-		.name = "GOST2012256-NULL-STREEBOG256",
-		.id = 0x300ff87, /* FIXME IANA */
-		.algorithm_mkey = SSL_kGOST,
-		.algorithm_auth = SSL_aGOST01,
-		.algorithm_enc = SSL_eNULL,
-		.algorithm_mac = SSL_STREEBOG256,
-		.algorithm_ssl = SSL_TLSV1,
-		.algo_strength = SSL_STRONG_NONE,
-		.algorithm2 = SSL_HANDSHAKE_MAC_STREEBOG256|TLS1_PRF_STREEBOG256,
-		.strength_bits = 0,
-		.alg_bits = 0
-	},
-
 
 	/* end of list */
 };
@@ -2667,21 +2598,6 @@ ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 	unsigned long alg_k;
 
 	alg_k = s->s3->hs.cipher->algorithm_mkey;
-
-#ifndef OPENSSL_NO_GOST
-	if ((alg_k & SSL_kGOST) != 0) {
-		if (!CBB_add_u8(cbb, TLS_CT_GOST01_SIGN))
-			return 0;
-		if (!CBB_add_u8(cbb, TLS_CT_GOST12_256_SIGN))
-			return 0;
-		if (!CBB_add_u8(cbb, TLS_CT_GOST12_512_SIGN))
-			return 0;
-		if (!CBB_add_u8(cbb, TLS_CT_GOST12_256_SIGN_COMPAT))
-			return 0;
-		if (!CBB_add_u8(cbb, TLS_CT_GOST12_512_SIGN_COMPAT))
-			return 0;
-	}
-#endif
 
 	if ((alg_k & SSL_kDHE) != 0) {
 		if (!CBB_add_u8(cbb, SSL3_CT_RSA_FIXED_DH))

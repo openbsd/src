@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.9 2023/10/18 19:14:32 anton Exp $
+# $OpenBSD: Makefile.inc,v 1.10 2024/02/03 15:58:34 beck Exp $
 
 .PATH:			${.CURDIR}/..
 
@@ -39,7 +39,7 @@ run-self-client-server: client server 127.0.0.1.crt
 CLEANFILES +=		127.0.0.1.{crt,key} \
 			ca.{crt,key,srl} fake-ca.{crt,key} \
 			{client,server}.{req,crt,key} \
-			{dsa,ec,gost,rsa}.{key,req,crt} \
+			{dsa,ec,rsa}.{key,req,crt} \
 			dh.param
 
 127.0.0.1.crt:
@@ -70,10 +70,6 @@ dsa.key:
 ec.key:
 	openssl ecparam -genkey -name secp256r1 -out $@
 
-gost.key:
-	openssl genpkey -algorithm gost2001 \
-	    -pkeyopt paramset:A -pkeyopt dgst:md_gost94 -out $@
-
 rsa.key:
 	openssl genrsa -out $@ 2048
 
@@ -82,11 +78,6 @@ dsa.req ec.req rsa.req: ${@:R}.key
 	    -subj /L=OpenBSD/O=tls-regress/OU=${@:R}/CN=localhost/ \
 	    -nodes -key ${@:R}.key -out $@
 
-gost.req: ${@:R}.key
-	openssl req -batch -new -md_gost94 \
-	    -subj /L=OpenBSD/O=tls-regress/OU=${@:R}/CN=localhost/ \
-	    -nodes -key ${@:R}.key -out $@
-
-dsa.crt ec.crt gost.crt rsa.crt: ca.crt ${@:R}.req
+dsa.crt ec.crt rsa.crt: ca.crt ${@:R}.req
 	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt \
 	    -req -in ${@:R}.req -out $@

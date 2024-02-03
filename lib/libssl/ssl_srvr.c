@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.158 2023/12/29 12:24:33 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.159 2024/02/03 15:58:34 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,10 +161,6 @@
 #include <openssl/objects.h>
 #include <openssl/opensslconf.h>
 #include <openssl/x509.h>
-
-#ifndef OPENSSL_NO_GOST
-#include <openssl/gost.h>
-#endif
 
 #include "bytestring.h"
 #include "dtls_local.h"
@@ -564,15 +560,7 @@ ssl3_accept(SSL *s)
 			}
 
 			alg_k = s->s3->hs.cipher->algorithm_mkey;
-			if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
-				/*
-				 * A GOST client may use the key from its
-				 * certificate for key exchange, in which case
-				 * the CertificateVerify message is not sent.
-				 */
-				s->s3->hs.state = SSL3_ST_SR_FINISHED_A;
-				s->init_num = 0;
-			} else if (SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) {
+			if (SSL_USE_SIGALGS(s)) {
 				s->s3->hs.state = SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num = 0;
 				if (!s->session->peer_cert)
@@ -795,7 +783,6 @@ ssl3_get_client_hello(SSL *s)
 	unsigned long id;
 	SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
-	unsigned long alg_k;
 	const SSL_METHOD *method;
 	uint16_t shared_version;
 
@@ -1138,10 +1125,8 @@ ssl3_get_client_hello(SSL *s)
 	if (!tls1_transcript_hash_init(s))
 		goto err;
 
-	alg_k = s->s3->hs.cipher->algorithm_mkey;
-	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) ||
-	    !(s->verify_mode & SSL_VERIFY_PEER))
-		tls1_transcript_free(s);
+	if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER))
+		tls1_transcript_free(s); 
 
 	/*
 	 * We now have the following setup.
@@ -1816,75 +1801,6 @@ ssl3_get_client_kex_ecdhe(SSL *s, CBS *cbs)
 }
 
 static int
-ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
-{
-	unsigned char premaster_secret[32];
-	EVP_PKEY_CTX *pkey_ctx = NULL;
-	EVP_PKEY *client_pubkey;
-	EVP_PKEY *pkey = NULL;
-	size_t outlen;
-	CBS gostblob;
-
-	/* Get our certificate private key*/
-#ifndef OPENSSL_NO_GOST
-	if ((s->s3->hs.cipher->algorithm_auth & SSL_aGOST01) != 0)
-		pkey = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
-#endif
-
-	if ((pkey_ctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL)
-		goto err;
-	if (EVP_PKEY_decrypt_init(pkey_ctx) <= 0)
-		goto err;
-
-	/*
-	 * If client certificate is present and is of the same type,
-	 * maybe use it for key exchange.
-	 * Don't mind errors from EVP_PKEY_derive_set_peer, because
-	 * it is completely valid to use a client certificate for
-	 * authorization only.
-	 */
-	if ((client_pubkey = X509_get0_pubkey(s->session->peer_cert)) != NULL) {
-		if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pubkey) <= 0)
-			ERR_clear_error();
-	}
-
-	/* Decrypt session key */
-	if (!CBS_get_asn1(cbs, &gostblob, CBS_ASN1_SEQUENCE))
-		goto decode_err;
-	if (CBS_len(cbs) != 0)
-		goto decode_err;
-	outlen = sizeof(premaster_secret);
-	if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen,
-	    CBS_data(&gostblob), CBS_len(&gostblob)) <= 0) {
-		SSLerror(s, SSL_R_DECRYPTION_FAILED);
-		goto err;
-	}
-
-	if (!tls12_derive_master_secret(s, premaster_secret,
-	    sizeof(premaster_secret)))
-		goto err;
-
-	/* Check if pubkey from client certificate was used */
-	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY,
-	    2, NULL) > 0)
-		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-
-	explicit_bzero(premaster_secret, sizeof(premaster_secret));
-	EVP_PKEY_CTX_free(pkey_ctx);
-
-	return 1;
-
- decode_err:
-	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
- err:
-	explicit_bzero(premaster_secret, sizeof(premaster_secret));
-	EVP_PKEY_CTX_free(pkey_ctx);
-
-	return 0;
-}
-
-static int
 ssl3_get_client_key_exchange(SSL *s)
 {
 	unsigned long alg_k;
@@ -1911,9 +1827,6 @@ ssl3_get_client_key_exchange(SSL *s)
 			goto err;
 	} else if (alg_k & SSL_kECDHE) {
 		if (!ssl3_get_client_kex_ecdhe(s, &cbs))
-			goto err;
-	} else if (alg_k & SSL_kGOST) {
-		if (!ssl3_get_client_kex_gost(s, &cbs))
 			goto err;
 	} else {
 		al = SSL_AD_HANDSHAKE_FAILURE;
@@ -2043,15 +1956,6 @@ ssl3_get_cert_verify(SSL *s)
 			al = SSL_AD_INTERNAL_ERROR;
 			goto fatal_err;
 		}
-#ifndef OPENSSL_NO_GOST
-		if (sigalg->key_type == EVP_PKEY_GOSTR01 &&
-		    EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_VERIFY,
-		    EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE,
-		    NULL) <= 0) {
-			al = SSL_AD_INTERNAL_ERROR;
-			goto fatal_err;
-		}
-#endif
 		if (EVP_DigestVerify(mctx, CBS_data(&signature),
 		    CBS_len(&signature), hdata, hdatalen) <= 0) {
 			SSLerror(s, ERR_R_EVP_LIB);
@@ -2096,54 +2000,6 @@ ssl3_get_cert_verify(SSL *s)
 			SSLerror(s, SSL_R_BAD_ECDSA_SIGNATURE);
 			goto fatal_err;
 		}
-#ifndef OPENSSL_NO_GOST
-	} else if (EVP_PKEY_id(pkey) == NID_id_GostR3410_94 ||
-	    EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
-		unsigned char sigbuf[128];
-		unsigned int siglen = sizeof(sigbuf);
-		EVP_PKEY_CTX *pctx;
-		const EVP_MD *md;
-		int nid;
-
-		if (!tls1_transcript_data(s, &hdata, &hdatalen)) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			al = SSL_AD_INTERNAL_ERROR;
-			goto fatal_err;
-		}
-		if (!EVP_PKEY_get_default_digest_nid(pkey, &nid) ||
-		    !(md = EVP_get_digestbynid(nid))) {
-			SSLerror(s, ERR_R_EVP_LIB);
-			al = SSL_AD_INTERNAL_ERROR;
-			goto fatal_err;
-		}
-		if ((pctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL) {
-			SSLerror(s, ERR_R_EVP_LIB);
-			al = SSL_AD_INTERNAL_ERROR;
-			goto fatal_err;
-		}
-		if (!EVP_DigestInit_ex(mctx, md, NULL) ||
-		    !EVP_DigestUpdate(mctx, hdata, hdatalen) ||
-		    !EVP_DigestFinal(mctx, sigbuf, &siglen) ||
-		    (EVP_PKEY_verify_init(pctx) <= 0) ||
-		    (EVP_PKEY_CTX_set_signature_md(pctx, md) <= 0) ||
-		    (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_VERIFY,
-		    EVP_PKEY_CTRL_GOST_SIG_FORMAT,
-		    GOST_SIG_FORMAT_RS_LE, NULL) <= 0)) {
-			SSLerror(s, ERR_R_EVP_LIB);
-			al = SSL_AD_INTERNAL_ERROR;
-			EVP_PKEY_CTX_free(pctx);
-			goto fatal_err;
-		}
-		if (EVP_PKEY_verify(pctx, CBS_data(&signature),
-		    CBS_len(&signature), sigbuf, siglen) <= 0) {
-			al = SSL_AD_DECRYPT_ERROR;
-			SSLerror(s, SSL_R_BAD_SIGNATURE);
-			EVP_PKEY_CTX_free(pctx);
-			goto fatal_err;
-		}
-
-		EVP_PKEY_CTX_free(pctx);
-#endif
 	} else {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		al = SSL_AD_UNSUPPORTED_CERTIFICATE;

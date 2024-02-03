@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.163 2023/12/29 12:24:33 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.164 2024/02/03 15:58:33 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -160,10 +160,6 @@
 #include <openssl/md5.h>
 #include <openssl/objects.h>
 #include <openssl/opensslconf.h>
-
-#ifndef OPENSSL_NO_GOST
-#include <openssl/gost.h>
-#endif
 
 #include "bytestring.h"
 #include "dtls_local.h"
@@ -829,7 +825,6 @@ ssl3_get_server_hello(SSL *s)
 	uint8_t compression_method;
 	const SSL_CIPHER *cipher;
 	const SSL_METHOD *method;
-	unsigned long alg_k;
 	int al, ret;
 
 	s->first_packet = 1;
@@ -1038,8 +1033,7 @@ ssl3_get_server_hello(SSL *s)
 	 * Don't digest cached records if no sigalgs: we may need them for
 	 * client authentication.
 	 */
-	alg_k = s->s3->hs.cipher->algorithm_mkey;
-	if (!(SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)))
+	if (!SSL_USE_SIGALGS(s))
 		tls1_transcript_free(s);
 
 	if (!CBS_get_u8(&cbs, &compression_method))
@@ -1931,119 +1925,6 @@ ssl3_send_client_kex_ecdhe(SSL *s, CBB *cbb)
 }
 
 static int
-ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
-{
-	unsigned char premaster_secret[32], shared_ukm[32], tmp[256];
-	EVP_PKEY_CTX *pkey_ctx = NULL;
-	EVP_MD_CTX *ukm_hash = NULL;
-	EVP_PKEY *pkey;
-	size_t msglen;
-	unsigned int md_len;
-	CBB gostblob;
-	int nid;
-	int ret = 0;
-
-	/* Get server certificate PKEY and create ctx from it */
-	pkey = X509_get0_pubkey(s->session->peer_cert);
-	if (pkey == NULL || s->session->peer_cert_type != SSL_PKEY_GOST01) {
-		SSLerror(s, SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
-		goto err;
-	}
-	if ((pkey_ctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
-	/*
-	 * If we have send a certificate, and certificate key parameters match
-	 * those of server certificate, use certificate key for key exchange.
-	 * Otherwise, generate ephemeral key pair.
-	 */
-	if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0)
-		goto err;
-
-	/* Generate session key. */
-	arc4random_buf(premaster_secret, sizeof(premaster_secret));
-
-	/*
-	 * If we have client certificate, use its secret as peer key.
-	 * XXX - this presumably lacks PFS.
-	 */
-	if (s->s3->hs.tls12.cert_request != 0 &&
-	    s->cert->key->privatekey != NULL) {
-		if (EVP_PKEY_derive_set_peer(pkey_ctx,
-		    s->cert->key->privatekey) <=0) {
-			/*
-			 * If there was an error - just ignore it.
-			 * Ephemeral key would be used.
-			 */
-			ERR_clear_error();
-		}
-	}
-
-	/*
-	 * Compute shared IV and store it in algorithm-specific context data.
-	 */
-	if ((ukm_hash = EVP_MD_CTX_new()) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
-	/* XXX check handshake hash instead. */
-	if (s->s3->hs.cipher->algorithm2 & SSL_HANDSHAKE_MAC_GOST94)
-		nid = NID_id_GostR3411_94;
-	else
-		nid = NID_id_tc26_gost3411_2012_256;
-	if (!EVP_DigestInit(ukm_hash, EVP_get_digestbynid(nid)))
-		goto err;
-	if (!EVP_DigestUpdate(ukm_hash, s->s3->client_random, SSL3_RANDOM_SIZE))
-		goto err;
-	if (!EVP_DigestUpdate(ukm_hash, s->s3->server_random, SSL3_RANDOM_SIZE))
-		goto err;
-	if (!EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len))
-		goto err;
-	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
-	    EVP_PKEY_CTRL_SET_IV, 8, shared_ukm) < 0) {
-		SSLerror(s, SSL_R_LIBRARY_BUG);
-		goto err;
-	}
-
-	/*
-	 * Make GOST keytransport blob message, encapsulate it into sequence.
-	 */
-	msglen = 255;
-	if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, premaster_secret,
-	    sizeof(premaster_secret)) < 0) {
-		SSLerror(s, SSL_R_LIBRARY_BUG);
-		goto err;
-	}
-
-	if (!CBB_add_asn1(cbb, &gostblob, CBS_ASN1_SEQUENCE))
-		goto err;
-	if (!CBB_add_bytes(&gostblob, tmp, msglen))
-		goto err;
-	if (!CBB_flush(cbb))
-		goto err;
-
-	/* Check if pubkey from client certificate was used. */
-	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
-	    NULL) > 0)
-		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-
-	if (!tls12_derive_master_secret(s, premaster_secret, 32))
-		goto err;
-
-	ret = 1;
-
- err:
-	explicit_bzero(premaster_secret, sizeof(premaster_secret));
-	EVP_PKEY_CTX_free(pkey_ctx);
-	EVP_MD_CTX_free(ukm_hash);
-
-	return ret;
-}
-
-static int
 ssl3_send_client_key_exchange(SSL *s)
 {
 	unsigned long alg_k;
@@ -2066,9 +1947,6 @@ ssl3_send_client_key_exchange(SSL *s)
 				goto err;
 		} else if (alg_k & SSL_kECDHE) {
 			if (!ssl3_send_client_kex_ecdhe(s, &kex))
-				goto err;
-		} else if (alg_k & SSL_kGOST) {
-			if (!ssl3_send_client_kex_gost(s, &kex))
 				goto err;
 		} else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
@@ -2115,14 +1993,6 @@ ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey,
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-#ifndef OPENSSL_NO_GOST
-	if (sigalg->key_type == EVP_PKEY_GOSTR01 &&
-	    EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
-	    EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE, NULL) <= 0) {
-		SSLerror(s, ERR_R_EVP_LIB);
-		goto err;
-	}
-#endif
 	if ((sigalg->flags & SIGALG_FLAG_RSA_PSS) &&
 	    (!EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) ||
 	    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1))) {
@@ -2230,72 +2100,6 @@ ssl3_send_client_verify_ec(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 	return ret;
 }
 
-#ifndef OPENSSL_NO_GOST
-static int
-ssl3_send_client_verify_gost(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
-{
-	CBB cbb_signature;
-	EVP_MD_CTX *mctx;
-	EVP_PKEY_CTX *pctx;
-	const EVP_MD *md;
-	const unsigned char *hdata;
-	unsigned char *signature = NULL;
-	size_t signature_len;
-	size_t hdata_len;
-	int nid;
-	int ret = 0;
-
-	if ((mctx = EVP_MD_CTX_new()) == NULL)
-		goto err;
-
-	if (!tls1_transcript_data(s, &hdata, &hdata_len)) {
-		SSLerror(s, ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-	if (!EVP_PKEY_get_default_digest_nid(pkey, &nid) ||
-	    (md = EVP_get_digestbynid(nid)) == NULL) {
-		SSLerror(s, ERR_R_EVP_LIB);
-		goto err;
-	}
-	if (!EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey)) {
-		SSLerror(s, ERR_R_EVP_LIB);
-		goto err;
-	}
-#ifndef OPENSSL_NO_GOST
-	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
-	    EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE, NULL) <= 0) {
-		SSLerror(s, ERR_R_EVP_LIB);
-		goto err;
-	}
-#endif
-	if (!EVP_DigestSign(mctx, NULL, &signature_len, hdata, hdata_len)) {
-		SSLerror(s, ERR_R_EVP_LIB);
-		goto err;
-	}
-	if ((signature = calloc(1, signature_len)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if (!EVP_DigestSign(mctx, signature, &signature_len, hdata, hdata_len)) {
-		SSLerror(s, ERR_R_EVP_LIB);
-		goto err;
-	}
-
-	if (!CBB_add_u16_length_prefixed(cert_verify, &cbb_signature))
-		goto err;
-	if (!CBB_add_bytes(&cbb_signature, signature, signature_len))
-		goto err;
-	if (!CBB_flush(cert_verify))
-		goto err;
-
-	ret = 1;
- err:
-	EVP_MD_CTX_free(mctx);
-	free(signature);
-	return ret;
-}
-#endif
-
 static int
 ssl3_send_client_verify(SSL *s)
 {
@@ -2331,12 +2135,6 @@ ssl3_send_client_verify(SSL *s)
 		} else if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
 			if (!ssl3_send_client_verify_ec(s, pkey, &cert_verify))
 				goto err;
-#ifndef OPENSSL_NO_GOST
-		} else if (EVP_PKEY_id(pkey) == NID_id_GostR3410_94 ||
-		    EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
-			if (!ssl3_send_client_verify_gost(s, pkey, &cert_verify))
-				goto err;
-#endif
 		} else {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;

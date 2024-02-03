@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.41 2024/01/18 16:30:43 tb Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.42 2024/02/03 15:58:34 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -468,7 +468,6 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
     CBS *iv)
 {
 	EVP_PKEY *mac_pkey = NULL;
-	int gost_param_nid;
 	int mac_type;
 	int ret = 0;
 
@@ -484,25 +483,10 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 		goto err;
 	if (EVP_CIPHER_key_length(rl->cipher) != CBS_len(key))
 		goto err;
-
-#ifndef OPENSSL_NO_GOST
-	/* XXX die die die */
-	/* Special handling for GOST... */
-	if (EVP_MD_type(rl->mac_hash) == NID_id_Gost28147_89_MAC) {
-		if (CBS_len(mac_key) != 32)
-			goto err;
-		mac_type = EVP_PKEY_GOSTIMIT;
-		rp->stream_mac = 1;
-	} else {
-#endif
-		if (CBS_len(mac_key) > INT_MAX)
-			goto err;
-		if (EVP_MD_size(rl->mac_hash) != CBS_len(mac_key))
-			goto err;
-#ifndef OPENSSL_NO_GOST
-	}
-#endif
-
+	if (CBS_len(mac_key) > INT_MAX)
+		goto err;
+	if (EVP_MD_size(rl->mac_hash) != CBS_len(mac_key))
+		goto err;
 	if ((rp->cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 		goto err;
 	if ((rp->hash_ctx = EVP_MD_CTX_new()) == NULL)
@@ -523,23 +507,6 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 	if (EVP_DigestSignInit(rp->hash_ctx, NULL, rl->mac_hash, NULL,
 	    mac_pkey) <= 0)
 		goto err;
-
-	/* More special handling for GOST... */
-	if (EVP_CIPHER_nid(rl->cipher) == NID_gost89_cnt) {
-		gost_param_nid = NID_id_tc26_gost_28147_param_Z;
-		if (EVP_MD_type(rl->handshake_hash) == NID_id_GostR3411_94)
-			gost_param_nid = NID_id_Gost28147_89_CryptoPro_A_ParamSet;
-
-		if (EVP_CIPHER_CTX_ctrl(rp->cipher_ctx, EVP_CTRL_GOST_SET_SBOX,
-		    gost_param_nid, 0) <= 0)
-			goto err;
-
-		if (EVP_MD_type(rl->mac_hash) == NID_id_Gost28147_89_MAC) {
-			if (EVP_MD_CTX_ctrl(rp->hash_ctx, EVP_MD_CTRL_GOST_SET_SBOX,
-			    gost_param_nid, 0) <= 0)
-				goto err;
-		}
-	}
 
 	ret = 1;
 

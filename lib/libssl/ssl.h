@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.232 2023/11/22 15:43:42 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.233 2024/02/03 15:58:33 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -245,7 +245,6 @@ extern "C" {
 #define SSL_TXT_kECDH		"kECDH"
 #define SSL_TXT_kEECDH		"kEECDH"
 #define SSL_TXT_kPSK            "kPSK"
-#define SSL_TXT_kGOST		"kGOST"
 #define SSL_TXT_kSRP		"kSRP"
 
 #define	SSL_TXT_aRSA		"aRSA"
@@ -255,9 +254,6 @@ extern "C" {
 #define SSL_TXT_aKRB5     	"aKRB5"
 #define SSL_TXT_aECDSA		"aECDSA"
 #define SSL_TXT_aPSK            "aPSK"
-#define SSL_TXT_aGOST94		"aGOST94"
-#define SSL_TXT_aGOST01		"aGOST01"
-#define SSL_TXT_aGOST		"aGOST"
 
 #define	SSL_TXT_DSS		"DSS"
 #define SSL_TXT_DH		"DH"
@@ -293,12 +289,8 @@ extern "C" {
 #define SSL_TXT_MD5		"MD5"
 #define SSL_TXT_SHA1		"SHA1"
 #define SSL_TXT_SHA		"SHA" /* same as "SHA1" */
-#define SSL_TXT_GOST94		"GOST94"
-#define SSL_TXT_GOST89MAC		"GOST89MAC"
 #define SSL_TXT_SHA256		"SHA256"
 #define SSL_TXT_SHA384		"SHA384"
-#define SSL_TXT_STREEBOG256		"STREEBOG256"
-#define SSL_TXT_STREEBOG512		"STREEBOG512"
 
 #define SSL_TXT_DTLS1		"DTLSv1"
 #define SSL_TXT_DTLS1_2		"DTLSv1.2"
@@ -2176,7 +2168,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_NO_CLIENT_CERT_METHOD			 331
 #define SSL_R_NO_CLIENT_CERT_RECEIVED			 186
 #define SSL_R_NO_COMPRESSION_SPECIFIED			 187
-#define SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER		 330
 #define SSL_R_NO_METHOD_SPECIFIED			 188
 #define SSL_R_NO_PRIVATEKEY				 189
 #define SSL_R_NO_PRIVATE_KEY_ASSIGNED			 190

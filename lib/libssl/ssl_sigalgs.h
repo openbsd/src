@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.26 2022/07/02 16:00:12 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.27 2024/02/03 15:58:34 beck Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -46,14 +46,6 @@ __BEGIN_HIDDEN_DECLS
 #define SIGALG_ECDSA_SHA1		0x0203
 #define SIGALG_PRIVATE_START		0xFE00
 #define SIGALG_PRIVATE_END		0xFFFF
-
-/*
- * If Russia can elect the US President, surely
- * IANA could fix this problem.
- */
-#define SIGALG_GOSTR12_512_STREEBOG_512	0xEFEF
-#define SIGALG_GOSTR12_256_STREEBOG_256	0xEEEE
-#define SIGALG_GOSTR01_GOST94		0xEDED
 
 /* Legacy sigalg for < TLSv1.2 same value as BoringSSL uses. */
 #define SIGALG_RSA_PKCS1_MD5_SHA1	0xFF01

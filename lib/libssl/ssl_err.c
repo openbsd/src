@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.46 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.47 2024/02/03 15:58:33 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -306,7 +306,6 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_NO_CLIENT_CERT_METHOD) , "no client cert method"},
 	{ERR_REASON(SSL_R_NO_CLIENT_CERT_RECEIVED), "no client cert received"},
 	{ERR_REASON(SSL_R_NO_COMPRESSION_SPECIFIED), "no compression specified"},
-	{ERR_REASON(SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER), "Peer haven't sent GOST certificate, required for selected ciphersuite"},
 	{ERR_REASON(SSL_R_NO_METHOD_SPECIFIED)   , "no method specified"},
 	{ERR_REASON(SSL_R_NO_PRIVATEKEY)         , "no privatekey"},
 	{ERR_REASON(SSL_R_NO_PRIVATE_KEY_ASSIGNED), "no private key assigned"},

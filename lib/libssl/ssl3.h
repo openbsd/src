@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.57 2021/09/10 14:49:13 tb Exp $ */
+/* $OpenBSD: ssl3.h,v 1.58 2024/02/03 15:58:33 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -325,7 +325,7 @@ extern "C" {
  * enough to contain all of the cert types defined either for
  * SSLv3 and TLSv1.
  */
-#define SSL3_CT_NUMBER			13
+#define SSL3_CT_NUMBER			7
 
 #define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
 #define TLS1_FLAGS_SKIP_CERT_VERIFY		0x0010
