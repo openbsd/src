@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.43 2023/07/28 11:23:03 claudio Exp $	*/
+/*	$OpenBSD: util.c,v 1.44 2024/02/03 00:38:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -701,8 +701,7 @@ print_proto(uint8_t proto)
 	if ((p = getprotobynumber(proto)) != NULL)
 		strlcpy(buf[idx], p->p_name, sizeof(buf[idx]));
 	else
-		snprintf(buf[idx], sizeof(buf), "%u", proto);
-
+		snprintf(buf[idx], sizeof(buf[idx]), "%u", proto);
 
 	return (buf[idx++]);
 }
