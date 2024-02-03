@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.13 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.14 2024/02/03 10:37:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -528,6 +528,7 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = mvkpcie_intr_map;
 	sc->sc_pc.pc_intr_map_msi = _pci_intr_map_msi;
+	sc->sc_pc.pc_intr_map_msivec = _pci_intr_map_msivec;
 	sc->sc_pc.pc_intr_map_msix = _pci_intr_map_msix;
 	sc->sc_pc.pc_intr_string = mvkpcie_intr_string;
 	sc->sc_pc.pc_intr_establish = mvkpcie_intr_establish;
@@ -783,7 +784,7 @@ mvkpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	KASSERT(ih.ih_type != PCI_NONE);
 
 	if (ih.ih_type != PCI_INTX) {
-		uint64_t addr, data;
+		uint64_t addr = 0, data;
 
 		/* Assume hardware passes Requester ID as sideband data. */
 		data = pci_requester_id(ih.ih_pc, ih.ih_tag);

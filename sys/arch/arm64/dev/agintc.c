@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.54 2023/09/22 01:10:43 jsg Exp $ */
+/* $OpenBSD: agintc.c,v 1.55 2024/02/03 10:37:25 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1540,7 +1540,7 @@ struct agintc_msi_device {
 	LIST_ENTRY(agintc_msi_device) md_list;
 
 	uint32_t		md_deviceid;
-	uint32_t		md_eventid;
+	uint32_t		md_events;
 	struct agintc_dmamem	*md_itt;
 };
 
@@ -1949,7 +1949,15 @@ agintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 	if (md == NULL)
 		return NULL;
 
-	eventid = md->md_eventid++;
+	eventid = *addr;
+	if (eventid > 0 && (md->md_events & (1U << eventid)))
+		return NULL;
+	for (; eventid < 32; eventid++) {
+		if ((md->md_events & (1U << eventid)) == 0) {
+			md->md_events |= (1U << eventid);
+			break;
+		}
+	}
 	if (eventid >= 32)
 		return NULL;
 

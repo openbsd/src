@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.50 2023/09/21 19:39:41 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.51 2024/02/03 10:37:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -711,6 +711,7 @@ dwpcie_attach_deferred(struct device *self)
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = dwpcie_intr_map;
 	sc->sc_pc.pc_intr_map_msi = _pci_intr_map_msi;
+	sc->sc_pc.pc_intr_map_msivec = _pci_intr_map_msivec;
 	sc->sc_pc.pc_intr_map_msix = _pci_intr_map_msix;
 	sc->sc_pc.pc_intr_string = dwpcie_intr_string;
 	sc->sc_pc.pc_intr_establish = dwpcie_intr_establish;
@@ -729,6 +730,8 @@ dwpcie_attach_deferred(struct device *self)
 	    OF_getproplen(sc->sc_node, "msi-map") > 0 ||
 	    sc->sc_msi_addr)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+	if (OF_getproplen(sc->sc_node, "msi-map") > 0)
+		pba.pba_flags |= PCI_FLAGS_MSIVEC_ENABLED;
 
 	/* XXX No working MSI on RK3588 yet. */
 	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-pcie"))
@@ -1835,6 +1838,8 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		uint64_t addr, data;
 
 		if (sc->sc_msi_addr) {
+			if (ih.ih_type == PCI_MSI && ih.ih_intrpin > 0)
+				return NULL;
 			dm = dwpcie_msi_establish(sc, level, func, arg, name);
 			if (dm == NULL)
 				return NULL;
@@ -1845,6 +1850,7 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 			 * Assume hardware passes Requester ID as
 			 * sideband data.
 			 */
+			addr = ih.ih_intrpin;
 			data = pci_requester_id(ih.ih_pc, ih.ih_tag);
 			cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
 			    &data, level, ci, func, arg, (void *)name);

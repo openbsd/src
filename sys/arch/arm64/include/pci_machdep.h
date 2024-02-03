@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.11 2021/06/11 12:23:52 kettenis Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.12 2024/02/03 10:37:26 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,6 +70,8 @@ struct machine_pci_chipset {
 			    pci_intr_handle_t *);
 	int		(*pc_intr_map_msi)(struct pci_attach_args *,
 			    pci_intr_handle_t *);
+	int		(*pc_intr_map_msivec)(struct pci_attach_args *,
+			    int, pci_intr_handle_t *);
 	int		(*pc_intr_map_msix)(struct pci_attach_args *,
 			    int, pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
@@ -102,6 +104,8 @@ struct machine_pci_chipset {
     (*(c)->pa_pc->pc_intr_map)((c), (ihp))
 #define	pci_intr_map_msi(c, ihp)					\
     (*(c)->pa_pc->pc_intr_map_msi)((c), (ihp))
+#define	pci_intr_map_msivec(c, vec, ihp)				\
+    (*(c)->pa_pc->pc_intr_map_msivec)((c), (vec), (ihp))
 #define	pci_intr_map_msix(c, vec, ihp)					\
     (*(c)->pa_pc->pc_intr_map_msix)((c), (vec), (ihp))
 #define	pci_intr_string(c, ih)						\
@@ -123,10 +127,14 @@ struct machine_pci_chipset {
 void	pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int, int);
 pci_chipset_tag_t pci_lookup_segment(int);
 
+int	pci_intr_enable_msivec(struct pci_attach_args *, int);
+
 void	pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, uint32_t);
 void	pci_msix_enable(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
 	    int, bus_addr_t, uint32_t);
 int	_pci_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
+int	_pci_intr_map_msivec(struct pci_attach_args *, int,
+	    pci_intr_handle_t *);
 int	_pci_intr_map_msix(struct pci_attach_args *, int, pci_intr_handle_t *);
 
 #define __HAVE_PCI_MSIX

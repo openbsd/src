@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.5 2021/03/22 20:30:21 patrick Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.6 2024/02/03 10:37:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -24,15 +24,44 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
+int
+pci_intr_enable_msivec(struct pci_attach_args *pa, int num_vec)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t reg;
+	int mmc, mme, off;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		return 1;
+
+	mmc = ((reg & PCI_MSI_MC_MMC_MASK) >> PCI_MSI_MC_MMC_SHIFT);
+	if (num_vec > (1 << mmc))
+		return 1;
+
+	mme = ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT);
+	while ((1 << mme) < num_vec)
+		mme++;
+	reg &= ~PCI_MSI_MC_MME_MASK;
+	reg |= (mme << PCI_MSI_MC_MME_SHIFT);
+	pci_conf_write(pc, tag, off, reg);
+
+	return 0;
+}
+
 void
 pci_msi_enable(pci_chipset_tag_t pc, pcitag_t tag,
     bus_addr_t addr, uint32_t data)
 {
 	pcireg_t reg;
-	int off;
+	int mme, off;
 
 	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
 		panic("%s: no msi capability", __func__);
+
+	mme = ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT);
+	data &= ~((1 << mme) - 1);
 
 	if (reg & PCI_MSI_MC_C64) {
 		pci_conf_write(pc, tag, off + PCI_MSI_MA, addr);
@@ -128,6 +157,33 @@ _pci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	ihp->ih_pc = pa->pa_pc;
 	ihp->ih_tag = pa->pa_tag;
+	ihp->ih_intrpin = 0;
+	ihp->ih_type = PCI_MSI;
+	ihp->ih_dmat = pa->pa_dmat;
+
+	return 0;
+}
+
+int
+_pci_intr_map_msivec(struct pci_attach_args *pa, int vec,
+    pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t reg;
+	int mme, off;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSIVEC_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, &off, &reg) == 0)
+		return -1;
+
+	mme = ((reg & PCI_MSI_MC_MME_MASK) >> PCI_MSI_MC_MME_SHIFT);
+	if (vec >= (1 << mme))
+		return -1;
+
+	ihp->ih_pc = pa->pa_pc;
+	ihp->ih_tag = pa->pa_tag;
+	ihp->ih_intrpin = vec;
 	ihp->ih_type = PCI_MSI;
 	ihp->ih_dmat = pa->pa_dmat;
 
@@ -164,4 +220,3 @@ _pci_intr_map_msix(struct pci_attach_args *pa, int vec,
 
 	return 0;
 }
-

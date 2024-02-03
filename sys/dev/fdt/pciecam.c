@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.4 2022/04/06 18:59:28 naddy Exp $ */
+/* $OpenBSD: pciecam.c,v 1.5 2024/02/03 10:37:26 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -245,6 +245,7 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = pciecam_intr_map;
 	sc->sc_pc.pc_intr_map_msi = _pci_intr_map_msi;
+	sc->sc_pc.pc_intr_map_msivec = _pci_intr_map_msivec;
 	sc->sc_pc.pc_intr_map_msix = _pci_intr_map_msix;
 	sc->sc_pc.pc_intr_string = pciecam_intr_string;
 	sc->sc_pc.pc_intr_establish = pciecam_intr_establish;
@@ -391,7 +392,7 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ih, int level,
 	KASSERT(ih.ih_type != PCI_NONE);
 
 	if (ih.ih_type != PCI_INTX) {
-		uint64_t addr, data;
+		uint64_t addr = 0, data;
 
 		/* Assume hardware passes Requester ID as sideband data. */
 		data = pci_requester_id(ih.ih_pc, ih.ih_tag);

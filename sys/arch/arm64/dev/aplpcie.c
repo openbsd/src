@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.18 2023/12/28 13:32:56 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.19 2024/02/03 10:37:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -405,6 +405,7 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = aplpcie_intr_map;
 	sc->sc_pc.pc_intr_map_msi = _pci_intr_map_msi;
+	sc->sc_pc.pc_intr_map_msivec = _pci_intr_map_msivec;
 	sc->sc_pc.pc_intr_map_msix = _pci_intr_map_msix;
 	sc->sc_pc.pc_intr_string = aplpcie_intr_string;
 	sc->sc_pc.pc_intr_establish = aplpcie_intr_establish;
@@ -939,6 +940,7 @@ aplpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	if (ih.ih_type != PCI_INTX) {
 		uint64_t addr, data;
 
+		addr = data = 0;
 		cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
 		    &data, level, ci, func, arg, name);
 		if (cookie == NULL)

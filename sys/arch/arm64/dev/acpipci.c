@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.41 2023/09/16 23:25:16 jmatthew Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.42 2024/02/03 10:37:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -207,6 +207,7 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc->pc_intr_v = sc;
 	sc->sc_pc->pc_intr_map = acpipci_intr_map;
 	sc->sc_pc->pc_intr_map_msi = _pci_intr_map_msi;
+	sc->sc_pc->pc_intr_map_msivec = _pci_intr_map_msivec;
 	sc->sc_pc->pc_intr_map_msix = _pci_intr_map_msix;
 	sc->sc_pc->pc_intr_string = acpipci_intr_string;
 	sc->sc_pc->pc_intr_establish = acpipci_intr_establish;
@@ -629,7 +630,7 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	if (ih.ih_type != PCI_INTX) {
 		struct interrupt_controller *ic = sc->sc_msi_ic;
 		bus_dma_segment_t seg;
-		uint64_t addr, data;
+		uint64_t addr = 0, data;
 
 		KASSERT(ic);
 

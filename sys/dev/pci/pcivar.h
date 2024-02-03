@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.78 2023/04/13 15:07:43 miod Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.79 2024/02/03 10:37:26 kettenis Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -161,13 +161,15 @@ struct pci_attach_args {
  *
  * OpenBSD doesn't actually use them yet -- csapuntz@cvs.openbsd.org
  */
-#define	PCI_FLAGS_IO_ENABLED	0x01		/* I/O space is enabled */
-#define	PCI_FLAGS_MEM_ENABLED	0x02		/* memory space is enabled */
-#define	PCI_FLAGS_MRL_OKAY	0x04		/* Memory Read Line okay */
-#define	PCI_FLAGS_MRM_OKAY	0x08		/* Memory Read Multiple okay */
-#define	PCI_FLAGS_MWI_OKAY	0x10		/* Memory Write and Invalidate
+#define	PCI_FLAGS_IO_ENABLED		0x01	/* I/O space is enabled */
+#define	PCI_FLAGS_MEM_ENABLED		0x02	/* memory space is enabled */
+#define	PCI_FLAGS_MRL_OKAY		0x04	/* Memory Read Line okay */
+#define	PCI_FLAGS_MRM_OKAY		0x08	/* Memory Read Multiple okay */
+#define	PCI_FLAGS_MWI_OKAY		0x10	/* Memory Write and Invalidate
 						   okay */
-#define	PCI_FLAGS_MSI_ENABLED	0x20		/* Message Signaled Interrupt
+#define	PCI_FLAGS_MSI_ENABLED		0x20	/* Message Signaled Interrupt
+						   enabled */
+#define PCI_FLAGS_MSIVEC_ENABLED	0x40	/* Multiple Message Capability
 						   enabled */
 
 /*

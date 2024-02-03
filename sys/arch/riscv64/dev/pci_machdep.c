@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.1 2021/05/19 19:32:25 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.2 2024/02/03 10:37:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -132,6 +132,13 @@ _pci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	ihp->ih_dmat = pa->pa_dmat;
 
 	return 0;
+}
+
+int
+_pci_intr_map_msivec(struct pci_attach_args *pa, int vec,
+    pci_intr_handle_t *ihp)
+{
+	return -1;
 }
 
 int

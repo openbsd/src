@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.3 2021/06/14 08:19:39 kettenis Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.4 2024/02/03 10:37:26 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,6 +70,8 @@ struct machine_pci_chipset {
 			    pci_intr_handle_t *);
 	int		(*pc_intr_map_msi)(struct pci_attach_args *,
 			    pci_intr_handle_t *);
+	int		(*pc_intr_map_msivec)(struct pci_attach_args *,
+			    int, pci_intr_handle_t *);
 	int		(*pc_intr_map_msix)(struct pci_attach_args *,
 			    int, pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
@@ -127,6 +129,8 @@ void	pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, uint32_t);
 void	pci_msix_enable(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
 	    int, bus_addr_t, uint32_t);
 int	_pci_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
+int	_pci_intr_map_msivec(struct pci_attach_args *, int,
+	    pci_intr_handle_t *);
 int	_pci_intr_map_msix(struct pci_attach_args *, int, pci_intr_handle_t *);
 
 #define __HAVE_PCI_MSIX
