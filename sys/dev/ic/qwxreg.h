@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxreg.h,v 1.5 2024/02/02 15:44:19 stsp Exp $	*/
+/*	$OpenBSD: qwxreg.h,v 1.6 2024/02/03 10:03:18 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -37,6 +37,16 @@
 /*
  * core.h
  */
+
+#define ATH11K_TX_MGMT_NUM_PENDING_MAX	512
+
+#define ATH11K_TX_MGMT_TARGET_MAX_SUPPORT_WMI 64
+
+/* Pending management packets threshold for dropping probe responses */
+#define ATH11K_PRB_RSP_DROP_THRESHOLD ((ATH11K_TX_MGMT_TARGET_MAX_SUPPORT_WMI * 3) / 4)
+
+#define ATH11K_INVALID_HW_MAC_ID	0xFF
+#define ATH11K_CONNECTION_LOSS_HZ	(3 * HZ)
 
 enum ath11k_hw_rev {
 	ATH11K_HW_IPQ8074,

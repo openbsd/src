@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.9 2024/02/02 15:44:19 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.10 2024/02/03 10:03:18 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -113,6 +113,53 @@ struct ath11k_hw_hal_params {
 	const struct ath11k_hw_tcl2wbm_rbm_map *tcl2wbm_rbm_map;
 };
 
+struct hal_tx_info {
+	uint16_t meta_data_flags; /* %HAL_TCL_DATA_CMD_INFO0_META_ */
+	uint8_t ring_id;
+	uint32_t desc_id;
+	enum hal_tcl_desc_type type;
+	enum hal_tcl_encap_type encap_type;
+	uint64_t paddr;
+	uint32_t data_len;
+	uint32_t pkt_offset;
+	enum hal_encrypt_type encrypt_type;
+	uint32_t flags0; /* %HAL_TCL_DATA_CMD_INFO1_ */
+	uint32_t flags1; /* %HAL_TCL_DATA_CMD_INFO2_ */
+	uint16_t addr_search_flags; /* %HAL_TCL_DATA_CMD_INFO0_ADDR(X/Y)_ */
+	uint16_t bss_ast_hash;
+	uint16_t bss_ast_idx;
+	uint8_t tid;
+	uint8_t search_type; /* %HAL_TX_ADDR_SEARCH_ */
+	uint8_t lmac_id;
+	uint8_t dscp_tid_tbl_idx;
+	bool enable_mesh;
+	uint8_t rbm_id;
+};
+
+/* TODO: Check if the actual desc macros can be used instead */
+#define HAL_TX_STATUS_FLAGS_FIRST_MSDU		BIT(0)
+#define HAL_TX_STATUS_FLAGS_LAST_MSDU		BIT(1)
+#define HAL_TX_STATUS_FLAGS_MSDU_IN_AMSDU	BIT(2)
+#define HAL_TX_STATUS_FLAGS_RATE_STATS_VALID	BIT(3)
+#define HAL_TX_STATUS_FLAGS_RATE_LDPC		BIT(4)
+#define HAL_TX_STATUS_FLAGS_RATE_STBC		BIT(5)
+#define HAL_TX_STATUS_FLAGS_OFDMA		BIT(6)
+
+#define HAL_TX_STATUS_DESC_LEN		sizeof(struct hal_wbm_release_ring)
+
+/* Tx status parsed from srng desc */
+struct hal_tx_status {
+	enum hal_wbm_rel_src_module buf_rel_source;
+	enum hal_wbm_tqm_rel_reason status;
+	uint8_t ack_rssi;
+	uint32_t flags; /* %HAL_TX_STATUS_FLAGS_ */
+	uint32_t ppdu_id;
+	uint8_t try_cnt;
+	uint8_t tid;
+	uint16_t peer_id;
+	uint32_t rate_stats;
+};
+
 struct ath11k_hw_params {
 	const char *name;
 	uint16_t hw_rev;
@@ -209,9 +256,7 @@ struct ath11k_hw_params {
 };
 
 struct ath11k_hw_ops {
-#if notyet
 	uint8_t (*get_hw_mac_from_pdev_id)(int pdev_id);
-#endif
 	void (*wmi_init_config)(struct qwx_softc *sc,
 	    struct target_resource_config *config);
 	int (*mac_id_to_pdev_id)(struct ath11k_hw_params *hw, int mac_id);
@@ -922,11 +967,9 @@ struct dp_tx_ring {
 	uint8_t tcl_data_ring_id;
 	struct dp_srng tcl_data_ring;
 	struct dp_srng tcl_comp_ring;
-#if 0
-	struct idr txbuf_idr;
-	/* Protects txbuf_idr and num_pending */
-	spinlock_t tx_idr_lock;
-#endif
+	int cur;
+	int queued;
+	struct qwx_tx_data *data;
 	struct hal_wbm_release_ring *tx_status;
 	int tx_status_head;
 	int tx_status_tail;
