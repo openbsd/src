@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.348 2024/02/02 22:02:12 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.349 2024/02/03 15:50:00 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1437,6 +1437,9 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		return;
 	}
 
+	if (dsp->u.local.is_mbox && dsp->u.local.command != NULL)
+		fatalx("serious memory corruption in privileged process");
+	
 	if (pipe(pipefd) == -1) {
 		(void)snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
 		m_create(p_dispatcher, IMSG_MDA_DONE, 0, 0, -1);

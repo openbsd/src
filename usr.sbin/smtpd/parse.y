@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.297 2024/02/02 20:54:27 millert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.298 2024/02/03 15:50:00 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -670,7 +670,6 @@ dispatcher_local_option dispatcher_local_options
 dispatcher_local:
 MBOX {
 	dsp->u.local.is_mbox = 1;
-	asprintf(&dsp->u.local.command, "/usr/libexec/mail.local -f %%{mbox.from} -- %%{user.username}");
 } dispatcher_local_options
 | MAILDIR {
 	asprintf(&dsp->u.local.command, "/usr/libexec/mail.maildir");
