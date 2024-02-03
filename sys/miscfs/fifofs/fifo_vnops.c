@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.102 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.103 2024/02/03 22:50:09 mvs Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -105,16 +105,18 @@ int	filt_fiforead(struct knote *kn, long hint);
 void	filt_fifowdetach(struct knote *kn);
 int	filt_fifowrite(struct knote *kn, long hint);
 int	filt_fifoexcept(struct knote *kn, long hint);
-int	filt_fifomodify(struct kevent *kev, struct knote *kn);
-int	filt_fifoprocess(struct knote *kn, struct kevent *kev);
+int	filt_fiformodify(struct kevent *kev, struct knote *kn);
+int	filt_fiforprocess(struct knote *kn, struct kevent *kev);
+int	filt_fifowmodify(struct kevent *kev, struct knote *kn);
+int	filt_fifowprocess(struct knote *kn, struct kevent *kev);
 
 const struct filterops fiforead_filtops = {
 	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_fifordetach,
 	.f_event	= filt_fiforead,
-	.f_modify	= filt_fifomodify,
-	.f_process	= filt_fifoprocess,
+	.f_modify	= filt_fiformodify,
+	.f_process	= filt_fiforprocess,
 };
 
 const struct filterops fifowrite_filtops = {
@@ -122,8 +124,8 @@ const struct filterops fifowrite_filtops = {
 	.f_attach	= NULL,
 	.f_detach	= filt_fifowdetach,
 	.f_event	= filt_fifowrite,
-	.f_modify	= filt_fifomodify,
-	.f_process	= filt_fifoprocess,
+	.f_modify	= filt_fifowmodify,
+	.f_process	= filt_fifowprocess,
 };
 
 const struct filterops fifoexcept_filtops = {
@@ -131,8 +133,8 @@ const struct filterops fifoexcept_filtops = {
 	.f_attach	= NULL,
 	.f_detach	= filt_fifordetach,
 	.f_event	= filt_fifoexcept,
-	.f_modify	= filt_fifomodify,
-	.f_process	= filt_fifoprocess,
+	.f_modify	= filt_fiformodify,
+	.f_process	= filt_fiforprocess,
 };
 
 /*
@@ -517,6 +519,7 @@ filt_fiforead(struct knote *kn, long hint)
 	int rv;
 
 	soassertlocked(so);
+	MUTEX_ASSERT_LOCKED(&so->so_rcv.sb_mtx);
 
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_rcv.sb_state & SS_CANTRCVMORE) {
@@ -551,6 +554,7 @@ filt_fifowrite(struct knote *kn, long hint)
 	int rv;
 
 	soassertlocked(so);
+	MUTEX_ASSERT_LOCKED(&so->so_snd.sb_mtx);
 
 	kn->kn_data = sbspace(so, &so->so_snd);
 	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
@@ -571,6 +575,7 @@ filt_fifoexcept(struct knote *kn, long hint)
 	int rv = 0;
 
 	soassertlocked(so);
+	MUTEX_ASSERT_LOCKED(&so->so_rcv.sb_mtx);
 
 	if (kn->kn_flags & __EV_POLL) {
 		if (so->so_state & SS_ISDISCONNECTED) {
@@ -585,26 +590,60 @@ filt_fifoexcept(struct knote *kn, long hint)
 }
 
 int
-filt_fifomodify(struct kevent *kev, struct knote *kn)
+filt_fiformodify(struct kevent *kev, struct knote *kn)
 {
 	struct socket *so = kn->kn_hook;
 	int rv;
 
 	solock(so);
+	mtx_enter(&so->so_rcv.sb_mtx);
 	rv = knote_modify(kev, kn);
+	mtx_leave(&so->so_rcv.sb_mtx);
 	sounlock(so);
 
 	return (rv);
 }
 
 int
-filt_fifoprocess(struct knote *kn, struct kevent *kev)
+filt_fiforprocess(struct knote *kn, struct kevent *kev)
 {
 	struct socket *so = kn->kn_hook;
 	int rv;
 
 	solock(so);
+	mtx_enter(&so->so_rcv.sb_mtx);
 	rv = knote_process(kn, kev);
+	mtx_leave(&so->so_rcv.sb_mtx);
+	sounlock(so);
+
+	return (rv);
+}
+
+int
+filt_fifowmodify(struct kevent *kev, struct knote *kn)
+{
+	struct socket *so = kn->kn_hook;
+	int rv;
+
+	solock(so);
+	mtx_enter(&so->so_snd.sb_mtx);
+	rv = knote_modify(kev, kn);
+	mtx_leave(&so->so_snd.sb_mtx);
+	sounlock(so);
+
+	return (rv);
+}
+
+int
+filt_fifowprocess(struct knote *kn, struct kevent *kev)
+{
+	struct socket *so = kn->kn_hook;
+	int rv;
+
+	solock(so);
+	mtx_enter(&so->so_snd.sb_mtx);
+	rv = knote_process(kn, kev);
+	mtx_leave(&so->so_snd.sb_mtx);
 	sounlock(so);
 
 	return (rv);

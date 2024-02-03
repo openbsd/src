@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.316 2024/01/28 20:34:25 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.317 2024/02/03 22:50:09 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_detach	= udp_detach,
 	.pru_lock	= udp_lock,
 	.pru_unlock	= udp_unlock,
+	.pru_locked	= udp_locked,
 	.pru_bind	= udp_bind,
 	.pru_connect	= udp_connect,
 	.pru_disconnect	= udp_disconnect,
@@ -143,6 +144,7 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pru_detach	= udp_detach,
 	.pru_lock	= udp_lock,
 	.pru_unlock	= udp_unlock,
+	.pru_locked	= udp_locked,
 	.pru_bind	= udp_bind,
 	.pru_connect	= udp_connect,
 	.pru_disconnect	= udp_disconnect,
@@ -1154,6 +1156,14 @@ udp_unlock(struct socket *so)
 
 	NET_ASSERT_LOCKED();
 	mtx_leave(&inp->inp_mtx);
+}
+
+int
+udp_locked(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	return mtx_owned(&inp->inp_mtx);
 }
 
 int

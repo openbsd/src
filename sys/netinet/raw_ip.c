@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.154 2024/01/21 01:17:20 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.155 2024/02/03 22:50:09 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_detach	= rip_detach,
 	.pru_lock	= rip_lock,
 	.pru_unlock	= rip_unlock,
+	.pru_locked	= rip_locked,
 	.pru_bind	= rip_bind,
 	.pru_connect	= rip_connect,
 	.pru_disconnect	= rip_disconnect,
@@ -522,6 +523,14 @@ rip_unlock(struct socket *so)
 
 	NET_ASSERT_LOCKED();
 	mtx_leave(&inp->inp_mtx);
+}
+
+int
+rip_locked(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	return mtx_owned(&inp->inp_mtx);
 }
 
 int

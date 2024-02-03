@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.179 2024/01/21 01:17:20 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.180 2024/02/03 22:50:09 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_detach	= rip6_detach,
 	.pru_lock	= rip6_lock,
 	.pru_unlock	= rip6_unlock,
+	.pru_locked	= rip6_locked,
 	.pru_bind	= rip6_bind,
 	.pru_connect	= rip6_connect,
 	.pru_disconnect	= rip6_disconnect,
@@ -651,6 +652,14 @@ rip6_unlock(struct socket *so)
 
 	NET_ASSERT_LOCKED();
 	mtx_leave(&inp->inp_mtx);
+}
+
+int
+rip6_locked(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	return mtx_owned(&inp->inp_mtx);
 }
 
 int

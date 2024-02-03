@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.91 2024/01/01 18:52:09 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.92 2024/02/03 22:50:09 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -69,6 +69,7 @@ const struct pr_usrreqs divert6_usrreqs = {
 	.pru_detach	= divert_detach,
 	.pru_lock	= divert_lock,
 	.pru_unlock	= divert_unlock,
+	.pru_locked	= divert_locked,
 	.pru_bind	= divert_bind,
 	.pru_shutdown	= divert_shutdown,
 	.pru_send	= divert6_send,

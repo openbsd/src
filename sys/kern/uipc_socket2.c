@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.140 2024/01/11 14:15:11 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.141 2024/02/03 22:50:08 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -439,12 +439,33 @@ sounlock_shared(struct socket *so)
 }
 
 void
-soassertlocked(struct socket *so)
+soassertlocked_readonly(struct socket *so)
 {
 	switch (so->so_proto->pr_domain->dom_family) {
 	case PF_INET:
 	case PF_INET6:
 		NET_ASSERT_LOCKED();
+		break;
+	default:
+		rw_assert_wrlock(&so->so_lock);
+		break;
+	}
+}
+
+void
+soassertlocked(struct socket *so)
+{
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
+		if (rw_status(&netlock) == RW_READ) {
+			NET_ASSERT_LOCKED();
+
+			if (splassert_ctl > 0 && pru_locked(so) == 0 &&
+			    rw_status(&so->so_lock) != RW_WRITE)
+				splassert_fail(0, RW_WRITE, __func__);
+		} else
+			NET_ASSERT_LOCKED_EXCLUSIVE();
 		break;
 	default:
 		rw_assert_wrlock(&so->so_lock);
@@ -489,46 +510,62 @@ sbwait(struct socket *so, struct sockbuf *sb)
 
 	soassertlocked(so);
 
+	mtx_enter(&sb->sb_mtx);
 	sb->sb_flags |= SB_WAIT;
+	mtx_leave(&sb->sb_mtx);
+
 	return sosleep_nsec(so, &sb->sb_cc, prio, "netio", sb->sb_timeo_nsecs);
 }
 
 int
 sblock(struct socket *so, struct sockbuf *sb, int flags)
 {
-	int error, prio = PSOCK;
+	int error = 0, prio = PSOCK;
 
 	soassertlocked(so);
 
+	mtx_enter(&sb->sb_mtx);
 	if ((sb->sb_flags & SB_LOCK) == 0) {
 		sb->sb_flags |= SB_LOCK;
-		return (0);
+		goto out;
 	}
-	if ((flags & SBL_WAIT) == 0)
-		return (EWOULDBLOCK);
+	if ((flags & SBL_WAIT) == 0) {
+		error = EWOULDBLOCK;
+		goto out;
+	}
 	if (!(flags & SBL_NOINTR || sb->sb_flags & SB_NOINTR))
 		prio |= PCATCH;
 
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
+		mtx_leave(&sb->sb_mtx);
 		error = sosleep_nsec(so, &sb->sb_flags, prio, "netlck", INFSLP);
 		if (error)
 			return (error);
+		mtx_enter(&sb->sb_mtx);
 	}
 	sb->sb_flags |= SB_LOCK;
-	return (0);
+out:
+	mtx_leave(&sb->sb_mtx);
+
+	return (error);
 }
 
 void
 sbunlock(struct socket *so, struct sockbuf *sb)
 {
-	soassertlocked(so);
+	int dowakeup = 0;
 
+	mtx_enter(&sb->sb_mtx);
 	sb->sb_flags &= ~SB_LOCK;
 	if (sb->sb_flags & SB_WANT) {
 		sb->sb_flags &= ~SB_WANT;
-		wakeup(&sb->sb_flags);
+		dowakeup = 1;
 	}
+	mtx_leave(&sb->sb_mtx);
+
+	if (dowakeup)
+		wakeup(&sb->sb_flags);
 }
 
 /*
@@ -539,15 +576,24 @@ sbunlock(struct socket *so, struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb)
 {
-	soassertlocked(so);
+	int dowakeup = 0, dopgsigio = 0;
 
+	mtx_enter(&sb->sb_mtx);
 	if (sb->sb_flags & SB_WAIT) {
 		sb->sb_flags &= ~SB_WAIT;
-		wakeup(&sb->sb_cc);
+		dowakeup = 1;
 	}
 	if (sb->sb_flags & SB_ASYNC)
-		pgsigio(&so->so_sigio, SIGIO, 0);
+		dopgsigio = 1;
+
 	knote_locked(&sb->sb_klist, 0);
+	mtx_leave(&sb->sb_mtx);
+
+	if (dowakeup)
+		wakeup(&sb->sb_cc);
+
+	if (dopgsigio)
+		pgsigio(&so->so_sigio, SIGIO, 0);
 }
 
 /*
