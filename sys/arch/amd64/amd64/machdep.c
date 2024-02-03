@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.289 2024/01/19 18:38:16 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.290 2024/02/03 16:21:22 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -486,6 +486,7 @@ bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 extern int tsc_is_invariant;
 extern int amd64_has_xcrypt;
+extern int need_retpoline;
 
 const struct sysctl_bounded_args cpuctl_vars[] = {
 	{ CPU_LIDACTION, &lid_action, 0, 2 },
@@ -494,6 +495,7 @@ const struct sysctl_bounded_args cpuctl_vars[] = {
 	{ CPU_CPUFEATURE, &cpu_feature, SYSCTL_INT_READONLY },
 	{ CPU_XCRYPT, &amd64_has_xcrypt, SYSCTL_INT_READONLY },
 	{ CPU_INVARIANTTSC, &tsc_is_invariant, SYSCTL_INT_READONLY },
+	{ CPU_RETPOLINE, &need_retpoline, SYSCTL_INT_READONLY },
 };
 
 /*

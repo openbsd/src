@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.177 2023/11/22 18:50:10 bluhm Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.178 2024/02/03 16:21:22 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -163,6 +163,7 @@ int cpu_apmi_edx = 0;		/* cpuid(0x80000007).edx */
 int ecpu_ecxfeature = 0;	/* cpuid(0x80000001).ecx */
 int cpu_meltdown = 0;
 int cpu_use_xsaves = 0;
+int need_retpoline = 1;		/* most systems need retpoline */
 
 void
 replacesmap(void)
@@ -232,9 +233,11 @@ replacemeltdown(void)
 	if (ibrs == 2 || (ci->ci_feature_sefflags_edx & SEFF0EDX_IBT)) {
 		extern const char _jmprax, _jmpr11, _jmpr13;
 		extern const short _jmprax_len, _jmpr11_len, _jmpr13_len;
+
 		codepatch_replace(CPTAG_RETPOLINE_RAX, &_jmprax, _jmprax_len);
 		codepatch_replace(CPTAG_RETPOLINE_R11, &_jmpr11, _jmpr11_len);
 		codepatch_replace(CPTAG_RETPOLINE_R13, &_jmpr13, _jmpr13_len);
+		need_retpoline = 0;
 	}
 
 	if (!cpu_meltdown)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.160 2024/01/24 19:23:39 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.161 2024/02/03 16:21:22 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -481,7 +481,8 @@ void mp_setperf_init(void);
 #define CPU_TSCFREQ		16	/* TSC frequency */
 #define CPU_INVARIANTTSC	17	/* has invariant TSC */
 #define CPU_PWRACTION		18	/* action caused by power button */
-#define CPU_MAXID		19	/* number of valid machdep ids */
+#define CPU_RETPOLINE		19	/* cpu requires retpoline pattern */
+#define CPU_MAXID		20	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -503,6 +504,7 @@ void mp_setperf_init(void);
 	{ "tscfreq", CTLTYPE_QUAD }, \
 	{ "invarianttsc", CTLTYPE_INT }, \
 	{ "pwraction", CTLTYPE_INT }, \
+	{ "retpoline", CTLTYPE_INT }, \
 }
 
 #endif /* !_MACHINE_CPU_H_ */

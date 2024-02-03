@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.15 2023/05/22 09:29:54 kn Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.16 2024/02/03 16:21:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -58,6 +58,10 @@ struct var vars[] = {
 	    { CTL_HW, HW_DISKNAMES }},
 	{ "hw.ncpufound", pint, 2,
 	    { CTL_HW, HW_NCPUFOUND }},
+#ifdef __amd64__
+	{ "machdep.retpoline", pint, 2,
+	    { CTL_MACHDEP, CPU_RETPOLINE }},
+#endif
 #ifdef CPU_COMPATIBLE
 	{ "machdep.compatible", pstring, 2,
 	    { CTL_MACHDEP, CPU_COMPATIBLE }},
