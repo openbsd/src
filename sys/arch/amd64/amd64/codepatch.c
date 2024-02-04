@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.c,v 1.10 2023/07/31 01:33:57 guenther Exp $    */
+/*      $OpenBSD: codepatch.c,v 1.11 2024/02/04 20:18:48 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -39,8 +39,9 @@ extern struct codepatch codepatch_end;
 extern char __cptext_start[];
 extern char __cptext_end[];
 
-void	codepatch_control_flow(uint16_t _tag, void *_func, int _opcode,
-	    const char *_op);
+enum op_type { OP_CALL, OP_JMP };
+__cptext void	codepatch_control_flow(uint16_t _tag, void *_func,
+			enum op_type _type);
 
 void
 codepatch_fill_nop(void *caddr, uint16_t len)
@@ -155,26 +156,27 @@ codepatch_replace(uint16_t tag, const void *code, size_t len)
 void
 codepatch_call(uint16_t tag, void *func)
 {
-	/* 0xe8 == call near */
-	codepatch_control_flow(tag, func, 0xe8, "call");
+	codepatch_control_flow(tag, func, OP_CALL);
 }
 
 void
 codepatch_jmp(uint16_t tag, void *func)
 {
-	/* 0xe9 == jmp near */
-	codepatch_control_flow(tag, func, 0xe9, "jmp");
+	codepatch_control_flow(tag, func, OP_JMP);
 }
 
 /* Patch with call or jump to func */
 void
-codepatch_control_flow(uint16_t tag, void *func, int opcode, const char *op)
+codepatch_control_flow(uint16_t tag, void *func, enum op_type type)
 {
 	struct codepatch *patch;
 	unsigned char *rwaddr;
 	int32_t offset;
 	int i = 0;
 	vaddr_t rwmap = 0;
+	const char *op = type == OP_JMP ? "jmp" : "call";
+	char opcode = type == OP_JMP ? 0xe9 /* jmp near */
+	    : 0xe8 /* call near */;
 
 	DBGPRINT("patching tag %u with %s %p", tag, op, func);
 
@@ -189,7 +191,10 @@ codepatch_control_flow(uint16_t tag, void *func, int opcode, const char *op)
 		rwaddr = codepatch_maprw(&rwmap, patch->addr);
 		rwaddr[0] = opcode;
 		memcpy(rwaddr + 1, &offset, sizeof(offset));
-		codepatch_fill_nop(rwaddr + 5, patch->len - 5);
+		if (type == OP_CALL)
+			codepatch_fill_nop(rwaddr + 5, patch->len - 5);
+		else /* OP_JMP */
+			memset(rwaddr + 5, 0xCC /* int3 */, patch->len - 5);
 		i++;
 	}
 	codepatch_unmaprw(rwmap);
