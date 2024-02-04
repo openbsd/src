@@ -309,6 +309,7 @@
 #define PT_SUNW_EH_FRAME PT_GNU_EH_FRAME      /* Solaris uses the same value */
 #define PT_GNU_STACK	(PT_LOOS + 0x474e551) /* Stack flags */
 #define PT_GNU_RELRO	(PT_LOOS + 0x474e552) /* Read-only after relocation */
+#define PT_GNU_PROPERTY	(PT_LOOS + 0x474e553) /* Program property note */
 
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6 /* Fill with random data. */
 #define PT_OPENBSD_WXNEEDED	0x65a3dbe7 /* Program does W^X violations */
