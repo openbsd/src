@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.25 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.26 2024/02/04 13:03:18 jca Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -42,14 +42,14 @@
 
 #include <sys/cdefs.h>
 
-#define	_U	0x01
-#define	_L	0x02
-#define	_N	0x04
-#define	_S	0x08
-#define	_P	0x10
-#define	_C	0x20
-#define	_X	0x40
-#define	_B	0x80
+#define	_CTYPE_U	0x01
+#define	_CTYPE_L	0x02
+#define	_CTYPE_N	0x04
+#define	_CTYPE_S	0x08
+#define	_CTYPE_P	0x10
+#define	_CTYPE_C	0x20
+#define	_CTYPE_X	0x40
+#define	_CTYPE_B	0x80
 
 #if __POSIX_VISIBLE >= 200809
 #ifndef	_LOCALE_T_DEFINED_
@@ -114,57 +114,62 @@ int	toupper_l(int, locale_t);
 
 __only_inline int isalnum(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_U|_L|_N)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] &
+	    (_CTYPE_U|_CTYPE_L|_CTYPE_N)));
 }
 
 __only_inline int isalpha(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_U|_L)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] &
+	    (_CTYPE_U|_CTYPE_L)));
 }
 
 __only_inline int iscntrl(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _C));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_C));
 }
 
 __only_inline int isdigit(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _N));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_N));
 }
 
 __only_inline int isgraph(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_P|_U|_L|_N)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] &
+	    (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N)));
 }
 
 __only_inline int islower(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _L));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_L));
 }
 
 __only_inline int isprint(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_P|_U|_L|_N|_B)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] &
+	    (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N|_CTYPE_B)));
 }
 
 __only_inline int ispunct(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _P));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_P));
 }
 
 __only_inline int isspace(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _S));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_S));
 }
 
 __only_inline int isupper(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _U));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & _CTYPE_U));
 }
 
 __only_inline int isxdigit(int _c)
 {
-	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] & (_N|_X)));
+	return (_c == -1 ? 0 : ((_ctype_ + 1)[(unsigned char)_c] &
+	    (_CTYPE_N|_CTYPE_X)));
 }
 
 __only_inline int tolower(int _c)

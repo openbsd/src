@@ -1,4 +1,4 @@
-/*	$OpenBSD: isctype.c,v 1.12 2015/09/13 11:38:08 guenther Exp $ */
+/*	$OpenBSD: isctype.c,v 1.13 2024/02/04 13:03:18 jca Exp $ */
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,8 @@
 int
 isalnum(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L|_N)));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] &
+	    (_CTYPE_U|_CTYPE_L|_CTYPE_N)));
 }
 DEF_STRONG(isalnum);
 
@@ -49,7 +50,8 @@ DEF_STRONG(isalnum);
 int
 isalpha(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L)));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] &
+	    (_CTYPE_U|_CTYPE_L)));
 }
 DEF_STRONG(isalpha);
 
@@ -65,7 +67,7 @@ DEF_STRONG(isblank);
 int
 iscntrl(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _C));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _CTYPE_C));
 }
 DEF_STRONG(iscntrl);
 
@@ -73,7 +75,7 @@ DEF_STRONG(iscntrl);
 int
 isdigit(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _N));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _CTYPE_N));
 }
 DEF_STRONG(isdigit);
 
@@ -81,7 +83,8 @@ DEF_STRONG(isdigit);
 int
 isgraph(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N)));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] &
+	    (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N)));
 }
 DEF_STRONG(isgraph);
 
@@ -89,7 +92,7 @@ DEF_STRONG(isgraph);
 int
 islower(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _L));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _CTYPE_L));
 }
 DEF_STRONG(islower);
 
@@ -97,7 +100,8 @@ DEF_STRONG(islower);
 int
 isprint(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N|_B)));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] &
+	    (_CTYPE_P|_CTYPE_U|_CTYPE_L|_CTYPE_N|_CTYPE_B)));
 }
 DEF_STRONG(isprint);
 
@@ -105,7 +109,7 @@ DEF_STRONG(isprint);
 int
 ispunct(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _P));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _CTYPE_P));
 }
 DEF_STRONG(ispunct);
 
@@ -113,7 +117,7 @@ DEF_STRONG(ispunct);
 int
 isspace(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _S));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _CTYPE_S));
 }
 DEF_STRONG(isspace);
 
@@ -121,7 +125,7 @@ DEF_STRONG(isspace);
 int
 isupper(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _U));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _CTYPE_U));
 }
 DEF_STRONG(isupper);
 
@@ -129,7 +133,8 @@ DEF_STRONG(isupper);
 int
 isxdigit(int c)
 {
-	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_N|_X)));
+	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] &
+	    (_CTYPE_N|_CTYPE_X)));
 }
 DEF_STRONG(isxdigit);
 

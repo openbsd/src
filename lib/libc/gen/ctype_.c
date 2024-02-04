@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype_.c,v 1.12 2015/09/19 04:02:21 guenther Exp $ */
+/*	$OpenBSD: ctype_.c,v 1.13 2024/02/04 13:03:18 jca Exp $ */
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -35,6 +35,16 @@
 
 #include <ctype.h>
 #include "ctype_private.h"
+
+/* Shorter names for the defines provided by <ctype.h> */
+#define	_U	_CTYPE_U
+#define	_L	_CTYPE_L
+#define	_N	_CTYPE_N
+#define	_S	_CTYPE_S
+#define	_P	_CTYPE_P
+#define	_C	_CTYPE_C
+#define	_X	_CTYPE_X
+#define	_B	_CTYPE_B
 
 const char _C_ctype_[1 + CTYPE_NUM_CHARS] = {
 	0,
