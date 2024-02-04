@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.124 2024/02/03 14:43:15 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.125 2024/02/04 07:43:27 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -737,7 +737,8 @@ struct cert *
 cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 {
 	const unsigned char	*oder;
-	int			 i;
+	size_t			 j;
+	int			 i, extsz;
 	X509			*x = NULL;
 	X509_EXTENSION		*ext = NULL;
 	const X509_ALGOR	*palg;
@@ -808,8 +809,12 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 
 	/* Look for X509v3 extensions. */
+	if ((extsz = X509_get_ext_count(x)) <= 0) {
+		warnx("%s: certificate without X.509v3 extensions", fn);
+		goto out;
+	}
 
-	for (i = 0; i < X509_get_ext_count(x); i++) {
+	for (i = 0; i < extsz; i++) {
 		ext = X509_get_ext(x, i);
 		assert(ext != NULL);
 		obj = X509_EXTENSION_get_object(ext);
@@ -938,8 +943,8 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			    p.fn);
 			goto out;
 		}
-		for (i = 0; (size_t)i < p.res->asz; i++) {
-			if (p.res->as[i].type == CERT_AS_INHERIT) {
+		for (j = 0; j < p.res->asz; j++) {
+			if (p.res->as[j].type == CERT_AS_INHERIT) {
 				warnx("%s: inherit elements not allowed in EE"
 				    " cert", p.fn);
 				goto out;
