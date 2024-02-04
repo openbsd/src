@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.10 2024/02/03 00:28:07 jsg Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.11 2024/02/04 14:54:51 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -301,7 +301,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 	uint8_t ds;
 	off_t offset;
 	ssize_t sz;
-	int is_write, notify, i;
+	int is_write, notify = 0, i;
 	char *vr;
 	struct vring_desc *table, *desc;
 	struct vring_avail *avail;
