@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.319 2024/02/03 15:58:34 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.320 2024/02/04 20:50:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1068,7 +1068,7 @@ SSL_is_server(const SSL *s)
 LSSL_ALIAS(SSL_is_server);
 
 static long
-ssl_get_default_timeout()
+ssl_get_default_timeout(void)
 {
 	/*
 	 * 2 hours, the 24 hours mentioned in the TLSv1 spec
