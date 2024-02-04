@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.104 2024/02/03 14:30:47 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.105 2024/02/04 00:53:27 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -88,58 +88,6 @@ DECLARE_ASN1_FUNCTIONS(Manifest);
 IMPLEMENT_ASN1_FUNCTIONS(Manifest);
 
 #define GENTIME_LENGTH 15
-
-/*
- * Convert an ASN1_GENERALIZEDTIME to a struct tm.
- * Returns 1 on success, 0 on failure.
- */
-static int
-generalizedtime_to_tm(const ASN1_GENERALIZEDTIME *gtime, struct tm *tm)
-{
-	/*
-	 * ASN1_GENERALIZEDTIME is another name for ASN1_STRING. Check type and
-	 * length, so we don't accidentally accept a UTCTime. Punt on checking
-	 * Zulu time for OpenSSL: we don't want to mess about with silly flags.
-	 */
-	if (ASN1_STRING_type(gtime) != V_ASN1_GENERALIZEDTIME)
-		return 0;
-	if (ASN1_STRING_length(gtime) != GENTIME_LENGTH)
-		return 0;
-
-	memset(tm, 0, sizeof(*tm));
-	return ASN1_TIME_to_tm(gtime, tm);
-}
-
-/*
- * Validate and verify the time validity of the mft.
- * Returns 1 if all is good and for any other case 0.
- */
-static int
-mft_parse_time(const ASN1_GENERALIZEDTIME *from,
-    const ASN1_GENERALIZEDTIME *until, struct parse *p)
-{
-	struct tm tm_from, tm_until;
-
-	if (!generalizedtime_to_tm(from, &tm_from)) {
-		warnx("%s: embedded from time format invalid", p->fn);
-		return 0;
-	}
-	if (!generalizedtime_to_tm(until, &tm_until)) {
-		warnx("%s: embedded until time format invalid", p->fn);
-		return 0;
-	}
-
-	if ((p->res->thisupdate = timegm(&tm_from)) == -1 ||
-	    (p->res->nextupdate = timegm(&tm_until)) == -1)
-		errx(1, "%s: timegm failed", p->fn);
-
-	if (p->res->thisupdate > p->res->nextupdate) {
-		warnx("%s: bad update interval", p->fn);
-		return 0;
-	}
-
-	return 1;
-}
 
 /*
  * Determine rtype corresponding to file extension. Returns RTYPE_INVALID
@@ -301,8 +249,32 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	if (p->res->seqnum == NULL)
 		goto out;
 
-	if (!mft_parse_time(mft->thisUpdate, mft->nextUpdate, p))
+	/*
+	 * OpenSSL's DER decoder implementation will accept a GeneralizedTime
+	 * which doesn't conform to RFC 5280. So, double check.
+	 */
+	if (ASN1_STRING_length(mft->thisUpdate) != GENTIME_LENGTH) {
+		warnx("%s: embedded from time format invalid", p->fn);
 		goto out;
+	}
+	if (ASN1_STRING_length(mft->nextUpdate) != GENTIME_LENGTH) {
+		warnx("%s: embedded until time format invalid", p->fn);
+		goto out;
+	}
+
+	if (!x509_get_time(mft->thisUpdate, &p->res->thisupdate)) {
+		warn("%s: parsing manifest thisUpdate failed", p->fn);
+		goto out;
+	}
+	if (!x509_get_time(mft->nextUpdate, &p->res->nextupdate)) {
+		warn("%s: parsing manifest nextUpdate failed", p->fn);
+		goto out;
+	}
+
+	if (p->res->thisupdate > p->res->nextupdate) {
+		warnx("%s: bad update interval", p->fn);
+		goto out;
+	}
 
 	if (OBJ_obj2nid(mft->fileHashAlg) != NID_sha256) {
 		warnx("%s: RFC 6486 section 4.2.1: fileHashAlg: "
