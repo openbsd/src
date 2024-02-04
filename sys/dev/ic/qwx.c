@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.16 2024/02/03 20:07:19 kettenis Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.17 2024/02/04 17:51:59 kettenis Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8368,7 +8368,7 @@ qwx_qmi_load_bdf_qmi(struct qwx_softc *sc, int regdb)
 
 	if (regdb)
 		bdf_type = ATH11K_QMI_BDF_TYPE_REGDB;
-	else if (len >= QWX_SELFMAG &&
+	else if (boardfw_len >= QWX_SELFMAG &&
 	    memcmp(boardfw, QWX_ELFMAG, QWX_SELFMAG) == 0)
 		bdf_type = ATH11K_QMI_BDF_TYPE_ELF;
 	else
@@ -8376,9 +8376,9 @@ qwx_qmi_load_bdf_qmi(struct qwx_softc *sc, int regdb)
 
 	DPRINTF("%s: bdf_type %d\n", __func__, bdf_type);
 
-	fw_size = MIN(sc->hw_params.fw.board_size, len);
+	fw_size = MIN(sc->hw_params.fw.board_size, boardfw_len);
 
-	ret = qwx_qmi_load_file_target_mem(sc, boardfw, boardfw_len, bdf_type);
+	ret = qwx_qmi_load_file_target_mem(sc, boardfw, fw_size, bdf_type);
 	if (ret < 0) {
 		printf("%s: failed to load bdf file\n", __func__);
 		goto out;
