@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.117 2024/01/18 14:49:59 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.118 2024/02/04 14:57:00 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -650,8 +650,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
 		log_warnx("%s: can't find vm", __func__);
-		ret = ENOENT;
-		goto err;
+		return (ENOENT);
 	}
 	vcp = &vm->vm_params.vmc_params;
 
@@ -747,7 +746,6 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		if (vmm_pipe(vm, fds[0], vmm_dispatch_vm) == -1)
 			fatal("setup vm pipe");
 
-		return (0);
 	} else {
 		/* Child. Create a new session. */
 		if (setsid() == -1)
