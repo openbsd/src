@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.15 2023/08/15 21:05:44 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.16 2024/02/04 13:07:02 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -699,7 +699,7 @@ asn1_integer_null_data_test(void)
 	ASN1_INTEGER *aint = NULL;
 	uint8_t *p = NULL, *pp;
 	int len;
-	int failed = 0;
+	int failed = 1;
 
 	if ((aint = ASN1_INTEGER_new()) == NULL) {
 		fprintf(stderr, "FAIL: ASN1_INTEGER_new() == NULL\n");
