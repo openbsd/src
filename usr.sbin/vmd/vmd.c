@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.153 2024/01/18 14:49:59 claudio Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.154 2024/02/04 14:56:45 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -527,9 +527,8 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    imsg->hdr.peerid == IMSG_AGENTX_PEERID ?
 		    PROC_AGENTX : PROC_CONTROL, -1, imsg->hdr.type,
 		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
-			log_debug("%s: GET_INFO_VM failed for vm %d, removing",
-			    __func__, vm->vm_vmid);
-			vm_terminate(vm, __func__);
+			if (vm)
+				vm_terminate(vm, __func__);
 			return (-1);
 		}
 		break;
