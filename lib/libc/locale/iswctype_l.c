@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype_l.c,v 1.2 2022/07/25 21:38:24 guenther Exp $ */
+/*	$OpenBSD: iswctype_l.c,v 1.3 2024/02/04 12:46:01 jca Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $ */
 
 /*
@@ -82,73 +82,73 @@ __isctype_wl(wint_t c, _RuneType f, locale_t locale)
 int
 iswalnum_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_A|_CTYPE_D, locale);
+	return __isctype_wl(c, _RUNETYPE_A|_RUNETYPE_D, locale);
 }
 
 int
 iswalpha_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_A, locale);
+	return __isctype_wl(c, _RUNETYPE_A, locale);
 }
 
 int
 iswblank_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_B, locale);
+	return __isctype_wl(c, _RUNETYPE_B, locale);
 }
 
 int
 iswcntrl_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_C, locale);
+	return __isctype_wl(c, _RUNETYPE_C, locale);
 }
 
 int
 iswdigit_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_D, locale);
+	return __isctype_wl(c, _RUNETYPE_D, locale);
 }
 
 int
 iswgraph_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_G, locale);
+	return __isctype_wl(c, _RUNETYPE_G, locale);
 }
 
 int
 iswlower_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_L, locale);
+	return __isctype_wl(c, _RUNETYPE_L, locale);
 }
 
 int
 iswprint_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_R, locale);
+	return __isctype_wl(c, _RUNETYPE_R, locale);
 }
 
 int
 iswpunct_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_P, locale);
+	return __isctype_wl(c, _RUNETYPE_P, locale);
 }
 
 int
 iswspace_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_S, locale);
+	return __isctype_wl(c, _RUNETYPE_S, locale);
 }
 
 int
 iswupper_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_U, locale);
+	return __isctype_wl(c, _RUNETYPE_U, locale);
 }
 
 int
 iswxdigit_l(wint_t c, locale_t locale)
 {
-	return __isctype_wl(c, _CTYPE_X, locale);
+	return __isctype_wl(c, _RUNETYPE_X, locale);
 }
 
 wint_t

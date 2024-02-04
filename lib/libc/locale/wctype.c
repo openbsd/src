@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctype.c,v 1.1 2022/07/25 21:38:24 guenther Exp $ */
+/*	$OpenBSD: wctype.c,v 1.2 2024/02/04 12:46:01 jca Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -43,18 +43,18 @@
 
 static struct _WCTypeEntry wctype_entries[_WCTYPE_NINDEXES] =
 {
-	{ "alnum", _CTYPE_A|_CTYPE_D },
-	{ "alpha", _CTYPE_A },
-	{ "blank", _CTYPE_B },
-	{ "cntrl", _CTYPE_C },
-	{ "digit", _CTYPE_D },
-	{ "graph", _CTYPE_G },
-	{ "lower", _CTYPE_L },
-	{ "print", _CTYPE_R },
-	{ "punct", _CTYPE_P },
-	{ "space", _CTYPE_S },
-	{ "upper", _CTYPE_U },
-	{ "xdigit", _CTYPE_X },
+	{ "alnum", _RUNETYPE_A|_RUNETYPE_D },
+	{ "alpha", _RUNETYPE_A },
+	{ "blank", _RUNETYPE_B },
+	{ "cntrl", _RUNETYPE_C },
+	{ "digit", _RUNETYPE_D },
+	{ "graph", _RUNETYPE_G },
+	{ "lower", _RUNETYPE_L },
+	{ "print", _RUNETYPE_R },
+	{ "punct", _RUNETYPE_P },
+	{ "space", _RUNETYPE_S },
+	{ "upper", _RUNETYPE_U },
+	{ "xdigit", _RUNETYPE_X },
 };
 
 wctype_t

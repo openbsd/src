@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype.c,v 1.8 2022/07/25 21:38:24 guenther Exp $ */
+/*	$OpenBSD: iswctype.c,v 1.9 2024/02/04 12:46:01 jca Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -80,75 +80,75 @@ __tolower_w(wint_t c)
 int
 iswalnum(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_A|_CTYPE_D));
+	return (__isctype_w((c), _RUNETYPE_A|_RUNETYPE_D));
 }
 
 int
 iswalpha(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_A));
+	return (__isctype_w((c), _RUNETYPE_A));
 }
 
 int
 iswblank(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_B));
+	return (__isctype_w((c), _RUNETYPE_B));
 }
 
 int
 iswcntrl(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_C));
+	return (__isctype_w((c), _RUNETYPE_C));
 }
 
 int
 iswdigit(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_D));
+	return (__isctype_w((c), _RUNETYPE_D));
 }
 
 int
 iswgraph(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_G));
+	return (__isctype_w((c), _RUNETYPE_G));
 }
 
 int
 iswlower(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_L));
+	return (__isctype_w((c), _RUNETYPE_L));
 }
 
 int
 iswprint(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_R));
+	return (__isctype_w((c), _RUNETYPE_R));
 }
 
 int
 iswpunct(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_P));
+	return (__isctype_w((c), _RUNETYPE_P));
 }
 
 int
 iswspace(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_S));
+	return (__isctype_w((c), _RUNETYPE_S));
 }
 DEF_STRONG(iswspace);
 
 int
 iswupper(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_U));
+	return (__isctype_w((c), _RUNETYPE_U));
 }
 DEF_STRONG(iswupper);
 
 int
 iswxdigit(wint_t c)
 {
-	return (__isctype_w((c), _CTYPE_X));
+	return (__isctype_w((c), _RUNETYPE_X));
 }
 
 wint_t
@@ -167,8 +167,9 @@ DEF_STRONG(towlower);
 int
 wcwidth(wchar_t c)
 {
-	if (__isctype_w((c), _CTYPE_R))
-		return (((unsigned)__runetype_w(c) & _CTYPE_SWM) >> _CTYPE_SWS);
+	if (__isctype_w((c), _RUNETYPE_R))
+		return (((unsigned)__runetype_w(c) & _RUNETYPE_SWM) >>
+		    _RUNETYPE_SWS);
 	return -1;
 }
 DEF_WEAK(wcwidth);
