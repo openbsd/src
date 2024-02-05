@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.204 2024/01/31 14:56:42 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.205 2024/02/05 12:52:11 aoyama Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -444,13 +444,11 @@ extern u_long rtgeneration;
 struct mbuf;
 struct socket;
 struct ifnet;
-struct in_addr;
 struct sockaddr_in6;
 struct if_ieee80211_data;
 struct bfd_config;
 
 void	 route_init(void);
-void	 route_cache(struct route *, struct in_addr, u_int);
 void	 rtm_ifchg(struct ifnet *);
 void	 rtm_ifannounce(struct ifnet *, int);
 void	 rtm_bfd(struct bfd_config *);
