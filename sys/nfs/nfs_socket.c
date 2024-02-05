@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.144 2023/08/03 09:49:09 mvs Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.145 2024/02/05 20:21:39 mvs Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -295,7 +295,6 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			goto bad;
 	}
 
-	solock(so);
 	/*
 	 * Protocols that do not require connections may be optionally left
 	 * unconnected for servers that reply from a port other than NFS_PORT.
@@ -303,9 +302,10 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	if (nmp->nm_flag & NFSMNT_NOCONN) {
 		if (nmp->nm_soflags & PR_CONNREQUIRED) {
 			error = ENOTCONN;
-			goto bad_locked;
+			goto bad;
 		}
 	} else {
+		solock(so);
 		error = soconnect(so, nmp->nm_nam);
 		if (error)
 			goto bad_locked;
@@ -330,17 +330,21 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			so->so_error = 0;
 			goto bad_locked;
 		}
+		sounlock(so);
 	}
 	/*
 	 * Always set receive timeout to detect server crash and reconnect.
 	 * Otherwise, we can get stuck in soreceive forever.
 	 */
+	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_timeo_nsecs = SEC_TO_NSEC(5);
+	mtx_leave(&so->so_rcv.sb_mtx);
+	mtx_enter(&so->so_snd.sb_mtx);
 	if (nmp->nm_flag & (NFSMNT_SOFT | NFSMNT_INT))
 		so->so_snd.sb_timeo_nsecs = SEC_TO_NSEC(5);
 	else
 		so->so_snd.sb_timeo_nsecs = INFSLP;
-	sounlock(so);
+	mtx_leave(&so->so_snd.sb_mtx);
 	if (nmp->nm_sotype == SOCK_DGRAM) {
 		sndreserve = nmp->nm_wsize + NFS_MAXPKTHDR;
 		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +

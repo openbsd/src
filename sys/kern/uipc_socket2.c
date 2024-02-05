@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.141 2024/02/03 22:50:08 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.142 2024/02/05 20:21:38 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -216,10 +216,14 @@ sonewconn(struct socket *head, int connstatus, int wait)
 		goto fail;
 	so->so_snd.sb_wat = head->so_snd.sb_wat;
 	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
+	mtx_enter(&head->so_snd.sb_mtx);
 	so->so_snd.sb_timeo_nsecs = head->so_snd.sb_timeo_nsecs;
+	mtx_leave(&head->so_snd.sb_mtx);
 	so->so_rcv.sb_wat = head->so_rcv.sb_wat;
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
+	mtx_enter(&head->so_rcv.sb_mtx);
 	so->so_rcv.sb_timeo_nsecs = head->so_rcv.sb_timeo_nsecs;
+	mtx_leave(&head->so_rcv.sb_mtx);
 
 	sigio_copy(&so->so_sigio, &head->so_sigio);
 
@@ -506,15 +510,17 @@ sosleep_nsec(struct socket *so, void *ident, int prio, const char *wmesg,
 int
 sbwait(struct socket *so, struct sockbuf *sb)
 {
+	uint64_t timeo_nsecs;
 	int prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
 
 	soassertlocked(so);
 
 	mtx_enter(&sb->sb_mtx);
+	timeo_nsecs = sb->sb_timeo_nsecs;
 	sb->sb_flags |= SB_WAIT;
 	mtx_leave(&sb->sb_mtx);
 
-	return sosleep_nsec(so, &sb->sb_cc, prio, "netio", sb->sb_timeo_nsecs);
+	return sosleep_nsec(so, &sb->sb_cc, prio, "netio", timeo_nsecs);
 }
 
 int

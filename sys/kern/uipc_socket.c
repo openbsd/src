@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.316 2024/02/03 22:50:08 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.317 2024/02/05 20:21:38 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1224,7 +1224,9 @@ sorflush(struct socket *so)
 	m = sb->sb_mb;
 	memset(&sb->sb_startzero, 0,
 	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
+	mtx_enter(&sb->sb_mtx);
 	sb->sb_timeo_nsecs = INFSLP;
+	mtx_leave(&sb->sb_mtx);
 	sbunlock(so, sb);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(m);
@@ -1907,9 +1909,9 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			if (nsecs == 0)
 				nsecs = INFSLP;
 
-			solock(so);
+			mtx_enter(&sb->sb_mtx);
 			sb->sb_timeo_nsecs = nsecs;
-			sounlock(so);
+			mtx_leave(&sb->sb_mtx);
 			break;
 		    }
 
@@ -2047,9 +2049,9 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			struct timeval tv;
 			uint64_t nsecs;
 
-			solock_shared(so);
+			mtx_enter(&sb->sb_mtx);
 			nsecs = sb->sb_timeo_nsecs;
-			sounlock_shared(so);
+			mtx_leave(&sb->sb_mtx);
 
 			m->m_len = sizeof(struct timeval);
 			memset(&tv, 0, sizeof(tv));
