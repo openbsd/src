@@ -1,4 +1,4 @@
-/* $OpenBSD: uselocale.c,v 1.8 2022/07/25 21:29:16 guenther Exp $ */
+/* $OpenBSD: uselocale.c,v 1.9 2024/02/05 06:48:04 anton Exp $ */
 /*
  * Copyright (c) 2017, 2022 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -273,10 +273,10 @@ child_func(void *arg)
 	TEST_R(nl_langinfo, "UTF-8", CODESET);
 	TEST_R(nl_langinfo_l, "UTF-8", CODESET, _LOCALE_UTF8);
 	TEST_R(nl_langinfo_l, "US-ASCII", CODESET, _LOCALE_C);
-	TEST_R(isalpha, _L, 0x65);  /* e */
-	TEST_R(isalpha_l, _L, 0x65, _LOCALE_UTF8);
-	TEST_R(isalpha_l, _L, 0x65, _LOCALE_C);
-	TEST_R(isalpha_l, _L, 0x65, _LOCALE_C);
+	TEST_R(isalpha, _CTYPE_L, 0x65);  /* e */
+	TEST_R(isalpha_l, _CTYPE_L, 0x65, _LOCALE_UTF8);
+	TEST_R(isalpha_l, _CTYPE_L, 0x65, _LOCALE_C);
+	TEST_R(isalpha_l, _CTYPE_L, 0x65, _LOCALE_C);
 	TEST_R(isalpha, 0, 0x30);  /* 0 */
 	TEST_R(isalpha_l, 0, 0x30, _LOCALE_UTF8);
 	TEST_R(isalpha_l, 0, 0x30, _LOCALE_C);
