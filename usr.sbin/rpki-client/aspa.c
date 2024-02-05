@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.24 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.25 2024/02/05 19:23:58 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -129,11 +129,18 @@ aspa_parse_providers(struct parse *p, const STACK_OF(ASN1_INTEGER) *providers)
 static int
 aspa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
+	const unsigned char	*oder;
 	ASProviderAttestation	*aspa;
 	int			 rc = 0;
 
+	oder = d;
 	if ((aspa = d2i_ASProviderAttestation(NULL, &d, dsz)) == NULL) {
 		warnx("%s: ASPA: failed to parse ASProviderAttestation", p->fn);
+		goto out;
+	}
+	if (d != oder + dsz) {
+		warnx("%s: %td bytes trailing garbage in eContent", p->fn,
+		    oder + dsz - d);
 		goto out;
 	}
 

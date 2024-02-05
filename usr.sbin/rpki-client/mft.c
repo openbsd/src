@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.105 2024/02/04 00:53:27 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.106 2024/02/05 19:23:58 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -232,13 +232,20 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 static int
 mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
+	const unsigned char	*oder;
 	Manifest		*mft;
 	FileAndHash		*fh;
 	int			 i, rc = 0;
 
+	oder = d;
 	if ((mft = d2i_Manifest(NULL, &d, dsz)) == NULL) {
 		warnx("%s: RFC 6486 section 4: failed to parse Manifest",
 		    p->fn);
+		goto out;
+	}
+	if (d != oder + dsz) {
+		warnx("%s: %td bytes trailing garbage in eContent", p->fn,
+		    oder + dsz - d);
 		goto out;
 	}
 

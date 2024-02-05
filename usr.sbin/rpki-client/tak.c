@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.13 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.14 2024/02/05 19:23:58 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -184,14 +184,21 @@ parse_takey(const char *fn, const TAKey *takey)
 static int
 tak_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
-	TAK		*tak;
-	const char	*fn;
-	int		 rc = 0;
+	const unsigned char	*oder;
+	TAK			*tak;
+	const char		*fn;
+	int			 rc = 0;
 
 	fn = p->fn;
 
+	oder = d;
 	if ((tak = d2i_TAK(NULL, &d, dsz)) == NULL) {
 		warnx("%s: failed to parse Trust Anchor Key", fn);
+		goto out;
+	}
+	if (d != oder + dsz) {
+		warnx("%s: %td bytes trailing garbage in eContent", p->fn,
+		    oder + dsz - d);
 		goto out;
 	}
 

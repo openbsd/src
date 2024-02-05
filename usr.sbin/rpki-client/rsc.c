@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.29 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.30 2024/02/05 19:23:58 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -325,6 +325,7 @@ rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
 static int
 rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
+	const unsigned char	*oder;
 	RpkiSignedChecklist	*rsc;
 	ResourceBlock		*resources;
 	int			 rc = 0;
@@ -333,8 +334,14 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	 * RFC 9323 section 4
 	 */
 
+	oder = d;
 	if ((rsc = d2i_RpkiSignedChecklist(NULL, &d, dsz)) == NULL) {
 		warnx("%s: RSC: failed to parse RpkiSignedChecklist", p->fn);
+		goto out;
+	}
+	if (d != oder + dsz) {
+		warnx("%s: %td bytes trailing garbage in eContent", p->fn,
+		    oder + dsz - d);
 		goto out;
 	}
 

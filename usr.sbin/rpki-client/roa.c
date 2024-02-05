@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.72 2023/12/14 07:52:53 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.73 2024/02/05 19:23:58 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -101,6 +101,7 @@ IMPLEMENT_ASN1_FUNCTIONS(RouteOriginAttestation);
 static int
 roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
+	const unsigned char		*oder;
 	RouteOriginAttestation		*roa;
 	const ROAIPAddressFamily	*addrfam;
 	const STACK_OF(ROAIPAddress)	*addrs;
@@ -113,9 +114,15 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	int				 ipaddrblocksz;
 	int				 i, j, rc = 0;
 
+	oder = d;
 	if ((roa = d2i_RouteOriginAttestation(NULL, &d, dsz)) == NULL) {
 		warnx("%s: RFC 6482 section 3: failed to parse "
 		    "RouteOriginAttestation", p->fn);
+		goto out;
+	}
+	if (d != oder + dsz) {
+		warnx("%s: %td bytes trailing garbage in eContent", p->fn,
+		    oder + dsz - d);
 		goto out;
 	}
 
