@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.106 2023/09/19 11:36:33 claudio Exp $
+.\"	$OpenBSD: ddb.4,v 1.107 2024/02/05 21:33:00 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: September 19 2023 $
+.Dd $Mdocdate: February 5 2024 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -622,20 +622,11 @@ Prints a list of all breakpoints that have been set with the
 .Ic break
 command.
 .\" --------------------
-.It Xo
-.Ic show buf
-.Op Cm /f
-.Ar addr
-.Xc
+.It Ic show buf Ar addr
 Prints the
 .Vt struct buf
 at
 .Ar addr .
-If the
-.Cm /f
-modifier is specified output will also include
-.Li softdep
-printout, if those are available.
 .\" --------------------
 .It Ic show extents
 Prints a detailed list of all extents.
