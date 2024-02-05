@@ -1,6 +1,6 @@
 BEGIN
 {
-	@map[8 - 1] = count();
+	@map[8 - 1, "test"] = count();
 	printf("=> Print with one element\n");
 	print(@map);
 
@@ -8,7 +8,7 @@ BEGIN
 	printf("=> Print after zero:\n");
 	print(@map);
 
-	@map[7] = count();
+	@map[7, "test"] = count();
 	@map[5] = 42;
 	@map[3 + 1] = 9999;
 	@map[897123] = 9997;
@@ -17,12 +17,12 @@ BEGIN
 	print(@map, @top);
 
 	printf("=> Using printf:\n");
-	printf("%d + %d\n", @map[4], @map[7]);
+	printf("%d + %d\n", @map[4], @map[7, "test"]);
 }
 
 END
 {
-	@map[7] = count();
+	@map[7, "test"] = count();
 	printf("=> Print all map:\n");
 	print(@map);
 
