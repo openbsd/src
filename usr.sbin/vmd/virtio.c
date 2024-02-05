@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.110 2023/11/03 11:16:43 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.111 2024/02/05 21:58:09 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -73,6 +73,7 @@ SLIST_HEAD(virtio_dev_head, virtio_dev) virtio_devs;
 static int virtio_dev_launch(struct vmd_vm *, struct virtio_dev *);
 static void virtio_dispatch_dev(int, short, void *);
 static int handle_dev_msg(struct viodev_msg *, struct virtio_dev *);
+static int virtio_dev_closefds(struct virtio_dev *);
 
 const char *
 virtio_reg_name(uint8_t reg)
@@ -1303,6 +1304,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 	int data_fds[VM_MAX_BASE_PER_DISK], sync_fds[2], async_fds[2], ret = 0;
 	size_t i, data_fds_sz, sz = 0;
 	struct viodev_msg msg;
+	struct virtio_dev *dev_entry;
 	struct imsg imsg;
 	struct imsgev *iev = &dev->sync_iev;
 
@@ -1326,25 +1328,15 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 	}
 
 	/* We need two channels: one synchronous (IO reads) and one async. */
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sync_fds) == -1) {
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC,
+	    sync_fds) == -1) {
 		log_warn("failed to create socketpair");
 		return (errno);
 	}
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, async_fds) == -1) {
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC,
+	    async_fds) == -1) {
 		log_warn("failed to create async socketpair");
 		return (errno);
-	}
-
-	/* Keep communication channels open after exec. */
-	if (fcntl(sync_fds[1], F_SETFD, 0)) {
-		ret = errno;
-		log_warn("%s: fcntl", __func__);
-		goto err;
-	}
-	if (fcntl(async_fds[1], F_SETFD, 0)) {
-		ret = errno;
-		log_warn("%s: fcnt", __func__);
-		goto err;
 	}
 
 	/* Fork... */
@@ -1370,13 +1362,6 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		/* Close data fds. Only the child device needs them now. */
 		for (i = 0; i < data_fds_sz; i++)
 			close_fd(data_fds[i]);
-
-		/* Set our synchronous channel to non-blocking. */
-		if (fcntl(sync_fds[0], F_SETFL, O_NONBLOCK) == -1) {
-			ret = errno;
-			log_warn("%s: fcntl", __func__);
-			goto err;
-		}
 
 		/* 1. Send over our configured device. */
 		log_debug("%s: sending '%c' type device struct", __func__,
@@ -1446,15 +1431,21 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		close_fd(async_fds[0]);
 		close_fd(sync_fds[0]);
 
+		/* Close pty. Virtio devices do not need it. */
+		close_fd(vm->vm_tty);
+		vm->vm_tty = -1;
+
+		if (vm->vm_cdrom != -1) {
+			close_fd(vm->vm_cdrom);
+			vm->vm_cdrom = -1;
+		}
+
 		/* Keep data file descriptors open after exec. */
-		for (i = 0; i < data_fds_sz; i++) {
-			log_debug("%s: marking fd %d !close-on-exec", __func__,
-			    data_fds[i]);
-			if (fcntl(data_fds[i], F_SETFD, 0)) {
-				ret = errno;
-				log_warn("%s: fcntl", __func__);
-				goto err;
-			}
+		SLIST_FOREACH(dev_entry, &virtio_devs, dev_next) {
+			if (dev_entry == dev)
+				continue;
+			if (virtio_dev_closefds(dev_entry) == -1)
+				fatalx("unable to close other virtio devs");
 		}
 
 		memset(&nargv, 0, sizeof(nargv));
@@ -1519,11 +1510,6 @@ vm_device_pipe(struct virtio_dev *dev, void (*cb)(int, short, void *))
 
 	log_debug("%s: initializing '%c' device pipe (fd=%d)", __func__,
 	    dev->dev_type, fd);
-
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-		log_warn("failed to set nonblocking mode on vm device pipe");
-		return (-1);
-	}
 
 	imsg_init(&iev->ibuf, fd);
 	iev->handler = cb;
@@ -1763,4 +1749,31 @@ virtio_deassert_pic_irq(struct virtio_dev *dev, int vcpu)
 	    &msg, sizeof(msg));
 	if (ret == -1)
 		log_warnx("%s: failed to deassert irq %d", __func__, dev->irq);
+}
+
+/*
+ * Close all underlying file descriptors for a given virtio device.
+ */
+static int
+virtio_dev_closefds(struct virtio_dev *dev)
+{
+	size_t i;
+
+	switch (dev->dev_type) {
+		case VMD_DEVTYPE_DISK:
+			for (i = 0; i < dev->vioblk.ndisk_fd; i++) {
+				close_fd(dev->vioblk.disk_fd[i]);
+				dev->vioblk.disk_fd[i] = -1;
+			}
+			break;
+		case VMD_DEVTYPE_NET:
+			close_fd(dev->vionet.data_fd);
+			dev->vionet.data_fd = -1;
+			break;
+	default:
+		log_warnx("%s: invalid device type", __func__);
+		return (-1);
+	}
+
+	return (0);
 }

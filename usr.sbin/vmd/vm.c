@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.96 2024/01/18 14:49:59 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.97 2024/02/05 21:58:09 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -221,12 +221,17 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
  * fd_vmm: file descriptor for communicating with vmm(4) device
  */
 void
-vm_main(int fd, int vmm_fd)
+vm_main(int fd, int fd_vmm)
 {
 	struct vm_create_params	*vcp = NULL;
 	struct vmd_vm		 vm;
 	size_t			 sz = 0;
 	int			 ret = 0;
+
+	/*
+	 * The vm process relies on global state. Set the fd for /dev/vmm.
+	 */
+	env->vmd_fd = fd_vmm;
 
 	/*
 	 * We aren't root, so we can't chroot(2). Use unveil(2) instead.
@@ -276,11 +281,6 @@ vm_main(int fd, int vmm_fd)
 			log_warnx("%s: failed to receive boot fd",
 			    vcp->vcp_name);
 			_exit(EINVAL);
-		}
-		if (fcntl(vm.vm_kernel, F_SETFL, O_NONBLOCK) == -1) {
-			ret = errno;
-			log_warn("failed to set nonblocking mode on boot fd");
-			_exit(ret);
 		}
 	}
 
@@ -2454,7 +2454,7 @@ vm_pipe_init(struct vm_dev_pipe *p, void (*cb)(int, short, void *))
 
 	memset(p, 0, sizeof(struct vm_dev_pipe));
 
-	ret = pipe(fds);
+	ret = pipe2(fds, O_CLOEXEC);
 	if (ret)
 		fatal("failed to create vm_dev_pipe pipe");
 
@@ -2507,7 +2507,7 @@ vm_pipe_recv(struct vm_dev_pipe *p)
 }
 
 /*
- * Re-map the guest address space using the shared memory file descriptor.
+ * Re-map the guest address space using vmm(4)'s VMM_IOC_SHARE
  *
  * Returns 0 on success, non-zero in event of failure.
  */

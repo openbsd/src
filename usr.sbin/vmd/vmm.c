@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.118 2024/02/04 14:57:00 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.119 2024/02/05 21:58:09 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -52,6 +52,7 @@
 #include "vmd.h"
 #include "vmm.h"
 #include "atomicio.h"
+#include "proc.h"
 
 void	vmm_sighdlr(int, short, void *);
 int	vmm_start_vm(struct imsg *, uint32_t *, pid_t *);
@@ -467,8 +468,14 @@ vmm_pipe(struct vmd_vm *vm, int fd, void (*cb)(int, short, void *))
 {
 	struct imsgev	*iev = &vm->vm_iev;
 
-	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-		log_warn("failed to set nonblocking mode on vm pipe");
+	/*
+	 * Set to close-on-exec as vmm_pipe is used after fork+exec to
+	 * establish async ipc between vm and vmd's vmm process. This
+	 * prevents future vm processes or virtio subprocesses from
+	 * inheriting this control channel.
+	 */
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+		log_warn("failed to set close-on-exec for vmm ipc channel");
 		return (-1);
 	}
 
@@ -661,15 +668,9 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		}
 	}
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC, fds)
+	    == -1)
 		fatal("socketpair");
-
-	/* Keep our channel open after exec. */
-	if (fcntl(fds[1], F_SETFD, 0)) {
-		ret = errno;
-		log_warn("%s: fcntl", __func__);
-		goto err;
-	}
 
 	/* Start child vmd for this VM (fork, chroot, drop privs) */
 	vm_pid = fork();
@@ -745,7 +746,6 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		/* Wire up our pipe into the event handling. */
 		if (vmm_pipe(vm, fds[0], vmm_dispatch_vm) == -1)
 			fatal("setup vm pipe");
-
 	} else {
 		/* Child. Create a new session. */
 		if (setsid() == -1)
@@ -763,21 +763,6 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 			if (fd > 2)
 				close(fd);
 		}
-
-		/* Toggle all fds to not close on exec. */
-		for (i = 0 ; i < vm->vm_params.vmc_ndisks; i++)
-			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
-				if (vm->vm_disks[i][j] != -1)
-					fcntl(vm->vm_disks[i][j], F_SETFD, 0);
-		for (i = 0 ; i < vm->vm_params.vmc_nnics; i++)
-			fcntl(vm->vm_ifs[i].vif_fd, F_SETFD, 0);
-		if (vm->vm_kernel != -1)
-			fcntl(vm->vm_kernel, F_SETFD, 0);
-		if (vm->vm_cdrom != -1)
-			fcntl(vm->vm_cdrom, F_SETFD, 0);
-		if (vm->vm_tty != -1)
-			fcntl(vm->vm_tty, F_SETFD, 0);
-		fcntl(env->vmd_fd, F_SETFD, 0);	/* vmm device fd */
 
 		/*
 		 * Prepare our new argv for execvp(2) with the fd of our open

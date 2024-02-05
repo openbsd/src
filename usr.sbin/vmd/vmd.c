@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.154 2024/02/04 14:56:45 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.155 2024/02/05 21:58:09 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -800,6 +800,8 @@ main(int argc, char **argv)
 
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
+	env->vmd_fd = -1;
+	env->vmd_fd6 = -1;
 
 	while ((ch = getopt(argc, argv, "D:P:I:V:X:df:i:nt:vp:")) != -1) {
 		switch (ch) {
@@ -891,7 +893,6 @@ main(int argc, char **argv)
 
 	ps = &env->vmd_ps;
 	ps->ps_env = env;
-	env->vmd_fd = vmm_fd;
 
 	if (config_init(env) == -1)
 		fatal("failed to initialize configuration");
@@ -924,7 +925,7 @@ main(int argc, char **argv)
 
 	/* Open /dev/vmm early. */
 	if (env->vmd_noaction == 0 && proc_id == PROC_PARENT) {
-		env->vmd_fd = open(VMM_NODE, O_RDWR);
+		env->vmd_fd = open(VMM_NODE, O_RDWR | O_CLOEXEC);
 		if (env->vmd_fd == -1)
 			fatal("%s", VMM_NODE);
 	}
@@ -1014,9 +1015,6 @@ vmd_configure(void)
 	int ncpu_mib[] = {CTL_HW, HW_NCPUONLINE};
 	size_t ncpus_sz = sizeof(ncpus);
 
-	if ((env->vmd_ptmfd = open(PATH_PTMDEV, O_RDWR|O_CLOEXEC)) == -1)
-		fatal("open %s", PATH_PTMDEV);
-
 	/*
 	 * pledge in the parent process:
 	 * stdio - for malloc and basic I/O including events.
@@ -1033,6 +1031,9 @@ vmd_configure(void)
 	if (pledge("stdio rpath wpath proc tty recvfd sendfd getpw"
 	    " chown fattr flock", NULL) == -1)
 		fatal("pledge");
+
+	if ((env->vmd_ptmfd = getptmfd()) == -1)
+		fatal("getptmfd %s", PATH_PTMDEV);
 
 	if (parse_config(env->vmd_conffile) == -1) {
 		proc_kill(&env->vmd_ps);
@@ -1846,32 +1847,29 @@ vm_checkaccess(int fd, unsigned int uflag, uid_t uid, int amode)
 int
 vm_opentty(struct vmd_vm *vm)
 {
-	struct ptmget		 ptm;
 	struct stat		 st;
 	struct group		*gr;
 	uid_t			 uid;
 	gid_t			 gid;
 	mode_t			 mode;
-	int			 on;
+	int			 on = 1, tty_slave;
 
 	/*
 	 * Open tty with pre-opened PTM fd
 	 */
-	if ((ioctl(env->vmd_ptmfd, PTMGET, &ptm) == -1))
+	if (fdopenpty(env->vmd_ptmfd, &vm->vm_tty, &tty_slave, vm->vm_ttyname,
+	    NULL, NULL) == -1) {
+		log_warn("fdopenpty");
 		return (-1);
+	}
+	close(tty_slave);
 
 	/*
 	 * We use user ioctl(2) mode to pass break commands.
 	 */
-	on = 1;
-	if (ioctl(ptm.cfd, TIOCUCNTL, &on) == -1)
-		fatal("could not enable user ioctl mode");
-
-	vm->vm_tty = ptm.cfd;
-	close(ptm.sfd);
-	if (strlcpy(vm->vm_ttyname, ptm.sn, sizeof(vm->vm_ttyname))
-	    >= sizeof(vm->vm_ttyname)) {
-		log_warnx("%s: truncated ttyname", __func__);
+	if (ioctl(vm->vm_tty, TIOCUCNTL, &on) == -1) {
+		log_warn("could not enable user ioctl mode on %s",
+		    vm->vm_ttyname);
 		goto fail;
 	}
 
@@ -1896,8 +1894,10 @@ vm_opentty(struct vmd_vm *vm)
 	 * Change ownership and mode of the tty as required.
 	 * Loosely based on the implementation of sshpty.c
 	 */
-	if (stat(vm->vm_ttyname, &st) == -1)
+	if (fstat(vm->vm_tty, &st) == -1) {
+		log_warn("fstat failed for %s", vm->vm_ttyname);
 		goto fail;
+	}
 
 	if (st.st_uid != uid || st.st_gid != gid) {
 		if (chown(vm->vm_ttyname, uid, gid) == -1) {
