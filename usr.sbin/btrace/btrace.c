@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.83 2024/01/25 20:50:58 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.84 2024/02/05 15:11:35 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -450,9 +450,9 @@ rules_do(int fd)
 		if (ioctl(fd, DTIOCGSTATS, &dtst))
 			warn("DTIOCGSTATS");
 
-		printf("%llu events read\n", dtst.dtst_readevt);
-		printf("%llu events dropped\n", dtst.dtst_dropevt);
-		printf("%llu events filtered\n", bt_filtered);
+		fprintf(stderr, "%llu events read\n", dtst.dtst_readevt);
+		fprintf(stderr, "%llu events dropped\n", dtst.dtst_dropevt);
+		fprintf(stderr, "%llu events filtered\n", bt_filtered);
 	}
 }
 
