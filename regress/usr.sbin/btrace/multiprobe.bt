@@ -1,10 +1,10 @@
 BEGIN,
-interval:hz:2
+interval:hz:50
 {
 	printf("multi\n");
 }
 
-interval:hz:1
+interval:hz:100
 {
 	exit();
 }

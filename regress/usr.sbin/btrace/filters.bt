@@ -16,7 +16,7 @@ syscall:open:return
         exit();
 }
 
-interval:hz:1
+interval:hz:100
 {
         exit();
 }

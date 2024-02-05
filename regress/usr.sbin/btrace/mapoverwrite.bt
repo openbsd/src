@@ -10,7 +10,7 @@ BEGIN
 /*
  * Overwrite map periodically to ensure there's no double-free.
  */
-interval:hz:1
+interval:hz:100
 {
 	if (@counter >= 10)
 		exit();
