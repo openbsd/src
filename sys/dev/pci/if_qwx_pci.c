@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.5 2024/02/03 20:07:19 kettenis Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.6 2024/02/05 10:45:47 kettenis Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -3180,6 +3180,9 @@ qwx_mhi_ready_state_transition(struct qwx_pci_softc *psc)
 void
 qwx_mhi_ee_amss_state_transition(struct qwx_pci_softc *psc)
 {
+	/* XXX without this delay starting the channels may fail */
+	delay(1000);
+
 	qwx_mhi_start_channels(psc);
 }
 
