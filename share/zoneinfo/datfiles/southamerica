@@ -1,4 +1,4 @@
-# $OpenBSD: southamerica,v 1.80 2024/01/02 22:43:20 millert Exp $
+# $OpenBSD: southamerica,v 1.81 2024/02/05 17:07:23 millert Exp $
 # tzdb data for South America and environs
 
 # This file is in the public domain, so clarified as of
@@ -1584,8 +1584,11 @@ Zone Atlantic/Stanley	-3:51:24 -	LMT	1890
 			-3:00	-	-03
 
 # French Guiana
+# For the 1911/1912 establishment of standard time in French possessions, see:
+# Société Française de Physique, Recueil de constantes physiques (1913),
+# page 752, 18b.
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
-Zone America/Cayenne	-3:29:20 -	LMT	1911 Jul
+Zone America/Cayenne	-3:29:20 -	LMT	1911 Jul  1
 			-4:00	-	-04	1967 Oct
 			-3:00	-	-03
 
