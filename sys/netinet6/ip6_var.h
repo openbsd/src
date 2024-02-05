@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.110 2024/02/03 22:50:09 mvs Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.111 2024/02/05 23:16:39 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -196,8 +196,8 @@ struct	ip6stat {
 	/* number of times that an deprecated address is chosen */
 	u_int64_t ip6s_sources_deprecated[16];
 
-	u_int64_t ip6s_forward_cachehit;
-	u_int64_t ip6s_forward_cachemiss;
+	u_int64_t ip6s_rtcachehit;	/* valid route found in cache */
+	u_int64_t ip6s_rtcachemiss;	/* route cache with new destination */
 	u_int64_t ip6s_wrongif;		/* packet received on wrong interface */
 	u_int64_t ip6s_idropped;	/* lost input due to nobufs, etc. */
 };
@@ -243,8 +243,8 @@ enum ip6stat_counters {
 	ip6s_sources_samescope = ip6s_sources_otherif + 16,
 	ip6s_sources_otherscope = ip6s_sources_samescope + 16,
 	ip6s_sources_deprecated = ip6s_sources_otherscope + 16,
-	ip6s_forward_cachehit = ip6s_sources_deprecated + 16,
-	ip6s_forward_cachemiss,
+	ip6s_rtcachehit = ip6s_sources_deprecated + 16,
+	ip6s_rtcachemiss,
 	ip6s_wrongif,
 	ip6s_idropped,
 

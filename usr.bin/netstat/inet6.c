@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.56 2022/08/12 14:49:15 bluhm Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.57 2024/02/05 23:16:39 bluhm Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -371,7 +371,6 @@ ip6_stats(char *name)
 	p(ip6s_cantfrag, "\t%llu datagram%s that can't be fragmented\n");
 	p(ip6s_badscope, "\t%llu packet%s that violated scope rules\n");
 	p(ip6s_notmember, "\t%llu multicast packet%s which we don't join\n");
-	p(ip6s_wrongif, "\t%llu packet%s received on wrong interface\n");
 	for (first = 1, i = 0; i < 256; i++)
 		if (ip6stat.ip6s_nxthist[i] != 0) {
 			if (first) {
@@ -478,9 +477,9 @@ ip6_stats(char *name)
 			PRINT_SCOPESTAT(ip6s_sources_deprecated[i], i);
 		}
 	}
-
-	p1(ip6s_forward_cachehit, "\t%llu forward cache hit\n");
-	p1(ip6s_forward_cachemiss, "\t%llu forward cache miss\n");
+	p1(ip6s_rtcachehit, "\t%llu route cache hit\n");
+	p1(ip6s_rtcachemiss, "\t%llu route cache miss\n");
+	p(ip6s_wrongif, "\t%llu packet%s received on wrong interface\n");
 	p(ip6s_idropped,
 	    "\t%llu input packet%s dropped due to no bufs, etc.\n");
 #undef p

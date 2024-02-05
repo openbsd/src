@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.111 2024/02/03 22:50:09 mvs Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.112 2024/02/05 23:16:39 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -87,6 +87,8 @@ struct	ipstat {
 	u_long	ips_inswcsum;		/* software checksummed on input */
 	u_long	ips_outswcsum;		/* software checksummed on output */
 	u_long	ips_notmember;		/* multicasts for unregistered groups */
+	u_long	ips_rtcachehit;		/* valid route found in cache */
+	u_long	ips_rtcachemiss;	/* route cache with new destination */
 	u_long	ips_wrongif;		/* packet received on wrong interface */
 	u_long	ips_idropped;		/* lost input due to nobufs, etc. */
 };
@@ -133,6 +135,8 @@ enum ipstat_counters {
 	ips_inswcsum,		/* software checksummed on input */
 	ips_outswcsum,		/* software checksummed on output */
 	ips_notmember,		/* multicasts for unregistered groups */
+	ips_rtcachehit,		/* valid route to destination found in cache */
+	ips_rtcachemiss,	/* route cache filled with new destination */
 	ips_wrongif,		/* packet received on wrong interface */
 	ips_idropped,		/* lost input packets due to nobufs, etc. */
 

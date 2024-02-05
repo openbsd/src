@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.427 2024/01/31 14:56:42 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.428 2024/02/05 23:16:39 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -214,9 +214,11 @@ route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
 	    ro->ro_tableid == rtableid &&
 	    ro->ro_dst.sa_family == AF_INET &&
 	    satosin(&ro->ro_dst)->sin_addr.s_addr == addr.s_addr) {
+		ipstat_inc(ips_rtcachehit);
 		return;
 	}
 
+	ipstat_inc(ips_rtcachemiss);
 	rtfree(ro->ro_rt);
 	ro->ro_rt = NULL;
 	ro->ro_generation = gen;
