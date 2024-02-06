@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.26 2024/02/06 12:44:28 martijn Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.27 2024/02/06 15:36:11 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -333,7 +333,7 @@ trapcmd_exec(struct trapcmd *cmd, struct sockaddr *sa,
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s) == -1) {
 		log_warn("could not create pipe for OID '%s'",
-		    mib_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf),
+		    mib_oid2string(&cmd->cmd_oid, oidbuf, sizeof(oidbuf),
 		    snmpd_env->sc_oidfmt));
 		return;
 	}
@@ -352,14 +352,14 @@ trapcmd_exec(struct trapcmd *cmd, struct sockaddr *sa,
 
 		/* this shouldn't happen */
 		log_warn("could not exec trap command for OID '%s'",
-		    mib_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf),
+		    mib_oid2string(&cmd->cmd_oid, oidbuf, sizeof(oidbuf),
 		    snmpd_env->sc_oidfmt));
 		_exit(1);
 		/* NOTREACHED */
 
 	case -1:
 		log_warn("could not fork trap command for OID '%s'",
-		    mib_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf),
+		    mib_oid2string(&cmd->cmd_oid, oidbuf, sizeof(oidbuf),
 		    snmpd_env->sc_oidfmt));
 		close(s[0]);
 		close(s[1]);
@@ -427,7 +427,7 @@ trapcmd_lookup(struct ber_oid *oid)
 	struct trapcmd	key, *res;
 
 	bzero(&key, sizeof(key));
-	key.cmd_oid = oid;
+	key.cmd_oid = *oid;
 
 	if ((res = RB_FIND(trapcmd_tree, &trapcmd_tree, &key)) == NULL)
 		res = key.cmd_maybe;
@@ -439,7 +439,7 @@ trapcmd_cmp(struct trapcmd *cmd1, struct trapcmd *cmd2)
 {
 	int ret;
 
-	ret = ober_oid_cmp(cmd1->cmd_oid, cmd2->cmd_oid);
+	ret = ober_oid_cmp(&cmd1->cmd_oid, &cmd2->cmd_oid);
 	switch (ret) {
 	case 2:
 		/* cmd1 is a child of cmd2 */
@@ -462,6 +462,5 @@ trapcmd_free(struct trapcmd *cmd)
 {
 	RB_REMOVE(trapcmd_tree, &trapcmd_tree, cmd);
 	free(cmd->cmd_argv);
-	free(cmd->cmd_oid);
 	free(cmd);
 }

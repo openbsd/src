@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2024/02/06 12:44:28 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2024/02/06 15:36:11 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -67,9 +67,9 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 		ober_link_elements(vblist, elm);
 
 	TAILQ_FOREACH(tr, &snmpd_env->sc_trapreceivers, entry) {
-		if (tr->ta_oid != NULL && tr->ta_oid->bo_n) {
+		if (tr->ta_oid.bo_n) {
 			/* The trap receiver may want only a specified MIB */
-			r = ober_oid_cmp(oid, tr->ta_oid);
+			r = ober_oid_cmp(oid, &tr->ta_oid);
 			if (r != 0 && r != 2)
 				continue;
 		}

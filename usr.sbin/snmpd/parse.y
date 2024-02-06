@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.88 2024/02/06 12:44:27 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.89 2024/02/06 15:36:11 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -97,16 +97,53 @@ struct sym {
 int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
+struct oid_sym {
+	char			*descriptor;
+	char			 file[PATH_MAX];
+	int			 lineno;
+};
+
+struct object_sym {
+	struct oid_sym		 oid;
+	char			*name;
+	int			 isint;
+	union {
+		int32_t		 intval;
+		char		*sval;
+	};
+};
+
+struct trapcmd_sym {
+	struct oid_sym	 oid;
+	struct trapcmd	*cmd;
+};
+
+struct trapaddress_sym {
+	struct oid_sym	 oid;
+	struct trap_address *tr;
+};
+
 struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct usmuser		*user = NULL;
 static int			 mibparsed = 0;
-static struct ber_oid		*smi_object;
+
+static struct oid_sym		*blocklist = NULL;
+static size_t			 nblocklist = 0;
+static struct oid_sym		 sysoid = {};
+static struct object_sym	*objects = NULL;
+static size_t			 nobjects = 0;
+static struct trapcmd_sym	*trapcmds = NULL;
+static size_t			 ntrapcmds = 0;
+static struct trapaddress_sym	*trapaddresses = NULL;
+static size_t			 ntrapaddresses = 0;
 
 static uint8_t			 engineid[SNMPD_MAXENGINEIDLEN];
 static int32_t			 enginepen;
 static size_t			 engineidlen;
 
+int		 resolve_oid(struct ber_oid *, struct oid_sym *);
+int		 resolve_oids(void);
 int		 host(const char *, const char *, int, int,
 		    struct sockaddr_storage *, int);
 int		 listen_add(struct sockaddr_storage *, int, int);
@@ -117,7 +154,7 @@ typedef struct {
 		char		*string;
 		struct host	*host;
 		struct timeval	 tv;
-		struct ber_oid	*oid;
+		struct oid_sym	 oid;
 		struct agentx_master ax;
 		struct {
 			int		 type;
@@ -308,31 +345,31 @@ main		: LISTEN ON listen_udptcp
 		}
 		| TRAP RECEIVER	host
 		| TRAP HANDLE trapoid cmd {
-			struct trapcmd *cmd = $4.data;
+			struct trapcmd_sym *ttrapcmds;
 
-			cmd->cmd_oid = $3;
-
-			if (trapcmd_add(cmd) != 0) {
-				free($3);
-				free(cmd);
-				yyerror("duplicate oid");
+			if ((ttrapcmds = recallocarray(trapcmds, ntrapcmds,
+			    ntrapcmds + 1, sizeof(*trapcmds))) == NULL) {
+				yyerror("malloc");
+				free($3.descriptor);
+				free($4.data);
 				YYERROR;
 			}
-			conf->sc_traphandler = 1;
+
+			trapcmds = ttrapcmds;
+			trapcmds[ntrapcmds].oid = $3;
+			trapcmds[ntrapcmds++].cmd = $4.data;
 		}
 		| BLOCKLIST oid {
-			struct ber_oid *blocklist;
+			struct oid_sym *tblocklist;
 
-			blocklist = recallocarray(conf->sc_blocklist,
-			    conf->sc_nblocklist, conf->sc_nblocklist + 1,
-			    sizeof(*blocklist));
-			if (blocklist == NULL) {
+			if ((tblocklist = recallocarray(blocklist, nblocklist,
+			    nblocklist + 1, sizeof(*blocklist))) == NULL) {
 				yyerror("malloc");
+				free($2.descriptor);
 				YYERROR;
 			}
-			conf->sc_blocklist = blocklist;
-			blocklist[conf->sc_nblocklist++] = *$2;
-			free($2);
+			blocklist = tblocklist;
+			blocklist[nblocklist++] = $2;
 		}
 		| RTFILTER yesno		{
 			conf->sc_rtfilter = $2;
@@ -821,13 +858,12 @@ sysmib		: CONTACT STRING		{
 			free($2);
 		}
 		| OBJECTID oid			{
-			if (conf->sc_system.sys_oid.bo_n != 0) {
+			if (sysoid.descriptor != NULL) {
 				yyerror("system oid already defined");
-				free($2);
+				free($2.descriptor);
 				YYERROR;
 			}
-			conf->sc_system.sys_oid = *$2;
-			free($2);
+			sysoid = $2;
 		}
 		| SERVICES NUMBER		{
 			if (conf->sc_system.sys_services != -1) {
@@ -846,24 +882,22 @@ sysmib		: CONTACT STRING		{
 		;
 
 object		: OBJECTID oid NAME STRING optwrite 	{
-			const char *error;
+			struct object_sym *tobjects;
 
-			smi_object = $2;
-			error = smi_insert($2, $4);
-			free($4);
-			if (error != NULL) {
-				yyerror("%s", error);
-				free($2);
-				YYERROR;
+			if ((tobjects = recallocarray(objects, nobjects,
+			    nobjects + 1, sizeof(*objects))) == NULL) {
+				yyerror("malloc");
+				free($2.descriptor);
+				free($4);
 			}
-		} objectvalue {
-			free(smi_object);
-		}
+			objects = tobjects;
+			nobjects++;
+			objects[nobjects - 1].oid = $2;
+			objects[nobjects - 1].name = $4;
+		} objectvalue
 		;
 
 objectvalue	: INTEGER NUMBER			{
-			const char *error;
-
 			if ($2 < INT32_MIN) {
 				yyerror("number too small");
 				YYERROR;
@@ -872,22 +906,12 @@ objectvalue	: INTEGER NUMBER			{
 				yyerror("number too large");
 				YYERROR;
 			}
-			error = appl_internal_object_int(smi_object, $2);
-			if (error != NULL) {
-				yyerror("%s", error);
-				YYERROR;
-			}
+			objects[nobjects - 1].isint = 1;
+			objects[nobjects - 1].intval = $2;
 		}
 		| OCTETSTRING STRING			{
-			const char *error;
-
-			error = appl_internal_object_string(smi_object, $2);
-			if (error != NULL) {
-				yyerror("%s", error);
-				free($2);
-				YYERROR;
-			}
-			
+			objects[nobjects - 1].isint = 0;
+			objects[nobjects - 1].sval = $2;
 		}
 		;
 
@@ -896,37 +920,28 @@ optwrite	: READONLY				{ $$ = 0; }
 		;
 
 oid		: STRING				{
-			struct ber_oid	*oid;
-			if ((oid = calloc(1, sizeof(*oid))) == NULL) {
-				yyerror("calloc");
-				free($1);
-				YYERROR;
-			}
-			if (smi_string2oid($1, oid) == -1) {
-				yyerror("invalid OID: %s", $1);
-				free(oid);
-				free($1);
-				YYERROR;
-			}
-			free($1);
-			$$ = oid;
+			$$.descriptor = $1;
+			strlcpy($$.file, file->name, sizeof($$.file));
+			$$.lineno = file->lineno;
 		}
 		;
 
 trapoid		: oid					{ $$ = $1; }
 		| DEFAULT				{
-			struct ber_oid	*sysoid;
-			if ((sysoid =
-			    calloc(1, sizeof(*sysoid))) == NULL) {
-				yyerror("calloc");
+			if (($$.descriptor = strdup("1.3")) == NULL) {
+				yyerror("malloc");
 				YYERROR;
 			}
-			ober_string2oid("1.3", sysoid);
-			$$ = sysoid;
+			strlcpy($$.file, file->name, sizeof($$.file));
+			$$.lineno = file->lineno;
 		}
 		;
 
-hostoid		: /* empty */				{ $$ = NULL; }
+hostoid		: /* empty */				{
+			$$.descriptor = NULL;
+			strlcpy($$.file, file->name, sizeof($$.file));
+			$$.lineno = file->lineno;
+		}
 		| OBJECTID oid				{ $$ = $2; }
 		;
 
@@ -1017,41 +1032,54 @@ srcaddr		: /* empty */				{ $$ = NULL; }
 		;
 
 hostdef		: STRING hostoid hostauth srcaddr	{
-			struct sockaddr_storage ss;
+			struct sockaddr_storage ss, ssl = {};
 			struct trap_address *tr;
-
-			if ((tr = calloc(1, sizeof(*tr))) == NULL) {
-				yyerror("calloc");
-				YYERROR;
-			}
+			struct trapaddress_sym *ttrapaddresses;
 
 			if (host($1, SNMPTRAP_PORT, AF_UNSPEC, SOCK_DGRAM,
 			    &ss, 1) <= 0) {
 				yyerror("invalid host: %s", $1);
 				free($1);
-				free($2);
+				free($2.descriptor);
 				free($3.data);
 				free($4);
-				free(tr);
 				YYERROR;
 			}
 			free($1);
-			memcpy(&(tr->ta_ss), &ss, sizeof(ss));
 			if ($4 != NULL) {
 				if (host($4, "0", ss.ss_family, SOCK_DGRAM,
 				    &ss, 1) <= 0) {
 					yyerror("invalid source-address: %s",
 					    $4);
-					free($2);
+					free($2.descriptor);
 					free($3.data);
 					free($4);
-					free(tr);
 					YYERROR;
 				}
 				free($4);
-				memcpy(&(tr->ta_sslocal), &ss, sizeof(ss));
 			}
-			tr->ta_oid = $2;
+
+			ttrapaddresses = reallocarray(trapaddresses,
+			    ntrapaddresses + 1, sizeof(*trapaddresses));
+			if (ttrapaddresses == NULL) {
+				yyerror("malloc");
+				free($2.descriptor);
+				free($3.data);
+				YYERROR;
+			}
+			trapaddresses = ttrapaddresses;
+			ntrapaddresses++;
+
+			if ((tr = calloc(1, sizeof(*tr))) == NULL) {
+				yyerror("calloc");
+				free($2.descriptor);
+				free($3.data);
+				ntrapaddresses--;
+				YYERROR;
+			}
+
+			tr->ta_ss = ss;
+			tr->ta_sslocal = ssl;
 			tr->ta_version = $3.type;
 			if ($3.type == SNMP_V2) {
 				(void)strlcpy(tr->ta_community, $3.data,
@@ -1061,7 +1089,9 @@ hostdef		: STRING hostoid hostauth srcaddr	{
 				tr->ta_usmusername = $3.data;
 				tr->ta_seclevel = $3.value;
 			}
-			TAILQ_INSERT_TAIL(&(conf->sc_trapreceivers), tr, entry);
+
+			trapaddresses[ntrapaddresses - 1].oid = $2;
+			trapaddresses[ntrapaddresses - 1].tr = tr;
 		}
 		;
 
@@ -1641,6 +1671,105 @@ popfile(void)
 	return (file ? 0 : EOF);
 }
 
+int
+resolve_oid(struct ber_oid *dst, struct oid_sym *src)
+{
+	struct file f = { .name = src->file, };
+	const char *error;
+
+	file = &f;
+	yylval.lineno = src->lineno;
+
+	if ((error = mib_string2oid(src->descriptor, dst)) != NULL) {
+		if (smi_string2oid(src->descriptor, dst) == -1) {
+			yyerror("%s", error);
+			free(src->descriptor);
+			return -1;
+		}
+		yyerror("deprecated oid format");
+	}
+	free(src->descriptor);
+
+	return 0;
+}
+
+int
+resolve_oids(void)
+{
+	struct file f;
+	struct ber_oid oid;
+	const char *error;
+	size_t i;
+
+	conf->sc_blocklist = calloc(nblocklist, sizeof(*conf->sc_blocklist));
+	if (conf->sc_blocklist == NULL)
+		fatal("malloc");
+
+	conf->sc_nblocklist = nblocklist;
+	for (i = 0; i < nblocklist; i++) {
+		if (resolve_oid(&conf->sc_blocklist[i], &blocklist[i]) == -1)
+			return -1;
+	}
+	free(blocklist);
+
+	if (sysoid.descriptor != NULL) {
+		if (resolve_oid(&conf->sc_system.sys_oid, &sysoid) == -1)
+			return -1;
+	}
+
+	for (i = 0; i < nobjects; i++) {
+		if (resolve_oid(&oid, &objects[i].oid) == -1)
+			return -1;
+		file = &f;
+		f.name = objects[i].oid.file;
+		yylval.lineno = objects[i].oid.lineno;
+		if ((error = smi_insert(&oid, objects[i].name)) != NULL) {
+			yyerror("%s", error);
+			return -1;
+		}
+		if (objects[i].isint) {
+			if ((error = appl_internal_object_int(
+			    &oid, objects[i].intval)) != NULL) {
+				yyerror("%s", error);
+				return -1;
+			}
+		} else {
+			if ((error = appl_internal_object_string(
+			    &oid, objects[i].sval)) != NULL) {
+				yyerror("%s", error);
+				return -1;
+			}
+		}
+		free(objects[i].name);
+	}
+	free(objects);
+
+	for (i = 0; i < ntrapcmds; i++) {
+		if (resolve_oid(
+		    &trapcmds[i].cmd->cmd_oid, &trapcmds[i].oid) == -1)
+			return -1;
+		f.name = trapcmds[i].oid.file;
+		yylval.lineno = trapcmds[i].oid.lineno;
+		file = &f;
+		if (trapcmd_add(trapcmds[i].cmd) != 0) {
+			yyerror("duplicate oid");
+			return -1;
+		}
+	}
+	free(trapcmds);
+
+	for (i = 0; i < ntrapaddresses; i++) {
+		if (resolve_oid(
+		    &trapaddresses[i].tr->ta_oid, &trapaddresses[i].oid) == -1)
+			return -1;
+		TAILQ_INSERT_TAIL(&conf->sc_trapreceivers,
+		    trapaddresses[i].tr, entry);
+	}
+	free(trapaddresses);
+
+	return 0;
+}
+
 struct snmpd *
 parse_config(const char *filename, u_int flags)
 {
@@ -1662,8 +1791,10 @@ parse_config(const char *filename, u_int flags)
 
 	conf->sc_system.sys_services = -1;
 	conf->sc_flags = flags;
+
 	conf->sc_oidfmt =
 	    flags & SNMPD_F_NONAMES ?  MIB_OIDNUMERIC : MIB_OIDSYMBOLIC;
+
 	conf->sc_confpath = filename;
 	TAILQ_INIT(&conf->sc_addresses);
 	TAILQ_INIT(&conf->sc_agentx_masters);
@@ -1683,9 +1814,19 @@ parse_config(const char *filename, u_int flags)
 
 	endservent();
 
+	if (errors) {
+		free(conf);
+		return (NULL);
+	}
+
 	if (!mibparsed)
 		mib_parsedir("/usr/share/snmp/mibs");
 	mib_resolve();
+
+	if (resolve_oids() == -1) {
+		free(conf);
+		return NULL;
+	}
 
 	if (uname(&u) == -1)
 		fatal("uname");
@@ -1742,12 +1883,12 @@ parse_config(const char *filename, u_int flags)
 		if (h->flags & ADDRESS_FLAG_NOTIFY)
 			found = 1;
 	}
-	if (conf->sc_traphandler && !found) {
+	if (ntrapcmds && !found) {
 		log_warnx("trap handler needs at least one notify listener");
 		free(conf);
 		return (NULL);
 	}
-	if (!conf->sc_traphandler && found) {
+	if (!ntrapcmds && found) {
 		log_warnx("notify listener needs at least one trap handler");
 		free(conf);
 		return (NULL);
@@ -1783,11 +1924,6 @@ parse_config(const char *filename, u_int flags)
 			TAILQ_REMOVE(&symhead, sym, entry);
 			free(sym);
 		}
-	}
-
-	if (errors) {
-		free(conf);
-		return (NULL);
 	}
 
 	return (conf);

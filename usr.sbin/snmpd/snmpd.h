@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.118 2024/02/06 12:44:28 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.119 2024/02/06 15:36:11 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -341,7 +341,7 @@ struct trap_address {
 			int		 ta_seclevel;
 		};
 	};
-	struct ber_oid		*ta_oid;
+	struct ber_oid		 ta_oid;
 
 	TAILQ_ENTRY(trap_address) entry;
 };
@@ -428,7 +428,7 @@ struct snmpd {
 };
 
 struct trapcmd {
-	struct ber_oid		*cmd_oid;
+	struct ber_oid		 cmd_oid;
 		/* sideways return for intermediate lookups */
 	struct trapcmd		*cmd_maybe;
 
