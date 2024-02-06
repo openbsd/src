@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_standard.c,v 1.2 2024/01/08 04:16:48 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_standard.c,v 1.3 2024/02/06 10:53:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -269,7 +269,7 @@ module_standard_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 	RADIUS_PACKET		*radres = NULL;
 	struct attr		*attr;
 
-	TAILQ_FOREACH(attr, &module->remove_reqattrs, next) {
+	TAILQ_FOREACH(attr, &module->remove_resattrs, next) {
 		if (radres == NULL &&
 		    (radres = radius_convert_packet(res, reslen)) == NULL) {
 			 syslog(LOG_ERR,
