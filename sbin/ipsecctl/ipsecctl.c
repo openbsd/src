@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.87 2024/01/29 00:59:54 yasuoka Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.88 2024/02/06 05:39:28 yasuoka Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -706,11 +706,7 @@ ipsecctl_show(int opts)
 		}
 	}
 
-	/* open /etc/{services,protocols} before pledge(2) */
-	setservent(1);
-	setprotoent(1);
-
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
 
 	if (rbuf != NULL) {
@@ -751,6 +747,9 @@ ipsecctl_show(int opts)
 			printf("No flows\n");
 	}
 
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	if (sbuf != NULL) {
 		if (opts & IPSECCTL_OPT_SHOWALL)
 			ipsecctl_print_title("SAD:");
@@ -785,10 +784,6 @@ ipsecctl_show(int opts)
 		ipsecctl_print_title("SAD:");
 		printf("No entries\n");
 	}
-
-	/* close /etc/{services,protocols} */
-	endservent();
-	endprotoent();
 }
 
 int
