@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.25 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.26 2024/02/06 12:44:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include "log.h"
+#include "mib.h"
 #include "smi.h"
 #include "snmp.h"
 #include "snmpd.h"
@@ -332,7 +333,8 @@ trapcmd_exec(struct trapcmd *cmd, struct sockaddr *sa,
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, s) == -1) {
 		log_warn("could not create pipe for OID '%s'",
-		    smi_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf), 0));
+		    mib_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf),
+		    snmpd_env->sc_oidfmt));
 		return;
 	}
 
@@ -350,13 +352,15 @@ trapcmd_exec(struct trapcmd *cmd, struct sockaddr *sa,
 
 		/* this shouldn't happen */
 		log_warn("could not exec trap command for OID '%s'",
-		    smi_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf), 0));
+		    mib_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf),
+		    snmpd_env->sc_oidfmt));
 		_exit(1);
 		/* NOTREACHED */
 
 	case -1:
 		log_warn("could not fork trap command for OID '%s'",
-		    smi_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf), 0));
+		    mib_oid2string(cmd->cmd_oid, oidbuf, sizeof(oidbuf),
+		    snmpd_env->sc_oidfmt));
 		close(s[0]);
 		close(s[1]);
 		return;

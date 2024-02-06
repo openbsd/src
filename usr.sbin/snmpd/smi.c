@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.39 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.40 2024/02/06 12:44:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -470,8 +470,8 @@ smi_print_element(struct ber_element *root)
 		case BER_TYPE_OBJECT:
 			if (ober_get_oid(root, &o) == -1)
 				goto fail;
-			if (asprintf(&str, "%s", smi_oid2string(&o, strbuf,
-			    sizeof(strbuf), 0)) == -1)
+			if (asprintf(&str, "%s", mib_oid2string(&o, strbuf,
+			    sizeof(strbuf), snmpd_env->sc_oidfmt)) == -1)
 				goto fail;
 			break;
 		case BER_TYPE_OCTETSTRING:

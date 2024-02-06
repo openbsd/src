@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.41 2023/12/21 12:43:30 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.42 2024/02/06 12:44:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -31,10 +31,11 @@
 
 #include "application.h"
 #include "log.h"
+#include "mib.h"
 #include "smi.h"
 #include "snmp.h"
+#include "snmpd.h"
 #include "snmpe.h"
-#include "mib.h"
 
 #define OID(...)		(struct ber_oid){ { __VA_ARGS__ },	\
     (sizeof((uint32_t []) { __VA_ARGS__ }) / sizeof(uint32_t)) }
@@ -135,7 +136,7 @@ struct snmp_target_mib {
 
 void appl_agentcap_free(struct appl_agentcap *);
 enum appl_error appl_region(struct appl_context *, uint32_t, uint8_t,
-    struct ber_oid *, int, int, struct appl_backend *);
+    struct ber_oid *, uint8_t, int, int, struct appl_backend *);
 void appl_region_free(struct appl_context *, struct appl_region *);
 enum appl_error appl_region_unregister_match(struct appl_context *, uint8_t,
     struct ber_oid *, char *, struct appl_backend *, int);
@@ -248,7 +249,7 @@ appl_addagentcaps(const char *ctxname, struct ber_oid *oid, const char *descr,
 	if (ctxname == NULL)
 		ctxname = "";
 
-	(void)smi_oid2string(oid, oidbuf, sizeof(oidbuf), 0);
+	mib_oid2string(oid, oidbuf, sizeof(oidbuf), snmpd_env->sc_oidfmt);
 	log_info("%s: Adding agent capabilities %s context(%s)",
 		backend->ab_name, oidbuf, ctxname);
 
@@ -297,7 +298,7 @@ appl_removeagentcaps(const char *ctxname, struct ber_oid *oid,
 	if (ctxname == NULL)
 		ctxname = "";
 
-	(void)smi_oid2string(oid, oidbuf, sizeof(oidbuf), 0);
+	mib_oid2string(oid, oidbuf, sizeof(oidbuf), snmpd_env->sc_oidfmt);
 	log_info("%s: Removing agent capabilities %s context(%s)",
 	    backend->ab_name, oidbuf, ctxname);
 
@@ -449,18 +450,24 @@ appl_targetmib(struct ber_oid *oid)
 
 enum appl_error
 appl_region(struct appl_context *ctx, uint32_t timeout, uint8_t priority,
-    struct ber_oid *oid, int instance, int subtree,
+    struct ber_oid *oid, uint8_t range_subid, int instance, int subtree,
     struct appl_backend *backend)
 {
 	struct appl_region *region = NULL, *nregion;
 	char oidbuf[1024], regionbuf[1024], subidbuf[11];
-	size_t i;
+	size_t i, bo_n;
 
-	/* Don't use smi_oid2string, because appl_register can't use it */
-	oidbuf[0] = '\0';
-	for (i = 0; i < oid->bo_n; i++) {
-		if (i != 0)
-			strlcat(oidbuf, ".", sizeof(oidbuf));
+	bo_n = oid->bo_n;
+	if (range_subid != 0)
+		oid->bo_n = range_subid;
+	mib_oid2string(oid, oidbuf, sizeof(oidbuf), snmpd_env->sc_oidfmt);
+	if (range_subid != 0) {
+		oid->bo_n = bo_n;
+		i = range_subid + 1;
+	} else
+		i = oid->bo_n;
+	for (; i < oid->bo_n; i++) {
+		strlcat(oidbuf, ".", sizeof(oidbuf));
 		snprintf(subidbuf, sizeof(subidbuf), "%"PRIu32,
 		    oid->bo_id[i]);
 		strlcat(oidbuf, subidbuf, sizeof(oidbuf));
@@ -539,15 +546,21 @@ appl_register(const char *ctxname, uint32_t timeout, uint8_t priority,
 	struct appl_region *region, search;
 	char oidbuf[1024], subidbuf[11];
 	enum appl_error error;
-	size_t i;
+	size_t i, bo_n;
 	uint32_t lower_bound;
 
-	oidbuf[0] = '\0';
-	/* smi_oid2string can't do ranges */
-	for (i = 0; i < oid->bo_n; i++) {
+	bo_n = oid->bo_n;
+	if (range_subid != 0)
+		oid->bo_n = range_subid;
+	mib_oid2string(oid, oidbuf, sizeof(oidbuf), snmpd_env->sc_oidfmt);
+	if (range_subid != 0) {
+		oid->bo_n = bo_n;
+		i = range_subid + 1;
+	} else
+		i = oid->bo_n;
+	for (; i < oid->bo_n; i++) {
+		strlcat(oidbuf, ".", sizeof(oidbuf));
 		snprintf(subidbuf, sizeof(subidbuf), "%"PRIu32, oid->bo_id[i]);
-		if (i != 0)
-			strlcat(oidbuf, ".", sizeof(oidbuf));
 		if (range_subid == i + 1) {
 			strlcat(oidbuf, "[", sizeof(oidbuf));
 			strlcat(oidbuf, subidbuf, sizeof(oidbuf));
@@ -587,8 +600,8 @@ appl_register(const char *ctxname, uint32_t timeout, uint8_t priority,
 	}
 
 	if (range_subid == 0)
-		return appl_region(ctx, timeout, priority, oid, instance,
-		    subtree, backend);
+		return appl_region(ctx, timeout, priority, oid, range_subid,
+		    instance, subtree, backend);
 
 	range_subid--;
 	if (range_subid >= oid->bo_n) {
@@ -604,12 +617,13 @@ appl_register(const char *ctxname, uint32_t timeout, uint8_t priority,
 
 	lower_bound = oid->bo_id[range_subid];
 	do {
-		if ((error = appl_region(ctx, timeout, priority, oid, instance,
-		    subtree, backend)) != APPL_ERROR_NOERROR)
+		if ((error = appl_region(ctx, timeout, priority, oid,
+		    range_subid, instance, subtree,
+		    backend)) != APPL_ERROR_NOERROR)
 			goto fail;
 	} while (oid->bo_id[range_subid]++ != upper_bound);
-	if ((error = appl_region(ctx, timeout, priority, oid, instance, subtree,
-	    backend)) != APPL_ERROR_NOERROR)
+	if ((error = appl_region(ctx, timeout, priority, oid, range_subid,
+	    instance, subtree, backend)) != APPL_ERROR_NOERROR)
 		goto fail;
 
 	return APPL_ERROR_NOERROR;
@@ -1311,8 +1325,8 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 	for (i = 1; vb != NULL; vb = vb->av_next, i++) {
 		if (!appl_varbind_valid(vb, origvb, next,
 		    error != APPL_ERROR_NOERROR, backend->ab_range, &errstr)) {
-			smi_oid2string(&(vb->av_oid), oidbuf,
-			    sizeof(oidbuf), 0);
+			mib_oid2string(&(vb->av_oid), oidbuf, sizeof(oidbuf),
+			    snmpd_env->sc_oidfmt);
 			log_warnx("%s: %"PRIu32" %s: %s",
 			    backend->ab_name, requestid, oidbuf, errstr);
 			invalid = 1;
@@ -1756,15 +1770,16 @@ appl_pdu_log(struct appl_backend *backend, enum snmp_pdutype pdutype,
 	buf[0] = '\0';
 	for (vb = vblist; vb != NULL; vb = vb->av_next) {
 		strlcat(buf, "{", sizeof(buf));
-		strlcat(buf, smi_oid2string(&(vb->av_oid), oidbuf,
-		    sizeof(oidbuf), 0), sizeof(buf));
+		strlcat(buf, mib_oid2string(&(vb->av_oid), oidbuf,
+		    sizeof(oidbuf), snmpd_env->sc_oidfmt), sizeof(buf));
 		if (next) {
 			if (vb->av_include)
 				strlcat(buf, "(incl)", sizeof(buf));
 			if (vb->av_oid_end.bo_n > 0) {
 				strlcat(buf, "-", sizeof(buf));
-				strlcat(buf, smi_oid2string(&(vb->av_oid_end),
-				    oidbuf, sizeof(oidbuf), 0), sizeof(buf));
+				strlcat(buf, mib_oid2string(&(vb->av_oid_end),
+				    oidbuf, sizeof(oidbuf),
+				    snmpd_env->sc_oidfmt), sizeof(buf));
 			}
 		}
 		strlcat(buf, ":", sizeof(buf));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.11 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.12 2024/02/06 12:44:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -243,10 +243,9 @@ appl_internal_region(struct ber_oid *oid)
 	 * Ignore requestDenied, duplicateRegistration, and unsupportedContext
 	 */
 	if (error == APPL_ERROR_PROCESSINGERROR ||
-	    error == APPL_ERROR_PARSEERROR) {
-		smi_oid2string(oid, oidbuf, sizeof(oidbuf), 0);
-		fatalx("internal: Failed to register %s", oidbuf);
-	}
+	    error == APPL_ERROR_PARSEERROR)
+		fatalx("internal: Failed to register %s", mib_oid2string(oid,
+		    oidbuf, sizeof(oidbuf), snmpd_env->sc_oidfmt));
 }
 
 void
@@ -267,7 +266,8 @@ appl_internal_object(struct ber_oid *oid,
 	if (RB_INSERT(appl_internal_objects,
 	    &appl_internal_objects, obj) != NULL)
 		fatalx("%s: %s already registered", __func__,
-		    smi_oid2string(oid, buf, sizeof(buf), 0));
+		    mib_oid2string(oid, buf, sizeof(buf),
+		    snmpd_env->sc_oidfmt));
 }
 
 const char *

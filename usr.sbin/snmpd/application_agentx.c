@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.15 2023/12/21 12:43:30 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.16 2024/02/06 12:44:27 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -34,6 +34,7 @@
 #include "application.h"
 #include "ax.h"
 #include "log.h"
+#include "mib.h"
 #include "smi.h"
 #include "snmp.h"
 #include "snmpd.h"
@@ -558,7 +559,7 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	TAILQ_INSERT_TAIL(&(conn->conn_sessions), session, sess_conn_entry);
 
 	appl_agentx_oid2ber_oid(&(session->sess_oid), &oid);
-	smi_oid2string(&oid, oidbuf, sizeof(oidbuf), 0);
+	mib_oid2string(&oid, oidbuf, sizeof(oidbuf), snmpd_env->sc_oidfmt);
 	log_info("%s: %s %s: Open", session->sess_backend.ab_name, oidbuf,
 	    session->sess_descr.aos_string);
 

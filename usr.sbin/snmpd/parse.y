@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.87 2024/02/06 12:39:13 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.88 2024/02/06 12:44:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1662,6 +1662,8 @@ parse_config(const char *filename, u_int flags)
 
 	conf->sc_system.sys_services = -1;
 	conf->sc_flags = flags;
+	conf->sc_oidfmt =
+	    flags & SNMPD_F_NONAMES ?  MIB_OIDNUMERIC : MIB_OIDSYMBOLIC;
 	conf->sc_confpath = filename;
 	TAILQ_INIT(&conf->sc_addresses);
 	TAILQ_INIT(&conf->sc_agentx_masters);

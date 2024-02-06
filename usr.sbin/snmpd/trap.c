@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2024/02/06 12:44:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -54,7 +54,7 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 	if (TAILQ_EMPTY(&snmpd_env->sc_trapreceivers))
 		return (0);
 
-	smi_oid2string(oid, ostr, sizeof(ostr), 0);
+	mib_oid2string(oid, ostr, sizeof(ostr), snmpd_env->sc_oidfmt);
 	log_debug("trap_send: oid %s", ostr);
 
 	/* Add mandatory varbind elements */
