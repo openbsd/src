@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.17 2024/02/04 17:51:59 kettenis Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.18 2024/02/06 14:18:15 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -54,6 +54,8 @@
  * Driver for Qualcomm Technologies 802.11ax chipset.
  */
 
+#include "bpfilter.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,6 +74,9 @@
 #include <dev/ofw/openfirm.h>
 #endif
 
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 #include <net/if.h>
 #include <net/if_media.h>
 
@@ -360,6 +365,15 @@ qwx_tx(struct qwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	wh = mtod(m, struct ieee80211_frame *);
 	frame_type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct qwx_tx_radiotap_header *tap = &sc->sc_txtap;
+
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_txtap_len,
+		    m, BPF_DIRECTION_OUT);
+	}
+#endif
 
 	if (frame_type == IEEE80211_FC0_TYPE_MGT)
 		return qwx_mac_mgmt_tx_wmi(sc, arvif, pdev_id, m);
@@ -12636,6 +12650,14 @@ qwx_mgmt_rx_event(struct qwx_softc *sc, struct mbuf *m)
 	DNPRINTF(QWX_D_MGMT, "%s: event mgmt rx freq %d chan %d snr %d\n",
 	    __func__, rx_ev.chan_freq, rx_ev.channel, rx_ev.snr);
 
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct qwx_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
+		    m, BPF_DIRECTION_IN);
+	}
+#endif
 	ieee80211_input(ifp, m, ni, &rxi);
 exit:
 #ifdef notyet
@@ -15213,8 +15235,14 @@ qwx_dp_rx_deliver_msdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu)
 	wh = mtod(msdu->m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	/* TODO: bpf */
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf != NULL) {
+		struct qwx_rx_radiotap_header *tap = &sc->sc_rxtap;
 
+		bpf_mtap_hdr(sc->sc_drvbpf, tap, sc->sc_rxtap_len,
+		    msdu->m, BPF_DIRECTION_IN);
+	}
+#endif
 	ieee80211_input(ifp, msdu->m, ni, &msdu->rxi);
 	ieee80211_release_node(ic, ni);
 }
@@ -23063,6 +23091,23 @@ qwx_run_stop(struct qwx_softc *sc)
 	return ENOTSUP;
 }
 
+#if NBPFILTER > 0
+void
+qwx_radiotap_attach(struct qwx_softc *sc)
+{
+	bpfattach(&sc->sc_drvbpf, &sc->sc_ic.ic_if, DLT_IEEE802_11_RADIO,
+	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN);
+
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(IWX_RX_RADIOTAP_PRESENT);
+
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
+	sc->sc_txtap.wt_ihdr.it_present = htole32(IWX_TX_RADIOTAP_PRESENT);
+}
+#endif
+
 int
 qwx_attach(struct qwx_softc *sc)
 {
@@ -23073,7 +23118,9 @@ qwx_attach(struct qwx_softc *sc)
 	task_set(&sc->init_task, qwx_init_task, sc);
 	task_set(&sc->newstate_task, qwx_newstate_task, sc);
 	timeout_set_proc(&sc->scan.timeout, qwx_scan_timeout, sc);
-
+#if NBPFILTER > 0
+	qwx_radiotap_attach(sc);
+#endif
 	for (i = 0; i < nitems(sc->pdevs); i++)
 		sc->pdevs[i].sc = sc;
 

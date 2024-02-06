@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.11 2024/02/03 20:07:19 kettenis Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.12 2024/02/06 14:18:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1624,6 +1624,18 @@ struct qwx_ext_irq_grp {
 #endif
 };
 
+struct qwx_rx_radiotap_header {
+	struct ieee80211_radiotap_header wr_ihdr;
+} __packed;
+
+#define IWX_RX_RADIOTAP_PRESENT	0 /* TODO add more information */
+
+struct qwx_tx_radiotap_header {
+	struct ieee80211_radiotap_header wt_ihdr;
+} __packed;
+
+#define IWX_TX_RADIOTAP_PRESENT	0 /* TODO add more information */
+
 struct qwx_softc {
 	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
@@ -1751,6 +1763,24 @@ struct qwx_softc {
 	uint32_t			msi_ce_irqmask;
 
 	struct qmi_wlanfw_request_mem_ind_msg_v01 *sc_req_mem_ind;
+
+#if NBPFILTER > 0
+	caddr_t			sc_drvbpf;
+
+	union {
+		struct qwx_rx_radiotap_header th;
+		uint8_t	pad[IEEE80211_RADIOTAP_HDRLEN];
+	} sc_rxtapu;
+#define sc_rxtap	sc_rxtapu.th
+	int			sc_rxtap_len;
+
+	union {
+		struct qwx_tx_radiotap_header th;
+		uint8_t	pad[IEEE80211_RADIOTAP_HDRLEN];
+	} sc_txtapu;
+#define sc_txtap	sc_txtapu.th
+	int			sc_txtap_len;
+#endif
 };
 
 int	qwx_ce_intr(void *);
