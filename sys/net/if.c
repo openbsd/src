@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.717 2024/02/05 18:27:47 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.718 2024/02/06 00:18:53 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1788,7 +1788,7 @@ if_linkstate(struct ifnet *ifp)
 {
 	NET_ASSERT_LOCKED();
 
-	if (panicstr != NULL) {
+	if (panicstr == NULL) {
 		rtm_ifchg(ifp);
 		rt_if_track(ifp);
 	}
