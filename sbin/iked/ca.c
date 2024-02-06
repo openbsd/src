@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.99 2024/01/24 10:09:07 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.100 2024/02/06 13:10:56 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,7 @@
 
 void	 ca_run(struct privsep *, struct privsep_proc *, void *);
 void	 ca_shutdown(void);
-void	 ca_reset(struct privsep *);
+void	 ca_reset(struct iked *);
 int	 ca_reload(struct iked *);
 
 int	 ca_cert_local(struct iked *, X509 *);
@@ -175,9 +175,8 @@ ca_getkey(struct privsep *ps, struct iked_id *key, enum imsg_type type)
 }
 
 void
-ca_reset(struct privsep *ps)
+ca_reset(struct iked *env)
 {
-	struct iked	*env = iked_env;
 	struct ca_store	*store = env->sc_priv;
 
 	if (store->ca_privkey.id_type == IKEV2_ID_NONE ||
@@ -338,7 +337,7 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&mode, imsg->data, sizeof(mode));
 		if (mode == RESET_ALL || mode == RESET_CA) {
 			log_debug("%s: config reset", __func__);
-			ca_reset(&env->sc_ps);
+			ca_reset(env);
 		}
 		break;
 	case IMSG_OCSP_FD:
