@@ -27,6 +27,7 @@ struct mipi_dsi_device {
 	uint32_t channel;
 	uint32_t mode_flags;
 #define MIPI_DSI_MODE_LPM	(1 << 0)
+	bool attached;
 };
 
 struct mipi_dsi_msg {
