@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2024/02/06 05:00:12 jca Exp $
+# $OpenBSD: Makefile,v 1.8 2024/02/06 05:07:28 jca Exp $
 
 .include <bsd.own.mk>
 
@@ -320,6 +320,8 @@ SRCS+=	comparetf2.c \
 	floatunsitf.c \
 	floatuntitf.c \
 	multc3.c \
+	restore.S \
+	save.S \
 	trunctfdf2.c \
 	trunctfsf2.c
 .endif
