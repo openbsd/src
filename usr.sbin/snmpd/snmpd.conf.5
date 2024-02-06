@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.63 2023/04/25 13:36:01 op Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.64 2024/02/06 12:39:13 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2023 $
+.Dd $Mdocdate: February 6 2024 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -231,6 +231,11 @@ RFC1910 legacy format.
 must be 8 bytes
 .Pq or 16 characters in hexadecimal format .
 .El
+.It Ic mib directory Ar path
+Specify which directories to recursively search for MIB files.
+Multiple directories can be specified.
+If no directory is specified it defaults to
+.Pa /usr/share/snmp/mibs .
 .It Ic read-only community Ar string
 Specify the name of the read-only community.
 There is no default value.

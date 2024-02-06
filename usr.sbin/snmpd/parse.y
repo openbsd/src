@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.86 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.87 2024/02/06 12:39:13 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -100,6 +100,7 @@ char		*symget(const char *);
 struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct usmuser		*user = NULL;
+static int			 mibparsed = 0;
 static struct ber_oid		*smi_object;
 
 static uint8_t			 engineid[SNMPD_MAXENGINEIDLEN];
@@ -145,6 +146,7 @@ typedef struct {
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR
 %token	HANDLE DEFAULT SRCADDR TCP UDP BLOCKLIST PORT
+%token	MIB DIRECTORY
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.string>	usmuser community optcommunity
@@ -166,6 +168,7 @@ grammar		: /* empty */
 		| grammar main '\n'
 		| grammar system '\n'
 		| grammar object '\n'
+		| grammar mib '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -1188,6 +1191,12 @@ cmd		: STRING		{
 		}
 		;
 
+mib		: MIB DIRECTORY STRING		{
+			mib_parsedir($3);
+			mibparsed = 1;
+		}
+		;
+
 %%
 
 struct keywords {
@@ -1231,6 +1240,7 @@ lookup(char *s)
 		{ "contact",			CONTACT },
 		{ "default",			DEFAULT },
 		{ "description",		DESCR },
+		{ "directory",			DIRECTORY },
 		{ "enc",			ENC },
 		{ "enckey",			ENCKEY },
 		{ "engineid",			ENGINEID },
@@ -1245,6 +1255,7 @@ lookup(char *s)
 		{ "listen",			LISTEN },
 		{ "location",			LOCATION },
 		{ "mac",			MAC },
+		{ "mib",			MIB },
 		{ "mode",			MODE },
 		{ "name",			NAME },
 		{ "none",			NONE },
@@ -1669,6 +1680,10 @@ parse_config(const char *filename, u_int flags)
 	popfile();
 
 	endservent();
+
+	if (!mibparsed)
+		mib_parsedir("/usr/share/snmp/mibs");
+	mib_resolve();
 
 	if (uname(&u) == -1)
 		fatal("uname");
