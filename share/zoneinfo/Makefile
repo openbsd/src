@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2023/11/18 07:18:07 anton Exp $
+#	$OpenBSD: Makefile,v 1.19 2024/02/07 21:24:58 millert Exp $
 
 # DATAFORM selects the data format.  OpenBSD always uses "main"
 # Available formats represent essentially the same data, albeit
@@ -82,11 +82,11 @@ TZDATA_TEXT=	leapseconds tzdata.zi
 TDATA=		africa antarctica asia australasia \
 		europe northamerica southamerica etcetera factory \
 		backward
-TABDATA=	iso3166.tab zone.tab zone1970.tab $(TZDATA_TEXT)
+TABDATA=	iso3166.tab zone.tab zone1970.tab zonenow.tab $(TZDATA_TEXT)
 DATA=		$(TDATA) $(TABDATA)
 DSTDATA_ZI_DEPS= ziguard.awk $(TDATA)
 
-ZIC=		zic
+ZIC=		zic $(ZFLAGS)
 
 all: leapseconds tzdata.zi
 
@@ -148,6 +148,8 @@ realinstall: ${DATA} ${REDO}
 	${INSTALL} -c -o root -g bin -m 644 ${.CURDIR}/datfiles/zone.tab \
 	    ${DESTDIR}/usr/share/zoneinfo
 	${INSTALL} -c -o root -g bin -m 644 ${.CURDIR}/datfiles/zone1970.tab \
+	    ${DESTDIR}/usr/share/zoneinfo
+	${INSTALL} -c -o root -g bin -m 644 ${.CURDIR}/datfiles/zonenow.tab \
 	    ${DESTDIR}/usr/share/zoneinfo
 
 clean:
