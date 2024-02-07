@@ -621,7 +621,7 @@ static bool relax(InputSection &sec) {
   // iteration.
   DenseMap<const Defined *, uint64_t> valueDelta;
   ArrayRef<SymbolAnchor> sa = ArrayRef(aux.anchors);
-  uint32_t delta = 0;
+  uint64_t delta = 0;
   for (auto [i, r] : llvm::enumerate(sec.relocs())) {
     for (; sa.size() && sa[0].offset <= r.offset; sa = sa.slice(1))
       if (!sa[0].end)
@@ -688,8 +688,8 @@ static bool relax(InputSection &sec) {
       a.d->value -= delta - valueDelta.find(a.d)->second;
   }
   // Inform assignAddresses that the size has changed.
-  if (!isUInt<16>(delta))
-    fatal("section size decrease is too large");
+  if (!isUInt<32>(delta))
+    fatal("section size decrease is too large: " + Twine(delta));
   sec.bytesDropped = delta;
   return changed;
 }
