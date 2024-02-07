@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.90 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.91 2024/02/07 20:32:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -169,7 +169,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	vsize_t len;
 
 #ifdef BTLBDEBUG
-	printf("bus_mem_add_mapping(%x,%x,%scachable,%p)\n",
+	printf("bus_mem_add_mapping(%lx,%lx,%scachable,%p)\n",
 	    bpa, size, flags? "" : "non", bshp);
 #endif
 
@@ -196,10 +196,10 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		size -= min(size, HPPA_FLEX_SIZE - (pa - spa));
 
 		/* do need a new mapping? */
-		if (!(bmm[flex / 32] & (1 << (flex % 32)))) {
+		if (!(bmm[flex / 32] & (1U << (flex % 32)))) {
 #ifdef BTLBDEBUG
 			printf("bus_mem_add_mapping: adding flex=%x "
-			    "%x-%x, ", flex, spa, epa - 1);
+			    "%lx-%lx, ", flex, spa, epa - 1);
 #endif
 			while (spa != epa) {
 				len = epa - spa;
@@ -224,7 +224,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 				    >= 0) {
 					pa = spa + len;	/* may wrap to 0... */
 #ifdef BTLBDEBUG
-					printf("--- %x/%x, %x-%x ",
+					printf("--- %x/%lx, %lx-%lx ",
 					    flex, HPPA_FLEX(pa - 1),
 					    spa, pa - 1);
 #endif
@@ -235,7 +235,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 						printf("mask %x ", flex);
 #endif
 						bmm[flex / 32] |=
-						    (1 << (flex % 32));
+						    (1U << (flex % 32));
 					}
 					if (len > epa - spa)
 						spa = epa;
@@ -243,7 +243,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 						spa = pa;
 				} else {
 #ifdef BTLBDEBUG
-					printf("kenter 0x%x-0x%x", spa, epa);
+					printf("kenter 0x%lx-0x%lx", spa, epa);
 #endif
 					for (; spa != epa; spa += PAGE_SIZE)
 						pmap_kenter_pa(spa, spa,
