@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.86 2020/06/23 02:18:58 aoyama Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.87 2024/02/07 20:54:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -389,7 +389,7 @@ tlb_flush(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 /*
  * [INTERNAL]
  * Update translation cache entry for `va' in pmap_kernel() to `pte'. May
- * flush insteai of updating.
+ * flush instead of updating.
  */
 void
 tlb_kflush(vaddr_t va, pt_entry_t pte)
@@ -1886,10 +1886,7 @@ pmap_set_modify(pmap_t pmap, vaddr_t va)
 
 	pg->mdpage.pv_flags |= PG_M_U;
 
-	if (pmap == pmap_kernel())
-		set_dcmd(CMMU_DCMD_INV_SATC);
-	else
-		set_dcmd(CMMU_DCMD_INV_UATC);
+	tlb_flush(pmap, va, *pte);
 
 	return (TRUE);
 }
