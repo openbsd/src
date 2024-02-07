@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.13 2024/02/02 12:02:26 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.14 2024/02/07 22:35:08 kettenis Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -299,9 +299,10 @@ sximmc_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-mmc") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun9i-a80-mmc") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun20i-d1-mmc") ||
-	    OF_is_compatible(faa->fa_node, "allwinner,sun20i-d1-emmc") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-mmc") ||
-	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-emmc"));
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a64-emmc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a100-mmc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a100-emmc"));
 }
 
 int
@@ -398,7 +399,8 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dma_ftrglevel = SXIMMC_DMA_FTRGLEVEL_A20;
 
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun20i-d1-mmc") ||
-	    OF_is_compatible(faa->fa_node, "allwinner,sun20i-d1-emmc"))
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a100-mmc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-a100-emmc"))
 		sc->sc_idma_shift = 2;
 
 	if (sc->sc_use_dma) {
@@ -451,8 +453,8 @@ sximmc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (OF_is_compatible(sc->sc_node, "allwinner,sun4i-a10-mmc") ||
 	    OF_is_compatible(sc->sc_node, "allwinner,sun20i-d1-mmc") ||
-	    OF_is_compatible(sc->sc_node, "allwinner,sun20i-d1-emmc") ||
-	    OF_is_compatible(sc->sc_node, "allwinner,sun50i-a64-emmc")) {
+	    OF_is_compatible(sc->sc_node, "allwinner,sun50i-a64-emmc") ||
+	    OF_is_compatible(sc->sc_node, "allwinner,sun50i-a100-emmc")) {
 		saa.max_seg = 0x2000;
 	} else {
 		saa.max_seg = 0x10000;
