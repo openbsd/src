@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.22 2015/11/19 02:35:24 mmcc Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.23 2024/02/07 17:22:01 tb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -176,10 +176,16 @@ keynote_keygen(int argc, char *argv[])
     {
         RAND_bytes(seed, SEED_LEN);
 
-	dsa = DSA_generate_parameters(len, seed, SEED_LEN,
-	    &counter, &h, NULL, NULL);
+	dsa = DSA_new();
 
 	if (dsa == NULL)
+	{
+	    ERR_print_errors_fp(stderr);
+	    exit(1);
+	}
+
+	if (DSA_generate_parameters_ex(dsa, len, seed, SEED_LEN,
+	    &counter, &h, NULL) != 1)
 	{
 	    ERR_print_errors_fp(stderr);
 	    exit(1);
