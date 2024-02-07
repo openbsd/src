@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.91 2024/01/09 19:57:01 bluhm Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.92 2024/02/07 23:40:40 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 
-int in6_selectif(struct sockaddr_in6 *, struct ip6_pktopts *,
+int in6_selectif(const struct in6_addr *, struct ip6_pktopts *,
     struct ip6_moptions *, struct route_in6 *, struct ifnet **, u_int);
 
 /*
@@ -118,7 +118,7 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 		struct sockaddr_in6 sa6;
 
 		/* get the outgoing interface */
-		error = in6_selectif(dstsock, opts, mopts, ro, &ifp, rtableid);
+		error = in6_selectif(dst, opts, mopts, ro, &ifp, rtableid);
 		if (error)
 			return (error);
 
@@ -179,22 +179,8 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
-	if (!rtisvalid(ro->ro_rt) || (ro->ro_tableid != rtableid) ||
-	    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
-		rtfree(ro->ro_rt);
-		ro->ro_rt = NULL;
-	}
+	route6_cache(ro, dst, rtableid);
 	if (ro->ro_rt == NULL) {
-		struct sockaddr_in6 *sa6;
-
-		/* No route yet, so try to acquire one */
-		bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
-		ro->ro_tableid = rtableid;
-		sa6 = &ro->ro_dst;
-		sa6->sin6_family = AF_INET6;
-		sa6->sin6_len = sizeof(struct sockaddr_in6);
-		sa6->sin6_addr = *dst;
-		sa6->sin6_scope_id = dstsock->sin6_scope_id;
 		ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst),
 		    RT_RESOLVE, ro->ro_tableid);
 	}
@@ -312,35 +298,17 @@ in6_selectsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 }
 
 struct rtentry *
-in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+in6_selectroute(const struct in6_addr *dst, struct ip6_pktopts *opts,
     struct route_in6 *ro, unsigned int rtableid)
 {
-	struct in6_addr *dst;
-
-	dst = &dstsock->sin6_addr;
-
 	/*
 	 * Use a cached route if it exists and is valid, else try to allocate
 	 * a new one.
 	 */
 	if (ro) {
-		if (rtisvalid(ro->ro_rt))
-			KASSERT(sin6tosa(&ro->ro_dst)->sa_family == AF_INET6);
-		if (!rtisvalid(ro->ro_rt) ||
-		    !IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, dst)) {
-			rtfree(ro->ro_rt);
-			ro->ro_rt = NULL;
-		}
+		route6_cache(ro, dst, rtableid);
 		if (ro->ro_rt == NULL) {
-			struct sockaddr_in6 *sa6;
-
 			/* No route yet, so try to acquire one */
-			bzero(&ro->ro_dst, sizeof(struct sockaddr_in6));
-			ro->ro_tableid = rtableid;
-			sa6 = &ro->ro_dst;
-			*sa6 = *dstsock;
-			sa6->sin6_scope_id = 0;
-			ro->ro_tableid = rtableid;
 			ro->ro_rt = rtalloc_mpath(sin6tosa(&ro->ro_dst),
 			    NULL, ro->ro_tableid);
 		}
@@ -369,7 +337,7 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 }
 
 int
-in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
+in6_selectif(const struct in6_addr *dst, struct ip6_pktopts *opts,
     struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
     u_int rtableid)
 {
@@ -387,11 +355,11 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * If the destination address is a multicast address and the outgoing
 	 * interface for the address is specified by the caller, use it.
 	 */
-	if (IN6_IS_ADDR_MULTICAST(&dstsock->sin6_addr) &&
+	if (IN6_IS_ADDR_MULTICAST(dst) &&
 	    mopts != NULL && (*retifp = if_get(mopts->im6o_ifidx)) != NULL)
 	    	return (0);
 
-	rt = in6_selectroute(dstsock, opts, ro, rtableid);
+	rt = in6_selectroute(dst, opts, ro, rtableid);
 	if (rt == NULL)
 		return (EHOSTUNREACH);
 

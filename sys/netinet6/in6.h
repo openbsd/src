@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.113 2024/01/31 14:56:43 bluhm Exp $	*/
+/*	$OpenBSD: in6.h,v 1.114 2024/02/07 23:40:40 bluhm Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -427,6 +427,8 @@ struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *, u_int);
 int	in6_mask2len(struct in6_addr *, u_char *);
 int	in6_nam2sin6(const struct mbuf *, struct sockaddr_in6 **);
 int	in6_sa2sin6(struct sockaddr *, struct sockaddr_in6 **);
+
+void	route6_cache(struct route_in6 *, const struct in6_addr *, u_int);
 
 struct ip6_pktopts;
 struct ip6_moptions;

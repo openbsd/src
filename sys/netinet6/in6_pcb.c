@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.134 2024/01/31 12:27:57 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.135 2024/02/07 23:40:40 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -566,24 +566,10 @@ in6_pcbrtentry(struct inpcb *inp)
 {
 	struct route_in6 *ro = &inp->inp_route6;
 
-	/* check if route is still valid */
-	if (!rtisvalid(ro->ro_rt)) {
-		rtfree(ro->ro_rt);
-		ro->ro_rt = NULL;
-	}
-
-	/*
-	 * No route yet, so try to acquire one.
-	 */
+	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
+		return (NULL);
+	route6_cache(ro, &inp->inp_faddr6, inp->inp_rtableid);
 	if (ro->ro_rt == NULL) {
-		memset(ro, 0, sizeof(struct route_in6));
-
-		if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
-			return (NULL);
-		ro->ro_dst.sin6_family = AF_INET6;
-		ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
-		ro->ro_dst.sin6_addr = inp->inp_faddr6;
-		ro->ro_tableid = inp->inp_rtableid;
 		ro->ro_rt = rtalloc_mpath(sin6tosa(&ro->ro_dst),
 		    &inp->inp_laddr6.s6_addr32[0], ro->ro_tableid);
 	}

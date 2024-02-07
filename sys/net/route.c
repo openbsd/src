@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.428 2024/02/05 23:16:39 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.429 2024/02/07 23:40:40 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -228,6 +228,36 @@ route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
 	satosin(&ro->ro_dst)->sin_family = AF_INET;
 	satosin(&ro->ro_dst)->sin_len = sizeof(struct sockaddr_in);
 	satosin(&ro->ro_dst)->sin_addr = addr;
+}
+
+void
+route6_cache(struct route_in6 *ro, const struct in6_addr *addr,
+    u_int rtableid)
+{
+	u_long gen;
+
+	gen = atomic_load_long(&rtgeneration);
+	membar_consumer();
+
+	if (rtisvalid(ro->ro_rt) &&
+	    ro->ro_generation == gen &&
+	    ro->ro_tableid == rtableid &&
+	    ro->ro_dst.sin6_family == AF_INET6 &&
+	    IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, addr)) {
+		ip6stat_inc(ip6s_rtcachehit);
+		return;
+	}
+
+	ip6stat_inc(ip6s_rtcachemiss);
+	rtfree(ro->ro_rt);
+	ro->ro_rt = NULL;
+	ro->ro_generation = gen;
+	ro->ro_tableid = rtableid;
+
+	memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
+	ro->ro_dst.sin6_family = AF_INET6;
+	ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
+	ro->ro_dst.sin6_addr = *addr;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.284 2024/01/31 12:27:57 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.285 2024/02/07 23:40:40 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
 	int hlen, tlen;
 	struct route_in6 ip6route;
 	struct rtentry *rt = NULL;
-	struct sockaddr_in6 *dst, dstsock;
+	struct sockaddr_in6 *dst;
 	int error = 0;
 	u_long mtu;
 	int dontfrag;
@@ -442,13 +442,7 @@ reroute:
 	}
 #endif /* IPSEC */
 
-	bzero(&dstsock, sizeof(dstsock));
-	dstsock.sin6_family = AF_INET6;
-	dstsock.sin6_addr = ip6->ip6_dst;
-	dstsock.sin6_len = sizeof(dstsock);
-	ro->ro_tableid = m->m_pkthdr.ph_rtableid;
-
-	if (IN6_IS_ADDR_MULTICAST(&dstsock.sin6_addr)) {
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		struct in6_pktinfo *pi = NULL;
 
 		/*
@@ -463,7 +457,8 @@ reroute:
 	}
 
 	if (ifp == NULL) {
-		rt = in6_selectroute(&dstsock, opt, ro, ro->ro_tableid);
+		rt = in6_selectroute(&ip6->ip6_dst, opt, ro,
+		    m->m_pkthdr.ph_rtableid);
 		if (rt == NULL) {
 			ip6stat_inc(ip6s_noroute);
 			error = EHOSTUNREACH;
@@ -485,7 +480,7 @@ reroute:
 			goto bad;
 		}
 	} else {
-		*dst = dstsock;
+		route6_cache(ro, &ip6->ip6_dst, m->m_pkthdr.ph_rtableid);
 	}
 
 	if (rt && (rt->rt_flags & RTF_GATEWAY) &&

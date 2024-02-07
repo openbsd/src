@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.112 2023/07/07 08:05:02 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.113 2024/02/07 23:40:40 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ void
 ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct sockaddr_in6 *sin6;
+	struct sockaddr *dst;
 	struct route_in6 ro;
 	struct ifnet *ifp = NULL;
 	int error = 0, type = 0, code = 0, destmtu = 0;
@@ -165,15 +165,12 @@ reroute:
 	}
 #endif /* IPSEC */
 
-	memset(&ro, 0, sizeof(ro));
-	sin6 = &ro.ro_dst;
-	sin6->sin6_family = AF_INET6;
-	sin6->sin6_len = sizeof(*sin6);
-	sin6->sin6_addr = ip6->ip6_dst;
-
+	ro.ro_rt = NULL;
+	route6_cache(&ro, &ip6->ip6_dst, m->m_pkthdr.ph_rtableid);
+	dst = sin6tosa(&ro.ro_dst);
 	if (!rtisvalid(rt)) {
 		rtfree(rt);
-		rt = rtalloc_mpath(sin6tosa(sin6), &ip6->ip6_src.s6_addr32[0],
+		rt = rtalloc_mpath(dst, &ip6->ip6_src.s6_addr32[0],
 		    m->m_pkthdr.ph_rtableid);
 		if (rt == NULL) {
 			ip6stat_inc(ip6s_noroute);
@@ -185,6 +182,7 @@ reroute:
 			goto out;
 		}
 	}
+	ro.ro_rt = rt;
 
 	/*
 	 * Scope check: if a packet can't be delivered to its destination
@@ -226,8 +224,6 @@ reroute:
 	 */
 	if (tdb != NULL) {
 		/* Callee frees mbuf */
-		ro.ro_rt = rt;
-		ro.ro_tableid = m->m_pkthdr.ph_rtableid;
 		error = ip6_output_ipsec_send(tdb, m, &ro, 0, 1);
 		rt = ro.ro_rt;
 		if (error)
@@ -237,7 +233,7 @@ reroute:
 #endif /* IPSEC */
 
 	if (rt->rt_flags & RTF_GATEWAY)
-		sin6 = satosin6(rt->rt_gateway);
+		dst = rt->rt_gateway;
 
 	/*
 	 * If we are to forward the packet using the same interface
@@ -319,7 +315,7 @@ reroute:
 	}
 #endif
 
-	error = if_output_tso(ifp, &m, sin6tosa(sin6), rt, ifp->if_mtu);
+	error = if_output_tso(ifp, &m, dst, rt, ifp->if_mtu);
 	if (error)
 		ip6stat_inc(ip6s_cantforward);
 	else if (m == NULL)
