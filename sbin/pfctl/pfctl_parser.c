@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.349 2023/10/26 16:26:01 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.350 2024/02/07 23:53:44 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -720,17 +720,23 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 	if (verbose)
 		printf("@%d ", r->nr);
 
-	if (r->action > PF_MATCH)
-		printf("action(%d)", r->action);
-	else if (anchor_call[0]) {
-		p = strrchr(anchor_call, '/');
-		if (p ? p[1] == '_' : anchor_call[0] == '_')
-			printf("%s", anchortypes[r->action]);
+	if (anchor_call[0]) {
+		if (r->action >= nitems(anchortypes)) {
+			printf("anchor(%d)", r->action);
+		} else {
+			p = strrchr(anchor_call, '/');
+			if (p ? p[1] == '_' : anchor_call[0] == '_')
+				printf("%s", anchortypes[r->action]);
+			else
+				printf("%s \"%s\"", anchortypes[r->action],
+				    anchor_call);
+		}
+	} else {
+		if (r->action >= nitems(actiontypes))
+			printf("action(%d)", r->action);
 		else
-			printf("%s \"%s\"", anchortypes[r->action],
-			    anchor_call);
-	} else
-		printf("%s", actiontypes[r->action]);
+			printf("%s", actiontypes[r->action]);
+	}
 	if (r->action == PF_DROP) {
 		if (r->rule_flag & PFRULE_RETURN)
 			printf(" return");
