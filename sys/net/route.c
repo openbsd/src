@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.429 2024/02/07 23:40:40 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.430 2024/02/07 23:52:20 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -230,6 +230,7 @@ route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
 	satosin(&ro->ro_dst)->sin_addr = addr;
 }
 
+#ifdef INET6
 void
 route6_cache(struct route_in6 *ro, const struct in6_addr *addr,
     u_int rtableid)
@@ -259,6 +260,7 @@ route6_cache(struct route_in6 *ro, const struct in6_addr *addr,
 	ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
 	ro->ro_dst.sin6_addr = *addr;
 }
+#endif
 
 /*
  * Returns 1 if the (cached) ``rt'' entry is still valid, 0 otherwise.
