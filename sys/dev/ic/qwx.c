@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.27 2024/02/08 14:35:07 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.28 2024/02/08 14:36:22 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -11426,7 +11426,7 @@ qwx_peer_assoc_conf_event(struct qwx_softc *sc, struct mbuf *m)
 
 	DNPRINTF(QWX_D_WMI, "%s: event peer assoc conf ev vdev id %d "
 	    "macaddr %s\n", __func__, peer_assoc_conf.vdev_id,
-	    ether_sprintf(peer_assoc_conf.macaddr));
+	    ether_sprintf((u_char *)peer_assoc_conf.macaddr));
 
 	sc->peer_assoc_done = 1;
 	wakeup(&sc->peer_assoc_done);
@@ -17579,7 +17579,7 @@ qwx_wmi_vdev_up(struct qwx_softc *sc, uint32_t vdev_id, uint32_t pdev_id,
 	}
 
 	DNPRINTF(QWX_D_WMI, "%s: cmd vdev up id 0x%x assoc id %d bssid %s\n",
-	    __func__, vdev_id, aid, ether_sprintf(bssid));
+	    __func__, vdev_id, aid, ether_sprintf((u_char *)bssid));
 
 	return 0;
 }
@@ -23264,8 +23264,7 @@ qwx_run(struct qwx_softc *sc)
 #endif
 
 	DNPRINTF(QWX_D_MAC, "%s: vdev %d up (associated) bssid %s aid %d\n",
-	    __func__, arvif->vdev_id, ether_sprintf(ni->ni_bssid),
-	    vif->cfg.aid);
+	    __func__, arvif->vdev_id, ether_sprintf(ni->ni_bssid), arvif->aid);
 
 	ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr, arvif->vdev_id,
 	    pdev_id, WMI_PEER_AUTHORIZE, 1);
