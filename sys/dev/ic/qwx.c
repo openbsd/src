@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.19 2024/02/08 11:06:50 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.20 2024/02/08 11:09:53 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -22171,11 +22171,26 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 #endif
 	ret = bus_dmamap_load_mbuf(sc->sc_dmat, tx_data->map,
 	    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-	if (ret) {
+	if (ret && ret != EFBIG) {
 		printf("%s: failed to map Tx buffer: %d\n",
 		    sc->sc_dev.dv_xname, ret);
 		m_freem(m);
 		return ret;
+	}
+	if (ret) {
+		/* Too many DMA segments, linearize mbuf. */
+		if (m_defrag(m, M_DONTWAIT)) {
+			m_freem(m);
+			return ENOBUFS;
+		}
+		ret = bus_dmamap_load_mbuf(sc->sc_dmat, tx_data->map, m,
+		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+		if (ret) {
+			printf("%s: failed to map Tx buffer: %d\n",
+			    sc->sc_dev.dv_xname, ret);
+			m_freem(m);
+			return ret;
+		}
 	}
 	ti.paddr = tx_data->map->dm_segs[0].ds_addr;
 
@@ -22290,10 +22305,25 @@ qwx_mac_mgmt_tx_wmi(struct qwx_softc *sc, struct qwx_vif *arvif,
 #endif
 	ret = bus_dmamap_load_mbuf(sc->sc_dmat, tx_data->map,
 	    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-	if (ret) {
+	if (ret && ret != EFBIG) {
 		printf("%s: failed to map mgmt Tx buffer: %d\n",
 		    sc->sc_dev.dv_xname, ret);
 		return ret;
+	}
+	if (ret) {
+		/* Too many DMA segments, linearize mbuf. */
+		if (m_defrag(m, M_DONTWAIT)) {
+			m_freem(m);
+			return ENOBUFS;
+		}
+		ret = bus_dmamap_load_mbuf(sc->sc_dmat, tx_data->map, m,
+		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+		if (ret) {
+			printf("%s: failed to map mgmt Tx buffer: %d\n",
+			    sc->sc_dev.dv_xname, ret);
+			m_freem(m);
+			return ret;
+		}
 	}
 
 	ret = qwx_wmi_mgmt_send(sc, arvif, pdev_id, buf_id, m, tx_data);
