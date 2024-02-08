@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.25 2024/02/08 14:31:53 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.26 2024/02/08 14:33:40 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -9401,6 +9401,10 @@ qwx_dp_shadow_start_timer(struct qwx_softc *sc, struct hal_srng *srng,
 	lockdep_assert_held(&srng->lock);
 #endif
 	if (!sc->hw_params.supports_shadow_regs)
+		return;
+
+	update_timer->tx_num++;
+	if (update_timer->started)
 		return;
 
 	update_timer->started = 1;
