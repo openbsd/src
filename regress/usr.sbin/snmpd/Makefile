@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2024/02/08 17:09:51 martijn Exp $
+# $OpenBSD: Makefile,v 1.14 2024/02/08 17:38:41 martijn Exp $
 # Regress tests for snmpd
 
 PROG =				snmpd_regress
@@ -146,6 +146,12 @@ BACKEND_TARGETS+=		backend_get_close_overlap
 BACKEND_TARGETS+=		backend_get_disappear
 BACKEND_TARGETS+=		backend_get_disappear_overlap
 BACKEND_TARGETS+=		backend_get_disappear_doublesession
+BACKEND_TARGETS+=		backend_get_octetstring_max
+BACKEND_TARGETS+=		backend_get_octetstring_too_long
+BACKEND_TARGETS+=		backend_get_ipaddress_too_short
+BACKEND_TARGETS+=		backend_get_ipaddress_too_long
+BACKEND_TARGETS+=		backend_get_opaque_non_ber
+BACKEND_TARGETS+=		backend_get_opaque_double_value
 BACKEND_TARGETS+=		backend_getnext_selfbound
 BACKEND_TARGETS+=		backend_getnext_lowerbound
 BACKEND_TARGETS+=		backend_getnext_lowerbound_self

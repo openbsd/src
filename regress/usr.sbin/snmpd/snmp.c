@@ -5,6 +5,7 @@
 
 #include <ber.h>
 #include <err.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <netdb.h>
 #include <poll.h>
@@ -288,7 +289,7 @@ snmpv2_response_validate(int s, int timeout, const char *community,
     struct varbind *varbindlist, size_t nvarbind)
 {
 	struct ber_element *message, *pdu;
-	char buf[1024];
+	char buf[100000];
 	size_t buflen = sizeof(buf);
 
 	message = snmp_recv(s, timeout, buf, &buflen);
@@ -311,22 +312,30 @@ snmp_recv(int s, int timeout, void *buf, size_t *buflen)
 	struct ber ber = {};
 	struct ber_element *message;
 	ssize_t n;
+	size_t ntot = 0;
 	int ret;
 
+ again:
 	if ((ret = poll(&pfd, 1, timeout)) == -1)
 		err(1, "poll");
-	if (ret == 0)
-		errx(1, "%s: timeout", __func__);
-	if ((n = read(s, buf, *buflen)) == -1)
-		err(1, "agentx read");
-
-	*buflen = n;
+	if (ret == 0) {
+		if (ntot == 0)
+			errx(1, "%s: timeout", __func__);
+		errc(1, ECANCELED, "%s: unable to decode message", __func__);
+	}
+	if ((n = read(s, buf + ntot, *buflen - ntot)) == -1)
+		err(1, "snmp read");
+	ntot += n;
 
 	ober_set_application(&ber, smi_application);
-	ober_set_readbuf(&ber, buf, n);
+	ober_set_readbuf(&ber, buf, ntot);
 
-	if ((message = ober_read_elements(&ber, NULL)) == NULL)
+	if ((message = ober_read_elements(&ber, NULL)) == NULL) {
+		if (errno == ECANCELED)
+			goto again;
 		errx(1, "%s: unable to decode message", __func__);
+	}
+	*buflen = n;
 	if (verbose) {
 		printf("SNMP received(%d):\n", s);
 		smi_debug_elements(message);
