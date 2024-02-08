@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.18 2024/02/06 14:18:15 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.19 2024/02/08 11:06:50 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15189,6 +15189,7 @@ qwx_dp_rx_process_msdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 
 	if (msdu->is_frag) {
 		m_adj(msdu->m, hal_rx_desc_sz);
+		msdu->m->m_len = msdu->m->m_pkthdr.len = msdu_len;
 	} else if (!msdu->is_continuation) {
 		if ((msdu_len + hal_rx_desc_sz) > DP_RX_BUFFER_SIZE) {
 #if 0
@@ -15207,6 +15208,7 @@ qwx_dp_rx_process_msdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 			return EINVAL;
 		}
 		m_adj(msdu->m, hal_rx_desc_sz + l3_pad_bytes);
+		msdu->m->m_len = msdu->m->m_pkthdr.len = msdu_len;
 	} else {
 		ret = qwx_dp_rx_msdu_coalesce(sc, msdu_list, msdu, last_buf,
 		    l3_pad_bytes, msdu_len);
