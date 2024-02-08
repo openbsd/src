@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.42 2024/02/06 12:44:27 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.43 2024/02/08 17:34:09 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -153,6 +153,7 @@ void appl_request_upstream_reply(struct appl_request_upstream *);
 int appl_varbind_valid(struct appl_varbind *, struct appl_varbind_internal *,
     int, int, int, const char **);
 int appl_error_valid(enum appl_error, enum snmp_pdutype);
+unsigned int appl_ber_any(struct ber_element *);
 int appl_varbind_backend(struct appl_varbind_internal *);
 void appl_varbind_error(struct appl_varbind_internal *, enum appl_error);
 void appl_pdu_log(struct appl_backend *, enum snmp_pdutype, int32_t, uint16_t,
@@ -1427,6 +1428,11 @@ appl_varbind_valid(struct appl_varbind *varbind,
 {
 	int cmp;
 	int eomv = 0;
+	long long intval;
+	void *buf;
+	size_t len;
+	struct ber ber;
+	struct ber_element *elm;
 
 	if (null)
 		next = 0;
@@ -1438,36 +1444,111 @@ appl_varbind_valid(struct appl_varbind *varbind,
 		}
 		return 1;
 	}
+
+	if (null) {
+		if (varbind->av_value->be_class != BER_CLASS_UNIVERSAL ||
+		    varbind->av_value->be_type != BER_TYPE_NULL) {
+			*errstr = "expecting null value";
+			return 0;
+		}
+	} else {
+		if (varbind->av_value->be_class == BER_CLASS_UNIVERSAL &&
+		    varbind->av_value->be_type == BER_TYPE_NULL) {
+			*errstr = "unexpected null value";
+			return 0;
+		}
+	}
+
 	if (varbind->av_value->be_class == BER_CLASS_UNIVERSAL) {
 		switch (varbind->av_value->be_type) {
 		case BER_TYPE_NULL:
-			if (null)
-				break;
-			*errstr = "not expecting null value";
-			return 0;
+			/* Checked above */
+			break;
 		case BER_TYPE_INTEGER:
+			(void)ober_get_integer(varbind->av_value, &intval);
+			if (intval < SMI_INTEGER_MIN) {
+				*errstr = "INTEGER value too small";
+				return 0;
+			}
+			if (intval > SMI_INTEGER_MAX) {
+				*errstr = "INTEGER value too large";
+				return 0;
+			}
+			break;
 		case BER_TYPE_OCTETSTRING:
+			(void)ober_get_nstring(varbind->av_value, NULL, &len);
+			if (len > SMI_OCTETSTRING_MAX) {
+				*errstr = "OCTET STRING too long";
+				return 0;
+			}
+			break;
 		case BER_TYPE_OBJECT:
-			if (!null)
-				break;
-			/* FALLTHROUGH */
+			/* validated by ber.c */
+			break;
 		default:
-			*errstr = "invalid value";
+			*errstr = "invalid value encoding";
 			return 0;
 		}
 	} else if (varbind->av_value->be_class == BER_CLASS_APPLICATION) {
 		switch (varbind->av_value->be_type) {
 		case SNMP_T_IPADDR:
+			(void)ober_get_nstring(varbind->av_value, NULL, &len);
+			if (len != SMI_IPADDRESS_MAX) {
+				*errstr = "invalid IpAddress size";
+				return 0;
+			}
+			break;
 		case SNMP_T_COUNTER32:
+			(void)ober_get_integer(varbind->av_value, &intval);
+			if (intval < SMI_COUNTER32_MIN) {
+				*errstr = "Counter32 value too small";
+				return 0;
+			}
+			if (intval > SMI_COUNTER32_MAX) {
+				*errstr = "Counter32 value too large";
+				return 0;
+			}
+			break;
 		case SNMP_T_GAUGE32:
+			(void)ober_get_integer(varbind->av_value, &intval);
+			if (intval < SMI_GAUGE32_MIN) {
+				*errstr = "Gauge32 value too small";
+				return 0;
+			}
+			if (intval > SMI_GAUGE32_MAX) {
+				*errstr = "Gauge32 value too large";
+				return 0;
+			}
+			break;
 		case SNMP_T_TIMETICKS:
+			(void)ober_get_integer(varbind->av_value, &intval);
+			if (intval < SMI_TIMETICKS_MIN) {
+				*errstr = "TimeTicks value too small";
+				return 0;
+			}
+			if (intval > SMI_TIMETICKS_MAX) {
+				*errstr = "TimeTicks value too large";
+				return 0;
+			}
+			break;
 		case SNMP_T_OPAQUE:
+			(void)ober_get_nstring(varbind->av_value, &buf, &len);
+			memset(&ber, 0, sizeof(ber));
+			ober_set_application(&ber, appl_ber_any);
+			ober_set_readbuf(&ber, buf, len);
+			elm = ober_read_elements(&ber, NULL);
+			if (elm == NULL || ober_calc_len(elm) != len) {
+				ober_free_elements(elm);
+				*errstr = "Opaque not valid ber encoded value";
+				return 0;
+			}
+			ober_free_elements(elm);
+			break;
 		case SNMP_T_COUNTER64:
-			if (!null)
-				break;
-			/* FALLTHROUGH */
+			/* Maximum value supported by ber.c */
+			break;
 		default:
-			*errstr = "expecting null value";
+			*errstr = "invalid value encoding";
 			return 0;
 		}
 	} else if (varbind->av_value->be_class == BER_CLASS_CONTEXT) {
@@ -1477,22 +1558,14 @@ appl_varbind_valid(struct appl_varbind *varbind,
 				*errstr = "Unexpected noSuchObject";
 				return 0;
 			}
-			/* FALLTHROUGH */
+			break;
 		case APPL_EXC_NOSUCHINSTANCE:
-			if (null) {
-				*errstr = "expecting null value";
-				return 0;
-			}
 			if (next && request != NULL) {
 				*errstr = "Unexpected noSuchInstance";
 				return 0;
 			}
 			break;
 		case APPL_EXC_ENDOFMIBVIEW:
-			if (null) {
-				*errstr = "expecting null value";
-				return 0;
-			}
 			if (!next && request != NULL) {
 				*errstr = "Unexpected endOfMibView";
 				return 0;
@@ -1500,11 +1573,11 @@ appl_varbind_valid(struct appl_varbind *varbind,
 			eomv = 1;
 			break;
 		default:
-			*errstr = "invalid exception";
+			*errstr = "invalid value encoding";
 			return 0;
 		}
 	} else {
-		*errstr = "invalid value";
+		*errstr = "invalid value encoding";
 		return 0;
 	}
 
@@ -1544,6 +1617,12 @@ appl_varbind_valid(struct appl_varbind *varbind,
 		}
 	}
 	return 1;
+}
+
+unsigned int
+appl_ber_any(struct ber_element *elm)
+{
+	return BER_TYPE_OCTETSTRING;
 }
 
 int

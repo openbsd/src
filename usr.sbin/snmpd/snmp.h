@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.20 2023/12/21 12:43:31 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.21 2024/02/08 17:34:09 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -156,5 +156,18 @@ enum snmp_security_model {
 #define SNMP_MSGFLAG_REPORT	0x04
 
 #define SNMP_MAX_TIMEWINDOW	150	/* RFC3414 */
+
+/* RFC2578 */
+#define SMI_INTEGER_MIN		INT32_MIN
+#define SMI_INTEGER_MAX		INT32_MAX
+#define SMI_OCTETSTRING_MAX	65535
+#define SMI_IPADDRESS_MAX	4
+#define SMI_COUNTER32_MIN	0
+#define SMI_COUNTER32_MAX	UINT32_MAX
+#define SMI_GAUGE32_MIN		0
+#define SMI_GAUGE32_MAX		UINT32_MAX
+#define SMI_TIMETICKS_MIN	0
+#define SMI_TIMETICKS_MAX	UINT32_MAX
+
 
 #endif /* SNMPD_SNMP_H */
