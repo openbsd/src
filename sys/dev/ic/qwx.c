@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.22 2024/02/08 11:16:49 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.23 2024/02/08 11:20:29 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -12729,6 +12729,9 @@ qwx_wmi_process_mgmt_tx_comp(struct qwx_softc *sc,
 	if (arvif->txmgmt.queued > 0)
 		arvif->txmgmt.queued--;
 
+	if (arvif->txmgmt.queued < nitems(arvif->txmgmt.data) - 1)
+		sc->qfullmsk &= ~(1U << QWX_MGMT_QUEUE_ID);
+
 	if (tx_compl_param->status != 0)
 		ifp->if_oerrors++;
 }
@@ -14800,6 +14803,9 @@ qwx_dp_tx_completion_handler(struct qwx_softc *sc, int ring_id)
 #endif
 		qwx_dp_tx_complete_msdu(sc, tx_ring, msdu_id, &ts);
 	}
+
+	if (tx_ring->queued < sc->hw_params.tx_ring_size - 1)
+		sc->qfullmsk &= ~(1 << ring_id);
 
 	return 0;
 }
@@ -22234,6 +22240,10 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 #endif
 	tx_ring->queued++;
 	tx_ring->cur = (tx_ring->cur + 1) % sc->hw_params.tx_ring_size;
+
+	if (tx_ring->queued >= sc->hw_params.tx_ring_size - 1)
+		sc->qfullmsk |= (1 << ti.ring_id); 
+
 	return 0;
 }
 
@@ -22335,6 +22345,10 @@ qwx_mac_mgmt_tx_wmi(struct qwx_softc *sc, struct qwx_vif *arvif,
 
 	txmgmt->cur = (txmgmt->cur + 1) % nitems(txmgmt->data);
 	txmgmt->queued++;
+
+	if (txmgmt->queued >= nitems(txmgmt->data) - 1)
+		sc->qfullmsk |= (1U << QWX_MGMT_QUEUE_ID);
+
 	return 0;
 
 err_unmap_buf:

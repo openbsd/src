@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.12 2024/02/06 14:18:15 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.13 2024/02/08 11:20:29 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1675,6 +1675,7 @@ struct qwx_softc {
 
 	int			sc_tx_timer;
 	uint32_t		qfullmsk;
+#define	QWX_MGMT_QUEUE_ID	31
 
 	bus_addr_t			mem;
 	struct ath11k_hw_params		hw_params;
