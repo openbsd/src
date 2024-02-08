@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.18 2024/02/07 22:34:39 kettenis Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.19 2024/02/08 00:00:16 jsg Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -362,7 +362,7 @@ sxipio_pinctrl(uint32_t phandle, void *cookie)
 			if (strcmp(func, sc->sc_pins[i].funcs[j].name) == 0)
 				break;
 		}
-		if (j > nitems(sc->sc_pins[i].funcs))
+		if (j >= nitems(sc->sc_pins[i].funcs))
 			goto err;
 
 		group = sc->sc_pins[i].name[1] - 'A';
