@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.24 2024/02/08 11:23:33 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.25 2024/02/08 14:31:53 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -22156,7 +22156,6 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 
 	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags)) {
 		m_freem(m);
-		printf("%s: crash flush\n", __func__);
 		return ESHUTDOWN;
 	}
 #if 0
@@ -22207,10 +22206,8 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 
 		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 			k = ieee80211_get_txkey(ic, wh, ni);
-			if ((m = ieee80211_encrypt(ic, m, k)) == NULL) {
-				printf("%s: encrypt failed\n", __func__);
+			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
 				return ENOBUFS;
-			}
 			/* 802.11 header may have moved. */
 			wh = mtod(m, struct ieee80211_frame *);
 		}
@@ -22298,7 +22295,6 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 
 	hal_tcl_desc = (void *)qwx_hal_srng_src_get_next_entry(sc, tcl_ring);
 	if (!hal_tcl_desc) {
-		printf("%s: hal_tcl_desc == NULL\n", __func__);
 		/* NOTE: It is highly unlikely we'll be running out of tcl_ring
 		 * desc because the desc is directly enqueued onto hw queue.
 		 */
