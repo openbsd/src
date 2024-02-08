@@ -1,4 +1,4 @@
-/*	$OpenBSD: ytphy.c,v 1.4 2023/09/01 20:35:31 kettenis Exp $	*/
+/*	$OpenBSD: ytphy.c,v 1.5 2024/02/08 13:00:21 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
@@ -58,9 +58,9 @@
 #define YT8521_EXT_CHIP_CONFIG		0xa001
 #define  YT8521_RXC_DLY_EN		(1 << 8)
 #define  YT8521_CFG_LDO_MASK		(0x3 << 4)
-#define  YT8521_CFG_LDO_3V3		0x0
-#define  YT8521_CFG_LDO_2V5		0x1
-#define  YT8521_CFG_LDO_1V8		0x2	/* or 0x3 */
+#define  YT8521_CFG_LDO_3V3		(0x0 << 4)
+#define  YT8521_CFG_LDO_2V5		(0x1 << 4)
+#define  YT8521_CFG_LDO_1V8		(0x2 << 4)	/* or 0x3 */
 #define YT8521_EXT_RGMII_CONFIG1	0xa003
 #define  YT8521_TX_CLK_SEL		(1 << 14)
 #define  YT8521_RX_DELAY_SEL_MASK	(0xf << 10)
