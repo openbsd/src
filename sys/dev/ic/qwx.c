@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.21 2024/02/08 11:13:01 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.22 2024/02/08 11:16:49 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15498,9 +15498,9 @@ qwx_dp_rx_reap_mon_status_ring(struct qwx_softc *sc, int mac_id,
 			}
 
 			bus_dmamap_sync(sc->sc_dmat, rx_data->map, 0,
-			    m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+			    rx_data->m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
 
-			tlv = mtod(m, struct hal_tlv_hdr *);
+			tlv = mtod(rx_data->m, struct hal_tlv_hdr *);
 			if (FIELD_GET(HAL_TLV_HDR_TAG, tlv->tl) !=
 					HAL_RX_STATUS_BUFFER_DONE) {
 				printf("%s: mon status DONE not set %lx, "
