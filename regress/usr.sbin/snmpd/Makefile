@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2023/11/20 10:34:21 martijn Exp $
+# $OpenBSD: Makefile,v 1.13 2024/02/08 17:09:51 martijn Exp $
 # Regress tests for snmpd
 
 PROG =				snmpd_regress
@@ -261,8 +261,21 @@ transport: ${TRANSPORT_TARGETS}
 
 ${REGRESS_TARGETS}: snmpd_regress
 # Always start snmpd if it's not running
-	@pgrep -q snmpd || \
-	    (printf "%s\n" "${SNMPD_START}"; ${SNMPD_START} sleep 0.5)
+	@pgrep -q snmpd || ( \
+		printf "%s\n" "${SNMPD_START}"; \
+		rm -f /tmp/agentx 2>/dev/null; \
+		${SNMPD_START} \
+		i=0; \
+		while [ ! -S /tmp/agentx ]; do \
+			i=$$((i + 1)); \
+			[ $$i -eq 100 ] && ( \
+				printf "Failed to start snmpd\n"; >&2 \
+				${SUDO} pkill -f ${SNMPD}; \
+				exit 1; \
+			); \
+			sleep 0.1; \
+		done \
+	)
 	./snmpd_regress ${SNMPD_REGRESS_FLAGS} $@
 # Make sure that snmpd hasn't crashed in the meantime.
 	@sleep 0.01

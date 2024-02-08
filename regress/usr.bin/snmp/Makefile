@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/11/06 09:46:04 martijn Exp $
+# $OpenBSD: Makefile,v 1.7 2024/02/08 17:09:51 martijn Exp $
 
 SNMP?=			/usr/bin/snmp
 SNMPD?=			/usr/sbin/snmpd -f ${.OBJDIR}/snmpd.conf
@@ -31,6 +31,7 @@ snmpd.conf: Makefile
 	printf 'listen on $$listen6_addr snmpv1 snmpv2c snmpv3\n' >> snmpd.conf
 	printf 'listen on tcp $$listen6_addr snmpv1 snmpv2c snmpv3\n' >> snmpd.conf
 	printf 'listen on $$listen_addr notify snmpv1 snmpv2c snmpv3\n\n' >> snmpd.conf
+	printf 'agentx path "/tmp/agentx"\n\n' >> snmpd.conf
 	printf 'read-only community public\n' >> snmpd.conf
 	printf 'read-write community private\n' >> snmpd.conf
 	printf 'trap community public\n\n' >> snmpd.conf
@@ -79,7 +80,19 @@ trap_output: Makefile
 	chmod a+rw trap_output
 
 start: stop snmpd.conf traphandle.sh trap_output
+	rm -f /tmp/agentx 2>/dev/null
 	${SUDO} ${SNMPD}
+	@(i=0; \
+	while [ ! -S /tmp/agentx ]; do \
+		i=$$((i + 1)); \
+		[ $$i -eq 100 ] && ( \
+			printf "%s\n" '${SUDO} pkill -xf "${SNMPD}"'; \
+			printf "Failed to start snmpd\n" >&2; \
+			${SUDO} pkill -xf "${SNMPD}"; \
+			exit 1; \
+		); \
+		sleep 0.1; \
+	done;)
 
 stop:
 	-${SUDO} pkill -xf "${SNMPD}"
