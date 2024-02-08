@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2024/02/08 20:28:54 miod Exp $
 
 LIB=	clangBasic
 NOPIC=
@@ -85,6 +85,7 @@ SRCS+=	AArch64.cpp \
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/Basic/Targets
 
 BUILDFIRST=	VCSVersion.inc
+CLEANFILES+=	VCSVersion.inc
 
 VCSVersion.inc:
 	touch $@

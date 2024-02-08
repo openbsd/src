@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_tools/Makefile,v 1.88.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.18 2017/07/19 12:50:32 espie Exp $
+# $OpenBSD: Makefile,v 1.19 2024/02/08 20:28:54 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -390,11 +390,12 @@ gengtype-yacc+%DIKED.c: gengtype-yacc.c
 	    ${.ALLSRC} > ${.TARGET}
 
 GENSRCS+= gengtype-lex.c gengtype-yacc.h gengtype-yacc+%DIKED.c
-CLEANFILES+= gengtype-yacc.c
+CLEANFILES+= gengtype-yacc.c gengtype-lex.d gengtype-yacc+%DIKED.d
 
 gengtype: gengtype.o gengtype-yacc+%DIKED.o gengtype-lex.o errors.o \
 	  ${LIBIBERTY}
 	${CC} ${CFLAGS} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC}
+CLEANFILES+= gengtype.d
 
 gtype-desc.h:	gengtype
 	./gengtype
@@ -411,17 +412,23 @@ CLEANFILES+=	gt-*.h gtype-*.h
 .for F in check checksum genrtl modes
 gen$F:	gen$F.o errors.o ${LIBIBERTY}
 	${CC} ${CFLAGS} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC}
+CLEANFILES+=	gen$F.d
 .endfor
+CLEANFILES+=	errors.d
 
 .for F in attr attrtab automata codes conditions config constants emit \
 	extract flags  opinit output peep preds recog
 gen$F:	gen$F.o rtl.o read-rtl.o ggc-none.o vec.o min-insn-modes.o \
 	gensupport.o print-rtl.o errors.o ${LIBIBERTY}
 	${CC} ${CFLAGS} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC} -lm
+CLEANFILES+=	gen$F.d
 .endfor
+CLEANFILES+=	rtl.d read-rtl.d ggc-none.d vec.d min-insn-modes.d \
+	gensupport.d print-rtl.d
 
 gencondmd:	gencondmd.o
 	${CC} ${CFLAGS} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC}
+CLEANFILES+=	gencondmd.d
 
 #
 # Generated .md files.

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2023/11/11 18:35:37 robert Exp $
+# $OpenBSD: Makefile,v 1.13 2024/02/08 20:28:54 miod Exp $
 
 LIB=	LLVMInstrumentation
 NOPROFILE=
@@ -31,3 +31,5 @@ InstrumentationSanitizerBinaryMetadata.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Instrumentation/SanitizerBinaryMetadata.cpp $@
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Transforms/Instrumentation
+
+CLEANFILES+= InstrumentationSanitizerBinaryMetadata.cpp

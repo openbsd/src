@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:40 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2024/02/08 20:28:54 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -74,6 +74,7 @@ LLVM_LIBDEPS=	clangAST \
     lldbUtility
 
 BUILDFIRST=	VCSVersion.inc LLGSOptions.inc
+CLEANFILES+=	VCSVersion.inc LLGSOptions.inc
 
 VCSVersion.inc:
 	touch $@

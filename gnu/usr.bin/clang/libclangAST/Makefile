@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2024/02/08 20:28:54 miod Exp $
 
 LIB=	clangAST
 NOPIC=
@@ -120,6 +120,8 @@ SRCS+=	ByteCodeEmitter.cpp \
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/AST/Interp
 
 BUILDFIRST=	AttrDocTable.inc \
+		Opcodes.inc
+CLEANFILES+=	AttrDocTable.inc \
 		Opcodes.inc
 
 AttrDocTable.inc:

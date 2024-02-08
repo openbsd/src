@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2023/11/11 18:35:40 robert Exp $
+# $OpenBSD: Makefile,v 1.16 2024/02/08 20:28:54 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -82,6 +82,7 @@ Options.inc: Options.td
 		-o ${.TARGET} ${.ALLSRC}
 
 BUILDFIRST=	VCSVersion.inc
+CLEANFILES+=	Options.inc VCSVersion.inc
 
 VCSVersion.inc:
 	touch $@

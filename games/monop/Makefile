@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 2002/05/23 18:43:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2024/02/08 20:28:53 miod Exp $
 
 PROG=	monop
 SRCS=	monop.c cards.c execute.c getinp.c houses.c jail.c misc.c morg.c \
 	print.c prop.c rent.c roll.c spec.c trade.c
 MAN=	monop.6
-CLEANFILES+=initdeck cards.pck
+CLEANFILES+=initdeck initdeck.d cards.pck
 
 monop: cards.pck
 
