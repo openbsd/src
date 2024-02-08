@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.20 2024/02/08 11:09:53 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.21 2024/02/08 11:13:01 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8249,7 +8249,7 @@ qwx_qmi_load_file_target_mem(struct qwx_softc *sc, const u_char *data,
 #ifdef notyet
 	void *bdf_addr = NULL;
 #endif
-	int ret;
+	int ret = EINVAL; /* empty fw image */
 	uint32_t remaining = len;
 
 	req = malloc(sizeof(*req), M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -8393,7 +8393,7 @@ qwx_qmi_load_bdf_qmi(struct qwx_softc *sc, int regdb)
 	fw_size = MIN(sc->hw_params.fw.board_size, boardfw_len);
 
 	ret = qwx_qmi_load_file_target_mem(sc, boardfw, fw_size, bdf_type);
-	if (ret < 0) {
+	if (ret) {
 		printf("%s: failed to load bdf file\n", __func__);
 		goto out;
 	}
