@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.21 2023/11/20 20:41:18 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.22 2024/02/08 20:50:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -450,7 +450,9 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	 * defragmenting mbufs before transmitting them fixes the
 	 * issue.
 	 */
-	if (OF_is_compatible(faa->fa_node, "starfive,jh7100-gmac"))
+	/* XXX drop "starfive,jh7100-gmac" in the future */
+	if (OF_is_compatible(faa->fa_node, "starfive,jh7100-gmac") ||
+	    OF_is_compatible(faa->fa_node, "starfive,jh7100-dwmac"))
 		sc->sc_defrag = 1;
 
 	/* Power up PHY. */
