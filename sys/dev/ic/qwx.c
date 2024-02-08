@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.23 2024/02/08 11:20:29 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.24 2024/02/08 11:23:33 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -12755,6 +12755,93 @@ qwx_mgmt_tx_compl_event(struct qwx_softc *sc, struct mbuf *m)
 	    tx_compl_param.status, tx_compl_param.ack_rssi);
 }
 
+int
+qwx_pull_roam_ev(struct qwx_softc *sc, struct mbuf *m,
+    struct wmi_roam_event *roam_ev)
+{
+	const void **tb;
+	const struct wmi_roam_event *ev;
+	int ret;
+
+	tb = qwx_wmi_tlv_parse_alloc(sc, mtod(m, void *), m->m_pkthdr.len);
+	if (tb == NULL) {
+		ret = ENOMEM;
+		printf("%s: failed to parse tlv: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TAG_ROAM_EVENT];
+	if (!ev) {
+		printf("%s: failed to fetch roam ev\n",
+		    sc->sc_dev.dv_xname);
+		free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+		return EPROTO;
+	}
+
+	roam_ev->vdev_id = ev->vdev_id;
+	roam_ev->reason = ev->reason;
+	roam_ev->rssi = ev->rssi;
+
+	free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+	return 0;
+}
+
+void
+qwx_mac_handle_beacon_miss(struct qwx_softc *sc, uint32_t vdev_id)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if ((ic->ic_opmode != IEEE80211_M_STA) ||
+	    (ic->ic_state != IEEE80211_S_RUN))
+		return;
+
+	if (ic->ic_mgt_timer == 0) {
+		if (ic->ic_if.if_flags & IFF_DEBUG)
+			printf("%s: receiving no beacons from %s; checking if "
+			    "this AP is still responding to probe requests\n",
+			    sc->sc_dev.dv_xname,
+			    ether_sprintf(ic->ic_bss->ni_macaddr));
+		/*
+		 * Rather than go directly to scan state, try to send a
+		 * directed probe request first. If that fails then the
+		 * state machine will drop us into scanning after timing
+		 * out waiting for a probe response.
+		 */
+		IEEE80211_SEND_MGMT(ic, ic->ic_bss,
+		    IEEE80211_FC0_SUBTYPE_PROBE_REQ, 0);
+	}
+}
+
+void
+qwx_roam_event(struct qwx_softc *sc, struct mbuf *m)
+{
+	struct wmi_roam_event roam_ev = {};
+
+	if (qwx_pull_roam_ev(sc, m, &roam_ev) != 0) {
+		printf("%s: failed to extract roam event\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	DNPRINTF(QWX_D_WMI, "%s: event roam vdev %u reason 0x%08x rssi %d\n",
+	    __func__, roam_ev.vdev_id, roam_ev.reason, roam_ev.rssi);
+
+	if (roam_ev.reason >= WMI_ROAM_REASON_MAX)
+		return;
+
+	switch (roam_ev.reason) {
+	case WMI_ROAM_REASON_BEACON_MISS:
+		qwx_mac_handle_beacon_miss(sc, roam_ev.vdev_id);
+		break;
+	case WMI_ROAM_REASON_BETTER_AP:
+	case WMI_ROAM_REASON_LOW_RSSI:
+	case WMI_ROAM_REASON_SUITABLE_AP_FOUND:
+	case WMI_ROAM_REASON_HO_FAILED:
+		break;
+	}
+}
+
 void
 qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 {
@@ -12816,10 +12903,10 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 	case WMI_PEER_STA_KICKOUT_EVENTID:
 		ath11k_peer_sta_kickout_event(ab, skb);
 		break;
-	case WMI_ROAM_EVENTID:
-		ath11k_roam_event(ab, skb);
-		break;
 #endif
+	case WMI_ROAM_EVENTID:
+		qwx_roam_event(sc, m);
+		break;
 	case WMI_CHAN_INFO_EVENTID:
 		DPRINTF("%s: 0x%x: chan info event\n", __func__, id);
 		qwx_chan_info_event(sc, m);
