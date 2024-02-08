@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.13 2024/02/08 11:20:29 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.14 2024/02/08 14:35:07 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -841,6 +841,13 @@ void qwx_htc_rx_completion_handler(struct qwx_softc *, struct mbuf *);
 void qwx_dp_htt_htc_t2h_msg_handler(struct qwx_softc *, struct mbuf *);
 
 struct qwx_dp;
+
+struct qwx_dp_htt_wbm_tx_status {
+	uint32_t msdu_id;
+	int acked;
+	int ack_rssi;
+	uint16_t peer_id;
+};
 
 #define DP_NUM_CLIENTS_MAX 64
 #define DP_AVG_TIDS_PER_CLIENT 2

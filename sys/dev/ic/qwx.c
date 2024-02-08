@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.26 2024/02/08 14:33:40 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.27 2024/02/08 14:35:07 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14787,10 +14787,76 @@ qwx_dp_tx_status_parse(struct qwx_softc *sc, struct hal_wbm_release_ring *desc,
 }
 
 void
+qwx_dp_tx_free_txbuf(struct qwx_softc *sc, int msdu_id,
+    struct dp_tx_ring *tx_ring)
+{
+	struct qwx_tx_data *tx_data;
+
+	if (msdu_id >= sc->hw_params.tx_ring_size)
+		return;
+
+	tx_data = &tx_ring->data[msdu_id];
+
+	bus_dmamap_unload(sc->sc_dmat, tx_data->map);
+	m_freem(tx_data->m);
+	tx_data->m = NULL;
+
+	if (tx_ring->queued > 0)
+		tx_ring->queued--;
+}
+
+void
+qwx_dp_tx_htt_tx_complete_buf(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
+    struct qwx_dp_htt_wbm_tx_status *ts)
+{
+	/* Not using Tx status info for now. Just free the buffer. */
+	qwx_dp_tx_free_txbuf(sc, ts->msdu_id, tx_ring);
+}
+
+void
 qwx_dp_tx_process_htt_tx_complete(struct qwx_softc *sc, void *desc,
     uint8_t mac_id, uint32_t msdu_id, struct dp_tx_ring *tx_ring)
 {
-	printf("%s: not implemented\n", __func__);
+	struct htt_tx_wbm_completion *status_desc;
+	struct qwx_dp_htt_wbm_tx_status ts = {0};
+	enum hal_wbm_htt_tx_comp_status wbm_status;
+
+	status_desc = desc + HTT_TX_WBM_COMP_STATUS_OFFSET;
+
+	wbm_status = FIELD_GET(HTT_TX_WBM_COMP_INFO0_STATUS,
+	    status_desc->info0);
+
+	switch (wbm_status) {
+	case HAL_WBM_REL_HTT_TX_COMP_STATUS_OK:
+	case HAL_WBM_REL_HTT_TX_COMP_STATUS_DROP:
+	case HAL_WBM_REL_HTT_TX_COMP_STATUS_TTL:
+		ts.acked = (wbm_status == HAL_WBM_REL_HTT_TX_COMP_STATUS_OK);
+		ts.msdu_id = msdu_id;
+		ts.ack_rssi = FIELD_GET(HTT_TX_WBM_COMP_INFO1_ACK_RSSI,
+		    status_desc->info1);
+
+		if (FIELD_GET(HTT_TX_WBM_COMP_INFO2_VALID, status_desc->info2))
+			ts.peer_id = FIELD_GET(HTT_TX_WBM_COMP_INFO2_SW_PEER_ID,
+			    status_desc->info2);
+		else
+			ts.peer_id = HTT_INVALID_PEER_ID;
+
+		qwx_dp_tx_htt_tx_complete_buf(sc, tx_ring, &ts);
+		break;
+	case HAL_WBM_REL_HTT_TX_COMP_STATUS_REINJ:
+	case HAL_WBM_REL_HTT_TX_COMP_STATUS_INSPECT:
+		qwx_dp_tx_free_txbuf(sc, msdu_id, tx_ring);
+		break;
+	case HAL_WBM_REL_HTT_TX_COMP_STATUS_MEC_NOTIFY:
+		/* This event is to be handled only when the driver decides to
+		 * use WDS offload functionality.
+		 */
+		break;
+	default:
+		printf("%s: Unknown htt tx status %d\n",
+		    sc->sc_dev.dv_xname, wbm_status);
+		break;
+	}
 }
 
 void
