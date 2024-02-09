@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_crypt.c,v 1.2 2022/11/26 16:08:54 tb Exp $ */
+/*	$OpenBSD: sm2_crypt.c,v 1.3 2024/02/09 07:43:52 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -203,7 +203,6 @@ sm2_kdf(uint8_t *key, size_t key_len, uint8_t *secret, size_t secret_len,
 		goto err;
 	}
 
-	EVP_MD_CTX_init(hash);
 	while ((key_len > 0) && (ctr != 0)) {
 		if (!EVP_DigestInit_ex(hash, digest, NULL)) {
 			SM2error(ERR_R_EVP_LIB);
