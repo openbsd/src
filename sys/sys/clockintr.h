@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.25 2024/01/24 19:23:38 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.26 2024/02/09 16:52:58 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -113,7 +113,8 @@ struct clockintr_queue {
 #define CQ_INIT			0x00000001	/* clockintr_cpu_init() done */
 #define CQ_INTRCLOCK		0x00000002	/* intrclock installed */
 #define CQ_IGNORE_REQUEST	0x00000004	/* ignore callback requests */
-#define CQ_STATE_MASK		0x00000007
+#define CQ_NEED_WAKEUP		0x00000008	/* caller at barrier */
+#define CQ_STATE_MASK		0x0000000f
 
 void clockintr_cpu_init(const struct intrclock *);
 int clockintr_dispatch(void *);
@@ -123,12 +124,16 @@ void clockintr_trigger(void);
  * Kernel API
  */
 
+#define CL_BARRIER	0x00000001	/* block if callback is running */
+#define CL_FLAG_MASK	0x00000001
+
 uint64_t clockintr_advance(struct clockintr *, uint64_t);
 void clockintr_bind(struct clockintr *, struct cpu_info *,
     void (*)(struct clockrequest *, void *, void *), void *);
 void clockintr_cancel(struct clockintr *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_stagger(struct clockintr *, uint64_t, uint32_t, uint32_t);
+void clockintr_unbind(struct clockintr *, uint32_t);
 uint64_t clockrequest_advance(struct clockrequest *, uint64_t);
 uint64_t clockrequest_advance_random(struct clockrequest *, uint64_t, uint32_t);
 void clockqueue_init(struct clockintr_queue *);

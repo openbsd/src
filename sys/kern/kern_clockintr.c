@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.65 2024/02/09 15:06:23 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.66 2024/02/09 16:52:58 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -227,6 +227,12 @@ clockintr_dispatch(void *frame)
 			CLR(request->cr_flags, CR_RESCHEDULE);
 			clockqueue_pend_insert(cq, cl, request->cr_expiration);
 		}
+		if (ISSET(cq->cq_flags, CQ_NEED_WAKEUP)) {
+			CLR(cq->cq_flags, CQ_NEED_WAKEUP);
+			mtx_leave(&cq->cq_mtx);
+			wakeup(&cq->cq_running);
+			mtx_enter(&cq->cq_mtx);
+		}
 		run++;
 	}
 
@@ -352,13 +358,39 @@ clockintr_bind(struct clockintr *cl, struct cpu_info *ci,
 {
 	struct clockintr_queue *cq = &ci->ci_queue;
 
+	splassert(IPL_NONE);
+	KASSERT(cl->cl_queue == NULL);
+
+	mtx_enter(&cq->cq_mtx);
 	cl->cl_arg = arg;
 	cl->cl_func = func;
 	cl->cl_queue = cq;
-
-	mtx_enter(&cq->cq_mtx);
 	TAILQ_INSERT_TAIL(&cq->cq_all, cl, cl_alink);
 	mtx_leave(&cq->cq_mtx);
+}
+
+void
+clockintr_unbind(struct clockintr *cl, uint32_t flags)
+{
+	struct clockintr_queue *cq = cl->cl_queue;
+
+	KASSERT(!ISSET(flags, ~CL_FLAG_MASK));
+
+	mtx_enter(&cq->cq_mtx);
+
+	clockintr_cancel_locked(cl);
+
+	cl->cl_arg = NULL;
+	cl->cl_func = NULL;
+	cl->cl_queue = NULL;
+	TAILQ_REMOVE(&cq->cq_all, cl, cl_alink);
+
+	if (ISSET(flags, CL_BARRIER) && cl == cq->cq_running) {
+		SET(cq->cq_flags, CQ_NEED_WAKEUP);
+		msleep_nsec(&cq->cq_running, &cq->cq_mtx, PWAIT | PNORELOCK,
+		    "clkbar", INFSLP);
+	} else
+		mtx_leave(&cq->cq_mtx);
 }
 
 void
