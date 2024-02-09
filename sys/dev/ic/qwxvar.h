@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.14 2024/02/08 14:35:07 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.15 2024/02/09 09:55:17 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -777,6 +777,7 @@ struct qwx_rx_data {
 };
 
 struct qwx_tx_data {
+	struct ieee80211_node *ni;
 	struct mbuf	*m;
 	bus_dmamap_t	map;
 	uint8_t eid;

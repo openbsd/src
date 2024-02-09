@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.29 2024/02/09 09:53:50 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.30 2024/02/09 09:55:17 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -144,7 +144,7 @@ int qwx_mac_register(struct qwx_softc *);
 int qwx_mac_start(struct qwx_softc *);
 void qwx_mac_scan_finish(struct qwx_softc *);
 int qwx_mac_mgmt_tx_wmi(struct qwx_softc *, struct qwx_vif *, uint8_t,
-    struct mbuf *);
+    struct ieee80211_node *, struct mbuf *);
 int qwx_dp_tx(struct qwx_softc *, struct qwx_vif *, uint8_t,
     struct ieee80211_node *, struct mbuf *);
 int qwx_dp_tx_send_reo_cmd(struct qwx_softc *, struct dp_rx_tid *,
@@ -376,7 +376,7 @@ qwx_tx(struct qwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 
 	if (frame_type == IEEE80211_FC0_TYPE_MGT)
-		return qwx_mac_mgmt_tx_wmi(sc, arvif, pdev_id, m);
+		return qwx_mac_mgmt_tx_wmi(sc, arvif, pdev_id, ni, m);
 
 	return qwx_dp_tx(sc, arvif, pdev_id, ni, m);
 }
@@ -12730,6 +12730,9 @@ qwx_wmi_process_mgmt_tx_comp(struct qwx_softc *sc,
 	m_freem(tx_data->m);
 	tx_data->m = NULL;
 
+	ieee80211_release_node(ic, tx_data->ni);
+	tx_data->ni = NULL;
+
 	if (arvif->txmgmt.queued > 0)
 		arvif->txmgmt.queued--;
 
@@ -14860,6 +14863,7 @@ void
 qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
     uint32_t msdu_id, struct hal_tx_status *ts)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_tx_data *tx_data = &tx_ring->data[msdu_id];
 
 	if (ts->buf_rel_source != HAL_WBM_REL_SRC_MODULE_TQM) {
@@ -14872,6 +14876,9 @@ qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
 	tx_data->m = NULL;
 
 	/* TODO: Tx rate adjustment? */
+
+	ieee80211_release_node(ic, tx_data->ni);
+	tx_data->ni = NULL;
 	
 	if (tx_ring->queued > 0)
 		tx_ring->queued--;
@@ -22378,6 +22385,7 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 	}
 
 	tx_data->m = m;
+	tx_data->ni = ni;
 
 	qwx_hal_tx_cmd_desc_setup(sc,
 	    hal_tcl_desc + sizeof(struct hal_tlv_hdr), &ti);
@@ -22438,7 +22446,7 @@ free_peer:
 
 int
 qwx_mac_mgmt_tx_wmi(struct qwx_softc *sc, struct qwx_vif *arvif,
-    uint8_t pdev_id, struct mbuf *m)
+    uint8_t pdev_id, struct ieee80211_node *ni, struct mbuf *m)
 {
 	struct qwx_txmgmt_queue *txmgmt = &arvif->txmgmt;
 	struct qwx_tx_data *tx_data;
@@ -22492,6 +22500,7 @@ qwx_mac_mgmt_tx_wmi(struct qwx_softc *sc, struct qwx_vif *arvif,
 		    sc->sc_dev.dv_xname, ret);
 		goto err_unmap_buf;
 	}
+	tx_data->ni = ni;
 
 	txmgmt->cur = (txmgmt->cur + 1) % nitems(txmgmt->data);
 	txmgmt->queued++;
