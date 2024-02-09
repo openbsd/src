@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.7 2024/02/09 11:24:52 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.8 2024/02/09 14:57:36 bluhm Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -56,6 +56,7 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/lock.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
