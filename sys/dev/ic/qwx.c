@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.31 2024/02/09 09:59:01 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.32 2024/02/09 12:45:10 jsg Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8378,7 +8378,7 @@ qwx_qmi_load_bdf_qmi(struct qwx_softc *sc, int regdb)
 	ret = qwx_core_fetch_bdf(sc, &data, &len, &boardfw, &boardfw_len,
 	    regdb ? ATH11K_REGDB_FILE : ATH11K_BOARD_API2_FILE);
 	if (ret)
-		goto out;
+		return ret;
 
 	if (regdb)
 		bdf_type = ATH11K_QMI_BDF_TYPE_REGDB;
