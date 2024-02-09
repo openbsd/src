@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.34 2024/02/09 14:07:27 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.35 2024/02/09 14:09:19 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -150,6 +150,7 @@ int qwx_dp_tx(struct qwx_softc *, struct qwx_vif *, uint8_t,
 int qwx_dp_tx_send_reo_cmd(struct qwx_softc *, struct dp_rx_tid *,
     enum hal_reo_cmd_type , struct ath11k_hal_reo_cmd *,
     void (*func)(struct qwx_dp *, void *, enum hal_reo_cmd_status));
+void qwx_dp_rx_deliver_msdu(struct qwx_softc *, struct qwx_rx_msdu *);
 
 int qwx_scan(struct qwx_softc *);
 void qwx_scan_abort(struct qwx_softc *);
@@ -15342,9 +15343,245 @@ qwx_dp_process_rx_err(struct qwx_softc *sc)
 }
 
 int
+qwx_hal_wbm_desc_parse_err(void *desc, struct hal_rx_wbm_rel_info *rel_info)
+{
+	struct hal_wbm_release_ring *wbm_desc = desc;
+	enum hal_wbm_rel_desc_type type;
+	enum hal_wbm_rel_src_module rel_src;
+	enum hal_rx_buf_return_buf_manager ret_buf_mgr;
+
+	type = FIELD_GET(HAL_WBM_RELEASE_INFO0_DESC_TYPE, wbm_desc->info0);
+
+	/* We expect only WBM_REL buffer type */
+	if (type != HAL_WBM_REL_DESC_TYPE_REL_MSDU)
+		return -EINVAL;
+
+	rel_src = FIELD_GET(HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE,
+	    wbm_desc->info0);
+	if (rel_src != HAL_WBM_REL_SRC_MODULE_RXDMA &&
+	    rel_src != HAL_WBM_REL_SRC_MODULE_REO)
+		return EINVAL;
+
+	ret_buf_mgr = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR,
+	    wbm_desc->buf_addr_info.info1);
+	if (ret_buf_mgr != HAL_RX_BUF_RBM_SW3_BM) {
+#if 0
+		ab->soc_stats.invalid_rbm++;
+#endif
+		return EINVAL;
+	}
+
+	rel_info->cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
+	    wbm_desc->buf_addr_info.info1);
+	rel_info->err_rel_src = rel_src;
+	if (rel_src == HAL_WBM_REL_SRC_MODULE_REO) {
+		rel_info->push_reason = FIELD_GET(
+		    HAL_WBM_RELEASE_INFO0_REO_PUSH_REASON, wbm_desc->info0);
+		rel_info->err_code = FIELD_GET(
+		    HAL_WBM_RELEASE_INFO0_REO_ERROR_CODE, wbm_desc->info0);
+	} else {
+		rel_info->push_reason = FIELD_GET(
+		    HAL_WBM_RELEASE_INFO0_RXDMA_PUSH_REASON, wbm_desc->info0);
+		rel_info->err_code = FIELD_GET(
+		    HAL_WBM_RELEASE_INFO0_RXDMA_ERROR_CODE, wbm_desc->info0);
+	}
+
+	rel_info->first_msdu = FIELD_GET(HAL_WBM_RELEASE_INFO2_FIRST_MSDU,
+	    wbm_desc->info2);
+	rel_info->last_msdu = FIELD_GET(HAL_WBM_RELEASE_INFO2_LAST_MSDU,
+	    wbm_desc->info2);
+
+	return 0;
+}
+
+int
+qwx_dp_rx_h_null_q_desc(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
+    struct qwx_rx_msdu_list *msdu_list)
+{
+	printf("%s: not implemented\n", __func__);
+	return ENOTSUP;
+}
+
+int
+qwx_dp_rx_h_reo_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
+    struct qwx_rx_msdu_list *msdu_list)
+{
+	int drop = 0;
+#if 0
+	ar->ab->soc_stats.reo_error[rxcb->err_code]++;
+#endif
+	switch (msdu->err_code) {
+	case HAL_REO_DEST_RING_ERROR_CODE_DESC_ADDR_ZERO:
+		if (qwx_dp_rx_h_null_q_desc(sc, msdu, msdu_list))
+			drop = 1;
+		break;
+	case HAL_REO_DEST_RING_ERROR_CODE_PN_CHECK_FAILED:
+		/* TODO: Do not drop PN failed packets in the driver;
+		 * instead, it is good to drop such packets in mac80211
+		 * after incrementing the replay counters.
+		 */
+		/* fallthrough */
+	default:
+		/* TODO: Review other errors and process them to mac80211
+		 * as appropriate.
+		 */
+		drop = 1;
+		break;
+	}
+
+	return drop;
+}
+
+int
+qwx_dp_rx_h_rxdma_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu)
+{
+	int drop = 0;
+#if 0
+	ar->ab->soc_stats.rxdma_error[rxcb->err_code]++;
+#endif
+	switch (msdu->err_code) {
+	case HAL_REO_ENTR_RING_RXDMA_ECODE_TKIP_MIC_ERR:
+		drop = 1; /* OpenBSD uses TKIP in software crypto mode only */
+		break;
+	default:
+		/* TODO: Review other rxdma error code to check if anything is
+		 * worth reporting to mac80211
+		 */
+		drop = 1;
+		break;
+	}
+
+	return drop;
+}
+
+void
+qwx_dp_rx_wbm_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
+    struct qwx_rx_msdu_list *msdu_list)
+{
+	int drop = 1;
+
+	switch (msdu->err_rel_src) {
+	case HAL_WBM_REL_SRC_MODULE_REO:
+		drop = qwx_dp_rx_h_reo_err(sc, msdu, msdu_list);
+		break;
+	case HAL_WBM_REL_SRC_MODULE_RXDMA:
+		drop = qwx_dp_rx_h_rxdma_err(sc, msdu);
+		break;
+	default:
+		/* msdu will get freed */
+		break;
+	}
+
+	if (drop) {
+		m_freem(msdu->m);
+		msdu->m = NULL;
+		return;
+	}
+
+	qwx_dp_rx_deliver_msdu(sc, msdu);
+}
+
+int
 qwx_dp_rx_process_wbm_err(struct qwx_softc *sc)
 {
-	return 0;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct qwx_dp *dp = &sc->dp;
+	struct dp_rxdma_ring *rx_ring;
+	struct hal_rx_wbm_rel_info err_info;
+	struct hal_srng *srng;
+	struct qwx_rx_msdu_list msdu_list[MAX_RADIOS];
+	struct qwx_rx_msdu *msdu;
+	struct mbuf *m;
+	struct qwx_rx_data *rx_data;
+	uint32_t *rx_desc;
+	int idx, mac_id;
+	int num_buffs_reaped[MAX_RADIOS] = {0};
+	int total_num_buffs_reaped = 0;
+	int ret, i;
+
+	for (i = 0; i < sc->num_radios; i++)
+		TAILQ_INIT(&msdu_list[i]);
+
+	srng = &sc->hal.srng_list[dp->rx_rel_ring.ring_id];
+#ifdef notyet
+	spin_lock_bh(&srng->lock);
+#endif
+	qwx_hal_srng_access_begin(sc, srng);
+
+	while ((rx_desc = qwx_hal_srng_dst_get_next_entry(sc, srng))) {
+		ret = qwx_hal_wbm_desc_parse_err(rx_desc, &err_info);
+		if (ret) {
+			printf("%s: failed to parse rx error in wbm_rel "
+			    "ring desc %d\n", sc->sc_dev.dv_xname, ret);
+			continue;
+		}
+
+		idx = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID, err_info.cookie);
+		mac_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_PDEV_ID, err_info.cookie);
+
+		if (mac_id >= MAX_RADIOS)
+			continue;
+	
+		rx_ring = &sc->pdev_dp.rx_refill_buf_ring;
+		if (idx >= rx_ring->bufs_max)
+			continue;
+		rx_data = &rx_ring->rx_data[idx];
+
+		bus_dmamap_unload(sc->sc_dmat, rx_data->map);
+		m = rx_data->m;
+		rx_data->m = NULL;
+
+		num_buffs_reaped[mac_id]++;
+		total_num_buffs_reaped++;
+
+		if (err_info.push_reason !=
+		    HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED) {
+			m_freem(m);
+			continue;
+		}
+
+		msdu = &rx_data->rx_msdu;
+		memset(&msdu->rxi, 0, sizeof(msdu->rxi));
+		msdu->m = m;
+		msdu->err_rel_src = err_info.err_rel_src;
+		msdu->err_code = err_info.err_code;
+		msdu->rx_desc = mtod(m, struct hal_rx_desc *);
+		TAILQ_INSERT_TAIL(&msdu_list[mac_id], msdu, entry);
+	}
+
+	qwx_hal_srng_access_end(sc, srng);
+#ifdef notyet
+	spin_unlock_bh(&srng->lock);
+#endif
+	if (!total_num_buffs_reaped)
+		goto done;
+
+	for (i = 0; i < sc->num_radios; i++) {
+		if (!num_buffs_reaped[i])
+			continue;
+
+		rx_ring = &sc->pdev_dp.rx_refill_buf_ring;
+		qwx_dp_rxbufs_replenish(sc, i, rx_ring, num_buffs_reaped[i],
+		    sc->hw_params.hal_params->rx_buf_rbm);
+	}
+
+	for (i = 0; i < sc->num_radios; i++) {
+		while ((msdu = TAILQ_FIRST(msdu_list))) {
+			TAILQ_REMOVE(msdu_list, msdu, entry);
+			if (test_bit(ATH11K_CAC_RUNNING, sc->sc_flags)) {
+				m_freem(msdu->m);
+				msdu->m = NULL;
+				continue;
+			}
+			qwx_dp_rx_wbm_err(sc, msdu, &msdu_list[i]);
+			msdu->m = NULL;
+		}
+	}
+done:
+	ifp->if_ierrors += total_num_buffs_reaped;
+
+	return total_num_buffs_reaped;
 }
 
 struct qwx_rx_msdu *

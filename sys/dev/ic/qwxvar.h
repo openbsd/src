@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.17 2024/02/09 14:07:27 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.18 2024/02/09 14:09:19 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1473,6 +1473,15 @@ struct hal_rx_user_status {
 	uint32_t mpdu_fcs_ok_bitmap[8];
 	uint32_t mpdu_ok_byte_count;
 	uint32_t mpdu_err_byte_count;
+};
+
+struct hal_rx_wbm_rel_info {
+	uint32_t cookie;
+	enum hal_wbm_rel_src_module err_rel_src;
+	enum hal_reo_dest_ring_push_reason push_reason;
+	uint32_t err_code;
+	int first_msdu;
+	int last_msdu;
 };
 
 #define HAL_INVALID_PEERID 0xffff
