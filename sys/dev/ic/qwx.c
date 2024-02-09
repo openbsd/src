@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.28 2024/02/08 14:36:22 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.29 2024/02/09 09:53:50 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -12892,7 +12892,6 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 		break;
 #endif
 	case WMI_MGMT_RX_EVENTID:
-		DPRINTF("%s: 0x%x: mgmt rx event\n", __func__, id);
 		qwx_mgmt_rx_event(sc, m);
 		/* mgmt_rx_event() owns the skb now! */
 		return;
@@ -12900,7 +12899,6 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 		qwx_mgmt_tx_compl_event(sc, m);
 		break;
 	case WMI_SCAN_EVENTID:
-		DPRINTF("%s: 0x%x: scan event\n", __func__, id);
 		qwx_scan_event(sc, m);
 		break;
 #if 0
@@ -12912,7 +12910,6 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 		qwx_roam_event(sc, m);
 		break;
 	case WMI_CHAN_INFO_EVENTID:
-		DPRINTF("%s: 0x%x: chan info event\n", __func__, id);
 		qwx_chan_info_event(sc, m);
 		break;
 #if 0
