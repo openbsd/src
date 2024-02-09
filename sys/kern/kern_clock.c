@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.121 2023/10/17 00:04:02 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.122 2024/02/09 17:42:18 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -49,11 +49,6 @@
 #include <sys/sysctl.h>
 #include <sys/sched.h>
 #include <sys/timetc.h>
-
-#include "dt.h"
-#if NDT > 0
-#include <dev/dt/dtvar.h>
-#endif
 
 /*
  * Clock handling routines.
@@ -145,12 +140,6 @@ initclocks(void)
 void
 hardclock(struct clockframe *frame)
 {
-#if NDT > 0
-	DT_ENTER(profile, NULL);
-	if (CPU_IS_PRIMARY(curcpu()))
-		DT_ENTER(interval, NULL);
-#endif
-
 	/*
 	 * If we are not the primary CPU, we're not allowed to do
 	 * any more work.

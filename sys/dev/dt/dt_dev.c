@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.29 2024/01/02 16:32:48 bluhm Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.30 2024/02/09 17:42:18 cheloha Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
@@ -56,13 +57,13 @@
  *	proc_trampoline+0x1c
  */
 #if defined(__amd64__)
-#define DT_FA_PROFILE	7
+#define DT_FA_PROFILE	5
 #define DT_FA_STATIC	2
 #elif defined(__i386__)
-#define DT_FA_PROFILE	8
+#define DT_FA_PROFILE	5
 #define DT_FA_STATIC	2
 #elif defined(__macppc__)
-#define DT_FA_PROFILE  7
+#define DT_FA_PROFILE  5
 #define DT_FA_STATIC   2
 #elif defined(__octeon__)
 #define DT_FA_PROFILE	6
@@ -492,6 +493,14 @@ dt_ioctl_record_start(struct dt_softc *sc)
 		SMR_SLIST_INSERT_HEAD_LOCKED(&dtp->dtp_pcbs, dp, dp_pnext);
 		dtp->dtp_recording++;
 		dtp->dtp_prov->dtpv_recording++;
+
+		if (dp->dp_nsecs != 0) {
+			clockintr_bind(&dp->dp_clockintr, dp->dp_cpu, dt_clock,
+			    dp);
+			clockintr_stagger(&dp->dp_clockintr, dp->dp_nsecs,
+			    CPU_INFO_UNIT(dp->dp_cpu), MAXCPUS);
+			clockintr_advance(&dp->dp_clockintr, dp->dp_nsecs);
+		}
 	}
 	rw_exit_write(&dt_lock);
 
@@ -517,6 +526,13 @@ dt_ioctl_record_stop(struct dt_softc *sc)
 	rw_enter_write(&dt_lock);
 	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
 		struct dt_probe *dtp = dp->dp_dtp;
+
+		/*
+		 * Set an execution barrier to ensure the shared
+		 * reference to dp is inactive.
+		 */
+		if (dp->dp_nsecs != 0)
+			clockintr_unbind(&dp->dp_clockintr, CL_BARRIER);
 
 		dtp->dtp_recording--;
 		dtp->dtp_prov->dtpv_recording--;

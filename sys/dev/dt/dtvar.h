@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.17 2023/04/26 16:53:59 claudio Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.18 2024/02/09 17:42:18 cheloha Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -175,6 +175,7 @@ int		dtioc_req_isvalid(struct dtioc_req *);
  * userland read(2)s them.
  *
  *  Locks used to protect struct members in this file:
+ *	D	dt_lock
  *	I	immutable after creation
  *	K	kernel lock
  *	K,S	kernel lock for writing and SMR for reading
@@ -197,9 +198,9 @@ struct dt_pcb {
 	struct dt_filter	 dp_filter;	/* [I] filter to match */
 
 	/* Provider specific fields. */
-	unsigned int		 dp_cpuid;	/* [I] on which CPU */
-	unsigned int		 dp_maxtick;	/* [I] freq. of profiling */
-	unsigned int		 dp_nticks;	/* [c] current tick count */
+	struct clockintr	 dp_clockintr;	/* [D] profiling handle */
+	uint64_t		 dp_nsecs;	/* [I] profiling period */
+	struct cpu_info		*dp_cpu;	/* [I] on which CPU */
 
 	/* Counters */
 	uint64_t		 dp_dropevt;	/* [m] # dropped event */
@@ -270,6 +271,7 @@ struct dt_probe *dt_dev_alloc_probe(const char *, const char *,
 		    struct dt_provider *);
 void		 dt_dev_register_probe(struct dt_probe *);
 
+void		 dt_clock(struct clockrequest *, void *, void *);
 
 extern volatile uint32_t	dt_tracing;	/* currently tracing? */
 
