@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.30 2024/02/09 09:55:17 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.31 2024/02/09 09:59:01 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14859,12 +14859,84 @@ qwx_dp_tx_process_htt_tx_complete(struct qwx_softc *sc, void *desc,
 	}
 }
 
+int
+qwx_mac_hw_ratecode_to_legacy_rate(struct ieee80211_node *ni, uint8_t hw_rc,
+    uint8_t preamble, uint8_t *rateidx, uint16_t *rate)
+{
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+	int i;
+
+	if (preamble == WMI_RATE_PREAMBLE_CCK) {
+		hw_rc &= ~ATH11k_HW_RATECODE_CCK_SHORT_PREAM_MASK;
+		switch (hw_rc) {
+			case ATH11K_HW_RATE_CCK_LP_1M:
+				*rate = 2;
+				break;
+			case ATH11K_HW_RATE_CCK_LP_2M:
+			case ATH11K_HW_RATE_CCK_SP_2M:
+				*rate = 4;
+				break;
+			case ATH11K_HW_RATE_CCK_LP_5_5M:
+			case ATH11K_HW_RATE_CCK_SP_5_5M:
+				*rate = 11;
+				break;
+			case ATH11K_HW_RATE_CCK_LP_11M:
+			case ATH11K_HW_RATE_CCK_SP_11M:
+				*rate = 22;
+				break;
+			default:
+				return EINVAL;
+		}
+	} else {
+		switch (hw_rc) {
+			case ATH11K_HW_RATE_OFDM_6M:
+				*rate = 12;
+				break;
+			case ATH11K_HW_RATE_OFDM_9M:
+				*rate = 18;
+				break;
+			case ATH11K_HW_RATE_OFDM_12M:
+				*rate = 24;
+				break;
+			case ATH11K_HW_RATE_OFDM_18M:
+				*rate = 36;
+				break;
+			case ATH11K_HW_RATE_OFDM_24M:
+				*rate = 48;
+				break;
+			case ATH11K_HW_RATE_OFDM_36M:
+				*rate = 72;
+				break;
+			case ATH11K_HW_RATE_OFDM_48M:
+				*rate = 96;
+				break;
+			case ATH11K_HW_RATE_OFDM_54M:
+				*rate = 104;
+				break;
+			default:
+				return EINVAL;
+		}
+	}
+
+	for (i = 0; i < rs->rs_nrates; i++) {
+		uint8_t rval = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+		if (rval == *rate) {
+			*rateidx = i;
+			return 0;
+		}
+	}
+
+	return EINVAL;
+}
+
 void
 qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
     uint32_t msdu_id, struct hal_tx_status *ts)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_tx_data *tx_data = &tx_ring->data[msdu_id];
+	uint8_t pkt_type, mcs, rateidx;
+	uint16_t rate;
 
 	if (ts->buf_rel_source != HAL_WBM_REL_SRC_MODULE_TQM) {
 		/* Must not happen */
@@ -14875,7 +14947,11 @@ qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
 	m_freem(tx_data->m);
 	tx_data->m = NULL;
 
-	/* TODO: Tx rate adjustment? */
+	pkt_type = FIELD_GET(HAL_TX_RATE_STATS_INFO0_PKT_TYPE, ts->rate_stats);
+	mcs = FIELD_GET(HAL_TX_RATE_STATS_INFO0_MCS, ts->rate_stats);
+	if (qwx_mac_hw_ratecode_to_legacy_rate(tx_data->ni, mcs, pkt_type,
+	    &rateidx, &rate) == 0)
+		tx_data->ni->ni_txrate = rateidx;
 
 	ieee80211_release_node(ic, tx_data->ni);
 	tx_data->ni = NULL;
@@ -23064,6 +23140,7 @@ qwx_auth(struct qwx_softc *sc)
 	}
 
 	qwx_recalculate_mgmt_rate(sc, ni, arvif->vdev_id, pdev->pdev_id);
+	ni->ni_txrate = 0;
 	
 	ret = qwx_mac_station_add(sc, arvif, pdev->pdev_id, ni);
 	if (ret)
@@ -23289,7 +23366,12 @@ qwx_run(struct qwx_softc *sc)
 int
 qwx_run_stop(struct qwx_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+
 	sc->ops.irq_disable(sc);
+
+	if (ic->ic_opmode == IEEE80211_M_STA)
+		ic->ic_bss->ni_txrate = 0;
 
 	printf("%s: not implemented\n", __func__);
 	return ENOTSUP;
