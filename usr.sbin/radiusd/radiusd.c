@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.34 2024/01/08 04:16:48 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.35 2024/02/09 07:46:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -54,12 +54,14 @@ static int		 radiusd_start(struct radiusd *);
 static void		 radiusd_stop(struct radiusd *);
 static void		 radiusd_free(struct radiusd *);
 static void		 radiusd_listen_on_event(int, short, void *);
+static void		 radiusd_listen_handle_packet(struct radiusd_listen *,
+			    RADIUS_PACKET *, struct sockaddr *, socklen_t);
 static void		 radiusd_on_sigterm(int, short, void *);
 static void		 radiusd_on_sigint(int, short, void *);
 static void		 radiusd_on_sighup(int, short, void *);
 static void		 radiusd_on_sigchld(int, short, void *);
-static void		 radius_query_request(struct radius_query *);
-static void		 radius_query_response(struct radius_query *);
+static void		 raidus_query_access_request(struct radius_query *);
+static void		 radius_query_access_response(struct radius_query *);
 static const char	*radius_code_string(int);
 static int		 radiusd_access_response_fixup (struct radius_query *);
 
@@ -350,19 +352,12 @@ radiusd_free(struct radiusd *radiusd)
 static void
 radiusd_listen_on_event(int fd, short evmask, void *ctx)
 {
-	int				 i, sz, req_id, req_code;
-	struct radiusd_listen		*listn = ctx;
-	static u_char			 buf[65535];
-	static char			 username[256];
+	int				 sz;
+	RADIUS_PACKET			*packet = NULL;
 	struct sockaddr_storage		 peer;
 	socklen_t			 peersz;
-	RADIUS_PACKET			*packet = NULL;
-	char				 peerstr[NI_MAXHOST + NI_MAXSERV + 30];
-	struct radiusd_authentication	*authen;
-	struct radiusd_client		*client;
-	struct radius_query		*q;
-#define in(_x)	(((struct sockaddr_in  *)_x)->sin_addr)
-#define in6(_x)	(((struct sockaddr_in6 *)_x)->sin6_addr)
+	struct radiusd_listen		*listn = ctx;
+	static u_char			 buf[65535];
 
 	if (evmask & EV_READ) {
 		peersz = sizeof(peer);
@@ -371,115 +366,128 @@ radiusd_listen_on_event(int fd, short evmask, void *ctx)
 			if (errno == EAGAIN)
 				return;
 			log_warn("%s: recvfrom() failed", __func__);
-			goto on_error;
+			return;
 		}
 		RADIUSD_ASSERT(peer.ss_family == AF_INET ||
 		    peer.ss_family == AF_INET6);
-
-		/* prepare some information about this messages */
-		if (addrport_tostring((struct sockaddr *)&peer, peersz,
-		    peerstr, sizeof(peerstr)) == NULL) {
-			log_warn("%s: getnameinfo() failed", __func__);
-			goto on_error;
-		}
-		if ((packet = radius_convert_packet(buf, sz)) == NULL) {
+		if ((packet = radius_convert_packet(buf, sz)) == NULL)
 			log_warn("%s: radius_convert_packet() failed",
 			    __func__);
-			goto on_error;
-		}
-		req_id = radius_get_id(packet);
-		req_code = radius_get_code(packet);
+		else
+			radiusd_listen_handle_packet(listn, packet,
+			    (struct sockaddr *)&peer, peersz);
+	}
+}
 
-		/*
-		 * Find a matching `client' entry
-		 */
-		TAILQ_FOREACH(client, &listn->radiusd->client, next) {
-			if (client->af != peer.ss_family)
-				continue;
-			if (peer.ss_family == AF_INET &&
-			    IPv4_cmp(&((struct sockaddr_in *)&peer)->sin_addr,
-			    &client->addr, &client->mask))
-				break;
-			else if (peer.ss_family == AF_INET6 &&
-			    IPv6_cmp(&((struct sockaddr_in6 *)&peer)->sin6_addr,
-			    &client->addr, &client->mask))
-				break;
-		}
-		if (client == NULL) {
-			log_warnx("Received %s(code=%d) from %s id=%d: "
-			    "no `client' matches", radius_code_string(req_code),
-			    req_code, peerstr, req_id);
-			goto on_error;
-		}
+static void
+radiusd_listen_handle_packet(struct radiusd_listen *listn,
+    RADIUS_PACKET *packet, struct sockaddr *peer, socklen_t peerlen)
+{
+	int				 i, req_id, req_code;
+	static char			 username[256];
+	char				 peerstr[NI_MAXHOST + NI_MAXSERV + 30];
+	struct radiusd_authentication	*authen;
+	struct radiusd_client		*client;
+	struct radius_query		*q = NULL;
+#define in(_x)	(((struct sockaddr_in  *)_x)->sin_addr)
+#define in6(_x)	(((struct sockaddr_in6 *)_x)->sin6_addr)
 
-		/* Check the client's Message-Authenticator */
-		if (client->msgauth_required &&
-		    !radius_has_attr(packet,
-		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR)) {
-			log_warnx("Received %s(code=%d) from %s id=%d: "
-			    "no message authenticator",
-			    radius_code_string(req_code), req_code, peerstr,
-			    req_id);
-			goto on_error;
-		}
+	req_id = radius_get_id(packet);
+	req_code = radius_get_code(packet);
+	/* prepare some information about this messages */
+	if (addrport_tostring(peer, peerlen, peerstr, sizeof(peerstr)) ==
+	    NULL) {
+		log_warn("%s: getnameinfo() failed", __func__);
+		goto on_error;
+	}
 
-		if (radius_has_attr(packet,
-		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR) &&
-		    radius_check_message_authenticator(packet, client->secret)
-		    != 0) {
-			log_warnx("Received %s(code=%d) from %s id=%d: "
-			    "bad message authenticator",
-			    radius_code_string(req_code), req_code, peerstr,
-			    req_id);
-			goto on_error;
-		}
+	/*
+	 * Find a matching `client' entry
+	 */
+	TAILQ_FOREACH(client, &listn->radiusd->client, next) {
+		if (client->af != peer->sa_family)
+			continue;
+		if (peer->sa_family == AF_INET && IPv4_cmp(
+		    &in(peer), &client->addr, &client->mask))
+			break;
+		else if (peer->sa_family == AF_INET6 && IPv6_cmp(
+		    &in6(peer), &client->addr, &client->mask))
+			break;
+	}
+	if (client == NULL) {
+		log_warnx("Received %s(code=%d) from %s id=%d: no `client' "
+		    "matches", radius_code_string(req_code), req_code, peerstr,
+		    req_id);
+		goto on_error;
+	}
 
-		/*
-		 * Find a duplicate request.  In RFC 2865, it has the same
-		 * source IP address and source UDP port and Identifier.
-		 */
-		TAILQ_FOREACH(q, &listn->radiusd->query, next) {
-			if (peer.ss_family == q->clientaddr.ss_family &&
-			    ((peer.ss_family == AF_INET &&
-			    in(&q->clientaddr).s_addr ==
-			    in(&peer).s_addr) ||
-			    (peer.ss_family == AF_INET6 &&
-			    IN6_ARE_ADDR_EQUAL(
-			    &in6(&q->clientaddr), &in6(&peer)))) &&
-			    ((struct sockaddr_in *)&q->clientaddr)->sin_port ==
-			    ((struct sockaddr_in *)&peer)->sin_port &&
-			    req_id == q->req_id)
-				break;	/* found it */
-		}
-		if (q != NULL) {
-			log_info("Received %s(code=%d) from %s id=%d: "
-			    "duplicate request by q=%u",
-			    radius_code_string(req_code), req_code, peerstr,
-			    req_id, q->id);
-			/* XXX RFC 5080 suggests to answer the cached result */
-			goto on_error;
-		}
+	/* Check the client's Message-Authenticator */
+	if (client->msgauth_required && !radius_has_attr(packet,
+	    RADIUS_TYPE_MESSAGE_AUTHENTICATOR)) {
+		log_warnx("Received %s(code=%d) from %s id=%d: no message "
+		    "authenticator", radius_code_string(req_code), req_code,
+		    peerstr, req_id);
+		goto on_error;
+	}
 
-		/* FIXME: we can support other request codes */
-		if (req_code != RADIUS_CODE_ACCESS_REQUEST) {
-			log_info("Received %s(code=%d) from %s id=%d: %s "
-			    "is not supported in this implementation",
-			    radius_code_string(req_code), req_code, peerstr,
-			    req_id, radius_code_string(req_code));
-			goto on_error;
-		}
+	if (radius_has_attr(packet, RADIUS_TYPE_MESSAGE_AUTHENTICATOR) &&
+	    radius_check_message_authenticator(packet, client->secret) != 0) {
+		log_warnx("Received %s(code=%d) from %s id=%d: bad message "
+		    "authenticator", radius_code_string(req_code), req_code,
+		    peerstr, req_id);
+		goto on_error;
+	}
 
+	/*
+	 * Find a duplicate request.  In RFC 2865, it has the same source IP
+	 * address and source UDP port and Identifier.
+	 */
+	TAILQ_FOREACH(q, &listn->radiusd->query, next) {
+		if (peer->sa_family == q->clientaddr.ss_family &&
+		    ((peer->sa_family == AF_INET && in(&q->clientaddr).s_addr ==
+		    in(peer).s_addr) || (peer->sa_family == AF_INET6 &&
+		    IN6_ARE_ADDR_EQUAL(&in6(&q->clientaddr), &in6(peer)))) &&
+		    ((struct sockaddr_in *)&q->clientaddr)->sin_port ==
+		    ((struct sockaddr_in *)peer)->sin_port &&
+		    req_id == q->req_id)
+			break;	/* found it */
+	}
+	if (q != NULL) {
+		log_info("Received %s(code=%d) from %s id=%d: duplicate "
+		    "request by q=%u", radius_code_string(req_code), req_code,
+		    peerstr, req_id, q->id);
+		/* XXX RFC 5080 suggests to answer the cached result */
+		goto on_error;
+	}
+
+	if ((q = calloc(1, sizeof(struct radius_query))) == NULL) {
+		log_warn("%s: Out of memory", __func__);
+		goto on_error;
+	}
+	if (radius_get_string_attr(packet, RADIUS_TYPE_USER_NAME, username,
+	    sizeof(username)) != 0) {
+		log_info("Received %s(code=%d) from %s id=%d: no User-Name "
+		    "attribute", radius_code_string(req_code), req_code,
+		    peerstr, req_id);
+	} else
+		strlcpy(q->username, username, sizeof(q->username));
+
+	q->id = ++radius_query_id_seq;
+	q->clientaddrlen = peerlen;
+	memcpy(&q->clientaddr, peer, peerlen);
+	q->listen = listn;
+	q->req = packet;
+	q->client = client;
+	q->req_id = req_id;
+	radius_get_authenticator(packet, q->req_auth);
+	packet = NULL;
+	TAILQ_INSERT_TAIL(&listn->radiusd->query, q, next);
+
+	switch (req_code) {
+	case RADIUS_CODE_ACCESS_REQUEST:
 		/*
 		 * Find a matching `authenticate' entry
 		 */
-		if (radius_get_string_attr(packet, RADIUS_TYPE_USER_NAME,
-		    username, sizeof(username)) != 0) {
-			log_info("Received %s(code=%d) from %s id=%d: "
-			    "no User-Name attribute",
-			    radius_code_string(req_code), req_code, peerstr,
-			    req_id);
-			goto on_error;
-		}
 		TAILQ_FOREACH(authen, &listn->radiusd->authen, next) {
 			for (i = 0; authen->username[i] != NULL; i++) {
 				if (fnmatch(authen->username[i], username, 0)
@@ -487,7 +495,7 @@ radiusd_listen_on_event(int fd, short evmask, void *ctx)
 					goto found;
 			}
 		}
-found:
+ found:
 		if (authen == NULL) {
 			log_warnx("Received %s(code=%d) from %s id=%d "
 			    "username=%s: no `authenticate' matches.",
@@ -495,7 +503,7 @@ found:
 			    req_id, username);
 			goto on_error;
 		}
-		RADIUSD_ASSERT(authen->auth != NULL);
+		q->authen = authen;
 
 		if (!MODULE_DO_USERPASS(authen->auth->module) &&
 		    !MODULE_DO_ACCSREQ(authen->auth->module)) {
@@ -505,42 +513,32 @@ found:
 			    req_id, username, authen->auth->module->name);
 			goto on_error;
 		}
-		if ((q = calloc(1, sizeof(struct radius_query))) == NULL) {
-			log_warn("%s: Out of memory", __func__);
-			goto on_error;
-		}
-		memcpy(&q->clientaddr, &peer, peersz);
-		strlcpy(q->username, username, sizeof(q->username));
-		q->id = ++radius_query_id_seq;
-		q->clientaddrlen = peersz;
-		q->authen = authen;
-		q->listen = listn;
-		q->req = packet;
-		q->client = client;
-		q->req_id = req_id;
-		radius_get_authenticator(packet, q->req_auth);
 
 		log_info("Received %s(code=%d) from %s id=%d username=%s "
 		    "q=%u: `%s' authentication is starting",
 		    radius_code_string(req_code), req_code, peerstr, q->req_id,
 		    q->username, q->id, q->authen->auth->module->name);
-		TAILQ_INSERT_TAIL(&listn->radiusd->query, q, next);
 
-		radius_query_request(q);
-
+		raidus_query_access_request(q);
 		return;
+	default:
+		log_info("Received %s(code=%d) from %s id=%d: %s is not "
+		    "supported in this implementation", radius_code_string(
+		    req_code), req_code, peerstr, req_id, radius_code_string(
+		    req_code));
+		break;
 	}
 on_error:
 	if (packet != NULL)
 		radius_delete_packet(packet);
+	if (q != NULL)
+		radiusd_access_request_aborted(q);
 #undef in
 #undef in6
-
-	return;
 }
 
 static void
-radius_query_request(struct radius_query *q)
+raidus_query_access_request(struct radius_query *q)
 {
 	struct radiusd_authentication	*authen = q->authen;
 
@@ -566,7 +564,7 @@ radius_query_request(struct radius_query *q)
 }
 
 static void
-radius_query_response(struct radius_query *q)
+radius_query_access_response(struct radius_query *q)
 {
 	int		 sz, res_id, res_code;
 	char		 buf[NI_MAXHOST + NI_MAXSERV + 30];
@@ -609,7 +607,6 @@ radius_query_response(struct radius_query *q)
 		log_warn("Sending a RADIUS response failed");
 on_error:
 	radiusd_access_request_aborted(q);
-
 }
 
 /***********************************************************************
@@ -643,7 +640,7 @@ radiusd_access_request_answer(struct radius_query *q)
 	}
 
 	RADIUSD_ASSERT(q->deco == NULL);
-	radius_query_response(q);
+	radius_query_access_response(q);
 
 	return;
 on_error:
@@ -957,7 +954,8 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 		goto on_error;
 	}
 	if (fcntl(module->fd, F_SETFL, ival | O_NONBLOCK) == -1) {
-		log_warn("Could not load module `%s': fcntl(F_SETFL,O_NONBLOCK)",
+		log_warn(
+		    "Could not load module `%s': fcntl(F_SETFL,O_NONBLOCK)",
 		    name);
 		goto on_error;
 	}
@@ -1281,7 +1279,7 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 					radius_delete_packet(q->req);
 					q->req = radpkt;
 				}
-				radius_query_request(q);
+				raidus_query_access_request(q);
 				break;
 			case IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER:
 				if (radpkt == NULL) {
@@ -1299,7 +1297,7 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 					    q->req);
 					q->res = radpkt;
 				}
-				radius_query_response(q);
+				radius_query_access_response(q);
 				break;
 			}
 		}
