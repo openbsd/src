@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.15 2024/02/09 09:55:17 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.16 2024/02/09 12:50:10 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1773,7 +1773,6 @@ struct qwx_softc {
 
 	struct qmi_wlanfw_request_mem_ind_msg_v01 *sc_req_mem_ind;
 
-#if NBPFILTER > 0
 	caddr_t			sc_drvbpf;
 
 	union {
@@ -1789,7 +1788,6 @@ struct qwx_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 };
 
 int	qwx_ce_intr(void *);
