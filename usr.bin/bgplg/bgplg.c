@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplg.c,v 1.19 2018/03/05 10:53:37 denis Exp $	*/
+/*	$OpenBSD: bgplg.c,v 1.20 2024/02/09 12:56:53 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -260,17 +260,15 @@ main(void)
 
 	printf("Content-Type: %s\n"
 	    "Cache-Control: no-cache\n\n"
-	    "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
-	    "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" "
-	    "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
-	    "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+	    "<!doctype html>\n"
+	    "<html>\n"
 	    "<head>\n"
 	    "<title>%s</title>\n",
 	    CONTENT_TYPE, myname);
 	if (stat(INC_STYLE, &st) == 0) {
-		printf("<style type='text/css'><!--\n");
+		printf("<style>\n");
 		lg_incl(INC_STYLE);
-		printf("--></style>\n");
+		printf("</style>\n");
 	}
 	if (stat(INC_HEAD, &st) != 0 || lg_incl(INC_HEAD) != 0) {
 		printf("</head>\n"
@@ -308,8 +306,8 @@ main(void)
 	}
 
 	printf("</select>\n"
-	    "<input type='text' value='%s' name='req'/>\n"
-	    "<input type='submit' value='submit'/>\n"
+	    "<input type='text' value='%s' name='req'>\n"
+	    "<input type='submit' value='submit'>\n"
 	    "</div>\n"
 	    "</form>\n"
 	    "<pre>\n", req ? req : "");
