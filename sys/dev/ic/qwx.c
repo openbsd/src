@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.35 2024/02/09 14:09:19 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.36 2024/02/09 14:11:00 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16441,9 +16441,83 @@ qwx_dp_rx_process_mon_rings(struct qwx_softc *sc, int mac_id)
 }
 
 int
-qwx_dp_process_rxdma_err(struct qwx_softc *sc)
+qwx_dp_process_rxdma_err(struct qwx_softc *sc, int mac_id)
 {
-	return 0;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct dp_srng *err_ring;
+	struct dp_rxdma_ring *rx_ring;
+	struct dp_link_desc_bank *link_desc_banks = sc->dp.link_desc_banks;
+	struct hal_srng *srng;
+	uint32_t msdu_cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
+	enum hal_rx_buf_return_buf_manager rbm;
+	enum hal_reo_entr_rxdma_ecode rxdma_err_code;
+	struct qwx_rx_data *rx_data;
+	struct hal_reo_entrance_ring *entr_ring;
+	void *desc;
+	int num_buf_freed = 0;
+	uint64_t paddr;
+	uint32_t desc_bank;
+	void *link_desc_va;
+	int num_msdus;
+	int i, idx, srng_id;
+
+	srng_id = sc->hw_params.hw_ops->mac_id_to_srng_id(&sc->hw_params,
+	    mac_id);
+	err_ring = &sc->pdev_dp.rxdma_err_dst_ring[srng_id];
+	rx_ring = &sc->pdev_dp.rx_refill_buf_ring;
+
+	srng = &sc->hal.srng_list[err_ring->ring_id];
+#ifdef notyet
+	spin_lock_bh(&srng->lock);
+#endif
+	qwx_hal_srng_access_begin(sc, srng);
+
+	while ((desc = qwx_hal_srng_dst_get_next_entry(sc, srng))) {
+		qwx_hal_rx_reo_ent_paddr_get(sc, desc, &paddr, &desc_bank);
+
+		entr_ring = (struct hal_reo_entrance_ring *)desc;
+		rxdma_err_code = FIELD_GET(
+		    HAL_REO_ENTR_RING_INFO1_RXDMA_ERROR_CODE,
+		    entr_ring->info1);
+#if 0
+		ab->soc_stats.rxdma_error[rxdma_err_code]++;
+#endif
+		link_desc_va = link_desc_banks[desc_bank].vaddr +
+		     (paddr - link_desc_banks[desc_bank].paddr);
+		qwx_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus,
+		    msdu_cookies, &rbm);
+
+		for (i = 0; i < num_msdus; i++) {
+			idx = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
+			    msdu_cookies[i]);
+			if (idx >= rx_ring->bufs_max)
+				continue;
+
+			rx_data = &rx_ring->rx_data[idx];
+
+			bus_dmamap_unload(sc->sc_dmat, rx_data->map);
+			m_freem(rx_data->m);
+			rx_data->m = NULL;
+
+			num_buf_freed++;
+		}
+
+		qwx_dp_rx_link_desc_return(sc, desc,
+		    HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
+	}
+
+	qwx_hal_srng_access_end(sc, srng);
+#ifdef notyet
+	spin_unlock_bh(&srng->lock);
+#endif
+	if (num_buf_freed)
+		qwx_dp_rxbufs_replenish(sc, mac_id, rx_ring, num_buf_freed,
+		    sc->hw_params.hal_params->rx_buf_rbm);
+
+	ifp->if_ierrors += num_buf_freed;
+
+	return num_buf_freed;
 }
 
 void
@@ -16798,7 +16872,7 @@ qwx_dp_service_srng(struct qwx_softc *sc, int grp_id)
 			   (1 << (id))) == 0)
 				continue;
 
-			if (qwx_dp_process_rxdma_err(sc))
+			if (qwx_dp_process_rxdma_err(sc, id))
 				ret = 1;
 
 			qwx_dp_rxbufs_replenish(sc, id, &dp->rx_refill_buf_ring,
