@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.15 2024/01/08 04:16:48 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.16 2024/02/09 07:41:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -162,7 +162,7 @@ module_load(struct module_base *base)
 }
 
 void
-module_drop_privilege(struct module_base *base)
+module_drop_privilege(struct module_base *base, int nochroot)
 {
 	struct passwd	*pw;
 
@@ -171,7 +171,7 @@ module_drop_privilege(struct module_base *base)
 	/* Drop the privilege */
 	if ((pw = getpwnam(RADIUSD_USER)) == NULL)
 		goto on_fail;
-	if (chroot(pw->pw_dir) == -1)
+	if (nochroot == 0 && chroot(pw->pw_dir) == -1)
 		goto on_fail;
 	if (chdir("/") == -1)
 		goto on_fail;

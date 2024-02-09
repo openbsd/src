@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.19 2023/09/04 10:49:20 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.20 2024/02/09 07:41:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 	if ((module_radius.base = module_create(
 	    STDIN_FILENO, &module_radius, &module_radius_handlers)) == NULL)
 		err(1, "Could not create a module instance");
-	module_drop_privilege(module_radius.base);
+	module_drop_privilege(module_radius.base, 0);
 	setproctitle("[main]");
 
 	module_load(module_radius.base);

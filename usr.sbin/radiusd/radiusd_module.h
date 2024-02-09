@@ -60,7 +60,7 @@ void			 module_stop(struct module_base *);
 int			 module_run(struct module_base *);
 void			 module_destroy(struct module_base *);
 void			 module_load(struct module_base *);
-void			 module_drop_privilege(struct module_base *);
+void			 module_drop_privilege(struct module_base *, int);
 int			 module_notify_secret(struct module_base *,
 			    const char *);
 int			 module_send_message(struct module_base *, uint32_t,
