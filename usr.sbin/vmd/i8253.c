@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.38 2023/10/25 12:44:28 dv Exp $ */
+/* $OpenBSD: i8253.c,v 1.39 2024/02/09 14:35:47 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -298,8 +298,8 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				if (i8253_channel[sel].start == 0)
 					i8253_channel[sel].start = 0xffff;
 
-				log_debug("%s: channel %d reset, mode=%d, "
-				    "start=%d", __func__,
+				DPRINTF("%s: channel %d reset, mode=%d, "
+				    "start=%d\n", __func__,
 				    sel, i8253_channel[sel].mode,
 				    i8253_channel[sel].start);
 
