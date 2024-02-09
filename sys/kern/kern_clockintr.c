@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.64 2024/01/24 19:23:38 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.65 2024/02/09 15:06:23 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -31,6 +31,7 @@
 #include <sys/sysctl.h>
 #include <sys/time.h>
 
+void clockintr_cancel_locked(struct clockintr *);
 void clockintr_hardclock(struct clockrequest *, void *, void *);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
 void clockqueue_intrclock_install(struct clockintr_queue *,
@@ -317,9 +318,20 @@ void
 clockintr_cancel(struct clockintr *cl)
 {
 	struct clockintr_queue *cq = cl->cl_queue;
-	int was_next;
 
 	mtx_enter(&cq->cq_mtx);
+	clockintr_cancel_locked(cl);
+	mtx_leave(&cq->cq_mtx);
+}
+
+void
+clockintr_cancel_locked(struct clockintr *cl)
+{
+	struct clockintr_queue *cq = cl->cl_queue;
+	int was_next;
+
+	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
+
 	if (ISSET(cl->cl_flags, CLST_PENDING)) {
 		was_next = cl == TAILQ_FIRST(&cq->cq_pend);
 		clockqueue_pend_delete(cq, cl);
@@ -332,7 +344,6 @@ clockintr_cancel(struct clockintr *cl)
 	}
 	if (cl == cq->cq_running)
 		SET(cq->cq_flags, CQ_IGNORE_REQUEST);
-	mtx_leave(&cq->cq_mtx);
 }
 
 void
