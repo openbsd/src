@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.33 2024/02/09 14:05:48 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.34 2024/02/09 14:07:27 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16209,10 +16209,301 @@ qwx_dp_process_rxdma_err(struct qwx_softc *sc)
 	return 0;
 }
 
+void
+qwx_hal_reo_status_queue_stats(struct qwx_softc *sc, uint32_t *reo_desc,
+    struct hal_reo_status *status)
+{
+	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_reo_get_queue_stats_status *desc =
+	    (struct hal_reo_get_queue_stats_status *)tlv->value;
+
+	status->uniform_hdr.cmd_num =
+	    FIELD_GET(HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	status->uniform_hdr.cmd_status =
+	    FIELD_GET(HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+#if 0
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "Queue stats status:\n");
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "header: cmd_num %d status %d\n",
+		   status->uniform_hdr.cmd_num,
+		   status->uniform_hdr.cmd_status);
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "ssn %ld cur_idx %ld\n",
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_SSN,
+			     desc->info0),
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_CUR_IDX,
+			     desc->info0));
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "pn = [%08x, %08x, %08x, %08x]\n",
+		   desc->pn[0], desc->pn[1], desc->pn[2], desc->pn[3]);
+	ath11k_dbg(ab, ATH11K_DBG_HAL,
+		   "last_rx: enqueue_tstamp %08x dequeue_tstamp %08x\n",
+		   desc->last_rx_enqueue_timestamp,
+		   desc->last_rx_dequeue_timestamp);
+	ath11k_dbg(ab, ATH11K_DBG_HAL,
+		   "rx_bitmap [%08x %08x %08x %08x %08x %08x %08x %08x]\n",
+		   desc->rx_bitmap[0], desc->rx_bitmap[1], desc->rx_bitmap[2],
+		   desc->rx_bitmap[3], desc->rx_bitmap[4], desc->rx_bitmap[5],
+		   desc->rx_bitmap[6], desc->rx_bitmap[7]);
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "count: cur_mpdu %ld cur_msdu %ld\n",
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO1_MPDU_COUNT,
+			     desc->info1),
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO1_MSDU_COUNT,
+			     desc->info1));
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "fwd_timeout %ld fwd_bar %ld dup_count %ld\n",
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_TIMEOUT_COUNT,
+			     desc->info2),
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_FDTB_COUNT,
+			     desc->info2),
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_DUPLICATE_COUNT,
+			     desc->info2));
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "frames_in_order %ld bar_rcvd %ld\n",
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO3_FIO_COUNT,
+			     desc->info3),
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO3_BAR_RCVD_CNT,
+			     desc->info3));
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "num_mpdus %d num_msdus %d total_bytes %d\n",
+		   desc->num_mpdu_frames, desc->num_msdu_frames,
+		   desc->total_bytes);
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "late_rcvd %ld win_jump_2k %ld hole_cnt %ld\n",
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_LATE_RX_MPDU,
+			     desc->info4),
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_WINDOW_JMP2K,
+			     desc->info4),
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_HOLE_COUNT,
+			     desc->info4));
+	ath11k_dbg(ab, ATH11K_DBG_HAL, "looping count %ld\n",
+		   FIELD_GET(HAL_REO_GET_QUEUE_STATS_STATUS_INFO5_LOOPING_CNT,
+			     desc->info5));
+#endif
+}
+
+void
+qwx_hal_reo_flush_queue_status(struct qwx_softc *sc, uint32_t *reo_desc,
+    struct hal_reo_status *status)
+{
+	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_reo_flush_queue_status *desc =
+	    (struct hal_reo_flush_queue_status *)tlv->value;
+
+	status->uniform_hdr.cmd_num = FIELD_GET(
+	   HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	status->uniform_hdr.cmd_status = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+	status->u.flush_queue.err_detected = FIELD_GET(
+	    HAL_REO_FLUSH_QUEUE_INFO0_ERR_DETECTED, desc->info0);
+}
+
+void
+qwx_hal_reo_flush_cache_status(struct qwx_softc *sc, uint32_t *reo_desc,
+    struct hal_reo_status *status)
+{
+	struct ath11k_hal *hal = &sc->hal;
+	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_reo_flush_cache_status *desc =
+	    (struct hal_reo_flush_cache_status *)tlv->value;
+
+	status->uniform_hdr.cmd_num = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	status->uniform_hdr.cmd_status = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+
+	status->u.flush_cache.err_detected = FIELD_GET(
+	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_IS_ERR, desc->info0);
+	status->u.flush_cache.err_code = FIELD_GET(
+	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_BLOCK_ERR_CODE, desc->info0);
+	if (!status->u.flush_cache.err_code)
+		hal->avail_blk_resource |= BIT(hal->current_blk_index);
+
+	status->u.flush_cache.cache_controller_flush_status_hit = FIELD_GET(
+	    HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_STATUS_HIT, desc->info0);
+
+	status->u.flush_cache.cache_controller_flush_status_desc_type =
+	    FIELD_GET(HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_DESC_TYPE,
+	    desc->info0);
+	status->u.flush_cache.cache_controller_flush_status_client_id =
+	    FIELD_GET(HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_CLIENT_ID,
+	    desc->info0);
+	status->u.flush_cache.cache_controller_flush_status_err =
+	    FIELD_GET(HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_ERR,
+	    desc->info0);
+	status->u.flush_cache.cache_controller_flush_status_cnt =
+	    FIELD_GET(HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_COUNT,
+	    desc->info0);
+}
+
+void
+qwx_hal_reo_unblk_cache_status(struct qwx_softc *sc, uint32_t *reo_desc,
+    struct hal_reo_status *status)
+{
+	struct ath11k_hal *hal = &sc->hal;
+	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_reo_unblock_cache_status *desc =
+	   (struct hal_reo_unblock_cache_status *)tlv->value;
+
+	status->uniform_hdr.cmd_num = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	status->uniform_hdr.cmd_status = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+
+	status->u.unblock_cache.err_detected = FIELD_GET(
+	    HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_IS_ERR, desc->info0);
+	status->u.unblock_cache.unblock_type = FIELD_GET(
+	    HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_TYPE, desc->info0);
+
+	if (!status->u.unblock_cache.err_detected &&
+	    status->u.unblock_cache.unblock_type ==
+	    HAL_REO_STATUS_UNBLOCK_BLOCKING_RESOURCE)
+		hal->avail_blk_resource &= ~BIT(hal->current_blk_index);
+}
+
+void
+qwx_hal_reo_flush_timeout_list_status(struct qwx_softc *ab, uint32_t *reo_desc,
+    struct hal_reo_status *status)
+{
+	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_reo_flush_timeout_list_status *desc =
+	    (struct hal_reo_flush_timeout_list_status *)tlv->value;
+
+	status->uniform_hdr.cmd_num = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	status->uniform_hdr.cmd_status = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+
+	status->u.timeout_list.err_detected = FIELD_GET(
+	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_IS_ERR, desc->info0);
+	status->u.timeout_list.list_empty = FIELD_GET(
+	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_LIST_EMPTY, desc->info0);
+
+	status->u.timeout_list.release_desc_cnt = FIELD_GET(
+	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_REL_DESC_COUNT, desc->info1);
+	status->u.timeout_list.fwd_buf_cnt = FIELD_GET(
+	    HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_FWD_BUF_COUNT, desc->info1);
+}
+
+void
+qwx_hal_reo_desc_thresh_reached_status(struct qwx_softc *sc, uint32_t *reo_desc,
+    struct hal_reo_status *status)
+{
+	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_reo_desc_thresh_reached_status *desc =
+	    (struct hal_reo_desc_thresh_reached_status *)tlv->value;
+
+	status->uniform_hdr.cmd_num = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->hdr.info0);
+	status->uniform_hdr.cmd_status = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->hdr.info0);
+
+	status->u.desc_thresh_reached.threshold_idx = FIELD_GET(
+	    HAL_REO_DESC_THRESH_STATUS_INFO0_THRESH_INDEX, desc->info0);
+
+	status->u.desc_thresh_reached.link_desc_counter0 = FIELD_GET(
+	    HAL_REO_DESC_THRESH_STATUS_INFO1_LINK_DESC_COUNTER0, desc->info1);
+
+	status->u.desc_thresh_reached.link_desc_counter1 = FIELD_GET(
+	    HAL_REO_DESC_THRESH_STATUS_INFO2_LINK_DESC_COUNTER1, desc->info2);
+
+	status->u.desc_thresh_reached.link_desc_counter2 = FIELD_GET(
+	    HAL_REO_DESC_THRESH_STATUS_INFO3_LINK_DESC_COUNTER2, desc->info3);
+
+	status->u.desc_thresh_reached.link_desc_counter_sum = FIELD_GET(
+	    HAL_REO_DESC_THRESH_STATUS_INFO4_LINK_DESC_COUNTER_SUM,
+	    desc->info4);
+}
+
+void
+qwx_hal_reo_update_rx_reo_queue_status(struct qwx_softc *ab, uint32_t *reo_desc,
+    struct hal_reo_status *status)
+{
+	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
+	struct hal_reo_status_hdr *desc =
+	    (struct hal_reo_status_hdr *)tlv->value;
+
+	status->uniform_hdr.cmd_num = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_STATUS_NUM, desc->info0);
+	status->uniform_hdr.cmd_status = FIELD_GET(
+	    HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS, desc->info0);
+}
+
 int
 qwx_dp_process_reo_status(struct qwx_softc *sc)
 {
-	return 0;
+	struct qwx_dp *dp = &sc->dp;
+	struct hal_srng *srng;
+	struct dp_reo_cmd *cmd, *tmp;
+	int found = 0, ret = 0;
+	uint32_t *reo_desc;
+	uint16_t tag;
+	struct hal_reo_status reo_status;
+
+	srng = &sc->hal.srng_list[dp->reo_status_ring.ring_id];
+	memset(&reo_status, 0, sizeof(reo_status));
+#ifdef notyet
+	spin_lock_bh(&srng->lock);
+#endif
+	qwx_hal_srng_access_begin(sc, srng);
+
+	while ((reo_desc = qwx_hal_srng_dst_get_next_entry(sc, srng))) {
+		ret = 1;
+
+		tag = FIELD_GET(HAL_SRNG_TLV_HDR_TAG, *reo_desc);
+		switch (tag) {
+		case HAL_REO_GET_QUEUE_STATS_STATUS:
+			qwx_hal_reo_status_queue_stats(sc, reo_desc,
+			    &reo_status);
+			break;
+		case HAL_REO_FLUSH_QUEUE_STATUS:
+			qwx_hal_reo_flush_queue_status(sc, reo_desc,
+			    &reo_status);
+			break;
+		case HAL_REO_FLUSH_CACHE_STATUS:
+			qwx_hal_reo_flush_cache_status(sc, reo_desc,
+			    &reo_status);
+			break;
+		case HAL_REO_UNBLOCK_CACHE_STATUS:
+			qwx_hal_reo_unblk_cache_status(sc, reo_desc,
+			    &reo_status);
+			break;
+		case HAL_REO_FLUSH_TIMEOUT_LIST_STATUS:
+			qwx_hal_reo_flush_timeout_list_status(sc, reo_desc,
+			    &reo_status);
+			break;
+		case HAL_REO_DESCRIPTOR_THRESHOLD_REACHED_STATUS:
+			qwx_hal_reo_desc_thresh_reached_status(sc, reo_desc,
+			    &reo_status);
+			break;
+		case HAL_REO_UPDATE_RX_REO_QUEUE_STATUS:
+			qwx_hal_reo_update_rx_reo_queue_status(sc, reo_desc,
+			    &reo_status);
+			break;
+		default:
+			printf("%s: Unknown reo status type %d\n",
+			    sc->sc_dev.dv_xname, tag);
+			continue;
+		}
+#ifdef notyet
+		spin_lock_bh(&dp->reo_cmd_lock);
+#endif
+		TAILQ_FOREACH_SAFE(cmd, &dp->reo_cmd_list, entry, tmp) {
+			if (reo_status.uniform_hdr.cmd_num == cmd->cmd_num) {
+				found = 1;
+				TAILQ_REMOVE(&dp->reo_cmd_list, cmd, entry);
+				break;
+			}
+		}
+#ifdef notyet
+		spin_unlock_bh(&dp->reo_cmd_lock);
+#endif
+		if (found) {
+			cmd->handler(dp, (void *)&cmd->data,
+			    reo_status.uniform_hdr.cmd_status);
+			free(cmd, M_DEVBUF, sizeof(*cmd));
+		}
+		found = 0;
+	}
+
+	qwx_hal_srng_access_end(sc, srng);
+#ifdef notyet
+	spin_unlock_bh(&srng->lock);
+#endif
+	return ret;
 }
 
 int

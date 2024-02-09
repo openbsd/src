@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.16 2024/02/09 12:50:10 bluhm Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.17 2024/02/09 14:07:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -661,6 +661,100 @@ struct hal_srng_config {
 };
 
 #define QWX_NUM_SRNG_CFG	21
+
+struct hal_reo_status_header {
+	uint16_t cmd_num;
+	enum hal_reo_cmd_status cmd_status;
+	uint16_t cmd_exe_time;
+	uint32_t timestamp;
+};
+
+struct hal_reo_status_queue_stats {
+	uint16_t ssn;
+	uint16_t curr_idx;
+	uint32_t pn[4];
+	uint32_t last_rx_queue_ts;
+	uint32_t last_rx_dequeue_ts;
+	uint32_t rx_bitmap[8]; /* Bitmap from 0-255 */
+	uint32_t curr_mpdu_cnt;
+	uint32_t curr_msdu_cnt;
+	uint16_t fwd_due_to_bar_cnt;
+	uint16_t dup_cnt;
+	uint32_t frames_in_order_cnt;
+	uint32_t num_mpdu_processed_cnt;
+	uint32_t num_msdu_processed_cnt;
+	uint32_t total_num_processed_byte_cnt;
+	uint32_t late_rx_mpdu_cnt;
+	uint32_t reorder_hole_cnt;
+	uint8_t timeout_cnt;
+	uint8_t bar_rx_cnt;
+	uint8_t num_window_2k_jump_cnt;
+};
+
+struct hal_reo_status_flush_queue {
+	bool err_detected;
+};
+
+enum hal_reo_status_flush_cache_err_code {
+	HAL_REO_STATUS_FLUSH_CACHE_ERR_CODE_SUCCESS,
+	HAL_REO_STATUS_FLUSH_CACHE_ERR_CODE_IN_USE,
+	HAL_REO_STATUS_FLUSH_CACHE_ERR_CODE_NOT_FOUND,
+};
+
+struct hal_reo_status_flush_cache {
+	bool err_detected;
+	enum hal_reo_status_flush_cache_err_code err_code;
+	bool cache_controller_flush_status_hit;
+	uint8_t cache_controller_flush_status_desc_type;
+	uint8_t cache_controller_flush_status_client_id;
+	uint8_t cache_controller_flush_status_err;
+	uint8_t cache_controller_flush_status_cnt;
+};
+
+enum hal_reo_status_unblock_cache_type {
+	HAL_REO_STATUS_UNBLOCK_BLOCKING_RESOURCE,
+	HAL_REO_STATUS_UNBLOCK_ENTIRE_CACHE_USAGE,
+};
+
+struct hal_reo_status_unblock_cache {
+	bool err_detected;
+	enum hal_reo_status_unblock_cache_type unblock_type;
+};
+
+struct hal_reo_status_flush_timeout_list {
+	bool err_detected;
+	bool list_empty;
+	uint16_t release_desc_cnt;
+	uint16_t fwd_buf_cnt;
+};
+
+enum hal_reo_threshold_idx {
+	HAL_REO_THRESHOLD_IDX_DESC_COUNTER0,
+	HAL_REO_THRESHOLD_IDX_DESC_COUNTER1,
+	HAL_REO_THRESHOLD_IDX_DESC_COUNTER2,
+	HAL_REO_THRESHOLD_IDX_DESC_COUNTER_SUM,
+};
+
+struct hal_reo_status_desc_thresh_reached {
+	enum hal_reo_threshold_idx threshold_idx;
+	uint32_t link_desc_counter0;
+	uint32_t link_desc_counter1;
+	uint32_t link_desc_counter2;
+	uint32_t link_desc_counter_sum;
+};
+
+struct hal_reo_status {
+	struct hal_reo_status_header uniform_hdr;
+	uint8_t loop_cnt;
+	union {
+		struct hal_reo_status_queue_stats queue_stats;
+		struct hal_reo_status_flush_queue flush_queue;
+		struct hal_reo_status_flush_cache flush_cache;
+		struct hal_reo_status_unblock_cache unblock_cache;
+		struct hal_reo_status_flush_timeout_list timeout_list;
+		struct hal_reo_status_desc_thresh_reached desc_thresh_reached;
+	} u;
+};
 
 /* HAL context to be used to access SRNG APIs (currently used by data path
  * and transport (CE) modules)
