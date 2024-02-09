@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.430 2024/02/07 23:52:20 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.431 2024/02/09 14:02:11 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ route_init(void)
 #endif
 }
 
-void
+int
 route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
 {
 	u_long gen;
@@ -215,7 +215,7 @@ route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
 	    ro->ro_dst.sa_family == AF_INET &&
 	    satosin(&ro->ro_dst)->sin_addr.s_addr == addr.s_addr) {
 		ipstat_inc(ips_rtcachehit);
-		return;
+		return (0);
 	}
 
 	ipstat_inc(ips_rtcachemiss);
@@ -228,10 +228,12 @@ route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
 	satosin(&ro->ro_dst)->sin_family = AF_INET;
 	satosin(&ro->ro_dst)->sin_len = sizeof(struct sockaddr_in);
 	satosin(&ro->ro_dst)->sin_addr = addr;
+
+	return (ESRCH);
 }
 
 #ifdef INET6
-void
+int
 route6_cache(struct route_in6 *ro, const struct in6_addr *addr,
     u_int rtableid)
 {
@@ -246,7 +248,7 @@ route6_cache(struct route_in6 *ro, const struct in6_addr *addr,
 	    ro->ro_dst.sin6_family == AF_INET6 &&
 	    IN6_ARE_ADDR_EQUAL(&ro->ro_dst.sin6_addr, addr)) {
 		ip6stat_inc(ip6s_rtcachehit);
-		return;
+		return (0);
 	}
 
 	ip6stat_inc(ip6s_rtcachemiss);
@@ -259,6 +261,8 @@ route6_cache(struct route_in6 *ro, const struct in6_addr *addr,
 	ro->ro_dst.sin6_family = AF_INET6;
 	ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
 	ro->ro_dst.sin6_addr = *addr;
+
+	return (ESRCH);
 }
 #endif
 

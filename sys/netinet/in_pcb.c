@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.290 2024/02/07 23:40:40 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.291 2024/02/09 14:02:11 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -918,8 +918,7 @@ in_pcbrtentry(struct inpcb *inp)
 
 	if (inp->inp_faddr.s_addr == INADDR_ANY)
 		return (NULL);
-	route_cache(ro, inp->inp_faddr, inp->inp_rtableid);
-	if (ro->ro_rt == NULL) {
+	if (route_cache(ro, inp->inp_faddr, inp->inp_rtableid)) {
 		ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
 		    &inp->inp_laddr.s_addr, ro->ro_tableid);
 	}
@@ -941,8 +940,6 @@ in_pcbselsrc(struct in_addr *insrc, struct sockaddr_in *sin,
 	const struct in_addr *laddr = &inp->inp_laddr;
 	u_int rtableid = inp->inp_rtableid;
 	struct sockaddr	*ip4_source = NULL;
-
-	struct sockaddr_in *sin2;
 	struct in_ifaddr *ia = NULL;
 
 	/*
@@ -984,25 +981,9 @@ in_pcbselsrc(struct in_addr *insrc, struct sockaddr_in *sin,
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
-	if (!rtisvalid(ro->ro_rt) || (ro->ro_tableid != rtableid) ||
-	    (satosin(&ro->ro_dst)->sin_addr.s_addr != sin->sin_addr.s_addr)) {
-		rtfree(ro->ro_rt);
-		ro->ro_rt = NULL;
-	}
-	if (ro->ro_rt == NULL) {
+	if (route_cache(ro, sin->sin_addr, rtableid)) {
 		/* No route yet, so try to acquire one */
-		ro->ro_dst.sa_family = AF_INET;
-		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
-		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
-		ro->ro_tableid = rtableid;
 		ro->ro_rt = rtalloc_mpath(&ro->ro_dst, NULL, ro->ro_tableid);
-
-		/*
-		 * It is important to zero out the rest of the
-		 * struct sockaddr_in when mixing v6 & v4!
-		 */
-		sin2 = satosin(&ro->ro_dst);
-		memset(sin2->sin_zero, 0, sizeof(sin2->sin_zero));
 	}
 
 	/*
