@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.6 2024/02/05 10:45:47 kettenis Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.7 2024/02/09 11:24:52 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -49,6 +49,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
