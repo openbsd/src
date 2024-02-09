@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.32 2024/02/09 12:45:10 jsg Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.33 2024/02/09 14:05:48 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15047,10 +15047,298 @@ qwx_dp_tx_completion_handler(struct qwx_softc *sc, int ring_id)
 	return 0;
 }
 
+void
+qwx_hal_rx_reo_ent_paddr_get(struct qwx_softc *sc, void *desc, uint64_t *paddr,
+    uint32_t *desc_bank)
+{
+	struct ath11k_buffer_addr *buff_addr = desc;
+
+	*paddr = ((uint64_t)(FIELD_GET(BUFFER_ADDR_INFO1_ADDR,
+	    buff_addr->info1)) << 32) |
+	    FIELD_GET(BUFFER_ADDR_INFO0_ADDR, buff_addr->info0);
+
+	*desc_bank = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE, buff_addr->info1);
+}
+
+int
+qwx_hal_desc_reo_parse_err(struct qwx_softc *sc, uint32_t *rx_desc,
+    uint64_t *paddr, uint32_t *desc_bank)
+{
+	struct hal_reo_dest_ring *desc = (struct hal_reo_dest_ring *)rx_desc;
+	enum hal_reo_dest_ring_push_reason push_reason;
+	enum hal_reo_dest_ring_error_code err_code;
+
+	push_reason = FIELD_GET(HAL_REO_DEST_RING_INFO0_PUSH_REASON,
+	    desc->info0);
+	err_code = FIELD_GET(HAL_REO_DEST_RING_INFO0_ERROR_CODE,
+	    desc->info0);
+#if 0
+	ab->soc_stats.reo_error[err_code]++;
+#endif
+	if (push_reason != HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED &&
+	    push_reason != HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
+		printf("%s: expected error push reason code, received %d\n",
+		    sc->sc_dev.dv_xname, push_reason);
+		return EINVAL;
+	}
+
+	if (FIELD_GET(HAL_REO_DEST_RING_INFO0_BUFFER_TYPE, desc->info0) !=
+	    HAL_REO_DEST_RING_BUFFER_TYPE_LINK_DESC) {
+		printf("%s: expected buffer type link_desc",
+		    sc->sc_dev.dv_xname);
+		return EINVAL;
+	}
+
+	qwx_hal_rx_reo_ent_paddr_get(sc, rx_desc, paddr, desc_bank);
+
+	return 0;
+}
+
+void
+qwx_hal_rx_msdu_link_info_get(void *link_desc, uint32_t *num_msdus,
+    uint32_t *msdu_cookies, enum hal_rx_buf_return_buf_manager *rbm)
+{
+	struct hal_rx_msdu_link *link = (struct hal_rx_msdu_link *)link_desc;
+	struct hal_rx_msdu_details *msdu;
+	int i;
+
+	*num_msdus = HAL_NUM_RX_MSDUS_PER_LINK_DESC;
+
+	msdu = &link->msdu_link[0];
+	*rbm = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR,
+	    msdu->buf_addr_info.info1);
+
+	for (i = 0; i < *num_msdus; i++) {
+		msdu = &link->msdu_link[i];
+
+		if (!FIELD_GET(BUFFER_ADDR_INFO0_ADDR,
+		    msdu->buf_addr_info.info0)) {
+			*num_msdus = i;
+			break;
+		}
+		*msdu_cookies = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
+		    msdu->buf_addr_info.info1);
+		msdu_cookies++;
+	}
+}
+
+void
+qwx_hal_rx_msdu_link_desc_set(struct qwx_softc *sc, void *desc,
+    void *link_desc, enum hal_wbm_rel_bm_act action)
+{
+	struct hal_wbm_release_ring *dst_desc = desc;
+	struct hal_wbm_release_ring *src_desc = link_desc;
+
+	dst_desc->buf_addr_info = src_desc->buf_addr_info;
+	dst_desc->info0 |= FIELD_PREP(HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE,
+	    HAL_WBM_REL_SRC_MODULE_SW) |
+	    FIELD_PREP(HAL_WBM_RELEASE_INFO0_BM_ACTION, action) |
+	    FIELD_PREP(HAL_WBM_RELEASE_INFO0_DESC_TYPE,
+	    HAL_WBM_REL_DESC_TYPE_MSDU_LINK);
+}
+
+int
+qwx_dp_rx_link_desc_return(struct qwx_softc *sc, uint32_t *link_desc,
+    enum hal_wbm_rel_bm_act action)
+{
+	struct qwx_dp *dp = &sc->dp;
+	struct hal_srng *srng;
+	uint32_t *desc;
+	int ret = 0;
+
+	srng = &sc->hal.srng_list[dp->wbm_desc_rel_ring.ring_id];
+#ifdef notyet
+	spin_lock_bh(&srng->lock);
+#endif
+	qwx_hal_srng_access_begin(sc, srng);
+
+	desc = qwx_hal_srng_src_get_next_entry(sc, srng);
+	if (!desc) {
+		ret = ENOBUFS;
+		goto exit;
+	}
+
+	qwx_hal_rx_msdu_link_desc_set(sc, (void *)desc, (void *)link_desc,
+	    action);
+
+exit:
+	qwx_hal_srng_access_end(sc, srng);
+#ifdef notyet
+	spin_unlock_bh(&srng->lock);
+#endif
+	return ret;
+}
+
+int
+qwx_dp_rx_frag_h_mpdu(struct qwx_softc *sc, struct mbuf *m,
+    uint32_t *ring_desc)
+{
+	printf("%s: not implemented\n", __func__);
+	return ENOTSUP;
+}
+
+static inline uint16_t
+qwx_dp_rx_h_msdu_start_msdu_len(struct qwx_softc *sc, struct hal_rx_desc *desc)
+{
+	return sc->hw_params.hw_ops->rx_desc_get_msdu_len(desc);
+}
+
+void
+qwx_dp_process_rx_err_buf(struct qwx_softc *sc, uint32_t *ring_desc,
+    int buf_id, int drop)
+{
+	struct qwx_pdev_dp *dp = &sc->pdev_dp;
+	struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
+	struct mbuf *m;
+	struct qwx_rx_data *rx_data;
+	struct hal_rx_desc *rx_desc;
+	uint16_t msdu_len;
+	uint32_t hal_rx_desc_sz = sc->hw_params.hal_desc_sz;
+
+	if (buf_id >= rx_ring->bufs_max)
+		return;
+
+	rx_data = &rx_ring->rx_data[buf_id];
+	if (rx_data->m == NULL)
+		return;
+
+	bus_dmamap_unload(sc->sc_dmat, rx_data->map);
+	m = rx_data->m;
+	rx_data->m = NULL;
+
+	if (drop) {
+		m_freem(m);
+		return;
+	}
+
+	rx_desc = mtod(m, struct hal_rx_desc *);
+	msdu_len = qwx_dp_rx_h_msdu_start_msdu_len(sc, rx_desc);
+	if ((msdu_len + hal_rx_desc_sz) > DP_RX_BUFFER_SIZE) {
+#if 0
+		uint8_t *hdr_status = ath11k_dp_rx_h_80211_hdr(ar->ab, rx_desc);
+		ath11k_warn(ar->ab, "invalid msdu leng %u", msdu_len);
+		ath11k_dbg_dump(ar->ab, ATH11K_DBG_DATA, NULL, "", hdr_status,
+				sizeof(struct ieee80211_hdr));
+		ath11k_dbg_dump(ar->ab, ATH11K_DBG_DATA, NULL, "", rx_desc,
+				sizeof(struct hal_rx_desc));
+#endif
+		m_freem(m);
+		return;
+	}
+
+	if (qwx_dp_rx_frag_h_mpdu(sc, m, ring_desc)) {
+		qwx_dp_rx_link_desc_return(sc, ring_desc,
+		    HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
+	}
+
+	m_freem(m);
+}
+
 int
 qwx_dp_process_rx_err(struct qwx_softc *sc)
 {
-	return 0;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	uint32_t msdu_cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
+	struct dp_link_desc_bank *link_desc_banks;
+	enum hal_rx_buf_return_buf_manager rbm;
+	int tot_n_bufs_reaped, ret, i;
+	int n_bufs_reaped[MAX_RADIOS] = {0};
+	struct dp_rxdma_ring *rx_ring;
+	struct dp_srng *reo_except;
+	uint32_t desc_bank, num_msdus;
+	struct hal_srng *srng;
+	struct qwx_dp *dp;
+	void *link_desc_va;
+	int buf_id, mac_id;
+	uint64_t paddr;
+	uint32_t *desc;
+	int is_frag;
+	uint8_t drop = 0;
+
+	tot_n_bufs_reaped = 0;
+
+	dp = &sc->dp;
+	reo_except = &dp->reo_except_ring;
+	link_desc_banks = dp->link_desc_banks;
+
+	srng = &sc->hal.srng_list[reo_except->ring_id];
+#ifdef notyet
+	spin_lock_bh(&srng->lock);
+#endif
+	qwx_hal_srng_access_begin(sc, srng);
+
+	while ((desc = qwx_hal_srng_dst_get_next_entry(sc, srng))) {
+		struct hal_reo_dest_ring *reo_desc =
+		    (struct hal_reo_dest_ring *)desc;
+#if 0
+		ab->soc_stats.err_ring_pkts++;
+#endif
+		ret = qwx_hal_desc_reo_parse_err(sc, desc, &paddr, &desc_bank);
+		if (ret) {
+			printf("%s: failed to parse error reo desc %d\n",
+			    sc->sc_dev.dv_xname, ret);
+			continue;
+		}
+		link_desc_va = link_desc_banks[desc_bank].vaddr +
+		    (paddr - link_desc_banks[desc_bank].paddr);
+		qwx_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus,
+		    msdu_cookies, &rbm);
+		if (rbm != HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST &&
+		    rbm != HAL_RX_BUF_RBM_SW3_BM) {
+#if 0
+			ab->soc_stats.invalid_rbm++;
+#endif
+			printf("%s: invalid return buffer manager %d\n",
+			    sc->sc_dev.dv_xname, rbm);
+			qwx_dp_rx_link_desc_return(sc, desc,
+			    HAL_WBM_REL_BM_ACT_REL_MSDU);
+			continue;
+		}
+
+		is_frag = !!(reo_desc->rx_mpdu_info.info0 &
+		    RX_MPDU_DESC_INFO0_FRAG_FLAG);
+
+		/* Process only rx fragments with one msdu per link desc below,
+		 * and drop msdu's indicated due to error reasons.
+		 */
+		if (!is_frag || num_msdus > 1) {
+			drop = 1;
+			/* Return the link desc back to wbm idle list */
+			qwx_dp_rx_link_desc_return(sc, desc,
+			   HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
+		}
+
+		for (i = 0; i < num_msdus; i++) {
+			buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
+			    msdu_cookies[i]);
+
+			mac_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_PDEV_ID,
+			    msdu_cookies[i]);
+
+			qwx_dp_process_rx_err_buf(sc, desc, buf_id, drop);
+			n_bufs_reaped[mac_id]++;
+			tot_n_bufs_reaped++;
+		}
+	}
+
+	qwx_hal_srng_access_end(sc, srng);
+#ifdef notyet
+	spin_unlock_bh(&srng->lock);
+#endif
+	for (i = 0; i < sc->num_radios; i++) {
+		if (!n_bufs_reaped[i])
+			continue;
+
+		rx_ring = &sc->pdev_dp.rx_refill_buf_ring;
+
+		qwx_dp_rxbufs_replenish(sc, i, rx_ring, n_bufs_reaped[i],
+		    sc->hw_params.hal_params->rx_buf_rbm);
+	}
+
+	ifp->if_ierrors += tot_n_bufs_reaped;
+
+	return tot_n_bufs_reaped;
 }
 
 int
@@ -15086,12 +15374,6 @@ static inline uint8_t
 qwx_dp_rx_h_msdu_end_l3pad(struct qwx_softc *sc, struct hal_rx_desc *desc)
 {
 	return sc->hw_params.hw_ops->rx_desc_get_l3_pad_bytes(desc);
-}
-
-static inline uint16_t
-qwx_dp_rx_h_msdu_start_msdu_len(struct qwx_softc *sc, struct hal_rx_desc *desc)
-{
-	return sc->hw_params.hw_ops->rx_desc_get_msdu_len(desc);
 }
 
 static inline int
