@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_eapmsk.c,v 1.2 2023/07/08 08:53:26 yasuoka Exp $ */
+/*	$OpenBSD: radius_eapmsk.c,v 1.3 2024/02/09 11:59:23 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -34,35 +34,32 @@
 #include "radius_local.h"
 
 int 
-radius_get_eap_msk(const RADIUS_PACKET * packet, void *buf, size_t * len,
+radius_get_eap_msk(const RADIUS_PACKET * packet, void *buf, size_t *len,
     const char *secret)
 {
-	/*
-	 * Unfortunately, the way to pass EAP MSK/EMSK over RADIUS
-	 * is not standardized.
-	 */
 	uint8_t	 buf0[256];
 	uint8_t	 buf1[256];
-	size_t	 len0, len1;
+	size_t	 len0, len1, msklen;
 
-	/*
-	 * EAP MSK via MPPE keys
-	 *
-	 * MSK = MPPE-Recv-Key + MPPE-Send-Key + 32byte zeros
-	 * http://msdn.microsoft.com/en-us/library/cc224635.aspx
-	 */
+	/* RFC 3748 defines the MSK minimum size is 64 bytes */
+	if (*len < 64)
+		return (-1);
 	len0 = sizeof(buf0);
 	len1 = sizeof(buf1);
 	if (radius_get_mppe_recv_key_attr(packet, buf0, &len0, secret) == 0 &&
 	    radius_get_mppe_send_key_attr(packet, buf1, &len1, secret) == 0) {
-		if (len0 < 16 || len1 < 16)
-			return (-1);
-		if (*len < 64)
-			return (-1);
-		memcpy(buf, buf0, 16);
-		memcpy(((char *)buf) + 16, buf1, 16);
-		memset(((char *)buf) + 32, 0, 32);
-		*len = 64;
+		/* addition cannot overflow since len{0,1} are limited to 256 */
+		msklen = len0 + len1;
+		if (msklen > *len)
+			return (-1);	/* not enougth */
+		memcpy(buf, buf0, len0);
+		memcpy(((char *)buf) + len0, buf1, len1);
+		/* zero padding to the minimum size, 64 bytes.  */
+		if (msklen < 64) {
+			memset(((char *)buf) + msklen, 0, 64 - msklen);
+			msklen = 64;
+		}
+		*len = msklen;
 		return (0);
 	}
 
