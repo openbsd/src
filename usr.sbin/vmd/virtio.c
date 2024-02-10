@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.111 2024/02/05 21:58:09 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.112 2024/02/10 02:10:41 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1301,8 +1301,8 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 {
 	char *nargv[12], num[32], vmm_fd[32], vm_name[VM_NAME_MAX], t[2];
 	pid_t dev_pid;
-	int data_fds[VM_MAX_BASE_PER_DISK], sync_fds[2], async_fds[2], ret = 0;
-	size_t i, data_fds_sz, sz = 0;
+	int sync_fds[2], async_fds[2], ret = 0;
+	size_t sz = 0;
 	struct viodev_msg msg;
 	struct virtio_dev *dev_entry;
 	struct imsg imsg;
@@ -1310,14 +1310,10 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 
 	switch (dev->dev_type) {
 	case VMD_DEVTYPE_NET:
-		data_fds[0] = dev->vionet.data_fd;
-		data_fds_sz = 1;
 		log_debug("%s: launching vionet%d",
 		    vm->vm_params.vmc_params.vcp_name, dev->vionet.idx);
 		break;
 	case VMD_DEVTYPE_DISK:
-		memcpy(&data_fds, dev->vioblk.disk_fd, sizeof(data_fds));
-		data_fds_sz = dev->vioblk.ndisk_fd;
 		log_debug("%s: launching vioblk%d",
 		    vm->vm_params.vmc_params.vcp_name, dev->vioblk.idx);
 		break;
@@ -1359,10 +1355,6 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		dev->sync_fd = sync_fds[1];
 		dev->async_fd = async_fds[1];
 
-		/* Close data fds. Only the child device needs them now. */
-		for (i = 0; i < data_fds_sz; i++)
-			close_fd(data_fds[i]);
-
 		/* 1. Send over our configured device. */
 		log_debug("%s: sending '%c' type device struct", __func__,
 			dev->dev_type);
@@ -1370,6 +1362,13 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		if (sz != sizeof(*dev)) {
 			log_warnx("%s: failed to send device", __func__);
 			ret = EIO;
+			goto err;
+		}
+
+		/* Close data fds. Only the child device needs them now. */
+		if (virtio_dev_closefds(dev) == -1) {
+			log_warnx("%s: failed to close device data fds",
+			    __func__);
 			goto err;
 		}
 
@@ -1774,6 +1773,11 @@ virtio_dev_closefds(struct virtio_dev *dev)
 		log_warnx("%s: invalid device type", __func__);
 		return (-1);
 	}
+
+	close_fd(dev->async_fd);
+	dev->async_fd = -1;
+	close_fd(dev->sync_fd);
+	dev->sync_fd = -1;
 
 	return (0);
 }
