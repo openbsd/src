@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.424 2024/01/19 01:43:27 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.425 2024/02/10 15:28:16 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -771,14 +771,13 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case HW_ALLOWPOWERDOWN:
 		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
 		    &allowpowerdown));
-#if NUCOM > 0
 	case HW_UCOMNAMES: {
-		const char *str = sysctl_ucominit();
-		if (str == NULL)
-			return EINVAL;
+		const char *str = "";
+#if NUCOM > 0
+		str = sysctl_ucominit();
+#endif	/* NUCOM > 0 */
 		return (sysctl_rdstring(oldp, oldlenp, newp, str));
 	}
-#endif	/* NUCOM > 0 */
 #ifdef __HAVE_CPU_TOPOLOGY
 	case HW_SMT:
 		return (sysctl_hwsmt(oldp, oldlenp, newp, newlen));
