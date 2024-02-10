@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.108 2023/01/18 20:56:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.109 2024/02/10 11:28:52 naddy Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -49,6 +49,8 @@ DPADD+=	${LIBZ}
 .endif
 
 # The random relink kit, used on OpenBSD by /etc/rc
+
+CLEANFILES+= Makefile.relink sshd.tar
 
 Makefile.relink: ${.CURDIR}/../Makefile.inc ${.CURDIR}/Makefile
 	# XXX assume a concatenation of these is OK
