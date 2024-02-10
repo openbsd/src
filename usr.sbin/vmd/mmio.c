@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmio.c,v 1.2 2022/12/28 21:30:19 jmc Exp $	*/
+/*	$OpenBSD: mmio.c,v 1.3 2024/02/10 12:31:16 dv Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -473,7 +473,7 @@ static enum decode_result
 decode_modrm(struct x86_decode_state *state, struct x86_insn *insn)
 {
 	enum decode_result res;
-	uint8_t byte;
+	uint8_t byte = 0;
 
 	if (!is_valid_state(state, __func__) || insn == NULL)
 		return (DECODE_ERROR);
@@ -486,8 +486,10 @@ decode_modrm(struct x86_decode_state *state, struct x86_insn *insn)
 	case OP_ENC_RM:
 	case OP_ENC_MI:
 		res = next_byte(state, &byte);
-		if (res == DECODE_ERROR)
+		if (res == DECODE_ERROR) {
 			log_warnx("%s: failed to get modrm byte", __func__);
+			break;
+		}
 		insn->insn_modrm = byte;
 		insn->insn_modrm_valid = 1;
 		break;
