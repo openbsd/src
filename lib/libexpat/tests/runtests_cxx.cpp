@@ -1,4 +1,7 @@
-/*
+/* C++ compilation harness for the test suite.
+
+   This is used to ensure the Expat headers can be included from C++
+   and have everything work as expected.
                             __  __            _
                          ___\ \/ /_ __   __ _| |_
                         / _ \\  /| '_ \ / _` | __|
@@ -6,11 +9,8 @@
                         \___/_/\_\ .__/ \__,_|\__|
                                  |_| XML parser
 
-   Copyright (c) 2000      Clark Cooper <coopercc@users.sourceforge.net>
-   Copyright (c) 2002      Greg Stein <gstein@users.sourceforge.net>
-   Copyright (c) 2005      Karl Waclawek <karl@waclawek.net>
+   Copyright (c) 2005      Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
    Copyright (c) 2017-2023 Sebastian Pipping <sebastian@pipping.org>
-   Copyright (c) 2023      Orgad Shaneh <orgad.shaneh@audiocodes.com>
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -33,16 +33,4 @@
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef WINCONFIG_H
-#define WINCONFIG_H
-
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-
-#include <memory.h>
-#include <string.h>
-
-#endif /* ndef WINCONFIG_H */
+#include "runtests.c"

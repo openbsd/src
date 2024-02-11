@@ -1,4 +1,4 @@
-/*
+/* Tests in the "miscellaneous" test case for the Expat test suite
                             __  __            _
                          ___\ \/ /_ __   __ _| |_
                         / _ \\  /| '_ \ / _` | __|
@@ -6,11 +6,18 @@
                         \___/_/\_\ .__/ \__,_|\__|
                                  |_| XML parser
 
-   Copyright (c) 2000      Clark Cooper <coopercc@users.sourceforge.net>
-   Copyright (c) 2002      Greg Stein <gstein@users.sourceforge.net>
-   Copyright (c) 2005      Karl Waclawek <karl@waclawek.net>
-   Copyright (c) 2017-2023 Sebastian Pipping <sebastian@pipping.org>
-   Copyright (c) 2023      Orgad Shaneh <orgad.shaneh@audiocodes.com>
+   Copyright (c) 2001-2006 Fred L. Drake, Jr. <fdrake@users.sourceforge.net>
+   Copyright (c) 2003      Greg Stein <gstein@users.sourceforge.net>
+   Copyright (c) 2005-2007 Steven Solie <steven@solie.ca>
+   Copyright (c) 2005-2012 Karl Waclawek <karl@waclawek.net>
+   Copyright (c) 2016-2022 Sebastian Pipping <sebastian@pipping.org>
+   Copyright (c) 2017-2022 Rhodri James <rhodri@wildebeest.org.uk>
+   Copyright (c) 2017      Joe Orton <jorton@redhat.com>
+   Copyright (c) 2017      José Gutiérrez de la Concha <jose@zeroc.com>
+   Copyright (c) 2018      Marco Maggi <marco.maggi-ipsu@poste.it>
+   Copyright (c) 2019      David Loffredo <loffredo@steptools.com>
+   Copyright (c) 2020      Tim Gates <tim.gates@iress.com>
+   Copyright (c) 2021      Donghee Na <donghee.na@python.org>
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -33,16 +40,17 @@
    USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef WINCONFIG_H
-#define WINCONFIG_H
-
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
+#ifdef __cplusplus
+extern "C" {
 #endif
-#include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
 
-#include <memory.h>
-#include <string.h>
+#ifndef XML_MISC_TESTS_H
+#  define XML_MISC_TESTS_H
 
-#endif /* ndef WINCONFIG_H */
+extern void make_miscellaneous_test_case(Suite *s);
+
+#endif /* XML_MISC_TESTS_H */
+
+#ifdef __cplusplus
+}
+#endif
