@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.11 2023/09/22 07:29:14 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.12 2024/02/11 03:57:10 gkoehler Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -86,6 +86,9 @@ sub parse_value($self, $name, $value)
 
 sub add_property($self, $name, $value)
 {
+	if ($name eq "CFlags") {
+		$name = "Cflags";
+	}
 	if (defined $self->{properties}{$name}) {
 		die "Duplicate property $name";
 	}
