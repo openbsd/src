@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.142 2024/02/05 20:21:38 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.143 2024/02/11 18:14:26 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -504,6 +504,16 @@ sosleep_nsec(struct socket *so, void *ident, int prio, const char *wmesg,
 	return ret;
 }
 
+void
+sbmtxassertlocked(struct socket *so, struct sockbuf *sb)
+{
+	if (sb->sb_flags & SB_MTXLOCK) {
+		if (splassert_ctl > 0 && mtx_owned(&sb->sb_mtx) == 0)
+			splassert_fail(0, RW_WRITE, __func__);
+	} else
+		soassertlocked(so);
+}
+
 /*
  * Wait for data to arrive at/drain from a socket buffer.
  */
@@ -925,7 +935,7 @@ sbappendaddr(struct socket *so, struct sockbuf *sb, const struct sockaddr *asa,
 	struct mbuf *m, *n, *nlast;
 	int space = asa->sa_len;
 
-	soassertlocked(so);
+	sbmtxassertlocked(so, sb);
 
 	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
 		panic("sbappendaddr");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.180 2024/02/03 22:50:09 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.181 2024/02/11 18:14:27 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -263,6 +263,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		else
 			n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 		if (n != NULL) {
+			struct socket *so = inp->inp_socket;
 			int ret;
 
 			if (inp->inp_flags & IN6P_CONTROLOPTS)
@@ -270,11 +271,10 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 			/* strip intermediate headers */
 			m_adj(n, *offp);
 
-			mtx_enter(&inp->inp_mtx);
-			ret = sbappendaddr(inp->inp_socket,
-			    &inp->inp_socket->so_rcv,
+			mtx_enter(&so->so_rcv.sb_mtx);
+			ret = sbappendaddr(so, &so->so_rcv,
 			    sin6tosa(&rip6src), n, opts);
-			mtx_leave(&inp->inp_mtx);
+			mtx_leave(&so->so_rcv.sb_mtx);
 
 			if (ret == 0) {
 				/* should notify about lost packet */
@@ -282,7 +282,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 				m_freem(opts);
 				rip6stat_inc(rip6s_fullsock);
 			} else
-				sorwakeup(inp->inp_socket);
+				sorwakeup(so);
 		}
 		in_pcbunref(inp);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.317 2024/02/05 20:21:38 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.318 2024/02/11 18:14:26 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -149,6 +149,18 @@ soalloc(const struct domain *dp, int wait)
 	sigio_init(&so->so_sigio);
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
+
+	switch (dp->dom_family) {
+	case AF_INET:
+	case AF_INET6:
+		switch (dp->dom_protosw->pr_type) {
+		case SOCK_DGRAM:
+		case SOCK_RAW:
+			so->so_rcv.sb_flags |= SB_MTXLOCK;
+			break;
+		}
+		break;
+	}
 
 	return (so);
 }
@@ -825,7 +837,7 @@ restart:
 		sounlock_shared(so);
 		return (error);
 	}
-	pru_lock(so);
+	sb_mtx_lock(&so->so_rcv);
 
 	m = so->so_rcv.sb_mb;
 #ifdef SOCKET_SPLICE
@@ -889,7 +901,7 @@ restart:
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 		sbunlock(so, &so->so_rcv);
-		pru_unlock(so);
+		sb_mtx_unlock(&so->so_rcv);
 		error = sbwait(so, &so->so_rcv);
 		if (error) {
 			sounlock_shared(so);
@@ -961,13 +973,13 @@ dontblock:
 			sbsync(&so->so_rcv, nextrecord);
 			if (controlp) {
 				if (pr->pr_domain->dom_externalize) {
-					pru_unlock(so);
+					sb_mtx_unlock(&so->so_rcv);
 					sounlock_shared(so);
 					error =
 					    (*pr->pr_domain->dom_externalize)
 					    (cm, controllen, flags);
 					solock_shared(so);
-					pru_lock(so);
+					sb_mtx_lock(&so->so_rcv);
 				}
 				*controlp = cm;
 			} else {
@@ -1041,11 +1053,11 @@ dontblock:
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive uiomove");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			resid = uio->uio_resid;
-			pru_unlock(so);
+			sb_mtx_unlock(&so->so_rcv);
 			sounlock_shared(so);
 			uio_error = uiomove(mtod(m, caddr_t) + moff, len, uio);
 			solock_shared(so);
-			pru_lock(so);
+			sb_mtx_lock(&so->so_rcv);
 			if (uio_error)
 				uio->uio_resid = resid - len;
 		} else
@@ -1127,14 +1139,14 @@ dontblock:
 				break;
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
-			pru_unlock(so);
+			sb_mtx_unlock(&so->so_rcv);
 			error = sbwait(so, &so->so_rcv);
 			if (error) {
 				sbunlock(so, &so->so_rcv);
 				sounlock_shared(so);
 				return (0);
 			}
-			pru_lock(so);
+			sb_mtx_lock(&so->so_rcv);
 			if ((m = so->so_rcv.sb_mb) != NULL)
 				nextrecord = m->m_nextpkt;
 		}
@@ -1168,7 +1180,7 @@ dontblock:
 	    (flags & MSG_EOR) == 0 &&
 	    (so->so_rcv.sb_state & SS_CANTRCVMORE) == 0) {
 		sbunlock(so, &so->so_rcv);
-		pru_unlock(so);
+		sb_mtx_unlock(&so->so_rcv);
 		goto restart;
 	}
 
@@ -1179,7 +1191,7 @@ dontblock:
 		*flagsp |= flags;
 release:
 	sbunlock(so, &so->so_rcv);
-	pru_unlock(so);
+	sb_mtx_unlock(&so->so_rcv);
 	sounlock_shared(so);
 	return (error);
 }

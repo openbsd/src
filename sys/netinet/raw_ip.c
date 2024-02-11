@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.155 2024/02/03 22:50:09 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.156 2024/02/11 18:14:26 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -220,24 +220,24 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 		else
 			n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 		if (n != NULL) {
+			struct socket *so = inp->inp_socket;
 			int ret;
 
 			if (inp->inp_flags & INP_CONTROLOPTS ||
-			    inp->inp_socket->so_options & SO_TIMESTAMP)
+			    so->so_options & SO_TIMESTAMP)
 				ip_savecontrol(inp, &opts, ip, n);
 
-			mtx_enter(&inp->inp_mtx);
-			ret = sbappendaddr(inp->inp_socket,
-			    &inp->inp_socket->so_rcv,
+			mtx_enter(&so->so_rcv.sb_mtx);
+			ret = sbappendaddr(so, &so->so_rcv,
 			    sintosa(&ripsrc), n, opts);
-			mtx_leave(&inp->inp_mtx);
+			mtx_leave(&so->so_rcv.sb_mtx);
 
 			if (ret == 0) {
 				/* should notify about lost packet */
 				m_freem(n);
 				m_freem(opts);
 			} else
-				sorwakeup(inp->inp_socket);
+				sorwakeup(so);
 		}
 		in_pcbunref(inp);
 	}

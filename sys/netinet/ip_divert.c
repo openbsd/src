@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.93 2024/02/03 22:50:09 mvs Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.94 2024/02/11 18:14:26 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -241,14 +241,14 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 		in_proto_cksum_out(m, NULL);
 	}
 
-	mtx_enter(&inp->inp_mtx);
 	so = inp->inp_socket;
+	mtx_enter(&so->so_rcv.sb_mtx);
 	if (sbappendaddr(so, &so->so_rcv, sintosa(&sin), m, NULL) == 0) {
-		mtx_leave(&inp->inp_mtx);
+		mtx_leave(&so->so_rcv.sb_mtx);
 		divstat_inc(divs_fullsock);
 		goto bad;
 	}
-	mtx_leave(&inp->inp_mtx);
+	mtx_leave(&so->so_rcv.sb_mtx);
 	sorwakeup(so);
 
 	in_pcbunref(inp);
