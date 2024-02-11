@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.150 2024/01/31 12:27:57 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.151 2024/02/11 01:27:45 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -69,7 +69,6 @@
 #include <sys/rwlock.h>
 #include <sys/refcnt.h>
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet/ip_ipsp.h>
 

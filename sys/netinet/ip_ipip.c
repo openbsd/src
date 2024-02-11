@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.100 2023/11/28 13:23:20 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.101 2024/02/11 01:27:45 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -60,6 +60,7 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet6/ip6_var.h>
 #include <netinet/ip_ecn.h>
 #include <netinet/ip_ipip.h>
 

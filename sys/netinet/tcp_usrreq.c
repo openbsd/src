@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.229 2024/01/19 02:24:07 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.230 2024/02/11 01:27:45 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -90,6 +90,7 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet6/ip6_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_fsm.h>
 #include <netinet/tcp_seq.h>

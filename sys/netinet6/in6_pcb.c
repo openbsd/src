@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.136 2024/02/09 14:02:12 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.137 2024/02/11 01:27:45 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -116,6 +116,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#include <netinet6/ip6_var.h>
 #include <netinet/in_pcb.h>
 
 #include <netinet6/in6_var.h>

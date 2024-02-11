@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.97 2022/01/02 22:36:04 jsg Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.98 2024/02/11 01:27:45 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -36,6 +36,7 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+#include <netinet6/ip6_var.h>
 
 #if NPF > 0
 #include <net/pfvar.h>
