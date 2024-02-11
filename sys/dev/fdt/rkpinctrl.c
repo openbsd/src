@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpinctrl.c,v 1.14 2023/09/22 01:10:44 jsg Exp $	*/
+/*	$OpenBSD: rkpinctrl.c,v 1.15 2024/02/11 16:01:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -260,11 +260,12 @@ rk3288_pinctrl(uint32_t phandle, void *cookie)
 		bank = pins[i];
 		idx = pins[i + 1];
 		mux = pins[i + 2];
+
+		if (bank > 8 || idx >= 32 || mux > 7)
+			continue;
+
 		pull = rk3288_pull(bank, idx, pins[i + 3]);
 		strength = rk3288_strength(bank, idx, pins[i + 3]);
-
-		if (bank > 8 || idx > 32 || mux > 7)
-			continue;
 
 		/* Bank 0 lives in the PMU. */
 		if (bank < 1) {
@@ -401,12 +402,13 @@ rk3308_pinctrl(uint32_t phandle, void *cookie)
 		bank = pins[i];
 		idx = pins[i + 1];
 		mux = pins[i + 2];
+
+		if (bank > 4 || idx >= 32 || mux > 7)
+			continue;
+
 		pull = rk3308_pull(bank, idx, pins[i + 3]);
 		strength = rk3308_strength(bank, idx, pins[i + 3]);
  
-		if (bank > 4 || idx > 32 || mux > 7)
-			continue;
-
 		base = RK3308_GRF_GPIO0A_IOMUX;
 
 		s = splhigh();
@@ -546,11 +548,12 @@ rk3328_pinctrl(uint32_t phandle, void *cookie)
 		bank = pins[i];
 		idx = pins[i + 1];
 		mux = pins[i + 2];
+
+		if (bank > 3 || idx >= 32 || mux > 3)
+			continue;
+
 		pull = rk3328_pull(bank, idx, pins[i + 3]);
 		strength = rk3328_strength(bank, idx, pins[i + 3]);
-
-		if (bank > 3 || idx > 32 || mux > 3)
-			continue;
 
 		base = RK3328_GRF_GPIO0A_IOMUX;
 
@@ -738,11 +741,12 @@ rk3399_pinctrl(uint32_t phandle, void *cookie)
 		bank = pins[i];
 		idx = pins[i + 1];
 		mux = pins[i + 2];
+
+		if (bank > 4 || idx >= 32 || mux > 3)
+			continue;
+
 		pull = rk3399_pull(bank, idx, pins[i + 3]);
 		strength = rk3399_strength(bank, idx, pins[i + 3]);
-
-		if (bank > 5 || idx > 32 || mux > 3)
-			continue;
 
 		/* Bank 0 and 1 live in the PMU. */
 		if (bank < 2) {
@@ -986,12 +990,13 @@ rk3568_pinctrl(uint32_t phandle, void *cookie)
 		bank = pins[i];
 		idx = pins[i + 1];
 		mux = pins[i + 2];
+
+		if (bank > 5 || idx >= 32 || mux > 7)
+			continue;
+
 		pull = rk3568_pull(bank, idx, pins[i + 3]);
 		strength = rk3568_strength(bank, idx, pins[i + 3]);
 		schmitt = rk3568_schmitt(bank, idx, pins[i + 3]);
-
-		if (bank > 5 || idx > 32 || mux > 7)
-			continue;
 
 		/* Bank 0 lives in the PMU. */
 		if (bank < 1) {
@@ -1170,12 +1175,13 @@ rk3588_pinctrl(uint32_t phandle, void *cookie)
 		bank = pins[i];
 		idx = pins[i + 1];
 		mux = pins[i + 2];
+
+		if (bank > 5 || idx >= 32 || mux > 15)
+			continue;
+
 		pull = rk3588_pull(bank, idx, pins[i + 3]);
 		strength = rk3588_strength(bank, idx, pins[i + 3]);
 		schmitt = rk3588_schmitt(bank, idx, pins[i + 3]);
-
-		if (bank > 5 || idx > 32 || mux > 15)
-			continue;
 
 		if (bank == 0 && idx < 12) {
 			/* PMU1 */
