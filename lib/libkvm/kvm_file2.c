@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.57 2022/02/22 17:35:01 deraadt Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.58 2024/02/11 21:29:12 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -103,7 +103,6 @@
 
 #ifdef INET6
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #endif
 
 #include <fcntl.h>

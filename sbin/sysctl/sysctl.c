@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.259 2023/05/17 22:12:51 kettenis Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.260 2024/02/11 21:29:12 bluhm Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/ip6_divert.h>
 
 #include <netmpls/mpls.h>

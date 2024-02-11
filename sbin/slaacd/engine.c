@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.87 2024/02/03 18:30:17 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.88 2024/02/11 21:29:12 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -60,7 +60,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
 
