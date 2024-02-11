@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.681 2024/02/02 22:02:12 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.682 2024/02/11 09:24:26 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1740,6 +1740,9 @@ void log_trace_verbose(int);
 void log_trace0(const char *, ...)
     __attribute__((format (printf, 1, 2)));
 #define log_trace(m, ...)  do { if (tracing & (m)) log_trace0(__VA_ARGS__); } while (0)
+
+int parse_table_line(FILE *, char **, size_t *, int *,
+    char **, char **, int *);
 
 /* waitq.c */
 int  waitq_wait(void *, void (*)(void *, void *, void *), void *);
