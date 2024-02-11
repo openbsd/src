@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.318 2024/02/11 18:14:26 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.319 2024/02/11 21:36:49 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -900,8 +900,8 @@ restart:
 		}
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
-		sbunlock(so, &so->so_rcv);
 		sb_mtx_unlock(&so->so_rcv);
+		sbunlock(so, &so->so_rcv);
 		error = sbwait(so, &so->so_rcv);
 		if (error) {
 			sounlock_shared(so);
@@ -1179,8 +1179,8 @@ dontblock:
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 &&
 	    (so->so_rcv.sb_state & SS_CANTRCVMORE) == 0) {
-		sbunlock(so, &so->so_rcv);
 		sb_mtx_unlock(&so->so_rcv);
+		sbunlock(so, &so->so_rcv);
 		goto restart;
 	}
 
@@ -1190,8 +1190,8 @@ dontblock:
 	if (flagsp)
 		*flagsp |= flags;
 release:
-	sbunlock(so, &so->so_rcv);
 	sb_mtx_unlock(&so->so_rcv);
+	sbunlock(so, &so->so_rcv);
 	sounlock_shared(so);
 	return (error);
 }
