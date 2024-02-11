@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1258 2024/01/26 16:35:58 sthen Exp $
+#	$OpenBSD: install.sub,v 1.1259 2024/02/11 21:56:10 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -917,7 +917,7 @@ ask_password() {
 }
 
 # Ask for a passphrase once showing prompt $1. Ensure input is not empty
-# save it in $_passphrase.
+# and save it in $_passphrase.
 ask_passphrase() {
 	local _q=$1
 
@@ -3106,9 +3106,6 @@ encrypt_root() {
 
 	[[ $MDBOOTSR == y ]] || return
 
-	# The interactive bioctl(8) passphrase prompt requires a TTY.
-	$AI && return
-
 	[[ -x /sbin/bioctl ]] || return
 
 	# Do not even try if softraid is in use already,
@@ -3124,8 +3121,12 @@ encrypt_root() {
 			_args=-k$KEYDISK
 			break
 			;;
-		# Do nothing, bioctl(8) will handle the passphrase.
-		[pP]*)	break
+		[pP]*)  $AI || break
+			ask_passphrase 'New passphrase?'
+			PASSFILE=/tmp/i/passfile
+			(umask 077 && print -r -- "$_passphrase" >$PASSFILE)
+			_args=-p$PASSFILE
+			break
 			;;
 		[nN]*)	return
 			;;
@@ -3139,6 +3140,7 @@ encrypt_root() {
 	echo 'RAID *' | disklabel -w -A -T- $_chunk
 
 	bioctl -Cforce -cC -l${_chunk}a $_args softraid0 >/dev/null
+	rm -fP $PASSFILE
 
 	# No volumes existed before asking, but we just created one.
 	ROOTDISK=$(get_softraid_volumes)
