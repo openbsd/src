@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.17 2024/02/12 01:18:17 guenther Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.18 2024/02/12 02:57:14 jsg Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6513,7 +6513,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		 * then use it to prevent cross-VM branch-target injection.
 		 */
 		if (ci->ci_guest_vcpu != vcpu &&
-		    (ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS)) {
+		    (ci->ci_feature_amdspec_ebx & CPUIDEBX_IBPB)) {
 			wrmsr(MSR_PRED_CMD, PRED_CMD_IBPB);
 			ci->ci_guest_vcpu = vcpu;
 		}

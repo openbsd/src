@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.179 2024/02/12 01:18:17 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.180 2024/02/12 02:57:14 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -188,7 +188,7 @@ replacemeltdown(void)
 {
 	static int replacedone = 0;
 	struct cpu_info *ci = &cpu_info_primary;
-	int swapgs_vuln = 0, ibrs = 0, s;
+	int swapgs_vuln = 0, ibrs = 0, s, ibpb = 0;
 
 	if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
 		int family = ci->ci_family;
@@ -211,6 +211,8 @@ replacemeltdown(void)
 		} else if (ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS) {
 			ibrs = 1;
 		}
+		if (ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS)
+			ibpb = 1;
         } else if (strcmp(cpu_vendor, "AuthenticAMD") == 0 &&
             ci->ci_pnfeatset >= 0x80000008) {
 		if (ci->ci_feature_amdspec_ebx & CPUIDEBX_IBRS_ALWAYSON) {
@@ -219,6 +221,8 @@ replacemeltdown(void)
 		    (ci->ci_feature_amdspec_ebx & CPUIDEBX_IBRS_PREF)) {
 			ibrs = 1;
 		}
+		if (ci->ci_feature_amdspec_ebx & CPUIDEBX_IBPB)
+			ibpb = 1;
 	}
 
 	/* Enhanced IBRS: turn it on once on each CPU and don't touch again */
@@ -232,7 +236,7 @@ replacemeltdown(void)
 	s = splhigh();
 
 	/* If we don't have IBRS/IBPB, then don't use IBPB */
-	if ((ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS) == 0)
+	if (ibpb == 0)
 		codepatch_nop(CPTAG_IBPB_NOP);
 
 	if (ibrs == 2 || (ci->ci_feature_sefflags_edx & SEFF0EDX_IBT)) {
