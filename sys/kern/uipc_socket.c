@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.319 2024/02/11 21:36:49 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.320 2024/02/12 22:48:27 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -132,8 +132,9 @@ soinit(void)
 }
 
 struct socket *
-soalloc(const struct domain *dp, int wait)
+soalloc(const struct protosw *prp, int wait)
 {
+	const struct domain *dp = prp->pr_domain;
 	struct socket *so;
 
 	so = pool_get(&socket_pool, (wait == M_WAIT ? PR_WAITOK : PR_NOWAIT) |
@@ -153,7 +154,7 @@ soalloc(const struct domain *dp, int wait)
 	switch (dp->dom_family) {
 	case AF_INET:
 	case AF_INET6:
-		switch (dp->dom_protosw->pr_type) {
+		switch (prp->pr_type) {
 		case SOCK_DGRAM:
 		case SOCK_RAW:
 			so->so_rcv.sb_flags |= SB_MTXLOCK;
@@ -188,7 +189,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	so = soalloc(pffinddomain(dom), M_WAIT);
+	so = soalloc(prp, M_WAIT);
 	so->so_type = type;
 	if (suser(p) == 0)
 		so->so_state = SS_PRIV;

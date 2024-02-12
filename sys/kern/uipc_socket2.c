@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.143 2024/02/11 18:14:26 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.144 2024/02/12 22:48:27 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ sonewconn(struct socket *head, int connstatus, int wait)
 		return (NULL);
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return (NULL);
-	so = soalloc(head->so_proto->pr_domain, wait);
+	so = soalloc(head->so_proto, wait);
 	if (so == NULL)
 		return (NULL);
 	so->so_type = head->so_type;
