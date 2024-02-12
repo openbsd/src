@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_fdt.c,v 1.11 2024/01/26 17:11:50 kettenis Exp $ */
+/*	$OpenBSD: ehci_fdt.c,v 1.12 2024/02/12 21:37:25 uaa Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -207,6 +207,7 @@ struct ehci_phy ehci_phys[] = {
 	{ "allwinner,sun8i-v3s-usb-phy", sun4i_phy_init },
 	{ "allwinner,sun20i-d1-usb-phy", sun4i_phy_init },
 	{ "allwinner,sun50i-h6-usb-phy", sun4i_phy_init },
+	{ "allwinner,sun50i-h616-usb-phy", sun4i_phy_init },
 	{ "allwinner,sun50i-a64-usb-phy", sun4i_phy_init },
 	{ "allwinner,sun9i-a80-usb-phy", sun9i_phy_init },
 };
@@ -287,6 +288,62 @@ ehci_init_phys(struct ehci_fdt_softc *sc)
 #define  SUNXI_AHB_INCR16	(1 << 11)
 
 void
+sun50i_h616_phy2_init(struct ehci_fdt_softc *sc, int node)
+{
+	int len, idx;
+	uint32_t *reg, val;
+	bus_size_t size;
+	bus_space_handle_t ioh;
+
+	/*
+	 * to access USB2-PHY register, get address from "reg" property of
+	 * current "allwinner,...-usb-phy" node
+	 */
+	len = OF_getproplen(node, "reg");
+	if (len <= 0)
+		goto out;
+
+	reg = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "reg", reg, len);
+
+	idx = OF_getindex(node, "pmu2", "reg-names");
+	if (idx < 0 || (idx + 1) > (len / (sizeof(uint32_t) * 2))) {
+		printf(": no phy2 register\n");
+		goto free;
+	}
+
+	/* convert "reg-names" index to "reg" (address-size pair) index */
+	idx *= 2;
+
+	size = reg[idx + 1];
+	if (bus_space_map(sc->sc.iot, reg[idx], size, 0, &ioh)) {
+		printf(": can't map phy2 registers\n");
+		goto free;
+	}
+
+	clock_enable(node, "usb2_phy");
+	reset_deassert(node, "usb2_reset");
+	clock_enable(node, "pmu2_clk");
+
+	/*
+	 * address is offset from "pmu2", not EHCI2 base address
+	 * (normally it points EHCI2 base address + 0x810)
+	 */
+	val = bus_space_read_4(sc->sc.iot, ioh, 0x10);
+	val &= ~(1 << 3);	/* clear SIDDQ */
+	bus_space_write_4(sc->sc.iot, ioh, 0x10, val);
+
+	clock_disable(node, "pmu2_clk");
+	/* "usb2_reset" and "usb2_phy" unchanged */
+
+	bus_space_unmap(sc->sc.iot, ioh, size);
+free:
+	free(reg, M_TEMP, len);
+out:
+	return;
+}
+
+void
 sun4i_phy_init(struct ehci_fdt_softc *sc, uint32_t *cells)
 {
 	uint32_t vbus_supply;
@@ -297,6 +354,11 @@ sun4i_phy_init(struct ehci_fdt_softc *sc, uint32_t *cells)
 	node = OF_getnodebyphandle(cells[0]);
 	if (node == -1)
 		return;
+
+	/* Allwinner H616 needs to clear PHY2's SIDDQ flag */
+	if (OF_is_compatible(node, "allwinner,sun50i-h616-usb-phy") &&
+	    cells[1] != 2)
+		sun50i_h616_phy2_init(sc, node);
 
 	val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, SUNXI_HCI_ICR);
 	val |= SUNXI_AHB_INCR8 | SUNXI_AHB_INCR4;
@@ -315,9 +377,17 @@ sun4i_phy_init(struct ehci_fdt_softc *sc, uint32_t *cells)
 		val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, 0x810);
 		val &= ~(1 << 1);
 		bus_space_write_4(sc->sc.iot, sc->sc.ioh, 0x810, val);
-	} else if (OF_is_compatible(node, "allwinner,sun20i-d1-usb-phy")) {
+	} else if (OF_is_compatible(node, "allwinner,sun8i-a83t-usb-phy") ||
+		   OF_is_compatible(node, "allwinner,sun20i-d1-usb-phy") ||
+		   OF_is_compatible(node, "allwinner,sun50i-h616-usb-phy")) {
 		val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, 0x810);
 		val &= ~(1 << 3);
+		bus_space_write_4(sc->sc.iot, sc->sc.ioh, 0x810, val);
+	}
+	if (OF_is_compatible(node, "allwinner,sun8i-a83t-usb-phy") ||
+	    OF_is_compatible(node, "allwinner,sun50i-h616-usb-phy")) {
+		val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, 0x810);
+		val |= 1 << 5;
 		bus_space_write_4(sc->sc.iot, sc->sc.ioh, 0x810, val);
 	}
 
