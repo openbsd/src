@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.29 2021/04/13 15:39:21 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.30 2024/02/12 16:42:42 job Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -145,6 +145,8 @@ OPTLIST const optlist[] = {
 	{"shellmeta",	NULL,		OPT_STR,	0},
 /* O_SHIFTWIDTH	    4BSD */
 	{"shiftwidth",	NULL,		OPT_NUM,	OPT_NOZERO},
+/* O_SHOWFILENAME */
+	{"showfilename",NULL,		OPT_0BOOL,	0},
 /* O_SHOWMATCH	    4BSD */
 	{"showmatch",	NULL,		OPT_0BOOL,	0},
 /* O_SHOWMODE	  4.4BSD */

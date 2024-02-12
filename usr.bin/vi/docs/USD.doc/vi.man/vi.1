@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.83 2023/01/29 09:28:57 otto Exp $
+.\"	$OpenBSD: vi.1,v 1.84 2024/02/12 16:42:42 job Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: January 29 2023 $
+.Dd $Mdocdate: February 12 2024 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2488,6 +2488,10 @@ Set the meta characters checked to determine if file name expansion
 is necessary.
 .It Cm shiftwidth , sw Bq 8
 Set the autoindent and shift command indentation width.
+.It Cm showfilename Bq off
+.Nm vi
+only.
+Display the file name on the colon command line.
 .It Cm showmatch , sm Bq off
 .Nm vi
 only.
