@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.94 2023/07/31 04:01:07 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.95 2024/02/12 01:18:17 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -149,6 +149,13 @@ INTRENTRY_LABEL(calltrap_specstk):
 	movq	%r12,%rax
 	movq	%r13,%rdx
 	wrmsr
+	/* who knows what happened in this trap; use IPBP on the way out */
+	CODEPATCH_START
+	xorl	%edx,%edx
+	movl	$PRED_CMD_IBPB,%eax
+	movl	$MSR_PRED_CMD,%ecx
+	wrmsr
+	CODEPATCH_END(CPTAG_IBPB_NOP)
 	call	pku_xonly
 	popq	%rdi
 	popq	%rsi

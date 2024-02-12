@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.16 2024/01/31 05:49:33 guenther Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.17 2024/02/12 01:18:17 guenther Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4185,6 +4185,16 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		TRACEPOINT(vmm, guest_enter, vcpu, vrp);
 
+		/*
+		 * If we're resuming to a different VCPU and have IBPB,
+		 * then use it to prevent cross-VM branch-target injection.
+		 */
+		if (ci->ci_guest_vcpu != vcpu &&
+		    (ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS)) {
+			wrmsr(MSR_PRED_CMD, PRED_CMD_IBPB);
+			ci->ci_guest_vcpu = vcpu;
+		}
+
 		/* Restore any guest PKRU state. */
 		if (vmm_softc->sc_md.pkru_enabled)
 			wrpkru(0, vcpu->vc_pkru);
@@ -6496,6 +6506,16 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		if ((ret = vmm_fpurestore(vcpu))) {
 			stgi();
 			break;
+		}
+
+		/*
+		 * If we're resuming to a different VCPU and have IBPB,
+		 * then use it to prevent cross-VM branch-target injection.
+		 */
+		if (ci->ci_guest_vcpu != vcpu &&
+		    (ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS)) {
+			wrmsr(MSR_PRED_CMD, PRED_CMD_IBPB);
+			ci->ci_guest_vcpu = vcpu;
 		}
 
 		/* Restore any guest PKRU state. */

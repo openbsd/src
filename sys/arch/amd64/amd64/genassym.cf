@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.44 2023/01/16 00:05:18 deraadt Exp $
+#	$OpenBSD: genassym.cf,v 1.45 2024/02/12 01:18:17 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -108,6 +108,7 @@ member  CPU_INFO_APICID		ci_apicid
 member  CPU_INFO_RESCHED	ci_want_resched
 member  CPU_INFO_CURPROC	ci_curproc
 member  CPU_INFO_PROC_PMAP	ci_proc_pmap
+member  CPU_INFO_USER_PMAP	ci_user_pmap
 member  CPU_INFO_CURPCB		ci_curpcb
 member  CPU_INFO_IDLE_PCB	ci_idle_pcb
 member	CPU_INFO_ILEVEL		ci_ilevel

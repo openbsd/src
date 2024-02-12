@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.161 2024/02/03 16:21:22 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.162 2024/02/12 01:18:17 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ union vmm_cpu_cap {
  *	o	owned (read/modified only) by this CPU
  */
 struct x86_64_tss;
+struct vcpu;
 struct cpu_info {
 	/*
 	 * The beginning of this structure in mapped in the userspace "u-k"
@@ -130,7 +131,8 @@ struct cpu_info {
 	struct proc *ci_curproc;	/* [o] */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
-	struct pmap *ci_proc_pmap;	/* last userspace pmap */
+	struct pmap *ci_proc_pmap;	/* active, non-kernel pmap */
+	struct pmap *ci_user_pmap;	/* [o] last pmap used in userspace */
 	struct pcb *ci_curpcb;		/* [o] */
 	struct pcb *ci_idle_pcb;	/* [o] */
 
@@ -219,6 +221,7 @@ struct cpu_info {
 	union		vmm_cpu_cap ci_vmm_cap;
 	paddr_t		ci_vmxon_region_pa;
 	struct vmxon_region *ci_vmxon_region;
+	struct vcpu	*ci_guest_vcpu;		/* [o] last vcpu resumed */
 
 	char		ci_panicbuf[512];
 

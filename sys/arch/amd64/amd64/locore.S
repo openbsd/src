@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.144 2023/12/12 15:30:55 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.145 2024/02/12 01:18:17 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -595,6 +595,22 @@ GENTRY(Xsyscall)
 	jz	.Lsyscall_restore_fsbase
 
 .Lsyscall_restore_registers:
+	/*
+	 * If the pmap we're now on isn't the same as the one we
+	 * were on last time we were in userspace, then use IBPB
+	 * to prevent cross-process branch-target injection.
+	 */
+	CODEPATCH_START
+	movq	CPUVAR(PROC_PMAP),%rbx
+	cmpq	CPUVAR(USER_PMAP),%rbx
+	je	1f
+	xorl	%edx,%edx
+	movl	$PRED_CMD_IBPB,%eax
+	movl	$MSR_PRED_CMD,%ecx
+	wrmsr
+	movq	%rbx,CPUVAR(USER_PMAP)
+1:
+	CODEPATCH_END(CPTAG_IBPB_NOP)
 	call	pku_xonly
 	RET_STACK_REFILL_WITH_RCX
 
@@ -758,17 +774,33 @@ intr_user_exit_post_ast:
 	testl	$CPUPF_USERXSTATE,CPUVAR(PFLAGS)
 	jz	.Lintr_restore_xstate
 
+	/* Restore FS.base if it's not already in the CPU */
+	testl	$CPUPF_USERSEGS,CPUVAR(PFLAGS)
+	jz	.Lintr_restore_fsbase
+
+.Lintr_restore_registers:
 #ifdef DIAGNOSTIC
 	/* no more C calls after this, so check the SPL */
 	cmpl	$0,CPUVAR(ILEVEL)
 	jne	.Luser_spl_not_lowered
 #endif /* DIAGNOSTIC */
 
-	/* Restore FS.base if it's not already in the CPU */
-	testl	$CPUPF_USERSEGS,CPUVAR(PFLAGS)
-	jz	.Lintr_restore_fsbase
-
-.Lintr_restore_registers:
+	/*
+	 * If the pmap we're now on isn't the same as the one we
+	 * were on last time we were in userspace, then use IBPB
+	 * to prevent cross-process branch-target injection.
+	 */
+	CODEPATCH_START
+	movq	CPUVAR(PROC_PMAP),%rbx
+	cmpq	CPUVAR(USER_PMAP),%rbx
+	je	1f
+	xorl	%edx,%edx
+	movl	$PRED_CMD_IBPB,%eax
+	movl	$MSR_PRED_CMD,%ecx
+	wrmsr
+	movq	%rbx,CPUVAR(USER_PMAP)
+1:
+	CODEPATCH_END(CPTAG_IBPB_NOP)
 	call	pku_xonly
 	RET_STACK_REFILL_WITH_RCX
 

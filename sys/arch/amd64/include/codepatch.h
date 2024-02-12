@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.18 2023/07/31 04:01:07 guenther Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.19 2024/02/12 01:18:17 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -69,6 +69,7 @@ void codepatch_disable(void);
 #define CPTAG_RETPOLINE_RAX		14
 #define CPTAG_RETPOLINE_R11		15
 #define CPTAG_RETPOLINE_R13		16
+#define CPTAG_IBPB_NOP			17
 
 /*
  * stac/clac SMAP instructions have lfence like semantics.  Let's

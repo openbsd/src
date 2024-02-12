@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.178 2024/02/03 16:21:22 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.179 2024/02/12 01:18:17 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -230,6 +230,11 @@ replacemeltdown(void)
 	replacedone = 1;
 
 	s = splhigh();
+
+	/* If we don't have IBRS/IBPB, then don't use IBPB */
+	if ((ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS) == 0)
+		codepatch_nop(CPTAG_IBPB_NOP);
+
 	if (ibrs == 2 || (ci->ci_feature_sefflags_edx & SEFF0EDX_IBT)) {
 		extern const char _jmprax, _jmpr11, _jmpr13;
 		extern const short _jmprax_len, _jmpr11_len, _jmpr13_len;
