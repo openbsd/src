@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.58 2024/02/07 19:07:42 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.59 2024/02/12 15:11:06 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2023 Martin Pieuchot <mpi@openbsd.org>
@@ -611,7 +611,7 @@ bm_insert(const char *mname, struct bt_arg *mkey, struct bt_arg *mval)
 {
 	struct bt_arg *ba;
 
-	if (mkey->ba_type == B_AT_TUPLE)	
+	if (mkey->ba_type == B_AT_TUPLE)
 		yyerror("tuple cannot be used as map key");
 
 	ba = ba_new(bg_get(mname), B_AT_MAP);
