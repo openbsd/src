@@ -1301,11 +1301,7 @@ static void readConfigs(opt::InputArgList &args) {
   config->zOrigin = hasZOption(args, "origin");
   config->zPacPlt = hasZOption(args, "pac-plt");
   config->zRelro = getZFlag(args, "relro", "norelro", true);
-#ifndef __OpenBSD__
-  config->zRetpolineplt = getZFlag(args, "retpolineplt", "noretpolineplt", false);
-#else
-  config->zRetpolineplt = getZFlag(args, "retpolineplt", "noretpolineplt", true);
-#endif
+  config->zRetpolineplt = hasZOption(args, "retpolineplt");
   config->zRodynamic = hasZOption(args, "rodynamic");
   config->zSeparate = getZSeparate(args);
   config->zShstk = hasZOption(args, "shstk");
