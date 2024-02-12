@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.84 2024/02/05 15:11:35 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.85 2024/02/12 15:12:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -1868,6 +1868,7 @@ ba2dtflags(struct bt_arg *ba)
 long
 bacmp(struct bt_arg *a, struct bt_arg *b)
 {
+	char astr[STRLEN];
 	long val;
 
 	if (a->ba_type != b->ba_type)
@@ -1877,9 +1878,12 @@ bacmp(struct bt_arg *a, struct bt_arg *b)
 	case B_AT_LONG:
 		return ba2long(a, NULL) - ba2long(b, NULL);
 	case B_AT_STR:
-		return strcmp(ba2str(a, NULL), ba2str(b, NULL));
+		strlcpy(astr, ba2str(a, NULL), sizeof(astr));
+		return strcmp(astr, ba2str(b, NULL));
 	case B_AT_TUPLE:
 		/* Compare two lists of arguments one by one. */
+		a = a->ba_value;
+		b = b->ba_value;
 		do {
 			val = bacmp(a, b);
 			if (val != 0)
