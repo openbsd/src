@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.66 2024/02/09 16:52:58 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.67 2024/02/12 22:07:33 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -63,7 +63,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 		clockqueue_intrclock_install(cq, ic);
 
 	/* TODO: Remove this from struct clockintr_queue. */
-	if (cq->cq_hardclock.cl_expiration == 0) {
+	if (CPU_IS_PRIMARY(ci) && cq->cq_hardclock.cl_expiration == 0) {
 		clockintr_bind(&cq->cq_hardclock, ci, clockintr_hardclock,
 		    NULL);
 	}
@@ -99,12 +99,6 @@ clockintr_cpu_init(const struct intrclock *ic)
 			clockintr_schedule(&cq->cq_hardclock, 0);
 		else
 			clockintr_advance(&cq->cq_hardclock, hardclock_period);
-	} else {
-		if (cq->cq_hardclock.cl_expiration == 0) {
-			clockintr_stagger(&cq->cq_hardclock, hardclock_period,
-			     multiplier, MAXCPUS);
-		}
-		clockintr_advance(&cq->cq_hardclock, hardclock_period);
 	}
 
 	/*

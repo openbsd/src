@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.122 2024/02/09 17:42:18 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.123 2024/02/12 22:07:33 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -140,13 +140,6 @@ initclocks(void)
 void
 hardclock(struct clockframe *frame)
 {
-	/*
-	 * If we are not the primary CPU, we're not allowed to do
-	 * any more work.
-	 */
-	if (CPU_IS_PRIMARY(curcpu()) == 0)
-		return;
-
 	tc_ticktock();
 	ticks++;
 	jiffies++;
