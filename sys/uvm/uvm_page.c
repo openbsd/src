@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.173 2023/08/12 07:22:56 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.174 2024/02/13 10:16:28 miod Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1024,10 +1024,6 @@ uvm_pageclean(struct vm_page *pg)
 void
 uvm_pagefree(struct vm_page *pg)
 {
-	if ((pg->pg_flags & (PG_TABLED|PQ_ACTIVE|PQ_INACTIVE)) &&
-	    (pg->uobject == NULL || !UVM_OBJ_IS_PMAP(pg->uobject)))
-		MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
-
 	uvm_pageclean(pg);
 	uvm_pmr_freepages(pg, 1);
 }
