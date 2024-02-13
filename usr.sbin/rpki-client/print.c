@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.47 2024/02/13 20:36:42 job Exp $ */
+/*	$OpenBSD: print.c,v 1.48 2024/02/13 20:40:17 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -697,9 +697,11 @@ takey_print(char *name, const struct takey *t)
 
 		for (i = 0; i < t->commentsz; i++)
 			printf("\t# %s\n", t->comments[i]);
-		printf("\n");
+		if (t->commentsz > 0)
+			printf("\n");
 		for (i = 0; i < t->urisz; i++)
-			printf("\t%s\n\t", t->uris[i]);
+			printf("\t%s\n", t->uris[i]);
+		printf("\n\t");
 		for (i = 0; i < strlen(spki); i++) {
 			printf("%c", spki[i]);
 			if ((++j % 64) == 0)
