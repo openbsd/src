@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.42 2024/01/26 21:14:08 jan Exp $	*/
+/*	$OpenBSD: engine.c,v 1.43 2024/02/13 12:53:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1385,8 +1385,6 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 	char		 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	iface->state = new_state;
-	if (new_state != old_state)
-		iface->xid = arc4random();
 
 	switch (new_state) {
 	case IF_DOWN:
@@ -1426,6 +1424,7 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		case IF_DOWN:
 		case IF_IPV6_ONLY:
 			iface->timo.tv_sec = START_EXP_BACKOFF;
+			iface->xid = arc4random();
 			break;
 		case IF_BOUND:
 			fatal("invalid transition Bound -> Init");
@@ -1436,8 +1435,10 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 	case IF_REBOOTING:
 		if (old_state == IF_REBOOTING)
 			iface->timo.tv_sec *= 2;
-		else
+		else {
 			iface->timo.tv_sec = START_EXP_BACKOFF;
+			iface->xid = arc4random();
+		}
 		request_dhcp_request(iface);
 		break;
 	case IF_REQUESTING:
@@ -1458,6 +1459,7 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		if (old_state == IF_BOUND) {
 			iface->timo.tv_sec = (iface->rebinding_time -
 			    iface->renewal_time) / 2; /* RFC 2131 4.4.5 */
+			iface->xid = arc4random();
 		} else
 			iface->timo.tv_sec /= 2;
 
