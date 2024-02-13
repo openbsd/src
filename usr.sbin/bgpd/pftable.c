@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.17 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: pftable.c,v 1.18 2024/02/13 16:35:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -31,12 +31,9 @@
 
 #include "log.h"
 
-/* Namespace collision: these are defined in both bgpd.h and pfvar.h */
+/* Namespace collision: these are defined in pfvar.h and bgpd.h */
 #undef v4
 #undef v6
-#undef addr8
-#undef addr16
-#undef addr32
 
 #include "bgpd.h"
 
@@ -216,7 +213,7 @@ pftable_add_work(const char *table, struct bgpd_addr *addr,
 	pfa = &pft->worklist[pft->naddrs];
 
 	memset(pfa, 0, sizeof(*pfa));
-	memcpy(&pfa->pfra_u, &addr->ba, (len + 7U) / 8);
+	memcpy(&pfa->pfra_u, &addr->v6, (len + 7U) / 8);
 	pfa->pfra_af = aid2af(addr->aid);
 	pfa->pfra_net = len;
 

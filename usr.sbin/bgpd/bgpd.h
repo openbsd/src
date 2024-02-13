@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.484 2024/01/30 13:50:08 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.485 2024/02/13 16:35:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -197,14 +197,12 @@ struct bgpd_addr {
 		struct in_addr		v4;
 		struct in6_addr		v6;
 		/* maximum size for a prefix is 256 bits */
-	} ba;		    /* 128-bit address */
+	};		    /* 128-bit address */
 	uint64_t	rd;		/* route distinguisher for VPN addrs */
 	uint32_t	scope_id;	/* iface scope id for v6 */
 	uint8_t		aid;
 	uint8_t		labellen;	/* size of the labelstack */
 	uint8_t		labelstack[18];	/* max that makes sense */
-#define	v4	ba.v4
-#define	v6	ba.v6
 };
 
 #define	DEFAULT_LISTENER	0x01
