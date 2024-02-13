@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.25 2023/04/26 16:53:59 claudio Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.26 2024/02/13 09:29:39 claudio Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -46,12 +46,6 @@ void db_dump_stack(db_expr_t, int, db_expr_t, char *);
 void db_dump_trap(db_expr_t, int, db_expr_t, char *);
 void db_dump_ts(db_expr_t, int, db_expr_t, char *);
 void db_print_window(u_int64_t);
-
-#if 0
-#define INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS) /* Not really true, y'know */
-#else
-#define INKERNEL(va)	1	/* Everything's in the kernel now. 8^) */
-#endif
 
 #define	KLOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_PRIMARY, sizeof(x))
 #define ULOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_AIUS, sizeof(x))
@@ -124,10 +118,6 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			if (frame == 0 || frame == (vaddr_t)-1)
 				break;
 		}
-#if 0
-		if (!INKERNEL(frame))
-			break;
-#endif
 
 		db_find_sym_and_offset(pc, &name, &offset);
 
@@ -226,58 +216,29 @@ db_print_window(u_int64_t frame)
 	struct frame *f = (struct frame *)(frame + BIAS);
 
 	db_printf("frame %p locals, ins:\n", f);
-	if (INKERNEL(f)) {
-		db_printf("%llx %llx %llx %llx ",
-			  (unsigned long long)f->fr_local[0],
-			  (unsigned long long)f->fr_local[1],
-			  (unsigned long long)f->fr_local[2],
-			  (unsigned long long)f->fr_local[3]);
-		db_printf("%llx %llx %llx %llx\n",
-			  (unsigned long long)f->fr_local[4],
-			  (unsigned long long)f->fr_local[5],
-			  (unsigned long long)f->fr_local[6],
-			  (unsigned long long)f->fr_local[7]);
-		db_printf("%llx %llx %llx %llx ",
-			  (unsigned long long)f->fr_arg[0],
-			  (unsigned long long)f->fr_arg[1],
-			  (unsigned long long)f->fr_arg[2],
-			  (unsigned long long)f->fr_arg[3]);
-		db_printf("%llx %llx %llx=sp %llx=pc:",
-			  (unsigned long long)f->fr_arg[4],
-			  (unsigned long long)f->fr_arg[5],
-			  (unsigned long long)f->fr_fp,
-			  (unsigned long long)f->fr_pc);
-		/* Sometimes this don't work.  Dunno why. */
-		db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
-		db_printf("\n");
-	} else {
-		struct frame fr;
-
-		if (copyin(f, &fr, sizeof(fr)))
-			return;
-		f = &fr;
-		db_printf("%llx %llx %llx %llx ",
-			  (unsigned long long)f->fr_local[0],
-			  (unsigned long long)f->fr_local[1],
-			  (unsigned long long)f->fr_local[2],
-			  (unsigned long long)f->fr_local[3]);
-		db_printf("%llx %llx %llx %llx\n",
-			  (unsigned long long)f->fr_local[4],
-			  (unsigned long long)f->fr_local[5],
-			  (unsigned long long)f->fr_local[6],
-			  (unsigned long long)f->fr_local[7]);
-		db_printf("%llx %llx %llx %llx ",
-			  (unsigned long long)f->fr_arg[0],
-			  (unsigned long long)f->fr_arg[1],
-			  (unsigned long long)f->fr_arg[2],
-			  (unsigned long long)f->fr_arg[3]);
-		db_printf("%llx %llx %llx=sp %llx=pc",
-			  (unsigned long long)f->fr_arg[4],
-			  (unsigned long long)f->fr_arg[5],
-			  (unsigned long long)f->fr_fp,
-			  (unsigned long long)f->fr_pc);
-		db_printf("\n");
-	}
+	db_printf("%llx %llx %llx %llx ",
+		  (unsigned long long)f->fr_local[0],
+		  (unsigned long long)f->fr_local[1],
+		  (unsigned long long)f->fr_local[2],
+		  (unsigned long long)f->fr_local[3]);
+	db_printf("%llx %llx %llx %llx\n",
+		  (unsigned long long)f->fr_local[4],
+		  (unsigned long long)f->fr_local[5],
+		  (unsigned long long)f->fr_local[6],
+		  (unsigned long long)f->fr_local[7]);
+	db_printf("%llx %llx %llx %llx ",
+		  (unsigned long long)f->fr_arg[0],
+		  (unsigned long long)f->fr_arg[1],
+		  (unsigned long long)f->fr_arg[2],
+		  (unsigned long long)f->fr_arg[3]);
+	db_printf("%llx %llx %llx=sp %llx=pc:",
+		  (unsigned long long)f->fr_arg[4],
+		  (unsigned long long)f->fr_arg[5],
+		  (unsigned long long)f->fr_fp,
+		  (unsigned long long)f->fr_pc);
+	/* Sometimes this don't work.  Dunno why. */
+	db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
+	db_printf("\n");
 }
 
 void
@@ -285,12 +246,6 @@ db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int		i;
 	u_int64_t	frame, oldframe;
-	int		kernel_only = 1;
-	char		c, *cp = modif;
-
-	while ((c = *cp++) != 0)
-		if (c == 'u')
-			kernel_only = 0;
 
 	if (count == -1)
 		count = 65535;
@@ -315,17 +270,10 @@ db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		}
 
 		frame += BIAS;
-		if (!INKERNEL(((struct frame *)frame))
-		    && kernel_only) break;
 		db_printf("Window %x ", i);
 		db_print_window(frame - BIAS);
-		if (!INKERNEL(((struct frame *)frame))) {
-			copyin(&((struct frame *)frame)->fr_fp, &frame,
-			    sizeof(frame));
-		} else
-			frame = ((struct frame *)frame)->fr_fp;
+		frame = ((struct frame *)frame)->fr_fp;
 	}
-
 }
 
 
@@ -501,5 +449,3 @@ db_dump_ts(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	}
 
 }
-
-
