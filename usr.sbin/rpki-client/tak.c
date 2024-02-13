@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.14 2024/02/05 19:23:58 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.15 2024/02/13 21:18:55 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -90,13 +90,14 @@ parse_takey(const char *fn, const TAKey *takey)
 {
 	const ASN1_UTF8STRING	*comment;
 	const ASN1_IA5STRING	*certURI;
-	EVP_PKEY		*pkey;
-	RSA			*r;
+	X509_PUBKEY		*pkey;
+	ASN1_OBJECT		*obj;
 	struct takey		*res = NULL;
-	unsigned char		*der = NULL, *rder = NULL;
+	const unsigned char	*der;
+	unsigned char		*pkey_der = NULL;
 	unsigned char		 md[SHA_DIGEST_LENGTH];
 	size_t			 i;
-	int			 rdersz, rc = 0;
+	int			 der_len, nid, pkey_der_len;
 
 	if ((res = calloc(1, sizeof(struct takey))) == NULL)
 		err(1, NULL);
@@ -118,7 +119,7 @@ parse_takey(const char *fn, const TAKey *takey)
 	res->urisz = sk_ASN1_IA5STRING_num(takey->certificateURIs);
 	if (res->urisz == 0) {
 		warnx("%s: Signed TAL requires at least 1 CertificateURI", fn);
-		goto out;
+		goto err;
 	}
 	if ((res->uris = calloc(res->urisz, sizeof(char *))) == NULL)
 		err(1, NULL);
@@ -127,7 +128,7 @@ parse_takey(const char *fn, const TAKey *takey)
 		certURI = sk_ASN1_IA5STRING_value(takey->certificateURIs, i);
 		if (!valid_uri(certURI->data, certURI->length, NULL)) {
 			warnx("%s: invalid TA URI", fn);
-			goto out;
+			goto err;
 		}
 
 		/* XXX: enforce that protocol is rsync or https. */
@@ -137,44 +138,36 @@ parse_takey(const char *fn, const TAKey *takey)
 			err(1, NULL);
 	}
 
-	if ((pkey = X509_PUBKEY_get0(takey->subjectPublicKeyInfo)) == NULL) {
-		warnx("%s: X509_PUBKEY_get0 failed", fn);
-		goto out;
+	pkey = takey->subjectPublicKeyInfo;
+	if (!X509_PUBKEY_get0_param(&obj, &der, &der_len, NULL, pkey)) {
+		warnx("%s: X509_PUBKEY_get0_param failed", fn);
+		goto err;
 	}
 
-	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL) {
-		warnx("%s: EVP_PKEY_get0_RSA failed", fn);
-		goto out;
+	if ((nid = OBJ_obj2nid(obj)) != NID_rsaEncryption) {
+		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
+		    fn, nid2str(nid), LN_rsaEncryption);
+		goto err;
 	}
 
-	if ((rdersz = i2d_RSAPublicKey(r, &rder)) <= 0) {
-		warnx("%s: i2d_RSAPublicKey failed", fn);
-		goto out;
-	}
-
-	if (!EVP_Digest(rder, rdersz, md, NULL, EVP_sha1(), NULL)) {
+	if (!EVP_Digest(der, der_len, md, NULL, EVP_sha1(), NULL)) {
 		warnx("%s: EVP_Digest failed", fn);
-		goto out;
+		goto err;
 	}
 	res->ski = hex_encode(md, SHA_DIGEST_LENGTH);
 
-	if ((res->pubkeysz = i2d_PUBKEY(pkey, &der)) <= 0) {
-		warnx("%s: i2d_PUBKEY failed", fn);
-		goto out;
+	if ((pkey_der_len = i2d_X509_PUBKEY(pkey, &pkey_der)) <= 0) {
+		warnx("%s: i2d_X509_PUBKEY failed", fn);
+		goto err;
 	}
+	res->pubkey = pkey_der;
+	res->pubkeysz = pkey_der_len;
 
-	res->pubkey = der;
-	der = NULL;
-
-	rc = 1;
- out:
-	if (rc == 0) {
-		takey_free(res);
-		res = NULL;
-	}
-	free(der);
-	free(rder);
 	return res;
+
+ err:
+	takey_free(res);
+	return NULL;
 }
 
 /*
