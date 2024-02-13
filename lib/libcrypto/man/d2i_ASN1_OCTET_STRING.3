@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.19 2022/09/12 14:36:09 tb Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.20 2024/02/13 12:38:43 job Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2022 $
+.Dd $Mdocdate: February 13 2024 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -452,3 +452,10 @@ and
 .Fn i2d_ASN1_GENERALSTRING
 first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
+.Sh CAVEATS
+Other implementations may accept or emit invalid DER encodings of
+GeneralizedTime and UTCTime.
+Portable applications should use
+.Fn ASN1_STRING_length
+to double check whether a given GeneralizedTime or UTCTime object is at least
+15 or 13 bytes, respectively.
