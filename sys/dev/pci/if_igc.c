@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.15 2024/01/23 08:48:12 kevlo Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.16 2024/02/13 13:58:19 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -2028,7 +2028,7 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	ether_extract_headers(mp, &ext);
 
 	if (ext.ip4) {
-		iphlen = ext.ip4->ip_hl << 2;
+		iphlen = ext.ip4hlen;
 
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV4;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {

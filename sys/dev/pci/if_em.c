@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.371 2024/01/28 18:42:58 mglocker Exp $ */
+/* $OpenBSD: if_em.c,v 1.372 2024/02/13 13:58:19 bluhm Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2433,7 +2433,7 @@ em_tx_ctx_setup(struct em_queue *que, struct mbuf *mp, u_int head,
 	vlan_macip_lens |= (sizeof(*ext.eh) << E1000_ADVTXD_MACLEN_SHIFT);
 
 	if (ext.ip4) {
-		iphlen = ext.ip4->ip_hl << 2;
+		iphlen = ext.ip4hlen;
 
 		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_IPV4;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {

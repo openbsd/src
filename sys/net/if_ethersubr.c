@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.291 2023/07/27 20:21:25 jan Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.292 2024/02/13 13:58:19 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -139,6 +139,20 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifdef MPLS
 #include <netmpls/mpls.h>
 #endif /* MPLS */
+
+/* #define ETHERDEBUG 1 */
+#ifdef ETHERDEBUG
+int etherdebug = ETHERDEBUG;
+#define DNPRINTF(level, fmt, args...)					\
+	do {								\
+		if (etherdebug >= level)				\
+			printf("%s: " fmt "\n", __func__, ## args);	\
+	} while (0)
+#else
+#define DNPRINTF(level, fmt, args...)					\
+	do { } while (0)
+#endif
+#define DPRINTF(fmt, args...)	DNPRINTF(1, fmt, args)
 
 u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -1034,56 +1048,126 @@ ether_e64_to_addr(struct ether_addr *ea, uint64_t e64)
 
 /* Parse different TCP/IP protocol headers for a quick view inside an mbuf. */
 void
-ether_extract_headers(struct mbuf *mp, struct ether_extracted *ext)
+ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 {
 	struct mbuf	*m;
-	uint64_t	 hlen;
+	size_t		 hlen;
 	int		 hoff;
 	uint8_t		 ipproto;
 	uint16_t	 ether_type;
+	/* gcc 4.2.1 on sparc64 may create 32 bit loads on unaligned mbuf */
+	union {
+		u_char	hc_data;
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+		struct {
+			u_int	hl:4,	/* header length */
+				v:4;	/* version */
+		} hc_ip;
+		struct {
+			u_int	x2:4,	/* (unused) */
+				off:4;	/* data offset */
+		} hc_th;
+#endif
+#if _BYTE_ORDER == _BIG_ENDIAN
+		struct {
+			u_int	v:4,	/* version */
+				hl:4;	/* header length */
+		} hc_ip;
+		struct {
+			u_int	off:4,	/* data offset */
+				x2:4;	/* (unused) */
+		} hc_th;
+#endif
+	} hdrcpy;
 
 	/* Return NULL if header was not recognized. */
 	memset(ext, 0, sizeof(*ext));
 
-	if (mp->m_len < sizeof(*ext->eh))
-		return;
+	KASSERT(ISSET(m0->m_flags, M_PKTHDR));
+	ext->paylen = m0->m_pkthdr.len;
 
-	ext->eh = mtod(mp, struct ether_header *);
+	if (m0->m_len < sizeof(*ext->eh)) {
+		DPRINTF("m_len %d, eh %zu", m0->m_len, sizeof(*ext->eh));
+		return;
+	}
+	ext->eh = mtod(m0, struct ether_header *);
 	ether_type = ntohs(ext->eh->ether_type);
 	hlen = sizeof(*ext->eh);
+	if (ext->paylen < hlen) {
+		DPRINTF("paylen %u, ehlen %zu", ext->paylen, hlen);
+		ext->eh = NULL;
+		return;
+	}
+	ext->paylen -= hlen;
 
 #if NVLAN > 0
 	if (ether_type == ETHERTYPE_VLAN) {
-		ext->evh = mtod(mp, struct ether_vlan_header *);
+		if (m0->m_len < sizeof(*ext->evh)) {
+			DPRINTF("m_len %d, evh %zu",
+			    m0->m_len, sizeof(*ext->evh));
+			return;
+		}
+		ext->evh = mtod(m0, struct ether_vlan_header *);
 		ether_type = ntohs(ext->evh->evl_proto);
 		hlen = sizeof(*ext->evh);
+		if (sizeof(*ext->eh) + ext->paylen < hlen) {
+			DPRINTF("paylen %zu, evhlen %zu",
+			    sizeof(*ext->eh) + ext->paylen, hlen);
+			ext->evh = NULL;
+			return;
+		}
+		ext->paylen = sizeof(*ext->eh) + ext->paylen - hlen;
 	}
 #endif
 
 	switch (ether_type) {
 	case ETHERTYPE_IP:
-		m = m_getptr(mp, hlen, &hoff);
-		if (m == NULL || m->m_len - hoff < sizeof(*ext->ip4))
+		m = m_getptr(m0, hlen, &hoff);
+		if (m == NULL || m->m_len - hoff < sizeof(*ext->ip4)) {
+			DPRINTF("m_len %d, hoff %d, ip4 %zu",
+			    m ? m->m_len : -1, hoff, sizeof(*ext->ip4));
 			return;
+		}
 		ext->ip4 = (struct ip *)(mtod(m, caddr_t) + hoff);
+
+		memcpy(&hdrcpy.hc_data, ext->ip4, 1);
+		hlen = hdrcpy.hc_ip.hl << 2;
+		if (m->m_len - hoff < hlen) {
+			DPRINTF("m_len %d, hoff %d, iphl %zu",
+			    m ? m->m_len : -1, hoff, hlen);
+			ext->ip4 = NULL;
+			return;
+		}
+		if (ext->paylen < hlen) {
+			DPRINTF("paylen %u, ip4hlen %zu", ext->paylen, hlen);
+			ext->ip4 = NULL;
+			return;
+		}
+		ext->ip4hlen = hlen;
+		ext->paylen -= hlen;
+		ipproto = ext->ip4->ip_p;
 
 		if (ISSET(ntohs(ext->ip4->ip_off), IP_MF|IP_OFFMASK))
 			return;
-
-		hlen = ext->ip4->ip_hl << 2;
-		ipproto = ext->ip4->ip_p;
-
 		break;
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		m = m_getptr(mp, hlen, &hoff);
-		if (m == NULL || m->m_len - hoff < sizeof(*ext->ip6))
+		m = m_getptr(m0, hlen, &hoff);
+		if (m == NULL || m->m_len - hoff < sizeof(*ext->ip6)) {
+			DPRINTF("m_len %d, hoff %d, ip6 %zu",
+			    m ? m->m_len : -1, hoff, sizeof(*ext->ip6));
 			return;
+		}
 		ext->ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
 
 		hlen = sizeof(*ext->ip6);
+		if (ext->paylen < hlen) {
+			DPRINTF("paylen %u, ip6hlen %zu", ext->paylen, hlen);
+			ext->ip6 = NULL;
+			return;
+		}
+		ext->paylen -= hlen;
 		ipproto = ext->ip6->ip6_nxt;
-
 		break;
 #endif
 	default:
@@ -1093,16 +1177,51 @@ ether_extract_headers(struct mbuf *mp, struct ether_extracted *ext)
 	switch (ipproto) {
 	case IPPROTO_TCP:
 		m = m_getptr(m, hoff + hlen, &hoff);
-		if (m == NULL || m->m_len - hoff < sizeof(*ext->tcp))
+		if (m == NULL || m->m_len - hoff < sizeof(*ext->tcp)) {
+			DPRINTF("m_len %d, hoff %d, tcp %zu",
+			    m ? m->m_len : -1, hoff, sizeof(*ext->tcp));
 			return;
+		}
 		ext->tcp = (struct tcphdr *)(mtod(m, caddr_t) + hoff);
+
+		memcpy(&hdrcpy.hc_data, &ext->tcp->th_flags - 1, 1);
+		hlen = hdrcpy.hc_th.off << 2;
+		if (m->m_len - hoff < hlen) {
+			DPRINTF("m_len %d, hoff %d, thoff %zu",
+			    m ? m->m_len : -1, hoff, hlen);
+			ext->tcp = NULL;
+			return;
+		}
+		if (ext->paylen < hlen) {
+			DPRINTF("paylen %u, tcphlen %zu", ext->paylen, hlen);
+			ext->tcp = NULL;
+			return;
+		}
+		ext->tcphlen = hlen;
+		ext->paylen -= hlen;
 		break;
 
 	case IPPROTO_UDP:
 		m = m_getptr(m, hoff + hlen, &hoff);
-		if (m == NULL || m->m_len - hoff < sizeof(*ext->udp))
+		if (m == NULL || m->m_len - hoff < sizeof(*ext->udp)) {
+			DPRINTF("m_len %d, hoff %d, tcp %zu",
+			    m ? m->m_len : -1, hoff, sizeof(*ext->tcp));
 			return;
+		}
 		ext->udp = (struct udphdr *)(mtod(m, caddr_t) + hoff);
+
+		hlen = sizeof(*ext->udp);
+		if (ext->paylen < hlen) {
+			DPRINTF("paylen %u, udphlen %zu", ext->paylen, hlen);
+			ext->udp = NULL;
+			return;
+		}
 		break;
 	}
+
+	DNPRINTF(2, "%s%s%s%s%s%s ip4h %u, tcph %u, payl %u",
+	    ext->eh ? "eh," : "", ext->evh ? "evh," : "",
+	    ext->ip4 ? "ip4," : "", ext->ip6 ? "ip6," : "",
+	    ext->tcp ? "tcp," : "", ext->udp ? "udp," : "",
+	    ext->ip4hlen, ext->tcphlen, ext->paylen);
 }

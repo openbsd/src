@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.90 2023/07/27 20:21:25 jan Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.91 2024/02/13 13:58:19 bluhm Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -307,6 +307,9 @@ struct ether_extracted {
 	struct ip6_hdr			*ip6;
 	struct tcphdr			*tcp;
 	struct udphdr			*udp;
+	u_int				 ip4hlen;
+	u_int				 tcphlen;
+	u_int				 paylen;
 };
 
 void ether_extract_headers(struct mbuf *, struct ether_extracted *);

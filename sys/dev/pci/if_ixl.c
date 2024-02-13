@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.95 2024/01/07 21:01:45 bluhm Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.96 2024/02/13 13:58:19 bluhm Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2827,7 +2827,7 @@ ixl_tx_setup_offload(struct mbuf *m0, struct ixl_tx_ring *txr,
 		    IXL_TX_DESC_CMD_IIPT_IPV4_CSUM :
 		    IXL_TX_DESC_CMD_IIPT_IPV4;
  
-		hlen = ext.ip4->ip_hl << 2;
+		hlen = ext.ip4hlen;
 #ifdef INET6
 	} else if (ext.ip6) {
 		offload |= IXL_TX_DESC_CMD_IIPT_IPV6;
@@ -2844,10 +2844,12 @@ ixl_tx_setup_offload(struct mbuf *m0, struct ixl_tx_ring *txr,
 
 	if (ext.tcp && ISSET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
 		offload |= IXL_TX_DESC_CMD_L4T_EOFT_TCP;
-		offload |= (uint64_t)ext.tcp->th_off << IXL_TX_DESC_L4LEN_SHIFT;
+		offload |= (uint64_t)(ext.tcphlen >> 2)
+		    << IXL_TX_DESC_L4LEN_SHIFT;
 	} else if (ext.udp && ISSET(m0->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
 		offload |= IXL_TX_DESC_CMD_L4T_EOFT_UDP;
-		offload |= (sizeof(*ext.udp) >> 2) << IXL_TX_DESC_L4LEN_SHIFT;
+		offload |= (uint64_t)(sizeof(*ext.udp) >> 2)
+		    << IXL_TX_DESC_L4LEN_SHIFT;
 	}
 
 	if (ISSET(m0->m_pkthdr.csum_flags, M_TCP_TSO)) {
@@ -2855,7 +2857,7 @@ ixl_tx_setup_offload(struct mbuf *m0, struct ixl_tx_ring *txr,
 			struct ixl_tx_desc *ring, *txd;
 			uint64_t cmd = 0, paylen, outlen;
 
-			hlen += ext.tcp->th_off << 2;
+			hlen += ext.tcphlen;
 
 			outlen = m0->m_pkthdr.ph_mss;
 			paylen = m0->m_pkthdr.len - ETHER_HDR_LEN - hlen;
