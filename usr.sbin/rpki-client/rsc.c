@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.30 2024/02/05 19:23:58 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.31 2024/02/13 22:44:21 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -44,6 +44,13 @@ extern ASN1_OBJECT	*rsc_oid;
 /*
  * Types and templates for RSC eContent - RFC 9323
  */
+
+ASN1_ITEM_EXP ConstrainedASIdentifiers_it;
+ASN1_ITEM_EXP ConstrainedIPAddressFamily_it;
+ASN1_ITEM_EXP ConstrainedIPAddrBlocks_it;
+ASN1_ITEM_EXP FileNameAndHash_it;
+ASN1_ITEM_EXP ResourceBlock_it;
+ASN1_ITEM_EXP RpkiSignedChecklist_it;
 
 typedef struct {
 	ASIdOrRanges		*asnum;

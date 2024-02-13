@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.15 2024/02/13 21:18:55 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.16 2024/02/13 22:44:21 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -44,6 +44,9 @@ extern ASN1_OBJECT	*tak_oid;
 /*
  * ASN.1 templates for Trust Anchor Keys (draft-ietf-sidrops-signed-tal-12)
  */
+
+ASN1_ITEM_EXP TAKey_it;
+ASN1_ITEM_EXP TAK_it;
 
 DECLARE_STACK_OF(ASN1_IA5STRING);
 

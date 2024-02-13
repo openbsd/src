@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.25 2024/02/05 19:23:58 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.26 2024/02/13 22:44:21 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -45,6 +45,8 @@ extern ASN1_OBJECT	*aspa_oid;
 /*
  * Types and templates for ASPA eContent draft-ietf-sidrops-aspa-profile-15
  */
+
+ASN1_ITEM_EXP ASProviderAttestation_it;
 
 typedef struct {
 	ASN1_INTEGER		*version;

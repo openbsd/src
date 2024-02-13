@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.106 2024/02/05 19:23:58 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.107 2024/02/13 22:44:21 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -48,6 +48,9 @@ extern ASN1_OBJECT	*mft_oid;
 /*
  * Types and templates for the Manifest eContent, RFC 6486, section 4.2.
  */
+
+ASN1_ITEM_EXP FileAndHash_it;
+ASN1_ITEM_EXP Manifest_it;
 
 typedef struct {
 	ASN1_IA5STRING	*file;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.73 2024/02/05 19:23:58 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.74 2024/02/13 22:44:21 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -44,6 +44,10 @@ extern ASN1_OBJECT	*roa_oid;
 /*
  * Types and templates for the ROA eContent, RFC 6482, section 3.
  */
+
+ASN1_ITEM_EXP ROAIPAddress_it;
+ASN1_ITEM_EXP ROAIPAddressFamily_it;
+ASN1_ITEM_EXP RouteOriginAttestation_it;
 
 typedef struct {
 	ASN1_BIT_STRING		*address;
