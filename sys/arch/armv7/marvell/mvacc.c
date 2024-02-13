@@ -1,4 +1,4 @@
-/* $OpenBSD: mvacc.c,v 1.5 2022/07/11 10:44:08 jmatthew Exp $ */
+/* $OpenBSD: mvacc.c,v 1.6 2024/02/13 02:14:25 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -133,7 +133,7 @@ mvacc_get_frequency(void *cookie, uint32_t *cells)
 	cpu = (sar >> SAR_CPU_DDR_FREQ_OPT) & SAR_CPU_DDR_FREQ_OPT_MASK;
 	tclk = (sar >> SAR_TCLK_FREQ_OPT) & SAR_TCLK_FREQ_OPT_MASK;
 
-	if (cpu > nitems(mvacc_cpu_freqs)) {
+	if (cpu >= nitems(mvacc_cpu_freqs)) {
 		printf("%s: invalid cpu frequency", sc->sc_dev.dv_xname);
 		return 0;
 	}
