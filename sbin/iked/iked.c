@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.67 2024/01/15 15:29:00 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.68 2024/02/13 12:25:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -422,6 +422,10 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct iked	*env = iked_env;
 
 	switch (imsg->hdr.type) {
+	case IMSG_CTL_ACTIVE:
+	case IMSG_CTL_PASSIVE:
+		proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV2, -1);
+		break;
 	case IMSG_OCSP_FD:
 		ocsp_connect(env, imsg);
 		break;

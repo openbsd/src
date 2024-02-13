@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.100 2024/02/06 13:10:56 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.101 2024/02/13 12:25:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -332,6 +332,14 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	unsigned int		 mode;
 
 	switch (imsg->hdr.type) {
+	case IMSG_CTL_ACTIVE:
+	case IMSG_CTL_PASSIVE:
+		/*
+		 * send back to indicate we have processed
+		 * all messages from parent.
+		 */
+		proc_compose(&env->sc_ps, PROC_PARENT, imsg->hdr.type, NULL, 0);
+		break;
 	case IMSG_CTL_RESET:
 		IMSG_SIZE_CHECK(imsg, &mode);
 		memcpy(&mode, imsg->data, sizeof(mode));
