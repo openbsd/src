@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.77 2024/02/01 15:11:38 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.78 2024/02/13 20:37:15 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -191,8 +191,9 @@ out:
 }
 
 /*
- * Parse X509v3 subject key identifier (SKI), RFC 6487 sec. 4.8.2.
- * The SKI must be the SHA1 hash of the Subject Public Key.
+ * Parse X509v3 subject key identifier (SKI), RFC 6487 section 4.8.2:
+ * "The SKI is a SHA-1 hash of the value of the DER-encoded ASN.1 BIT STRING of
+ * the Subject Public Key, as described in Section 4.2.1.2 of RFC 5280."
  * Returns the SKI formatted as hex string, or NULL if it couldn't be parsed.
  */
 int
