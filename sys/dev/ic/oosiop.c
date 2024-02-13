@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.36 2022/04/16 19:19:59 naddy Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.37 2024/02/13 17:51:17 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -726,8 +726,6 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 
 	sc = xs->sc_link->bus->sb_adapter_softc;
 
-	s = splbio();
-
 	cb = xs->io;
 
 	cb->xs = xs;
@@ -747,7 +745,6 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 	if (err) {
 		printf("%s: unable to load cmd DMA map: %d",
 		    sc->sc_dev.dv_xname, err);
-		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
@@ -769,7 +766,6 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 			printf("%s: unable to load data DMA map: %d",
 			    sc->sc_dev.dv_xname, err);
 			bus_dmamap_unload(sc->sc_dmat, cb->cmddma);
-			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 			return;
@@ -787,6 +783,12 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 	 */
 	timeout_set(&xs->stimeout, oosiop_timeout, cb);
 
+	oosiop_setup(sc, cb);
+
+	s = splbio();
+
+	TAILQ_INSERT_TAIL(&sc->sc_cbq, cb, chain);
+
 	if (xs->flags & SCSI_POLL)
 		dopoll = 1;
 	else {
@@ -795,16 +797,13 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		timeout_add_msec(&xs->stimeout, xs->timeout);
 	}
 
-	splx(s);
-
-	oosiop_setup(sc, cb);
-
-	TAILQ_INSERT_TAIL(&sc->sc_cbq, cb, chain);
-
 	if (!sc->sc_active) {
 		/* Abort script to start selection */
 		oosiop_write_1(sc, OOSIOP_ISTAT, OOSIOP_ISTAT_ABRT);
 	}
+
+	splx(s);
+
 	if (dopoll)
 		oosiop_poll(sc, cb);
 }
