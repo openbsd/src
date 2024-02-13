@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.180 2024/02/05 23:16:39 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.181 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1461,14 +1461,14 @@ inpcb_dump(u_long off, short protocol, int af)
 	case AF_INET:
 		inet_ntop(af, &inp.inp_faddr, faddr, sizeof(faddr));
 		inet_ntop(af, &inp.inp_laddr, laddr, sizeof(laddr));
-		inet_ntop(af, &((struct sockaddr_in *)
-		    (&inp.inp_route.ro_dst))->sin_addr, raddr, sizeof(raddr));
+		inet_ntop(af, &inp.inp_route.ro_dstsin.sin_addr, raddr,
+		    sizeof(raddr));
 		break;
 	case AF_INET6:
 		inet_ntop(af, &inp.inp_faddr6, faddr, sizeof(faddr));
 		inet_ntop(af, &inp.inp_laddr6, laddr, sizeof(laddr));
-		inet_ntop(af, &inp.inp_route6.ro_dst.sin6_addr,
-		    raddr, sizeof(raddr));
+		inet_ntop(af, &inp.inp_route.ro_dstsin6.sin6_addr, raddr,
+		    sizeof(raddr));
 		break;
 	default:
 		faddr[0] = laddr[0] = '\0';

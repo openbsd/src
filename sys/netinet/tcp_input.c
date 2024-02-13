@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.400 2024/02/11 01:27:45 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.401 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -145,8 +145,8 @@ struct timeval tcp_ackdrop_ppslim_last;
 #define ND6_HINT(tp) \
 do { \
 	if (tp && tp->t_inpcb && (tp->t_inpcb->inp_flags & INP_IPV6) &&	\
-	    rtisvalid(tp->t_inpcb->inp_route6.ro_rt)) {			\
-		nd6_nud_hint(tp->t_inpcb->inp_route6.ro_rt);		\
+	    rtisvalid(tp->t_inpcb->inp_route.ro_rt)) {			\
+		nd6_nud_hint(tp->t_inpcb->inp_route.ro_rt);		\
 	} \
 } while (0)
 #else
@@ -3166,7 +3166,7 @@ syn_cache_put(struct syn_cache *sc)
 
 	/* Dealing with last reference, no lock needed. */
 	m_free(sc->sc_ipopts);
-	rtfree(sc->sc_route4.ro_rt);
+	rtfree(sc->sc_route.ro_rt);
 
 	pool_put(&syn_cache_pool, sc);
 }
@@ -3578,13 +3578,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	/*
 	 * Give the new socket our cached route reference.
 	 */
-	if (src->sa_family == AF_INET)
-		inp->inp_route = sc->sc_route4;         /* struct assignment */
-#ifdef INET6
-	else
-		inp->inp_route6 = sc->sc_route6;
-#endif
-	sc->sc_route4.ro_rt = NULL;
+	inp->inp_route = sc->sc_route;		/* struct assignment */
+	sc->sc_route.ro_rt = NULL;
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 	if (am == NULL)
@@ -4152,7 +4147,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 		if (inp != NULL)
 			ip->ip_tos = inp->inp_ip.ip_tos;
 
-		error = ip_output(m, sc->sc_ipopts, &sc->sc_route4,
+		error = ip_output(m, sc->sc_ipopts, &sc->sc_route,
 		    (ip_mtudisc ? IP_MTUDISC : 0),  NULL,
 		    inp ? inp->inp_seclevel : NULL, 0);
 		break;
@@ -4164,7 +4159,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 		ip6->ip6_hlim = in6_selecthlim(inp);
 		/* leave flowlabel = 0, it is legal and require no state mgmt */
 
-		error = ip6_output(m, NULL /*XXX*/, &sc->sc_route6, 0,
+		error = ip6_output(m, NULL /*XXX*/, &sc->sc_route, 0,
 		    NULL, inp ? inp->inp_seclevel : NULL);
 		break;
 #endif

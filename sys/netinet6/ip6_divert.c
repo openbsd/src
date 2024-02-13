@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.94 2024/02/11 18:14:27 mvs Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.95 2024/02/13 12:22:09 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -30,13 +30,13 @@
 #include <net/netisr.h>
 
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#include <netinet/in_pcb.h>
-#include <netinet/ip_divert.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/in6_var.h>
+#include <netinet/in_pcb.h>
+#include <netinet/ip_divert.h>
 #include <netinet6/ip6_divert.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
@@ -180,7 +180,7 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	} else {
 		m->m_pkthdr.ph_rtableid = inp->inp_rtableid;
 
-		error = ip6_output(m, NULL, &inp->inp_route6,
+		error = ip6_output(m, NULL, &inp->inp_route,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL);
 	}
 

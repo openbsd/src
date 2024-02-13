@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.292 2024/02/11 01:27:45 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.293 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -920,7 +920,7 @@ in_pcbrtentry(struct inpcb *inp)
 	if (inp->inp_faddr.s_addr == INADDR_ANY)
 		return (NULL);
 	if (route_cache(ro, inp->inp_faddr, inp->inp_rtableid)) {
-		ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
+		ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa,
 		    &inp->inp_laddr.s_addr, ro->ro_tableid);
 	}
 	return (ro->ro_rt);
@@ -984,7 +984,7 @@ in_pcbselsrc(struct in_addr *insrc, struct sockaddr_in *sin,
 	 */
 	if (route_cache(ro, sin->sin_addr, rtableid)) {
 		/* No route yet, so try to acquire one */
-		ro->ro_rt = rtalloc_mpath(&ro->ro_dst, NULL, ro->ro_tableid);
+		ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa, NULL, ro->ro_tableid);
 	}
 
 	/*

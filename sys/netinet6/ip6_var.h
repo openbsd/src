@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.112 2024/02/07 23:40:40 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.113 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ struct	ip6_moptions {
 /* Routing header related info */
 struct	ip6po_rhinfo {
 	struct	ip6_rthdr *ip6po_rhi_rthdr; /* Routing header */
-	struct	route_in6 ip6po_rhi_route; /* Route to the 1st hop */
+	struct	route ip6po_rhi_route; /* Route to the 1st hop */
 };
 #define ip6po_rthdr	ip6po_rhinfo.ip6po_rhi_rthdr
 #define ip6po_route	ip6po_rhinfo.ip6po_rhi_route
@@ -323,7 +323,7 @@ int	ip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	ip6_forward(struct mbuf *, struct rtentry *, int);
 
 void	ip6_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in6 *);
-int	ip6_output(struct mbuf *, struct ip6_pktopts *, struct route_in6 *, int,
+int	ip6_output(struct mbuf *, struct ip6_pktopts *, struct route *, int,
 	    struct ip6_moptions *, const u_char[]);
 int	ip6_fragment(struct mbuf *, struct mbuf_list *, int, u_char, u_long);
 int	ip6_ctloutput(int, struct socket *, int, int, struct mbuf *);
@@ -370,14 +370,14 @@ int	in6_pcbselsrc(const struct in6_addr **, struct sockaddr_in6 *,
 int	in6_selectsrc(const struct in6_addr **, struct sockaddr_in6 *,
 	    struct ip6_moptions *, unsigned int);
 struct rtentry *in6_selectroute(const struct in6_addr *, struct ip6_pktopts *,
-	    struct route_in6 *, unsigned int rtableid);
+	    struct route *, unsigned int rtableid);
 
 u_int32_t ip6_randomflowlabel(void);
 
 #ifdef IPSEC
 struct tdb;
 int	ip6_output_ipsec_lookup(struct mbuf *, const u_char[], struct tdb **);
-int	ip6_output_ipsec_send(struct tdb *, struct mbuf *, struct route_in6 *,
+int	ip6_output_ipsec_send(struct tdb *, struct mbuf *, struct route *,
 	    int, int);
 #endif /* IPSEC */
 

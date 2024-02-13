@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.19 2022/06/29 22:45:24 bluhm Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.20 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -37,6 +37,8 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip6.h>

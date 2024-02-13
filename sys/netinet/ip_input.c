@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.388 2024/01/31 14:56:42 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.389 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1494,7 +1494,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 	route_cache(&ro, ip->ip_dst, m->m_pkthdr.ph_rtableid);
 	if (!rtisvalid(rt)) {
 		rtfree(rt);
-		rt = rtalloc_mpath(&ro.ro_dst, &ip->ip_src.s_addr,
+		rt = rtalloc_mpath(&ro.ro_dstsa, &ip->ip_src.s_addr,
 		    m->m_pkthdr.ph_rtableid);
 		if (rt == NULL) {
 			ipstat_inc(ips_noroute);

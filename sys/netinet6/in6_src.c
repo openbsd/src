@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.93 2024/02/09 14:02:12 bluhm Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.94 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 #include <netinet6/nd6.h>
 
 int in6_selectif(const struct in6_addr *, struct ip6_pktopts *,
-    struct ip6_moptions *, struct route_in6 *, struct ifnet **, u_int);
+    struct ip6_moptions *, struct route *, struct ifnet **, u_int);
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
@@ -95,7 +95,7 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
     struct inpcb *inp, struct ip6_pktopts *opts)
 {
 	struct ip6_moptions *mopts = inp->inp_moptions6;
-	struct route_in6 *ro = &inp->inp_route6;
+	struct route *ro = &inp->inp_route;
 	const struct in6_addr *laddr = &inp->inp_laddr6;
 	u_int rtableid = inp->inp_rtableid;
 	struct ifnet *ifp = NULL;
@@ -180,8 +180,7 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	 * our src addr is taken from the i/f, else punt.
 	 */
 	if (route6_cache(ro, dst, rtableid)) {
-		ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst),
-		    RT_RESOLVE, ro->ro_tableid);
+		ro->ro_rt = rtalloc(&ro->ro_dstsa, RT_RESOLVE, ro->ro_tableid);
 	}
 
 	/*
@@ -298,7 +297,7 @@ in6_selectsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 
 struct rtentry *
 in6_selectroute(const struct in6_addr *dst, struct ip6_pktopts *opts,
-    struct route_in6 *ro, unsigned int rtableid)
+    struct route *ro, unsigned int rtableid)
 {
 	/*
 	 * Use a cached route if it exists and is valid, else try to allocate
@@ -307,8 +306,8 @@ in6_selectroute(const struct in6_addr *dst, struct ip6_pktopts *opts,
 	if (ro) {
 		if (route6_cache(ro, dst, rtableid)) {
 			/* No route yet, so try to acquire one */
-			ro->ro_rt = rtalloc_mpath(sin6tosa(&ro->ro_dst),
-			    NULL, ro->ro_tableid);
+			ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa, NULL,
+			    ro->ro_tableid);
 		}
 
 		/*
@@ -336,7 +335,7 @@ in6_selectroute(const struct in6_addr *dst, struct ip6_pktopts *opts,
 
 int
 in6_selectif(const struct in6_addr *dst, struct ip6_pktopts *opts,
-    struct ip6_moptions *mopts, struct route_in6 *ro, struct ifnet **retifp,
+    struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp,
     u_int rtableid)
 {
 	struct rtentry *rt = NULL;

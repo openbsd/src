@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.54 2023/12/23 10:52:54 bluhm Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.55 2024/02/13 12:22:09 bluhm Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -31,6 +31,7 @@
 #include <net/if_var.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
+#include <net/route.h>
 #include <net/rtable.h>
 
 #include <netinet/in.h>

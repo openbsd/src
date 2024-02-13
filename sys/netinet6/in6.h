@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.115 2024/02/09 14:02:12 bluhm Exp $	*/
+/*	$OpenBSD: in6.h,v 1.116 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -144,16 +144,6 @@ extern const struct in6_addr in6addr_linklocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #if __BSD_VISIBLE
-/*
- * IPv6 route structure, keep fields in sync with struct route
- */
-struct route_in6 {
-	struct	rtentry *ro_rt;
-	u_long		 ro_generation;
-	u_long		 ro_tableid;	/* padded to long for alignment */
-	struct	sockaddr_in6 ro_dst;
-};
-
 /*
  * Definition of some useful macros to handle IP6 addresses
  */
@@ -427,8 +417,6 @@ struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *, u_int);
 int	in6_mask2len(struct in6_addr *, u_char *);
 int	in6_nam2sin6(const struct mbuf *, struct sockaddr_in6 **);
 int	in6_sa2sin6(struct sockaddr *, struct sockaddr_in6 **);
-
-int	route6_cache(struct route_in6 *, const struct in6_addr *, u_int);
 
 struct ip6_pktopts;
 struct ip6_moptions;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.181 2024/02/11 18:14:27 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.182 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -512,7 +512,7 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		pf_mbuf_link_inpcb(m, inp);
 #endif
 
-	error = ip6_output(m, optp, &inp->inp_route6, flags,
+	error = ip6_output(m, optp, &inp->inp_route, flags,
 	    inp->inp_moptions6, inp->inp_seclevel);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 		icmp6stat_inc(icp6s_outhist + type);

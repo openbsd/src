@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.137 2024/02/11 01:27:45 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.138 2024/02/13 12:22:09 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -114,12 +114,11 @@
 #include <net/pfvar.h>
 
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/in_pcb.h>
-
-#include <netinet6/in6_var.h>
 
 #if NSTOEPLITZ > 0
 #include <net/toeplitz.h>
@@ -517,13 +516,10 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr_in6 *dst,
 		if ((PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) &&
 		    inp->inp_route.ro_rt &&
-		    !(inp->inp_route.ro_rt->rt_flags & RTF_HOST)) {
-			struct sockaddr_in6 *dst6;
-
-			dst6 = satosin6(&inp->inp_route.ro_dst);
-			if (IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
-			    &dst->sin6_addr))
-				goto do_notify;
+		    !(inp->inp_route.ro_rt->rt_flags & RTF_HOST) &&
+		    IN6_ARE_ADDR_EQUAL(&inp->inp_route.ro_dstsin6.sin6_addr,
+		    &dst->sin6_addr)) {
+			goto do_notify;
 		}
 
 		/*
@@ -565,12 +561,12 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr_in6 *dst,
 struct rtentry *
 in6_pcbrtentry(struct inpcb *inp)
 {
-	struct route_in6 *ro = &inp->inp_route6;
+	struct route *ro = &inp->inp_route;
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
 		return (NULL);
 	if (route6_cache(ro, &inp->inp_faddr6, inp->inp_rtableid)) {
-		ro->ro_rt = rtalloc_mpath(sin6tosa(&ro->ro_dst),
+		ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa,
 		    &inp->inp_laddr6.s6_addr32[0], ro->ro_tableid);
 	}
 	return (ro->ro_rt);

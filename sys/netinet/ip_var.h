@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.112 2024/02/05 23:16:39 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.113 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -227,6 +227,7 @@ extern const struct pr_usrreqs rip_usrreqs;
 
 extern struct rttimer_queue ip_mtudisc_timeout_q;
 extern struct pool ipqent_pool;
+struct rtentry;
 struct route;
 struct inpcb;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.147 2024/02/09 14:02:11 bluhm Exp $	*/
+/*	$OpenBSD: in.h,v 1.148 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -788,8 +788,6 @@ int	   in_mask2len(struct in_addr *);
 void	   in_len2mask(struct in_addr *, int);
 int	   in_nam2sin(const struct mbuf *, struct sockaddr_in **);
 int	   in_sa2sin(struct sockaddr *, struct sockaddr_in **);
-
-int	   route_cache(struct route *, struct in_addr, u_int);
 
 char	  *inet_ntoa(struct in_addr);
 int	   inet_nat64(int, const void *, void *, const void *, u_int8_t);

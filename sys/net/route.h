@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.205 2024/02/05 12:52:11 aoyama Exp $	*/
+/*	$OpenBSD: route.h,v 1.206 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -370,6 +370,19 @@ struct sockaddr_rtsearch {
 	char		sr_search[RTSEARCH_LEN];
 };
 
+struct rt_addrinfo {
+	int	rti_addrs;
+	const	struct sockaddr *rti_info[RTAX_MAX];
+	int	rti_flags;
+	struct	ifaddr *rti_ifa;
+	struct	rt_msghdr *rti_rtm;
+	u_char	rti_mpls;
+};
+
+#ifdef __BSD_VISIBLE
+
+#include <netinet/in.h>
+
 /*
  * A route consists of a destination address and a reference
  * to a routing entry.  These are often held by protocols
@@ -379,17 +392,17 @@ struct route {
 	struct	rtentry *ro_rt;
 	u_long		 ro_generation;
 	u_long		 ro_tableid;	/* u_long because of alignment */
-	struct	sockaddr ro_dst;
+	union {
+		struct	sockaddr	rod_sa;
+		struct	sockaddr_in	rod_sin;
+		struct	sockaddr_in6	rod_sin6;
+	} ro_dst;
+#define ro_dstsa	ro_dst.rod_sa
+#define ro_dstsin	ro_dst.rod_sin
+#define ro_dstsin6	ro_dst.rod_sin6
 };
 
-struct rt_addrinfo {
-	int	rti_addrs;
-	const	struct sockaddr *rti_info[RTAX_MAX];
-	int	rti_flags;
-	struct	ifaddr *rti_ifa;
-	struct	rt_msghdr *rti_rtm;
-	u_char	rti_mpls;
-};
+#endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
 
@@ -449,6 +462,8 @@ struct if_ieee80211_data;
 struct bfd_config;
 
 void	 route_init(void);
+int	 route_cache(struct route *, struct in_addr, u_int);
+int	 route6_cache(struct route *, const struct in6_addr *, u_int);
 void	 rtm_ifchg(struct ifnet *);
 void	 rtm_ifannounce(struct ifnet *, int);
 void	 rtm_bfd(struct bfd_config *);

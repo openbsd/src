@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.285 2024/02/07 23:40:40 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.286 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ static __inline u_int16_t __attribute__((__unused__))
     u_int32_t, u_int32_t);
 void in6_delayed_cksum(struct mbuf *, u_int8_t);
 
-int ip6_output_ipsec_pmtu_update(struct tdb *, struct route_in6 *,
+int ip6_output_ipsec_pmtu_update(struct tdb *, struct route *,
     struct in6_addr *, int, int, int);
 
 /* Context for non-repeating IDs */
@@ -160,14 +160,14 @@ struct idgen32_ctx ip6_id_ctx;
  * We use u_long to hold largest one, * which is rt_mtu.
  */
 int
-ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
+ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route *ro,
     int flags, struct ip6_moptions *im6o, const u_char seclevel[])
 {
 	struct ip6_hdr *ip6;
 	struct ifnet *ifp = NULL;
 	struct mbuf_list ml;
 	int hlen, tlen;
-	struct route_in6 ip6route;
+	struct route iproute;
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 *dst;
 	int error = 0;
@@ -177,7 +177,7 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
 	u_int32_t optlen = 0, plen = 0, unfragpartlen = 0;
 	struct ip6_exthdrs exthdrs;
 	struct in6_addr finaldst;
-	struct route_in6 *ro_pmtu = NULL;
+	struct route *ro_pmtu = NULL;
 	int hdrsplit = 0;
 	u_int8_t sproto = 0;
 	u_char nextproto;
@@ -390,13 +390,13 @@ reroute:
 
 	/* initialize cached route */
 	if (ro == NULL) {
-		ro = &ip6route;
+		ro = &iproute;
 		bzero((caddr_t)ro, sizeof(*ro));
 	}
 	ro_pmtu = ro;
 	if (opt && opt->ip6po_rthdr)
 		ro = &opt->ip6po_route;
-	dst = &ro->ro_dst;
+	dst = &ro->ro_dstsin6;
 
 	/*
 	 * if specified, try to fill in the traffic class field.
@@ -750,9 +750,9 @@ reroute:
 	ip6stat_inc(ip6s_fragmented);
 
 done:
-	if (ro == &ip6route && ro->ro_rt) {
+	if (ro == &iproute && ro->ro_rt) {
 		rtfree(ro->ro_rt);
-	} else if (ro_pmtu == &ip6route && ro_pmtu->ro_rt) {
+	} else if (ro_pmtu == &iproute && ro_pmtu->ro_rt) {
 		rtfree(ro_pmtu->ro_rt);
 	}
 	if_put(ifp);
@@ -2772,7 +2772,7 @@ ip6_output_ipsec_lookup(struct mbuf *m, const u_char seclevel[],
 }
 
 int
-ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route_in6 *ro,
+ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
     struct in6_addr *dst, int ifidx, int rtableid, int transportmode)
 {
 	struct rtentry *rt = NULL;
@@ -2807,7 +2807,7 @@ ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route_in6 *ro,
 		rt->rt_mtu = tdb->tdb_mtu;
 		if (ro != NULL && ro->ro_rt != NULL) {
 			rtfree(ro->ro_rt);
-			ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst), RT_RESOLVE,
+			ro->ro_rt = rtalloc(&ro->ro_dstsa, RT_RESOLVE,
 			    rtableid);
 		}
 		if (rt_mtucloned)
@@ -2817,7 +2817,7 @@ ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route_in6 *ro,
 }
 
 int
-ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
+ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
     int tunalready, int fwd)
 {
 	struct mbuf_list ml;

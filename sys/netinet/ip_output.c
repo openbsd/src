@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.394 2024/01/31 14:56:43 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.395 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ reroute:
 	 * destination and is still up.  If not, free it and try again.
 	 */
 	route_cache(ro, ip->ip_dst, m->m_pkthdr.ph_rtableid);
-	dst = satosin(&ro->ro_dst);
+	dst = &ro->ro_dstsin;
 
 	if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    (ip->ip_dst.s_addr == INADDR_BROADCAST)) &&
@@ -185,7 +185,7 @@ reroute:
 		struct in_ifaddr *ia;
 
 		if (ro->ro_rt == NULL)
-			ro->ro_rt = rtalloc_mpath(&ro->ro_dst,
+			ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa,
 			    &ip->ip_src.s_addr, ro->ro_tableid);
 
 		if (ro->ro_rt == NULL) {
@@ -253,7 +253,7 @@ reroute:
 		 * still points to the address in "ro".  (It may have been
 		 * changed to point to a gateway address, above.)
 		 */
-		dst = satosin(&ro->ro_dst);
+		dst = &ro->ro_dstsin;
 
 		/*
 		 * See if the caller provided any multicast options
@@ -455,7 +455,7 @@ sendit:
 			rtfree(ro->ro_rt);
 			ro->ro_tableid = orig_rtableid;
 			ro->ro_rt = icmp_mtudisc_clone(
-			    satosin(&ro->ro_dst)->sin_addr, ro->ro_tableid, 0);
+			    ro->ro_dstsin.sin_addr, ro->ro_tableid, 0);
 		}
 #endif
 		/*
@@ -558,7 +558,8 @@ ip_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
 		rt->rt_mtu = tdb->tdb_mtu;
 		if (ro != NULL && ro->ro_rt != NULL) {
 			rtfree(ro->ro_rt);
-			ro->ro_rt = rtalloc(&ro->ro_dst, RT_RESOLVE, rtableid);
+			ro->ro_rt = rtalloc(&ro->ro_dstsa, RT_RESOLVE,
+			    rtableid);
 		}
 		if (rt_mtucloned)
 			rtfree(rt);

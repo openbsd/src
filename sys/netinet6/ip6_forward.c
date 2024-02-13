@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.113 2024/02/07 23:40:40 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.114 2024/02/13 12:22:09 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct sockaddr *dst;
-	struct route_in6 ro;
+	struct route ro;
 	struct ifnet *ifp = NULL;
 	int error = 0, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy = NULL;
@@ -167,7 +167,7 @@ reroute:
 
 	ro.ro_rt = NULL;
 	route6_cache(&ro, &ip6->ip6_dst, m->m_pkthdr.ph_rtableid);
-	dst = sin6tosa(&ro.ro_dst);
+	dst = &ro.ro_dstsa;
 	if (!rtisvalid(rt)) {
 		rtfree(rt);
 		rt = rtalloc_mpath(dst, &ip6->ip6_src.s6_addr32[0],
@@ -253,7 +253,7 @@ reroute:
 	    ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
-		    nd6_is_addr_neighbor(&ro.ro_dst, ifp)) {
+		    nd6_is_addr_neighbor(&ro.ro_dstsin6, ifp)) {
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is
