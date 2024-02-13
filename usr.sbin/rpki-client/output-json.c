@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.41 2024/02/03 14:30:47 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.42 2024/02/13 20:41:22 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -76,9 +76,6 @@ outputheader_json(struct stats *st)
 	json_do_int("cachedir_superfluous_files", st->repo_stats.extra_files);
 	json_do_int("cachedir_del_superfluous_files",
 	    st->repo_stats.del_extra_files);
-
-	/* XXX: remove in rpki-client 9.0 */
-	json_do_int("stalemanifests", 0);
 
 	json_do_end();
 }

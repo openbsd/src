@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.6 2024/02/03 14:30:47 job Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.7 2024/02/13 20:41:22 job Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -47,10 +47,6 @@ set_common_stats(const struct repotalstats *in, struct ometric *metric,
 	    OKV("type", "state"), OKV("manifest", "valid"), ol);
 	ometric_set_int_with_labels(metric, in->mfts_fail,
 	    OKV("type", "state"), OKV("manifest", "failed parse"), ol);
-
-	/* XXX: remove in rpki-client 9.0 */
-	ometric_set_int_with_labels(metric, 0,
-	    OKV("type", "state"), OKV("manifest", "stale"), ol);
 
 	ometric_set_int_with_labels(metric, in->roas,
 	    OKV("type", "state"), OKV("roa", "valid"), ol);
