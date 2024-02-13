@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.46 2024/02/01 15:11:38 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.47 2024/02/13 20:36:42 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -83,27 +83,26 @@ void
 tal_print(const struct tal *p)
 {
 	char			*ski;
-	EVP_PKEY		*pk;
-	RSA			*r;
-	const unsigned char	*der;
-	unsigned char		*rder = NULL;
+	const unsigned char	*der, *pkey_der;
+	X509_PUBKEY		*pubkey;
+	ASN1_OBJECT		*obj;
 	unsigned char		 md[SHA_DIGEST_LENGTH];
-	int			 rder_len;
+	int			 nid, der_len;
 	size_t			 i;
 
-	der = p->pkey;
-	pk = d2i_PUBKEY(NULL, &der, p->pkeysz);
-	if (pk == NULL)
-		errx(1, "d2i_PUBKEY failed in %s", __func__);
+	pkey_der = p->pkey;
+	if ((pubkey = d2i_X509_PUBKEY(NULL, &pkey_der, p->pkeysz)) == NULL)
+		errx(1, "d2i_X509_PUBKEY failed");
 
-	r = EVP_PKEY_get0_RSA(pk);
-	if (r == NULL)
-		errx(1, "EVP_PKEY_get0_RSA failed in %s", __func__);
-	if ((rder_len = i2d_RSAPublicKey(r, &rder)) <= 0)
-		errx(1, "i2d_RSAPublicKey failed in %s", __func__);
+	if (!X509_PUBKEY_get0_param(&obj, &der, &der_len, NULL, pubkey))
+		errx(1, "X509_PUBKEY_get0_param failed");
 
-	if (!EVP_Digest(rder, rder_len, md, NULL, EVP_sha1(), NULL))
-		errx(1, "EVP_Digest failed in %s", __func__);
+	if ((nid = OBJ_obj2nid(obj)) != NID_rsaEncryption)
+		errx(1, "RFC 7935: wrong signature algorithm %s, want %s",
+		    nid2str(nid), LN_rsaEncryption);
+
+	if (!EVP_Digest(der, der_len, md, NULL, EVP_sha1(), NULL))
+		errx(1, "EVP_Digest failed");
 
 	ski = hex_encode(md, SHA_DIGEST_LENGTH);
 
@@ -126,8 +125,7 @@ tal_print(const struct tal *p)
 		}
 	}
 
-	EVP_PKEY_free(pk);
-	free(rder);
+	X509_PUBKEY_free(pubkey);
 	free(ski);
 }
 
