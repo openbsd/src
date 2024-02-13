@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.41 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.42 2024/02/13 08:03:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,6 +54,11 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	const char		*sepstr, *bufname, *bufdata, *bufend, *line;
 	size_t			 seplen, bufsize;
 	int			 bracket = args_has(args, 'p');
+
+	if (window_pane_exited(wp)) {
+		cmdq_error(item, "target pane has exited");
+		return (CMD_RETURN_ERROR);
+	}
 
 	bufname = NULL;
 	if (args_has(args, 'b'))

@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.287 2023/10/23 08:12:00 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.288 2024/02/13 08:03:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1202,6 +1202,12 @@ window_pane_visible(struct window_pane *wp)
 	if (~wp->window->flags & WINDOW_ZOOMED)
 		return (1);
 	return (wp == wp->window->active);
+}
+
+int
+window_pane_exited(struct window_pane *wp)
+{
+	return (wp->fd == -1 || (wp->flags & PANE_EXITED));
 }
 
 u_int
