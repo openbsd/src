@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.36 2024/02/09 14:11:00 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.37 2024/02/14 11:30:55 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -21517,6 +21517,7 @@ int
 qwx_mac_op_start(struct qwx_pdev *pdev)
 {
 	struct qwx_softc *sc = pdev->sc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	int ret;
 
 	ret = qwx_wmi_pdev_set_param(sc, WMI_PDEV_PARAM_PMF_QOS, 1,
@@ -21536,7 +21537,7 @@ qwx_mac_op_start(struct qwx_pdev *pdev)
 	}
 
 	if (isset(sc->wmi.svc_map, WMI_TLV_SERVICE_SPOOF_MAC_SUPPORT)) {
-		ret = qwx_wmi_scan_prob_req_oui(sc, sc->mac_addr,
+		ret = qwx_wmi_scan_prob_req_oui(sc, ic->ic_myaddr,
 		    pdev->pdev_id);
 		if (ret) {
 			printf("%s: failed to set prob req oui for "
@@ -22050,17 +22051,17 @@ qwx_mac_op_add_interface(struct qwx_pdev *pdev)
 		goto err;
 	}
 
-	ret = qwx_wmi_vdev_create(sc, sc->mac_addr, &vdev_param);
+	ret = qwx_wmi_vdev_create(sc, ic->ic_myaddr, &vdev_param);
 	if (ret) {
 		printf("%s: failed to create WMI vdev %d %s: %d\n",
 		    sc->sc_dev.dv_xname, arvif->vdev_id,
-		    ether_sprintf(sc->mac_addr), ret);
+		    ether_sprintf(ic->ic_myaddr), ret);
 		goto err;
 	}
 
 	sc->num_created_vdevs++;
 	DNPRINTF(QWX_D_MAC, "%s: vdev %s created, vdev_id %d\n", __func__,
-	    ether_sprintf(sc->mac_addr), arvif->vdev_id);
+	    ether_sprintf(ic->ic_myaddr), arvif->vdev_id);
 	sc->allocated_vdev_map |= 1U << arvif->vdev_id;
 	sc->free_vdev_map &= ~(1U << arvif->vdev_id);
 #ifdef notyet
