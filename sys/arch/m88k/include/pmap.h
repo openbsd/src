@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.30 2023/12/11 22:12:53 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.31 2024/02/14 06:16:53 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -77,7 +77,7 @@ int	pmap_translation_info(pmap_t, vaddr_t, paddr_t *, uint32_t *);
 #define	PTI_BATC	2
 
 #define	pmap_map_direct(pg)		((vaddr_t)VM_PAGE_TO_PHYS(pg))
-#define	pmap_unmap_direct(va)		PHYS_TO_VM_PAGE((paddr_t)va)
+vm_page_t pmap_unmap_direct(vaddr_t);
 
 #define	PMAP_CHECK_COPYIN	1
 

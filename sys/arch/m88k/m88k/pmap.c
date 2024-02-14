@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2024/02/07 20:54:53 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.88 2024/02/14 06:16:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -2001,4 +2001,19 @@ pmap_page_uncache(paddr_t pa)
 	}
 	splx(s);
 	pmap_cache_ctrl(pa, pa + PAGE_SIZE, CACHE_INH);
+}
+
+/*
+ * [MI]
+ * Marks a "direct" page as unused.
+ */
+vm_page_t
+pmap_unmap_direct(vaddr_t va)
+{
+	paddr_t pa = (paddr_t)va;
+	vm_page_t pg = PHYS_TO_VM_PAGE(pa);
+
+	pmap_clean_page(pa);
+
+	return pg;
 }
