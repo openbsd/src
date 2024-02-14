@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.16 2023/11/10 16:02:47 jasper Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.17 2024/02/14 02:40:02 jsg Exp $	*/
 /*	$NetBSD: fgen.l,v 1.37 2016/03/08 20:13:44 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -1264,6 +1264,7 @@ tokenize(YY_BUFFER_STATE yinput)
 						token->text);
 				free((void *)fcode->name);
 				free(fcode);
+				break;
 			}
 			if (debug)
 				printf("Adding %s to dictionary\n", token->text);		
