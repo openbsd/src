@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.113 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.114 2024/02/14 13:18:21 claudio Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -63,6 +63,70 @@
 
 #ifndef _NETINET6_IP6_VAR_H_
 #define _NETINET6_IP6_VAR_H_
+
+struct	ip6stat {
+	u_int64_t ip6s_total;		/* total packets received */
+	u_int64_t ip6s_tooshort;	/* packet too short */
+	u_int64_t ip6s_toosmall;	/* not enough data */
+	u_int64_t ip6s_fragments;	/* fragments received */
+	u_int64_t ip6s_fragdropped;	/* frags dropped(dups, out of space) */
+	u_int64_t ip6s_fragtimeout;	/* fragments timed out */
+	u_int64_t ip6s_fragoverflow;	/* fragments that exceeded limit */
+	u_int64_t ip6s_forward;		/* packets forwarded */
+	u_int64_t ip6s_cantforward;	/* packets rcvd for unreachable dest */
+	u_int64_t ip6s_redirectsent;	/* packets forwarded on same net */
+	u_int64_t ip6s_delivered;	/* datagrams delivered to upper level*/
+	u_int64_t ip6s_localout;	/* total ip packets generated here */
+	u_int64_t ip6s_odropped;	/* lost output due to nobufs, etc. */
+	u_int64_t ip6s_reassembled;	/* total packets reassembled ok */
+	u_int64_t ip6s_fragmented;	/* datagrams successfully fragmented */
+	u_int64_t ip6s_ofragments;	/* output fragments created */
+	u_int64_t ip6s_cantfrag;	/* don't fragment flag was set, etc. */
+	u_int64_t ip6s_badoptions;	/* error in option processing */
+	u_int64_t ip6s_noroute;		/* packets discarded due to no route */
+	u_int64_t ip6s_badvers;		/* ip6 version != 6 */
+	u_int64_t ip6s_rawout;		/* total raw ip packets generated */
+	u_int64_t ip6s_badscope;	/* scope error */
+	u_int64_t ip6s_notmember;	/* don't join this multicast group */
+	u_int64_t ip6s_nxthist[256];	/* next header history */
+	u_int64_t ip6s_m1;		/* one mbuf */
+	u_int64_t ip6s_m2m[32];		/* two or more mbuf */
+	u_int64_t ip6s_mext1;		/* one ext mbuf */
+	u_int64_t ip6s_mext2m;		/* two or more ext mbuf */
+	u_int64_t ip6s_nogif;		/* no match gif found */
+	u_int64_t ip6s_toomanyhdr;	/* discarded due to too many headers */
+
+	/*
+	 * statistics for improvement of the source address selection
+	 * algorithm:
+	 * XXX: hardcoded 16 = # of ip6 multicast scope types + 1
+	 */
+	/* number of times that address selection fails */
+	u_int64_t ip6s_sources_none;
+	/* number of times that an address on the outgoing I/F is chosen */
+	u_int64_t ip6s_sources_sameif[16];
+	/* number of times that an address on a non-outgoing I/F is chosen */
+	u_int64_t ip6s_sources_otherif[16];
+	/*
+	 * number of times that an address that has the same scope
+	 * from the destination is chosen.
+	 */
+	u_int64_t ip6s_sources_samescope[16];
+	/*
+	 * number of times that an address that has a different scope
+	 * from the destination is chosen.
+	 */
+	u_int64_t ip6s_sources_otherscope[16];
+	/* number of times that an deprecated address is chosen */
+	u_int64_t ip6s_sources_deprecated[16];
+
+	u_int64_t ip6s_rtcachehit;	/* valid route found in cache */
+	u_int64_t ip6s_rtcachemiss;	/* route cache with new destination */
+	u_int64_t ip6s_wrongif;		/* packet received on wrong interface */
+	u_int64_t ip6s_idropped;	/* lost input due to nobufs, etc. */
+};
+
+#ifdef _KERNEL
 
 /*
  * IP6 reassembly queue structure.  Each fragment
@@ -139,70 +203,6 @@ struct	ip6_pktopts {
 	int	ip6po_flags;
 #define	IP6PO_DONTFRAG	0x04	/* disable fragmentation (IPV6_DONTFRAG) */
 };
-
-struct	ip6stat {
-	u_int64_t ip6s_total;		/* total packets received */
-	u_int64_t ip6s_tooshort;	/* packet too short */
-	u_int64_t ip6s_toosmall;	/* not enough data */
-	u_int64_t ip6s_fragments;	/* fragments received */
-	u_int64_t ip6s_fragdropped;	/* frags dropped(dups, out of space) */
-	u_int64_t ip6s_fragtimeout;	/* fragments timed out */
-	u_int64_t ip6s_fragoverflow;	/* fragments that exceeded limit */
-	u_int64_t ip6s_forward;		/* packets forwarded */
-	u_int64_t ip6s_cantforward;	/* packets rcvd for unreachable dest */
-	u_int64_t ip6s_redirectsent;	/* packets forwarded on same net */
-	u_int64_t ip6s_delivered;	/* datagrams delivered to upper level*/
-	u_int64_t ip6s_localout;	/* total ip packets generated here */
-	u_int64_t ip6s_odropped;	/* lost output due to nobufs, etc. */
-	u_int64_t ip6s_reassembled;	/* total packets reassembled ok */
-	u_int64_t ip6s_fragmented;	/* datagrams successfully fragmented */
-	u_int64_t ip6s_ofragments;	/* output fragments created */
-	u_int64_t ip6s_cantfrag;	/* don't fragment flag was set, etc. */
-	u_int64_t ip6s_badoptions;	/* error in option processing */
-	u_int64_t ip6s_noroute;		/* packets discarded due to no route */
-	u_int64_t ip6s_badvers;		/* ip6 version != 6 */
-	u_int64_t ip6s_rawout;		/* total raw ip packets generated */
-	u_int64_t ip6s_badscope;	/* scope error */
-	u_int64_t ip6s_notmember;	/* don't join this multicast group */
-	u_int64_t ip6s_nxthist[256];	/* next header history */
-	u_int64_t ip6s_m1;		/* one mbuf */
-	u_int64_t ip6s_m2m[32];		/* two or more mbuf */
-	u_int64_t ip6s_mext1;		/* one ext mbuf */
-	u_int64_t ip6s_mext2m;		/* two or more ext mbuf */
-	u_int64_t ip6s_nogif;		/* no match gif found */
-	u_int64_t ip6s_toomanyhdr;	/* discarded due to too many headers */
-
-	/*
-	 * statistics for improvement of the source address selection
-	 * algorithm:
-	 * XXX: hardcoded 16 = # of ip6 multicast scope types + 1
-	 */
-	/* number of times that address selection fails */
-	u_int64_t ip6s_sources_none;
-	/* number of times that an address on the outgoing I/F is chosen */
-	u_int64_t ip6s_sources_sameif[16];
-	/* number of times that an address on a non-outgoing I/F is chosen */
-	u_int64_t ip6s_sources_otherif[16];
-	/*
-	 * number of times that an address that has the same scope
-	 * from the destination is chosen.
-	 */
-	u_int64_t ip6s_sources_samescope[16];
-	/*
-	 * number of times that an address that has a different scope
-	 * from the destination is chosen.
-	 */
-	u_int64_t ip6s_sources_otherscope[16];
-	/* number of times that an deprecated address is chosen */
-	u_int64_t ip6s_sources_deprecated[16];
-
-	u_int64_t ip6s_rtcachehit;	/* valid route found in cache */
-	u_int64_t ip6s_rtcachemiss;	/* route cache with new destination */
-	u_int64_t ip6s_wrongif;		/* packet received on wrong interface */
-	u_int64_t ip6s_idropped;	/* lost input due to nobufs, etc. */
-};
-
-#ifdef _KERNEL
 
 #include <sys/percpu.h>
 
