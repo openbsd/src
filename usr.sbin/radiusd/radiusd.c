@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.35 2024/02/09 07:46:32 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.36 2024/02/14 02:44:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -1286,6 +1286,7 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 					log_warn("q=%u wrong pkt from module",
 					    q->id);
 					radiusd_access_request_aborted(q);
+					break;
 				}
 				q->res = radpkt;
 				radiusd_access_request_answer(q);
