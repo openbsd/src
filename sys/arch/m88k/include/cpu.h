@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.74 2024/01/24 19:23:39 cheloha Exp $ */
+/*	$OpenBSD: cpu.h,v 1.75 2024/02/14 12:36:35 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -243,7 +243,6 @@ unsigned int cpu_rnd_messybits(void);
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_exec(p)		do { /* nothing */ } while (0)
 
 #define	cpu_idle_enter()	do { /* nothing */ } while (0)
 #define	cpu_idle_cycle()	do { /* nothing */ } while (0)
