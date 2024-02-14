@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.12 2012/11/01 21:09:17 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.13 2024/02/14 12:48:31 miod Exp $
 
 # Copyright (c) 1994, 1995 Gordon W. Ross
 # Copyright (c) 1993 Adam Glass
@@ -93,18 +93,10 @@ export	ALPHA_PSL_USERMODE
 export	ALPHA_PSL_IPL_MASK
 export	ALPHA_PSL_IPL_0
 export	ALPHA_PSL_IPL_SOFT
-export	ALPHA_PSL_IPL_HIGH
-
-# pte bits
-export	ALPHA_PTE_VALID
-export	ALPHA_PTE_ASM
-export	ALPHA_PTE_KR
-export	ALPHA_PTE_KW
 
 # Important offsets into the proc struct & associated constants
 struct	proc
 member	p_addr
-member	p_vmspace
 member	p_stat
 member	P_MD_ASTPENDING	p_md.md_astpending
 member	P_MD_PCBPADDR	p_md.md_pcbpaddr
@@ -112,14 +104,9 @@ member	p_cpu
 
 export	SONPROC
 
-# offsets needed by cpu_switch() to switch mappings.
-define	VM_MAP_PMAP		offsetof(struct vmspace, vm_map.pmap) 
-
 # Important offsets into the user struct & associated constants
-export	UPAGES
 struct	user
 member	u_pcb
-member	U_PCB_HWPCB		u_pcb.pcb_hw
 member	U_PCB_HWPCB_KSP		u_pcb.pcb_hw.apcb_ksp
 member	U_PCB_CONTEXT		u_pcb.pcb_context[0]
 member	U_PCB_ONFAULT		u_pcb.pcb_onfault
@@ -130,11 +117,7 @@ member	FPR_REGS	fpr_regs[0]
 member	fpr_cr
 
 # Important other addresses
-export	HWRPB_ADDR
 export	VPTBASE
-
-# Offsets into the HWRPB.
-define	RPB_PRIMARY_CPU_ID	offsetof(struct rpb, rpb_primary_cpu_id)
 
 # Kernel entries
 export	ALPHA_KENTRY_ARITH
@@ -156,4 +139,3 @@ member	CURPROC		ci_curproc
 member	FPCURPROC	ci_fpcurproc
 member	CURPCB		ci_curpcb
 member	IDLE_PCB_PADDR	ci_idle_pcb_paddr
-member	WANT_RESCHED	ci_want_resched
