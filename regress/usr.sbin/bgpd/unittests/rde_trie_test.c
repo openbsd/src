@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.13 2022/02/07 09:31:21 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.14 2024/02/14 07:56:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -100,10 +100,10 @@ print_prefix(struct bgpd_addr *p)
 	static char buf[48];
 
 	if (p->aid == AID_INET) {
-		if (inet_ntop(AF_INET, &p->ba, buf, sizeof(buf)) == NULL)
+		if (inet_ntop(AF_INET, &p->v4, buf, sizeof(buf)) == NULL)
 			return "?";
 	} else if (p->aid == AID_INET6) {
-		if (inet_ntop(AF_INET6, &p->ba, buf, sizeof(buf)) == NULL)
+		if (inet_ntop(AF_INET6, &p->v6, buf, sizeof(buf)) == NULL)
 			return "?";
 	} else {
 		return "???";
