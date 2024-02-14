@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.207 2024/02/13 13:58:19 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.208 2024/02/14 22:41:48 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -2494,16 +2494,12 @@ ixgbe_tx_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 {
 	struct ether_extracted ext;
 	int offload = 0;
-	uint32_t ethlen, iphlen;
 
 	ether_extract_headers(mp, &ext);
-	ethlen = sizeof(*ext.eh);
 
-	*vlan_macip_lens |= (ethlen << IXGBE_ADVTXD_MACLEN_SHIFT);
+	*vlan_macip_lens |= (sizeof(*ext.eh) << IXGBE_ADVTXD_MACLEN_SHIFT);
 
 	if (ext.ip4) {
-		iphlen = ext.ip4hlen;
-
 		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {
 			*olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
 			offload = 1;
@@ -2512,8 +2508,6 @@ ixgbe_tx_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
 #ifdef INET6
 	} else if (ext.ip6) {
-		iphlen = sizeof(*ext.ip6);
-
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
 #endif
 	} else {
@@ -2522,7 +2516,7 @@ ixgbe_tx_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 		return offload;
 	}
 
-	*vlan_macip_lens |= iphlen;
+	*vlan_macip_lens |= ext.iphlen;
 
 	if (ext.tcp) {
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
@@ -2548,7 +2542,7 @@ ixgbe_tx_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 			*mss_l4len_idx |= outlen << IXGBE_ADVTXD_MSS_SHIFT;
 			*mss_l4len_idx |= thlen << IXGBE_ADVTXD_L4LEN_SHIFT;
 
-			hdrlen = ethlen + iphlen + thlen;
+			hdrlen = sizeof(*ext.eh) + ext.iphlen + thlen;
 			paylen = mp->m_pkthdr.len - hdrlen;
 			CLR(*olinfo_status, IXGBE_ADVTXD_PAYLEN_MASK
 			    << IXGBE_ADVTXD_PAYLEN_SHIFT);
@@ -3276,10 +3270,8 @@ ixgbe_rxeof(struct rx_ring *rxr)
 				    ext.evh)
 					hdrlen += ETHER_VLAN_ENCAP_LEN;
 #endif
-				if (ext.ip4)
-					hdrlen += ext.ip4hlen;
-				if (ext.ip6)
-					hdrlen += sizeof(*ext.ip6);
+				if (ext.ip4 || ext.ip6)
+					hdrlen += ext.iphlen;
 				if (ext.tcp) {
 					hdrlen += ext.tcphlen;
 					tcpstat_inc(tcps_inhwlro);

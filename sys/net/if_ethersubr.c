@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.292 2024/02/13 13:58:19 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.293 2024/02/14 22:41:48 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1051,7 +1051,7 @@ void
 ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 {
 	struct mbuf	*m;
-	size_t		 hlen;
+	size_t		 hlen, iplen;
 	int		 hoff;
 	uint8_t		 ipproto;
 	uint16_t	 ether_type;
@@ -1143,7 +1143,19 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 			ext->ip4 = NULL;
 			return;
 		}
-		ext->ip4hlen = hlen;
+		iplen = ntohs(ext->ip4->ip_len);
+		if (ext->paylen < iplen) {
+			DPRINTF("paylen %u, ip4len %zu", ext->paylen, iplen);
+			ext->ip4 = NULL;
+			return;
+		}
+		if (iplen < hlen) {
+			DPRINTF("ip4len %zu, ip4hlen %zu", iplen, hlen);
+			ext->ip4 = NULL;
+			return;
+		}
+		ext->iplen = iplen;
+		ext->iphlen = hlen;
 		ext->paylen -= hlen;
 		ipproto = ext->ip4->ip_p;
 
@@ -1166,6 +1178,14 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 			ext->ip6 = NULL;
 			return;
 		}
+		iplen = hlen + ntohs(ext->ip6->ip6_plen);
+		if (ext->paylen < iplen) {
+			DPRINTF("paylen %u, ip6len %zu", ext->paylen, iplen);
+			ext->ip6 = NULL;
+			return;
+		}
+		ext->iplen = iplen;
+		ext->iphlen = hlen;
 		ext->paylen -= hlen;
 		ipproto = ext->ip6->ip6_nxt;
 		break;
@@ -1192,8 +1212,9 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 			ext->tcp = NULL;
 			return;
 		}
-		if (ext->paylen < hlen) {
-			DPRINTF("paylen %u, tcphlen %zu", ext->paylen, hlen);
+		if (ext->iplen - ext->iphlen < hlen) {
+			DPRINTF("iplen %u, iphlen %u, tcphlen %zu",
+			    ext->iplen, ext->iphlen, hlen);
 			ext->tcp = NULL;
 			return;
 		}
@@ -1211,17 +1232,18 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 		ext->udp = (struct udphdr *)(mtod(m, caddr_t) + hoff);
 
 		hlen = sizeof(*ext->udp);
-		if (ext->paylen < hlen) {
-			DPRINTF("paylen %u, udphlen %zu", ext->paylen, hlen);
+		if (ext->iplen - ext->iphlen < hlen) {
+			DPRINTF("iplen %u, iphlen %u, udphlen %zu",
+			    ext->iplen, ext->iphlen, hlen);
 			ext->udp = NULL;
 			return;
 		}
 		break;
 	}
 
-	DNPRINTF(2, "%s%s%s%s%s%s ip4h %u, tcph %u, payl %u",
+	DNPRINTF(2, "%s%s%s%s%s%s ip %u, iph %u, tcph %u, payl %u",
 	    ext->eh ? "eh," : "", ext->evh ? "evh," : "",
 	    ext->ip4 ? "ip4," : "", ext->ip6 ? "ip6," : "",
 	    ext->tcp ? "tcp," : "", ext->udp ? "udp," : "",
-	    ext->ip4hlen, ext->tcphlen, ext->paylen);
+	    ext->iplen, ext->iphlen, ext->tcphlen, ext->paylen);
 }

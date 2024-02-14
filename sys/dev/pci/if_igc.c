@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.16 2024/02/13 13:58:19 bluhm Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.17 2024/02/14 22:41:48 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -2005,7 +2005,6 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	struct igc_adv_tx_context_desc *txdesc;
 	uint32_t type_tucmd_mlhl = 0;
 	uint32_t vlan_macip_lens = 0;
-	uint32_t iphlen;
 	int off = 0;
 
 	vlan_macip_lens |= (sizeof(*ext.eh) << IGC_ADVTXD_MACLEN_SHIFT);
@@ -2028,8 +2027,6 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	ether_extract_headers(mp, &ext);
 
 	if (ext.ip4) {
-		iphlen = ext.ip4hlen;
-
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV4;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {
 			*olinfo_status |= IGC_TXD_POPTS_IXSM << 8;
@@ -2037,15 +2034,13 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 		}
 #ifdef INET6
 	} else if (ext.ip6) {
-		iphlen = sizeof(*ext.ip6);
-
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV6;
 #endif
 	} else {
 		return 0;
 	}
 
-	vlan_macip_lens |= iphlen;
+	vlan_macip_lens |= ext.iphlen;
 	type_tucmd_mlhl |= IGC_ADVTXD_DCMD_DEXT | IGC_ADVTXD_DTYP_CTXT;
 
 	if (ext.tcp) {

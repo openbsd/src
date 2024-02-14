@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.30 2024/02/13 13:58:19 bluhm Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.31 2024/02/14 22:41:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -764,12 +764,8 @@ again:
 			else
 				hdr->csum_offset = offsetof(struct udphdr, uh_sum);
 
-			if (ext.ip4)
-				hdr->csum_start += ext.ip4hlen;
-#ifdef INET6
-			else if (ext.ip6)
-				hdr->csum_start += sizeof(*ext.ip6);
-#endif
+			if (ext.ip4 || ext.ip6)
+				hdr->csum_start += ext.iphlen;
 			hdr->flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
 		}
 
