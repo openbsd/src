@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.54 2023/12/10 16:56:01 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.55 2024/02/14 20:44:54 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -948,7 +948,6 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
-	GET_CURPROC
 	GET_CURPROC
 	ldq	t0, 0(v0)
 	ldq	s0, P_ADDR(t0)
