@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.78 2024/02/13 20:37:15 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.79 2024/02/14 10:49:00 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -191,7 +191,7 @@ out:
 }
 
 /*
- * Parse X509v3 subject key identifier (SKI), RFC 6487 section 4.8.2:
+ * Validate the X509v3 subject key identifier (SKI), RFC 6487 section 4.8.2:
  * "The SKI is a SHA-1 hash of the value of the DER-encoded ASN.1 BIT STRING of
  * the Subject Public Key, as described in Section 4.2.1.2 of RFC 5280."
  * Returns the SKI formatted as hex string, or NULL if it couldn't be parsed.
@@ -199,11 +199,10 @@ out:
 int
 x509_get_ski(X509 *x, const char *fn, char **ski)
 {
-	const unsigned char	*d, *spk;
 	ASN1_OCTET_STRING	*os;
-	X509_PUBKEY		*pubkey;
-	unsigned char		 spkd[SHA_DIGEST_LENGTH];
-	int			 crit, dsz, spkz, rc = 0;
+	unsigned char		 md[EVP_MAX_MD_SIZE];
+	unsigned int		 md_len = EVP_MAX_MD_SIZE;
+	int			 crit, rc = 0;
 
 	*ski = NULL;
 	os = X509_get_ext_d2i(x, NID_subject_key_identifier, &crit, NULL);
@@ -221,36 +220,24 @@ x509_get_ski(X509 *x, const char *fn, char **ski)
 		goto out;
 	}
 
-	d = os->data;
-	dsz = os->length;
+	if (!X509_pubkey_digest(x, EVP_sha1(), md, &md_len)) {
+		warnx("%s: X509_pubkey_digest", fn);
+		goto out;
+	}
 
-	if (dsz != SHA_DIGEST_LENGTH) {
+	if (os->length < 0 || md_len != (size_t)os->length) {
 		warnx("%s: RFC 6487 section 4.8.2: SKI: "
-		    "want %d bytes SHA1 hash, have %d bytes",
-		    fn, SHA_DIGEST_LENGTH, dsz);
+		    "want %u bytes SHA1 hash, have %d bytes",
+		    fn, md_len, os->length);
 		goto out;
 	}
 
-	if ((pubkey = X509_get_X509_PUBKEY(x)) == NULL) {
-		warnx("%s: X509_get_X509_PUBKEY", fn);
-		goto out;
-	}
-	if (!X509_PUBKEY_get0_param(NULL, &spk, &spkz, NULL, pubkey)) {
-		warnx("%s: X509_PUBKEY_get0_param", fn);
-		goto out;
-	}
-
-	if (!EVP_Digest(spk, spkz, spkd, NULL, EVP_sha1(), NULL)) {
-		warnx("%s: EVP_Digest failed", fn);
-		goto out;
-	}
-
-	if (memcmp(spkd, d, dsz) != 0) {
+	if (memcmp(os->data, md, md_len) != 0) {
 		warnx("%s: SKI does not match SHA1 hash of SPK", fn);
 		goto out;
 	}
 
-	*ski = hex_encode(d, dsz);
+	*ski = hex_encode(md, md_len);
 	rc = 1;
  out:
 	ASN1_OCTET_STRING_free(os);
