@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.324 2024/01/01 07:00:18 jsg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.325 2024/02/14 06:17:51 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -536,7 +536,7 @@ main(void *framep)
 	/*
 	 * Start the idle pool page garbage collector
 	 */
-#if !(defined(__m88k__) && defined(MULTIPROCESSOR))	/* XXX */
+#if defined(MULTIPROCESSOR)
 	pool_gc_pages(NULL);
 #endif
 
