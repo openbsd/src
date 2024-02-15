@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.383 2024/01/24 10:09:07 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.384 2024/02/15 19:11:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -248,6 +248,7 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_PASSIVE:
 		if (config_getmode(env, imsg->hdr.type) == -1)
 			return (0);	/* ignore error */
+		config_enablesocket(env);
 		timer_del(env, &env->sc_inittmr);
 		TAILQ_FOREACH(pol, &env->sc_policies, pol_entry) {
 			if (policy_generate_ts(pol) == -1)

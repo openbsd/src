@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.227 2024/02/15 19:04:12 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.228 2024/02/15 19:11:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -925,6 +925,7 @@ int	 config_setsocket(struct iked *, struct sockaddr_storage *, in_port_t,
 	    enum privsep_procid);
 int	 config_getsocket(struct iked *env, struct imsg *,
 	    void (*cb)(int, short, void *));
+void	 config_enablesocket(struct iked *env);
 int	 config_setpfkey(struct iked *);
 int	 config_getpfkey(struct iked *, struct imsg *);
 int	 config_setuser(struct iked *, struct iked_user *, enum privsep_procid);

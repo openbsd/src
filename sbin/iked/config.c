@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.96 2024/02/13 12:25:11 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.97 2024/02/15 19:11:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -651,9 +651,22 @@ config_getsocket(struct iked *env, struct imsg *imsg,
 
 	event_set(&sock->sock_ev, sock->sock_fd,
 	    EV_READ|EV_PERSIST, cb, sock);
-	event_add(&sock->sock_ev, NULL);
 
 	return (0);
+}
+
+void
+config_enablesocket(struct iked *env)
+{
+	struct iked_socket	*sock;
+	size_t			 i;
+
+	for (i = 0; i < nitems(env->sc_sock4); i++)
+		if ((sock = env->sc_sock4[i]) != NULL)
+			event_add(&sock->sock_ev, NULL);
+	for (i = 0; i < nitems(env->sc_sock6); i++)
+		if ((sock = env->sc_sock6[i]) != NULL)
+			event_add(&sock->sock_ev, NULL);
 }
 
 int
