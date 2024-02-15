@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.208 2024/02/14 22:41:48 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.209 2024/02/15 10:56:53 mglocker Exp $	*/
 
 /******************************************************************************
 
@@ -3260,20 +3260,24 @@ ixgbe_rxeof(struct rx_ring *rxr)
 
 			if (pkts > 1) {
 				struct ether_extracted ext;
-				uint32_t hdrlen, paylen;
+				uint32_t paylen;
 
-				/* Calculate header size. */
+				/*
+				 * Calculate the payload size:
+				 *
+				 * The packet length returned by the NIC
+				 * (sendmp->m_pkthdr.len) can contain
+				 * padding, which we don't want to count
+				 * in to the payload size.  Therefore, we
+				 * calculate the real payload size based
+				 * on the total ip length field (ext.iplen).
+				 */
 				ether_extract_headers(sendmp, &ext);
-				hdrlen = sizeof(*ext.eh);
-#if NVLAN > 0
-				if (ISSET(sendmp->m_flags, M_VLANTAG) ||
-				    ext.evh)
-					hdrlen += ETHER_VLAN_ENCAP_LEN;
-#endif
+				paylen = ext.iplen;
 				if (ext.ip4 || ext.ip6)
-					hdrlen += ext.iphlen;
+					paylen -= ext.iphlen;
 				if (ext.tcp) {
-					hdrlen += ext.tcphlen;
+					paylen -= ext.tcphlen;
 					tcpstat_inc(tcps_inhwlro);
 					tcpstat_add(tcps_inpktlro, pkts);
 				} else {
@@ -3285,8 +3289,6 @@ ixgbe_rxeof(struct rx_ring *rxr)
 				 * mark it as TSO, set a correct mss,
 				 * and recalculate the TCP checksum.
 				 */
-				paylen = sendmp->m_pkthdr.len > hdrlen ?
-				    sendmp->m_pkthdr.len - hdrlen : 0;
 				if (ext.tcp && paylen >= pkts) {
 					SET(sendmp->m_pkthdr.csum_flags,
 					    M_TCP_TSO);
