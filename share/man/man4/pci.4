@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.404 2024/02/15 15:07:55 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.405 2024/02/15 15:42:16 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -326,6 +326,8 @@ Intel AX200/AX201/AX210/AX211 IEEE 802.11a/ac/ax/b/g/n wireless network device
 Marvell Libertas IEEE 802.11b/g wireless network device
 .It Xr pgt 4
 Conexant/Intersil Prism GT Full-MAC IEEE 802.11a/b/g wireless network device
+.It Xr qwx 4
+Qualcomm IEEE 802.11a/ac/ax/b/g/n wireless network device
 .It Xr ral 4
 Ralink Technology/MediaTek IEEE 802.11a/b/g/n wireless network device
 .It Xr rtw 4
@@ -338,8 +340,6 @@ WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b wireless network
 device
 .It Xr wpi 4
 Intel PRO/Wireless 3945ABG IEEE 802.11a/b/g wireless network device
-.It Xr qwx 4
-Qualcomm IEEE 802.11a/ac/ax/b/g/n wireless network device
 .El
 .Ss Cryptography accelerators
 .Bl -tag -width 10n -offset ind -compact
