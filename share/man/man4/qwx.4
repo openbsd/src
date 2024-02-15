@@ -1,6 +1,7 @@
-.\" $OpenBSD: qwx.4,v 1.1 2024/02/15 15:05:18 stsp Exp $
+.\" $OpenBSD: qwx.4,v 1.2 2024/02/15 15:05:40 stsp Exp $
 .\"
 .\" Copyright (c) 2022 Martin Pieuchot <mpi@openbsd.org>
+.\" Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -25,8 +26,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for a wide variety of
-Qualcomm Technologies 802.11ax devices.
+driver provides support for Qualcomm Technologies QCNFA765
+802.11ax devices.
 .Pp
 The
 .Nm
@@ -34,6 +35,30 @@ driver can be configured at runtime with
 .Xr ifconfig 8
 or on boot with
 .Xr hostname.if 5 .
+.Sh FILES
+The driver needs the following firmware files,
+which are loaded when an interface is brought up:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/qwx-wcn6855-hw2.0-amms
+.It Pa /etc/firmware/qwx-wcn6855-hw2.0-board-2
+.It Pa /etc/firmware/qwx-wcn6855-hw2.0-m3
+.It Pa /etc/firmware/qwx-wcn6855-hw2.0-regdb
+.It Pa /etc/firmware/qwx-wcn6855-hw2.1-amms
+.It Pa /etc/firmware/qwx-wcn6855-hw2.1-board-2
+.It Pa /etc/firmware/qwx-wcn6855-hw2.1-m3
+.It Pa /etc/firmware/qwx-wcn6855-hw2.1-regdb
+.El
+.Pp
+These firmware files are not free because Qualcomm refuses to grant
+distribution rights without contractual obligations.
+As a result, even though
+.Ox
+includes the driver, the firmware files cannot be included and
+users have to download these files on their own.
+.Pp
+A prepackaged version of the firmware can be installed using
+.Xr fw_update 8 .
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -42,14 +67,24 @@ or on boot with
 .Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh EXAMPLES
+The following example scans for available networks:
+.Pp
+.Dl # ifconfig qwx0 scan
+.Pp
+The following
+.Xr hostname.if 5
+example configures qwx0 to join network
+.Dq mynwid ,
+using WPA key
+.Dq mywpakey ,
+obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+join mynwid wpakey mywpakey
+inet autoconf
+.Ed
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 7.3 .
-.Sh AUTHORS
-The
-.Nm
-driver was written by
-.An Martin Pieuchot Aq Mt mpi@openbsd.org
-based on source code licensed under the BSD released in 2019 for Linux.
+.Ox 7.5 .
