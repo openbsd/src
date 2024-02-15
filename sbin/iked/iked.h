@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.228 2024/02/15 19:11:00 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.229 2024/02/15 20:10:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -730,6 +730,8 @@ struct privsep {
 	struct event			 ps_evsigusr1;
 
 	struct iked			*ps_env;
+	unsigned int			 ps_connecting;
+	void				(*ps_connected)(struct privsep *);
 };
 
 struct privsep_proc {
@@ -1192,7 +1194,7 @@ void	 timer_del(struct iked *, struct iked_timer *);
 void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
-void	 proc_connect(struct privsep *);
+void	 proc_connect(struct privsep *, void (*)(struct privsep *));
 void	 proc_dispatch(int, short event, void *);
 void	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, unsigned int,
