@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.18 2024/02/09 14:09:19 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.19 2024/02/15 11:57:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1435,8 +1435,8 @@ struct dp_rxdma_ring {
 #else
 	struct qwx_rx_data *rx_data;
 #endif
-	int cur;
 	int bufs_max;
+	uint8_t freemap[howmany(DP_RXDMA_BUF_RING_SIZE, 8)];
 };
 
 enum hal_rx_mon_status {

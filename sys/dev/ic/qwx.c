@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.37 2024/02/14 11:30:55 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.38 2024/02/15 11:57:38 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -14018,7 +14018,7 @@ qwx_dp_rxdma_buf_ring_free(struct qwx_softc *sc, struct dp_rxdma_ring *rx_ring)
 	    sizeof(rx_ring->rx_data[0]) * rx_ring->bufs_max);
 	rx_ring->rx_data = NULL;
 	rx_ring->bufs_max = 0;
-	rx_ring->cur = 0;
+	memset(rx_ring->freemap, 0xff, sizeof(rx_ring->freemap));
 }
 
 void
@@ -14067,7 +14067,20 @@ qwx_hal_rx_buf_addr_info_get(void *desc, uint64_t *paddr, uint32_t *cookie,
 	*rbm = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR, binfo->info1);
 }
 
-/* Returns number of Rx buffers replenished */
+int
+qwx_next_free_rxbuf_idx(struct dp_rxdma_ring *rx_ring)
+{
+	int i, idx;
+
+	for (i = 0; i < nitems(rx_ring->freemap); i++) {
+		idx = ffs(rx_ring->freemap[i]);
+		if (idx > 0)
+			return ((idx - 1) + (i * 8));
+	}
+
+	return -1;
+}
+
 int
 qwx_dp_rxbufs_replenish(struct qwx_softc *sc, int mac_id,
     struct dp_rxdma_ring *rx_ring, int req_entries,
@@ -14078,7 +14091,7 @@ qwx_dp_rxbufs_replenish(struct qwx_softc *sc, int mac_id,
 	struct mbuf *m;
 	int num_free;
 	int num_remain;
-	int ret;
+	int ret, idx;
 	uint32_t cookie;
 	uint64_t paddr;
 	struct qwx_rx_data *rx_data;
@@ -14113,10 +14126,12 @@ qwx_dp_rxbufs_replenish(struct qwx_softc *sc, int mac_id,
 			goto fail_free_mbuf;
 
 		m->m_len = m->m_pkthdr.len = size;
-		rx_data = &rx_ring->rx_data[rx_ring->cur];
-		if (rx_data->m != NULL)
+
+		idx = qwx_next_free_rxbuf_idx(rx_ring);
+		if (idx == -1)
 			goto fail_free_mbuf;
 
+		rx_data = &rx_ring->rx_data[idx];
 		if (rx_data->map == NULL) {
 			ret = bus_dmamap_create(sc->sc_dmat, size, 1,
 			    size, 0, BUS_DMA_NOWAIT, &rx_data->map);
@@ -14137,11 +14152,12 @@ qwx_dp_rxbufs_replenish(struct qwx_softc *sc, int mac_id,
 			goto fail_dma_unmap;
 
 		rx_data->m = m;
+		m = NULL;
 
 		cookie = FIELD_PREP(DP_RXDMA_BUF_COOKIE_PDEV_ID, mac_id) |
-		    FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, rx_ring->cur);
+		    FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, idx);
 
-		rx_ring->cur = (rx_ring->cur + 1) % rx_ring->bufs_max;
+		clrbit(rx_ring->freemap, idx);
 		num_remain--;
 
 		paddr = rx_data->map->dm_segs[0].ds_addr;
@@ -14183,7 +14199,7 @@ qwx_dp_rxdma_ring_buf_setup(struct qwx_softc *sc,
 		return ENOMEM;
 
 	rx_ring->bufs_max = num_entries;
-	rx_ring->cur = 0;
+	memset(rx_ring->freemap, 0xff, sizeof(rx_ring->freemap));
 
 	return qwx_dp_rxbufs_replenish(sc, dp->mac_id, rx_ring, num_entries,
 	    sc->hw_params.hal_params->rx_buf_rbm);
@@ -15196,16 +15212,14 @@ qwx_dp_process_rx_err_buf(struct qwx_softc *sc, uint32_t *ring_desc,
 	uint16_t msdu_len;
 	uint32_t hal_rx_desc_sz = sc->hw_params.hal_desc_sz;
 
-	if (buf_id >= rx_ring->bufs_max)
+	if (buf_id >= rx_ring->bufs_max || isset(rx_ring->freemap, buf_id))
 		return;
 
 	rx_data = &rx_ring->rx_data[buf_id];
-	if (rx_data->m == NULL)
-		return;
-
 	bus_dmamap_unload(sc->sc_dmat, rx_data->map);
 	m = rx_data->m;
 	rx_data->m = NULL;
+	setbit(rx_ring->freemap, buf_id);
 
 	if (drop) {
 		m_freem(m);
@@ -15524,13 +15538,14 @@ qwx_dp_rx_process_wbm_err(struct qwx_softc *sc)
 			continue;
 	
 		rx_ring = &sc->pdev_dp.rx_refill_buf_ring;
-		if (idx >= rx_ring->bufs_max)
+		if (idx >= rx_ring->bufs_max || isset(rx_ring->freemap, idx))
 			continue;
-		rx_data = &rx_ring->rx_data[idx];
 
+		rx_data = &rx_ring->rx_data[idx];
 		bus_dmamap_unload(sc->sc_dmat, rx_data->map);
 		m = rx_data->m;
 		rx_data->m = NULL;
+		setbit(rx_ring->freemap, idx);
 
 		num_buffs_reaped[mac_id]++;
 		total_num_buffs_reaped++;
@@ -16075,16 +16090,14 @@ try_again:
 			continue;
 
 		rx_ring = &pdev_dp->rx_refill_buf_ring;
-		if (idx >= rx_ring->bufs_max)
+		if (idx >= rx_ring->bufs_max || isset(rx_ring->freemap, idx))
 			continue;
 
 		rx_data = &rx_ring->rx_data[idx];
-		if (rx_data->m == NULL)
-			continue;
-
 		bus_dmamap_unload(sc->sc_dmat, rx_data->map);
 		m = rx_data->m;
 		rx_data->m = NULL;
+		setbit(rx_ring->freemap, idx);
 
 		num_buffs_reaped[mac_id]++;
 
@@ -16166,7 +16179,7 @@ qwx_dp_rx_alloc_mon_status_buf(struct qwx_softc *sc,
 	struct mbuf *m;
 	struct qwx_rx_data *rx_data;
 	const size_t size = DP_RX_BUFFER_SIZE;
-	int ret;
+	int ret, idx;
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -16180,7 +16193,11 @@ qwx_dp_rx_alloc_mon_status_buf(struct qwx_softc *sc,
 		goto fail_free_mbuf;
 
 	m->m_len = m->m_pkthdr.len = size;
-	rx_data = &rx_ring->rx_data[rx_ring->cur];
+	idx = qwx_next_free_rxbuf_idx(rx_ring);
+	if (idx == -1)
+		goto fail_free_mbuf;
+
+	rx_data = &rx_ring->rx_data[idx];
 	if (rx_data->m != NULL)
 		goto fail_free_mbuf;
 
@@ -16199,8 +16216,9 @@ qwx_dp_rx_alloc_mon_status_buf(struct qwx_softc *sc,
 		goto fail_free_mbuf;
 	}
 
-	*buf_idx = rx_ring->cur;
+	*buf_idx = idx;
 	rx_data->m = m;
+	clrbit(rx_ring->freemap, idx);
 	return m;
 
 fail_free_mbuf:
@@ -16250,25 +16268,20 @@ qwx_dp_rx_reap_mon_status_ring(struct qwx_softc *sc, int mac_id,
 		    &cookie, &rbm);
 		if (paddr) {
 			buf_idx = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID, cookie);
-
-			rx_data = &rx_ring->rx_data[buf_idx];
-			if (rx_data->m == NULL) {
-				printf("%s: rx monitor status with invalid "
-				    "buf_idx %d\n", __func__, buf_idx);
+			if (buf_idx >= rx_ring->bufs_max ||
+			    isset(rx_ring->freemap, buf_idx)) {
 				pmon->buf_state = DP_MON_STATUS_REPLINISH;
 				goto move_next;
 			}
+
+			rx_data = &rx_ring->rx_data[buf_idx];
 
 			bus_dmamap_sync(sc->sc_dmat, rx_data->map, 0,
 			    rx_data->m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
 
 			tlv = mtod(rx_data->m, struct hal_tlv_hdr *);
 			if (FIELD_GET(HAL_TLV_HDR_TAG, tlv->tl) !=
-					HAL_RX_STATUS_BUFFER_DONE) {
-				printf("%s: mon status DONE not set %lx, "
-				    "buf_idx %d\n", __func__,
-				    FIELD_GET(HAL_TLV_HDR_TAG, tlv->tl),
-				    buf_idx);
+			    HAL_RX_STATUS_BUFFER_DONE) {
 				/* If done status is missing, hold onto status
 				 * ring until status is done for this status
 				 * ring buffer.
@@ -16283,6 +16296,7 @@ qwx_dp_rx_reap_mon_status_ring(struct qwx_softc *sc, int mac_id,
 			bus_dmamap_unload(sc->sc_dmat, rx_data->map);
 			m = rx_data->m;
 			rx_data->m = NULL;
+			setbit(rx_ring->freemap, buf_idx);
 #if 0
 			if (ab->hw_params.full_monitor_mode) {
 				ath11k_dp_rx_mon_update_status_buf_state(pmon, tlv);
@@ -16304,7 +16318,6 @@ move_next:
 			break;
 		}
 		rx_data = &rx_ring->rx_data[buf_idx];
-		KASSERT(rx_data->m == NULL);
 
 		cookie = FIELD_PREP(DP_RXDMA_BUF_COOKIE_PDEV_ID, mac_id) |
 		    FIELD_PREP(DP_RXDMA_BUF_COOKIE_BUF_ID, buf_idx);
@@ -16491,7 +16504,8 @@ qwx_dp_process_rxdma_err(struct qwx_softc *sc, int mac_id)
 		for (i = 0; i < num_msdus; i++) {
 			idx = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
 			    msdu_cookies[i]);
-			if (idx >= rx_ring->bufs_max)
+			if (idx >= rx_ring->bufs_max ||
+			    isset(rx_ring->freemap, idx))
 				continue;
 
 			rx_data = &rx_ring->rx_data[idx];
@@ -16499,6 +16513,7 @@ qwx_dp_process_rxdma_err(struct qwx_softc *sc, int mac_id)
 			bus_dmamap_unload(sc->sc_dmat, rx_data->map);
 			m_freem(rx_data->m);
 			rx_data->m = NULL;
+			setbit(rx_ring->freemap, idx);
 
 			num_buf_freed++;
 		}
@@ -16868,15 +16883,18 @@ qwx_dp_service_srng(struct qwx_softc *sc, int grp_id)
 		for (j = 0; j < sc->hw_params.num_rxmda_per_pdev; j++) {
 			int id = i * sc->hw_params.num_rxmda_per_pdev + j;
 
-			if ((sc->hw_params.ring_mask->rxdma2host[grp_id] &
-			   (1 << (id))) == 0)
-				continue;
+			if (sc->hw_params.ring_mask->rxdma2host[grp_id] &
+			   (1 << (id))) {
+				if (qwx_dp_process_rxdma_err(sc, id))
+					ret = 1;
+			}
 
-			if (qwx_dp_process_rxdma_err(sc, id))
-				ret = 1;
-
-			qwx_dp_rxbufs_replenish(sc, id, &dp->rx_refill_buf_ring,
-			    0, sc->hw_params.hal_params->rx_buf_rbm);
+			if (sc->hw_params.ring_mask->host2rxdma[grp_id] &
+			    (1 << id)) {
+				qwx_dp_rxbufs_replenish(sc, id,
+				    &dp->rx_refill_buf_ring, 0,
+				    sc->hw_params.hal_params->rx_buf_rbm);
+			}
 		}
 	}
 
