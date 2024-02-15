@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.845 2023/09/27 07:50:46 phessler Exp $
+#	$OpenBSD: Makefile,v 1.846 2024/02/15 15:07:55 deraadt Exp $
 
 MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -75,7 +75,7 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	pvclock.4 pwdog.4 pwmbl.4 pwmfan.4 pwmleds.4 pwmreg.4 \
 	qccpu.4 qcdwusb.4 qcgpio.4 qciic.4 qcpdc.4 qcpmic.4 qcpmicgpio.4 \
 	qcpon.4 qcpwm.4 qcrng.4 qcrtc.4 qcspmi.4 \
-	qla.4 qle.4 qlw.4 qsphy.4 \
+	qla.4 qle.4 qlw.4 qsphy.4 qwx.4 \
 	radio.4 ral.4 random.4 rdomain.4 rd.4 rdac.4 re.4 rdcphy.4 rgephy.4 \
 	rge.4 ricohrtc.4 rkanxdp.4 rkclock.4 rkcomphy.4 \
 	rkdrm.4 rkdwhdmi.4 rkdwusb.4 \
