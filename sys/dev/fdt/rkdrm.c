@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.20 2024/01/19 17:51:15 kettenis Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.21 2024/02/15 09:48:03 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -528,7 +528,7 @@ rkdrm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size *
 	info = drm_fb_helper_alloc_info(helper);
 	if (IS_ERR(info)) {
 		DRM_ERROR("Failed to allocate fb_info\n");
-		return error;
+		return PTR_ERR(info);
 	}
 	info->par = helper;
 	return 0;
