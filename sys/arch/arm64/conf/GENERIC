@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.282 2024/01/24 07:36:52 kevlo Exp $
+# $OpenBSD: GENERIC,v 1.283 2024/02/15 16:33:54 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -397,7 +397,7 @@ bwfm*		at pci?			# Broadcom FullMAC
 iwn*		at pci?			# Intel WiFi Link 4965/5000/1000/6000
 iwm*		at pci?			# Intel WiFi Link 7xxx
 iwx*		at pci?			# Intel WiFi Link 22xxx
-#qwx*		at pci?			# Qualcomm 802.11ax
+qwx*		at pci?			# Qualcomm 802.11ax
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
