@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.49 2024/02/14 03:07:58 jsg Exp $	*/
+/*	$OpenBSD: exf.c,v 1.50 2024/02/15 00:55:01 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -853,8 +853,10 @@ file_write(SCR *sp, MARK *fm, MARK *tm, char *name, int flags)
 		from.lno = 1;
 		from.cno = 0;
 		fm = &from;
-		if (db_last(sp, &to.lno))
+		if (db_last(sp, &to.lno)) {
+			(void)fclose(fp);
 			return (1);
+		}
 		to.cno = 0;
 		tm = &to;
 	}
@@ -1017,8 +1019,10 @@ file_backup(SCR *sp, char *name, char *bname)
 		++bname;
 	} else
 		version = 0;
-	if (argv_exp2(sp, &cmd, bname, strlen(bname)))
+	if (argv_exp2(sp, &cmd, bname, strlen(bname))) {
+		(void)close(rfd);
 		return (1);
+	}
 
 	/*
 	 *  0 args: impossible.
