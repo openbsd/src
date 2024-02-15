@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.39 2024/02/15 15:53:51 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.40 2024/02/15 16:29:45 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -7742,7 +7742,7 @@ qwx_qmi_mem_seg_send(struct qwx_softc *sc)
 	sc->fwmem_ready = 0;
 
 	while (sc->sc_req_mem_ind == NULL) {
-		ret = tsleep_nsec(&sc->qmi_resp, 0, "qwxfwmem",
+		ret = tsleep_nsec(&sc->sc_req_mem_ind, 0, "qwxfwmem",
 		    SEC_TO_NSEC(10));
 		if (ret) {
 			printf("%s: fw memory request timeout\n",
