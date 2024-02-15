@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.38 2024/02/15 11:57:38 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.39 2024/02/15 15:53:51 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -592,6 +592,14 @@ next_scan:
 			printf("%s: %s -> %s\n", ifp->if_xname,
 			    ieee80211_state_name[ic->ic_state],
 			    ieee80211_state_name[IEEE80211_S_SCAN]);
+#if 0
+		if ((sc->sc_flags & QWX_FLAG_BGSCAN) == 0) {
+#endif
+			ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+			ieee80211_node_cleanup(ic, ic->ic_bss);
+#if 0
+		}
+#endif
 		ic->ic_state = IEEE80211_S_SCAN;
 		refcnt_rele_wake(&sc->task_refs);
 		splx(s);
