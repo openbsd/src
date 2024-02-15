@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.68 2024/02/13 12:25:11 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.69 2024/02/15 19:04:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -170,7 +170,6 @@ main(int argc, char *argv[])
 
 	ps = &env->sc_ps;
 	ps->ps_env = env;
-	TAILQ_INIT(&ps->ps_rcsocks);
 
 	if (strlcpy(env->sc_conffile, conffile, PATH_MAX) >= PATH_MAX)
 		errx(1, "config file exceeds PATH_MAX");

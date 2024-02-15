@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.226 2024/01/24 10:09:07 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.227 2024/02/15 19:04:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -89,10 +89,7 @@ struct control_sock {
 	int		 cs_fd;
 	int		 cs_restricted;
 	void		*cs_env;
-
-	TAILQ_ENTRY(control_sock) cs_entry;
 };
-TAILQ_HEAD(control_socks, control_sock);
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
@@ -719,7 +716,6 @@ struct privsep {
 	int				 ps_noaction;
 
 	struct control_sock		 ps_csock;
-	struct control_socks		 ps_rcsocks;
 
 	unsigned int			 ps_instances[PROC_MAX];
 	unsigned int			 ps_ninstances;
