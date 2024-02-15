@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.28 2024/02/02 10:53:48 tb Exp $ */
+/* $OpenBSD: b_dump.c,v 1.29 2024/02/15 10:34:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -134,6 +135,8 @@ BIO_dump_indent(BIO *bio, const char *s, int len, int indent)
 		if ((written = BIO_printf(bio, "%*s%04x - ", indent, "",
 		    dumped)) < 0)
 			goto err;
+		if (printed > INT_MAX - written)
+			goto err;
 		printed += written;
 
 		/*
@@ -154,6 +157,8 @@ BIO_dump_indent(BIO *bio, const char *s, int len, int indent)
 				sep = '-';
 			if ((written = BIO_printf(bio, "%02x%c", u8, sep)) < 0)
 				goto err;
+			if (printed > INT_MAX - written)
+				goto err;
 			printed += written;
 
 			/* Locale-independent version of !isprint(u8). */
@@ -173,6 +178,8 @@ BIO_dump_indent(BIO *bio, const char *s, int len, int indent)
 		if ((written = BIO_printf(bio, "%*s%.*s\n", 3 * missing + 2, "",
 		    row_bytes, ascii_dump)) < 0)
 			goto err;
+		if (printed > INT_MAX - written)
+			goto err;
 		printed += written;
 
 		dumped += row_bytes;
@@ -181,6 +188,8 @@ BIO_dump_indent(BIO *bio, const char *s, int len, int indent)
 	if (trailing > 0) {
 		if ((written = BIO_printf(bio, "%*s%04x - <SPACES/NULS>\n",
 		    indent, "", dumped + trailing)) < 0)
+			goto err;
+		if (printed > INT_MAX - written)
 			goto err;
 		printed += written;
 	}
