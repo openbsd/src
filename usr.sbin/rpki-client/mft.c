@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.107 2024/02/13 22:44:21 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.108 2024/02/15 07:01:33 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -60,8 +60,13 @@ typedef struct {
 DECLARE_STACK_OF(FileAndHash);
 
 #ifndef DEFINE_STACK_OF
+#define sk_FileAndHash_dup(sk)		SKM_sk_dup(FileAndHash, (sk))
+#define sk_FileAndHash_free(sk)		SKM_sk_free(FileAndHash, (sk))
 #define sk_FileAndHash_num(sk)		SKM_sk_num(FileAndHash, (sk))
 #define sk_FileAndHash_value(sk, i)	SKM_sk_value(FileAndHash, (sk), (i))
+#define sk_FileAndHash_sort(sk)		SKM_sk_sort(FileAndHash, (sk))
+#define sk_FileAndHash_set_cmp_func(sk, cmp) \
+    SKM_sk_set_cmp_func(FileAndHash, (sk), (cmp))
 #endif
 
 typedef struct {
@@ -228,6 +233,76 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 	return rc;
 }
 
+static int
+mft_fh_cmp_name(const FileAndHash *const *a, const FileAndHash *const *b)
+{
+	if ((*a)->file->length < (*b)->file->length)
+		return -1;
+	if ((*a)->file->length > (*b)->file->length)
+		return 1;
+
+	return memcmp((*a)->file->data, (*b)->file->data, (*b)->file->length);
+}
+
+static int
+mft_fh_cmp_hash(const FileAndHash *const *a, const FileAndHash *const *b)
+{
+	assert((*a)->hash->length == SHA256_DIGEST_LENGTH);
+	assert((*b)->hash->length == SHA256_DIGEST_LENGTH);
+
+	return memcmp((*a)->hash->data, (*b)->hash->data, (*b)->hash->length);
+}
+
+/*
+ * Assuming that the hash lengths are validated, this checks that all file names
+ * and hashes in a manifest are unique. Returns 1 on success, 0 on failure.
+ */
+static int
+mft_has_unique_names_and_hashes(const char *fn, const Manifest *mft)
+{
+	STACK_OF(FileAndHash)	*fhs;
+	int			 i, ret = 0;
+
+	if ((fhs = sk_FileAndHash_dup(mft->fileList)) == NULL)
+		err(1, NULL);
+
+	(void)sk_FileAndHash_set_cmp_func(fhs, mft_fh_cmp_name);
+	sk_FileAndHash_sort(fhs);
+
+	for (i = 0; i < sk_FileAndHash_num(fhs) - 1; i++) {
+		const FileAndHash *curr = sk_FileAndHash_value(fhs, i);
+		const FileAndHash *next = sk_FileAndHash_value(fhs, i + 1);
+
+		if (mft_fh_cmp_name(&curr, &next) == 0) {
+			warnx("%s: duplicate name: %.*s", fn,
+			    curr->file->length, curr->file->data);
+			goto err;
+		}
+	}
+
+	(void)sk_FileAndHash_set_cmp_func(fhs, mft_fh_cmp_hash);
+	sk_FileAndHash_sort(fhs);
+
+	for (i = 0; i < sk_FileAndHash_num(fhs) - 1; i++) {
+		const FileAndHash *curr = sk_FileAndHash_value(fhs, i);
+		const FileAndHash *next = sk_FileAndHash_value(fhs, i + 1);
+
+		if (mft_fh_cmp_hash(&curr, &next) == 0) {
+			warnx("%s: duplicate hash for %.*s and %.*s", fn,
+			    curr->file->length, curr->file->data,
+			    next->file->length, next->file->data);
+			goto err;
+		}
+	}
+
+	ret = 1;
+
+ err:
+	sk_FileAndHash_free(fhs);
+
+	return ret;
+}
+
 /*
  * Handle the eContent of the manifest object, RFC 6486 sec. 4.2.
  * Returns 0 on failure and 1 on success.
@@ -315,6 +390,9 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		warnx("%s: CRL not part of MFT fileList", p->fn);
 		goto out;
 	}
+
+	if (!mft_has_unique_names_and_hashes(p->fn, mft))
+		goto out;
 
 	rc = 1;
  out:
