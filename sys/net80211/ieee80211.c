@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.88 2022/03/19 10:25:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.89 2024/02/15 15:40:56 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -1125,7 +1125,7 @@ ieee80211_next_mode(struct ifnet *ifp)
 	 * Indicate a wrap-around if we're running in a fixed, user-specified
 	 * phy mode.
 	 */
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO)
+	if (IFM_SUBTYPE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO)
 		return (IEEE80211_MODE_AUTO);
 
 	/*
