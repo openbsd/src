@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.41 2024/02/16 09:03:29 phessler Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.42 2024/02/16 14:13:45 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -6818,6 +6818,9 @@ qwx_qmi_recv_wlanfw_request_mem_indication(struct qwx_softc *sc, struct mbuf *m,
 
 	DNPRINTF(QWX_D_QMI, "%s\n", __func__);
 
+	if (!sc->expect_fwmem_req || sc->sc_req_mem_ind != NULL)
+		return;
+
 	/* This structure is too large for the stack. */
 	ind = malloc(sizeof(*ind), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ind == NULL)
@@ -7751,11 +7754,15 @@ qwx_qmi_mem_seg_send(struct qwx_softc *sc)
 		}
 	}
 
+	sc->expect_fwmem_req = 0;
+
 	ind = sc->sc_req_mem_ind;
 	mem_seg_len = le32toh(ind->mem_seg_len);
 	if (mem_seg_len > mem_seg_len_max) {
 		printf("%s: firmware requested too many memory segments: %u\n",
 		    sc->sc_dev.dv_xname, mem_seg_len);
+		free(sc->sc_req_mem_ind, M_DEVBUF, sizeof(*sc->sc_req_mem_ind));
+		sc->sc_req_mem_ind = NULL;
 		return -1;
 	}
 
@@ -7764,6 +7771,9 @@ qwx_qmi_mem_seg_send(struct qwx_softc *sc)
 		if (ind->mem_seg[i].size == 0) {
 			printf("%s: firmware requested zero-sized "
 			    "memory segment %u\n", sc->sc_dev.dv_xname, i);
+			free(sc->sc_req_mem_ind, M_DEVBUF,
+			    sizeof(*sc->sc_req_mem_ind));
+			sc->sc_req_mem_ind = NULL;
 			return -1;
 		}
 		total_size += le32toh(ind->mem_seg[i].size);
@@ -7847,8 +7857,10 @@ qwx_qmi_mem_seg_send(struct qwx_softc *sc)
 		}
 	}
 
-	if (mem_seg_len == 0)
-		return EBUSY;
+	if (mem_seg_len == 0) {
+		sc->expect_fwmem_req = 1;
+		return EBUSY; /* retry */
+	}
 
 	if (!sc->hw_params.fixed_fw_mem) {
 		while (!sc->fwmem_ready) {
@@ -19057,11 +19069,13 @@ qwx_qmi_event_server_arrive(struct qwx_softc *sc)
 	int ret;
 
 	sc->fw_init_done = 0;
+	sc->expect_fwmem_req = 1;
 
 	ret = qwx_qmi_fw_ind_register_send(sc);
 	if (ret < 0) {
 		printf("%s: failed to send qmi firmware indication: %d\n",
 		    sc->sc_dev.dv_xname, ret);
+		sc->expect_fwmem_req = 0;
 		return ret;
 	}
 
@@ -19069,12 +19083,14 @@ qwx_qmi_event_server_arrive(struct qwx_softc *sc)
 	if (ret < 0) {
 		printf("%s: failed to send qmi host cap: %d\n",
 		    sc->sc_dev.dv_xname, ret);
+		sc->expect_fwmem_req = 0;
 		return ret;
 	}
 
 	ret = qwx_qmi_mem_seg_send(sc);
 	if (ret == EBUSY)
 		ret = qwx_qmi_mem_seg_send(sc);
+	sc->expect_fwmem_req = 0;
 	if (ret) {
 		printf("%s: failed to send qmi memory segments: %d\n",
 		    sc->sc_dev.dv_xname, ret);

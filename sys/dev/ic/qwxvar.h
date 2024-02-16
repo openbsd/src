@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.19 2024/02/15 11:57:38 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.20 2024/02/16 14:13:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1854,6 +1854,7 @@ struct qwx_softc {
 	struct qmi_response_type_v01	qmi_resp;
 
 	struct qwx_dmamem		*fwmem;
+	int				 expect_fwmem_req;
 	int				 fwmem_ready;
 	int				 fw_init_done;
 
