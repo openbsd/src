@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.109 2024/02/16 15:13:49 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.110 2024/02/16 15:18:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -185,7 +185,7 @@ rtype_from_mftfile(const char *fn)
 static int
 mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 {
-	char			*fn = NULL;
+	char			*file = NULL;
 	int			 rc = 0;
 	struct mftfile		*fent;
 	enum rtype		 type;
@@ -195,8 +195,8 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 		warnx("%s: RFC 6486 section 4.2.2: bad filename", p->fn);
 		goto out;
 	}
-	fn = strndup(fh->file->data, fh->file->length);
-	if (fn == NULL)
+	file = strndup(fh->file->data, fh->file->length);
+	if (file == NULL)
 		err(1, NULL);
 
 	if (fh->hash->length != SHA256_DIGEST_LENGTH) {
@@ -206,9 +206,9 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 		goto out;
 	}
 
-	type = rtype_from_mftfile(fn);
+	type = rtype_from_mftfile(file);
 	/* remember the filehash for the CRL in struct mft */
-	if (type == RTYPE_CRL && strcmp(fn, p->res->crl) == 0) {
+	if (type == RTYPE_CRL && strcmp(file, p->res->crl) == 0) {
 		memcpy(p->res->crlhash, fh->hash->data, SHA256_DIGEST_LENGTH);
 		p->found_crl = 1;
 	}
@@ -223,13 +223,13 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 	}
 
 	fent->type = type;
-	fent->file = fn;
-	fn = NULL;
+	fent->file = file;
+	file = NULL;
 	memcpy(fent->hash, fh->hash->data, SHA256_DIGEST_LENGTH);
 
 	rc = 1;
  out:
-	free(fn);
+	free(file);
 	return rc;
 }
 
