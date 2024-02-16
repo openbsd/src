@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.44 2024/02/16 14:18:36 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.45 2024/02/16 22:46:07 phessler Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -22283,8 +22283,17 @@ void
 qwx_init_task(void *arg)
 {
 	struct qwx_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s = splnet();
+	rw_enter_write(&sc->ioctl_rwl);
 
-	printf("%s: %s not implemented\n", sc->sc_dev.dv_xname, __func__);
+	qwx_stop(ifp);
+
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
+		qwx_init(ifp);
+
+	rw_exit(&sc->ioctl_rwl);
+	splx(s);
 }
 
 void
