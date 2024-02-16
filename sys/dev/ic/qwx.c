@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.42 2024/02/16 14:13:45 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.43 2024/02/16 14:16:16 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -186,10 +186,8 @@ qwx_init(struct ifnet *ifp)
 	sc->vdev_id_11d_scan = QWX_11D_INVALID_VDEV_ID;
 
 	error = qwx_core_init(sc);
-	if (error) {
-		printf(": failed to init core: %d\n", error);
+	if (error)
 		return error;
-	}
 
 	memset(&sc->qrtr_server, 0, sizeof(sc->qrtr_server));
 	sc->qrtr_server.node = QRTR_NODE_BCAST;
@@ -19136,10 +19134,8 @@ qwx_core_init(struct qwx_softc *sc)
 	}
 
 	error = sc->ops.power_up(sc);
-	if (error) {
-		printf("failed to power up :%d\n", error);
+	if (error)
 		qwx_qmi_deinit_service(sc);
-	}
 
 	return error;
 }
