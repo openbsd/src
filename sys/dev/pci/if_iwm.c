@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.413 2023/12/20 07:32:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.414 2024/02/16 11:44:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8534,7 +8534,7 @@ iwm_scan(struct iwm_softc *sc)
 	 * The current mode might have been fixed during association.
 	 * Ensure all channels get scanned.
 	 */
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
+	if (IFM_SUBTYPE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
 		ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
 
 	sc->sc_flags |= IWM_FLAG_SCANNING;

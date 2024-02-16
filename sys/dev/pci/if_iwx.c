@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.180 2023/12/30 16:55:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.181 2024/02/16 11:44:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7529,7 +7529,7 @@ iwx_scan(struct iwx_softc *sc)
 	 * The current mode might have been fixed during association.
 	 * Ensure all channels get scanned.
 	 */
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
+	if (IFM_SUBTYPE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
 		ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
 
 	sc->sc_flags |= IWX_FLAG_SCANNING;
