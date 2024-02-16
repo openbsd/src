@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.74 2024/02/13 22:44:21 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.75 2024/02/16 11:55:42 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -157,7 +157,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 			goto out;
 		}
 
-		switch(afi) {
+		switch (afi) {
 		case AFI_IPV4:
 			if (ipv4_seen++ > 0) {
 				warnx("%s: RFC 6482bis section 4.3.2: "

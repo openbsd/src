@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.248 2024/02/03 14:30:47 job Exp $ */
+/*	$OpenBSD: main.c,v 1.249 2024/02/16 11:55:42 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -130,7 +130,7 @@ time_t
 get_current_time(void)
 {
 	if (evaluation_time > X509_TIME_MIN)
-		return (time_t) evaluation_time;
+		return (time_t)evaluation_time;
 	return time(NULL);
 }
 
@@ -865,8 +865,8 @@ static void
 check_fs_size(int fd, const char *cachedir)
 {
 	struct statvfs	fs;
-	const long long minsize = 500 * 1024 * 1024;
-	const long long minnode = 300 * 1000;
+	const long long	minsize = 500 * 1024 * 1024;
+	const long long	minnode = 300 * 1000;
 
 	if (fstatvfs(fd, &fs) == -1)
 		err(1, "statfs %s", cachedir);
