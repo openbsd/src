@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.17 2024/02/16 05:18:29 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.18 2024/02/16 15:13:49 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -164,14 +164,14 @@ static int
 tak_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
 	const unsigned char	*oder;
-	TAK			*tak;
+	TAK			*tak_asn1;
 	const char		*fn;
 	int			 rc = 0;
 
 	fn = p->fn;
 
 	oder = d;
-	if ((tak = d2i_TAK(NULL, &d, dsz)) == NULL) {
+	if ((tak_asn1 = d2i_TAK(NULL, &d, dsz)) == NULL) {
 		warnx("%s: failed to parse Trust Anchor Key", fn);
 		goto out;
 	}
@@ -181,28 +181,28 @@ tak_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(fn, tak->version, 0))
+	if (!valid_econtent_version(fn, tak_asn1->version, 0))
 		goto out;
 
-	p->res->current = parse_takey(fn, tak->current);
+	p->res->current = parse_takey(fn, tak_asn1->current);
 	if (p->res->current == NULL)
 		goto out;
 
-	if (tak->predecessor != NULL) {
-		p->res->predecessor = parse_takey(fn, tak->predecessor);
+	if (tak_asn1->predecessor != NULL) {
+		p->res->predecessor = parse_takey(fn, tak_asn1->predecessor);
 		if (p->res->predecessor == NULL)
 			goto out;
 	}
 
-	if (tak->successor != NULL) {
-		p->res->successor = parse_takey(fn, tak->successor);
+	if (tak_asn1->successor != NULL) {
+		p->res->successor = parse_takey(fn, tak_asn1->successor);
 		if (p->res->successor == NULL)
 			goto out;
 	}
 
 	rc = 1;
  out:
-	TAK_free(tak);
+	TAK_free(tak_asn1);
 	return rc;
 }
 

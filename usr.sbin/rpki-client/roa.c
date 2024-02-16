@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.75 2024/02/16 11:55:42 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.76 2024/02/16 15:13:49 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -106,7 +106,7 @@ static int
 roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
 	const unsigned char		*oder;
-	RouteOriginAttestation		*roa;
+	RouteOriginAttestation		*roa_asn1;
 	const ROAIPAddressFamily	*addrfam;
 	const STACK_OF(ROAIPAddress)	*addrs;
 	int				 addrsz, ipv4_seen = 0, ipv6_seen = 0;
@@ -119,7 +119,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	int				 i, j, rc = 0;
 
 	oder = d;
-	if ((roa = d2i_RouteOriginAttestation(NULL, &d, dsz)) == NULL) {
+	if ((roa_asn1 = d2i_RouteOriginAttestation(NULL, &d, dsz)) == NULL) {
 		warnx("%s: RFC 6482 section 3: failed to parse "
 		    "RouteOriginAttestation", p->fn);
 		goto out;
@@ -130,16 +130,16 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, roa->version, 0))
+	if (!valid_econtent_version(p->fn, roa_asn1->version, 0))
 		goto out;
 
-	if (!as_id_parse(roa->asid, &p->res->asid)) {
+	if (!as_id_parse(roa_asn1->asid, &p->res->asid)) {
 		warnx("%s: RFC 6482 section 3.2: asID: "
 		    "malformed AS identifier", p->fn);
 		goto out;
 	}
 
-	ipaddrblocksz = sk_ROAIPAddressFamily_num(roa->ipAddrBlocks);
+	ipaddrblocksz = sk_ROAIPAddressFamily_num(roa_asn1->ipAddrBlocks);
 	if (ipaddrblocksz != 1 && ipaddrblocksz != 2) {
 		warnx("%s: draft-rfc6482bis: unexpected number of ipAddrBlocks "
 		    "(got %d, expected 1 or 2)", p->fn, ipaddrblocksz);
@@ -147,7 +147,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	}
 
 	for (i = 0; i < ipaddrblocksz; i++) {
-		addrfam = sk_ROAIPAddressFamily_value(roa->ipAddrBlocks, i);
+		addrfam = sk_ROAIPAddressFamily_value(roa_asn1->ipAddrBlocks, i);
 		addrs = addrfam->addresses;
 		addrsz = sk_ROAIPAddress_num(addrs);
 
@@ -233,7 +233,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 
 	rc = 1;
  out:
-	RouteOriginAttestation_free(roa);
+	RouteOriginAttestation_free(roa_asn1);
 	return rc;
 }
 

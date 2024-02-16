@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.108 2024/02/15 07:01:33 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.109 2024/02/16 15:13:49 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -311,12 +311,12 @@ static int
 mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
 	const unsigned char	*oder;
-	Manifest		*mft;
+	Manifest		*mft_asn1;
 	FileAndHash		*fh;
 	int			 i, rc = 0;
 
 	oder = d;
-	if ((mft = d2i_Manifest(NULL, &d, dsz)) == NULL) {
+	if ((mft_asn1 = d2i_Manifest(NULL, &d, dsz)) == NULL) {
 		warnx("%s: RFC 6486 section 4: failed to parse Manifest",
 		    p->fn);
 		goto out;
@@ -327,10 +327,10 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, mft->version, 0))
+	if (!valid_econtent_version(p->fn, mft_asn1->version, 0))
 		goto out;
 
-	p->res->seqnum = x509_convert_seqnum(p->fn, mft->manifestNumber);
+	p->res->seqnum = x509_convert_seqnum(p->fn, mft_asn1->manifestNumber);
 	if (p->res->seqnum == NULL)
 		goto out;
 
@@ -338,20 +338,20 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	 * OpenSSL's DER decoder implementation will accept a GeneralizedTime
 	 * which doesn't conform to RFC 5280. So, double check.
 	 */
-	if (ASN1_STRING_length(mft->thisUpdate) != GENTIME_LENGTH) {
+	if (ASN1_STRING_length(mft_asn1->thisUpdate) != GENTIME_LENGTH) {
 		warnx("%s: embedded from time format invalid", p->fn);
 		goto out;
 	}
-	if (ASN1_STRING_length(mft->nextUpdate) != GENTIME_LENGTH) {
+	if (ASN1_STRING_length(mft_asn1->nextUpdate) != GENTIME_LENGTH) {
 		warnx("%s: embedded until time format invalid", p->fn);
 		goto out;
 	}
 
-	if (!x509_get_time(mft->thisUpdate, &p->res->thisupdate)) {
+	if (!x509_get_time(mft_asn1->thisUpdate, &p->res->thisupdate)) {
 		warn("%s: parsing manifest thisUpdate failed", p->fn);
 		goto out;
 	}
-	if (!x509_get_time(mft->nextUpdate, &p->res->nextupdate)) {
+	if (!x509_get_time(mft_asn1->nextUpdate, &p->res->nextupdate)) {
 		warn("%s: parsing manifest nextUpdate failed", p->fn);
 		goto out;
 	}
@@ -361,27 +361,28 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (OBJ_obj2nid(mft->fileHashAlg) != NID_sha256) {
+	if (OBJ_obj2nid(mft_asn1->fileHashAlg) != NID_sha256) {
 		warnx("%s: RFC 6486 section 4.2.1: fileHashAlg: "
 		    "want SHA256 object, have %s (NID %d)", p->fn,
-		    ASN1_tag2str(OBJ_obj2nid(mft->fileHashAlg)),
-		    OBJ_obj2nid(mft->fileHashAlg));
+		    ASN1_tag2str(OBJ_obj2nid(mft_asn1->fileHashAlg)),
+		    OBJ_obj2nid(mft_asn1->fileHashAlg));
 		goto out;
 	}
 
-	if (sk_FileAndHash_num(mft->fileList) >= MAX_MANIFEST_ENTRIES) {
+	if (sk_FileAndHash_num(mft_asn1->fileList) >= MAX_MANIFEST_ENTRIES) {
 		warnx("%s: %d exceeds manifest entry limit (%d)", p->fn,
-		    sk_FileAndHash_num(mft->fileList), MAX_MANIFEST_ENTRIES);
+		    sk_FileAndHash_num(mft_asn1->fileList),
+		    MAX_MANIFEST_ENTRIES);
 		goto out;
 	}
 
-	p->res->files = calloc(sk_FileAndHash_num(mft->fileList),
+	p->res->files = calloc(sk_FileAndHash_num(mft_asn1->fileList),
 	    sizeof(struct mftfile));
 	if (p->res->files == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < sk_FileAndHash_num(mft->fileList); i++) {
-		fh = sk_FileAndHash_value(mft->fileList, i);
+	for (i = 0; i < sk_FileAndHash_num(mft_asn1->fileList); i++) {
+		fh = sk_FileAndHash_value(mft_asn1->fileList, i);
 		if (!mft_parse_filehash(p, fh))
 			goto out;
 	}
@@ -391,12 +392,12 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!mft_has_unique_names_and_hashes(p->fn, mft))
+	if (!mft_has_unique_names_and_hashes(p->fn, mft_asn1))
 		goto out;
 
 	rc = 1;
  out:
-	Manifest_free(mft);
+	Manifest_free(mft_asn1);
 	return rc;
 }
 

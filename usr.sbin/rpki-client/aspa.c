@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.26 2024/02/13 22:44:21 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.27 2024/02/16 15:13:49 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -132,11 +132,11 @@ static int
 aspa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
 	const unsigned char	*oder;
-	ASProviderAttestation	*aspa;
+	ASProviderAttestation	*aspa_asn1;
 	int			 rc = 0;
 
 	oder = d;
-	if ((aspa = d2i_ASProviderAttestation(NULL, &d, dsz)) == NULL) {
+	if ((aspa_asn1 = d2i_ASProviderAttestation(NULL, &d, dsz)) == NULL) {
 		warnx("%s: ASPA: failed to parse ASProviderAttestation", p->fn);
 		goto out;
 	}
@@ -146,20 +146,20 @@ aspa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, aspa->version, 1))
+	if (!valid_econtent_version(p->fn, aspa_asn1->version, 1))
 		goto out;
 
-	if (!as_id_parse(aspa->customerASID, &p->res->custasid)) {
+	if (!as_id_parse(aspa_asn1->customerASID, &p->res->custasid)) {
 		warnx("%s: malformed CustomerASID", p->fn);
 		goto out;
 	}
 
-	if (!aspa_parse_providers(p, aspa->providers))
+	if (!aspa_parse_providers(p, aspa_asn1->providers))
 		goto out;
 
 	rc = 1;
  out:
-	ASProviderAttestation_free(aspa);
+	ASProviderAttestation_free(aspa_asn1);
 	return rc;
 }
 
