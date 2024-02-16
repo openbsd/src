@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.49 2024/02/16 14:27:43 jsing Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.50 2024/02/16 14:40:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -134,26 +134,14 @@ LCRYPTO_ALIAS(BIO_get_new_index);
 BIO *
 BIO_new(const BIO_METHOD *method)
 {
-	BIO *ret = NULL;
+	BIO *bio = NULL;
 
 	/* XXX calloc */
-	ret = malloc(sizeof(BIO));
-	if (ret == NULL) {
+	bio = malloc(sizeof(BIO));
+	if (bio == NULL) {
 		BIOerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
+		return NULL;
 	}
-	if (!BIO_set(ret, method)) {
-		free(ret);
-		ret = NULL;
-	}
-
-	return ret;
-}
-LCRYPTO_ALIAS(BIO_new);
-
-int
-BIO_set(BIO *bio, const BIO_METHOD *method)
-{
 	bio->method = method;
 	bio->callback = NULL;
 	bio->callback_ex = NULL;
@@ -174,10 +162,20 @@ BIO_set(BIO *bio, const BIO_METHOD *method)
 		if (!method->create(bio)) {
 			CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio,
 			    &bio->ex_data);
-			return (0);
+			free(bio);
+			return NULL;
 		}
 	}
-	return (1);
+
+	return bio;
+}
+LCRYPTO_ALIAS(BIO_new);
+
+int
+BIO_set(BIO *bio, const BIO_METHOD *method)
+{
+	BIOerror(ERR_R_DISABLED);
+	return 0;
 }
 LCRYPTO_ALIAS(BIO_set);
 
@@ -190,12 +188,12 @@ BIO_free(BIO *bio)
 		return 0;
 
 	if (CRYPTO_add(&bio->references, -1, CRYPTO_LOCK_BIO) > 0)
-		return (1);
+		return 1;
 
 	if (bio->callback != NULL || bio->callback_ex != NULL) {
 		if ((ret = (int)bio_call_callback(bio, BIO_CB_FREE, NULL, 0, 0,
 		    0L, 1L, NULL)) <= 0)
-			return (ret);
+			return ret;
 	}
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
