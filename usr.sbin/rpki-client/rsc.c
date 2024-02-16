@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.31 2024/02/13 22:44:21 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.32 2024/02/16 15:15:02 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -333,7 +333,7 @@ static int
 rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
 	const unsigned char	*oder;
-	RpkiSignedChecklist	*rsc;
+	RpkiSignedChecklist	*rsc_asn1;
 	ResourceBlock		*resources;
 	int			 rc = 0;
 
@@ -342,7 +342,7 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	 */
 
 	oder = d;
-	if ((rsc = d2i_RpkiSignedChecklist(NULL, &d, dsz)) == NULL) {
+	if ((rsc_asn1 = d2i_RpkiSignedChecklist(NULL, &d, dsz)) == NULL) {
 		warnx("%s: RSC: failed to parse RpkiSignedChecklist", p->fn);
 		goto out;
 	}
@@ -352,10 +352,10 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, rsc->version, 0))
+	if (!valid_econtent_version(p->fn, rsc_asn1->version, 0))
 		goto out;
 
-	resources = rsc->resources;
+	resources = rsc_asn1->resources;
 	if (resources->asID == NULL && resources->ipAddrBlocks == NULL) {
 		warnx("%s: RSC: one of asID or ipAddrBlocks must be present",
 		    p->fn);
@@ -368,15 +368,15 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	if (!rsc_parse_iplist(p, resources->ipAddrBlocks))
 		goto out;
 
-	if (!rsc_check_digesttype(p, rsc->digestAlgorithm))
+	if (!rsc_check_digesttype(p, rsc_asn1->digestAlgorithm))
 		goto out;
 
-	if (!rsc_parse_checklist(p, rsc->checkList))
+	if (!rsc_parse_checklist(p, rsc_asn1->checkList))
 		goto out;
 
 	rc = 1;
  out:
-	RpkiSignedChecklist_free(rsc);
+	RpkiSignedChecklist_free(rsc_asn1);
 	return rc;
 }
 
