@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.32 2024/02/16 15:15:02 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.33 2024/02/16 15:19:02 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -277,7 +277,7 @@ static int
 rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
 {
 	FileNameAndHash		*fh;
-	ASN1_IA5STRING		*fn;
+	ASN1_IA5STRING		*fileName;
 	struct rscfile		*file;
 	size_t			 sz, i;
 
@@ -308,15 +308,15 @@ rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
 		}
 		memcpy(file->hash, fh->hash->data, SHA256_DIGEST_LENGTH);
 
-		if ((fn = fh->fileName) == NULL)
+		if ((fileName = fh->fileName) == NULL)
 			continue;
 
-		if (!valid_filename(fn->data, fn->length)) {
+		if (!valid_filename(fileName->data, fileName->length)) {
 			warnx("%s: RSC FileNameAndHash: bad filename", p->fn);
 			return 0;
 		}
 
-		file->filename = strndup(fn->data, fn->length);
+		file->filename = strndup(fileName->data, fileName->length);
 		if (file->filename == NULL)
 			err(1, NULL);
 	}
