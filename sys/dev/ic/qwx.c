@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.40 2024/02/15 16:29:45 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.41 2024/02/16 09:03:29 phessler Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -7098,7 +7098,7 @@ qwx_qrtr_recv_msg(struct qwx_softc *sc, struct mbuf *m)
 		wakeup(&sc->qrtr_server);
 		break;
 	default:
-		printf("%s: unhandled qrtr type %u\n",
+		DPRINTF("%s: unhandled qrtr type %u\n",
 		    sc->sc_dev.dv_xname, type);
 		return;
 	}
@@ -13003,7 +13003,7 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 		DPRINTF("%s: 0x%x: wlan freq avoid event\n", __func__, id);
 		break;
 	default:
-		printf("%s: unsupported event id 0x%x\n", __func__, id);
+		DPRINTF("%s: unsupported event id 0x%x\n", __func__, id);
 		break;
 	}
 
