@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_KEY_new.3,v 1.18 2023/08/29 10:07:42 tb Exp $
+.\" $OpenBSD: EC_KEY_new.3,v 1.19 2024/02/16 06:09:36 tb Exp $
 .\" full merge up to: OpenSSL 3aef36ff Jan 5 13:06:03 2016 -0500
 .\" partial merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 29 2023 $
+.Dd $Mdocdate: February 16 2024 $
 .Dt EC_KEY_NEW 3
 .Os
 .Sh NAME
@@ -324,6 +324,10 @@ object, the private key and the
 public key for the
 .Fa key ,
 respectively.
+The setters copy the group and key objects without sanity checks
+and it is the caller's responsibility to ensure that
+the resulting key is valid, for example using
+.Fn EC_KEY_check_key .
 .Pp
 The functions
 .Fn EC_KEY_get_enc_flags
