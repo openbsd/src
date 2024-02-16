@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.48 2024/02/13 20:40:17 job Exp $ */
+/*	$OpenBSD: print.c,v 1.49 2024/02/16 05:18:29 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -83,28 +83,16 @@ void
 tal_print(const struct tal *p)
 {
 	char			*ski;
-	const unsigned char	*der, *pkey_der;
+	const unsigned char	*der;
 	X509_PUBKEY		*pubkey;
-	ASN1_OBJECT		*obj;
-	unsigned char		 md[SHA_DIGEST_LENGTH];
-	int			 nid, der_len;
 	size_t			 i;
 
-	pkey_der = p->pkey;
-	if ((pubkey = d2i_X509_PUBKEY(NULL, &pkey_der, p->pkeysz)) == NULL)
+	der = p->pkey;
+	if ((pubkey = d2i_X509_PUBKEY(NULL, &der, p->pkeysz)) == NULL)
 		errx(1, "d2i_X509_PUBKEY failed");
 
-	if (!X509_PUBKEY_get0_param(&obj, &der, &der_len, NULL, pubkey))
-		errx(1, "X509_PUBKEY_get0_param failed");
-
-	if ((nid = OBJ_obj2nid(obj)) != NID_rsaEncryption)
-		errx(1, "RFC 7935: wrong signature algorithm %s, want %s",
-		    nid2str(nid), LN_rsaEncryption);
-
-	if (!EVP_Digest(der, der_len, md, NULL, EVP_sha1(), NULL))
-		errx(1, "EVP_Digest failed");
-
-	ski = hex_encode(md, SHA_DIGEST_LENGTH);
+	if ((ski = x509_pubkey_get_ski(pubkey, p->descr)) == NULL)
+		errx(1, "x509_pubkey_get_ski failed");
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "tal");

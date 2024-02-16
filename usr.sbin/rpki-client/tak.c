@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.16 2024/02/13 22:44:21 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.17 2024/02/16 05:18:29 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -93,14 +93,11 @@ parse_takey(const char *fn, const TAKey *takey)
 {
 	const ASN1_UTF8STRING	*comment;
 	const ASN1_IA5STRING	*certURI;
-	X509_PUBKEY		*pkey;
-	ASN1_OBJECT		*obj;
+	X509_PUBKEY		*pubkey;
 	struct takey		*res = NULL;
-	const unsigned char	*der;
-	unsigned char		*pkey_der = NULL;
-	unsigned char		 md[SHA_DIGEST_LENGTH];
+	unsigned char		*der = NULL;
 	size_t			 i;
-	int			 der_len, nid, pkey_der_len;
+	int			 der_len;
 
 	if ((res = calloc(1, sizeof(struct takey))) == NULL)
 		err(1, NULL);
@@ -141,30 +138,16 @@ parse_takey(const char *fn, const TAKey *takey)
 			err(1, NULL);
 	}
 
-	pkey = takey->subjectPublicKeyInfo;
-	if (!X509_PUBKEY_get0_param(&obj, &der, &der_len, NULL, pkey)) {
-		warnx("%s: X509_PUBKEY_get0_param failed", fn);
+	pubkey = takey->subjectPublicKeyInfo;
+	if ((res->ski = x509_pubkey_get_ski(pubkey, fn)) == NULL)
 		goto err;
-	}
 
-	if ((nid = OBJ_obj2nid(obj)) != NID_rsaEncryption) {
-		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
-		    fn, nid2str(nid), LN_rsaEncryption);
-		goto err;
-	}
-
-	if (!EVP_Digest(der, der_len, md, NULL, EVP_sha1(), NULL)) {
-		warnx("%s: EVP_Digest failed", fn);
-		goto err;
-	}
-	res->ski = hex_encode(md, SHA_DIGEST_LENGTH);
-
-	if ((pkey_der_len = i2d_X509_PUBKEY(pkey, &pkey_der)) <= 0) {
+	if ((der_len = i2d_X509_PUBKEY(pubkey, &der)) <= 0) {
 		warnx("%s: i2d_X509_PUBKEY failed", fn);
 		goto err;
 	}
-	res->pubkey = pkey_der;
-	res->pubkeysz = pkey_der_len;
+	res->pubkey = der;
+	res->pubkeysz = der_len;
 
 	return res;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.79 2024/02/14 10:49:00 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.80 2024/02/16 05:18:29 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -372,6 +372,38 @@ x509_get_pubkey(X509 *x, const char *fn)
  out:
 	free(pubkey);
 	return res;
+}
+
+/*
+ * Compute the SKI of an RSA public key in an X509_PUBKEY using SHA-1.
+ * Returns allocated hex-encoded SKI on success, NULL on failure.
+ */
+char *
+x509_pubkey_get_ski(X509_PUBKEY *pubkey, const char *fn)
+{
+	ASN1_OBJECT		*obj;
+	const unsigned char	*der;
+	int			 der_len, nid;
+	unsigned char		 md[EVP_MAX_MD_SIZE];
+	unsigned int		 md_len = EVP_MAX_MD_SIZE;
+
+	if (!X509_PUBKEY_get0_param(&obj, &der, &der_len, NULL, pubkey)) {
+		warnx("%s: X509_PUBKEY_get0_param failed", fn);
+		return NULL;
+	}
+
+	if ((nid = OBJ_obj2nid(obj)) != NID_rsaEncryption) {
+		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
+		    fn, nid2str(nid), LN_rsaEncryption);
+		return NULL;
+	}
+
+	if (!EVP_Digest(der, der_len, md, &md_len, EVP_sha1(), NULL)) {
+		warnx("%s: EVP_Digest failed", fn);
+		return NULL;
+	}
+
+	return hex_encode(md, md_len);
 }
 
 /*
