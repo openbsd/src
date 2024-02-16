@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.43 2024/02/16 14:16:16 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.44 2024/02/16 14:18:36 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -211,34 +211,31 @@ qwx_init(struct ifnet *ifp)
 	ieee80211_media_init(ifp, qwx_media_change, ieee80211_media_status);
 
 	if (sc->attached) {
-		/*
-		 * We are either going up for the first time or qwx_stop() ran
-		 * before us and has waited for any stale tasks to finish up.
-		 */
-		KASSERT(sc->task_refs.r_refs == 0);
+		/* Update MAC in case the upper layers changed it. */
+		IEEE80211_ADDR_COPY(ic->ic_myaddr,
+		    ((struct arpcom *)ifp)->ac_enaddr);
+	} else {
+		sc->attached = 1;
+
+		/* Configure initial MAC address. */
+		error = if_setlladdr(ifp, ic->ic_myaddr);
+		if (error)
+			printf("%s: could not set MAC address %s: %d\n",
+			    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr),
+			    error);
+	}
+
+	if (ifp->if_flags & IFF_UP) {
 		refcnt_init(&sc->task_refs);
 
 		ifq_clr_oactive(&ifp->if_snd);
 		ifp->if_flags |= IFF_RUNNING;
-
-		/* Update MAC in case the upper layers changed it. */
-		IEEE80211_ADDR_COPY(ic->ic_myaddr,
-		    ((struct arpcom *)ifp)->ac_enaddr);
 
 		error = qwx_mac_start(sc);
 		if (error)
 			return error;
 
 		ieee80211_begin_scan(ifp);
-	} else {
-		sc->attached = 1;
-
-		/* Configure MAC address at boot-time. */
-		error = if_setlladdr(ifp, ic->ic_myaddr);
-		if (error)
-			printf("%s: could not set MAC address %s: %d\n",
-			    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr),
-			    error);
 	}
 
 	return 0;
