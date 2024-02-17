@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkrng.c,v 1.5 2023/04/14 01:11:32 dlg Exp $	*/
+/*	$OpenBSD: rkrng.c,v 1.6 2024/02/17 13:29:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -124,6 +124,9 @@ rkrng_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "rockchip,cryptov1-rng") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-crypto") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-crypto") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-crypto") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,cryptov2-rng");
 }
 
@@ -133,7 +136,10 @@ rkrng_attach(struct device *parent, struct device *self, void *aux)
 	struct rkrng_softc *sc = (struct rkrng_softc *)self;
 	struct fdt_attach_args *faa = aux;
 
-	if (OF_is_compatible(faa->fa_node, "rockchip,cryptov1-rng"))
+	if (OF_is_compatible(faa->fa_node, "rockchip,cryptov1-rng") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-crypto") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-crypto") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-crypto"))
 		sc->sc_v = &rkrnv_v1;
 	else if (OF_is_compatible(faa->fa_node, "rockchip,cryptov2-rng"))
 		sc->sc_v = &rkrnv_v2;
