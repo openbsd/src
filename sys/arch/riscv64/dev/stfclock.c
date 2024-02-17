@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.12 2023/09/23 18:29:55 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.13 2024/02/17 12:01:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
@@ -50,7 +50,10 @@
 #define JH7100_CLK_GMAC_ROOT_DIV	121
 #define JH7100_CLK_GMAC_GTX		123
 #define JH7100_CLK_UART0_CORE		147
+#define JH7100_CLK_I2C0_CORE		155
+#define JH7100_CLK_I2C1_CORE		157
 #define JH7100_CLK_UART3_CORE		162
+#define JH7100_CLK_I2C2_CORE		168
 #define JH7100_CLK_TEMP_APB		183
 #define JH7100_CLK_TEMP_SENSE		184
 #define JH7100_CLK_PLL0_OUT		186
@@ -408,9 +411,12 @@ stfclock_get_frequency_jh7100(void *cookie, uint32_t *cells)
 		break;
 	case JH7100_CLK_SDIO0_CCLKINT:
 	case JH7100_CLK_UART3_CORE:
+	case JH7100_CLK_I2C2_CORE:
 		parent = JH7100_CLK_PERH0_SRC;
 		break;
 	case JH7100_CLK_SDIO1_CCLKINT:
+	case JH7100_CLK_I2C0_CORE:
+	case JH7100_CLK_I2C1_CORE:
 	case JH7100_CLK_UART0_CORE:
 		parent = JH7100_CLK_PERH1_SRC;
 		break;
@@ -468,8 +474,11 @@ stfclock_enable_jh7100(void *cookie, uint32_t *cells, int on)
 	case JH7100_CLK_SDIO1_AHB:
 	case JH7100_CLK_GMAC_AHB:
 	case JH7100_CLK_GMAC_GTX:
+	case JH7100_CLK_I2C0_CORE:
+	case JH7100_CLK_I2C1_CORE:
 	case JH7100_CLK_UART0_CORE:
 	case JH7100_CLK_UART3_CORE:
+	case JH7100_CLK_I2C2_CORE:
 	case JH7100_CLK_TEMP_APB:
 	case JH7100_CLK_TEMP_SENSE:
 		if (on)
