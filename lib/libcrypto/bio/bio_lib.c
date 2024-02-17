@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.50 2024/02/16 14:40:18 jsing Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.51 2024/02/17 14:29:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,28 +136,17 @@ BIO_new(const BIO_METHOD *method)
 {
 	BIO *bio = NULL;
 
-	/* XXX calloc */
-	bio = malloc(sizeof(BIO));
-	if (bio == NULL) {
+	if ((bio = calloc(1, sizeof(BIO))) == NULL) {
 		BIOerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
+
 	bio->method = method;
-	bio->callback = NULL;
-	bio->callback_ex = NULL;
-	bio->cb_arg = NULL;
-	bio->init = 0;
 	bio->shutdown = 1;
-	bio->flags = 0;
-	bio->retry_reason = 0;
-	bio->num = 0;
-	bio->ptr = NULL;
-	bio->prev_bio = NULL;
-	bio->next_bio = NULL;
 	bio->references = 1;
-	bio->num_read = 0L;
-	bio->num_write = 0L;
+
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
+
 	if (method->create != NULL) {
 		if (!method->create(bio)) {
 			CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio,
