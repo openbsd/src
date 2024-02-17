@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.32 2022/05/25 16:21:11 claudio Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.33 2024/02/17 14:53:29 job Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -211,6 +211,7 @@ static const char *bgpnotify_major[] = {
 	"OPEN Message Error", "UPDATE Message Error",
 	"Hold Timer Expired", "Finite State Machine Error",
 	"Cease", "ROUTE_REFRESH Message Error",
+	"Send Hold Timer Expired",
 };
 #define bgp_notify_major(x) \
 	num_or_str(bgpnotify_major, \
