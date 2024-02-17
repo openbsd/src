@@ -298,14 +298,6 @@
 ./etc/rpki/ripe.tal
 ./etc/services
 ./etc/signify
-./etc/signify/openbsd-68-base.pub
-./etc/signify/openbsd-68-fw.pub
-./etc/signify/openbsd-68-pkg.pub
-./etc/signify/openbsd-68-syspatch.pub
-./etc/signify/openbsd-69-base.pub
-./etc/signify/openbsd-69-fw.pub
-./etc/signify/openbsd-69-pkg.pub
-./etc/signify/openbsd-69-syspatch.pub
 ./etc/signify/openbsd-70-base.pub
 ./etc/signify/openbsd-70-fw.pub
 ./etc/signify/openbsd-70-pkg.pub
@@ -330,6 +322,7 @@
 ./etc/signify/openbsd-75-fw.pub
 ./etc/signify/openbsd-75-pkg.pub
 ./etc/signify/openbsd-75-syspatch.pub
+./etc/signify/openbsd-76-base.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/ssh
