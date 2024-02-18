@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.180 2024/02/12 02:57:14 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.181 2024/02/18 05:42:50 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -653,10 +653,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		atomic_setbits_int(&ci->ci_flags,
 		    CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
-#ifndef SMALL_KERNEL
-		cpu_ucode_apply(ci);
-#endif
-		cpu_tsx_disable(ci);
 		identifycpu(ci);
 		cpu_fix_msrs(ci);
 #ifdef MTRR
