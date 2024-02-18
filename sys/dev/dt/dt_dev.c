@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.30 2024/02/09 17:42:18 cheloha Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.31 2024/02/18 00:54:03 cheloha Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -497,8 +497,6 @@ dt_ioctl_record_start(struct dt_softc *sc)
 		if (dp->dp_nsecs != 0) {
 			clockintr_bind(&dp->dp_clockintr, dp->dp_cpu, dt_clock,
 			    dp);
-			clockintr_stagger(&dp->dp_clockintr, dp->dp_nsecs,
-			    CPU_INFO_UNIT(dp->dp_cpu), MAXCPUS);
 			clockintr_advance(&dp->dp_clockintr, dp->dp_nsecs);
 		}
 	}
