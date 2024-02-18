@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.120 2023/10/18 17:26:06 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.121 2024/02/18 15:47:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -472,7 +472,9 @@ int EVP_Cipher(EVP_CIPHER_CTX *c, unsigned char *out, const unsigned char *in,
 
 EVP_MD_CTX *EVP_MD_CTX_new(void);
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
+#ifndef LIBRESSL_INTERNAL
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx);
+#endif
 int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
@@ -584,7 +586,9 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl);
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
 
+#ifndef LIBRESSL_INTERNAL
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
+#endif
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *a);
