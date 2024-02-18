@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.117 2023/11/23 15:02:57 deraadt Exp $ */
+/* $OpenBSD: wskbd.c,v 1.118 2024/02/18 20:17:48 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1229,8 +1229,11 @@ getkeyrepeat:
 
 	case WSKBDIO_GETENCODINGS:
 		uedp = (struct wskbd_encoding_data *)data;
-		for (count = 0; sc->id->t_keymap.keydesc[count].name; count++)
-			;
+		count = 0;
+		if (sc->id->t_keymap.keydesc != NULL) {
+			while (sc->id->t_keymap.keydesc[count].name)
+				count++;
+		}
 		if (uedp->nencodings > count)
 			uedp->nencodings = count;
 		for (i = 0; i < uedp->nencodings; i++) {
