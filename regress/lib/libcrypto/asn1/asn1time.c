@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.22 2024/02/18 16:32:29 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.23 2024/02/18 16:56:33 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Google Inc.
@@ -576,7 +576,7 @@ static int
 asn1_time_overflow(void)
 {
 	struct tm overflow_year = {0}, overflow_month = {0};
-	struct tm copy, max_time = {0}, min_time = {0};
+	struct tm copy, max_time = {0}, min_time = {0}, zero = {0};
 	int64_t valid_time_range = INT64_C(315569519999);
 	int64_t posix_u64;
 	time_t posix_time;
@@ -654,6 +654,12 @@ asn1_time_overflow(void)
 		    "fail for maximum time\n");
 		goto err;
 	}
+	if (memcmp(&zero, &max_time, sizeof(max_time)) != 0) {
+		fprintf(stderr, "FAIL: failing OPENSSL_gmtime_adj didn't "
+		    "zero out max_time\n");
+		goto err;
+	}
+	max_time = copy;
 
 	min_time.tm_year = 0 - 1900;
 	min_time.tm_mon = 1 - 1;
@@ -678,6 +684,12 @@ asn1_time_overflow(void)
 		    "fail for minimum time\n");
 		goto err;
 	}
+	if (memcmp(&zero, &min_time, sizeof(min_time)) != 0) {
+		fprintf(stderr, "FAIL: failing OPENSSL_gmtime_adj didn't "
+		    "zero out max_time\n");
+		goto err;
+	}
+	min_time = copy;
 
 	/* Test that we can offset by the valid minimum and maximum times. */
 	if (!OPENSSL_gmtime_adj(&copy, 0, valid_time_range)) {
@@ -686,8 +698,10 @@ asn1_time_overflow(void)
 		goto err;
 	}
 	if (memcmp(&copy, &max_time, sizeof(max_time)) != 0) {
-		fprintf(stderr, "FAIL: maximally adjusted copy didn't match"
+		fprintf(stderr, "FAIL: maximally adjusted copy didn't match "
 		    "max_time\n");
+		hexdump((unsigned char *)&max_time, sizeof(max_time));
+		hexdump((unsigned char *)&copy, sizeof(copy));
 		goto err;
 	}
 	if (!OPENSSL_gmtime_adj(&copy, 0, -valid_time_range)) {
@@ -696,7 +710,7 @@ asn1_time_overflow(void)
 		goto err;
 	}
 	if (memcmp(&copy, &min_time, sizeof(min_time)) != 0) {
-		fprintf(stderr, "FAIL: maximally adjusted copy didn't match"
+		fprintf(stderr, "FAIL: maximally adjusted copy didn't match "
 		    "min_time\n");
 		goto err;
 	}
