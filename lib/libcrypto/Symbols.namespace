@@ -2645,3 +2645,7 @@ _libre_i2d_DHparams
 _libre_DHparams_print_fp
 _libre_DHparams_print
 _libre_ERR_load_DH_strings
+_libre_OPENSSL_gmtime
+_libre_OPENSSL_timegm
+_libre_OPENSSL_posix_to_tm
+_libre_OPENSSL_tm_to_posix

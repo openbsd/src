@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_posix.c,v 1.4 2023/11/13 12:46:07 beck Exp $ */
+/* $OpenBSD: a_time_posix.c,v 1.5 2024/02/18 16:28:38 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  * Copyright (c) 2022, Bob Beck <beck@obtuse.com>
@@ -23,10 +23,14 @@
 
 #include <inttypes.h>
 #include <limits.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 
 #include <openssl/asn1.h>
+#include <openssl/posix_time.h>
+
+#include "crypto_internal.h"
 
 #define SECS_PER_HOUR (int64_t)(60 * 60)
 #define SECS_PER_DAY (int64_t)(24 * SECS_PER_HOUR)
@@ -36,7 +40,7 @@
  * to 9999?
  */
 static int
-is_valid_date(int year, int month, int day)
+is_valid_date(int64_t year, int64_t month, int64_t day)
 {
 	int days_in_month;
 	if (day < 1 || month < 1 || year < 0 || year > 9999)
@@ -80,13 +84,16 @@ is_valid_time(int hours, int minutes, int seconds)
 	    minutes <= 59 && seconds <= 59;
 }
 
+/* 0000-01-01 00:00:00 UTC */
+#define MIN_POSIX_TIME INT64_C(-62167219200)
+/* 9999-12-31 23:59:59 UTC */
+#define MAX_POSIX_TIME INT64_C(253402300799)
+
 /* Is a int64 time representing a time within our expected range? */
 static int
-is_valid_epoch_time(int64_t time)
+is_valid_posix_time(int64_t time)
 {
-	/* 0000-01-01 00:00:00 UTC to 9999-12-31 23:59:59 UTC */
-	return (int64_t)-62167219200LL <= time &&
-	    time <= (int64_t)253402300799LL;
+	return MIN_POSIX_TIME <= time && time <= MAX_POSIX_TIME;
 }
 
 /*
@@ -95,8 +102,8 @@ is_valid_epoch_time(int64_t time)
  * (Public Domain)
  */
 static int
-posix_time_from_utc(int year, int month, int day, int hours,  int minutes,
-    int seconds, int64_t *out_time)
+posix_time_from_utc(int64_t year, int64_t month, int64_t day, int64_t hours,
+    int64_t minutes, int64_t seconds, int64_t *out_time)
 {
 	int64_t era, year_of_era, day_of_year, day_of_era, posix_days;
 
@@ -132,7 +139,7 @@ utc_from_posix_time(int64_t time, int *out_year, int *out_month, int *out_day,
 	int64_t days, leftover_seconds, era, day_of_era, year_of_era,
 	    day_of_year, month_of_year;
 
-	if (!is_valid_epoch_time(time))
+	if (!is_valid_posix_time(time))
 		return 0;
 
 	days = time / SECS_PER_DAY;
@@ -167,40 +174,41 @@ utc_from_posix_time(int64_t time, int *out_year, int *out_month, int *out_day,
 	return 1;
 }
 
-static int
-asn1_time_tm_to_posix(const struct tm *tm, int64_t *out)
+int
+OPENSSL_tm_to_posix(const struct tm *tm, int64_t *out)
 {
-	/* Ensure additions below do not overflow */
-	if (tm->tm_year > 9999)
-		return 0;
-	if (tm->tm_mon > 12)
-		return 0;
-
-	return posix_time_from_utc(tm->tm_year + 1900, tm->tm_mon + 1,
-	    tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, out);
+	return posix_time_from_utc(tm->tm_year + (int64_t)1900,
+	    tm->tm_mon + (int64_t)1, tm->tm_mday, tm->tm_hour, tm->tm_min,
+	    tm->tm_sec, out);
 }
+LCRYPTO_ALIAS(OPENSSL_tm_to_posix);
 
-static int
-asn1_time_posix_to_tm(int64_t time, struct tm *out_tm)
+int
+OPENSSL_posix_to_tm(int64_t time, struct tm *out_tm)
 {
-	memset(out_tm, 0, sizeof(struct tm));
-	if (!utc_from_posix_time(time, &out_tm->tm_year, &out_tm->tm_mon,
-	    &out_tm->tm_mday, &out_tm->tm_hour, &out_tm->tm_min,
-	    &out_tm->tm_sec))
+	struct tm tmp_tm = {0};
+
+	memset(out_tm, 0, sizeof(*out_tm));
+
+	if (!utc_from_posix_time(time, &tmp_tm.tm_year, &tmp_tm.tm_mon,
+	    &tmp_tm.tm_mday, &tmp_tm.tm_hour, &tmp_tm.tm_min, &tmp_tm.tm_sec))
 		return 0;
 
-	out_tm->tm_year -= 1900;
-	out_tm->tm_mon -= 1;
+	tmp_tm.tm_year -= 1900;
+	tmp_tm.tm_mon -= 1;
+
+	*out_tm = tmp_tm;
 
 	return 1;
 }
+LCRYPTO_ALIAS(OPENSSL_posix_to_tm);
 
 int
 asn1_time_tm_to_time_t(const struct tm *tm, time_t *out)
 {
 	int64_t posix_time;
 
-	if (!asn1_time_tm_to_posix(tm, &posix_time))
+	if (!OPENSSL_tm_to_posix(tm, &posix_time))
 		return 0;
 
 #ifdef SMALL_TIME_T
@@ -219,7 +227,7 @@ asn1_time_time_t_to_tm(const time_t *time, struct tm *out_tm)
 {
 	int64_t posix_time = *time;
 
-	return asn1_time_posix_to_tm(posix_time, out_tm);
+	return OPENSSL_posix_to_tm(posix_time, out_tm);
 }
 
 int
@@ -236,28 +244,29 @@ OPENSSL_gmtime(const time_t *time, struct tm *out_tm) {
 }
 LCRYPTO_ALIAS(OPENSSL_gmtime);
 
+/* Public API in OpenSSL. BoringSSL uses int64_t instead of long. */
 int
-OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
+OPENSSL_gmtime_adj(struct tm *tm, int offset_day, int64_t offset_sec)
 {
 	int64_t posix_time;
 
-	/* Ensure additions below do not overflow */
-	if (tm->tm_year > 9999)
-		return 0;
-	if (tm->tm_mon > 12)
+	if (!OPENSSL_tm_to_posix(tm, &posix_time))
 		return 0;
 
-	if (!posix_time_from_utc(tm->tm_year + 1900, tm->tm_mon + 1,
-	    tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, &posix_time))
-		return 0;
+	CTASSERT(INT_MAX <= INT64_MAX / SECS_PER_DAY);
+	CTASSERT(MAX_POSIX_TIME <= INT64_MAX - INT_MAX * SECS_PER_DAY);
+	CTASSERT(MIN_POSIX_TIME >= INT64_MIN - INT_MIN * SECS_PER_DAY);
 
-	if (!utc_from_posix_time(posix_time + off_day * SECS_PER_DAY +
-	    offset_sec, &tm->tm_year, &tm->tm_mon, &tm->tm_mday, &tm->tm_hour,
-	    &tm->tm_min, &tm->tm_sec))
-		return 0;
+	posix_time += offset_day * SECS_PER_DAY;
 
-	tm->tm_year -= 1900;
-	tm->tm_mon -= 1;
+	if (posix_time > 0 && offset_sec > INT64_MAX - posix_time)
+		return 0;
+	if (posix_time < 0 && offset_sec < INT64_MIN - posix_time)
+		return 0;
+	posix_time += offset_sec;
+
+	if (!OPENSSL_posix_to_tm(posix_time, tm))
+		return 0;
 
 	return 1;
 }
@@ -268,20 +277,17 @@ OPENSSL_gmtime_diff(int *out_days, int *out_secs, const struct tm *from,
 {
 	int64_t time_to, time_from, timediff, daydiff;
 
-	if (!posix_time_from_utc(to->tm_year + 1900, to->tm_mon + 1,
-	    to->tm_mday, to->tm_hour, to->tm_min, to->tm_sec, &time_to))
+	if (!OPENSSL_tm_to_posix(to, &time_to) ||
+	    !OPENSSL_tm_to_posix(from, &time_from))
 		return 0;
 
-	if (!posix_time_from_utc(from->tm_year + 1900, from->tm_mon + 1,
-	    from->tm_mday, from->tm_hour, from->tm_min,
-	    from->tm_sec, &time_from))
-		return 0;
+	/* Times are in range, so these calculations cannot overflow. */
+	CTASSERT(SECS_PER_DAY <= INT_MAX);
+	CTASSERT((MAX_POSIX_TIME - MIN_POSIX_TIME) / SECS_PER_DAY <= INT_MAX);
 
 	timediff = time_to - time_from;
 	daydiff = timediff / SECS_PER_DAY;
 	timediff %= SECS_PER_DAY;
-	if (daydiff > INT_MAX || daydiff < INT_MIN)
-		return 0;
 
 	*out_secs = timediff;
 	*out_days = daydiff;

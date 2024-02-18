@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.167 2024/01/27 17:14:33 tb Exp $
+# $OpenBSD: Makefile,v 1.168 2024/02/18 16:28:37 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -705,6 +705,7 @@ HDRS=\
 	${LCRYPTO_SRC}/aes/aes.h \
 	${LCRYPTO_SRC}/asn1/asn1.h \
 	${LCRYPTO_SRC}/asn1/asn1t.h \
+	${LCRYPTO_SRC}/asn1/posix_time.h \
 	${LCRYPTO_SRC}/bf/blowfish.h \
 	${LCRYPTO_SRC}/bio/bio.h \
 	${LCRYPTO_SRC}/bn/bn.h \
