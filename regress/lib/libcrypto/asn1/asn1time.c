@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.24 2024/02/18 17:13:29 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.25 2024/02/18 22:17:01 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Google Inc.
@@ -699,8 +699,6 @@ asn1_time_overflow(void)
 	if (memcmp(&copy, &max_time, sizeof(max_time)) != 0) {
 		fprintf(stderr, "FAIL: maximally adjusted copy didn't match "
 		    "max_time\n");
-		hexdump((unsigned char *)&max_time, sizeof(max_time));
-		hexdump((unsigned char *)&copy, sizeof(copy));
 		goto err;
 	}
 	if (!OPENSSL_gmtime_adj(&copy, 0, -valid_time_range)) {
