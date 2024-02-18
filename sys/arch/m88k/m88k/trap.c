@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.133 2024/01/23 13:02:15 aoyama Exp $	*/
+/*	$OpenBSD: trap.c,v 1.134 2024/02/18 21:27:38 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -864,7 +864,7 @@ m88110_user_fault:
 			access_type = PROT_EXEC;
 			fault_code = PROT_EXEC;
 #ifdef TRAPDEBUG
-			printf("User Instruction fault exip %x isr %x ilar %x\n",
+			printf("User Instruction fault exip %lx isr %lx ilar %lx\n",
 			    frame->tf_exip, frame->tf_isr, frame->tf_ilar);
 #endif
 		} else {
@@ -887,7 +887,7 @@ m88110_user_fault:
 				fault_code = PROT_WRITE;
 			}
 #ifdef TRAPDEBUG
-			printf("User Data access fault exip %x dsr %x dlar %x\n",
+			printf("User Data access fault exip %lx dsr %lx dlar %lx\n",
 			    frame->tf_exip, frame->tf_dsr, frame->tf_dlar);
 #endif
 		}
@@ -919,7 +919,7 @@ m88110_user_fault:
 					result = EFAULT;
 			} else {
 #ifdef TRAPDEBUG
-				printf("Unexpected Instruction fault isr %x\n",
+				printf("Unexpected Instruction fault isr %lx\n",
 				    frame->tf_isr);
 #endif
 				goto lose;
@@ -957,14 +957,14 @@ m88110_user_fault:
 				if (pmap_set_modify(map->pmap, va)) {
 #ifdef TRAPDEBUG
 					printf("Corrected userland write fault, pmap %p va %p\n",
-					    map->pmap, va);
+					    map->pmap, (void *)va);
 #endif
 					result = 0;
 				} else {
 					/* must be a real wp fault */
 #ifdef TRAPDEBUG
 					printf("Uncorrected userland write fault, pmap %p va %p\n",
-					    map->pmap, va);
+					    map->pmap, (void *)va);
 #endif
 					result = uvm_fault(map, va, 0, access_type);
 					if (result == EACCES)
@@ -972,7 +972,7 @@ m88110_user_fault:
 				}
 			} else {
 #ifdef TRAPDEBUG
-				printf("Unexpected Data access fault dsr %x\n",
+				printf("Unexpected Data access fault dsr %lx\n",
 				    frame->tf_dsr);
 #endif
 				goto lose;
@@ -1255,7 +1255,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	/*
 	 * For 88k, all the arguments are passed in the registers (r2-r9).
 	 */
-	ap = &tf->tf_r[2];
+	args = &tf->tf_r[2];
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
