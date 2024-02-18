@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.33 2024/01/05 10:18:52 tb Exp $ */
+/* $OpenBSD: evp_key.c,v 1.34 2024/02/18 15:45:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,7 +156,7 @@ EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 	if (data == NULL)
 		return nkey;
 
-	EVP_MD_CTX_init(&c);
+	EVP_MD_CTX_legacy_clear(&c);
 	for (;;) {
 		if (!EVP_DigestInit_ex(&c, md, NULL))
 			goto err;

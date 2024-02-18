@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.37 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.38 2024/02/18 15:45:42 tb Exp $ */
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -331,7 +331,7 @@ PKCS1_MGF1(unsigned char *mask, long len, const unsigned char *seed,
 	int mdlen;
 	int rv = -1;
 
-	EVP_MD_CTX_init(&c);
+	EVP_MD_CTX_legacy_clear(&c);
 	mdlen = EVP_MD_size(dgst);
 	if (mdlen < 0)
 		goto err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.9 2024/02/18 15:43:21 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.10 2024/02/18 15:45:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,7 +123,7 @@
 int
 EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 {
-	EVP_MD_CTX_init(ctx);
+	EVP_MD_CTX_legacy_clear(ctx);
 	return EVP_DigestInit_ex(ctx, type, NULL);
 }
 
@@ -207,7 +207,7 @@ EVP_Digest(const void *data, size_t count,
 	EVP_MD_CTX ctx;
 	int ret;
 
-	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_legacy_clear(&ctx);
 	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_ONESHOT);
 	ret = EVP_DigestInit_ex(&ctx, type, NULL) &&
 	    EVP_DigestUpdate(&ctx, data, count) &&
@@ -294,7 +294,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 int
 EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 {
-	EVP_MD_CTX_init(out);
+	EVP_MD_CTX_legacy_clear(out);
 	return EVP_MD_CTX_copy_ex(out, in);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.41 2024/02/01 17:11:58 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.42 2024/02/18 15:45:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -266,7 +266,7 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	else if (passlen == -1)
 		passlen = strlen(pass);
 
-	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_legacy_clear(&ctx);
 
 	if (!EVP_DigestInit_ex(&ctx, md, NULL))
 		goto err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.55 2024/01/25 13:44:08 tb Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.56 2024/02/18 15:45:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -711,7 +711,7 @@ PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		return 0;
 	}
 
-	EVP_MD_CTX_init(&ctx_tmp);
+	EVP_MD_CTX_legacy_clear(&ctx_tmp);
 	i = OBJ_obj2nid(p7->type);
 	p7->state = PKCS7_S_HEADER;
 
@@ -879,7 +879,7 @@ PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	if (md == NULL)
 		return 0;
 
-	EVP_MD_CTX_init(&mctx);
+	EVP_MD_CTX_legacy_clear(&mctx);
 	if (EVP_DigestSignInit(&mctx, &pctx, md, NULL, si->pkey) <= 0)
 		goto err;
 
@@ -997,7 +997,7 @@ PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si, X509 *x509)
 	BIO *btmp;
 	EVP_PKEY *pkey;
 
-	EVP_MD_CTX_init(&mdc_tmp);
+	EVP_MD_CTX_legacy_clear(&mdc_tmp);
 
 	if (!PKCS7_type_is_signed(p7) &&
 	    !PKCS7_type_is_signedAndEnveloped(p7)) {

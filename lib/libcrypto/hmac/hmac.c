@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.31 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: hmac.c,v 1.32 2024/02/18 15:45:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -214,9 +214,9 @@ HMAC_CTX_reset(HMAC_CTX *ctx)
 void
 HMAC_CTX_init(HMAC_CTX *ctx)
 {
-	EVP_MD_CTX_init(&ctx->i_ctx);
-	EVP_MD_CTX_init(&ctx->o_ctx);
-	EVP_MD_CTX_init(&ctx->md_ctx);
+	EVP_MD_CTX_legacy_clear(&ctx->i_ctx);
+	EVP_MD_CTX_legacy_clear(&ctx->o_ctx);
+	EVP_MD_CTX_legacy_clear(&ctx->md_ctx);
 	ctx->md = NULL;
 }
 

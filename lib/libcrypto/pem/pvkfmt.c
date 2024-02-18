@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.27 2023/07/07 13:40:44 beck Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.28 2024/02/18 15:45:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -713,7 +713,7 @@ derive_pvk_key(unsigned char *key, const unsigned char *salt,
 	EVP_MD_CTX mctx;
 	int rv = 1;
 
-	EVP_MD_CTX_init(&mctx);
+	EVP_MD_CTX_legacy_clear(&mctx);
 	if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL) ||
 	    !EVP_DigestUpdate(&mctx, salt, saltlen) ||
 	    !EVP_DigestUpdate(&mctx, pass, passlen) ||

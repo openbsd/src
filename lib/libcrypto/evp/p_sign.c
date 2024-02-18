@@ -1,4 +1,4 @@
-/* $OpenBSD: p_sign.c,v 1.19 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: p_sign.c,v 1.20 2024/02/18 15:45:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,7 +77,7 @@ EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 	int ret = 0;
 
 	*siglen = 0;
-	EVP_MD_CTX_init(&tmp_ctx);
+	EVP_MD_CTX_legacy_clear(&tmp_ctx);
 	if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
 		goto err;
 	if (!EVP_DigestFinal_ex(&tmp_ctx, &(m[0]), &m_len))

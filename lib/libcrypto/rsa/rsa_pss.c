@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pss.c,v 1.17 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_pss.c,v 1.18 2024/02/18 15:45:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -92,7 +92,7 @@ RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 	EVP_MD_CTX ctx;
 	unsigned char H_[EVP_MAX_MD_SIZE];
 
-	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_legacy_clear(&ctx);
 
 	if (mgf1Hash == NULL)
 		mgf1Hash = Hash;
@@ -200,7 +200,7 @@ RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 	unsigned char *H, *salt = NULL, *p;
 	EVP_MD_CTX ctx;
 
-	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_legacy_clear(&ctx);
 
 	if (mgf1Hash == NULL)
 		mgf1Hash = Hash;

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.42 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.43 2024/02/18 15:45:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,7 +95,7 @@ X509_issuer_and_serial_hash(X509 *a)
 	unsigned char md[16];
 	char *f;
 
-	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_legacy_clear(&ctx);
 	f = X509_NAME_oneline(a->cert_info->issuer, NULL, 0);
 	if (f == NULL)
 		goto err;
@@ -291,7 +291,7 @@ X509_NAME_hash_old(X509_NAME *x)
 
 	/* Make sure X509_NAME structure contains valid cached encoding */
 	i2d_X509_NAME(x, NULL);
-	EVP_MD_CTX_init(&md_ctx);
+	EVP_MD_CTX_legacy_clear(&md_ctx);
 	if (EVP_DigestInit_ex(&md_ctx, EVP_md5(), NULL) &&
 	    EVP_DigestUpdate(&md_ctx, x->bytes->data, x->bytes->length) &&
 	    EVP_DigestFinal_ex(&md_ctx, md, NULL))
