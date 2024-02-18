@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.23 2024/02/18 16:56:33 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.24 2024/02/18 17:13:29 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Google Inc.
@@ -649,17 +649,16 @@ asn1_time_overflow(void)
 		    "leave copy of max_time unmodified\n");
 		goto err;
 	}
-	if (OPENSSL_gmtime_adj(&max_time, 0, 1)) {
+	if (OPENSSL_gmtime_adj(&copy, 0, 1)) {
 		fprintf(stderr, "FAIL: OPENSSL_gmtime_adj by 1 sec didn't "
 		    "fail for maximum time\n");
 		goto err;
 	}
-	if (memcmp(&zero, &max_time, sizeof(max_time)) != 0) {
+	if (memcmp(&zero, &copy, sizeof(copy)) != 0) {
 		fprintf(stderr, "FAIL: failing OPENSSL_gmtime_adj didn't "
 		    "zero out max_time\n");
 		goto err;
 	}
-	max_time = copy;
 
 	min_time.tm_year = 0 - 1900;
 	min_time.tm_mon = 1 - 1;
@@ -679,18 +678,18 @@ asn1_time_overflow(void)
 		    "leave copy of min_time unmodified\n");
 		goto err;
 	}
-	if (OPENSSL_gmtime_adj(&min_time, 0, -1)) {
+	if (OPENSSL_gmtime_adj(&copy, 0, -1)) {
 		fprintf(stderr, "FAIL: OPENSSL_gmtime_adj by 1 sec didn't "
 		    "fail for minimum time\n");
 		goto err;
 	}
-	if (memcmp(&zero, &min_time, sizeof(min_time)) != 0) {
+	if (memcmp(&zero, &copy, sizeof(copy)) != 0) {
 		fprintf(stderr, "FAIL: failing OPENSSL_gmtime_adj didn't "
 		    "zero out max_time\n");
 		goto err;
 	}
-	min_time = copy;
 
+	copy = min_time;
 	/* Test that we can offset by the valid minimum and maximum times. */
 	if (!OPENSSL_gmtime_adj(&copy, 0, valid_time_range)) {
 		fprintf(stderr, "FAIL: OPENSSL_gmtime_adj by maximum range "
