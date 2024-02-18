@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_TIME_set.3,v 1.21 2023/11/16 14:20:49 tb Exp $
+.\" $OpenBSD: ASN1_TIME_set.3,v 1.22 2024/02/18 16:30:17 tb Exp $
 .\" full merge up to: OpenSSL 3d0f1cb9 Jul 11 03:01:24 2017 +0800
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: February 18 2024 $
 .Dt ASN1_TIME_SET 3
 .Os
 .Sh NAME
@@ -96,7 +96,9 @@
 .Nm ASN1_TIME_compare ,
 .Nm ASN1_TIME_to_generalizedtime ,
 .Nm OPENSSL_gmtime ,
-.Nm OPENSSL_timegm
+.Nm OPENSSL_timegm ,
+.Nm OPENSSL_posix_to_tm ,
+.Nm OPENSSL_tm_to_posix
 .Nd ASN.1 Time functions
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -219,15 +221,27 @@
 .Fa "const ASN1_TIME *t"
 .Fa "ASN1_GENERALIZEDTIME **out"
 .Fc
+.In openssl/crypto.h
 .Ft struct tm *
 .Fo OPENSSL_gmtime
 .Fa "const time_t *time"
 .Fa "struct tm *out_tm"
 .Fc
+.In openssl/posix_time.h
 .Ft int
 .Fo OPENSSL_timegm
 .Fa "const struct tm *tm"
 .Fa "time_t *out_time"
+.Fc
+.Ft int
+.Fo OPENSSL_posix_to_tm
+.Fa "int64_t time"
+.Fa "struct tm *out_tm"
+.Fc
+.Ft int
+.Fo OPENSSL_tm_to_posix
+.Fa "struct tm *t_tm"
+.Fa "int64_t *out"
 .Fc
 .Sh DESCRIPTION
 An
@@ -529,6 +543,21 @@ converts a time structure in UTC time in
 .Fa tm
 to a time_t value in
 .Fa out_time .
+.Pp
+.Fn OPENSSL_posix_to_tm
+converts an
+.Vt int64_t
+POSIX time value in
+.Fa time ,
+which must be in the range of year 0 to 9999,
+to a broken out time value in
+.Fa tm .
+.Pp
+.Fn OPENSSL_tm_to_posix
+converts a time value between the years 0 and 9999 in
+.Fa tm
+to a POSIX time value in
+.Fa out .
 .Sh RETURN VALUES
 .Fn ASN1_TIME_set ,
 .Fn ASN1_UTCTIME_set ,
@@ -599,6 +628,12 @@ returns
 on success or NULL for failure.
 It can fail if the time is not representable in a struct tm,
 or falls outside the range allowed in RFC 5280 times.
+.Pp
+.Fn OPENSSL_posix_to_tm
+and
+.Fn OPENSSL_tm_to_posix
+return 1 for success or 0 on failure.
+It is a failure if the year is less than 0 or more than 9999.
 .Sh EXAMPLES
 Set a time object to one hour after the current time and print it
 out:
@@ -690,9 +725,13 @@ first appeared in OpenSSL 1.1.1 and have been available since
 .Ox 7.2 .
 .Pp
 .Fn OPENSSL_gmtime
+first appeared in OpenSSL 0.9.7.
+.Fn OPENSSL_timegm ,
+.Fn OPENSSL_posix_to_tm ,
 and
-.Fn OPENSSL_timegm
-first appeared in BoringSSL and have been available since
+.Fn OPENSSL_tm_to_posix
+first appeared in BoringSSL;
+all these functions have been available since
 .Ox 7.5 .
 .Sh CAVEATS
 Some applications add offset times directly to a
