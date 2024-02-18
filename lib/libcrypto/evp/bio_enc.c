@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_enc.c,v 1.29 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: bio_enc.c,v 1.30 2024/02/18 15:44:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,7 +115,7 @@ enc_new(BIO *bi)
 	ctx = malloc(sizeof(BIO_ENC_CTX));
 	if (ctx == NULL)
 		return (0);
-	EVP_CIPHER_CTX_init(&ctx->cipher);
+	EVP_CIPHER_CTX_legacy_clear(&ctx->cipher);
 
 	ctx->buf_len = 0;
 	ctx->buf_off = 0;
@@ -360,7 +360,7 @@ again:
 	case BIO_CTRL_DUP:
 		dbio = (BIO *)ptr;
 		dctx = (BIO_ENC_CTX *)dbio->ptr;
-		EVP_CIPHER_CTX_init(&dctx->cipher);
+		EVP_CIPHER_CTX_legacy_clear(&dctx->cipher);
 		ret = EVP_CIPHER_CTX_copy(&dctx->cipher, &ctx->cipher);
 		if (ret)
 			dbio->init = 1;
