@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.110 2023/10/09 21:49:34 kettenis Exp $ */
+/* $OpenBSD: bwfm.c,v 1.111 2024/02/19 21:23:02 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -451,6 +451,16 @@ bwfm_init(struct ifnet *ifp)
 			return;
 		}
 		sc->sc_initialized = 1;
+	} else {
+		/* Update MAC in case the upper layers changed it. */
+		IEEE80211_ADDR_COPY(ic->ic_myaddr,
+		    ((struct arpcom *)ifp)->ac_enaddr);
+		if (bwfm_fwvar_var_set_data(sc, "cur_etheraddr",
+		    ic->ic_myaddr, sizeof(ic->ic_myaddr))) {
+			printf("%s: could not write MAC address\n",
+			    DEVNAME(sc));
+			return;
+		}
 	}
 
 	/* Select default channel */
