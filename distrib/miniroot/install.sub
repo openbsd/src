@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1259 2024/02/11 21:56:10 kn Exp $
+#	$OpenBSD: install.sub,v 1.1260 2024/02/19 13:53:03 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3123,9 +3123,7 @@ encrypt_root() {
 			;;
 		[pP]*)  $AI || break
 			ask_passphrase 'New passphrase?'
-			PASSFILE=/tmp/i/passfile
-			(umask 077 && print -r -- "$_passphrase" >$PASSFILE)
-			_args=-p$PASSFILE
+			_args=-s
 			break
 			;;
 		[nN]*)	return
@@ -3139,8 +3137,10 @@ encrypt_root() {
 	md_prep_fdisk $_chunk
 	echo 'RAID *' | disklabel -w -A -T- $_chunk
 
-	bioctl -Cforce -cC -l${_chunk}a $_args softraid0 >/dev/null
-	rm -fP $PASSFILE
+	# Standard input is ignored in interactive mode.
+	print -r -- "$_passphrase" |
+		bioctl -Cforce -cC -l${_chunk}a $_args softraid0 >/dev/null
+	unset _passphrase
 
 	# No volumes existed before asking, but we just created one.
 	ROOTDISK=$(get_softraid_volumes)
