@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.462 2024/02/13 16:12:37 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.463 2024/02/19 10:15:35 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -705,8 +705,12 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_TIMER_HOLDTIME:
-		case EVNT_TIMER_SENDHOLD:
 			session_notification(peer, ERR_HOLDTIMEREXPIRED,
+			    0, NULL);
+			change_state(peer, STATE_IDLE, event);
+			break;
+		case EVNT_TIMER_SENDHOLD:
+			session_notification(peer, ERR_SENDHOLDTIMEREXPIRED,
 			    0, NULL);
 			change_state(peer, STATE_IDLE, event);
 			break;
@@ -746,8 +750,12 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_TIMER_HOLDTIME:
-		case EVNT_TIMER_SENDHOLD:
 			session_notification(peer, ERR_HOLDTIMEREXPIRED,
+			    0, NULL);
+			change_state(peer, STATE_IDLE, event);
+			break;
+		case EVNT_TIMER_SENDHOLD:
+			session_notification(peer, ERR_SENDHOLDTIMEREXPIRED,
 			    0, NULL);
 			change_state(peer, STATE_IDLE, event);
 			break;
@@ -782,8 +790,12 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_TIMER_HOLDTIME:
-		case EVNT_TIMER_SENDHOLD:
 			session_notification(peer, ERR_HOLDTIMEREXPIRED,
+			    0, NULL);
+			change_state(peer, STATE_IDLE, event);
+			break;
+		case EVNT_TIMER_SENDHOLD:
+			session_notification(peer, ERR_SENDHOLDTIMEREXPIRED,
 			    0, NULL);
 			change_state(peer, STATE_IDLE, event);
 			break;

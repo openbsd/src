@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.485 2024/02/13 16:35:43 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.486 2024/02/19 10:15:35 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -705,7 +705,8 @@ enum err_codes {
 	ERR_HOLDTIMEREXPIRED,
 	ERR_FSM,
 	ERR_CEASE,
-	ERR_RREFRESH
+	ERR_RREFRESH,
+	ERR_SENDHOLDTIMEREXPIRED,
 };
 
 enum suberr_update {
