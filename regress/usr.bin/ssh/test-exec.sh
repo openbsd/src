@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.106 2024/02/09 08:47:42 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.107 2024/02/19 09:25:52 dtucker Exp $
 #	Placed in the Public Domain.
 
 #SUDO=sudo
@@ -570,8 +570,7 @@ case "$SCRIPT" in
 *)		REGRESS_INTEROP_PUTTY=no ;;
 esac
 
-if test "$REGRESS_INTEROP_PUTTY" = "yes" ; then
-    puttysetup() {
+puttysetup() {
 	if test "x$REGRESS_INTEROP_PUTTY" != "xyes" ; then
 		skip "putty interop tests not enabled"
 	fi
@@ -623,8 +622,9 @@ if test "$REGRESS_INTEROP_PUTTY" = "yes" ; then
 		echo "KexAlgorithms +diffie-hellman-group14-sha1" \
 		    >>${OBJ}/sshd_proxy
 	fi
-    }
-fi
+	PUTTYDIR=${OBJ}/.putty
+	export PUTTYDIR
+}
 
 REGRESS_INTEROP_DROPBEAR=no
 if test -x "$DROPBEARKEY" -a -x "$DBCLIENT" -a -x "$DROPBEARCONVERT"; then
