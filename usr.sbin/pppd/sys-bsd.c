@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.32 2021/10/24 21:24:19 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.33 2024/02/19 16:39:03 denis Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -1123,7 +1123,7 @@ dodefaultroute(g, cmd)
     rtmsg.gway.sin_len = sizeof(rtmsg.gway);
     rtmsg.gway.sin_family = AF_INET;
     rtmsg.gway.sin_addr.s_addr = g;
-    rtmsg.mask.sin_len = sizeof(rtmsg.dst);
+    rtmsg.mask.sin_len = sizeof(rtmsg.mask);
     rtmsg.mask.sin_family = AF_INET;
 
     rtmsg.hdr.rtm_msglen = sizeof(rtmsg);
