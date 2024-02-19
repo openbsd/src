@@ -158,12 +158,6 @@ void x86::getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
   // consider deprecating this and instead warn if the user requests external
   // retpoline thunks and *doesn't* request some form of retpolines.
   auto SpectreOpt = clang::driver::options::ID::OPT_INVALID;
-  if (Triple.isOSOpenBSD() && Triple.getArch() == llvm::Triple::x86_64 &&
-      Args.hasFlag(options::OPT_mretpoline, options::OPT_mno_retpoline, true)) {
-      Features.push_back("+retpoline-indirect-calls");
-      Features.push_back("+retpoline-indirect-branches");
-      SpectreOpt = options::OPT_mretpoline;
-  } else
   if (Args.hasArgNoClaim(options::OPT_mretpoline, options::OPT_mno_retpoline,
                          options::OPT_mspeculative_load_hardening,
                          options::OPT_mno_speculative_load_hardening)) {
