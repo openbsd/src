@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.42 2022/10/25 06:05:57 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.43 2024/02/19 09:59:29 claudio Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -100,6 +100,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	struct pcb *npcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf2;
 	struct rwindow *rp;
+	size_t pcbsz;
 	extern struct proc proc0;
 
 	/*
@@ -136,7 +137,15 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 #else
 	opcb->lastcall = NULL;
 #endif
-	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
+	/*
+	 * If a new stack is provided, do not bother copying saved windows
+	 * in the new pcb. Also, we'll reset pcb_nsaved accordingly below.
+	 */
+	if (stack != NULL)
+		pcbsz = offsetof(struct pcb, pcb_rw);
+	else
+		pcbsz = sizeof(struct pcb);
+	bcopy((caddr_t)opcb, (caddr_t)npcb, pcbsz);
 	if (p1->p_md.md_fpstate) {
 		fpusave_proc(p1, 1);
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
@@ -162,6 +171,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	 * with space reserved for the frame, and zero the frame pointer.
 	 */
 	if (stack != NULL) {
+		npcb->pcb_nsaved = 0;
 		tf2->tf_out[6] = (u_int64_t)(u_long)stack - (BIAS + CC64FSZ);
 		tf2->tf_in[6] = 0;
 	}
