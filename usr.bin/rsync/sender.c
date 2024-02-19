@@ -1,4 +1,4 @@
-/*	$OpenBSD: sender.c,v 1.30 2021/08/29 13:43:46 claudio Exp $ */
+/*	$OpenBSD: sender.c,v 1.31 2024/02/19 16:39:18 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -432,7 +432,7 @@ rsync_sender(struct sess *sess, int fdin,
 	 * poll events on demand.
 	 */
 
-	pfd[0].fd = fdin; /* from receiver */
+	pfd[0].fd = -1; /* from receiver */
 	pfd[0].events = POLLIN;
 	pfd[1].fd = -1; /* to receiver */
 	pfd[1].events = POLLOUT;
@@ -440,7 +440,11 @@ rsync_sender(struct sess *sess, int fdin,
 	pfd[2].events = POLLIN;
 
 	for (;;) {
-		assert(pfd[0].fd != -1);
+		/* disable recevier until all buffered data was sent */
+		if (pfd[1].fd != -1 && wbufsz > 0)
+			pfd[0].fd = -1;
+		else
+			pfd[0].fd = fdin;
 		if ((c = poll(pfd, 3, poll_timeout)) == -1) {
 			ERR("poll");
 			goto out;
