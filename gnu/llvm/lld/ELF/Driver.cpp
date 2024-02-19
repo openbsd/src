@@ -510,7 +510,6 @@ constexpr const char *knownZFlags[] = {
     "nokeep-text-section-prefix",
     "nopack-relative-relocs",
     "norelro",
-    "noretpolineplt",
     "noseparate-code",
     "nostart-stop-gc",
     "notext",
