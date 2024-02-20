@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.46 2024/02/20 11:42:36 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.47 2024/02/20 11:44:15 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -10159,6 +10159,48 @@ fail_link_desc_cleanup:
 }
 
 void
+qwx_dp_reo_cmd_list_cleanup(struct qwx_softc *sc)
+{
+	struct qwx_dp *dp = &sc->dp;
+	struct dp_reo_cmd *cmd, *tmp;
+	struct dp_reo_cache_flush_elem *cmd_cache, *tmp_cache;
+	struct dp_rx_tid *rx_tid;
+#ifdef notyet
+	spin_lock_bh(&dp->reo_cmd_lock);
+#endif
+	TAILQ_FOREACH_SAFE(cmd, &dp->reo_cmd_list, entry, tmp) {
+		TAILQ_REMOVE(&dp->reo_cmd_list, cmd, entry);
+		rx_tid = &cmd->data;
+		if (rx_tid->mem) {
+			qwx_dmamem_free(sc->sc_dmat, rx_tid->mem);
+			rx_tid->mem = NULL;
+			rx_tid->vaddr = NULL;
+			rx_tid->paddr = 0ULL;
+			rx_tid->size = 0;
+		}
+		free(cmd, M_DEVBUF, sizeof(*cmd));
+	}
+
+	TAILQ_FOREACH_SAFE(cmd_cache, &dp->reo_cmd_cache_flush_list,
+	    entry, tmp_cache) {
+		TAILQ_REMOVE(&dp->reo_cmd_cache_flush_list, cmd_cache, entry);
+		dp->reo_cmd_cache_flush_count--;
+		rx_tid = &cmd_cache->data;
+		if (rx_tid->mem) {
+			qwx_dmamem_free(sc->sc_dmat, rx_tid->mem);
+			rx_tid->mem = NULL;
+			rx_tid->vaddr = NULL;
+			rx_tid->paddr = 0ULL;
+			rx_tid->size = 0;
+		}
+		free(cmd_cache, M_DEVBUF, sizeof(*cmd_cache));
+	}
+#ifdef notyet
+	spin_unlock_bh(&dp->reo_cmd_lock);
+#endif
+}
+
+void
 qwx_dp_free(struct qwx_softc *sc)
 {
 	struct qwx_dp *dp = &sc->dp;
@@ -10168,9 +10210,7 @@ qwx_dp_free(struct qwx_softc *sc)
 	    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
 
 	qwx_dp_srng_common_cleanup(sc);
-#ifdef notyet
-	ath11k_dp_reo_cmd_list_cleanup(ab);
-#endif
+	qwx_dp_reo_cmd_list_cleanup(sc);
 	for (i = 0; i < sc->hw_params.max_tx_ring; i++) {
 #if 0
 		spin_lock_bh(&dp->tx_ring[i].tx_idr_lock);
