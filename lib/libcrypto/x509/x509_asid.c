@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.42 2024/02/19 15:44:10 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.43 2024/02/20 14:58:16 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -558,6 +558,8 @@ extract_min_max(ASIdOrRange *aor, ASN1_INTEGER **min, ASN1_INTEGER **max)
 		*max = aor->u.range->max;
 		return 1;
 	}
+	*min = NULL;
+	*max = NULL;
 
 	return 0;
 }
