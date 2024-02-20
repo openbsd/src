@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.5 2024/02/20 12:25:43 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.6 2024/02/20 12:51:10 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -101,11 +101,10 @@ ax_recv(struct ax *ax)
 	struct ax_pdu_searchrangelist *srl = NULL;
 	struct ax_pdu_varbindlist *vbl;
 	struct ax_searchrange *sr;
-	size_t rbsize, packetidx = 0, i, rawlen;
+	size_t rbsize, rawlen;
 	ssize_t nread;
 	uint8_t *u8;
 	uint8_t *rbuf;
-	int found;
 
 	/* Only read a single packet at a time to make sure libevent triggers */
 	if (ax->ax_rblen < AX_PDU_HEADER) {
