@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.h,v 1.3 2023/12/21 12:43:31 martijn Exp $ */
+/*	$OpenBSD: ax.h,v 1.4 2024/02/20 12:25:43 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -125,8 +125,6 @@ struct ax {
 	size_t ax_wblen;
 	size_t ax_wbtlen;
 	size_t ax_wbsize;
-	uint32_t *ax_packetids;
-	size_t ax_packetidsize;
 };
 
 #ifndef AX_PRIMITIVE

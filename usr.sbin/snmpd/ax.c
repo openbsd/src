@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.4 2023/12/21 12:43:31 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.5 2024/02/20 12:25:43 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -36,7 +36,6 @@ static int ax_pdu_need(struct ax *, size_t);
 static int ax_pdu_header(struct ax *,
     enum ax_pdu_type, uint8_t, uint32_t, uint32_t, uint32_t,
     struct ax_ostring *);
-static uint32_t ax_packetid(struct ax *);
 static uint32_t ax_pdu_queue(struct ax *);
 static int ax_pdu_add_uint16(struct ax *, uint16_t);
 static int ax_pdu_add_uint32(struct ax *, uint32_t);
@@ -89,7 +88,6 @@ ax_free(struct ax *ax)
 	close(ax->ax_fd);
 	free(ax->ax_rbuf);
 	free(ax->ax_wbuf);
-	free(ax->ax_packetids);
 	free(ax);
 }
 
@@ -394,24 +392,6 @@ ax_recv(struct ax *ax)
 		}
 		break;
 	case AX_PDU_TYPE_RESPONSE:
-		if (ax->ax_packetids != NULL) {
-			found = 0;
-			for (i = 0; ax->ax_packetids[i] != 0; i++) {
-				if (ax->ax_packetids[i] ==
-				    pdu->ap_header.aph_packetid) {
-					packetidx = i;
-					found = 1;
-				}
-			}
-			if (found) {
-				ax->ax_packetids[packetidx] =
-				    ax->ax_packetids[i - 1];
-				ax->ax_packetids[i - 1] = 0;
-			} else {
-				errno = EPROTO;
-				goto fail;
-			}
-		}
 		if (rawlen < 8) {
 			errno = EPROTO;
 			goto fail;
@@ -543,7 +523,7 @@ uint32_t
 ax_close(struct ax *ax, uint32_t sessionid,
     enum ax_close_reason reason)
 {
-	if (ax_pdu_header(ax, AX_PDU_TYPE_CLOSE, 0, sessionid, 0, 0,
+	if (ax_pdu_header(ax, AX_PDU_TYPE_CLOSE, 0, sessionid, arc4random(), 0,
 	    NULL) == -1)
 		return 0;
 
@@ -1163,8 +1143,6 @@ ax_pdu_header(struct ax *ax, enum ax_pdu_type type, uint8_t flags,
 		flags |= AX_PDU_FLAG_NETWORK_BYTE_ORDER;
 	ax->ax_wbuf[ax->ax_wbtlen++] = flags;
 	ax->ax_wbuf[ax->ax_wbtlen++] = 0;
-	if (packetid == 0)
-		packetid = ax_packetid(ax);
 	if (ax_pdu_add_uint32(ax, sessionid) == -1 ||
 	    ax_pdu_add_uint32(ax, transactionid) == -1 ||
 	    ax_pdu_add_uint32(ax, packetid) == -1 ||
@@ -1177,40 +1155,6 @@ ax_pdu_header(struct ax *ax, enum ax_pdu_type type, uint8_t flags,
 	}
 
 	return 0;
-}
-
-static uint32_t
-ax_packetid(struct ax *ax)
-{
-	uint32_t packetid, *packetids;
-	size_t npackets = 0, i;
-	int found;
-
-	if (ax->ax_packetids != NULL) {
-		for (npackets = 0; ax->ax_packetids[npackets] != 0; npackets++)
-			continue;
-	}
-	if (ax->ax_packetidsize == 0 || npackets == ax->ax_packetidsize - 1) {
-		packetids = recallocarray(ax->ax_packetids, ax->ax_packetidsize,
-		    ax->ax_packetidsize + 25, sizeof(*packetids));
-		if (packetids == NULL)
-			return 0;
-		ax->ax_packetidsize += 25;
-		ax->ax_packetids = packetids;
-	}
-	do {
-		found = 0;
-		packetid = arc4random();
-		for (i = 0; ax->ax_packetids[i] != 0; i++) {
-			if (ax->ax_packetids[i] == packetid) {
-				found = 1;
-				break;
-			}
-		}
-	} while (packetid == 0 || found);
-	ax->ax_packetids[npackets] = packetid;
-
-	return packetid;
 }
 
 static int
