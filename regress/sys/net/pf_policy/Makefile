@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2023/01/11 08:11:07 sashan Exp $
+#	$OpenBSD: Makefile,v 1.4 2024/02/20 21:10:26 bluhm Exp $
 
 # Copyright (c) 2022 Alexandr Nedvedicky <sashan@openbsd.org>
 #
@@ -16,10 +16,10 @@
 #
 
 #
-# PROBE_HOST use any remote host which is
+# REMOTE_ADDR use any remote host which is
 # reachable for ping(8)
 #
-PROBE_HOST ?= 10.188.210.50
+REMOTE_ADDR ?= 10.188.210.50
 
 TESTS_PASS =	absolute	\
 		quick		\
@@ -34,37 +34,43 @@ TESTS_BLOCK =	list		\
 TESTS_ONCE =	nesting-once	\
 		once
 
+.include <bsd.own.mk>
+
+.if ! (make(clean) || make(cleandir) || make(obj))
+
+REACHABLE != ping -c 1 -w 1 ${REMOTE_ADDR} > /dev/null 2>&1 && echo yes || :
+.if empty(REACHABLE)
+regress:
+	@echo Cannot reach ${REMOTE_ADDR}
+	@echo SKIPPED
+.endif
+
+.endif
+
 REGRESS_SETUP_ONCE = enable-pf
 enable-pf:
 	${SUDO} pfctl -e || true
 
-REACHABLE != ping -c 1 -w 1 ${PROBE_HOST} > /dev/null 2>&1 && echo yes || :
-.if empty(REACHABLE)
-regress:
-	@echo Cannot reach ${PROBE_HOST}
-	@echo SKIPPED
-.endif
-
 REGRESS_TARGETS += check-probe-host
 
 check-probe-host:
-	ping -c 1 -w 1 ${PROBE_HOST}
+	ping -c 1 -w 1 ${REMOTE_ADDR}
 
 .for rules in ${TESTS_PASS}
 REGRESS_TARGETS +=	run-pass-${rules}
 run-pass-${rules}:
 	${SUDO} pfctl -a "regress/*" -Fa
 	${SUDO} pfctl -a "regress" -f ${.CURDIR}/${rules}.conf
-	ping -c 1 -w 1 ${PROBE_HOST}
+	ping -c 1 -w 1 ${REMOTE_ADDR}
 .endfor
 
 .for rules in ${TESTS_BLOCK}
 REGRESS_TARGETS +=	run-block-${rules}
 run-block-${rules}:
 	${SUDO} pfctl -a "regress/*" -Fa
-	ping -c 1 -w 1 ${PROBE_HOST}
+	ping -c 1 -w 1 ${REMOTE_ADDR}
 	${SUDO} pfctl -a "regress" -f ${.CURDIR}/${rules}.conf
-	ping -c 1 -w 1 ${PROBE_HOST} || true
+	ping -c 1 -w 1 ${REMOTE_ADDR} || true
 .endfor
 
 .for rules in ${TESTS_ONCE}
@@ -72,8 +78,8 @@ REGRESS_TARGETS +=	run-once-${rules}
 run-once-${rules}:
 	${SUDO} pfctl -a "regress/*" -Fa
 	${SUDO} pfctl -a "regress" -f ${.CURDIR}/${rules}.conf
-	ping -c 1 -w 1 ${PROBE_HOST}
-	ping -c 1 -w 1 ${PROBE_HOST} || true
+	ping -c 1 -w 1 ${REMOTE_ADDR}
+	ping -c 1 -w 1 ${REMOTE_ADDR} || true
 .endfor
 
 REGRESS_CLEANUP += cleanup
