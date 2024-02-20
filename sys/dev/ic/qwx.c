@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.45 2024/02/16 22:46:07 phessler Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.46 2024/02/20 11:42:36 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -22848,6 +22848,12 @@ qwx_dp_rx_tid_del_func(struct qwx_dp *dp, void *ctx,
 	now = gettime();
 	elem->ts = now;
 	memcpy(&elem->data, rx_tid, sizeof(*rx_tid));
+
+	rx_tid->mem = NULL;
+	rx_tid->vaddr = NULL;
+	rx_tid->paddr = 0ULL;
+	rx_tid->size = 0;
+
 #ifdef notyet
 	spin_lock_bh(&dp->reo_cmd_lock);
 #endif
@@ -22903,18 +22909,20 @@ qwx_peer_rx_tid_delete(struct qwx_softc *sc, struct ath11k_peer *peer,
 	cmd.upd0 |= HAL_REO_CMD_UPD0_VLD;
 	ret = qwx_dp_tx_send_reo_cmd(sc, rx_tid, HAL_REO_CMD_UPDATE_RX_QUEUE,
 	    &cmd, qwx_dp_rx_tid_del_func);
-	if (ret && ret != ESHUTDOWN) {
-		printf("%s: failed to send "
-		    "HAL_REO_CMD_UPDATE_RX_QUEUE cmd, tid %d (%d)\n",
-		    sc->sc_dev.dv_xname, tid, ret);
-	}
+	if (ret) {
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send "
+			    "HAL_REO_CMD_UPDATE_RX_QUEUE cmd, tid %d (%d)\n",
+			    sc->sc_dev.dv_xname, tid, ret);
+		}
 
-	if (rx_tid->mem) {
-		qwx_dmamem_free(sc->sc_dmat, rx_tid->mem);
-		rx_tid->mem = NULL;
-		rx_tid->vaddr = NULL;
-		rx_tid->paddr = 0ULL;
-		rx_tid->size = 0;
+		if (rx_tid->mem) {
+			qwx_dmamem_free(sc->sc_dmat, rx_tid->mem);
+			rx_tid->mem = NULL;
+			rx_tid->vaddr = NULL;
+			rx_tid->paddr = 0ULL;
+			rx_tid->size = 0;
+		}
 	}
 }
 
