@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmatch.c,v 1.3 2022/12/26 19:16:02 jmc Exp $	*/
+/*	$OpenBSD: rmatch.c,v 1.4 2024/02/20 10:36:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -260,8 +260,12 @@ matchsub(const char **pp, const char **ss, const char *end, int wild)
 		/* eat possible escape char before '/' */
 		if (pattern[0] == '\\' && pattern[1] == '/')
 			pattern++;
-		if (pattern[0] == '/')
+		if (pattern[0] == '/') {
+			/* hit the barrier but we still have characters left */
+			if (string < end)
+				return 1;
 			break;
+		}
 
 		/* check if there are still characters available to compare */
 		if (string >= end)
