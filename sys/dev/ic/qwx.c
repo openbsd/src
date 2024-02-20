@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.47 2024/02/20 11:44:15 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.48 2024/02/20 11:48:19 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -154,7 +154,6 @@ void qwx_dp_rx_deliver_msdu(struct qwx_softc *, struct qwx_rx_msdu *);
 
 int qwx_scan(struct qwx_softc *);
 void qwx_scan_abort(struct qwx_softc *);
-int qwx_disassoc(struct qwx_softc *);
 int qwx_auth(struct qwx_softc *);
 int qwx_deauth(struct qwx_softc *);
 int qwx_run(struct qwx_softc *);
@@ -548,12 +547,6 @@ qwx_newstate_task(void *arg)
 				goto out;
 			/* FALLTHROUGH */
 		case IEEE80211_S_ASSOC:
-			if (nstate <= IEEE80211_S_ASSOC) {
-				err = qwx_disassoc(sc);
-				if (err)
-					goto out;
-			}
-			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 			if (nstate <= IEEE80211_S_AUTH) {
 				err = qwx_deauth(sc);
@@ -11689,6 +11682,54 @@ qwx_vdev_start_resp_event(struct qwx_softc *sc, struct mbuf *m)
 }
 
 int
+qwx_pull_vdev_stopped_param_tlv(struct qwx_softc *sc, struct mbuf *m,
+    uint32_t *vdev_id)
+{
+	const void **tb;
+	const struct wmi_vdev_stopped_event *ev;
+	int ret;
+
+	tb = qwx_wmi_tlv_parse_alloc(sc, mtod(m, void *), m->m_pkthdr.len);
+	if (tb == NULL) {
+		ret = ENOMEM;
+		printf("%s: failed to parse tlv: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TAG_VDEV_STOPPED_EVENT];
+	if (!ev) {
+		printf("%s: failed to fetch vdev stop ev\n",
+		    sc->sc_dev.dv_xname);
+		free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+		return EPROTO;
+	}
+
+	*vdev_id = ev->vdev_id;
+
+	free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+	return 0;
+}
+
+void
+qwx_vdev_stopped_event(struct qwx_softc *sc, struct mbuf *m)
+{
+	uint32_t vdev_id = 0;
+
+	if (qwx_pull_vdev_stopped_param_tlv(sc, m, &vdev_id) != 0) {
+		printf("%s: failed to extract vdev stopped event\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	sc->vdev_setup_done = 1;
+	wakeup(&sc->vdev_setup_done);
+
+	DNPRINTF(QWX_D_WMI, "%s: vdev stopped for vdev id %d", __func__,
+	    vdev_id);
+}
+
+int
 qwx_wmi_tlv_iter_parse(struct qwx_softc *sc, uint16_t tag, uint16_t len,
     const void *ptr, void *data)
 {
@@ -12946,10 +12987,10 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 	case WMI_OFFLOAD_BCN_TX_STATUS_EVENTID:
 		ath11k_bcn_tx_status_event(ab, skb);
 		break;
-	case WMI_VDEV_STOPPED_EVENTID:
-		ath11k_vdev_stopped_event(ab, skb);
-		break;
 #endif
+	case WMI_VDEV_STOPPED_EVENTID:
+		qwx_vdev_stopped_event(sc, m);
+		break;
 	case WMI_MGMT_RX_EVENTID:
 		qwx_mgmt_rx_event(sc, m);
 		/* mgmt_rx_event() owns the skb now! */
@@ -13792,6 +13833,52 @@ qwx_peer_map_event(struct qwx_softc *sc, uint8_t vdev_id, uint16_t peer_id,
 #endif
 }
 
+struct ieee80211_node *
+qwx_peer_find_by_id(struct qwx_softc *sc, uint16_t peer_id)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = NULL;
+	int s;
+
+	s = splnet();
+	RBT_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
+		struct qwx_node *nq = (struct qwx_node *)ni;
+		if (nq->peer.peer_id == peer_id)
+			break;
+	}
+	splx(s);
+
+	return ni;
+}
+
+void
+qwx_peer_unmap_event(struct qwx_softc *sc, uint16_t peer_id)
+{
+	struct ieee80211_node *ni;
+#ifdef notyet
+	spin_lock_bh(&ab->base_lock);
+#endif
+	ni = qwx_peer_find_by_id(sc, peer_id);
+	if (!ni) {
+		printf("%s: peer-unmap-event: unknown peer id %d\n",
+		    sc->sc_dev.dv_xname, peer_id);
+		goto exit;
+	}
+
+	DPRINTF(QWX_D_HTT, "%s: peer unmap vdev %d peer %s id %d\n",
+	    __func__, peer->vdev_id, ether_sprintf(ni->ni_macaddr), peer_id);
+#if 0
+	list_del(&peer->list);
+	kfree(peer);
+#endif
+	sc->peer_mapped = 1;
+	wakeup(&sc->peer_mapped);
+exit:
+#ifdef notyet
+	spin_unlock_bh(&ab->base_lock);
+#endif
+	return;
+}
 
 void
 qwx_dp_htt_htc_t2h_msg_handler(struct qwx_softc *sc, struct mbuf *m)
@@ -13845,13 +13932,13 @@ qwx_dp_htt_htc_t2h_msg_handler(struct qwx_softc *sc, struct mbuf *m)
 		qwx_peer_map_event(sc, vdev_id, peer_id, mac_addr, ast_hash,
 		    hw_peer_id);
 		break;
-#if 0
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP:
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP2:
 		peer_id = FIELD_GET(HTT_T2H_PEER_UNMAP_INFO_PEER_ID,
-				    resp->peer_unmap_ev.info);
-		ath11k_peer_unmap_event(ab, peer_id);
+		    resp->peer_unmap_ev.info);
+		qwx_peer_unmap_event(sc, peer_id);
 		break;
+#if 0
 	case HTT_T2H_MSG_TYPE_PPDU_STATS_IND:
 		ath11k_htt_pull_ppdu_stats(ab, skb);
 		break;
@@ -18621,6 +18708,38 @@ qwx_wmi_vdev_up(struct qwx_softc *sc, uint32_t vdev_id, uint32_t pdev_id,
 	return 0;
 }
 
+int
+qwx_wmi_vdev_down(struct qwx_softc *sc, uint32_t vdev_id, uint8_t pdev_id)
+{
+	struct qwx_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
+	struct wmi_vdev_down_cmd *cmd;
+	struct mbuf *m;
+	int ret;
+
+	m = qwx_wmi_alloc_mbuf(sizeof(*cmd));
+	if (!m)
+		return ENOMEM;
+
+	cmd = (struct wmi_vdev_down_cmd *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
+
+	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_DOWN_CMD) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->vdev_id = vdev_id;
+
+	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_DOWN_CMDID);
+	if (ret) {
+		printf("%s: failed to submit WMI_VDEV_DOWN cmd\n",
+		    sc->sc_dev.dv_xname);
+		m_freem(m);
+		return ret;
+	}
+
+	DNPRINTF(QWX_D_WMI, "%s: cmd vdev down id 0x%x\n", __func__, vdev_id);
+
+	return 0;
+}
+
 void
 qwx_wmi_put_wmi_channel(struct wmi_channel *chan,
     struct wmi_vdev_start_req_arg *arg)
@@ -18672,6 +18791,38 @@ qwx_wmi_put_wmi_channel(struct wmi_channel *chan,
 	    arg->channel.max_antenna_gain) |
 	    FIELD_PREP(WMI_CHAN_REG_INFO2_MAX_TX_PWR,
 	    arg->channel.max_power);
+}
+
+int
+qwx_wmi_vdev_stop(struct qwx_softc *sc, uint8_t vdev_id, uint8_t pdev_id)
+{
+	struct qwx_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
+	struct wmi_vdev_stop_cmd *cmd;
+	struct mbuf *m;
+	int ret;
+
+	m = qwx_wmi_alloc_mbuf(sizeof(*cmd));
+	if (!m)
+		return ENOMEM;
+
+	cmd = (struct wmi_vdev_stop_cmd *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
+
+	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_VDEV_STOP_CMD) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->vdev_id = vdev_id;
+
+	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_STOP_CMDID);
+	if (ret) {
+		printf("%s: failed to submit WMI_VDEV_STOP cmd\n",
+		    sc->sc_dev.dv_xname);
+		m_freem(m);
+		return ret;
+	}
+
+	DNPRINTF(QWX_D_WMI, "%s: cmd vdev stop id 0x%x\n", __func__, vdev_id);
+
+	return ret;
 }
 
 int
@@ -21831,6 +21982,46 @@ qwx_mac_set_txbf_conf(struct qwx_vif *arvif)
 }
 
 int
+qwx_mac_vdev_stop(struct qwx_softc *sc, struct qwx_vif *arvif, int pdev_id)
+{
+	int ret;
+#ifdef notyet
+	lockdep_assert_held(&ar->conf_mutex);
+#endif
+#if 0
+	reinit_completion(&ar->vdev_setup_done);
+#endif
+	sc->vdev_setup_done = 0;
+	ret = qwx_wmi_vdev_stop(sc, arvif->vdev_id, pdev_id);
+	if (ret) {
+		printf("%s: failed to stop WMI vdev %i: %d\n",
+		    sc->sc_dev.dv_xname, arvif->vdev_id, ret);
+		return ret;
+	}
+
+	ret = qwx_mac_vdev_setup_sync(sc);
+	if (ret) {
+		printf("%s: failed to synchronize setup for vdev %i: %d\n",
+		    sc->sc_dev.dv_xname, arvif->vdev_id, ret);
+		return ret;
+	}
+
+	if (sc->num_started_vdevs > 0)
+		sc->num_started_vdevs--;
+
+	DNPRINTF(QWX_D_MAC, "%s: vdev vdev_id %d stopped\n", __func__,
+	    arvif->vdev_id);
+
+	if (test_bit(ATH11K_CAC_RUNNING, sc->sc_flags)) {
+		clear_bit(ATH11K_CAC_RUNNING, sc->sc_flags);
+		DNPRINTF(QWX_D_MAC, "%s: CAC Stopped for vdev %d\n", __func__,
+		    arvif->vdev_id);
+	}
+
+	return 0;
+}
+
+int
 qwx_mac_vdev_start_restart(struct qwx_softc *sc, struct qwx_vif *arvif,
     int pdev_id, int restart)
 {
@@ -22498,12 +22689,24 @@ qwx_peer_delete(struct qwx_softc *sc, uint32_t vdev_id, uint8_t pdev_id,
 {
 	int ret;
 
+	sc->peer_mapped = 0;
 	sc->peer_delete_done = 0;
+
 	ret = qwx_wmi_send_peer_delete_cmd(sc, addr, vdev_id, pdev_id);
 	if (ret) {
 		printf("%s: failed to delete peer vdev_id %d addr %s ret %d\n",
 		    sc->sc_dev.dv_xname, vdev_id, ether_sprintf(addr), ret);
 		return ret;
+	}
+
+	while (!sc->peer_mapped) {
+		ret = tsleep_nsec(&sc->peer_mapped, 0, "qwxpeer",
+		    SEC_TO_NSEC(3));
+		if (ret) {
+			printf("%s: peer delete unmap timeout\n",
+			    sc->sc_dev.dv_xname);
+			return ret;
+		}
 	}
 
 	while (!sc->peer_delete_done) {
@@ -22963,6 +23166,51 @@ qwx_peer_rx_tid_delete(struct qwx_softc *sc, struct ath11k_peer *peer,
 			rx_tid->paddr = 0ULL;
 			rx_tid->size = 0;
 		}
+	}
+}
+
+void
+qwx_dp_rx_frags_cleanup(struct qwx_softc *sc, struct dp_rx_tid *rx_tid,
+    int rel_link_desc)
+{
+#ifdef notyet
+	lockdep_assert_held(&ab->base_lock);
+#endif
+#if 0
+	if (rx_tid->dst_ring_desc) {
+		if (rel_link_desc)
+			ath11k_dp_rx_link_desc_return(ab, (u32 *)rx_tid->dst_ring_desc,
+						      HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
+		kfree(rx_tid->dst_ring_desc);
+		rx_tid->dst_ring_desc = NULL;
+	}
+#endif
+	rx_tid->cur_sn = 0;
+	rx_tid->last_frag_no = 0;
+	rx_tid->rx_frag_bitmap = 0;
+#if 0
+	__skb_queue_purge(&rx_tid->rx_frags);
+#endif
+}
+
+void
+qwx_peer_rx_tid_cleanup(struct qwx_softc *sc, struct ath11k_peer *peer)
+{
+	struct dp_rx_tid *rx_tid;
+	int i;
+#ifdef notyet
+	lockdep_assert_held(&ar->ab->base_lock);
+#endif
+	for (i = 0; i < IEEE80211_NUM_TID; i++) {
+		rx_tid = &peer->rx_tid[i];
+
+		qwx_peer_rx_tid_delete(sc, peer, i);
+		qwx_dp_rx_frags_cleanup(sc, rx_tid, 1);
+#if 0
+		spin_unlock_bh(&ar->ab->base_lock);
+		del_timer_sync(&rx_tid->frag_timer);
+		spin_lock_bh(&ar->ab->base_lock);
+#endif
 	}
 }
 
@@ -23454,6 +23702,26 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 
 	if (tx_ring->queued >= sc->hw_params.tx_ring_size - 1)
 		sc->qfullmsk |= (1 << ti.ring_id); 
+
+	return 0;
+}
+
+int
+qwx_mac_station_remove(struct qwx_softc *sc, struct qwx_vif *arvif,
+    uint8_t pdev_id, struct ieee80211_node *ni)
+{
+	struct qwx_node *nq = (struct qwx_node *)ni;
+	struct ath11k_peer *peer = &nq->peer;
+	int ret;
+
+	qwx_peer_rx_tid_cleanup(sc, peer);
+
+	ret = qwx_peer_delete(sc, arvif->vdev_id, pdev_id, ni->ni_macaddr);
+	if (ret) {
+		printf("%s: unable to delete BSS peer: %d\n",
+		   sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
 
 	return 0;
 }
@@ -24143,8 +24411,35 @@ qwx_auth(struct qwx_softc *sc)
 int
 qwx_deauth(struct qwx_softc *sc)
 {
-	printf("%s: not implemented\n", __func__);
-	return ENOTSUP;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	int ret;
+
+	ret = qwx_mac_vdev_stop(sc, arvif, pdev_id);
+	if (ret) {
+		printf("%s: unable to stop vdev vdev_id %d: %d\n",
+		   sc->sc_dev.dv_xname, arvif->vdev_id, ret);
+		return ret;
+	}
+
+	ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr, arvif->vdev_id,
+	    pdev_id, WMI_PEER_AUTHORIZE, 0);
+	if (ret) {
+		printf("%s: unable to deauthorize BSS peer: %d\n",
+		   sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ret = qwx_mac_station_remove(sc, arvif, pdev_id, ni);
+	if (ret)
+		return ret;
+
+	DNPRINTF(QWX_D_MAC, "%s: disassociated from bssid %s aid %d\n",
+	    __func__, arvif->vdev_id, ether_sprintf(ni->ni_bssid), arvif->aid);
+
+	return 0;
 }
 
 void
@@ -24243,13 +24538,6 @@ qwx_peer_assoc_prepare(struct qwx_softc *sc, struct qwx_vif *arvif,
 }
 
 int
-qwx_disassoc(struct qwx_softc *sc)
-{
-	printf("%s: not implemented\n", __func__);
-	return ENOTSUP;
-}
-
-int
 qwx_run(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -24344,14 +24632,24 @@ int
 qwx_run_stop(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	int ret;
 
 	sc->ops.irq_disable(sc);
 
 	if (ic->ic_opmode == IEEE80211_M_STA)
 		ic->ic_bss->ni_txrate = 0;
 
-	printf("%s: not implemented\n", __func__);
-	return ENOTSUP;
+	ret = qwx_wmi_vdev_down(sc, arvif->vdev_id, pdev_id);
+	if (ret)
+		return ret;
+
+	arvif->is_up = 0;
+
+	DNPRINTF(QWX_D_MAC, "%s: vdev %d down\n", __func__, arvif->vdev_id);
+
+	return 0;
 }
 
 #if NBPFILTER > 0
