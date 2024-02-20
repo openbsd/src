@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.89 2024/02/06 15:36:11 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.90 2024/02/20 12:32:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1759,9 +1759,13 @@ resolve_oids(void)
 	free(trapcmds);
 
 	for (i = 0; i < ntrapaddresses; i++) {
-		if (resolve_oid(
-		    &trapaddresses[i].tr->ta_oid, &trapaddresses[i].oid) == -1)
-			return -1;
+		if (trapaddresses[i].oid.descriptor == NULL)
+			trapaddresses[i].tr->ta_oid.bo_n = 0;
+		else {
+			if (resolve_oid(&trapaddresses[i].tr->ta_oid,
+			    &trapaddresses[i].oid) == -1)
+				return -1;
+		}
 		TAILQ_INSERT_TAIL(&conf->sc_trapreceivers,
 		    trapaddresses[i].tr, entry);
 	}
