@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.124 2023/07/27 09:27:43 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.125 2024/02/20 21:40:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -149,6 +149,7 @@ enum imsg_type {
 	/* Device Operation Messages */
 	IMSG_DEVOP_HOSTMAC,
 	IMSG_DEVOP_MSG,
+	IMSG_DEVOP_VIONET_MSG,
 };
 
 struct vmop_result {
@@ -410,7 +411,13 @@ enum pipe_msg_type {
 	I8253_RESET_CHAN_2 = 2,
 	NS8250_ZERO_READ,
 	NS8250_RATELIMIT,
-	MC146818_RESCHEDULE_PER
+	MC146818_RESCHEDULE_PER,
+	VIRTIO_NOTIFY,
+	VIRTIO_RAISE_IRQ,
+	VIRTIO_THREAD_START,
+	VIRTIO_THREAD_PAUSE,
+	VIRTIO_THREAD_STOP,
+	VIRTIO_THREAD_ACK,
 };
 
 static inline struct sockaddr_in *
@@ -495,6 +502,8 @@ int	 read_mem(paddr_t, void *buf, size_t);
 int	 start_vm(struct vmd_vm *, int);
 __dead void vm_shutdown(unsigned int);
 void	 vm_pipe_init(struct vm_dev_pipe *, void (*)(int, short, void *));
+void	 vm_pipe_init2(struct vm_dev_pipe *, void (*)(int, short, void *),
+	    void *);
 void	 vm_pipe_send(struct vm_dev_pipe *, enum pipe_msg_type);
 enum pipe_msg_type vm_pipe_recv(struct vm_dev_pipe *);
 int	 write_mem(paddr_t, const void *buf, size_t);

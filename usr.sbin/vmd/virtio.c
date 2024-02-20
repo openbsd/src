@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.112 2024/02/10 02:10:41 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.113 2024/02/20 21:40:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1424,7 +1424,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		 */
 		dev->sync_fd = sync_fds[0];
 		dev->async_fd = async_fds[0];
-		vm_device_pipe(dev, virtio_dispatch_dev);
+		vm_device_pipe(dev, virtio_dispatch_dev, NULL);
 	} else {
 		/* Child */
 		close_fd(async_fds[0]);
@@ -1502,7 +1502,8 @@ err:
  * Initialize an async imsg channel for a virtio device.
  */
 int
-vm_device_pipe(struct virtio_dev *dev, void (*cb)(int, short, void *))
+vm_device_pipe(struct virtio_dev *dev, void (*cb)(int, short, void *),
+    struct event_base *ev_base)
 {
 	struct imsgev *iev = &dev->async_iev;
 	int fd = dev->async_fd;
@@ -1514,7 +1515,7 @@ vm_device_pipe(struct virtio_dev *dev, void (*cb)(int, short, void *))
 	iev->handler = cb;
 	iev->data = dev;
 	iev->events = EV_READ;
-	imsg_event_add(iev);
+	imsg_event_add2(iev, ev_base);
 
 	return (0);
 }

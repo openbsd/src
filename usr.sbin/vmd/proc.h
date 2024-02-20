@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.23 2023/09/26 01:53:54 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.24 2024/02/20 21:40:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -160,8 +160,11 @@ void	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, unsigned int,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 imsg_event_add(struct imsgev *);
+void	 imsg_event_add2(struct imsgev *, struct event_base *);
 int	 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
 	    pid_t, int, void *, uint16_t);
+int	 imsg_compose_event2(struct imsgev *, uint16_t, uint32_t,
+    	    pid_t, int, void *, uint16_t, struct event_base *);
 int	 imsg_composev_event(struct imsgev *, uint16_t, uint32_t,
 	    pid_t, int, const struct iovec *, int);
 int	 proc_compose_imsg(struct privsep *, enum privsep_procid, int,

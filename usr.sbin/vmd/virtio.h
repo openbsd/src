@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.50 2024/01/30 23:01:49 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.51 2024/02/20 21:40:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -343,7 +343,8 @@ int virtio_restore(int, struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK],
     int *);
 const char *virtio_reg_name(uint8_t);
 uint32_t vring_size(uint32_t);
-int vm_device_pipe(struct virtio_dev *, void (*)(int, short, void *));
+int vm_device_pipe(struct virtio_dev *, void (*)(int, short, void *),
+    struct event_base *);
 int virtio_pci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 void virtio_assert_pic_irq(struct virtio_dev *, int);
 void virtio_deassert_pic_irq(struct virtio_dev *, int);

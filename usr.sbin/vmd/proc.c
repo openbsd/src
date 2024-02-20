@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.22 2024/01/18 14:49:59 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.23 2024/02/20 21:40:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -685,9 +685,14 @@ proc_dispatch_null(int fd, struct privsep_proc *p, struct imsg *imsg)
 /*
  * imsg helper functions
  */
-
 void
 imsg_event_add(struct imsgev *iev)
+{
+	imsg_event_add2(iev, NULL);
+}
+
+void
+imsg_event_add2(struct imsgev *iev, struct event_base *ev_base)
 {
 	if (iev->handler == NULL) {
 		imsg_flush(&iev->ibuf);
@@ -700,6 +705,8 @@ imsg_event_add(struct imsgev *iev)
 
 	event_del(&iev->ev);
 	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
+	if (ev_base != NULL)
+		event_base_set(ev_base, &iev->ev);
 	event_add(&iev->ev, NULL);
 }
 
@@ -707,12 +714,20 @@ int
 imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
     pid_t pid, int fd, void *data, uint16_t datalen)
 {
+	return imsg_compose_event2(iev, type, peerid, pid, fd, data, datalen,
+	    NULL);
+}
+
+int
+imsg_compose_event2(struct imsgev *iev, uint16_t type, uint32_t peerid,
+    pid_t pid, int fd, void *data, uint16_t datalen, struct event_base *ev_base)
+{
 	int	ret;
 
 	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
 	    pid, fd, data, datalen)) == -1)
 		return (ret);
-	imsg_event_add(iev);
+	imsg_event_add2(iev, ev_base);
 	return (ret);
 }
 
