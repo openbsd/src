@@ -581,6 +581,7 @@
 ./usr/include/dev/pci/if_lgereg.h
 ./usr/include/dev/pci/if_liireg.h
 ./usr/include/dev/pci/if_mskvar.h
+./usr/include/dev/pci/if_mwxreg.h
 ./usr/include/dev/pci/if_myxreg.h
 ./usr/include/dev/pci/if_nfereg.h
 ./usr/include/dev/pci/if_nfevar.h
