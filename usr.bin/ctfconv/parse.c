@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.15 2022/12/26 18:43:49 jmc Exp $ */
+/*	$OpenBSD: parse.c,v 1.16 2024/02/21 13:18:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -1345,6 +1345,8 @@ dav2val(struct dwaval *dav, size_t psz)
 	case DW_FORM_sdata:
 	case DW_FORM_data8:
 	case DW_FORM_ref8:
+	case DW_FORM_udata:
+	case DW_FORM_ref_udata:
 		val = dav->dav_u64;
 		break;
 	case DW_FORM_strp:
