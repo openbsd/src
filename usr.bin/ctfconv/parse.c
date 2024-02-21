@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.18 2024/02/21 13:21:56 claudio Exp $ */
+/*	$OpenBSD: parse.c,v 1.19 2024/02/21 13:24:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -333,6 +333,11 @@ it_cmp(struct itype *a, struct itype *b)
 	    (diff = (a->it_size - b->it_size) != 0))
 		return diff;
 
+	/* Arrays need to have same number of elements */
+	if ((a->it_type == CTF_K_ARRAY) &&
+	    (diff = (a->it_nelems - b->it_nelems) != 0))
+		return diff;
+
 	/* Match by name */
 	if (!(a->it_flags & ITF_ANON) && !(b->it_flags & ITF_ANON))
 		return strcmp(it_name(a), it_name(b));
@@ -345,7 +350,7 @@ it_cmp(struct itype *a, struct itype *b)
 	if ((a->it_refp != NULL) && (b->it_refp != NULL))
 		return it_cmp(a->it_refp, b->it_refp);
 
-	return 1;
+	return 0;
 }
 
 int
