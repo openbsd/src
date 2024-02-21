@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxreg.h,v 1.6 2024/02/03 10:03:18 stsp Exp $	*/
+/*	$OpenBSD: qwxreg.h,v 1.7 2024/02/21 14:40:50 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -6926,11 +6926,6 @@ enum ath11k_qmi_bdf_type {
 #define HAL_OFFSET_FROM_HP_TO_TP		4
 
 #define HAL_SHADOW_REG(sc, x) (HAL_SHADOW_BASE_ADDR(sc) + (4 * (x)))
-
-/* SRNG registers are split into two groups R0 and R2 */
-#define HAL_SRNG_REG_GRP_R0	0
-#define HAL_SRNG_REG_GRP_R2	1
-#define HAL_SRNG_NUM_REG_GRP    2
 
 enum hal_srng_ring_id {
 	HAL_SRNG_RING_ID_REO2SW1 = 0,
