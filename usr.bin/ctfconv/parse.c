@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.16 2024/02/21 13:18:33 claudio Exp $ */
+/*	$OpenBSD: parse.c,v 1.17 2024/02/21 13:20:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -833,7 +833,7 @@ parse_refers(struct dwdie *die, size_t psz, int type)
 
 	if (it->it_ref == 0 && (it->it_size == sizeof(void *) ||
 	    type == CTF_K_CONST || type == CTF_K_VOLATILE ||
-	    type == CTF_K_POINTER)) {
+	    type == CTF_K_POINTER || type == CTF_K_TYPEDEF)) {
 		/* Work around GCC/clang not emiting a type for void */
 		it->it_flags &= ~ITF_UNRES;
 		it->it_ref = VOID_OFFSET;
