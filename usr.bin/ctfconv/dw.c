@@ -1,4 +1,4 @@
-/*	$OpenBSD: dw.c,v 1.5 2021/10/25 19:54:29 kn Exp $ */
+/*	$OpenBSD: dw.c,v 1.6 2024/02/21 13:16:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot
@@ -21,6 +21,7 @@
 
 #include <errno.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -184,6 +185,7 @@ const char *
 dw_at2name(uint64_t at)
 {
 	static const char *dw_attrs[] = { DW_AT_NAMES };
+	static char buf[64];
 
 	if (at <= nitems(dw_attrs))
 		return dw_attrs[at - 1];
@@ -193,7 +195,8 @@ dw_at2name(uint64_t at)
 	if (at == DW_AT_hi_user)
 		return "DW_AT_hi_user";
 
-	return NULL;
+	snprintf(buf, sizeof(buf), "#%llu", at);
+	return buf;
 }
 
 const char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwarf.h,v 1.2 2017/08/11 14:58:56 jasper Exp $ */
+/*	$OpenBSD: dwarf.h,v 1.3 2024/02/21 13:16:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -273,6 +273,7 @@
 #define DW_AT_const_expr		0x6c
 #define DW_AT_enum_class		0x6d
 #define DW_AT_linkage_name		0x6e
+#define DW_AT_noreturn			0x87
 #define DW_AT_lo_user			0x2000
 #define DW_AT_hi_user			0x3fff
 
@@ -413,6 +414,7 @@
 	"DW_AT_const_expr",						\
 	"DW_AT_enum_class",						\
 	"DW_AT_linkage_name",						\
+	[0x87 - 1] = "DW_AT_noreturn",					\
 
 #define DW_FORM_addr			0x01
 #define DW_FORM_block2			0x03
