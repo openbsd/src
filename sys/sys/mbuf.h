@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.261 2023/07/16 03:01:31 yasuoka Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.262 2024/02/21 13:42:06 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ struct mbuf {
     ("\20\1IPV4_CSUM_OUT\2TCP_CSUM_OUT\3UDP_CSUM_OUT\4IPV4_CSUM_IN_OK" \
     "\5IPV4_CSUM_IN_BAD\6TCP_CSUM_IN_OK\7TCP_CSUM_IN_BAD\10UDP_CSUM_IN_OK" \
     "\11UDP_CSUM_IN_BAD\12ICMP_CSUM_OUT\13ICMP_CSUM_IN_OK\14ICMP_CSUM_IN_BAD" \
-    "\15IPV6_NODF_OUT" "\16TIMESTAMP" "\17FLOWID")
+    "\15IPV6_NODF_OUT" "\16TIMESTAMP" "\17FLOWID" "\20TCP_TSO")
 #endif
 
 /* mbuf types */
