@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.249 2024/02/16 11:55:42 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.250 2024/02/21 12:48:25 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -74,6 +74,11 @@ int	rrdpon = 1;
 int	repo_timeout;
 time_t	deadline;
 
+/* 9999-12-31 23:59:59 UTC */
+#define X509_TIME_MAX 253402300799LL
+/* 0000-01-01 00:00:00 UTC */
+#define X509_TIME_MIN -62167219200LL
+
 int64_t  evaluation_time = X509_TIME_MIN;
 
 struct stats	 stats;
@@ -113,6 +118,18 @@ getmonotime(void)
 	return (ts.tv_sec);
 }
 
+/*
+ * Time - Evaluation time is used as the current time if it is
+ * larger than X509_TIME_MIN, otherwise the system time is used.
+ */
+time_t
+get_current_time(void)
+{
+	if (evaluation_time > X509_TIME_MIN)
+		return (time_t)evaluation_time;
+	return time(NULL);
+}
+
 void
 entity_free(struct entity *ent)
 {
@@ -124,14 +141,6 @@ entity_free(struct entity *ent)
 	free(ent->mftaki);
 	free(ent->data);
 	free(ent);
-}
-
-time_t
-get_current_time(void)
-{
-	if (evaluation_time > X509_TIME_MIN)
-		return (time_t)evaluation_time;
-	return time(NULL);
 }
 
 /*

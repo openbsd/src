@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.206 2024/02/21 12:38:10 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.207 2024/02/21 12:48:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -902,9 +902,10 @@ int		 output_json(FILE *, struct vrp_tree *, struct brk_tree *,
 int		 output_ometric(FILE *, struct vrp_tree *, struct brk_tree *,
 		    struct vap_tree *, struct stats *);
 
-void		logx(const char *fmt, ...)
+void		 logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
-time_t		getmonotime(void);
+time_t		 getmonotime(void);
+time_t		 get_current_time(void);
 
 int	mkpath(const char *);
 int	mkpathat(int, const char *);
@@ -955,13 +956,5 @@ int	mkpathat(int, const char *);
 
 /* Maximum number of delegated hosting locations (repositories) for each TAL. */
 #define MAX_REPO_PER_TAL	1000
-
-/*
- * Time - Evaluation time is used as the current time if it is
- * larger than X509_TIME_MIN, otherwise the system time is used.
- */
-#define X509_TIME_MAX 253402300799LL
-#define X509_TIME_MIN -62167219200LL
-extern time_t  get_current_time(void);
 
 #endif /* ! EXTERN_H */
