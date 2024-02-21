@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.17 2024/02/21 13:20:38 claudio Exp $ */
+/*	$OpenBSD: parse.c,v 1.18 2024/02/21 13:21:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -50,7 +50,11 @@ struct pool it_pool, im_pool, ir_pool;
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#define DPRINTF(x...)	do { /*printf(x)*/ } while (0)
+#ifdef DEBUG
+#define DPRINTF(x...)	do { printf(x); } while (0)
+#else
+#define DPRINTF(x...)	do { ; } while (0)
+#endif
 
 #define VOID_OFFSET	1	/* Fake offset for generating "void" type. */
 
