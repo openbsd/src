@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.1 2024/02/21 10:48:10 claudio Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.2 2024/02/21 12:08:05 jsg Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -501,7 +501,7 @@ mwx_map_reg_l1(struct mwx_softc *sc, uint32_t reg)
 }
 
 /*
- * Poll for timeout miliseconds or until register reg read the value val
+ * Poll for timeout milliseconds or until register reg read the value val
  * after applying the mask to the value read. Returns 0 on success ETIMEDOUT
  * on failure.
  */
@@ -554,7 +554,7 @@ mwx_init(struct ifnet *ifp)
 		return rv;
 
 #if 0
-	/* XXX no channel availabel yet */
+	/* XXX no channel available yet */
 	rv = mt7921_mcu_set_chan_info(sc, MCU_EXT_CMD_SET_RX_PATH);
 	if (rv)
 		return rv;
@@ -1047,7 +1047,7 @@ mwx_intr(void *arg)
 //	mt76_connac_pm_ref(&dev->mphy, &dev->pm);
 
 	if (intr & ~mask)
-		printf("%s: unhandled interupt %08x\n", DEVNAME(sc),
+		printf("%s: unhandled interrupt %08x\n", DEVNAME(sc),
 		    intr & ~mask);
 	/* ack interrupts */
 	intr &= mask;
@@ -2094,7 +2094,7 @@ mwx_dma_rx_process(struct mwx_softc *sc, struct mbuf_list *ml)
 			break;
 		default:
 			if (DEVDEBUG(sc))
-				printf("%s: recevied unknown pkt type %d\n",
+				printf("%s: received unknown pkt type %d\n",
 				    DEVNAME(sc), type);
 			m_freem(m);
 			break;
@@ -2503,7 +2503,7 @@ mwx_mcu_wait_resp_msg(struct mwx_softc *sc, uint32_t cmd, int seq,
 		return rv;
 	}
 	if (sc->sc_mcu_wait[seq].mcu_m == NULL) {
-		printf("%s: command respone missing\n", DEVNAME(sc));
+		printf("%s: command response missing\n", DEVNAME(sc));
 		return ENOENT;
 	}
 	if (mp != NULL)
@@ -3154,7 +3154,7 @@ mt7921_mcu_get_nic_capability(struct mwx_softc *sc)
 	if (rv != 0)
 		return rv;
 
-	/* the message was allready pulled up by mwx_mcu_rx_event() */
+	/* the message was already pulled up by mwx_mcu_rx_event() */
 	if (m->m_len < sizeof(*hdr)) {
 		printf("%s: GET_NIC_CAPAB response size error\n", DEVNAME(sc));
 		m_freem(m);

@@ -586,7 +586,7 @@ struct mt76_txwi {
 #define	MT_TX_PORT_IDX_LMAC			0
 #define	MT_TX_PORT_IDX_MCU			1
 
-/* valus for EEPROM command */
+/* values for EEPROM command */
 #define	EE_MODE_EFUSE		0
 #define	EE_MODE_BUFFER		1
 
