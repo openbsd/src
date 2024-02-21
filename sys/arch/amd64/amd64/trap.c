@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.104 2024/01/31 06:06:28 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.105 2024/02/21 15:53:07 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -424,7 +424,7 @@ usertrap(struct trapframe *frame)
 		break;
 	case T_CP:
 		sig = SIGILL;
-		code = (frame->tf_err & 0x7fff) < 4 ? ILL_ILLOPC
+		code = (frame->tf_err & 0x7fff) < 4 ? ILL_BTCFI
 		    : ILL_BADSTK;
 		break;
 

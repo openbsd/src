@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo.h,v 1.13 2022/10/25 16:08:26 kettenis Exp $	*/
+/*	$OpenBSD: siginfo.h,v 1.14 2024/02/21 15:53:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -61,7 +61,8 @@ union sigval {
 #define ILL_PRVREG	6	/* privileged register */
 #define ILL_COPROC	7	/* co-processor */
 #define ILL_BADSTK	8	/* bad stack */
-#define NSIGILL		8
+#define ILL_BTCFI	9	/* IBT missing on indirect call */
+#define NSIGILL		9
 
 #define EMT_TAGOVF	1	/* tag overflow */
 #define NSIGEMT		1
