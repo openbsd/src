@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.326 2024/01/21 17:21:55 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.327 2024/02/21 03:28:29 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4556,7 +4556,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	struct vm_page *pg;
 	struct uvm_object *uobj;
 	vaddr_t cp_start, cp_end;
-	int refs;
+	int refs, imut = 0;
 	int error;
 	boolean_t rv;
 
@@ -4572,10 +4572,8 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	/* Make a first pass to check for various conditions. */
 	for (entry = first; entry != NULL && entry->start < end;
 	    entry = RBT_NEXT(uvm_map_addr, entry)) {
-		if (entry->etype & UVM_ET_IMMUTABLE) {
-			vm_map_unlock(map);
-			return EPERM;
-		}
+		if (entry->etype & UVM_ET_IMMUTABLE)
+			imut = 1;
 		if (UVM_ET_ISSUBMAP(entry)) {
 			vm_map_unlock(map);
 			return EINVAL;
@@ -4607,6 +4605,11 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		 */
 		if (amap == NULL || (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0)
 			goto flush_object;
+
+		if (imut) {
+			vm_map_unbusy(map);
+			return EPERM;
+		}
 
 		cp_start = MAX(entry->start, start);
 		cp_end = MIN(entry->end, end);
