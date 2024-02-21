@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.205 2024/02/21 12:35:36 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.206 2024/02/21 12:38:10 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -702,15 +702,15 @@ int		 cms_parse_validate_detached(X509 **, const char *,
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 
 int		 ip_addr_afi_parse(const char *, const ASN1_OCTET_STRING *,
-			enum afi *);
+		    enum afi *);
 int		 ip_addr_parse(const ASN1_BIT_STRING *,
-			enum afi, const char *, struct ip_addr *);
+		    enum afi, const char *, struct ip_addr *);
 void		 ip_addr_print(const struct ip_addr *, enum afi, char *,
-			size_t);
+		    size_t);
 int		 ip_addr_check_overlap(const struct cert_ip *,
-			const char *, const struct cert_ip *, size_t, int);
+		    const char *, const struct cert_ip *, size_t, int);
 int		 ip_addr_check_covered(enum afi, const unsigned char *,
-			const unsigned char *, const struct cert_ip *, size_t);
+		    const unsigned char *, const struct cert_ip *, size_t);
 int		 ip_cert_compose_ranges(struct cert_ip *);
 void		 ip_roa_compose_ranges(struct roa_ip *);
 void		 ip_warn(const char *, const char *, const struct cert_ip *);
@@ -727,9 +727,9 @@ int		 sbgp_parse_ipaddrblk(const char *, const IPAddrBlocks *,
 
 int		 as_id_parse(const ASN1_INTEGER *, uint32_t *);
 int		 as_check_overlap(const struct cert_as *, const char *,
-			const struct cert_as *, size_t, int);
+		    const struct cert_as *, size_t, int);
 int		 as_check_covered(uint32_t, uint32_t,
-			const struct cert_as *, size_t);
+		    const struct cert_as *, size_t);
 void		 as_warn(const char *, const char *, const struct cert_as *);
 
 int		 sbgp_as_id(const char *, struct cert_as *, size_t *,
