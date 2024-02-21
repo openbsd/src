@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.110 2024/02/16 15:18:08 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.111 2024/02/21 09:17:06 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -33,15 +33,6 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
-
-/*
- * Parse results and data of the manifest file.
- */
-struct	parse {
-	const char	*fn; /* manifest file name */
-	struct mft	*res; /* result object */
-	int		 found_crl;
-};
 
 extern ASN1_OBJECT	*mft_oid;
 
@@ -183,7 +174,8 @@ rtype_from_mftfile(const char *fn)
  * Return zero on failure, non-zero on success.
  */
 static int
-mft_parse_filehash(struct parse *p, const FileAndHash *fh)
+mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
+    int *found_crl)
 {
 	char			*file = NULL;
 	int			 rc = 0;
@@ -192,7 +184,7 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 	size_t			 new_idx = 0;
 
 	if (!valid_mft_filename(fh->file->data, fh->file->length)) {
-		warnx("%s: RFC 6486 section 4.2.2: bad filename", p->fn);
+		warnx("%s: RFC 6486 section 4.2.2: bad filename", fn);
 		goto out;
 	}
 	file = strndup(fh->file->data, fh->file->length);
@@ -201,25 +193,24 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 
 	if (fh->hash->length != SHA256_DIGEST_LENGTH) {
 		warnx("%s: RFC 6486 section 4.2.1: hash: "
-		    "invalid SHA256 length, have %d",
-		    p->fn, fh->hash->length);
+		    "invalid SHA256 length, have %d", fn, fh->hash->length);
 		goto out;
 	}
 
 	type = rtype_from_mftfile(file);
 	/* remember the filehash for the CRL in struct mft */
-	if (type == RTYPE_CRL && strcmp(file, p->res->crl) == 0) {
-		memcpy(p->res->crlhash, fh->hash->data, SHA256_DIGEST_LENGTH);
-		p->found_crl = 1;
+	if (type == RTYPE_CRL && strcmp(file, mft->crl) == 0) {
+		memcpy(mft->crlhash, fh->hash->data, SHA256_DIGEST_LENGTH);
+		*found_crl = 1;
 	}
 
 	if (filemode)
-		fent = &p->res->files[p->res->filesz++];
+		fent = &mft->files[mft->filesz++];
 	else {
 		/* Fisher-Yates shuffle */
-		new_idx = arc4random_uniform(p->res->filesz + 1);
-		p->res->files[p->res->filesz++] = p->res->files[new_idx];
-		fent = &p->res->files[new_idx];
+		new_idx = arc4random_uniform(mft->filesz + 1);
+		mft->files[mft->filesz++] = mft->files[new_idx];
+		fent = &mft->files[new_idx];
 	}
 
 	fent->type = type;
@@ -308,30 +299,30 @@ mft_has_unique_names_and_hashes(const char *fn, const Manifest *mft)
  * Returns 0 on failure and 1 on success.
  */
 static int
-mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
+mft_parse_econtent(const char *fn, struct mft *mft, const unsigned char *d,
+    size_t dsz)
 {
 	const unsigned char	*oder;
 	Manifest		*mft_asn1;
 	FileAndHash		*fh;
-	int			 i, rc = 0;
+	int			 found_crl, i, rc = 0;
 
 	oder = d;
 	if ((mft_asn1 = d2i_Manifest(NULL, &d, dsz)) == NULL) {
-		warnx("%s: RFC 6486 section 4: failed to parse Manifest",
-		    p->fn);
+		warnx("%s: RFC 6486 section 4: failed to parse Manifest", fn);
 		goto out;
 	}
 	if (d != oder + dsz) {
-		warnx("%s: %td bytes trailing garbage in eContent", p->fn,
+		warnx("%s: %td bytes trailing garbage in eContent", fn,
 		    oder + dsz - d);
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, mft_asn1->version, 0))
+	if (!valid_econtent_version(fn, mft_asn1->version, 0))
 		goto out;
 
-	p->res->seqnum = x509_convert_seqnum(p->fn, mft_asn1->manifestNumber);
-	if (p->res->seqnum == NULL)
+	mft->seqnum = x509_convert_seqnum(fn, mft_asn1->manifestNumber);
+	if (mft->seqnum == NULL)
 		goto out;
 
 	/*
@@ -339,60 +330,61 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	 * which doesn't conform to RFC 5280. So, double check.
 	 */
 	if (ASN1_STRING_length(mft_asn1->thisUpdate) != GENTIME_LENGTH) {
-		warnx("%s: embedded from time format invalid", p->fn);
+		warnx("%s: embedded from time format invalid", fn);
 		goto out;
 	}
 	if (ASN1_STRING_length(mft_asn1->nextUpdate) != GENTIME_LENGTH) {
-		warnx("%s: embedded until time format invalid", p->fn);
+		warnx("%s: embedded until time format invalid", fn);
 		goto out;
 	}
 
-	if (!x509_get_time(mft_asn1->thisUpdate, &p->res->thisupdate)) {
-		warn("%s: parsing manifest thisUpdate failed", p->fn);
+	if (!x509_get_time(mft_asn1->thisUpdate, &mft->thisupdate)) {
+		warn("%s: parsing manifest thisUpdate failed", fn);
 		goto out;
 	}
-	if (!x509_get_time(mft_asn1->nextUpdate, &p->res->nextupdate)) {
-		warn("%s: parsing manifest nextUpdate failed", p->fn);
+	if (!x509_get_time(mft_asn1->nextUpdate, &mft->nextupdate)) {
+		warn("%s: parsing manifest nextUpdate failed", fn);
 		goto out;
 	}
 
-	if (p->res->thisupdate > p->res->nextupdate) {
-		warnx("%s: bad update interval", p->fn);
+	if (mft->thisupdate > mft->nextupdate) {
+		warnx("%s: bad update interval", fn);
 		goto out;
 	}
 
 	if (OBJ_obj2nid(mft_asn1->fileHashAlg) != NID_sha256) {
 		warnx("%s: RFC 6486 section 4.2.1: fileHashAlg: "
-		    "want SHA256 object, have %s (NID %d)", p->fn,
+		    "want SHA256 object, have %s (NID %d)", fn,
 		    ASN1_tag2str(OBJ_obj2nid(mft_asn1->fileHashAlg)),
 		    OBJ_obj2nid(mft_asn1->fileHashAlg));
 		goto out;
 	}
 
 	if (sk_FileAndHash_num(mft_asn1->fileList) >= MAX_MANIFEST_ENTRIES) {
-		warnx("%s: %d exceeds manifest entry limit (%d)", p->fn,
+		warnx("%s: %d exceeds manifest entry limit (%d)", fn,
 		    sk_FileAndHash_num(mft_asn1->fileList),
 		    MAX_MANIFEST_ENTRIES);
 		goto out;
 	}
 
-	p->res->files = calloc(sk_FileAndHash_num(mft_asn1->fileList),
+	mft->files = calloc(sk_FileAndHash_num(mft_asn1->fileList),
 	    sizeof(struct mftfile));
-	if (p->res->files == NULL)
+	if (mft->files == NULL)
 		err(1, NULL);
 
+	found_crl = 0;
 	for (i = 0; i < sk_FileAndHash_num(mft_asn1->fileList); i++) {
 		fh = sk_FileAndHash_value(mft_asn1->fileList, i);
-		if (!mft_parse_filehash(p, fh))
+		if (!mft_parse_filehash(fn, mft, fh, &found_crl))
 			goto out;
 	}
 
-	if (!p->found_crl) {
-		warnx("%s: CRL not part of MFT fileList", p->fn);
+	if (!found_crl) {
+		warnx("%s: CRL not part of MFT fileList", fn);
 		goto out;
 	}
 
-	if (!mft_has_unique_names_and_hashes(p->fn, mft_asn1))
+	if (!mft_has_unique_names_and_hashes(fn, mft_asn1))
 		goto out;
 
 	rc = 1;
@@ -409,7 +401,7 @@ struct mft *
 mft_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
     size_t len)
 {
-	struct parse	 p;
+	struct mft	*mft;
 	struct cert	*cert = NULL;
 	int		 rc = 0;
 	size_t		 cmsz;
@@ -417,28 +409,25 @@ mft_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	char		*crldp = NULL, *crlfile;
 	time_t		 signtime = 0;
 
-	memset(&p, 0, sizeof(struct parse));
-	p.fn = fn;
-
 	cms = cms_parse_validate(x509, fn, der, len, mft_oid, &cmsz, &signtime);
 	if (cms == NULL)
 		return NULL;
 	assert(*x509 != NULL);
 
-	if ((p.res = calloc(1, sizeof(struct mft))) == NULL)
+	if ((mft = calloc(1, sizeof(*mft))) == NULL)
 		err(1, NULL);
-	p.res->signtime = signtime;
+	mft->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &p.res->aia))
+	if (!x509_get_aia(*x509, fn, &mft->aia))
 		goto out;
-	if (!x509_get_aki(*x509, fn, &p.res->aki))
+	if (!x509_get_aki(*x509, fn, &mft->aki))
 		goto out;
-	if (!x509_get_sia(*x509, fn, &p.res->sia))
+	if (!x509_get_sia(*x509, fn, &mft->sia))
 		goto out;
-	if (!x509_get_ski(*x509, fn, &p.res->ski))
+	if (!x509_get_ski(*x509, fn, &mft->ski))
 		goto out;
-	if (p.res->aia == NULL || p.res->aki == NULL || p.res->sia == NULL ||
-	    p.res->ski == NULL) {
+	if (mft->aia == NULL || mft->aki == NULL || mft->sia == NULL ||
+	    mft->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI, SIA, or SKI X509 extension", fn);
 		goto out;
@@ -470,16 +459,16 @@ mft_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		    "bad CRL distribution point extension", fn);
 		goto out;
 	}
-	if ((p.res->crl = strdup(crlfile)) == NULL)
+	if ((mft->crl = strdup(crlfile)) == NULL)
 		err(1, NULL);
 
-	if (mft_parse_econtent(cms, cmsz, &p) == 0)
+	if (mft_parse_econtent(fn, mft, cms, cmsz) == 0)
 		goto out;
 
 	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
-	if (p.res->signtime > p.res->nextupdate) {
+	if (mft->signtime > mft->nextupdate) {
 		warnx("%s: dating issue: CMS signing-time after MFT nextUpdate",
 		    fn);
 		goto out;
@@ -488,15 +477,15 @@ mft_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	rc = 1;
 out:
 	if (rc == 0) {
-		mft_free(p.res);
-		p.res = NULL;
+		mft_free(mft);
+		mft = NULL;
 		X509_free(*x509);
 		*x509 = NULL;
 	}
 	free(crldp);
 	cert_free(cert);
 	free(cms);
-	return p.res;
+	return mft;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.33 2024/02/16 15:19:02 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.34 2024/02/21 09:17:06 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -30,14 +30,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-/*
- * Parse results and data of the Signed Checklist file.
- */
-struct	parse {
-	const char	*fn; /* Signed Checklist file name */
-	struct rsc	*res; /* results */
-};
 
 extern ASN1_OBJECT	*rsc_oid;
 
@@ -135,7 +127,8 @@ IMPLEMENT_ASN1_FUNCTIONS(RpkiSignedChecklist);
  * Return 0 on failure.
  */
 static int
-rsc_parse_aslist(struct parse *p, const ConstrainedASIdentifiers *asids)
+rsc_parse_aslist(const char *fn, struct rsc *rsc,
+    const ConstrainedASIdentifiers *asids)
 {
 	int	 i, asz;
 
@@ -143,18 +136,18 @@ rsc_parse_aslist(struct parse *p, const ConstrainedASIdentifiers *asids)
 		return 1;
 
 	if ((asz = sk_ASIdOrRange_num(asids->asnum)) == 0) {
-		warnx("%s: RSC asID empty", p->fn);
+		warnx("%s: RSC asID empty", fn);
 		return 0;
 	}
 
 	if (asz >= MAX_AS_SIZE) {
 		warnx("%s: too many AS number entries: limit %d",
-		    p->fn, MAX_AS_SIZE);
+		    fn, MAX_AS_SIZE);
 		return 0;
 	}
 
-	p->res->as = calloc(asz, sizeof(struct cert_as));
-	if (p->res->as == NULL)
+	rsc->as = calloc(asz, sizeof(struct cert_as));
+	if (rsc->as == NULL)
 		err(1, NULL);
 
 	for (i = 0; i < asz; i++) {
@@ -164,18 +157,16 @@ rsc_parse_aslist(struct parse *p, const ConstrainedASIdentifiers *asids)
 
 		switch (aor->type) {
 		case ASIdOrRange_id:
-			if (!sbgp_as_id(p->fn, p->res->as, &p->res->asz,
-			    aor->u.id))
+			if (!sbgp_as_id(fn, rsc->as, &rsc->asz, aor->u.id))
 				return 0;
 			break;
 		case ASIdOrRange_range:
-			if (!sbgp_as_range(p->fn, p->res->as, &p->res->asz,
+			if (!sbgp_as_range(fn, rsc->as, &rsc->asz,
 			    aor->u.range))
 				return 0;
 			break;
 		default:
-			warnx("%s: RSC AsList: unknown type %d", p->fn,
-			    aor->type);
+			warnx("%s: RSC AsList: unknown type %d", fn, aor->type);
 			return 0;
 		}
 	}
@@ -184,7 +175,8 @@ rsc_parse_aslist(struct parse *p, const ConstrainedASIdentifiers *asids)
 }
 
 static int
-rsc_parse_iplist(struct parse *p, const ConstrainedIPAddrBlocks *ipAddrBlocks)
+rsc_parse_iplist(const char *fn, struct rsc *rsc,
+    const ConstrainedIPAddrBlocks *ipAddrBlocks)
 {
 	const ConstrainedIPAddressFamily	*af;
 	const IPAddressOrRanges			*aors;
@@ -197,7 +189,7 @@ rsc_parse_iplist(struct parse *p, const ConstrainedIPAddrBlocks *ipAddrBlocks)
 		return 1;
 
 	if (sk_ConstrainedIPAddressFamily_num(ipAddrBlocks) == 0) {
-		warnx("%s: RSC ipAddrBlocks empty", p->fn);
+		warnx("%s: RSC ipAddrBlocks empty", fn);
 		return 0;
 	}
 
@@ -205,20 +197,20 @@ rsc_parse_iplist(struct parse *p, const ConstrainedIPAddrBlocks *ipAddrBlocks)
 		af = sk_ConstrainedIPAddressFamily_value(ipAddrBlocks, i);
 		aors = af->addressesOrRanges;
 
-		ipsz = p->res->ipsz + sk_IPAddressOrRange_num(aors);
+		ipsz = rsc->ipsz + sk_IPAddressOrRange_num(aors);
 		if (ipsz >= MAX_IP_SIZE) {
 			warnx("%s: too many IP address entries: limit %d",
-			    p->fn, MAX_IP_SIZE);
+			    fn, MAX_IP_SIZE);
 			return 0;
 		}
 
-		p->res->ips = recallocarray(p->res->ips, p->res->ipsz, ipsz,
+		rsc->ips = recallocarray(rsc->ips, rsc->ipsz, ipsz,
 		    sizeof(struct cert_ip));
-		if (p->res->ips == NULL)
+		if (rsc->ips == NULL)
 			err(1, NULL);
 
-		if (!ip_addr_afi_parse(p->fn, af->addressFamily, &afi)) {
-			warnx("%s: RSC: invalid AFI", p->fn);
+		if (!ip_addr_afi_parse(fn, af->addressFamily, &afi)) {
+			warnx("%s: RSC: invalid AFI", fn);
 			return 0;
 		}
 
@@ -226,18 +218,18 @@ rsc_parse_iplist(struct parse *p, const ConstrainedIPAddrBlocks *ipAddrBlocks)
 			aor = sk_IPAddressOrRange_value(aors, j);
 			switch (aor->type) {
 			case IPAddressOrRange_addressPrefix:
-				if (!sbgp_addr(p->fn, p->res->ips,
-				    &p->res->ipsz, afi, aor->u.addressPrefix))
+				if (!sbgp_addr(fn, rsc->ips,
+				    &rsc->ipsz, afi, aor->u.addressPrefix))
 					return 0;
 				break;
 			case IPAddressOrRange_addressRange:
-				if (!sbgp_addr_range(p->fn, p->res->ips,
-				    &p->res->ipsz, afi, aor->u.addressRange))
+				if (!sbgp_addr_range(fn, rsc->ips,
+				    &rsc->ipsz, afi, aor->u.addressRange))
 					return 0;
 				break;
 			default:
 				warnx("%s: RFC 3779: IPAddressOrRange: "
-				    "unknown type %d", p->fn, aor->type);
+				    "unknown type %d", fn, aor->type);
 				return 0;
 			}
 		}
@@ -247,7 +239,7 @@ rsc_parse_iplist(struct parse *p, const ConstrainedIPAddrBlocks *ipAddrBlocks)
 }
 
 static int
-rsc_check_digesttype(struct parse *p, const X509_ALGOR *alg)
+rsc_check_digesttype(const char *fn, struct rsc *rsc, const X509_ALGOR *alg)
 {
 	const ASN1_OBJECT	*obj;
 	int			 type, nid;
@@ -256,13 +248,13 @@ rsc_check_digesttype(struct parse *p, const X509_ALGOR *alg)
 
 	if (type != V_ASN1_UNDEF) {
 		warnx("%s: RSC DigestAlgorithmIdentifier unexpected parameters:"
-		    " %d", p->fn, type);
+		    " %d", fn, type);
 		return 0;
 	}
 
 	if ((nid = OBJ_obj2nid(obj)) != NID_sha256) {
 		warnx("%s: RSC DigestAlgorithmIdentifier: want SHA256, have %s"
-		    " (NID %d)", p->fn, ASN1_tag2str(nid), nid);
+		    " (NID %d)", fn, ASN1_tag2str(nid), nid);
 		return 0;
 	}
 
@@ -274,7 +266,8 @@ rsc_check_digesttype(struct parse *p, const X509_ALGOR *alg)
  * Return zero on failure, non-zero on success.
  */
 static int
-rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
+rsc_parse_checklist(const char *fn, struct rsc *rsc,
+    const STACK_OF(FileNameAndHash) *checkList)
 {
 	FileNameAndHash		*fh;
 	ASN1_IA5STRING		*fileName;
@@ -282,28 +275,28 @@ rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
 	size_t			 sz, i;
 
 	if ((sz = sk_FileNameAndHash_num(checkList)) == 0) {
-		warnx("%s: RSC checkList needs at least one entry", p->fn);
+		warnx("%s: RSC checkList needs at least one entry", fn);
 		return 0;
 	}
 
 	if (sz >= MAX_CHECKLIST_ENTRIES) {
-		warnx("%s: %zu exceeds checklist entry limit (%d)", p->fn, sz,
+		warnx("%s: %zu exceeds checklist entry limit (%d)", fn, sz,
 		    MAX_CHECKLIST_ENTRIES);
 		return 0;
 	}
 
-	p->res->files = calloc(sz, sizeof(struct rscfile));
-	if (p->res->files == NULL)
+	rsc->files = calloc(sz, sizeof(struct rscfile));
+	if (rsc->files == NULL)
 		err(1, NULL);
-	p->res->filesz = sz;
+	rsc->filesz = sz;
 
 	for (i = 0; i < sz; i++) {
 		fh = sk_FileNameAndHash_value(checkList, i);
 
-		file = &p->res->files[i];
+		file = &rsc->files[i];
 
 		if (fh->hash->length != SHA256_DIGEST_LENGTH) {
-			warnx("%s: RSC Digest: invalid SHA256 length", p->fn);
+			warnx("%s: RSC Digest: invalid SHA256 length", fn);
 			return 0;
 		}
 		memcpy(file->hash, fh->hash->data, SHA256_DIGEST_LENGTH);
@@ -312,7 +305,7 @@ rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
 			continue;
 
 		if (!valid_filename(fileName->data, fileName->length)) {
-			warnx("%s: RSC FileNameAndHash: bad filename", p->fn);
+			warnx("%s: RSC FileNameAndHash: bad filename", fn);
 			return 0;
 		}
 
@@ -330,7 +323,8 @@ rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
  * Returns zero on failure, non-zero on success.
  */
 static int
-rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
+rsc_parse_econtent(const char *fn, struct rsc *rsc, const unsigned char *d,
+    size_t dsz)
 {
 	const unsigned char	*oder;
 	RpkiSignedChecklist	*rsc_asn1;
@@ -343,35 +337,35 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 
 	oder = d;
 	if ((rsc_asn1 = d2i_RpkiSignedChecklist(NULL, &d, dsz)) == NULL) {
-		warnx("%s: RSC: failed to parse RpkiSignedChecklist", p->fn);
+		warnx("%s: RSC: failed to parse RpkiSignedChecklist", fn);
 		goto out;
 	}
 	if (d != oder + dsz) {
-		warnx("%s: %td bytes trailing garbage in eContent", p->fn,
+		warnx("%s: %td bytes trailing garbage in eContent", fn,
 		    oder + dsz - d);
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, rsc_asn1->version, 0))
+	if (!valid_econtent_version(fn, rsc_asn1->version, 0))
 		goto out;
 
 	resources = rsc_asn1->resources;
 	if (resources->asID == NULL && resources->ipAddrBlocks == NULL) {
 		warnx("%s: RSC: one of asID or ipAddrBlocks must be present",
-		    p->fn);
+		    fn);
 		goto out;
 	}
 
-	if (!rsc_parse_aslist(p, resources->asID))
+	if (!rsc_parse_aslist(fn, rsc, resources->asID))
 		goto out;
 
-	if (!rsc_parse_iplist(p, resources->ipAddrBlocks))
+	if (!rsc_parse_iplist(fn, rsc, resources->ipAddrBlocks))
 		goto out;
 
-	if (!rsc_check_digesttype(p, rsc_asn1->digestAlgorithm))
+	if (!rsc_check_digesttype(fn, rsc, rsc_asn1->digestAlgorithm))
 		goto out;
 
-	if (!rsc_parse_checklist(p, rsc_asn1->checkList))
+	if (!rsc_parse_checklist(fn, rsc, rsc_asn1->checkList))
 		goto out;
 
 	rc = 1;
@@ -388,40 +382,37 @@ struct rsc *
 rsc_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
     size_t len)
 {
-	struct parse		 p;
+	struct rsc		*rsc;
 	unsigned char		*cms;
 	size_t			 cmsz;
 	struct cert		*cert = NULL;
 	time_t			 signtime = 0;
 	int			 rc = 0;
 
-	memset(&p, 0, sizeof(struct parse));
-	p.fn = fn;
-
 	cms = cms_parse_validate(x509, fn, der, len, rsc_oid, &cmsz,
 	    &signtime);
 	if (cms == NULL)
 		return NULL;
 
-	if ((p.res = calloc(1, sizeof(struct rsc))) == NULL)
+	if ((rsc = calloc(1, sizeof(struct rsc))) == NULL)
 		err(1, NULL);
-	p.res->signtime = signtime;
+	rsc->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &p.res->aia))
+	if (!x509_get_aia(*x509, fn, &rsc->aia))
 		goto out;
-	if (!x509_get_aki(*x509, fn, &p.res->aki))
+	if (!x509_get_aki(*x509, fn, &rsc->aki))
 		goto out;
-	if (!x509_get_ski(*x509, fn, &p.res->ski))
+	if (!x509_get_ski(*x509, fn, &rsc->ski))
 		goto out;
-	if (p.res->aia == NULL || p.res->aki == NULL || p.res->ski == NULL) {
+	if (rsc->aia == NULL || rsc->aki == NULL || rsc->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI or SKI X509 extension", fn);
 		goto out;
 	}
 
-	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
+	if (!x509_get_notbefore(*x509, fn, &rsc->notbefore))
 		goto out;
-	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
+	if (!x509_get_notafter(*x509, fn, &rsc->notafter))
 		goto out;
 
 	if (X509_get_ext_by_NID(*x509, NID_sinfo_access, -1) != -1) {
@@ -434,25 +425,25 @@ rsc_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		goto out;
 	}
 
-	if (!rsc_parse_econtent(cms, cmsz, &p))
+	if (!rsc_parse_econtent(fn, rsc, cms, cmsz))
 		goto out;
 
 	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
-	p.res->valid = valid_rsc(fn, cert, p.res);
+	rsc->valid = valid_rsc(fn, cert, rsc);
 
 	rc = 1;
  out:
 	if (rc == 0) {
-		rsc_free(p.res);
-		p.res = NULL;
+		rsc_free(rsc);
+		rsc = NULL;
 		X509_free(*x509);
 		*x509 = NULL;
 	}
 	cert_free(cert);
 	free(cms);
-	return p.res;
+	return rsc;
 }
 
 /*

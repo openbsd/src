@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.29 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: gbr.c,v 1.30 2024/02/21 09:17:06 tb Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -24,14 +24,6 @@
 
 #include "extern.h"
 
-/*
- * Parse results and data of the manifest file.
- */
-struct	parse {
-	const char	 *fn; /* manifest file name */
-	struct gbr	 *res; /* results */
-};
-
 extern ASN1_OBJECT	*gbr_oid;
 
 /*
@@ -43,44 +35,41 @@ struct gbr *
 gbr_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
     size_t len)
 {
-	struct parse	 p;
+	struct gbr	*gbr;
 	struct cert	*cert = NULL;
 	size_t		 cmsz;
 	unsigned char	*cms;
 	time_t		 signtime = 0;
 
-	memset(&p, 0, sizeof(struct parse));
-	p.fn = fn;
-
 	cms = cms_parse_validate(x509, fn, der, len, gbr_oid, &cmsz, &signtime);
 	if (cms == NULL)
 		return NULL;
 
-	if ((p.res = calloc(1, sizeof(*p.res))) == NULL)
+	if ((gbr = calloc(1, sizeof(*gbr))) == NULL)
 		err(1, NULL);
-	p.res->signtime = signtime;
-	if ((p.res->vcard = strndup(cms, cmsz)) == NULL)
+	gbr->signtime = signtime;
+	if ((gbr->vcard = strndup(cms, cmsz)) == NULL)
 		err(1, NULL);
 	free(cms);
 
-	if (!x509_get_aia(*x509, fn, &p.res->aia))
+	if (!x509_get_aia(*x509, fn, &gbr->aia))
 		goto out;
-	if (!x509_get_aki(*x509, fn, &p.res->aki))
+	if (!x509_get_aki(*x509, fn, &gbr->aki))
 		goto out;
-	if (!x509_get_sia(*x509, fn, &p.res->sia))
+	if (!x509_get_sia(*x509, fn, &gbr->sia))
 		goto out;
-	if (!x509_get_ski(*x509, fn, &p.res->ski))
+	if (!x509_get_ski(*x509, fn, &gbr->ski))
 		goto out;
-	if (p.res->aia == NULL || p.res->aki == NULL || p.res->sia == NULL ||
-	    p.res->ski == NULL) {
+	if (gbr->aia == NULL || gbr->aki == NULL || gbr->sia == NULL ||
+	    gbr->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI, SIA or SKI X509 extension", fn);
 		goto out;
 	}
 
-	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
+	if (!x509_get_notbefore(*x509, fn, &gbr->notbefore))
 		goto out;
-	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
+	if (!x509_get_notafter(*x509, fn, &gbr->notafter))
 		goto out;
 
 	if (!x509_inherits(*x509)) {
@@ -91,10 +80,10 @@ gbr_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
-	return p.res;
+	return gbr;
 
  out:
-	gbr_free(p.res);
+	gbr_free(gbr);
 	X509_free(*x509);
 	*x509 = NULL;
 	cert_free(cert);

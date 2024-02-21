@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.18 2024/02/16 15:13:49 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.19 2024/02/21 09:17:06 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -30,14 +30,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-/*
- * Parse results and data of the Trust Anchor Key file.
- */
-struct parse {
-	const char	*fn; /* TAK file name */
-	struct tak	*res; /* results */
-};
 
 extern ASN1_OBJECT	*tak_oid;
 
@@ -161,14 +153,12 @@ parse_takey(const char *fn, const TAKey *takey)
  * Returns zero on failure, non-zero on success.
  */
 static int
-tak_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
+tak_parse_econtent(const char *fn, struct tak *tak, const unsigned char *d,
+    size_t dsz)
 {
 	const unsigned char	*oder;
 	TAK			*tak_asn1;
-	const char		*fn;
 	int			 rc = 0;
-
-	fn = p->fn;
 
 	oder = d;
 	if ((tak_asn1 = d2i_TAK(NULL, &d, dsz)) == NULL) {
@@ -176,7 +166,7 @@ tak_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 	if (d != oder + dsz) {
-		warnx("%s: %td bytes trailing garbage in eContent", p->fn,
+		warnx("%s: %td bytes trailing garbage in eContent", fn,
 		    oder + dsz - d);
 		goto out;
 	}
@@ -184,19 +174,19 @@ tak_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	if (!valid_econtent_version(fn, tak_asn1->version, 0))
 		goto out;
 
-	p->res->current = parse_takey(fn, tak_asn1->current);
-	if (p->res->current == NULL)
+	tak->current = parse_takey(fn, tak_asn1->current);
+	if (tak->current == NULL)
 		goto out;
 
 	if (tak_asn1->predecessor != NULL) {
-		p->res->predecessor = parse_takey(fn, tak_asn1->predecessor);
-		if (p->res->predecessor == NULL)
+		tak->predecessor = parse_takey(fn, tak_asn1->predecessor);
+		if (tak->predecessor == NULL)
 			goto out;
 	}
 
 	if (tak_asn1->successor != NULL) {
-		p->res->successor = parse_takey(fn, tak_asn1->successor);
-		if (p->res->successor == NULL)
+		tak->successor = parse_takey(fn, tak_asn1->successor);
+		if (tak->successor == NULL)
 			goto out;
 	}
 
@@ -214,42 +204,39 @@ struct tak *
 tak_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
     size_t len)
 {
-	struct parse		 p;
+	struct tak		*tak;
 	struct cert		*cert = NULL;
 	unsigned char		*cms;
 	size_t			 cmsz;
 	time_t			 signtime = 0;
 	int			 rc = 0;
 
-	memset(&p, 0, sizeof(struct parse));
-	p.fn = fn;
-
 	cms = cms_parse_validate(x509, fn, der, len, tak_oid, &cmsz, &signtime);
 	if (cms == NULL)
 		return NULL;
 
-	if ((p.res = calloc(1, sizeof(struct tak))) == NULL)
+	if ((tak = calloc(1, sizeof(struct tak))) == NULL)
 		err(1, NULL);
-	p.res->signtime = signtime;
+	tak->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &p.res->aia))
+	if (!x509_get_aia(*x509, fn, &tak->aia))
 		goto out;
-	if (!x509_get_aki(*x509, fn, &p.res->aki))
+	if (!x509_get_aki(*x509, fn, &tak->aki))
 		goto out;
-	if (!x509_get_sia(*x509, fn, &p.res->sia))
+	if (!x509_get_sia(*x509, fn, &tak->sia))
 		goto out;
-	if (!x509_get_ski(*x509, fn, &p.res->ski))
+	if (!x509_get_ski(*x509, fn, &tak->ski))
 		goto out;
-	if (p.res->aia == NULL || p.res->aki == NULL || p.res->sia == NULL ||
-	    p.res->ski == NULL) {
+	if (tak->aia == NULL || tak->aki == NULL || tak->sia == NULL ||
+	    tak->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI, SIA, or SKI X509 extension", fn);
 		goto out;
 	}
 
-	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
+	if (!x509_get_notbefore(*x509, fn, &tak->notbefore))
 		goto out;
-	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
+	if (!x509_get_notafter(*x509, fn, &tak->notafter))
 		goto out;
 
 	if (!x509_inherits(*x509)) {
@@ -257,13 +244,13 @@ tak_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		goto out;
 	}
 
-	if (!tak_parse_econtent(cms, cmsz, &p))
+	if (!tak_parse_econtent(fn, tak, cms, cmsz))
 		goto out;
 
 	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
-	if (strcmp(p.res->aki, p.res->current->ski) != 0) {
+	if (strcmp(tak->aki, tak->current->ski) != 0) {
 		warnx("%s: current TAKey's SKI does not match EE AKI", fn);
 		goto out;
 	}
@@ -271,14 +258,14 @@ tak_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	rc = 1;
  out:
 	if (rc == 0) {
-		tak_free(p.res);
-		p.res = NULL;
+		tak_free(tak);
+		tak = NULL;
 		X509_free(*x509);
 		*x509 = NULL;
 	}
 	cert_free(cert);
 	free(cms);
-	return p.res;
+	return tak;
 }
 
 /*
