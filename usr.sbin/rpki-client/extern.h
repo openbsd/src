@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.204 2024/02/16 05:18:29 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.205 2024/02/21 12:35:36 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -652,7 +652,6 @@ void		 takey_free(struct takey *);
 void		 tak_free(struct tak *);
 struct tak	*tak_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
-struct tak	*tak_read(struct ibuf *);
 
 void		 aspa_buffer(struct ibuf *, const struct aspa *);
 void		 aspa_free(struct aspa *);
@@ -708,7 +707,6 @@ int		 ip_addr_parse(const ASN1_BIT_STRING *,
 			enum afi, const char *, struct ip_addr *);
 void		 ip_addr_print(const struct ip_addr *, enum afi, char *,
 			size_t);
-int		 ip_addr_cmp(const struct ip_addr *, const struct ip_addr *);
 int		 ip_addr_check_overlap(const struct cert_ip *,
 			const char *, const struct cert_ip *, size_t, int);
 int		 ip_addr_check_covered(enum afi, const unsigned char *,
