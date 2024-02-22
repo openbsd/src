@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.49 2024/02/22 09:06:11 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.50 2024/02/22 09:08:08 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -299,6 +299,18 @@ qwx_stop(struct ifnet *ifp)
 	splx(s);
 }
 
+void
+qwx_free_firmware(struct qwx_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < nitems(sc->fw_img); i++) {
+		free(sc->fw_img[i].data, M_DEVBUF, sc->fw_img[i].size);
+		sc->fw_img[i].data = NULL;
+		sc->fw_img[i].size = 0;
+	}
+}
+
 int
 qwx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -322,7 +334,7 @@ qwx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING)) {
 				/* Force reload of firmware image from disk. */
-				sc->have_firmware = 0;
+				qwx_free_firmware(sc);
 				err = qwx_init(ifp);
 			}
 		} else {
@@ -8374,20 +8386,34 @@ err_free_req:
 int
 qwx_qmi_load_bdf_qmi(struct qwx_softc *sc, int regdb)
 {
-	u_char *data;
+	u_char *data = NULL;
 	const u_char *boardfw;
-	size_t len, boardfw_len;
+	size_t len = 0, boardfw_len;
 	uint32_t fw_size;
 	int ret = 0, bdf_type;
 #ifdef notyet
 	const uint8_t *tmp;
 	uint32_t file_type;
 #endif
+	int fw_idx = regdb ? QWX_FW_REGDB : QWX_FW_BOARD;
 
-	ret = qwx_core_fetch_bdf(sc, &data, &len, &boardfw, &boardfw_len,
-	    regdb ? ATH11K_REGDB_FILE : ATH11K_BOARD_API2_FILE);
-	if (ret)
-		return ret;
+	if (sc->fw_img[fw_idx].data) {
+		boardfw = sc->fw_img[fw_idx].data;
+		boardfw_len = sc->fw_img[fw_idx].size;
+	} else {
+		ret = qwx_core_fetch_bdf(sc, &data, &len,
+		    &boardfw, &boardfw_len,
+		    regdb ? ATH11K_REGDB_FILE : ATH11K_BOARD_API2_FILE);
+		if (ret)
+			return ret;
+
+		sc->fw_img[fw_idx].data = malloc(boardfw_len, M_DEVBUF,
+		    M_NOWAIT);
+		if (sc->fw_img[fw_idx].data) {
+			memcpy(sc->fw_img[fw_idx].data, boardfw, boardfw_len);
+			sc->fw_img[fw_idx].size = boardfw_len;
+		}
+	}
 
 	if (regdb)
 		bdf_type = ATH11K_QMI_BDF_TYPE_REGDB;
@@ -8506,16 +8532,24 @@ qwx_qmi_m3_load(struct qwx_softc *sc)
 	char path[PATH_MAX];
 	int ret;
 
-	ret = snprintf(path, sizeof(path), "%s-%s-%s",
-	    ATH11K_FW_DIR, sc->hw_params.fw.dir, ATH11K_M3_FILE);
-	if (ret < 0 || ret >= sizeof(path))
-		return ENOSPC;
+	if (sc->fw_img[QWX_FW_M3].data) {
+		data = sc->fw_img[QWX_FW_M3].data;
+		len = sc->fw_img[QWX_FW_M3].size;
+	} else {
+		ret = snprintf(path, sizeof(path), "%s-%s-%s",
+		    ATH11K_FW_DIR, sc->hw_params.fw.dir, ATH11K_M3_FILE);
+		if (ret < 0 || ret >= sizeof(path))
+			return ENOSPC;
 
-	ret = loadfirmware(path, &data, &len);
-	if (ret) {
-		printf("%s: could not read %s (error %d)\n",
-		    sc->sc_dev.dv_xname, path, ret);
-		return ret;
+		ret = loadfirmware(path, &data, &len);
+		if (ret) {
+			printf("%s: could not read %s (error %d)\n",
+			    sc->sc_dev.dv_xname, path, ret);
+			return ret;
+		}
+
+		sc->fw_img[QWX_FW_M3].data = data;
+		sc->fw_img[QWX_FW_M3].size = len;
 	}
 
 	if (sc->m3_mem == NULL || QWX_DMA_LEN(sc->m3_mem) < len) {
@@ -8531,7 +8565,6 @@ qwx_qmi_m3_load(struct qwx_softc *sc)
 	}
 
 	memcpy(QWX_DMA_KVA(sc->m3_mem), data, len);
-	free(data, M_DEVBUF, len);
 	return 0;
 }
 
@@ -24709,6 +24742,8 @@ qwx_detach(struct qwx_softc *sc)
 		qwx_dmamem_free(sc->sc_dmat, sc->m3_mem);
 		sc->m3_mem = NULL;
 	}
+
+	qwx_free_firmware(sc);
 }
 
 struct qwx_dmamem *

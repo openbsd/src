@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.11 2024/02/22 09:06:11 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.12 2024/02/22 09:08:08 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -371,7 +371,7 @@ struct qwx_pci_softc {
 	struct taskq		*mhi_taskq;
 
 	/*
-	 * DMA memory for AMMS.bin firmware image.
+	 * DMA memory for AMSS.bin firmware image.
 	 * This memory must remain available to the device until
 	 * the device is powered down.
 	 */
@@ -3032,23 +3032,31 @@ qwx_mhi_fw_load_handler(struct qwx_pci_softc *psc)
 	u_char *data;
 	size_t len;
 
-	ret = snprintf(amss_path, sizeof(amss_path), "%s-%s-%s",
-	    ATH11K_FW_DIR, sc->hw_params.fw.dir, ATH11K_AMSS_FILE);
-	if (ret < 0 || ret >= sizeof(amss_path))
-		return ENOSPC;
+	if (sc->fw_img[QWX_FW_AMSS].data) {
+		data = sc->fw_img[QWX_FW_AMSS].data;
+		len = sc->fw_img[QWX_FW_AMSS].size;
+	} else {
+		ret = snprintf(amss_path, sizeof(amss_path), "%s-%s-%s",
+		    ATH11K_FW_DIR, sc->hw_params.fw.dir, ATH11K_AMSS_FILE);
+		if (ret < 0 || ret >= sizeof(amss_path))
+			return ENOSPC;
 
-	ret = loadfirmware(amss_path, &data, &len);
-	if (ret) {
-		printf("%s: could not read %s (error %d)\n",
-		    sc->sc_dev.dv_xname, amss_path, ret);
-		return ret;
-	}
+		ret = loadfirmware(amss_path, &data, &len);
+		if (ret) {
+			printf("%s: could not read %s (error %d)\n",
+			    sc->sc_dev.dv_xname, amss_path, ret);
+			return ret;
+		}
 
-	if (len < MHI_DMA_VEC_CHUNK_SIZE) {
-		printf("%s: %s is too short, have only %zu bytes\n",
-		    sc->sc_dev.dv_xname, amss_path, len);
-		free(data, M_DEVBUF, len);
-		return EINVAL;
+		if (len < MHI_DMA_VEC_CHUNK_SIZE) {
+			printf("%s: %s is too short, have only %zu bytes\n",
+			    sc->sc_dev.dv_xname, amss_path, len);
+			free(data, M_DEVBUF, len);
+			return EINVAL;
+		}
+
+		sc->fw_img[QWX_FW_AMSS].data = data;
+		sc->fw_img[QWX_FW_AMSS].size = len;
 	}
 
 	/* Second-stage boot loader sits in the first 512 KB of image. */
@@ -3056,7 +3064,6 @@ qwx_mhi_fw_load_handler(struct qwx_pci_softc *psc)
 	if (ret != 0) {
 		printf("%s: could not load firmware %s\n",
 		    sc->sc_dev.dv_xname, amss_path);
-		free(data, M_DEVBUF, len);
 		return ret;
 	}
 
@@ -3065,6 +3072,7 @@ qwx_mhi_fw_load_handler(struct qwx_pci_softc *psc)
 	if (ret != 0) {
 		printf("%s: could not load firmware %s\n",
 		    sc->sc_dev.dv_xname, amss_path);
+		return ret;
 	}
 
 	while (psc->bhi_ee < MHI_EE_AMSS) {
@@ -3076,11 +3084,8 @@ qwx_mhi_fw_load_handler(struct qwx_pci_softc *psc)
 	if (ret != 0) {
 		printf("%s: device failed to enter AMSS EE\n",
 		    sc->sc_dev.dv_xname);
-		free(data, M_DEVBUF, len);
-		return ret;
 	}
 
-	free(data, M_DEVBUF, len);
 	return ret;
 }
 
