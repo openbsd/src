@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.622 2024/02/03 00:11:34 jsg Exp $ */
+/*	$OpenBSD: rde.c,v 1.623 2024/02/22 06:45:22 miod Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1240,10 +1240,17 @@ rde_dispatch_imsg_rtr(struct imsgbuf *imsgbuf)
 			if (imsg_get_data(&imsg, &roa, sizeof(roa)) == -1)
 				fatalx("IMSG_RECONF_ROA_ITEM bad len");
 			if (trie_roa_add(&roa_new.th, &roa) != 0) {
+#if defined(__GNUC__) && __GNUC__ < 4
+				struct bgpd_addr p = {
+					.aid = roa.aid
+				};
+				p.v6 = roa.prefix.inet6;
+#else
 				struct bgpd_addr p = {
 					.aid = roa.aid,
 					.v6 = roa.prefix.inet6
 				};
+#endif
 				log_warnx("trie_roa_add %s/%u failed",
 				    log_addr(&p), roa.prefixlen);
 			}
