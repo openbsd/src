@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.19 2024/02/21 13:24:37 claudio Exp $ */
+/*	$OpenBSD: parse.c,v 1.20 2024/02/22 13:17:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -323,20 +323,30 @@ it_free(struct itype *it)
 int
 it_cmp(struct itype *a, struct itype *b)
 {
-	int diff;
+	if (a->it_type > b->it_type)
+		return 1;
+	if (a->it_type < b->it_type)
+		return -1;
 
-	if ((diff = (a->it_type - b->it_type)) != 0)
-		return diff;
-
-	/* Basic types need to have the same size. */
-	if ((a->it_type == CTF_K_INTEGER || a->it_type == CTF_K_FLOAT) &&
-	    (diff = (a->it_size - b->it_size) != 0))
-		return diff;
+	/* Basic types need to have the same encoding and size. */
+	if ((a->it_type == CTF_K_INTEGER || a->it_type == CTF_K_FLOAT)) {
+		if (a->it_enc > b->it_enc)
+			return 1;
+		if (a->it_enc < b->it_enc)
+			return -1;
+		if (a->it_size > b->it_size)
+			return 1;
+		if (a->it_size < b->it_size)
+			return -1;
+	}
 
 	/* Arrays need to have same number of elements */
-	if ((a->it_type == CTF_K_ARRAY) &&
-	    (diff = (a->it_nelems - b->it_nelems) != 0))
-		return diff;
+	if (a->it_type == CTF_K_ARRAY) {
+		if (a->it_nelems > b->it_nelems)
+			return 1;
+		if (a->it_nelems < b->it_nelems)
+			return -1;
+	}
 
 	/* Match by name */
 	if (!(a->it_flags & ITF_ANON) && !(b->it_flags & ITF_ANON))
@@ -349,6 +359,10 @@ it_cmp(struct itype *a, struct itype *b)
 	/* Match by reference */
 	if ((a->it_refp != NULL) && (b->it_refp != NULL))
 		return it_cmp(a->it_refp, b->it_refp);
+	if (a->it_refp == NULL)
+		return -1;
+	if (b->it_refp == NULL)
+		return 1;
 
 	return 0;
 }
