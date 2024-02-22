@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.111 2024/02/21 09:17:06 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.112 2024/02/22 12:49:42 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -121,6 +121,8 @@ rtype_from_file_extension(const char *fn)
 		return RTYPE_TAK;
 	if (strcasecmp(fn + sz - 4, ".csv") == 0)
 		return RTYPE_GEOFEED;
+	if (strcasecmp(fn + sz - 4, ".spl") == 0)
+		return RTYPE_SPL;
 
 	return RTYPE_INVALID;
 }
@@ -162,6 +164,7 @@ rtype_from_mftfile(const char *fn)
 	case RTYPE_GBR:
 	case RTYPE_ROA:
 	case RTYPE_ASPA:
+	case RTYPE_SPL:
 	case RTYPE_TAK:
 		return type;
 	default:

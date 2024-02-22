@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.28 2023/06/26 18:39:53 job Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.29 2024/02/22 12:49:42 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -21,7 +21,7 @@
 
 int
 output_bgpd(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct vap_tree *vaps, struct stats *st)
+    struct vap_tree *vaps, struct vsp_tree *vsps, struct stats *st)
 {
 	struct vrp	*vrp;
 	struct vap	*vap;

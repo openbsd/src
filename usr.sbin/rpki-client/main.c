@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.250 2024/02/21 12:48:25 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.251 2024/02/22 12:49:42 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -557,7 +557,8 @@ queue_add_from_cert(const struct cert *cert)
  */
 static void
 entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
-    struct brk_tree *brktree, struct vap_tree *vaptree)
+    struct brk_tree *brktree, struct vap_tree *vaptree,
+    struct vsp_tree *vsptree)
 {
 	enum rtype	 type;
 	struct tal	*tal;
@@ -565,6 +566,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	struct mft	*mft;
 	struct roa	*roa;
 	struct aspa	*aspa;
+	struct spl	*spl;
 	struct repo	*rp;
 	char		*file;
 	time_t		 mtime;
@@ -665,6 +667,19 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		aspa_free(aspa);
 		break;
+	case RTYPE_SPL:
+		io_read_buf(b, &c, sizeof(c));
+		if (c == 0) {
+			repo_stat_inc(rp, talid, type, STYPE_FAIL);
+			break;
+		}
+		spl = spl_read(b);
+		if (spl->valid)
+			spl_insert_vsps(vsptree, spl, rp);
+		else
+			repo_stat_inc(rp, talid, type, STYPE_INVALID);
+		spl_free(spl);
+		break;
 	case RTYPE_TAK:
 		break;
 	case RTYPE_FILE:
@@ -755,6 +770,11 @@ sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 	out->vaps += in->vaps;
 	out->vaps_uniqs += in->vaps_uniqs;
 	out->vaps_pas += in->vaps_pas;
+	out->spls += in->spls;
+	out->spls_fail += in->spls_fail;
+	out->spls_invalid += in->spls_invalid;
+	out->vsps += in->vsps;
+	out->vsps_uniqs += in->vsps_uniqs;
 }
 
 static void
@@ -947,6 +967,7 @@ main(int argc, char *argv[])
 	const char	*errs, *name;
 	const char	*skiplistfile = NULL;
 	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
+	struct vsp_tree	 vsps = RB_INITIALIZER(&vsps);
 	struct brk_tree	 brks = RB_INITIALIZER(&brks);
 	struct vap_tree	 vaps = RB_INITIALIZER(&vaps);
 	struct rusage	 ru;
@@ -1341,7 +1362,8 @@ main(int argc, char *argv[])
 		if ((pfd[0].revents & POLLIN)) {
 			b = io_buf_read(proc, &procbuf);
 			if (b != NULL) {
-				entity_process(b, &stats, &vrps, &brks, &vaps);
+				entity_process(b, &stats, &vrps, &brks, &vaps,
+				    &vsps);
 				ibuf_free(b);
 			}
 		}
@@ -1434,7 +1456,7 @@ main(int argc, char *argv[])
 	}
 	repo_stats_collect(sum_repostats, &stats.repo_stats);
 
-	if (outputfiles(&vrps, &brks, &vaps, &stats))
+	if (outputfiles(&vrps, &brks, &vaps, &vsps, &stats))
 		rc = 1;
 
 	printf("Processing time %lld seconds "
@@ -1451,6 +1473,9 @@ main(int argc, char *argv[])
 	    "invalid)\n", stats.repo_tal_stats.aspas,
 	    stats.repo_tal_stats.aspas_fail,
 	    stats.repo_tal_stats.aspas_invalid);
+	printf("Signed Prefix Lists: %u (%u failed parse, %u invalid)\n",
+	    stats.repo_tal_stats.spls, stats.repo_tal_stats.spls_fail,
+	    stats.repo_tal_stats.spls_invalid);
 	printf("BGPsec Router Certificates: %u\n", stats.repo_tal_stats.brks);
 	printf("Certificates: %u (%u invalid)\n",
 	    stats.repo_tal_stats.certs, stats.repo_tal_stats.certs_fail);
@@ -1470,6 +1495,8 @@ main(int argc, char *argv[])
 	    stats.repo_tal_stats.vrps_uniqs);
 	printf("VAP Entries: %u (%u unique)\n", stats.repo_tal_stats.vaps,
 	    stats.repo_tal_stats.vaps_uniqs);
+	printf("VSP Entries: %u (%u unique)\n", stats.repo_tal_stats.vsps,
+	    stats.repo_tal_stats.vsps_uniqs);
 
 	/* Memory cleanup. */
 	repo_free();

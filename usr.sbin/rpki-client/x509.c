@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.80 2024/02/16 05:18:29 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.81 2024/02/22 12:49:42 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -44,6 +44,7 @@ ASN1_OBJECT	*rsc_oid;	/* id-ct-signedChecklist */
 ASN1_OBJECT	*aspa_oid;	/* id-ct-ASPA */
 ASN1_OBJECT	*tak_oid;	/* id-ct-SignedTAL */
 ASN1_OBJECT	*geofeed_oid;	/* id-ct-geofeedCSVwithCRLF */
+ASN1_OBJECT	*spl_oid;	/* id-ct-signedPrefixList */
 
 static const struct {
 	const char	 *oid;
@@ -116,6 +117,10 @@ static const struct {
 	{
 		.oid = "1.2.840.113549.1.9.16.1.50",
 		.ptr = &tak_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.16.1.51",
+		.ptr = &spl_oid,
 	},
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.49 2024/02/16 05:18:29 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.50 2024/02/22 12:49:42 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -501,6 +501,60 @@ roa_print(const X509 *x, const struct roa *p)
 			if (i > 0)
 				printf("%26s", "");
 			printf("%s maxlen: %hhu\n", buf, p->ips[i].maxlength);
+		}
+	}
+	if (outformats & FORMAT_JSON)
+		json_do_end();
+}
+
+void
+spl_print(const X509 *x, const struct spl *s)
+{
+	char	 buf[128];
+	size_t	 i;
+
+	if (outformats & FORMAT_JSON) {
+		json_do_string("type", "spl");
+		json_do_string("ski", pretty_key_id(s->ski));
+		x509_print(x);
+		json_do_string("aki", pretty_key_id(s->aki));
+		json_do_string("aia", s->aia);
+		json_do_string("sia", s->sia);
+		if (s->signtime != 0)
+			json_do_int("signing_time", s->signtime);
+		json_do_int("valid_since", s->notbefore);
+		json_do_int("valid_until", s->notafter);
+		if (s->expires)
+			json_do_int("expires", s->expires);
+		json_do_int("asid", s->asid);
+	} else {
+		printf("Subject key identifier:   %s\n", pretty_key_id(s->ski));
+		x509_print(x);
+		printf("Authority key identifier: %s\n", pretty_key_id(s->aki));
+		printf("Authority info access:    %s\n", s->aia);
+		printf("Subject info access:      %s\n", s->sia);
+		if (s->signtime != 0)
+			printf("Signing time:             %s\n",
+			    time2str(s->signtime));
+		printf("SPL not before:           %s\n",
+		    time2str(s->notbefore));
+		printf("SPL not after:            %s\n", time2str(s->notafter));
+		printf("asID:                     %u\n", s->asid);
+		printf("Originated IP Prefixes:   ");
+	}
+
+	if (outformats & FORMAT_JSON)
+		json_do_array("prefixes");
+	for (i = 0; i < s->pfxsz; i++) {
+		ip_addr_print(&s->pfxs[i].prefix, s->pfxs[i].afi, buf,
+		    sizeof(buf));
+
+		if (outformats & FORMAT_JSON) {
+			json_do_string("prefix", buf);
+		} else {
+			if (i > 0)
+				printf("%26s", "");
+			printf("%s\n", buf); 
 		}
 	}
 	if (outformats & FORMAT_JSON)

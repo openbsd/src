@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.71 2024/02/01 15:11:38 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.72 2024/02/22 12:49:42 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -192,6 +192,22 @@ valid_roa(const char *fn, struct cert *cert, struct roa *roa)
 	}
 
 	return 1;
+}
+
+/*
+ * Validate our SPL: check that the asID is contained in the end-entity
+ * certificate's resources.
+ * Returns 1 if valid, 0 otherwise.
+ */
+int
+valid_spl(const char *fn, struct cert *cert, struct spl *spl)
+{
+	if (as_check_covered(spl->asid, spl->asid, cert->as, cert->asz) > 0)
+		return 1;
+
+	warnx("%s: SPL: uncovered ASID: %u", fn, spl->asid);
+
+	return 0;
 }
 
 /*

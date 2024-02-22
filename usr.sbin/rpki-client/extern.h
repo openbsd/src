@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.207 2024/02/21 12:48:25 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.208 2024/02/22 12:49:42 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -178,6 +178,7 @@ enum rtype {
 	RTYPE_ASPA,
 	RTYPE_TAK,
 	RTYPE_GEOFEED,
+	RTYPE_SPL,
 };
 
 enum location {
@@ -278,6 +279,34 @@ struct rsc {
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* Not After of the RSC EE */
 	time_t		 expires; /* when the signature path expires */
+};
+
+/*
+ * An IP address prefix in a given SignedPrefixList.
+ */
+struct spl_pfx {
+	enum afi	 afi;
+	struct ip_addr	 prefix;
+};
+
+/*
+ * An SPL, draft-ietf-sidrops-rpki-prefixlist
+ * This consists of an ASID and its IP prefixes.
+ */
+struct spl {
+	uint32_t	 asid;
+	struct spl_pfx	*pfxs;
+	size_t		 pfxsz;
+	int		 talid;
+	char		*aia;
+	char		*aki;
+	char		*sia;
+	char		*ski;
+	time_t		 signtime; /* CMS signing-time attribute */
+	time_t		 notbefore; /* EE cert's Not Before */
+	time_t		 notafter; /* EE cert's Not After */
+	time_t		 expires; /* when the certification path expires */
+	int		 valid;
 };
 
 /*
@@ -408,6 +437,26 @@ struct vrp {
  */
 RB_HEAD(vrp_tree, vrp);
 RB_PROTOTYPE(vrp_tree, vrp, entry, vrpcmp);
+
+/*
+ * Validated SignedPrefixList Payload
+ * A single VSP element (including ASID)
+ * draft-ietf-sidrops-rpki-prefixlist
+ */
+struct vsp {
+	RB_ENTRY(vsp)	 entry;
+	uint32_t	 asid;
+	struct spl_pfx	*prefixes;
+	size_t		 prefixesz;
+	time_t		 expires;
+	int		 talid;
+	unsigned int	 repoid;
+};
+/*
+ * Tree of VSP sorted by asid
+ */
+RB_HEAD(vsp_tree, vsp);
+RB_PROTOTYPE(vsp_tree, vsp, entry, vspcmp);
 
 /*
  * A single BGPsec Router Key (including ASID)
@@ -561,6 +610,11 @@ struct repotalstats {
 	uint32_t	 vaps_pas; /* total number of providers */
 	uint32_t	 vrps; /* total number of Validated ROA Payloads */
 	uint32_t	 vrps_uniqs; /* number of unique vrps */
+	uint32_t	 spls; /* signed prefix list */
+	uint32_t	 spls_fail; /* failing syntactic parse */
+	uint32_t	 spls_invalid; /* invalid asid */
+	uint32_t	 vsps; /* total number of Validated SPL Payloads */
+	uint32_t	 vsps_uniqs; /* number of unique vsps */
 };
 
 struct repostats {
@@ -637,6 +691,14 @@ struct roa	*roa_read(struct ibuf *);
 void		 roa_insert_vrps(struct vrp_tree *, struct roa *,
 		    struct repo *);
 
+void		 spl_buffer(struct ibuf *, const struct spl *);
+void		 spl_free(struct spl *);
+struct spl	*spl_parse(X509 **, const char *, int, const unsigned char *,
+		    size_t);
+struct spl	*spl_read(struct ibuf *);
+void		 spl_insert_vsps(struct vsp_tree *, struct spl *,
+		    struct repo *);
+
 void		 gbr_free(struct gbr *);
 struct gbr	*gbr_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
@@ -690,6 +752,7 @@ int		 valid_aspa(const char *, struct cert *, struct aspa *);
 int		 valid_geofeed(const char *, struct cert *, struct geofeed *);
 int		 valid_uuid(const char *);
 int		 valid_ca_pkey(const char *, EVP_PKEY *);
+int		 valid_spl(const char *, struct cert *, struct spl *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
@@ -870,6 +933,7 @@ void		 rsc_print(const X509 *, const struct rsc *);
 void		 aspa_print(const X509 *, const struct aspa *);
 void		 tak_print(const X509 *, const struct tak *);
 void		 geofeed_print(const X509 *, const struct geofeed *);
+void		 spl_print(const X509 *, const struct spl *);
 
 /* Missing RFC 3779 API */
 IPAddrBlocks *IPAddrBlocks_new(void);
@@ -885,22 +949,22 @@ extern int	 outformats;
 #define FORMAT_OMETRIC	0x10
 
 int		 outputfiles(struct vrp_tree *v, struct brk_tree *b,
-		    struct vap_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 outputheader(FILE *, struct stats *);
 int		 output_bgpd(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 output_bird1v4(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 output_bird1v6(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 output_bird2(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 output_csv(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 output_json(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
 int		 output_ometric(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct stats *);
+		    struct vap_tree *, struct vsp_tree *, struct stats *);
 
 void		 logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
