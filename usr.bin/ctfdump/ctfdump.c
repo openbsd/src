@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.27 2022/08/14 15:01:18 millert Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.28 2024/02/22 13:21:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -490,16 +490,16 @@ ctf_dump_type(struct ctf_header *cth, const char *data, size_t dlen,
 	case CTF_K_INTEGER:
 		eob = *((uint32_t *)(p + toff));
 		toff += sizeof(uint32_t);
-		printf(" encoding=%s offset=%u bits=%u",
+		printf(" encoding=%s offset=%u bits=%u (%llu bytes)",
 		    ctf_enc2name(CTF_INT_ENCODING(eob)), CTF_INT_OFFSET(eob),
-		    CTF_INT_BITS(eob));
+		    CTF_INT_BITS(eob), size);
 		break;
 	case CTF_K_FLOAT:
 		eob = *((uint32_t *)(p + toff));
 		toff += sizeof(uint32_t);
-		printf(" encoding=%s offset=%u bits=%u",
+		printf(" encoding=%s offset=%u bits=%u (%llu bytes)",
 		    ctf_fpenc2name(CTF_FP_ENCODING(eob)), CTF_FP_OFFSET(eob),
-		    CTF_FP_BITS(eob));
+		    CTF_FP_BITS(eob), size);
 		break;
 	case CTF_K_ARRAY:
 		cta = (struct ctf_array *)(p + toff);
@@ -563,7 +563,8 @@ ctf_dump_type(struct ctf_header *cth, const char *data, size_t dlen,
 		}
 		break;
 	case CTF_K_ENUM:
-		printf("\n");
+		printf(" (%llu bytes)\n", size);
+
 		for (i = 0; i < vlen; i++) {
 			struct ctf_enum	*cte;
 
