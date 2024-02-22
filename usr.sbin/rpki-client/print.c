@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.50 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: print.c,v 1.51 2024/02/22 19:29:55 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -554,7 +554,7 @@ spl_print(const X509 *x, const struct spl *s)
 		} else {
 			if (i > 0)
 				printf("%26s", "");
-			printf("%s\n", buf); 
+			printf("%s\n", buf);
 		}
 	}
 	if (outformats & FORMAT_JSON)

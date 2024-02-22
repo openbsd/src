@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.1 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: spl.c,v 1.2 2024/02/22 19:29:55 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -86,7 +86,7 @@ IMPLEMENT_ASN1_FUNCTIONS(SignedPrefixList);
  * Comparator to help sorting elements in SPL prefixBlocks and VSPs.
  * Returns -1 if 'a' should precede 'b', 1 if 'b' should precede 'a',
  * or '0' if a and b are equal.
- */ 
+ */
 static int
 prefix_cmp(enum afi afi, const struct ip_addr *a, const struct ip_addr *b)
 {
