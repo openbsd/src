@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.48 2024/02/20 11:48:19 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.49 2024/02/22 09:06:11 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -24761,4 +24761,34 @@ qwx_dmamem_free(bus_dma_tag_t dmat, struct qwx_dmamem *adm)
 	bus_dmamem_free(dmat, &adm->seg, 1);
 	bus_dmamap_destroy(dmat, adm->map);
 	free(adm, M_DEVBUF, sizeof(*adm));
+}
+
+int
+qwx_activate(struct device *self, int act)
+{
+	struct qwx_softc *sc = (struct qwx_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int err = 0;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		if (ifp->if_flags & IFF_RUNNING) {
+			rw_enter_write(&sc->ioctl_rwl);
+			qwx_stop(ifp);
+			rw_exit(&sc->ioctl_rwl);
+		}
+		break;
+	case DVACT_RESUME:
+		break;
+	case DVACT_WAKEUP:
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP) {
+			err = qwx_init(ifp);
+			if (err)
+				printf("%s: could not initialize hardware\n",
+				    sc->sc_dev.dv_xname);
+		}
+		break;
+	}
+
+	return 0;
 }

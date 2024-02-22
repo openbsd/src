@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.10 2024/02/16 16:37:42 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.11 2024/02/22 09:06:11 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -402,7 +402,6 @@ int	qwx_pci_match(struct device *, void *, void *);
 void	qwx_pci_attach(struct device *, struct device *, void *);
 int	qwx_pci_detach(struct device *, int);
 void	qwx_pci_attach_hook(struct device *);
-int	qwx_pci_activate(struct device *, int);
 void	qwx_pci_free_xfer_rings(struct qwx_pci_softc *);
 int	qwx_pci_alloc_xfer_ring(struct qwx_softc *, struct qwx_pci_xfer_ring *,
 	    uint32_t, uint32_t, uint32_t, size_t);
@@ -526,7 +525,7 @@ const struct cfattach qwx_pci_ca = {
 	qwx_pci_match,
 	qwx_pci_attach,
 	qwx_pci_detach,
-	qwx_pci_activate
+	qwx_activate
 };
 
 /* XXX pcidev */
@@ -1202,19 +1201,6 @@ qwx_pci_attach_hook(struct device *self)
 	qwx_attach(sc);
 
 	splx(s);
-}
-
-int
-qwx_pci_activate(struct device *self, int act)
-{
-	switch (act) {
-	case DVACT_SUSPEND:
-		break;
-	case DVACT_WAKEUP:
-		break;
-	}
-
-	return 0;
 }
 
 void
