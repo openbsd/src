@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.33 2022/08/14 14:57:38 millert Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.34 2024/02/22 13:49:17 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -55,11 +55,14 @@ static const char	*db_ctf_off2name(uint32_t);
 static Elf_Sym		*db_ctf_idx2sym(size_t *, uint8_t);
 static char		*db_ctf_decompress(const char *, size_t, size_t);
 
+uint32_t		 db_ctf_type_len(const struct ctf_type *);
+size_t			 db_ctf_type_size(const struct ctf_type *);
 const struct ctf_type	*db_ctf_type_by_name(const char *, unsigned int);
 const struct ctf_type	*db_ctf_type_by_symbol(Elf_Sym *);
 const struct ctf_type	*db_ctf_type_by_index(uint16_t);
 void			 db_ctf_pprint(const struct ctf_type *, vaddr_t);
 void			 db_ctf_pprint_struct(const struct ctf_type *, vaddr_t);
+void			 db_ctf_pprint_enum(const struct ctf_type *, vaddr_t);
 void			 db_ctf_pprint_ptr(const struct ctf_type *, vaddr_t);
 
 /*
@@ -242,6 +245,68 @@ db_ctf_type_len(const struct ctf_type *ctt)
 }
 
 /*
+ * Return the size of the type.
+ */
+size_t
+db_ctf_type_size(const struct ctf_type *ctt)
+{
+	vaddr_t			 taddr = (vaddr_t)ctt;
+	const struct ctf_type	*ref;
+	const struct ctf_array	*arr;
+	size_t			 tlen = 0;
+	uint16_t		 kind;
+	uint32_t		 toff;
+	uint64_t		 size;
+
+	kind = CTF_INFO_KIND(ctt->ctt_info);
+
+	if (ctt->ctt_size <= CTF_MAX_SIZE) {
+		size = ctt->ctt_size;
+		toff = sizeof(struct ctf_stype);
+	} else {
+		size = CTF_TYPE_LSIZE(ctt);
+		toff = sizeof(struct ctf_type);
+	}
+
+	switch (kind) {
+	case CTF_K_UNKNOWN:
+	case CTF_K_FORWARD:
+		break;
+	case CTF_K_INTEGER:
+	case CTF_K_FLOAT:
+		tlen = size;
+		break;
+	case CTF_K_ARRAY:
+		arr = (struct ctf_array *)(taddr + toff);
+		ref = db_ctf_type_by_index(arr->cta_contents);
+		tlen = arr->cta_nelems * db_ctf_type_size(ref);
+		break;
+	case CTF_K_FUNCTION:
+		tlen = 0;
+		break;
+	case CTF_K_STRUCT:
+	case CTF_K_UNION:
+	case CTF_K_ENUM:
+		tlen = size;
+		break;
+	case CTF_K_POINTER:
+		tlen = sizeof(void *);
+		break;
+	case CTF_K_TYPEDEF:
+	case CTF_K_VOLATILE:
+	case CTF_K_CONST:
+	case CTF_K_RESTRICT:
+		ref = db_ctf_type_by_index(ctt->ctt_type);
+		tlen = db_ctf_type_size(ref);
+		break;
+	default:
+		return 0;
+	}
+
+	return tlen;
+}
+
+/*
  * Return the CTF type associated to an ELF symbol.
  */
 const struct ctf_type *
@@ -347,8 +412,14 @@ db_ctf_pprint(const struct ctf_type *ctt, vaddr_t addr)
 {
 	vaddr_t			 taddr = (vaddr_t)ctt;
 	const struct ctf_type	*ref;
+	const struct ctf_array	*arr;
 	uint16_t		 kind;
-	uint32_t		 eob, toff;
+	uint32_t		 eob, toff, i;
+	db_expr_t		 val;
+	size_t			 elm_size;
+
+	if (ctt == NULL)
+		return;
 
 	kind = CTF_INFO_KIND(ctt->ctt_info);
 	if (ctt->ctt_size <= CTF_MAX_SIZE)
@@ -357,20 +428,58 @@ db_ctf_pprint(const struct ctf_type *ctt, vaddr_t addr)
 		toff = sizeof(struct ctf_type);
 
 	switch (kind) {
-	case CTF_K_FLOAT:
-	case CTF_K_ENUM:
 	case CTF_K_ARRAY:
+		arr = (struct ctf_array *)(taddr + toff);
+		ref = db_ctf_type_by_index(arr->cta_contents);
+		elm_size = db_ctf_type_size(ref);
+		db_printf("[");
+		for (i = 0; i < arr->cta_nelems; i++) {
+			db_ctf_pprint(ref, addr + i * elm_size);
+			if (i + 1 < arr->cta_nelems)
+				db_printf(",");
+		}
+		db_printf("]");
+		break;
+	case CTF_K_ENUM:
+		db_ctf_pprint_enum(ctt, addr);
+		break;
+	case CTF_K_FLOAT:
 	case CTF_K_FUNCTION:
-		db_printf("%lu", *((unsigned long *)addr));
+		val = db_get_value(addr, sizeof(val), 0);
+		db_printf("%lx", (unsigned long)val);
 		break;
 	case CTF_K_INTEGER:
 		eob = db_get_value((taddr + toff), sizeof(eob), 0);
 		switch (CTF_INT_BITS(eob)) {
-		case 64:
-			db_printf("0x%llx", *((long long *)addr));
+#ifndef __LP64__
+		case 64: {
+			uint64_t val64;
+#if BYTE_ORDER == LITTLE_ENDIAN
+			val64 = db_get_value(addr + 4, CTF_INT_BITS(eob) / 8,
+			   CTF_INT_ENCODING(eob) & CTF_INT_SIGNED); 
+			val64 <<= 32;
+			val64 |= db_get_value(addr, CTF_INT_BITS(eob) / 8, 0);
+#else
+			val64 = db_get_value(addr, CTF_INT_BITS(eob) / 8,
+			   CTF_INT_ENCODING(eob) & CTF_INT_SIGNED); 
+			val64 <<= 32;
+			val64 |= db_get_value(addr + 4, CTF_INT_BITS(eob) / 8,
+			    0);
+#endif
+			if (CTF_INT_ENCODING(eob) & CTF_INT_SIGNED)
+				db_printf("%lld", val64);
+			else
+				db_printf("%llu", val64);
 			break;
+		}
+#endif
 		default:
-			db_printf("0x%x", *((int *)addr));
+			val = db_get_value(addr, CTF_INT_BITS(eob) / 8,
+			   CTF_INT_ENCODING(eob) & CTF_INT_SIGNED); 
+			if (CTF_INT_ENCODING(eob) & CTF_INT_SIGNED)
+				db_printf("%ld", val);
+			else
+				db_printf("%lu", val);
 			break;
 		}
 		break;
@@ -416,7 +525,6 @@ db_ctf_pprint_struct(const struct ctf_type *ctt, vaddr_t addr)
 
 	db_printf("{");
 	if (size < CTF_LSTRUCT_THRESH) {
-
 		for (i = 0; i < vlen; i++) {
 			struct ctf_member	*ctm;
 
@@ -449,6 +557,35 @@ db_ctf_pprint_struct(const struct ctf_type *ctt, vaddr_t addr)
 		}
 	}
 	db_printf("}");
+}
+
+void
+db_ctf_pprint_enum(const struct ctf_type *ctt, vaddr_t addr)
+{
+	const char		*name = NULL, *p = (const char *)ctt;
+	struct ctf_enum		*cte;
+	uint32_t		 toff;
+	int32_t			 val;
+	uint16_t		 i, vlen;
+
+	vlen = CTF_INFO_VLEN(ctt->ctt_info);
+	toff = sizeof(struct ctf_stype);
+
+	val = (int32_t)db_get_value(addr, sizeof(val), 1);
+	for (i = 0; i < vlen; i++) {
+		cte = (struct ctf_enum *)(p + toff);
+		toff += sizeof(*cte);
+
+		if (val == cte->cte_value) {
+			name = db_ctf_off2name(cte->cte_name);
+			break;
+		}
+	}
+
+	if (name != NULL)
+		db_printf("%s", name);
+	else
+		db_printf("#%d", val);
 }
 
 void
