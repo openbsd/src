@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.12 2024/02/22 09:08:08 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.13 2024/02/22 09:12:45 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -462,7 +462,6 @@ int	qwx_mhi_fw_load_handler(struct qwx_pci_softc *);
 int	qwx_mhi_await_device_reset(struct qwx_softc *);
 int	qwx_mhi_await_device_ready(struct qwx_softc *);
 void	qwx_mhi_ready_state_transition(struct qwx_pci_softc *);
-void	qwx_mhi_ee_amss_state_transition(struct qwx_pci_softc *);
 void	qwx_mhi_mission_mode_state_transition(struct qwx_pci_softc *);
 void	qwx_mhi_low_power_mode_state_transition(struct qwx_pci_softc *);
 void	qwx_mhi_set_state(struct qwx_softc *, uint32_t);
@@ -2937,6 +2936,10 @@ qwx_mhi_start(struct qwx_pci_softc *psc)
 		ret = qwx_mhi_fw_load_handler(psc);
 		if (ret)
 			return ret;
+
+		/* XXX without this delay starting the channels may fail */
+		delay(1000);
+		qwx_mhi_start_channels(psc);
 	} else {
 		/* XXX Handle partially initialized device...?!? */
 		ee = qwx_pci_read(sc, psc->bhi_off + MHI_BHI_EXECENV);
@@ -3171,15 +3174,6 @@ qwx_mhi_ready_state_transition(struct qwx_pci_softc *psc)
 	 * into M0 and the execution environment will switch to SBL.
 	 */
 	qwx_mhi_set_state(sc, MHI_STATE_M0);
-}
-
-void
-qwx_mhi_ee_amss_state_transition(struct qwx_pci_softc *psc)
-{
-	/* XXX without this delay starting the channels may fail */
-	delay(1000);
-
-	qwx_mhi_start_channels(psc);
 }
 
 void
@@ -3649,7 +3643,6 @@ qwx_mhi_state_change(void *arg)
 				DNPRINTF(QWX_D_MHI, "%s: new EE AMSS\n",
 				    sc->sc_dev.dv_xname);
 				psc->bhi_ee = ee;
-				qwx_mhi_ee_amss_state_transition(psc);
 				/* Wake thread loading the full AMSS image. */
 				wakeup(&psc->bhie_off);
 				break;
