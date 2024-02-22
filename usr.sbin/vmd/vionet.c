@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.13 2024/02/20 21:40:37 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.14 2024/02/22 02:38:53 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -89,9 +89,8 @@ int pipe_inject[2];
 struct iovec iov_rx[VIONET_QUEUE_SIZE];
 struct iovec iov_tx[VIONET_QUEUE_SIZE];
 pthread_rwlock_t lock = NULL;		/* Guards device config state. */
-
-/* Transient reset state used by the main thread to coordinate device reset. */
-int resetting = 0;
+int resetting = 0;	/* Transient reset state used to coordinate reset. */
+int rx_enabled = 0;	/* 1: we expect to read the tap, 0: wait for notify. */
 
 __dead void
 vionet_main(int fd, int fd_vmm)
@@ -693,6 +692,7 @@ vionet_notifyq(struct virtio_dev *dev)
 
 	switch (vionet->cfg.queue_notify) {
 	case RXQ:
+		rx_enabled = 1;
 		vm_pipe_send(&pipe_rx, VIRTIO_NOTIFY);
 		break;
 	case TXQ:
@@ -900,7 +900,6 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	struct imsg	 	 imsg;
 	ssize_t			 n = 0;
 	int			 verbose;
-	uint8_t			 status = 0;
 
 	if (dev == NULL)
 		fatalx("%s: missing vionet pointer", __func__);
@@ -948,11 +947,7 @@ dev_dispatch_vm(int fd, short event, void *arg)
 			break;
 		case IMSG_VMDOP_UNPAUSE_VM:
 			log_debug("%s: unpausing", __func__);
-			pthread_rwlock_rdlock(&lock);
-			status = vionet->cfg.device_status &
-			    VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK;
-			pthread_rwlock_unlock(&lock);
-			if (status)
+			if (rx_enabled)
 				vm_pipe_send(&pipe_rx, VIRTIO_THREAD_START);
 			break;
 		case IMSG_CTL_VERBOSE:
@@ -1092,6 +1087,7 @@ handle_io_write(struct viodev_msg *msg, struct virtio_dev *dev)
 
 	pthread_rwlock_unlock(&lock);
 	if (pause_devices) {
+		rx_enabled = 0;
 		vionet_deassert_pic_irq(dev);
 		vm_pipe_send(&pipe_rx, VIRTIO_THREAD_PAUSE);
 		vm_pipe_send(&pipe_tx, VIRTIO_THREAD_PAUSE);
