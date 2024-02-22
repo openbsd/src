@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.208 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.209 2024/02/22 21:00:26 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -612,7 +612,7 @@ struct repotalstats {
 	uint32_t	 vrps_uniqs; /* number of unique vrps */
 	uint32_t	 spls; /* signed prefix list */
 	uint32_t	 spls_fail; /* failing syntactic parse */
-	uint32_t	 spls_invalid; /* invalid asid */
+	uint32_t	 spls_invalid; /* invalid spls */
 	uint32_t	 vsps; /* total number of Validated SPL Payloads */
 	uint32_t	 vsps_uniqs; /* number of unique vsps */
 };
