@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.50 2024/02/22 09:08:08 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.51 2024/02/22 21:21:35 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -17232,8 +17232,10 @@ qwx_wmi_pdev_set_param(struct qwx_softc *sc, uint32_t param_id,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_PDEV_SET_PARAM_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_PDEV_SET_PARAM cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_PDEV_SET_PARAM cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -17268,8 +17270,10 @@ qwx_wmi_pdev_lro_cfg(struct qwx_softc *sc, uint8_t pdev_id)
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_LRO_CONFIG_CMDID);
 	if (ret) {
-		printf("%s: failed to send lro cfg req wmi cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send lro cfg req wmi cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -17303,8 +17307,10 @@ qwx_wmi_pdev_set_ps_mode(struct qwx_softc *sc, int vdev_id, uint8_t pdev_id,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_STA_POWERSAVE_MODE_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_PDEV_SET_PARAM cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_PDEV_SET_PARAM cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -17345,8 +17351,10 @@ qwx_wmi_scan_prob_req_oui(struct qwx_softc *sc, const uint8_t *mac_addr,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_SCAN_PROB_REQ_OUI_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_SCAN_PROB_REQ_OUI cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_SCAN_PROB_REQ_OUI cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -17378,8 +17386,11 @@ qwx_wmi_send_dfs_phyerr_offload_enable_cmd(struct qwx_softc *sc, uint32_t pdev_i
 	ret = qwx_wmi_cmd_send(wmi, m,
 	    WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE "
-		    "cmd\n", sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send "
+			    "WMI_PDEV_DFS_PHYERR_OFFLOAD_ENABLE cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_free(m);
 		return ret;
 	}
@@ -17504,8 +17515,10 @@ qwx_wmi_send_scan_chan_list_cmd(struct qwx_softc *sc, uint8_t pdev_id,
 
 		ret = qwx_wmi_cmd_send(wmi, m, WMI_SCAN_CHAN_LIST_CMDID);
 		if (ret) {
-			printf("%s: failed to send WMI_SCAN_CHAN_LIST cmd\n",
-			    sc->sc_dev.dv_xname);
+			if (ret != ESHUTDOWN) {
+				printf("%s: failed to send WMI_SCAN_CHAN_LIST "
+				    "cmd\n", sc->sc_dev.dv_xname);
+			}
 			m_freem(m);
 			return ret;
 		}
@@ -17543,8 +17556,10 @@ qwx_wmi_send_11d_scan_start_cmd(struct qwx_softc *sc,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_11D_SCAN_START_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_11D_SCAN_START_CMDID: %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_11D_SCAN_START_CMDID: "
+			    "%d\n", sc->sc_dev.dv_xname, ret);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -17819,8 +17834,10 @@ qwx_wmi_send_scan_start_cmd(struct qwx_softc *sc,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_START_SCAN_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_START_SCAN_CMDID\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_START_SCAN_CMDID\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -17872,8 +17889,10 @@ qwx_wmi_send_scan_stop_cmd(struct qwx_softc *sc,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_STOP_SCAN_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_STOP_SCAN_CMDID\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_STOP_SCAN_CMDID\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -17906,8 +17925,10 @@ qwx_wmi_send_peer_create_cmd(struct qwx_softc *sc, uint8_t pdev_id,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_PEER_CREATE_CMDID);
 	if (ret) {
-		printf("%s: failed to submit WMI_PEER_CREATE cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to submit WMI_PEER_CREATE cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -17941,8 +17962,10 @@ qwx_wmi_send_peer_delete_cmd(struct qwx_softc *sc, const uint8_t *peer_addr,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_PEER_DELETE_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_PEER_DELETE cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_PEER_DELETE cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18176,8 +18199,10 @@ qwx_wmi_send_peer_assoc_cmd(struct qwx_softc *sc, uint8_t pdev_id,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_PEER_ASSOC_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_PEER_ASSOC_CMDID\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_PEER_ASSOC_CMDID\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18379,7 +18404,8 @@ qwx_init_cmd_send(struct qwx_pdev_wmi *wmi, struct wmi_init_cmd_param *param)
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_INIT_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_INIT_CMDID\n", __func__);
+		if (ret != ESHUTDOWN)
+			printf("%s: failed to send WMI_INIT_CMDID\n", __func__);
 		m_freem(m);
 		return ret;
 	}
@@ -18462,8 +18488,10 @@ qwx_wmi_set_hw_mode(struct qwx_softc *sc,
 
 	ret = qwx_wmi_cmd_send(&wmi->wmi[0], m, WMI_PDEV_SET_HW_MODE_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_PDEV_SET_HW_MODE_CMDID\n",
-		    __func__);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send "
+			    "WMI_PDEV_SET_HW_MODE_CMDID\n", __func__);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18499,8 +18527,11 @@ qwx_wmi_set_sta_ps_param(struct qwx_softc *sc, uint32_t vdev_id,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_STA_POWERSAVE_PARAM_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_STA_POWERSAVE_PARAM_CMDID",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send "
+			    "WMI_STA_POWERSAVE_PARAM_CMDID",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18559,8 +18590,11 @@ qwx_wmi_mgmt_send(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 #endif
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_MGMT_TX_SEND_CMDID);
 	if (ret) {
-		printf("%s: failed to submit WMI_MGMT_TX_SEND_CMDID cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to submit "
+			    "WMI_MGMT_TX_SEND_CMDID cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18638,8 +18672,10 @@ qwx_wmi_vdev_create(struct qwx_softc *sc, uint8_t *macaddr,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_CREATE_CMDID);
 	if (ret) {
-		printf("%s: failed to submit WMI_VDEV_CREATE_CMDID\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to submit WMI_VDEV_CREATE_CMDID\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18675,8 +18711,10 @@ qwx_wmi_vdev_set_param_cmd(struct qwx_softc *sc, uint32_t vdev_id,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_SET_PARAM_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_VDEV_SET_PARAM_CMDID\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_VDEV_SET_PARAM_CMDID\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18729,8 +18767,10 @@ qwx_wmi_vdev_up(struct qwx_softc *sc, uint32_t vdev_id, uint32_t pdev_id,
 #endif
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_UP_CMDID);
 	if (ret) {
-		printf("%s: failed to submit WMI_VDEV_UP cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to submit WMI_VDEV_UP cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18762,8 +18802,10 @@ qwx_wmi_vdev_down(struct qwx_softc *sc, uint32_t vdev_id, uint8_t pdev_id)
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_DOWN_CMDID);
 	if (ret) {
-		printf("%s: failed to submit WMI_VDEV_DOWN cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to submit WMI_VDEV_DOWN cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18847,8 +18889,10 @@ qwx_wmi_vdev_stop(struct qwx_softc *sc, uint8_t vdev_id, uint8_t pdev_id)
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_STOP_CMDID);
 	if (ret) {
-		printf("%s: failed to submit WMI_VDEV_STOP cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to submit WMI_VDEV_STOP cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -18935,8 +18979,10 @@ qwx_wmi_vdev_start(struct qwx_softc *sc, struct wmi_vdev_start_req_arg *arg,
 	ret = qwx_wmi_cmd_send(wmi, m, restart ?
 	    WMI_VDEV_RESTART_REQUEST_CMDID : WMI_VDEV_START_REQUEST_CMDID);
 	if (ret) {
-		printf("%s: failed to submit vdev_%s cmd\n",
-		    sc->sc_dev.dv_xname, restart ? "restart" : "start");
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to submit vdev_%s cmd\n",
+			    sc->sc_dev.dv_xname, restart ? "restart" : "start");
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -22593,8 +22639,11 @@ qwx_mac_11d_scan_start(struct qwx_softc *sc, struct qwx_vif *arvif)
 	ret = qwx_wmi_send_11d_scan_start_cmd(sc, &param,
 	   0 /* TODO: derive pdev ID from arvif somehow? */);
 	if (ret) {
-		printf("%s: failed to start 11d scan; vdev: %d ret: %d\n",
-		    sc->sc_dev.dv_xname, arvif->vdev_id, ret);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to start 11d scan; vdev: %d "
+			    "ret: %d\n", sc->sc_dev.dv_xname,
+			    arvif->vdev_id, ret);
+		}
 	} else {
 		sc->vdev_id_11d_scan = arvif->vdev_id;
 		if (sc->state_11d == ATH11K_11D_PREPARING)
@@ -23932,8 +23981,10 @@ qwx_wmi_set_peer_param(struct qwx_softc *sc, uint8_t *peer_addr,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_PEER_SET_PARAM_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_PEER_SET_PARAM cmd\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send WMI_PEER_SET_PARAM cmd\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 		return ret;
 	}
@@ -23976,8 +24027,11 @@ qwx_wmi_peer_rx_reorder_queue_setup(struct qwx_softc *sc, int vdev_id,
 
 	ret = qwx_wmi_cmd_send(wmi, m, WMI_PEER_REORDER_QUEUE_SETUP_CMDID);
 	if (ret) {
-		printf("%s: failed to send WMI_PEER_REORDER_QUEUE_SETUP\n",
-		    sc->sc_dev.dv_xname);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to send "
+			    "WMI_PEER_REORDER_QUEUE_SETUP\n",
+			    sc->sc_dev.dv_xname);
+		}
 		m_freem(m);
 	}
 
@@ -24246,8 +24300,10 @@ qwx_scan(struct qwx_softc *sc)
 
 	ret = qwx_start_scan(sc, arg);
 	if (ret) {
-		printf("%s: failed to start hw scan: %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		if (ret != ESHUTDOWN) {
+			printf("%s: failed to start hw scan: %d\n",
+			    sc->sc_dev.dv_xname, ret);
+		}
 #ifdef notyet
 		spin_lock_bh(&ar->data_lock);
 #endif
