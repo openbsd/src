@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.432 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.433 2024/02/22 14:25:58 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -202,7 +202,8 @@ route_init(void)
 }
 
 int
-route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
+route_cache(struct route *ro, const struct in_addr *dst,
+    const struct in_addr *src, u_int rtableid)
 {
 	u_long gen;
 
@@ -213,28 +214,35 @@ route_cache(struct route *ro, struct in_addr addr, u_int rtableid)
 	    ro->ro_generation == gen &&
 	    ro->ro_tableid == rtableid &&
 	    ro->ro_dstsa.sa_family == AF_INET &&
-	    ro->ro_dstsin.sin_addr.s_addr == addr.s_addr) {
-		ipstat_inc(ips_rtcachehit);
-		return (0);
+	    ro->ro_dstsin.sin_addr.s_addr == dst->s_addr) {
+		if (src == NULL || !ipmultipath ||
+		    !ISSET(ro->ro_rt->rt_flags, RTF_MPATH) ||
+		    (ro->ro_srcin.s_addr != INADDR_ANY &&
+		    ro->ro_srcin.s_addr == src->s_addr)) {
+			ipstat_inc(ips_rtcachehit);
+			return (0);
+		}
 	}
 
 	ipstat_inc(ips_rtcachemiss);
 	rtfree(ro->ro_rt);
-	ro->ro_rt = NULL;
+	memset(ro, 0, sizeof(*ro));
 	ro->ro_generation = gen;
 	ro->ro_tableid = rtableid;
 
-	memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
 	ro->ro_dstsin.sin_family = AF_INET;
 	ro->ro_dstsin.sin_len = sizeof(struct sockaddr_in);
-	ro->ro_dstsin.sin_addr = addr;
+	ro->ro_dstsin.sin_addr = *dst;
+	if (src != NULL)
+		ro->ro_srcin = *src;
 
 	return (ESRCH);
 }
 
 #ifdef INET6
 int
-route6_cache(struct route *ro, const struct in6_addr *addr, u_int rtableid)
+route6_cache(struct route *ro, const struct in6_addr *dst,
+    const struct in6_addr *src, u_int rtableid)
 {
 	u_long gen;
 
@@ -245,21 +253,27 @@ route6_cache(struct route *ro, const struct in6_addr *addr, u_int rtableid)
 	    ro->ro_generation == gen &&
 	    ro->ro_tableid == rtableid &&
 	    ro->ro_dstsa.sa_family == AF_INET6 &&
-	    IN6_ARE_ADDR_EQUAL(&ro->ro_dstsin6.sin6_addr, addr)) {
-		ip6stat_inc(ip6s_rtcachehit);
-		return (0);
+	    IN6_ARE_ADDR_EQUAL(&ro->ro_dstsin6.sin6_addr, dst)) {
+		if (src == NULL || !ip6_multipath ||
+		    !ISSET(ro->ro_rt->rt_flags, RTF_MPATH) ||
+		    (!IN6_IS_ADDR_UNSPECIFIED(&ro->ro_srcin6) &&
+		    IN6_ARE_ADDR_EQUAL(&ro->ro_srcin6, src))) {
+			ip6stat_inc(ip6s_rtcachehit);
+			return (0);
+		}
 	}
 
 	ip6stat_inc(ip6s_rtcachemiss);
 	rtfree(ro->ro_rt);
-	ro->ro_rt = NULL;
+	memset(ro, 0, sizeof(*ro));
 	ro->ro_generation = gen;
 	ro->ro_tableid = rtableid;
 
-	memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
 	ro->ro_dstsin6.sin6_family = AF_INET6;
 	ro->ro_dstsin6.sin6_len = sizeof(struct sockaddr_in6);
-	ro->ro_dstsin6.sin6_addr = *addr;
+	ro->ro_dstsin6.sin6_addr = *dst;
+	if (src != NULL)
+		ro->ro_srcin6 = *src;
 
 	return (ESRCH);
 }

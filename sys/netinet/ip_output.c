@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.395 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.396 2024/02/22 14:25:58 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ reroute:
 	 * If there is a cached route, check that it is to the same
 	 * destination and is still up.  If not, free it and try again.
 	 */
-	route_cache(ro, ip->ip_dst, m->m_pkthdr.ph_rtableid);
+	route_cache(ro, &ip->ip_dst, &ip->ip_src, m->m_pkthdr.ph_rtableid);
 	dst = &ro->ro_dstsin;
 
 	if ((IN_MULTICAST(ip->ip_dst.s_addr) ||

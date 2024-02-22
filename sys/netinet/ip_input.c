@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.389 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.390 2024/02/22 14:25:58 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ const struct sysctl_bounded_args ipctl_vars[] = {
 	{ IPCTL_IPPORT_HILASTAUTO, &ipport_hilastauto, 0, 65535 },
 	{ IPCTL_IPPORT_MAXQUEUE, &ip_maxqueue, 0, 10000 },
 	{ IPCTL_MFORWARDING, &ipmforwarding, 0, 1 },
-	{ IPCTL_MULTIPATH, &ipmultipath, 0, 1 },
 	{ IPCTL_ARPTIMEOUT, &arpt_keep, 0, INT_MAX },
 	{ IPCTL_ARPDOWN, &arpt_down, 0, INT_MAX },
 };
@@ -1491,7 +1490,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 	}
 
 	ro.ro_rt = NULL;
-	route_cache(&ro, ip->ip_dst, m->m_pkthdr.ph_rtableid);
+	route_cache(&ro, &ip->ip_dst, &ip->ip_src, m->m_pkthdr.ph_rtableid);
 	if (!rtisvalid(rt)) {
 		rtfree(rt);
 		rt = rtalloc_mpath(&ro.ro_dstsa, &ip->ip_src.s_addr,
@@ -1633,10 +1632,10 @@ int
 ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error;
 #ifdef MROUTING
 	extern struct mrtstat mrtstat;
 #endif
+	int oldval, error;
 
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPCTL_IFQUEUE &&
@@ -1721,6 +1720,15 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_MRTVIF:
 		return (EOPNOTSUPP);
 #endif
+	case IPCTL_MULTIPATH:
+		NET_LOCK();
+		oldval = ipmultipath;
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &ipmultipath, 0, 1);
+		if (oldval != ipmultipath)
+			atomic_inc_long(&rtgeneration);
+		NET_UNLOCK();
+		return (error);
 	default:
 		NET_LOCK();
 		error = sysctl_bounded_arr(ipctl_vars, nitems(ipctl_vars),
