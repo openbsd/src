@@ -525,6 +525,7 @@ _libre_X509_STORE_new
 _libre_X509_STORE_free
 _libre_X509_STORE_up_ref
 _libre_X509_STORE_get0_objects
+_libre_X509_STORE_get1_objects
 _libre_X509_STORE_get_ex_data
 _libre_X509_STORE_set_ex_data
 _libre_X509_STORE_set_flags

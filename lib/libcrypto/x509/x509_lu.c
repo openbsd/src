@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.62 2023/12/27 01:55:25 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.63 2024/02/23 10:39:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -245,6 +245,24 @@ X509_OBJECT_free(X509_OBJECT *a)
 	free(a);
 }
 LCRYPTO_ALIAS(X509_OBJECT_free);
+
+static X509_OBJECT *
+x509_object_dup(const X509_OBJECT *obj)
+{
+	X509_OBJECT *copy;
+
+	if ((copy = X509_OBJECT_new()) == NULL) {
+		X509error(ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+
+	copy->type = obj->type;
+	copy->data = obj->data;
+
+	X509_OBJECT_up_ref_count(copy);
+
+	return copy;
+}
 
 void
 X509_STORE_free(X509_STORE *store)
@@ -784,6 +802,53 @@ X509_STORE_get0_objects(X509_STORE *xs)
 	return xs->objs;
 }
 LCRYPTO_ALIAS(X509_STORE_get0_objects);
+
+static STACK_OF(X509_OBJECT) *
+sk_X509_OBJECT_deep_copy(const STACK_OF(X509_OBJECT) *objs)
+{
+	STACK_OF(X509_OBJECT) *copy = NULL;
+	X509_OBJECT *obj = NULL;
+	int i;
+
+	if ((copy = sk_X509_OBJECT_new(x509_object_cmp)) == NULL) {
+		X509error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
+		if ((obj = x509_object_dup(sk_X509_OBJECT_value(objs, i))) == NULL)
+			goto err;
+		if (!sk_X509_OBJECT_push(copy, obj))
+			goto err;
+		obj = NULL;
+	}
+
+	return copy;
+
+ err:
+	X509_OBJECT_free(obj);
+	sk_X509_OBJECT_pop_free(copy, X509_OBJECT_free);
+
+	return NULL;
+}
+
+STACK_OF(X509_OBJECT) *
+X509_STORE_get1_objects(X509_STORE *store)
+{
+	STACK_OF(X509_OBJECT) *objs;
+
+	if (store == NULL) {
+		X509error(ERR_R_PASSED_NULL_PARAMETER);
+		return NULL;
+	}
+
+	CRYPTO_r_lock(CRYPTO_LOCK_X509_STORE);
+	objs = sk_X509_OBJECT_deep_copy(store->objs);
+	CRYPTO_r_unlock(CRYPTO_LOCK_X509_STORE);
+
+	return objs;
+}
+LCRYPTO_ALIAS(X509_STORE_get1_objects);
 
 void *
 X509_STORE_get_ex_data(X509_STORE *xs, int idx)
