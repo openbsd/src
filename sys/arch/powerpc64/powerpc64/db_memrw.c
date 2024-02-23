@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.2 2020/06/12 22:01:01 gkoehler Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.3 2024/02/23 18:19:03 cheloha Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*-
@@ -46,9 +46,9 @@
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(vaddr_t addr, size_t size, char *data)
+db_read_bytes(vaddr_t addr, size_t size, void *datap)
 {
-	char *src;
+	char *data = datap, *src;
 
 	src = (char *)addr;
 
@@ -136,10 +136,10 @@ db_write_text(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, void *datap)
 {
 	extern char _start[], _etext[];
-	char *dst;
+	char *data = datap, *dst;
 
 	/* If any part is in kernel text, use db_write_text() */
 	if (addr >= (vaddr_t)_start && addr < (vaddr_t)_etext) {

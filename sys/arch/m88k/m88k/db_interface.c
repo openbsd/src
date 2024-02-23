@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.28 2022/04/14 19:47:11 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.29 2024/02/23 18:19:03 cheloha Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -487,9 +487,9 @@ ddb_entry_trap(level, eframe)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(vaddr_t addr, size_t size, char *data)
+db_read_bytes(vaddr_t addr, size_t size, void *datap)
 {
-	char *src;
+	char *data = datap, *src;
 
 	src = (char *)addr;
 
@@ -502,10 +502,10 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, void *datap)
 {
 	extern pt_entry_t *pmap_pte(pmap_t, vaddr_t);
-	char *dst = (char *)addr;
+	char *data = datap, *dst = (char *)addr;
 	vaddr_t va;
 	paddr_t pa;
 	pt_entry_t *pte, opte, npte;

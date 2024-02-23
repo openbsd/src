@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.60 2023/01/11 03:17:56 visa Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.61 2024/02/23 18:19:03 cheloha Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -281,8 +281,10 @@ db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 #endif
 
 void
-db_read_bytes(vaddr_t addr, size_t size, char *data)
+db_read_bytes(vaddr_t addr, size_t size, void *datap)
 {
+	char *data = datap;
+
 	while (size >= sizeof(uint32_t)) {
 		*(uint32_t *)data = kdbpeek(addr);
 		data += sizeof(uint32_t);
@@ -302,8 +304,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 }
 
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, void *datap)
 {
+	char *data = datap;
 	vaddr_t ptr = addr;
 	size_t len = size;
 

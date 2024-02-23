@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.61 2023/01/31 15:18:55 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.62 2024/02/23 18:19:03 cheloha Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -523,8 +523,9 @@ db_stopcpu(struct cpu_info *ci)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(vaddr_t addr, size_t size, char *data)
+db_read_bytes(vaddr_t addr, size_t size, void *datap)
 {
+	char *data = datap;
 	register char	*src;
 
 	src = (char *)addr;
@@ -541,8 +542,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, void *datap)
 {
+	char *data = datap;
 	register char	*dst;
 	extern vaddr_t ktext;
 	extern paddr_t ktextp;

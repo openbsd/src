@@ -1,5 +1,5 @@
 /*	$NetBSD: db_memrw.c,v 1.4 2001/05/18 20:38:27 matt Exp $	*/
-/*	$OpenBSD: db_memrw.c,v 1.6 2022/10/15 08:04:02 jsg Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.7 2024/02/23 18:19:03 cheloha Exp $	*/
 
 /* 
  * Mach Operating System
@@ -53,9 +53,9 @@
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(vaddr_t addr, size_t size, char *data)
+db_read_bytes(vaddr_t addr, size_t size, void *datap)
 {
-	char	*src = (char *)addr;
+	char *data = datap, *src = (char *)addr;
 	faultbuf env;
 	faultbuf *old_onfault = curpcb->pcb_onfault;
 	if (setfault(&env)) {
@@ -80,9 +80,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, void *datap)
 {
-	char	*dst = (char *)addr;
+	char *data = datap, *dst = (char *)addr;
 	faultbuf env;
 	faultbuf *old_onfault = curpcb->pcb_onfault;
 

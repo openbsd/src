@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.2 2024/02/23 18:19:03 cheloha Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.8 2006/02/24 00:57:19 uwe Exp $	*/
 
 /*
@@ -49,9 +49,9 @@
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(vaddr_t addr, size_t size, char *data)
+db_read_bytes(vaddr_t addr, size_t size, void *datap)
 {
-	char *src = (char *)addr;
+	char *data = datap, *src = (char *)addr;
 
 	/* properly aligned 4-byte */
 	if (size == 4 && ((addr & 3) == 0) && (((uintptr_t)data & 3) == 0)) {
@@ -73,9 +73,9 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vaddr_t addr, size_t size, char *data)
+db_write_bytes(vaddr_t addr, size_t size, void *datap)
 {
-	char *dst = (char *)addr;
+	char *data = datap, *dst = (char *)addr;
 
 	/* properly aligned 4-byte */
 	if (size == 4 && ((addr & 3) == 0) && (((uintptr_t)data & 3) == 0)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.28 2022/04/14 19:47:10 naddy Exp $ */
+/* $OpenBSD: db_interface.c,v 1.29 2024/02/23 18:19:02 cheloha Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -188,12 +188,12 @@ ddb_trap(a0, a1, a2, entry, regs)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
+db_read_bytes(addr, size, datap)
 	vaddr_t		addr;
 	register size_t	size;
-	register char	*data;
+	register void	*datap;
 {
-	register char	*src;
+	register char	*data = datap, *src;
 
 	src = (char *)addr;
 	while (size-- > 0)
@@ -204,12 +204,12 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
+db_write_bytes(addr, size, datap)
 	vaddr_t		addr;
 	register size_t	size;
-	register char	*data;
+	register void	*datap;
 {
-	register char	*dst;
+	register char	*data = datap, *dst;
 
 	dst = (char *)addr;
 	while (size-- > 0)
