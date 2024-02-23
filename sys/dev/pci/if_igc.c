@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.17 2024/02/14 22:41:48 bluhm Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.18 2024/02/23 01:06:18 kevlo Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -1491,6 +1491,23 @@ igc_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 		ifmr->ifm_active |= IFM_FDX;
 	else
 		ifmr->ifm_active |= IFM_HDX;
+
+	switch (sc->hw.fc.current_mode) {
+	case igc_fc_tx_pause:
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
+		break;
+	case igc_fc_rx_pause:
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+		break;
+	case igc_fc_full:
+		ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE |
+		    IFM_ETH_TXPAUSE;
+		break;
+	default:
+		ifmr->ifm_active &= ~(IFM_FLOW | IFM_ETH_RXPAUSE |
+		    IFM_ETH_TXPAUSE);
+		break;
+	}
 }
 
 /*********************************************************************
@@ -1590,6 +1607,9 @@ igc_update_link_status(struct igc_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct igc_hw *hw = &sc->hw;
 	int link_state;
+
+	if (hw->mac.get_link_status == true)
+		igc_check_for_link(hw);
 
 	if (IGC_READ_REG(&sc->hw, IGC_STATUS) & IGC_STATUS_LU) {
 		if (sc->link_active == 0) {
