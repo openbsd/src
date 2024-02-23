@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.96 2023/10/12 15:32:38 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.97 2024/02/23 16:51:39 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -271,6 +271,7 @@ timeout_set_flags(struct timeout *to, void (*fn)(void *), void *arg, int kclock,
     int flags)
 {
 	KASSERT(!ISSET(flags, ~(TIMEOUT_PROC | TIMEOUT_MPSAFE)));
+	KASSERT(kclock >= KCLOCK_NONE && kclock < KCLOCK_MAX);
 
 	to->to_func = fn;
 	to->to_arg = arg;
@@ -404,7 +405,7 @@ timeout_abs_ts(struct timeout *to, const struct timespec *abstime)
 	mtx_enter(&timeout_mutex);
 
 	KASSERT(ISSET(to->to_flags, TIMEOUT_INITIALIZED));
-	KASSERT(to->to_kclock != KCLOCK_NONE);
+	KASSERT(to->to_kclock == KCLOCK_UPTIME);
 
 	old_abstime = to->to_abstime;
 	to->to_abstime = *abstime;
@@ -750,10 +751,14 @@ softclock(void *arg)
 		CIRCQ_REMOVE(&to->to_list);
 		if (to == first_new)
 			new = 1;
-		if (to->to_kclock != KCLOCK_NONE)
-			softclock_process_kclock_timeout(to, new);
-		else
+		if (to->to_kclock == KCLOCK_NONE)
 			softclock_process_tick_timeout(to, new);
+		else if (to->to_kclock == KCLOCK_UPTIME)
+			softclock_process_kclock_timeout(to, new);
+		else {
+			panic("%s: invalid to_clock: %d",
+			    __func__, to->to_kclock);
+		}
 	}
 	tostat.tos_softclocks++;
 	needsproc = !CIRCQ_EMPTY(&timeout_proc);
@@ -951,26 +956,34 @@ db_show_timeout(struct timeout *to, struct circq *bucket)
 		where = "thread-mp";
 #endif
 	else {
-		if (to->to_kclock != KCLOCK_NONE)
+		if (to->to_kclock == KCLOCK_UPTIME)
 			wheel = timeout_wheel_kc;
-		else
+		else if (to->to_kclock == KCLOCK_NONE)
 			wheel = timeout_wheel;
+		else
+			goto invalid;
 		snprintf(buf, sizeof(buf), "%3ld/%1ld",
 		    (bucket - wheel) % WHEELSIZE,
 		    (bucket - wheel) / WHEELSIZE);
 		where = buf;
 	}
-	if (to->to_kclock != KCLOCK_NONE) {
+	if (to->to_kclock == KCLOCK_UPTIME) {
 		kc = &timeout_kclock[to->to_kclock];
 		timespecsub(&to->to_abstime, &kc->kc_lastscan, &remaining);
 		db_printf("%20s  %8s  %9s  0x%0*lx  %s\n",
 		    db_timespec(&remaining), db_kclock(to->to_kclock), where,
 		    width, (ulong)to->to_arg, name);
-	} else {
+	} else if (to->to_kclock == KCLOCK_NONE) {
 		db_printf("%20d  %8s  %9s  0x%0*lx  %s\n",
 		    to->to_time - ticks, "ticks", where,
 		    width, (ulong)to->to_arg, name);
-	}
+	} else
+		goto invalid;
+	return;
+
+ invalid:
+	db_printf("%s: timeout 0x%p: invalid to_kclock: %d",
+	    __func__, to, to->to_kclock);
 }
 
 void
