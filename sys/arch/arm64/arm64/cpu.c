@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.104 2024/02/21 21:50:17 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.105 2024/02/23 21:52:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -938,10 +938,12 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		 * Lenovo X13s ships with broken EL2 firmware that
 		 * hangs the machine if we enable PAuth.
 		 */
-		if (hw_vendor && strcmp(hw_vendor, "LENOVO") == 0 &&
-		    hw_prod && strncmp(hw_prod, "21BX", 4) == 0) {
-			cpu_id_aa64isar1 &= ~ID_AA64ISAR1_APA_MASK;
-			cpu_id_aa64isar1 &= ~ID_AA64ISAR1_GPA_MASK;
+		if (hw_vendor && hw_prod && strcmp(hw_vendor, "LENOVO") == 0) {
+			if (strncmp(hw_prod, "21BX", 4) == 0 ||
+			    strncmp(hw_prod, "21BY", 4) == 0) {
+				cpu_id_aa64isar1 &= ~ID_AA64ISAR1_APA_MASK;
+				cpu_id_aa64isar1 &= ~ID_AA64ISAR1_GPA_MASK;
+			}
 		}
 
 		cpu_identify(ci);
