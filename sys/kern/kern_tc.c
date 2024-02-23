@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.82 2023/02/04 19:19:36 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.83 2024/02/23 23:01:15 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -96,7 +96,7 @@ static struct timehands th1 = {
 static struct timehands th0 = {
 	.th_counter = &dummy_timecounter,
 	.th_scale = UINT64_MAX / 1000000,
-	.th_offset = { .sec = 1, .frac = 0 },
+	.th_offset = { .sec = 0, .frac = 0 },
 	.th_generation = 1,
 	.th_next = &th1
 };
@@ -117,7 +117,7 @@ static SLIST_HEAD(, timecounter) tc_list = SLIST_HEAD_INITIALIZER(tc_list);
  * examining kernel core dumps.
  */
 volatile time_t naptime = 0;
-volatile time_t time_second = 1;
+volatile time_t time_second = 0;
 volatile time_t time_uptime = 0;
 
 static int timestepwarnings;
