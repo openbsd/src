@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.86 2024/02/24 16:19:49 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.87 2024/02/24 17:05:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -1089,6 +1089,7 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 {
 	struct bt_arg *ba = SLIST_FIRST(&bs->bs_args);
 	struct bt_var *bvar, *bv = bs->bs_var;
+	struct map *map;
 
 	assert(SLIST_NEXT(ba, ba_next) == NULL);
 
@@ -1105,6 +1106,16 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 		bvar = ba->ba_value;
 		bv->bv_type = bvar->bv_type;
 		bv->bv_value = bvar->bv_value;
+		break;
+	case B_AT_MAP:
+		bvar = ba->ba_value;
+		map = (struct map *)bvar->bv_value;
+		/* Uninitialized map */
+		if (map == NULL)
+			bv->bv_value = 0;
+		else
+			bv->bv_value = map_get(map, ba2hash(ba->ba_key, dtev));
+		bv->bv_type = B_VT_LONG; /* XXX should we type map? */
 		break;
 	case B_AT_TUPLE:
 		bv->bv_value = baeval(ba, dtev);
