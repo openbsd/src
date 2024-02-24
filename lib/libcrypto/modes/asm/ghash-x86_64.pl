@@ -165,6 +165,7 @@ $code=<<___;
 .type	gcm_gmult_4bit,\@function,2
 .align	16
 gcm_gmult_4bit:
+	_CET_ENDBR
 	push	%rbx
 	push	%rbp		# %rbp and %r12 are pushed exclusively in
 	push	%r12		# order to reuse Win64 exception handler...
@@ -195,6 +196,7 @@ $code.=<<___;
 .type	gcm_ghash_4bit,\@function,4
 .align	16
 gcm_ghash_4bit:
+	_CET_ENDBR
 	push	%rbx
 	push	%rbp
 	push	%r12

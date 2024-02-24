@@ -918,6 +918,7 @@ $code.=<<___;
 .type	aesni_ccm64_decrypt_blocks,\@function,6
 .align	16
 aesni_ccm64_decrypt_blocks:
+	_CET_ENDBR
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
@@ -1317,6 +1318,7 @@ $code.=<<___;
 .type	aesni_xts_encrypt,\@function,6
 .align	16
 aesni_xts_encrypt:
+	_CET_ENDBR
 	lea	(%rsp),%rax
 	push	%rbp
 	sub	\$$frame_size,%rsp
@@ -1711,6 +1713,7 @@ $code.=<<___;
 .type	aesni_xts_decrypt,\@function,6
 .align	16
 aesni_xts_decrypt:
+	_CET_ENDBR
 	lea	(%rsp),%rax
 	push	%rbp
 	sub	\$$frame_size,%rsp
@@ -2148,6 +2151,7 @@ $code.=<<___;
 .type	${PREFIX}_cbc_encrypt,\@function,6
 .align	16
 ${PREFIX}_cbc_encrypt:
+	_CET_ENDBR
 	test	$len,$len		# check length
 	jz	.Lcbc_ret
 
