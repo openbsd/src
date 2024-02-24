@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.87 2024/02/24 17:05:59 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.88 2024/02/24 19:42:54 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -1814,6 +1814,58 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	return str;
 }
 
+int
+ba2flags(struct bt_arg *ba)
+{
+	int flags = 0;
+
+	assert(ba->ba_type != B_AT_MAP);
+	assert(ba->ba_type != B_AT_TUPLE);
+
+	switch (ba->ba_type) {
+	case B_AT_STR:
+	case B_AT_LONG:
+	case B_AT_TMEMBER:
+	case B_AT_VAR:
+	case B_AT_HIST:
+	case B_AT_NIL:
+		break;
+	case B_AT_BI_KSTACK:
+		flags |= DTEVT_KSTACK;
+		break;
+	case B_AT_BI_USTACK:
+		flags |= DTEVT_USTACK;
+		break;
+	case B_AT_BI_COMM:
+		flags |= DTEVT_EXECNAME;
+		break;
+	case B_AT_BI_CPU:
+	case B_AT_BI_PID:
+	case B_AT_BI_TID:
+	case B_AT_BI_NSECS:
+		break;
+	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
+		flags |= DTEVT_FUNCARGS;
+		break;
+	case B_AT_BI_RETVAL:
+	case B_AT_BI_PROBE:
+		break;
+	case B_AT_MF_COUNT:
+	case B_AT_MF_MAX:
+	case B_AT_MF_MIN:
+	case B_AT_MF_SUM:
+	case B_AT_FN_STR:
+		break;
+	case B_AT_OP_PLUS ... B_AT_OP_LOR:
+		flags |= ba2dtflags(ba->ba_value);
+		break;
+	default:
+		xabort("invalid argument type %d", ba->ba_type);
+	}
+
+	return flags;
+}
+
 /*
  * Return dt(4) flags indicating which data should be recorded by the
  * kernel, if any, for a given `ba'.
@@ -1830,51 +1882,15 @@ ba2dtflags(struct bt_arg *ba)
 
 	do {
 		if (ba->ba_type == B_AT_MAP)
-			bval = ba->ba_key;
-		else
-			bval = ba;
+			flags |= ba2flags(ba->ba_key);
+		else if (ba->ba_type == B_AT_TUPLE) {
+			bval = ba->ba_value;
+			do {
+				flags |= ba2flags(bval);
+			} while ((bval = SLIST_NEXT(bval, ba_next)) != NULL);
+		} else
+			flags |= ba2flags(ba);
 
-		switch (bval->ba_type) {
-		case B_AT_STR:
-		case B_AT_LONG:
-		case B_AT_TUPLE:
-		case B_AT_TMEMBER:
-		case B_AT_VAR:
-	    	case B_AT_HIST:
-		case B_AT_NIL:
-			break;
-		case B_AT_BI_KSTACK:
-			flags |= DTEVT_KSTACK;
-			break;
-		case B_AT_BI_USTACK:
-			flags |= DTEVT_USTACK;
-			break;
-		case B_AT_BI_COMM:
-			flags |= DTEVT_EXECNAME;
-			break;
-		case B_AT_BI_CPU:
-		case B_AT_BI_PID:
-		case B_AT_BI_TID:
-		case B_AT_BI_NSECS:
-			break;
-		case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
-			flags |= DTEVT_FUNCARGS;
-			break;
-		case B_AT_BI_RETVAL:
-		case B_AT_BI_PROBE:
-			break;
-		case B_AT_MF_COUNT:
-		case B_AT_MF_MAX:
-		case B_AT_MF_MIN:
-		case B_AT_MF_SUM:
-		case B_AT_FN_STR:
-			break;
-		case B_AT_OP_PLUS ... B_AT_OP_LOR:
-			flags |= ba2dtflags(bval->ba_value);
-			break;
-		default:
-			xabort("invalid argument type %d", bval->ba_type);
-		}
 	} while ((ba = SLIST_NEXT(ba, ba_next)) != NULL);
 
 	--recursions;
