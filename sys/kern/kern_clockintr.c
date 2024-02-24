@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.67 2024/02/12 22:07:33 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.68 2024/02/24 01:43:32 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -36,11 +36,11 @@ void clockintr_hardclock(struct clockrequest *, void *, void *);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
 void clockqueue_intrclock_install(struct clockintr_queue *,
     const struct intrclock *);
+void clockqueue_intrclock_reprogram(struct clockintr_queue *);
 uint64_t clockqueue_next(const struct clockintr_queue *);
 void clockqueue_pend_delete(struct clockintr_queue *, struct clockintr *);
 void clockqueue_pend_insert(struct clockintr_queue *, struct clockintr *,
     uint64_t);
-void clockqueue_reset_intrclock(struct clockintr_queue *);
 void intrclock_rearm(struct intrclock *, uint64_t);
 void intrclock_trigger(struct intrclock *);
 uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
@@ -338,7 +338,7 @@ clockintr_cancel_locked(struct clockintr *cl)
 		if (ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
 			if (was_next && !TAILQ_EMPTY(&cq->cq_pend)) {
 				if (cq == &curcpu()->ci_queue)
-					clockqueue_reset_intrclock(cq);
+					clockqueue_intrclock_reprogram(cq);
 			}
 		}
 	}
@@ -410,7 +410,7 @@ clockintr_schedule_locked(struct clockintr *cl, uint64_t expiration)
 	if (ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
 		if (cl == TAILQ_FIRST(&cq->cq_pend)) {
 			if (cq == &curcpu()->ci_queue)
-				clockqueue_reset_intrclock(cq);
+				clockqueue_intrclock_reprogram(cq);
 		}
 	}
 	if (cl == cq->cq_running)
@@ -507,7 +507,7 @@ clockqueue_pend_insert(struct clockintr_queue *cq, struct clockintr *cl,
 }
 
 void
-clockqueue_reset_intrclock(struct clockintr_queue *cq)
+clockqueue_intrclock_reprogram(struct clockintr_queue *cq)
 {
 	uint64_t exp, now;
 
