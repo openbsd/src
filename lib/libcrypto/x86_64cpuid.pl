@@ -18,7 +18,7 @@ print<<___;
 .extern		OPENSSL_cpuid_setup
 .hidden		OPENSSL_cpuid_setup
 .section	.init
-	endbr64
+	_CET_ENDBR
 	call	OPENSSL_cpuid_setup
 
 .extern	OPENSSL_ia32cap_P
@@ -30,7 +30,7 @@ print<<___;
 .type	OPENSSL_ia32_cpuid,\@abi-omnipotent
 .align	16
 OPENSSL_ia32_cpuid:
-	endbr64
+	_CET_ENDBR
 	mov	%rbx,%r8		# save %rbx
 
 	xor	%eax,%eax

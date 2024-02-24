@@ -128,7 +128,7 @@ $code=<<___;
 .type	RC4,\@function,4
 .align	16
 RC4:
-	endbr64
+	_CET_ENDBR
 	or	$len,$len
 	jne	.Lentry
 	ret
@@ -435,7 +435,7 @@ $code.=<<___;
 .type	RC4_set_key,\@function,3
 .align	16
 RC4_set_key:
-	endbr64
+	_CET_ENDBR
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len

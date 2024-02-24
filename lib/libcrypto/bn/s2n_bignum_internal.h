@@ -18,6 +18,12 @@
 #   define S2N_BN_SYMBOL(name) name
 #endif
 
+#ifdef __CET__
+#   include <cet.h>
+#else
+#   define _CET_ENDBR
+#endif
+
 #define S2N_BN_SYM_VISIBILITY_DIRECTIVE(name) .globl S2N_BN_SYMBOL(name)
 #ifdef S2N_BN_HIDE_SYMBOLS
 #   ifdef __APPLE__

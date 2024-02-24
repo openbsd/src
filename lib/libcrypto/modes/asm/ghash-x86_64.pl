@@ -412,7 +412,7 @@ $code.=<<___;
 .type	gcm_init_clmul,\@abi-omnipotent
 .align	16
 gcm_init_clmul:
-	endbr64
+	_CET_ENDBR
 	movdqu		($Xip),$Hkey
 	pshufd		\$0b01001110,$Hkey,$Hkey	# dword swap
 
@@ -450,7 +450,7 @@ $code.=<<___;
 .type	gcm_gmult_clmul,\@abi-omnipotent
 .align	16
 gcm_gmult_clmul:
-	endbr64
+	_CET_ENDBR
 	movdqu		($Xip),$Xi
 	movdqa		.Lbswap_mask(%rip),$T3
 	movdqu		($Htbl),$Hkey
@@ -478,7 +478,7 @@ $code.=<<___;
 .type	gcm_ghash_clmul,\@abi-omnipotent
 .align	16
 gcm_ghash_clmul:
-	endbr64
+	_CET_ENDBR
 ___
 $code.=<<___ if ($win64);
 .LSEH_begin_gcm_ghash_clmul:
@@ -689,7 +689,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
+	_CET_ENDBR
 	push	%rsi
 	push	%rdi
 	push	%rbx

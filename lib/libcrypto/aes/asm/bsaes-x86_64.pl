@@ -813,7 +813,7 @@ $code.=<<___;
 .type	_bsaes_encrypt8,\@abi-omnipotent
 .align	64
 _bsaes_encrypt8:
-	endbr64
+	_CET_ENDBR
 	lea	.LBS0(%rip), $const	# constants table
 
 	movdqa	($key), @XMM[9]		# round 0 key
@@ -878,7 +878,7 @@ $code.=<<___;
 .type	_bsaes_decrypt8,\@abi-omnipotent
 .align	64
 _bsaes_decrypt8:
-	endbr64
+	_CET_ENDBR
 	lea	.LBS0(%rip), $const	# constants table
 
 	movdqa	($key), @XMM[9]		# round 0 key
@@ -970,7 +970,7 @@ $code.=<<___;
 .type	_bsaes_key_convert,\@abi-omnipotent
 .align	16
 _bsaes_key_convert:
-	endbr64
+	_CET_ENDBR
 	lea	.Lmasks(%rip), $const
 	movdqu	($inp), %xmm7		# load round 0 key
 	lea	0x10($inp), $inp
@@ -1060,7 +1060,7 @@ $code.=<<___;
 .type	bsaes_enc_key_convert,\@function,2
 .align	16
 bsaes_enc_key_convert:
-	endbr64
+	_CET_ENDBR
 	mov	240($inp),%r10d		# pass rounds
 	mov	$inp,%rcx		# pass key
 	mov	$out,%rax		# pass key schedule
@@ -1075,7 +1075,7 @@ bsaes_enc_key_convert:
 .align	16
 bsaes_encrypt_128:
 .Lenc128_loop:
-	endbr64
+	_CET_ENDBR
 	movdqu	0x00($inp), @XMM[0]	# load input
 	movdqu	0x10($inp), @XMM[1]
 	movdqu	0x20($inp), @XMM[2]
@@ -1108,7 +1108,7 @@ bsaes_encrypt_128:
 .type	bsaes_dec_key_convert,\@function,2
 .align	16
 bsaes_dec_key_convert:
-	endbr64
+	_CET_ENDBR
 	mov	240($inp),%r10d		# pass rounds
 	mov	$inp,%rcx		# pass key
 	mov	$out,%rax		# pass key schedule
@@ -1123,7 +1123,7 @@ bsaes_dec_key_convert:
 .type	bsaes_decrypt_128,\@function,4
 .align	16
 bsaes_decrypt_128:
-	endbr64
+	_CET_ENDBR
 .Ldec128_loop:
 	movdqu	0x00($inp), @XMM[0]	# load input
 	movdqu	0x10($inp), @XMM[1]
@@ -1169,7 +1169,7 @@ $code.=<<___;
 .type	bsaes_ecb_encrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ecb_encrypt_blocks:
-	endbr64
+	_CET_ENDBR
 	mov	%rsp, %rax
 .Lecb_enc_prologue:
 	push	%rbp
@@ -1371,7 +1371,7 @@ $code.=<<___;
 .type	bsaes_ecb_decrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ecb_decrypt_blocks:
-	endbr64
+	_CET_ENDBR
 	mov	%rsp, %rax
 .Lecb_dec_prologue:
 	push	%rbp
@@ -1577,7 +1577,7 @@ $code.=<<___;
 .type	bsaes_cbc_encrypt,\@abi-omnipotent
 .align	16
 bsaes_cbc_encrypt:
-	endbr64
+	_CET_ENDBR
 ___
 $code.=<<___ if ($win64);
 	mov	48(%rsp),$arg6		# pull direction flag
@@ -1865,7 +1865,7 @@ $code.=<<___;
 .type	bsaes_ctr32_encrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ctr32_encrypt_blocks:
-	endbr64
+	_CET_ENDBR
 	mov	%rsp, %rax
 .Lctr_enc_prologue:
 	push	%rbp
@@ -2107,7 +2107,7 @@ $code.=<<___;
 .type	bsaes_xts_encrypt,\@abi-omnipotent
 .align	16
 bsaes_xts_encrypt:
-	endbr64
+	_CET_ENDBR
 	mov	%rsp, %rax
 .Lxts_enc_prologue:
 	push	%rbp
@@ -2489,7 +2489,7 @@ $code.=<<___;
 .type	bsaes_xts_decrypt,\@abi-omnipotent
 .align	16
 bsaes_xts_decrypt:
-	endbr64
+	_CET_ENDBR
 	mov	%rsp, %rax
 .Lxts_dec_prologue:
 	push	%rbp
@@ -2966,7 +2966,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
-	endbr64
+	_CET_ENDBR
 	push	%rsi
 	push	%rdi
 	push	%rbx

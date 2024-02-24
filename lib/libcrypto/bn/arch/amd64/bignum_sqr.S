@@ -62,7 +62,7 @@
 #define llshort ebp
 
 S2N_BN_SYMBOL(bignum_sqr):
-	endbr64
+	_CET_ENDBR
 
 #if WINDOWS_ABI
         push    rdi

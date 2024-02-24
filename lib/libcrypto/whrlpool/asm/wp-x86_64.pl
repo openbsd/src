@@ -57,7 +57,7 @@ $code=<<___;
 .type	$func,\@function,3
 .align	16
 $func:
-	endbr64
+	_CET_ENDBR
 	push	%rbx
 	push	%rbp
 	push	%r12

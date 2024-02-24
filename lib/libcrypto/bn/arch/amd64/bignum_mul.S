@@ -59,7 +59,7 @@
 
 
 S2N_BN_SYMBOL(bignum_mul):
-	endbr64
+	_CET_ENDBR
 
 #if WINDOWS_ABI
         push    rdi
