@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.85 2024/02/12 15:12:09 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.86 2024/02/24 16:19:49 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -1112,12 +1112,18 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 		break;
 	case B_AT_BI_PID:
 	case B_AT_BI_TID:
+	case B_AT_BI_CPU:
 	case B_AT_BI_NSECS:
+	case B_AT_BI_RETVAL:
 	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
 	case B_AT_OP_PLUS ... B_AT_OP_LOR:
 		bv->bv_value = baeval(ba, dtev);
 		bv->bv_type = B_VT_LONG;
 		break;
+	case B_AT_BI_COMM:
+	case B_AT_BI_KSTACK:
+	case B_AT_BI_USTACK:
+	case B_AT_BI_PROBE:
 	case B_AT_FN_STR:
 		bv->bv_value = baeval(ba, dtev);
 		bv->bv_type = B_VT_STR;
