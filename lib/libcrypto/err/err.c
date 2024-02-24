@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.57 2024/02/24 07:50:25 tb Exp $ */
+/* $OpenBSD: err.c,v 1.58 2024/02/24 07:53:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -334,11 +334,8 @@ int_err_get(int create)
 	LHASH_OF(ERR_STRING_DATA) *ret = NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	if (!int_error_hash && create) {
-		CRYPTO_push_info("int_err_get (err.c)");
+	if (!int_error_hash && create)
 		int_error_hash = lh_ERR_STRING_DATA_new();
-		CRYPTO_pop_info();
-	}
 	if (int_error_hash)
 		ret = int_error_hash;
 	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
@@ -431,11 +428,8 @@ int_thread_get(int create)
 	LHASH_OF(ERR_STATE) *ret = NULL;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	if (!int_thread_hash && create) {
-		CRYPTO_push_info("int_thread_get (err.c)");
+	if (!int_thread_hash && create)
 		int_thread_hash = lh_ERR_STATE_new();
-		CRYPTO_pop_info();
-	}
 	if (int_thread_hash) {
 		int_thread_hash_references++;
 		ret = int_thread_hash;
