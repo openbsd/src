@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.51 2024/02/22 21:21:35 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.52 2024/02/24 15:21:39 cheloha Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -23155,7 +23155,7 @@ qwx_dp_rx_tid_del_func(struct qwx_dp *dp, void *ctx,
 	struct qwx_softc *sc = dp->sc;
 	struct dp_rx_tid *rx_tid = ctx;
 	struct dp_reo_cache_flush_elem *elem, *tmp;
-	time_t now;
+	uint64_t now;
 
 	if (status == HAL_REO_CMD_DRAIN) {
 		goto free_desc;
@@ -23170,7 +23170,7 @@ qwx_dp_rx_tid_del_func(struct qwx_dp *dp, void *ctx,
 	if (!elem)
 		goto free_desc;
 
-	now = gettime();
+	now = getnsecuptime();
 	elem->ts = now;
 	memcpy(&elem->data, rx_tid, sizeof(*rx_tid));
 
@@ -23188,7 +23188,7 @@ qwx_dp_rx_tid_del_func(struct qwx_dp *dp, void *ctx,
 	/* Flush and invalidate aged REO desc from HW cache */
 	TAILQ_FOREACH_SAFE(elem, &dp->reo_cmd_cache_flush_list, entry, tmp) {
 		if (dp->reo_cmd_cache_flush_count > DP_REO_DESC_FREE_THRESHOLD ||
-		    now < elem->ts + DP_REO_DESC_FREE_TIMEOUT_MS) {
+		    now >= elem->ts + MSEC_TO_NSEC(DP_REO_DESC_FREE_TIMEOUT_MS)) {
 			TAILQ_REMOVE(&dp->reo_cmd_cache_flush_list, elem, entry);
 			dp->reo_cmd_cache_flush_count--;
 #ifdef notyet

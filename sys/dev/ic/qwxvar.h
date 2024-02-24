@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.22 2024/02/22 09:08:08 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.23 2024/02/24 15:21:39 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1041,7 +1041,7 @@ struct dp_rx_tid {
 struct dp_reo_cache_flush_elem {
 	TAILQ_ENTRY(dp_reo_cache_flush_elem) entry;
 	struct dp_rx_tid data;
-	unsigned long ts;
+	uint64_t ts;
 };
 
 TAILQ_HEAD(dp_reo_cmd_cache_flush_head, dp_reo_cache_flush_elem);
