@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lastcomm.1,v 1.27 2024/01/19 14:25:03 deraadt Exp $
+.\"	$OpenBSD: lastcomm.1,v 1.28 2024/02/25 00:07:13 deraadt Exp $
 .\"	$NetBSD: lastcomm.1,v 1.5 1995/10/22 01:43:41 ghudson Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)lastcomm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 19 2024 $
+.Dd $Mdocdate: February 25 2024 $
 .Dt LASTCOMM 1
 .Os
 .Sh NAME
@@ -101,6 +101,14 @@ Elapsed time of the process.
 The flags are encoded as follows:
 .Pp
 .Bl -tag -width 6n -compact -offset indent
+.It Li B
+The command executed an indirect branch to a location that did not
+start with a
+.Ql BTI
+instruction, and terminated with signal
+.Dv SIGILL ,
+.Va code
+.Dv ILL_BTCFI .
 .It Li D
 The command terminated with the generation of a
 .Pa core

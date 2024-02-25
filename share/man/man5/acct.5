@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.26 2022/02/22 17:22:29 deraadt Exp $
+.\"	$OpenBSD: acct.5,v 1.27 2024/02/25 00:07:14 deraadt Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)acct.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: February 22 2022 $
+.Dd $Mdocdate: February 25 2024 $
 .Dt ACCT 5
 .Os
 .Sh NAME
@@ -69,14 +69,16 @@ struct acct {
 	dev_t	  ac_tty;	/* controlling tty, or -1 */
 	pid_t	  ac_pid;	/* process id */
 
-#define	AFORK	0x01		/* fork'd but not exec'd */
-#define	AMAP	0x04		/* system call or stack mapping violation */
-#define	ACORE	0x08		/* dumped core */
-#define	AXSIG	0x10		/* killed by a signal */
-#define	APLEDGE	0x20		/* killed due to pledge violation */
-#define	ATRAP	0x40		/* memory access violation */
-#define	AUNVEIL	0x80		/* unveil access violation */
 	u_int32_t ac_flag;	/* accounting flags */
+#define	AFORK	0x00000001	/* fork'd but not exec'd */
+#define	AMAP	0x00000004	/* killed by syscall or stack mapping violation */
+#define	ACORE	0x00000008	/* dumped core */
+#define	AXSIG	0x00000010	/* killed by a signal */
+#define	APLEDGE	0x00000020	/* killed due to pledge violation */
+#define	ATRAP	0x00000040	/* memory access violation */
+#define	AUNVEIL	0x00000080	/* unveil access violation */
+#define APINSYS 0x00000200      /* killed by syscall pin violation */
+#define ABTCFI  0x00000400      /* BT CFI violation */
 };
 
 /*
@@ -125,6 +127,18 @@ The process attempted a file access that was prevented by
 .Xr unveil 2
 restrictions.
 Note that this does not cause the process to terminate.
+.It Dv APINSYS
+The command tried to execute a system call from the wrong
+system call instruction, see
+.Xr pinsyscalls 2 .
+.It Dv ABTCFI
+The command executed an indirect branch to a location that did not
+start with a
+.Ql BTI
+instruction, and terminated with signal
+.Dv SIGILL ,
+.Va code
+.Dv ILL_BTCFI .
 .El
 .Sh SEE ALSO
 .Xr lastcomm 1 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acct.h,v 1.15 2024/01/20 12:16:55 deraadt Exp $	*/
+/*	$OpenBSD: acct.h,v 1.16 2024/02/25 00:07:13 deraadt Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
@@ -59,15 +59,16 @@ struct acct {
 	dev_t	  ac_tty;		/* controlling tty, or -1 */
 	pid_t	  ac_pid;		/* process id */
 
-#define	AFORK	0x00000001		/* fork'd but not exec'd */
-#define	AMAP	0x00000004		/* system call or stack mapping violation */
-#define	ACORE	0x00000008		/* dumped core */
-#define	AXSIG	0x00000010		/* killed by a signal */
-#define	APLEDGE	0x00000020		/* killed due to pledge violation */
-#define	ATRAP	0x00000040		/* memory access violation */
-#define	AUNVEIL	0x00000080		/* unveil access violation */
-#define	APINSYS	0x00000200		/* syscall pin violation */
 	u_int32_t ac_flag;		/* accounting flags */
+#define	AFORK	0x00000001	/* fork'd but not exec'd */
+#define	AMAP	0x00000004	/* killed by syscall or stack mapping violation */
+#define	ACORE	0x00000008	/* dumped core */
+#define	AXSIG	0x00000010	/* killed by a signal */
+#define	APLEDGE	0x00000020	/* killed due to pledge violation */
+#define	ATRAP	0x00000040	/* memory access violation */
+#define	AUNVEIL	0x00000080	/* unveil access violation */
+#define	APINSYS	0x00000200	/* killed by syscall pin violation */
+#define	ABTCFI	0x00000400	/* BT CFI violation */
 };
 
 /*

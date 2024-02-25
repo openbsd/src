@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.321 2024/01/17 22:22:25 kurt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.322 2024/02/25 00:07:13 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -799,6 +799,11 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 
 	switch (signum) {
 	case SIGILL:
+		if (code == ILL_BTCFI) {
+			pr->ps_acflag |= ABTCFI;
+			break;
+		}
+		/* FALLTHROUGH */
 	case SIGBUS:
 	case SIGSEGV:
 		pr->ps_acflag |= ATRAP;
