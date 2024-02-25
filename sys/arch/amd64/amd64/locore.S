@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.145 2024/02/12 01:18:17 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.146 2024/02/25 22:33:09 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -506,11 +506,6 @@ ENTRY(savectx)
 	ret
 	lfence
 END(savectx)
-
-// XXX this should not behave like a nop
-IDTVEC(syscall32)
-	sysret		/* go away please */
-END(Xsyscall32)
 
 /*
  * syscall insn entry.

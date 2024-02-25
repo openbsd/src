@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.16 2024/01/19 18:38:16 kettenis Exp $	*/
+/*	$OpenBSD: segments.h,v 1.17 2024/02/25 22:33:09 guenther Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -247,16 +247,15 @@ void cpu_init_idt(void);
  * Then comes the predefined TSS descriptor.
  * There are NGDT_SYS of them.
  *
- * The particular order of the UCODE32, UDATA, and UCODE descriptors is 
- * required by the syscall/sysret instructions.
+ * The particular order of the UDATA and UCODE descriptors is 
+ * required by the sysretq instruction.
  */
 #define	GNULL_SEL	0	/* Null descriptor */
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
-#define	GUCODE32_SEL	3	/* User 32bit code descriptor (unused) */
-#define	GUDATA_SEL	4	/* User data descriptor */
-#define	GUCODE_SEL	5	/* User code descriptor */
-#define NGDT_MEM 6
+#define	GUDATA_SEL	3	/* User data descriptor */
+#define	GUCODE_SEL	4	/* User code descriptor */
+#define NGDT_MEM 5
 
 #define	GPROC0_SEL	0	/* common TSS */
 #define NGDT_SYS	1

@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.18 2024/02/12 02:57:14 jsg Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.19 2024/02/25 22:33:09 guenther Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2734,7 +2734,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	msr_store[2].vms_index = MSR_LSTAR;
 	msr_store[2].vms_data = rdmsr(MSR_LSTAR);
 	msr_store[3].vms_index = MSR_CSTAR;
-	msr_store[3].vms_data = rdmsr(MSR_CSTAR);
+	msr_store[3].vms_data = 0;
 	msr_store[4].vms_index = MSR_SFMASK;
 	msr_store[4].vms_data = rdmsr(MSR_SFMASK);
 	msr_store[5].vms_index = MSR_KERNELGSBASE;

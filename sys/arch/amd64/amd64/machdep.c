@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.290 2024/02/03 16:21:22 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.291 2024/02/25 22:33:09 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1743,9 +1743,6 @@ init_x86_64(paddr_t first_avail)
 
 	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GDATA_SEL), 0,
 	    0xfffff, SDT_MEMRWA, SEL_KPL, 1, 0, 1);
-
-	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GUCODE32_SEL), 0,
-	    atop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
 
 	set_mem_segment(GDT_ADDR_MEM(cpu_info_primary.ci_gdt, GUDATA_SEL), 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);

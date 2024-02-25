@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.24 2023/11/28 00:17:48 dv Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.25 2024/02/25 22:33:09 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -221,12 +221,6 @@ skip_init:
 	pushq	%rdx
 
 	movq	$MSR_LSTAR, %rcx
-	rdmsr
-	pushq	%rax
-	pushq	%rdx
-
-	/* XXX - unused? */
-	movq	$MSR_CSTAR, %rcx
 	rdmsr
 	pushq	%rax
 	pushq	%rdx
@@ -483,9 +477,9 @@ restore_host:
 	movq	$MSR_SFMASK, %rcx
 	wrmsr
 
-	/* XXX - unused? */
-	popq	%rdx
-	popq	%rax
+	/* make sure guest doesn't bleed into host */
+	xorl	%edx, %edx
+	xorl	%eax, %eax
 	movq	$MSR_CSTAR, %rcx
 	wrmsr
 
@@ -580,12 +574,6 @@ ENTRY(svm_enter_guest)
 	pushq	%rdx
 
 	movq	$MSR_LSTAR, %rcx
-	rdmsr
-	pushq	%rax
-	pushq	%rdx
-
-	/* XXX - unused? */
-	movq	$MSR_CSTAR, %rcx
 	rdmsr
 	pushq	%rax
 	pushq	%rdx
@@ -696,9 +684,9 @@ restore_host_svm:
 	movq	$MSR_SFMASK, %rcx
 	wrmsr
 
-	/* XXX - unused? */
-	popq	%rdx
-	popq	%rax
+	/* make sure guest doesn't bleed into host */
+	xorl	%edx, %edx
+	xorl	%eax, %eax
 	movq	$MSR_CSTAR, %rcx
 	wrmsr
 

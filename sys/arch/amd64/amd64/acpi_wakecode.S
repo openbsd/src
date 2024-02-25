@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.49 2022/12/01 00:26:15 guenther Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.50 2024/02/25 22:33:09 guenther Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -267,8 +267,8 @@ _ACPI_TRMP_LABEL(.Lacpi_long_mode_trampoline)
 	wrmsr
 
 	movl	$MSR_CSTAR, %ecx
-	movl	.Lacpi_saved_cstar, %eax
-	movl	.Lacpi_saved_cstar+4, %edx
+	xorl	%eax, %eax
+	xorl	%edx, %edx
 	wrmsr
 
 	movl	$MSR_SFMASK, %ecx
@@ -691,8 +691,6 @@ _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_star)
 	.quad 0
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_lstar)
 	.quad 0
-_ACPI_TRMP_DATA_LABEL(.Lacpi_saved_cstar)
-	.quad 0
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_sfmask)
 	.quad 0
 #if NLAPIC > 0
@@ -780,11 +778,6 @@ NENTRY(acpi_savecpu)
 	rdmsr
 	movl	%eax, .Lacpi_saved_star
 	movl	%edx, .Lacpi_saved_star+4
-
-	movl	$MSR_CSTAR, %ecx
-	rdmsr
-	movl	%eax, .Lacpi_saved_cstar
-	movl	%edx, .Lacpi_saved_cstar+4
 
 	movl	$MSR_LSTAR, %ecx
 	rdmsr
