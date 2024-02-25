@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.69 2024/02/25 18:17:11 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.70 2024/02/25 19:15:50 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -34,12 +34,12 @@
 void clockintr_cancel_locked(struct clockintr *);
 void clockintr_hardclock(struct clockrequest *, void *, void *);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
-void clockqueue_intrclock_install(struct clockintr_queue *,
+void clockqueue_intrclock_install(struct clockqueue *,
     const struct intrclock *);
-void clockqueue_intrclock_reprogram(struct clockintr_queue *);
-uint64_t clockqueue_next(const struct clockintr_queue *);
-void clockqueue_pend_delete(struct clockintr_queue *, struct clockintr *);
-void clockqueue_pend_insert(struct clockintr_queue *, struct clockintr *,
+void clockqueue_intrclock_reprogram(struct clockqueue *);
+uint64_t clockqueue_next(const struct clockqueue *);
+void clockqueue_pend_delete(struct clockqueue *, struct clockintr *);
+void clockqueue_pend_insert(struct clockqueue *, struct clockintr *,
     uint64_t);
 void intrclock_rearm(struct intrclock *, uint64_t);
 void intrclock_trigger(struct intrclock *);
@@ -55,14 +55,14 @@ clockintr_cpu_init(const struct intrclock *ic)
 {
 	uint64_t multiplier = 0;
 	struct cpu_info *ci = curcpu();
-	struct clockintr_queue *cq = &ci->ci_queue;
+	struct clockqueue *cq = &ci->ci_queue;
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int reset_cq_intrclock = 0;
 
 	if (ic != NULL)
 		clockqueue_intrclock_install(cq, ic);
 
-	/* TODO: Remove this from struct clockintr_queue. */
+	/* TODO: Remove this from struct clockqueue. */
 	if (CPU_IS_PRIMARY(ci) && cq->cq_hardclock.cl_expiration == 0) {
 		clockintr_bind(&cq->cq_hardclock, ci, clockintr_hardclock,
 		    NULL);
@@ -141,7 +141,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 void
 clockintr_trigger(void)
 {
-	struct clockintr_queue *cq = &curcpu()->ci_queue;
+	struct clockqueue *cq = &curcpu()->ci_queue;
 
 	KASSERT(ISSET(cq->cq_flags, CQ_INIT));
 
@@ -158,7 +158,7 @@ clockintr_dispatch(void *frame)
 	uint64_t lateness, run = 0, start;
 	struct cpu_info *ci = curcpu();
 	struct clockintr *cl;
-	struct clockintr_queue *cq = &ci->ci_queue;
+	struct clockqueue *cq = &ci->ci_queue;
 	struct clockrequest *request = &cq->cq_request;
 	void *arg;
 	void (*func)(struct clockrequest *, void *, void *);
@@ -272,7 +272,7 @@ uint64_t
 clockintr_advance(struct clockintr *cl, uint64_t period)
 {
 	uint64_t count, expiration;
-	struct clockintr_queue *cq = cl->cl_queue;
+	struct clockqueue *cq = cl->cl_queue;
 
 	mtx_enter(&cq->cq_mtx);
 	expiration = cl->cl_expiration;
@@ -286,7 +286,7 @@ clockintr_advance(struct clockintr *cl, uint64_t period)
 uint64_t
 clockrequest_advance(struct clockrequest *cr, uint64_t period)
 {
-	struct clockintr_queue *cq = cr->cr_queue;
+	struct clockqueue *cq = cr->cr_queue;
 
 	KASSERT(cr == &cq->cq_request);
 
@@ -299,7 +299,7 @@ clockrequest_advance_random(struct clockrequest *cr, uint64_t min,
     uint32_t mask)
 {
 	uint64_t count = 0;
-	struct clockintr_queue *cq = cr->cr_queue;
+	struct clockqueue *cq = cr->cr_queue;
 	uint32_t off;
 
 	KASSERT(cr == &cq->cq_request);
@@ -317,7 +317,7 @@ clockrequest_advance_random(struct clockrequest *cr, uint64_t min,
 void
 clockintr_cancel(struct clockintr *cl)
 {
-	struct clockintr_queue *cq = cl->cl_queue;
+	struct clockqueue *cq = cl->cl_queue;
 
 	mtx_enter(&cq->cq_mtx);
 	clockintr_cancel_locked(cl);
@@ -327,7 +327,7 @@ clockintr_cancel(struct clockintr *cl)
 void
 clockintr_cancel_locked(struct clockintr *cl)
 {
-	struct clockintr_queue *cq = cl->cl_queue;
+	struct clockqueue *cq = cl->cl_queue;
 	int was_next;
 
 	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
@@ -350,7 +350,7 @@ void
 clockintr_bind(struct clockintr *cl, struct cpu_info *ci,
     void (*func)(struct clockrequest *, void *, void *), void *arg)
 {
-	struct clockintr_queue *cq = &ci->ci_queue;
+	struct clockqueue *cq = &ci->ci_queue;
 
 	splassert(IPL_NONE);
 	KASSERT(cl->cl_queue == NULL);
@@ -366,7 +366,7 @@ clockintr_bind(struct clockintr *cl, struct cpu_info *ci,
 void
 clockintr_unbind(struct clockintr *cl, uint32_t flags)
 {
-	struct clockintr_queue *cq = cl->cl_queue;
+	struct clockqueue *cq = cl->cl_queue;
 
 	KASSERT(!ISSET(flags, ~CL_FLAG_MASK));
 
@@ -390,7 +390,7 @@ clockintr_unbind(struct clockintr *cl, uint32_t flags)
 void
 clockintr_schedule(struct clockintr *cl, uint64_t expiration)
 {
-	struct clockintr_queue *cq = cl->cl_queue;
+	struct clockqueue *cq = cl->cl_queue;
 
 	mtx_enter(&cq->cq_mtx);
 	clockintr_schedule_locked(cl, expiration);
@@ -400,7 +400,7 @@ clockintr_schedule(struct clockintr *cl, uint64_t expiration)
 void
 clockintr_schedule_locked(struct clockintr *cl, uint64_t expiration)
 {
-	struct clockintr_queue *cq = cl->cl_queue;
+	struct clockqueue *cq = cl->cl_queue;
 
 	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
 
@@ -421,7 +421,7 @@ void
 clockintr_stagger(struct clockintr *cl, uint64_t period, uint32_t numer,
     uint32_t denom)
 {
-	struct clockintr_queue *cq = cl->cl_queue;
+	struct clockqueue *cq = cl->cl_queue;
 
 	KASSERT(numer < denom);
 
@@ -443,7 +443,7 @@ clockintr_hardclock(struct clockrequest *cr, void *frame, void *arg)
 }
 
 void
-clockqueue_init(struct clockintr_queue *cq)
+clockqueue_init(struct clockqueue *cq)
 {
 	if (ISSET(cq->cq_flags, CQ_INIT))
 		return;
@@ -457,7 +457,7 @@ clockqueue_init(struct clockintr_queue *cq)
 }
 
 void
-clockqueue_intrclock_install(struct clockintr_queue *cq,
+clockqueue_intrclock_install(struct clockqueue *cq,
     const struct intrclock *ic)
 {
 	mtx_enter(&cq->cq_mtx);
@@ -469,14 +469,14 @@ clockqueue_intrclock_install(struct clockintr_queue *cq,
 }
 
 uint64_t
-clockqueue_next(const struct clockintr_queue *cq)
+clockqueue_next(const struct clockqueue *cq)
 {
 	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
 	return TAILQ_FIRST(&cq->cq_pend)->cl_expiration;
 }
 
 void
-clockqueue_pend_delete(struct clockintr_queue *cq, struct clockintr *cl)
+clockqueue_pend_delete(struct clockqueue *cq, struct clockintr *cl)
 {
 	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
 	KASSERT(ISSET(cl->cl_flags, CLST_PENDING));
@@ -486,7 +486,7 @@ clockqueue_pend_delete(struct clockintr_queue *cq, struct clockintr *cl)
 }
 
 void
-clockqueue_pend_insert(struct clockintr_queue *cq, struct clockintr *cl,
+clockqueue_pend_insert(struct clockqueue *cq, struct clockintr *cl,
     uint64_t expiration)
 {
 	struct clockintr *elm;
@@ -507,7 +507,7 @@ clockqueue_pend_insert(struct clockintr_queue *cq, struct clockintr *cl,
 }
 
 void
-clockqueue_intrclock_reprogram(struct clockintr_queue *cq)
+clockqueue_intrclock_reprogram(struct clockqueue *cq)
 {
 	uint64_t exp, now;
 
@@ -564,7 +564,7 @@ sysctl_clockintr(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
 	struct clockintr_stat sum, tmp;
-	struct clockintr_queue *cq;
+	struct clockqueue *cq;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	uint32_t gen;
@@ -636,7 +636,7 @@ void
 db_show_clockintr_cpu(struct cpu_info *ci)
 {
 	struct clockintr *elm;
-	struct clockintr_queue *cq = &ci->ci_queue;
+	struct clockqueue *cq = &ci->ci_queue;
 	u_int cpu = CPU_INFO_UNIT(ci);
 
 	if (cq->cq_running != NULL)

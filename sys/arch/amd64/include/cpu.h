@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.162 2024/02/12 01:18:17 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.163 2024/02/25 19:15:50 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -228,7 +228,7 @@ struct cpu_info {
 	paddr_t		ci_vmcs_pa;
 	struct rwlock	ci_vmcs_lock;
 
-	struct clockintr_queue ci_queue;
+	struct clockqueue ci_queue;
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */

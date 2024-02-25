@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.28 2024/02/25 18:29:26 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.29 2024/02/25 19:15:50 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2024 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -35,8 +35,8 @@ struct clockintr_stat {
 #include <sys/mutex.h>
 #include <sys/queue.h>
 
+struct clockqueue;
 struct clockrequest;
-struct clockintr_queue;
 struct cpu_info;
 
 /*
@@ -63,7 +63,7 @@ struct clockintr {
 	TAILQ_ENTRY(clockintr) cl_plink;		/* [m] cq_pend glue */
 	void *cl_arg;					/* [I] argument */
 	void (*cl_func)(struct clockrequest *, void*, void*); /* [I] callback */
-	struct clockintr_queue *cl_queue;		/* [I] parent queue */
+	struct clockqueue *cl_queue;			/* [I] parent queue */
 	uint32_t cl_flags;				/* [m] CLST_* flags */
 };
 
@@ -79,7 +79,7 @@ struct clockintr {
  */
 struct clockrequest {
 	uint64_t cr_expiration;			/* [o] copy of dispatch time */
-	struct clockintr_queue *cr_queue;	/* [I] enclosing queue */
+	struct clockqueue *cr_queue;		/* [I] enclosing queue */
 	uint32_t cr_flags;			/* [o] CR_* flags */
 };
 
@@ -95,7 +95,7 @@ struct clockrequest {
  *	m	Per-queue mutex (cq_mtx).
  *	o	Owned by a single CPU.
  */
-struct clockintr_queue {
+struct clockqueue {
 	struct clockrequest cq_request;	/* [o] callback request object */
 	struct mutex cq_mtx;		/* [a] per-queue mutex */
 	uint64_t cq_uptime;		/* [o] cached uptime */
@@ -136,7 +136,7 @@ void clockintr_stagger(struct clockintr *, uint64_t, uint32_t, uint32_t);
 void clockintr_unbind(struct clockintr *, uint32_t);
 uint64_t clockrequest_advance(struct clockrequest *, uint64_t);
 uint64_t clockrequest_advance_random(struct clockrequest *, uint64_t, uint32_t);
-void clockqueue_init(struct clockintr_queue *);
+void clockqueue_init(struct clockqueue *);
 int sysctl_clockintr(int *, u_int, void *, size_t *, void *, size_t);
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2023/08/23 01:55:47 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.36 2024/02/25 19:15:50 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -72,7 +72,7 @@ struct cpu_info {
 	register_t	ci_tempsave[CPUSAVE_LEN];
 	register_t	ci_idle_sp_save;
 
-	struct clockintr_queue ci_queue;
+	struct clockqueue ci_queue;
 
 	volatile int 	ci_cpl;
 	volatile int	ci_dec_deferred;

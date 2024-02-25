@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.103 2024/01/24 19:23:39 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.104 2024/02/25 19:15:50 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -115,7 +115,7 @@ struct cpu_info {
 	struct gmonparam *ci_gmon;
 	struct clockintr ci_gmonclock;
 #endif
-	struct clockintr_queue ci_queue;
+	struct clockqueue ci_queue;
 	char		ci_panicbuf[512];
 } __attribute__((__aligned__(64)));
 

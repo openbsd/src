@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2024/01/27 12:05:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2024/02/25 19:15:50 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -90,7 +90,7 @@ struct cpu_info {
 	struct pcb		*ci_curpcb;
 	struct pcb		*ci_idle_pcb;
 
-	struct clockintr_queue	ci_queue;
+	struct clockqueue	ci_queue;
 	volatile int		ci_timer_deferred;
 
 	uint32_t		ci_cpl;
