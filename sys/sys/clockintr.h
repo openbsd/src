@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.27 2024/02/25 18:17:11 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.28 2024/02/25 18:29:26 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2024 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -36,6 +36,7 @@ struct clockintr_stat {
 #include <sys/queue.h>
 
 struct clockrequest;
+struct clockintr_queue;
 struct cpu_info;
 
 /*
@@ -56,7 +57,6 @@ struct intrclock {
  *	I	Immutable after initialization.
  *	m	Parent queue mutex (cl_queue->cq_mtx).
  */
-struct clockintr_queue;
 struct clockintr {
 	uint64_t cl_expiration;				/* [m] dispatch time */
 	TAILQ_ENTRY(clockintr) cl_alink;		/* [m] cq_all glue */
