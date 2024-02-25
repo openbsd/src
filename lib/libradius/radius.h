@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.h,v 1.3 2024/01/19 06:32:28 yasuoka Exp $ */
+/*	$OpenBSD: radius.h,v 1.4 2024/02/25 06:22:45 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -173,7 +173,7 @@
 #define RADIUS_SERVICE_TYPE_ADMINISTRATIVE    6
 #define RADIUS_SERVICE_TYPE_NAS_PROMPT        7
 #define RADIUS_SERVICE_TYPE_AUTHENTICAT_ONLY  8
-#define RADIUS_SERVICE_TYPE_CB_NAS_PROMPTi    9
+#define RADIUS_SERVICE_TYPE_CB_NAS_PROMPT     9
 #define RADIUS_SERVICE_TYPE_CALL_CHECK        10
 #define RADIUS_SERVICE_TYPE_CB_ADMINISTRATIVE 11
 
