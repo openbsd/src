@@ -1,8 +1,8 @@
-/* $OpenBSD: kern_clockintr.c,v 1.68 2024/02/24 01:43:32 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.69 2024/02/25 18:17:11 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
- * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
+ * Copyright (c) 2020-2024 Scott Cheloha <cheloha@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
