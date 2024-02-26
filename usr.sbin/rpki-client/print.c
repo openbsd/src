@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.51 2024/02/22 19:29:55 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.52 2024/02/26 10:02:37 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -734,6 +734,7 @@ takey_print(char *name, const struct takey *t)
 			json_do_string("uri", t->uris[i]);
 		json_do_end();
 		json_do_string("spki", spki);
+		json_do_end();
 	} else {
 		printf("TAL derived from the '%s' Trust Anchor Key:\n\n", name);
 
