@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_local.h,v 1.17 2017/08/12 11:20:34 goda Exp $ */
+/*	$OpenBSD: npppd_local.h,v 1.18 2024/02/26 08:29:37 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -85,7 +85,7 @@ struct _npppd_pool {
 	struct sockaddr_npppd *addrs;
 	/** list of addresses dynamically allocated */
 	slist 		dyna_addrs;
-	int		/** whether initialized or not */
+	unsigned int	/** whether initialized or not */
 			initialized:1,
 			/** whether in use or not */
 			running:1;

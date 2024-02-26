@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.14 2021/03/29 03:54:39 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.15 2024/02/26 08:29:37 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.14 2021/03/29 03:54:39 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.15 2024/02/26 08:29:37 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -405,7 +405,7 @@ typedef struct _l2tp_ctrl {
 	/** number of calls established */
 	int	ncalls;
 
-	int /** use sequence number in L2TP Data Message? */
+	unsigned int /** use sequence number in L2TP Data Message? */
 	    data_use_seq:1,
 	    /** waiting to acknowledge HELLO? */
 	    hello_wait_ack:1;

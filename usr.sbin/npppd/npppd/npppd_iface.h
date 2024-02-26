@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.h,v 1.7 2015/12/05 16:10:31 yasuoka Exp $ */
+/*	$OpenBSD: npppd_iface.h,v 1.8 2024/02/26 08:29:37 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -29,31 +29,31 @@
 #define NPPPD_IFACE_H 1
 
 typedef struct _npppd_iface {
- 	/** base of npppd structure */
+	/** base of npppd structure */
 	void	*npppd;
- 	/** interface name */
+	/** interface name */
 	char	ifname[IFNAMSIZ];
- 	/** file descriptor for device file */
+	/** file descriptor for device file */
 	int	devf;
 
- 	/** assigned IPv4 address */
+	/** assigned IPv4 address */
 	struct in_addr	ip4addr;
- 	/** for event(3)  */
+	/** for event(3)  */
 	struct event	ev;
 
 	struct ipcpconf *ipcpconf;
 
- 	int	/**
- 		 * whether set IP address as npppd_iface's work or not.
- 		 * <p>if 0, npppd_iface only refers IP address already set.</p>
- 		 */
- 		set_ip4addr:1,
+	unsigned int	/**
+		 * whether set IP address as npppd_iface's work or not.
+		 * <p>if 0, npppd_iface only refers IP address already set.</p>
+		 */
+		set_ip4addr:1,
 		/** set if using pppx(4) rather than tun(4) */
 		using_pppx:1,
 		/** is initialized */
-  		initialized:1,
+		initialized:1,
 		/** is started */
-  		started:1;
+		started:1;
 } npppd_iface;
 
 /** whether interface IP address is usable or not */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptp.h,v 1.11 2021/03/29 03:54:40 yasuoka Exp $	*/
+/*	$OpenBSD: pptp.h,v 1.12 2024/02/26 08:29:37 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -288,7 +288,7 @@ typedef struct _pptp_ctrl {
 	time_t	last_rcv_ctrl;	/* timestamp of latest ctrl message received */
 	uint32_t	echo_seq; /* identifier of Echo Request */
 
-	int16_t		/* flags : processing I/O events */
+	uint16_t	/* flags : processing I/O events */
 			on_io_event:1,
 			reserved:15;
 } pptp_ctrl;
