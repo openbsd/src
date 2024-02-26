@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.17 2023/10/10 07:11:50 stsp Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.18 2024/02/26 18:57:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -73,6 +73,7 @@ void	dwqe_setup_jh7110(struct dwqe_softc *);
 void	dwqe_mii_statchg_jh7110(struct device *);
 void	dwqe_setup_rk3568(struct dwqe_fdt_softc *);
 void	dwqe_mii_statchg_rk3568(struct device *);
+void	dwqe_setup_rk3588(struct dwqe_fdt_softc *);
 void	dwqe_mii_statchg_rk3588(struct device *);
 
 const struct cfattach dwqe_fdt_ca = {
@@ -114,10 +115,12 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	/* Decide GMAC id through address */
 	switch (faa->fa_reg[0].addr) {
 	case 0xfe2a0000:	/* RK3568 */
+	case 0xfe1b0000:	/* RK3588 */
 	case 0x16030000:	/* JH7110 */
 		fsc->sc_gmac_id = 0;
 		break;
 	case 0xfe010000:	/* RK3568 */
+	case 0xfe1c0000:	/* RK3588 */
 	case 0x16040000:	/* JH7110 */
 		fsc->sc_gmac_id = 1;
 		break;
@@ -137,6 +140,8 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_phy_mode = DWQE_PHY_MODE_RGMII_TXID;
 	else if (strcmp(phy_mode, "rgmii-id") == 0)
 		sc->sc_phy_mode = DWQE_PHY_MODE_RGMII_ID;
+	else if (strcmp(phy_mode, "rmii") == 0)
+		sc->sc_phy_mode = DWQE_PHY_MODE_RMII;
 	else
 		sc->sc_phy_mode = DWQE_PHY_MODE_UNKNOWN;
 
@@ -162,11 +167,17 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_is_compatible(faa->fa_node, "starfive,jh7110-dwmac")) {
 		clock_enable(faa->fa_node, "tx");
 		clock_enable(faa->fa_node, "gtx");
-	} else if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac")) {
-		clock_enable(faa->fa_node, "mac_clk_rx");
-		clock_enable(faa->fa_node, "mac_clk_tx");
+	} else if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3588-gmac")) {
 		clock_enable(faa->fa_node, "aclk_mac");
 		clock_enable(faa->fa_node, "pclk_mac");
+		clock_enable(faa->fa_node, "mac_clk_tx");
+		clock_enable(faa->fa_node, "clk_mac_speed");
+		if (strcmp(phy_mode, "rmii") == 0) {
+			clock_enable(faa->fa_node, "mac_clk_rx");
+			clock_enable(faa->fa_node, "clk_mac_ref");
+			clock_enable(faa->fa_node, "clk_mac_refout");
+		}
 	}
 	delay(5000);
 
@@ -175,6 +186,8 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 		dwqe_setup_jh7110(sc);
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
 		dwqe_setup_rk3568(fsc);
+	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3588-gmac"))
+		dwqe_setup_rk3588(fsc);
 
 	/* Power up PHY. */
 	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
@@ -329,6 +342,26 @@ dwqe_reset_phy(struct dwqe_softc *sc, uint32_t phy)
 #define  RK3568_GMAC_TXCLK_DLY_SET(_v)		((1 << 0) << 16 | ((_v) << 0))
 #define  RK3568_GMAC_RXCLK_DLY_SET(_v)		((1 << 1) << 16 | ((_v) << 1))
 
+/* RK3588 registers */
+#define RK3588_GRF_GMAC_CON7		0x031c
+#define  RK3588_GMACx_RXCLK_DLY_ENA(id)		((1 << (2 * (id) + 3)) << 16 | (1 << (2 * (id) + 3)))
+#define  RK3588_GMACx_TXCLK_DLY_ENA(id)		((1 << (2 * (id) + 2)) << 16 | (1 << (2 * (id) + 2)))
+#define RK3588_GRF_GMAC_CON8		0x0320
+#define RK3588_GRF_GMAC_CON9		0x0324
+#define  RK3588_GMAC_CLK_RX_DL_CFG(val)		((0x7f << 8) << 16 | ((val) << 8))
+#define  RK3588_GMAC_CLK_TX_DL_CFG(val)		((0x7f << 0) << 16 | ((val) << 0))
+#define RK3588_PHP_GRF_GMAC_CON0	0x0008
+#define  RK3588_GMACx_PHY_INTF_SEL_RGMII(id)	((0x7 << (6 * (id) + 3)) << 16 | (0x1 << (6 * (id) + 3)))
+#define  RK3588_GMACx_PHY_INTF_SEL_RMII(id)	((0x7 << (6 * (id) + 3)) << 16 | (0x4 << (6 * (id) + 3)))
+#define RK3588_PHP_GRF_CLK_CON1		0x0070
+#define  RK3588_RMII_MODE_GMACx_RMII(id)	((0x1 << (5 * (id))) << 16 | (0x1 << (5 * (id))))
+#define  RK3588_RMII_MODE_GMACx_RGMII(id)	((0x1 << (5 * (id))) << 16 | (0x0 << (5 * (id))))
+#define  RK3588_MII_TX_CLK_SEL_RMII_2_5(id)	((0x3 << (5 * (id) + 2)) << 16 | (0x1 << (5 * (id) + 2)))
+#define  RK3588_MII_TX_CLK_SEL_RMII_25(id)	((0x3 << (5 * (id) + 2)) << 16 | (0x0 << (5 * (id) + 2)))
+#define  RK3588_MII_TX_CLK_SEL_RGMII_2_5(id)	((0x3 << (5 * (id) + 2)) << 16 | (0x2 << (5 * (id) + 2)))
+#define  RK3588_MII_TX_CLK_SEL_RGMII_25(id)	((0x3 << (5 * (id) + 2)) << 16 | (0x3 << (5 * (id) + 2)))
+#define  RK3588_MII_TX_CLK_SEL_RGMII_125(id)	((0x3 << (5 * (id) + 2)) << 16 | (0x0 << (5 * (id) + 2)))
+
 void	dwqe_mii_statchg_jh7110_task(void *);
 void	dwqe_mii_statchg_rk3568_task(void *);
 
@@ -410,7 +443,6 @@ void
 dwqe_setup_rk3568(struct dwqe_fdt_softc *fsc)
 {
 	struct dwqe_softc *sc = &fsc->sc_sc;
-	char phy_mode[32];
 	struct regmap *rm;
 	uint32_t grf;
 	int tx_delay, rx_delay;
@@ -421,30 +453,35 @@ dwqe_setup_rk3568(struct dwqe_fdt_softc *fsc)
 	if (rm == NULL)
 		return;
 
-	if (OF_getprop(sc->sc_node, "phy-mode",
-	    phy_mode, sizeof(phy_mode)) <= 0)
+	switch (sc->sc_phy_mode) {
+	case DWQE_PHY_MODE_RGMII:
+	case DWQE_PHY_MODE_RGMII_ID:
+	case DWQE_PHY_MODE_RGMII_RXID:
+	case DWQE_PHY_MODE_RGMII_TXID:
+		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
+		break;
+	case DWQE_PHY_MODE_RMII:
+		iface = RK3568_GMAC_PHY_INTF_SEL_RMII;
+		break;
+	default:
 		return;
+	}
 
 	tx_delay = OF_getpropint(sc->sc_node, "tx_delay", 0x30);
 	rx_delay = OF_getpropint(sc->sc_node, "rx_delay", 0x10);
-
-	if (strcmp(phy_mode, "rgmii") == 0) {
-		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
-	} else if (strcmp(phy_mode, "rgmii-id") == 0) {
-		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
-		/* id is "internal delay" */
+	switch (sc->sc_phy_mode) {
+	case DWQE_PHY_MODE_RGMII_ID:
 		tx_delay = rx_delay = 0;
-	} else if (strcmp(phy_mode, "rgmii-rxid") == 0) {
-		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
+		break;
+	case DWQE_PHY_MODE_RGMII_RXID:
 		rx_delay = 0;
-	} else if (strcmp(phy_mode, "rgmii-txid") == 0) {
-		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
+		break;
+	case DWQE_PHY_MODE_RGMII_TXID:
 		tx_delay = 0;
-	} else if (strcmp(phy_mode, "rmii") == 0) {
-		iface = RK3568_GMAC_PHY_INTF_SEL_RMII;
-		tx_delay = rx_delay = 0;
-	} else
-		return;
+		break;
+	default:
+		break;
+	}
 
 	/* Program clock delay lines. */
 	regmap_write_4(rm, RK3568_GRF_GMACx_CON0(fsc->sc_gmac_id),
@@ -490,19 +527,97 @@ dwqe_mii_statchg_rk3568(struct device *self)
 }
 
 void
-dwqe_mii_statchg_rk3588(struct device *self)
+dwqe_setup_rk3588(struct dwqe_fdt_softc *fsc)
 {
-	struct dwqe_softc *sc = (void *)self;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct dwqe_softc *sc = &fsc->sc_sc;
 	struct regmap *rm;
-	uint32_t grf;
-	uint32_t gmac_clk_sel = 0;
-
-	dwqe_mii_statchg(self);
+	struct regmap *php_rm;
+	uint32_t grf, php_grf;
+	int tx_delay, rx_delay;
+	uint32_t iface, clk;
 
 	grf = OF_getpropint(sc->sc_node, "rockchip,grf", 0);
 	rm = regmap_byphandle(grf);
 	if (rm == NULL)
+		return;
+
+	php_grf = OF_getpropint(sc->sc_node, "rockchip,php-grf", 0);
+	php_rm = regmap_byphandle(php_grf);
+	if (php_rm == NULL)
+		return;
+
+	switch (sc->sc_phy_mode) {
+	case DWQE_PHY_MODE_RGMII:
+	case DWQE_PHY_MODE_RGMII_ID:
+	case DWQE_PHY_MODE_RGMII_RXID:
+	case DWQE_PHY_MODE_RGMII_TXID:
+		iface = RK3588_GMACx_PHY_INTF_SEL_RGMII(fsc->sc_gmac_id);
+		clk = RK3588_RMII_MODE_GMACx_RGMII(fsc->sc_gmac_id);
+		sc->sc_clk_sel_2_5 =
+		    RK3588_MII_TX_CLK_SEL_RGMII_2_5(fsc->sc_gmac_id);
+		sc->sc_clk_sel_25 =
+		    RK3588_MII_TX_CLK_SEL_RGMII_25(fsc->sc_gmac_id);
+		sc->sc_clk_sel_125 =
+		    RK3588_MII_TX_CLK_SEL_RGMII_125(fsc->sc_gmac_id);
+		break;
+	case DWQE_PHY_MODE_RMII:
+		iface = RK3588_GMACx_PHY_INTF_SEL_RMII(fsc->sc_gmac_id);
+		clk = RK3588_RMII_MODE_GMACx_RMII(fsc->sc_gmac_id);
+		sc->sc_clk_sel_2_5 =
+		    RK3588_MII_TX_CLK_SEL_RMII_2_5(fsc->sc_gmac_id);
+		sc->sc_clk_sel_25 =
+		    RK3588_MII_TX_CLK_SEL_RMII_25(fsc->sc_gmac_id);
+		break;
+	default:
+		return;
+	}
+
+	tx_delay = OF_getpropint(sc->sc_node, "tx_delay", 0x30);
+	rx_delay = OF_getpropint(sc->sc_node, "rx_delay", 0x10);
+	switch (sc->sc_phy_mode) {
+	case DWQE_PHY_MODE_RGMII_ID:
+		tx_delay = rx_delay = 0;
+		break;
+	case DWQE_PHY_MODE_RGMII_RXID:
+		rx_delay = 0;
+		break;
+	case DWQE_PHY_MODE_RGMII_TXID:
+		tx_delay = 0;
+		break;
+	default:
+		break;
+	}
+
+	/* Set interface and clock. */
+	regmap_write_4(php_rm, RK3588_PHP_GRF_GMAC_CON0, iface);
+	regmap_write_4(php_rm, RK3588_PHP_GRF_CLK_CON1, clk);
+
+	/* Enable clock delay. */
+	regmap_write_4(rm, RK3588_GRF_GMAC_CON7,
+	    RK3588_GMACx_TXCLK_DLY_ENA(fsc->sc_gmac_id) |
+	    RK3588_GMACx_RXCLK_DLY_ENA(fsc->sc_gmac_id));
+
+	/* Program clock delay lines. */
+	regmap_write_4(rm, fsc->sc_gmac_id == 1 ?
+	    RK3588_GRF_GMAC_CON9 : RK3588_GRF_GMAC_CON8,
+	    RK3588_GMAC_CLK_TX_DL_CFG(tx_delay) |
+	    RK3588_GMAC_CLK_RX_DL_CFG(rx_delay));
+}
+
+void
+dwqe_mii_statchg_rk3588(struct device *self)
+{
+	struct dwqe_softc *sc = (void *)self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct regmap *php_rm;
+	uint32_t php_grf;
+	uint32_t gmac_clk_sel = 0;
+
+	dwqe_mii_statchg(self);
+
+	php_grf = OF_getpropint(sc->sc_node, "rockchip,php-grf", 0);
+	php_rm = regmap_byphandle(php_grf);
+	if (php_rm == NULL)
 		return;
 
 	switch (ifp->if_baudrate) {
@@ -517,5 +632,5 @@ dwqe_mii_statchg_rk3588(struct device *self)
 		break;
 	}
 
-	regmap_write_4(rm, sc->sc_clk_sel, gmac_clk_sel);
+	regmap_write_4(php_rm, RK3588_PHP_GRF_CLK_CON1, gmac_clk_sel);
 }
