@@ -1,4 +1,4 @@
-/*	$OpenBSD: addr_range.c,v 1.6 2017/05/30 17:22:00 yasuoka Exp $ */
+/*	$OpenBSD: addr_range.c,v 1.7 2024/02/26 08:25:51 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  * Author:
  *	Yasuoka Masahiko <yasuoka@iij.ad.jp>
  *
- * $Id: addr_range.c,v 1.6 2017/05/30 17:22:00 yasuoka Exp $
+ * $Id: addr_range.c,v 1.7 2024/02/26 08:25:51 yasuoka Exp $
  */
 #ifdef ADDR_RANGE_DEBUG
 #define IIJDEBUG
@@ -329,8 +329,7 @@ in_addr_range_list_add(struct in_addr_range **list, const char *str)
 	return 0;
 }
 
-static int bitmask2masklen(mask)
-	u_int32_t mask;
+static int bitmask2masklen(u_int32_t mask)
 {
     switch(mask) {
     case 0x00000000:  return  0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.5 2015/12/17 08:01:55 tb Exp $ */
+/*	$OpenBSD: hash.c,v 1.6 2024/02/26 08:25:51 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -36,10 +36,8 @@
  * NULL.
  */
 hash_table *
-hash_create(cmp_func, hash_func, hsz)
-	int (*cmp_func) (const void *, const void *);
-	uint32_t (*hash_func) (const void *, int);
-	int hsz;
+hash_create(int (*cmp_func) (const void *, const void *),
+    uint32_t (*hash_func) (const void *, int), int hsz)
 {
 	hash_table *htbl;
 
@@ -66,8 +64,7 @@ hash_create(cmp_func, hash_func, hsz)
  * NULL.
  */
 hash_link *
-hash_first(htbl)
-	hash_table *htbl;
+hash_first(hash_table *htbl)
 {
 	htbl->cur = 0;
 	htbl->bucket_cur = NULL;
@@ -79,8 +76,7 @@ hash_first(htbl)
  * NULL.
  */
 hash_link *
-hash_next(htbl)
-	hash_table *htbl;
+hash_next(hash_table *htbl)
 {
 	hash_link *hlink;
 
@@ -105,9 +101,7 @@ hash_next(htbl)
  * NULL
  */
 hash_link *
-hash_lookup(htbl, k)
-	hash_table *htbl;
-	const void *k;
+hash_lookup(hash_table *htbl, const void *k)
 {
 	int c;
 	hash_link *w;
@@ -125,10 +119,7 @@ hash_lookup(htbl, k)
  * Return 0 on success.  Return -1 on failure.
  */
 int
-hash_insert(htbl, k, i)
-	hash_table *htbl;
-	const void *k;
-	void *i;
+hash_insert(hash_table *htbl, const void *k, void *i)
 {
 	int c;
 	hash_link *n;
@@ -155,10 +146,7 @@ hash_insert(htbl, k, i)
  * on failure.
  */
 int
-hash_delete(htbl, k, memfree)
-	hash_table *htbl;
-	const void *k;
-	int memfree;
+hash_delete(hash_table *htbl, const void *k, int memfree)
 {
 	int i;
 	hash_link *b, *w;
@@ -194,9 +182,7 @@ hash_delete(htbl, k, memfree)
  * If memfree != 0 then free items.
  */
 void
-hash_delete_all(htbl, memfree)
-	hash_table *htbl;
-	int memfree;
+hash_delete_all(hash_table *htbl, int memfree)
 {
 	int i;
 	hash_link *w, *hl;
@@ -217,8 +203,7 @@ hash_delete_all(htbl, memfree)
 /* hash_free - Free hash table and all buckets.
  */
 void
-hash_free(htbl)
-	hash_table *htbl;
+hash_free(hash_table *htbl)
 {
 	if (htbl != NULL) {
 		free(htbl->bucket);

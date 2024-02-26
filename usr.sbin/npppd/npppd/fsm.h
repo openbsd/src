@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.h,v 1.6 2017/05/30 17:22:00 yasuoka Exp $ */
+/*	$OpenBSD: fsm.h,v 1.7 2024/02/26 08:25:51 yasuoka Exp $ */
 /*	$NetBSD: fsm.h,v 1.10 2000/09/23 22:39:35 christos Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ void fsm_open(fsm *);
 void fsm_close(fsm *, const char *);
 void fsm_input(fsm *, u_char *, int);
 void fsm_protreject(fsm *);
-void fsm_sdata(fsm *, int, int, u_char *, int);
+void fsm_sdata(fsm *, u_char, u_char, u_char *, int);
 void fsm_log(fsm *, uint32_t, const char *, ...) __attribute__((__format__ (__printf__, 3, 4)));
 
 

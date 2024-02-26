@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvfromto.c,v 1.6 2015/12/17 08:01:55 tb Exp $ */
+/*	$OpenBSD: recvfromto.c,v 1.7 2024/02/26 08:25:51 yasuoka Exp $ */
 /* adapted from ipsec-tools 0.6 src/racoon/sockmisc.c */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,18 +41,9 @@
  * setsockopt() have already performed on socket.
  */
 int
-recvfromto_nat_t(s, buf, buflen, flags, from, fromlen, to, tolen,
-    ipsec, ipseclen)
-	int s;
-	void *buf;
-	size_t buflen;
-	int flags;
-	struct sockaddr *from;
-	u_int *fromlen;
-	struct sockaddr *to;
-	u_int *tolen;
-	void *ipsec;
-	u_int *ipseclen;
+recvfromto_nat_t(int s, void *buf, size_t buflen, int flags,
+    struct sockaddr *from, u_int *fromlen, struct sockaddr *to, u_int *tolen,
+    void *ipsec, u_int *ipseclen)
 {
 	int otolen;
 	u_int oipseclen = 0;
@@ -188,29 +179,16 @@ recvfromto_nat_t(s, buf, buflen, flags, from, fromlen, to, tolen,
 }
 
 int
-recvfromto(s, buf, buflen, flags, from, fromlen, to, tolen)
-	int s;
-	void *buf;
-	size_t buflen;
-	int flags;
-	struct sockaddr *from;
-	u_int *fromlen;
-	struct sockaddr *to;
-	u_int *tolen;
+recvfromto(int s, void *buf, size_t buflen, int flags, struct sockaddr *from,
+    u_int *fromlen, struct sockaddr *to, u_int *tolen)
 {
 	return recvfromto_nat_t(s, buf, buflen, flags, from, fromlen,
 	    to, tolen, NULL, NULL);
 }
 
 int
-sendto_nat_t(s, buf, buflen, flags, to, tolen, ipsec)
-	int s;
-	const void *buf;
-	size_t buflen;
-	int flags;
-	struct sockaddr *to;
-	u_int tolen;
-	void *ipsec;
+sendto_nat_t(int s, const void *buf, size_t buflen, int flags,
+    struct sockaddr *to, u_int tolen, void *ipsec)
 {
 #ifdef IP_IPSECFLOWINFO
 	if (ipsec) {
