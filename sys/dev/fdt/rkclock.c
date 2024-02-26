@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.84 2023/11/26 13:47:45 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.85 2024/02/26 18:54:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4108,6 +4108,11 @@ const struct rkclock rk3588_clocks[] = {
 		SET_PARENT
 	},
 	{
+		RK3588_CLK_GMAC_125M, RK3588_CRU_CLKSEL_CON(83),
+		SEL(15, 15), DIV(14, 8),
+		{ RK3588_PLL_GPLL, RK3588_PLL_CPLL }
+	},
+	{
 		RK3588_CCLK_SRC_SDIO, RK3588_CRU_CLKSEL_CON(172),
 		SEL(9, 8), DIV(7, 2),
 		{ RK3588_PLL_GPLL, RK3588_PLL_CPLL, RK3588_XIN24M }
@@ -4444,6 +4449,14 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 	uint32_t bit, mask, reg;
 
 	switch (idx) {
+	case RK3588_SRST_A_GMAC0:
+		reg = RK3588_CRU_SOFTRST_CON(32);
+		bit = 10;
+		break;
+	case RK3588_SRST_A_GMAC1:
+		reg = RK3588_CRU_SOFTRST_CON(32);
+		bit = 11;
+		break;
 	case RK3588_SRST_PCIE0_POWER_UP:
 		reg = RK3588_CRU_SOFTRST_CON(32);
 		bit = 13;
