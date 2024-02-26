@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.9 2024/02/26 08:47:28 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.10 2024/02/26 10:42:05 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -62,6 +62,7 @@
 static int l2tp_put_tunnel_attributes(RADIUS_PACKET *, void *);
 static int pptp_put_tunnel_attributes(RADIUS_PACKET *, void *);
 static int radius_acct_request(npppd *, npppd_ppp *, int );
+static void radius_acct_on_cb(void *, RADIUS_PACKET *, int, RADIUS_REQUEST_CTX);
 static void npppd_ppp_radius_acct_reqcb(void *, RADIUS_PACKET *, int, RADIUS_REQUEST_CTX);
 
 /***********************************************************************
@@ -217,6 +218,9 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 	ATTR_INT32(RADIUS_TYPE_NAS_PORT, ppp->id);
 	    /* npppd has no physical / virtual ports in design. */
 
+	/* RFC 2865  5.32. NAS-Identifier */
+	ATTR_STR(RADIUS_TYPE_NAS_IDENTIFIER, "npppd");
+
 	/* RFC 2865 5.31. Calling-Station-Id */
 	if (ppp->calling_number[0] != '\0')
 		ATTR_STR(RADIUS_TYPE_CALLING_STATION_ID, ppp->calling_number);
@@ -315,6 +319,54 @@ fail:
 		radius_delete_packet(radpkt);
 
 	return -1;
+}
+
+void
+radius_acct_on(npppd *pppd, radius_req_setting *rad_setting)
+{
+	RADIUS_REQUEST_CTX radctx = NULL;
+	RADIUS_PACKET *radpkt = NULL;
+
+	if (!radius_req_setting_has_server(rad_setting))
+		return;
+	if ((radpkt = radius_new_request_packet(RADIUS_CODE_ACCOUNTING_REQUEST))
+	    == NULL)
+		goto fail;
+
+	if (radius_prepare(rad_setting, NULL, &radctx, radius_acct_on_cb) != 0)
+		goto fail;
+
+	/*
+	 * RFC 2865 "5.4.  NAS-IP-Address" or RFC 3162 "2.1. NAS-IPv6-Address"
+	 */
+	if (radius_prepare_nas_address(rad_setting, radpkt) != 0)
+		goto fail;
+
+	/* RFC 2865 "5.41. NAS-Port-Type" */
+	ATTR_INT32(RADIUS_TYPE_NAS_PORT_TYPE, RADIUS_NAS_PORT_TYPE_VIRTUAL);
+
+	/* RFC 2866  5.1. Acct-Status-Type */
+	ATTR_INT32(RADIUS_TYPE_ACCT_STATUS_TYPE, RADIUS_ACCT_STATUS_TYPE_ACCT_ON);
+	/* RFC 2865  5.32. NAS-Identifier */
+	ATTR_STR(RADIUS_TYPE_NAS_IDENTIFIER, "npppd");
+
+	/* Send the request */
+	radius_request(radctx, radpkt);
+
+	return;
+ fail:
+	if (radctx != NULL)
+		radius_cancel_request(radctx);
+	if (radpkt != NULL)
+		radius_delete_packet(radpkt);
+}
+
+static void
+radius_acct_on_cb(void *context, RADIUS_PACKET *pkt, int flags,
+    RADIUS_REQUEST_CTX ctx)
+{
+	if ((flags & (RADIUS_REQUEST_TIMEOUT | RADIUS_REQUEST_ERROR)) != 0)
+		radius_request_failover(ctx);
 }
 
 #ifdef USE_NPPPD_PPTP

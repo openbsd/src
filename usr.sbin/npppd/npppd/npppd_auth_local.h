@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth_local.h,v 1.8 2017/08/11 16:41:47 goda Exp $ */
+/*	$OpenBSD: npppd_auth_local.h,v 1.9 2024/02/26 10:42:05 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -70,6 +70,9 @@ struct _npppd_auth_radius {
 
 	/** RADIUS accounting server setting */
 	radius_req_setting *rad_acct_setting;
+
+	/** Whether RADIUS accounting-on is noticed */
+	int rad_acct_on;
 };
 #endif
 

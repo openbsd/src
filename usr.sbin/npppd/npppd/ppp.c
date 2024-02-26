@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp.c,v 1.30 2021/03/29 03:54:39 yasuoka Exp $ */
+/*	$OpenBSD: ppp.c,v 1.31 2024/02/26 10:42:05 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: ppp.c,v 1.30 2021/03/29 03:54:39 yasuoka Exp $ */
+/* $Id: ppp.c,v 1.31 2024/02/26 10:42:05 yasuoka Exp $ */
 /**@file
  * This file provides PPP(Point-to-Point Protocol, RFC 1661) and
  * {@link :: _npppd_ppp PPP instance} related functions.
@@ -1092,6 +1092,11 @@ ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
 {
 	/* RFC 2865 "5.4 NAS-IP-Address" or RFC3162 "2.1. NAS-IPv6-Address" */
 	if (radius_prepare_nas_address(rad_setting, radpkt) != 0)
+		goto fail;
+
+	/* RFC 2865  5.32. NAS-Identifier */
+	if (radius_put_string_attr(radpkt, RADIUS_TYPE_NAS_IDENTIFIER, "npppd")
+	    != 0)
 		goto fail;
 
 	/* RFC 2865 "5.6. Service-Type" */
