@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_req.h,v 1.7 2015/07/23 09:04:06 yasuoka Exp $ */
+/*	$OpenBSD: radius_req.h,v 1.8 2024/02/26 08:47:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -50,6 +50,15 @@
 
 /** authenticator is not checked */
 #define	RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK	0x0020
+
+/** no message authenticator */
+#define	RADIUS_REQUEST_CHECK_NO_MSG_AUTHENTICATOR	0x0040
+
+/** has valid message authenticator */
+#define	RADIUS_REQUEST_CHECK_MSG_AUTHENTICATOR_OK	0x0080
+
+/** message authenticator is not checked*/
+#define	RADIUS_REQUEST_CHECK_MSG_AUTHENTICATOR_NO_CHECK	0x0100
 
 /** type for context to handle RADIUS request / response */
 typedef void * RADIUS_REQUEST_CTX;

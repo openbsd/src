@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.8 2015/07/23 09:04:06 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.9 2024/02/26 08:47:28 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -300,9 +300,6 @@ radius_acct_request(npppd *pppd, npppd_ppp *ppp, int stop)
 		ATTR_INT32(RADIUS_TYPE_ACCT_OUTPUT_GIGAWORDS,
 		    ppp->obytes >> 32);
 	}
-
-	radius_set_accounting_request_authenticator(radpkt,
-	    radius_get_server_secret(radctx));
 
 	/* Send the request */
 	radius_request(radctx, radpkt);

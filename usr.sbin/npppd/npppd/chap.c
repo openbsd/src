@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.17 2021/03/29 03:54:39 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.18 2024/02/26 08:47:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.17 2021/03/29 03:54:39 yasuoka Exp $ */
+/* $Id: chap.c,v 1.18 2024/02/26 08:47:28 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -860,6 +860,11 @@ chap_radius_response(void *context, RADIUS_PACKET *pkt, int flags,
 	if ((flags & RADIUS_REQUEST_CHECK_AUTHENTICATOR_OK) == 0 &&
 	    (flags & RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK) == 0) {
 		reason="bad_authenticator";
+		goto auth_failed;
+	}
+	if ((flags & RADIUS_REQUEST_CHECK_MSG_AUTHENTICATOR_OK) == 0 &&
+	    (flags & RADIUS_REQUEST_CHECK_NO_MSG_AUTHENTICATOR) == 0) {
+		reason="bad_msg_authenticator";
 		goto auth_failed;
 	}
 	/*

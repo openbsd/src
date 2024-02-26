@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_req.c,v 1.11 2015/12/05 18:43:36 mmcc Exp $ */
+/*	$OpenBSD: radius_req.c,v 1.12 2024/02/26 08:47:28 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides functions for RADIUS request using radius(3) and event(3).
  * @author	Yasuoka Masahiko
- * $Id: radius_req.c,v 1.11 2015/12/05 18:43:36 mmcc Exp $
+ * $Id: radius_req.c,v 1.12 2024/02/26 08:47:28 yasuoka Exp $
  */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -68,7 +68,7 @@ struct overlapped {
 	radius_req_setting	*setting;
 };
 
-static int   radius_request0 (struct overlapped *, int);
+static int   radius_request0(struct overlapped *);
 static int   radius_prepare_socket(struct overlapped *);
 static void  radius_request_io_event (int, short, void *);
 static void  radius_on_response(RADIUS_REQUEST_CTX, RADIUS_PACKET *, int, int);
@@ -107,7 +107,7 @@ radius_request(RADIUS_REQUEST_CTX ctx, RADIUS_PACKET *pkt)
 	if (radius_get_uint32_attr(pkt, RADIUS_TYPE_ACCT_DELAY_TIME, &ival)
 	    == 0)
 		lap->acct_delay_time = 1;
-	radius_request0(lap, 0);
+	radius_request0(lap);
 }
 
 /**
@@ -207,7 +207,7 @@ radius_request_failover(RADIUS_REQUEST_CTX ctx)
 	if (radius_prepare_socket(lap) != 0)
 		return -1;
 
-	if (radius_request0(lap, 1) != 0)
+	if (radius_request0(lap) != 0)
 		return -1;
 
 	lap->failovers++;
@@ -359,7 +359,7 @@ radius_get_server_address(RADIUS_REQUEST_CTX ctx)
 }
 
 static int
-radius_request0(struct overlapped *lap, int new_message)
+radius_request0(struct overlapped *lap)
 {
 	struct timeval tv0;
 
@@ -378,16 +378,16 @@ radius_request0(struct overlapped *lap, int new_message)
 		else {
 			timespecsub(&curr, &lap->req_time, &delta);
 			if (radius_set_uint32_attr(lap->pkt,
-			    RADIUS_TYPE_ACCT_DELAY_TIME, delta.tv_sec) == 0) {
+			    RADIUS_TYPE_ACCT_DELAY_TIME, delta.tv_sec) == 0)
 				radius_update_id(lap->pkt);
-				new_message = 1;
-			}
 		}
 	}
-	if (new_message) {
+	if (radius_get_code(lap->pkt) == RADIUS_CODE_ACCOUNTING_REQUEST)
 		radius_set_accounting_request_authenticator(lap->pkt,
 		    radius_get_server_secret(lap));
-	}
+	else
+		radius_put_message_authenticator(lap->pkt,
+		    radius_get_server_secret(lap));
 
 	lap->ntry--;
 	if (radius_send(lap->socket, lap->pkt, 0) != 0) {
@@ -440,12 +440,17 @@ radius_request_io_event(int fd, short evmask, void *context)
 			}
 			flags |= RADIUS_REQUEST_ERROR;
 		} else if (lap->secret[0] == '\0') {
-			flags |= RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK;
+			flags |= RADIUS_REQUEST_CHECK_AUTHENTICATOR_NO_CHECK
+			    | RADIUS_REQUEST_CHECK_MSG_AUTHENTICATOR_NO_CHECK;
 		} else {
 			radius_set_request_packet(respkt, lap->pkt);
 			if (!radius_check_response_authenticator(respkt,
 			    lap->secret))
 				flags |= RADIUS_REQUEST_CHECK_AUTHENTICATOR_OK;
+			if (!radius_has_attr(respkt, RADIUS_TYPE_MESSAGE_AUTHENTICATOR))
+				flags |= RADIUS_REQUEST_CHECK_NO_MSG_AUTHENTICATOR;
+			else if (radius_check_message_authenticator(respkt, lap->secret) == 0)
+				flags |= RADIUS_REQUEST_CHECK_MSG_AUTHENTICATOR_OK;
 		}
 		radius_on_response(lap, respkt, flags, 0);
 		radius_delete_packet(respkt);
@@ -453,7 +458,7 @@ radius_request_io_event(int fd, short evmask, void *context)
 		if (lap->ntry > 0) {
 			RADIUS_REQ_DBG((LOG_DEBUG,
 			    "%s() timed out retry", __func__));
-			radius_request0(lap, 0);
+			radius_request0(lap);
 			return;
 		}
 		RADIUS_REQ_DBG((LOG_DEBUG, "%s() timed out", __func__));
