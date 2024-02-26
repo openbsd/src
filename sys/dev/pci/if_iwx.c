@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.181 2024/02/16 11:44:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.182 2024/02/26 18:00:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6085,13 +6085,12 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 	} else if (sc->sc_rate_n_flags_version >= 2)
 		rate_flags |= IWX_RATE_MCS_LEGACY_OFDM_MSK;
 
-	rval = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
 	if (sc->sc_rate_n_flags_version >= 2) {
 		if (rate_flags & IWX_RATE_MCS_LEGACY_OFDM_MSK) {
-			rate_flags |= (iwx_fw_rateidx_ofdm(rval) &
+			rate_flags |= (iwx_fw_rateidx_ofdm(rinfo->rate) &
 			    IWX_RATE_LEGACY_RATE_MSK);
 		} else {
-			rate_flags |= (iwx_fw_rateidx_cck(rval) &
+			rate_flags |= (iwx_fw_rateidx_cck(rinfo->rate) &
 			    IWX_RATE_LEGACY_RATE_MSK);
 		}
 	} else
