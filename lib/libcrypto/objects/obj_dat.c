@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.85 2024/01/24 14:05:10 jsing Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.86 2024/02/26 15:00:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -440,7 +440,8 @@ const void *
 OBJ_bsearch_(const void *key, const void *base, int num, int size,
     int (*cmp)(const void *, const void *))
 {
-	return OBJ_bsearch_ex_(key, base, num, size, cmp, 0);
+	OBJerror(ERR_R_DISABLED);
+	return NULL;
 }
 LCRYPTO_ALIAS(OBJ_bsearch_);
 
@@ -448,33 +449,8 @@ const void *
 OBJ_bsearch_ex_(const void *key, const void *base_, int num, int size,
     int (*cmp)(const void *, const void *), int flags)
 {
-	const char *base = base_;
-	int l, h, i = 0, c = 0;
-	const char *p = NULL;
-
-	if (num == 0)
-		return (NULL);
-	l = 0;
-	h = num;
-	while (l < h) {
-		i = (l + h) / 2;
-		p = &(base[i * size]);
-		c = (*cmp)(key, p);
-		if (c < 0)
-			h = i;
-		else if (c > 0)
-			l = i + 1;
-		else
-			break;
-	}
-	if (c != 0 && !(flags & OBJ_BSEARCH_VALUE_ON_NOMATCH))
-		p = NULL;
-	else if (c == 0 && (flags & OBJ_BSEARCH_FIRST_VALUE_ON_MATCH)) {
-		while (i > 0 && (*cmp)(key, &(base[(i - 1) * size])) == 0)
-			i--;
-		p = &(base[i * size]);
-	}
-	return (p);
+	OBJerror(ERR_R_DISABLED);
+	return NULL;
 }
 
 /* Convert an object name into an ASN1_OBJECT

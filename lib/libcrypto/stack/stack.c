@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.24 2024/01/13 16:32:53 tb Exp $ */
+/* $OpenBSD: stack.c,v 1.25 2024/02/26 15:00:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,6 +195,39 @@ sk_delete(_STACK *st, int loc)
 }
 LCRYPTO_ALIAS(sk_delete);
 
+static const void *
+obj_bsearch_ex(const void *key, const void *base_, int num, int size,
+    int (*cmp)(const void *, const void *), int flags)
+{
+	const char *base = base_;
+	int l, h, i = 0, c = 0;
+	const char *p = NULL;
+
+	if (num == 0)
+		return (NULL);
+	l = 0;
+	h = num;
+	while (l < h) {
+		i = (l + h) / 2;
+		p = &(base[i * size]);
+		c = (*cmp)(key, p);
+		if (c < 0)
+			h = i;
+		else if (c > 0)
+			l = i + 1;
+		else
+			break;
+	}
+	if (c != 0 && !(flags & OBJ_BSEARCH_VALUE_ON_NOMATCH))
+		p = NULL;
+	else if (c == 0 && (flags & OBJ_BSEARCH_FIRST_VALUE_ON_MATCH)) {
+		while (i > 0 && (*cmp)(key, &(base[(i - 1) * size])) == 0)
+			i--;
+		p = &(base[i * size]);
+	}
+	return (p);
+}
+
 static int
 internal_find(_STACK *st, void *data, int ret_val_options)
 {
@@ -213,7 +246,7 @@ internal_find(_STACK *st, void *data, int ret_val_options)
 	sk_sort(st);
 	if (data == NULL)
 		return (-1);
-	r = OBJ_bsearch_ex_(&data, st->data, st->num, sizeof(void *), st->comp,
+	r = obj_bsearch_ex(&data, st->data, st->num, sizeof(void *), st->comp,
 	    ret_val_options);
 	if (r == NULL)
 		return (-1);
