@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.8 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.9 2024/02/26 15:40:33 job Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -141,6 +141,8 @@ repo_stats(const struct repo *rp, const struct repostats *in, void *arg)
 	ol = olabels_new(keys, values);
 	ometric_set_timespec(rpki_repo_duration, &in->sync_time, ol);
 
+	ometric_set_int_with_labels(rpki_repo_obj, in->new_files,
+	    OKV("type", "state"), OKV("files", "new"), ol);
 	ometric_set_int_with_labels(rpki_repo_obj, in->del_files,
 	    OKV("type", "state"), OKV("files", "deleted"), ol);
 	ometric_set_int_with_labels(rpki_repo_obj, in->extra_files,

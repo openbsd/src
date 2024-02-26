@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.53 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.54 2024/02/26 15:40:33 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1401,6 +1401,18 @@ repo_check_timeout(int timeout)
 		}
 	}
 	return timeout;
+}
+
+/*
+ * Update repo-specific stats when files are going to be moved
+ * from DIR_TEMP to DIR_VALID.
+ */
+void
+repostats_new_files_inc(struct repo *rp, const char *file)
+{
+	if (strncmp(file, ".rsync/", strlen(".rsync/")) == 0 ||
+	    strncmp(file, ".rrdp/", strlen(".rrdp/")) == 0)
+		rp->repostats.new_files++;
 }
 
 /*

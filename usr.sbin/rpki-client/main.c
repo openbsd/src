@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.251 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: main.c,v 1.252 2024/02/26 15:40:33 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -597,6 +597,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 
 	rp = repo_byid(id);
 	repo_stat_inc(rp, talid, type, STYPE_OK);
+	repostats_new_files_inc(rp, file);
 	switch (type) {
 	case RTYPE_TAL:
 		st->tals++;
@@ -786,6 +787,7 @@ sum_repostats(const struct repo *rp, const struct repostats *in, void *arg)
 	out->extra_files += in->extra_files;
 	out->del_extra_files += in->del_extra_files;
 	out->del_dirs += in->del_dirs;
+	out->new_files += in->new_files;
 	timespecadd(&in->sync_time, &out->sync_time, &out->sync_time);
 }
 
@@ -1487,6 +1489,8 @@ main(int argc, char *argv[])
 	printf("Ghostbuster records: %u\n", stats.repo_tal_stats.gbrs);
 	printf("Trust Anchor Keys: %u\n", stats.repo_tal_stats.taks);
 	printf("Repositories: %u\n", stats.repos);
+	printf("New files moved into validated cache: %u\n",
+	    stats.repo_stats.new_files);
 	printf("Cleanup: removed %u files, %u directories\n"
 	    "Repository cleanup: kept %u and removed %u superfluous files\n",
 	    stats.repo_stats.del_files, stats.repo_stats.del_dirs,

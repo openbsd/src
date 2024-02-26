@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.209 2024/02/22 21:00:26 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.210 2024/02/26 15:40:33 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -622,6 +622,7 @@ struct repostats {
 	uint32_t	 extra_files;	/* number of superfluous files */
 	uint32_t	 del_extra_files;/* number of removed extra files */
 	uint32_t	 del_dirs;	/* number of dirs removed in cleanup */
+	uint32_t	 new_files;	/* moved from DIR_TEMP to DIR_VALID */
 	struct timespec	 sync_time;	/* time to sync repo */
 };
 
@@ -850,6 +851,7 @@ struct repo	*repo_byid(unsigned int);
 int		 repo_queued(struct repo *, struct entity *);
 void		 repo_cleanup(struct filepath_tree *, int);
 int		 repo_check_timeout(int);
+void		 repostats_new_files_inc(struct repo *, const char *);
 void		 repo_stat_inc(struct repo *, int, enum rtype, enum stype);
 void		 repo_tal_stats_collect(void (*)(const struct repo *,
 		    const struct repotalstats *, void *), int, void *);
