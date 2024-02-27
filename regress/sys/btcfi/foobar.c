@@ -1,6 +1,8 @@
 /* Public domain */
 
 #include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 extern void foo(void);
@@ -19,10 +21,29 @@ handler(int sig, siginfo_t *si, void *context)
 		exit(0);
 }
 
+#if defined(__amd64__)
+static int
+has_cet_ibt(void)
+{
+	uint32_t d;
+
+	asm("cpuid" : "=d" (d) : "a" (7), "c" (0));
+	return (d & (1U << 20)) ? 1 : 0;
+}
+#endif
+
 int
 main(void)
 {
 	struct sigaction sa;
+
+#if defined(__amd64__)
+	if (!has_cet_ibt()) {
+		printf("Unsupported CPU\n");
+		printf("SKIPPED\n");
+		exit(0);
+	}
+#endif
 
 	sa.sa_sigaction = handler;
 	sa.sa_mask = 0;
