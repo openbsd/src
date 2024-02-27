@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.88 2024/02/24 19:42:54 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.89 2024/02/27 12:38:12 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -1640,6 +1640,9 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 	long val;
 
 	switch (ba->ba_type) {
+	case B_AT_STR:
+		val = (*ba2str(ba, dtev) == '\0') ? 0 : 1;
+		break;
 	case B_AT_LONG:
 		val = (long)ba->ba_value;
 		break;
