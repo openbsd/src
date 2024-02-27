@@ -1,4 +1,4 @@
-/*	$OpenBSD: sender.c,v 1.31 2024/02/19 16:39:18 claudio Exp $ */
+/*	$OpenBSD: sender.c,v 1.32 2024/02/27 11:28:30 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -159,7 +159,7 @@ send_up_fsm(struct sess *sess, size_t *phase,
 		 * finished with the file.
 		 */
 
-		hash_file(up->stat.map, up->stat.mapsz, fmd, sess);
+		hash_file_final(&up->stat.ctx, fmd);
 		if (!io_lowbuffer_alloc(sess, wb, wbsz, wbmax, dsz)) {
 			ERRX1("io_lowbuffer_alloc");
 			return 0;
@@ -619,6 +619,7 @@ rsync_sender(struct sess *sess, int fdin,
 
 			/* Hash our blocks. */
 
+			hash_file_start(&up.stat.ctx, sess);
 			blkhash_set(up.stat.blktab, up.cur->blks);
 
 			/*

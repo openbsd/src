@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.47 2023/11/27 11:30:49 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.48 2024/02/27 11:28:30 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,6 +16,8 @@
  */
 #ifndef EXTERN_H
 #define EXTERN_H
+
+#include <openssl/md4.h>
 
 /*
  * This is the rsync protocol version that we support.
@@ -214,6 +216,7 @@ struct	blkstat {
 	struct blktab	*blktab; /* hashtable of blocks */
 	uint32_t	 s1; /* partial sum for computing fast hash */
 	uint32_t	 s2; /* partial sum for computing fast hash */
+	MD4_CTX		 ctx; /* context for hash_file */
 };
 
 /*
@@ -388,8 +391,10 @@ int		 blk_send_ack(struct sess *, int, struct blkset *);
 uint32_t	 hash_fast(const void *, size_t);
 void		 hash_slow(const void *, size_t, unsigned char *,
 		    const struct sess *);
-void		 hash_file(const void *, size_t, unsigned char *,
-		    const struct sess *);
+
+void		 hash_file_start(MD4_CTX *, const struct sess *);
+void		 hash_file_buf(MD4_CTX *, const void *, size_t);
+void		 hash_file_final(MD4_CTX *, unsigned char *);
 
 void		 copy_file(int, const char *, const struct flist *);
 

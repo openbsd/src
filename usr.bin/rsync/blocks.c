@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocks.c,v 1.21 2021/11/03 14:42:12 deraadt Exp $ */
+/*	$OpenBSD: blocks.c,v 1.22 2024/02/27 11:28:30 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -280,6 +280,8 @@ blk_match(struct sess *sess, const struct blkset *blks,
 			    blk->len, blk->idx);
 			tok = -(blk->idx + 1);
 
+			hash_file_buf(&st->ctx, st->map + last, sz + blk->len);
+
 			/*
 			 * Write the data we have, then follow it with
 			 * the tag of the block that matches.
@@ -293,6 +295,7 @@ blk_match(struct sess *sess, const struct blkset *blks,
 			st->total += blk->len;
 			st->offs += blk->len;
 			st->hint = blk->idx + 1;
+
 			return;
 		}
 
@@ -308,12 +311,16 @@ blk_match(struct sess *sess, const struct blkset *blks,
 		st->curlen = st->curpos + sz;
 		st->curtok = 0;
 		st->curst = sz ? BLKSTAT_DATA : BLKSTAT_TOK;
+
+		hash_file_buf(&st->ctx, st->map + st->curpos, sz);
 	} else {
 		st->curpos = 0;
 		st->curlen = st->mapsz;
 		st->curtok = 0;
 		st->curst = st->mapsz ? BLKSTAT_DATA : BLKSTAT_TOK;
 		st->dirty = st->total = st->mapsz;
+
+		hash_file_buf(&st->ctx, st->map, st->mapsz);
 
 		LOG4("%s: flushing whole file %zu B",
 		    path, st->mapsz);

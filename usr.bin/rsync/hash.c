@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.4 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: hash.c,v 1.5 2024/02/27 11:28:30 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -82,14 +82,21 @@ hash_slow(const void *buf, size_t len,
  * of the sequence, not the beginning.
  */
 void
-hash_file(const void *buf, size_t len,
-	unsigned char *md, const struct sess *sess)
+hash_file_start(MD4_CTX *ctx, const struct sess *sess)
 {
-	MD4_CTX		 ctx;
 	int32_t		 seed = htole32(sess->seed);
 
-	MD4_Init(&ctx);
-	MD4_Update(&ctx, (unsigned char *)&seed, sizeof(int32_t));
-	MD4_Update(&ctx, buf, len);
-	MD4_Final(md, &ctx);
+	MD4_Init(ctx);
+	MD4_Update(ctx, (unsigned char *)&seed, sizeof(int32_t));
+}
+
+void
+hash_file_buf(MD4_CTX *ctx, const void *buf, size_t len)
+{
+	MD4_Update(ctx, buf, len);
+}
+void
+hash_file_final(MD4_CTX *ctx, unsigned char *md)
+{
+	MD4_Final(md, ctx);
 }
