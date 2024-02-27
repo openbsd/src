@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.23 2023/11/10 15:51:19 bluhm Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.24 2024/02/27 10:47:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -374,8 +374,10 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dwxe_softc *sc = (void *)self;
 	struct fdt_attach_args *faa = aux;
+	char phy_mode[16] = { 0 };
 	struct ifnet *ifp;
 	uint32_t phy;
+	int mii_flags = 0;
 	int node;
 
 	sc->sc_node = faa->fa_node;
@@ -387,6 +389,16 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_dmat = faa->fa_dmat;
 
+	OF_getprop(faa->fa_node, "phy-mode", phy_mode, sizeof(phy_mode));
+	if (strcmp(phy_mode, "rgmii") == 0)
+		mii_flags |= MIIF_SETDELAY;
+	else if (strcmp(phy_mode, "rgmii-rxid") == 0)
+		mii_flags |= MIIF_SETDELAY | MIIF_RXID;
+	else if (strcmp(phy_mode, "rgmii-txid") == 0)
+		mii_flags |= MIIF_SETDELAY | MIIF_TXID;
+	else if (strcmp(phy_mode, "rgmii-id") == 0)
+		mii_flags |= MIIF_SETDELAY | MIIF_RXID | MIIF_TXID;
+
 	/* Lookup PHY. */
 	phy = OF_getpropint(faa->fa_node, "phy-handle", 0);
 	node = OF_getnodebyphandle(phy);
@@ -394,6 +406,7 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_phyloc = OF_getpropint(node, "reg", MII_PHY_ANY);
 	else
 		sc->sc_phyloc = MII_PHY_ANY;
+	sc->sc_mii.mii_node = node;
 
 	sc->sc_clk = clock_get_frequency(faa->fa_node, "stmmaceth");
 	if (sc->sc_clk > 160000000)
@@ -435,7 +448,7 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_media, 0, dwxe_media_change, dwxe_media_status);
 
 	mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
-	    MII_OFFSET_ANY, MIIF_NOISOLATE);
+	    MII_OFFSET_ANY, MIIF_NOISOLATE | mii_flags);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
