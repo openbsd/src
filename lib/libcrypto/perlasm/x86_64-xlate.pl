@@ -567,7 +567,15 @@ my %globals;
 					$v.="$line\tSEGMENT";
 					if ($line=~/\.([prx])data/) {
 					    $v.=" READONLY";
-					    $v.=" ALIGN(".($1 eq "p" ? 4 : 8).")" if ($masm>=$masmref);
+					    if ($masm>=$masmref) {
+						    if ($1 eq "r") {
+							    $v.=" ALIGN(64)";
+						    } elsif ($1 eq "p") {
+							    $v.=" ALIGN(4)";
+						    } else {
+							    $v.=" ALIGN(8)";
+						    }
+					    }
 					} elsif ($line=~/\.CRT\$/i) {
 					    $v.=" READONLY ";
 					    $v.=$masm>=$masmref ? "ALIGN(8)" : "DWORD";
