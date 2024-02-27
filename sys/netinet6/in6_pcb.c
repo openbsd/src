@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.139 2024/02/22 14:25:58 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.140 2024/02/27 12:37:49 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -561,16 +561,10 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr_in6 *dst,
 struct rtentry *
 in6_pcbrtentry(struct inpcb *inp)
 {
-	struct route *ro = &inp->inp_route;
-
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
 		return (NULL);
-	if (route6_cache(ro, &inp->inp_faddr6, &inp->inp_laddr6,
-	    inp->inp_rtableid)) {
-		ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa,
-		    &inp->inp_laddr6.s6_addr32[0], ro->ro_tableid);
-	}
-	return (ro->ro_rt);
+	return (route6_mpath(&inp->inp_route, &inp->inp_faddr6,
+	    &inp->inp_laddr6, inp->inp_rtableid));
 }
 
 struct inpcb *

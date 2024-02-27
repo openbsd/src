@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.207 2024/02/22 14:25:58 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.208 2024/02/27 12:37:49 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -465,7 +465,11 @@ struct bfd_config;
 void	 route_init(void);
 int	 route_cache(struct route *, const struct in_addr *,
 	    const struct in_addr *, u_int);
+struct rtentry *route_mpath(struct route *, const struct in_addr *,
+	    const struct in_addr *, u_int);
 int	 route6_cache(struct route *, const struct in6_addr *,
+	    const struct in6_addr *, u_int);
+struct rtentry *route6_mpath(struct route *, const struct in6_addr *,
 	    const struct in6_addr *, u_int);
 void	 rtm_ifchg(struct ifnet *);
 void	 rtm_ifannounce(struct ifnet *, int);
