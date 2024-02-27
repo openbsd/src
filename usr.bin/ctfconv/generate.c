@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.6 2024/02/22 13:15:17 claudio Exp $ */
+/*	$OpenBSD: generate.c,v 1.7 2024/02/27 06:58:19 anton Exp $ */
 
 /*
  * Copyright (c) 2017 Martin Pieuchot
@@ -197,7 +197,7 @@ imcs_add_type(struct imcs *imcs, struct itype *it)
 		ctsz = sizeof(struct ctf_stype);
 	} else if (size <= CTF_MAX_SIZE) {
 		if (kind == CTF_K_INTEGER || kind == CTF_K_FLOAT) {
-			assert(size <= 64);
+			assert(size <= 128);
 			if (size == 0)
 				ctt.ctt_size = 0;
 			else if (size <= 8)
@@ -206,8 +206,10 @@ imcs_add_type(struct imcs *imcs, struct itype *it)
 				ctt.ctt_size = 2;
 			else if (size <= 32)
 				ctt.ctt_size = 4;
-			else
+			else if (size <= 64)
 				ctt.ctt_size = 8;
+			else
+				ctt.ctt_size = 16;
 		} else
 			ctt.ctt_size = size;
 		ctsz = sizeof(struct ctf_stype);
