@@ -1,7 +1,7 @@
-  [] FLOAT float encoding=LDOUBLE offset=0 bits=32
-  [] FLOAT float encoding=LDOUBLE offset=0 bits=64
-  [] FLOAT float encoding=LDOUBLE offset=0 bits=96
-  [] INTEGER char encoding=SIGNED CHAR offset=0 bits=8
-  [] INTEGER signed encoding=SIGNED offset=0 bits=32
-  [] INTEGER signed encoding=SIGNED offset=0 bits=64
-  [] INTEGER void encoding=SIGNED offset=0 bits=0
+  [] FLOAT float encoding=LDOUBLE offset=0 bits=32 (4 bytes)
+  [] FLOAT float encoding=LDOUBLE offset=0 bits=64 (8 bytes)
+  [] FLOAT float encoding=LDOUBLE offset=0 bits=96 (12 bytes)
+  [] INTEGER char encoding=SIGNED CHAR offset=0 bits=8 (1 bytes)
+  [] INTEGER signed encoding=SIGNED offset=0 bits=32 (4 bytes)
+  [] INTEGER signed encoding=SIGNED offset=0 bits=64 (8 bytes)
+  [] INTEGER void encoding=SIGNED offset=0 bits=0 (0 bytes)
