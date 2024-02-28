@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.140 2024/02/23 09:50:19 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.141 2024/02/28 12:21:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2204,7 +2204,7 @@ X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose_id)
 	if (ctx->param->purpose == 0)
 		ctx->param->purpose = purpose_id;
 	if (ctx->param->trust == 0)
-		ctx->param->trust = purpose->trust;
+		ctx->param->trust = X509_PURPOSE_get_trust(purpose);
 
 	return 1;
 }
