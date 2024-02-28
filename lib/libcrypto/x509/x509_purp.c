@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.35 2024/01/07 16:22:46 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.36 2024/02/28 16:26:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -177,10 +177,12 @@ X509_check_purpose(X509 *x, int id, int ca)
 
 	if (id == -1)
 		return 1;
-	idx = X509_PURPOSE_get_by_id(id);
-	if (idx == -1)
+
+	if ((idx = X509_PURPOSE_get_by_id(id)) == -1)
 		return -1;
-	pt = X509_PURPOSE_get0(idx);
+	if ((pt = X509_PURPOSE_get0(idx)) == NULL)
+		return -1;
+
 	return pt->check_purpose(pt, x, ca);
 }
 LCRYPTO_ALIAS(X509_check_purpose);
