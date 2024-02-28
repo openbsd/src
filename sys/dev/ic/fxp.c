@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.133 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.134 2024/02/28 12:53:31 miod Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1382,11 +1382,12 @@ fxp_init(void *xsc)
 	else
 		bufs = FXP_NRFABUFS_MIN;
 	if (sc->rx_bufs > bufs) {
-		while (sc->rfa_headm != NULL && sc->rx_bufs-- > bufs) {
+		while (sc->rfa_headm != NULL && sc->rx_bufs > bufs) {
 			rxmap = *((bus_dmamap_t *)sc->rfa_headm->m_ext.ext_buf);
 			bus_dmamap_unload(sc->sc_dmat, rxmap);
 			FXP_RXMAP_PUT(sc, rxmap);
 			sc->rfa_headm = m_free(sc->rfa_headm);
+			sc->rx_bufs--;
 		}
 	} else if (sc->rx_bufs < bufs) {
 		int err, tmp_rx_bufs = sc->rx_bufs;
