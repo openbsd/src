@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.26 2023/11/19 09:29:11 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.27 2024/02/28 17:04:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -70,6 +70,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+#include <openssl/x509.h>
 
 #define NOKEYS		0x1
 #define NOCERTS 	0x2
@@ -1023,7 +1024,7 @@ alg_print(BIO *x, const X509_ALGOR *alg)
 	BIO_printf(bio_err, "%s, Iteration %ld\n",
 	    OBJ_nid2ln(OBJ_obj2nid(aobj)),
 	    ASN1_INTEGER_get(pbe->iter));
-	PBEPARAM_free(pbe);
+	ASN1_item_free((ASN1_VALUE *)pbe, &PBEPARAM_it);
 	return 1;
 }
 
