@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.115 2024/02/22 14:25:58 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.116 2024/02/28 10:57:20 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 	struct route ro;
 	struct ifnet *ifp = NULL;
 	int error = 0, type = 0, code = 0, destmtu = 0;
-	struct mbuf *mcopy = NULL;
+	struct mbuf *mcopy;
 #ifdef IPSEC
 	struct tdb *tdb = NULL;
 #endif /* IPSEC */
@@ -121,13 +121,13 @@ ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 			    m->m_pkthdr.ph_ifidx);
 		}
 		m_freem(m);
-		goto out;
+		goto done;
 	}
 
 	if (ip6->ip6_hlim <= IPV6_HLIMDEC) {
 		icmp6_error(m, ICMP6_TIME_EXCEEDED,
 				ICMP6_TIME_EXCEED_TRANSIT, 0);
-		goto out;
+		goto done;
 	}
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
 
@@ -175,12 +175,12 @@ reroute:
 		    m->m_pkthdr.ph_rtableid);
 		if (rt == NULL) {
 			ip6stat_inc(ip6s_noroute);
-			if (mcopy) {
+			if (mcopy != NULL) {
 				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 					    ICMP6_DST_UNREACH_NOROUTE, 0);
 			}
 			m_freem(m);
-			goto out;
+			goto done;
 		}
 	}
 	ro.ro_rt = rt;
@@ -211,11 +211,11 @@ reroute:
 			    ip6->ip6_nxt,
 			    m->m_pkthdr.ph_ifidx, rt->rt_ifidx);
 		}
-		if (mcopy)
+		if (mcopy != NULL)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
 		m_freem(m);
-		goto out;
+		goto done;
 	}
 
 #ifdef IPSEC
@@ -270,11 +270,11 @@ reroute:
 			 * type/code is based on suggestion by Rich Draves.
 			 * not sure if it is the best pick.
 			 */
-			if (mcopy)
+			if (mcopy != NULL)
 				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0);
 			m_freem(m);
-			goto out;
+			goto done;
 		}
 		type = ND_REDIRECT;
 	}
@@ -327,18 +327,18 @@ reroute:
 	if (mcopy != NULL)
 		icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
 	m_freem(m);
-	goto out;
+	goto done;
 
 senderr:
 	if (mcopy == NULL)
-		goto out;
+		goto done;
 
 	switch (error) {
 	case 0:
 		if (type == ND_REDIRECT) {
 			icmp6_redirect_output(mcopy, rt);
 			ip6stat_inc(ip6s_redirectsent);
-			goto out;
+			goto done;
 		}
 		goto freecopy;
 
@@ -383,11 +383,11 @@ senderr:
 		break;
 	}
 	icmp6_error(mcopy, type, code, destmtu);
-	goto out;
+	goto done;
 
-freecopy:
+ freecopy:
 	m_freem(mcopy);
-out:
+ done:
 	rtfree(rt);
 	if_put(ifp);
 #ifdef IPSEC

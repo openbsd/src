@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.258 2024/02/22 14:25:58 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.259 2024/02/28 10:57:20 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 #if NPF > 0
 	struct in6_addr odst;
 #endif
-	int srcrt = 0;
+	int pfrdr = 0;
 
 	KASSERT(*offp == 0);
 
@@ -413,7 +413,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto bad;
 
 	ip6 = mtod(m, struct ip6_hdr *);
-	srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
+	pfrdr = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 #endif
 
 	/*
@@ -618,7 +618,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 #endif /* IPSEC */
 
-	ip6_forward(m, rt, srcrt);
+	ip6_forward(m, rt, pfrdr);
 	*mp = NULL;
 	return IPPROTO_DONE;
  bad:

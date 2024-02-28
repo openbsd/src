@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.390 2024/02/22 14:25:58 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.391 2024/02/28 10:57:20 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -391,7 +391,10 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	struct rtentry	*rt = NULL;
 	struct ip	*ip;
 	int hlen;
-	in_addr_t pfrdr = 0;
+#if NPF > 0
+	struct in_addr odst;
+#endif
+	int pfrdr = 0;
 
 	KASSERT(*offp == 0);
 
@@ -412,7 +415,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	/*
 	 * Packet filter
 	 */
-	pfrdr = ip->ip_dst.s_addr;
+	odst = ip->ip_dst;
 	if (pf_test(AF_INET, PF_IN, ifp, mp) != PF_PASS)
 		goto bad;
 	m = *mp;
@@ -420,7 +423,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto bad;
 
 	ip = mtod(m, struct ip *);
-	pfrdr = (pfrdr != ip->ip_dst.s_addr);
+	pfrdr = odst.s_addr != ip->ip_dst.s_addr;
 #endif
 
 	hlen = ip->ip_hl << 2;
@@ -1472,7 +1475,7 @@ const u_char inetctlerrmap[PRC_NCMDS] = {
 void
 ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 {
-	struct mbuf mfake, *mcopy = NULL;
+	struct mbuf mfake, *mcopy;
 	struct ip *ip = mtod(m, struct ip *);
 	struct route ro;
 	int error = 0, type = 0, code = 0, destmtu = 0, fake = 0, len;
@@ -1482,11 +1485,11 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat_inc(ips_cantforward);
 		m_freem(m);
-		goto freecopy;
+		goto done;
 	}
 	if (ip->ip_ttl <= IPTTLDEC) {
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
-		goto freecopy;
+		goto done;
 	}
 
 	ro.ro_rt = NULL;
@@ -1563,10 +1566,10 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		if (type)
 			ipstat_inc(ips_redirectsent);
 		else
-			goto freecopy;
+			goto done;
 	}
 	if (!fake)
-		goto freecopy;
+		goto done;
 
 	switch (error) {
 	case 0:				/* forwarded, but need redirect */
@@ -1590,7 +1593,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		}
 		ipstat_inc(ips_cantfrag);
 		if (destmtu == 0)
-			goto freecopy;
+			goto done;
 		break;
 
 	case EACCES:
@@ -1598,7 +1601,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		 * pf(4) blocked the packet. There is no need to send an ICMP
 		 * packet back since pf(4) takes care of it.
 		 */
-		goto freecopy;
+		goto done;
 
 	case ENOBUFS:
 		/*
@@ -1607,7 +1610,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		 * source quench could be a big problem under DoS attacks,
 		 * or the underlying interface is rate-limited.
 		 */
-		goto freecopy;
+		goto done;
 
 	case ENETUNREACH:		/* shouldn't happen, checked above */
 	case EHOSTUNREACH:
@@ -1619,10 +1622,10 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		break;
 	}
 	mcopy = m_copym(&mfake, 0, len, M_DONTWAIT);
-	if (mcopy)
+	if (mcopy != NULL)
 		icmp_error(mcopy, type, code, dest, destmtu);
 
-freecopy:
+ done:
 	if (fake)
 		m_tag_delete_chain(&mfake);
 	rtfree(rt);
