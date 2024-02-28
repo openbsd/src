@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.117 2020/08/21 22:59:27 kn Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.118 2024/02/28 16:08:34 denis Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -494,6 +494,11 @@ pppioctl(struct ppp_softc *sc, u_long cmd, caddr_t data, int flag,
 		case PPP_IP:
 			npx = NP_IP;
 			break;
+#ifdef INET6
+		case PPP_IPV6:
+			npx = NP_IPV6;
+			break;
+#endif
 		default:
 			return EINVAL;
 		}
@@ -579,15 +584,19 @@ pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFADDR:
-		if (ifa->ifa_addr->sa_family != AF_INET)
-			error = EAFNOSUPPORT;
-		break;
-
 	case SIOCSIFDSTADDR:
-		if (ifa->ifa_addr->sa_family != AF_INET)
+		switch (ifa->ifa_addr->sa_family) {
+		case AF_INET:
+			break;
+#ifdef INET6
+		case AF_INET6:
+			break;
+#endif
+		default:
 			error = EAFNOSUPPORT;
+			break;
+		}
 		break;
-
 	case SIOCSIFMTU:
 		sc->sc_if.if_mtu = ifr->ifr_mtu;
 		break;
@@ -674,6 +683,14 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		protocol = PPP_IP;
 		mode = sc->sc_npmode[NP_IP];
 		break;
+#ifdef INET6
+	case AF_INET6:
+		address = PPP_ALLSTATIONS;
+		control = PPP_UI;
+		protocol = PPP_IPV6;
+		mode = sc->sc_npmode[NP_IPV6];
+		break;
+#endif
 	case AF_UNSPEC:
 		address = PPP_ADDRESS(dst->sa_data);
 		control = PPP_CONTROL(dst->sa_data);
@@ -804,6 +821,11 @@ ppp_requeue(struct ppp_softc *sc)
 		case PPP_IP:
 			mode = sc->sc_npmode[NP_IP];
 			break;
+#ifdef INET6
+		case PPP_IPV6:
+			mode = sc->sc_npmode[NP_IPV6];
+			break;
+#endif
 		default:
 			mode = NPMODE_PASS;
 		}
@@ -1391,7 +1413,25 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		ipv4_input(ifp, m);
 		rv = 1;
 		break;
+#ifdef INET6
+	case PPP_IPV6:
+		/*
+		 * IPv6 packet - take off the ppp header and pass it up to IPv6.
+		 */
+		if ((ifp->if_flags & IFF_UP) == 0 ||
+		    sc->sc_npmode[NP_IPV6] != NPMODE_PASS) {
+			/* interface is down - drop the packet. */
+			m_freem(m);
+			return;
+		}
+		m->m_pkthdr.len -= PPP_HDRLEN;
+		m->m_data += PPP_HDRLEN;
+		m->m_len -= PPP_HDRLEN;
 
+		ipv6_input(ifp, m);
+		rv = 1;
+		break;
+#endif
 	default:
 		/*
 		 * Some other protocol - place on input queue for read().

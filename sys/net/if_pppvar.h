@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppvar.h,v 1.20 2020/05/20 06:44:30 mpi Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.21 2024/02/28 16:08:34 denis Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
@@ -81,7 +81,8 @@
  * indexing sc_npmode.
  */
 #define NP_IP	0		/* Internet Protocol */
-#define NUM_NP	1		/* Number of NPs. */
+#define NP_IPV6	1		/* Internet Protocol v6 */
+#define NUM_NP	2		/* Number of NPs. */
 
 struct ppp_pkt;
 
