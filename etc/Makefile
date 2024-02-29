@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.487 2023/12/13 11:34:56 job Exp $
+#	$OpenBSD: Makefile,v 1.488 2024/02/29 22:21:21 bluhm Exp $
 
 .include <bsd.own.mk>
 
@@ -175,6 +175,8 @@ distribution-etc-root-var: distrib-dirs
 	chown -h root:wheel ${DESTDIR}/etc/localtime
 	ln -fs /usr/sbin/rmt ${DESTDIR}/etc/rmt
 	chown -h root:wheel ${DESTDIR}/etc/rmt
+	${INSTALL} -c -o root -g wheel -m 644 /dev/null \
+	    ${DESTDIR}/var/account/acct
 	${INSTALL} -c -o root -g wheel -m 644 minfree \
 	    ${DESTDIR}/var/crash
 	${INSTALL} -c -o ${BINOWN} -g operator -m 664 /dev/null \
