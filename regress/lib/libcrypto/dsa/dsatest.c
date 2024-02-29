@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsatest.c,v 1.10 2023/11/19 13:11:05 tb Exp $	*/
+/*	$OpenBSD: dsatest.c,v 1.11 2024/02/29 20:04:43 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -196,7 +196,6 @@ end:
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_thread_state(NULL);
 	ERR_free_strings();
-	CRYPTO_mem_leaks(bio_err);
 	BIO_free(bio_err);
 	bio_err = NULL;
 

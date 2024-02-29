@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.22 2023/11/19 13:11:05 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.23 2024/02/29 20:04:43 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -769,7 +769,6 @@ main(int argc, char *argv[])
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
 	ERR_remove_thread_state(NULL);
-	CRYPTO_mem_leaks_fp(stderr);
 
 	return 0;
 }
