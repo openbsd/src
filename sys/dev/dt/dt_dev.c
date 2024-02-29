@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.31 2024/02/18 00:54:03 cheloha Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.32 2024/02/29 00:18:48 cheloha Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -477,6 +477,7 @@ dt_ioctl_get_stats(struct dt_softc *sc, struct dtioc_stat *dtst)
 int
 dt_ioctl_record_start(struct dt_softc *sc)
 {
+	uint64_t now;
 	struct dt_pcb *dp;
 
 	if (sc->ds_recording)
@@ -487,6 +488,7 @@ dt_ioctl_record_start(struct dt_softc *sc)
 		return ENOENT;
 
 	rw_enter_write(&dt_lock);
+	now = nsecuptime();
 	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
 		struct dt_probe *dtp = dp->dp_dtp;
 
@@ -497,7 +499,8 @@ dt_ioctl_record_start(struct dt_softc *sc)
 		if (dp->dp_nsecs != 0) {
 			clockintr_bind(&dp->dp_clockintr, dp->dp_cpu, dt_clock,
 			    dp);
-			clockintr_advance(&dp->dp_clockintr, dp->dp_nsecs);
+			clockintr_schedule(&dp->dp_clockintr,
+			    now + dp->dp_nsecs);
 		}
 	}
 	rw_exit_write(&dt_lock);
