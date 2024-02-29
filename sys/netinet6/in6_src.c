@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.96 2024/02/27 12:37:49 bluhm Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.97 2024/02/29 12:01:59 naddy Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
     struct inpcb *inp, struct ip6_pktopts *opts)
 {
 	struct ip6_moptions *mopts = inp->inp_moptions6;
-	struct rtentry *rt;
+	struct route *ro = &inp->inp_route;
 	const struct in6_addr *laddr = &inp->inp_laddr6;
 	u_int rtableid = inp->inp_rtableid;
 	struct ifnet *ifp = NULL;
@@ -118,8 +118,7 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 		struct sockaddr_in6 sa6;
 
 		/* get the outgoing interface */
-		error = in6_selectif(dst, opts, mopts, &inp->inp_route, &ifp,
-		    rtableid);
+		error = in6_selectif(dst, opts, mopts, ro, &ifp, rtableid);
 		if (error)
 			return (error);
 
@@ -180,7 +179,9 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
-	rt = route6_mpath(&inp->inp_route, dst, NULL, rtableid);
+	if (route6_cache(ro, dst, NULL, rtableid)) {
+		ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa, NULL, ro->ro_tableid);
+	}
 
 	/*
 	 * in_pcbconnect() checks out IFF_LOOPBACK to skip using
@@ -189,14 +190,14 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	 * so doesn't check out IFF_LOOPBACK.
 	 */
 
-	if (rt != NULL) {
-		ifp = if_get(rt->rt_ifidx);
+	if (ro->ro_rt) {
+		ifp = if_get(ro->ro_rt->rt_ifidx);
 		if (ifp != NULL) {
 			ia6 = in6_ifawithscope(ifp, dst, rtableid);
 			if_put(ifp);
 		}
 		if (ia6 == NULL) /* xxx scope error ?*/
-			ia6 = ifatoia6(rt->rt_ifa);
+			ia6 = ifatoia6(ro->ro_rt->rt_ifa);
 	}
 
 	/*
@@ -205,7 +206,8 @@ in6_pcbselsrc(const struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	 * - preferred source address is set
 	 * - output interface is UP
 	 */
-	if (rt && !(rt->rt_flags & RTF_LLINFO) && !(rt->rt_flags & RTF_HOST)) {
+	if (ro->ro_rt && !(ro->ro_rt->rt_flags & RTF_LLINFO) &&
+	    !(ro->ro_rt->rt_flags & RTF_HOST)) {
 		ip6_source = rtable_getsource(rtableid, AF_INET6);
 		if (ip6_source != NULL) {
 			struct ifaddr *ifa;
@@ -302,9 +304,11 @@ in6_selectroute(const struct in6_addr *dst, struct ip6_pktopts *opts,
 	 * a new one.
 	 */
 	if (ro) {
-		struct rtentry *rt;
-
-		rt = route6_mpath(ro, dst, NULL, rtableid);
+		if (route6_cache(ro, dst, NULL, rtableid)) {
+			/* No route yet, so try to acquire one */
+			ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa, NULL,
+			    ro->ro_tableid);
+		}
 
 		/*
 		 * Check if the outgoing interface conflicts with
@@ -315,13 +319,15 @@ in6_selectroute(const struct in6_addr *dst, struct ip6_pktopts *opts,
 		 */
 		if (opts && opts->ip6po_pktinfo &&
 		    opts->ip6po_pktinfo->ipi6_ifindex) {
-			if (rt != NULL && !ISSET(rt->rt_flags, RTF_LOCAL) &&
-			    rt->rt_ifidx != opts->ip6po_pktinfo->ipi6_ifindex) {
+			if (ro->ro_rt != NULL &&
+			    !ISSET(ro->ro_rt->rt_flags, RTF_LOCAL) &&
+			    ro->ro_rt->rt_ifidx !=
+			    opts->ip6po_pktinfo->ipi6_ifindex) {
 			    	return (NULL);
 			}
 		}
 
-		return (rt);
+		return (ro->ro_rt);
 	}
 
 	return (NULL);
@@ -332,7 +338,7 @@ in6_selectif(const struct in6_addr *dst, struct ip6_pktopts *opts,
     struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp,
     u_int rtableid)
 {
-	struct rtentry *rt;
+	struct rtentry *rt = NULL;
 	struct in6_pktinfo *pi = NULL;
 
 	/* If the caller specify the outgoing interface explicitly, use it. */
@@ -371,10 +377,11 @@ in6_selectif(const struct in6_addr *dst, struct ip6_pktopts *opts,
 	 * Although this may not be very harmful, it should still be confusing.
 	 * We thus reject the case here.
 	 */
-	if (ISSET(rt->rt_flags, RTF_REJECT | RTF_BLACKHOLE))
+	if (rt && (rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE)))
 		return (rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 
-	*retifp = if_get(rt->rt_ifidx);
+	if (rt != NULL)
+		*retifp = if_get(rt->rt_ifidx);
 
 	return (0);
 }

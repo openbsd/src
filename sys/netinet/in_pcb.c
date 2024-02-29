@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.295 2024/02/27 12:37:49 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.296 2024/02/29 12:01:59 naddy Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -908,15 +908,23 @@ in_pcblookup_local_lock(struct inpcbtable *table, const void *laddrp,
 struct rtentry *
 in_pcbrtentry(struct inpcb *inp)
 {
+	struct route *ro;
+
 #ifdef INET6
 	if (ISSET(inp->inp_flags, INP_IPV6))
 		return in6_pcbrtentry(inp);
 #endif
 
+	ro = &inp->inp_route;
+
 	if (inp->inp_faddr.s_addr == INADDR_ANY)
 		return (NULL);
-	return (route_mpath(&inp->inp_route, &inp->inp_faddr, &inp->inp_laddr,
-	    inp->inp_rtableid));
+	if (route_cache(ro, &inp->inp_faddr, &inp->inp_laddr,
+	    inp->inp_rtableid)) {
+		ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa,
+		    &inp->inp_laddr.s_addr, ro->ro_tableid);
+	}
+	return (ro->ro_rt);
 }
 
 /*
@@ -930,7 +938,7 @@ in_pcbselsrc(struct in_addr *insrc, struct sockaddr_in *sin,
     struct inpcb *inp)
 {
 	struct ip_moptions *mopts = inp->inp_moptions;
-	struct rtentry *rt;
+	struct route *ro = &inp->inp_route;
 	const struct in_addr *laddr = &inp->inp_laddr;
 	u_int rtableid = inp->inp_rtableid;
 	struct sockaddr	*ip4_source = NULL;
@@ -975,14 +983,17 @@ in_pcbselsrc(struct in_addr *insrc, struct sockaddr_in *sin,
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
 	 */
-	rt = route_mpath(&inp->inp_route, &sin->sin_addr, NULL, rtableid);
+	if (route_cache(ro, &sin->sin_addr, NULL, rtableid)) {
+		/* No route yet, so try to acquire one */
+		ro->ro_rt = rtalloc_mpath(&ro->ro_dstsa, NULL, ro->ro_tableid);
+	}
 
 	/*
 	 * If we found a route, use the address
 	 * corresponding to the outgoing interface.
 	 */
-	if (rt != NULL)
-		ia = ifatoia(rt->rt_ifa);
+	if (ro->ro_rt != NULL)
+		ia = ifatoia(ro->ro_rt->rt_ifa);
 
 	/*
 	 * Use preferred source address if :
@@ -990,7 +1001,8 @@ in_pcbselsrc(struct in_addr *insrc, struct sockaddr_in *sin,
 	 * - preferred source address is set
 	 * - output interface is UP
 	 */
-	if (rt && !(rt->rt_flags & RTF_LLINFO) && !(rt->rt_flags & RTF_HOST)) {
+	if (ro->ro_rt && !(ro->ro_rt->rt_flags & RTF_LLINFO) &&
+	    !(ro->ro_rt->rt_flags & RTF_HOST)) {
 		ip4_source = rtable_getsource(rtableid, AF_INET);
 		if (ip4_source != NULL) {
 			struct ifaddr *ifa;
