@@ -1,4 +1,4 @@
-/*	$OpenBSD: nanosleep.c,v 1.7 2018/05/22 18:33:41 cheloha Exp $	*/
+/*	$OpenBSD: nanosleep.c,v 1.8 2024/02/29 18:17:41 bluhm Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -137,13 +137,13 @@ int
 time_elapsed(void)
 {
 	struct timespec ts;
-	struct timeval stv, etv;
+	struct timespec stv, etv;
 
 	ts.tv_sec = 0;
 	ts.tv_nsec = 500000000;
 
-	if (gettimeofday(&stv, NULL) < 0) {
-		warn("gettimeofday");
+	if (clock_gettime(CLOCK_MONOTONIC, &stv) < 0) {
+		warn("clock_gettime");
 		return 1;
 	}
 
@@ -152,14 +152,14 @@ time_elapsed(void)
 		return 1;
 	}
 
-	if (gettimeofday(&etv, NULL) < 0) {
-		warn("gettimeofday");
+	if (clock_gettime(CLOCK_MONOTONIC, &etv) < 0) {
+		warn("clock_gettime");
 		return 1;
 	}
 
-	timersub(&etv, &stv, &stv);
+	timespecsub(&etv, &stv, &stv);
 
-	if (stv.tv_sec == 0 && stv.tv_usec < 500000) {
+	if (stv.tv_sec == 0 && stv.tv_nsec < 500000000) {
 		warnx("slept less than 0.5 sec");
 		return 1;
 	}
@@ -171,7 +171,7 @@ int
 time_elapsed_with_signal(void)
 {
 	struct timespec ts, rts;
-	struct timeval stv, etv;
+	struct timespec stv, etv;
 	pid_t pid;
 	int status;
 
@@ -195,8 +195,8 @@ time_elapsed_with_signal(void)
 	rts.tv_sec = 0;
 	rts.tv_nsec = 0;
 
-	if (gettimeofday(&stv, NULL) < 0) {
-		warn("gettimeofday");
+	if (clock_gettime(CLOCK_MONOTONIC, &stv) < 0) {
+		warn("clock_gettime");
 		return 1;
 	}
 
@@ -205,17 +205,17 @@ time_elapsed_with_signal(void)
 		return 1;
 	}
 
-	if (gettimeofday(&etv, NULL) < 0) {
-		warn("gettimeofday");
+	if (clock_gettime(CLOCK_MONOTONIC, &etv) < 0) {
+		warn("clock_gettime");
 		return 1;
 	}
 
-	timersub(&etv, &stv, &stv);
+	timespecsub(&etv, &stv, &stv);
 
 	etv.tv_sec = rts.tv_sec;
-	etv.tv_usec = rts.tv_nsec / 1000 + 1; /* the '+ 1' is a "roundup" */
+	etv.tv_nsec = rts.tv_nsec;
 
-	timeradd(&etv, &stv, &stv);
+	timespecadd(&etv, &stv, &stv);
 
 	if (stv.tv_sec < 10) {
 		warnx("slept time + leftover time < 10 sec");
