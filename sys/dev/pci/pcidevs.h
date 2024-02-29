@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2063 2024/02/19 05:36:17 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2064 2024/02/29 10:09:54 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5744,6 +5744,8 @@
 #define	PCI_PRODUCT_INTEL_ADL_N_GT_1	0x46d0		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_N_GT_2	0x46d1		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_N_GT_3	0x46d2		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_N_GT_4	0x46d3		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_N_GT_5	0x46d4		/* Graphics */
 #define	PCI_PRODUCT_INTEL_DG1_1	0x4905		/* Iris Xe MAX */
 #define	PCI_PRODUCT_INTEL_DG1_2	0x4906		/* Graphics */
 #define	PCI_PRODUCT_INTEL_DG1_3	0x4907		/* SG-18M */
