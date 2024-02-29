@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_algor.c,v 1.6 2023/10/26 08:01:38 tb Exp $ */
+/*	$OpenBSD: x509_algor.c,v 1.7 2024/02/29 20:03:47 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -23,7 +23,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
+int X509_ALGOR_set_evp_md(X509_ALGOR *alg, const EVP_MD *md);
 
 static int
 x509_algor_new_test(void)
@@ -321,7 +321,7 @@ x509_algor_get0_test(void)
 }
 
 static int
-x509_algor_set_md_test(void)
+x509_algor_set_evp_md_test(void)
 {
 	X509_ALGOR *alg = NULL;
 	const ASN1_OBJECT *aobj;
@@ -331,7 +331,11 @@ x509_algor_set_md_test(void)
 	if ((alg = X509_ALGOR_new()) == NULL)
 		errx(1, "%s: X509_ALGOR_new", __func__);
 
-	X509_ALGOR_set_md(alg, EVP_sm3());
+	if (!X509_ALGOR_set_evp_md(alg, EVP_sm3())) {
+		fprintf(stderr, "%s: X509_ALGOR_set_evp_md to sm3 failed\n",
+		    __func__);
+		goto failure;
+	}
 	X509_ALGOR_get0(&aobj, &ptype, NULL, alg);
 	if ((nid = OBJ_obj2nid(aobj)) != NID_sm3) {
 		fprintf(stderr, "%s: sm3 want %d, got %d\n", __func__,
@@ -348,15 +352,19 @@ x509_algor_set_md_test(void)
 	if (!X509_ALGOR_set0(alg, NULL, 0, NULL))
 		errx(1, "%s: X509_ALGOR_set0", __func__);
 
-	X509_ALGOR_set_md(alg, EVP_md5());
+	if (!X509_ALGOR_set_evp_md(alg, EVP_md5())) {
+		fprintf(stderr, "%s: X509_ALGOR_set_evp_md to md5 failed\n",
+		    __func__);
+		goto failure;
+	}
 	X509_ALGOR_get0(&aobj, &ptype, NULL, alg);
 	if ((nid = OBJ_obj2nid(aobj)) != NID_md5) {
-		fprintf(stderr, "%s: sm3 want %d, got %d\n", __func__,
+		fprintf(stderr, "%s: md5 want %d, got %d\n", __func__,
 		    NID_sm3, nid);
 		goto failure;
 	}
 	if (ptype != V_ASN1_NULL) {
-		fprintf(stderr, "%s: sm3 want %d, got %d\n", __func__,
+		fprintf(stderr, "%s: md5 want %d, got %d\n", __func__,
 		    V_ASN1_NULL, ptype);
 		goto failure;
 	}
@@ -377,7 +385,7 @@ main(void)
 	failed |= x509_algor_new_test();
 	failed |= x509_algor_set0_test();
 	failed |= x509_algor_get0_test();
-	failed |= x509_algor_set_md_test();
+	failed |= x509_algor_set_evp_md_test();
 
 	return failed;
 }
