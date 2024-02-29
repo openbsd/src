@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_pkey_cleanup.c,v 1.4 2024/01/15 15:09:57 tb Exp $ */
+/*	$OpenBSD: evp_pkey_cleanup.c,v 1.5 2024/02/29 20:02:00 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -34,8 +34,6 @@ int pkey_ids[] = {
 	EVP_PKEY_DSA,
 	EVP_PKEY_EC,
 	EVP_PKEY_ED25519,
-	EVP_PKEY_GOSTIMIT,
-	EVP_PKEY_GOSTR01,
 	EVP_PKEY_HMAC,
 	EVP_PKEY_RSA,
 	EVP_PKEY_RSA_PSS,
