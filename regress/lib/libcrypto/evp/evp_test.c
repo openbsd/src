@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.16 2024/01/21 19:08:59 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.17 2024/02/29 20:02:40 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -732,10 +732,6 @@ obj_name_do_all_test(void)
 
 	memset(&arg, 0, sizeof(arg));
 	OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH, obj_name_cb, &arg);
-	failure |= arg.failure;
-
-	memset(&arg, 0, sizeof(arg));
-	OBJ_NAME_do_all(OBJ_NAME_TYPE_PKEY_METH, obj_name_cb, &arg);
 	failure |= arg.failure;
 
 	return failure;
