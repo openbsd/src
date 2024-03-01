@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2064 2024/02/29 10:09:54 jsg Exp $
+$OpenBSD: pcidevs,v 1.2065 2024/03/01 08:34:42 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -8537,6 +8537,7 @@ product QUMRANET VIO1_NET	0x1041	Virtio 1.x Network
 product QUMRANET VIO1_BLOCK	0x1042	Virtio 1.x Storage
 product QUMRANET VIO1_CONS	0x1043	Virtio 1.x Console
 product QUMRANET VIO1_RNG	0x1044	Virtio 1.x RNG
+product QUMRANET VIO1_MEM	0x1045	Virtio 1.x Memory Balloon
 product QUMRANET VIO1_SCSI	0x1048	Virtio 1.x SCSI
 product QUMRANET VIO1_GPU	0x1050	Virtio 1.x GPU
 product QUMRANET VIO1_INPUT	0x1052	Virtio 1.x Input
@@ -8702,6 +8703,10 @@ product REDHAT SERIAL2		0x0003	Qemu Serial 2x
 product REDHAT SERIAL4		0x0004	Qemu Serial 4x
 product REDHAT SDMMC		0x0007	SD/MMC
 product REDHAT HB		0x0008	Host
+product REDHAT PCIE		0x000c	PCIE
+product REDHAT XHCI		0x000d	xHCI
+product REDHAT PCI		0x000e	PCI
+product REDHAT NVME		0x0010	NVMe
 product REDHAT QXL		0x0100	QXL Video
 
 /* Rendition products */
