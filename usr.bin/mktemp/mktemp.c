@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.25 2019/06/28 05:35:34 deraadt Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.26 2024/03/01 21:50:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001-2003, 2013
@@ -35,8 +35,8 @@ int
 main(int argc, char *argv[])
 {
 	int ch, fd, uflag = 0, tflag = 0, makedir = 0;
-	char *cp, *template, *tempfile, *prefix = _PATH_TMP;
-	size_t len;
+	char *base, *cp, *template, *tempfile, *prefix = _PATH_TMP;
+	size_t len, suffixlen = 0;
 
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
@@ -76,13 +76,26 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	len = strlen(template);
-	if (len < 6 || strcmp(&template[len - 6], "XXXXXX")) {
+	base = strrchr(template, '/');
+	if (base != NULL)
+		base++;
+	else
+		base = template;
+	len = strlen(base);
+	if (len > 0 && base[len - 1] != 'X') {
+		/* Check for suffix, e.g. /tmp/XXXXXX.foo in last component. */
+		for (suffixlen = 0; suffixlen < len; suffixlen++) {
+			if (base[len - suffixlen - 1] == 'X')
+				break;
+		}
+	}
+	if (len - suffixlen < 6 ||
+	    strncmp(&base[len - suffixlen - 6], "XXXXXX", 6)) {
 		fatalx("insufficient number of Xs in template `%s'",
 		    template);
 	}
 	if (tflag) {
-		if (strchr(template, '/')) {
+		if (base != template) {
 			fatalx("template must not contain directory "
 			    "separators in -t mode");
 		}
@@ -103,12 +116,12 @@ main(int argc, char *argv[])
 		fatalx("cannot allocate memory");
 
 	if (makedir) {
-		if (mkdtemp(tempfile) == NULL)
+		if (mkdtemps(tempfile, suffixlen) == NULL)
 			fatal("cannot make temp dir %s", tempfile);
 		if (uflag)
 			(void)rmdir(tempfile);
 	} else {
-		if ((fd = mkstemp(tempfile)) == -1)
+		if ((fd = mkstemps(tempfile, suffixlen)) == -1)
 			fatal("cannot make temp file %s", tempfile);
 		(void)close(fd);
 		if (uflag)
@@ -118,7 +131,7 @@ main(int argc, char *argv[])
 	(void)puts(tempfile);
 	free(tempfile);
 
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
 
 __dead void

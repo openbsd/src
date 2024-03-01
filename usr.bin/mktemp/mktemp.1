@@ -1,6 +1,6 @@
-.\"	$OpenBSD: mktemp.1,v 1.31 2022/03/31 17:27:25 naddy Exp $
+.\"	$OpenBSD: mktemp.1,v 1.32 2024/03/01 21:50:40 millert Exp $
 .\"
-.\" Copyright (c) 1996, 2000, 2001, 2003, 2010, 2013
+.\" Copyright (c) 1996, 2000, 2001, 2003, 2010, 2013, 2024
 .\"	Todd C. Miller <millert@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: March 1 2024 $
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -36,9 +36,15 @@ The
 .Ar template
 may be any filename with at least six
 .Ql X Ns s
-appended
-to it, for example
-.Pa /tmp/tfile.XXXXXXXXXX .
+in the last component of the filename, for example
+.Pa /tmp/tfile.XXXXXXXXXX
+or
+.Pa /tmp/editor.XXXXXXXXXX.txt .
+If there is more than one run of
+.Ql X Ns s
+in the
+.Ar template ,
+the last one will be used.
 If no
 .Ar template
 is specified, a default of
@@ -47,7 +53,7 @@ is used and the
 .Fl t
 flag is implied (see below).
 .Pp
-The trailing
+The final
 .Ql X Ns s
 are replaced with a unique digit and letter combination.
 The name chosen depends both on the number of
