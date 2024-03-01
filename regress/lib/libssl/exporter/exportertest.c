@@ -1,4 +1,4 @@
-/* $OpenBSD: exportertest.c,v 1.3 2023/04/14 14:23:05 tb Exp $ */
+/* $OpenBSD: exportertest.c,v 1.4 2024/03/01 03:46:54 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -534,6 +534,7 @@ exporter_test(size_t test_no, const struct exporter_test *et)
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
 	uint8_t export[256];
+	unsigned char id[2];
 	int err, ret;
 	int failed = 1;
 
@@ -602,7 +603,9 @@ exporter_test(size_t test_no, const struct exporter_test *et)
 
 	ssl->s3->hs.state = SSL_ST_OK;
 	ssl->s3->hs.negotiated_tls_version = et->tls_version;
-	ssl->s3->hs.cipher = SSL_CIPHER_get_by_id(et->cipher_id);
+	id[0] = (et->cipher_id >> 8) & 0xff;
+	id[1] = et->cipher_id & 0xff;
+	ssl->s3->hs.cipher = SSL_CIPHER_find(ssl, id);
 
 	ret = SSL_export_keying_material(ssl, export, et->export_len, et->label,
 	    et->label_len, et->context_value, et->context_value_len,
