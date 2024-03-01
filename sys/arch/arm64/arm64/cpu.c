@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.106 2024/02/28 00:53:16 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.107 2024/03/01 15:57:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -266,6 +266,13 @@ void	cpu_opp_kstat_attach(struct cpu_info *ci);
 void
 cpu_identify(struct cpu_info *ci)
 {
+	static uint64_t prev_id_aa64isar0;
+	static uint64_t prev_id_aa64isar1;
+	static uint64_t prev_id_aa64isar2;
+	static uint64_t prev_id_aa64mmfr0;
+	static uint64_t prev_id_aa64mmfr1;
+	static uint64_t prev_id_aa64pfr0;
+	static uint64_t prev_id_aa64pfr1;
 	uint64_t midr, impl, part;
 	uint64_t clidr, id;
 	uint32_t ctr, ccsidr, sets, ways, line;
@@ -481,6 +488,19 @@ cpu_identify(struct cpu_info *ci)
 	 */
 	if (impl == CPU_IMPL_APPLE)
 		ci->ci_serror = cpu_serror_apple;
+
+	/*
+	 * Skip printing CPU features if they are identical to the
+	 * previous CPU.
+	 */
+	if (READ_SPECIALREG(id_aa64isar0_el1) == prev_id_aa64isar0 &&
+	    READ_SPECIALREG(id_aa64isar1_el1) == prev_id_aa64isar1 &&
+	    READ_SPECIALREG(id_aa64isar2_el1) == prev_id_aa64isar2 &&
+	    READ_SPECIALREG(id_aa64mmfr0_el1) == prev_id_aa64mmfr0 &&
+	    READ_SPECIALREG(id_aa64mmfr1_el1) == prev_id_aa64mmfr1 &&
+	    READ_SPECIALREG(id_aa64pfr0_el1) == prev_id_aa64pfr0 &&
+	    READ_SPECIALREG(id_aa64pfr1_el1) == prev_id_aa64pfr1)
+		return;
 
 	/*
 	 * Print CPU features encoded in the ID registers.
@@ -786,6 +806,14 @@ cpu_identify(struct cpu_info *ci)
 		printf("%sMTE", sep);
 		sep = ",";
 	}
+
+	prev_id_aa64isar0 = READ_SPECIALREG(id_aa64isar0_el1);
+	prev_id_aa64isar1 = READ_SPECIALREG(id_aa64isar1_el1);
+	prev_id_aa64isar2 = READ_SPECIALREG(id_aa64isar2_el1);
+	prev_id_aa64mmfr0 = READ_SPECIALREG(id_aa64mmfr0_el1);
+	prev_id_aa64mmfr1 = READ_SPECIALREG(id_aa64mmfr1_el1);
+	prev_id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
+	prev_id_aa64pfr1 = READ_SPECIALREG(id_aa64pfr1_el1);
 
 #ifdef CPU_DEBUG
 	id = READ_SPECIALREG(id_aa64afr0_el1);
