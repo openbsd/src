@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.32 2024/03/01 21:50:40 millert Exp $
+.\"	$OpenBSD: mktemp.1,v 1.33 2024/03/01 23:37:42 millert Exp $
 .\"
 .\" Copyright (c) 1996, 2000, 2001, 2003, 2010, 2013, 2024
 .\"	Todd C. Miller <millert@openbsd.org>
@@ -44,7 +44,7 @@ If there is more than one run of
 .Ql X Ns s
 in the
 .Ar template ,
-the last one will be used.
+only the last one will be considered.
 If no
 .Ar template
 is specified, a default of
