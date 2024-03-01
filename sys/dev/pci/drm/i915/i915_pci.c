@@ -771,6 +771,7 @@ static const struct intel_device_info xehpsdv_info = {
 
 static const struct intel_device_info dg2_info = {
 	DG2_FEATURES,
+	.require_force_probe = 1,
 };
 
 static const struct intel_device_info ats_m_info = {
