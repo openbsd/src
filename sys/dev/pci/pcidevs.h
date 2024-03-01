@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2064 2024/02/29 10:09:54 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2065 2024/03/01 08:34:42 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8542,6 +8542,7 @@
 #define	PCI_PRODUCT_QUMRANET_VIO1_BLOCK	0x1042		/* Virtio 1.x Storage */
 #define	PCI_PRODUCT_QUMRANET_VIO1_CONS	0x1043		/* Virtio 1.x Console */
 #define	PCI_PRODUCT_QUMRANET_VIO1_RNG	0x1044		/* Virtio 1.x RNG */
+#define	PCI_PRODUCT_QUMRANET_VIO1_MEM	0x1045		/* Virtio 1.x Memory Balloon */
 #define	PCI_PRODUCT_QUMRANET_VIO1_SCSI	0x1048		/* Virtio 1.x SCSI */
 #define	PCI_PRODUCT_QUMRANET_VIO1_GPU	0x1050		/* Virtio 1.x GPU */
 #define	PCI_PRODUCT_QUMRANET_VIO1_INPUT	0x1052		/* Virtio 1.x Input */
@@ -8707,6 +8708,10 @@
 #define	PCI_PRODUCT_REDHAT_SERIAL4	0x0004		/* Qemu Serial 4x */
 #define	PCI_PRODUCT_REDHAT_SDMMC	0x0007		/* SD/MMC */
 #define	PCI_PRODUCT_REDHAT_HB	0x0008		/* Host */
+#define	PCI_PRODUCT_REDHAT_PCIE	0x000c		/* PCIE */
+#define	PCI_PRODUCT_REDHAT_XHCI	0x000d		/* xHCI */
+#define	PCI_PRODUCT_REDHAT_PCI	0x000e		/* PCI */
+#define	PCI_PRODUCT_REDHAT_NVME	0x0010		/* NVMe */
 #define	PCI_PRODUCT_REDHAT_QXL	0x0100		/* QXL Video */
 
 /* Rendition products */

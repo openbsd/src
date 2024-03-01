@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2064 2024/02/29 10:09:54 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2065 2024/03/01 08:34:42 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -30764,6 +30764,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Virtio 1.x RNG",
 	},
 	{
+	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_MEM,
+	    "Virtio 1.x Memory Balloon",
+	},
+	{
 	    PCI_VENDOR_QUMRANET, PCI_PRODUCT_QUMRANET_VIO1_SCSI,
 	    "Virtio 1.x SCSI",
 	},
@@ -31382,6 +31386,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_HB,
 	    "Host",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_PCIE,
+	    "PCIE",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_XHCI,
+	    "xHCI",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_PCI,
+	    "PCI",
+	},
+	{
+	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_NVME,
+	    "NVMe",
 	},
 	{
 	    PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_QXL,
