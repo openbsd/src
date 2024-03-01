@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.179 2023/11/18 15:42:09 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.180 2024/03/01 17:48:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -294,6 +294,7 @@ Xedit(const char *args, struct mbr *mbr)
 int
 gsetpid(const int pn)
 {
+	int32_t			 is_nil;
 	uint32_t		 status;
 
 	GPT_print_parthdr(TERSE);
@@ -305,8 +306,9 @@ gsetpid(const int pn)
 		return -1;
 	}
 
+	is_nil = uuid_is_nil(&gp[pn].gp_type, NULL);
 	gp[pn].gp_type = *ask_uuid(&gp[pn].gp_type);
-	if (PRT_protected_uuid(&gp[pn].gp_type)) {
+	if (PRT_protected_uuid(&gp[pn].gp_type) && is_nil == 0) {
 		printf("can't change partition type to %s\n",
 		    PRT_uuid_to_desc(&gp[pn].gp_type));
 		return -1;
