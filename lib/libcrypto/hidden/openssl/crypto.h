@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.2 2023/07/28 10:19:20 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.3 2024/03/01 07:38:33 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -71,6 +71,7 @@ LCRYPTO_USED(OpenSSLDie);
 LCRYPTO_USED(OPENSSL_cpu_caps);
 LCRYPTO_USED(OPENSSL_init_crypto);
 LCRYPTO_USED(OPENSSL_cleanup);
+LCRYPTO_USED(OPENSSL_gmtime);
 LCRYPTO_USED(ERR_load_CRYPTO_strings);
 
 #endif /* _LIBCRYPTO_CRYPTO_H */
