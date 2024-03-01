@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.253 2024/03/01 08:10:09 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.254 2024/03/01 09:36:55 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -897,9 +897,9 @@ load_shortlist(const char *fqdn)
 static void
 check_fs_size(int fd, const char *cachedir)
 {
-	struct statvfs	fs;
-	const long long	minsize = 500 * 1024 * 1024;
-	const long long	minnode = 300 * 1000;
+	struct statvfs		fs;
+	unsigned long long	minsize = 500 * 1024 * 1024;
+	unsigned long long	minnode = 300 * 1000;
 
 	if (fstatvfs(fd, &fs) == -1)
 		err(1, "statfs %s", cachedir);
@@ -909,13 +909,13 @@ check_fs_size(int fd, const char *cachedir)
 		fprintf(stderr, "WARNING: rpki-client may need more than "
 		    "the available disk space\n"
 		    "on the file-system holding %s.\n", cachedir);
-		fprintf(stderr, "available space: %lldkB, "
-		    "suggested minimum %lldkB\n",
-		    (long long)fs.f_bavail * fs.f_frsize / 1024,
+		fprintf(stderr, "available space: %llukB, "
+		    "suggested minimum %llukB\n",
+		    (unsigned long long)fs.f_bavail * fs.f_frsize / 1024,
 		    minsize / 1024);
-		fprintf(stderr, "available inodes %lld, "
-		    "suggested minimum %lld\n\n",
-		    (long long)fs.f_favail, minnode);
+		fprintf(stderr, "available inodes: %llu, "
+		    "suggested minimum: %llu\n\n",
+		    (unsigned long long)fs.f_favail, minnode);
 		fflush(stderr);
 	}
 }
