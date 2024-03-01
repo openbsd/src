@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.44 2024/02/26 15:40:33 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.45 2024/03/01 07:59:20 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -113,6 +113,31 @@ output_aspa(struct vap_tree *vaps)
 	json_do_end();
 }
 
+static void
+output_spl(struct vsp_tree *vsps)
+{
+	struct vsp	*vsp;
+	char		 buf[64];
+	size_t		 i;
+
+	json_do_array("signedprefixlists");
+	RB_FOREACH(vsp, vsp_tree, vsps) {
+		json_do_object("vsp", 1);
+		json_do_int("origin_as", vsp->asid);
+		json_do_array("prefixes");
+		for (i = 0; i < vsp->prefixesz; i++) {
+			ip_addr_print(&vsp->prefixes[i].prefix,
+			    vsp->prefixes[i].afi, buf, sizeof(buf));
+			json_do_string("prefix", buf);
+		}
+		json_do_end();
+		json_do_int("expires", vsp->expires);
+		json_do_string("ta", taldescs[vsp->talid]);
+		json_do_end();
+	}
+	json_do_end();
+}
+
 int
 output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
     struct vap_tree *vaps, struct vsp_tree *vsps, struct stats *st)
@@ -120,8 +145,6 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	char		 buf[64];
 	struct vrp	*v;
 	struct brk	*b;
-	struct vsp	*vsp;
-	size_t		 i;
 
 	json_do_start(out);
 	outputheader_json(st);
@@ -155,22 +178,7 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	if (!excludeaspa)
 		output_aspa(vaps);
 
-	json_do_array("signedprefixlists");
-	RB_FOREACH(vsp, vsp_tree, vsps) {
-		json_do_object("vsp", 1);
-		json_do_int("origin_as", vsp->asid);
-		json_do_array("prefixes");
-		for (i = 0; i < vsp->prefixesz; i++) {
-			ip_addr_print(&vsp->prefixes[i].prefix,
-			    vsp->prefixes[i].afi, buf, sizeof(buf));
-			json_do_string("prefix", buf);
-		}
-		json_do_end();
-		json_do_int("expires", vsp->expires);
-		json_do_string("ta", taldescs[vsp->talid]);
-		json_do_end();
-	}
-	json_do_end();
+	output_spl(vsps);
 
 	return json_do_finish();
 }
