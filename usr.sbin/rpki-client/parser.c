@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.129 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.130 2024/03/01 08:10:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -39,6 +39,8 @@
 #include "extern.h"
 
 extern int noop;
+extern int experimental;
+extern int verbose;
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
@@ -861,9 +863,15 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_SPL:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			spl = proc_parser_spl(file, f, flen, entp);
-			if (spl != NULL)
-				mtime = spl->signtime;
+			if (experimental) {
+				spl = proc_parser_spl(file, f, flen, entp);
+				if (spl != NULL)
+					mtime = spl->signtime;
+			} else {
+				if (verbose > 0)
+					warnx("%s: skipped", file);
+				spl = NULL;
+			}
 			io_simple_buffer(b, &mtime, sizeof(mtime));
 			c = (spl != NULL);
 			io_simple_buffer(b, &c, sizeof(int));

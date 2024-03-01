@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.102 2024/02/22 17:54:08 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.103 2024/03/01 08:10:09 tb Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 22 2024 $
+.Dd $Mdocdate: March 1 2024 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd RPKI validator to support BGP routing security
 .Sh SYNOPSIS
 .Nm
-.Op Fl ABcjmnoRrVv
+.Op Fl ABcjmnoRrVvx
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
@@ -231,6 +231,10 @@ If
 .Fl f
 is given, specify once to print more information about the encapsulated X.509
 certificate, twice to print the certificate in PEM format.
+.It Fl x
+Enable processing of experimental file formats.
+This option is implied by
+.Fl f .
 .It Ar outputdir
 The directory where
 .Nm

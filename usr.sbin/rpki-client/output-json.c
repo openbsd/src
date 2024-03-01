@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.45 2024/03/01 07:59:20 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.46 2024/03/01 08:10:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -22,6 +22,8 @@
 
 #include "extern.h"
 #include "json.h"
+
+extern int experimental;
 
 static void
 outputheader_json(struct stats *st)
@@ -178,7 +180,8 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	if (!excludeaspa)
 		output_aspa(vaps);
 
-	output_spl(vsps);
+	if (experimental)
+		output_spl(vsps);
 
 	return json_do_finish();
 }
