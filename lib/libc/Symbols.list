@@ -1410,6 +1410,7 @@ getw
 getwc
 getwchar
 mkdtemp
+mkdtemps
 mkostemp
 mkostemps
 mkstemp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.19 2024/01/19 19:45:02 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.20 2024/03/01 21:30:40 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -116,6 +116,7 @@ PROTO_STD_DEPRECATED(mbstowcs);
 PROTO_STD_DEPRECATED(mbtowc);
 PROTO_DEPRECATED(mergesort);
 PROTO_DEPRECATED(mkdtemp);
+PROTO_DEPRECATED(mkdtemps);
 PROTO_NORMAL(mkostemp);
 PROTO_DEPRECATED(mkostemps);
 PROTO_NORMAL(mkstemp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.76 2019/05/10 15:03:24 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.77 2024/03/01 21:30:40 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -289,6 +289,7 @@ void	setprogname(const char *);
 
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 
+char *	 mkdtemps(char *, int);
 int	 mkstemps(char *, int);
 int	 mkostemps(char *, int, int);
 
