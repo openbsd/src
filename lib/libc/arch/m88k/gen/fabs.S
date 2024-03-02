@@ -1,4 +1,4 @@
-/* $OpenBSD: fabs.S,v 1.11 2013/01/11 21:23:24 miod Exp $ */
+/* $OpenBSD: fabs.S,v 1.12 2024/03/02 12:02:42 miod Exp $ */
 /*-
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -35,6 +35,7 @@
  * Will work only if the argument passed is in IEEE format!
  */
 
+STRONG_ALIAS(fabsl, fabs)
 ENTRY(fabs)
 	subu	%r31,%r31,16
 	st.d	%r2,%r31,0
