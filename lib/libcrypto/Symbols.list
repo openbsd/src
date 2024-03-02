@@ -1086,7 +1086,6 @@ ERR_get_error
 ERR_get_error_line
 ERR_get_error_line_data
 ERR_get_next_error_library
-ERR_get_state
 ERR_lib_error_string
 ERR_load_ASN1_strings
 ERR_load_BIO_strings

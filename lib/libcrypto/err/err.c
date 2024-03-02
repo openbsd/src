@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.58 2024/02/24 07:53:01 tb Exp $ */
+/* $OpenBSD: err.c,v 1.59 2024/03/02 10:30:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,9 +127,22 @@ DECLARE_LHASH_OF(ERR_STATE);
 
 typedef struct st_ERR_FNS ERR_FNS;
 
+typedef struct err_state_st {
+	CRYPTO_THREADID tid;
+	int err_flags[ERR_NUM_ERRORS];
+	unsigned long err_buffer[ERR_NUM_ERRORS];
+	char *err_data[ERR_NUM_ERRORS];
+	int err_data_flags[ERR_NUM_ERRORS];
+	const char *err_file[ERR_NUM_ERRORS];
+	int err_line[ERR_NUM_ERRORS];
+	int top, bottom;
+} ERR_STATE;
+
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
 
+static ERR_STATE *ERR_get_state(void);
 static void ERR_STATE_free(ERR_STATE *s);
+
 #ifndef OPENSSL_NO_ERR
 static ERR_STRING_DATA ERR_str_libraries[] = {
 	{ERR_PACK(ERR_LIB_NONE,0,0),		"unknown library"},
@@ -1020,7 +1033,7 @@ ERR_remove_state(unsigned long pid)
 }
 LCRYPTO_ALIAS(ERR_remove_state);
 
-ERR_STATE *
+static ERR_STATE *
 ERR_get_state(void)
 {
 	static ERR_STATE fallback;
@@ -1058,7 +1071,6 @@ ERR_get_state(void)
 	}
 	return ret;
 }
-LCRYPTO_ALIAS(ERR_get_state);
 
 int
 ERR_get_next_error_library(void)
