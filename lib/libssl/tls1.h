@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.58 2024/03/02 11:44:47 tb Exp $ */
+/* $OpenBSD: tls1.h,v 1.59 2024/03/02 11:46:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -739,17 +739,6 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS1_3_RFC_AES_128_CCM_SHA256			"TLS_AES_128_CCM_SHA256"
 #define TLS1_3_RFC_AES_128_CCM_8_SHA256			"TLS_AES_128_CCM_8_SHA256"
 #endif
-
-#define TLS_CT_RSA_SIGN			1
-#define TLS_CT_DSS_SIGN			2
-#define TLS_CT_RSA_FIXED_DH		3
-#define TLS_CT_DSS_FIXED_DH		4
-#define TLS_CT_ECDSA_SIGN		64
-#define TLS_CT_RSA_FIXED_ECDH		65
-#define TLS_CT_ECDSA_FIXED_ECDH 	66
-/* when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
- * comment there) */
-#define TLS_CT_NUMBER			7
 
 #define TLS1_FINISH_MAC_LENGTH		12
 

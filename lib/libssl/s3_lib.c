@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.250 2024/03/02 11:44:47 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.251 2024/03/02 11:46:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2594,6 +2594,10 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	return (ret);
 }
 
+#define SSL3_CT_RSA_SIGN	1
+#define SSL3_CT_RSA_FIXED_DH	3
+#define SSL3_CT_ECDSA_SIGN	64
+
 int
 ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 {
@@ -2613,7 +2617,7 @@ ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 	 * ECDSA certs can be used with RSA cipher suites as well
 	 * so we don't need to check for SSL_kECDH or SSL_kECDHE.
 	 */
-	if (!CBB_add_u8(cbb, TLS_CT_ECDSA_SIGN))
+	if (!CBB_add_u8(cbb, SSL3_CT_ECDSA_SIGN))
 		return 0;
 
 	return 1;
