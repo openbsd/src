@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.71 2024/03/02 11:40:53 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.72 2024/03/02 15:40:05 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -117,6 +117,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #ifndef HEADER_CRYPTO_H
 #define HEADER_CRYPTO_H
