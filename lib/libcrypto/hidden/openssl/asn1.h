@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.8 2024/03/01 07:38:33 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.9 2024/03/02 08:54:02 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -222,8 +222,6 @@ LCRYPTO_USED(ASN1_mbstring_copy);
 LCRYPTO_USED(ASN1_mbstring_ncopy);
 LCRYPTO_USED(ASN1_STRING_set_by_NID);
 LCRYPTO_USED(ASN1_STRING_TABLE_get);
-LCRYPTO_USED(ASN1_STRING_TABLE_add);
-LCRYPTO_USED(ASN1_STRING_TABLE_cleanup);
 LCRYPTO_USED(ASN1_item_new);
 LCRYPTO_USED(ASN1_item_free);
 LCRYPTO_USED(ASN1_item_d2i);

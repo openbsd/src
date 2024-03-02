@@ -1093,8 +1093,6 @@ _libre_ASN1_mbstring_copy
 _libre_ASN1_mbstring_ncopy
 _libre_ASN1_STRING_set_by_NID
 _libre_ASN1_STRING_TABLE_get
-_libre_ASN1_STRING_TABLE_add
-_libre_ASN1_STRING_TABLE_cleanup
 _libre_ASN1_item_new
 _libre_ASN1_item_free
 _libre_ASN1_item_d2i

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.84 2024/03/02 08:50:47 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.85 2024/03/02 08:54:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -857,8 +857,6 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
     const unsigned char *in, int inlen, int inform, int nid);
 const ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid);
-int ASN1_STRING_TABLE_add(int, long, long, unsigned long, unsigned long);
-void ASN1_STRING_TABLE_cleanup(void);
 
 /* ASN1 template functions */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.30 2024/03/02 08:50:47 tb Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.31 2024/03/02 08:54:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -327,19 +327,3 @@ ASN1_STRING_TABLE_get(int nid)
 	return NULL;
 }
 LCRYPTO_ALIAS(ASN1_STRING_TABLE_get);
-
-int
-ASN1_STRING_TABLE_add(int nid, long minsize, long maxsize, unsigned long mask,
-    unsigned long flags)
-{
-	ASN1error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(ASN1_STRING_TABLE_add);
-
-void
-ASN1_STRING_TABLE_cleanup(void)
-{
-	ASN1error(ERR_R_DISABLED);
-}
-LCRYPTO_ALIAS(ASN1_STRING_TABLE_cleanup);
