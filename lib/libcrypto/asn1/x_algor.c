@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.38 2023/11/01 20:41:12 tb Exp $ */
+/* $OpenBSD: x_algor.c,v 1.39 2024/03/02 10:33:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -266,12 +266,6 @@ X509_ALGOR_set_evp_md(X509_ALGOR *alg, const EVP_MD *md)
 		return 0;
 
 	return 1;
-}
-
-void
-X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
-{
-	(void)X509_ALGOR_set_evp_md(alg, md);
 }
 
 int

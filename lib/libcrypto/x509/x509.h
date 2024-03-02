@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.105 2024/03/02 10:20:27 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.106 2024/03/02 10:33:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -510,9 +510,6 @@ X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval);
 void X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype, const void **ppval,
     const X509_ALGOR *algor);
-#ifndef LIBRESSL_INTERNAL
-void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
-#endif
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b);
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
