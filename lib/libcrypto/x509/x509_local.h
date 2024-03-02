@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.20 2024/03/02 10:20:27 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.21 2024/03/02 10:40:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -58,6 +58,8 @@
 
 #ifndef HEADER_X509_LOCAL_H
 #define HEADER_X509_LOCAL_H
+
+#include <openssl/x509v3.h>
 
 __BEGIN_HIDDEN_DECLS
 
@@ -401,6 +403,9 @@ X509_ALGOR *PKCS5_pbe_set(int alg, int iter, const unsigned char *salt,
     int saltlen);
 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     int prf_nid, int keylen);
+
+int X509_PURPOSE_get_by_id(int id);
+int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
 
 __END_HIDDEN_DECLS
 

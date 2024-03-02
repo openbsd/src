@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.26 2024/03/02 10:35:32 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.27 2024/03/02 10:40:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -719,20 +719,13 @@ int X509V3_extensions_print(BIO *out, const char *title,
 int X509_check_ca(X509 *x);
 int X509_check_purpose(X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
-int X509_PURPOSE_set(int *p, int purpose);
 int X509_check_issued(X509 *issuer, X509 *subject);
 int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid);
 int X509_PURPOSE_get_count(void);
-X509_PURPOSE * X509_PURPOSE_get0(int idx);
+X509_PURPOSE *X509_PURPOSE_get0(int idx);
 int X509_PURPOSE_get_by_sname(const char *sname);
-int X509_PURPOSE_get_by_id(int id);
-int X509_PURPOSE_add(int id, int trust, int flags,
-			int (*ck)(const X509_PURPOSE *, const X509 *, int),
-			const char *name, const char *sname, void *arg);
 char *X509_PURPOSE_get0_name(const X509_PURPOSE *xp);
 char *X509_PURPOSE_get0_sname(const X509_PURPOSE *xp);
-int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
-void X509_PURPOSE_cleanup(void);
 int X509_PURPOSE_get_id(const X509_PURPOSE *);
 uint32_t X509_get_extension_flags(X509 *x);
 uint32_t X509_get_key_usage(X509 *x);

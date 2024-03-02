@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.141 2024/02/28 12:21:16 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.142 2024/03/02 10:40:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2171,15 +2171,6 @@ LCRYPTO_ALIAS(X509_STORE_CTX_set0_crls);
  * purpose and trust settings which the application can set: if they
  * aren't set then we use the default of SSL client/server.
  */
-int
-X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
-    int purpose, int trust)
-{
-	X509error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509_STORE_CTX_purpose_inherit);
-
 int
 X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose_id)
 {

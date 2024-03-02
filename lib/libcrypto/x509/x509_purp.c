@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.36 2024/02/28 16:26:08 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.37 2024/03/02 10:40:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -188,18 +188,6 @@ X509_check_purpose(X509 *x, int id, int ca)
 LCRYPTO_ALIAS(X509_check_purpose);
 
 int
-X509_PURPOSE_set(int *p, int purpose)
-{
-	if (X509_PURPOSE_get_by_id(purpose) == -1) {
-		X509V3error(X509V3_R_INVALID_PURPOSE);
-		return 0;
-	}
-	*p = purpose;
-	return 1;
-}
-LCRYPTO_ALIAS(X509_PURPOSE_set);
-
-int
 X509_PURPOSE_get_count(void)
 {
 	return X509_PURPOSE_COUNT;
@@ -243,23 +231,6 @@ X509_PURPOSE_get_by_id(int purpose)
 
 	return purpose - X509_PURPOSE_MIN;
 }
-LCRYPTO_ALIAS(X509_PURPOSE_get_by_id);
-
-int
-X509_PURPOSE_add(int id, int trust, int flags,
-    int (*ck)(const X509_PURPOSE *, const X509 *, int), const char *name,
-    const char *sname, void *arg)
-{
-	X509error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509_PURPOSE_add);
-
-void
-X509_PURPOSE_cleanup(void)
-{
-}
-LCRYPTO_ALIAS(X509_PURPOSE_cleanup);
 
 int
 X509_PURPOSE_get_id(const X509_PURPOSE *xp)
@@ -287,7 +258,6 @@ X509_PURPOSE_get_trust(const X509_PURPOSE *xp)
 {
 	return xp->trust;
 }
-LCRYPTO_ALIAS(X509_PURPOSE_get_trust);
 
 /*
  * List of NIDs of extensions supported by the verifier. If an extension

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.7 2024/02/23 10:39:07 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.8 2024/03/02 10:40:05 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -109,7 +109,6 @@ LCRYPTO_USED(X509_STORE_CTX_set_chain);
 LCRYPTO_USED(X509_STORE_CTX_set0_crls);
 LCRYPTO_USED(X509_STORE_CTX_set_purpose);
 LCRYPTO_USED(X509_STORE_CTX_set_trust);
-LCRYPTO_USED(X509_STORE_CTX_purpose_inherit);
 LCRYPTO_USED(X509_STORE_CTX_set_flags);
 LCRYPTO_USED(X509_STORE_CTX_set_time);
 LCRYPTO_USED(X509_STORE_CTX_set0_verified_chain);

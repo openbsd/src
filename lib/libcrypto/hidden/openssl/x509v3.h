@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.6 2024/03/02 10:35:32 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.7 2024/03/02 10:40:05 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -177,18 +177,13 @@ LCRYPTO_USED(X509V3_extensions_print);
 LCRYPTO_USED(X509_check_ca);
 LCRYPTO_USED(X509_check_purpose);
 LCRYPTO_USED(X509_supported_extension);
-LCRYPTO_USED(X509_PURPOSE_set);
 LCRYPTO_USED(X509_check_issued);
 LCRYPTO_USED(X509_check_akid);
 LCRYPTO_USED(X509_PURPOSE_get_count);
 LCRYPTO_USED(X509_PURPOSE_get0);
 LCRYPTO_USED(X509_PURPOSE_get_by_sname);
-LCRYPTO_USED(X509_PURPOSE_get_by_id);
-LCRYPTO_USED(X509_PURPOSE_add);
 LCRYPTO_USED(X509_PURPOSE_get0_name);
 LCRYPTO_USED(X509_PURPOSE_get0_sname);
-LCRYPTO_USED(X509_PURPOSE_get_trust);
-LCRYPTO_USED(X509_PURPOSE_cleanup);
 LCRYPTO_USED(X509_PURPOSE_get_id);
 LCRYPTO_USED(X509_get_extension_flags);
 LCRYPTO_USED(X509_get_key_usage);

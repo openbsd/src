@@ -2693,17 +2693,12 @@ X509_PUBKEY_it
 X509_PUBKEY_new
 X509_PUBKEY_set
 X509_PUBKEY_set0_param
-X509_PURPOSE_add
-X509_PURPOSE_cleanup
 X509_PURPOSE_get0
 X509_PURPOSE_get0_name
 X509_PURPOSE_get0_sname
-X509_PURPOSE_get_by_id
 X509_PURPOSE_get_by_sname
 X509_PURPOSE_get_count
 X509_PURPOSE_get_id
-X509_PURPOSE_get_trust
-X509_PURPOSE_set
 X509_REQ_INFO_free
 X509_REQ_INFO_it
 X509_REQ_INFO_new
@@ -2796,7 +2791,6 @@ X509_STORE_CTX_get_verify
 X509_STORE_CTX_get_verify_cb
 X509_STORE_CTX_init
 X509_STORE_CTX_new
-X509_STORE_CTX_purpose_inherit
 X509_STORE_CTX_set0_crls
 X509_STORE_CTX_set0_param
 X509_STORE_CTX_set0_trusted_stack
