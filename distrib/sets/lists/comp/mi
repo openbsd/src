@@ -2720,7 +2720,6 @@
 ./usr/share/man/man3/legacy_coding.3
 ./usr/share/man/man3/lgamma.3
 ./usr/share/man/man3/lh_new.3
-./usr/share/man/man3/lh_stats.3
 ./usr/share/man/man3/link_ntoa.3
 ./usr/share/man/man3/lldiv.3
 ./usr/share/man/man3/localeconv.3
