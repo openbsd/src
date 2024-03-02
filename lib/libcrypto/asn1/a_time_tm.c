@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.32 2024/03/02 09:08:41 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.33 2024/03/02 09:10:42 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -405,16 +405,6 @@ ASN1_TIME_set(ASN1_TIME *s, time_t t)
 	return (ASN1_TIME_adj(s, t, 0, 0));
 }
 LCRYPTO_ALIAS(ASN1_TIME_set);
-
-ASN1_TIME *
-ASN1_TIME_set_tm(ASN1_TIME *s, struct tm *tm)
-{
-	time_t t;
-
-	if (!asn1_time_tm_to_time_t(tm, &t))
-		return NULL;
-	return (ASN1_TIME_adj(s, t, 0, 0));
-}
 
 ASN1_TIME *
 ASN1_TIME_adj(ASN1_TIME *s, time_t t, int offset_day, long offset_sec)

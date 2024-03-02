@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_local.h,v 1.9 2024/03/02 09:08:41 tb Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.10 2024/03/02 09:10:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -187,7 +187,6 @@ void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 
-ASN1_TIME *ASN1_TIME_set_tm(ASN1_TIME *s, struct tm *tm);
 int ASN1_time_parse(const char *_bytes, size_t _len, struct tm *_tm, int _mode);
 int ASN1_time_tm_cmp(struct tm *_tm1, struct tm *_tm2);
 
