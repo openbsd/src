@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.131 2024/03/02 10:20:27 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.132 2024/03/02 10:21:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -210,8 +210,6 @@ extern "C" {
 #define		EVP_CIPH_ALWAYS_CALL_INIT	0x20
 /* Call ctrl() to init cipher parameters */
 #define		EVP_CIPH_CTRL_INIT		0x40
-/* Don't use standard key length function */
-#define		EVP_CIPH_CUSTOM_KEY_LENGTH	0x80
 /* Don't use standard block padding */
 #define		EVP_CIPH_NO_PADDING		0x100
 /* cipher handles random key generation */
@@ -241,7 +239,6 @@ extern "C" {
 /* ctrl() values */
 
 #define		EVP_CTRL_INIT			0x0
-#define		EVP_CTRL_SET_KEY_LENGTH		0x1
 #define		EVP_CTRL_GET_RC2_KEY_BITS	0x2
 #define		EVP_CTRL_SET_RC2_KEY_BITS	0x3
 #define		EVP_CTRL_GET_RC5_ROUNDS		0x4
