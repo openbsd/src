@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.85 2024/03/02 08:54:02 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.86 2024/03/02 08:55:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -216,9 +216,6 @@ typedef struct asn1_string_table_st {
 	unsigned long mask;
 	unsigned long flags;
 } ASN1_STRING_TABLE;
-
-/* XXX - unused. Remove in next major bump. */
-DECLARE_STACK_OF(ASN1_STRING_TABLE)
 
 /* size limits: this stuff is taken straight from RFC2459 */
 /* XXX - unused macros. A more complete version is in a_strnid.c. Remove? */
