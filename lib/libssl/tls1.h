@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.57 2024/02/03 15:58:34 beck Exp $ */
+/* $OpenBSD: tls1.h,v 1.58 2024/03/02 11:44:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -315,6 +315,9 @@ int SSL_get_servername_type(const SSL *s);
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     const char *label, size_t llen, const unsigned char *p, size_t plen,
     int use_context);
+
+int SSL_get_signature_type_nid(const SSL *ssl, int *nid);
+int SSL_get_peer_signature_type_nid(const SSL *ssl, int *nid);
 
 #define SSL_set_tlsext_host_name(s,name) \
 SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)

@@ -222,6 +222,7 @@ SSL_get_peer_cert_chain
 SSL_get_peer_certificate
 SSL_get_peer_finished
 SSL_get_peer_quic_transport_params
+SSL_get_peer_signature_type_nid
 SSL_get_privatekey
 SSL_get_quiet_shutdown
 SSL_get_rbio
@@ -235,6 +236,7 @@ SSL_get_servername_type
 SSL_get_session
 SSL_get_shared_ciphers
 SSL_get_shutdown
+SSL_get_signature_type_nid
 SSL_get_srtp_profiles
 SSL_get_ssl_method
 SSL_get_verify_callback

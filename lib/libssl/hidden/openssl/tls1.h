@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.1 2023/07/08 16:40:14 beck Exp $ */
+/* $OpenBSD: tls1.h,v 1.2 2024/03/02 11:44:47 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -28,5 +28,7 @@
 LSSL_USED(SSL_get_servername);
 LSSL_USED(SSL_get_servername_type);
 LSSL_USED(SSL_export_keying_material);
+LSSL_USED(SSL_get_peer_signature_type_nid);
+LSSL_USED(SSL_get_signature_type_nid);
 
 #endif /* _LIBSSL_TLS1_H */
