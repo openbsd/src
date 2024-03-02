@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.64 2024/02/18 16:28:37 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.65 2024/03/02 09:15:03 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -526,9 +526,7 @@ void OPENSSL_cleanup(void);
  * OpenSSL helpfully put OPENSSL_gmtime() here because all other time related
  * functions are in asn1.h.
  */
-#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 struct tm *OPENSSL_gmtime(const time_t *time, struct tm *out_tm);
-#endif
 
 void ERR_load_CRYPTO_strings(void);
 
