@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.27 2024/03/02 09:49:45 tb Exp $ */
+/* $OpenBSD: objects.h,v 1.28 2024/03/02 09:50:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,9 +71,7 @@
 #define	OBJ_NAME_TYPE_UNDEF		0x00
 #define	OBJ_NAME_TYPE_MD_METH		0x01
 #define	OBJ_NAME_TYPE_CIPHER_METH	0x02
-#define	OBJ_NAME_TYPE_PKEY_METH		0x03
-#define	OBJ_NAME_TYPE_COMP_METH		0x04
-#define	OBJ_NAME_TYPE_NUM		0x05
+#define	OBJ_NAME_TYPE_NUM		0x03
 
 #define	OBJ_NAME_ALIAS			0x8000
 
