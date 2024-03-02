@@ -2812,6 +2812,7 @@ X509_STORE_add_crl
 X509_STORE_add_lookup
 X509_STORE_free
 X509_STORE_get0_objects
+X509_STORE_get1_objects
 X509_STORE_get0_param
 X509_STORE_get_check_issued
 X509_STORE_get_ex_data
