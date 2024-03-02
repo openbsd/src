@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_add.c,v 1.23 2024/01/25 13:44:08 tb Exp $ */
+/* $OpenBSD: p12_add.c,v 1.24 2024/03/02 10:15:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -90,7 +90,6 @@ PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it, int nid1, int nid2)
 	safebag->type = OBJ_nid2obj(nid2);
 	return safebag;
 }
-LCRYPTO_ALIAS(PKCS12_item_pack_safebag);
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 data Contentinfo */
 PKCS7 *
@@ -118,7 +117,6 @@ err:
 	PKCS7_free(p7);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS12_pack_p7data);
 
 /* Unpack SAFEBAGS from PKCS#7 data ContentInfo */
 STACK_OF(PKCS12_SAFEBAG) *
@@ -181,7 +179,6 @@ err:
 	PKCS7_free(p7);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS12_pack_p7encdata);
 
 STACK_OF(PKCS12_SAFEBAG) *
 PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass, int passlen)
@@ -214,7 +211,6 @@ PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 		return 1;
 	return 0;
 }
-LCRYPTO_ALIAS(PKCS12_pack_authsafes);
 
 STACK_OF(PKCS7) *
 PKCS12_unpack_authsafes(const PKCS12 *p12)

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.34 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: p12_key.c,v 1.35 2024/03/02 10:15:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,6 +64,7 @@
 #include <openssl/pkcs12.h>
 
 #include "evp_local.h"
+#include "pkcs12_local.h"
 
 /* PKCS12 compatible key/IV generation */
 #ifndef min
@@ -93,7 +94,6 @@ PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
 	freezero(unipass, uniplen);
 	return ret;
 }
-LCRYPTO_ALIAS(PKCS12_key_gen_asc);
 
 int
 PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
@@ -194,4 +194,3 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 
 	return ret;
 }
-LCRYPTO_ALIAS(PKCS12_key_gen_uni);

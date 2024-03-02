@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.36 2024/01/25 13:44:08 tb Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.37 2024/03/02 10:15:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -263,5 +263,4 @@ PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
 
 	return 1;
 }
-LCRYPTO_ALIAS(PKCS12_setup_mac);
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.43 2024/03/02 10:06:48 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.44 2024/03/02 10:15:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -69,8 +69,12 @@
 
 #include "evp_local.h"
 #include "hmac_local.h"
+#include "pkcs12_local.h"
 
 /* Password based encryption (PBE) functions */
+int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
+    ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md_type,
+    int en_de);
 
 static const struct pbe_config {
 	int pbe_nid;

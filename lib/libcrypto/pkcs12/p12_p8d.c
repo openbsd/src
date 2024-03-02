@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_p8d.c,v 1.11 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: p12_p8d.c,v 1.12 2024/03/02 10:15:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -60,6 +60,7 @@
 
 #include <openssl/pkcs12.h>
 
+#include "pkcs12_local.h"
 #include "x509_local.h"
 
 PKCS8_PRIV_KEY_INFO *
