@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.38 2024/03/02 10:41:46 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.39 2024/03/02 10:43:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -105,7 +105,7 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
 static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca);
 static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca);
 
-static X509_PURPOSE xstandard[] = {
+static const X509_PURPOSE xstandard[] = {
 	{
 		.purpose = X509_PURPOSE_SSL_CLIENT,
 		.trust = X509_TRUST_SSL_CLIENT,
@@ -204,7 +204,7 @@ X509_PURPOSE_get_count(void)
 }
 LCRYPTO_ALIAS(X509_PURPOSE_get_count);
 
-X509_PURPOSE *
+const X509_PURPOSE *
 X509_PURPOSE_get0(int idx)
 {
 	if (idx < 0 || (size_t)idx >= X509_PURPOSE_COUNT)
@@ -218,7 +218,7 @@ int
 X509_PURPOSE_get_by_sname(const char *sname)
 {
 	int i;
-	X509_PURPOSE *xptmp;
+	const X509_PURPOSE *xptmp;
 
 	for (i = 0; i < X509_PURPOSE_get_count(); i++) {
 		xptmp = X509_PURPOSE_get0(i);
@@ -249,14 +249,14 @@ X509_PURPOSE_get_id(const X509_PURPOSE *xp)
 }
 LCRYPTO_ALIAS(X509_PURPOSE_get_id);
 
-char *
+const char *
 X509_PURPOSE_get0_name(const X509_PURPOSE *xp)
 {
 	return xp->name;
 }
 LCRYPTO_ALIAS(X509_PURPOSE_get0_name);
 
-char *
+const char *
 X509_PURPOSE_get0_sname(const X509_PURPOSE *xp)
 {
 	return xp->sname;
