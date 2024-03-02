@@ -2409,7 +2409,6 @@ _libre_OBJ_ln2nid
 _libre_OBJ_sn2nid
 _libre_OBJ_cmp
 _libre_OBJ_new_nid
-_libre_OBJ_add_object
 _libre_OBJ_create
 _libre_OBJ_cleanup
 _libre_OBJ_create_objects

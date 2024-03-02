@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.87 2024/03/02 09:47:16 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.88 2024/03/02 09:49:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -208,7 +208,7 @@ OBJ_new_nid(int num)
 }
 LCRYPTO_ALIAS(OBJ_new_nid);
 
-int
+static int
 OBJ_add_object(const ASN1_OBJECT *obj)
 {
 	ASN1_OBJECT *o = NULL;
@@ -258,7 +258,6 @@ OBJ_add_object(const ASN1_OBJECT *obj)
 	ASN1_OBJECT_free(o);
 	return (NID_undef);
 }
-LCRYPTO_ALIAS(OBJ_add_object);
 
 ASN1_OBJECT *
 OBJ_nid2obj(int nid)

@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.4 2024/03/02 09:47:16 tb Exp $ */
+/* $OpenBSD: objects.h,v 1.5 2024/03/02 09:49:45 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -39,7 +39,6 @@ LCRYPTO_USED(OBJ_ln2nid);
 LCRYPTO_USED(OBJ_sn2nid);
 LCRYPTO_USED(OBJ_cmp);
 LCRYPTO_USED(OBJ_new_nid);
-LCRYPTO_USED(OBJ_add_object);
 LCRYPTO_USED(OBJ_create);
 LCRYPTO_USED(OBJ_cleanup);
 LCRYPTO_USED(OBJ_create_objects);

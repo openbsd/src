@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.26 2024/03/02 09:47:16 tb Exp $ */
+/* $OpenBSD: objects.h,v 1.27 2024/03/02 09:49:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,7 +108,6 @@ int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b);
 
 int		OBJ_new_nid(int num);
-int		OBJ_add_object(const ASN1_OBJECT *obj);
 int		OBJ_create(const char *oid, const char *sn, const char *ln);
 void		OBJ_cleanup(void);
 int		OBJ_create_objects(BIO *in);
