@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.65 2024/03/02 09:15:03 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.66 2024/03/02 11:28:46 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -272,26 +272,10 @@ DECLARE_STACK_OF(void)
 #endif
 
 int CRYPTO_mem_ctrl(int mode);
-int CRYPTO_is_mem_check_on(void);
-
-/* for applications */
-#define MemCheck_start() CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON)
-#define MemCheck_stop()	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF)
 
 #define OPENSSL_malloc(num)	CRYPTO_malloc((int)num,NULL,0)
 #define OPENSSL_strdup(str)	CRYPTO_strdup((str),NULL,0)
-#define OPENSSL_realloc(addr,num) \
-	CRYPTO_realloc((char *)addr,(int)num,NULL,0)
-#define OPENSSL_realloc_clean(addr,old_num,num) \
-	CRYPTO_realloc_clean(addr,old_num,num,NULL,0)
-#define OPENSSL_remalloc(addr,num) \
-	CRYPTO_remalloc((char **)addr,(int)num,NULL,0)
-#define OPENSSL_freeFunc	CRYPTO_free
 #define OPENSSL_free(addr)	CRYPTO_free(addr)
-
-#define OPENSSL_malloc_locked(num) \
-	CRYPTO_malloc_locked((int)num,NULL,0)
-#define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
 #endif
 
 const char *OpenSSL_version(int type);
@@ -376,86 +360,24 @@ void (*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l
 /* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
  * call the latter last if you need different functions */
 int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t), void (*f)(void *));
-int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*free_func)(void *));
 int CRYPTO_set_mem_ex_functions(void *(*m)(size_t, const char *, int),
     void *(*r)(void *, size_t, const char *, int), void (*f)(void *));
-int CRYPTO_set_locked_mem_ex_functions(void *(*m)(size_t, const char *, int),
-    void (*free_func)(void *));
-int CRYPTO_set_mem_debug_functions(
-    void (*m)(void *, int, const char *, int, int),
-    void (*r)(void *, void *, int, const char *, int, int),
-    void (*f)(void *, int), void (*so)(long), long (*go)(void));
-void CRYPTO_get_mem_functions(void *(**m)(size_t), void *(**r)(void *, size_t),
-    void (**f)(void *));
-void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *));
-void CRYPTO_get_mem_ex_functions(void *(**m)(size_t, const char *, int),
-    void *(**r)(void *, size_t, const char *, int), void (**f)(void *));
-void CRYPTO_get_locked_mem_ex_functions(void *(**m)(size_t, const char *, int),
-    void (**f)(void *));
-void CRYPTO_get_mem_debug_functions(
-    void (**m)(void *, int, const char *, int, int),
-    void (**r)(void *, void *, int, const char *, int, int),
-    void (**f)(void *, int), void (**so)(long), long (**go)(void));
 
 #ifndef LIBRESSL_INTERNAL
-void *CRYPTO_malloc_locked(int num, const char *file, int line);
-void CRYPTO_free_locked(void *ptr);
 void *CRYPTO_malloc(int num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
 void CRYPTO_free(void *ptr);
-void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
 #endif
-
-void *CRYPTO_realloc_clean(void *addr, int old_num, int num,
-    const char *file, int line);
-void *CRYPTO_remalloc(void *addr, int num, const char *file, int line);
 
 #ifndef LIBRESSL_INTERNAL
 void OPENSSL_cleanse(void *ptr, size_t len);
 #endif
-
-void CRYPTO_set_mem_debug_options(long bits);
-long CRYPTO_get_mem_debug_options(void);
 
 #define CRYPTO_push_info(info) \
         CRYPTO_push_info_(info, NULL, 0);
 int CRYPTO_push_info_(const char *info, const char *file, int line);
 int CRYPTO_pop_info(void);
 int CRYPTO_remove_all_info(void);
-
-
-/* Default debugging functions (enabled by CRYPTO_malloc_debug_init() macro;
- * used as default in CRYPTO_MDEBUG compilations): */
-/* The last argument has the following significance:
- *
- * 0:	called before the actual memory allocation has taken place
- * 1:	called after the actual memory allocation has taken place
- */
-void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line, int before_p)
-	__attribute__ ((deprecated));
-void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num, const char *file, int line, int before_p)
-	__attribute__ ((deprecated));
-void CRYPTO_dbg_free(void *addr, int before_p)
-	__attribute__ ((deprecated));
-/* Tell the debugging code about options.  By default, the following values
- * apply:
- *
- * 0:                           Clear all options.
- * V_CRYPTO_MDEBUG_TIME (1):    Set the "Show Time" option.
- * V_CRYPTO_MDEBUG_THREAD (2):  Set the "Show Thread Number" option.
- * V_CRYPTO_MDEBUG_ALL (3):     1 + 2
- */
-void CRYPTO_dbg_set_options(long bits)
-	__attribute__ ((deprecated));
-long CRYPTO_dbg_get_options(void)
-	__attribute__ ((deprecated));
-
-
-int CRYPTO_mem_leaks_fp(FILE *);
-int CRYPTO_mem_leaks(struct bio_st *bio);
-/* unsigned long order, char *file, int line, int num_bytes, char *addr */
-typedef int *CRYPTO_MEM_LEAK_CB(unsigned long, const char *, int, int, void *);
-int CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 
 /*
  * Because this is a public header, use a portable method of indicating the

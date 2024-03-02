@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.3 2024/03/01 07:38:33 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.4 2024/03/02 11:28:46 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -43,30 +43,10 @@ LCRYPTO_USED(CRYPTO_THREADID_cmp);
 LCRYPTO_USED(CRYPTO_THREADID_cpy);
 LCRYPTO_USED(CRYPTO_THREADID_hash);
 LCRYPTO_USED(CRYPTO_set_mem_functions);
-LCRYPTO_USED(CRYPTO_set_locked_mem_functions);
 LCRYPTO_USED(CRYPTO_set_mem_ex_functions);
-LCRYPTO_USED(CRYPTO_set_locked_mem_ex_functions);
-LCRYPTO_USED(CRYPTO_set_mem_debug_functions);
-LCRYPTO_USED(CRYPTO_get_mem_functions);
-LCRYPTO_USED(CRYPTO_get_locked_mem_functions);
-LCRYPTO_USED(CRYPTO_get_mem_ex_functions);
-LCRYPTO_USED(CRYPTO_get_locked_mem_ex_functions);
-LCRYPTO_USED(CRYPTO_get_mem_debug_functions);
-LCRYPTO_USED(CRYPTO_realloc_clean);
-LCRYPTO_USED(CRYPTO_remalloc);
-LCRYPTO_USED(CRYPTO_set_mem_debug_options);
-LCRYPTO_USED(CRYPTO_get_mem_debug_options);
 LCRYPTO_USED(CRYPTO_push_info_);
 LCRYPTO_USED(CRYPTO_pop_info);
 LCRYPTO_USED(CRYPTO_remove_all_info);
-LCRYPTO_USED(CRYPTO_dbg_malloc);
-LCRYPTO_USED(CRYPTO_dbg_realloc);
-LCRYPTO_USED(CRYPTO_dbg_free);
-LCRYPTO_USED(CRYPTO_dbg_set_options);
-LCRYPTO_USED(CRYPTO_dbg_get_options);
-LCRYPTO_USED(CRYPTO_mem_leaks_fp);
-LCRYPTO_USED(CRYPTO_mem_leaks);
-LCRYPTO_USED(CRYPTO_mem_leaks_cb);
 LCRYPTO_USED(OpenSSLDie);
 LCRYPTO_USED(OPENSSL_cpu_caps);
 LCRYPTO_USED(OPENSSL_init_crypto);
