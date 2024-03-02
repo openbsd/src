@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.3 2023/07/05 21:14:54 bcook Exp $ */
+/* $OpenBSD: x509.h,v 1.4 2024/03/02 10:48:17 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -104,8 +104,6 @@ LCRYPTO_USED(X509_get_default_private_dir);
 LCRYPTO_USED(X509_to_X509_REQ);
 LCRYPTO_USED(X509_REQ_to_X509);
 LCRYPTO_USED(X509_get_pubkey_parameters);
-LCRYPTO_USED(X509_TRUST_set_default);
-LCRYPTO_USED(X509_TRUST_set);
 LCRYPTO_USED(X509_NAME_oneline);
 LCRYPTO_USED(X509_get0_extensions);
 LCRYPTO_USED(X509_get0_tbs_sigalg);
@@ -268,14 +266,6 @@ LCRYPTO_USED(X509_verify_cert);
 LCRYPTO_USED(X509_find_by_issuer_and_serial);
 LCRYPTO_USED(X509_find_by_subject);
 LCRYPTO_USED(X509_check_trust);
-LCRYPTO_USED(X509_TRUST_get_count);
-LCRYPTO_USED(X509_TRUST_get0);
-LCRYPTO_USED(X509_TRUST_get_by_id);
-LCRYPTO_USED(X509_TRUST_add);
-LCRYPTO_USED(X509_TRUST_cleanup);
-LCRYPTO_USED(X509_TRUST_get_flags);
-LCRYPTO_USED(X509_TRUST_get0_name);
-LCRYPTO_USED(X509_TRUST_get_trust);
 LCRYPTO_USED(X509_up_ref);
 LCRYPTO_USED(X509_chain_up_ref);
 LCRYPTO_USED(ERR_load_X509_strings);

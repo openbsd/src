@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.40 2024/01/13 19:57:38 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.41 2024/03/02 10:48:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -219,82 +219,3 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 	return trust->check_trust((X509_TRUST *)trust, x, flags);
 }
 LCRYPTO_ALIAS(X509_check_trust);
-
-/*
- * Remove all the functions below in the next bump.
- */
-
-int
-(*X509_TRUST_set_default(int (*trust)(int , X509 *, int)))(int, X509 *, int)
-{
-	X509error(ERR_R_DISABLED);
-	return NULL;
-}
-LCRYPTO_ALIAS(X509_TRUST_set_default);
-
-int
-X509_TRUST_get_count(void)
-{
-	return X509_TRUST_COUNT;
-}
-LCRYPTO_ALIAS(X509_TRUST_get_count);
-
-X509_TRUST *
-X509_TRUST_get0(int idx)
-{
-	X509error(ERR_R_DISABLED);
-	return NULL;
-}
-LCRYPTO_ALIAS(X509_TRUST_get0);
-
-int
-X509_TRUST_get_by_id(int id)
-{
-	X509error(ERR_R_DISABLED);
-	return -1;
-}
-LCRYPTO_ALIAS(X509_TRUST_get_by_id);
-
-int
-X509_TRUST_set(int *t, int trust)
-{
-	X509error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509_TRUST_set);
-
-int
-X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
-    const char *name, int arg1, void *arg2)
-{
-	X509error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509_TRUST_add);
-
-void
-X509_TRUST_cleanup(void)
-{
-}
-LCRYPTO_ALIAS(X509_TRUST_cleanup);
-
-int
-X509_TRUST_get_flags(const X509_TRUST *xp)
-{
-	return xp->flags;
-}
-LCRYPTO_ALIAS(X509_TRUST_get_flags);
-
-char *
-X509_TRUST_get0_name(const X509_TRUST *xp)
-{
-	return xp->name;
-}
-LCRYPTO_ALIAS(X509_TRUST_get0_name);
-
-int
-X509_TRUST_get_trust(const X509_TRUST *xp)
-{
-	return xp->trust;
-}
-LCRYPTO_ALIAS(X509_TRUST_get_trust);
