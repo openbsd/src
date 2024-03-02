@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.122 2024/03/02 09:36:40 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.123 2024/03/02 09:39:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -460,15 +460,6 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey,
 
 int EVP_Cipher(EVP_CIPHER_CTX *c, unsigned char *out, const unsigned char *in,
     unsigned int inl);
-
-#define EVP_add_cipher_alias(n,alias) \
-	OBJ_NAME_add((alias),OBJ_NAME_TYPE_CIPHER_METH|OBJ_NAME_ALIAS,(n))
-#define EVP_add_digest_alias(n,alias) \
-	OBJ_NAME_add((alias),OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS,(n))
-#define EVP_delete_cipher_alias(alias) \
-	OBJ_NAME_remove(alias,OBJ_NAME_TYPE_CIPHER_METH|OBJ_NAME_ALIAS);
-#define EVP_delete_digest_alias(alias) \
-	OBJ_NAME_remove(alias,OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS);
 
 EVP_MD_CTX *EVP_MD_CTX_new(void);
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
