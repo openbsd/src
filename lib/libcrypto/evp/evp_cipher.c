@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.20 2024/02/24 08:00:37 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.21 2024/03/02 09:55:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -613,15 +613,15 @@ EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 }
 
 void
-EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
+EVP_CIPHER_CTX_legacy_clear(EVP_CIPHER_CTX *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 }
 
-void
-EVP_CIPHER_CTX_legacy_clear(EVP_CIPHER_CTX *ctx)
+int
+EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 {
-	memset(ctx, 0, sizeof(*ctx));
+	return EVP_CIPHER_CTX_cleanup(ctx);
 }
 
 int
