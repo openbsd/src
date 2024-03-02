@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.50 2023/10/19 10:27:27 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.51 2024/03/02 09:24:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -304,7 +304,6 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	return ret;
 }
-LCRYPTO_ALIAS(BN_mod_exp_simple);
 
 /* BN_mod_exp_mont_consttime() stores the precomputed powers in a specific layout
  * so that accessing any of these table values shows the same access pattern as far
