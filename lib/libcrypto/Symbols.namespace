@@ -2469,7 +2469,6 @@ _libre_d2i_DSAPrivateKey
 _libre_i2d_DSAPrivateKey
 _libre_d2i_DSAparams
 _libre_i2d_DSAparams
-_libre_DSA_generate_parameters
 _libre_DSA_generate_parameters_ex
 _libre_DSA_generate_key
 _libre_DSAparams_print

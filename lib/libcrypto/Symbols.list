@@ -865,7 +865,6 @@ DSA_do_verify
 DSA_dup_DH
 DSA_free
 DSA_generate_key
-DSA_generate_parameters
 DSA_generate_parameters_ex
 DSA_get0_engine
 DSA_get0_g

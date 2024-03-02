@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.1 2023/07/08 14:28:15 beck Exp $ */
+/* $OpenBSD: dsa.h,v 1.2 2024/03/02 09:33:14 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -61,7 +61,6 @@ LCRYPTO_USED(d2i_DSAPrivateKey);
 LCRYPTO_USED(i2d_DSAPrivateKey);
 LCRYPTO_USED(d2i_DSAparams);
 LCRYPTO_USED(i2d_DSAparams);
-LCRYPTO_USED(DSA_generate_parameters);
 LCRYPTO_USED(DSA_generate_parameters_ex);
 LCRYPTO_USED(DSA_generate_key);
 LCRYPTO_USED(DSAparams_print);
