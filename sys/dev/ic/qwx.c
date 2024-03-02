@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.55 2024/03/02 15:04:27 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.56 2024/03/02 15:06:20 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -13060,10 +13060,10 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 	case WMI_PEER_ASSOC_CONF_EVENTID:
 		qwx_peer_assoc_conf_event(sc, m);
 		break;
-#if 0
 	case WMI_UPDATE_STATS_EVENTID:
-		ath11k_update_stats_event(ab, skb);
+		/* ignore */
 		break;
+#if 0
 	case WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID:
 		ath11k_pdev_ctl_failsafe_check_event(ab, skb);
 		break;
