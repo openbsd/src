@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.129 2024/03/02 10:08:29 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.130 2024/03/02 10:13:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -649,9 +649,6 @@ const EVP_CIPHER *EVP_desx_cbc(void);
 #ifndef OPENSSL_NO_RC4
 const EVP_CIPHER *EVP_rc4(void);
 const EVP_CIPHER *EVP_rc4_40(void);
-#ifndef OPENSSL_NO_MD5
-const EVP_CIPHER *EVP_rc4_hmac_md5(void);
-#endif
 #endif
 #ifndef OPENSSL_NO_IDEA
 const EVP_CIPHER *EVP_idea_ecb(void);
@@ -721,10 +718,6 @@ const EVP_CIPHER *EVP_aes_256_wrap(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 const EVP_CIPHER *EVP_chacha20_poly1305(void);
-#endif
-#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
-const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
-const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
 #endif
 #endif
 #ifndef OPENSSL_NO_CAMELLIA

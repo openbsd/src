@@ -1371,7 +1371,6 @@ EVP_aead_aes_256_gcm
 EVP_aead_chacha20_poly1305
 EVP_aead_xchacha20_poly1305
 EVP_aes_128_cbc
-EVP_aes_128_cbc_hmac_sha1
 EVP_aes_128_ccm
 EVP_aes_128_cfb1
 EVP_aes_128_cfb128
@@ -1393,7 +1392,6 @@ EVP_aes_192_gcm
 EVP_aes_192_ofb
 EVP_aes_192_wrap
 EVP_aes_256_cbc
-EVP_aes_256_cbc_hmac_sha1
 EVP_aes_256_ccm
 EVP_aes_256_cfb1
 EVP_aes_256_cfb128
@@ -1477,7 +1475,6 @@ EVP_rc2_ecb
 EVP_rc2_ofb
 EVP_rc4
 EVP_rc4_40
-EVP_rc4_hmac_md5
 EVP_read_pw_string
 EVP_read_pw_string_min
 EVP_ripemd160

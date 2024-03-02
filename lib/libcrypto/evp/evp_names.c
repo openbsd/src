@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.11 2024/03/02 09:43:10 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.12 2024/03/02 10:13:13 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -50,10 +50,6 @@ static const struct cipher_name cipher_names[] = {
 	{
 		.name = SN_aes_128_cbc,
 		.cipher = EVP_aes_128_cbc,
-	},
-	{
-		.name = SN_aes_128_cbc_hmac_sha1,
-		.cipher = EVP_aes_128_cbc_hmac_sha1,
 	},
 	{
 		.name = SN_aes_128_cfb128,
@@ -116,10 +112,6 @@ static const struct cipher_name cipher_names[] = {
 	{
 		.name = SN_aes_256_cbc,
 		.cipher = EVP_aes_256_cbc,
-	},
-	{
-		.name = SN_aes_256_cbc_hmac_sha1,
-		.cipher = EVP_aes_256_cbc_hmac_sha1,
 	},
 	{
 		.name = SN_aes_256_cfb128,
@@ -497,10 +489,6 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_rc4_40,
 		.cipher = EVP_rc4_40,
 	},
-	{
-		.name = SN_rc4_hmac_md5,
-		.cipher = EVP_rc4_hmac_md5,
-	},
 #endif /* OPENSSL_NO_RC4 */
 
 #ifndef OPENSSL_NO_SM4
@@ -536,10 +524,6 @@ static const struct cipher_name cipher_names[] = {
 	{
 		.name = LN_aes_128_cbc,
 		.cipher = EVP_aes_128_cbc,
-	},
-	{
-		.name = LN_aes_128_cbc_hmac_sha1,
-		.cipher = EVP_aes_128_cbc_hmac_sha1,
 	},
 	{
 		.name = LN_aes_128_ccm,
@@ -618,10 +602,6 @@ static const struct cipher_name cipher_names[] = {
 	{
 		.name = LN_aes_256_cbc,
 		.cipher = EVP_aes_256_cbc,
-	},
-	{
-		.name = LN_aes_256_cbc_hmac_sha1,
-		.cipher = EVP_aes_256_cbc_hmac_sha1,
 	},
 	{
 		.name = LN_aes_256_ccm,
@@ -1059,10 +1039,6 @@ static const struct cipher_name cipher_names[] = {
 	{
 		.name = LN_rc4_40,
 		.cipher = EVP_rc4_40,
-	},
-	{
-		.name = LN_rc4_hmac_md5,
-		.cipher = EVP_rc4_hmac_md5,
 	},
 #endif /* OPENSSL_NO_RC4 */
 
