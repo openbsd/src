@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.43 2023/11/19 15:41:46 tb Exp $ */
+/* $OpenBSD: engine.h,v 1.44 2024/03/02 10:22:07 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -66,22 +66,8 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/bn.h>
-#ifndef OPENSSL_NO_DH
-#include <openssl/dh.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_EC
-#include <openssl/ec.h>
-#endif
 #include <openssl/err.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
 #include <openssl/ui.h>
-#include <openssl/x509.h>
 
 #include <openssl/ossl_typ.h>
 
@@ -101,36 +87,6 @@ extern "C" {
 #define ENGINE_METHOD_EC		(unsigned int)0x0800
 #define ENGINE_METHOD_ALL		(unsigned int)0xFFFF
 #define ENGINE_METHOD_NONE		(unsigned int)0x0000
-
-#define ENGINE_TABLE_FLAG_NOINIT	(unsigned int)0x0001
-
-#define ENGINE_FLAGS_MANUAL_CMD_CTRL	(int)0x0002
-#define ENGINE_FLAGS_BY_ID_COPY		(int)0x0004
-#define ENGINE_FLAGS_NO_REGISTER_ALL	(int)0x0008
-#define ENGINE_CMD_FLAG_NUMERIC		(unsigned int)0x0001
-#define ENGINE_CMD_FLAG_STRING		(unsigned int)0x0002
-#define ENGINE_CMD_FLAG_NO_INPUT	(unsigned int)0x0004
-#define ENGINE_CMD_FLAG_INTERNAL	(unsigned int)0x0008
-
-#define ENGINE_CTRL_SET_LOGSTREAM		1
-#define ENGINE_CTRL_SET_PASSWORD_CALLBACK	2
-#define ENGINE_CTRL_HUP				3
-#define ENGINE_CTRL_SET_USER_INTERFACE		4
-#define ENGINE_CTRL_SET_CALLBACK_DATA		5
-#define ENGINE_CTRL_LOAD_CONFIGURATION		6
-#define ENGINE_CTRL_LOAD_SECTION		7
-
-#define ENGINE_CTRL_HAS_CTRL_FUNCTION		10
-#define ENGINE_CTRL_GET_FIRST_CMD_TYPE		11
-#define ENGINE_CTRL_GET_NEXT_CMD_TYPE		12
-#define ENGINE_CTRL_GET_CMD_FROM_NAME		13
-#define ENGINE_CTRL_GET_NAME_LEN_FROM_CMD	14
-#define ENGINE_CTRL_GET_NAME_FROM_CMD		15
-#define ENGINE_CTRL_GET_DESC_LEN_FROM_CMD	16
-#define ENGINE_CTRL_GET_DESC_FROM_CMD		17
-#define ENGINE_CTRL_GET_CMD_FLAGS		18
-
-#define ENGINE_CMD_BASE				200
 
 /*
  * Prototypes for the stub functions in engine_stubs.c. They are provided to
