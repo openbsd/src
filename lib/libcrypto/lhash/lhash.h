@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.h,v 1.12 2014/06/12 15:49:29 deraadt Exp $ */
+/* $OpenBSD: lhash.h,v 1.13 2024/03/02 11:04:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -179,16 +179,6 @@ void lh_doall_arg(_LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg);
 unsigned long lh_strhash(const char *c);
 unsigned long lh_num_items(const _LHASH *lh);
 
-void lh_stats(const _LHASH *lh, FILE *out);
-void lh_node_stats(const _LHASH *lh, FILE *out);
-void lh_node_usage_stats(const _LHASH *lh, FILE *out);
-
-#ifndef OPENSSL_NO_BIO
-void lh_stats_bio(const _LHASH *lh, BIO *out);
-void lh_node_stats_bio(const _LHASH *lh, BIO *out);
-void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
-#endif
-
 /* Type checking... */
 
 #define LHASH_OF(type) struct lhash_st_##type
@@ -217,12 +207,6 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
   lh_doall_arg(CHECKED_LHASH_OF(type, lh), fn, CHECKED_PTR_OF(arg_type, arg))
 #define LHM_lh_num_items(type, lh) lh_num_items(CHECKED_LHASH_OF(type, lh))
 #define LHM_lh_down_load(type, lh) (CHECKED_LHASH_OF(type, lh)->down_load)
-#define LHM_lh_node_stats_bio(type, lh, out) \
-  lh_node_stats_bio(CHECKED_LHASH_OF(type, lh), out)
-#define LHM_lh_node_usage_stats_bio(type, lh, out) \
-  lh_node_usage_stats_bio(CHECKED_LHASH_OF(type, lh), out)
-#define LHM_lh_stats_bio(type, lh, out) \
-  lh_stats_bio(CHECKED_LHASH_OF(type, lh), out)
 #define LHM_lh_free(type, lh) lh_free(CHECKED_LHASH_OF(type, lh))
 
 DECLARE_LHASH_OF(OPENSSL_STRING);

@@ -3437,14 +3437,8 @@ lh_doall_arg
 lh_free
 lh_insert
 lh_new
-lh_node_stats
-lh_node_stats_bio
-lh_node_usage_stats
-lh_node_usage_stats_bio
 lh_num_items
 lh_retrieve
-lh_stats
-lh_stats_bio
 lh_strhash
 o2i_ECPublicKey
 o2i_SCT

@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.29 2023/08/03 16:32:15 tb Exp $ */
+/* $OpenBSD: safestack.h,v 1.30 2024/03/02 11:04:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -1816,12 +1816,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_ADDED_OBJ_error(lh) LHM_lh_error(ADDED_OBJ,lh)
 #define lh_ADDED_OBJ_num_items(lh) LHM_lh_num_items(ADDED_OBJ,lh)
 #define lh_ADDED_OBJ_down_load(lh) LHM_lh_down_load(ADDED_OBJ,lh)
-#define lh_ADDED_OBJ_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(ADDED_OBJ,lh,out)
-#define lh_ADDED_OBJ_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(ADDED_OBJ,lh,out)
-#define lh_ADDED_OBJ_stats_bio(lh,out) \
-  LHM_lh_stats_bio(ADDED_OBJ,lh,out)
 #define lh_ADDED_OBJ_free(lh) LHM_lh_free(ADDED_OBJ,lh)
 
 #define lh_CONF_VALUE_new() LHM_lh_new(CONF_VALUE,conf_value)
@@ -1834,12 +1828,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_CONF_VALUE_error(lh) LHM_lh_error(CONF_VALUE,lh)
 #define lh_CONF_VALUE_num_items(lh) LHM_lh_num_items(CONF_VALUE,lh)
 #define lh_CONF_VALUE_down_load(lh) LHM_lh_down_load(CONF_VALUE,lh)
-#define lh_CONF_VALUE_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(CONF_VALUE,lh,out)
-#define lh_CONF_VALUE_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(CONF_VALUE,lh,out)
-#define lh_CONF_VALUE_stats_bio(lh,out) \
-  LHM_lh_stats_bio(CONF_VALUE,lh,out)
 #define lh_CONF_VALUE_free(lh) LHM_lh_free(CONF_VALUE,lh)
 
 #define lh_ERR_STATE_new() LHM_lh_new(ERR_STATE,err_state)
@@ -1852,12 +1840,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_ERR_STATE_error(lh) LHM_lh_error(ERR_STATE,lh)
 #define lh_ERR_STATE_num_items(lh) LHM_lh_num_items(ERR_STATE,lh)
 #define lh_ERR_STATE_down_load(lh) LHM_lh_down_load(ERR_STATE,lh)
-#define lh_ERR_STATE_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(ERR_STATE,lh,out)
-#define lh_ERR_STATE_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(ERR_STATE,lh,out)
-#define lh_ERR_STATE_stats_bio(lh,out) \
-  LHM_lh_stats_bio(ERR_STATE,lh,out)
 #define lh_ERR_STATE_free(lh) LHM_lh_free(ERR_STATE,lh)
 
 #define lh_ERR_STRING_DATA_new() LHM_lh_new(ERR_STRING_DATA,err_string_data)
@@ -1870,12 +1852,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_ERR_STRING_DATA_error(lh) LHM_lh_error(ERR_STRING_DATA,lh)
 #define lh_ERR_STRING_DATA_num_items(lh) LHM_lh_num_items(ERR_STRING_DATA,lh)
 #define lh_ERR_STRING_DATA_down_load(lh) LHM_lh_down_load(ERR_STRING_DATA,lh)
-#define lh_ERR_STRING_DATA_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(ERR_STRING_DATA,lh,out)
-#define lh_ERR_STRING_DATA_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(ERR_STRING_DATA,lh,out)
-#define lh_ERR_STRING_DATA_stats_bio(lh,out) \
-  LHM_lh_stats_bio(ERR_STRING_DATA,lh,out)
 #define lh_ERR_STRING_DATA_free(lh) LHM_lh_free(ERR_STRING_DATA,lh)
 
 #define lh_EX_CLASS_ITEM_new() LHM_lh_new(EX_CLASS_ITEM,ex_class_item)
@@ -1888,12 +1864,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_EX_CLASS_ITEM_error(lh) LHM_lh_error(EX_CLASS_ITEM,lh)
 #define lh_EX_CLASS_ITEM_num_items(lh) LHM_lh_num_items(EX_CLASS_ITEM,lh)
 #define lh_EX_CLASS_ITEM_down_load(lh) LHM_lh_down_load(EX_CLASS_ITEM,lh)
-#define lh_EX_CLASS_ITEM_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(EX_CLASS_ITEM,lh,out)
-#define lh_EX_CLASS_ITEM_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(EX_CLASS_ITEM,lh,out)
-#define lh_EX_CLASS_ITEM_stats_bio(lh,out) \
-  LHM_lh_stats_bio(EX_CLASS_ITEM,lh,out)
 #define lh_EX_CLASS_ITEM_free(lh) LHM_lh_free(EX_CLASS_ITEM,lh)
 
 #define lh_FUNCTION_new() LHM_lh_new(FUNCTION,function)
@@ -1906,12 +1876,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_FUNCTION_error(lh) LHM_lh_error(FUNCTION,lh)
 #define lh_FUNCTION_num_items(lh) LHM_lh_num_items(FUNCTION,lh)
 #define lh_FUNCTION_down_load(lh) LHM_lh_down_load(FUNCTION,lh)
-#define lh_FUNCTION_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(FUNCTION,lh,out)
-#define lh_FUNCTION_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(FUNCTION,lh,out)
-#define lh_FUNCTION_stats_bio(lh,out) \
-  LHM_lh_stats_bio(FUNCTION,lh,out)
 #define lh_FUNCTION_free(lh) LHM_lh_free(FUNCTION,lh)
 
 #define lh_OBJ_NAME_new() LHM_lh_new(OBJ_NAME,obj_name)
@@ -1924,12 +1888,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_OBJ_NAME_error(lh) LHM_lh_error(OBJ_NAME,lh)
 #define lh_OBJ_NAME_num_items(lh) LHM_lh_num_items(OBJ_NAME,lh)
 #define lh_OBJ_NAME_down_load(lh) LHM_lh_down_load(OBJ_NAME,lh)
-#define lh_OBJ_NAME_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(OBJ_NAME,lh,out)
-#define lh_OBJ_NAME_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(OBJ_NAME,lh,out)
-#define lh_OBJ_NAME_stats_bio(lh,out) \
-  LHM_lh_stats_bio(OBJ_NAME,lh,out)
 #define lh_OBJ_NAME_free(lh) LHM_lh_free(OBJ_NAME,lh)
 
 #define lh_OPENSSL_STRING_new() LHM_lh_new(OPENSSL_STRING,openssl_string)
@@ -1942,12 +1900,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_OPENSSL_STRING_error(lh) LHM_lh_error(OPENSSL_STRING,lh)
 #define lh_OPENSSL_STRING_num_items(lh) LHM_lh_num_items(OPENSSL_STRING,lh)
 #define lh_OPENSSL_STRING_down_load(lh) LHM_lh_down_load(OPENSSL_STRING,lh)
-#define lh_OPENSSL_STRING_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(OPENSSL_STRING,lh,out)
-#define lh_OPENSSL_STRING_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(OPENSSL_STRING,lh,out)
-#define lh_OPENSSL_STRING_stats_bio(lh,out) \
-  LHM_lh_stats_bio(OPENSSL_STRING,lh,out)
 #define lh_OPENSSL_STRING_free(lh) LHM_lh_free(OPENSSL_STRING,lh)
 
 #define lh_SSL_SESSION_new() LHM_lh_new(SSL_SESSION,ssl_session)
@@ -1960,12 +1912,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 #define lh_SSL_SESSION_error(lh) LHM_lh_error(SSL_SESSION,lh)
 #define lh_SSL_SESSION_num_items(lh) LHM_lh_num_items(SSL_SESSION,lh)
 #define lh_SSL_SESSION_down_load(lh) LHM_lh_down_load(SSL_SESSION,lh)
-#define lh_SSL_SESSION_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(SSL_SESSION,lh,out)
-#define lh_SSL_SESSION_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(SSL_SESSION,lh,out)
-#define lh_SSL_SESSION_stats_bio(lh,out) \
-  LHM_lh_stats_bio(SSL_SESSION,lh,out)
 #define lh_SSL_SESSION_free(lh) LHM_lh_free(SSL_SESSION,lh)
 
 #endif /* !defined HEADER_SAFESTACK_H */

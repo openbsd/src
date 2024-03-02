@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.281 2024/01/22 13:44:59 job Exp $
+# $OpenBSD: Makefile,v 1.282 2024/03/02 11:04:51 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -432,7 +432,6 @@ MAN=	\
 	i2d_CMS_bio_stream.3 \
 	i2d_PKCS7_bio_stream.3 \
 	lh_new.3 \
-	lh_stats.3 \
 	openssl.cnf.5 \
 	s2i_ASN1_INTEGER.3 \
 	x509v3.cnf.5

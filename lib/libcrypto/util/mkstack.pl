@@ -151,12 +151,6 @@ EOF
 #define lh_${type_thing}_error(lh) LHM_lh_error(${type_thing},lh)
 #define lh_${type_thing}_num_items(lh) LHM_lh_num_items(${type_thing},lh)
 #define lh_${type_thing}_down_load(lh) LHM_lh_down_load(${type_thing},lh)
-#define lh_${type_thing}_node_stats_bio(lh,out) \\
-  LHM_lh_node_stats_bio(${type_thing},lh,out)
-#define lh_${type_thing}_node_usage_stats_bio(lh,out) \\
-  LHM_lh_node_usage_stats_bio(${type_thing},lh,out)
-#define lh_${type_thing}_stats_bio(lh,out) \\
-  LHM_lh_stats_bio(${type_thing},lh,out)
 #define lh_${type_thing}_free(lh) LHM_lh_free(${type_thing},lh)
 EOF
 	}
