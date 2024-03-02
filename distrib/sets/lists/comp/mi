@@ -1131,7 +1131,6 @@
 ./usr/include/openssl/engine.h
 ./usr/include/openssl/err.h
 ./usr/include/openssl/evp.h
-./usr/include/openssl/gost.h
 ./usr/include/openssl/hkdf.h
 ./usr/include/openssl/hmac.h
 ./usr/include/openssl/idea.h
