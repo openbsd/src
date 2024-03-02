@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.9 2024/03/02 08:54:02 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.10 2024/03/02 09:02:04 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -226,7 +226,6 @@ LCRYPTO_USED(ASN1_item_new);
 LCRYPTO_USED(ASN1_item_free);
 LCRYPTO_USED(ASN1_item_d2i);
 LCRYPTO_USED(ASN1_item_i2d);
-LCRYPTO_USED(ASN1_add_oid_module);
 LCRYPTO_USED(ASN1_generate_nconf);
 LCRYPTO_USED(ASN1_generate_v3);
 LCRYPTO_USED(ASN1_item_print);

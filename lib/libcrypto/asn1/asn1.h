@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.88 2024/03/02 09:00:07 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.89 2024/03/02 09:02:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -839,8 +839,6 @@ void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it);
 ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **val, const unsigned char **in,
     long len, const ASN1_ITEM *it);
 int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
-
-void ASN1_add_oid_module(void);
 
 ASN1_TYPE *ASN1_generate_nconf(const char *str, CONF *nconf);
 ASN1_TYPE *ASN1_generate_v3(const char *str, X509V3_CTX *cnf);

@@ -1097,7 +1097,6 @@ _libre_ASN1_item_new
 _libre_ASN1_item_free
 _libre_ASN1_item_d2i
 _libre_ASN1_item_i2d
-_libre_ASN1_add_oid_module
 _libre_ASN1_generate_nconf
 _libre_ASN1_generate_v3
 _libre_ASN1_item_print

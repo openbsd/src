@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_moid.c,v 1.16 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: asn_moid.c,v 1.17 2024/03/02 09:02:04 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -105,7 +105,6 @@ ASN1_add_oid_module(void)
 {
 	CONF_module_add("oid_section", oid_module_init, oid_module_finish);
 }
-LCRYPTO_ALIAS(ASN1_add_oid_module);
 
 /* Create an OID based on a name value pair. Accept two formats.
  * shortname = 1.2.3.4
