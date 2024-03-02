@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.108 2024/03/02 10:49:03 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.109 2024/03/02 10:50:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,17 +154,6 @@ typedef struct x509_cert_aux_st X509_CERT_AUX;
 typedef struct x509_cinf_st X509_CINF;
 
 DECLARE_STACK_OF(X509)
-
-/* This is used for a table of trust checking functions */
-
-typedef struct x509_trust_st {
-	int trust;
-	int flags;
-	int (*check_trust)(struct x509_trust_st *, X509 *, int);
-	char *name;
-	int arg1;
-	void *arg2;
-} X509_TRUST;
 
 /* standard trust ids */
 

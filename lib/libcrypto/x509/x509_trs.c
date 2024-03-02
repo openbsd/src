@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.41 2024/03/02 10:48:17 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.42 2024/03/02 10:50:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -66,6 +66,15 @@
 
 #include "crypto_internal.h"
 #include "x509_local.h"
+
+typedef struct x509_trust_st {
+	int trust;
+	int flags;
+	int (*check_trust)(struct x509_trust_st *, X509 *, int);
+	char *name;
+	int arg1;
+	void *arg2;
+} X509_TRUST;
 
 static int
 obj_trust(int id, X509 *x, int flags)
