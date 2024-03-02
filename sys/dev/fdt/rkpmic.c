@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.13 2023/04/10 04:21:20 jsg Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.14 2024/03/02 19:52:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <dev/ofw/fdt.h>
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/spi/spivar.h>
 
 #include <dev/clock_subr.h>
 
@@ -46,6 +47,9 @@
 #define RK808_RTC_STATUS	0x11
 #define RK809_RTC_STATUS	0x0e
 #define  RK80X_RTC_STATUS_POWER_UP	0x80
+
+#define RKSPI_CMD_READ		(0 << 7)
+#define RKSPI_CMD_WRITE		(1 << 7)
 
 struct rkpmic_vsel_range {
 	uint32_t base, delta;
@@ -96,6 +100,55 @@ const struct rkpmic_regdata rk805_regdata[] = {
 	{ "LDO_REG1", 0x3b, 0x1f, rk805_vsel_range3 },
 	{ "LDO_REG2", 0x3d, 0x1f, rk805_vsel_range3 },
 	{ "LDO_REG3", 0x3f, 0x1f, rk805_vsel_range3 },
+	{ }
+};
+
+/*
+ * Used by RK806 for BUCK
+ *  0-159:	0.5V-1.5V, step=6.25mV
+ *  160-236:	1.5V-3.4V, step=25mV
+ *  237-255:	3.4V-3.4V, step=0mV
+ */
+const struct rkpmic_vsel_range rk806_vsel_range1[] = {
+	{ 500000, 6250, 0, 159 },
+	{ 1500000, 25000, 160, 236 },
+	{ 3400000, 0, 237, 255 },
+	{}
+};
+
+/*
+ * Used by RK806 for LDO
+ *  0-232:	0.5V-3.4V, step=12.5mV
+ *  233-255:	3.4V-3.4V, step=0mV
+ */
+const struct rkpmic_vsel_range rk806_vsel_range2[] = {
+	{ 500000, 12500, 0, 232 },
+	{ 3400000, 0, 233, 255 },
+	{}
+};
+
+const struct rkpmic_regdata rk806_regdata[] = {
+	{ "dcdc-reg1", 0x1a, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg2", 0x1b, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg3", 0x1c, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg4", 0x1d, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg5", 0x1e, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg6", 0x1f, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg7", 0x20, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg8", 0x21, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg9", 0x22, 0xff, rk806_vsel_range1 },
+	{ "dcdc-reg10", 0x23, 0xff, rk806_vsel_range1 },
+	{ "nldo-reg1", 0x43, 0xff, rk806_vsel_range2 },
+	{ "nldo-reg2", 0x44, 0xff, rk806_vsel_range2 },
+	{ "nldo-reg3", 0x45, 0xff, rk806_vsel_range2 },
+	{ "nldo-reg4", 0x46, 0xff, rk806_vsel_range2 },
+	{ "nldo-reg5", 0x47, 0xff, rk806_vsel_range2 },
+	{ "pldo-reg1", 0x4e, 0xff, rk806_vsel_range2 },
+	{ "pldo-reg2", 0x4f, 0xff, rk806_vsel_range2 },
+	{ "pldo-reg3", 0x50, 0xff, rk806_vsel_range2 },
+	{ "pldo-reg4", 0x51, 0xff, rk806_vsel_range2 },
+	{ "pldo-reg5", 0x52, 0xff, rk806_vsel_range2 },
+	{ "pldo-reg6", 0x53, 0xff, rk806_vsel_range2 },
 	{ }
 };
 
@@ -256,19 +309,39 @@ const struct rkpmic_regdata rk817_regdata[] = {
 
 struct rkpmic_softc {
 	struct device sc_dev;
-	i2c_tag_t sc_tag;
-	i2c_addr_t sc_addr;
+	int sc_node;
+
+	i2c_tag_t sc_i2c_tag;
+	i2c_addr_t sc_i2c_addr;
+	spi_tag_t sc_spi_tag;
+	struct spi_config sc_spi_conf;
 
 	int sc_rtc_ctrl_reg, sc_rtc_status_reg;
 	struct todr_chip_handle sc_todr;
 	const struct rkpmic_regdata *sc_regdata;
+
+	int (*sc_read)(struct rkpmic_softc *, uint8_t, void *, size_t);
+	int (*sc_write)(struct rkpmic_softc *, uint8_t, void *, size_t);
 };
 
-int	rkpmic_match(struct device *, void *, void *);
+int	rkpmic_i2c_match(struct device *, void *, void *);
+void	rkpmic_i2c_attach(struct device *, struct device *, void *);
+int	rkpmic_i2c_read(struct rkpmic_softc *, uint8_t, void *, size_t);
+int	rkpmic_i2c_write(struct rkpmic_softc *, uint8_t, void *, size_t);
+
+int	rkpmic_spi_match(struct device *, void *, void *);
+void	rkpmic_spi_attach(struct device *, struct device *, void *);
+int	rkpmic_spi_read(struct rkpmic_softc *, uint8_t, void *, size_t);
+int	rkpmic_spi_write(struct rkpmic_softc *, uint8_t, void *, size_t);
+
 void	rkpmic_attach(struct device *, struct device *, void *);
 
-const struct cfattach rkpmic_ca = {
-	sizeof(struct rkpmic_softc), rkpmic_match, rkpmic_attach
+const struct cfattach rkpmic_i2c_ca = {
+	sizeof(struct rkpmic_softc), rkpmic_i2c_match, rkpmic_i2c_attach
+};
+
+const struct cfattach rkpmic_spi_ca = {
+	sizeof(struct rkpmic_softc), rkpmic_spi_match, rkpmic_spi_attach
 };
 
 struct cfdriver rkpmic_cd = {
@@ -284,7 +357,7 @@ int	rkpmic_gettime(struct todr_chip_handle *, struct timeval *);
 int	rkpmic_settime(struct todr_chip_handle *, struct timeval *);
 
 int
-rkpmic_match(struct device *parent, void *match, void *aux)
+rkpmic_i2c_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
@@ -295,33 +368,68 @@ rkpmic_match(struct device *parent, void *match, void *aux)
 }
 
 void
-rkpmic_attach(struct device *parent, struct device *self, void *aux)
+rkpmic_i2c_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkpmic_softc *sc = (struct rkpmic_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	int node = *(int *)ia->ia_cookie;
+
+	sc->sc_i2c_tag = ia->ia_tag;
+	sc->sc_i2c_addr = ia->ia_addr;
+	sc->sc_node = *(int *)ia->ia_cookie;
+	sc->sc_read = rkpmic_i2c_read;
+	sc->sc_write = rkpmic_i2c_write;
+
+	rkpmic_attach(parent, self, aux);
+}
+
+int
+rkpmic_spi_match(struct device *parent, void *match, void *aux)
+{
+	struct spi_attach_args *sa = aux;
+
+	return (strcmp(sa->sa_name, "rockchip,rk806") == 0);
+}
+
+void
+rkpmic_spi_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct rkpmic_softc *sc = (struct rkpmic_softc *)self;
+	struct spi_attach_args *sa = aux;
+
+	sc->sc_spi_tag = sa->sa_tag;
+	sc->sc_node = *(int *)sa->sa_cookie;
+	sc->sc_read = rkpmic_spi_read;
+	sc->sc_write = rkpmic_spi_write;
+
+	sc->sc_spi_conf.sc_bpw = 8;
+	sc->sc_spi_conf.sc_freq =
+	    OF_getpropint(sc->sc_node, "spi-max-frequency", 1000000);
+	sc->sc_spi_conf.sc_cs = OF_getpropint(sc->sc_node, "reg", 0);
+
+	rkpmic_attach(parent, self, aux);
+}
+
+void
+rkpmic_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct rkpmic_softc *sc = (struct rkpmic_softc *)self;
 	const char *chip;
+	int node;
 
-	sc->sc_tag = ia->ia_tag;
-	sc->sc_addr = ia->ia_addr;
-
-	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = rkpmic_gettime;
-	sc->sc_todr.todr_settime = rkpmic_settime;
-	sc->sc_todr.todr_quality = 0;
-	todr_attach(&sc->sc_todr);
-
-	if (OF_is_compatible(node, "rockchip,rk805")) {
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk805")) {
 		chip = "RK805";
 		sc->sc_rtc_ctrl_reg = RK805_RTC_CTRL;
 		sc->sc_rtc_status_reg = RK805_RTC_STATUS;
 		sc->sc_regdata = rk805_regdata;
-	} else if (OF_is_compatible(node, "rockchip,rk808")) {
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk806")) {
+		chip = "RK806";
+		sc->sc_regdata = rk806_regdata;
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk808")) {
 		chip = "RK808";
 		sc->sc_rtc_ctrl_reg = RK808_RTC_CTRL;
 		sc->sc_rtc_status_reg = RK808_RTC_STATUS;
 		sc->sc_regdata = rk808_regdata;
-	} else if (OF_is_compatible(node, "rockchip,rk809")) {
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk809")) {
 		chip = "RK809";
 		sc->sc_rtc_ctrl_reg = RK809_RTC_CTRL;
 		sc->sc_rtc_status_reg = RK809_RTC_STATUS;
@@ -334,7 +442,15 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %s\n", chip);
 
-	node = OF_getnodebyname(node, "regulators");
+	if (sc->sc_rtc_ctrl_reg) {
+		sc->sc_todr.cookie = sc;
+		sc->sc_todr.todr_gettime = rkpmic_gettime;
+		sc->sc_todr.todr_settime = rkpmic_settime;
+		sc->sc_todr.todr_quality = 0;
+		todr_attach(&sc->sc_todr);
+	}
+
+	node = OF_getnodebyname(sc->sc_node, "regulators");
 	if (node == 0)
 		return;
 	for (node = OF_child(node); node; node = OF_peer(node))
@@ -393,7 +509,7 @@ rkpmic_get_voltage(void *cookie)
 	uint32_t ret = 0;
 
 	vsel = rkpmic_reg_read(rr->rr_sc, rr->rr_reg) & rr->rr_mask;
-	
+
 	while (vsel_range->base) {
 		ret = vsel_range->base;
 		if (vsel >= vsel_range->vsel_min &&
@@ -519,14 +635,8 @@ rkpmic_reg_read(struct rkpmic_softc *sc, int reg)
 {
 	uint8_t cmd = reg;
 	uint8_t val;
-	int error;
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
-	error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &val, sizeof val, I2C_F_POLL);
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
-
-	if (error) {
+	if (sc->sc_read(sc, cmd, &val, sizeof(val))) {
 		printf("%s: can't read register 0x%02x\n",
 		    sc->sc_dev.dv_xname, reg);
 		val = 0xff;
@@ -539,14 +649,8 @@ void
 rkpmic_reg_write(struct rkpmic_softc *sc, int reg, uint8_t val)
 {
 	uint8_t cmd = reg;
-	int error;
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
-	error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &val, sizeof val, I2C_F_POLL);
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
-
-	if (error) {
+	if (sc->sc_write(sc, cmd, &val, sizeof(val))) {
 		printf("%s: can't write register 0x%02x\n",
 		    sc->sc_dev.dv_xname, reg);
 	}
@@ -560,10 +664,7 @@ rkpmic_clock_read(struct rkpmic_softc *sc, struct clock_ymdhms *dt)
 	uint8_t status;
 	int error;
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
-	error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof(cmd), regs, RK80X_NRTC_REGS, I2C_F_POLL);
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	error = sc->sc_read(sc, cmd, regs, RK80X_NRTC_REGS);
 
 	if (error) {
 		printf("%s: can't read RTC\n", sc->sc_dev.dv_xname);
@@ -610,10 +711,7 @@ rkpmic_clock_write(struct rkpmic_softc *sc, struct clock_ymdhms *dt)
 	/* Stop RTC such that we can write to it. */
 	rkpmic_reg_write(sc, sc->sc_rtc_ctrl_reg, RK80X_RTC_CTRL_STOP_RTC);
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
-	error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof(cmd), regs, RK80X_NRTC_REGS, I2C_F_POLL);
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	error = sc->sc_write(sc, cmd, regs, RK80X_NRTC_REGS);
 
 	/* Restart RTC. */
 	rkpmic_reg_write(sc, sc->sc_rtc_ctrl_reg, 0);
@@ -627,4 +725,72 @@ rkpmic_clock_write(struct rkpmic_softc *sc, struct clock_ymdhms *dt)
 	rkpmic_reg_write(sc, sc->sc_rtc_status_reg, RK80X_RTC_STATUS_POWER_UP);
 
 	return 0;
+}
+
+int
+rkpmic_i2c_read(struct rkpmic_softc *sc, uint8_t cmd, void *buf, size_t buflen)
+{
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c_tag, I2C_F_POLL);
+	error = iic_exec(sc->sc_i2c_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_i2c_addr, &cmd, sizeof(cmd), buf, buflen, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c_tag, I2C_F_POLL);
+
+	return error;
+}
+
+int
+rkpmic_i2c_write(struct rkpmic_softc *sc, uint8_t cmd, void *buf, size_t buflen)
+{
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c_tag, I2C_F_POLL);
+	error = iic_exec(sc->sc_i2c_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_i2c_addr, &cmd, sizeof(cmd), buf, buflen, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c_tag, I2C_F_POLL);
+
+	return error;
+}
+
+int
+rkpmic_spi_read(struct rkpmic_softc *sc, uint8_t cmd, void *buf, size_t buflen)
+{
+	uint8_t cmdbuf[3];
+	int error;
+
+	cmdbuf[0] = RKSPI_CMD_READ | (buflen - 1);
+	cmdbuf[1] = cmd;  /* 16-bit addr low */
+	cmdbuf[2] = 0x00; /* 16-bit addr high */
+
+	spi_acquire_bus(sc->sc_spi_tag, 0);
+	spi_config(sc->sc_spi_tag, &sc->sc_spi_conf);
+	error = spi_transfer(sc->sc_spi_tag, cmdbuf, NULL, sizeof(cmdbuf),
+	    SPI_KEEP_CS);
+	if (!error)
+		error = spi_read(sc->sc_spi_tag, buf, buflen);
+	spi_release_bus(sc->sc_spi_tag, 0);
+
+	return error;
+}
+
+int
+rkpmic_spi_write(struct rkpmic_softc *sc, uint8_t cmd, void *buf, size_t buflen)
+{
+	uint8_t cmdbuf[3];
+	int error;
+
+	cmdbuf[0] = RKSPI_CMD_WRITE | (buflen - 1);
+	cmdbuf[1] = cmd;  /* 16-bit addr low */
+	cmdbuf[2] = 0x00; /* 16-bit addr high */
+
+	spi_acquire_bus(sc->sc_spi_tag, 0);
+	spi_config(sc->sc_spi_tag, &sc->sc_spi_conf);
+	error = spi_transfer(sc->sc_spi_tag, cmdbuf, NULL, sizeof(cmdbuf),
+	    SPI_KEEP_CS);
+	if (!error)
+		error = spi_write(sc->sc_spi_tag, buf, buflen);
+	spi_release_bus(sc->sc_spi_tag, 0);
+
+	return error;
 }
