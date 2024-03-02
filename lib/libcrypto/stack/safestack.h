@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.30 2024/03/02 11:04:52 tb Exp $ */
+/* $OpenBSD: safestack.h,v 1.31 2024/03/02 11:11:11 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -84,16 +84,8 @@
 #define STACK_OF(type) struct stack_st_##type
 #define PREDECLARE_STACK_OF(type) STACK_OF(type);
 
-#define DECLARE_STACK_OF(type) \
-STACK_OF(type) \
-    { \
-    _STACK stack; \
-    };
-#define DECLARE_SPECIAL_STACK_OF(type, type2) \
-STACK_OF(type) \
-    { \
-    _STACK stack; \
-    };
+#define DECLARE_STACK_OF(type) STACK_OF(type);
+#define DECLARE_SPECIAL_STACK_OF(type, type2) STACK_OF(type);
 
 #define IMPLEMENT_STACK_OF(type) /* nada (obsolete in new safestack approach)*/
 
@@ -1815,7 +1807,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(ADDED_OBJ,lh,fn,arg_type,arg)
 #define lh_ADDED_OBJ_error(lh) LHM_lh_error(ADDED_OBJ,lh)
 #define lh_ADDED_OBJ_num_items(lh) LHM_lh_num_items(ADDED_OBJ,lh)
-#define lh_ADDED_OBJ_down_load(lh) LHM_lh_down_load(ADDED_OBJ,lh)
 #define lh_ADDED_OBJ_free(lh) LHM_lh_free(ADDED_OBJ,lh)
 
 #define lh_CONF_VALUE_new() LHM_lh_new(CONF_VALUE,conf_value)
@@ -1827,7 +1818,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(CONF_VALUE,lh,fn,arg_type,arg)
 #define lh_CONF_VALUE_error(lh) LHM_lh_error(CONF_VALUE,lh)
 #define lh_CONF_VALUE_num_items(lh) LHM_lh_num_items(CONF_VALUE,lh)
-#define lh_CONF_VALUE_down_load(lh) LHM_lh_down_load(CONF_VALUE,lh)
 #define lh_CONF_VALUE_free(lh) LHM_lh_free(CONF_VALUE,lh)
 
 #define lh_ERR_STATE_new() LHM_lh_new(ERR_STATE,err_state)
@@ -1839,7 +1829,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(ERR_STATE,lh,fn,arg_type,arg)
 #define lh_ERR_STATE_error(lh) LHM_lh_error(ERR_STATE,lh)
 #define lh_ERR_STATE_num_items(lh) LHM_lh_num_items(ERR_STATE,lh)
-#define lh_ERR_STATE_down_load(lh) LHM_lh_down_load(ERR_STATE,lh)
 #define lh_ERR_STATE_free(lh) LHM_lh_free(ERR_STATE,lh)
 
 #define lh_ERR_STRING_DATA_new() LHM_lh_new(ERR_STRING_DATA,err_string_data)
@@ -1851,7 +1840,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(ERR_STRING_DATA,lh,fn,arg_type,arg)
 #define lh_ERR_STRING_DATA_error(lh) LHM_lh_error(ERR_STRING_DATA,lh)
 #define lh_ERR_STRING_DATA_num_items(lh) LHM_lh_num_items(ERR_STRING_DATA,lh)
-#define lh_ERR_STRING_DATA_down_load(lh) LHM_lh_down_load(ERR_STRING_DATA,lh)
 #define lh_ERR_STRING_DATA_free(lh) LHM_lh_free(ERR_STRING_DATA,lh)
 
 #define lh_EX_CLASS_ITEM_new() LHM_lh_new(EX_CLASS_ITEM,ex_class_item)
@@ -1863,7 +1851,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(EX_CLASS_ITEM,lh,fn,arg_type,arg)
 #define lh_EX_CLASS_ITEM_error(lh) LHM_lh_error(EX_CLASS_ITEM,lh)
 #define lh_EX_CLASS_ITEM_num_items(lh) LHM_lh_num_items(EX_CLASS_ITEM,lh)
-#define lh_EX_CLASS_ITEM_down_load(lh) LHM_lh_down_load(EX_CLASS_ITEM,lh)
 #define lh_EX_CLASS_ITEM_free(lh) LHM_lh_free(EX_CLASS_ITEM,lh)
 
 #define lh_FUNCTION_new() LHM_lh_new(FUNCTION,function)
@@ -1875,7 +1862,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(FUNCTION,lh,fn,arg_type,arg)
 #define lh_FUNCTION_error(lh) LHM_lh_error(FUNCTION,lh)
 #define lh_FUNCTION_num_items(lh) LHM_lh_num_items(FUNCTION,lh)
-#define lh_FUNCTION_down_load(lh) LHM_lh_down_load(FUNCTION,lh)
 #define lh_FUNCTION_free(lh) LHM_lh_free(FUNCTION,lh)
 
 #define lh_OBJ_NAME_new() LHM_lh_new(OBJ_NAME,obj_name)
@@ -1887,7 +1873,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(OBJ_NAME,lh,fn,arg_type,arg)
 #define lh_OBJ_NAME_error(lh) LHM_lh_error(OBJ_NAME,lh)
 #define lh_OBJ_NAME_num_items(lh) LHM_lh_num_items(OBJ_NAME,lh)
-#define lh_OBJ_NAME_down_load(lh) LHM_lh_down_load(OBJ_NAME,lh)
 #define lh_OBJ_NAME_free(lh) LHM_lh_free(OBJ_NAME,lh)
 
 #define lh_OPENSSL_STRING_new() LHM_lh_new(OPENSSL_STRING,openssl_string)
@@ -1899,7 +1884,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(OPENSSL_STRING,lh,fn,arg_type,arg)
 #define lh_OPENSSL_STRING_error(lh) LHM_lh_error(OPENSSL_STRING,lh)
 #define lh_OPENSSL_STRING_num_items(lh) LHM_lh_num_items(OPENSSL_STRING,lh)
-#define lh_OPENSSL_STRING_down_load(lh) LHM_lh_down_load(OPENSSL_STRING,lh)
 #define lh_OPENSSL_STRING_free(lh) LHM_lh_free(OPENSSL_STRING,lh)
 
 #define lh_SSL_SESSION_new() LHM_lh_new(SSL_SESSION,ssl_session)
@@ -1911,7 +1895,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
   LHM_lh_doall_arg(SSL_SESSION,lh,fn,arg_type,arg)
 #define lh_SSL_SESSION_error(lh) LHM_lh_error(SSL_SESSION,lh)
 #define lh_SSL_SESSION_num_items(lh) LHM_lh_num_items(SSL_SESSION,lh)
-#define lh_SSL_SESSION_down_load(lh) LHM_lh_down_load(SSL_SESSION,lh)
 #define lh_SSL_SESSION_free(lh) LHM_lh_free(SSL_SESSION,lh)
 
 #endif /* !defined HEADER_SAFESTACK_H */

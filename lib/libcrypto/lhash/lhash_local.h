@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.h,v 1.10 2024/03/02 11:11:11 tb Exp $ */
+/* $OpenBSD: lhash_local.h,v 1.1 2024/03/02 11:11:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,45 +56,50 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_STACK_H
-#define HEADER_STACK_H
+/* Header for dynamic hash table routines
+ * Author - Eric Young
+ */
 
-#ifdef  __cplusplus
-extern "C" {
+#include <openssl/opensslconf.h>
+
+#ifndef HEADER_LHASH_LOCAL_H
+#define HEADER_LHASH_LOCAL_H
+
+typedef struct lhash_node_st {
+	void *data;
+	struct lhash_node_st *next;
+#ifndef OPENSSL_NO_HASH_COMP
+	unsigned long hash;
 #endif
+} LHASH_NODE;
 
-typedef struct stack_st _STACK;
+struct lhash_st {
+	LHASH_NODE **b;
+	LHASH_COMP_FN_TYPE comp;
+	LHASH_HASH_FN_TYPE hash;
+	unsigned int num_nodes;
+	unsigned int num_alloc_nodes;
+	unsigned int p;
+	unsigned int pmax;
+	unsigned long up_load; /* load times 256 */
+	unsigned long down_load; /* load times 256 */
+	unsigned long num_items;
 
-#define M_sk_num(sk)		((sk) ? (sk)->num:-1)
-#define M_sk_value(sk,n)	((sk) ? (sk)->data[n] : NULL)
+	unsigned long num_expands;
+	unsigned long num_expand_reallocs;
+	unsigned long num_contracts;
+	unsigned long num_contract_reallocs;
+	unsigned long num_hash_calls;
+	unsigned long num_comp_calls;
+	unsigned long num_insert;
+	unsigned long num_replace;
+	unsigned long num_delete;
+	unsigned long num_no_delete;
+	unsigned long num_retrieve;
+	unsigned long num_retrieve_miss;
+	unsigned long num_hash_comps;
 
-int sk_num(const _STACK *);
-void *sk_value(const _STACK *, int);
-
-void *sk_set(_STACK *, int, void *);
-
-_STACK *sk_new(int (*cmp)(const void *, const void *));
-_STACK *sk_new_null(void);
-void sk_free(_STACK *);
-void sk_pop_free(_STACK *st, void (*func)(void *));
-int sk_insert(_STACK *sk, void *data, int where);
-void *sk_delete(_STACK *st, int loc);
-void *sk_delete_ptr(_STACK *st, void *p);
-int sk_find(_STACK *st, void *data);
-int sk_find_ex(_STACK *st, void *data);
-int sk_push(_STACK *st, void *data);
-int sk_unshift(_STACK *st, void *data);
-void *sk_shift(_STACK *st);
-void *sk_pop(_STACK *st);
-void sk_zero(_STACK *st);
-int (*sk_set_cmp_func(_STACK *sk, int (*c)(const void *, const void *)))(
-    const void *, const void *);
-_STACK *sk_dup(_STACK *st);
-void sk_sort(_STACK *st);
-int sk_is_sorted(const _STACK *st);
-
-#ifdef  __cplusplus
-}
-#endif
+	int error;
+} /* _LHASH */;
 
 #endif

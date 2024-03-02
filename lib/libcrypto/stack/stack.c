@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.26 2024/03/02 09:47:16 tb Exp $ */
+/* $OpenBSD: stack.c,v 1.27 2024/03/02 11:11:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 
 #include <openssl/objects.h>
 #include <openssl/stack.h>
+
+#include "stack_local.h"
 
 #undef MIN_NODES
 #define MIN_NODES	4

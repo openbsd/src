@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.21 2024/01/24 14:02:52 jsing Exp $ */
+/* $OpenBSD: lhash.c,v 1.22 2024/03/02 11:11:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,6 +103,8 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 
+#include "lhash_local.h"
+
 #undef MIN_NODES
 #define MIN_NODES	16
 #define UP_LOAD		(2*LH_LOAD_MULT) /* load times 256  (default 2) */
@@ -156,6 +158,13 @@ lh_free(_LHASH *lh)
 	free(lh);
 }
 LCRYPTO_ALIAS(lh_free);
+
+int
+lh_error(_LHASH *lh)
+{
+	return lh->error;
+}
+LCRYPTO_ALIAS(lh_error);
 
 void *
 lh_insert(_LHASH *lh, void *data)

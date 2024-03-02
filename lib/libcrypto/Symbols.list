@@ -3434,6 +3434,7 @@ idea_set_encrypt_key
 lh_delete
 lh_doall
 lh_doall_arg
+lh_error
 lh_free
 lh_insert
 lh_new

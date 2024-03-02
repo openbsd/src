@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.h,v 1.13 2024/03/02 11:04:51 tb Exp $ */
+/* $OpenBSD: lhash.h,v 1.14 2024/03/02 11:11:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,14 +75,6 @@
 extern "C" {
 #endif
 
-typedef struct lhash_node_st {
-	void *data;
-	struct lhash_node_st *next;
-#ifndef OPENSSL_NO_HASH_COMP
-	unsigned long hash;
-#endif
-} LHASH_NODE;
-
 typedef int (*LHASH_COMP_FN_TYPE)(const void *, const void *);
 typedef unsigned long (*LHASH_HASH_FN_TYPE)(const void *);
 typedef void (*LHASH_DOALL_FN_TYPE)(void *);
@@ -133,44 +125,13 @@ typedef void (*LHASH_DOALL_ARG_FN_TYPE)(void *, void *);
 		name##_doall_arg(a, b); }
 #define LHASH_DOALL_ARG_FN(name) name##_LHASH_DOALL_ARG
 
-typedef struct lhash_st {
-	LHASH_NODE **b;
-	LHASH_COMP_FN_TYPE comp;
-	LHASH_HASH_FN_TYPE hash;
-	unsigned int num_nodes;
-	unsigned int num_alloc_nodes;
-	unsigned int p;
-	unsigned int pmax;
-	unsigned long up_load; /* load times 256 */
-	unsigned long down_load; /* load times 256 */
-	unsigned long num_items;
-
-	unsigned long num_expands;
-	unsigned long num_expand_reallocs;
-	unsigned long num_contracts;
-	unsigned long num_contract_reallocs;
-	unsigned long num_hash_calls;
-	unsigned long num_comp_calls;
-	unsigned long num_insert;
-	unsigned long num_replace;
-	unsigned long num_delete;
-	unsigned long num_no_delete;
-	unsigned long num_retrieve;
-	unsigned long num_retrieve_miss;
-	unsigned long num_hash_comps;
-
-	int error;
-} _LHASH;	/* Do not use _LHASH directly, use LHASH_OF
-		 * and friends */
+typedef struct lhash_st _LHASH;
 
 #define LH_LOAD_MULT	256
 
-/* Indicates a malloc() error in the last call, this is only bad
- * in lh_insert(). */
-#define lh_error(lh)	((lh)->error)
-
 _LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c);
 void lh_free(_LHASH *lh);
+int lh_error(_LHASH *lh);
 void *lh_insert(_LHASH *lh, void *data);
 void *lh_delete(_LHASH *lh, const void *data);
 void *lh_retrieve(_LHASH *lh, const void *data);
@@ -183,7 +144,7 @@ unsigned long lh_num_items(const _LHASH *lh);
 
 #define LHASH_OF(type) struct lhash_st_##type
 
-#define DECLARE_LHASH_OF(type) LHASH_OF(type) { int dummy; }
+#define DECLARE_LHASH_OF(type) LHASH_OF(type)
 
 #define CHECKED_LHASH_OF(type,lh) \
   ((_LHASH *)CHECKED_PTR_OF(LHASH_OF(type),lh))
@@ -206,7 +167,6 @@ unsigned long lh_num_items(const _LHASH *lh);
 #define LHM_lh_doall_arg(type, lh, fn, arg_type, arg) \
   lh_doall_arg(CHECKED_LHASH_OF(type, lh), fn, CHECKED_PTR_OF(arg_type, arg))
 #define LHM_lh_num_items(type, lh) lh_num_items(CHECKED_LHASH_OF(type, lh))
-#define LHM_lh_down_load(type, lh) (CHECKED_LHASH_OF(type, lh)->down_load)
 #define LHM_lh_free(type, lh) lh_free(CHECKED_LHASH_OF(type, lh))
 
 DECLARE_LHASH_OF(OPENSSL_STRING);

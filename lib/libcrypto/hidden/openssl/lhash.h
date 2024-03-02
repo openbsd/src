@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.h,v 1.3 2024/03/02 11:04:51 tb Exp $ */
+/* $OpenBSD: lhash.h,v 1.4 2024/03/02 11:11:11 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -27,6 +27,7 @@
 
 LCRYPTO_USED(lh_new);
 LCRYPTO_USED(lh_free);
+LCRYPTO_USED(lh_error);
 LCRYPTO_USED(lh_insert);
 LCRYPTO_USED(lh_delete);
 LCRYPTO_USED(lh_retrieve);
