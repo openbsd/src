@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.60 2023/08/25 12:37:33 schwarze Exp $ */
+/* $OpenBSD: bio.h,v 1.61 2024/03/02 09:18:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -648,25 +648,9 @@ void BIO_copy_next_retry(BIO *b);
 #ifndef __MINGW_PRINTF_FORMAT
 int BIO_printf(BIO *bio, const char *format, ...)
 	__attribute__((__format__(__printf__, 2, 3), __nonnull__(2)));
-int BIO_vprintf(BIO *bio, const char *format, va_list args)
-	__attribute__((__format__(__printf__, 2, 0), __nonnull__(2)));
-int BIO_snprintf(char *buf, size_t n, const char *format, ...)
-	__attribute__((__deprecated__, __format__(__printf__, 3, 4),
-	    __nonnull__(3)));
-int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
-	__attribute__((__deprecated__, __format__(__printf__, 3, 0),
-	    __nonnull__(3)));
 #else
 int BIO_printf(BIO *bio, const char *format, ...)
 	__attribute__((__format__(__MINGW_PRINTF_FORMAT, 2, 3), __nonnull__(2)));
-int BIO_vprintf(BIO *bio, const char *format, va_list args)
-	__attribute__((__format__(__MINGW_PRINTF_FORMAT, 2, 0), __nonnull__(2)));
-int BIO_snprintf(char *buf, size_t n, const char *format, ...)
-	__attribute__((__deprecated__, __format__(__MINGW_PRINTF_FORMAT, 3, 4),
-	    __nonnull__(3)));
-int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
-	__attribute__((__deprecated__, __format__(__MINGW_PRINTF_FORMAT, 3, 0),
-	    __nonnull__(3)));
 #endif
 
 void ERR_load_BIO_strings(void);

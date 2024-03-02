@@ -332,7 +332,6 @@ BIO_set_next
 BIO_set_retry_reason
 BIO_set_shutdown
 BIO_set_tcp_ndelay
-BIO_snprintf
 BIO_sock_cleanup
 BIO_sock_error
 BIO_sock_init
@@ -343,8 +342,6 @@ BIO_socket_nbio
 BIO_test_flags
 BIO_up_ref
 BIO_vfree
-BIO_vprintf
-BIO_vsnprintf
 BIO_write
 BN_CTX_end
 BN_CTX_free

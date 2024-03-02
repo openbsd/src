@@ -1215,9 +1215,6 @@ _libre_BIO_new_connect
 _libre_BIO_new_accept
 _libre_BIO_copy_next_retry
 _libre_BIO_printf
-_libre_BIO_vprintf
-_libre_BIO_snprintf
-_libre_BIO_vsnprintf
 _libre_ERR_load_BIO_strings
 _libre_ASN1_item_ex_new
 _libre_ASN1_item_ex_free

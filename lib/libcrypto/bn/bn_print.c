@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.46 2023/07/22 17:14:08 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.47 2024/03/02 09:18:28 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -25,6 +25,7 @@
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 
+#include "bio_local.h"
 #include "bn_local.h"
 #include "bytestring.h"
 

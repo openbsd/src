@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_local.h,v 1.5 2022/12/02 19:44:04 tb Exp $ */
+/* $OpenBSD: bio_local.h,v 1.6 2024/03/02 09:18:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,8 @@
 #ifndef HEADER_BIO_LOCAL_H
 #define HEADER_BIO_LOCAL_H
 
+#include <stdarg.h>
+
 __BEGIN_HIDDEN_DECLS
 
 struct bio_method_st {
@@ -117,6 +119,8 @@ typedef struct bio_f_buffer_ctx_struct {
 	int obuf_len;	/* how many bytes are in it */
 	int obuf_off;	/* write/read offset */
 } BIO_F_BUFFER_CTX;
+
+int BIO_vprintf(BIO *bio, const char *format, va_list args);
 
 __END_HIDDEN_DECLS
 
