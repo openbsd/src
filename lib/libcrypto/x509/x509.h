@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.107 2024/03/02 10:48:17 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.108 2024/03/02 10:49:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,8 +165,6 @@ typedef struct x509_trust_st {
 	int arg1;
 	void *arg2;
 } X509_TRUST;
-
-DECLARE_STACK_OF(X509_TRUST)
 
 /* standard trust ids */
 
