@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.17 2024/03/02 10:06:48 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.18 2024/03/02 10:08:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -372,6 +372,12 @@ struct evp_aead_ctx_st {
 	/* aead_state is an opaque pointer to the AEAD specific state. */
 	void *aead_state;
 };
+
+/* Legacy EVP_CIPHER methods used by CMS and its predecessors. */
+int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *cipher, ASN1_TYPE *type);
+int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *cipher, ASN1_TYPE *type);
+int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *cipher, ASN1_TYPE *type);
+int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *cipher, ASN1_TYPE *type);
 
 int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de);

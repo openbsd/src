@@ -1181,12 +1181,10 @@ EVP_CIPHER_CTX_set_iv
 EVP_CIPHER_CTX_set_key_length
 EVP_CIPHER_CTX_set_padding
 EVP_CIPHER_CTX_test_flags
-EVP_CIPHER_asn1_to_param
 EVP_CIPHER_block_size
 EVP_CIPHER_do_all
 EVP_CIPHER_do_all_sorted
 EVP_CIPHER_flags
-EVP_CIPHER_get_asn1_iv
 EVP_CIPHER_iv_length
 EVP_CIPHER_key_length
 EVP_CIPHER_meth_dup
@@ -1202,8 +1200,6 @@ EVP_CIPHER_meth_set_init
 EVP_CIPHER_meth_set_iv_length
 EVP_CIPHER_meth_set_set_asn1_params
 EVP_CIPHER_nid
-EVP_CIPHER_param_to_asn1
-EVP_CIPHER_set_asn1_iv
 EVP_CIPHER_type
 EVP_Cipher
 EVP_CipherFinal

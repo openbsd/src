@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.128 2024/03/02 10:06:48 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.129 2024/03/02 10:08:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -875,14 +875,6 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey, int indent,
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
 
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
-
-/* calls methods */
-int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
-int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
-
-/* These are used by EVP_CIPHER methods */
-int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
-int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 
 /* PKCS5 password based encryption */
 int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
