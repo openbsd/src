@@ -2395,12 +2395,6 @@ _libre_RSA_meth_set_sign
 _libre_RSA_meth_get_verify
 _libre_RSA_meth_set_verify
 _libre_ERR_load_RSA_strings
-_libre_OBJ_NAME_init
-_libre_OBJ_NAME_new_index
-_libre_OBJ_NAME_get
-_libre_OBJ_NAME_add
-_libre_OBJ_NAME_remove
-_libre_OBJ_NAME_cleanup
 _libre_OBJ_NAME_do_all
 _libre_OBJ_NAME_do_all_sorted
 _libre_OBJ_dup

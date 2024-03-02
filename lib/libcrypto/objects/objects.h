@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.23 2023/07/28 10:25:05 tb Exp $ */
+/* $OpenBSD: objects.h,v 1.24 2024/03/02 09:41:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,15 +94,6 @@ typedef struct obj_name_st {
 
 #define		OBJ_create_and_add_object(a,b,c) OBJ_create(a,b,c)
 
-
-int OBJ_NAME_init(void);
-int OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
-    int (*cmp_func)(const char *, const char *),
-    void (*free_func)(const char *, int, const char *));
-const char *OBJ_NAME_get(const char *name, int type);
-int OBJ_NAME_add(const char *name, int type, const char *data);
-int OBJ_NAME_remove(const char *name, int type);
-void OBJ_NAME_cleanup(int type); /* -1 for everything */
 void OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *arg),
     void *arg);
 void OBJ_NAME_do_all_sorted(int type, void (*fn)(const OBJ_NAME *, void *arg),

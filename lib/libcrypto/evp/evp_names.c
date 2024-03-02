@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.9 2024/03/02 09:36:40 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.10 2024/03/02 09:41:02 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -1914,55 +1914,3 @@ void
 EVP_cleanup(void)
 {
 }
-
-/*
- * XXX - Remove all the garbage below in the next bump.
- */
-
-int
-OBJ_NAME_init(void)
-{
-	OBJerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(OBJ_NAME_init);
-
-int
-OBJ_NAME_new_index(unsigned long (*hash_func)(const char *),
-    int (*cmp_func)(const char *, const char *),
-    void (*free_func)(const char *, int, const char *))
-{
-	OBJerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(OBJ_NAME_new_index);
-
-const char *
-OBJ_NAME_get(const char *name, int type)
-{
-	OBJerror(ERR_R_DISABLED);
-	return NULL;
-}
-LCRYPTO_ALIAS(OBJ_NAME_get);
-
-int
-OBJ_NAME_add(const char *name, int type, const char *data)
-{
-	/* No error to avoid polluting xca's error stack. */
-	return 0;
-}
-LCRYPTO_ALIAS(OBJ_NAME_add);
-
-int
-OBJ_NAME_remove(const char *name, int type)
-{
-	OBJerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(OBJ_NAME_remove);
-
-void
-OBJ_NAME_cleanup(int type)
-{
-}
-LCRYPTO_ALIAS(OBJ_NAME_cleanup);

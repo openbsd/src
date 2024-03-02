@@ -1686,14 +1686,8 @@ NETSCAPE_SPKI_verify
 NOTICEREF_free
 NOTICEREF_it
 NOTICEREF_new
-OBJ_NAME_add
-OBJ_NAME_cleanup
 OBJ_NAME_do_all
 OBJ_NAME_do_all_sorted
-OBJ_NAME_get
-OBJ_NAME_init
-OBJ_NAME_new_index
-OBJ_NAME_remove
 OBJ_add_object
 OBJ_bsearch_
 OBJ_cleanup

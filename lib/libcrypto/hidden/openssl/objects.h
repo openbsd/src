@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.2 2023/07/28 10:25:05 tb Exp $ */
+/* $OpenBSD: objects.h,v 1.3 2024/03/02 09:41:02 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -25,12 +25,6 @@
 #endif
 #include "crypto_namespace.h"
 
-LCRYPTO_USED(OBJ_NAME_init);
-LCRYPTO_USED(OBJ_NAME_new_index);
-LCRYPTO_USED(OBJ_NAME_get);
-LCRYPTO_USED(OBJ_NAME_add);
-LCRYPTO_USED(OBJ_NAME_remove);
-LCRYPTO_USED(OBJ_NAME_cleanup);
 LCRYPTO_USED(OBJ_NAME_do_all);
 LCRYPTO_USED(OBJ_NAME_do_all_sorted);
 LCRYPTO_USED(OBJ_dup);
