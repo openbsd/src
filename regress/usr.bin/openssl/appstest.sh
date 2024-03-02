@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.61 2024/01/26 11:58:36 job Exp $
+# $OpenBSD: appstest.sh,v 1.62 2024/03/02 11:53:55 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -786,40 +786,6 @@ __EOF__
 		-out $sv_ecdsa_csr.verify.out
 	check_exit_status $?
 
-	# GOST certificate
-
-	sv_gost_key=$server_dir/sv_gost_key.pem
-	sv_gost_csr=$server_dir/sv_gost_csr.pem
-	sv_gost_pass=test-gost-pass
-
-	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=gost.test-dummy.com/'
-	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=gost.test-dummy.com\'
-	fi
-
-	start_message "genpkey ... generate server key#4"
-
-	$openssl_bin genpkey -algorithm GOST2001 -pkeyopt paramset:A \
-		-pkeyopt dgst:streebog512 -out $sv_gost_key
-	check_exit_status $?
-
-	start_message "req ... generate server csr#4"
-
-	$openssl_bin req -new -subj $subj -streebog512 \
-		-key $sv_gost_key -keyform pem -passin pass:$sv_gost_pass \
-		-addext 'subjectAltName = DNS:gost.test-dummy.com' \
-		-out $sv_gost_csr -outform pem
-	check_exit_status $?
-
-	start_message "req ... verify server csr#4"
-
-	$openssl_bin req -verify -in $sv_gost_csr -inform pem \
-		-newhdr -noout -pubkey -subject -modulus -text \
-		-nameopt multiline -reqopt compatible \
-		-out $sv_gost_csr.verify.out
-	check_exit_status $?
-
 	#---------#---------#---------#---------#---------#---------#---------
 
 	# --- CA operations (issue cert for server) ---
@@ -921,13 +887,6 @@ __EOF__
 	sv_ecdsa_cert=$server_dir/sv_ecdsa_cert.pem
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
 		-in $sv_ecdsa_csr -out $sv_ecdsa_cert > $sv_ecdsa_cert.log 2>&1
-	check_exit_status $?
-
-	start_message "ca ... issue cert for server csr#4"
-
-	sv_gost_cert=$server_dir/sv_gost_cert.pem
-	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $sv_gost_csr -out $sv_gost_cert > $sv_gost_cert.log 2>&1
 	check_exit_status $?
 
 	#---------#---------#---------#---------#---------#---------#---------
@@ -1084,27 +1043,6 @@ __EOF__
 		-out $cl_ecdsa_csr -outform pem
 	check_exit_status $?
 
-	start_message "req ... generate private key and csr for user3"
-
-	cl_gost_key=$user1_dir/cl_gost_key.pem
-	cl_gost_csr=$user1_dir/cl_gost_csr.pem
-	cl_gost_pass=test-user1-pass
-
-	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user3.test-dummy.com/'
-	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user3.test-dummy.com\'
-	fi
-
-	$openssl_bin genpkey -algorithm GOST2001 -pkeyopt paramset:A \
-		-pkeyopt dgst:streebog512 -out $cl_gost_key
-	check_exit_status $?
-
-	$openssl_bin req -new -subj $subj -streebog512 \
-		-key $cl_gost_key -keyform pem -passin pass:$cl_gost_pass \
-		-out $cl_gost_csr -outform pem
-	check_exit_status $?
-
 	#---------#---------#---------#---------#---------#---------#---------
 
 	# --- CA operations (issue cert for user1) ---
@@ -1122,13 +1060,6 @@ __EOF__
 	cl_ecdsa_cert=$user1_dir/cl_ecdsa_cert.pem
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
 		-in $cl_ecdsa_csr -out $cl_ecdsa_cert > $cl_ecdsa_cert.log 2>&1
-	check_exit_status $?
-
-	start_message "ca ... issue cert for user3"
-
-	cl_gost_cert=$user1_dir/cl_gost_cert.pem
-	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $cl_gost_csr -out $cl_gost_cert > $cl_gost_cert.log 2>&1
 	check_exit_status $?
 }
 
@@ -1530,10 +1461,6 @@ function test_sc_by_protocol_version {
 	msg=$3
 	cid=$4
 
-	if [ $gost_tests = 1 ] && [ $ver = "tls1_3" -o $sc != 00 ] ; then
-		return
-	fi
-
 	groups_and_cipher=""
 	if [ $ver = "tls1_3" ] ; then
 		# Expect HelloRetryRequest
@@ -1596,10 +1523,6 @@ function test_sc_all_cipher {
 	sc=$1
 	ver=$2
 
-	if [ $gost_tests = 1 ] && [ $ver = "tls1_3" -o $sc != 00 ] ; then
-		return
-	fi
-
 	copt=cipher
 	ciphers=$user1_dir/ciphers_${sc}_${ver}
 
@@ -1616,8 +1539,6 @@ function test_sc_all_cipher {
 		if [ $s_id = "0" ] ; then
 			if [ $ecdsa_tests = 1 ] ; then
 				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
-			elif [ $gost_tests = 1 ] ; then
-				cipher_string="kGOST:!NULL:!TLSv1.3"
 			else
 				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
 			fi
@@ -1629,8 +1550,6 @@ function test_sc_all_cipher {
 		if [ $c_id = "0" ] ; then
 			if [ $ecdsa_tests = 1 ] ; then
 				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
-			elif [ $gost_tests = 1 ] ; then
-				cipher_string="kGOST:!NULL:!TLSv1.3"
 			else
 				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
 			fi
@@ -1664,10 +1583,6 @@ function test_sc_all_cipher {
 function test_sc_session_reuse {
 	sc=$1
 	ver=$2
-
-	if [ $gost_tests = 1 ] && [ $ver = "tls1_3" -o $sc != 00 ] ; then
-		return
-	fi
 
 	sess_dat=$user1_dir/s_client_${sc}_${ver}_sess.dat
 
@@ -1716,10 +1631,6 @@ function test_sc_verify {
 	sc=$1
 	ver=$2
 
-	if [ $gost_tests = 1 ] && [ $ver = "tls1_3" -o $sc != 00 ] ; then
-		return
-	fi
-
 	# invalid verification pattern
 
 	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_invalid.out
@@ -1750,11 +1661,6 @@ function test_sc_verify {
 		crt=$cl_ecdsa_cert
 		key=$cl_ecdsa_key
 		pwd=$cl_ecdsa_pass
-	elif [ $gost_tests = 1 ] ; then
-		echo "Using GOST client certificate"
-		crt=$cl_gost_cert
-		key=$cl_gost_key
-		pwd=$cl_gost_pass
 	else
 		echo "Using RSA client certificate"
 		crt=$cl_rsa_cert
@@ -1806,11 +1712,6 @@ function test_server_client {
 		crt=$sv_ecdsa_cert
 		key=$sv_ecdsa_key
 		pwd=$sv_ecdsa_pass
-	elif [ $gost_tests = 1 ] ; then
-		echo "Using GOST certificate"
-		crt=$sv_gost_cert
-		key=$sv_gost_key
-		pwd=$sv_gost_pass
 	else
 		echo "Using RSA certificate"
 		crt=$sv_rsa_cert
@@ -1845,14 +1746,6 @@ function test_server_client {
 	# invalid verification pattern
 	test_sc_verify $sc tls1_2
 	test_sc_verify $sc tls1_3
-
-	# s_time
-	if [ $gost_tests != 1 ] ; then
-		start_message "s_time ... connect to TLS/SSL test server"
-		$c_bin s_time -connect $host:$port -CApath $ca_dir -time 1 \
-			> $server_dir/s_time_${sc}.log
-		check_exit_status $?
-	fi
 
 	stop_s_server
 }
@@ -1891,11 +1784,6 @@ function test_server_client_dtls {
 		crt=$sv_ecdsa_cert
 		key=$sv_ecdsa_key
 		pwd=$sv_ecdsa_pass
-	elif [ $gost_tests = 1 ] ; then
-		echo "Using GOST certificate"
-		crt=$sv_gost_cert
-		key=$sv_gost_key
-		pwd=$sv_gost_pass
 	else
 		echo "Using RSA certificate"
 		crt=$sv_rsa_cert
@@ -1949,11 +1837,6 @@ function test_gnutls {
 		crt=$sv_ecdsa_cert
 		key=$sv_ecdsa_key
 		sni=ecdsa.test-dummy.com
-	elif [ $gost_tests = 1 ] ; then
-		echo "Using GOST certificate"
-		crt=$sv_gost_cert
-		key=$sv_gost_key
-		sni=gost.test-dummy.com
 	else
 		echo "Using RSA certificate"
 		crt=$sv_rsa_cert
@@ -2036,7 +1919,6 @@ other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl11}
 other_openssl_version=`$other_openssl_bin version | cut -b 1-10`
 
 ecdsa_tests=0
-gost_tests=0
 interop_tests=0
 gnutls_tests=0
 no_long_tests=0
@@ -2045,10 +1927,8 @@ while [ "$1" != "" ]; do
 	case $1 in
 		-e | --ecdsa)		shift
 					ecdsa_tests=1
-					gost_tests=0
 					;;
 		-g | --gost)		shift
-					gost_tests=1
 					ecdsa_tests=0
 					;;
 		-i | --interop)		shift
