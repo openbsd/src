@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.48 2024/03/02 11:37:13 tb Exp $ */
+/* $OpenBSD: crypto_local.h,v 1.1 2024/03/02 11:37:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,273 +114,25 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#include <pthread.h>
-#include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <string.h>
-#include <syslog.h>
-#include <unistd.h>
+#include <stdlib.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/crypto.h>
+#ifndef HEADER_CRYPTO_LOCAL_H
+#define HEADER_CRYPTO_LOCAL_H
 
-#include "crypto_local.h"
+__BEGIN_HIDDEN_DECLS
 
-static void (*locking_callback)(int mode, int type,
-    const char *file, int line) = NULL;
-static int (*add_lock_callback)(int *pointer, int amount,
-    int type, const char *file, int line) = NULL;
+struct crypto_threadid_st {
+	void *ptr;
+	unsigned long val;
+} /* CRYPTO_THREADID */;
 
-int
-CRYPTO_num_locks(void)
-{
-	return 1;
-}
+void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
+int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
+void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
+unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
 
-unsigned long
-(*CRYPTO_get_id_callback(void))(void)
-{
-	return NULL;
-}
+__END_HIDDEN_DECLS
 
-void
-CRYPTO_set_id_callback(unsigned long (*func)(void))
-{
-	return;
-}
-
-unsigned long
-CRYPTO_thread_id(void)
-{
-	return (unsigned long)pthread_self();
-}
-
-void
-CRYPTO_set_locking_callback(void (*func)(int mode, int lock_num,
-    const char *file, int line))
-{
-	locking_callback = func;
-}
-
-void
-(*CRYPTO_get_locking_callback(void))(int mode, int lock_num,
-	const char *file, int line)
-{
-	return locking_callback;
-}
-
-void
-CRYPTO_set_add_lock_callback(int (*func)(int *num, int mount, int lock_num,
-	const char *file, int line))
-{
-	add_lock_callback = func;
-}
-
-int
-(*CRYPTO_get_add_lock_callback(void))(int *num, int mount, int type,
-    const char *file, int line)
-{
-	return add_lock_callback;
-}
-
-const char *
-CRYPTO_get_lock_name(int lock_num)
-{
-	return "";
-}
-
-struct CRYPTO_dynlock_value *
-CRYPTO_get_dynlock_value(int i)
-{
-	return NULL;
-}
-
-int CRYPTO_get_new_dynlockid(void)
-{
-	return 0;
-}
-
-void
-CRYPTO_destroy_dynlockid(int i)
-{
-	return;
-}
-
-int CRYPTO_get_new_lockid(char *name)
-{
-	return 0;
-}
-
-int
-CRYPTO_THREADID_set_callback(void (*func)(CRYPTO_THREADID *))
-{
-	return 1;
-}
-
-void
-(*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *)
-{
-	return NULL;
-}
-
-void
-CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val)
-{
-	return;
-}
-
-void
-CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
-{
-	return;
-}
-
-void
-CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *(
-    *dyn_create_function)(const char *file, int line))
-{
-	return;
-}
-
-void
-CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)(
-    int mode, struct CRYPTO_dynlock_value *l, const char *file, int line))
-{
-	return;
-}
-
-void
-CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)(
-    struct CRYPTO_dynlock_value *l, const char *file, int line))
-{
-	return;
-}
-
-struct CRYPTO_dynlock_value *
-(*CRYPTO_get_dynlock_create_callback(void))(
-    const char *file, int line)
-{
-	return NULL;
-}
-
-void
-(*CRYPTO_get_dynlock_lock_callback(void))(int mode,
-    struct CRYPTO_dynlock_value *l, const char *file, int line)
-{
-	return NULL;
-}
-
-void
-(*CRYPTO_get_dynlock_destroy_callback(void))(
-    struct CRYPTO_dynlock_value *l, const char *file, int line)
-{
-	return NULL;
-}
-
-void
-CRYPTO_THREADID_current(CRYPTO_THREADID *id)
-{
-	memset(id, 0, sizeof(*id));
-	id->val = (unsigned long)pthread_self();
-}
-LCRYPTO_ALIAS(CRYPTO_THREADID_current);
-
-int
-CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b)
-{
-	return memcmp(a, b, sizeof(*a));
-}
-LCRYPTO_ALIAS(CRYPTO_THREADID_cmp);
-
-void
-CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src)
-{
-	memcpy(dest, src, sizeof(*src));
-}
-LCRYPTO_ALIAS(CRYPTO_THREADID_cpy);
-
-unsigned long
-CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
-{
-	return id->val;
-}
-LCRYPTO_ALIAS(CRYPTO_THREADID_hash);
-
-#if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
-	defined(__INTEL__) || \
-	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-
-uint64_t OPENSSL_ia32cap_P;
-
-uint64_t
-OPENSSL_cpu_caps(void)
-{
-	return OPENSSL_ia32cap_P;
-}
-LCRYPTO_ALIAS(OPENSSL_cpu_caps);
-
-#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM)
-#define OPENSSL_CPUID_SETUP
-void
-OPENSSL_cpuid_setup(void)
-{
-	static int trigger = 0;
-	uint64_t OPENSSL_ia32_cpuid(void);
-
-	if (trigger)
-		return;
-	trigger = 1;
-	OPENSSL_ia32cap_P = OPENSSL_ia32_cpuid();
-}
 #endif
-
-#else
-uint64_t
-OPENSSL_cpu_caps(void)
-{
-	return 0;
-}
-LCRYPTO_ALIAS(OPENSSL_cpu_caps);
-#endif
-
-#if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
-void
-OPENSSL_cpuid_setup(void)
-{
-}
-#endif
-
-static void
-OPENSSL_showfatal(const char *fmta, ...)
-{
-	struct syslog_data sdata = SYSLOG_DATA_INIT;
-	va_list ap;
-
-	va_start(ap, fmta);
-	vsyslog_r(LOG_CONS|LOG_LOCAL2, &sdata, fmta, ap);
-	va_end(ap);
-}
-
-void
-OpenSSLDie(const char *file, int line, const char *assertion)
-{
-	OPENSSL_showfatal(
-	    "uid %u cmd %s %s(%d): OpenSSL internal error, assertion failed: %s\n",
-	    getuid(), getprogname(), file, line, assertion);
-	_exit(1);
-}
-LCRYPTO_ALIAS(OpenSSLDie);
-
-int
-CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)
-{
-	size_t i;
-	const unsigned char *a = in_a;
-	const unsigned char *b = in_b;
-	unsigned char x = 0;
-
-	for (i = 0; i < len; i++)
-		x |= a[i] ^ b[i];
-
-	return x;
-}

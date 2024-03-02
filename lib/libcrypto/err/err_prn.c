@@ -1,4 +1,4 @@
-/* $OpenBSD: err_prn.c,v 1.22 2024/01/10 14:23:37 tb Exp $ */
+/* $OpenBSD: err_prn.c,v 1.23 2024/03/02 11:37:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,7 @@
 #include <openssl/lhash.h>
 
 #include "bio_local.h"
+#include "crypto_local.h"
 
 void
 ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u), void *u)

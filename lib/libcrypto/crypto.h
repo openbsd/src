@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.68 2024/03/02 11:35:09 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.69 2024/03/02 11:37:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -313,14 +313,7 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
     int line);
 
 /* Don't use this structure directly. */
-typedef struct crypto_threadid_st {
-	void *ptr;
-	unsigned long val;
-} CRYPTO_THREADID;
-void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
-int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
-void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
-unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
+typedef struct crypto_threadid_st CRYPTO_THREADID;
 
 #ifndef LIBRESSL_INTERNAL
 /* These functions are deprecated no-op stubs */
