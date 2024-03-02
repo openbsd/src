@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.235 2024/03/02 11:45:51 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.236 2024/03/02 11:48:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1496,7 +1496,6 @@ int SSL_set_session_ticket_ext_cb(SSL *s,
 int SSL_set_session_secret_cb(SSL *s,
     tls_session_secret_cb_fn tls_session_secret_cb, void *arg);
 
-void SSL_set_debug(SSL *s, int debug);
 int SSL_cache_hit(SSL *s);
 
 /* What the "other" parameter contains in security callback */

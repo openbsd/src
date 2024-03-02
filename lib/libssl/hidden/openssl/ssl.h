@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.5 2024/03/02 11:45:51 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.6 2024/03/02 11:48:55 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -358,7 +358,6 @@ LSSL_USED(SSL_COMP_add_compression_method);
 LSSL_USED(SSL_set_session_ticket_ext);
 LSSL_USED(SSL_set_session_ticket_ext_cb);
 LSSL_USED(SSL_set_session_secret_cb);
-LSSL_USED(SSL_set_debug);
 LSSL_USED(SSL_cache_hit);
 LSSL_USED(SSL_set_security_level);
 LSSL_USED(SSL_get_security_level);

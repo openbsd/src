@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.320 2024/02/04 20:50:23 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.321 2024/03/02 11:48:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3474,13 +3474,6 @@ SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version,
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_MSG_CALLBACK, (void (*)(void))cb);
 }
 LSSL_ALIAS(SSL_set_msg_callback);
-
-void
-SSL_set_debug(SSL *s, int debug)
-{
-	SSLerror(s, ERR_R_DISABLED);
-}
-LSSL_ALIAS(SSL_set_debug);
 
 int
 SSL_cache_hit(SSL *s)
