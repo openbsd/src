@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.87 2024/03/02 08:57:42 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.88 2024/03/02 09:00:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -504,19 +504,6 @@ typedef struct BIT_STRING_BITNAME_st {
 			B_ASN1_VISIBLESTRING| \
 			B_ASN1_BMPSTRING|\
 			B_ASN1_UTF8STRING
-
-#ifndef LIBRESSL_INTERNAL
-#define M_ASN1_IA5STRING_new ASN1_IA5STRING_new
-
-#define M_ASN1_INTEGER_free ASN1_INTEGER_free
-#define M_ASN1_ENUMERATED_free ASN1_ENUMERATED_free
-#define M_ASN1_OCTET_STRING_free ASN1_OCTET_STRING_free
-
-#define M_ASN1_OCTET_STRING_print ASN1_STRING_print
-
-#define M_ASN1_STRING_data ASN1_STRING_data
-#define M_ASN1_STRING_length ASN1_STRING_length
-#endif
 
 ASN1_TYPE *ASN1_TYPE_new(void);
 void ASN1_TYPE_free(ASN1_TYPE *a);
