@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.70 2024/03/02 11:39:11 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.71 2024/03/02 11:40:53 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -240,7 +240,7 @@ typedef struct {
 typedef struct bio_st BIO_dummy;
 
 struct crypto_ex_data_st {
-	STACK_OF(void) *sk;
+	void *sk;
 };
 DECLARE_STACK_OF(void)
 
