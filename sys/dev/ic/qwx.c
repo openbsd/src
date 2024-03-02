@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.56 2024/03/02 15:06:20 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.57 2024/03/02 15:18:57 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -151,6 +151,7 @@ int qwx_dp_tx_send_reo_cmd(struct qwx_softc *, struct dp_rx_tid *,
     enum hal_reo_cmd_type , struct ath11k_hal_reo_cmd *,
     void (*func)(struct qwx_dp *, void *, enum hal_reo_cmd_status));
 void qwx_dp_rx_deliver_msdu(struct qwx_softc *, struct qwx_rx_msdu *);
+void qwx_dp_service_mon_ring(void *);
 
 int qwx_scan(struct qwx_softc *);
 void qwx_scan_abort(struct qwx_softc *);
@@ -271,6 +272,8 @@ qwx_stop(struct ifnet *ifp)
 	int s = splnet();
 
 	rw_assert_wrlock(&sc->ioctl_rwl);
+
+	timeout_del(&sc->mon_reap_timer);
 
 	/* Disallow new tasks. */
 	set_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
@@ -14130,11 +14133,7 @@ qwx_dp_rx_pdev_srng_alloc(struct qwx_softc *sc)
 	 * init reap timer for QCA6390.
 	 */
 	if (!sc->hw_params.rxdma1_enable) {
-#if 0
-		//init mon status buffer reap timer
-		timer_setup(&ar->ab->mon_reap_timer,
-			    ath11k_dp_service_mon_ring, 0);
-#endif
+		timeout_set(&sc->mon_reap_timer, qwx_dp_service_mon_ring, sc);
 		return 0;
 	}
 #if 0
@@ -14834,6 +14833,8 @@ void
 qwx_dp_pdev_free(struct qwx_softc *sc)
 {
 	int i;
+
+	timeout_del(&sc->mon_reap_timer);
 
 	for (i = 0; i < sc->num_radios; i++)
 		qwx_dp_rx_pdev_free(sc, i);
@@ -16541,7 +16542,6 @@ qwx_dp_rx_process_mon_status(struct qwx_softc *sc, int mac_id)
 	struct hal_rx_mon_ppdu_info *ppdu_info = &pmon->mon_ppdu_info;
 
 	num_buffs_reaped = qwx_dp_rx_reap_mon_status_ring(sc, mac_id, &ml);
-	printf("%s: processing %d packets\n", __func__, num_buffs_reaped);
 	if (!num_buffs_reaped)
 		goto exit;
 
@@ -16627,6 +16627,18 @@ qwx_dp_rx_process_mon_rings(struct qwx_softc *sc, int mac_id)
 		ret = qwx_dp_rx_process_mon_status(sc, mac_id);
 
 	return ret;
+}
+
+void
+qwx_dp_service_mon_ring(void *arg)
+{
+	struct qwx_softc *sc = arg;
+	int i;
+
+	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++)
+		qwx_dp_rx_process_mon_rings(sc, i);
+
+	timeout_add(&sc->mon_reap_timer, ATH11K_MON_TIMER_INTERVAL);
 }
 
 int
@@ -21747,7 +21759,7 @@ qwx_mac_config_mon_status_default(struct qwx_softc *sc, int enable)
 
 	if (enable)
 		tlv_filter = qwx_mac_mon_status_filter_default;
-#if 0
+#if 0 /* mon status info is not useful and the code triggers mbuf corruption */
 	for (i = 0; i < sc->hw_params.num_rxmda_per_pdev; i++) {
 		ring = &sc->pdev_dp.rx_mon_status_refill_ring[i];
 		ret = qwx_dp_tx_htt_rx_filter_setup(sc,
@@ -21756,11 +21768,11 @@ qwx_mac_config_mon_status_default(struct qwx_softc *sc, int enable)
 		if (ret)
 			return ret;
 	}
-#endif
-#if 0
-	if (enable && !ar->ab->hw_params.rxdma1_enable)
-		mod_timer(&ar->ab->mon_reap_timer, jiffies +
-			  msecs_to_jiffies(ATH11K_MON_TIMER_INTERVAL));
+
+	if (enable && !sc->hw_params.rxdma1_enable) {
+		timeout_add_msec(&sc->mon_reap_timer,
+		    ATH11K_MON_TIMER_INTERVAL);
+	}
 #endif
 	return ret;
 }
