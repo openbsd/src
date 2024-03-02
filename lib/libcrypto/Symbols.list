@@ -3400,7 +3400,6 @@ sk_delete
 sk_delete_ptr
 sk_dup
 sk_find
-sk_find_ex
 sk_free
 sk_insert
 sk_is_sorted

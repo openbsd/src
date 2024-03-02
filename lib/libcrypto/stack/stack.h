@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.h,v 1.10 2024/03/02 11:11:11 tb Exp $ */
+/* $OpenBSD: stack.h,v 1.11 2024/03/02 11:20:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,7 +81,6 @@ int sk_insert(_STACK *sk, void *data, int where);
 void *sk_delete(_STACK *st, int loc);
 void *sk_delete_ptr(_STACK *st, void *p);
 int sk_find(_STACK *st, void *data);
-int sk_find_ex(_STACK *st, void *data);
 int sk_push(_STACK *st, void *data);
 int sk_unshift(_STACK *st, void *data);
 void *sk_shift(_STACK *st);

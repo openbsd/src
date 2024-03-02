@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.27 2024/03/02 11:11:11 tb Exp $ */
+/* $OpenBSD: stack.c,v 1.28 2024/03/02 11:20:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -264,13 +264,6 @@ sk_find(_STACK *st, void *data)
 	return internal_find(st, data, OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
 }
 LCRYPTO_ALIAS(sk_find);
-
-int
-sk_find_ex(_STACK *st, void *data)
-{
-	return internal_find(st, data, OBJ_BSEARCH_VALUE_ON_NOMATCH);
-}
-LCRYPTO_ALIAS(sk_find_ex);
 
 int
 sk_push(_STACK *st, void *data)

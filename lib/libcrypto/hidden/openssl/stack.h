@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.h,v 1.2 2023/07/05 21:14:54 bcook Exp $ */
+/* $OpenBSD: stack.h,v 1.3 2024/03/02 11:20:36 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -36,7 +36,6 @@ LCRYPTO_USED(sk_insert);
 LCRYPTO_USED(sk_delete);
 LCRYPTO_USED(sk_delete_ptr);
 LCRYPTO_USED(sk_find);
-LCRYPTO_USED(sk_find_ex);
 LCRYPTO_USED(sk_push);
 LCRYPTO_USED(sk_unshift);
 LCRYPTO_USED(sk_shift);

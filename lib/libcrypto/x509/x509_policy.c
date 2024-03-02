@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.26 2024/03/02 11:11:11 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.27 2024/03/02 11:20:36 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -103,7 +103,6 @@ DECLARE_STACK_OF(X509_POLICY_NODE)
 #define sk_X509_POLICY_NODE_push(st, val) SKM_sk_push(X509_POLICY_NODE, (st), (val))
 #define sk_X509_POLICY_NODE_unshift(st, val) SKM_sk_unshift(X509_POLICY_NODE, (st), (val))
 #define sk_X509_POLICY_NODE_find(st, val) SKM_sk_find(X509_POLICY_NODE, (st), (val))
-#define sk_X509_POLICY_NODE_find_ex(st, val) SKM_sk_find_ex(X509_POLICY_NODE, (st), (val))
 #define sk_X509_POLICY_NODE_delete(st, i) SKM_sk_delete(X509_POLICY_NODE, (st), (i))
 #define sk_X509_POLICY_NODE_delete_ptr(st, ptr) SKM_sk_delete_ptr(X509_POLICY_NODE, (st), (ptr))
 #define sk_X509_POLICY_NODE_insert(st, val, i) SKM_sk_insert(X509_POLICY_NODE, (st), (val), (i))
@@ -146,7 +145,6 @@ DECLARE_STACK_OF(X509_POLICY_LEVEL)
 #define sk_X509_POLICY_LEVEL_push(st, val) SKM_sk_push(X509_POLICY_LEVEL, (st), (val))
 #define sk_X509_POLICY_LEVEL_unshift(st, val) SKM_sk_unshift(X509_POLICY_LEVEL, (st), (val))
 #define sk_X509_POLICY_LEVEL_find(st, val) SKM_sk_find(X509_POLICY_LEVEL, (st), (val))
-#define sk_X509_POLICY_LEVEL_find_ex(st, val) SKM_sk_find_ex(X509_POLICY_LEVEL, (st), (val))
 #define sk_X509_POLICY_LEVEL_delete(st, i) SKM_sk_delete(X509_POLICY_LEVEL, (st), (i))
 #define sk_X509_POLICY_LEVEL_delete_ptr(st, ptr) SKM_sk_delete_ptr(X509_POLICY_LEVEL, (st), (ptr))
 #define sk_X509_POLICY_LEVEL_insert(st, val, i) SKM_sk_insert(X509_POLICY_LEVEL, (st), (val), (i))

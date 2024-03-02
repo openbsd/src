@@ -18,7 +18,6 @@ _libre_sk_insert
 _libre_sk_delete
 _libre_sk_delete_ptr
 _libre_sk_find
-_libre_sk_find_ex
 _libre_sk_push
 _libre_sk_unshift
 _libre_sk_shift
