@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.69 2024/03/02 11:37:13 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.70 2024/03/02 11:39:11 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -379,8 +379,6 @@ void OpenSSLDie(const char *file, int line, const char *assertion);
 #define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(__FILE__, __LINE__, #e),1))
 
 uint64_t OPENSSL_cpu_caps(void);
-
-int OPENSSL_isservice(void);
 
 #ifndef LIBRESSL_INTERNAL
 int FIPS_mode(void);
