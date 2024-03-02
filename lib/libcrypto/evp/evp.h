@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.125 2024/03/02 09:59:56 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.126 2024/03/02 10:03:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -933,53 +933,11 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
     const char *str, int len);
-int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth);
-int EVP_PKEY_asn1_add_alias(int to, int from);
 int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id, int *ppkey_flags,
     const char **pinfo, const char **ppem_str,
     const EVP_PKEY_ASN1_METHOD *ameth);
 
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_get0_asn1(const EVP_PKEY *pkey);
-EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags, const char *pem_str,
-    const char *info);
-void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
-    const EVP_PKEY_ASN1_METHOD *src);
-void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth);
-void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*pub_decode)(EVP_PKEY *pk, X509_PUBKEY *pub),
-    int (*pub_encode)(X509_PUBKEY *pub, const EVP_PKEY *pk),
-    int (*pub_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),
-    int (*pub_print)(BIO *out, const EVP_PKEY *pkey, int indent,
-    ASN1_PCTX *pctx),
-    int (*pkey_size)(const EVP_PKEY *pk),
-    int (*pkey_bits)(const EVP_PKEY *pk));
-void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*priv_decode)(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf),
-    int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk),
-    int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
-    ASN1_PCTX *pctx));
-void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*param_decode)(EVP_PKEY *pkey, const unsigned char **pder, int derlen),
-    int (*param_encode)(const EVP_PKEY *pkey, unsigned char **pder),
-    int (*param_missing)(const EVP_PKEY *pk),
-    int (*param_copy)(EVP_PKEY *to, const EVP_PKEY *from),
-    int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),
-    int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
-    ASN1_PCTX *pctx));
-
-void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
-    void (*pkey_free)(EVP_PKEY *pkey));
-void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2));
-void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*pkey_security_bits)(const EVP_PKEY *pkey));
-
-void EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*pkey_check)(const EVP_PKEY *pk));
-void EVP_PKEY_asn1_set_public_check(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*pkey_public_check)(const EVP_PKEY *pk));
-void EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
-    int (*pkey_check)(const EVP_PKEY *pk));
 
 #define EVP_PKEY_OP_UNDEFINED		0
 #define EVP_PKEY_OP_PARAMGEN		(1<<1)

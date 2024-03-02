@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.168 2024/02/18 16:28:37 tb Exp $
+# $OpenBSD: Makefile,v 1.169 2024/03/02 10:03:12 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -96,7 +96,6 @@ SRCS+= a_time_posix.c
 SRCS+= a_time_tm.c
 SRCS+= a_type.c
 SRCS+= a_utf8.c
-SRCS+= ameth_lib.c
 SRCS+= asn1_err.c
 SRCS+= asn1_gen.c
 SRCS+= asn1_item.c
