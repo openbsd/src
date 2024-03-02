@@ -1867,9 +1867,6 @@ _libre_CRYPTO_set_mem_debug_functions
 _libre_CRYPTO_realloc_clean
 _libre_CRYPTO_remalloc
 _libre_CRYPTO_set_mem_debug_options
-_libre_CRYPTO_push_info_
-_libre_CRYPTO_pop_info
-_libre_CRYPTO_remove_all_info
 _libre_OpenSSLDie
 _libre_OPENSSL_cpu_caps
 _libre_OPENSSL_init_crypto

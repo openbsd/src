@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.66 2024/03/02 11:28:46 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.67 2024/03/02 11:32:31 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -372,12 +372,6 @@ void CRYPTO_free(void *ptr);
 #ifndef LIBRESSL_INTERNAL
 void OPENSSL_cleanse(void *ptr, size_t len);
 #endif
-
-#define CRYPTO_push_info(info) \
-        CRYPTO_push_info_(info, NULL, 0);
-int CRYPTO_push_info_(const char *info, const char *file, int line);
-int CRYPTO_pop_info(void);
-int CRYPTO_remove_all_info(void);
 
 /*
  * Because this is a public header, use a portable method of indicating the

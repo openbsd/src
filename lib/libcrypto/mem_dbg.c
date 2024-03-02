@@ -1,4 +1,4 @@
-/* $OpenBSD: mem_dbg.c,v 1.26 2024/03/02 11:28:46 tb Exp $ */
+/* $OpenBSD: mem_dbg.c,v 1.27 2024/03/02 11:32:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,35 +109,10 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <openssl/crypto.h>
-#include <openssl/bio.h>
-#include <openssl/lhash.h>
 
 int
 CRYPTO_mem_ctrl(int mode)
 {
 	return (CRYPTO_MEM_CHECK_OFF);
 }
-
-int
-CRYPTO_push_info_(const char *info, const char *file, int line)
-{
-	return (0);
-}
-LCRYPTO_ALIAS(CRYPTO_push_info_);
-
-int
-CRYPTO_pop_info(void)
-{
-	return (0);
-}
-LCRYPTO_ALIAS(CRYPTO_pop_info);
-
-int
-CRYPTO_remove_all_info(void)
-{
-	return (0);
-}
-LCRYPTO_ALIAS(CRYPTO_remove_all_info);

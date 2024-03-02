@@ -687,9 +687,6 @@ CRYPTO_ofb128_encrypt
 CRYPTO_poly1305_finish
 CRYPTO_poly1305_init
 CRYPTO_poly1305_update
-CRYPTO_pop_info
-CRYPTO_push_info_
-CRYPTO_remove_all_info
 CRYPTO_set_add_lock_callback
 CRYPTO_set_dynlock_create_callback
 CRYPTO_set_dynlock_destroy_callback

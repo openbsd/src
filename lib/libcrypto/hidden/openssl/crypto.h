@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.4 2024/03/02 11:28:46 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.5 2024/03/02 11:32:31 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -44,9 +44,6 @@ LCRYPTO_USED(CRYPTO_THREADID_cpy);
 LCRYPTO_USED(CRYPTO_THREADID_hash);
 LCRYPTO_USED(CRYPTO_set_mem_functions);
 LCRYPTO_USED(CRYPTO_set_mem_ex_functions);
-LCRYPTO_USED(CRYPTO_push_info_);
-LCRYPTO_USED(CRYPTO_pop_info);
-LCRYPTO_USED(CRYPTO_remove_all_info);
 LCRYPTO_USED(OpenSSLDie);
 LCRYPTO_USED(OPENSSL_cpu_caps);
 LCRYPTO_USED(OPENSSL_init_crypto);
