@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.39 2024/03/02 09:24:59 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.40 2024/03/02 09:27:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -307,6 +307,12 @@ int BN_div_ct(BIGNUM *q, BIGNUM *r, const BIGNUM *n, const BIGNUM *d,
     BN_CTX *ctx);
 int BN_mod_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
 int BN_mod_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
+
+int BN_mod_exp_mont_word(BIGNUM *r, BN_ULONG a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int BN_mod_exp2_mont(BIGNUM *r, const BIGNUM *a1, const BIGNUM *p1,
+    const BIGNUM *a2, const BIGNUM *p2, const BIGNUM *m,
+    BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx);

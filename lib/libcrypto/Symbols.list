@@ -407,10 +407,8 @@ BN_mask_bits
 BN_mod_add
 BN_mod_add_quick
 BN_mod_exp
-BN_mod_exp2_mont
 BN_mod_exp_mont
 BN_mod_exp_mont_consttime
-BN_mod_exp_mont_word
 BN_mod_inverse
 BN_mod_lshift
 BN_mod_lshift1

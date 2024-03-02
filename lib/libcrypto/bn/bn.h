@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.76 2024/03/02 09:24:59 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.77 2024/03/02 09:27:31 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -391,11 +391,6 @@ int	BN_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 #endif
 int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont);
-int	BN_mod_exp_mont_word(BIGNUM *r, BN_ULONG a, const BIGNUM *p,
-    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-int	BN_mod_exp2_mont(BIGNUM *r, const BIGNUM *a1, const BIGNUM *p1,
-    const BIGNUM *a2, const BIGNUM *p2, const BIGNUM *m,
-    BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
 int	BN_mask_bits(BIGNUM *a, int n);
 int	BN_print_fp(FILE *fp, const BIGNUM *a);

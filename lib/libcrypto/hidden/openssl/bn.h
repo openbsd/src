@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.5 2024/03/02 09:24:59 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.6 2024/03/02 09:27:31 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -97,8 +97,6 @@ LCRYPTO_USED(BN_lshift);
 LCRYPTO_USED(BN_lshift1);
 LCRYPTO_USED(BN_exp);
 LCRYPTO_USED(BN_mod_exp_mont_consttime);
-LCRYPTO_USED(BN_mod_exp_mont_word);
-LCRYPTO_USED(BN_mod_exp2_mont);
 LCRYPTO_USED(BN_mask_bits);
 LCRYPTO_USED(BN_print_fp);
 LCRYPTO_USED(BN_print);

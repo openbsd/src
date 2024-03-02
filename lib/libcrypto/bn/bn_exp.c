@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.51 2024/03/02 09:24:59 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.52 2024/03/02 09:27:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -961,7 +961,6 @@ err:
 	BN_CTX_end(ctx);
 	return (ret);
 }
-LCRYPTO_ALIAS(BN_mod_exp_mont_word);
 
 int
 BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
@@ -1353,4 +1352,3 @@ err:
 	BN_CTX_end(ctx);
 	return (ret);
 }
-LCRYPTO_ALIAS(BN_mod_exp2_mont);

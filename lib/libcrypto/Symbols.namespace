@@ -2221,8 +2221,6 @@ _libre_BN_lshift
 _libre_BN_lshift1
 _libre_BN_exp
 _libre_BN_mod_exp_mont_consttime
-_libre_BN_mod_exp_mont_word
-_libre_BN_mod_exp2_mont
 _libre_BN_mask_bits
 _libre_BN_print_fp
 _libre_BN_print
