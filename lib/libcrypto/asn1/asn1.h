@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.86 2024/03/02 08:55:38 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.87 2024/03/02 08:57:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -216,17 +216,6 @@ typedef struct asn1_string_table_st {
 	unsigned long mask;
 	unsigned long flags;
 } ASN1_STRING_TABLE;
-
-/* size limits: this stuff is taken straight from RFC2459 */
-/* XXX - unused macros. A more complete version is in a_strnid.c. Remove? */
-#define ub_name				32768
-#define ub_common_name			64
-#define ub_locality_name		128
-#define ub_state_name			128
-#define ub_organization_name		64
-#define ub_organization_unit_name	64
-#define ub_title			64
-#define ub_email_address		128
 
 /* Declarations for template structures: for full definitions
  * see asn1t.h
