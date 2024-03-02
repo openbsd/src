@@ -1269,11 +1269,6 @@ EVP_MD_size
 EVP_MD_type
 EVP_OpenFinal
 EVP_OpenInit
-EVP_PBE_CipherInit
-EVP_PBE_alg_add
-EVP_PBE_alg_add_type
-EVP_PBE_cleanup
-EVP_PBE_find
 EVP_PKCS82PKEY
 EVP_PKEY2PKCS8
 EVP_PKEY_CTX_ctrl
@@ -2007,7 +2002,6 @@ PKCS12_unpack_p7data
 PKCS12_unpack_p7encdata
 PKCS12_verify_mac
 PKCS1_MGF1
-PKCS5_PBE_add
 PKCS5_PBE_keyivgen
 PKCS5_PBKDF2_HMAC
 PKCS5_PBKDF2_HMAC_SHA1

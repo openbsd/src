@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.42 2024/02/18 15:45:42 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.43 2024/03/02 10:06:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -640,41 +640,3 @@ PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	return ret;
 }
 LCRYPTO_ALIAS(PKCS12_PBE_keyivgen);
-
-/*
- * XXX - remove the functions below in the next major bump
- */
-
-int
-EVP_PBE_find(int type, int pbe_nid, int *out_cipher_nid, int *out_md_nid,
-    EVP_PBE_KEYGEN **out_keygen)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-
-int
-EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
-    EVP_PBE_KEYGEN *keygen)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-
-int
-EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
-    EVP_PBE_KEYGEN *keygen)
-{
-	EVPerror(ERR_R_DISABLED);
-	return 0;
-}
-
-void
-EVP_PBE_cleanup(void)
-{
-}
-
-void
-PKCS5_PBE_add(void)
-{
-}

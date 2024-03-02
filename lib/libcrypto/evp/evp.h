@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.127 2024/03/02 10:04:40 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.128 2024/03/02 10:06:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -896,26 +896,6 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
 int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md,
     int en_de);
-
-void PKCS5_PBE_add(void);
-
-int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
-    ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de);
-
-/* PBE type */
-
-/* Can appear as the outermost AlgorithmIdentifier */
-#define EVP_PBE_TYPE_OUTER	0x0
-/* Is an PRF type OID */
-#define EVP_PBE_TYPE_PRF	0x1
-
-int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
-    EVP_PBE_KEYGEN *keygen);
-int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
-    EVP_PBE_KEYGEN *keygen);
-int EVP_PBE_find(int type, int pbe_nid, int *pcnid, int *pmnid,
-    EVP_PBE_KEYGEN **pkeygen);
-void EVP_PBE_cleanup(void);
 
 #define ASN1_PKEY_ALIAS		0x1
 #define ASN1_PKEY_DYNAMIC	0x2

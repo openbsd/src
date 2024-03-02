@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.16 2024/02/18 15:43:21 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.17 2024/03/02 10:06:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -372,6 +372,9 @@ struct evp_aead_ctx_st {
 	/* aead_state is an opaque pointer to the AEAD specific state. */
 	void *aead_state;
 };
+
+int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
+    ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de);
 
 int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str);
 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex);
