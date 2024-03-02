@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.27 2024/03/02 10:40:05 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.28 2024/03/02 10:41:46 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -422,15 +422,7 @@ struct ISSUING_DIST_POINT_st {
 #define X509_PURPOSE_DYNAMIC	0x1
 #define X509_PURPOSE_DYNAMIC_NAME	0x2
 
-typedef struct x509_purpose_st {
-	int purpose;
-	int trust;		/* Default trust ID */
-	int flags;
-	int (*check_purpose)(const struct x509_purpose_st *, const X509 *, int);
-	char *name;
-	char *sname;
-	void *usr_data;
-} X509_PURPOSE;
+typedef struct x509_purpose_st X509_PURPOSE;
 
 #define X509_PURPOSE_SSL_CLIENT		1
 #define X509_PURPOSE_SSL_SERVER		2
