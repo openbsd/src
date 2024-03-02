@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.109 2024/03/02 10:50:26 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.110 2024/03/02 10:52:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -148,8 +148,6 @@ DECLARE_STACK_OF(X509_ATTRIBUTE)
 typedef struct X509_req_info_st X509_REQ_INFO;
 
 typedef struct X509_req_st X509_REQ;
-
-typedef struct x509_cert_aux_st X509_CERT_AUX;
 
 typedef struct x509_cinf_st X509_CINF;
 
@@ -626,11 +624,6 @@ void X509_free(X509 *a);
 X509 *d2i_X509(X509 **a, const unsigned char **in, long len);
 int i2d_X509(X509 *a, unsigned char **out);
 extern const ASN1_ITEM X509_it;
-X509_CERT_AUX *X509_CERT_AUX_new(void);
-void X509_CERT_AUX_free(X509_CERT_AUX *a);
-X509_CERT_AUX *d2i_X509_CERT_AUX(X509_CERT_AUX **a, const unsigned char **in, long len);
-int i2d_X509_CERT_AUX(X509_CERT_AUX *a, unsigned char **out);
-extern const ASN1_ITEM X509_CERT_AUX_it;
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
@@ -828,7 +821,6 @@ int		X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
 int		X509_print_ex(BIO *bp,X509 *x, unsigned long nmflag, unsigned long cflag);
 int		X509_print(BIO *bp,X509 *x);
 int		X509_ocspid_print(BIO *bp,X509 *x);
-int		X509_CERT_AUX_print(BIO *bp,X509_CERT_AUX *x, int indent);
 int		X509_CRL_print(BIO *bp,X509_CRL *x);
 int		X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflag, unsigned long cflag);
 int		X509_REQ_print(BIO *bp,X509_REQ *req);

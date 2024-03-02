@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.21 2024/03/02 10:40:05 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.22 2024/03/02 10:52:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -135,13 +135,20 @@ struct X509_req_st {
  * useful in certificate stores and databases. When used this is tagged onto
  * the end of the certificate itself.
  */
-struct x509_cert_aux_st {
+typedef struct x509_cert_aux_st {
 	STACK_OF(ASN1_OBJECT) *trust;		/* trusted uses */
 	STACK_OF(ASN1_OBJECT) *reject;		/* rejected uses */
 	ASN1_UTF8STRING *alias;			/* "friendly name" */
 	ASN1_OCTET_STRING *keyid;		/* key id of private key */
 	STACK_OF(X509_ALGOR) *other;		/* other unspecified info */
-} /* X509_CERT_AUX */;
+} X509_CERT_AUX;
+
+X509_CERT_AUX *X509_CERT_AUX_new(void);
+void X509_CERT_AUX_free(X509_CERT_AUX *a);
+X509_CERT_AUX *d2i_X509_CERT_AUX(X509_CERT_AUX **a, const unsigned char **in, long len);
+int i2d_X509_CERT_AUX(X509_CERT_AUX *a, unsigned char **out);
+extern const ASN1_ITEM X509_CERT_AUX_it;
+int X509_CERT_AUX_print(BIO *bp,X509_CERT_AUX *x, int indent);
 
 struct x509_cinf_st {
 	ASN1_INTEGER *version;		/* [ 0 ] default of v1 */
