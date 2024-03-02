@@ -1025,7 +1025,6 @@ _libre_ASN1_TIME_normalize
 _libre_ASN1_TIME_set_string_X509
 _libre_ASN1_TIME_diff
 _libre_ASN1_TIME_set
-_libre_ASN1_TIME_set_tm
 _libre_ASN1_TIME_adj
 _libre_ASN1_TIME_check
 _libre_ASN1_TIME_to_generalizedtime
@@ -1103,8 +1102,6 @@ _libre_ASN1_item_print
 _libre_SMIME_crlf_copy
 _libre_SMIME_text
 _libre_ERR_load_ASN1_strings
-_libre_ASN1_time_parse
-_libre_ASN1_time_tm_cmp
 _libre_BIO_set_flags
 _libre_BIO_test_flags
 _libre_BIO_clear_flags

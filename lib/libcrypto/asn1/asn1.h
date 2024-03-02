@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.90 2024/03/02 09:04:07 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.91 2024/03/02 09:08:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -684,7 +684,6 @@ int ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from,
 extern const ASN1_ITEM ASN1_OCTET_STRING_NDEF_it;
 
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t);
-ASN1_TIME *ASN1_TIME_set_tm(ASN1_TIME *s, struct tm *tm);
 ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t, int offset_day,
     long offset_sec);
 int ASN1_TIME_check(const ASN1_TIME *t);
@@ -1125,8 +1124,6 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_WRONG_TAG				 168
 #define ASN1_R_WRONG_TYPE				 169
 
-int ASN1_time_parse(const char *_bytes, size_t _len, struct tm *_tm, int _mode);
-int ASN1_time_tm_cmp(struct tm *_tm1, struct tm *_tm2);
 #ifdef  __cplusplus
 }
 #endif

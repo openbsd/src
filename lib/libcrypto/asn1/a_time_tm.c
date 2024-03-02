@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.31 2023/10/01 22:14:36 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.32 2024/03/02 09:08:41 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -60,7 +60,6 @@ ASN1_time_tm_cmp(struct tm *tm1, struct tm *tm2)
 		return (1);
 	return 0;
 }
-LCRYPTO_ALIAS(ASN1_time_tm_cmp);
 
 int
 ASN1_time_tm_clamp_notafter(struct tm *tm)
@@ -345,7 +344,6 @@ ASN1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 
 	return -1;
 }
-LCRYPTO_ALIAS(ASN1_time_parse);
 
 /*
  * ASN1_TIME generic functions.
@@ -417,7 +415,6 @@ ASN1_TIME_set_tm(ASN1_TIME *s, struct tm *tm)
 		return NULL;
 	return (ASN1_TIME_adj(s, t, 0, 0));
 }
-LCRYPTO_ALIAS(ASN1_TIME_set_tm);
 
 ASN1_TIME *
 ASN1_TIME_adj(ASN1_TIME *s, time_t t, int offset_day, long offset_sec)
