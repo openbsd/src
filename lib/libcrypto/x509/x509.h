@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.110 2024/03/02 10:52:24 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.111 2024/03/02 10:59:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -355,18 +355,6 @@ int X509_REQ_get_signature_nid(const X509_REQ *req);
 
 void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg);
-
-void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
-X509_CRL_METHOD *X509_CRL_METHOD_new(
-	int (*crl_init)(X509_CRL *crl),
-	int (*crl_free)(X509_CRL *crl),
-	int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret,
-				ASN1_INTEGER *ser, X509_NAME *issuer),
-	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk));
-void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
-
-void X509_CRL_set_meth_data(X509_CRL *crl, void *dat);
-void *X509_CRL_get_meth_data(X509_CRL *crl);
 
 X509_PUBKEY	*X509_get_X509_PUBKEY(const X509 *x);
 

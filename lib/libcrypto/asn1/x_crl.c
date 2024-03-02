@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.42 2024/01/06 17:37:23 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.43 2024/03/02 10:59:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -601,39 +601,6 @@ X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 {
 	return crl_lookup(crl, ret, X509_get_serialNumber(x),
 	    X509_get_issuer_name(x));
-}
-
-void
-X509_CRL_set_default_method(const X509_CRL_METHOD *meth)
-{
-}
-
-X509_CRL_METHOD *
-X509_CRL_METHOD_new(int (*crl_init)(X509_CRL *crl),
-    int (*crl_free)(X509_CRL *crl),
-    int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret,
-    ASN1_INTEGER *ser, X509_NAME *issuer),
-    int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk))
-{
-	X509error(ERR_R_DISABLED);
-	return NULL;
-}
-
-void
-X509_CRL_METHOD_free(X509_CRL_METHOD *m)
-{
-}
-
-void
-X509_CRL_set_meth_data(X509_CRL *crl, void *dat)
-{
-}
-
-void *
-X509_CRL_get_meth_data(X509_CRL *crl)
-{
-	X509error(ERR_R_DISABLED);
-	return NULL;
 }
 
 int

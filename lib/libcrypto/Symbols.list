@@ -2556,8 +2556,6 @@ X509_CINF_new
 X509_CRL_INFO_free
 X509_CRL_INFO_it
 X509_CRL_INFO_new
-X509_CRL_METHOD_free
-X509_CRL_METHOD_new
 X509_CRL_add0_revoked
 X509_CRL_add1_ext_i2d
 X509_CRL_add_ext
@@ -2582,7 +2580,6 @@ X509_CRL_get_ext_count
 X509_CRL_get_ext_d2i
 X509_CRL_get_issuer
 X509_CRL_get_lastUpdate
-X509_CRL_get_meth_data
 X509_CRL_get_nextUpdate
 X509_CRL_get_signature_nid
 X509_CRL_get_version
@@ -2593,10 +2590,8 @@ X509_CRL_print
 X509_CRL_print_fp
 X509_CRL_set1_lastUpdate
 X509_CRL_set1_nextUpdate
-X509_CRL_set_default_method
 X509_CRL_set_issuer_name
 X509_CRL_set_lastUpdate
-X509_CRL_set_meth_data
 X509_CRL_set_nextUpdate
 X509_CRL_set_version
 X509_CRL_sign
