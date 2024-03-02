@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.234 2024/03/02 11:44:47 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.235 2024/03/02 11:45:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1122,8 +1122,6 @@ int	SSL_clear(SSL *s);
 void	SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
 
 const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
-const SSL_CIPHER *SSL_CIPHER_get_by_id(unsigned int id);
-const SSL_CIPHER *SSL_CIPHER_get_by_value(uint16_t value);
 int	SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits);
 const char *	SSL_CIPHER_get_version(const SSL_CIPHER *c);
 const char *	SSL_CIPHER_get_name(const SSL_CIPHER *c);

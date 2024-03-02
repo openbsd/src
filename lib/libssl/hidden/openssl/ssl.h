@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.4 2023/07/28 09:53:55 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.5 2024/03/02 11:45:51 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -111,8 +111,6 @@ LSSL_USED(SSL_want);
 LSSL_USED(SSL_clear);
 LSSL_USED(SSL_CTX_flush_sessions);
 LSSL_USED(SSL_get_current_cipher);
-LSSL_USED(SSL_CIPHER_get_by_id);
-LSSL_USED(SSL_CIPHER_get_by_value);
 LSSL_USED(SSL_CIPHER_get_bits);
 LSSL_USED(SSL_CIPHER_get_version);
 LSSL_USED(SSL_CIPHER_get_name);
