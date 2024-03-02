@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.h,v 1.1 2023/07/08 14:27:14 beck Exp $ */
+/* $OpenBSD: cmac.h,v 1.2 2024/03/02 09:30:21 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -33,6 +33,5 @@ LCRYPTO_USED(CMAC_CTX_copy);
 LCRYPTO_USED(CMAC_Init);
 LCRYPTO_USED(CMAC_Update);
 LCRYPTO_USED(CMAC_Final);
-LCRYPTO_USED(CMAC_resume);
 
 #endif /* _LIBCRYPTO_CMAC_H */

@@ -2433,7 +2433,6 @@ _libre_CMAC_CTX_copy
 _libre_CMAC_Init
 _libre_CMAC_Update
 _libre_CMAC_Final
-_libre_CMAC_resume
 _libre_d2i_DSAparams_bio
 _libre_i2d_DSAparams_bio
 _libre_d2i_DSAparams_fp

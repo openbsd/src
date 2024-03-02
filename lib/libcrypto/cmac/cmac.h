@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.h,v 1.3 2014/06/21 13:42:14 jsing Exp $ */
+/* $OpenBSD: cmac.h,v 1.4 2024/03/02 09:30:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -74,7 +74,6 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
     const EVP_CIPHER *cipher, ENGINE *impl);
 int CMAC_Update(CMAC_CTX *ctx, const void *data, size_t dlen);
 int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen);
-int CMAC_resume(CMAC_CTX *ctx);
 
 #ifdef  __cplusplus
 }

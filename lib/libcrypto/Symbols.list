@@ -478,7 +478,6 @@ CMAC_CTX_new
 CMAC_Final
 CMAC_Init
 CMAC_Update
-CMAC_resume
 CMS_ContentInfo_free
 CMS_ContentInfo_it
 CMS_ContentInfo_new

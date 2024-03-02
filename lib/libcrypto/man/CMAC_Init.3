@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMAC_Init.3,v 1.5 2023/12/25 15:52:18 schwarze Exp $
+.\" $OpenBSD: CMAC_Init.3,v 1.6 2024/03/02 09:30:21 tb Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 25 2023 $
+.Dd $Mdocdate: March 2 2024 $
 .Dt CMAC_INIT 3
 .Os
 .Sh NAME
@@ -22,7 +22,6 @@
 .Nm CMAC_Init ,
 .Nm CMAC_Update ,
 .Nm CMAC_Final ,
-.Nm CMAC_resume ,
 .Nm CMAC_CTX_copy ,
 .Nm CMAC_CTX_get0_cipher_ctx ,
 .Nm CMAC_CTX_cleanup ,
@@ -51,13 +50,6 @@
 .Fa "CMAC_CTX *ctx"
 .Fa "unsigned char *out_mac"
 .Fa "size_t *out_len"
-.Fc
-.Ft int
-.Fn CMAC_resume "CMAC_CTX *ctx"
-.Ft int
-.Fo CMAC_CTX_copy
-.Fa "CMAC_CTX *out_ctx"
-.Fa "CMAC_CTX *in_ctx"
 .Fc
 .Ft EVP_CIPHER_CTX *
 .Fn CMAC_CTX_get0_cipher_ctx "CMAC_CTX *ctx"
@@ -183,19 +175,6 @@ resulting message authentication code to
 .Fa out_mac .
 The caller is responsible for providing a buffer of sufficient size.
 .Pp
-Calling
-.Fn CMAC_resume
-after
-.Fn CMAC_Final
-allows the user to subsequently append additional data with
-.Fn CMAC_Update .
-Otherwise, unless
-.Fn CMAC_Init
-is called to start from scratch,
-.Fn CMAC_Update
-can no longer be used after
-.Fn CMAC_Final .
-.Pp
 .Fn CMAC_CTX_copy
 performs a deep copy of the already initialized
 .Fa in_ctx
@@ -235,7 +214,6 @@ It succeeds unless memory is exhausted.
 .Fn CMAC_Init ,
 .Fn CMAC_Update ,
 .Fn CMAC_Final ,
-.Fn CMAC_resume ,
 and
 .Fn CMAC_CTX_copy
 return 1 on success or 0 on failure.
