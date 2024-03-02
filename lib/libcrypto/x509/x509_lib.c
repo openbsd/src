@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.16 2024/01/25 15:09:22 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.17 2024/03/02 10:35:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -333,37 +333,3 @@ err:
 	return 0;
 }
 LCRYPTO_ALIAS(X509V3_add1_i2d);
-
-/*
- * XXX - remove all the functions below in the next major bump.
- */
-
-int
-X509V3_EXT_add(X509V3_EXT_METHOD *ext)
-{
-	X509V3error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509V3_EXT_add);
-
-int
-X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
-{
-	X509V3error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509V3_EXT_add_list);
-
-int
-X509V3_EXT_add_alias(int nid_to, int nid_from)
-{
-	X509V3error(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(X509V3_EXT_add_alias);
-
-void
-X509V3_EXT_cleanup(void)
-{
-}
-LCRYPTO_ALIAS(X509V3_EXT_cleanup);

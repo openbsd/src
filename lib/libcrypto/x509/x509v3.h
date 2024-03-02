@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.25 2023/06/25 18:15:21 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.26 2024/03/02 10:35:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -692,10 +692,6 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *meth, const char *value);
 char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *meth, const ASN1_ENUMERATED *aint);
 char *i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *meth,
     const ASN1_ENUMERATED *aint);
-int X509V3_EXT_add(X509V3_EXT_METHOD *ext);
-int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist);
-int X509V3_EXT_add_alias(int nid_to, int nid_from);
-void X509V3_EXT_cleanup(void);
 
 const X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
 const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
