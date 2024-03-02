@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.130 2024/03/02 10:13:13 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.131 2024/03/02 10:20:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -870,17 +870,12 @@ int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
 /* PKCS5 password based encryption */
-int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-    ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md, int en_de);
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
     const unsigned char *salt, int saltlen, int iter, int keylen,
     unsigned char *out);
 int PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
     int saltlen, int iter, const EVP_MD *digest, int keylen,
     unsigned char *out);
-int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-    ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md,
-    int en_de);
 
 #define ASN1_PKEY_ALIAS		0x1
 #define ASN1_PKEY_DYNAMIC	0x2

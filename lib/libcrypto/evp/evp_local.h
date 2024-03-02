@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.18 2024/03/02 10:08:29 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.19 2024/03/02 10:20:27 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -339,9 +339,6 @@ struct evp_pkey_method_st {
 } /* EVP_PKEY_METHOD */;
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
-
-int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-    ASN1_TYPE *param, const EVP_CIPHER *c, const EVP_MD *md, int en_de);
 
 /* EVP_AEAD represents a specific AEAD algorithm. */
 struct evp_aead_st {

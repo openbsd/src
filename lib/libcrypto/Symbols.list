@@ -1952,15 +1952,8 @@ PKCS12_unpack_p7data
 PKCS12_unpack_p7encdata
 PKCS12_verify_mac
 PKCS1_MGF1
-PKCS5_PBE_keyivgen
 PKCS5_PBKDF2_HMAC
 PKCS5_PBKDF2_HMAC_SHA1
-PKCS5_pbe2_set
-PKCS5_pbe2_set_iv
-PKCS5_pbe_set
-PKCS5_pbe_set0_algor
-PKCS5_pbkdf2_set
-PKCS5_v2_PBE_keyivgen
 PKCS7_ATTR_SIGN_it
 PKCS7_ATTR_VERIFY_it
 PKCS7_DIGEST_free

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.104 2024/03/02 10:17:37 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.105 2024/03/02 10:20:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1017,20 +1017,6 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk,X509_NAME *name,
 X509 *X509_find_by_subject(STACK_OF(X509) *sk,X509_NAME *name);
 
 extern const ASN1_ITEM PBEPARAM_it;
-
-int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
-				const unsigned char *salt, int saltlen);
-
-X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
-				const unsigned char *salt, int saltlen);
-X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
-					 unsigned char *salt, int saltlen);
-X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
-				 unsigned char *salt, int saltlen,
-				 unsigned char *aiv, int prf_nid);
-
-X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
-				int prf_nid, int keylen);
 
 /* PKCS#8 utilities */
 
