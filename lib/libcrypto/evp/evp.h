@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.121 2024/02/18 15:47:48 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.122 2024/03/02 09:36:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -812,9 +812,6 @@ void OpenSSL_add_all_digests(void);
 #define SSLeay_add_all_algorithms() OpenSSL_add_all_algorithms()
 #define SSLeay_add_all_ciphers() OpenSSL_add_all_ciphers()
 #define SSLeay_add_all_digests() OpenSSL_add_all_digests()
-
-int EVP_add_cipher(const EVP_CIPHER *cipher);
-int EVP_add_digest(const EVP_MD *digest);
 
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
 const EVP_MD *EVP_get_digestbyname(const char *name);

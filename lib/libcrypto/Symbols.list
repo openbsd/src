@@ -1425,8 +1425,6 @@ EVP_SealFinal
 EVP_SealInit
 EVP_SignFinal
 EVP_VerifyFinal
-EVP_add_cipher
-EVP_add_digest
 EVP_aead_aes_128_gcm
 EVP_aead_aes_256_gcm
 EVP_aead_chacha20_poly1305
