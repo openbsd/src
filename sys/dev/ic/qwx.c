@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.54 2024/02/29 11:45:47 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.55 2024/03/02 15:04:27 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -13899,8 +13899,8 @@ qwx_peer_unmap_event(struct qwx_softc *sc, uint16_t peer_id)
 		goto exit;
 	}
 
-	DPRINTF(QWX_D_HTT, "%s: peer unmap vdev %d peer %s id %d\n",
-	    __func__, peer->vdev_id, ether_sprintf(ni->ni_macaddr), peer_id);
+	DNPRINTF(QWX_D_HTT, "%s: peer unmap peer %s id %d\n",
+	    __func__, ether_sprintf(ni->ni_macaddr), peer_id);
 #if 0
 	list_del(&peer->list);
 	kfree(peer);
@@ -24527,7 +24527,7 @@ qwx_deauth(struct qwx_softc *sc)
 		return ret;
 
 	DNPRINTF(QWX_D_MAC, "%s: disassociated from bssid %s aid %d\n",
-	    __func__, arvif->vdev_id, ether_sprintf(ni->ni_bssid), arvif->aid);
+	    __func__, ether_sprintf(ni->ni_bssid), arvif->aid);
 
 	return 0;
 }
