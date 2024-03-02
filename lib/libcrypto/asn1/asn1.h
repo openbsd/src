@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.89 2024/03/02 09:02:04 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.90 2024/03/02 09:04:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -866,18 +866,6 @@ ASN1_TYPE *ASN1_generate_v3(const char *str, X509V3_CTX *cnf);
 
 int ASN1_item_print(BIO *out, ASN1_VALUE *ifld, int indent,
     const ASN1_ITEM *it, const ASN1_PCTX *pctx);
-ASN1_PCTX *ASN1_PCTX_new(void);
-void ASN1_PCTX_free(ASN1_PCTX *p);
-unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p);
-void ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p);
-void ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p);
-void ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p);
-void ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags);
-unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p);
-void ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags);
 
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
 int SMIME_text(BIO *in, BIO *out);

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.10 2024/03/02 09:02:04 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.11 2024/03/02 09:04:07 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -229,18 +229,6 @@ LCRYPTO_USED(ASN1_item_i2d);
 LCRYPTO_USED(ASN1_generate_nconf);
 LCRYPTO_USED(ASN1_generate_v3);
 LCRYPTO_USED(ASN1_item_print);
-LCRYPTO_USED(ASN1_PCTX_new);
-LCRYPTO_USED(ASN1_PCTX_free);
-LCRYPTO_USED(ASN1_PCTX_get_flags);
-LCRYPTO_USED(ASN1_PCTX_set_flags);
-LCRYPTO_USED(ASN1_PCTX_get_nm_flags);
-LCRYPTO_USED(ASN1_PCTX_set_nm_flags);
-LCRYPTO_USED(ASN1_PCTX_get_cert_flags);
-LCRYPTO_USED(ASN1_PCTX_set_cert_flags);
-LCRYPTO_USED(ASN1_PCTX_get_oid_flags);
-LCRYPTO_USED(ASN1_PCTX_set_oid_flags);
-LCRYPTO_USED(ASN1_PCTX_get_str_flags);
-LCRYPTO_USED(ASN1_PCTX_set_str_flags);
 LCRYPTO_USED(SMIME_crlf_copy);
 LCRYPTO_USED(SMIME_text);
 LCRYPTO_USED(ERR_load_ASN1_strings);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.26 2023/12/20 14:26:47 tb Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.27 2024/03/02 09:04:07 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -75,99 +75,6 @@
 static const ASN1_PCTX default_pctx = {
 	.flags = ASN1_PCTX_FLAGS_SHOW_ABSENT,
 };
-
-ASN1_PCTX *
-ASN1_PCTX_new(void)
-{
-	ASN1_PCTX *p;
-
-	if ((p = calloc(1, sizeof(ASN1_PCTX))) == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-
-	return p;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_new);
-
-void
-ASN1_PCTX_free(ASN1_PCTX *p)
-{
-	free(p);
-}
-LCRYPTO_ALIAS(ASN1_PCTX_free);
-
-unsigned long
-ASN1_PCTX_get_flags(const ASN1_PCTX *p)
-{
-	return p->flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_get_flags);
-
-void
-ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags)
-{
-	p->flags = flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_set_flags);
-
-unsigned long
-ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p)
-{
-	return p->nm_flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_get_nm_flags);
-
-void
-ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags)
-{
-	p->nm_flags = flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_set_nm_flags);
-
-unsigned long
-ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p)
-{
-	return p->cert_flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_get_cert_flags);
-
-void
-ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags)
-{
-	p->cert_flags = flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_set_cert_flags);
-
-unsigned long
-ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p)
-{
-	return p->oid_flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_get_oid_flags);
-
-void
-ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags)
-{
-	p->oid_flags = flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_set_oid_flags);
-
-unsigned long
-ASN1_PCTX_get_str_flags(const ASN1_PCTX *p)
-{
-	return p->str_flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_get_str_flags);
-
-void
-ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags)
-{
-	p->str_flags = flags;
-}
-LCRYPTO_ALIAS(ASN1_PCTX_set_str_flags);
-
-/* Main print routines */
 
 static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
     const ASN1_ITEM *it, const char *fname, const char *sname, int nohdr,
