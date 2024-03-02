@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.103 2023/11/02 20:25:48 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.104 2024/03/02 10:17:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -328,27 +328,10 @@ typedef struct Netscape_spki_st {
 	ASN1_BIT_STRING *signature;
 } NETSCAPE_SPKI;
 
-/* Password based encryption structure */
-
 typedef struct PBEPARAM_st {
 	ASN1_OCTET_STRING *salt;
 	ASN1_INTEGER *iter;
 } PBEPARAM;
-
-/* Password based encryption V2 structures */
-
-typedef struct PBE2PARAM_st {
-	X509_ALGOR *keyfunc;
-	X509_ALGOR *encryption;
-} PBE2PARAM;
-
-typedef struct PBKDF2PARAM_st {
-	/* Usually OCTET STRING but could be anything */
-	ASN1_TYPE *salt;
-	ASN1_INTEGER *iter;
-	ASN1_INTEGER *keylength;
-	X509_ALGOR *prf;
-} PBKDF2PARAM;
 
 #ifdef  __cplusplus
 }
@@ -1033,21 +1016,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk,X509_NAME *name,
 				     ASN1_INTEGER *serial);
 X509 *X509_find_by_subject(STACK_OF(X509) *sk,X509_NAME *name);
 
-PBEPARAM *PBEPARAM_new(void);
-void PBEPARAM_free(PBEPARAM *a);
-PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, const unsigned char **in, long len);
-int i2d_PBEPARAM(PBEPARAM *a, unsigned char **out);
 extern const ASN1_ITEM PBEPARAM_it;
-PBE2PARAM *PBE2PARAM_new(void);
-void PBE2PARAM_free(PBE2PARAM *a);
-PBE2PARAM *d2i_PBE2PARAM(PBE2PARAM **a, const unsigned char **in, long len);
-int i2d_PBE2PARAM(PBE2PARAM *a, unsigned char **out);
-extern const ASN1_ITEM PBE2PARAM_it;
-PBKDF2PARAM *PBKDF2PARAM_new(void);
-void PBKDF2PARAM_free(PBKDF2PARAM *a);
-PBKDF2PARAM *d2i_PBKDF2PARAM(PBKDF2PARAM **a, const unsigned char **in, long len);
-int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **out);
-extern const ASN1_ITEM PBKDF2PARAM_it;
 
 int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 				const unsigned char *salt, int saltlen);

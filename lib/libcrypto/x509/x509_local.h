@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.18 2024/01/06 17:37:23 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.19 2024/03/02 10:17:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -359,6 +359,37 @@ int X509_ALGOR_set0_by_nid(X509_ALGOR *alg, int nid, int parameter_type,
 int X509_policy_check(const STACK_OF(X509) *certs,
     const STACK_OF(ASN1_OBJECT) *user_policies, unsigned long flags,
     X509 **out_current_cert);
+
+PBEPARAM *PBEPARAM_new(void);
+void PBEPARAM_free(PBEPARAM *a);
+PBEPARAM *d2i_PBEPARAM(PBEPARAM **a, const unsigned char **in, long len);
+int i2d_PBEPARAM(PBEPARAM *a, unsigned char **out);
+
+/* Password based encryption V2 structures */
+typedef struct PBE2PARAM_st {
+	X509_ALGOR *keyfunc;
+	X509_ALGOR *encryption;
+} PBE2PARAM;
+
+PBE2PARAM *PBE2PARAM_new(void);
+void PBE2PARAM_free(PBE2PARAM *a);
+PBE2PARAM *d2i_PBE2PARAM(PBE2PARAM **a, const unsigned char **in, long len);
+int i2d_PBE2PARAM(PBE2PARAM *a, unsigned char **out);
+extern const ASN1_ITEM PBE2PARAM_it;
+
+typedef struct PBKDF2PARAM_st {
+	/* Usually OCTET STRING but could be anything */
+	ASN1_TYPE *salt;
+	ASN1_INTEGER *iter;
+	ASN1_INTEGER *keylength;
+	X509_ALGOR *prf;
+} PBKDF2PARAM;
+
+PBKDF2PARAM *PBKDF2PARAM_new(void);
+void PBKDF2PARAM_free(PBKDF2PARAM *a);
+PBKDF2PARAM *d2i_PBKDF2PARAM(PBKDF2PARAM **a, const unsigned char **in, long len);
+int i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **out);
+extern const ASN1_ITEM PBKDF2PARAM_it;
 
 __END_HIDDEN_DECLS
 
