@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.10 2024/03/02 09:41:02 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.11 2024/03/02 09:43:10 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -1787,7 +1787,7 @@ OBJ_NAME_from_cipher_name(OBJ_NAME *obj_name, const struct cipher_name *cipher)
 		obj_name->data = cipher->alias;
 	} else {
 		obj_name->alias = 0;
-		obj_name->data = (const char *)evp_cipher;
+		obj_name->data = evp_cipher;
 	}
 
 	return 1;
@@ -1822,7 +1822,7 @@ OBJ_NAME_from_digest_name(OBJ_NAME *obj_name, const struct digest_name *digest)
 		obj_name->data = digest->alias;
 	} else {
 		obj_name->alias = 0;
-		obj_name->data = (const char *)evp_md;
+		obj_name->data = evp_md;
 	}
 
 	return 1;
