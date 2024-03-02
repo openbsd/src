@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.28 2024/03/02 09:50:47 tb Exp $ */
+/* $OpenBSD: objects.h,v 1.29 2024/03/02 09:51:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,8 +85,6 @@ typedef struct obj_name_st {
 	const char *name;
 	const void *data;
 } OBJ_NAME;
-
-#define		OBJ_create_and_add_object(a,b,c) OBJ_create(a,b,c)
 
 void OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *arg),
     void *arg);
