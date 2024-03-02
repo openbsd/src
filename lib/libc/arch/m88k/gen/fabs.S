@@ -1,4 +1,4 @@
-/* $OpenBSD: fabs.S,v 1.12 2024/03/02 12:02:42 miod Exp $ */
+/* $OpenBSD: fabs.S,v 1.13 2024/03/02 16:51:00 miod Exp $ */
 /*-
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -37,12 +37,6 @@
 
 STRONG_ALIAS(fabsl, fabs)
 ENTRY(fabs)
-	subu	%r31,%r31,16
-	st.d	%r2,%r31,0
-	ld.bu	%r4,%r31,0
-	mask	%r4,%r4,0x7f	/* set sign bit to 0 */
-	st.b	%r4,%r31,0
-	ld.d	%r2,%r31,0
 	jmp.n	%r1
-	 addu	%r31,%r31,16
+	 and.u	%r2, %r2, 0x7fff	/* set sign bit to 0 */
 END(fabs)
