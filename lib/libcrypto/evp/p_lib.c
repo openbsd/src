@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.58 2024/01/05 21:22:01 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.59 2024/03/02 11:17:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,10 +140,6 @@ extern const EVP_PKEY_ASN1_METHOD dsa3_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dsa4_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD gostimit_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD gostr01_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD gostr12_256_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD gostr12_512_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa2_asn1_meth;
@@ -160,10 +156,6 @@ static const EVP_PKEY_ASN1_METHOD *asn1_methods[] = {
 	&dsa4_asn1_meth,
 	&eckey_asn1_meth,
 	&ed25519_asn1_meth,
-	&gostimit_asn1_meth,
-	&gostr01_asn1_meth,
-	&gostr12_256_asn1_meth,
-	&gostr12_512_asn1_meth,
 	&hmac_asn1_meth,
 	&rsa_asn1_meth,
 	&rsa2_asn1_meth,

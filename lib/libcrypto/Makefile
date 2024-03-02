@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.172 2024/03/02 11:11:11 tb Exp $
+# $OpenBSD: Makefile,v 1.173 2024/03/02 11:17:27 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -357,7 +357,6 @@ SRCS+= e_chacha.c
 SRCS+= e_chacha20poly1305.c
 SRCS+= e_des.c
 SRCS+= e_des3.c
-SRCS+= e_gost2814789.c
 SRCS+= e_idea.c
 SRCS+= e_null.c
 SRCS+= e_rc2.c
@@ -373,8 +372,6 @@ SRCS+= evp_key.c
 SRCS+= evp_names.c
 SRCS+= evp_pbe.c
 SRCS+= evp_pkey.c
-SRCS+= m_gost2814789.c
-SRCS+= m_gostr341194.c
 SRCS+= m_md4.c
 SRCS+= m_md5.c
 SRCS+= m_md5_sha1.c
@@ -393,22 +390,6 @@ SRCS+= p_verify.c
 SRCS+= pmeth_fn.c
 SRCS+= pmeth_gn.c
 SRCS+= pmeth_lib.c
-
-# gost/
-SRCS+= gost2814789.c
-SRCS+= gost89_keywrap.c
-SRCS+= gost89_params.c
-SRCS+= gost89imit_ameth.c
-SRCS+= gost89imit_pmeth.c
-SRCS+= gost_asn1.c
-SRCS+= gost_err.c
-SRCS+= gostr341001.c
-SRCS+= gostr341001_ameth.c
-SRCS+= gostr341001_key.c
-SRCS+= gostr341001_params.c
-SRCS+= gostr341001_pmeth.c
-SRCS+= gostr341194.c
-SRCS+= streebog.c
 
 # hkdf/
 SRCS+= hkdf.c
@@ -728,7 +709,6 @@ HDRS=\
 	${LCRYPTO_SRC}/engine/engine.h \
 	${LCRYPTO_SRC}/err/err.h \
 	${LCRYPTO_SRC}/evp/evp.h \
-	${LCRYPTO_SRC}/gost/gost.h \
 	${LCRYPTO_SRC}/hkdf/hkdf.h \
 	${LCRYPTO_SRC}/hmac/hmac.h \
 	${LCRYPTO_SRC}/idea/idea.h \
