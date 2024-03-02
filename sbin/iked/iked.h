@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.229 2024/02/15 20:10:45 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.230 2024/03/02 16:16:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -656,6 +656,7 @@ struct iked_message {
 	struct iked_addr	*msg_cp_addr;	/* requested address */
 	struct iked_addr	*msg_cp_addr6;	/* requested address */
 	struct iked_addr	*msg_cp_dns;	/* requested dns */
+	uint16_t		 msg_frag_num;
 
 	/* MOBIKE */
 	int			 msg_update_sa_addresses;
@@ -1130,7 +1131,7 @@ struct iked_socket *
 int	 ikev2_msg_enqueue(struct iked *, struct iked_msgqueue *,
 	    struct iked_message *, int);
 int	 ikev2_msg_retransmit_response(struct iked *, struct iked_sa *,
-	    struct iked_message *, uint8_t);
+	    struct iked_message *, struct ike_header *);
 void	 ikev2_msg_prevail(struct iked *, struct iked_msgqueue *,
 	    struct iked_message *);
 void	 ikev2_msg_dispose(struct iked *, struct iked_msgqueue *,
@@ -1142,6 +1143,8 @@ struct iked_msg_retransmit *
 
 /* ikev2_pld.c */
 int	 ikev2_pld_parse(struct iked *, struct ike_header *,
+	    struct iked_message *, size_t);
+int	 ikev2_pld_parse_quick(struct iked *, struct ike_header *,
 	    struct iked_message *, size_t);
 
 /* eap.c */

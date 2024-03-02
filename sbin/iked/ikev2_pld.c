@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.133 2023/09/02 18:36:30 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.134 2024/03/02 16:16:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2099,6 +2099,82 @@ ikev2_pld_eap(struct iked *env, struct ikev2_payload *pld,
 		if (eap_parse(env, sa, msg, eap, msg->msg_response) == -1)
 			return (-1);
 		msg->msg_parent->msg_eap.eam_found = 1;
+	}
+
+	return (0);
+}
+
+/* parser for the initial IKE_AUTH payload, does not require msg_sa */
+int
+ikev2_pld_parse_quick(struct iked *env, struct ike_header *hdr,
+    struct iked_message *msg, size_t offset)
+{
+	struct ikev2_payload	 pld;
+	struct ikev2_frag_payload frag;
+	uint8_t			*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t			*buf;
+	size_t			 len, total, left;
+	size_t			 length;
+	unsigned int		 payload;
+
+	log_debug("%s: header ispi %s rspi %s"
+	    " nextpayload %s version 0x%02x exchange %s flags 0x%02x"
+	    " msgid %d length %u response %d", __func__,
+	    print_spi(betoh64(hdr->ike_ispi), 8),
+	    print_spi(betoh64(hdr->ike_rspi), 8),
+	    print_map(hdr->ike_nextpayload, ikev2_payload_map),
+	    hdr->ike_version,
+	    print_map(hdr->ike_exchange, ikev2_exchange_map),
+	    hdr->ike_flags,
+	    betoh32(hdr->ike_msgid),
+	    betoh32(hdr->ike_length),
+	    msg->msg_response);
+
+	length = betoh32(hdr->ike_length);
+
+	if (ibuf_size(msg->msg_data) < length) {
+		log_debug("%s: short message", __func__);
+		return (-1);
+	}
+
+	offset += sizeof(*hdr);
+
+	/* Bytes left in datagram. */
+	total = length - offset;
+
+	payload = hdr->ike_nextpayload;
+
+	while (payload != 0 && offset < length) {
+		if (ikev2_validate_pld(msg, offset, total, &pld))
+			return (-1);
+
+		log_debug("%s: %spayload %s"
+		    " nextpayload %s critical 0x%02x length %d",
+		    __func__, msg->msg_e ? "decrypted " : "",
+		    print_map(payload, ikev2_payload_map),
+		    print_map(pld.pld_nextpayload, ikev2_payload_map),
+		    pld.pld_reserved & IKEV2_CRITICAL_PAYLOAD,
+		    betoh16(pld.pld_length));
+
+		/* Skip over generic payload header. */
+		offset += sizeof(pld);
+		total -= sizeof(pld);
+		left = betoh16(pld.pld_length) - sizeof(pld);
+
+		switch (payload) {
+		case IKEV2_PAYLOAD_SKF:
+			len = left;
+			buf = msgbuf + offset;
+			if (len < sizeof(frag))
+				return (-1);
+			memcpy(&frag, buf, sizeof(frag));
+			msg->msg_frag_num = betoh16(frag.frag_num);
+			break;
+		}
+
+		payload = pld.pld_nextpayload;
+		offset += left;
+		total -= left;
 	}
 
 	return (0);

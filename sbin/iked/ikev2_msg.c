@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.100 2023/08/04 19:06:25 claudio Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.101 2024/03/02 16:16:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1275,14 +1275,24 @@ ikev2_msg_lookup(struct iked *env, struct iked_msgqueue *queue,
 
 int
 ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
-    struct iked_message *msg, uint8_t exchange)
+    struct iked_message *msg, struct ike_header *hdr)
 {
 	struct iked_msg_retransmit	*mr = NULL;
-	struct iked_message	*m = NULL;
+	struct iked_message		*m = NULL;
 
-	if ((mr = ikev2_msg_lookup(env, &sa->sa_responses, msg, exchange))
-	    == NULL)
+	if ((mr = ikev2_msg_lookup(env, &sa->sa_responses, msg,
+	    hdr->ike_exchange)) == NULL)
 		return (-2);	/* not found */
+
+	if (hdr->ike_nextpayload == IKEV2_PAYLOAD_SKF) {
+		/* only retransmit for fragment number one */
+		if (ikev2_pld_parse_quick(env, hdr, msg,
+		    msg->msg_offset) != 0 || msg->msg_frag_num != 1) {
+			log_debug("%s: ignoring fragment", SPI_SA(sa, __func__));
+			return (0);
+		}
+		log_debug("%s: first fragment", SPI_SA(sa, __func__));
+	}
 
 	TAILQ_FOREACH(m, &mr->mrt_frags, msg_entry) {
 		if (sendtofrom(m->msg_fd, ibuf_data(m->msg_data),
@@ -1295,7 +1305,7 @@ ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
 		}
 		log_info("%sretransmit %s res %u local %s peer %s",
 		    SPI_SA(sa, NULL),
-		    print_map(exchange, ikev2_exchange_map),
+		    print_map(hdr->ike_exchange, ikev2_exchange_map),
 		    m->msg_msgid,
 		    print_addr(&m->msg_local),
 		    print_addr(&m->msg_peer));
