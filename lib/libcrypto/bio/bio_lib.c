@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.51 2024/02/17 14:29:07 jsing Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.52 2024/03/02 09:22:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,14 +159,6 @@ BIO_new(const BIO_METHOD *method)
 	return bio;
 }
 LCRYPTO_ALIAS(BIO_new);
-
-int
-BIO_set(BIO *bio, const BIO_METHOD *method)
-{
-	BIOerror(ERR_R_DISABLED);
-	return 0;
-}
-LCRYPTO_ALIAS(BIO_set);
 
 int
 BIO_free(BIO *bio)

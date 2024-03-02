@@ -1145,7 +1145,6 @@ _libre_BIO_s_file
 _libre_BIO_new_file
 _libre_BIO_new_fp
 _libre_BIO_new
-_libre_BIO_set
 _libre_BIO_free
 _libre_BIO_up_ref
 _libre_BIO_get_data

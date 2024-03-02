@@ -315,7 +315,6 @@ BIO_s_log
 BIO_s_mem
 BIO_s_null
 BIO_s_socket
-BIO_set
 BIO_set_callback
 BIO_set_callback_arg
 BIO_set_callback_ex

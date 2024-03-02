@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.62 2024/03/02 09:21:24 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.63 2024/03/02 09:22:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -534,7 +534,6 @@ const BIO_METHOD *BIO_s_file(void);
 BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 BIO	*BIO_new(const BIO_METHOD *type);
-int	BIO_set(BIO *a, const BIO_METHOD *type);
 int	BIO_free(BIO *a);
 int	BIO_up_ref(BIO *bio);
 void	*BIO_get_data(BIO *a);
