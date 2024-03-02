@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.67 2024/03/02 11:32:31 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.68 2024/03/02 11:35:09 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -273,9 +273,9 @@ DECLARE_STACK_OF(void)
 
 int CRYPTO_mem_ctrl(int mode);
 
-#define OPENSSL_malloc(num)	CRYPTO_malloc((int)num,NULL,0)
+#define OPENSSL_malloc(num)	CRYPTO_malloc((num),NULL,0)
 #define OPENSSL_strdup(str)	CRYPTO_strdup((str),NULL,0)
-#define OPENSSL_free(addr)	CRYPTO_free(addr)
+#define OPENSSL_free(addr)	CRYPTO_free((addr),NULL,0)
 #endif
 
 const char *OpenSSL_version(int type);
@@ -364,9 +364,9 @@ int CRYPTO_set_mem_ex_functions(void *(*m)(size_t, const char *, int),
     void *(*r)(void *, size_t, const char *, int), void (*f)(void *));
 
 #ifndef LIBRESSL_INTERNAL
-void *CRYPTO_malloc(int num, const char *file, int line);
+void *CRYPTO_malloc(size_t num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
-void CRYPTO_free(void *ptr);
+void CRYPTO_free(void *ptr, const char *file, int line);
 #endif
 
 #ifndef LIBRESSL_INTERNAL
