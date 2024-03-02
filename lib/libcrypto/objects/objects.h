@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.25 2024/03/02 09:43:10 tb Exp $ */
+/* $OpenBSD: objects.h,v 1.26 2024/03/02 09:47:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,10 +77,6 @@
 
 #define	OBJ_NAME_ALIAS			0x8000
 
-#define OBJ_BSEARCH_VALUE_ON_NOMATCH		0x01
-#define OBJ_BSEARCH_FIRST_VALUE_ON_MATCH	0x02
-
-
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -110,14 +106,6 @@ int		OBJ_txt2nid(const char *s);
 int		OBJ_ln2nid(const char *s);
 int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b);
-
-#if defined(LIBRESSL_INTERNAL)
-const void *	OBJ_bsearch_(const void *key, const void *base, int num,
-		    int size, int (*cmp)(const void *, const void *));
-const void *	OBJ_bsearch_ex_(const void *key, const void *base, int num,
-		    int size, int (*cmp)(const void *, const void *),
-		    int flags);
-#endif
 
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(const ASN1_OBJECT *obj);

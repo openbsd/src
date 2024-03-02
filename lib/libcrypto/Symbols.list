@@ -1689,7 +1689,6 @@ NOTICEREF_new
 OBJ_NAME_do_all
 OBJ_NAME_do_all_sorted
 OBJ_add_object
-OBJ_bsearch_
 OBJ_cleanup
 OBJ_cmp
 OBJ_create

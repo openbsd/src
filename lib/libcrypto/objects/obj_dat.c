@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.86 2024/02/26 15:00:30 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.87 2024/03/02 09:47:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -435,23 +435,6 @@ OBJ_ln2nid(const char *ln)
 	return NID_undef;
 }
 LCRYPTO_ALIAS(OBJ_ln2nid);
-
-const void *
-OBJ_bsearch_(const void *key, const void *base, int num, int size,
-    int (*cmp)(const void *, const void *))
-{
-	OBJerror(ERR_R_DISABLED);
-	return NULL;
-}
-LCRYPTO_ALIAS(OBJ_bsearch_);
-
-const void *
-OBJ_bsearch_ex_(const void *key, const void *base_, int num, int size,
-    int (*cmp)(const void *, const void *), int flags)
-{
-	OBJerror(ERR_R_DISABLED);
-	return NULL;
-}
 
 /* Convert an object name into an ASN1_OBJECT
  * if "noname" is not set then search for short and long names first.

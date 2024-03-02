@@ -2408,7 +2408,6 @@ _libre_OBJ_txt2nid
 _libre_OBJ_ln2nid
 _libre_OBJ_sn2nid
 _libre_OBJ_cmp
-_libre_OBJ_bsearch_
 _libre_OBJ_new_nid
 _libre_OBJ_add_object
 _libre_OBJ_create
