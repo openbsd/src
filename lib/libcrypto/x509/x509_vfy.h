@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.67 2024/03/02 10:54:39 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.68 2024/03/02 10:57:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -363,19 +363,7 @@ int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
 int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 
-
-X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method);
 void X509_LOOKUP_free(X509_LOOKUP *ctx);
-int X509_LOOKUP_init(X509_LOOKUP *ctx);
-int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-    X509_NAME *name, X509_OBJECT *ret);
-int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-    X509_NAME *name, ASN1_INTEGER *serial, X509_OBJECT *ret);
-int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-    const unsigned char *bytes, int len, X509_OBJECT *ret);
-int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-    const char *str, int len, X509_OBJECT *ret);
-int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 
 int	X509_STORE_load_locations(X509_STORE *ctx,
 		const char *file, const char *dir);

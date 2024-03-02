@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.63 2024/02/23 10:39:07 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.64 2024/03/02 10:57:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,7 +65,7 @@
 #include <openssl/x509v3.h>
 #include "x509_local.h"
 
-X509_LOOKUP *
+static X509_LOOKUP *
 X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
 	X509_LOOKUP *lu;
@@ -84,7 +84,6 @@ X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 
 	return lu;
 }
-LCRYPTO_ALIAS(X509_LOOKUP_new);
 
 void
 X509_LOOKUP_free(X509_LOOKUP *ctx)
@@ -98,26 +97,6 @@ X509_LOOKUP_free(X509_LOOKUP *ctx)
 LCRYPTO_ALIAS(X509_LOOKUP_free);
 
 int
-X509_LOOKUP_init(X509_LOOKUP *ctx)
-{
-	if (ctx->method == NULL)
-		return 0;
-	/* Historical behavior: make init succeed even without method. */
-	return 1;
-}
-LCRYPTO_ALIAS(X509_LOOKUP_init);
-
-int
-X509_LOOKUP_shutdown(X509_LOOKUP *ctx)
-{
-	if (ctx->method == NULL)
-		return 0;
-	/* Historical behavior: make shutdown succeed even without method. */
-	return 1;
-}
-LCRYPTO_ALIAS(X509_LOOKUP_shutdown);
-
-int
 X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
     char **ret)
 {
@@ -129,7 +108,7 @@ X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
 }
 LCRYPTO_ALIAS(X509_LOOKUP_ctrl);
 
-int
+static int
 X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, X509_NAME *name,
     X509_OBJECT *ret)
 {
@@ -137,31 +116,6 @@ X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, X509_NAME *name,
 		return 0;
 	return ctx->method->get_by_subject(ctx, type, name, ret);
 }
-LCRYPTO_ALIAS(X509_LOOKUP_by_subject);
-
-int
-X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-    X509_NAME *name, ASN1_INTEGER *serial, X509_OBJECT *ret)
-{
-	return 0;
-}
-LCRYPTO_ALIAS(X509_LOOKUP_by_issuer_serial);
-
-int
-X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-    const unsigned char *bytes, int len, X509_OBJECT *ret)
-{
-	return 0;
-}
-LCRYPTO_ALIAS(X509_LOOKUP_by_fingerprint);
-
-int
-X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, const char *str,
-    int len, X509_OBJECT *ret)
-{
-	return 0;
-}
-LCRYPTO_ALIAS(X509_LOOKUP_by_alias);
 
 static int
 x509_object_cmp(const X509_OBJECT * const *a, const X509_OBJECT * const *b)

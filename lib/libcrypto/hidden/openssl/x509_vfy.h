@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.8 2024/03/02 10:40:05 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.9 2024/03/02 10:57:03 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -79,14 +79,7 @@ LCRYPTO_USED(X509_LOOKUP_ctrl);
 LCRYPTO_USED(X509_load_cert_file);
 LCRYPTO_USED(X509_load_crl_file);
 LCRYPTO_USED(X509_load_cert_crl_file);
-LCRYPTO_USED(X509_LOOKUP_new);
 LCRYPTO_USED(X509_LOOKUP_free);
-LCRYPTO_USED(X509_LOOKUP_init);
-LCRYPTO_USED(X509_LOOKUP_by_subject);
-LCRYPTO_USED(X509_LOOKUP_by_issuer_serial);
-LCRYPTO_USED(X509_LOOKUP_by_fingerprint);
-LCRYPTO_USED(X509_LOOKUP_by_alias);
-LCRYPTO_USED(X509_LOOKUP_shutdown);
 LCRYPTO_USED(X509_STORE_load_locations);
 LCRYPTO_USED(X509_STORE_load_mem);
 LCRYPTO_USED(X509_STORE_set_default_paths);
