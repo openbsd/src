@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.126 2024/03/02 10:03:13 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.127 2024/03/02 10:04:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1004,14 +1004,6 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_get0_asn1(const EVP_PKEY *pkey);
  */
 #define EVP_PKEY_FLAG_SIGCTX_CUSTOM	4
 
-const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
-EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags);
-void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
-    const EVP_PKEY_METHOD *meth);
-void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src);
-void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth);
-int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth);
-
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *ctx);
@@ -1073,73 +1065,6 @@ void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb);
 EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
 
 int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx);
-
-void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
-    int (*init)(EVP_PKEY_CTX *ctx));
-
-void EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
-    int (*copy)(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src));
-
-void EVP_PKEY_meth_set_cleanup(EVP_PKEY_METHOD *pmeth,
-    void (*cleanup)(EVP_PKEY_CTX *ctx));
-
-void EVP_PKEY_meth_set_paramgen(EVP_PKEY_METHOD *pmeth,
-    int (*paramgen_init)(EVP_PKEY_CTX *ctx),
-    int (*paramgen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey));
-
-void EVP_PKEY_meth_set_keygen(EVP_PKEY_METHOD *pmeth,
-    int (*keygen_init)(EVP_PKEY_CTX *ctx),
-    int (*keygen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey));
-
-void EVP_PKEY_meth_set_sign(EVP_PKEY_METHOD *pmeth,
-    int (*sign_init)(EVP_PKEY_CTX *ctx),
-    int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
-    const unsigned char *tbs, size_t tbslen));
-
-void EVP_PKEY_meth_set_verify(EVP_PKEY_METHOD *pmeth,
-    int (*verify_init)(EVP_PKEY_CTX *ctx),
-    int (*verify)(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
-    const unsigned char *tbs, size_t tbslen));
-
-void EVP_PKEY_meth_set_verify_recover(EVP_PKEY_METHOD *pmeth,
-    int (*verify_recover_init)(EVP_PKEY_CTX *ctx),
-    int (*verify_recover)(EVP_PKEY_CTX *ctx, unsigned char *sig,
-    size_t *siglen, const unsigned char *tbs, size_t tbslen));
-
-void EVP_PKEY_meth_set_signctx(EVP_PKEY_METHOD *pmeth,
-    int (*signctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx),
-    int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
-    EVP_MD_CTX *mctx));
-
-void EVP_PKEY_meth_set_verifyctx(EVP_PKEY_METHOD *pmeth,
-    int (*verifyctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx),
-    int (*verifyctx)(EVP_PKEY_CTX *ctx, const unsigned char *sig, int siglen,
-    EVP_MD_CTX *mctx));
-
-void EVP_PKEY_meth_set_encrypt(EVP_PKEY_METHOD *pmeth,
-    int (*encrypt_init)(EVP_PKEY_CTX *ctx),
-    int (*encryptfn)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
-    const unsigned char *in, size_t inlen));
-
-void EVP_PKEY_meth_set_decrypt(EVP_PKEY_METHOD *pmeth,
-    int (*decrypt_init)(EVP_PKEY_CTX *ctx),
-    int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
-    const unsigned char *in, size_t inlen));
-
-void EVP_PKEY_meth_set_derive(EVP_PKEY_METHOD *pmeth,
-    int (*derive_init)(EVP_PKEY_CTX *ctx),
-    int (*derive)(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen));
-
-void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
-    int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2),
-    int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value));
-
-void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
-    int (*check)(EVP_PKEY *pkey));
-void EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
-    int (*public_check)(EVP_PKEY *pkey));
-void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
-    int (*param_check)(EVP_PKEY *pkey));
 
 /* Authenticated Encryption with Additional Data.
  *
