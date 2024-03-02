@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.5 2024/03/02 09:18:28 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.6 2024/03/02 09:21:24 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -118,8 +118,6 @@ LCRYPTO_USED(BIO_fd_should_retry);
 LCRYPTO_USED(BIO_fd_non_fatal_error);
 LCRYPTO_USED(BIO_dump);
 LCRYPTO_USED(BIO_dump_indent);
-LCRYPTO_USED(BIO_dump_fp);
-LCRYPTO_USED(BIO_dump_indent_fp);
 LCRYPTO_USED(BIO_gethostbyname);
 LCRYPTO_USED(BIO_sock_error);
 LCRYPTO_USED(BIO_socket_ioctl);

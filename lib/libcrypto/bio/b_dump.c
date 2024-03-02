@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.29 2024/02/15 10:34:30 tb Exp $ */
+/* $OpenBSD: b_dump.c,v 1.30 2024/03/02 09:21:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -209,39 +209,3 @@ BIO_dump(BIO *bio, const char *s, int len)
 	return BIO_dump_indent(bio, s, len, 0);
 }
 LCRYPTO_ALIAS(BIO_dump);
-
-/*
- * XXX - remove the functions below in the next major bump.
- */
-
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len)
-{
-	BIOerror(ERR_R_DISABLED);
-	return -1;
-}
-
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent)
-{
-	BIOerror(ERR_R_DISABLED);
-	return -1;
-}
-
-int
-BIO_dump_fp(FILE *fp, const char *s, int len)
-{
-	BIOerror(ERR_R_DISABLED);
-	return -1;
-}
-LCRYPTO_ALIAS(BIO_dump_fp);
-
-int
-BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
-{
-	BIOerror(ERR_R_DISABLED);
-	return -1;
-}
-LCRYPTO_ALIAS(BIO_dump_indent_fp);

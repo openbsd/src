@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.61 2024/03/02 09:18:28 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.62 2024/03/02 09:21:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -599,14 +599,10 @@ int BIO_dgram_non_fatal_error(int _error);
 
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int _error);
-int BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len);
-int BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-    void *u, const char *s, int len, int indent);
+
 int BIO_dump(BIO *b, const char *bytes, int len);
 int BIO_dump_indent(BIO *b, const char *bytes, int len, int indent);
-int BIO_dump_fp(FILE *fp, const char *s, int len);
-int BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent);
+
 struct hostent *BIO_gethostbyname(const char *name);
 /* We might want a thread-safe interface too:
  * struct hostent *BIO_gethostbyname_r(const char *name,

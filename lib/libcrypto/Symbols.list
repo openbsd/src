@@ -233,11 +233,7 @@ BIO_ctrl_wpending
 BIO_debug_callback
 BIO_dgram_non_fatal_error
 BIO_dump
-BIO_dump_cb
-BIO_dump_fp
 BIO_dump_indent
-BIO_dump_indent_cb
-BIO_dump_indent_fp
 BIO_dup_chain
 BIO_f_base64
 BIO_f_buffer
