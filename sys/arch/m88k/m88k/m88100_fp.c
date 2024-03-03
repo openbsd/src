@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_fp.c,v 1.6 2024/03/03 11:03:13 miod Exp $	*/
+/*	$OpenBSD: m88100_fp.c,v 1.7 2024/03/03 11:14:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -442,9 +442,16 @@ m88100_fpu_imprecise_exception(struct trapframe *frame)
 	 */
 	__asm__ volatile ("fstcr %0, %%fcr62" :: "r"(frame->tf_fpsr));
 
-	/* Check for a SIGFPE condition */
-	if (frame->tf_fpsr & frame->tf_fpcr)
-		m88100_fpu_checksig(frame, SIGFPE, 0 /* SI_NOINFO */);
+	/*
+	 * Check for a SIGFPE condition.
+	 *
+	 * XXX If the exception was caught while in kernel mode, we can't
+	 * XXX send a signal at this point... what to do?
+	 */
+	if ((frame->tf_fpsr & PSR_MODE) == 0) {
+		if (frame->tf_fpsr & frame->tf_fpcr)
+			m88100_fpu_checksig(frame, SIGFPE, 0 /* SI_NOINFO */);
+	}
 }
 
 /*
