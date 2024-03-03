@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.33 2024/03/01 23:37:42 millert Exp $
+.\"	$OpenBSD: mktemp.1,v 1.34 2024/03/03 15:24:45 millert Exp $
 .\"
 .\" Copyright (c) 1996, 2000, 2001, 2003, 2010, 2013, 2024
 .\"	Todd C. Miller <millert@openbsd.org>
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2024 $
+.Dd $Mdocdate: March 3 2024 $
 .Dt MKTEMP 1
 .Os
 .Sh NAME
 .Nm mktemp
-.Nd make temporary filename (unique)
+.Nd make temporary file or directory (unique)
 .Sh SYNOPSIS
 .Nm mktemp
 .Op Fl dqtu
@@ -29,14 +29,14 @@
 .Sh DESCRIPTION
 The
 .Nm mktemp
-utility takes the given filename
+utility takes the specified file name
 .Ar template
-and overwrites a portion of it to create a unique filename.
+and overwrites a portion of it to create a unique file name.
 The
 .Ar template
-may be any filename with at least six
+may be any file name containing at least six
 .Ql X Ns s
-in the last component of the filename, for example
+in the last component of the path, for example
 .Pa /tmp/tfile.XXXXXXXXXX
 or
 .Pa /tmp/editor.XXXXXXXXXX.txt .
@@ -47,7 +47,7 @@ in the
 only the last one will be considered.
 If no
 .Ar template
-is specified, a default of
+is specified, a default value of
 .Pa tmp.XXXXXXXXXX
 is used and the
 .Fl t
@@ -60,8 +60,8 @@ The name chosen depends both on the number of
 .Ql X Ns s
 in the
 .Ar template
-and the number of collisions with pre-existing files.
-The number of unique filenames
+and the number of collisions with pre-existing entries.
+The number of unique names
 .Nm
 can return depends on the number of
 .Ql X Ns s
@@ -74,19 +74,19 @@ testing roughly 26 ** 10 combinations.
 .Pp
 If
 .Nm
-can successfully generate a unique filename, the file (or directory)
-is created with file permissions such that it is only readable and writable
+successfully generates a unique name, the file (or directory)
+is created with permissions such that it is only readable and writable
 by its owner (unless the
 .Fl u
-flag is given) and the filename is printed to standard output.
+flag is given) and the name is printed to the standard output.
 .Pp
 .Nm mktemp
 is provided to allow shell scripts to safely use temporary files.
 Traditionally, many shell scripts take the name of the program with
-the PID as a suffix and use that as a temporary filename.
+the PID as a suffix and use that as a temporary file name.
 This kind of naming scheme is predictable and the race condition it creates
 is easy for an attacker to win.
-A safer, though still inferior approach
+A safer, though still inferior approach,
 is to make a temporary directory using the same naming scheme.
 While this does allow one to guarantee that a temporary file will not be
 subverted, it still allows a simple denial of service attack.
@@ -101,7 +101,7 @@ Make a directory instead of a file.
 .It Fl p Ar directory
 Use the specified
 .Ar directory
-as a prefix when generating the temporary filename.
+as a prefix when generating the temporary name.
 The
 .Ar directory
 will be overridden by the user's
@@ -163,7 +163,7 @@ The following
 fragment illustrates a simple use of
 .Nm
 where the script should quit if it cannot get a safe
-temporary file.
+temporary file:
 .Bd -literal -offset indent
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX` || exit 1
 echo "program output" >> $TMPFILE
@@ -171,7 +171,7 @@ echo "program output" >> $TMPFILE
 .Pp
 The same fragment with support for a user's
 .Ev TMPDIR
-environment variable can be written as follows.
+environment variable can be written as follows:
 .Bd -literal -offset indent
 TMPFILE=`mktemp -t example.XXXXXXXXXX` || exit 1
 echo "program output" >> $TMPFILE
@@ -181,7 +181,7 @@ This can be further simplified if we don't care about the actual name of
 the temporary file.
 In this case the
 .Fl t
-flag is implied.
+flag is implied:
 .Bd -literal -offset indent
 TMPFILE=`mktemp` || exit 1
 echo "program output" >> $TMPFILE
@@ -194,7 +194,7 @@ In this example the temporary file will be created in
 .Pa /extra/tmp
 unless the user's
 .Ev TMPDIR
-environment variable specifies otherwise.
+environment variable specifies otherwise:
 .Bd -literal -offset indent
 TMPFILE=`mktemp -p /extra/tmp example.XXXXXXXXXX` || exit 1
 echo "program output" >> $TMPFILE
@@ -202,10 +202,10 @@ echo "program output" >> $TMPFILE
 .Pp
 In other cases, we want the script to catch the error.
 For instance, if we attempt to create two temporary files and
-the second one fails we need to remove the first before exiting.
+the second one fails we need to remove the first before exiting:
 .Bd -literal -offset indent
-TMP1=`mktemp -t example.1.XXXXXXXXXX` || exit 1
-TMP2=`mktemp -t example.2.XXXXXXXXXX`
+TMP1=`mktemp -t example.XXXXXXXXXX.1` || exit 1
+TMP2=`mktemp -t example.XXXXXXXXXX.2`
 if [ $? -ne 0 ]; then
 	rm -f $TMP1
 	exit 1
@@ -215,7 +215,7 @@ fi
 Or perhaps you don't want to exit if
 .Nm
 is unable to create the file.
-In this case you can protect that part of the script thusly.
+In this case you can protect that part of the script thusly:
 .Bd -literal -offset indent
 TMPFILE=`mktemp -q -t example.XXXXXXXXXX` && {
 	# Safe to use $TMPFILE in this block
