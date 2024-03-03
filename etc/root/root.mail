@@ -1,6 +1,6 @@
-From deraadt@do-not-reply.openbsd.org Mon Apr 4 07:05:00 MDT 2024
+From deraadt@do-not-reply.openbsd.org Mon Apr 5 07:05:00 MDT 2024
 Return-Path: root
-Date: Apr 4 07:05:00 MDT 2024
+Date: Apr 5 07:05:00 MDT 2024
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
 Subject: Welcome to OpenBSD 7.5!
