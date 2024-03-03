@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.16 2020/05/17 14:32:12 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.17 2024/03/03 17:00:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -78,6 +78,47 @@ dcache_wbinv_all(void)
 				val = (way << wshift) | (set << sshift) |
 				    (level << 1);
 				__asm volatile("mcr p15, 0, %0, c7, c14, 2"
+				    :: "r"(val));
+			}
+		}
+	}
+
+	__asm volatile("dsb");
+}
+
+void
+dcache_inv_all(void)
+{
+	uint32_t clidr;
+	uint32_t ccsidr;
+	uint32_t val;
+	int nways, nsets;
+	int wshift, sshift;
+	int way, set;
+	int level;
+	
+	__asm volatile("mrc p15, 1, %0, c0, c0, 1" : "=r"(clidr));
+	for (level = 0; level < CLIDR_LOC(clidr); level++) {
+		if (CLIDR_CTYPE(clidr, level) == CLIDR_CTYPE_NOCACHE)
+			break;
+		if (CLIDR_CTYPE(clidr, level) == CLIDR_CTYPE_ICACHE)
+			continue;
+
+		__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r"(level << 1));
+		__asm volatile("isb");
+		__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r"(ccsidr));
+
+		nways = CCSIDR_ASSOCIATIVITY(ccsidr) + 1;
+		nsets = CCSIDR_NUMSETS(ccsidr) + 1;
+
+		sshift = CCSIDR_LINESZ(ccsidr) + 4;
+		wshift = __builtin_clz(CCSIDR_ASSOCIATIVITY(ccsidr));
+
+		for (way = 0; way < nways; way++) {
+			for (set = 0; set < nsets; set++) {
+				val = (way << wshift) | (set << sshift) |
+				    (level << 1);
+				__asm volatile("mcr p15, 0, %0, c7, c6, 2"
 				    :: "r"(val));
 			}
 		}
@@ -182,8 +223,9 @@ run_loadfile(uint64_t *marks, int howto)
 
 	efi_cleanup();
 
-	dcache_disable();
 	dcache_wbinv_all();
+	dcache_disable();
+	dcache_inv_all();
 	icache_disable();
 	icache_inv_all();
 	mmu_disable();
