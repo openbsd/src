@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.40 2022/10/26 20:19:07 kn Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.41 2024/03/03 02:40:10 gkoehler Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -69,6 +69,9 @@ struct awacs_softc {
 
 	u_int sc_record_source;		/* recording source mask */
 	u_int sc_output_mask;		/* output source mask */
+
+	int sc_awacs_hardware;
+	int sc_awacs_headphone_mask;
 
 	char *sc_reg;
 	u_int sc_codecctl0;
@@ -195,6 +198,11 @@ const struct audio_hw_if awacs_hw_if = {
 /* cc1 */
 #define AWACS_MUTE_SPEAKER	0x00000080
 #define AWACS_MUTE_HEADPHONE	0x00000200
+/*
+ * iMacs that use this driver have a speaker amp power down feature,
+ * triggered by this bit in cc1.
+ */
+#define AWACS_MUTE_SPEAKER_IMAC	0x00000800
 
 const struct awacs_speed_tab {
 	int rate;
@@ -209,6 +217,25 @@ const struct awacs_speed_tab {
 	{ 29400, AWACS_RATE_29400 },
 	{ 44100, AWACS_RATE_44100 },
 };
+
+/* add hardware as needed */
+#define HW_IS_OTHER 0
+/* iMac (Late 1999) */
+#define HW_IS_IMAC1 1
+/* iMac (Summer 2000) and iMac (Early 2001, Summer 2001) */
+#define HW_IS_IMAC2 2
+
+/* Codecs status headphones mask */
+
+/* headphone connector on back */
+#define AWACS_STATUS_HP_CONN 8
+
+/* right connector on front */
+#define AWACS_STATUS_HP_RCONN_IMAC 4
+/* left connector on front */
+#define AWACS_STATUS_HP_LCONN_IMAC 2
+/* connector on the right side */
+#define AWACS_STATUS_HP_SCONN_IMAC 1
 
 int
 awacs_match(struct device *parent, void *match, void *aux)
@@ -243,6 +270,21 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	int cirq, oirq, iirq;
 	int cirq_type, oirq_type, iirq_type;
 
+	if (!strcmp(hw_prod, "PowerMac2,1"))
+		sc->sc_awacs_hardware = HW_IS_IMAC1;
+	else if (!strcmp(hw_prod, "PowerMac2,2") ||
+	    !strcmp(hw_prod, "PowerMac4,1"))
+		sc->sc_awacs_hardware = HW_IS_IMAC2;
+	else
+		sc->sc_awacs_hardware = HW_IS_OTHER;
+	/* set headphone mask */
+	if (sc->sc_awacs_hardware == HW_IS_IMAC1 ||
+	    sc->sc_awacs_hardware == HW_IS_IMAC2)
+		sc->sc_awacs_headphone_mask = AWACS_STATUS_HP_LCONN_IMAC |
+		    AWACS_STATUS_HP_RCONN_IMAC | AWACS_STATUS_HP_SCONN_IMAC;
+	else
+		sc->sc_awacs_headphone_mask = AWACS_STATUS_HP_CONN;
+	
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	ca->ca_reg[2] += ca->ca_baseaddr;
 	ca->ca_reg[4] += ca->ca_baseaddr;
@@ -289,7 +331,10 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_codecctl2 = AWACS_CODEC_ADDR2 | AWACS_CODEC_EMSEL0;
 	sc->sc_codecctl4 = AWACS_CODEC_ADDR4 | AWACS_CODEC_EMSEL0;
 
-	sc->sc_codecctl0 |= AWACS_INPUT_CD | AWACS_DEFAULT_CD_GAIN;
+	/* don't set CD in on iMacs, or else the outputs will be very noisy */
+	if (sc->sc_awacs_hardware != HW_IS_IMAC1 &&
+	    sc->sc_awacs_hardware != HW_IS_IMAC2)
+		sc->sc_codecctl0 |= AWACS_INPUT_CD | AWACS_DEFAULT_CD_GAIN;
 	awacs_write_codec(sc, sc->sc_codecctl0);
 
 	/* Set initial volume[s] */
@@ -302,12 +347,25 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	awacs_write_codec(sc, sc->sc_codecctl1);
 
 	/* check for headphone present */
-	if (awacs_read_reg(sc, AWACS_CODEC_STATUS) & 0x8) {
+	if (awacs_read_reg(sc, AWACS_CODEC_STATUS) &
+	    sc->sc_awacs_headphone_mask) {
 		/* default output to speakers */
 		printf(" headphones");
 		sc->sc_output_mask = 1 << 1;
-		sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
-		sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+		/* front headphones on iMacs are wired to the speakers output */
+		if ((sc->sc_awacs_hardware != HW_IS_IMAC2 &&
+		    sc->sc_awacs_hardware != HW_IS_IMAC1) ||
+		    ((sc->sc_awacs_hardware == HW_IS_IMAC2 ||
+		    sc->sc_awacs_hardware == HW_IS_IMAC1) &&
+		    (awacs_read_reg(sc, AWACS_CODEC_STATUS) &
+		    AWACS_STATUS_HP_SCONN_IMAC))) {
+			sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+			sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+		}
+		if (sc->sc_awacs_hardware == HW_IS_IMAC1)
+			sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER_IMAC;
+		else if (sc->sc_awacs_hardware == HW_IS_IMAC2)
+			sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER_IMAC;
 		awacs_write_codec(sc, sc->sc_codecctl1);
 	} else {
 		/* default output to speakers */
@@ -315,13 +373,19 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_output_mask = 1 << 0;
 		sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
 		sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
+		if (sc->sc_awacs_hardware == HW_IS_IMAC1)
+			sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER_IMAC;
+		else if (sc->sc_awacs_hardware == HW_IS_IMAC2)
+			sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER_IMAC;
 		awacs_write_codec(sc, sc->sc_codecctl1);
 	}
 
 	/* default input from CD */
 	sc->sc_record_source = 1 << 0;
 	sc->sc_codecctl0 &= ~AWACS_INPUT_MASK;
-	sc->sc_codecctl0 |= AWACS_INPUT_CD;
+	if (sc->sc_awacs_hardware != HW_IS_IMAC1 &&
+	    sc->sc_awacs_hardware != HW_IS_IMAC2)
+		sc->sc_codecctl0 |= AWACS_INPUT_CD;
 	awacs_write_codec(sc, sc->sc_codecctl0);
 
 	/* Enable interrupts and looping mode. */
@@ -372,17 +436,37 @@ awacs_intr(void *v)
 		printf("status = %x\n", awacs_read_reg(sc, AWACS_CODEC_STATUS));
 #endif
 
-		if (awacs_read_reg(sc, AWACS_CODEC_STATUS) & 0x8) {
+		if (awacs_read_reg(sc, AWACS_CODEC_STATUS) &
+		    sc->sc_awacs_headphone_mask) {
 			/* default output to speakers */
 			sc->sc_output_mask = 1 << 1;
-			sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
-			sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+			/*
+			 * Front headphones on iMacs are wired to the
+			 * speakers output.
+			 */
+			if ((sc->sc_awacs_hardware != HW_IS_IMAC2 &&
+			    sc->sc_awacs_hardware != HW_IS_IMAC1) ||
+			    ((sc->sc_awacs_hardware == HW_IS_IMAC2 ||
+			    sc->sc_awacs_hardware == HW_IS_IMAC1) &&
+			    (awacs_read_reg(sc, AWACS_CODEC_STATUS) &
+			    AWACS_STATUS_HP_SCONN_IMAC))) {
+				sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+				sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+			}
+			if (sc->sc_awacs_hardware == HW_IS_IMAC1)
+				sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER_IMAC;
+			else if (sc->sc_awacs_hardware == HW_IS_IMAC2)
+				sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER_IMAC;
 			awacs_write_codec(sc, sc->sc_codecctl1);
 		} else {
 			/* default output to speakers */
 			sc->sc_output_mask = 1 << 0;
 			sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
 			sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
+			if (sc->sc_awacs_hardware == HW_IS_IMAC1)
+				sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER_IMAC;
+			else if (sc->sc_awacs_hardware == HW_IS_IMAC2)
+				sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER_IMAC;
 			awacs_write_codec(sc, sc->sc_codecctl1);
 		}
 	}
