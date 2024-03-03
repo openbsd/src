@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_fp.c,v 1.5 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: m88100_fp.c,v 1.6 2024/03/03 11:03:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -354,6 +354,24 @@ m88100_fpu_imprecise_exception(struct trapframe *frame)
 
 	/* Reset the exception cause register */
 	__asm__ volatile ("fstcr %r0, %fcr0");
+
+	/*
+	 * The 88100 errata for mask C82N (rev 0x0a) documents that an
+	 * imprecise exception may be raised for integer instructions
+	 * returning an inexact result.
+	 * However, there is nothing to do in this case, since the result
+	 * is not a floating-point value, and has been correctly put in
+	 * the destination register; we simply need to to ignore that
+	 * exception.
+	 */
+	switch ((frame->tf_fpit >> 11) & 0x1f) {
+	case 0x09:	/* int */
+	case 0x0a:	/* nint */
+	case 0x0b:	/* trnc */
+		return;
+	default:
+		break;
+	}
 
 	/*
 	 * Pick the inexact result, build a float32 or a float64 out of it, and
