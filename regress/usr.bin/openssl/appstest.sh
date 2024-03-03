@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.62 2024/03/02 11:53:55 tb Exp $
+# $OpenBSD: appstest.sh,v 1.63 2024/03/03 13:29:19 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1746,6 +1746,12 @@ function test_server_client {
 	# invalid verification pattern
 	test_sc_verify $sc tls1_2
 	test_sc_verify $sc tls1_3
+
+	# s_time
+	start_message "s_time ... connect to TLS/SSL test server"
+	$c_bin s_time -connect $host:$port -CApath $ca_dir -time 1 \
+		> $server_dir/s_time_${sc}.log
+	check_exit_status $?
 
 	stop_s_server
 }
