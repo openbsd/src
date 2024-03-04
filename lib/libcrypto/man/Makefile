@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.282 2024/03/02 11:04:51 tb Exp $
+# $OpenBSD: Makefile,v 1.283 2024/03/04 19:04:47 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -200,7 +200,6 @@ MAN=	\
 	EVP_SealInit.3 \
 	EVP_SignInit.3 \
 	EVP_VerifyInit.3 \
-	EVP_add_cipher.3 \
 	EVP_aes_128_cbc.3 \
 	EVP_camellia_128_cbc.3 \
 	EVP_chacha20.3 \
