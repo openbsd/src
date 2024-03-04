@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2065 2024/03/01 08:34:42 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2066 2024/03/04 05:34:07 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -21489,11 +21489,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DG2_G12_1,
-	    "Graphics",
+	    "Arc A570M",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DG2_G12_2,
-	    "Graphics",
+	    "Arc A530M",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DG2_G10_4,
@@ -21533,11 +21533,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DG2_G12_5,
-	    "Graphics",
+	    "Arc Pro A60M",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DG2_G12_6,
-	    "Graphics",
+	    "Arc Pro A60",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATS_M150,
