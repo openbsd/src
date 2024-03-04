@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.36 2024/03/03 21:42:41 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.37 2024/03/04 04:11:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -1735,7 +1735,7 @@ sxiccmu_a10_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 
 int
 sxiccmu_a10s_set_frequency(struct sxiccmu_softc *sc, uint32_t idx,
-    int32_t freq)
+    uint32_t freq)
 {
 	struct sxiccmu_clock clock;
 	uint32_t parent, parent_freq;
