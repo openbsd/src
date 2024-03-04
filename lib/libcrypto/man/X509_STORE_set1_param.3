@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_set1_param.3,v 1.20 2023/11/16 20:27:43 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.21 2024/03/04 09:24:07 tb Exp $
 .\" content checked up to:
 .\" OpenSSL man3/X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: March 4 2024 $
 .Dt X509_STORE_SET1_PARAM 3
 .Os
 .Sh NAME
@@ -29,6 +29,7 @@
 .Nm X509_STORE_add_cert ,
 .Nm X509_STORE_add_crl ,
 .Nm X509_STORE_get0_param ,
+.Nm X509_STORE_get1_objects ,
 .Nm X509_STORE_get0_objects ,
 .Nm X509_STORE_get_ex_new_index ,
 .Nm X509_STORE_set_ex_data ,
@@ -73,6 +74,10 @@
 .Fc
 .Ft X509_VERIFY_PARAM *
 .Fo X509_STORE_get0_param
+.Fa "X509_STORE *store"
+.Fc
+.Ft STACK_OF(X509_OBJECT) *
+.Fo X509_STORE_get1_objects
 .Fa "X509_STORE *store"
 .Fc
 .Ft STACK_OF(X509_OBJECT) *
@@ -181,10 +186,35 @@ or if memory allocation fails.
 .Fn X509_STORE_get0_param
 returns an internal pointer to the verification parameter object
 contained in the
+.Fa store .
+The returned pointer must not be freed by the calling application.
+.Pp
+.Fn X509_STORE_get1_objects
+returns a newly allocated stack containing
+the certificates, revocation lists, and private keys in
 .Fa store ,
+as well as cached objects added by
+.Xr X509_LOOKUP_hash_dir 3 .
+The caller must release the result with
+.Xr sk_pop_free 3
+and
+.Xr X509_OBJECT_free 3
+when done.
+.Pp
 .Fn X509_STORE_get0_objects
-to the stack of certificates, revocation lists, and private keys.
-The returned pointers must not be freed by the calling application.
+is a deprecated function returning an internal pointer to
+the stack of certificates, revocation lists, and private keys contained in
+.Fa store .
+The returned pointer must not be modified or freed by the calling application.
+This function is not thread-safe.
+If
+.Fa store
+is shared across multiple threads, callers cannot safely inspect the result of
+this function, because another thread may have concurrently added to it.
+In particular,
+.Xr X509_LOOKUP_hash_dir 3
+treats this list as a cache and may add to it in the course of certificate
+verification.
 .Pp
 .Fn X509_STORE_get_ex_new_index
 returns a new index or \-1 on failure.
@@ -232,3 +262,7 @@ and
 .Fn X509_STORE_get_ex_data
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 6.3 .
+.Pp
+X509_STORE_get1_objects
+first appeared in BoringSSL and has been available since
+.Ox 7.5 .
