@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2024/03/03 11:15:38 miod Exp $
+#	$OpenBSD: Makefile,v 1.16 2024/03/04 19:35:13 miod Exp $
 
 # Copyright (c) 2021 Moritz Buhl <mbuhl@openbsd.org>
 #
@@ -47,24 +47,37 @@ PROGS+= trig_test
 
 # failing tests
 FAILING = run-cexp_test-{2,3,4} run-csqrt_test-{1,2,3} \
-	run-ctrig_test-{2,3,4,6} run-fma_test-7 \
+	run-ctrig_test-{2,3,6} run-fma_test-7 \
 	run-invctrig_test-{1,2,3,4} run-invtrig_test-{1,2,3,5,6} \
-	run-logarithm_test-1 run-lround_test-1 run-nan_test-1 \
-	run-next_test-5 run-rem_test-3
+	run-lround_test-1 run-nan_test-1 run-next_test-5 run-rem_test-3
 
-. if ${MACHINE} == amd64
+. if ${MACHINE} == alpha
+FAILING+=	run-conj_test-1
+FAILING+=	run-ctrig_test-{4,5}
+FAILING+=	run-exponential_test-1
+FAILING+=	run-fenv_test-{2,3,4,6,7,8}
+FAILING+=	run-fma_test-{1,2,4,5,6}
+FAILING+=	run-fmaxmin_test-{7,11}
+FAILING+=	run-invtrig_test-{4,7}
+FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
+FAILING+=	run-next_test-{1,4}
+FAILING+=	run-rem_test-1
+FAILING+=	run-trig_test-2
+. elif ${MACHINE} == amd64
 FAILING+=	run-cexp_test-{1,7}
-FAILING+=	run-ctrig_test-1
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-ctrig_test-{1,4}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-invtrig_test-7
+FAILING+=	run-logarithm_test-1
 FAILING+=	run-next_test-{1,2,4}
 . elif ${MACHINE} == arm64
 FAILING+=	run-cexp_test-{1,7}
-FAILING+=	run-ctrig_test-{1,5}
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-ctrig_test-{1,4,5}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-fma_test-{1,2,4,5,6,7}
 FAILING+=	run-invtrig_test-7
-FAILING+=	run-logarithm_test-5
+FAILING+=	run-logarithm_test-{1,5}
 FAILING+=	run-lrint_test-1
 FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
@@ -72,62 +85,84 @@ FAILING+=	run-rem_test-{1,2}
 FAILING+=	run-trig_test-1
 . elif ${MACHINE} == armv7
 FAILING+=	run-cexp_test-7
-FAILING+=	run-ctrig_test-{1,5}
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-ctrig_test-{1,4,5}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-invtrig_test-7
+FAILING+=	run-logarithm_test-1
 FAILING+=	run-lrint_test-1
 FAILING+=	run-nearbyint_test-1
 FAILING+=	run-trig_test-1
+. elif ${MACHINE} == hppa
+FAILING+=	run-ctrig_test-{4,5}
+FAILING+=	run-exponential_test-1
+FAILING+=	run-fmaxmin_test-11
+FAILING+=	run-invtrig_test-7
+FAILING+=	run-lrint_test-1
+FAILING+=	run-next_test-4
+FAILING+=	run-trig_test-3
 . elif ${MACHINE} == i386
 FAILING+=	run-cexp_test-{1,7}
-FAILING+=	run-ctrig_test-{1,5}
+FAILING+=	run-ctrig_test-{1,4,5}
 FAILING+=	run-fma_test-{1,6}
 FAILING+=	run-invtrig_test-4
-FAILING+=	run-logarithm_test-3
+FAILING+=	run-logarithm_test-{1,3}
 FAILING+=	run-lrint_test-1
 FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
 . elif ${MACHINE_ARCH} == m88k
 FAILING+=	run-cexp_test-7
-FAILING+=	run-ctrig_test-{1,5}
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-ctrig_test-{1,4,5}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-fma_test-{1,3,6}
 FAILING+=	run-fmaxmin_test-{1,12}
 FAILING+=	run-invtrig_test-7
-FAILING+=	run-logarithm_test-3
+FAILING+=	run-logarithm_test-{1,3}
 FAILING+=	run-lrint_test-1
 FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-4
 . elif ${MACHINE} == powerpc64
 FAILING+=	run-cexp_test-7
-FAILING+=	run-ctrig_test-{1,5}
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-ctrig_test-{1,4,5}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-invtrig_test-7
+FAILING+=	run-logarithm_test-1
 . elif ${MACHINE} == macppc
 FAILING+=	run-cexp_test-7
-FAILING+=	run-ctrig_test-{1,5}
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-ctrig_test-{1,4,5}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-fenv_test-{7,8}
 FAILING+=	run-invtrig_test-7
-FAILING+=	run-logarithm_test-3
+FAILING+=	run-logarithm_test-{1,3}
 FAILING+=	run-lrint_test-1
-. elif ${MACHINE} == sparc64
+. elif ${MACHINE_ARCH} == sh
 FAILING+=	run-ctrig_test-5
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-exponential_test-{1,2,4}
+FAILING+=	run-fenv_test-{1,2,3,4,5,6,7,8}
+FAILING+=	run-fma_test-{1,3,4,5,6}
+FAILING+=	run-invtrig_test-{4,7}
+FAILING+=	run-logarithm_test-1
+FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
+FAILING+=	run-next_test-{1,3,4}
+FAILING+=	run-rem_test-1
+FAILING+=	run-trig_test-{1,2}
+. elif ${MACHINE} == sparc64
+FAILING+=	run-ctrig_test-{4,5}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-fma_test-{1,2,4,5,6}
 FAILING+=	run-invtrig_test-{4,7}
-FAILING+=	run-logarithm_test-5
+FAILING+=	run-logarithm_test-{1,5}
 FAILING+=	run-lrint_test-1
 FAILING+=	run-next_test-{1,2,4}
 FAILING+=	run-rem_test-{1,2}
 FAILING+=	run-trig_test-{1,2}
 . elif ${MACHINE} == octeon
 FAILING+=	run-cexp_test-7
-FAILING+=	run-ctrig_test-{1,5}
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-ctrig_test-{1,4,5}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-fma_test-{1,2,3,4,5,6}
 FAILING+=	run-invtrig_test-{4,7}
-FAILING+=	run-logarithm_test-5
+FAILING+=	run-logarithm_test-{1,5}
 FAILING+=	run-lrint_test-1
 FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,3,4}
@@ -135,12 +170,12 @@ FAILING+=	run-rem_test-{1,2}
 FAILING+=	run-trig_test-{1,2}
 . elif ${MACHINE} == riscv64
 FAILING+=	run-cexp_test-7
-FAILING+=	run-ctrig_test-{1,5}
-FAILING+=	run-exponential_test-1 
+FAILING+=	run-ctrig_test-{1,4,5}
+FAILING+=	run-exponential_test-1
 FAILING+=	run-fma_test-{1,2,4,5,6}
 FAILING+=	run-ilogb_test-3
 FAILING+=	run-invtrig_test-{4,7}
-FAILING+=	run-logarithm_test-5
+FAILING+=	run-logarithm_test-{1,5}
 FAILING+=	run-lrint_test-1
 FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
