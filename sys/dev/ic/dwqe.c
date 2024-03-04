@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.16 2023/12/28 14:30:28 uwe Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.17 2024/03/04 23:50:20 bluhm Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -754,7 +754,7 @@ dwqe_up(struct dwqe_softc *sc)
 		rxb->tb_m = NULL;
 	}
 
-	if_rxr_init(&sc->sc_rx_ring, 2, DWQE_NRXDESC);
+	if_rxr_init(&sc->sc_rx_ring, 2, DWQE_NRXDESC - 1);
 
 	dwqe_write(sc, GMAC_CHAN_RX_BASE_ADDR_HI(0), DWQE_DMA_DVA(sc->sc_rxring) >> 32);
 	dwqe_write(sc, GMAC_CHAN_RX_BASE_ADDR(0), DWQE_DMA_DVA(sc->sc_rxring));
