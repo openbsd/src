@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_lock.3,v 1.1 2019/03/10 15:00:34 schwarze Exp $
+.\"	$OpenBSD: CRYPTO_lock.3,v 1.2 2024/03/04 09:30:43 tb Exp $
 .\"	OpenSSL doc/crypto/threads.pod fb552ac6 Sep 30 23:43:01 2009 +0000
 .\"
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,14 +15,10 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 10 2019 $
+.Dd $Mdocdate: March 4 2024 $
 .Dt CRYPTO_LOCK 3
 .Os
 .Sh NAME
-.Nm CRYPTO_THREADID_current ,
-.Nm CRYPTO_THREADID_cmp ,
-.Nm CRYPTO_THREADID_cpy ,
-.Nm CRYPTO_THREADID_hash ,
 .Nm CRYPTO_lock ,
 .Nm CRYPTO_w_lock ,
 .Nm CRYPTO_w_unlock ,
@@ -32,24 +28,6 @@
 .Nd thread support
 .Sh SYNOPSIS
 .In openssl/crypto.h
-.Ft void
-.Fo CRYPTO_THREADID_current
-.Fa "CRYPTO_THREADID *id"
-.Fc
-.Ft int
-.Fo CRYPTO_THREADID_cmp
-.Fa "const CRYPTO_THREADID *a"
-.Fa "const CRYPTO_THREADID *b"
-.Fc
-.Ft void
-.Fo CRYPTO_THREADID_cpy
-.Fa "CRYPTO_THREADID *dest"
-.Fa "const CRYPTO_THREADID *src"
-.Fc
-.Ft unsigned long
-.Fo CRYPTO_THREADID_hash
-.Fa "const CRYPTO_THREADID *id"
-.Fc
 .Ft void
 .Fo CRYPTO_lock
 .Fa "int mode"
@@ -75,18 +53,6 @@
 .Ed
 .Sh DESCRIPTION
 These functions are obsolete.
-.Pp
-.Fn CRYPTO_THREADID_current
-stores a unique identifier of the currently executing thread
-into the opaque object
-.Fa id .
-.Pp
-.Fn CRYPTO_THREADID_cpy
-copies the contents of
-.Fa src
-to
-.Fa dest .
-.Pp
 .Fn CRYPTO_lock
 locks or unlocks a mutex lock.
 .Pp
@@ -135,20 +101,6 @@ and unlocks the lock number
 .Fa type
 again.
 .Sh RETURN VALUES
-.Fn CRYPTO_THREADID_cmp
-returns 0 if
-.Fa a
-and
-.Fa b
-refer to the same thread or a non-zero value otherwise.
-.Pp
-.Fn CRYPTO_THREADID_hash
-returns a numeric value usable as a hash-table key.
-In the LibreSSL implementation, it is the value returned from
-.Xr pthread_self 3
-for the thread
-.Fa id .
-.Pp
 .Fn CRYPTO_add
 returns the new value of
 .Pf * Fa p .
@@ -166,11 +118,3 @@ first appeared in SSLeay 0.6.0.
 first appeared in SSLeay 0.6.2.
 These functions have been available since
 .Ox 2.4 .
-.Pp
-.Fn CRYPTO_THREADID_current ,
-.Fn CRYPTO_THREADID_cmp ,
-.Fn CRYPTO_THREADID_cpy ,
-and
-.Fn CRYPTO_THREADID_hash
-first appeared in OpenSSL 1.0.0 and have been available since
-.Ox 4.9 .
