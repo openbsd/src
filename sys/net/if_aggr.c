@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.42 2023/12/23 10:52:54 bluhm Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.43 2024/03/04 04:44:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -1176,8 +1176,8 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	aggr_update_capabilities(sc);
 
 	/*
-         * use (and modification) of ifp->if_input and ac->ac_trunkport
-         * is protected by NET_LOCK.
+	 * use (and modification) of ifp->if_input and ac->ac_trunkport
+	 * is protected by NET_LOCK.
 	 */
 
 	ac0->ac_trunkport = p;
@@ -1406,8 +1406,8 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	timeout_del(&p->p_wait_while_timer);
 
 	/*
-         * use (and modification) of ifp->if_input and ac->ac_trunkport
-         * is protected by NET_LOCK.
+	 * use (and modification) of ifp->if_input and ac->ac_trunkport
+	 * is protected by NET_LOCK.
 	 */
 
 	ac0->ac_trunkport = NULL;
