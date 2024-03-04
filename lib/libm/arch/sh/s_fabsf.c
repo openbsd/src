@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fabsf.c,v 1.2 2014/04/18 15:09:52 guenther Exp $	*/
+/*	$OpenBSD: s_fabsf.c,v 1.3 2024/03/04 17:09:23 miod Exp $	*/
 
 /*
  * Written by Martynas Venckus.  Public domain
@@ -14,4 +14,4 @@ fabsf(float f)
 
 	return (f);
 }
-
+DEF_STD(fabsf);
