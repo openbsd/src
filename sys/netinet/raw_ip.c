@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.156 2024/02/11 18:14:26 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.157 2024/03/05 09:45:13 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -127,8 +127,6 @@ rip_init(void)
 {
 	in_pcbinit(&rawcbtable, 1);
 }
-
-struct mbuf	*rip_chkhdr(struct mbuf *, struct mbuf *);
 
 int
 rip_input(struct mbuf **mp, int *offp, int proto, int af)

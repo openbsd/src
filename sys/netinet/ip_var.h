@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.113 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.114 2024/03/05 09:45:13 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -261,6 +261,8 @@ void	 rip_init(void);
 int	 rip_input(struct mbuf **, int *, int, int);
 int	 rip_output(struct mbuf *, struct socket *, struct sockaddr *,
 	    struct mbuf *);
+struct mbuf *
+	 rip_chkhdr(struct mbuf *, struct mbuf *);
 int	 rip_attach(struct socket *, int, int);
 int	 rip_detach(struct socket *);
 void	 rip_lock(struct socket *);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.94 2024/02/11 18:14:26 mvs Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.95 2024/03/05 09:45:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -100,21 +100,19 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 	if ((error = in_nam2sin(nam, &sin)))
 		goto fail;
 
-	/* Do basic sanity checks. */
-	if (m->m_pkthdr.len < sizeof(struct ip))
+	if (m->m_pkthdr.len > IP_MAXPACKET) {
+		error = EMSGSIZE;
 		goto fail;
-	if ((m = m_pullup(m, sizeof(struct ip))) == NULL) {
-		/* m_pullup() has freed the mbuf, so just return. */
-		divstat_inc(divs_errors);
-		return (ENOBUFS);
 	}
+
+	m = rip_chkhdr(m, NULL);
+	if (m == NULL) {
+		error = EINVAL;
+		goto fail;
+	}
+
 	ip = mtod(m, struct ip *);
-	if (ip->ip_v != IPVERSION)
-		goto fail;
 	off = ip->ip_hl << 2;
-	if (off < sizeof(struct ip) || ntohs(ip->ip_len) < off ||
-	    m->m_pkthdr.len < ntohs(ip->ip_len))
-		goto fail;
 
 	dir = (sin->sin_addr.s_addr == INADDR_ANY ? PF_OUT : PF_IN);
 
@@ -135,8 +133,10 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		min_hdrlen = 0;
 		break;
 	}
-	if (min_hdrlen && m->m_pkthdr.len < off + min_hdrlen)
+	if (min_hdrlen && m->m_pkthdr.len < off + min_hdrlen) {
+		error = EINVAL;
 		goto fail;
+	}
 
 	m->m_pkthdr.pf.flags |= PF_TAG_DIVERTED_PACKET;
 
@@ -181,7 +181,7 @@ divert_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 fail:
 	m_freem(m);
 	divstat_inc(divs_errors);
-	return (error ? error : EINVAL);
+	return (error);
 }
 
 void
