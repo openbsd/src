@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.289 2024/02/21 09:28:29 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.290 2024/03/05 18:52:41 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -545,29 +545,27 @@ m_purge(struct mbuf *m)
  * mbuf chain defragmenter. This function uses some evil tricks to defragment
  * an mbuf chain into a single buffer without changing the mbuf pointer.
  * This needs to know a lot of the mbuf internals to make this work.
+ * The resulting mbuf is not aligned to IP header to assist DMA transfers.
  */
 int
 m_defrag(struct mbuf *m, int how)
 {
 	struct mbuf *m0;
-	unsigned int adj;
 
 	if (m->m_next == NULL)
 		return (0);
 
 	KASSERT(m->m_flags & M_PKTHDR);
 
-	adj = mtod(m, unsigned long) & (sizeof(long) - 1);
 	if ((m0 = m_gethdr(how, m->m_type)) == NULL)
 		return (ENOBUFS);
-	if (m->m_pkthdr.len + adj > MHLEN) {
-		MCLGETL(m0, how, m->m_pkthdr.len + adj);
+	if (m->m_pkthdr.len > MHLEN) {
+		MCLGETL(m0, how, m->m_pkthdr.len);
 		if (!(m0->m_flags & M_EXT)) {
 			m_free(m0);
 			return (ENOBUFS);
 		}
 	}
-	m0->m_data += adj;
 	m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
 	m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
 
@@ -586,9 +584,9 @@ m_defrag(struct mbuf *m, int how)
 		memcpy(&m->m_ext, &m0->m_ext, sizeof(struct mbuf_ext));
 		MCLINITREFERENCE(m);
 		m->m_flags |= m0->m_flags & (M_EXT|M_EXTWR);
-		m->m_data = m->m_ext.ext_buf + adj;
+		m->m_data = m->m_ext.ext_buf;
 	} else {
-		m->m_data = m->m_pktdat + adj;
+		m->m_data = m->m_pktdat;
 		memcpy(m->m_data, m0->m_data, m0->m_len);
 	}
 	m->m_pkthdr.len = m->m_len = m0->m_len;
