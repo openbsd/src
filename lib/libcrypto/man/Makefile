@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.284 2024/03/05 17:21:40 tb Exp $
+# $OpenBSD: Makefile,v 1.285 2024/03/05 18:30:40 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,6 @@ MAN=	\
 	ASN1_mbstring_copy.3 \
 	ASN1_parse_dump.3 \
 	ASN1_put_object.3 \
-	ASN1_time_parse.3 \
 	ASRange_new.3 \
 	AUTHORITY_KEYID_new.3 \
 	BASIC_CONSTRAINTS_new.3 \
