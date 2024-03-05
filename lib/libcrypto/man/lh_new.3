@@ -1,4 +1,4 @@
-.\" $OpenBSD: lh_new.3,v 1.12 2024/03/04 19:03:31 tb Exp $
+.\" $OpenBSD: lh_new.3,v 1.13 2024/03/05 22:15:29 tb Exp $
 .\" full merge up to:
 .\" OpenSSL doc/crypto/lhash.pod 1bc74519 May 20 08:11:46 2016 -0400
 .\" selective merge up to:
@@ -118,7 +118,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 4 2024 $
+.Dd $Mdocdate: March 5 2024 $
 .Dt LH_NEW 3
 .Os
 .Sh NAME
@@ -379,8 +379,6 @@ lh_STUFF_doall_arg(hashtable, LHASH_DOALL_ARG_FN(STUFF_print), BIO,
 .Pp
 .Fn lh_<type>_error
 can be used to determine if an error occurred in the last operation.
-.Fn lh_<type>_error
-is a macro.
 .Sh RETURN VALUES
 .Fn lh_<type>_new
 returns
