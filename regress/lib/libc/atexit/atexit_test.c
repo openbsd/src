@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit_test.c,v 1.9 2017/07/27 15:08:37 bluhm Exp $ */
+/*	$OpenBSD: atexit_test.c,v 1.10 2024/03/05 19:27:47 miod Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -39,6 +39,14 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+
+/*
+ * XXX Provide a prototype for aligned_alloc on pre-C11 compilers to prevent
+ * inclusion of hidden/stdlib.h below to cause a missing prototype error.
+ */
+#if (__ISO_C_VISIBLE - 0) < 2011
+void *aligned_alloc(size_t, size_t);
+#endif
 
 #include "include/namespace.h"
 #include "hidden/stdlib.h"
