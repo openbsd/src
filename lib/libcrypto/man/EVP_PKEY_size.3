@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_size.3,v 1.2 2023/09/12 15:29:03 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_size.3,v 1.3 2024/03/05 19:21:31 tb Exp $
 .\" full merge up to: OpenSSL eed9d03b Jan 8 11:04:15 2020 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 12 2023 $
+.Dd $Mdocdate: March 5 2024 $
 .Dt EVP_PKEY_SIZE 3
 .Os
 .Sh NAME
@@ -144,7 +144,6 @@ is supported for the following algorithms:
 .It DSA    Ta Xr DSA_size 3
 .It EC     Ta Xr ECDSA_size 3
 .It ED25519 Ta 64, but see below
-.It GOST01 Ta 64 or 128
 .It HMAC   Ta Dv EVP_MAX_MD_SIZE No = 64
 .It RSA    Ta Xr RSA_size 3
 .It X25519 Ta Dv X25519_KEYLEN No = 32
@@ -173,7 +172,6 @@ By default, the following algorithms are supported:
 .It DSA    Ta the public domain parameter Fa p Ta Xr DSA_bits 3
 .It EC     Ta the order of the group Ta Xr EC_GROUP_order_bits 3
 .It ED25519 Ta 253 Ta \(em
-.It GOST01 Ta 256 or 512 Ta \(em
 .It RSA    Ta the public modulus Ta Xr RSA_bits 3
 .It X25519 Ta 253 Ta \(em
 .El
@@ -192,7 +190,6 @@ By default, the following algorithms are supported:
 .It DSA    Ta Xr DSA_security_bits 3
 .It EC     Ta Xr EC_GROUP_order_bits 3 divided by 2
 .It ED25519 Ta 128
-.It GOST01 Ta not supported, return value is \-2
 .It RSA    Ta Xr RSA_security_bits 3
 .It X25519 Ta 128
 .El
