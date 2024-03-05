@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2021/05/09 14:26:45 jan Exp $
+#	$OpenBSD: Makefile,v 1.12 2024/03/05 07:01:40 anton Exp $
 
 .PHONY: setup-ftpd
 
@@ -41,6 +41,7 @@ regress:
 setup-ftpd:
 	${SUDO} pkill tcpserver || true
 	${SUDO} pkill ftpd || true
+	nc 127.0.0.1 21 >/dev/null 2>&1 || true
 	# start ftpd
 	${SUDO} ${TCPSERVER} 127.0.0.1 21 ${KTRACE} ${FTPD} -A & \
 	    timeout=$$(($$(date +%s) + 5)); \
