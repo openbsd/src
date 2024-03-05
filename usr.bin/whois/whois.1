@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.38 2023/08/21 11:12:28 jsg Exp $
+.\"	$OpenBSD: whois.1,v 1.39 2024/03/05 16:06:32 millert Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)whois.1	8.2 (Berkeley) 6/20/94
 .\"
-.Dd $Mdocdate: August 21 2023 $
+.Dd $Mdocdate: March 5 2024 $
 .Dt WHOIS 1
 .Os
 .Sh NAME
@@ -130,37 +130,26 @@ Use the Internet Assigned Numbers Authority
 root zone database.
 It contains information about top-level domains.
 .It Fl i
-Use the Network Solutions Registry for Internet Numbers
-.Pq Tn whois.networksolutions.com
+Use the traditional Network Information Center (InterNIC)
+.Pq Tn whois.internic.net
 database.
-Historically, it contained network numbers and domain contact information
-for most of
+This now contains only registrations for domain names under
 .Tn \&.COM ,
 .Tn \&.NET ,
 .Tn \&.ORG
 and
-.Tn \&.EDU
-domains.
-However, the registration of these domains is now done by a number of
-independent and competing registrars and this database holds no information
-on the domains registered by organizations other than Network Solutions, Inc.
-Also, note that the
-.Tn InterNIC
-database
-.Pq Pa whois.internic.net
-is no longer handled by Network Solutions, Inc.
-For details, see
-.Lk https://www.internic.net/ .
-.Pp
-(Hint: Contact information, identified by the term
-.Em handle ,
-can be looked up by prefixing
-.Qq Li \&!
-or
-.Qq Li handle\ \&
-to the
-.Tn NIC
-handle in the query.)
+.Tn \&.EDU .
+You can optionally specify the type of object to search for:
+.D1 Ic whois -i ' Ns Ar type Ar name Ns Ic '
+where
+.Ar type
+is one of
+.Em domain , nameserver , registrar .
+The
+.Ar name
+may also contain
+.Li *
+wildcards.
 .It Fl l
 Use the Latin American and Caribbean IP address Regional Registry
 .Pq Tn LACNIC

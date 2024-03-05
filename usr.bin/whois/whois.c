@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.58 2018/06/19 11:28:11 jca Exp $   */
+/*      $OpenBSD: whois.c,v 1.59 2024/03/05 16:06:32 millert Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -45,7 +45,7 @@
 #include <unistd.h>
 
 #define	NICHOST		"whois.crsnic.net"
-#define	INICHOST	"whois.networksolutions.com"
+#define	INICHOST	"whois.internic.net"
 #define	CNICHOST	"whois.corenic.net"
 #define	DNICHOST	"whois.nic.mil"
 #define	GNICHOST	"whois.nic.gov"
