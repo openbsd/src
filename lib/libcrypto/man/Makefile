@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.283 2024/03/04 19:04:47 tb Exp $
+# $OpenBSD: Makefile,v 1.284 2024/03/05 17:21:40 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -170,7 +170,6 @@ MAN=	\
 	EVP_EncodeInit.3 \
 	EVP_EncryptInit.3 \
 	EVP_MD_CTX_ctrl.3 \
-	EVP_MD_meth_new.3 \
 	EVP_MD_nid.3 \
 	EVP_OpenInit.3 \
 	EVP_PKCS82PKEY.3 \
