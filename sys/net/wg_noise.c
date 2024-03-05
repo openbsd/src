@@ -1,4 +1,4 @@
-/*	$OpenBSD: wg_noise.c,v 1.6 2023/02/03 18:31:17 miod Exp $ */
+/*	$OpenBSD: wg_noise.c,v 1.7 2024/03/05 17:48:01 mvs Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
@@ -20,6 +20,7 @@
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/mutex.h>
 #include <sys/rwlock.h>
 
 #include <crypto/blake2s.h>
@@ -139,7 +140,7 @@ noise_remote_init(struct noise_remote *r, uint8_t public[NOISE_PUBLIC_KEY_LEN],
 	bzero(r, sizeof(*r));
 	memcpy(r->r_public, public, NOISE_PUBLIC_KEY_LEN);
 	rw_init(&r->r_handshake_lock, "noise_handshake");
-	rw_init(&r->r_keypair_lock, "noise_keypair");
+	mtx_init_flags(&r->r_keypair_mtx, IPL_NET, "noise_keypair", 0);
 
 	SLIST_INSERT_HEAD(&r->r_unused_keypairs, &r->r_keypair[0], kp_entry);
 	SLIST_INSERT_HEAD(&r->r_unused_keypairs, &r->r_keypair[1], kp_entry);
@@ -468,10 +469,10 @@ noise_remote_begin_session(struct noise_remote *r)
 	kp.kp_remote_index = hs->hs_remote_index;
 	getnanouptime(&kp.kp_birthdate);
 	bzero(&kp.kp_ctr, sizeof(kp.kp_ctr));
-	rw_init(&kp.kp_ctr.c_lock, "noise_counter");
+	mtx_init_flags(&kp.kp_ctr.c_mtx, IPL_NET, "noise_counter", 0);
 
 	/* Now we need to add_new_keypair */
-	rw_enter_write(&r->r_keypair_lock);
+	mtx_enter(&r->r_keypair_mtx);
 	next = r->r_next;
 	current = r->r_current;
 	previous = r->r_previous;
@@ -497,7 +498,7 @@ noise_remote_begin_session(struct noise_remote *r)
 		r->r_next = noise_remote_keypair_allocate(r);
 		*r->r_next = kp;
 	}
-	rw_exit_write(&r->r_keypair_lock);
+	mtx_leave(&r->r_keypair_mtx);
 
 	explicit_bzero(&r->r_handshake, sizeof(r->r_handshake));
 	rw_exit_write(&r->r_handshake_lock);
@@ -514,25 +515,25 @@ noise_remote_clear(struct noise_remote *r)
 	explicit_bzero(&r->r_handshake, sizeof(r->r_handshake));
 	rw_exit_write(&r->r_handshake_lock);
 
-	rw_enter_write(&r->r_keypair_lock);
+	mtx_enter(&r->r_keypair_mtx);
 	noise_remote_keypair_free(r, r->r_next);
 	noise_remote_keypair_free(r, r->r_current);
 	noise_remote_keypair_free(r, r->r_previous);
 	r->r_next = NULL;
 	r->r_current = NULL;
 	r->r_previous = NULL;
-	rw_exit_write(&r->r_keypair_lock);
+	mtx_leave(&r->r_keypair_mtx);
 }
 
 void
 noise_remote_expire_current(struct noise_remote *r)
 {
-	rw_enter_write(&r->r_keypair_lock);
+	mtx_enter(&r->r_keypair_mtx);
 	if (r->r_next != NULL)
 		r->r_next->kp_valid = 0;
 	if (r->r_current != NULL)
 		r->r_current->kp_valid = 0;
-	rw_exit_write(&r->r_keypair_lock);
+	mtx_leave(&r->r_keypair_mtx);
 }
 
 int
@@ -541,7 +542,7 @@ noise_remote_ready(struct noise_remote *r)
 	struct noise_keypair *kp;
 	int ret;
 
-	rw_enter_read(&r->r_keypair_lock);
+	mtx_enter(&r->r_keypair_mtx);
 	/* kp_ctr isn't locked here, we're happy to accept a racy read. */
 	if ((kp = r->r_current) == NULL ||
 	    !kp->kp_valid ||
@@ -551,7 +552,7 @@ noise_remote_ready(struct noise_remote *r)
 		ret = EINVAL;
 	else
 		ret = 0;
-	rw_exit_read(&r->r_keypair_lock);
+	mtx_leave(&r->r_keypair_mtx);
 	return ret;
 }
 
@@ -562,7 +563,7 @@ noise_remote_encrypt(struct noise_remote *r, uint32_t *r_idx, uint64_t *nonce,
 	struct noise_keypair *kp;
 	int ret = EINVAL;
 
-	rw_enter_read(&r->r_keypair_lock);
+	mtx_enter(&r->r_keypair_mtx);
 	if ((kp = r->r_current) == NULL)
 		goto error;
 
@@ -601,7 +602,7 @@ noise_remote_encrypt(struct noise_remote *r, uint32_t *r_idx, uint64_t *nonce,
 
 	ret = 0;
 error:
-	rw_exit_read(&r->r_keypair_lock);
+	mtx_leave(&r->r_keypair_mtx);
 	return ret;
 }
 
@@ -616,7 +617,7 @@ noise_remote_decrypt(struct noise_remote *r, uint32_t r_idx, uint64_t nonce,
 	 * attempt the current keypair first as that is most likely. We also
 	 * want to make sure that the keypair is valid as it would be
 	 * catastrophic to decrypt against a zero'ed keypair. */
-	rw_enter_read(&r->r_keypair_lock);
+	mtx_enter(&r->r_keypair_mtx);
 
 	if (r->r_current != NULL && r->r_current->kp_local_index == r_idx) {
 		kp = r->r_current;
@@ -651,8 +652,6 @@ noise_remote_decrypt(struct noise_remote *r, uint32_t r_idx, uint64_t nonce,
 	 * we skip the REKEY_AFTER_TIME_RECV check. This is safe to do as a
 	 * data packet can't confirm a session that we are an INITIATOR of. */
 	if (kp == r->r_next) {
-		rw_exit_read(&r->r_keypair_lock);
-		rw_enter_write(&r->r_keypair_lock);
 		if (kp == r->r_next && kp->kp_local_index == r_idx) {
 			noise_remote_keypair_free(r, r->r_previous);
 			r->r_previous = r->r_current;
@@ -662,7 +661,6 @@ noise_remote_decrypt(struct noise_remote *r, uint32_t r_idx, uint64_t nonce,
 			ret = ECONNRESET;
 			goto error;
 		}
-		rw_enter(&r->r_keypair_lock, RW_DOWNGRADE);
 	}
 
 	/* Similar to when we encrypt, we want to notify the caller when we
@@ -680,7 +678,7 @@ noise_remote_decrypt(struct noise_remote *r, uint32_t r_idx, uint64_t nonce,
 	ret = 0;
 
 error:
-	rw_exit(&r->r_keypair_lock);
+	mtx_leave(&r->r_keypair_mtx);
 	return ret;
 }
 
@@ -731,9 +729,9 @@ noise_counter_send(struct noise_counter *ctr)
 	return atomic_inc_long_nv((u_long *)&ctr->c_send) - 1;
 #else
 	uint64_t ret;
-	rw_enter_write(&ctr->c_lock);
+	mtx_enter(&ctr->c_mtx);
 	ret = ctr->c_send++;
-	rw_exit_write(&ctr->c_lock);
+	mtx_leave(&ctr->c_mtx);
 	return ret;
 #endif
 }
@@ -745,7 +743,7 @@ noise_counter_recv(struct noise_counter *ctr, uint64_t recv)
 	unsigned long bit;
 	int ret = EEXIST;
 
-	rw_enter_write(&ctr->c_lock);
+	mtx_enter(&ctr->c_mtx);
 
 	/* Check that the recv counter is valid */
 	if (ctr->c_recv >= REJECT_AFTER_MESSAGES ||
@@ -779,7 +777,7 @@ noise_counter_recv(struct noise_counter *ctr, uint64_t recv)
 
 	ret = 0;
 error:
-	rw_exit_write(&ctr->c_lock);
+	mtx_leave(&ctr->c_mtx);
 	return ret;
 }
 
@@ -976,7 +974,7 @@ noise_timer_expired(struct timespec *birthdate, time_t sec, long nsec)
 #define T_LIM (COUNTER_WINDOW_SIZE + 1)
 #define T_INIT do {				\
 	bzero(&ctr, sizeof(ctr));		\
-	rw_init(&ctr.c_lock, "counter");	\
+	mtx_init_flags(&ctr.c_mtx, IPL_NET, "counter", 0);	\
 } while (0)
 #define T(num, v, e) do {						\
 	if (noise_counter_recv(&ctr, v) != e) {				\

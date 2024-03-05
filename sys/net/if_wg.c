@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.36 2024/01/18 08:46:41 mvs Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.37 2024/03/05 17:48:01 mvs Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -150,8 +150,8 @@ struct wg_index {
 };
 
 struct wg_timers {
-	/* t_lock is for blocking wg_timers_event_* when setting t_disabled. */
-	struct rwlock		 t_lock;
+	/* t_mtx is for blocking wg_timers_event_* when setting t_disabled. */
+	struct mutex		 t_mtx;
 
 	int			 t_disabled;
 	int			 t_need_another_keepalive;
@@ -930,7 +930,7 @@ void
 wg_timers_init(struct wg_timers *t)
 {
 	bzero(t, sizeof(*t));
-	rw_init(&t->t_lock, "wg_timers");
+	mtx_init_flags(&t->t_mtx, IPL_NET, "wg_timers", 0);
 	mtx_init(&t->t_handshake_mtx, IPL_NET);
 
 	timeout_set(&t->t_new_handshake, wg_timers_run_new_handshake, t);
@@ -945,19 +945,19 @@ wg_timers_init(struct wg_timers *t)
 void
 wg_timers_enable(struct wg_timers *t)
 {
-	rw_enter_write(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	t->t_disabled = 0;
-	rw_exit_write(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 	wg_timers_run_persistent_keepalive(t);
 }
 
 void
 wg_timers_disable(struct wg_timers *t)
 {
-	rw_enter_write(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	t->t_disabled = 1;
 	t->t_need_another_keepalive = 0;
-	rw_exit_write(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 
 	timeout_del_barrier(&t->t_new_handshake);
 	timeout_del_barrier(&t->t_send_keepalive);
@@ -969,12 +969,12 @@ wg_timers_disable(struct wg_timers *t)
 void
 wg_timers_set_persistent_keepalive(struct wg_timers *t, uint16_t interval)
 {
-	rw_enter_read(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	if (!t->t_disabled) {
 		t->t_persistent_keepalive_interval = interval;
 		wg_timers_run_persistent_keepalive(t);
 	}
-	rw_exit_read(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 }
 
 int
@@ -1020,16 +1020,16 @@ wg_timers_event_data_sent(struct wg_timers *t)
 	int	msecs = NEW_HANDSHAKE_TIMEOUT * 1000;
 	msecs += arc4random_uniform(REKEY_TIMEOUT_JITTER);
 
-	rw_enter_read(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	if (!t->t_disabled && !timeout_pending(&t->t_new_handshake))
 		timeout_add_msec(&t->t_new_handshake, msecs);
-	rw_exit_read(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 }
 
 void
 wg_timers_event_data_received(struct wg_timers *t)
 {
-	rw_enter_read(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	if (!t->t_disabled) {
 		if (!timeout_pending(&t->t_send_keepalive))
 			timeout_add_sec(&t->t_send_keepalive,
@@ -1037,7 +1037,7 @@ wg_timers_event_data_received(struct wg_timers *t)
 		else
 			t->t_need_another_keepalive = 1;
 	}
-	rw_exit_read(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 }
 
 void
@@ -1055,11 +1055,11 @@ wg_timers_event_any_authenticated_packet_received(struct wg_timers *t)
 void
 wg_timers_event_any_authenticated_packet_traversal(struct wg_timers *t)
 {
-	rw_enter_read(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	if (!t->t_disabled && t->t_persistent_keepalive_interval > 0)
 		timeout_add_sec(&t->t_persistent_keepalive,
 		    t->t_persistent_keepalive_interval);
-	rw_exit_read(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 }
 
 void
@@ -1068,10 +1068,10 @@ wg_timers_event_handshake_initiated(struct wg_timers *t)
 	int	msecs = REKEY_TIMEOUT * 1000;
 	msecs += arc4random_uniform(REKEY_TIMEOUT_JITTER);
 
-	rw_enter_read(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	if (!t->t_disabled)
 		timeout_add_msec(&t->t_retry_handshake, msecs);
-	rw_exit_read(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 }
 
 void
@@ -1085,7 +1085,7 @@ wg_timers_event_handshake_responded(struct wg_timers *t)
 void
 wg_timers_event_handshake_complete(struct wg_timers *t)
 {
-	rw_enter_read(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	if (!t->t_disabled) {
 		mtx_enter(&t->t_handshake_mtx);
 		timeout_del(&t->t_retry_handshake);
@@ -1094,25 +1094,25 @@ wg_timers_event_handshake_complete(struct wg_timers *t)
 		mtx_leave(&t->t_handshake_mtx);
 		wg_timers_run_send_keepalive(t);
 	}
-	rw_exit_read(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 }
 
 void
 wg_timers_event_session_derived(struct wg_timers *t)
 {
-	rw_enter_read(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	if (!t->t_disabled)
 		timeout_add_sec(&t->t_zero_key_material, REJECT_AFTER_TIME * 3);
-	rw_exit_read(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 }
 
 void
 wg_timers_event_want_initiation(struct wg_timers *t)
 {
-	rw_enter_read(&t->t_lock);
+	mtx_enter(&t->t_mtx);
 	if (!t->t_disabled)
 		wg_timers_run_send_initiation(t, 0);
-	rw_exit_read(&t->t_lock);
+	mtx_leave(&t->t_mtx);
 }
 
 void

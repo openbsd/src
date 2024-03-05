@@ -1,4 +1,4 @@
-/*	$OpenBSD: wg_noise.h,v 1.2 2020/12/09 05:53:33 tb Exp $ */
+/*	$OpenBSD: wg_noise.h,v 1.3 2024/03/05 17:48:01 mvs Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
@@ -21,6 +21,7 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/mutex.h>
 #include <sys/rwlock.h>
 
 #include <crypto/blake2s.h>
@@ -71,7 +72,7 @@ struct noise_handshake {
 };
 
 struct noise_counter {
-	struct rwlock		 c_lock;
+	struct mutex		 c_mtx;
 	uint64_t		 c_send;
 	uint64_t		 c_recv;
 	unsigned long		 c_backtrack[COUNTER_NUM];
@@ -100,7 +101,7 @@ struct noise_remote {
 	uint8_t				 r_timestamp[NOISE_TIMESTAMP_LEN];
 	struct timespec			 r_last_init; /* nanouptime */
 
-	struct rwlock			 r_keypair_lock;
+	struct mutex			 r_keypair_mtx;
 	SLIST_HEAD(,noise_keypair)	 r_unused_keypairs;
 	struct noise_keypair		*r_next, *r_current, *r_previous;
 	struct noise_keypair		 r_keypair[3]; /* 3: next, current, previous. */
