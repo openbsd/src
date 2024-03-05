@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.41 2020/10/11 18:28:17 millert Exp $
+# $OpenBSD: security,v 1.42 2024/03/05 18:54:29 kn Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -883,10 +883,17 @@ sub check_disklabels {
 	nag !(open my $fh, '-|', qw(df -ln)),
 	    "cannot spawn df: $!"
 	    and return;
-	my @disks = sort map m{^/dev/(\w*\d*)[a-p]}, <$fh>;
+	my %disks;
+	@disks{map m{^/dev/(\w*\d*)[a-p]}, <$fh>} = ();
 	close_or_nag $fh, "df";
 
-	foreach my $disk (@disks) {
+	unless (nag !(open my $fh, '-|', qw(bioctl softraid0)),
+	    "cannot spawn bioctl: $!") {
+		@disks{map m{<(\w*\d*)[a-p]>}, <$fh>} = ();
+		close_or_nag $fh, "bioctl";
+	}
+
+	foreach my $disk (sort keys %disks) {
 		$check_title = "======\n$disk diffs (-OLD  +NEW)\n======";
 		my $filename = BACKUP_DIR . "disklabel.$disk";
 		system "disklabel $disk > $filename";
