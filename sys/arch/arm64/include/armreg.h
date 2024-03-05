@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.30 2023/11/29 23:32:16 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.31 2024/03/05 18:42:20 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -656,6 +656,8 @@
 #define	SCTLR_EnDA	0x0000000008000000
 #define	SCTLR_EnIB	0x0000000040000000
 #define	SCTLR_EnIA	0x0000000080000000
+#define	SCTLR_BT0	0x0000000800000000
+#define	SCTLR_BT1	0x0000001000000000
 
 /* SPSR_EL1 */
 /*

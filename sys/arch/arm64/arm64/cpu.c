@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.107 2024/03/01 15:57:43 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.108 2024/03/05 18:42:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1039,6 +1039,13 @@ cpu_init(void)
 		sctlr = READ_SPECIALREG(sctlr_el1);
 		sctlr |= SCTLR_EnIA | SCTLR_EnDA;
 		sctlr |= SCTLR_EnIB | SCTLR_EnDB;
+		WRITE_SPECIALREG(sctlr_el1, sctlr);
+	}
+
+	/* Enable strict BTI compatibility for PACIASP and PACIBSP. */
+	if (ID_AA64PFR1_BT(cpu_id_aa64pfr1) >= ID_AA64PFR1_BT_IMPL) {
+		sctlr = READ_SPECIALREG(sctlr_el1);
+		sctlr |= SCTLR_BT0 | SCTLR_BT1;
 		WRITE_SPECIALREG(sctlr_el1, sctlr);
 	}
 
