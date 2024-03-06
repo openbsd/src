@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.119 2024/01/28 03:01:39 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.120 2024/03/06 00:11:25 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -182,6 +182,13 @@ const struct puc_device_description puc_devs[] = {
 	},
 	{	/* 700 Series KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_700SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+	    },
+	},
+	{	/* MTL KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MTL_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
 		{ PUC_PORT_COM, 0x10, 0x0000 },
