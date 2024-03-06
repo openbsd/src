@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_CRL_new.3,v 1.13 2021/10/30 16:20:35 schwarze Exp $
+.\" $OpenBSD: X509_CRL_new.3,v 1.14 2024/03/06 02:34:14 tb Exp $
 .\"
 .\" Copyright (c) 2016, 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2021 $
+.Dd $Mdocdate: March 6 2024 $
 .Dt X509_CRL_NEW 3
 .Os
 .Sh NAME
@@ -67,19 +67,6 @@ decrements the reference count of
 by 1.
 If the reference count reaches 0, it frees
 .Fa crl .
-If
-.Xr X509_CRL_set_default_method 3
-was in effect at the time
-.Fa crl
-was created and the
-.Fn crl_free
-callback is not
-.Dv NULL ,
-that callback is invoked near the end of
-.Fn X509_CRL_free ,
-right before freeing
-.Fa crl
-itself.
 .Pp
 .Fn X509_CRL_INFO_new
 allocates and initializes an empty
@@ -125,7 +112,6 @@ returns 1 on success or 0 on error.
 .Xr X509_CRL_get_issuer 3 ,
 .Xr X509_CRL_get_version 3 ,
 .Xr X509_CRL_match 3 ,
-.Xr X509_CRL_METHOD_new 3 ,
 .Xr X509_CRL_print 3 ,
 .Xr X509_CRL_sign 3 ,
 .Xr X509_EXTENSION_new 3 ,
