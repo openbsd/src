@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2066 2024/03/04 05:34:07 jsg Exp $
+$OpenBSD: pcidevs,v 1.2067 2024/03/06 00:05:18 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6374,7 +6374,97 @@ product INTEL 600SERIES_GSPI_2	0x7afb	600 Series GSPI
 product INTEL 600SERIES_I2C_4	0x7afc	600 Series I2C
 product INTEL 600SERIES_I2C_5	0x7afd	600 Series I2C
 product INTEL 600SERIES_UART_2	0x7afe	600 Series UART
+product INTEL MTL_U4_HB		0x7d00	Core Ultra Host
+product INTEL MTL_H_HB_2	0x7d01	Core Ultra Host
+product INTEL MTL_U_HB_2	0x7d02	Core Ultra Host
+product INTEL MTL_DTT		0x7d03	Core Ultra DTT
+product INTEL MTL_VMD		0x7d0b	Core Ultra VMD
+product INTEL MTL_PMT		0x7d0d	Core Ultra PMT
+product INTEL MTL_H_HB_1	0x7d14	Core Ultra Host
+product INTEL MTL_U_HB_1	0x7d16	Core Ultra Host
+product INTEL MTL_IPU		0x7d19	Core Ultra IPU
+product INTEL MTL_NPU		0x7d1d	Core Ultra NPU
+product INTEL MTL_U4_GT_1	0x7d40	Graphics
+product INTEL MTL_U_GT_1	0x7d45	Graphics
+product INTEL MTL_H_GT_1	0x7d55	Arc Graphics
+product INTEL MTL_U_GT_2	0x7d60	Graphics
+product INTEL MTL_H_GT_2	0x7dd5	Graphics
+product INTEL MTL_H_ESPI	0x7e02	Core Ultra eSPI
+product INTEL MTL_U_ESPI	0x7e03	Core Ultra eSPI
+product INTEL MTL_U4_ESPI	0x7e07	Core Ultra eSPI
+product INTEL MTL_P2SB_SOC	0x7e20	Core Ultra P2SB
+product INTEL MTL_PMC_SOC	0x7e21	Core Ultra PMC
+product INTEL MTL_SMB		0x7e22	Core Ultra SMBus
+product INTEL MTL_SPI		0x7e23	Core Ultra SPI
+product INTEL MTL_TH		0x7e24	Core Ultra TH
+product INTEL MTL_UART_0	0x7e25	Core Ultra UART
+product INTEL MTL_UART_1	0x7e26	Core Ultra UART
+product INTEL MTL_GSPI_0	0x7e27	Core Ultra GSPI
+product INTEL MTL_HDA		0x7e28	Core Ultra HD Audio
+product INTEL MTL_GSPI_1	0x7e30	Core Ultra GSPI
+product INTEL MTL_PCIE_1	0x7e38	Core Ultra PCIE
+product INTEL MTL_PCIE_2	0x7e39	Core Ultra PCIE
+product INTEL MTL_PCIE_3	0x7e3a	Core Ultra PCIE
+product INTEL MTL_PCIE_4	0x7e3b	Core Ultra PCIE
+product INTEL MTL_PCIE_5	0x7e3c	Core Ultra PCIE
+product INTEL MTL_PCIE_6	0x7e3d	Core Ultra PCIE
+product INTEL MTL_PCIE_7	0x7e3e	Core Ultra PCIE
+product INTEL MTL_PCIE_8	0x7e3f	Core Ultra PCIE
 product INTEL WL_22500_14	0x7e40	Wi-Fi 6 AX210
+product INTEL MTL_ISH		0x7e45	Core Ultra ISH
+product INTEL MTL_GSPI_2	0x7e46	Core Ultra GSPI
+product INTEL MTL_THC_0_1	0x7e48	Core Ultra THC
+product INTEL MTL_THC_0_2	0x7e49	Core Ultra THC
+product INTEL MTL_THC_1_1	0x7e4a	Core Ultra THC
+product INTEL MTL_THC_1_2	0x7e4b	Core Ultra THC
+product INTEL MTL_GNA		0x7e4c	Core Ultra GNA
+product INTEL MTL_PCIE_9	0x7e4d	Core Ultra PCIE
+product INTEL MTL_I2C_4		0x7e50	Core Ultra I2C
+product INTEL MTL_I2C_5		0x7e51	Core Ultra I2C
+product INTEL MTL_UART_2	0x7e52	Core Ultra UART
+product INTEL MTL_HECI_5	0x7e58	Core Ultra HECI
+product INTEL MTL_HECI_6	0x7e59	Core Ultra HECI
+product INTEL MTL_HECI_7	0x7e5a	Core Ultra HECI
+product INTEL MTL_AHCI		0x7e63	Core Ultra AHCI
+product INTEL MTL_RAID_1	0x7e67	Core Ultra RAID
+product INTEL MTL_HECI_1	0x7e70	Core Ultra HECI
+product INTEL MTL_HECI_2	0x7e71	Core Ultra HECI
+product INTEL MTL_IDER		0x7e72	Core Ultra IDE-R
+product INTEL MTL_KT		0x7e73	Core Ultra KT
+product INTEL MTL_HECI_3	0x7e74	Core Ultra HECI
+product INTEL MTL_HECI_4	0x7e75	Core Ultra HECI
+product INTEL MTL_I2C_0		0x7e78	Core Ultra I2C
+product INTEL MTL_I2C_1		0x7e79	Core Ultra I2C
+product INTEL MTL_I2C_2		0x7e7a	Core Ultra I2C
+product INTEL MTL_I2C_3		0x7e7b	Core Ultra I2C
+product INTEL MTL_I3C		0x7e7c	Core Ultra I3C
+product INTEL MTL_XHCI_2	0x7e7d	Core Ultra xHCI
+product INTEL MTL_XDCI_2	0x7e7e	Core Ultra xDCI
+product INTEL MTL_SRAM		0x7e7f	Core Ultra SRAM
+product INTEL MTL_U4_XHCI	0x7eb0	Core Ultra xHCI
+product INTEL MTL_U4_XDCI	0x7eb1	Core Ultra xDCI
+product INTEL MTL_U4_TBT_DMA0	0x7eb2	Core Ultra TBT
+product INTEL MTL_U4_PCIE_16	0x7eb4	Core Ultra PCIE
+product INTEL MTL_U4_PCIE_17	0x7eb5	Core Ultra PCIE
+product INTEL MTL_U4_P2SB_IOE	0x7eb8	Core Ultra P2SB
+product INTEL MTL_U4_IEH_IOE	0x7eb9	Core Ultra IEH
+product INTEL MTL_U4_PMC_IOE	0x7ebe	Core Ultra PMC
+product INTEL MTL_U4_SRAM_IOE	0x7ebf	Core Ultra SRAM
+product INTEL MTL_XHCI_1	0x7ec0	Core Ultra xHCI
+product INTEL MTL_XDCI_1	0x7ec1	Core Ultra xDCI
+product INTEL MTL_TBT_DMA0	0x7ec2	Core Ultra TBT
+product INTEL MTL_TBT_DMA1	0x7ec3	Core Ultra TBT
+product INTEL MTL_PCIE_16	0x7ec4	Core Ultra PCIE
+product INTEL MTL_PCIE_17	0x7ec5	Core Ultra PCIE
+product INTEL MTL_PCIE_18	0x7ec6	Core Ultra PCIE
+product INTEL MTL_PCIE_19	0x7ec7	Core Ultra PCIE
+product INTEL MTL_P2SB_IOE	0x7ec8	Core Ultra P2SB
+product INTEL MTL_IEH_IOE	0x7ec9	Core Ultra IEH
+product INTEL MTL_PCIE_10	0x7eca	Core Ultra PCIE
+product INTEL MTL_PCIE_11	0x7ecb	Core Ultra PCIE
+product INTEL MTL_H_PCIE_12	0x7ecc 	Core Ultra PCIE
+product INTEL MTL_PMC_IOE	0x7ece	Core Ultra PMC
+product INTEL MTL_SRAM_IOE	0x7ecf	Core Ultra SRAM
 product INTEL WL_22500_15	0x7f70	Wi-Fi 6 AX211
 product INTEL US15W_HB		0x8100	US15W Host
 product INTEL US15L_HB		0x8101	US15L/UL11L Host
