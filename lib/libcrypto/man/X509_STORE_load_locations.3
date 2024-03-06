@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_load_locations.3,v 1.10 2021/11/12 14:05:28 schwarze Exp $
+.\" $OpenBSD: X509_STORE_load_locations.3,v 1.11 2024/03/06 10:07:47 tb Exp $
 .\" full merge up to:
 .\" OpenSSL X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2021 $
+.Dd $Mdocdate: March 6 2024 $
 .Dt X509_STORE_LOAD_LOCATIONS 3
 .Os
 .Sh NAME
@@ -122,7 +122,7 @@ already contains an
 .Vt X509_LOOKUP
 object using the given
 .Fa method ;
-if it does, no action occurs.
+if it does, the existing object is returned and no other action occurs.
 Otherwise, a new
 .Vt X509_LOOKUP
 object is allocated, added, and returned.
@@ -148,6 +148,7 @@ In particular, parse errors or lack of memory can cause failure.
 returns the existing or new lookup object or
 .Dv NULL
 on failure.
+This is an internal pointer that must not be freed.
 With LibreSSL, the only reason for failure is lack of memory.
 .Sh FILES
 .Bl -tag -width Ds
