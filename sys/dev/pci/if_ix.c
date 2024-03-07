@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.209 2024/02/15 10:56:53 mglocker Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.210 2024/03/07 14:49:47 claudio Exp $	*/
 
 /******************************************************************************
 
@@ -3174,10 +3174,10 @@ ixgbe_rxeof(struct rx_ring *rxr)
 		if (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) {
 			if (rxbuf->fmp) {
 				m_freem(rxbuf->fmp);
-				rxbuf->fmp = NULL;
+			} else {
+				m_freem(mp);
 			}
-
-			m_freem(mp);
+			rxbuf->fmp = NULL;
 			rxbuf->buf = NULL;
 			goto next_desc;
 		}
@@ -3224,6 +3224,8 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			sendmp = mp;
 			sendmp->m_pkthdr.len = 0;
 			sendmp->m_pkthdr.ph_mss = 0;
+		} else {
+			mp->m_flags &= ~M_PKTHDR;
 		}
 		sendmp->m_pkthdr.len += mp->m_len;
 		/*
