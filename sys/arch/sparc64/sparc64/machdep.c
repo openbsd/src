@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.208 2024/02/10 07:10:13 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.209 2024/03/07 15:01:53 claudio Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1014,7 +1014,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			paddr_t pa;
 			long incr;
 
-			incr = min(buflen, NBPG);
+			incr = min(buflen,
+			    PAGE_SIZE - ((u_long)vaddr & PGOFSET));
 
 			if (pmap_extract(pmap_kernel(), vaddr, &pa) == FALSE) {
 #ifdef DIAGNOSTIC
@@ -1100,7 +1101,9 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 			paddr_t pa;
 			long incr;
 
-			incr = min(buflen, NBPG);
+			incr = min(buflen,
+			    PAGE_SIZE - ((u_long)vaddr & PGOFSET));
+
 			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
 			buflen -= incr;
 			vaddr += incr;
