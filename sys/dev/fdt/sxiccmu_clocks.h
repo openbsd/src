@@ -364,6 +364,7 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 
 #define D1_CLK_PLL_CPU		0
 #define D1_CLK_PLL_PERIPH0	5
+#define D1_CLK_PSI_AHB		23
 #define D1_CLK_APB1		25
 #define D1_CLK_MMC0		56
 #define D1_CLK_MMC1		57
@@ -377,6 +378,7 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 #define D1_CLK_BUS_UART3	65
 #define D1_CLK_BUS_UART4	66
 #define D1_CLK_BUS_UART5	67
+#define D1_CLK_BUS_EMAC		77
 #define D1_CLK_USB_OHCI0	97
 #define D1_CLK_USB_OHCI1	98
 #define D1_CLK_BUS_OHCI0	99
@@ -400,6 +402,7 @@ const struct sxiccmu_ccu_bit sun20i_d1_gates[] = {
 	[D1_CLK_BUS_UART3] = { 0x090c, 3, D1_CLK_APB1 },
 	[D1_CLK_BUS_UART4] = { 0x090c, 4, D1_CLK_APB1 },
 	[D1_CLK_BUS_UART5] = { 0x090c, 5, D1_CLK_APB1 },
+	[D1_CLK_BUS_EMAC] =  { 0x097c, 0, D1_CLK_PSI_AHB },
 	[D1_CLK_USB_OHCI0] = { 0x0a70, 31 },
 	[D1_CLK_USB_OHCI1] = { 0x0a74, 31 },
 	[D1_CLK_BUS_OHCI0] = { 0x0a8c, 0 },
@@ -989,6 +992,7 @@ const struct sxiccmu_ccu_bit sun9i_a80_mmc_resets[] = {
 #define D1_RST_BUS_UART3	21
 #define D1_RST_BUS_UART4	22
 #define D1_RST_BUS_UART5	23
+#define D1_RST_BUS_EMAC		30
 #define D1_RST_USB_PHY0		40
 #define D1_RST_USB_PHY1		41
 #define D1_RST_BUS_OHCI0	42
@@ -1006,6 +1010,7 @@ const struct sxiccmu_ccu_bit sun20i_d1_resets[] = {
 	[D1_RST_BUS_UART3] = { 0x090c, 19 },
 	[D1_RST_BUS_UART4] = { 0x090c, 20 },
 	[D1_RST_BUS_UART5] = { 0x090c, 21 },
+	[D1_RST_BUS_EMAC] =  { 0x097c, 16 },
 	[D1_RST_USB_PHY0] =  { 0x0a70, 30 },
 	[D1_RST_USB_PHY1] =  { 0x0a74, 30 },
 	[D1_RST_BUS_OHCI0] = { 0x0a8c, 16 },

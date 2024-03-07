@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.37 2024/03/04 04:11:52 deraadt Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.38 2024/03/07 01:04:16 kevlo Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -1265,12 +1265,15 @@ sxiccmu_a80_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 #define D1_RISCV_CLK_SEL_HOSC		(0 << 24)
 #define D1_RISCV_CLK_SEL_PLL_CPU	(5 << 24)
 #define D1_RISCV_DIV_CFG_FACTOR_M(x)	(((x) >> 0) & 0x1f)
+#define D1_PSI_CLK_REG			0x0510
+#define D1_PSI_CLK_FACTOR_N(x)		(((x) >> 8) & 0x3)
+#define D1_PSI_CLK_FACTOR_M(x)		(((x) >> 0) & 0x3)
 
 uint32_t
 sxiccmu_d1_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
 	uint32_t parent;
-	uint32_t reg;
+	uint32_t reg, freq;
 	uint32_t m, n;
 
 	switch (idx) {
@@ -1301,6 +1304,13 @@ sxiccmu_d1_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 		}
 		m = D1_RISCV_DIV_CFG_FACTOR_M(reg) + 1;
 		return sxiccmu_ccu_get_frequency(sc, &parent) / m;
+	case D1_CLK_PSI_AHB:
+		reg = SXIREAD4(sc, D1_PSI_CLK_REG);
+		/* assume PLL_PERIPH0 source */
+		freq = sxiccmu_d1_get_frequency(sc, D1_CLK_PLL_PERIPH0);
+		m = D1_PSI_CLK_FACTOR_M(reg) + 1;
+		n = 1 << D1_PSI_CLK_FACTOR_N(reg);
+		return freq / (m * n);
 	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
