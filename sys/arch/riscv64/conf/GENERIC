@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2024/02/02 12:09:18 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.50 2024/03/07 01:05:07 kevlo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -101,6 +101,7 @@ ehci*		at fdt?
 cad*		at fdt?
 dwge*		at fdt?
 dwqe*		at fdt?
+dwxe*		at fdt?
 dwiic*		at fdt?
 iic*		at dwiic?
 dwmmc*		at fdt?
