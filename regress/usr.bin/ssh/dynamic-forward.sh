@@ -1,4 +1,4 @@
-#	$OpenBSD: dynamic-forward.sh,v 1.16 2023/01/11 00:51:27 djm Exp $
+#	$OpenBSD: dynamic-forward.sh,v 1.17 2024/03/08 11:34:10 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="dynamic forwarding"
@@ -51,9 +51,9 @@ check_socks() {
 	for s in 4 5; do
 	    for h in 127.0.0.1 localhost; do
 		trace "testing ssh socks version $s host $h (-$direction)"
-		${REAL_SSH} -q -F $OBJ/ssh_config \
-			-o "ProxyCommand ${proxycmd}${s} $h $PORT 2>/dev/null" \
-			somehost cat ${DATA} > ${COPY}
+		${REAL_SSH} -q -F $OBJ/ssh_config -o \
+		   "ProxyCommand ${TEST_SHELL} -c '${proxycmd}${s} $h $PORT 2>/dev/null'" \
+		   somehost cat ${DATA} > ${COPY}
 		r=$?
 		if [ "x$expect_success" = "xY" ] ; then
 			if [ $r -ne 0 ] ; then
