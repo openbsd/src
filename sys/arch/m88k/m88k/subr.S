@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.31 2023/12/12 07:37:21 deraadt Exp $	*/
+/* $OpenBSD: subr.S,v 1.32 2024/03/08 16:18:53 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -714,7 +714,7 @@ ENTRY(copyoutstr)
 	or	%r6,  %r6,  %lo16(Lcosflt)
 	st	%r6,  %r7,  PCB_ONFAULT
 	bcnd	lt0,  CNT,  Lcosflt
-	bcnd	eq0,  CNT,  Lcosdone
+	bcnd	eq0,  CNT,  2f
 	or	%r6,  %r0,  0
 1:
 	ld.bu	%r7,  SRC,  %r6
@@ -727,13 +727,14 @@ ENTRY(copyoutstr)
 #else
 	st.b.usr	%r7,  DEST,  %r6
 #endif
-	bcnd.n	eq0,  %r7, 2f		/* all done */
+	bcnd.n	eq0,  %r7, 3f		/* all done */
 	 addu	%r6,  %r6, 1
 	cmp	%r7,  %r6, CNT
 	bb1	lt,   %r7, 1b
+2:
 	br.n	Lcosdone
 	 or	%r2,  %r0, ENAMETOOLONG
-2:
+3:
 	br.n	Lcosdone
 	 or	%r2,  %r0, 0
 
