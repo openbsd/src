@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.57 2024/03/02 15:18:57 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.58 2024/03/09 23:29:53 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -12870,11 +12870,16 @@ qwx_wmi_process_mgmt_tx_comp(struct qwx_softc *sc,
 	if (arvif->txmgmt.queued > 0)
 		arvif->txmgmt.queued--;
 
-	if (arvif->txmgmt.queued < nitems(arvif->txmgmt.data) - 1)
-		sc->qfullmsk &= ~(1U << QWX_MGMT_QUEUE_ID);
-
 	if (tx_compl_param->status != 0)
 		ifp->if_oerrors++;
+
+	if (arvif->txmgmt.queued < nitems(arvif->txmgmt.data) - 1) {
+		sc->qfullmsk &= ~(1U << QWX_MGMT_QUEUE_ID);
+		if (sc->qfullmsk == 0 && ifq_is_oactive(&ifp->if_snd)) {
+			ifq_clr_oactive(&ifp->if_snd);
+			(*ifp->if_start)(ifp);
+		}
+	}
 }
 
 void
@@ -15159,6 +15164,8 @@ qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
 int
 qwx_dp_tx_completion_handler(struct qwx_softc *sc, int ring_id)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	struct qwx_dp *dp = &sc->dp;
 	int hal_ring_id = dp->tx_ring[ring_id].tcl_comp_ring.ring_id;
 	struct hal_srng *status_ring = &sc->hal.srng_list[hal_ring_id];
@@ -15235,8 +15242,13 @@ qwx_dp_tx_completion_handler(struct qwx_softc *sc, int ring_id)
 		qwx_dp_tx_complete_msdu(sc, tx_ring, msdu_id, &ts);
 	}
 
-	if (tx_ring->queued < sc->hw_params.tx_ring_size - 1)
+	if (tx_ring->queued < sc->hw_params.tx_ring_size - 1) {
 		sc->qfullmsk &= ~(1 << ring_id);
+		if (sc->qfullmsk == 0 && ifq_is_oactive(&ifp->if_snd)) {
+			ifq_clr_oactive(&ifp->if_snd);
+			(*ifp->if_start)(ifp);
+		}
+	}
 
 	return 0;
 }
