@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.20 2024/02/29 16:10:52 guenther Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.21 2024/03/12 02:31:15 guenther Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6017,6 +6017,58 @@ svm_handle_msr(struct vcpu *vcpu)
 	return (0);
 }
 
+/* Handle cpuid(0xd) and its subleafs */
+static void
+vmm_handle_cpuid_0xd(struct vcpu *vcpu, uint32_t subleaf, uint64_t *rax,
+    uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx)
+{
+	if (subleaf == 0) {
+		/*
+		 * CPUID(0xd.0) depends on the value in XCR0 and MSR_XSS.  If
+		 * the guest XCR0 isn't the same as the host then set it, redo
+		 * the CPUID, and restore it.
+		 */
+		uint64_t xcr0 = vcpu->vc_gueststate.vg_xcr0;
+
+		/*
+		 * "ecx enumerates the size required ... for an area
+		 *  containing all the ... components supported by this
+		 *  processor"
+		 * "ebx enumerates the size required ... for an area
+		 *  containing all the ... components corresponding to bits
+		 *  currently set in xcr0"
+		 * So: since the VMM 'processor' is what our base kernel uses,
+		 * the VMM ecx is our ebx
+		 */
+		ecx = ebx;
+		if (xcr0 != (xsave_mask & XFEATURE_XCR0_MASK)) {
+			uint32_t dummy;
+			xsetbv(0, xcr0);
+			CPUID_LEAF(0xd, subleaf, eax, ebx, dummy, edx);
+			xsetbv(0, xsave_mask & XFEATURE_XCR0_MASK);
+		}
+		eax = xsave_mask & XFEATURE_XCR0_MASK;
+		edx = (xsave_mask & XFEATURE_XCR0_MASK) >> 32;
+	} else if (subleaf == 1) {
+		/* mask out XSAVEC, XSAVES, and XFD support */
+		eax &= XSAVE_XSAVEOPT | XSAVE_XGETBV1;
+		ebx = 0;	/* no xsavec or xsaves for now */
+		ecx = edx = 0;	/* no xsaves for now */
+	} else if (subleaf >= 63 ||
+	    ((1ULL << subleaf) & xsave_mask & XFEATURE_XCR0_MASK) == 0) {
+		/* disclaim subleaves of features we don't expose */
+		eax = ebx = ecx = edx = 0;
+	} else {
+		/* disclaim compressed alignment or xfd support */
+		ecx = 0;
+	}
+
+	*rax = eax;
+	vcpu->vc_gueststate.vg_rbx = ebx;
+	vcpu->vc_gueststate.vg_rcx = ecx;
+	vcpu->vc_gueststate.vg_rdx = edx;
+}
+
 /*
  * vmm_handle_cpuid
  *
@@ -6227,22 +6279,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x0d:	/* Processor ext. state information */
-		if (subleaf == 0) {
-			*rax = xsave_mask;
-			*rbx = ebx;
-			*rcx = ecx;
-			*rdx = edx;
-		} else if (subleaf == 1) {
-			*rax = 0;
-			*rbx = 0;
-			*rcx = 0;
-			*rdx = 0;
-		} else {
-			*rax = eax;
-			*rbx = ebx;
-			*rcx = ecx;
-			*rdx = edx;
-		}
+		vmm_handle_cpuid_0xd(vcpu, subleaf, rax, eax, ebx, ecx, edx);
 		break;
 	case 0x0f:	/* QoS info (not supported) */
 		DPRINTF("%s: function 0x0f (QoS info) not supported\n",
