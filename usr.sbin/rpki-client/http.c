@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.80 2024/01/30 11:15:05 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.81 2024/03/12 16:02:30 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1417,6 +1417,11 @@ http_parse_header(struct http_connection *conn, char *buf)
 		if (loctail != NULL)
 			*loctail = '\0';
 		conn->redir_uri = redirurl;
+		if (!valid_origin(redirurl, conn->req->uri)) {
+			warnx("%s: cross origin redirect to %s", conn->req->uri,
+			    http_info(redirurl));
+			return -1;
+		}
 	} else if (strncasecmp(cp, TRANSFER_ENCODING,
 	    sizeof(TRANSFER_ENCODING) - 1) == 0) {
 		cp += sizeof(TRANSFER_ENCODING) - 1;
