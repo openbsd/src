@@ -1,4 +1,4 @@
-/*	$OpenBSD: ytphy.c,v 1.5 2024/02/08 13:00:21 jsg Exp $	*/
+/*	$OpenBSD: ytphy.c,v 1.6 2024/03/12 16:26:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
@@ -73,6 +73,12 @@
 #define  YT8531_RGMII_RXD_DS_MASK	((0x1 << 12) | (0x3 << 4))
 #define  YT8531_RGMII_RXD_DS_LOW(x)	(((x) & 0x3) << 4)
 #define  YT8531_RGMII_RXD_DS_HIGH(x)	(((x) >> 2) << 12)
+#define YT8521_EXT_SYNCE_CFG		0xa012
+#define  YT8531_EN_SYNC_E		(1 << 6)
+#define  YT8531_CLK_FRE_SEL_125M	(1 << 4)
+#define  YT8531_CLK_SRC_SEL_MASK	(0x7 << 1)
+#define  YT8531_CLK_SRC_SEL_PLL_125M	(0x0 << 1)
+#define  YT8531_CLK_SRC_SEL_REF_25M	(0x4 << 1)
 
 int	ytphy_match(struct device *, void *, void *);
 void	ytphy_attach(struct device *, struct device *, void *);
@@ -428,6 +434,7 @@ ytphy_yt8531_init(struct mii_softc *sc)
 {
 	uint32_t rx_clk_drv = 0;
 	uint32_t rx_data_drv = 0;
+	uint32_t clk_out_freq = 0;
 	uint16_t addr, data;
 	uint16_t volt;
 
@@ -439,6 +446,8 @@ ytphy_yt8531_init(struct mii_softc *sc)
 		    "motorcomm,rx-clk-drv-microamp", 0);
 		rx_data_drv = OF_getpropint(sc->mii_pdata->mii_node,
 		    "motorcomm,rx-data-drv-microamp", 0);
+		clk_out_freq = OF_getpropint(sc->mii_pdata->mii_node,
+		    "motorcomm,clk-out-frequency-hz", 0);
 	}
 #endif
 
@@ -464,6 +473,27 @@ ytphy_yt8531_init(struct mii_softc *sc)
 	data &= ~YT8531_RGMII_RXD_DS_MASK;
 	data |= YT8531_RGMII_RXD_DS_LOW(rx_data_drv);
 	data |= YT8531_RGMII_RXD_DS_HIGH(rx_data_drv);
+	PHY_WRITE(sc, YT8511_REG_DATA, data);
+
+	PHY_WRITE(sc, YT8511_REG_ADDR, YT8521_EXT_SYNCE_CFG);
+	data = PHY_READ(sc, YT8511_REG_DATA);
+	switch (clk_out_freq) {
+	case 125000000:
+		data |= YT8531_EN_SYNC_E;
+		data |= YT8531_CLK_FRE_SEL_125M;
+		data &= ~YT8531_CLK_SRC_SEL_MASK;
+		data |= YT8531_CLK_SRC_SEL_PLL_125M;
+		break;
+	case 25000000:
+		data |= YT8531_EN_SYNC_E;
+		data &= ~YT8531_CLK_FRE_SEL_125M;
+		data &= ~YT8531_CLK_SRC_SEL_MASK;
+		data |= YT8531_CLK_SRC_SEL_REF_25M;
+		break;
+	default:
+		data &= ~YT8531_EN_SYNC_E;
+		break;
+	}
 	PHY_WRITE(sc, YT8511_REG_DATA, data);
 
 	/* Restore address register. */
