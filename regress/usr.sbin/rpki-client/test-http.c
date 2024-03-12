@@ -35,6 +35,26 @@ getmonotime(void)
 	return (ts.tv_sec);
 }
 
+int
+valid_origin(const char *uri, const char *proto)
+{
+	const char *to;
+
+	/* extract end of host from proto URI */
+	to = strstr(proto, "://");
+	if (to == NULL)
+		return 0;
+	to += strlen("://");
+	if ((to = strchr(to, '/')) == NULL)
+		return 0;
+
+	/* compare hosts including the / for the start of the path section */
+	if (strncasecmp(uri, proto, to - proto + 1) != 0)
+		return 0;
+
+	return 1;
+}
+
 static void
 http_request(unsigned int id, const char *uri, const char *last_mod, int fd)
 {
