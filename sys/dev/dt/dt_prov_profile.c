@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_profile.c,v 1.6 2024/02/09 17:42:18 cheloha Exp $ */
+/*	$OpenBSD: dt_prov_profile.c,v 1.7 2024/03/13 13:13:57 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -53,13 +53,13 @@ int
 dt_prov_profile_init(void)
 {
 	dtpp_profile = dt_dev_alloc_probe("hz", "97", &dt_prov_profile);
-	dt_dev_register_probe(dtpp_profile);
 	if (dtpp_profile == NULL)
 		return 0;
+	dt_dev_register_probe(dtpp_profile);
 	dtpp_interval = dt_dev_alloc_probe("hz", "1", &dt_prov_interval);
-	dt_dev_register_probe(dtpp_interval);
 	if (dtpp_interval == NULL)
 		return 1;
+	dt_dev_register_probe(dtpp_interval);
 	return 2;
 }
 
