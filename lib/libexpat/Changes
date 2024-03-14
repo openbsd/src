@@ -2,6 +2,12 @@ NOTE: We are looking for help with a few things:
       https://github.com/libexpat/libexpat/labels/help%20wanted
       If you can help, please get in touch.  Thanks!
 
+        Security fixes:
+       #839 #842  CVE-2024-28757 -- Prevent billion laughs attacks with
+                    isolated use of external parsers.  Please see the commit
+                    message of commit 1d50b80cf31de87750103656f6eb693746854aa8
+                    for details.
+
 Release 2.6.0 Tue February 6 2024
         Security fixes:
       #789 #814  CVE-2023-52425 -- Fix quadratic runtime issues with big tokens
