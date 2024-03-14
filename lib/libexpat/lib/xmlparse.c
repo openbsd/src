@@ -7779,6 +7779,8 @@ copyString(const XML_Char *s, const XML_Memory_Handling_Suite *memsuite) {
 
 static float
 accountingGetCurrentAmplification(XML_Parser rootParser) {
+  //                                          1.........1.........12 => 22
+  const size_t lenOfShortestInclude = sizeof("<!ENTITY a SYSTEM 'b'>") - 1;
   const XmlBigCount countBytesOutput
       = rootParser->m_accounting.countBytesDirect
         + rootParser->m_accounting.countBytesIndirect;
@@ -7786,7 +7788,9 @@ accountingGetCurrentAmplification(XML_Parser rootParser) {
       = rootParser->m_accounting.countBytesDirect
             ? (countBytesOutput
                / (float)(rootParser->m_accounting.countBytesDirect))
-            : 1.0f;
+            : ((lenOfShortestInclude
+                + rootParser->m_accounting.countBytesIndirect)
+               / (float)lenOfShortestInclude);
   assert(! rootParser->m_parentParser);
   return amplificationFactor;
 }
