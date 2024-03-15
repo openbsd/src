@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraints.c,v 1.2 2023/12/27 07:15:55 tb Exp $ */
+/*	$OpenBSD: constraints.c,v 1.3 2024/03/15 03:38:59 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -24,6 +24,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,7 @@
 struct tal_constraints {
 	int		 fd;		/* constraints file descriptor or -1. */
 	char		*fn;		/* constraints filename */
+	char		*warn;		/* warning msg used for violations */
 	struct cert_ip	*allow_ips;	/* list of allowed IP address ranges */
 	size_t		 allow_ipsz;	/* length of "allow_ips" */
 	struct cert_as	*allow_as;	/* allowed AS numbers and ranges */
@@ -59,7 +61,7 @@ static void
 constraints_load_talid(int talid)
 {
 	const char	*tal = tals[talid];
-	char		*constraints = NULL;
+	char		*constraints = NULL, *warning = NULL, *cbn;
 	int		 fd;
 	size_t		 len;
 	int		 saved_errno;
@@ -72,16 +74,23 @@ constraints_load_talid(int talid)
 	/* Replace .tal suffix with .constraints. */
 	len = strlen(tal) - 4;
 	if (asprintf(&constraints, "%.*s.constraints", (int)len, tal) == -1)
-		errx(1, NULL);
+		err(1, NULL);
+
+	/* prepare warning message for when violations are detected */
+	if ((cbn = basename(constraints)) == NULL)
+		err(1, "basename");
+	if (asprintf(&warning, "resource violates %s", cbn) == -1)
+		err(1, NULL);
 
 	saved_errno = errno;
-
+	
 	fd = open(constraints, O_RDONLY);
 	if (fd == -1 && errno != ENOENT)
 		err(1, "failed to load constraints for %s", tal);
 
 	tal_constraints[talid].fn = constraints;
 	tal_constraints[talid].fd = fd;
+	tal_constraints[talid].warn = warning;
 
 	errno = saved_errno;
 }
@@ -108,8 +117,10 @@ constraints_unload(void)
 		if (tal_constraints[talid].fd != -1)
 			close(tal_constraints[talid].fd);
 		free(tal_constraints[talid].fn);
+		free(tal_constraints[talid].warn);
 		tal_constraints[talid].fd = -1;
 		tal_constraints[talid].fn = NULL;
+		tal_constraints[talid].warn = NULL;
 	}
 	errno = saved_errno;
 }
@@ -578,7 +589,7 @@ constraints_validate(const char *fn, const struct cert *cert)
 		    deny_as, deny_asz))
 			continue;
 
-		as_warn(fn, "trust anchor constraints violation", &cert->as[i]);
+		as_warn(fn, tal_constraints[talid].warn, &cert->as[i]);
 		return 0;
 	}
 
@@ -592,8 +603,7 @@ constraints_validate(const char *fn, const struct cert *cert)
 		    allow_ipsz, deny_ips, deny_ipsz))
 			continue;
 
-		ip_warn(fn, "trust anchor constraints violation",
-		    &cert->ips[i]);
+		ip_warn(fn, tal_constraints[talid].warn, &cert->ips[i]);
 		return 0;
 	}
 
