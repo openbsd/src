@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1261 2024/03/05 19:47:58 kn Exp $
+#	$OpenBSD: install.sub,v 1.1262 2024/03/15 16:29:32 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3477,11 +3477,6 @@ do_upgrade() {
 
 	# Perform final steps common to both an install and an upgrade.
 	finish_up
-	if [ -f /tmp/wdpid ]; then
-		kill -KILL "$(</tmp/wdpid)" 2>/dev/null
-		# do not bother waiting
-		rm -f /tmp/wdpid
-	fi
 }
 
 check_unattendedupgrade() {
@@ -3526,6 +3521,15 @@ start_watchdog() {
 	) >/dev/null 2>&1 &
 	echo $! > /tmp/wdpid
 	set +m
+}
+
+# Stop the background timer.
+stop_watchdog() {
+	if [ -f /tmp/wdpid ]; then
+		kill -KILL "$(</tmp/wdpid)" 2>/dev/null
+		# do not bother waiting
+		rm -f /tmp/wdpid
+	fi
 }
 
 # return if we only want internal functions
@@ -3707,6 +3711,8 @@ case $MODE in
 install)	do_install;;
 upgrade)	do_upgrade;;
 esac
+
+$UU && stop_watchdog
 
 # In case of autoinstall, this is a second process of install.sub.
 # Exiting here returns to the original process, which handles the
