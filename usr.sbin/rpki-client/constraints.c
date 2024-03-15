@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraints.c,v 1.3 2024/03/15 03:38:59 job Exp $ */
+/*	$OpenBSD: constraints.c,v 1.4 2024/03/15 05:14:16 tb Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -83,7 +83,7 @@ constraints_load_talid(int talid)
 		err(1, NULL);
 
 	saved_errno = errno;
-	
+
 	fd = open(constraints, O_RDONLY);
 	if (fd == -1 && errno != ENOENT)
 		err(1, "failed to load constraints for %s", tal);
