@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.268 2024/02/03 20:46:57 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.269 2024/03/15 21:56:22 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 3 2024 $
+.Dd $Mdocdate: March 15 2024 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -1113,6 +1113,34 @@ For example, with recipient
 .It %{rcpt}     Ta expands to Dq user+t:g@example.org
 .It %{rcpt:raw} Ta expands to Dq user+t?g@example.org
 .El
+.Ss MDA ENVIRONMENT
+When a MDA is invoked,
+.Xr smtpd 8
+will create a new process.
+Only the uid and gid of the destination user is set.
+The following environment variables will be set:
+.Bl -tag -width "ORIGINAL_RECIPIENT"
+.It Ev DOMAIN
+The recipient domain.
+.It Ev HOME
+The home directory of the destination user.
+.It Ev RECIPIENT
+The address of the final recipient.
+.It Ev ORIGINAL_RECIPIENT
+The address of the original recipient.
+.It Ev EXTENSION
+The sub address of the recipient, only set when there is a sub address.
+.It Ev SENDER
+The address of the sender (might be empty).
+.El
+.Pp
+This process gets the mail piped to
+.Xr stdin 3 .
+A mail is considered as delivered when the mda exit with
+.Dv EX_OK
+and
+.Xr stdin 3
+is completely read.
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
 .It Pa /etc/mail/smtpd.conf
