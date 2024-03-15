@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.108 2024/03/05 18:42:20 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.109 2024/03/15 13:26:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -52,6 +52,7 @@
 #define CPU_IMPL_AMCC		0x50
 #define CPU_IMPL_QCOM		0x51
 #define CPU_IMPL_APPLE		0x61
+#define CPU_IMPL_AMPERE		0xc0
 
 /* ARM */
 #define CPU_PART_CORTEX_A34	0xd02
@@ -114,6 +115,9 @@
 #define CPU_PART_AVALANCHE_PRO	0x035
 #define CPU_PART_BLIZZARD_MAX	0x038
 #define CPU_PART_AVALANCHE_MAX	0x039
+
+/* Ampere */
+#define CPU_PART_AMPERE1	0xac3
 
 #define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
 #define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
@@ -201,6 +205,11 @@ struct cpu_cores cpu_cores_apple[] = {
 	{ 0, NULL },
 };
 
+struct cpu_cores cpu_cores_ampere[] = {
+	{ CPU_PART_AMPERE1, "AmpereOne" },
+	{ 0, NULL },
+};
+
 /* arm cores makers */
 const struct implementers {
 	int			id;
@@ -212,6 +221,7 @@ const struct implementers {
 	{ CPU_IMPL_AMCC, "Applied Micro", cpu_cores_amcc },
 	{ CPU_IMPL_QCOM, "Qualcomm", cpu_cores_qcom },
 	{ CPU_IMPL_APPLE, "Apple", cpu_cores_apple },
+	{ CPU_IMPL_AMPERE, "Ampere", cpu_cores_ampere },
 	{ 0, NULL },
 };
 
@@ -230,6 +240,7 @@ int arm64_has_aes;
 
 extern char trampoline_vectors_none[];
 extern char trampoline_vectors_loop_8[];
+extern char trampoline_vectors_loop_11[];
 extern char trampoline_vectors_loop_24[];
 extern char trampoline_vectors_loop_32[];
 #if NPSCI > 0
@@ -419,8 +430,10 @@ cpu_identify(struct cpu_info *ci)
 	 * But we might still be vulnerable to Spectre-BHB.  If we know the
 	 * CPU, we can add a branchy loop that cleans the BHB.
 	 */
-	if (impl == CPU_IMPL_ARM) {
+	switch (impl) {
+	case CPU_IMPL_ARM:
 		switch (part) {
+		case CPU_PART_CORTEX_A57:
 		case CPU_PART_CORTEX_A72:
 			ci->ci_trampoline_vectors =
 			    (vaddr_t)trampoline_vectors_loop_8;
@@ -444,6 +457,15 @@ cpu_identify(struct cpu_info *ci)
 			    (vaddr_t)trampoline_vectors_loop_32;
 			break;
 		}
+		break;
+	case CPU_IMPL_AMPERE:
+		switch (part) {
+		case CPU_PART_AMPERE1:
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_loop_11;
+			break;
+		}
+		break;
 	}
 
 	/*
