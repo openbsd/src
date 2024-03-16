@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.60 2024/03/16 02:00:31 millert Exp $   */
+/*      $OpenBSD: whois.c,v 1.61 2024/03/16 06:29:36 jmc Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -373,7 +373,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-AadgIilmPQRr] [-c country-code | -h host] "
+	    "usage: %s [-AadgIilmPQRrS] [-c country-code | -h host] "
 		"[-p port] name ...\n", __progname);
 	exit(1);
 }
