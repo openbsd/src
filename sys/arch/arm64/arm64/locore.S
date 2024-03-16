@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.45 2023/12/12 07:37:20 deraadt Exp $ */
+/* $OpenBSD: locore.S,v 1.46 2024/03/16 20:46:28 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -57,6 +57,7 @@ drop_to_el1:
 
 	/* Configure the Hypervisor */
 	mov	x2, #(HCR_RW)
+	orr	x2, x2, #(HCR_API | HCR_APK)
 	msr	hcr_el2, x2
 
 	/* Load the Virtualization Process ID Register */
