@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.109 2024/03/15 13:26:09 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.110 2024/03/16 09:15:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -87,6 +87,8 @@
 #define CPU_PART_CORTEX_A720	0xd81
 #define CPU_PART_CORTEX_X4	0xd82
 #define CPU_PART_NEOVERSE_V3	0xd84
+#define CPU_PART_CORTEX_A520AE	0xd88
+#define CPU_PART_CORTEX_A720AE	0xd89
 #define CPU_PART_NEOVERSE_N3	0xd8e
 
 /* Cavium */
@@ -152,9 +154,11 @@ struct cpu_cores cpu_cores_arm[] = {
 	{ CPU_PART_CORTEX_A78C, "Cortex-A78C" },
 	{ CPU_PART_CORTEX_A510, "Cortex-A510" },
 	{ CPU_PART_CORTEX_A520, "Cortex-A520" },
+	{ CPU_PART_CORTEX_A520AE, "Cortex-A520AE" },
 	{ CPU_PART_CORTEX_A710, "Cortex-A710" },
 	{ CPU_PART_CORTEX_A715, "Cortex-A715" },
 	{ CPU_PART_CORTEX_A720, "Cortex-A720" },
+	{ CPU_PART_CORTEX_A720AE, "Cortex-A720AE" },
 	{ CPU_PART_CORTEX_X1, "Cortex-X1" },
 	{ CPU_PART_CORTEX_X1C, "Cortex-X1C" },
 	{ CPU_PART_CORTEX_X2, "Cortex-X2" },
