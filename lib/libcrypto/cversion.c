@@ -1,4 +1,4 @@
-/* $OpenBSD: cversion.c,v 1.18 2023/07/08 08:28:23 beck Exp $ */
+/* $OpenBSD: cversion.c,v 1.19 2024/03/16 21:42:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,15 +68,15 @@ SSLeay_version(int t)
 	case SSLEAY_VERSION:
 		return OPENSSL_VERSION_TEXT;
 	case SSLEAY_BUILT_ON:
-		return("built on: date not available");
+		return "built on: date not available";
 	case SSLEAY_CFLAGS:
-		return("compiler: information not available");
+		return "compiler: information not available";
 	case SSLEAY_PLATFORM:
-		return("platform: information not available");
+		return "platform: information not available";
 	case SSLEAY_DIR:
 		return "OPENSSLDIR: \"" OPENSSLDIR "\"";
 	}
-	return("not available");
+	return "not available";
 }
 LCRYPTO_ALIAS(SSLeay_version);
 
@@ -94,17 +94,17 @@ OpenSSL_version(int t)
 	case OPENSSL_VERSION:
 		return OPENSSL_VERSION_TEXT;
 	case OPENSSL_BUILT_ON:
-		return("built on: date not available");
+		return "built on: date not available";
 	case OPENSSL_CFLAGS:
-		return("compiler: information not available");
+		return "compiler: information not available";
 	case OPENSSL_PLATFORM:
-		return("platform: information not available");
+		return "platform: information not available";
 	case OPENSSL_DIR:
 		return "OPENSSLDIR: \"" OPENSSLDIR "\"";
 	case OPENSSL_ENGINES_DIR:
 		return "ENGINESDIR: N/A";
 	}
-	return("not available");
+	return "not available";
 }
 LCRYPTO_ALIAS(OpenSSL_version);
 
