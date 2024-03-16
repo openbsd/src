@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whois.1,v 1.39 2024/03/05 16:06:32 millert Exp $
+.\"	$OpenBSD: whois.1,v 1.40 2024/03/16 02:00:31 millert Exp $
 .\"	$NetBSD: whois.1,v 1.5 1995/08/31 21:51:32 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)whois.1	8.2 (Berkeley) 6/20/94
 .\"
-.Dd $Mdocdate: March 5 2024 $
+.Dd $Mdocdate: March 16 2024 $
 .Dt WHOIS 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd Internet domain name and network number directory service
 .Sh SYNOPSIS
 .Nm whois
-.Op Fl AadgIilmPQRr
+.Op Fl AadgIilmPQRrS
 .Oo
 .Fl c Ar country-code | Fl h Ar host
 .Oc
@@ -201,6 +201,16 @@ Use the Reseaux IP Europeens
 .Pq Tn RIPE
 database.
 It contains network numbers and domain contact information for Europe.
+.It Fl S
+By default
+.Nm
+adjusts simple queries (without spaces) to produce more useful output
+from certain whois servers, and it suppresses some uninformative output.
+With the
+.Fl S
+option,
+.Nm
+sends the query and prints the output verbatim.
 .El
 .Pp
 The default action, unless directed otherwise with a special
