@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.29 2023/08/03 18:53:55 tb Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.30 2024/03/16 20:42:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,6 +109,7 @@
  *
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -131,6 +132,10 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 
 	if (bits < 0 || (bits == 1 && top > 0)) {
 		BNerror(BN_R_BITS_TOO_SMALL);
+		return (0);
+	}
+	if (bits > INT_MAX - 7) {
+		BNerror(BN_R_BIGNUM_TOO_LONG);
 		return (0);
 	}
 
