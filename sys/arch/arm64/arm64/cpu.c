@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.110 2024/03/16 09:15:04 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.111 2024/03/17 13:05:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -821,11 +821,11 @@ cpu_identify(struct cpu_info *ci)
 		sep = ",";
 	}
 
-	if (ID_AA64PFR1_SBSS(id) >= ID_AA64PFR1_SBSS_PSTATE) {
-		printf("%sSBSS", sep);
+	if (ID_AA64PFR1_SSBS(id) >= ID_AA64PFR1_SSBS_PSTATE) {
+		printf("%sSSBS", sep);
 		sep = ",";
 	}
-	if (ID_AA64PFR1_SBSS(id) >= ID_AA64PFR1_SBSS_PSTATE_MSR)
+	if (ID_AA64PFR1_SSBS(id) >= ID_AA64PFR1_SSBS_PSTATE_MSR)
 		printf("+MSR");
 
 	if (ID_AA64PFR1_MTE(id) >= ID_AA64PFR1_MTE_IMPL) {
