@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.25 2024/02/25 22:33:09 guenther Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.26 2024/03/17 05:49:41 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -247,6 +247,23 @@ skip_init:
 	 * XXX information yet to make the correct choices.
 	 */
 	CODEPATCH_START
+	xorl	%eax,%eax
+	xorl	%ebx,%ebx
+	xorl	%ecx,%ecx
+	xorl	%edx,%edx
+	xorl	%esi,%esi
+	xorl	%edi,%edi
+	xorl	%ebp,%ebp
+	/*
+	 * r8 is a boolean flagging launch or resume
+	 * r9 is 0-2 about the CPU
+	 */
+	xorl	%r10d,%r10d
+	xorl	%r11d,%r11d
+	xorl	%r12d,%r12d
+	xorl	%r13d,%r13d
+	xorl	%r14d,%r14d
+	xorl	%r15d,%r15d
 	subq	$8, %rsp
 	movw	%ds, (%rsp)
 	verw	(%rsp)

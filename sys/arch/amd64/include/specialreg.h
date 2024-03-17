@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.109 2023/09/03 09:30:43 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.110 2024/03/17 05:49:41 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -428,6 +428,8 @@
 #define ARCH_CAP_PBRSB_NO		(1 << 24) /* PBSR safe */
 #define ARCH_CAP_GDS_CTRL		(1 << 25) /* has GDS_MITG_DIS/LOCK */
 #define ARCH_CAP_GDS_NO			(1 << 26) /* GDS safe */
+#define ARCH_CAP_RFDS_NO		(1 << 27) /* RFDS safe */
+#define ARCH_CAP_RFDS_CLEAR		(1 << 28) /* use VERW for RFDS */
 #define MSR_FLUSH_CMD		0x10b
 #define FLUSH_CMD_L1D_FLUSH	0x1	/* (1ULL << 0) */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */

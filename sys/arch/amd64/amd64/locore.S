@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.146 2024/02/25 22:33:09 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.147 2024/03/17 05:49:41 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -616,8 +616,15 @@ GENTRY(Xsyscall)
 	movq	TF_R13(%rsp),%r13
 	movq	TF_R14(%rsp),%r14
 	movq	TF_R15(%rsp),%r15
+	movq	TF_RBX(%rsp),%rbx
+	movq	TF_RDX(%rsp),%rdx
 
 	CODEPATCH_START
+	xorl	%edi,%edi
+	xorl	%esi,%esi
+	xorl	%r11d,%r11d
+	xorl	%eax,%eax
+	xorl	%ecx,%ecx
 	movw	%ds,TF_R8(%rsp)
 	verw	TF_R8(%rsp)
 	CODEPATCH_END(CPTAG_MDS)
@@ -625,7 +632,6 @@ GENTRY(Xsyscall)
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_RBP(%rsp),%rbp
-	movq	TF_RBX(%rsp),%rbx
 
 	/*
 	 * We need to finish reading from the trapframe, then switch
@@ -635,7 +641,6 @@ GENTRY(Xsyscall)
 	 * user page tables, so save it in CPUVAR(SCRATCH) across
 	 * the switch.
 	 */
-	movq	TF_RDX(%rsp),%rdx
 	movq	TF_RAX(%rsp),%rax
 	movq	TF_RIP(%rsp),%rcx
 	movq	TF_RFLAGS(%rsp),%r11
@@ -806,8 +811,15 @@ intr_user_exit_post_ast:
 	movq	TF_R13(%rsp),%r13
 	movq	TF_R14(%rsp),%r14
 	movq	TF_R15(%rsp),%r15
+	movq	TF_RBX(%rsp),%rbx
 
 	CODEPATCH_START
+	xorl	%edi,%edi
+	xorl	%esi,%esi
+	xorl	%r11d,%r11d
+	xorl	%eax,%eax
+	xorl	%edx,%edx
+	xorl	%ecx,%ecx
 	movw	%ds,TF_R8(%rsp)
 	verw	TF_R8(%rsp)
 	CODEPATCH_END(CPTAG_MDS)
@@ -815,7 +827,6 @@ intr_user_exit_post_ast:
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_RBP(%rsp),%rbp
-	movq	TF_RBX(%rsp),%rbx
 
 	/*
 	 * To get the final value for the register that was used

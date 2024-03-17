@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.183 2024/02/25 22:33:09 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.184 2024/03/17 05:49:41 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -299,7 +299,8 @@ replacemds(void)
 	CPU_INFO_ITERATOR cii;
 	void *handler = NULL, *vmm_handler = NULL;
 	const char *type;
-	int has_verw, s;
+	int use_verw = 0, s;
+	uint32_t cap = 0;
 
 	/* ci_mds_tmp must be 32byte aligned for AVX instructions */
 	CTASSERT((offsetof(struct cpu_info, ci_mds_tmp) -
@@ -309,20 +310,22 @@ replacemds(void)
 		return;
 	replacedone = 1;
 
-	if (strcmp(cpu_vendor, "GenuineIntel") != 0 ||
-	    ((ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) &&
-	     (rdmsr(MSR_ARCH_CAPABILITIES) & ARCH_CAP_MDS_NO))) {
+	if (strcmp(cpu_vendor, "GenuineIntel") != 0)
+		goto notintel;	/* VERW only needed on Intel */
+
+	if ((ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP))
+		cap = rdmsr(MSR_ARCH_CAPABILITIES);
+
+	if (cap & ARCH_CAP_MDS_NO) {
 		/* Unaffected, nop out the handling code */
-		has_verw = 0;
 	} else if (ci->ci_feature_sefflags_edx & SEFF0EDX_MD_CLEAR) {
 		/* new firmware, use VERW */
-		has_verw = 1;
+		use_verw = 1;
 	} else {
 		int family = ci->ci_family;
 		int model = ci->ci_model;
 		int stepping = CPUID2STEPPING(ci->ci_signature);
 
-		has_verw = 0;
 		if (family == 0x6 &&
 		    (model == 0x2e || model == 0x1e || model == 0x1f ||
 		     model == 0x1a || model == 0x2f || model == 0x25 ||
@@ -395,15 +398,24 @@ replacemds(void)
 		}
 	}
 
+	/* Register File Data Sampling (RFDS) also has a VERW workaround */
+	if ((cap & ARCH_CAP_RFDS_NO) == 0 && (cap & ARCH_CAP_RFDS_CLEAR))
+		use_verw = 1;
+
 	if (handler != NULL) {
 		printf("cpu0: using %s MDS workaround%s\n", type, "");
 		s = splhigh();
 		codepatch_call(CPTAG_MDS, handler);
 		codepatch_call(CPTAG_MDS_VMM, vmm_handler);
 		splx(s);
-	} else if (has_verw) {
-		/* The new firmware enhances L1D_FLUSH MSR to flush MDS too */
-		if (cpu_info_primary.ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr == 1) {
+	} else if (use_verw) {
+		/*
+		 * The new firmware enhances L1D_FLUSH MSR to flush MDS too,
+		 * but keep the verw if affected by RFDS
+		 */
+		if ((cap & ARCH_CAP_RFDS_NO) == 0 && (cap & ARCH_CAP_RFDS_CLEAR)) {
+			type = "";
+		} else if (cpu_info_primary.ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr == 1) {
 			s = splhigh();
 			codepatch_nop(CPTAG_MDS_VMM);
 			splx(s);
@@ -413,6 +425,7 @@ replacemds(void)
 		}
 		printf("cpu0: using %s MDS workaround%s\n", "VERW", type);
 	} else {
+notintel:
 		s = splhigh();
 		codepatch_nop(CPTAG_MDS);
 		codepatch_nop(CPTAG_MDS_VMM);
