@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.64 2024/01/23 11:51:53 uwe Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.65 2024/03/17 00:06:43 patrick Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -55,6 +55,11 @@
 
 #include <dev/mii/eephyreg.h>
 
+#ifdef __HAVE_FDT
+#include <machine/fdt.h>
+#include <dev/ofw/openfirm.h>
+#endif
+
 int	eephy_match(struct device *, void *, void *);
 void	eephy_attach(struct device *, struct device *, void *);
 
@@ -69,6 +74,10 @@ struct cfdriver eephy_cd = {
 int	eephy_service(struct mii_softc *, struct mii_data *, int);
 void	eephy_status(struct mii_softc *);
 void	eephy_reset(struct mii_softc *);
+
+#ifdef __HAVE_FDT
+void	eephy_fdt_reg_init(struct mii_softc *);
+#endif
 
 const struct mii_phy_funcs eephy_funcs = {
 	eephy_service, eephy_status, eephy_reset,
@@ -212,6 +221,10 @@ eephy_attach(struct device *parent, struct device *self, void *aux)
 
 		PHY_WRITE(sc, E1000_EADR, page);
 	}
+
+#ifdef __HAVE_FDT
+	eephy_fdt_reg_init(sc);
+#endif
 
 	PHY_RESET(sc);
 
@@ -428,3 +441,40 @@ eephy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_ETH_MASTER;
 	}
 }
+
+#ifdef __HAVE_FDT
+void eephy_fdt_reg_init(struct mii_softc *sc)
+{
+	uint32_t *prop, opage;
+	int i, len;
+
+	if (!sc->mii_pdata->mii_node)
+		return;
+
+	len = OF_getproplen(sc->mii_pdata->mii_node, "marvell,reg-init");
+	if (len <= 0 || len % (4 * sizeof(uint32_t)) != 0)
+		return;
+
+	opage = PHY_READ(sc, E1000_EADR);
+	prop = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(sc->mii_pdata->mii_node, "marvell,reg-init",
+	    prop, len);
+	for (i = 0; i < len; i += 4) {
+		uint32_t page = prop[i + 0];
+		uint32_t reg = prop[i + 1];
+		uint32_t keep = prop[i + 2];
+		uint32_t set = prop[i + 3];
+		uint32_t val = 0;
+
+		PHY_WRITE(sc, E1000_EADR, page);
+		if (keep) {
+			val = PHY_READ(sc, reg);
+			val &= keep;
+		}
+		val |= set;
+		PHY_WRITE(sc, reg, val);
+	}
+	free(prop, M_TEMP, len);
+	PHY_WRITE(sc, E1000_EADR, opage);
+}
+#endif
