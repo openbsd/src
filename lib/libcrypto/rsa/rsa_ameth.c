@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.57 2024/01/10 14:59:19 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.58 2024/03/17 07:10:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -605,6 +605,10 @@ rsa_md_to_algor(const EVP_MD *md, X509_ALGOR **out_alg)
 
 	if ((alg = X509_ALGOR_new()) == NULL)
 		goto err;
+	/*
+	 * XXX - This omits the parameters, whereas RFC 4055, section 2.1
+	 * explicitly states that an explicit ASN.1 NULL is required.
+	 */
 	if (!X509_ALGOR_set_evp_md(alg, md))
 		goto err;
 
@@ -640,6 +644,10 @@ rsa_mgf1md_to_maskGenAlgorithm(const EVP_MD *mgf1md, X509_ALGOR **out_alg)
 
 	if ((inner_alg = X509_ALGOR_new()) == NULL)
 		goto err;
+	/*
+	 * XXX - This omits the parameters, whereas RFC 4055, section 2.1
+	 * explicitly states that an explicit ASN.1 NULL is required.
+	 */
 	if (!X509_ALGOR_set_evp_md(inner_alg, mgf1md))
 		goto err;
 	if ((astr = ASN1_item_pack(inner_alg, &X509_ALGOR_it, NULL)) == NULL)
