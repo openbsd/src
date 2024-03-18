@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.43 2024/03/04 04:44:12 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.44 2024/03/18 06:05:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -299,7 +299,10 @@ static const char *lacp_mux_event_names[] = {
  * aggr interface
  */
 
-#define AGGR_MAX_PORTS		32
+#define AGGR_PORT_BITS		5
+#define AGGR_FLOWID_SHIFT	(16 - AGGR_PORT_BITS)
+
+#define AGGR_MAX_PORTS		(1 << AGGR_PORT_BITS)
 #define AGGR_MAX_SLOW_PKTS	(AGGR_MAX_PORTS * 3)
 
 struct aggr_multiaddr {
@@ -660,7 +663,7 @@ aggr_transmit(struct aggr_softc *sc, const struct aggr_map *map, struct mbuf *m)
 #endif
 
 	if (ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
-		flow = m->m_pkthdr.ph_flowid;
+		flow = m->m_pkthdr.ph_flowid >> AGGR_FLOWID_SHIFT;
 
 	ifp0 = map->m_ifp0s[flow % AGGR_MAX_PORTS];
 
