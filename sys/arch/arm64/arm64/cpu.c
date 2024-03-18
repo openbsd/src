@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.111 2024/03/17 13:05:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.112 2024/03/18 18:35:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -289,13 +289,14 @@ cpu_identify(struct cpu_info *ci)
 	static uint64_t prev_id_aa64pfr0;
 	static uint64_t prev_id_aa64pfr1;
 	uint64_t midr, impl, part;
-	uint64_t clidr, id;
-	uint32_t ctr, ccsidr, sets, ways, line;
+	uint64_t clidr, ccsidr, id;
+	uint32_t ctr, sets, ways, line;
 	const char *impl_name = NULL;
 	const char *part_name = NULL;
 	const char *il1p_name = NULL;
 	const char *sep;
 	struct cpu_cores *coreselecter = cpu_cores_none;
+	int ccidx;
 	int i;
 
 	midr = READ_SPECIALREG(midr_el1);
@@ -348,7 +349,18 @@ cpu_identify(struct cpu_info *ci)
 		break;
 	}
 
+	id = READ_SPECIALREG(id_aa64mmfr2_el1);
 	clidr = READ_SPECIALREG(clidr_el1);
+	if (ID_AA64MMFR2_CCIDX(id) > ID_AA64MMFR2_CCIDX_IMPL) {
+		/* Reserved value.  Don't print cache information. */
+		clidr = 0;
+	} else if (ID_AA64MMFR2_CCIDX(id) == ID_AA64MMFR2_CCIDX_IMPL) {
+		/* CCSIDR_EL1 uses the new 64-bit format. */
+		ccidx = 1;
+	} else {
+		/* CCSIDR_EL1 uses the old 32-bit format. */
+		ccidx = 0;
+	}
 	for (i = 0; i < 7; i++) {
 		if ((clidr & CLIDR_CTYPE_MASK) == 0)
 			break;
@@ -359,9 +371,15 @@ cpu_identify(struct cpu_info *ci)
 			    i << CSSELR_LEVEL_SHIFT | CSSELR_IND);
 			__asm volatile("isb");
 			ccsidr = READ_SPECIALREG(ccsidr_el1);
-			sets = CCSIDR_SETS(ccsidr);
-			ways = CCSIDR_WAYS(ccsidr);
-			line = CCSIDR_LINE_SIZE(ccsidr);
+			if (ccidx) {
+				sets = CCSIDR_CCIDX_SETS(ccsidr);
+				ways = CCSIDR_CCIDX_WAYS(ccsidr);
+				line = CCSIDR_CCIDX_LINE_SIZE(ccsidr);
+			} else {
+				sets = CCSIDR_SETS(ccsidr);
+				ways = CCSIDR_WAYS(ccsidr);
+				line = CCSIDR_LINE_SIZE(ccsidr);
+			}
 			printf("%s %dKB %db/line %d-way L%d %sI-cache", sep,
 			    (sets * ways * line) / 1024, line, ways, (i + 1),
 			    il1p_name);
@@ -372,9 +390,15 @@ cpu_identify(struct cpu_info *ci)
 			WRITE_SPECIALREG(csselr_el1, i << CSSELR_LEVEL_SHIFT);
 			__asm volatile("isb");
 			ccsidr = READ_SPECIALREG(ccsidr_el1);
-			sets = CCSIDR_SETS(ccsidr);
-			ways = CCSIDR_WAYS(ccsidr);
-			line = CCSIDR_LINE_SIZE(ccsidr);
+			if (ccidx) {
+				sets = CCSIDR_CCIDX_SETS(ccsidr);
+				ways = CCSIDR_CCIDX_WAYS(ccsidr);
+				line = CCSIDR_CCIDX_LINE_SIZE(ccsidr);
+			} else {
+				sets = CCSIDR_SETS(ccsidr);
+				ways = CCSIDR_WAYS(ccsidr);
+				line = CCSIDR_LINE_SIZE(ccsidr);
+			}
 			printf("%s %dKB %db/line %d-way L%d D-cache", sep,
 			    (sets * ways * line) / 1024, line, ways, (i + 1));
 			sep = ",";
@@ -383,9 +407,15 @@ cpu_identify(struct cpu_info *ci)
 			WRITE_SPECIALREG(csselr_el1, i << CSSELR_LEVEL_SHIFT);
 			__asm volatile("isb");
 			ccsidr = READ_SPECIALREG(ccsidr_el1);
-			sets = CCSIDR_SETS(ccsidr);
-			ways = CCSIDR_WAYS(ccsidr);
-			line = CCSIDR_LINE_SIZE(ccsidr);
+			if (ccidx) {
+				sets = CCSIDR_CCIDX_SETS(ccsidr);
+				ways = CCSIDR_CCIDX_WAYS(ccsidr);
+				line = CCSIDR_CCIDX_LINE_SIZE(ccsidr);
+			} else {
+				sets = CCSIDR_SETS(ccsidr);
+				ways = CCSIDR_WAYS(ccsidr);
+				line = CCSIDR_LINE_SIZE(ccsidr);
+			}
 			printf("%s %dKB %db/line %d-way L%d cache", sep,
 			    (sets * ways * line) / 1024, line, ways, (i + 1));
 		}
