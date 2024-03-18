@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.269 2024/03/15 21:56:22 op Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.270 2024/03/18 08:48:50 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 15 2024 $
+.Dd $Mdocdate: March 18 2024 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -155,7 +155,8 @@ Deliver the message to the user's mbox with
 .It Cm mda Ar command
 Delegate the delivery to a
 .Ar command
-that receives the message on its standard input.
+that receives the message on its standard input
+.Pq see Sx MDA COMMANDS .
 .Pp
 The
 .Ar command
@@ -1113,34 +1114,65 @@ For example, with recipient
 .It %{rcpt}     Ta expands to Dq user+t:g@example.org
 .It %{rcpt:raw} Ta expands to Dq user+t?g@example.org
 .El
-.Ss MDA ENVIRONMENT
-When a MDA is invoked,
+.Ss MDA COMMANDS
+When an action delivery method is
+.Cm mda ,
 .Xr smtpd 8
-will create a new process.
-Only the uid and gid of the destination user is set.
-The following environment variables will be set:
-.Bl -tag -width "ORIGINAL_RECIPIENT"
+runs the associated command for the delivery with the mail content
+provided via standard input.
+The command is expected to read all the mail content.
+.Pp
+The exit code of the command reports the outcome of the delivery:
+status 0
+.Pq Dv EX_OK
+is a successful delivery; status 71
+.Pq Dv EX_OSERR
+and 75
+.Pq Dv EX_TEMPFAIL
+are temporary failures; and all other exit status are considered
+permament failures.
+.Pp
+The following environment variables are set:
+.Pp
+.Bl -tag -width ORIGINAL_RECIPIENT -compact
 .It Ev DOMAIN
 The recipient domain.
+.It Ev EXTENSION
+The sub address of the recipient (may be unset).
 .It Ev HOME
-The home directory of the destination user.
-.It Ev RECIPIENT
-The address of the final recipient.
+The delivery user's login directory.
+.It Ev LOCAL
+The local part of the recipient user address.
+.It Ev LOGNAME
+The login name of the user.
 .It Ev ORIGINAL_RECIPIENT
 The address of the original recipient.
-.It Ev EXTENSION
-The sub address of the recipient, only set when there is a sub address.
+.It Ev PATH
+Set to
+.Ev _PATH_DEFPATH .
+Traditionally
+.Pa /usr/bin:/bin ,
+but expanded to include
+.Pa /usr/sbin ,
+.Pa /sbin ,
+.Pa /usr/X11R6/bin ,
+.Pa /usr/local/bin ,
+and
+.Pa /usr/local/sbin
+in
+.Ox .
+.It Ev RECIPIENT
+The address of the final recipient.
 .It Ev SENDER
 The address of the sender (might be empty).
+.It Ev SHELL
+Set to
+.Pa /bin/sh .
+.It Ev USER
+Synonym of
+.Ev LOGNAME
+for backwards compatibility.
 .El
-.Pp
-This process gets the mail piped to
-.Xr stdin 3 .
-A mail is considered as delivered when the mda exit with
-.Dv EX_OK
-and
-.Xr stdin 3
-is completely read.
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
 .It Pa /etc/mail/smtpd.conf
