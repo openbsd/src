@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.51 2023/11/10 15:51:19 bluhm Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.52 2024/03/18 21:37:44 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1388,6 +1388,7 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_mdio = mii_byphandle(phy);
 		sc->sc_phyloc = OF_getpropint(node, "reg", MII_PHY_ANY);
 		sc->sc_sfp = OF_getpropint(node, "sfp", sc->sc_sfp);
+		sc->sc_mii.mii_node = node;
 	}
 
 	if (sc->sc_sfp)
