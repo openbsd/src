@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.486 2024/02/19 10:15:35 job Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.487 2024/03/18 10:49:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,7 @@
 #define	RTR_PORT			323
 #define	CONFFILE			"/etc/bgpd.conf"
 #define	BGPD_USER			"_bgpd"
-#define	PEER_DESCR_LEN			32
+#define	PEER_DESCR_LEN			64
 #define	REASON_LEN			256	/* includes NUL terminator */
 #define	PFTABLE_LEN			32
 #define	ROUTELABEL_LEN			32
