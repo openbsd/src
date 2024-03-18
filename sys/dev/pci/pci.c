@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.127 2023/04/13 15:36:28 miod Exp $	*/
+/*	$OpenBSD: pci.c,v 1.128 2024/03/18 21:20:46 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -875,8 +875,8 @@ pci_reserve_resources(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
-	pcireg_t bhlc, blr, type, bir;
-	pcireg_t addr, mask;
+	pcireg_t bhlc, blr, bir, csr;
+	pcireg_t addr, mask, type;
 	bus_addr_t base, limit;
 	bus_size_t size;
 	int reg, reg_start, reg_end, reg_rom;
@@ -907,7 +907,8 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	default:
 		return (0);
 	}
-    
+
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	for (reg = reg_start; reg < reg_end; reg += 4) {
 		if (!pci_mapreg_probe(pc, tag, reg, &type))
 			continue;
@@ -945,8 +946,11 @@ pci_reserve_resources(struct pci_attach_args *pa)
 #endif
 			if (pa->pa_memex && extent_alloc_region(pa->pa_memex,
 			    base, size, EX_NOWAIT)) {
-				printf("%d:%d:%d: mem address conflict 0x%lx/0x%lx\n",
-				    bus, dev, func, base, size);
+				if (csr & PCI_COMMAND_MEM_ENABLE) {
+					printf("%d:%d:%d: mem address conflict"
+					    " 0x%lx/0x%lx\n", bus, dev, func,
+					    base, size);
+				}
 				pci_conf_write(pc, tag, reg, 0);
 				if (type & PCI_MAPREG_MEM_TYPE_64BIT)
 					pci_conf_write(pc, tag, reg + 4, 0);
@@ -955,8 +959,11 @@ pci_reserve_resources(struct pci_attach_args *pa)
 		case PCI_MAPREG_TYPE_IO:
 			if (pa->pa_ioex && extent_alloc_region(pa->pa_ioex,
 			    base, size, EX_NOWAIT)) {
-				printf("%d:%d:%d: io address conflict 0x%lx/0x%lx\n",
-				    bus, dev, func, base, size);
+				if (csr & PCI_COMMAND_IO_ENABLE) {
+					printf("%d:%d:%d: io address conflict"
+					    " 0x%lx/0x%lx\n", bus, dev, func,
+					    base, size);
+				}
 				pci_conf_write(pc, tag, reg, 0);
 			}
 			break;
@@ -981,8 +988,11 @@ pci_reserve_resources(struct pci_attach_args *pa)
 			    base, size, EX_NOWAIT) &&
 			    pa->pa_memex && extent_alloc_region(pa->pa_memex,
 			    base, size, EX_NOWAIT)) {
-				printf("%d:%d:%d: rom address conflict 0x%lx/0x%lx\n",
-				    bus, dev, func, base, size);
+				if (addr & PCI_ROM_ENABLE) {
+					printf("%d:%d:%d: rom address conflict"
+					    " 0x%lx/0x%lx\n", bus, dev, func,
+					    base, size);
+				}
 				pci_conf_write(pc, tag, PCI_ROM_REG, 0);
 			}
 		}
