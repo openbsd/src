@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.455 2023/08/16 08:26:35 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.456 2024/03/18 14:54:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4989,7 +4989,7 @@ expand_rule(struct filter_rule *rule, struct filter_rib_l *rib,
 int
 str2key(char *s, char *dest, size_t max_len)
 {
-	unsigned	i;
+	unsigned int	i;
 	char		t[3];
 
 	if (strlen(s) / 2 > max_len) {
@@ -5006,7 +5006,8 @@ str2key(char *s, char *dest, size_t max_len)
 		t[0] = s[2*i];
 		t[1] = s[2*i + 1];
 		t[2] = 0;
-		if (!isxdigit(t[0]) || !isxdigit(t[1])) {
+		if (!isxdigit((unsigned char)t[0]) ||
+		    !isxdigit((unsigned char)t[1])) {
 			yyerror("key must be specified in hex");
 			return (-1);
 		}
