@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.23 2022/09/11 06:38:10 jmc Exp $
+.\" $OpenBSD: login_cap.3,v 1.24 2024/03/18 08:50:54 op Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: March 18 2024 $
 .Dt LOGIN_GETCLASS 3
 .Os
 .Sh NAME
@@ -245,7 +245,7 @@ Sets the
 environment variable to the value of the
 .Li path
 keyword if specified, or to the value of
-.Li _PATH_DEFPATH
+.Dv _PATH_DEFPATH
 in
 .In paths.h
 if not.
