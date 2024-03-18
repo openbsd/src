@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.44 2024/03/18 06:05:23 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.45 2024/03/18 06:14:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -53,6 +53,7 @@
  */
 
 #include "bpfilter.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,6 +68,7 @@
 #include <sys/percpu.h>
 #include <sys/smr.h>
 #include <sys/task.h>
+#include <sys/kstat.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -303,7 +305,7 @@ static const char *lacp_mux_event_names[] = {
 #define AGGR_FLOWID_SHIFT	(16 - AGGR_PORT_BITS)
 
 #define AGGR_MAX_PORTS		(1 << AGGR_PORT_BITS)
-#define AGGR_MAX_SLOW_PKTS	(AGGR_MAX_PORTS * 3)
+#define AGGR_MAX_SLOW_PKTS	3
 
 struct aggr_multiaddr {
 	TAILQ_ENTRY(aggr_multiaddr)
@@ -329,8 +331,22 @@ static const char *aggr_port_selected_names[] = {
 	"STANDBY",
 };
 
+struct aggr_proto_count {
+	uint64_t		c_pkts;
+	uint64_t		c_bytes;
+};
+
+#define AGGR_PROTO_TX_LACP	0
+#define AGGR_PROTO_TX_MARKER	1
+#define AGGR_PROTO_RX_LACP	2
+#define AGGR_PROTO_RX_MARKER	3
+
+#define AGGR_PROTO_COUNT	4
+
 struct aggr_port {
 	struct ifnet		*p_ifp0;
+	struct kstat		*p_kstat;
+	struct mutex		 p_mtx;
 
 	uint8_t			 p_lladdr[ETHER_ADDR_LEN];
 	uint32_t		 p_mtu;
@@ -365,7 +381,7 @@ struct aggr_port {
 
 	/* Receive machine */
 	enum lacp_rxm_state	 p_rxm_state;
-	struct mbuf_queue	 p_rxm_mq;
+	struct mbuf_list	 p_rxm_ml;
 	struct task		 p_rxm_task;
 
 	/* Periodic Transmission machine */
@@ -378,6 +394,11 @@ struct aggr_port {
 	int			 p_txm_log[LACP_TX_MACHINE_RATE];
 	unsigned int		 p_txm_slot;
 	struct timeout		 p_txm_ntt;
+
+	/* Counters */
+	struct aggr_proto_count	 p_proto_counts[AGGR_PROTO_COUNT];
+	uint64_t		 p_rx_drops;
+	uint32_t		 p_nselectch;
 };
 
 TAILQ_HEAD(aggr_port_list, aggr_port);
@@ -508,6 +529,11 @@ static void	aggr_set_selected(struct aggr_port *, enum aggr_port_selected,
 static void	aggr_unselected(struct aggr_port *);
 
 static void	aggr_selection_logic(struct aggr_softc *, struct aggr_port *);
+
+#if NKSTAT > 0
+static void	aggr_port_kstat_attach(struct aggr_port *);
+static void	aggr_port_kstat_detach(struct aggr_port *);
+#endif
 
 static struct if_clone aggr_cloner =
     IF_CLONE_INITIALIZER("aggr", aggr_clone_create, aggr_clone_destroy);
@@ -746,7 +772,9 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 	if (!ISSET(m->m_flags, M_VLANTAG) &&
 	    __predict_false(aggr_eh_is_slow(eh))) {
+		unsigned int rx_proto = AGGR_PROTO_RX_LACP;
 		struct ether_slowproto_hdr *sph;
+		int drop = 0;
 
 		hlen += sizeof(*sph);
 		if (m->m_len < hlen) {
@@ -760,9 +788,25 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m)
 
 		sph = (struct ether_slowproto_hdr *)(eh + 1);
 		switch (sph->sph_subtype) {
-		case SLOWPROTOCOLS_SUBTYPE_LACP:
 		case SLOWPROTOCOLS_SUBTYPE_LACP_MARKER:
-			if (mq_enqueue(&p->p_rxm_mq, m) == 0)
+			rx_proto = AGGR_PROTO_RX_MARKER;
+			/* FALLTHROUGH */
+		case SLOWPROTOCOLS_SUBTYPE_LACP:
+			mtx_enter(&p->p_mtx);
+			p->p_proto_counts[rx_proto].c_pkts++;
+			p->p_proto_counts[rx_proto].c_bytes += m->m_pkthdr.len;
+
+			if (ml_len(&p->p_rxm_ml) < AGGR_MAX_SLOW_PKTS)
+				ml_enqueue(&p->p_rxm_ml, m);
+			else {
+				p->p_rx_drops++;
+				drop = 1;
+			}
+			mtx_leave(&p->p_mtx);
+
+			if (drop)
+				goto drop;
+			else
 				task_add(systq, &p->p_rxm_task);
 			return;
 		default:
@@ -1115,6 +1159,7 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	p->p_ifp0 = ifp0;
 	p->p_aggr = sc;
 	p->p_mtu = ifp0->if_mtu;
+	mtx_init(&p->p_mtx, IPL_SOFTNET);
 
 	CTASSERT(sizeof(p->p_lladdr) == sizeof(ac0->ac_enaddr));
 	memcpy(p->p_lladdr, ac0->ac_enaddr, sizeof(p->p_lladdr));
@@ -1155,7 +1200,7 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	if_detachhook_add(ifp0, &p->p_dhook);
 
 	task_set(&p->p_rxm_task, aggr_rx, p);
-	mq_init(&p->p_rxm_mq, 3, IPL_NET);
+	ml_init(&p->p_rxm_ml);
 
 	timeout_set_proc(&p->p_ptm_tx, aggr_ptm_tx, p);
 	timeout_set_proc(&p->p_txm_ntt, aggr_transmit_machine, p);
@@ -1172,6 +1217,10 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	/* commit */
 	DPRINTF(sc, "%s %s trunkport: creating port\n",
 	    ifp->if_xname, ifp0->if_xname);
+
+#if NKSTAT > 0
+	aggr_port_kstat_attach(p); /* this prints warnings itself */
+#endif
 
 	TAILQ_INSERT_TAIL(&sc->sc_ports, p, p_entry);
 	sc->sc_nports++;
@@ -1418,6 +1467,10 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	ifp0->if_ioctl = p->p_ioctl;
 	ifp0->if_output = p->p_output;
 
+#if NKSTAT > 0
+	aggr_port_kstat_detach(p);
+#endif
+
 	TAILQ_REMOVE(&sc->sc_ports, p, p_entry);
 	sc->sc_nports--;
 
@@ -1460,7 +1513,6 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 
 	if_detachhook_del(ifp0, &p->p_dhook);
 	if_linkstatehook_del(ifp0, &p->p_lhook);
-
 	if_put(ifp0);
 	free(p, M_DEVBUF, sizeof(*p));
 
@@ -1757,6 +1809,11 @@ aggr_marker_response(struct aggr_port *p, struct mbuf *m)
 	memcpy(eh->ether_shost, ac->ac_enaddr, sizeof(eh->ether_shost));
 	eh->ether_type = htons(ETHERTYPE_SLOW);
 
+	mtx_enter(&p->p_mtx);
+	p->p_proto_counts[AGGR_PROTO_TX_MARKER].c_pkts++;
+	p->p_proto_counts[AGGR_PROTO_TX_MARKER].c_bytes += m->m_pkthdr.len;
+	mtx_leave(&p->p_mtx);
+
 	(void)if_enqueue(ifp0, m);
 }
 
@@ -1789,7 +1846,10 @@ aggr_rx(void *arg)
 	struct mbuf_list ml;
 	struct mbuf *m;
 
-	mq_delist(&p->p_rxm_mq, &ml);
+	mtx_enter(&p->p_mtx);
+	ml = p->p_rxm_ml;
+	ml_init(&p->p_rxm_ml);
+	mtx_leave(&p->p_mtx);
 
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		struct ether_slowproto_hdr *sph;
@@ -1823,7 +1883,16 @@ aggr_set_selected(struct aggr_port *p, enum aggr_port_selected s,
 		    sc->sc_if.if_xname, p->p_ifp0->if_xname,
 		    aggr_port_selected_names[p->p_selected],
 		    aggr_port_selected_names[s]);
+
+		/*
+		 * setting p_selected doesnt need the mtx except to
+		 * coordinate with a kstat read.
+		 */
+
+		mtx_enter(&p->p_mtx);
 		p->p_selected = s;
+		p->p_nselectch++;
+		mtx_leave(&p->p_mtx);
 	}
 	aggr_mux(sc, p, ev);
 }
@@ -2739,6 +2808,11 @@ aggr_ntt_transmit(struct aggr_port *p)
 	lacpdu->lacp_terminator.lacp_tlv_type = LACP_T_TERMINATOR;
 	lacpdu->lacp_terminator.lacp_tlv_length = 0;
 
+	mtx_enter(&p->p_mtx);
+	p->p_proto_counts[AGGR_PROTO_TX_LACP].c_pkts++;
+	p->p_proto_counts[AGGR_PROTO_TX_LACP].c_bytes += m->m_pkthdr.len;
+	mtx_leave(&p->p_mtx);
+
 	(void)if_enqueue(ifp0, m);
 }
 
@@ -2922,3 +2996,129 @@ aggr_multi_del(struct aggr_softc *sc, struct ifreq *ifr)
 
 	return (0);
 }
+
+#if NKSTAT > 0
+static const char *aggr_proto_names[AGGR_PROTO_COUNT] = {
+	[AGGR_PROTO_TX_LACP] = "tx-lacp",
+	[AGGR_PROTO_TX_MARKER] = "tx-marker",
+	[AGGR_PROTO_RX_LACP] = "rx-lacp",
+	[AGGR_PROTO_RX_MARKER] = "rx-marker",
+};
+
+struct aggr_port_kstat {
+	struct kstat_kv		interface;
+
+	struct {
+		struct kstat_kv		pkts;
+		struct kstat_kv		bytes;
+	}			protos[AGGR_PROTO_COUNT];
+
+	struct kstat_kv		rx_drops;
+
+	struct kstat_kv		selected;
+	struct kstat_kv		nselectch;
+};
+
+static int
+aggr_port_kstat_read(struct kstat *ks)
+{
+	struct aggr_port *p = ks->ks_softc;
+	struct aggr_port_kstat *pk = ks->ks_data;
+	unsigned int proto;
+
+	mtx_enter(&p->p_mtx);
+	for (proto = 0; proto < AGGR_PROTO_COUNT; proto++) {
+		kstat_kv_u64(&pk->protos[proto].pkts) =
+		    p->p_proto_counts[proto].c_pkts;
+		kstat_kv_u64(&pk->protos[proto].bytes) =
+		    p->p_proto_counts[proto].c_bytes;
+	}
+	kstat_kv_u64(&pk->rx_drops) = p->p_rx_drops;
+
+	kstat_kv_bool(&pk->selected) = p->p_selected == AGGR_PORT_SELECTED;
+	kstat_kv_u32(&pk->nselectch) = p->p_nselectch;
+	mtx_leave(&p->p_mtx);
+
+	nanouptime(&ks->ks_updated);
+
+	return (0);
+}
+
+static void
+aggr_port_kstat_attach(struct aggr_port *p)
+{
+	struct aggr_softc *sc = p->p_aggr;
+	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp0 = p->p_ifp0;
+	struct kstat *ks;
+	struct aggr_port_kstat *pk;
+	unsigned int proto;
+
+	pk = malloc(sizeof(*pk), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (pk == NULL) {
+		log(LOG_WARNING, "%s %s: unable to allocate aggr-port kstat\n",
+		    ifp->if_xname, ifp0->if_xname);
+		return;
+	}
+
+	ks = kstat_create(ifp->if_xname, 0, "aggr-port", ifp0->if_index,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		log(LOG_WARNING, "%s %s: unable to create aggr-port kstat\n",
+		    ifp->if_xname, ifp0->if_xname);
+		free(pk, M_DEVBUF, sizeof(*pk));
+		return;
+	}
+
+	kstat_kv_init(&pk->interface, "interface", KSTAT_KV_T_ISTR);
+	strlcpy(kstat_kv_istr(&pk->interface), ifp0->if_xname,
+	    sizeof(kstat_kv_istr(&pk->interface)));
+
+	for (proto = 0; proto < AGGR_PROTO_COUNT; proto++) {
+		char kvname[KSTAT_KV_NAMELEN];
+
+		snprintf(kvname, sizeof(kvname),
+		    "%s-pkts", aggr_proto_names[proto]);
+		kstat_kv_unit_init(&pk->protos[proto].pkts,
+		    kvname, KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS);
+
+		snprintf(kvname, sizeof(kvname),
+		    "%s-bytes", aggr_proto_names[proto]);
+		kstat_kv_unit_init(&pk->protos[proto].bytes,
+		    kvname, KSTAT_KV_T_COUNTER64, KSTAT_KV_U_BYTES);
+	}
+
+	kstat_kv_unit_init(&pk->rx_drops, "rx-drops",
+	    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS);
+
+	kstat_kv_init(&pk->selected, "selected", KSTAT_KV_T_BOOL);
+	kstat_kv_init(&pk->nselectch, "select-changes", KSTAT_KV_T_COUNTER32);
+
+	ks->ks_softc = p;
+	ks->ks_data = pk;
+	ks->ks_datalen = sizeof(*pk);
+	ks->ks_read = aggr_port_kstat_read;
+
+	kstat_install(ks);
+
+	p->p_kstat = ks;
+}
+
+static void
+aggr_port_kstat_detach(struct aggr_port *p)
+{
+	struct kstat *ks = p->p_kstat;
+	struct aggr_port_kstat *pk;
+
+	if (ks == NULL)
+		return;
+
+	p->p_kstat = NULL;
+
+	kstat_remove(ks);
+	pk = ks->ks_data;
+	kstat_destroy(ks);
+
+	free(pk, M_DEVBUF, sizeof(*pk));
+}
+#endif
