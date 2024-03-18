@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.112 2024/03/18 18:35:21 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.113 2024/03/18 21:57:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -278,6 +278,43 @@ void	cpu_kstat_attach(struct cpu_info *ci);
 void	cpu_opp_kstat_attach(struct cpu_info *ci);
 #endif
 
+/*
+ * Enable mitigation for Spectre-V4 speculative store bypass
+ * vulnerabilities (CVE-2018-3639).
+ */
+void
+cpu_mitigate_spectre_v4(struct cpu_info *ci)
+{
+	uint64_t id;
+
+	switch (CPU_IMPL(ci->ci_midr)) {
+	case CPU_IMPL_ARM:
+		switch (CPU_PART(ci->ci_midr)) {
+		case CPU_PART_CORTEX_A35:
+		case CPU_PART_CORTEX_A53:
+		case CPU_PART_CORTEX_A55:
+			/* Not vulnerable. */
+			return;
+		}
+		break;
+	case CPU_IMPL_QCOM:
+		switch (CPU_PART(ci->ci_midr)) {
+		case CPU_PART_KRYO400_SILVER:
+			/* Not vulnerable. */
+			return;
+		}
+		break;
+	}
+
+	/* SSBS tells us Spectre-V4 is mitigated. */
+	id = READ_SPECIALREG(id_aa64pfr1_el1);
+	if (ID_AA64PFR1_SSBS(id) >= ID_AA64PFR1_SSBS_PSTATE)
+		return;
+
+	/* Enable firmware workaround if required. */
+	smccc_enable_arch_workaround_2();
+}
+
 void
 cpu_identify(struct cpu_info *ci)
 {
@@ -508,7 +545,7 @@ cpu_identify(struct cpu_info *ci)
 	 */
 #if NPSCI > 0
 	if (ci->ci_trampoline_vectors == (vaddr_t)trampoline_vectors_none &&
-	    psci_flush_bp_has_bhb()) {
+	    smccc_needs_arch_workaround_3()) {
 		ci->ci_flush_bp = cpu_flush_bp_noop;
 		if (psci_method() == PSCI_METHOD_HVC)
 			ci->ci_trampoline_vectors =
@@ -538,6 +575,8 @@ cpu_identify(struct cpu_info *ci)
 		ci->ci_flush_bp = cpu_flush_bp_noop;
 		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
 	}
+
+	cpu_mitigate_spectre_v4(ci);
 
 	/*
 	 * Apple CPUs provide detailed information for SError.

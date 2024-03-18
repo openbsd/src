@@ -22,4 +22,7 @@ int	psci_method(void);
 
 int32_t	smccc(uint32_t, register_t, register_t, register_t);
 
+void	smccc_enable_arch_workaround_2(void);
+int	smccc_needs_arch_workaround_3(void);
+
 #endif /* _SYS_DEV_FDT_PSCIVAR_H_ */
