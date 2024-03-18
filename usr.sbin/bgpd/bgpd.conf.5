@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.237 2023/10/13 07:37:35 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.238 2024/03/18 10:16:50 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 13 2023 $
+.Dd $Mdocdate: March 18 2024 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -473,7 +473,9 @@ aspa-set {
 .Pp
 .It Xo
 .Ic origin-set Ar name
-.Ic { Ar address Ns Li / Ns Ar len Ic maxlen Ar mlen Ic source-as Ar asn ... Ic }
+.Ic { Ar address Ns Li / Ns Ar len
+.Op Ic maxlen Ar mlen
+.Ic source-as Ar asn ... Ic }
 .Xc
 An
 .Ic origin-set
