@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OPENSSL_malloc.3,v 1.11 2023/11/16 20:27:43 schwarze Exp $
+.\"	$OpenBSD: OPENSSL_malloc.3,v 1.12 2024/03/19 17:48:57 tb Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,16 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: March 19 2024 $
 .Dt OPENSSL_MALLOC 3
 .Os
 .Sh NAME
 .Nm OPENSSL_malloc ,
-.Nm OPENSSL_realloc ,
 .Nm OPENSSL_free ,
 .Nm OPENSSL_strdup ,
 .Nm CRYPTO_malloc ,
-.Nm CRYPTO_realloc ,
 .Nm CRYPTO_free ,
 .Nm CRYPTO_strdup
 .Nd legacy OpenSSL memory allocation wrappers
@@ -31,11 +29,6 @@
 .In openssl/crypto.h
 .Ft void *
 .Fo OPENSSL_malloc
-.Fa "size_t num"
-.Fc
-.Ft void *
-.Fo OPENSSL_realloc
-.Fa "void *addr"
 .Fa "size_t num"
 .Fc
 .Ft void
@@ -48,13 +41,6 @@
 .Fc
 .Ft void *
 .Fo CRYPTO_malloc
-.Fa "size_t num"
-.Fa "const char *file"
-.Fa "int line"
-.Fc
-.Ft void *
-.Fo CRYPTO_realloc
-.Fa "void *p"
 .Fa "size_t num"
 .Fa "const char *file"
 .Fa "int line"
@@ -78,7 +64,6 @@ They are provided purely for compatibility with legacy application code.
 All 8 of these functions are wrappers around the corresponding
 standard
 .Xr malloc 3 ,
-.Xr realloc 3 ,
 .Xr free 3 ,
 and
 .Xr strdup 3
@@ -93,15 +78,13 @@ standard functions.
 .Sh SEE ALSO
 .Xr crypto 3
 .Sh HISTORY
-.Fn CRYPTO_malloc ,
-.Fn CRYPTO_realloc ,
+.Fn CRYPTO_malloc
 and
 .Fn CRYPTO_free
 first appeared in SSLeay 0.6.4 and have been available since
 .Ox 2.4 .
 .Pp
-.Fn OPENSSL_malloc ,
-.Fn OPENSSL_realloc ,
+.Fn OPENSSL_malloc
 and
 .Fn OPENSSL_free
 first appeared in OpenSSL 0.9.6 and have been available since
