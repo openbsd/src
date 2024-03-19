@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.10 2024/01/24 00:17:01 dlg Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.11 2024/03/19 03:49:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -327,7 +327,7 @@ sec_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	error = if_enqueue(ifp, m);
 	if (error != 0)
-		counters_inc(ifp->if_counters, ifc_oerrors);
+		counters_inc(ifp->if_counters, ifc_oqdrops);
 
 	return (error);
 
