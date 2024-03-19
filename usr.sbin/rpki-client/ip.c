@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.32 2023/12/27 07:15:55 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.33 2024/03/19 05:04:13 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -72,7 +72,7 @@ ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *p, enum afi *afi)
  * specified in the "ips" array.
  * This means that the IP prefix must be strictly within the ranges or
  * singletons given in the array.
- * Return 0 if we're inheriting from the parent, >0 if we're covered,
+ * Return 0 if we're inheriting from the issuer, >0 if we're covered,
  * or <0 if we're not covered.
  */
 int

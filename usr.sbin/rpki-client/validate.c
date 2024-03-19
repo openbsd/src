@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.72 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.73 2024/03/19 05:04:13 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -50,7 +50,7 @@ valid_as(struct auth *a, uint32_t min, uint32_t max)
 		return 0;
 
 	/* If it inherits, walk up the chain. */
-	return valid_as(a->parent, min, max);
+	return valid_as(a->issuer, min, max);
 }
 
 /*
@@ -76,13 +76,13 @@ valid_ip(struct auth *a, enum afi afi,
 		return 0;
 
 	/* If it inherits, walk up the chain. */
-	return valid_ip(a->parent, afi, min, max);
+	return valid_ip(a->issuer, afi, min, max);
 }
 
 /*
  * Make sure the AKI is the same as the AKI listed on the Manifest,
  * and that the SKI doesn't already exist.
- * Return the parent by its AKI, or NULL on failure.
+ * Return the issuer by its AKI, or NULL on failure.
  */
 struct auth *
 valid_ski_aki(const char *fn, struct auth_tree *auths,
@@ -357,7 +357,7 @@ build_chain(const struct auth *a, STACK_OF(X509) **intermediates,
 		err(1, "sk_X509_new_null");
 	if ((*root = sk_X509_new_null()) == NULL)
 		err(1, "sk_X509_new_null");
-	for (; a != NULL; a = a->parent) {
+	for (; a != NULL; a = a->issuer) {
 		assert(a->cert->x509 != NULL);
 		if (!a->any_inherits) {
 			if (!sk_X509_push(*root, a->cert->x509))

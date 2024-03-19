@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.127 2024/02/16 14:48:47 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.128 2024/03/19 05:04:13 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1198,7 +1198,7 @@ auth_find(struct auth_tree *auths, const char *aki)
 }
 
 struct auth *
-auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
+auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *issuer)
 {
 	struct auth *na;
 
@@ -1206,7 +1206,7 @@ auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
 	if (na == NULL)
 		err(1, NULL);
 
-	na->parent = parent;
+	na->issuer = issuer;
 	na->cert = cert;
 	na->any_inherits = x509_any_inherits(cert->x509);
 

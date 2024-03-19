@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.211 2024/03/17 01:44:59 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.212 2024/03/19 05:04:13 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,7 +26,7 @@
 
 enum cert_as_type {
 	CERT_AS_ID, /* single identifier */
-	CERT_AS_INHERIT, /* inherit from parent */
+	CERT_AS_INHERIT, /* inherit from issuer */
 	CERT_AS_RANGE, /* range of identifiers */
 };
 
@@ -376,7 +376,7 @@ struct gbr {
  * A single ASPA record
  */
 struct aspa {
-	int			 valid; /* contained in parent auth */
+	int			 valid; /* contained in issuer auth */
 	int			 talid; /* TAL the ASPA is chained up to */
 	char			*aia; /* AIA */
 	char			*aki; /* AKI */
@@ -491,7 +491,7 @@ RB_HEAD(crl_tree, crl);
 struct auth {
 	RB_ENTRY(auth)	 entry;
 	struct cert	*cert; /* owner information */
-	struct auth	*parent; /* pointer to parent or NULL for TA cert */
+	struct auth	*issuer; /* pointer to issuer or NULL for TA cert */
 	int		 any_inherits;
 };
 /*

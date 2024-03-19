@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.130 2024/03/01 08:10:09 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.131 2024/03/19 05:04:13 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -670,7 +670,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 	}
 
 	/* TAK EE must be signed by self-signed CA */
-	if (a->parent != NULL)
+	if (a->issuer != NULL)
 		goto out;
 
 	tak->talid = a->cert->talid;
