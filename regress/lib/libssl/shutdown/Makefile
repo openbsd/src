@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2024/01/19 08:29:08 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2024/03/20 10:38:05 jsing Exp $
 
 PROG=	shutdowntest
 LDADD=	-lssl -lcrypto
@@ -11,8 +11,8 @@ REGRESS_TARGETS= \
 
 regress-shutdowntest: ${PROG}
 	./shutdowntest \
-	    ${.CURDIR}/../../libssl/certs/server.pem \
-	    ${.CURDIR}/../../libssl/certs/server.pem \
-	    ${.CURDIR}/../../libssl/certs/ca.pem
+	    ${.CURDIR}/../../libssl/certs/server1-rsa.pem \
+	    ${.CURDIR}/../../libssl/certs/server1-rsa-chain.pem \
+	    ${.CURDIR}/../../libssl/certs/ca-root-rsa.pem
 
 .include <bsd.regress.mk>
