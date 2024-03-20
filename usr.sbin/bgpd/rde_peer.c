@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.35 2024/02/03 09:26:52 jsg Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.36 2024/03/20 09:35:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -44,18 +44,15 @@ peer_has_as4byte(struct rde_peer *peer)
 	return (peer->capa.as4byte);
 }
 
+/*
+ * Check if ADD_PATH is enabled for aid and mode (rx / tx). If aid is
+ * AID_UNSPEC then the function returns true if any aid has mode enabled.
+ */
 int
 peer_has_add_path(struct rde_peer *peer, uint8_t aid, int mode)
 {
 	if (aid >= AID_MAX)
 		return 0;
-	if (aid == AID_UNSPEC) {
-		/* check if at capability is set for at least one AID */
-		for (aid = AID_MIN; aid < AID_MAX; aid++)
-			if (peer->capa.add_path[aid] & mode)
-				return 1;
-		return 0;
-	}
 	return (peer->capa.add_path[aid] & mode);
 }
 
@@ -444,7 +441,7 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 	}
 	peer->state = PEER_UP;
 
-	for (i = 0; i < AID_MAX; i++) {
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (peer->capa.mp[i])
 			peer_dump(peer, i);
 	}
@@ -500,7 +497,7 @@ peer_flush(struct rde_peer *peer, uint8_t aid, time_t staletime)
 	/* every route is gone so reset staletime */
 	if (aid == AID_UNSPEC) {
 		uint8_t i;
-		for (i = 0; i < AID_MAX; i++)
+		for (i = AID_MIN; i < AID_MAX; i++)
 			peer->staletime[i] = 0;
 	} else {
 		peer->staletime[aid] = 0;

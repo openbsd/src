@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.463 2024/02/19 10:15:35 job Exp $ */
+/*	$OpenBSD: session.c,v 1.464 2024/03/20 09:35:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@ void	session_tcp_established(struct peer *);
 void	session_capa_ann_none(struct peer *);
 int	session_capa_add(struct ibuf *, uint8_t, uint8_t);
 int	session_capa_add_mp(struct ibuf *, uint8_t);
-int	session_capa_add_afi(struct peer *, struct ibuf *, uint8_t, uint8_t);
+int	session_capa_add_afi(struct ibuf *, uint8_t, uint8_t);
 struct bgp_msg	*session_newmsg(enum msg_type, uint16_t);
 int	session_sendmsg(struct bgp_msg *, struct peer *);
 void	session_open(struct peer *);
@@ -1357,8 +1357,7 @@ session_capa_add_mp(struct ibuf *buf, uint8_t aid)
 }
 
 int
-session_capa_add_afi(struct peer *p, struct ibuf *b, uint8_t aid,
-    uint8_t flags)
+session_capa_add_afi(struct ibuf *b, uint8_t aid, uint8_t flags)
 {
 	u_int		errs = 0;
 	uint16_t	afi;
@@ -1492,7 +1491,7 @@ session_open(struct peer *p)
 	}
 
 	/* multiprotocol extensions, RFC 4760 */
-	for (i = 0; i < AID_MAX; i++)
+	for (i = AID_MIN; i < AID_MAX; i++)
 		if (p->capa.ann.mp[i]) {	/* 4 bytes data */
 			errs += session_capa_add(opb, CAPA_MP, 4);
 			errs += session_capa_add_mp(opb, i);
@@ -1517,7 +1516,7 @@ session_open(struct peer *p)
 		int		rst = 0;
 		uint16_t	hdr = 0;
 
-		for (i = 0; i < AID_MAX; i++) {
+		for (i = AID_MIN; i < AID_MAX; i++) {
 			if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING)
 				rst++;
 		}
@@ -1536,7 +1535,7 @@ session_open(struct peer *p)
 	}
 
 	/* advertisement of multiple paths, RFC7911 */
-	if (p->capa.ann.add_path[0]) {	/* variable */
+	if (p->capa.ann.add_path[AID_MIN]) {	/* variable */
 		uint8_t	aplen;
 
 		if (mpcapa)
@@ -1547,12 +1546,12 @@ session_open(struct peer *p)
 		if (mpcapa) {
 			for (i = AID_MIN; i < AID_MAX; i++) {
 				if (p->capa.ann.mp[i]) {
-					errs += session_capa_add_afi(p, opb,
+					errs += session_capa_add_afi(opb,
 					    i, p->capa.ann.add_path[i]);
 				}
 			}
 		} else {	/* AID_INET */
-			errs += session_capa_add_afi(p, opb, AID_INET,
+			errs += session_capa_add_afi(opb, AID_INET,
 			    p->capa.ann.add_path[AID_INET]);
 		}
 	}
@@ -1759,7 +1758,7 @@ session_neighbor_rrefresh(struct peer *p)
 	if (!(p->capa.neg.refresh || p->capa.neg.enhanced_rr))
 		return (-1);
 
-	for (i = 0; i < AID_MAX; i++) {
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.neg.mp[i] != 0)
 			session_rrefresh(p, i, ROUTE_REFRESH_REQUEST);
 	}
@@ -1828,7 +1827,7 @@ session_graceful_restart(struct peer *p)
 	timer_set(&p->timers, Timer_RestartTimeout,
 	    p->capa.neg.grestart.timeout);
 
-	for (i = 0; i < AID_MAX; i++) {
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.neg.grestart.flags[i] & CAPA_GR_PRESENT) {
 			if (imsg_rde(IMSG_SESSION_STALE, p->conf.id,
 			    &i, sizeof(i)) == -1)
@@ -1854,7 +1853,7 @@ session_graceful_stop(struct peer *p)
 {
 	uint8_t	i;
 
-	for (i = 0; i < AID_MAX; i++) {
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		/*
 		 * Only flush if the peer is restarting and the timeout fired.
 		 * In all other cases the session was already flushed when the
@@ -2485,7 +2484,6 @@ parse_notification(struct peer *peer)
 	uint8_t		 capa_code;
 	uint8_t		 capa_len;
 	size_t		 reason_len;
-	uint8_t		 i;
 
 	/* just log */
 	p = peer->rbuf->rptr;
@@ -2545,8 +2543,8 @@ parse_notification(struct peer *peer)
 			datalen -= capa_len;
 			switch (capa_code) {
 			case CAPA_MP:
-				for (i = 0; i < AID_MAX; i++)
-					peer->capa.ann.mp[i] = 0;
+				memset(peer->capa.ann.mp, 0,
+				    sizeof(peer->capa.ann.mp));
 				log_peer_warnx(&peer->conf,
 				    "disabling multiprotocol capability");
 				break;
@@ -2840,12 +2838,11 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 	    (p->capa.ann.refresh && p->capa.peer.refresh) != 0;
 	p->capa.neg.enhanced_rr =
 	    (p->capa.ann.enhanced_rr && p->capa.peer.enhanced_rr) != 0;
-
 	p->capa.neg.as4byte =
 	    (p->capa.ann.as4byte && p->capa.peer.as4byte) != 0;
 
 	/* MP: both side must agree on the AFI,SAFI pair */
-	for (i = 0; i < AID_MAX; i++) {
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.ann.mp[i] && p->capa.peer.mp[i])
 			p->capa.neg.mp[i] = 1;
 		else
@@ -2866,7 +2863,7 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 	 * supporting graceful restart.
 	 */
 
-	for (i = 0; i < AID_MAX; i++) {
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		int8_t	negflags;
 
 		/* disable GR if the AFI/SAFI is not present */
@@ -2898,26 +2895,24 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 	if (p->capa.ann.grestart.restart == 0)
 		p->capa.neg.grestart.restart = 0;
 
-
 	/*
 	 * ADD-PATH: set only those bits where both sides agree.
 	 * For this compare our send bit with the recv bit from the peer
 	 * and vice versa.
 	 * The flags are stored from this systems view point.
+	 * At index 0 the flags are set if any per-AID flag is set.
 	 */
 	memset(p->capa.neg.add_path, 0, sizeof(p->capa.neg.add_path));
-	if (p->capa.ann.add_path[0]) {
-		for (i = AID_MIN; i < AID_MAX; i++) {
-			if ((p->capa.ann.add_path[i] & CAPA_AP_RECV) &&
-			    (p->capa.peer.add_path[i] & CAPA_AP_SEND)) {
-				p->capa.neg.add_path[i] |= CAPA_AP_RECV;
-				p->capa.neg.add_path[0] |= CAPA_AP_RECV;
-			}
-			if ((p->capa.ann.add_path[i] & CAPA_AP_SEND) &&
-			    (p->capa.peer.add_path[i] & CAPA_AP_RECV)) {
-				p->capa.neg.add_path[i] |= CAPA_AP_SEND;
-				p->capa.neg.add_path[0] |= CAPA_AP_SEND;
-			}
+	for (i = AID_MIN; i < AID_MAX; i++) {
+		if ((p->capa.ann.add_path[i] & CAPA_AP_RECV) &&
+		    (p->capa.peer.add_path[i] & CAPA_AP_SEND)) {
+			p->capa.neg.add_path[i] |= CAPA_AP_RECV;
+			p->capa.neg.add_path[0] |= CAPA_AP_RECV;
+		}
+		if ((p->capa.ann.add_path[i] & CAPA_AP_SEND) &&
+		    (p->capa.peer.add_path[i] & CAPA_AP_RECV)) {
+			p->capa.neg.add_path[i] |= CAPA_AP_SEND;
+			p->capa.neg.add_path[0] |= CAPA_AP_SEND;
 		}
 	}
 
@@ -3323,7 +3318,7 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				log_warnx("no such peer: id=%u", peerid);
 				break;
 			}
-			if (rr.aid >= AID_MAX)
+			if (rr.aid < AID_MIN || rr.aid >= AID_MAX)
 				fatalx("IMSG_REFRESH: bad AID");
 			session_rrefresh(p, rr.aid, rr.subtype);
 			break;
@@ -3338,7 +3333,7 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 				log_warnx("no such peer: id=%u", peerid);
 				break;
 			}
-			if (aid >= AID_MAX)
+			if (aid < AID_MIN || aid >= AID_MAX)
 				fatalx("IMSG_SESSION_RESTARTED: bad AID");
 			if (p->capa.neg.grestart.flags[aid] &
 			    CAPA_GR_RESTARTING) {

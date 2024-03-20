@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.82 2024/02/22 06:45:22 miod Exp $ */
+/*	$OpenBSD: util.c,v 1.83 2024/03/20 09:35:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -922,7 +922,7 @@ aid2str(uint8_t aid)
 int
 aid2afi(uint8_t aid, uint16_t *afi, uint8_t *safi)
 {
-	if (aid < AID_MAX) {
+	if (aid != AID_UNSPEC && aid < AID_MAX) {
 		*afi = aid_vals[aid].afi;
 		*safi = aid_vals[aid].safi;
 		return (0);
@@ -935,7 +935,7 @@ afi2aid(uint16_t afi, uint8_t safi, uint8_t *aid)
 {
 	uint8_t i;
 
-	for (i = 0; i < AID_MAX; i++)
+	for (i = AID_MIN; i < AID_MAX; i++)
 		if (aid_vals[i].afi == afi && aid_vals[i].safi == safi) {
 			*aid = i;
 			return (0);
@@ -960,7 +960,7 @@ af2aid(sa_family_t af, uint8_t safi, uint8_t *aid)
 	if (safi == 0) /* default to unicast subclass */
 		safi = SAFI_UNICAST;
 
-	for (i = 0; i < AID_MAX; i++)
+	for (i = AID_UNSPEC; i < AID_MAX; i++)
 		if (aid_vals[i].af == af && aid_vals[i].safi == safi) {
 			*aid = i;
 			return (0);

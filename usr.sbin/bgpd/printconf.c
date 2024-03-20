@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.169 2024/01/10 13:31:09 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.170 2024/03/20 09:35:46 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -920,7 +920,7 @@ print_announce(struct peer_config *p, const char *c)
 	if (p->announce_capa == 0)
 		printf("%s\tannounce capabilities no\n", c);
 
-	for (aid = 0; aid < AID_MAX; aid++)
+	for (aid = AID_MIN; aid < AID_MAX; aid++)
 		if (p->capabilities.mp[aid])
 			printf("%s\tannounce %s\n", c, aid2str(aid));
 
