@@ -217,7 +217,6 @@ struct inteldrm_softc {
 	bus_dma_tag_t dmat;
 	bus_space_tag_t iot;
 	bus_space_tag_t bst;
-	struct agp_map *agph;
 	bus_space_handle_t opregion_ioh;
 	bus_space_handle_t opregion_rvda_ioh;
 	bus_size_t opregion_rvda_size;

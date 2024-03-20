@@ -43,8 +43,6 @@
 #include "i915_vma.h"
 #include "i915_vma_resource.h"
 
-#include <dev/pci/agpvar.h>
-
 static inline void assert_vma_held_evict(const struct i915_vma *vma)
 {
 	/*
@@ -582,22 +580,9 @@ void __iomem *i915_vma_pin_iomap(struct i915_vma *vma)
 			ptr = i915_gem_object_lmem_io_map(vma->obj, 0,
 							  vma->obj->base.size);
 		} else if (i915_vma_is_map_and_fenceable(vma)) {
-#ifdef __linux__
 			ptr = io_mapping_map_wc(&i915_vm_to_ggtt(vma->vm)->iomap,
 						i915_vma_offset(vma),
 						i915_vma_size(vma));
-#else
-		{
-			struct drm_i915_private *dev_priv = vma->vm->i915;
-			err = agp_map_subregion(dev_priv->agph, i915_vma_offset(vma),
-			    i915_vma_size(vma), &vma->bsh);
-			if (err) {
-				err = -err;
-				goto err;
-			}
-			ptr = bus_space_vaddr(dev_priv->bst, vma->bsh);
-		}
-#endif
 		} else {
 			ptr = (void __iomem *)
 				i915_gem_object_pin_map(vma->obj, I915_MAP_WC);
@@ -616,10 +601,8 @@ void __iomem *i915_vma_pin_iomap(struct i915_vma *vma)
 		if (unlikely(cmpxchg(&vma->iomap, NULL, ptr))) {
 			if (page_unmask_bits(ptr))
 				__i915_gem_object_release_map(vma->obj);
-#ifdef __linux__
 			else
 				io_mapping_unmap(ptr);
-#endif
 			ptr = vma->iomap;
 		}
 	}
@@ -1879,14 +1862,8 @@ static void __i915_vma_iounmap(struct i915_vma *vma)
 
 	if (page_unmask_bits(vma->iomap))
 		__i915_gem_object_release_map(vma->obj);
-	else {
-#ifdef __linux__
+	else
 		io_mapping_unmap(vma->iomap);
-#else
-		struct drm_i915_private *dev_priv = vma->vm->i915;
-		agp_unmap_subregion(dev_priv->agph, vma->bsh, vma->node.size);
-#endif
-	}
 	vma->iomap = NULL;
 }
 

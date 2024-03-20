@@ -28,9 +28,6 @@
 #include "intel_gtt.h"
 #include "gen8_ppgtt.h"
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/agpvar.h>
-
 static void i915_ggtt_color_adjust(const struct drm_mm_node *node,
 				   unsigned long color,
 				   u64 *start,
@@ -53,7 +50,6 @@ static void i915_ggtt_color_adjust(const struct drm_mm_node *node,
 static int ggtt_init_hw(struct i915_ggtt *ggtt)
 {
 	struct drm_i915_private *i915 = ggtt->vm.i915;
-	int i;
 
 	i915_address_space_init(&ggtt->vm, VM_CLASS_GGTT);
 
@@ -77,6 +73,9 @@ static int ggtt_init_hw(struct i915_ggtt *ggtt)
 		ggtt->mtrr = arch_phys_wc_add(ggtt->gmadr.start,
 					      ggtt->mappable_end);
 #else
+		bus_space_handle_t bsh;
+		int i;
+
 		/* XXX would be a lot nicer to get agp info before now */
 		uvm_page_physload(atop(ggtt->gmadr.start),
 		    atop(ggtt->gmadr.start + ggtt->mappable_end),
@@ -94,11 +93,13 @@ static int ggtt_init_hw(struct i915_ggtt *ggtt)
 		for (i = 0; i < atop(ggtt->mappable_end); i++)
 			atomic_setbits_int(&(i915->pgs[i].pg_flags),
 			    PG_PMAP_WC);
-		if (agp_init_map(i915->bst, ggtt->gmadr.start,
+		if (bus_space_map(i915->bst, ggtt->gmadr.start,
 		    ggtt->mappable_end,
-		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
-		    &i915->agph))
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh))
 			panic("can't map aperture");
+		ggtt->iomap.base = ggtt->gmadr.start;
+		ggtt->iomap.size = ggtt->mappable_end;
+		ggtt->iomap.iomem = bus_space_vaddr(i915->bst, bsh);
 #endif
 	}
 
