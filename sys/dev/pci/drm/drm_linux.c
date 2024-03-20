@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.109 2024/01/21 13:36:40 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.110 2024/03/20 02:38:35 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1302,7 +1302,8 @@ vga_disable_bridge(struct pci_attach_args *pa)
 void
 vga_get_uninterruptible(struct pci_dev *pdev, int rsrc)
 {
-	KASSERT(pdev->pci->sc_bridgetag == NULL);
+	if (pdev->pci->sc_bridgetag != NULL)
+		return;
 	pci_enumerate_bus(pdev->pci, vga_disable_bridge, NULL);
 }
 
