@@ -75,14 +75,14 @@ struct slot {
 	int volctl;			/* volume in the 0..127 range */
 	struct abuf buf;		/* file i/o buffer */
 	int bpf;			/* bytes per frame */
-	int cmin, cmax;			/* file channel range */
+	int imin, imax, omin, omax;	/* channel mapping ranges */
 	struct cmap cmap;		/* channel mapper state */
 	struct resamp resamp;		/* resampler state */
 	struct conv conv;		/* format encoder state */
 	int join;			/* channel join factor */
 	int expand;			/* channel expand factor */
 	void *resampbuf, *convbuf;	/* conversion tmp buffers */
-	int dup;			/* mono-to-stereo and alike */
+	int dup;			/* compat with legacy -j option */
 	int round;			/* slot-side block size */
 	int mode;			/* MODE_{PLAY,REC} */
 #define SLOT_CFG	0		/* buffers not allocated yet */
@@ -136,9 +136,9 @@ const unsigned int voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
 const unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
 char usagestr[] = "usage: aucat [-dn] [-b size] "
-    "[-c min:max] [-e enc] [-f device] [-g position]\n\t"
-    "[-h fmt] [-i file] [-j flag] [-o file] [-p position] [-q port]\n\t"
-    "[-r rate] [-v volume]\n";
+    "[-c channels] [-e enc] [-f device] [-g position]\n\t"
+    "[-h fmt] [-i file] [-m min:max/min:max] [-o file] [-p position]\n\t"
+    "[-q port] [-r rate] [-v volume]\n";
 
 static void *
 allocbuf(int nfr, int nch)
@@ -218,19 +218,22 @@ slot_fill(struct slot *s)
 
 static int
 slot_new(char *path, int mode, struct aparams *par, int hdr,
-    int cmin, int cmax, int rate, int dup, int vol, long long pos)
+    int imin, int imax, int omin, int omax, int nch,
+    int rate, int dup, int vol, long long pos)
 {
 	struct slot *s, **ps;
 
 	s = xmalloc(sizeof(struct slot));
 	if (!afile_open(&s->afile, path, hdr,
 		mode == SIO_PLAY ? AFILE_FREAD : AFILE_FWRITE,
-		par, rate, cmax - cmin + 1)) {
+		par, rate, nch)) {
 		xfree(s);
 		return 0;
 	}
-	s->cmin = cmin;
-	s->cmax = cmin + s->afile.nch - 1;
+	s->imin = (imin != -1) ? imin : 0;
+	s->imax = (imax != -1) ? imax : s->imin + s->afile.nch - 1;
+	s->omin = (omin != -1) ? omin : 0;
+	s->omax = (omax != -1) ? omax : s->omin + s->afile.nch - 1;
 	s->dup = dup;
 	s->vol = MIDI_TO_ADATA(vol);
 	s->mode = mode;
@@ -240,11 +243,17 @@ slot_new(char *path, int mode, struct aparams *par, int hdr,
 		slot_log(s);
 		log_puts(": ");
 		log_puts(s->mode == SIO_PLAY ? "play" : "rec");
-		log_puts(", chan ");
-		log_putu(s->cmin);
-		log_puts(":");
-		log_putu(s->cmax);
 		log_puts(", ");
+		log_putu(s->afile.nch);
+		log_puts("ch (");
+		log_putu(s->imin);
+		log_puts(":");
+		log_putu(s->imax);
+		log_puts("/");
+		log_putu(s->omin);
+		log_puts(":");
+		log_putu(s->omax);
+		log_puts("), ");
 		log_putu(s->afile.rate);
 		log_puts("Hz, ");
 		switch (s->afile.fmt) {
@@ -283,7 +292,7 @@ slot_new(char *path, int mode, struct aparams *par, int hdr,
 static void
 slot_init(struct slot *s)
 {
-	unsigned int slot_nch, bufsz;
+	unsigned int inch, onch, bufsz;
 
 #ifdef DEBUG
 	if (s->pstate != SLOT_CFG) {
@@ -292,7 +301,7 @@ slot_init(struct slot *s)
 		panic();
 	}
 #endif
-	s->bpf = s->afile.par.bps * (s->cmax - s->cmin + 1);
+	s->bpf = s->afile.par.bps * s->afile.nch;
 	s->round = ((long long)dev_round * s->afile.rate +
 	    dev_rate - 1) / dev_rate;
 
@@ -310,54 +319,50 @@ slot_init(struct slot *s)
 	}
 #endif
 
-	slot_nch = s->cmax - s->cmin + 1;
 	s->convbuf = NULL;
 	s->resampbuf = NULL;
 	s->join = 1;
 	s->expand = 1;
+	inch = s->imax - s->imin + 1;
+	onch = s->omax - s->omin + 1;
+	if (s->dup) {
+		/* compat with legacy -j option */
+		if (s->mode == SIO_PLAY)
+			onch = dev_pchan;
+		else
+			inch = dev_rchan;
+	}
+	if (onch > inch)
+		s->expand = onch / inch;
+	else if (onch < inch)
+		s->join = inch / onch;
 	if (s->mode & SIO_PLAY) {
-		if (s->dup) {
-			if (dev_pchan > slot_nch)
-				s->expand = dev_pchan / slot_nch;
-			else if (dev_pchan < slot_nch)
-				s->join = slot_nch / dev_pchan;
-		}
 		cmap_init(&s->cmap,
-		    s->cmin, s->cmax,
-		    s->cmin, s->cmax,
-		    0, dev_pchan - 1,
-		    0, dev_pchan - 1);
+		    0, s->afile.nch - 1, s->imin, s->imax,
+		    0, dev_pchan - 1, s->omin, s->omax);
 		if (s->afile.fmt != AFILE_FMT_PCM ||
 		    !aparams_native(&s->afile.par)) {
-			dec_init(&s->conv, &s->afile.par, slot_nch);
-			s->convbuf = allocbuf(s->round, slot_nch);
+			dec_init(&s->conv, &s->afile.par, s->afile.nch);
+			s->convbuf = allocbuf(s->round, s->afile.nch);
 		}
 		if (s->afile.rate != dev_rate) {
 			resamp_init(&s->resamp, s->afile.rate, dev_rate,
-			    slot_nch);
-			s->resampbuf = allocbuf(dev_round, slot_nch);
+			    s->afile.nch);
+			s->resampbuf = allocbuf(dev_round, s->afile.nch);
 		}
 	}
 	if (s->mode & SIO_REC) {
-		if (s->dup) {
-			if (dev_rchan > slot_nch)
-				s->join = dev_rchan / slot_nch;
-			else if (dev_rchan < slot_nch)
-				s->expand = slot_nch / dev_rchan;
-		}
 		cmap_init(&s->cmap,
-		    0, dev_rchan - 1,
-		    0, dev_rchan - 1,
-		    s->cmin, s->cmax,
-		    s->cmin, s->cmax);
+		    0, dev_rchan - 1, s->imin, s->imax,
+		    0, s->afile.nch - 1, s->omin, s->omax);
 		if (s->afile.rate != dev_rate) {
 			resamp_init(&s->resamp, dev_rate, s->afile.rate,
-			    slot_nch);
-			s->resampbuf = allocbuf(dev_round, slot_nch);
+			    s->afile.nch);
+			s->resampbuf = allocbuf(dev_round, s->afile.nch);
 		}
 		if (!aparams_native(&s->afile.par)) {
-			enc_init(&s->conv, &s->afile.par, slot_nch);
-			s->convbuf = allocbuf(s->round, slot_nch);
+			enc_init(&s->conv, &s->afile.par, s->afile.nch);
+			s->convbuf = allocbuf(s->round, s->afile.nch);
 		}
 
 		/*
@@ -368,13 +373,13 @@ slot_init(struct slot *s)
 	         */
 		if (s->resampbuf) {
 			memset(s->resampbuf, 0,
-			    dev_round * slot_nch * sizeof(adata_t));
+			    dev_round * s->afile.nch * sizeof(adata_t));
 		} else if (s->convbuf) {
 			memset(s->convbuf, 0,
-			    s->round * slot_nch * sizeof(adata_t));
+			    s->round * s->afile.nch * sizeof(adata_t));
 		} else {
 			memset(s->buf.data, 0,
-			    bufsz * slot_nch * sizeof(adata_t));
+			    bufsz * s->afile.nch * sizeof(adata_t));
 		}
 	}
 	s->pstate = SLOT_INIT;
@@ -487,7 +492,7 @@ slot_getcnt(struct slot *s, int *icnt, int *ocnt)
 static void
 play_filt_resamp(struct slot *s, void *res_in, void *out, int icnt, int ocnt)
 {
-	int i, offs, vol, nch;
+	int i, offs, vol, inch, onch;
 	void *in;
 
 	if (s->resampbuf) {
@@ -496,18 +501,24 @@ play_filt_resamp(struct slot *s, void *res_in, void *out, int icnt, int ocnt)
 	} else
 		in = res_in;
 
-	nch = s->cmap.nch;
+	inch = s->imax - s->imin + 1;
+	onch = s->omax - s->omin + 1;
 	vol = s->vol / s->join; /* XXX */
 	cmap_add(&s->cmap, in, out, vol, ocnt);
 
 	offs = 0;
 	for (i = s->join - 1; i > 0; i--) {
-		offs += nch;
+		offs += onch;
+		if (offs + s->cmap.nch > s->afile.nch)
+			break;
 		cmap_add(&s->cmap, (adata_t *)in + offs, out, vol, ocnt);
 	}
+
 	offs = 0;
 	for (i = s->expand - 1; i > 0; i--) {
-		offs += nch;
+		offs += inch;
+		if (offs + s->cmap.nch > dev_pchan)
+			break;
 		cmap_add(&s->cmap, in, (adata_t *)out + offs, vol, ocnt);
 	}
 }
@@ -581,23 +592,28 @@ slot_mix_badd(struct slot *s, adata_t *odata)
 static void
 rec_filt_resamp(struct slot *s, void *in, void *res_out, int icnt, int ocnt)
 {
-	int i, vol, offs, nch;
+	int i, vol, offs, inch, onch;
 	void *out = res_out;
 
 	out = (s->resampbuf) ? s->resampbuf : res_out;
 
-	nch = s->cmap.nch;
+	inch = s->imax - s->imin + 1;
+	onch = s->omax - s->omin + 1;
 	vol = ADATA_UNIT / s->join;
 	cmap_copy(&s->cmap, in, out, vol, icnt);
 
 	offs = 0;
 	for (i = s->join - 1; i > 0; i--) {
-		offs += nch;
+		offs += onch;
+		if (offs + s->cmap.nch > dev_rchan)
+			break;
 		cmap_add(&s->cmap, (adata_t *)in + offs, out, vol, icnt);
 	}
 	offs = 0;
 	for (i = s->expand - 1; i > 0; i--) {
-		offs += nch;
+		offs += inch;
+		if (offs + s->cmap.nch > s->afile.nch)
+			break;
 		cmap_copy(&s->cmap, in, (adata_t *)out + offs, vol, icnt);
 	}
 	if (s->resampbuf)
@@ -683,12 +699,12 @@ dev_open(char *dev, int mode, int bufsz, char *port)
 		if (s->afile.rate > rate)
 			rate = s->afile.rate;
 		if (s->mode == SIO_PLAY) {
-			if (s->cmax > pmax)
-				pmax = s->cmax;
+			if (s->omax > pmax)
+				pmax = s->omax;
 		}
 		if (s->mode == SIO_REC) {
-			if (s->cmax > rmax)
-				rmax = s->cmax;
+			if (s->imax > rmax)
+				rmax = s->imax;
 		}
 	}
 	sio_initpar(&par);
@@ -1078,8 +1094,10 @@ offline(void)
 	for (s = slot_list; s != NULL; s = s->next) {
 		if (s->afile.rate > rate)
 			rate = s->afile.rate;
-		if (s->cmax > cmax)
-			cmax = s->cmax;
+		if (s->imax > cmax)
+			cmax = s->imax;
+		if (s->omax > cmax)
+			cmax = s->omax;
 	}
 	dev_sh = NULL;
 	dev_name = "offline";
@@ -1323,26 +1341,78 @@ opt_hdr(char *s, int *hdr)
 }
 
 static int
-opt_ch(char *s, int *rcmin, int *rcmax)
+opt_map(char *str, int *rimin, int *rimax, int *romin, int *romax)
 {
-	char *next, *end;
-	long cmin, cmax;
+	char *s, *next;
+	long imin, imax, omin, omax;
 
 	errno = 0;
-	cmin = strtol(s, &next, 10);
+	s = str;
+	imin = strtol(s, &next, 10);
 	if (next == s || *next != ':')
 		goto failed;
-	cmax = strtol(++next, &end, 10);
-	if (end == next || *end != '\0')
+	s = next + 1;
+	imax = strtol(s, &next, 10);
+	if (next == s || *next != '/')
 		goto failed;
-	if (cmin < 0 || cmax < cmin || cmax >= NCHAN_MAX)
+	s = next + 1;
+	omin = strtol(s, &next, 10);
+	if (next == s || *next != ':')
 		goto failed;
-	*rcmin = cmin;
-	*rcmax = cmax;
+	s = next + 1;
+	omax = strtol(s, &next, 10);
+	if (next == s || *next != '\0')
+		goto failed;
+	if (imin < 0 || imax < imin || imax >= NCHAN_MAX)
+		goto failed;
+	if (omin < 0 || omax < omin || omax >= NCHAN_MAX)
+		goto failed;
+	*rimin = imin;
+	*rimax = imax;
+	*romin = omin;
+	*romax = omax;
 	return 1;
 failed:
-	log_puts(s);
-	log_puts(": channel range expected\n");
+	log_puts(str);
+	log_puts(": channel mapping expected\n");
+	return 0;
+}
+
+static int
+opt_nch(char *str, int *rnch, int *roff)
+{
+	char *s, *next;
+	long nch, off, cmin, cmax;
+
+	errno = 0;
+	s = str;
+	nch = strtol(s, &next, 10);
+	if (next == s)
+		goto failed;
+	if (*next == ':') {
+		/* compat with legacy -c syntax */
+		s = next + 1;
+		cmin = nch;
+		cmax = strtol(s, &next, 10);
+		if (next == s)
+			goto failed;
+		if (cmin < 0 || cmax < cmin || cmax >= NCHAN_MAX)
+			goto failed;
+		nch = cmax - cmin + 1;
+		off = cmin;
+	} else {
+		off = 0;
+		if (nch < 0 || nch >= NCHAN_MAX)
+			goto failed;
+	}
+	if (*next != '\0')
+		goto failed;
+	*rnch = nch;
+	*roff = off;
+	return 1;
+failed:
+	log_puts(str);
+	log_puts(": channel count expected\n");
 	return 0;
 }
 
@@ -1381,7 +1451,7 @@ opt_pos(char *s, long long *pos)
 int
 main(int argc, char **argv)
 {
-	int dup, cmin, cmax, rate, vol, bufsz, hdr, mode;
+	int dup, imin, imax, omin, omax, nch, off, rate, vol, bufsz, hdr, mode;
 	char *port, *dev;
 	struct aparams par;
 	int n_flag, c;
@@ -1393,9 +1463,10 @@ main(int argc, char **argv)
 	vol = 127;
 	dup = 0;
 	bufsz = 0;
+	nch = 2;
+	off = 0;
 	rate = DEFAULT_RATE;
-	cmin = 0;
-	cmax = 1;
+	imin = imax = omin = omax = -1;
 	par.bits = ADATA_BITS;
 	par.bps = APARAMS_BPS(par.bits);
 	par.le = ADATA_LE;
@@ -1409,14 +1480,14 @@ main(int argc, char **argv)
 	pos = 0;
 
 	while ((c = getopt(argc, argv,
-		"b:c:de:f:g:h:i:j:no:p:q:r:t:v:")) != -1) {
+		"b:c:de:f:g:h:i:j:m:no:p:q:r:t:v:")) != -1) {
 		switch (c) {
 		case 'b':
 			if (!opt_num(optarg, 1, RATE_MAX, &bufsz))
 				return 1;
 			break;
 		case 'c':
-			if (!opt_ch(optarg, &cmin, &cmax))
+			if (!opt_nch(optarg, &nch, &off))
 				return 1;
 			break;
 		case 'd':
@@ -1438,22 +1509,41 @@ main(int argc, char **argv)
 				return 1;
 			break;
 		case 'i':
+			if (off > 0) {
+				/* compat with legacy -c syntax */
+				omin = off;
+				omax = off + nch - 1;
+			}
 			if (!slot_new(optarg, SIO_PLAY,
-				&par, hdr, cmin, cmax, rate, dup, vol, pos))
+				&par, hdr, imin, imax, omin, omax,
+				nch, rate, dup, vol, pos))
 				return 1;
 			mode |= SIO_PLAY;
+			imin = imax = omin = omax = -1;
 			break;
 		case 'j':
+			/* compat with legacy -j option */
 			if (!opt_onoff(optarg, &dup))
+				return 1;
+			break;
+		case 'm':
+			if (!opt_map(optarg, &imin, &imax, &omin, &omax))
 				return 1;
 			break;
 		case 'n':
 			n_flag = 1;
 			break;
 		case 'o':
+			if (off > 0) {
+				/* compat with legacy -c syntax */
+				imin = off;
+				imax = off + nch - 1;
+			}
 			if (!slot_new(optarg, SIO_REC,
-				&par, hdr, cmin, cmax, rate, dup, 0, pos))
+				&par, hdr, imin, imax, omin, omax,
+				nch, rate, dup, 0, pos))
 				return 1;
+			imin = imax = omin = omax = -1;
 			mode |= SIO_REC;
 			break;
 		case 'p':
