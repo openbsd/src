@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.31 2024/03/20 21:41:09 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.32 2024/03/20 21:49:00 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -96,7 +96,7 @@ struct conf_imodule_st {
 static STACK_OF(CONF_MODULE) *supported_modules = NULL;
 static STACK_OF(CONF_IMODULE) *initialized_modules = NULL;
 
-static void module_free(CONF_MODULE *md);
+static void module_free(CONF_MODULE *mod);
 static void imodule_free(CONF_IMODULE *imod);
 static void module_finish(CONF_IMODULE *imod);
 static int module_run(const CONF *cnf, char *name, char *value,
@@ -189,10 +189,10 @@ err:
 static int
 module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
 {
-	CONF_MODULE *md;
+	CONF_MODULE *mod;
 	int ret;
 
-	if ((md = module_find(name)) == NULL) {
+	if ((mod = module_find(name)) == NULL) {
 		if (!(flags & CONF_MFLAGS_SILENT)) {
 			CONFerror(CONF_R_UNKNOWN_MODULE_NAME);
 			ERR_asprintf_error_data("module=%s", name);
@@ -200,7 +200,7 @@ module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
 		return -1;
 	}
 
-	ret = module_init(md, name, value, cnf);
+	ret = module_init(mod, name, value, cnf);
 
 	if (ret <= 0) {
 		if (!(flags & CONF_MFLAGS_SILENT)) {
@@ -346,18 +346,18 @@ void
 CONF_modules_unload(int all)
 {
 	int i;
-	CONF_MODULE *md;
+	CONF_MODULE *mod;
 
 	CONF_modules_finish();
 
 	/* unload modules in reverse order */
 	for (i = sk_CONF_MODULE_num(supported_modules) - 1; i >= 0; i--) {
-		md = sk_CONF_MODULE_value(supported_modules, i);
+		mod = sk_CONF_MODULE_value(supported_modules, i);
 		if (!all)
 			continue;
 		/* Since we're working in reverse this is OK */
 		(void)sk_CONF_MODULE_delete(supported_modules, i);
-		module_free(md);
+		module_free(mod);
 	}
 	if (sk_CONF_MODULE_num(supported_modules) == 0) {
 		sk_CONF_MODULE_free(supported_modules);
@@ -367,13 +367,13 @@ CONF_modules_unload(int all)
 
 /* unload a single module */
 static void
-module_free(CONF_MODULE *md)
+module_free(CONF_MODULE *mod)
 {
-	if (md == NULL)
+	if (mod == NULL)
 		return;
 
-	free(md->name);
-	free(md);
+	free(mod->name);
+	free(mod);
 }
 
 static void
