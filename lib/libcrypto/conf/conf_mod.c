@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.32 2024/03/20 21:49:00 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.33 2024/03/20 21:51:23 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -432,45 +432,45 @@ CONF_modules_free(void)
 /* Utility functions */
 
 const char *
-CONF_imodule_get_name(const CONF_IMODULE *md)
+CONF_imodule_get_name(const CONF_IMODULE *imod)
 {
-	return md->name;
+	return imod->name;
 }
 
 const char *
-CONF_imodule_get_value(const CONF_IMODULE *md)
+CONF_imodule_get_value(const CONF_IMODULE *imod)
 {
-	return md->value;
+	return imod->value;
 }
 
 void *
-CONF_imodule_get_usr_data(const CONF_IMODULE *md)
+CONF_imodule_get_usr_data(const CONF_IMODULE *imod)
 {
-	return md->usr_data;
+	return imod->usr_data;
 }
 
 void
-CONF_imodule_set_usr_data(CONF_IMODULE *md, void *usr_data)
+CONF_imodule_set_usr_data(CONF_IMODULE *imod, void *usr_data)
 {
-	md->usr_data = usr_data;
+	imod->usr_data = usr_data;
 }
 
 CONF_MODULE *
-CONF_imodule_get_module(const CONF_IMODULE *md)
+CONF_imodule_get_module(const CONF_IMODULE *imod)
 {
-	return md->pmod;
+	return imod->pmod;
 }
 
 unsigned long
-CONF_imodule_get_flags(const CONF_IMODULE *md)
+CONF_imodule_get_flags(const CONF_IMODULE *imod)
 {
-	return md->flags;
+	return imod->flags;
 }
 
 void
-CONF_imodule_set_flags(CONF_IMODULE *md, unsigned long flags)
+CONF_imodule_set_flags(CONF_IMODULE *imod, unsigned long flags)
 {
-	md->flags = flags;
+	imod->flags = flags;
 }
 
 void *
