@@ -821,19 +821,41 @@ static int init_stolen_lmem(struct intel_memory_region *mem)
 		return 0;
 	}
 
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
+#ifdef __linux__
 	if (mem->io_size &&
 	    !io_mapping_init_wc(&mem->iomap, mem->io_start, mem->io_size))
 		goto err_cleanup;
+#else
+	if (mem->io_size) {
+		paddr_t start, end;
+		struct vm_page *pgs;
+		int i;
+		bus_space_handle_t bsh;
+
+		start = atop(mem->io_start);
+		end = start + atop(mem->io_size);
+		uvm_page_physload(start, end, start, end, PHYSLOAD_DEVICE);
+
+		pgs = PHYS_TO_VM_PAGE(mem->io_start);
+		for (i = 0; i < atop(mem->io_size); i++)
+			atomic_setbits_int(&(pgs[i].pg_flags), PG_PMAP_WC);
+
+		if (bus_space_map(i915->bst, mem->io_start, mem->io_size,
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh))
+			panic("can't map stolen lmem");
+
+		mem->iomap.base = mem->io_start;
+		mem->iomap.size = mem->io_size;
+		mem->iomap.iomem = bus_space_vaddr(i915->bst, bsh);
+	}
+#endif
 
 	drm_dbg(&i915->drm, "Stolen Local memory IO start: %pa\n",
 		&mem->io_start);
 	drm_dbg(&i915->drm, "Stolen Local DSM base: %pa\n", &mem->region.start);
 
 	return 0;
-
+#ifdef __linux__
 err_cleanup:
 	i915_gem_cleanup_stolen(mem->i915);
 	return err;

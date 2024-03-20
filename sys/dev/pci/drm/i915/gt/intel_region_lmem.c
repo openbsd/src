@@ -153,15 +153,36 @@ region_lmem_release(struct intel_memory_region *mem)
 static int
 region_lmem_init(struct intel_memory_region *mem)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	int ret;
 
+#ifdef __linux__
 	if (!io_mapping_init_wc(&mem->iomap,
 				mem->io_start,
 				mem->io_size))
 		return -EIO;
+#else
+	struct drm_i915_private *i915 = mem->i915;
+	paddr_t start, end;
+	struct vm_page *pgs;
+	int i;
+	bus_space_handle_t bsh;
+
+	start = atop(mem->io_start);
+	end = start + atop(mem->io_size);
+	uvm_page_physload(start, end, start, end, PHYSLOAD_DEVICE);
+
+	pgs = PHYS_TO_VM_PAGE(mem->io_start);
+	for (i = 0; i < atop(mem->io_size); i++)
+		atomic_setbits_int(&(pgs[i].pg_flags), PG_PMAP_WC);
+
+	if (bus_space_map(i915->bst, mem->io_start, mem->io_size,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &bsh))
+		panic("can't map lmem");
+
+	mem->iomap.base = mem->io_start;
+	mem->iomap.size = mem->io_size;
+	mem->iomap.iomem = bus_space_vaddr(i915->bst, bsh);
+#endif
 
 	ret = intel_region_ttm_init(mem);
 	if (ret)
@@ -170,10 +191,11 @@ region_lmem_init(struct intel_memory_region *mem)
 	return 0;
 
 out_no_buddy:
+#ifdef __linux__
 	io_mapping_fini(&mem->iomap);
+#endif
 
 	return ret;
-#endif
 }
 
 static const struct intel_memory_region_ops intel_region_lmem_ops = {
