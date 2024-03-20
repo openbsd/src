@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.29 2024/03/20 21:21:03 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.30 2024/03/20 21:31:31 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -97,6 +97,7 @@ static STACK_OF(CONF_MODULE) *supported_modules = NULL;
 static STACK_OF(CONF_IMODULE) *initialized_modules = NULL;
 
 static void module_free(CONF_MODULE *md);
+static void imodule_free(CONF_IMODULE *imod);
 static void module_finish(CONF_IMODULE *imod);
 static int module_run(const CONF *cnf, char *name, char *value,
     unsigned long flags);
@@ -371,6 +372,17 @@ module_free(CONF_MODULE *md)
 	free(md);
 }
 
+static void
+imodule_free(CONF_IMODULE *imod)
+{
+	if (imod == NULL)
+		return;
+
+	free(imod->name);
+	free(imod->value);
+	free(imod);
+}
+
 /* finish and free up all modules instances */
 
 void
@@ -394,9 +406,8 @@ module_finish(CONF_IMODULE *imod)
 	if (imod->pmod->finish)
 		imod->pmod->finish(imod);
 	imod->pmod->links--;
-	free(imod->name);
-	free(imod->value);
-	free(imod);
+
+	imodule_free(imod);
 }
 
 /* Add a static module to OpenSSL */
