@@ -715,9 +715,6 @@ static int i915_ttm_io_mem_reserve(struct ttm_device *bdev, struct ttm_resource 
 static unsigned long i915_ttm_io_mem_pfn(struct ttm_buffer_object *bo,
 					 unsigned long page_offset)
 {
-	STUB();
-	return 0;
-#ifdef notyet
 	struct drm_i915_gem_object *obj = i915_ttm_to_gem(bo);
 	struct scatterlist *sg;
 	unsigned long base;
@@ -730,7 +727,6 @@ static unsigned long i915_ttm_io_mem_pfn(struct ttm_buffer_object *bo,
 	sg = i915_gem_object_page_iter_get_sg(obj, &obj->ttm.get_io_page, page_offset, &ofs);
 
 	return ((base + sg_dma_address(sg)) >> PAGE_SHIFT) + ofs;
-#endif
 }
 
 static int i915_ttm_access_memory(struct ttm_buffer_object *bo,
