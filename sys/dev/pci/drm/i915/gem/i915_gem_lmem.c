@@ -15,9 +15,6 @@ i915_gem_object_lmem_io_map(struct drm_i915_gem_object *obj,
 			    unsigned long n,
 			    unsigned long size)
 {
-	STUB();
-	return NULL;
-#ifdef notyet
 	resource_size_t offset;
 
 	GEM_BUG_ON(!i915_gem_object_is_contiguous(obj));
@@ -26,7 +23,6 @@ i915_gem_object_lmem_io_map(struct drm_i915_gem_object *obj,
 	offset -= obj->mm.region->region.start;
 
 	return io_mapping_map_wc(&obj->mm.region->iomap, offset, size);
-#endif
 }
 
 /**

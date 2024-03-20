@@ -521,8 +521,6 @@ i915_gem_object_read_from_page_kmap(struct drm_i915_gem_object *obj, u64 offset,
 static void
 i915_gem_object_read_from_page_iomap(struct drm_i915_gem_object *obj, u64 offset, void *dst, int size)
 {
-	STUB();
-#ifdef notyet
 	pgoff_t idx = offset >> PAGE_SHIFT;
 	dma_addr_t dma = i915_gem_object_get_dma_address(obj, idx);
 	void __iomem *src_map;
@@ -537,7 +535,6 @@ i915_gem_object_read_from_page_iomap(struct drm_i915_gem_object *obj, u64 offset
 		memcpy_fromio(dst, src_ptr, size);
 
 	io_mapping_unmap(src_map);
-#endif
 }
 
 static bool object_has_mappable_iomem(struct drm_i915_gem_object *obj)

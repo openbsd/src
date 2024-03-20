@@ -564,32 +564,16 @@ retry:
 		goto retry;
 	}
 
-#ifdef __linux__
 	addr = io_mapping_map_local_wc(iter_io->iomap, iter_io->cache.offs +
 				       (((resource_size_t)i - iter_io->cache.i)
 					<< PAGE_SHIFT));
-#else
-	if (bus_space_map(bst, iter_io->cache.offs +
-	    (((resource_size_t)i - iter_io->cache.i) << PAGE_SHIFT),
-	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
-	    &dmap->bsh)) {
-		printf("%s bus_space_map failed\n", __func__);
-		addr = 0;
-	} else {
-		addr = bus_space_vaddr(bst, dmap->bsh);
-	}
-#endif
 	iosys_map_set_vaddr_iomem(dmap, addr);
 }
 
 static void ttm_kmap_iter_iomap_unmap_local(struct ttm_kmap_iter *iter,
 					    struct iosys_map *map, bus_space_tag_t bst)
 {
-#ifdef notyet
 	io_mapping_unmap_local(map->vaddr_iomem);
-#else
-	bus_space_unmap(bst, map->bsh, PAGE_SIZE);
-#endif
 }
 
 static const struct ttm_kmap_iter_ops ttm_kmap_iter_io_ops = {
