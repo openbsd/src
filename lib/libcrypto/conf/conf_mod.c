@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.30 2024/03/20 21:31:31 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.31 2024/03/20 21:41:09 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -101,7 +101,7 @@ static void imodule_free(CONF_IMODULE *imod);
 static void module_finish(CONF_IMODULE *imod);
 static int module_run(const CONF *cnf, char *name, char *value,
     unsigned long flags);
-static CONF_MODULE *module_add(const char *name, conf_init_func *ifunc,
+static int module_add(const char *name, conf_init_func *ifunc,
     conf_finish_func *ffunc);
 static CONF_MODULE *module_find(char *name);
 static int module_init(CONF_MODULE *pmod, char *name, char *value,
@@ -214,33 +214,37 @@ module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
 	return ret;
 }
 
-/* add module to list */
-static CONF_MODULE *
+static int
 module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc)
 {
 	CONF_MODULE *tmod = NULL;
+	int ret = 0;
 
 	if (name == NULL)
-		return NULL;
+		goto err;
+
 	if (supported_modules == NULL)
 		supported_modules = sk_CONF_MODULE_new_null();
 	if (supported_modules == NULL)
-		return NULL;
-	tmod = malloc(sizeof(CONF_MODULE));
-	if (tmod == NULL)
-		return NULL;
+		goto err;
 
-	tmod->name = strdup(name);
+	if ((tmod = calloc(1, sizeof(*tmod))) == NULL)
+		goto err;
+	if ((tmod->name = strdup(name)) == NULL)
+		goto err;
 	tmod->init = ifunc;
 	tmod->finish = ffunc;
-	tmod->links = 0;
 
-	if (!sk_CONF_MODULE_push(supported_modules, tmod)) {
-		free(tmod);
-		return NULL;
-	}
+	if (!sk_CONF_MODULE_push(supported_modules, tmod))
+		goto err;
+	tmod = NULL;
 
-	return tmod;
+	ret = 1;
+
+ err:
+	module_free(tmod);
+
+	return ret;
 }
 
 /* Find a module from the list. We allow module names of the
@@ -415,7 +419,7 @@ module_finish(CONF_IMODULE *imod)
 int
 CONF_module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc)
 {
-	return module_add(name, ifunc, ffunc) != NULL;
+	return module_add(name, ifunc, ffunc);
 }
 
 void
