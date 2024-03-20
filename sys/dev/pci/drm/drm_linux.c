@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.110 2024/03/20 02:38:35 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.111 2024/03/20 02:42:17 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -664,6 +664,28 @@ vmap(struct vm_page **pages, unsigned int npages, unsigned long flags,
 		return NULL;
 	for (i = 0; i < npages; i++) {
 		pa = VM_PAGE_TO_PHYS(pages[i]) | prot;
+		pmap_enter(pmap_kernel(), va + (i * PAGE_SIZE), pa,
+		    PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE | PMAP_WIRED);
+		pmap_update(pmap_kernel());
+	}
+
+	return (void *)va;
+}
+
+void *
+vmap_pfn(unsigned long *pfns, unsigned int npfn, pgprot_t prot)
+{
+	vaddr_t va;
+	paddr_t pa;
+	int i;
+
+	va = (vaddr_t)km_alloc(PAGE_SIZE * npfn, &kv_any, &kp_none,
+	    &kd_nowait);
+	if (va == 0)
+		return NULL;
+	for (i = 0; i < npfn; i++) {
+		pa = round_page(pfns[i]) | prot;
 		pmap_enter(pmap_kernel(), va + (i * PAGE_SIZE), pa,
 		    PROT_READ | PROT_WRITE,
 		    PROT_READ | PROT_WRITE | PMAP_WIRED);
