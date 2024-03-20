@@ -151,6 +151,9 @@ static void ttm_tt_init_fields(struct ttm_tt *ttm,
 	ttm->swap_storage = NULL;
 	ttm->sg = bo->sg;
 	ttm->caching = caching;
+	ttm->dmat = bo->bdev->dmat;
+	ttm->map = NULL;
+	ttm->segs = NULL;
 }
 
 int ttm_tt_init(struct ttm_tt *ttm, struct ttm_buffer_object *bo,
@@ -184,9 +187,11 @@ void ttm_tt_fini(struct ttm_tt *ttm)
 	ttm->dma_address = NULL;
 	ttm->orders = NULL;
 
-	bus_dmamap_destroy(ttm->dmat, ttm->map);
-	km_free(ttm->segs, round_page(ttm->num_pages *
-	    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero);
+	if (ttm->map)
+		bus_dmamap_destroy(ttm->dmat, ttm->map);
+	if (ttm->segs)
+		km_free(ttm->segs, round_page(ttm->num_pages *
+		    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero);
 }
 EXPORT_SYMBOL(ttm_tt_fini);
 
@@ -209,8 +214,6 @@ int ttm_sg_tt_init(struct ttm_tt *ttm, struct ttm_buffer_object *bo,
 
 	ttm->segs = km_alloc(round_page(ttm->num_pages *
 	    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero, &kd_waitok);
-
-	ttm->dmat = bo->bdev->dmat;
 
 	if (bo->bdev->pool.use_dma32 == false)
 		flags |= BUS_DMA_64BIT;
