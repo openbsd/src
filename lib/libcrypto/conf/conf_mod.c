@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.34 2024/03/20 21:53:57 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.35 2024/03/20 22:08:22 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -86,7 +86,7 @@ struct conf_module_st {
  */
 
 struct conf_imodule_st {
-	CONF_MODULE *pmod;
+	CONF_MODULE *mod;
 	char *name;
 	char *value;
 	unsigned long flags;
@@ -288,7 +288,7 @@ module_init(CONF_MODULE *pmod, char *name, char *value, const CONF *cnf)
 	if (!imod)
 		goto err;
 
-	imod->pmod = pmod;
+	imod->mod = pmod;
 	imod->name = name ? strdup(name) : NULL;
 	imod->value = value ? strdup(value) : NULL;
 	imod->usr_data = NULL;
@@ -407,9 +407,9 @@ CONF_modules_finish(void)
 static void
 module_finish(CONF_IMODULE *imod)
 {
-	if (imod->pmod->finish)
-		imod->pmod->finish(imod);
-	imod->pmod->links--;
+	if (imod->mod->finish)
+		imod->mod->finish(imod);
+	imod->mod->links--;
 
 	imodule_free(imod);
 }
@@ -458,7 +458,7 @@ CONF_imodule_set_usr_data(CONF_IMODULE *imod, void *usr_data)
 CONF_MODULE *
 CONF_imodule_get_module(const CONF_IMODULE *imod)
 {
-	return imod->pmod;
+	return imod->mod;
 }
 
 unsigned long
