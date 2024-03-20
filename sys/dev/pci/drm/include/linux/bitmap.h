@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.6 2024/01/06 09:33:08 kettenis Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.7 2024/03/20 02:51:06 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -97,6 +97,23 @@ bitmap_complement(void *d, void *s, u_int n)
 		dst[b >> 5] = ~src[b >> 5];
 }
 
+static inline bool
+bitmap_intersects(const void *s1, const void *s2, u_int n)
+{
+	const u_int *b1 = s1;
+	const u_int *b2 = s2;
+	u_int b;
+
+	for (b = 0; b < n; b += 32)
+		if (b1[b >> 5] & b2[b >> 5])
+			return true;
+	if ((n % 32) != 0)
+		if ((b1[n >> 5] & b2[b >> 5]) & (0xffffffff >> (32 - (n % 32))))
+			return true;
+
+	return false;
+}
+
 static inline void
 bitmap_copy(void *d, void *s, u_int n)
 {
@@ -109,7 +126,7 @@ bitmap_copy(void *d, void *s, u_int n)
 }
 
 static inline void
-bitmap_to_arr32(void *d, unsigned long *src, u_int n)
+bitmap_to_arr32(void *d, const unsigned long *src, u_int n)
 {
 	u_int *dst = d;
 	u_int b;
@@ -128,6 +145,27 @@ bitmap_to_arr32(void *d, unsigned long *src, u_int n)
 		dst[n >> 5] &= (0xffffffff >> (32 - (n % 32)));
 }
 
+static inline void
+bitmap_from_arr32(unsigned long *dst, const void *s, u_int n)
+{
+	const u_int *src = s;
+	u_int b;
+
+#ifdef __LP64__
+	for (b = 0; b < n; b += 32) {
+		dst[b >> 6] = src[b >> 5];
+		b += 32;
+		if (b < n)
+			dst[b >> 6] |= ((unsigned long)src[b >> 5]) << 32;
+	}
+	if ((n % 64) != 0)
+		dst[n >> 6] &= (0xffffffffffffffffUL >> (64 - (n % 64)));
+#else
+	bitmap_copy(dst, s, n);
+	if ((n % 32) != 0)
+		dst[n >> 5] &=  (0xffffffff >> (32 - (n % 32)));
+#endif
+}
 
 static inline int
 bitmap_weight(const void *p, u_int n)
