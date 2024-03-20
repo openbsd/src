@@ -215,6 +215,7 @@ struct inteldrm_softc {
 #ifdef __OpenBSD__
 	struct device sc_dev;
 	bus_dma_tag_t dmat;
+	bus_space_tag_t iot;
 	bus_space_tag_t bst;
 	struct agp_map *agph;
 	bus_space_handle_t opregion_ioh;

@@ -248,6 +248,12 @@ static int i915_driver_early_probe(struct drm_i915_private *dev_priv)
 	if (ret < 0)
 		goto err_workqueues;
 
+#ifdef __OpenBSD__
+	dev_priv->bdev.iot = dev_priv->iot;
+	dev_priv->bdev.memt = dev_priv->bst;
+	dev_priv->bdev.dmat = dev_priv->dmat;
+#endif
+
 	ret = intel_region_ttm_device_init(dev_priv);
 	if (ret)
 		goto err_ttm;
@@ -2254,6 +2260,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	dev_priv->pc = pa->pa_pc;
 	dev_priv->tag = pa->pa_tag;
+	dev_priv->iot = pa->pa_iot;
 	dev_priv->dmat = pa->pa_dmat;
 	dev_priv->bst = pa->pa_memt;
 	dev_priv->memex = pa->pa_memex;
