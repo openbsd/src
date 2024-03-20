@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.7 2024/03/20 02:51:06 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.8 2024/03/20 22:52:44 bluhm Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -115,10 +115,10 @@ bitmap_intersects(const void *s1, const void *s2, u_int n)
 }
 
 static inline void
-bitmap_copy(void *d, void *s, u_int n)
+bitmap_copy(void *d, const void *s, u_int n)
 {
 	u_int *dst = d;
-	u_int *src = s;
+	const u_int *src = s;
 	u_int b;
 
 	for (b = 0; b < n; b += 32)
