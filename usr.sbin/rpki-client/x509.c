@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.82 2024/03/19 05:04:13 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.83 2024/03/20 04:36:30 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -536,7 +536,23 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 			continue;
 
 		if (strncasecmp(*sia, "rsync://", 8) == 0) {
+			const char *p = *sia + strlen("rsync://");
+			size_t fnlen, plen;
+
 			rsync_found = 1;
+
+			if (filemode)
+				continue;
+
+			fnlen = strlen(fn);
+			plen = strlen(p);
+
+			if (fnlen < plen || strcmp(p, fn + fnlen - plen) != 0) {
+				warnx("%s: mismatch between pathname and SIA "
+				    "(%s)", fn, *sia);
+				goto out;
+			}
+
 			continue;
 		}
 
