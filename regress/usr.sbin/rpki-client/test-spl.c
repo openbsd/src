@@ -1,4 +1,4 @@
-/*	$Id: test-spl.c,v 1.1 2024/02/22 12:51:50 job Exp $ */
+/*	$Id: test-spl.c,v 1.2 2024/03/20 04:39:10 job Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -33,7 +33,7 @@
 
 int outformats;
 int verbose;
-int filemode;
+int filemode = 1;
 
 int
 main(int argc, char *argv[])
