@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.33 2024/03/20 21:51:23 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.34 2024/03/20 21:53:57 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -217,7 +217,7 @@ module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
 static int
 module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc)
 {
-	CONF_MODULE *tmod = NULL;
+	CONF_MODULE *mod = NULL;
 	int ret = 0;
 
 	if (name == NULL)
@@ -228,21 +228,21 @@ module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc)
 	if (supported_modules == NULL)
 		goto err;
 
-	if ((tmod = calloc(1, sizeof(*tmod))) == NULL)
+	if ((mod = calloc(1, sizeof(*mod))) == NULL)
 		goto err;
-	if ((tmod->name = strdup(name)) == NULL)
+	if ((mod->name = strdup(name)) == NULL)
 		goto err;
-	tmod->init = ifunc;
-	tmod->finish = ffunc;
+	mod->init = ifunc;
+	mod->finish = ffunc;
 
-	if (!sk_CONF_MODULE_push(supported_modules, tmod))
+	if (!sk_CONF_MODULE_push(supported_modules, mod))
 		goto err;
-	tmod = NULL;
+	mod = NULL;
 
 	ret = 1;
 
  err:
-	module_free(tmod);
+	module_free(mod);
 
 	return ret;
 }
@@ -255,7 +255,7 @@ module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc)
 static CONF_MODULE *
 module_find(char *name)
 {
-	CONF_MODULE *tmod;
+	CONF_MODULE *mod;
 	int i, nchar;
 	char *p;
 
@@ -267,9 +267,9 @@ module_find(char *name)
 		nchar = strlen(name);
 
 	for (i = 0; i < sk_CONF_MODULE_num(supported_modules); i++) {
-		tmod = sk_CONF_MODULE_value(supported_modules, i);
-		if (!strncmp(tmod->name, name, nchar))
-			return tmod;
+		mod = sk_CONF_MODULE_value(supported_modules, i);
+		if (!strncmp(mod->name, name, nchar))
+			return mod;
 	}
 
 	return NULL;
