@@ -33,4 +33,15 @@ io_mapping_unmap_local(void *va)
 {
 }
 
+static inline void *
+io_mapping_map_atomic_wc(struct io_mapping *map, unsigned long off)
+{
+	return ((uint8_t *)map->iomem + off);
+}
+
+static inline void
+io_mapping_unmap_atomic(void *va)
+{
+}
+
 #endif
