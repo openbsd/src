@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.35 2024/03/20 22:08:22 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.36 2024/03/20 22:11:07 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -104,7 +104,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 static int module_add(const char *name, conf_init_func *ifunc,
     conf_finish_func *ffunc);
 static CONF_MODULE *module_find(char *name);
-static int module_init(CONF_MODULE *pmod, char *name, char *value,
+static int module_init(CONF_MODULE *mod, char *name, char *value,
     const CONF *cnf);
 
 /* Main function: load modules from a CONF structure */
@@ -277,7 +277,7 @@ module_find(char *name)
 
 /* initialize a module */
 static int
-module_init(CONF_MODULE *pmod, char *name, char *value, const CONF *cnf)
+module_init(CONF_MODULE *mod, char *name, char *value, const CONF *cnf)
 {
 	int ret = 1;
 	int init_called = 0;
@@ -288,7 +288,7 @@ module_init(CONF_MODULE *pmod, char *name, char *value, const CONF *cnf)
 	if (!imod)
 		goto err;
 
-	imod->mod = pmod;
+	imod->mod = mod;
 	imod->name = name ? strdup(name) : NULL;
 	imod->value = value ? strdup(value) : NULL;
 	imod->usr_data = NULL;
@@ -297,8 +297,8 @@ module_init(CONF_MODULE *pmod, char *name, char *value, const CONF *cnf)
 		goto memerr;
 
 	/* Try to initialize module */
-	if (pmod->init) {
-		ret = pmod->init(imod, cnf);
+	if (mod->init) {
+		ret = mod->init(imod, cnf);
 		init_called = 1;
 		/* Error occurred, exit */
 		if (ret <= 0)
@@ -318,14 +318,14 @@ module_init(CONF_MODULE *pmod, char *name, char *value, const CONF *cnf)
 		goto err;
 	}
 
-	pmod->links++;
+	mod->links++;
 
 	return ret;
 
 err:
 	/* We've started the module so we'd better finish it */
-	if (pmod->finish && init_called)
-		pmod->finish(imod);
+	if (mod->finish && init_called)
+		mod->finish(imod);
 
 memerr:
 	if (imod) {
@@ -474,15 +474,15 @@ CONF_imodule_set_flags(CONF_IMODULE *imod, unsigned long flags)
 }
 
 void *
-CONF_module_get_usr_data(CONF_MODULE *pmod)
+CONF_module_get_usr_data(CONF_MODULE *mod)
 {
-	return pmod->usr_data;
+	return mod->usr_data;
 }
 
 void
-CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
+CONF_module_set_usr_data(CONF_MODULE *mod, void *usr_data)
 {
-	pmod->usr_data = usr_data;
+	mod->usr_data = usr_data;
 }
 
 /* Return default config file name */
