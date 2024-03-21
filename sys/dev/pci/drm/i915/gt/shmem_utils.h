@@ -27,6 +27,8 @@ int shmem_write(struct file *file, loff_t off, void *src, size_t len);
 
 struct uvm_object *
 uao_create_from_object(struct drm_i915_gem_object *);
+int uao_read_to_iosys_map(struct uvm_object *, loff_t,
+	struct iosys_map *, size_t, size_t);
 int uao_read(struct uvm_object *, loff_t, void *, size_t);
 int uao_write(struct uvm_object *, loff_t, void *, size_t);
 

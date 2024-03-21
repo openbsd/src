@@ -249,6 +249,38 @@ static int __uao_rw(struct uvm_object *uao, loff_t off,
 	return 0;
 }
 
+int uao_read_to_iosys_map(struct uvm_object *uao, loff_t off,
+			    struct iosys_map *map, size_t map_off, size_t len)
+{
+	struct pglist plist;
+	struct vm_page *page;
+	vaddr_t pgoff = trunc_page(off);
+	size_t olen = round_page(len);
+
+	TAILQ_INIT(&plist);
+	if (uvm_obj_wire(uao, pgoff, olen, &plist))
+		return -ENOMEM;
+
+	TAILQ_FOREACH(page, &plist, pageq) {
+		unsigned int this =
+			min_t(size_t, PAGE_SIZE - offset_in_page(off), len);
+		void *vaddr;
+
+		vaddr = kmap(page);
+		iosys_map_memcpy_to(map, map_off, vaddr + offset_in_page(off),
+				    this);
+		kunmap_va(vaddr);
+
+		len -= this;
+		map_off += this;
+		off = 0;
+	}
+
+	uvm_obj_unwire(uao, pgoff, olen);
+
+	return 0;
+}
+
 int uao_read(struct uvm_object *uao, loff_t off, void *dst, size_t len)
 {
 	return __uao_rw(uao, off, dst, len, false);
