@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.41 2023/03/08 04:43:06 guenther Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.42 2024/03/21 10:58:15 claudio Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -292,7 +292,6 @@ main(int argc, char *argv[])
 				syslog(LOG_ERR, "poll failed: %s", strerror(errno));
 				return (1);
 			}
-				
 		}
 		
 		if (tcpflag) {
@@ -315,7 +314,6 @@ main(int argc, char *argv[])
 			nfsdargs.namelen = sizeof(inetpeer);
 			if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) == -1) {
 				syslog(LOG_ERR, "can't Add TCP socket");
-				return (1);
 			}
 			(void)close(msgsock);
 		}
