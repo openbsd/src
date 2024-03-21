@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.169 2024/02/13 08:10:23 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.170 2024/03/21 11:53:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -286,7 +286,7 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .minimum = 0,
 	  .maximum = INT_MAX,
-	  .default_num = 500,
+	  .default_num = 10,
 	  .unit = "milliseconds",
 	  .text = "Time to wait before assuming a key is Escape."
 	},
