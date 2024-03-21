@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.385 2024/03/02 16:16:07 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.386 2024/03/21 22:08:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5933,8 +5933,7 @@ ikev2_prfplus(struct iked_hash *prf, struct ibuf *key, struct ibuf *seed,
 
 	for (i = 0; i < rlen; i++) {
 		if (t1 != NULL) {
-			t2 = ibuf_new(ibuf_data(t1), ibuf_size(t1));
-			ibuf_free(t1);
+			t2 = t1;
 		} else
 			t2 = ibuf_new(NULL, 0);
 		t1 = ibuf_new(NULL, hash_keylength(prf));
