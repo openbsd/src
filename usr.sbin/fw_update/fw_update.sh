@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.55 2023/11/15 02:07:43 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.56 2024/03/21 01:02:29 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -100,9 +100,10 @@ spin() {
 
 	{
 		for p in '/' '-' '\\' '|' '/' '-' '\\' '|'; do
-			echo -n "$p"'\010'
+			echo -n "$p"'\b'
 			sleep 0.125
 		done
+		echo -n " "'\b' 
 	}>/dev/tty
 }
 
