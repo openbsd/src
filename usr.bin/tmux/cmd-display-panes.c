@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.45 2022/06/30 09:55:53 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.46 2024/03/21 11:30:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -246,7 +246,7 @@ cmd_display_panes_key(struct client *c, void *data, struct key_event *event)
 	wp = window_pane_at_index(w, index);
 	if (wp == NULL)
 		return (1);
-	window_unzoom(w);
+	window_unzoom(w, 1);
 
 	xasprintf(&expanded, "%%%u", wp->id);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.50 2022/02/17 09:58:47 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.51 2024/03/21 11:30:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,7 +40,7 @@ resize_window(struct window *w, u_int sx, u_int sy, int xpixel, int ypixel)
 	/* If the window is zoomed, unzoom. */
 	zoomed = w->flags & WINDOW_ZOOMED;
 	if (zoomed)
-		window_unzoom(w);
+		window_unzoom(w, 1);
 
 	/* Resize the layout first. */
 	layout_resize(w, sx, sy);

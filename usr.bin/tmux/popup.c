@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.52 2023/08/15 07:01:47 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.53 2024/03/21 11:30:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -346,7 +346,7 @@ popup_make_pane(struct popup_data *pd, enum layout_type type)
 	u_int			 hlimit;
 	const char		*shell;
 
-	window_unzoom(w);
+	window_unzoom(w, 1);
 
 	lc = layout_split_pane(wp, type, -1, 0);
 	hlimit = options_get_number(s->options, "history-limit");

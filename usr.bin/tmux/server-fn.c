@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.135 2024/02/13 08:10:23 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.136 2024/03/21 11:30:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -487,6 +487,6 @@ server_check_unattached(void)
 void
 server_unzoom_window(struct window *w)
 {
-	if (window_unzoom(w) == 0)
+	if (window_unzoom(w, 1) == 0)
 		server_redraw_window(w);
 }
