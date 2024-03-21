@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-detach-client.c,v 1.36 2021/08/21 10:22:38 nicm Exp $ */
+/* $OpenBSD: cmd-detach-client.c,v 1.37 2024/03/21 11:26:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -59,6 +59,7 @@ cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
 	struct cmd_find_state	*source = cmdq_get_source(item);
+	struct client		*c = cmdq_get_client(item);
 	struct client		*tc = cmdq_get_target_client(item), *loop;
 	struct session		*s;
 	enum msgtype		 msgtype;
@@ -101,9 +102,13 @@ cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (cmd != NULL)
+	if (cmd != NULL) {
+		if (c == NULL || c->session == NULL) {
+			cmdq_error(item, "must be attached for -E");
+			return (CMD_RETURN_ERROR);
+		}
 		server_client_exec(tc, cmd);
-	else
+	} else
 		server_client_detach(tc, msgtype);
 	return (CMD_RETURN_STOP);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.84 2023/12/27 20:17:13 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.85 2024/03/21 11:26:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -384,7 +384,7 @@ screen_resize_y(struct screen *s, u_int sy, int eat_empty, u_int *cy)
 
 		/*
 		 * Try to pull as much as possible out of scrolled history, if
-		 * is is enabled.
+		 * it is enabled.
 		 */
 		available = gd->hscrolled;
 		if (gd->flags & GRID_HISTORY && available > 0) {
