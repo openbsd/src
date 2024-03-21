@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.937 2024/03/13 11:25:50 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.938 2024/03/21 11:32:49 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 13 2024 $
+.Dd $Mdocdate: March 21 2024 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6469,7 +6469,7 @@ is replaced by the buffer name in
 and the result executed as a command.
 If
 .Ar template
-is not given, "paste-buffer -b \[aq]%%\[aq]" is used.
+is not given, "paste-buffer -p -b \[aq]%%\[aq]" is used.
 .Pp
 .Fl O
 specifies the initial sort field: one of
