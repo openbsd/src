@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.938 2024/03/21 11:32:49 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.939 2024/03/21 11:51:32 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -6116,7 +6116,7 @@ the default is
 .Ql y .
 .Tg menu
 .It Xo Ic display-menu
-.Op Fl O
+.Op Fl OM
 .Op Fl b Ar border-lines
 .Op Fl c Ar target-client
 .Op Fl C Ar starting-choice
@@ -6223,7 +6223,13 @@ changes this behaviour so that the menu does not close when the mouse button is
 released without an item selected the menu is not closed and a mouse button
 must be clicked to choose an item.
 .Pp
-The following keys are also available:
+.Fl M
+tells
+.Nm
+the menu should handle mouse events; by default only menus opened from mouse
+key bindings do so.
+.Pp
+The following keys are available in menus:
 .Bl -column "Key" "Function" -offset indent
 .It Sy "Key" Ta Sy "Function"
 .It Li "Enter" Ta "Choose selected item"
