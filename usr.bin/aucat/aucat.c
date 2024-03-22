@@ -141,15 +141,15 @@ char usagestr[] = "usage: aucat [-dn] [-b size] "
     "[-q port] [-r rate] [-v volume]\n";
 
 static void *
-allocbuf(int nfr, int nch)
+allocbuf(int nfr, int nch, int bps)
 {
 	size_t fsize;
 
-	if (nch < 0 || nch > NCHAN_MAX) {
-		log_puts("allocbuf: bogus channel count\n");
+	if (nch < 0 || nch > NCHAN_MAX || bps < 0 || bps > 4) {
+		log_puts("allocbuf: bogus channels or bytes per sample count\n");
 		panic();
 	}
-	fsize = nch * sizeof(adata_t);
+	fsize = nch * bps;
 	return reallocarray(NULL, nfr, fsize);
 }
 
@@ -343,12 +343,12 @@ slot_init(struct slot *s)
 		if (s->afile.fmt != AFILE_FMT_PCM ||
 		    !aparams_native(&s->afile.par)) {
 			dec_init(&s->conv, &s->afile.par, s->afile.nch);
-			s->convbuf = allocbuf(s->round, s->afile.nch);
+			s->convbuf = allocbuf(s->round, s->afile.nch, sizeof(adata_t));
 		}
 		if (s->afile.rate != dev_rate) {
 			resamp_init(&s->resamp, s->afile.rate, dev_rate,
 			    s->afile.nch);
-			s->resampbuf = allocbuf(dev_round, s->afile.nch);
+			s->resampbuf = allocbuf(dev_round, s->afile.nch, sizeof(adata_t));
 		}
 	}
 	if (s->mode & SIO_REC) {
@@ -358,11 +358,11 @@ slot_init(struct slot *s)
 		if (s->afile.rate != dev_rate) {
 			resamp_init(&s->resamp, dev_rate, s->afile.rate,
 			    s->afile.nch);
-			s->resampbuf = allocbuf(dev_round, s->afile.nch);
+			s->resampbuf = allocbuf(dev_round, s->afile.nch, sizeof(adata_t));
 		}
 		if (!aparams_native(&s->afile.par)) {
 			enc_init(&s->conv, &s->afile.par, s->afile.nch);
-			s->convbuf = allocbuf(s->round, s->afile.nch);
+			s->convbuf = allocbuf(s->round, s->afile.nch, sizeof(adata_t));
 		}
 
 		/*
@@ -737,11 +737,11 @@ dev_open(char *dev, int mode, int bufsz, char *port)
 	dev_round = par.round;
 	if (mode & SIO_PLAY) {
 		dev_pchan = par.pchan;
-		dev_pbuf = allocbuf(dev_round, dev_pchan);
+		dev_pbuf = allocbuf(dev_round, dev_pchan, sizeof(adata_t));
 	}
 	if (mode & SIO_REC) {
 		dev_rchan = par.rchan;
-		dev_rbuf = allocbuf(dev_round, dev_rchan);
+		dev_rbuf = allocbuf(dev_round, dev_rchan, sizeof(adata_t));
 	}
 	dev_pstate = DEV_STOP;
 	if (log_level >= 2) {
@@ -1106,7 +1106,7 @@ offline(void)
 	dev_bufsz = rate;
 	dev_round = rate;
 	dev_pchan = dev_rchan = cmax + 1;
-	dev_pbuf = dev_rbuf = allocbuf(dev_round, dev_pchan);
+	dev_pbuf = dev_rbuf = allocbuf(dev_round, dev_pchan, sizeof(adata_t));
 	dev_pstate = DEV_STOP;
 	for (s = slot_list; s != NULL; s = s->next)
 		slot_init(s);
