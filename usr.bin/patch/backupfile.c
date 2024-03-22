@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.22 2020/10/12 13:58:27 naddy Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.23 2024/03/22 19:22:23 jcs Exp $	*/
 
 /*
  * backupfile.c -- make Emacs style backup file names Copyright (C) 1990 Free
@@ -220,11 +220,11 @@ invalid_arg(const char *kind, const char *value, int problem)
 }
 
 static const char *backup_args[] = {
-	"never", "simple", "nil", "existing", "t", "numbered", 0
+	"none", "never", "simple", "nil", "existing", "t", "numbered", 0
 };
 
 static enum backup_type backup_types[] = {
-	simple, simple, numbered_existing,
+	none, simple, simple, numbered_existing,
 	numbered_existing, numbered, numbered
 };
 
