@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.19 2023/12/27 07:17:39 tb Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.20 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -228,7 +228,7 @@ start_snapshot_elem(struct notification_xml *nxml, const char **attr)
 	for (i = 0; attr[i]; i += 2) {
 		if (strcmp("uri", attr[i]) == 0 && hasUri++ == 0) {
 			if (valid_uri(attr[i + 1], strlen(attr[i + 1]),
-			    "https://") &&
+			    HTTPS_PROTO) &&
 			    valid_origin(attr[i + 1], nxml->notifyuri)) {
 				nxml->snapshot_uri = xstrdup(attr[i + 1]);
 				continue;
@@ -274,7 +274,7 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 	for (i = 0; attr[i]; i += 2) {
 		if (strcmp("uri", attr[i]) == 0 && hasUri++ == 0) {
 			if (valid_uri(attr[i + 1], strlen(attr[i + 1]),
-			    "https://") &&
+			    HTTPS_PROTO) &&
 			    valid_origin(attr[i + 1], nxml->notifyuri)) {
 				delta_uri = attr[i + 1];
 				continue;

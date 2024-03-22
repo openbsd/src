@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.39 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: tal.c,v 1.40 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -84,8 +84,8 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 			goto out;
 		}
 		/* Check that the URI is sensible */
-		if (!(strncasecmp(line, "https://", 8) == 0 ||
-		    strncasecmp(line, "rsync://", 8) == 0)) {
+		if (!(strncasecmp(line, HTTPS_PROTO, HTTPS_PROTO_LEN) == 0 ||
+		    strncasecmp(line, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0)) {
 			warnx("%s: unsupported URL schema: %s", fn, line);
 			goto out;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.83 2024/03/20 04:36:30 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.84 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -535,8 +535,8 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 		if (rsync_found)
 			continue;
 
-		if (strncasecmp(*sia, "rsync://", 8) == 0) {
-			const char *p = *sia + strlen("rsync://");
+		if (strncasecmp(*sia, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
+			const char *p = *sia + RSYNC_PROTO_LEN;
 			size_t fnlen, plen;
 
 			rsync_found = 1;
@@ -773,7 +773,7 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 		    crl))
 			goto out;
 
-		if (strncasecmp(*crl, "rsync://", 8) == 0) {
+		if (strncasecmp(*crl, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
 			rsync_found = 1;
 			goto out;
 		}

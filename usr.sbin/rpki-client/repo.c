@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.54 2024/02/26 15:40:33 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.55 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -338,7 +338,7 @@ ta_fetch(struct tarepo *tr)
 	if (!rrdpon) {
 		for (; tr->uriidx < tr->urisz; tr->uriidx++) {
 			if (strncasecmp(tr->uri[tr->uriidx],
-			    "rsync://", 8) == 0)
+			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0)
 				break;
 		}
 	}
@@ -353,7 +353,8 @@ ta_fetch(struct tarepo *tr)
 
 	logx("ta/%s: pulling from %s", tr->descr, tr->uri[tr->uriidx]);
 
-	if (strncasecmp(tr->uri[tr->uriidx], "rsync://", 8) == 0) {
+	if (strncasecmp(tr->uri[tr->uriidx], RSYNC_PROTO,
+	    RSYNC_PROTO_LEN) == 0) {
 		/*
 		 * Create destination location.
 		 * Build up the tree to this point.
@@ -499,9 +500,9 @@ rrdp_filename(const struct rrdprepo *rr, const char *uri, int valid)
 	char *nfile;
 	const char *dir = rr->basedir;
 
-	if (!valid_uri(uri, strlen(uri), "rsync://"))
+	if (!valid_uri(uri, strlen(uri), RSYNC_PROTO))
 		errx(1, "%s: bad URI %s", rr->basedir, uri);
-	uri += strlen("rsync://");	/* skip proto */
+	uri += RSYNC_PROTO_LEN;	/* skip proto */
 	if (valid) {
 		if ((nfile = strdup(uri)) == NULL)
 			err(1, NULL);
@@ -1301,7 +1302,8 @@ repo_proto(const struct repo *rp)
 	if (rp->ta != NULL) {
 		const struct tarepo *tr = rp->ta;
 		if (tr->uriidx < tr->urisz &&
-		    strncasecmp(tr->uri[tr->uriidx], "rsync://", 8) == 0)
+		    strncasecmp(tr->uri[tr->uriidx], RSYNC_PROTO,
+		    RSYNC_PROTO_LEN) == 0)
 			return "rsync";
 		else
 			return "https";

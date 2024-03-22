@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.49 2024/02/26 20:37:27 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.50 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,7 +65,7 @@ rsync_base_uri(const char *uri)
 	char *base_uri;
 
 	/* Case-insensitive rsync URI. */
-	if (strncasecmp(uri, "rsync://", 8) != 0) {
+	if (strncasecmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0) {
 		warnx("%s: not using rsync schema", uri);
 		return NULL;
 	}

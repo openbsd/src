@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_snapshot.c,v 1.8 2023/12/27 07:17:39 tb Exp $ */
+/*	$OpenBSD: rrdp_snapshot.c,v 1.9 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -119,7 +119,7 @@ start_publish_elem(struct snapshot_xml *sxml, const char **attr)
 	for (i = 0; attr[i]; i += 2) {
 		if (strcmp("uri", attr[i]) == 0 && hasUri++ == 0) {
 			if (valid_uri(attr[i + 1], strlen(attr[i + 1]),
-			    "rsync://")) {
+			    RSYNC_PROTO)) {
 				uri = xstrdup(attr[i + 1]);
 				continue;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.39 2024/03/19 05:04:13 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.40 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -62,11 +62,11 @@ parse_load_crl(char *uri)
 
 	if (uri == NULL)
 		return;
-	if (strncmp(uri, "rsync://", strlen("rsync://")) != 0) {
+	if (strncmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0) {
 		warnx("bad CRL distribution point URI %s", uri);
 		return;
 	}
-	uri += strlen("rsync://");
+	uri += RSYNC_PROTO_LEN;
 
 	f = load_file(uri, &flen);
 	if (f == NULL) {
@@ -97,11 +97,11 @@ parse_load_cert(char *uri)
 	if (uri == NULL)
 		return NULL;
 
-	if (strncmp(uri, "rsync://", strlen("rsync://")) != 0) {
+	if (strncmp(uri, RSYNC_PROTO, RSYNC_PROTO_LEN) != 0) {
 		warnx("bad authority information access URI %s", uri);
 		return NULL;
 	}
-	uri += strlen("rsync://");
+	uri += RSYNC_PROTO_LEN;
 
 	f = load_file(uri, &flen);
 	if (f == NULL) {
@@ -318,8 +318,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			printf("--\n");
 	}
 
-	if (strncmp(file, "rsync://", strlen("rsync://")) == 0) {
-		file += strlen("rsync://");
+	if (strncmp(file, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
+		file += RSYNC_PROTO_LEN;
 		buf = load_file(file, &len);
 		if (buf == NULL) {
 			warn("parse file %s", file);

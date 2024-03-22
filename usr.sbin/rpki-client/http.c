@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.81 2024/03/12 16:02:30 job Exp $ */
+/*	$OpenBSD: http.c,v 1.82 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -412,7 +412,7 @@ proxy_parse_uri(char *uri)
 	if (uri == NULL)
 		return;
 
-	if (strncasecmp(uri, "http://", 7) != 0)
+	if (strncasecmp(uri, HTTP_PROTO, HTTP_PROTO_LEN) != 0)
 		errx(1, "%s: http_proxy not using http schema", http_info(uri));
 
 	host = uri + 7;
@@ -479,7 +479,7 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 	char *host, *port = NULL, *path;
 	char *hosttail;
 
-	if (strncasecmp(uri, "https://", 8) != 0) {
+	if (strncasecmp(uri, HTTPS_PROTO, HTTPS_PROTO_LEN) != 0) {
 		warnx("%s: not using https schema", http_info(uri));
 		return -1;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.212 2024/03/19 05:04:13 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.213 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1014,5 +1014,12 @@ int	mkpathat(int, const char *);
 
 /* Maximum number of delegated hosting locations (repositories) for each TAL. */
 #define MAX_REPO_PER_TAL	1000
+
+#define HTTP_PROTO		"http://"
+#define HTTP_PROTO_LEN		(sizeof(HTTP_PROTO) - 1)
+#define HTTPS_PROTO		"https://"
+#define HTTPS_PROTO_LEN		(sizeof(HTTPS_PROTO) - 1)
+#define RSYNC_PROTO		"rsync://"
+#define RSYNC_PROTO_LEN		(sizeof(RSYNC_PROTO) - 1)
 
 #endif /* ! EXTERN_H */

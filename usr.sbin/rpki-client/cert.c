@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.128 2024/03/19 05:04:13 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.129 2024/03/22 03:38:12 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -524,15 +524,15 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 
 		if (OBJ_cmp(oid, carepo_oid) == 0) {
 			if (!x509_location(fn, "SIA: caRepository",
-			    "rsync://", ad->location, &cert->repo))
+			    RSYNC_PROTO, ad->location, &cert->repo))
 				goto out;
 		} else if (OBJ_cmp(oid, manifest_oid) == 0) {
 			if (!x509_location(fn, "SIA: rpkiManifest",
-			    "rsync://", ad->location, &cert->mft))
+			    RSYNC_PROTO, ad->location, &cert->mft))
 				goto out;
 		} else if (OBJ_cmp(oid, notify_oid) == 0) {
 			if (!x509_location(fn, "SIA: rpkiNotify",
-			    "https://", ad->location, &cert->notify))
+			    HTTPS_PROTO, ad->location, &cert->notify))
 				goto out;
 		}
 	}
