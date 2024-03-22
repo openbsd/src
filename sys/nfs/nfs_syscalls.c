@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.121 2024/02/05 20:21:39 mvs Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.122 2024/03/22 07:15:04 claudio Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -243,6 +243,27 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 			return (EPERM);
 		}
 	}
+	/*
+	 * Allow only IPv4 UDP and TCP sockets.
+	 */
+	if ((so->so_type != SOCK_STREAM && so->so_type != SOCK_DGRAM) || 
+	    so->so_proto->pr_domain->dom_family != AF_INET) {
+		m_freem(mynam);
+		return (EINVAL);
+	}
+	if (mynam != NULL) {
+		struct sockaddr_in *sin;
+		error = in_nam2sin(mynam, &sin);
+		if (error) {
+			m_freem(mynam);
+			return (error);
+		}
+		if (ntohs(sin->sin_port) >= IPPORT_RESERVED) {
+			m_freem(mynam);
+			return (ECONNREFUSED);
+		}
+	}
+
 	if (so->so_type == SOCK_STREAM)
 		siz = NFS_MAXPACKET + sizeof (u_long);
 	else

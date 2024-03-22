@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.145 2024/02/05 20:21:39 mvs Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.146 2024/03/22 07:15:04 claudio Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1624,11 +1624,22 @@ nfsrv_rcv(struct socket *so, caddr_t arg, int waitflag)
 			error = soreceive(so, &nam, &auio, &mp,
 			    NULL, &flags, 0);
 			if (mp) {
-				if (nam) {
-					m = nam;
-					m->m_next = mp;
-				} else
-					m = mp;
+				struct sockaddr_in *sin;
+
+				if (nam == NULL) {
+					nfsstats.srv_errs++;
+					m_freem(mp);
+					continue;
+				}
+				if (in_nam2sin(nam, &sin) != 0 ||
+				    ntohs(sin->sin_port) >= IPPORT_RESERVED) {
+					nfsstats.srv_errs++;
+					m_freem(nam);
+					m_freem(mp);
+					continue;
+				}
+				m = nam;
+				m->m_next = mp;
 				if (slp->ns_recend)
 					slp->ns_recend->m_nextpkt = m;
 				else
