@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2022/12/28 21:30:17 jmc Exp $	*/
+/*	$OpenBSD: control.c,v 1.3 2024/03/22 19:14:28 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <paths.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -71,13 +72,15 @@ control(int debug, int verbose)
 	if ((pw = getpwnam(LPD_USER)) == NULL)
 		fatalx("unknown user " LPD_USER);
 
+	if (chroot(_PATH_VAREMPTY) == -1)
+		fatal("%s: chroot", __func__);
+	if (chdir("/") == -1)
+		fatal("%s: chdir", __func__);
+
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("cannot drop privileges");
-
-	if (chroot(pw->pw_dir) == 1)
-		fatal("%s: chroot", __func__);
 
 	if (pledge("stdio unix recvfd sendfd", NULL) == -1)
 		fatal("%s: pledge", __func__);
