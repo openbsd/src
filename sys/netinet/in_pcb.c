@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.296 2024/02/29 12:01:59 naddy Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.297 2024/03/22 18:05:01 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -277,12 +277,12 @@ in_pcballoc(struct socket *so, struct inpcbtable *table, int wait)
 }
 
 int
-in_pcbbind_locked(struct inpcb *inp, struct mbuf *nam, struct proc *p)
+in_pcbbind_locked(struct inpcb *inp, struct mbuf *nam, const void *laddr,
+    struct proc *p)
 {
 	struct socket *so = inp->inp_socket;
 	u_int16_t lport = 0;
 	int wild = 0;
-	const void *laddr = &zeroin46_addr;
 	int error;
 
 	if (inp->inp_lport)
@@ -359,7 +359,7 @@ in_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 
 	/* keep lookup, modification, and rehash in sync */
 	mtx_enter(&table->inpt_mtx);
-	error = in_pcbbind_locked(inp, nam, p);
+	error = in_pcbbind_locked(inp, nam, &zeroin46_addr, p);
 	mtx_leave(&table->inpt_mtx);
 
 	return error;
@@ -542,7 +542,7 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind_locked(inp, NULL, curproc);
+			error = in_pcbbind_locked(inp, NULL, &ina, curproc);
 			if (error) {
 				mtx_leave(&table->inpt_mtx);
 				return (error);

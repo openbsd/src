@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.141 2024/02/29 12:01:59 naddy Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.142 2024/03/22 18:05:01 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -313,7 +313,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
 		if (inp->inp_lport == 0) {
-			error = in_pcbbind_locked(inp, NULL, curproc);
+			error = in_pcbbind_locked(inp, NULL, in6a, curproc);
 			if (error) {
 				mtx_leave(&table->inpt_mtx);
 				return (error);
