@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.124 2024/02/12 22:48:27 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.125 2024/03/22 17:34:11 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -394,6 +394,7 @@ int	sosend(struct socket *, struct mbuf *, struct uio *,
 	    struct mbuf *, struct mbuf *, int);
 int	sosetopt(struct socket *, int, int, struct mbuf *);
 int	soshutdown(struct socket *, int);
+void	sorflush(struct socket *);
 void	sowakeup(struct socket *, struct sockbuf *);
 void	sorwakeup(struct socket *);
 void	sowwakeup(struct socket *);

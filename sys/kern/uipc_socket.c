@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.320 2024/02/12 22:48:27 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.321 2024/03/22 17:34:11 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ void	sotask(void *);
 void	soreaper(void *);
 void	soput(void *);
 int	somove(struct socket *, int);
-void	sorflush(struct socket *);
 
 void	filt_sordetach(struct knote *kn);
 int	filt_soread(struct knote *kn, long hint);
