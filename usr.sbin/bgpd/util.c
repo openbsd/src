@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.83 2024/03/20 09:35:46 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.84 2024/03/22 07:19:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -306,6 +306,32 @@ log_policy(enum role role)
 		return "peer";
 	default:
 		return "unknown";
+	}
+}
+
+const char *
+log_capability(uint8_t capa)
+{
+	static char buf[20];
+
+	switch (capa) {
+	case CAPA_MP:
+		return "Multiprotocol Extensions";
+	case CAPA_REFRESH:
+		return "Route Refresh";
+	case CAPA_ROLE:
+		return "BGP Role";
+	case CAPA_RESTART:
+		return "Graceful Restart";
+	case CAPA_AS4BYTE:
+		return "4-octet AS number";
+	case CAPA_ADD_PATH:
+		return "ADD-PATH";
+	case CAPA_ENHANCED_RR:
+		return "Enhanced Route Refresh";
+	default:
+		snprintf(buf, sizeof(buf), "unknown %u", capa);
+		return buf;
 	}
 }
 

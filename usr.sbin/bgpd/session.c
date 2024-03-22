@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.464 2024/03/20 09:35:46 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.465 2024/03/22 07:19:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2479,11 +2479,8 @@ parse_notification(struct peer *peer)
 	struct ibuf	 ibuf;
 	u_char		*p;
 	uint16_t	 datalen;
-	uint8_t		 errcode;
-	uint8_t		 subcode;
-	uint8_t		 capa_code;
-	uint8_t		 capa_len;
-	size_t		 reason_len;
+	uint8_t		 errcode, subcode;
+	uint8_t		 reason_len;
 
 	/* just log */
 	p = peer->rbuf->rptr;
@@ -2495,140 +2492,38 @@ parse_notification(struct peer *peer)
 	p += MSGSIZE_HEADER;	/* header is already checked */
 	datalen -= MSGSIZE_HEADER;
 
-	memcpy(&errcode, p, sizeof(errcode));
-	p += sizeof(errcode);
-	datalen -= sizeof(errcode);
-
-	memcpy(&subcode, p, sizeof(subcode));
-	p += sizeof(subcode);
-	datalen -= sizeof(subcode);
-
 	/* XXX */
 	ibuf_from_buffer(&ibuf, p, datalen);
-	log_notification(peer, errcode, subcode, &ibuf, "received");
+	
+	if (ibuf_get_n8(&ibuf, &errcode) == -1 ||
+	    ibuf_get_n8(&ibuf, &subcode) == -1) {
+		log_peer_warnx(&peer->conf, "received bad notification");
+		return (-1);
+	}
 
 	peer->errcnt++;
 	peer->stats.last_rcvd_errcode = errcode;
 	peer->stats.last_rcvd_suberr = subcode;
 
-	if (errcode == ERR_OPEN && subcode == ERR_OPEN_CAPA) {
-		if (datalen == 0) {	/* zebra likes to send those.. humbug */
-			log_peer_warnx(&peer->conf, "received \"unsupported "
-			    "capability\" notification without data part, "
-			    "disabling capability announcements altogether");
-			session_capa_ann_none(peer);
+	CTASSERT(sizeof(peer->stats.last_reason) > UINT8_MAX);
+	memset(peer->stats.last_reason, 0, sizeof(peer->stats.last_reason));
+	if (errcode == ERR_CEASE &&
+	    (subcode == ERR_CEASE_ADMIN_DOWN ||
+	     subcode == ERR_CEASE_ADMIN_RESET)) {
+		/* check if shutdown reason is included */
+		if (ibuf_get_n8(&ibuf, &reason_len) != -1 && reason_len != 0) {
+			if (ibuf_get(&ibuf, peer->stats.last_reason,
+			    reason_len) == -1)
+				log_peer_warnx(&peer->conf,
+				    "received truncated shutdown reason");
 		}
-
-		while (datalen > 0) {
-			if (datalen < 2) {
-				log_peer_warnx(&peer->conf,
-				    "parse_notification: "
-				    "expect len >= 2, len is %u", datalen);
-				return (-1);
-			}
-			memcpy(&capa_code, p, sizeof(capa_code));
-			p += sizeof(capa_code);
-			datalen -= sizeof(capa_code);
-			memcpy(&capa_len, p, sizeof(capa_len));
-			p += sizeof(capa_len);
-			datalen -= sizeof(capa_len);
-			if (datalen < capa_len) {
-				log_peer_warnx(&peer->conf,
-				    "parse_notification: capa_len %u exceeds "
-				    "remaining msg length %u", capa_len,
-				    datalen);
-				return (-1);
-			}
-			p += capa_len;
-			datalen -= capa_len;
-			switch (capa_code) {
-			case CAPA_MP:
-				memset(peer->capa.ann.mp, 0,
-				    sizeof(peer->capa.ann.mp));
-				log_peer_warnx(&peer->conf,
-				    "disabling multiprotocol capability");
-				break;
-			case CAPA_REFRESH:
-				peer->capa.ann.refresh = 0;
-				log_peer_warnx(&peer->conf,
-				    "disabling route refresh capability");
-				break;
-			case CAPA_ROLE:
-				if (peer->capa.ann.policy == 1) {
-					peer->capa.ann.policy = 0;
-					log_peer_warnx(&peer->conf,
-					    "disabling role capability");
-				} else {
-					log_peer_warnx(&peer->conf,
-					    "role capability enforced, "
-					    "not disabling");
-				}
-				break;
-			case CAPA_RESTART:
-				peer->capa.ann.grestart.restart = 0;
-				log_peer_warnx(&peer->conf,
-				    "disabling restart capability");
-				break;
-			case CAPA_AS4BYTE:
-				peer->capa.ann.as4byte = 0;
-				log_peer_warnx(&peer->conf,
-				    "disabling 4-byte AS num capability");
-				break;
-			case CAPA_ADD_PATH:
-				memset(peer->capa.ann.add_path, 0,
-				    sizeof(peer->capa.ann.add_path));
-				log_peer_warnx(&peer->conf,
-				    "disabling ADD-PATH capability");
-				break;
-			case CAPA_ENHANCED_RR:
-				peer->capa.ann.enhanced_rr = 0;
-				log_peer_warnx(&peer->conf,
-				    "disabling enhanced route refresh "
-				    "capability");
-				break;
-			default:	/* should not happen... */
-				log_peer_warnx(&peer->conf, "received "
-				    "\"unsupported capability\" notification "
-				    "for unknown capability %u, disabling "
-				    "capability announcements altogether",
-				    capa_code);
-				session_capa_ann_none(peer);
-				break;
-			}
-		}
-
-		return (1);
 	}
+
+	log_notification(peer, errcode, subcode, &ibuf, "received");
 
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_OPT) {
 		session_capa_ann_none(peer);
 		return (1);
-	}
-
-	if (errcode == ERR_CEASE &&
-	    (subcode == ERR_CEASE_ADMIN_DOWN ||
-	     subcode == ERR_CEASE_ADMIN_RESET)) {
-		if (datalen > 1) {
-			reason_len = *p++;
-			datalen--;
-			if (datalen < reason_len) {
-				log_peer_warnx(&peer->conf,
-				    "received truncated shutdown reason");
-				return (0);
-			}
-			if (reason_len > REASON_LEN - 1) {
-				log_peer_warnx(&peer->conf,
-				    "received overly long shutdown reason");
-				return (0);
-			}
-			memcpy(peer->stats.last_reason, p, reason_len);
-			peer->stats.last_reason[reason_len] = '\0';
-			log_peer_warnx(&peer->conf,
-			    "received shutdown reason: \"%s\"",
-			    log_reason(peer->stats.last_reason));
-			p += reason_len;
-			datalen -= reason_len;
-		}
 	}
 
 	return (0);

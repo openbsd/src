@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.167 2024/01/16 13:15:31 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.168 2024/03/22 07:19:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,17 +104,6 @@ enum opt_params {
 	OPT_PARAM_AUTH,
 	OPT_PARAM_CAPABILITIES,
 	OPT_PARAM_EXT_LEN=255,
-};
-
-enum capa_codes {
-	CAPA_NONE = 0,
-	CAPA_MP = 1,
-	CAPA_REFRESH = 2,
-	CAPA_ROLE = 9,
-	CAPA_RESTART = 64,
-	CAPA_AS4BYTE = 65,
-	CAPA_ADD_PATH = 69,
-	CAPA_ENHANCED_RR = 70,
 };
 
 struct bgp_msg {
@@ -273,7 +262,7 @@ char	*log_fmt_peer(const struct peer_config *);
 void	 log_statechange(struct peer *, enum session_state,
 	    enum session_events);
 void	 log_notification(const struct peer *, uint8_t, uint8_t,
-	    struct ibuf *, const char *);
+	    const struct ibuf *, const char *);
 void	 log_conn_attempt(const struct peer *, struct sockaddr *,
 	    socklen_t);
 

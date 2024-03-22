@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.487 2024/03/18 10:49:24 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.488 2024/03/22 07:19:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -406,6 +406,17 @@ struct capabilities {
 	int8_t	as4byte;		/* 4-byte ASnum, RFC 4893 */
 	int8_t	enhanced_rr;		/* enhanced route refresh, RFC 7313 */
 	int8_t	policy;			/* Open Policy, RFC 9234, 2 = enforce */
+};
+
+enum capa_codes {
+	CAPA_NONE = 0,
+	CAPA_MP = 1,
+	CAPA_REFRESH = 2,
+	CAPA_ROLE = 9,
+	CAPA_RESTART = 64,
+	CAPA_AS4BYTE = 65,
+	CAPA_ADD_PATH = 69,
+	CAPA_ENHANCED_RR = 70,
 };
 
 /* flags for RFC 4724 - graceful restart */
@@ -1546,6 +1557,7 @@ const char	*log_roa(struct roa *);
 const char	*log_aspa(struct aspa_set *);
 const char	*log_rtr_error(enum rtr_error);
 const char	*log_policy(enum role);
+const char	*log_capability(uint8_t);
 int		 aspath_asprint(char **, struct ibuf *);
 uint32_t	 aspath_extract(const void *, int);
 int		 aspath_verify(struct ibuf *, int, int);
