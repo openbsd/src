@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.153 2024/03/22 18:05:01 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.154 2024/03/22 21:48:38 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -120,11 +120,8 @@
 struct pf_state_key;
 
 union inpaddru {
+	struct in_addr iau_addr;
 	struct in6_addr iau_addr6;
-	struct {
-		uint8_t pad[12];
-		struct in_addr inaddr;	/* easier transition */
-	} iau_a4u;
 };
 
 /*
@@ -142,9 +139,9 @@ struct inpcb {
 	struct	  inpcbtable *inp_table;	/* [I] inet queue/hash table */
 	union	  inpaddru inp_faddru;		/* [t] Foreign address. */
 	union	  inpaddru inp_laddru;		/* [t] Local address. */
-#define	inp_faddr	inp_faddru.iau_a4u.inaddr
+#define	inp_faddr	inp_faddru.iau_addr
 #define	inp_faddr6	inp_faddru.iau_addr6
-#define	inp_laddr	inp_laddru.iau_a4u.inaddr
+#define	inp_laddr	inp_laddru.iau_addr
 #define	inp_laddr6	inp_laddru.iau_addr6
 	u_int16_t inp_fport;		/* [t] foreign port */
 	u_int16_t inp_lport;		/* [t] local port */

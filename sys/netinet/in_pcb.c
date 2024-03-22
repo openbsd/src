@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.297 2024/03/22 18:05:01 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.298 2024/03/22 21:48:38 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -102,11 +102,7 @@
 #endif
 
 const struct in_addr zeroin_addr;
-
-const union {
-	struct in_addr	za_in;
-	struct in6_addr	za_in6;
-} zeroin46_addr;
+const union inpaddru zeroin46_addr;
 
 /*
  * These configure the range of local port addresses assigned to
