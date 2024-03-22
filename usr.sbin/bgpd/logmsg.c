@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.12 2024/03/22 07:19:28 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.13 2024/03/22 15:41:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -189,13 +189,19 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 
 		if (subcode == ERR_CEASE_ADMIN_DOWN ||
 		    subcode == ERR_CEASE_ADMIN_RESET) {
-			if (peer->stats.last_reason[0] != '\0') {
-				logit(LOG_ERR, "%s: %s notification: %s, %s: "
-				    "reason \"%s\"", p, dir,
-				    errnames[errcode], suberrname,
-				    log_reason(peer->stats.last_reason));
-				free(p);
-				return;
+			uint8_t len;
+			/* check if shutdown reason is included */
+			if (ibuf_get_n8(&ibuf, &len) != -1 && len != 0) {
+				char *s;
+				if ((s = ibuf_get_string(&ibuf, len)) != NULL) {
+					logit(LOG_ERR, "%s: %s notification: "
+					    "%s, %s: reason \"%s\"", p, dir,
+					    errnames[errcode], suberrname,
+					    log_reason(s));
+					free(s);
+					free(p);
+					return;
+				}
 			}
 		}
 		break;

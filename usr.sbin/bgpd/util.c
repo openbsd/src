@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.84 2024/03/22 07:19:28 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.85 2024/03/22 15:41:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -31,6 +31,22 @@
 #include "bgpd.h"
 #include "rde.h"
 #include "log.h"
+
+char *
+ibuf_get_string(struct ibuf *buf, size_t len)
+{
+	char *str;
+
+	if (ibuf_size(buf) < len) {
+		errno = EBADMSG;
+		return (NULL);
+	}
+	str = strndup(ibuf_data(buf), len);
+	if (str == NULL)
+		return (NULL);
+	ibuf_skip(buf, len);
+	return (str);
+}
 
 const char *
 log_addr(const struct bgpd_addr *addr)

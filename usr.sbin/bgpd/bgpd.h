@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.488 2024/03/22 07:19:28 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.489 2024/03/22 15:41:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1545,6 +1545,7 @@ int	trie_equal(struct trie_head *, struct trie_head *);
 time_t			 getmonotime(void);
 
 /* util.c */
+char		*ibuf_get_string(struct ibuf *, size_t);
 const char	*log_addr(const struct bgpd_addr *);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*log_sockaddr(struct sockaddr *, socklen_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.465 2024/03/22 07:19:28 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.466 2024/03/22 15:41:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2505,6 +2505,8 @@ parse_notification(struct peer *peer)
 	peer->stats.last_rcvd_errcode = errcode;
 	peer->stats.last_rcvd_suberr = subcode;
 
+	log_notification(peer, errcode, subcode, &ibuf, "received");
+
 	CTASSERT(sizeof(peer->stats.last_reason) > UINT8_MAX);
 	memset(peer->stats.last_reason, 0, sizeof(peer->stats.last_reason));
 	if (errcode == ERR_CEASE &&
@@ -2518,8 +2520,6 @@ parse_notification(struct peer *peer)
 				    "received truncated shutdown reason");
 		}
 	}
-
-	log_notification(peer, errcode, subcode, &ibuf, "received");
 
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_OPT) {
 		session_capa_ann_none(peer);
