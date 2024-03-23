@@ -1,4 +1,4 @@
-/* $OpenBSD: unixsock_test.c,v 1.2 2021/12/15 20:41:28 bluhm Exp $ */
+/* $OpenBSD: unixsock_test.c,v 1.3 2024/03/23 01:35:57 mvs Exp $ */
 /* Written by Claudio Jeker in 2011 */
 /* Public domain */
 #include <sys/types.h>
@@ -77,7 +77,7 @@ struct test {
 };
 
 int
-main()
+main(void)
 {
 	struct sockaddr_storage ss;
 	struct sockaddr_un *sun, sun2;
