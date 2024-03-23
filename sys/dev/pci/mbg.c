@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.35 2023/09/25 15:38:46 deraadt Exp $ */
+/*	$OpenBSD: mbg.c,v 1.36 2024/03/23 10:38:02 sthen Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -159,6 +159,7 @@ const struct pci_matchid mbg_devices[] = {
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_GPS170PCI },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32 },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI509 },
+	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI510 },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI511 },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PEX511 },
 	{ PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PZF180PEX }
@@ -241,6 +242,7 @@ mbg_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_read = mbg_read_amcc_s5920;
 		sensor_task_register(sc, mbg_task, 10);
 		break;
+	case PCI_PRODUCT_MEINBERG_PCI510:
 	case PCI_PRODUCT_MEINBERG_PCI511:
 	case PCI_PRODUCT_MEINBERG_PEX511:
 		sc->sc_read = mbg_read_asic;
