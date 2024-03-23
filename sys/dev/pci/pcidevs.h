@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2068 2024/03/06 07:01:24 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2069 2024/03/23 10:35:50 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7543,6 +7543,7 @@
 /* Meinberg Funkuhren */
 #define	PCI_PRODUCT_MEINBERG_PCI32	0x0101		/* PCI32 */
 #define	PCI_PRODUCT_MEINBERG_PCI509	0x0102		/* PCI509 */
+#define	PCI_PRODUCT_MEINBERG_PCI510	0x0103		/* PCI510 */
 #define	PCI_PRODUCT_MEINBERG_PCI511	0x0104		/* PCI511 */
 #define	PCI_PRODUCT_MEINBERG_PEX511	0x0105		/* PEX511 */
 #define	PCI_PRODUCT_MEINBERG_PZF180PEX	0x0106		/* PZF180PEX */
