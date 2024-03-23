@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2068 2024/03/06 07:01:24 jsg Exp $
+$OpenBSD: pcidevs,v 1.2069 2024/03/23 10:35:50 sthen Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7538,6 +7538,7 @@ product MEDIATEK MT7921		0x7961	MT7921
 /* Meinberg Funkuhren */
 product MEINBERG PCI32		0x0101	PCI32
 product MEINBERG PCI509		0x0102	PCI509
+product MEINBERG PCI510		0x0103	PCI510
 product MEINBERG PCI511		0x0104	PCI511
 product MEINBERG PEX511		0x0105	PEX511
 product MEINBERG PZF180PEX	0x0106	PZF180PEX
