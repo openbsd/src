@@ -1,4 +1,4 @@
-#	$OpenBSD: lacnic.constraints,v 1.4 2024/01/30 03:40:01 job Exp $
+#	$OpenBSD: lacnic.constraints,v 1.5 2024/03/23 04:18:56 job Exp $
 
 # From https://www.iana.org/assignments/ipv6-unicast-address-assignments
 allow 2001:1200::/23
@@ -9,7 +9,7 @@ allow 27648 - 28671
 allow 52224 - 53247
 allow 61440 - 61951
 allow 64099 - 64197
-allow 262144 - 273820
+allow 262144 - 274844
 
 # AFRINIC Internet Number Resources cannot be transferred
 # From https://www.iana.org/assignments/ipv4-address-space/
