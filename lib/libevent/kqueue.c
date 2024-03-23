@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.42 2022/12/27 23:05:55 jmc Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.43 2024/03/23 22:51:49 yasuoka Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -358,6 +358,7 @@ kq_add(void *arg, struct event *ev)
 static int
 kq_del(void *arg, struct event *ev)
 {
+	int i, j;
 	struct kqop *kqop = arg;
 	struct kevent kev;
 
@@ -387,6 +388,21 @@ kq_del(void *arg, struct event *ev)
 				return (-1);
 		}
 
+		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
+		return (0);
+	}
+
+	for (i = j = 0; i < kqop->nchanges; i++) {
+		if (kqop->changes[i].udata == ev &&
+		    (kqop->changes[i].flags & EV_ADD) != 0)
+			continue;	/* delete this */
+		if (i != j)
+			memcpy(&kqop->changes[j], &kqop->changes[i],
+			    sizeof(struct kevent));
+		j++;
+	}
+	if (kqop->nchanges != j) {
+		kqop->nchanges = j;
 		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
 		return (0);
 	}
