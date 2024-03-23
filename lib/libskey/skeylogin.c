@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.64 2023/03/15 17:01:35 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.65 2024/03/23 16:30:01 guenther Exp $
  */
 
 #ifdef	QUOTA
@@ -207,7 +207,7 @@ skeylookup(struct skey *mp, char *name)
 int
 skeygetnext(struct skey *mp)
 {
-	struct dirent entry, *dp;
+	struct dirent *dp;
 	int rval;
 
 	if (mp->keyfile != NULL) {
@@ -220,10 +220,10 @@ skeygetnext(struct skey *mp)
 		return (-1);
 
 	rval = 1;
-	while ((readdir_r(mp->keydir, &entry, &dp)) == 0 && dp == &entry) {
+	while ((dp = readdir(mp->keydir)) != NULL) {
 		/* Skip dot files and zero-length files. */
-		if (entry.d_name[0] != '.' &&
-		    (rval = skeygetent(-1, mp, entry.d_name)) != 1)
+		if (dp->d_name[0] != '.' &&
+		    (rval = skeygetent(-1, mp, dp->d_name)) != 1)
 			break;
 	}
 

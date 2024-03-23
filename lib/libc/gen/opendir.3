@@ -1,4 +1,4 @@
-.\"	$OpenBSD: opendir.3,v 1.2 2022/09/11 06:38:10 jmc Exp $
+.\"	$OpenBSD: opendir.3,v 1.3 2024/03/23 16:30:01 guenther Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: March 23 2024 $
 .Dt OPENDIR 3
 .Os
 .Sh NAME
@@ -112,9 +112,11 @@ operation.
 .Pp
 The
 .Fn readdir_r
-function (much like
-.Fn readdir )
-initializes the
+function is a deprecated variant of
+.Fn readdir .
+Like
+.Fn readdir ,
+it initializes the
 .Vt dirent
 structure referenced by
 .Fa entry
@@ -304,3 +306,11 @@ The
 .Fn fdopendir
 function appeared in
 .Ox 5.0 .
+.Sh CAVEATS
+The
+.Fn readdir_r
+function was intended to provide a thread-safe version of
+.Fn readdir .
+However, it was later found to be both unnecessary in the typical
+usage and unportable due to insufficient buffer sizing guidance.
+It was therefore officially deprecated in issue 8.
