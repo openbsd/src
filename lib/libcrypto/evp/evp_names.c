@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.14 2024/03/24 06:15:59 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.15 2024/03/24 13:56:35 jca Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -1643,6 +1643,9 @@ EVP_get_cipherbyname(const char *name)
 	if (!OPENSSL_init_crypto(0, NULL))
 		return NULL;
 
+	if (name == NULL)
+		return NULL;
+
 	if ((cipher = bsearch(name, cipher_names, N_CIPHER_NAMES,
 	    sizeof(*cipher), cipher_cmp)) == NULL)
 		return NULL;
@@ -1662,6 +1665,9 @@ EVP_get_digestbyname(const char *name)
 	const struct digest_name *digest;
 
 	if (!OPENSSL_init_crypto(0, NULL))
+		return NULL;
+
+	if (name == NULL)
 		return NULL;
 
 	if ((digest = bsearch(name, digest_names, N_DIGEST_NAMES,
