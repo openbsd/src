@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.11 2023/10/27 19:18:53 mpi Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.12 2024/03/24 10:29:35 mpi Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -45,7 +45,9 @@
  *	I	immutable after creation
  *	K	kernel lock
  *	F	uvm_lock_fpageq
+ *	L	uvm_lock_pageq
  *	S	uvm_swap_data_lock
+ *	p	copy of per-CPU counters, used only by userland.
  */
 struct uvmexp {
 	/* vm_page constants */
@@ -56,8 +58,8 @@ struct uvmexp {
 	/* vm_page counters */
 	int npages;     /* [I] number of pages we manage */
 	int free;       /* [F] number of free pages */
-	int active;     /* number of active pages */
-	int inactive;   /* number of pages that we free'd but may want back */
+	int active;     /* [L] # of active pages */
+	int inactive;   /* [L] # of pages that we free'd but may want back */
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
 
@@ -69,10 +71,10 @@ struct uvmexp {
 	int vtextpages;		/* XXX # of pages used by vtext vnodes */
 
 	/* pageout params */
-	int freemin;    /* min number of free pages */
-	int freetarg;   /* target number of free pages */
+	int freemin;    /* [I] min number of free pages */
+	int freetarg;   /* [I] target number of free pages */
 	int inactarg;   /* target number of inactive pages */
-	int wiredmax;   /* max number of wired pages */
+	int wiredmax;   /* [I] max number of wired pages */
 	int anonmin;	/* min threshold for anon pages */
 	int vtextmin;	/* min threshold for vtext pages */
 	int vnodemin;	/* min threshold for vnode pages */
@@ -91,16 +93,16 @@ struct uvmexp {
 	int unused06;	/* formerly nfreeanon */
 
 	/* stat counters */
-	int faults;		/* page fault count */
+	int faults;		/* [p] page fault count */
 	int traps;		/* trap count */
 	int intrs;		/* interrupt count */
 	int swtch;		/* context switch count */
 	int softs;		/* software interrupt count */
 	int syscalls;		/* system calls */
-	int pageins;		/* pagein operation count */
+	int pageins;		/* [p] pagein operation count */
 				/* pageouts are in pdpageouts below */
-	int unused07;		/* formerly obsolete_swapins */
-	int unused08;		/* formerly obsolete_swapouts */
+	int unused07;           /* formerly obsolete_swapins */
+	int unused08;           /* formerly obsolete_swapouts */
 	int pgswapin;		/* pages swapped in */
 	int pgswapout;		/* pages swapped out */
 	int forks;  		/* forks */
@@ -113,28 +115,28 @@ struct uvmexp {
 	int unused09;		/* formerly zeroaborts */
 
 	/* fault subcounters */
-	int fltnoram;	/* number of times fault was out of ram */
-	int fltnoanon;	/* number of times fault was out of anons */
-	int fltnoamap;	/* number of times fault was out of amap chunks */
-	int fltpgwait;	/* number of times fault had to wait on a page */
-	int fltpgrele;	/* number of times fault found a released page */
-	int fltrelck;	/* number of times fault relock called */
-	int fltrelckok;	/* number of times fault relock is a success */
-	int fltanget;	/* number of times fault gets anon page */
-	int fltanretry;	/* number of times fault retrys an anon get */
-	int fltamcopy;	/* number of times fault clears "needs copy" */
-	int fltnamap;	/* number of times fault maps a neighbor anon page */
-	int fltnomap;	/* number of times fault maps a neighbor obj page */
-	int fltlget;	/* number of times fault does a locked pgo_get */
-	int fltget;	/* number of times fault does an unlocked get */
-	int flt_anon;	/* number of times fault anon (case 1a) */
-	int flt_acow;	/* number of times fault anon cow (case 1b) */
-	int flt_obj;	/* number of times fault is on object page (2a) */
-	int flt_prcopy;	/* number of times fault promotes with copy (2b) */
-	int flt_przero;	/* number of times fault promotes with zerofill (2b) */
+	int fltnoram;	/* [p] # of times fault was out of ram */
+	int fltnoanon;	/* [p] # of times fault was out of anons */
+	int fltnoamap;	/* [p] # of times fault was out of amap chunks */
+	int fltpgwait;	/* [p] # of times fault had to wait on a page */
+	int fltpgrele;	/* [p] # of times fault found a released page */
+	int fltrelck;	/* [p] # of times fault relock called */
+	int fltrelckok;	/* [p] # of times fault relock is a success */
+	int fltanget;	/* [p] # of times fault gets anon page */
+	int fltanretry;	/* [p] # of times fault retrys an anon get */
+	int fltamcopy;	/* [p] # of times fault clears "needs copy" */
+	int fltnamap;	/* [p] # of times fault maps a neighbor anon page */
+	int fltnomap;	/* [p] # of times fault maps a neighbor obj page */
+	int fltlget;	/* [p] # of times fault does a locked pgo_get */
+	int fltget;	/* [p] # of times fault does an unlocked get */
+	int flt_anon;	/* [p] # of times fault anon (case 1a) */
+	int flt_acow;	/* [p] # of times fault anon cow (case 1b) */
+	int flt_obj;	/* [p] # of times fault is on object page (2a) */
+	int flt_prcopy;	/* [p] # of times fault promotes with copy (2b) */
+	int flt_przero;	/* [p] # of times fault promotes with zerofill (2b) */
 
 	/* daemon counters */
-	int pdwoke;	/* number of times daemon woke up */
+	int pdwoke;	/* [F] # of times daemon woke up */
 	int pdrevs;	/* number of times daemon rev'd clock hand */
 	int pdswout;	/* number of times daemon called for swapout */
 	int pdfreed;	/* number of pages daemon freed since boot */

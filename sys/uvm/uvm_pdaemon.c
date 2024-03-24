@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.109 2023/10/27 19:18:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.110 2024/03/24 10:29:35 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -165,33 +165,27 @@ uvm_wait(const char *wmsg)
 
 /*
  * uvmpd_tune: tune paging parameters
- *
- * => called whenever memory is added to (or removed from?) the system
- * => caller must call with page queues locked
  */
-
 void
 uvmpd_tune(void)
 {
+	int val;
 
-	uvmexp.freemin = uvmexp.npages / 30;
+	val = uvmexp.npages / 30;
 
-	/* between 16k and 512k */
 	/* XXX:  what are these values good for? */
-	uvmexp.freemin = max(uvmexp.freemin, (16*1024) >> PAGE_SHIFT);
-#if 0
-	uvmexp.freemin = min(uvmexp.freemin, (512*1024) >> PAGE_SHIFT);
-#endif
+	val = max(val, (16*1024) >> PAGE_SHIFT);
 
 	/* Make sure there's always a user page free. */
-	if (uvmexp.freemin < uvmexp.reserve_kernel + 1)
-		uvmexp.freemin = uvmexp.reserve_kernel + 1;
+	if (val < uvmexp.reserve_kernel + 1)
+		val = uvmexp.reserve_kernel + 1;
+	uvmexp.freemin = val;
 
-	uvmexp.freetarg = (uvmexp.freemin * 4) / 3;
-	if (uvmexp.freetarg <= uvmexp.freemin)
-		uvmexp.freetarg = uvmexp.freemin + 1;
-
-	/* uvmexp.inactarg: computed in main daemon loop */
+	/* Calculate free target. */
+	val = (uvmexp.freemin * 4) / 3;
+	if (val <= uvmexp.freemin)
+		val = uvmexp.freemin + 1;
+	uvmexp.freetarg = val;
 
 	uvmexp.wiredmax = uvmexp.npages / 3;
 }
@@ -211,15 +205,12 @@ uvm_pageout(void *arg)
 {
 	struct uvm_constraint_range constraint;
 	struct uvm_pmalloc *pma;
-	int npages = 0;
+	int free;
 
 	/* ensure correct priority and set paging parameters... */
 	uvm.pagedaemon_proc = curproc;
 	(void) spl0();
-	uvm_lock_pageq();
-	npages = uvmexp.npages;
 	uvmpd_tune();
-	uvm_unlock_pageq();
 
 	for (;;) {
 		long size;
@@ -245,44 +236,38 @@ uvm_pageout(void *arg)
 			} else
 				constraint = no_constraint;
 		}
-
+		free = uvmexp.free - BUFPAGES_DEFICIT;
 		uvm_unlock_fpageq();
 
 		/*
 		 * now lock page queues and recompute inactive count
 		 */
 		uvm_lock_pageq();
-		if (npages != uvmexp.npages) {	/* check for new pages? */
-			npages = uvmexp.npages;
-			uvmpd_tune();
-		}
-
 		uvmexp.inactarg = (uvmexp.active + uvmexp.inactive) / 3;
 		if (uvmexp.inactarg <= uvmexp.freetarg) {
 			uvmexp.inactarg = uvmexp.freetarg + 1;
 		}
+		uvm_unlock_pageq();
 
 		/* Reclaim pages from the buffer cache if possible. */
 		size = 0;
 		if (pma != NULL)
 			size += pma->pm_size >> PAGE_SHIFT;
-		if (uvmexp.free - BUFPAGES_DEFICIT < uvmexp.freetarg)
-			size += uvmexp.freetarg - (uvmexp.free -
-			    BUFPAGES_DEFICIT);
+		if (free < uvmexp.freetarg)
+			size += uvmexp.freetarg - free;
 		if (size == 0)
 			size = 16; /* XXX */
-		uvm_unlock_pageq();
+
 		(void) bufbackoff(&constraint, size * 2);
 #if NDRM > 0
 		drmbackoff(size * 2);
 #endif
-		uvm_lock_pageq();
-
 		/*
 		 * scan if needed
 		 */
-		if (pma != NULL ||
-		    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) ||
+		uvm_lock_pageq();
+		free = uvmexp.free - BUFPAGES_DEFICIT;
+		if (pma != NULL || (free < uvmexp.freetarg) ||
 		    ((uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg)) {
 			uvmpd_scan(pma, &constraint);
 		}
