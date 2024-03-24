@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.284 2024/03/02 19:53:17 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.285 2024/03/24 22:34:48 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -372,6 +372,7 @@ iic*		at sxitwi?	# I2C bus
 dwxe*		at fdt?
 
 # Xilinx Zynq UltraScale+ SoCs
+cad*		at fdt?			# Ethernet controller
 cduart*		at fdt?
 
 # PCI
