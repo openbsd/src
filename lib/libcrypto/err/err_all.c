@@ -1,4 +1,4 @@
-/* $OpenBSD: err_all.c,v 1.34 2024/03/02 13:39:28 tb Exp $ */
+/* $OpenBSD: err_all.c,v 1.35 2024/03/24 06:05:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,9 +125,6 @@ ERR_load_crypto_strings_internal(void)
 	ERR_load_EC_strings();
 #endif
 	ERR_load_EVP_strings();
-#ifndef OPENSSL_NO_GOST
-	ERR_load_GOST_strings();
-#endif
 	ERR_load_KDF_strings();
 	ERR_load_OBJ_strings();
 	ERR_load_OCSP_strings();

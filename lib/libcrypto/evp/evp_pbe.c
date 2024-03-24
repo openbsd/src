@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.46 2024/03/02 10:20:27 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.47 2024/03/24 06:05:41 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -494,14 +494,6 @@ md_nid_from_prf_nid(int nid)
 		return NID_sha3_384;
 	case NID_hmac_sha3_512:
 		return NID_sha3_512;
-#ifndef OPENSSL_NO_GOST
-	case NID_id_HMACGostR3411_94:
-		return NID_id_GostR3411_94;
-	case NID_id_tc26_hmac_gost_3411_12_256:
-		return NID_id_tc26_gost3411_2012_256;
-	case NID_id_tc26_hmac_gost_3411_12_512:
-		return NID_id_tc26_gost3411_2012_512;
-#endif
 	default:
 		return NID_undef;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.12 2024/03/02 10:13:13 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.13 2024/03/24 06:05:41 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -414,13 +414,6 @@ static const struct cipher_name cipher_names[] = {
 		.cipher = EVP_desx_cbc,
 	},
 #endif /* OPENSSL_NO_DES */
-
-#ifndef OPENSSL_NO_GOST
-	{
-		.name = LN_id_Gost28147_89,
-		.cipher = EVP_gost2814789_cfb64,
-	},
-#endif /* OPENSSL_NO_GOST */
 
 #ifndef OPENSSL_NO_IDEA
 	{
@@ -917,21 +910,6 @@ static const struct cipher_name cipher_names[] = {
 	},
 #endif /* OPENSSL_NO_DES */
 
-#ifndef OPENSSL_NO_GOST
-	{
-		.name = SN_id_Gost28147_89,
-		.cipher = EVP_gost2814789_cfb64,
-	},
-	{
-		.name = SN_gost89_cnt,
-		.cipher = EVP_gost2814789_cnt,
-	},
-	{
-		.name = SN_gost89_ecb,
-		.cipher = EVP_gost2814789_ecb,
-	},
-#endif /* OPENSSL_NO_GOST */
-
 #ifndef OPENSSL_NO_AES
 	{
 		.name = SN_aes_128_ccm,
@@ -1087,24 +1065,6 @@ static const struct digest_name digest_names[] = {
 		.alias = SN_sha1,
 	},
 #endif
-#ifndef OPENSSL_NO_GOST
-	{
-		.name = LN_id_Gost28147_89_MAC,
-		.digest = EVP_gost2814789imit,
-	},
-	{
-		.name = LN_id_tc26_gost3411_2012_512,
-		.digest = EVP_streebog512,
-	},
-	{
-		.name = LN_id_tc26_gost3411_2012_256,
-		.digest = EVP_streebog256,
-	},
-	{
-		.name = LN_id_GostR3411_94,
-		.digest = EVP_gostr341194,
-	},
-#endif /* OPENSSL_NO_GOST */
 
 #ifndef OPENSSL_NO_MD4
 	{
@@ -1356,13 +1316,6 @@ static const struct digest_name digest_names[] = {
 	},
 #endif /* OPENSSL_NO_SHA256 && OPENSSL_NO_EC */
 
-#ifndef OPENSSL_NO_GOST
-	{
-		.name = SN_id_Gost28147_89_MAC,
-		.digest = EVP_gost2814789imit,
-	},
-#endif /* OPENSSL_NO_GOST */
-
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_SHA256)
 	{
 		.name = SN_dsa_with_SHA224,
@@ -1491,13 +1444,6 @@ static const struct digest_name digest_names[] = {
 		.alias = SN_md5,
 	},
 #endif
-
-#ifndef OPENSSL_NO_GOST
-	{
-		.name = SN_id_GostR3411_94,
-		.digest = EVP_gostr341194,
-	},
-#endif /* OPENSSL_NO_GOST */
 
 #ifndef OPENSSL_NO_RIPEMD
 	{
@@ -1660,17 +1606,6 @@ static const struct digest_name digest_names[] = {
 		.alias = SN_sha1,
 	},
 #endif /* OPENSSL_NO_SHA1 */
-
-#ifndef OPENSSL_NO_GOST
-	{
-		.name = SN_id_tc26_gost3411_2012_256,
-		.digest = EVP_streebog256,
-	},
-	{
-		.name = SN_id_tc26_gost3411_2012_512,
-		.digest = EVP_streebog512,
-	},
-#endif /* OPENSSL_NO_GOST */
 
 #ifndef OPENSSL_NO_WHIRLPOOL
 	{
