@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.13 2024/03/24 06:05:41 tb Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.14 2024/03/24 06:15:59 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -46,7 +46,6 @@ struct digest_name {
  */
 
 static const struct cipher_name cipher_names[] = {
-#ifndef OPENSSL_NO_AES
 	{
 		.name = SN_aes_128_cbc,
 		.cipher = EVP_aes_128_cbc,
@@ -157,9 +156,7 @@ static const struct cipher_name cipher_names[] = {
 		.cipher = EVP_aes_256_cbc,
 		.alias = SN_aes_256_cbc,
 	},
-#endif /* OPENSSL_NO_AES */
 
-#ifndef OPENSSL_NO_BF
 	{
 		.name = "BF",
 		.cipher = EVP_bf_cbc,
@@ -182,9 +179,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_bf_ofb64,
 		.cipher = EVP_bf_ofb,
 	},
-#endif
 
-#ifndef OPENSSL_NO_CAMELLIA
 	{
 		.name = SN_camellia_128_cbc,
 		.cipher = EVP_camellia_128_cbc,
@@ -275,9 +270,7 @@ static const struct cipher_name cipher_names[] = {
 		.cipher = EVP_camellia_256_cbc,
 		.alias = SN_camellia_256_cbc,
 	},
-#endif /* OPENSSL_NO_CAMELLIA */
 
-#ifndef OPENSSL_NO_CAST
 	{
 		.name = "CAST",
 		.cipher = EVP_cast5_cbc,
@@ -305,9 +298,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_cast5_ofb64,
 		.cipher = EVP_cast5_ofb,
 	},
-#endif
 
-#ifndef OPENSSL_NO_CHACHA
 	{
 		.name = SN_chacha20,
 		.cipher = EVP_chacha20,
@@ -317,16 +308,12 @@ static const struct cipher_name cipher_names[] = {
 		.cipher = EVP_chacha20,
 		.alias = SN_chacha20,
 	},
-#endif /* OPENSSL_NO_CHACHA */
 
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 	{
 		.name = SN_chacha20_poly1305,
 		.cipher = EVP_chacha20_poly1305,
 	},
-#endif /* OPENSSL_NO_CHACHA && OPENSSL_NO_POLY1305 */
 
-#ifndef OPENSSL_NO_DES
 	{
 		.name = "DES",
 		.cipher = EVP_des_cbc,
@@ -413,9 +400,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_desx_cbc,
 		.cipher = EVP_desx_cbc,
 	},
-#endif /* OPENSSL_NO_DES */
 
-#ifndef OPENSSL_NO_IDEA
 	{
 		.name = "IDEA",
 		.cipher = EVP_idea_cbc,
@@ -438,9 +423,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_idea_ofb64,
 		.cipher = EVP_idea_ofb,
 	},
-#endif /* OPENSSL_NO_IDEA */
 
-#ifndef OPENSSL_NO_RC2
 	{
 		.name = "RC2",
 		.cipher = EVP_rc2_cbc,
@@ -471,9 +454,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_rc2_ofb64,
 		.cipher = EVP_rc2_ofb,
 	},
-#endif /* OPENSSL_NO_RC2 */
 
-#ifndef OPENSSL_NO_RC4
 	{
 		.name = SN_rc4,
 		.cipher = EVP_rc4,
@@ -482,9 +463,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_rc4_40,
 		.cipher = EVP_rc4_40,
 	},
-#endif /* OPENSSL_NO_RC4 */
 
-#ifndef OPENSSL_NO_SM4
 	{
 		.name = "SM4",
 		.cipher = EVP_sm4_cbc,
@@ -511,9 +490,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_sm4_ofb128,
 		.cipher = EVP_sm4_ofb,
 	},
-#endif /* OPENSSL_NO_SM4 */
 
-#ifndef OPENSSL_NO_AES
 	{
 		.name = LN_aes_128_cbc,
 		.cipher = EVP_aes_128_cbc,
@@ -648,9 +625,7 @@ static const struct cipher_name cipher_names[] = {
 		.cipher = EVP_aes_256_cbc,
 		.alias = SN_aes_256_cbc,
 	},
-#endif /* OPENSSL_NO_AES */
 
-#ifndef OPENSSL_NO_BF
 	{
 		.name = "bf",
 		.cipher = EVP_bf_cbc,
@@ -679,9 +654,7 @@ static const struct cipher_name cipher_names[] = {
 		.cipher = EVP_bf_cbc,
 		.alias = SN_bf_cbc,
 	},
-#endif /* OPENSSL_NO_BF */
 
-#ifndef OPENSSL_NO_CAMELLIA
 	{
 		.name = LN_camellia_128_cbc,
 		.cipher = EVP_camellia_128_cbc,
@@ -772,9 +745,7 @@ static const struct cipher_name cipher_names[] = {
 		.cipher = EVP_camellia_256_cbc,
 		.alias = SN_camellia_256_cbc,
 	},
-#endif /* OPENSSL_NO_CAMELLIA */
 
-#ifndef OPENSSL_NO_CAST
 	{
 		.name = "cast",
 		.cipher = EVP_cast5_cbc,
@@ -802,9 +773,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = LN_cast5_ofb64,
 		.cipher = EVP_cast5_ofb,
 	},
-#endif
 
-#ifndef OPENSSL_NO_CHACHA
 	{
 		.name = LN_chacha20,
 		.cipher = EVP_chacha20,
@@ -819,9 +788,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = LN_chacha20_poly1305,
 		.cipher = EVP_chacha20_poly1305,
 	},
-#endif
 
-#ifndef OPENSSL_NO_DES
 	{
 		.name = "des",
 		.cipher = EVP_des_cbc,
@@ -908,9 +875,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = LN_desx_cbc,
 		.cipher = EVP_desx_cbc,
 	},
-#endif /* OPENSSL_NO_DES */
 
-#ifndef OPENSSL_NO_AES
 	{
 		.name = SN_aes_128_ccm,
 		.cipher = EVP_aes_128_ccm,
@@ -949,9 +914,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = SN_id_aes256_wrap,
 		.cipher = EVP_aes_256_wrap,
 	},
-#endif /* OPENSSL_NO_AES */
 
-#ifndef OPENSSL_NO_IDEA
 	{
 		.name = "idea",
 		.cipher = EVP_idea_cbc,
@@ -974,9 +937,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = LN_idea_ofb64,
 		.cipher = EVP_idea_ofb,
 	},
-#endif /* OPENSSL_NO_IDEA */
 
-#ifndef OPENSSL_NO_RC2
 	{
 		.name = "rc2",
 		.cipher = EVP_rc2_cbc,
@@ -1007,9 +968,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = LN_rc2_ofb64,
 		.cipher = EVP_rc2_ofb,
 	},
-#endif /* OPENSSL_NO_RC2 */
 
-#ifndef OPENSSL_NO_RC4
 	{
 		.name = LN_rc4,
 		.cipher = EVP_rc4,
@@ -1018,9 +977,7 @@ static const struct cipher_name cipher_names[] = {
 		.name = LN_rc4_40,
 		.cipher = EVP_rc4_40,
 	},
-#endif /* OPENSSL_NO_RC4 */
 
-#ifndef OPENSSL_NO_SM4
 	{
 		.name = "sm4",
 		.cipher = EVP_sm4_cbc,
@@ -1047,7 +1004,6 @@ static const struct cipher_name cipher_names[] = {
 		.name = LN_sm4_ofb128,
 		.cipher = EVP_sm4_ofb,
 	},
-#endif /* OPENSSL_NO_SM4 */
 };
 
 #define N_CIPHER_NAMES (sizeof(cipher_names) / sizeof(cipher_names[0]))
@@ -1058,65 +1014,47 @@ static const struct cipher_name cipher_names[] = {
  */
 
 static const struct digest_name digest_names[] = {
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_SHA1)
 	{
 		.name = SN_dsaWithSHA1,
 		.digest = EVP_sha1,
 		.alias = SN_sha1,
 	},
-#endif
 
-#ifndef OPENSSL_NO_MD4
 	{
 		.name = SN_md4,
 		.digest = EVP_md4,
 	},
-#endif /* OPENSSL_NO_MD4 */
 
-#ifndef OPENSSL_NO_MD5
 	{
 		.name = SN_md5,
 		.digest = EVP_md5,
 	},
-#endif /* OPENSSL_NO_MD5 */
 
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_SHA1)
 	{
 		.name = SN_md5_sha1,
 		.digest = EVP_md5_sha1,
 	},
-#endif /* OPENSSL_NO_MD5 && OPENSSL_NO_SHA1 */
 
-#ifndef OPENSSL_NO_RIPEMD
 	{
 		.name = SN_ripemd160,
 		.digest = EVP_ripemd160,
 	},
-#endif /* OPENSSL_NO_RIPEMD */
 
-#ifndef OPENSSL_NO_RSA
-#ifndef OPENSSL_NO_MD4
 	{
 		.name = SN_md4WithRSAEncryption,
 		.digest = EVP_md4,
 		.alias = SN_md4,
 	},
-#endif /* OPENSSL_NO_MD4 */
-#ifndef OPENSSL_NO_MD5
 	{
 		.name = SN_md5WithRSAEncryption,
 		.digest = EVP_md5,
 		.alias = SN_md5,
 	},
-#endif /* OPENSSL_NO_MD5 */
-#ifndef OPENSSL_NO_RIPEMD
 	{
 		.name = SN_ripemd160WithRSA,
 		.digest = EVP_ripemd160,
 		.alias = SN_ripemd160,
 	},
-#endif /* OPENSSL_NO_RIPEMD */
-#ifndef OPENSSL_NO_SHA1
 	{
 		.name = SN_sha1WithRSAEncryption,
 		.digest = EVP_sha1,
@@ -1127,8 +1065,6 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha1,
 		.alias = SN_sha1, /* XXX - alias to SN_sha1WithRSAEncryption? */
 	},
-#endif /* OPENSSL_NO_SHA1 */
-#ifndef OPENSSL_NO_SHA256
 	{
 		.name = SN_sha224WithRSAEncryption,
 		.digest = EVP_sha224,
@@ -1139,8 +1075,6 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha256,
 		.alias = SN_sha256,
 	},
-#endif /* OPENSSL_NO_SHA256 */
-#ifndef OPENSSL_NO_SHA3
 	{
 		.name = LN_RSA_SHA3_224,
 		.digest = EVP_sha3_224,
@@ -1161,8 +1095,6 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha3_512,
 		.alias = SN_sha3_512,
 	},
-#endif /* OPENSSL_NO_SHA3 */
-#ifndef OPENSSL_NO_SHA512
 	{
 		.name = SN_sha384WithRSAEncryption,
 		.digest = EVP_sha384,
@@ -1183,23 +1115,16 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha512_256,
 		.alias = SN_sha512_256,
 	},
-#endif /* OPENSSL_NO_SHA256 */
-#ifndef OPENSSL_NO_SM4
 	{
 		.name = SN_sm3WithRSAEncryption,
 		.digest = EVP_sm3,
 		.alias = SN_sm3,
 	},
-#endif
-#endif /* OPENSSL_NO_RSA */
 
-#ifndef OPENSSL_NO_SHA1
 	{
 		.name = SN_sha1,
 		.digest = EVP_sha1,
 	},
-#endif /* OPENSSL_NO_SHA1 */
-#ifndef OPENSSL_NO_SHA256
 	{
 		.name = SN_sha224,
 		.digest = EVP_sha224,
@@ -1208,8 +1133,6 @@ static const struct digest_name digest_names[] = {
 		.name = SN_sha256,
 		.digest = EVP_sha256,
 	},
-#endif /* OPENSSL_NO_SHA256 */
-#ifndef OPENSSL_NO_SHA3
 	{
 		.name = SN_sha3_224,
 		.digest = EVP_sha3_224,
@@ -1226,9 +1149,7 @@ static const struct digest_name digest_names[] = {
 		.name = SN_sha3_512,
 		.digest = EVP_sha3_512,
 	},
-#endif /* OPENSSL_NO_SHA3 */
 
-#ifndef OPENSSL_NO_SHA512
 	{
 		.name = SN_sha384,
 		.digest = EVP_sha384,
@@ -1245,24 +1166,18 @@ static const struct digest_name digest_names[] = {
 		.name = SN_sha512_256,
 		.digest = EVP_sha512_256,
 	},
-#endif /* OPENSSL_NO_SHA512 */
 
-#ifndef OPENSSL_NO_SM3
 	{
 		.name = SN_sm3,
 		.digest = EVP_sm3,
 	},
-#endif /* OPENSSL_NO_SM3 */
 
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_SHA1)
 	{
 		.name = LN_dsaWithSHA1,
 		.digest = EVP_sha1,
 		.alias = SN_sha1,
 	},
-#endif
 
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_SHA256)
 	{
 		.name = LN_dsa_with_SHA224,
 		.digest = EVP_sha224,
@@ -1283,17 +1198,13 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha512,
 		.alias = SN_sha512,
 	},
-#endif /* OPENSSL_NO_DSA && OPENSSL_NO_SHA256 */
 
-#if !defined(OPENSSL_NO_SHA1) && !defined(OPENSSL_NO_EC)
 	{
 		.name = SN_ecdsa_with_SHA1,
 		.digest = EVP_sha1,
 		.alias = SN_sha1,
 	},
-#endif
 
-#if !defined(OPENSSL_NO_SHA256) && !defined(OPENSSL_NO_EC)
 	{
 		.name = SN_ecdsa_with_SHA224,
 		.digest = EVP_sha224,
@@ -1314,9 +1225,7 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha512,
 		.alias = SN_sha512,
 	},
-#endif /* OPENSSL_NO_SHA256 && OPENSSL_NO_EC */
 
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_SHA256)
 	{
 		.name = SN_dsa_with_SHA224,
 		.digest = EVP_sha224,
@@ -1327,9 +1236,7 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha256,
 		.alias = SN_sha256,
 	},
-#endif /* OPENSSL_NO_DSA && OPENSSL_NO_SHA256 */
 
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_SHA3)
 	{
 		.name = SN_dsa_with_SHA3_224,
 		.digest = EVP_sha3_224,
@@ -1350,9 +1257,7 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha3_512,
 		.alias = SN_sha3_512,
 	},
-#endif /* OPENSSL_NO_DSA && OPENSSL_NO_SHA3 */
 
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_SHA256)
 	{
 		.name = SN_dsa_with_SHA384,
 		.digest = EVP_sha384,
@@ -1363,9 +1268,7 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha512,
 		.alias = SN_sha512,
 	},
-#endif /* OPENSSL_NO_DSA && OPENSSL_NO_SHA256 */
 
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_SHA3)
 	{
 		.name = SN_ecdsa_with_SHA3_224,
 		.digest = EVP_sha3_224,
@@ -1386,9 +1289,7 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha3_512,
 		.alias = SN_sha3_512,
 	},
-#endif /* OPENSSL_NO_EC && OPENSSL_NO_SHA3 */
 
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_SHA3)
 	{
 		.name = SN_RSA_SHA3_224,
 		.digest = EVP_sha3_224,
@@ -1409,43 +1310,31 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha3_512,
 		.alias = SN_sha3_512,
 	},
-#endif /* OPENSSL_NO_RSA && OPENSSL_NO_SHA3 */
 
-#ifndef OPENSSL_NO_MD4
 	{
 		.name = LN_md4,
 		.digest = EVP_md4,
 	},
-#endif /* OPENSSL_NO_MD4 */
-#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_RSA)
 	{
 		.name = LN_md4WithRSAEncryption,
 		.digest = EVP_md4,
 		.alias = SN_md4,
 	},
-#endif /* OPENSSL_NO_MD4 */
 
-#if !defined(OPENSSL_NO_MD5)
 	{
 		.name = LN_md5,
 		.digest = EVP_md5,
 	},
-#endif /* OPENSSL_NO_MD5 */
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_SHA1)
 	{
 		.name = LN_md5_sha1,
 		.digest = EVP_md5_sha1,
 	},
-#endif /* OPENSSL_NO_MD5 && OPENSSL_NO_SHA1 */
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_RSA)
 	{
 		.name = LN_md5WithRSAEncryption,
 		.digest = EVP_md5,
 		.alias = SN_md5,
 	},
-#endif
 
-#ifndef OPENSSL_NO_RIPEMD
 	{
 		.name = "ripemd",
 		.digest = EVP_ripemd160,
@@ -1455,60 +1344,46 @@ static const struct digest_name digest_names[] = {
 		.name = LN_ripemd160,
 		.digest = EVP_ripemd160,
 	},
-#ifndef OPENSSL_NO_RSA
 	{
 		.name = LN_ripemd160WithRSA,
 		.digest = EVP_ripemd160,
 		.alias = SN_ripemd160,
 	},
-#endif /* OPENSSL_NO_RSA */
 	{
 		.name = "rmd160",
 		.digest = EVP_ripemd160,
 		.alias = SN_ripemd160,
 	},
-#endif /* OPENSSL_NO_RIPEMD */
 
-#ifndef OPENSSL_NO_SHA1
 	{
 		.name = LN_sha1,
 		.digest = EVP_sha1,
 	},
-#endif /* OPENSSL_NO_SHA1 */
-#if !defined(OPENSSL_NO_SHA1) && !defined(OPENSSL_NO_RSA)
 	{
 		.name = LN_sha1WithRSAEncryption,
 		.digest = EVP_sha1,
 		.alias = SN_sha1,
 	},
-#endif /* OPENSSL_NO_SHA1 && OPENSSL_NO_RSA */
 
-#ifndef OPENSSL_NO_SHA256
 	{
 		.name = LN_sha224,
 		.digest = EVP_sha224,
 	},
-#ifndef OPENSSL_NO_RSA
 	{
 		.name = LN_sha224WithRSAEncryption,
 		.digest = EVP_sha224,
 		.alias = SN_sha224,
 	},
-#endif /* OPENSSL_NO_RSA */
 	{
 		.name = LN_sha256,
 		.digest = EVP_sha256,
 	},
-#ifndef OPENSSL_NO_RSA
 	{
 		.name = LN_sha256WithRSAEncryption,
 		.digest = EVP_sha256,
 		.alias = SN_sha256,
 	},
-#endif /* OPENSSL_NO_RSA */
-#endif /* OPENSSL_NO_SHA256 */
 
-#ifndef OPENSSL_NO_SHA3
 	{
 		.name = LN_sha3_224,
 		.digest = EVP_sha3_224,
@@ -1525,20 +1400,16 @@ static const struct digest_name digest_names[] = {
 		.name = LN_sha3_512,
 		.digest = EVP_sha3_512,
 	},
-#endif /* OPENSSL_NO_SHA3 */
 
-#ifndef OPENSSL_NO_SHA512
 	{
 		.name = LN_sha384,
 		.digest = EVP_sha384,
 	},
-#ifndef OPENSSL_NO_RSA
 	{
 		.name = LN_sha384WithRSAEncryption,
 		.digest = EVP_sha384,
 		.alias = SN_sha384,
 	},
-#endif /* OPENSSL_NO_RSA */
 	{
 		.name = LN_sha512,
 		.digest = EVP_sha512,
@@ -1547,18 +1418,15 @@ static const struct digest_name digest_names[] = {
 		.name = LN_sha512_224,
 		.digest = EVP_sha512_224,
 	},
-#ifndef OPENSSL_NO_RSA
 	{
 		.name = LN_sha512_224WithRSAEncryption,
 		.digest = EVP_sha512_224,
 		.alias = SN_sha512_224,
 	},
-#endif
 	{
 		.name = LN_sha512_256,
 		.digest = EVP_sha512_256,
 	},
-#ifndef OPENSSL_NO_RSA
 	{
 		.name = LN_sha512_256WithRSAEncryption,
 		.digest = EVP_sha512_256,
@@ -1569,24 +1437,17 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_sha512,
 		.alias = SN_sha512,
 	},
-#endif
-#endif /* OPENSSL_NO_SHA512 */
 
-#ifndef OPENSSL_NO_SM3
 	{
 		.name = LN_sm3,
 		.digest = EVP_sm3,
 	},
-#endif /* OPENSSL_NO_SM3 */
-#if !defined(OPENSSL_NO_SM3) && !defined(OPENSSL_NO_RSA)
 	{
 		.name = LN_sm3WithRSAEncryption,
 		.digest = EVP_sm3,
 		.alias = SN_sm3,
 	},
-#endif /* OPENSSL_NO_SM3 && OPENSSL_NO_RSA */
 
-#ifndef OPENSSL_NO_MD5
 	{
 		.name = "ssl2-md5",
 		.digest = EVP_md5,
@@ -1597,22 +1458,17 @@ static const struct digest_name digest_names[] = {
 		.digest = EVP_md5,
 		.alias = SN_md5,
 	},
-#endif /* OPENSSL_NO_MD5 */
 
-#ifndef OPENSSL_NO_SHA1
 	{
 		.name = "ssl3-sha1",
 		.digest = EVP_sha1,
 		.alias = SN_sha1,
 	},
-#endif /* OPENSSL_NO_SHA1 */
 
-#ifndef OPENSSL_NO_WHIRLPOOL
 	{
 		.name = SN_whirlpool,
 		.digest = EVP_whirlpool,
 	},
-#endif
 };
 
 #define N_DIGEST_NAMES (sizeof(digest_names) / sizeof(digest_names[0]))
