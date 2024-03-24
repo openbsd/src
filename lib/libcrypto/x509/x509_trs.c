@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.44 2024/03/23 06:38:01 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.45 2024/03/24 00:35:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -70,7 +70,6 @@
 typedef struct x509_trust_st {
 	int trust;
 	int (*check_trust)(struct x509_trust_st *, X509 *);
-	char *name;
 	int arg1;
 } X509_TRUST;
 
@@ -141,48 +140,40 @@ static const X509_TRUST trstandard[] = {
 	{
 		.trust = X509_TRUST_COMPAT,
 		.check_trust = trust_compat,
-		.name = "compatible",
 	},
 	{
 		.trust = X509_TRUST_SSL_CLIENT,
 		.check_trust = trust_1oidany,
-		.name = "SSL Client",
 		.arg1 = NID_client_auth,
 	},
 	{
 		.trust = X509_TRUST_SSL_SERVER,
 		.check_trust = trust_1oidany,
-		.name = "SSL Server",
 		.arg1 = NID_server_auth,
 	},
 	{
 		.trust = X509_TRUST_EMAIL,
 		.check_trust = trust_1oidany,
-		.name = "S/MIME email",
 		.arg1 = NID_email_protect,
 	},
 	{
 		.trust = X509_TRUST_OBJECT_SIGN,
 		.check_trust = trust_1oidany,
-		.name = "Object Signer",
 		.arg1 = NID_code_sign,
 	},
 	{
 		.trust = X509_TRUST_OCSP_SIGN,
 		.check_trust = trust_1oid,
-		.name = "OCSP responder",
 		.arg1 = NID_OCSP_sign,
 	},
 	{
 		.trust = X509_TRUST_OCSP_REQUEST,
 		.check_trust = trust_1oid,
-		.name = "OCSP request",
 		.arg1 = NID_ad_OCSP,
 	},
 	{
 		.trust = X509_TRUST_TSA,
 		.check_trust = trust_1oidany,
-		.name = "TSA server",
 		.arg1 = NID_time_stamp,
 	},
 };
