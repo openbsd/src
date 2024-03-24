@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.16 2020/09/12 07:34:17 yasuoka Exp $	*/
+/*	$OpenBSD: http.h,v 1.17 2024/03/24 10:53:27 job Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -131,7 +131,8 @@ struct http_error {
 	{ 100,	"Continue" },				\
 	{ 101,	"Switching Protocols" },		\
 	{ 102,	"Processing" },				\
-	/* 103-199 unassigned */			\
+	{ 103,	"Early Hints" },			\
+	/* 104-199 unassigned */			\
 	{ 200,	"OK" },					\
 	{ 201,	"Created" },				\
 	{ 202,	"Accepted" },				\
@@ -175,10 +176,10 @@ struct http_error {
 	{ 418,	"I'm a teapot" },			\
 	/* 419-421 unassigned */			\
 	{ 420,	"Enhance Your Calm" },			\
-	{ 422,	"Unprocessable Entity" },		\
+	{ 422,	"Unprocessable Content" },		\
 	{ 423,	"Locked" },				\
 	{ 424,	"Failed Dependency" },			\
-	/* 425 unassigned */				\
+	{ 425,	"Too Early" },			\
 	{ 426,	"Upgrade Required" },			\
 	/* 427 unassigned */				\
 	{ 428,	"Precondition Required" },		\
