@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.45 2024/03/24 00:35:45 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.46 2024/03/24 01:24:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -70,7 +70,7 @@
 typedef struct x509_trust_st {
 	int trust;
 	int (*check_trust)(struct x509_trust_st *, X509 *);
-	int arg1;
+	int nid;
 } X509_TRUST;
 
 static int
@@ -116,7 +116,7 @@ static int
 trust_1oidany(X509_TRUST *trust, X509 *x)
 {
 	if (x->aux && (x->aux->trust || x->aux->reject))
-		return obj_trust(trust->arg1, x);
+		return obj_trust(trust->nid, x);
 	/* we don't have any trust settings: for compatibility
 	 * we return trusted if it is self signed
 	 */
@@ -127,7 +127,7 @@ static int
 trust_1oid(X509_TRUST *trust, X509 *x)
 {
 	if (x->aux)
-		return obj_trust(trust->arg1, x);
+		return obj_trust(trust->nid, x);
 	return X509_TRUST_UNTRUSTED;
 }
 
@@ -144,37 +144,37 @@ static const X509_TRUST trstandard[] = {
 	{
 		.trust = X509_TRUST_SSL_CLIENT,
 		.check_trust = trust_1oidany,
-		.arg1 = NID_client_auth,
+		.nid = NID_client_auth,
 	},
 	{
 		.trust = X509_TRUST_SSL_SERVER,
 		.check_trust = trust_1oidany,
-		.arg1 = NID_server_auth,
+		.nid = NID_server_auth,
 	},
 	{
 		.trust = X509_TRUST_EMAIL,
 		.check_trust = trust_1oidany,
-		.arg1 = NID_email_protect,
+		.nid = NID_email_protect,
 	},
 	{
 		.trust = X509_TRUST_OBJECT_SIGN,
 		.check_trust = trust_1oidany,
-		.arg1 = NID_code_sign,
+		.nid = NID_code_sign,
 	},
 	{
 		.trust = X509_TRUST_OCSP_SIGN,
 		.check_trust = trust_1oid,
-		.arg1 = NID_OCSP_sign,
+		.nid = NID_OCSP_sign,
 	},
 	{
 		.trust = X509_TRUST_OCSP_REQUEST,
 		.check_trust = trust_1oid,
-		.arg1 = NID_ad_OCSP,
+		.nid = NID_ad_OCSP,
 	},
 	{
 		.trust = X509_TRUST_TSA,
 		.check_trust = trust_1oidany,
-		.arg1 = NID_time_stamp,
+		.nid = NID_time_stamp,
 	},
 };
 
