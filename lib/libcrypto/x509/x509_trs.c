@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.47 2024/03/24 08:03:29 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.48 2024/03/24 08:27:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -78,21 +78,20 @@ obj_trust(int id, X509 *x)
 {
 	ASN1_OBJECT *obj;
 	int i, nid;
-	X509_CERT_AUX *ax;
+	X509_CERT_AUX *aux;
 
-	ax = x->aux;
-	if (!ax)
+	if ((aux = x->aux) == NULL)
 		return X509_TRUST_UNTRUSTED;
 
-	for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
-		obj = sk_ASN1_OBJECT_value(ax->reject, i);
+	for (i = 0; i < sk_ASN1_OBJECT_num(aux->reject); i++) {
+		obj = sk_ASN1_OBJECT_value(aux->reject, i);
 		nid = OBJ_obj2nid(obj);
 		if (nid == id || nid == NID_anyExtendedKeyUsage)
 			return X509_TRUST_REJECTED;
 	}
 
-	for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
-		obj = sk_ASN1_OBJECT_value(ax->trust, i);
+	for (i = 0; i < sk_ASN1_OBJECT_num(aux->trust); i++) {
+		obj = sk_ASN1_OBJECT_value(aux->trust, i);
 		nid = OBJ_obj2nid(obj);
 		if (nid == id || nid == NID_anyExtendedKeyUsage)
 			return X509_TRUST_TRUSTED;
