@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.17 2024/02/29 20:02:40 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.18 2024/03/24 14:00:11 jca Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -737,6 +737,28 @@ obj_name_do_all_test(void)
 	return failure;
 }
 
+static int
+evp_get_cipherbyname_test(void)
+{
+	int failure = 0;
+
+	/* Should handle NULL gracefully */
+	failure |= EVP_get_cipherbyname(NULL) != NULL;
+
+	return failure;
+}
+
+static int
+evp_get_digestbyname_test(void)
+{
+	int failure = 0;
+
+	/* Should handle NULL gracefully */
+	failure |= EVP_get_digestbyname(NULL) != NULL;
+
+	return failure;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -748,6 +770,8 @@ main(int argc, char **argv)
 	failed |= evp_do_all_test();
 	failed |= evp_aliases_test();
 	failed |= obj_name_do_all_test();
+	failed |= evp_get_cipherbyname_test();
+	failed |= evp_get_digestbyname_test();
 
 	OPENSSL_cleanup();
 
