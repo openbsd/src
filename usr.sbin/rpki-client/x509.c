@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.84 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.85 2024/03/24 00:38:58 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -1024,6 +1024,12 @@ x509_convert_seqnum(const char *fn, const ASN1_INTEGER *i)
 	if (i == NULL)
 		goto out;
 
+	if (ASN1_STRING_length(i) > 20) {
+		warnx("%s: %s: want 20 octets or fewer, have more.",
+		    __func__, fn);
+		goto out;
+	}
+
 	seqnum = ASN1_INTEGER_to_BN(i, NULL);
 	if (seqnum == NULL) {
 		warnx("%s: ASN1_INTEGER_to_BN error", fn);
@@ -1032,12 +1038,6 @@ x509_convert_seqnum(const char *fn, const ASN1_INTEGER *i)
 
 	if (BN_is_negative(seqnum)) {
 		warnx("%s: %s: want positive integer, have negative.",
-		    __func__, fn);
-		goto out;
-	}
-
-	if (BN_num_bytes(seqnum) > 20) {
-		warnx("%s: %s: want 20 octets or fewer, have more.",
 		    __func__, fn);
 		goto out;
 	}
