@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_attr.c,v 1.20 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: p12_attr.c,v 1.21 2024/03/24 06:48:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -74,7 +74,6 @@ PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name, int namelen)
 	else
 		return 0;
 }
-LCRYPTO_ALIAS(PKCS12_add_localkeyid);
 
 /* Add key usage to PKCS#8 structure */
 
@@ -99,8 +98,6 @@ PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name, int namelen)
 	else
 		return 0;
 }
-LCRYPTO_ALIAS(PKCS12_add_friendlyname_asc);
-
 
 int
 PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag, const unsigned char *name,
@@ -112,7 +109,6 @@ PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag, const unsigned char *name,
 	else
 		return 0;
 }
-LCRYPTO_ALIAS(PKCS12_add_friendlyname_uni);
 
 int
 PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name, int namelen)
@@ -123,7 +119,6 @@ PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name, int namelen)
 	else
 		return 0;
 }
-LCRYPTO_ALIAS(PKCS12_add_CSPName_asc);
 
 ASN1_TYPE *
 PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
@@ -140,7 +135,6 @@ PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
 	}
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS12_get_attr_gen);
 
 char *
 PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)

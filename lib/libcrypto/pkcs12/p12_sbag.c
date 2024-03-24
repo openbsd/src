@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_sbag.c,v 1.8 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: p12_sbag.c,v 1.9 2024/03/24 06:48:03 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999-2018.
@@ -166,7 +166,6 @@ PKCS12_SAFEBAG_create_cert(X509 *x509)
 	return PKCS12_item_pack_safebag(x509, &X509_it,
 	    NID_x509Certificate, NID_certBag);
 }
-LCRYPTO_ALIAS(PKCS12_SAFEBAG_create_cert);
 
 PKCS12_SAFEBAG *
 PKCS12_SAFEBAG_create_crl(X509_CRL *crl)
@@ -174,7 +173,6 @@ PKCS12_SAFEBAG_create_crl(X509_CRL *crl)
 	return PKCS12_item_pack_safebag(crl, &X509_CRL_it,
 	    NID_x509Crl, NID_crlBag);
 }
-LCRYPTO_ALIAS(PKCS12_SAFEBAG_create_crl);
 
 /* Turn PKCS8 object into a keybag */
 
@@ -193,7 +191,6 @@ PKCS12_SAFEBAG_create0_p8inf(PKCS8_PRIV_KEY_INFO *p8)
 
 	return bag;
 }
-LCRYPTO_ALIAS(PKCS12_SAFEBAG_create0_p8inf);
 
 /* Turn PKCS8 object into a shrouded keybag */
 
@@ -213,7 +210,6 @@ PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8)
 
 	return bag;
 }
-LCRYPTO_ALIAS(PKCS12_SAFEBAG_create0_pkcs8);
 
 PKCS12_SAFEBAG *
 PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid, const char *pass, int passlen,
@@ -237,4 +233,3 @@ PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid, const char *pass, int passlen,
 
 	return bag;
 }
-LCRYPTO_ALIAS(PKCS12_SAFEBAG_create_pkcs8_encrypt);

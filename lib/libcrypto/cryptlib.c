@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.48 2024/03/02 11:37:13 tb Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.49 2024/03/24 06:48:03 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -283,28 +283,24 @@ CRYPTO_THREADID_current(CRYPTO_THREADID *id)
 	memset(id, 0, sizeof(*id));
 	id->val = (unsigned long)pthread_self();
 }
-LCRYPTO_ALIAS(CRYPTO_THREADID_current);
 
 int
 CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b)
 {
 	return memcmp(a, b, sizeof(*a));
 }
-LCRYPTO_ALIAS(CRYPTO_THREADID_cmp);
 
 void
 CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src)
 {
 	memcpy(dest, src, sizeof(*src));
 }
-LCRYPTO_ALIAS(CRYPTO_THREADID_cpy);
 
 unsigned long
 CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
 {
 	return id->val;
 }
-LCRYPTO_ALIAS(CRYPTO_THREADID_hash);
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
 	defined(__INTEL__) || \

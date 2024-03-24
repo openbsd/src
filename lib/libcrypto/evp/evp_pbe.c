@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.47 2024/03/24 06:05:41 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.48 2024/03/24 06:48:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -642,4 +642,3 @@ PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	explicit_bzero(iv, EVP_MAX_IV_LENGTH);
 	return ret;
 }
-LCRYPTO_ALIAS(PKCS12_PBE_keyivgen);
