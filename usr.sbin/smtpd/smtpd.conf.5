@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.270 2024/03/18 08:48:50 op Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.271 2024/03/24 06:22:18 jsg Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 18 2024 $
+.Dd $Mdocdate: March 24 2024 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -1130,7 +1130,7 @@ is a successful delivery; status 71
 and 75
 .Pq Dv EX_TEMPFAIL
 are temporary failures; and all other exit status are considered
-permament failures.
+permanent failures.
 .Pp
 The following environment variables are set:
 .Pp
