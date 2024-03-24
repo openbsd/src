@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.13 2023/08/15 08:27:30 miod Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.14 2024/03/24 22:34:06 patrick Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -54,6 +54,7 @@
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_gpio.h>
 
 #define GEM_NETCTL			0x0000
 #define  GEM_NETCTL_DPRAM			(1 << 18)
@@ -388,6 +389,8 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct cad_softc *sc = (struct cad_softc *)self;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	uint32_t phy_reset_gpio[3];
+	uint32_t phy_reset_duration;
 	uint32_t hi, lo;
 	uint32_t rev, ver;
 	uint32_t val;
@@ -425,6 +428,20 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (i == GEM_LADDRNUM)
 			ether_fakeaddr(ifp);
+	}
+
+	if (OF_getpropintarray(faa->fa_node, "phy-reset-gpios", phy_reset_gpio,
+	    sizeof(phy_reset_gpio)) == sizeof(phy_reset_gpio)) {
+		phy_reset_duration = OF_getpropint(faa->fa_node,
+		    "phy-reset-duration", 1);
+		if (phy_reset_duration > 1000)
+			phy_reset_duration = 1;
+
+		gpio_controller_config_pin(phy_reset_gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(phy_reset_gpio, 1);
+		delay((phy_reset_duration + 1) * 1000);
+		gpio_controller_set_pin(phy_reset_gpio, 0);
+		delay(1000);
 	}
 
 	phy = OF_getpropint(faa->fa_node, "phy-handle", 0);
