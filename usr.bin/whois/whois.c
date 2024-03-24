@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.61 2024/03/16 06:29:36 jmc Exp $   */
+/*      $OpenBSD: whois.c,v 1.62 2024/03/24 19:51:47 millert Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -46,7 +46,6 @@
 
 #define	NICHOST		"whois.crsnic.net"
 #define	INICHOST	"whois.internic.net"
-#define	CNICHOST	"whois.corenic.net"
 #define	DNICHOST	"whois.nic.mil"
 #define	GNICHOST	"whois.nic.gov"
 #define	ANICHOST	"whois.arin.net"
@@ -297,10 +296,9 @@ whois(const char *query, const char *server, const char *port, int flags)
 /*
  * If no country is specified determine the top level domain from the query.
  * If the TLD is a number, query ARIN, otherwise, use TLD.whois-server.net.
- * If the domain does not contain '.', check to see if it is an NSI handle
- * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+) or an
- * ASN (starts with AS) or IPv6 address (contains ':'). Fall back to
- * NICHOST for the non-handle and non-IPv6 case.
+ * If the domain does not contain '.', check to see if it is an ASN (starts
+ * with AS) or IPv6 address (contains ':').
+ * Fall back to NICHOST for the non-handle and non-IPv6 case.
  */
 char *
 choose_server(const char *name, const char *country, char **tofree)
@@ -318,13 +316,7 @@ choose_server(const char *name, const char *country, char **tofree)
 	if (country != NULL)
 		qhead = country;
 	else if ((qhead = strrchr(name, '.')) == NULL) {
-		if (*name == '!')
-			return (INICHOST);
-		else if ((strncasecmp(name, "COCO-", 5) == 0 ||
-		    strncasecmp(name, "COHO-", 5) == 0) &&
-		    strtol(name + 5, &ep, 10) > 0 && *ep == '\0')
-			return (CNICHOST);
-		else if ((strncasecmp(name, "AS", 2) == 0) &&
+		if ((strncasecmp(name, "AS", 2) == 0) &&
 		    strtol(name + 2, &ep, 10) > 0 && *ep == '\0')
 			return (MNICHOST);
 		else if (strchr(name, ':') != NULL) /* IPv6 address */
