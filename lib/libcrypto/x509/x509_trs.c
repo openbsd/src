@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.46 2024/03/24 01:24:26 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.47 2024/03/24 08:03:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -83,22 +83,21 @@ obj_trust(int id, X509 *x)
 	ax = x->aux;
 	if (!ax)
 		return X509_TRUST_UNTRUSTED;
-	if (ax->reject) {
-		for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
-			obj = sk_ASN1_OBJECT_value(ax->reject, i);
-			nid = OBJ_obj2nid(obj);
-			if (nid == id || nid == NID_anyExtendedKeyUsage)
-				return X509_TRUST_REJECTED;
-		}
+
+	for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
+		obj = sk_ASN1_OBJECT_value(ax->reject, i);
+		nid = OBJ_obj2nid(obj);
+		if (nid == id || nid == NID_anyExtendedKeyUsage)
+			return X509_TRUST_REJECTED;
 	}
-	if (ax->trust) {
-		for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
-			obj = sk_ASN1_OBJECT_value(ax->trust, i);
-			nid = OBJ_obj2nid(obj);
-			if (nid == id || nid == NID_anyExtendedKeyUsage)
-				return X509_TRUST_TRUSTED;
-		}
+
+	for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
+		obj = sk_ASN1_OBJECT_value(ax->trust, i);
+		nid = OBJ_obj2nid(obj);
+		if (nid == id || nid == NID_anyExtendedKeyUsage)
+			return X509_TRUST_TRUSTED;
 	}
+
 	return X509_TRUST_UNTRUSTED;
 }
 
