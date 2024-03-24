@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.32 2023/11/13 11:46:24 tb Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.33 2024/03/24 11:30:12 beck Exp $ */
 
 /*
  * Copyright (c) 2017,2020 Bob Beck <beck@openbsd.org>
@@ -34,6 +34,7 @@
 
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
+#include <openssl/posix_time.h>
 #include <openssl/ssl.h>
 
 #include "http.h"
@@ -193,7 +194,7 @@ parse_ocsp_time(ASN1_GENERALIZEDTIME *gt)
 		return -1;
 	if (!ASN1_TIME_to_tm(gt, &tm))
 		return -1;
-	if ((rv = timegm(&tm)) == -1)
+	if (!OPENSSL_timegm(&tm, &rv))
 		return -1;
 	return rv;
 }

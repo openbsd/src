@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.32 2023/08/22 08:09:36 tb Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.33 2024/03/24 11:30:12 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -999,7 +999,7 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 	if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
 		goto err;
 
-	if (!(tm = gmtime(&sec)))
+	if (OPENSSL_gmtime(&sec, tm) == NULL)
 		goto err;
 
 	/*

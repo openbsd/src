@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_cl.c,v 1.24 2024/03/02 09:08:41 tb Exp $ */
+/* $OpenBSD: ocsp_cl.c,v 1.25 2024/03/24 11:30:12 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -68,6 +68,7 @@
 #include <openssl/ocsp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/posix_time.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
@@ -394,67 +395,59 @@ int
 OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
     ASN1_GENERALIZEDTIME *nextupd, long nsec, long maxsec)
 {
-	time_t t_now, t_tmp;
-	struct tm tm_this, tm_next, tm_tmp;
+	int64_t posix_next, posix_this, posix_now;
+	struct tm tm_this, tm_next;
 
-	time(&t_now);
+	/* Negative values of nsec make no sense */
+	if (nsec < 0)
+		return 0;
+
+	posix_now = time(NULL);
 
 	/*
 	 * Times must explicitly be a GENERALIZEDTIME as per section
 	 * 4.2.2.1 of RFC 6960 - It is invalid to accept other times
 	 * (such as UTCTIME permitted/required by RFC 5280 for certificates)
 	 */
-
-	/* Check thisUpdate is valid and not more than nsec in the future */
+	/* Check that thisUpdate is valid. */
 	if (ASN1_time_parse(thisupd->data, thisupd->length, &tm_this,
 	    V_ASN1_GENERALIZEDTIME) != V_ASN1_GENERALIZEDTIME) {
 		OCSPerror(OCSP_R_ERROR_IN_THISUPDATE_FIELD);
 		return 0;
-	} else {
-		t_tmp = t_now + nsec;
-		if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
-			return 0;
-		if (ASN1_time_tm_cmp(&tm_this, &tm_tmp) > 0) {
-			OCSPerror(OCSP_R_STATUS_NOT_YET_VALID);
-			return 0;
-		}
-
-		/*
-		 * If maxsec specified check thisUpdate is not more than maxsec
-		 * in the past
-		 */
-		if (maxsec >= 0) {
-			t_tmp = t_now - maxsec;
-			if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
-				return 0;
-			if (ASN1_time_tm_cmp(&tm_this, &tm_tmp) < 0) {
-				OCSPerror(OCSP_R_STATUS_TOO_OLD);
-				return 0;
-			}
-		}
+	}
+	if (!OPENSSL_tm_to_posix(&tm_this, &posix_this))
+		return 0;
+	/* thisUpdate must not be more than nsec in the future. */
+	if (posix_this - nsec > posix_now) {
+		OCSPerror(OCSP_R_STATUS_NOT_YET_VALID);
+		return 0;
+	}
+	/* thisUpdate must not be more than maxsec seconds in the past. */
+	if (maxsec >= 0 && posix_this < posix_now - maxsec) {
+		OCSPerror(OCSP_R_STATUS_TOO_OLD);
+		return 0;
 	}
 
-	if (!nextupd)
+	/* RFC 6960 section 4.2.2.1 allows for servers to not set nextUpdate */
+	if (nextupd == NULL)
 		return 1;
 
-	/* Check nextUpdate is valid and not more than nsec in the past */
+	/* Check that nextUpdate is valid. */
 	if (ASN1_time_parse(nextupd->data, nextupd->length, &tm_next,
 	    V_ASN1_GENERALIZEDTIME) != V_ASN1_GENERALIZEDTIME) {
 		OCSPerror(OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
 		return 0;
-	} else {
-		t_tmp = t_now - nsec;
-		if (gmtime_r(&t_tmp, &tm_tmp) == NULL)
-			return 0;
-		if (ASN1_time_tm_cmp(&tm_next, &tm_tmp) < 0) {
-			OCSPerror(OCSP_R_STATUS_EXPIRED);
-			return 0;
-		}
 	}
-
-	/* Also don't allow nextUpdate to precede thisUpdate */
-	if (ASN1_time_tm_cmp(&tm_next, &tm_this) < 0) {
+	if (!OPENSSL_tm_to_posix(&tm_next, &posix_next))
+		return 0;
+	/* Don't allow nextUpdate to precede thisUpdate. */
+	if (posix_next < posix_this) {
 		OCSPerror(OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
+		return 0;
+	}
+	/* nextUpdate must not be more than nsec seconds in the past. */
+	if (posix_next + nsec  < posix_now) {
+		OCSPerror(OCSP_R_STATUS_EXPIRED);
 		return 0;
 	}
 

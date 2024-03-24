@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ocsp.c,v 1.24 2023/11/13 10:56:19 tb Exp $ */
+/*	$OpenBSD: tls_ocsp.c,v 1.25 2024/03/24 11:30:12 beck Exp $ */
 /*
  * Copyright (c) 2015 Marko Kreen <markokr@gmail.com>
  * Copyright (c) 2016 Bob Beck <beck@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
+#include <openssl/posix_time.h>
 #include <openssl/x509.h>
 
 #include <tls.h>
@@ -68,7 +69,7 @@ tls_ocsp_asn1_parse_time(struct tls *ctx, ASN1_GENERALIZEDTIME *gt, time_t *gt_t
 		return -1;
 	if (!ASN1_TIME_to_tm(gt, &tm))
 		return -1;
-	if ((*gt_time = timegm(&tm)) == -1)
+	if (!OPENSSL_timegm(&tm, gt_time))
 		return -1;
 	return 0;
 }
