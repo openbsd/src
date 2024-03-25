@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.139 2024/03/25 04:02:29 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.140 2024/03/25 05:48:39 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -102,7 +102,7 @@ tlsext_alpn_check_format(CBS *cbs)
 }
 
 static int
-tlsext_alpn_server_parse(SSL *s, struct tlsext_data *td, uint16_t msg_types,
+tlsext_alpn_server_parse(SSL *s, struct tlsext_data *td, uint16_t msg_type,
     CBS *cbs, int *alert)
 {
 	CBS alpn;
