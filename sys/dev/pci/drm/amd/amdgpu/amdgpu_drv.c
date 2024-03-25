@@ -3491,15 +3491,14 @@ amdgpu_attachhook(struct device *self)
 	if (adev->mode_info.mode_config_initialized &&
 	    !list_empty(&adev_to_drm(adev)->mode_config.connector_list)) {
 
-		/* OpenBSD specific backlight property on connector */
-		amdgpu_init_backlight(adev);
-
 		/*
 		 * in linux via amdgpu_pci_probe -> drm_dev_register
-		 * must be after (local) backlight property added not before
-		 * and before drm_fbdev_generic_setup()
+		 * must be before drm_fbdev_generic_setup()
 		 */
 		drm_dev_register(dev, adev->flags);
+
+		/* OpenBSD specific backlight property on connector */
+		amdgpu_init_backlight(adev);
 
 		/* select 8 bpp console on low vram cards */
 		if (adev->gmc.real_vram_size <= (32*1024*1024))
