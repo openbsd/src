@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.16 2024/03/25 06:20:16 joshua Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.17 2024/03/25 11:10:17 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -174,9 +174,8 @@ EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 	int sctx;
 	int r = 0;
 
-	if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) {
+	if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)
 		return evp_digestsignfinal_sigctx_custom(ctx, sigret, siglen);
-	}
 
 	if (ctx->pctx->pmeth->signctx)
 		sctx = 1;
