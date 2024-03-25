@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.84 2024/03/25 04:06:41 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.85 2024/03/25 10:19:14 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -27,17 +27,10 @@
 #include "bytestring.h"
 #include "ssl_tlsext.h"
 
-struct tlsext_data {
-	CBS alpn;
-};
-
 struct tls_extension_funcs {
 	int (*needs)(SSL *s, uint16_t msg_type);
 	int (*build)(SSL *s, uint16_t msg_type, CBB *cbb);
-	int (*parse)(SSL *s, struct tlsext_data *td, uint16_t msg_type,
-	    CBS *cbs, int *alert);
-	int (*process)(SSL *s, struct tlsext_data *td, uint16_t msg_type,
-	    int *alert);
+	int (*process)(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
 };
 
 uint16_t tls_extension_type(const struct tls_extension *);
@@ -61,25 +54,6 @@ tls_extension_funcs(int type, const struct tls_extension_funcs **client_funcs,
 
 	if ((*server_funcs = tlsext_funcs(ext, 1)) == NULL)
 		return 0;
-
-	return 1;
-}
-
-static int
-tls_extension_parse(const struct tls_extension_funcs *tlsext_funcs, SSL *ssl,
-    uint16_t msg_type, CBS *cbs, int *alert)
-{
-	struct tlsext_data td;
-
-	memset(&td, 0, sizeof(td));
-
-	if (!tlsext_funcs->parse(ssl, &td, msg_type, cbs, alert))
-		return 0;
-
-	if (tlsext_funcs->process != NULL) {
-		if (!tlsext_funcs->process(ssl, &td, msg_type, alert))
-			return 0;
-	}
 
 	return 1;
 }
@@ -264,8 +238,7 @@ test_tlsext_alpn_client(void)
 
 	CBS_init(&cbs, tlsext_alpn_single_proto,
 	    sizeof(tlsext_alpn_single_proto));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse ALPN\n");
 		goto err;
 	}
@@ -332,8 +305,7 @@ test_tlsext_alpn_client(void)
 
 	CBS_init(&cbs, tlsext_alpn_multiple_protos,
 	    sizeof(tlsext_alpn_multiple_protos));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse ALPN\n");
 		goto err;
 	}
@@ -470,8 +442,7 @@ test_tlsext_alpn_server(void)
 	    sizeof(tlsext_alpn_single_proto));
 
 	/* Shouldn't be able to parse without requesting */
-	if (tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("Should only parse server if we requested it\n");
 		goto err;
 	}
@@ -482,8 +453,7 @@ test_tlsext_alpn_server(void)
 		FAIL("should be able to set ALPN to http/1.1\n");
 		goto err;
 	}
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("Should be able to parse server when we request it\n");
 		goto err;
 	}
@@ -696,8 +666,7 @@ test_tlsext_supportedgroups_client(void)
 
 	CBS_init(&cbs, tlsext_supportedgroups_client_secp384r1,
 	    sizeof(tlsext_supportedgroups_client_secp384r1));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client Ellipticcurves\n");
 		goto err;
 	}
@@ -803,8 +772,7 @@ test_tlsext_supportedgroups_client(void)
 
 	CBS_init(&cbs, tlsext_supportedgroups_client_nistp192and224,
 	    sizeof(tlsext_supportedgroups_client_nistp192and224));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client Ellipticcurves\n");
 		goto err;
 	}
@@ -1023,8 +991,7 @@ test_tlsext_ecpf_client(void)
 
 	CBS_init(&cbs, tlsext_ecpf_hello_uncompressed,
 	    sizeof(tlsext_ecpf_hello_uncompressed));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client ECPointFormats\n");
 		goto err;
 	}
@@ -1119,8 +1086,7 @@ test_tlsext_ecpf_client(void)
 
 	CBS_init(&cbs, tlsext_ecpf_hello_prefer_order,
 	    sizeof(tlsext_ecpf_hello_prefer_order));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client ECPointFormats\n");
 		goto err;
 	}
@@ -1248,8 +1214,7 @@ test_tlsext_ecpf_server(void)
 
 	CBS_init(&cbs, tlsext_ecpf_hello_prime,
 	    sizeof(tlsext_ecpf_hello_prime));
-	if (tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("must include uncompressed in server ECPointFormats\n");
 		goto err;
 	}
@@ -1339,8 +1304,7 @@ test_tlsext_ecpf_server(void)
 
 	CBS_init(&cbs, tlsext_ecpf_hello_prefer_order,
 	    sizeof(tlsext_ecpf_hello_prefer_order));
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server ECPointFormats\n");
 		goto err;
 	}
@@ -1475,8 +1439,7 @@ test_tlsext_ri_client(void)
 	}
 
 	CBS_init(&cbs, tlsext_ri_client, sizeof(tlsext_ri_client));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client RI\n");
 		goto err;
 	}
@@ -1500,8 +1463,7 @@ test_tlsext_ri_client(void)
 	ssl->s3->renegotiate_seen = 0;
 
 	CBS_init(&cbs, tlsext_ri_client, sizeof(tlsext_ri_client));
-	if (tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("parsed invalid client RI\n");
 		goto err;
 	}
@@ -1597,8 +1559,7 @@ test_tlsext_ri_server(void)
 	}
 
 	CBS_init(&cbs, tlsext_ri_server, sizeof(tlsext_ri_server));
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server RI\n");
 		goto err;
 	}
@@ -1624,8 +1585,7 @@ test_tlsext_ri_server(void)
 	ssl->s3->renegotiate_seen = 0;
 
 	CBS_init(&cbs, tlsext_ri_server, sizeof(tlsext_ri_server));
-	if (tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("parsed invalid server RI\n");
 		goto err;
 	}
@@ -1722,8 +1682,7 @@ test_tlsext_sigalgs_client(void)
 	}
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client SNI\n");
 		goto done;
 	}
@@ -1786,8 +1745,7 @@ test_tlsext_sigalgs_server(void)
 		errx(1, "failed to finish CBB");
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("server should not parse sigalgs\n");
 		goto done;
 	}
@@ -1912,8 +1870,7 @@ test_tlsext_sni_client(void)
 	ssl->hit = 0;
 
 	CBS_init(&cbs, tlsext_sni_client, sizeof(tlsext_sni_client));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client SNI\n");
 		goto err;
 	}
@@ -1945,8 +1902,7 @@ test_tlsext_sni_client(void)
 	}
 
 	CBS_init(&cbs, tlsext_sni_client, sizeof(tlsext_sni_client));
-	if (tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("parsed client with mismatched SNI\n");
 		goto err;
 	}
@@ -2039,8 +1995,7 @@ test_tlsext_sni_server(void)
 	ssl->session->tlsext_hostname = NULL;
 
 	CBS_init(&cbs, tlsext_sni_server, tlsext_sni_server_len);
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server SNI\n");
 		goto err;
 	}
@@ -2174,8 +2129,7 @@ test_tlsext_quic_transport_parameters_client(void)
 
 	CBS_init(&cbs, tlsext_quic_transport_data,
 	    sizeof(tlsext_quic_transport_data));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("server_parse of QUIC from server failed\n");
 		goto err;
 	}
@@ -2298,16 +2252,14 @@ test_tlsext_quic_transport_parameters_server(void)
 
 	ssl->quic_method = NULL;
 
-	if (tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_EE,
-	    &cbs, &alert)) {
+	if (client_funcs->process(ssl, SSL_TLSEXT_MSG_EE, &cbs, &alert)) {
 		FAIL("QUIC parse should have failed!\n");
 		goto err;
 	}
 
 	ssl->quic_method = &quic_method;
 
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("client_parse of QUIC from server failed\n");
 		goto err;
 	}
@@ -2412,8 +2364,7 @@ test_tlsext_ocsp_client(void)
 	}
 	CBS_init(&cbs, tls_ocsp_client_default,
 	    sizeof(tls_ocsp_client_default));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse TLSEXT_TYPE_status_request client\n");
 		goto err;
 	}
@@ -2938,8 +2889,7 @@ test_tlsext_srtp_client(void)
 	}
 
 	CBS_init(&cbs, tlsext_srtp_single, sizeof(tlsext_srtp_single));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
@@ -3007,8 +2957,7 @@ test_tlsext_srtp_client(void)
 
 	CBS_init(&cbs, tlsext_srtp_multiple,
 	    sizeof(tlsext_srtp_multiple));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
@@ -3039,8 +2988,7 @@ test_tlsext_srtp_client(void)
 
 	CBS_init(&cbs, tlsext_srtp_multiple_one_valid,
 	    sizeof(tlsext_srtp_multiple_one_valid));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
@@ -3069,8 +3017,7 @@ test_tlsext_srtp_client(void)
 
 	CBS_init(&cbs, tlsext_srtp_multiple_invalid,
 	    sizeof(tlsext_srtp_multiple_invalid));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("should be able to fall back to negotiated\n");
 		goto err;
 	}
@@ -3191,8 +3138,7 @@ test_tlsext_srtp_server(void)
 	}
 
 	CBS_init(&cbs, tlsext_srtp_single, sizeof(tlsext_srtp_single));
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse SRTP\n");
 		goto err;
 	}
@@ -3215,8 +3161,7 @@ test_tlsext_srtp_server(void)
 
 	CBS_init(&cbs, tlsext_srtp_multiple,
 	    sizeof(tlsext_srtp_multiple));
-	if (tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("should not find multiple entries from the server\n");
 		goto err;
 	}
@@ -3226,8 +3171,7 @@ test_tlsext_srtp_server(void)
 
 	CBS_init(&cbs, tlsext_srtp_single_invalid,
 	    sizeof(tlsext_srtp_single_invalid));
-	if (tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("should not be able to parse this\n");
 		goto err;
 	}
@@ -3579,8 +3523,7 @@ test_tlsext_versions_client(void)
 	}
 
 	CBS_init(&cbs, data, dlen);
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client versions\n");
 		goto done;
 	}
@@ -3659,8 +3602,7 @@ test_tlsext_versions_server(void)
 	}
 
 	CBS_init(&cbs, data, dlen);
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse client versions\n");
 		goto done;
 	}
@@ -3762,8 +3704,7 @@ test_tlsext_keyshare_client(void)
 	(ssl)->version = TLS1_3_VERSION;
 	CBS_init(&cbs, data, dlen);
 
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client keyshare\n");
 		goto done;
 	}
@@ -3897,8 +3838,7 @@ test_tlsext_keyshare_server(void)
 
 	CBS_init(&cbs, data, dlen);
 
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server keyshare\n");
 		goto done;
 	}
@@ -3998,8 +3938,7 @@ test_tlsext_cookie_client(void)
 	CBS_init(&cbs, data, dlen);
 
 	/* Checks cookie against what's in the hs.tls13 */
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client cookie\n");
 		goto done;
 	}
@@ -4088,8 +4027,7 @@ test_tlsext_cookie_server(void)
 
 	CBS_init(&cbs, data, dlen);
 
-	if (tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("client should not have parsed server cookie\n");
 		goto done;
 	}
@@ -4098,8 +4036,7 @@ test_tlsext_cookie_server(void)
 	ssl->s3->hs.tls13.cookie = NULL;
 	ssl->s3->hs.tls13.cookie_len = 0;
 
-	if (!tls_extension_parse(client_funcs, ssl, SSL_TLSEXT_MSG_SH,
-	    &cbs, &alert)) {
+	if (!client_funcs->process(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server cookie\n");
 		goto done;
 	}
@@ -4240,8 +4177,7 @@ test_tlsext_psk_modes_client(void)
 
 	CBS_init(&cbs, tlsext_default_psk_modes,
 	    sizeof(tlsext_default_psk_modes));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse psk kex modes\n");
 		goto err;
 	}
@@ -4263,8 +4199,7 @@ test_tlsext_psk_modes_client(void)
 	ssl->s3->hs.tls13.use_psk_dhe_ke = 0;
 
 	CBS_init(&cbs, tlsext_psk_only_mode, sizeof(tlsext_psk_only_mode));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse psk kex modes\n");
 		goto err;
 	}
@@ -4286,8 +4221,7 @@ test_tlsext_psk_modes_client(void)
 	ssl->s3->hs.tls13.use_psk_dhe_ke = 0;
 
 	CBS_init(&cbs, tlsext_psk_both_modes, sizeof(tlsext_psk_both_modes));
-	if (!tls_extension_parse(server_funcs, ssl, SSL_TLSEXT_MSG_CH,
-	    &cbs, &alert)) {
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse psk kex modes\n");
 		goto err;
 	}
