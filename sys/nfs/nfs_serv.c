@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.122 2023/03/08 04:43:09 guenther Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.123 2024/03/25 17:57:07 guenther Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1598,7 +1598,7 @@ nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = 0;
 		goto nfsmout;
 	}
-	if (vp->v_type == VDIR && (error = suser_ucred(cred)) != 0)
+	if (vp->v_type == VDIR)
 		goto out1;
 
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, NULL, procp);

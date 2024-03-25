@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.193 2023/04/26 10:00:37 beck Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.194 2024/03/25 17:57:07 guenther Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1769,11 +1769,6 @@ nfs_link(void *v)
 
 	info.nmi_v3 = NFS_ISV3(vp);
 
-	if (dvp->v_mount != vp->v_mount) {
-		pool_put(&namei_pool, cnp->cn_pnbuf);
-		vput(dvp);
-		return (EXDEV);
-	}
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error != 0) {
 		VOP_ABORTOP(dvp, cnp);

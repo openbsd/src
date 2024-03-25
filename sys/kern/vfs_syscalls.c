@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.363 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.364 2024/03/25 17:57:07 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1703,7 +1703,6 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 	struct vnode *vp;
 	struct nameidata nd;
 	int error, follow;
-	int flags;
 
 	if (flag & ~AT_SYMLINK_FOLLOW)
 		return (EINVAL);
@@ -1716,12 +1715,12 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 		return (error);
 	vp = nd.ni_vp;
 
-	flags = LOCKPARENT;
 	if (vp->v_type == VDIR) {
-		flags |= STRIPSLASHES;
+		error = EPERM;
+		goto out;
 	}
 
-	NDINITAT(&nd, CREATE, flags, UIO_USERSPACE, fd2, path2, p);
+	NDINITAT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, fd2, path2, p);
 	nd.ni_pledge = PLEDGE_CPATH;
 	nd.ni_unveil = UNVEIL_CREATE;
 	if ((error = namei(&nd)) != 0)
@@ -1736,6 +1735,15 @@ dolinkat(struct proc *p, int fd1, const char *path1, int fd2,
 		error = EEXIST;
 		goto out;
 	}
+
+	/* No cross-mount links! */
+	if (nd.ni_dvp->v_mount != vp->v_mount) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		vput(nd.ni_dvp);
+		error = EXDEV;
+		goto out;
+	}
+
 	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
 out:
 	vrele(vp);
