@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.27 2023/07/06 10:16:58 visa Exp $ */
+/* $OpenBSD: wsevent.c,v 1.28 2024/03/25 13:01:49 mvs Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -101,20 +101,21 @@ wsevent_init(struct wseventvar *ev)
 {
 	struct wscons_event *queue;
 
-	if (ev->q != NULL)
+	if (ev->ws_q != NULL)
 		return (0);
 
         queue = mallocarray(WSEVENT_QSIZE, sizeof(struct wscons_event),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
-	if (ev->q != NULL) {
-		free(queue, M_DEVBUF, WSEVENT_QSIZE * sizeof(struct wscons_event));
+	if (ev->ws_q != NULL) {
+		free(queue, M_DEVBUF,
+		    WSEVENT_QSIZE * sizeof(struct wscons_event));
 		return (1);
 	}
 
-	ev->q = queue;
-	ev->get = ev->put = 0;
+	ev->ws_q = queue;
+	ev->ws_get = ev->ws_put = 0;
 
-	sigio_init(&ev->sigio);
+	sigio_init(&ev->ws_sigio);
 
 	return (0);
 }
@@ -125,18 +126,18 @@ wsevent_init(struct wseventvar *ev)
 void
 wsevent_fini(struct wseventvar *ev)
 {
-	if (ev->q == NULL) {
+	if (ev->ws_q == NULL) {
 #ifdef DIAGNOSTIC
 		printf("wsevent_fini: already invoked\n");
 #endif
 		return;
 	}
-	free(ev->q, M_DEVBUF, WSEVENT_QSIZE * sizeof(struct wscons_event));
-	ev->q = NULL;
+	free(ev->ws_q, M_DEVBUF, WSEVENT_QSIZE * sizeof(struct wscons_event));
+	ev->ws_q = NULL;
 
-	klist_invalidate(&ev->sel.si_note);
+	klist_invalidate(&ev->ws_sel.si_note);
 
-	sigio_free(&ev->sigio);
+	sigio_free(&ev->ws_sigio);
 }
 
 /*
@@ -156,12 +157,12 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	if (uio->uio_resid < sizeof(struct wscons_event))
 		return (EMSGSIZE);	/* ??? */
 	s = splwsevent();
-	while (ev->get == ev->put) {
+	while (ev->ws_get == ev->ws_put) {
 		if (flags & IO_NDELAY) {
 			splx(s);
 			return (EWOULDBLOCK);
 		}
-		ev->wanted = 1;
+		ev->ws_wanted = 1;
 		error = tsleep_nsec(ev, PWSEVENT | PCATCH,
 		    "wsevent_read", INFSLP);
 		if (error) {
@@ -173,15 +174,15 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	 * Move wscons_event from tail end of queue (there is at least one
 	 * there).
 	 */
-	if (ev->put < ev->get)
-		cnt = WSEVENT_QSIZE - ev->get;	/* events in [get..QSIZE) */
+	if (ev->ws_put < ev->ws_get)
+		cnt = WSEVENT_QSIZE - ev->ws_get; /* events in [get..QSIZE) */
 	else
-		cnt = ev->put - ev->get;	/* events in [get..put) */
+		cnt = ev->ws_put - ev->ws_get;    /* events in [get..put) */
 	splx(s);
 	n = howmany(uio->uio_resid, sizeof(struct wscons_event));
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->q[ev->get],
+	error = uiomove((caddr_t)&ev->ws_q[ev->ws_get],
 	    cnt * sizeof(struct wscons_event), uio);
 	n -= cnt;
 	/*
@@ -189,14 +190,14 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	 * stop.  Otherwise move from front of queue to put index, if there
 	 * is anything there to move.
 	 */
-	if ((ev->get = (ev->get + cnt) % WSEVENT_QSIZE) != 0 ||
-	    n == 0 || error || (cnt = ev->put) == 0)
+	if ((ev->ws_get = (ev->ws_get + cnt) % WSEVENT_QSIZE) != 0 ||
+	    n == 0 || error || (cnt = ev->ws_put) == 0)
 		return (error);
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->q[0],
+	error = uiomove((caddr_t)&ev->ws_q[0],
 	    cnt * sizeof(struct wscons_event), uio);
-	ev->get = cnt;
+	ev->ws_get = cnt;
 	return (error);
 }
 
@@ -206,7 +207,7 @@ wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
 	struct klist *klist;
 	int s;
 
-	klist = &ev->sel.si_note;
+	klist = &ev->ws_sel.si_note;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -229,7 +230,7 @@ void
 filt_wseventdetach(struct knote *kn)
 {
 	struct wseventvar *ev = kn->kn_hook;
-	struct klist *klist = &ev->sel.si_note;
+	struct klist *klist = &ev->ws_sel.si_note;
 	int s;
 
 	s = splwsevent();
@@ -242,13 +243,13 @@ filt_wseventread(struct knote *kn, long hint)
 {
 	struct wseventvar *ev = kn->kn_hook;
 
-	if (ev->get == ev->put)
+	if (ev->ws_get == ev->ws_put)
 		return (0);
 
-	if (ev->get < ev->put)
-		kn->kn_data = ev->put - ev->get;
+	if (ev->ws_get < ev->ws_put)
+		kn->kn_data = ev->ws_put - ev->ws_get;
 	else
-		kn->kn_data = (WSEVENT_QSIZE - ev->get) + ev->put;
+		kn->kn_data = (WSEVENT_QSIZE - ev->ws_get) + ev->ws_put;
 
 	return (1);
 }

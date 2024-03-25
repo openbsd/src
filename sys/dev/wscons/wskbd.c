@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.118 2024/02/18 20:17:48 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.119 2024/03/25 13:01:49 mvs Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -650,8 +650,8 @@ wskbd_detach(struct device  *self, int flags)
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
 			/* Wake everyone by generating a dummy event. */
-			if (++evar->put >= WSEVENT_QSIZE)
-				evar->put = 0;
+			if (++evar->ws_put >= WSEVENT_QSIZE)
+				evar->ws_put = 0;
 			WSEVENT_WAKEUP(evar);
 			/* Wait for processes to go away. */
 			if (tsleep_nsec(sc, PZERO, "wskdet", SEC_TO_NSEC(60)))
@@ -757,16 +757,16 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 	}
 
 #ifdef DIAGNOSTIC
-	if (evar->q == NULL) {
+	if (evar->ws_q == NULL) {
 		printf("wskbd_input: evar->q=NULL\n");
 		return;
 	}
 #endif
 
-	put = evar->put;
-	ev = &evar->q[put];
+	put = evar->ws_put;
+	ev = &evar->ws_q[put];
 	put = (put + 1) % WSEVENT_QSIZE;
-	if (put == evar->get) {
+	if (put == evar->ws_get) {
 		log(LOG_WARNING, "%s: event queue overflow\n",
 		    sc->sc_base.me_dv.dv_xname);
 		return;
@@ -774,7 +774,7 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 	ev->type = type;
 	ev->value = value;
 	nanotime(&ev->time);
-	evar->put = put;
+	evar->ws_put = put;
 	WSEVENT_WAKEUP(evar);
 }
 
@@ -1008,7 +1008,7 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 	case FIOASYNC:
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
-		sc->sc_base.me_evp->async = *(int *)data != 0;
+		sc->sc_base.me_evp->ws_async = *(int *)data != 0;
 		return (0);
 
 	case FIOGETOWN:
@@ -1016,7 +1016,7 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		sigio_getown(&evar->sigio, cmd, data);
+		sigio_getown(&evar->ws_sigio, cmd, data);
 		return (0);
 
 	case FIOSETOWN:
@@ -1024,7 +1024,7 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		return (sigio_setown(&evar->sigio, cmd, data));
+		return (sigio_setown(&evar->ws_sigio, cmd, data));
 	}
 
 	/*

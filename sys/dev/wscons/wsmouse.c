@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.70 2022/10/16 18:23:44 bru Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.71 2024/03/25 13:01:49 mvs Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -265,8 +265,8 @@ wsmouse_detach(struct device *self, int flags)
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
 			/* Wake everyone by generating a dummy event. */
-			if (++evar->put >= WSEVENT_QSIZE)
-				evar->put = 0;
+			if (++evar->ws_put >= WSEVENT_QSIZE)
+				evar->ws_put = 0;
 			WSEVENT_WAKEUP(evar);
 			/* Wait for processes to go away. */
 			if (tsleep_nsec(sc, PZERO, "wsmdet", SEC_TO_NSEC(60)))
@@ -498,7 +498,7 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 	case FIOASYNC:
 		if (sc->sc_base.me_evp == NULL)
 			return (EINVAL);
-		sc->sc_base.me_evp->async = *(int *)data != 0;
+		sc->sc_base.me_evp->ws_async = *(int *)data != 0;
 		return (0);
 
 	case FIOGETOWN:
@@ -506,7 +506,7 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		sigio_getown(&evar->sigio, cmd, data);
+		sigio_getown(&evar->ws_sigio, cmd, data);
 		return (0);
 
 	case FIOSETOWN:
@@ -514,7 +514,7 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		return (sigio_setown(&evar->sigio, cmd, data));
+		return (sigio_setown(&evar->ws_sigio, cmd, data));
 
 	case WSMOUSEIO_GETPARAMS:
 	case WSMOUSEIO_SETPARAMS:
@@ -958,9 +958,9 @@ wsmouse_evq_put(struct evq_access *evq, int ev_type, int ev_value)
 	struct wscons_event *ev;
 	int space;
 
-	space = evq->evar->get - evq->put;
+	space = evq->evar->ws_get - evq->put;
 	if (space != 1 && space != 1 - WSEVENT_QSIZE) {
-		ev = &evq->evar->q[evq->put++];
+		ev = &evq->evar->ws_q[evq->put++];
 		evq->put %= WSEVENT_QSIZE;
 		ev->type = ev_type;
 		ev->value = ev_value;
@@ -1102,12 +1102,12 @@ void
 wsmouse_log_events(struct wsmouseinput *input, struct evq_access *evq)
 {
 	struct wscons_event *ev;
-	int n = evq->evar->put;
+	int n = evq->evar->ws_put;
 
 	if (n != evq->put) {
 		printf("[%s-ev][%04d]", DEVNAME(input), LOGTIME(&evq->ts));
 		while (n != evq->put) {
-			ev = &evq->evar->q[n++];
+			ev = &evq->evar->ws_q[n++];
 			n %= WSEVENT_QSIZE;
 			printf(" %d:%d", ev->type, ev->value);
 		}
@@ -1141,7 +1141,7 @@ wsmouse_input_sync(struct device *sc)
 	evq.evar = *input->evar;
 	if (evq.evar == NULL)
 		return;
-	evq.put = evq.evar->put;
+	evq.put = evq.evar->ws_put;
 	evq.result = EVQ_RESULT_NONE;
 	getnanotime(&evq.ts);
 
@@ -1184,7 +1184,7 @@ wsmouse_input_sync(struct device *sc)
 			if (input->flags & LOG_EVENTS) {
 				wsmouse_log_events(input, &evq);
 			}
-			evq.evar->put = evq.put;
+			evq.evar->ws_put = evq.put;
 			WSEVENT_WAKEUP(evq.evar);
 		}
 	}

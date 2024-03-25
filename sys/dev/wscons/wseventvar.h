@@ -1,4 +1,4 @@
-/* $OpenBSD: wseventvar.h,v 1.12 2023/09/08 20:00:28 mvs Exp $ */
+/* $OpenBSD: wseventvar.h,v 1.13 2024/03/25 13:01:49 mvs Exp $ */
 /* $NetBSD: wseventvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
 
 /*
@@ -84,25 +84,27 @@
 #define	WSEVENT_QSIZE	256	/* may need tuning; this uses 2k */
 
 struct wseventvar {
-	u_int	get;		/* get (read) index (modified synchronously) */
-	volatile u_int put;	/* put (write) index (modified by interrupt) */
-	struct selinfo sel;	/* process selecting */
-	struct sigio_ref sigio;	/* async I/O registration */
-	int	wanted;		/* wake up on input ready */
-	int	async;		/* send SIGIO on input ready */
-	struct wscons_event *q;	/* circular buffer (queue) of events */
+	u_int	ws_get;			/* get (read) index (modified
+					    synchronously) */
+	volatile u_int ws_put;		/* put (write) index (modified by
+					    interrupt) */
+	struct selinfo ws_sel;		/* process selecting */
+	struct sigio_ref ws_sigio;	/* async I/O registration */
+	int	ws_wanted;		/* wake up on input ready */
+	int	ws_async;		/* send SIGIO on input ready */
+	struct wscons_event *ws_q;	/* circular buffer (queue) of events */
 };
 
 #define	splwsevent()	spltty()
 
 #define	WSEVENT_WAKEUP(ev) { \
-	selwakeup(&(ev)->sel); \
-	if ((ev)->wanted) { \
-		(ev)->wanted = 0; \
+	selwakeup(&(ev)->ws_sel); \
+	if ((ev)->ws_wanted) { \
+		(ev)->ws_wanted = 0; \
 		wakeup((caddr_t)(ev)); \
 	} \
-	if ((ev)->async) \
-		pgsigio(&(ev)->sigio, SIGIO, 0); \
+	if ((ev)->ws_async) \
+		pgsigio(&(ev)->ws_sigio, SIGIO, 0); \
 }
 
 int	wsevent_init(struct wseventvar *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.56 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.57 2024/03/25 13:01:49 mvs Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -416,9 +416,9 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		}
 
 		s = spltty();
-		get = evar->get;
-		put = evar->put;
-		ev = &evar->q[put];
+		get = evar->ws_get;
+		put = evar->ws_put;
+		ev = &evar->ws_q[put];
 		if (++put % WSEVENT_QSIZE == get) {
 			put--;
 			splx(s);
@@ -428,7 +428,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 			put = 0;
 		*ev = *(struct wscons_event *)data;
 		nanotime(&ev->time);
-		evar->put = put;
+		evar->ws_put = put;
 		WSEVENT_WAKEUP(evar);
 		splx(s);
 		return (0);
@@ -500,7 +500,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		evar->async = *(int *)data != 0;
+		evar->ws_async = *(int *)data != 0;
 		return (0);
 	case FIOGETOWN:
 	case TIOCGPGRP:
@@ -509,7 +509,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		sigio_getown(&evar->sigio, cmd, data);
+		sigio_getown(&evar->ws_sigio, cmd, data);
 		return (0);
 	case FIOSETOWN:
 	case TIOCSPGRP:
@@ -518,7 +518,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
-		return (sigio_setown(&evar->sigio, cmd, data));
+		return (sigio_setown(&evar->ws_sigio, cmd, data));
 	default:
 		DPRINTF(("%s: unknown\n", sc->sc_base.me_dv.dv_xname));
 		break;

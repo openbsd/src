@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.33 2023/08/15 08:27:30 miod Exp $ */
+/* $OpenBSD: wstpad.c,v 1.34 2024/03/25 13:01:49 mvs Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -931,7 +931,7 @@ wstpad_tap_timeout(void *p)
 			tp->tap.state = TAP_DETECT;
 		}
 		if (ev) {
-			evq.put = evq.evar->put;
+			evq.put = evq.evar->ws_put;
 			evq.result = EVQ_RESULT_NONE;
 			getnanotime(&evq.ts);
 			wsmouse_evq_put(&evq, ev, btn);
@@ -940,7 +940,7 @@ wstpad_tap_timeout(void *p)
 				if (input->flags & LOG_EVENTS) {
 					wsmouse_log_events(input, &evq);
 				}
-				evq.evar->put = evq.put;
+				evq.evar->ws_put = evq.put;
 				WSEVENT_WAKEUP(evq.evar);
 			} else {
 				input->sbtn.sync |= tp->tap.button;
