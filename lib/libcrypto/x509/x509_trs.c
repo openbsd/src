@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.52 2024/03/25 02:18:35 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.53 2024/03/25 03:57:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,12 +68,6 @@
 #include "x509_internal.h"
 #include "x509_local.h"
 
-typedef struct x509_trust_st {
-	int trust;
-	int (*check_trust)(int, const X509 *);
-	int nid;
-} X509_TRUST;
-
 static int
 obj_trust(int id, const X509 *x)
 {
@@ -130,62 +124,10 @@ trust_1oid(int nid, const X509 *x)
 	return X509_TRUST_UNTRUSTED;
 }
 
-/* WARNING: the following table should be kept in order of trust
- * and without any gaps so we can just subtract the minimum trust
- * value to get an index into the table
- */
-
-static const X509_TRUST trstandard[] = {
-	{
-		.trust = X509_TRUST_COMPAT,
-		.check_trust = trust_compat,
-	},
-	{
-		.trust = X509_TRUST_SSL_CLIENT,
-		.check_trust = trust_1oidany,
-		.nid = NID_client_auth,
-	},
-	{
-		.trust = X509_TRUST_SSL_SERVER,
-		.check_trust = trust_1oidany,
-		.nid = NID_server_auth,
-	},
-	{
-		.trust = X509_TRUST_EMAIL,
-		.check_trust = trust_1oidany,
-		.nid = NID_email_protect,
-	},
-	{
-		.trust = X509_TRUST_OBJECT_SIGN,
-		.check_trust = trust_1oidany,
-		.nid = NID_code_sign,
-	},
-	{
-		.trust = X509_TRUST_OCSP_SIGN,
-		.check_trust = trust_1oid,
-		.nid = NID_OCSP_sign,
-	},
-	{
-		.trust = X509_TRUST_OCSP_REQUEST,
-		.check_trust = trust_1oid,
-		.nid = NID_ad_OCSP,
-	},
-	{
-		.trust = X509_TRUST_TSA,
-		.check_trust = trust_1oidany,
-		.nid = NID_time_stamp,
-	},
-};
-
-#define X509_TRUST_COUNT	(sizeof(trstandard) / sizeof(trstandard[0]))
-
-CTASSERT(X509_TRUST_MIN == 1 && X509_TRUST_MAX == X509_TRUST_COUNT);
-
 int
 X509_check_trust(X509 *x, int trust_id, int flags)
 {
-	const X509_TRUST *trust;
-	int idx;
+	int rv;
 
 	if (trust_id == -1)
 		return 1;
@@ -194,29 +136,39 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 	if (!x509v3_cache_extensions(x))
 		return X509_TRUST_UNTRUSTED;
 
-	/*
-	 * XXX beck/jsing This enables self signed certs to be trusted for
-	 * an unspecified id/trust flag value (this is NOT the
-	 * X509_TRUST_DEFAULT), which was the longstanding
-	 * openssl behaviour. boringssl does not have this behaviour.
-	 *
-	 * This should be revisited, but changing the default "not default"
-	 * may break things.
-	 */
-	if (trust_id == 0) {
-		int rv;
+	switch (trust_id) {
+	case 0:
+		/*
+		 * XXX beck/jsing This enables self signed certs to be trusted
+		 * for an unspecified id/trust flag value (this is NOT the
+		 * X509_TRUST_DEFAULT), which was the longstanding openssl
+		 * behaviour. boringssl does not have this behaviour.
+		 *
+		 * This should be revisited, but changing the default
+		 * "not default" may break things.
+		 */
 		rv = obj_trust(NID_anyExtendedKeyUsage, x);
 		if (rv != X509_TRUST_UNTRUSTED)
 			return rv;
 		return trust_compat(NID_undef, x);
-	}
-
-	if (trust_id < X509_TRUST_MIN || trust_id > X509_TRUST_MAX)
+	case X509_TRUST_COMPAT:
+		return trust_compat(NID_undef, x);
+	case X509_TRUST_SSL_CLIENT:
+		return trust_1oidany(NID_client_auth, x);
+	case X509_TRUST_SSL_SERVER:
+		return trust_1oidany(NID_server_auth, x);
+	case X509_TRUST_EMAIL:
+		return trust_1oidany(NID_email_protect, x);
+	case X509_TRUST_OBJECT_SIGN:
+		return trust_1oidany(NID_code_sign, x);
+	case X509_TRUST_OCSP_SIGN:
+		return trust_1oid(NID_OCSP_sign, x);
+	case X509_TRUST_OCSP_REQUEST:
+		return trust_1oid(NID_ad_OCSP, x);
+	case X509_TRUST_TSA:
+		return trust_1oidany(NID_time_stamp, x);
+	default:
 		return obj_trust(trust_id, x);
-
-	idx = trust_id - X509_TRUST_MIN;
-	trust = &trstandard[idx];
-
-	return trust->check_trust(trust->nid, x);
+	}
 }
 LCRYPTO_ALIAS(X509_check_trust);
