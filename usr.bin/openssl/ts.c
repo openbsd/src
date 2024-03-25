@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.27 2023/11/19 09:19:54 tb Exp $ */
+/* $OpenBSD: ts.c,v 1.28 2024/03/25 10:16:02 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -676,10 +676,12 @@ create_query(BIO *data_bio, char *digest, const EVP_MD *md, const char *policy,
 
 static int
 create_digest(BIO *input, char *digest, const EVP_MD *md,
-    unsigned char **md_value)
+    unsigned char **out_md_value)
 {
-	int md_value_len;
 	EVP_MD_CTX *md_ctx = NULL;
+	unsigned char *md_value = NULL;
+	int md_value_len;
+	int ret = 0;
 
 	md_value_len = EVP_MD_size(md);
 	if (md_value_len < 0)
@@ -690,8 +692,8 @@ create_digest(BIO *input, char *digest, const EVP_MD *md,
 		unsigned char buffer[4096];
 		int length;
 
-		*md_value = malloc(md_value_len);
-		if (*md_value == NULL)
+		md_value = malloc(md_value_len);
+		if (md_value == NULL)
 			goto err;
 
 		if ((md_ctx = EVP_MD_CTX_new()) == NULL)
@@ -705,31 +707,30 @@ create_digest(BIO *input, char *digest, const EVP_MD *md,
 				goto err;
 		}
 
-		if (!EVP_DigestFinal(md_ctx, *md_value, NULL))
+		if (!EVP_DigestFinal(md_ctx, md_value, NULL))
 			goto err;
-
-		EVP_MD_CTX_free(md_ctx);
-		md_ctx = NULL;
-
 	} else {
 		/* Digest bytes are specified with digest. */
 		long digest_len;
 
-		*md_value = string_to_hex(digest, &digest_len);
-		if (*md_value == NULL || md_value_len != digest_len) {
-			free(*md_value);
-			*md_value = NULL;
+		md_value = string_to_hex(digest, &digest_len);
+		if (md_value == NULL || md_value_len != digest_len) {
 			BIO_printf(bio_err, "bad digest, %d bytes "
 			    "must be specified\n", md_value_len);
 			goto err;
 		}
 	}
 
-	return md_value_len;
+	*out_md_value = md_value;
+	md_value = NULL;
+
+	ret = md_value_len;
 
  err:
+	free(md_value);
 	EVP_MD_CTX_free(md_ctx);
-	return 0;
+
+	return ret;
 }
 
 static ASN1_INTEGER *
