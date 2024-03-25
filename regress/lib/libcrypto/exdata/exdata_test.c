@@ -1,4 +1,4 @@
-/* $OpenBSD: exdata_test.c,v 1.1 2023/12/27 12:34:32 jsing Exp $ */
+/* $OpenBSD: exdata_test.c,v 1.2 2024/03/25 10:41:36 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -30,6 +30,10 @@ ex_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx, long argl,
 {
 	long *arg = argp;
 
+	if (ptr != NULL) {
+		fprintf(stderr, "FAIL: ex_new() called with ptr != NULL\n");
+		return 0;
+	}
 	if (argl != 1234 || *arg != 1234) {
 		fprintf(stderr, "FAIL: ex_new() with bad arguments\n");
 		return 0;
@@ -78,7 +82,7 @@ struct exdata {
 static int
 ex_data_test(void)
 {
-	struct exdata exdata1, exdata2;
+	struct exdata exdata1, exdata2, exdata3, exdata4;
 	void *argp;
 	long argl;
 	int idx1, idx2;
@@ -86,6 +90,8 @@ ex_data_test(void)
 
 	memset(&exdata1, 0, sizeof(exdata1));
 	memset(&exdata2, 0, sizeof(exdata2));
+	memset(&exdata3, 0, sizeof(exdata3));
+	memset(&exdata4, 0, sizeof(exdata4));
 
 	argl = 1234;
 	argp = &argl;
@@ -123,33 +129,33 @@ ex_data_test(void)
 	}
 
 	if (!CRYPTO_set_ex_data(&exdata1.exdata, idx2, &idx2)) {
-		fprintf(stderr, "FAIL: CRYPTO_set_ex_data() failed\n");
+		fprintf(stderr, "FAIL: CRYPTO_set_ex_data() failed with index 2\n");
 		goto failure;
 	}
 	if (!CRYPTO_set_ex_data(&exdata1.exdata, idx1, &idx1)) {
-		fprintf(stderr, "FAIL: CRYPTO_set_ex_data() failed\n");
+		fprintf(stderr, "FAIL: CRYPTO_set_ex_data() failed with index 1\n");
 		goto failure;
 	}
 	if (CRYPTO_get_ex_data(&exdata1.exdata, idx1) != &idx1) {
-		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed\n");
+		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed with index 1\n");
 		goto failure;
 	}
 	if (CRYPTO_get_ex_data(&exdata1.exdata, idx2) != &idx2) {
-		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed\n");
+		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed with index 2\n");
 		goto failure;
 	}
 
 	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_RSA, &exdata2.exdata,
 	    &exdata1.exdata)) {
-		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed\n");
+		fprintf(stderr, "FAIL: CRYPTO_dup_ex_data() failed\n");
 		goto failure;
 	}
 	if (CRYPTO_get_ex_data(&exdata2.exdata, idx1) != &idx1) {
-		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed\n");
+		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed after dup\n");
 		goto failure;
 	}
 	if (CRYPTO_get_ex_data(&exdata2.exdata, idx2) != &idx2) {
-		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed\n");
+		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed after dup\n");
 		goto failure;
 	}
 
@@ -172,11 +178,55 @@ ex_data_test(void)
 		goto failure;
 	}
 
+	/* The current implementation allows for data to be set without new. */
+	if (!CRYPTO_set_ex_data(&exdata3.exdata, idx1, &idx1)) {
+		fprintf(stderr, "FAIL: CRYPTO_set_ex_data() failed with index "
+		    "1 (without new)\n");
+		goto failure;
+	}
+	if (CRYPTO_get_ex_data(&exdata3.exdata, idx1) != &idx1) {
+		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed with index "
+		    "1 (without new)\n");
+		goto failure;
+	}
+
+	/* And indexes can be used without allocation. */
+	if (!CRYPTO_set_ex_data(&exdata3.exdata, idx2 + 1, &idx2)) {
+		fprintf(stderr, "FAIL: CRYPTO_set_ex_data() failed with index "
+		    "%d (unallocated)\n", idx2 + 1);
+		goto failure;
+	}
+	if (CRYPTO_get_ex_data(&exdata3.exdata, idx2 + 1) != &idx2) {
+		fprintf(stderr, "FAIL: CRYPTO_get_ex_data() failed with index "
+		    "%d\n", idx2 + 1);
+		goto failure;
+	}
+
+	/* And new can be called without getting any index first. */
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, &exdata4, &exdata4.exdata)) {
+		fprintf(stderr, "FAIL: CRYPTO_new_ex_data() failed with "
+		    "uninitialised index\n");
+		goto failure;
+	}
+
+	/* And dup can be called after new or without new... */
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, &exdata1, &exdata1.exdata)) {
+		fprintf(stderr, "FAIL: CRYPTO_new_ex_data() failed\n");
+		goto failure;
+	}
+	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_RSA, &exdata2.exdata,
+	    &exdata1.exdata)) {
+		fprintf(stderr, "FAIL: CRYPTO_dup_ex_data() after new failed\n");
+		goto failure;
+	}
+
 	failed = 0;
 
  failure:
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, &exdata1, &exdata1.exdata);
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, &exdata2, &exdata2.exdata);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, &exdata3, &exdata3.exdata);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, &exdata4, &exdata4.exdata);
 
 	return failed;
 }
