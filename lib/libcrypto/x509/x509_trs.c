@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.53 2024/03/25 03:57:13 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.54 2024/03/25 04:03:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -71,9 +71,9 @@
 static int
 obj_trust(int id, const X509 *x)
 {
+	const X509_CERT_AUX *aux;
 	ASN1_OBJECT *obj;
 	int i, nid;
-	const X509_CERT_AUX *aux;
 
 	if ((aux = x->aux) == NULL)
 		return X509_TRUST_UNTRUSTED;
@@ -99,28 +99,29 @@ static int
 trust_compat(int nid, const X509 *x)
 {
 	/* Extensions already cached in X509_check_trust(). */
-	if (x->ex_flags & EXFLAG_SS)
+	if ((x->ex_flags & EXFLAG_SS) != 0)
 		return X509_TRUST_TRUSTED;
-	else
-		return X509_TRUST_UNTRUSTED;
+
+	return X509_TRUST_UNTRUSTED;
 }
 
 static int
 trust_1oidany(int nid, const X509 *x)
 {
-	if (x->aux && (x->aux->trust || x->aux->reject))
+	/* Inspect the certificate's trust settings if there are any. */
+	if (x->aux != NULL && (x->aux->trust != NULL || x->aux->reject != NULL))
 		return obj_trust(nid, x);
-	/* we don't have any trust settings: for compatibility
-	 * we return trusted if it is self signed
-	 */
+
+	/* For compatibility we return trusted if the cert is self signed. */
 	return trust_compat(NID_undef, x);
 }
 
 static int
 trust_1oid(int nid, const X509 *x)
 {
-	if (x->aux)
+	if (x->aux != NULL)
 		return obj_trust(nid, x);
+
 	return X509_TRUST_UNTRUSTED;
 }
 
