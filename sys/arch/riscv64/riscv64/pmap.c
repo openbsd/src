@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2024/01/23 19:51:10 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 2024/03/25 23:10:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -1371,6 +1371,7 @@ pmap_bootstrap(long kvo, vaddr_t l1pt, vaddr_t kernelstart, vaddr_t kernelend,
 	//switching to new page table
 	uint64_t satp = pmap_kernel()->pm_satp;
 	__asm volatile("csrw satp, %0" :: "r" (satp) : "memory");
+	sfence_vma();
 
 	printf("all mapped\n");
 

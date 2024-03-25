@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 2023/12/12 07:37:21 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.18 2024/03/25 23:10:03 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -160,6 +160,8 @@ _start_kern_bootstrap:
 
 	.align 2
 va:
+	sfence.vma
+
 	/* Set the global pointer again, this time with the virtual address. */
 .option push
 .option norelax
@@ -314,6 +316,8 @@ cpu_hatch:
 
 	.align 2
 mpva:
+	sfence.vma
+
 	/* Set the global pointer again, this time with the virtual address. */
 .option push
 .option norelax
