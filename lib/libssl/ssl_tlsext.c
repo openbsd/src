@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.137 2023/04/28 18:14:59 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.138 2024/03/25 03:23:59 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2185,8 +2185,6 @@ static const struct tls_extension tls_extensions[] = {
 		},
 	},
 	{
-		/* MUST be last extension in CH per RFC 8446 section 4.2. */
-
 		.type = TLSEXT_TYPE_pre_shared_key,
 		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH,
 		.client = {
@@ -2250,6 +2248,7 @@ tlsext_funcs(const struct tls_extension *tlsext, int is_server)
 int
 tlsext_randomize_build_order(SSL *s)
 {
+	const struct tls_extension *psk_ext;
 	size_t idx, new_idx, psk_idx;
 	size_t alpn_idx = 0, sni_idx = 0;
 
@@ -2261,9 +2260,11 @@ tlsext_randomize_build_order(SSL *s)
 		return 0;
 	s->tlsext_build_order_len = N_TLS_EXTENSIONS;
 
-	/* RFC 8446, section 4.2: PSK must be the last extension in the CH. */
-	psk_idx = N_TLS_EXTENSIONS - 1;
-	s->tlsext_build_order[psk_idx] = &tls_extensions[psk_idx];
+	/* RFC 8446, section 4.2 - PSK MUST be the last extension in the CH. */
+	if ((psk_ext = tls_extension_find(TLSEXT_TYPE_pre_shared_key,
+	    &psk_idx)) == NULL)
+		return 0;
+	s->tlsext_build_order[N_TLS_EXTENSIONS - 1] = psk_ext;
 
 	/* Fisher-Yates shuffle with PSK fixed. */
 	for (idx = 0; idx < psk_idx; idx++) {
