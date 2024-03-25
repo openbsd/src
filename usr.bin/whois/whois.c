@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.62 2024/03/24 19:51:47 millert Exp $   */
+/*      $OpenBSD: whois.c,v 1.63 2024/03/25 15:52:39 millert Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -166,8 +166,8 @@ int
 whois(const char *query, const char *server, const char *port, int flags)
 {
 	FILE *fp;
-	char *buf, *p, *nhost, *nbuf = NULL;
-	size_t len;
+	char *p, *nhost, *buf = NULL;
+	size_t len, bufsize = 0;
 	int i, s, error;
 	const char *reason = NULL, *fmt;
 	struct addrinfo hints, *res, *ai;
@@ -228,24 +228,15 @@ whois(const char *query, const char *server, const char *port, int flags)
 	fprintf(fp, fmt, query);
 	fflush(fp);
 	nhost = NULL;
-	while ((buf = fgetln(fp, &len)) != NULL) {
+	while ((len = getline(&buf, &bufsize, fp)) != (size_t)-1) {
 		/* Nominet */
 		if (!(flags & WHOIS_SPAM_ME) &&
 		    len == 5 && strncmp(buf, "-- \r\n", 5) == 0)
 			break;
 
 		p = buf + len - 1;
-		if (isspace((unsigned char)*p)) {
-			do
-				*p = '\0';
-			while (p > buf && isspace((unsigned char)*--p));
-		} else {
-			if ((nbuf = malloc(len + 1)) == NULL)
-				err(1, "malloc");
-			memcpy(nbuf, buf, len);
-			nbuf[len] = '\0';
-			buf = nbuf;
-		}
+		while (p > buf && isspace((unsigned char)*p))
+			*p-- = '\0';
 		puts(buf);
 
 		if (nhost == NULL && (flags & WHOIS_RECURSE)) {
@@ -254,10 +245,8 @@ whois(const char *query, const char *server, const char *port, int flags)
 				while (isblank((unsigned char)*p))
 					p++;
 				if ((len = strcspn(p, " \t\n\r"))) {
-					if ((nhost = malloc(len + 1)) == NULL)
-						err(1, "malloc");
-					memcpy(nhost, p, len);
-					nhost[len] = '\0';
+					if ((nhost = strndup(p, len)) == NULL)
+						err(1, "strndup");
 				}
 			} else if (strcmp(server, ANICHOST) == 0) {
 				for (p = buf; *p != '\0'; p++)
@@ -283,7 +272,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 		}
 	}
 	fclose(fp);
-	free(nbuf);
+	free(buf);
 
 	if (nhost != NULL) {
 		error = whois(query, nhost, port, 0);
