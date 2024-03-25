@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.18 2024/02/23 01:06:18 kevlo Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.19 2024/03/25 20:25:13 mbuhl Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -117,7 +117,8 @@ int	igc_media_change(struct ifnet *);
 void	igc_iff(struct igc_softc *);
 void	igc_update_link_status(struct igc_softc *);
 int	igc_get_buf(struct rx_ring *, int);
-int	igc_tx_ctx_setup(struct tx_ring *, struct mbuf *, int, uint32_t *);
+int	igc_tx_ctx_setup(struct tx_ring *, struct mbuf *, int, uint32_t *,
+	    uint32_t *);
 
 void	igc_configure_queues(struct igc_softc *);
 void	igc_set_queues(struct igc_softc *, uint32_t, uint32_t, int);
@@ -790,10 +791,8 @@ igc_setup_interface(struct igc_softc *sc)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
-#ifdef notyet
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
 #endif
 
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
@@ -1001,7 +1000,11 @@ igc_start(struct ifqueue *ifq)
 		bus_dmamap_sync(txr->txdma.dma_tag, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-		if (igc_tx_ctx_setup(txr, m, prod, &olinfo_status)) {
+		cmd_type_len = IGC_ADVTXD_DCMD_IFCS | IGC_ADVTXD_DTYP_DATA |
+		    IGC_ADVTXD_DCMD_DEXT;
+
+		if (igc_tx_ctx_setup(txr, m, prod, &cmd_type_len,
+		    &olinfo_status)) {
 			/* Consume the first descriptor */
 			prod++;
 			prod &= mask;
@@ -1011,13 +1014,14 @@ igc_start(struct ifqueue *ifq)
 		for (i = 0; i < map->dm_nsegs; i++) {
 			txdesc = &txr->tx_base[prod];
 
-			cmd_type_len = IGC_ADVTXD_DCMD_IFCS | IGC_ADVTXD_DTYP_DATA |
-			    IGC_ADVTXD_DCMD_DEXT | map->dm_segs[i].ds_len;
+			CLR(cmd_type_len, IGC_ADVTXD_DTALEN_MASK);
+			cmd_type_len |= map->dm_segs[i].ds_len;
 			if (i == map->dm_nsegs - 1)
 				cmd_type_len |= IGC_ADVTXD_DCMD_EOP |
 				    IGC_ADVTXD_DCMD_RS;
 
-			htolem64(&txdesc->read.buffer_addr, map->dm_segs[i].ds_addr);
+			htolem64(&txdesc->read.buffer_addr,
+			    map->dm_segs[i].ds_addr);
 			htolem32(&txdesc->read.cmd_type_len, cmd_type_len);
 			htolem32(&txdesc->read.olinfo_status, olinfo_status);
 
@@ -2019,7 +2023,7 @@ igc_free_transmit_buffers(struct tx_ring *txr)
 
 int
 igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
-    uint32_t *olinfo_status)
+    uint32_t *cmd_type_len, uint32_t *olinfo_status)
 {
 	struct ether_extracted ext;
 	struct igc_adv_tx_context_desc *txdesc;
@@ -2027,6 +2031,7 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	uint32_t vlan_macip_lens = 0;
 	int off = 0;
 
+	ether_extract_headers(mp, &ext);
 	vlan_macip_lens |= (sizeof(*ext.eh) << IGC_ADVTXD_MACLEN_SHIFT);
 
 	/*
@@ -2034,17 +2039,14 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	 * be placed into the context descriptor. Hence
 	 * we need to make one even if not doing offloads.
 	 */
-#ifdef notyet
 #if NVLAN > 0
 	if (ISSET(mp->m_flags, M_VLANTAG)) {
 		uint32_t vtag = mp->m_pkthdr.ether_vtag;
 		vlan_macip_lens |= (vtag << IGC_ADVTXD_VLAN_SHIFT);
+		*cmd_type_len |= IGC_ADVTXD_DCMD_VLE;
 		off = 1;
 	}
 #endif
-#endif
-
-	ether_extract_headers(mp, &ext);
 
 	if (ext.ip4) {
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV4;
@@ -2056,8 +2058,6 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	} else if (ext.ip6) {
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV6;
 #endif
-	} else {
-		return 0;
 	}
 
 	vlan_macip_lens |= ext.iphlen;

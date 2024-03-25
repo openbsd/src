@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_base.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_base.h,v 1.2 2024/03/25 20:25:13 mbuhl Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -45,6 +45,7 @@ struct igc_adv_tx_context_desc {
 };
 
 /* Adv Transmit Descriptor Config Masks */
+#define IGC_ADVTXD_DTALEN_MASK	0x0000FFFF
 #define IGC_ADVTXD_DTYP_CTXT	0x00200000 /* Advanced Context Descriptor */
 #define IGC_ADVTXD_DTYP_DATA	0x00300000 /* Advanced Data Descriptor */
 #define IGC_ADVTXD_DCMD_EOP	0x01000000 /* End of Packet */
