@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.33 2024/03/24 11:30:12 beck Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.34 2024/03/25 07:02:22 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -990,7 +990,7 @@ static ASN1_GENERALIZEDTIME *
 TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
     time_t sec, long usec, unsigned precision)
 {
-	struct tm *tm = NULL;
+	struct tm tm;
 	char genTime_str[17 + TS_MAX_CLOCK_PRECISION_DIGITS];
 	char usecstr[TS_MAX_CLOCK_PRECISION_DIGITS + 2];
 	char *p;
@@ -999,7 +999,7 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 	if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
 		goto err;
 
-	if (OPENSSL_gmtime(&sec, tm) == NULL)
+	if (OPENSSL_gmtime(&sec, &tm) == NULL)
 		goto err;
 
 	/*
@@ -1037,8 +1037,8 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 	}
 	rv = snprintf(genTime_str, sizeof(genTime_str),
 	    "%04d%02d%02d%02d%02d%02d%sZ",
-	    tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-	    tm->tm_hour, tm->tm_min, tm->tm_sec, usecstr);
+	    tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+	    tm.tm_hour, tm.tm_min, tm.tm_sec, usecstr);
 	if (rv < 0 || rv >= sizeof(genTime_str))
 		goto err;
 
