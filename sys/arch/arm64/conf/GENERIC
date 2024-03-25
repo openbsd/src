@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.285 2024/03/24 22:34:48 patrick Exp $
+# $OpenBSD: GENERIC,v 1.286 2024/03/25 17:24:03 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -244,6 +244,7 @@ bse*		at fdt?
 bse*		at acpi?
 dwctwo*		at fdt?
 usb*		at dwctwo?
+rpigpio*	at fdt? early 1
 
 # Amlogic SoCs
 amlclock*	at fdt? early 1

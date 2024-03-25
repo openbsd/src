@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.68 2024/01/01 18:25:50 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.69 2024/03/25 17:24:03 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -258,6 +258,10 @@ device	smmu
 attach	smmu at fdt with smmu_fdt
 file	arch/arm64/dev/smmu.c			smmu
 file	arch/arm64/dev/smmu_fdt.c		smmu_fdt
+
+device	rpigpio
+attach	rpigpio at fdt
+file	arch/arm64/dev/rpigpio.c		rpigpio
 
 # ACPI
 include "dev/acpi/files.acpi"
