@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.34 2024/02/18 15:45:42 tb Exp $ */
+/* $OpenBSD: evp_key.c,v 1.35 2024/03/25 10:58:06 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,7 +135,7 @@ EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     const unsigned char *salt, const unsigned char *data, int datal,
     int count, unsigned char *key, unsigned char *iv)
 {
-	EVP_MD_CTX c;
+	EVP_MD_CTX *md_ctx;
 	unsigned char md_buf[EVP_MAX_MD_SIZE];
 	int niv, nkey, addmd = 0;
 	unsigned int mds = 0, i;
@@ -156,27 +156,29 @@ EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 	if (data == NULL)
 		return nkey;
 
-	EVP_MD_CTX_legacy_clear(&c);
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+
 	for (;;) {
-		if (!EVP_DigestInit_ex(&c, md, NULL))
+		if (!EVP_DigestInit_ex(md_ctx, md, NULL))
 			goto err;
 		if (addmd++)
-			if (!EVP_DigestUpdate(&c, &(md_buf[0]), mds))
+			if (!EVP_DigestUpdate(md_ctx, &(md_buf[0]), mds))
 				goto err;
-		if (!EVP_DigestUpdate(&c, data, datal))
+		if (!EVP_DigestUpdate(md_ctx, data, datal))
 			goto err;
 		if (salt != NULL)
-			if (!EVP_DigestUpdate(&c, salt, PKCS5_SALT_LEN))
+			if (!EVP_DigestUpdate(md_ctx, salt, PKCS5_SALT_LEN))
 				goto err;
-		if (!EVP_DigestFinal_ex(&c, &(md_buf[0]), &mds))
+		if (!EVP_DigestFinal_ex(md_ctx, &(md_buf[0]), &mds))
 			goto err;
 
 		for (i = 1; i < (unsigned int)count; i++) {
-			if (!EVP_DigestInit_ex(&c, md, NULL))
+			if (!EVP_DigestInit_ex(md_ctx, md, NULL))
 				goto err;
-			if (!EVP_DigestUpdate(&c, &(md_buf[0]), mds))
+			if (!EVP_DigestUpdate(md_ctx, &(md_buf[0]), mds))
 				goto err;
-			if (!EVP_DigestFinal_ex(&c, &(md_buf[0]), &mds))
+			if (!EVP_DigestFinal_ex(md_ctx, &(md_buf[0]), &mds))
 				goto err;
 		}
 		i = 0;
@@ -210,7 +212,7 @@ EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
 	rv = type->key_len;
 
 err:
-	EVP_MD_CTX_cleanup(&c);
+	EVP_MD_CTX_free(md_ctx);
 	explicit_bzero(md_buf, sizeof md_buf);
 	return rv;
 }
