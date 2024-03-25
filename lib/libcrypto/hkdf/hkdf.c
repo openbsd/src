@@ -1,5 +1,6 @@
-/* $OpenBSD: hkdf.c,v 1.10 2023/07/07 13:54:46 beck Exp $ */
-/* Copyright (c) 2014, Google Inc.
+/* $OpenBSD: hkdf.c,v 1.11 2024/03/25 13:09:13 jsing Exp $ */
+/*
+ * Copyright (c) 2014, Google Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +22,7 @@
 #include <openssl/err.h>
 #include <openssl/hmac.h>
 
+#include "bytestring.h"
 #include "evp_local.h"
 #include "hmac_local.h"
 
@@ -73,51 +75,61 @@ HKDF_expand(uint8_t *out_key, size_t out_len,
     const uint8_t *info, size_t info_len)
 {
 	const size_t digest_len = EVP_MD_size(digest);
-	uint8_t previous[EVP_MAX_MD_SIZE];
-	size_t n, done = 0;
-	unsigned int i;
+	uint8_t out_hmac[EVP_MAX_MD_SIZE];
+	size_t n, remaining;
+	uint8_t ctr;
+	HMAC_CTX *hmac = NULL;
+	CBB cbb;
 	int ret = 0;
-	HMAC_CTX hmac;
+
+	if (!CBB_init_fixed(&cbb, out_key, out_len))
+		goto err;
+
+	if ((hmac = HMAC_CTX_new()) == NULL)
+		goto err;
+	if (!HMAC_Init_ex(hmac, prk, prk_len, digest, NULL))
+		goto err;
+
+	remaining = out_len;
+	ctr = 0;
 
 	/* Expand key material to desired length. */
-	n = (out_len + digest_len - 1) / digest_len;
-	if (out_len + digest_len < out_len || n > 255) {
-		CRYPTOerror(EVP_R_TOO_LARGE);
-		return 0;
-	}
+	while (remaining > 0) {
+		if (++ctr == 0) {
+			CRYPTOerror(EVP_R_TOO_LARGE);
+			goto err;
+		}
 
-	HMAC_CTX_init(&hmac);
-	if (!HMAC_Init_ex(&hmac, prk, prk_len, digest, NULL))
-		goto out;
+		if (!HMAC_Update(hmac, info, info_len))
+			goto err;
+		if (!HMAC_Update(hmac, &ctr, 1))
+			goto err;
+		if (!HMAC_Final(hmac, out_hmac, NULL))
+			goto err;
 
-	for (i = 0; i < n; i++) {
-		uint8_t ctr = i + 1;
-		size_t todo;
+		if ((n = remaining) > digest_len)
+			n = digest_len;
 
-		if (i != 0 && (!HMAC_Init_ex(&hmac, NULL, 0, NULL, NULL) ||
-		    !HMAC_Update(&hmac, previous, digest_len)))
-			goto out;
+		if (!CBB_add_bytes(&cbb, out_hmac, n))
+			goto err;
 
-		if (!HMAC_Update(&hmac, info, info_len) ||
-		    !HMAC_Update(&hmac, &ctr, 1) ||
-		    !HMAC_Final(&hmac, previous, NULL))
-			goto out;
+		remaining -= n;
 
-		todo = digest_len;
-		if (todo > out_len - done)
-			todo = out_len - done;
-
-		memcpy(out_key + done, previous, todo);
-		done += todo;
+		if (remaining > 0) {
+			if (!HMAC_Init_ex(hmac, NULL, 0, NULL, NULL))
+				goto err;
+			if (!HMAC_Update(hmac, out_hmac, digest_len))
+				goto err;
+		}
 	}
 
 	ret = 1;
 
- out:
-	HMAC_CTX_cleanup(&hmac);
-	explicit_bzero(previous, sizeof(previous));
-	if (ret != 1)
-		CRYPTOerror(ERR_R_CRYPTO_LIB);
+ err:
+	CBB_cleanup(&cbb);
+	HMAC_CTX_free(hmac);
+	explicit_bzero(out_hmac, sizeof(out_hmac));
+
 	return ret;
 }
 LCRYPTO_ALIAS(HKDF_expand);
