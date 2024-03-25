@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.46 2023/12/29 05:33:32 tb Exp $ */
+/* $OpenBSD: by_dir.c,v 1.47 2024/03/25 00:05:49 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,9 +55,6 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -331,23 +328,27 @@ get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 		for (;;) {
 			(void) snprintf(b->data, b->max, "%s/%08lx.%s%d",
 			    ent->dir, h, postfix, k);
-
-			{
-				struct stat st;
-				if (stat(b->data, &st) < 0)
-					break;
-			}
-			/* found one. */
+			/*
+			 * Found one. Attempt to load it. This could fail for
+			 * any number of reasons from the file can't be opened,
+			 * the file contains garbage, etc. Clear the error stack
+			 * to avoid exposing the lower level error. These all
+			 * boil down to "we could not find CA/CRL".
+			 */
 			if (type == X509_LU_X509) {
 				if ((X509_load_cert_file(xl, b->data,
-				    ent->dir_type)) == 0)
+				    ent->dir_type)) == 0) {
+					ERR_clear_error();
 					break;
+				}
 			} else if (type == X509_LU_CRL) {
 				if ((X509_load_crl_file(xl, b->data,
-				    ent->dir_type)) == 0)
+				    ent->dir_type)) == 0) {
+					ERR_clear_error();
 					break;
+				}
 			}
-			/* else case will caught higher up */
+			/* The lack of a CA or CRL will be caught higher up. */
 			k++;
 		}
 
