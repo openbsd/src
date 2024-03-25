@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.48 2024/03/24 08:27:35 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.49 2024/03/25 00:46:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,6 +65,7 @@
 #include <openssl/x509v3.h>
 
 #include "crypto_internal.h"
+#include "x509_internal.h"
 #include "x509_local.h"
 
 typedef struct x509_trust_st {
@@ -103,7 +104,7 @@ obj_trust(int id, X509 *x)
 static int
 trust_compat(X509_TRUST *trust, X509 *x)
 {
-	X509_check_purpose(x, -1, 0);
+	/* Extensions already cached in X509_check_trust(). */
 	if (x->ex_flags & EXFLAG_SS)
 		return X509_TRUST_TRUSTED;
 	else
@@ -188,6 +189,10 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 
 	if (trust_id == -1)
 		return 1;
+
+	/* Call early so the trust handlers don't need to modify the certs. */
+	if (!x509v3_cache_extensions(x))
+		return X509_TRUST_UNTRUSTED;
 
 	/*
 	 * XXX beck/jsing This enables self signed certs to be trusted for
