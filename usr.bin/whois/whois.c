@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.63 2024/03/25 15:52:39 millert Exp $   */
+/*      $OpenBSD: whois.c,v 1.64 2024/03/25 19:11:52 op Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -264,7 +264,6 @@ whois(const char *query, const char *server, const char *port, int flags)
 
 		/* Verisign etc. */
 		if (!(flags & WHOIS_SPAM_ME) &&
-		    len >= sizeof(CHOPSPAM)-1 &&
 		    (strncasecmp(buf, CHOPSPAM, sizeof(CHOPSPAM)-1) == 0 ||
 		     strncasecmp(buf, &CHOPSPAM[4], sizeof(CHOPSPAM)-5) == 0)) {
 			printf("\n");
