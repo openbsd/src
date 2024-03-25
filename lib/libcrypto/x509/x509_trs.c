@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.50 2024/03/25 01:00:02 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.51 2024/03/25 01:48:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -69,17 +69,16 @@
 #include "x509_local.h"
 
 typedef struct x509_trust_st {
-	int trust;
-	int (*check_trust)(int, X509 *);
+	int (*check_trust)(int, const X509 *);
 	int nid;
 } X509_TRUST;
 
 static int
-obj_trust(int id, X509 *x)
+obj_trust(int id, const X509 *x)
 {
 	ASN1_OBJECT *obj;
 	int i, nid;
-	X509_CERT_AUX *aux;
+	const X509_CERT_AUX *aux;
 
 	if ((aux = x->aux) == NULL)
 		return X509_TRUST_UNTRUSTED;
@@ -102,7 +101,7 @@ obj_trust(int id, X509 *x)
 }
 
 static int
-trust_compat(int nid, X509 *x)
+trust_compat(int nid, const X509 *x)
 {
 	/* Extensions already cached in X509_check_trust(). */
 	if (x->ex_flags & EXFLAG_SS)
@@ -112,7 +111,7 @@ trust_compat(int nid, X509 *x)
 }
 
 static int
-trust_1oidany(int nid, X509 *x)
+trust_1oidany(int nid, const X509 *x)
 {
 	if (x->aux && (x->aux->trust || x->aux->reject))
 		return obj_trust(nid, x);
@@ -123,7 +122,7 @@ trust_1oidany(int nid, X509 *x)
 }
 
 static int
-trust_1oid(int nid, X509 *x)
+trust_1oid(int nid, const X509 *x)
 {
 	if (x->aux)
 		return obj_trust(nid, x);
