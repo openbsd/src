@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.49 2024/03/25 00:46:57 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.50 2024/03/25 01:00:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -70,7 +70,7 @@
 
 typedef struct x509_trust_st {
 	int trust;
-	int (*check_trust)(struct x509_trust_st *, X509 *);
+	int (*check_trust)(int, X509 *);
 	int nid;
 } X509_TRUST;
 
@@ -102,7 +102,7 @@ obj_trust(int id, X509 *x)
 }
 
 static int
-trust_compat(X509_TRUST *trust, X509 *x)
+trust_compat(int nid, X509 *x)
 {
 	/* Extensions already cached in X509_check_trust(). */
 	if (x->ex_flags & EXFLAG_SS)
@@ -112,21 +112,21 @@ trust_compat(X509_TRUST *trust, X509 *x)
 }
 
 static int
-trust_1oidany(X509_TRUST *trust, X509 *x)
+trust_1oidany(int nid, X509 *x)
 {
 	if (x->aux && (x->aux->trust || x->aux->reject))
-		return obj_trust(trust->nid, x);
+		return obj_trust(nid, x);
 	/* we don't have any trust settings: for compatibility
 	 * we return trusted if it is self signed
 	 */
-	return trust_compat(trust, x);
+	return trust_compat(NID_undef, x);
 }
 
 static int
-trust_1oid(X509_TRUST *trust, X509 *x)
+trust_1oid(int nid, X509 *x)
 {
 	if (x->aux)
-		return obj_trust(trust->nid, x);
+		return obj_trust(nid, x);
 	return X509_TRUST_UNTRUSTED;
 }
 
@@ -208,7 +208,7 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 		rv = obj_trust(NID_anyExtendedKeyUsage, x);
 		if (rv != X509_TRUST_UNTRUSTED)
 			return rv;
-		return trust_compat(NULL, x);
+		return trust_compat(NID_undef, x);
 	}
 
 	if (trust_id < X509_TRUST_MIN || trust_id > X509_TRUST_MAX)
@@ -217,6 +217,6 @@ X509_check_trust(X509 *x, int trust_id, int flags)
 	idx = trust_id - X509_TRUST_MIN;
 	trust = &trstandard[idx];
 
-	return trust->check_trust((X509_TRUST *)trust, x);
+	return trust->check_trust(trust->nid, x);
 }
 LCRYPTO_ALIAS(X509_check_trust);
