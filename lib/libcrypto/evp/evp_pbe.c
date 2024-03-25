@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.48 2024/03/24 06:48:03 tb Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.49 2024/03/25 11:38:47 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -234,7 +234,7 @@ int
 PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md, int en_de)
 {
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *md_ctx;
 	unsigned char md_tmp[EVP_MAX_MD_SIZE];
 	unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 	int i;
@@ -277,22 +277,23 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	else if (passlen == -1)
 		passlen = strlen(pass);
 
-	EVP_MD_CTX_legacy_clear(&ctx);
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
 
-	if (!EVP_DigestInit_ex(&ctx, md, NULL))
+	if (!EVP_DigestInit_ex(md_ctx, md, NULL))
 		goto err;
-	if (!EVP_DigestUpdate(&ctx, pass, passlen))
+	if (!EVP_DigestUpdate(md_ctx, pass, passlen))
 		goto err;
-	if (!EVP_DigestUpdate(&ctx, salt, saltlen))
+	if (!EVP_DigestUpdate(md_ctx, salt, saltlen))
 		goto err;
-	if (!EVP_DigestFinal_ex(&ctx, md_tmp, NULL))
+	if (!EVP_DigestFinal_ex(md_ctx, md_tmp, NULL))
 		goto err;
 	for (i = 1; i < iter; i++) {
-		if (!EVP_DigestInit_ex(&ctx, md, NULL))
+		if (!EVP_DigestInit_ex(md_ctx, md, NULL))
 			goto err;
-		if (!EVP_DigestUpdate(&ctx, md_tmp, mdsize))
+		if (!EVP_DigestUpdate(md_ctx, md_tmp, mdsize))
 			goto err;
-		if (!EVP_DigestFinal_ex (&ctx, md_tmp, NULL))
+		if (!EVP_DigestFinal_ex(md_ctx, md_tmp, NULL))
 			goto err;
 	}
 	if ((size_t)EVP_CIPHER_key_length(cipher) > sizeof(md_tmp)) {
@@ -315,7 +316,7 @@ PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	ret = 1;
 
  err:
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_free(md_ctx);
 	PBEPARAM_free(pbe);
 
 	return ret;
