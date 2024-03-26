@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.43 2023/06/03 21:37:53 krw Exp $	*/
+/*	$OpenBSD: boot.c,v 1.44 2024/03/26 14:46:48 claudio Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -212,7 +212,7 @@ chain(u_int64_t pentry, char *args, void *ssym, void *esym)
 }
 
 int
-loadfile(int fd, char *args)
+loadfile(int fd, char *args, int isupgrade)
 {
 	union {
 		Elf64_Ehdr elf64;
@@ -254,6 +254,16 @@ loadfile(int fd, char *args)
 
 	printf(" start=0x%lx\n", (unsigned long)entry);
 
+	/* Prevent re-upgrade: chmod a-x bsd.upgrade */
+	if (isupgrade) {
+		struct stat st;
+
+		if (fstat(fd, &st) == 0) {
+			st.st_mode &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
+			if (fchmod(fd, st.st_mode) == -1)
+				printf("fchmod a-x %s: failed\n", opened_name);
+		}
+	}
 	close(fd);
 
 #ifdef SOFTRAID
@@ -276,6 +286,10 @@ upgrade(void)
 
 	if (stat("/bsd.upgrade", &sb) < 0)
 		return 0;
+	if ((sb.st_mode & S_IXUSR) == 0) {
+		printf("/bsd.upgrade is not u+x\n");
+		return 0;
+        }
 	return 1;
 }
 
@@ -413,6 +427,7 @@ main(void)
 {
 	extern char version[];
 	int chosen;
+	int isupgrade = 0;
 	char bootline[512];		/* Should check size? */
 	char *cp;
 	int fd;
@@ -461,10 +476,10 @@ main(void)
 		just_bootline[0] = bootline;
 		just_bootline[1] = 0;
 		bootlp = just_bootline;
-	}
-	if (bootlp == kernels && upgrade()) {
+	} else if (upgrade()) {
 		just_bootline[0] = "/bsd.upgrade";
 		just_bootline[1] = 0;
+		isupgrade = 1;
 		bootlp = just_bootline;
 		printf("upgrade detected: switching to %s\n", *bootlp);
 	}
@@ -514,7 +529,7 @@ main(void)
 		if (debug)
 			printf("main: Calling loadfile(fd, %s)\n", opened_name);
 #endif
-		(void)loadfile(fd, opened_name);
+		(void)loadfile(fd, opened_name, isupgrade);
 	}
 	return 0;
 }
