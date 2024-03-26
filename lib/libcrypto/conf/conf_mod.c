@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.36 2024/03/20 22:11:07 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.37 2024/03/26 00:24:11 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -279,62 +279,50 @@ module_find(char *name)
 static int
 module_init(CONF_MODULE *mod, char *name, char *value, const CONF *cnf)
 {
-	int ret = 1;
-	int init_called = 0;
 	CONF_IMODULE *imod = NULL;
+	int need_finish = 0;
+	int ret = -1;
 
-	/* Otherwise add initialized module to list */
-	imod = malloc(sizeof(CONF_IMODULE));
-	if (!imod)
+	if (name == NULL || value == NULL)
+		goto err;
+
+	if ((imod = calloc(1, sizeof(*imod))) == NULL)
 		goto err;
 
 	imod->mod = mod;
-	imod->name = name ? strdup(name) : NULL;
-	imod->value = value ? strdup(value) : NULL;
-	imod->usr_data = NULL;
 
-	if (!imod->name || !imod->value)
-		goto memerr;
-
-	/* Try to initialize module */
-	if (mod->init) {
-		ret = mod->init(imod, cnf);
-		init_called = 1;
-		/* Error occurred, exit */
-		if (ret <= 0)
-			goto err;
-	}
-
-	if (initialized_modules == NULL) {
-		initialized_modules = sk_CONF_IMODULE_new_null();
-		if (!initialized_modules) {
-			CONFerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	}
-
-	if (!sk_CONF_IMODULE_push(initialized_modules, imod)) {
-		CONFerror(ERR_R_MALLOC_FAILURE);
+	if ((imod->name = strdup(name)) == NULL)
 		goto err;
+	if ((imod->value = strdup(value)) == NULL)
+		goto err;
+
+	if (mod->init != NULL) {
+		need_finish = 1;
+		if (mod->init(imod, cnf) <= 0)
+			goto err;
 	}
+
+	if (initialized_modules == NULL)
+		initialized_modules = sk_CONF_IMODULE_new_null();
+	if (initialized_modules == NULL)
+		goto err;
+
+	if (!sk_CONF_IMODULE_push(initialized_modules, imod))
+		goto err;
+	imod = NULL;
+	need_finish = 0;
 
 	mod->links++;
 
-	return ret;
+	ret = 1;
 
-err:
-	/* We've started the module so we'd better finish it */
-	if (mod->finish && init_called)
+ err:
+	if (need_finish && mod->finish != NULL)
 		mod->finish(imod);
 
-memerr:
-	if (imod) {
-		free(imod->name);
-		free(imod->value);
-		free(imod);
-	}
+	imodule_free(imod);
 
-	return -1;
+	return ret;
 }
 
 /* Unload any dynamic modules that have a link count of zero:
