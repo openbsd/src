@@ -1,4 +1,4 @@
-/* $OpenBSD: p_verify.c,v 1.19 2024/02/18 15:45:42 tb Exp $ */
+/* $OpenBSD: p_verify.c,v 1.20 2024/03/26 05:50:49 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,16 +71,16 @@ EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
 {
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;
-	EVP_MD_CTX tmp_ctx;
+	EVP_MD_CTX *md_ctx;
 	EVP_PKEY_CTX *pkctx = NULL;
 	int ret = 0;
 
-	EVP_MD_CTX_legacy_clear(&tmp_ctx);
-	if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
 		goto err;
-	if (!EVP_DigestFinal_ex(&tmp_ctx, &(m[0]), &m_len))
+	if (!EVP_MD_CTX_copy_ex(md_ctx, ctx))
 		goto err;
-	EVP_MD_CTX_cleanup(&tmp_ctx);
+	if (!EVP_DigestFinal_ex(md_ctx, &(m[0]), &m_len))
+		goto err;
 
 	ret = -1;
 	if ((pkctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL)
@@ -92,6 +92,7 @@ EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
 	ret = EVP_PKEY_verify(pkctx, sigbuf, siglen, m, m_len);
 
  err:
+	EVP_MD_CTX_free(md_ctx);
 	EVP_PKEY_CTX_free(pkctx);
 	return ret;
 }
