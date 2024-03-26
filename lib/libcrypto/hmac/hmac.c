@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.32 2024/02/18 15:45:42 tb Exp $ */
+/* $OpenBSD: hmac.c,v 1.33 2024/03/26 12:10:50 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,14 +180,7 @@ LCRYPTO_ALIAS(HMAC_Final);
 HMAC_CTX *
 HMAC_CTX_new(void)
 {
-	HMAC_CTX *ctx;
-
-	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
-		return NULL;
-
-	HMAC_CTX_init(ctx);
-
-	return ctx;
+	return calloc(1, sizeof(HMAC_CTX));
 }
 LCRYPTO_ALIAS(HMAC_CTX_new);
 
