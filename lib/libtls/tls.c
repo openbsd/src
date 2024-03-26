@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.98 2023/07/02 06:37:27 beck Exp $ */
+/* $OpenBSD: tls.c,v 1.99 2024/03/26 00:50:22 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -77,19 +77,19 @@ tls_error_clear(struct tls_error *error)
 {
 	free(error->msg);
 	error->msg = NULL;
-	error->num = 0;
+	error->errno_value = 0;
 	error->tls = 0;
 }
 
 static int
-tls_error_vset(struct tls_error *error, int errnum, const char *fmt, va_list ap)
+tls_error_vset(struct tls_error *error, int errno_value, const char *fmt, va_list ap)
 {
 	char *errmsg = NULL;
 	int rv = -1;
 
 	tls_error_clear(error);
 
-	error->num = errnum;
+	error->errno_value = errno_value;
 	error->tls = 1;
 
 	if (vasprintf(&errmsg, fmt, ap) == -1) {
@@ -97,12 +97,12 @@ tls_error_vset(struct tls_error *error, int errnum, const char *fmt, va_list ap)
 		goto err;
 	}
 
-	if (errnum == -1) {
+	if (errno_value == -1) {
 		error->msg = errmsg;
 		return (0);
 	}
 
-	if (asprintf(&error->msg, "%s: %s", errmsg, strerror(errnum)) == -1) {
+	if (asprintf(&error->msg, "%s: %s", errmsg, strerror(errno_value)) == -1) {
 		error->msg = NULL;
 		goto err;
 	}
@@ -118,12 +118,12 @@ int
 tls_error_set(struct tls_error *error, const char *fmt, ...)
 {
 	va_list ap;
-	int errnum, rv;
+	int errno_value, rv;
 
-	errnum = errno;
+	errno_value = errno;
 
 	va_start(ap, fmt);
-	rv = tls_error_vset(error, errnum, fmt, ap);
+	rv = tls_error_vset(error, errno_value, fmt, ap);
 	va_end(ap);
 
 	return (rv);
@@ -709,7 +709,7 @@ tls_reset(struct tls *ctx)
 
 	free(ctx->error.msg);
 	ctx->error.msg = NULL;
-	ctx->error.num = -1;
+	ctx->error.errno_value = -1;
 
 	tls_conninfo_free(ctx->conninfo);
 	ctx->conninfo = NULL;

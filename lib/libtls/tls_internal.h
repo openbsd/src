@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.83 2023/06/27 18:19:59 tb Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.84 2024/03/26 00:50:22 joshua Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -46,7 +46,7 @@ union tls_addr {
 
 struct tls_error {
 	char *msg;
-	int num;
+	int errno_value;
 	int tls;
 };
 
