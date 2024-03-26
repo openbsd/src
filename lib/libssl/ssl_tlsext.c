@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.141 2024/03/25 10:18:13 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.142 2024/03/26 01:21:34 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1999,6 +1999,20 @@ static const struct tls_extension tls_extensions[] = {
 		},
 	},
 	{
+		.type = TLSEXT_TYPE_supported_groups,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
+		.client = {
+			.needs = tlsext_supportedgroups_client_needs,
+			.build = tlsext_supportedgroups_client_build,
+			.process = tlsext_supportedgroups_client_process,
+		},
+		.server = {
+			.needs = tlsext_supportedgroups_server_needs,
+			.build = tlsext_supportedgroups_server_build,
+			.process = tlsext_supportedgroups_server_process,
+		},
+	},
+	{
 		.type = TLSEXT_TYPE_key_share,
 		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH |
 		    SSL_TLSEXT_MSG_HRR,
@@ -2068,20 +2082,6 @@ static const struct tls_extension tls_extensions[] = {
 			.needs = tlsext_ecpf_server_needs,
 			.build = tlsext_ecpf_server_build,
 			.process = tlsext_ecpf_server_process,
-		},
-	},
-	{
-		.type = TLSEXT_TYPE_supported_groups,
-		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
-		.client = {
-			.needs = tlsext_supportedgroups_client_needs,
-			.build = tlsext_supportedgroups_client_build,
-			.process = tlsext_supportedgroups_client_process,
-		},
-		.server = {
-			.needs = tlsext_supportedgroups_server_needs,
-			.build = tlsext_supportedgroups_server_build,
-			.process = tlsext_supportedgroups_server_process,
 		},
 	},
 	{
