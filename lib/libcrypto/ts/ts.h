@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.23 2023/11/19 15:46:10 tb Exp $ */
+/* $OpenBSD: ts.h,v 1.24 2024/03/26 00:39:22 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -389,8 +389,8 @@ int TS_RESP_CTX_set_accuracy(TS_RESP_CTX *ctx,
    '0' means sec, '3' msec, '6' usec, and so on. Default is 0. */
 int TS_RESP_CTX_set_clock_precision_digits(TS_RESP_CTX *ctx,
     unsigned clock_precision_digits);
-/* At most we accept usec precision. */
-#define TS_MAX_CLOCK_PRECISION_DIGITS	6
+/* At most we accept sec precision. */
+#define TS_MAX_CLOCK_PRECISION_DIGITS 0
 
 /* No flags are set by default. */
 void TS_RESP_CTX_add_flags(TS_RESP_CTX *ctx, int flags);

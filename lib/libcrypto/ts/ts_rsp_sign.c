@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.34 2024/03/25 07:02:22 beck Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.35 2024/03/26 00:39:22 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -89,9 +89,6 @@ static ESS_SIGNING_CERT *ESS_SIGNING_CERT_new_init(X509 *signcert,
 static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed);
 static int TS_TST_INFO_content_new(PKCS7 *p7);
 static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
-
-static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
-    ASN1_GENERALIZEDTIME *, time_t, long, unsigned);
 
 /* Default callbacks for response generation. */
 
@@ -434,7 +431,7 @@ LCRYPTO_ALIAS(TS_RESP_CTX_get_tst_info);
 int
 TS_RESP_CTX_set_clock_precision_digits(TS_RESP_CTX *ctx, unsigned precision)
 {
-	if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
+	if (precision > 0)
 		return 0;
 	ctx->clock_precision_digits = precision;
 	return 1;
@@ -650,8 +647,7 @@ TS_RESP_create_tst_info(TS_RESP_CTX *ctx, ASN1_OBJECT *policy)
 	    !TS_TST_INFO_set_serial(tst_info, serial))
 		goto end;
 	if (!(*ctx->time_cb)(ctx, ctx->time_cb_data, &sec, &usec) ||
-	    !(asn1_time = TS_RESP_set_genTime_with_precision(NULL, sec, usec,
-	    ctx->clock_precision_digits)) ||
+	    ((asn1_time = ASN1_GENERALIZEDTIME_set(NULL, sec)) == NULL) ||
 	    !TS_TST_INFO_set_time(tst_info, asn1_time))
 		goto end;
 
@@ -983,76 +979,4 @@ err:
 	free(pp);
 
 	return 0;
-}
-
-
-static ASN1_GENERALIZEDTIME *
-TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
-    time_t sec, long usec, unsigned precision)
-{
-	struct tm tm;
-	char genTime_str[17 + TS_MAX_CLOCK_PRECISION_DIGITS];
-	char usecstr[TS_MAX_CLOCK_PRECISION_DIGITS + 2];
-	char *p;
-	int rv;
-
-	if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
-		goto err;
-
-	if (OPENSSL_gmtime(&sec, &tm) == NULL)
-		goto err;
-
-	/*
-	 * Put "genTime_str" in GeneralizedTime format.  We work around the
-	 * restrictions imposed by rfc3280 (i.e. "GeneralizedTime values MUST
-	 * NOT include fractional seconds") and OpenSSL related functions to
-	 * meet the rfc3161 requirement: "GeneralizedTime syntax can include
-	 * fraction-of-second details".
-	 */
-	if (precision > 0) {
-		/* To make things a bit harder, X.690 | ISO/IEC 8825-1 provides
-		   the following restrictions for a DER-encoding, which OpenSSL
-		   (specifically ASN1_GENERALIZEDTIME_check() function) doesn't
-		   support:
-		   "The encoding MUST terminate with a "Z" (which means "Zulu"
-		   time). The decimal point element, if present, MUST be the
-		   point option ".". The fractional-seconds elements,
-		   if present, MUST omit all trailing 0's;
-		   if the elements correspond to 0, they MUST be wholly
-		   omitted, and the decimal point element also MUST be
-		   omitted." */
-		(void) snprintf(usecstr, sizeof(usecstr), ".%06ld", usec);
-		/* truncate and trim trailing 0 */
-		usecstr[precision + 1] = '\0';
-		p = usecstr + strlen(usecstr) - 1;
-		while (p > usecstr && *p == '0')
-			*p-- = '\0';
-		/* if we've reached the beginning, delete the . too */
-		if (p == usecstr)
-			*p = '\0';
-
-	} else {
-		/* empty */
-		usecstr[0] = '\0';
-	}
-	rv = snprintf(genTime_str, sizeof(genTime_str),
-	    "%04d%02d%02d%02d%02d%02d%sZ",
-	    tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-	    tm.tm_hour, tm.tm_min, tm.tm_sec, usecstr);
-	if (rv < 0 || rv >= sizeof(genTime_str))
-		goto err;
-
-	/* Now call OpenSSL to check and set our genTime value */
-	if (!asn1_time && !(asn1_time = ASN1_GENERALIZEDTIME_new()))
-		goto err;
-	if (!ASN1_GENERALIZEDTIME_set_string(asn1_time, genTime_str)) {
-		ASN1_GENERALIZEDTIME_free(asn1_time);
-		goto err;
-	}
-
-	return asn1_time;
-
-err:
-	TSerror(TS_R_COULD_NOT_SET_TIME);
-	return NULL;
 }
