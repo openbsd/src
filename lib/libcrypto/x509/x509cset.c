@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.19 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509cset.c,v 1.20 2024/03/26 11:09:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -77,6 +77,12 @@ int
 X509_CRL_set_version(X509_CRL *x, long version)
 {
 	if (x == NULL)
+		return (0);
+	/*
+	 * RFC 5280, 4.1: versions 1 - 3 are specified as follows.
+	 * Version  ::=  INTEGER  {  v1(0), v2(1), v3(2) }
+	 */
+	if (version < 0 || version > 1)
 		return (0);
 	if (x->crl->version == NULL) {
 		if ((x->crl->version = ASN1_INTEGER_new()) == NULL)

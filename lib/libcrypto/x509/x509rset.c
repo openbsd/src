@@ -1,4 +1,4 @@
-/* $OpenBSD: x509rset.c,v 1.14 2024/03/25 12:10:57 jsing Exp $ */
+/* $OpenBSD: x509rset.c,v 1.15 2024/03/26 11:09:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,6 +69,9 @@ int
 X509_REQ_set_version(X509_REQ *x, long version)
 {
 	if (x == NULL)
+		return (0);
+	/* RFC 2986 section 4.1 only specifies version 1, encoded as a 0. */
+	if (version != 0)
 		return (0);
 	x->req_info->enc.modified = 1;
 	return (ASN1_INTEGER_set(x->req_info->version, version));
