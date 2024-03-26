@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.27 2024/03/26 11:09:37 tb Exp $ */
+/* $OpenBSD: x509_set.c,v 1.28 2024/03/26 22:44:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -257,12 +257,12 @@ X509_get_X509_PUBKEY(const X509 *x)
 LCRYPTO_ALIAS(X509_get_X509_PUBKEY);
 
 void
-X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
-    const ASN1_BIT_STRING **psuid)
+X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **issuerUID,
+    const ASN1_BIT_STRING **subjectUID)
 {
-	if (piuid != NULL)
-		*piuid = x->cert_info->issuerUID;
-	if (psuid != NULL)
-		*psuid = x->cert_info->subjectUID;
+	if (issuerUID != NULL)
+		*issuerUID = x->cert_info->issuerUID;
+	if (subjectUID != NULL)
+		*subjectUID = x->cert_info->subjectUID;
 }
 LCRYPTO_ALIAS(X509_get0_uids);
