@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.c,v 1.11 2024/03/26 06:58:58 jsing Exp $ */
+/* $OpenBSD: md4.c,v 1.12 2024/03/26 07:11:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,13 +77,6 @@ __END_HIDDEN_DECLS
 #define HASH_UPDATE		MD4_Update
 #define HASH_TRANSFORM		MD4_Transform
 #define HASH_FINAL		MD4_Final
-#define	HASH_MAKE_STRING(c,s)	do {	\
-	unsigned long ll;		\
-	ll=(c)->A; HOST_l2c(ll,(s));	\
-	ll=(c)->B; HOST_l2c(ll,(s));	\
-	ll=(c)->C; HOST_l2c(ll,(s));	\
-	ll=(c)->D; HOST_l2c(ll,(s));	\
-	} while (0)
 #define	HASH_BLOCK_DATA_ORDER	md4_block_data_order
 
 #define HASH_NO_UPDATE
@@ -314,6 +307,7 @@ MD4_Final(unsigned char *md, MD4_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
+	unsigned long ll;
 
 	p[n] = 0x80; /* there is always room for one */
 	n++;
@@ -338,11 +332,16 @@ MD4_Final(unsigned char *md, MD4_CTX *c)
 	c->num = 0;
 	memset(p, 0, MD4_CBLOCK);
 
-#ifndef HASH_MAKE_STRING
-#error "HASH_MAKE_STRING must be defined!"
-#else
-	HASH_MAKE_STRING(c, md);
-#endif
+	do {
+	ll = c->A;
+	HOST_l2c(ll, md);
+	ll = c->B;
+	HOST_l2c(ll, md);
+	ll = c->C;
+	HOST_l2c(ll, md);
+	ll = c->D;
+	HOST_l2c(ll, md);
+	} while (0);
 
 	return 1;
 }
