@@ -1,4 +1,4 @@
-/* $OpenBSD: p_sign.c,v 1.20 2024/02/18 15:45:42 tb Exp $ */
+/* $OpenBSD: p_sign.c,v 1.21 2024/03/26 06:08:51 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,18 +71,19 @@ EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 {
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;
-	EVP_MD_CTX tmp_ctx;
+	EVP_MD_CTX *md_ctx;
 	EVP_PKEY_CTX *pkctx = NULL;
 	size_t sltmp;
 	int ret = 0;
 
 	*siglen = 0;
-	EVP_MD_CTX_legacy_clear(&tmp_ctx);
-	if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
+
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
 		goto err;
-	if (!EVP_DigestFinal_ex(&tmp_ctx, &(m[0]), &m_len))
+	if (!EVP_MD_CTX_copy_ex(md_ctx, ctx))
 		goto err;
-	EVP_MD_CTX_cleanup(&tmp_ctx);
+	if (!EVP_DigestFinal_ex(md_ctx, &(m[0]), &m_len))
+		goto err;
 
 	sltmp = (size_t)EVP_PKEY_size(pkey);
 
@@ -99,6 +100,7 @@ EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 	ret = 1;
 
  err:
+	EVP_MD_CTX_free(md_ctx);
 	EVP_PKEY_CTX_free(pkctx);
 	return ret;
 }
