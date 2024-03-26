@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.20 2024/03/26 05:46:13 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.21 2024/03/26 05:55:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,22 +74,6 @@ CTASSERT(sizeof(MD5_LONG) == sizeof(uint32_t));
 void md5_block_asm_data_order(MD5_CTX *c, const void *p, size_t num);
 #define md5_block_data_order md5_block_asm_data_order
 #endif
-
-#define DATA_ORDER_IS_LITTLE_ENDIAN
-
-#define HASH_LONG		MD5_LONG
-#define HASH_CTX		MD5_CTX
-#define HASH_CBLOCK		MD5_CBLOCK
-#define HASH_UPDATE		MD5_Update
-#define HASH_TRANSFORM		MD5_Transform
-#define HASH_FINAL		MD5_Final
-#define	HASH_BLOCK_DATA_ORDER	md5_block_data_order
-
-#define HASH_NO_UPDATE
-#define HASH_NO_TRANSFORM
-#define HASH_NO_FINAL
-
-#include "md32_common.h"
 
 #ifndef MD5_ASM
 static inline uint32_t
