@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.466 2024/03/22 15:41:34 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.467 2024/03/26 12:45:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -58,6 +58,7 @@ void	session_sighdlr(int);
 int	setup_listeners(u_int *);
 void	init_peer(struct peer *);
 void	start_timer_holdtime(struct peer *);
+void	start_timer_sendholdtime(struct peer *);
 void	start_timer_keepalive(struct peer *);
 void	session_close_connection(struct peer *);
 void	change_state(struct peer *, enum session_state, enum session_events);
@@ -833,6 +834,20 @@ start_timer_holdtime(struct peer *peer)
 		timer_set(&peer->timers, Timer_Hold, peer->holdtime);
 	else
 		timer_stop(&peer->timers, Timer_Hold);
+}
+
+void
+start_timer_sendholdtime(struct peer *peer)
+{
+	uint16_t holdtime = INTERVAL_HOLD;
+
+	if (peer->holdtime > INTERVAL_HOLD)
+		holdtime = peer->holdtime;
+
+	if (peer->holdtime > 0)
+		timer_set(&peer->timers, Timer_SendHold, holdtime);
+	else
+		timer_stop(&peer->timers, Timer_SendHold);
 }
 
 void
@@ -1929,10 +1944,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 			return (1);
 		}
 		p->stats.last_write = getmonotime();
-		if (p->holdtime > 0)
-			timer_set(&p->timers, Timer_SendHold,
-			    p->holdtime < INTERVAL_HOLD ? INTERVAL_HOLD :
-			    p->holdtime);
+		start_timer_sendholdtime(p);
 		if (p->throttled && p->wbuf.queued < SESS_MSG_LOW_MARK) {
 			if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) == -1)
 				log_peer_warn(&p->conf, "imsg_compose XON");
