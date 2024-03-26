@@ -1,4 +1,4 @@
-/*	$OpenBSD: testfly.S,v 1.12 2023/01/22 16:38:36 anton Exp $	*/
+/*	$OpenBSD: testfly.S,v 1.13 2024/03/26 19:12:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -36,11 +36,22 @@
 
 	.space 16384
 
-#if defined(__aarch64__) || defined(__amd64__)
+#if defined(__aarch64__)
 	.section .rodata
 	.globl	testfly
 	.type	testfly,_ASM_TYPE_FUNCTION
 testfly:
+	bti c
+	ret
+END(testfly)
+#endif
+
+#if defined(__amd64__)
+	.section .rodata
+	.globl	testfly
+	.type	testfly,_ASM_TYPE_FUNCTION
+testfly:
+	endbr64
 	ret
 END(testfly)
 #endif
