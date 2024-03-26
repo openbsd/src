@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.125 2024/03/22 17:34:11 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.126 2024/03/26 09:46:47 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -242,7 +242,10 @@ sb_notify(struct socket *so, struct sockbuf *sb)
 static inline long
 sbspace(struct socket *so, struct sockbuf *sb)
 {
-	soassertlocked_readonly(so);
+	if (sb->sb_flags & SB_MTXLOCK)
+		sbmtxassertlocked(so, sb);
+	else
+		soassertlocked_readonly(so);
 
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.144 2024/02/12 22:48:27 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.145 2024/03/26 09:46:47 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -142,7 +142,9 @@ soisdisconnecting(struct socket *so)
 	soassertlocked(so);
 	so->so_state &= ~SS_ISCONNECTING;
 	so->so_state |= SS_ISDISCONNECTING;
+	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_state |= SS_CANTRCVMORE;
+	mtx_leave(&so->so_rcv.sb_mtx);
 	so->so_snd.sb_state |= SS_CANTSENDMORE;
 	wakeup(&so->so_timeo);
 	sowwakeup(so);
@@ -155,7 +157,9 @@ soisdisconnected(struct socket *so)
 	soassertlocked(so);
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
 	so->so_state |= SS_ISDISCONNECTED;
+	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_state |= SS_CANTRCVMORE;
+	mtx_leave(&so->so_rcv.sb_mtx);
 	so->so_snd.sb_state |= SS_CANTSENDMORE;
 	wakeup(&so->so_timeo);
 	sowwakeup(so);
@@ -219,9 +223,10 @@ sonewconn(struct socket *head, int connstatus, int wait)
 	mtx_enter(&head->so_snd.sb_mtx);
 	so->so_snd.sb_timeo_nsecs = head->so_snd.sb_timeo_nsecs;
 	mtx_leave(&head->so_snd.sb_mtx);
+
+	mtx_enter(&head->so_rcv.sb_mtx);
 	so->so_rcv.sb_wat = head->so_rcv.sb_wat;
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
-	mtx_enter(&head->so_rcv.sb_mtx);
 	so->so_rcv.sb_timeo_nsecs = head->so_rcv.sb_timeo_nsecs;
 	mtx_leave(&head->so_rcv.sb_mtx);
 
@@ -651,16 +656,22 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 
 	if (sbreserve(so, &so->so_snd, sndcc))
 		goto bad;
-	if (sbreserve(so, &so->so_rcv, rcvcc))
-		goto bad2;
 	so->so_snd.sb_wat = sndcc;
-	so->so_rcv.sb_wat = rcvcc;
-	if (so->so_rcv.sb_lowat == 0)
-		so->so_rcv.sb_lowat = 1;
 	if (so->so_snd.sb_lowat == 0)
 		so->so_snd.sb_lowat = MCLBYTES;
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
+
+	mtx_enter(&so->so_rcv.sb_mtx);
+	if (sbreserve(so, &so->so_rcv, rcvcc)) {
+		mtx_leave(&so->so_rcv.sb_mtx);
+		goto bad2;
+	}
+	so->so_rcv.sb_wat = rcvcc;
+	if (so->so_rcv.sb_lowat == 0)
+		so->so_rcv.sb_lowat = 1;
+	mtx_leave(&so->so_rcv.sb_mtx);
+
 	return (0);
 bad2:
 	sbrelease(so, &so->so_snd);
@@ -676,8 +687,7 @@ bad:
 int
 sbreserve(struct socket *so, struct sockbuf *sb, u_long cc)
 {
-	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
-	soassertlocked(so);
+	sbmtxassertlocked(so, sb);
 
 	if (cc == 0 || cc > sb_max)
 		return (1);
@@ -818,7 +828,7 @@ sbappend(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 	if (m == NULL)
 		return;
 
-	soassertlocked(so);
+	sbmtxassertlocked(so, sb);
 	SBLASTRECORDCHK(sb, "sbappend 1");
 
 	if ((n = sb->sb_lastrecord) != NULL) {
@@ -899,8 +909,7 @@ sbappendrecord(struct socket *so, struct sockbuf *sb, struct mbuf *m0)
 {
 	struct mbuf *m;
 
-	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
-	soassertlocked(so);
+	sbmtxassertlocked(so, sb);
 
 	if (m0 == NULL)
 		return;
@@ -983,6 +992,8 @@ sbappendcontrol(struct socket *so, struct sockbuf *sb, struct mbuf *m0,
 {
 	struct mbuf *m, *mlast, *n;
 	int eor = 0, space = 0;
+
+	sbmtxassertlocked(so, sb);
 
 	if (control == NULL)
 		panic("sbappendcontrol");
@@ -1109,8 +1120,7 @@ sbdrop(struct socket *so, struct sockbuf *sb, int len)
 	struct mbuf *m, *mn;
 	struct mbuf *next;
 
-	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
-	soassertlocked(so);
+	sbmtxassertlocked(so, sb);
 
 	next = (m = sb->sb_mb) ? m->m_nextpkt : NULL;
 	while (len > 0) {

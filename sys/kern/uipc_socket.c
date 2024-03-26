@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.321 2024/03/22 17:34:11 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.322 2024/03/26 09:46:47 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -159,6 +159,9 @@ soalloc(const struct protosw *prp, int wait)
 			so->so_rcv.sb_flags |= SB_MTXLOCK;
 			break;
 		}
+		break;
+	case AF_UNIX:
+		so->so_rcv.sb_flags |= SB_MTXLOCK;
 		break;
 	}
 
@@ -987,8 +990,11 @@ dontblock:
 				 * Dispose of any SCM_RIGHTS message that went
 				 * through the read path rather than recv.
 				 */
-				if (pr->pr_domain->dom_dispose)
+				if (pr->pr_domain->dom_dispose) {
+					sb_mtx_unlock(&so->so_rcv);
 					pr->pr_domain->dom_dispose(cm);
+					sb_mtx_lock(&so->so_rcv);
+				}
 				m_free(cm);
 			}
 		}
@@ -1173,8 +1179,11 @@ dontblock:
 		}
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive 4");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive 4");
-		if (pr->pr_flags & PR_WANTRCVD)
+		if (pr->pr_flags & PR_WANTRCVD) {
+			sb_mtx_unlock(&so->so_rcv);
 			pru_rcvd(so);
+			sb_mtx_lock(&so->so_rcv);
+		}
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 &&
@@ -1233,10 +1242,10 @@ sorflush(struct socket *so)
 	/* with SBL_WAIT and SLB_NOINTR sblock() must not fail */
 	KASSERT(error == 0);
 	socantrcvmore(so);
+	mtx_enter(&sb->sb_mtx);
 	m = sb->sb_mb;
 	memset(&sb->sb_startzero, 0,
 	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
-	mtx_enter(&sb->sb_mtx);
 	sb->sb_timeo_nsecs = INFSLP;
 	mtx_leave(&sb->sb_mtx);
 	sbunlock(so, sb);
@@ -1757,7 +1766,8 @@ somove(struct socket *so, int wait)
 void
 sorwakeup(struct socket *so)
 {
-	soassertlocked_readonly(so);
+	if ((so->so_rcv.sb_flags & SB_MTXLOCK) == 0)
+		soassertlocked_readonly(so);
 
 #ifdef SOCKET_SPLICE
 	if (so->so_rcv.sb_flags & SB_SPLICE) {
@@ -1877,6 +1887,8 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 				cnt = 1;
 
 			solock(so);
+			mtx_enter(&sb->sb_mtx);
+
 			switch (optname) {
 			case SO_SNDBUF:
 			case SO_RCVBUF:
@@ -1898,7 +1910,10 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 				    sb->sb_hiwat : cnt;
 				break;
 			}
+
+			mtx_leave(&sb->sb_mtx);
 			sounlock(so);
+
 			break;
 		    }
 
@@ -2169,13 +2184,6 @@ sofilt_unlock(struct socket *so, struct sockbuf *sb)
 	}
 }
 
-static inline void
-sofilt_assert_locked(struct socket *so, struct sockbuf *sb)
-{
-	MUTEX_ASSERT_LOCKED(&sb->sb_mtx);
-	soassertlocked_readonly(so);
-}
-
 int
 soo_kqfilter(struct file *fp, struct knote *kn)
 {
@@ -2218,9 +2226,14 @@ filt_soread(struct knote *kn, long hint)
 	struct socket *so = kn->kn_fp->f_data;
 	int rv = 0;
 
-	sofilt_assert_locked(so, &so->so_rcv);
+	MUTEX_ASSERT_LOCKED(&so->so_rcv.sb_mtx);
+	if ((so->so_rcv.sb_flags & SB_MTXLOCK) == 0)
+		soassertlocked_readonly(so);
 
 	if (so->so_options & SO_ACCEPTCONN) {
+		if (so->so_rcv.sb_flags & SB_MTXLOCK)
+			soassertlocked_readonly(so);
+
 		kn->kn_data = so->so_qlen;
 		rv = (kn->kn_data != 0);
 
@@ -2275,7 +2288,8 @@ filt_sowrite(struct knote *kn, long hint)
 	struct socket *so = kn->kn_fp->f_data;
 	int rv;
 
-	sofilt_assert_locked(so, &so->so_snd);
+	MUTEX_ASSERT_LOCKED(&so->so_snd.sb_mtx);
+	soassertlocked_readonly(so);
 
 	kn->kn_data = sbspace(so, &so->so_snd);
 	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
@@ -2306,7 +2320,9 @@ filt_soexcept(struct knote *kn, long hint)
 	struct socket *so = kn->kn_fp->f_data;
 	int rv = 0;
 
-	sofilt_assert_locked(so, &so->so_rcv);
+	MUTEX_ASSERT_LOCKED(&so->so_rcv.sb_mtx);
+	if ((so->so_rcv.sb_flags & SB_MTXLOCK) == 0)
+		soassertlocked_readonly(so);
 
 #ifdef SOCKET_SPLICE
 	if (isspliced(so)) {

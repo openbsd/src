@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.202 2024/03/22 17:34:11 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.203 2024/03/26 09:46:47 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -489,8 +489,10 @@ uipc_rcvd(struct socket *so)
 	 * Adjust backpressure on sender
 	 * and wakeup any waiting to write.
 	 */
+	mtx_enter(&so->so_rcv.sb_mtx);
 	so2->so_snd.sb_mbcnt = so->so_rcv.sb_mbcnt;
 	so2->so_snd.sb_cc = so->so_rcv.sb_cc;
+	mtx_leave(&so->so_rcv.sb_mtx);
 	sowwakeup(so2);
 	sounlock(so2);
 }
@@ -499,8 +501,9 @@ int
 uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control)
 {
+	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
-	int error = 0;
+	int error = 0, dowakeup = 0;
 
 	if (control) {
 		sounlock(so);
@@ -514,21 +517,24 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		error = EPIPE;
 		goto dispose;
 	}
-	if ((so2 = unp_solock_peer(so)) == NULL) {
+	if (unp->unp_conn == NULL) {
 		error = ENOTCONN;
 		goto dispose;
 	}
+
+	so2 = unp->unp_conn->unp_socket;
 
 	/*
 	 * Send to paired receive port, and then raise
 	 * send buffer counts to maintain backpressure.
 	 * Wake up readers.
 	 */
+	mtx_enter(&so2->so_rcv.sb_mtx);
 	if (control) {
 		if (sbappendcontrol(so2, &so2->so_rcv, m, control)) {
 			control = NULL;
 		} else {
-			sounlock(so2);
+			mtx_leave(&so2->so_rcv.sb_mtx);
 			error = ENOBUFS;
 			goto dispose;
 		}
@@ -539,9 +545,12 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
 	so->so_snd.sb_cc = so2->so_rcv.sb_cc;
 	if (so2->so_rcv.sb_cc > 0)
+		dowakeup = 1;
+	mtx_leave(&so2->so_rcv.sb_mtx);
+
+	if (dowakeup)
 		sorwakeup(so2);
 
-	sounlock(so2);
 	m = NULL;
 
 dispose:
@@ -563,7 +572,7 @@ uipc_dgram_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
 	const struct sockaddr *from;
-	int error = 0;
+	int error = 0, dowakeup = 0;
 
 	if (control) {
 		sounlock(so);
@@ -583,7 +592,7 @@ uipc_dgram_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			goto dispose;
 	}
 
-	if ((so2 = unp_solock_peer(so)) == NULL) {
+	if (unp->unp_conn == NULL) {
 		if (nam != NULL)
 			error = ECONNREFUSED;
 		else
@@ -591,20 +600,24 @@ uipc_dgram_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		goto dispose;
 	}
 
+	so2 = unp->unp_conn->unp_socket;
+
 	if (unp->unp_addr)
 		from = mtod(unp->unp_addr, struct sockaddr *);
 	else
 		from = &sun_noname;
+
+	mtx_enter(&so2->so_rcv.sb_mtx);
 	if (sbappendaddr(so2, &so2->so_rcv, from, m, control)) {
-		sorwakeup(so2);
+		dowakeup = 1;
 		m = NULL;
 		control = NULL;
 	} else
 		error = ENOBUFS;
+	mtx_leave(&so2->so_rcv.sb_mtx);
 
-	if (so2 != so)
-		sounlock(so2);
-
+	if (dowakeup)
+		sorwakeup(so2);
 	if (nam)
 		unp_disconnect(unp);
 
@@ -1390,9 +1403,9 @@ unp_gc(void *arg __unused)
 		if ((unp->unp_gcflags & UNP_GCDEAD) == 0)
 			continue;
 		so = unp->unp_socket;
-		solock(so);
+		mtx_enter(&so->so_rcv.sb_mtx);
 		unp_scan(so->so_rcv.sb_mb, unp_remove_gcrefs);
-		sounlock(so);
+		mtx_leave(&so->so_rcv.sb_mtx);
 	}
 
 	/*
@@ -1414,9 +1427,9 @@ unp_gc(void *arg __unused)
 			unp->unp_gcflags &= ~UNP_GCDEAD;
 
 			so = unp->unp_socket;
-			solock(so);
+			mtx_enter(&so->so_rcv.sb_mtx);
 			unp_scan(so->so_rcv.sb_mb, unp_restore_gcrefs);
-			sounlock(so);
+			mtx_leave(&so->so_rcv.sb_mtx);
 
 			KASSERT(nunref > 0);
 			nunref--;
