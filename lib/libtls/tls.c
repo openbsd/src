@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.99 2024/03/26 00:50:22 joshua Exp $ */
+/* $OpenBSD: tls.c,v 1.100 2024/03/26 01:15:57 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -146,12 +146,12 @@ int
 tls_config_set_error(struct tls_config *config, const char *fmt, ...)
 {
 	va_list ap;
-	int errnum, rv;
+	int errno_value, rv;
 
-	errnum = errno;
+	errno_value = errno;
 
 	va_start(ap, fmt);
-	rv = tls_error_vset(&config->error, errnum, fmt, ap);
+	rv = tls_error_vset(&config->error, errno_value, fmt, ap);
 	va_end(ap);
 
 	return (rv);
@@ -174,12 +174,12 @@ int
 tls_set_error(struct tls *ctx, const char *fmt, ...)
 {
 	va_list ap;
-	int errnum, rv;
+	int errno_value, rv;
 
-	errnum = errno;
+	errno_value = errno;
 
 	va_start(ap, fmt);
-	rv = tls_error_vset(&ctx->error, errnum, fmt, ap);
+	rv = tls_error_vset(&ctx->error, errno_value, fmt, ap);
 	va_end(ap);
 
 	return (rv);
