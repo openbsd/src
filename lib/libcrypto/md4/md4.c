@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.c,v 1.7 2023/08/10 13:41:56 jsing Exp $ */
+/* $OpenBSD: md4.c,v 1.8 2024/03/26 06:23:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -124,18 +124,6 @@ LCRYPTO_ALIAS(MD4_Transform);
 #define INIT_DATA_C (unsigned long)0x98badcfeL
 #define INIT_DATA_D (unsigned long)0x10325476L
 
-int
-MD4_Init(MD4_CTX *c)
-{
-	memset (c, 0, sizeof(*c));
-	c->A = INIT_DATA_A;
-	c->B = INIT_DATA_B;
-	c->C = INIT_DATA_C;
-	c->D = INIT_DATA_D;
-	return 1;
-}
-LCRYPTO_ALIAS(MD4_Init);
-
 #ifndef md4_block_data_order
 #ifdef X
 #undef X
@@ -245,6 +233,18 @@ md4_block_data_order(MD4_CTX *c, const void *data_, size_t num)
 	}
 }
 #endif
+
+int
+MD4_Init(MD4_CTX *c)
+{
+	memset (c, 0, sizeof(*c));
+	c->A = INIT_DATA_A;
+	c->B = INIT_DATA_B;
+	c->C = INIT_DATA_C;
+	c->D = INIT_DATA_D;
+	return 1;
+}
+LCRYPTO_ALIAS(MD4_Init);
 
 unsigned char *
 MD4(const unsigned char *d, size_t n, unsigned char *md)
