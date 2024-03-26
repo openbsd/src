@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.34 2024/03/26 05:43:22 tb Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.35 2024/03/26 07:03:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -177,17 +177,17 @@ PBKDF2PARAM_free(PBKDF2PARAM *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PBKDF2PARAM_it);
 }
 
-/* Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm:
+/*
+ * Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm:
  * yes I know this is horrible!
- *
- * Extended version to allow application supplied PRF NID and IV.
  */
 
-static X509_ALGOR *
-PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
-    int saltlen, unsigned char *aiv, int prf_nid)
+X509_ALGOR *
+PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
+    int saltlen)
 {
 	X509_ALGOR *scheme = NULL, *kalg = NULL, *ret = NULL;
+	int prf_nid = NID_hmacWithSHA1;
 	int alg_nid, keylen;
 	EVP_CIPHER_CTX ctx;
 	unsigned char iv[EVP_MAX_IV_LENGTH];
@@ -212,12 +212,8 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 		goto merr;
 
 	/* Create random IV */
-	if (EVP_CIPHER_iv_length(cipher)) {
-		if (aiv)
-			memcpy(iv, aiv, EVP_CIPHER_iv_length(cipher));
-		else
-			arc4random_buf(iv, EVP_CIPHER_iv_length(cipher));
-	}
+	if (EVP_CIPHER_iv_length(cipher) > 0)
+		arc4random_buf(iv, EVP_CIPHER_iv_length(cipher));
 
 	EVP_CIPHER_CTX_legacy_clear(&ctx);
 
@@ -228,14 +224,6 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 		ASN1error(ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		goto err;
-	}
-	/* If prf NID unspecified see if cipher has a preference.
-	 * An error is OK here: just means use default PRF.
-	 */
-	if ((prf_nid == -1) &&
-	    EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0) {
-		ERR_clear_error();
-		prf_nid = NID_hmacWithSHA1;
 	}
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
@@ -285,13 +273,6 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 	X509_ALGOR_free(ret);
 
 	return NULL;
-}
-
-X509_ALGOR *
-PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
-    int saltlen)
-{
-	return PKCS5_pbe2_set_iv(cipher, iter, salt, saltlen, NULL, -1);
 }
 
 X509_ALGOR *
