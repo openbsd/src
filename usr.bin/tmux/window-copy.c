@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.346 2024/03/21 11:26:28 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.347 2024/03/26 10:20:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -805,7 +805,7 @@ window_copy_formats(struct window_mode_entry *wme, struct format_tree *ft)
 			format_add(ft, "selection_active", "1");
 		else
 			format_add(ft, "selection_active", "0");
-		if (data->endselx != data->selx && data->endsely != data->sely)
+		if (data->endselx != data->selx || data->endsely != data->sely)
 			format_add(ft, "selection_present", "1");
 		else
 			format_add(ft, "selection_present", "0");
