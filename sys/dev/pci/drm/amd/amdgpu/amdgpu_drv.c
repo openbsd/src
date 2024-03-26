@@ -3457,14 +3457,23 @@ amdgpu_init_backlight(struct amdgpu_device *adev)
 	drm_for_each_connector_iter(connector, &conn_iter) {
 		aconnector = to_amdgpu_dm_connector(connector);
 
+		if (connector->registration_state != DRM_CONNECTOR_REGISTERED)
+			continue;
+
 		if (aconnector->bl_idx == -1)
 			continue;
+
+		dev->registered = false;
+		connector->registration_state = DRM_CONNECTOR_UNREGISTERED;
 
 		connector->backlight_device = bd;
 		connector->backlight_property = drm_property_create_range(dev,
 		    0, "Backlight", 0, bd->props.max_brightness);
 		drm_object_attach_property(&connector->base,
 		    connector->backlight_property, bd->props.brightness);
+
+		connector->registration_state = DRM_CONNECTOR_REGISTERED;
+		dev->registered = true;
 
 		break;
 	}
