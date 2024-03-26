@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2023/09/06 01:47:37 jsg Exp $
+#	$OpenBSD: Makefile,v 1.7 2024/03/26 22:26:04 kettenis Exp $
 
 NOMAN=		#
 
@@ -10,7 +10,7 @@ INSTALL_STRIP=
 BINDIR=		/usr/mdec
 SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c
 SRCS+=		efidev.c efipxe.c efirng.c fdt.c
-SRCS+=		softraid_riscv64.c
+SRCS+=		softraid_riscv64.c efiriscv.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
