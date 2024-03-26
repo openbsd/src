@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.20 2024/03/24 06:05:41 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.21 2024/03/26 01:41:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -306,10 +306,6 @@ struct evp_pkey_method_st {
 	int (*signctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
 	int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 	    EVP_MD_CTX *mctx);
-
-	int (*verifyctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
-	int (*verifyctx)(EVP_PKEY_CTX *ctx, const unsigned char *sig,
-	    int siglen, EVP_MD_CTX *mctx);
 
 	int (*encrypt_init)(EVP_PKEY_CTX *ctx);
 	int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,

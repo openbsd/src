@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.18 2024/03/25 11:41:40 joshua Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.19 2024/03/26 01:41:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -95,12 +95,7 @@ do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 	}
 
 	if (ver) {
-		if (ctx->pctx->pmeth->verifyctx_init) {
-			if (ctx->pctx->pmeth->verifyctx_init(ctx->pctx,
-			    ctx) <=0)
-				return 0;
-			ctx->pctx->operation = EVP_PKEY_OP_VERIFYCTX;
-		} else if (ctx->pctx->pmeth->digestverify != NULL) {
+		if (ctx->pctx->pmeth->digestverify != NULL) {
 			ctx->pctx->operation = EVP_PKEY_OP_VERIFY;
 			ctx->update = update_oneshot_only;
 		} else if (EVP_PKEY_verify_init(ctx->pctx) <= 0)
@@ -233,22 +228,13 @@ EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen)
 	unsigned char md[EVP_MAX_MD_SIZE];
 	int r;
 	unsigned int mdlen = 0;
-	int vctx;
 
-	if (ctx->pctx->pmeth->verifyctx)
-		vctx = 1;
-	else
-		vctx = 0;
 	EVP_MD_CTX_legacy_clear(&tmp_ctx);
 	if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
 		return -1;
-	if (vctx) {
-		r = tmp_ctx.pctx->pmeth->verifyctx(tmp_ctx.pctx, sig,
-		    siglen, &tmp_ctx);
-	} else
-		r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
+	r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
 	EVP_MD_CTX_cleanup(&tmp_ctx);
-	if (vctx || !r)
+	if (!r)
 		return r;
 	return EVP_PKEY_verify(ctx->pctx, sig, siglen, md, mdlen);
 }
