@@ -1067,7 +1067,8 @@ static void i915_ttm_delayed_free(struct drm_i915_gem_object *obj)
 	ttm_bo_put(i915_gem_to_ttm(obj));
 }
 
-#ifdef notyet
+#ifdef __linux__
+
 static vm_fault_t vm_fault_ttm(struct vm_fault *vmf)
 {
 	struct vm_area_struct *area = vmf->vma;
@@ -1219,6 +1220,187 @@ static const struct vm_operations_struct vm_ops_ttm = {
 	.close = ttm_vm_close,
 };
 
+#else /* !__linux__ */
+
+static int
+
+vm_fault_ttm(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
+    int npages, int centeridx, vm_fault_t fault_type,
+    vm_prot_t access_type, int flags)
+{
+	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
+	struct ttm_buffer_object *bo = (struct ttm_buffer_object *)uobj;
+	struct drm_device *dev = bo->base.dev;
+	struct drm_i915_gem_object *obj = i915_ttm_to_gem(bo);
+	intel_wakeref_t wakeref = 0;
+	vm_fault_t ret;
+	int idx;
+	int write = !!(access_type & PROT_WRITE);
+
+	/* Sanity check that we allow writing into this object */
+	if (unlikely(i915_gem_object_is_readonly(obj) && write)) {
+		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
+		return VM_PAGER_BAD;
+	}
+
+	ret = ttm_bo_vm_reserve(bo);
+	if (ret) {
+		switch (ret) {
+		case VM_FAULT_NOPAGE:
+			ret = VM_PAGER_OK;
+			break;
+		case VM_FAULT_RETRY:
+			ret = VM_PAGER_REFAULT;
+			break;
+		default:
+			ret = VM_PAGER_BAD;
+			break;
+		}
+		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
+		return ret;
+	}
+
+	if (obj->mm.madv != I915_MADV_WILLNEED) {
+		dma_resv_unlock(bo->base.resv);
+		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
+		return VM_PAGER_BAD;
+	}
+
+	/*
+	 * This must be swapped out with shmem ttm_tt (pipeline-gutting).
+	 * Calling ttm_bo_validate() here with TTM_PL_SYSTEM should only go as
+	 * far as far doing a ttm_bo_move_null(), which should skip all the
+	 * other junk.
+	 */
+	if (!bo->resource) {
+		struct ttm_operation_ctx ctx = {
+			.interruptible = true,
+			.no_wait_gpu = true, /* should be idle already */
+		};
+		int err;
+
+		GEM_BUG_ON(!bo->ttm || !(bo->ttm->page_flags & TTM_TT_FLAG_SWAPPED));
+
+		err = ttm_bo_validate(bo, i915_ttm_sys_placement(), &ctx);
+		if (err) {
+			dma_resv_unlock(bo->base.resv);
+			uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
+			return VM_PAGER_BAD;
+		}
+	} else if (!i915_ttm_resource_mappable(bo->resource)) {
+		int err = -ENODEV;
+		int i;
+
+		for (i = 0; i < obj->mm.n_placements; i++) {
+			struct intel_memory_region *mr = obj->mm.placements[i];
+			unsigned int flags;
+
+			if (!mr->io_size && mr->type != INTEL_MEMORY_SYSTEM)
+				continue;
+
+			flags = obj->flags;
+			flags &= ~I915_BO_ALLOC_GPU_ONLY;
+			err = __i915_ttm_migrate(obj, mr, flags);
+			if (!err)
+				break;
+		}
+
+		if (err) {
+			drm_dbg(dev, "Unable to make resource CPU accessible(err = %pe)\n",
+				ERR_PTR(err));
+			dma_resv_unlock(bo->base.resv);
+			ret = VM_FAULT_SIGBUS;
+			goto out_rpm;
+		}
+	}
+
+	if (i915_ttm_cpu_maps_iomem(bo->resource))
+		wakeref = intel_runtime_pm_get(&to_i915(obj->base.dev)->runtime_pm);
+
+	if (drm_dev_enter(dev, &idx)) {
+		ret = ttm_bo_vm_fault_reserved(ufi, vaddr,
+					       TTM_BO_VM_NUM_PREFAULT, 1);
+		drm_dev_exit(idx);
+	} else {
+		STUB();
+#ifdef notyet
+		ret = ttm_bo_vm_dummy_page(vmf, vmf->vma->vm_page_prot);
+#else
+		STUB();
+		ret = VM_FAULT_NOPAGE;
+#endif
+	}
+#ifdef __linux__
+	if (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
+		goto out_rpm;
+#endif
+
+	/*
+	 * ttm_bo_vm_reserve() already has dma_resv_lock.
+	 * userfault_count is protected by dma_resv lock and rpm wakeref.
+	 */
+	if (ret == VM_FAULT_NOPAGE && wakeref && !obj->userfault_count) {
+		obj->userfault_count = 1;
+		spin_lock(&to_i915(obj->base.dev)->runtime_pm.lmem_userfault_lock);
+		list_add(&obj->userfault_link, &to_i915(obj->base.dev)->runtime_pm.lmem_userfault_list);
+		spin_unlock(&to_i915(obj->base.dev)->runtime_pm.lmem_userfault_lock);
+
+		GEM_WARN_ON(!i915_ttm_cpu_maps_iomem(bo->resource));
+	}
+
+	if (wakeref & CONFIG_DRM_I915_USERFAULT_AUTOSUSPEND)
+		intel_wakeref_auto(&to_i915(obj->base.dev)->runtime_pm.userfault_wakeref,
+				   msecs_to_jiffies_timeout(CONFIG_DRM_I915_USERFAULT_AUTOSUSPEND));
+
+	i915_ttm_adjust_lru(obj);
+
+	dma_resv_unlock(bo->base.resv);
+
+out_rpm:
+	switch (ret) {
+	case VM_FAULT_NOPAGE:
+		ret = VM_PAGER_OK;
+		break;
+	case VM_FAULT_RETRY:
+		ret = VM_PAGER_REFAULT;
+		break;
+	default:
+		ret = VM_PAGER_BAD;
+		break;
+	}
+
+	if (wakeref)
+		intel_runtime_pm_put(&to_i915(obj->base.dev)->runtime_pm, wakeref);
+
+	uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
+
+	return ret;
+}
+
+static void
+ttm_vm_reference(struct uvm_object *uobj)
+{
+	struct drm_i915_gem_object *obj =
+		i915_ttm_to_gem((struct ttm_buffer_object *)uobj);
+
+	i915_gem_object_get(obj);
+}
+
+static void
+ttm_vm_detach(struct uvm_object *uobj)
+{
+	struct drm_i915_gem_object *obj =
+		i915_ttm_to_gem((struct ttm_buffer_object *)uobj);
+
+	i915_gem_object_put(obj);
+}
+
+const struct uvm_pagerops vm_ops_ttm = {
+	.pgo_fault = vm_fault_ttm,
+	.pgo_reference = ttm_vm_reference,
+	.pgo_detach = ttm_vm_detach,
+};
+
 #endif
 
 static u64 i915_ttm_mmap_offset(struct drm_i915_gem_object *obj)
@@ -1272,9 +1454,7 @@ static const struct drm_i915_gem_object_ops i915_gem_ttm_obj_ops = {
 
 	.mmap_offset = i915_ttm_mmap_offset,
 	.unmap_virtual = i915_ttm_unmap_virtual,
-#ifdef notyet
 	.mmap_ops = &vm_ops_ttm,
-#endif
 };
 
 void i915_ttm_bo_destroy(struct ttm_buffer_object *bo)

@@ -1449,8 +1449,18 @@ i915_gem_mmap(struct file *filp, vm_prot_t accessprot,
 		 * destroyed and will be invalid when the vma manager lock
 		 * is released.
 		 */
-		mmo = container_of(node, struct i915_mmap_offset, vma_node);
-		obj = i915_gem_object_get_rcu(mmo->obj);
+		if (!node->driver_private) {
+			mmo = container_of(node, struct i915_mmap_offset, vma_node);
+			obj = i915_gem_object_get_rcu(mmo->obj);
+
+			GEM_BUG_ON(obj && obj->ops->mmap_ops);
+		} else {
+			obj = i915_gem_object_get_rcu
+				(container_of(node, struct drm_i915_gem_object,
+					      base.vma_node));
+
+			GEM_BUG_ON(obj && !obj->ops->mmap_ops);
+		}
 	}
 	drm_vma_offset_unlock_lookup(dev->vma_offset_manager);
 	rcu_read_unlock();
@@ -1463,6 +1473,9 @@ i915_gem_mmap(struct file *filp, vm_prot_t accessprot,
 			return NULL;
 		}
 	}
+
+	if (obj->ops->mmap_ops)
+		uvm_obj_init(&obj->base.uobj, obj->ops->mmap_ops, 1);
 
 	return &obj->base.uobj;
 }
