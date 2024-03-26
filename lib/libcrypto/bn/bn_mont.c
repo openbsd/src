@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.61 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.62 2024/03/26 04:14:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -299,7 +299,76 @@ BN_MONT_CTX_set_locked(BN_MONT_CTX **pmctx, int lock, const BIGNUM *mod,
 }
 LCRYPTO_ALIAS(BN_MONT_CTX_set_locked);
 
-static int bn_montgomery_reduce(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mctx);
+/*
+ * bn_montgomery_reduce() performs Montgomery reduction, reducing the input
+ * from its Montgomery form aR to a, returning the result in r. Note that the
+ * input is mutated in the process of performing the reduction, destroying its
+ * original value.
+ */
+static int
+bn_montgomery_reduce(BIGNUM *r, BIGNUM *a, BN_MONT_CTX *mctx)
+{
+	BIGNUM *n;
+	BN_ULONG *ap, *rp, n0, v, carry, mask;
+	int i, max, n_len;
+
+	n = &mctx->N;
+	n_len = mctx->N.top;
+
+	if (n_len == 0) {
+		BN_zero(r);
+		return 1;
+	}
+
+	if (!bn_wexpand(r, n_len))
+		return 0;
+
+	/*
+	 * Expand a to twice the length of the modulus, zero if necessary.
+	 * XXX - make this a requirement of the caller.
+	 */
+	if ((max = 2 * n_len) < n_len)
+		return 0;
+	if (!bn_wexpand(a, max))
+		return 0;
+	for (i = a->top; i < max; i++)
+		a->d[i] = 0;
+
+	carry = 0;
+	n0 = mctx->n0[0];
+
+	/* Add multiples of the modulus, so that it becomes divisible by R. */
+	for (i = 0; i < n_len; i++) {
+		v = bn_mul_add_words(&a->d[i], n->d, n_len, a->d[i] * n0);
+		bn_addw_addw(v, a->d[i + n_len], carry, &carry,
+		    &a->d[i + n_len]);
+	}
+
+	/* Divide by R (this is the equivalent of right shifting by n_len). */
+	ap = &a->d[n_len];
+
+	/*
+	 * The output is now in the range of [0, 2N). Attempt to reduce once by
+	 * subtracting the modulus. If the reduction was necessary then the
+	 * result is already in r, otherwise copy the value prior to reduction
+	 * from the top half of a.
+	 */
+	mask = carry - bn_sub_words(r->d, ap, n->d, n_len);
+
+	rp = r->d;
+	for (i = 0; i < n_len; i++) {
+		*rp = (*rp & ~mask) | (*ap & mask);
+		rp++;
+		ap++;
+	}
+	r->top = n_len;
+
+	bn_correct_top(r);
+
+	BN_set_negative(r, a->neg ^ n->neg);
+
+	return 1;
+}
 
 static int
 bn_mod_mul_montgomery_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
@@ -511,77 +580,6 @@ BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mctx, BN_CTX *ctx)
 	return bn_mod_mul_montgomery(r, a, &mctx->RR, mctx, ctx);
 }
 LCRYPTO_ALIAS(BN_to_montgomery);
-
-/*
- * bn_montgomery_reduce() performs Montgomery reduction, reducing the input
- * from its Montgomery form aR to a, returning the result in r. Note that the
- * input is mutated in the process of performing the reduction, destroying its
- * original value.
- */
-static int
-bn_montgomery_reduce(BIGNUM *r, BIGNUM *a, BN_MONT_CTX *mctx)
-{
-	BIGNUM *n;
-	BN_ULONG *ap, *rp, n0, v, carry, mask;
-	int i, max, n_len;
-
-	n = &mctx->N;
-	n_len = mctx->N.top;
-
-	if (n_len == 0) {
-		BN_zero(r);
-		return 1;
-	}
-
-	if (!bn_wexpand(r, n_len))
-		return 0;
-
-	/*
-	 * Expand a to twice the length of the modulus, zero if necessary.
-	 * XXX - make this a requirement of the caller.
-	 */
-	if ((max = 2 * n_len) < n_len)
-		return 0;
-	if (!bn_wexpand(a, max))
-		return 0;
-	for (i = a->top; i < max; i++)
-		a->d[i] = 0;
-
-	carry = 0;
-	n0 = mctx->n0[0];
-
-	/* Add multiples of the modulus, so that it becomes divisible by R. */
-	for (i = 0; i < n_len; i++) {
-		v = bn_mul_add_words(&a->d[i], n->d, n_len, a->d[i] * n0);
-		bn_addw_addw(v, a->d[i + n_len], carry, &carry,
-		    &a->d[i + n_len]);
-	}
-
-	/* Divide by R (this is the equivalent of right shifting by n_len). */
-	ap = &a->d[n_len];
-
-	/*
-	 * The output is now in the range of [0, 2N). Attempt to reduce once by
-	 * subtracting the modulus. If the reduction was necessary then the
-	 * result is already in r, otherwise copy the value prior to reduction
-	 * from the top half of a.
-	 */
-	mask = carry - bn_sub_words(r->d, ap, n->d, n_len);
-
-	rp = r->d;
-	for (i = 0; i < n_len; i++) {
-		*rp = (*rp & ~mask) | (*ap & mask);
-		rp++;
-		ap++;
-	}
-	r->top = n_len;
-
-	bn_correct_top(r);
-
-	BN_set_negative(r, a->neg ^ n->neg);
-
-	return 1;
-}
 
 int
 BN_from_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mctx, BN_CTX *ctx)
