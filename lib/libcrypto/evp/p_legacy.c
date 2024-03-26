@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_legacy.c,v 1.3 2024/02/18 15:44:10 tb Exp $ */
+/*	$OpenBSD: p_legacy.c,v 1.4 2024/03/26 05:22:50 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,7 +99,7 @@ EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 	int i, size = 0, ret = 0;
 
 	if (type) {
-		EVP_CIPHER_CTX_legacy_clear(ctx);
+		EVP_CIPHER_CTX_reset(ctx);
 		if (!EVP_DecryptInit_ex(ctx, type, NULL, NULL, NULL))
 			return 0;
 	}
@@ -154,7 +154,7 @@ EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 	int i, iv_len;
 
 	if (type) {
-		EVP_CIPHER_CTX_legacy_clear(ctx);
+		EVP_CIPHER_CTX_reset(ctx);
 		if (!EVP_EncryptInit_ex(ctx, type, NULL, NULL, NULL))
 			return 0;
 	}
