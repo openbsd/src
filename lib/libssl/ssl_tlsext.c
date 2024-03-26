@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.142 2024/03/26 01:21:34 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.143 2024/03/26 03:44:11 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2253,6 +2253,16 @@ tlsext_extension_seen(SSL *s, uint16_t type)
 	return ((s->s3->hs.extensions_seen & (1 << idx)) != 0);
 }
 
+int
+tlsext_extension_processed(SSL *s, uint16_t type)
+{
+	size_t idx;
+
+	if (tls_extension_find(type, &idx) == NULL)
+		return 0;
+	return ((s->s3->hs.extensions_processed & (1 << idx)) != 0);
+}
+
 const struct tls_extension_funcs *
 tlsext_funcs(const struct tls_extension *tlsext, int is_server)
 {
@@ -2490,6 +2500,8 @@ tlsext_process(SSL *s, struct tlsext_data *td, int is_server, uint16_t msg_type,
 
 	alert_desc = SSL_AD_DECODE_ERROR;
 
+	s->s3->hs.extensions_processed = 0;
+
 	/* Run processing for present TLS extensions, in a defined order. */
 	for (idx = 0; idx < N_TLS_EXTENSIONS; idx++) {
 		tlsext = &tls_extensions[idx];
@@ -2503,6 +2515,8 @@ tlsext_process(SSL *s, struct tlsext_data *td, int is_server, uint16_t msg_type,
 
 		if (CBS_len(&td->extensions[idx]) != 0)
 			goto err;
+
+		s->s3->hs.extensions_processed |= (1 << idx);
 	}
 
 	return 1;
