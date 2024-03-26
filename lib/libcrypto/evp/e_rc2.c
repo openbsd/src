@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.27 2024/01/07 15:42:57 tb Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.28 2024/03/26 06:58:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -396,12 +396,6 @@ rc2_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 			return 1;
 		}
 		return 0;
-
-#ifdef PBE_PRF_TEST
-	case EVP_CTRL_PBE_PRF_NID:
-		*(int *)ptr = NID_hmacWithMD5;
-		return 1;
-#endif
 
 	default:
 		return -1;
