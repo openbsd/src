@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.c,v 1.12 2024/03/26 07:11:29 jsing Exp $ */
+/* $OpenBSD: md4.c,v 1.13 2024/03/26 07:12:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -332,7 +332,6 @@ MD4_Final(unsigned char *md, MD4_CTX *c)
 	c->num = 0;
 	memset(p, 0, MD4_CBLOCK);
 
-	do {
 	ll = c->A;
 	HOST_l2c(ll, md);
 	ll = c->B;
@@ -341,7 +340,6 @@ MD4_Final(unsigned char *md, MD4_CTX *c)
 	HOST_l2c(ll, md);
 	ll = c->D;
 	HOST_l2c(ll, md);
-	} while (0);
 
 	return 1;
 }
