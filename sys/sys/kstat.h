@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.h,v 1.4 2023/11/16 02:45:20 dlg Exp $ */
+/* $OpenBSD: kstat.h,v 1.5 2024/03/26 00:53:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -85,6 +85,8 @@ enum kstat_kv_type {
 	KSTAT_KV_T_FREQ,	/* frequency (Hz) */
 	KSTAT_KV_T_VOLTS_DC,	/* voltage (uV DC) */
 	KSTAT_KV_T_VOLTS_AC,	/* voltage (uV AC) */
+	KSTAT_KV_T_AMPS,	/* current (uA) */
+	KSTAT_KV_T_WATTS,	/* power (uW) */
 };
 
 /* units only apply to integer types */
@@ -124,6 +126,8 @@ struct kstat_kv {
 #define kstat_kv_temp(_kv)	(_kv)->kv_v.v_u64
 #define kstat_kv_freq(_kv)	(_kv)->kv_v.v_u64
 #define kstat_kv_volts(_kv)	(_kv)->kv_v.v_u64
+#define kstat_kv_amps(_kv)	(_kv)->kv_v.v_u64
+#define kstat_kv_watts(_kv)	(_kv)->kv_v.v_u64
 
 #ifdef _KERNEL
 
