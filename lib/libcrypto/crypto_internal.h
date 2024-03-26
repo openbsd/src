@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.7 2023/08/15 08:39:27 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.8 2024/03/26 04:11:42 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -92,7 +92,7 @@ crypto_store_htobe64(uint8_t *dst, uint64_t v)
  * unsigned host endian value, from the specified address in memory. The memory
  * address may have any alignment.
  */
-#ifndef HAVE_CRYPTO_LOAD_BE32TOH
+#ifndef HAVE_CRYPTO_LOAD_LE32TOH
 static inline uint32_t
 crypto_load_le32toh(const uint8_t *src)
 {
@@ -109,7 +109,7 @@ crypto_load_le32toh(const uint8_t *src)
  * unsigned little endian value, at the specified address in memory. The memory
  * address may have any alignment.
  */
-#ifndef HAVE_CRYPTO_STORE_HTOBE32
+#ifndef HAVE_CRYPTO_STORE_HTOLE32
 static inline void
 crypto_store_htole32(uint8_t *dst, uint32_t v)
 {
