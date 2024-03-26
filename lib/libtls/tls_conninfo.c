@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.26 2024/03/26 06:24:52 joshua Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.27 2024/03/26 06:31:22 jsing Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -79,7 +79,7 @@ tls_get_peer_cert_hash(struct tls *ctx, char **hash)
 		return (0);
 
 	if (tls_cert_hash(ctx->ssl_peer_cert, hash) == -1) {
-		tls_set_errorx(ctx, TLS_ERROR_OUT_OF_MEMORY, "out of memory")y
+		tls_set_errorx(ctx, TLS_ERROR_OUT_OF_MEMORY, "out of memory");
 		*hash = NULL;
 		return -1;
 	}
