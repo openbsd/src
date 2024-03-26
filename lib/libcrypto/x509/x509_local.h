@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.22 2024/03/02 10:52:24 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.23 2024/03/26 05:39:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -404,8 +404,6 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     const unsigned char *salt, int saltlen);
 X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
     unsigned char *salt, int saltlen);
-X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
-    unsigned char *salt, int saltlen, unsigned char *aiv, int prf_nid);
 X509_ALGOR *PKCS5_pbe_set(int alg, int iter, const unsigned char *salt,
     int saltlen);
 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,

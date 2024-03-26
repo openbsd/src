@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.32 2024/03/02 10:17:37 tb Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.33 2024/03/26 05:39:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -65,7 +65,6 @@
 #include <openssl/x509.h>
 
 #include "evp_local.h"
-#include "x509_local.h"
 
 /* PKCS#5 v2.0 password based encryption structures */
 
@@ -183,7 +182,7 @@ PBKDF2PARAM_free(PBKDF2PARAM *a)
  * Extended version to allow application supplied PRF NID and IV.
  */
 
-X509_ALGOR *
+static X509_ALGOR *
 PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
     int saltlen, unsigned char *aiv, int prf_nid)
 {
