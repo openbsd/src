@@ -1,4 +1,4 @@
-#	$OpenBSD: sftp-cmds.sh,v 1.17 2024/03/25 06:05:42 dtucker Exp $
+#	$OpenBSD: sftp-cmds.sh,v 1.18 2024/03/26 08:09:16 dtucker Exp $
 #	Placed in the Public Domain.
 
 # XXX - TODO: 
@@ -188,7 +188,7 @@ cmp ${COPY}.1 ${COPY}.2 || fail "created file is not equal after ln"
 verbose "$tid: ln -s"
 rm -f ${COPY}.2
 echo "ln -s ${COPY}.1 ${COPY}.2" | ${SFTP} -D ${SFTPSERVER} >/dev/null 2>&1 || fail "ln -s failed"
-test -L ${COPY}.2 || fail "missing file after ln -s"
+test -h ${COPY}.2 || fail "missing file after ln -s"
 
 verbose "$tid: cp"
 rm -f ${COPY}.2
