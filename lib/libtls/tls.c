@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.101 2024/03/26 06:24:52 joshua Exp $ */
+/* $OpenBSD: tls.c,v 1.102 2024/03/26 08:54:48 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -821,7 +821,7 @@ tls_handshake(struct tls *ctx)
 	tls_error_clear(&ctx->error);
 
 	if ((ctx->flags & (TLS_CLIENT | TLS_SERVER_CONN)) == 0) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_CONTEXT,
 		    "invalid operation for context");
 		goto out;
 	}
@@ -924,7 +924,7 @@ tls_close(struct tls *ctx)
 	tls_error_clear(&ctx->error);
 
 	if ((ctx->flags & (TLS_CLIENT | TLS_SERVER_CONN)) == 0) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_CONTEXT,
 		    "invalid operation for context");
 		rv = -1;
 		goto out;

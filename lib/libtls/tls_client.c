@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.50 2024/03/26 06:24:52 joshua Exp $ */
+/* $OpenBSD: tls_client.c,v 1.51 2024/03/26 08:54:48 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -66,7 +66,8 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	int rv = -1, s = -1, ret;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "not a client context");
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_CONTEXT,
+		    "not a client context");
 		goto err;
 	}
 
@@ -292,7 +293,8 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	int rv = -1;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "not a client context");
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_CONTEXT,
+		    "not a client context");
 		goto err;
 	}
 
@@ -456,7 +458,8 @@ tls_handshake_client(struct tls *ctx)
 	int rv = -1;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "not a client context");
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_CONTEXT,
+		    "not a client context");
 		goto err;
 	}
 

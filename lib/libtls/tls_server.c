@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.50 2024/03/26 06:24:52 joshua Exp $ */
+/* $OpenBSD: tls_server.c,v 1.51 2024/03/26 08:54:48 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -372,7 +372,8 @@ tls_accept_common(struct tls *ctx)
 	struct tls *conn_ctx = NULL;
 
 	if ((ctx->flags & TLS_SERVER) == 0) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "not a server context");
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_CONTEXT,
+		    "not a server context");
 		goto err;
 	}
 
@@ -461,7 +462,7 @@ tls_handshake_server(struct tls *ctx)
 	int rv = -1;
 
 	if ((ctx->flags & TLS_SERVER_CONN) == 0) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_CONTEXT,
 		    "not a server connection context");
 		goto err;
 	}
