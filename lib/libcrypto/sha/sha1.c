@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.12 2023/08/10 07:15:23 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.13 2024/03/26 12:54:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,12 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 
+#include "crypto_internal.h"
+
 #if !defined(OPENSSL_NO_SHA1) && !defined(OPENSSL_NO_SHA)
+
+/* Ensure that SHA_LONG and uint32_t are equivalent sizes. */
+CTASSERT(sizeof(SHA_LONG) == sizeof(uint32_t));
 
 #define DATA_ORDER_IS_BIG_ENDIAN
 
@@ -138,109 +143,77 @@ void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 #if !defined(SHA1_ASM)
 #include <endian.h>
 static void
-sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
+sha1_block_data_order(SHA_CTX *c, const void *_in, size_t num)
 {
-	const unsigned char *data = p;
-	unsigned int A, B, C, D, E, T, l;
+	const uint8_t *in = _in;
+	const SHA_LONG *in32;
+	unsigned int A, B, C, D, E, T;
 	unsigned int X0, X1, X2, X3, X4, X5, X6, X7,
 	    X8, X9, X10, X11, X12, X13, X14, X15;
 
-	A = c->h0;
-	B = c->h1;
-	C = c->h2;
-	D = c->h3;
-	E = c->h4;
+	while (num--) {
+		A = c->h0;
+		B = c->h1;
+		C = c->h2;
+		D = c->h3;
+		E = c->h4;
 
-	for (;;) {
-
-		if (BYTE_ORDER != LITTLE_ENDIAN &&
-		    sizeof(SHA_LONG) == 4 && ((size_t)p % 4) == 0) {
-			const SHA_LONG *W = (const SHA_LONG *)data;
-
-			X0 = W[0];
-			X1 = W[1];
-			BODY_00_15( 0, A, B, C, D, E, T, X0);
-			X2 = W[2];
-			BODY_00_15( 1, T, A, B, C, D, E, X1);
-			X3 = W[3];
-			BODY_00_15( 2, E, T, A, B, C, D, X2);
-			X4 = W[4];
-			BODY_00_15( 3, D, E, T, A, B, C, X3);
-			X5 = W[5];
-			BODY_00_15( 4, C, D, E, T, A, B, X4);
-			X6 = W[6];
-			BODY_00_15( 5, B, C, D, E, T, A, X5);
-			X7 = W[7];
-			BODY_00_15( 6, A, B, C, D, E, T, X6);
-			X8 = W[8];
-			BODY_00_15( 7, T, A, B, C, D, E, X7);
-			X9 = W[9];
-			BODY_00_15( 8, E, T, A, B, C, D, X8);
-			X10 = W[10];
-			BODY_00_15( 9, D, E, T, A, B, C, X9);
-			X11 = W[11];
-			BODY_00_15(10, C, D, E, T, A, B, X10);
-			X12 = W[12];
-			BODY_00_15(11, B, C, D, E, T, A, X11);
-			X13 = W[13];
-			BODY_00_15(12, A, B, C, D, E, T, X12);
-			X14 = W[14];
-			BODY_00_15(13, T, A, B, C, D, E, X13);
-			X15 = W[15];
-			BODY_00_15(14, E, T, A, B, C, D, X14);
-			BODY_00_15(15, D, E, T, A, B, C, X15);
-
-			data += SHA_CBLOCK;
+		if ((size_t)in % 4 == 0) {
+			/* Input is 32 bit aligned. */
+			in32 = (const SHA_LONG *)in;
+			X0 = be32toh(in32[0]);
+			X1 = be32toh(in32[1]);
+			X2 = be32toh(in32[2]);
+			X3 = be32toh(in32[3]);
+			X4 = be32toh(in32[4]);
+			X5 = be32toh(in32[5]);
+			X6 = be32toh(in32[6]);
+			X7 = be32toh(in32[7]);
+			X8 = be32toh(in32[8]);
+			X9 = be32toh(in32[9]);
+			X10 = be32toh(in32[10]);
+			X11 = be32toh(in32[11]);
+			X12 = be32toh(in32[12]);
+			X13 = be32toh(in32[13]);
+			X14 = be32toh(in32[14]);
+			X15 = be32toh(in32[15]);
 		} else {
-			HOST_c2l(data, l);
-			X0 = l;
-			HOST_c2l(data, l);
-			X1 = l;
-			BODY_00_15( 0, A, B, C, D, E, T, X0);
-			HOST_c2l(data, l);
-			X2 = l;
-			BODY_00_15( 1, T, A, B, C, D, E, X1);
-			HOST_c2l(data, l);
-			X3 = l;
-			BODY_00_15( 2, E, T, A, B, C, D, X2);
-			HOST_c2l(data, l);
-			X4 = l;
-			BODY_00_15( 3, D, E, T, A, B, C, X3);
-			HOST_c2l(data, l);
-			X5 = l;
-			BODY_00_15( 4, C, D, E, T, A, B, X4);
-			HOST_c2l(data, l);
-			X6 = l;
-			BODY_00_15( 5, B, C, D, E, T, A, X5);
-			HOST_c2l(data, l);
-			X7 = l;
-			BODY_00_15( 6, A, B, C, D, E, T, X6);
-			HOST_c2l(data, l);
-			X8 = l;
-			BODY_00_15( 7, T, A, B, C, D, E, X7);
-			HOST_c2l(data, l);
-			X9 = l;
-			BODY_00_15( 8, E, T, A, B, C, D, X8);
-			HOST_c2l(data, l);
-			X10 = l;
-			BODY_00_15( 9, D, E, T, A, B, C, X9);
-			HOST_c2l(data, l);
-			X11 = l;
-			BODY_00_15(10, C, D, E, T, A, B, X10);
-			HOST_c2l(data, l);
-			X12 = l;
-			BODY_00_15(11, B, C, D, E, T, A, X11);
-			HOST_c2l(data, l);
-			X13 = l;
-			BODY_00_15(12, A, B, C, D, E, T, X12);
-			HOST_c2l(data, l);
-			X14 = l;
-			BODY_00_15(13, T, A, B, C, D, E, X13);
-			HOST_c2l(data, l);
-			X15 = l;
-			BODY_00_15(14, E, T, A, B, C, D, X14);
-			BODY_00_15(15, D, E, T, A, B, C, X15);
+			/* Input is not 32 bit aligned. */
+			X0 = crypto_load_be32toh(&in[0 * 4]);
+			X1 = crypto_load_be32toh(&in[1 * 4]);
+			X2 = crypto_load_be32toh(&in[2 * 4]);
+			X3 = crypto_load_be32toh(&in[3 * 4]);
+			X4 = crypto_load_be32toh(&in[4 * 4]);
+			X5 = crypto_load_be32toh(&in[5 * 4]);
+			X6 = crypto_load_be32toh(&in[6 * 4]);
+			X7 = crypto_load_be32toh(&in[7 * 4]);
+			X8 = crypto_load_be32toh(&in[8 * 4]);
+			X9 = crypto_load_be32toh(&in[9 * 4]);
+			X10 = crypto_load_be32toh(&in[10 * 4]);
+			X11 = crypto_load_be32toh(&in[11 * 4]);
+			X12 = crypto_load_be32toh(&in[12 * 4]);
+			X13 = crypto_load_be32toh(&in[13 * 4]);
+			X14 = crypto_load_be32toh(&in[14 * 4]);
+			X15 = crypto_load_be32toh(&in[15 * 4]);
 		}
+		in += SHA_CBLOCK;
+
+		BODY_00_15( 0, A, B, C, D, E, T, X0);
+		BODY_00_15( 1, T, A, B, C, D, E, X1);
+		BODY_00_15( 2, E, T, A, B, C, D, X2);
+		BODY_00_15( 3, D, E, T, A, B, C, X3);
+		BODY_00_15( 4, C, D, E, T, A, B, X4);
+		BODY_00_15( 5, B, C, D, E, T, A, X5);
+		BODY_00_15( 6, A, B, C, D, E, T, X6);
+		BODY_00_15( 7, T, A, B, C, D, E, X7);
+		BODY_00_15( 8, E, T, A, B, C, D, X8);
+		BODY_00_15( 9, D, E, T, A, B, C, X9);
+		BODY_00_15(10, C, D, E, T, A, B, X10);
+		BODY_00_15(11, B, C, D, E, T, A, X11);
+		BODY_00_15(12, A, B, C, D, E, T, X12);
+		BODY_00_15(13, T, A, B, C, D, E, X13);
+		BODY_00_15(14, E, T, A, B, C, D, X14);
+		BODY_00_15(15, D, E, T, A, B, C, X15);
 
 		BODY_16_19(16, C, D, E, T, A, B, X0, X0, X2, X8, X13);
 		BODY_16_19(17, B, C, D, E, T, A, X1, X1, X3, X9, X14);
@@ -316,16 +289,6 @@ sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 		c->h2 = (c->h2 + A)&0xffffffffL;
 		c->h3 = (c->h3 + B)&0xffffffffL;
 		c->h4 = (c->h4 + C)&0xffffffffL;
-
-		if (--num == 0)
-			break;
-
-		A = c->h0;
-		B = c->h1;
-		C = c->h2;
-		D = c->h3;
-		E = c->h4;
-
 	}
 }
 #endif
@@ -412,7 +375,6 @@ int
 SHA1_Final(unsigned char *md, SHA_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
-	unsigned long ll;
 	size_t n = c->num;
 
 	p[n] = 0x80; /* there is always room for one */
@@ -423,31 +385,20 @@ SHA1_Final(unsigned char *md, SHA_CTX *c)
 		n = 0;
 		sha1_block_data_order(c, p, 1);
 	}
-	memset(p + n, 0, SHA_CBLOCK - 8 - n);
 
-	p += SHA_CBLOCK - 8;
-#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
-	HOST_l2c(c->Nh, p);
-	HOST_l2c(c->Nl, p);
-#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
-	HOST_l2c(c->Nl, p);
-	HOST_l2c(c->Nh, p);
-#endif
-	p -= SHA_CBLOCK;
+	memset(p + n, 0, SHA_CBLOCK - 8 - n);
+	c->data[SHA_LBLOCK - 2] = htobe32(c->Nh);
+	c->data[SHA_LBLOCK - 1] = htobe32(c->Nl);
+
 	sha1_block_data_order(c, p, 1);
 	c->num = 0;
 	memset(p, 0, SHA_CBLOCK);
 
-	ll = c->h0;
-	HOST_l2c(ll, md);
-	ll = c->h1;
-	HOST_l2c(ll, md);
-	ll = c->h2;
-	HOST_l2c(ll, md);
-	ll = c->h3;
-	HOST_l2c(ll, md);
-	ll = c->h4;
-	HOST_l2c(ll, md);
+	crypto_store_htobe32(&md[0 * 4], c->h0);
+	crypto_store_htobe32(&md[1 * 4], c->h1);
+	crypto_store_htobe32(&md[2 * 4], c->h2);
+	crypto_store_htobe32(&md[3 * 4], c->h3);
+	crypto_store_htobe32(&md[4 * 4], c->h4);
 
 	return 1;
 }
