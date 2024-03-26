@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.13 2023/11/16 03:17:34 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.14 2024/03/26 00:54:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -471,6 +471,16 @@ kstat_kv(const void *d, ssize_t len)
 		case KSTAT_KV_T_VOLTS_AC: /* uV */
 			f = kstat_kv_volts(kv);
 			printf("%.2f VAC", f / 1000000.0);
+			break;
+
+		case KSTAT_KV_T_AMPS: /* uA */
+			f = kstat_kv_amps(kv);
+			printf("%.3f A", f / 1000000.0);
+			break;
+
+		case KSTAT_KV_T_WATTS: /* uW */
+			f = kstat_kv_watts(kv);
+			printf("%.3f W", f / 1000000.0);
 			break;
 
 		default:
