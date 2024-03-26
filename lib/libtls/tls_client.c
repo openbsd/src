@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_client.c,v 1.49 2023/05/14 07:26:25 op Exp $ */
+/* $OpenBSD: tls_client.c,v 1.50 2024/03/26 06:24:52 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -66,12 +66,12 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	int rv = -1, s = -1, ret;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
-		tls_set_errorx(ctx, "not a client context");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "not a client context");
 		goto err;
 	}
 
 	if (host == NULL) {
-		tls_set_errorx(ctx, "host not specified");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "host not specified");
 		goto err;
 	}
 
@@ -79,11 +79,11 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	if (port == NULL) {
 		ret = tls_host_port(host, &hs, &ps);
 		if (ret == -1) {
-			tls_set_errorx(ctx, "memory allocation failure");
+			tls_set_errorx(ctx, TLS_ERROR_OUT_OF_MEMORY, "out of memory");
 			goto err;
 		}
 		if (ret != 0) {
-			tls_set_errorx(ctx, "no port provided");
+			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "no port provided");
 			goto err;
 		}
 	}
@@ -114,7 +114,8 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 			hints.ai_family = AF_UNSPEC;
 			hints.ai_flags = AI_ADDRCONFIG;
 			if ((s = getaddrinfo(h, p, &hints, &res0)) != 0) {
-				tls_set_error(ctx, "%s", gai_strerror(s));
+				tls_set_error(ctx, TLS_ERROR_UNKNOWN,
+				    "%s", gai_strerror(s));
 				goto err;
 			}
 		}
@@ -125,11 +126,13 @@ tls_connect_servername(struct tls *ctx, const char *host, const char *port,
 	for (res = res0; res; res = res->ai_next) {
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s == -1) {
-			tls_set_error(ctx, "socket");
+			tls_set_error(ctx, TLS_ERROR_UNKNOWN,
+			    "socket");
 			continue;
 		}
 		if (connect(s, res->ai_addr, res->ai_addrlen) == -1) {
-			tls_set_error(ctx, "connect");
+			tls_set_error(ctx, TLS_ERROR_UNKNOWN,
+			    "connect");
 			close(s);
 			s = -1;
 			continue;
@@ -174,11 +177,13 @@ tls_client_read_session(struct tls *ctx)
 	int rv = -1;
 
 	if (fstat(sfd, &sb) == -1) {
-		tls_set_error(ctx, "failed to stat session file");
+		tls_set_error(ctx, TLS_ERROR_UNKNOWN,
+		    "failed to stat session file");
 		goto err;
 	}
 	if (sb.st_size < 0 || sb.st_size > INT_MAX) {
-		tls_set_errorx(ctx, "invalid session file size");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "invalid session file size");
 		goto err;
 	}
 	session_len = (size_t)sb.st_size;
@@ -192,19 +197,22 @@ tls_client_read_session(struct tls *ctx)
 
 	n = pread(sfd, session, session_len, 0);
 	if (n < 0 || (size_t)n != session_len) {
-		tls_set_error(ctx, "failed to read session file");
+		tls_set_error(ctx, TLS_ERROR_UNKNOWN,
+		    "failed to read session file");
 		goto err;
 	}
 	if ((bio = BIO_new_mem_buf(session, session_len)) == NULL)
 		goto err;
 	if ((ss = PEM_read_bio_SSL_SESSION(bio, NULL, tls_password_cb,
 	    NULL)) == NULL) {
-		tls_set_errorx(ctx, "failed to parse session");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "failed to parse session");
 		goto err;
 	}
 
 	if (SSL_set_session(ctx->ssl_conn, ss) != 1) {
-		tls_set_errorx(ctx, "failed to set session");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "failed to set session");
 		goto err;
 	}
 
@@ -234,7 +242,8 @@ tls_client_write_session(struct tls *ctx)
 
 	if ((ss = SSL_get1_session(ctx->ssl_conn)) == NULL) {
 		if (ftruncate(sfd, 0) == -1) {
-			tls_set_error(ctx, "failed to truncate session file");
+			tls_set_error(ctx, TLS_ERROR_UNKNOWN,
+			    "failed to truncate session file");
 			goto err;
 		}
 		goto done;
@@ -251,12 +260,14 @@ tls_client_write_session(struct tls *ctx)
 	offset = 0;
 
 	if (ftruncate(sfd, len) == -1) {
-		tls_set_error(ctx, "failed to truncate session file");
+		tls_set_error(ctx, TLS_ERROR_UNKNOWN,
+		    "failed to truncate session file");
 		goto err;
 	}
 	while (len > 0) {
 		if ((n = pwrite(sfd, data + offset, len, offset)) == -1) {
-			tls_set_error(ctx, "failed to write session file");
+			tls_set_error(ctx, TLS_ERROR_UNKNOWN,
+			    "failed to write session file");
 			goto err;
 		}
 		offset += n;
@@ -281,13 +292,14 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	int rv = -1;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
-		tls_set_errorx(ctx, "not a client context");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "not a client context");
 		goto err;
 	}
 
 	if (servername != NULL) {
 		if ((ctx->servername = strdup(servername)) == NULL) {
-			tls_set_errorx(ctx, "out of memory");
+			tls_set_errorx(ctx, TLS_ERROR_OUT_OF_MEMORY,
+			    "out of memory");
 			goto err;
 		}
 
@@ -304,7 +316,7 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	}
 
 	if ((ctx->ssl_ctx = SSL_CTX_new(SSLv23_client_method())) == NULL) {
-		tls_set_errorx(ctx, "ssl context failure");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "ssl context failure");
 		goto err;
 	}
 
@@ -317,7 +329,8 @@ tls_connect_common(struct tls *ctx, const char *servername)
 
 	if (ctx->config->verify_name) {
 		if (ctx->servername == NULL) {
-			tls_set_errorx(ctx, "server name not specified");
+			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+			    "server name not specified");
 			goto err;
 		}
 	}
@@ -328,23 +341,26 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	if (ctx->config->ecdhecurves != NULL) {
 		if (SSL_CTX_set1_groups(ctx->ssl_ctx, ctx->config->ecdhecurves,
 		    ctx->config->ecdhecurves_len) != 1) {
-			tls_set_errorx(ctx, "failed to set ecdhe curves");
+			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+			    "failed to set ecdhe curves");
 			goto err;
 		}
 	}
 
 	if (SSL_CTX_set_tlsext_status_cb(ctx->ssl_ctx, tls_ocsp_verify_cb) != 1) {
-		tls_set_errorx(ctx, "ssl OCSP verification setup failure");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "ssl OCSP verification setup failure");
 		goto err;
 	}
 
 	if ((ctx->ssl_conn = SSL_new(ctx->ssl_ctx)) == NULL) {
-		tls_set_errorx(ctx, "ssl connection failure");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "ssl connection failure");
 		goto err;
 	}
 
 	if (SSL_set_app_data(ctx->ssl_conn, ctx) != 1) {
-		tls_set_errorx(ctx, "ssl application data failure");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "ssl application data failure");
 		goto err;
 	}
 
@@ -355,7 +371,8 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	}
 
 	if (SSL_set_tlsext_status_type(ctx->ssl_conn, TLSEXT_STATUSTYPE_ocsp) != 1) {
-		tls_set_errorx(ctx, "ssl OCSP extension setup failure");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "ssl OCSP extension setup failure");
 		goto err;
 	}
 
@@ -368,7 +385,8 @@ tls_connect_common(struct tls *ctx, const char *servername)
 	    inet_pton(AF_INET6, ctx->servername, &addrbuf) != 1) {
 		if (SSL_set_tlsext_host_name(ctx->ssl_conn,
 		    ctx->servername) == 0) {
-			tls_set_errorx(ctx, "server name indication failure");
+			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+			    "server name indication failure");
 			goto err;
 		}
 	}
@@ -393,7 +411,7 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 	int rv = -1;
 
 	if (fd_read < 0 || fd_write < 0) {
-		tls_set_errorx(ctx, "invalid file descriptors");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "invalid file descriptors");
 		goto err;
 	}
 
@@ -402,7 +420,8 @@ tls_connect_fds(struct tls *ctx, int fd_read, int fd_write,
 
 	if (SSL_set_rfd(ctx->ssl_conn, fd_read) != 1 ||
 	    SSL_set_wfd(ctx->ssl_conn, fd_write) != 1) {
-		tls_set_errorx(ctx, "ssl file descriptor failure");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "ssl file descriptor failure");
 		goto err;
 	}
 
@@ -437,12 +456,12 @@ tls_handshake_client(struct tls *ctx)
 	int rv = -1;
 
 	if ((ctx->flags & TLS_CLIENT) == 0) {
-		tls_set_errorx(ctx, "not a client context");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "not a client context");
 		goto err;
 	}
 
 	if ((ctx->state & TLS_CONNECTED) == 0) {
-		tls_set_errorx(ctx, "context not connected");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "context not connected");
 		goto err;
 	}
 
@@ -457,14 +476,16 @@ tls_handshake_client(struct tls *ctx)
 	if (ctx->config->verify_name) {
 		cert = SSL_get_peer_certificate(ctx->ssl_conn);
 		if (cert == NULL) {
-			tls_set_errorx(ctx, "no server certificate");
+			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+			    "no server certificate");
 			goto err;
 		}
 		if (tls_check_name(ctx, cert, ctx->servername, &match) == -1)
 			goto err;
 		if (!match) {
-			tls_set_errorx(ctx, "name `%s' not present in"
-			    " server certificate", ctx->servername);
+			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+			    "name `%s' not present in server certificate",
+			    ctx->servername);
 			goto err;
 		}
 	}

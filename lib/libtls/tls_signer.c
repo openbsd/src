@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.9 2023/06/18 19:12:58 tb Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.10 2024/03/26 06:24:52 joshua Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -91,7 +91,7 @@ tls_signer_add_keypair_mem(struct tls_signer *signer, const uint8_t *cert,
 
 	/* Compute certificate hash */
 	if ((bio = BIO_new_mem_buf(cert, cert_len)) == NULL) {
-		tls_error_setx(&signer->error,
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
 		    "failed to create certificate bio");
 		goto err;
 	}
@@ -99,12 +99,12 @@ tls_signer_add_keypair_mem(struct tls_signer *signer, const uint8_t *cert,
 	    NULL)) == NULL) {
 		if ((ssl_err = ERR_peek_error()) != 0)
 			errstr = ERR_error_string(ssl_err, NULL);
-		tls_error_setx(&signer->error, "failed to load certificate: %s",
-		    errstr);
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "failed to load certificate: %s", errstr);
 		goto err;
 	}
 	if (tls_cert_pubkey_hash(x509, &hash) == -1) {
-		tls_error_setx(&signer->error,
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
 		    "failed to get certificate hash");
 		goto err;
 	}
@@ -116,23 +116,27 @@ tls_signer_add_keypair_mem(struct tls_signer *signer, const uint8_t *cert,
 
 	/* Read private key */
 	if ((bio = BIO_new_mem_buf(key, key_len)) == NULL) {
-		tls_error_setx(&signer->error, "failed to create key bio");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "failed to create key bio");
 		goto err;
 	}
 	if ((pkey = PEM_read_bio_PrivateKey(bio, NULL, tls_password_cb,
 	    NULL)) == NULL) {
-		tls_error_setx(&signer->error, "failed to read private key");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "failed to read private key");
 		goto err;
 	}
 
 	if ((skey = calloc(1, sizeof(*skey))) == NULL) {
-		tls_error_set(&signer->error, "failed to create key entry");
+		tls_error_set(&signer->error, TLS_ERROR_UNKNOWN,
+		    "failed to create key entry");
 		goto err;
 	}
 	skey->hash = hash;
 	if ((skey->rsa = EVP_PKEY_get1_RSA(pkey)) == NULL &&
 	    (skey->ecdsa = EVP_PKEY_get1_EC_KEY(pkey)) == NULL) {
-		tls_error_setx(&signer->error, "unknown key type");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "unknown key type");
 		goto err;
 	}
 
@@ -194,29 +198,31 @@ tls_sign_rsa(struct tls_signer *signer, struct tls_signer_key *skey,
 	} else if (padding_type == TLS_PADDING_RSA_PKCS1) {
 		rsa_padding = RSA_PKCS1_PADDING;
 	} else {
-		tls_error_setx(&signer->error, "invalid RSA padding type (%d)",
-		    padding_type);
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "invalid RSA padding type (%d)", padding_type);
 		return (-1);
 	}
 
 	if (input_len > INT_MAX) {
-		tls_error_setx(&signer->error, "input too large");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "input too large");
 		return (-1);
 	}
 	if ((rsa_size = RSA_size(skey->rsa)) <= 0) {
-		tls_error_setx(&signer->error, "invalid RSA size: %d",
-		    rsa_size);
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "invalid RSA size: %d", rsa_size);
 		return (-1);
 	}
 	if ((signature = calloc(1, rsa_size)) == NULL) {
-		tls_error_set(&signer->error, "RSA signature");
+		tls_error_set(&signer->error, TLS_ERROR_UNKNOWN, "RSA signature");
 		return (-1);
 	}
 
 	if ((signature_len = RSA_private_encrypt((int)input_len, input,
 	    signature, skey->rsa, rsa_padding)) <= 0) {
 		/* XXX - include further details from libcrypto. */
-		tls_error_setx(&signer->error, "RSA signing failed");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "RSA signing failed");
 		free(signature);
 		return (-1);
 	}
@@ -239,28 +245,32 @@ tls_sign_ecdsa(struct tls_signer *signer, struct tls_signer_key *skey,
 	*out_signature_len = 0;
 
 	if (padding_type != TLS_PADDING_NONE) {
-		tls_error_setx(&signer->error, "invalid ECDSA padding");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "invalid ECDSA padding");
 		return (-1);
 	}
 
 	if (input_len > INT_MAX) {
-		tls_error_setx(&signer->error, "digest too large");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "digest too large");
 		return (-1);
 	}
 	if ((signature_len = ECDSA_size(skey->ecdsa)) <= 0) {
-		tls_error_setx(&signer->error, "invalid ECDSA size: %d",
-		    signature_len);
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "invalid ECDSA size: %d", signature_len);
 		return (-1);
 	}
 	if ((signature = calloc(1, signature_len)) == NULL) {
-		tls_error_set(&signer->error, "ECDSA signature");
+		tls_error_set(&signer->error, TLS_ERROR_UNKNOWN,
+		    "ECDSA signature");
 		return (-1);
 	}
 
 	if (!ECDSA_sign(0, input, input_len, signature, &signature_len,
 	    skey->ecdsa)) {
 		/* XXX - include further details from libcrypto. */
-		tls_error_setx(&signer->error, "ECDSA signing failed");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		    "ECDSA signing failed");
 		free(signature);
 		return (-1);
 	}
@@ -286,7 +296,7 @@ tls_signer_sign(struct tls_signer *signer, const char *pubkey_hash,
 			break;
 
 	if (skey == NULL) {
-		tls_error_setx(&signer->error, "key not found");
+		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN, "key not found");
 		return (-1);
 	}
 
@@ -298,7 +308,7 @@ tls_signer_sign(struct tls_signer *signer, const char *pubkey_hash,
 		return tls_sign_ecdsa(signer, skey, input, input_len,
 		    padding_type, out_signature, out_signature_len);
 
-	tls_error_setx(&signer->error, "unknown key type");
+	tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN, "unknown key type");
 
 	return (-1);
 }

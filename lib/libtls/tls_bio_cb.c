@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_bio_cb.c,v 1.21 2023/05/14 07:26:25 op Exp $ */
+/* $OpenBSD: tls_bio_cb.c,v 1.22 2024/03/26 06:24:52 joshua Exp $ */
 /*
  * Copyright (c) 2016 Tobias Pape <tobias@netshed.de>
  *
@@ -143,7 +143,7 @@ tls_set_cbs(struct tls *ctx, tls_read_cb read_cb, tls_write_cb write_cb,
 	int rv = -1;
 
 	if (read_cb == NULL || write_cb == NULL) {
-		tls_set_errorx(ctx, "no callbacks provided");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "no callbacks provided");
 		goto err;
 	}
 
@@ -152,11 +152,13 @@ tls_set_cbs(struct tls *ctx, tls_read_cb read_cb, tls_write_cb write_cb,
 	ctx->cb_arg = cb_arg;
 
 	if ((bio_cb = bio_s_cb()) == NULL) {
-		tls_set_errorx(ctx, "failed to create callback method");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "failed to create callback method");
 		goto err;
 	}
 	if ((bio = BIO_new(bio_cb)) == NULL) {
-		tls_set_errorx(ctx, "failed to create callback i/o");
+		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		    "failed to create callback i/o");
 		goto err;
 	}
 	BIO_set_data(bio, ctx);
