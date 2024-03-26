@@ -1,4 +1,4 @@
-/* $OpenBSD: x509rset.c,v 1.15 2024/03/26 11:09:37 tb Exp $ */
+/* $OpenBSD: x509rset.c,v 1.16 2024/03/26 23:45:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,12 +69,12 @@ int
 X509_REQ_set_version(X509_REQ *x, long version)
 {
 	if (x == NULL)
-		return (0);
+		return 0;
 	/* RFC 2986 section 4.1 only specifies version 1, encoded as a 0. */
 	if (version != 0)
-		return (0);
+		return 0;
 	x->req_info->enc.modified = 1;
-	return (ASN1_INTEGER_set(x->req_info->version, version));
+	return ASN1_INTEGER_set(x->req_info->version, version);
 }
 LCRYPTO_ALIAS(X509_REQ_set_version);
 
@@ -88,10 +88,10 @@ LCRYPTO_ALIAS(X509_REQ_get_version);
 int
 X509_REQ_set_subject_name(X509_REQ *x, X509_NAME *name)
 {
-	if ((x == NULL) || (x->req_info == NULL))
-		return (0);
+	if (x == NULL || x->req_info == NULL)
+		return 0;
 	x->req_info->enc.modified = 1;
-	return (X509_NAME_set(&x->req_info->subject, name));
+	return X509_NAME_set(&x->req_info->subject, name);
 }
 LCRYPTO_ALIAS(X509_REQ_set_subject_name);
 
@@ -105,9 +105,9 @@ LCRYPTO_ALIAS(X509_REQ_get_subject_name);
 int
 X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey)
 {
-	if ((x == NULL) || (x->req_info == NULL))
-		return (0);
+	if (x == NULL || x->req_info == NULL)
+		return 0;
 	x->req_info->enc.modified = 1;
-	return (X509_PUBKEY_set(&x->req_info->pubkey, pkey));
+	return X509_PUBKEY_set(&x->req_info->pubkey, pkey);
 }
 LCRYPTO_ALIAS(X509_REQ_set_pubkey);
