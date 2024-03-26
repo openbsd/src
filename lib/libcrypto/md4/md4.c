@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.c,v 1.14 2024/03/26 12:18:23 jsing Exp $ */
+/* $OpenBSD: md4.c,v 1.15 2024/03/26 12:23:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,11 +118,6 @@ __END_HIDDEN_DECLS
 
 /* Implemented from RFC1186 The MD4 Message-Digest Algorithm
  */
-
-#define INIT_DATA_A (unsigned long)0x67452301L
-#define INIT_DATA_B (unsigned long)0xefcdab89L
-#define INIT_DATA_C (unsigned long)0x98badcfeL
-#define INIT_DATA_D (unsigned long)0x10325476L
 
 #ifndef md4_block_data_order
 #ifdef X
@@ -248,11 +243,13 @@ md4_block_data_order(MD4_CTX *c, const void *_in, size_t num)
 int
 MD4_Init(MD4_CTX *c)
 {
-	memset (c, 0, sizeof(*c));
-	c->A = INIT_DATA_A;
-	c->B = INIT_DATA_B;
-	c->C = INIT_DATA_C;
-	c->D = INIT_DATA_D;
+	memset(c, 0, sizeof(*c));
+
+	c->A = 0x67452301UL;
+	c->B = 0xefcdab89UL;
+	c->C = 0x98badcfeUL;
+	c->D = 0x10325476UL;
+
 	return 1;
 }
 LCRYPTO_ALIAS(MD4_Init);
