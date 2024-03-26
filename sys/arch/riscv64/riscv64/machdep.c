@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2024/02/21 04:26:45 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 2024/03/26 22:46:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -551,6 +551,7 @@ initriscv(struct riscv_bootparams *rbp)
 	paddr_t fdt_start = (paddr_t)rbp->dtbp_phys;
 	size_t fdt_size;
 	struct fdt_reg reg;
+	const char *s;
 	void *node;
 	EFI_PHYSICAL_ADDRESS system_table = 0;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
@@ -647,27 +648,37 @@ initriscv(struct riscv_bootparams *rbp)
 	process_kernel_args();
 
 	/*
-	 * Determine physical RAM address range from FDT.
+	 * Determine physical RAM address range from the /memory nodes
+	 * in the FDT.  There can be multiple nodes and each node can
+	 * contain multiple ranges.
 	 */
 	node = fdt_find_node("/memory");
 	if (node == NULL)
 		panic("%s: no memory specified", __func__);
 	ramstart = (paddr_t)-1, ramend = 0;
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-		if (fdt_get_reg(node, i, &reg))
-			break;
-		if (reg.size == 0)
-			continue;
+	while (node) {
+		s = fdt_node_name(node);
+		if (strncmp(s, "memory", 6) == 0 &&
+		    (s[6] == '\0' || s[6] == '@')) {
+			for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+				if (fdt_get_reg(node, i, &reg))
+					break;
+				if (reg.size == 0)
+					continue;
 
-		start = reg.addr;
-		end = reg.addr + reg.size;
+				start = reg.addr;
+				end = reg.addr + reg.size;
 
-		if (start < ramstart)
-			ramstart = start;
-		if (end > ramend)
-			ramend = end;
+				if (start < ramstart)
+					ramstart = start;
+				if (end > ramend)
+					ramend = end;
 
-		physmem += atop(ramend - ramstart);
+				physmem += atop(reg.size);
+			}
+		}
+
+		node = fdt_next_node(node);
 	}
 
 	/* The bootloader has loaded us into a 64MB block. */
