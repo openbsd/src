@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.62 2024/03/26 04:14:45 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.63 2024/03/26 04:23:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -436,7 +436,7 @@ bn_montgomery_multiply_word(const BN_ULONG *ap, BN_ULONG b, const BN_ULONG *np,
  * given word arrays. The caller must ensure that rp, ap, bp and np are all
  * n_len words in length, while tp must be n_len * 2 + 2 words in length.
  */
-void
+static void
 bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, BN_ULONG *tp, BN_ULONG n0, int n_len)
 {
@@ -484,7 +484,7 @@ bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *b
  * BIGNUMs. The caller must ensure that the modulus is two or more words in
  * length and that a and b have the same number of words as the modulus.
  */
-int
+static int
 bn_montgomery_multiply(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mctx, BN_CTX *ctx)
 {
@@ -519,7 +519,7 @@ bn_montgomery_multiply(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 }
 
 #ifndef OPENSSL_BN_ASM_MONT
-int
+static int
 bn_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mctx, BN_CTX *ctx)
 {
@@ -530,7 +530,7 @@ bn_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 }
 #else
 
-int
+static int
 bn_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mctx, BN_CTX *ctx)
 {
