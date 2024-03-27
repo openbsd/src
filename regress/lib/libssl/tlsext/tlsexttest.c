@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.86 2024/03/26 02:43:56 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.87 2024/03/27 22:27:09 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1108,7 +1108,6 @@ test_tlsext_ecpf_client(void)
 		FAIL("client had an incorrect ECPointFormats entry\n");
 		goto err;
 	}
-
 
 	failure = 0;
 
@@ -3648,6 +3647,7 @@ test_tlsext_keyshare_client(void)
 	const struct tls_extension_funcs *server_funcs;
 	int failure;
 	size_t dlen;
+	size_t idx;
 	int alert;
 	CBB cbb;
 	CBS cbs;
@@ -3701,18 +3701,109 @@ test_tlsext_keyshare_client(void)
 		goto done;
 	}
 
-	(ssl)->version = TLS1_3_VERSION;
-	CBS_init(&cbs, data, dlen);
+	ssl->version = TLS1_3_VERSION;
 
-	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
-		FAIL("failed to parse client keyshare\n");
+	/* Fake up the ssl enough so the key share can process */
+	ssl->session = SSL_SESSION_new();
+	ssl->s3 = calloc(1, sizeof(*ssl->s3));
+	ssl->session->tlsext_supportedgroups = calloc(4,
+	    sizeof(unsigned short));
+	if (ssl->session == NULL || ssl->s3 == NULL ||
+	    ssl->session->tlsext_supportedgroups == NULL) {
+		FAIL("malloc");
 		goto done;
 	}
+	ssl->session->tlsext_supportedgroups[0] = 29;
+	ssl->session->tlsext_supportedgroups[1] = 23;
+	ssl->session->tlsext_supportedgroups[2] = 24;
+	ssl->session->tlsext_supportedgroups[3] = 25;
+	ssl->session->tlsext_supportedgroups_length = 4;
+	tls_extension_find(TLSEXT_TYPE_supported_groups, &idx);
+	ssl->s3->hs.extensions_processed |= (1 << idx);
+	ssl->s3->hs.extensions_seen |= (1 << idx);
+	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
 
+	/*
+	 * We should select the key share for group 29, when group 29
+	 * is the most preferred group
+	 */
+	CBS_init(&cbs, data, dlen);
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
+		FAIL("failed to process client keyshare\n");
+		goto done;
+	}
 	if (CBS_len(&cbs) != 0) {
 		FAIL("extension data remaining\n");
 		goto done;
 	}
+	if (ssl->s3->hs.key_share == NULL) {
+		FAIL("Did not select a key share");
+		goto done;
+	}
+
+	/*
+	 * Pretend the client did not send the supported groups extension. We
+	 * should fail to process.
+	 */
+	ssl->s3->hs.extensions_seen = 0;
+	free(ssl->s3->hs.key_share);
+	ssl->s3->hs.key_share = NULL;
+	CBS_init(&cbs, data, dlen);
+	if (server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
+		FAIL("Processed key share when supported groups not provided");
+		goto done;
+	}
+	ssl->s3->hs.extensions_seen |= (1 << idx);
+
+	/*
+	 * Pretend supported groups did not get processed. We should fail to
+	 * process
+	 */
+	ssl->s3->hs.extensions_processed = 0;
+	ssl->s3->hs.key_share = NULL;
+	CBS_init(&cbs, data, dlen);
+	if (server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
+		FAIL("Processed key share when supported groups unprocesed");
+		goto done;
+	}
+	ssl->s3->hs.extensions_processed |= (1 << idx);
+
+	/*
+	 * Remove group 29 by making it 0xbeef, meaning 29 has not been sent in
+	 * supported groups. This should fail to process.
+	 */
+	ssl->session->tlsext_supportedgroups[0] = 0xbeef;
+	ssl->s3->hs.key_share = NULL;
+	CBS_init(&cbs, data, dlen);
+	if (server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
+		FAIL("Processed key share with invalid group!");
+		goto done;
+	}
+	ssl->session->tlsext_supportedgroups[0] = 29;
+
+	/*
+	 * Make 29 least preferred, while server supports both 29 and 25.
+	 * Client key share is for 29 but it prefers 25. We should successfully
+	 * process, but should not select this key share.
+	 */
+	ssl->session->tlsext_supportedgroups[0] = 25;
+	ssl->session->tlsext_supportedgroups[3] = 29;
+	ssl->s3->hs.key_share = NULL;
+	CBS_init(&cbs, data, dlen);
+	if (!server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
+		FAIL("failed to process client keyshare\n");
+		goto done;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining\n");
+		goto done;
+	}
+	if (ssl->s3->hs.key_share != NULL) {
+		FAIL("Selected a key share when I should not have!");
+		goto done;
+	}
+	ssl->session->tlsext_supportedgroups[0] = 29;
+	ssl->session->tlsext_supportedgroups[3] = 25;
 
 	failure = 0;
 
