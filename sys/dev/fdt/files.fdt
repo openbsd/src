@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.201 2024/03/02 19:52:41 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.202 2024/03/27 15:15:00 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -132,7 +132,7 @@ device	bcmmbox
 attach	bcmmbox at fdt
 file	dev/fdt/bcm2835_mbox.c		bcmmbox
 
-device	bcmpcie: pcibus
+device	bcmpcie: pcibus, fdt
 attach	bcmpcie at fdt
 file	dev/fdt/bcm2711_pcie.c		bcmpcie
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.12 2024/02/03 10:37:26 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.13 2024/03/27 15:15:00 patrick Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
+#include <machine/simplebusvar.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -57,7 +58,7 @@ struct bcmpcie_range {
 };
 
 struct bcmpcie_softc {
-	struct device		sc_dev;
+	struct simplebus_softc	sc_sbus;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
@@ -97,9 +98,11 @@ bcmpcie_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "brcm,bcm2711-pcie");
+	return OF_is_compatible(faa->fa_node, "brcm,bcm2711-pcie") ||
+	    OF_is_compatible(faa->fa_node, "brcm,bcm2712-pcie");
 }
 
+int	bcmpcie_submatch(struct device *, void *, void *);
 void	bcmpcie_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
 int	bcmpcie_bus_maxdevs(void *, int);
@@ -272,8 +275,6 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	printf("\n");
-
 	memcpy(&sc->sc_bus_iot, sc->sc_iot, sizeof(sc->sc_bus_iot));
 	sc->sc_bus_iot.bus_private = sc;
 	sc->sc_bus_iot._space_map = bcmpcie_bs_iomap;
@@ -314,7 +315,22 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 
-	config_found(self, &pba, NULL);
+	/* Attach device tree nodes enumerating PCIe bus */
+	simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
+
+	config_found_sm(self, &pba, NULL, bcmpcie_submatch);
+}
+
+int
+bcmpcie_submatch(struct device *self, void *match, void *aux)
+{
+	struct cfdata *cf = match;
+	struct pcibus_attach_args *pba = aux;
+
+	if (strcmp(pba->pba_busname, cf->cf_driver->cd_name) != 0)
+		return 0;
+
+	return (*cf->cf_attach->ca_match)(self, match, aux);
 }
 
 void
