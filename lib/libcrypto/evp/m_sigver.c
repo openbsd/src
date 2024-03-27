@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.22 2024/03/27 03:05:59 jsing Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.23 2024/03/27 04:18:50 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -166,42 +166,46 @@ int
 EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 {
 	EVP_PKEY_CTX *pctx = ctx->pctx;
+	EVP_MD_CTX tmp_ctx;
+	unsigned char md[EVP_MAX_MD_SIZE];
+	unsigned int mdlen = 0;
+	int s;
 	int r = 0;
 
 	if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)
 		return evp_digestsignfinal_sigctx_custom(ctx, sigret, siglen);
 
-	if (sigret) {
-		EVP_MD_CTX tmp_ctx;
-		unsigned char md[EVP_MAX_MD_SIZE];
-		unsigned int mdlen = 0;
-		EVP_MD_CTX_legacy_clear(&tmp_ctx);
-		if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
-			return 0;
+	if (sigret == NULL) {
 		if (ctx->pctx->pmeth->signctx != NULL) {
-			r = tmp_ctx.pctx->pmeth->signctx(tmp_ctx.pctx,
-			    sigret, siglen, &tmp_ctx);
-			EVP_MD_CTX_cleanup(&tmp_ctx);
-			return r;
-		}
-		r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
-		EVP_MD_CTX_cleanup(&tmp_ctx);
-		if (!r)
-			return r;
-		if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, md, mdlen) <= 0)
-			return 0;
-	} else {
-		if (ctx->pctx->pmeth->signctx != NULL) {
-			if (ctx->pctx->pmeth->signctx(ctx->pctx, sigret,
+			if (ctx->pctx->pmeth->signctx(ctx->pctx, NULL,
 			    siglen, ctx) <= 0)
 				return 0;
-		} else {
-			int s = EVP_MD_size(ctx->digest);
-			if (s < 0 || EVP_PKEY_sign(ctx->pctx, sigret, siglen,
-			    NULL, s) <= 0)
-				return 0;
+			return 1;
 		}
+
+		if ((s = EVP_MD_size(ctx->digest)) < 0)
+			return 0;
+		if (EVP_PKEY_sign(ctx->pctx, NULL, siglen, NULL, s) <= 0)
+		       	return 0;
+
+		return 1;
 	}
+
+	EVP_MD_CTX_legacy_clear(&tmp_ctx);
+	if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
+		return 0;
+	if (ctx->pctx->pmeth->signctx != NULL) {
+		r = tmp_ctx.pctx->pmeth->signctx(tmp_ctx.pctx,
+		    sigret, siglen, &tmp_ctx);
+		EVP_MD_CTX_cleanup(&tmp_ctx);
+		return r;
+	}
+	r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
+	EVP_MD_CTX_cleanup(&tmp_ctx);
+	if (!r)
+		return r;
+	if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, md, mdlen) <= 0)
+		return 0;
 	return 1;
 }
 
