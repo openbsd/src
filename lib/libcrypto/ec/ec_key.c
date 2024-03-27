@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.39 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.40 2024/03/27 01:22:30 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -204,8 +204,7 @@ LCRYPTO_ALIAS(EC_KEY_dup);
 int
 EC_KEY_up_ref(EC_KEY *r)
 {
-	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC);
-	return ((i > 1) ? 1 : 0);
+	return CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC) > 1;
 }
 LCRYPTO_ALIAS(EC_KEY_up_ref);
 

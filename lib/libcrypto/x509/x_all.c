@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.30 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x_all.c,v 1.31 2024/03/27 01:22:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -535,7 +535,6 @@ LCRYPTO_ALIAS(X509_NAME_digest);
 int
 X509_up_ref(X509 *x)
 {
-	int i = CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-	return i > 1 ? 1 : 0;
+	return CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509) > 1;
 }
 LCRYPTO_ALIAS(X509_up_ref);

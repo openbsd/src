@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.43 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.44 2024/03/27 01:22:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,9 +170,7 @@ LCRYPTO_ALIAS(DH_free);
 int
 DH_up_ref(DH *r)
 {
-	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH);
-
-	return i > 1 ? 1 : 0;
+	return CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH) > 1;
 }
 LCRYPTO_ALIAS(DH_up_ref);
 
