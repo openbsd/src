@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.15 2024/03/27 06:38:54 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.16 2024/03/27 06:39:46 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -29,12 +29,6 @@
  * Note: rewritten a little bit to provide error control and an OpenSSL-
  * compatible API.
  */
-
-#ifndef AES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
 
 #include <stdlib.h>
 
