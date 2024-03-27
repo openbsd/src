@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4.h,v 1.14 2023/07/28 10:35:14 tb Exp $ */
+/* $OpenBSD: rc4.h,v 1.15 2024/03/27 12:13:08 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,7 +77,6 @@ typedef struct rc4_key_st {
 } RC4_KEY;
 
 void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data);
-void private_RC4_set_key(RC4_KEY *key, int len, const unsigned char *data);
 void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
     unsigned char *outdata);
 
