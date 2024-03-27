@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.151 2022/08/01 14:15:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.152 2024/03/27 15:41:40 kurt Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -183,6 +183,11 @@ uvm_km_init(vaddr_t base, vaddr_t start, vaddr_t end)
 		panic("uvm_km_init: could not reserve space for kernel");
 	
 	kernel_map = &kernel_map_store;
+
+#ifndef __HAVE_PMAP_DIRECT
+	/* allow km_alloc calls before uvm_km_thread starts */
+	mtx_init(&uvm_km_pages.mtx, IPL_VM);
+#endif
 }
 
 /*
@@ -558,7 +563,6 @@ uvm_km_page_init(void)
 	int	len, bulk;
 	vaddr_t	addr;
 
-	mtx_init(&uvm_km_pages.mtx, IPL_VM);
 	if (!uvm_km_pages.lowat) {
 		/* based on physmem, calculate a good value here */
 		uvm_km_pages.lowat = physmem / 256;
