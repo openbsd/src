@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.9 2024/03/27 11:12:09 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.10 2024/03/27 12:54:42 jsing Exp $
 
 # sparc64-specific libcrypto build rules
 
@@ -19,7 +19,7 @@ des_enc-sparc.S: ${LCRYPTO_SRC}/des/asm/des_enc.m4
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-sparcv9 ghash-sparcv9
 # rc4
-SRCS+= rc4_enc.c rc4_skey.c
+SRCS+= rc4.c
 # sha
 SSLASM+= sha sha1-sparcv9 sha1-sparcv9
 CFLAGS+= -DSHA1_ASM

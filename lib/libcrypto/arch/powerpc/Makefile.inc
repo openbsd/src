@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.5 2024/03/27 11:12:08 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2024/03/27 12:54:42 jsing Exp $
 
 # powerpc-specific libcrypto build rules
 
@@ -17,7 +17,7 @@ SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # des
 SRCS+= des_enc.c fcrypt_b.c
 # rc4
-SRCS+= rc4_enc.c rc4_skey.c
+SRCS+= rc4.c
 # sha
 CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-ppc sha1-ppc

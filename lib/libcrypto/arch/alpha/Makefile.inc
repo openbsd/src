@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.7 2024/03/27 11:12:08 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.8 2024/03/27 12:54:42 jsing Exp $
 
 # alpha-specific libcrypto build rules
 
@@ -15,7 +15,7 @@ SRCS+= des_enc.c fcrypt_b.c
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-alpha
 # rc4
-SRCS+= rc4_enc.c rc4_skey.c
+SRCS+= rc4.c
 # sha
 CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-alpha
