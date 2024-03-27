@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
+/* $OpenBSD: aes_local.h,v 1.3 2024/03/27 11:15:44 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -63,9 +63,6 @@
 #include <string.h>
 
 __BEGIN_HIDDEN_DECLS
-
-#define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ ((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
-#define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
 
 typedef unsigned int u32;
 typedef unsigned short u16;

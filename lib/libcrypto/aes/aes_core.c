@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.18 2024/03/27 08:24:13 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.19 2024/03/27 11:15:44 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -643,10 +643,10 @@ AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 	else
 		key->rounds = 14;
 
-	rk[0] = GETU32(userKey);
-	rk[1] = GETU32(userKey + 4);
-	rk[2] = GETU32(userKey + 8);
-	rk[3] = GETU32(userKey + 12);
+	rk[0] = crypto_load_be32toh(&userKey[0 * 4]);
+	rk[1] = crypto_load_be32toh(&userKey[1 * 4]);
+	rk[2] = crypto_load_be32toh(&userKey[2 * 4]);
+	rk[3] = crypto_load_be32toh(&userKey[3 * 4]);
 	if (bits == 128) {
 		while (1) {
 			temp = rk[3];
@@ -665,8 +665,8 @@ AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 			rk += 4;
 		}
 	}
-	rk[4] = GETU32(userKey + 16);
-	rk[5] = GETU32(userKey + 20);
+	rk[4] = crypto_load_be32toh(&userKey[4 * 4]);
+	rk[5] = crypto_load_be32toh(&userKey[5 * 4]);
 	if (bits == 192) {
 		while (1) {
 			temp = rk[5];
@@ -687,8 +687,8 @@ AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 			rk += 6;
 		}
 	}
-	rk[6] = GETU32(userKey + 24);
-	rk[7] = GETU32(userKey + 28);
+	rk[6] = crypto_load_be32toh(&userKey[6 * 4]);
+	rk[7] = crypto_load_be32toh(&userKey[7 * 4]);
 	if (bits == 256) {
 		while (1) {
 			temp = rk[7];
@@ -799,10 +799,10 @@ AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	 * map byte array block to cipher state
 	 * and add initial round key:
 	 */
-	s0 = GETU32(in     ) ^ rk[0];
-	s1 = GETU32(in +  4) ^ rk[1];
-	s2 = GETU32(in +  8) ^ rk[2];
-	s3 = GETU32(in + 12) ^ rk[3];
+	s0 = crypto_load_be32toh(&in[0 * 4]) ^ rk[0];
+	s1 = crypto_load_be32toh(&in[1 * 4]) ^ rk[1];
+	s2 = crypto_load_be32toh(&in[2 * 4]) ^ rk[2];
+	s3 = crypto_load_be32toh(&in[3 * 4]) ^ rk[3];
 #ifdef FULL_UNROLL
 	/* round 1: */
 	t0 = Te0[s0 >> 24] ^ Te1[(s1 >> 16) & 0xff] ^ Te2[(s2 >>  8) & 0xff] ^ Te3[s3 & 0xff] ^ rk[ 4];
@@ -946,28 +946,28 @@ AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	    (Te0[(t2 >> 8) & 0xff] & 0x0000ff00) ^
 	    (Te1[(t3) & 0xff] & 0x000000ff) ^
 	    rk[0];
-	PUTU32(out, s0);
+	crypto_store_htobe32(&out[0 * 4], s0);
 	s1 =
 	    (Te2[(t1 >> 24)] & 0xff000000) ^
 	    (Te3[(t2 >> 16) & 0xff] & 0x00ff0000) ^
 	    (Te0[(t3 >> 8) & 0xff] & 0x0000ff00) ^
 	    (Te1[(t0) & 0xff] & 0x000000ff) ^
 	    rk[1];
-	PUTU32(out +  4, s1);
+	crypto_store_htobe32(&out[1 * 4], s1);
 	s2 =
 	    (Te2[(t2 >> 24)] & 0xff000000) ^
 	    (Te3[(t3 >> 16) & 0xff] & 0x00ff0000) ^
 	    (Te0[(t0 >> 8) & 0xff] & 0x0000ff00) ^
 	    (Te1[(t1) & 0xff] & 0x000000ff) ^
 	    rk[2];
-	PUTU32(out +  8, s2);
+	crypto_store_htobe32(&out[2 * 4], s2);
 	s3 =
 	    (Te2[(t3 >> 24)] & 0xff000000) ^
 	    (Te3[(t0 >> 16) & 0xff] & 0x00ff0000) ^
 	    (Te0[(t1 >> 8) & 0xff] & 0x0000ff00) ^
 	    (Te1[(t2) & 0xff] & 0x000000ff) ^
 	    rk[3];
-	PUTU32(out + 12, s3);
+	crypto_store_htobe32(&out[3 * 4], s3);
 }
 
 /*
@@ -989,10 +989,10 @@ AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	 * map byte array block to cipher state
 	 * and add initial round key:
 	 */
-	s0 = GETU32(in) ^ rk[0];
-	s1 = GETU32(in + 4) ^ rk[1];
-	s2 = GETU32(in + 8) ^ rk[2];
-	s3 = GETU32(in + 12) ^ rk[3];
+	s0 = crypto_load_be32toh(&in[0 * 4]) ^ rk[0];
+	s1 = crypto_load_be32toh(&in[1 * 4]) ^ rk[1];
+	s2 = crypto_load_be32toh(&in[2 * 4]) ^ rk[2];
+	s3 = crypto_load_be32toh(&in[3 * 4]) ^ rk[3];
 #ifdef FULL_UNROLL
 	/* round 1: */
 	t0 = Td0[s0 >> 24] ^ Td1[(s3 >> 16) & 0xff] ^ Td2[(s2 >>  8) & 0xff] ^ Td3[s1 & 0xff] ^ rk[ 4];
@@ -1136,27 +1136,27 @@ AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	    (Td4[(t2 >> 8) & 0xff] <<  8) ^
 	    (Td4[(t1) & 0xff]) ^
 	    rk[0];
-	PUTU32(out, s0);
+	crypto_store_htobe32(&out[0 * 4], s0);
 	s1 =
 	    (((uint32_t)Td4[(t1 >> 24)]) << 24) ^
 	    (Td4[(t0 >> 16) & 0xff] << 16) ^
 	    (Td4[(t3 >> 8) & 0xff] <<  8) ^
 	    (Td4[(t2) & 0xff]) ^
 	    rk[1];
-	PUTU32(out + 4, s1);
+	crypto_store_htobe32(&out[1 * 4], s1);
 	s2 =
 	    (((uint32_t)Td4[(t2 >> 24)]) << 24) ^
 	    (Td4[(t1 >> 16) & 0xff] << 16) ^
 	    (Td4[(t0 >> 8) & 0xff] <<  8) ^
 	    (Td4[(t3) & 0xff]) ^
 	    rk[2];
-	PUTU32(out + 8, s2);
+	crypto_store_htobe32(&out[2 * 4], s2);
 	s3 =
 	    (((uint32_t)Td4[(t3 >> 24)]) << 24) ^
 	    (Td4[(t2 >> 16) & 0xff] << 16) ^
 	    (Td4[(t1 >> 8) & 0xff] <<  8) ^
 	    (Td4[(t0) & 0xff]) ^
 	    rk[3];
-	PUTU32(out + 12, s3);
+	crypto_store_htobe32(&out[3 * 4], s3);
 }
 #endif /* AES_ASM */
