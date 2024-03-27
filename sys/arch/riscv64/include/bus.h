@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2022/12/29 11:35:01 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2024/03/27 23:10:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -265,8 +265,10 @@ bus_space_copy_1(void *v, bus_space_handle_t h1, bus_size_t o1,
 	char *s = (char *)(h1 + o1);
 	char *d = (char *)(h2 + o2);
 
+	__asm volatile ("fence w,o" ::: "memory");
 	while (c--)
 		*d++ = *s++;
+	__asm volatile ("fence io,iwr" ::: "memory");
 }
 
 
@@ -277,8 +279,10 @@ bus_space_copy_2(void *v, bus_space_handle_t h1, bus_size_t o1,
 	short *s = (short *)(h1 + o1);
 	short *d = (short *)(h2 + o2);
 
+	__asm volatile ("fence w,o" ::: "memory");
 	while (c--)
 		*d++ = *s++;
+	__asm volatile ("fence io,iwr" ::: "memory");
 }
 
 static __inline void
@@ -288,8 +292,10 @@ bus_space_copy_4(void *v, bus_space_handle_t h1, bus_size_t o1,
 	int *s = (int *)(h1 + o1);
 	int *d = (int *)(h2 + o2);
 
+	__asm volatile ("fence w,o" ::: "memory");
 	while (c--)
 		*d++ = *s++;
+	__asm volatile ("fence io,iwr" ::: "memory");
 }
 
 static __inline void
@@ -299,8 +305,10 @@ bus_space_copy_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 	int64_t *s = (int64_t *)(h1 + o1);
 	int64_t *d = (int64_t *)(h2 + o2);
 
+	__asm volatile ("fence w,o" ::: "memory");
 	while (c--)
 		*d++ = *s++;
+	__asm volatile ("fence io,iwr" ::: "memory");
 }
 
 /*----------------------------------------------------------------------------*/
