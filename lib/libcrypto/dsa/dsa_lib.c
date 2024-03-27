@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.47 2024/03/27 01:22:30 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.48 2024/03/27 01:49:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,48 +146,45 @@ DSA_new_method(ENGINE *engine)
 LCRYPTO_ALIAS(DSA_new_method);
 
 void
-DSA_free(DSA *r)
+DSA_free(DSA *dsa)
 {
-	int i;
-
-	if (r == NULL)
+	if (dsa == NULL)
 		return;
 
-	i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DSA);
-	if (i > 0)
+	if (CRYPTO_add(&dsa->references, -1, CRYPTO_LOCK_DSA) > 0)
 		return;
 
-	if (r->meth != NULL && r->meth->finish != NULL)
-		r->meth->finish(r);
+	if (dsa->meth != NULL && dsa->meth->finish != NULL)
+		dsa->meth->finish(dsa);
 
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, dsa, &dsa->ex_data);
 
-	BN_free(r->p);
-	BN_free(r->q);
-	BN_free(r->g);
-	BN_free(r->pub_key);
-	BN_free(r->priv_key);
-	BN_free(r->kinv);
-	BN_free(r->r);
-	free(r);
+	BN_free(dsa->p);
+	BN_free(dsa->q);
+	BN_free(dsa->g);
+	BN_free(dsa->pub_key);
+	BN_free(dsa->priv_key);
+	BN_free(dsa->kinv);
+	BN_free(dsa->r);
+	free(dsa);
 }
 LCRYPTO_ALIAS(DSA_free);
 
 int
-DSA_up_ref(DSA *r)
+DSA_up_ref(DSA *dsa)
 {
-	return CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DSA) > 1;
+	return CRYPTO_add(&dsa->references, 1, CRYPTO_LOCK_DSA) > 1;
 }
 LCRYPTO_ALIAS(DSA_up_ref);
 
 int
-DSA_size(const DSA *r)
+DSA_size(const DSA *dsa)
 {
 	DSA_SIG signature;
 	int ret = 0;
 
-	signature.r = r->q;
-	signature.s = r->q;
+	signature.r = dsa->q;
+	signature.s = dsa->q;
 
 	if ((ret = i2d_DSA_SIG(&signature, NULL)) < 0)
 		ret = 0;
@@ -206,102 +203,107 @@ DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 LCRYPTO_ALIAS(DSA_get_ex_new_index);
 
 int
-DSA_set_ex_data(DSA *d, int idx, void *arg)
+DSA_set_ex_data(DSA *dsa, int idx, void *arg)
 {
-	return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
+	return CRYPTO_set_ex_data(&dsa->ex_data, idx, arg);
 }
 LCRYPTO_ALIAS(DSA_set_ex_data);
 
 void *
-DSA_get_ex_data(DSA *d, int idx)
+DSA_get_ex_data(DSA *dsa, int idx)
 {
-	return CRYPTO_get_ex_data(&d->ex_data, idx);
+	return CRYPTO_get_ex_data(&dsa->ex_data, idx);
 }
 LCRYPTO_ALIAS(DSA_get_ex_data);
 
 int
-DSA_security_bits(const DSA *d)
+DSA_security_bits(const DSA *dsa)
 {
-	if (d->p == NULL || d->q == NULL)
+	if (dsa->p == NULL || dsa->q == NULL)
 		return -1;
 
-	return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+	return BN_security_bits(BN_num_bits(dsa->p), BN_num_bits(dsa->q));
 }
 LCRYPTO_ALIAS(DSA_security_bits);
 
 #ifndef OPENSSL_NO_DH
 DH *
-DSA_dup_DH(const DSA *r)
+DSA_dup_DH(const DSA *dsa)
 {
 	/*
 	 * DSA has p, q, g, optional pub_key, optional priv_key.
 	 * DH has p, optional length, g, optional pub_key, optional priv_key,
 	 * optional q.
 	 */
-	DH *ret = NULL;
+	DH *dh = NULL;
 
-	if (r == NULL)
+	if (dsa == NULL)
 		goto err;
-	ret = DH_new();
-	if (ret == NULL)
+
+	if ((dh = DH_new()) == NULL)
 		goto err;
-	if (r->p != NULL)
-		if ((ret->p = BN_dup(r->p)) == NULL)
-			goto err;
-	if (r->q != NULL) {
-		ret->length = BN_num_bits(r->q);
-		if ((ret->q = BN_dup(r->q)) == NULL)
+
+	if (dsa->p != NULL) {
+		if ((dh->p = BN_dup(dsa->p)) == NULL)
 			goto err;
 	}
-	if (r->g != NULL)
-		if ((ret->g = BN_dup(r->g)) == NULL)
+	if (dsa->q != NULL) {
+		dh->length = BN_num_bits(dsa->q);
+		if ((dh->q = BN_dup(dsa->q)) == NULL)
 			goto err;
-	if (r->pub_key != NULL)
-		if ((ret->pub_key = BN_dup(r->pub_key)) == NULL)
+	}
+	if (dsa->g != NULL) {
+		if ((dh->g = BN_dup(dsa->g)) == NULL)
 			goto err;
-	if (r->priv_key != NULL)
-		if ((ret->priv_key = BN_dup(r->priv_key)) == NULL)
+	}
+	if (dsa->pub_key != NULL) {
+		if ((dh->pub_key = BN_dup(dsa->pub_key)) == NULL)
 			goto err;
+	}
+	if (dsa->priv_key != NULL) {
+		if ((dh->priv_key = BN_dup(dsa->priv_key)) == NULL)
+			goto err;
+	}
 
-	return ret;
+	return dh;
 
-err:
-	DH_free(ret);
+ err:
+	DH_free(dh);
 	return NULL;
 }
 LCRYPTO_ALIAS(DSA_dup_DH);
 #endif
 
 void
-DSA_get0_pqg(const DSA *d, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
+DSA_get0_pqg(const DSA *dsa, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
 	if (p != NULL)
-		*p = d->p;
+		*p = dsa->p;
 	if (q != NULL)
-		*q = d->q;
+		*q = dsa->q;
 	if (g != NULL)
-		*g = d->g;
+		*g = dsa->g;
 }
 LCRYPTO_ALIAS(DSA_get0_pqg);
 
 int
-DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+DSA_set0_pqg(DSA *dsa, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
-	if ((d->p == NULL && p == NULL) || (d->q == NULL && q == NULL) ||
-	    (d->g == NULL && g == NULL))
+	if ((dsa->p == NULL && p == NULL) || (dsa->q == NULL && q == NULL) ||
+	    (dsa->g == NULL && g == NULL))
 		return 0;
 
 	if (p != NULL) {
-		BN_free(d->p);
-		d->p = p;
+		BN_free(dsa->p);
+		dsa->p = p;
 	}
 	if (q != NULL) {
-		BN_free(d->q);
-		d->q = q;
+		BN_free(dsa->q);
+		dsa->q = q;
 	}
 	if (g != NULL) {
-		BN_free(d->g);
-		d->g = g;
+		BN_free(dsa->g);
+		dsa->g = g;
 	}
 
 	return 1;
@@ -309,28 +311,28 @@ DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 LCRYPTO_ALIAS(DSA_set0_pqg);
 
 void
-DSA_get0_key(const DSA *d, const BIGNUM **pub_key, const BIGNUM **priv_key)
+DSA_get0_key(const DSA *dsa, const BIGNUM **pub_key, const BIGNUM **priv_key)
 {
 	if (pub_key != NULL)
-		*pub_key = d->pub_key;
+		*pub_key = dsa->pub_key;
 	if (priv_key != NULL)
-		*priv_key = d->priv_key;
+		*priv_key = dsa->priv_key;
 }
 LCRYPTO_ALIAS(DSA_get0_key);
 
 int
-DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
+DSA_set0_key(DSA *dsa, BIGNUM *pub_key, BIGNUM *priv_key)
 {
-	if (d->pub_key == NULL && pub_key == NULL)
+	if (dsa->pub_key == NULL && pub_key == NULL)
 		return 0;
 
 	if (pub_key != NULL) {
-		BN_free(d->pub_key);
-		d->pub_key = pub_key;
+		BN_free(dsa->pub_key);
+		dsa->pub_key = pub_key;
 	}
 	if (priv_key != NULL) {
-		BN_free(d->priv_key);
-		d->priv_key = priv_key;
+		BN_free(dsa->priv_key);
+		dsa->priv_key = priv_key;
 	}
 
 	return 1;
@@ -338,63 +340,63 @@ DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 LCRYPTO_ALIAS(DSA_set0_key);
 
 const BIGNUM *
-DSA_get0_p(const DSA *d)
+DSA_get0_p(const DSA *dsa)
 {
-	return d->p;
+	return dsa->p;
 }
 LCRYPTO_ALIAS(DSA_get0_p);
 
 const BIGNUM *
-DSA_get0_q(const DSA *d)
+DSA_get0_q(const DSA *dsa)
 {
-	return d->q;
+	return dsa->q;
 }
 LCRYPTO_ALIAS(DSA_get0_q);
 
 const BIGNUM *
-DSA_get0_g(const DSA *d)
+DSA_get0_g(const DSA *dsa)
 {
-	return d->g;
+	return dsa->g;
 }
 LCRYPTO_ALIAS(DSA_get0_g);
 
 const BIGNUM *
-DSA_get0_pub_key(const DSA *d)
+DSA_get0_pub_key(const DSA *dsa)
 {
-	return d->pub_key;
+	return dsa->pub_key;
 }
 LCRYPTO_ALIAS(DSA_get0_pub_key);
 
 const BIGNUM *
-DSA_get0_priv_key(const DSA *d)
+DSA_get0_priv_key(const DSA *dsa)
 {
-	return d->priv_key;
+	return dsa->priv_key;
 }
 LCRYPTO_ALIAS(DSA_get0_priv_key);
 
 void
-DSA_clear_flags(DSA *d, int flags)
+DSA_clear_flags(DSA *dsa, int flags)
 {
-	d->flags &= ~flags;
+	dsa->flags &= ~flags;
 }
 LCRYPTO_ALIAS(DSA_clear_flags);
 
 int
-DSA_test_flags(const DSA *d, int flags)
+DSA_test_flags(const DSA *dsa, int flags)
 {
-	return d->flags & flags;
+	return dsa->flags & flags;
 }
 LCRYPTO_ALIAS(DSA_test_flags);
 
 void
-DSA_set_flags(DSA *d, int flags)
+DSA_set_flags(DSA *dsa, int flags)
 {
-	d->flags |= flags;
+	dsa->flags |= flags;
 }
 LCRYPTO_ALIAS(DSA_set_flags);
 
 ENGINE *
-DSA_get0_engine(DSA *d)
+DSA_get0_engine(DSA *dsa)
 {
 	return NULL;
 }
