@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.24 2024/03/27 06:33:51 joshua Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.25 2024/03/27 06:53:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -186,7 +186,7 @@ EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 		if ((s = EVP_MD_size(ctx->digest)) < 0)
 			return 0;
 		if (EVP_PKEY_sign(ctx->pctx, NULL, siglen, NULL, s) <= 0)
-		       	return 0;
+			return 0;
 
 		return 1;
 	}
