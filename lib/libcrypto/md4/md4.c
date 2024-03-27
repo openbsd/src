@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.c,v 1.15 2024/03/26 12:23:02 jsing Exp $ */
+/* $OpenBSD: md4.c,v 1.16 2024/03/27 06:15:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -69,61 +70,46 @@
 /* Ensure that MD4_LONG and uint32_t are equivalent size. */
 CTASSERT(sizeof(MD4_LONG) == sizeof(uint32_t));
 
-__BEGIN_HIDDEN_DECLS
+static inline uint32_t
+md4_f(uint32_t x, uint32_t y, uint32_t z)
+{
+	return (x & y) | (~x & z);
+}
 
-void md4_block_data_order (MD4_CTX *c, const void *p, size_t num);
+static inline uint32_t
+md4_g(uint32_t x, uint32_t y, uint32_t z)
+{
+	return (x & y) | (x & z) | (y & z);
+}
 
-__END_HIDDEN_DECLS
+static inline uint32_t
+md4_h(uint32_t x, uint32_t y, uint32_t z)
+{
+	return x ^ y ^ z;
+}
 
-#define DATA_ORDER_IS_LITTLE_ENDIAN
+static inline void
+md4_round1(uint32_t *a, uint32_t b, uint32_t c, uint32_t d, uint32_t x,
+    uint32_t s)
+{
+	*a = crypto_rol_u32(*a + md4_f(b, c, d) + x, s);
+}
 
-#define HASH_LONG		MD4_LONG
-#define HASH_CTX		MD4_CTX
-#define HASH_CBLOCK		MD4_CBLOCK
-#define HASH_UPDATE		MD4_Update
-#define HASH_TRANSFORM		MD4_Transform
-#define HASH_FINAL		MD4_Final
-#define	HASH_BLOCK_DATA_ORDER	md4_block_data_order
+static inline void
+md4_round2(uint32_t *a, uint32_t b, uint32_t c, uint32_t d, uint32_t x,
+    uint32_t s)
+{
+	*a = crypto_rol_u32(*a + md4_g(b, c, d) + x + 0x5a827999UL, s);
+}
 
-#define HASH_NO_UPDATE
-#define HASH_NO_TRANSFORM
-#define HASH_NO_FINAL
+static inline void
+md4_round3(uint32_t *a, uint32_t b, uint32_t c, uint32_t d, uint32_t x,
+    uint32_t s)
+{
+	*a = crypto_rol_u32(*a + md4_h(b, c, d) + x + 0x6ed9eba1UL, s);
+}
 
-#include "md32_common.h"
-
-/*
-#define	F(x,y,z)	(((x) & (y))  |  ((~(x)) & (z)))
-#define	G(x,y,z)	(((x) & (y))  |  ((x) & ((z))) | ((y) & ((z))))
-*/
-
-/* As pointed out by Wei Dai <weidai@eskimo.com>, the above can be
- * simplified to the code below.  Wei attributes these optimizations
- * to Peter Gutmann's SHS code, and he attributes it to Rich Schroeppel.
- */
-#define	F(b,c,d)	((((c) ^ (d)) & (b)) ^ (d))
-#define G(b,c,d)	(((b) & (c)) | ((b) & (d)) | ((c) & (d)))
-#define	H(b,c,d)	((b) ^ (c) ^ (d))
-
-#define R0(a,b,c,d,k,s,t) { \
-	a+=((k)+(t)+F((b),(c),(d))); \
-	a=ROTATE(a,s); };
-
-#define R1(a,b,c,d,k,s,t) { \
-	a+=((k)+(t)+G((b),(c),(d))); \
-	a=ROTATE(a,s); };\
-
-#define R2(a,b,c,d,k,s,t) { \
-	a+=((k)+(t)+H((b),(c),(d))); \
-	a=ROTATE(a,s); };
-
-/* Implemented from RFC1186 The MD4 Message-Digest Algorithm
- */
-
-#ifndef md4_block_data_order
-#ifdef X
-#undef X
-#endif
-void
+static void
 md4_block_data_order(MD4_CTX *c, const void *_in, size_t num)
 {
 	const uint8_t *in = _in;
@@ -178,59 +164,58 @@ md4_block_data_order(MD4_CTX *c, const void *_in, size_t num)
 		}
 		in += MD4_CBLOCK;
 
-		/* Round 0 */
-		R0(A, B, C, D, X0, 3, 0);
-		R0(D, A, B, C, X1, 7, 0);
-		R0(C, D, A, B, X2, 11, 0);
-		R0(B, C, D, A, X3, 19, 0);
-		R0(A, B, C, D, X4, 3, 0);
-		R0(D, A, B, C, X5, 7, 0);
-		R0(C, D, A, B, X6, 11, 0);
-		R0(B, C, D, A, X7, 19, 0);
-		R0(A, B, C, D, X8, 3, 0);
-		R0(D, A,B, C,X9, 7, 0);
-		R0(C, D,A, B,X10, 11, 0);
-		R0(B, C,D, A,X11, 19, 0);
-		R0(A, B,C, D,X12, 3, 0);
-		R0(D, A,B, C,X13, 7, 0);
-		R0(C, D,A, B,X14, 11, 0);
-		R0(B, C,D, A,X15, 19, 0);
+		md4_round1(&A, B, C, D, X0, 3);
+		md4_round1(&D, A, B, C, X1, 7);
+		md4_round1(&C, D, A, B, X2, 11);
+		md4_round1(&B, C, D, A, X3, 19);
+		md4_round1(&A, B, C, D, X4, 3);
+		md4_round1(&D, A, B, C, X5, 7);
+		md4_round1(&C, D, A, B, X6, 11);
+		md4_round1(&B, C, D, A, X7, 19);
+		md4_round1(&A, B, C, D, X8, 3);
+		md4_round1(&D, A, B, C, X9, 7);
+		md4_round1(&C, D, A, B, X10, 11);
+		md4_round1(&B, C, D, A, X11, 19);
+		md4_round1(&A, B, C, D, X12, 3);
+		md4_round1(&D, A, B, C, X13, 7);
+		md4_round1(&C, D, A, B, X14, 11);
+		md4_round1(&B, C, D, A, X15, 19);
 
 		/* Round 1 */
-		R1(A, B, C, D, X0, 3, 0x5A827999L);
-		R1(D, A, B, C, X4, 5, 0x5A827999L);
-		R1(C, D, A, B, X8, 9, 0x5A827999L);
-		R1(B, C, D, A, X12, 13, 0x5A827999L);
-		R1(A, B, C, D, X1, 3, 0x5A827999L);
-		R1(D, A, B, C, X5, 5, 0x5A827999L);
-		R1(C, D, A, B, X9, 9, 0x5A827999L);
-		R1(B, C, D, A, X13, 13, 0x5A827999L);
-		R1(A, B, C, D, X2, 3, 0x5A827999L);
-		R1(D, A, B, C, X6, 5, 0x5A827999L);
-		R1(C, D, A, B, X10, 9, 0x5A827999L);
-		R1(B, C, D, A, X14, 13, 0x5A827999L);
-		R1(A, B, C, D, X3, 3, 0x5A827999L);
-		R1(D, A, B, C, X7, 5, 0x5A827999L);
-		R1(C, D, A, B, X11, 9, 0x5A827999L);
-		R1(B, C, D, A, X15, 13, 0x5A827999L);
+		md4_round2(&A, B, C, D, X0, 3);
+		md4_round2(&D, A, B, C, X4, 5);
+		md4_round2(&C, D, A, B, X8, 9);
+		md4_round2(&B, C, D, A, X12, 13);
+		md4_round2(&A, B, C, D, X1, 3);
+		md4_round2(&D, A, B, C, X5, 5);
+		md4_round2(&C, D, A, B, X9, 9);
+		md4_round2(&B, C, D, A, X13, 13);
+		md4_round2(&A, B, C, D, X2, 3);
+		md4_round2(&D, A, B, C, X6, 5);
+		md4_round2(&C, D, A, B, X10, 9);
+		md4_round2(&B, C, D, A, X14, 13);
+		md4_round2(&A, B, C, D, X3, 3);
+		md4_round2(&D, A, B, C, X7, 5);
+		md4_round2(&C, D, A, B, X11, 9);
+		md4_round2(&B, C, D, A, X15, 13);
 
 		/* Round 2 */
-		R2(A, B, C, D, X0, 3, 0x6ED9EBA1L);
-		R2(D, A, B, C, X8, 9, 0x6ED9EBA1L);
-		R2(C, D, A, B, X4, 11, 0x6ED9EBA1L);
-		R2(B, C, D, A, X12, 15, 0x6ED9EBA1L);
-		R2(A, B, C, D, X2, 3, 0x6ED9EBA1L);
-		R2(D, A, B, C, X10, 9, 0x6ED9EBA1L);
-		R2(C, D, A, B, X6, 11, 0x6ED9EBA1L);
-		R2(B, C, D, A, X14, 15, 0x6ED9EBA1L);
-		R2(A, B, C, D, X1, 3, 0x6ED9EBA1L);
-		R2(D, A, B, C, X9, 9, 0x6ED9EBA1L);
-		R2(C, D, A, B, X5, 11, 0x6ED9EBA1L);
-		R2(B, C, D, A, X13, 15, 0x6ED9EBA1L);
-		R2(A, B, C, D, X3, 3, 0x6ED9EBA1L);
-		R2(D, A, B, C, X11, 9, 0x6ED9EBA1L);
-		R2(C, D, A, B, X7, 11, 0x6ED9EBA1L);
-		R2(B, C, D, A, X15, 15, 0x6ED9EBA1L);
+		md4_round3(&A, B, C, D, X0, 3);
+		md4_round3(&D, A, B, C, X8, 9);
+		md4_round3(&C, D, A, B, X4, 11);
+		md4_round3(&B, C, D, A, X12, 15);
+		md4_round3(&A, B, C, D, X2, 3);
+		md4_round3(&D, A, B, C, X10, 9);
+		md4_round3(&C, D, A, B, X6, 11);
+		md4_round3(&B, C, D, A, X14, 15);
+		md4_round3(&A, B, C, D, X1, 3);
+		md4_round3(&D, A, B, C, X9, 9);
+		md4_round3(&C, D, A, B, X5, 11);
+		md4_round3(&B, C, D, A, X13, 15);
+		md4_round3(&A, B, C, D, X3, 3);
+		md4_round3(&D, A, B, C, X11, 9);
+		md4_round3(&C, D, A, B, X7, 11);
+		md4_round3(&B, C, D, A, X15, 15);
 
 		A = c->A += A;
 		B = c->B += B;
@@ -238,7 +223,6 @@ md4_block_data_order(MD4_CTX *c, const void *_in, size_t num)
 		D = c->D += D;
 	}
 }
-#endif
 
 int
 MD4_Init(MD4_CTX *c)
