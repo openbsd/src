@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.20 2024/03/26 11:25:08 joshua Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.21 2024/03/27 01:55:40 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -166,11 +166,11 @@ int
 EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 {
 	EVP_PKEY_CTX *pctx = ctx->pctx;
-	EVP_MD_CTX tmp_ctx;
+	EVP_MD_CTX *md_ctx = NULL;
 	unsigned char md[EVP_MAX_MD_SIZE];
 	unsigned int mdlen = 0;
 	int s;
-	int r = 0;
+	int ret = 0;
 
 	if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)
 		return evp_digestsignfinal_sigctx_custom(ctx, sigret, siglen);
@@ -191,22 +191,27 @@ EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 		return 1;
 	}
 
-	EVP_MD_CTX_legacy_clear(&tmp_ctx);
-	if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
-		return 0;
-	if (ctx->pctx->pmeth->signctx != NULL) {
-		r = tmp_ctx.pctx->pmeth->signctx(tmp_ctx.pctx,
-		    sigret, siglen, &tmp_ctx);
-		EVP_MD_CTX_cleanup(&tmp_ctx);
-		return r;
+
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_MD_CTX_copy_ex(md_ctx, ctx))
+		goto err;
+	if (md_ctx->pctx->pmeth->signctx != NULL) {
+		if(md_ctx->pctx->pmeth->signctx(md_ctx->pctx,
+		    sigret, siglen, md_ctx) <= 0)
+			goto err;
 	}
-	r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
-	EVP_MD_CTX_cleanup(&tmp_ctx);
-	if (!r)
-		return r;
+	if (!EVP_DigestFinal_ex(md_ctx, md, &mdlen))
+		goto err;
 	if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, md, mdlen) <= 0)
-		return 0;
-	return 1;
+		goto err;
+
+	ret = 1;
+
+ err:
+	EVP_MD_CTX_free(md_ctx);
+
+	return ret;
 }
 
 int
