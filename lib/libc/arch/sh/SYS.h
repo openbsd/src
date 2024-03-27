@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.15 2023/12/11 22:24:16 kettenis Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.16 2024/03/27 20:03:29 miod Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -78,13 +78,6 @@
 #define	SYSENTRY_HIDDEN(x)				\
 	ENTRY(_thread_sys_ ## x)
 
-#define	__END_HIDDEN(x)					\
-	SET_ENTRY_SIZE(_thread_sys_ ## x);		\
-	_HIDDEN_FALIAS(x,_thread_sys_ ## x);		\
-	SET_ENTRY_SIZE(_HIDDEN(x))
-#define	__END(x)					\
-	__END_HIDDEN(x); SET_ENTRY_SIZE(x)
-
 #define PINSYSCALL(sysno, label)					\
 	.pushsection .openbsd.syscalls,"",@progbits;			\
 	.p2align 2;							\
@@ -95,7 +88,8 @@
 #ifdef __ASSEMBLER__
 /*
  * If the system call number fits in a 8-bit signed value (i.e. fits in 7 bits),
- * then we can use the #imm8 addressing mode.
+ * then we can use the #imm8 addressing mode. Otherwise, we'll load the number
+ * from memory at the end of the system call wrapper.
  */
 
 .macro systrap num
@@ -107,13 +101,26 @@
 	mov.l	903f, r0
 97:	trapa	#0x80
 	PINSYSCALL(\num, 97b)
-	bra	904f
-	 nop
-	.align	2
- 903:	.long	\num
- 904:
 .endif
 .endm
+
+.macro systrap_data num
+.iflt \num - 128
+.else
+	.text
+	.align	2
+ 903:	.long	\num
+.endif
+.endm
+
+.macro syscall_error num
+.ifeq \num - SYS_lseek
+	mov	#-1, r1
+.endif
+	rts
+	 mov	#-1, r0
+.endm
+
 #endif
 
 #define SYSTRAP(x)					\
@@ -126,25 +133,31 @@
 		SYSENTRY_HIDDEN(x);			\
 		SYSTRAP(y)
 
-#define SET_ERRNO_AND_RETURN				\
+#define SET_ERRNO_AND_RETURN(y)				\
 		stc	gbr,r1;				\
 		mov	#TCB_OFFSET_ERRNO_NEG,r2;	\
 		sub	r2,r1;				\
 		mov.l	r0,@r1;				\
-		mov	#-1, r1;	/* for lseek */	\
-		rts;					\
-		 mov	#-1, r0
+		syscall_error SYS_ ## y
 
 #define _SYSCALL(x,y)					\
 		.text;					\
-	911:	SET_ERRNO_AND_RETURN;			\
+	911:	SET_ERRNO_AND_RETURN(y);		\
 		_SYSCALL_NOERROR(x,y);			\
 		bf	911b
 #define _SYSCALL_HIDDEN(x,y)				\
 		.text;					\
-	911:	SET_ERRNO_AND_RETURN;			\
+	911:	SET_ERRNO_AND_RETURN(y);		\
 		_SYSCALL_HIDDEN_NOERROR(x,y);		\
 		bf	911b
+
+#define	__END_HIDDEN(x,y)				\
+		systrap_data SYS_ ## y;			\
+		SET_ENTRY_SIZE(_thread_sys_ ## x);	\
+		_HIDDEN_FALIAS(x,_thread_sys_ ## x);	\
+		SET_ENTRY_SIZE(_HIDDEN(x))
+#define	__END(x,y)					\
+		__END_HIDDEN(x,y); SET_ENTRY_SIZE(x)
 
 #define SYSCALL_NOERROR(x)				\
 		_SYSCALL_NOERROR(x,x)
@@ -156,22 +169,22 @@
 		_SYSCALL_NOERROR(x,y);			\
 		rts;					\
 		 nop;					\
-		__END(x)
+		__END(x,y)
 
 #define PSEUDO(x,y)					\
 		_SYSCALL(x,y);				\
 		rts;					\
 		 nop;					\
-		__END(x)
+		__END(x,y)
 
 #define PSEUDO_HIDDEN(x,y)				\
 		_SYSCALL_HIDDEN(x,y);			\
 		rts;					\
 		 nop;					\
-		__END_HIDDEN(x)
+		__END_HIDDEN(x,y)
 
 #define RSYSCALL_NOERROR(x)		PSEUDO_NOERROR(x,x)
 #define RSYSCALL(x)			PSEUDO(x,x)
 #define RSYSCALL_HIDDEN(x)		PSEUDO_HIDDEN(x,x)
-#define SYSCALL_END(x)			__END(x)
-#define SYSCALL_END_HIDDEN(x)		__END_HIDDEN(x)
+#define SYSCALL_END(x)			__END(x,x)
+#define SYSCALL_END_HIDDEN(x)		__END_HIDDEN(x,x)

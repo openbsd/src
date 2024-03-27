@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.9 2023/12/10 16:45:52 deraadt Exp $	*/
+/*	$OpenBSD: brk.S,v 1.10 2024/03/27 20:03:29 miod Exp $	*/
 /*	$NetBSD: brk.S,v 1.10 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -64,13 +64,7 @@ ENTRY(brk)
 	bf	1f
 	mov	r0, r4
 1:
-#if SYS_break >= 128
-	mov.l	LSYS_break, r0
-#else
-	mov	#SYS_break, r0
-#endif
-99:	trapa	#0x80
-	PINSYSCALL(SYS_break, 99b)
+	systrap SYS_break
 	bf	2f
 #ifdef __PIC__
 	mov.l	Lcurbrk, r0
@@ -83,12 +77,10 @@ ENTRY(brk)
 	rts
 	 mov.l	r4, @r1
 2:
-	SET_ERRNO_AND_RETURN
+	SET_ERRNO_AND_RETURN(break)
 
 	.align	2
-#if SYS_break >= 128
-LSYS_break:	.long	SYS_break
-#endif
+	systrap_data SYS_break
 #ifdef __PIC__
 L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
 Lminbrk:	.long	__minbrk@GOT

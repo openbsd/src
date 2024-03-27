@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.7 2023/12/10 16:45:52 deraadt Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.8 2024/03/27 20:03:29 miod Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.6 2003/08/07 16:42:21 agc Exp $	*/
 
 /*-
@@ -47,13 +47,7 @@ SYSENTRY_HIDDEN(sigprocmask)
 1:	mov.l	@r2, r2			/* fetch indirect ... */
 	mov	r2, r5			/* to new mask arg */
 2:	
-#if SYS_sigprocmask >= 128
-	mov.l	LSYS_sigprocmask, r0
-#else
-	mov	#SYS_sigprocmask, r0
-#endif
-99:	trapa	#0x80
-	PINSYSCALL(SYS_sigprocmask, 99b)
+	systrap SYS_sigprocmask
 	bf	4f
 	mov	r6, r2			/* fetch old mask requested */
 	tst	r2, r2			/* test if old mask requested */
@@ -64,11 +58,6 @@ SYSENTRY_HIDDEN(sigprocmask)
 	rts
 	 nop
 4:
-	SET_ERRNO_AND_RETURN
-
-	.align	2
-#if SYS_sigprocmask >= 128
-LSYS_sigprocmask:
-	.long	SYS_sigprocmask
-#endif
+	SET_ERRNO_AND_RETURN(sigprocmask)
+	systrap_data(SYS_sigprocmask)
 SYSCALL_END_HIDDEN(sigprocmask)

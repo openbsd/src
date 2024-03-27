@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.6 2023/12/10 16:45:52 deraadt Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.7 2024/03/27 20:03:29 miod Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.5 2003/08/07 16:42:21 agc Exp $	*/
 
 /*-
@@ -41,18 +41,7 @@ SYSENTRY_HIDDEN(sigsuspend)
 	mov	r4, r0		/* fetch mask arg */
 	mov.l	@r0, r0		/* indirect to mask arg */
 	mov	r0, r4
-#if SYS_sigsuspend >= 128
-	mov.l	LSYS_sigsuspend, r0
-#else
-	mov	#SYS_sigsuspend, r0
-#endif
-99:	trapa	#0x80
-	PINSYSCALL(SYS_sigsuspend, 99b)
-	SET_ERRNO_AND_RETURN
-
-	.align	2
-#if SYS_sigsuspend >= 128
-LSYS_sigsuspend:
-	.long	SYS_sigsuspend
-#endif
+	systrap SYS_sigsuspend
+	SET_ERRNO_AND_RETURN(sigsuspend)
+	systrap_data SYS_sigsuspend
 SYSCALL_END_HIDDEN(sigsuspend)
