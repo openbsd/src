@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.101 2024/01/26 19:23:03 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.102 2024/03/27 15:40:50 kurt Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1223,6 +1223,7 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	pmap_kernel()->pm_guarded = ATTR_GP;
 	pmap_kernel()->pm_asid = 0;
 
+	mtx_init(&pmap_tramp.pm_mtx, IPL_VM);
 	pmap_tramp.pm_vp.l1 = (struct pmapvp1 *)va + 1;
 	pmap_tramp.pm_privileged = 1;
 	pmap_tramp.pm_guarded = ATTR_GP;
