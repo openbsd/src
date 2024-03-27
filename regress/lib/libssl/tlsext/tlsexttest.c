@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.87 2024/03/27 22:27:09 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.88 2024/03/27 23:56:34 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3704,11 +3704,12 @@ test_tlsext_keyshare_client(void)
 	ssl->version = TLS1_3_VERSION;
 
 	/* Fake up the ssl enough so the key share can process */
+	tls_key_share_free(ssl->s3->hs.key_share);
 	ssl->session = SSL_SESSION_new();
-	ssl->s3 = calloc(1, sizeof(*ssl->s3));
+	memset(ssl->s3, 0, sizeof(*ssl->s3));
 	ssl->session->tlsext_supportedgroups = calloc(4,
 	    sizeof(unsigned short));
-	if (ssl->session == NULL || ssl->s3 == NULL ||
+	if (ssl->session == NULL || 
 	    ssl->session->tlsext_supportedgroups == NULL) {
 		FAIL("malloc");
 		goto done;
@@ -3746,7 +3747,7 @@ test_tlsext_keyshare_client(void)
 	 * should fail to process.
 	 */
 	ssl->s3->hs.extensions_seen = 0;
-	free(ssl->s3->hs.key_share);
+	tls_key_share_free(ssl->s3->hs.key_share);
 	ssl->s3->hs.key_share = NULL;
 	CBS_init(&cbs, data, dlen);
 	if (server_funcs->process(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
