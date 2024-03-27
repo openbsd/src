@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.1 2024/03/27 11:24:15 jsing Exp $ */
+/* $OpenBSD: blowfish.c,v 1.2 2024/03/27 11:54:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -344,7 +344,6 @@ static const BF_KEY bf_init = {
 void
 BF_encrypt(BF_LONG *data, const BF_KEY *key)
 {
-#ifndef BF_PTR2
 	BF_LONG l, r;
 	const BF_LONG *p, *s;
 
@@ -380,41 +379,6 @@ BF_encrypt(BF_LONG *data, const BF_KEY *key)
 
 	data[1] = l&0xffffffffL;
 	data[0] = r&0xffffffffL;
-#else
-	BF_LONG l, r,t, *k;
-
-	l = data[0];
-	r = data[1];
-	k = (BF_LONG*)key;
-
-	l ^= k[0];
-	BF_ENC(r, l, k, 1);
-	BF_ENC(l, r, k, 2);
-	BF_ENC(r, l, k, 3);
-	BF_ENC(l, r, k, 4);
-	BF_ENC(r, l, k, 5);
-	BF_ENC(l, r, k, 6);
-	BF_ENC(r, l, k, 7);
-	BF_ENC(l, r, k, 8);
-	BF_ENC(r, l, k, 9);
-	BF_ENC(l, r,k, 10);
-	BF_ENC(r, l,k, 11);
-	BF_ENC(l, r,k, 12);
-	BF_ENC(r, l,k, 13);
-	BF_ENC(l, r,k, 14);
-	BF_ENC(r, l,k, 15);
-	BF_ENC(l, r,k, 16);
-#if BF_ROUNDS == 20
-	BF_ENC(r, l,k, 17);
-	BF_ENC(l, r,k, 18);
-	BF_ENC(r, l,k, 19);
-	BF_ENC(l, r,k, 20);
-#endif
-	r ^= k[BF_ROUNDS + 1];
-
-	data[1] = l&0xffffffffL;
-	data[0] = r&0xffffffffL;
-#endif
 }
 
 #ifndef BF_DEFAULT_OPTIONS
@@ -422,7 +386,6 @@ BF_encrypt(BF_LONG *data, const BF_KEY *key)
 void
 BF_decrypt(BF_LONG *data, const BF_KEY *key)
 {
-#ifndef BF_PTR2
 	BF_LONG l, r;
 	const BF_LONG *p, *s;
 
@@ -458,41 +421,6 @@ BF_decrypt(BF_LONG *data, const BF_KEY *key)
 
 	data[1] = l&0xffffffffL;
 	data[0] = r&0xffffffffL;
-#else
-	BF_LONG l, r,t, *k;
-
-	l = data[0];
-	r = data[1];
-	k = (BF_LONG *)key;
-
-	l ^= k[BF_ROUNDS + 1];
-#if BF_ROUNDS == 20
-	BF_ENC(r, l,k, 20);
-	BF_ENC(l, r,k, 19);
-	BF_ENC(r, l,k, 18);
-	BF_ENC(l, r,k, 17);
-#endif
-	BF_ENC(r, l,k, 16);
-	BF_ENC(l, r,k, 15);
-	BF_ENC(r, l,k, 14);
-	BF_ENC(l, r,k, 13);
-	BF_ENC(r, l,k, 12);
-	BF_ENC(l, r,k, 11);
-	BF_ENC(r, l,k, 10);
-	BF_ENC(l, r, k, 9);
-	BF_ENC(r, l, k, 8);
-	BF_ENC(l, r, k, 7);
-	BF_ENC(r, l, k, 6);
-	BF_ENC(l, r, k, 5);
-	BF_ENC(r, l, k, 4);
-	BF_ENC(l, r, k, 3);
-	BF_ENC(r, l, k, 2);
-	BF_ENC(l, r, k, 1);
-	r ^= k[0];
-
-	data[1] = l&0xffffffffL;
-	data[0] = r&0xffffffffL;
-#endif
 }
 
 void
