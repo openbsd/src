@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.65 2024/03/26 08:54:48 joshua Exp $ */
+/* $OpenBSD: tls.h,v 1.66 2024/03/27 07:35:30 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -81,6 +81,7 @@ extern "C" {
 #define TLS_ERROR_UNKNOWN			0x0000
 #define TLS_ERROR_OUT_OF_MEMORY			0x1000
 #define TLS_ERROR_INVALID_CONTEXT		0x2000
+#define TLS_ERROR_INVALID_ARGUMENT		0x2001
 #endif
 
 struct tls;

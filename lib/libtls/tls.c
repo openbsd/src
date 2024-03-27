@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.102 2024/03/26 08:54:48 joshua Exp $ */
+/* $OpenBSD: tls.c,v 1.103 2024/03/27 07:35:30 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -359,9 +359,9 @@ tls_keypair_to_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY **pke
 		return (0);
 
 	if (len > INT_MAX) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_ARGUMENT,
 		    ctx->config->use_fake_private_key ?
-		    "cert too long" : "key too long");
+		    "certificate too long" : "key too long");
 		goto err;
 	}
 
@@ -491,7 +491,7 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 
 	if (keypair->cert_mem != NULL) {
 		if (keypair->cert_len > INT_MAX) {
-			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+			tls_set_errorx(ctx, TLS_ERROR_INVALID_ARGUMENT,
 			    "certificate too long");
 			goto err;
 		}
@@ -647,7 +647,8 @@ tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 
 	if (ca_mem != NULL) {
 		if (ca_len > INT_MAX) {
-			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "ca too long");
+			tls_set_errorx(ctx, TLS_ERROR_INVALID_ARGUMENT,
+			    "ca too long");
 			goto err;
 		}
 		if (SSL_CTX_load_verify_mem(ssl_ctx, ca_mem, ca_len) != 1) {
@@ -664,7 +665,8 @@ tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 
 	if (crl_mem != NULL) {
 		if (crl_len > INT_MAX) {
-			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN, "crl too long");
+			tls_set_errorx(ctx, TLS_ERROR_INVALID_ARGUMENT,
+			    "crl too long");
 			goto err;
 		}
 		if ((bio = BIO_new_mem_buf(crl_mem, crl_len)) == NULL) {
@@ -865,7 +867,7 @@ tls_read(struct tls *ctx, void *buf, size_t buflen)
 	}
 
 	if (buflen > INT_MAX) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_ARGUMENT,
 		    "buflen too long");
 		goto out;
 	}
@@ -897,7 +899,7 @@ tls_write(struct tls *ctx, const void *buf, size_t buflen)
 	}
 
 	if (buflen > INT_MAX) {
-		tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
+		tls_set_errorx(ctx, TLS_ERROR_INVALID_ARGUMENT,
 		    "buflen too long");
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.68 2024/03/26 06:24:52 joshua Exp $ */
+/* $OpenBSD: tls_config.c,v 1.69 2024/03/27 07:35:30 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -321,12 +321,12 @@ tls_config_parse_alpn(struct tls_config *config, const char *alpn,
 	q = s;
 	while ((p = strsep(&q, ",")) != NULL) {
 		if ((len = strlen(p)) == 0) {
-			tls_config_set_errorx(config, TLS_ERROR_UNKNOWN,
+			tls_config_set_errorx(config, TLS_ERROR_INVALID_ARGUMENT,
 			    "alpn protocol with zero length");
 			goto err;
 		}
 		if (len > 255) {
-			tls_config_set_errorx(config, TLS_ERROR_UNKNOWN,
+			tls_config_set_errorx(config, TLS_ERROR_INVALID_ARGUMENT,
 			    "alpn protocol too long");
 			goto err;
 		}
