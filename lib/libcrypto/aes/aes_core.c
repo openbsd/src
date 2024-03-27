@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.16 2024/03/27 06:39:46 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.17 2024/03/27 06:51:59 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -35,6 +35,7 @@
 #include <openssl/aes.h>
 
 #include "aes_local.h"
+#include "crypto_internal.h"
 
 #ifndef AES_ASM
 /*
@@ -1356,14 +1357,9 @@ AES_set_decrypt_key(const unsigned char *userKey, const int bits,
 			tpb = tp9 ^ tp2;
 			tpd = tp9 ^ tp4;
 			tpe = tp8 ^ tp4 ^ tp2;
-#if defined(ROTATE)
-			rk[j] = tpe ^ ROTATE(tpd, 16) ^
-			    ROTATE(tp9, 24) ^ ROTATE(tpb, 8);
-#else
-			rk[j] = tpe ^ (tpd >> 16) ^ (tpd << 16) ^
-			    (tp9 >> 8) ^ (tp9 << 24) ^
-			    (tpb >> 24) ^ (tpb << 8);
-#endif
+
+			rk[j] = tpe ^ crypto_rol_u32(tpd, 16) ^
+			    crypto_rol_u32(tp9, 24) ^ crypto_rol_u32(tpb, 8);
 		}
 	}
 	return 0;
