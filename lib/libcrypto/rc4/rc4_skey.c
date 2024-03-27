@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4_skey.c,v 1.16 2023/07/28 10:35:14 tb Exp $ */
+/* $OpenBSD: rc4_skey.c,v 1.17 2024/03/27 12:14:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,8 +57,6 @@
  */
 
 #include <openssl/rc4.h>
-
-#include "rc4_local.h"
 
 /* RC4 as implemented from a posting from
  * Newsgroups: sci.crypt
