@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.322 2024/03/26 09:46:47 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.323 2024/03/27 22:47:53 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ soalloc(const struct protosw *prp, int wait)
 		}
 		break;
 	case AF_UNIX:
-		so->so_rcv.sb_flags |= SB_MTXLOCK;
+		so->so_rcv.sb_flags |= SB_MTXLOCK | SB_OWNLOCK;
 		break;
 	}
 
@@ -903,12 +903,23 @@ restart:
 		}
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
-		sb_mtx_unlock(&so->so_rcv);
-		sbunlock(so, &so->so_rcv);
-		error = sbwait(so, &so->so_rcv);
-		if (error) {
+
+		if (so->so_rcv.sb_flags & SB_OWNLOCK) {
+			sbunlock_locked(so, &so->so_rcv);
 			sounlock_shared(so);
-			return (error);
+			error = sbwait_locked(so, &so->so_rcv);
+			sb_mtx_unlock(&so->so_rcv);
+			if (error)
+				return (error);
+			solock_shared(so);
+		} else {
+			sb_mtx_unlock(&so->so_rcv);
+			sbunlock(so, &so->so_rcv);
+			error = sbwait(so, &so->so_rcv);
+			if (error) {
+				sounlock_shared(so);
+				return (error);
+			}
 		}
 		goto restart;
 	}

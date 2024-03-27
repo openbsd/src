@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.145 2024/03/26 09:46:47 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.146 2024/03/27 22:47:53 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -523,6 +523,18 @@ sbmtxassertlocked(struct socket *so, struct sockbuf *sb)
  * Wait for data to arrive at/drain from a socket buffer.
  */
 int
+sbwait_locked(struct socket *so, struct sockbuf *sb)
+{
+	int prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
+
+	MUTEX_ASSERT_LOCKED(&sb->sb_mtx);
+
+	sb->sb_flags |= SB_WAIT;
+	return msleep_nsec(&sb->sb_cc, &sb->sb_mtx, prio, "sbwait",
+	    sb->sb_timeo_nsecs);
+}
+
+int
 sbwait(struct socket *so, struct sockbuf *sb)
 {
 	uint64_t timeo_nsecs;
@@ -573,20 +585,23 @@ out:
 }
 
 void
-sbunlock(struct socket *so, struct sockbuf *sb)
+sbunlock_locked(struct socket *so, struct sockbuf *sb)
 {
-	int dowakeup = 0;
+	MUTEX_ASSERT_LOCKED(&sb->sb_mtx);
 
-	mtx_enter(&sb->sb_mtx);
 	sb->sb_flags &= ~SB_LOCK;
 	if (sb->sb_flags & SB_WANT) {
 		sb->sb_flags &= ~SB_WANT;
-		dowakeup = 1;
-	}
-	mtx_leave(&sb->sb_mtx);
-
-	if (dowakeup)
 		wakeup(&sb->sb_flags);
+	}
+}
+
+void
+sbunlock(struct socket *so, struct sockbuf *sb)
+{
+	mtx_enter(&sb->sb_mtx);
+	sbunlock_locked(so, sb);
+	mtx_leave(&sb->sb_mtx);
 }
 
 /*
