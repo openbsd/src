@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.143 2024/03/26 03:44:11 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.144 2024/03/27 10:44:17 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -33,6 +33,7 @@
 #include "ssl_tlsext.h"
 
 #define TLSEXT_TYPE_alpn TLSEXT_TYPE_application_layer_protocol_negotiation
+#define TLSEXT_MAX_SUPPORTED_GROUPS 64
 
 /*
  * Supported Application-Layer Protocol Negotiation - RFC 7301
@@ -230,21 +231,25 @@ static int
 tlsext_supportedgroups_server_process(SSL *s, uint16_t msg_type, CBS *cbs,
     int *alert)
 {
-	CBS grouplist;
-	uint16_t *groups;
+	uint16_t *groups = NULL;
 	size_t groups_len;
-	int i;
+	CBS grouplist;
+	int i, j;
+	int ret = 0;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &grouplist))
-		return 0;
+		goto err;
 
 	groups_len = CBS_len(&grouplist);
 	if (groups_len == 0 || groups_len % 2 != 0)
-		return 0;
+		goto err;
 	groups_len /= 2;
 
+	if (groups_len > TLSEXT_MAX_SUPPORTED_GROUPS)
+		goto err;
+
 	if (s->hit)
-		return 1;
+		goto done;
 
 	if (s->s3->hs.tls13.hrr) {
 		if (s->session->tlsext_supportedgroups == NULL) {
@@ -257,33 +262,49 @@ tlsext_supportedgroups_server_process(SSL *s, uint16_t msg_type, CBS *cbs,
 		 * did not change its list of supported groups.
 		 */
 
-		return 1;
+		goto done;
 	}
 
 	if (s->session->tlsext_supportedgroups != NULL)
-		return 0; /* XXX internal error? */
+		goto err; /* XXX internal error? */
 
 	if ((groups = reallocarray(NULL, groups_len, sizeof(uint16_t))) == NULL) {
 		*alert = SSL_AD_INTERNAL_ERROR;
-		return 0;
+		goto err;
 	}
 
 	for (i = 0; i < groups_len; i++) {
-		if (!CBS_get_u16(&grouplist, &groups[i])) {
-			free(groups);
-			return 0;
+		if (!CBS_get_u16(&grouplist, &groups[i]))
+			goto err;
+		/*
+		 * Do not allow duplicate groups to be sent. This is not
+		 * currently specified in RFC 8446 or earlier, but there is no
+		 * legitimate justification for this to occur in TLS 1.2 or TLS
+		 * 1.3.
+		 */
+		for (j = 0; j < i; j++) {
+			if (groups[i] == groups[j]) {
+				*alert = SSL_AD_ILLEGAL_PARAMETER;
+				goto err;
+			}
 		}
 	}
 
-	if (CBS_len(&grouplist) != 0) {
-		free(groups);
-		return 0;
-	}
+	if (CBS_len(&grouplist) != 0)
+		goto err;
 
 	s->session->tlsext_supportedgroups = groups;
 	s->session->tlsext_supportedgroups_length = groups_len;
+	groups = NULL;
 
-	return 1;
+
+ done:
+	ret = 1;
+
+ err:
+	free(groups);
+
+	return ret;
 }
 
 /* This extension is never used by the server. */
