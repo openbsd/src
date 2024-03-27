@@ -6,8 +6,6 @@
 SRCS+= aes_cbc.c 
 CFLAGS+= -DAES_ASM
 SSLASM+= aes aes-armv4
-# bf
-SRCS+= bf_enc.c
 # bn
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
 SSLASM+= bn armv4-mont

@@ -1,11 +1,9 @@
-# $OpenBSD: Makefile.inc,v 1.6 2023/01/31 06:17:10 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.7 2024/03/27 11:12:08 jsing Exp $
 
 # alpha-specific libcrypto build rules
 
 # aes
 SRCS+= aes_core.c aes_cbc.c 
-# bf
-SRCS+= bf_enc.c
 # bn
 SSLASM+= bn alpha-mont
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
