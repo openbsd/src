@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.44 2024/03/27 01:22:30 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.45 2024/03/27 01:26:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,37 +140,35 @@ DH_new_method(ENGINE *engine)
 LCRYPTO_ALIAS(DH_new_method);
 
 void
-DH_free(DH *r)
+DH_free(DH *dh)
 {
-	int i;
-
-	if (r == NULL)
-		return;
-	i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DH);
-	if (i > 0)
+	if (dh == NULL)
 		return;
 
-	if (r->meth != NULL && r->meth->finish != NULL)
-		r->meth->finish(r);
+	if (CRYPTO_add(&dh->references, -1, CRYPTO_LOCK_DH) > 0)
+		return;
 
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
+	if (dh->meth != NULL && dh->meth->finish != NULL)
+		dh->meth->finish(dh);
 
-	BN_free(r->p);
-	BN_free(r->g);
-	BN_free(r->q);
-	BN_free(r->j);
-	free(r->seed);
-	BN_free(r->counter);
-	BN_free(r->pub_key);
-	BN_free(r->priv_key);
-	free(r);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, dh, &dh->ex_data);
+
+	BN_free(dh->p);
+	BN_free(dh->g);
+	BN_free(dh->q);
+	BN_free(dh->j);
+	free(dh->seed);
+	BN_free(dh->counter);
+	BN_free(dh->pub_key);
+	BN_free(dh->priv_key);
+	free(dh);
 }
 LCRYPTO_ALIAS(DH_free);
 
 int
-DH_up_ref(DH *r)
+DH_up_ref(DH *dh)
 {
-	return CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH) > 1;
+	return CRYPTO_add(&dh->references, 1, CRYPTO_LOCK_DH) > 1;
 }
 LCRYPTO_ALIAS(DH_up_ref);
 
@@ -184,16 +182,16 @@ DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 LCRYPTO_ALIAS(DH_get_ex_new_index);
 
 int
-DH_set_ex_data(DH *d, int idx, void *arg)
+DH_set_ex_data(DH *dh, int idx, void *arg)
 {
-	return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
+	return CRYPTO_set_ex_data(&dh->ex_data, idx, arg);
 }
 LCRYPTO_ALIAS(DH_set_ex_data);
 
 void *
-DH_get_ex_data(DH *d, int idx)
+DH_get_ex_data(DH *dh, int idx)
 {
-	return CRYPTO_get_ex_data(&d->ex_data, idx);
+	return CRYPTO_get_ex_data(&dh->ex_data, idx);
 }
 LCRYPTO_ALIAS(DH_get_ex_data);
 
