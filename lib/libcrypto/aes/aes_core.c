@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.14 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: aes_core.c,v 1.15 2024/03/27 06:38:54 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -25,8 +25,10 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Note: rewritten a little bit to provide error control and an OpenSSL-
-   compatible API */
+/*
+ * Note: rewritten a little bit to provide error control and an OpenSSL-
+ * compatible API.
+ */
 
 #ifndef AES_DEBUG
 # ifndef NDEBUG
@@ -35,7 +37,9 @@
 #endif
 
 #include <stdlib.h>
+
 #include <openssl/aes.h>
+
 #include "aes_local.h"
 
 #ifndef AES_ASM
