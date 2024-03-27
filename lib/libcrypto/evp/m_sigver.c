@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.25 2024/03/27 06:53:15 tb Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.26 2024/03/27 07:36:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -191,7 +191,7 @@ EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 		return 1;
 	}
 
-
+	/* Use a copy since EVP_DigestFinal_ex() clears secrets. */
 	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
 		goto err;
 	if (!EVP_MD_CTX_copy_ex(md_ctx, ctx))
@@ -203,6 +203,7 @@ EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 	} else {
 		if (!EVP_DigestFinal_ex(md_ctx, md, &mdlen))
 			goto err;
+		/* Use the original ctx since secrets were cleared. */
 		if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, md, mdlen) <= 0)
 			goto err;
 	}
