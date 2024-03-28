@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.13 2024/03/28 07:04:21 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.14 2024/03/28 07:13:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,11 @@
 #include <openssl/crypto.h>
 #include <openssl/ripemd.h>
 
+#include "crypto_internal.h"
+
+/* Ensure that SHA_LONG and uint32_t are equivalent sizes. */
+CTASSERT(sizeof(RIPEMD160_LONG) == sizeof(uint32_t));
+
 #define DATA_ORDER_IS_LITTLE_ENDIAN
 
 #define HASH_LONG               RIPEMD160_LONG
@@ -120,28 +125,28 @@
 
 #define RIP1(a,b,c,d,e,w,s) { \
 	a+=F1(b,c,d)+w; \
-        a=ROTATE(a,s)+e; \
-        c=ROTATE(c,10); }
+        a=crypto_rol_u32(a,s)+e; \
+        c=crypto_rol_u32(c,10); }
 
 #define RIP2(a,b,c,d,e,w,s,K) { \
 	a+=F2(b,c,d)+w+K; \
-        a=ROTATE(a,s)+e; \
-        c=ROTATE(c,10); }
+        a=crypto_rol_u32(a,s)+e; \
+        c=crypto_rol_u32(c,10); }
 
 #define RIP3(a,b,c,d,e,w,s,K) { \
 	a+=F3(b,c,d)+w+K; \
-        a=ROTATE(a,s)+e; \
-        c=ROTATE(c,10); }
+        a=crypto_rol_u32(a,s)+e; \
+        c=crypto_rol_u32(c,10); }
 
 #define RIP4(a,b,c,d,e,w,s,K) { \
 	a+=F4(b,c,d)+w+K; \
-        a=ROTATE(a,s)+e; \
-        c=ROTATE(c,10); }
+        a=crypto_rol_u32(a,s)+e; \
+        c=crypto_rol_u32(c,10); }
 
 #define RIP5(a,b,c,d,e,w,s,K) { \
 	a+=F5(b,c,d)+w+K; \
-        a=ROTATE(a,s)+e; \
-        c=ROTATE(c,10); }
+        a=crypto_rol_u32(a,s)+e; \
+        c=crypto_rol_u32(c,10); }
 
 static void
 ripemd160_block_data_order(RIPEMD160_CTX *ctx, const void *p, size_t num)
