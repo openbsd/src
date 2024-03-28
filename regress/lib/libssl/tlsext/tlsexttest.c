@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.88 2024/03/27 23:56:34 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.89 2024/03/28 01:45:18 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3706,11 +3706,14 @@ test_tlsext_keyshare_client(void)
 	/* Fake up the ssl enough so the key share can process */
 	tls_key_share_free(ssl->s3->hs.key_share);
 	ssl->session = SSL_SESSION_new();
+	if (ssl->session == NULL) {
+		FAIL("malloc");
+		goto done;
+	}
 	memset(ssl->s3, 0, sizeof(*ssl->s3));
 	ssl->session->tlsext_supportedgroups = calloc(4,
 	    sizeof(unsigned short));
-	if (ssl->session == NULL || 
-	    ssl->session->tlsext_supportedgroups == NULL) {
+	if (ssl->session->tlsext_supportedgroups == NULL) {
 		FAIL("malloc");
 		goto done;
 	}
@@ -3780,7 +3783,6 @@ test_tlsext_keyshare_client(void)
 		FAIL("Processed key share with invalid group!");
 		goto done;
 	}
-	ssl->session->tlsext_supportedgroups[0] = 29;
 
 	/*
 	 * Make 29 least preferred, while server supports both 29 and 25.
