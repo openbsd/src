@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.11 2024/03/28 05:21:20 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.12 2024/03/28 07:03:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,23 +64,6 @@
 
 #include <openssl/crypto.h>
 #include <openssl/ripemd.h>
-
-/*
- * DO EXAMINE COMMENTS IN crypto/md5/md5_locl.h & crypto/md5/md5_dgst.c
- * FOR EXPLANATIONS ON FOLLOWING "CODE."
- *					<appro@fy.chalmers.se>
- */
-#ifdef RMD160_ASM
-# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
-#  define ripemd160_block_data_order ripemd160_block_asm_data_order
-# endif
-#endif
-
-__BEGIN_HIDDEN_DECLS
-
-void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p, size_t num);
-
-__END_HIDDEN_DECLS
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
 
@@ -166,15 +149,7 @@ __END_HIDDEN_DECLS
         a=ROTATE(a,s)+e; \
         c=ROTATE(c,10); }
 
-#  ifdef RMD160_ASM
-void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p, size_t num);
-#    define ripemd160_block ripemd160_block_x86
-#  else
-void ripemd160_block(RIPEMD160_CTX *c, unsigned long *p, size_t num);
-#  endif
-
-#ifndef ripemd160_block_data_order
-void
+static void
 ripemd160_block_data_order(RIPEMD160_CTX *ctx, const void *p, size_t num)
 {
 	const unsigned char *data = p;
@@ -414,7 +389,6 @@ ripemd160_block_data_order(RIPEMD160_CTX *ctx, const void *p, size_t num)
 
 	}
 }
-#endif
 
 int
 RIPEMD160_Init(RIPEMD160_CTX *c)
