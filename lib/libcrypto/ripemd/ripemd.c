@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.17 2024/03/28 10:45:30 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.18 2024/03/28 23:54:15 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -385,6 +385,7 @@ RIPEMD160_Init(RIPEMD160_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(RIPEMD160_Init);
 
 int
 RIPEMD160_Update(RIPEMD160_CTX *c, const void *data_, size_t len)
@@ -439,12 +440,14 @@ RIPEMD160_Update(RIPEMD160_CTX *c, const void *data_, size_t len)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(RIPEMD160_Update);
 
 void
 RIPEMD160_Transform(RIPEMD160_CTX *c, const unsigned char *data)
 {
 	ripemd160_block_data_order(c, data, 1);
 }
+LCRYPTO_ALIAS(RIPEMD160_Transform);
 
 int
 RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
@@ -477,6 +480,7 @@ RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(RIPEMD160_Final);
 
 unsigned char *
 RIPEMD160(const unsigned char *d, size_t n,
@@ -494,3 +498,4 @@ RIPEMD160(const unsigned char *d, size_t n,
 	explicit_bzero(&c, sizeof(c));
 	return (md);
 }
+LCRYPTO_ALIAS(RIPEMD160);

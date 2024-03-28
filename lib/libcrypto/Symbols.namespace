@@ -2544,3 +2544,8 @@ _libre_ENGINE_load_private_key
 _libre_ENGINE_load_public_key
 _libre_RC4_set_key
 _libre_RC4
+_libre_RIPEMD160_Init
+_libre_RIPEMD160_Update
+_libre_RIPEMD160_Final
+_libre_RIPEMD160
+_libre_RIPEMD160_Transform
