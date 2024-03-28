@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.12 2024/03/28 01:41:16 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2024/03/28 01:57:00 jsing Exp $
 
 # sparc64-specific libcrypto build rules
 
@@ -12,8 +12,6 @@ SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # modes
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-sparcv9 ghash-sparcv9
-# rc4
-SRCS+= rc4.c
 # sha
 SSLASM+= sha sha1-sparcv9 sha1-sparcv9
 CFLAGS+= -DSHA1_ASM

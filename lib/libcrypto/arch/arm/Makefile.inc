@@ -14,8 +14,6 @@ SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # modes
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-armv4
-# rc4
-SRCS+= rc4.c
 # sha
 CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-armv4-large

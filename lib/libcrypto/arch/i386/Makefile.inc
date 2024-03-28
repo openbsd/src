@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.14 2024/03/28 01:49:29 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.15 2024/03/28 01:57:00 jsing Exp $
 
 # i386-specific libcrypto build rules
 
@@ -29,7 +29,6 @@ SSLASM+= modes ghash-x86
 CFLAGS+= -DHAVE_RC4_INTERNAL
 CFLAGS+= -DHAVE_RC4_SET_KEY_INTERNAL
 SSLASM+= rc4 rc4-586
-SRCS+=   rc4.c
 # sha
 CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-586
