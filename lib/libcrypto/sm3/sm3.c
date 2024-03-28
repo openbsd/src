@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.13 2024/03/28 08:33:14 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.14 2024/03/28 08:37:03 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -21,6 +21,8 @@
 
 #include <openssl/sm3.h>
 
+#include "crypto_internal.h"
+
 #ifndef OPENSSL_NO_SM3
 
 #define DATA_ORDER_IS_BIG_ENDIAN
@@ -42,8 +44,8 @@ void SM3_transform(SM3_CTX *c, const unsigned char *data);
 
 #include "md32_common.h"
 
-#define P0(X) (X ^ ROTATE(X, 9) ^ ROTATE(X, 17))
-#define P1(X) (X ^ ROTATE(X, 15) ^ ROTATE(X, 23))
+#define P0(X) (X ^ crypto_rol_u32(X, 9) ^ crypto_rol_u32(X, 17))
+#define P1(X) (X ^ crypto_rol_u32(X, 15) ^ crypto_rol_u32(X, 23))
 
 #define FF0(X, Y, Z) (X ^ Y ^ Z)
 #define GG0(X, Y, Z) (X ^ Y ^ Z)
@@ -52,17 +54,17 @@ void SM3_transform(SM3_CTX *c, const unsigned char *data);
 #define GG1(X, Y, Z) ((Z ^ (X & (Y ^ Z))))
 
 #define EXPAND(W0, W7, W13, W3, W10) \
-	(P1(W0 ^ W7 ^ ROTATE(W13, 15)) ^ ROTATE(W3, 7) ^ W10)
+	(P1(W0 ^ W7 ^ crypto_rol_u32(W13, 15)) ^ crypto_rol_u32(W3, 7) ^ W10)
 
 #define ROUND(A, B, C, D, E, F, G, H, TJ, Wi, Wj, FF, GG)	do {	\
-	const SM3_WORD A12 = ROTATE(A, 12);				\
+	const SM3_WORD A12 = crypto_rol_u32(A, 12);				\
 	const SM3_WORD A12_SM = A12 + E + TJ;				\
-	const SM3_WORD SS1 = ROTATE(A12_SM, 7);				\
+	const SM3_WORD SS1 = crypto_rol_u32(A12_SM, 7);				\
 	const SM3_WORD TT1 = FF(A, B, C) + D + (SS1 ^ A12) + (Wj);	\
 	const SM3_WORD TT2 = GG(E, F, G) + H + SS1 + Wi;		\
-	B = ROTATE(B, 9);						\
+	B = crypto_rol_u32(B, 9);						\
 	D = TT1;							\
-	F = ROTATE(F, 19);						\
+	F = crypto_rol_u32(F, 19);						\
 	H = P0(TT2);							\
 } while(0)
 
