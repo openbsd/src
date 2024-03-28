@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.10 2024/03/28 08:26:42 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.11 2024/03/28 08:30:25 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -31,17 +31,6 @@
 #define HASH_UPDATE		SM3_Update
 #define HASH_TRANSFORM		SM3_Transform
 #define HASH_FINAL		SM3_Final
-#define HASH_MAKE_STRING(c, s) do {		\
-	unsigned long ll;			\
-	ll = (c)->A; HOST_l2c(ll, (s));		\
-	ll = (c)->B; HOST_l2c(ll, (s));		\
-	ll = (c)->C; HOST_l2c(ll, (s));		\
-	ll = (c)->D; HOST_l2c(ll, (s));		\
-	ll = (c)->E; HOST_l2c(ll, (s));		\
-	ll = (c)->F; HOST_l2c(ll, (s));		\
-	ll = (c)->G; HOST_l2c(ll, (s));		\
-	ll = (c)->H; HOST_l2c(ll, (s));		\
-} while (0)
 #define HASH_BLOCK_DATA_ORDER   SM3_block_data_order
 
 void SM3_block_data_order(SM3_CTX *c, const void *p, size_t num);
@@ -341,6 +330,7 @@ SM3_Final(unsigned char *md, SM3_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
+	unsigned long ll;
 
 	p[n] = 0x80; /* there is always room for one */
 	n++;
@@ -365,11 +355,24 @@ SM3_Final(unsigned char *md, SM3_CTX *c)
 	c->num = 0;
 	memset(p, 0, SM3_CBLOCK);
 
-#ifndef HASH_MAKE_STRING
-#error "HASH_MAKE_STRING must be defined!"
-#else
-	HASH_MAKE_STRING(c, md);
-#endif
+	do {
+	ll = (c)->A;
+	HOST_l2c(ll, md);
+	ll = (c)->B;
+	HOST_l2c(ll, md);
+	ll = (c)->C;
+	HOST_l2c(ll, md);
+	ll = (c)->D;
+	HOST_l2c(ll, md);
+	ll = (c)->E;
+	HOST_l2c(ll, md);
+	ll = (c)->F;
+	HOST_l2c(ll, md);
+	ll = (c)->G;
+	HOST_l2c(ll, md);
+	ll = (c)->H;
+	HOST_l2c(ll, md);
+	} while (0);
 
 	return 1;
 }
