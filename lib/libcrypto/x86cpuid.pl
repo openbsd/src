@@ -150,8 +150,4 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 &set_label("nocpuid");
 &function_end("OPENSSL_ia32_cpuid");
 
-&external_label("OPENSSL_ia32cap_P");
-
-&initseg("OPENSSL_cpuid_setup");
-
 &asm_finish();
