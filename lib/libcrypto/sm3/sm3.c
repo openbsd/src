@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.16 2024/03/28 12:04:38 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.17 2024/03/28 12:09:09 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -27,8 +27,6 @@
 CTASSERT(sizeof(SM3_WORD) == sizeof(uint32_t));
 
 #ifndef OPENSSL_NO_SM3
-
-void SM3_transform(SM3_CTX *c, const unsigned char *data);
 
 #define P0(X) (X ^ crypto_rol_u32(X, 9) ^ crypto_rol_u32(X, 17))
 #define P1(X) (X ^ crypto_rol_u32(X, 15) ^ crypto_rol_u32(X, 23))
@@ -323,12 +321,6 @@ SM3_Update(SM3_CTX *c, const void *data_, size_t len)
 	return 1;
 }
 LCRYPTO_ALIAS(SM3_Update);
-
-void
-SM3_Transform(SM3_CTX *c, const unsigned char *data)
-{
-	sm3_block_data_order(c, data, 1);
-}
 
 int
 SM3_Final(unsigned char *md, SM3_CTX *c)
