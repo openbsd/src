@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.12 2024/03/28 08:31:11 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.13 2024/03/28 08:33:14 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -71,15 +71,6 @@ void SM3_transform(SM3_CTX *c, const unsigned char *data);
 
 #define R2(A, B, C, D, E, F, G, H, TJ, Wi, Wj) \
 	ROUND(A, B, C, D, E, F, G, H, TJ, Wi, Wj, FF1, GG1)
-
-#define SM3_A 0x7380166fUL
-#define SM3_B 0x4914b2b9UL
-#define SM3_C 0x172442d7UL
-#define SM3_D 0xda8a0600UL
-#define SM3_E 0xa96f30bcUL
-#define SM3_F 0x163138aaUL
-#define SM3_G 0xe38dee4dUL
-#define SM3_H 0xb0fb0e4eUL
 
 void
 SM3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)
@@ -252,14 +243,16 @@ int
 SM3_Init(SM3_CTX *c)
 {
 	memset(c, 0, sizeof(*c));
-	c->A = SM3_A;
-	c->B = SM3_B;
-	c->C = SM3_C;
-	c->D = SM3_D;
-	c->E = SM3_E;
-	c->F = SM3_F;
-	c->G = SM3_G;
-	c->H = SM3_H;
+
+	c->A = 0x7380166fUL;
+	c->B = 0x4914b2b9UL;
+	c->C = 0x172442d7UL;
+	c->D = 0xda8a0600UL;
+	c->E = 0xa96f30bcUL;
+	c->F = 0x163138aaUL;
+	c->G = 0xe38dee4dUL;
+	c->H = 0xb0fb0e4eUL;
+
 	return 1;
 }
 LCRYPTO_ALIAS(SM3_Init);
