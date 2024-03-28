@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4.c,v 1.9 2024/03/28 01:49:29 jsing Exp $ */
+/* $OpenBSD: rc4.c,v 1.10 2024/03/28 08:18:13 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -299,9 +299,11 @@ RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 {
 	rc4_internal(key, len, indata, outdata);
 }
+LCRYPTO_ALIAS(RC4);
 
 void
 RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
 {
 	rc4_set_key_internal(key, len, data);
 }
+LCRYPTO_ALIAS(RC4_set_key);

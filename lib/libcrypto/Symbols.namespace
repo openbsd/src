@@ -2542,3 +2542,5 @@ _libre_ENGINE_ctrl_cmd
 _libre_ENGINE_ctrl_cmd_string
 _libre_ENGINE_load_private_key
 _libre_ENGINE_load_public_key
+_libre_RC4_set_key
+_libre_RC4
