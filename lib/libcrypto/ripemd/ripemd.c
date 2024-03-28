@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.15 2024/03/28 07:28:48 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.16 2024/03/28 07:29:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -485,7 +485,6 @@ RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 	c->num = 0;
 	memset(p, 0, RIPEMD160_CBLOCK);
 
-	do {
 	ll = c->A;
 	HOST_l2c(ll, md);
 	ll = c->B;
@@ -496,7 +495,6 @@ RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 	HOST_l2c(ll, md);
 	ll = c->E;
 	HOST_l2c(ll, md);
-	} while (0);
 
 	return 1;
 }
