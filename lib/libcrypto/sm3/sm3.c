@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.14 2024/03/28 08:37:03 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.15 2024/03/28 11:22:58 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -23,26 +23,13 @@
 
 #include "crypto_internal.h"
 
+/* Ensure that SM3_WORD and uint32_t are equivalent size. */
+CTASSERT(sizeof(SM3_WORD) == sizeof(uint32_t));
+
 #ifndef OPENSSL_NO_SM3
-
-#define DATA_ORDER_IS_BIG_ENDIAN
-
-#define HASH_LONG		SM3_WORD
-#define HASH_CTX		SM3_CTX
-#define HASH_CBLOCK		SM3_CBLOCK
-#define HASH_UPDATE		SM3_Update
-#define HASH_TRANSFORM		SM3_Transform
-#define HASH_FINAL		SM3_Final
-#define HASH_BLOCK_DATA_ORDER   SM3_block_data_order
 
 void SM3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void SM3_transform(SM3_CTX *c, const unsigned char *data);
-
-#define HASH_NO_UPDATE
-#define HASH_NO_TRANSFORM
-#define HASH_NO_FINAL
-
-#include "md32_common.h"
 
 #define P0(X) (X ^ crypto_rol_u32(X, 9) ^ crypto_rol_u32(X, 17))
 #define P1(X) (X ^ crypto_rol_u32(X, 15) ^ crypto_rol_u32(X, 23))
@@ -75,9 +62,10 @@ void SM3_transform(SM3_CTX *c, const unsigned char *data);
 	ROUND(A, B, C, D, E, F, G, H, TJ, Wi, Wj, FF1, GG1)
 
 void
-SM3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)
+SM3_block_data_order(SM3_CTX *ctx, const void *_in, size_t num)
 {
-	const unsigned char *data = p;
+	const uint8_t *in = _in;
+	const SM3_WORD *in32;
 	SM3_WORD A, B, C, D, E, F, G, H;
 	SM3_WORD W00, W01, W02, W03, W04, W05, W06, W07;
 	SM3_WORD W08, W09, W10, W11, W12, W13, W14, W15;
@@ -96,22 +84,45 @@ SM3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)
         	 * We have to load all message bytes immediately since SM3 reads
         	 * them slightly out of order.
         	 */
-		HOST_c2l(data, W00);
-		HOST_c2l(data, W01);
-		HOST_c2l(data, W02);
-		HOST_c2l(data, W03);
-		HOST_c2l(data, W04);
-		HOST_c2l(data, W05);
-		HOST_c2l(data, W06);
-		HOST_c2l(data, W07);
-		HOST_c2l(data, W08);
-		HOST_c2l(data, W09);
-		HOST_c2l(data, W10);
-		HOST_c2l(data, W11);
-		HOST_c2l(data, W12);
-		HOST_c2l(data, W13);
-		HOST_c2l(data, W14);
-		HOST_c2l(data, W15);
+		if ((uintptr_t)in % 4 == 0) {
+			/* Input is 32 bit aligned. */
+			in32 = (const SM3_WORD *)in;
+			W00 = be32toh(in32[0]);
+			W01 = be32toh(in32[1]);
+			W02 = be32toh(in32[2]);
+			W03 = be32toh(in32[3]);
+			W04 = be32toh(in32[4]);
+			W05 = be32toh(in32[5]);
+			W06 = be32toh(in32[6]);
+			W07 = be32toh(in32[7]);
+			W08 = be32toh(in32[8]);
+			W09 = be32toh(in32[9]);
+			W10 = be32toh(in32[10]);
+			W11 = be32toh(in32[11]);
+			W12 = be32toh(in32[12]);
+			W13 = be32toh(in32[13]);
+			W14 = be32toh(in32[14]);
+			W15 = be32toh(in32[15]);
+		} else {
+			/* Input is not 32 bit aligned. */
+			W00 = crypto_load_be32toh(&in[0 * 4]);
+			W01 = crypto_load_be32toh(&in[1 * 4]);
+			W02 = crypto_load_be32toh(&in[2 * 4]);
+			W03 = crypto_load_be32toh(&in[3 * 4]);
+			W04 = crypto_load_be32toh(&in[4 * 4]);
+			W05 = crypto_load_be32toh(&in[5 * 4]);
+			W06 = crypto_load_be32toh(&in[6 * 4]);
+			W07 = crypto_load_be32toh(&in[7 * 4]);
+			W08 = crypto_load_be32toh(&in[8 * 4]);
+			W09 = crypto_load_be32toh(&in[9 * 4]);
+			W10 = crypto_load_be32toh(&in[10 * 4]);
+			W11 = crypto_load_be32toh(&in[11 * 4]);
+			W12 = crypto_load_be32toh(&in[12 * 4]);
+			W13 = crypto_load_be32toh(&in[13 * 4]);
+			W14 = crypto_load_be32toh(&in[14 * 4]);
+			W15 = crypto_load_be32toh(&in[15 * 4]);
+		}
+		in += SM3_CBLOCK;
 
 		R1(A, B, C, D, E, F, G, H, 0x79cc4519, W00, W00 ^ W04);
 		W00 = EXPAND(W00, W07, W13, W03, W10);
@@ -325,7 +336,6 @@ SM3_Final(unsigned char *md, SM3_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
-	unsigned long ll;
 
 	p[n] = 0x80; /* there is always room for one */
 	n++;
@@ -335,37 +345,23 @@ SM3_Final(unsigned char *md, SM3_CTX *c)
 		n = 0;
 		SM3_block_data_order(c, p, 1);
 	}
-	memset(p + n, 0, SM3_CBLOCK - 8 - n);
 
-	p += SM3_CBLOCK - 8;
-#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
-	HOST_l2c(c->Nh, p);
-	HOST_l2c(c->Nl, p);
-#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
-	HOST_l2c(c->Nl, p);
-	HOST_l2c(c->Nh, p);
-#endif
-	p -= SM3_CBLOCK;
+	memset(p + n, 0, SM3_CBLOCK - 8 - n);
+	c->data[SM3_LBLOCK - 2] = htobe32(c->Nh);
+	c->data[SM3_LBLOCK - 1] = htobe32(c->Nl);
+
 	SM3_block_data_order(c, p, 1);
 	c->num = 0;
 	memset(p, 0, SM3_CBLOCK);
 
-	ll = (c)->A;
-	HOST_l2c(ll, md);
-	ll = (c)->B;
-	HOST_l2c(ll, md);
-	ll = (c)->C;
-	HOST_l2c(ll, md);
-	ll = (c)->D;
-	HOST_l2c(ll, md);
-	ll = (c)->E;
-	HOST_l2c(ll, md);
-	ll = (c)->F;
-	HOST_l2c(ll, md);
-	ll = (c)->G;
-	HOST_l2c(ll, md);
-	ll = (c)->H;
-	HOST_l2c(ll, md);
+	crypto_store_htobe32(&md[0 * 4], c->A);
+	crypto_store_htobe32(&md[1 * 4], c->B);
+	crypto_store_htobe32(&md[2 * 4], c->C);
+	crypto_store_htobe32(&md[3 * 4], c->D);
+	crypto_store_htobe32(&md[4 * 4], c->E);
+	crypto_store_htobe32(&md[5 * 4], c->F);
+	crypto_store_htobe32(&md[6 * 4], c->G);
+	crypto_store_htobe32(&md[7 * 4], c->H);
 
 	return 1;
 }
