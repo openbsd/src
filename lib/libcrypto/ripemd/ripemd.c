@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.9 2024/03/28 05:00:27 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.10 2024/03/28 05:16:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -419,7 +419,7 @@ ripemd160_block_data_order(RIPEMD160_CTX *ctx, const void *p, size_t num)
 int
 RIPEMD160_Init(RIPEMD160_CTX *c)
 {
-	memset (c, 0, sizeof(*c));
+	memset(c, 0, sizeof(*c));
 	c->A = RIPEMD160_A;
 	c->B = RIPEMD160_B;
 	c->C = RIPEMD160_C;
@@ -429,47 +429,47 @@ RIPEMD160_Init(RIPEMD160_CTX *c)
 }
 
 int
-HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
+RIPEMD160_Update(RIPEMD160_CTX *c, const void *data_, size_t len)
 {
 	const unsigned char *data = data_;
 	unsigned char *p;
-	HASH_LONG l;
+	RIPEMD160_LONG l;
 	size_t n;
 
 	if (len == 0)
 		return 1;
 
-	l = (c->Nl + (((HASH_LONG)len) << 3))&0xffffffffUL;
+	l = (c->Nl + (((RIPEMD160_LONG)len) << 3))&0xffffffffUL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
 	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
-	c->Nh+=(HASH_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
+	c->Nh+=(RIPEMD160_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
 	c->Nl = l;
 
 	n = c->num;
 	if (n != 0) {
 		p = (unsigned char *)c->data;
 
-		if (len >= HASH_CBLOCK || len + n >= HASH_CBLOCK) {
-			memcpy (p + n, data, HASH_CBLOCK - n);
-			HASH_BLOCK_DATA_ORDER (c, p, 1);
-			n = HASH_CBLOCK - n;
+		if (len >= RIPEMD160_CBLOCK || len + n >= RIPEMD160_CBLOCK) {
+			memcpy(p + n, data, RIPEMD160_CBLOCK - n);
+			ripemd160_block_data_order(c, p, 1);
+			n = RIPEMD160_CBLOCK - n;
 			data += n;
 			len -= n;
 			c->num = 0;
-			memset (p,0,HASH_CBLOCK);	/* keep it zeroed */
+			memset(p, 0, RIPEMD160_CBLOCK);	/* keep it zeroed */
 		} else {
-			memcpy (p + n, data, len);
+			memcpy(p + n, data, len);
 			c->num += (unsigned int)len;
 			return 1;
 		}
 	}
 
-	n = len/HASH_CBLOCK;
+	n = len/RIPEMD160_CBLOCK;
 	if (n > 0) {
-		HASH_BLOCK_DATA_ORDER (c, data, n);
-		n    *= HASH_CBLOCK;
+		ripemd160_block_data_order(c, data, n);
+		n    *= RIPEMD160_CBLOCK;
 		data += n;
 		len -= n;
 	}
@@ -477,17 +477,19 @@ HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
 	if (len != 0) {
 		p = (unsigned char *)c->data;
 		c->num = (unsigned int)len;
-		memcpy (p, data, len);
+		memcpy(p, data, len);
 	}
 	return 1;
 }
 
-void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
+void
+RIPEMD160_Transform(RIPEMD160_CTX *c, const unsigned char *data)
 {
-	HASH_BLOCK_DATA_ORDER (c, data, 1);
+	ripemd160_block_data_order(c, data, 1);
 }
 
-int HASH_FINAL (unsigned char *md, HASH_CTX *c)
+int
+RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
@@ -495,14 +497,14 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	p[n] = 0x80; /* there is always room for one */
 	n++;
 
-	if (n > (HASH_CBLOCK - 8)) {
-		memset (p + n, 0, HASH_CBLOCK - n);
+	if (n > (RIPEMD160_CBLOCK - 8)) {
+		memset(p + n, 0, RIPEMD160_CBLOCK - n);
 		n = 0;
-		HASH_BLOCK_DATA_ORDER (c, p, 1);
+		ripemd160_block_data_order(c, p, 1);
 	}
-	memset (p + n, 0, HASH_CBLOCK - 8 - n);
+	memset(p + n, 0, RIPEMD160_CBLOCK - 8 - n);
 
-	p += HASH_CBLOCK - 8;
+	p += RIPEMD160_CBLOCK - 8;
 #if   defined(DATA_ORDER_IS_BIG_ENDIAN)
 	HOST_l2c(c->Nh, p);
 	HOST_l2c(c->Nl, p);
@@ -510,10 +512,10 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	HOST_l2c(c->Nl, p);
 	HOST_l2c(c->Nh, p);
 #endif
-	p -= HASH_CBLOCK;
-	HASH_BLOCK_DATA_ORDER (c, p, 1);
+	p -= RIPEMD160_CBLOCK;
+	ripemd160_block_data_order(c, p, 1);
 	c->num = 0;
-	memset (p, 0, HASH_CBLOCK);
+	memset(p, 0, RIPEMD160_CBLOCK);
 
 #ifndef HASH_MAKE_STRING
 #error "HASH_MAKE_STRING must be defined!"
