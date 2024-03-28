@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.9 2024/03/28 08:13:11 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.10 2024/03/28 08:26:42 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -276,47 +276,47 @@ SM3_Init(SM3_CTX *c)
 LCRYPTO_ALIAS(SM3_Init);
 
 int
-HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
+SM3_Update(SM3_CTX *c, const void *data_, size_t len)
 {
 	const unsigned char *data = data_;
 	unsigned char *p;
-	HASH_LONG l;
+	SM3_WORD l;
 	size_t n;
 
 	if (len == 0)
 		return 1;
 
-	l = (c->Nl + (((HASH_LONG)len) << 3))&0xffffffffUL;
+	l = (c->Nl + (((SM3_WORD)len) << 3))&0xffffffffUL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
 	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
-	c->Nh+=(HASH_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
+	c->Nh+=(SM3_WORD)(len>>29);	/* might cause compiler warning on 16-bit */
 	c->Nl = l;
 
 	n = c->num;
 	if (n != 0) {
 		p = (unsigned char *)c->data;
 
-		if (len >= HASH_CBLOCK || len + n >= HASH_CBLOCK) {
-			memcpy (p + n, data, HASH_CBLOCK - n);
-			HASH_BLOCK_DATA_ORDER (c, p, 1);
-			n = HASH_CBLOCK - n;
+		if (len >= SM3_CBLOCK || len + n >= SM3_CBLOCK) {
+			memcpy(p + n, data, SM3_CBLOCK - n);
+			SM3_block_data_order(c, p, 1);
+			n = SM3_CBLOCK - n;
 			data += n;
 			len -= n;
 			c->num = 0;
-			memset (p,0,HASH_CBLOCK);	/* keep it zeroed */
+			memset(p, 0, SM3_CBLOCK);	/* keep it zeroed */
 		} else {
-			memcpy (p + n, data, len);
+			memcpy(p + n, data, len);
 			c->num += (unsigned int)len;
 			return 1;
 		}
 	}
 
-	n = len/HASH_CBLOCK;
+	n = len / SM3_CBLOCK;
 	if (n > 0) {
-		HASH_BLOCK_DATA_ORDER (c, data, n);
-		n    *= HASH_CBLOCK;
+		SM3_block_data_order(c, data, n);
+		n *= SM3_CBLOCK;
 		data += n;
 		len -= n;
 	}
@@ -324,18 +324,20 @@ HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
 	if (len != 0) {
 		p = (unsigned char *)c->data;
 		c->num = (unsigned int)len;
-		memcpy (p, data, len);
+		memcpy(p, data, len);
 	}
 	return 1;
 }
 LCRYPTO_ALIAS(SM3_Update);
 
-void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
+void
+SM3_Transform(SM3_CTX *c, const unsigned char *data)
 {
-	HASH_BLOCK_DATA_ORDER (c, data, 1);
+	SM3_block_data_order(c, data, 1);
 }
 
-int HASH_FINAL (unsigned char *md, HASH_CTX *c)
+int
+SM3_Final(unsigned char *md, SM3_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
@@ -343,14 +345,14 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	p[n] = 0x80; /* there is always room for one */
 	n++;
 
-	if (n > (HASH_CBLOCK - 8)) {
-		memset (p + n, 0, HASH_CBLOCK - n);
+	if (n > (SM3_CBLOCK - 8)) {
+		memset(p + n, 0, SM3_CBLOCK - n);
 		n = 0;
-		HASH_BLOCK_DATA_ORDER (c, p, 1);
+		SM3_block_data_order(c, p, 1);
 	}
-	memset (p + n, 0, HASH_CBLOCK - 8 - n);
+	memset(p + n, 0, SM3_CBLOCK - 8 - n);
 
-	p += HASH_CBLOCK - 8;
+	p += SM3_CBLOCK - 8;
 #if   defined(DATA_ORDER_IS_BIG_ENDIAN)
 	HOST_l2c(c->Nh, p);
 	HOST_l2c(c->Nl, p);
@@ -358,10 +360,10 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	HOST_l2c(c->Nl, p);
 	HOST_l2c(c->Nh, p);
 #endif
-	p -= HASH_CBLOCK;
-	HASH_BLOCK_DATA_ORDER (c, p, 1);
+	p -= SM3_CBLOCK;
+	SM3_block_data_order(c, p, 1);
 	c->num = 0;
-	memset (p, 0, HASH_CBLOCK);
+	memset(p, 0, SM3_CBLOCK);
 
 #ifndef HASH_MAKE_STRING
 #error "HASH_MAKE_STRING must be defined!"
