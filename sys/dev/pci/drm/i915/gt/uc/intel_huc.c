@@ -136,7 +136,7 @@ static void huc_delayed_load_timer_callback(void *arg)
 
 static void huc_delayed_load_start(struct intel_huc *huc)
 {
-	int delay;
+	ktime_t delay;
 
 	GEM_BUG_ON(intel_huc_is_authenticated(huc, INTEL_HUC_AUTH_BY_GSC));
 
@@ -146,10 +146,10 @@ static void huc_delayed_load_start(struct intel_huc *huc)
 	 */
 	switch (huc->delayed_load.status) {
 	case INTEL_HUC_WAITING_ON_GSC:
-		delay = GSC_INIT_TIMEOUT_MS;
+		delay = ms_to_ktime(GSC_INIT_TIMEOUT_MS);
 		break;
 	case INTEL_HUC_WAITING_ON_PXP:
-		delay = PXP_INIT_TIMEOUT_MS;
+		delay = ms_to_ktime(PXP_INIT_TIMEOUT_MS);
 		break;
 	default:
 		gsc_init_error(huc);
@@ -171,7 +171,7 @@ static void huc_delayed_load_start(struct intel_huc *huc)
 #ifdef __linux__
 	hrtimer_start(&huc->delayed_load.timer, delay, HRTIMER_MODE_REL);
 #else
-	timeout_add_msec(&huc->delayed_load.timer, delay);
+	timeout_add_nsec(&huc->delayed_load.timer, ktime_to_ns(delay));
 #endif
 }
 

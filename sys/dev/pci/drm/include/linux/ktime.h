@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktime.h,v 1.7 2023/01/01 01:34:58 jsg Exp $	*/
+/*	$OpenBSD: ktime.h,v 1.8 2024/03/28 02:36:38 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -148,6 +148,12 @@ static inline ktime_t
 ns_to_ktime(uint64_t ns)
 {
 	return ns;
+}
+
+static inline ktime_t
+ms_to_ktime(uint64_t ms)
+{
+	return ms * NSEC_PER_MSEC;
 }
 
 static inline int64_t
