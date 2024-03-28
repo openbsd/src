@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_cbc.c,v 1.12 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: aes_cbc.c,v 1.13 2024/03/28 12:28:48 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -52,8 +52,13 @@
 #include <openssl/aes.h>
 #include <openssl/modes.h>
 
-void
-AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+#ifdef HAVE_AES_CBC_ENCRYPT_INTERNAL
+void aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, unsigned char *ivec, const int enc);
+
+#else
+static inline void
+aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key, unsigned char *ivec, const int enc)
 {
 	if (enc)
@@ -62,4 +67,12 @@ AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 	else
 		CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
 		    (block128_f)AES_decrypt);
+}
+#endif
+
+void
+AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, unsigned char *ivec, const int enc)
+{
+	aes_cbc_encrypt_internal(in, out, len, key, ivec, enc);
 }

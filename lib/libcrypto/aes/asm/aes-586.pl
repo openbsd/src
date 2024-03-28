@@ -2004,9 +2004,8 @@ sub declast()
 	&mov	(&DWP(12,$acc),$s3);
 &function_end("AES_decrypt");
 
-# void AES_cbc_encrypt (const void char *inp, unsigned char *out,
-#			size_t length, const AES_KEY *key,
-#			unsigned char *ivp,const int enc);
+# void aes_cbc_encrypt_internal(const void char *inp, unsigned char *out,
+#     size_t length, const AES_KEY *key, unsigned char *ivp,const int enc);
 {
 # stack frame layout
 #             -4(%esp)		# return address	 0(%esp)
@@ -2029,7 +2028,7 @@ my $ivec=&DWP(60,"esp");	# ivec[16]
 my $aes_key=&DWP(76,"esp");	# copy of aes_key
 my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 
-&function_begin("AES_cbc_encrypt");
+&function_begin("aes_cbc_encrypt_internal");
 	&mov	($s2 eq "ecx"? $s2 : "",&wparam(2));	# load len
 	&cmp	($s2,0);
 	&je	(&label("drop_out"));
@@ -2617,7 +2616,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 
 	&mov	("esp",$_esp);
 	&popf	();
-&function_end("AES_cbc_encrypt");
+&function_end("aes_cbc_encrypt_internal");
 }
 
 #------------------------------------------------------------------#
