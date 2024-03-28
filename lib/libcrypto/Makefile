@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.182 2024/03/28 01:57:00 jsing Exp $
+# $OpenBSD: Makefile,v 1.183 2024/03/28 02:09:28 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -791,13 +791,9 @@ obj_dat.h: obj_mac.h ${SSL_OBJECTS}/obj_dat.pl
 CFLAGS+=-DOPENSSL_NO_ASM
 SRCS+= aes_core.c
 SRCS+= aes_cbc.c
-SRCS+= blowfish.c
 SRCS+= camellia.c
 SRCS+= cmll_cbc.c
 SRCS+= cmll_misc.c
-SRCS+= des_enc.c
-SRCS+= fcrypt_b.c
-SRCS+= rc4.c
 SRCS+= wp_block.c
 .endif
 
