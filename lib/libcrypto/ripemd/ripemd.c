@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.10 2024/03/28 05:16:11 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.11 2024/03/28 05:21:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
-
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/opensslconf.h>
+
+#include <openssl/crypto.h>
 #include <openssl/ripemd.h>
 
 /*
