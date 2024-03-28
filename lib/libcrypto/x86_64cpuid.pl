@@ -15,17 +15,7 @@ open OUT,"| \"$^X\" $xlate $flavour $output";
 ($arg1,$arg2,$arg3,$arg4)=("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
 print<<___;
-.extern		OPENSSL_cpuid_setup
-.hidden		OPENSSL_cpuid_setup
-.section	.init
-	_CET_ENDBR
-	call	OPENSSL_cpuid_setup
-
-.extern	OPENSSL_ia32cap_P
-.hidden	OPENSSL_ia32cap_P
-
 .text
-
 .globl	OPENSSL_ia32_cpuid
 .type	OPENSSL_ia32_cpuid,\@abi-omnipotent
 .align	16
