@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.1 2024/03/28 00:57:26 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.2 2024/03/28 12:52:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -58,6 +58,31 @@
 static const unsigned char aes_wrap_default_iv[] = {
 	0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6,
 };
+
+#ifdef HAVE_AES_CBC_ENCRYPT_INTERNAL
+void aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, unsigned char *ivec, const int enc);
+
+#else
+static inline void
+aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, unsigned char *ivec, const int enc)
+{
+	if (enc)
+		CRYPTO_cbc128_encrypt(in, out, len, key, ivec,
+		    (block128_f)AES_encrypt);
+	else
+		CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
+		    (block128_f)AES_decrypt);
+}
+#endif
+
+void
+AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, unsigned char *ivec, const int enc)
+{
+	aes_cbc_encrypt_internal(in, out, len, key, ivec, enc);
+}
 
 /*
  * The input and output encrypted as though 128bit cfb mode is being
