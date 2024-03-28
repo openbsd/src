@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4.c,v 1.10 2024/03/28 08:18:13 joshua Exp $ */
+/* $OpenBSD: rc4.c,v 1.11 2024/03/28 12:11:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -262,7 +262,7 @@ rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
 void rc4_set_key_internal(RC4_KEY *key, int len, const unsigned char *data);
 
 #else
-static void
+static inline void
 rc4_set_key_internal(RC4_KEY *key, int len, const unsigned char *data)
 {
 	RC4_INT tmp;
