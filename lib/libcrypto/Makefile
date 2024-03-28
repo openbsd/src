@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.180 2024/03/28 00:57:26 jsing Exp $
+# $OpenBSD: Makefile,v 1.181 2024/03/28 01:41:16 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -266,12 +266,14 @@ SRCS+= cbc_enc.c
 SRCS+= cfb64ede.c
 SRCS+= cfb64enc.c
 SRCS+= cfb_enc.c
+SRCS+= des_enc.c
 SRCS+= ecb3_enc.c
 SRCS+= ecb_enc.c
 SRCS+= ede_cbcm_enc.c
 SRCS+= enc_read.c
 SRCS+= enc_writ.c
 SRCS+= fcrypt.c
+SRCS+= fcrypt_b.c
 SRCS+= ofb64ede.c
 SRCS+= ofb64enc.c
 SRCS+= ofb_enc.c

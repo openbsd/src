@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.4 2024/03/27 12:54:42 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2024/03/28 01:41:16 jsing Exp $
 
 # riscv64 libcrypto build rules
 
@@ -10,10 +10,6 @@ SRCS+= aes_cbc.c
 SRCS+= camellia.c
 SRCS+= cmll_cbc.c
 SRCS+= cmll_misc.c
-
-# des
-SRCS+= des_enc.c
-SRCS+= fcrypt_b.c
 
 # rc4
 SRCS+= rc4.c

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.12 2024/03/28 01:14:31 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2024/03/28 01:41:16 jsing Exp $
 
 # i386-specific libcrypto build rules
 
@@ -19,8 +19,6 @@ CFLAGS+= -DOPENSSL_BN_ASM_MONT
 SSLASM+= bn x86-mont
 # camellia
 SSLASM+= camellia cmll-x86
-# des
-SRCS+= des_enc.c fcrypt_b.c
 # md5
 CFLAGS+= -DMD5_ASM
 SSLASM+= md5 md5-586

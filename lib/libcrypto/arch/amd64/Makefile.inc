@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.15 2024/03/27 12:42:30 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.16 2024/03/28 01:41:16 jsing Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -39,8 +39,6 @@ SRCS += word_clz.S
 # camellia
 SRCS+=	cmll_misc.c
 SSLASM+= camellia cmll-x86_64
-# des
-SRCS+= des_enc.c fcrypt_b.c
 # md5
 CFLAGS+= -DMD5_ASM
 SSLASM+= md5 md5-x86_64
