@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.185 2024/01/19 21:20:35 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.186 2024/03/28 02:19:57 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -610,15 +610,6 @@ sys_msyscall(struct proc *p, void *v, register_t *retval)
 		return EINVAL;		/* disallow wrap-around. */
 
 	return uvm_map_syscall(&p->p_vmspace->vm_map, addr, addr+size);
-}
-
-/*
- * sys_pinsyscall
- */
-int
-sys_pinsyscall(struct proc *p, void *v, register_t *retval)
-{
-	return (0);
 }
 
 /*

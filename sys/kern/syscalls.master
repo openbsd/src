@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.258 2024/03/25 17:42:34 mvs Exp $
+;	$OpenBSD: syscalls.master,v 1.259 2024/03/28 02:19:57 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -282,7 +282,7 @@
 143	STD		{ int sys_setthrname(pid_t tid, const char *name); }
 144	OBSOL		ogetrlimit
 145	OBSOL		osetrlimit
-146	STD NOLOCK	{ int sys_pinsyscall(int syscall, void *addr, size_t len); }
+146	OBSOL		pinsyscall
 147	STD		{ int sys_setsid(void); }
 148	STD		{ int sys_quotactl(const char *path, int cmd, \
 			    int uid, char *arg); }
