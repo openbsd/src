@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.183 2024/03/28 02:09:28 jsing Exp $
+# $OpenBSD: Makefile,v 1.184 2024/03/28 06:45:36 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -644,7 +644,6 @@ SRCS+= x_all.c
 	${LCRYPTO_SRC}/engine \
 	${LCRYPTO_SRC}/err \
 	${LCRYPTO_SRC}/evp \
-	${LCRYPTO_SRC}/gost \
 	${LCRYPTO_SRC}/hkdf \
 	${LCRYPTO_SRC}/hmac \
 	${LCRYPTO_SRC}/idea \
