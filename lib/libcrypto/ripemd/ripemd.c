@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.14 2024/03/28 07:13:02 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.15 2024/03/28 07:28:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,14 +78,6 @@ CTASSERT(sizeof(RIPEMD160_LONG) == sizeof(uint32_t));
 #define HASH_UPDATE             RIPEMD160_Update
 #define HASH_TRANSFORM          RIPEMD160_Transform
 #define HASH_FINAL              RIPEMD160_Final
-#define	HASH_MAKE_STRING(c,s)	do {	\
-	unsigned long ll;		\
-	ll=(c)->A; HOST_l2c(ll,(s));	\
-	ll=(c)->B; HOST_l2c(ll,(s));	\
-	ll=(c)->C; HOST_l2c(ll,(s));	\
-	ll=(c)->D; HOST_l2c(ll,(s));	\
-	ll=(c)->E; HOST_l2c(ll,(s));	\
-	} while (0)
 #define HASH_BLOCK_DATA_ORDER   ripemd160_block_data_order
 
 #define HASH_NO_UPDATE
@@ -468,6 +460,7 @@ RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
+	unsigned long ll;
 
 	p[n] = 0x80; /* there is always room for one */
 	n++;
@@ -492,11 +485,18 @@ RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 	c->num = 0;
 	memset(p, 0, RIPEMD160_CBLOCK);
 
-#ifndef HASH_MAKE_STRING
-#error "HASH_MAKE_STRING must be defined!"
-#else
-	HASH_MAKE_STRING(c, md);
-#endif
+	do {
+	ll = c->A;
+	HOST_l2c(ll, md);
+	ll = c->B;
+	HOST_l2c(ll, md);
+	ll = c->C;
+	HOST_l2c(ll, md);
+	ll = c->D;
+	HOST_l2c(ll, md);
+	ll = c->E;
+	HOST_l2c(ll, md);
+	} while (0);
 
 	return 1;
 }
