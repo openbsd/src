@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.7 2024/03/28 08:01:01 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.8 2024/03/28 08:04:27 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -15,13 +15,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef OPENSSL_NO_SM3
-
-#include <openssl/sm3.h>
-
 #include <string.h>
 
 #include <openssl/opensslconf.h>
+
+#include <openssl/sm3.h>
+
+#ifndef OPENSSL_NO_SM3
 
 #define DATA_ORDER_IS_BIG_ENDIAN
 
