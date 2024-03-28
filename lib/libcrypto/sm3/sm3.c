@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.11 2024/03/28 08:30:25 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.12 2024/03/28 08:31:11 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -355,7 +355,6 @@ SM3_Final(unsigned char *md, SM3_CTX *c)
 	c->num = 0;
 	memset(p, 0, SM3_CBLOCK);
 
-	do {
 	ll = (c)->A;
 	HOST_l2c(ll, md);
 	ll = (c)->B;
@@ -372,7 +371,6 @@ SM3_Final(unsigned char *md, SM3_CTX *c)
 	HOST_l2c(ll, md);
 	ll = (c)->H;
 	HOST_l2c(ll, md);
-	} while (0);
 
 	return 1;
 }
