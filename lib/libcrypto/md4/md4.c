@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.c,v 1.16 2024/03/27 06:15:18 jsing Exp $ */
+/* $OpenBSD: md4.c,v 1.17 2024/03/28 08:00:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,12 +118,12 @@ md4_block_data_order(MD4_CTX *c, const void *_in, size_t num)
 	unsigned int X0, X1, X2, X3, X4, X5, X6, X7,
 	    X8, X9, X10, X11, X12, X13, X14, X15;
 
-	A = c->A;
-	B = c->B;
-	C = c->C;
-	D = c->D;
-
 	while (num-- > 0) {
+		A = c->A;
+		B = c->B;
+		C = c->C;
+		D = c->D;
+
 		if ((uintptr_t)in % 4 == 0) {
 			/* Input is 32 bit aligned. */
 			in32 = (const MD4_LONG *)in;
@@ -217,10 +217,10 @@ md4_block_data_order(MD4_CTX *c, const void *_in, size_t num)
 		md4_round3(&C, D, A, B, X7, 11);
 		md4_round3(&B, C, D, A, X15, 15);
 
-		A = c->A += A;
-		B = c->B += B;
-		C = c->C += C;
-		D = c->D += D;
+		c->A += A;
+		c->B += B;
+		c->C += C;
+		c->D += D;
 	}
 }
 

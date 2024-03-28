@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.21 2024/03/26 05:55:15 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.22 2024/03/28 08:00:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,12 +137,12 @@ md5_block_data_order(MD5_CTX *c, const void *_in, size_t num)
 	MD5_LONG X0, X1, X2, X3, X4, X5, X6, X7,
 	    X8, X9, X10, X11, X12, X13, X14, X15;
 
-	A = c->A;
-	B = c->B;
-	C = c->C;
-	D = c->D;
-
 	while (num-- > 0) {
+		A = c->A;
+		B = c->B;
+		C = c->C;
+		D = c->D;
+
 		if ((uintptr_t)in % 4 == 0) {
 			/* Input is 32 bit aligned. */
 			in32 = (const MD5_LONG *)in;
@@ -251,10 +251,10 @@ md5_block_data_order(MD5_CTX *c, const void *_in, size_t num)
 		md5_round4(&C, D, A, B, X2, 0x2ad7d2bbL, 15);
 		md5_round4(&B, C, D, A, X9, 0xeb86d391L, 21);
 
-		A = c->A += A;
-		B = c->B += B;
-		C = c->C += C;
-		D = c->D += D;
+		c->A += A;
+		c->B += B;
+		c->C += C;
+		c->D += D;
 	}
 }
 #endif
