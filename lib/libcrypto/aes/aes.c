@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_cfb.c,v 1.8 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: aes.c,v 1.1 2024/03/28 00:57:26 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -49,10 +49,18 @@
  *
  */
 
+#include <string.h>
+
 #include <openssl/aes.h>
+#include <openssl/bio.h>
 #include <openssl/modes.h>
 
-/* The input and output encrypted as though 128bit cfb mode is being
+static const unsigned char aes_wrap_default_iv[] = {
+	0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6,
+};
+
+/*
+ * The input and output encrypted as though 128bit cfb mode is being
  * used.  The extra state information to record how much of the
  * 128bit block we have used is contained in *num;
  */
@@ -82,3 +90,101 @@ AES_cfb8_encrypt(const unsigned char *in, unsigned char *out, size_t length,
 	    (block128_f)AES_encrypt);
 }
 
+void
+AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key, unsigned char ivec[AES_BLOCK_SIZE],
+    unsigned char ecount_buf[AES_BLOCK_SIZE], unsigned int *num)
+{
+	CRYPTO_ctr128_encrypt(in, out, length, key, ivec, ecount_buf, num,
+	    (block128_f)AES_encrypt);
+}
+
+void
+AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key, const int enc)
+{
+	if (AES_ENCRYPT == enc)
+		AES_encrypt(in, out, key);
+	else
+		AES_decrypt(in, out, key);
+}
+
+void
+AES_ofb128_encrypt(const unsigned char *in, unsigned char *out, size_t length,
+    const AES_KEY *key, unsigned char *ivec, int *num)
+{
+	CRYPTO_ofb128_encrypt(in, out, length, key, ivec, num,
+	    (block128_f)AES_encrypt);
+}
+
+int
+AES_wrap_key(AES_KEY *key, const unsigned char *iv, unsigned char *out,
+    const unsigned char *in, unsigned int inlen)
+{
+	unsigned char *A, B[16], *R;
+	unsigned int i, j, t;
+
+	if ((inlen & 0x7) || (inlen < 16))
+		return -1;
+	A = B;
+	t = 1;
+	memmove(out + 8, in, inlen);
+	if (!iv)
+		iv = aes_wrap_default_iv;
+
+	memcpy(A, iv, 8);
+
+	for (j = 0; j < 6; j++) {
+		R = out + 8;
+		for (i = 0; i < inlen; i += 8, t++, R += 8) {
+			memcpy(B + 8, R, 8);
+			AES_encrypt(B, B, key);
+			A[7] ^= (unsigned char)(t & 0xff);
+			if (t > 0xff) {
+				A[6] ^= (unsigned char)((t >> 8) & 0xff);
+				A[5] ^= (unsigned char)((t >> 16) & 0xff);
+				A[4] ^= (unsigned char)((t >> 24) & 0xff);
+			}
+			memcpy(R, B + 8, 8);
+		}
+	}
+	memcpy(out, A, 8);
+	return inlen + 8;
+}
+
+int
+AES_unwrap_key(AES_KEY *key, const unsigned char *iv, unsigned char *out,
+    const unsigned char *in, unsigned int inlen)
+{
+	unsigned char *A, B[16], *R;
+	unsigned int i, j, t;
+
+	if ((inlen & 0x7) || (inlen < 24))
+		return -1;
+	inlen -= 8;
+	A = B;
+	t = 6 * (inlen >> 3);
+	memcpy(A, in, 8);
+	memmove(out, in + 8, inlen);
+	for (j = 0; j < 6; j++) {
+		R = out + inlen - 8;
+		for (i = 0; i < inlen; i += 8, t--, R -= 8) {
+			A[7] ^= (unsigned char)(t & 0xff);
+			if (t > 0xff) {
+				A[6] ^= (unsigned char)((t >> 8) & 0xff);
+				A[5] ^= (unsigned char)((t >> 16) & 0xff);
+				A[4] ^= (unsigned char)((t >> 24) & 0xff);
+			}
+			memcpy(B + 8, R, 8);
+			AES_decrypt(B, B, key);
+			memcpy(R, B + 8, 8);
+		}
+	}
+	if (!iv)
+		iv = aes_wrap_default_iv;
+	if (memcmp(A, iv, 8)) {
+		explicit_bzero(out, inlen);
+		return 0;
+	}
+	return inlen;
+}
