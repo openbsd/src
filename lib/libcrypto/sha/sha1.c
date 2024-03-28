@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.13 2024/03/26 12:54:22 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.14 2024/03/28 07:06:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,92 +71,114 @@
 /* Ensure that SHA_LONG and uint32_t are equivalent sizes. */
 CTASSERT(sizeof(SHA_LONG) == sizeof(uint32_t));
 
-#define DATA_ORDER_IS_BIG_ENDIAN
-
-#define HASH_LONG               SHA_LONG
-#define HASH_CTX                SHA_CTX
-#define HASH_CBLOCK             SHA_CBLOCK
-
-#define HASH_BLOCK_DATA_ORDER   	sha1_block_data_order
-#define Xupdate(a, ix, ia, ib, ic, id)	( (a)=(ia^ib^ic^id),	\
-					  ix=(a)=ROTATE((a),1)	\
-					)
+#ifdef SHA1_ASM
+void sha1_block_data_order(SHA_CTX *ctx, const void *p, size_t num);
+#endif
 
 #ifndef SHA1_ASM
-static
-#endif
-void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
+static inline SHA_LONG
+Ch(SHA_LONG x, SHA_LONG y, SHA_LONG z)
+{
+	return (x & y) ^ (~x & z);
+}
 
-#define HASH_NO_UPDATE
-#define HASH_NO_TRANSFORM
-#define HASH_NO_FINAL
+static inline SHA_LONG
+Parity(SHA_LONG x, SHA_LONG y, SHA_LONG z)
+{
+	return x ^ y ^ z;
+}
 
-#include "md32_common.h"
+static inline SHA_LONG
+Maj(SHA_LONG x, SHA_LONG y, SHA_LONG z)
+{
+	return (x & y) ^ (x & z) ^ (y & z);
+}
 
-#define K_00_19	0x5a827999UL
-#define K_20_39 0x6ed9eba1UL
-#define K_40_59 0x8f1bbcdcUL
-#define K_60_79 0xca62c1d6UL
+static inline void
+sha1_msg_schedule_update(SHA_LONG *W0, SHA_LONG W2, SHA_LONG W8, SHA_LONG W13)
+{
+	*W0 = crypto_rol_u32(W13 ^ W8 ^ W2 ^ *W0, 1);
+}
 
-/* As  pointed out by Wei Dai <weidai@eskimo.com>, F() below can be
- * simplified to the code in F_00_19.  Wei attributes these optimisations
- * to Peter Gutmann's SHS code, and he attributes it to Rich Schroeppel.
- * #define F(x,y,z) (((x) & (y))  |  ((~(x)) & (z)))
- * I've just become aware of another tweak to be made, again from Wei Dai,
- * in F_40_59, (x&a)|(y&a) -> (x|y)&a
- */
-#define	F_00_19(b, c, d)	((((c) ^ (d)) & (b)) ^ (d))
-#define	F_20_39(b, c, d)	((b) ^ (c) ^ (d))
-#define F_40_59(b, c, d)	(((b) & (c)) | (((b)|(c)) & (d)))
-#define	F_60_79(b, c, d)	F_20_39(b, c, d)
+static inline void
+sha1_round1(SHA_LONG *a, SHA_LONG *b, SHA_LONG *c, SHA_LONG *d, SHA_LONG *e,
+    SHA_LONG Wt)
+{
+	SHA_LONG Kt, T;
 
+	Kt = 0x5a827999UL;
+	T = crypto_rol_u32(*a, 5) + Ch(*b, *c, *d) + *e + Kt + Wt;
 
-#define BODY_00_15(i, a, b, c, d, e, f, xi) \
-	(f)=xi+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+	*e = *d;
+	*d = *c;
+	*c = crypto_rol_u32(*b, 30);
+	*b = *a;
+	*a = T;
+}
 
-#define BODY_16_19(i, a, b, c, d, e, f, xi, xa, xb, xc, xd) \
-	Xupdate(f, xi, xa, xb, xc, xd); \
-	(f)+=(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+static inline void
+sha1_round2(SHA_LONG *a, SHA_LONG *b, SHA_LONG *c, SHA_LONG *d, SHA_LONG *e,
+    SHA_LONG Wt)
+{
+	SHA_LONG Kt, T;
 
-#define BODY_20_31(i, a, b, c, d, e, f, xi, xa, xb, xc, xd) \
-	Xupdate(f, xi, xa, xb, xc, xd); \
-	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+	Kt = 0x6ed9eba1UL;
+	T = crypto_rol_u32(*a, 5) + Parity(*b, *c, *d) + *e + Kt + Wt;
 
-#define BODY_32_39(i, a, b, c, d, e, f, xa, xb, xc, xd) \
-	Xupdate(f, xa, xa, xb, xc, xd); \
-	(f)+=(e)+K_20_39+ROTATE((a),5)+F_20_39((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+	*e = *d;
+	*d = *c;
+	*c = crypto_rol_u32(*b, 30);
+	*b = *a;
+	*a = T;
+}
 
-#define BODY_40_59(i, a, b, c, d, e, f, xa, xb, xc, xd) \
-	Xupdate(f, xa, xa, xb, xc, xd); \
-	(f)+=(e)+K_40_59+ROTATE((a),5)+F_40_59((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+static inline void
+sha1_round3(SHA_LONG *a, SHA_LONG *b, SHA_LONG *c, SHA_LONG *d, SHA_LONG *e,
+    SHA_LONG Wt)
+{
+	SHA_LONG Kt, T;
 
-#define BODY_60_79(i, a, b, c, d, e, f, xa, xb, xc, xd) \
-	Xupdate(f, xa, xa, xb, xc, xd); \
-	(f)=xa+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
-	(b)=ROTATE((b),30);
+	Kt = 0x8f1bbcdcUL;
+	T = crypto_rol_u32(*a, 5) + Maj(*b, *c, *d) + *e + Kt + Wt;
 
-#if !defined(SHA1_ASM)
-#include <endian.h>
+	*e = *d;
+	*d = *c;
+	*c = crypto_rol_u32(*b, 30);
+	*b = *a;
+	*a = T;
+}
+
+static inline void
+sha1_round4(SHA_LONG *a, SHA_LONG *b, SHA_LONG *c, SHA_LONG *d, SHA_LONG *e,
+    SHA_LONG Wt)
+{
+	SHA_LONG Kt, T;
+
+	Kt = 0xca62c1d6UL;
+	T = crypto_rol_u32(*a, 5) + Parity(*b, *c, *d) + *e + Kt + Wt;
+
+	*e = *d;
+	*d = *c;
+	*c = crypto_rol_u32(*b, 30);
+	*b = *a;
+	*a = T;
+}
+
 static void
-sha1_block_data_order(SHA_CTX *c, const void *_in, size_t num)
+sha1_block_data_order(SHA_CTX *ctx, const void *_in, size_t num)
 {
 	const uint8_t *in = _in;
 	const SHA_LONG *in32;
-	unsigned int A, B, C, D, E, T;
+	unsigned int a, b, c, d, e;
 	unsigned int X0, X1, X2, X3, X4, X5, X6, X7,
 	    X8, X9, X10, X11, X12, X13, X14, X15;
 
 	while (num--) {
-		A = c->h0;
-		B = c->h1;
-		C = c->h2;
-		D = c->h3;
-		E = c->h4;
+		a = ctx->h0;
+		b = ctx->h1;
+		c = ctx->h2;
+		d = ctx->h3;
+		e = ctx->h4;
 
 		if ((size_t)in % 4 == 0) {
 			/* Input is 32 bit aligned. */
@@ -198,101 +220,167 @@ sha1_block_data_order(SHA_CTX *c, const void *_in, size_t num)
 		}
 		in += SHA_CBLOCK;
 
-		BODY_00_15( 0, A, B, C, D, E, T, X0);
-		BODY_00_15( 1, T, A, B, C, D, E, X1);
-		BODY_00_15( 2, E, T, A, B, C, D, X2);
-		BODY_00_15( 3, D, E, T, A, B, C, X3);
-		BODY_00_15( 4, C, D, E, T, A, B, X4);
-		BODY_00_15( 5, B, C, D, E, T, A, X5);
-		BODY_00_15( 6, A, B, C, D, E, T, X6);
-		BODY_00_15( 7, T, A, B, C, D, E, X7);
-		BODY_00_15( 8, E, T, A, B, C, D, X8);
-		BODY_00_15( 9, D, E, T, A, B, C, X9);
-		BODY_00_15(10, C, D, E, T, A, B, X10);
-		BODY_00_15(11, B, C, D, E, T, A, X11);
-		BODY_00_15(12, A, B, C, D, E, T, X12);
-		BODY_00_15(13, T, A, B, C, D, E, X13);
-		BODY_00_15(14, E, T, A, B, C, D, X14);
-		BODY_00_15(15, D, E, T, A, B, C, X15);
+		sha1_round1(&a, &b, &c, &d, &e, X0);
+		sha1_round1(&a, &b, &c, &d, &e, X1);
+		sha1_round1(&a, &b, &c, &d, &e, X2);
+		sha1_round1(&a, &b, &c, &d, &e, X3);
+		sha1_round1(&a, &b, &c, &d, &e, X4);
+		sha1_round1(&a, &b, &c, &d, &e, X5);
+		sha1_round1(&a, &b, &c, &d, &e, X6);
+		sha1_round1(&a, &b, &c, &d, &e, X7);
+		sha1_round1(&a, &b, &c, &d, &e, X8);
+		sha1_round1(&a, &b, &c, &d, &e, X9);
+		sha1_round1(&a, &b, &c, &d, &e, X10);
+		sha1_round1(&a, &b, &c, &d, &e, X11);
+		sha1_round1(&a, &b, &c, &d, &e, X12);
+		sha1_round1(&a, &b, &c, &d, &e, X13);
+		sha1_round1(&a, &b, &c, &d, &e, X14);
+		sha1_round1(&a, &b, &c, &d, &e, X15);
 
-		BODY_16_19(16, C, D, E, T, A, B, X0, X0, X2, X8, X13);
-		BODY_16_19(17, B, C, D, E, T, A, X1, X1, X3, X9, X14);
-		BODY_16_19(18, A, B, C, D, E, T, X2, X2, X4, X10, X15);
-		BODY_16_19(19, T, A, B, C, D, E, X3, X3, X5, X11, X0);
+		sha1_msg_schedule_update(&X0, X2, X8, X13);
+		sha1_msg_schedule_update(&X1, X3, X9, X14);
+		sha1_msg_schedule_update(&X2, X4, X10, X15);
+		sha1_msg_schedule_update(&X3, X5, X11, X0);
+		sha1_msg_schedule_update(&X4, X6, X12, X1);
+		sha1_msg_schedule_update(&X5, X7, X13, X2);
+		sha1_msg_schedule_update(&X6, X8, X14, X3);
+		sha1_msg_schedule_update(&X7, X9, X15, X4);
+		sha1_msg_schedule_update(&X8, X10, X0, X5);
+		sha1_msg_schedule_update(&X9, X11, X1, X6);
+		sha1_msg_schedule_update(&X10, X12, X2, X7);
+		sha1_msg_schedule_update(&X11, X13, X3, X8);
+		sha1_msg_schedule_update(&X12, X14, X4, X9);
+		sha1_msg_schedule_update(&X13, X15, X5, X10);
+		sha1_msg_schedule_update(&X14, X0, X6, X11);
+		sha1_msg_schedule_update(&X15, X1, X7, X12);
 
-		BODY_20_31(20, E, T, A, B, C, D, X4, X4, X6, X12, X1);
-		BODY_20_31(21, D, E, T, A, B, C, X5, X5, X7, X13, X2);
-		BODY_20_31(22, C, D, E, T, A, B, X6, X6, X8, X14, X3);
-		BODY_20_31(23, B, C, D, E, T, A, X7, X7, X9, X15, X4);
-		BODY_20_31(24, A, B, C, D, E, T, X8, X8, X10, X0, X5);
-		BODY_20_31(25, T, A, B, C, D, E, X9, X9, X11, X1, X6);
-		BODY_20_31(26, E, T, A, B, C, D, X10, X10, X12, X2, X7);
-		BODY_20_31(27, D, E, T, A, B, C, X11, X11, X13, X3, X8);
-		BODY_20_31(28, C, D, E, T, A, B, X12, X12, X14, X4, X9);
-		BODY_20_31(29, B, C, D, E, T, A, X13, X13, X15, X5, X10);
-		BODY_20_31(30, A, B, C, D, E, T, X14, X14, X0, X6, X11);
-		BODY_20_31(31, T, A, B, C, D, E, X15, X15, X1, X7, X12);
+		sha1_round1(&a, &b, &c, &d, &e, X0);
+		sha1_round1(&a, &b, &c, &d, &e, X1);
+		sha1_round1(&a, &b, &c, &d, &e, X2);
+		sha1_round1(&a, &b, &c, &d, &e, X3);
+		sha1_round2(&a, &b, &c, &d, &e, X4);
+		sha1_round2(&a, &b, &c, &d, &e, X5);
+		sha1_round2(&a, &b, &c, &d, &e, X6);
+		sha1_round2(&a, &b, &c, &d, &e, X7);
+		sha1_round2(&a, &b, &c, &d, &e, X8);
+		sha1_round2(&a, &b, &c, &d, &e, X9);
+		sha1_round2(&a, &b, &c, &d, &e, X10);
+		sha1_round2(&a, &b, &c, &d, &e, X11);
+		sha1_round2(&a, &b, &c, &d, &e, X12);
+		sha1_round2(&a, &b, &c, &d, &e, X13);
+		sha1_round2(&a, &b, &c, &d, &e, X14);
+		sha1_round2(&a, &b, &c, &d, &e, X15);
 
-		BODY_32_39(32, E, T, A, B, C, D, X0, X2, X8, X13);
-		BODY_32_39(33, D, E, T, A, B, C, X1, X3, X9, X14);
-		BODY_32_39(34, C, D, E, T, A, B, X2, X4, X10, X15);
-		BODY_32_39(35, B, C, D, E, T, A, X3, X5, X11, X0);
-		BODY_32_39(36, A, B, C, D, E, T, X4, X6, X12, X1);
-		BODY_32_39(37, T, A, B, C, D, E, X5, X7, X13, X2);
-		BODY_32_39(38, E, T, A, B, C, D, X6, X8, X14, X3);
-		BODY_32_39(39, D, E, T, A, B, C, X7, X9, X15, X4);
+		sha1_msg_schedule_update(&X0, X2, X8, X13);
+		sha1_msg_schedule_update(&X1, X3, X9, X14);
+		sha1_msg_schedule_update(&X2, X4, X10, X15);
+		sha1_msg_schedule_update(&X3, X5, X11, X0);
+		sha1_msg_schedule_update(&X4, X6, X12, X1);
+		sha1_msg_schedule_update(&X5, X7, X13, X2);
+		sha1_msg_schedule_update(&X6, X8, X14, X3);
+		sha1_msg_schedule_update(&X7, X9, X15, X4);
+		sha1_msg_schedule_update(&X8, X10, X0, X5);
+		sha1_msg_schedule_update(&X9, X11, X1, X6);
+		sha1_msg_schedule_update(&X10, X12, X2, X7);
+		sha1_msg_schedule_update(&X11, X13, X3, X8);
+		sha1_msg_schedule_update(&X12, X14, X4, X9);
+		sha1_msg_schedule_update(&X13, X15, X5, X10);
+		sha1_msg_schedule_update(&X14, X0, X6, X11);
+		sha1_msg_schedule_update(&X15, X1, X7, X12);
 
-		BODY_40_59(40, C, D, E, T, A, B, X8, X10, X0, X5);
-		BODY_40_59(41, B, C, D, E, T, A, X9, X11, X1, X6);
-		BODY_40_59(42, A, B, C, D, E, T, X10, X12, X2, X7);
-		BODY_40_59(43, T, A, B, C, D, E, X11, X13, X3, X8);
-		BODY_40_59(44, E, T, A, B, C, D, X12, X14, X4, X9);
-		BODY_40_59(45, D, E, T, A, B, C, X13, X15, X5, X10);
-		BODY_40_59(46, C, D, E, T, A, B, X14, X0, X6, X11);
-		BODY_40_59(47, B, C, D, E, T, A, X15, X1, X7, X12);
-		BODY_40_59(48, A, B, C, D, E, T, X0, X2, X8, X13);
-		BODY_40_59(49, T, A, B, C, D, E, X1, X3, X9, X14);
-		BODY_40_59(50, E, T, A, B, C, D, X2, X4, X10, X15);
-		BODY_40_59(51, D, E, T, A, B, C, X3, X5, X11, X0);
-		BODY_40_59(52, C, D, E, T, A, B, X4, X6, X12, X1);
-		BODY_40_59(53, B, C, D, E, T, A, X5, X7, X13, X2);
-		BODY_40_59(54, A, B, C, D, E, T, X6, X8, X14, X3);
-		BODY_40_59(55, T, A, B, C, D, E, X7, X9, X15, X4);
-		BODY_40_59(56, E, T, A, B, C, D, X8, X10, X0, X5);
-		BODY_40_59(57, D, E, T, A, B, C, X9, X11, X1, X6);
-		BODY_40_59(58, C, D, E, T, A, B, X10, X12, X2, X7);
-		BODY_40_59(59, B, C, D, E, T, A, X11, X13, X3, X8);
+		sha1_round2(&a, &b, &c, &d, &e, X0);
+		sha1_round2(&a, &b, &c, &d, &e, X1);
+		sha1_round2(&a, &b, &c, &d, &e, X2);
+		sha1_round2(&a, &b, &c, &d, &e, X3);
+		sha1_round2(&a, &b, &c, &d, &e, X4);
+		sha1_round2(&a, &b, &c, &d, &e, X5);
+		sha1_round2(&a, &b, &c, &d, &e, X6);
+		sha1_round2(&a, &b, &c, &d, &e, X7);
+		sha1_round3(&a, &b, &c, &d, &e, X8);
+		sha1_round3(&a, &b, &c, &d, &e, X9);
+		sha1_round3(&a, &b, &c, &d, &e, X10);
+		sha1_round3(&a, &b, &c, &d, &e, X11);
+		sha1_round3(&a, &b, &c, &d, &e, X12);
+		sha1_round3(&a, &b, &c, &d, &e, X13);
+		sha1_round3(&a, &b, &c, &d, &e, X14);
+		sha1_round3(&a, &b, &c, &d, &e, X15);
 
-		BODY_60_79(60, A, B, C, D, E, T, X12, X14, X4, X9);
-		BODY_60_79(61, T, A, B, C, D, E, X13, X15, X5, X10);
-		BODY_60_79(62, E, T, A, B, C, D, X14, X0, X6, X11);
-		BODY_60_79(63, D, E, T, A, B, C, X15, X1, X7, X12);
-		BODY_60_79(64, C, D, E, T, A, B, X0, X2, X8, X13);
-		BODY_60_79(65, B, C, D, E, T, A, X1, X3, X9, X14);
-		BODY_60_79(66, A, B, C, D, E, T, X2, X4, X10, X15);
-		BODY_60_79(67, T, A, B, C, D, E, X3, X5, X11, X0);
-		BODY_60_79(68, E, T, A, B, C, D, X4, X6, X12, X1);
-		BODY_60_79(69, D, E, T, A, B, C, X5, X7, X13, X2);
-		BODY_60_79(70, C, D, E, T, A, B, X6, X8, X14, X3);
-		BODY_60_79(71, B, C, D, E, T, A, X7, X9, X15, X4);
-		BODY_60_79(72, A, B, C, D, E, T, X8, X10, X0, X5);
-		BODY_60_79(73, T, A, B, C, D, E, X9, X11, X1, X6);
-		BODY_60_79(74, E, T, A, B, C, D, X10, X12, X2, X7);
-		BODY_60_79(75, D, E, T, A, B, C, X11, X13, X3, X8);
-		BODY_60_79(76, C, D, E, T, A, B, X12, X14, X4, X9);
-		BODY_60_79(77, B, C, D, E, T, A, X13, X15, X5, X10);
-		BODY_60_79(78, A, B, C, D, E, T, X14, X0, X6, X11);
-		BODY_60_79(79, T, A, B, C, D, E, X15, X1, X7, X12);
+		sha1_msg_schedule_update(&X0, X2, X8, X13);
+		sha1_msg_schedule_update(&X1, X3, X9, X14);
+		sha1_msg_schedule_update(&X2, X4, X10, X15);
+		sha1_msg_schedule_update(&X3, X5, X11, X0);
+		sha1_msg_schedule_update(&X4, X6, X12, X1);
+		sha1_msg_schedule_update(&X5, X7, X13, X2);
+		sha1_msg_schedule_update(&X6, X8, X14, X3);
+		sha1_msg_schedule_update(&X7, X9, X15, X4);
+		sha1_msg_schedule_update(&X8, X10, X0, X5);
+		sha1_msg_schedule_update(&X9, X11, X1, X6);
+		sha1_msg_schedule_update(&X10, X12, X2, X7);
+		sha1_msg_schedule_update(&X11, X13, X3, X8);
+		sha1_msg_schedule_update(&X12, X14, X4, X9);
+		sha1_msg_schedule_update(&X13, X15, X5, X10);
+		sha1_msg_schedule_update(&X14, X0, X6, X11);
+		sha1_msg_schedule_update(&X15, X1, X7, X12);
 
-		c->h0 = (c->h0 + E)&0xffffffffL;
-		c->h1 = (c->h1 + T)&0xffffffffL;
-		c->h2 = (c->h2 + A)&0xffffffffL;
-		c->h3 = (c->h3 + B)&0xffffffffL;
-		c->h4 = (c->h4 + C)&0xffffffffL;
+		sha1_round3(&a, &b, &c, &d, &e, X0);
+		sha1_round3(&a, &b, &c, &d, &e, X1);
+		sha1_round3(&a, &b, &c, &d, &e, X2);
+		sha1_round3(&a, &b, &c, &d, &e, X3);
+		sha1_round3(&a, &b, &c, &d, &e, X4);
+		sha1_round3(&a, &b, &c, &d, &e, X5);
+		sha1_round3(&a, &b, &c, &d, &e, X6);
+		sha1_round3(&a, &b, &c, &d, &e, X7);
+		sha1_round3(&a, &b, &c, &d, &e, X8);
+		sha1_round3(&a, &b, &c, &d, &e, X9);
+		sha1_round3(&a, &b, &c, &d, &e, X10);
+		sha1_round3(&a, &b, &c, &d, &e, X11);
+		sha1_round4(&a, &b, &c, &d, &e, X12);
+		sha1_round4(&a, &b, &c, &d, &e, X13);
+		sha1_round4(&a, &b, &c, &d, &e, X14);
+		sha1_round4(&a, &b, &c, &d, &e, X15);
+
+		sha1_msg_schedule_update(&X0, X2, X8, X13);
+		sha1_msg_schedule_update(&X1, X3, X9, X14);
+		sha1_msg_schedule_update(&X2, X4, X10, X15);
+		sha1_msg_schedule_update(&X3, X5, X11, X0);
+		sha1_msg_schedule_update(&X4, X6, X12, X1);
+		sha1_msg_schedule_update(&X5, X7, X13, X2);
+		sha1_msg_schedule_update(&X6, X8, X14, X3);
+		sha1_msg_schedule_update(&X7, X9, X15, X4);
+		sha1_msg_schedule_update(&X8, X10, X0, X5);
+		sha1_msg_schedule_update(&X9, X11, X1, X6);
+		sha1_msg_schedule_update(&X10, X12, X2, X7);
+		sha1_msg_schedule_update(&X11, X13, X3, X8);
+		sha1_msg_schedule_update(&X12, X14, X4, X9);
+		sha1_msg_schedule_update(&X13, X15, X5, X10);
+		sha1_msg_schedule_update(&X14, X0, X6, X11);
+		sha1_msg_schedule_update(&X15, X1, X7, X12);
+
+		sha1_round4(&a, &b, &c, &d, &e, X0);
+		sha1_round4(&a, &b, &c, &d, &e, X1);
+		sha1_round4(&a, &b, &c, &d, &e, X2);
+		sha1_round4(&a, &b, &c, &d, &e, X3);
+		sha1_round4(&a, &b, &c, &d, &e, X4);
+		sha1_round4(&a, &b, &c, &d, &e, X5);
+		sha1_round4(&a, &b, &c, &d, &e, X6);
+		sha1_round4(&a, &b, &c, &d, &e, X7);
+		sha1_round4(&a, &b, &c, &d, &e, X8);
+		sha1_round4(&a, &b, &c, &d, &e, X9);
+		sha1_round4(&a, &b, &c, &d, &e, X10);
+		sha1_round4(&a, &b, &c, &d, &e, X11);
+		sha1_round4(&a, &b, &c, &d, &e, X12);
+		sha1_round4(&a, &b, &c, &d, &e, X13);
+		sha1_round4(&a, &b, &c, &d, &e, X14);
+		sha1_round4(&a, &b, &c, &d, &e, X15);
+
+		ctx->h0 += a;
+		ctx->h1 += b;
+		ctx->h2 += c;
+		ctx->h3 += d;
+		ctx->h4 += e;
 	}
 }
 #endif
-
 
 int
 SHA1_Init(SHA_CTX *c)
