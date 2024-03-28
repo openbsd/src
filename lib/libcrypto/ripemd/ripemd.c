@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.16 2024/03/28 07:29:41 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.17 2024/03/28 10:45:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,22 +70,6 @@
 /* Ensure that SHA_LONG and uint32_t are equivalent sizes. */
 CTASSERT(sizeof(RIPEMD160_LONG) == sizeof(uint32_t));
 
-#define DATA_ORDER_IS_LITTLE_ENDIAN
-
-#define HASH_LONG               RIPEMD160_LONG
-#define HASH_CTX                RIPEMD160_CTX
-#define HASH_CBLOCK             RIPEMD160_CBLOCK
-#define HASH_UPDATE             RIPEMD160_Update
-#define HASH_TRANSFORM          RIPEMD160_Transform
-#define HASH_FINAL              RIPEMD160_Final
-#define HASH_BLOCK_DATA_ORDER   ripemd160_block_data_order
-
-#define HASH_NO_UPDATE
-#define HASH_NO_TRANSFORM
-#define HASH_NO_FINAL
-
-#include "md32_common.h"
-
 #if 0
 #define F1(x,y,z)	 ((x)^(y)^(z))
 #define F2(x,y,z)	(((x)&(y))|((~x)&z))
@@ -141,68 +125,76 @@ CTASSERT(sizeof(RIPEMD160_LONG) == sizeof(uint32_t));
         c=crypto_rol_u32(c,10); }
 
 static void
-ripemd160_block_data_order(RIPEMD160_CTX *ctx, const void *p, size_t num)
+ripemd160_block_data_order(RIPEMD160_CTX *ctx, const void *_in, size_t num)
 {
-	const unsigned char *data = p;
+	const uint8_t *in = _in;
+	const RIPEMD160_LONG *in32;
 	unsigned int A, B, C, D, E;
-	unsigned int a, b, c, d, e, l;
+	unsigned int a, b, c, d, e;
 	unsigned int X0, X1, X2, X3, X4, X5, X6, X7,
 	    X8, X9, X10, X11, X12, X13, X14, X15;
 
 	for (; num--; ) {
-
 		A = ctx->A;
 		B = ctx->B;
 		C = ctx->C;
 		D = ctx->D;
 		E = ctx->E;
 
-		HOST_c2l(data, l);
-		X0 = l;
-		HOST_c2l(data, l);
-		X1 = l;
+		if ((uintptr_t)in % 4 == 0) {
+			/* Input is 32 bit aligned. */
+			in32 = (const RIPEMD160_LONG *)in;
+			X0 = le32toh(in32[0]);
+			X1 = le32toh(in32[1]);
+			X2 = le32toh(in32[2]);
+			X3 = le32toh(in32[3]);
+			X4 = le32toh(in32[4]);
+			X5 = le32toh(in32[5]);
+			X6 = le32toh(in32[6]);
+			X7 = le32toh(in32[7]);
+			X8 = le32toh(in32[8]);
+			X9 = le32toh(in32[9]);
+			X10 = le32toh(in32[10]);
+			X11 = le32toh(in32[11]);
+			X12 = le32toh(in32[12]);
+			X13 = le32toh(in32[13]);
+			X14 = le32toh(in32[14]);
+			X15 = le32toh(in32[15]);
+		} else {
+			/* Input is not 32 bit aligned. */
+			X0 = crypto_load_le32toh(&in[0 * 4]);
+			X1 = crypto_load_le32toh(&in[1 * 4]);
+			X2 = crypto_load_le32toh(&in[2 * 4]);
+			X3 = crypto_load_le32toh(&in[3 * 4]);
+			X4 = crypto_load_le32toh(&in[4 * 4]);
+			X5 = crypto_load_le32toh(&in[5 * 4]);
+			X6 = crypto_load_le32toh(&in[6 * 4]);
+			X7 = crypto_load_le32toh(&in[7 * 4]);
+			X8 = crypto_load_le32toh(&in[8 * 4]);
+			X9 = crypto_load_le32toh(&in[9 * 4]);
+			X10 = crypto_load_le32toh(&in[10 * 4]);
+			X11 = crypto_load_le32toh(&in[11 * 4]);
+			X12 = crypto_load_le32toh(&in[12 * 4]);
+			X13 = crypto_load_le32toh(&in[13 * 4]);
+			X14 = crypto_load_le32toh(&in[14 * 4]);
+			X15 = crypto_load_le32toh(&in[15 * 4]);
+		}
+		in += RIPEMD160_CBLOCK;
+
 		RIP1(A, B, C, D, E, X0, 11);
-		HOST_c2l(data, l);
-		X2 = l;
 		RIP1(E, A, B, C, D, X1, 14);
-		HOST_c2l(data, l);
-		X3 = l;
 		RIP1(D, E, A, B, C, X2, 15);
-		HOST_c2l(data, l);
-		X4 = l;
 		RIP1(C, D, E, A, B, X3, 12);
-		HOST_c2l(data, l);
-		X5 = l;
 		RIP1(B, C, D, E, A, X4, 5);
-		HOST_c2l(data, l);
-		X6 = l;
 		RIP1(A, B, C, D, E, X5, 8);
-		HOST_c2l(data, l);
-		X7 = l;
 		RIP1(E, A, B, C, D, X6, 7);
-		HOST_c2l(data, l);
-		X8 = l;
 		RIP1(D, E, A, B, C, X7, 9);
-		HOST_c2l(data, l);
-		X9 = l;
 		RIP1(C, D, E, A, B, X8, 11);
-		HOST_c2l(data, l);
-		X10 = l;
 		RIP1(B, C, D, E, A, X9, 13);
-		HOST_c2l(data, l);
-		X11 = l;
 		RIP1(A, B, C, D, E, X10, 14);
-		HOST_c2l(data, l);
-		X12 = l;
 		RIP1(E, A, B, C, D, X11, 15);
-		HOST_c2l(data, l);
-		X13 = l;
 		RIP1(D, E, A, B, C, X12, 6);
-		HOST_c2l(data, l);
-		X14 = l;
 		RIP1(C, D, E, A, B, X13, 7);
-		HOST_c2l(data, l);
-		X15 = l;
 		RIP1(B, C, D, E, A, X14, 9);
 		RIP1(A, B, C, D, E, X15, 8);
 
@@ -377,7 +369,6 @@ ripemd160_block_data_order(RIPEMD160_CTX *ctx, const void *p, size_t num)
 		ctx->D = ctx->E + a + B;
 		ctx->E = ctx->A + b + C;
 		ctx->A = D;
-
 	}
 }
 
@@ -460,7 +451,6 @@ RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
-	unsigned long ll;
 
 	p[n] = 0x80; /* there is always room for one */
 	n++;
@@ -470,31 +460,20 @@ RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 		n = 0;
 		ripemd160_block_data_order(c, p, 1);
 	}
-	memset(p + n, 0, RIPEMD160_CBLOCK - 8 - n);
 
-	p += RIPEMD160_CBLOCK - 8;
-#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
-	HOST_l2c(c->Nh, p);
-	HOST_l2c(c->Nl, p);
-#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
-	HOST_l2c(c->Nl, p);
-	HOST_l2c(c->Nh, p);
-#endif
-	p -= RIPEMD160_CBLOCK;
+	memset(p + n, 0, RIPEMD160_CBLOCK - 8 - n);
+	c->data[RIPEMD160_LBLOCK - 2] = htole32(c->Nl);
+	c->data[RIPEMD160_LBLOCK - 1] = htole32(c->Nh);
+
 	ripemd160_block_data_order(c, p, 1);
 	c->num = 0;
 	memset(p, 0, RIPEMD160_CBLOCK);
 
-	ll = c->A;
-	HOST_l2c(ll, md);
-	ll = c->B;
-	HOST_l2c(ll, md);
-	ll = c->C;
-	HOST_l2c(ll, md);
-	ll = c->D;
-	HOST_l2c(ll, md);
-	ll = c->E;
-	HOST_l2c(ll, md);
+	crypto_store_htole32(&md[0 * 4], c->A);
+	crypto_store_htole32(&md[1 * 4], c->B);
+	crypto_store_htole32(&md[2 * 4], c->C);
+	crypto_store_htole32(&md[3 * 4], c->D);
+	crypto_store_htole32(&md[4 * 4], c->E);
 
 	return 1;
 }
