@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.15 2024/03/28 11:22:58 jsing Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.16 2024/03/28 12:04:38 jsing Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -28,7 +28,6 @@ CTASSERT(sizeof(SM3_WORD) == sizeof(uint32_t));
 
 #ifndef OPENSSL_NO_SM3
 
-void SM3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void SM3_transform(SM3_CTX *c, const unsigned char *data);
 
 #define P0(X) (X ^ crypto_rol_u32(X, 9) ^ crypto_rol_u32(X, 17))
@@ -61,8 +60,8 @@ void SM3_transform(SM3_CTX *c, const unsigned char *data);
 #define R2(A, B, C, D, E, F, G, H, TJ, Wi, Wj) \
 	ROUND(A, B, C, D, E, F, G, H, TJ, Wi, Wj, FF1, GG1)
 
-void
-SM3_block_data_order(SM3_CTX *ctx, const void *_in, size_t num)
+static void
+sm3_block_data_order(SM3_CTX *ctx, const void *_in, size_t num)
 {
 	const uint8_t *in = _in;
 	const SM3_WORD *in32;
@@ -295,7 +294,7 @@ SM3_Update(SM3_CTX *c, const void *data_, size_t len)
 
 		if (len >= SM3_CBLOCK || len + n >= SM3_CBLOCK) {
 			memcpy(p + n, data, SM3_CBLOCK - n);
-			SM3_block_data_order(c, p, 1);
+			sm3_block_data_order(c, p, 1);
 			n = SM3_CBLOCK - n;
 			data += n;
 			len -= n;
@@ -310,7 +309,7 @@ SM3_Update(SM3_CTX *c, const void *data_, size_t len)
 
 	n = len / SM3_CBLOCK;
 	if (n > 0) {
-		SM3_block_data_order(c, data, n);
+		sm3_block_data_order(c, data, n);
 		n *= SM3_CBLOCK;
 		data += n;
 		len -= n;
@@ -328,7 +327,7 @@ LCRYPTO_ALIAS(SM3_Update);
 void
 SM3_Transform(SM3_CTX *c, const unsigned char *data)
 {
-	SM3_block_data_order(c, data, 1);
+	sm3_block_data_order(c, data, 1);
 }
 
 int
@@ -343,14 +342,14 @@ SM3_Final(unsigned char *md, SM3_CTX *c)
 	if (n > (SM3_CBLOCK - 8)) {
 		memset(p + n, 0, SM3_CBLOCK - n);
 		n = 0;
-		SM3_block_data_order(c, p, 1);
+		sm3_block_data_order(c, p, 1);
 	}
 
 	memset(p + n, 0, SM3_CBLOCK - 8 - n);
 	c->data[SM3_LBLOCK - 2] = htobe32(c->Nh);
 	c->data[SM3_LBLOCK - 1] = htobe32(c->Nl);
 
-	SM3_block_data_order(c, p, 1);
+	sm3_block_data_order(c, p, 1);
 	c->num = 0;
 	memset(p, 0, SM3_CBLOCK);
 
