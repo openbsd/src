@@ -152,8 +152,9 @@ if ($alt=0) {
 
 &external_label("OPENSSL_ia32cap_P");
 
-# void RC4(RC4_KEY *key,size_t len,const unsigned char *inp,unsigned char *out);
-&function_begin("RC4");
+# void rc4_internal(RC4_KEY *key, size_t len, const unsigned char *inp,
+#     unsigned char *out);
+&function_begin("rc4_internal");
 	&mov	($dat,&wparam(0));	# load key schedule pointer
 	&mov	($ty, &wparam(1));	# load len
 	&mov	($inp,&wparam(2));	# load inp
@@ -291,7 +292,7 @@ if ($alt=0) {
 	&mov	(&DWP(-4,$dat),$yy);		# save key->y
 	&mov	(&BP(-8,$dat),&LB($xx));	# save key->x
 &set_label("abort");
-&function_end("RC4");
+&function_end("rc4_internal");
 
 ########################################################################
 
@@ -301,8 +302,8 @@ $idi="ebp";
 $ido="ecx";
 $idx="edx";
 
-# void RC4_set_key(RC4_KEY *key,int len,const unsigned char *data);
-&function_begin("RC4_set_key");
+# void rc4_set_key_internal(RC4_KEY *key,int len,const unsigned char *data);
+&function_begin("rc4_set_key_internal");
 	&mov	($out,&wparam(0));		# load key
 	&mov	($idi,&wparam(1));		# load len
 	&mov	($inp,&wparam(2));		# load data
@@ -382,6 +383,6 @@ $idx="edx";
 	&xor	("eax","eax");
 	&mov	(&DWP(-8,$out),"eax");		# key->x=0;
 	&mov	(&DWP(-4,$out),"eax");		# key->y=0;
-&function_end("RC4_set_key");
+&function_end("rc4_set_key_internal");
 
 &asm_finish();

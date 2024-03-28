@@ -124,10 +124,10 @@ $code=<<___;
 .extern	OPENSSL_ia32cap_P
 .hidden	OPENSSL_ia32cap_P
 
-.globl	RC4
-.type	RC4,\@function,4
+.globl	rc4_internal
+.type	rc4_internal,\@function,4
 .align	16
-RC4:
+rc4_internal:
 	_CET_ENDBR
 	or	$len,$len
 	jne	.Lentry
@@ -423,7 +423,7 @@ $code.=<<___;
 	add	\$24,%rsp
 .Lepilogue:
 	ret
-.size	RC4,.-RC4
+.size	rc4_internal,.-rc4_internal
 ___
 }
 
@@ -431,10 +431,10 @@ $idx="%r8";
 $ido="%r9";
 
 $code.=<<___;
-.globl	RC4_set_key
-.type	RC4_set_key,\@function,3
+.globl	rc4_set_key_internal
+.type	rc4_set_key_internal,\@function,3
 .align	16
-RC4_set_key:
+rc4_set_key_internal:
 	_CET_ENDBR
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
@@ -502,7 +502,7 @@ RC4_set_key:
 	mov	%eax,-8($dat)
 	mov	%eax,-4($dat)
 	ret
-.size	RC4_set_key,.-RC4_set_key
+.size	rc4_set_key_internal,.-rc4_set_key_internal
 ___
 
 sub reg_part {

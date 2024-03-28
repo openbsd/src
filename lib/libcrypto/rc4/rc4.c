@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4.c,v 1.8 2024/03/27 12:54:42 jsing Exp $ */
+/* $OpenBSD: rc4.c,v 1.9 2024/03/28 01:49:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,8 +68,13 @@
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void
-RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
+#ifdef HAVE_RC4_INTERNAL
+void rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
+    unsigned char *outdata);
+
+#else
+static void
+rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
     unsigned char *outdata)
 {
 	RC4_INT *d;
@@ -251,9 +256,14 @@ RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 	key->x = x;
 	key->y = y;
 }
+#endif
 
-void
-RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
+#ifdef HAVE_RC4_SET_KEY_INTERNAL
+void rc4_set_key_internal(RC4_KEY *key, int len, const unsigned char *data);
+
+#else
+static void
+rc4_set_key_internal(RC4_KEY *key, int len, const unsigned char *data)
 {
 	RC4_INT tmp;
 	int id1, id2;
@@ -280,4 +290,18 @@ RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
 		SK_LOOP(d, i + 2);
 		SK_LOOP(d, i + 3);
 	}
+}
+#endif
+
+void
+RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
+    unsigned char *outdata)
+{
+	rc4_internal(key, len, indata, outdata);
+}
+
+void
+RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
+{
+	rc4_set_key_internal(key, len, data);
 }
