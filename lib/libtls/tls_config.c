@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.69 2024/03/27 07:35:30 joshua Exp $ */
+/* $OpenBSD: tls_config.c,v 1.70 2024/03/28 06:55:02 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -301,7 +301,8 @@ tls_config_parse_alpn(struct tls_config *config, const char *alpn,
 	*alpn_len = 0;
 
 	if ((buf_len = strlen(alpn) + 1) > 65535) {
-		tls_config_set_errorx(config, TLS_ERROR_UNKNOWN, "alpn too large");
+		tls_config_set_errorx(config, TLS_ERROR_INVALID_ARGUMENT,
+		    "alpn too large");
 		goto err;
 	}
 
@@ -865,7 +866,7 @@ tls_config_set_session_id(struct tls_config *config,
     const unsigned char *session_id, size_t len)
 {
 	if (len > TLS_MAX_SESSION_ID_LENGTH) {
-		tls_config_set_errorx(config, TLS_ERROR_UNKNOWN,
+		tls_config_set_errorx(config, TLS_ERROR_INVALID_ARGUMENT,
 		    "session ID too large");
 		return (-1);
 	}
@@ -878,12 +879,12 @@ int
 tls_config_set_session_lifetime(struct tls_config *config, int lifetime)
 {
 	if (lifetime > TLS_MAX_SESSION_TIMEOUT) {
-		tls_config_set_errorx(config, TLS_ERROR_UNKNOWN,
+		tls_config_set_errorx(config, TLS_ERROR_INVALID_ARGUMENT,
 		    "session lifetime too large");
 		return (-1);
 	}
 	if (lifetime != 0 && lifetime < TLS_MIN_SESSION_TIMEOUT) {
-		tls_config_set_errorx(config, TLS_ERROR_UNKNOWN,
+		tls_config_set_errorx(config, TLS_ERROR_INVALID_ARGUMENT,
 		    "session lifetime too small");
 		return (-1);
 	}

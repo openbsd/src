@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.11 2024/03/28 02:08:24 joshua Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.12 2024/03/28 06:55:02 joshua Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -204,7 +204,7 @@ tls_sign_rsa(struct tls_signer *signer, struct tls_signer_key *skey,
 	}
 
 	if (input_len > INT_MAX) {
-		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		tls_error_setx(&signer->error, TLS_ERROR_INVALID_ARGUMENT,
 		    "input too large");
 		return (-1);
 	}
@@ -252,7 +252,7 @@ tls_sign_ecdsa(struct tls_signer *signer, struct tls_signer_key *skey,
 	}
 
 	if (input_len > INT_MAX) {
-		tls_error_setx(&signer->error, TLS_ERROR_UNKNOWN,
+		tls_error_setx(&signer->error, TLS_ERROR_INVALID_ARGUMENT,
 		    "digest too large");
 		return (-1);
 	}
