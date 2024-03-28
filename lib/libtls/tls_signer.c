@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.10 2024/03/26 06:24:52 joshua Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.11 2024/03/28 02:08:24 joshua Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -128,8 +128,8 @@ tls_signer_add_keypair_mem(struct tls_signer *signer, const uint8_t *cert,
 	}
 
 	if ((skey = calloc(1, sizeof(*skey))) == NULL) {
-		tls_error_set(&signer->error, TLS_ERROR_UNKNOWN,
-		    "failed to create key entry");
+		tls_error_set(&signer->error, TLS_ERROR_OUT_OF_MEMORY,
+		    "out of memory");
 		goto err;
 	}
 	skey->hash = hash;
@@ -214,7 +214,8 @@ tls_sign_rsa(struct tls_signer *signer, struct tls_signer_key *skey,
 		return (-1);
 	}
 	if ((signature = calloc(1, rsa_size)) == NULL) {
-		tls_error_set(&signer->error, TLS_ERROR_UNKNOWN, "RSA signature");
+		tls_error_set(&signer->error, TLS_ERROR_OUT_OF_MEMORY,
+		    "out of memory");
 		return (-1);
 	}
 
@@ -261,8 +262,8 @@ tls_sign_ecdsa(struct tls_signer *signer, struct tls_signer_key *skey,
 		return (-1);
 	}
 	if ((signature = calloc(1, signature_len)) == NULL) {
-		tls_error_set(&signer->error, TLS_ERROR_UNKNOWN,
-		    "ECDSA signature");
+		tls_error_set(&signer->error, TLS_ERROR_OUT_OF_MEMORY,
+		    "out of memory");
 		return (-1);
 	}
 
