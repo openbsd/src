@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.2 2024/03/27 11:54:29 jsing Exp $ */
+/* $OpenBSD: blowfish.c,v 1.3 2024/03/29 02:37:20 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -380,6 +380,7 @@ BF_encrypt(BF_LONG *data, const BF_KEY *key)
 	data[1] = l&0xffffffffL;
 	data[0] = r&0xffffffffL;
 }
+LCRYPTO_ALIAS(BF_encrypt);
 
 #ifndef BF_DEFAULT_OPTIONS
 
@@ -422,6 +423,7 @@ BF_decrypt(BF_LONG *data, const BF_KEY *key)
 	data[1] = l&0xffffffffL;
 	data[0] = r&0xffffffffL;
 }
+LCRYPTO_ALIAS(BF_decrypt);
 
 void
 BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
@@ -498,6 +500,7 @@ BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
 	tin[0] = tin[1] = 0;
 }
+LCRYPTO_ALIAS(BF_cbc_encrypt);
 
 /*
  * The input and output encrypted as though 64bit cfb mode is being
@@ -561,6 +564,7 @@ BF_cfb64_encrypt(const unsigned char *in, unsigned char *out, long length,
 	v0 = v1 = ti[0] = ti[1] = t=c = cc = 0;
 	*num = n;
 }
+LCRYPTO_ALIAS(BF_cfb64_encrypt);
 
 void
 BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
@@ -582,6 +586,7 @@ BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
 	l2n(l, out);
 	l = d[0] = d[1] = 0;
 }
+LCRYPTO_ALIAS(BF_ecb_encrypt);
 
 /*
  * The input and output encrypted as though 64bit ofb mode is being
@@ -632,6 +637,7 @@ BF_ofb64_encrypt(const unsigned char *in, unsigned char *out, long length,
 	t = v0 = v1 = ti[0] = ti[1] = 0;
 	*num = n;
 }
+LCRYPTO_ALIAS(BF_ofb64_encrypt);
 
 void
 BF_set_key(BF_KEY *key, int len, const unsigned char *data)
@@ -686,4 +692,5 @@ BF_set_key(BF_KEY *key, int len, const unsigned char *data)
 		p[i + 1] = in[1];
 	}
 }
+LCRYPTO_ALIAS(BF_set_key);
 #endif

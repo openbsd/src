@@ -2584,3 +2584,10 @@ _libre_DES_string_to_key
 _libre_DES_string_to_2keys
 _libre_DES_cfb64_encrypt
 _libre_DES_ofb64_encrypt
+_libre_BF_set_key
+_libre_BF_encrypt
+_libre_BF_decrypt
+_libre_BF_ecb_encrypt
+_libre_BF_cbc_encrypt
+_libre_BF_cfb64_encrypt
+_libre_BF_ofb64_encrypt
