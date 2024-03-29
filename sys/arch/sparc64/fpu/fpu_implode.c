@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.9 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.10 2024/03/29 21:07:11 miod Exp $	*/
 /*	$NetBSD: fpu_implode.c,v 1.7 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -57,7 +57,7 @@
 #include <sparc64/fpu/fpu_emu.h>
 #include <sparc64/fpu/fpu_extern.h>
 
-static int fpu_round(register struct fpemu *, register struct fpn *);
+static int fpu_round(struct fpemu *, struct fpn *);
 static int toinf(struct fpemu *, int);
 
 /*
@@ -73,10 +73,10 @@ static int toinf(struct fpemu *, int);
  * responsibility to fix this if necessary.
  */
 static int
-fpu_round(register struct fpemu *fe, register struct fpn *fp)
+fpu_round(struct fpemu *fe, struct fpn *fp)
 {
-	register u_int m0, m1, m2, m3;
-	register int gr, s;
+	u_int m0, m1, m2, m3;
+	int gr, s;
 
 	m0 = fp->fp_mant[0];
 	m1 = fp->fp_mant[1];
@@ -188,10 +188,10 @@ toinf(struct fpemu *fe, int sign)
  * of the SPARC instruction set).
  */
 u_int
-fpu_ftoi(struct fpemu *fe, register struct fpn *fp)
+fpu_ftoi(struct fpemu *fe, struct fpn *fp)
 {
-	register u_int i;
-	register int sign, exp;
+	u_int i;
+	int sign, exp;
 
 	sign = fp->fp_sign;
 	switch (fp->fp_class) {
@@ -235,10 +235,10 @@ fpu_ftoi(struct fpemu *fe, register struct fpn *fp)
  * of the SPARC instruction set).
  */
 u_int
-fpu_ftox(struct fpemu *fe, register struct fpn *fp, u_int *res)
+fpu_ftox(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
-	register u_int64_t i;
-	register int sign, exp;
+	u_int64_t i;
+	int sign, exp;
 
 	sign = fp->fp_sign;
 	switch (fp->fp_class) {
@@ -286,10 +286,10 @@ out:
  * We assume <= 29 bits in a single-precision fraction (1.f part).
  */
 u_int
-fpu_ftos(struct fpemu *fe, register struct fpn *fp)
+fpu_ftos(struct fpemu *fe, struct fpn *fp)
 {
-	register u_int sign = fp->fp_sign << 31;
-	register int exp;
+	u_int sign = fp->fp_sign << 31;
+	int exp;
 
 #define	SNG_EXP(e)	((e) << SNG_FRACBITS)	/* makes e an exponent */
 #define	SNG_MASK	(SNG_EXP(1) - 1)	/* mask for fraction */
@@ -368,10 +368,10 @@ done:
  * This code mimics fpu_ftos; see it for comments.
  */
 u_int
-fpu_ftod(struct fpemu *fe, register struct fpn *fp, u_int *res)
+fpu_ftod(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
-	register u_int sign = fp->fp_sign << 31;
-	register int exp;
+	u_int sign = fp->fp_sign << 31;
+	int exp;
 
 #define	DBL_EXP(e)	((e) << (DBL_FRACBITS & 31))
 #define	DBL_MASK	(DBL_EXP(1) - 1)
@@ -426,10 +426,10 @@ done:
  * so we can avoid a small bit of work.
  */
 u_int
-fpu_ftoq(struct fpemu *fe, register struct fpn *fp, u_int *res)
+fpu_ftoq(struct fpemu *fe, struct fpn *fp, u_int *res)
 {
-	register u_int sign = fp->fp_sign << 31;
-	register int exp;
+	u_int sign = fp->fp_sign << 31;
+	int exp;
 
 #define	EXT_EXP(e)	((e) << (EXT_FRACBITS & 31))
 #define	EXT_MASK	(EXT_EXP(1) - 1)
@@ -483,8 +483,7 @@ done:
  * Implode an fpn, writing the result into the given space.
  */
 void
-fpu_implode(struct fpemu *fe, register struct fpn *fp, int type,
-    register u_int *space)
+fpu_implode(struct fpemu *fe, struct fpn *fp, int type, u_int *space)
 {
 	DPRINTF(FPE_INSN, ("fpu_implode: "));
 	switch (type) {

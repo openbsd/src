@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.6 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.7 2024/03/29 21:07:11 miod Exp $	*/
 /*	$NetBSD: fpu_explode.c,v 1.5 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -80,7 +80,7 @@
  * int -> fpn.
  */
 int
-fpu_itof(register struct fpn *fp, register u_int i)
+fpu_itof(struct fpn *fp, u_int i)
 {
 
 	if (i == 0)
@@ -104,7 +104,7 @@ fpu_itof(register struct fpn *fp, register u_int i)
  * 64-bit int -> fpn.
  */
 int
-fpu_xtof(register struct fpn *fp, register u_int64_t i)
+fpu_xtof(struct fpn *fp, u_int64_t i)
 {
 	if (i == 0)
 		return (FPC_ZERO);
@@ -165,10 +165,10 @@ fpu_xtof(register struct fpn *fp, register u_int64_t i)
  * format: i.e., needs at most fp_mant[0] and fp_mant[1].
  */
 int
-fpu_stof(register struct fpn *fp, register u_int i)
+fpu_stof(struct fpn *fp, u_int i)
 {
-	register int exp;
-	register u_int frac, f0, f1;
+	int exp;
+	u_int frac, f0, f1;
 #define SNG_SHIFT (SNG_FRACBITS - FP_LG)
 
 	exp = (i >> (32 - 1 - SNG_EXPBITS)) & mask(SNG_EXPBITS);
@@ -183,10 +183,10 @@ fpu_stof(register struct fpn *fp, register u_int i)
  * We assume this uses at most (96-FP_LG) bits.
  */
 int
-fpu_dtof(register struct fpn *fp, register u_int i, register u_int j)
+fpu_dtof(struct fpn *fp, u_int i, u_int j)
 {
-	register int exp;
-	register u_int frac, f0, f1, f2;
+	int exp;
+	u_int frac, f0, f1, f2;
 #define DBL_SHIFT (DBL_FRACBITS - 32 - FP_LG)
 
 	exp = (i >> (32 - 1 - DBL_EXPBITS)) & mask(DBL_EXPBITS);
@@ -202,11 +202,10 @@ fpu_dtof(register struct fpn *fp, register u_int i, register u_int j)
  * 128-bit extended -> fpn.
  */
 int
-fpu_qtof(register struct fpn *fp, register u_int i, register u_int j,
-    register u_int k, register u_int l)
+fpu_qtof(struct fpn *fp, u_int i, u_int j, u_int k, u_int l)
 {
-	register int exp;
-	register u_int frac, f0, f1, f2, f3;
+	int exp;
+	u_int frac, f0, f1, f2, f3;
 #define EXT_SHIFT (-(EXT_FRACBITS - 3 * 32 - FP_LG))	/* left shift! */
 
 	/*
@@ -229,10 +228,9 @@ fpu_qtof(register struct fpn *fp, register u_int i, register u_int j,
  * operations are performed.)
  */
 void
-fpu_explode(register struct fpemu *fe, register struct fpn *fp, int type,
-    int reg)
+fpu_explode(struct fpemu *fe, struct fpn *fp, int type, int reg)
 {
-	register u_int s, *space;
+	u_int s, *space;
 	u_int64_t l, *xspace;
 
 	xspace = (u_int64_t *)&fe->fe_fpstate->fs_regs[reg & ~1];

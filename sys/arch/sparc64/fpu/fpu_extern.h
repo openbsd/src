@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_extern.h,v 1.7 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: fpu_extern.h,v 1.8 2024/03/29 21:07:11 miod Exp $	*/
 /*	$NetBSD: fpu_extern.h,v 1.4 2000/08/03 18:32:08 eeh Exp $	*/
 
 /*-
@@ -73,6 +73,6 @@ struct fpn *fpu_mul(struct fpemu *);
 struct fpn *fpu_sqrt(struct fpemu *);
 
 /* fpu_subr.c */
-int fpu_shr(register struct fpn *, register int);
-void fpu_norm(register struct fpn *);
-struct fpn *fpu_newnan(register struct fpemu *);
+int fpu_shr(struct fpn *, int);
+void fpu_norm(struct fpn *);
+struct fpn *fpu_newnan(struct fpemu *);

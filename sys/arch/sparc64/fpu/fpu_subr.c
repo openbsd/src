@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_subr.c,v 1.2 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: fpu_subr.c,v 1.3 2024/03/29 21:07:11 miod Exp $	*/
 /*	$NetBSD: fpu_subr.c,v 1.3 1996/03/14 19:42:01 christos Exp $ */
 
 /*
@@ -64,10 +64,10 @@
  * sticky field is ignored anyway.
  */
 int
-fpu_shr(register struct fpn *fp, register int rsh)
+fpu_shr(struct fpn *fp, int rsh)
 {
-	register u_int m0, m1, m2, m3, s;
-	register int lsh;
+	u_int m0, m1, m2, m3, s;
+	int lsh;
 
 #ifdef DIAGNOSTIC
 	if (rsh <= 0 || (fp->fp_class != FPC_NUM && !ISNAN(fp)))
@@ -138,10 +138,10 @@ fpu_shr(register struct fpn *fp, register int rsh)
  * a supernormal and it will fix it (provided fp->fp_mant[3] == 0).
  */
 void
-fpu_norm(register struct fpn *fp)
+fpu_norm(struct fpn *fp)
 {
-	register u_int m0, m1, m2, m3, top, sup, nrm;
-	register int lsh, rsh, exp;
+	u_int m0, m1, m2, m3, top, sup, nrm;
+	int lsh, rsh, exp;
 
 	exp = fp->fp_exp;
 	m0 = fp->fp_mant[0];
@@ -206,9 +206,9 @@ fpu_norm(register struct fpn *fp)
  * As a side effect, we set NV (invalid) for the current exceptions.
  */
 struct fpn *
-fpu_newnan(register struct fpemu *fe)
+fpu_newnan(struct fpemu *fe)
 {
-	register struct fpn *fp;
+	struct fpn *fp;
 
 	fe->fe_cx = FSR_NV;
 	fp = &fe->fe_f3;

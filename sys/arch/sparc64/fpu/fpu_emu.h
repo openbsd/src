@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emu.h,v 1.6 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: fpu_emu.h,v 1.7 2024/03/29 21:07:11 miod Exp $	*/
 /*	$NetBSD: fpu_emu.h,v 1.4 2000/08/03 18:32:07 eeh Exp $ */
 
 /*
@@ -128,7 +128,7 @@ struct fpn {
 		SWAP(x, y); \
 }
 #define	SWAP(x, y) { \
-	register struct fpn *swap; \
+	struct fpn *swap; \
 	swap = (x), (x) = (y), (y) = swap; \
 }
 

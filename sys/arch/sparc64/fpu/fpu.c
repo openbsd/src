@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.23 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.24 2024/03/29 21:07:11 miod Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -185,9 +185,9 @@ fpu_fcopy(u_int *src, u_int *dst, int type)
  * unknown FPops do enter the queue, however.
  */
 void
-fpu_cleanup(register struct proc *p, register struct fpstate *fs)
+fpu_cleanup(struct proc *p, struct fpstate *fs)
 {
-	register int i, fsr = fs->fs_fsr, error;
+	int i, fsr = fs->fs_fsr, error;
 	union instr instr;
 	union sigval sv;
 	struct fpemu fe;

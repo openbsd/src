@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_add.c,v 1.3 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: fpu_add.c,v 1.4 2024/03/29 21:07:11 miod Exp $	*/
 /*	$NetBSD: fpu_add.c,v 1.3 1996/03/14 19:41:52 christos Exp $ */
 
 /*
@@ -60,11 +60,11 @@
 #include <sparc64/fpu/fpu_extern.h>
 
 struct fpn *
-fpu_add(register struct fpemu *fe)
+fpu_add(struct fpemu *fe)
 {
-	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
-	register u_int r0, r1, r2, r3;
-	register int rd;
+	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
+	u_int r0, r1, r2, r3;
+	int rd;
 
 	/*
 	 * Put the `heavier' operand on the right (see fpu_emu.h).

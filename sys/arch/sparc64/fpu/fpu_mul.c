@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_mul.c,v 1.3 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: fpu_mul.c,v 1.4 2024/03/29 21:07:11 miod Exp $	*/
 /*	$NetBSD: fpu_mul.c,v 1.2 1994/11/20 20:52:44 deraadt Exp $ */
 
 /*
@@ -75,8 +75,6 @@
  *
  * Since we do not have efficient multiword arithmetic, we code the
  * accumulator as four separate words, just like any other mantissa.
- * We use local `register' variables in the hope that this is faster
- * than memory.  We keep x->fp_mant in locals for the same reason.
  *
  * In the algorithm above, the bits in y are inspected one at a time.
  * We will pick them up 32 at a time and then deal with those 32, one
@@ -97,11 +95,11 @@
  * until we reach a nonzero word.
  */
 struct fpn *
-fpu_mul(register struct fpemu *fe)
+fpu_mul(struct fpemu *fe)
 {
-	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
-	register u_int a3, a2, a1, a0, x3, x2, x1, x0, bit, m;
-	register int sticky;
+	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
+	u_int a3, a2, a1, a0, x3, x2, x1, x0, bit, m;
+	int sticky;
 	FPU_DECL_CARRY
 
 	/*
