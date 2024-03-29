@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.11 2024/01/04 17:01:26 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.12 2024/03/29 06:41:58 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <string.h>
 
+#include <openssl/cms.h>
 #include <openssl/curve25519.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
@@ -530,10 +531,67 @@ ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	return -2;
 }
 
+#ifndef OPENSSL_NO_CMS
+static int
+ecx_cms_sign_or_verify(EVP_PKEY *pkey, long verify, CMS_SignerInfo *si)
+{
+	X509_ALGOR *digestAlgorithm, *signatureAlgorithm;
+	ASN1_OBJECT *aobj;
+
+	if (verify != 0 && verify != 1)
+		return -1;
+
+	/* Check that we have an Ed25519 public key. */
+	if (EVP_PKEY_id(pkey) != NID_ED25519)
+		return -1;
+
+	CMS_SignerInfo_get0_algs(si, NULL, NULL, &digestAlgorithm,
+	    &signatureAlgorithm);
+
+	/* RFC 8419, section 2.3: digestAlgorithm MUST be SHA-512. */
+	if (digestAlgorithm == NULL)
+		return -1;
+	if (OBJ_obj2nid(digestAlgorithm->algorithm) != NID_sha512)
+		return -1;
+
+	/*
+	 * RFC 8419, section 2.4: signatureAlgorithm MUST be Ed25519, and the
+	 * parameters MUST be absent. For verification check that this is the
+	 * case, for signing set the signatureAlgorithm accordingly.
+	 */
+	if (verify) {
+		const ASN1_OBJECT *obj;
+		int param_type;
+
+		if (signatureAlgorithm == NULL)
+			return -1;
+
+		X509_ALGOR_get0(&obj, &param_type, NULL, signatureAlgorithm);
+		if (OBJ_obj2nid(obj) != NID_ED25519)
+			return -1;
+		if (param_type != V_ASN1_UNDEF)
+			return -1;
+
+		return 1;
+	}
+
+	if ((aobj = OBJ_nid2obj(NID_ED25519)) == NULL)
+		return -1;
+	if (!X509_ALGOR_set0(signatureAlgorithm, aobj, V_ASN1_UNDEF, NULL))
+		return -1;
+
+	return 1;
+}
+#endif
+
 static int
 ecx_sign_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
 	switch (op) {
+#ifndef OPENSSL_NO_CMS
+	case ASN1_PKEY_CTRL_CMS_SIGN:
+		return ecx_cms_sign_or_verify(pkey, arg1, arg2);
+#endif
 	case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
 		/* PureEdDSA does its own hashing. */
 		*(int *)arg2 = NID_undef;
@@ -806,6 +864,9 @@ pkey_ecx_ed_ctrl(EVP_PKEY_CTX *pkey_ctx, int op, int arg1, void *arg2)
 		}
 		return 1;
 
+#ifndef OPENSSL_NO_CMS
+	case EVP_PKEY_CTRL_CMS_SIGN:
+#endif
 	case EVP_PKEY_CTRL_DIGESTINIT:
 		return 1;
 	}

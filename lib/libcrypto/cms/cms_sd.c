@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.30 2024/02/02 14:13:11 tb Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.31 2024/03/29 06:41:58 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -277,6 +277,64 @@ cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
 	return 1;
 }
 
+static const EVP_MD *
+cms_SignerInfo_default_digest_md(const CMS_SignerInfo *si)
+{
+	int rv, nid;
+
+	if (si->pkey == NULL) {
+		CMSerror(CMS_R_NO_PUBLIC_KEY);
+		return NULL;
+	}
+
+	/* On failure or unsupported operation, give up. */
+	if ((rv = EVP_PKEY_get_default_digest_nid(si->pkey, &nid)) <= 0)
+		return NULL;
+	if (rv > 2)
+		return NULL;
+
+	/*
+	 * XXX - we need to identify EdDSA in a better way. Figure out where
+	 * and how. This mimics EdDSA checks in openssl/ca.c and openssl/req.c.
+	 */
+
+	/* The digest md is required to be EVP_sha512() (EdDSA). */
+	if (rv == 2 && nid == NID_undef)
+		return EVP_sha512();
+
+	/* Use mandatory or default digest. */
+	return EVP_get_digestbynid(nid);
+}
+
+static const EVP_MD *
+cms_SignerInfo_signature_md(const CMS_SignerInfo *si)
+{
+	int rv, nid;
+
+	if (si->pkey == NULL) {
+		CMSerror(CMS_R_NO_PUBLIC_KEY);
+		return NULL;
+	}
+
+	/* Fall back to digestAlgorithm unless pkey has a mandatory digest. */
+	if ((rv = EVP_PKEY_get_default_digest_nid(si->pkey, &nid)) <= 1)
+		return EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
+	if (rv > 2)
+		return NULL;
+
+	/*
+	 * XXX - we need to identify EdDSA in a better way. Figure out where
+	 * and how. This mimics EdDSA checks in openssl/ca.c and openssl/req.c.
+	 */
+
+	/* The signature md is required to be EVP_md_null() (EdDSA). */
+	if (nid == NID_undef)
+		return EVP_md_null();
+
+	/* Use mandatory digest. */
+	return EVP_get_digestbynid(nid);
+}
+
 CMS_SignerInfo *
 CMS_add1_signer(CMS_ContentInfo *cms, X509 *signer, EVP_PKEY *pk,
     const EVP_MD *md, unsigned int flags)
@@ -325,19 +383,10 @@ CMS_add1_signer(CMS_ContentInfo *cms, X509 *signer, EVP_PKEY *pk,
 	if (!cms_set1_SignerIdentifier(si->sid, signer, type))
 		goto err;
 
+	if (md == NULL)
+		md = cms_SignerInfo_default_digest_md(si);
 	if (md == NULL) {
-		int def_nid;
-		if (EVP_PKEY_get_default_digest_nid(pk, &def_nid) <= 0)
-			goto err;
-		md = EVP_get_digestbynid(def_nid);
-		if (md == NULL) {
-			CMSerror(CMS_R_NO_DEFAULT_DIGEST);
-			goto err;
-		}
-	}
-
-	if (!md) {
-		CMSerror(CMS_R_NO_DIGEST_SET);
+		CMSerror(CMS_R_NO_DEFAULT_DIGEST);
 		goto err;
 	}
 
@@ -735,7 +784,7 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 	size_t sig_len = 0;
 	int ret = 0;
 
-	if ((md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm)) == NULL)
+	if ((md = cms_SignerInfo_signature_md(si)) == NULL)
 		goto err;
 
 	if (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
@@ -795,13 +844,8 @@ CMS_SignerInfo_verify(CMS_SignerInfo *si)
 	int buf_len = 0;
 	int ret = -1;
 
-	if ((md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm)) == NULL)
+	if ((md = cms_SignerInfo_signature_md(si)) == NULL)
 		goto err;
-
-	if (si->pkey == NULL) {
-		CMSerror(CMS_R_NO_PUBLIC_KEY);
-		goto err;
-	}
 
 	if (si->mctx == NULL)
 		si->mctx = EVP_MD_CTX_new();
