@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.44 2024/03/29 04:45:15 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.45 2024/03/29 04:50:11 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -474,37 +474,49 @@ X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param, ASN1_OBJECT *policy)
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_add0_policy);
 
+static STACK_OF(ASN1_OBJECT) *
+sk_ASN1_OBJECT_deep_copy(const STACK_OF(ASN1_OBJECT) *sk)
+{
+	STACK_OF(ASN1_OBJECT) *objs;
+	ASN1_OBJECT *obj = NULL;
+	int i;
+
+	if ((objs = sk_ASN1_OBJECT_new_null()) == NULL)
+		goto err;
+
+	for (i = 0; i < sk_ASN1_OBJECT_num(sk); i++) {
+		if ((obj = OBJ_dup(sk_ASN1_OBJECT_value(sk, i))) == NULL)
+			goto err;
+		if (sk_ASN1_OBJECT_push(objs, obj) <= 0)
+			goto err;
+		obj = NULL;
+	}
+
+	return objs;
+
+ err:
+	sk_ASN1_OBJECT_pop_free(objs, ASN1_OBJECT_free);
+	ASN1_OBJECT_free(obj);
+
+	return NULL;
+}
+
 int
 X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
     STACK_OF(ASN1_OBJECT) *policies)
 {
-	int i;
-	ASN1_OBJECT *oid, *doid;
-
-	if (!param)
+	if (param == NULL)
 		return 0;
-	if (param->policies)
-		sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
 
-	if (!policies) {
-		param->policies = NULL;
+	sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
+	param->policies = NULL;
+
+	if (policies == NULL)
 		return 1;
-	}
 
-	param->policies = sk_ASN1_OBJECT_new_null();
-	if (!param->policies)
+	if ((param->policies = sk_ASN1_OBJECT_deep_copy(policies)) == NULL)
 		return 0;
 
-	for (i = 0; i < sk_ASN1_OBJECT_num(policies); i++) {
-		oid = sk_ASN1_OBJECT_value(policies, i);
-		doid = OBJ_dup(oid);
-		if (!doid)
-			return 0;
-		if (!sk_ASN1_OBJECT_push(param->policies, doid)) {
-			ASN1_OBJECT_free(doid);
-			return 0;
-		}
-	}
 	return 1;
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_set1_policies);
