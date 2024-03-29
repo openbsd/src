@@ -2798,9 +2798,9 @@ cbc_se_handler:
 	.rva	.LSEH_end_AES_set_decrypt_key
 	.rva	.LSEH_info_AES_set_decrypt_key
 
-	.rva	.LSEH_begin_AES_cbc_encrypt
-	.rva	.LSEH_end_AES_cbc_encrypt
-	.rva	.LSEH_info_AES_cbc_encrypt
+	.rva	.LSEH_begin_aes_cbc_encrypt_internal
+	.rva	.LSEH_end_aes_cbc_encrypt_internal
+	.rva	.LSEH_info_aes_cbc_encrypt_internal
 
 .section	.xdata
 .align	8
@@ -2820,7 +2820,7 @@ cbc_se_handler:
 	.byte	9,0,0,0
 	.rva	key_se_handler
 	.rva	.Ldec_key_prologue,.Ldec_key_epilogue	# HandlerData[]
-.LSEH_info_AES_cbc_encrypt:
+.LSEH_info_aes_cbc_encrypt_internal:
 	.byte	9,0,0,0
 	.rva	cbc_se_handler
 ___
