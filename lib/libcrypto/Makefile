@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.186 2024/03/29 02:33:44 jsing Exp $
+# $OpenBSD: Makefile,v 1.187 2024/03/29 02:41:49 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -557,8 +557,7 @@ SRCS+= ui_openssl.c
 SRCS+= ui_util.c
 
 # whrlpool/
-SRCS+= wp_block.c
-SRCS+= wp_dgst.c
+SRCS+= whirlpool.c
 
 # x509/
 SRCS+= by_dir.c
