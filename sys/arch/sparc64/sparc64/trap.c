@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.124 2024/03/29 21:17:13 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.125 2024/03/29 21:19:30 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -903,28 +903,8 @@ text_access_fault(struct trapframe *tf, unsigned type, vaddr_t pc,
 		goto out;
 
 	error = uvm_fault(&p->p_vmspace->vm_map, va, 0, access_type);
-
-	/*
-	 * If this was a stack access we keep track of the maximum
-	 * accessed stack size.  Also, if uvm_fault gets a protection
-	 * failure it is due to accessing the stack region outside
-	 * the current limit and we need to reflect that as an access
-	 * error.
-	 */
-	if (error == 0) {
-		uvm_grow(p, va);
+	if (error == 0)
 		goto out;
-	}
-
-	/*
-	 * Pagein failed. Any other page fault in kernel, die; if user
-	 * fault, deliver SIGSEGV.
-	 */
-	if (tf->tf_tstate & TSTATE_PRIV) {
-		(void) splhigh();
-		panic("kernel text fault: pc=%llx", (unsigned long long)pc);
-		/* NOTREACHED */
-	}
 
 	signal = SIGSEGV;
 	sicode = SEGV_MAPERR;
@@ -937,10 +917,8 @@ text_access_fault(struct trapframe *tf, unsigned type, vaddr_t pc,
 	trapsignal(p, signal, access_type, sicode, sv);
 
 out:
-	if ((tf->tf_tstate & TSTATE_PRIV) == 0) {
-		userret(p);
-		share_fpu(p, tf);
-	}
+	userret(p);
+	share_fpu(p, tf);
 }
 
 
@@ -997,30 +975,8 @@ text_access_error(struct trapframe *tf, unsigned type, vaddr_t pc,
 		goto out;
 
 	error = uvm_fault(&p->p_vmspace->vm_map, va, 0, access_type);
-
-	/*
-	 * If this was a stack access we keep track of the maximum
-	 * accessed stack size.  Also, if uvm_fault gets a protection
-	 * failure it is due to accessing the stack region outside
-	 * the current limit and we need to reflect that as an access
-	 * error.
-	 */
-	if (error == 0) {
-		uvm_grow(p, va);
+	if (error == 0)
 		goto out;
-	}
-
-	/*
-	 * Pagein failed.  If doing copyin/out, return to onfault
-	 * address.  Any other page fault in kernel, die; if user
-	 * fault, deliver SIGSEGV.
-	 */
-	if (tf->tf_tstate & TSTATE_PRIV) {
-		(void) splhigh();
-		panic("kernel text error: pc=%lx sfsr=%lb", pc,
-		    sfsr, SFSR_BITS);
-		/* NOTREACHED */
-	}
 
 	signal = SIGSEGV;
 	sicode = SEGV_MAPERR;
