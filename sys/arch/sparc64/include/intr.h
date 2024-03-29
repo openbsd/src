@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.23 2024/03/29 21:16:01 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.24 2024/03/29 21:18:19 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -110,6 +110,6 @@ void	*softintr_establish(int, void (*)(void *), void *);
 void	 softintr_disestablish(void *);
 void	 softintr_schedule(void *);
 
-void	send_softint(int cpu, int level, struct intrhand *ih);
+void	send_softint(int, struct intrhand *);
 
 #endif /* _MACHINE_INTR_H_ */

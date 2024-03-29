@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.83 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.84 2024/03/29 21:18:19 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -727,5 +727,5 @@ sys_tick_get_timecount(struct timecounter *tc)
 void
 sparc64_raise_clockintr(void)
 {
-	send_softint(-1, PIL_CLOCK, &curcpu()->ci_tickintr);
+	send_softint(PIL_CLOCK, &curcpu()->ci_tickintr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.209 2024/03/29 21:17:13 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.210 2024/03/29 21:18:19 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -7218,38 +7218,35 @@ ENTRY(cecc_catch)
 END(cecc_catch)
 
 /*
- * send_softint(cpu, level, intrhand)
+ * send_softint(level, intrhand)
  *
  * Send a softint with an intrhand pointer so we can cause a vectored
  * interrupt instead of a polled interrupt.  This does pretty much the
  * same as interrupt_vector.  If intrhand is NULL then it just sends
- * a polled interrupt.  If cpu is -1 then send it to this CPU, if it's
- * -2 send it to any CPU, otherwise send it to a particular CPU.
- *
- * XXXX Dispatching to different CPUs is not implemented yet.
+ * a polled interrupt.
  */
 ENTRY(send_softint)
 	rdpr	%pstate, %g1
 	andn	%g1, PSTATE_IE, %o3
 	wrpr	%o3, 0, %pstate
 
-	brz,pn	%o2, 1f
+	brz,pn	%o1, 1f
 	 add	%g7, CI_INTRPENDING, %o3
 
-	ldx	[%o2 + IH_PEND], %o5
+	ldx	[%o1 + IH_PEND], %o5
 	brnz,pn	%o5, 1f
-	 sll	%o1, 3+3, %o5	! Find start of table for this IPL
+	 sll	%o0, 3+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
 
 	ldx	[%o3], %o5		! Load list head
-	add	%o2, IH_PEND, %o4
+	add	%o1, IH_PEND, %o4
 	casxa	[%o4] ASI_N, %g0, %o5
 	brnz,pn	%o5, 1f
 	 nop
-	stx	%o2, [%o3]
+	stx	%o1, [%o3]
 
 	mov	1, %o3			! Change from level to bitmask
-	sllx	%o3, %o1, %o3
+	sllx	%o3, %o0, %o3
 	wr	%o3, 0, SET_SOFTINT	! SET_SOFTINT
 1:
 	retl
