@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.20 2024/03/28 12:52:58 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.21 2024/03/29 02:33:44 jsing Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -19,8 +19,6 @@ CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-parisc sha1-parisc
 CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha512-parisc sha256-parisc
-# whrlpool
-SRCS+= wp_block.c
 
 .for dir src dst in ${SSLASM}
 SRCS+=	${dst}.S

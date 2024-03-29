@@ -20,8 +20,6 @@ CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha256-armv4
 CFLAGS+= -DSHA512_ASM
 SSLASM+= sha sha512-armv4
-# whrlpool
-SRCS+= wp_block.c
 
 .for dir f in ${SSLASM}
 SRCS+=	${f}.S

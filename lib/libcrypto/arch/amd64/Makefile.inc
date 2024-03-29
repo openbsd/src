@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.21 2024/03/29 01:24:07 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.22 2024/03/29 02:33:44 jsing Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -66,8 +66,6 @@ GENERATED+= sha512-x86_64.S
 sha512-x86_64.S: ${LCRYPTO_SRC}/sha/asm/sha512-x86_64.pl ${EXTRA_PL}
 	cd ${LCRYPTO_SRC}/sha/asm ; \
 		/usr/bin/perl ./sha512-x86_64.pl ${.OBJDIR}/${.TARGET}
-# whrlpool
-SRCS+= wp_block.c
 
 .for dir f in ${SSLASM}
 SRCS+=	${f}.S

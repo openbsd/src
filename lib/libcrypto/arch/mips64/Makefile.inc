@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.12 2024/03/28 12:52:58 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2024/03/29 02:33:44 jsing Exp $
 
 # mips64-specific libcrypto build rules
 
@@ -18,8 +18,6 @@ SSLASM+= sha sha512-mips sha256-mips
 CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha512-mips sha512-mips
 CFLAGS+= -DSHA512_ASM
-# whrlpool
-SRCS+= wp_block.c
 
 .for dir src dst in ${SSLASM}
 SRCS+=	${dst}.S

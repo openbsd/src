@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.9 2024/03/28 12:52:58 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.10 2024/03/29 02:33:44 jsing Exp $
 
 # powerpc-specific libcrypto build rules
 
@@ -19,8 +19,6 @@ CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-ppc sha1-ppc
 CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha512-ppc sha256-ppc
-# whrlpool
-SRCS+= wp_block.c
 
 .for dir src dst in ${SSLASM}
 SRCS+=	${dst}.S

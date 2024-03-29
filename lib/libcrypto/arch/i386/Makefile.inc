@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.18 2024/03/29 01:24:07 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.19 2024/03/29 02:33:44 jsing Exp $
 
 # i386-specific libcrypto build rules
 
@@ -37,8 +37,6 @@ CFLAGS+= -DSHA256_ASM
 SSLASM+= sha sha256-586
 CFLAGS+= -DSHA512_ASM
 SSLASM+= sha sha512-586
-# whrlpool
-SRCS+= wp_block.c
 
 .for dir f in ${SSLASM}
 SRCS+=	${f}.S

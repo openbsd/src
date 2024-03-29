@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.11 2024/03/28 12:52:58 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.12 2024/03/29 02:33:44 jsing Exp $
 
 # alpha-specific libcrypto build rules
 
@@ -15,8 +15,6 @@ SSLASM+= modes ghash-alpha
 # sha
 CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-alpha
-# whrlpool
-SRCS+= wp_block.c
 
 .for dir f in ${SSLASM}
 SRCS+=	${f}.S
