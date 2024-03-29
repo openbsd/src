@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.32 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.33 2024/03/29 03:23:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -118,29 +118,30 @@ int
 i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
     const ASN1_ITEM *it)
 {
-	/* If streaming create stream BIO and copy all content through it */
-	if (flags & SMIME_STREAM) {
-		BIO *bio, *tbio;
-		bio = BIO_new_NDEF(out, val, it);
-		if (!bio) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		SMIME_crlf_copy(in, bio, flags);
-		(void)BIO_flush(bio);
-		/* Free up successive BIOs until we hit the old output BIO */
-		do {
-			tbio = BIO_pop(bio);
-			BIO_free(bio);
-			bio = tbio;
-		} while (bio != out);
+	BIO *bio, *tbio;
+	int ret;
+
+	/* Without streaming, write out the ASN.1 structure's content. */
+	if ((flags & SMIME_STREAM) == 0)
+		return ASN1_item_i2d_bio(it, out, val);
+
+	/* If streaming, create a stream BIO and copy all content through it. */
+	if ((bio = BIO_new_NDEF(out, val, it)) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return 0;
 	}
-	/* else just write out ASN1 structure which will have all content
-	 * stored internally
-	 */
-	else
-		ASN1_item_i2d_bio(it, out, val);
-	return 1;
+
+	ret = SMIME_crlf_copy(in, bio, flags);
+	(void)BIO_flush(bio);
+
+	/* Free up successive BIOs until we hit the old output BIO. */
+	do {
+		tbio = BIO_pop(bio);
+		BIO_free(bio);
+		bio = tbio;
+	} while (bio != out);
+
+	return ret;
 }
 
 /* Base 64 read and write of ASN1 structure */
