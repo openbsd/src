@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.43 2024/03/29 00:25:32 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.44 2024/03/29 04:45:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -464,12 +464,11 @@ LCRYPTO_ALIAS(X509_VERIFY_PARAM_set_time);
 int
 X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param, ASN1_OBJECT *policy)
 {
-	if (!param->policies) {
+	if (param->policies == NULL)
 		param->policies = sk_ASN1_OBJECT_new_null();
-		if (!param->policies)
-			return 0;
-	}
-	if (!sk_ASN1_OBJECT_push(param->policies, policy))
+	if (param->policies == NULL)
+		return 0;
+	if (sk_ASN1_OBJECT_push(param->policies, policy) <= 0)
 		return 0;
 	return 1;
 }
