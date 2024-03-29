@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.123 2022/01/21 03:12:55 gnezdo Exp $
+#  $OpenBSD: Makefile,v 1.124 2024/03/29 06:49:00 miod Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -47,25 +47,13 @@ ARCH_SRCS = e_sqrt.c e_sqrtf.c e_remainder.c e_remainderf.c \
 .elif (${MACHINE_ARCH} == "sh")
 .PATH:	${.CURDIR}/arch/sh
 ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
-.elif (${MACHINE_ARCH} == "aarch64")
-.PATH:	${.CURDIR}/arch/aarch64
-.elif (${MACHINE_ARCH} == "arm")
-.PATH:	${.CURDIR}/arch/arm
-.elif (${MACHINE_ARCH} == "m88k")
-.PATH:	${.CURDIR}/arch/m88k
-.elif (${MACHINE_ARCH} == "mips64")
-.PATH:	${.CURDIR}/arch/mips64
 .elif (${MACHINE_ARCH} == "mips64el")
 .PATH:	${.CURDIR}/arch/mips64
-.elif (${MACHINE_ARCH} == "powerpc")
-.PATH:	${.CURDIR}/arch/powerpc
-.elif (${MACHINE_ARCH} == "powerpc64")
-.PATH:	${.CURDIR}/arch/powerpc64
-.elif (${MACHINE_ARCH} == "riscv64")
-.PATH:	${.CURDIR}/arch/riscv64
 .elif (${MACHINE_ARCH} == "sparc64")
 .PATH:	${.CURDIR}/arch/sparc64
 ARCH_SRCS = e_sqrtl.c
+.else
+.PATH:	${.CURDIR}/arch/${MACHINE_ARCH}
 .endif
 
 .PATH:	${.CURDIR}/man
