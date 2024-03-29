@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.41 2024/03/29 21:08:11 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.42 2024/03/29 21:14:31 miod Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -162,10 +162,6 @@ struct	fpstate
 member	fs_regs
 member	fs_fsr
 member	fs_gsr
-member	fs_qsize
-member	fs_queue
-define	FS_SIZE		sizeof(struct fpstate)
-export	FSR_QNE
 export	FPRS_FEF
 export	FPRS_DU
 export	FPRS_DL

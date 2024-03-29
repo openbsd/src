@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.25 2024/03/29 21:08:10 miod Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.26 2024/03/29 21:14:31 miod Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -143,14 +143,14 @@ fpu_dumpstate(struct fpstate *fs)
 #define	X8(x) X4(x),X4(x)
 #define	X16(x) X8(x),X8(x)
 
-static char cx_to_trapx[] = {
+static const char cx_to_trapx[] = {
 	X1(FSR_NX),
 	X2(FSR_DZ),
 	X4(FSR_UF),
 	X8(FSR_OF),
 	X16(FSR_NV)
 };
-static u_char fpu_codes[] = {
+static const u_char fpu_codes[] = {
 	X1(FPE_FLTINEX_TRAP),
 	X2(FPE_FLTDIV_TRAP),
 	X4(FPE_FLTUND_TRAP),
@@ -158,7 +158,7 @@ static u_char fpu_codes[] = {
 	X16(FPE_FLTOPERR_TRAP)
 };
 
-static int fpu_types[] = {
+static const int fpu_types[] = {
 	X1(FPE_FLTRES),
 	X2(FPE_FLTDIV),
 	X4(FPE_FLTUND),
@@ -180,64 +180,48 @@ fpu_fcopy(u_int *src, u_int *dst, int type)
 }
 
 /*
- * The FPU gave us an exception.  Clean up the mess.  Note that the
- * fp queue can only have FPops in it, never load/store FP registers
- * nor FBfcc instructions.  Experiments with `crashme' prove that
- * unknown FPops do enter the queue, however.
+ * The FPU gave us an exception.  Clean up the mess.
  */
 void
-fpu_cleanup(struct proc *p, struct fpstate *fs)
+fpu_cleanup(struct proc *p, struct fpstate *fs, union instr instr,
+    union sigval sv)
 {
 	int i, fsr = fs->fs_fsr, error;
-	union instr instr;
-	union sigval sv;
 	struct fpemu fe;
 
-	sv.sival_int = p->p_md.md_tf->tf_pc;  /* XXX only approximate */
-
 	switch ((fsr >> FSR_FTT_SHIFT) & FSR_FTT_MASK) {
-
 	case FSR_TT_NONE:
-#if 0
-		/* XXX I'm not sure how we get here, but ignoring the trap */
-		/* XXX seems to work in my limited tests		   */
-		/* XXX More research to be done =)			   */
-		panic("fpu_cleanup 1"); /* ??? */
-#else
-		printf("fpu_cleanup 1\n");
+#ifdef DEBUG
+		printf("fpu_cleanup: invoked although no exception\n");
 #endif
-		break;
-
+		return;
 	case FSR_TT_IEEE:
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
 		trapsignal(p, SIGFPE, fpu_codes[i - 1], fpu_types[i - 1], sv);
-		break;		/* XXX should return, but queue remains */
-
+		return;
 	case FSR_TT_UNFIN:
-		if (fs->fs_qsize == 0) {
-			printf("fpu_cleanup: unfinished fpop");
-			/* The book says reexecute or emulate. */
+		if (instr.i_int == 0) {
+#ifdef DEBUG
+			printf("fpu_cleanup: unfinished fpop\n");
+#endif
 			return;
 		}
 		break;
 	case FSR_TT_UNIMP:
-		if (fs->fs_qsize == 0)
-			panic("fpu_cleanup: unimplemented fpop");
+		if (instr.i_int == 0)
+			panic("fpu_cleanup: unimplemented fpop without insn");
 		break;
-
 	case FSR_TT_SEQ:
 		panic("fpu sequence error");
 		/* NOTREACHED */
-
 	case FSR_TT_HWERR:
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
 		    p->p_p->ps_comm, p->p_p->ps_pid);
 		uprintf("%s[%d]: fpu hardware error\n",
 		    p->p_p->ps_comm, p->p_p->ps_pid);
 		trapsignal(p, SIGFPE, -1, FPE_FLTINV, sv);	/* ??? */
-		goto out;
-
+		return;
 	default:
 		printf("fsr=0x%x\n", fsr);
 		panic("fpu error");
@@ -245,36 +229,24 @@ fpu_cleanup(struct proc *p, struct fpstate *fs)
 
 	/* emulate the instructions left in the queue */
 	fe.fe_fpstate = fs;
-	for (i = 0; i < fs->fs_qsize; i++) {
-		instr.i_int = fs->fs_queue[i].fq_instr;
-		if (instr.i_any.i_op != IOP_reg ||
-		    (instr.i_op3.i_op3 != IOP3_FPop1 &&
-		     instr.i_op3.i_op3 != IOP3_FPop2))
-			panic("bogus fpu queue");
-		error = fpu_execute(p, &fe, instr);
-		switch (error) {
-
-		case 0:
-			continue;
-
-		case FPE:
-			trapsignal(p, SIGFPE,
-			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1],
-			    fpu_types[(fs->fs_fsr & FSR_CX) - 1], sv);
-			break;
-
-		case NOTFPU:
-			trapsignal(p, SIGILL, 0, ILL_COPROC, sv);
-			break;
-
-		default:
-			panic("fpu_cleanup 3");
-			/* NOTREACHED */
-		}
-		/* XXX should stop here, but queue remains */
+	if (instr.i_any.i_op != IOP_reg ||
+	    (instr.i_op3.i_op3 != IOP3_FPop1 &&
+	     instr.i_op3.i_op3 != IOP3_FPop2))
+		panic("bogus fpu instruction to emulate");
+	error = fpu_execute(p, &fe, instr);
+	switch (error) {
+	case 0:
+		break;
+	case FPE:
+		trapsignal(p, SIGFPE,
+		    fpu_codes[(fs->fs_fsr & FSR_CX) - 1],
+		    fpu_types[(fs->fs_fsr & FSR_CX) - 1], sv);
+		break;
+	case NOTFPU:
+	default:
+		trapsignal(p, SIGILL, 0, ILL_COPROC, sv);
+		break;
 	}
-out:
-	fs->fs_qsize = 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.122 2024/03/29 21:09:04 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.123 2024/03/29 21:14:31 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -87,8 +87,7 @@
  * set, no matter how it is interpreted.  Appendix N of the Sparc V8 document
  * seems to imply that we should do this, and it does make sense.
  */
-__asm(".align 64");
-struct	fpstate initfpstate = {
+const struct fpstate initfpstate = {
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
 };
@@ -475,25 +474,10 @@ dopanic:
 
 		if (fs == NULL) {
 			KERNEL_LOCK();
-			/* NOTE: fpstate must be 64-bit aligned */
 			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
-			fs->fs_qsize = 0;
 			p->p_md.md_fpstate = fs;
 			KERNEL_UNLOCK();
-		}
-
-		/*
-		 * We may have more FPEs stored up and/or ops queued.
-		 * If they exist, handle them and get out.  Otherwise,
-		 * resolve the FPU state, turn it on, and try again.
-		 *
-		 * Ultras should never have a FPU queue.
-		 */
-		if (fs->fs_qsize) {
-			printf("trap: Warning fs_qsize is %d\n",fs->fs_qsize);
-			fpu_cleanup(p, fs);
-			break;
 		}
 		if (fpproc != p) {		/* we do not have it */
 			/* but maybe another CPU has it? */
@@ -567,6 +551,9 @@ dopanic:
 
 	case T_FP_IEEE_754:
 	case T_FP_OTHER:
+	{
+		union instr ins;
+
 		/*
 		 * Clean up after a floating point exception.
 		 * fpu_cleanup can (and usually does) modify the
@@ -582,20 +569,19 @@ dopanic:
 		fpproc = NULL;
 		intr_restore(s);
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
-		if (type == T_FP_OTHER && p->p_md.md_fpstate->fs_qsize == 0) {
+		if (type == T_FP_OTHER) {
 			/*
-			 * Push the faulting instruction on the queue;
+			 * Read the faulting instruction;
 			 * we might need to emulate it.
 			 */
-			(void)copyinsn(p, pc,
-			    &p->p_md.md_fpstate->fs_queue[0].fq_instr);
-			p->p_md.md_fpstate->fs_queue[0].fq_addr = (int *)pc;
-			p->p_md.md_fpstate->fs_qsize = 1;
-		}
+			(void)copyinsn(p, pc, &ins.i_int);
+		} else
+			ins.i_int = 0;
 		ADVANCE;
-		fpu_cleanup(p, p->p_md.md_fpstate);
+		fpu_cleanup(p, p->p_md.md_fpstate, ins, sv);
 		/* fpu_cleanup posts signals if needed */
 		break;
+	}
 
 	case T_TAGOF:
 		trapsignal(p, SIGEMT, 0, EMT_TAGOVF, sv);	/* XXX code? */

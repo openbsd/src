@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.8 2024/03/29 21:08:11 miod Exp $	*/
+/*	$OpenBSD: reg.h,v 1.9 2024/03/29 21:14:31 miod Exp $	*/
 /*	$NetBSD: reg.h,v 1.8 2001/06/19 12:59:16 wiz Exp $ */
 
 /*
@@ -70,29 +70,12 @@ struct reg {
 
 /*
  * FP coprocessor registers.
- *
- * FP_QSIZE is the maximum coprocessor instruction queue depth
- * of any implementation on which the kernel will run.  David Hough:
- * ``I'd suggest allowing 16 ... allowing an indeterminate variable
- * size would be even better''.  Of course, we cannot do that; we
- * need to malloc these.
- *
- * XXXX UltraSPARC processors don't implement a floating point queue.
  */
-#define	FP_QSIZE	16
-#define ALIGNFPSTATE(f)		((struct fpstate *)(((long)(f))&(~BLOCK_ALIGN)))
-
-struct fp_qentry {
-	int	*fq_addr;		/* the instruction's address */
-	int	fq_instr;		/* the instruction itself */
-};
 
 struct fpstate {
 	u_int	fs_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fs_fsr;			/* %fsr */
 	int	fs_gsr;			/* graphics state reg */
-	int	fs_qsize;		/* actual queue depth */
-	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
 };
 
 /*

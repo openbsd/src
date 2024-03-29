@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.14 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.15 2024/03/29 21:14:31 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.10 2000/09/26 22:05:50 eeh Exp $ */
 
 /*
@@ -71,7 +71,7 @@
 #include <machine/frame.h>
 #include <sys/ptrace.h>
 
-/* Unfortunately we need to convert v9 trapframe to v8 regs */
+/* Unfortunately we need to convert struct trapframe to struct reg */
 int
 process_read_regs(struct proc *p, struct reg *regs)
 {
@@ -95,8 +95,8 @@ process_read_regs(struct proc *p, struct reg *regs)
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
-	extern struct fpstate	initfpstate;
-	struct fpstate *statep = &initfpstate;
+	extern const struct fpstate initfpstate;
+	const struct fpstate *statep = &initfpstate;
 
 	/* NOTE: struct fpreg == struct fpstate */
 	if (p->p_md.md_fpstate) {
@@ -160,7 +160,6 @@ process_write_fpregs(struct proc *p, struct fpreg *regs)
 
 	/* copy in fregs */
 	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
-	p->p_md.md_fpstate->fs_qsize = 0;
 	return 0;
 }
 
