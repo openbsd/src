@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.26 2022/10/19 18:29:36 deraadt Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.27 2024/03/29 06:48:04 deraadt Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 19 2022 $
+.Dd $Mdocdate: March 29 2024 $
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -132,11 +132,8 @@ On
 some additional restrictions prevent dangerous address space modifications.
 The proposed space at
 .Fa ss_sp
-is verified to be contiguously mapped for read-write permissions
-(no execute)
-and incapable of syscall entry
-(see
-.Xr msyscall 2 ) .
+is verified to be contiguously mapped for read-write permissions without
+execute.
 If those conditions are met, a page-aligned inner region will be freshly mapped
 (all zero) with
 .Dv MAP_STACK
