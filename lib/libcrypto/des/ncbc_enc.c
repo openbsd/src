@@ -1,4 +1,4 @@
-/* $OpenBSD: ncbc_enc.c,v 1.10 2023/07/08 07:34:34 jsing Exp $ */
+/* $OpenBSD: ncbc_enc.c,v 1.11 2024/03/29 01:47:29 joshua Exp $ */
 /*
  * #included by:
  *    cbc_enc.c  (DES_cbc_encrypt)
@@ -153,3 +153,8 @@ DES_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
 	tin[0] = tin[1] = 0;
 }
+#ifdef CBC_ENC_C__DONT_UPDATE_IV
+LCRYPTO_ALIAS(DES_cbc_encrypt);
+#else
+LCRYPTO_ALIAS(DES_ncbc_encrypt);
+#endif

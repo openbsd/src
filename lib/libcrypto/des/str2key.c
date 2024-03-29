@@ -1,4 +1,4 @@
-/* $OpenBSD: str2key.c,v 1.13 2023/07/08 07:34:34 jsing Exp $ */
+/* $OpenBSD: str2key.c,v 1.14 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,6 +97,7 @@ DES_string_to_key(const char *str, DES_cblock *key)
 	explicit_bzero(&ks, sizeof(ks));
 	DES_set_odd_parity(key);
 }
+LCRYPTO_ALIAS(DES_string_to_key);
 
 void
 DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
@@ -164,3 +165,4 @@ DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
 	DES_set_odd_parity(key1);
 	DES_set_odd_parity(key2);
 }
+LCRYPTO_ALIAS(DES_string_to_2keys);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cfb_enc.c,v 1.16 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: cfb_enc.c,v 1.17 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,3 +187,4 @@ DES_cfb_encrypt(const unsigned char *in, unsigned char *out, int numbits,
 	l2c(v1, iv);
 	v0 = v1 = d0 = d1 = ti[0] = ti[1] = 0;
 }
+LCRYPTO_ALIAS(DES_cfb_encrypt);

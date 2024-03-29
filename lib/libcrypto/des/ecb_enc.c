@@ -1,4 +1,4 @@
-/* $OpenBSD: ecb_enc.c,v 1.19 2023/07/31 05:04:06 tb Exp $ */
+/* $OpenBSD: ecb_enc.c,v 1.20 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,3 +80,4 @@ DES_ecb_encrypt(const_DES_cblock *input, DES_cblock *output,
 	l2c(l, out);
 	l = ll[0] = ll[1] = 0;
 }
+LCRYPTO_ALIAS(DES_ecb_encrypt);

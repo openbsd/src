@@ -1,4 +1,4 @@
-/* $OpenBSD: des_enc.c,v 1.15 2023/07/08 07:34:34 jsing Exp $ */
+/* $OpenBSD: des_enc.c,v 1.16 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,6 +150,7 @@ DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	data[1] = r;
 	l = r = t = u = 0;
 }
+LCRYPTO_ALIAS(DES_encrypt1);
 
 void
 DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
@@ -233,6 +234,7 @@ DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 	data[1] = ROTATE(r, 3) & 0xffffffffL;
 	l = r = t = u = 0;
 }
+LCRYPTO_ALIAS(DES_encrypt2);
 
 #endif /* OPENBSD_DES_ASM */
 
@@ -256,6 +258,7 @@ DES_encrypt3(DES_LONG *data, DES_key_schedule *ks1,
 	data[0] = l;
 	data[1] = r;
 }
+LCRYPTO_ALIAS(DES_encrypt3);
 
 void
 DES_decrypt3(DES_LONG *data, DES_key_schedule *ks1,
@@ -277,6 +280,7 @@ DES_decrypt3(DES_LONG *data, DES_key_schedule *ks1,
 	data[0] = l;
 	data[1] = r;
 }
+LCRYPTO_ALIAS(DES_decrypt3);
 
 #ifndef DES_DEFAULT_OPTIONS
 
@@ -388,5 +392,6 @@ DES_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
 	tin[0] = tin[1] = 0;
 }
+LCRYPTO_ALIAS(DES_ede3_cbc_encrypt);
 
 #endif /* DES_DEFAULT_OPTIONS */

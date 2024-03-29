@@ -1,4 +1,4 @@
-/* $OpenBSD: ede_cbcm_enc.c,v 1.9 2023/07/08 07:34:34 jsing Exp $ */
+/* $OpenBSD: ede_cbcm_enc.c,v 1.10 2024/03/29 01:47:29 joshua Exp $ */
 /* Written by Ben Laurie <ben@algroup.co.uk> for the OpenSSL
  * project 13 Feb 1999.
  */
@@ -186,4 +186,5 @@ DES_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
 	tin[0] = tin[1] = 0;
 }
+LCRYPTO_ALIAS(DES_ede3_cbcm_encrypt);
 #endif

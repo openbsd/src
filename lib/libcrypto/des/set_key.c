@@ -1,4 +1,4 @@
-/* $OpenBSD: set_key.c,v 1.26 2023/12/20 06:30:04 tb Exp $ */
+/* $OpenBSD: set_key.c,v 1.27 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,6 +91,7 @@ DES_set_odd_parity(DES_cblock *key)
 	for (i = 0; i < DES_KEY_SZ; i++)
 		(*key)[i] = odd_parity[(*key)[i]];
 }
+LCRYPTO_ALIAS(DES_set_odd_parity);
 
 int
 DES_check_key_parity(const_DES_cblock *key)
@@ -103,6 +104,7 @@ DES_check_key_parity(const_DES_cblock *key)
 	}
 	return (1);
 }
+LCRYPTO_ALIAS(DES_check_key_parity);
 
 /* Weak and semi weak keys as taken from
  * %A D.W. Davies
@@ -145,6 +147,7 @@ DES_is_weak_key(const_DES_cblock *key)
 			return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(DES_is_weak_key);
 
 /* NOW DEFINED IN des_local.h
  * See ecb_encrypt.c for a pseudo description of these macros.
@@ -314,6 +317,7 @@ DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule)
 		return 0;
 	}
 }
+LCRYPTO_ALIAS(DES_set_key);
 
 /* return 0 if key parity is odd (correct),
  * return -1 if key parity error,
@@ -329,6 +333,7 @@ DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule)
 	DES_set_key_unchecked(key, schedule);
 	return 0;
 }
+LCRYPTO_ALIAS(DES_set_key_checked);
 
 void
 DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule)
@@ -388,12 +393,14 @@ DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule)
 		*(k++) = ROTATE(t2, 26) & 0xffffffffL;
 	}
 }
+LCRYPTO_ALIAS(DES_set_key_unchecked);
 
 int
 DES_key_sched(const_DES_cblock *key, DES_key_schedule *schedule)
 {
 	return (DES_set_key(key, schedule));
 }
+LCRYPTO_ALIAS(DES_key_sched);
 
 int
 DES_random_key(DES_cblock *ret)
@@ -404,3 +411,4 @@ DES_random_key(DES_cblock *ret)
 	} while (DES_is_weak_key(ret));
 	return (1);
 }
+LCRYPTO_ALIAS(DES_random_key);

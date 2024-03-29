@@ -1,4 +1,4 @@
-/* $OpenBSD: xcbc_enc.c,v 1.12 2023/07/08 07:34:34 jsing Exp $ */
+/* $OpenBSD: xcbc_enc.c,v 1.13 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,3 +151,4 @@ DES_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 	inW0 = inW1 = outW0 = outW1 = 0;
 	tin[0] = tin[1] = 0;
 }
+LCRYPTO_ALIAS(DES_xcbc_encrypt);

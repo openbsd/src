@@ -1,4 +1,4 @@
-/* $OpenBSD: qud_cksm.c,v 1.10 2023/07/08 07:34:34 jsing Exp $ */
+/* $OpenBSD: qud_cksm.c,v 1.11 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,3 +123,4 @@ DES_quad_cksum(const unsigned char *input, DES_cblock output[],
 	}
 	return (z0);
 }
+LCRYPTO_ALIAS(DES_quad_cksum);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cfb64enc.c,v 1.8 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: cfb64enc.c,v 1.9 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,3 +120,4 @@ DES_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 	v0 = v1 = ti[0] = ti[1] = c = cc = 0;
 	*num = n;
 }
+LCRYPTO_ALIAS(DES_cfb64_encrypt);

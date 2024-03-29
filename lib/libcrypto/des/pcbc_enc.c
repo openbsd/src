@@ -1,4 +1,4 @@
-/* $OpenBSD: pcbc_enc.c,v 1.9 2023/07/08 07:34:34 jsing Exp $ */
+/* $OpenBSD: pcbc_enc.c,v 1.10 2024/03/29 01:47:29 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,3 +114,4 @@ DES_pcbc_encrypt(const unsigned char *input, unsigned char *output,
 	tin[0] = tin[1] = 0;
 	sin0 = sin1 = xor0 = xor1 = tout0 = tout1 = 0;
 }
+LCRYPTO_ALIAS(DES_pcbc_encrypt);
