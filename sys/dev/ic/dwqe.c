@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.17 2024/03/04 23:50:20 bluhm Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.18 2024/03/29 08:19:40 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -592,6 +592,9 @@ dwqe_tx_proc(struct dwqe_softc *sc)
 	struct dwqe_desc *txd;
 	struct dwqe_buf *txb;
 	int idx, txfree;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
 
 	bus_dmamap_sync(sc->sc_dmat, DWQE_DMA_MAP(sc->sc_txring), 0,
 	    DWQE_DMA_LEN(sc->sc_txring),
