@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2_local.h,v 1.2 2023/07/07 08:29:37 beck Exp $ */
+/* $OpenBSD: rc2_local.h,v 1.3 2024/03/29 05:03:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,49 +100,6 @@
 			case 1: *(--(c))=(unsigned char)(((l1)     )&0xff);\
 				}					\
 			}
-
-/* NOTE - c is not incremented as per n2l */
-#define n2ln(c,l1,l2,n)	{						\
-			c+=n;						\
-			l1=l2=0;					\
-			switch (n) {					\
-			case 8: l2 =((unsigned long)(*(--(c))))    ;	\
-			case 7: l2|=((unsigned long)(*(--(c))))<< 8;	\
-			case 6: l2|=((unsigned long)(*(--(c))))<<16;	\
-			case 5: l2|=((unsigned long)(*(--(c))))<<24;	\
-			case 4: l1 =((unsigned long)(*(--(c))))    ;	\
-			case 3: l1|=((unsigned long)(*(--(c))))<< 8;	\
-			case 2: l1|=((unsigned long)(*(--(c))))<<16;	\
-			case 1: l1|=((unsigned long)(*(--(c))))<<24;	\
-				}					\
-			}
-
-/* NOTE - c is not incremented as per l2n */
-#define l2nn(l1,l2,c,n)	{						\
-			c+=n;						\
-			switch (n) {					\
-			case 8: *(--(c))=(unsigned char)(((l2)    )&0xff);\
-			case 7: *(--(c))=(unsigned char)(((l2)>> 8)&0xff);\
-			case 6: *(--(c))=(unsigned char)(((l2)>>16)&0xff);\
-			case 5: *(--(c))=(unsigned char)(((l2)>>24)&0xff);\
-			case 4: *(--(c))=(unsigned char)(((l1)    )&0xff);\
-			case 3: *(--(c))=(unsigned char)(((l1)>> 8)&0xff);\
-			case 2: *(--(c))=(unsigned char)(((l1)>>16)&0xff);\
-			case 1: *(--(c))=(unsigned char)(((l1)>>24)&0xff);\
-				}					\
-			}
-
-#undef n2l
-#define n2l(c,l)        (l =((unsigned long)(*((c)++)))<<24L,		\
-                         l|=((unsigned long)(*((c)++)))<<16L,		\
-                         l|=((unsigned long)(*((c)++)))<< 8L,		\
-                         l|=((unsigned long)(*((c)++))))
-
-#undef l2n
-#define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24L)&0xff),	\
-                         *((c)++)=(unsigned char)(((l)>>16L)&0xff),	\
-                         *((c)++)=(unsigned char)(((l)>> 8L)&0xff),	\
-                         *((c)++)=(unsigned char)(((l)     )&0xff))
 
 #define C_RC2(n)							\
 	t=(x0+(x1& ~x3)+(x2&x3)+ *(p0++))&0xffff;			\
