@@ -1,4 +1,4 @@
-/* $OpenBSD: cast_s.h,v 1.7 2023/07/08 07:25:43 jsing Exp $ */
+/* $OpenBSD: cast.c,v 1.1 2024/03/29 07:36:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
-__BEGIN_HIDDEN_DECLS
+#include <openssl/cast.h>
+
+#include "cast_local.h"
 
 const CAST_LONG CAST_S_table0[256] = {
 	0x30fb40d4, 0x9fa0ff0b, 0x6beccd2f, 0x3f258c7a,
@@ -587,4 +589,395 @@ const CAST_LONG CAST_S_table7[256] = {
 	0x50b2ad80, 0xeaee6801, 0x8db2a283, 0xea8bf59e,
 };
 
-__END_HIDDEN_DECLS
+#ifndef OPENBSD_CAST_ASM
+void
+CAST_encrypt(CAST_LONG *data, const CAST_KEY *key)
+{
+	CAST_LONG l, r, t;
+	const CAST_LONG *k;
+
+	k = &(key->data[0]);
+	l = data[0];
+	r = data[1];
+
+	E_CAST( 0, k,l, r,+,^, -);
+	E_CAST( 1, k,r, l,^, -,+);
+	E_CAST( 2, k,l, r, -,+,^);
+	E_CAST( 3, k,r, l,+,^, -);
+	E_CAST( 4, k,l, r,^, -,+);
+	E_CAST( 5, k,r, l, -,+,^);
+	E_CAST( 6, k,l, r,+,^, -);
+	E_CAST( 7, k,r, l,^, -,+);
+	E_CAST( 8, k,l, r, -,+,^);
+	E_CAST( 9, k,r, l,+,^, -);
+	E_CAST(10, k,l, r,^, -,+);
+	E_CAST(11, k,r, l, -,+,^);
+	if (!key->short_key) {
+		E_CAST(12, k,l, r,+,^, -);
+		E_CAST(13, k,r, l,^, -,+);
+		E_CAST(14, k,l, r, -,+,^);
+		E_CAST(15, k,r, l,+,^, -);
+	}
+
+	data[1] = l&0xffffffffL;
+	data[0] = r&0xffffffffL;
+}
+LCRYPTO_ALIAS(CAST_encrypt);
+
+void
+CAST_decrypt(CAST_LONG *data, const CAST_KEY *key)
+{
+	CAST_LONG l, r, t;
+	const CAST_LONG *k;
+
+	k = &(key->data[0]);
+	l = data[0];
+	r = data[1];
+
+	if (!key->short_key) {
+		E_CAST(15, k,l, r,+,^, -);
+		E_CAST(14, k,r, l, -,+,^);
+		E_CAST(13, k,l, r,^, -,+);
+		E_CAST(12, k,r, l,+,^, -);
+	}
+	E_CAST(11, k,l, r, -,+,^);
+	E_CAST(10, k,r, l,^, -,+);
+	E_CAST( 9, k,l, r,+,^, -);
+	E_CAST( 8, k,r, l, -,+,^);
+	E_CAST( 7, k,l, r,^, -,+);
+	E_CAST( 6, k,r, l,+,^, -);
+	E_CAST( 5, k,l, r, -,+,^);
+	E_CAST( 4, k,r, l,^, -,+);
+	E_CAST( 3, k,l, r,+,^, -);
+	E_CAST( 2, k,r, l, -,+,^);
+	E_CAST( 1, k,l, r,^, -,+);
+	E_CAST( 0, k,r, l,+,^, -);
+
+	data[1] = l&0xffffffffL;
+	data[0] = r&0xffffffffL;
+}
+LCRYPTO_ALIAS(CAST_decrypt);
+#endif
+
+#define CAST_exp(l,A,a,n) \
+	A[n/4]=l; \
+	a[n+3]=(l    )&0xff; \
+	a[n+2]=(l>> 8)&0xff; \
+	a[n+1]=(l>>16)&0xff; \
+	a[n+0]=(l>>24)&0xff;
+
+#define S4 CAST_S_table4
+#define S5 CAST_S_table5
+#define S6 CAST_S_table6
+#define S7 CAST_S_table7
+void
+CAST_set_key(CAST_KEY *key, int len, const unsigned char *data)
+{
+	CAST_LONG x[16];
+	CAST_LONG z[16];
+	CAST_LONG k[32];
+	CAST_LONG X[4], Z[4];
+	CAST_LONG l, *K;
+	int i;
+
+	for (i = 0;
+		i < 16;
+	i++) x[i] = 0;
+	if (len > 16)
+		len = 16;
+	for (i = 0; i < len; i++)
+		x[i] = data[i];
+	if (len <= 10)
+		key->short_key = 1;
+	else
+		key->short_key = 0;
+
+	K = &k[0];
+	X[0] = ((x[ 0]<<24)|(x[ 1]<<16)|(x[ 2]<<8)|x[ 3])&0xffffffffL;
+	X[1] = ((x[ 4]<<24)|(x[ 5]<<16)|(x[ 6]<<8)|x[ 7])&0xffffffffL;
+	X[2] = ((x[ 8]<<24)|(x[ 9]<<16)|(x[10]<<8)|x[11])&0xffffffffL;
+	X[3] = ((x[12]<<24)|(x[13]<<16)|(x[14]<<8)|x[15])&0xffffffffL;
+
+	for (;;) {
+		l = X[0]^S4[x[13]]^S5[x[15]]^S6[x[12]]^S7[x[14]]^S6[x[ 8]];
+		CAST_exp(l, Z, z, 0);
+		l = X[2]^S4[z[ 0]]^S5[z[ 2]]^S6[z[ 1]]^S7[z[ 3]]^S7[x[10]];
+		CAST_exp(l, Z, z, 4);
+		l = X[3]^S4[z[ 7]]^S5[z[ 6]]^S6[z[ 5]]^S7[z[ 4]]^S4[x[ 9]];
+		CAST_exp(l, Z, z, 8);
+		l = X[1]^S4[z[10]]^S5[z[ 9]]^S6[z[11]]^S7[z[ 8]]^S5[x[11]];
+		CAST_exp(l, Z,z, 12);
+
+		K[0] = S4[z[ 8]]^S5[z[ 9]]^S6[z[ 7]]^S7[z[ 6]]^S4[z[ 2]];
+		K[1] = S4[z[10]]^S5[z[11]]^S6[z[ 5]]^S7[z[ 4]]^S5[z[ 6]];
+		K[2] = S4[z[12]]^S5[z[13]]^S6[z[ 3]]^S7[z[ 2]]^S6[z[ 9]];
+		K[3] = S4[z[14]]^S5[z[15]]^S6[z[ 1]]^S7[z[ 0]]^S7[z[12]];
+
+		l = Z[2]^S4[z[ 5]]^S5[z[ 7]]^S6[z[ 4]]^S7[z[ 6]]^S6[z[ 0]];
+		CAST_exp(l, X, x, 0);
+		l = Z[0]^S4[x[ 0]]^S5[x[ 2]]^S6[x[ 1]]^S7[x[ 3]]^S7[z[ 2]];
+		CAST_exp(l, X, x, 4);
+		l = Z[1]^S4[x[ 7]]^S5[x[ 6]]^S6[x[ 5]]^S7[x[ 4]]^S4[z[ 1]];
+		CAST_exp(l, X, x, 8);
+		l = Z[3]^S4[x[10]]^S5[x[ 9]]^S6[x[11]]^S7[x[ 8]]^S5[z[ 3]];
+		CAST_exp(l, X,x, 12);
+
+		K[4] = S4[x[ 3]]^S5[x[ 2]]^S6[x[12]]^S7[x[13]]^S4[x[ 8]];
+		K[5] = S4[x[ 1]]^S5[x[ 0]]^S6[x[14]]^S7[x[15]]^S5[x[13]];
+		K[6] = S4[x[ 7]]^S5[x[ 6]]^S6[x[ 8]]^S7[x[ 9]]^S6[x[ 3]];
+		K[7] = S4[x[ 5]]^S5[x[ 4]]^S6[x[10]]^S7[x[11]]^S7[x[ 7]];
+
+		l = X[0]^S4[x[13]]^S5[x[15]]^S6[x[12]]^S7[x[14]]^S6[x[ 8]];
+		CAST_exp(l, Z, z, 0);
+		l = X[2]^S4[z[ 0]]^S5[z[ 2]]^S6[z[ 1]]^S7[z[ 3]]^S7[x[10]];
+		CAST_exp(l, Z, z, 4);
+		l = X[3]^S4[z[ 7]]^S5[z[ 6]]^S6[z[ 5]]^S7[z[ 4]]^S4[x[ 9]];
+		CAST_exp(l, Z, z, 8);
+		l = X[1]^S4[z[10]]^S5[z[ 9]]^S6[z[11]]^S7[z[ 8]]^S5[x[11]];
+		CAST_exp(l, Z,z, 12);
+
+		K[8] = S4[z[ 3]]^S5[z[ 2]]^S6[z[12]]^S7[z[13]]^S4[z[ 9]];
+		K[9] = S4[z[ 1]]^S5[z[ 0]]^S6[z[14]]^S7[z[15]]^S5[z[12]];
+		K[10] = S4[z[ 7]]^S5[z[ 6]]^S6[z[ 8]]^S7[z[ 9]]^S6[z[ 2]];
+		K[11] = S4[z[ 5]]^S5[z[ 4]]^S6[z[10]]^S7[z[11]]^S7[z[ 6]];
+
+		l = Z[2]^S4[z[ 5]]^S5[z[ 7]]^S6[z[ 4]]^S7[z[ 6]]^S6[z[ 0]];
+		CAST_exp(l, X, x, 0);
+		l = Z[0]^S4[x[ 0]]^S5[x[ 2]]^S6[x[ 1]]^S7[x[ 3]]^S7[z[ 2]];
+		CAST_exp(l, X, x, 4);
+		l = Z[1]^S4[x[ 7]]^S5[x[ 6]]^S6[x[ 5]]^S7[x[ 4]]^S4[z[ 1]];
+		CAST_exp(l, X, x, 8);
+		l = Z[3]^S4[x[10]]^S5[x[ 9]]^S6[x[11]]^S7[x[ 8]]^S5[z[ 3]];
+		CAST_exp(l, X,x, 12);
+
+		K[12] = S4[x[ 8]]^S5[x[ 9]]^S6[x[ 7]]^S7[x[ 6]]^S4[x[ 3]];
+		K[13] = S4[x[10]]^S5[x[11]]^S6[x[ 5]]^S7[x[ 4]]^S5[x[ 7]];
+		K[14] = S4[x[12]]^S5[x[13]]^S6[x[ 3]]^S7[x[ 2]]^S6[x[ 8]];
+		K[15] = S4[x[14]]^S5[x[15]]^S6[x[ 1]]^S7[x[ 0]]^S7[x[13]];
+		if (K != k)
+			break;
+		K += 16;
+	}
+
+	for (i = 0; i < 16; i++) {
+		key->data[i*2] = k[i];
+		key->data[i*2 + 1] = ((k[i + 16]) + 16)&0x1f;
+	}
+}
+LCRYPTO_ALIAS(CAST_set_key);
+
+void
+CAST_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
+    const CAST_KEY *ks, unsigned char *iv, int enc)
+{
+	CAST_LONG tin0, tin1;
+	CAST_LONG tout0, tout1, xor0, xor1;
+	long l = length;
+	CAST_LONG tin[2];
+
+	if (enc) {
+		n2l(iv, tout0);
+		n2l(iv, tout1);
+		iv -= 8;
+		for (l -= 8; l >= 0; l -= 8) {
+			n2l(in, tin0);
+			n2l(in, tin1);
+			tin0 ^= tout0;
+			tin1 ^= tout1;
+			tin[0] = tin0;
+			tin[1] = tin1;
+			CAST_encrypt(tin, ks);
+			tout0 = tin[0];
+			tout1 = tin[1];
+			l2n(tout0, out);
+			l2n(tout1, out);
+		}
+		if (l != -8) {
+			n2ln(in, tin0, tin1, l + 8);
+			tin0 ^= tout0;
+			tin1 ^= tout1;
+			tin[0] = tin0;
+			tin[1] = tin1;
+			CAST_encrypt(tin, ks);
+			tout0 = tin[0];
+			tout1 = tin[1];
+			l2n(tout0, out);
+			l2n(tout1, out);
+		}
+		l2n(tout0, iv);
+		l2n(tout1, iv);
+	} else {
+		n2l(iv, xor0);
+		n2l(iv, xor1);
+		iv -= 8;
+		for (l -= 8; l >= 0; l -= 8) {
+			n2l(in, tin0);
+			n2l(in, tin1);
+			tin[0] = tin0;
+			tin[1] = tin1;
+			CAST_decrypt(tin, ks);
+			tout0 = tin[0]^xor0;
+			tout1 = tin[1]^xor1;
+			l2n(tout0, out);
+			l2n(tout1, out);
+			xor0 = tin0;
+			xor1 = tin1;
+		}
+		if (l != -8) {
+			n2l(in, tin0);
+			n2l(in, tin1);
+			tin[0] = tin0;
+			tin[1] = tin1;
+			CAST_decrypt(tin, ks);
+			tout0 = tin[0]^xor0;
+			tout1 = tin[1]^xor1;
+			l2nn(tout0, tout1, out, l + 8);
+			xor0 = tin0;
+			xor1 = tin1;
+		}
+		l2n(xor0, iv);
+		l2n(xor1, iv);
+	}
+	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
+	tin[0] = tin[1] = 0;
+}
+LCRYPTO_ALIAS(CAST_cbc_encrypt);
+
+/*
+ * The input and output encrypted as though 64bit cfb mode is being
+ * used.  The extra state information to record how much of the
+ * 64bit block we have used is contained in *num;
+ */
+
+void
+CAST_cfb64_encrypt(const unsigned char *in, unsigned char *out,
+    long length, const CAST_KEY *schedule, unsigned char *ivec,
+    int *num, int enc)
+{
+	CAST_LONG v0, v1, t;
+	int n= *num;
+	long l = length;
+	CAST_LONG ti[2];
+	unsigned char *iv, c, cc;
+
+	iv = ivec;
+	if (enc) {
+		while (l--) {
+			if (n == 0) {
+				n2l(iv, v0);
+				ti[0] = v0;
+				n2l(iv, v1);
+				ti[1] = v1;
+				CAST_encrypt((CAST_LONG *)ti, schedule);
+				iv = ivec;
+				t = ti[0];
+				l2n(t, iv);
+				t = ti[1];
+				l2n(t, iv);
+				iv = ivec;
+			}
+			c= *(in++)^iv[n];
+			*(out++) = c;
+			iv[n] = c;
+			n = (n + 1)&0x07;
+		}
+	} else {
+		while (l--) {
+			if (n == 0) {
+				n2l(iv, v0);
+				ti[0] = v0;
+				n2l(iv, v1);
+				ti[1] = v1;
+				CAST_encrypt((CAST_LONG *)ti, schedule);
+				iv = ivec;
+				t = ti[0];
+				l2n(t, iv);
+				t = ti[1];
+				l2n(t, iv);
+				iv = ivec;
+			}
+			cc= *(in++);
+			c = iv[n];
+			iv[n] = cc;
+			*(out++) = c^cc;
+			n = (n + 1)&0x07;
+		}
+	}
+	v0 = v1 = ti[0] = ti[1] = t=c = cc = 0;
+	*num = n;
+}
+LCRYPTO_ALIAS(CAST_cfb64_encrypt);
+
+void
+CAST_ecb_encrypt(const unsigned char *in, unsigned char *out,
+    const CAST_KEY *ks, int enc)
+{
+	CAST_LONG l, d[2];
+
+	n2l(in, l);
+	d[0] = l;
+	n2l(in, l);
+	d[1] = l;
+	if (enc)
+		CAST_encrypt(d, ks);
+	else
+		CAST_decrypt(d, ks);
+	l = d[0];
+	l2n(l, out);
+	l = d[1];
+	l2n(l, out);
+	l = d[0] = d[1] = 0;
+}
+LCRYPTO_ALIAS(CAST_ecb_encrypt);
+
+/*
+ * The input and output encrypted as though 64bit ofb mode is being
+ * used.  The extra state information to record how much of the
+ * 64bit block we have used is contained in *num;
+ */
+void
+CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,
+    long length, const CAST_KEY *schedule, unsigned char *ivec,
+    int *num)
+{
+	CAST_LONG v0, v1, t;
+	int n= *num;
+	long l = length;
+	unsigned char d[8];
+	char *dp;
+	CAST_LONG ti[2];
+	unsigned char *iv;
+	int save = 0;
+
+	iv = ivec;
+	n2l(iv, v0);
+	n2l(iv, v1);
+	ti[0] = v0;
+	ti[1] = v1;
+	dp = (char *)d;
+	l2n(v0, dp);
+	l2n(v1, dp);
+	while (l--) {
+		if (n == 0) {
+			CAST_encrypt((CAST_LONG *)ti, schedule);
+			dp = (char *)d;
+			t = ti[0];
+			l2n(t, dp);
+			t = ti[1];
+			l2n(t, dp);
+			save++;
+		}
+		*(out++)= *(in++)^d[n];
+		n = (n + 1)&0x07;
+	}
+	if (save) {
+		v0 = ti[0];
+		v1 = ti[1];
+		iv = ivec;
+		l2n(v0, iv);
+		l2n(v1, iv);
+	}
+	t = v0 = v1 = ti[0] = ti[1] = 0;
+	*num = n;
+}
+LCRYPTO_ALIAS(CAST_ofb64_encrypt);

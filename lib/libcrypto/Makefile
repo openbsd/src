@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.191 2024/03/29 07:26:21 jsing Exp $
+# $OpenBSD: Makefile,v 1.192 2024/03/29 07:36:38 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -204,11 +204,7 @@ SRCS+= bs_cbs.c
 SRCS+= camellia.c
 
 # cast/
-SRCS+= c_cfb64.c
-SRCS+= c_ecb.c
-SRCS+= c_enc.c
-SRCS+= c_ofb64.c
-SRCS+= c_skey.c
+SRCS+= cast.c
 
 # chacha/
 SRCS+= chacha.c
