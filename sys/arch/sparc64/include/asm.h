@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.18 2023/01/13 17:53:30 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.19 2024/03/29 21:05:34 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -42,9 +42,6 @@
 #define _MACHINE_ASM_H_
 
 /* Pull in CC64FSZ and BIAS from frame.h */
-#ifndef _LOCORE
-#define _LOCORE
-#endif
 #include <machine/frame.h>
 
 #define	_C_LABEL(name)		name
