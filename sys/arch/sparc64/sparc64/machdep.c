@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.215 2024/03/29 21:27:53 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.216 2024/03/29 21:29:34 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1694,7 +1694,7 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int number,
 	if (ih == NULL)
 		return (NULL);
 
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih);
 
 	return (ih);
 }

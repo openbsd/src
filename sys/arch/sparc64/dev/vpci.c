@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.34 2024/03/29 21:18:19 miod Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.35 2024/03/29 21:29:33 miod Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -695,7 +695,7 @@ vpci_intr_establish_cpu(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		return (NULL);
 
 	ih->ih_cpu = cpu;
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih);
 	ih->ih_ack = vpci_intr_ack;
 
 	err = sun4v_intr_settarget(devhandle, sysino, ih->ih_cpu->ci_upaid);

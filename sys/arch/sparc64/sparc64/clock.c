@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.85 2024/03/29 21:26:38 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.86 2024/03/29 21:29:34 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -171,7 +171,12 @@ const struct intrclock stick_intrclock = {
 
 void sparc64_raise_clockintr(void);
 
-static struct intrhand level0 = { tickintr };
+static struct intrhand level10 = {
+	.ih_fun = tickintr,
+	.ih_number = 1,
+	.ih_pil = 10,
+	.ih_name = "clock"
+};
 
 /*
  * clock (eeprom) attaches at the sbus or the ebus (PCI)
@@ -516,41 +521,36 @@ cpu_initclocks(void)
 
 	struct cpu_info *ci;
 
-	/* We don't have a counter-timer -- use %tick */
-	level0.ih_clr = 0;
-
 	/* 
 	 * Establish a level 10 interrupt handler 
 	 *
 	 * We will have a conflict with the softint handler,
 	 * so we set the ih_number to 1.
 	 */
-	level0.ih_number = 1;
-	strlcpy(level0.ih_name, "clock", sizeof(level0.ih_name));
-	intr_establish(10, &level0);
-	evcount_percpu(&level0.ih_count);
+	intr_establish(&level10);
+	evcount_percpu(&level10.ih_count);
 
 	if (sys_tick_rate > 0) {
 		sys_tick_nsec_cycle_ratio =
 		    sys_tick_rate * (1ULL << 32) / 1000000000;
 		sys_tick_nsec_max = UINT64_MAX / sys_tick_nsec_cycle_ratio;
 		if (impl == IMPL_HUMMINGBIRD) {
-			level0.ih_fun = stickintr;
+			level10.ih_fun = stickintr;
 			cpu_start_clock = stick_start;
 		} else {
-			level0.ih_fun = sys_tickintr;
+			level10.ih_fun = sys_tickintr;
 			cpu_start_clock = sys_tick_start;
 		}
 	} else {
 		tick_nsec_cycle_ratio =
 		    cpu_clockrate * (1ULL << 32) / 1000000000;
 		tick_nsec_max = UINT64_MAX / tick_nsec_cycle_ratio;
-		level0.ih_fun = tickintr;
+		level10.ih_fun = tickintr;
 		cpu_start_clock = tick_start;
 	}
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next)
-		memcpy(&ci->ci_tickintr, &level0, sizeof(level0));
+		memcpy(&ci->ci_tickintr, &level10, sizeof(level10));
 }
 
 void
@@ -576,7 +576,7 @@ int
 tickintr(void *cap)
 {
 	clockintr_dispatch(cap);
-	evcount_inc(&level0.ih_count);
+	evcount_inc(&level10.ih_count);
 	return (1);
 }
 
@@ -584,7 +584,7 @@ int
 sys_tickintr(void *cap)
 {
 	clockintr_dispatch(cap);
-	evcount_inc(&level0.ih_count);
+	evcount_inc(&level10.ih_count);
 	return (1);
 }
 
@@ -592,7 +592,7 @@ int
 stickintr(void *cap)
 {
 	clockintr_dispatch(cap);
-	evcount_inc(&level0.ih_count);
+	evcount_inc(&level10.ih_count);
 	return (1);
 }
 

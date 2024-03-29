@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus_mainbus.c,v 1.12 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: ebus_mainbus.c,v 1.13 2024/03/29 21:29:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -274,7 +274,7 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		if (ih == NULL)
 			return (NULL);
 
-		intr_establish(ih->ih_pil, ih);
+		intr_establish(ih);
 		ih->ih_ack = ebus_mainbus_intr_ack;
 
 		err = hv_intr_settarget(sysino, ih->ih_cpu->ci_upaid);
@@ -322,7 +322,7 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (ih == NULL)
 		return (NULL);
 
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih);
 
 	if (intrmapptr != NULL) {
 		u_int64_t intrmap;

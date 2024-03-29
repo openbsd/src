@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.46 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.47 2024/03/29 21:29:33 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -291,7 +291,7 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 	struct mainbus_attach_args *ma = aux;
 	int node = ma->ma_node;
 	struct intrhand *ih;
-	int ipl, error;
+	int error;
 	struct sysioreg *sysio;
 	char buf[32];
 	char *name;
@@ -363,11 +363,10 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 	ih->ih_map = &sysio->therm_int_map;
 	ih->ih_clr = NULL; /* &sysio->therm_clr_int; */
 	ih->ih_fun = sbus_overtemp;
-	ipl = 1;
-	ih->ih_pil = (1 << ipl);
+	ih->ih_pil = 1;
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	strlcpy(ih->ih_name, sc->sc_dev.dv_xname, sizeof(ih->ih_name));
-	intr_establish(ipl, ih);
+	intr_establish(ih);
 	*(ih->ih_map) |= INTMAP_V;
 	
 	/*
@@ -757,7 +756,7 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 	if (ih == NULL)
 		return (ih);
 
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih);
 
 	return (ih);
 }

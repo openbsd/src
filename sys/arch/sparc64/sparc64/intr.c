@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.66 2024/03/29 21:18:19 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.67 2024/03/29 21:29:34 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -132,10 +132,10 @@ intr_ack(struct intrhand *ih)
 }
 
 /*
- * Attach an interrupt handler to the vector chain for the given level.
+ * Attach an interrupt handler to the vector chain.
  */
 void
-intr_establish(int level, struct intrhand *ih)
+intr_establish(struct intrhand *ih)
 {
 	struct intrhand *q;
 	u_int64_t m, id;
@@ -143,12 +143,7 @@ intr_establish(int level, struct intrhand *ih)
 
 	s = splhigh();
 
-	/*
-	 * This is O(N^2) for long chains, but chains are never long
-	 * and we do want to preserve order.
-	 */
-	ih->ih_pil = level; /* XXXX caller should have done this before */
-	ih->ih_pending = 0; /* XXXX caller should have done this before */
+	ih->ih_pending = NULL;
 	ih->ih_next = NULL;
 	if (ih->ih_cpu == NULL)
 		ih->ih_cpu = curcpu();
@@ -294,7 +289,7 @@ softintr_establish(int level, void (*fun)(void *), void *arg)
 	ih->ih_fun = (int (*)(void *))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
-	ih->ih_pending = 0;
+	ih->ih_pending = NULL;
 	ih->ih_ack = NULL;
 	ih->ih_clr = NULL;
 	return (ih);

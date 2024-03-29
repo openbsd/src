@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.83 2023/04/11 00:45:08 jsg Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.84 2024/03/29 21:29:33 miod Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -681,7 +681,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	ih->ih_map = mapper;
 	ih->ih_clr = clearer;
 	ih->ih_fun = handler;
-	ih->ih_pil = (1 << ipl);
+	ih->ih_pil = ipl;
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	snprintf(ih->ih_name, sizeof(ih->ih_name),
 	    "%s:%s", sc->sc_dev.dv_xname, suffix);
@@ -691,7 +691,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	    ih->ih_fun, ih->ih_arg, sc->sc_dev.dv_xname, ih->ih_number,
 	    ih->ih_pil));
 
-	intr_establish(ipl, ih);
+	intr_establish(ih);
 }
 
 /*
@@ -1286,7 +1286,7 @@ found:
 	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
 		ih->ih_mpsafe = 1;
 
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih);
 
 	/*
 	 * Enable the interrupt now we have the handler installed.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.37 2024/03/29 21:18:19 miod Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.38 2024/03/29 21:29:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -786,7 +786,7 @@ pyro_intr_establish_cpu(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
 		ih->ih_mpsafe = 1;
 
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih);
 
 	if (intrmapptr != NULL) {
 		u_int64_t intrmap;
