@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbi.c,v 1.7 2022/12/06 00:11:23 jca Exp $	*/
+/*	$OpenBSD: sbi.c,v 1.8 2024/03/29 22:11:34 kettenis Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -34,6 +34,9 @@
 #include <machine/sbi.h>
 
 #include <dev/cons.h>
+
+extern void (*cpuresetfn)(void);
+extern void (*powerdownfn)(void);
 
 /* SBI Implementation-Specific Definitions */
 #define	OPENSBI_VERSION_MAJOR_OFFSET	16
@@ -125,6 +128,20 @@ sbi_hsm_hart_status(u_long hart)
 #endif
 
 void
+sbi_reset(void)
+{
+	SBI_CALL2(SBI_EXT_ID_SRST, SBI_SRST_RESET,
+	    SBI_SRST_RESET_WARM_REBOOT, 0);
+}
+
+void
+sbi_powerdown(void)
+{
+	SBI_CALL2(SBI_EXT_ID_SRST, SBI_SRST_RESET,
+	    SBI_SRST_RESET_SHUTDOWN, 0);
+}
+
+void
 sbi_init(void)
 {
 	struct sbi_ret sret;
@@ -167,6 +184,15 @@ sbi_init(void)
 	    "SBI doesn't implement sbi_remote_sfence_vma_asid()");
 	KASSERTMSG(sbi_probe_extension(SBI_SHUTDOWN) != 0,
 	    "SBI doesn't implement sbi_shutdown()");
+
+	/*
+	 * Implement reboot and power down if the System Reset
+	 * Extension is implemented.
+	 */
+	if (sbi_probe_extension(SBI_EXT_ID_SRST) != 0) {
+		cpuresetfn = sbi_reset;
+		powerdownfn = sbi_powerdown;
+	}
 }
 
 /*

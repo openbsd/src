@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbi.h,v 1.5 2022/08/29 02:01:18 jsg Exp $	*/
+/*	$OpenBSD: sbi.h,v 1.6 2024/03/29 22:11:34 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2016-2017 Ruslan Bukin <br@bsdpad.com>
@@ -75,6 +75,13 @@
 #define	 SBI_HSM_STATUS_STOPPED		1
 #define	 SBI_HSM_STATUS_START_PENDING	2
 #define	 SBI_HSM_STATUS_STOP_PENDING	3
+
+/* System Reset Extension */
+#define	SBI_EXT_ID_SRST			0x53525354
+#define	SBI_SRST_RESET			0
+#define	 SBI_SRST_RESET_SHUTDOWN	0
+#define	 SBI_SRST_RESET_COLD_REBOOT	1
+#define	 SBI_SRST_RESET_WARM_REBOOT	2
 
 /* Legacy Extensions */
 #define	SBI_SET_TIMER			0
