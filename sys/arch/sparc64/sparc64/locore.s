@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.210 2024/03/29 21:18:19 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.211 2024/03/29 21:20:03 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -265,16 +265,11 @@ sun4u_mtp_patch_end:
 	.text
 
 /*
- * Handy stack conversion macros.
- * Correctly switch to a 64-bit stack
- * regardless of the current stack.
+ * Reserve the given room on stack.
  */
 
 	.macro STACKFRAME size
 	save	%sp, \size, %sp
-	add	%sp, -BIAS, %o0		! Convert to 64-bits
-	andcc	%sp, 1, %g0		! 64-bit stack?
-	movz	%icc, %o0, %sp
 	.endm
 
 
