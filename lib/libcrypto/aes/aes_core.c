@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.19 2024/03/27 11:15:44 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.20 2024/03/29 04:39:54 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -36,6 +36,9 @@
 
 #include "aes_local.h"
 #include "crypto_internal.h"
+
+#if !defined(HAVE_AES_SET_ENCRYPT_KEY_INTERNAL) && \
+    !defined(HAVE_AES_SET_DECRYPT_KEY_INTERNAL)
 
 /*
 Te0[x] = S [x].[02, 01, 01, 03];
@@ -618,12 +621,20 @@ static const u32 rcon[] = {
 	0x10000000, 0x20000000, 0x40000000, 0x80000000,
 	0x1B000000, 0x36000000, /* for 128-bit blocks, Rijndael never uses more than 10 rcon values */
 };
+#endif
 
-/**
+#ifdef HAVE_AES_SET_ENCRYPT_KEY_INTERNAL
+int aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
+    AES_KEY *key);
+
+#else
+
+/*
  * Expand the cipher key into the encryption key schedule.
  */
-int
-AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
+static inline int
+aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
+    AES_KEY *key)
 {
 	u32 *rk;
 	int i = 0;
@@ -719,12 +730,25 @@ AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 	}
 	return 0;
 }
+#endif
 
-/**
+int
+AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
+{
+	return aes_set_encrypt_key_internal(userKey, bits, key);
+}
+
+#ifdef HAVE_AES_SET_DECRYPT_KEY_INTERNAL
+int aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
+    AES_KEY *key);
+
+#else
+/*
  * Expand the cipher key into the decryption key schedule.
  */
-int
-AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
+static inline int
+aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
+    AES_KEY *key)
 {
 	u32 *rk;
 	int i, j, status;
@@ -777,6 +801,13 @@ AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 		    Td3[Te1[(rk[3]) & 0xff] & 0xff];
 	}
 	return 0;
+}
+#endif
+
+int
+AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
+{
+	return aes_set_decrypt_key_internal(userKey, bits, key);
 }
 
 #ifndef AES_ASM

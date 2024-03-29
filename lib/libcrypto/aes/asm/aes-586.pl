@@ -2849,12 +2849,12 @@ sub enckey()
     &set_label("exit");
 &function_end("_x86_AES_set_encrypt_key");
 
-# int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
-&function_begin_B("AES_set_encrypt_key");
+# int aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
+#      AES_KEY *key)
+&function_begin_B("aes_set_encrypt_key_internal");
 	&call	("_x86_AES_set_encrypt_key");
 	&ret	();
-&function_end_B("AES_set_encrypt_key");
+&function_end_B("aes_set_encrypt_key_internal");
 
 sub deckey()
 { my ($i,$key,$tp1,$tp2,$tp4,$tp8) = @_;
@@ -2911,9 +2911,9 @@ sub deckey()
 	&mov	(&DWP(4*$i,$key),$tp1);
 }
 
-# int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
-&function_begin_B("AES_set_decrypt_key");
+# int aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
+#     AES_KEY *key)
+&function_begin_B("aes_set_decrypt_key_internal");
 	&call	("_x86_AES_set_encrypt_key");
 	&cmp	("eax",0);
 	&je	(&label("proceed"));
@@ -2969,6 +2969,6 @@ sub deckey()
 	&jb	(&label("permute"));
 
 	&xor	("eax","eax");			# return success
-&function_end("AES_set_decrypt_key");
+&function_end("aes_set_decrypt_key_internal");
 
 &asm_finish();

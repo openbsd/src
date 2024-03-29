@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.19 2024/03/29 02:33:44 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.20 2024/03/29 04:39:54 jsing Exp $
 
 # i386-specific libcrypto build rules
 
@@ -12,6 +12,9 @@ CFLAGS+= -DVPAES_ASM
 SSLASM+= aes vpaes-x86
 SSLASM+= aes aesni-x86
 CFLAGS+= -DHAVE_AES_CBC_ENCRYPT_INTERNAL
+CFLAGS+= -DHAVE_AES_SET_ENCRYPT_KEY_INTERNAL
+CFLAGS+= -DHAVE_AES_SET_DECRYPT_KEY_INTERNAL
+SRCS+= aes_core.c
 # bn
 CFLAGS+= -DOPENSSL_IA32_SSE2
 SSLASM+= bn bn-586

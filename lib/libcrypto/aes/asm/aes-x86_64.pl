@@ -1290,13 +1290,13 @@ $code.=<<___;
 ___
 }
 
-# int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
+# int aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
+#     AES_KEY *key)
 $code.=<<___;
-.globl	AES_set_encrypt_key
-.type	AES_set_encrypt_key,\@function,3
+.globl	aes_set_encrypt_key_internal
+.type	aes_set_encrypt_key_internal,\@function,3
 .align	16
-AES_set_encrypt_key:
+aes_set_encrypt_key_internal:
 	_CET_ENDBR
 	push	%rbx
 	push	%rbp
@@ -1318,7 +1318,7 @@ AES_set_encrypt_key:
 	add	\$56,%rsp
 .Lenc_key_epilogue:
 	ret
-.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+.size	aes_set_encrypt_key_internal,.-aes_set_encrypt_key_internal
 
 .type	_x86_64_AES_set_encrypt_key,\@abi-omnipotent
 .align	16
@@ -1562,13 +1562,13 @@ $code.=<<___;
 ___
 }
 
-# int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
+# int aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
+#     AES_KEY *key)
 $code.=<<___;
-.globl	AES_set_decrypt_key
-.type	AES_set_decrypt_key,\@function,3
+.globl	aes_set_decrypt_key_internal
+.type	aes_set_decrypt_key_internal,\@function,3
 .align	16
-AES_set_decrypt_key:
+aes_set_decrypt_key_internal:
 	_CET_ENDBR
 	push	%rbx
 	push	%rbp
@@ -1638,7 +1638,7 @@ $code.=<<___;
 	add	\$56,%rsp
 .Ldec_key_epilogue:
 	ret
-.size	AES_set_decrypt_key,.-AES_set_decrypt_key
+.size	aes_set_decrypt_key_internal,.-aes_set_decrypt_key_internal
 ___
 
 # void aes_cbc_encrypt_internal(const void char *inp, unsigned char *out,
@@ -2790,13 +2790,13 @@ cbc_se_handler:
 	.rva	.LSEH_end_AES_decrypt
 	.rva	.LSEH_info_AES_decrypt
 
-	.rva	.LSEH_begin_AES_set_encrypt_key
-	.rva	.LSEH_end_AES_set_encrypt_key
-	.rva	.LSEH_info_AES_set_encrypt_key
+	.rva	.LSEH_begin_aes_set_encrypt_key_internal
+	.rva	.LSEH_end_aes_set_encrypt_key_internal
+	.rva	.LSEH_info_aes_set_encrypt_key_internal
 
-	.rva	.LSEH_begin_AES_set_decrypt_key
-	.rva	.LSEH_end_AES_set_decrypt_key
-	.rva	.LSEH_info_AES_set_decrypt_key
+	.rva	.LSEH_begin_aes_set_decrypt_key_internal
+	.rva	.LSEH_end_aes_set_decrypt_key_internal
+	.rva	.LSEH_info_aes_set_decrypt_key_internal
 
 	.rva	.LSEH_begin_aes_cbc_encrypt_internal
 	.rva	.LSEH_end_aes_cbc_encrypt_internal
@@ -2812,11 +2812,11 @@ cbc_se_handler:
 	.byte	9,0,0,0
 	.rva	block_se_handler
 	.rva	.Ldec_prologue,.Ldec_epilogue	# HandlerData[]
-.LSEH_info_AES_set_encrypt_key:
+.LSEH_info_aes_set_encrypt_key_internal:
 	.byte	9,0,0,0
 	.rva	key_se_handler
 	.rva	.Lenc_key_prologue,.Lenc_key_epilogue	# HandlerData[]
-.LSEH_info_AES_set_decrypt_key:
+.LSEH_info_aes_set_decrypt_key_internal:
 	.byte	9,0,0,0
 	.rva	key_se_handler
 	.rva	.Ldec_key_prologue,.Ldec_key_epilogue	# HandlerData[]
