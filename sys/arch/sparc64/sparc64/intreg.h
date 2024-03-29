@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.h,v 1.3 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: intreg.h,v 1.4 2024/03/29 21:16:01 miod Exp $	*/
 /*	$NetBSD: intreg.h,v 1.4 2000/06/24 04:21:05 eeh Exp $ */
 
 /*
@@ -52,8 +52,3 @@
  *
  */
 #define MAXINTNUM	(1<<11)
-
-#ifndef _LOCORE
-struct intrhand;	/* This is in cpu.h if you need it. */
-void	send_softint(int cpu, int level, struct intrhand *ih);
-#endif
