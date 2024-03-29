@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.33 2024/03/29 03:23:01 tb Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.34 2024/03/29 04:35:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -110,7 +110,6 @@ static MIME_PARAM *mime_param_find(MIME_HEADER *hdr, char *name);
 static void mime_hdr_free(MIME_HEADER *hdr);
 
 #define MAX_SMLEN 1024
-#define mime_debug(x) /* x */
 
 /* Output an ASN1 structure in BER format streaming if necessary */
 
@@ -707,7 +706,6 @@ mime_parse_hdr(BIO *bio)
 
 			case MIME_TYPE:
 				if (c == ';') {
-					mime_debug("Found End Value\n");
 					*p = 0;
 					mhdr = mime_hdr_new(ntmp,
 					    strip_ends(q));
@@ -749,7 +747,6 @@ mime_parse_hdr(BIO *bio)
 					ntmp = NULL;
 					q = p + 1;
 				} else if (c == '"') {
-					mime_debug("Found Quote\n");
 					state = MIME_QUOTE;
 				} else if (c == '(') {
 					save_state = state;
@@ -759,7 +756,6 @@ mime_parse_hdr(BIO *bio)
 
 			case MIME_QUOTE:
 				if (c == '"') {
-					mime_debug("Found Match Quote\n");
 					state = MIME_VALUE;
 				}
 				break;
