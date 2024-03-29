@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.208 2024/03/29 21:16:38 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.209 2024/03/29 21:17:13 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -71,10 +71,6 @@
 #include <machine/frame.h>
 #include <machine/pmap.h>
 #include <machine/asm.h>
-
-#undef	CURPROC
-#undef	CPCB
-#undef	FPPROC
 
 /* Let us use same syntax as C code */
 #define db_enter()	ta	1; nop
@@ -206,7 +202,7 @@ sun4u_mtp_patch_end:
  * something like:
  *	foointr:
  *		TRAP_SETUP ...		! makes %o registers safe
- *		INCR cnt+V_FOO			! count a foo
+ *		INCR uvmexp+V_FOO	! count a foo
  */
 	.macro INCR what
 	sethi	%hi(\what), %o0
@@ -351,14 +347,6 @@ cold:
  * (oddly enough, the code looks about as slimy too).  Thus, all the
  * trap numbers are given as arguments to the trap macros.  This means
  * there is one line per trap.  Sigh.
- *
- * Hardware interrupt vectors can be `linked'---the linkage is to regular
- * C code---or rewired to fast in-window handlers.  The latter are good
- * for unbuffered hardware like the Zilog serial chip and the AMD audio
- * chip, where many interrupts can be handled trivially with pseudo-DMA
- * or similar.  Only one `fast' interrupt can be used per level, however,
- * and direct and `fast' interrupts are incompatible.  Routines in intr.c
- * handle setting these, with optional paranoia.
  */
 
 /*
@@ -399,15 +387,14 @@ cold:
 	TA8
 	.endm
 #endif	/* DEBUG */
-	/* hardware interrupts (can be linked or made `fast') */
+	/* hardware interrupts */
 	.macro HARDINT4U lev
 	VTRAP \lev, sparc_interrupt
 	.endm
 
-	/* software interrupts (may not be made direct, sorry---but you
-	   should not be using them trivially anyway) */
+	/* software interrupts */
 	.macro SOFTINT4U lev, bit
-	HARDINT4U lev
+	HARDINT4U \lev
 	.endm
 
 	/* traps that just call trap() */
@@ -429,7 +416,6 @@ cold:
 	.endm
 
 #define	SYSCALL		VTRAP 0x100, syscall_setup
-#define	ZS_INTERRUPT4U	HARDINT4U 12
 
 /*
  * Macro to clear %tt so we don't get confused with old traps.
@@ -739,14 +725,14 @@ trapbase:
 	HARDINT4U 9			! 049 = level 9 interrupt
 	HARDINT4U 10			! 04a = level 10 interrupt
 	HARDINT4U 11			! 04b = level 11 interrupt
-	ZS_INTERRUPT4U			! 04c = level 12 (zs) interrupt
+	HARDINT4U 12			! 04c = level 12 interrupt
 	HARDINT4U 13			! 04d = level 13 interrupt
 	HARDINT4U 14			! 04e = level 14 interrupt
 	HARDINT4U 15			! 04f = nonmaskable interrupt
 	UTRAP 0x050; UTRAP 0x051; UTRAP 0x052; UTRAP 0x053; UTRAP 0x054; UTRAP 0x055
 	UTRAP 0x056; UTRAP 0x057; UTRAP 0x058; UTRAP 0x059; UTRAP 0x05a; UTRAP 0x05b
 	UTRAP 0x05c; UTRAP 0x05d; UTRAP 0x05e; UTRAP 0x05f
-	VTRAP 0x060, interrupt_vector; ! 060 = interrupt vector
+	VTRAP 0x060, interrupt_vector;	! 060 = interrupt vector
 	TRAP T_PA_WATCHPT		! 061 = physical address data watchpoint
 	TRAP T_VA_WATCHPT		! 062 = virtual address data watchpoint
 	VTRAP T_ECCERR, cecc_catch	! 063 = Correctable ECC error
@@ -899,7 +885,7 @@ kdatafault:
 	HARDINT4U 9			! 049 = level 9 interrupt
 	HARDINT4U 10			! 04a = level 10 interrupt
 	HARDINT4U 11			! 04b = level 11 interrupt
-	ZS_INTERRUPT4U			! 04c = level 12 (zs) interrupt
+	HARDINT4U 12			! 04c = level 12 interrupt
 	HARDINT4U 13			! 04d = level 13 interrupt
 	HARDINT4U 14			! 04e = level 14 interrupt
 	HARDINT4U 15			! 04f = nonmaskable interrupt
@@ -1522,8 +1508,6 @@ panic_red:
  * is set.  If so, it sets the H/W write bit, marks the tte modified,
  * and enters the mapping into the MMU.  Otherwise it does a regular
  * data fault.
- *
- *
  */
 	ICACHE_ALIGN
 dmmu_write_fault:
@@ -2257,7 +2241,7 @@ datafault:
 
 	TRAP_SETUP -CC64FSZ-TF_SIZE
 Ldatafault_internal:
-	INCR uvmexp+V_FAULTS				! cnt.v_faults++ (clobbers %o0,%o1,%o2) should not fault
+	INCR uvmexp+V_FAULTS				! uvmexp.faults++ (clobbers %o0,%o1,%o2) should not fault
 !	ldx	[%sp + CC64FSZ + BIAS + TF_FAULT], %g1		! DEBUG make sure this has not changed
 	mov	%g1, %o0				! Move these to the out regs so we can save the globals
 	mov	%g2, %o4
@@ -2512,7 +2496,7 @@ textfault:
 	membar	#Sync					! No real reason for this XXXX
 
 	TRAP_SETUP -CC64FSZ-TF_SIZE
-	INCR uvmexp+V_FAULTS				! cnt.v_faults++ (clobbers %o0,%o1,%o2)
+	INCR uvmexp+V_FAULTS				! uvmexp.faults++ (clobbers %o0,%o1,%o2)
 
 	mov	%g3, %o3
 
@@ -3764,7 +3748,7 @@ return_from_syscall:
  * When an interrupt comes in, interrupt_vector uses the interrupt
  * vector number to lookup the appropriate intrhand from the intrlev
  * array.  It then looks up the interrupt level from the intrhand
- * structure.  It uses the level to index the intrpending array,
+ * structure.  It uses the level to index the per-cpu intrpending array,
  * which is 8 slots for each possible interrupt level (so we can
  * shift instead of multiply for address calculation).  It hunts for
  * any available slot at that level.  Available slots are NULL.
@@ -4183,7 +4167,6 @@ END(ipi_db)
  *	%l1 = return pc
  *	%l2 = return npc
  *	%l3 = interrupt level
- *	(software interrupt only) %l4 = bits to clear in interrupt register
  *
  * Internal:
  *	%l4, %l5: local variables
@@ -4276,7 +4259,7 @@ sparc_interrupt:
 #endif
 
 	rd	%y, %l6
-	INCR uvmexp+V_INTR		! cnt.v_intr++; (clobbers %o0,%o1,%o2)
+	INCR uvmexp+V_INTR		! uvmexp.intrs++; (clobbers %o0,%o1,%o2)
 	rdpr	%tt, %l5		! Find out our current IPL
 	rdpr	%tstate, %l0
 	rdpr	%tpc, %l1
@@ -5208,10 +5191,8 @@ dlflush3:
 END(cache_flush_virt)
 
 /*
- * XXXXX Still needs lotsa cleanup after sendsig is complete and offsets are known
- *
- * The following code is copied to the top of the user stack when each
- * process is exec'ed, and signals are `trampolined' off it.
+ * The following code is copied to a dedicated page,
+ * and signals are `trampolined' off it.
  *
  * When this code is run, the stack looks like:
  *	[%sp]			128 bytes to which registers can be dumped
@@ -5228,11 +5209,6 @@ END(cache_flush_virt)
  * The address of the function to call is in %g1; the old %g1 and %o0
  * have already been saved in the sigcontext.  We are running in a clean
  * window, all previous windows now being saved to the stack.
- *
- * XXX this is bullshit
- * Note that [%sp + 128 + 8] == %sp + 128 + 16.  The copy at %sp+128+8
- * will eventually be removed, with a hole left in its place, if things
- * work out.
  */
 	.section .rodata
 	.globl	sigcode
@@ -5324,7 +5300,6 @@ sigcode:
 
 	restore	%g0, SYS_sigreturn, %g1 ! get registers back & set syscall #
 	add	%sp, BIAS + 128 + 16, %o0	! compute scp
-!	andn	%o0, 0x0f, %o0
 	.globl	sigcoderet
 sigcoderet:
 	.globl	sigcodecall
@@ -5904,13 +5879,12 @@ ENTRY(cpu_switchto)
 #endif	/* defined(MULTIPROCESSOR) */
 	mov	SONPROC, %o0			! newproc->p_stat = SONPROC
 	stb	%o0, [%i1 + P_STAT]
-	ldx	[%i1 + P_ADDR], %l1		! newpcb = newpeoc->p_addr;
+	ldx	[%i1 + P_ADDR], %l1		! newpcb = newproc->p_addr;
 
 	flushw				! save all register windows except this one
 
 	/*
-	 * Not the old process.  Save the old process, if any;
-	 * then load p.
+	 * Save the old process, if any; then load p.
 	 */
 	brz,pn	%i0, Lsw_load		! if no old process, go load
 	 wrpr	%g0, PSTATE_KERN, %pstate
@@ -6004,9 +5978,9 @@ ENTRY(snapshot)
 END(snapshot)
 
 /*
- * cpu_set_kpc() and cpu_fork() arrange for proc_trampoline() to run
+ * cpu_fork() arrange for proc_trampoline() to run
  * after a process gets chosen in mi_switch(). The stack frame will
- * contain a function pointer in %l0, and an argument to pass to it in %l2.
+ * contain a function pointer in %l0, and an argument to pass to it in %l1.
  *
  * If the function *(%l0) returns, we arrange for an immediate return
  * to user mode. This happens in two known cases: after execve(2) of init,
@@ -6021,30 +5995,14 @@ ENTRY(proc_trampoline)
 	 mov	%l1, %o0
 
 	/*
-	 * Here we finish up as in syscall, but simplified.  We need to
-	 * fiddle pc and npc a bit, as execve() / setregs() /cpu_set_kpc()
-	 * have only set npc, in anticipation that trap.c will advance past
-	 * the trap instruction; but we bypass that, so we must do it manually.
+	 * Here we finish up as in syscall, but simplified.
 	 */
 !	save	%sp, -CC64FSZ, %sp		! Save a kernel frame to emulate a syscall
-#if 0
-	/* This code doesn't seem to work, but it should. */
-	ldx	[%sp + CC64FSZ + BIAS + TF_TSTATE], %g1
-	ldx	[%sp + CC64FSZ + BIAS + TF_NPC], %g2	! pc = tf->tf_npc from execve/fork
-	andn	%g1, CWP, %g1			! Clear the CWP bits
-	add	%g2, 4, %g3			! npc = pc+4
-	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
-	stx	%g3, [%sp + CC64FSZ + BIAS + TF_NPC]
-	or	%g1, %g5, %g1
-	stx	%g2, [%sp + CC64FSZ + BIAS + TF_PC]
-	stx	%g1, [%sp + CC64FSZ + BIAS + TF_TSTATE]
-#else	/* 0 */
 	mov	PSTATE_USER, %g1		! XXXX user pstate (no need to load it)
 	sllx	%g1, TSTATE_PSTATE_SHIFT, %g1	! Shift it into place
 	rdpr	%cwp, %g5			! Fixup %cwp in %tstate
 	or	%g1, %g5, %g1
 	stx	%g1, [%sp + CC64FSZ + BIAS + TF_TSTATE]
-#endif	/* 0 */
 	CHKPT %o3,%o4,0x35
 	ba,a,pt	%icc, return_from_trap
 	 nop
@@ -6160,9 +6118,6 @@ dlflush4:
  * pmap_copy_phys(src, dst)
  *
  * Copy one page physically addressed
- *
- * We also need to blast the D$ and flush like
- * pmap_zero_phys.
  */
 ENTRY(pmap_copy_phys)
 	set	NBPG, %o3
@@ -6945,7 +6900,7 @@ Lkcerr:
 END(kcopy)
 
 /*
- * bcopy(src, dest, size - overlaps detected and copied in reverse
+ * bcopy(src, dest, size) - overlaps detected and copied in reverse
  */
 ENTRY(bcopy)
 	/*
@@ -7447,7 +7402,6 @@ cpu_clockrate:
  * void delay(N)  -- delay N microseconds
  *
  * Register usage: %o0 = "N" number of usecs to go (counts down to zero)
- *		   %o1 = "timerblurb" (stays constant)
  *		   %o2 = counter for 1 usec (counts down from %o1 to zero)
  *
  *
@@ -7509,7 +7463,7 @@ END(longjmp)
 	 *
 	 *  %o0 = *ts
 	 */
-	ENTRY(savetstate)
+ENTRY(savetstate)
 	mov	%o0, %o1
 	CHKPT %o4,%o3,0x28
 	rdpr	%tl, %o0
@@ -7534,7 +7488,7 @@ END(longjmp)
 2:
 	retl
 	 nop
-	END(savetstate)
+END(savetstate)
 
 	/*
 	 * Debug stuff.  Restore trap registers from buffer.
@@ -7544,7 +7498,7 @@ END(longjmp)
 	 *
 	 * Maybe this should be re-written to increment tl instead of decrementing.
 	 */
-	ENTRY(restoretstate)
+ENTRY(restoretstate)
 	CHKPT %o4,%o3,0x36
 	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	brz,pn	%o0, 2f
@@ -7575,7 +7529,7 @@ END(longjmp)
 	/*
 	 * Switch to context in %o0
 	 */
-	ENTRY(switchtoctx)
+ENTRY(switchtoctx)
 	set	DEMAP_CTX_SECONDARY, %o3
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP
 	membar	#Sync
@@ -7588,7 +7542,8 @@ END(longjmp)
 	flush	%o2
 	retl
 	 nop
-	END(restoretstate)
+END(switchtoctx)
+END(restoretstate)
 
 #endif /* DDB */	/* DDB */
 

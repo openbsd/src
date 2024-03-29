@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.64 2024/03/29 21:09:04 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.65 2024/03/29 21:17:13 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -95,13 +95,6 @@ intr_handler(struct trapframe *tf, struct intrhand *ih)
 }
 
 /*
- * Level 1 software interrupt (could also be SBus level 1 interrupt).
- * Three possible reasons:
- *	Network software interrupt
- *	Soft clock interrupt
- */
-
-/*
  * PCI devices can share interrupts so we need to have
  * a handler to hand out interrupts.
  */
@@ -140,7 +133,6 @@ intr_ack(struct intrhand *ih)
 
 /*
  * Attach an interrupt handler to the vector chain for the given level.
- * This is not possible if it has been taken away as a fast vector.
  */
 void
 intr_establish(int level, struct intrhand *ih)

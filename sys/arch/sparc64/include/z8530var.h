@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.8 2013/04/21 14:44:16 sebastia Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.9 2024/03/29 21:17:13 miod Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.4 2000/11/08 23:41:42 eeh Exp $	*/
 
 /*
@@ -60,15 +60,7 @@ struct zsc_softc {
 /*
  * Functions to read and write individual registers in a channel.
  * The ZS chip requires a 1.6 uSec. recovery time between accesses.
- * On the SparcStation the recovery time is handled in hardware.
- * On the older Sun4 machine it isn't, and software must do it.
- *
- * However, it *is* a problem on some Sun4m's (i.e. the SS20) (XXX: why?).
- * Thus we leave in the delay (done in the functions below).
- * XXX: (ABB) Think about this more.
- *
- * The functions below could be macros instead if we are concerned
- * about the function call overhead where ZS_DELAY does nothing.
+ * On sparc64, the recovery time is handled in hardware.
  */
 
 u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);

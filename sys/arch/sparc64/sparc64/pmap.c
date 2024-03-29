@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.113 2024/03/29 21:11:32 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.114 2024/03/29 21:17:13 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -1104,7 +1104,7 @@ remap_data:
 	vmmap += NBPG;
 	{ 
 		extern vaddr_t u0[2];
-		extern struct pcb* proc0paddr;
+		extern struct pcb *proc0paddr;
 		extern void main(void);
 		paddr_t pa;
 
@@ -1472,7 +1472,7 @@ pmap_destroy(struct pmap *pm)
 
 /*
  * Release any resources held by the given physical map.
- * Called when a pmap initialized by pmap_pinit is being released.
+ * Called when a pmap initialized by pmap_create is being released.
  */
 void
 pmap_release(struct pmap *pm)
@@ -2704,7 +2704,7 @@ pmap_remove_pv(struct pmap *pmap, vaddr_t va, paddr_t pa)
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up
 	 * to the header.  Otherwise we must search the list for
-	 * the entry.  In either case we free the now unused entry.
+	 * the entry.
 	 */
 	if (pmap == pv->pv_pmap && PV_MATCH(pv, va)) {
 		/* Save modified/ref bits */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.123 2024/03/29 21:14:31 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.124 2024/03/29 21:17:13 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -684,8 +684,7 @@ accesstype(unsigned int type, u_long sfsr)
 }
 
 /*
- * This routine handles MMU generated faults.  About half
- * of them could be recoverable through uvm_fault.
+ * This routine handles MMU generated faults.
  */
 void
 data_access_fault(struct trapframe *tf, unsigned type, vaddr_t pc,
@@ -872,8 +871,7 @@ out:
 }
 
 /*
- * This routine handles MMU generated faults.  About half
- * of them could be recoverable through uvm_fault.
+ * This routine handles MMU generated faults.
  */
 void
 text_access_fault(struct trapframe *tf, unsigned type, vaddr_t pc,

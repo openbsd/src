@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.212 2024/03/29 21:11:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.213 2024/03/29 21:17:13 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -214,7 +214,6 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s", version);
-	/*identifycpu();*/
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
 
@@ -1602,9 +1601,6 @@ sparc_bus_protect(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h,
         for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
                 /*
                  * Extract physical address for the page.
-                 * We use a cheezy hack to differentiate physical
-                 * page 0 from an invalid mapping, not that it
-                 * really matters...
                  */
                 if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
                         panic("bus_space_protect(): invalid page");

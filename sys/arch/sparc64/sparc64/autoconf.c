@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.146 2024/03/29 21:09:04 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.147 2024/03/29 21:17:13 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -640,8 +640,7 @@ bootpath_store(int storep, struct bootpath *bp)
 /*
  * Determine mass storage and memory configuration for a machine.
  * We get the PROM's root device and make sure we understand it, then
- * attach it as `mainbus0'.  We also set up to handle the PROM `sync'
- * command.
+ * attach it as `mainbus0'.
  */
 void
 cpu_configure(void)
@@ -1286,9 +1285,9 @@ romgetcursoraddr(int **rowp, int **colp)
 	    2, &col, &row);
 
 	/*
-	 * We are running on a 64-bit machine, so these things point to
-	 * 64-bit values.  To convert them to pointers to interfaces, add
-	 * 4 to the address.
+	 * We are running on a 64-bit big-endian machine, so these things
+	 * point to 64-bit big-endian values.  To convert them to pointers
+	 * to int, add 4 to the address.
 	 */
 	if (row == 0 || col == 0)
 		return (-1);

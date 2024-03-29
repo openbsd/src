@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.88 2022/10/15 10:12:13 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.89 2024/03/29 21:17:13 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -66,9 +66,6 @@
 #include "uk.h"
 #include "wd.h"
 
-#ifdef notyet
-#include "fb.h"
-#endif
 #include "zstty.h"
 #include "sab.h"
 #include "pcons.h"
@@ -84,7 +81,7 @@
 #include "vldcp.h"
 #include "vdsp.h"
 
-#include "fdc.h"		/* has NFDC and NFD; see files.sparc */
+#include "fdc.h"		/* has NFDC and NFD; see files.sparc64 */
 
 #include "drm.h"
 cdev_decl(drm);
@@ -125,14 +122,14 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 0 */
 	bdev_notdef(),			/* 1 */
 	bdev_notdef(),			/* 2 */
-	bdev_notdef(),			/* 3: SMD disk -- not this arch */
+	bdev_notdef(),			/* 3 */
 	bdev_swap_init(1,sw),		/* 4 swap pseudo-device */
 	bdev_disk_init(NRD,rd),		/* 5: ram disk */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_notdef(),			/* 9: was: concatenated disk driver */
-	bdev_notdef(),			/* 10: SMD disk -- not this arch */
+	bdev_notdef(),			/* 10 */
 	bdev_notdef(),			/* 11: was: SCSI tape */
 	bdev_disk_init(NWD,wd),		/* 12: IDE disk */
 	bdev_notdef(),			/* 13 */
@@ -154,21 +151,21 @@ int	nblkdev = nitems(bdevsw);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_notdef(),			/* 1: tapemaster tape */
+	cdev_notdef(),			/* 1 */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_notdef(),			/* 4 */
-	cdev_notdef(),			/* 5: tapemaster tape */
-	cdev_notdef(),			/* 6: systech/versatec */
+	cdev_notdef(),			/* 5 */
+	cdev_notdef(),			/* 6 */
 	cdev_notdef(),			/* 7 was /dev/drum */
-	cdev_notdef(),			/* 8: Archive QIC-11 tape */
-	cdev_notdef(),			/* 9: SMD disk on Xylogics 450/451 */
-	cdev_notdef(),			/* 10: systech multi-terminal board */
-	cdev_notdef(),			/* 11: DES encryption chip */
+	cdev_notdef(),			/* 8 */
+	cdev_notdef(),			/* 9 */
+	cdev_notdef(),			/* 10 */
+	cdev_notdef(),			/* 11 */
 	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8530 serial port */
-	cdev_notdef(),			/* 13: /dev/mouse */
-	cdev_notdef(),			/* 14: cgone */
-	cdev_notdef(),			/* 15: sun /dev/winNNN */
+	cdev_notdef(),			/* 13 */
+	cdev_notdef(),			/* 14 */
+	cdev_notdef(),			/* 15 */
 	cdev_log_init(1,log),		/* 16: /dev/klog */
 	cdev_disk_init(NSD,sd),		/* 17: SCSI disk */
 	cdev_tape_init(NST,st),		/* 18: SCSI tape */
@@ -181,11 +178,11 @@ struct cdevsw	cdevsw[] =
 	cdev_uperf_init(NUPERF,uperf),	/* 25: performance counters */
 	cdev_disk_init(NWD,wd),		/* 26: IDE disk */
 	cdev_notdef(),			/* 27 */
-	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
+	cdev_notdef(),			/* 28 */
 	cdev_notdef(),			/* 29 */
 	cdev_dt_init(NDT,dt),		/* 30: dynamic tracer */
-	cdev_notdef(),			/* 31: /dev/cgtwo */
-	cdev_notdef(),			/* 32: should be /dev/gpone */
+	cdev_notdef(),			/* 31 */
+	cdev_notdef(),			/* 32 */
 	cdev_notdef(),			/* 33 */
 	cdev_notdef(),			/* 34 */
 	cdev_notdef(),			/* 35 */
@@ -195,7 +192,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 39 */
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
-	cdev_notdef(),			/* 42: SMD disk */
+	cdev_notdef(),			/* 42 */
 	cdev_notdef(),			/* 43 */
 	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_notdef(),			/* 45 */
@@ -221,7 +218,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRD,rd),		/* 61: memory disk */
 	cdev_notdef(),			/* 62 */
 	cdev_notdef(),			/* 63 */
-	cdev_notdef(),			/* 64: /dev/cgeight */
+	cdev_notdef(),			/* 64 */
 	cdev_notdef(),			/* 65 */
 	cdev_notdef(),			/* 66 */
 	cdev_notdef(),			/* 67 */
@@ -309,20 +306,16 @@ int	mem_no = 3; 	/* major device number of memory special file */
  * It cannot be provided to the users, because the
  * swstrategy routine munches the b_dev and b_blkno entries
  * before calling the appropriate driver.  This would horribly
- * confuse, e.g. the hashing routines. Instead, /dev/drum is
- * provided as a character (raw) device.
+ * confuse, e.g. the hashing routines.
  */
 dev_t	swapdev = makedev(4, 0);
 
 /*
  * Routine that identifies /dev/mem and /dev/kmem.
- *
- * A minimal stub routine can always return 0.
  */
 int
 iskmemdev(dev_t dev)
 {
-
 	return (major(dev) == mem_no && minor(dev) < 2);
 }
 
