@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.211 2024/03/29 21:20:03 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.212 2024/03/29 21:23:17 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1387,7 +1387,7 @@ panic_red:
 	.macro	TRAP_SETUP stackspace
 	GET_CPCB(%g6)
 	sethi	%hi((\stackspace)), %g5
-	sethi	%hi(USPACE), %g7		! Always multiple of page size
+	set	USPACE-BIAS, %g7
 	or	%g5, %lo((\stackspace)), %g5
 
 	sra	%g5, 0, %g5			! Sign extend the damn thing
@@ -1397,13 +1397,7 @@ panic_red:
 
 	sub	%g7, WSTATE_KERN, %g7		! Compare & leave in register
 	movrz	%g7, %sp, %g6			! Select old (kernel) stack or base of kernel stack
-	btst	1, %g6				! Fixup 64-bit stack if necessary
-	bnz,pt	%icc, 1f
-	 add	%g6, %g5, %g6			! Allocate a stack frame
-	inc	-BIAS, %g6
-	nop
-	nop
-1:
+	add	%g6, %g5, %g6			! Allocate a stack frame
 	SPILL stx, %g6 + CC64FSZ + BIAS + TF_L, 8, ! save local + in
 	save	%g6, 0, %sp			! If we fault we should come right back here
 	stx	%i0, [%sp + CC64FSZ + BIAS + TF_O + (0*8)] ! Save out registers to trap frame
@@ -1460,14 +1454,7 @@ panic_red:
 
 	movrz	%g4, %sp, %g6
 
-	add	%g6, %g5, %g5			! Allocate a stack frame
-	btst	1, %g6
-	bnz,pt	%icc, 1f
-	 mov	%g5, %g6
-
-	add	%g5, -BIAS, %g6
-
-1:
+	add	%g6, %g5, %g6			! Allocate a stack frame
 	SPILL stx, %g6 + CC64FSZ + BIAS + TF_L, 8,  ! save local+in to trap frame
 	save	%g6, 0, %sp			! If we fault we should come right back here
 	stx	%i0, [%sp + CC64FSZ + BIAS + TF_O + (0*8)] ! Save out registers to trap frame
