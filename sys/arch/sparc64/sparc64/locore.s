@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.206 2024/03/29 21:09:04 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.207 2024/03/29 21:11:32 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5109,8 +5109,6 @@ END(sp_tlb_flush_ctx)
 	FTYPE(us_dcache_flush_page)
 us_dcache_flush_page:
 
-	!! Try using cache_flush_phys for a change.
-
 	mov	-1, %o1		! Generate mask for tag: bits [29..2]
 	srlx	%o0, 13-2, %o2	! Tag is VA bits <40:13> in bits <29:2>
 	clr	%o4
@@ -5209,64 +5207,6 @@ dlflush3:
 	retl
 	 nop
 END(cache_flush_virt)
-
-/*
- *	cache_flush_phys(paddr_t, psize_t, int);
- *
- *	Clear a set of paddrs from the D$ and if param3 is
- *	non-zero, E$.  (E$ is not supported yet).
- */
-
-		.align 8
-	.globl	cache_flush_phys
-	.proc 1
-	FTYPE(cache_flush_phys)
-cache_flush_phys:
-#ifdef DEBUG
-	tst	%o2		! Want to clear E$?
-	tnz	1		! Error!
-#endif	/* DEBUG */
-	add	%o0, %o1, %o1	! End PA
-
-	!!
-	!! D$ tags match pa bits 40-13.
-	!! Generate a mask for them.
-	!!
-
-	mov	-1, %o2		! Generate mask for tag: bits [40..13]
-	srl	%o2, 5, %o2	! 32-5 = [27..0]
-	sllx	%o2, 13, %o2	! 27+13 = [40..13]
-
-	and	%o2, %o0, %o0	! Mask away uninteresting bits
-	and	%o2, %o1, %o1	! (probably not necessary)
-
-	set	(2*NBPG), %o5
-	clr	%o4
-1:
-	ldxa	[%o4] ASI_DCACHE_TAG, %o3
-	sllx	%o3, 40-29, %o3	! Shift D$ tag into place
-	and	%o3, %o2, %o3	! Mask out trash
-	cmp	%o0, %o3
-	blt,pt	%xcc, 2f	! Too low
-	cmp	%o1, %o3
-	bgt,pt	%xcc, 2f	! Too high
-	 nop
-
-	membar	#LoadStore
-dlflush4:
-	stxa	%g0, [%o4] ASI_DCACHE_TAG ! Just right
-2:
-	membar	#StoreLoad
-	dec	16, %o5
-	brgz,pt	%o5, 1b
-	 inc	16, %o4
-
-	sethi	%hi(KERNBASE), %o5
-	flush	%o5
-	membar	#Sync
-	retl
-	 nop
-END(cache_flush_phys)
 
 /*
  * XXXXX Still needs lotsa cleanup after sendsig is complete and offsets are known
@@ -6206,7 +6146,7 @@ ENTRY(pmap_zero_phys)
 	dec	8, %o2
 	stxa	%g0, [%o0] ASI_PHYS_CACHED
 	inc	8, %o0
-dlflush5:
+dlflush4:
 	stxa	%g0, [%o1] ASI_DCACHE_TAG
 	brgz	%o2, 1b
 	 inc	16, %o1
@@ -7678,5 +7618,4 @@ dlflush_start:
 	.xword	dlflush2
 	.xword	dlflush3
 	.xword	dlflush4
-	.xword	dlflush5
 	.xword	0

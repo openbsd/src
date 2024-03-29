@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.75 2023/10/24 13:20:10 claudio Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.76 2024/03/29 21:11:32 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -73,9 +73,8 @@
 
 #include <sparc64/dev/starfire.h>
 
-/* This is declared here so that you must include a CPU for the cache code. */
 struct cacheinfo cacheinfo = {
-	us_dcache_flush_page
+	.c_dcache_flush_page = us_dcache_flush_page
 };
 
 void (*cpu_start_clock)(void);
@@ -283,8 +282,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	if (ci->ci_upaid == cpu_myid())
 		cpu_init(ci);
 
-	cacheinfo.c_physical = 1; /* Dunno... */
-	cacheinfo.c_split = 1;
 	l = getpropint(node, "icache-line-size", 0);
 	if (l == 0)
 		l = getpropint(node, "l1-icache-line-size", 0);
@@ -293,7 +290,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
-	cacheinfo.ic_l2linesize = i;
 	cacheinfo.ic_totalsize = getpropint(node, "icache-size", 0);
 	if (cacheinfo.ic_totalsize == 0)
 		cacheinfo.ic_totalsize = getpropint(node, "l1-icache-size", 0);
@@ -310,7 +306,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
-	cacheinfo.dc_l2linesize = i;
 	cacheinfo.dc_totalsize = getpropint(node, "dcache-size", 0);
 	if (cacheinfo.dc_totalsize == 0)
 		cacheinfo.dc_totalsize = getpropint(node, "l1-dcache-size", 0);
@@ -327,7 +322,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
-	cacheinfo.ec_l2linesize = i;
 	cacheinfo.ec_totalsize = getpropint(node, "ecache-size", 0);
 	if (cacheinfo.ec_totalsize == 0)
 		cacheinfo.ec_totalsize = getpropint(node, "l2-cache-size", 0);
@@ -340,17 +334,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * XXX - The following will have to do until
 	 * we have per-cpu cache handling.
 	 */
-	cacheinfo.c_l2linesize =
-		min(cacheinfo.ic_l2linesize,
-		    cacheinfo.dc_l2linesize);
-	cacheinfo.c_linesize =
-		min(cacheinfo.ic_linesize,
-		    cacheinfo.dc_linesize);
-	cacheinfo.c_totalsize =
-		cacheinfo.ic_totalsize +
-		cacheinfo.dc_totalsize;
-
-	if (cacheinfo.c_totalsize == 0)
+	if (cacheinfo.ic_totalsize + cacheinfo.dc_totalsize == 0)
 		return;
 	
 	sep = " ";
@@ -379,7 +363,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #endif
 
 	printf("\n");
-	cache_enable();
 }
 
 int

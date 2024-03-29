@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.112 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.113 2024/03/29 21:11:32 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -47,7 +47,7 @@
 #include <machine/openfirm.h>
 #include <machine/kcore.h>
 
-#include "cache.h"
+#include <sparc64/sparc64/cache.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
