@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.68 2017/10/29 12:42:11 aoyama Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.69 2024/03/29 06:52:50 miod Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1
 
@@ -6,7 +6,7 @@ BINDIR=/usr/bin
 .if defined(BOOTSTRAP)
 LANGUAGES=--enable-languages=c
 .else
-LANGUAGES=--enable-languages='c,c++,objc' 
+LANGUAGES=--enable-languages='c,c++' 
 .endif
 V=3.3.6
 
@@ -29,7 +29,7 @@ MAKE_FLAGS= 	CFLAGS="${GNUCFLAGS}" \
 GXX_INCDIR=	/usr/include/g++
 CLEANFILES=	.gdbinit */.gdbinit *.info* \
 		c-parse.c c-parse.h c-parse.y cexp.c cp/parse.c cp/parse.h \
-		f/*.info* objc/objc-parse.c objc/objc-parse.y target_path \
+		target_path \
 		print-rtl1.c gengtype-lex.c gengtype-yacc.c gengtype-yacc.h \
 		genrtl.c genrtl.h fixinc.sh fixinc/Makefile \
 		po/Makefile  po/Makefile.in  po/POTFILES
