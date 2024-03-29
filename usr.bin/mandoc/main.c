@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.263 2023/09/04 13:08:11 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.264 2024/03/29 01:01:00 millert Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -390,6 +390,9 @@ main(int argc, char *argv[])
 		argc -= optind;
 		argv += optind;
 	}
+
+	/* Avoid repeated TZ lookups, especially for makewhatis. */
+	tzset();
 
 	/*
 	 * Quirks for help(1) and man(1),
