@@ -586,15 +586,15 @@ $code.=<<___;
 .size	_x86_64_AES_encrypt_compact,.-_x86_64_AES_encrypt_compact
 ___
 
-# void AES_encrypt (const void *inp,void *out,const AES_KEY *key);
+# void aes_encrypt_internal(const void *inp, void *out, const AES_KEY *key);
 $code.=<<___;
-.globl	AES_encrypt
-.type	AES_encrypt,\@function,3
+.globl	aes_encrypt_internal
+.type	aes_encrypt_internal,\@function,3
 .align	16
 .globl	asm_AES_encrypt
 .hidden	asm_AES_encrypt
 asm_AES_encrypt:
-AES_encrypt:
+aes_encrypt_internal:
 	_CET_ENDBR
 	push	%rbx
 	push	%rbp
@@ -655,7 +655,7 @@ AES_encrypt:
 	lea	48(%rsi),%rsp
 .Lenc_epilogue:
 	ret
-.size	AES_encrypt,.-AES_encrypt
+.size	aes_encrypt_internal,.-aes_encrypt_internal
 ___
 
 #------------------------------------------------------------------#
@@ -1188,15 +1188,15 @@ $code.=<<___;
 .size	_x86_64_AES_decrypt_compact,.-_x86_64_AES_decrypt_compact
 ___
 
-# void AES_decrypt (const void *inp,void *out,const AES_KEY *key);
+# void aes_decrypt_internal(const void *inp, void *out, const AES_KEY *key);
 $code.=<<___;
-.globl	AES_decrypt
-.type	AES_decrypt,\@function,3
+.globl	aes_decrypt_internal
+.type	aes_decrypt_internal,\@function,3
 .align	16
 .globl	asm_AES_decrypt
 .hidden	asm_AES_decrypt
 asm_AES_decrypt:
-AES_decrypt:
+aes_decrypt_internal:
 	_CET_ENDBR
 	push	%rbx
 	push	%rbp
@@ -1259,7 +1259,7 @@ AES_decrypt:
 	lea	48(%rsi),%rsp
 .Ldec_epilogue:
 	ret
-.size	AES_decrypt,.-AES_decrypt
+.size	aes_decrypt_internal,.-aes_decrypt_internal
 ___
 #------------------------------------------------------------------#
 
@@ -2782,13 +2782,13 @@ cbc_se_handler:
 
 .section	.pdata
 .align	4
-	.rva	.LSEH_begin_AES_encrypt
-	.rva	.LSEH_end_AES_encrypt
-	.rva	.LSEH_info_AES_encrypt
+	.rva	.LSEH_begin_aes_encrypt_internal
+	.rva	.LSEH_end_aes_encrypt_internal
+	.rva	.LSEH_info_aes_encrypt_internal
 
-	.rva	.LSEH_begin_AES_decrypt
-	.rva	.LSEH_end_AES_decrypt
-	.rva	.LSEH_info_AES_decrypt
+	.rva	.LSEH_begin_aes_decrypt_internal
+	.rva	.LSEH_end_aes_decrypt_internal
+	.rva	.LSEH_info_aes_decrypt_internal
 
 	.rva	.LSEH_begin_aes_set_encrypt_key_internal
 	.rva	.LSEH_end_aes_set_encrypt_key_internal
@@ -2804,11 +2804,11 @@ cbc_se_handler:
 
 .section	.xdata
 .align	8
-.LSEH_info_AES_encrypt:
+.LSEH_info_aes_encrypt_internal:
 	.byte	9,0,0,0
 	.rva	block_se_handler
 	.rva	.Lenc_prologue,.Lenc_epilogue	# HandlerData[]
-.LSEH_info_AES_decrypt:
+.LSEH_info_aes_decrypt_internal:
 	.byte	9,0,0,0
 	.rva	block_se_handler
 	.rva	.Ldec_prologue,.Ldec_epilogue	# HandlerData[]

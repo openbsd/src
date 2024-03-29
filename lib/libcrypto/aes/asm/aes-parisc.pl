@@ -66,9 +66,9 @@ $code=<<___;
 	.LEVEL	$LEVEL
 	.text
 
-	.EXPORT	AES_encrypt,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR
+	.EXPORT	aes_encrypt_internal,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR
 	.ALIGN	64
-AES_encrypt
+aes_encrypt_internal
 	.PROC
 	.CALLINFO	FRAME=`$FRAME-16*$SIZE_T`,NO_CALLS,SAVE_RP,ENTRY_GR=18
 	.ENTRY
@@ -540,9 +540,9 @@ L\$AES_Te
 ___
 
 $code.=<<___;
-	.EXPORT	AES_decrypt,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR
+	.EXPORT	aes_decrypt_internal,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR
 	.ALIGN	16
-AES_decrypt
+aes_decrypt_internal
 	.PROC
 	.CALLINFO	FRAME=`$FRAME-16*$SIZE_T`,NO_CALLS,SAVE_RP,ENTRY_GR=18
 	.ENTRY

@@ -161,17 +161,17 @@ AES_Te:
 .word	0x1B000000, 0x36000000, 0, 0, 0, 0, 0, 0
 .size	AES_Te,.-AES_Te
 
-@ void AES_encrypt(const unsigned char *in, unsigned char *out,
-@ 		 const AES_KEY *key) {
-.global AES_encrypt
-.type   AES_encrypt,%function
+@ void aes_encrypt_internal(const unsigned char *in, unsigned char *out,
+@     const AES_KEY *key) {
+.global aes_encrypt_internal
+.type   aes_encrypt_internal,%function
 .align	5
-AES_encrypt:
-	sub	r3,pc,#8		@ AES_encrypt
+aes_encrypt_internal:
+	sub	r3,pc,#8		@ aes_encrypt_internal
 	stmdb   sp!,{r1,r4-r12,lr}
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
-	sub	$tbl,r3,#AES_encrypt-AES_Te	@ Te
+	sub	$tbl,r3,#aes_encrypt_internal-AES_Te	@ Te
 #if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
@@ -265,7 +265,7 @@ AES_encrypt:
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
 #endif
-.size	AES_encrypt,.-AES_encrypt
+.size	aes_encrypt_internal,.-aes_encrypt_internal
 
 .type   _armv4_AES_encrypt,%function
 .align	2
@@ -877,17 +877,17 @@ AES_Td:
 .byte	0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 .size	AES_Td,.-AES_Td
 
-@ void AES_decrypt(const unsigned char *in, unsigned char *out,
-@ 		 const AES_KEY *key) {
-.global AES_decrypt
-.type   AES_decrypt,%function
+@ void aes_decrypt_internal(const unsigned char *in, unsigned char *out,
+@     const AES_KEY *key) {
+.global aes_decrypt_internal
+.type   aes_decrypt_internal,%function
 .align	5
-AES_decrypt:
-	sub	r3,pc,#8		@ AES_decrypt
+aes_decrypt_internal:
+	sub	r3,pc,#8		@ aes_decrypt_internal
 	stmdb   sp!,{r1,r4-r12,lr}
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
-	sub	$tbl,r3,#AES_decrypt-AES_Td		@ Td
+	sub	$tbl,r3,#aes_decrypt_internal-AES_Td		@ Td
 #if __ARM_ARCH__<7 || defined(__STRICT_ALIGNMENT)
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
@@ -981,7 +981,7 @@ AES_decrypt:
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
 #endif
-.size	AES_decrypt,.-AES_decrypt
+.size	aes_decrypt_internal,.-aes_decrypt_internal
 
 .type   _armv4_AES_decrypt,%function
 .align	2

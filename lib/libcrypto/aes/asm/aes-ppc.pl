@@ -327,9 +327,9 @@ $code.=<<___;
 .byte	0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
 
 
-.globl	.AES_encrypt
+.globl	.aes_encrypt_internal
 .align	7
-.AES_encrypt:
+.aes_encrypt_internal:
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 
@@ -754,9 +754,9 @@ Lenc_compact_done:
 	xor	$s3,$s3,$t3
 	blr
 
-.globl	.AES_decrypt
+.globl	.aes_decrypt_internal
 .align	7
-.AES_decrypt:
+.aes_decrypt_internal:
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.20 2024/03/29 04:39:54 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.21 2024/03/29 11:00:57 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -37,8 +37,10 @@
 #include "aes_local.h"
 #include "crypto_internal.h"
 
-#if !defined(HAVE_AES_SET_ENCRYPT_KEY_INTERNAL) && \
-    !defined(HAVE_AES_SET_DECRYPT_KEY_INTERNAL)
+#if !defined(HAVE_AES_SET_ENCRYPT_KEY_INTERNAL) || \
+    !defined(HAVE_AES_SET_DECRYPT_KEY_INTERNAL) || \
+    !defined(HAVE_AES_ENCRYPT_INTERNAL) || \
+    !defined(HAVE_AES_DECRYPT_INTERNAL)
 
 /*
 Te0[x] = S [x].[02, 01, 01, 03];
@@ -616,6 +618,10 @@ static const u8 Td4[256] = {
 	0x17U, 0x2bU, 0x04U, 0x7eU, 0xbaU, 0x77U, 0xd6U, 0x26U,
 	0xe1U, 0x69U, 0x14U, 0x63U, 0x55U, 0x21U, 0x0cU, 0x7dU,
 };
+#endif
+
+#if !defined(HAVE_AES_SET_ENCRYPT_KEY_INTERNAL) || \
+    !defined(HAVE_AES_SET_DECRYPT_KEY_INTERNAL)
 static const u32 rcon[] = {
 	0x01000000, 0x02000000, 0x04000000, 0x08000000,
 	0x10000000, 0x20000000, 0x40000000, 0x80000000,
@@ -810,13 +816,17 @@ AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 	return aes_set_decrypt_key_internal(userKey, bits, key);
 }
 
-#ifndef AES_ASM
+#ifdef HAVE_AES_ENCRYPT_INTERNAL
+void aes_encrypt_internal(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key);
+
+#else
 /*
- * Encrypt a single block
- * in and out can overlap
+ * Encrypt a single block - in and out can overlap.
  */
-void
-AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
+static inline void
+aes_encrypt_internal(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key)
 {
 	const u32 *rk;
 	u32 s0, s1, s2, s3, t0, t1, t2, t3;
@@ -1000,13 +1010,25 @@ AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	    rk[3];
 	crypto_store_htobe32(&out[3 * 4], s3);
 }
+#endif
 
-/*
- * Decrypt a single block
- * in and out can overlap
- */
 void
-AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
+AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
+{
+	return aes_encrypt_internal(in, out, key);
+}
+
+#ifdef HAVE_AES_DECRYPT_INTERNAL
+void aes_decrypt_internal(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key);
+
+#else
+/*
+ * Decrypt a single block - in and out can overlap.
+ */
+static inline void
+aes_decrypt_internal(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key)
 {
 	const u32 *rk;
 	u32 s0, s1, s2, s3, t0, t1, t2, t3;
@@ -1190,4 +1212,10 @@ AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 	    rk[3];
 	crypto_store_htobe32(&out[3 * 4], s3);
 }
-#endif /* AES_ASM */
+#endif
+
+void
+AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
+{
+	return aes_decrypt_internal(in, out, key);
+}

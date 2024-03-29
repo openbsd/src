@@ -511,8 +511,8 @@ _sparcv9_AES_encrypt:
 .size	_sparcv9_AES_encrypt,(.-_sparcv9_AES_encrypt)
 
 .align	32
-.globl	AES_encrypt
-AES_encrypt:
+.globl	aes_encrypt_internal
+aes_encrypt_internal:
 	save	%sp,-$frame,%sp
 #ifdef __PIC__
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %o5
@@ -638,8 +638,8 @@ AES_encrypt:
 
 	ret
 	restore
-.type	AES_encrypt,#function
-.size	AES_encrypt,(.-AES_encrypt)
+.type	aes_encrypt_internal,#function
+.size	aes_encrypt_internal,(.-aes_encrypt_internal)
 
 ___
 
@@ -1075,8 +1075,8 @@ _sparcv9_AES_decrypt:
 .size	_sparcv9_AES_decrypt,(.-_sparcv9_AES_decrypt)
 
 .align	32
-.globl	AES_decrypt
-AES_decrypt:
+.globl	aes_decrypt_internal
+aes_decrypt_internal:
 	save	%sp,-$frame,%sp
 #ifdef __PIC__
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %o5
@@ -1202,8 +1202,8 @@ AES_decrypt:
 
 	ret
 	restore
-.type	AES_decrypt,#function
-.size	AES_decrypt,(.-AES_decrypt)
+.type	aes_decrypt_internal,#function
+.size	aes_decrypt_internal,(.-aes_decrypt_internal)
 ___
 
 # fmovs instructions substituting for FP nops were originally added

@@ -1158,8 +1158,8 @@ sub enclast()
 	&data_word(0x00000000, 0x00000000, 0x00000000, 0x00000000);
 	&previous();
 
-# void AES_encrypt (const void *inp,void *out,const AES_KEY *key);
-&function_begin("AES_encrypt");
+# void aes_encrypt_internal(const void *inp, void *out, const AES_KEY *key);
+&function_begin("aes_encrypt_internal");
 	&mov	($acc,&wparam(0));		# load inp
 	&mov	($key,&wparam(2));		# load key
 
@@ -1213,7 +1213,7 @@ sub enclast()
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
-&function_end("AES_encrypt");
+&function_end("aes_encrypt_internal");
 
 #--------------------------------------------------------------------#
 
@@ -1947,8 +1947,8 @@ sub declast()
 	&data_byte(0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d);
 	&previous();
 
-# void AES_decrypt (const void *inp,void *out,const AES_KEY *key);
-&function_begin("AES_decrypt");
+# void aes_decrypt_internal(const void *inp, void *out, const AES_KEY *key);
+&function_begin("aes_decrypt_internal");
 	&mov	($acc,&wparam(0));		# load inp
 	&mov	($key,&wparam(2));		# load key
 
@@ -2002,7 +2002,7 @@ sub declast()
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
-&function_end("AES_decrypt");
+&function_end("aes_decrypt_internal");
 
 # void aes_cbc_encrypt_internal(const void char *inp, unsigned char *out,
 #     size_t length, const AES_KEY *key, unsigned char *ivp,const int enc);
