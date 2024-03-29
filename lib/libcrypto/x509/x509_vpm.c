@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.42 2024/01/08 09:51:09 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.43 2024/03/29 00:25:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -82,7 +82,7 @@ int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param, const unsigned char *ip,
 static void
 str_free(char *s)
 {
-    free(s);
+	free(s);
 }
 
 static STACK_OF(OPENSSL_STRING) *
