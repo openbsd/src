@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.21 2024/03/29 11:00:57 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.22 2024/03/29 11:19:01 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -37,11 +37,6 @@
 #include "aes_local.h"
 #include "crypto_internal.h"
 
-#if !defined(HAVE_AES_SET_ENCRYPT_KEY_INTERNAL) || \
-    !defined(HAVE_AES_SET_DECRYPT_KEY_INTERNAL) || \
-    !defined(HAVE_AES_ENCRYPT_INTERNAL) || \
-    !defined(HAVE_AES_DECRYPT_INTERNAL)
-
 /*
 Te0[x] = S [x].[02, 01, 01, 03];
 Te1[x] = S [x].[03, 02, 01, 01];
@@ -55,6 +50,10 @@ Td3[x] = Si[x].[09, 0d, 0b, 0e];
 Td4[x] = Si[x].[01];
 */
 
+#if !defined(HAVE_AES_SET_ENCRYPT_KEY_INTERNAL) || \
+    !defined(HAVE_AES_SET_DECRYPT_KEY_INTERNAL) || \
+    !defined(HAVE_AES_ENCRYPT_INTERNAL) || \
+    !defined(HAVE_AES_DECRYPT_INTERNAL)
 static const u32 Te0[256] = {
 	0xc66363a5U, 0xf87c7c84U, 0xee777799U, 0xf67b7b8dU,
 	0xfff2f20dU, 0xd66b6bbdU, 0xde6f6fb1U, 0x91c5c554U,
@@ -584,6 +583,10 @@ static const u32 Td3[256] = {
 	0xa8017139U, 0x0cb3de08U, 0xb4e49cd8U, 0x56c19064U,
 	0xcb84617bU, 0x32b670d5U, 0x6c5c7448U, 0xb85742d0U,
 };
+#endif
+
+#if !defined(HAVE_AES_ENCRYPT_INTERNAL) || \
+    !defined(HAVE_AES_DECRYPT_INTERNAL)
 static const u8 Td4[256] = {
 	0x52U, 0x09U, 0x6aU, 0xd5U, 0x30U, 0x36U, 0xa5U, 0x38U,
 	0xbfU, 0x40U, 0xa3U, 0x9eU, 0x81U, 0xf3U, 0xd7U, 0xfbU,
