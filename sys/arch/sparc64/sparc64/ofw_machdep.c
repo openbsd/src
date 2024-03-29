@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.37 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.38 2024/03/29 21:09:49 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -243,6 +243,7 @@ prom_alloc_virt(int len, int align)
 	return (vaddr_t)args.retaddr;
 }
 
+#ifdef unused
 /* 
  * Release some address space to the prom
  *
@@ -274,7 +275,7 @@ prom_free_virt(vaddr_t vaddr, int len)
 	args.len = len;
 	return openfirmware(&args);
 }
-
+#endif
 
 /* 
  * Unmap some address space

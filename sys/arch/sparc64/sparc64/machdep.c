@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.210 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.211 2024/03/29 21:09:49 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1684,11 +1684,13 @@ bus_intr_allocate(bus_space_tag_t t, int (*handler)(void *), void *arg,
 	return (ih);
 }
 
+#ifdef notyet
 void
 bus_intr_free(void *arg)
 {
 	free(arg, M_DEVBUF, 0);
 }
+#endif
 
 void *
 sparc_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int number,
