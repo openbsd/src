@@ -1,4 +1,4 @@
-/* $OpenBSD: err_all.c,v 1.35 2024/03/24 06:05:41 tb Exp $ */
+/* $OpenBSD: err_all.c,v 1.36 2024/03/29 02:22:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@
 #include <openssl/kdf.h>
 #include <openssl/objects.h>
 #include <openssl/ocsp.h>
-#include <openssl/pem2.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/rand.h>
 #include <openssl/ts.h>

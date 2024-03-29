@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.26 2023/04/25 17:51:36 tb Exp $ */
+/* $OpenBSD: pem.h,v 1.27 2024/03/29 02:22:18 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,6 @@
 #endif
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-#include <openssl/pem2.h>
 
 #ifdef  __cplusplus
 extern "C" {
