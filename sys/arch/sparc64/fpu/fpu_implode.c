@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.10 2024/03/29 21:07:11 miod Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.11 2024/03/29 21:08:10 miod Exp $	*/
 /*	$NetBSD: fpu_implode.c,v 1.7 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
+#include <machine/fsr.h>
 #include <machine/ieee.h>
 #include <machine/instr.h>
 #include <machine/reg.h>

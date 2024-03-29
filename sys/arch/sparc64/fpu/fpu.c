@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.24 2024/03/29 21:07:11 miod Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.25 2024/03/29 21:08:10 miod Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -75,6 +75,7 @@
 #include <sys/signalvar.h>
 
 #include <machine/instr.h>
+#include <machine/fsr.h>
 #include <machine/reg.h>
 
 #include <sparc64/fpu/fpu_emu.h>

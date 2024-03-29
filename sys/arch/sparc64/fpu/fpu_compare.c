@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_compare.c,v 1.4 2024/03/29 21:07:11 miod Exp $	*/
+/*	$OpenBSD: fpu_compare.c,v 1.5 2024/03/29 21:08:10 miod Exp $	*/
 /*	$NetBSD: fpu_compare.c,v 1.3 2001/08/26 05:46:31 eeh Exp $ */
 
 /*
@@ -50,6 +50,7 @@
 
 #include <sys/types.h>
 
+#include <machine/fsr.h>
 #include <machine/reg.h>
 
 #include <sparc64/fpu/fpu_arith.h>

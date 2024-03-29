@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_div.c,v 1.5 2024/03/29 21:07:11 miod Exp $	*/
+/*	$OpenBSD: fpu_div.c,v 1.6 2024/03/29 21:08:10 miod Exp $	*/
 /*	$NetBSD: fpu_div.c,v 1.2 1994/11/20 20:52:38 deraadt Exp $ */
 
 /*
@@ -47,6 +47,7 @@
 
 #include <sys/types.h>
 
+#include <machine/fsr.h>
 #include <machine/reg.h>
 
 #include <sparc64/fpu/fpu_arith.h>

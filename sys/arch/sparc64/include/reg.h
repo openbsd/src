@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.7 2022/10/22 20:09:41 miod Exp $	*/
+/*	$OpenBSD: reg.h,v 1.8 2024/03/29 21:08:11 miod Exp $	*/
 /*	$NetBSD: reg.h,v 1.8 2001/06/19 12:59:16 wiz Exp $ */
 
 /*
@@ -67,8 +67,6 @@ struct reg {
 	int64_t r_local[8];	/* %l* registers in trap's caller */
 	int64_t r_in[8];	/* %i* registers in trap's caller */
 };
-
-#include <machine/fsr.h>
 
 /*
  * FP coprocessor registers.

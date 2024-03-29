@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_subr.c,v 1.3 2024/03/29 21:07:11 miod Exp $	*/
+/*	$OpenBSD: fpu_subr.c,v 1.4 2024/03/29 21:08:10 miod Exp $	*/
 /*	$NetBSD: fpu_subr.c,v 1.3 1996/03/14 19:42:01 christos Exp $ */
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #endif
 
+#include <machine/fsr.h>
 #include <machine/reg.h>
 #include <machine/instr.h>
 

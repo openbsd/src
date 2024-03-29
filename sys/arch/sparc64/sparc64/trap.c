@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.120 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.121 2024/03/29 21:08:11 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -67,6 +67,7 @@
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
+#include <machine/fsr.h>
 #include <machine/trap.h>
 #include <machine/instr.h>
 #include <machine/pmap.h>

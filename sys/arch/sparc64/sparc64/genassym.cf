@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.40 2023/01/11 19:57:17 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.41 2024/03/29 21:08:11 miod Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -88,6 +88,7 @@ include <machine/pmap.h>
 include <machine/cpu.h>
 include <machine/mutex.h>
 
+include <machine/fsr.h>
 include <machine/reg.h>
 
 ifdef notyet
