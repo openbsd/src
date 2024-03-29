@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.16 2023/07/28 10:28:02 tb Exp $ */
+/* $OpenBSD: cms.h,v 1.17 2024/03/29 02:28:50 jsing Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -58,8 +58,11 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_CMS
+
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -138,14 +141,12 @@ ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
 int CMS_is_detached(CMS_ContentInfo *cms);
 int CMS_set_detached(CMS_ContentInfo *cms, int detached);
 
-#ifdef HEADER_PEM_H
 CMS_ContentInfo *PEM_read_bio_CMS(BIO *bp, CMS_ContentInfo **x,
     pem_password_cb *cb, void *u);
 CMS_ContentInfo *PEM_read_CMS(FILE *fp, CMS_ContentInfo **x,
     pem_password_cb *cb, void *u);
 int PEM_write_bio_CMS(BIO *bp, const CMS_ContentInfo *x);
 int PEM_write_CMS(FILE *fp, const CMS_ContentInfo *x);
-#endif
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms);
 CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms);
 int i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms);
