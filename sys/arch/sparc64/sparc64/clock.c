@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.84 2024/03/29 21:18:19 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.85 2024/03/29 21:26:38 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -66,14 +66,9 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/resourcevar.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/clockintr.h>
-#ifdef GPROF
-#include <sys/gmon.h>
-#endif
 #include <sys/sched.h>
 #include <sys/stdint.h>
 #include <sys/timetc.h>
@@ -87,7 +82,6 @@
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
 
-#include <sparc64/sparc64/intreg.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>

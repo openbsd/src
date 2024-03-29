@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.76 2024/03/29 21:11:32 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.77 2024/03/29 21:26:38 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -63,7 +63,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/trap.h>
 #include <machine/hypervisor.h>
 #include <machine/openfirm.h>
 #include <machine/pmap.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.213 2024/03/29 21:17:13 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.214 2024/03/29 21:26:38 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -72,7 +72,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/extent.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
@@ -86,18 +85,15 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
-#include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 
 #include <net/if.h>
-#include <uvm/uvm.h>
 
 #include <sys/sysctl.h>
 #include <sys/exec_elf.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
-#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/cpu.h>

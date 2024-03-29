@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.114 2024/03/29 21:17:13 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.115 2024/03/29 21:26:38 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -28,7 +28,6 @@
 
 #include <sys/atomic.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -51,16 +50,9 @@
 
 #ifdef DDB
 #include <machine/db_machdep.h>
-#include <ddb/db_command.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_access.h>
 #include <ddb/db_output.h>
-#define db_enter()	__asm volatile("ta 1; nop");
 #else
 #define db_enter()
-#define db_printf	printf
 #endif
 
 #define	MEG		(1<<20) /* 1MB */
