@@ -1,9 +1,6 @@
-# $OpenBSD: Makefile.inc,v 1.12 2024/03/29 06:03:20 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2024/03/29 07:24:09 jsing Exp $
 
 # aarch64-specific libcrypto build rules
-
-# camellia
-SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 
 .for dir f in ${SSLASM}
 SRCS+=	${f}.S

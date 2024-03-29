@@ -10,8 +10,6 @@ CFLAGS+= -DHAVE_AES_SET_DECRYPT_KEY_INTERNAL
 # bn
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
 SSLASM+= bn armv4-mont
-# camellia
-SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # modes
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-armv4

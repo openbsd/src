@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.11 2024/03/29 06:03:21 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.12 2024/03/29 07:24:09 jsing Exp $
 
 # powerpc-specific libcrypto build rules
 
@@ -10,8 +10,6 @@ SSLASM+= bn ppc bn-ppc
 SSLASM+= bn ppc-mont ppc-mont		# bn_mul_mont_int
 #SSLASM+= bn ppc64-mont ppc64-mont	# bn_mul_mont_fpu64
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
-# camellia
-SRCS+= camellia.c cmll_cbc.c cmll_misc.c
 # sha
 CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-ppc sha1-ppc
