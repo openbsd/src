@@ -9,31 +9,16 @@
 
 #include "fido.h"
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000
-static EVP_MD *
-rs1_get_EVP_MD(void)
-{
-	return (EVP_MD_fetch(NULL, "SHA-1", NULL));
-}
+#define PRAGMA(s)
 
-static void
-rs1_free_EVP_MD(EVP_MD *md)
-{
-	EVP_MD_free(md);
-}
-#else
 static EVP_MD *
 rs1_get_EVP_MD(void)
 {
+	PRAGMA("GCC diagnostic push");
+	PRAGMA("GCC diagnostic ignored \"-Wcast-qual\"");
 	return ((EVP_MD *)EVP_sha1());
+	PRAGMA("GCC diagnostic pop");
 }
-
-static void
-rs1_free_EVP_MD(EVP_MD *md)
-{
-	(void)md;
-}
-#endif /* OPENSSL_VERSION_NUMBER */
 
 int
 rs1_verify_sig(const fido_blob_t *dgst, EVP_PKEY *pkey,
@@ -70,7 +55,6 @@ rs1_verify_sig(const fido_blob_t *dgst, EVP_PKEY *pkey,
 	ok = 0;
 fail:
 	EVP_PKEY_CTX_free(pctx);
-	rs1_free_EVP_MD(md);
 
 	return (ok);
 }

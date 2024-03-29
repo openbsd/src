@@ -17,31 +17,16 @@
 #define get0_RSA(x)	EVP_PKEY_get0((x))
 #endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000
-static EVP_MD *
-rs256_get_EVP_MD(void)
-{
-	return (EVP_MD_fetch(NULL, "SHA2-256", NULL));
-}
+#define PRAGMA(s)
 
-static void
-rs256_free_EVP_MD(EVP_MD *md)
-{
-	EVP_MD_free(md);
-}
-#else
 static EVP_MD *
 rs256_get_EVP_MD(void)
 {
+	PRAGMA("GCC diagnostic push");
+	PRAGMA("GCC diagnostic ignored \"-Wcast-qual\"");
 	return ((EVP_MD *)EVP_sha256());
+	PRAGMA("GCC diagnostic pop");
 }
-
-static void
-rs256_free_EVP_MD(EVP_MD *md)
-{
-	(void)md;
-}
-#endif /* OPENSSL_VERSION_NUMBER */
 
 static int
 decode_bignum(const cbor_item_t *item, void *ptr, size_t len)
@@ -266,7 +251,6 @@ rs256_verify_sig(const fido_blob_t *dgst, EVP_PKEY *pkey,
 	ok = 0;
 fail:
 	EVP_PKEY_CTX_free(pctx);
-	rs256_free_EVP_MD(md);
 
 	return (ok);
 }
