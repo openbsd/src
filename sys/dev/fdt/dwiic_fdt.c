@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwiic_fdt.c,v 1.1 2023/08/29 12:09:40 kettenis Exp $	*/
+/*	$OpenBSD: dwiic_fdt.c,v 1.2 2024/03/29 22:08:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -48,6 +48,7 @@ const struct cfattach dwiic_fdt_ca = {
 	sizeof(struct dwiic_fdt_softc), dwiic_fdt_match, dwiic_fdt_attach
 };
 
+void	dwiic_fdt_calc_timings(struct dwiic_fdt_softc *);
 void	dwiic_fdt_bus_scan(struct device *, struct i2cbus_attach_args *,
 	    void *);
 
@@ -66,8 +67,6 @@ dwiic_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct dwiic_softc *sc = &fsc->sc_sc;
 	struct fdt_attach_args *faa = aux;
 	struct i2cbus_attach_args iba;
-	uint32_t sda_hold, sda_fall, scl_fall;
-	uint64_t freq;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -84,19 +83,7 @@ dwiic_fdt_attach(struct device *parent, struct device *self, void *aux)
 	reset_deassert_all(faa->fa_node);
 	clock_enable(faa->fa_node, NULL);
 
-	freq = clock_get_frequency(faa->fa_node, NULL);
-	sda_hold = OF_getpropint(faa->fa_node, "i2c-sda-hold-time-ns", 300);
-	sda_fall = OF_getpropint(faa->fa_node, "i2c-sda-falling-time-ns", 300);
-	scl_fall = OF_getpropint(faa->fa_node, "i2c-scl-falling-time-ns", 300);
-
-	sc->sda_hold_time = round_closest(freq * sda_hold, 1000000000);
-
-	/* Standard-mode: tHIGH = 4.0 us; tLOW = 4.7 us */
-	sc->ss_hcnt = round_closest(freq * (4000 + sda_fall), 1000000000) - 3;
-	sc->ss_lcnt = round_closest(freq * (4700 + scl_fall), 1000000000) - 1;
-	/* Fast-mode: tHIGH = 0.6 us; tLOW = 1.3 us */
-	sc->fs_hcnt = round_closest(freq * (600 + sda_fall), 1000000000) - 3;
-	sc->fs_lcnt = round_closest(freq * (1300 + scl_fall), 1000000000) - 1;
+	dwiic_fdt_calc_timings(fsc);
 
 	if (dwiic_init(sc)) {
 		printf(": can't initialize\n");
@@ -127,6 +114,31 @@ dwiic_fdt_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_bus_scan = dwiic_fdt_bus_scan;
 	iba.iba_bus_scan_arg = &fsc->sc_node;
 	config_found(&sc->sc_dev, &iba, iicbus_print);
+}
+
+void
+dwiic_fdt_calc_timings(struct dwiic_fdt_softc *fsc)
+{
+	struct dwiic_softc *sc = &fsc->sc_sc;
+	uint32_t sda_hold, sda_fall, scl_fall;
+	uint64_t freq;
+
+	freq = clock_get_frequency(fsc->sc_node, NULL);
+	if (freq == 0)
+		return;
+
+	sda_hold = OF_getpropint(fsc->sc_node, "i2c-sda-hold-time-ns", 300);
+	sda_fall = OF_getpropint(fsc->sc_node, "i2c-sda-falling-time-ns", 300);
+	scl_fall = OF_getpropint(fsc->sc_node, "i2c-scl-falling-time-ns", 300);
+
+	sc->sda_hold_time = round_closest(freq * sda_hold, 1000000000);
+
+	/* Standard-mode: tHIGH = 4.0 us; tLOW = 4.7 us */
+	sc->ss_hcnt = round_closest(freq * (4000 + sda_fall), 1000000000) - 3;
+	sc->ss_lcnt = round_closest(freq * (4700 + scl_fall), 1000000000) - 1;
+	/* Fast-mode: tHIGH = 0.6 us; tLOW = 1.3 us */
+	sc->fs_hcnt = round_closest(freq * (600 + sda_fall), 1000000000) - 3;
+	sc->fs_lcnt = round_closest(freq * (1300 + scl_fall), 1000000000) - 1;
 }
 
 void
