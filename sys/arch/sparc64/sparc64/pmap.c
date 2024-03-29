@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.115 2024/03/29 21:26:38 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.116 2024/03/29 21:27:53 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -1174,6 +1174,8 @@ remap_data:
 		cpus->ci_next = NULL; /* Redundant, I know. */
 		cpus->ci_curproc = &proc0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
+		cpus->ci_cpcbpaddr = pseg_get(pmap_kernel(), u0[0]) &
+		    TLB_PA_MASK;
 		cpus->ci_upaid = cpu_myid();
 		cpus->ci_cpuid = 0;
 		cpus->ci_flags = CPUF_RUNNING;

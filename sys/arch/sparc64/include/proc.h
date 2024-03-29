@@ -47,4 +47,5 @@ struct mdproc {
 	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct	fpstate *md_fpstate;	/* fpu state, if any; always resident */
 	volatile int md_astpending;
+	paddr_t	md_pcbpaddr;
 };

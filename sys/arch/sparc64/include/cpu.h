@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.106 2024/03/29 21:09:04 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.107 2024/03/29 21:27:53 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -113,6 +113,7 @@ struct cpu_info {
 	/* Most important fields first */
 	struct proc		*ci_curproc;
 	struct pcb		*ci_cpcb;	/* also initial stack */
+	paddr_t			ci_cpcbpaddr;
 	struct cpu_info		*ci_next;
 
 	struct proc		*ci_fpproc;

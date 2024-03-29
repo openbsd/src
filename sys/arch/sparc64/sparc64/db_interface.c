@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.62 2024/02/23 18:19:03 cheloha Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.63 2024/03/29 21:27:53 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -1009,6 +1009,7 @@ db_setpcb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		if (p->p_stat && p->p_tid == addr) {
 			curproc = p;
 			curpcb = (struct pcb*)p->p_addr;
+			curcpu()->ci_cpcbpaddr = p->p_md.md_pcbpaddr;
 			if (p->p_vmspace->vm_map.pmap->pm_ctx) {
 				switchtoctx(p->p_vmspace->vm_map.pmap->pm_ctx);
 				return;

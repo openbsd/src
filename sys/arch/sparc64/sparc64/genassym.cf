@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.43 2024/03/29 21:14:56 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.44 2024/03/29 21:27:53 miod Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -91,6 +91,7 @@ member	p_vmspace
 member	p_cpu
 member	P_FPSTATE	p_md.md_fpstate
 member	P_MD_ASTPENDING	p_md.md_astpending
+member	P_MD_PCBPADDR	p_md.md_pcbpaddr
 
 export	SONPROC
 
@@ -116,6 +117,7 @@ struct	cpu_info
 member	ci_self
 member	ci_curproc
 member	ci_cpcb
+member	ci_cpcbpaddr
 member	ci_fpproc
 member	ci_handled_intr_level
 member	ci_intrpending

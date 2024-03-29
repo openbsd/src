@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.213 2024/03/29 21:25:55 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.214 2024/03/29 21:27:53 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ sun4u_mtp_patch_end:
 #ifdef SUN4V
 
 #define GET_CPUINFO_PA(ci) \
-	mov	0x10, ci				;\
+	mov	0x10, ci			;\
 	ldxa	[ci] ASI_SCRATCHPAD, ci
 
 #define GET_MMFSA(mmfsa) \
@@ -1927,61 +1927,9 @@ winfixspill:
 	 wrpr	%g5, 0, %cwp				!  return here and write out all dirty windows.
 #endif	/* 1 */
 	wrpr	%g2, 0, %tl				! Restore trap level for now XXXX
-	GET_CPCB(%g6)
-#ifdef DEBUG
-	set	0x12, %g5				! debug
-	sethi	%hi(DATA_START), %g7			! debug
-	stb	%g5, [%g7 + 0x20]			! debug
-	CHKPT %g5,%g7,0x11
-#endif	/* DEBUG */
-
-	/*
-	 * Traverse kernel map to find paddr of cpcb and only us ASI_PHYS_CACHED to
-	 * prevent any faults while saving the windows.  BTW if it isn't mapped, we
-	 * will trap and hopefully panic.
-	 */
-
-!	ba	0f					! DEBUG -- don't use phys addresses
-	 wr	%g0, ASI_NUCLEUS, %asi			! In case of problems finding PA
-	sethi	%hi(ctxbusy), %g1
-	ldx	[%g1 + %lo(ctxbusy)], %g1		! Load start of ctxbusy
-#ifdef DEBUG
-	srax	%g6, HOLESHIFT, %g7			! Check for valid address
-	brz,pt	%g7, 1f					! Should be zero or -1
-	 addcc	%g7, 1, %g7					! Make -1 -> 0
-	tnz	%xcc, 1					! Invalid address??? How did this happen?
-1:
-#endif	/* DEBUG */
-	srlx	%g6, STSHIFT, %g7
-	ldx	[%g1], %g1				! Load pointer to kernel_pmap
-	and	%g7, STMASK, %g7
-	sll	%g7, 3, %g7
-	add	%g7, %g1, %g1
-	ldxa	[%g1] ASI_PHYS_CACHED, %g1		! Load pointer to directory
-
-	srlx	%g6, PDSHIFT, %g7			! Do page directory
-	and	%g7, PDMASK, %g7
-	sll	%g7, 3, %g7
-	brz,pn	%g1, 0f
-	 add	%g7, %g1, %g1
-	ldxa	[%g1] ASI_PHYS_CACHED, %g1
-
-	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
-	and	%g7, PTMASK, %g7
-	brz	%g1, 0f
-	 sll	%g7, 3, %g7
-	add	%g1, %g7, %g7
-	ldxa	[%g7] ASI_PHYS_CACHED, %g7		! This one is not
-	brgez	%g7, 0f
-	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
-	sll	%g6, 32-PGSHIFT, %g6			! And offset
-	sllx	%g7, PGSHIFT+17, %g7			! There are 17 bits to the left of the PA in the TTE
-	srl	%g6, 32-PGSHIFT, %g6
-	srax	%g7, 17, %g7
-	or	%g7, %g6, %g6				! Then combine them to form PA
-
+	GET_CPUINFO_VA(%g6)
+	ldx	[%g6 + CI_CPCBPADDR], %g6
 	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
-0:
 	/*
 	 * Now save all user windows to cpcb.
 	 */
@@ -3145,41 +3093,8 @@ pcbspill_others:
 
 pcbspill:
 	GET_CPUINFO_PA(%g6)
-	wr	%g0, ASI_PHYS_CACHED, %asi
-	ldxa	[%g6 + CI_CPCB] %asi, %g6
-
-	sethi	%hi(ctxbusy), %g1
-	ldx	[%g1 + %lo(ctxbusy)], %g1
-	ldx	[%g1], %g1
-
-	srlx	%g6, STSHIFT, %g7
-	and	%g7, STMASK, %g7
-	sll	%g7, 3, %g7
-	add	%g7, %g1, %g1
-	ldxa	[%g1] ASI_PHYS_CACHED, %g1		! Load pointer to directory
-
-	srlx	%g6, PDSHIFT, %g7			! Do page directory
-	and	%g7, PDMASK, %g7
-	sll	%g7, 3, %g7
-	brz,pn	%g1, pcbspill_fail
-	 add	%g7, %g1, %g1
-	ldxa	[%g1] ASI_PHYS_CACHED, %g1
-
-	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
-	and	%g7, PTMASK, %g7
-	brz	%g1, pcbspill_fail
-	 sll	%g7, 3, %g7
-	add	%g1, %g7, %g7
-	ldxa	[%g7] ASI_PHYS_CACHED, %g7		! This one is not
-	brgez	%g7, pcbspill_fail
-	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
-	sll	%g6, 32-PGSHIFT, %g6			! And offset
-	sllx	%g7, PGSHIFT+8, %g7			! There are 8 bits to the left of the PA in the TTE
-	srl	%g6, 32-PGSHIFT, %g6
-	srax	%g7, 8, %g7
-	or	%g7, %g6, %g6				! Then combine them to form PA
-
-!	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
+	wr	%g0, ASI_PHYS_CACHED, %asi		! Use ASI_PHYS_CACHED to prevent possible page faults
+	ldxa	[%g6 + CI_CPCBPADDR] %asi, %g6
 	
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7
 	sllx	%g7, 7, %g5
@@ -3195,10 +3110,6 @@ pcbspill:
 	stba	%g7, [%g6 + PCB_NSAVED] %asi
 
 	retry
-	NOTREACHED
-
-pcbspill_fail:
-	db_enter()
 	NOTREACHED
 
 
@@ -5885,9 +5796,11 @@ ENTRY(cpu_switchto)
 	 * We also must load up the `in' and `local' registers.
 	 */
 Lsw_load:
-	/* set new cpcb */
-	stx	%i1, [%g7 + CI_CURPROC]	! curproc = newproc;
-	stx	%l1, [%g7 + CI_CPCB]	! cpcb = newpcb;
+	/* set new cpcb and cpcbpaddr */
+	stx	%i1, [%g7 + CI_CURPROC]		! curproc = newproc;
+	ldx	[%i1 + P_MD_PCBPADDR], %o2
+	stx	%l1, [%g7 + CI_CPCB]		! cpcb = newpcb;
+	stx	%o2, [%g7 + CI_CPCBPADDR]
 
 	ldx	[%l1 + PCB_SP], %i6
 	ldx	[%l1 + PCB_PC], %i7

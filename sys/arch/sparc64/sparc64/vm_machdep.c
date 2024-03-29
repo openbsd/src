@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.44 2024/03/29 21:12:58 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.45 2024/03/29 21:27:53 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -102,6 +102,13 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	struct rwindow *rp;
 	size_t pcbsz;
 	extern struct proc proc0;
+
+	/*
+	 * Cache the physical address of the pcb, to speed up window
+	 * spills in locore.
+	 */
+	(void)pmap_extract(pmap_kernel(), (vaddr_t)npcb,
+	    &p2->p_md.md_pcbpaddr);
 
 	/*
 	 * Save all user registers to p1's stack or, in the case of

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.214 2024/03/29 21:26:38 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.215 2024/03/29 21:27:53 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -205,6 +205,8 @@ cpu_startup(void)
 #endif
 
 	proc0.p_addr = proc0paddr;
+	(void)pmap_extract(pmap_kernel(), (vaddr_t)proc0paddr,
+	    &proc0.p_md.md_pcbpaddr);
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
