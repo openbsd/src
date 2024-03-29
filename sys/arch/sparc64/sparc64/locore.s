@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.212 2024/03/29 21:23:17 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.213 2024/03/29 21:25:55 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4527,15 +4527,15 @@ rft_user:
 	andn	%g1, CWP, %g1
 	wrpr	%g1, %g7, %tstate
 
+	rdpr	%otherwin, %g7
+	brnz	%g7, 1f
+	 nop
+
 	/* XXX Rewrite sun4u code to handle faults like sun4v. */
 	sethi	%hi(cputyp), %g2
 	ld	[%g2 + %lo(cputyp)], %g2
 	cmp	%g2, CPU_SUN4V
 	bne,pt	%icc, 1f
-	 nop
-
-	rdpr	%otherwin, %g2
-	brnz	%g2, 1f
 	 nop
 
 	wr	%g0, ASI_AIUS, %asi
@@ -4554,8 +4554,8 @@ rft_user_fault_end:
 	rdpr	%canrestore, %g7
 	wrpr	%g7, 0, %otherwin
 	wrpr	%g0, 0, %canrestore
+	rdpr	%otherwin, %g7
 1:
-	rdpr	%otherwin, %g7			! restore register window controls
 	wrpr	%g7, 0, %canrestore
 	wrpr	%g0, 0, %otherwin
 	wrpr	WSTATE_USER, %wstate		! Need to know where our sp points
