@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.7 2021/09/17 15:12:28 deraadt Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.8 2024/03/29 21:02:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,6 @@
 
 #include <sys/types.h>
 
-#include <machine/frame.h>
 #include <machine/fsr.h>
 #include <machine/ieee.h>
 #include <machine/instr.h>

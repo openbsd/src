@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_add.c,v 1.4 2021/09/17 15:12:28 deraadt Exp $	*/
+/*	$OpenBSD: fpu_add.c,v 1.5 2024/03/29 21:02:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,6 @@
 
 #include <sys/types.h>
 
-#include <machine/frame.h>
 #include <machine/fsr.h>
 #include <machine/instr.h>
 

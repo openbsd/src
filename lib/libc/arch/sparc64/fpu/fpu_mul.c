@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_mul.c,v 1.3 2019/03/15 05:42:38 kevlo Exp $	*/
+/*	$OpenBSD: fpu_mul.c,v 1.4 2024/03/29 21:02:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,8 +50,6 @@
  */
 
 #include <sys/types.h>
-
-#include <machine/frame.h>
 
 #include "fpu_arith.h"
 #include "fpu_emu.h"
