@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.121 2024/03/29 21:08:11 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.122 2024/03/29 21:09:04 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -552,16 +552,6 @@ dopanic:
 	case T_ALIGN:
 	case T_LDDF_ALIGN:
 	case T_STDF_ALIGN:
-#if 0
-	{
-		int64_t dsfsr, dsfar=0, isfsr;
-
-		dsfsr = ldxa(SFSR, ASI_DMMU);
-		if (dsfsr & SFSR_FV)
-			dsfar = ldxa(SFAR, ASI_DMMU);
-		isfsr = ldxa(SFSR, ASI_IMMU);
-	}
-#endif
 		/*
 		 * If we're busy doing copyin/copyout continue
 		 */

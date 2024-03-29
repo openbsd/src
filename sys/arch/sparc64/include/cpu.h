@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.105 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.106 2024/03/29 21:09:04 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -269,9 +269,8 @@ do {									\
 } while (0)
 
 /*
- * Arguments to hardclock, softclock and gatherstats encapsulate the
- * previous machine state in an opaque clockframe.  The ipl is here
- * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
+ * Arguments to clockintr_dispatch encapsulate the
+ * previous machine state in an opaque clockframe.
  */
 struct clockframe {
 	struct trapframe t;

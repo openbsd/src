@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.63 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.64 2024/03/29 21:09:04 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -67,53 +67,9 @@ struct intrhand *intrlev[MAXINTNUM];
 
 #define INTR_DEVINO	0x8000
 
-void	strayintr(const struct trapframe *, int);
-int	softintr(void *);
 int	intr_handler(struct trapframe *, struct intrhand *);
 int	intr_list_handler(void *);
 void	intr_ack(struct intrhand *);
-
-/*
- * Stray interrupt handler.  Clear it if possible.
- * If not, and if we get 10 interrupts in 10 seconds, panic.
- */
-int ignore_stray = 1;
-int straycnt[16];
-
-void
-strayintr(const struct trapframe *fp, int vectored)
-{
-	static int straytime, nstray;
-	int timesince;
-#if 0
-	extern int swallow_zsintrs;
-#endif
-
-	if (fp->tf_pil < 16)
-		straycnt[(int)fp->tf_pil]++;
-
-	if (ignore_stray)
-		return;
-
-	/* If we're in polled mode ignore spurious interrupts */
-	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
-
-	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%llb "
-	    "vectored=%d\n", fp->tf_pil, fp->tf_pc, fp->tf_npc,
-	    fp->tf_tstate >> TSTATE_PSTATE_SHIFT, PSTATE_BITS, vectored);
-
-	timesince = gettime() - straytime;
-	if (timesince <= 10) {
-		if (++nstray > 500)
-			panic("crazy interrupts");
-	} else {
-		straytime = gettime();
-		nstray = 1;
-	}
-#ifdef DDB
-	db_enter();
-#endif
-}
 
 int
 intr_handler(struct trapframe *tf, struct intrhand *ih)

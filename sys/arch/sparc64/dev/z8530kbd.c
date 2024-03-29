@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.30 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.31 2024/03/29 21:09:04 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -1032,12 +1032,6 @@ struct zsops zsops_kbd = {
 void
 zskbd_cnpollc(void *v, int on)
 {
-	extern int swallow_zsintrs;
-
-	if (on)
-		swallow_zsintrs++;
-	else
-		swallow_zsintrs--;
 }
 
 void

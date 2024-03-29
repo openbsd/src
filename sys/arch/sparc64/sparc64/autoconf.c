@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.145 2023/11/09 14:26:34 kn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.146 2024/03/29 21:09:04 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -123,7 +123,6 @@ static	int rootnode;
 
 static	char *str2hex(char *, long *);
 static	int mbprint(void *, const char *);
-void	sync_crash(void);
 int	mainbus_match(struct device *, void *, void *);
 static	void mainbus_attach(struct device *, struct device *, void *);
 int	get_ncpus(void);
@@ -711,11 +710,6 @@ cpu_configure(void)
 #endif
 	}
 
-#if notyet
-        /* FIXME FIXME FIXME  This is probably *WRONG!!!**/
-        OF_set_callback(sync_crash);
-#endif
-
 	/* block clock interrupts and anything below */
 	splclock();
 	/* Enable device interrupts */
@@ -815,17 +809,6 @@ diskconf(void)
 
 	setroot(bootdv, bp->val[2], RB_USERREQ | RB_HALT);
 	dumpconf();
-}
-
-/*
- * Console `sync' command.  SunOS just does a `panic: zero' so I guess
- * no one really wants anything fancy...
- */
-void
-sync_crash(void)
-{
-
-	panic("PROM sync command");
 }
 
 char *

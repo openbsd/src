@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.205 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.206 2024/03/29 21:09:04 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -4163,7 +4163,6 @@ END(ipi_db)
  *			intrpending[intlev][i] = NULL;
  *			if ((*ih->ih_fun)(ih->ih_arg ? ih->ih_arg : &frame))
  *				return;
- *			strayintr(&frame);
  *			return;
  *		}
  *
@@ -4174,14 +4173,11 @@ END(ipi_db)
  * they took care of the interrupt.  If a handler claims the interrupt,
  * we exit (hardware interrupts are latched in the requestor so we'll
  * just take another interrupt in the unlikely event of simultaneous
- * interrupts from two different devices at the same level).  If we go
- * through all the registered handlers and no one claims it, we report a
- * stray interrupt.  This is more or less done as:
+ * interrupts from two different devices at the same level).
  *
  *	for (ih = intrhand[intlev]; ih; ih = ih->ih_next)
  *		if ((*ih->ih_fun)(ih->ih_arg ? ih->ih_arg : &frame))
  *			return;
- *	strayintr(&frame);
  *
  * Inputs:
  *	%l0 = %tstate
@@ -6202,9 +6198,6 @@ END(Lfsprobe)
  * the contents of the D$.  We will execute a flush at the end
  * to sync the I$.
  */
-	.data
-paginuse:
-	.word	0
 	.text
 ENTRY(pmap_zero_phys)
 	set	NBPG, %o2		! Loop count

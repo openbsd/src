@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.32 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: zs.c,v 1.33 2024/03/29 21:09:04 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -120,14 +120,13 @@ static u_char zs_init_reg[16] = {
 /* Console ops */
 static int  zscngetc(dev_t);
 static void zscnputc(dev_t, int);
-static void zscnpollc(dev_t, int);
 
 struct consdev zs_consdev = {
 	NULL,
 	NULL,
 	zscngetc,
 	zscnputc,
-	zscnpollc,
+	nullcnpollc,
 	NULL,
 };
 
@@ -153,9 +152,6 @@ const struct cfattach zs_sbus_ca = {
 const struct cfattach zs_fhc_ca = {
 	sizeof(struct zsc_softc), zs_match_fhc, zs_attach_fhc
 };
-
-extern int stdinnode;
-extern int fbnode;
 
 /* Interrupt handlers. */
 static int zshard(void *);
@@ -300,11 +296,6 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
 	int s, channel, softpri = PIL_TTY;
-
-	if (zsd == NULL) {
-		printf("configuration incomplete\n");
-		return;
-	}
 
 	printf(" softpri %d\n", softpri);
 
@@ -744,24 +735,6 @@ static void
 zscnputc(dev_t dev, int c)
 {
 	zs_putc(zs_conschan_put, c);
-}
-
-int swallow_zsintrs;
-
-static void
-zscnpollc(dev_t dev, int on)
-{
-	/* 
-	 * Need to tell zs driver to acknowledge all interrupts or we get
-	 * annoying spurious interrupt messages.  This is because mucking
-	 * with spl() levels during polling does not prevent interrupts from
-	 * being generated.
-	 */
-
-	if (on)
-		swallow_zsintrs++;
-	else
-		swallow_zsintrs--;
 }
 
 int
