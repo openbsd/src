@@ -1,4 +1,4 @@
-/* $OpenBSD: camellia.c,v 1.12 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: camellia.c,v 1.13 2024/03/29 07:26:21 jsing Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -84,10 +84,25 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/camellia.h>
+
 #include <openssl/opensslconf.h>
 
-#include "cmll_local.h"
+#include <openssl/camellia.h>
+#include <openssl/modes.h>
+
+typedef unsigned int  u32;
+typedef unsigned char u8;
+
+int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey,
+	    KEY_TABLE_TYPE keyTable);
+void Camellia_EncryptBlock_Rounds(int grandRounds, const u8 plaintext[],
+	    const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
+void Camellia_DecryptBlock_Rounds(int grandRounds, const u8 ciphertext[],
+	    const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
+void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[],
+	    const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
+void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[],
+	    const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
 
 /* 32-bit rotations */
 #if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
@@ -563,4 +578,109 @@ Camellia_DecryptBlock(int keyBitLength, const u8 plaintext[],
 {
 	Camellia_DecryptBlock_Rounds(keyBitLength == 128 ? 3 : 4,
 	    plaintext, keyTable, ciphertext);
+}
+
+int
+Camellia_set_key(const unsigned char *userKey, const int bits,
+    CAMELLIA_KEY *key)
+{
+	if (userKey == NULL || key == NULL)
+		return -1;
+	if (bits != 128 && bits != 192 && bits != 256)
+		return -2;
+	key->grand_rounds = Camellia_Ekeygen(bits, userKey, key->u.rd_key);
+	return 0;
+}
+
+void
+Camellia_encrypt(const unsigned char *in, unsigned char *out,
+    const CAMELLIA_KEY *key)
+{
+	Camellia_EncryptBlock_Rounds(key->grand_rounds, in, key->u.rd_key, out);
+}
+
+void
+Camellia_decrypt(const unsigned char *in, unsigned char *out,
+    const CAMELLIA_KEY *key)
+{
+	Camellia_DecryptBlock_Rounds(key->grand_rounds, in, key->u.rd_key, out);
+}
+
+void
+Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out, size_t len,
+    const CAMELLIA_KEY *key, unsigned char *ivec, const int enc)
+{
+	if (enc)
+		CRYPTO_cbc128_encrypt(in, out, len, key, ivec,
+		    (block128_f)Camellia_encrypt);
+	else
+		CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
+		   (block128_f)Camellia_decrypt);
+}
+
+/*
+ * The input and output encrypted as though 128bit cfb mode is being
+ * used.  The extra state information to record how much of the
+ * 128bit block we have used is contained in *num;
+ */
+
+void
+Camellia_cfb128_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const CAMELLIA_KEY *key, unsigned char *ivec, int *num,
+    const int enc)
+{
+	CRYPTO_cfb128_encrypt(in, out, length, key, ivec, num, enc,
+	    (block128_f)Camellia_encrypt);
+}
+
+/* N.B. This expects the input to be packed, MS bit first */
+void
+Camellia_cfb1_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const CAMELLIA_KEY *key, unsigned char *ivec, int *num,
+    const int enc)
+{
+	CRYPTO_cfb128_1_encrypt(in, out, length, key, ivec, num, enc,
+	    (block128_f)Camellia_encrypt);
+}
+
+void
+Camellia_cfb8_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const CAMELLIA_KEY *key, unsigned char *ivec, int *num,
+    const int enc)
+{
+	CRYPTO_cfb128_8_encrypt(in, out, length, key, ivec, num, enc,
+	    (block128_f)Camellia_encrypt);
+}
+
+void
+Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const CAMELLIA_KEY *key,
+    unsigned char ivec[CAMELLIA_BLOCK_SIZE],
+    unsigned char ecount_buf[CAMELLIA_BLOCK_SIZE], unsigned int *num)
+{
+	CRYPTO_ctr128_encrypt(in, out, length, key, ivec, ecount_buf, num,
+	    (block128_f)Camellia_encrypt);
+}
+
+void
+Camellia_ecb_encrypt(const unsigned char *in, unsigned char *out,
+    const CAMELLIA_KEY *key, const int enc)
+{
+	if (CAMELLIA_ENCRYPT == enc)
+		Camellia_encrypt(in, out, key);
+	else
+		Camellia_decrypt(in, out, key);
+}
+
+/*
+ * The input and output encrypted as though 128bit ofb mode is being
+ * used.  The extra state information to record how much of the
+ * 128bit block we have used is contained in *num;
+ */
+void
+Camellia_ofb128_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const CAMELLIA_KEY *key, unsigned char *ivec, int *num)
+{
+	CRYPTO_ofb128_encrypt(in, out, length, key, ivec, num,
+	    (block128_f)Camellia_encrypt);
 }
