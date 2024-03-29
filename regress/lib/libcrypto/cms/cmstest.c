@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmstest.c,v 1.7 2023/03/02 21:08:14 tb Exp $	*/
+/*	$OpenBSD: cmstest.c,v 1.8 2024/03/29 06:42:42 tb Exp $	*/
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -95,6 +95,40 @@ static const char cms_key_1[] =
     "rVVJ1qokUEKT6H1GmFXO3Fkw3kjPKS8VZloKOB7OiBC+AwMEQIflArCZ+PJdnVNO\n"
     "48ntHnaeaZk8rKXsYdJsqMKgIxZYZuCIazZz9WHeYxn5vkH76Q3DrfqrneJ3HSU/\n"
     "pFtLoXoGoVXRjAtpNvX7fh/G\n"
+    "-----END PRIVATE KEY-----\n";
+
+const char cms_ca_2[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIBvTCCAW+gAwIBAgIQHioe49U1R3LcahmTCOUmoTAFBgMrZXAwXTEUMBIGA1UE\n"
+    "ChMLQ01TIFRlc3QgQ0ExHTAbBgNVBAsMFGNtc3Rlc3RAbGlicmVzc2wub3JnMSYw\n"
+    "JAYDVQQDDB1DTVMgVGVzdCBjbXN0ZXN0QGxpYnJlc3NsLm9yZzAeFw0yMzEwMDkw\n"
+    "OTAzNDhaFw0zMzEwMDkwOTAzNDhaMF0xFDASBgNVBAoTC0NNUyBUZXN0IENBMR0w\n"
+    "GwYDVQQLDBRjbXN0ZXN0QGxpYnJlc3NsLm9yZzEmMCQGA1UEAwwdQ01TIFRlc3Qg\n"
+    "Y21zdGVzdEBsaWJyZXNzbC5vcmcwKjAFBgMrZXADIQAYj6pY7cN0DnwmsYHVDLqJ\n"
+    "7/Futy5p4QJDKA/FSZ6+6KNFMEMwDgYDVR0PAQH/BAQDAgIEMBIGA1UdEwEB/wQI\n"
+    "MAYBAf8CAQAwHQYDVR0OBBYEFE7G7c7O2Vj79+Q786M7ssMd/lflMAUGAytlcANB\n"
+    "AOk+RHgs8D82saBM1nQMgIwEsNhYwbj3HhrRFDezYcnZeorBgiZTV3uQd2EndFdU\n"
+    "hcs4OYMCRorxqpUXX6EMtwQ=\n"
+    "-----END CERTIFICATE-----\n";
+
+const char cms_cert_2[] =
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIB5DCCAZagAwIBAgIQevuGe7FBHIc2pnQ4b4dsIzAFBgMrZXAwXTEUMBIGA1UE\n"
+    "ChMLQ01TIFRlc3QgQ0ExHTAbBgNVBAsMFGNtc3Rlc3RAbGlicmVzc2wub3JnMSYw\n"
+    "JAYDVQQDDB1DTVMgVGVzdCBjbXN0ZXN0QGxpYnJlc3NsLm9yZzAeFw0yMzEwMDkw\n"
+    "OTAzNDhaFw0zMzEwMDkwOTAzNDhaMD4xHTAbBgNVBAoTFENNUyB0ZXN0IGNlcnRp\n"
+    "ZmljYXRlMR0wGwYDVQQLDBRjbXN0ZXN0QGxpYnJlc3NsLm9yZzAqMAUGAytlcAMh\n"
+    "AFH47Z54SuXMN+i5CCvMVUZJZzSYsDcRY+lPtc+J8h2ko4GKMIGHMA4GA1UdDwEB\n"
+    "/wQEAwIFoDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwQwHwYDVR0jBBgw\n"
+    "FoAUTsbtzs7ZWPv35Dvzozuywx3+V+UwNQYDVR0RBC4wLIIUY21zdGVzdC5saWJy\n"
+    "ZXNzbC5vcmeBFGNtc3Rlc3RAbGlicmVzc2wub3JnMAUGAytlcANBAAEqYppowFjF\n"
+    "fTZhNM3cIyFfmQthJV/+krEE2VTSoKgCokll+fXz1K9P+R3asgrVDoHjnBtvksIE\n"
+    "wup36c05XQA=\n"
+    "-----END CERTIFICATE-----\n";
+
+const char cms_key_2[] =
+    "-----BEGIN PRIVATE KEY-----\n"
+    "MC4CAQAwBQYDK2VwBCIEIO88YApnGRDewzSwtxAnBvhlTPz9MjSz51mEpE2oi+9g\n"
     "-----END PRIVATE KEY-----\n";
 
 static void
@@ -204,7 +238,8 @@ test_cms_encrypt_decrypt(void)
 }
 
 static int
-test_cms_sign_verify(void)
+test_cms_sign_verify(const char *ca_pem, const char *cert_pem,
+    const char *key_pem)
 {
 	STACK_OF(X509) *certs = NULL;
 	CMS_ContentInfo *ci = NULL;
@@ -224,7 +259,7 @@ test_cms_sign_verify(void)
 
 	if ((certs = sk_X509_new_null()) == NULL)
 		errx(1, "failed to create certs");
-	if ((bio_mem = BIO_new_mem_buf(cms_cert_1, -1)) == NULL)
+	if ((bio_mem = BIO_new_mem_buf(cert_pem, -1)) == NULL)
 		errx(1, "failed to create BIO for cert");
 	if ((cert = PEM_read_bio_X509(bio_mem, NULL, NULL, NULL)) == NULL)
 		errx(1, "failed to read cert");
@@ -232,7 +267,7 @@ test_cms_sign_verify(void)
 		errx(1, "failed to push cert");
 
 	BIO_free(bio_mem);
-	if ((bio_mem = BIO_new_mem_buf(cms_ca_1, -1)) == NULL)
+	if ((bio_mem = BIO_new_mem_buf(ca_pem, -1)) == NULL)
 		errx(1, "failed to create BIO for cert");
 	if ((ca = PEM_read_bio_X509(bio_mem, NULL, NULL, NULL)) == NULL)
 		errx(1, "failed to read cert");
@@ -242,7 +277,7 @@ test_cms_sign_verify(void)
 		errx(1, "failed to add cert to store");
 
 	BIO_free(bio_mem);
-	if ((bio_mem = BIO_new_mem_buf(cms_key_1, -1)) == NULL)
+	if ((bio_mem = BIO_new_mem_buf(key_pem, -1)) == NULL)
 		errx(1, "failed to create BIO for key");
 	if ((pkey = PEM_read_bio_PrivateKey(bio_mem, NULL, NULL, NULL)) == NULL)
 		errx(1, "failed to read key");
@@ -320,7 +355,8 @@ main(int argc, char **argv)
 	ERR_load_crypto_strings();
 
 	failed |= test_cms_encrypt_decrypt();
-	failed |= test_cms_sign_verify();
+	failed |= test_cms_sign_verify(cms_ca_1, cms_cert_1, cms_key_1);
+	failed |= test_cms_sign_verify(cms_ca_2, cms_cert_2, cms_key_2);
 
 	return failed;
 }
