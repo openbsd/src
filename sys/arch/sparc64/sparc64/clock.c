@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.82 2023/09/17 14:50:51 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.83 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -207,13 +207,8 @@ extern todr_chip_handle_t todr_handle;
 static struct idprom *idprom;
 
 int clock_bus_wenable(struct todr_chip_handle *, int);
-struct chiptime;
 void myetheraddr(u_char *);
 struct idprom *getidprom(void);
-int chiptotime(int, int, int, int, int, int);
-void timetochip(struct chiptime *);
-
-int timerblurb = 10; /* Guess a value; used before clock is attached */
 
 /*
  * The OPENPROM calls the clock the "eeprom", so we have to have our

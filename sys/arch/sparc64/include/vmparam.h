@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.34 2023/03/19 20:32:13 kettenis Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.35 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2001/05/01 02:19:19 thorpej Exp $ */
 
 /*
@@ -121,9 +121,4 @@
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD                /* can't add RAM after vm_mem_init */
 
-#if defined (_KERNEL) && !defined(_LOCORE)
-struct vm_map;
-vaddr_t		dvma_mapin(struct vm_map *, vaddr_t, int, int);
-void		dvma_mapout(vaddr_t, vaddr_t, int);
-#endif
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.15 2013/03/31 17:07:03 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.16 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -27,36 +27,6 @@
 #ifndef	_MACHINE_PTE_H_
 #define	_MACHINE_PTE_H_
 
-/*
- * Address translation works as follows:
- *
- **
- * For sun4u:
- *	
- *	Take your pick; it's all S/W anyway.  We'll start by emulating a sun4.
- *	Oh, here's the sun4u TTE for reference:
- *
- *	struct sun4u_tte {
- *		u_int64	tag_g:1,	(global flag)
- *			tag_ctxt:15,	(context for mapping)
- *			tag_unassigned:6,
- *			tag_va:42;	(virtual address bits<63:22>)
- *		u_int64	data_v:1,	(valid bit)
- *			data_size:2,	(page size [8K*8**<SIZE>])
- *			data_nfo:1,	(no-fault only)
- *			data_ie:1,	(invert endianness [inefficient])
- *			data_soft2:2,	(reserved for S/W)
- *			data_pa:36,	(physical address)
- *			data_soft:6,	(reserved for S/W)
- *			data_lock:1,	(lock into TLB)
- *			data_cacheable:2,	(cacheability control)
- *			data_e:1,	(explicit accesses only)
- *			data_priv:1,	(privileged page)
- *			data_w:1,	(writeable)
- *			data_g:1;	(same as tag_g)
- *	};	
- */
-
 /* virtual address to virtual page number */
 #define	VA_SUN4U_VPG(va)	(((int)(va) >> 13) & 31)
 
@@ -76,13 +46,8 @@
 #ifndef _LOCORE
 /* 
  *  This is the spitfire TTE.
- *
- *  We could use bitmasks and shifts to construct this if
- *  we had a 64-bit compiler w/64-bit longs.  Otherwise it's
- *  a real pain to do this in C.
  */
-#if 0
-/* We don't use bitfields anyway. */
+#if 0 /* We don't use bitfields anyway. */
 struct sun4u_tag_fields {
 	u_int64_t	tag_g:1,	/* global flag */
 		tag_ctxt:15,	/* context for mapping */
@@ -236,20 +201,4 @@ void smp_tlb_flush_ctx(int);
 ((priv)?SUN4V_TLB_P:0LL)|((write)?SUN4V_TLB_W:0LL)|((g)?SUN4V_TLB_G:0LL)|\
 ((ie)?SUN4V_TLB_IE:0LL))
 
-
-#define MMU_CACHE_VIRT	0x3
-#define MMU_CACHE_PHYS	0x2
-#define MMU_CACHE_NONE	0x0
-
-/* This needs to be updated for sun4u IOMMUs */
-/*
- * IOMMU PTE bits.
- */
-#define IOPTE_PPN_MASK  0x07ffff00
-#define IOPTE_PPN_SHIFT 8
-#define IOPTE_RSVD      0x000000f1
-#define IOPTE_WRITE     0x00000004
-#define IOPTE_VALID     0x00000002
-
 #endif /* _MACHINE_PTE_H_ */
-

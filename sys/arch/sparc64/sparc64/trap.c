@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.119 2024/01/11 19:16:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.120 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -79,36 +79,6 @@
 
 #include <sparc64/fpu/fpu_extern.h>
 #include <sparc64/sparc64/cache.h>
-
-#ifndef offsetof
-#define	offsetof(s, f) ((int)&((s *)0)->f)
-#endif
-
-/* trapstats */
-int trapstats = 0;
-int protfix = 0;
-int udmiss = 0;	/* Number of normal/nucleus data/text miss/protection faults */
-int udhit = 0;
-int udprot = 0;
-int utmiss = 0;
-int kdmiss = 0;
-int kdhit = 0;
-int kdprot = 0;
-int ktmiss = 0;
-int iveccnt = 0; /* number if normal/nucleus interrupt/interrupt vector faults */
-int uintrcnt = 0;
-int kiveccnt = 0;
-int kintrcnt = 0;
-int intristk = 0; /* interrupts when already on intrstack */
-int intrpoll = 0; /* interrupts not using vector lists */
-int wfill = 0;
-int kwfill = 0;
-int wspill = 0;
-int wspillskip = 0;
-int rftucnt = 0;
-int rftuld = 0;
-int rftudone = 0;
-int rftkcnt[5] = { 0, 0, 0, 0, 0 };
 
 /*
  * Initial FPU state is all registers == all 1s, everything else == all 0s.

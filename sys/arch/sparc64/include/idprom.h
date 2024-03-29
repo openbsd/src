@@ -1,4 +1,4 @@
-/*	$OpenBSD: idprom.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: idprom.h,v 1.3 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: idprom.h,v 1.2 1998/09/05 23:57:26 eeh Exp $ */
 
 /*
@@ -48,10 +48,5 @@ struct idprom {
 	u_char	id_checksum;		/* xor of everything else */
 	char	id_undef[16];		/* undefined */
 };
-
-#define ID_SUN4_100	0x22
-#define ID_SUN4_200	0x21
-#define ID_SUN4_300	0x23
-#define ID_SUN4_400	0x24
 
 #define IDPROM_VERSION 1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.209 2024/03/07 15:01:53 claudio Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.210 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -821,34 +821,6 @@ printf("starting dump, blkno %lld\n", (long long)blkno);
 	}
 }
 
-void trapdump(struct trapframe *);
-/*
- * dump out a trapframe.
- */
-void
-trapdump(struct trapframe *tf)
-{
-	printf("TRAPFRAME: tstate=%llx pc=%llx npc=%llx y=%x\n",
-	       (unsigned long long)tf->tf_tstate, (unsigned long long)tf->tf_pc,
-	       (unsigned long long)tf->tf_npc, (unsigned)tf->tf_y);
-	printf("%%g1-7: %llx %llx %llx %llx %llx %llx %llx\n",
-	       (unsigned long long)tf->tf_global[1],
-	       (unsigned long long)tf->tf_global[2],
-	       (unsigned long long)tf->tf_global[3], 
-	       (unsigned long long)tf->tf_global[4],
-	       (unsigned long long)tf->tf_global[5],
-	       (unsigned long long)tf->tf_global[6], 
-	       (unsigned long long)tf->tf_global[7]);
-	printf("%%o0-7: %llx %llx %llx %llx\n %llx %llx %llx %llx\n",
-	       (unsigned long long)tf->tf_out[0],
-	       (unsigned long long)tf->tf_out[1],
-	       (unsigned long long)tf->tf_out[2],
-	       (unsigned long long)tf->tf_out[3], 
-	       (unsigned long long)tf->tf_out[4],
-	       (unsigned long long)tf->tf_out[5],
-	       (unsigned long long)tf->tf_out[6],
-	       (unsigned long long)tf->tf_out[7]);
-}
 /*
  * get the fp and dump the stack as best we can.  don't leave the
  * current stack page

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.27 2022/06/28 14:43:50 visa Exp $	*/
+/*	$OpenBSD: conf.h,v 1.28 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
@@ -67,40 +67,13 @@ cdev_decl(vdsp);
 	0, (dev_type_mmap((*))) enodev, \
 	0, 0, dev_init(c,n,kqfilter) }
 
-cdev_decl(cn);
-
 cdev_decl(zs);
 
 bdev_decl(fd);
 cdev_decl(fd);
 
-cdev_decl(fb);
-
-cdev_decl(ms);
-
-cdev_decl(kbd);
-cdev_decl(kd);
-
-cdev_decl(bwtwo);
-
-cdev_decl(cgtwo);
-
-cdev_decl(cgthree);
-
-cdev_decl(cgfour);
-
-cdev_decl(cgsix);
-
-cdev_decl(cgeight);
-
-cdev_decl(tcx);
-
-cdev_decl(cgfourteen);
-
 cdev_decl(bpp);
 cdev_decl(lpt);
-
-cdev_decl(scsibus);
 
 bdev_decl(wd);
 cdev_decl(wd);
@@ -126,5 +99,3 @@ cdev_decl(sbpp);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
 	0, (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
-
-cdev_decl(bpp);

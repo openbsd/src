@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.204 2023/12/12 07:37:21 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.205 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -515,7 +515,7 @@ cold:
 	TA32
 	.endm
 
-	.macro DMMU_PROT dprot
+	.macro DMMU_PROT
 	ba,a,pt	%xcc, dmmu_write_fault
 	nop
 	TA32
@@ -756,7 +756,7 @@ ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	DMMU_MISS 7
 ufast_DMMU_protection:			! 06c = fast data access MMU protection
-	DMMU_PROT udprot
+	DMMU_PROT
 	UTRAP 0x070			! Implementation dependent traps
 	UTRAP 0x071; UTRAP 0x072; UTRAP 0x073; UTRAP 0x074; UTRAP 0x075; UTRAP 0x076
 	UTRAP 0x077; UTRAP 0x078; UTRAP 0x079; UTRAP 0x07a; UTRAP 0x07b; UTRAP 0x07c
@@ -916,7 +916,7 @@ kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 kfast_DMMU_miss:			! 068 = fast data access MMU miss
 	DMMU_MISS 10
 kfast_DMMU_protection:			! 06c = fast data access MMU protection
-	DMMU_PROT kdprot
+	DMMU_PROT
 	UTRAP 0x070			! Implementation dependent traps
 	UTRAP 0x071; UTRAP 0x072; UTRAP 0x073; UTRAP 0x074; UTRAP 0x075; UTRAP 0x076
 	UTRAP 0x077; UTRAP 0x078; UTRAP 0x079; UTRAP 0x07a; UTRAP 0x07b; UTRAP 0x07c
@@ -1402,13 +1402,6 @@ panic_red:
   *
   * Essentially we need to be able to write re-entrant code w/no stack.
   */
-	.data
-trap_setup_msg:
-	.asciz	"TRAP_SETUP: tt=%x osp=%x nsp=%x tl=%x tpc=%x\n"
-	_ALIGN
-intr_setup_msg:
-	.asciz	"INTR_SETUP: tt=%x osp=%x nsp=%x tl=%x tpc=%x\n"
-	_ALIGN
 	.text
 
 	.macro	TRAP_SETUP stackspace

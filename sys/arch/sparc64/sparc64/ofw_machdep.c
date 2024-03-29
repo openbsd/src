@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.36 2022/10/17 18:49:06 kettenis Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.37 2024/03/29 21:06:14 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -47,10 +47,6 @@
 
 #include <dev/ofw/ofw_pci.h>
 
-#if defined(FFS) && defined(CD9660)
-#include <ufs/ffs/fs.h>
-#endif
-
 /*
  * Note that stdarg.h and the ANSI style va_start macro is used for both
  * ANSI and traditional C compilers.
@@ -58,10 +54,6 @@
 #include <sys/stdarg.h>
 
 #include <machine/sparc64.h>
-
-int vsprintf(char *, const char *, va_list);
-
-void dk_cleanup(void);
 
 static u_int mmuh = -1, memh = -1;
 
