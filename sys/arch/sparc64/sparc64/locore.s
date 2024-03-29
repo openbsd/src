@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.207 2024/03/29 21:11:32 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.208 2024/03/29 21:16:38 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 #include <sparc64/sparc64/intreg.h>
 #include <machine/ctlreg.h>
 #include <machine/psl.h>
-#include <machine/signal.h>
 #include <machine/trap.h>
 #include <machine/frame.h>
 #include <machine/pmap.h>

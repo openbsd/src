@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.12 2016/05/10 18:39:48 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.13 2024/03/29 21:16:38 miod Exp $	*/
 /*	$NetBSD: signal.h,v 1.10 2001/05/09 19:50:49 kleink Exp $ */
 
 /*
@@ -44,7 +44,6 @@
 #ifndef	_MACHINE_SIGNAL_H_
 #define _MACHINE_SIGNAL_H_
 
-#ifndef _LOCORE
 #include <sys/cdefs.h>
 
 typedef int sig_atomic_t;
@@ -69,9 +68,8 @@ struct sigcontext {
 	int		sc_mask;	/* signal mask to restore */
 };
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
-#endif /* _LOCORE */
 
-#if defined(_LOCORE) || defined(_KERNEL)
+#if defined(_KERNEL)
 /*
  * `Code' arguments to signal handlers.  The names, and the funny numbering.
  * are defined so as to match up with what SunOS uses; I have no idea why
