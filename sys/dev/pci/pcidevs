@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2069 2024/03/23 10:35:50 sthen Exp $
+$OpenBSD: pcidevs,v 1.2070 2024/03/30 11:12:20 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -310,6 +310,7 @@ vendor	LENOVO		0x17aa	Lenovo
 vendor	HAWKING		0x17b3	Hawking Technology
 vendor	QUALCOMM	0x17cb	Qualcomm
 vendor	NETCHIP		0x17cc	NetChip Technology
+vendor	CADENCE		0x17cd	Cadence
 vendor	I4		0x17cf	I4
 vendor	ARECA		0x17d3	Areca
 vendor	NETERION	0x17d5	Neterion
@@ -348,6 +349,7 @@ vendor	UMIS		0x1cc4	Union Memory
 vendor	BAIKAL		0x1d39	Baikal Electronics
 vendor	AQUANTIA	0x1d6a	Aquantia
 vendor	ROCKCHIP	0x1d87	Rockchip
+vendor	LONGSYS		0x1d97	Longsys
 vendor	TEKRAM2		0x1de1	Tekram
 vendor	AMPERE		0x1def	Ampere
 vendor	KIOXIA		0x1e0f	Kioxia
@@ -7366,6 +7368,9 @@ product LMC DS3			0x0004	DS3
 product LMC SSI			0x0005	SSI
 product LMC DS1			0x0006	DS1
 product LMC HSSIC		0x0007	HSSIc
+
+/* Longsys products */
+product LONGSYS FORESEE_XP1000	0x5216	FORESEE XP1000
 
 /* Lucent products */
 product LUCENT LTMODEM		0x0440	K56flex DSVD LTMODEM
