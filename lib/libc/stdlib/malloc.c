@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.295 2023/12/19 06:59:28 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.296 2024/03/30 07:50:39 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1428,7 +1428,7 @@ _malloc_init(int from_rthreads)
 	}
 	if (!mopts.malloc_canary) {
 		char *p;
-		size_t sz, d_avail;
+		size_t sz, roundup_sz, d_avail;
 
 		omalloc_init();
 		/*
@@ -1436,20 +1436,20 @@ _malloc_init(int from_rthreads)
 		 * randomise offset inside the page at which the dir_infos
 		 * lay (subject to alignment by 1 << MALLOC_MINSHIFT)
 		 */
-		sz = mopts.malloc_mutexes * sizeof(*d) + 2 * MALLOC_PAGESIZE;
-		if ((p = MMAPNONE(sz, 0)) == MAP_FAILED)
+		sz = mopts.malloc_mutexes * sizeof(*d);
+		roundup_sz = (sz + MALLOC_PAGEMASK) & ~MALLOC_PAGEMASK;
+		if ((p = MMAPNONE(roundup_sz + 2 * MALLOC_PAGESIZE, 0)) ==
+		    MAP_FAILED)
 			wrterror(NULL, "malloc_init mmap1 failed");
-		if (mprotect(p + MALLOC_PAGESIZE, mopts.malloc_mutexes *
-		    sizeof(*d), PROT_READ | PROT_WRITE))
+		if (mprotect(p + MALLOC_PAGESIZE, roundup_sz,
+		    PROT_READ | PROT_WRITE))
 			wrterror(NULL, "malloc_init mprotect1 failed");
-		if (mimmutable(p, sz))
+		if (mimmutable(p, roundup_sz + 2 * MALLOC_PAGESIZE))
 			wrterror(NULL, "malloc_init mimmutable1 failed");
-		d_avail = (((mopts.malloc_mutexes * sizeof(*d) +
-		    MALLOC_PAGEMASK) & ~MALLOC_PAGEMASK) -
-		    (mopts.malloc_mutexes * sizeof(*d))) >> MALLOC_MINSHIFT;
+		d_avail = (roundup_sz - sz) >> MALLOC_MINSHIFT;
 		d = (struct dir_info *)(p + MALLOC_PAGESIZE +
 		    (arc4random_uniform(d_avail) << MALLOC_MINSHIFT));
-		STATS_ADD(d[1].malloc_used, sz);
+		STATS_ADD(d[1].malloc_used, roundup_sz + 2 * MALLOC_PAGESIZE);
 		for (i = 0; i < mopts.malloc_mutexes; i++)
 			mopts.malloc_pool[i] = &d[i];
 		mopts.internal_funcs = 1;
