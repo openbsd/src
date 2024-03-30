@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.25 2023/10/12 15:16:44 cheloha Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.26 2024/03/30 07:41:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -179,6 +179,14 @@ struct bt_arg {
 };
 
 #define BA_INITIALIZER(v, t)	{ { NULL }, (void *)(v), NULL, (t) }
+
+/*
+ * Represents branches of an if-else statement.
+ */
+struct bt_cond {
+	struct bt_stmt		*bc_condbs;
+	struct bt_stmt		*bc_elsebs;
+};
 
 /*
  * Each action associated with a given probe is made of at least one

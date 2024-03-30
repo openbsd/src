@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.59 2024/02/12 15:11:06 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.60 2024/03/30 07:41:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2023 Martin Pieuchot <mpi@openbsd.org>
@@ -119,7 +119,7 @@ static int 	 beflag = 0;		/* BEGIN/END parsing context flag */
 %token	<v.i>		ERROR ENDFILT
 %token	<v.i>		OP_EQ OP_NE OP_LE OP_LT OP_GE OP_GT OP_LAND OP_LOR
 /* Builtins */
-%token	<v.i>		BUILTIN BEGIN END HZ IF STR
+%token	<v.i>		BUILTIN BEGIN ELSE END HZ IF STR
 /* Functions and Map operators */
 %token  <v.i>		F_DELETE F_PRINT
 %token	<v.i>		MFUNC FUNC0 FUNC1 FUNCN OP1 OP2 OP4 MOP0 MOP1
@@ -248,7 +248,9 @@ stmt	: ';' NL			{ $$ = NULL; }
 	| GVAR '=' OP4 '(' expr ',' vargs ')'	{ $$ = bh_inc($1, $5, $7); }
 	;
 
-stmtblck: IF '(' expr ')' block			{ $$ = bt_new($3, $5); }
+stmtblck: IF '(' expr ')' block			{ $$ = bt_new($3, $5, NULL); }
+	| IF '(' expr ')' block ELSE block	{ $$ = bt_new($3, $5, $7); }
+	| IF '(' expr ')' block ELSE stmtblck	{ $$ = bt_new($3, $5, $7); }
 	;
 
 stmtlist: stmtlist stmtblck		{ $$ = bs_append($1, $2); }
@@ -340,15 +342,22 @@ bc_new(struct bt_arg *term, enum bt_argtype op, struct bt_arg *ba)
 
 /* Create a new if/else test */
 struct bt_stmt *
-bt_new(struct bt_arg *ba, struct bt_stmt *condbs)
+bt_new(struct bt_arg *ba, struct bt_stmt *condbs, struct bt_stmt *elsebs)
 {
 	struct bt_arg *bop;
+	struct bt_cond *bc;
 
 	bop = ba_op(B_AT_OP_NE, NULL, ba);
 
-	return bs_new(B_AC_TEST, bop, (struct bt_var *)condbs);
+	bc = calloc(1, sizeof(*bc));
+	if (bc == NULL)
+		err(1, "bt_cond: calloc");
+	bc->bc_condbs = condbs;
+	bc->bc_elsebs = elsebs;
 
+	return bs_new(B_AC_TEST, bop, (struct bt_var *)bc);
 }
+
 /* Create a new probe */
 struct bt_probe *
 bp_new(const char *prov, const char *func, const char *name, int32_t rate)
@@ -714,6 +723,7 @@ lookup(char *s)
 		{ "count",	MOP0, 		B_AT_MF_COUNT },
 		{ "cpu",	BUILTIN,	B_AT_BI_CPU },
 		{ "delete",	F_DELETE,	B_AC_DELETE },
+		{ "else",	ELSE,		0 },
 		{ "exit",	FUNC0,		B_AC_EXIT },
 		{ "hist",	OP1,		0 },
 		{ "hz",		HZ,		0 },
