@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.30 2020/07/31 11:19:12 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.31 2024/03/30 01:13:56 jsg Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -530,7 +530,7 @@ do {									\
 #define GEN_RD(name)							\
 static inline u_int64_t sparc_rd_ ## name(void);			\
 static inline u_int64_t						\
-sparc_rd_ ## name()							\
+sparc_rd_ ## name(void)							\
 {									\
 	u_int64_t r;							\
 	__asm volatile("rd %%" #name ", %0" :				\
@@ -542,7 +542,7 @@ sparc_rd_ ## name()							\
 #define GEN_RDPR(name)							\
 static inline u_int64_t sparc_rdpr_ ## name(void);			\
 static inline u_int64_t						\
-sparc_rdpr_ ## name()							\
+sparc_rdpr_ ## name(void)						\
 {									\
 	u_int64_t r;							\
 	__asm volatile("rdpr %%" #name ", %0" :				\
