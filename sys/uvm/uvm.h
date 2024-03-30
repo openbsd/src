@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.71 2022/10/07 05:01:44 deraadt Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.72 2024/03/30 12:47:47 mpi Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
  *
  *  Locks used to protect struct members in this file:
  *	Q	uvm.pageqlock
+ *	F	uvm.fpageqlock
  */
 struct uvm {
 	/* vm_page related parameters */
@@ -58,7 +59,7 @@ struct uvm {
 	struct mutex pageqlock;		/* [] lock for active/inactive page q */
 	struct mutex fpageqlock;	/* [] lock for free page q  + pdaemon */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
-	struct uvm_pmr_control pmr_control; /* pmemrange data */
+	struct uvm_pmr_control pmr_control; /* [F] pmemrange data */
 
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
