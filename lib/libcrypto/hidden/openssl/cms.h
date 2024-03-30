@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.2 2023/07/28 10:28:02 tb Exp $ */
+/* $OpenBSD: cms.h,v 1.3 2024/03/30 01:53:05 joshua Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -39,8 +39,13 @@ LCRYPTO_USED(CMS_get_version);
 LCRYPTO_USED(CMS_SignerInfo_get_version);
 LCRYPTO_USED(CMS_dataInit);
 LCRYPTO_USED(CMS_dataFinal);
+LCRYPTO_USED(CMS_get0_content);
 LCRYPTO_USED(CMS_is_detached);
 LCRYPTO_USED(CMS_set_detached);
+LCRYPTO_USED(PEM_read_bio_CMS);
+LCRYPTO_USED(PEM_read_CMS);
+LCRYPTO_USED(PEM_write_bio_CMS);
+LCRYPTO_USED(PEM_write_CMS);
 LCRYPTO_USED(CMS_stream);
 LCRYPTO_USED(d2i_CMS_bio);
 LCRYPTO_USED(i2d_CMS_bio);
@@ -133,6 +138,10 @@ LCRYPTO_USED(CMS_unsigned_add1_attr_by_OBJ);
 LCRYPTO_USED(CMS_unsigned_add1_attr_by_NID);
 LCRYPTO_USED(CMS_unsigned_add1_attr_by_txt);
 LCRYPTO_USED(CMS_unsigned_get0_data_by_OBJ);
+LCRYPTO_USED(CMS_get1_ReceiptRequest);
+LCRYPTO_USED(CMS_ReceiptRequest_create0);
+LCRYPTO_USED(CMS_add1_ReceiptRequest);
+LCRYPTO_USED(CMS_ReceiptRequest_get0_values);
 LCRYPTO_USED(CMS_RecipientInfo_kari_get0_alg);
 LCRYPTO_USED(CMS_RecipientInfo_kari_get0_reks);
 LCRYPTO_USED(CMS_RecipientInfo_kari_get0_orig_id);

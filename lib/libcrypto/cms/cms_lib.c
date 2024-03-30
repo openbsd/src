@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.24 2023/08/24 04:56:36 tb Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.25 2024/03/30 01:53:05 joshua Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -314,6 +314,7 @@ CMS_get0_content(CMS_ContentInfo *cms)
 		return NULL;
 	}
 }
+LCRYPTO_ALIAS(CMS_get0_content);
 
 /*
  * Return an ASN1_OBJECT pointer to content type. This allows it to be

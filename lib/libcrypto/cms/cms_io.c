@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.20 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: cms_io.c,v 1.21 2024/03/30 01:53:05 joshua Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -105,6 +105,7 @@ PEM_read_bio_CMS(BIO *bp, CMS_ContentInfo **x, pem_password_cb *cb, void *u)
 	return PEM_ASN1_read_bio((d2i_of_void *)d2i_CMS_ContentInfo,
 	    PEM_STRING_CMS, bp, (void **)x, cb, u);
 }
+LCRYPTO_ALIAS(PEM_read_bio_CMS);
 
 CMS_ContentInfo *
 PEM_read_CMS(FILE *fp, CMS_ContentInfo **x, pem_password_cb *cb, void *u)
@@ -112,6 +113,7 @@ PEM_read_CMS(FILE *fp, CMS_ContentInfo **x, pem_password_cb *cb, void *u)
 	return PEM_ASN1_read((d2i_of_void *)d2i_CMS_ContentInfo,
 	    PEM_STRING_CMS, fp, (void **)x, cb, u);
 }
+LCRYPTO_ALIAS(PEM_read_CMS);
 
 int
 PEM_write_bio_CMS(BIO *bp, const CMS_ContentInfo *x)
@@ -119,6 +121,7 @@ PEM_write_bio_CMS(BIO *bp, const CMS_ContentInfo *x)
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_CMS_ContentInfo,
 	    PEM_STRING_CMS, bp, (void *)x, NULL, NULL, 0, NULL, NULL);
 }
+LCRYPTO_ALIAS(PEM_write_bio_CMS);
 
 int
 PEM_write_CMS(FILE *fp, const CMS_ContentInfo *x)
@@ -126,6 +129,7 @@ PEM_write_CMS(FILE *fp, const CMS_ContentInfo *x)
 	return PEM_ASN1_write((i2d_of_void *)i2d_CMS_ContentInfo,
 	    PEM_STRING_CMS, fp, (void *)x, NULL, NULL, 0, NULL, NULL);
 }
+LCRYPTO_ALIAS(PEM_write_CMS);
 
 BIO *
 BIO_new_CMS(BIO *out, CMS_ContentInfo *cms)
