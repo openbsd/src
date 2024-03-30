@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.69 2022/01/08 06:49:42 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.70 2024/03/30 08:44:20 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -484,7 +484,6 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 	} else if (value < (1L<<42)) {
 		/*
 		 * Target 42bits or smaller.
-		 * We can generate this pattern:
 		 *
 		 * The resulting code in the jump slot is:
 		 *
@@ -507,7 +506,6 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 	} else if (value > -(1UL<<41)) {
 		/*
 		 * Large target >= 0xfffffe0000000000UL
-		 * We can generate this pattern:
 		 *
 		 * The resulting code in the jump slot is:
 		 *
