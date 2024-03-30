@@ -1,4 +1,4 @@
-/*	$OpenBSD: evptest.c,v 1.14 2024/02/29 20:04:43 tb Exp $	*/
+/*	$OpenBSD: evptest.c,v 1.15 2024/03/30 09:49:59 tb Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -49,6 +49,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -129,13 +130,6 @@ ustrsep(char **p, const char *sep)
 	return (unsigned char *)sstrsep(p, sep);
 }
 
-static int
-test1_exit(int ec)
-{
-	exit(ec);
-	return(0);		/* To keep some compilers quiet */
-}
-
 static void
 test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
     const unsigned char *iv, int in, const unsigned char *plaintext, int pn,
@@ -159,12 +153,12 @@ test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
 	if (kn != EVP_CIPHER_key_length(c)) {
 		fprintf(stderr, "Key length doesn't match, got %d expected %lu\n",kn,
 		    (unsigned long)EVP_CIPHER_key_length(c));
-		test1_exit(5);
+		exit(5);
 	}
 	if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
 		fprintf(stderr, "EVP_CIPHER_CTX_new failed\n");
 		ERR_print_errors_fp(stderr);
-		test1_exit(12);
+		exit(12);
 	}
 	EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
 	if (encdec != 0) {
@@ -174,32 +168,32 @@ test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
 		if (!EVP_EncryptInit_ex(ctx, c, NULL, key, eiv)) {
 			fprintf(stderr, "EncryptInit failed\n");
 			ERR_print_errors_fp(stderr);
-			test1_exit(10);
+			exit(10);
 		}
 		EVP_CIPHER_CTX_set_padding(ctx, 0);
 
 		if (!EVP_EncryptUpdate(ctx, out, &outl, plaintext, pn)) {
 			fprintf(stderr, "Encrypt failed\n");
 			ERR_print_errors_fp(stderr);
-			test1_exit(6);
+			exit(6);
 		}
 		if (!EVP_EncryptFinal_ex(ctx, out + outl, &outl2)) {
 			fprintf(stderr, "EncryptFinal failed\n");
 			ERR_print_errors_fp(stderr);
-			test1_exit(7);
+			exit(7);
 		}
 
 		if (outl + outl2 != cn) {
 			fprintf(stderr, "Ciphertext length mismatch got %d expected %d\n",
 			    outl + outl2, cn);
-			test1_exit(8);
+			exit(8);
 		}
 
 		if (memcmp(out, ciphertext, cn)) {
 			fprintf(stderr, "Ciphertext mismatch\n");
 			hexdump(stderr, "Got",out,cn);
 			hexdump(stderr, "Expected",ciphertext,cn);
-			test1_exit(9);
+			exit(9);
 		}
 	}
 
@@ -210,32 +204,32 @@ test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
 		if (!EVP_DecryptInit_ex(ctx, c,NULL, key, eiv)) {
 			fprintf(stderr, "DecryptInit failed\n");
 			ERR_print_errors_fp(stderr);
-			test1_exit(11);
+			exit(11);
 		}
 		EVP_CIPHER_CTX_set_padding(ctx, 0);
 
 		if (!EVP_DecryptUpdate(ctx, out, &outl, ciphertext, cn)) {
 			fprintf(stderr, "Decrypt failed\n");
 			ERR_print_errors_fp(stderr);
-			test1_exit(6);
+			exit(6);
 		}
 		if (!EVP_DecryptFinal_ex(ctx, out + outl, &outl2)) {
 			fprintf(stderr, "DecryptFinal failed\n");
 			ERR_print_errors_fp(stderr);
-			test1_exit(7);
+			exit(7);
 		}
 
 		if (outl + outl2 != pn) {
 			fprintf(stderr, "Plaintext length mismatch got %d expected %d\n",
 			    outl + outl2, pn);
-			test1_exit(8);
+			exit(8);
 		}
 
 		if (memcmp(out, plaintext, pn)) {
 			fprintf(stderr, "Plaintext mismatch\n");
 			hexdump(stderr, "Got",out,pn);
 			hexdump(stderr, "Expected",plaintext,pn);
-			test1_exit(9);
+			exit(9);
 		}
 	}
 
@@ -283,7 +277,7 @@ test_digest(const char *digest, const unsigned char *plaintext, int pn,
 	if ((ctx = EVP_MD_CTX_new()) == NULL) {
 		fprintf(stderr, "EVP_CIPHER_CTX_new failed\n");
 		ERR_print_errors_fp(stderr);
-		test1_exit(104);
+		exit(104);
 	}
 	if (!EVP_DigestInit_ex(ctx, d, NULL)) {
 		fprintf(stderr, "DigestInit failed\n");
