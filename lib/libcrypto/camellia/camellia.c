@@ -1,4 +1,4 @@
-/* $OpenBSD: camellia.c,v 1.13 2024/03/29 07:26:21 jsing Exp $ */
+/* $OpenBSD: camellia.c,v 1.14 2024/03/30 04:58:12 joshua Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -591,6 +591,7 @@ Camellia_set_key(const unsigned char *userKey, const int bits,
 	key->grand_rounds = Camellia_Ekeygen(bits, userKey, key->u.rd_key);
 	return 0;
 }
+LCRYPTO_ALIAS(Camellia_set_key);
 
 void
 Camellia_encrypt(const unsigned char *in, unsigned char *out,
@@ -598,6 +599,7 @@ Camellia_encrypt(const unsigned char *in, unsigned char *out,
 {
 	Camellia_EncryptBlock_Rounds(key->grand_rounds, in, key->u.rd_key, out);
 }
+LCRYPTO_ALIAS(Camellia_encrypt);
 
 void
 Camellia_decrypt(const unsigned char *in, unsigned char *out,
@@ -605,6 +607,7 @@ Camellia_decrypt(const unsigned char *in, unsigned char *out,
 {
 	Camellia_DecryptBlock_Rounds(key->grand_rounds, in, key->u.rd_key, out);
 }
+LCRYPTO_ALIAS(Camellia_decrypt);
 
 void
 Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out, size_t len,
@@ -617,6 +620,7 @@ Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out, size_t len,
 		CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
 		   (block128_f)Camellia_decrypt);
 }
+LCRYPTO_ALIAS(Camellia_cbc_encrypt);
 
 /*
  * The input and output encrypted as though 128bit cfb mode is being
@@ -632,6 +636,7 @@ Camellia_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 	CRYPTO_cfb128_encrypt(in, out, length, key, ivec, num, enc,
 	    (block128_f)Camellia_encrypt);
 }
+LCRYPTO_ALIAS(Camellia_cfb128_encrypt);
 
 /* N.B. This expects the input to be packed, MS bit first */
 void
@@ -642,6 +647,7 @@ Camellia_cfb1_encrypt(const unsigned char *in, unsigned char *out,
 	CRYPTO_cfb128_1_encrypt(in, out, length, key, ivec, num, enc,
 	    (block128_f)Camellia_encrypt);
 }
+LCRYPTO_ALIAS(Camellia_cfb1_encrypt);
 
 void
 Camellia_cfb8_encrypt(const unsigned char *in, unsigned char *out,
@@ -651,6 +657,7 @@ Camellia_cfb8_encrypt(const unsigned char *in, unsigned char *out,
 	CRYPTO_cfb128_8_encrypt(in, out, length, key, ivec, num, enc,
 	    (block128_f)Camellia_encrypt);
 }
+LCRYPTO_ALIAS(Camellia_cfb8_encrypt);
 
 void
 Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
@@ -661,6 +668,7 @@ Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	CRYPTO_ctr128_encrypt(in, out, length, key, ivec, ecount_buf, num,
 	    (block128_f)Camellia_encrypt);
 }
+LCRYPTO_ALIAS(Camellia_ctr128_encrypt);
 
 void
 Camellia_ecb_encrypt(const unsigned char *in, unsigned char *out,
@@ -671,6 +679,7 @@ Camellia_ecb_encrypt(const unsigned char *in, unsigned char *out,
 	else
 		Camellia_decrypt(in, out, key);
 }
+LCRYPTO_ALIAS(Camellia_ecb_encrypt);
 
 /*
  * The input and output encrypted as though 128bit ofb mode is being
@@ -684,3 +693,4 @@ Camellia_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 	CRYPTO_ofb128_encrypt(in, out, length, key, ivec, num,
 	    (block128_f)Camellia_encrypt);
 }
+LCRYPTO_ALIAS(Camellia_ofb128_encrypt);
