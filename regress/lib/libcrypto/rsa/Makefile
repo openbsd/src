@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2024/03/30 00:34:40 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2024/03/30 00:36:14 jsing Exp $
 
-PROG=		rsa_test
+PROGS=		rsa_test \
+		rsa_padding_test
 LDADD=		-lcrypto
 DPADD=		${LIBCRYPTO}
 WARNINGS=	Yes
