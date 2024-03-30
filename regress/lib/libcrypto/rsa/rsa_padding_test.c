@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_padding_test.c,v 1.1 2024/03/30 00:36:14 jsing Exp $	*/
+/*	$OpenBSD: rsa_padding_test.c,v 1.2 2024/03/30 02:20:39 jsing Exp $	*/
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -135,19 +135,24 @@ test_pkcs1_type1(void)
 	size_t i;
 	int failed = 1;
 
-	memset(in, 0x6f, sizeof(in));
+	for (i = 0; i < 1000; i++) {
+		arc4random_buf(in, sizeof(in));
 
-	if (!RSA_padding_add_PKCS1_type_1(buf, sizeof(buf), in, sizeof(in))) {
-		fprintf(stderr, "FAIL: failed to add PKCS1 type 1 padding\n");
-		goto failed;
-	}
+		if (!RSA_padding_add_PKCS1_type_1(buf, sizeof(buf), in,
+		    sizeof(in))) {
+			fprintf(stderr, "FAIL: failed to add PKCS1 type 1 "
+			    "padding\n");
+			goto failed;
+		}
 
-	pad_len = RSA_padding_check_PKCS1_type_1(out, sizeof(out) - 1,
-	    buf + 1, sizeof(buf) - 1, sizeof(buf));
-	if (pad_len != sizeof(in)) {
-		fprintf(stderr, "FAIL: failed to check PKCS1 type 1 padding\n");
-		ERR_print_errors_fp(stderr);
-		goto failed;
+		pad_len = RSA_padding_check_PKCS1_type_1(out, sizeof(out) - 1,
+		    buf + 1, sizeof(buf) - 1, sizeof(buf));
+		if (pad_len != sizeof(in)) {
+			fprintf(stderr, "FAIL: failed to check PKCS1 type 1 "
+			    "padding\n");
+			ERR_print_errors_fp(stderr);
+			goto failed;
+		}
 	}
 
 	for (i = 0; i < N_PKCS1_TYPE1_TESTS; i++) {
@@ -260,25 +265,30 @@ static int
 test_pkcs1_type2(void)
 {
 	const struct pkcs1_test *pt;
-	uint8_t buf[32], in[19], out[32];
+	uint8_t buf[32], in[19], out[512];
 	int pad_len;
 	long err;
 	size_t i;
 	int failed = 1;
 
-	memset(in, 0x6f, sizeof(in));
+	for (i = 0; i < 1000; i++) {
+		arc4random_buf(in, sizeof(in));
 
-	if (!RSA_padding_add_PKCS1_type_2(buf, sizeof(buf), in, sizeof(in))) {
-		fprintf(stderr, "FAIL: failed to add PKCS1 type 2 padding\n");
-		goto failed;
-	}
+		if (!RSA_padding_add_PKCS1_type_2(buf, sizeof(buf), in,
+		    sizeof(in))) {
+			fprintf(stderr, "FAIL: failed to add PKCS1 type 2 "
+			    "padding\n");
+			goto failed;
+		}
 
-	pad_len = RSA_padding_check_PKCS1_type_2(out, sizeof(out) - 1,
-	    buf + 1, sizeof(buf) - 1, sizeof(out));
-	if (pad_len != sizeof(in)) {
-		fprintf(stderr, "FAIL: failed to check PKCS1 type 2 padding\n");
-		ERR_print_errors_fp(stderr);
-		goto failed;
+		pad_len = RSA_padding_check_PKCS1_type_2(out, sizeof(out) - 1,
+		    buf + 1, sizeof(buf) - 1, sizeof(buf));
+		if (pad_len != sizeof(in)) {
+			fprintf(stderr, "FAIL: failed to check PKCS1 type 2 "
+			    "padding\n");
+			ERR_print_errors_fp(stderr);
+			goto failed;
+		}
 	}
 
 	for (i = 0; i < N_PKCS1_TYPE2_TESTS; i++) {
