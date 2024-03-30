@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.33 2024/03/26 12:10:50 joshua Exp $ */
+/* $OpenBSD: hmac.c,v 1.34 2024/03/30 10:10:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,6 +143,7 @@ HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
 		HMAC_CTX_init(ctx);
 	return HMAC_Init_ex(ctx, key, len, md, NULL);
 }
+LCRYPTO_ALIAS(HMAC_Init);
 
 int
 HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, size_t len)
@@ -203,6 +204,7 @@ HMAC_CTX_reset(HMAC_CTX *ctx)
 	HMAC_CTX_init(ctx);
 	return 1;
 }
+LCRYPTO_ALIAS(HMAC_CTX_reset);
 
 void
 HMAC_CTX_init(HMAC_CTX *ctx)
