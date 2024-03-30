@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pk1.c,v 1.16 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_pk1.c,v 1.17 2024/03/30 04:34:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,31 +64,61 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 
+#include "bytestring.h"
+
 int
 RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
     const unsigned char *from, int flen)
 {
-	int j;
-	unsigned char *p;
+	CBB cbb;
+	int i;
+	int ret = 0;
 
-	if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
+	/*
+	 * Pad data block with PKCS1 type 1 padding - RFC 2313, section 8.1.
+	 */
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	if (flen < 0 || tlen < 0)
+		goto err;
+
+	if (flen > tlen - RSA_PKCS1_PADDING_SIZE) {
 		RSAerror(RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
-		return 0;
+		goto err;
 	}
 
-	p = (unsigned char *)to;
+	if (!CBB_init_fixed(&cbb, to, tlen))
+		goto err;
 
-	*(p++) = 0;
-	*(p++) = 1; /* Private Key BT (Block Type) */
+	/*
+	 * Add leading NUL, block type (0x01), padding bytes (0xff) and
+	 * trailing NUL.
+	 */
+	if (!CBB_add_u8(&cbb, 0))
+		goto err;
+	if (!CBB_add_u8(&cbb, 1))
+		goto err;
+	for (i = 0; i < tlen - 3 - flen; i++) {
+		if (!CBB_add_u8(&cbb, 0xff))
+			goto err;
+	}
+	if (!CBB_add_u8(&cbb, 0))
+		goto err;
 
-	/* pad out with 0xff data */
-	j = tlen - 3 - flen;
-	memset(p, 0xff, j);
-	p += j;
-	*(p++) = '\0';
-	memcpy(p, from, flen);
+	/* Now add the actual data. */
+	if (!CBB_add_bytes(&cbb, from, flen))
+		goto err;
 
-	return 1;
+	if (!CBB_finish(&cbb, NULL, NULL))
+		goto err;
+
+	ret = 1;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return ret;
 }
 LCRYPTO_ALIAS(RSA_padding_add_PKCS1_type_1);
 
@@ -146,33 +176,69 @@ int
 RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
     const unsigned char *from, int flen)
 {
-	int i, j;
-	unsigned char *p;
+	uint8_t padding[256];
+	uint8_t pad;
+	CBB cbb;
+	CBS cbs;
+	int i;
+	int ret = 0;
 
-	if (flen > tlen - 11) {
+	/*
+	 * Pad data block with PKCS1 type 2 padding - RFC 2313, section 8.1.
+	 */
+
+	memset(&cbb, 0, sizeof(cbb));
+	CBS_init(&cbs, NULL, 0);
+
+	if (flen < 0 || tlen < 0)
+		goto err;
+
+	if (flen > tlen - RSA_PKCS1_PADDING_SIZE) {
 		RSAerror(RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
-		return 0;
+		goto err;
 	}
 
-	p = (unsigned char *)to;
+	if (!CBB_init_fixed(&cbb, to, tlen))
+		goto err;
 
-	*(p++) = 0;
-	*(p++) = 2; /* Public Key BT (Block Type) */
+	/*
+	 * Add leading NUL, block type (0x02), padding bytes (random non-zero
+	 * bytes) and trailing NUL.
+	 */
+	if (!CBB_add_u8(&cbb, 0))
+		goto err;
+	if (!CBB_add_u8(&cbb, 2))
+		goto err;
+	for (i = 0; i < tlen - 3 - flen; i++) {
+		do {
+			if (CBS_len(&cbs) == 0) {
+				arc4random_buf(padding, sizeof(padding));
+				CBS_init(&cbs, padding, sizeof(padding));
+			}
+			if (!CBS_get_u8(&cbs, &pad))
+				goto err;
+		} while (pad == 0);
 
-	/* pad out with non-zero random data */
-	j = tlen - 3 - flen;
-
-	arc4random_buf(p, j);
-	for (i = 0; i < j; i++) {
-		while (*p == '\0')
-			arc4random_buf(p, 1);
-		p++;
+		if (!CBB_add_u8(&cbb, pad))
+			goto err;
 	}
+	if (!CBB_add_u8(&cbb, 0))
+		goto err;
 
-	*(p++) = '\0';
+	/* Now add the actual data. */
+	if (!CBB_add_bytes(&cbb, from, flen))
+		goto err;
 
-	memcpy(p, from, flen);
-	return 1;
+	if (!CBB_finish(&cbb, NULL, NULL))
+		goto err;
+
+	ret = 1;
+
+ err:
+	CBB_cleanup(&cbb);
+	explicit_bzero(padding, sizeof(padding));
+
+	return ret;
 }
 LCRYPTO_ALIAS(RSA_padding_add_PKCS1_type_2);
 
