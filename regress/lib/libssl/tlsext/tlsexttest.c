@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.89 2024/03/28 01:45:18 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.90 2024/03/30 09:53:41 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2040,7 +2040,7 @@ static const unsigned char tlsext_quic_transport_data[] = {
 static int
 test_tlsext_quic_transport_parameters_client(void)
 {
-	const SSL_QUIC_METHOD quic_method;
+	const SSL_QUIC_METHOD quic_method = {0};
 	unsigned char *data = NULL;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
@@ -2171,7 +2171,7 @@ test_tlsext_quic_transport_parameters_client(void)
 static int
 test_tlsext_quic_transport_parameters_server(void)
 {
-	const SSL_QUIC_METHOD quic_method;
+	const SSL_QUIC_METHOD quic_method = {0};
 	unsigned char *data = NULL;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
