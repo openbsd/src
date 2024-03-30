@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.22 2024/03/29 11:19:01 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.23 2024/03/30 05:14:12 joshua Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -746,6 +746,7 @@ AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
 	return aes_set_encrypt_key_internal(userKey, bits, key);
 }
+LCRYPTO_ALIAS(AES_set_encrypt_key);
 
 #ifdef HAVE_AES_SET_DECRYPT_KEY_INTERNAL
 int aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
@@ -818,6 +819,7 @@ AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
 	return aes_set_decrypt_key_internal(userKey, bits, key);
 }
+LCRYPTO_ALIAS(AES_set_decrypt_key);
 
 #ifdef HAVE_AES_ENCRYPT_INTERNAL
 void aes_encrypt_internal(const unsigned char *in, unsigned char *out,
@@ -1020,6 +1022,7 @@ AES_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 {
 	return aes_encrypt_internal(in, out, key);
 }
+LCRYPTO_ALIAS(AES_encrypt);
 
 #ifdef HAVE_AES_DECRYPT_INTERNAL
 void aes_decrypt_internal(const unsigned char *in, unsigned char *out,
@@ -1222,3 +1225,4 @@ AES_decrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key)
 {
 	return aes_decrypt_internal(in, out, key);
 }
+LCRYPTO_ALIAS(AES_decrypt);
