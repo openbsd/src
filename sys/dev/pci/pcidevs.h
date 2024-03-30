@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2069 2024/03/23 10:35:50 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.2070 2024/03/30 11:12:20 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -315,6 +315,7 @@
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_QUALCOMM	0x17cb		/* Qualcomm */
 #define	PCI_VENDOR_NETCHIP	0x17cc		/* NetChip Technology */
+#define	PCI_VENDOR_CADENCE	0x17cd		/* Cadence */
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_NETERION	0x17d5		/* Neterion */
@@ -353,6 +354,7 @@
 #define	PCI_VENDOR_BAIKAL	0x1d39		/* Baikal Electronics */
 #define	PCI_VENDOR_AQUANTIA	0x1d6a		/* Aquantia */
 #define	PCI_VENDOR_ROCKCHIP	0x1d87		/* Rockchip */
+#define	PCI_VENDOR_LONGSYS	0x1d97		/* Longsys */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_AMPERE	0x1def		/* Ampere */
 #define	PCI_VENDOR_KIOXIA	0x1e0f		/* Kioxia */
@@ -7371,6 +7373,9 @@
 #define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
 #define	PCI_PRODUCT_LMC_DS1	0x0006		/* DS1 */
 #define	PCI_PRODUCT_LMC_HSSIC	0x0007		/* HSSIc */
+
+/* Longsys products */
+#define	PCI_PRODUCT_LONGSYS_FORESEE_XP1000	0x5216		/* FORESEE XP1000 */
 
 /* Lucent products */
 #define	PCI_PRODUCT_LUCENT_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */

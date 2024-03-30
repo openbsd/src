@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2069 2024/03/23 10:35:50 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.2070 2024/03/30 11:12:20 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -26672,6 +26672,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HSSIc",
 	},
 	{
+	    PCI_VENDOR_LONGSYS, PCI_PRODUCT_LONGSYS_FORESEE_XP1000,
+	    "FORESEE XP1000",
+	},
+	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
 	    "K56flex DSVD LTMODEM",
 	},
@@ -37072,6 +37076,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "NetChip Technology",
 	},
 	{
+	    PCI_VENDOR_CADENCE,
+	    "Cadence",
+	},
+	{
 	    PCI_VENDOR_I4,
 	    "I4",
 	},
@@ -37222,6 +37230,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ROCKCHIP,
 	    "Rockchip",
+	},
+	{
+	    PCI_VENDOR_LONGSYS,
+	    "Longsys",
 	},
 	{
 	    PCI_VENDOR_TEKRAM2,
