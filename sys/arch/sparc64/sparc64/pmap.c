@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.116 2024/03/29 21:27:53 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.117 2024/03/30 07:45:21 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -51,6 +51,7 @@
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_output.h>
+#define db_enter()	__asm volatile("ta 1; nop")
 #else
 #define db_enter()
 #endif
