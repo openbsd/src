@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.90 2024/01/24 19:23:38 cheloha Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.91 2024/03/30 13:33:20 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -500,12 +500,10 @@ setrunnable(struct proc *p)
 		if ((pr->ps_flags & PS_TRACED) != 0 && pr->ps_xsig != 0)
 			atomic_setbits_int(&p->p_siglist, sigmask(pr->ps_xsig));
 		prio = p->p_usrpri;
-		unsleep(p);
 		setrunqueue(NULL, p, prio);
 		break;
 	case SSLEEP:
 		prio = p->p_slppri;
-		unsleep(p);		/* e.g. when sending signals */
 
 		/* if not yet asleep, don't add to runqueue */
 		if (ISSET(p->p_flag, P_WSLEEP))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.200 2023/09/13 14:25:49 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.201 2024/03/30 13:33:20 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -467,25 +467,23 @@ sleep_signal_check(void)
 }
 
 int
-wakeup_proc(struct proc *p, const volatile void *chan, int flags)
+wakeup_proc(struct proc *p, int flags)
 {
 	int awakened = 0;
 
 	SCHED_ASSERT_LOCKED();
 
-	if (p->p_wchan != NULL &&
-	   ((chan == NULL) || (p->p_wchan == chan))) {
+	if (p->p_wchan != NULL) {
 		awakened = 1;
 		if (flags)
 			atomic_setbits_int(&p->p_flag, flags);
+#ifdef DIAGNOSTIC
+		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
+			panic("thread %d p_stat is %d", p->p_tid, p->p_stat);
+#endif
+		unsleep(p);
 		if (p->p_stat == SSLEEP)
 			setrunnable(p);
-		else if (p->p_stat == SSTOP)
-			unsleep(p);
-#ifdef DIAGNOSTIC
-		else
-			panic("wakeup: p_stat is %d", (int)p->p_stat);
-#endif
 	}
 
 	return awakened;
@@ -505,7 +503,7 @@ endtsleep(void *arg)
 	int s;
 
 	SCHED_LOCK(s);
-	wakeup_proc(p, NULL, P_TIMEOUT);
+	wakeup_proc(p, P_TIMEOUT);
 	SCHED_UNLOCK(s);
 }
 
@@ -531,10 +529,12 @@ unsleep(struct proc *p)
 void
 wakeup_n(const volatile void *ident, int n)
 {
-	struct slpque *qp;
+	struct slpque *qp, wakeq;
 	struct proc *p;
 	struct proc *pnext;
 	int s;
+
+	TAILQ_INIT(&wakeq);
 
 	SCHED_LOCK(s);
 	qp = &slpque[LOOKUP(ident)];
@@ -542,10 +542,22 @@ wakeup_n(const volatile void *ident, int n)
 		pnext = TAILQ_NEXT(p, p_runq);
 #ifdef DIAGNOSTIC
 		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
-			panic("wakeup: p_stat is %d", (int)p->p_stat);
+			panic("thread %d p_stat is %d", p->p_tid, p->p_stat);
 #endif
-		if (wakeup_proc(p, ident, 0))
+		KASSERT(p->p_wchan != NULL);
+		if (p->p_wchan == ident) {
+			TAILQ_REMOVE(qp, p, p_runq);
+			p->p_wchan = NULL;
+			TAILQ_INSERT_TAIL(&wakeq, p, p_runq);
 			--n;
+		}
+	}
+	while ((p = TAILQ_FIRST(&wakeq))) {
+		TAILQ_REMOVE(&wakeq, p, p_runq);
+		TRACEPOINT(sched, unsleep, p->p_tid + THREAD_PID_OFFSET,
+		    p->p_p->ps_pid);
+		if (p->p_stat == SSLEEP)
+			setrunnable(p);
 	}
 	SCHED_UNLOCK(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.111 2024/03/20 02:42:17 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.112 2024/03/30 13:33:20 mpi Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -162,7 +162,7 @@ wake_up_process(struct proc *p)
 	int s, rv;
 
 	SCHED_LOCK(s);
-	rv = wakeup_proc(p, NULL, 0);
+	rv = wakeup_proc(p, 0);
 	SCHED_UNLOCK(s);
 	return rv;
 }

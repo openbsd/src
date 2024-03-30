@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.322 2024/02/25 00:07:13 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.323 2024/03/30 13:33:20 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1205,6 +1205,7 @@ runfast:
 	if (p->p_usrpri > PUSER)
 		p->p_usrpri = PUSER;
 run:
+	unsleep(p);
 	setrunnable(p);
 out:
 	/* finally adjust siglist */
@@ -2109,6 +2110,7 @@ single_thread_set(struct proc *p, int flags)
 		if (q->p_flag & P_WEXIT) {
 			if (mode == SINGLE_EXIT) {
 				if (q->p_stat == SSTOP) {
+					unsleep(q);
 					setrunnable(q);
 					atomic_inc_int(&pr->ps_singlecount);
 				}
@@ -2130,12 +2132,14 @@ single_thread_set(struct proc *p, int flags)
 					break;
 				}
 				/* need to unwind or exit, so wake it */
+				unsleep(q);
 				setrunnable(q);
 			}
 			atomic_inc_int(&pr->ps_singlecount);
 			break;
 		case SSTOP:
 			if (mode == SINGLE_EXIT) {
+				unsleep(q);
 				setrunnable(q);
 				atomic_inc_int(&pr->ps_singlecount);
 			}

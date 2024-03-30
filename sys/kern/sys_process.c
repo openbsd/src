@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.95 2023/11/21 14:00:13 bluhm Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.96 2024/03/30 13:33:20 mpi Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -493,6 +493,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		if (t->p_stat == SSTOP) {
 			tr->ps_xsig = data;
 			SCHED_LOCK(s);
+			unsleep(t);
 			setrunnable(t);
 			SCHED_UNLOCK(s);
 		} else {
