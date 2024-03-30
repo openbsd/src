@@ -1,4 +1,4 @@
-/* $OpenBSD: whirlpool.c,v 1.1 2024/03/29 02:41:49 jsing Exp $ */
+/* $OpenBSD: whirlpool.c,v 1.2 2024/03/30 03:45:47 joshua Exp $ */
 /**
  * The Whirlpool hashing function.
  *
@@ -650,6 +650,7 @@ WHIRLPOOL_Init(WHIRLPOOL_CTX *c)
 	memset (c, 0, sizeof(*c));
 	return (1);
 }
+LCRYPTO_ALIAS(WHIRLPOOL_Init);
 
 int
 WHIRLPOOL_Update(WHIRLPOOL_CTX *c, const void *_inp, size_t bytes)
@@ -671,6 +672,7 @@ WHIRLPOOL_Update(WHIRLPOOL_CTX *c, const void *_inp, size_t bytes)
 
 	return (1);
 }
+LCRYPTO_ALIAS(WHIRLPOOL_Update);
 
 void
 WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *_inp, size_t bits)
@@ -796,6 +798,7 @@ reconsider:
 		}
 	}
 }
+LCRYPTO_ALIAS(WHIRLPOOL_BitUpdate);
 
 int
 WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c)
@@ -837,6 +840,7 @@ WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c)
 	}
 	return (0);
 }
+LCRYPTO_ALIAS(WHIRLPOOL_Final);
 
 unsigned char *
 WHIRLPOOL(const void *inp, size_t bytes, unsigned char *md)
@@ -851,3 +855,4 @@ WHIRLPOOL(const void *inp, size_t bytes, unsigned char *md)
 	WHIRLPOOL_Final(md, &ctx);
 	return (md);
 }
+LCRYPTO_ALIAS(WHIRLPOOL);

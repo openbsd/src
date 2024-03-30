@@ -2599,3 +2599,8 @@ _libre_CMS_get1_ReceiptRequest
 _libre_CMS_ReceiptRequest_create0
 _libre_CMS_add1_ReceiptRequest
 _libre_CMS_ReceiptRequest_get0_values
+_libre_WHIRLPOOL_Init
+_libre_WHIRLPOOL_Update
+_libre_WHIRLPOOL_BitUpdate
+_libre_WHIRLPOOL_Final
+_libre_WHIRLPOOL
