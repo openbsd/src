@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.43 2024/03/07 01:05:07 kevlo Exp $
+#	$OpenBSD: RAMDISK,v 1.44 2024/03/31 19:17:53 kettenis Exp $
 
 machine		riscv64
 maxusers	4
@@ -119,6 +119,7 @@ ix*		at pci?		# Intel 82598EB 10Gb ethernet
 ixl*		at pci?		# Intel Ethernet 700 Series
 aq*		at pci?		# Aquantia aQtion Ethernet
 igc*		at pci?		# Intel I225 Ethernet
+rge*		at pci?		# Realtek 8125
 
 # Wireless network cards
 iwm*		at pci?		# Intel WiFi Link 7xxx
