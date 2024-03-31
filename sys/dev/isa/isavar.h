@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.58 2014/03/18 22:36:37 miod Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.59 2024/03/31 09:49:33 miod Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -119,8 +119,6 @@ struct isabus_attach_args;
 #include <alpha/isa/isa_machdep.h>
 #elif defined(__i386__)
 #include <i386/isa/isa_machdep.h>
-#elif defined(__powerpc__)
-#include <powerpc/isa/isa_machdep.h>
 #else
 #include <machine/isa_machdep.h>
 #endif
