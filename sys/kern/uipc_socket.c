@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.324 2024/03/31 13:50:00 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.325 2024/03/31 14:01:28 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -232,6 +232,14 @@ solisten(struct socket *so, int backlog)
 	int somaxconn_local = READ_ONCE(somaxconn);
 	int sominconn_local = READ_ONCE(sominconn);
 	int error;
+
+	switch (so->so_type) {
+	case SOCK_STREAM:
+	case SOCK_SEQPACKET:
+		break;
+	default:
+		return (EOPNOTSUPP);
+	}
 
 	soassertlocked(so);
 
