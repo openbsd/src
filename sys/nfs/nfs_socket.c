@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.146 2024/03/22 07:15:04 claudio Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.147 2024/03/31 13:50:00 mvs Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -371,7 +371,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	error = soreserve(so, sndreserve, rcvreserve);
 	if (error)
 		goto bad_locked;
+	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_flags |= SB_NOINTR;
+	mtx_leave(&so->so_rcv.sb_mtx);
 	so->so_snd.sb_flags |= SB_NOINTR;
 	sounlock(so);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.122 2024/03/22 07:15:04 claudio Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.123 2024/03/31 13:50:00 mvs Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -297,12 +297,12 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 		m_freem(m);
 	}
 	solock(so);
-	so->so_rcv.sb_flags &= ~SB_NOINTR;
 	mtx_enter(&so->so_rcv.sb_mtx);
+	so->so_rcv.sb_flags &= ~SB_NOINTR;
 	so->so_rcv.sb_timeo_nsecs = INFSLP;
 	mtx_leave(&so->so_rcv.sb_mtx);
-	so->so_snd.sb_flags &= ~SB_NOINTR;
 	mtx_enter(&so->so_snd.sb_mtx);
+	so->so_snd.sb_flags &= ~SB_NOINTR;
 	so->so_snd.sb_timeo_nsecs = INFSLP;
 	mtx_leave(&so->so_snd.sb_mtx);
 	sounlock(so);

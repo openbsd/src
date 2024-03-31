@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.62 2024/03/26 09:46:47 mvs Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.63 2024/03/31 13:50:00 mvs Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -91,6 +91,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 
 	case FIOASYNC:
 		solock(so);
+		mtx_enter(&so->so_rcv.sb_mtx);
 		if (*(int *)data) {
 			so->so_rcv.sb_flags |= SB_ASYNC;
 			so->so_snd.sb_flags |= SB_ASYNC;
@@ -98,6 +99,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 			so->so_rcv.sb_flags &= ~SB_ASYNC;
 			so->so_snd.sb_flags &= ~SB_ASYNC;
 		}
+		mtx_leave(&so->so_rcv.sb_mtx);
 		sounlock(so);
 		break;
 

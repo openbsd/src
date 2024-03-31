@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.146 2024/03/27 22:47:53 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.147 2024/03/31 13:50:00 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -351,7 +351,9 @@ void
 socantrcvmore(struct socket *so)
 {
 	soassertlocked(so);
+	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_state |= SS_CANTRCVMORE;
+	mtx_leave(&so->so_rcv.sb_mtx);
 	sorwakeup(so);
 }
 
