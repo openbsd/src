@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.76 2024/02/25 19:15:50 cheloha Exp $ */
+/*	$OpenBSD: cpu.h,v 1.77 2024/03/31 07:23:29 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -253,7 +253,7 @@ unsigned int cpu_rnd_messybits(void);
 #endif
 
 /*
- * Arguments to hardclock and gatherstats encapsulate the previous
+ * Arguments to clockintr_dispatch encapsulate the previous
  * machine state in an opaque clockframe. CLKF_INTR is only valid
  * if the process is in kernel mode. Clockframe is really trapframe,
  * so pointer to clockframe can be safely cast into a pointer to

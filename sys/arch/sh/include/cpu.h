@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.37 2024/02/25 19:15:50 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.38 2024/03/31 07:23:29 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@ extern struct cpu_info cpu_info_store;
 
 
 /*
- * Arguments to hardclock and gatherstats encapsulate the previous
+ * Arguments to clockintr_dispatch encapsulate the previous
  * machine state in an opaque clockframe.
  */
 struct clockframe {

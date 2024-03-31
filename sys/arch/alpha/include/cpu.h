@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.72 2024/02/25 19:15:50 cheloha Exp $ */
+/* $OpenBSD: cpu.h,v 1.73 2024/03/31 07:23:29 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -300,7 +300,7 @@ cpu_rnd_messybits(void)
 }
 
 /*
- * Arguments to hardclock and gatherstats encapsulate the previous
+ * Arguments to clockintr_dispatch encapsulate the previous
  * machine state in an opaque clockframe.  On the Alpha, we use
  * what we push on an interrupt (a trapframe).
  */
