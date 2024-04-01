@@ -410,6 +410,9 @@
 #define RK3588_PLL_NPLL			7
 #define RK3588_PLL_PPLL			8
 
+#define RK3588_CLK_PWM1			76
+#define RK3588_CLK_PWM2			79
+#define RK3588_CLK_PWM3			82
 #define RK3588_ACLK_BUS_ROOT		113
 #define RK3588_CLK_I2C1			131
 #define RK3588_CLK_I2C2			132
