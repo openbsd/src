@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.97 2022/09/11 09:58:06 schwarze Exp $
+.\"     $OpenBSD: nc.1,v 1.98 2024/04/01 12:40:18 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: April 1 2024 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -398,6 +398,7 @@ a destination port must be specified,
 unless the
 .Fl U
 option is given.
+For some options, the value 0 requests that the system choose a port number.
 .Sh CLIENT/SERVER MODEL
 It is quite simple to build a very basic client/server model using
 .Nm .
