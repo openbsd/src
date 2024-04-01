@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.32 2024/03/29 06:47:05 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.33 2024/04/01 12:00:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -84,6 +84,7 @@ pin_check(struct proc *p, register_t code)
 		if (code == SYS_sigreturn)
 			return (0);
 		error = EPERM;
+		goto die;
 	}
 	if (pin) {
 		if (code >= pin->pn_npins || pin->pn_pins[code] == 0)
@@ -94,9 +95,11 @@ pin_check(struct proc *p, register_t code)
 			; /* multiple locations, hopefully a boring operation */
 		else
 			error = ENOSYS;
-	}
+	} else
+		error = ENOSYS;
 	if (error == 0)
 		return (0);
+die:
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PINSYSCALL))
 		ktrpinsyscall(p, error, code, addr);
