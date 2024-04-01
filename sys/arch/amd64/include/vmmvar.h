@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.98 2024/01/20 20:11:24 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.99 2024/04/01 05:11:49 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -435,6 +435,15 @@ struct vcpu_reg_state {
 	struct vcpu_segment_info	vrs_idtr;
 };
 
+#define VCPU_HOST_REGS_EFER   		0
+#define VCPU_HOST_REGS_STAR   		1
+#define VCPU_HOST_REGS_LSTAR  		2
+#define VCPU_HOST_REGS_CSTAR  		3
+#define VCPU_HOST_REGS_SFMASK 		4
+#define VCPU_HOST_REGS_KGSBASE		5
+#define VCPU_HOST_REGS_MISC_ENABLE	6
+#define VCPU_HOST_REGS_NMSRS		(VCPU_HOST_REGS_MISC_ENABLE + 1)
+
 /*
  * struct vm_exit
  *
@@ -616,8 +625,6 @@ struct vm_mprotect_ept_params {
 #define VMX_FAIL_LAUNCH_UNKNOWN 	1
 #define VMX_FAIL_LAUNCH_INVALID_VMCS	2
 #define VMX_FAIL_LAUNCH_VALID_VMCS	3
-
-#define VMX_NUM_MSR_STORE		7
 
 /* MSR bitmap manipulation macros */
 #define VMX_MSRIDX(m)			((m) / 8)
@@ -894,8 +901,10 @@ struct vcpu {
 	paddr_t vc_vmx_msr_exit_save_pa;
 	vaddr_t vc_vmx_msr_exit_load_va;
 	paddr_t vc_vmx_msr_exit_load_pa;
+#if 0	/* XXX currently use msr_exit_save for msr_entry_load too */
 	vaddr_t vc_vmx_msr_entry_load_va;
 	paddr_t vc_vmx_msr_entry_load_pa;
+#endif
 	uint8_t vc_vmx_vpid_enabled;
 	uint64_t vc_vmx_cr0_fixed1;
 	uint64_t vc_vmx_cr0_fixed0;

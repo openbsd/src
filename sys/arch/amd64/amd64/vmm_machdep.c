@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.21 2024/03/12 02:31:15 guenther Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.22 2024/04/01 05:11:49 guenther Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2329,7 +2329,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	uint32_t cr0, cr4;
 	uint32_t pinbased, procbased, procbased2, exit, entry;
 	uint32_t want1, want0;
-	uint64_t ctrlval, cr3;
+	uint64_t ctrlval, cr3, msr_misc_enable;
 	uint16_t ctrl, vpid;
 	struct vmx_msr_store *msr_store;
 
@@ -2723,24 +2723,26 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vrs->vrs_crs[VCPU_REGS_CR0] = cr0;
 	vrs->vrs_crs[VCPU_REGS_CR4] = cr4;
 
+	msr_misc_enable = rdmsr(MSR_MISC_ENABLE);
+
 	/*
 	 * Select host MSRs to be loaded on exit
 	 */
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_load_va;
-	msr_store[0].vms_index = MSR_EFER;
-	msr_store[0].vms_data = rdmsr(MSR_EFER);
-	msr_store[1].vms_index = MSR_STAR;
-	msr_store[1].vms_data = rdmsr(MSR_STAR);
-	msr_store[2].vms_index = MSR_LSTAR;
-	msr_store[2].vms_data = rdmsr(MSR_LSTAR);
-	msr_store[3].vms_index = MSR_CSTAR;
-	msr_store[3].vms_data = 0;
-	msr_store[4].vms_index = MSR_SFMASK;
-	msr_store[4].vms_data = rdmsr(MSR_SFMASK);
-	msr_store[5].vms_index = MSR_KERNELGSBASE;
-	msr_store[5].vms_data = rdmsr(MSR_KERNELGSBASE);
-	msr_store[6].vms_index = MSR_MISC_ENABLE;
-	msr_store[6].vms_data = rdmsr(MSR_MISC_ENABLE);
+	msr_store[VCPU_HOST_REGS_EFER].vms_index = MSR_EFER;
+	msr_store[VCPU_HOST_REGS_EFER].vms_data = rdmsr(MSR_EFER);
+	msr_store[VCPU_HOST_REGS_STAR].vms_index = MSR_STAR;
+	msr_store[VCPU_HOST_REGS_STAR].vms_data = rdmsr(MSR_STAR);
+	msr_store[VCPU_HOST_REGS_LSTAR].vms_index = MSR_LSTAR;
+	msr_store[VCPU_HOST_REGS_LSTAR].vms_data = rdmsr(MSR_LSTAR);
+	msr_store[VCPU_HOST_REGS_CSTAR].vms_index = MSR_CSTAR;
+	msr_store[VCPU_HOST_REGS_CSTAR].vms_data = 0;
+	msr_store[VCPU_HOST_REGS_SFMASK].vms_index = MSR_SFMASK;
+	msr_store[VCPU_HOST_REGS_SFMASK].vms_data = rdmsr(MSR_SFMASK);
+	msr_store[VCPU_HOST_REGS_KGSBASE].vms_index = MSR_KERNELGSBASE;
+	msr_store[VCPU_HOST_REGS_KGSBASE].vms_data = 0;
+	msr_store[VCPU_HOST_REGS_MISC_ENABLE].vms_index = MSR_MISC_ENABLE;
+	msr_store[VCPU_HOST_REGS_MISC_ENABLE].vms_data = msr_misc_enable;
 
 	/*
 	 * Select guest MSRs to be loaded on entry / saved on exit
@@ -2759,7 +2761,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * Initialize MSR_MISC_ENABLE as it can't be read and populated from vmd
 	 * and some of the content is based on the host.
 	 */
-	msr_store[VCPU_REGS_MISC_ENABLE].vms_data = rdmsr(MSR_MISC_ENABLE);
+	msr_store[VCPU_REGS_MISC_ENABLE].vms_data = msr_misc_enable;
 	msr_store[VCPU_REGS_MISC_ENABLE].vms_data &=
 	    ~(MISC_ENABLE_TCC | MISC_ENABLE_PERF_MON_AVAILABLE |
 	      MISC_ENABLE_EIST_ENABLED | MISC_ENABLE_ENABLE_MONITOR_FSM |
@@ -2768,24 +2770,26 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	      MISC_ENABLE_BTS_UNAVAILABLE | MISC_ENABLE_PEBS_UNAVAILABLE;
 
 	/*
-	 * Currently we have the same count of entry/exit MSRs loads/stores
-	 * but this is not an architectural requirement.
+	 * Currently we use the same memory for guest MSRs (entry-load and
+	 * exit-store) so they have the same count.  We exit-load the same
+	 * host MSRs, so same count but different memory.  Those are just
+	 * our current choices, not architectural requirements.
 	 */
-	if (vmwrite(VMCS_EXIT_MSR_STORE_COUNT, VMX_NUM_MSR_STORE)) {
+	if (vmwrite(VMCS_EXIT_MSR_STORE_COUNT, VCPU_REGS_NMSRS)) {
 		DPRINTF("%s: error setting guest MSR exit store count\n",
 		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
-	if (vmwrite(VMCS_EXIT_MSR_LOAD_COUNT, VMX_NUM_MSR_STORE)) {
+	if (vmwrite(VMCS_EXIT_MSR_LOAD_COUNT, VCPU_HOST_REGS_NMSRS)) {
 		DPRINTF("%s: error setting guest MSR exit load count\n",
 		    __func__);
 		ret = EINVAL;
 		goto exit;
 	}
 
-	if (vmwrite(VMCS_ENTRY_MSR_LOAD_COUNT, VMX_NUM_MSR_STORE)) {
+	if (vmwrite(VMCS_ENTRY_MSR_LOAD_COUNT, VCPU_REGS_NMSRS)) {
 		DPRINTF("%s: error setting guest MSR entry load count\n",
 		    __func__);
 		ret = EINVAL;
@@ -2974,6 +2978,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		goto exit;
 	}
 
+#if 0	/* XXX currently use msr_exit_save for msr_entry_load too */
 	/* Allocate MSR entry load area VA */
 	vcpu->vc_vmx_msr_entry_load_va = (vaddr_t)km_alloc(PAGE_SIZE, &kv_page,
 	   &kp_zero, &kd_waitok);
@@ -2989,6 +2994,7 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		ret = ENOMEM;
 		goto exit;
 	}
+#endif
 
 	vmcs = (struct vmcs *)vcpu->vc_control_va;
 	vmcs->vmcs_revision = curcpu()->ci_vmm_cap.vcc_vmx.vmx_vmxon_revision;
@@ -3308,11 +3314,13 @@ vcpu_deinit_vmx(struct vcpu *vcpu)
 		    PAGE_SIZE, &kv_page, &kp_zero);
 		vcpu->vc_vmx_msr_exit_load_va = 0;
 	}
+#if 0
 	if (vcpu->vc_vmx_msr_entry_load_va) {
 		km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 		    PAGE_SIZE, &kv_page, &kp_zero);
 		vcpu->vc_vmx_msr_entry_load_va = 0;
 	}
+#endif
 
 	if (vcpu->vc_vmx_vpid_enabled)
 		vmm_free_vpid(vcpu->vc_vpid);
@@ -3954,8 +3962,9 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	int ret = 0, exitinfo;
 	struct region_descriptor gdt;
 	struct cpu_info *ci = NULL;
-	uint64_t exit_reason, cr3, insn_error;
+	uint64_t exit_reason, cr3, msr, insn_error;
 	struct schedstate_percpu *spc;
+	struct vmx_msr_store *msr_store;
 	struct vmx_invvpid_descriptor vid;
 	uint64_t eii, procbased, int_st;
 	uint16_t irq;
@@ -4091,6 +4100,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 	}
 
+	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_load_va;
 	while (ret == 0) {
 #ifdef VMM_DEBUG
 		paddr_t pa = 0ULL;
@@ -4126,6 +4136,26 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				    (uint64_t)ci->ci_tss);
 				return (EINVAL);
 			}
+
+			/* Host GS.base (aka curcpu) */
+			if (vmwrite(VMCS_HOST_IA32_GS_BASE, (uint64_t)ci)) {
+				printf("%s: vmwrite(0x%04X, 0x%llx)\n",
+				    __func__, VMCS_HOST_IA32_GS_BASE,
+				    (uint64_t)ci);
+				return (EINVAL);
+			}
+
+			/* Host FS.base */
+			msr = rdmsr(MSR_FSBASE);
+			if (vmwrite(VMCS_HOST_IA32_FS_BASE, msr)) {
+				printf("%s: vmwrite(0x%04X, 0x%llx)\n",
+				    __func__, VMCS_HOST_IA32_FS_BASE, msr);
+				return (EINVAL);
+			}
+
+			/* Host KernelGS.base (userspace GS.base here) */
+			msr_store[VCPU_HOST_REGS_KGSBASE].vms_data =
+			    rdmsr(MSR_KERNELGSBASE);
 		}
 
 		/* Inject event if present */
@@ -8087,7 +8117,7 @@ vmx_vcpu_dump_regs(struct vcpu *vcpu)
 
 	msr_store = (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
 
-	for (i = 0; i < VMX_NUM_MSR_STORE; i++) {
+	for (i = 0; i < VCPU_REGS_NMSRS; i++) {
 		DPRINTF("  MSR %d @ %p : 0x%08llx (%s), "
 		    "value=0x%016llx ",
 		    i, &msr_store[i], msr_store[i].vms_index,
