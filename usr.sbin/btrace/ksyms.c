@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.9 2024/03/16 17:42:37 cheloha Exp $ */
+/*	$OpenBSD: ksyms.c,v 1.10 2024/04/01 22:49:04 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -51,7 +51,7 @@ kelf_open(const char *path)
 	char *name;
 	Elf *elf;
 	Elf_Data *data = NULL;
-	Elf_Scn	*scn = NULL, *symtab;
+	Elf_Scn	*scn = NULL, *symtab = NULL;
 	GElf_Sym sym;
 	GElf_Shdr shdr;
 	size_t i, shstrndx, strtabndx = SIZE_MAX, symtab_size;
