@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.S,v 1.1.1.1 2018/08/21 18:35:18 bluhm Exp $	*/
+/*	$OpenBSD: fenv.S,v 1.2 2024/04/01 18:52:34 anton Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -16,6 +16,13 @@
  */
 
 #include <sys/syscall.h>
+
+#define PINSYSCALL(sysno, label)					\
+	.pushsection .openbsd.syscalls,"",%progbits;			\
+	.p2align 2;							\
+	.long label;							\
+	.long sysno;							\
+	.popsection;
 
 	.section	.note.openbsd.ident, "a"
 	.p2align	2
@@ -49,7 +56,11 @@ _start:
 	mov	$1,		%rdi
 	mov	$env,		%rsi
 	mov	$(env_end-env),	%rdx
+1:
 	syscall
+	PINSYSCALL(SYS_write, 1b)
 	mov	$SYS_exit,	%rax
 	mov	$0,		%rdi
+2:
 	syscall
+	PINSYSCALL(SYS_exit, 2b)
