@@ -5244,6 +5244,7 @@ START_TEST(test_nested_entity_suspend) {
 }
 END_TEST
 
+#if defined(XML_TESTING)
 /* Regression test for quadratic parsing on large tokens */
 START_TEST(test_big_tokens_scale_linearly) {
   const struct {
@@ -5329,6 +5330,7 @@ START_TEST(test_big_tokens_scale_linearly) {
   }
 }
 END_TEST
+#endif
 
 START_TEST(test_set_reparse_deferral) {
   const char *const pre = "<d>";
@@ -5727,6 +5729,7 @@ START_TEST(test_bypass_heuristic_when_close_to_bufsize) {
 }
 END_TEST
 
+#if defined(XML_TESTING)
 START_TEST(test_varying_buffer_fills) {
   const int KiB = 1024;
   const int MiB = 1024 * KiB;
@@ -5839,6 +5842,7 @@ START_TEST(test_varying_buffer_fills) {
   free(document);
 }
 END_TEST
+#endif
 
 void
 make_basic_test_case(Suite *s) {
@@ -6082,12 +6086,16 @@ make_basic_test_case(Suite *s) {
   tcase_add_test__ifdef_xml_dtd(tc_basic,
                                 test_pool_integrity_with_unfinished_attr);
   tcase_add_test__if_xml_ge(tc_basic, test_nested_entity_suspend);
+#if defined(XML_TESTING)
   tcase_add_test(tc_basic, test_big_tokens_scale_linearly);
+#endif
   tcase_add_test(tc_basic, test_set_reparse_deferral);
   tcase_add_test(tc_basic, test_reparse_deferral_is_inherited);
   tcase_add_test(tc_basic, test_set_reparse_deferral_on_null_parser);
   tcase_add_test(tc_basic, test_set_reparse_deferral_on_the_fly);
   tcase_add_test(tc_basic, test_set_bad_reparse_option);
   tcase_add_test(tc_basic, test_bypass_heuristic_when_close_to_bufsize);
+#if defined(XML_TESTING)
   tcase_add_test(tc_basic, test_varying_buffer_fills);
+#endif
 }

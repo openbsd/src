@@ -101,7 +101,9 @@ main(int argc, char *argv[]) {
   for (g_chunkSize = 0; g_chunkSize <= 5; g_chunkSize++) {
     for (int enabled = 0; enabled <= 1; ++enabled) {
       char context[100];
+#if defined(XML_TESTING)
       g_reparseDeferralEnabledDefault = enabled;
+#endif
       snprintf(context, sizeof(context), "chunksize=%d deferral=%d",
                g_chunkSize, enabled);
       context[sizeof(context) - 1] = '\0';
