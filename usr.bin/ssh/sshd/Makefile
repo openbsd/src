@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.109 2024/02/10 11:28:52 naddy Exp $
+#	$OpenBSD: Makefile,v 1.110 2024/04/01 15:48:16 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -50,21 +50,21 @@ DPADD+=	${LIBZ}
 
 # The random relink kit, used on OpenBSD by /etc/rc
 
-CLEANFILES+= Makefile.relink sshd.tar
+CLEANFILES+= sshd.tar install.sh
 
-Makefile.relink: ${.CURDIR}/../Makefile.inc ${.CURDIR}/Makefile
-	# XXX assume a concatenation of these is OK
-	cat ${.CURDIR}/../Makefile.inc ${.CURDIR}/Makefile > Makefile.relink
+install.sh: Makefile
+	echo "set -o errexit" > $@
+	echo "${CC} ${LDFLAGS} ${LDSTATIC} -o ${PROG}" \
+	    "\`echo " ${OBJS} "| tr ' ' '\\\n' | sort -R\`" ${LDADD} >> $@
+	echo "./${PROG} -V # test it works" >> $@
+	echo "install -c -s  -o root -g bin -m ${BINMODE} ${PROG} " \
+	    "${BINDIR}/${PROG}" >> $@
 
-sshd.tar: ${OBJS} Makefile.relink
-	tar cf $@ ${OBJS} Makefile.relink
+${PROG}.tar: ${OBJS} install.sh
+	tar cf $@ ${OBJS} install.sh
 
-afterinstall: sshd.tar
+afterinstall: ${PROG}.tar
 	install -d -o root -g wheel -m 755 \
-	    ${DESTDIR}/usr/share/relink/usr/sbin/sshd
+	    ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}
 	install -o ${BINOWN} -g ${BINGRP} -m 640 \
-	    sshd.tar ${DESTDIR}/usr/share/relink/usr/sbin/sshd/sshd.tar
-
-relink:
-	cc -o sshd `echo ${OBJS} | tr ' ' '\n' | sort -R` ${LDADD}
-	./sshd -V && install -o root -g wheel -m ${BINMODE} sshd /usr/sbin/sshd
+	    ${PROG}.tar ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}/${PROG}.tar
