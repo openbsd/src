@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.161 2023/09/05 16:01:58 jca Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.162 2024/04/01 21:09:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -845,6 +845,8 @@ nextstate(struct con *cp)
 				    match(cp->ibuf, "EHLO")) {
 					snprintf(cp->obuf, cp->osize,
 					    "250-%s\r\n"
+					    "250-8BITMIME\r\n"
+					    "250-SMTPUTF8\r\n"
 					    "250 STARTTLS\r\n",
 					    hostname);
 					nextstate = 7;
