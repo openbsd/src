@@ -2979,6 +2979,9 @@
 ./usr/share/relink/kernel
 ./usr/share/relink/kernel.tgz
 ./usr/share/relink/usr
+./usr/share/relink/usr/bin
+./usr/share/relink/usr/bin/ssh-agent
+./usr/share/relink/usr/bin/ssh-agent/ssh-agent.tar
 ./usr/share/relink/usr/lib
 ./usr/share/relink/usr/lib/libc.so.99.0.a
 ./usr/share/relink/usr/lib/libcrypto.so.53.0.a
