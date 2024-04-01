@@ -590,7 +590,6 @@
 ./usr/include/g++/vector
 ./usr/lib/gcc-lib
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd7.5/4.2.1/cc1
-./usr/lib/gcc-lib/sparc64-unknown-openbsd7.5/4.2.1/cc1obj
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd7.5/4.2.1/cc1plus
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd7.5/4.2.1/libgcov.a
 ./usr/lib/libstdc++.a
