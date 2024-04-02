@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.53 2024/01/16 19:05:00 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.54 2024/04/02 08:39:16 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -92,7 +92,6 @@ struct exec_vmcmd {
 #define VMCMD_RELATIVE  0x0001  /* ev_addr is relative to base entry */
 #define VMCMD_BASE      0x0002  /* marks a base entry */
 #define VMCMD_STACK     0x0004  /* create with UVM_FLAG_STACK */
-#define VMCMD_SYSCALL   0x0008  /* create with UVM_FLAG_SYSCALL */
 #define VMCMD_IMMUTABLE	0x0010  /* create with UVM_ET_IMMUTABLE */
 #define VMCMD_TEXTREL	0x0020  /* terrible binary contains terrible textrel */
 };

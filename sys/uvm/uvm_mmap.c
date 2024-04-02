@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.186 2024/03/28 02:19:57 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.187 2024/04/02 08:39:17 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -592,24 +592,7 @@ sys_mprotect(struct proc *p, void *v, register_t *retval)
 int
 sys_msyscall(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_msyscall_args /* {
-		syscallarg(void *) addr;
-		syscallarg(size_t) len;
-	} */ *uap = v;
-	vaddr_t addr;
-	vsize_t size, pageoff;
-
-	addr = (vaddr_t)SCARG(uap, addr);
-	size = (vsize_t)SCARG(uap, len);
-
-	/*
-	 * align the address to a page boundary, and adjust the size accordingly
-	 */
-	ALIGN_ADDR(addr, size, pageoff);
-	if (addr > SIZE_MAX - size)
-		return EINVAL;		/* disallow wrap-around. */
-
-	return uvm_map_syscall(&p->p_vmspace->vm_map, addr, addr+size);
+	return 0;
 }
 
 /*

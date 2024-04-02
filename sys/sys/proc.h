@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.357 2024/03/30 13:33:21 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.358 2024/04/02 08:39:16 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -337,7 +337,6 @@ struct proc {
 	struct	filedesc *p_fd;		/* copy of p_p->ps_fd */
 	struct	vmspace *p_vmspace;	/* [I] copy of p_p->ps_vmspace */
 	struct	p_inentry p_spinentry;	/* [o] cache for SP check */
-	struct	p_inentry p_pcinentry;	/* [o] cache for PC check */
 
 	int	p_flag;			/* P_* flags. */
 	u_char	p_spare;		/* unused */

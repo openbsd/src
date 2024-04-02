@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.88 2024/01/16 19:05:01 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.89 2024/04/02 08:39:17 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -261,7 +261,6 @@ RBT_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
 struct vm_map {
 	struct pmap		*pmap;		/* [I] Physical map */
 	u_long			sserial;	/* [v] # stack changes */
-	u_long			wserial;	/* [v] # PROT_WRITE increases */
 
 	struct uvm_map_addr	addr;		/* [v] Entry tree, by addr */
 
@@ -328,7 +327,6 @@ struct vm_map {
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
 #define	VM_MAP_GUARDPAGES	0x20		/* rw: add guard pgs to map */
 #define	VM_MAP_ISVMSPACE	0x40		/* ro: map is a vmspace */
-#define	VM_MAP_SYSCALL_ONCE	0x80		/* rw: libc syscall registered */
 #define	VM_MAP_PINSYSCALL_ONCE	0x100		/* rw: pinsyscall done */
 
 /* Number of kernel maps and entries to statically allocate */
@@ -358,7 +356,6 @@ struct vm_map *	uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
 vaddr_t		uvm_map_pie(vaddr_t);
 vaddr_t		uvm_map_hint(struct vmspace *, vm_prot_t, vaddr_t, vaddr_t);
 int		uvm_map_check_copyin_add(struct vm_map *, vaddr_t, vaddr_t);
-int		uvm_map_syscall(struct vm_map *, vaddr_t, vaddr_t);
 int		uvm_map_immutable(struct vm_map *, vaddr_t, vaddr_t, int);
 int		uvm_map_inherit(struct vm_map *, vaddr_t, vaddr_t, vm_inherit_t);
 int		uvm_map_advice(struct vm_map *, vaddr_t, vaddr_t, int);
@@ -385,7 +382,6 @@ int		uvm_map_mquery(struct vm_map*, vaddr_t*, vsize_t, voff_t, int);
 struct p_inentry;
 
 int		uvm_map_inentry_sp(vm_map_entry_t);
-int		uvm_map_inentry_pc(vm_map_entry_t);
 boolean_t	uvm_map_inentry(struct proc *, struct p_inentry *, vaddr_t addr,
 		    const char *fmt, int (*fn)(vm_map_entry_t), u_long serial);
 

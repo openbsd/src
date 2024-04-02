@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.254 2024/01/17 18:56:13 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.255 2024/04/02 08:39:16 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -905,7 +905,7 @@ exec_sigcode_map(struct process *pr)
 	if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_sigcode, round_page(sz),
 	    sigobject, 0, 0, UVM_MAPFLAG(PROT_EXEC,
 	    PROT_READ | PROT_WRITE | PROT_EXEC, MAP_INHERIT_COPY,
-	    MADV_RANDOM, UVM_FLAG_COPYONW | UVM_FLAG_SYSCALL))) {
+	    MADV_RANDOM, UVM_FLAG_COPYONW))) {
 		uao_detach(sigobject);
 		return (ENOMEM);
 	}

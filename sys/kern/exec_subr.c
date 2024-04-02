@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.66 2023/03/19 20:32:13 kettenis Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.67 2024/04/02 08:39:16 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -194,9 +194,6 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	/*
 	 * do the map
 	 */
-	if ((cmd->ev_flags & VMCMD_SYSCALL) && (cmd->ev_prot & PROT_EXEC))
-		flags |= UVM_FLAG_SYSCALL;
-
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 	    uobj, cmd->ev_offset, 0,
 	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, MAP_INHERIT_COPY,
@@ -217,8 +214,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 			    round_page(cmd->ev_addr + cmd->ev_len), 1);
 #ifdef PMAP_CHECK_COPYIN
 		if (PMAP_CHECK_COPYIN &&
-		    ((flags & UVM_FLAG_SYSCALL) ||
-		    ((cmd->ev_flags & VMCMD_IMMUTABLE) && (cmd->ev_prot & PROT_EXEC))))
+		    ((cmd->ev_flags & VMCMD_IMMUTABLE) && (cmd->ev_prot & PROT_EXEC)))
 			uvm_map_check_copyin_add(&p->p_vmspace->vm_map,
 			    cmd->ev_addr, round_page(cmd->ev_addr + cmd->ev_len));
 #endif
