@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.325 2024/03/31 14:01:28 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.326 2024/04/02 12:21:39 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2290,7 +2290,7 @@ filt_soread(struct knote *kn, long hint)
 		}
 		kn->kn_fflags = so->so_error;
 		rv = 1;
-	} else if (so->so_error) {	/* temporary udp error */
+	} else if (so->so_error) {
 		rv = 1;
 	} else if (kn->kn_sfflags & NOTE_LOWAT) {
 		rv = (kn->kn_data >= kn->kn_sdata);
@@ -2327,7 +2327,7 @@ filt_sowrite(struct knote *kn, long hint)
 		}
 		kn->kn_fflags = so->so_error;
 		rv = 1;
-	} else if (so->so_error) {	/* temporary udp error */
+	} else if (so->so_error) {
 		rv = 1;
 	} else if (((so->so_state & SS_ISCONNECTED) == 0) &&
 	    (so->so_proto->pr_flags & PR_CONNREQUIRED)) {
