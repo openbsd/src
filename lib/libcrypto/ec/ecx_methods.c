@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.12 2024/03/29 06:41:58 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.13 2024/04/02 04:04:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -536,7 +536,6 @@ static int
 ecx_cms_sign_or_verify(EVP_PKEY *pkey, long verify, CMS_SignerInfo *si)
 {
 	X509_ALGOR *digestAlgorithm, *signatureAlgorithm;
-	ASN1_OBJECT *aobj;
 
 	if (verify != 0 && verify != 1)
 		return -1;
@@ -575,9 +574,8 @@ ecx_cms_sign_or_verify(EVP_PKEY *pkey, long verify, CMS_SignerInfo *si)
 		return 1;
 	}
 
-	if ((aobj = OBJ_nid2obj(NID_ED25519)) == NULL)
-		return -1;
-	if (!X509_ALGOR_set0(signatureAlgorithm, aobj, V_ASN1_UNDEF, NULL))
+	if (!X509_ALGOR_set0_by_nid(signatureAlgorithm, NID_ED25519,
+	    V_ASN1_UNDEF, NULL))
 		return -1;
 
 	return 1;
