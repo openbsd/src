@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.134 2024/03/02 16:16:07 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.135 2024/04/02 19:58:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2074,19 +2074,25 @@ ikev2_pld_eap(struct iked *env, struct ikev2_payload *pld,
 	struct eap_header		 hdr;
 	struct eap_message		*eap = NULL;
 	const struct iked_sa		*sa = msg->msg_sa;
-	size_t				 len;
+	size_t				 eap_len;
 
 	if (ikev2_validate_eap(msg, offset, left, &hdr))
 		return (-1);
-	len = betoh16(hdr.eap_length);
 
-	if (len < sizeof(*eap)) {
+	eap_len = betoh16(hdr.eap_length);
+	if (left != eap_len) {
+		log_info("%s: malformed payload: EAP length does not match"
+		    " payload length (%zu != %zu)", __func__, left, eap_len);
+		return (-1);
+	}
+
+	if (eap_len < sizeof(*eap)) {
 		log_info("%s: %s id %d length %d", SPI_SA(sa, __func__),
 		    print_map(hdr.eap_code, eap_code_map),
 		    hdr.eap_id, betoh16(hdr.eap_length));
 	} else {
 		/* Now try to get the indicated length */
-		if ((eap = ibuf_seek(msg->msg_data, offset, len)) == NULL) {
+		if ((eap = ibuf_seek(msg->msg_data, offset, eap_len)) == NULL) {
 			log_debug("%s: invalid EAP length", __func__);
 			return (-1);
 		}
