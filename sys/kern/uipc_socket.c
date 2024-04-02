@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.326 2024/04/02 12:21:39 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.327 2024/04/02 14:23:15 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2050,6 +2050,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 		case SO_REUSEPORT:
 		case SO_BROADCAST:
 		case SO_OOBINLINE:
+		case SO_ACCEPTCONN:
 		case SO_TIMESTAMP:
 		case SO_ZEROIZE:
 			*mtod(m, int *) = so->so_options & optname;

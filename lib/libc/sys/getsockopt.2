@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.61 2023/02/22 06:31:51 guenther Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.62 2024/04/02 14:23:15 claudio Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 22 2023 $
+.Dd $Mdocdate: April 2 2024 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -176,6 +176,8 @@ get and clear error on the socket (get only)
 get the domain of the socket (get only)
 .It Dv SO_PROTOCOL
 get the protocol of the socket (get only)
+.It Dv SO_ACCEPTCONN
+get listening status of the socket (get only)
 .It Dv SO_PEERCRED
 get the credentials from other side of connection (get only)
 .El
@@ -447,6 +449,7 @@ Finally,
 .Dv SO_DOMAIN ,
 .Dv SO_PROTOCOL ,
 .Dv SO_ERROR ,
+.Dv SO_ACCEPTCONN ,
 and
 .Dv SO_PEERCRED
 are options used only with
@@ -465,6 +468,11 @@ returns the protocol of the socket such as
 returns any pending error on the socket and clears the error status.
 It may be used to check for asynchronous errors on connected
 datagram sockets or for other asynchronous errors.
+.Dv SO_ACCEPTCONN
+returns whether the socket is currently accepting connections, that is,
+whether or not
+.Xr listen 2
+was called.
 .Dv SO_PEERCRED
 fetches the
 .Va struct sockpeercred
