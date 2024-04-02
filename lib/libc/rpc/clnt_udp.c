@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.41 2024/01/22 16:18:06 deraadt Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.42 2024/04/02 08:51:06 jsg Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -77,7 +77,7 @@ clntudp_bufcreate1(struct clntudp_bufcreate_args *args)
 	}
 	args->sendsz = ((args->sendsz + 3) / 4) * 4;
 	args->recvsz = ((args->recvsz + 3) / 4) * 4;
-	args->cu = (struct cu_data *)mem_alloc(sizeof(args->cu) +
+	args->cu = (struct cu_data *)mem_alloc(sizeof(*args->cu) +
 	    args->sendsz + args->recvsz);
 	if (args->cu == NULL) {
 		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
