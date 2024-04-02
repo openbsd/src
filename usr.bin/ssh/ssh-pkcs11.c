@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11.c,v 1.60 2024/04/02 09:32:28 deraadt Exp $ */
+/* $OpenBSD: ssh-pkcs11.c,v 1.61 2024/04/02 09:48:24 claudio Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  * Copyright (c) 2014 Pedro Martelletto. All rights reserved.
@@ -1378,7 +1378,6 @@ static int
 pkcs11_decode_hex(const char *hex, unsigned char **dest, size_t *rlen)
 {
 	size_t	i, len;
-	char	ptr[3];
 
 	if (dest)
 		*dest = NULL;
@@ -1391,7 +1390,6 @@ pkcs11_decode_hex(const char *hex, unsigned char **dest, size_t *rlen)
 
 	*dest = xmalloc(len);
 
-	ptr[2] = '\0';
 	for (i = 0; i < len; i++) {
 		int hi, low;
 
