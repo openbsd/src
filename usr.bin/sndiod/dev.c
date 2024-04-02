@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.107 2023/12/09 22:12:03 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.108 2024/04/02 05:21:32 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1108,7 +1108,7 @@ dev_abort(struct dev *d)
 			if (c->ops == NULL)
 				continue;
 			if (c->opt == o) {
-				c->ops->exit(s->arg);
+				c->ops->exit(c->arg);
 				c->ops = NULL;
 			}
 		}
