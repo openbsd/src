@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.26 2022/04/29 08:30:48 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.27 2024/04/02 05:32:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -84,6 +84,7 @@ dev_sio_timeout(void *arg)
 
 	dev_log(d);
 	log_puts(": watchdog timeout\n");
+	dev_migrate(d);
 	dev_abort(d);
 }
 
