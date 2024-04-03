@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.165 2023/12/29 13:23:27 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.166 2024/04/03 18:43:32 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3103,13 +3103,6 @@ pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
 		*end = VM_MAX_KERNEL_ADDRESS;
 
 	return (va);
-}
-
-void
-pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
-{
-	*vstartp = virtual_avail;
-	*vendp = VM_MAX_KERNEL_ADDRESS;
 }
 
 /*

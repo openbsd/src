@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.33 2023/04/13 15:23:23 miod Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.34 2024/04/03 18:43:32 miod Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -173,9 +173,10 @@ void		 pmap_update(pmap_t);
 void		 pmap_zero_page(struct vm_page *);
 #endif
 
-void		 pmap_virtual_space(vaddr_t *, vaddr_t *);
 #if defined(PMAP_STEAL_MEMORY)
 vaddr_t		 pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
+#else
+void		 pmap_virtual_space(vaddr_t *, vaddr_t *);
 #endif
 
 /* nested pmaps are used in i386/amd64 vmm */
