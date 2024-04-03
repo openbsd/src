@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.187 2024/04/02 08:39:17 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.188 2024/04/03 22:21:48 kettenis Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1244,7 +1244,6 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 	last_baseva = VM_MAXUSER_ADDRESS;
 	kva = 0;
 	TAILQ_INIT(&dead_entries);
-	KERNEL_LOCK();
 	for (i = 0; i < count; i++) {
 		baseva = (vaddr_t)paramp[i].kb_addr;
 		s = paramp[i].kb_size;
@@ -1295,7 +1294,6 @@ redo:
 		vm_map_unlock(kernel_map);
 	}
 	uvm_unmap_detach(&dead_entries, AMAP_REFALL);
-	KERNEL_UNLOCK();
 
 	return error;
 }
