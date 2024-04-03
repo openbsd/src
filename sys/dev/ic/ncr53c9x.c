@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.80 2022/04/16 19:19:59 naddy Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.81 2024/04/03 18:41:38 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -596,13 +596,13 @@ ncr53c9x_select(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 	 * always possible that the interrupt may never happen.
 	 */
 	if ((ecb->xs->flags & SCSI_POLL) == 0) {
-		int timeout = ecb->timeout;
+		int timeout = ecb->xs->timeout;
 
 		if (timeout > 1000000)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;
-		timeout_add(&ecb->to, timeout);
+		timeout_add(&ecb->xs->stimeout, timeout);
 	}
 
 	/*
@@ -741,7 +741,6 @@ ncr53c9x_get_ecb(void *null)
 	if (ecb == NULL)
 		return (NULL);
 
-	timeout_set(&ecb->to, ncr53c9x_timeout, ecb);
 	ecb->flags |= ECB_ALLOC;
 
 	return (ecb);
@@ -842,7 +841,7 @@ ncr53c9x_scsi_cmd(struct scsi_xfer *xs)
 	/* Initialize ecb */
 	ecb = xs->io;
 	ecb->xs = xs;
-	ecb->timeout = xs->timeout;
+	timeout_set(&xs->stimeout, ncr53c9x_timeout, ecb);
 
 	if (flags & SCSI_RESET) {
 		ecb->flags |= ECB_RESET;
@@ -869,9 +868,9 @@ ncr53c9x_scsi_cmd(struct scsi_xfer *xs)
 		return;
 
 	/* Not allowed to use interrupts, use polling instead */
-	if (ncr53c9x_poll(sc, xs, ecb->timeout)) {
+	if (ncr53c9x_poll(sc, xs, xs->timeout)) {
 		ncr53c9x_timeout(ecb);
-		if (ncr53c9x_poll(sc, xs, ecb->timeout))
+		if (ncr53c9x_poll(sc, xs, xs->timeout))
 			ncr53c9x_timeout(ecb);
 	}
 }
@@ -1070,7 +1069,7 @@ ncr53c9x_sense(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 	ecb->daddr = (char *)&xs->sense;
 	ecb->dleft = sizeof(struct scsi_sense_data);
 	ecb->flags |= ECB_SENSE;
-	ecb->timeout = NCR_SENSE_TIMEOUT;
+	xs->timeout = NCR_SENSE_TIMEOUT;
 	ti->senses++;
 	li = TINFO_LUN(ti, lun);
 	if (li->busy) li->busy = 0;
@@ -1101,7 +1100,7 @@ ncr53c9x_done(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
 
-	timeout_del(&ecb->to);
+	timeout_del(&ecb->xs->stimeout);
 
 	if (ecb->stat == SCSI_QUEUE_FULL) {
 		/*
@@ -2175,7 +2174,7 @@ again:
 					goto reset;
 				}
 				printf("sending REQUEST SENSE\n");
-				timeout_del(&ecb->to);
+				timeout_del(&ecb->xs->stimeout);
 				ncr53c9x_sense(sc, ecb);
 				goto out;
 			}
@@ -2255,7 +2254,7 @@ printf("<<RESELECT CONT'd>>");
 			 */
 			if (sc->sc_state == NCR_SELECTING) {
 				NCR_MISC(("backoff selector "));
-				timeout_del(&ecb->to);
+				timeout_del(&ecb->xs->stimeout);
 				ncr53c9x_dequeue(sc, ecb);
 				TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
 				ecb->flags |= ECB_READY;
@@ -2693,11 +2692,11 @@ ncr53c9x_abort(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 {
 
 	/* 2 secs for the abort */
-	ecb->timeout = NCR_ABORT_TIMEOUT;
+	ecb->xs->timeout = NCR_ABORT_TIMEOUT;
 	ecb->flags |= ECB_ABORT;
 
 	if (ecb == sc->sc_nexus) {
-		int timeout = ecb->timeout;
+		int timeout = ecb->xs->timeout;
 
 		/*
 		 * If we're still selecting, the message will be scheduled
@@ -2713,7 +2712,7 @@ ncr53c9x_abort(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;
-		timeout_add(&ecb->to, timeout);
+		timeout_add(&ecb->xs->stimeout, timeout);
 	} else {
 		/*
 		 * Just leave the command where it is.
