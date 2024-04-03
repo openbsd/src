@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.h,v 1.5 2021/05/21 00:39:35 gkoehler Exp $	*/
+/*	$OpenBSD: mplock.h,v 1.6 2024/04/03 19:30:59 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -42,7 +42,8 @@ struct __ppc_lock {
 
 #ifndef _LOCORE
 
-void __ppc_lock_init(struct __ppc_lock *);
+#define PPC_LOCK_INITIALIZER	{ NULL, 0 }
+
 void __ppc_lock(struct __ppc_lock *);
 void __ppc_unlock(struct __ppc_lock *);
 

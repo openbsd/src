@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2023/04/13 15:23:22 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.61 2024/04/03 19:30:59 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -67,9 +67,7 @@ extern char _start[], _etext[], _erodata[], _end[];
 
 #ifdef MULTIPROCESSOR
 
-struct mutex pmap_hash_lock;
-
-#define PMAP_HASH_LOCK_INIT()	mtx_init(&pmap_hash_lock, IPL_HIGH)
+struct mutex pmap_hash_lock = MUTEX_INITIALIZER(IPL_HIGH);
 
 #define	PMAP_HASH_LOCK(s)						\
 do {									\
@@ -104,7 +102,6 @@ do {									\
 
 #else
 
-#define	PMAP_HASH_LOCK_INIT()		/* nothing */
 #define	PMAP_HASH_LOCK(s)		(void)s
 #define	PMAP_HASH_UNLOCK(s)		/* nothing */
 
@@ -1035,8 +1032,6 @@ pmap_init(void)
 	pool_init(&pmap_slbd_pool, sizeof(struct slb_desc), 0, IPL_VM, 0,
 	    "slbd", NULL);
 	pool_setlowat(&pmap_slbd_pool, 5);
-
-	PMAP_HASH_LOCK_INIT();
 
 	LIST_INIT(&pmap_kernel()->pm_slbd);
 	for (i = 0; i < nitems(kernel_slb_desc); i++) {

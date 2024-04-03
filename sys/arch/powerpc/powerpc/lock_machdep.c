@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.11 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.12 2024/04/03 19:30:59 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2021 George Koehler <gkoehler@openbsd.org>
@@ -37,13 +37,6 @@
  * Acquired the lock:	mpl->mpl_cpu == curcpu()
  * Released the lock:	mpl->mpl_cpu == NULL
  */
-
-void
-__ppc_lock_init(struct __ppc_lock *lock)
-{
-	lock->mpl_cpu = NULL;
-	lock->mpl_count = 0;
-}
 
 #if defined(MP_LOCKDEBUG)
 #ifndef DDB

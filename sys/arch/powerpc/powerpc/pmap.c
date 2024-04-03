@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.182 2023/02/21 04:49:43 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.183 2024/04/03 19:30:59 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -186,9 +186,7 @@ int physmem;
 int physmaxaddr;
 
 #ifdef MULTIPROCESSOR
-struct __ppc_lock pmap_hash_lock;
-
-#define	PMAP_HASH_LOCK_INIT()		__ppc_lock_init(&pmap_hash_lock)
+struct __ppc_lock pmap_hash_lock = PPC_LOCK_INITIALIZER;
 
 #define	PMAP_HASH_LOCK(s)						\
 do {									\
@@ -224,7 +222,6 @@ do {									\
 
 #else /* ! MULTIPROCESSOR */
 
-#define	PMAP_HASH_LOCK_INIT()		/* nothing */
 #define	PMAP_HASH_LOCK(s)		(void)s
 #define	PMAP_HASH_UNLOCK(s)		/* nothing */
 
@@ -2206,8 +2203,6 @@ pmap_init()
 	pool_init(&pmap_pted_pool, sizeof(struct pte_desc), 0, IPL_VM, 0,
 	    "pted", NULL);
 	pool_setlowat(&pmap_pted_pool, 20);
-
-	PMAP_HASH_LOCK_INIT();
 
 	pmap_initialized = 1;
 }
