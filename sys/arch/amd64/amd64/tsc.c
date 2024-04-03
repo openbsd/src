@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.31 2023/02/04 19:19:36 cheloha Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.32 2024/04/03 02:01:21 guenther Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -63,8 +63,8 @@ tsc_freq_cpuid(struct cpu_info *ci)
 	uint64_t count;
 	uint32_t eax, ebx, khz, dummy;
 
-	if (!strcmp(cpu_vendor, "GenuineIntel") &&
-	    cpuid_level >= 0x15) {
+	if (ci->ci_vendor == CPUV_INTEL &&
+	    ci->ci_cpuid_level >= 0x15) {
 		eax = ebx = khz = dummy = 0;
 		CPUID(0x15, eax, ebx, khz, dummy);
 		khz /= 1000;
@@ -104,7 +104,7 @@ tsc_freq_msr(struct cpu_info *ci)
 {
 	uint64_t base, def, divisor, multiplier;
 
-	if (strcmp(cpu_vendor, "AuthenticAMD") != 0)
+	if (ci->ci_vendor != CPUV_AMD)
 		return 0;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.9 2019/03/25 18:48:12 guenther Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.10 2024/04/03 02:01:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -76,14 +76,15 @@ pctrrd(struct pctrst *st)
 void
 pctrattach(int num)
 {
+	struct cpu_info *ci = &cpu_info_primary;
 	uint32_t dummy;
 
 	if (num > 1)
 		return;
 
-	pctr_isamd = (strcmp(cpu_vendor, "AuthenticAMD") == 0);
+	pctr_isamd = (ci->ci_vendor == CPUV_AMD);
 	if (!pctr_isamd) {
-		pctr_isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
+		pctr_isintel = (ci->ci_vendor == CPUV_INTEL);
 		CPUID(0xa, pctr_intel_cap, dummy, dummy, dummy);
 	}
 }

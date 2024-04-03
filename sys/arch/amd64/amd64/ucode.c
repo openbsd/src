@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucode.c,v 1.8 2023/09/10 09:32:31 jsg Exp $	*/
+/*	$OpenBSD: ucode.c,v 1.9 2024/04/03 02:01:21 guenther Exp $	*/
 /*
  * Copyright (c) 2018 Stefan Fritsch <fritsch@genua.de>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -108,9 +108,9 @@ cpu_ucode_setup(void)
 void
 cpu_ucode_apply(struct cpu_info *ci)
 {
-	if (strcmp(cpu_vendor, "GenuineIntel") == 0)
+	if (ci->ci_vendor == CPUV_INTEL)
 		cpu_ucode_intel_apply(ci);
-	else if (strcmp(cpu_vendor, "AuthenticAMD") == 0)
+	else if (ci->ci_vendor == CPUV_AMD)
 		cpu_ucode_amd_apply(ci);
 }
 

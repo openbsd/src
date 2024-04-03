@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.184 2024/03/17 05:49:41 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.185 2024/04/03 02:01:21 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -150,8 +150,8 @@ void	replacemds(void);
 extern long _stac;
 extern long _clac;
 
-int cpuid_level = 0;		/* cpuid(0).eax */
-char cpu_vendor[16] = { 0 };	/* cpuid(0).e[bdc]x, \0 */
+int cpuid_level = 0;		/* MIN cpuid(0).eax */
+char cpu_vendor[16] = { 0 };	/* CPU0's cpuid(0).e[bdc]x, \0 */
 int cpu_id = 0;			/* cpuid(1).eax */
 int cpu_ebxfeature = 0;		/* cpuid(1).ebx */
 int cpu_ecxfeature = 0;		/* cpuid(1).ecx */
@@ -190,7 +190,7 @@ replacemeltdown(void)
 	struct cpu_info *ci = &cpu_info_primary;
 	int swapgs_vuln = 0, ibrs = 0, s, ibpb = 0;
 
-	if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+	if (ci->ci_vendor == CPUV_INTEL) {
 		int family = ci->ci_family;
 		int model = ci->ci_model;
 
@@ -213,7 +213,7 @@ replacemeltdown(void)
 		}
 		if (ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS)
 			ibpb = 1;
-        } else if (strcmp(cpu_vendor, "AuthenticAMD") == 0 &&
+        } else if (ci->ci_vendor == CPUV_AMD &&
             ci->ci_pnfeatset >= 0x80000008) {
 		if (ci->ci_feature_amdspec_ebx & CPUIDEBX_IBRS_ALWAYSON) {
 			ibrs = 2;
@@ -310,7 +310,7 @@ replacemds(void)
 		return;
 	replacedone = 1;
 
-	if (strcmp(cpu_vendor, "GenuineIntel") != 0)
+	if (ci->ci_vendor != CPUV_INTEL)
 		goto notintel;	/* VERW only needed on Intel */
 
 	if ((ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP))
@@ -527,7 +527,7 @@ cpu_init_mwait(struct cpu_softc *sc, struct cpu_info *ci)
 {
 	unsigned int smallest, largest, extensions, c_substates;
 
-	if ((cpu_ecxfeature & CPUIDECX_MWAIT) == 0 || cpuid_level < 0x5)
+	if ((cpu_ecxfeature & CPUIDECX_MWAIT) == 0 || ci->ci_cpuid_level < 0x5)
 		return;
 
 	/* get the monitor granularity */
@@ -536,7 +536,7 @@ cpu_init_mwait(struct cpu_softc *sc, struct cpu_info *ci)
 	largest  &= 0xffff;
 
 	/* mask out states C6/C7 in 31:24 for CHT45 errata */
-	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
+	if (ci->ci_vendor == CPUV_INTEL &&
 	    ci->ci_family == 0x06 && ci->ci_model == 0x4c)
 		cpu_mwait_states &= 0x00ffffff;
 
@@ -789,7 +789,7 @@ cpu_init(struct cpu_info *ci)
 		cr4 |= CR4_SMAP;
 	if (ci->ci_feature_sefflags_ecx & SEFF0ECX_UMIP)
 		cr4 |= CR4_UMIP;
-	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd)
+	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && ci->ci_cpuid_level >= 0xd)
 		cr4 |= CR4_OSXSAVE;
 	if (pg_xo)
 		cr4 |= CR4_PKE;
@@ -797,7 +797,7 @@ cpu_init(struct cpu_info *ci)
 		cr4 |= CR4_PCIDE;
 	lcr4(cr4);
 
-	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd) {
+	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && ci->ci_cpuid_level >= 0xd) {
 		u_int32_t eax, ebx, ecx, edx;
 
 		xsave_mask = XFEATURE_X87 | XFEATURE_SSE;
@@ -815,7 +815,7 @@ cpu_init(struct cpu_info *ci)
 		/* check for xsaves, xsaveopt, and supervisor features */
 		CPUID_LEAF(0xd, 1, eax, ebx, ecx, edx);
 		/* Disable XSAVES on AMD family 17h due to Erratum 1386 */
-		if (!strcmp(cpu_vendor, "AuthenticAMD") &&
+		if (ci->ci_vendor == CPUV_AMD &&
 		    ci->ci_family == 0x17) {
 			eax &= ~XSAVE_XSAVES;
 		}
@@ -1022,6 +1022,15 @@ cpu_hatch(void *v)
 	struct cpu_info *ci = (struct cpu_info *)v;
 	int s;
 
+	{
+		uint32_t vendor[4];
+		int level;
+
+		CPUID(0, level, vendor[0], vendor[2], vendor[1]);
+		vendor[3] = 0;
+		cpu_set_vendor(ci, level, (const char *)vendor);
+	}
+
 	cpu_init_msrs(ci);
 
 #ifdef DEBUG
@@ -1215,7 +1224,7 @@ cpu_fix_msrs(struct cpu_info *ci)
 	int family = ci->ci_family;
 	uint64_t msr, nmsr;
 
-	if (!strcmp(cpu_vendor, "GenuineIntel")) {
+	if (ci->ci_vendor == CPUV_INTEL) {
 		if ((family > 6 || (family == 6 && ci->ci_model >= 0xd)) &&
 		    rdmsr_safe(MSR_MISC_ENABLE, &msr) == 0 &&
 		    (msr & MISC_ENABLE_FAST_STRINGS) == 0) {
@@ -1241,7 +1250,7 @@ cpu_fix_msrs(struct cpu_info *ci)
 		}
 	}
 
-	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+	if (ci->ci_vendor == CPUV_AMD) {
 		/* Apply AMD errata */
 		amd64_errata(ci);
 
@@ -1286,11 +1295,11 @@ cpu_tsx_disable(struct cpu_info *ci)
 	uint32_t dummy, sefflags_edx;
 
 	/* this runs before identifycpu() populates ci_feature_sefflags_edx */
-	if (cpuid_level < 0x07)
+	if (ci->ci_cpuid_level < 0x07)
 		return;
 	CPUID_LEAF(0x7, 0, dummy, dummy, dummy, sefflags_edx);
 
-	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
+	if (ci->ci_vendor == CPUV_INTEL &&
 	    (sefflags_edx & SEFF0EDX_ARCH_CAP)) {
 		msr = rdmsr(MSR_ARCH_CAPABILITIES);
 		if (msr & ARCH_CAP_TSX_CTRL) {

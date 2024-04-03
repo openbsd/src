@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.139 2024/03/17 05:49:41 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.140 2024/04/03 02:01:21 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -615,17 +615,17 @@ identifycpu(struct cpu_info *ci)
 
 	if (ci->ci_feature_flags && ci->ci_feature_flags & CPUID_TSC) {
 		/* Has TSC, check if it's constant */
-		if (!strcmp(cpu_vendor, "GenuineIntel")) {
+		if (ci->ci_vendor == CPUV_INTEL) {
 			if ((ci->ci_family == 0x0f && ci->ci_model >= 0x03) ||
 			    (ci->ci_family == 0x06 && ci->ci_model >= 0x0e)) {
 				atomic_setbits_int(&ci->ci_flags, CPUF_CONST_TSC);
 			}
-		} else if (!strcmp(cpu_vendor, "CentaurHauls")) {
+		} else if (ci->ci_vendor == CPUV_VIA) {
 			/* VIA */
 			if (ci->ci_model >= 0x0f) {
 				atomic_setbits_int(&ci->ci_flags, CPUF_CONST_TSC);
 			}
-		} else if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+		} else if (ci->ci_vendor == CPUV_AMD) {
 			if (cpu_apmi_edx & CPUIDEDX_ITSC) {
 				/* Invariant TSC indicates constant TSC on AMD */
 				atomic_setbits_int(&ci->ci_flags, CPUF_CONST_TSC);
@@ -659,9 +659,9 @@ identifycpu(struct cpu_info *ci)
 		uint64_t level = 0;
 		uint32_t dummy;
 
-		if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+		if (ci->ci_vendor == CPUV_AMD) {
 			level = rdmsr(MSR_PATCH_LEVEL);
-		} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+		} else if (ci->ci_vendor == CPUV_INTEL) {
 			wrmsr(MSR_BIOS_SIGN, 0);
 			CPUID(1, dummy, dummy, dummy, dummy);
 			level = rdmsr(MSR_BIOS_SIGN) >> 32;
@@ -691,7 +691,7 @@ identifycpu(struct cpu_info *ci)
 		if (cpu_apmi_edx & cpu_cpuid_apmi_edx[i].bit)
 			printf(",%s", cpu_cpuid_apmi_edx[i].str);
 
-	if (cpuid_level >= 0x07) {
+	if (ci->ci_cpuid_level >= 0x07) {
 		/* "Structured Extended Feature Flags" */
 		CPUID_LEAF(0x7, 0, dummy, ci->ci_feature_sefflags_ebx,
 		    ci->ci_feature_sefflags_ecx, ci->ci_feature_sefflags_edx);
@@ -709,14 +709,14 @@ identifycpu(struct cpu_info *ci)
 				printf(",%s", cpu_seff0_edxfeatures[i].str);
 	}
 
-	if (!strcmp(cpu_vendor, "GenuineIntel") && cpuid_level >= 0x06) {
+	if (ci->ci_vendor == CPUV_INTEL && ci->ci_cpuid_level >= 0x06) {
 		CPUID(0x06, ci->ci_feature_tpmflags, dummy, cpu_tpm_ecxflags,
 		    dummy);
 		for (i = 0; i < nitems(cpu_tpm_eaxfeatures); i++)
 			if (ci->ci_feature_tpmflags &
 			    cpu_tpm_eaxfeatures[i].bit)
 				printf(",%s", cpu_tpm_eaxfeatures[i].str);
-	} else if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+	} else if (ci->ci_vendor == CPUV_AMD) {
 		CPUID(0x06, ci->ci_feature_tpmflags, dummy, cpu_tpm_ecxflags,
 		    dummy);
 		if (ci->ci_family >= 0x12)
@@ -724,7 +724,7 @@ identifycpu(struct cpu_info *ci)
 	}
 
 	/* speculation control features */
-	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+	if (ci->ci_vendor == CPUV_AMD) {
 		if (ci->ci_pnfeatset >= 0x80000008) {
 			CPUID(0x80000008, dummy, ci->ci_feature_amdspec_ebx,
 			    dummy, dummy);
@@ -734,7 +734,7 @@ identifycpu(struct cpu_info *ci)
 					printf(",%s",
 					    cpu_amdspec_ebxfeatures[i].str);
 		}
-	} else if (!strcmp(cpu_vendor, "GenuineIntel") &&
+	} else if (ci->ci_vendor == CPUV_INTEL &&
 	    (ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP)) {
 		uint64_t msr = rdmsr(MSR_ARCH_CAPABILITIES);
 
@@ -744,7 +744,7 @@ identifycpu(struct cpu_info *ci)
 	}
 
 	/* xsave subfeatures */
-	if (cpuid_level >= 0xd) {
+	if (ci->ci_cpuid_level >= 0xd) {
 		CPUID_LEAF(0xd, 1, val, dummy, dummy, dummy);
 		for (i = 0; i < nitems(cpu_xsave_extfeatures); i++)
 			if (val & cpu_xsave_extfeatures[i].bit)
@@ -761,7 +761,7 @@ identifycpu(struct cpu_info *ci)
 
 	if (CPU_IS_PRIMARY(ci)) {
 #ifndef SMALL_KERNEL
-		if (!strcmp(cpu_vendor, "AuthenticAMD") &&
+		if (ci->ci_vendor == CPUV_AMD &&
 		    ci->ci_pnfeatset >= 0x80000007) {
 			CPUID(0x80000007, dummy, dummy, dummy, val);
 
@@ -813,7 +813,7 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif
 
-	if (CPU_IS_PRIMARY(ci) && !strcmp(cpu_vendor, "CentaurHauls")) {
+	if (CPU_IS_PRIMARY(ci) && ci->ci_vendor == CPUV_VIA) {
 		ci->cpu_setup = via_nano_setup;
 #ifndef SMALL_KERNEL
 		ci->ci_sensor.type = SENSOR_TEMP;
@@ -887,14 +887,14 @@ cpu_topology(struct cpu_info *ci)
 	u_int32_t smt_mask = 0, core_mask, pkg_mask = 0;
 
 	/* We need at least apicid at CPUID 1 */
-	if (cpuid_level < 1)
+	if (ci->ci_cpuid_level < 1)
 		goto no_topology;
 
 	/* Initial apicid */
 	CPUID(1, eax, ebx, ecx, edx);
 	apicid = (ebx >> 24) & 0xff;
 
-	if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+	if (ci->ci_vendor == CPUV_AMD) {
 		uint32_t nthreads = 1; /* per core */
 		uint32_t thread_id; /* within a package */
 
@@ -920,9 +920,9 @@ cpu_topology(struct cpu_info *ci)
 		/* Cut logical thread_id into core id, and smt id in a core */
 		ci->ci_core_id = thread_id / nthreads;
 		ci->ci_smt_id = thread_id % nthreads;
-	} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+	} else if (ci->ci_vendor == CPUV_INTEL) {
 		/* We only support leaf 1/4 detection */
-		if (cpuid_level < 4)
+		if (ci->ci_cpuid_level < 4)
 			goto no_topology;
 		/* Get max_apicid */
 		CPUID(1, eax, ebx, ecx, edx);
@@ -1091,7 +1091,7 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 	 * Full details can be found here:
 	 * https://software.intel.com/security-software-guidance/insights/deep-dive-intel-analysis-l1-terminal-fault
 	 */
-	if (!strcmp(cpu_vendor, "GenuineIntel")) {
+	if (ci->ci_vendor == CPUV_INTEL) {
 		if (ci->ci_feature_sefflags_edx & SEFF0EDX_L1DF)
 			ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr = 1;
 		else

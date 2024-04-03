@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.4 2013/12/19 21:30:02 deraadt Exp $ */
+/* $OpenBSD: mtrr.c,v 1.5 2024/04/03 02:01:21 guenther Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -38,6 +38,7 @@ extern struct mem_range_ops mrops;
 void
 mem_range_attach(void)
 {
+	struct cpu_info *ci = &cpu_info_primary;
 	int family, model, step;
 
 	family = (cpu_id >> 8) & 0xf;
@@ -45,9 +46,9 @@ mem_range_attach(void)
 	step   = (cpu_id >> 0) & 0xf;
 
 	/* Try for i686 MTRRs */
-	if (((strcmp(cpu_vendor, "GenuineIntel") == 0) ||
-	    (strcmp(cpu_vendor, "CentaurHauls") == 0) ||
-	    (strcmp(cpu_vendor, "AuthenticAMD") == 0)) && 
+	if ((ci->ci_vendor == CPUV_AMD ||
+	     ci->ci_vendor == CPUV_INTEL ||
+	     ci->ci_vendor == CPUV_VIA) && 
 	    (family == 0x6 || family == 0xf) &&
 	    cpu_feature & CPUID_MTRR) {
 		mem_range_softc.mr_op = &mrops;
