@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.109 2024/03/25 01:28:29 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.110 2024/04/03 06:01:11 anton Exp $
 #	Placed in the Public Domain.
 
 #SUDO=sudo
@@ -243,14 +243,14 @@ ssh_logfile ()
 # [kbytes] to ensure the file is at least that large.
 DATANAME=data
 DATA=$OBJ/${DATANAME}
-cat ${SSHAGENT} >${DATA}
+cat ${SSH} >${DATA}
 COPY=$OBJ/copy
 rm -f ${COPY}
 
 increase_datafile_size()
 {
 	while [ `du -k ${DATA} | cut -f1` -lt $1 ]; do
-		cat ${SSHAGENT} >>${DATA}
+		cat ${SSH} >>${DATA}
 	done
 }
 
