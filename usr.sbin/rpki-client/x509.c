@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.85 2024/03/24 00:38:58 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.86 2024/04/03 04:20:13 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -758,9 +758,10 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 		    " disallowed", fn);
 		goto out;
 	}
+	/* Need to hardcode the alternative 0 due to missing macros or enum. */
 	if (dp->distpoint->type != 0) {
-		warnx("%s: RFC 6487 section 4.8.6: CRL: "
-		    "expected GEN_OTHERNAME, have %d", fn, dp->distpoint->type);
+		warnx("%s: RFC 6487 section 4.8.6: CRL DistributionPointName:"
+		    " expected fullName, have %d", fn, dp->distpoint->type);
 		goto out;
 	}
 
