@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.118 2022/04/08 13:13:14 mbuhl Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.119 2024/04/03 18:32:47 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1596,7 +1596,8 @@ ipmi_attach_common(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	c->c_sc = sc;
 	c->c_ccode = -1;
 
-	sc->sc_cmd_taskq = taskq_create("ipmicmd", 1, IPL_NONE, TASKQ_MPSAFE);
+	sc->sc_cmd_taskq = taskq_create("ipmicmd", 1, IPL_MPFLOOR,
+	    TASKQ_MPSAFE);
 }
 
 int
