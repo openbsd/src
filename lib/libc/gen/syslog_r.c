@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.19 2017/08/08 14:23:23 bluhm Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.20 2024/04/03 04:36:53 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 {
 	int cnt;
 	char ch, *p, *t;
-	int saved_errno;
+	int saved_errno = errno;	/* use original errno */
 #define	TBUF_SIZE	(LOG_MAXLINE+1)
 #define	FMT_SIZE	(1024+1)
 	char *stdp = NULL, tbuf[TBUF_SIZE], fmt_cpy[FMT_SIZE];
@@ -89,9 +89,7 @@ __vsyslog_r(int pri, struct syslog_data *data,
 
 	/* Check priority against setlogmask values. */
 	if (!(LOG_MASK(LOG_PRI(pri)) & data->log_mask))
-		return;
-
-	saved_errno = errno;
+		goto done;
 
 	/* Set default facility if none specified. */
 	if ((pri & LOG_FACMASK) == 0)
@@ -187,6 +185,8 @@ __vsyslog_r(int pri, struct syslog_data *data,
 	 * is not running or the kernel ran out of buffers.
 	 */
 	sendsyslog(tbuf, cnt, data->log_stat & LOG_CONS);
+done:
+	errno = saved_errno;
 }
 
 void
