@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.457 2024/03/20 09:35:46 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.458 2024/04/03 08:57:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4985,11 +4985,23 @@ expand_rule(struct filter_rule *rule, struct filter_rib_l *rib,
 	return (0);
 }
 
+static int
+h2i(char c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	else if (c >= 'a' && c <= 'f')
+		return c - 'a' + 10;
+	else if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	else
+		return -1;
+}
+
 int
 str2key(char *s, char *dest, size_t max_len)
 {
-	unsigned int	i;
-	char		t[3];
+	size_t	i;
 
 	if (strlen(s) / 2 > max_len) {
 		yyerror("key too long");
@@ -5002,15 +5014,15 @@ str2key(char *s, char *dest, size_t max_len)
 	}
 
 	for (i = 0; i < strlen(s) / 2; i++) {
-		t[0] = s[2*i];
-		t[1] = s[2*i + 1];
-		t[2] = 0;
-		if (!isxdigit((unsigned char)t[0]) ||
-		    !isxdigit((unsigned char)t[1])) {
+		int hi, lo;
+
+		hi = h2i(s[2 * i]);
+		lo = h2i(s[2 * i + 1]);
+		if (hi == -1 || lo == -1) {
 			yyerror("key must be specified in hex");
 			return (-1);
 		}
-		dest[i] = strtoul(t, NULL, 16);
+		dest[i] = (hi << 4) | lo;
 	}
 
 	return (0);
