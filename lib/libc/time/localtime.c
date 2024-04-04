@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.65 2022/10/03 15:34:39 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.66 2024/04/04 02:20:01 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -189,7 +189,6 @@ static struct state *	gmtptr;
 #define TZ_STRLEN_MAX 255
 #endif /* !defined TZ_STRLEN_MAX */
 
-static char		lcl_TZname[TZ_STRLEN_MAX + 1];
 static int		lcl_is_set;
 static int		gmt_is_set;
 _THREAD_PRIVATE_MUTEX(lcl);
@@ -1147,9 +1146,11 @@ tzsetwall(void)
 static void
 tzset_basic(void)
 {
+	static char	lcl_TZname[TZ_STRLEN_MAX + 1];
 	const char *	name;
 
-	if (issetugid() || (name = getenv("TZ")) == NULL) {
+	name = getenv("TZ");
+	if (name == NULL) {
 		tzsetwall_basic();
 		return;
 	}
@@ -1159,6 +1160,10 @@ tzset_basic(void)
 	lcl_is_set = strlen(name) < sizeof lcl_TZname;
 	if (lcl_is_set)
 		strlcpy(lcl_TZname, name, sizeof lcl_TZname);
+
+	/* Ignore TZ for setuid/setgid processes. */
+	if (issetugid())
+		name = TZDEFAULT;
 
 	if (lclptr == NULL) {
 		lclptr = calloc(1, sizeof *lclptr);
