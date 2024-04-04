@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.136 2024/03/21 11:30:42 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.137 2024/04/04 22:44:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -410,7 +410,7 @@ server_find_session(struct session *s,
 static int
 server_newer_session(struct session *s_loop, struct session *s_out)
 {
-	return (timercmp(&s_loop->activity_time, &s_out->activity_time, <));
+	return (timercmp(&s_loop->activity_time, &s_out->activity_time, >));
 }
 
 static int
