@@ -7,7 +7,8 @@
 #include <machine/pte.h>
 #include <linux/types.h>
 
-#define pgprot_val(v)	(v)
+#define pgprot_val(p)		(p)
+#define pgprot_decrypted(p)	(p)
 #define PAGE_KERNEL	0
 #define PAGE_KERNEL_IO	0
 
