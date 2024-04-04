@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2024/04/01 15:50:17 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.40 2024/04/04 16:00:51 semarie Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -28,7 +28,7 @@ install.sh: Makefile
 	echo "${CC} ${LDFLAGS} ${LDSTATIC} -o ${PROG}" \
 	    "\`echo " ${OBJS} "| tr ' ' '\\\n' | sort -R\`" ${LDADD} >> $@
 	echo "./${PROG} /usr/bin/true" >> $@
-	echo "install -c -s  -o root -g bin -m ${BINMODE} ${PROG} " \
+	echo "install -c -s -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${PROG} " \
 	    "${BINDIR}/${PROG}" >> $@
 
 ${PROG}.tar: ${OBJS} install.sh
@@ -37,5 +37,5 @@ ${PROG}.tar: ${OBJS} install.sh
 afterinstall: ${PROG}.tar
 	install -d -o root -g wheel -m 755 \
 	    ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}
-	install -o ${BINOWN} -g ${BINGRP} -m 640 \
+	install -o root -g bin -m 640 \
 	    ${PROG}.tar ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}/${PROG}.tar
