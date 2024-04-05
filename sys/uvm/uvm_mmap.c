@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.188 2024/04/03 22:21:48 kettenis Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.189 2024/04/05 12:51:15 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -610,6 +610,7 @@ sys_pinsyscalls(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) npins;
 	} */ *uap = v;
 	struct process *pr = p->p_p;
+	struct vm_map *map = &p->p_vmspace->vm_map;
 	int npins, error = 0, i;
 	vaddr_t base;
 	size_t len;
@@ -622,6 +623,8 @@ sys_pinsyscalls(struct proc *p, void *v, register_t *retval)
 	len = (vsize_t)SCARG(uap, len);
 	if (base > SIZE_MAX - len)
 		return (EINVAL);	/* disallow wrap-around. */
+	if (base < map->min_offset || base+len > map->max_offset)
+		return (EINVAL);
 
 	/* XXX MP unlock */
 
