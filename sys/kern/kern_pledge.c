@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.312 2024/03/28 02:19:57 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.313 2024/04/05 13:55:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -105,7 +105,6 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	 */
 	[SYS_exit] = PLEDGE_ALWAYS,
 	[SYS_kbind] = PLEDGE_ALWAYS,
-	[SYS_msyscall] = PLEDGE_ALWAYS,
 	[SYS___get_tcb] = PLEDGE_ALWAYS,
 	[SYS___set_tcb] = PLEDGE_ALWAYS,
 	[SYS_pledge] = PLEDGE_ALWAYS,
