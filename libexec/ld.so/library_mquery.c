@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.75 2024/01/17 13:00:05 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.76 2024/04/05 13:51:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -332,21 +332,10 @@ retry:
 	}
 
 	libc = _dl_islibc(dynp, LOFF);
-	if (libc) {
-		if (syscall_phdp)
-			_dl_pin(libfile, syscall_phdp, lowld->start,
-			    (size_t)((exec_start + exec_size) - LOFF),
-			    exec_start, exec_size);
-
-		/*
-		 * XXX msyscall() can be removed once pinsyscalls()
-		 * is fully operational
-		 */
-		/* Request permission for system calls in libc.so's text segment */
-		if (_dl_msyscall(exec_start, exec_size) == -1)
-			_dl_printf("msyscall %lx %lx error\n",
-			    exec_start, exec_size);
-	}
+	if (libc && syscall_phdp)
+		_dl_pin(libfile, syscall_phdp, lowld->start,
+		    (size_t)((exec_start + exec_size) - LOFF),
+		    exec_start, exec_size);
 	_dl_close(libfile);
 
 	dynp = (Elf_Dyn *)((unsigned long)dynp + LOFF);
