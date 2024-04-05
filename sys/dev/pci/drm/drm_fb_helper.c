@@ -1517,9 +1517,7 @@ static uint32_t drm_fb_helper_find_color_mode_format(struct drm_fb_helper *fb_he
 						     const uint32_t *formats, size_t format_count,
 						     unsigned int color_mode)
 {
-#ifdef notyet
 	struct drm_device *dev = fb_helper->dev;
-#endif
 	uint32_t bpp, depth;
 
 	switch (color_mode) {
