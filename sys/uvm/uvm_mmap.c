@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.190 2024/04/05 12:58:49 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.191 2024/04/05 14:16:05 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -584,15 +584,6 @@ sys_mprotect(struct proc *p, void *v, register_t *retval)
 
 	return (uvm_map_protect(&p->p_vmspace->vm_map, addr, addr+size,
 	    prot, 0, FALSE, TRUE));
-}
-
-/*
- * sys_msyscall: the msyscall system call
- */
-int
-sys_msyscall(struct proc *p, void *v, register_t *retval)
-{
-	return 0;
 }
 
 /*
