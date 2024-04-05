@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.255 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: main.c,v 1.256 2024/04/05 16:05:15 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -664,7 +664,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		}
 		aspa = aspa_read(b);
 		if (aspa->valid)
-			aspa_insert_vaps(vaptree, aspa, rp);
+			aspa_insert_vaps(file, vaptree, aspa, rp);
 		else
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		aspa_free(aspa);

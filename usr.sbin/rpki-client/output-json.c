@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.46 2024/03/01 08:10:09 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.47 2024/04/05 16:05:15 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -92,6 +92,9 @@ static void
 print_vap(struct vap *v)
 {
 	size_t i;
+
+	if (v->invalid)
+		return;
 
 	json_do_object("aspa", 1);
 	json_do_int("customer_asid", v->custasid);

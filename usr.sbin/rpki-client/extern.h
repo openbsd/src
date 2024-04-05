@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.213 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.214 2024/04/05 16:05:15 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -403,6 +403,7 @@ struct vap {
 	time_t			 expires;
 	int			 talid;
 	unsigned int		 repoid;
+	int			 invalid;
 };
 
 /*
@@ -710,7 +711,7 @@ struct tak	*tak_parse(X509 **, const char *, int, const unsigned char *,
 
 void		 aspa_buffer(struct ibuf *, const struct aspa *);
 void		 aspa_free(struct aspa *);
-void		 aspa_insert_vaps(struct vap_tree *, struct aspa *,
+void		 aspa_insert_vaps(char *, struct vap_tree *, struct aspa *,
 		    struct repo *);
 struct aspa	*aspa_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
