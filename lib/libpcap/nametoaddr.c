@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.24 2021/12/01 18:28:45 deraadt Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.25 2024/04/05 18:01:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -255,8 +255,7 @@ pcap_nametollc(const char *s)
 
 /* Hex digit to integer. */
 static __inline int
-xdtoi(c)
-	int c;
+xdtoi(int c)
 {
 	if (isdigit(c))
 		return c - '0';

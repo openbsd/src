@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.26 2021/12/01 18:28:45 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.27 2024/04/05 18:01:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -109,8 +109,7 @@ pcap_freealldevs(pcap_if_t *alldevs)
  * lowest unit number is preferred; loopback is ignored.
  */
 char *
-pcap_lookupdev(errbuf)
-	char *errbuf;
+pcap_lookupdev(char *errbuf)
 {
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa, *mp;

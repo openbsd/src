@@ -1,4 +1,4 @@
-/*	$OpenBSD: etherent.c,v 1.9 2015/11/17 21:39:23 mmcc Exp $	*/
+/*	$OpenBSD: etherent.c,v 1.10 2024/04/05 18:01:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
@@ -40,8 +40,7 @@ static __inline int skip_line(FILE *);
 
 /* Hex digit to integer. */
 static __inline int
-xdtoi(c)
-	int c;
+xdtoi(int c)
 {
 	if (isdigit(c))
 		return c - '0';
@@ -52,8 +51,7 @@ xdtoi(c)
 }
 
 static __inline int
-skip_space(f)
-	FILE *f;
+skip_space(FILE *f)
 {
 	int c;
 
@@ -65,8 +63,7 @@ skip_space(f)
 }
 
 static __inline int
-skip_line(f)
-	FILE *f;
+skip_line(FILE *f)
 {
 	int c;
 

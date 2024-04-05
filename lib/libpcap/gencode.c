@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.64 2022/12/27 17:10:07 jmc Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.65 2024/04/05 18:01:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -220,8 +220,7 @@ freechunks(void)
  * A strdup whose allocations are freed after code generation is over.
  */
 char *
-sdup(s)
-	const char *s;
+sdup(const char *s)
 {
 	int n = strlen(s) + 1;
 	char *cp = newchunk(n);
@@ -231,8 +230,7 @@ sdup(s)
 }
 
 static __inline struct block *
-new_block(code)
-	int code;
+new_block(int code)
 {
 	struct block *p;
 
@@ -244,8 +242,7 @@ new_block(code)
 }
 
 static __inline struct slist *
-new_stmt(code)
-	int code;
+new_stmt(int code)
 {
 	struct slist *p;
 
@@ -256,8 +253,7 @@ new_stmt(code)
 }
 
 static struct block *
-gen_retblk(v)
-	int v;
+gen_retblk(int v)
 {
 	struct block *b = new_block(BPF_RET|BPF_K);
 
@@ -386,8 +382,7 @@ pcap_freecode(struct bpf_program *program)
  * in each block is already resolved.
  */
 static void
-backpatch(list, target)
-	struct block *list, *target;
+backpatch(struct block *list, struct block *target)
 {
 	struct block *next;
 
@@ -408,8 +403,7 @@ backpatch(list, target)
  * which of jt and jf is the link.
  */
 static void
-merge(b0, b1)
-	struct block *b0, *b1;
+merge(struct block *b0, struct block *b1)
 {
 	struct block **p = &b0;
 
@@ -422,8 +416,7 @@ merge(b0, b1)
 }
 
 void
-finish_parse(p)
-	struct block *p;
+finish_parse(struct block *p)
 {
 	backpatch(p, gen_retblk(snaplen));
 	p->sense = !p->sense;
@@ -448,8 +441,7 @@ finish_parse(p)
 }
 
 void
-gen_and(b0, b1)
-	struct block *b0, *b1;
+gen_and(struct block *b0, struct block *b1)
 {
 	backpatch(b0, b1->head);
 	b0->sense = !b0->sense;
@@ -460,8 +452,7 @@ gen_and(b0, b1)
 }
 
 void
-gen_or(b0, b1)
-	struct block *b0, *b1;
+gen_or(struct block *b0, struct block *b1)
 {
 	b0->sense = !b0->sense;
 	backpatch(b0, b1->head);
@@ -471,16 +462,13 @@ gen_or(b0, b1)
 }
 
 void
-gen_not(b)
-	struct block *b;
+gen_not(struct block *b)
 {
 	b->sense = !b->sense;
 }
 
 static struct block *
-gen_cmp(offset, size, v)
-	u_int offset, size;
-	bpf_int32 v;
+gen_cmp(u_int offset, u_int size, bpf_int32 v)
 {
 	struct slist *s;
 	struct block *b;
@@ -496,9 +484,7 @@ gen_cmp(offset, size, v)
 }
 
 static struct block *
-gen_cmp_gt(offset, size, v)
-	u_int offset, size;
-	bpf_int32 v;
+gen_cmp_gt(u_int offset, u_int size, bpf_int32 v)
 {
 	struct slist *s;
 	struct block *b;
@@ -514,10 +500,7 @@ gen_cmp_gt(offset, size, v)
 }
 
 static struct block *
-gen_mcmp(offset, size, v, mask)
-	u_int offset, size;
-	bpf_int32 v;
-	bpf_u_int32 mask;
+gen_mcmp(u_int offset, u_int size, bpf_int32 v, bpf_u_int32 mask)
 {
 	struct block *b = gen_cmp(offset, size, v);
 	struct slist *s;
@@ -532,10 +515,7 @@ gen_mcmp(offset, size, v, mask)
 
 /* Like gen_mcmp with 'dynamic off_nl' added to the offset */
 static struct block *
-gen_mcmp_nl(offset, size, v, mask)
-	u_int offset, size;
-	bpf_int32 v;
-	bpf_u_int32 mask;
+gen_mcmp_nl(u_int offset, u_int size, bpf_int32 v, bpf_u_int32 mask)
 {
 	struct block *b = gen_cmp_nl(offset, size, v);
 	struct slist *s;
@@ -549,9 +529,7 @@ gen_mcmp_nl(offset, size, v, mask)
 }
 
 static struct block *
-gen_bcmp(offset, size, v)
-	u_int offset, size;
-	const u_char *v;
+gen_bcmp(u_int offset, u_int size, const u_char *v)
 {
 	struct block *b, *tmp;
 
@@ -645,9 +623,7 @@ nl2X_stmt(void)
 
 /* Like gen_cmp but adds the dynamic 'off_nl' to the offset */
 static struct block *
-gen_cmp_nl(offset, size, v)
-	u_int offset, size;
-	bpf_int32 v;
+gen_cmp_nl(u_int offset, u_int size, bpf_int32 v)
 {
 	struct slist *s, *tmp;
 	struct block *b;
@@ -669,8 +645,7 @@ gen_cmp_nl(offset, size, v)
 }
 
 static void
-init_linktype(type)
-	int type;
+init_linktype(int type)
 {
 	linktype = type;
 	init_code = NULL;
@@ -806,8 +781,7 @@ init_linktype(type)
 }
 
 static struct block *
-gen_uncond(rsense)
-	int rsense;
+gen_uncond(int rsense)
 {
 	struct block *b;
 	struct slist *s;
@@ -833,8 +807,7 @@ gen_false()
 }
 
 static struct block *
-gen_linktype(proto)
-	int proto;
+gen_linktype(int proto)
 {
 	struct block *b0, *b1;
 
@@ -956,11 +929,8 @@ gen_linktype(proto)
 }
 
 static struct block *
-gen_hostop(addr, mask, dir, proto, src_off, dst_off)
-	bpf_u_int32 addr;
-	bpf_u_int32 mask;
-	int dir, proto;
-	u_int src_off, dst_off;
+gen_hostop(bpf_u_int32 addr, bpf_u_int32 mask, int dir, int proto,
+    u_int src_off, u_int dst_off)
 {
 	struct block *b0, *b1;
 	u_int offset;
@@ -1000,11 +970,8 @@ gen_hostop(addr, mask, dir, proto, src_off, dst_off)
 
 #ifdef INET6
 static struct block *
-gen_hostop6(addr, mask, dir, proto, src_off, dst_off)
-	struct in6_addr *addr;
-	struct in6_addr *mask;
-	int dir, proto;
-	u_int src_off, dst_off;
+gen_hostop6(struct in6_addr *addr, struct in6_addr *mask, int dir, int proto,
+	u_int src_off, u_int dst_off)
 {
 	struct block *b0, *b1;
 	u_int offset;
@@ -1054,9 +1021,7 @@ gen_hostop6(addr, mask, dir, proto, src_off, dst_off)
 #endif /*INET6*/
 
 static struct block *
-gen_ehostop(eaddr, dir)
-	const u_char *eaddr;
-	int dir;
+gen_ehostop(const u_char *eaddr, int dir)
 {
 	struct block *b0, *b1;
 
@@ -1090,9 +1055,7 @@ gen_ehostop(eaddr, dir)
  * Like gen_ehostop, but for DLT_FDDI
  */
 static struct block *
-gen_fhostop(eaddr, dir)
-	const u_char *eaddr;
-	int dir;
+gen_fhostop(const u_char *eaddr, int dir)
 {
 	struct block *b0, *b1;
 
@@ -1149,10 +1112,7 @@ gen_fhostop(eaddr, dir)
  * and not generate masking instructions if the mask is 0xFFFF.
  */
 static struct block *
-gen_dnhostop(addr, dir, base_off)
-	bpf_u_int32 addr;
-	int dir;
-	u_int base_off;
+gen_dnhostop(bpf_u_int32 addr, int dir, u_int base_off)
 {
 	struct block *b0, *b1, *b2, *tmp;
 	u_int offset_lh;	/* offset if long header is received */
@@ -1220,11 +1180,7 @@ gen_dnhostop(addr, dir, base_off)
 }
 
 static struct block *
-gen_host(addr, mask, proto, dir)
-	bpf_u_int32 addr;
-	bpf_u_int32 mask;
-	int proto;
-	int dir;
+gen_host(bpf_u_int32 addr, bpf_u_int32 mask, int proto, int dir)
 {
 	struct block *b0, *b1;
 
@@ -1312,11 +1268,7 @@ gen_host(addr, mask, proto, dir)
 
 #ifdef INET6
 static struct block *
-gen_host6(addr, mask, proto, dir)
-	struct in6_addr *addr;
-	struct in6_addr *mask;
-	int proto;
-	int dir;
+gen_host6(struct in6_addr *addr, struct in6_addr *mask, int proto, int dir)
 {
 	switch (proto) {
 
@@ -1433,8 +1385,7 @@ gen_gateway(eaddr, alist, proto, dir)
 #endif	/*INET6*/
 
 struct block *
-gen_proto_abbrev(proto)
-	int proto;
+gen_proto_abbrev(int proto)
 {
 	struct block *b0 = NULL, *b1;
 
@@ -1648,9 +1599,7 @@ iphl_to_x(void)
 }
 
 static struct block *
-gen_portatom(off, v)
-	int off;
-	bpf_int32 v;
+gen_portatom(int off, bpf_int32 v)
 {
 	struct slist *s, *tmp;
 	struct block *b;
@@ -1670,17 +1619,14 @@ gen_portatom(off, v)
 
 #ifdef INET6
 static struct block *
-gen_portatom6(off, v)
-	int off;
-	bpf_int32 v;
+gen_portatom6(int off, bpf_int32 v)
 {
 	return gen_cmp_nl(40 + off, BPF_H, v);
 }
 #endif/*INET6*/
 
 struct block *
-gen_portop(port, proto, dir)
-	int port, proto, dir;
+gen_portop(int port, int proto, int dir)
 {
 	struct block *b0, *b1, *tmp;
 
@@ -1720,10 +1666,7 @@ gen_portop(port, proto, dir)
 }
 
 static struct block *
-gen_port(port, ip_proto, dir)
-	int port;
-	int ip_proto;
-	int dir;
+gen_port(int port, int ip_proto, int dir)
 {
 	struct block *b0, *b1, *tmp;
 
@@ -1751,8 +1694,7 @@ gen_port(port, ip_proto, dir)
 
 #ifdef INET6
 struct block *
-gen_portop6(port, proto, dir)
-	int port, proto, dir;
+gen_portop6(int port, int proto, int dir)
 {
 	struct block *b0, *b1, *tmp;
 
@@ -1790,10 +1732,7 @@ gen_portop6(port, proto, dir)
 }
 
 static struct block *
-gen_port6(port, ip_proto, dir)
-	int port;
-	int ip_proto;
-	int dir;
+gen_port6(int port, int ip_proto, int dir)
 {
 	struct block *b0, *b1, *tmp;
 
@@ -1821,9 +1760,7 @@ gen_port6(port, ip_proto, dir)
 #endif /* INET6 */
 
 static int
-lookup_proto(name, proto)
-	const char *name;
-	int proto;
+lookup_proto(const char *name, int proto)
 {
 	int v;
 
@@ -1854,10 +1791,7 @@ lookup_proto(name, proto)
 }
 
 static struct block *
-gen_protochain(v, proto, dir)
-	int v;
-	int proto;
-	int dir;
+gen_protochain(int v, int proto, int dir)
 {
 	struct block *b0, *b;
 	struct slist *s[100];
@@ -2151,10 +2085,7 @@ gen_protochain(v, proto, dir)
 }
 
 static struct block *
-gen_proto(v, proto, dir)
-	int v;
-	int proto;
-	int dir;
+gen_proto(int v, int proto, int dir)
 {
 	struct block *b0, *b1;
 
@@ -2273,9 +2204,7 @@ gen_proto(v, proto, dir)
 }
 
 struct block *
-gen_scode(name, q)
-	const char *name;
-	struct qual q;
+gen_scode(const char *name, struct qual q)
 {
 	int proto = q.proto;
 	int dir = q.dir;
@@ -2479,10 +2408,7 @@ gen_scode(name, q)
 }
 
 struct block *
-gen_mcode(s1, s2, masklen, q)
-	const char *s1, *s2;
-	int masklen;
-	struct qual q;
+gen_mcode(const char *s1, const char *s2, int masklen, struct qual q)
 {
 	int nlen, mlen;
 	bpf_u_int32 n, m;
@@ -2520,10 +2446,7 @@ gen_mcode(s1, s2, masklen, q)
 }
 
 struct block *
-gen_ncode(s, v, q)
-	const char *s;
-	bpf_u_int32 v;
-	struct qual q;
+gen_ncode(const char *s, bpf_u_int32 v, struct qual q)
 {
 	bpf_u_int32 mask;
 	int proto = q.proto;
@@ -2606,10 +2529,7 @@ gen_ncode(s, v, q)
 
 #ifdef INET6
 struct block *
-gen_mcode6(s1, s2, masklen, q)
-	const char *s1, *s2;
-	int masklen;
-	struct qual q;
+gen_mcode6(const char *s1, const char *s2, int masklen, struct qual q)
 {
 	struct addrinfo *res;
 	struct in6_addr *addr;
@@ -2664,9 +2584,7 @@ gen_mcode6(s1, s2, masklen, q)
 #endif /*INET6*/
 
 struct block *
-gen_ecode(eaddr, q)
-	const u_char *eaddr;
-	struct qual q;
+gen_ecode(const u_char *eaddr, struct qual q)
 {
 	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
 		if (linktype == DLT_EN10MB)
@@ -2682,8 +2600,7 @@ gen_ecode(eaddr, q)
 }
 
 void
-sappend(s0, s1)
-	struct slist *s0, *s1;
+sappend(struct slist *s0, struct slist *s1)
 {
 	/*
 	 * This is definitely not the best way to do this, but the
@@ -2695,8 +2612,7 @@ sappend(s0, s1)
 }
 
 static struct slist *
-xfer_to_x(a)
-	struct arth *a;
+xfer_to_x(struct arth *a)
 {
 	struct slist *s;
 
@@ -2706,8 +2622,7 @@ xfer_to_x(a)
 }
 
 static struct slist *
-xfer_to_a(a)
-	struct arth *a;
+xfer_to_a(struct arth *a)
 {
 	struct slist *s;
 
@@ -2717,10 +2632,7 @@ xfer_to_a(a)
 }
 
 struct arth *
-gen_load(proto, index, size)
-	int proto;
-	struct arth *index;
-	int size;
+gen_load(int proto, struct arth *index, int size)
 {
 	struct slist *s, *tmp;
 	struct block *b;
@@ -2824,10 +2736,7 @@ gen_load(proto, index, size)
 }
 
 struct block *
-gen_relation(code, a0, a1, reversed)
-	int code;
-	struct arth *a0, *a1;
-	int reversed;
+gen_relation(int code, struct arth *a0, struct arth *a1, int reversed)
 {
 	struct slist *s0, *s1, *s2;
 	struct block *b, *tmp;
@@ -2902,8 +2811,7 @@ gen_loadrnd()
 }
 
 struct arth *
-gen_loadi(val)
-	int val;
+gen_loadi(int val)
 {
 	struct arth *a;
 	struct slist *s;
@@ -2924,8 +2832,7 @@ gen_loadi(val)
 }
 
 struct arth *
-gen_neg(a)
-	struct arth *a;
+gen_neg(struct arth *a)
 {
 	struct slist *s;
 
@@ -2942,9 +2849,7 @@ gen_neg(a)
 }
 
 struct arth *
-gen_arth(code, a0, a1)
-	int code;
-	struct arth *a0, *a1;
+gen_arth(int code, struct arth *a0, struct arth *a1)
 {
 	struct slist *s0, *s1, *s2;
 
@@ -2998,15 +2903,13 @@ alloc_reg()
  * be used later.
  */
 static void
-free_reg(n)
-	int n;
+free_reg(int n)
 {
 	regused[n] = 0;
 }
 
 static struct block *
-gen_len(jmp, n)
-	int jmp, n;
+gen_len(int jmp, int n)
 {
 	struct slist *s;
 	struct block *b;
@@ -3020,15 +2923,13 @@ gen_len(jmp, n)
 }
 
 struct block *
-gen_greater(n)
-	int n;
+gen_greater(int n)
 {
 	return gen_len(BPF_JGE, n);
 }
 
 struct block *
-gen_less(n)
-	int n;
+gen_less(int n)
 {
 	struct block *b;
 
@@ -3039,8 +2940,7 @@ gen_less(n)
 }
 
 struct block *
-gen_byteop(op, idx, val)
-	int op, idx, val;
+gen_byteop(int op, int idx, int val)
 {
 	struct block *b;
 	struct slist *s;
@@ -3080,8 +2980,7 @@ gen_byteop(op, idx, val)
 }
 
 struct block *
-gen_broadcast(proto)
-	int proto;
+gen_broadcast(int proto)
 {
 	bpf_u_int32 hostmask;
 	struct block *b0, *b1, *b2;
@@ -3122,8 +3021,7 @@ gen_broadcast(proto)
 }
 
 struct block *
-gen_multicast(proto)
-	int proto;
+gen_multicast(int proto)
 {
 	struct block *b0, *b1;
 	struct slist *s;
@@ -3179,8 +3077,7 @@ gen_multicast(proto)
  * = 1 implies "outbound".
  */
 struct block *
-gen_inbound(dir)
-	int dir;
+gen_inbound(int dir)
 {
 	struct block *b0;
 
@@ -3348,9 +3245,7 @@ gen_p80211_type(int type, int mask)
 }
 
 static struct block *
-gen_ahostop(eaddr, dir)
-	const u_char *eaddr;
-	int dir;
+gen_ahostop(const u_char *eaddr, int dir)
 {
 	struct block *b0, *b1;
 
@@ -3380,9 +3275,7 @@ gen_ahostop(eaddr, dir)
 }
 
 struct block *
-gen_acode(eaddr, q)
-	const u_char *eaddr;
-	struct qual q;
+gen_acode(const u_char *eaddr, struct qual q)
 {
 	if ((q.addr == Q_HOST || q.addr == Q_DEFAULT) && q.proto == Q_LINK) {
 		if (linktype == DLT_ARCNET)
@@ -3393,8 +3286,7 @@ gen_acode(eaddr, q)
 }
 
 struct block *
-gen_mpls(label)
-	int label;
+gen_mpls(int label)
 {
 	struct block	*b0;
 
@@ -3424,8 +3316,7 @@ gen_mpls(label)
  * support IEEE 802.1Q VLAN trunk over ethernet
  */
 struct block *
-gen_vlan(vlan_num)
-	int vlan_num;
+gen_vlan(int vlan_num)
 {
 	struct	block	*b0;
 

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.28 2020/08/03 03:40:02 dlg Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.29 2024/04/05 18:01:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -317,8 +317,7 @@ tcp-urg			{ yylval.i = 0x20; return NUM; }
 			}
 %%
 void
-lex_init(buf)
-	const char *buf;
+lex_init(const char *buf)
 {
 	in_buffer = buf;
 	yyrestart(NULL);
@@ -336,8 +335,7 @@ yywrap()
 
 /* Hex digit to integer. */
 static inline int
-xdtoi(c)
-	int c;
+xdtoi(int c)
 {
 	if (isdigit(c))
 		return c - '0';
@@ -352,8 +350,7 @@ xdtoi(c)
  * preceding 0x or 0 and uses hex or octal instead of decimal.
  */
 static int
-stoi(s)
-	char *s;
+stoi(char *s)
 {
 	int base = 10;
 	int n = 0;

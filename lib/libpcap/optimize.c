@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.21 2020/08/03 03:29:58 dlg Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.22 2024/04/05 18:01:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -199,8 +199,7 @@ static uset all_edge_sets;
 #endif
 
 static void
-find_levels_r(b)
-	struct block *b;
+find_levels_r(struct block *b)
 {
 	int level;
 
@@ -228,8 +227,7 @@ find_levels_r(b)
  * with the 'link' field of the struct block.
  */
 static void
-find_levels(root)
-	struct block *root;
+find_levels(struct block *root)
 {
 	memset((char *)levels, 0, n_blocks * sizeof(*levels));
 	unMarkAll();
@@ -241,8 +239,7 @@ find_levels(root)
  * Assumes graph has been leveled.
  */
 static void
-find_dom(root)
-	struct block *root;
+find_dom(struct block *root)
 {
 	int i;
 	struct block *b;
@@ -272,8 +269,7 @@ find_dom(root)
 }
 
 static void
-propedom(ep)
-	struct edge *ep;
+propedom(struct edge *ep)
 {
 	SET_INSERT(ep->edom, ep->id);
 	if (ep->succ) {
@@ -287,8 +283,7 @@ propedom(ep)
  * Assumes graph has been leveled and predecessors established.
  */
 static void
-find_edom(root)
-	struct block *root;
+find_edom(struct block *root)
 {
 	int i;
 	uset x;
@@ -317,8 +312,7 @@ find_edom(root)
  * Assumes graph has been leveled.
  */
 static void
-find_closure(root)
-	struct block *root;
+find_closure(struct block *root)
 {
 	int i;
 	struct block *b;
@@ -348,8 +342,7 @@ find_closure(root)
  * The implementation should probably change to an array access.
  */
 static int
-atomuse(s)
-	struct stmt *s;
+atomuse(struct stmt *s)
 {
 	int c = s->code;
 
@@ -394,8 +387,7 @@ atomuse(s)
  * The implementation should probably change to an array access.
  */
 static int
-atomdef(s)
-	struct stmt *s;
+atomdef(struct stmt *s)
 {
 	if (s->code == NOP)
 		return -1;
@@ -420,8 +412,7 @@ atomdef(s)
 }
 
 static void
-compute_local_ud(b)
-	struct block *b;
+compute_local_ud(struct block *b)
 {
 	struct slist *s;
 	atomset def = 0, use = 0, kill = 0;
@@ -464,8 +455,7 @@ compute_local_ud(b)
  * Assume graph is already leveled.
  */
 static void
-find_ud(root)
-	struct block *root;
+find_ud(struct block *root)
 {
 	int i, maxlevel;
 	struct block *p;
@@ -530,9 +520,7 @@ init_val()
 
 /* Because we really don't have an IR, this stuff is a little messy. */
 static int
-F(code, v0, v1)
-	int code;
-	int v0, v1;
+F(int code, int v0, int v1)
 {
 	u_int hash;
 	int val;
@@ -563,11 +551,7 @@ F(code, v0, v1)
 }
 
 static __inline void
-vstore(s, valp, newval, alter)
-	struct stmt *s;
-	int *valp;
-	int newval;
-	int alter;
+vstore(struct stmt *s, int *valp, int newval, int alter)
 {
 	if (alter && *valp == newval)
 		s->code = NOP;
@@ -576,9 +560,7 @@ vstore(s, valp, newval, alter)
 }
 
 static void
-fold_op(s, v0, v1)
-	struct stmt *s;
-	int v0, v1;
+fold_op(struct stmt *s, int v0, int v1)
 {
 	bpf_int32 a, b;
 
@@ -633,8 +615,7 @@ fold_op(s, v0, v1)
 }
 
 static __inline struct slist *
-this_op(s)
-	struct slist *s;
+this_op(struct slist *s)
 {
 	while (s != 0 && s->s.code == NOP)
 		s = s->next;
@@ -642,8 +623,7 @@ this_op(s)
 }
 
 static void
-opt_not(b)
-	struct block *b;
+opt_not(struct block *b)
 {
 	struct block *tmp = JT(b);
 
@@ -652,8 +632,7 @@ opt_not(b)
 }
 
 static void
-opt_peep(b)
-	struct block *b;
+opt_peep(struct block *b)
 {
 	struct slist *s;
 	struct slist *next, *last;
@@ -861,10 +840,7 @@ opt_peep(b)
  * evaluation and code transformations weren't folded together.
  */
 static void
-opt_stmt(s, val, alter)
-	struct stmt *s;
-	int val[];
-	int alter;
+opt_stmt(struct stmt *s, int val[], int alter)
 {
 	int op;
 	int v;
@@ -1048,9 +1024,7 @@ opt_stmt(s, val, alter)
 }
 
 static void
-deadstmt(s, last)
-	struct stmt *s;
-	struct stmt *last[];
+deadstmt(struct stmt *s, struct stmt *last[])
 {
 	int atom;
 
@@ -1074,8 +1048,7 @@ deadstmt(s, last)
 }
 
 static void
-opt_deadstores(b)
-	struct block *b;
+opt_deadstores(struct block *b)
 {
 	struct slist *s;
 	int atom;
@@ -1095,9 +1068,7 @@ opt_deadstores(b)
 }
 
 static void
-opt_blk(b, do_stmts)
-	struct block *b;
-	int do_stmts;
+opt_blk(struct block *b, int do_stmts)
 {
 	struct slist *s;
 	struct edge *p;
@@ -1168,8 +1139,7 @@ opt_blk(b, do_stmts)
  * from 'b'.
  */
 static int
-use_conflict(b, succ)
-	struct block *b, *succ;
+use_conflict(struct block *b, struct block *succ)
 {
 	int atom;
 	atomset use = succ->out_use;
@@ -1185,9 +1155,7 @@ use_conflict(b, succ)
 }
 
 static struct block *
-fold_edge(child, ep)
-	struct block *child;
-	struct edge *ep;
+fold_edge(struct block *child, struct edge *ep)
 {
 	int sense;
 	int aval0, aval1, oval0, oval1;
@@ -1231,8 +1199,7 @@ fold_edge(child, ep)
 }
 
 static void
-opt_j(ep)
-	struct edge *ep;
+opt_j(struct edge *ep)
 {
 	int i, k;
 	struct block *target;
@@ -1287,8 +1254,7 @@ opt_j(ep)
 
 
 static void
-or_pullup(b)
-	struct block *b;
+or_pullup(struct block *b)
 {
 	int val, at_top;
 	struct block *pull;
@@ -1380,8 +1346,7 @@ or_pullup(b)
 }
 
 static void
-and_pullup(b)
-	struct block *b;
+and_pullup(struct block *b)
 {
 	int val, at_top;
 	struct block *pull;
@@ -1472,9 +1437,7 @@ and_pullup(b)
 }
 
 static void
-opt_blks(root, do_stmts)
-	struct block *root;
-	int do_stmts;
+opt_blks(struct block *root, int do_stmts)
 {
 	int i, maxlevel;
 	struct block *p;
@@ -1507,17 +1470,14 @@ opt_blks(root, do_stmts)
 }
 
 static __inline void
-link_inedge(parent, child)
-	struct edge *parent;
-	struct block *child;
+link_inedge(struct edge *parent, struct block *child)
 {
 	parent->next = child->in_edges;
 	child->in_edges = parent;
 }
 
 static void
-find_inedges(root)
-	struct block *root;
+find_inedges(struct block *root)
 {
 	int i;
 	struct block *b;
@@ -1538,8 +1498,7 @@ find_inedges(root)
 }
 
 static void
-opt_root(b)
-	struct block **b;
+opt_root(struct block **b)
 {
 	struct slist *tmp, *s;
 
@@ -1563,9 +1522,7 @@ opt_root(b)
 }
 
 static void
-opt_loop(root, do_stmts)
-	struct block *root;
-	int do_stmts;
+opt_loop(struct block *root, int do_stmts)
 {
 
 #ifdef BDEBUG
@@ -1592,8 +1549,7 @@ opt_loop(root, do_stmts)
  * Optimize the filter code in its dag representation.
  */
 void
-bpf_optimize(rootp)
-	struct block **rootp;
+bpf_optimize(struct block **rootp)
 {
 	struct block *root;
 
@@ -1608,8 +1564,7 @@ bpf_optimize(rootp)
 }
 
 static void
-make_marks(p)
-	struct block *p;
+make_marks(struct block *p)
 {
 	if (!isMarked(p)) {
 		Mark(p);
@@ -1625,8 +1580,7 @@ make_marks(p)
  * only for nodes that are alive.
  */
 static void
-mark_code(p)
-	struct block *p;
+mark_code(struct block *p)
 {
 	cur_mark += 1;
 	make_marks(p);
@@ -1637,8 +1591,7 @@ mark_code(p)
  * the accumulator.
  */
 static int
-eq_slist(x, y)
-	struct slist *x, *y;
+eq_slist(struct slist *x, struct slist *y)
 {
 	while (1) {
 		while (x && x->s.code == NOP)
@@ -1657,8 +1610,7 @@ eq_slist(x, y)
 }
 
 static __inline int
-eq_blk(b0, b1)
-	struct block *b0, *b1;
+eq_blk(struct block *b0, struct block *b1)
 {
 	if (b0->s.code == b1->s.code &&
 	    b0->s.k == b1->s.k &&
@@ -1669,8 +1621,7 @@ eq_blk(b0, b1)
 }
 
 static void
-intern_blocks(root)
-	struct block *root;
+intern_blocks(struct block *root)
 {
 	struct block *p;
 	int i, j;
@@ -1728,8 +1679,7 @@ opt_cleanup()
  * Return the number of stmts in 's'.
  */
 static int
-slength(s)
-	struct slist *s;
+slength(struct slist *s)
 {
 	int n = 0;
 
@@ -1744,8 +1694,7 @@ slength(s)
  * All nodes should be initially unmarked.
  */
 static int
-count_blocks(p)
-	struct block *p;
+count_blocks(struct block *p)
 {
 	if (p == 0 || isMarked(p))
 		return 0;
@@ -1758,8 +1707,7 @@ count_blocks(p)
  * the basic blocks, and entering them into the 'blocks' array.`
  */
 static void
-number_blks_r(p)
-	struct block *p;
+number_blks_r(struct block *p)
 {
 	int n;
 
@@ -1780,8 +1728,7 @@ number_blks_r(p)
  * The nodes should be unmarked before calling.
  */
 static int
-count_stmts(p)
-	struct block *p;
+count_stmts(struct block *p)
 {
 	int n;
 
@@ -1798,8 +1745,7 @@ count_stmts(p)
  * from the total number of blocks and/or statements.
  */
 static void
-opt_init(root)
-	struct block *root;
+opt_init(struct block *root)
 {
 	bpf_u_int32 *p;
 	int i, n, max_stmts;
@@ -1927,8 +1873,7 @@ int bids[1000];
  * properly.
  */
 static int
-convert_code_r(p)
-	struct block *p;
+convert_code_r(struct block *p)
 {
 	struct bpf_insn *dst;
 	struct slist *src;
@@ -2086,9 +2031,7 @@ filled:
  * BPF array representation.  Set *lenp to the number of instructions.
  */
 struct bpf_insn *
-icode_to_fcode(root, lenp)
-	struct block *root;
-	int *lenp;
+icode_to_fcode(struct block *root, int *lenp)
 {
 	int n;
 	struct bpf_insn *fp;
