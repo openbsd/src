@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_syscall.c,v 1.8 2023/04/13 02:19:05 jsg Exp $ */
+/*	$OpenBSD: dt_prov_syscall.c,v 1.9 2024/04/06 11:18:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -101,7 +101,6 @@ dt_prov_syscall_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 {
 	struct dt_pcb *dp;
 
-	KASSERT(dtioc_req_isvalid(dtrq));
 	KASSERT(TAILQ_EMPTY(plist));
 	KASSERT(dtp->dtp_prov == &dt_prov_syscall);
 	KASSERT((dtp->dtp_sysnum >= 0) && (dtp->dtp_sysnum < dtps_nsysent));
@@ -110,7 +109,6 @@ dt_prov_syscall_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 	if (dp == NULL)
 		return ENOMEM;
 
-	dp->dp_filter = dtrq->dtrq_filter;
 	dp->dp_evtflags = dtrq->dtrq_evtflags & DTEVT_PROV_SYSCALL;
 	TAILQ_INSERT_HEAD(plist, dp, dp_snext);
 

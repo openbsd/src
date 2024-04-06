@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.18 2024/02/09 17:42:18 cheloha Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.19 2024/04/06 11:18:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -82,26 +82,6 @@ struct dt_evt {
 	"\003KSTACK"		\
 	"\004FUNCARGS"		\
 
-/*
- * Each PCB can have a filter attached to itself.  A filter do not
- * prevent an enabled probe to fire, but when that happens, event
- * states are only recorded if it is matched.
- */
-struct dt_filter {
-	enum dt_operand {
-		DT_OP_NONE = 0,
-		DT_OP_EQ,
-		DT_OP_NE,
-	}		dtf_operand;
-	enum dt_filtervar {
-		DT_FV_NONE = 0,
-		DT_FV_PID,
-		DT_FV_TID,
-	}		dtf_variable		/* what should be filtered */;
-	unsigned int	dtf_value;		/* PID or TID to filter */
-};
-
-
 struct dtioc_probe_info {
 	uint32_t	dtpi_pbn;		/* probe number */
 	uint8_t		dtpi_nargs;		/* # of arguments */
@@ -129,7 +109,6 @@ struct dtioc_arg {
 
 struct dtioc_req {
 	uint32_t		 dtrq_pbn;	/* probe number */
-	struct dt_filter	 dtrq_filter;	/* probe filter */
 	uint32_t		 dtrq_rate;	/* number of ticks */
 	uint64_t		 dtrq_evtflags;	/* states to record */
 };
@@ -165,8 +144,6 @@ struct dtioc_getaux {
 
 struct dt_softc;
 
-int		dtioc_req_isvalid(struct dtioc_req *);
-
 /*
  * Probe control block, possibly per-CPU.
  *
@@ -195,7 +172,6 @@ struct dt_pcb {
 	struct dt_softc		*dp_sc;		/* [I] related softc */
 	struct dt_probe		*dp_dtp;	/* [I] related probe */
 	uint64_t		 dp_evtflags;	/* [I] event states to record */
-	struct dt_filter	 dp_filter;	/* [I] filter to match */
 
 	/* Provider specific fields. */
 	struct clockintr	 dp_clockintr;	/* [D] profiling handle */
@@ -211,7 +187,6 @@ TAILQ_HEAD(dt_pcb_list, dt_pcb);
 struct dt_pcb	*dt_pcb_alloc(struct dt_probe *, struct dt_softc *);
 void		 dt_pcb_free(struct dt_pcb *);
 void		 dt_pcb_purge(struct dt_pcb_list *);
-int		 dt_pcb_filter(struct dt_pcb *);
 
 struct dt_evt	*dt_pcb_ring_get(struct dt_pcb *, int);
 void		 dt_pcb_ring_consume(struct dt_pcb *, struct dt_evt *);

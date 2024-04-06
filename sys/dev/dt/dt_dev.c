@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.32 2024/02/29 00:18:48 cheloha Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.33 2024/04/06 11:18:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -348,30 +348,6 @@ dtlookup(int unit)
 }
 
 int
-dtioc_req_isvalid(struct dtioc_req *dtrq)
-{
-	switch (dtrq->dtrq_filter.dtf_operand) {
-	case DT_OP_NONE:
-	case DT_OP_EQ:
-	case DT_OP_NE:
-		break;
-	default:
-		return 0;
-	}
-
-	switch (dtrq->dtrq_filter.dtf_variable) {
-	case DT_FV_NONE:
-	case DT_FV_PID:
-	case DT_FV_TID:
-		break;
-	default:
-		return 0;
-	}
-
-	return 1;
-}
-
-int
 dt_ioctl_list_probes(struct dt_softc *sc, struct dtioc_probe *dtpr)
 {
 	struct dtioc_probe_info info, *dtpi;
@@ -552,9 +528,6 @@ dt_ioctl_probe_enable(struct dt_softc *sc, struct dtioc_req *dtrq)
 	struct dt_probe *dtp;
 	int error;
 
-	if (!dtioc_req_isvalid(dtrq))
-		return EINVAL;
-
 	SIMPLEQ_FOREACH(dtp, &dt_probe_list, dtp_next) {
 		if (dtp->dtp_pbn == dtrq->dtrq_pbn)
 			break;
@@ -581,9 +554,6 @@ dt_ioctl_probe_disable(struct dt_softc *sc, struct dtioc_req *dtrq)
 {
 	struct dt_probe *dtp;
 	int error;
-
-	if (!dtioc_req_isvalid(dtrq))
-		return EINVAL;
 
 	SIMPLEQ_FOREACH(dtp, &dt_probe_list, dtp_next) {
 		if (dtp->dtp_pbn == dtrq->dtrq_pbn)
@@ -711,48 +681,6 @@ dt_pcb_purge(struct dt_pcb_list *plist)
 	}
 }
 
-int
-dt_pcb_filter(struct dt_pcb *dp)
-{
-	struct dt_filter *dtf = &dp->dp_filter;
-	struct proc *p = curproc;
-	unsigned int var = 0;
-	int match = 1;
-
-	/* Filter out tracing program. */
-	if (dp->dp_sc->ds_pid == p->p_p->ps_pid)
-		return 1;
-
-	switch (dtf->dtf_variable) {
-	case DT_FV_PID:
-		var = p->p_p->ps_pid;
-		break;
-	case DT_FV_TID:
-		var = p->p_tid + THREAD_PID_OFFSET;
-		break;
-	case DT_FV_NONE:
-		break;
-	default:
-		KASSERT(0);
-	}
-
-	switch (dtf->dtf_operand) {
-	case DT_OP_EQ:
-		match = !!(var == dtf->dtf_value);
-		break;
-	case DT_OP_NE:
-		match = !!(var != dtf->dtf_value);
-		break;
-	case DT_OP_NONE:
-		break;
-	default:
-		KASSERT(0);
-	}
-
-	return !match;
-}
-
-
 /*
  * Get a reference to the next free event state from the ring.
  */
@@ -762,9 +690,6 @@ dt_pcb_ring_get(struct dt_pcb *dp, int profiling)
 	struct proc *p = curproc;
 	struct dt_evt *dtev;
 	int distance;
-
-	if (dt_pcb_filter(dp))
-		return NULL;
 
 	mtx_enter(&dp->dp_mtx);
 	distance = dp->dp_prod - dp->dp_cons;

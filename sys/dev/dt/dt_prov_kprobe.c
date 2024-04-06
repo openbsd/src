@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.7 2023/07/06 10:53:11 jasper Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.8 2024/04/06 11:18:02 mpi Exp $	*/
 
 /*
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
@@ -263,7 +263,6 @@ dt_prov_kprobe_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 		intr_restore(s);
 	}
 
-	dp->dp_filter = dtrq->dtrq_filter;
 	dp->dp_evtflags = dtrq->dtrq_evtflags & DTEVT_PROV_KPROBE;
 	TAILQ_INSERT_HEAD(plist, dp, dp_snext);
 	return 0;
