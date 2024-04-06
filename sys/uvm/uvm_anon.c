@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.57 2023/10/27 19:13:51 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.58 2024/04/06 10:59:52 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -260,7 +260,8 @@ uvm_anon_release(struct vm_anon *anon)
 	uvm_unlock_pageq();
 	KASSERT(anon->an_page == NULL);
 	lock = anon->an_lock;
-	uvm_anfree(anon);
+	uvm_anon_dropswap(anon);
+	pool_put(&uvm_anon_pool, anon);
 	rw_exit(lock);
 	/* Note: extra reference is held for PG_RELEASED case. */
 	rw_obj_free(lock);
