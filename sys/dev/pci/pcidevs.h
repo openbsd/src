@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2070 2024/03/30 11:12:20 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2071 2024/04/06 08:39:51 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5699,6 +5699,7 @@
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_3	0x462a		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_HX_HB_4	0x462b		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_S_PCIE_2	0x462d		/* Core 12G PCIE */
+#define	PCI_PRODUCT_INTEL_ADL_N_IPU	0x462e		/* ADL-N IPU */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_PCIE2	0x462f		/* Core 12G PCIE */
 #define	PCI_PRODUCT_INTEL_ADL_S_HB_5	0x4630		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_HX_HB_1	0x4637		/* Core 12G Host */
@@ -5712,15 +5713,18 @@
 #define	PCI_PRODUCT_INTEL_ADL_S_HB_3	0x4648		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_H_HB_1	0x4649		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_S_PCIE_3	0x464d		/* Core 12G PCIE */
+#define	PCI_PRODUCT_INTEL_ADL_N_XHCI_2	0x464e		/* ADL-N xHCI */
 #define	PCI_PRODUCT_INTEL_ADL_S_GNA	0x464f		/* Core 12G GNA */
 #define	PCI_PRODUCT_INTEL_ADL_S_HB_4	0x4650		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_IPU	0x465d		/* Core 12G IPU */
+#define	PCI_PRODUCT_INTEL_ADL_N_XDCI_2	0x465e		/* ADL-N xDCI */
 #define	PCI_PRODUCT_INTEL_ADL_S_HB_1	0x4660		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_S_HB_2	0x4668		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_DMA1	0x466d		/* Core 12G TBT */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_PCIE0	0x466e		/* Core 12G PCIE */
 #define	PCI_PRODUCT_INTEL_ADL_S_TH	0x466f		/* Core 12G TH */
 #define	PCI_PRODUCT_INTEL_ADL_S_CL	0x467d		/* Core 12G CL */
+#define	PCI_PRODUCT_INTEL_ADL_N_GNA	0x467e		/* ADL-N GNA */
 #define	PCI_PRODUCT_INTEL_ADL_S_VMD	0x467f		/* Core 12G VMD */
 #define	PCI_PRODUCT_INTEL_ADL_S_GT1_1	0x4680		/* UHD Graphics 770 */
 #define	PCI_PRODUCT_INTEL_ADL_S_GT1_2	0x4682		/* UHD Graphics 730 */
