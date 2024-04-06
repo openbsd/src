@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2023/11/24 16:41:12 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2024/04/06 18:33:54 kettenis Exp $
 #
 # Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
 # All rights reserved.
@@ -69,5 +69,4 @@ struct	riscv_bootparams
 member	RISCV_BOOTPARAMS_KERN_L1PT	kern_l1pt
 member	RISCV_BOOTPARAMS_KERN_PHYS	kern_phys
 member	RISCV_BOOTPARAMS_KERN_STACK	kern_stack
-member	RISCV_BOOTPARAMS_DTBP_VIRT	dtbp_virt
 member	RISCV_BOOTPARAMS_DTBP_PHYS	dtbp_phys

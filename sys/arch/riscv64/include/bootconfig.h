@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootconfig.h,v 1.4 2021/07/02 10:42:22 kettenis Exp $	*/
+/*	$OpenBSD: bootconfig.h,v 1.5 2024/04/06 18:33:54 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2015-2017 Ruslan Bukin <br@bsdpad.com>
@@ -41,7 +41,6 @@ struct riscv_bootparams {
 	vaddr_t		kern_l1pt;	/* L1 page table for the kernel */
 	paddr_t		kern_phys;
 	vaddr_t		kern_stack;
-	vaddr_t		dtbp_virt;	/* Device tree blob virtual addr */
 	paddr_t		dtbp_phys;	/* Device tree blob physical addr */
 };
 

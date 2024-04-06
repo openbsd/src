@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 2024/03/26 22:46:48 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 2024/04/06 18:33:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -543,15 +543,12 @@ void
 initriscv(struct riscv_bootparams *rbp)
 {
 	paddr_t memstart, memend;
-	paddr_t ramstart, ramend;
-	paddr_t start, end;
-	vaddr_t vstart;
-	void *config = (void *)rbp->dtbp_virt;
+	paddr_t startpa, endpa, pa;
+	vaddr_t vstart, va;
+	struct fdt_head *fh;
+	void *config = (void *)rbp->dtbp_phys;
 	void *fdt = NULL;
-	paddr_t fdt_start = (paddr_t)rbp->dtbp_phys;
-	size_t fdt_size;
 	struct fdt_reg reg;
-	const char *s;
 	void *node;
 	EFI_PHYSICAL_ADDRESS system_table = 0;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
@@ -561,9 +558,35 @@ initriscv(struct riscv_bootparams *rbp)
 	/* Set the per-CPU pointer. */
 	__asm volatile("mv tp, %0" :: "r"(&cpu_info_primary));
 
-	if (!fdt_init(config) || fdt_get_size(config) == 0)
-		panic("initriscv: no FDT");
-	fdt_size = fdt_get_size(config);
+	sbi_init();
+
+	/* The bootloader has loaded us into a 64MB block. */
+	memstart = rbp->kern_phys;
+	memend = memstart + 64 * 1024 * 1024;
+
+	/* Bootstrap enough of pmap to enter the kernel proper. */
+	vstart = pmap_bootstrap(rbp->kern_phys - KERNBASE, rbp->kern_l1pt,
+	    KERNBASE, esym, memstart, memend);
+
+	/* Map the FDT header to determine its size. */
+	va = vstart;
+	startpa = trunc_page((paddr_t)config);
+	endpa = round_page((paddr_t)config + sizeof(struct fdt_head));
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
+	fh = (void *)(vstart + ((paddr_t)config - startpa));
+	if (betoh32(fh->fh_magic) != FDT_MAGIC || betoh32(fh->fh_size) == 0)
+		panic("%s: no FDT", __func__);
+
+	/* Map the remainder of the FDT. */
+	endpa = round_page((paddr_t)config + betoh32(fh->fh_size));
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
+	config = (void *)(vstart + ((paddr_t)config - startpa));
+	vstart = va;
+
+	if (!fdt_init(config))
+		panic("%s: corrupt FDT", __func__);
 
 	node = fdt_find_node("/cpus");
 	if (node != NULL) {
@@ -643,51 +666,7 @@ initriscv(struct riscv_bootparams *rbp)
 		}
 	}
 
-	sbi_init();
-
 	process_kernel_args();
-
-	/*
-	 * Determine physical RAM address range from the /memory nodes
-	 * in the FDT.  There can be multiple nodes and each node can
-	 * contain multiple ranges.
-	 */
-	node = fdt_find_node("/memory");
-	if (node == NULL)
-		panic("%s: no memory specified", __func__);
-	ramstart = (paddr_t)-1, ramend = 0;
-	while (node) {
-		s = fdt_node_name(node);
-		if (strncmp(s, "memory", 6) == 0 &&
-		    (s[6] == '\0' || s[6] == '@')) {
-			for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-				if (fdt_get_reg(node, i, &reg))
-					break;
-				if (reg.size == 0)
-					continue;
-
-				start = reg.addr;
-				end = reg.addr + reg.size;
-
-				if (start < ramstart)
-					ramstart = start;
-				if (end > ramend)
-					ramend = end;
-
-				physmem += atop(reg.size);
-			}
-		}
-
-		node = fdt_next_node(node);
-	}
-
-	/* The bootloader has loaded us into a 64MB block. */
-	memstart = rbp->kern_phys;
-	memend = memstart + 64 * 1024 * 1024;
-
-	/* Bootstrap enough of pmap to enter the kernel proper. */
-	vstart = pmap_bootstrap(rbp->kern_phys - KERNBASE, rbp->kern_l1pt,
-	    KERNBASE, esym, memstart, memend, ramstart, ramend);
 
 	proc0paddr = (struct user *)rbp->kern_stack;
 
@@ -703,17 +682,16 @@ initriscv(struct riscv_bootparams *rbp)
 	vstart += MAXCPUS * PAGE_SIZE;
 
 	/* Relocate the FDT to safe memory. */
-	if (fdt_size != 0) {
-		uint32_t csize, size = round_page(fdt_size);
+	if (fdt_get_size(config) != 0) {
+		uint32_t csize, size = round_page(fdt_get_size(config));
 		paddr_t pa;
 		vaddr_t va;
 
 		pa = pmap_steal_avail(size, PAGE_SIZE, NULL);
-		memcpy((void *)PHYS_TO_DMAP(pa),
-		    (void *)PHYS_TO_DMAP(fdt_start), size);
+		memcpy((void *)PHYS_TO_DMAP(pa), config, size);
 		for (va = vstart, csize = size; csize > 0;
 		    csize -= PAGE_SIZE, va += PAGE_SIZE, pa += PAGE_SIZE)
-			pmap_kenter_pa(va, pa, PROT_READ);
+			pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
 
 		fdt = (void *)vstart;
 		vstart += size;
@@ -722,15 +700,22 @@ initriscv(struct riscv_bootparams *rbp)
 	/* Relocate the EFI memory map too. */
 	if (mmap_start != 0) {
 		uint32_t csize, size = round_page(mmap_size);
-		paddr_t pa;
+		paddr_t pa, startpa, endpa;
 		vaddr_t va;
 
+		startpa = trunc_page(mmap_start);
+		endpa = round_page(mmap_start + mmap_size);
+		for (pa = startpa, va = vstart; pa < endpa;
+		    pa += PAGE_SIZE, va += PAGE_SIZE)
+			pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
 		pa = pmap_steal_avail(size, PAGE_SIZE, NULL);
 		memcpy((void *)PHYS_TO_DMAP(pa),
-		    (void *)PHYS_TO_DMAP(mmap_start), size);
+		    (caddr_t)vstart + (mmap_start - startpa), mmap_size);
+		pmap_kremove(vstart, endpa - startpa);
+
 		for (va = vstart, csize = size; csize > 0;
 		    csize -= PAGE_SIZE, va += PAGE_SIZE, pa += PAGE_SIZE)
-			pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
+			pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 
 		mmap = (void *)vstart;
 		vstart += size;
@@ -822,6 +807,30 @@ initriscv(struct riscv_bootparams *rbp)
 
 		uvm_page_physload(atop(start), atop(end),
 		    atop(start), atop(end), 0);
+	}
+
+	/*
+	 * Determine physical RAM size from the /memory nodes in the
+	 * FDT.  There can be multiple nodes and each node can contain
+	 * multiple ranges.
+	 */
+	node = fdt_find_node("/memory");
+	if (node == NULL)
+		panic("%s: no memory specified", __func__);
+	while (node) {
+		const char *s = fdt_node_name(node);
+		if (strncmp(s, "memory", 6) == 0 &&
+		    (s[6] == '\0' || s[6] == '@')) {
+			for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+				if (fdt_get_reg(node, i, &reg))
+					break;
+				if (reg.size == 0)
+					continue;
+				physmem += atop(reg.size);
+			}
+		}
+
+		node = fdt_next_node(node);
 	}
 
 	kmeminit_nkmempages();

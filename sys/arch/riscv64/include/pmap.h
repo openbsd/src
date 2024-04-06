@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.11 2024/01/23 19:51:10 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.12 2024/04/06 18:33:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -94,8 +94,7 @@ extern struct pmap kernel_pmap_;
 
 vaddr_t pmap_bootstrap(long kvo, paddr_t lpt1,
 		vaddr_t kernelstart, vaddr_t kernelend,
-		paddr_t memstart, paddr_t memend,
-		paddr_t ramstart, paddr_t ramend);
+		paddr_t memstart, paddr_t memend);
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 void pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot);
 

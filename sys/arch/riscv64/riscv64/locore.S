@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2024/03/25 23:10:03 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.19 2024/04/06 18:33:54 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -42,8 +42,6 @@
 #include <machine/vmparam.h>
 #include <machine/riscvreg.h>
 #include <machine/pte.h>
-
-#define VM_EARLY_DTB_ADDRESS	(VM_MAX_KERNEL_ADDRESS - (2 * L2_SIZE))
 
 	.globl	kernbase
 	.set	kernbase, KERNBASE
@@ -105,42 +103,6 @@ _start_kern_bootstrap:
 	addi	t4, t4, 1
 	bltu	t4, t3, 1b
 
-	/* Create an L1 page for early devmap */
-	lla	s1, pagetable_l1
-	lla	s2, pagetable_l2_devmap	/* Link to next level PN */
-	srli	s2, s2, PAGE_SHIFT
-
-	li	a5, (VM_MAX_KERNEL_ADDRESS - L2_SIZE)
-	srli	a5, a5, L1_SHIFT	/* >> L1_SHIFT */
-	andi	a5, a5, 0x1ff		/* & 0x1ff */
-	li	t4, PTE_V
-	slli	t5, s2, PTE_PPN0_S	/* (s2 << PTE_PPN0_S) */
-	or	t6, t4, t5
-
-	/* Store single level1 PTE entry to position */
-	li	a6, PTE_SIZE
-	mulw	a5, a5, a6
-	add	t0, s1, a5
-	sd	t6, (t0)
-
-	/* Create an L2 page superpage for DTB */
-	lla	s1, pagetable_l2_devmap
-	mv	s2, a1
-	srli	s2, s2, PAGE_SHIFT
-	/* Mask off any bits that aren't aligned */
-	andi	s2, s2, ~((1 << (PTE_PPN1_S - PTE_PPN0_S)) - 1)
-
-	li	t0, (PTE_KERN)
-	slli	t2, s2, PTE_PPN0_S	/* << PTE_PPN0_S */
-	or	t0, t0, t2
-
-	/* Store PTE entry to position */
-	li	a6, PTE_SIZE
-	li	a5, 510
-	mulw	a5, a5, a6
-	add	t1, s1, a5
-	sd	t0, (t1)
-
 	/* Page tables END */
 
 	/* Setup supervisor trap vector */
@@ -198,16 +160,8 @@ va:
 	la	t0, pagetable_l1
 	sd	t0, RISCV_BOOTPARAMS_KERN_L1PT(sp)
 	sd	s9, RISCV_BOOTPARAMS_KERN_PHYS(sp)
-
 	la	t0, initstack
 	sd	t0, RISCV_BOOTPARAMS_KERN_STACK(sp)
-
-	li	t0, (VM_EARLY_DTB_ADDRESS)
-	/* Add offset of DTB within superpage */
-	li	t1, (L2_OFFSET)
-	and	t1, a1, t1
-	add	t0, t0, t1
-	sd	t0, RISCV_BOOTPARAMS_DTBP_VIRT(sp)
 	sd	a1, RISCV_BOOTPARAMS_DTBP_PHYS(sp)
 
 	/* Set esym to virtual address of symbol table end */
@@ -271,8 +225,6 @@ esym:
 pagetable_l1:
 	.space	PAGE_SIZE
 pagetable_l2:
-	.space	PAGE_SIZE
-pagetable_l2_devmap:
 	.space	PAGE_SIZE
 
 	.align 3
