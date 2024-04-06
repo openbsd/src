@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.141 2024/02/11 18:14:26 mvs Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.142 2024/04/06 14:23:27 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -430,8 +430,9 @@ mrt_rtwalk_mfcsysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 	}
 
 	for (minfo = msa->msa_minfos;
-	     (uint8_t *)minfo < ((uint8_t *)msa->msa_minfos + msa->msa_len);
-	     minfo++) {
+	    (uint8_t *)(minfo + 1) <=
+	    (uint8_t *)msa->msa_minfos + msa->msa_len;
+	    minfo++) {
 		/* Find a new entry or update old entry. */
 		if (minfo->mfc_origin.s_addr !=
 		    satosin(rt->rt_gateway)->sin_addr.s_addr ||
@@ -471,13 +472,11 @@ mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 	if (oldp != NULL && *oldlenp > MAXPHYS)
 		return (EINVAL);
 
-	if (oldp != NULL)
+	memset(&msa, 0, sizeof(msa));
+	if (oldp != NULL && *oldlenp > 0) {
 		msa.msa_minfos = malloc(*oldlenp, M_TEMP, M_WAITOK | M_ZERO);
-	else
-		msa.msa_minfos = NULL;
-
-	msa.msa_len = *oldlenp;
-	msa.msa_needed = 0;
+		msa.msa_len = *oldlenp;
+	}
 
 	for (rtableid = 0; rtableid <= RT_TABLEID_MAX; rtableid++) {
 		rtable_walk(rtableid, AF_INET, NULL, mrt_rtwalk_mfcsysctl,
@@ -486,11 +485,11 @@ mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 
 	if (msa.msa_minfos != NULL && msa.msa_needed > 0 &&
 	    (error = copyout(msa.msa_minfos, oldp, msa.msa_needed)) != 0) {
-		free(msa.msa_minfos, M_TEMP, *oldlenp);
+		free(msa.msa_minfos, M_TEMP, msa.msa_len);
 		return (error);
 	}
 
-	free(msa.msa_minfos, M_TEMP, *oldlenp);
+	free(msa.msa_minfos, M_TEMP, msa.msa_len);
 	*oldlenp = msa.msa_needed;
 
 	return (0);

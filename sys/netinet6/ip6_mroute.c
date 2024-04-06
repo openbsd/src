@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.140 2024/02/11 18:14:27 mvs Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.141 2024/04/06 14:23:27 bluhm Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -406,8 +406,9 @@ mrt6_rtwalk_mf6csysctl(struct rtentry *rt, void *arg, unsigned int rtableid)
 	}
 
 	for (minfo = msa->ms6a_minfos;
-	     (uint8_t *)minfo < ((uint8_t *)msa->ms6a_minfos + msa->ms6a_len);
-	     minfo++) {
+	    (uint8_t *)(minfo + 1) <=
+	    (uint8_t *)msa->ms6a_minfos + msa->ms6a_len;
+	    minfo++) {
 		/* Find a new entry or update old entry. */
 		if (!IN6_ARE_ADDR_EQUAL(&minfo->mf6c_origin.sin6_addr,
 		    &satosin6(rt->rt_gateway)->sin6_addr) ||
@@ -449,13 +450,11 @@ mrt6_sysctl_mfc(void *oldp, size_t *oldlenp)
 	if (oldp != NULL && *oldlenp > MAXPHYS)
 		return EINVAL;
 
-	if (oldp != NULL)
+	memset(&msa, 0, sizeof(msa));
+	if (oldp != NULL && *oldlenp > 0) {
 		msa.ms6a_minfos = malloc(*oldlenp, M_TEMP, M_WAITOK | M_ZERO);
-	else
-		msa.ms6a_minfos = NULL;
-
-	msa.ms6a_len = *oldlenp;
-	msa.ms6a_needed = 0;
+		msa.ms6a_len = *oldlenp;
+	}
 
 	for (rtableid = 0; rtableid <= RT_TABLEID_MAX; rtableid++) {
 		rtable_walk(rtableid, AF_INET6, NULL, mrt6_rtwalk_mf6csysctl,
@@ -464,11 +463,11 @@ mrt6_sysctl_mfc(void *oldp, size_t *oldlenp)
 
 	if (msa.ms6a_minfos != NULL && msa.ms6a_needed > 0 &&
 	    (error = copyout(msa.ms6a_minfos, oldp, msa.ms6a_needed)) != 0) {
-		free(msa.ms6a_minfos, M_TEMP, *oldlenp);
+		free(msa.ms6a_minfos, M_TEMP, msa.ms6a_len);
 		return error;
 	}
 
-	free(msa.ms6a_minfos, M_TEMP, *oldlenp);
+	free(msa.ms6a_minfos, M_TEMP, msa.ms6a_len);
 	*oldlenp = msa.ms6a_needed;
 
 	return 0;
