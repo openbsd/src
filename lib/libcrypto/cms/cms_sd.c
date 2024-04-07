@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.31 2024/03/29 06:41:58 tb Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.32 2024/04/07 06:34:42 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -1008,36 +1008,55 @@ CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs)
 }
 LCRYPTO_ALIAS(CMS_add_smimecap);
 
+/*
+ * Add AlgorithmIdentifier OID of type |nid| to the SMIMECapability attribute
+ * set |*out_algs| (see RFC 3851, section 2.5.2). If keysize > 0, the OID has
+ * an integer parameter of value |keysize|, otherwise parameters are omitted.
+ */
 int
-CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs, int algnid, int keysize)
+CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **out_algs, int nid, int keysize)
 {
-	X509_ALGOR *alg;
-	ASN1_INTEGER *key = NULL;
+	STACK_OF(X509_ALGOR) *algs;
+	X509_ALGOR *alg = NULL;
+	ASN1_INTEGER *parameter = NULL;
+	int parameter_type = V_ASN1_UNDEF;
+	int ret = 0;
+
+	if ((algs = *out_algs) == NULL)
+		algs = sk_X509_ALGOR_new_null();
+	if (algs == NULL)
+		goto err;
 
 	if (keysize > 0) {
-		if ((key = ASN1_INTEGER_new()) == NULL)
-			return 0;
-		if (!ASN1_INTEGER_set(key, keysize)) {
-			ASN1_INTEGER_free(key);
-			return 0;
-		}
-	}
-	alg = X509_ALGOR_new();
-	if (alg == NULL) {
-		ASN1_INTEGER_free(key);
-		return 0;
+		if ((parameter = ASN1_INTEGER_new()) == NULL)
+			goto err;
+		if (!ASN1_INTEGER_set(parameter, keysize))
+			goto err;
+		parameter_type = V_ASN1_INTEGER;
 	}
 
-	X509_ALGOR_set0(alg, OBJ_nid2obj(algnid),
-	    key ? V_ASN1_INTEGER : V_ASN1_UNDEF, key);
-	if (*algs == NULL)
-		*algs = sk_X509_ALGOR_new_null();
-	if (*algs == NULL || !sk_X509_ALGOR_push(*algs, alg)) {
-		X509_ALGOR_free(alg);
-		return 0;
-	}
+	if ((alg = X509_ALGOR_new()) == NULL)
+		goto err;
+	if (!X509_ALGOR_set0_by_nid(alg, nid, parameter_type, parameter))
+		goto err;
+	parameter = NULL;
 
-	return 1;
+	if (sk_X509_ALGOR_push(algs, alg) <= 0)
+		goto err;
+	alg = NULL;
+
+	*out_algs = algs;
+	algs = NULL;
+
+	ret = 1;
+
+ err:
+	if (algs != *out_algs)
+		sk_X509_ALGOR_pop_free(algs, X509_ALGOR_free);
+	X509_ALGOR_free(alg);
+	ASN1_INTEGER_free(parameter);
+
+	return ret;
 }
 LCRYPTO_ALIAS(CMS_add_simple_smimecap);
 
