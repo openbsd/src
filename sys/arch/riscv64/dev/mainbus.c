@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.8 2021/06/20 16:51:37 deraadt Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.9 2024/04/07 21:08:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -64,7 +64,7 @@ struct cfdriver mainbus_cd = {
 
 struct machine_bus_dma_tag mainbus_dma_tag = {
 	NULL,
-	0,
+	BUS_DMA_COHERENT,
 	_dmamap_create,
 	_dmamap_destroy,
 	_dmamap_load,
@@ -244,6 +244,18 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 		fa.fa_nintr = len / sizeof(uint32_t);
 
 		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
+	}
+
+	if (OF_getproplen(node, "dma-noncoherent") >= 0) {
+		fa.fa_dmat = malloc(sizeof(*sc->sc_dmat),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		memcpy(fa.fa_dmat, sc->sc_dmat, sizeof(*sc->sc_dmat));
+		fa.fa_dmat->_flags &= ~BUS_DMA_COHERENT;
+	} else if (OF_getproplen(node, "dma-coherent") >= 0) {
+		fa.fa_dmat = malloc(sizeof(*sc->sc_dmat),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		memcpy(fa.fa_dmat, sc->sc_dmat, sizeof(*sc->sc_dmat));
+		fa.fa_dmat->_flags |= BUS_DMA_COHERENT;
 	}
 
 	if (submatch == NULL && sc->sc_early == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplebus.c,v 1.6 2023/09/22 01:10:44 jsg Exp $	*/
+/*	$OpenBSD: simplebus.c,v 1.7 2024/04/07 21:08:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -226,7 +226,12 @@ simplebus_attach_node(struct device *self, int node)
 		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
 	}
 
-	if (OF_getproplen(node, "dma-coherent") >= 0) {
+	if (OF_getproplen(node, "dma-noncoherent") >= 0) {
+		fa.fa_dmat = malloc(sizeof(sc->sc_dma),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		memcpy(fa.fa_dmat, &sc->sc_dma, sizeof(sc->sc_dma));
+		fa.fa_dmat->_flags &= ~BUS_DMA_COHERENT;
+	} else if (OF_getproplen(node, "dma-coherent") >= 0) {
 		fa.fa_dmat = malloc(sizeof(sc->sc_dma),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
 		memcpy(fa.fa_dmat, &sc->sc_dma, sizeof(sc->sc_dma));
