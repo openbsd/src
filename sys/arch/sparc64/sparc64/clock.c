@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.86 2024/03/29 21:29:34 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.87 2024/04/08 20:05:51 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -470,21 +470,8 @@ myetheraddr(u_char *cp)
 void
 cpu_initclocks(void)
 {
-#ifdef DEBUG
-	extern int intrdebug;
-#endif
 	u_int sys_tick_rate;
 	int impl = 0;
-
-#ifdef DEBUG
-	/* Set a 1s clock */
-	if (intrdebug) {
-		hz = 1;
-		tick = 1000000 / hz;
-		tick_nsec = 1000000000 / hz;
-		printf("intrdebug set: 1Hz clock\n");
-	}
-#endif
 
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
