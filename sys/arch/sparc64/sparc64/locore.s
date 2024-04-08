@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.216 2024/04/08 20:00:27 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.217 2024/04/08 20:02:18 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1483,6 +1483,64 @@ panic_red:
 	.endm
 
 /*
+ * Perform an inline pseg_get(), to retrieve the address of the PTE associated
+ * to the given virtual address.
+ * On entry: %g3 = va (won't be modified)
+ * Registers used: %g4, %g5, %g6
+ * Branches to the "failure" label if translation invalid, otherwise ends
+ * with the pte address in %g6.
+ */
+	.macro	PTE_GET failure
+	sethi	%hi(0x1fff), %g6		! 8K context mask
+	sethi	%hi(ctxbusy), %g4
+	or	%g6, %lo(0x1fff), %g6
+	ldx	[%g4 + %lo(ctxbusy)], %g4
+	srax	%g3, HOLESHIFT, %g5		! Check for valid address
+	and	%g3, %g6, %g6			! Isolate context
+	inc	%g5				! (0 or -1) -> (1 or 0)
+	sllx	%g6, 3, %g6			! Make it into an offset into ctxbusy
+	ldx	[%g4+%g6], %g4			! Load up our page table.
+	srlx	%g3, STSHIFT, %g6
+	cmp	%g5, 1
+	bgu,pn %xcc, \failure			! Error!
+	 srlx	%g3, PDSHIFT, %g5
+	and	%g6, STMASK, %g6
+	sll	%g6, 3, %g6
+	and	%g5, PDMASK, %g5
+	sll	%g5, 3, %g5
+	add	%g6, %g4, %g4
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	srlx	%g3, PTSHIFT, %g6		! Convert to ptab offset
+	add	%g5, %g4, %g5
+	brz,pn	%g4, \failure			! NULL entry? check somewhere else
+	 and	%g6, PTMASK, %g6
+	ldxa	[%g5] ASI_PHYS_CACHED, %g4
+	sll	%g6, 3, %g6
+	brz,pn	%g4, \failure			! NULL entry? check somewhere else
+	 add	%g6, %g4, %g6
+	.endm
+
+/*
+ * Make sure the TSB get locked for MULTIPROCESSOR kernels.
+ * On entry: %g2 = TSB pointer
+ * Registers used: %g5, %g6
+ */
+	.macro	LOCK_TSB
+#ifdef MULTIPROCESSOR
+97:
+	ld	[%g2], %g6
+	btst	(TSB_TAG_LOCKED >> 32), %g6
+	bnz,pn	%icc, 97b			! Wait until bit is clear
+	 or	%g6, (TSB_TAG_LOCKED >> 32), %g5
+	casa	[%g2] ASI_NUCLEUS, %g6, %g5
+	cmp	%g6, %g5
+	bne,pn	%icc, 97b			! Wait until we can set it
+	 nop
+	membar  #StoreStore
+#endif
+	.endm
+
+/*
  * This is the MMU protection handler.  It's too big to fit
  * in the trap table so I moved it here.  It's relatively simple.
  * It looks up the page mapping in the page table associated with
@@ -1494,38 +1552,8 @@ panic_red:
 	ICACHE_ALIGN
 dmmu_write_fault:
 	mov	TLB_TAG_ACCESS, %g3
-	sethi	%hi(0x1fff), %g6			! 8K context mask
 	ldxa	[%g3] ASI_DMMU, %g3			! Get fault addr from Tag Target
-	sethi	%hi(ctxbusy), %g4
-	or	%g6, %lo(0x1fff), %g6
-	ldx	[%g4 + %lo(ctxbusy)], %g4
-	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	and	%g3, %g6, %g6				! Isolate context
-	
-	inc	%g5					! (0 or -1) -> (1 or 0)
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	ldx	[%g4+%g6], %g4				! Load up our page table.
-	srlx	%g3, STSHIFT, %g6
-	cmp	%g5, 1
-	bgu,pn %xcc, winfix				! Error!
-	 srlx	%g3, PDSHIFT, %g5
-	and	%g6, STMASK, %g6
-	sll	%g6, 3, %g6
-	
-	and	%g5, PDMASK, %g5
-	sll	%g5, 3, %g5
-	add	%g6, %g4, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4
-	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
-	and	%g6, PTMASK, %g6
-	add	%g5, %g4, %g5
-	brz,pn	%g4, winfix				! NULL entry? check somewhere else
-	
-	 nop	
-	ldxa	[%g5] ASI_PHYS_CACHED, %g4
-	sll	%g6, 3, %g6
-	brz,pn	%g4, winfix				! NULL entry? check somewhere else
-	 add	%g6, %g4, %g6
+	PTE_GET winfix
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
@@ -1534,19 +1562,6 @@ dmmu_write_fault:
 	
 	btst	SUN4U_TLB_REAL_W|SUN4U_TLB_W, %g4	! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
-#ifdef DEBUG
-	/* Make sure we don't try to replace a kernel translation */
-	/* This should not be necessary */
-	sllx	%g3, 64-13, %g2				! Isolate context bits
-	sethi	%hi(KERNBASE), %g5			! Don't need %lo
-	brnz,pt	%g2, 0f					! Ignore context != 0
-	 set	0x0800000, %g2				! 8MB
-	sub	%g3, %g5, %g5
-	cmp	%g5, %g2
-	tlu	%xcc, 1; nop
-	blu,pn	%xcc, winfix				! Next instruction in delay slot is unimportant
-0:
-#endif	/* DEBUG */
 	/* Need to check for and handle large pages. */
 	 srlx	%g4, 61, %g5				! Isolate the size bits
 	ldxa	[%g0] ASI_DMMU_8KPTR, %g2		! Load DMMU 8K TSB pointer
@@ -1561,18 +1576,7 @@ dmmu_write_fault:
 	 or	%g4, SUN4U_TLB_MODIFY|SUN4U_TLB_ACCESS|SUN4U_TLB_W, %g4
 		! Update the modified bit
 
-1:
-#ifdef MULTIPROCESSOR
-	ld	[%g2], %g6
-	btst	(TSB_TAG_LOCKED >> 32), %g6
-	bnz,pn	%icc, 1b
-	 or	%g6, (TSB_TAG_LOCKED >> 32), %g5
-	casa	[%g2] ASI_NUCLEUS, %g6, %g5
-	cmp	%g6, %g5
-	bne,pn	%icc, 1b
-	 nop
-	membar  #StoreStore
-#endif
+	LOCK_TSB
 	stx	%g4, [%g2 + 8]				! Update TSB entry data
 	mov	SFSR, %g7
 	stx	%g1, [%g2]				! Update TSB entry tag
@@ -1619,55 +1623,8 @@ dmmu_write_fault:
 	ICACHE_ALIGN
 data_miss:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
-	sethi	%hi(0x1fff), %g6			! 8K context mask
 	ldxa	[%g3] ASI_DMMU, %g3			! from tag access register
-	sethi	%hi(ctxbusy), %g4
-	or	%g6, %lo(0x1fff), %g6
-	ldx	[%g4 + %lo(ctxbusy)], %g4
-	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	and	%g3, %g6, %g6				! Isolate context
-	
-	inc	%g5					! (0 or -1) -> (1 or 0)
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	ldx	[%g4+%g6], %g4				! Load up our page table.
-#ifdef DEBUG
-	/* Make sure we don't try to replace a kernel translation */
-	/* This should not be necessary */
-	brnz,pt	%g6, 1f			! If user context continue miss
-	sethi	%hi(KERNBASE), %g7			! Don't need %lo
-	set	0x0800000, %g6				! 8MB
-	sub	%g3, %g7, %g7
-	cmp	%g7, %g6
-	sethi	%hi(DATA_START), %g7
-	mov	6, %g6		! debug
-	stb	%g6, [%g7+0x20]	! debug
-	tlu	%xcc, 1; nop
-	blu,pn	%xcc, data_nfo				! Next instruction in delay slot is unimportant
-	 mov	7, %g6		! debug
-	stb	%g6, [%g7+0x20]	! debug
-1:	
-#endif	/* DEBUG */
-	srlx	%g3, STSHIFT, %g6
-	cmp	%g5, 1
-	bgu,pn %xcc, data_nfo				! Error!
-	 srlx	%g3, PDSHIFT, %g5
-	and	%g6, STMASK, %g6
-	
-	sll	%g6, 3, %g6
-	and	%g5, PDMASK, %g5
-	sll	%g5, 3, %g5
-	add	%g6, %g4, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4
-	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
-	and	%g6, PTMASK, %g6
-	add	%g5, %g4, %g5
-	brz,pn	%g4, data_nfo				! NULL entry? check somewhere else
-	
-	 nop
-	ldxa	[%g5] ASI_PHYS_CACHED, %g4
-	sll	%g6, 3, %g6
-	brz,pn	%g4, data_nfo				! NULL entry? check somewhere else
-	 add	%g6, %g4, %g6
+	PTE_GET	data_nfo
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, data_nfo				! Entry invalid?  Punt
@@ -1684,19 +1641,8 @@ data_miss:
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
 	 or	%g4, SUN4U_TLB_ACCESS, %g4		! Update the modified bit
-
 1:
-#ifdef MULTIPROCESSOR
-	ld	[%g2], %g6
-	btst	(TSB_TAG_LOCKED >> 32), %g6
-	bnz,pn	%icc, 1b
-	 or	%g6, (TSB_TAG_LOCKED >> 32), %g5
-	casa	[%g2] ASI_NUCLEUS, %g6, %g5
-	cmp	%g6, %g5
-	bne,pn	%icc, 1b
-	 nop
-	membar  #StoreStore
-#endif
+	LOCK_TSB
 	stx	%g4, [%g2 + 8]				! Update TSB entry data
 	stx	%g1, [%g2]				! Update TSB entry tag
 
@@ -2287,56 +2233,8 @@ data_error:
 	ICACHE_ALIGN
 instr_miss:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
-	sethi	%hi(0x1fff), %g7			! 8K context mask
 	ldxa	[%g3] ASI_IMMU, %g3			! from tag access register
-	sethi	%hi(ctxbusy), %g4
-	or	%g7, %lo(0x1fff), %g7
-	ldx	[%g4 + %lo(ctxbusy)], %g4
-	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	and	%g3, %g7, %g6				! Isolate context
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	inc	%g5					! (0 or -1) -> (1 or 0)
-	
-	ldx	[%g4+%g6], %g4				! Load up our page table.
-#ifdef DEBUG
-	/* Make sure we don't try to replace a kernel translation */
-	/* This should not be necessary */
-	brnz,pt	%g6, 1f					! If user context continue miss
-	sethi	%hi(KERNBASE), %g7			! Don't need %lo
-	set	0x0800000, %g6				! 8MB
-	sub	%g3, %g7, %g7
-	cmp	%g7, %g6
-	mov	6, %g6		! debug
-	sethi	%hi(DATA_START), %g7
-	stb	%g6, [%g7+0x30]	! debug
-	tlu	%xcc, 1; nop
-	blu,pn	%xcc, textfault				! Next instruction in delay slot is unimportant
-	 mov	7, %g6		! debug
-	stb	%g6, [%g7+0x30]	! debug
-1:	
-#endif	/* DEBUG */
-	srlx	%g3, STSHIFT, %g6
-	cmp	%g5, 1
-	bgu,pn %xcc, textfault				! Error!
-	 srlx	%g3, PDSHIFT, %g5
-	and	%g6, STMASK, %g6
-	sll	%g6, 3, %g6
-	and	%g5, PDMASK, %g5
-	nop
-
-	sll	%g5, 3, %g5
-	add	%g6, %g4, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4
-	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
-	and	%g6, PTMASK, %g6
-	add	%g5, %g4, %g5
-	brz,pn	%g4, textfault				! NULL entry? check somewhere else
-	 nop
-	
-	ldxa	[%g5] ASI_PHYS_CACHED, %g4
-	sll	%g6, 3, %g6
-	brz,pn	%g4, textfault				! NULL entry? check somewhere else
-	 add	%g6, %g4, %g6		
+	PTE_GET	textfault
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, textfault
@@ -2347,7 +2245,6 @@ instr_miss:
 	bz,pn	%xcc, textfault
 	 nop
 
-
 	or	%g4, SUN4U_TLB_ACCESS, %g7		! Update accessed bit
 	btst	SUN4U_TLB_ACCESS, %g4			! Need to update access bit?
 	bne,pt	%xcc, 1f
@@ -2356,19 +2253,8 @@ instr_miss:
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
 	 or	%g4, SUN4U_TLB_ACCESS, %g4		! Update accessed bit
-
 1:
-#ifdef MULTIPROCESSOR
-	ld	[%g2], %g6
-	btst	(TSB_TAG_LOCKED >> 32), %g6
-	bnz,pn	%icc, 1b
-	 or	%g6, (TSB_TAG_LOCKED >> 32), %g5
-	casa	[%g2] ASI_NUCLEUS, %g6, %g5
-	cmp	%g6, %g5
-	bne,pn	%icc, 1b
-	 nop
-	membar	#StoreStore
-#endif
+	LOCK_TSB
 	stx	%g4, [%g2 + 8]				! Update TSB entry data
 	stx	%g1, [%g2]				! Update TSB entry tag
 #ifdef DEBUG
@@ -2498,6 +2384,43 @@ text_error:
 #ifdef SUN4V
 
 /*
+ * Perform an inline pseg_get(), to retrieve the pte associated to the given
+ * virtual address.
+ * On entry: %g3 = va (won't be modified), %g6 = context
+ * Registers used: %g4,%g5, %g6
+ * Branches to the "failure" label if translation invalid, otherwise ends
+ * with the pte address in %g6.
+ */
+	.macro	PTE_GET_SUN4V	failure
+	sethi	%hi(ctxbusy), %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
+	sllx	%g6, 3, %g6			! Make it into an offset into ctxbusy
+	ldx	[%g4+%g6], %g4			! Load up our page table.
+
+	srax	%g3, HOLESHIFT, %g5		! Check for valid address
+	brz,pt	%g5, 0f				! Should be zero or -1
+	 inc	%g5				! (0 or -1) -> (1 or 0)
+	brnz,pn	%g5, \failure			! Error! In hole!
+0:
+	srlx	%g3, STSHIFT, %g6
+	and	%g6, STMASK, %g6		! Index into pm_segs
+	sll	%g6, 3, %g6
+	add	%g4, %g6, %g4
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4	! Load page directory pointer
+	srlx	%g3, PDSHIFT, %g6
+	and	%g6, PDMASK, %g6
+	sll	%g6, 3, %g6
+	brz,pn	%g4, \failure			! NULL entry? check somewhere else
+	 add	%g4, %g6, %g4
+	ldxa	[%g4] ASI_PHYS_CACHED, %g4	! Load page table pointer
+	srlx	%g3, PTSHIFT, %g6		! Convert to ptab offset
+	and	%g6, PTMASK, %g6
+	sll	%g6, 3, %g6
+	brz,pn	%g4, \failure			! NULL entry? check somewhere else
+	 add	%g4, %g6, %g6
+	.endm
+
+/*
  * Traps for sun4v.
  */
 
@@ -2507,35 +2430,7 @@ sun4v_tl1_dtsb_miss:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x50, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(ctxbusy), %g4
-	ldx	[%g4 + %lo(ctxbusy)], %g4
-
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	ldx	[%g4 + %g6], %g4			! Load up our page table.
-
-	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	brz,pt	%g5, 0f					! Should be zero or -1
-	 inc	%g5					! Make -1 -> 0
-	brnz,pn	%g5, sun4v_tl1_ptbl_miss		! Error! In hole!
-0:
-	srlx	%g3, STSHIFT, %g6
-	and	%g6, STMASK, %g6			! Index into pm_segs
-	sll	%g6, 3, %g6
-	add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page directory pointer
-
-	srlx	%g3, PDSHIFT, %g6
-	and	%g6, PDMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_tl1_ptbl_miss		! NULL entry? check somewhere else
-	 add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page table pointer
-
-	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
-	and	%g6, PTMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_tl1_ptbl_miss		! NULL entry? check somewhere else
-	 add	%g4, %g6, %g6
+	PTE_GET_SUN4V sun4v_tl1_ptbl_miss
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, sun4v_tl1_ptbl_miss		! Entry invalid?  Punt
@@ -2571,16 +2466,7 @@ sun4v_tl1_dtsb_miss:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-3:
-	ld	[%g2], %g3
-	btst	(TSB_TAG_LOCKED >> 32), %g3
-	bnz,pn	%icc, 3b
-	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
-	casa	[%g2] ASI_NUCLEUS, %g3, %g5
-	cmp	%g3, %g5
-	bne,pn	%icc, 3b
-	 nop
-	membar	#StoreStore
+	LOCK_TSB
 	stx	%g4, [%g2 + 8]
 	stx	%g1, [%g2]		! unlock
 
@@ -2593,35 +2479,7 @@ sun4v_tl1_dtsb_prot:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x50, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(ctxbusy), %g4
-	ldx	[%g4 + %lo(ctxbusy)], %g4
-
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	ldx	[%g4 + %g6], %g4			! Load up our page table.
-
-	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	brz,pt	%g5, 0f					! Should be zero or -1
-	 inc	%g5					! Make -1 -> 0
-	brnz,pn	%g5, sun4v_tl1_ptbl_miss		! Error! In hole!
-0:
-	srlx	%g3, STSHIFT, %g6
-	and	%g6, STMASK, %g6			! Index into pm_segs
-	sll	%g6, 3, %g6
-	add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page directory pointer
-
-	srlx	%g3, PDSHIFT, %g6
-	and	%g6, PDMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_tl1_ptbl_miss		! NULL entry? check somewhere else
-	 add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page table pointer
-
-	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
-	and	%g6, PTMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_tl1_ptbl_miss		! NULL entry? check somewhere else
-	 add	%g4, %g6, %g6
+	PTE_GET_SUN4V sun4v_tl1_ptbl_miss
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, sun4v_tl1_ptbl_miss		! Entry invalid?  Punt
@@ -2663,16 +2521,7 @@ sun4v_tl1_dtsb_prot:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-3:
-	ld	[%g2], %g3
-	btst	(TSB_TAG_LOCKED >> 32), %g3
-	bnz,pn	%icc, 3b
-	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
-	casa	[%g2] ASI_NUCLEUS, %g3, %g5
-	cmp	%g3, %g5
-	bne,pn	%icc, 3b
-	 nop
-	membar	#StoreStore
+	LOCK_TSB
 	stx	%g4, [%g2 + 8]
 	stx	%g1, [%g2]		! unlock
 
@@ -2789,35 +2638,7 @@ sun4v_tl0_dtsb_miss:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x50, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(ctxbusy), %g4
-	ldx	[%g4 + %lo(ctxbusy)], %g4
-
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	ldx	[%g4 + %g6], %g4			! Load up our page table.
-
-	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	brz,pt	%g5, 0f					! Should be zero or -1
-	 inc	%g5					! Make -1 -> 0
-	brnz,pn	%g5, sun4v_datatrap			! Error! In hole!
-0:
-	srlx	%g3, STSHIFT, %g6
-	and	%g6, STMASK, %g6			! Index into pm_segs
-	sll	%g6, 3, %g6
-	add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page directory pointer
-
-	srlx	%g3, PDSHIFT, %g6
-	and	%g6, PDMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_datatrap			! NULL entry? check somewhere else
-	 add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page table pointer
-
-	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
-	and	%g6, PTMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_datatrap			! NULL entry? check somewhere else
-	 add	%g4, %g6, %g6
+	PTE_GET_SUN4V sun4v_datatrap
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, sun4v_datatrap			! Entry invalid?  Punt
@@ -2853,16 +2674,7 @@ sun4v_tl0_dtsb_miss:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-3:
-	ld	[%g2], %g3
-	btst	(TSB_TAG_LOCKED >> 32), %g3
-	bnz,pn	%icc, 3b
-	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
-	casa	[%g2] ASI_NUCLEUS, %g3, %g5
-	cmp	%g3, %g5
-	bne,pn	%icc, 3b
-	 nop
-	membar	#StoreStore
+	LOCK_TSB
 	stx	%g4, [%g2 + 8]
 	stx	%g1, [%g2]		! unlock
 
@@ -2875,35 +2687,7 @@ sun4v_tl0_dtsb_prot:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x50, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(ctxbusy), %g4
-	ldx	[%g4 + %lo(ctxbusy)], %g4
-
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	ldx	[%g4 + %g6], %g4			! Load up our page table.
-
-	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	brz,pt	%g5, 0f					! Should be zero or -1
-	 inc	%g5					! Make -1 -> 0
-	brnz,pn	%g5, sun4v_datatrap			! Error! In hole!
-0:
-	srlx	%g3, STSHIFT, %g6
-	and	%g6, STMASK, %g6			! Index into pm_segs
-	sll	%g6, 3, %g6
-	add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page directory pointer
-
-	srlx	%g3, PDSHIFT, %g6
-	and	%g6, PDMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_datatrap			! NULL entry? check somewhere else
-	 add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page table pointer
-
-	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
-	and	%g6, PTMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_datatrap			! NULL entry? check somewhere else
-	 add	%g4, %g6, %g6
+	PTE_GET_SUN4V sun4v_datatrap
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, sun4v_datatrap			! Entry invalid?  Punt
@@ -2945,16 +2729,7 @@ sun4v_tl0_dtsb_prot:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-3:
-	ld	[%g2], %g3
-	btst	(TSB_TAG_LOCKED >> 32), %g3
-	bnz,pn	%icc, 3b
-	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
-	casa	[%g2] ASI_NUCLEUS, %g3, %g5
-	cmp	%g3, %g5
-	bne,pn	%icc, 3b
-	 nop
-	membar	#StoreStore
+	LOCK_TSB
 	stx	%g4, [%g2 + 8]
 	stx	%g1, [%g2]		! unlock
 
@@ -2984,35 +2759,7 @@ sun4v_tl0_itsb_miss:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x10, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(ctxbusy), %g4
-	ldx	[%g4 + %lo(ctxbusy)], %g4
-
-	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
-	ldx	[%g4 + %g6], %g4			! Load up our page table.
-
-	srax	%g3, HOLESHIFT, %g5			! Check for valid address
-	brz,pt	%g5, 0f					! Should be zero or -1
-	 inc	%g5					! Make -1 -> 0
-	brnz,pn	%g5, sun4v_texttrap			! Error! In hole!
-0:
-	srlx	%g3, STSHIFT, %g6
-	and	%g6, STMASK, %g6			! Index into pm_segs
-	sll	%g6, 3, %g6
-	add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page directory pointer
-
-	srlx	%g3, PDSHIFT, %g6
-	and	%g6, PDMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_texttrap			! NULL entry? check somewhere else
-	 add	%g4, %g6, %g4
-	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Load page table pointer
-
-	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
-	and	%g6, PTMASK, %g6
-	sll	%g6, 3, %g6
-	brz,pn	%g4, sun4v_texttrap			! NULL entry? check somewhere else
-	 add	%g4, %g6, %g6
+	PTE_GET_SUN4V sun4v_texttrap
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, sun4v_texttrap			! Entry invalid?  Punt
@@ -3051,16 +2798,7 @@ sun4v_tl0_itsb_miss:
 	sllx	%g3, 4, %g3
 	add	%g2, %g3, %g2
 
-3:
-	ld	[%g2], %g3
-	btst	(TSB_TAG_LOCKED >> 32), %g3
-	bnz,pn	%icc, 3b
-	 or	%g3, (TSB_TAG_LOCKED >> 32), %g5
-	casa	[%g2] ASI_NUCLEUS, %g3, %g5
-	cmp	%g3, %g5
-	bne,pn	%icc, 3b
-	 nop
-	membar	#StoreStore
+	LOCK_TSB
 	stx	%g4, [%g2 + 8]
 	stx	%g1, [%g2]		! unlock
 
@@ -3112,6 +2850,53 @@ pcbspill:
 	retry
 	NOTREACHED
 
+	/*
+	 * Copy the trap-time register window to the stack, if needed,
+	 * and reset ci_rwsp afterwards.
+	 * On entry: %g7 is curcpu
+	 * Registers used: %g2 and all locals
+	 */
+	.macro	SUN4V_PUSH_RWINDOW
+	ldx	[%g7 + CI_RWSP], %g2
+	brz,pt	%g2, 98f
+	 nop
+
+	ldx	[%g7 + CI_RW + (0*8)], %l0
+	ldx	[%g7 + CI_RW + (1*8)], %l1
+	ldx	[%g7 + CI_RW + (2*8)], %l2
+	ldx	[%g7 + CI_RW + (3*8)], %l3
+	ldx	[%g7 + CI_RW + (4*8)], %l4
+	ldx	[%g7 + CI_RW + (5*8)], %l5
+	ldx	[%g7 + CI_RW + (6*8)], %l6
+	ldx	[%g7 + CI_RW + (7*8)], %l7
+	stx	%l0, [%g2 + BIAS + (0*8)]
+	stx	%l1, [%g2 + BIAS + (1*8)]
+	stx	%l2, [%g2 + BIAS + (2*8)]
+	stx	%l3, [%g2 + BIAS + (3*8)]
+	stx	%l4, [%g2 + BIAS + (4*8)]
+	stx	%l5, [%g2 + BIAS + (5*8)]
+	stx	%l6, [%g2 + BIAS + (6*8)]
+	stx	%l7, [%g2 + BIAS + (7*8)]
+	ldx	[%g7 + CI_RW + (8*8)], %l0
+	ldx	[%g7 + CI_RW + (9*8)], %l1
+	ldx	[%g7 + CI_RW + (10*8)], %l2
+	ldx	[%g7 + CI_RW + (11*8)], %l3
+	ldx	[%g7 + CI_RW + (12*8)], %l4
+	ldx	[%g7 + CI_RW + (13*8)], %l5
+	ldx	[%g7 + CI_RW + (14*8)], %l6
+	ldx	[%g7 + CI_RW + (15*8)], %l7
+	stx	%l0, [%g2 + BIAS + (8*8)]
+	stx	%l1, [%g2 + BIAS + (9*8)]
+	stx	%l2, [%g2 + BIAS + (10*8)]
+	stx	%l3, [%g2 + BIAS + (11*8)]
+	stx	%l4, [%g2 + BIAS + (12*8)]
+	stx	%l5, [%g2 + BIAS + (13*8)]
+	stx	%l6, [%g2 + BIAS + (14*8)]
+	stx	%l7, [%g2 + BIAS + (15*8)]
+
+	stx	%g0, [%g7 + CI_RWSP]
+98:
+	.endm
 
 sun4v_datatrap:
 	GET_MMFSA(%g3)
@@ -3165,45 +2950,7 @@ sun4v_datatrap:
 	wrpr	%g0, 0, %tl
 
 	GET_CPUINFO_VA(%g7)
-	ldx	[%g7 + CI_RWSP], %g2
-	brz,pt	%g2, 1f
-	 nop
-
-	ldx	[%g7 + CI_RW + (0*8)], %l0
-	ldx	[%g7 + CI_RW + (1*8)], %l1
-	ldx	[%g7 + CI_RW + (2*8)], %l2
-	ldx	[%g7 + CI_RW + (3*8)], %l3
-	ldx	[%g7 + CI_RW + (4*8)], %l4
-	ldx	[%g7 + CI_RW + (5*8)], %l5
-	ldx	[%g7 + CI_RW + (6*8)], %l6
-	ldx	[%g7 + CI_RW + (7*8)], %l7
-	stx	%l0, [%g2 + BIAS + (0*8)]
-	stx	%l1, [%g2 + BIAS + (1*8)]
-	stx	%l2, [%g2 + BIAS + (2*8)]
-	stx	%l3, [%g2 + BIAS + (3*8)]
-	stx	%l4, [%g2 + BIAS + (4*8)]
-	stx	%l5, [%g2 + BIAS + (5*8)]
-	stx	%l6, [%g2 + BIAS + (6*8)]
-	stx	%l7, [%g2 + BIAS + (7*8)]
-	ldx	[%g7 + CI_RW + (8*8)], %l0
-	ldx	[%g7 + CI_RW + (9*8)], %l1
-	ldx	[%g7 + CI_RW + (10*8)], %l2
-	ldx	[%g7 + CI_RW + (11*8)], %l3
-	ldx	[%g7 + CI_RW + (12*8)], %l4
-	ldx	[%g7 + CI_RW + (13*8)], %l5
-	ldx	[%g7 + CI_RW + (14*8)], %l6
-	ldx	[%g7 + CI_RW + (15*8)], %l7
-	stx	%l0, [%g2 + BIAS + (8*8)]
-	stx	%l1, [%g2 + BIAS + (9*8)]
-	stx	%l2, [%g2 + BIAS + (10*8)]
-	stx	%l3, [%g2 + BIAS + (11*8)]
-	stx	%l4, [%g2 + BIAS + (12*8)]
-	stx	%l5, [%g2 + BIAS + (13*8)]
-	stx	%l6, [%g2 + BIAS + (14*8)]
-	stx	%l7, [%g2 + BIAS + (15*8)]
-
-	stx	%g0, [%g7 + CI_RWSP]
-1:
+	SUN4V_PUSH_RWINDOW
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
@@ -3260,45 +3007,7 @@ sun4v_texttrap:
 	wrpr	%g0, 0, %tl
 
 	GET_CPUINFO_VA(%g7)
-	ldx	[%g7 + CI_RWSP], %g2
-	brz,pt	%g2, 1f
-	 nop
-
-	ldx	[%g7 + CI_RW + (0*8)], %l0
-	ldx	[%g7 + CI_RW + (1*8)], %l1
-	ldx	[%g7 + CI_RW + (2*8)], %l2
-	ldx	[%g7 + CI_RW + (3*8)], %l3
-	ldx	[%g7 + CI_RW + (4*8)], %l4
-	ldx	[%g7 + CI_RW + (5*8)], %l5
-	ldx	[%g7 + CI_RW + (6*8)], %l6
-	ldx	[%g7 + CI_RW + (7*8)], %l7
-	stx	%l0, [%g2 + BIAS + (0*8)]
-	stx	%l1, [%g2 + BIAS + (1*8)]
-	stx	%l2, [%g2 + BIAS + (2*8)]
-	stx	%l3, [%g2 + BIAS + (3*8)]
-	stx	%l4, [%g2 + BIAS + (4*8)]
-	stx	%l5, [%g2 + BIAS + (5*8)]
-	stx	%l6, [%g2 + BIAS + (6*8)]
-	stx	%l7, [%g2 + BIAS + (7*8)]
-	ldx	[%g7 + CI_RW + (8*8)], %l0
-	ldx	[%g7 + CI_RW + (9*8)], %l1
-	ldx	[%g7 + CI_RW + (10*8)], %l2
-	ldx	[%g7 + CI_RW + (11*8)], %l3
-	ldx	[%g7 + CI_RW + (12*8)], %l4
-	ldx	[%g7 + CI_RW + (13*8)], %l5
-	ldx	[%g7 + CI_RW + (14*8)], %l6
-	ldx	[%g7 + CI_RW + (15*8)], %l7
-	stx	%l0, [%g2 + BIAS + (8*8)]
-	stx	%l1, [%g2 + BIAS + (9*8)]
-	stx	%l2, [%g2 + BIAS + (10*8)]
-	stx	%l3, [%g2 + BIAS + (11*8)]
-	stx	%l4, [%g2 + BIAS + (12*8)]
-	stx	%l5, [%g2 + BIAS + (13*8)]
-	stx	%l6, [%g2 + BIAS + (14*8)]
-	stx	%l7, [%g2 + BIAS + (15*8)]
-
-	stx	%g0, [%g7 + CI_RWSP]
-1:
+	SUN4V_PUSH_RWINDOW
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
@@ -3424,45 +3133,7 @@ Lslowtrap_reenter:
 
 	GET_CPUINFO_VA(%g7)
 #ifdef SUN4V
-	ldx	[%g7 + CI_RWSP], %g2
-	brz,pt	%g2, 1f
-	 nop
-
-	ldx	[%g7 + CI_RW + (0*8)], %l0
-	ldx	[%g7 + CI_RW + (1*8)], %l1
-	ldx	[%g7 + CI_RW + (2*8)], %l2
-	ldx	[%g7 + CI_RW + (3*8)], %l3
-	ldx	[%g7 + CI_RW + (4*8)], %l4
-	ldx	[%g7 + CI_RW + (5*8)], %l5
-	ldx	[%g7 + CI_RW + (6*8)], %l6
-	ldx	[%g7 + CI_RW + (7*8)], %l7
-	stx	%l0, [%g2 + BIAS + (0*8)]
-	stx	%l1, [%g2 + BIAS + (1*8)]
-	stx	%l2, [%g2 + BIAS + (2*8)]
-	stx	%l3, [%g2 + BIAS + (3*8)]
-	stx	%l4, [%g2 + BIAS + (4*8)]
-	stx	%l5, [%g2 + BIAS + (5*8)]
-	stx	%l6, [%g2 + BIAS + (6*8)]
-	stx	%l7, [%g2 + BIAS + (7*8)]
-	ldx	[%g7 + CI_RW + (8*8)], %l0
-	ldx	[%g7 + CI_RW + (9*8)], %l1
-	ldx	[%g7 + CI_RW + (10*8)], %l2
-	ldx	[%g7 + CI_RW + (11*8)], %l3
-	ldx	[%g7 + CI_RW + (12*8)], %l4
-	ldx	[%g7 + CI_RW + (13*8)], %l5
-	ldx	[%g7 + CI_RW + (14*8)], %l6
-	ldx	[%g7 + CI_RW + (15*8)], %l7
-	stx	%l0, [%g2 + BIAS + (8*8)]
-	stx	%l1, [%g2 + BIAS + (9*8)]
-	stx	%l2, [%g2 + BIAS + (10*8)]
-	stx	%l3, [%g2 + BIAS + (11*8)]
-	stx	%l4, [%g2 + BIAS + (12*8)]
-	stx	%l5, [%g2 + BIAS + (13*8)]
-	stx	%l6, [%g2 + BIAS + (14*8)]
-	stx	%l7, [%g2 + BIAS + (15*8)]
-
-	stx	%g0, [%g7 + CI_RWSP]
-1:
+	SUN4V_PUSH_RWINDOW
 #endif
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
@@ -4107,45 +3778,7 @@ sparc_interrupt:
 
 	GET_CPUINFO_VA(%g7)
 #ifdef SUN4V
-	ldx	[%g7 + CI_RWSP], %g2
-	brz,pt	%g2, 1f
-	 nop
-
-	ldx	[%g7 + CI_RW + (0*8)], %l0
-	ldx	[%g7 + CI_RW + (1*8)], %l1
-	ldx	[%g7 + CI_RW + (2*8)], %l2
-	ldx	[%g7 + CI_RW + (3*8)], %l3
-	ldx	[%g7 + CI_RW + (4*8)], %l4
-	ldx	[%g7 + CI_RW + (5*8)], %l5
-	ldx	[%g7 + CI_RW + (6*8)], %l6
-	ldx	[%g7 + CI_RW + (7*8)], %l7
-	stx	%l0, [%g2 + BIAS + (0*8)]
-	stx	%l1, [%g2 + BIAS + (1*8)]
-	stx	%l2, [%g2 + BIAS + (2*8)]
-	stx	%l3, [%g2 + BIAS + (3*8)]
-	stx	%l4, [%g2 + BIAS + (4*8)]
-	stx	%l5, [%g2 + BIAS + (5*8)]
-	stx	%l6, [%g2 + BIAS + (6*8)]
-	stx	%l7, [%g2 + BIAS + (7*8)]
-	ldx	[%g7 + CI_RW + (8*8)], %l0
-	ldx	[%g7 + CI_RW + (9*8)], %l1
-	ldx	[%g7 + CI_RW + (10*8)], %l2
-	ldx	[%g7 + CI_RW + (11*8)], %l3
-	ldx	[%g7 + CI_RW + (12*8)], %l4
-	ldx	[%g7 + CI_RW + (13*8)], %l5
-	ldx	[%g7 + CI_RW + (14*8)], %l6
-	ldx	[%g7 + CI_RW + (15*8)], %l7
-	stx	%l0, [%g2 + BIAS + (8*8)]
-	stx	%l1, [%g2 + BIAS + (9*8)]
-	stx	%l2, [%g2 + BIAS + (10*8)]
-	stx	%l3, [%g2 + BIAS + (11*8)]
-	stx	%l4, [%g2 + BIAS + (12*8)]
-	stx	%l5, [%g2 + BIAS + (13*8)]
-	stx	%l6, [%g2 + BIAS + (14*8)]
-	stx	%l7, [%g2 + BIAS + (15*8)]
-
-	stx	%g0, [%g7 + CI_RWSP]
-1:
+	SUN4V_PUSH_RWINDOW
 #endif
 
 	rd	%y, %l6
@@ -6076,9 +5709,6 @@ ENTRY(pseg_set)
 	 inc	%o4					! Make -1 -> 0
 	brz,pt	%o4, 0f
 	 nop
-#ifdef DEBUG
-	ta	1					! Break into debugger
-#endif	/* DEBUG */
 	mov	-1, %o0					! Error -- in hole!
 	retl
 	 mov	-1, %o1
