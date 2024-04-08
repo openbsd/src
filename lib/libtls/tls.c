@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.103 2024/03/27 07:35:30 joshua Exp $ */
+/* $OpenBSD: tls.c,v 1.104 2024/04/08 20:47:32 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -387,7 +387,7 @@ tls_keypair_to_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY **pke
 		    NULL)) ==  NULL) {
 			tls_set_errorx(ctx, TLS_ERROR_UNKNOWN,
 			    "failed to read private key");
-		       	goto err;
+			goto err;
 		}
 	}
 
