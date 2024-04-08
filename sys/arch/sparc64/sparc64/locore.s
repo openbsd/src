@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.218 2024/04/08 20:05:51 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.219 2024/04/08 20:07:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1425,17 +1425,6 @@ data_miss:
 	stx	%g4, [%g2 + 8]				! Update TSB entry data
 	stx	%g1, [%g2]				! Update TSB entry tag
 
-#if 0
-	/* This was a miss -- should be nothing to demap. */
-	sllx	%g3, (64-13), %g6			! Need to demap old entry first
-	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
-	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
-	movrz	%g6, %g5, %g1				! Pick one
-	andn	%g3, 0xfff, %g6
-	or	%g6, %g1, %g6
-	stxa	%g6, [%g6] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
-#endif	/* 0 */
 	stxa	%g4, [%g0] ASI_DMMU_DATA_IN		! Enter new mapping
 	membar	#Sync
 	CLRTT
@@ -1947,17 +1936,6 @@ instr_miss:
 	LOCK_TSB
 	stx	%g4, [%g2 + 8]				! Update TSB entry data
 	stx	%g1, [%g2]				! Update TSB entry tag
-#if 1
-	/* This was a miss -- should be nothing to demap. */
-	sllx	%g3, (64-13), %g6			! Need to demap old entry first
-	mov	DEMAP_PAGE_SECONDARY, %g1		! Secondary flush
-	mov	DEMAP_PAGE_NUCLEUS, %g5			! Nucleus flush
-	movrz	%g6, %g5, %g1				! Pick one
-	andn	%g3, 0xfff, %g6
-	or	%g6, %g1, %g6
-	stxa	%g6, [%g6] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
-#endif	/* 1 */
 	stxa	%g4, [%g0] ASI_IMMU_DATA_IN		! Enter new mapping
 	membar	#Sync
 	CLRTT
