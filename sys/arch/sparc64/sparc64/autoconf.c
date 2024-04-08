@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.147 2024/03/29 21:17:13 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.148 2024/04/08 19:59:28 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -387,7 +387,7 @@ bootstrap(int nctx)
 		disp =  (vaddr_t)hv_mmu_demap_ctx - (vaddr_t)sp_tlb_flush_ctx;
 		insn = 0x10800000 | disp >> 2;	/* ba hv_mmu_demap_ctx */
 		((u_int32_t *)sp_tlb_flush_ctx)[0] = insn;
-		insn = 0x94102003; 		/* mov MAP_ITLB|MAP_DTLB, %o2 */
+		insn = 0x92102003; 		/* mov MAP_ITLB|MAP_DTLB, %o1 */
 		((u_int32_t *)sp_tlb_flush_ctx)[1] = insn;
 
 	{
