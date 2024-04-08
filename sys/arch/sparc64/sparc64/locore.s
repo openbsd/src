@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.214 2024/03/29 21:27:53 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.215 2024/04/08 19:59:57 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1642,14 +1642,14 @@ data_miss:
 	mov	6, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
 	tlu	%xcc, 1; nop
-	blu,pn	%xcc, winfix				! Next instruction in delay slot is unimportant
+	blu,pn	%xcc, data_nfo				! Next instruction in delay slot is unimportant
 	 mov	7, %g6		! debug
 	stb	%g6, [%g7+0x20]	! debug
 1:	
 #endif	/* DEBUG */
 	srlx	%g3, STSHIFT, %g6
 	cmp	%g5, 1
-	bgu,pn %xcc, winfix				! Error!
+	bgu,pn %xcc, data_nfo				! Error!
 	 srlx	%g3, PDSHIFT, %g5
 	and	%g6, STMASK, %g6
 	
