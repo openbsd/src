@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.221 2024/04/08 20:08:19 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.222 2024/04/08 20:09:18 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3924,10 +3924,7 @@ END(cpu_mp_startup)
  * OpenFirmware entry point
  */
 	.align 8
-	.globl	openfirmware
-	.proc 1
-	FTYPE(openfirmware)
-openfirmware:
+NENTRY(openfirmware)
 	sethi	%hi(romp), %o4
 	ldx	[%o4+%lo(romp)], %o4
 	save	%sp, -CC64FSZ, %sp
@@ -3967,10 +3964,7 @@ END(openfirmware)
  *
  */
 	.align 8
-	.globl	sp_tlb_flush_pte
-	.proc 1
-	FTYPE(sp_tlb_flush_pte)
-sp_tlb_flush_pte:
+NENTRY(sp_tlb_flush_pte)
 #ifdef HORRID_III_HACK
 	rdpr	%pstate, %o5
 	andn	%o5, PSTATE_IE, %o4
@@ -4022,10 +4016,7 @@ END(sp_tlb_flush_pte)
  *
  */
 	.align 8
-	.globl	sp_tlb_flush_ctx
-	.proc 1
-	FTYPE(sp_tlb_flush_ctx)
-sp_tlb_flush_ctx:
+NENTRY(sp_tlb_flush_ctx)
 #ifdef HORRID_III_HACK
 	rdpr	%pstate, %o5
 	andn	%o5, PSTATE_IE, %o4
@@ -4074,11 +4065,7 @@ END(sp_tlb_flush_ctx)
  *
  */
 	.align 8
-	.globl	us_dcache_flush_page
-	.proc 1
-	FTYPE(us_dcache_flush_page)
-us_dcache_flush_page:
-
+NENTRY(us_dcache_flush_page)
 	mov	-1, %o1		! Generate mask for tag: bits [29..2]
 	srlx	%o0, 13-2, %o2	! Tag is VA bits <40:13> in bits <29:2>
 	clr	%o4
@@ -4114,10 +4101,7 @@ dlflush2:
 END(us_dcache_flush_page)
 
 	.align 8
-	.globl	us3_dcache_flush_page
-	.proc 1
-	FTYPE(us3_dcache_flush_page)
-us3_dcache_flush_page:
+NENTRY(us3_dcache_flush_page)
 	ldxa    [%g0] ASI_MCCR, %o1
 	btst    MCCR_DCACHE_EN, %o1
 	bz,pn   %icc, 1f
@@ -4149,10 +4133,7 @@ END(no_dcache_flush_page)
  *
  */
 	.align 8
-	.globl	cache_flush_virt
-	.proc 1
-	FTYPE(cache_flush_virt)
-cache_flush_virt:
+NENTRY(cache_flush_virt)
 	brz,pn	%o1, 2f		! What? nothing to clear?
 	 add	%o0, %o1, %o2
 	mov	0x1ff, %o3
@@ -4311,27 +4292,6 @@ sigfillsiz:
 /*
  * Primitives
  */
-#ifdef ENTRY
-#undef ENTRY
-#endif	/* ENTRY */
-
-#ifdef GPROF
-	.globl	_mcount
-#define	ENTRY(x) \
-	.globl x; x: ; \
-	.data; \
-	.align 8; \
-0:	.uaword 0; .uaword 0; \
-	.text;	\
-	save	%sp, -CC64FSZ, %sp; \
-	sethi	%hi(0b), %o0; \
-	call	_mcount; \
-	or	%o0, %lo(0b), %o0; \
-	restore
-#else	/* GPROF */
-#define	ENTRY(x)	.globl x; x:
-#endif	/* GPROF */
-#define	ALTENTRY(x)	.globl x; x:
 
 /*
  * getfp() - get stack frame pointer
