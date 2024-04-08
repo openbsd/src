@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.10 2024/03/29 21:04:37 miod Exp $	*/
+/*	$OpenBSD: frame.h,v 1.11 2024/04/08 20:07:53 miod Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2001/03/04 09:28:35 mrg Exp $ */
 
 /*
@@ -84,18 +84,12 @@ struct frame {
 #define v9next_frame(f)		((struct frame*)(f->fr_fp+BIAS))
 
 /*
- * The v9 trapframe.  Since we don't get a free register window with
- * each trap we need some way to keep track of pending traps.  We use
- * tf_fault to save the faulting address for memory faults and tf_kstack
- * to thread trapframes on the kernel stack(s).  If tf_kstack == 0 then
- * this is the lowest level trap; we came from user mode.
+ * The v9 trapframe.
  */
 struct trapframe {
 	int64_t		tf_tstate;	/* tstate register */
 	int64_t		tf_pc;		/* return pc */
 	int64_t		tf_npc;		/* return npc */
-	int64_t		tf_fault;	/* faulting addr -- need somewhere to save it */
-	int64_t		tf_kstack;	/* kernel stack of prev tf */
 	int		tf_y;		/* %y register -- 32-bits */
 	short		tf_tt;		/* What type of trap this was */
 	char		tf_pil;		/* What IRQ we're handling */

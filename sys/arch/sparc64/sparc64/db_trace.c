@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.26 2024/02/13 09:29:39 claudio Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.27 2024/04/08 20:07:53 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -299,10 +299,9 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		  tf, (unsigned long long)tf->tf_tstate,
 		  (unsigned long long)tf->tf_pc,
 		  (unsigned long long)tf->tf_npc);
-	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %llx\tkstack: %llx\ttt: %x\nGlobals:\n",
+	db_printf("y: %x\tpil: %d\toldpil: %d\ttt: %x\nGlobals:\n",
 		  (int)tf->tf_y, (int)tf->tf_pil, (int)tf->tf_oldpil,
-		  (unsigned long long)tf->tf_fault,
-		  (unsigned long long)tf->tf_kstack, (int)tf->tf_tt);
+		  (int)tf->tf_tt);
 	db_printf("%016llx %016llx %016llx %016llx\n",
 		  (unsigned long long)tf->tf_global[0],
 		  (unsigned long long)tf->tf_global[1],

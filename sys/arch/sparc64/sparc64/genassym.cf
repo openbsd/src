@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.44 2024/03/29 21:27:53 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.45 2024/04/08 20:07:53 miod Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -167,8 +167,6 @@ struct	trapframe
 member	tf_tstate
 member	tf_pc
 member	tf_npc
-member	tf_fault
-member	tf_kstack
 member	tf_y
 member	tf_pil
 member	tf_oldpil

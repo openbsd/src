@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.219 2024/04/08 20:07:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.220 2024/04/08 20:07:53 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1805,7 +1805,6 @@ datafault:
 	TRAP_SETUP -CC64FSZ-TF_SIZE
 Ldatafault_internal:
 	INCR uvmexp+V_FAULTS				! uvmexp.faults++ (clobbers %o0,%o1,%o2) should not fault
-!	ldx	[%sp + CC64FSZ + BIAS + TF_FAULT], %g1		! DEBUG make sure this has not changed
 	mov	%g1, %o0				! Move these to the out regs so we can save the globals
 	mov	%g2, %o4
 	mov	%g3, %o5
@@ -2835,10 +2834,9 @@ softtrap:
 	GET_CPCB(%g7)
 	set	USPACE-CC64FSZ-TF_SIZE-BIAS, %g5
 	add	%g7, %g5, %g6
-	stx	%g1, [%g6 + CC64FSZ + BIAS + TF_FAULT]		! Generate a new trapframe
-	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_O + (0*8)]	!	but don't bother with
-	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_O + (1*8)]	!	locals and ins
-	stx	%i2, [%g6 + CC64FSZ + BIAS + TF_O + (2*8)]
+	stx	%i0, [%g6 + CC64FSZ + BIAS + TF_O + (0*8)]	! Generate a new trapframe
+	stx	%i1, [%g6 + CC64FSZ + BIAS + TF_O + (1*8)]	!	but don't bother with
+	stx	%i2, [%g6 + CC64FSZ + BIAS + TF_O + (2*8)]	!	locals and ins
 	stx	%i3, [%g6 + CC64FSZ + BIAS + TF_O + (3*8)]
 	stx	%i4, [%g6 + CC64FSZ + BIAS + TF_O + (4*8)]
 	stx	%i5, [%g6 + CC64FSZ + BIAS + TF_O + (5*8)]
@@ -3356,7 +3354,6 @@ sparc_interrupt:
 	stx	%l1, [%sp + CC64FSZ + BIAS + TF_PC]
 	btst	TSTATE_PRIV, %l0		! User mode?
 	stx	%l2, [%sp + CC64FSZ + BIAS + TF_NPC]
-	stx	%fp, [%sp + CC64FSZ + BIAS + TF_KSTACK]	!  old frame pointer
 	
 	sub	%l5, 0x40, %l6			! Convert to interrupt level
 	stb	%l6, [%sp + CC64FSZ + BIAS + TF_PIL]	! set up intrframe/clockframe
