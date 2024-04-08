@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.33 2024/03/02 09:10:42 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.34 2024/04/08 19:57:40 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -160,15 +160,7 @@ tm_to_utctime(struct tm *tm, ASN1_TIME *atime)
 ASN1_TIME *
 tm_to_rfc5280_time(struct tm *tm, ASN1_TIME *atime)
 {
-	int year;
-
-	year = tm->tm_year + 1900;
-	if (year < 1950 || year > 9999) {
-		ASN1error(ASN1_R_ILLEGAL_TIME_VALUE);
-		return (NULL);
-	}
-
-	if (year < 2050)
+	if (tm->tm_year >= 50 && tm->tm_year < 150)
 		return (tm_to_utctime(tm, atime));
 
 	return (tm_to_gentime(tm, atime));
@@ -352,25 +344,21 @@ ASN1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 static int
 ASN1_TIME_set_string_internal(ASN1_TIME *s, const char *str, int mode)
 {
+	struct tm tm;
 	int type;
-	char *tmp;
 
-	if ((type = ASN1_time_parse(str, strlen(str), NULL, mode)) == -1)
+	if ((type = ASN1_time_parse(str, strlen(str), &tm, mode)) == -1)
 		return (0);
-	if (mode != 0 && mode != type)
+	switch(mode) {
+	case V_ASN1_UTCTIME:
+		return (type == mode && tm_to_utctime(&tm, s) != NULL);
+	case V_ASN1_GENERALIZEDTIME:
+		return (type == mode && tm_to_gentime(&tm, s) != NULL);
+	case RFC5280:
+		return (tm_to_rfc5280_time(&tm, s) != NULL);
+	default:
 		return (0);
-
-	if (s == NULL)
-		return (1);
-
-	if ((tmp = strdup(str)) == NULL)
-		return (0);
-	free(s->data);
-	s->data = tmp;
-	s->length = strlen(tmp);
-	s->type = type;
-
-	return (1);
+	}
 }
 
 static ASN1_TIME *
@@ -448,7 +436,7 @@ LCRYPTO_ALIAS(ASN1_TIME_to_generalizedtime);
 int
 ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
 {
-	return (ASN1_TIME_set_string_internal(s, str, 0));
+	return (ASN1_TIME_set_string_internal(s, str, RFC5280));
 }
 LCRYPTO_ALIAS(ASN1_TIME_set_string);
 

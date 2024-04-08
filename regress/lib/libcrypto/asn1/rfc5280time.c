@@ -1,4 +1,4 @@
-/* $OpenBSD: rfc5280time.c,v 1.7 2022/09/05 21:12:08 tb Exp $ */
+/* $OpenBSD: rfc5280time.c,v 1.8 2024/04/08 19:57:40 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@opebsd.org>
@@ -229,13 +229,6 @@ rfc5280_invtime_test(int test_no, struct rfc5280_time_test *att)
 	}
 	if (ASN1_UTCTIME_set_string(ut, att->str) != 0) {
 		if (X509_cmp_time(ut, &now) != 0) {
-			fprintf(stderr, "FAIL: test %d - successfully parsed as UTCTIME "
-			    "string '%s'\n", test_no, att->str);
-			goto done;
-		}
-	}
-	if (ASN1_TIME_set_string(t, att->str) != 0) {
-		if (X509_cmp_time(t, &now) != 0) {
 			fprintf(stderr, "FAIL: test %d - successfully parsed as UTCTIME "
 			    "string '%s'\n", test_no, att->str);
 			goto done;

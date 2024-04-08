@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.25 2024/02/18 22:17:01 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.26 2024/04/08 19:57:40 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Google Inc.
@@ -420,6 +420,7 @@ static int
 asn1_time_test(int test_no, const struct asn1_time_test *att, int type)
 {
 	ASN1_TIME *t = NULL, *tx509 = NULL;
+	char *parsed_time = NULL;
 	int failure = 1;
 
 	if (ASN1_TIME_set_string(NULL, att->str) != 1) {
@@ -434,9 +435,27 @@ asn1_time_test(int test_no, const struct asn1_time_test *att, int type)
 	if ((tx509 = ASN1_TIME_new()) == NULL)
 		goto done;
 
-	if (ASN1_TIME_set_string(t, att->str) != 1) {
-		fprintf(stderr, "FAIL: test %d - failed to set string '%s'\n",
-		    test_no, att->str);
+	switch (strlen(att->str)) {
+	case 13:
+		t->type = V_ASN1_UTCTIME;
+		if (ASN1_UTCTIME_set_string(t, att->str) != 1) {
+			fprintf(stderr, "FAIL: test %d - failed to set utc "
+			    "string '%s'\n",
+			    test_no, att->str);
+			goto done;
+		}
+		break;
+	case 15:
+		t->type = V_ASN1_GENERALIZEDTIME;
+		if (ASN1_GENERALIZEDTIME_set_string(t, att->str) != 1) {
+			fprintf(stderr, "FAIL: test %d - failed to set gen "
+			    "string '%s'\n",
+			    test_no, att->str);
+			goto done;
+		}
+		break;
+	default:
+		fprintf(stderr, "FAIL: unknown type\n");
 		goto done;
 	}
 
@@ -446,13 +465,33 @@ asn1_time_test(int test_no, const struct asn1_time_test *att, int type)
 		goto done;
 	}
 
+	if ((parsed_time = strdup(t->data)) == NULL)
+		goto done;
+
 	if (ASN1_TIME_normalize(t) != 1) {
 		fprintf(stderr, "FAIL: test %d - failed to set normalize '%s'\n",
 		    test_no, att->str);
 		goto done;
 	}
 
-	if (ASN1_TIME_set_string_X509(tx509, t->data) != 1) {
+	if (ASN1_TIME_set_string_X509(tx509, parsed_time) != 1) {
+		fprintf(stderr, "FAIL: test %d - failed to set string X509 '%s'\n",
+		    test_no, t->data);
+		goto done;
+	}
+
+	if (t->type != tx509->type) {
+		fprintf(stderr, "FAIL: test %d - type %d, different from %d\n",
+		    test_no, t->type, tx509->type);
+		goto done;
+	}
+
+	if (ASN1_TIME_compare(t, tx509) != 0) {
+		fprintf(stderr, "FAIL: ASN1_TIME values differ!\n");
+		goto done;
+	}
+
+	if (ASN1_TIME_set_string(tx509, parsed_time) != 1) {
 		fprintf(stderr, "FAIL: test %d - failed to set string X509 '%s'\n",
 		    test_no, t->data);
 		goto done;
@@ -476,6 +515,7 @@ asn1_time_test(int test_no, const struct asn1_time_test *att, int type)
 
 	ASN1_TIME_free(t);
 	ASN1_TIME_free(tx509);
+	free(parsed_time);
 
 	return (failure);
 }
