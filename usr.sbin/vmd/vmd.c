@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.155 2024/02/05 21:58:09 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.156 2024/04/08 12:48:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -946,9 +946,6 @@ main(int argc, char **argv)
 	/* only the parent returns */
 	proc_init(ps, procs, nitems(procs), env->vmd_debug, argc0, argv,
 	    proc_id);
-
-	if (!env->vmd_debug && daemon(0, 0) == -1)
-		fatal("can't daemonize");
 
 	if (ps->ps_noaction == 0)
 		log_info("startup");
