@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.220 2024/04/08 20:07:53 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.221 2024/04/08 20:08:19 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6424,9 +6424,7 @@ ENTRY(longjmp)
 	ret
 	 restore	%i2, 0, %o0
 END(longjmp)
-#endif /* DDB */
 
-#ifdef DDB
 	/*
 	 * Debug stuff.  Dump the trap registers into buffer & set tl=0.
 	 *
@@ -6490,6 +6488,7 @@ ENTRY(restoretstate)
 2:
 	retl
 	 wrpr	%o0, 0, %tl
+END(restoretstate)
 
 	/*
 	 * Switch to context in %o0
@@ -6508,7 +6507,6 @@ ENTRY(switchtoctx)
 	retl
 	 nop
 END(switchtoctx)
-END(restoretstate)
 
 #endif /* DDB */	/* DDB */
 
