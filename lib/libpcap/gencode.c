@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.65 2024/04/05 18:01:56 deraadt Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.66 2024/04/08 02:51:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -262,7 +262,7 @@ gen_retblk(int v)
 }
 
 static __inline void
-syntax()
+syntax(void)
 {
 	bpf_error("syntax error in filter expression");
 }
@@ -795,13 +795,13 @@ gen_uncond(int rsense)
 }
 
 static __inline struct block *
-gen_true()
+gen_true(void)
 {
 	return gen_uncond(1);
 }
 
 static __inline struct block *
-gen_false()
+gen_false(void)
 {
 	return gen_uncond(0);
 }
@@ -971,7 +971,7 @@ gen_hostop(bpf_u_int32 addr, bpf_u_int32 mask, int dir, int proto,
 #ifdef INET6
 static struct block *
 gen_hostop6(struct in6_addr *addr, struct in6_addr *mask, int dir, int proto,
-	u_int src_off, u_int dst_off)
+    u_int src_off, u_int dst_off)
 {
 	struct block *b0, *b1;
 	u_int offset;
@@ -1345,11 +1345,7 @@ gen_host6(struct in6_addr *addr, struct in6_addr *mask, int proto, int dir)
 
 #ifndef INET6
 static struct block *
-gen_gateway(eaddr, alist, proto, dir)
-	const u_char *eaddr;
-	bpf_u_int32 **alist;
-	int proto;
-	int dir;
+gen_gateway(const u_char *eaddr, bpf_u_int32 **alist, int proto, int dir)
 {
 	struct block *b0, *b1, *tmp;
 
@@ -1523,7 +1519,7 @@ gen_proto_abbrev(int proto)
 }
 
 static struct block *
-gen_ipfrag()
+gen_ipfrag(void)
 {
 	struct slist *s, *tmp;
 	struct block *b;
@@ -2779,7 +2775,7 @@ gen_relation(int code, struct arth *a0, struct arth *a1, int reversed)
 }
 
 struct arth *
-gen_loadlen()
+gen_loadlen(void)
 {
 	int regno = alloc_reg();
 	struct arth *a = (struct arth *)newchunk(sizeof(*a));
@@ -2795,7 +2791,7 @@ gen_loadlen()
 }
 
 struct arth *
-gen_loadrnd()
+gen_loadrnd(void)
 {
 	int regno = alloc_reg();
 	struct arth *a = (struct arth *)newchunk(sizeof(*a));
@@ -2882,7 +2878,7 @@ static int curreg;
  * Return the next free register.
  */
 static int
-alloc_reg()
+alloc_reg(void)
 {
 	int n = BPF_MEMWORDS;
 

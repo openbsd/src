@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.29 2024/04/05 18:01:56 deraadt Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.30 2024/04/08 02:51:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -328,7 +328,7 @@ lex_init(const char *buf)
  * define a macro to map this identifier to pcap_wrap.
  */
 int
-yywrap()
+yywrap(void)
 {
 	return 1;
 }

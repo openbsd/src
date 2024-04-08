@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.22 2024/04/05 18:01:56 deraadt Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.23 2024/04/08 02:51:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -510,7 +510,7 @@ struct valnode *vnode_base;
 struct valnode *next_vnode;
 
 static void
-init_val()
+init_val(void)
 {
 	curval = 0;
 	next_vnode = vnode_base;
@@ -1664,7 +1664,7 @@ intern_blocks(struct block *root)
 }
 
 static void
-opt_cleanup()
+opt_cleanup(void)
 {
 	free((void *)vnode_base);
 	free((void *)vmap);
@@ -2062,8 +2062,7 @@ icode_to_fcode(struct block *root, int *lenp)
 
 #ifdef BDEBUG
 static void
-opt_dump(root)
-	struct block *root;
+opt_dump(struct block *root)
 {
 	struct bpf_program f;
 
