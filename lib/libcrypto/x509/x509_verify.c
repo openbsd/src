@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.68 2024/02/01 23:16:38 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.69 2024/04/08 23:46:21 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -52,6 +52,9 @@ x509_verify_asn1_time_to_time_t(const ASN1_TIME *atime, int notAfter,
 	struct tm tm = { 0 };
 	int type;
 
+	if (atime == NULL)
+		return 0;
+
 	type = ASN1_time_parse(atime->data, atime->length, &tm, atime->type);
 	if (type == -1)
 		return 0;
@@ -78,35 +81,6 @@ x509_verify_asn1_time_to_time_t(const ASN1_TIME *atime, int notAfter,
 	 * Jan 19 2038.
 	 */
 	return asn1_time_tm_to_time_t(&tm, out);
-}
-
-/*
- * Cache certificate hash, and values parsed out of an X509.
- * called from cache_extensions()
- */
-int
-x509_verify_cert_info_populate(X509 *cert)
-{
-	const ASN1_TIME *notBefore, *notAfter;
-
-	/*
-	 * Parse and save the cert times, or remember that they
-	 * are unacceptable/unparsable.
-	 */
-
-	cert->not_before = cert->not_after = -1;
-
-	if ((notBefore = X509_get_notBefore(cert)) == NULL)
-		return 0;
-	if ((notAfter = X509_get_notAfter(cert)) == NULL)
-		return 0;
-
-	if (!x509_verify_asn1_time_to_time_t(notBefore, 0, &cert->not_before))
-		return 0;
-	if (!x509_verify_asn1_time_to_time_t(notAfter, 1, &cert->not_after))
-		return 0;
-
-	return 1;
 }
 
 struct x509_verify_chain *
@@ -840,26 +814,28 @@ x509_verify_set_check_time(struct x509_verify_ctx *ctx)
 static int
 x509_verify_cert_times(X509 *cert, time_t *cmp_time, int *error)
 {
-	time_t when;
+	time_t when, not_before, not_after;
 
 	if (cmp_time == NULL)
 		when = time(NULL);
 	else
 		when = *cmp_time;
 
-	if (cert->not_before == -1) {
+	if (!x509_verify_asn1_time_to_time_t(X509_get_notBefore(cert), 0,
+	    &not_before)) {
 		*error = X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
 		return 0;
 	}
-	if (when < cert->not_before) {
+	if (when < not_before) {
 		*error = X509_V_ERR_CERT_NOT_YET_VALID;
 		return 0;
 	}
-	if (cert->not_after == -1) {
+	if (!x509_verify_asn1_time_to_time_t(X509_get_notAfter(cert), 1,
+	    &not_after)) {
 		*error = X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
 		return 0;
 	}
-	if (when > cert->not_after) {
+	if (when > not_after) {
 		*error = X509_V_ERR_CERT_HAS_EXPIRED;
 		return 0;
 	}

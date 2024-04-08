@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.142 2024/03/02 10:40:05 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.143 2024/04/08 23:46:21 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1744,18 +1744,6 @@ verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
 	return ctx->verify_cb(0, ctx);
 }
 
-
-/* Mimic OpenSSL '0 for failure' ick */
-static int
-time_t_bogocmp(time_t a, time_t b)
-{
-	if (a == -1 || b == -1)
-		return 0;
-	if (a <= b)
-		return -1;
-	return 1;
-}
-
 /*
  * Check certificate validity times.
  *
@@ -1777,10 +1765,7 @@ x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 	else
 		ptime = time(NULL);
 
-	if (x->ex_flags & EXFLAG_SET)
-		i = time_t_bogocmp(x->not_before, ptime);
-	else
-		i = X509_cmp_time(X509_get_notBefore(x), &ptime);
+	i = X509_cmp_time(X509_get_notBefore(x), &ptime);
 
 	if (i >= 0 && depth < 0)
 		return 0;
@@ -1791,10 +1776,7 @@ x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 	    X509_V_ERR_CERT_NOT_YET_VALID))
 		return 0;
 
-	if (x->ex_flags & EXFLAG_SET)
-		i = time_t_bogocmp(x->not_after, ptime);
-	else
-		i = X509_cmp_time_internal(X509_get_notAfter(x), &ptime, 1);
+	i = X509_cmp_time_internal(X509_get_notAfter(x), &ptime, 1);
 
 	if (i <= 0 && depth < 0)
 		return 0;
