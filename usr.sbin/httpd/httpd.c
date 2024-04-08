@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.73 2022/09/02 07:38:14 benno Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.74 2024/04/08 12:45:18 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -220,8 +220,6 @@ main(int argc, char *argv[])
 	proc_init(ps, procs, nitems(procs), debug, argc0, argv, proc_id);
 
 	log_procinit("parent");
-	if (!debug && daemon(1, 0) == -1)
-		err(1, "failed to daemonize");
 
 	if (ps->ps_noaction == 0)
 		log_info("startup");
