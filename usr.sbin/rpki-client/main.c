@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.256 2024/04/05 16:05:15 job Exp $ */
+/*	$OpenBSD: main.c,v 1.257 2024/04/08 14:02:13 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -773,6 +773,7 @@ sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 	out->vaps += in->vaps;
 	out->vaps_uniqs += in->vaps_uniqs;
 	out->vaps_pas += in->vaps_pas;
+	out->vaps_overflowed += in->vaps_overflowed;
 	out->spls += in->spls;
 	out->spls_fail += in->spls_fail;
 	out->spls_invalid += in->spls_invalid;
@@ -1502,8 +1503,9 @@ main(int argc, char *argv[])
 	    stats.repo_stats.extra_files, stats.repo_stats.del_extra_files);
 	printf("VRP Entries: %u (%u unique)\n", stats.repo_tal_stats.vrps,
 	    stats.repo_tal_stats.vrps_uniqs);
-	printf("VAP Entries: %u (%u unique)\n", stats.repo_tal_stats.vaps,
-	    stats.repo_tal_stats.vaps_uniqs);
+	printf("VAP Entries: %u (%u unique, %u overflowed)\n",
+	    stats.repo_tal_stats.vaps, stats.repo_tal_stats.vaps_uniqs,
+	    stats.repo_tal_stats.vaps_overflowed);
 	printf("VSP Entries: %u (%u unique)\n", stats.repo_tal_stats.vsps,
 	    stats.repo_tal_stats.vsps_uniqs);
 

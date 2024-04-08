@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.47 2024/04/05 16:05:15 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.48 2024/04/08 14:02:13 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -93,7 +93,7 @@ print_vap(struct vap *v)
 {
 	size_t i;
 
-	if (v->invalid)
+	if (v->overflowed)
 		return;
 
 	json_do_object("aspa", 1);

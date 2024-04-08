@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.30 2024/04/05 16:05:15 job Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.31 2024/04/08 14:02:13 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -58,7 +58,7 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	if (fprintf(out, "\naspa-set {\n") < 0)
 		return -1;
 	RB_FOREACH(vap, vap_tree, vaps) {
-		if (vap->invalid)
+		if (vap->overflowed)
 			continue;
 		if (fprintf(out, "\tcustomer-as %d expires %lld "
 		    "provider-as { ", vap->custasid,

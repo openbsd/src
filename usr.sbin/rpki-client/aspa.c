@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.29 2024/04/05 16:05:15 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.30 2024/04/08 14:02:13 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -339,7 +339,7 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 	v->expires = aspa->expires;
 
 	if ((found = RB_INSERT(vap_tree, tree, v)) != NULL) {
-		if (found->invalid) {
+		if (found->overflowed) {
 			free(v);
 			return;
 		}
@@ -356,14 +356,6 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 		v = found;
 	} else
 		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_UNIQUE);
-
-	if (v->providersz >= MAX_ASPA_PROVIDERS) {
-		v->invalid = 1;
-		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_INVALID);
-		warnx("%s: too many providers for ASPA Customer ASID "
-		    "(more than %d)", fn, MAX_ASPA_PROVIDERS);
-		return;
-	}
 
 	repo_stat_inc(rp, aspa->talid, RTYPE_ASPA, STYPE_TOTAL);
 
@@ -390,6 +382,17 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 
 		if (j < v->providersz)
 			j++;
+	}
+
+	if (v->providersz >= MAX_ASPA_PROVIDERS) {
+		v->overflowed = 1;
+		free(v->providers);
+		v->providers = NULL;
+		v->providersz = 0;
+		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_OVERFLOW);
+		warnx("%s: too many providers for ASPA Customer ASID %u "
+		    "(more than %d)", fn, v->custasid, MAX_ASPA_PROVIDERS);
+		return;
 	}
 }
 

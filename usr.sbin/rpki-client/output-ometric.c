@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.9 2024/02/26 15:40:33 job Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.10 2024/04/08 14:02:13 tb Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -82,6 +82,8 @@ set_common_stats(const struct repotalstats *in, struct ometric *metric,
 	    OKV("type", "state"), OKV("vap", "unique"), ol);
 	ometric_set_int_with_labels(metric, in->vaps_pas,
 	    OKV("type", "state"), OKV("vap providers", "total"), ol);
+	ometric_set_int_with_labels(metric, in->vaps_overflowed,
+	    OKV("type", "state"), OKV("vap overflowed"), ol);
 
 	ometric_set_int_with_labels(metric, in->spls,
 	    OKV("type", "state"), OKV("spl", "valid"), ol);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.214 2024/04/05 16:05:15 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.215 2024/04/08 14:02:13 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -403,7 +403,7 @@ struct vap {
 	time_t			 expires;
 	int			 talid;
 	unsigned int		 repoid;
-	int			 invalid;
+	int			 overflowed;
 };
 
 /*
@@ -573,6 +573,7 @@ enum stype {
 	STYPE_UNIQUE,
 	STYPE_DEC_UNIQUE,
 	STYPE_PROVIDERS,
+	STYPE_OVERFLOW,
 };
 
 struct repo;
@@ -601,6 +602,7 @@ struct repotalstats {
 	uint32_t	 vaps; /* total number of Validated ASPA Payloads */
 	uint32_t	 vaps_uniqs; /* total number of unique VAPs */
 	uint32_t	 vaps_pas; /* total number of providers */
+	uint32_t	 vaps_overflowed; /* VAPs with too many providers */
 	uint32_t	 vrps; /* total number of Validated ROA Payloads */
 	uint32_t	 vrps_uniqs; /* number of unique vrps */
 	uint32_t	 spls; /* signed prefix list */
