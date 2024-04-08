@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.19 2019/08/06 18:06:32 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.20 2024/04/08 20:00:27 miod Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -40,8 +40,6 @@
 #include <machine/sparc64.h>
 
 #define SPARC64_IPI_RETRIES	10000
-
-#define	sparc64_ipi_sleep()	delay(1000)
 
 void	sun4u_send_ipi(int, void (*)(void), u_int64_t, u_int64_t);
 void	sun4u_broadcast_ipi(void (*)(void), u_int64_t, u_int64_t);

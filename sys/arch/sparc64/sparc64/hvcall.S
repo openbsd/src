@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.12 2019/10/20 16:27:19 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.13 2024/04/08 20:00:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -226,16 +226,6 @@ ENTRY(hv_mmu_demap_page)
 	 nop
 
 ENTRY(hv_mmu_demap_ctx)
-	mov	%o1, %o3
-	mov	%o0, %o2
-	clr	%o1
-	clr	%o0
-	mov	MMU_DEMAP_CTX, %o5
-	ta	FAST_TRAP
-	retl	
-	 nop
-
-ENTRY(hv_mmu_demap_all)
 	mov	%o1, %o3
 	mov	%o0, %o2
 	clr	%o1

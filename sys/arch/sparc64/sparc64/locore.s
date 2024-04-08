@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.215 2024/04/08 19:59:57 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.216 2024/04/08 20:00:27 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -3325,8 +3325,6 @@ sun4v_texttrap:
  * will generate a bus error.  Debugging the problem will be a bit
  * complicated since lots of register windows will be lost, but what
  * can we do?
- * 
- * XXX The trap code generates SIGKILL for now.
  */
 checkalign:
 	rdpr	%tl, %g2
@@ -3555,7 +3553,6 @@ softtrap:
 
 /*
  * syscall_setup() builds a trap frame and calls syscall().
- * sun_syscall is same but delivers sun system call number
  * XXX	should not have to save&reload ALL the registers just for
  *	ptrace...
  */
@@ -3601,7 +3598,7 @@ syscall_setup:
 
 	/* see `proc_trampoline' for the reason for this label */
 return_from_syscall:
-	wrpr	%g0, PSTATE_KERN, %pstate	! Disable intterrupts
+	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
 	wrpr	%g0, 0, %tl			! Return to tl==0
 	ba,a,pt	%icc, return_from_trap
 	 nop
@@ -4232,12 +4229,12 @@ sparc_intr_retry:
 	jmpl	%l1, %o7		! (*ih->ih_ack)(ih)
 	 mov	%l2, %o0
 0:
-	brnz,pn	%l7, 2b			! 'Nother?
+	brnz,pn	%l7, 2b			! Another?
 	 mov	%l7, %l2
 
 intrcmplt:
 	/*
-	 * Re-read SOFTINT to see if any new  pending interrupts
+	 * Re-read SOFTINT to see if there are any new pending interrupts
 	 * at this level.
 	 */
 	mov	1, %l3			! Ack softint
@@ -4281,7 +4278,7 @@ intrcmplt:
 	.globl	syscall
 
 /*
- * Various return-from-trap routines (see return_from_trap).
+ * Various return-from-trap routines.
  */
 
 /*
@@ -4298,9 +4295,8 @@ intrcmplt:
  * When returning to user mode, the trap level does not matter, as it
  * will be set explicitly.
  *
- * If we are returning to user code, we must:
- *  1.  Check for register windows in the pcb that belong on the stack.
- *	If there are any, reload them
+ * If we are returning to user code, we must check for register windows in
+ * the pcb that belong on the stack, and reload them, if there are any.
  */
 return_from_trap:
 #ifdef DEBUG
@@ -4527,8 +4523,7 @@ dump_dtlb:
 
 	retl
 	 nop
-#endif /* DDB */	/* DDB */
-#if defined(DDB)
+
 	.globl	print_dtlb
 print_dtlb:
 	save	%sp, -CC64FSZ, %sp
@@ -4568,7 +4563,7 @@ print_dtlb:
 3:
 	.asciz	"%2d:%016lx %016lx\r\n"
 	.text
-#endif	/* defined(DDB) */
+#endif	/* DDB */
 
 	.align	8
 dostart:
@@ -4584,15 +4579,10 @@ dostart:
 	 * and the bootops vector in %o2.
 	 *
 	 * All we need to do is:
-	 *
 	 *	1:	Save the prom vector
-	 *
 	 *	2:	Create a decent stack for ourselves
-	 *
 	 *	3:	Install the permanent 4MB kernel mapping
-	 *
 	 *	4:	Call the C language initialization code
-	 *
 	 */
 
 	/*
@@ -5337,7 +5327,6 @@ ENTRY(_copyin)
 	GET_CPCB(%o3)
 	wr	%g0, ASI_AIUS, %asi
 	set	Lcopyfault, %o4
-!	mov	%o7, %g7		! save return address
 	membar	#Sync
 	stx	%o4, [%o3 + PCB_ONFAULT]
 	cmp	%o2, BCOPY_SMALL
@@ -5518,18 +5507,11 @@ END(_copyin)
  * This is a modified version of bcopy that uses ASI_AIUS.  When
  * bcopy is optimized to use block copy ASIs, this should be also.
  */
- /*
-  * This needs to be reimplemented to really do the copy.
-  */
 ENTRY(copyout)
-	/*
-	 * ******NOTE****** this depends on bcopy() not using %g7
-	 */
 Ldocopy:
 	GET_CPCB(%o3)
 	wr	%g0, ASI_AIUS, %asi
 	set	Lcopyfault, %o4
-!	mov	%o7, %g7		! save return address
 	membar	#Sync
 	stx	%o4, [%o3 + PCB_ONFAULT]
 	cmp	%o2, BCOPY_SMALL
@@ -5697,7 +5679,6 @@ Lcopyout_done:
 	GET_CPCB(%o3)
 	membar	#Sync
 	stx	%g0, [%o3 + PCB_ONFAULT]
-!	jmp	%g7 + 8		! Original instr
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
 	membar	#StoreStore|#StoreLoad
 	retl			! New instr
@@ -5721,9 +5702,6 @@ ENTRY(copyin32)
 END(copyin32)
 
 ! Copyin or copyout fault.  Clear cpcb->pcb_onfault and return EFAULT.
-! Note that although we were in bcopy, there is no state to clean up;
-! the only special thing is that we have to return to [g7 + 8] rather than
-! [o7 + 8].
 Lcopyfault:
 	GET_CPCB(%o3)
 	stx	%g0, [%o3 + PCB_ONFAULT]
@@ -6154,8 +6132,6 @@ END(pseg_set)
 
 /*
  * memcpy(dst, src, len) - always copies forward.
- *
- * Must not use %g7 (see copyin/copyout above).
  */
 ENTRY(memcpy) /* dest, src, size */
 	cmp	%o2, BCOPY_SMALL! (check length for doublecopy first)
@@ -7454,7 +7430,6 @@ proc0paddr:
 	.xword	u0			! KVA of proc0 uarea
 
 #ifdef DEBUG
-	.comm	trapdebug, 4
 	.comm	pmapdebug, 4
 #endif	/* DEBUG */
 

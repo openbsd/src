@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.117 2024/03/30 07:45:21 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.118 2024/04/08 20:00:27 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -2616,7 +2616,7 @@ ctx_free(struct pmap *pm)
 	if (ctxbusy[oldctx] == 0)
 		printf("ctx_free: freeing free context %d\n", oldctx);
 	if (ctxbusy[oldctx] != pm->pm_physaddr) {
-		printf("ctx_free: freeing someone esle's context\n "
+		printf("ctx_free: freeing someone else's context\n "
 		       "ctxbusy[%d] = %p, pm(%p)->pm_ctx = %p\n", 
 		       oldctx, (void *)(u_long)ctxbusy[oldctx], pm,
 		       (void *)(u_long)pm->pm_physaddr);

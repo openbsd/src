@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.20 2019/10/20 16:27:19 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.21 2024/04/08 20:00:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -55,7 +55,6 @@ int64_t	hv_cpu_myid(uint64_t *cpuid);
 
 int64_t	hv_mmu_demap_page(vaddr_t vaddr, uint64_t context, uint64_t flags);
 int64_t	hv_mmu_demap_ctx(uint64_t context, uint64_t flags);
-int64_t	hv_mmu_demap_all(uint64_t flags);
 int64_t	hv_mmu_map_perm_addr(vaddr_t vaddr, uint64_t tte, uint64_t flags);
 int64_t	hv_mmu_unmap_perm_addr(vaddr_t vaddr, uint64_t flags);
 int64_t	hv_mmu_map_addr(vaddr_t vaddr, uint64_t context, uint64_t tte,
