@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.30 2024/01/16 13:33:12 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.31 2024/04/08 13:18:54 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -204,6 +204,9 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 	if (proc_id == PROC_PARENT) {
 		privsep_process = PROC_PARENT;
 		proc_setup(ps, procs, nproc);
+
+		if (!debug && daemon(0, 0) == -1)
+			fatal("failed to daemonize");
 
 		/*
 		 * Create the children sockets so we can use them
