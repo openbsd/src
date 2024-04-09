@@ -15,6 +15,7 @@ neighbor 192.0.2.1 {
 	announce IPv4 unicast
 	announce IPv4 vpn
 	announce IPv4 flowspec
+	announce policy no
 }
 neighbor 2001:db8::1 {
 	remote-as 64496
@@ -23,4 +24,5 @@ neighbor 2001:db8::1 {
 	announce IPv6 unicast
 	announce IPv6 vpn
 	announce IPv6 flowspec
+	announce policy no
 }

@@ -13,12 +13,14 @@ neighbor 192.0.2.1 {
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv4 unicast
+	announce policy no
 }
 neighbor 192.0.2.2 {
 	remote-as 64496
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv4 unicast
+	announce policy no
 }
 neighbor 192.0.2.3 {
 	descr "test-peer"
@@ -26,6 +28,7 @@ neighbor 192.0.2.3 {
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv4 unicast
+	announce policy no
 }
 group "testing" {
 	neighbor 192.0.2.7 {
@@ -33,12 +36,14 @@ group "testing" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 	neighbor 192.0.2.8 {
 		remote-as 64496
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 	neighbor 192.0.2.6 {
 		descr "test2-peer"
@@ -46,12 +51,14 @@ group "testing" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 	neighbor 192.0.2.4 {
 		remote-as 64496
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 	neighbor 192.0.2.5 {
 		descr "test2-peer"
@@ -59,6 +66,7 @@ group "testing" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 }
 
@@ -68,6 +76,7 @@ group "test2" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 	neighbor 192.0.2.11 {
 		descr "test3-peer"
@@ -75,6 +84,7 @@ group "test2" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 }
 

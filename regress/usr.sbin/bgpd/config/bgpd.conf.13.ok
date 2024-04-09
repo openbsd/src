@@ -13,18 +13,21 @@ neighbor 2001:db8:abcd::7 {
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv6 unicast
+	announce policy no
 }
 neighbor 192.0.2.5 {
 	remote-as 5
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv4 unicast
+	announce policy no
 }
 neighbor 2001:db8:abcd::5 {
 	remote-as 5
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv6 unicast
+	announce policy no
 }
 neighbor 192.0.2.6 {
 	remote-as 6
@@ -33,6 +36,7 @@ neighbor 192.0.2.6 {
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv4 unicast
+	announce policy no
 }
 neighbor 2001:db8:abcd::6 {
 	remote-as 6
@@ -41,12 +45,14 @@ neighbor 2001:db8:abcd::6 {
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv6 unicast
+	announce policy no
 }
 neighbor 192.0.2.7 {
 	remote-as 7
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv4 unicast
+	announce policy no
 }
 group "TEST" {
 	neighbor 192.0.2.2 {
@@ -56,6 +62,7 @@ group "TEST" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 	neighbor 2001:db8:abcd::2 {
 		remote-as 2
@@ -64,6 +71,7 @@ group "TEST" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv6 unicast
+		announce policy no
 	}
 	neighbor 192.0.2.3 {
 		remote-as 3
@@ -72,6 +80,7 @@ group "TEST" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 	neighbor 2001:db8:abcd::3 {
 		remote-as 3
@@ -80,18 +89,21 @@ group "TEST" {
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv6 unicast
+		announce policy no
 	}
 	neighbor 192.0.2.4 {
 		remote-as 4
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv4 unicast
+		announce policy no
 	}
 	neighbor 2001:db8:abcd::4 {
 		remote-as 4
 		enforce neighbor-as yes
 		enforce local-as yes
 		announce IPv6 unicast
+		announce policy no
 	}
 }
 
