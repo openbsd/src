@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_convert.c,v 1.4 2024/04/09 14:56:21 jsing Exp $ */
+/*	$OpenBSD: bn_convert.c,v 1.5 2024/04/09 16:06:01 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -482,7 +482,8 @@ test_bn_convert(void)
 		}
 
 		free(mpi_out);
-		
+		mpi_out = NULL;
+
 		if ((mpi_len = BN_bn2mpi(bn, NULL)) != bct->mpi_len) {
 			fprintf(stderr, "FAIL: Test %zu - BN_bn2mpi() returned "
 			    "%d, want %d", i, mpi_len, bct->mpi_len);
@@ -550,6 +551,7 @@ test_bn_convert(void)
 	failed = 0;
 
  failure:
+	free(mpi_out);
 	free(out_str);
 	BN_free(bn);
 
