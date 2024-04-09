@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.262 2024/01/09 13:41:32 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.263 2024/04/09 12:05:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -716,11 +716,19 @@ send_config(struct bgpd_config *conf)
 	}
 	free_roatree(&conf->roa);
 	RB_FOREACH(aspa, aspa_tree, &conf->aspa) {
+		/* XXX prevent oversized IMSG for now */
+		if (aspa->num * sizeof(*aspa->tas) >
+		    MAX_IMSGSIZE - IMSG_HEADER_SIZE) {
+			log_warnx("oversized ASPA set for customer-as %s, %s",
+			    log_as(aspa->as), "dropped");
+			continue;
+		}
+
 		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA, 0, 0,
 		    -1, aspa, offsetof(struct aspa_set, tas)) == -1)
 			return (-1);
 		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA_TAS, 0, 0,
-		    -1, aspa->tas, sizeof(*aspa->tas) * aspa->num) == -1)
+		    -1, aspa->tas, aspa->num * sizeof(*aspa->tas)) == -1)
 			return (-1);
 		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA_DONE, 0, 0, -1,
 		    NULL, 0) == -1)
