@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.396 2024/02/22 14:25:58 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.397 2024/04/09 11:05:05 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -417,6 +417,8 @@ sendit:
 	else if (m->m_pkthdr.pf.flags & PF_TAG_REROUTE) {
 		/* tag as generated to skip over pf_test on rerun */
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+		if (ro == &iproute)
+			rtfree(ro->ro_rt);
 		ro = NULL;
 		if_put(ifp); /* drop reference since target changed */
 		ifp = NULL;
@@ -481,7 +483,7 @@ sendit:
 	ipstat_inc(ips_fragmented);
 
 done:
-	if (ro == &iproute && ro->ro_rt)
+	if (ro == &iproute)
 		rtfree(ro->ro_rt);
 	if_put(ifp);
 #ifdef IPSEC
