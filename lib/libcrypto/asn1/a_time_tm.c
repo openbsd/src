@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.34 2024/04/08 19:57:40 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.35 2024/04/09 13:56:00 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -344,21 +344,32 @@ ASN1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 static int
 ASN1_TIME_set_string_internal(ASN1_TIME *s, const char *str, int mode)
 {
+	ASN1_TIME *atime = s;
 	struct tm tm;
 	int type;
+	int ret = 0;
 
 	if ((type = ASN1_time_parse(str, strlen(str), &tm, mode)) == -1)
 		return (0);
-	switch(mode) {
+	switch (mode) {
 	case V_ASN1_UTCTIME:
-		return (type == mode && tm_to_utctime(&tm, s) != NULL);
+		ret = (type == mode && (atime = tm_to_utctime(&tm, s)) != NULL);
+		break;
 	case V_ASN1_GENERALIZEDTIME:
-		return (type == mode && tm_to_gentime(&tm, s) != NULL);
+		ret = (type == mode && (atime = tm_to_gentime(&tm, s)) != NULL);
+		break;
 	case RFC5280:
-		return (tm_to_rfc5280_time(&tm, s) != NULL);
+		ret = ((atime = tm_to_rfc5280_time(&tm, s)) != NULL);
+		break;
 	default:
-		return (0);
+		ret = 0;
+		break;
 	}
+
+	if (atime != s)
+		ASN1_TIME_free(atime);
+
+	return ret;
 }
 
 static ASN1_TIME *
