@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2072 2024/04/07 00:58:57 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2073 2024/04/09 01:22:19 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6060,6 +6060,12 @@
 #define	PCI_PRODUCT_INTEL_DG2_G11_7	0x56b1		/* Arc Pro A40/A50 */
 #define	PCI_PRODUCT_INTEL_DG2_G12_5	0x56b2		/* Arc Pro A60M */
 #define	PCI_PRODUCT_INTEL_DG2_G12_6	0x56b3		/* Arc Pro A60 */
+#define	PCI_PRODUCT_INTEL_DG2_G11_8	0x56ba		/* Arc A380E */
+#define	PCI_PRODUCT_INTEL_DG2_G11_9	0x56bb		/* Arc A310E */
+#define	PCI_PRODUCT_INTEL_DG2_G11_10	0x56bc		/* Arc A370E */
+#define	PCI_PRODUCT_INTEL_DG2_G11_11	0x56bd		/* Arc A350E */
+#define	PCI_PRODUCT_INTEL_DG2_G10_7	0x56be		/* Arc A750E */
+#define	PCI_PRODUCT_INTEL_DG2_G10_8	0x56bf		/* Arc A580E */
 #define	PCI_PRODUCT_INTEL_ATS_M150	0x56c0		/* Flex 170 */
 #define	PCI_PRODUCT_INTEL_ATS_M75	0x56c1		/* Flex 140 */
 #define	PCI_PRODUCT_INTEL_I219_LM24	0x57a0		/* I219-LM */
