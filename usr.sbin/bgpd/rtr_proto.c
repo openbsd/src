@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.34 2024/03/22 15:41:34 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.35 2024/04/09 12:09:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -36,7 +36,8 @@ struct rtr_header {
 } __packed;
 
 #define RTR_MAX_VERSION		2
-#define RTR_MAX_LEN		2048
+#define RTR_MAX_PDU_SIZE	49152	/* XXX < IBUF_READ_SIZE */
+#define RTR_MAX_PDU_ERROR_SIZE	256
 #define RTR_DEFAULT_REFRESH	3600
 #define RTR_DEFAULT_RETRY	600
 #define RTR_DEFAULT_EXPIRE	7200
@@ -272,7 +273,7 @@ rtr_newmsg(struct rtr_session *rs, enum rtr_pdu_type type, uint32_t len,
 	struct ibuf *buf;
 	int saved_errno;
 
-	if (len > RTR_MAX_LEN) {
+	if (len > RTR_MAX_PDU_SIZE) {
 		errno = ERANGE;
 		return NULL;
 	}
@@ -328,6 +329,11 @@ rtr_send_error(struct rtr_session *rs, struct ibuf *pdu, enum rtr_error err,
 	if (pdu != NULL) {
 		ibuf_rewind(pdu);
 		len = ibuf_size(pdu);
+		if (len > RTR_MAX_PDU_ERROR_SIZE) {
+			len = RTR_MAX_PDU_ERROR_SIZE;
+			/* truncate down can not fail */
+			ibuf_truncate(pdu, RTR_MAX_PDU_ERROR_SIZE);
+		}
 	}
 
 	buf = rtr_newmsg(rs, ERROR_REPORT, 2 * sizeof(uint32_t) + len + mlen,
@@ -426,7 +432,7 @@ rtr_parse_header(struct rtr_session *rs, struct ibuf *hdr,
 
 	len = ntohl(rh.length);
 
-	if (len > RTR_MAX_LEN) {
+	if (len > RTR_MAX_PDU_SIZE) {
 		rtr_send_error(rs, hdr, CORRUPT_DATA, "%s: too big: %zu bytes",
 		    log_rtr_type(rh.type), len);
 		return -1;
@@ -752,6 +758,22 @@ rtr_parse_aspa(struct rtr_session *rs, struct ibuf *pdu)
 		aspatree = &rs->aspa_oldv6;
 	} else {
 		aspatree = &rs->aspa;
+	}
+
+	/* treat ASPA records with too many SPAS like a withdraw */
+	if (cnt > MAX_ASPA_SPAS_COUNT) {
+		struct aspa_set needle = { 0 };
+		needle.as = ntohl(rtr_aspa.cas);
+
+		log_warnx("rtr %s: oversized ASPA PDU: "
+		    "imlicit withdraw of customerAS %s",
+		    log_rtr(rs), log_as(needle.as));
+		a = RB_FIND(aspa_tree, aspatree, &needle);
+		if (a != NULL) {
+			RB_REMOVE(aspa_tree, aspatree, a);
+			free_aspa(a);
+		}
+		return 0;
 	}
 
 	/* create aspa_set entry from the rtr aspa pdu */
