@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.458 2024/04/03 08:57:26 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.459 2024/04/09 09:03:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -273,6 +273,7 @@ typedef struct {
 %type	<v.number>		asnumber as4number as4number_any optnumber
 %type	<v.number>		espah af safi restart origincode nettype
 %type	<v.number>		yesno inout restricted expires enforce
+%type	<v.number>		yesnoenforce enforce
 %type	<v.number>		validity aspa_validity
 %type	<v.number>		addpathextra addpathmax
 %type	<v.number>		port proto_item tos length flag icmptype
@@ -1889,7 +1890,7 @@ peeropts	: REMOTEAS as4number	{
 			}
 			curpeer->conf.min_holdtime = $3;
 		}
-		| ANNOUNCE af safi {
+		| ANNOUNCE af safi enforce {
 			uint8_t		aid, safi;
 			uint16_t	afi;
 
@@ -1905,42 +1906,48 @@ peeropts	: REMOTEAS as4number	{
 					yyerror("unknown AFI/SAFI pair");
 					YYERROR;
 				}
-				curpeer->conf.capabilities.mp[aid] = 1;
+				if ($4)
+					curpeer->conf.capabilities.mp[aid] = 2;
+				else
+					curpeer->conf.capabilities.mp[aid] = 1;
 			}
 		}
 		| ANNOUNCE CAPABILITIES yesno {
 			curpeer->conf.announce_capa = $3;
 		}
-		| ANNOUNCE REFRESH yesno {
+		| ANNOUNCE REFRESH yesnoenforce {
 			curpeer->conf.capabilities.refresh = $3;
 		}
-		| ANNOUNCE ENHANCED REFRESH yesno {
+		| ANNOUNCE ENHANCED REFRESH yesnoenforce {
 			curpeer->conf.capabilities.enhanced_rr = $4;
 		}
-		| ANNOUNCE RESTART yesno {
+		| ANNOUNCE RESTART yesnoenforce {
 			curpeer->conf.capabilities.grestart.restart = $3;
 		}
-		| ANNOUNCE AS4BYTE yesno {
+		| ANNOUNCE AS4BYTE yesnoenforce {
 			curpeer->conf.capabilities.as4byte = $3;
 		}
-		| ANNOUNCE ADDPATH RECV yesno {
+		| ANNOUNCE ADDPATH RECV yesnoenforce {
 			int8_t *ap = curpeer->conf.capabilities.add_path;
 			uint8_t i;
 
-			for (i = AID_MIN; i < AID_MAX; i++)
-				if ($4)
+			for (i = AID_MIN; i < AID_MAX; i++) {
+				if ($4) {
+					if ($4 == 2)
+						ap[i] |= CAPA_AP_RECV_ENFORCE;
 					ap[i] |= CAPA_AP_RECV;
-				else
+				} else
 					ap[i] &= ~CAPA_AP_RECV;
+			}
 		}
-		| ANNOUNCE ADDPATH SEND STRING addpathextra addpathmax {
+		| ANNOUNCE ADDPATH SEND STRING addpathextra addpathmax enforce {
 			int8_t *ap = curpeer->conf.capabilities.add_path;
 			enum addpath_mode mode;
 			u_int8_t i;
 
 			if (!strcmp($4, "no")) {
 				free($4);
-				if ($5 != 0 || $6 != 0) {
+				if ($5 != 0 || $6 != 0 || $7 != 0) {
 					yyerror("no additional option allowed "
 					    "for 'add-path send no'");
 					YYERROR;
@@ -1970,16 +1977,18 @@ peeropts	: REMOTEAS as4number	{
 				YYERROR;
 			}
 			for (i = AID_MIN; i < AID_MAX; i++) {
-				if (mode != ADDPATH_EVAL_NONE)
+				if (mode != ADDPATH_EVAL_NONE) {
+					if ($7)
+						ap[i] |= CAPA_AP_SEND_ENFORCE;
 					ap[i] |= CAPA_AP_SEND;
-				else
+				} else
 					ap[i] &= ~CAPA_AP_SEND;
 			}
 			curpeer->conf.eval.mode = mode;
 			curpeer->conf.eval.extrapaths = $5;
 			curpeer->conf.eval.maxpaths = $6;
 		}
-		| ANNOUNCE POLICY enforce {
+		| ANNOUNCE POLICY yesnoenforce {
 			curpeer->conf.capabilities.policy = $3;
 		}
 		| ROLE STRING {
@@ -3083,7 +3092,11 @@ delete		: /* empty */	{ $$ = 0; }
 		| DELETE	{ $$ = 1; }
 		;
 
-enforce		: yesno		{ $$ = $1; }
+enforce		: /* empty */	{ $$ = 0; }
+		| ENFORCE	{ $$ = 2; }
+		;
+
+yesnoenforce	: yesno		{ $$ = $1; }
 		| ENFORCE	{ $$ = 2; }
 		;
 

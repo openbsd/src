@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.467 2024/03/26 12:45:29 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.468 2024/04/09 09:03:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -89,7 +89,7 @@ int	parse_update(struct peer *);
 int	parse_rrefresh(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_capabilities(struct peer *, u_char *, uint16_t, uint32_t *);
-int	capa_neg_calc(struct peer *, uint8_t *);
+int	capa_neg_calc(struct peer *);
 void	session_dispatch_imsg(struct imsgbuf *, int, u_int *);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
@@ -1562,12 +1562,13 @@ session_open(struct peer *p)
 			for (i = AID_MIN; i < AID_MAX; i++) {
 				if (p->capa.ann.mp[i]) {
 					errs += session_capa_add_afi(opb,
-					    i, p->capa.ann.add_path[i]);
+					    i, p->capa.ann.add_path[i] &
+					    CAPA_AP_MASK);
 				}
 			}
 		} else {	/* AID_INET */
 			errs += session_capa_add_afi(opb, AID_INET,
-			    p->capa.ann.add_path[AID_INET]);
+			    p->capa.ann.add_path[AID_INET] & CAPA_AP_MASK);
 		}
 	}
 
@@ -2167,7 +2168,7 @@ parse_open(struct peer *peer)
 	uint16_t	 holdtime, oholdtime, myholdtime;
 	uint32_t	 as, bgpid;
 	uint16_t	 optparamlen, extlen, plen, op_len;
-	uint8_t		 op_type, suberr = 0;
+	uint8_t		 op_type;
 
 	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER_MARKER;
@@ -2350,8 +2351,7 @@ bad_len:
 		return (-1);
 	}
 
-	if (capa_neg_calc(peer, &suberr) == -1) {
-		session_notification(peer, ERR_OPEN, suberr, NULL);
+	if (capa_neg_calc(peer) == -1) {
 		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);
 	}
@@ -2735,9 +2735,10 @@ parse_capabilities(struct peer *peer, u_char *d, uint16_t dlen, uint32_t *as)
 }
 
 int
-capa_neg_calc(struct peer *p, uint8_t *suberr)
+capa_neg_calc(struct peer *p)
 {
-	uint8_t	i, hasmp = 0;
+	struct ibuf *ebuf;
+	uint8_t	i, hasmp = 0, capa_code, capa_len, capa_aid = 0;
 
 	/* a capability is accepted only if both sides announced it */
 
@@ -2811,6 +2812,8 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 	 */
 	memset(p->capa.neg.add_path, 0, sizeof(p->capa.neg.add_path));
 	for (i = AID_MIN; i < AID_MAX; i++) {
+		if (p->capa.neg.mp[i] == 0)
+			continue;
 		if ((p->capa.ann.add_path[i] & CAPA_AP_RECV) &&
 		    (p->capa.peer.add_path[i] & CAPA_AP_SEND)) {
 			p->capa.neg.add_path[i] |= CAPA_AP_RECV;
@@ -2836,43 +2839,112 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 		switch (p->conf.role) {
 		case ROLE_PROVIDER:
 			if (p->remote_role != ROLE_CUSTOMER)
-				goto fail;
+				goto policyfail;
 			break;
 		case ROLE_RS:
 			if (p->remote_role != ROLE_RS_CLIENT)
-				goto fail;
+				goto policyfail;
 			break;
 		case ROLE_RS_CLIENT:
 			if (p->remote_role != ROLE_RS)
-				goto fail;
+				goto policyfail;
 			break;
 		case ROLE_CUSTOMER:
 			if (p->remote_role != ROLE_PROVIDER)
-				goto fail;
+				goto policyfail;
 			break;
 		case ROLE_PEER:
 			if (p->remote_role != ROLE_PEER)
-				goto fail;
+				goto policyfail;
 			break;
 		default:
- fail:
+ policyfail:
 			log_peer_warnx(&p->conf, "open policy role mismatch: "
 			    "our role %s, their role %s",
 			    log_policy(p->conf.role),
 			    log_policy(p->remote_role));
-			*suberr = ERR_OPEN_ROLE;
+			session_notification(p, ERR_OPEN, ERR_OPEN_ROLE, NULL);
 			return (-1);
 		}
 		p->capa.neg.policy = 1;
-	} else if (p->capa.ann.policy == 2 && p->conf.ebgp) {
-		/* enforce presence of open policy role capability */
+	}
+
+	/* enforce presence of open policy role capability */
+	if (p->capa.ann.policy == 2 && p->capa.peer.policy == 0 &&
+	    p->conf.ebgp) {
 		log_peer_warnx(&p->conf, "open policy role enforced but "
 		    "not present");
-		*suberr = ERR_OPEN_ROLE;
+		session_notification(p, ERR_OPEN, ERR_OPEN_ROLE, NULL);
 		return (-1);
 	}
 
+	/* enforce presence of other capabilities */
+	if (p->capa.ann.refresh == 2 && p->capa.neg.refresh == 0) {
+		capa_code = CAPA_REFRESH;
+		capa_len = 0;
+		goto fail;
+	}
+	if (p->capa.ann.enhanced_rr == 2 && p->capa.neg.enhanced_rr == 0) {
+		capa_code = CAPA_ENHANCED_RR;
+		capa_len = 0;
+		goto fail;
+	}
+	if (p->capa.ann.as4byte == 2 && p->capa.neg.as4byte == 0) {
+		capa_code = CAPA_AS4BYTE;
+		capa_len = 4;
+		goto fail;
+	}
+	if (p->capa.ann.grestart.restart == 2 &&
+	    p->capa.neg.grestart.restart == 0) {
+		capa_code = CAPA_RESTART;
+		capa_len = 2;
+		goto fail;
+	}
+	for (i = AID_MIN; i < AID_MAX; i++) {
+		if (p->capa.ann.mp[i] == 2 && p->capa.neg.mp[i] == 0) {
+			capa_code = CAPA_MP;
+			capa_len = 4;
+			capa_aid = i;
+			goto fail;
+		}
+	}
+
+	for (i = AID_MIN; i < AID_MAX; i++) {
+		if (p->capa.neg.mp[i] == 0)
+			continue;
+		if ((p->capa.ann.add_path[i] & CAPA_AP_RECV_ENFORCE) &&
+		    (p->capa.neg.add_path[i] & CAPA_AP_RECV) == 0) {
+			capa_code = CAPA_ADD_PATH;
+			capa_len = 4;
+			capa_aid = i;
+			goto fail;
+		}
+		if ((p->capa.ann.add_path[i] & CAPA_AP_SEND_ENFORCE) &&
+		    (p->capa.neg.add_path[i] & CAPA_AP_SEND) == 0) {
+			capa_code = CAPA_ADD_PATH;
+			capa_len = 4;
+			capa_aid = i;
+			goto fail;
+		}
+	}
+
 	return (0);
+
+ fail:
+	if ((ebuf = ibuf_dynamic(2, 256)) == NULL)
+		return (-1);
+	/* best effort, no problem if it fails */
+	session_capa_add(ebuf, capa_code, capa_len);
+	if (capa_code == CAPA_MP)
+		session_capa_add_mp(ebuf, capa_aid);
+	else if (capa_code == CAPA_ADD_PATH)
+		session_capa_add_afi(ebuf, capa_aid, 0);
+	else if (capa_len > 0)
+		ibuf_add_zero(ebuf, capa_len);
+
+	session_notification(p, ERR_OPEN, ERR_OPEN_CAPA, ebuf);
+	ibuf_free(ebuf);
+	return (-1);
 }
 
 void

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.238 2024/03/18 10:16:50 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.239 2024/04/09 09:03:18 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2024 $
+.Dd $Mdocdate: April 9 2024 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -956,6 +956,7 @@ The neighbor properties are as follows:
 .Ic announce
 .Pq Ic IPv4 Ns | Ns Ic IPv6
 .Pq Ic none Ns | Ns Ic unicast Ns | Ns Ic vpn Ns | Ns Ic flowspec
+.Op Ic enforce
 .Xc
 For the given address family, control which
 .Em subsequent address families
@@ -979,7 +980,7 @@ for the same address family of the session.
 .Pp
 .It Xo
 .Ic announce add-path recv
-.Pq Ic yes Ns | Ns Ic no
+.Pq Ic yes Ns | Ns Ic no Ns | Ns Ic enforce
 .Xc
 If set to
 .Ic yes ,
@@ -991,12 +992,14 @@ The default is
 .It Xo
 .Ic announce add-path send
 .Pq Ic no Ns | Ns Ic all
+.Op Ic enforce
 .Xc
 .It Xo
 .Ic announce add-path send
-.Pq Ic best Ns | Ns Ic ecmp | Ns Ic as-wide-best
+.Pq Ic best Ns | Ns Ic ecmp Ns | Ns Ic as-wide-best
 .Op Ic plus Ar num
 .Op Ic max Ar num
+.Op Ic enforce
 .Xc
 If set to
 .Ic all ,
@@ -1047,12 +1050,16 @@ is ignored.
 .Pp
 .It Xo
 .Ic announce as-4byte
-.Pq Ic yes Ns | Ns Ic no
+.Pq Ic yes Ns | Ns Ic no Ns | Ns Ic enforce
 .Xc
 If set to
 .Ic no ,
 the 4-byte AS capability is not announced and so native 4-byte AS support is
 disabled.
+If
+.Ic enforce
+is set, the session will only be established if the neighbor also announces
+the capability.
 The default is
 .Ic yes .
 .Pp
@@ -1069,11 +1076,15 @@ The default is
 .Pp
 .It Xo
 .Ic announce enhanced refresh
-.Pq Ic yes Ns | Ns Ic no
+.Pq Ic yes Ns | Ns Ic no Ns | Ns Ic enforce
 .Xc
 If set to
 .Ic yes ,
 the enhanced route refresh capability is announced.
+If
+.Ic enforce
+is set, the session will only be established if the neighbor also announces
+the capability.
 The default is
 .Ic no .
 .Pp
@@ -1088,24 +1099,28 @@ If the role of the neighbor does not correspond to the expected role then
 the session will be closed.
 If
 .Ic enforce
-is set the session will only establish if the neighbor also announces
-the open policy capability.
+is set, the session will only be established if the neighbor also announces
+the capability.
 The default is
 .Ic no .
 .Pp
 .It Xo
 .Ic announce refresh
-.Pq Ic yes Ns | Ns Ic no
+.Pq Ic yes Ns | Ns Ic no Ns | Ns Ic enforce
 .Xc
 If set to
 .Ic no ,
 the route refresh capability is not announced.
+If
+.Ic enforce
+is set, the session will only be established if the neighbor also announces
+the capability.
 The default is
 .Ic yes .
 .Pp
 .It Xo
 .Ic announce restart
-.Pq Ic yes Ns | Ns Ic no
+.Pq Ic yes Ns | Ns Ic no Ns | Ns Ic enforce
 .Xc
 If set to
 .Ic no ,
@@ -1113,6 +1128,10 @@ the graceful restart capability is not announced.
 Currently only the End-of-RIB marker is supported and announced by the
 .Ic restart
 capability.
+If
+.Ic enforce
+is set, the session will only be established if the neighbor also announces
+the capability.
 The default is
 .Ic yes .
 .Pp

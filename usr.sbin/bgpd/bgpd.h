@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.489 2024/03/22 15:41:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.490 2024/04/09 09:03:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -432,6 +432,9 @@ enum capa_codes {
 #define	CAPA_AP_RECV		0x01
 #define	CAPA_AP_SEND		0x02
 #define	CAPA_AP_BIDIR		0x03
+#define	CAPA_AP_MASK		0x0f
+#define	CAPA_AP_RECV_ENFORCE	0x10	/* internal only */
+#define	CAPA_AP_SEND_ENFORCE	0x20	/* internal only */
 
 /* values for RFC 9234 - BGP Open Policy */
 #define CAPA_ROLE_PROVIDER	0x00

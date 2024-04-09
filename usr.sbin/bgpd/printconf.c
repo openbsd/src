@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.170 2024/03/20 09:35:46 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.171 2024/04/09 09:03:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -916,37 +916,67 @@ void
 print_announce(struct peer_config *p, const char *c)
 {
 	uint8_t	aid;
+	int match = 0;
 
 	if (p->announce_capa == 0)
 		printf("%s\tannounce capabilities no\n", c);
 
 	for (aid = AID_MIN; aid < AID_MAX; aid++)
-		if (p->capabilities.mp[aid])
+		if (p->capabilities.mp[aid] == 2) {
+			printf("%s\tannounce %s enforce\n", c, aid2str(aid));
+			match = 1;
+		} else if (p->capabilities.mp[aid]) {
 			printf("%s\tannounce %s\n", c, aid2str(aid));
+			match = 1;
+		}
+	if (!match) {
+		printf("%s\tannounce IPv4 none\n", c);
+		printf("%s\tannounce IPv6 none\n", c);
+	}
 
-	if (p->capabilities.refresh == 0)
+	if (p->capabilities.refresh == 2)
+		printf("%s\tannounce refresh enforce\n", c);
+	else if (p->capabilities.refresh == 0)
 		printf("%s\tannounce refresh no\n", c);
-	if (p->capabilities.enhanced_rr == 1)
+
+	if (p->capabilities.enhanced_rr == 2)
+		printf("%s\tannounce enhanced refresh enforce\n", c);
+	else if (p->capabilities.enhanced_rr == 1)
 		printf("%s\tannounce enhanced refresh yes\n", c);
-	if (p->capabilities.grestart.restart == 0)
+
+	if (p->capabilities.grestart.restart == 2)
+		printf("%s\tannounce restart enforce\n", c);
+	else if (p->capabilities.grestart.restart == 0)
 		printf("%s\tannounce restart no\n", c);
-	if (p->capabilities.as4byte == 0)
+
+	if (p->capabilities.as4byte == 2)
+		printf("%s\tannounce as4byte enforce\n", c);
+	else if (p->capabilities.as4byte == 0)
 		printf("%s\tannounce as4byte no\n", c);
-	if (p->capabilities.add_path[0] & CAPA_AP_RECV)
+
+	if (p->capabilities.add_path[AID_MIN] & CAPA_AP_RECV_ENFORCE)
+		printf("%s\tannounce add-path recv enforce\n", c);
+	else if (p->capabilities.add_path[AID_MIN] & CAPA_AP_RECV)
 		printf("%s\tannounce add-path recv yes\n", c);
-	if (p->capabilities.add_path[0] & CAPA_AP_SEND) {
+
+	if (p->capabilities.add_path[AID_MIN] & CAPA_AP_SEND) {
 		printf("%s\tannounce add-path send %s", c,
 		    print_addpath_mode(p->eval.mode));
 		if (p->eval.extrapaths != 0)
 			printf(" plus %d", p->eval.extrapaths);
 		if (p->eval.maxpaths != 0)
 			printf(" max %d", p->eval.maxpaths);
+		if (p->capabilities.add_path[AID_MIN] & CAPA_AP_SEND_ENFORCE)
+			printf(" enforce");
 		printf("\n");
 	}
-	if (p->capabilities.policy) {
-		printf("%s\tannounce policy %s\n", c,
-		    p->capabilities.policy == 2 ? "enforce" : "yes");
-	}
+
+	if (p->capabilities.policy == 2)
+		printf("%s\tannounce policy enforce\n", c);
+	else if (p->capabilities.policy == 1)
+		printf("%s\tannounce policy yes\n", c);
+	else
+		printf("%s\tannounce policy no\n", c);
 }
 
 void
