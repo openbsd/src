@@ -1,4 +1,4 @@
-/*	$OpenBSD: whirlpool_test.c,v 1.2 2024/04/09 18:08:43 tb Exp $ */
+/*	$OpenBSD: whirlpool_test.c,v 1.3 2024/04/09 18:12:11 tb Exp $ */
 /*
  * Copyright (c) 2024 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -192,7 +192,9 @@ whirlpool_test(void)
 		}
 
 		for (l = 0; l < wt->in_len;) {
-			in_len = arc4random_uniform(wt->in_len / 2);
+			in_len = 1;
+			if (wt->in_len > 1)
+				in_len = arc4random_uniform(wt->in_len / 2);
 			if (in_len < 1)
 				in_len = 1;
 			if (in_len > wt->in_len - l)
