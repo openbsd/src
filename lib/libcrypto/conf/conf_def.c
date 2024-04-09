@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_def.c,v 1.33 2020/02/17 12:51:48 inoguchi Exp $ */
+/* $OpenBSD: conf_def.c,v 1.34 2024/04/09 13:56:30 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,12 +122,14 @@ NCONF_default(void)
 {
 	return &default_method;
 }
+LCRYPTO_ALIAS(NCONF_default);
 
 CONF_METHOD *
 NCONF_WIN32(void)
 {
 	return &WIN32_method;
 }
+LCRYPTO_ALIAS(NCONF_WIN32);
 
 static CONF *
 def_create(CONF_METHOD *meth)

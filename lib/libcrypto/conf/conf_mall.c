@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mall.c,v 1.11 2024/03/02 09:02:04 tb Exp $ */
+/* $OpenBSD: conf_mall.c,v 1.12 2024/04/09 13:56:30 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -67,3 +67,4 @@ OPENSSL_load_builtin_modules(void)
 	/* Add builtin modules here */
 	ASN1_add_oid_module();
 }
+LCRYPTO_ALIAS(OPENSSL_load_builtin_modules);

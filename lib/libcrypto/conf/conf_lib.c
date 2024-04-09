@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_lib.c,v 1.16 2024/01/28 21:00:54 tb Exp $ */
+/* $OpenBSD: conf_lib.c,v 1.17 2024/04/09 13:56:30 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2000.
  */
@@ -75,6 +75,7 @@ CONF_set_nconf(CONF *conf, LHASH_OF(CONF_VALUE) *hash)
 	default_CONF_method->init(conf);
 	conf->data = hash;
 }
+LCRYPTO_ALIAS(CONF_set_nconf);
 
 /* The following section contains the "CONF classic" functions,
    rewritten in terms of the new CONF interface. */
@@ -85,6 +86,7 @@ CONF_set_default_method(CONF_METHOD *meth)
 	default_CONF_method = meth;
 	return 1;
 }
+LCRYPTO_ALIAS(CONF_set_default_method);
 
 LHASH_OF(CONF_VALUE) *
 CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file, long *eline)
@@ -103,6 +105,7 @@ CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file, long *eline)
 
 	return ltmp;
 }
+LCRYPTO_ALIAS(CONF_load);
 
 LHASH_OF(CONF_VALUE) *
 CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp, long *eline)
@@ -118,6 +121,7 @@ CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp, long *eline)
 	BIO_free(btmp);
 	return ltmp;
 }
+LCRYPTO_ALIAS(CONF_load_fp);
 
 LHASH_OF(CONF_VALUE) *
 CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp, long *eline)
@@ -132,6 +136,7 @@ CONF_load_bio(LHASH_OF(CONF_VALUE) *conf, BIO *bp, long *eline)
 		return ctmp.data;
 	return NULL;
 }
+LCRYPTO_ALIAS(CONF_load_bio);
 
 STACK_OF(CONF_VALUE) *
 CONF_get_section(LHASH_OF(CONF_VALUE) *conf, const char *section)
@@ -144,6 +149,7 @@ CONF_get_section(LHASH_OF(CONF_VALUE) *conf, const char *section)
 		return NCONF_get_section(&ctmp, section);
 	}
 }
+LCRYPTO_ALIAS(CONF_get_section);
 
 char *
 CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
@@ -157,6 +163,7 @@ CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
 		return NCONF_get_string(&ctmp, group, name);
 	}
 }
+LCRYPTO_ALIAS(CONF_get_string);
 
 long
 CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
@@ -179,6 +186,7 @@ CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
 	}
 	return result;
 }
+LCRYPTO_ALIAS(CONF_get_number);
 
 void
 CONF_free(LHASH_OF(CONF_VALUE) *conf)
@@ -188,6 +196,7 @@ CONF_free(LHASH_OF(CONF_VALUE) *conf)
 	CONF_set_nconf(&ctmp, conf);
 	NCONF_free_data(&ctmp);
 }
+LCRYPTO_ALIAS(CONF_free);
 
 int
 CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
@@ -203,6 +212,7 @@ CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
 	BIO_free(btmp);
 	return ret;
 }
+LCRYPTO_ALIAS(CONF_dump_fp);
 
 int
 CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
@@ -212,6 +222,7 @@ CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
 	CONF_set_nconf(&ctmp, conf);
 	return NCONF_dump_bio(&ctmp, out);
 }
+LCRYPTO_ALIAS(CONF_dump_bio);
 
 /* The following section contains the "New CONF" functions.  They are
    completely centralised around a new CONF structure that may contain
@@ -235,6 +246,7 @@ NCONF_new(CONF_METHOD *meth)
 
 	return ret;
 }
+LCRYPTO_ALIAS(NCONF_new);
 
 void
 NCONF_free(CONF *conf)
@@ -243,6 +255,7 @@ NCONF_free(CONF *conf)
 		return;
 	conf->meth->destroy(conf);
 }
+LCRYPTO_ALIAS(NCONF_free);
 
 void
 NCONF_free_data(CONF *conf)
@@ -251,6 +264,7 @@ NCONF_free_data(CONF *conf)
 		return;
 	conf->meth->destroy_data(conf);
 }
+LCRYPTO_ALIAS(NCONF_free_data);
 
 int
 NCONF_load(CONF *conf, const char *file, long *eline)
@@ -262,6 +276,7 @@ NCONF_load(CONF *conf, const char *file, long *eline)
 
 	return conf->meth->load(conf, file, eline);
 }
+LCRYPTO_ALIAS(NCONF_load);
 
 int
 NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
@@ -277,6 +292,7 @@ NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 	BIO_free(btmp);
 	return ret;
 }
+LCRYPTO_ALIAS(NCONF_load_fp);
 
 int
 NCONF_load_bio(CONF *conf, BIO *bp, long *eline)
@@ -288,6 +304,7 @@ NCONF_load_bio(CONF *conf, BIO *bp, long *eline)
 
 	return conf->meth->load_bio(conf, bp, eline);
 }
+LCRYPTO_ALIAS(NCONF_load_bio);
 
 STACK_OF(CONF_VALUE) *
 NCONF_get_section(const CONF *conf, const char *section)
@@ -304,6 +321,7 @@ NCONF_get_section(const CONF *conf, const char *section)
 
 	return _CONF_get_section_values(conf, section);
 }
+LCRYPTO_ALIAS(NCONF_get_section);
 
 char *
 NCONF_get_string(const CONF *conf, const char *group, const char *name)
@@ -324,6 +342,7 @@ NCONF_get_string(const CONF *conf, const char *group, const char *name)
 	    group ? group : "", name);
 	return NULL;
 }
+LCRYPTO_ALIAS(NCONF_get_string);
 
 int
 NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
@@ -348,6 +367,7 @@ NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
 
 	return 1;
 }
+LCRYPTO_ALIAS(NCONF_get_number_e);
 
 int
 NCONF_dump_fp(const CONF *conf, FILE *out)
@@ -362,6 +382,7 @@ NCONF_dump_fp(const CONF *conf, FILE *out)
 	BIO_free(btmp);
 	return ret;
 }
+LCRYPTO_ALIAS(NCONF_dump_fp);
 
 int
 NCONF_dump_bio(const CONF *conf, BIO *out)
@@ -373,3 +394,4 @@ NCONF_dump_bio(const CONF *conf, BIO *out)
 
 	return conf->meth->dump(conf, out);
 }
+LCRYPTO_ALIAS(NCONF_dump_bio);

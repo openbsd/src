@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_err.c,v 1.15 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: conf_err.c,v 1.16 2024/04/09 13:56:30 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -103,3 +103,4 @@ ERR_load_CONF_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_CONF_strings);

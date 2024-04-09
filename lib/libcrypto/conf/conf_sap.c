@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_sap.c,v 1.15 2023/11/19 15:46:09 tb Exp $ */
+/* $OpenBSD: conf_sap.c,v 1.16 2024/04/09 13:56:30 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -124,6 +124,7 @@ OPENSSL_config(const char *config_name)
 {
 	(void) OpenSSL_config(config_name);
 }
+LCRYPTO_ALIAS(OPENSSL_config);
 
 static void
 OPENSSL_no_config_internal(void)
@@ -144,3 +145,4 @@ OPENSSL_no_config(void)
 {
 	(void) OpenSSL_no_config();
 }
+LCRYPTO_ALIAS(OPENSSL_no_config);

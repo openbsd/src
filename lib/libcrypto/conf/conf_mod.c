@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.37 2024/03/26 00:24:11 tb Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.38 2024/04/09 13:56:30 beck Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -147,6 +147,7 @@ CONF_modules_load(const CONF *cnf, const char *appname, unsigned long flags)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CONF_modules_load);
 
 int
 CONF_modules_load_file(const char *filename, const char *appname,
@@ -185,6 +186,7 @@ err:
 
 	return ret;
 }
+LCRYPTO_ALIAS(CONF_modules_load_file);
 
 static int
 module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
@@ -352,6 +354,7 @@ CONF_modules_unload(int all)
 		supported_modules = NULL;
 	}
 }
+LCRYPTO_ALIAS(CONF_modules_unload);
 
 /* unload a single module */
 static void
@@ -389,6 +392,7 @@ CONF_modules_finish(void)
 	sk_CONF_IMODULE_free(initialized_modules);
 	initialized_modules = NULL;
 }
+LCRYPTO_ALIAS(CONF_modules_finish);
 
 /* finish a module instance */
 
@@ -409,6 +413,7 @@ CONF_module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc
 {
 	return module_add(name, ifunc, ffunc);
 }
+LCRYPTO_ALIAS(CONF_module_add);
 
 void
 CONF_modules_free(void)
@@ -416,6 +421,7 @@ CONF_modules_free(void)
 	CONF_modules_finish();
 	CONF_modules_unload(1);
 }
+LCRYPTO_ALIAS(CONF_modules_free);
 
 /* Utility functions */
 
@@ -424,54 +430,63 @@ CONF_imodule_get_name(const CONF_IMODULE *imod)
 {
 	return imod->name;
 }
+LCRYPTO_ALIAS(CONF_imodule_get_name);
 
 const char *
 CONF_imodule_get_value(const CONF_IMODULE *imod)
 {
 	return imod->value;
 }
+LCRYPTO_ALIAS(CONF_imodule_get_value);
 
 void *
 CONF_imodule_get_usr_data(const CONF_IMODULE *imod)
 {
 	return imod->usr_data;
 }
+LCRYPTO_ALIAS(CONF_imodule_get_usr_data);
 
 void
 CONF_imodule_set_usr_data(CONF_IMODULE *imod, void *usr_data)
 {
 	imod->usr_data = usr_data;
 }
+LCRYPTO_ALIAS(CONF_imodule_set_usr_data);
 
 CONF_MODULE *
 CONF_imodule_get_module(const CONF_IMODULE *imod)
 {
 	return imod->mod;
 }
+LCRYPTO_ALIAS(CONF_imodule_get_module);
 
 unsigned long
 CONF_imodule_get_flags(const CONF_IMODULE *imod)
 {
 	return imod->flags;
 }
+LCRYPTO_ALIAS(CONF_imodule_get_flags);
 
 void
 CONF_imodule_set_flags(CONF_IMODULE *imod, unsigned long flags)
 {
 	imod->flags = flags;
 }
+LCRYPTO_ALIAS(CONF_imodule_set_flags);
 
 void *
 CONF_module_get_usr_data(CONF_MODULE *mod)
 {
 	return mod->usr_data;
 }
+LCRYPTO_ALIAS(CONF_module_get_usr_data);
 
 void
 CONF_module_set_usr_data(CONF_MODULE *mod, void *usr_data)
 {
 	mod->usr_data = usr_data;
 }
+LCRYPTO_ALIAS(CONF_module_set_usr_data);
 
 /* Return default config file name */
 
@@ -485,6 +500,7 @@ CONF_get1_default_config_file(void)
 		return (NULL);
 	return file;
 }
+LCRYPTO_ALIAS(CONF_get1_default_config_file);
 
 /* This function takes a list separated by 'sep' and calls the
  * callback function giving the start and length of each member
@@ -531,3 +547,4 @@ CONF_parse_list(const char *list_, int sep, int nospc,
 		lstart = p + 1;
 	}
 }
+LCRYPTO_ALIAS(CONF_parse_list);
