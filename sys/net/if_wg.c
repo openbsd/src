@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.37 2024/03/05 17:48:01 mvs Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.38 2024/04/09 12:53:08 claudio Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -42,6 +42,7 @@
 #include <net/pfvar.h>
 #include <net/route.h>
 #include <net/bpf.h>
+#include <net/art.h>
 
 #include <netinet/ip.h>
 #include <netinet/ip6.h>

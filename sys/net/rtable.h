@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.28 2023/11/12 17:51:41 bluhm Exp $ */
+/*	$OpenBSD: rtable.h,v 1.29 2024/04/09 12:53:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -23,7 +23,6 @@
  * Newer routing table implementation based on ART (Allotment Routing
  * Table).
  */
-#include <net/art.h>
 
 #define	rt_key(rt)	((rt)->rt_dest)
 #define	rt_plen(rt)	((rt)->rt_plen)

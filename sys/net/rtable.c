@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.86 2024/03/26 10:01:57 bluhm Exp $ */
+/*	$OpenBSD: rtable.c,v 1.87 2024/04/09 12:53:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -30,6 +30,7 @@
 
 #include <net/rtable.h>
 #include <net/route.h>
+#include <net/art.h>
 
 /*
  * Structures used by rtable_get() to retrieve the corresponding
