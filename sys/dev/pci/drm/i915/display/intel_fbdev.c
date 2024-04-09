@@ -288,7 +288,6 @@ static int intelfb_create(struct drm_fb_helper *helper,
 
 	info->fbops = &intelfb_ops;
 
-#ifdef __linux__
 	obj = intel_fb_obj(&intel_fb->base);
 	if (i915_gem_object_is_lmem(obj)) {
 		struct intel_memory_region *mem = obj->mm.region;
@@ -336,21 +335,18 @@ static int intelfb_create(struct drm_fb_helper *helper,
 		memset_io(info->screen_base, 0, info->screen_size);
 
 	/* Use default scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
-#else
+
+	drm_dbg_kms(&dev_priv->drm, "allocated %dx%d fb: 0x%08x\n",
+		    ifbdev->fb->base.width, ifbdev->fb->base.height,
+		    i915_ggtt_offset(vma));
+	ifbdev->vma = vma;
+	ifbdev->vma_flags = flags;
+
+	intel_runtime_pm_put(&dev_priv->runtime_pm, wakeref);
+	vga_switcheroo_client_fb_set(pdev, info);
 {
 	struct drm_framebuffer *fb = ifbdev->helper.fb;
 	struct rasops_info *ri = &dev_priv->ro;
-	bus_space_handle_t bsh;
-	int err;
-
-	vaddr = i915_vma_pin_iomap(vma);
-	if (IS_ERR(vaddr)) {
-		DRM_ERROR("Failed to remap framebuffer into virtual memory\n");
-		ret = PTR_ERR(vaddr);
-		goto out_unpin;
-	}
-
-	drm_fb_helper_fill_info(info, &ifbdev->helper, sizes);
 
 	ri->ri_bits = vaddr;
 	ri->ri_depth = fb->format->cpp[0] * 8;
@@ -376,20 +372,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 		ri->ri_bpos = 0;
 		break;
 	}
-
-	if (vma->obj->stolen && !prealloc)
-		memset(ri->ri_bits, 0, vma->node.size);
 }
-#endif
-
-	drm_dbg_kms(&dev_priv->drm, "allocated %dx%d fb: 0x%08x\n",
-		    ifbdev->fb->base.width, ifbdev->fb->base.height,
-		    i915_ggtt_offset(vma));
-	ifbdev->vma = vma;
-	ifbdev->vma_flags = flags;
-
-	intel_runtime_pm_put(&dev_priv->runtime_pm, wakeref);
-	vga_switcheroo_client_fb_set(pdev, info);
 	return 0;
 
 out_unpin:
