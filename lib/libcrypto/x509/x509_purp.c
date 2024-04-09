@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.40 2024/04/08 23:46:21 beck Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.41 2024/04/09 15:00:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -397,6 +397,13 @@ x509v3_cache_extensions_internal(X509 *x)
 
 	if (x->ex_flags & EXFLAG_SET)
 		return;
+
+	/*
+	 * XXX - this should really only set EXFLAG_INVALID if extensions are
+	 * invalid. However, the X509_digest() failure matches OpenSSL/BoringSSL
+	 * behavior and the version checks are at least vaguely related to
+	 * extensions.
+	 */
 
 	if (!X509_digest(x, X509_CERT_HASH_EVP, x->hash, NULL))
 		x->ex_flags |= EXFLAG_INVALID;
