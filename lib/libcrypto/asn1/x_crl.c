@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.43 2024/03/02 10:59:41 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.44 2024/04/09 13:55:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -420,30 +420,35 @@ d2i_X509_REVOKED(X509_REVOKED **a, const unsigned char **in, long len)
 	return (X509_REVOKED *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_REVOKED_it);
 }
+LCRYPTO_ALIAS(d2i_X509_REVOKED);
 
 int
 i2d_X509_REVOKED(X509_REVOKED *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_REVOKED_it);
 }
+LCRYPTO_ALIAS(i2d_X509_REVOKED);
 
 X509_REVOKED *
 X509_REVOKED_new(void)
 {
 	return (X509_REVOKED *)ASN1_item_new(&X509_REVOKED_it);
 }
+LCRYPTO_ALIAS(X509_REVOKED_new);
 
 void
 X509_REVOKED_free(X509_REVOKED *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_REVOKED_it);
 }
+LCRYPTO_ALIAS(X509_REVOKED_free);
 
 X509_REVOKED *
 X509_REVOKED_dup(X509_REVOKED *a)
 {
 	return ASN1_item_dup(&X509_REVOKED_it, a);
 }
+LCRYPTO_ALIAS(X509_REVOKED_dup);
 
 X509_CRL_INFO *
 d2i_X509_CRL_INFO(X509_CRL_INFO **a, const unsigned char **in, long len)
@@ -451,24 +456,28 @@ d2i_X509_CRL_INFO(X509_CRL_INFO **a, const unsigned char **in, long len)
 	return (X509_CRL_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_CRL_INFO_it);
 }
+LCRYPTO_ALIAS(d2i_X509_CRL_INFO);
 
 int
 i2d_X509_CRL_INFO(X509_CRL_INFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_CRL_INFO_it);
 }
+LCRYPTO_ALIAS(i2d_X509_CRL_INFO);
 
 X509_CRL_INFO *
 X509_CRL_INFO_new(void)
 {
 	return (X509_CRL_INFO *)ASN1_item_new(&X509_CRL_INFO_it);
 }
+LCRYPTO_ALIAS(X509_CRL_INFO_new);
 
 void
 X509_CRL_INFO_free(X509_CRL_INFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_CRL_INFO_it);
 }
+LCRYPTO_ALIAS(X509_CRL_INFO_free);
 
 X509_CRL *
 d2i_X509_CRL(X509_CRL **a, const unsigned char **in, long len)
@@ -476,30 +485,35 @@ d2i_X509_CRL(X509_CRL **a, const unsigned char **in, long len)
 	return (X509_CRL *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_CRL_it);
 }
+LCRYPTO_ALIAS(d2i_X509_CRL);
 
 int
 i2d_X509_CRL(X509_CRL *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_CRL_it);
 }
+LCRYPTO_ALIAS(i2d_X509_CRL);
 
 X509_CRL *
 X509_CRL_new(void)
 {
 	return (X509_CRL *)ASN1_item_new(&X509_CRL_it);
 }
+LCRYPTO_ALIAS(X509_CRL_new);
 
 void
 X509_CRL_free(X509_CRL *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_CRL_it);
 }
+LCRYPTO_ALIAS(X509_CRL_free);
 
 X509_CRL *
 X509_CRL_dup(X509_CRL *x)
 {
 	return ASN1_item_dup(&X509_CRL_it, x);
 }
+LCRYPTO_ALIAS(X509_CRL_dup);
 
 static int
 X509_REVOKED_cmp(const X509_REVOKED * const *a, const X509_REVOKED * const *b)
@@ -522,6 +536,7 @@ X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
 	inf->enc.modified = 1;
 	return 1;
 }
+LCRYPTO_ALIAS(X509_CRL_add0_revoked);
 
 int
 X509_CRL_verify(X509_CRL *crl, EVP_PKEY *pkey)
@@ -529,6 +544,7 @@ X509_CRL_verify(X509_CRL *crl, EVP_PKEY *pkey)
 	return ASN1_item_verify(&X509_CRL_INFO_it, crl->sig_alg, crl->signature,
 	    crl->crl, pkey);
 }
+LCRYPTO_ALIAS(X509_CRL_verify);
 
 static int
 crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm, X509_REVOKED *rev)
@@ -595,6 +611,7 @@ X509_CRL_get0_by_serial(X509_CRL *crl, X509_REVOKED **ret,
 {
 	return crl_lookup(crl, ret, serial, NULL);
 }
+LCRYPTO_ALIAS(X509_CRL_get0_by_serial);
 
 int
 X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
@@ -602,60 +619,70 @@ X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 	return crl_lookup(crl, ret, X509_get_serialNumber(x),
 	    X509_get_issuer_name(x));
 }
+LCRYPTO_ALIAS(X509_CRL_get0_by_cert);
 
 int
 X509_CRL_get_signature_nid(const X509_CRL *crl)
 {
 	return OBJ_obj2nid(crl->sig_alg->algorithm);
 }
+LCRYPTO_ALIAS(X509_CRL_get_signature_nid);
 
 const STACK_OF(X509_EXTENSION) *
 X509_CRL_get0_extensions(const X509_CRL *crl)
 {
 	return crl->crl->extensions;
 }
+LCRYPTO_ALIAS(X509_CRL_get0_extensions);
 
 long
 X509_CRL_get_version(const X509_CRL *crl)
 {
 	return ASN1_INTEGER_get(crl->crl->version);
 }
+LCRYPTO_ALIAS(X509_CRL_get_version);
 
 const ASN1_TIME *
 X509_CRL_get0_lastUpdate(const X509_CRL *crl)
 {
 	return crl->crl->lastUpdate;
 }
+LCRYPTO_ALIAS(X509_CRL_get0_lastUpdate);
 
 ASN1_TIME *
 X509_CRL_get_lastUpdate(X509_CRL *crl)
 {
 	return crl->crl->lastUpdate;
 }
+LCRYPTO_ALIAS(X509_CRL_get_lastUpdate);
 
 const ASN1_TIME *
 X509_CRL_get0_nextUpdate(const X509_CRL *crl)
 {
 	return crl->crl->nextUpdate;
 }
+LCRYPTO_ALIAS(X509_CRL_get0_nextUpdate);
 
 ASN1_TIME *
 X509_CRL_get_nextUpdate(X509_CRL *crl)
 {
 	return crl->crl->nextUpdate;
 }
+LCRYPTO_ALIAS(X509_CRL_get_nextUpdate);
 
 X509_NAME *
 X509_CRL_get_issuer(const X509_CRL *crl)
 {
 	return crl->crl->issuer;
 }
+LCRYPTO_ALIAS(X509_CRL_get_issuer);
 
 STACK_OF(X509_REVOKED) *
 X509_CRL_get_REVOKED(X509_CRL *crl)
 {
 	return crl->crl->revoked;
 }
+LCRYPTO_ALIAS(X509_CRL_get_REVOKED);
 
 void
 X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
@@ -666,9 +693,11 @@ X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
 	if (palg != NULL)
 		*palg = crl->sig_alg;
 }
+LCRYPTO_ALIAS(X509_CRL_get0_signature);
 
 const X509_ALGOR *
 X509_CRL_get0_tbs_sigalg(const X509_CRL *crl)
 {
 	return crl->crl->sig_alg;
 }
+LCRYPTO_ALIAS(X509_CRL_get0_tbs_sigalg);

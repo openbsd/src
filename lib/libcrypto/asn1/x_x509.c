@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.37 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: x_x509.c,v 1.38 2024/04/09 13:55:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,24 +149,28 @@ d2i_X509_CINF(X509_CINF **a, const unsigned char **in, long len)
 	return (X509_CINF *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_CINF_it);
 }
+LCRYPTO_ALIAS(d2i_X509_CINF);
 
 int
 i2d_X509_CINF(X509_CINF *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_CINF_it);
 }
+LCRYPTO_ALIAS(i2d_X509_CINF);
 
 X509_CINF *
 X509_CINF_new(void)
 {
 	return (X509_CINF *)ASN1_item_new(&X509_CINF_it);
 }
+LCRYPTO_ALIAS(X509_CINF_new);
 
 void
 X509_CINF_free(X509_CINF *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_CINF_it);
 }
+LCRYPTO_ALIAS(X509_CINF_free);
 /* X509 top level structure needs a bit of customisation */
 
 static int
@@ -216,6 +220,7 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 
 	return 1;
 }
+LCRYPTO_ALIAS(d2i_X509_CINF);
 
 static const ASN1_AUX X509_aux = {
 	.app_data = NULL,
@@ -259,30 +264,35 @@ d2i_X509(X509 **a, const unsigned char **in, long len)
 	return (X509 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_it);
 }
+LCRYPTO_ALIAS(d2i_X509);
 
 int
 i2d_X509(X509 *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_it);
 }
+LCRYPTO_ALIAS(i2d_X509);
 
 X509 *
 X509_new(void)
 {
 	return (X509 *)ASN1_item_new(&X509_it);
 }
+LCRYPTO_ALIAS(X509_new);
 
 void
 X509_free(X509 *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_it);
 }
+LCRYPTO_ALIAS(X509_free);
 
 X509 *
 X509_dup(X509 *x)
 {
 	return ASN1_item_dup(&X509_it, x);
 }
+LCRYPTO_ALIAS(X509_dup);
 
 int
 X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
@@ -291,18 +301,21 @@ X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509, argl, argp,
 	    new_func, dup_func, free_func);
 }
+LCRYPTO_ALIAS(X509_get_ex_new_index);
 
 int
 X509_set_ex_data(X509 *r, int idx, void *arg)
 {
 	return (CRYPTO_set_ex_data(&r->ex_data, idx, arg));
 }
+LCRYPTO_ALIAS(X509_set_ex_data);
 
 void *
 X509_get_ex_data(X509 *r, int idx)
 {
 	return (CRYPTO_get_ex_data(&r->ex_data, idx));
 }
+LCRYPTO_ALIAS(X509_get_ex_data);
 
 /* X509_AUX ASN1 routines. X509_AUX is the name given to
  * a certificate with extra info tagged on the end. Since these
@@ -340,6 +353,7 @@ d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
 	X509_free(ret);
 	return NULL;
 }
+LCRYPTO_ALIAS(d2i_X509_AUX);
 
 int
 i2d_X509_AUX(X509 *a, unsigned char **pp)
@@ -351,6 +365,7 @@ i2d_X509_AUX(X509 *a, unsigned char **pp)
 		length += i2d_X509_CERT_AUX(a->aux, pp);
 	return length;
 }
+LCRYPTO_ALIAS(i2d_X509_AUX);
 
 int
 i2d_re_X509_tbs(X509 *x, unsigned char **pp)
@@ -358,6 +373,7 @@ i2d_re_X509_tbs(X509 *x, unsigned char **pp)
 	x->cert_info->enc.modified = 1;
 	return i2d_X509_CINF(x->cert_info, pp);
 }
+LCRYPTO_ALIAS(i2d_re_X509_tbs);
 
 void
 X509_get0_signature(const ASN1_BIT_STRING **psig, const X509_ALGOR **palg,
@@ -368,9 +384,11 @@ X509_get0_signature(const ASN1_BIT_STRING **psig, const X509_ALGOR **palg,
 	if (palg != NULL)
 		*palg = x->sig_alg;
 }
+LCRYPTO_ALIAS(X509_get0_signature);
 
 int
 X509_get_signature_nid(const X509 *x)
 {
 	return OBJ_obj2nid(x->sig_alg->algorithm);
 }
+LCRYPTO_ALIAS(X509_get_signature_nid);

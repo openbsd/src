@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.20 2024/01/28 14:43:48 joshua Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.21 2024/04/09 13:55:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,6 +139,7 @@ ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
 	free(str);
 	return (1);
 }
+LCRYPTO_ALIAS(ASN1_item_digest);
 
 /*
  * ASN1_ITEM version of ASN1_dup(): follows the same model except there's no
@@ -237,6 +238,7 @@ ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_item_sign);
 
 static int
 asn1_item_set_algorithm_identifiers(EVP_MD_CTX *ctx, X509_ALGOR *algor1,
@@ -376,6 +378,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_item_sign_ctx);
 
 int
 ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
@@ -462,6 +465,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_item_verify);
 
 #define HEADER_SIZE   8
 #define ASN1_CHUNK_INITIAL_SIZE (16 * 1024)

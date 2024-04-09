@@ -1,4 +1,4 @@
-/* $OpenBSD: x_req.c,v 1.21 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: x_req.c,v 1.22 2024/04/09 13:55:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,24 +143,28 @@ d2i_X509_REQ_INFO(X509_REQ_INFO **a, const unsigned char **in, long len)
 	return (X509_REQ_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_REQ_INFO_it);
 }
+LCRYPTO_ALIAS(d2i_X509_REQ_INFO);
 
 int
 i2d_X509_REQ_INFO(X509_REQ_INFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_REQ_INFO_it);
 }
+LCRYPTO_ALIAS(i2d_X509_REQ_INFO);
 
 X509_REQ_INFO *
 X509_REQ_INFO_new(void)
 {
 	return (X509_REQ_INFO *)ASN1_item_new(&X509_REQ_INFO_it);
 }
+LCRYPTO_ALIAS(X509_REQ_INFO_new);
 
 void
 X509_REQ_INFO_free(X509_REQ_INFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_REQ_INFO_it);
 }
+LCRYPTO_ALIAS(X509_REQ_INFO_free);
 
 static const ASN1_AUX X509_REQ_aux = {
 	.app_data = NULL,
@@ -203,36 +207,42 @@ d2i_X509_REQ(X509_REQ **a, const unsigned char **in, long len)
 	return (X509_REQ *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_REQ_it);
 }
+LCRYPTO_ALIAS(d2i_X509_REQ);
 
 int
 i2d_X509_REQ(X509_REQ *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_REQ_it);
 }
+LCRYPTO_ALIAS(i2d_X509_REQ);
 
 X509_REQ *
 X509_REQ_new(void)
 {
 	return (X509_REQ *)ASN1_item_new(&X509_REQ_it);
 }
+LCRYPTO_ALIAS(X509_REQ_new);
 
 void
 X509_REQ_free(X509_REQ *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_REQ_it);
 }
+LCRYPTO_ALIAS(X509_REQ_free);
 
 X509_REQ *
 X509_REQ_dup(X509_REQ *x)
 {
 	return ASN1_item_dup(&X509_REQ_it, x);
 }
+LCRYPTO_ALIAS(X509_REQ_dup);
 
 int
 X509_REQ_get_signature_nid(const X509_REQ *req)
 {
 	return OBJ_obj2nid(req->sig_alg->algorithm);
 }
+LCRYPTO_ALIAS(X509_REQ_get_signature_nid);
 
 void
 X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
@@ -243,3 +253,4 @@ X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
 	if (palg != NULL)
 		*palg = req->sig_alg;
 }
+LCRYPTO_ALIAS(X509_REQ_get0_signature);

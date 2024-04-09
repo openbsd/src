@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pkey.c,v 1.23 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: x_pkey.c,v 1.24 2024/04/09 13:55:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,6 +98,7 @@ X509_PKEY_new(void)
 	}
 	return NULL;
 }
+LCRYPTO_ALIAS(X509_PKEY_new);
 
 void
 X509_PKEY_free(X509_PKEY *x)
@@ -119,3 +120,4 @@ X509_PKEY_free(X509_PKEY *x)
 		free(x->key_data);
 	free(x);
 }
+LCRYPTO_ALIAS(X509_PKEY_free);

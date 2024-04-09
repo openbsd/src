@@ -1,4 +1,4 @@
-/* $OpenBSD: x_exten.c,v 1.20 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: x_exten.c,v 1.21 2024/04/09 13:55:02 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -116,24 +116,28 @@ d2i_X509_EXTENSION(X509_EXTENSION **a, const unsigned char **in, long len)
 	return (X509_EXTENSION *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_EXTENSION_it);
 }
+LCRYPTO_ALIAS(d2i_X509_EXTENSION);
 
 int
 i2d_X509_EXTENSION(X509_EXTENSION *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_EXTENSION_it);
 }
+LCRYPTO_ALIAS(i2d_X509_EXTENSION);
 
 X509_EXTENSION *
 X509_EXTENSION_new(void)
 {
 	return (X509_EXTENSION *)ASN1_item_new(&X509_EXTENSION_it);
 }
+LCRYPTO_ALIAS(X509_EXTENSION_new);
 
 void
 X509_EXTENSION_free(X509_EXTENSION *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_EXTENSION_it);
 }
+LCRYPTO_ALIAS(X509_EXTENSION_free);
 
 X509_EXTENSIONS *
 d2i_X509_EXTENSIONS(X509_EXTENSIONS **a, const unsigned char **in, long len)
@@ -141,15 +145,18 @@ d2i_X509_EXTENSIONS(X509_EXTENSIONS **a, const unsigned char **in, long len)
 	return (X509_EXTENSIONS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_EXTENSIONS_it);
 }
+LCRYPTO_ALIAS(d2i_X509_EXTENSIONS);
 
 int
 i2d_X509_EXTENSIONS(X509_EXTENSIONS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_EXTENSIONS_it);
 }
+LCRYPTO_ALIAS(i2d_X509_EXTENSIONS);
 
 X509_EXTENSION *
 X509_EXTENSION_dup(X509_EXTENSION *x)
 {
 	return ASN1_item_dup(&X509_EXTENSION_it, x);
 }
+LCRYPTO_ALIAS(X509_EXTENSION_dup);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_spki.c,v 1.13 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: x_spki.c,v 1.14 2024/04/09 13:55:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,24 +94,28 @@ d2i_NETSCAPE_SPKAC(NETSCAPE_SPKAC **a, const unsigned char **in, long len)
 	return (NETSCAPE_SPKAC *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &NETSCAPE_SPKAC_it);
 }
+LCRYPTO_ALIAS(d2i_NETSCAPE_SPKAC);
 
 int
 i2d_NETSCAPE_SPKAC(NETSCAPE_SPKAC *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NETSCAPE_SPKAC_it);
 }
+LCRYPTO_ALIAS(i2d_NETSCAPE_SPKAC);
 
 NETSCAPE_SPKAC *
 NETSCAPE_SPKAC_new(void)
 {
 	return (NETSCAPE_SPKAC *)ASN1_item_new(&NETSCAPE_SPKAC_it);
 }
+LCRYPTO_ALIAS(NETSCAPE_SPKAC_new);
 
 void
 NETSCAPE_SPKAC_free(NETSCAPE_SPKAC *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_SPKAC_it);
 }
+LCRYPTO_ALIAS(NETSCAPE_SPKAC_free);
 
 static const ASN1_TEMPLATE NETSCAPE_SPKI_seq_tt[] = {
 	{
@@ -154,21 +158,25 @@ d2i_NETSCAPE_SPKI(NETSCAPE_SPKI **a, const unsigned char **in, long len)
 	return (NETSCAPE_SPKI *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &NETSCAPE_SPKI_it);
 }
+LCRYPTO_ALIAS(d2i_NETSCAPE_SPKI);
 
 int
 i2d_NETSCAPE_SPKI(NETSCAPE_SPKI *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NETSCAPE_SPKI_it);
 }
+LCRYPTO_ALIAS(i2d_NETSCAPE_SPKI);
 
 NETSCAPE_SPKI *
 NETSCAPE_SPKI_new(void)
 {
 	return (NETSCAPE_SPKI *)ASN1_item_new(&NETSCAPE_SPKI_it);
 }
+LCRYPTO_ALIAS(NETSCAPE_SPKI_new);
 
 void
 NETSCAPE_SPKI_free(NETSCAPE_SPKI *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &NETSCAPE_SPKI_it);
 }
+LCRYPTO_ALIAS(NETSCAPE_SPKI_free);

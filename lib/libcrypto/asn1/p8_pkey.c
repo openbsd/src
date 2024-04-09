@@ -1,4 +1,4 @@
-/* $OpenBSD: p8_pkey.c,v 1.23 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: p8_pkey.c,v 1.24 2024/04/09 13:55:02 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -121,24 +121,28 @@ d2i_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO **a, const unsigned char **in, long 
 	return (PKCS8_PRIV_KEY_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &PKCS8_PRIV_KEY_INFO_it);
 }
+LCRYPTO_ALIAS(d2i_PKCS8_PRIV_KEY_INFO);
 
 int
 i2d_PKCS8_PRIV_KEY_INFO(PKCS8_PRIV_KEY_INFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PKCS8_PRIV_KEY_INFO_it);
 }
+LCRYPTO_ALIAS(i2d_PKCS8_PRIV_KEY_INFO);
 
 PKCS8_PRIV_KEY_INFO *
 PKCS8_PRIV_KEY_INFO_new(void)
 {
 	return (PKCS8_PRIV_KEY_INFO *)ASN1_item_new(&PKCS8_PRIV_KEY_INFO_it);
 }
+LCRYPTO_ALIAS(PKCS8_PRIV_KEY_INFO_new);
 
 void
 PKCS8_PRIV_KEY_INFO_free(PKCS8_PRIV_KEY_INFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS8_PRIV_KEY_INFO_it);
 }
+LCRYPTO_ALIAS(PKCS8_PRIV_KEY_INFO_free);
 
 int
 PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj, int version,
@@ -154,6 +158,7 @@ PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj, int version,
 		ASN1_STRING_set0(priv->pkey, penc, penclen);
 	return 1;
 }
+LCRYPTO_ALIAS(PKCS8_pkey_set0);
 
 int
 PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg, const unsigned char **pk,
@@ -169,12 +174,14 @@ PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg, const unsigned char **pk,
 		*pa = p8->pkeyalg;
 	return 1;
 }
+LCRYPTO_ALIAS(PKCS8_pkey_get0);
 
 const STACK_OF(X509_ATTRIBUTE) *
 PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8)
 {
 	return p8->attributes;
 }
+LCRYPTO_ALIAS(PKCS8_pkey_get0_attrs);
 
 int
 PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
@@ -185,3 +192,4 @@ PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
 		return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(PKCS8_pkey_add1_attr_by_NID);

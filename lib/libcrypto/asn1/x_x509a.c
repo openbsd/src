@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.21 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.22 2024/04/09 13:55:02 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -172,6 +172,7 @@ X509_alias_set1(X509 *x, const unsigned char *name, int len)
 		return 0;
 	return ASN1_STRING_set(aux->alias, name, len);
 }
+LCRYPTO_ALIAS(X509_alias_set1);
 
 int
 X509_keyid_set1(X509 *x, const unsigned char *id, int len)
@@ -190,6 +191,7 @@ X509_keyid_set1(X509 *x, const unsigned char *id, int len)
 		return 0;
 	return ASN1_STRING_set(aux->keyid, id, len);
 }
+LCRYPTO_ALIAS(X509_keyid_set1);
 
 unsigned char *
 X509_alias_get0(X509 *x, int *len)
@@ -200,6 +202,7 @@ X509_alias_get0(X509 *x, int *len)
 		*len = x->aux->alias->length;
 	return x->aux->alias->data;
 }
+LCRYPTO_ALIAS(X509_alias_get0);
 
 unsigned char *
 X509_keyid_get0(X509 *x, int *len)
@@ -210,6 +213,7 @@ X509_keyid_get0(X509 *x, int *len)
 		*len = x->aux->keyid->length;
 	return x->aux->keyid->data;
 }
+LCRYPTO_ALIAS(X509_keyid_get0);
 
 int
 X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)
@@ -232,6 +236,7 @@ X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)
 	ASN1_OBJECT_free(objtmp);
 	return 0;
 }
+LCRYPTO_ALIAS(X509_add1_trust_object);
 
 int
 X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
@@ -254,6 +259,7 @@ X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
 	ASN1_OBJECT_free(objtmp);
 	return 0;
 }
+LCRYPTO_ALIAS(X509_add1_reject_object);
 
 void
 X509_trust_clear(X509 *x)
@@ -263,6 +269,7 @@ X509_trust_clear(X509 *x)
 		x->aux->trust = NULL;
 	}
 }
+LCRYPTO_ALIAS(X509_trust_clear);
 
 void
 X509_reject_clear(X509 *x)
@@ -272,3 +279,4 @@ X509_reject_clear(X509 *x)
 		x->aux->reject = NULL;
 	}
 }
+LCRYPTO_ALIAS(X509_reject_clear);

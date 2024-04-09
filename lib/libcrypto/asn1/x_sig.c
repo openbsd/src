@@ -1,4 +1,4 @@
-/* $OpenBSD: x_sig.c,v 1.16 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: x_sig.c,v 1.17 2024/04/09 13:55:02 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,24 +92,28 @@ d2i_X509_SIG(X509_SIG **a, const unsigned char **in, long len)
 	return (X509_SIG *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_SIG_it);
 }
+LCRYPTO_ALIAS(d2i_X509_SIG);
 
 int
 i2d_X509_SIG(X509_SIG *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_SIG_it);
 }
+LCRYPTO_ALIAS(i2d_X509_SIG);
 
 X509_SIG *
 X509_SIG_new(void)
 {
 	return (X509_SIG *)ASN1_item_new(&X509_SIG_it);
 }
+LCRYPTO_ALIAS(X509_SIG_new);
 
 void
 X509_SIG_free(X509_SIG *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_SIG_it);
 }
+LCRYPTO_ALIAS(X509_SIG_free);
 
 void
 X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
@@ -120,6 +124,7 @@ X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
 	if (pdigest != NULL)
 		*pdigest = sig->digest;
 }
+LCRYPTO_ALIAS(X509_SIG_get0);
 
 void
 X509_SIG_getm(X509_SIG *sig, X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest)
@@ -129,3 +134,4 @@ X509_SIG_getm(X509_SIG *sig, X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest)
 	if (pdigest != NULL)
 		*pdigest = sig->digest;
 }
+LCRYPTO_ALIAS(X509_SIG_getm);
