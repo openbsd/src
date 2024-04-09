@@ -1,7 +1,7 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-/*	$OpenBSD: timestamp.h,v 1.11 2023/08/19 04:21:06 guenther Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.12 2024/04/09 15:08:21 cheloha Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -39,10 +39,6 @@
  * ts_set_from_time_t(d, t):	create timestamp from time_t.
  */
 
-/* sysresult = set_times(name):	set modification times on a file.
- * 				system call results.
- */
-
 #define Init_Timestamp()	clock_gettime(CLOCK_REALTIME, &starttime)
 
 #define TMIN (sizeof(time_t) == sizeof(int32_t) ? INT32_MIN : INT64_MIN)
@@ -63,8 +59,6 @@ do { \
 	if (is_out_of_date(t)) \
 		(t).tv_nsec++; \
 } while (0)
-
-extern int set_times(const char *);
 
 extern struct timespec starttime;	/* The time at the start 
 					 * of this whole process */
