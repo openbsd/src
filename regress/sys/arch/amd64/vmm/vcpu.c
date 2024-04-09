@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcpu.c,v 1.6 2023/05/13 23:15:28 dv Exp $	*/
+/*	$OpenBSD: vcpu.c,v 1.7 2024/04/09 21:55:16 dv Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -34,43 +34,51 @@
 #include <unistd.h>
 
 #define KIB		1024
-#define MIB		(1 << 20)
+#define MIB		(1UL << 20)
+#define GIB		(1024 * MIB)
 #define VMM_NODE	"/dev/vmm"
 
+#define LOW_MEM		0
+#define UPPER_MEM	1
+
 #define PCKBC_AUX	0x61
+#define PCJR_DISKCTRL	0xF0
 
 const char 		*VM_NAME = "regress";
+
+const uint8_t PUSHW_DX[] = { 0x66, 0x52 };		 // pushw %dx
+const uint8_t INS[] = { 0x6C };				 // ins es:[di],dx
+const uint8_t IN_PCJR[] = { 0xE4, 0xF0 };		 // in 0xF0
 
 /* Originally from vmd(8)'s vm.c */
 const struct vcpu_reg_state vcpu_init_flat16 = {
 	.vrs_gprs[VCPU_REGS_RFLAGS] = 0x2,
 	.vrs_gprs[VCPU_REGS_RIP] = 0xFFF0,
-	.vrs_gprs[VCPU_REGS_RSP] = 0x0,
+	.vrs_gprs[VCPU_REGS_RDX] = PCKBC_AUX,	/* Port used by INS */
+	.vrs_gprs[VCPU_REGS_RSP] =  0x800,	/* Set our stack in low mem. */
 	.vrs_crs[VCPU_REGS_CR0] = 0x60000010,
-	.vrs_crs[VCPU_REGS_CR3] = 0,
-	.vrs_sregs[VCPU_REGS_CS] = { 0xF000, 0xFFFF, 0x809F, 0xF0000},
-	.vrs_sregs[VCPU_REGS_DS] = { 0x0, 0xFFFF, 0x8093, 0x0},
-	.vrs_sregs[VCPU_REGS_ES] = { 0x0, 0xFFFF, 0x8093, 0x0},
-	.vrs_sregs[VCPU_REGS_FS] = { 0x0, 0xFFFF, 0x8093, 0x0},
-	.vrs_sregs[VCPU_REGS_GS] = { 0x0, 0xFFFF, 0x8093, 0x0},
-	.vrs_sregs[VCPU_REGS_SS] = { 0x0, 0xFFFF, 0x8093, 0x0},
-	.vrs_gdtr = { 0x0, 0xFFFF, 0x0, 0x0},
-	.vrs_idtr = { 0x0, 0xFFFF, 0x0, 0x0},
+	.vrs_sregs[VCPU_REGS_CS] = { 0xF000, 0xFFFF, 0x0093, 0xFFFF0000},
+	.vrs_sregs[VCPU_REGS_DS] = { 0x0, 0xFFFF, 0x0093, 0x0},
+	.vrs_sregs[VCPU_REGS_ES] = { 0x0, 0xFFFF, 0x0093, 0x0},
+	.vrs_sregs[VCPU_REGS_FS] = { 0x0, 0xFFFF, 0x0093, 0x0},
+	.vrs_sregs[VCPU_REGS_GS] = { 0x0, 0xFFFF, 0x0093, 0x0},
+	.vrs_sregs[VCPU_REGS_SS] = { 0x0, 0xFFFF, 0x0093, 0x0},
+	.vrs_gdtr = { 0x0, 0xFFFF, 0x0082, 0x0},
+	.vrs_idtr = { 0x0, 0xFFFF, 0x0082, 0x0},
 	.vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
 	.vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
-	.vrs_msrs[VCPU_REGS_EFER] = 0ULL,
-	.vrs_drs[VCPU_REGS_DR0] = 0x0,
-	.vrs_drs[VCPU_REGS_DR1] = 0x0,
-	.vrs_drs[VCPU_REGS_DR2] = 0x0,
-	.vrs_drs[VCPU_REGS_DR3] = 0x0,
 	.vrs_drs[VCPU_REGS_DR6] = 0xFFFF0FF0,
 	.vrs_drs[VCPU_REGS_DR7] = 0x400,
-	.vrs_msrs[VCPU_REGS_STAR] = 0ULL,
-	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
-	.vrs_msrs[VCPU_REGS_CSTAR] = 0ULL,
-	.vrs_msrs[VCPU_REGS_SFMASK] = 0ULL,
-	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL,
-	.vrs_crs[VCPU_REGS_XCR0] = XFEATURE_X87
+	.vrs_crs[VCPU_REGS_XCR0] = XFEATURE_X87,
+};
+
+struct intr_handler {
+	uint16_t	offset;
+	uint16_t	segment;
+};
+
+const struct intr_handler ivt[256] = {
+	[VMM_EX_GP] = { .segment = 0x0, .offset = 0x0B5D },
 };
 
 int
@@ -87,7 +95,8 @@ main(int argc, char **argv)
 
 	struct vm_mem_range		*vmr;
 	int				 fd, ret = 1;
-	size_t				 i, j;
+	size_t				 i;
+	off_t				 off, reset = 0xFFFFFFF0, stack = 0x800;
 	void				*p;
 
 	fd = open(VMM_NODE, O_RDWR);
@@ -95,7 +104,7 @@ main(int argc, char **argv)
 		err(1, "open %s", VMM_NODE);
 
 	/*
-	 * 1. Create our VM with 1 vcpu and 2 MiB of memory.
+	 * 1. Create our VM with 1 vcpu and 64 MiB of memory.
 	 */
 	memset(&vcp, 0, sizeof(vcp));
 	strlcpy(vcp.vcp_name, VM_NAME, sizeof(vcp.vcp_name));
@@ -103,34 +112,53 @@ main(int argc, char **argv)
 
 	/* Split into two ranges, similar to how vmd(8) might do it. */
 	vcp.vcp_nmemranges = 2;
-	vcp.vcp_memranges[0].vmr_gpa = 0x0;
-	vcp.vcp_memranges[0].vmr_size = 640 * KIB;
-	vcp.vcp_memranges[1].vmr_gpa = 640 * KIB;
-	vcp.vcp_memranges[1].vmr_size = (2 * MIB) - (640 * KIB);
+	vcp.vcp_memranges[LOW_MEM].vmr_gpa = 0x0;
+	vcp.vcp_memranges[LOW_MEM].vmr_size = 640 * KIB;
+	vcp.vcp_memranges[UPPER_MEM].vmr_size = (64 * MIB) - (640 * KIB);
+	vcp.vcp_memranges[UPPER_MEM].vmr_gpa = (4 * GIB)
+	    - vcp.vcp_memranges[UPPER_MEM].vmr_size;
 
-	/* Allocate memory. */
+	/* Allocate and Initialize our guest memory. */
 	for (i = 0; i < vcp.vcp_nmemranges; i++) {
 		vmr = &vcp.vcp_memranges[i];
+		if (vmr->vmr_size % 2 != 0)
+			errx(1, "memory ranges must be multiple of 2");
+
 		p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
 		    MAP_PRIVATE | MAP_ANON, -1, 0);
 		if (p == MAP_FAILED)
 			err(1, "mmap");
 
-		/*
-		 * Fill with 2-byte IN instructions that read from what would
-		 * be an ancient XT PC Keyboard status port. These reads will
-		 * trigger vm exits.
-		 */
-		if (vmr->vmr_size % 2 != 0)
-			errx(1, "memory ranges must be multiple of 2");
-		for (j = 0; j < vmr->vmr_size; j += 2) {
-			((uint8_t*)p)[j + 0] = 0xE4;
-			((uint8_t*)p)[j + 1] = PCKBC_AUX;
-		}
 		vmr->vmr_va = (vaddr_t)p;
 		printf("created mapped region %zu: { gpa: 0x%08lx, size: %lu,"
 		    " hva: 0x%lx }\n", i, vmr->vmr_gpa, vmr->vmr_size,
 		    vmr->vmr_va);
+
+		/* Fill with int3 instructions. */
+		memset(p, 0xcc, vmr->vmr_size);
+
+		if (i == LOW_MEM) {
+			/* Write our IVT. */
+			memcpy(p, &ivt, sizeof(ivt));
+
+			/*
+			 * Set up a #GP handler that does a read from a
+			 * non-existent PC Jr. Disk Controller.
+			 */
+			p = (uint8_t*)((uint8_t*)p + 0xb5d);
+			memcpy(p, IN_PCJR, sizeof(IN_PCJR));
+		} else {
+			/*
+			 * Write our code to the reset vector:
+			 *   PUSHW %dx        ; inits the stack
+			 *   INS dx, es:[di]  ; read from port in dx
+			 */
+			off = reset - vmr->vmr_gpa;
+			p = (uint8_t*)p + off;
+			memcpy(p, PUSHW_DX, sizeof(PUSHW_DX));
+			p = (uint8_t*)p + sizeof(PUSHW_DX);
+			memcpy(p, INS, sizeof(INS));
+		}
 	}
 
 	if (ioctl(fd, VMM_IOC_CREATE, &vcp) == -1)
@@ -172,11 +200,15 @@ main(int argc, char **argv)
 		vmr = &vsp.vsp_memranges[i];
 		p = (void*)vmr->vmr_va;
 
-		for (j = 0; j < vmr->vmr_size; j += 2) {
-			if (((uint8_t*)p)[j + 0] != 0xE4)
-				errx(1, "bad byte");
-			if (((uint8_t*)p)[j + 1] != PCKBC_AUX)
-				errx(1, "bad byte");
+		if (i == LOW_MEM) {
+			/* Check if our IVT is there. */
+			if (memcmp(&ivt, p, sizeof(ivt)) != 0) {
+				warnx("invalid ivt");
+				goto out;
+			}
+		} else {
+			/* Check our code at the reset vector. */
+
 		}
 		printf("checked shared region %zu: { gpa: 0x%08lx, size: %lu,"
 		    " hva: 0x%lx }\n", i, vmr->vmr_gpa, vmr->vmr_size,
@@ -266,7 +298,6 @@ main(int argc, char **argv)
 	vrunp.vrp_exit = exit;
 	vrunp.vrp_vcpu_id = 0;		/* XXX SP */
 	vrunp.vrp_vm_id = vcp.vcp_id;
-	vrunp.vrp_irq = 0x0;
 	vrunp.vrp_irqready = 1;
 
 	if (ioctl(fd, VMM_IOC_RUN, &vrunp) == -1) {
@@ -283,8 +314,13 @@ main(int argc, char **argv)
 	switch (vrunp.vrp_exit_reason) {
 	case SVM_VMEXIT_IOIO:
 	case VMX_EXIT_IO:
-		printf("vcpu %d on vm %d exited for io assist\n",
-		    vrunp.vrp_vcpu_id, vrunp.vrp_vm_id);
+		printf("vcpu %d on vm %d exited for io assist @ ip = 0x%llx, "
+		    "cs.base = 0x%llx, ss.base = 0x%llx, rsp = 0x%llx\n",
+		    vrunp.vrp_vcpu_id, vrunp.vrp_vm_id,
+		    vrunp.vrp_exit->vrs.vrs_gprs[VCPU_REGS_RIP],
+		    vrunp.vrp_exit->vrs.vrs_sregs[VCPU_REGS_CS].vsi_base,
+		    vrunp.vrp_exit->vrs.vrs_sregs[VCPU_REGS_SS].vsi_base,
+		    vrunp.vrp_exit->vrs.vrs_gprs[VCPU_REGS_RSP]);
 		break;
 	default:
 		warnx("unexpected vm exit reason: 0%04x",
@@ -298,6 +334,49 @@ main(int argc, char **argv)
 		    exit->vei.vei_port);
 		goto out;
 	}
+	if (exit->vei.vei_string != 1) {
+		warnx("expected string instruction (INS)");
+		goto out;
+	} else
+		printf("got expected string instruction\n");
+
+	/* Advance RIP? */
+	printf("insn_len = %u\n", exit->vei.vei_insn_len);
+	exit->vrs.vrs_gprs[VCPU_REGS_RIP] += exit->vei.vei_insn_len;
+
+	/*
+	 * Inject a #GP and see if we end up at our isr.
+	 */
+	vrunp.vrp_inject.vie_vector = VMM_EX_GP;
+	vrunp.vrp_inject.vie_errorcode = 0x11223344;
+	vrunp.vrp_inject.vie_type = VCPU_INJECT_EX;
+	printf("injecting exception 0x%x\n", vrunp.vrp_inject.vie_vector);
+	if (ioctl(fd, VMM_IOC_RUN, &vrunp) == -1) {
+		warn("VMM_IOC_RUN 2");
+		goto out;
+	}
+
+	switch (vrunp.vrp_exit_reason) {
+	case SVM_VMEXIT_IOIO:
+	case VMX_EXIT_IO:
+		printf("vcpu %d on vm %d exited for io assist @ ip = 0x%llx, "
+		    "cs.base = 0x%llx\n", vrunp.vrp_vcpu_id, vrunp.vrp_vm_id,
+		    vrunp.vrp_exit->vrs.vrs_gprs[VCPU_REGS_RIP],
+		    vrunp.vrp_exit->vrs.vrs_sregs[VCPU_REGS_CS].vsi_base);
+		break;
+	default:
+		warnx("unexpected vm exit reason: 0%04x",
+		    vrunp.vrp_exit_reason);
+		goto out;
+	}
+
+	if (exit->vei.vei_port != PCJR_DISKCTRL) {
+		warnx("expected NMI handler to poke PCJR_DISKCTLR, got 0x%02x",
+		    exit->vei.vei_port);
+		printf("rip = 0x%llx\n", exit->vrs.vrs_gprs[VCPU_REGS_RIP]);
+		goto out;
+	}
+	printf("exception handler called\n");
 
 	/*
 	 * If we made it here, we're close to passing. Any failures during
@@ -306,6 +385,22 @@ main(int argc, char **argv)
 	ret = 0;
 
 out:
+	printf("--- RESET VECTOR @ gpa 0x%llx ---\n", reset);
+	for (i=0; i<10; i++) {
+		if (i > 0)
+			printf(" ");
+		printf("%02x", *(uint8_t*)
+		    (vsp.vsp_memranges[UPPER_MEM].vmr_va + off + i));
+	}
+	printf("\n--- STACK @ gpa 0x%llx ---\n", stack);
+	for (i=0; i<16; i++) {
+		if (i > 0)
+			printf(" ");
+		printf("%02x", *(uint8_t*)(vsp.vsp_memranges[LOW_MEM].vmr_va
+			+ stack - i - 1));
+	}
+	printf("\n");
+
 	/*
 	 * 6. Terminate our VM and clean up.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.98 2024/02/20 21:40:37 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.99 2024/04/09 21:55:16 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1536,7 +1536,6 @@ vcpu_run_loop(void *arg)
 {
 	struct vm_run_params *vrp = (struct vm_run_params *)arg;
 	intptr_t ret = 0;
-	int irq;
 	uint32_t n;
 
 	vrp->vrp_continue = 0;
@@ -1611,10 +1610,10 @@ vcpu_run_loop(void *arg)
 		}
 
 		if (vrp->vrp_irqready && i8259_is_pending()) {
-			irq = i8259_ack();
-			vrp->vrp_irq = irq;
+			vrp->vrp_inject.vie_vector = i8259_ack();
+			vrp->vrp_inject.vie_type = VCPU_INJECT_INTR;
 		} else
-			vrp->vrp_irq = 0xFFFF;
+			vrp->vrp_inject.vie_type = VCPU_INJECT_NONE;
 
 		/* Still more interrupts pending? */
 		vrp->vrp_intr_pending = i8259_is_pending();

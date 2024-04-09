@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.22 2024/04/01 05:11:49 guenther Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.23 2024/04/09 21:55:16 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3694,6 +3694,10 @@ vm_run(struct vm_run_params *vrp)
 		}
 	}
 
+	vcpu->vc_inject.vie_type = vrp->vrp_inject.vie_type;
+	vcpu->vc_inject.vie_vector = vrp->vrp_inject.vie_vector;
+	vcpu->vc_inject.vie_errorcode = vrp->vrp_inject.vie_errorcode;
+
 	WRITE_ONCE(vcpu->vc_curcpu, curcpu());
 	/* Run the VCPU specified in vrp */
 	if (vcpu->vc_virt_mode == VMM_MODE_EPT) {
@@ -3966,8 +3970,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	struct schedstate_percpu *spc;
 	struct vmx_msr_store *msr_store;
 	struct vmx_invvpid_descriptor vid;
-	uint64_t eii, procbased, int_st;
-	uint16_t irq;
+	uint64_t cr0, eii, procbased, int_st;
 	u_long s;
 
 	rw_assert_wrlock(&vcpu->vc_lock);
@@ -3983,8 +3986,6 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	 * needs to be fixed up depends on what vmd populated in the
 	 * exit data structure.
 	 */
-	irq = vrp->vrp_irq;
-
 	if (vrp->vrp_intr_pending)
 		vcpu->vc_intr = 1;
 	else
@@ -4062,7 +4063,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 	/* Handle vmd(8) injected interrupts */
 	/* Is there an interrupt pending injection? */
-	if (irq != 0xFFFF) {
+	if (vcpu->vc_inject.vie_type == VCPU_INJECT_INTR) {
 		if (vmread(VMCS_GUEST_INTERRUPTIBILITY_ST, &int_st)) {
 			printf("%s: can't get interruptibility state\n",
 			    __func__);
@@ -4071,16 +4072,15 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Interruptibility state 0x3 covers NMIs and STI */
 		if (!(int_st & 0x3) && vcpu->vc_irqready) {
-			eii = (irq & 0xFF);
+			eii = (uint64_t)vcpu->vc_inject.vie_vector;
 			eii |= (1ULL << 31);	/* Valid */
-			eii |= (0ULL << 8);	/* Hardware Interrupt */
 			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
 				printf("vcpu_run_vmx: can't vector "
 				    "interrupt to guest\n");
 				return (EINVAL);
 			}
 
-			irq = 0xFFFF;
+			vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
 		}
 	} else if (!vcpu->vc_intr) {
 		/*
@@ -4159,38 +4159,65 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		}
 
 		/* Inject event if present */
-		if (vcpu->vc_event != 0) {
-			eii = (vcpu->vc_event & 0xFF);
+		if (vcpu->vc_inject.vie_type == VCPU_INJECT_EX) {
+			eii = (uint64_t)vcpu->vc_inject.vie_vector;
 			eii |= (1ULL << 31);	/* Valid */
 
-			/* Set the "Send error code" flag for certain vectors */
-			switch (vcpu->vc_event & 0xFF) {
-				case VMM_EX_DF:
-				case VMM_EX_TS:
-				case VMM_EX_NP:
-				case VMM_EX_SS:
-				case VMM_EX_GP:
-				case VMM_EX_PF:
-				case VMM_EX_AC:
-					eii |= (1ULL << 11);
-			}
+			switch (vcpu->vc_inject.vie_vector) {
+			case VMM_EX_BP:
+			case VMM_EX_OF:
+				/* Software Exceptions */
+				eii |= (4ULL << 8);
+				break;
+			case VMM_EX_DF:
+			case VMM_EX_TS:
+			case VMM_EX_NP:
+			case VMM_EX_SS:
+			case VMM_EX_GP:
+			case VMM_EX_PF:
+			case VMM_EX_AC:
+				/* Hardware Exceptions */
+				eii |= (3ULL << 8);
+				cr0 = 0;
+				if (vmread(VMCS_GUEST_IA32_CR0, &cr0)) {
+					printf("%s: vmread(VMCS_GUEST_IA32_CR0)"
+					    "\n", __func__);
+					ret = EINVAL;
+					break;
+				}
 
-			eii |= (3ULL << 8);	/* Hardware Exception */
+				/* Don't set error codes if in real mode. */
+				if (ret == EINVAL || !(cr0 & CR0_PE))
+					break;
+				eii |= (1ULL << 11);
+
+				/* Enforce a 0 error code for #AC. */
+				if (vcpu->vc_inject.vie_vector == VMM_EX_AC)
+					vcpu->vc_inject.vie_errorcode = 0;
+				/*
+				 * XXX: Intel SDM says if IA32_VMX_BASIC[56] is
+				 * set, error codes can be injected for hw
+				 * exceptions with or without error code,
+				 * regardless of vector. See Vol 3D. A1. Ignore
+				 * this capability for now.
+				 */
+				if (vmwrite(VMCS_ENTRY_EXCEPTION_ERROR_CODE,
+				    vcpu->vc_inject.vie_errorcode)) {
+					printf("%s: can't write error code to "
+					    "guest\n", __func__);
+					ret = EINVAL;
+				}
+			} /* switch */
+			if (ret == EINVAL)
+				break;
+
 			if (vmwrite(VMCS_ENTRY_INTERRUPTION_INFO, eii)) {
 				printf("%s: can't vector event to guest\n",
 				    __func__);
 				ret = EINVAL;
 				break;
 			}
-
-			if (vmwrite(VMCS_ENTRY_EXCEPTION_ERROR_CODE, 0)) {
-				printf("%s: can't write error code to guest\n",
-				    __func__);
-				ret = EINVAL;
-				break;
-			}
-
-			vcpu->vc_event = 0;
+			vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
 		}
 
 		if (vcpu->vc_vmx_vpid_enabled) {
@@ -4771,7 +4798,9 @@ vmm_inject_gp(struct vcpu *vcpu)
 {
 	DPRINTF("%s: injecting #GP at guest %%rip 0x%llx\n", __func__,
 	    vcpu->vc_gueststate.vg_rip);
-	vcpu->vc_event = VMM_EX_GP;
+	vcpu->vc_inject.vie_vector = VMM_EX_GP;
+	vcpu->vc_inject.vie_type = VCPU_INJECT_EX;
+	vcpu->vc_inject.vie_errorcode = 0;
 
 	return (0);
 }
@@ -4792,7 +4821,9 @@ vmm_inject_ud(struct vcpu *vcpu)
 {
 	DPRINTF("%s: injecting #UD at guest %%rip 0x%llx\n", __func__,
 	    vcpu->vc_gueststate.vg_rip);
-	vcpu->vc_event = VMM_EX_UD;
+	vcpu->vc_inject.vie_vector = VMM_EX_UD;
+	vcpu->vc_inject.vie_type = VCPU_INJECT_EX;
+	vcpu->vc_inject.vie_errorcode = 0;
 
 	return (0);
 }
@@ -4813,7 +4844,9 @@ vmm_inject_db(struct vcpu *vcpu)
 {
 	DPRINTF("%s: injecting #DB at guest %%rip 0x%llx\n", __func__,
 	    vcpu->vc_gueststate.vg_rip);
-	vcpu->vc_event = VMM_EX_DB;
+	vcpu->vc_inject.vie_vector = VMM_EX_DB;
+	vcpu->vc_inject.vie_type = VCPU_INJECT_EX;
+	vcpu->vc_inject.vie_errorcode = 0;
 
 	return (0);
 }
@@ -6463,10 +6496,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	struct cpu_info *ci = NULL;
 	uint64_t exit_reason;
 	struct schedstate_percpu *spc;
-	uint16_t irq;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
-
-	irq = vrp->vrp_irq;
 
 	if (vrp->vrp_intr_pending)
 		vcpu->vc_intr = 1;
@@ -6541,30 +6571,58 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		/* Handle vmd(8) injected interrupts */
 		/* Is there an interrupt pending injection? */
-		if (irq != 0xFFFF && vcpu->vc_irqready) {
-			vmcb->v_eventinj = (irq & 0xFF) | (1U << 31);
-			irq = 0xFFFF;
+		if (vcpu->vc_inject.vie_type == VCPU_INJECT_INTR &&
+		    vcpu->vc_irqready) {
+			vmcb->v_eventinj = vcpu->vc_inject.vie_vector |
+			    (1U << 31);
+			vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
 		}
 
 		/* Inject event if present */
-		if (vcpu->vc_event != 0) {
-			DPRINTF("%s: inject event %d\n", __func__,
-			    vcpu->vc_event);
-			vmcb->v_eventinj = 0;
+		if (vcpu->vc_inject.vie_type == VCPU_INJECT_EX) {
+			vmcb->v_eventinj = vcpu->vc_inject.vie_vector;
+
 			/* Set the "Event Valid" flag for certain vectors */
-			switch (vcpu->vc_event & 0xFF) {
-				case VMM_EX_DF:
-				case VMM_EX_TS:
-				case VMM_EX_NP:
-				case VMM_EX_SS:
-				case VMM_EX_GP:
-				case VMM_EX_PF:
-				case VMM_EX_AC:
+			switch (vcpu->vc_inject.vie_vector) {
+			case VMM_EX_BP:
+			case VMM_EX_OF:
+			case VMM_EX_DB:
+				/*
+				 * Software exception.
+				 * XXX check nRIP support.
+				 */
+				vmcb->v_eventinj |= (4ULL << 8);
+				break;
+			case VMM_EX_AC:
+				vcpu->vc_inject.vie_errorcode = 0;
+				/* fallthrough */
+			case VMM_EX_DF:
+			case VMM_EX_TS:
+			case VMM_EX_NP:
+			case VMM_EX_SS:
+			case VMM_EX_GP:
+			case VMM_EX_PF:
+				/* Hardware exception. */
+				vmcb->v_eventinj |= (3ULL << 8);
+
+				if (vmcb->v_cr0 & CR0_PE) {
+					/* Error code valid. */
 					vmcb->v_eventinj |= (1ULL << 11);
-			}
-			vmcb->v_eventinj |= (vcpu->vc_event) | (1U << 31);
-			vmcb->v_eventinj |= (3ULL << 8); /* Exception */
-			vcpu->vc_event = 0;
+					vmcb->v_eventinj |= (uint64_t)
+					    vcpu->vc_inject.vie_errorcode << 32;
+				}
+				break;
+			default:
+				printf("%s: unsupported exception vector %u\n",
+				    __func__, vcpu->vc_inject.vie_vector);
+				ret = EINVAL;
+			} /* switch */
+			if (ret == EINVAL)
+				break;
+
+			/* Event is valid. */
+			vmcb->v_eventinj |= (1U << 31);
+			vcpu->vc_inject.vie_type = VCPU_INJECT_NONE;
 		}
 
 		TRACEPOINT(vmm, guest_enter, vcpu, vrp);

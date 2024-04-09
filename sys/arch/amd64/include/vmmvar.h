@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.99 2024/04/01 05:11:49 guenther Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.100 2024/04/09 21:55:16 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -340,6 +340,7 @@ struct vm_exit_inout {
 	uint32_t		vei_data;	/* data */
 	uint8_t			vei_insn_len;	/* Count of instruction bytes */
 };
+
 /*
  *  vm_exit_eptviolation	: describes an EPT VIOLATION exit
  */
@@ -350,6 +351,19 @@ struct vm_exit_eptviolation {
 #define VEE_BYTES_VALID		0x2		/* vee_insn_bytes is valid */
 	uint8_t		vee_insn_len;		/* [VMX] instruction length */
 	uint8_t		vee_insn_bytes[15];	/* [SVM] bytes at {R,E,}IP */
+};
+
+/*
+ * struct vcpu_inject_event	: describes an exception or interrupt to inject.
+ */
+struct vcpu_inject_event {
+	uint8_t		vie_vector;	/* Exception or interrupt vector. */
+	uint32_t	vie_errorcode;	/* Optional error code. */
+	uint8_t		vie_type;
+#define VCPU_INJECT_NONE	0
+#define VCPU_INJECT_INTR	1	/* External hardware interrupt. */
+#define VCPU_INJECT_EX		2	/* HW or SW Exception */
+#define VCPU_INJECT_NMI		3	/* Non-maskable Interrupt */
 };
 
 /*
@@ -465,7 +479,7 @@ struct vm_run_params {
 	uint32_t	vrp_vm_id;
 	uint32_t	vrp_vcpu_id;
 	uint8_t		vrp_continue;		/* Continuing from an exit */
-	uint16_t	vrp_irq;		/* IRQ to inject */
+	struct vcpu_inject_event	vrp_inject;
 	uint8_t		vrp_intr_pending;	/* Additional intrs pending? */
 
 	/* Input/output parameter to VMM_IOC_RUN */
@@ -873,8 +887,7 @@ struct vcpu {
 	uint64_t vc_h_xcr0;			/* [v] */
 
 	struct vcpu_gueststate vc_gueststate;	/* [v] */
-
-	uint8_t vc_event;
+	struct vcpu_inject_event vc_inject;	/* [v] */
 
 	uint32_t vc_pvclock_version;		/* [v] */
 	paddr_t vc_pvclock_system_gpa;		/* [v] */
