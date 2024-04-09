@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.49 2024/03/25 11:38:47 joshua Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.50 2024/04/09 13:52:41 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -398,6 +398,7 @@ PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
 	HMAC_CTX_cleanup(&hctx_tpl);
 	return 1;
 }
+LCRYPTO_ALIAS(PKCS5_PBKDF2_HMAC);
 
 int
 PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen, const unsigned char *salt,
@@ -406,6 +407,7 @@ PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen, const unsigned char *salt,
 	return PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter,
 	    EVP_sha1(), keylen, out);
 }
+LCRYPTO_ALIAS(PKCS5_PBKDF2_HMAC_SHA1);
 
 /*
  * Now the key derivation function itself. This is a bit evil because

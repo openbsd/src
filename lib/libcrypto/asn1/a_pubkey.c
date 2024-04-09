@@ -1,4 +1,4 @@
-/* $OpenBSD: a_pubkey.c,v 1.6 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: a_pubkey.c,v 1.7 2024/04/09 13:52:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,6 +136,7 @@ d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 		EVP_PKEY_free(ret);
 	return (NULL);
 }
+LCRYPTO_ALIAS(d2i_PublicKey);
 
 int
 i2d_PublicKey(EVP_PKEY *a, unsigned char **pp)
@@ -158,3 +159,4 @@ i2d_PublicKey(EVP_PKEY *a, unsigned char **pp)
 		return (-1);
 	}
 }
+LCRYPTO_ALIAS(i2d_PublicKey);

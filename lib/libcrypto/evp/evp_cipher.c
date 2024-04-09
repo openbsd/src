@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.21 2024/03/02 09:55:30 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.22 2024/04/09 13:52:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,6 +127,7 @@ EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 {
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc);
 }
+LCRYPTO_ALIAS(EVP_CipherInit);
 
 int
 EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
@@ -242,6 +243,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CipherInit_ex);
 
 int
 EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
@@ -252,6 +254,7 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 
 	return EVP_DecryptUpdate(ctx, out, out_len, in, in_len);
 }
+LCRYPTO_ALIAS(EVP_CipherUpdate);
 
 int
 EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
@@ -270,6 +273,7 @@ EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 
 	return EVP_DecryptFinal_ex(ctx, out, out_len);
 }
+LCRYPTO_ALIAS(EVP_CipherFinal_ex);
 
 int
 EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -277,6 +281,7 @@ EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 {
 	return EVP_CipherInit(ctx, cipher, key, iv, 1);
 }
+LCRYPTO_ALIAS(EVP_EncryptInit);
 
 int
 EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
@@ -284,6 +289,7 @@ EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine
 {
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1);
 }
+LCRYPTO_ALIAS(EVP_EncryptInit_ex);
 
 /*
  * EVP_Cipher() is an implementation detail of EVP_Cipher{Update,Final}().
@@ -303,6 +309,7 @@ EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
 {
 	return ctx->cipher->do_cipher(ctx, out, in, in_len);
 }
+LCRYPTO_ALIAS(EVP_Cipher);
 
 static int
 evp_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
@@ -413,6 +420,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_EncryptUpdate);
 
 int
 EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
@@ -453,6 +461,7 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 
 	return evp_cipher(ctx, out, out_len, ctx->buf, block_size);
 }
+LCRYPTO_ALIAS(EVP_EncryptFinal_ex);
 
 int
 EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -460,6 +469,7 @@ EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 {
 	return EVP_CipherInit(ctx, cipher, key, iv, 0);
 }
+LCRYPTO_ALIAS(EVP_DecryptInit);
 
 int
 EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
@@ -467,6 +477,7 @@ EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine
 {
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0);
 }
+LCRYPTO_ALIAS(EVP_DecryptInit_ex);
 
 int
 EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
@@ -536,6 +547,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_DecryptUpdate);
 
 int
 EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
@@ -594,12 +606,14 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_DecryptFinal_ex);
 
 EVP_CIPHER_CTX *
 EVP_CIPHER_CTX_new(void)
 {
 	return calloc(1, sizeof(EVP_CIPHER_CTX));
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_new);
 
 void
 EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
@@ -611,6 +625,7 @@ EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 
 	free(ctx);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_free);
 
 void
 EVP_CIPHER_CTX_legacy_clear(EVP_CIPHER_CTX *ctx)
@@ -629,6 +644,7 @@ EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 {
 	return EVP_CIPHER_CTX_cleanup(ctx);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_reset);
 
 int
 EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *ctx)
@@ -651,6 +667,7 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *ctx)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_cleanup);
 
 int
 EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
@@ -674,6 +691,7 @@ EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_ctrl);
 
 int
 EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
@@ -683,6 +701,7 @@ EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 	arc4random_buf(key, ctx->key_len);
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_rand_key);
 
 int
 EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
@@ -722,6 +741,7 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_copy);
 
 /*
  * EVP_CIPHER_CTX accessors.
@@ -732,12 +752,14 @@ EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_cipher);
 
 int
 EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->encrypt;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_encrypting);
 
 int
 EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
@@ -757,6 +779,7 @@ EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_get_iv);
 
 int
 EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
@@ -776,30 +799,35 @@ EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_iv);
 
 unsigned char *
 EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
 {
 	return ctx->buf;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_buf_noconst);
 
 void *
 EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->app_data;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_get_app_data);
 
 void
 EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
 {
 	ctx->app_data = data;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_app_data);
 
 int
 EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->key_len;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_key_length);
 
 int
 EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *ctx, int key_len)
@@ -813,6 +841,7 @@ EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *ctx, int key_len)
 	EVPerror(EVP_R_INVALID_KEY_LENGTH);
 	return 0;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_key_length);
 
 int
 EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
@@ -823,30 +852,35 @@ EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 		ctx->flags |= EVP_CIPH_NO_PADDING;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_padding);
 
 void
 EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags)
 {
 	ctx->flags |= flags;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_flags);
 
 void
 EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags)
 {
 	ctx->flags &= ~flags;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_clear_flags);
 
 int
 EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 {
 	return (ctx->flags & flags);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_test_flags);
 
 void *
 EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher_data;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_get_cipher_data);
 
 void *
 EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
@@ -858,6 +892,7 @@ EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 
 	return old_cipher_data;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_cipher_data);
 
 /*
  * EVP_CIPHER_CTX getters that reach into the cipher attached to the context.
@@ -868,12 +903,14 @@ EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->nid;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_nid);
 
 int
 EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->block_size;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_block_size);
 
 int
 EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
@@ -893,12 +930,14 @@ EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 
 	return iv_length;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_iv_length);
 
 unsigned long
 EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->flags;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_flags);
 
 /*
  * Used by CMS and its predecessors. Only GOST and RC2 have a custom method.
@@ -1020,6 +1059,7 @@ EVP_CIPHER_type(const EVP_CIPHER *cipher)
 		return nid;
 	}
 }
+LCRYPTO_ALIAS(EVP_CIPHER_type);
 
 /*
  * Accessors. First the trivial getters, then the setters for the method API.
@@ -1030,30 +1070,35 @@ EVP_CIPHER_nid(const EVP_CIPHER *cipher)
 {
 	return cipher->nid;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_nid);
 
 int
 EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
 {
 	return cipher->block_size;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_block_size);
 
 int
 EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 {
 	return cipher->key_len;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_key_length);
 
 int
 EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 {
 	return cipher->iv_len;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_iv_length);
 
 unsigned long
 EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 {
 	return cipher->flags;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_flags);
 
 EVP_CIPHER *
 EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
@@ -1076,6 +1121,7 @@ EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
 
 	return cipher;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_new);
 
 EVP_CIPHER *
 EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
@@ -1089,12 +1135,14 @@ EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
 
 	return copy;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_dup);
 
 void
 EVP_CIPHER_meth_free(EVP_CIPHER *cipher)
 {
 	free(cipher);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_free);
 
 int
 EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len)
@@ -1103,6 +1151,7 @@ EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_iv_length);
 
 int
 EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags)
@@ -1111,6 +1160,7 @@ EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_flags);
 
 int
 EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size)
@@ -1119,6 +1169,7 @@ EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_impl_ctx_size);
 
 int
 EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
@@ -1129,6 +1180,7 @@ EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_init);
 
 int
 EVP_CIPHER_meth_set_do_cipher(EVP_CIPHER *cipher,
@@ -1139,6 +1191,7 @@ EVP_CIPHER_meth_set_do_cipher(EVP_CIPHER *cipher,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_do_cipher);
 
 int
 EVP_CIPHER_meth_set_cleanup(EVP_CIPHER *cipher,
@@ -1148,6 +1201,7 @@ EVP_CIPHER_meth_set_cleanup(EVP_CIPHER *cipher,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_cleanup);
 
 int
 EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
@@ -1157,6 +1211,7 @@ EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_set_asn1_params);
 
 int
 EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
@@ -1166,6 +1221,7 @@ EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_get_asn1_params);
 
 int
 EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
@@ -1175,3 +1231,4 @@ EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_meth_set_ctrl);

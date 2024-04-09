@@ -1,4 +1,4 @@
-/* $OpenBSD: e_xcbc_d.c,v 1.17 2024/01/07 15:42:57 tb Exp $ */
+/* $OpenBSD: e_xcbc_d.c,v 1.18 2024/04/09 13:52:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,6 +103,7 @@ EVP_desx_cbc(void)
 {
 	return (&d_xcbc_cipher);
 }
+LCRYPTO_ALIAS(EVP_desx_cbc);
 
 static int
 desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,

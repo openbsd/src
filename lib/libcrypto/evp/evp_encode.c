@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_encode.c,v 1.2 2023/12/29 10:31:50 tb Exp $ */
+/* $OpenBSD: evp_encode.c,v 1.3 2024/04/09 13:52:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,12 +128,14 @@ EVP_ENCODE_CTX_new(void)
 {
 	return calloc(1, sizeof(EVP_ENCODE_CTX));
 }
+LCRYPTO_ALIAS(EVP_ENCODE_CTX_new);
 
 void
 EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx)
 {
 	free(ctx);
 }
+LCRYPTO_ALIAS(EVP_ENCODE_CTX_free);
 
 void
 EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
@@ -142,6 +144,7 @@ EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 	ctx->num = 0;
 	ctx->line_num = 0;
 }
+LCRYPTO_ALIAS(EVP_EncodeInit);
 
 int
 EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
@@ -192,6 +195,7 @@ EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_EncodeUpdate);
 
 void
 EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
@@ -206,6 +210,7 @@ EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 	}
 	*outl = ret;
 }
+LCRYPTO_ALIAS(EVP_EncodeFinal);
 
 int
 EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
@@ -238,6 +243,7 @@ EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 	*t = '\0';
 	return (ret);
 }
+LCRYPTO_ALIAS(EVP_EncodeBlock);
 
 void
 EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
@@ -247,6 +253,7 @@ EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
 	ctx->line_num = 0;
 	ctx->expect_nl = 0;
 }
+LCRYPTO_ALIAS(EVP_DecodeInit);
 
 int
 EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
@@ -355,6 +362,7 @@ EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 	ctx->num = n;
 	return (rv);
 }
+LCRYPTO_ALIAS(EVP_DecodeUpdate);
 
 int
 EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
@@ -395,6 +403,7 @@ EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(EVP_DecodeBlock);
 
 int
 EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
@@ -412,3 +421,4 @@ EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 	} else
 		return (1);
 }
+LCRYPTO_ALIAS(EVP_DecodeFinal);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sm4.c,v 1.12 2024/01/04 17:38:36 tb Exp $	*/
+/*	$OpenBSD: e_sm4.c,v 1.13 2024/04/09 13:52:41 beck Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -164,6 +164,7 @@ EVP_sm4_cbc(void)
 {
 	return &sm4_cbc;
 }
+LCRYPTO_ALIAS(EVP_sm4_cbc);
 
 static const EVP_CIPHER sm4_cfb128 = {
 	.nid = NID_sm4_cfb128,
@@ -185,6 +186,7 @@ EVP_sm4_cfb128(void)
 {
 	return &sm4_cfb128;
 }
+LCRYPTO_ALIAS(EVP_sm4_cfb128);
 
 static const EVP_CIPHER sm4_ofb = {
 	.nid = NID_sm4_ofb128,
@@ -206,6 +208,7 @@ EVP_sm4_ofb(void)
 {
 	return &sm4_ofb;
 }
+LCRYPTO_ALIAS(EVP_sm4_ofb);
 
 static const EVP_CIPHER sm4_ecb = {
 	.nid = NID_sm4_ecb,
@@ -227,6 +230,7 @@ EVP_sm4_ecb(void)
 {
 	return &sm4_ecb;
 }
+LCRYPTO_ALIAS(EVP_sm4_ecb);
 
 static int
 sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
@@ -259,4 +263,5 @@ EVP_sm4_ctr(void)
 {
 	return &sm4_ctr_mode;
 }
+LCRYPTO_ALIAS(EVP_sm4_ctr);
 #endif

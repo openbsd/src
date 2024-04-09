@@ -1,4 +1,4 @@
-/* $OpenBSD: e_idea.c,v 1.21 2024/01/04 17:38:36 tb Exp $ */
+/* $OpenBSD: e_idea.c,v 1.22 2024/04/09 13:52:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -196,6 +196,7 @@ EVP_idea_cbc(void)
 {
 	return &idea_cbc;
 }
+LCRYPTO_ALIAS(EVP_idea_cbc);
 
 static const EVP_CIPHER idea_cfb64 = {
 	.nid = NID_idea_cfb64,
@@ -217,6 +218,7 @@ EVP_idea_cfb64(void)
 {
 	return &idea_cfb64;
 }
+LCRYPTO_ALIAS(EVP_idea_cfb64);
 
 static const EVP_CIPHER idea_ofb = {
 	.nid = NID_idea_ofb64,
@@ -238,6 +240,7 @@ EVP_idea_ofb(void)
 {
 	return &idea_ofb;
 }
+LCRYPTO_ALIAS(EVP_idea_ofb);
 
 static const EVP_CIPHER idea_ecb = {
 	.nid = NID_idea_ecb,
@@ -259,4 +262,5 @@ EVP_idea_ecb(void)
 {
 	return &idea_ecb;
 }
+LCRYPTO_ALIAS(EVP_idea_ecb);
 #endif

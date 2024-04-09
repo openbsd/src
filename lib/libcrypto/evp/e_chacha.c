@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha.c,v 1.13 2023/08/24 04:20:57 tb Exp $ */
+/* $OpenBSD: e_chacha.c,v 1.14 2024/04/09 13:52:41 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -72,5 +72,6 @@ EVP_chacha20(void)
 {
 	return (&chacha20_cipher);
 }
+LCRYPTO_ALIAS(EVP_chacha20);
 
 #endif

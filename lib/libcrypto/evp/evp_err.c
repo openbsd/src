@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_err.c,v 1.32 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: evp_err.c,v 1.33 2024/04/09 13:52:41 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -164,3 +164,4 @@ ERR_load_EVP_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_EVP_strings);

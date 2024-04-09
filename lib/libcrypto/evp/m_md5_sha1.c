@@ -1,4 +1,4 @@
-/* $OpenBSD: m_md5_sha1.c,v 1.8 2023/09/02 04:55:18 tb Exp $ */
+/* $OpenBSD: m_md5_sha1.c,v 1.9 2024/04/09 13:52:41 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -87,3 +87,4 @@ EVP_md5_sha1(void)
 {
 	return &md5_sha1_md;
 }
+LCRYPTO_ALIAS(EVP_md5_sha1);

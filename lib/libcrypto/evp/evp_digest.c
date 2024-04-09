@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_digest.c,v 1.12 2024/03/02 09:59:56 tb Exp $ */
+/* $OpenBSD: evp_digest.c,v 1.13 2024/04/09 13:52:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,6 +126,7 @@ EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	EVP_MD_CTX_legacy_clear(ctx);
 	return EVP_DigestInit_ex(ctx, type, NULL);
 }
+LCRYPTO_ALIAS(EVP_DigestInit);
 
 int
 EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
@@ -161,12 +162,14 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		return 1;
 	return ctx->digest->init(ctx);
 }
+LCRYPTO_ALIAS(EVP_DigestInit_ex);
 
 int
 EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return ctx->update(ctx, data, count);
 }
+LCRYPTO_ALIAS(EVP_DigestUpdate);
 
 /* The caller can assume that this removes any secret data from the context */
 int
@@ -178,6 +181,7 @@ EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	EVP_MD_CTX_cleanup(ctx);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_DigestFinal);
 
 /* The caller can assume that this removes any secret data from the context */
 int
@@ -199,6 +203,7 @@ EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	memset(ctx->md_data, 0, ctx->digest->ctx_size);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_DigestFinal_ex);
 
 int
 EVP_Digest(const void *data, size_t count,
@@ -216,12 +221,14 @@ EVP_Digest(const void *data, size_t count,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_Digest);
 
 EVP_MD_CTX *
 EVP_MD_CTX_new(void)
 {
 	return calloc(1, sizeof(EVP_MD_CTX));
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_new);
 
 void
 EVP_MD_CTX_free(EVP_MD_CTX *ctx)
@@ -233,18 +240,21 @@ EVP_MD_CTX_free(EVP_MD_CTX *ctx)
 
 	free(ctx);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_free);
 
 EVP_MD_CTX *
 EVP_MD_CTX_create(void)
 {
 	return EVP_MD_CTX_new();
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_create);
 
 void
 EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 {
 	EVP_MD_CTX_free(ctx);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_destroy);
 
 void
 EVP_MD_CTX_legacy_clear(EVP_MD_CTX *ctx)
@@ -263,6 +273,7 @@ EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 {
 	return EVP_MD_CTX_cleanup(ctx);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_reset);
 
 int
 EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
@@ -290,6 +301,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_cleanup);
 
 int
 EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
@@ -297,6 +309,7 @@ EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	EVP_MD_CTX_legacy_clear(out);
 	return EVP_MD_CTX_copy_ex(out, in);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_copy);
 
 int
 EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
@@ -352,6 +365,7 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_copy_ex);
 
 int
 EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
@@ -375,6 +389,7 @@ EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_ctrl);
 
 const EVP_MD *
 EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
@@ -383,36 +398,42 @@ EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 		return NULL;
 	return ctx->digest;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_md);
 
 void
 EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
 {
 	ctx->flags &= ~flags;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_clear_flags);
 
 void
 EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
 {
 	ctx->flags |= flags;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_set_flags);
 
 int
 EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
 {
 	return (ctx->flags & flags);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_test_flags);
 
 void *
 EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
 {
 	return ctx->md_data;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_md_data);
 
 EVP_PKEY_CTX *
 EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
 {
 	return ctx->pctx;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_pkey_ctx);
 
 void
 EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
@@ -436,18 +457,21 @@ EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 		EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
 	}
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_set_pkey_ctx);
 
 int
 EVP_MD_type(const EVP_MD *md)
 {
 	return md->type;
 }
+LCRYPTO_ALIAS(EVP_MD_type);
 
 int
 EVP_MD_pkey_type(const EVP_MD *md)
 {
 	return md->pkey_type;
 }
+LCRYPTO_ALIAS(EVP_MD_pkey_type);
 
 int
 EVP_MD_size(const EVP_MD *md)
@@ -458,15 +482,18 @@ EVP_MD_size(const EVP_MD *md)
 	}
 	return md->md_size;
 }
+LCRYPTO_ALIAS(EVP_MD_size);
 
 unsigned long
 EVP_MD_flags(const EVP_MD *md)
 {
 	return md->flags;
 }
+LCRYPTO_ALIAS(EVP_MD_flags);
 
 int
 EVP_MD_block_size(const EVP_MD *md)
 {
 	return md->block_size;
 }
+LCRYPTO_ALIAS(EVP_MD_block_size);

@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.35 2024/03/25 10:58:06 joshua Exp $ */
+/* $OpenBSD: evp_key.c,v 1.36 2024/04/09 13:52:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,6 +78,7 @@ EVP_set_pw_prompt(const char *prompt)
 	else
 		strlcpy(prompt_string, prompt, sizeof(prompt_string));
 }
+LCRYPTO_ALIAS(EVP_set_pw_prompt);
 
 char *
 EVP_get_pw_prompt(void)
@@ -87,12 +88,14 @@ EVP_get_pw_prompt(void)
 
 	return prompt_string;
 }
+LCRYPTO_ALIAS(EVP_get_pw_prompt);
 
 int
 EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
 {
 	return EVP_read_pw_string_min(buf, 0, len, prompt, verify);
 }
+LCRYPTO_ALIAS(EVP_read_pw_string);
 
 int
 EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
@@ -129,6 +132,7 @@ EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_read_pw_string_min);
 
 int
 EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
@@ -216,3 +220,4 @@ err:
 	explicit_bzero(md_buf, sizeof md_buf);
 	return rv;
 }
+LCRYPTO_ALIAS(EVP_BytesToKey);

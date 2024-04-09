@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.39 2024/03/02 11:17:27 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.40 2024/04/09 13:52:41 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -155,12 +155,14 @@ EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *engine)
 {
 	return evp_pkey_ctx_new(pkey, -1);
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_new);
 
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_new_id(int nid, ENGINE *engine)
 {
 	return evp_pkey_ctx_new(NULL, nid);
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_new_id);
 
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
@@ -192,6 +194,7 @@ EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 	EVP_PKEY_CTX_free(rctx);
 	return NULL;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_dup);
 
 void
 EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
@@ -204,6 +207,7 @@ EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 	EVP_PKEY_free(ctx->peerkey);
 	free(ctx);
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_free);
 
 int
 EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd,
@@ -236,6 +240,7 @@ EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd,
 	return ret;
 
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_ctrl);
 
 int
 EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *name, const char *value)
@@ -250,6 +255,7 @@ EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *name, const char *value)
 	}
 	return ctx->pmeth->ctrl_str(ctx, name, value);
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_ctrl_str);
 
 int
 EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
@@ -300,6 +306,7 @@ EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx)
 {
 	return ctx->operation;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_get_operation);
 
 void
 EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen)
@@ -307,39 +314,46 @@ EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen)
 	ctx->keygen_info = dat;
 	ctx->keygen_info_count = datlen;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_set0_keygen_info);
 
 void
 EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data)
 {
 	ctx->data = data;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_set_data);
 
 void *
 EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx)
 {
 	return ctx->data;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_get_data);
 
 EVP_PKEY *
 EVP_PKEY_CTX_get0_pkey(EVP_PKEY_CTX *ctx)
 {
 	return ctx->pkey;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_get0_pkey);
 
 EVP_PKEY *
 EVP_PKEY_CTX_get0_peerkey(EVP_PKEY_CTX *ctx)
 {
 	return ctx->peerkey;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_get0_peerkey);
 
 void
 EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data)
 {
 	ctx->app_data = data;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_set_app_data);
 
 void *
 EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx)
 {
 	return ctx->app_data;
 }
+LCRYPTO_ALIAS(EVP_PKEY_CTX_get_app_data);

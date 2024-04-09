@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_names.c,v 1.15 2024/03/24 13:56:35 jca Exp $ */
+/*	$OpenBSD: evp_names.c,v 1.16 2024/04/09 13:52:41 beck Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -1495,6 +1495,7 @@ EVP_CIPHER_do_all_sorted(void (*fn)(const EVP_CIPHER *, const char *,
 			fn(evp_cipher, cipher->name, NULL, arg);
 	}
 }
+LCRYPTO_ALIAS(EVP_CIPHER_do_all_sorted);
 
 void
 EVP_CIPHER_do_all(void (*fn)(const EVP_CIPHER *, const char *, const char *,
@@ -1502,6 +1503,7 @@ EVP_CIPHER_do_all(void (*fn)(const EVP_CIPHER *, const char *, const char *,
 {
 	EVP_CIPHER_do_all_sorted(fn, arg);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_do_all);
 
 void
 EVP_MD_do_all_sorted(void (*fn)(const EVP_MD *, const char *, const char *,
@@ -1525,6 +1527,7 @@ EVP_MD_do_all_sorted(void (*fn)(const EVP_MD *, const char *, const char *,
 			fn(evp_md, digest->name, NULL, arg);
 	}
 }
+LCRYPTO_ALIAS(EVP_MD_do_all_sorted);
 
 void
 EVP_MD_do_all(void (*fn)(const EVP_MD *, const char *, const char *, void *),
@@ -1532,6 +1535,7 @@ EVP_MD_do_all(void (*fn)(const EVP_MD *, const char *, const char *, void *),
 {
 	EVP_MD_do_all_sorted(fn, arg);
 }
+LCRYPTO_ALIAS(EVP_MD_do_all);
 
 /*
  * The OBJ_NAME API is completely misnamed. It has little to do with objects
@@ -1652,6 +1656,7 @@ EVP_get_cipherbyname(const char *name)
 
 	return cipher->cipher();
 }
+LCRYPTO_ALIAS(EVP_get_cipherbyname);
 
 static int
 digest_cmp(const void *a, const void *b)
@@ -1676,6 +1681,7 @@ EVP_get_digestbyname(const char *name)
 
 	return digest->digest();
 }
+LCRYPTO_ALIAS(EVP_get_digestbyname);
 
 /*
  * XXX - this is here because most of its job was to clean up the dynamic
@@ -1687,3 +1693,4 @@ void
 EVP_cleanup(void)
 {
 }
+LCRYPTO_ALIAS(EVP_cleanup);

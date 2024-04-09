@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_sm3.c,v 1.6 2023/07/07 19:37:53 beck Exp $	*/
+/*	$OpenBSD: m_sm3.c,v 1.7 2024/04/09 13:52:41 beck Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -64,5 +64,6 @@ EVP_sm3(void)
 {
 	return &sm3_md;
 }
+LCRYPTO_ALIAS(EVP_sm3);
 
 #endif /* OPENSSL_NO_SM3 */
