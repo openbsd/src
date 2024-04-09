@@ -1,13 +1,9 @@
-dnl	$OpenBSD: contents,v 1.16 2023/03/16 18:04:08 miod Exp $
+dnl	$OpenBSD: contents,v 1.17 2024/04/09 11:13:51 kettenis Exp $
 TopPart
 
 	miniroot-am335x-{:--:}OSrev.img
 			A miniroot filesystem to be used for
 			installation; BeagleBone version.
-
-	miniroot-cubie-{:--:}OSrev.img
-			A miniroot filesystem to be used for
-			installation; Cubieboard2 version.
 
 	miniroot-cubox-{:--:}OSrev.img
 			A miniroot filesystem to be used for

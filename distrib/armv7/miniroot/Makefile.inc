@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.32 2023/09/25 16:42:19 sthen Exp $
+#	$OpenBSD: Makefile.inc,v 1.33 2024/04/09 11:13:51 kettenis Exp $
 
 FS=		miniroot-${BOARD}-${OSrev}.img
 FSSIZE=		71424	# ffs+msdos, actually
@@ -37,10 +37,6 @@ ${FS}: bsd.rd
 	dd if=${PUBOOT}/${UBOOT}/SPL of=/dev/r`cat vnd`c bs=1024 seek=1
 	dd if=${PUBOOT}/${UBOOT}/u-boot.img of=/dev/r`cat vnd`c \
 	    bs=1024 seek=69 conv=sync
-.endif
-.if ${PLATFORM} == "SUNXI"
-	dd if=${PUBOOT}/${UBOOT}/u-boot-sunxi-with-spl.bin \
-	    of=/dev/r`cat vnd`c bs=1024 seek=8 conv=sync
 .endif
 
 	mkdir -p ${MOUNT_POINT}/efi/boot

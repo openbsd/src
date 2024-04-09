@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.49 2023/09/25 16:42:19 sthen Exp $
+#	$OpenBSD: list,v 1.50 2024/04/09 11:13:51 kettenis Exp $
 
 SRCDIRS distrib/special
 
@@ -115,10 +115,6 @@ COPY	/usr/local/share/dtb/arm/ti/omap/am335x-bonegreen-wireless.dtb	usr/mdec/am3
 COPY	/usr/local/share/dtb/arm/ti/omap/am335x-evm.dtb		usr/mdec/am335x/am335x-evm.dtb
 COPY	/usr/local/share/dtb/arm/ti/omap/am335x-evmsk.dtb	usr/mdec/am335x/am335x-evmsk.dtb
 COPY	/usr/local/share/dtb/arm/ti/omap/am335x-icev2.dtb	usr/mdec/am335x/am335x-icev2.dtb
-
-MKDIR							usr/mdec/cubie
-COPY	/usr/local/share/u-boot/Cubieboard2/u-boot-sunxi-with-spl.bin	usr/mdec/cubie/u-boot-sunxi-with-spl.bin
-COPY	/usr/local/share/dtb/arm/allwinner/sun7i-a20-cubieboard2.dtb	usr/mdec/cubie/sun7i-a20-cubieboard2.dtb
 
 MKDIR							usr/mdec/panda
 COPY	/usr/local/share/u-boot/omap4_panda/MLO		usr/mdec/panda/MLO

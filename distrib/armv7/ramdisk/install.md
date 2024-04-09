@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.56 2023/04/20 19:42:52 kettenis Exp $
+#	$OpenBSD: install.md,v 1.57 2024/04/09 11:13:51 kettenis Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,6 @@ md_installboot() {
 	case $(sysctl -n hw.product) in
 	*AM335x*)			_plat=am335x;;
 	*OMAP4*)			_plat=panda;;
-	*'Cubietech Cubieboard2'*)	_plat=cubie;;
 	*Cubox-i*|*HummingBoard*)	_plat=cubox;;
 	*Wandboard*)			_plat=wandboard;;
 	*Nitrogen6*|*'SABRE Lite'*)	_plat=nitrogen;;
@@ -78,11 +77,6 @@ md_installboot() {
 		__EOT
 		mkuboot -t script -a arm -o linux /tmp/i/boot.cmd \
 		    /mnt/mnt/6x_bootscript
-		;;
-	cubie)
-		cp $_mdec/*.dtb /mnt/mnt/
-		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=/dev/${_disk}c \
-		    bs=1024 seek=8 status=none
 		;;
 	esac
 

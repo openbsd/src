@@ -1,3 +1,3 @@
-SUBDIR= am335x cubie cubox nitrogen panda wandboard
+SUBDIR= am335x cubox nitrogen panda wandboard
 
 .include <bsd.subdir.mk>
