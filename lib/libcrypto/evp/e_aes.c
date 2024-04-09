@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.56 2024/01/04 17:38:36 tb Exp $ */
+/* $OpenBSD: e_aes.c,v 1.57 2024/04/09 13:48:51 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -666,7 +666,7 @@ static const EVP_CIPHER aes_128_cfb = {
 };
 
 const EVP_CIPHER *
-EVP_aes_128_cfb(void)
+EVP_aes_128_cfb128(void)
 {
 #ifdef AESNI_CAPABLE
 	return AESNI_CAPABLE ? &aesni_128_cfb : &aes_128_cfb;
@@ -905,7 +905,7 @@ static const EVP_CIPHER aes_192_cfb = {
 };
 
 const EVP_CIPHER *
-EVP_aes_192_cfb(void)
+EVP_aes_192_cfb128(void)
 {
 #ifdef AESNI_CAPABLE
 	return AESNI_CAPABLE ? &aesni_192_cfb : &aes_192_cfb;
@@ -1144,7 +1144,7 @@ static const EVP_CIPHER aes_256_cfb = {
 };
 
 const EVP_CIPHER *
-EVP_aes_256_cfb(void)
+EVP_aes_256_cfb128(void)
 {
 #ifdef AESNI_CAPABLE
 	return AESNI_CAPABLE ? &aesni_256_cfb : &aes_256_cfb;
