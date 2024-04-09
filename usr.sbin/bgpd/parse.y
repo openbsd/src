@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.459 2024/04/09 09:03:18 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.460 2024/04/09 12:40:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5482,8 +5482,8 @@ merge_aspa_set(uint32_t as, struct aspa_tas_l *tas, time_t expires)
 		RB_INSERT(aspa_tree, &conf->aspa, aspa);
 	}
 
-	if (UINT32_MAX - aspa->num <= tas->num) {
-		yyerror("aspa_set overflow");
+	if (MAX_ASPA_SPAS_COUNT - aspa->num <= tas->num) {
+		yyerror("too many providers for customer-as %u", as);
 		return -1;
 	}
 	num = aspa->num + tas->num;
@@ -5500,6 +5500,7 @@ merge_aspa_set(uint32_t as, struct aspa_tas_l *tas, time_t expires)
 
 	aspa->num = num;
 	aspa->tas = newtas;
+
 	/* take the longest expiry time, same logic as for ROA entries */
 	if (aspa->expires != 0 && expires != 0 && expires > aspa->expires)
 		aspa->expires = expires;
