@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.364 2024/02/21 10:48:10 claudio Exp $
+#	$OpenBSD: files.pci,v 1.365 2024/04/09 14:58:41 mglocker Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -871,6 +871,10 @@ file	dev/pci/com_pci.c		com_pci
 device	mwx: ifnet, wlan, firmload
 attach	mwx at pci
 file	dev/pci/if_mwx.c		mwx
+
+# UFS HC
+attach	ufshci at pci with ufshci_pci
+file	dev/pci/ufshci_pci.c		ufshci_pci
 
 include "dev/pci/files.agp"
 include "dev/pci/drm/files.drm"
