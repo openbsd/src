@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.323 2024/03/30 13:33:20 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.324 2024/04/10 10:05:26 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -472,10 +472,10 @@ sys_sigprocmask(struct proc *p, void *v, register_t *retval)
 
 	switch (SCARG(uap, how)) {
 	case SIG_BLOCK:
-		atomic_setbits_int(&p->p_sigmask, mask);
+		SET(p->p_sigmask, mask);
 		break;
 	case SIG_UNBLOCK:
-		atomic_clearbits_int(&p->p_sigmask, mask);
+		CLR(p->p_sigmask, mask);
 		break;
 	case SIG_SETMASK:
 		p->p_sigmask = mask;
@@ -504,8 +504,8 @@ dosigsuspend(struct proc *p, sigset_t newmask)
 	KASSERT(p == curproc);
 
 	p->p_oldmask = p->p_sigmask;
-	atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
 	p->p_sigmask = newmask;
+	atomic_setbits_int(&p->p_flag, P_SIGSUSPEND);
 }
 
 /*
@@ -770,7 +770,7 @@ void
 postsig_done(struct proc *p, int signum, sigset_t catchmask, int reset)
 {
 	p->p_ru.ru_nsignals++;
-	atomic_setbits_int(&p->p_sigmask, catchmask);
+	SET(p->p_sigmask, catchmask);
 	if (reset != 0) {
 		sigset_t mask = sigmask(signum);
 		struct sigacts *ps = p->p_p->ps_sigacts;
@@ -922,7 +922,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 {
 	int s, prop;
 	sig_t action;
-	int mask;
+	sigset_t mask, sigmask;
 	int *siglist;
 	struct process *pr = p->p_p;
 	struct proc *q;
@@ -940,8 +940,11 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		return;
 
 	mask = sigmask(signum);
+	sigmask = READ_ONCE(p->p_sigmask);
 
 	if (type == SPROCESS) {
+		sigset_t tmpmask;
+
 		/* Accept SIGKILL to coredumping processes */
 		if (pr->ps_flags & PS_COREDUMP && signum == SIGKILL) {
 			atomic_setbits_int(&pr->ps_siglist, mask);
@@ -953,10 +956,12 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * immediately (it's unblocked) then have it take it.
 		 */
 		q = curproc;
-		if (q != NULL && q->p_p == pr && (q->p_flag & P_WEXIT) == 0 &&
-		    (q->p_sigmask & mask) == 0)
+		tmpmask = READ_ONCE(q->p_sigmask);
+		if (q->p_p == pr && (q->p_flag & P_WEXIT) == 0 &&
+		    (tmpmask & mask) == 0) {
 			p = q;
-		else {
+			sigmask = tmpmask;
+		} else {
 			/*
 			 * A process-wide signal can be diverted to a
 			 * different thread that's in sigwait() for this
@@ -967,16 +972,19 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * main thread.
 			 */
 			TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
+
 				/* ignore exiting threads */
 				if (q->p_flag & P_WEXIT)
 					continue;
 
 				/* skip threads that have the signal blocked */
-				if ((q->p_sigmask & mask) != 0)
+				tmpmask = READ_ONCE(q->p_sigmask);
+				if ((tmpmask & mask) != 0)
 					continue;
 
 				/* okay, could send to this thread */
 				p = q;
+				sigmask = tmpmask;
 
 				/*
 				 * sigsuspend, sigwait, ppoll/pselect, etc?
@@ -1016,7 +1024,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 
 		if (sigignore & mask)
 			return;
-		if (p->p_sigmask & mask) {
+		if (sigmask & mask) {
 			action = SIG_HOLD;
 		} else if (sigcatch & mask) {
 			action = SIG_CATCH;
@@ -1090,6 +1098,16 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 */
 		if (pr->ps_flags & PS_TRACED)
 			goto run;
+
+		/*
+		 * Recheck sigmask before waking up the process,
+		 * there is a chance that while sending the signal
+		 * the process changed sigmask and went to sleep.
+		 */
+		sigmask = READ_ONCE(p->p_sigmask);
+		if (sigmask & mask)
+			goto out;
+
 		/*
 		 * If SIGCONT is default (or ignored) and process is
 		 * asleep, we are finished; the process should not
@@ -1582,10 +1600,12 @@ sigabort(struct proc *p)
 {
 	struct sigaction sa;
 
+	KASSERT(p == curproc || panicstr || db_active);
+
 	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = SIG_DFL;
 	setsigvec(p, SIGABRT, &sa);
-	atomic_clearbits_int(&p->p_sigmask, sigmask(SIGABRT));
+	CLR(p->p_sigmask, sigmask(SIGABRT));
 	psignal(p, SIGABRT);
 }
 
@@ -1598,6 +1618,8 @@ sigismasked(struct proc *p, int sig)
 {
 	struct process *pr = p->p_p;
 	int rv;
+
+	KASSERT(p == curproc);
 
 	mtx_enter(&pr->ps_mtx);
 	rv = (pr->ps_sigacts->ps_sigignore & sigmask(sig)) ||
@@ -2000,8 +2022,8 @@ userret(struct proc *p)
 	 * time for signals to post.
 	 */
 	if (p->p_flag & P_SIGSUSPEND) {
-		atomic_clearbits_int(&p->p_flag, P_SIGSUSPEND);
 		p->p_sigmask = p->p_oldmask;
+		atomic_clearbits_int(&p->p_flag, P_SIGSUSPEND);
 
 		while ((signum = cursig(p, &ctx)) != 0)
 			postsig(p, signum, &ctx);

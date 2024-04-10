@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.156 2023/05/09 14:22:17 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.157 2024/04/10 10:05:26 claudio Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -644,11 +644,8 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 	}
 #endif
 
-	if (sigmask) {
-		KERNEL_LOCK();
+	if (sigmask)
 		dosigsuspend(p, *sigmask &~ sigcantmask);
-		KERNEL_UNLOCK();
-	}
 
 	/* Register kqueue events */
 	error = pselregister(p, pibits, pobits, nd, &nevents, &ncollected);
@@ -946,11 +943,8 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 	if ((error = copyin(fds, pl, sz)) != 0)
 		goto bad;
 
-	if (sigmask) {
-		KERNEL_LOCK();
+	if (sigmask)
 		dosigsuspend(p, *sigmask &~ sigcantmask);
-		KERNEL_UNLOCK();
-	}
 
 	/* Register kqueue events */
 	ppollregister(p, pl, nfds, &nevents, &ncollected);

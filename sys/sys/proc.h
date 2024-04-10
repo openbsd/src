@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.358 2024/04/02 08:39:16 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.359 2024/04/10 10:05:26 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -321,7 +321,7 @@ struct p_inentry {
  *	S	scheduler lock
  *	U	uidinfolk
  *	l	read only reference, see lim_read_enter()
- *	o	owned (read/modified only) by this thread
+ *	o	owned (modified only) by this thread
  */
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;	/* [S] current run/sleep queue */
@@ -379,7 +379,7 @@ struct proc {
 
 /* The following fields are all copied upon creation in fork. */
 #define	p_startcopy	p_sigmask
-	sigset_t p_sigmask;		/* [a] Current signal mask */
+	sigset_t p_sigmask;		/* [o] Current signal mask */
 
 	char	p_name[_MAXCOMLEN];	/* thread name, incl NUL */
 	u_char	p_slppri;		/* [S] Sleeping priority */
@@ -398,7 +398,7 @@ struct proc {
 	struct	user *p_addr;	/* Kernel virtual addr of u-area */
 	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
-	sigset_t p_oldmask;	/* Saved mask from before sigpause */
+	sigset_t p_oldmask;	/* [o] Saved mask from before sigpause */
 	int	p_sisig;	/* For core dump/debugger XXX */
 	union sigval p_sigval;	/* For core dump/debugger XXX */
 	long	p_sitrapno;	/* For core dump/debugger XXX */
