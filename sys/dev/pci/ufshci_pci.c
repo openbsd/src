@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci_pci.c,v 1.1 2024/04/09 14:58:41 mglocker Exp $ */
+/*	$OpenBSD: ufshci_pci.c,v 1.2 2024/04/10 10:40:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2024 Marcus Glocker <mglocker@openbsd.org>
@@ -18,20 +18,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-//#include <sys/buf.h>
-//#include <sys/kernel.h>
-//#include <sys/malloc.h>
 #include <sys/device.h>
-//#include <sys/timeout.h>
-//#include <sys/queue.h>
-//#include <sys/mutex.h>
-//#include <sys/pool.h>
-
-//#include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-//#include <dev/pci/pcidevs.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
