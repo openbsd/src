@@ -3189,3 +3189,10 @@ _libre_RAND_write_file
 _libre_RAND_file_name
 _libre_RAND_status
 _libre_RAND_poll
+_libre_RC2_set_key
+_libre_RC2_ecb_encrypt
+_libre_RC2_encrypt
+_libre_RC2_decrypt
+_libre_RC2_cbc_encrypt
+_libre_RC2_cfb64_encrypt
+_libre_RC2_ofb64_encrypt
