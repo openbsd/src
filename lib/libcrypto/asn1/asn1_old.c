@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_old.c,v 1.5 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: asn1_old.c,v 1.6 2024/04/10 14:55:12 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,6 +91,7 @@ ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x)
 	free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(ASN1_dup);
 
 void *
 ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x)

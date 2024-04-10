@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.91 2024/03/02 09:08:41 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.92 2024/04/10 14:55:12 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -573,9 +573,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
     int offset_day, long offset_sec);
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str);
 
-#ifndef LIBRESSL_INTERNAL
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
-#endif /* !LIBRESSL_INTERNAL */
 
 int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
@@ -736,11 +734,7 @@ int ASN1_object_size(int constructed, int length, int tag);
 
 void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
 
-#ifndef LIBRESSL_INTERNAL
-
 void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x);
-
-#endif /* !LIBRESSL_INTERNAL */
 
 void *ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x);
 
