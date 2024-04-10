@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.75 2023/04/28 19:46:41 dv Exp $	*/
+/*	$OpenBSD: main.c,v 1.76 2024/04/10 13:03:41 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -648,8 +648,6 @@ ctl_convert(const char *srcfile, const char *dstfile, int dsttype, size_t dstsiz
 
 	if (dstsize == 0)
 		dstsize = src.size;
-	else
-		dstsize *= 1048576;
 	if (dstsize < (size_t)src.size) {
 		errstr = "size cannot be smaller than input disk size";
 		goto done;
