@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.48 2023/10/24 13:20:09 claudio Exp $ */
+/* $OpenBSD: cpu.c,v 1.49 2024/04/10 15:38:11 mpi Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -228,10 +228,13 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 #endif
 	u_int32_t major, minor;
 #if defined(MULTIPROCESSOR)
-	extern paddr_t avail_start, avail_end;
+	vaddr_t pcbva;
 	struct pcb *pcb;
-	struct pglist mlist;
-	int error;
+	const struct kmem_pa_mode kp_contig = {
+		.kp_constraint = &no_constraint,
+		.kp_maxseg = 1,
+		.kp_zero = 1
+	};
 #endif
 
 	p = LOCATE_PCS(hwrpb, ma->ma_slot);
@@ -326,10 +329,8 @@ recognized:
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */
-	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(USPACE, avail_start, avail_end - 1, 0, 0,
-	    &mlist, 1, UVM_PLA_WAITOK);
-	if (error != 0) {
+	pcbva = (vaddr_t)km_alloc(USPACE, &kv_any, &kp_contig, &kd_waitok);
+	if (pcbva == 0) {
 		if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
 			panic("cpu_attach: unable to allocate idle stack for"
 			    " primary");
@@ -338,10 +339,8 @@ recognized:
 		return;
 	}
 
-	ci->ci_idle_pcb_paddr = VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	pcb = ci->ci_idle_pcb = (struct pcb *)
-	    ALPHA_PHYS_TO_K0SEG(ci->ci_idle_pcb_paddr);
-	memset(pcb, 0, USPACE);
+	ci->ci_idle_pcb_paddr = ALPHA_K0SEG_TO_PHYS(pcbva);
+	pcb = ci->ci_idle_pcb = (struct pcb *)pcbva;
 
 	/*
 	 * Initialize the idle stack pointer, reserving space for an
