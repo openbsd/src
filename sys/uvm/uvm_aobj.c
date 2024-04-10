@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.108 2023/05/13 09:24:59 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.109 2024/04/10 15:25:14 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1398,7 +1398,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 {
 	struct uvm_object *uobj = &aobj->u_obj;
 	struct vm_page *pg;
-	int rv, slot, npages;
+	int rv, npages;
 
 	pg = NULL;
 	npages = 1;
@@ -1429,8 +1429,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	 * ok, we've got the page now.
 	 * mark it as dirty, clear its swslot and un-busy it.
 	 */
-	slot = uao_set_swslot(&aobj->u_obj, pageidx, 0);
-	uvm_swap_free(slot, 1);
+	uao_dropswap(&aobj->u_obj, pageidx);
 	atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_CLEAN|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 
