@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.40 2024/03/02 09:27:31 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.41 2024/04/10 15:09:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -322,7 +322,6 @@ BIGNUM *BN_mod_inverse_ct(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n,
 BIGNUM *BN_mod_inverse_nonct(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n,
     BN_CTX *ctx);
 int	BN_gcd_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-int	BN_gcd_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 
 int	BN_swap_ct(BN_ULONG swap, BIGNUM *a, BIGNUM *b, size_t nwords);
 
