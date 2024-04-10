@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.127 2024/03/27 22:47:53 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.128 2024/04/10 12:04:41 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -86,7 +86,6 @@ struct socket {
 	short	so_q0len;		/* partials on so_q0 */
 	short	so_qlen;		/* number of connections on so_q */
 	short	so_qlimit;		/* max number queued connections */
-	u_long	so_newconn;		/* # of pending sonewconn() threads */
 	short	so_timeo;		/* connection timeout */
 	u_long	so_oobmark;		/* chars to oob mark */
 	u_int	so_error;		/* error affecting connection */
@@ -169,8 +168,7 @@ struct socket {
 #define	SS_CONNECTOUT		0x1000	/* connect, not accept, at this end */
 #define	SS_ISSENDING		0x2000	/* hint for lower layer */
 #define	SS_DNS			0x4000	/* created using SOCK_DNS socket(2) */
-#define	SS_NEWCONN_WAIT		0x8000	/* waiting sonewconn() relock */
-#define	SS_YP			0x10000	/* created using ypconnect(2) */
+#define	SS_YP			0x8000	/* created using ypconnect(2) */
 
 #ifdef _KERNEL
 
@@ -400,7 +398,6 @@ int	sosend(struct socket *, struct mbuf *, struct uio *,
 	    struct mbuf *, struct mbuf *, int);
 int	sosetopt(struct socket *, int, int, struct mbuf *);
 int	soshutdown(struct socket *, int);
-void	sorflush(struct socket *);
 void	sowakeup(struct socket *, struct sockbuf *);
 void	sorwakeup(struct socket *);
 void	sowwakeup(struct socket *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.327 2024/04/02 14:23:15 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.328 2024/04/10 12:04:41 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -65,6 +65,7 @@ void	sotask(void *);
 void	soreaper(void *);
 void	soput(void *);
 int	somove(struct socket *, int);
+void	sorflush(struct socket *);
 
 void	filt_sordetach(struct knote *kn);
 int	filt_soread(struct knote *kn, long hint);
@@ -413,15 +414,6 @@ drop:
 	}
 	if (so->so_options & SO_ACCEPTCONN) {
 		int persocket = solock_persocket(so);
-
-		if (persocket) {
-			/* Wait concurrent sonewconn() threads. */
-			while (so->so_newconn > 0) {
-				so->so_state |= SS_NEWCONN_WAIT;
-				sosleep_nsec(so, &so->so_newconn, PSOCK,
-				    "newcon", INFSLP);
-			}
-		}
 
 		while ((so2 = TAILQ_FIRST(&so->so_q0)) != NULL) {
 			if (persocket)

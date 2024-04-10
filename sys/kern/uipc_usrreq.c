@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.203 2024/03/26 09:46:47 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.204 2024/04/10 12:04:41 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -293,14 +293,10 @@ uipc_attach(struct socket *so, int proto, int wait)
 	so->so_pcb = unp;
 	getnanotime(&unp->unp_ctime);
 
-	/*
-	 * Enforce `unp_gc_lock' -> `solock()' lock order.
-	 */
-	sounlock(so);
 	rw_enter_write(&unp_gc_lock);
 	LIST_INSERT_HEAD(&unp_head, unp, unp_link);
 	rw_exit_write(&unp_gc_lock);
-	solock(so);
+
 	return (0);
 }
 
@@ -753,7 +749,6 @@ unp_detach(struct unpcb *unp)
 	unp->unp_vnode = NULL;
 
 	/*
-	 * Enforce `unp_gc_lock' -> `solock()' lock order.
 	 * Enforce `i_lock' -> `solock()' lock order.
 	 */
 	sounlock(so);
@@ -1443,16 +1438,26 @@ unp_gc(void *arg __unused)
 	if (nunref) {
 		LIST_FOREACH(unp, &unp_head, unp_link) {
 			if (unp->unp_gcflags & UNP_GCDEAD) {
+				struct sockbuf *sb = &unp->unp_socket->so_rcv;
+				struct mbuf *m;
+
 				/*
 				 * This socket could still be connected
 				 * and if so it's `so_rcv' is still
 				 * accessible by concurrent PRU_SEND
 				 * thread.
 				 */
-				so = unp->unp_socket;
-				solock(so);
-				sorflush(so);
-				sounlock(so);
+
+				mtx_enter(&sb->sb_mtx);
+				m = sb->sb_mb;
+				memset(&sb->sb_startzero, 0,
+				    (caddr_t)&sb->sb_endzero -
+				        (caddr_t)&sb->sb_startzero);
+				sb->sb_timeo_nsecs = INFSLP;
+				mtx_leave(&sb->sb_mtx);
+
+				unp_scan(m, unp_discard);
+				m_purge(m);
 			}
 		}
 	}

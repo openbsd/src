@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.147 2024/03/31 13:50:00 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.148 2024/04/10 12:04:41 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ sonewconn(struct socket *head, int connstatus, int wait)
 {
 	struct socket *so;
 	int persocket = solock_persocket(head);
-	int error;
+	int soqueue = connstatus ? 1 : 0;
 
 	/*
 	 * XXXSMP as long as `so' and `head' share the same lock, we
@@ -232,41 +232,13 @@ sonewconn(struct socket *head, int connstatus, int wait)
 
 	sigio_copy(&so->so_sigio, &head->so_sigio);
 
-	soqinsque(head, so, 0);
-
-	/*
-	 * We need to unlock `head' because PCB layer could release
-	 * solock() to enforce desired lock order.
-	 */
-	if (persocket) {
-		head->so_newconn++;
-		sounlock(head);
-	}
-
-	error = pru_attach(so, 0, wait);
-
-	if (persocket) {
-		sounlock(so);
-		solock(head);
-		solock(so);
-
-		if ((head->so_newconn--) == 0) {
-			if ((head->so_state & SS_NEWCONN_WAIT) != 0) {
-				head->so_state &= ~SS_NEWCONN_WAIT;
-				wakeup(&head->so_newconn);
-			}
-		}
-	}
-
-	if (error) {
-		soqremque(so, 0);
+	soqinsque(head, so, soqueue);
+	if (pru_attach(so, 0, wait) != 0) {
+		soqremque(so, soqueue);
 		goto fail;
 	}
-
 	if (connstatus) {
 		so->so_state |= connstatus;
-		soqremque(so, 0);
-		soqinsque(head, so, 1);
 		sorwakeup(head);
 		wakeup(&head->so_timeo);
 	}
