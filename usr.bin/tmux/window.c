@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.289 2024/03/21 11:30:42 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.290 2024/04/10 07:15:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -474,7 +474,7 @@ window_pane_update_focus(struct window_pane *wp)
 	struct client	*c;
 	int		 focused = 0;
 
-	if (wp != NULL) {
+	if (wp != NULL && (~wp->flags & PANE_EXITED)) {
 		if (wp != wp->window->active)
 			focused = 0;
 		else {
