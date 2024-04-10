@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.49 2024/03/24 06:48:03 tb Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.50 2024/04/10 14:51:02 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -136,24 +136,28 @@ CRYPTO_num_locks(void)
 {
 	return 1;
 }
+LCRYPTO_ALIAS(CRYPTO_num_locks);
 
 unsigned long
 (*CRYPTO_get_id_callback(void))(void)
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(CRYPTO_get_id_callback);
 
 void
 CRYPTO_set_id_callback(unsigned long (*func)(void))
 {
 	return;
 }
+LCRYPTO_ALIAS(CRYPTO_set_id_callback);
 
 unsigned long
 CRYPTO_thread_id(void)
 {
 	return (unsigned long)pthread_self();
 }
+LCRYPTO_ALIAS(CRYPTO_thread_id);
 
 void
 CRYPTO_set_locking_callback(void (*func)(int mode, int lock_num,
@@ -161,6 +165,7 @@ CRYPTO_set_locking_callback(void (*func)(int mode, int lock_num,
 {
 	locking_callback = func;
 }
+LCRYPTO_ALIAS(CRYPTO_set_locking_callback);
 
 void
 (*CRYPTO_get_locking_callback(void))(int mode, int lock_num,
@@ -168,6 +173,7 @@ void
 {
 	return locking_callback;
 }
+LCRYPTO_ALIAS(CRYPTO_get_locking_callback);
 
 void
 CRYPTO_set_add_lock_callback(int (*func)(int *num, int mount, int lock_num,
@@ -175,6 +181,7 @@ CRYPTO_set_add_lock_callback(int (*func)(int *num, int mount, int lock_num,
 {
 	add_lock_callback = func;
 }
+LCRYPTO_ALIAS(CRYPTO_set_add_lock_callback);
 
 int
 (*CRYPTO_get_add_lock_callback(void))(int *num, int mount, int type,
@@ -182,58 +189,68 @@ int
 {
 	return add_lock_callback;
 }
+LCRYPTO_ALIAS(CRYPTO_get_add_lock_callback);
 
 const char *
 CRYPTO_get_lock_name(int lock_num)
 {
 	return "";
 }
+LCRYPTO_ALIAS(CRYPTO_get_lock_name);
 
 struct CRYPTO_dynlock_value *
 CRYPTO_get_dynlock_value(int i)
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(CRYPTO_get_dynlock_value);
 
 int CRYPTO_get_new_dynlockid(void)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_get_new_dynlockid);
 
 void
 CRYPTO_destroy_dynlockid(int i)
 {
 	return;
 }
+LCRYPTO_ALIAS(CRYPTO_destroy_dynlockid);
 
 int CRYPTO_get_new_lockid(char *name)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_get_new_lockid);
 
 int
 CRYPTO_THREADID_set_callback(void (*func)(CRYPTO_THREADID *))
 {
 	return 1;
 }
+LCRYPTO_ALIAS(CRYPTO_THREADID_set_callback);
 
 void
 (*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *)
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(CRYPTO_THREADID_get_callback);
 
 void
 CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val)
 {
 	return;
 }
+LCRYPTO_ALIAS(CRYPTO_THREADID_set_numeric);
 
 void
 CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
 {
 	return;
 }
+LCRYPTO_ALIAS(CRYPTO_THREADID_set_pointer);
 
 void
 CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *(
@@ -241,6 +258,7 @@ CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *(
 {
 	return;
 }
+LCRYPTO_ALIAS(CRYPTO_set_dynlock_create_callback);
 
 void
 CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)(
@@ -248,6 +266,7 @@ CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)(
 {
 	return;
 }
+LCRYPTO_ALIAS(CRYPTO_set_dynlock_lock_callback);
 
 void
 CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)(
@@ -255,6 +274,7 @@ CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)(
 {
 	return;
 }
+LCRYPTO_ALIAS(CRYPTO_set_dynlock_destroy_callback);
 
 struct CRYPTO_dynlock_value *
 (*CRYPTO_get_dynlock_create_callback(void))(
@@ -269,6 +289,7 @@ void
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(CRYPTO_get_dynlock_lock_callback);
 
 void
 (*CRYPTO_get_dynlock_destroy_callback(void))(
@@ -276,6 +297,7 @@ void
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(CRYPTO_get_dynlock_destroy_callback);
 
 void
 CRYPTO_THREADID_current(CRYPTO_THREADID *id)
@@ -380,3 +402,4 @@ CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)
 
 	return x;
 }
+LCRYPTO_ALIAS(CRYPTO_memcmp);

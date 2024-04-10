@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.72 2024/03/02 15:40:05 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.73 2024/04/10 14:51:02 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -262,7 +262,6 @@ DECLARE_STACK_OF(void)
 #define CRYPTO_EX_INDEX_X509_STORE_CTX   14
 #define CRYPTO_EX_INDEX__COUNT           15
 
-#ifndef LIBRESSL_INTERNAL
 #define CRYPTO_malloc_init()		(0)
 #define CRYPTO_malloc_debug_init()	(0)
 
@@ -277,7 +276,6 @@ int CRYPTO_mem_ctrl(int mode);
 #define OPENSSL_malloc(num)	CRYPTO_malloc((num),NULL,0)
 #define OPENSSL_strdup(str)	CRYPTO_strdup((str),NULL,0)
 #define OPENSSL_free(addr)	CRYPTO_free((addr),NULL,0)
-#endif
 
 const char *OpenSSL_version(int type);
 #define OPENSSL_VERSION		0
@@ -316,7 +314,6 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 /* Don't use this structure directly. */
 typedef struct crypto_threadid_st CRYPTO_THREADID;
 
-#ifndef LIBRESSL_INTERNAL
 /* These functions are deprecated no-op stubs */
 void CRYPTO_set_id_callback(unsigned long (*func)(void));
 unsigned long (*CRYPTO_get_id_callback(void))(void);
@@ -349,7 +346,6 @@ void CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)(struct CRY
 struct CRYPTO_dynlock_value *(*CRYPTO_get_dynlock_create_callback(void))(const char *file, int line);
 void (*CRYPTO_get_dynlock_lock_callback(void))(int mode, struct CRYPTO_dynlock_value *l, const char *file, int line);
 void (*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l, const char *file, int line);
-#endif
 
 /* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
  * call the latter last if you need different functions */
@@ -357,15 +353,11 @@ int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t), voi
 int CRYPTO_set_mem_ex_functions(void *(*m)(size_t, const char *, int),
     void *(*r)(void *, size_t, const char *, int), void (*f)(void *));
 
-#ifndef LIBRESSL_INTERNAL
 void *CRYPTO_malloc(size_t num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
 void CRYPTO_free(void *ptr, const char *file, int line);
-#endif
 
-#ifndef LIBRESSL_INTERNAL
 void OPENSSL_cleanse(void *ptr, size_t len);
-#endif
 
 /*
  * Because this is a public header, use a portable method of indicating the
@@ -381,7 +373,6 @@ void OpenSSLDie(const char *file, int line, const char *assertion);
 
 uint64_t OPENSSL_cpu_caps(void);
 
-#ifndef LIBRESSL_INTERNAL
 int FIPS_mode(void);
 int FIPS_mode_set(int r);
 
@@ -393,7 +384,6 @@ void OPENSSL_init(void);
  * defined order as the return value when a != b is undefined, other than to be
  * non-zero. */
 int CRYPTO_memcmp(const void *a, const void *b, size_t len);
-#endif
 
 /*
  * OpenSSL compatible OPENSSL_INIT options.

@@ -1,4 +1,4 @@
-/* $OpenBSD: malloc-wrapper.c,v 1.10 2024/03/02 11:35:09 tb Exp $ */
+/* $OpenBSD: malloc-wrapper.c,v 1.11 2024/04/10 14:51:02 beck Exp $ */
 /*
  * Copyright (c) 2014 Bob Beck
  *
@@ -41,15 +41,18 @@ CRYPTO_malloc(size_t num, const char *file, int line)
 {
 	return malloc(num);
 }
+LCRYPTO_ALIAS(CRYPTO_malloc);
 
 char *
 CRYPTO_strdup(const char *str, const char *file, int line)
 {
 	return strdup(str);
 }
+LCRYPTO_ALIAS(CRYPTO_strdup);
 
 void
 CRYPTO_free(void *ptr, const char *file, int line)
 {
 	free(ptr);
 }
+LCRYPTO_ALIAS(CRYPTO_free);

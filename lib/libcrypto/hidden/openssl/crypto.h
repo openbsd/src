@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.6 2024/03/02 11:37:13 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.7 2024/04/10 14:51:02 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -46,5 +46,36 @@ LCRYPTO_USED(OPENSSL_init_crypto);
 LCRYPTO_USED(OPENSSL_cleanup);
 LCRYPTO_USED(OPENSSL_gmtime);
 LCRYPTO_USED(ERR_load_CRYPTO_strings);
+LCRYPTO_UNUSED(CRYPTO_mem_ctrl);
+LCRYPTO_UNUSED(CRYPTO_set_id_callback);
+LCRYPTO_UNUSED(CRYPTO_get_id_callback);
+LCRYPTO_UNUSED(CRYPTO_thread_id);
+LCRYPTO_UNUSED(CRYPTO_get_new_lockid);
+LCRYPTO_UNUSED(CRYPTO_get_lock_name);
+LCRYPTO_UNUSED(CRYPTO_num_locks);
+LCRYPTO_UNUSED(CRYPTO_set_locking_callback);
+LCRYPTO_UNUSED(CRYPTO_get_locking_callback);
+LCRYPTO_UNUSED(CRYPTO_set_add_lock_callback);
+LCRYPTO_UNUSED(CRYPTO_get_add_lock_callback);
+LCRYPTO_UNUSED(CRYPTO_THREADID_set_numeric);
+LCRYPTO_UNUSED(CRYPTO_THREADID_set_pointer);
+LCRYPTO_UNUSED(CRYPTO_THREADID_set_callback);
+LCRYPTO_UNUSED(CRYPTO_THREADID_get_callback);
+LCRYPTO_UNUSED(CRYPTO_get_new_dynlockid);
+LCRYPTO_UNUSED(CRYPTO_destroy_dynlockid);
+LCRYPTO_UNUSED(CRYPTO_get_dynlock_value);
+LCRYPTO_UNUSED(CRYPTO_set_dynlock_create_callback);
+LCRYPTO_UNUSED(CRYPTO_set_dynlock_lock_callback);
+LCRYPTO_UNUSED(CRYPTO_set_dynlock_destroy_callback);
+LCRYPTO_UNUSED(CRYPTO_get_dynlock_lock_callback);
+LCRYPTO_UNUSED(CRYPTO_get_dynlock_destroy_callback);
+LCRYPTO_UNUSED(CRYPTO_malloc);
+LCRYPTO_UNUSED(CRYPTO_strdup);
+LCRYPTO_UNUSED(CRYPTO_free);
+LCRYPTO_UNUSED(OPENSSL_cleanse);
+LCRYPTO_UNUSED(FIPS_mode);
+LCRYPTO_UNUSED(FIPS_mode_set);
+LCRYPTO_UNUSED(OPENSSL_init);
+LCRYPTO_UNUSED(CRYPTO_memcmp);
 
 #endif /* _LIBCRYPTO_CRYPTO_H */
