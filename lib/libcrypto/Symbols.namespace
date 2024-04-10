@@ -3201,3 +3201,5 @@ _libre_BN_mod_exp
 _libre_BN_mod_exp_mont
 _libre_BN_gcd
 _libre_BN_mod_inverse
+_libre_HMAC_Init
+_libre_HMAC_CTX_reset
