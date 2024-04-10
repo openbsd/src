@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.73 2024/04/10 14:51:02 beck Exp $ */
+/* $OpenBSD: crypto.h,v 1.74 2024/04/10 15:13:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -262,8 +262,10 @@ DECLARE_STACK_OF(void)
 #define CRYPTO_EX_INDEX_X509_STORE_CTX   14
 #define CRYPTO_EX_INDEX__COUNT           15
 
+#ifndef LIBRESSL_INTERNAL
 #define CRYPTO_malloc_init()		(0)
 #define CRYPTO_malloc_debug_init()	(0)
+#endif  /* LIBRESSL_INTERNAL */
 
 #if defined CRYPTO_MDEBUG_ALL || defined CRYPTO_MDEBUG_TIME || defined CRYPTO_MDEBUG_THREAD
 # ifndef CRYPTO_MDEBUG /* avoid duplicate #define */
