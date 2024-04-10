@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.h,v 1.3 2023/07/28 09:53:55 tb Exp $ */
+/* $OpenBSD: rand.h,v 1.4 2024/04/10 14:53:01 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -29,5 +29,15 @@ LCRYPTO_USED(RAND_set_rand_method);
 LCRYPTO_USED(RAND_get_rand_method);
 LCRYPTO_USED(RAND_SSLeay);
 LCRYPTO_USED(ERR_load_RAND_strings);
+LCRYPTO_UNUSED(RAND_cleanup);
+LCRYPTO_UNUSED(RAND_bytes);
+LCRYPTO_UNUSED(RAND_pseudo_bytes);
+LCRYPTO_UNUSED(RAND_seed);
+LCRYPTO_UNUSED(RAND_add);
+LCRYPTO_UNUSED(RAND_load_file);
+LCRYPTO_UNUSED(RAND_write_file);
+LCRYPTO_UNUSED(RAND_file_name);
+LCRYPTO_UNUSED(RAND_status);
+LCRYPTO_UNUSED(RAND_poll);
 
 #endif /* _LIBCRYPTO_RAND_H */

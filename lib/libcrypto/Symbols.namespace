@@ -3179,3 +3179,13 @@ _libre_FIPS_mode
 _libre_FIPS_mode_set
 _libre_OPENSSL_init
 _libre_CRYPTO_memcmp
+_libre_RAND_cleanup
+_libre_RAND_bytes
+_libre_RAND_pseudo_bytes
+_libre_RAND_seed
+_libre_RAND_add
+_libre_RAND_load_file
+_libre_RAND_write_file
+_libre_RAND_file_name
+_libre_RAND_status
+_libre_RAND_poll

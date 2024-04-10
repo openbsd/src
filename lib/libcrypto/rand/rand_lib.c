@@ -1,4 +1,4 @@
-/* $OpenBSD: rand_lib.c,v 1.23 2023/11/19 15:46:10 tb Exp $ */
+/* $OpenBSD: rand_lib.c,v 1.24 2024/04/10 14:53:01 beck Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -50,30 +50,35 @@ RAND_cleanup(void)
 {
 
 }
+LCRYPTO_ALIAS(RAND_cleanup);
 
 void
 RAND_seed(const void *buf, int num)
 {
 
 }
+LCRYPTO_ALIAS(RAND_seed);
 
 void
 RAND_add(const void *buf, int num, double entropy)
 {
 
 }
+LCRYPTO_ALIAS(RAND_add);
 
 int
 RAND_status(void)
 {
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_status);
 
 int
 RAND_poll(void)
 {
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_poll);
 
 /*
  * Hurray. You've made it to the good parts.
@@ -85,6 +90,7 @@ RAND_bytes(unsigned char *buf, int num)
 		arc4random_buf(buf, num);
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_bytes);
 
 int
 RAND_pseudo_bytes(unsigned char *buf, int num)
@@ -93,3 +99,4 @@ RAND_pseudo_bytes(unsigned char *buf, int num)
 		arc4random_buf(buf, num);
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_pseudo_bytes);
