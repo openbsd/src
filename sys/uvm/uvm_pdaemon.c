@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.110 2024/03/24 10:29:35 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.111 2024/04/10 15:26:18 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ void		uvmpd_scan_inactive(struct uvm_pmalloc *,
 		    struct uvm_constraint_range *, struct pglist *);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
-void		uvmpd_dropswap(struct vm_page *);
+int		uvmpd_dropswap(struct vm_page *);
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -382,23 +382,29 @@ uvmpd_trylockowner(struct vm_page *pg)
 	return slock;
 }
 
-
 /*
  * uvmpd_dropswap: free any swap allocated to this page.
  *
  * => called with owner locked.
+ * => return 1 if a page had an associated slot.
  */
-void
+int
 uvmpd_dropswap(struct vm_page *pg)
 {
 	struct vm_anon *anon = pg->uanon;
+	int slot, result = 0;
 
 	if ((pg->pg_flags & PQ_ANON) && anon->an_swslot) {
 		uvm_swap_free(anon->an_swslot, 1);
 		anon->an_swslot = 0;
+		result = 1;
 	} else if (pg->pg_flags & PQ_AOBJ) {
-		uao_dropswap(pg->uobject, pg->offset >> PAGE_SHIFT);
+		slot = uao_dropswap(pg->uobject, pg->offset >> PAGE_SHIFT);
+		if (slot)
+			result = 1;
 	}
+
+	return result;
 }
 
 /*
@@ -941,21 +947,9 @@ uvmpd_scan(struct uvm_pmalloc *pma, struct uvm_constraint_range *constraint)
 		 * to this page so that other pages can be paged out.
 		 */
 		if (swap_shortage > 0) {
-			if ((p->pg_flags & PQ_ANON) && p->uanon->an_swslot) {
-				uvm_swap_free(p->uanon->an_swslot, 1);
-				p->uanon->an_swslot = 0;
+			if (uvmpd_dropswap(p)) {
 				atomic_clearbits_int(&p->pg_flags, PG_CLEAN);
 				swap_shortage--;
-			}
-			if (p->pg_flags & PQ_AOBJ) {
-				int slot = uao_set_swslot(p->uobject,
-					p->offset >> PAGE_SHIFT, 0);
-				if (slot) {
-					uvm_swap_free(slot, 1);
-					atomic_clearbits_int(&p->pg_flags,
-					    PG_CLEAN);
-					swap_shortage--;
-				}
 			}
 		}
 
