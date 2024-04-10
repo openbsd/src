@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.170 2024/03/21 11:53:11 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.171 2024/04/10 07:36:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -874,6 +874,14 @@ const struct options_table_entry options_table[] = {
 	  .default_num = 0,
 	  .text = "Whether applications are allowed to use the escape sequence "
 		  "to rename windows."
+	},
+
+	{ .name = "allow-set-title",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_num = 1,
+	  .text = "Whether applications are allowed to use the escape sequence "
+		  "to set the pane title."
 	},
 
 	{ .name = "alternate-screen",

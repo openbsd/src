@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.223 2023/12/27 20:13:35 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.224 2024/04/10 07:36:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2341,7 +2341,9 @@ input_exit_osc(struct input_ctx *ictx)
 	switch (option) {
 	case 0:
 	case 2:
-		if (screen_set_title(sctx->s, p) && wp != NULL) {
+		if (wp != NULL &&
+		    options_get_number(wp->options, "allow-set-title") &&
+		    screen_set_title(sctx->s, p)) {
 			notify_pane("pane-title-changed", wp);
 			server_redraw_window_borders(wp->window);
 			server_status_window(wp->window);
