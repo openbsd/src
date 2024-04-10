@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.52 2024/03/02 09:27:31 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.53 2024/04/10 14:58:06 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -799,6 +799,7 @@ BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	return BN_mod_exp_mont_internal(rr, a, p, m, ctx, in_mont,
 	    (BN_get_flags(p, BN_FLG_CONSTTIME) != 0));
 }
+LCRYPTO_ALIAS(BN_mod_exp_mont);
 
 int
 BN_mod_exp_mont_ct(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
@@ -1160,6 +1161,7 @@ BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	return BN_mod_exp_internal(r, a, p, m, ctx,
 	    (BN_get_flags(p, BN_FLG_CONSTTIME) != 0));
 }
+LCRYPTO_ALIAS(BN_mod_exp);
 
 int
 BN_mod_exp_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,

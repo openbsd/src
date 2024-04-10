@@ -3196,3 +3196,8 @@ _libre_RC2_decrypt
 _libre_RC2_cbc_encrypt
 _libre_RC2_cfb64_encrypt
 _libre_RC2_ofb64_encrypt
+_libre_BN_div
+_libre_BN_mod_exp
+_libre_BN_mod_exp_mont
+_libre_BN_gcd
+_libre_BN_mod_inverse

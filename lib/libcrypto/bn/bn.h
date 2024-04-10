@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.77 2024/03/02 09:27:31 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.78 2024/04/10 14:58:06 beck Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -350,11 +350,10 @@ void	BN_set_negative(BIGNUM *b, int n);
 
 int BN_is_negative(const BIGNUM *b);
 
-#ifndef LIBRESSL_INTERNAL
 int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     BN_CTX *ctx);
 #define BN_mod(rem,m,d,ctx) BN_div(NULL,(rem),(m),(d),(ctx))
-#endif
+
 int	BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
 int	BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m, BN_CTX *ctx);
 int	BN_mod_add_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m);
@@ -383,12 +382,10 @@ int	BN_lshift(BIGNUM *r, const BIGNUM *a, int n);
 int	BN_lshift1(BIGNUM *r, const BIGNUM *a);
 int	BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
 
-#ifndef LIBRESSL_INTERNAL
 int	BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx);
 int	BN_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-#endif
 int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont);
 
@@ -407,14 +404,10 @@ char *	BN_bn2dec(const BIGNUM *a);
 int 	BN_hex2bn(BIGNUM **a, const char *str);
 int 	BN_dec2bn(BIGNUM **a, const char *str);
 int	BN_asc2bn(BIGNUM **a, const char *str);
-#ifndef LIBRESSL_INTERNAL
 int	BN_gcd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-#endif
 int	BN_kronecker(const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx); /* returns -2 for error */
-#ifndef LIBRESSL_INTERNAL
 BIGNUM *BN_mod_inverse(BIGNUM *ret,
     const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx);
-#endif
 BIGNUM *BN_mod_sqrt(BIGNUM *ret,
     const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx);
 

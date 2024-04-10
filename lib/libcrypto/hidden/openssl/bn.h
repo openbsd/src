@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.6 2024/03/02 09:27:31 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.7 2024/04/10 14:58:06 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -136,5 +136,10 @@ LCRYPTO_USED(BN_get_rfc3526_prime_4096);
 LCRYPTO_USED(BN_get_rfc3526_prime_6144);
 LCRYPTO_USED(BN_get_rfc3526_prime_8192);
 LCRYPTO_USED(ERR_load_BN_strings);
+LCRYPTO_UNUSED(BN_div);
+LCRYPTO_UNUSED(BN_mod_exp);
+LCRYPTO_UNUSED(BN_mod_exp_mont);
+LCRYPTO_UNUSED(BN_gcd);
+LCRYPTO_UNUSED(BN_mod_inverse);
 
 #endif /* _LIBCRYPTO_BN_H */

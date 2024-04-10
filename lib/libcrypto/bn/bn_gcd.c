@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.28 2023/06/02 17:15:30 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.29 2024/04/10 14:58:06 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,12 +195,7 @@ BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 	BN_CTX_end(ctx);
 	return (ret);
 }
-
-int
-BN_gcd_nonct(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
-{
-	return BN_gcd(r, in_a, in_b, ctx);
-}
+LCRYPTO_ALIAS(BN_gcd);
 
 /*
  * BN_gcd_no_branch is a special version of BN_mod_inverse_no_branch.
@@ -808,6 +803,7 @@ BN_mod_inverse(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 	    (BN_get_flags(n, BN_FLG_CONSTTIME) != 0));
 	return BN_mod_inverse_internal(in, a, n, ctx, ct);
 }
+LCRYPTO_ALIAS(BN_mod_inverse);
 
 BIGNUM *
 BN_mod_inverse_nonct(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
