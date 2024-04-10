@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.468 2024/04/09 09:03:18 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.469 2024/04/10 09:05:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1720,8 +1720,16 @@ session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
 	int			 errs = 0;
 	size_t			 datalen = 0;
 
-	if (p->stats.last_sent_errcode)	/* some notification already sent */
+	switch (p->state) {
+	case STATE_OPENSENT:
+	case STATE_OPENCONFIRM:
+	case STATE_ESTABLISHED:
+		break;
+	default:
+		/* session not open, no need to send notification */
+		log_notification(p, errcode, subcode, ibuf, "dropping");
 		return;
+	}
 
 	log_notification(p, errcode, subcode, ibuf, "sending");
 
