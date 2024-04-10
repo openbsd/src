@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.401 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.402 2024/04/10 22:10:03 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -100,16 +100,12 @@
 #include <net/pfvar.h>
 #endif
 
-struct	tcpiphdr tcp_saveti;
-
 int tcp_mss_adv(struct mbuf *, int);
 int tcp_flush_queue(struct tcpcb *);
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
-
-struct  tcpipv6hdr tcp_saveti6;
 
 /* for the packet header length in the mbuf */
 #define M_PH_LEN(m)      (((struct mbuf *)(m))->m_pkthdr.len)
@@ -373,7 +369,13 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 	int todrop, acked, ourfinisacked;
 	int hdroptlen = 0;
 	short ostate;
-	caddr_t saveti;
+	union {
+		struct	tcpiphdr tcpip;
+#ifdef INET6
+		struct  tcpipv6hdr tcpip6;
+#endif
+		char	caddr;
+	} saveti;
 	tcp_seq iss, *reuse = NULL;
 	uint64_t now;
 	u_long tiwin;
@@ -672,15 +674,13 @@ findpcb:
 			switch (af) {
 #ifdef INET6
 			case AF_INET6:
-				saveti = (caddr_t) &tcp_saveti6;
-				memcpy(&tcp_saveti6.ti6_i, ip6, sizeof(*ip6));
-				memcpy(&tcp_saveti6.ti6_t, th, sizeof(*th));
+				saveti.tcpip6.ti6_i = *ip6;
+				saveti.tcpip6.ti6_t = *th;
 				break;
 #endif
 			case AF_INET:
-				saveti = (caddr_t) &tcp_saveti;
-				memcpy(&tcp_saveti.ti_i, ip, sizeof(*ip));
-				memcpy(&tcp_saveti.ti_t, th, sizeof(*th));
+				memcpy(&saveti.tcpip.ti_i, ip, sizeof(*ip));
+				saveti.tcpip.ti_t = *th;
 				break;
 			}
 		}
@@ -2031,7 +2031,7 @@ dodata:							/* XXX */
 		}
 	}
 	if (otp)
-		tcp_trace(TA_INPUT, ostate, tp, otp, saveti, 0, tlen);
+		tcp_trace(TA_INPUT, ostate, tp, otp, &saveti.caddr, 0, tlen);
 
 	/*
 	 * Return any desired output.
@@ -2110,7 +2110,7 @@ drop:
 	 * Drop space held by incoming segment and return.
 	 */
 	if (otp)
-		tcp_trace(TA_DROP, ostate, tp, otp, saveti, 0, tlen);
+		tcp_trace(TA_DROP, ostate, tp, otp, &saveti.caddr, 0, tlen);
 
 	m_freem(m);
 	in_pcbunref(inp);
