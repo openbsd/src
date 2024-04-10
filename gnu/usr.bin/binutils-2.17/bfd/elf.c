@@ -5358,6 +5358,14 @@ rewrite_elf_program_header (bfd *ibfd, bfd *obfd)
    && ((bfd_vma) s->filepos + s->size				\
        <= p->p_offset + p->p_filesz))
 
+  /* Special case: OpenBSD pinsyscalls(2) information.  */
+#define IS_PINSYSCALL_DATA(p, s)					\
+  (p->p_type == PT_OPENBSD_SYSCALLS					\
+   && s->vma == 0 && s->lma == 0					\
+   && (bfd_vma) s->filepos >= p->p_offset				\
+   && ((bfd_vma) s->filepos + s->size					\
+       <= p->p_offset + p->p_filesz))
+
   /* The complicated case when p_vaddr is 0 is to handle the Solaris
      linker, which generates a PT_INTERP section with p_vaddr and
      p_memsz set to 0.  */
@@ -5376,7 +5384,7 @@ rewrite_elf_program_header (bfd *ibfd, bfd *obfd)
      A section will be included if:
        1. It is within the address space of the segment -- we use the LMA
           if that is set for the segment and the VMA otherwise,
-       2. It is an allocated segment,
+       2. It is an allocated segment, or part of PT_OPENBSD_SYSCALLS,
        3. There is an output section associated with it,
        4. The section has not already been allocated to a previous segment.
        5. PT_GNU_STACK segments do not include any sections.
@@ -5389,7 +5397,8 @@ rewrite_elf_program_header (bfd *ibfd, bfd *obfd)
       ? IS_CONTAINED_BY_LMA (section, segment, segment->p_paddr)	\
       : IS_CONTAINED_BY_VMA (section, segment))				\
      && (section->flags & SEC_ALLOC) != 0)				\
-    || IS_COREFILE_NOTE (segment, section))				\
+    || IS_COREFILE_NOTE (segment, section)				\
+    || IS_PINSYSCALL_DATA (segment, section))				\
    && section->output_section != NULL					\
    && segment->p_type != PT_GNU_STACK					\
    && (segment->p_type != PT_TLS					\
@@ -5655,6 +5664,7 @@ rewrite_elf_program_header (bfd *ibfd, bfd *obfd)
 		 LMA address of the output section.  */
 	      if (IS_CONTAINED_BY_LMA (output_section, segment, map->p_paddr)
 		  || IS_COREFILE_NOTE (segment, section)
+		  || IS_PINSYSCALL_DATA (segment, section)
 		  || (bed->want_p_paddr_set_to_zero &&
 		      IS_CONTAINED_BY_VMA (output_section, segment))
                 )
@@ -5751,7 +5761,8 @@ rewrite_elf_program_header (bfd *ibfd, bfd *obfd)
 	      BFD_ASSERT (output_section != NULL);
 
 	      if (IS_CONTAINED_BY_LMA (output_section, segment, map->p_paddr)
-		  || IS_COREFILE_NOTE (segment, section))
+		  || IS_COREFILE_NOTE (segment, section)
+		  || IS_PINSYSCALL_DATA (segment, section))
 		{
 		  if (map->count == 0)
 		    {
@@ -5868,6 +5879,7 @@ rewrite_elf_program_header (bfd *ibfd, bfd *obfd)
 #undef IS_CONTAINED_BY_VMA
 #undef IS_CONTAINED_BY_LMA
 #undef IS_COREFILE_NOTE
+#undef IS_PINSYSCALL_DATA
 #undef IS_SOLARIS_PT_INTERP
 #undef INCLUDE_SECTION_IN_SEGMENT
 #undef SEGMENT_AFTER_SEGMENT
