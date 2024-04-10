@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.4 2023/07/28 09:25:12 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.5 2024/04/10 15:01:31 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -161,5 +161,14 @@ LCRYPTO_USED(EC_KEY_METHOD_get_sign);
 LCRYPTO_USED(EC_KEY_METHOD_get_verify);
 LCRYPTO_USED(ECParameters_dup);
 LCRYPTO_USED(ERR_load_EC_strings);
+LCRYPTO_UNUSED(EC_GROUP_clear_free);
+LCRYPTO_UNUSED(EC_GROUP_set_curve_GFp);
+LCRYPTO_UNUSED(EC_GROUP_get_curve_GFp);
+LCRYPTO_UNUSED(EC_POINT_clear_free);
+LCRYPTO_UNUSED(EC_POINT_set_Jprojective_coordinates_GFp);
+LCRYPTO_UNUSED(EC_POINT_get_Jprojective_coordinates_GFp);
+LCRYPTO_UNUSED(EC_POINT_set_affine_coordinates_GFp);
+LCRYPTO_UNUSED(EC_POINT_get_affine_coordinates_GFp);
+LCRYPTO_UNUSED(EC_POINT_set_compressed_coordinates_GFp);
 
 #endif /* _LIBCRYPTO_EC_H */

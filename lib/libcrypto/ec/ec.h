@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.46 2023/08/11 04:45:27 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.47 2024/04/10 15:01:31 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -108,9 +108,7 @@ const EC_METHOD *EC_GFp_mont_method(void);
 
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth);
 void EC_GROUP_free(EC_GROUP *group);
-#ifndef LIBRESSL_INTERNAL
 void EC_GROUP_clear_free(EC_GROUP *group);
-#endif
 
 int EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src);
 EC_GROUP *EC_GROUP_dup(const EC_GROUP *src);
@@ -145,12 +143,10 @@ int EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
     BN_CTX *ctx);
 
-#if !defined(LIBRESSL_INTERNAL)
 int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx);
 int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
     BIGNUM *b, BN_CTX *ctx);
-#endif
 
 int EC_GROUP_get_degree(const EC_GROUP *group);
 
@@ -176,9 +172,7 @@ int EC_curve_nist2nid(const char *name);
 
 EC_POINT *EC_POINT_new(const EC_GROUP *group);
 void EC_POINT_free(EC_POINT *point);
-#ifndef LIBRESSL_INTERNAL
 void EC_POINT_clear_free(EC_POINT *point);
-#endif
 int EC_POINT_copy(EC_POINT *dst, const EC_POINT *src);
 EC_POINT *EC_POINT_dup(const EC_POINT *src, const EC_GROUP *group);
 
@@ -193,7 +187,6 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *p,
 int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *p,
     const BIGNUM *x, int y_bit, BN_CTX *ctx);
 
-#ifndef LIBRESSL_INTERNAL
 int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
     const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx);
 int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
@@ -204,7 +197,6 @@ int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
     const EC_POINT *p, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
 int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
     const BIGNUM *x, int y_bit, BN_CTX *ctx);
-#endif /* !LIBRESSL_INTERNAL */
 size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *p,
     point_conversion_form_t form, unsigned char *buf, size_t len, BN_CTX *ctx);
 int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *p,

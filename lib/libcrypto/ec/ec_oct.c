@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.16 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.17 2024/04/10 15:01:31 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -107,6 +107,7 @@ EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 {
 	return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_set_compressed_coordinates_GFp);
 
 size_t
 EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.65 2023/07/25 06:57:26 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.66 2024/04/10 15:01:31 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -136,6 +136,7 @@ EC_GROUP_clear_free(EC_GROUP *group)
 {
 	EC_GROUP_free(group);
 }
+LCRYPTO_ALIAS(EC_GROUP_clear_free);
 
 int
 EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
@@ -542,6 +543,7 @@ EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 {
 	return EC_GROUP_set_curve(group, p, a, b, ctx);
 }
+LCRYPTO_ALIAS(EC_GROUP_set_curve_GFp);
 
 int
 EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
@@ -549,6 +551,7 @@ EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 {
 	return EC_GROUP_get_curve(group, p, a, b, ctx);
 }
+LCRYPTO_ALIAS(EC_GROUP_get_curve_GFp);
 
 int
 EC_GROUP_get_degree(const EC_GROUP *group)
@@ -727,6 +730,7 @@ EC_POINT_clear_free(EC_POINT *point)
 {
 	EC_POINT_free(point);
 }
+LCRYPTO_ALIAS(EC_POINT_clear_free);
 
 int
 EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
@@ -862,6 +866,7 @@ EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 {
 	return EC_POINT_set_Jprojective_coordinates(group, point, x, y, z, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_set_Jprojective_coordinates_GFp);
 
 int
 EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
@@ -869,6 +874,7 @@ EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
 {
 	return EC_POINT_get_Jprojective_coordinates(group, point, x, y, z, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_get_Jprojective_coordinates_GFp);
 
 int
 EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
@@ -914,6 +920,7 @@ EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 {
 	return EC_POINT_set_affine_coordinates(group, point, x, y, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_set_affine_coordinates_GFp);
 
 int
 EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
@@ -951,6 +958,7 @@ EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point
 {
 	return EC_POINT_get_affine_coordinates(group, point, x, y, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_get_affine_coordinates_GFp);
 
 int
 EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
