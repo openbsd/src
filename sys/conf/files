@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.730 2024/02/03 18:51:57 beck Exp $
+#	$OpenBSD: files,v 1.731 2024/04/10 13:59:05 naddy Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1081,8 +1081,6 @@ file lib/libkern/arch/${MACHINE_ARCH}/strnlen.S | lib/libkern/strnlen.c
 file lib/libkern/arch/${MACHINE_ARCH}/strnstr.S | lib/libkern/strnstr.c
 file lib/libkern/arch/${MACHINE_ARCH}/scanc.S | lib/libkern/scanc.c
 file lib/libkern/arch/${MACHINE_ARCH}/skpc.S | lib/libkern/skpc.c
-file lib/libkern/arch/${MACHINE_ARCH}/htonl.S | lib/libkern/htonl.c
-file lib/libkern/arch/${MACHINE_ARCH}/htons.S | lib/libkern/htons.c
 file lib/libkern/arch/${MACHINE_ARCH}/strncasecmp.S | lib/libkern/strncasecmp.c
 
 file lib/libz/adler32.c			ppp_deflate | ipsec | crypto | ddb |
