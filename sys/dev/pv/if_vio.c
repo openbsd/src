@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.31 2024/02/14 22:41:48 bluhm Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.32 2024/04/10 19:55:50 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -43,12 +43,12 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/route.h>
 
-#include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
-#include <netinet/ip6.h>
 #include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 #include <netinet/udp.h>
 
 #if NBPFILTER > 0
@@ -537,6 +537,9 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM |
 	    VIRTIO_F_RING_EVENT_IDX | VIRTIO_NET_F_GUEST_CSUM;
 
+	vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO4;
+	vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO6;
+
 	virtio_negotiate_features(vsc, virtio_net_feature_names);
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_MAC)) {
 		vio_get_lladdr(&sc->sc_ac, vsc);
@@ -553,9 +556,9 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_hdr_size = offsetof(struct virtio_net_hdr, num_buffers);
 	}
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF))
-		ifp->if_hardmtu = 16000; /* arbitrary limit */
+		ifp->if_hardmtu = MAXMCLBYTES;
 	else
-		ifp->if_hardmtu = MCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
+		ifp->if_hardmtu = MAXMCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
 
 	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQRX], 0, MCLBYTES, 2, "rx") != 0)
 		goto err;
@@ -595,6 +598,10 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM))
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|
 		    IFCAP_CSUM_TCPv6|IFCAP_CSUM_UDPv6;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4))
+		ifp->if_capabilities |= IFCAP_TSOv4;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
+		ifp->if_capabilities |= IFCAP_TSOv6;
 	ifq_init_maxlen(&ifp->if_snd, vsc->sc_vqs[1].vq_num - 1);
 	ifmedia_init(&sc->sc_media, 0, vio_media_change, vio_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -714,6 +721,85 @@ vio_stop(struct ifnet *ifp, int disable)
 	}
 }
 
+static inline uint16_t
+vio_cksum_update(uint32_t cksum, uint16_t paylen)
+{
+	/* Add payload length */
+	cksum += paylen;
+
+	/* Fold back to 16 bit */
+	cksum += cksum >> 16;
+
+	return (uint16_t)(cksum);
+}
+
+void
+vio_tx_offload(struct virtio_net_hdr *hdr, struct mbuf *m)
+{
+	struct ether_extracted ext;
+
+	/*
+	 * Checksum Offload
+	 */
+
+	if (!ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT) &&
+	    !ISSET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT))
+		return;
+
+	ether_extract_headers(m, &ext);
+
+	/* Consistency Checks */
+	if ((!ext.ip4 && !ext.ip6) || (!ext.tcp && !ext.udp))
+		return;
+
+	if ((ext.tcp && !ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) ||
+	    (ext.udp && !ISSET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)))
+		return;
+
+	hdr->csum_start = sizeof(*ext.eh);
+#if NVLAN > 0
+	if (ext.evh)
+		hdr->csum_start = sizeof(*ext.evh);
+#endif
+	hdr->csum_start += ext.iphlen;
+
+	if (ext.tcp)
+		hdr->csum_offset = offsetof(struct tcphdr, th_sum);
+	else if (ext.udp)
+		hdr->csum_offset = offsetof(struct udphdr, uh_sum);
+
+	hdr->flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
+
+	/*
+	 * TCP Segmentation Offload
+	 */
+
+	if (!ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO))
+		return;
+
+	if (!ext.tcp) {
+		tcpstat_inc(tcps_outbadtso);
+		return;
+	}
+
+	hdr->hdr_len = hdr->csum_start + ext.tcphlen;
+	hdr->gso_size = m->m_pkthdr.ph_mss;
+
+	if (ext.ip4)
+		hdr->gso_type = VIRTIO_NET_HDR_GSO_TCPV4;
+#ifdef INET6
+	else if (ext.ip6)
+		hdr->gso_type = VIRTIO_NET_HDR_GSO_TCPV6;
+#endif
+
+	/* VirtIO-Net need pseudo header cksum with IP-payload length for TSO */
+	ext.tcp->th_sum = vio_cksum_update(ext.tcp->th_sum,
+	    htons(ext.iplen - ext.iphlen));
+
+	tcpstat_add(tcps_outpkttso,
+	    (ext.paylen + m->m_pkthdr.ph_mss - 1) / m->m_pkthdr.ph_mss);
+}
+
 void
 vio_start(struct ifnet *ifp)
 {
@@ -750,24 +836,7 @@ again:
 
 		hdr = &sc->sc_tx_hdrs[slot];
 		memset(hdr, 0, sc->sc_hdr_size);
-		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
-			struct ether_extracted ext;
-
-			ether_extract_headers(m, &ext);
-			hdr->csum_start = sizeof(*ext.eh);
-#if NVLAN > 0
-			if (ext.evh)
-				hdr->csum_start = sizeof(*ext.evh);
-#endif
-			if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
-				hdr->csum_offset = offsetof(struct tcphdr, th_sum);
-			else
-				hdr->csum_offset = offsetof(struct udphdr, uh_sum);
-
-			if (ext.ip4 || ext.ip6)
-				hdr->csum_start += ext.iphlen;
-			hdr->flags = VIRTIO_NET_HDR_F_NEEDS_CSUM;
-		}
+		vio_tx_offload(hdr, m);
 
 		r = vio_encap(sc, slot, m);
 		if (r != 0) {
