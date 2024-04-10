@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.31 2024/01/11 13:49:49 bluhm Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.32 2024/04/10 22:24:07 bluhm Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/socket.h>
 
 #include <net/route.h>
@@ -99,11 +100,22 @@
 #endif /* INET6 */
 
 #ifdef TCPDEBUG
+#include <sys/protosw.h>
+#endif
+
+/*
+ *  Locks used to protect struct members in this file:
+ *	D	TCP debug global mutex
+ */
+
+struct mutex tcp_debug_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
+
+#ifdef TCPDEBUG
 int	tcpconsdebug = 0;
 #endif
 
-struct	tcp_debug tcp_debug[TCP_NDEBUG];
-int	tcp_debx;
+struct	tcp_debug tcp_debug[TCP_NDEBUG];	/* [D] */
+int	tcp_debx;				/* [D] */
 
 /*
  * Tcp debug routines
@@ -113,14 +125,20 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct tcpcb *otp,
     caddr_t headers, int req, int len)
 {
 #ifdef TCPDEBUG
+	struct tcphdr *th;
 	tcp_seq seq, ack;
 	int flags;
 #endif
 	int pf = PF_UNSPEC;
-	struct tcp_debug *td = &tcp_debug[tcp_debx++];
-	struct tcpiphdr *ti = (struct tcpiphdr *)headers;
-	struct tcpipv6hdr *ti6 = (struct tcpipv6hdr *)headers;
-	struct tcphdr *th;
+	struct tcp_debug *td;
+	struct tcpiphdr *ti;
+	struct tcpipv6hdr *ti6;
+
+	mtx_enter(&tcp_debug_mtx);
+
+	td = &tcp_debug[tcp_debx++];
+	ti = (struct tcpiphdr *)headers;
+	ti6 = (struct tcpipv6hdr *)headers;
 
 	if (tcp_debx == TCP_NDEBUG)
 		tcp_debx = 0;
@@ -153,13 +171,17 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct tcpcb *otp,
 		switch (pf) {
 #ifdef INET6
 		case PF_INET6:
+#ifdef TCPDEBUG
 			th = &ti6->ti6_t;
+#endif
 			td->td_ti6 = *ti6;
 			td->td_ti6.ti6_plen = len;
 			break;
 #endif /* INET6 */
 		case PF_INET:
+#ifdef TCPDEBUG
 			th = &ti->ti_t;
+#endif
 			td->td_ti = *ti;
 			td->td_ti.ti_len = len;
 			break;
@@ -172,7 +194,7 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct tcpcb *otp,
 	td->td_req = req;
 #ifdef TCPDEBUG
 	if (tcpconsdebug == 0)
-		return;
+		goto done;
 	if (otp)
 		printf("%p %s:", otp, tcpstates[ostate]);
 	else
@@ -218,11 +240,14 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct tcpcb *otp,
 	/* print out internal state of tp !?! */
 	printf("\n");
 	if (tp == NULL)
-		return;
+		goto done;
 	printf("\trcv_(nxt,wnd,up) (%x,%lx,%x) snd_(una,nxt,max) (%x,%x,%x)\n",
 	    tp->rcv_nxt, tp->rcv_wnd, tp->rcv_up, tp->snd_una, tp->snd_nxt,
 	    tp->snd_max);
 	printf("\tsnd_(wl1,wl2,wnd) (%x,%x,%lx)\n",
 	    tp->snd_wl1, tp->snd_wl2, tp->snd_wnd);
+
+ done:
 #endif /* TCPDEBUG */
+	mtx_leave(&tcp_debug_mtx);
 }
