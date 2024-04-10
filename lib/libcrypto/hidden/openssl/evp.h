@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.3 2024/04/09 13:52:42 beck Exp $ */
+/* $OpenBSD: evp.h,v 1.4 2024/04/10 15:00:38 beck Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@openbsd.org>
  *
@@ -374,5 +374,10 @@ LCRYPTO_USED(EVP_AEAD_CTX_cleanup);
 LCRYPTO_USED(EVP_AEAD_CTX_seal);
 LCRYPTO_USED(EVP_AEAD_CTX_open);
 LCRYPTO_USED(ERR_load_EVP_strings);
+LCRYPTO_UNUSED(EVP_MD_CTX_init);
+LCRYPTO_UNUSED(EVP_EncryptFinal);
+LCRYPTO_UNUSED(EVP_DecryptFinal);
+LCRYPTO_UNUSED(EVP_CipherFinal);
+LCRYPTO_UNUSED(EVP_CIPHER_CTX_init);
 
 #endif /* _LIBCRYPTO_EVP_H */

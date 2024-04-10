@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.22 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.23 2024/04/10 15:00:38 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -264,6 +264,7 @@ EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 
 	return EVP_DecryptFinal_ex(ctx, out, out_len);
 }
+LCRYPTO_ALIAS(EVP_CipherFinal);
 
 int
 EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
@@ -427,6 +428,7 @@ EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
 	return EVP_EncryptFinal_ex(ctx, out, out_len);
 }
+LCRYPTO_ALIAS(EVP_EncryptFinal);
 
 int
 EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
@@ -554,6 +556,7 @@ EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
 {
 	return EVP_DecryptFinal_ex(ctx, out, out_len);
 }
+LCRYPTO_ALIAS(EVP_DecryptFinal);
 
 int
 EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *out_len)
@@ -638,6 +641,7 @@ EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 {
 	return EVP_CIPHER_CTX_cleanup(ctx);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_init);
 
 int
 EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)

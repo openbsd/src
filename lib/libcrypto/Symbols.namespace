@@ -3203,3 +3203,8 @@ _libre_BN_gcd
 _libre_BN_mod_inverse
 _libre_HMAC_Init
 _libre_HMAC_CTX_reset
+_libre_EVP_MD_CTX_init
+_libre_EVP_EncryptFinal
+_libre_EVP_DecryptFinal
+_libre_EVP_CipherFinal
+_libre_EVP_CIPHER_CTX_init
