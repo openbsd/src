@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc64.c,v 1.13 2021/12/01 21:45:19 deraadt Exp $	*/
+/*	$OpenBSD: kvm_sparc64.c,v 1.14 2024/04/11 18:58:44 miod Exp $	*/
 /*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@
 
 #include <machine/param.h>
 #include <machine/vmparam.h>
-#include <machine/pmap.h>
+#include <machine/pte.h>
 #include <machine/kcore.h>
 
 #include <limits.h>

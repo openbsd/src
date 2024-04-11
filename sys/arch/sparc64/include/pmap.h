@@ -35,7 +35,6 @@
 #define	_MACHINE_PMAP_H_
 
 #ifndef _LOCORE
-#include <machine/pte.h>
 #ifdef	_KERNEL
 #include <sys/queue.h>
 #endif

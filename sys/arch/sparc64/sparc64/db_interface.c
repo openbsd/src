@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.63 2024/03/29 21:27:53 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.64 2024/04/11 18:58:44 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -53,7 +53,7 @@
 #include <machine/cpu.h>
 #include <machine/openfirm.h>
 #include <machine/ctlreg.h>
-#include <machine/pmap.h>
+#include <machine/pte.h>
 
 #ifdef notyet
 #include "fb.h"
