@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.111 2023/11/10 15:51:20 bluhm Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.112 2024/04/11 05:30:55 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -198,6 +198,19 @@ CTASSERT(MCX_MAX_QUEUES * MCX_WQ_DOORBELL_STRIDE <
 #define MCX_ETHER_CAP_25G_SR		29
 #define MCX_ETHER_CAP_50G_CR2		30
 #define MCX_ETHER_CAP_50G_KR2		31
+
+#define MCX_ETHER_EXT_CAP_SGMII_100	0
+#define MCX_ETHER_EXT_CAP_1000_X	1
+#define MCX_ETHER_EXT_CAP_5G_R		3
+#define MCX_ETHER_EXT_CAP_XAUI		4
+#define MCX_ETHER_EXT_CAP_XLAUI		5
+#define MCX_ETHER_EXT_CAP_25G_AUI1	6
+#define MCX_ETHER_EXT_CAP_50G_AUI2	7
+#define MCX_ETHER_EXT_CAP_50G_AUI1	8
+#define MCX_ETHER_EXT_CAP_CAUI4		9
+#define MCX_ETHER_EXT_CAP_100G_AUI2	10
+#define MCX_ETHER_EXT_CAP_200G_AUI4	12
+#define MCX_ETHER_EXT_CAP_400G_AUI8	15
 
 #define MCX_MAX_CQE			32
 
@@ -406,11 +419,14 @@ struct mcx_reg_ptys {
 	uint8_t			rp_reserved2;
 	uint8_t			rp_proto_mask;
 #define MCX_REG_PTYS_PROTO_MASK_ETH		(1 << 2)
-	uint8_t			rp_reserved3[8];
+	uint8_t			rp_reserved3[4];
+	uint32_t		rp_ext_eth_proto_cap;
 	uint32_t		rp_eth_proto_cap;
-	uint8_t			rp_reserved4[8];
+	uint8_t			rp_reserved4[4];
+	uint32_t		rp_ext_eth_proto_admin;
 	uint32_t		rp_eth_proto_admin;
-	uint8_t			rp_reserved5[8];
+	uint8_t			rp_reserved5[4];
+	uint32_t		rp_ext_eth_proto_oper;
 	uint32_t		rp_eth_proto_oper;
 	uint8_t			rp_reserved6[24];
 } __packed __aligned(4);
@@ -2689,6 +2705,21 @@ static const struct mcx_eth_proto_capability mcx_eth_cap_map[] = {
 	[MCX_ETHER_CAP_25G_SR]		= { IFM_25G_SR,		IF_Gbps(25) },
 	[MCX_ETHER_CAP_50G_CR2]		= { IFM_50G_CR2,	IF_Gbps(50) },
 	[MCX_ETHER_CAP_50G_KR2]		= { IFM_50G_KR2,	IF_Gbps(50) },
+};
+
+static const struct mcx_eth_proto_capability mcx_ext_eth_cap_map[] = {
+	[MCX_ETHER_EXT_CAP_SGMII_100]	= { IFM_100_FX,		IF_Mbps(100) },
+	[MCX_ETHER_EXT_CAP_1000_X]	= { IFM_1000_SX,	IF_Gbps(1) },
+	[MCX_ETHER_EXT_CAP_5G_R]	= { IFM_5000_T,		IF_Gbps(5) },
+	[MCX_ETHER_EXT_CAP_XAUI]	= { IFM_10G_SFI,	IF_Gbps(10) },
+	[MCX_ETHER_EXT_CAP_XLAUI]	= { IFM_40G_XLPPI,	IF_Gbps(40) },
+	[MCX_ETHER_EXT_CAP_25G_AUI1]	= { 0 /*IFM_25G_AUI*/,	IF_Gbps(25) },
+	[MCX_ETHER_EXT_CAP_50G_AUI2]	= { 0 /*IFM_50G_AUI*/,	IF_Gbps(50) },
+	[MCX_ETHER_EXT_CAP_50G_AUI1]	= { 0 /*IFM_50G_AUI*/,	IF_Gbps(50) },
+	[MCX_ETHER_EXT_CAP_CAUI4]	= { 0 /*IFM_100G_AUI*/,	IF_Gbps(100) },
+	[MCX_ETHER_EXT_CAP_100G_AUI2]	= { 0 /*IFM_100G_AUI*/,	IF_Gbps(100) },
+	[MCX_ETHER_EXT_CAP_200G_AUI4]	= { 0 /*IFM_200G_AUI*/,	IF_Gbps(200) },
+	[MCX_ETHER_EXT_CAP_400G_AUI8]	= { 0 /*IFM_400G_AUI*/,	IF_Gbps(400) },
 };
 
 static int
@@ -7956,6 +7987,19 @@ mcx_media_add_types(struct mcx_softc *sc)
 
 		ifmedia_add(&sc->sc_media, IFM_ETHER | cap->cap_media, 0, NULL);
 	}
+
+	proto_cap = betoh32(ptys.rp_ext_eth_proto_cap);
+	for (i = 0; i < nitems(mcx_ext_eth_cap_map); i++) {
+		const struct mcx_eth_proto_capability *cap;
+		if (!ISSET(proto_cap, 1 << i))
+			continue;
+
+		cap = &mcx_ext_eth_cap_map[i];
+		if (cap->cap_media == 0)
+			continue;
+
+		ifmedia_add(&sc->sc_media, IFM_ETHER | cap->cap_media, 0, NULL);
+	}
 }
 
 static void
@@ -7965,6 +8009,7 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct mcx_reg_ptys ptys;
 	int i;
 	uint32_t proto_oper;
+	uint32_t ext_proto_oper;
 	uint64_t media_oper;
 
 	memset(&ptys, 0, sizeof(ptys));
@@ -7979,6 +8024,7 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	proto_oper = betoh32(ptys.rp_eth_proto_oper);
+	ext_proto_oper = betoh32(ptys.rp_ext_eth_proto_oper);
 
 	media_oper = 0;
 
@@ -7993,8 +8039,21 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 			media_oper = cap->cap_media;
 	}
 
+	if (media_oper == 0) {
+		for (i = 0; i < nitems(mcx_ext_eth_cap_map); i++) {
+			const struct mcx_eth_proto_capability *cap;
+			if (!ISSET(ext_proto_oper, 1 << i))
+				continue;
+
+			cap = &mcx_ext_eth_cap_map[i];
+
+			if (cap->cap_media != 0)
+				media_oper = cap->cap_media;
+		}
+	}
+
 	ifmr->ifm_status = IFM_AVALID;
-	if (proto_oper != 0) {
+	if ((proto_oper | ext_proto_oper) != 0) {
 		ifmr->ifm_status |= IFM_ACTIVE;
 		ifmr->ifm_active = IFM_ETHER | IFM_AUTO | media_oper;
 		/* txpause, rxpause, duplex? */
@@ -8010,6 +8069,7 @@ mcx_media_change(struct ifnet *ifp)
 	struct mcx_reg_ptys ptys;
 	struct mcx_reg_paos paos;
 	uint32_t media;
+	uint32_t ext_media;
 	int i, error;
 
 	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
@@ -8032,6 +8092,7 @@ mcx_media_change(struct ifnet *ifp)
 		}
 
 		media = betoh32(ptys.rp_eth_proto_cap);
+		ext_media = betoh32(ptys.rp_ext_eth_proto_cap);
 	} else {
 		/* map media type */
 		media = 0;
@@ -8039,6 +8100,17 @@ mcx_media_change(struct ifnet *ifp)
 			const struct  mcx_eth_proto_capability *cap;
 
 			cap = &mcx_eth_cap_map[i];
+			if (cap->cap_media ==
+			    IFM_SUBTYPE(sc->sc_media.ifm_media)) {
+				media = (1 << i);
+				break;
+			}
+		}
+
+		for (i = 0; i < nitems(mcx_ext_eth_cap_map); i++) {
+			const struct  mcx_eth_proto_capability *cap;
+
+			cap = &mcx_ext_eth_cap_map[i];
 			if (cap->cap_media ==
 			    IFM_SUBTYPE(sc->sc_media.ifm_media)) {
 				media = (1 << i);
@@ -8063,6 +8135,7 @@ mcx_media_change(struct ifnet *ifp)
 	ptys.rp_local_port = 1;
 	ptys.rp_proto_mask = MCX_REG_PTYS_PROTO_MASK_ETH;
 	ptys.rp_eth_proto_admin = htobe32(media);
+	ptys.rp_ext_eth_proto_admin = htobe32(ext_media);
 	if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_WRITE, &ptys,
 	    sizeof(ptys), MCX_CMDQ_SLOT_IOCTL) != 0) {
 		printf("%s: unable to set port media type/speed\n",
@@ -8107,10 +8180,11 @@ mcx_port_change(void *xsc)
 	if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_READ, &ptys,
 	    sizeof(ptys), slot) == 0) {
 		uint32_t proto_oper = betoh32(ptys.rp_eth_proto_oper);
+		uint32_t ext_proto_oper = betoh32(ptys.rp_ext_eth_proto_oper);
 		uint64_t baudrate = 0;
 		unsigned int i;
 
-		if (proto_oper != 0)
+		if ((proto_oper | ext_proto_oper) != 0)
 			link_state = LINK_STATE_FULL_DUPLEX;
 
 		for (i = 0; i < nitems(mcx_eth_cap_map); i++) {
@@ -8124,6 +8198,21 @@ mcx_port_change(void *xsc)
 
 			baudrate = cap->cap_baudrate;
 			break;
+		}
+
+		if (baudrate == 0) {
+			for (i = 0; i < nitems(mcx_ext_eth_cap_map); i++) {
+				const struct mcx_eth_proto_capability *cap;
+				if (!ISSET(ext_proto_oper, 1 << i))
+					continue;
+
+				cap = &mcx_ext_eth_cap_map[i];
+				if (cap->cap_baudrate == 0)
+					continue;
+
+				baudrate = cap->cap_baudrate;
+				break;
+			}
 		}
 
 		ifp->if_baudrate = baudrate;
