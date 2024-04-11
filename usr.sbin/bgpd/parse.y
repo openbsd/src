@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.460 2024/04/09 12:40:01 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.461 2024/04/11 18:07:55 tb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -272,7 +272,7 @@ typedef struct {
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number as4number_any optnumber
 %type	<v.number>		espah af safi restart origincode nettype
-%type	<v.number>		yesno inout restricted expires enforce
+%type	<v.number>		yesno inout restricted expires
 %type	<v.number>		yesnoenforce enforce
 %type	<v.number>		validity aspa_validity
 %type	<v.number>		addpathextra addpathmax
