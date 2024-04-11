@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.62 2024/01/22 18:54:01 kettenis Exp $
+# $OpenBSD: files.drm,v 1.63 2024/04/11 03:40:05 jsg Exp $
 
 #file	dev/pci/drm/aperture.c			drm
 file	dev/pci/drm/dma-resv.c			drm
@@ -292,6 +292,7 @@ file	dev/pci/drm/i915/gt/intel_ggtt_gmch.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_gsc.c			inteldrm
 file	dev/pci/drm/i915/gt/intel_gt.c			inteldrm
 file	dev/pci/drm/i915/gt/intel_gt_buffer_pool.c	inteldrm
+file	dev/pci/drm/i915/gt/intel_gt_ccs_mode.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_gt_clock_utils.c	inteldrm
 file	dev/pci/drm/i915/gt/intel_gt_debugfs.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_gt_engines_debugfs.c	inteldrm
