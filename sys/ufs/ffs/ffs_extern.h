@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.46 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.47 2024/04/11 16:31:30 otto Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #define	FFS_MAXID		20	/* number of valid ffs ids */
 
 #define FFS_NAMES { \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
