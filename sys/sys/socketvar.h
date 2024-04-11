@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.128 2024/04/10 12:04:41 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.129 2024/04/11 13:32:51 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -105,7 +105,8 @@ struct socket {
  * Variables for socket buffering.
  */
 	struct	sockbuf {
-		struct mutex sb_mtx;
+		struct rwlock sb_lock; 
+		struct mutex  sb_mtx;
 /* The following fields are all zeroed on flush. */
 #define	sb_startzero	sb_cc
 		u_long	sb_cc;		/* actual chars in buffer */
@@ -134,7 +135,7 @@ struct socket {
 #define SB_SPLICE	0x0020		/* buffer is splice source or drain */
 #define SB_NOINTR	0x0040		/* operations not interruptible */
 #define SB_MTXLOCK	0x0080		/* use sb_mtx for sockbuf protection */
-#define SB_OWNLOCK	0x0100		/* sb_mtx used standalone */
+#define SB_OWNLOCK	0x0100		/* sblock() doesn't need solock() */
 
 	void	(*so_upcall)(struct socket *so, caddr_t arg, int waitf);
 	caddr_t	so_upcallarg;		/* Arg for above */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.148 2024/04/10 12:04:41 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.149 2024/04/11 13:32:51 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -322,7 +322,9 @@ socantsendmore(struct socket *so)
 void
 socantrcvmore(struct socket *so)
 {
-	soassertlocked(so);
+	if ((so->so_rcv.sb_flags & SB_OWNLOCK) == 0)
+		soassertlocked(so);
+
 	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_state |= SS_CANTRCVMORE;
 	mtx_leave(&so->so_rcv.sb_mtx);
@@ -529,6 +531,17 @@ sblock(struct socket *so, struct sockbuf *sb, int flags)
 {
 	int error = 0, prio = PSOCK;
 
+	if (sb->sb_flags & SB_OWNLOCK) {
+		int rwflags = RW_WRITE;
+
+		if (!(flags & SBL_NOINTR || sb->sb_flags & SB_NOINTR))
+			rwflags |= RW_INTR;
+		if (!(flags & SBL_WAIT))
+			rwflags |= RW_NOSLEEP;
+
+		return rw_enter(&sb->sb_lock, rwflags);
+	}
+
 	soassertlocked(so);
 
 	mtx_enter(&sb->sb_mtx);
@@ -561,6 +574,11 @@ out:
 void
 sbunlock_locked(struct socket *so, struct sockbuf *sb)
 {
+	if (sb->sb_flags & SB_OWNLOCK) {
+		rw_exit(&sb->sb_lock);
+		return;
+	}
+
 	MUTEX_ASSERT_LOCKED(&sb->sb_mtx);
 
 	sb->sb_flags &= ~SB_LOCK;
@@ -573,6 +591,11 @@ sbunlock_locked(struct socket *so, struct sockbuf *sb)
 void
 sbunlock(struct socket *so, struct sockbuf *sb)
 {
+	if (sb->sb_flags & SB_OWNLOCK) {
+		rw_exit(&sb->sb_lock);
+		return;
+	}
+
 	mtx_enter(&sb->sb_mtx);
 	sbunlock_locked(so, sb);
 	mtx_leave(&sb->sb_mtx);

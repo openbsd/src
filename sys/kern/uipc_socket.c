@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.328 2024/04/10 12:04:41 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.329 2024/04/11 13:32:51 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ void	soreaper(void *);
 void	soput(void *);
 int	somove(struct socket *, int);
 void	sorflush(struct socket *);
+void	sorflush_locked(struct socket *);
 
 void	filt_sordetach(struct knote *kn);
 int	filt_soread(struct knote *kn, long hint);
@@ -143,6 +144,8 @@ soalloc(const struct protosw *prp, int wait)
 		return (NULL);
 	rw_init_flags(&so->so_lock, dp->dom_name, RWL_DUPOK);
 	refcnt_init(&so->so_refcnt);
+	rw_init(&so->so_rcv.sb_lock, "sbufrcv");
+	rw_init(&so->so_snd.sb_lock, "sbufsnd");
 	mtx_init(&so->so_rcv.sb_mtx, IPL_MPFLOOR);
 	mtx_init(&so->so_snd.sb_mtx, IPL_MPFLOOR);
 	klist_init_mutex(&so->so_rcv.sb_klist, &so->so_rcv.sb_mtx);
@@ -156,15 +159,15 @@ soalloc(const struct protosw *prp, int wait)
 	case AF_INET6:
 		switch (prp->pr_type) {
 		case SOCK_DGRAM:
-			so->so_rcv.sb_flags |= SB_OWNLOCK;
-			/* FALLTHROUGH */
-		case SOCK_RAW:
 			so->so_rcv.sb_flags |= SB_MTXLOCK;
+			break;
+		case SOCK_RAW:
+			so->so_rcv.sb_flags |= SB_MTXLOCK | SB_OWNLOCK;
 			break;
 		}
 		break;
 	case AF_UNIX:
-		so->so_rcv.sb_flags |= SB_MTXLOCK | SB_OWNLOCK;
+		so->so_rcv.sb_flags |= SB_MTXLOCK;
 		break;
 	}
 
@@ -346,9 +349,22 @@ sofree(struct socket *so, int keep_lock)
 	}
 #endif /* SOCKET_SPLICE */
 	sbrelease(so, &so->so_snd);
-	sorflush(so);
-	if (!keep_lock)
+
+	/*
+	 * Regardless on '_locked' postfix, must release solock() before
+	 * call sorflush_locked() for SB_OWNLOCK marked socket. Can't
+	 * release solock() and call sorflush() because solock() release
+	 * is unwanted for tcp(4) socket. 
+	 */
+
+	if (so->so_rcv.sb_flags & SB_OWNLOCK)
 		sounlock(so);
+
+	sorflush_locked(so);
+
+	if (!((so->so_rcv.sb_flags & SB_OWNLOCK) || keep_lock))
+		sounlock(so);
+
 #ifdef SOCKET_SPLICE
 	if (so->so_sp) {
 		/* Reuse splice idle, sounsplice() has been called before. */
@@ -807,6 +823,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	const struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
 	size_t resid, orig_resid = uio->uio_resid;
+	int dosolock = ((so->so_rcv.sb_flags & SB_OWNLOCK) == 0);
 
 	mp = mp0;
 	if (paddr)
@@ -836,12 +853,11 @@ bad:
 	if (mp)
 		*mp = NULL;
 
-	solock_shared(so);
+	if (dosolock)
+		solock_shared(so);
 restart:
-	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0) {
-		sounlock_shared(so);
-		return (error);
-	}
+	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0)
+		goto out;
 	sb_mtx_lock(&so->so_rcv);
 
 	m = so->so_rcv.sb_mb;
@@ -906,14 +922,16 @@ restart:
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 
-		if (so->so_rcv.sb_flags & SB_OWNLOCK) {
+		if (so->so_rcv.sb_flags & (SB_MTXLOCK | SB_OWNLOCK)) {
 			sbunlock_locked(so, &so->so_rcv);
-			sounlock_shared(so);
+			if (dosolock)
+				sounlock_shared(so);
 			error = sbwait_locked(so, &so->so_rcv);
 			sb_mtx_unlock(&so->so_rcv);
 			if (error)
 				return (error);
-			solock_shared(so);
+			if (dosolock)
+				solock_shared(so);
 		} else {
 			sb_mtx_unlock(&so->so_rcv);
 			sbunlock(so, &so->so_rcv);
@@ -990,11 +1008,13 @@ dontblock:
 			if (controlp) {
 				if (pr->pr_domain->dom_externalize) {
 					sb_mtx_unlock(&so->so_rcv);
-					sounlock_shared(so);
+					if (dosolock)
+						sounlock_shared(so);
 					error =
 					    (*pr->pr_domain->dom_externalize)
 					    (cm, controllen, flags);
-					solock_shared(so);
+					if (dosolock)
+						solock_shared(so);
 					sb_mtx_lock(&so->so_rcv);
 				}
 				*controlp = cm;
@@ -1073,9 +1093,11 @@ dontblock:
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			resid = uio->uio_resid;
 			sb_mtx_unlock(&so->so_rcv);
-			sounlock_shared(so);
+			if (dosolock)
+				sounlock_shared(so);
 			uio_error = uiomove(mtod(m, caddr_t) + moff, len, uio);
-			solock_shared(so);
+			if (dosolock)
+				solock_shared(so);
 			sb_mtx_lock(&so->so_rcv);
 			if (uio_error)
 				uio->uio_resid = resid - len;
@@ -1158,14 +1180,22 @@ dontblock:
 				break;
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
-			sb_mtx_unlock(&so->so_rcv);
-			error = sbwait(so, &so->so_rcv);
-			if (error) {
-				sbunlock(so, &so->so_rcv);
-				sounlock_shared(so);
-				return (0);
+			if (dosolock) {
+				sb_mtx_unlock(&so->so_rcv);
+				error = sbwait(so, &so->so_rcv);
+				if (error) {
+					sbunlock(so, &so->so_rcv);
+					sounlock_shared(so);
+					return (0);
+				}
+				sb_mtx_lock(&so->so_rcv);
+			} else {
+				if (sbwait_locked(so, &so->so_rcv)) {
+					sb_mtx_unlock(&so->so_rcv);
+					sbunlock(so, &so->so_rcv);
+					return (0);
+				}
 			}
-			sb_mtx_lock(&so->so_rcv);
 			if ((m = so->so_rcv.sb_mb) != NULL)
 				nextrecord = m->m_nextpkt;
 		}
@@ -1214,7 +1244,9 @@ dontblock:
 release:
 	sb_mtx_unlock(&so->so_rcv);
 	sbunlock(so, &so->so_rcv);
-	sounlock_shared(so);
+out:
+	if (dosolock)
+		sounlock_shared(so);
 	return (error);
 }
 
@@ -1223,7 +1255,6 @@ soshutdown(struct socket *so, int how)
 {
 	int error = 0;
 
-	solock(so);
 	switch (how) {
 	case SHUT_RD:
 		sorflush(so);
@@ -1232,24 +1263,28 @@ soshutdown(struct socket *so, int how)
 		sorflush(so);
 		/* FALLTHROUGH */
 	case SHUT_WR:
+		solock(so);
 		error = pru_shutdown(so);
+		sounlock(so);
 		break;
 	default:
 		error = EINVAL;
 		break;
 	}
-	sounlock(so);
 
 	return (error);
 }
 
 void
-sorflush(struct socket *so)
+sorflush_locked(struct socket *so)
 {
 	struct sockbuf *sb = &so->so_rcv;
 	struct mbuf *m;
 	const struct protosw *pr = so->so_proto;
 	int error;
+
+	if ((sb->sb_flags & SB_OWNLOCK) == 0)
+		soassertlocked(so);
 
 	error = sblock(so, sb, SBL_WAIT | SBL_NOINTR);
 	/* with SBL_WAIT and SLB_NOINTR sblock() must not fail */
@@ -1265,6 +1300,16 @@ sorflush(struct socket *so)
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(m);
 	m_purge(m);
+}
+
+void
+sorflush(struct socket *so)
+{
+	if ((so->so_rcv.sb_flags & SB_OWNLOCK) == 0)
+		solock_shared(so);
+	sorflush_locked(so);
+	if ((so->so_rcv.sb_flags & SB_OWNLOCK) == 0)
+		sounlock_shared(so);
 }
 
 #ifdef SOCKET_SPLICE
@@ -1905,7 +1950,8 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			if ((long)cnt <= 0)
 				cnt = 1;
 
-			solock(so);
+			if (((sb->sb_flags & SB_OWNLOCK) == 0))
+				solock(so);
 			mtx_enter(&sb->sb_mtx);
 
 			switch (optname) {
@@ -1931,7 +1977,8 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			}
 
 			mtx_leave(&sb->sb_mtx);
-			sounlock(so);
+			if (((sb->sb_flags & SB_OWNLOCK) == 0))
+				sounlock(so);
 
 			break;
 		    }
