@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.110 2024/03/17 05:49:41 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.111 2024/04/11 23:00:13 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -116,7 +116,7 @@
 #define	XFEATURE_HWP		0x00010000	/* HW P-states */
 #define	XFEATURE_TILECFG	0x00020000	/* AMX state */
 #define	XFEATURE_TILEDATA	0x00040000	/* AMX state */
-#define	XFEATURE_AMX		(XFEATURE_TILEDATA | XFEATURE_TILEDATA)
+#define	XFEATURE_AMX		(XFEATURE_TILECFG | XFEATURE_TILEDATA)
 
 /* valid only in xcomp_bv field: */
 #define XFEATURE_COMPRESSED	(1ULL << 63)	/* compressed format */
