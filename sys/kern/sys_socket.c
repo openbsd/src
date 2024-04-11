@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.63 2024/03/31 13:50:00 mvs Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.64 2024/04/11 08:33:37 mvs Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 
 	memset(ub, 0, sizeof (*ub));
 	ub->st_mode = S_IFSOCK;
-	solock(so);
+	solock_shared(so);
 	mtx_enter(&so->so_rcv.sb_mtx);
 	if ((so->so_rcv.sb_state & SS_CANTRCVMORE) == 0 ||
 	    so->so_rcv.sb_cc != 0)
@@ -156,7 +156,7 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 	ub->st_uid = so->so_euid;
 	ub->st_gid = so->so_egid;
 	(void)pru_sense(so, ub);
-	sounlock(so);
+	sounlock_shared(so);
 	return (0);
 }
 
