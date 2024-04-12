@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.199 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.200 2024/04/12 16:07:09 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -159,6 +159,9 @@ tcp_init(void)
 	    "sackhl", NULL);
 	pool_sethardlimit(&sackhl_pool, tcp_sackhole_limit, NULL, 0);
 	in_pcbinit(&tcbtable, TCB_INITIAL_HASH_SIZE);
+#ifdef INET6
+	in_pcbinit(&tcb6table, TCB_INITIAL_HASH_SIZE);
+#endif
 	tcpcounters = counters_alloc(tcps_ncounters);
 
 	arc4random_buf(tcp_secret, sizeof(tcp_secret));
@@ -461,21 +464,15 @@ tcp_newtcpcb(struct inpcb *inp, int wait)
 	tp->t_pmtud_mss_acked = 0;
 
 #ifdef INET6
-	/* we disallow IPv4 mapped address completely. */
-	if ((inp->inp_flags & INP_IPV6) == 0)
-		tp->pf = PF_INET;
-	else
+	if (ISSET(inp->inp_flags, INP_IPV6)) {
 		tp->pf = PF_INET6;
-#else
-	tp->pf = PF_INET;
-#endif
-
-#ifdef INET6
-	if (inp->inp_flags & INP_IPV6)
 		inp->inp_ipv6.ip6_hlim = ip6_defhlim;
-	else
-#endif /* INET6 */
+	} else
+#endif
+	{
+		tp->pf = PF_INET;
 		inp->inp_ip.ip_ttl = ip_defttl;
+	}
 
 	inp->inp_ppcb = (caddr_t)tp;
 	return (tp);
@@ -675,7 +672,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		 * corresponding to the address in the ICMPv6 message
 		 * payload.
 		 */
-		inp = in6_pcblookup(&tcbtable, &sa6->sin6_addr,
+		inp = in6_pcblookup(&tcb6table, &sa6->sin6_addr,
 		    th.th_dport, &sa6_src->sin6_addr, th.th_sport, rdomain);
 		if (cmd == PRC_MSGSIZE) {
 			/*
@@ -703,7 +700,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			    rdomain);
 		in_pcbunref(inp);
 	} else {
-		in6_pcbnotify(&tcbtable, sa6, 0,
+		in6_pcbnotify(&tcb6table, sa6, 0,
 		    sa6_src, 0, rdomain, cmd, NULL, notify);
 	}
 }
@@ -845,7 +842,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 void
 tcp6_mtudisc_callback(struct sockaddr_in6 *sin6, u_int rdomain)
 {
-	in6_pcbnotify(&tcbtable, sin6, 0,
+	in6_pcbnotify(&tcb6table, sin6, 0,
 	    &sa6_any, 0, rdomain, PRC_MSGSIZE, NULL, tcp_mtudisc);
 }
 #endif /* INET6 */

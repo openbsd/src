@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1193 2024/01/10 16:44:30 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1194 2024/04/12 16:07:09 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3788,7 +3788,7 @@ pf_socket_lookup(struct pf_pdesc *pd)
 {
 	struct pf_addr		*saddr, *daddr;
 	u_int16_t		 sport, dport;
-	struct inpcbtable	*tb;
+	struct inpcbtable	*table;
 	struct inpcb		*inp;
 
 	pd->lookup.uid = -1;
@@ -3800,14 +3800,14 @@ pf_socket_lookup(struct pf_pdesc *pd)
 		dport = pd->hdr.tcp.th_dport;
 		PF_ASSERT_LOCKED();
 		NET_ASSERT_LOCKED();
-		tb = &tcbtable;
+		table = &tcbtable;
 		break;
 	case IPPROTO_UDP:
 		sport = pd->hdr.udp.uh_sport;
 		dport = pd->hdr.udp.uh_dport;
 		PF_ASSERT_LOCKED();
 		NET_ASSERT_LOCKED();
-		tb = &udbtable;
+		table = &udbtable;
 		break;
 	default:
 		return (-1);
@@ -3830,10 +3830,10 @@ pf_socket_lookup(struct pf_pdesc *pd)
 		 * Fails when rtable is changed while evaluating the ruleset
 		 * The socket looked up will not match the one hit in the end.
 		 */
-		inp = in_pcblookup(tb, saddr->v4, sport, daddr->v4, dport,
+		inp = in_pcblookup(table, saddr->v4, sport, daddr->v4, dport,
 		    pd->rdomain);
 		if (inp == NULL) {
-			inp = in_pcblookup_listen(tb, daddr->v4, dport,
+			inp = in_pcblookup_listen(table, daddr->v4, dport,
 			    NULL, pd->rdomain);
 			if (inp == NULL)
 				return (-1);
@@ -3842,11 +3842,13 @@ pf_socket_lookup(struct pf_pdesc *pd)
 #ifdef INET6
 	case AF_INET6:
 		if (pd->virtual_proto == IPPROTO_UDP)
-			tb = &udb6table;
-		inp = in6_pcblookup(tb, &saddr->v6, sport, &daddr->v6,
+			table = &udb6table;
+		if (pd->virtual_proto == IPPROTO_TCP)
+			table = &tcb6table;
+		inp = in6_pcblookup(table, &saddr->v6, sport, &daddr->v6,
 		    dport, pd->rdomain);
 		if (inp == NULL) {
-			inp = in6_pcblookup_listen(tb, &daddr->v6, dport,
+			inp = in6_pcblookup_listen(table, &daddr->v6, dport,
 			    NULL, pd->rdomain);
 			if (inp == NULL)
 				return (-1);

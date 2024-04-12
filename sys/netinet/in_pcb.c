@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.299 2024/03/31 15:53:12 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.300 2024/04/12 16:07:09 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -743,10 +743,8 @@ in_pcbnotifyall(struct inpcbtable *table, const struct sockaddr_in *dst,
 	rw_enter_write(&table->inpt_notify);
 	mtx_enter(&table->inpt_mtx);
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
-#ifdef INET6
-		if (ISSET(inp->inp_flags, INP_IPV6))
-			continue;
-#endif
+		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
+
 		if (inp->inp_faddr.s_addr != dst->sin_addr.s_addr ||
 		    rtable_l2(inp->inp_rtableid) != rdomain) {
 			continue;
@@ -852,8 +850,7 @@ in_pcblookup_local_lock(struct inpcbtable *table, const void *laddrp,
 		wildcard = 0;
 #ifdef INET6
 		if (ISSET(flags, INPLOOKUP_IPV6)) {
-			if (!ISSET(inp->inp_flags, INP_IPV6))
-				continue;
+			KASSERT(ISSET(inp->inp_flags, INP_IPV6));
 
 			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
 				wildcard++;
@@ -869,10 +866,7 @@ in_pcblookup_local_lock(struct inpcbtable *table, const void *laddrp,
 		} else
 #endif /* INET6 */
 		{
-#ifdef INET6
-			if (ISSET(inp->inp_flags, INP_IPV6))
-				continue;
-#endif /* INET6 */
+			KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
 
 			if (inp->inp_faddr.s_addr != INADDR_ANY)
 				wildcard++;
@@ -1032,7 +1026,7 @@ in_pcbhash_insert(struct inpcb *inp)
 		    &inp->inp_faddr6, inp->inp_fport,
 		    &inp->inp_laddr6, inp->inp_lport);
 	else
-#endif /* INET6 */
+#endif
 		hash = in_pcbhash(table, rtable_l2(inp->inp_rtableid),
 		    &inp->inp_faddr, inp->inp_fport,
 		    &inp->inp_laddr, inp->inp_lport);
@@ -1052,10 +1046,8 @@ in_pcbhash_lookup(struct inpcbtable *table, uint64_t hash, u_int rdomain,
 
 	head = &table->inpt_hashtbl[hash & table->inpt_mask];
 	LIST_FOREACH(inp, head, inp_hash) {
-#ifdef INET6
-		if (ISSET(inp->inp_flags, INP_IPV6))
-			continue;
-#endif
+		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
+
 		if (inp->inp_fport == fport && inp->inp_lport == lport &&
 		    inp->inp_faddr.s_addr == faddr->s_addr &&
 		    inp->inp_laddr.s_addr == laddr->s_addr &&

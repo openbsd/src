@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.402 2024/04/10 22:10:03 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.403 2024/04/12 16:07:09 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -140,7 +140,8 @@ struct timeval tcp_ackdrop_ppslim_last;
 #ifdef INET6
 #define ND6_HINT(tp) \
 do { \
-	if (tp && tp->t_inpcb && (tp->t_inpcb->inp_flags & INP_IPV6) &&	\
+	if (tp && tp->t_inpcb &&					\
+	    ISSET(tp->t_inpcb->inp_flags, INP_IPV6) &&			\
 	    rtisvalid(tp->t_inpcb->inp_route.ro_rt)) {			\
 		nd6_nud_hint(tp->t_inpcb->inp_route.ro_rt);		\
 	} \
@@ -540,7 +541,7 @@ findpcb:
 		switch (af) {
 #ifdef INET6
 		case AF_INET6:
-			inp = in6_pcblookup(&tcbtable, &ip6->ip6_src,
+			inp = in6_pcblookup(&tcb6table, &ip6->ip6_src,
 			    th->th_sport, &ip6->ip6_dst, th->th_dport,
 			    m->m_pkthdr.ph_rtableid);
 			break;
@@ -557,10 +558,10 @@ findpcb:
 		switch (af) {
 #ifdef INET6
 		case AF_INET6:
-			inp = in6_pcblookup_listen(&tcbtable, &ip6->ip6_dst,
+			inp = in6_pcblookup_listen(&tcb6table, &ip6->ip6_dst,
 			    th->th_dport, m, m->m_pkthdr.ph_rtableid);
 			break;
-#endif /* INET6 */
+#endif
 		case AF_INET:
 			inp = in_pcblookup_listen(&tcbtable, ip->ip_dst,
 			    th->th_dport, m, m->m_pkthdr.ph_rtableid);
@@ -3543,17 +3544,16 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	    sizeof(oldinp->inp_seclevel));
 #endif /* IPSEC */
 #ifdef INET6
-	/*
-	 * inp still has the OLD in_pcb stuff, set the
-	 * v6-related flags on the new guy, too.
-	 */
-	inp->inp_flags |= (oldinp->inp_flags & INP_IPV6);
-	if (inp->inp_flags & INP_IPV6) {
+	if (ISSET(inp->inp_flags, INP_IPV6)) {
+		KASSERT(ISSET(oldinp->inp_flags, INP_IPV6));
+
 		inp->inp_ipv6.ip6_hlim = oldinp->inp_ipv6.ip6_hlim;
 		inp->inp_hops = oldinp->inp_hops;
 	} else
-#endif /* INET6 */
+#endif
 	{
+		KASSERT(!ISSET(oldinp->inp_flags, INP_IPV6));
+
 		inp->inp_ip.ip_ttl = oldinp->inp_ip.ip_ttl;
 		inp->inp_options = ip_srcroute(m);
 		if (inp->inp_options == NULL) {
