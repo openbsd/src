@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.51 2024/04/08 13:18:54 tobhe Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.52 2024/04/12 14:17:42 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -358,14 +358,10 @@ snmpd_backend(struct snmpd *env)
 	}
 	if (env->sc_flags & SNMPD_F_VERBOSE)
 		argv[i++] = "-vv";
-	if (env->sc_flags & SNMPD_F_DEBUG) {
+	if (env->sc_flags & SNMPD_F_DEBUG)
 		argv[i++] = "-d";
-		argv[i++] = "-x";
-		argv[i++] = "3";
-	} else {
-		argv[i++] = "-x";
-		argv[i++] = "0";
-	}
+	argv[i++] = "-x";
+	argv[i++] = "3";
 	argv[i] = NULL;
 	while ((file = readdir(dir)) != NULL) {
 		if (file->d_name[0] == '.')
@@ -377,10 +373,9 @@ snmpd_backend(struct snmpd *env)
 			fatal("fork");
 		case 0:
 			close(pair[1]);
-			if (dup2(pair[0],
-			    env->sc_flags & SNMPD_F_DEBUG ? 3 : 0) == -1)
+			if (dup2(pair[0], 3) == -1)
 				fatal("dup2");
-			if (closefrom(env->sc_flags & SNMPD_F_DEBUG ? 4 : 1) == -1)
+			if (closefrom(4) == -1)
 				fatal("closefrom");
 			(void)snprintf(execpath, sizeof(execpath), "%s/%s",
 			    SNMPD_BACKEND, file->d_name);
