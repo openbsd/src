@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.34 2023/05/18 08:22:37 jan Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.35 2024/04/12 19:27:43 jan Exp $	*/
 
 /******************************************************************************
 
@@ -65,8 +65,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip.h>
-#include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>

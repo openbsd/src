@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.97 2024/02/14 22:41:48 bluhm Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.98 2024/04/12 19:27:43 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -83,13 +83,11 @@
 #endif
 
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip6.h>
+#include <netinet/if_ether.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/udp.h>
-#include <netinet/if_ether.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
