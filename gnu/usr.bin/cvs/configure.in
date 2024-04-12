@@ -427,8 +427,7 @@ AC_OUTPUT([Makefile \
 	  tools/Makefile \
 	  vms/Makefile \
 	  windows-NT/Makefile \
-	  windows-NT/SCC/Makefile \
-	  zlib/Makefile],
+	  windows-NT/SCC/Makefile],
 	  [chmod -f +x \
 	  contrib/clmerge \
 	  contrib/cln_hist \
