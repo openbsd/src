@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.21 2024/03/26 01:41:06 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.22 2024/04/12 09:41:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -283,10 +283,8 @@ struct evp_pkey_method_st {
 	int (*copy)(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src);
 	void (*cleanup)(EVP_PKEY_CTX *ctx);
 
-	int (*paramgen_init)(EVP_PKEY_CTX *ctx);
 	int (*paramgen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
 
-	int (*keygen_init)(EVP_PKEY_CTX *ctx);
 	int (*keygen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
 
 	int (*sign_init)(EVP_PKEY_CTX *ctx);
@@ -298,7 +296,6 @@ struct evp_pkey_method_st {
 	    const unsigned char *sig, size_t siglen,
 	    const unsigned char *tbs, size_t tbslen);
 
-	int (*verify_recover_init)(EVP_PKEY_CTX *ctx);
 	int (*verify_recover)(EVP_PKEY_CTX *ctx,
 	    unsigned char *rout, size_t *routlen,
 	    const unsigned char *sig, size_t siglen);
@@ -307,11 +304,9 @@ struct evp_pkey_method_st {
 	int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 	    EVP_MD_CTX *mctx);
 
-	int (*encrypt_init)(EVP_PKEY_CTX *ctx);
 	int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 	    const unsigned char *in, size_t inlen);
 
-	int (*decrypt_init)(EVP_PKEY_CTX *ctx);
 	int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 	    const unsigned char *in, size_t inlen);
 

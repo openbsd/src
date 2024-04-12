@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.17 2024/04/12 02:56:15 tb Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.18 2024/04/12 09:41:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -71,19 +71,14 @@
 int
 EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
 {
-	int ret;
-
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->paramgen) {
+	if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->paramgen == NULL) {
 		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
+
 	ctx->operation = EVP_PKEY_OP_PARAMGEN;
-	if (!ctx->pmeth->paramgen_init)
-		return 1;
-	ret = ctx->pmeth->paramgen_init(ctx);
-	if (ret <= 0)
-		ctx->operation = EVP_PKEY_OP_UNDEFINED;
-	return ret;
+
+	return 1;
 }
 LCRYPTO_ALIAS(EVP_PKEY_paramgen_init);
 
@@ -120,19 +115,14 @@ LCRYPTO_ALIAS(EVP_PKEY_paramgen);
 int
 EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx)
 {
-	int ret;
-
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->keygen) {
+	if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->keygen == NULL)  {
 		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
+
 	ctx->operation = EVP_PKEY_OP_KEYGEN;
-	if (!ctx->pmeth->keygen_init)
-		return 1;
-	ret = ctx->pmeth->keygen_init(ctx);
-	if (ret <= 0)
-		ctx->operation = EVP_PKEY_OP_UNDEFINED;
-	return ret;
+
+	return 1;
 }
 LCRYPTO_ALIAS(EVP_PKEY_keygen_init);
 

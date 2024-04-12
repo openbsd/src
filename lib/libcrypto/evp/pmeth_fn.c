@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_fn.c,v 1.10 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: pmeth_fn.c,v 1.11 2024/04/12 09:41:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -155,19 +155,15 @@ LCRYPTO_ALIAS(EVP_PKEY_verify);
 int
 EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
 {
-	int ret;
-
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover) {
+	if (ctx == NULL || ctx->pmeth == NULL ||
+	    ctx->pmeth->verify_recover == NULL) {
 		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
+
 	ctx->operation = EVP_PKEY_OP_VERIFYRECOVER;
-	if (!ctx->pmeth->verify_recover_init)
-		return 1;
-	ret = ctx->pmeth->verify_recover_init(ctx);
-	if (ret <= 0)
-		ctx->operation = EVP_PKEY_OP_UNDEFINED;
-	return ret;
+
+	return 1;
 }
 LCRYPTO_ALIAS(EVP_PKEY_verify_recover_init);
 
@@ -191,19 +187,14 @@ LCRYPTO_ALIAS(EVP_PKEY_verify_recover);
 int
 EVP_PKEY_encrypt_init(EVP_PKEY_CTX *ctx)
 {
-	int ret;
-
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->encrypt) {
+	if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->encrypt == NULL) {
 		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
+
 	ctx->operation = EVP_PKEY_OP_ENCRYPT;
-	if (!ctx->pmeth->encrypt_init)
-		return 1;
-	ret = ctx->pmeth->encrypt_init(ctx);
-	if (ret <= 0)
-		ctx->operation = EVP_PKEY_OP_UNDEFINED;
-	return ret;
+
+	return 1;
 }
 LCRYPTO_ALIAS(EVP_PKEY_encrypt_init);
 
@@ -227,19 +218,14 @@ LCRYPTO_ALIAS(EVP_PKEY_encrypt);
 int
 EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx)
 {
-	int ret;
-
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->decrypt) {
+	if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->decrypt == NULL) {
 		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
+
 	ctx->operation = EVP_PKEY_OP_DECRYPT;
-	if (!ctx->pmeth->decrypt_init)
-		return 1;
-	ret = ctx->pmeth->decrypt_init(ctx);
-	if (ret <= 0)
-		ctx->operation = EVP_PKEY_OP_UNDEFINED;
-	return ret;
+
+	return 1;
 }
 LCRYPTO_ALIAS(EVP_PKEY_decrypt_init);
 
