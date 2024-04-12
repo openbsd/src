@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.157 2024/03/05 09:45:13 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.158 2024/04/12 12:25:58 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -172,7 +172,13 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		KASSERT(!ISSET(inp->inp_flags, INP_IPV6));
 
-		if (inp->inp_socket->so_rcv.sb_state & SS_CANTRCVMORE)
+		/*
+		 * Packet must not be inserted after disconnected wakeup
+		 * call.  To avoid race, check again when holding receive
+		 * buffer mutex.
+		 */
+		if (ISSET(READ_ONCE(inp->inp_socket->so_rcv.sb_state),
+		    SS_CANTRCVMORE))
 			continue;
 		if (rtable_l2(inp->inp_rtableid) !=
 		    rtable_l2(m->m_pkthdr.ph_rtableid))
@@ -219,21 +225,24 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 			n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 		if (n != NULL) {
 			struct socket *so = inp->inp_socket;
-			int ret;
+			int ret = 0;
 
 			if (inp->inp_flags & INP_CONTROLOPTS ||
 			    so->so_options & SO_TIMESTAMP)
 				ip_savecontrol(inp, &opts, ip, n);
 
 			mtx_enter(&so->so_rcv.sb_mtx);
-			ret = sbappendaddr(so, &so->so_rcv,
-			    sintosa(&ripsrc), n, opts);
+			if (!ISSET(inp->inp_socket->so_rcv.sb_state,
+			    SS_CANTRCVMORE)) {
+				ret = sbappendaddr(so, &so->so_rcv,
+				    sintosa(&ripsrc), n, opts);
+			}
 			mtx_leave(&so->so_rcv.sb_mtx);
 
 			if (ret == 0) {
-				/* should notify about lost packet */
 				m_freem(n);
 				m_freem(opts);
+				ipstat_inc(ips_noproto);
 			} else
 				sorwakeup(so);
 		}
