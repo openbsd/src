@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.8 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.9 2024/04/12 09:56:39 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -2549,7 +2549,7 @@ mt7601_set_chan(struct mtw_softc *sc, u_int chan)
 	int i;
 
 	/* find the settings for this channel */
-	for (i = 0; mt7601_rf_chan[i].chan != chan; i++)
+	for (i = 0; mt7601_rf_chan[i].chan != chan; i++);
 
 	mtw_rf_write(sc, 0, 17, mt7601_rf_chan[i].r17);
 	mtw_rf_write(sc, 0, 18, mt7601_rf_chan[i].r18);
