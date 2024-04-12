@@ -631,6 +631,10 @@
 /* Define to 1 to enable dnstap support */
 #undef USE_DNSTAP
 
+/* Define this to show the role of processes in the logfile for debugging
+   purposes. */
+#undef USE_LOG_PROCESS_ROLE
+
 /* Define if you want to use internal select based events */
 #undef USE_MINI_EVENT
 

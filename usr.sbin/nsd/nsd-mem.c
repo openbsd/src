@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 		DEFAULT_CHUNK_SIZE, DEFAULT_LARGE_OBJECT_SIZE,
 		DEFAULT_INITIAL_CLEANUP_SIZE, 1));
 	tsig_init(nsd.options->region);
-	if(!parse_options_file(nsd.options, configfile, NULL, NULL)) {
+	if(!parse_options_file(nsd.options, configfile, NULL, NULL, NULL)) {
 		error("could not read config: %s\n", configfile);
 	}
 	if(!parse_zone_list_file(nsd.options)) {

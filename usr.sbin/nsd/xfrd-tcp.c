@@ -1513,7 +1513,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 			/* fall through to remove zone from tp */
 			/* fallthrough */
 		case xfrd_packet_transfer:
-			if(zone->zone_options->pattern->multi_master_check) {
+			if(zone->zone_options->pattern->multi_primary_check) {
 				xfrd_tcp_release(xfrd->tcp_set, zone);
 				xfrd_make_request(zone);
 				break;

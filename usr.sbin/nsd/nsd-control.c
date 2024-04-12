@@ -124,9 +124,9 @@ usage()
 	printf("  addzones			add zone list on stdin {name space pattern newline}\n");
 	printf("  delzones			remove zone list on stdin {name newline}\n");
 	printf("  write [<zone>]		write changed zonefiles to disk\n");
-	printf("  notify [<zone>]		send NOTIFY messages to slave servers\n");
-	printf("  transfer [<zone>]		try to update slave zones to newer serial\n");
-	printf("  force_transfer [<zone>]	update slave zones with AXFR, no serial check\n");
+	printf("  notify [<zone>]		send NOTIFY messages to secondary servers\n");
+	printf("  transfer [<zone>]		try to update secondary zones to newer serial\n");
+	printf("  force_transfer [<zone>]	update secondary zones with AXFR, no serial check\n");
 	printf("  zonestatus [<zone>]		print state, serial, activity\n");
 	printf("  serverpid			get pid of server process\n");
 	printf("  verbosity <number>		change logging detail\n");
@@ -523,7 +523,7 @@ go(const char* cfgfile, char* svr, int argc, char* argv[])
 		exit(1);
 	}
 	tsig_init(opt->region);
-	if(!parse_options_file(opt, cfgfile, NULL, NULL)) {
+	if(!parse_options_file(opt, cfgfile, NULL, NULL, NULL)) {
 		fprintf(stderr, "could not read config file\n");
 		exit(1);
 	}

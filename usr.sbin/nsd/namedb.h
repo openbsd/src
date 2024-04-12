@@ -318,6 +318,10 @@ static inline int domain_is_subdomain(domain_type* d1, domain_type* d2)
 /* easy printout, to static buffer of dname_to_string, fqdn. */
 static inline const char* domain_to_string(domain_type* domain)
 { return dname_to_string(domain_dname(domain), NULL); }
+/* easy printout, to given buffer of dname_to_string, fqdn. */
+static inline const char* domain_to_string_buf(domain_type* domain, char *buf)
+{ return dname_to_string_buf(domain_dname(domain), NULL, buf); }
+
 
 /*
  * The type covered by the signature in the specified RRSIG RR.
@@ -391,6 +395,11 @@ void namedb_read_zonefile(struct nsd* nsd, struct zone* zone,
 	struct udb_base* taskudb, struct udb_ptr* last_task);
 zone_type* namedb_zone_create(namedb_type* db, const dname_type* dname,
         struct zone_options* zopt);
+static inline zone_type*
+namedb_find_or_create_zone(namedb_type *db, const dname_type *dname,
+	       	struct zone_options* zopt)
+{ zone_type* zone = namedb_find_zone(db, dname);
+  return zone ? zone : namedb_zone_create(db, dname, zopt); }
 void namedb_zone_delete(namedb_type* db, zone_type* zone);
 void namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt);
 void namedb_write_zonefiles(struct nsd* nsd, struct nsd_options* options);

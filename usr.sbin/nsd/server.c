@@ -1735,6 +1735,9 @@ server_start_xfrd(struct nsd *nsd, int del_db, int reload_active)
 #ifdef HAVE_SETPROCTITLE
 		setproctitle("xfrd");
 #endif
+#ifdef USE_LOG_PROCESS_ROLE
+		log_set_process_role("xfrd");
+#endif
 #ifdef HAVE_CPUSET_T
 		if(nsd->use_cpu_affinity) {
 			set_cpu_affinity(nsd->xfrd_cpuset);
@@ -1751,6 +1754,12 @@ server_start_xfrd(struct nsd *nsd, int del_db, int reload_active)
 			log_msg(LOG_ERR, "cannot fcntl pipe: %s", strerror(errno));
 		}
 		nsd->xfrd_listener->fd = sockets[0];
+#ifdef HAVE_SETPROCTITLE
+		setproctitle("main");
+#endif
+#ifdef USE_LOG_PROCESS_ROLE
+		log_set_process_role("main");
+#endif
 		break;
 	}
 	/* server-parent only */
@@ -2308,6 +2317,78 @@ reload_process_tasks(struct nsd* nsd, udb_ptr* last_task, int cmdsocket)
 
 void server_verify(struct nsd *nsd, int cmdsocket);
 
+struct quit_sync_event_data {
+	struct event_base* base;
+	size_t read;
+	union {
+		uint8_t buf[sizeof(sig_atomic_t)];
+		sig_atomic_t cmd;
+	} to_read;
+};
+
+static void server_reload_handle_sigchld(int sig, short event,
+		void* ATTR_UNUSED(arg))
+{
+	assert(sig == SIGCHLD);
+	assert(event & EV_SIGNAL);
+
+	/* reap the exited old-serve child(s) */
+	while(waitpid(-1, NULL, WNOHANG) > 0) {
+		/* pass */
+	}
+}
+
+static void server_reload_handle_quit_sync_ack(int cmdsocket, short event,
+		void* arg)
+{
+	struct quit_sync_event_data* cb_data =
+		(struct quit_sync_event_data*)arg;
+	ssize_t r;
+
+	if(event & EV_TIMEOUT) {
+		sig_atomic_t cmd = NSD_QUIT_SYNC;
+
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc send quit to main"));
+		if (!write_socket(cmdsocket, &cmd, sizeof(cmd))) {
+			log_msg(LOG_ERR, "problems sending command from "
+				"reload to old-main: %s", strerror(errno));
+		}
+		/* Wait for cmdsocket to become readable or for next timeout,
+		 * (this works because event is added EV_TIMEOUT|EV_PERSIST).
+		 */
+		return;
+	}
+	assert(event & EV_READ);
+	assert(cb_data->read < sizeof(cb_data->to_read.cmd));
+
+	r = read(cmdsocket, cb_data->to_read.buf + cb_data->read,
+			sizeof(cb_data->to_read.cmd) - cb_data->read);
+	if(r == 0) {
+		log_msg(LOG_ERR, "reload: old-main quit during quit sync");
+		cb_data->to_read.cmd = NSD_RELOAD;
+
+	} else if(r == -1) {
+		if(errno == EAGAIN || errno == EINTR)
+			return;
+
+		log_msg(LOG_ERR, "reload: could not wait for parent to quit: "
+			"%s", strerror(errno));
+		cb_data->to_read.cmd = NSD_RELOAD;
+
+	} else if (cb_data->read + r  < sizeof(cb_data->to_read.cmd)) {
+		/* More to read */
+		cb_data->read += r;
+		return;
+
+	} else {
+		assert(cb_data->read + r == sizeof(cb_data->to_read.cmd));
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc reply main %d",
+					(int)cb_data->to_read.cmd));
+	}
+	/* Done */
+	event_base_loopexit(cb_data->base, NULL);
+}
+
 /*
  * Reload the database, stop parent, re-fork children and continue.
  * as server_main.
@@ -2317,21 +2398,21 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	int cmdsocket)
 {
 	pid_t mypid;
-	sig_atomic_t cmd = NSD_QUIT_SYNC;
-	int ret;
+	sig_atomic_t cmd;
 	udb_ptr last_task;
 	struct sigaction old_sigchld, ign_sigchld;
 	struct radnode* node;
 	zone_type* zone;
 	enum soainfo_hint hint;
+	struct quit_sync_event_data cb_data;
+	struct event signal_event, cmd_event;
+	struct timeval reload_sync_timeout;
+
 	/* ignore SIGCHLD from the previous server_main that used this pid */
 	memset(&ign_sigchld, 0, sizeof(ign_sigchld));
 	ign_sigchld.sa_handler = SIG_IGN;
 	sigaction(SIGCHLD, &ign_sigchld, &old_sigchld);
 
-#ifdef HAVE_SETPROCTITLE
-	setproctitle("main");
-#endif
 #ifdef HAVE_CPUSET_T
 	if(nsd->use_cpu_affinity) {
 		set_cpu_affinity(nsd->cpuset);
@@ -2430,7 +2511,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 		exit(1);
 	}
 
-	/* if the parent has quit, we must quit too, poll the fd for cmds */
+	/* if the old-main has quit, we must quit too, poll the fd for cmds */
 	if(block_read(nsd, cmdsocket, &cmd, sizeof(cmd), 0) == sizeof(cmd)) {
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc command from main %d", (int)cmd));
 		if(cmd == NSD_QUIT) {
@@ -2440,34 +2521,55 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 		}
 	}
 
-	/* Send quit command to parent: blocking, wait for receipt. */
-	do {
-		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc send quit to main"));
-		cmd = NSD_QUIT_SYNC;
-		if (!write_socket(cmdsocket, &cmd, sizeof(cmd)))
-		{
-			log_msg(LOG_ERR, "problems sending command from reload to oldnsd: %s",
-				strerror(errno));
-		}
-		/* blocking: wait for parent to really quit. (it sends RELOAD as ack) */
-		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc wait for ack main"));
-		ret = block_read(nsd, cmdsocket, &cmd, sizeof(cmd),
-			RELOAD_SYNC_TIMEOUT);
-		if(ret == -2) {
-			DEBUG(DEBUG_IPC, 1, (LOG_ERR, "reload timeout QUITSYNC. retry"));
-		}
-	} while (ret == -2);
-	if(ret == -1) {
-		log_msg(LOG_ERR, "reload: could not wait for parent to quit: %s",
+	/* Send quit command to old-main: blocking, wait for receipt.
+	 * The old-main process asks the old-serve processes to quit, however
+	 * if a reload succeeded before, this process is the parent of the
+	 * old-serve processes, so we need to reap the children for it.
+	 */
+	DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc send quit to main"));
+	cmd = NSD_QUIT_SYNC;
+	if (!write_socket(cmdsocket, &cmd, sizeof(cmd)))
+	{
+		log_msg(LOG_ERR, "problems sending command from reload to oldnsd: %s",
 			strerror(errno));
 	}
-	DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc reply main %d %d", ret, (int)cmd));
+
+	reload_sync_timeout.tv_sec = RELOAD_SYNC_TIMEOUT;
+	reload_sync_timeout.tv_usec = 0;
+
+	cb_data.base = nsd_child_event_base();
+	cb_data.to_read.cmd = cmd;
+	cb_data.read = 0;
+
+	event_set(&signal_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
+	    server_reload_handle_sigchld, NULL);
+	if(event_base_set(cb_data.base, &signal_event) != 0
+	|| event_add(&signal_event, NULL) != 0) {
+		log_msg(LOG_ERR, "NSD quit sync: could not add signal event");
+	}
+
+	event_set(&cmd_event, cmdsocket, EV_READ|EV_TIMEOUT|EV_PERSIST,
+	    server_reload_handle_quit_sync_ack, &cb_data);
+	if(event_base_set(cb_data.base, &cmd_event) != 0
+	|| event_add(&cmd_event, &reload_sync_timeout) != 0) {
+		log_msg(LOG_ERR, "NSD quit sync: could not add command event");
+	}
+
+	/* short-lived main loop */
+	event_base_dispatch(cb_data.base);
+
+	/* remove command and signal event handlers */
+	event_del(&cmd_event);
+	event_del(&signal_event);
+	event_base_free(cb_data.base);
+	cmd = cb_data.to_read.cmd;
+
 	if(cmd == NSD_QUIT) {
 		/* small race condition possible here, parent got quit cmd. */
 		send_children_quit(nsd);
 		exit(1);
 	}
-	assert(ret==-1 || ret == 0 || cmd == NSD_RELOAD);
+	assert(cmd == NSD_RELOAD);
 	udb_ptr_unlink(&last_task, nsd->task[nsd->mytask]);
 	task_process_sync(nsd->task[nsd->mytask]);
 #ifdef USE_ZONE_STATS
@@ -2602,6 +2704,12 @@ server_main(struct nsd *nsd)
 					log_msg(LOG_WARNING,
 					       "Reload process %d failed with status %d, continuing with old database",
 					       (int) child_pid, status);
+#ifdef HAVE_SETPROCTITLE
+					setproctitle("main");
+#endif
+#ifdef USE_LOG_PROCESS_ROLE
+					log_set_process_role("main");
+#endif
 					reload_pid = -1;
 					if(reload_listener.fd != -1) close(reload_listener.fd);
 					netio_remove_handler(netio, &reload_listener);
@@ -2679,7 +2787,7 @@ server_main(struct nsd *nsd)
 				break;
 
 			/* timeout to collect processes. In case no sigchild happens. */
-			timeout_spec.tv_sec = 60;
+			timeout_spec.tv_sec = 1;
 			timeout_spec.tv_nsec = 0;
 
 			/* listen on ports, timeout for collecting terminated children */
@@ -2700,6 +2808,12 @@ server_main(struct nsd *nsd)
 				log_msg(LOG_WARNING,
 				       "Reload process %d failed, continuing with old database",
 				       (int) reload_pid);
+#ifdef HAVE_SETPROCTITLE
+				setproctitle("main");
+#endif
+#ifdef USE_LOG_PROCESS_ROLE
+				log_set_process_role("main");
+#endif
 				reload_pid = -1;
 				if(reload_listener.fd != -1) close(reload_listener.fd);
 				netio_remove_handler(netio, &reload_listener);
@@ -2760,9 +2874,21 @@ server_main(struct nsd *nsd)
 			default:
 				/* PARENT */
 				close(reload_sockets[0]);
+#ifdef HAVE_SETPROCTITLE
+				setproctitle("load");
+#endif
+#ifdef USE_LOG_PROCESS_ROLE
+				log_set_process_role("load");
+#endif
 				server_reload(nsd, server_region, netio,
 					reload_sockets[1]);
 				DEBUG(DEBUG_IPC,2, (LOG_INFO, "Reload exited to become new main"));
+#ifdef HAVE_SETPROCTITLE
+				setproctitle("main");
+#endif
+#ifdef USE_LOG_PROCESS_ROLE
+				log_set_process_role("main");
+#endif
 				close(reload_sockets[1]);
 				DEBUG(DEBUG_IPC,2, (LOG_INFO, "Reload closed"));
 				/* drop stale xfrd ipc data */
@@ -2779,6 +2905,12 @@ server_main(struct nsd *nsd)
 				/* server_main keep running until NSD_QUIT_SYNC
 				 * received from reload. */
 				close(reload_sockets[1]);
+#ifdef HAVE_SETPROCTITLE
+				setproctitle("old-main");
+#endif
+#ifdef USE_LOG_PROCESS_ROLE
+				log_set_process_role("old-main");
+#endif
 				reload_listener.fd = reload_sockets[0];
 				reload_listener.timeout = NULL;
 				reload_listener.user_data = nsd;
@@ -3213,6 +3345,9 @@ server_child(struct nsd *nsd)
 	region_type *server_region = region_create(xalloc, free);
 	struct event_base* event_base = nsd_child_event_base();
 	sig_atomic_t mode;
+#ifdef USE_LOG_PROCESS_ROLE
+	static char child_name[20];
+#endif
 
 	if(!event_base) {
 		log_msg(LOG_ERR, "nsd server could not create event base");
@@ -3226,11 +3361,17 @@ server_child(struct nsd *nsd)
 #endif
 
 	assert(nsd->server_kind != NSD_SERVER_MAIN);
-	DEBUG(DEBUG_IPC, 2, (LOG_INFO, "child process started"));
 
 #ifdef HAVE_SETPROCTITLE
 	setproctitle("server %d", nsd->this_child->child_num + 1);
 #endif
+#ifdef USE_LOG_PROCESS_ROLE
+	snprintf(child_name, sizeof(child_name), "srv%d",
+		nsd->this_child->child_num + 1);
+	log_set_process_role(child_name);
+#endif
+	DEBUG(DEBUG_IPC, 2, (LOG_INFO, "child process started"));
+
 #ifdef HAVE_CPUSET_T
 	if(nsd->use_cpu_affinity) {
 		set_cpu_affinity(nsd->this_child->cpuset);

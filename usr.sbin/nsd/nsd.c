@@ -1134,7 +1134,7 @@ main(int argc, char *argv[])
 	pp_init(&write_uint16, &write_uint32);
 
 	/* Read options */
-	if(!parse_options_file(nsd.options, configfile, NULL, NULL)) {
+	if(!parse_options_file(nsd.options, configfile, NULL, NULL, NULL)) {
 		error("could not read config: %s\n", configfile);
 	}
 	if(!parse_zone_list_file(nsd.options)) {

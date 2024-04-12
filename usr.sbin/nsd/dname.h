@@ -15,6 +15,7 @@
 
 #include "buffer.h"
 #include "region-allocator.h"
+#include "dns.h" /* for MAXDOMAINLEN */
 
 #if defined(NAMEDB_UPPERCASE) || defined(USE_NAMEDB_UPPERCASE)
 #define DNAME_NORMALIZE        toupper
@@ -346,6 +347,19 @@ label_next(const uint8_t *label)
 const char *dname_to_string(const dname_type *dname,
 			    const dname_type *origin);
 
+/*
+ * Convert DNAME to its string representation.  The result if written
+ * to the provided buffer buf, which must be at least 5 times
+ * MAXDOMAINNAMELEN.
+ *
+ * If ORIGIN is provided and DNAME is a subdomain of ORIGIN the dname
+ * will be represented relative to ORIGIN.
+ *
+ * Pre: dname != NULL
+ */
+const char *dname_to_string_buf(const dname_type *dname,
+                                const dname_type *origin,
+                                char buf[MAXDOMAINLEN * 5]);
 
 /*
  * Create a dname containing the single label specified by STR

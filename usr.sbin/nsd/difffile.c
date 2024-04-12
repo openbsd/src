@@ -24,6 +24,7 @@
 #include "rrl.h"
 #include "ixfr.h"
 #include "zonec.h"
+#include "xfrd-catalog-zones.h"
 
 static int
 write_64(FILE *out, uint64_t val)
@@ -919,7 +920,7 @@ find_or_create_zone(namedb_type* db, const dname_type* zone_name,
 			 * by xfrd, who wrote the AXFR or IXFR to disk, so we only
 			 * need to add it to our config.
 			 * This process does not need linesize and offset zonelist */
-			zopt = zone_list_zone_insert(opt, zstr, patname, 0, 0);
+			zopt = zone_list_zone_insert(opt, zstr, patname);
 			if(!zopt)
 				return 0;
 		}
@@ -1273,7 +1274,7 @@ check_for_bad_serial(namedb_type* db, const char* zone_str, uint32_t old_serial)
 	return 0;
 }
 
-static int
+int
 apply_ixfr_for_zone(nsd_type* nsd, zone_type* zone, FILE* in,
 	struct nsd_options* ATTR_UNUSED(opt), udb_base* taskudb, udb_ptr* last_task,
 	uint32_t xfrfilenr)
@@ -1348,7 +1349,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zone, FILE* in,
 	if(check_for_bad_serial(nsd->db, zone_buf, old_serial)) {
 		DEBUG(DEBUG_XFRD,1, (LOG_ERR,
 			"skipping diff file commit with bad serial"));
-		return 1;
+		return -2; /* Success in "main" process, failure in "xfrd" */
 	}
 
 	if(!zone->is_skipped)
@@ -1372,7 +1373,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zone, FILE* in,
 				diff_update_commit(
 					zone_buf, DIFF_CORRUPT, nsd, xfrfilenr);
 				/* the udb is still dirty, it is bad */
-				exit(1);
+				return -1; /* Fatal! */
 			} else if(ret == 2) {
 				break;
 			}
@@ -1402,12 +1403,12 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zone, FILE* in,
 		if(softfail && taskudb && !is_axfr) {
 			log_msg(LOG_ERR, "Failed to apply IXFR cleanly "
 				"(deletes nonexistent RRs, adds existing RRs). "
-				"Zone %s contents is different from master, "
+				"Zone %s contents is different from primary, "
 				"starting AXFR. Transfer %s", zone_buf, log_buf);
 			/* add/del failures in IXFR, get an AXFR */
 			diff_update_commit(
 				zone_buf, DIFF_INCONSISTENT, nsd, xfrfilenr);
-			exit(1);
+			return -1; /* Fatal! */
 		}
 		if(ixfr_store)
 			ixfr_store_finish(ixfr_store, nsd, log_buf);
@@ -1598,6 +1599,7 @@ void task_new_check_zonefiles(udb_base* udb, udb_ptr* last,
 	const dname_type* zone)
 {
 	udb_ptr e;
+	xfrd_check_catalog_consumer_zonefiles(zone);
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "add task checkzonefiles"));
 	if(!task_create_new_elem(udb, last, &e, sizeof(struct task_list_d) +
 		(zone?dname_total_size(zone):0), zone)) {
@@ -2111,13 +2113,23 @@ task_process_apply_xfr(struct nsd* nsd, udb_base* udb, udb_ptr *last_task,
 		return;
 	}
 	/* read and apply zone transfer */
-	if(!apply_ixfr_for_zone(nsd, zone, df, nsd->options, udb,
-		last_task, TASKLIST(task)->yesno)) {
+	switch(apply_ixfr_for_zone(nsd, zone, df, nsd->options, udb, last_task,
+				TASKLIST(task)->yesno)) {
+	case 1: /* Success */
+		break;
+
+	case 0: /* Failure */
 		/* soainfo_gone will be communicated from server_reload, unless
 		   preceding updates have been applied  */
 		zone->is_skipped = 1;
-	}
+		break;
 
+	case -1:/* Fatal */
+		exit(1);
+		break;
+
+	default:break;
+	}
 	fclose(df);
 }
 

@@ -260,6 +260,24 @@ buffer_write(buffer_type *buffer, const void *data, size_t count)
 	buffer->_position += count;
 }
 
+static inline int
+try_buffer_write_at(buffer_type *buffer, size_t at, const void *data, size_t count)
+{
+	if(!buffer_available_at(buffer, at, count))
+		return 0;
+	memcpy(buffer->_data + at, data, count);
+	return 1;
+}
+
+static inline int
+try_buffer_write(buffer_type *buffer, const void *data, size_t count)
+{
+	if(!try_buffer_write_at(buffer, buffer->_position, data, count))
+		return 0;
+	buffer->_position += count;
+	return 1;
+}
+
 static inline void
 buffer_write_string_at(buffer_type *buffer, size_t at, const char *str)
 {
@@ -270,6 +288,18 @@ static inline void
 buffer_write_string(buffer_type *buffer, const char *str)
 {
 	buffer_write(buffer, str, strlen(str));
+}
+
+static inline int
+try_buffer_write_string_at(buffer_type *buffer, size_t at, const char *str)
+{
+	return try_buffer_write_at(buffer, at, str, strlen(str));
+}
+
+static inline int
+try_buffer_write_string(buffer_type *buffer, const char *str)
+{
+	return try_buffer_write(buffer, str, strlen(str));
 }
 
 static inline void
@@ -326,6 +356,78 @@ buffer_write_u64(buffer_type *buffer, uint64_t data)
 {
 	buffer_write_u64_at(buffer, buffer->_position, data);
 	buffer->_position += sizeof(data);
+}
+
+static inline int
+try_buffer_write_u8_at(buffer_type *buffer, size_t at, uint8_t data)
+{
+	if(!buffer_available_at(buffer, at, sizeof(data)))
+		return 0;
+	buffer->_data[at] = data;
+	return 1;
+}
+
+static inline int
+try_buffer_write_u8(buffer_type *buffer, uint8_t data)
+{
+	if(!try_buffer_write_u8_at(buffer, buffer->_position, data))
+		return 0;
+	buffer->_position += sizeof(data);
+	return 1;
+}
+
+static inline int
+try_buffer_write_u16_at(buffer_type *buffer, size_t at, uint16_t data)
+{
+	if(!buffer_available_at(buffer, at, sizeof(data)))
+		return 0;
+	write_uint16(buffer->_data + at, data);
+	return 1;
+}
+
+static inline int
+try_buffer_write_u16(buffer_type *buffer, uint16_t data)
+{
+	if(!try_buffer_write_u16_at(buffer, buffer->_position, data))
+		return 0;
+	buffer->_position += sizeof(data);
+	return 1;
+}
+
+static inline int
+try_buffer_write_u32_at(buffer_type *buffer, size_t at, uint32_t data)
+{
+	if(!buffer_available_at(buffer, at, sizeof(data)))
+		return 0;
+	write_uint32(buffer->_data + at, data);
+	return 1;
+}
+
+static inline int
+try_buffer_write_u32(buffer_type *buffer, uint32_t data)
+{
+	if(!try_buffer_write_u32_at(buffer, buffer->_position, data))
+		return 0;
+	buffer->_position += sizeof(data);
+	return 1;
+}
+
+static inline int
+try_buffer_write_u64_at(buffer_type *buffer, size_t at, uint64_t data)
+{
+	if(!buffer_available_at(buffer, at, sizeof(data)))
+		return 0;
+	write_uint64(buffer->_data + at, data);
+	return 1;
+}
+
+static inline int
+try_buffer_write_u64(buffer_type *buffer, uint64_t data)
+{
+	if(!try_buffer_write_u64_at(buffer, buffer->_position, data))
+		return 0;
+	buffer->_position += sizeof(data);
+	return 1;
 }
 
 static inline void

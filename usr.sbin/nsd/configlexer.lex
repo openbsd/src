@@ -298,7 +298,8 @@ store-ixfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_STORE_IXFR;}
 ixfr-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IXFR_SIZE;}
 ixfr-number{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IXFR_NUMBER;}
 create-ixfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CREATE_IXFR;}
-multi-master-check{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_MASTER_CHECK;}
+multi-master-check{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_PRIMARY_CHECK;}
+multi-primary-check{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_PRIMARY_CHECK;}
 tls-service-key{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_KEY;}
 tls-service-ocsp{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_OCSP;}
 tls-service-pem{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_PEM;}
@@ -318,6 +319,9 @@ verifier{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER; }
 verifier-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_COUNT; }
 verifier-feed-zone{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_FEED_ZONE; }
 verifier-timeout{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFIER_TIMEOUT; }
+catalog{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_CATALOG; }
+catalog-member-pattern{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CATALOG_MEMBER_PATTERN; }
+catalog-producer-zone{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CATALOG_PRODUCER_ZONE; }
 {NEWLINE}		{ LEXOUT(("NL\n")); cfg_parser->line++;}
 
 servers={UNQUOTEDLETTER}*	{

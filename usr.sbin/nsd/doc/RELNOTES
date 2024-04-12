@@ -1,5 +1,66 @@
 NSD RELEASE NOTES
 
+4.9.1
+================
+BUG FIXES:
+	- Use rooted temporary path in makedist.sh.
+
+4.9.0
+================
+FEATURES:
+	- Merge #315: Allow SOA apex queries to otherwise with allow-query
+	  protected zones for clients matching a provide-xfr rule, because
+	  clients that are allowed to transfer the zone need to be able to
+	  query SOA at the apex preceding the actual transfer.
+	- Merge #304: Support for Catalog zones version "2" as specified in
+	  RFC 9432. Both the consumer as well as the producer role are
+	  implemented, but only a single catalog consumer zone is allowed.
+	  The "coo" property, only relevant with multiple catalog consumer,
+	  is therefore not supported. The "group" property is supported.
+	  Have a look at the nsd.conf man page for details on how to
+	  configure and use catalog zones.
+
+BUG FIXES:
+	- Fix to sync the tests script file common.sh.
+	- Update test script file common.sh.
+	- Fix #306: Missing AC_SUBST(dbdir) breaks installation with 4.8.0.
+	- Fix for #306: Create directory for xfrd.state and zone.list files
+	  in make install.
+	- Merge #307 from anandb-ripencc: Many improvements to the nsd.conf
+	  man page.
+	- Fix #308: Deprecate "multi-master-check" in favour of
+	  "multi-primary-check".
+	- Merge #309: More RFC 8499 compliance.
+	- Fix control-reconfig-xfrd test for zonestatus primary that is
+	  printed by nsd-control zonestatus.
+	- Move acx_nlnetlabs.m4 to version 47, with crypt32 check.
+	- Move acx_nlnetlabs.m4 to version 48, with ssp and getaddrinfo
+	  include check.
+	- Fix #313: nsd 4.8 stats with implausible spikes.
+	- Fix compile with memclean for xfrd nsd.db close.
+	- In xfrd del secondary zone, the timer could perhaps have
+	  event_added, and if so, it would not be event_del if a tcp connection
+	  is active at the time. This could cause the libevent event lists
+	  to fail. Also fix to make sure to set event_added for the
+	  nsd-control ssl nonblocking handshake and check event_added there
+	  too, for extra certainty.
+	- Merge #316: Fix to reap defunct children by the reload process that
+	  emerged when some serve child processes were still serving TCP
+	  request while the others had already quit, while the reload process
+	  was waiting for the signal from the backup/old main process that all
+	  children exited.
+	- Fix (also from Merge #316) to reap exited children more frequently
+	  from server main loop for processes that exited during reload, but
+	  missed the initial reaping at start of the main loop because they
+	  took somewhat longer to exit.
+	- Fix timing sensitivity in ixfr_outsync test.
+	- Test if debug is available in do-tests.
+	- Enforce timeout from NSD in ixfr_gone test.
+	- Update expressions in ixfr_and_restart test.
+	- Make algorithm explicit in control-repattern test.
+	- Switch algorithm to hmac-256 for testplan_mess test.
+	- Replace multiple strcat and strcpy by snprintf.
+
 4.8.0
 ================
 FEATURES:

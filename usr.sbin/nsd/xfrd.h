@@ -119,6 +119,12 @@ struct xfrd_state {
 	int notify_udp_num;
 	/* first and last notify_zone* entries waiting for a UDP socket */
 	struct notify_zone *notify_waiting_first, *notify_waiting_last;
+
+	/* tree of catalog consumer zones. Processing is disabled if > 1. */
+	rbtree_type *catalog_consumer_zones;
+
+	/* tree of updated catalog producer zones for which the content to serve */
+	rbtree_type *catalog_producer_zones;
 };
 
 /*

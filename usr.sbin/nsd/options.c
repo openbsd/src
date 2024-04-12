@@ -21,6 +21,7 @@
 #include "difffile.h"
 #include "rrl.h"
 #include "bitset.h"
+#include "xfrd.h"
 
 #include "configparser.h"
 config_parser_state_type* cfg_parser = 0;
@@ -202,7 +203,8 @@ warn_if_directory(const char* filetype, FILE* f, const char* fname)
 
 int
 parse_options_file(struct nsd_options* opt, const char* file,
-	void (*err)(void*,const char*), void* err_arg)
+	void (*err)(void*,const char*), void* err_arg,
+	struct nsd_options* old_opts)
 {
 	FILE *in = 0;
 	struct pattern_options* pat;
@@ -246,6 +248,10 @@ parse_options_file(struct nsd_options* opt, const char* file,
 
 	RBTREE_FOR(pat, struct pattern_options*, opt->patterns)
 	{
+		struct pattern_options* old_pat =
+			old_opts ? pattern_options_find(old_opts, pat->pname)
+			         : NULL;
+
 		/* lookup keys for acls */
 		for(acl=pat->allow_notify; acl; acl=acl->next)
 		{
@@ -299,6 +305,43 @@ parse_options_file(struct nsd_options* opt, const char* file,
 			if(!acl->key_options)
 				c_error("key %s in pattern %s could not be found",
 					acl->key_name, pat->pname);
+		}
+		/* lookup zones for catalog-producer-zone options */
+		if(pat->catalog_producer_zone) {
+			struct zone_options* zopt;
+			const dname_type *dname = dname_parse(opt->region,
+					pat->catalog_producer_zone);
+			if(dname == NULL) {
+				; /* pass; already erred during parsing */
+
+			} else if (!(zopt = zone_options_find(opt, dname))) {
+				c_error("catalog producer zone %s in pattern "
+					"%s could not be found",
+					pat->catalog_producer_zone,
+					pat->pname);
+
+			} else if (!zone_is_catalog_producer(zopt)) {
+				c_error("catalog-producer-zone %s in pattern "
+					"%s is not configered as a "
+					"catalog: producer",
+					pat->catalog_producer_zone,
+					pat->pname);
+			}
+		}
+		if( !old_opts /* Okay to add a cat producer member zone pat */
+		|| (!old_pat) /* But not to add, change or del an existing */
+		|| ( old_pat && !old_pat->catalog_producer_zone
+		             &&     !pat->catalog_producer_zone)
+		|| ( old_pat &&  old_pat->catalog_producer_zone
+		             &&      pat->catalog_producer_zone
+		             && strcmp( old_pat->catalog_producer_zone
+		                      ,     pat->catalog_producer_zone) == 0)){
+			; /* No existing catalog producer member zone added
+			   * or changed. Everyting is fine: pass */
+		} else {
+			c_error("catalog-producer-zone in pattern %s cannot "
+				"be removed or changed on a running NSD",
+				pat->pname);
 		}
 	}
 
@@ -372,18 +415,26 @@ zone_list_free_insert(struct nsd_options* opt, int linesize, off_t off)
 	opt->zonefree_number++;
 }
 
-struct zone_options*
-zone_list_zone_insert(struct nsd_options* opt, const char* nm,
-	const char* patnm, int linesize, off_t off)
+static struct zone_options*
+zone_list_member_zone_insert(struct nsd_options* opt, const char* nm,
+	const char* patnm, int linesize, off_t off, const char* mem_idnm,
+	new_member_id_type new_member_id)
 {
 	struct pattern_options* pat = pattern_options_find(opt, patnm);
+	struct catalog_member_zone* cmz = NULL;
 	struct zone_options* zone;
+	char member_id_str[MAXDOMAINLEN * 5 + 3] = "ERROR!";
+	DEBUG(DEBUG_XFRD, 2, (LOG_INFO, "zone_list_zone_insert(\"%s\", \"%s\""
+	        ", %d, \"%s\")", nm, patnm, linesize,
+		(mem_idnm ? mem_idnm : "<NULL>")));
 	if(!pat) {
 		log_msg(LOG_ERR, "pattern does not exist for zone %s "
 			"pattern %s", nm, patnm);
 		return NULL;
 	}
-	zone = zone_options_create(opt->region);
+	zone = pat->catalog_producer_zone
+	     ? &(cmz = catalog_member_zone_create(opt->region))->options
+	     : zone_options_create(opt->region);
 	zone->part_of_config = 0;
 	zone->name = region_strdup(opt->region, nm);
 	zone->linesize = linesize;
@@ -396,7 +447,38 @@ zone_list_zone_insert(struct nsd_options* opt, const char* nm,
 		region_recycle(opt->region, zone, sizeof(*zone));
 		return NULL;
 	}
+	if(!mem_idnm) {
+		if(cmz && new_member_id)
+			new_member_id(cmz);
+		if(cmz && cmz->member_id) {
+			/* Assume all bytes of member_id are printable.
+			 * plus 1 for space
+			 */
+			zone->linesize += label_length(dname_name(cmz->member_id)) + 1;
+			DEBUG(DEBUG_XFRD, 2, (LOG_INFO, "new linesize: %d",
+				(int)zone->linesize));
+		}
+	} else if(!cmz)
+		log_msg(LOG_ERR, "member ID '%s' given, but no catalog-producer-"
+			"zone value provided in zone '%s' or pattern '%s'",
+			mem_idnm, nm, patnm);
+
+	else if(snprintf(member_id_str, sizeof(member_id_str),
+	    "%s.zones.%s", mem_idnm, pat->catalog_producer_zone) >=
+	    (int)sizeof(member_id_str))
+		log_msg(LOG_ERR, "syntax error in member ID '%s.zones.%s' for "
+			"zone '%s'", mem_idnm, pat->catalog_producer_zone, nm);
+
+	else if(!(cmz->member_id = dname_parse(opt->region, member_id_str)))
+		log_msg(LOG_ERR, "parse error in member ID '%s' for "
+			"zone '%s'", member_id_str, nm);
 	return zone;
+}
+
+struct zone_options*
+zone_list_zone_insert(struct nsd_options* opt,const char* nm,const char* patnm)
+{
+	return zone_list_member_zone_insert(opt, nm, patnm, 0, 0, NULL, NULL);
 }
 
 int
@@ -465,8 +547,42 @@ parse_zone_list_file(struct nsd_options* opt)
 
 			/* store offset and line size for zone entry */
 			/* and create zone entry in zonetree */
-			(void)zone_list_zone_insert(opt, nm, patnm, linesize,
-				ftello(opt->zonelist)-linesize);
+			(void)zone_list_member_zone_insert(opt, nm, patnm,
+				linesize, ftello(opt->zonelist)-linesize,
+				NULL, NULL);
+
+		} else if(strncmp(buf, "cat ", 4) == 0) {
+			int linesize = strlen(buf);
+			/* parse the 'add' line */
+			/* pick last space on the line, so that the domain
+			 * name can have a space in it (but not the pattern)*/
+			char* nm = buf + 4;
+			char* mem_idnm = strrchr(nm, ' '), *patnm;
+			if(!mem_idnm) {
+				/* parse error */
+				log_msg(LOG_ERR, "parse error in %s: '%s'",
+					opt->zonelistfile, buf);
+				continue;
+			}
+			*mem_idnm++ = 0;
+			patnm = strrchr(nm, ' ');
+			if(!patnm) {
+				*--mem_idnm = ' ';
+				/* parse error */
+				log_msg(LOG_ERR, "parse error in %s: '%s'",
+					opt->zonelistfile, buf);
+				continue;
+			}
+			*patnm++ = 0;
+			if(linesize && buf[linesize-1] == '\n')
+				buf[linesize-1] = 0;
+
+			/* store offset and line size for zone entry */
+			/* and create zone entry in zonetree */
+			(void)zone_list_member_zone_insert(opt, nm, patnm,
+				linesize, ftello(opt->zonelist)-linesize,
+				mem_idnm, NULL);
+
 		} else if(strncmp(buf, "del ", 4) == 0) {
 			/* store offset and line size for deleted entry */
 			int linesize = strlen(buf);
@@ -485,26 +601,62 @@ parse_zone_list_file(struct nsd_options* opt)
 void
 zone_options_delete(struct nsd_options* opt, struct zone_options* zone)
 {
+	struct catalog_member_zone* member_zone = as_catalog_member_zone(zone);
+
 	rbtree_delete(opt->zone_options, zone->node.key);
 	region_recycle(opt->region, (void*)zone->node.key, dname_total_size(
 		(dname_type*)zone->node.key));
-	region_recycle(opt->region, zone, sizeof(*zone));
+	if(!member_zone) {
+		region_recycle(opt->region, zone, sizeof(*zone));
+		return;
+	}
+	/* Because catalog member zones are in xfrd only deleted through
+	 * catalog_del_consumer_member_zone() or through
+	 * xfrd_del_catalog_producer_member(), which both clear the node,
+	 * and because member zones in the main and serve processes are not
+	 * indexed, *member_zone->node == *RBTREE_NULL.
+	 * member_id is cleared too by those delete function, but there may be
+	 * leftover member_id's from the initial zone.list processing, which
+	 * made it to the main and serve processes.
+	 */
+	assert(!memcmp(&member_zone->node, RBTREE_NULL, sizeof(*RBTREE_NULL)));
+	if(member_zone->member_id) {
+		region_recycle(opt->region, (void*)member_zone->member_id,
+				dname_total_size(member_zone->member_id));
+	}
+	region_recycle(opt->region, member_zone, sizeof(*member_zone));
 }
+
 
 /* add a new zone to the zonelist */
 struct zone_options*
-zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
+zone_list_add_or_cat(struct nsd_options* opt, const char* zname,
+		const char* pname, new_member_id_type new_member_id)
 {
 	int r;
 	struct zonelist_free* e;
 	struct zonelist_bucket* b;
-	int linesize = 6 + strlen(zname) + strlen(pname);
+	char zone_list_line[6 + 5 * MAXDOMAINLEN + 2024 + 65];
+	struct catalog_member_zone* cmz;
+
 	/* create zone entry */
-	struct zone_options* zone = zone_list_zone_insert(opt, zname, pname,
-		linesize, 0);
+	struct zone_options* zone = zone_list_member_zone_insert(
+		opt, zname, pname, 6 + strlen(zname) + strlen(pname),
+		0, NULL, new_member_id);
 	if(!zone)
 		return NULL;
 
+	if(zone_is_catalog_producer_member(zone)
+	&& (cmz = as_catalog_member_zone(zone))
+	&& cmz->member_id) {
+		snprintf(zone_list_line, sizeof(zone_list_line),
+			"cat %s %s %.*s\n", zname, pname,
+			(int)label_length(dname_name(cmz->member_id)),
+			(const char*)dname_name(cmz->member_id) + 1);
+	} else {
+		snprintf(zone_list_line, sizeof(zone_list_line),
+			"add %s %s\n", zname, pname);
+	}
 	/* use free entry or append to file or create new file */
 	if(!opt->zonelist || opt->zonelist_off == 0) {
 		/* create new file */
@@ -531,7 +683,7 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 		zone->off = ftello(opt->zonelist);
 		if(zone->off == -1)
 			log_msg(LOG_ERR, "ftello(%s): %s", opt->zonelistfile, strerror(errno));
-		r = fprintf(opt->zonelist, "add %s %s\n", zname, pname);
+		r = fprintf(opt->zonelist, "%s", zone_list_line);
 		if(r != zone->linesize) {
 			if(r == -1)
 				log_msg(LOG_ERR, "could not write to %s: %s",
@@ -561,7 +713,7 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 			zone_options_delete(opt, zone);
 			return NULL;
 		}
-		r = fprintf(opt->zonelist, "add %s %s\n", zname, pname);
+		r = fprintf(opt->zonelist, "%s", zone_list_line);
 		if(r != zone->linesize) {
 			if(r == -1)
 				log_msg(LOG_ERR, "could not write to %s: %s",
@@ -572,7 +724,7 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 			zone_options_delete(opt, zone);
 			return NULL;
 		}
-		opt->zonelist_off += linesize;
+		opt->zonelist_off += zone->linesize;
 		if(fflush(opt->zonelist) != 0) {
 			log_msg(LOG_ERR, "fflush %s: %s", opt->zonelistfile, strerror(errno));
 		}
@@ -587,7 +739,7 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 		zone_options_delete(opt, zone);
 		return NULL;
 	}
-	r = fprintf(opt->zonelist, "add %s %s\n", zname, pname);
+	r = fprintf(opt->zonelist, "%s", zone_list_line);
 	if(r != zone->linesize) {
 		if(r == -1)
 			log_msg(LOG_ERR, "could not write to %s: %s",
@@ -617,6 +769,11 @@ zone_list_add(struct nsd_options* opt, const char* zname, const char* pname)
 void
 zone_list_del(struct nsd_options* opt, struct zone_options* zone)
 {
+	if (zone_is_catalog_consumer_member(zone)) {
+		/* catalog consumer member zones are not in the zones.list file */
+		zone_options_delete(opt, zone);
+		return;
+	}
 	/* put its space onto the free entry */
 	if(fseeko(opt->zonelist, zone->off, SEEK_SET) == -1) {
 		log_msg(LOG_ERR, "fseeko(%s): %s", opt->zonelistfile, strerror(errno));
@@ -691,10 +848,21 @@ zone_list_compact(struct nsd_options* opt)
 		return;
 	}
 	RBTREE_FOR(zone, struct zone_options*, opt->zone_options) {
+		struct catalog_member_zone* cmz;
+
 		if(zone->part_of_config)
 			continue;
-		r = fprintf(out, "add %s %s\n", zone->name,
-			zone->pattern->pname);
+		if(zone_is_catalog_producer_member(zone)
+		&& (cmz = as_catalog_member_zone(zone))
+		&& cmz->member_id) {
+			r = fprintf(out, "cat %s %s %.*s\n", zone->name,
+				zone->pattern->pname,
+				(int)label_length(dname_name(cmz->member_id)),
+				(const char*)dname_name(cmz->member_id) + 1);
+		} else {
+			r = fprintf(out, "add %s %s\n", zone->name,
+					zone->pattern->pname);
+		}
 		if(r < 0) {
 			log_msg(LOG_ERR, "write %s failed: %s", outname,
 				strerror(errno));
@@ -807,7 +975,24 @@ zone_options_create(region_type* region)
 	zone->name = 0;
 	zone->pattern = 0;
 	zone->part_of_config = 0;
+	zone->is_catalog_member_zone = 0;
 	return zone;
+}
+
+struct catalog_member_zone*
+catalog_member_zone_create(region_type* region)
+{
+	struct catalog_member_zone* member_zone;
+	member_zone = (struct catalog_member_zone*)region_alloc(region,
+			sizeof(struct catalog_member_zone));
+	member_zone->options.node = *RBTREE_NULL;
+	member_zone->options.name = 0;
+	member_zone->options.pattern = 0;
+	member_zone->options.part_of_config = 0;
+	member_zone->options.is_catalog_member_zone = 1;
+	member_zone->member_id = NULL;
+	member_zone->node = *RBTREE_NULL;
+	return member_zone;
 }
 
 /* true is booleans are the same truth value */
@@ -896,7 +1081,7 @@ pattern_options_create(region_type* region)
 #ifdef RATELIMIT
 	p->rrl_whitelist = 0;
 #endif
-	p->multi_master_check = 0;
+	p->multi_primary_check = 0;
 	p->store_ixfr = 0;
 	p->store_ixfr_is_default = 1;
 	p->ixfr_size = IXFR_SIZE_DEFAULT;
@@ -912,7 +1097,10 @@ pattern_options_create(region_type* region)
 	p->verifier_feed_zone_is_default = 1;
 	p->verifier_timeout = VERIFIER_TIMEOUT_INHERIT;
 	p->verifier_timeout_is_default = 1;
-
+	p->catalog_role = CATALOG_ROLE_INHERIT;
+	p->catalog_role_is_default = 1;
+	p->catalog_member_pattern = NULL;
+	p->catalog_producer_zone = NULL;
 	return p;
 }
 
@@ -1099,7 +1287,7 @@ copy_pat_fixed(region_type* region, struct pattern_options* orig,
 #ifdef RATELIMIT
 	orig->rrl_whitelist = p->rrl_whitelist;
 #endif
-	orig->multi_master_check = p->multi_master_check;
+	orig->multi_primary_check = p->multi_primary_check;
 	orig->store_ixfr = p->store_ixfr;
 	orig->store_ixfr_is_default = p->store_ixfr_is_default;
 	orig->ixfr_size = p->ixfr_size;
@@ -1114,6 +1302,16 @@ copy_pat_fixed(region_type* region, struct pattern_options* orig,
 	orig->verifier_timeout_is_default = p->verifier_timeout_is_default;
 	orig->verifier_feed_zone = p->verifier_feed_zone;
 	orig->verifier_feed_zone_is_default = p->verifier_feed_zone_is_default;
+	orig->catalog_role = p->catalog_role;
+	orig->catalog_role_is_default = p->catalog_role_is_default;
+	if(p->catalog_member_pattern)
+		orig->catalog_member_pattern =
+			region_strdup(region, p->catalog_member_pattern);
+	else orig->catalog_member_pattern = NULL;
+	if(p->catalog_producer_zone)
+		orig->catalog_producer_zone =
+			region_strdup(region, p->catalog_producer_zone);
+	else orig->catalog_producer_zone = NULL;
 }
 
 void
@@ -1227,7 +1425,7 @@ pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 #ifdef RATELIMIT
 	if(p->rrl_whitelist != q->rrl_whitelist) return 0;
 #endif
-	if(!booleq(p->multi_master_check,q->multi_master_check)) return 0;
+	if(!booleq(p->multi_primary_check,q->multi_primary_check)) return 0;
 	if(p->size_limit_xfr != q->size_limit_xfr) return 0;
 	if(!booleq(p->store_ixfr,q->store_ixfr)) return 0;
 	if(!booleq(p->store_ixfr_is_default,q->store_ixfr_is_default)) return 0;
@@ -1248,6 +1446,19 @@ pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 	if(p->verifier_timeout != q->verifier_timeout) return 0;
 	if(!booleq(p->verifier_timeout_is_default,
 		q->verifier_timeout_is_default)) return 0;
+	if(p->catalog_role != q->catalog_role) return 0;
+	if(!booleq(p->catalog_role_is_default,
+		q->catalog_role_is_default)) return 0;
+	if(!p->catalog_member_pattern && q->catalog_member_pattern) return 0;
+	else if(p->catalog_member_pattern && !q->catalog_member_pattern) return 0;
+	else if(p->catalog_member_pattern && q->catalog_member_pattern) {
+		if(strcmp(p->catalog_member_pattern, q->catalog_member_pattern) != 0) return 0;
+	}
+	if(!p->catalog_producer_zone && q->catalog_producer_zone) return 0;
+	else if(p->catalog_producer_zone && !q->catalog_producer_zone) return 0;
+	else if(p->catalog_producer_zone && q->catalog_producer_zone) {
+		if(strcmp(p->catalog_producer_zone, q->catalog_producer_zone) != 0) return 0;
+	}
 	return 1;
 }
 
@@ -1456,7 +1667,7 @@ pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 	marshal_u8(b, p->min_retry_time_is_default);
 	marshal_u32(b, p->min_expire_time);
 	marshal_u8(b, p->min_expire_time_expr);
-	marshal_u8(b, p->multi_master_check);
+	marshal_u8(b, p->multi_primary_check);
 	marshal_u8(b, p->store_ixfr);
 	marshal_u8(b, p->store_ixfr_is_default);
 	marshal_u64(b, p->ixfr_size);
@@ -1472,6 +1683,10 @@ pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 	marshal_u8(b, p->verifier_feed_zone_is_default);
 	marshal_u32(b, p->verifier_timeout);
 	marshal_u8(b, p->verifier_timeout_is_default);
+	marshal_u8(b, p->catalog_role);
+	marshal_u8(b, p->catalog_role_is_default);
+	marshal_str(b, p->catalog_member_pattern);
+	marshal_str(b, p->catalog_producer_zone);
 }
 
 struct pattern_options*
@@ -1506,7 +1721,7 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->min_retry_time_is_default = unmarshal_u8(b);
 	p->min_expire_time = unmarshal_u32(b);
 	p->min_expire_time_expr = unmarshal_u8(b);
-	p->multi_master_check = unmarshal_u8(b);
+	p->multi_primary_check = unmarshal_u8(b);
 	p->store_ixfr = unmarshal_u8(b);
 	p->store_ixfr_is_default = unmarshal_u8(b);
 	p->ixfr_size = unmarshal_u64(b);
@@ -1522,6 +1737,10 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->verifier_feed_zone_is_default = unmarshal_u8(b);
 	p->verifier_timeout = unmarshal_u32(b);
 	p->verifier_timeout_is_default = unmarshal_u8(b);
+	p->catalog_role = unmarshal_u8(b);
+	p->catalog_role_is_default = unmarshal_u8(b);
+	p->catalog_member_pattern = unmarshal_str(r, b);
+	p->catalog_producer_zone = unmarshal_str(r, b);
 	return p;
 }
 
@@ -2334,6 +2553,18 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 		c_error("could not find pattern %s", name);
 		return;
 	}
+	if(strncmp(dest->pname, PATTERN_IMPLICIT_MARKER,
+				strlen(PATTERN_IMPLICIT_MARKER)) == 0
+	&& pat->catalog_producer_zone) {
+		c_error("patterns with an catalog-producer-zone option are to "
+		        "be used with \"nsd-control addzone\" only and cannot "
+			"be included from zone clauses in the config file");
+		return;
+	}
+	if((dest->catalog_role == CATALOG_ROLE_PRODUCER &&  pat->request_xfr)
+	|| ( pat->catalog_role == CATALOG_ROLE_PRODUCER && dest->request_xfr)){
+		c_error("catalog producer zones cannot be secondary zones");
+	}
 
 	/* apply settings */
 	if(pat->zonefile)
@@ -2397,8 +2628,8 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 	copy_and_append_acls(&dest->provide_xfr, pat->provide_xfr);
 	copy_and_append_acls(&dest->allow_query, pat->allow_query);
 	copy_and_append_acls(&dest->outgoing_interface, pat->outgoing_interface);
-	if(pat->multi_master_check)
-		dest->multi_master_check = pat->multi_master_check;
+	if(pat->multi_primary_check)
+		dest->multi_primary_check = pat->multi_primary_check;
 
 	if(!pat->verify_zone_is_default) {
 		dest->verify_zone = pat->verify_zone;
@@ -2435,6 +2666,16 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 		}
 		dest->verifier = vec;
 	}
+	if(!pat->catalog_role_is_default) {
+		dest->catalog_role = pat->catalog_role;
+		dest->catalog_role_is_default = 0;
+	}
+	if(pat->catalog_member_pattern)
+		dest->catalog_member_pattern = region_strdup(
+			cfg_parser->opt->region, pat->catalog_member_pattern);
+	if(pat->catalog_producer_zone)
+		dest->catalog_producer_zone = region_strdup(
+			cfg_parser->opt->region, pat->catalog_producer_zone);
 }
 
 void

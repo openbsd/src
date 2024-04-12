@@ -1365,6 +1365,18 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 				why->ip_address_spec,
 				why->nokey?"NOKEY":
 				(why->blocked?"BLOCKED":why->key_name)));
+		} else if(q->qtype == TYPE_SOA
+		       &&  0 == dname_compare(q->qname,
+				(const dname_type*)q->zone->opts->node.key)
+		       && -1 != acl_check_incoming(
+				q->zone->opts->pattern->provide_xfr, q,&why)) {
+			assert(why);
+			DEBUG(DEBUG_QUERY,1, (LOG_INFO, "SOA apex query %s "
+				"passed request-xfr acl %s %s",
+				dname_to_string(q->qname, NULL),
+				why->ip_address_spec,
+				why->nokey?"NOKEY":
+				(why->blocked?"BLOCKED":why->key_name)));
 		} else {
 			if (verbosity >= 2) {
 				char address[128];
