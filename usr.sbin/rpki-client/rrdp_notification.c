@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.20 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.21 2024/04/12 11:50:29 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -294,7 +294,7 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 				continue;
 		}
 		PARSE_FAIL(p, "parse failed - non conforming "
-		    "attribute '%s' found in snapshot elem", attr[i]);
+		    "attribute '%s' found in delta elem", attr[i]);
 	}
 	/* Only add to the list if we are relevant */
 	if (hasUri != 1 || hasHash != 1 || delta_serial == 0)
