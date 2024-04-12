@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.113 2024/04/11 06:42:12 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.114 2024/04/12 01:54:21 jsg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -8108,13 +8108,14 @@ mcx_media_change(struct ifnet *ifp)
 			}
 		}
 
+		ext_media = 0;
 		for (i = 0; i < nitems(mcx_ext_eth_cap_map); i++) {
 			const struct  mcx_eth_proto_capability *cap;
 
 			cap = &mcx_ext_eth_cap_map[i];
 			if (cap->cap_media ==
 			    IFM_SUBTYPE(sc->sc_media.ifm_media)) {
-				media = (1 << i);
+				ext_media = (1 << i);
 				break;
 			}
 		}
