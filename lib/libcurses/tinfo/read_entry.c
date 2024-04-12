@@ -1,4 +1,4 @@
-/* $OpenBSD: read_entry.c,v 1.18 2023/10/17 09:52:09 nicm Exp $ */
+/* $OpenBSD: read_entry.c,v 1.19 2024/04/12 14:10:28 millert Exp $ */
 
 /****************************************************************************
  * Copyright 2018-2022,2023 Thomas E. Dickey                                *
@@ -44,7 +44,7 @@
 
 #include <tic.h>
 
-MODULE_ID("$Id: read_entry.c,v 1.18 2023/10/17 09:52:09 nicm Exp $")
+MODULE_ID("$Id: read_entry.c,v 1.19 2024/04/12 14:10:28 millert Exp $")
 
 #define MyNumber(n) (short) LOW_MSB(n)
 
@@ -864,9 +864,10 @@ _nc_read_tic_entry(char *filename,
     }
 #if NCURSES_USE_TERMCAP
     if (code != TGETENT_YES) {
+	const char *source = _nc_get_source();
 	code = _nc_read_termcap_entry(name, tp);
 	_nc_SPRINTF(filename, _nc_SLIMIT(PATH_MAX)
-		    "%.*s", PATH_MAX - 1, _nc_get_source());
+		    "%.*s", PATH_MAX - 1, source ? source : "");
     }
 #endif
     returnDB(code);
@@ -912,9 +913,10 @@ _nc_read_entry2(const char *const name, char *const filename, TERMTYPE2 *const t
 	}
 #elif NCURSES_USE_TERMCAP
 	if (code != TGETENT_YES) {
+	    const char *source = _nc_get_source();
 	    code = _nc_read_termcap_entry(name, tp);
 	    _nc_SPRINTF(filename, _nc_SLIMIT(PATH_MAX)
-			"%.*s", PATH_MAX - 1, _nc_get_source());
+			"%.*s", PATH_MAX - 1, source ? source : "");
 	}
 #endif
     }
