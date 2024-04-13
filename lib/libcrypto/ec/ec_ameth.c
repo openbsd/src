@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.51 2024/01/04 17:01:26 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.52 2024/04/13 14:02:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -69,6 +69,7 @@
 #include "asn1_local.h"
 #include "ec_local.h"
 #include "evp_local.h"
+#include "x509_local.h"
 
 #ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
@@ -637,7 +638,9 @@ ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 				return -1;
 			if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
 				return -1;
-			X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
+			if (!X509_ALGOR_set0_by_nid(alg2, snid, V_ASN1_UNDEF,
+			    NULL))
+			    return -1;
 		}
 		return 1;
 
@@ -655,7 +658,9 @@ ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 				return -1;
 			if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
 				return -1;
-			X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
+			if (!X509_ALGOR_set0_by_nid(alg2, snid, V_ASN1_UNDEF,
+			    NULL))
+			    return -1;
 		}
 		return 1;
 
