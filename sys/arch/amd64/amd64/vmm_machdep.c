@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.23 2024/04/09 21:55:16 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.24 2024/04/13 21:57:22 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -941,6 +941,7 @@ vmx_pmap_find_pte_ept(pmap_t pmap, paddr_t addr)
 int
 vmm_start(void)
 {
+	int rv = 0;
 	struct cpu_info *self = curcpu();
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
@@ -950,16 +951,19 @@ vmm_start(void)
 #endif /* MP_LOCKDEBUG */
 #endif /* MULTIPROCESSOR */
 
+	rw_enter_write(&vmm_softc->sc_slock);
+
 	/* VMM is already running */
 	if (self->ci_flags & CPUF_VMM)
-		return (0);
+		goto unlock;
 
 	/* Start VMM on this CPU */
 	start_vmm_on_cpu(self);
 	if (!(self->ci_flags & CPUF_VMM)) {
 		printf("%s: failed to enter VMM mode\n",
 			self->ci_dev->dv_xname);
-		return (EIO);
+		rv = EIO;
+		goto unlock;
 	}
 
 #ifdef MULTIPROCESSOR
@@ -984,8 +988,9 @@ vmm_start(void)
 		}
 	}
 #endif /* MULTIPROCESSOR */
-
-	return (0);
+unlock:
+	rw_exit_write(&vmm_softc->sc_slock);
+	return (rv);
 }
 
 /*
@@ -996,6 +1001,7 @@ vmm_start(void)
 int
 vmm_stop(void)
 {
+	int rv = 0;
 	struct cpu_info *self = curcpu();
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
@@ -1005,16 +1011,19 @@ vmm_stop(void)
 #endif /* MP_LOCKDEBUG */
 #endif /* MULTIPROCESSOR */
 
+	rw_enter_write(&vmm_softc->sc_slock);
+
 	/* VMM is not running */
 	if (!(self->ci_flags & CPUF_VMM))
-		return (0);
+		goto unlock;
 
 	/* Stop VMM on this CPU */
 	stop_vmm_on_cpu(self);
 	if (self->ci_flags & CPUF_VMM) {
 		printf("%s: failed to exit VMM mode\n",
 			self->ci_dev->dv_xname);
-		return (EIO);
+		rv = EIO;
+		goto unlock;
 	}
 
 #ifdef MULTIPROCESSOR
@@ -1039,7 +1048,8 @@ vmm_stop(void)
 		}
 	}
 #endif /* MULTIPROCESSOR */
-
+unlock:
+	rw_exit_write(&vmm_softc->sc_slock);
 	return (0);
 }
 
