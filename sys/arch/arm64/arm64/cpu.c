@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.113 2024/03/18 21:57:22 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.114 2024/04/13 14:19:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -279,6 +279,138 @@ void	cpu_opp_kstat_attach(struct cpu_info *ci);
 #endif
 
 /*
+ * Enable mitigation for Spectre-V2 branch target injection
+ * vulnerabilities (CVE-2017-5715).
+ */
+void
+cpu_mitigate_spectre_v2(struct cpu_info *ci)
+{
+	uint64_t id;
+
+	/*
+	 * By default we let the firmware decide what mitigation is
+	 * necessary.
+	 */
+	ci->ci_flush_bp = cpu_flush_bp_psci;
+
+	/* Some specific CPUs are known not to be vulnerable. */
+	switch (CPU_IMPL(ci->ci_midr)) {
+	case CPU_IMPL_ARM:
+		switch (CPU_PART(ci->ci_midr)) {
+		case CPU_PART_CORTEX_A35:
+		case CPU_PART_CORTEX_A53:
+		case CPU_PART_CORTEX_A55:
+			/* Not vulnerable. */
+			ci->ci_flush_bp = cpu_flush_bp_noop;
+			break;
+		}
+		break;
+	case CPU_IMPL_QCOM:
+		switch (CPU_PART(ci->ci_midr)) {
+		case CPU_PART_KRYO400_SILVER:
+			/* Not vulnerable. */
+			ci->ci_flush_bp = cpu_flush_bp_noop;
+			break;
+		}
+	}
+
+	/*
+	 * The architecture has been updated to explicitly tell us if
+	 * we're not vulnerable to Spectre-V2.
+	 */
+	id = READ_SPECIALREG(id_aa64pfr0_el1);
+	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_IMPL)
+		ci->ci_flush_bp = cpu_flush_bp_noop;
+}
+
+/*
+ * Enable mitigation for Spectre-BHB branch history injection
+ * vulnerabilities (CVE-2022-23960).
+*/
+void
+cpu_mitigate_spectre_bhb(struct cpu_info *ci)
+{
+	uint64_t id;
+
+	/*
+	 * If we know the CPU, we can add a branchy loop that cleans
+	 * the BHB.
+	 */
+	switch (CPU_IMPL(ci->ci_midr)) {
+	case CPU_IMPL_ARM:
+		switch (CPU_PART(ci->ci_midr)) {
+		case CPU_PART_CORTEX_A57:
+		case CPU_PART_CORTEX_A72:
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_loop_8;
+			break;
+		case CPU_PART_CORTEX_A76:
+		case CPU_PART_CORTEX_A76AE:
+		case CPU_PART_CORTEX_A77:
+		case CPU_PART_NEOVERSE_N1:
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_loop_24;
+			break;
+		case CPU_PART_CORTEX_A78:
+		case CPU_PART_CORTEX_A78AE:
+		case CPU_PART_CORTEX_A78C:
+		case CPU_PART_CORTEX_X1:
+		case CPU_PART_CORTEX_X2:
+		case CPU_PART_CORTEX_A710:
+		case CPU_PART_NEOVERSE_N2:
+		case CPU_PART_NEOVERSE_V1:
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_loop_32;
+			break;
+		}
+		break;
+	case CPU_IMPL_AMPERE:
+		switch (CPU_PART(ci->ci_midr)) {
+		case CPU_PART_AMPERE1:
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_loop_11;
+			break;
+		}
+		break;
+	}
+
+	/*
+	 * If we're not using a loop, let firmware decide.  This also
+	 * covers the original Spectre-V2 in addition to Spectre-BHB.
+	 */
+#if NPSCI > 0
+	if (ci->ci_trampoline_vectors == (vaddr_t)trampoline_vectors_none &&
+	    smccc_needs_arch_workaround_3()) {
+		ci->ci_flush_bp = cpu_flush_bp_noop;
+		if (psci_method() == PSCI_METHOD_HVC)
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_psci_hvc;
+		if (psci_method() == PSCI_METHOD_SMC)
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_psci_smc;
+	}
+#endif
+
+	/* Prefer CLRBHB to mitigate Spectre-BHB. */
+	id = READ_SPECIALREG(id_aa64isar2_el1);
+	if (ID_AA64ISAR2_CLRBHB(id) >= ID_AA64ISAR2_CLRBHB_IMPL)
+		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_clrbhb;
+
+	/* ECBHB tells us Spectre-BHB is mitigated. */
+	id = READ_SPECIALREG(id_aa64mmfr1_el1);
+	if (ID_AA64MMFR1_ECBHB(id) >= ID_AA64MMFR1_ECBHB_IMPL)
+		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
+
+	/*
+	 * The architecture has been updated to explicitly tell us if
+	 * we're not vulnerable to Spectre-BHB.
+	 */
+	id = READ_SPECIALREG(id_aa64pfr0_el1);
+	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_HCXT)
+		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
+}
+
+/*
  * Enable mitigation for Spectre-V4 speculative store bypass
  * vulnerabilities (CVE-2018-3639).
  */
@@ -459,123 +591,8 @@ cpu_identify(struct cpu_info *ci)
 		clidr >>= 3;
 	}
 
-	/*
-	 * Some ARM processors are vulnerable to branch target
-	 * injection attacks (CVE-2017-5715).
-	 */
-	switch (impl) {
-	case CPU_IMPL_ARM:
-		switch (part) {
-		case CPU_PART_CORTEX_A35:
-		case CPU_PART_CORTEX_A53:
-		case CPU_PART_CORTEX_A55:
-			/* Not vulnerable. */
-			ci->ci_flush_bp = cpu_flush_bp_noop;
-			break;
-		default:
-			/*
-			 * Potentially vulnerable; call into the
-			 * firmware and hope we're running on top of
-			 * Arm Trusted Firmware with a fix for
-			 * Security Advisory TFV 6.
-			 */
-			ci->ci_flush_bp = cpu_flush_bp_psci;
-			break;
-		}
-		break;
-	default:
-		/* Not much we can do for an unknown processor.  */
-		ci->ci_flush_bp = cpu_flush_bp_noop;
-		break;
-	}
-
-	/*
-	 * The architecture has been updated to explicitly tell us if
-	 * we're not vulnerable to regular Spectre.
-	 */
-	id = READ_SPECIALREG(id_aa64pfr0_el1);
-	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_IMPL)
-		ci->ci_flush_bp = cpu_flush_bp_noop;
-
-	/*
-	 * But we might still be vulnerable to Spectre-BHB.  If we know the
-	 * CPU, we can add a branchy loop that cleans the BHB.
-	 */
-	switch (impl) {
-	case CPU_IMPL_ARM:
-		switch (part) {
-		case CPU_PART_CORTEX_A57:
-		case CPU_PART_CORTEX_A72:
-			ci->ci_trampoline_vectors =
-			    (vaddr_t)trampoline_vectors_loop_8;
-			break;
-		case CPU_PART_CORTEX_A76:
-		case CPU_PART_CORTEX_A76AE:
-		case CPU_PART_CORTEX_A77:
-		case CPU_PART_NEOVERSE_N1:
-			ci->ci_trampoline_vectors =
-			    (vaddr_t)trampoline_vectors_loop_24;
-			break;
-		case CPU_PART_CORTEX_A78:
-		case CPU_PART_CORTEX_A78AE:
-		case CPU_PART_CORTEX_A78C:
-		case CPU_PART_CORTEX_X1:
-		case CPU_PART_CORTEX_X2:
-		case CPU_PART_CORTEX_A710:
-		case CPU_PART_NEOVERSE_N2:
-		case CPU_PART_NEOVERSE_V1:
-			ci->ci_trampoline_vectors =
-			    (vaddr_t)trampoline_vectors_loop_32;
-			break;
-		}
-		break;
-	case CPU_IMPL_AMPERE:
-		switch (part) {
-		case CPU_PART_AMPERE1:
-			ci->ci_trampoline_vectors =
-			    (vaddr_t)trampoline_vectors_loop_11;
-			break;
-		}
-		break;
-	}
-
-	/*
-	 * If we're not using a loop, try and call into PSCI.  This also
-	 * covers the original Spectre in addition to Spectre-BHB.
-	 */
-#if NPSCI > 0
-	if (ci->ci_trampoline_vectors == (vaddr_t)trampoline_vectors_none &&
-	    smccc_needs_arch_workaround_3()) {
-		ci->ci_flush_bp = cpu_flush_bp_noop;
-		if (psci_method() == PSCI_METHOD_HVC)
-			ci->ci_trampoline_vectors =
-			    (vaddr_t)trampoline_vectors_psci_hvc;
-		if (psci_method() == PSCI_METHOD_SMC)
-			ci->ci_trampoline_vectors =
-			    (vaddr_t)trampoline_vectors_psci_smc;
-	}
-#endif
-
-	/* Prefer CLRBHB to mitigate Spectre-BHB. */
-	id = READ_SPECIALREG(id_aa64isar2_el1);
-	if (ID_AA64ISAR2_CLRBHB(id) >= ID_AA64ISAR2_CLRBHB_IMPL)
-		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_clrbhb;
-
-	/* ECBHB tells us Spectre-BHB is mitigated. */
-	id = READ_SPECIALREG(id_aa64mmfr1_el1);
-	if (ID_AA64MMFR1_ECBHB(id) >= ID_AA64MMFR1_ECBHB_IMPL)
-		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
-
-	/*
-	 * The architecture has been updated to explicitly tell us if
-	 * we're not vulnerable.
-	 */
-	id = READ_SPECIALREG(id_aa64pfr0_el1);
-	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_HCXT) {
-		ci->ci_flush_bp = cpu_flush_bp_noop;
-		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
-	}
-
+	cpu_mitigate_spectre_v2(ci);
+	cpu_mitigate_spectre_bhb(ci);
 	cpu_mitigate_spectre_v4(ci);
 
 	/*
