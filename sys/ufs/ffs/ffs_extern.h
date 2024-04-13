@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.47 2024/04/11 16:31:30 otto Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.48 2024/04/13 15:07:10 jca Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -59,17 +59,17 @@
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "sd_tickdelay", CTLTYPE_INT }, \
-	{ "sd_worklist_push", CTLTYPE_INT }, \
-	{ "sd_blk_limit_push", CTLTYPE_INT }, \
-	{ "sd_ino_limit_push", CTLTYPE_INT }, \
-	{ "sd_blk_limit_hit", CTLTYPE_INT }, \
-	{ "sd_ino_limit_hit", CTLTYPE_INT }, \
-	{ "sd_sync_limit_hit", CTLTYPE_INT }, \
-	{ "sd_indir_blk_ptrs", CTLTYPE_INT }, \
-	{ "sd_inode_bitmap", CTLTYPE_INT }, \
-	{ "sd_direct_blk_ptrs", CTLTYPE_INT }, \
-	{ "sd_dir_entry", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 	{ "dirhash_dirsize", CTLTYPE_INT }, \
 	{ "dirhash_maxmem", CTLTYPE_INT }, \
 	{ "dirhash_mem", CTLTYPE_INT }, \
