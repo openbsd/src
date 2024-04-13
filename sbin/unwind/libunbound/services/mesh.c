@@ -69,6 +69,12 @@
 #include "edns-subnet/subnetmod.h"
 #include "edns-subnet/edns-subnet.h"
 #endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
 
 /**
  * Compare two response-ip client info entries for the purpose of mesh state
@@ -1197,6 +1203,8 @@ mesh_do_callback(struct mesh_state* m, int rcode, struct reply_info* rep,
 		r->edns.udp_size = EDNS_ADVERTISED_SIZE;
 		r->edns.ext_rcode = 0;
 		r->edns.bits &= EDNS_DO;
+		if(m->s.env->cfg->disable_edns_do && (r->edns.bits&EDNS_DO))
+			r->edns.edns_present = 0;
 
 		if(!inplace_cb_reply_call(m->s.env, &m->s.qinfo, &m->s, rep,
 			LDNS_RCODE_NOERROR, &r->edns, NULL, m->s.region, start_time) ||
@@ -1224,11 +1232,12 @@ static inline int
 mesh_is_rpz_respip_tcponly_action(struct mesh_state const* m)
 {
 	struct respip_action_info const* respip_info = m->s.respip_action_info;
-	return respip_info == NULL
+	return (respip_info == NULL
 			? 0
 			: (respip_info->rpz_used
 			&& !respip_info->rpz_disabled
-			&& respip_info->action == respip_truncate);
+			&& respip_info->action == respip_truncate))
+		|| m->s.tcp_required;
 }
 
 static inline int
@@ -1371,6 +1380,8 @@ mesh_send_reply(struct mesh_state* m, int rcode, struct reply_info* rep,
 		r->edns.udp_size = EDNS_ADVERTISED_SIZE;
 		r->edns.ext_rcode = 0;
 		r->edns.bits &= EDNS_DO;
+		if(m->s.env->cfg->disable_edns_do && (r->edns.bits&EDNS_DO))
+			r->edns.edns_present = 0;
 		m->s.qinfo.qname = r->qname;
 		m->s.qinfo.local_alias = r->local_alias;
 
@@ -1424,7 +1435,9 @@ mesh_send_reply(struct mesh_state* m, int rcode, struct reply_info* rep,
 	if(m->s.env->cfg->log_replies) {
 		log_reply_info(NO_VERBOSE, &m->s.qinfo,
 			&r->query_reply.client_addr,
-			r->query_reply.client_addrlen, duration, 0, r_buffer);
+			r->query_reply.client_addrlen, duration, 0, r_buffer,
+			(m->s.env->cfg->log_destaddr?(void*)r->query_reply.c->socket->addr->ai_addr:NULL),
+			r->query_reply.c->type);
 	}
 }
 
