@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.15 2024/03/18 21:57:22 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.16 2024/04/13 14:20:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -210,14 +210,6 @@ psci_flush_bp_smccc_arch_workaround_1(void)
 	struct psci_softc *sc = psci_sc;
 
 	(*sc->sc_callfn)(SMCCC_ARCH_WORKAROUND_1, 0, 0, 0);
-}
-
-void
-psci_flush_bp_smccc_arch_workaround_3(void)
-{
-	struct psci_softc *sc = psci_sc;
-
-	(*sc->sc_callfn)(SMCCC_ARCH_WORKAROUND_3, 0, 0, 0);
 }
 
 void

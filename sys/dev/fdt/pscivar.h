@@ -17,7 +17,6 @@ int32_t	psci_cpu_on(register_t, register_t, register_t);
 int32_t	psci_cpu_off(void);
 int32_t	psci_cpu_suspend(register_t, register_t, register_t);
 void	psci_flush_bp(void);
-int	psci_flush_bp_has_bhb(void);
 int	psci_method(void);
 
 int32_t	smccc(uint32_t, register_t, register_t, register_t);
