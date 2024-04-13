@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.144 2023/08/11 11:24:55 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.145 2024/04/13 15:58:10 jrick Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1950,8 +1950,8 @@ parsekeyfile(char *filename, struct iked_auth *auth)
 
 	if ((fd = open(filename, O_RDONLY)) == -1)
 		err(1, "open %s", filename);
-	if (fstat(fd, &sb) == -1)
-		err(1, "parsekeyfile: stat %s", filename);
+	if (check_file_secrecy(fd, filename) == -1)
+		exit(1);
 	if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
 		errx(1, "%s: key too %s", filename, sb.st_size ? "large" :
 		    "small");
