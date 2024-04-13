@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.182 2024/02/26 18:00:09 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.183 2024/04/13 23:44:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -786,7 +786,7 @@ iwx_alloc_fw_monitor(struct iwx_softc *sc, uint8_t max_power)
 	}
 
 	if (max_power > 26) {
-		 DPRINTF(("%s: External buffer size for monitor is too big %d, "
+		DPRINTF(("%s: External buffer size for monitor is too big %d, "
 		     "check the FW TLV\n", DEVNAME(sc), max_power));
 		return 0;
 	}
@@ -7211,7 +7211,7 @@ iwx_rval2ridx(int rval)
 			break;
 	}
 
-       return ridx;
+	return ridx;
 }
 
 void
@@ -9831,7 +9831,7 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			 * For v5 and above, we can check the version, for older
 			 * versions we need to check the size.
 			 */
-			 if (iwx_lookup_notif_ver(sc, IWX_LEGACY_GROUP,
+			if (iwx_lookup_notif_ver(sc, IWX_LEGACY_GROUP,
 			    IWX_ALIVE) == 6) {
 				SYNC_RESP_STRUCT(resp6, pkt);
 				if (iwx_rx_packet_payload_len(pkt) !=
@@ -10880,7 +10880,7 @@ iwx_find_device_cfg(struct iwx_softc *sc)
 	cores = IWX_SUBDEVICE_CORES(sdev_id);
 
 	for (i = nitems(iwx_dev_info_table) - 1; i >= 0; i--) {
-		 const struct iwx_dev_info *dev_info = &iwx_dev_info_table[i];
+		const struct iwx_dev_info *dev_info = &iwx_dev_info_table[i];
 
 		if (dev_info->device != (uint16_t)IWX_CFG_ANY &&
 		    dev_info->device != sc->sc_pid)

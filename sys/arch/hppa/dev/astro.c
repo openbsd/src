@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.18 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: astro.c,v 1.19 2024/04/13 23:44:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -407,8 +407,8 @@ iommu_iomap_load_map(struct astro_softc *sc, bus_dmamap_t map, int flags)
 		     pa < paend; pa += PAGE_SIZE, va += PAGE_SIZE) {
 			err = iommu_iomap_insert_page(ims, va, pa);
 			if (err) {
-                               printf("iomap insert error: %d for "
-                                    "va 0x%lx pa 0x%lx\n", err, va, pa);
+				printf("iomap insert error: %d for "
+				    "va 0x%lx pa 0x%lx\n", err, va, pa);
 				bus_dmamap_unload(sc->sc_dmat, map);
 				iommu_iomap_clear_pages(ims);
 			}

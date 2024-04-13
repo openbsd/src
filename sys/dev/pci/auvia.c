@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.66 2022/10/26 20:19:08 kn Exp $ */
+/*	$OpenBSD: auvia.c,v 1.67 2024/04/13 23:44:11 jsg Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -611,7 +611,7 @@ auvia_set_params(void *addr, int setmode, int usemode,
 				if (p->channels == 6
 				    && codec->vtbl->set_rate(codec, reg,
 				    &p->sample_rate))
- 				return (EINVAL);
+ 					return (EINVAL);
 			}
  		}
 

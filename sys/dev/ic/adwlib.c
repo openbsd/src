@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.29 2022/08/29 06:08:03 jsg Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.30 2024/04/13 23:44:11 jsg Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -315,9 +315,9 @@ AdwInitFromEEPROM(ADW_SOFTC *sc)
 					 */
 					lsw_msb |= (ADW_EEPROM_INTAB >> 8)
 							 & 0xFF;
-				 }
-				 eep_config.cfg_lsw &= 0x00FF;
-				 eep_config.cfg_lsw |= lsw_msb << 8;
+				}
+				eep_config.cfg_lsw &= 0x00FF;
+				eep_config.cfg_lsw |= lsw_msb << 8;
 			}
 			break;
 		}

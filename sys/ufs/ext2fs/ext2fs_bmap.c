@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.28 2021/12/12 09:14:59 visa Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.29 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp,
 	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 
 #ifdef DIAGNOSTIC
-    if (num > NIADDR + 1 || num < 1) {
+	if (num > NIADDR + 1 || num < 1) {
 		printf("ext2fs_bmaparray: num=%d\n", num);
 		panic("ext2fs_bmaparray: num");
 	}

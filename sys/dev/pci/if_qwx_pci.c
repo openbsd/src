@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.14 2024/02/22 09:15:34 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.15 2024/04/13 23:44:11 jsg Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -2901,7 +2901,7 @@ qwx_mhi_start(struct qwx_pci_softc *psc)
 #endif
 
 	/* Transition to primary runtime. */
-	 if (MHI_IN_PBL(ee)) {
+	if (MHI_IN_PBL(ee)) {
 		ret = qwx_mhi_fw_load_handler(psc);
 		if (ret)
 			return ret;

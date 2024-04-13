@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.56 2023/10/24 09:13:22 jmatthew Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.57 2024/04/13 23:44:11 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -3135,7 +3135,7 @@ umb_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (total_len < UCDC_NOTIFICATION_LENGTH) {
 		DPRINTF("%s: short notification (%d<%d)\n", DEVNAM(sc),
 		    total_len, UCDC_NOTIFICATION_LENGTH);
-		    return;
+		return;
 	}
 	if (sc->sc_intr_msg.bmRequestType != UCDC_NOTIFICATION) {
 		DPRINTF("%s: unexpected notification (type=0x%02x)\n",

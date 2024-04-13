@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.265 2024/01/08 19:52:29 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.266 2024/04/13 23:44:11 jsg Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -4249,7 +4249,7 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 		/* Name: Nt */
 		rv = opargs[0];
 		aml_freevalue(rv);
-			aml_copyvalue(rv, opargs[1]);
+		aml_copyvalue(rv, opargs[1]);
 		break;
 	case AMLOP_ALIAS:
 		/* Alias: nN */

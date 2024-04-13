@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.119 2024/04/11 18:58:44 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.120 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -510,9 +510,9 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend, u_int maxctx, u_int numcpus
 
 			/* And the rest of the virtual page. */
 			if (prom_claim_virt(newkv, szdiff) != newkv)
-			prom_printf("pmap_bootstrap: could not claim "
-				"virtual dseg extension "
-				"at size %lx\r\n", newkv, szdiff);
+				prom_printf("pmap_bootstrap: could not claim "
+				    "virtual dseg extension "
+				    "at size %lx\r\n", newkv, szdiff);
 
 			/* Make sure all 4MB are mapped */
 			prom_map_phys(newkp, szdiff, newkv, -1);

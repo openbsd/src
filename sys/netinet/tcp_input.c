@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.403 2024/04/12 16:07:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.404 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1078,12 +1078,13 @@ findpcb:
 	 * Receive window is amount of space in rcv queue,
 	 * but not less than advertised window.
 	 */
-	{ int win;
+	{
+		int win;
 
-	win = sbspace(so, &so->so_rcv);
-	if (win < 0)
-		win = 0;
-	tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
+		win = sbspace(so, &so->so_rcv);
+		if (win < 0)
+			win = 0;
+		tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
 	}
 
 	switch (tp->t_state) {

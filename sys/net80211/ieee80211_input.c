@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.251 2024/03/15 17:45:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.252 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -1901,7 +1901,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		 * This probe response indicates the AP is still serving us
 		 * so don't allow ieee80211_watchdog() to move us into SCAN.
 		 */
-		 if ((ic->ic_flags & IEEE80211_F_BGSCAN) == 0)
+		if ((ic->ic_flags & IEEE80211_F_BGSCAN) == 0)
 		 	ic->ic_mgt_timer = 0;
 	}
 	/*

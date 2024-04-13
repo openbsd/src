@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.16 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.17 2024/04/13 23:44:11 jsg Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -202,19 +202,18 @@ toshiba_update_brightness(void *arg0, int arg1)
 int
 toshiba_match(struct device *parent, void *match, void *aux)
 {
-      struct acpi_attach_args *aa = aux;
-      struct cfdata	      *cf = match;
+	struct acpi_attach_args *aa = aux;
+	struct cfdata	      *cf = match;
 
-        if (acpi_matchhids(aa, acpitoshiba_hids, cf->cf_driver->cd_name))
-                return (1);
+	if (acpi_matchhids(aa, acpitoshiba_hids, cf->cf_driver->cd_name))
+		return (1);
 
 	if (aa->aaa_name == NULL ||
-	   strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
-	   aa->aaa_table != NULL)
-	      return (0);
+	    strcmp(aa->aaa_name, cf->cf_driver->cd_name) != 0 ||
+	    aa->aaa_table != NULL)
+		return (0);
 
-      return (1);
-
+	return (1);
 }
 
 int

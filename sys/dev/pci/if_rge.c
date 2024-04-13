@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.23 2023/12/22 05:28:14 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.24 2024/04/13 23:44:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023 Kevin Lo <kevlo@openbsd.org>
@@ -1250,7 +1250,7 @@ rge_rxeof(struct rge_queues *q)
 			 * If this is part of a multi-fragment packet,
 			 * discard all the pieces.
 			 */
-			 if (q->q_rx.rge_head != NULL) {
+			if (q->q_rx.rge_head != NULL) {
 				m_freem(q->q_rx.rge_head);
 				q->q_rx.rge_head = q->q_rx.rge_tail = NULL;
 			}

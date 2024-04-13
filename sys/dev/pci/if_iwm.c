@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.414 2024/02/16 11:44:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.415 2024/04/13 23:44:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8169,7 +8169,7 @@ iwm_rval2ridx(int rval)
 			break;
 	}
 
-       return ridx;
+	return ridx;
 }
 
 void

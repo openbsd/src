@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.47 2023/10/10 11:25:31 bluhm Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.48 2024/04/13 23:44:11 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -382,7 +382,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 	if ((fp = pf_osfp_find_exact(&fpadd))) {
 		struct pf_osfp_entry *tentry;
 
-		 SLIST_FOREACH(tentry, &fp->fp_oses, fp_entry) {
+		SLIST_FOREACH(tentry, &fp->fp_oses, fp_entry) {
 			if (PF_OSFP_ENTRY_EQ(tentry, &fpioc->fp_os)) {
 				PF_UNLOCK();
 				pool_put(&pf_osfp_entry_pl, entry);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.89 2022/04/16 19:19:59 naddy Exp $ */
+/*	$OpenBSD: siop.c,v 1.90 2024/04/13 23:44:11 jsg Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ siop_intr(void *v)
 			 * unexpected disconnect. Usually the target signals
 			 * a fatal condition this way. Attempt to get sense.
 			 */
-			 if (siop_cmd) {
+			if (siop_cmd) {
 				siop_cmd->cmd_tables->status =
 				    siop_htoc32(&sc->sc_c, SCSI_CHECK);
 				goto end;

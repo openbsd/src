@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.109 2024/04/10 15:25:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.110 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -298,7 +298,7 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 
 		/* but a set is not */
 		printf("uao_set_swslot: uobj = %p\n", uobj);
-	    panic("uao_set_swslot: attempt to set a slot on a NOSWAP object");
+	    	panic("uao_set_swslot: attempt to set a slot on a NOSWAP object");
 	}
 
 	/*

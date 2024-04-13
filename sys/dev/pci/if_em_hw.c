@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.119 2023/12/03 00:19:25 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.120 2024/04/13 23:44:11 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -6432,9 +6432,9 @@ em_init_eeprom_params(struct em_hw *hw)
 	case em_pch2lan:
 	case em_pch_lpt:
 		{
-		int32_t         i = 0;
-		uint32_t        flash_size = 
-		    E1000_READ_ICH_FLASH_REG(hw, ICH_FLASH_GFPREG);
+			int32_t		i = 0;
+			uint32_t	flash_size = 
+			    E1000_READ_ICH_FLASH_REG(hw, ICH_FLASH_GFPREG);
 			eeprom->type = em_eeprom_ich8;
 			eeprom->use_eerd = FALSE;
 			eeprom->use_eewr = FALSE;

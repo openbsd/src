@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.194 2024/03/25 17:57:07 guenther Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.195 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -336,9 +336,9 @@ nfs_access(void *v)
 	 * Check access cache first. If a request has been made for this uid
 	 * shortly before, use the cached result.
 	 */
-	 cachevalid = (np->n_accstamp != -1 &&
-	     (gettime() - np->n_accstamp) < nfs_attrtimeo(np) &&
-	     np->n_accuid == ap->a_cred->cr_uid);
+	cachevalid = (np->n_accstamp != -1 &&
+	    (gettime() - np->n_accstamp) < nfs_attrtimeo(np) &&
+	    np->n_accuid == ap->a_cred->cr_uid);
 
 	if (cachevalid) {
 		if (!np->n_accerror) {
@@ -408,7 +408,7 @@ nfs_access(void *v)
 	 * If we got the same result as for a previous, different request, OR
 	 * it in. Don't update the timestamp in that case.
 	 */
-	 if (!error || error == EACCES) {
+	if (!error || error == EACCES) {
 		if (cachevalid && np->n_accstamp != -1 &&
 		    error == np->n_accerror) {
 			if (!error)

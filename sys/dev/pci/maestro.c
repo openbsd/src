@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.50 2022/10/28 15:09:46 kn Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.51 2024/04/13 23:44:11 jsg Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -900,7 +900,7 @@ maestro_set_speed(struct maestro_channel *ch, u_long *prate)
 	} else {
 		/* compute 16 bits fixed point value of speed/48000,
 		 * being careful not to overflow */
-		 ch->dv = (((ch->speed % 48000) << 16U) + 24000) / 48000
+		ch->dv = (((ch->speed % 48000) << 16U) + 24000) / 48000
 		    + ((ch->speed / 48000) << 16U);
 		/* And this is the real rate obtained */
 		ch->speed = (ch->dv >> 16U) * 48000 + 

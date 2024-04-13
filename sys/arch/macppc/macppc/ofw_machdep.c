@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.64 2021/03/11 11:16:59 jsg Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.65 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ ofw_find_keyboard(void)
 		 * use the builtin ADB one for console, the USB one is
 		 * certainly a HID device.
 		 */
-		 if (strncmp(iname, "PowerBook", 9) == 0)
+		if (strncmp(iname, "PowerBook", 9) == 0)
 			ofw_have_kbd = OFW_HAVE_ADBKBD;
 		else
 			ofw_have_kbd = OFW_HAVE_USBKBD;

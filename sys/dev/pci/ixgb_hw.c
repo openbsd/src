@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.c,v 1.9 2022/01/09 05:42:56 jsg Exp $ */
+/* $OpenBSD: ixgb_hw.c,v 1.10 2024/04/13 23:44:11 jsg Exp $ */
 
 /* ixgb_hw.c
  * Shared functions for accessing and configuring the adapter
@@ -83,14 +83,14 @@ ixgb_mac_reset(struct ixgb_hw *hw)
 {
 	uint32_t ctrl_reg;
 
-    ctrl_reg =  IXGB_CTRL0_RST |
-                IXGB_CTRL0_SDP3_DIR |   /* All pins are Output=1 */
-                IXGB_CTRL0_SDP2_DIR |
-                IXGB_CTRL0_SDP1_DIR |
-                IXGB_CTRL0_SDP0_DIR |
-                IXGB_CTRL0_SDP3     |   /* Initial value 1101   */
-                IXGB_CTRL0_SDP2     |
-                IXGB_CTRL0_SDP0;
+	ctrl_reg =  IXGB_CTRL0_RST |
+	    IXGB_CTRL0_SDP3_DIR |   /* All pins are Output=1 */
+	    IXGB_CTRL0_SDP2_DIR |
+	    IXGB_CTRL0_SDP1_DIR |
+	    IXGB_CTRL0_SDP0_DIR |
+	    IXGB_CTRL0_SDP3     |   /* Initial value 1101   */
+	    IXGB_CTRL0_SDP2     |
+	    IXGB_CTRL0_SDP0;
 
 #ifdef HP_ZX1
 	/* Workaround for 82597EX reset errata */

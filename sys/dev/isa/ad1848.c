@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.48 2022/10/28 14:55:46 kn Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.49 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -1244,19 +1244,20 @@ ad1848_set_speed(struct ad1848_softc *sc, u_long *argp)
 	if (arg > speed_table[n - 1].speed)
 		selected = n - 1;
 
-	for (i = 1 /*really*/ ; selected == -1 && i < n; i++)
+	for (i = 1 /*really*/ ; selected == -1 && i < n; i++) {
 		if (speed_table[i].speed == arg)
 			selected = i;
 		else if (speed_table[i].speed > arg) {
 			int diff1, diff2;
 
-		diff1 = arg - speed_table[i - 1].speed;
-		diff2 = speed_table[i].speed - arg;
+			diff1 = arg - speed_table[i - 1].speed;
+			diff2 = speed_table[i].speed - arg;
 
-		if (diff1 < diff2)
-			selected = i - 1;
-		else
-			selected = i;
+			if (diff1 < diff2)
+				selected = i - 1;
+			else
+				selected = i;
+		}
 	}
 
 	if (selected == -1) {

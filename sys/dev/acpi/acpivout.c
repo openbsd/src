@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.25 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.26 2024/04/13 23:44:11 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <paul@irofti.net>
  *
@@ -259,7 +259,7 @@ acpivout_get_bcl(struct acpivout_softc *sc)
 		value = aml_val2int(res.v_package[i + 2]);
 		for (j = i; j > 0 && sc->sc_bcl[j - 1] > value; j--)
 			sc->sc_bcl[j] = sc->sc_bcl[j - 1];
-		 sc->sc_bcl[j] = value;
+		sc->sc_bcl[j] = value;
 	}
 
 err:

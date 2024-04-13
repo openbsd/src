@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.79 2022/04/21 21:03:02 stsp Exp $	*/
+/*	$OpenBSD: an.c,v 1.80 2024/04/13 23:44:11 jsg Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -905,7 +905,7 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		if ((error = suser(curproc)) != 0)
 			break;
 		error = an_set_nwkey(sc, (struct ieee80211_nwkey *)data);
-			break;
+		break;
 	case SIOCG80211NWKEY:
 		error = an_get_nwkey(sc, (struct ieee80211_nwkey *)data);
 		break;

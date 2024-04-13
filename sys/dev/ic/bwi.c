@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.134 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.135 2024/04/13 23:44:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -6400,7 +6400,7 @@ bwi_led_attach(struct bwi_softc *sc)
 		if (led->l_act == BWI_LED_ACT_BLINK_SLOW ||
 		    led->l_act == BWI_LED_ACT_BLINK_POLL ||
 		    led->l_act == BWI_LED_ACT_BLINK) {
-		    led->l_flags |= BWI_LED_F_BLINK;
+		    	led->l_flags |= BWI_LED_F_BLINK;
 			if (led->l_act == BWI_LED_ACT_BLINK_POLL)
 				led->l_flags |= BWI_LED_F_POLLABLE;
 			else if (led->l_act == BWI_LED_ACT_BLINK_SLOW)

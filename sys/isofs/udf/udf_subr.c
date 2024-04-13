@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.26 2022/09/01 13:45:26 krw Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.27 2024/04/13 23:44:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -201,7 +201,7 @@ udf_vat_get(struct umount *ump, uint32_t lb)
 	up->u_vatlen = (letoh64(up->u_fentry->inf_len) - 36) >> 2;
 
 	ump->um_vat = malloc(sizeof(struct unode), M_UDFMOUNT, M_WAITOK);
-       *ump->um_vat = *up;
+	*ump->um_vat = *up;
 
 	ump->um_flags &= ~UDF_MNT_FIND_VAT;
 	ump->um_flags |=  UDF_MNT_USES_VAT;

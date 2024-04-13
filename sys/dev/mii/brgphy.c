@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.108 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.109 2024/04/13 23:44:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -836,7 +836,7 @@ brgphy_reset_bge(struct mii_softc *sc)
 	if (bge_sc->bge_phy_flags & BGE_PHY_BER_BUG)
 		brgphy_ber_bug(sc);
 	else if (bge_sc->bge_phy_flags & BGE_PHY_JITTER_BUG) {
-	    PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
+	    	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x0c00);
 		PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x000a);
 
 		if (bge_sc->bge_phy_flags & BGE_PHY_ADJUST_TRIM) {
@@ -925,7 +925,7 @@ brgphy_reset_bnx(struct mii_softc *sc)
 			PHY_WRITE(sc, BRGPHY_5708S_PG5_TXACTL3,
 			    bnx_sc->bnx_port_hw_cfg &
 			    BNX_PORT_HW_CFG_CFG_TXCTL3_MASK);
-			    PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
+			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
 			    BRGPHY_5708S_DIG_PG0);
 		}
 	} else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709 &&
