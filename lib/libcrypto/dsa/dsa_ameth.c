@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.57 2024/01/04 17:01:26 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.58 2024/04/13 13:57:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -634,8 +634,7 @@ dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 			hnid = OBJ_obj2nid(alg1->algorithm);
 			if (hnid == NID_undef)
 				return -1;
-			if (!OBJ_find_sigid_by_algs(&snid, hnid,
-			    EVP_PKEY_id(pkey)))
+			if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
 				return -1;
 			X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF,
 			    0);
