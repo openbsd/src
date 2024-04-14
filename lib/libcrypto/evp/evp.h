@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.133 2024/04/10 15:00:38 beck Exp $ */
+/* $OpenBSD: evp.h,v 1.134 2024/04/14 14:14:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -330,11 +330,6 @@ typedef int EVP_PBE_KEYGEN(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                                         (char *)(eckey))
 #endif
 
-#ifndef OPENSSL_NO_GOST
-#define EVP_PKEY_assign_GOST(pkey,gostkey) EVP_PKEY_assign((pkey),EVP_PKEY_GOSTR01,\
-                                        (char *)(gostkey))
-#endif
-
 /* Add some extra combinations */
 #define EVP_get_digestbynid(a) EVP_get_digestbyname(OBJ_nid2sn(a))
 #define EVP_get_digestbyobj(a) EVP_get_digestbynid(OBJ_obj2nid(a))
@@ -602,12 +597,6 @@ const EVP_MD *EVP_ripemd160(void);
 #ifndef OPENSSL_NO_WHIRLPOOL
 const EVP_MD *EVP_whirlpool(void);
 #endif
-#ifndef OPENSSL_NO_GOST
-const EVP_MD *EVP_gostr341194(void);
-const EVP_MD *EVP_gost2814789imit(void);
-const EVP_MD *EVP_streebog256(void);
-const EVP_MD *EVP_streebog512(void);
-#endif
 const EVP_CIPHER *EVP_enc_null(void);		/* does nothing :-) */
 #ifndef OPENSSL_NO_DES
 const EVP_CIPHER *EVP_des_ecb(void);
@@ -735,12 +724,6 @@ const EVP_CIPHER *EVP_camellia_256_ofb(void);
 const EVP_CIPHER *EVP_chacha20(void);
 #endif
 
-#ifndef OPENSSL_NO_GOST
-const EVP_CIPHER *EVP_gost2814789_ecb(void);
-const EVP_CIPHER *EVP_gost2814789_cfb64(void);
-const EVP_CIPHER *EVP_gost2814789_cnt(void);
-#endif
-
 #ifndef OPENSSL_NO_SM4
 const EVP_CIPHER *EVP_sm4_ecb(void);
 const EVP_CIPHER *EVP_sm4_cbc(void);
@@ -819,9 +802,6 @@ struct ec_key_st;
 struct ec_key_st *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey);
 struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, struct ec_key_st *key);
-#endif
-#ifndef OPENSSL_NO_GOST
-struct gost_key_st;
 #endif
 
 EVP_PKEY *EVP_PKEY_new(void);
