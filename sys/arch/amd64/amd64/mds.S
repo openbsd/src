@@ -1,4 +1,4 @@
-/*	$OpenBSD: mds.S,v 1.4 2023/04/22 18:27:28 guenther Exp $	*/
+/*	$OpenBSD: mds.S,v 1.5 2024/04/14 09:59:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -77,6 +77,8 @@ END(mds_handler_bdw)
 ENTRY(mds_handler_skl)
 	xorl	%ecx,%ecx
 	xgetbv
+	testb	$XFEATURE_AVX512,%al
+	jne	mds_handler_skl_avx512
 	testb	$XFEATURE_AVX,%al
 	jne	mds_handler_skl_avx
 	jmp	mds_handler_skl_sse
@@ -136,14 +138,12 @@ ENTRY(mds_handler_skl_avx)
 	lfence
 END(mds_handler_skl_avx)
 
-/* we don't support AVX512 yet */
-#if 0
 ENTRY(mds_handler_skl_avx512)
 	RETGUARD_SETUP(mds_handler_skl_avx512, r11)
 	movq	CPUVAR(MDS_BUF),%rax
 	leaq	64(%rax),%rdi
 	vmovdqa64	%zmm0,CPUVAR(MDS_TMP)
-	vpxor	%zmm0,%zmm0,%zmm0
+	vpxorq	%zmm0,%zmm0,%zmm0
 
 	lfence
 	vorpd	(%rax),%zmm0,%zmm0
@@ -164,7 +164,6 @@ ENTRY(mds_handler_skl_avx512)
 	retq
 	lfence
 END(mds_handler_skl_avx512)
-#endif
 
 ENTRY(mds_handler_silvermont)
 	RETGUARD_SETUP(mds_handler_silvermont, r11)

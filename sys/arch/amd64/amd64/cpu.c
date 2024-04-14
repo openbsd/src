@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.185 2024/04/03 02:01:21 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.186 2024/04/14 09:59:04 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -294,6 +294,7 @@ replacemds(void)
 	static int replacedone = 0;
 	extern long mds_handler_bdw, mds_handler_ivb, mds_handler_skl;
 	extern long mds_handler_skl_sse, mds_handler_skl_avx;
+	extern long mds_handler_skl_avx512;
 	extern long mds_handler_silvermont, mds_handler_knights;
 	struct cpu_info *ci = &cpu_info_primary;
 	CPU_INFO_ITERATOR cii;
@@ -302,9 +303,9 @@ replacemds(void)
 	int use_verw = 0, s;
 	uint32_t cap = 0;
 
-	/* ci_mds_tmp must be 32byte aligned for AVX instructions */
+	/* ci_mds_tmp must be 64-byte aligned for AVX-512 instructions */
 	CTASSERT((offsetof(struct cpu_info, ci_mds_tmp) -
-		  offsetof(struct cpu_info, ci_PAGEALIGN)) % 32 == 0);
+		  offsetof(struct cpu_info, ci_PAGEALIGN)) % 64 == 0);
 
 	if (replacedone)
 		return;
@@ -358,8 +359,10 @@ replacemds(void)
 			 * Skylake, KabyLake, CoffeeLake, WhiskeyLake,
 			 * CascadeLake
 			 */
-			/* XXX mds_handler_skl_avx512 */
-			if (xgetbv(0) & XFEATURE_AVX) {
+			if (xgetbv(0) & XFEATURE_AVX512) {
+				handler = &mds_handler_skl_avx512;
+				type = "Skylake AVX-512";
+			} else if (xgetbv(0) & XFEATURE_AVX) {
 				handler = &mds_handler_skl_avx;
 				type = "Skylake AVX";
 			} else {
@@ -803,6 +806,7 @@ cpu_init(struct cpu_info *ci)
 		xsave_mask = XFEATURE_X87 | XFEATURE_SSE;
 		CPUID_LEAF(0xd, 0, eax, ebx, ecx, edx);
 		xsave_mask |= eax & XFEATURE_AVX;
+		xsave_mask |= eax & XFEATURE_AVX512;
 		xsetbv(0, xsave_mask);
 		CPUID_LEAF(0xd, 0, eax, ebx, ecx, edx);
 		if (CPU_IS_PRIMARY(ci)) {

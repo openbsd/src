@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.164 2024/04/03 02:01:21 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.165 2024/04/14 09:59:04 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ struct cpu_info {
 	u_int64_t ci_user_cr3;		/* [o] U-K page table */
 
 	/* bits for mitigating Micro-architectural Data Sampling */
-	char		ci_mds_tmp[32];	/* [o] 32byte aligned */
+	char		ci_mds_tmp[64];	/* [o] 64-byte aligned */
 	void		*ci_mds_buf;	/* [I] */
 
 	struct proc *ci_curproc;	/* [o] */

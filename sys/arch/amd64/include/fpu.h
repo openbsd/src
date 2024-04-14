@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.19 2023/07/10 03:32:10 guenther Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.20 2024/04/14 09:59:04 kettenis Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -40,7 +40,7 @@ struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
 	struct xstate_hdr fp_xstate;
 	u_int64_t fp_ymm[16][2];
-	u_int64_t fp_cet_u[2];
+	u_int8_t fp_components[1856];	/* enough for AVX-512 */
 };
 
 /*
