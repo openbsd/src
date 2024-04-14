@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.103 2024/01/11 14:15:12 bluhm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.104 2024/04/14 20:46:27 bluhm Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ const struct protosw inetsw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_RAW,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPINPUT,
   .pr_input	= rip_input,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreqs	= &rip_usrreqs,
@@ -377,7 +377,7 @@ const struct protosw inetsw[] = {
   /* raw wildcard */
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inetdomain,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPINPUT,
   .pr_input	= rip_input,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreqs	= &rip_usrreqs,

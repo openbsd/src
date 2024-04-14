@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.391 2024/02/28 10:57:20 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.392 2024/04/14 20:46:27 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -245,6 +245,30 @@ ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
 	if (af != AF_UNSPEC)
 		return nxt;
 
+	nxt = ip_deliver(mp, offp, nxt, AF_INET, 1);
+	if (nxt == IPPROTO_DONE)
+		return IPPROTO_DONE;
+
+	/* save values for later, use after dequeue */
+	if (*offp != sizeof(struct ip)) {
+		struct m_tag *mtag;
+		struct ipoffnxt *ion;
+
+		/* mbuf tags are expensive, but only used for header options */
+		mtag = m_tag_get(PACKET_TAG_IP_OFFNXT, sizeof(*ion),
+		    M_NOWAIT);
+		if (mtag == NULL) {
+			ipstat_inc(ips_idropped);
+			m_freemp(mp);
+			return IPPROTO_DONE;
+		}
+		ion = (struct ipoffnxt *)(mtag + 1);
+		ion->ion_off = *offp;
+		ion->ion_nxt = nxt;
+
+		m_tag_prepend(*mp, mtag);
+	}
+
 	niq_enqueue(&ipintrq, *mp);
 	*mp = NULL;
 	return IPPROTO_DONE;
@@ -260,18 +284,31 @@ ipintr(void)
 	struct mbuf *m;
 
 	while ((m = niq_dequeue(&ipintrq)) != NULL) {
-		struct ip *ip;
+		struct m_tag *mtag;
 		int off, nxt;
 
 #ifdef DIAGNOSTIC
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("ipintr no HDR");
 #endif
-		ip = mtod(m, struct ip *);
-		off = ip->ip_hl << 2;
-		nxt = ip->ip_p;
+		mtag = m_tag_find(m, PACKET_TAG_IP_OFFNXT, NULL);
+		if (mtag != NULL) {
+			struct ipoffnxt *ion;
 
-		nxt = ip_deliver(&m, &off, nxt, AF_INET);
+			ion = (struct ipoffnxt *)(mtag + 1);
+			off = ion->ion_off;
+			nxt = ion->ion_nxt;
+
+			m_tag_delete(m, mtag);
+		} else {
+			struct ip *ip;
+
+			ip = mtod(m, struct ip *);
+			off = ip->ip_hl << 2;
+			nxt = ip->ip_p;
+		}
+
+		nxt = ip_deliver(&m, &off, nxt, AF_INET, 0);
 		KASSERT(nxt == IPPROTO_DONE);
 	}
 }
@@ -675,15 +712,11 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 #endif
 
 int
-ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
+ip_deliver(struct mbuf **mp, int *offp, int nxt, int af, int shared)
 {
-	const struct protosw *psw;
-	int naf = af;
 #ifdef INET6
 	int nest = 0;
-#endif /* INET6 */
-
-	NET_ASSERT_LOCKED_EXCLUSIVE();
+#endif
 
 	/*
 	 * Tell launch routine the next header
@@ -691,13 +724,41 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 	IPSTAT_INC(delivered);
 
 	while (nxt != IPPROTO_DONE) {
+		const struct protosw *psw;
+		int naf;
+
+		switch (af) {
+		case AF_INET:
+			psw = &inetsw[ip_protox[nxt]];
+			break;
+#ifdef INET6
+		case AF_INET6:
+			psw = &inet6sw[ip6_protox[nxt]];
+			break;
+#endif
+		}
+		if (shared && !ISSET(psw->pr_flags, PR_MPINPUT)) {
+			/* delivery not finished, decrement counter, queue */
+			switch (af) {
+			case AF_INET:
+				counters_dec(ipcounters, ips_delivered);
+				break;
+#ifdef INET6
+			case AF_INET6:
+				counters_dec(ip6counters, ip6s_delivered);
+				break;
+#endif
+			}
+			break;
+		}
+
 #ifdef INET6
 		if (af == AF_INET6 &&
 		    ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
 			ip6stat_inc(ip6s_toomanyhdr);
 			goto bad;
 		}
-#endif /* INET6 */
+#endif
 
 		/*
 		 * protection against faulty packet - there should be
@@ -716,7 +777,7 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 			}
 		}
 		/* Otherwise, just fall through and deliver the packet */
-#endif /* IPSEC */
+#endif
 
 		switch (nxt) {
 		case IPPROTO_IPV4:
@@ -728,17 +789,10 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 			naf = AF_INET6;
 			ip6stat_inc(ip6s_delivered);
 			break;
-#endif /* INET6 */
-		}
-		switch (af) {
-		case AF_INET:
-			psw = &inetsw[ip_protox[nxt]];
+#endif
+		default:
+			naf = af;
 			break;
-#ifdef INET6
-		case AF_INET6:
-			psw = &inet6sw[ip6_protox[nxt]];
-			break;
-#endif /* INET6 */
 		}
 		nxt = (*psw->pr_input)(mp, offp, nxt, af);
 		af = naf;

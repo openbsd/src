@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.259 2024/02/28 10:57:20 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.260 2024/04/14 20:46:27 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -166,11 +166,6 @@ ip6_init(void)
 #endif
 }
 
-struct ip6_offnxt {
-	int	ion_off;
-	int	ion_nxt;
-};
-
 /*
  * Enqueue packet for local delivery.  Queuing is used as a boundary
  * between the network layer (input/forward path) running with
@@ -190,10 +185,14 @@ ip6_ours(struct mbuf **mp, int *offp, int nxt, int af)
 	if (af != AF_UNSPEC)
 		return nxt;
 
+	nxt = ip_deliver(mp, offp, nxt, AF_INET6, 1);
+	if (nxt == IPPROTO_DONE)
+		return IPPROTO_DONE;
+
 	/* save values for later, use after dequeue */
 	if (*offp != sizeof(struct ip6_hdr)) {
 		struct m_tag *mtag;
-		struct ip6_offnxt *ion;
+		struct ipoffnxt *ion;
 
 		/* mbuf tags are expensive, but only used for header options */
 		mtag = m_tag_get(PACKET_TAG_IP6_OFFNXT, sizeof(*ion),
@@ -203,7 +202,7 @@ ip6_ours(struct mbuf **mp, int *offp, int nxt, int af)
 			m_freemp(mp);
 			return IPPROTO_DONE;
 		}
-		ion = (struct ip6_offnxt *)(mtag + 1);
+		ion = (struct ipoffnxt *)(mtag + 1);
 		ion->ion_off = *offp;
 		ion->ion_nxt = nxt;
 
@@ -234,9 +233,9 @@ ip6intr(void)
 #endif
 		mtag = m_tag_find(m, PACKET_TAG_IP6_OFFNXT, NULL);
 		if (mtag != NULL) {
-			struct ip6_offnxt *ion;
+			struct ipoffnxt *ion;
 
-			ion = (struct ip6_offnxt *)(mtag + 1);
+			ion = (struct ipoffnxt *)(mtag + 1);
 			off = ion->ion_off;
 			nxt = ion->ion_nxt;
 
@@ -248,7 +247,7 @@ ip6intr(void)
 			off = sizeof(struct ip6_hdr);
 			nxt = ip6->ip6_nxt;
 		}
-		nxt = ip_deliver(&m, &off, nxt, AF_INET6);
+		nxt = ip_deliver(&m, &off, nxt, AF_INET6, 0);
 		KASSERT(nxt == IPPROTO_DONE);
 	}
 }
