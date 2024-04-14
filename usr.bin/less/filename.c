@@ -107,6 +107,15 @@ metachar(char c)
 }
 
 /*
+ * Must use quotes rather than escape characters for this meta character.
+ */
+static int
+must_quote(char c)
+{
+	return (c == '\n');
+}
+
+/*
  * Insert a backslash before each metacharacter in a string.
  */
 char *
@@ -136,6 +145,9 @@ shell_quote(const char *s)
 				 * doesn't support escape chars.  Use quotes.
 				 */
 				use_quotes = 1;
+			} else if (must_quote(*p)) {
+				/* Opening quote + character + closing quote. */
+				len += 3;
 			} else {
 				/*
 				 * Allow space for the escape char.
@@ -155,14 +167,19 @@ shell_quote(const char *s)
 	} else {
 		newstr = r = ecalloc(len, sizeof (char));
 		while (*s != '\0') {
-			if (metachar(*s)) {
-				/*
-				 * Add the escape char.
-				 */
+			if (!metachar(*s)) {
+				*r++ = *s++;
+			} else if (must_quote(*s)) {
+				/* Surround the character with quotes. */
+				*r++ = openquote;
+				*r++ = *s++;
+				*r++ = closequote;
+			} else {
+				/* Escape the character. */
 				(void) strlcpy(r, esc, newstr + len - p);
 				r += esclen;
+				*r++ = *s++;
 			}
-			*r++ = *s++;
 		}
 		*r = '\0';
 	}
