@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.21 2019/06/28 13:32:41 deraadt Exp $ */
+/*	$OpenBSD: scandir.c,v 1.22 2024/04/14 11:21:08 florian Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 
 	/*
 	 * estimate the array size by taking the size of the directory file
-	 * and dividing it by a multiple of the minimum size entry. 
+	 * and dividing it by a multiple of the minimum size entry.
 	 */
 	arraysz = MAXIMUM(stb.st_size / 24, 16);
 	if (arraysz > SIZE_MAX / sizeof(struct dirent *)) {
@@ -96,7 +96,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 		 */
 		if (nitems >= arraysz) {
 			struct dirent **nnames;
-			
+
 			if (fstat(dirp->dd_fd, &stb) == -1)
 				goto fail;
 
