@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_errs.c,v 1.4 2023/10/22 12:20:07 otto Exp $	*/
+/*	$OpenBSD: malloc_errs.c,v 1.5 2024/04/14 17:47:41 otto Exp $	*/
 /*
  * Copyright (c) 2023 Otto Moerbeek <otto@drijf.net>
  *
@@ -20,6 +20,7 @@
 #include <err.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -231,7 +232,16 @@ void
 t22(void)
 {
 	int i, j;
-	unsigned char *p = malloc(32);
+	unsigned char *p;
+	while (1) {
+		uintptr_t address;
+		p = malloc(32);
+		address = (uintptr_t)(void *)p;
+		/* we don't want to have a chunk on the last slot of a page */
+		if (address / getpagesize() == (address + 32) / getpagesize())
+			break;
+		free(p);
+	}
 	p[32] = 0;
 	for (i = 0; i < 10000; i++)
 		p = malloc(32);
