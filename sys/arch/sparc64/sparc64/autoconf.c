@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.148 2024/04/08 19:59:28 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.149 2024/04/14 19:08:09 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -169,6 +169,16 @@ char sun4v_soft_state_running[] __align32 = "OpenBSD running";
 void	sun4v_interrupt_init(void);
 void	sun4v_sdio_init(void);
 #endif
+
+extern void us_tlb_flush_pte(vaddr_t, uint64_t);
+extern void us3_tlb_flush_pte(vaddr_t, uint64_t);
+extern void sun4v_tlb_flush_pte(vaddr_t, uint64_t);
+extern void us_tlb_flush_ctx(uint64_t);
+extern void us3_tlb_flush_ctx(uint64_t);
+extern void sun4v_tlb_flush_ctx(uint64_t);
+
+void (*sp_tlb_flush_pte)(vaddr_t, uint64_t) = us_tlb_flush_pte;
+void (*sp_tlb_flush_ctx)(uint64_t) = us_tlb_flush_ctx;
 
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1
@@ -342,6 +352,8 @@ bootstrap(int nctx)
 		}
 
 		cacheinfo.c_dcache_flush_page = us3_dcache_flush_page;
+		sp_tlb_flush_pte = us3_tlb_flush_pte;
+		sp_tlb_flush_ctx = us3_tlb_flush_ctx;
 	}
 
 	if ((impl >= IMPL_ZEUS && impl <= IMPL_JUPITER) || CPU_ISSUN4V) {
@@ -375,22 +387,6 @@ bootstrap(int nctx)
 
 #ifdef SUN4V
 	if (CPU_ISSUN4V) {
-		u_int32_t insn;
-		int32_t disp;
-
-		disp = (vaddr_t)hv_mmu_demap_page - (vaddr_t)sp_tlb_flush_pte;
-		insn = 0x10800000 | disp >> 2;	/* ba hv_mmu_demap_page */
-		((u_int32_t *)sp_tlb_flush_pte)[0] = insn;
-		insn = 0x94102003; 		/* mov MAP_ITLB|MAP_DTLB, %o2 */
-		((u_int32_t *)sp_tlb_flush_pte)[1] = insn;
-
-		disp =  (vaddr_t)hv_mmu_demap_ctx - (vaddr_t)sp_tlb_flush_ctx;
-		insn = 0x10800000 | disp >> 2;	/* ba hv_mmu_demap_ctx */
-		((u_int32_t *)sp_tlb_flush_ctx)[0] = insn;
-		insn = 0x92102003; 		/* mov MAP_ITLB|MAP_DTLB, %o1 */
-		((u_int32_t *)sp_tlb_flush_ctx)[1] = insn;
-
-	{
 		struct sun4v_patch {
 			u_int32_t addr;
 			u_int32_t insn;
@@ -413,8 +409,9 @@ bootstrap(int nctx)
 			flush((void *)(vaddr_t)p->addr);
 		}
 #endif
-	}
 
+		sp_tlb_flush_pte = sun4v_tlb_flush_pte;
+		sp_tlb_flush_ctx = sun4v_tlb_flush_ctx;
 	}
 #endif
 

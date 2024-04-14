@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.21 2024/04/11 18:58:44 miod Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.22 2024/04/14 19:08:09 miod Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -211,9 +211,9 @@ sun4v_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 }
 
 void
-smp_tlb_flush_pte(vaddr_t va, int ctx)
+smp_tlb_flush_pte(vaddr_t va, uint64_t ctx)
 {
-	sp_tlb_flush_pte(va, ctx);
+	(*sp_tlb_flush_pte)(va, ctx);
 
 	if (db_active)
 		return;
@@ -225,9 +225,9 @@ smp_tlb_flush_pte(vaddr_t va, int ctx)
 }
 
 void
-smp_tlb_flush_ctx(int ctx)
+smp_tlb_flush_ctx(uint64_t ctx)
 {
-	sp_tlb_flush_ctx(ctx);
+	(*sp_tlb_flush_ctx)(ctx);
 
 	if (db_active)
 		return;

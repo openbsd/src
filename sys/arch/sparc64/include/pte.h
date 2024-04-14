@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.16 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.17 2024/04/14 19:08:09 miod Exp $	*/
 /*	$NetBSD: pte.h,v 1.7 2001/07/31 06:55:46 eeh Exp $ */
 
 /*
@@ -89,17 +89,17 @@ struct sun4u_tte {
 typedef struct sun4u_tte pte_t;
 
 /* Assembly routine to flush a mapping */
-extern void sp_tlb_flush_pte(vaddr_t addr, int ctx);
-extern void sp_tlb_flush_ctx(int ctx);
+extern void (*sp_tlb_flush_pte)(vaddr_t, uint64_t);
+extern void (*sp_tlb_flush_ctx)(uint64_t);
 
 #if defined(MULTIPROCESSOR)
-void smp_tlb_flush_pte(vaddr_t, int);
-void smp_tlb_flush_ctx(int);
+void smp_tlb_flush_pte(vaddr_t, uint64_t);
+void smp_tlb_flush_ctx(uint64_t);
 #define tlb_flush_pte(va,ctx)	smp_tlb_flush_pte(va, ctx)
 #define tlb_flush_ctx(ctx)	smp_tlb_flush_ctx(ctx)
 #else
-#define tlb_flush_pte(va,ctx)	sp_tlb_flush_pte(va, ctx)
-#define tlb_flush_ctx(ctx)	sp_tlb_flush_ctx(ctx)
+#define tlb_flush_pte(va,ctx)	(*sp_tlb_flush_pte)(va, ctx)
+#define tlb_flush_ctx(ctx)	(*sp_tlb_flush_ctx)(ctx)
 #endif
 
 #endif /* _LOCORE */

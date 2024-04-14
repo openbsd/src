@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.222 2024/04/08 20:09:18 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.223 2024/04/14 19:08:09 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -55,8 +55,6 @@
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
-
-#define HORRID_III_HACK
 
 .register %g2,
 .register %g3,
@@ -410,9 +408,10 @@ cold:
 	.endm
 
 	.macro KCLEANWIN
-	clr	%l0
 #ifdef DEBUG
 	set	0xbadbeef, %l0		! DEBUG
+#else
+	clr	%l0
 #endif	/* DEBUG */
 	mov %l0, %l1; mov %l0, %l2	! 024-027 = clean window trap
 	rdpr %cleanwin, %o7		!	This handler is in-lined and cannot fault
@@ -1118,12 +1117,6 @@ trapbase_sun4v:
  * Finally, we may now call C code.
  *
  * This macro will destroy %g5-%g7.  %g0-%g4 remain unchanged.
- *
- * In order to properly handle nested traps without lossage, alternate
- * global %g6 is used as a kernel stack pointer.  It is set to the last
- * allocated stack pointer (trapframe) and the old value is stored in
- * tf_kstack.  It is restored when returning from a trap.  It is cleared
- * on entering user mode.
  */
 
  /*
@@ -2042,8 +2035,8 @@ text_error:
 #ifdef SUN4V
 
 /*
- * Perform an inline pseg_get(), to retrieve the pte associated to the given
- * virtual address.
+ * Perform an inline pseg_get(), to retrieve the address of the PTE associated
+ * to the given virtual address.
  * On entry: %g3 = va (won't be modified), %g6 = context
  * Registers used: %g4,%g5, %g6
  * Branches to the "failure" label if translation invalid, otherwise ends
@@ -2676,7 +2669,19 @@ sun4v_texttrap:
 	 nop
 	NOTREACHED
 
-#endif
+	.align 8
+NENTRY(sun4v_tlb_flush_pte)
+	ba	hv_mmu_demap_page
+	 mov	MAP_ITLB|MAP_DTLB, %o2
+END(sun4v_tlb_flush_pte)
+
+	.align 8
+NENTRY(sun4v_tlb_flush_ctx)
+	ba	hv_mmu_demap_ctx
+	 mov	MAP_ITLB|MAP_DTLB, %o1
+END(sun4v_tlb_flush_ctx)
+
+#endif	/* SUN4V */
 
 /*
  * We're here because we took an alignment fault in NUCLEUS context.
@@ -3964,8 +3969,28 @@ END(openfirmware)
  *
  */
 	.align 8
-NENTRY(sp_tlb_flush_pte)
-#ifdef HORRID_III_HACK
+NENTRY(us_tlb_flush_pte)
+	mov	CTX_SECONDARY, %o2
+	andn	%o0, 0xfff, %g2				! drop unused va bits
+	ldxa	[%o2] ASI_DMMU, %g1			! Save secondary context
+	sethi	%hi(KERNBASE), %o4
+	membar	#LoadStore
+	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
+	membar	#Sync
+	or	%g2, DEMAP_PAGE_SECONDARY, %g2		! Demap page from secondary context only
+	stxa	%g0, [%g2] ASI_DMMU_DEMAP		! Do the demap
+	stxa	%g0, [%g2] ASI_IMMU_DEMAP		! to both TLBs
+	membar	#Sync					! No real reason for this XXXX
+	flush	%o4
+	stxa	%g1, [%o2] ASI_DMMU			! Restore asi
+	membar	#Sync					! No real reason for this XXXX
+	flush	%o4
+	retl
+	 nop
+END(us_tlb_flush_pte)
+
+	.align 8
+NENTRY(us3_tlb_flush_pte)
 	rdpr	%pstate, %o5
 	andn	%o5, PSTATE_IE, %o4
 	wrpr	%o4, %pstate				! disable interrupts
@@ -3983,31 +4008,18 @@ NENTRY(sp_tlb_flush_pte)
 	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
 	membar	#Sync
 	or	%g2, DEMAP_PAGE_PRIMARY, %g2		! Demap page from primary context only
-#else
-	mov	CTX_SECONDARY, %o2
-	andn	%o0, 0xfff, %g2				! drop unused va bits
-	ldxa	[%o2] ASI_DMMU, %g1			! Save secondary context
-	sethi	%hi(KERNBASE), %o4
-	membar	#LoadStore
-	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
-	membar	#Sync
-	or	%g2, DEMAP_PAGE_SECONDARY, %g2		! Demap page from secondary context only
-#endif
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! to both TLBs
+	stxa	%g0, [%g2] ASI_DMMU_DEMAP		! Do the demap
+	stxa	%g0, [%g2] ASI_IMMU_DEMAP		! to both TLBs
 	membar	#Sync					! No real reason for this XXXX
 	flush	%o4
 	stxa	%g1, [%o2] ASI_DMMU			! Restore asi
 	membar	#Sync					! No real reason for this XXXX
 	flush	%o4
-#ifdef HORRID_III_HACK
 	wrpr	%g0, %o3, %tl				! Restore traplevel
 	wrpr	%o5, %pstate				! Restore interrupts
-#endif
 	retl
 	 nop
-END(sp_tlb_flush_pte)
+END(us_tlb_flush_pte)
 
 /*
  * tlb_flush_ctx(int ctx)
@@ -4016,8 +4028,26 @@ END(sp_tlb_flush_pte)
  *
  */
 	.align 8
-NENTRY(sp_tlb_flush_ctx)
-#ifdef HORRID_III_HACK
+NENTRY(us_tlb_flush_ctx)
+	mov	CTX_SECONDARY, %o2
+	sethi	%hi(KERNBASE), %o4
+	ldxa	[%o2] ASI_DMMU, %g1		! Save secondary context
+	membar	#LoadStore
+	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
+	membar	#Sync
+	set	DEMAP_CTX_SECONDARY, %g2	! Demap context from secondary context only
+	stxa	%g0, [%g2] ASI_DMMU_DEMAP		! Do the demap
+	stxa	%g0, [%g2] ASI_IMMU_DEMAP		! Do the demap
+	membar	#Sync
+	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
+	membar	#Sync					! No real reason for this XXXX
+	flush	%o4
+	retl
+	 nop
+END(us_tlb_flush_ctx)
+
+	.align 8
+NENTRY(us3_tlb_flush_ctx)
 	rdpr	%pstate, %o5
 	andn	%o5, PSTATE_IE, %o4
 	wrpr	%o4, %pstate				! disable interrupts
@@ -4034,29 +4064,17 @@ NENTRY(sp_tlb_flush_ctx)
 	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
 	membar	#Sync
 	set	DEMAP_CTX_PRIMARY, %g2		! Demap context from primary context only
-#else
-	mov	CTX_SECONDARY, %o2
-	sethi	%hi(KERNBASE), %o4
-	ldxa	[%o2] ASI_DMMU, %g1		! Save secondary context
-	membar	#LoadStore
-	stxa	%o0, [%o2] ASI_DMMU		! Insert context to demap
-	membar	#Sync
-	set	DEMAP_CTX_SECONDARY, %g2	! Demap context from secondary context only
-#endif
-	stxa	%g2, [%g2] ASI_DMMU_DEMAP		! Do the demap
-	membar	#Sync					! No real reason for this XXXX
-	stxa	%g2, [%g2] ASI_IMMU_DEMAP		! Do the demap
+	stxa	%g0, [%g2] ASI_DMMU_DEMAP		! Do the demap
+	stxa	%g0, [%g2] ASI_IMMU_DEMAP		! Do the demap
 	membar	#Sync
 	stxa	%g1, [%o2] ASI_DMMU		! Restore secondary asi
 	membar	#Sync					! No real reason for this XXXX
 	flush	%o4
-#ifdef HORRID_III_HACK
 	wrpr	%g0, %o3, %tl				! Restore traplevel
 	wrpr	%o5, %pstate				! Restore interrupts
-#endif
 	retl
 	 nop
-END(sp_tlb_flush_ctx)
+END(us3_tlb_flush_ctx)
 
 /*
  * dcache_flush_page(paddr_t pa)
