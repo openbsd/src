@@ -1,4 +1,4 @@
-.\"	$OpenBSD: update-plist.1,v 1.9 2021/05/28 18:45:09 tb Exp $
+.\"	$OpenBSD: update-plist.1,v 1.10 2024/04/14 17:24:15 phessler Exp $
 .\"
 .\" Copyright (c) 2018 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2021 $
+.Dd $Mdocdate: April 14 2024 $
 .Dt UPDATE-PLIST 1
 .Os
 .Sh NAME
@@ -304,8 +304,8 @@ will first write files as
 .Pa <file>.new ,
 then it will display which files are new and which files have changed.
 If old packing-lists already exist, it will move old packing lists into
-.Pa <file>.orig
-unless these already exist, then move the new files into position.
+.Pa <file>.orig ,
+then move the new files into position.
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
