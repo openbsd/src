@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_new.3,v 1.9 2021/11/12 14:05:28 schwarze Exp $
+.\" $OpenBSD: X509_LOOKUP_new.3,v 1.10 2024/04/14 10:56:18 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,22 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2021 $
+.Dd $Mdocdate: April 14 2024 $
 .Dt X509_LOOKUP_NEW 3
 .Os
 .Sh NAME
-.Nm X509_LOOKUP_new ,
 .Nm X509_LOOKUP_free ,
 .Nm X509_LOOKUP_ctrl ,
 .Nm X509_LOOKUP_add_dir ,
 .Nm X509_LOOKUP_load_file ,
 .Nm X509_LOOKUP_add_mem ,
-.Nm X509_LOOKUP_by_subject ,
-.Nm X509_LOOKUP_init ,
-.Nm X509_LOOKUP_shutdown ,
-.Nm X509_LOOKUP_by_issuer_serial ,
-.Nm X509_LOOKUP_by_fingerprint ,
-.Nm X509_LOOKUP_by_alias ,
 .Nm X509_get_default_cert_dir ,
 .Nm X509_get_default_cert_file ,
 .Nm X509_get_default_cert_dir_env ,
@@ -40,8 +33,6 @@
 .Nd certificate lookup object
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
-.Ft X509_LOOKUP *
-.Fn X509_LOOKUP_new "X509_LOOKUP_METHOD *method"
 .Ft void
 .Fn X509_LOOKUP_free "X509_LOOKUP *lookup"
 .Ft int
@@ -70,41 +61,6 @@
 .Fa "const struct iovec *source"
 .Fa "long type"
 .Fc
-.Ft int
-.Fo X509_LOOKUP_by_subject
-.Fa "X509_LOOKUP *lookup"
-.Fa "X509_LOOKUP_TYPE type"
-.Fa "X509_NAME *name"
-.Fa "X509_OBJECT *object"
-.Fc
-.Ft int
-.Fn X509_LOOKUP_init "X509_LOOKUP *lookup"
-.Ft int
-.Fn X509_LOOKUP_shutdown "X509_LOOKUP *lookup"
-.Ft int
-.Fo X509_LOOKUP_by_issuer_serial
-.Fa "X509_LOOKUP *lookup"
-.Fa "X509_LOOKUP_TYPE type"
-.Fa "X509_NAME *name"
-.Fa "ASN1_INTEGER *serial"
-.Fa "X509_OBJECT *object"
-.Fc
-.Ft int
-.Fo X509_LOOKUP_by_fingerprint
-.Fa "X509_LOOKUP *lookup"
-.Fa "X509_LOOKUP_TYPE type"
-.Fa "const unsigned char *bytes"
-.Fa "int length"
-.Fa "X509_OBJECT *object"
-.Fc
-.Ft int
-.Fo X509_LOOKUP_by_alias
-.Fa "X509_LOOKUP *lookup"
-.Fa "X509_LOOKUP_TYPE type"
-.Fa "const char *string"
-.Fa "int length"
-.Fa "X509_OBJECT *object"
-.Fc
 .In openssl/x509.h
 .Ft const char *
 .Fn X509_get_default_cert_dir void
@@ -115,21 +71,11 @@
 .Ft const char *
 .Fn X509_get_default_cert_file_env void
 .Sh DESCRIPTION
-.Fn X509_LOOKUP_new
-allocates a new, empty
-.Vt X509_LOOKUP
-object and associates it with the
-.Fa method
-which is a static object returned from either
-.Xr X509_LOOKUP_hash_dir 3
-or
-.Xr X509_LOOKUP_file 3
-or
-.Xr X509_LOOKUP_mem 3 .
-.Pp
 .Fn X509_LOOKUP_free
+is a deprecated function that
 releases the memory used by
 .Fa lookup .
+It is provided for compatibility only. 
 If
 .Fa lookup
 is a
@@ -332,21 +278,7 @@ and the files are read with
 In case of success, the first match is returned in the
 .Pf * Fa object
 provided by the caller, overwriting any previous content.
-.Pp
-With LibreSSL,
-.Fn X509_LOOKUP_init ,
-.Fn X509_LOOKUP_shutdown ,
-.Fn X509_LOOKUP_by_issuer_serial ,
-.Fn X509_LOOKUP_by_fingerprint ,
-and
-.Fn X509_LOOKUP_by_alias
-have no effect.
 .Sh RETURN VALUES
-.Fn X509_LOOKUP_new
-returns the new object or
-.Dv NULL
-if memory allocation fails.
-.Pp
 .Fn X509_LOOKUP_ctrl
 returns 1 for success or 0 for failure.
 With library implementations other than LibreSSL,
@@ -373,19 +305,6 @@ nor
 if no match is found, or if memory allocation fails.
 With library implementations other than LibreSSL,
 it might also return negative values for internal errors.
-.Pp
-.Fn X509_LOOKUP_init
-and
-.Fn X509_LOOKUP_shutdown
-are supposed to return 1 for success and 0 for failure.
-With LibreSSL, they always return 1.
-.Pp
-With LibreSSL,
-.Fn X509_LOOKUP_by_issuer_serial ,
-.Fn X509_LOOKUP_by_fingerprint ,
-and
-.Fn X509_LOOKUP_by_alias
-always return 0.
 .Pp
 .Fn X509_get_default_cert_dir
 returns a pointer to the constant string
