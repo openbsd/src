@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.268 2023/01/06 19:10:18 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.269 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -508,7 +508,8 @@ cpuid()
 	}
 
 	if (cpu_type)
-		for (p = cpu_types; p->name[0] && p->cpuid != cpu_type; p++);
+		for (p = cpu_types; p->name[0] && p->cpuid != cpu_type; p++)
+			;
 	else
 		for (p = cpu_types;
 		    p->name[0] && p->features != cpu_features; p++);
@@ -831,7 +832,8 @@ btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *lenp, u_int prot)
 	}
 
 	/* align size */
-	for (len = pdc_btlb.min_size << PGSHIFT; len < *lenp; len <<= 1);
+	for (len = pdc_btlb.min_size << PGSHIFT; len < *lenp; len <<= 1)
+		;
 	len >>= PGSHIFT;
 	i = ffs(~mask) - 1;
 	if (len > pdc_btlb.max_size || i < 0 || i >= btlb_max) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.133 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.134 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -653,7 +653,8 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	val &= 0xf;
 
 	/* convert rate to 802.11 rate */
-	for (i = 0; i < nitems(rates) && rates[i].val != val; i++);
+	for (i = 0; i < nitems(rates) && rates[i].val != val; i++)
+		;
 	rate = (i < nitems(rates)) ? rates[i].rate : 0;
 
 	imr->ifm_active |= IFM_IEEE80211_11B;

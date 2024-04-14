@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.138 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.139 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2906,7 +2906,8 @@ run_rt2870_set_chan(struct run_softc *sc, u_int chan)
 	int i;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rfprog[i].chan != chan; i++);
+	for (i = 0; rfprog[i].chan != chan; i++)
+		;
 
 	r2 = rfprog[i].r2;
 	if (sc->ntxchains == 1)
@@ -2960,7 +2961,8 @@ run_rt3070_set_chan(struct run_softc *sc, u_int chan)
 	int i;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rt2860_rf2850[i].chan != chan; i++);
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++)
+		;
 
 	/* use Tx power values from EEPROM */
 	txpow1 = sc->txpow1[i];
@@ -3026,7 +3028,8 @@ run_rt3572_set_chan(struct run_softc *sc, u_int chan)
 	int i;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rt2860_rf2850[i].chan != chan; i++);
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++)
+		;
 
 	/* use Tx power values from EEPROM */
 	txpow1 = sc->txpow1[i];
@@ -3175,7 +3178,8 @@ run_rt3593_set_chan(struct run_softc *sc, u_int chan)
 	int i;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rt2860_rf2850[i].chan != chan; i++);
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++)
+		;
 
 	/* use Tx power values from EEPROM */
 	txpow1 = sc->txpow1[i];
@@ -3335,7 +3339,8 @@ run_rt5390_set_chan(struct run_softc *sc, u_int chan)
 	int i;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rt2860_rf2850[i].chan != chan; i++);
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++)
+		;
 
 	/* use Tx power values from EEPROM */
 	txpow1 = sc->txpow1[i];
@@ -3451,7 +3456,8 @@ run_rt5592_set_chan(struct run_softc *sc, u_int chan)
 	    rt5592_freqs_40mhz : rt5592_freqs_20mhz;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rt2860_rf2850[i].chan != chan; i++, freqs++);
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++, freqs++)
+		;
 
 	/* use Tx power values from EEPROM */
 	txpow1 = sc->txpow1[i];

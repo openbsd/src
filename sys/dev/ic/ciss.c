@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.91 2022/04/16 19:19:59 naddy Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.92 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -217,7 +217,8 @@ ciss_attach(struct ciss_softc *sc)
 		sc->maxsg = MAXPHYS / PAGE_SIZE;
 	i = sizeof(struct ciss_ccb) +
 	    sizeof(ccb->ccb_cmd.sgl[0]) * (sc->maxsg - 1);
-	for (sc->ccblen = 0x10; sc->ccblen < i; sc->ccblen <<= 1);
+	for (sc->ccblen = 0x10; sc->ccblen < i; sc->ccblen <<= 1)
+		;
 
 	total = sc->ccblen * sc->maxcmd;
 	if ((error = bus_dmamem_alloc(sc->dmat, total, PAGE_SIZE, 0,

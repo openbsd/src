@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.20 2019/09/04 14:40:22 cheloha Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.21 2024/04/14 03:26:25 jsg Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -491,7 +491,8 @@ unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen)
 			conv = 3;
 		dp--;
 	} else {
-		for (dp = cp; *--dp == ' ' || *dp == '.';);
+		for (dp = cp; *--dp == ' ' || *dp == '.';)
+			;
 		dp++;
 	}
 
@@ -540,7 +541,8 @@ unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen)
 		*--cp = gen % 10 + '0';
 	if (gen)
 		return 0;
-	for (i = 8; dn[--i] == ' ';);
+	for (i = 8; dn[--i] == ' ';)
+		;
 	if (gentext + sizeof(gentext) - cp + 1 > 8 - i)
 		i = 8 - (gentext + sizeof(gentext) - cp + 1);
 	dn[i++] = '~';
@@ -563,7 +565,8 @@ unix2winfn(u_char *un, int unlen, struct winentry *wep, int cnt, int chksum)
 	/*
 	 * Drop trailing blanks and dots
 	 */
-	for (cp = un + unlen; *--cp == ' ' || *cp == '.'; unlen--);
+	for (cp = un + unlen; *--cp == ' ' || *cp == '.'; unlen--)
+		;
 
 	un += (cnt - 1) * WIN_CHARS;
 	unlen -= (cnt - 1) * WIN_CHARS;
@@ -571,7 +574,8 @@ unix2winfn(u_char *un, int unlen, struct winentry *wep, int cnt, int chksum)
 	/*
 	 * Initialize winentry to some useful default
 	 */
-	for (cp = (u_int8_t *)wep, i = sizeof(*wep); --i >= 0; *cp++ = 0xff);
+	for (cp = (u_int8_t *)wep, i = sizeof(*wep); --i >= 0; *cp++ = 0xff)
+		;
 	wep->weCnt = cnt;
 	wep->weAttributes = ATTR_WIN95;
 	wep->weReserved1 = 0;

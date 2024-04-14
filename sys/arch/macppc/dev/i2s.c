@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.37 2022/10/26 20:19:07 kn Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.38 2024/04/14 03:26:25 jsg Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -592,7 +592,8 @@ i2s_trigger_output(void *h, void *start, void *end, int bsize,
 
 	DPRINTF(("trigger_output %p %p 0x%x\n", start, end, bsize));
 
-	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
+	for (p = sc->sc_dmas; p && p->addr != start; p = p->next)
+		;
 	if (!p)
 		return -1;
 
@@ -633,7 +634,8 @@ i2s_trigger_input(void *h, void *start, void *end, int bsize,
 
 	DPRINTF(("trigger_input %p %p 0x%x\n", start, end, bsize));
 
-	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
+	for (p = sc->sc_dmas; p && p->addr != start; p = p->next)
+		;
 	if (!p)
 		return -1;
 

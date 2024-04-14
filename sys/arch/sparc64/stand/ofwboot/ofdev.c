@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.39 2023/06/03 21:37:53 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.40 2024/04/14 03:26:25 jsg Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -105,7 +105,8 @@ filename(char *str, char *ppart)
 				if (cp >= str && *cp == '-') {
 					/* found arguments, make firmware ignore them */
 					*cp = 0;
-					for (cp = lp; *--cp && *cp != ',';);
+					for (cp = lp; *--cp && *cp != ',';)
+						;
 					if (*++cp >= 'a' && *cp <= 'a' + MAXPARTITIONS)
 						*ppart = *cp;
 				}

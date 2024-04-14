@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.403 2024/02/11 06:40:46 jmc Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.404 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -4079,7 +4079,8 @@ bge_cksum_pad(struct mbuf *m)
 		 * Walk packet chain to find last mbuf. We will either
 		 * pad there, or append a new mbuf and pad it.
 		 */
-		for (last = m; last->m_next != NULL; last = last->m_next);
+		for (last = m; last->m_next != NULL; last = last->m_next)
+			;
 		if (m_trailingspace(last) < padlen) {
 			/* Allocate new empty mbuf, pad it. Compact later. */
 			struct mbuf *n;

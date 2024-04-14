@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.78 2021/05/11 08:46:31 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.79 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -538,7 +538,8 @@ ieee80211_eapol_key_encrypt(struct ieee80211com *ic,
 		/* set IV to the lower 16 octets of our global key counter */
 		memcpy(key->iv, ic->ic_globalcnt + 16, 16);
 		/* increment our global key counter (256-bit, big-endian) */
-		for (n = 31; n >= 0 && ++ic->ic_globalcnt[n] == 0; n--);
+		for (n = 31; n >= 0 && ++ic->ic_globalcnt[n] == 0; n--)
+			;
 
 		/* concatenate the EAPOL-Key IV field and the KEK */
 		memcpy(keybuf, key->iv, EAPOL_KEY_IV_LEN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.102 2022/04/21 21:03:02 stsp Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.103 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2225,7 +2225,8 @@ rt2860_set_chan(struct rt2860_softc *sc, u_int chan)
 	u_int i;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rfprog[i].chan != chan; i++);
+	for (i = 0; rfprog[i].chan != chan; i++)
+		;
 
 	r2 = rfprog[i].r2;
 	if (sc->ntxchains == 1)
@@ -2281,7 +2282,8 @@ rt3090_set_chan(struct rt2860_softc *sc, u_int chan)
 	KASSERT(chan >= 1 && chan <= 14);	/* RT3090 is 2GHz only */
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rt2860_rf2850[i].chan != chan; i++);
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++)
+		;
 
 	/* use Tx power values from EEPROM */
 	txpow1 = sc->txpow1[i];
@@ -2346,7 +2348,8 @@ rt5390_set_chan(struct rt2860_softc *sc, u_int chan)
 	KASSERT(chan >= 1 && chan <= 14);
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rt2860_rf2850[i].chan != chan; i++);
+	for (i = 0; rt2860_rf2850[i].chan != chan; i++)
+		;
 
 	/* use Tx power values from EEPROM */
 	txpow1 = sc->txpow1[i];
@@ -4054,10 +4057,12 @@ rt2860_calib(struct rt2860_softc *sc)
 
 	if (bbp49 < tssi[0]) {		/* lower than reference */
 		/* use higher Tx power than default */
-		for (d = 0; d > -4 && bbp49 <= tssi[d - 1]; d--);
+		for (d = 0; d > -4 && bbp49 <= tssi[d - 1]; d--)
+			;
 	} else if (bbp49 > tssi[0]) {	/* greater than reference */
 		/* use lower Tx power than default */
-		for (d = 0; d < +4 && bbp49 >= tssi[d + 1]; d++);
+		for (d = 0; d < +4 && bbp49 >= tssi[d + 1]; d++)
+			;
 	} else {
 		/* use default Tx power */
 		d = 0;

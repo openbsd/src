@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.127 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.128 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1654,7 +1654,8 @@ rum_set_chan(struct rum_softc *sc, struct ieee80211_channel *c)
 		  sc->rf_rev == RT2573_RF_2527) ? rum_rf5225 : rum_rf5226;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rfprog[i].chan != chan; i++);
+	for (i = 0; rfprog[i].chan != chan; i++)
+		;
 
 	power = sc->txpow[i];
 	if (power < 0) {

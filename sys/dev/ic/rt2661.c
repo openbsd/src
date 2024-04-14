@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.99 2022/04/21 21:03:02 stsp Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.100 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -2274,7 +2274,8 @@ rt2661_set_chan(struct rt2661_softc *sc, struct ieee80211_channel *c)
 	rfprog = (sc->rfprog == 0) ? rt2661_rf5225_1 : rt2661_rf5225_2;
 
 	/* find the settings for this channel (we know it exists) */
-	for (i = 0; rfprog[i].chan != chan; i++);
+	for (i = 0; rfprog[i].chan != chan; i++)
+		;
 
 	power = sc->txpow[i];
 	if (power < 0) {

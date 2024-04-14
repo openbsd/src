@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.165 2024/01/05 19:34:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.166 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -298,7 +298,8 @@ trap(int type, struct trapframe *frame)
 		fpp = (u_int64_t *)&hfp->hfp_regs;
 
 		pex = (u_int32_t *)&fpp[0];
-		for (i = 0, pex++; i < 7 && !*pex; i++, pex++);
+		for (i = 0, pex++; i < 7 && !*pex; i++, pex++)
+			;
 		flt = 0;
 		if (i < 7) {
 			u_int32_t stat = HPPA_FPU_OP(*pex);

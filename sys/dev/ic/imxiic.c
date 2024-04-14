@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.1 2020/11/17 14:30:13 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.2 2024/04/14 03:26:25 jsg Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -119,7 +119,8 @@ imxiic_setspeed(struct imxiic_softc *sc, u_int speed)
 		else if (div > sc->sc_clk_div[sc->sc_clk_ndiv - 1].div)
 			i = sc->sc_clk_ndiv - 1;
 		else
-			for (i = 0; sc->sc_clk_div[i].div < div; i++);
+			for (i = 0; sc->sc_clk_div[i].div < div; i++)
+				;
 
 		sc->frequency = sc->sc_clk_div[i].val;
 	}

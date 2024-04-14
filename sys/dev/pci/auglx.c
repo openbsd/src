@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.23 2022/10/26 20:19:08 kn Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.24 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -669,7 +669,8 @@ auglx_trigger_output(void *v, void *start, void *end, int blksize,
 	DPRINTF(AUGLX_DBG_DMA, ("%s: trigger_output, %p 0x%08x bytes, "
 	    "blksize 0x%04x\n", sc->sc_dev.dv_xname, start, size, blksize));
 
-	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
+	for (p = sc->sc_dmas; p && p->addr != start; p = p->next)
+		;
 	if (!p) {
 		DPRINTF(AUGLX_DBG_DMA, ("%s dma reg not found\n",
 		    sc->sc_dev.dv_xname));
@@ -730,7 +731,8 @@ auglx_trigger_input(void *v, void *start, void *end, int blksize,
 	DPRINTF(AUGLX_DBG_DMA, ("%s: trigger_input, %p 0x%08x bytes, "
 	    "blksize 0x%04x\n", sc->sc_dev.dv_xname, start, size, blksize));
 
-	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
+	for (p = sc->sc_dmas; p && p->addr != start; p = p->next)
+		;
 	if (!p) {
 		DPRINTF(AUGLX_DBG_DMA, ("%s dma reg not found\n",
 		    sc->sc_dev.dv_xname));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.17 2014/07/13 09:26:08 jasper Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.18 2024/04/14 03:26:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -156,7 +156,8 @@ devboot(dev, p)
 	*p++ = 'r';
 #endif
 	/* quick copy device name */
-	for (q = pdc_devs[B_TYPE(dev)].name; (*p++ = *q++););
+	for (q = pdc_devs[B_TYPE(dev)].name; (*p++ = *q++);)
+		;
 	unit = B_UNIT(dev);
 	if (unit >= 10) {
 		p[-1] = '0' + unit / 10;

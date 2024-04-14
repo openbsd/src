@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.51 2023/11/22 18:14:35 tobhe Exp $	*/
+/*	$OpenBSD: adb.c,v 1.52 2024/04/14 03:26:25 jsg Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -1526,7 +1526,8 @@ adb_poweroff(void)
 		pmu_fileserver_mode(0);
 		pm_adb_poweroff();
 
-		for (;;);		/* wait for power off */
+		for (;;)	/* wait for power off */
+			;
 
 		return 0;
 
@@ -1539,7 +1540,8 @@ adb_poweroff(void)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		for (;;);		/* wait for power off */
+		for (;;)		/* wait for power off */
+			;
 
 		return 0;
 
