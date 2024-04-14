@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.63 2022/04/16 19:19:59 naddy Exp $ */
+/*	$OpenBSD: qle.c,v 1.64 2024/04/14 00:38:26 jsg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -359,7 +359,7 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 
 	pcireg_t bars[] = { QLE_PCI_MEM_BAR, QLE_PCI_IO_BAR };
 	pcireg_t memtype;
-	int r, i, rv, loop_up;
+	int r, i, rv, loop_up = 0;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
