@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpp.c,v 1.6 2019/12/31 10:05:33 mpi Exp $	*/
+/*	$OpenBSD: bpp.c,v 1.7 2024/04/14 03:23:13 jsg Exp $	*/
 /*	$NetBSD: bpp.c,v 1.25 2005/12/11 12:23:44 christos Exp $ */
 
 /*-
@@ -318,7 +318,8 @@ bppwrite(dev_t dev, struct uio *uio, int flags)
 			if (bppdebug) {
 				size_t i;
 				printf("bpp: writing %ld : ", len);
-				for (i=0; i<len; i++) printf("%c(0x%x)", bp[i], bp[i]);
+				for (i=0; i<len; i++)
+					printf("%c(0x%x)", bp[i], bp[i]);
 				printf("\n");
 			}
 #endif
