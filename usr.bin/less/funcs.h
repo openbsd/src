@@ -122,8 +122,6 @@ char *fexpand(char *);
 char *fcomplete(char *);
 int bin_file(int f);
 char *lglob(char *);
-char *open_altfile(char *, int *, void **);
-void close_altfile(char *, char *, void *);
 int is_dir(char *);
 char *bad_file(char *);
 off_t filesize(int);

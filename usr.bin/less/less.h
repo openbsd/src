@@ -165,7 +165,6 @@ extern int abort_sigs(void);
 /* filestate flags */
 #define	CH_CANSEEK	001
 #define	CH_KEEPOPEN	002
-#define	CH_POPENED	004
 #define	CH_HELPFILE	010
 #define	CH_NODATA	020	/* Special case for zero length files */
 

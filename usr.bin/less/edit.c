@@ -35,9 +35,6 @@ extern char *namelogfile;
 dev_t curr_dev;
 ino_t curr_ino;
 
-char *curr_altfilename = NULL;
-static void *curr_altpipe;
-
 
 /*
  * Textlist functions deal with a list of words separated by spaces.
@@ -146,16 +143,6 @@ close_file(void)
 	 * Close the file descriptor, unless it is a pipe.
 	 */
 	ch_close();
-	/*
-	 * If we opened a file using an alternate name,
-	 * do special stuff to close it.
-	 */
-	if (curr_altfilename != NULL) {
-		close_altfile(curr_altfilename, get_filename(curr_ifile),
-		    curr_altpipe);
-		free(curr_altfilename);
-		curr_altfilename = NULL;
-	}
 	curr_ifile = NULL;
 	curr_ino = curr_dev = 0;
 }
@@ -185,10 +172,7 @@ edit_ifile(IFILE ifile)
 	int no_display;
 	int chflags;
 	char *filename;
-	char *open_filename;
 	char *qopen_filename;
-	char *alt_filename;
-	void *alt_pipe;
 	IFILE was_curr_ifile;
 	PARG parg;
 
@@ -200,11 +184,9 @@ edit_ifile(IFILE ifile)
 	}
 
 	/*
-	 * We must close the currently open file now.
-	 * This is necessary to make the open_altfile/close_altfile pairs
-	 * nest properly (or rather to avoid nesting at all).
-	 * {{ Some stupid implementations of popen() mess up if you do:
-	 *    fA = popen("A"); fB = popen("B"); pclose(fA); pclose(fB); }}
+	 * We close the currently open file now.  This was done before
+	 * to avoid linked popen/pclose pairs from LESSOPEN, but there
+	 * may other code that has come to rely on this restriction.
 	 */
 	end_logfile();
 	was_curr_ifile = save_curr_ifile();
@@ -233,47 +215,28 @@ edit_ifile(IFILE ifile)
 	}
 
 	filename = estrdup(get_filename(ifile));
-	/*
-	 * See if LESSOPEN specifies an "alternate" file to open.
-	 */
-	alt_pipe = NULL;
-	alt_filename = open_altfile(filename, &f, &alt_pipe);
-	open_filename = (alt_filename != NULL) ? alt_filename : filename;
-	qopen_filename = shell_unquote(open_filename);
+	qopen_filename = shell_unquote(filename);
 
 	chflags = 0;
-	if (strcmp(open_filename, helpfile()) == 0)
+	if (strcmp(filename, helpfile()) == 0)
 		chflags |= CH_HELPFILE;
-	if (alt_pipe != NULL) {
-		/*
-		 * The alternate "file" is actually a pipe.
-		 * f has already been set to the file descriptor of the pipe
-		 * in the call to open_altfile above.
-		 * Keep the file descriptor open because it was opened
-		 * via popen(), and pclose() wants to close it.
-		 */
-		chflags |= CH_POPENED;
-	} else if (strcmp(open_filename, "-") == 0) {
+	if (strcmp(filename, "-") == 0) {
 		/*
 		 * Use standard input.
 		 * Keep the file descriptor open because we can't reopen it.
 		 */
 		f = fd0;
 		chflags |= CH_KEEPOPEN;
-	} else if (strcmp(open_filename, FAKE_EMPTYFILE) == 0) {
+	} else if (strcmp(filename, FAKE_EMPTYFILE) == 0) {
 		f = -1;
 		chflags |= CH_NODATA;
-	} else if ((parg.p_string = bad_file(open_filename)) != NULL) {
+	} else if ((parg.p_string = bad_file(filename)) != NULL) {
 		/*
 		 * It looks like a bad file.  Don't try to open it.
 		 */
 		error("%s", &parg);
 		free(parg.p_string);
 err1:
-		if (alt_filename != NULL) {
-			close_altfile(alt_filename, filename, alt_pipe);
-			free(alt_filename);
-		}
 		del_ifile(ifile);
 		free(qopen_filename);
 		free(filename);
@@ -323,8 +286,6 @@ err1:
 		unsave_ifile(was_curr_ifile);
 	}
 	curr_ifile = ifile;
-	curr_altfilename = alt_filename;
-	curr_altpipe = alt_pipe;
 	set_open(curr_ifile); /* File has been opened */
 	get_pos(curr_ifile, &initial_scrpos);
 	new_file = TRUE;

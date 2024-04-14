@@ -778,7 +778,7 @@ ch_close(void)
 	if (thisfile == NULL)
 		return;
 
-	if (ch_flags & (CH_CANSEEK|CH_POPENED|CH_HELPFILE)) {
+	if (ch_flags & (CH_CANSEEK|CH_HELPFILE)) {
 		/*
 		 * We can seek or re-open, so we don't need to keep buffers.
 		 */
@@ -790,11 +790,8 @@ ch_close(void)
 		/*
 		 * We don't need to keep the file descriptor open
 		 * (because we can re-open it.)
-		 * But don't really close it if it was opened via popen(),
-		 * because pclose() wants to close it.
 		 */
-		if (!(ch_flags & CH_POPENED))
-			close(ch_file);
+		close(ch_file);
 		ch_file = -1;
 	} else {
 		keepstate = TRUE;

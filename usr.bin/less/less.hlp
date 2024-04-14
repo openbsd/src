@@ -149,8 +149,6 @@
                   Use a lesskey file.
   -K            --quit-on-intr
                   Exit less in response to ctrl-C.
-  -L  ........  --no-lessopen
-                  Ignore the LESSOPEN environment variable.
   -m  -M  ....  --long-prompt  --LONG-PROMPT
                   Set prompt style.
   -n  -N  ....  --line-numbers  --LINE-NUMBERS

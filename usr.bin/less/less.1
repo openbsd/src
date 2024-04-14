@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.59 2021/12/10 17:26:54 schwarze Exp $
+.\"	$OpenBSD: less.1,v 1.60 2024/04/14 18:11:54 guenther Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2021 $
+.Dd $Mdocdate: April 14 2024 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -304,16 +304,6 @@ environment variable is set, or if a lesskey file is found in a standard place
 (see
 .Sx KEY BINDINGS ) ,
 it is also used as a lesskey file.
-.It Fl L | -no-lessopen
-Ignore the
-.Ev LESSOPEN
-environment variable (see the
-.Sx INPUT PREPROCESSOR
-section below).
-This option can be set from within
-.Nm less ,
-but it will apply only to files opened subsequently, not to the
-file which is currently open.
 .It Fl M | -LONG-PROMPT
 Causes
 .Nm
@@ -1258,160 +1248,6 @@ On
 .Ox ,
 the system-wide lesskey file is
 .Pa /etc/sysless .
-.Sh INPUT PREPROCESSOR
-You may define an "input preprocessor" for
-.Nm less .
-Before
-.Nm less
-opens a file, it first gives your input preprocessor a chance to modify the
-way the contents of the file are displayed.
-An input preprocessor is simply an executable program (or shell script),
-which writes the contents of the file to a different file,
-called the replacement file.
-The contents of the replacement file are then displayed
-in place of the contents of the original file.
-However, it will appear to the user as if the original file is opened;
-that is,
-.Nm less
-will display the original filename as the name of the current file.
-.Pp
-An input preprocessor receives one command line argument, the original filename,
-as entered by the user.
-It should create the replacement file, and when finished
-print the name of the replacement file to its standard output.
-If the input preprocessor does not output a replacement filename,
-.Nm
-uses the original file, as normal.
-The input preprocessor is not called when viewing standard input.
-To set up an input preprocessor, set the
-.Ev LESSOPEN
-environment variable to a command line which will invoke your
-input preprocessor.
-This command line should include one occurrence of the string "%s",
-which will be replaced by the filename
-when the input preprocessor command is invoked.
-.Pp
-When
-.Nm
-closes a file opened in such a way, it will call another program,
-called the input postprocessor,
-which may perform any desired clean-up action (such as deleting the
-replacement file created by
-.Ev LESSOPEN ) .
-This program receives two command line arguments, the original filename
-as entered by the user, and the name of the replacement file.
-To set up an input postprocessor, set the
-.Ev LESSCLOSE
-environment variable to a command line which will invoke your
-input postprocessor.
-It may include two occurrences of the string "%s";
-the first is replaced with the original name of the file and the second
-with the name of the replacement file, which was output by
-.Ev LESSOPEN .
-.Pp
-For example, these two scripts will allow you
-to keep files in compressed format, but still let
-.Nm
-view them directly:
-.Pp
-lessopen.sh:
-.Bd -literal -offset indent
-#! /bin/sh
-case "$1" in
-*.Z)	uncompress -c $1  >/tmp/less.$$  2>/dev/null
-	if [ -s /tmp/less.$$ ]; then
-		echo /tmp/less.$$
-	else
-		rm -f /tmp/less.$$
-	fi
-	;;
-esac
-.Ed
-.Pp
-lessclose.sh:
-.Bd -literal -offset indent
-#! /bin/sh
-rm $2
-.Ed
-.Pp
-To use these scripts, put them both where they can be executed and
-set LESSOPEN="lessopen.sh\ %s", and LESSCLOSE="lessclose.sh\ %s\ %s".
-More complex LESSOPEN and LESSCLOSE scripts may be written
-to accept other types of compressed files, and so on.
-.Pp
-It is also possible to set up an input preprocessor to
-pipe the file data directly to
-.Nm less ,
-rather than putting the data into a replacement file.
-This avoids the need to decompress the entire file before starting to view it.
-An input preprocessor that works this way is called an input pipe.
-An input pipe, instead of writing the name of a replacement file on
-its standard output,
-writes the entire contents of the replacement file on its standard output.
-If the input pipe does not write any characters on its standard output,
-then there is no replacement file and
-.Nm
-uses the original file, as normal.
-To use an input pipe, make the first character in the
-.Ev LESSOPEN
-environment variable a vertical bar (|) to signify that the
-input preprocessor is an input pipe.
-.Pp
-For example, this script will work like the previous example scripts:
-.Pp
-lesspipe.sh:
-.Bd -literal -offset indent
-#! /bin/sh
-case "$1" in
-*.Z)	uncompress -c $1  2>/dev/null
-*)	exit 1
-	;;
-esac
-exit $?
-.Ed
-.Pp
-To use this script, put it where it can be executed and set
-LESSOPEN="|lesspipe.sh %s".
-.Pp
-Note that a preprocessor cannot output an empty file, since that
-is interpreted as meaning there is no replacement, and
-the original file is used.
-To avoid this, if
-.Ev LESSOPEN
-starts with two vertical bars,
-the exit status of the script becomes meaningful.
-If the exit status is zero, the output is considered to be
-replacement text, even if it empty.
-If the exit status is nonzero, any output is ignored and the
-original file is used.
-For compatibility with previous versions of
-.Nm less ,
-if
-.Ev LESSOPEN
-starts with only one vertical bar, the exit status
-of the preprocessor is ignored.
-.Pp
-When an input pipe is used, a LESSCLOSE postprocessor can be used,
-but it is usually not necessary since there is no replacement file to clean up.
-In this case, the replacement file name passed to the LESSCLOSE
-postprocessor is "-".
-.Pp
-For compatibility with previous versions of
-.Nm less ,
-the input preprocessor or pipe is not used if
-.Nm
-is viewing standard input.
-However, if the first character of LESSOPEN is a dash (-),
-the input preprocessor is used on standard input as well as other files.
-In this case, the dash is not considered to be part of
-the preprocessor command.
-If standard input is being viewed, the input preprocessor is passed
-a file name consisting of a single dash.
-Similarly, if the first two characters of LESSOPEN are vertical bar and dash
-(|-) or two vertical bars and a dash (||-),
-the input pipe is used on standard input as well as other files.
-Again, in this case the dash is not considered to be part of
-the input pipe command.
 .Sh NATIONAL CHARACTER SETS
 There are three types of characters in the input file:
 .Bl -tag -width "control characters"
@@ -1843,8 +1679,6 @@ end character in an ANSI color escape sequence
 (default "0123456789;[?!"'#%()*+\ ").
 .It Ev LESSBINFMT
 Format for displaying non-printable, non-control characters.
-.It Ev LESSCLOSE
-Command line to invoke the (optional) input-postprocessor.
 .It Ev LESSEDIT
 Editor prototype string (used for the v command).
 See discussion under
@@ -1874,8 +1708,6 @@ Prefix which
 will add before each metacharacter in a command sent to the shell.
 If LESSMETAESCAPE is an empty string, commands containing
 metacharacters will not be passed to the shell.
-.It Ev LESSOPEN
-Command line to invoke the (optional) input-preprocessor.
 .It Ev LESSSECURE
 Runs less in "secure" mode.
 See discussion under

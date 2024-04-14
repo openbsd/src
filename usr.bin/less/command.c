@@ -35,7 +35,6 @@ extern int hshift;
 extern int show_attn;
 extern off_t highest_hilite;
 extern char *every_first_cmd;
-extern char *curr_altfilename;
 extern char version[];
 extern struct scrpos initial_scrpos;
 extern IFILE curr_ifile;
@@ -1411,10 +1410,6 @@ again:
 			if (strcmp(get_filename(curr_ifile), "-") == 0) {
 				error("Cannot edit standard input", NULL);
 				break;
-			}
-			if (curr_altfilename != NULL) {
-				error("WARNING: This file was viewed via "
-				    "LESSOPEN", NULL);
 			}
 			/*
 			 * Expand the editor prototype string
