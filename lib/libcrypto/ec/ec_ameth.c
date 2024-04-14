@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.52 2024/04/13 14:02:51 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.53 2024/04/14 15:41:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -640,7 +640,7 @@ ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 				return -1;
 			if (!X509_ALGOR_set0_by_nid(alg2, snid, V_ASN1_UNDEF,
 			    NULL))
-			    return -1;
+				return -1;
 		}
 		return 1;
 
@@ -660,7 +660,7 @@ ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 				return -1;
 			if (!X509_ALGOR_set0_by_nid(alg2, snid, V_ASN1_UNDEF,
 			    NULL))
-			    return -1;
+				return -1;
 		}
 		return 1;
 
