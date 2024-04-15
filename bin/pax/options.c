@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.108 2024/04/15 17:33:10 jca Exp $	*/
+/*	$OpenBSD: options.c,v 1.109 2024/04/15 22:07:08 caspar Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -239,9 +239,9 @@ FSUB fsub[] = {
 #define F_OTAR	4	/* format when called as tar -o */
 #define F_TAR	5	/* format when called as tar */
 #ifdef SMALL
-# define DEFLT	5	/* format when called as pax: ustar */
+# define DEFLT	5	/* default write format when called as pax: ustar */
 #else
-# define DEFLT	10	/* format when called as pax: pax */
+# define DEFLT	10	/* default write format when called as pax: pax */
 #endif
 
 /*
