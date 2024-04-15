@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.601 2024/04/15 14:04:49 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.602 2024/04/15 14:06:52 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -1464,6 +1464,10 @@ which corresponds to the connection state.
 Each packet which matches this state will reset the TTL.
 Tuning these values may improve the performance of the
 firewall at the risk of dropping valid idle connections.
+Alternatively, these values may be adjusted collectively
+in a manner suitable for a specific environment using
+.Cm set optimization
+(see above).
 .Pp
 .Bl -tag -width Ds -compact
 .It Cm tcp.closed Pq 90 seconds by default
