@@ -1,5 +1,3 @@
-__bswap16
-__bswap32
 __mcount
 __multf3
 _fpgetmask

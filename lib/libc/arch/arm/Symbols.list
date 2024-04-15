@@ -1,7 +1,5 @@
 __adddf3
 __addsf3
-__bswap16
-__bswap32
 __divdf3
 __divsf3
 __divsi3
