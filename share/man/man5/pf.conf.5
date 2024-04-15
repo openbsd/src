@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.600 2022/11/18 18:11:10 kn Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.601 2024/04/15 14:04:49 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 18 2022 $
+.Dd $Mdocdate: April 15 2024 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1486,6 +1486,8 @@ The state after the first packet.
 .It Cm tcp.opening Pq 30 seconds by default
 The state after the second packet but before both endpoints have
 acknowledged the connection.
+.It Cm tcp.tsdiff Pq 30 seconds by default
+Maximum allowed time difference between RFC 1323 compliant packet timestamps.
 .El
 .Pp
 ICMP and UDP are handled in a fashion similar to TCP, but with a much more
@@ -2941,7 +2943,7 @@ state-opt      = ( "max" number | "no-sync" | timeout | "sloppy" |
 
 timeout-list   = timeout [ [ "," ] timeout-list ]
 timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
-                 "tcp.closing" | "tcp.finwait" | "tcp.closed" |
+                 "tcp.closing" | "tcp.finwait" | "tcp.closed" | "tcp.tsdiff" |
                  "udp.first" | "udp.single" | "udp.multiple" |
                  "icmp.first" | "icmp.error" |
                  "other.first" | "other.single" | "other.multiple" |
