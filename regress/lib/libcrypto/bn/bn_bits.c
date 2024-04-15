@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bits.c,v 1.1 2024/04/09 14:59:57 jsing Exp $ */
+/*	$OpenBSD: bn_bits.c,v 1.2 2024/04/15 14:36:16 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -111,12 +111,10 @@ test_bn_clear_bit(void)
 		fprintf(stderr, "FAIL: clear bit did not result in zero\n");
 		goto failure;
 	}
-#if 0
 	if (BN_is_negative(bn)) {
 		fprintf(stderr, "FAIL: clear bit resulted in -0\n");
 		goto failure;
 	}
-#endif
 
 	failed = 0;
 
@@ -198,12 +196,10 @@ test_bn_mask_bits(void)
 		fprintf(stderr, "FAIL: mask bits did not result in zero\n");
 		goto failure;
 	}
-#if 0
 	if (BN_is_negative(bn)) {
 		fprintf(stderr, "FAIL: mask bits resulted in -0\n");
 		goto failure;
 	}
-#endif
 
 	failed = 0;
 
