@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_asn1.c,v 1.14 2023/07/07 07:25:21 beck Exp $ */
+/* $OpenBSD: ts_asn1.c,v 1.15 2024/04/15 15:52:46 tb Exp $ */
 /* Written by Nils Larsch for the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -80,7 +80,7 @@ static const ASN1_TEMPLATE TS_MSG_IMPRINT_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM TS_MSG_IMPRINT_it = {
+static const ASN1_ITEM TS_MSG_IMPRINT_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = TS_MSG_IMPRINT_seq_tt,
@@ -202,7 +202,7 @@ static const ASN1_TEMPLATE TS_REQ_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM TS_REQ_it = {
+static const ASN1_ITEM TS_REQ_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = TS_REQ_seq_tt,
@@ -303,7 +303,7 @@ static const ASN1_TEMPLATE TS_ACCURACY_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM TS_ACCURACY_it = {
+static const ASN1_ITEM TS_ACCURACY_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = TS_ACCURACY_seq_tt,
@@ -423,7 +423,7 @@ static const ASN1_TEMPLATE TS_TST_INFO_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM TS_TST_INFO_it = {
+static const ASN1_ITEM TS_TST_INFO_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = TS_TST_INFO_seq_tt,
@@ -524,7 +524,7 @@ static const ASN1_TEMPLATE TS_STATUS_INFO_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM TS_STATUS_INFO_it = {
+static const ASN1_ITEM TS_STATUS_INFO_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = TS_STATUS_INFO_seq_tt,
@@ -640,7 +640,7 @@ static const ASN1_TEMPLATE TS_RESP_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM TS_RESP_it = {
+static const ASN1_ITEM TS_RESP_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = TS_RESP_seq_tt,
@@ -734,7 +734,7 @@ static const ASN1_TEMPLATE ESS_ISSUER_SERIAL_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM ESS_ISSUER_SERIAL_it = {
+static const ASN1_ITEM ESS_ISSUER_SERIAL_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = ESS_ISSUER_SERIAL_seq_tt,
@@ -798,7 +798,7 @@ static const ASN1_TEMPLATE ESS_CERT_ID_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM ESS_CERT_ID_it = {
+static const ASN1_ITEM ESS_CERT_ID_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = ESS_CERT_ID_seq_tt,
@@ -862,7 +862,7 @@ static const ASN1_TEMPLATE ESS_SIGNING_CERT_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM ESS_SIGNING_CERT_it = {
+static const ASN1_ITEM ESS_SIGNING_CERT_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = ESS_SIGNING_CERT_seq_tt,

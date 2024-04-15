@@ -1085,15 +1085,12 @@ ERR_set_mark
 ERR_unload_strings
 ESS_CERT_ID_dup
 ESS_CERT_ID_free
-ESS_CERT_ID_it
 ESS_CERT_ID_new
 ESS_ISSUER_SERIAL_dup
 ESS_ISSUER_SERIAL_free
-ESS_ISSUER_SERIAL_it
 ESS_ISSUER_SERIAL_new
 ESS_SIGNING_CERT_dup
 ESS_SIGNING_CERT_free
-ESS_SIGNING_CERT_it
 ESS_SIGNING_CERT_new
 EVP_AEAD_CTX_cleanup
 EVP_AEAD_CTX_free
@@ -2182,7 +2179,6 @@ TS_ACCURACY_free
 TS_ACCURACY_get_micros
 TS_ACCURACY_get_millis
 TS_ACCURACY_get_seconds
-TS_ACCURACY_it
 TS_ACCURACY_new
 TS_ACCURACY_set_micros
 TS_ACCURACY_set_millis
@@ -2208,7 +2204,6 @@ TS_MSG_IMPRINT_dup
 TS_MSG_IMPRINT_free
 TS_MSG_IMPRINT_get_algo
 TS_MSG_IMPRINT_get_msg
-TS_MSG_IMPRINT_it
 TS_MSG_IMPRINT_new
 TS_MSG_IMPRINT_print_bio
 TS_MSG_IMPRINT_set_algo
@@ -2231,7 +2226,6 @@ TS_REQ_get_msg_imprint
 TS_REQ_get_nonce
 TS_REQ_get_policy_id
 TS_REQ_get_version
-TS_REQ_it
 TS_REQ_new
 TS_REQ_print_bio
 TS_REQ_set_cert_req
@@ -2265,7 +2259,6 @@ TS_RESP_free
 TS_RESP_get_status_info
 TS_RESP_get_token
 TS_RESP_get_tst_info
-TS_RESP_it
 TS_RESP_new
 TS_RESP_print_bio
 TS_RESP_set_status_info
@@ -2278,7 +2271,6 @@ TS_STATUS_INFO_free
 TS_STATUS_INFO_get0_failure_info
 TS_STATUS_INFO_get0_status
 TS_STATUS_INFO_get0_text
-TS_STATUS_INFO_it
 TS_STATUS_INFO_new
 TS_STATUS_INFO_print_bio
 TS_STATUS_INFO_set_status
@@ -2303,7 +2295,6 @@ TS_TST_INFO_get_serial
 TS_TST_INFO_get_time
 TS_TST_INFO_get_tsa
 TS_TST_INFO_get_version
-TS_TST_INFO_it
 TS_TST_INFO_new
 TS_TST_INFO_print_bio
 TS_TST_INFO_set_accuracy
