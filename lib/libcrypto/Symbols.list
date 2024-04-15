@@ -1707,8 +1707,6 @@ OPENSSL_init_crypto
 OPENSSL_load_builtin_modules
 OPENSSL_no_config
 OPENSSL_posix_to_tm
-OPENSSL_strcasecmp
-OPENSSL_strncasecmp
 OPENSSL_timegm
 OPENSSL_tm_to_posix
 OPENSSL_uni2asc

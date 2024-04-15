@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.192 2024/03/29 07:36:38 jsing Exp $
+# $OpenBSD: Makefile,v 1.193 2024/04/15 15:55:01 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -69,7 +69,6 @@ SRCS+= malloc-wrapper.c
 SRCS+= mem_clr.c
 SRCS+= mem_dbg.c
 SRCS+= o_fips.c
-SRCS+= o_str.c
 
 # aes/
 SRCS+= aes.c
