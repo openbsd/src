@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.90 2023/07/28 10:35:14 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.91 2024/04/15 14:35:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -438,6 +438,9 @@ BN_clear_bit(BIGNUM *a, int n)
 
 	a->d[i] &= (~(((BN_ULONG)1) << j));
 	bn_correct_top(a);
+
+	BN_set_negative(a, a->neg);
+
 	return (1);
 }
 LCRYPTO_ALIAS(BN_clear_bit);
@@ -476,6 +479,9 @@ BN_mask_bits(BIGNUM *a, int n)
 		a->d[w] &= ~(BN_MASK2 << b);
 	}
 	bn_correct_top(a);
+
+	BN_set_negative(a, a->neg);
+
 	return (1);
 }
 LCRYPTO_ALIAS(BN_mask_bits);
