@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.154 2024/03/22 21:48:38 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.155 2024/04/15 18:31:04 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -176,9 +176,6 @@ struct inpcb {
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
 
 	int	inp_cksum6;
-#ifndef _KERNEL
-#define inp_csumoffset	inp_cksum6
-#endif
 	struct	icmp6_filter *inp_icmp6filt;
 	struct	pf_state_key *inp_pf_sk; /* [L] */
 	struct	mbuf *(*inp_upcall)(void *, struct mbuf *,
