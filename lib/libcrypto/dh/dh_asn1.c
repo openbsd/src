@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_asn1.c,v 1.12 2023/07/08 15:29:03 beck Exp $ */
+/* $OpenBSD: dh_asn1.c,v 1.13 2024/04/15 15:47:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -114,7 +114,7 @@ static const ASN1_TEMPLATE DHparams_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM DHparams_it = {
+static const ASN1_ITEM DHparams_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = DHparams_seq_tt,

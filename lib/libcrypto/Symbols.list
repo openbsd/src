@@ -800,7 +800,6 @@ DH_size
 DH_test_flags
 DH_up_ref
 DHparams_dup
-DHparams_it
 DHparams_print
 DHparams_print_fp
 DIRECTORYSTRING_free
