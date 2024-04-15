@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.107 2023/12/20 13:37:25 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.108 2024/04/15 13:58:48 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -197,27 +197,45 @@ nvme_dumpregs(struct nvme_softc *sc)
 int
 nvme_ready(struct nvme_softc *sc, u_int32_t rdy)
 {
-	u_int i = 0;
+	u_int32_t csts;
+	u_int i;
 
-	while ((nvme_read4(sc, NVME_CSTS) & NVME_CSTS_RDY) != rdy) {
-		if (i++ > sc->sc_rdy_to)
-			return (1);
+	for (i = 0; i <= sc->sc_rdy_to; i++) {
+		csts = nvme_read4(sc, NVME_CSTS);
+		/* enable fails if fatal error, disable succeeds. */
+		if (csts == 0xffffffff || ISSET(csts, NVME_CSTS_CFS))
+			return (rdy == NVME_CSTS_RDY);
+
+		if ((csts & NVME_CSTS_RDY) == rdy)
+			return (0);
 
 		delay(1000);
 		nvme_barrier(sc, NVME_CSTS, 4, BUS_SPACE_BARRIER_READ);
 	}
 
-	return (0);
+	return (1);
 }
 
 int
 nvme_enable(struct nvme_softc *sc)
 {
-	u_int32_t cc;
+	u_int32_t cc, csts;
 
 	cc = nvme_read4(sc, NVME_CC);
-	if (ISSET(cc, NVME_CC_EN))
+	if (cc != 0xffffffff && ISSET(cc, NVME_CC_EN))
 		return (nvme_ready(sc, NVME_CSTS_RDY));
+
+	csts = nvme_read4(sc, NVME_CSTS);
+	if (csts != 0xffffffff && ISSET(csts, NVME_CSTS_RDY)) {
+		/*
+		 * Ensure CSTS.RDY is 0.
+		 *
+		 * Transitioning CC.EN from 0 to 1 when CSTS.RDY is 1
+		 * "has undefined results" says NVMe.
+		 */
+		if (nvme_ready(sc, 0))
+			return (1);
+	}
 
 	if (sc->sc_ops->op_enable != NULL)
 		sc->sc_ops->op_enable(sc);
@@ -254,10 +272,18 @@ nvme_disable(struct nvme_softc *sc)
 	u_int32_t cc, csts;
 
 	cc = nvme_read4(sc, NVME_CC);
-	if (ISSET(cc, NVME_CC_EN)) {
-		csts = nvme_read4(sc, NVME_CSTS);
-		if (!ISSET(csts, NVME_CSTS_CFS) &&
-		    nvme_ready(sc, NVME_CSTS_RDY) != 0)
+	if (!ISSET(cc, NVME_CC_EN))
+		return (nvme_ready(sc, 0));
+
+	csts = nvme_read4(sc, NVME_CSTS);
+	if (!ISSET(csts, NVME_CSTS_RDY)) {
+		/*
+		 * Ensure CSTS.RDY is 1.
+		 *
+		 * Transitioning CC.EN from 1 to 0 when CSTS.RDY is 0
+		 * "has undefined results" says NVMe.
+		 */
+		if (nvme_ready(sc, NVME_CSTS_RDY))
 			return (1);
 	}
 
@@ -509,6 +535,8 @@ nvme_shutdown(struct nvme_softc *sc)
 		nvme_barrier(sc, 0, sc->sc_ios,
 		    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 		csts = nvme_read4(sc, NVME_CSTS);
+		if (csts == 0xffffffff)
+			break;
 		if ((csts & NVME_CSTS_SHST_MASK) == NVME_CSTS_SHST_DONE)
 			return (0);
 
@@ -968,6 +996,7 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 	struct nvme_poll_state state;
 	void (*done)(struct nvme_softc *, struct nvme_ccb *, struct nvme_cqe *);
 	void *cookie;
+	u_int32_t csts;
 	u_int16_t flags;
 
 	memset(&state, 0, sizeof(state));
@@ -981,8 +1010,14 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 
 	nvme_q_submit(sc, q, ccb, nvme_poll_fill);
 	while (!ISSET(state.c.flags, htole16(NVME_CQE_PHASE))) {
+		csts = nvme_read4(sc, NVME_CSTS);
+		if (csts == 0xffffffff || ISSET(csts, NVME_CSTS_CFS)) {
+			SET(state.c.flags, htole16(NVME_CQE_SC_INTERNAL_DEV_ERR));
+			break;
+		}
 		if (nvme_q_complete(sc, q) == 0)
 			delay(10);
+		nvme_barrier(sc, NVME_CSTS, 4, BUS_SPACE_BARRIER_READ);
 
 		/* XXX no timeout? */
 	}
