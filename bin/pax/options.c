@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.107 2023/12/09 23:00:11 jca Exp $	*/
+/*	$OpenBSD: options.c,v 1.108 2024/04/15 17:33:10 jca Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -238,7 +238,11 @@ FSUB fsub[] = {
 #define	F_CPIO	3	/* format when called as cpio */
 #define F_OTAR	4	/* format when called as tar -o */
 #define F_TAR	5	/* format when called as tar */
-#define DEFLT	5	/* default write format from list above */
+#ifdef SMALL
+# define DEFLT	5	/* format when called as pax: ustar */
+#else
+# define DEFLT	10	/* format when called as pax: pax */
+#endif
 
 /*
  * ford is the archive search order used by get_arc() to determine what kind
