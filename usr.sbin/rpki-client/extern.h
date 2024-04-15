@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.215 2024/04/08 14:02:13 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.216 2024/04/15 13:57:45 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -474,6 +474,7 @@ RB_PROTOTYPE(brk_tree, brk, entry, brkcmp);
 struct crl {
 	RB_ENTRY(crl)	 entry;
 	char		*aki;
+	char		*mftpath;
 	char		*number;
 	X509_CRL	*x509_crl;
 	time_t		 thisupdate;	/* do not use before */

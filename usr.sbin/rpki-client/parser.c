@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.131 2024/03/19 05:04:13 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.132 2024/04/15 13:57:45 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -276,6 +276,9 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
 		warnx("%s: AKI doesn't match Manifest AKI", fn);
 		goto out;
 	}
+
+	if ((crl->mftpath = strdup(mft->sia)) == NULL)
+		err(1, NULL);
 
 	*crlfile = fn;
 	free(f);

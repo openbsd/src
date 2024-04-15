@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.32 2024/02/01 15:11:38 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.33 2024/04/15 13:57:45 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -122,7 +122,28 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 static inline int
 crlcmp(struct crl *a, struct crl *b)
 {
-	return strcmp(a->aki, b->aki);
+	int	 cmp;
+
+	cmp = strcmp(a->aki, b->aki);
+	if (cmp > 0)
+		return 1;
+	if (cmp < 0)
+		return -1;
+
+	/*
+	 * In filemode the mftpath cannot be determined easily,
+	 * but it is always set in normal top-down validation.
+	 */
+	if (a->mftpath == NULL || b->mftpath == NULL)
+		return 0;
+
+	cmp = strcmp(a->mftpath, b->mftpath);
+	if (cmp > 0)
+		return 1;
+	if (cmp < 0)
+		return -1;
+
+	return 0;
 }
 
 RB_GENERATE_STATIC(crl_tree, crl, entry, crlcmp);
@@ -137,7 +158,10 @@ crl_get(struct crl_tree *crlt, const struct auth *a)
 
 	if (a == NULL)
 		return NULL;
+
 	find.aki = a->cert->ski;
+	find.mftpath = a->cert->mft;
+
 	return RB_FIND(crl_tree, crlt, &find);
 }
 
@@ -153,6 +177,7 @@ crl_free(struct crl *crl)
 	if (crl == NULL)
 		return;
 	free(crl->aki);
+	free(crl->mftpath);
 	free(crl->number);
 	X509_CRL_free(crl->x509_crl);
 	free(crl);
