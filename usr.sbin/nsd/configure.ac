@@ -162,7 +162,10 @@ AC_ARG_WITH([user],
 AC_SUBST(user)
 AC_DEFINE_UNQUOTED(USER, ["$user"], [the user name to drop privileges to])
 
-m4_version_prereq([2.70], [AC_PROG_CC], [AC_PROG_CC_STDC])
+m4_version_prereq([2.70], [AC_PROG_CC], [m4_warn([obsolete],
+[AC_PROG_CC_STDC is obsolete; use AC_PROG_CC
+])dnl
+AC_REQUIRE(AC_PROG_CC)])
 AC_PROG_SED
 AC_PROG_AWK
 AC_PROG_GREP
@@ -876,21 +879,15 @@ AC_INCLUDES_DEFAULT
 # causes conflicts with our T_xx defines.
 #
 AC_MSG_CHECKING(for __b64_ntop)
-AC_TRY_LINK([#include <stddef.h>],
-	[__b64_ntop(NULL, 0, NULL, 0);],
-	found_b64_ntop=yes,
-	found_b64_ntop=no
-)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stddef.h>]], [[__b64_ntop(NULL, 0, NULL, 0);]])],[found_b64_ntop=yes],[found_b64_ntop=no
+])
 if test "x$found_b64_ntop" = xno; then
 	AC_MSG_RESULT(no)
 
 	AC_MSG_CHECKING(for __b64_ntop with -lresolv)
 	LIBS="$LIBS -lresolv"
-	AC_TRY_LINK([#include <stddef.h>],
-		[__b64_ntop(NULL, 0, NULL, 0);],
-		found_b64_ntop=yes,
-		found_b64_ntop=no
-	)
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stddef.h>]], [[__b64_ntop(NULL, 0, NULL, 0);]])],[found_b64_ntop=yes],[found_b64_ntop=no
+	])
 	if test "x$found_b64_ntop" = xno; then
 		AC_MSG_RESULT(no)
 	fi
@@ -1431,3 +1428,5 @@ fi
 
 AC_CONFIG_FILES([Makefile $dnstap_config])
 AC_OUTPUT
+m4_unquote(
+  _m4_defn([_m4_wrap_text])_m4_popdef([_m4_wrap_text]))
