@@ -2911,14 +2911,6 @@ X509v3_get_ext_by_NID
 X509v3_get_ext_by_OBJ
 X509v3_get_ext_by_critical
 X509v3_get_ext_count
-X9_62_CHARACTERISTIC_TWO_free
-X9_62_CHARACTERISTIC_TWO_it
-X9_62_CHARACTERISTIC_TWO_new
-X9_62_CURVE_it
-X9_62_FIELDID_it
-X9_62_PENTANOMIAL_free
-X9_62_PENTANOMIAL_it
-X9_62_PENTANOMIAL_new
 ZLONG_it
 _CONF_add_string
 _CONF_free_data

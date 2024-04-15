@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.51 2024/04/15 15:44:15 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.52 2024/04/15 15:46:29 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -167,7 +167,7 @@ static const ASN1_TEMPLATE X9_62_PENTANOMIAL_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM X9_62_PENTANOMIAL_it = {
+static const ASN1_ITEM X9_62_PENTANOMIAL_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = X9_62_PENTANOMIAL_seq_tt,
@@ -176,21 +176,6 @@ const ASN1_ITEM X9_62_PENTANOMIAL_it = {
 	.size = sizeof(X9_62_PENTANOMIAL),
 	.sname = "X9_62_PENTANOMIAL",
 };
-
-X9_62_PENTANOMIAL *X9_62_PENTANOMIAL_new(void);
-void X9_62_PENTANOMIAL_free(X9_62_PENTANOMIAL *a);
-
-X9_62_PENTANOMIAL *
-X9_62_PENTANOMIAL_new(void)
-{
-	return (X9_62_PENTANOMIAL*)ASN1_item_new(&X9_62_PENTANOMIAL_it);
-}
-
-void
-X9_62_PENTANOMIAL_free(X9_62_PENTANOMIAL *a)
-{
-	ASN1_item_free((ASN1_VALUE *)a, &X9_62_PENTANOMIAL_it);
-}
 
 static const ASN1_TEMPLATE char_two_def_tt = {
 	.flags = 0,
@@ -267,7 +252,7 @@ static const ASN1_TEMPLATE X9_62_CHARACTERISTIC_TWO_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM X9_62_CHARACTERISTIC_TWO_it = {
+static const ASN1_ITEM X9_62_CHARACTERISTIC_TWO_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = X9_62_CHARACTERISTIC_TWO_seq_tt,
@@ -276,21 +261,6 @@ const ASN1_ITEM X9_62_CHARACTERISTIC_TWO_it = {
 	.size = sizeof(X9_62_CHARACTERISTIC_TWO),
 	.sname = "X9_62_CHARACTERISTIC_TWO",
 };
-
-X9_62_CHARACTERISTIC_TWO *X9_62_CHARACTERISTIC_TWO_new(void);
-void X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a);
-
-X9_62_CHARACTERISTIC_TWO *
-X9_62_CHARACTERISTIC_TWO_new(void)
-{
-	return (X9_62_CHARACTERISTIC_TWO*)ASN1_item_new(&X9_62_CHARACTERISTIC_TWO_it);
-}
-
-void
-X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a)
-{
-	ASN1_item_free((ASN1_VALUE *)a, &X9_62_CHARACTERISTIC_TWO_it);
-}
 
 static const ASN1_TEMPLATE fieldID_def_tt = {
 	.flags = 0,
@@ -349,7 +319,7 @@ static const ASN1_TEMPLATE X9_62_FIELDID_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM X9_62_FIELDID_it = {
+static const ASN1_ITEM X9_62_FIELDID_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = X9_62_FIELDID_seq_tt,
@@ -383,7 +353,7 @@ static const ASN1_TEMPLATE X9_62_CURVE_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM X9_62_CURVE_it = {
+static const ASN1_ITEM X9_62_CURVE_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = X9_62_CURVE_seq_tt,
