@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_conn.c,v 1.39 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: bss_conn.c,v 1.40 2024/04/15 15:40:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,8 +105,8 @@ static long conn_callback_ctrl(BIO *h, int cmd, BIO_info_cb *);
 
 static int conn_state(BIO *b, BIO_CONNECT *c);
 static void conn_close_socket(BIO *data);
-BIO_CONNECT *BIO_CONNECT_new(void);
-void BIO_CONNECT_free(BIO_CONNECT *a);
+static BIO_CONNECT *BIO_CONNECT_new(void);
+static void BIO_CONNECT_free(BIO_CONNECT *a);
 
 static const BIO_METHOD methods_connectp = {
 	.type = BIO_TYPE_CONNECT,
@@ -289,7 +289,7 @@ end:
 	return (ret);
 }
 
-BIO_CONNECT *
+static BIO_CONNECT *
 BIO_CONNECT_new(void)
 {
 	BIO_CONNECT *ret;
@@ -310,7 +310,7 @@ BIO_CONNECT_new(void)
 	return (ret);
 }
 
-void
+static void
 BIO_CONNECT_free(BIO_CONNECT *a)
 {
 	if (a == NULL)

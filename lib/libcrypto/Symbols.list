@@ -217,8 +217,6 @@ BF_encrypt
 BF_ofb64_encrypt
 BF_set_key
 BIGNUM_it
-BIO_CONNECT_free
-BIO_CONNECT_new
 BIO_accept
 BIO_callback_ctrl
 BIO_clear_flags
