@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.49 2024/04/15 15:41:27 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.50 2024/04/15 15:42:23 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -125,14 +125,14 @@ typedef struct ec_parameters_st {
 	ASN1_INTEGER *cofactor;
 } ECPARAMETERS;
 
-struct ecpk_parameters_st {
+typedef struct ecpk_parameters_st {
 	int type;
 	union {
 		ASN1_OBJECT *named_curve;
 		ECPARAMETERS *parameters;
 		ASN1_NULL *implicitlyCA;
 	} value;
-} /* ECPKPARAMETERS */ ;
+} ECPKPARAMETERS;
 
 /* SEC1 ECPrivateKey */
 typedef struct ec_privatekey_st {
@@ -497,31 +497,31 @@ const ASN1_ITEM ECPKPARAMETERS_it = {
 	.sname = "ECPKPARAMETERS",
 };
 
-ECPKPARAMETERS *ECPKPARAMETERS_new(void);
-void ECPKPARAMETERS_free(ECPKPARAMETERS *a);
-ECPKPARAMETERS *d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len);
-int i2d_ECPKPARAMETERS(const ECPKPARAMETERS *a, unsigned char **out);
+static ECPKPARAMETERS *ECPKPARAMETERS_new(void);
+static void ECPKPARAMETERS_free(ECPKPARAMETERS *a);
+static ECPKPARAMETERS *d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len);
+static int i2d_ECPKPARAMETERS(const ECPKPARAMETERS *a, unsigned char **out);
 
-ECPKPARAMETERS *
+static ECPKPARAMETERS *
 d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len)
 {
 	return (ECPKPARAMETERS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ECPKPARAMETERS_it);
 }
 
-int
+static int
 i2d_ECPKPARAMETERS(const ECPKPARAMETERS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ECPKPARAMETERS_it);
 }
 
-ECPKPARAMETERS *
+static ECPKPARAMETERS *
 ECPKPARAMETERS_new(void)
 {
 	return (ECPKPARAMETERS *)ASN1_item_new(&ECPKPARAMETERS_it);
 }
 
-void
+static void
 ECPKPARAMETERS_free(ECPKPARAMETERS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ECPKPARAMETERS_it);

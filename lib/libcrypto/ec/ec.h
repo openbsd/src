@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.47 2024/04/10 15:01:31 beck Exp $ */
+/* $OpenBSD: ec.h,v 1.48 2024/04/15 15:42:23 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -236,8 +236,6 @@ int EC_GROUP_get_basis_type(const EC_GROUP *);
 
 #define OPENSSL_EC_EXPLICIT_CURVE	0x000
 #define OPENSSL_EC_NAMED_CURVE		0x001
-
-typedef struct ecpk_parameters_st ECPKPARAMETERS;
 
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);

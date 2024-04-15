@@ -885,9 +885,6 @@ ECDSA_do_verify
 ECDSA_sign
 ECDSA_size
 ECDSA_verify
-ECPKPARAMETERS_free
-ECPKPARAMETERS_it
-ECPKPARAMETERS_new
 ECPKParameters_print
 ECPKParameters_print_fp
 ECParameters_dup
@@ -3001,7 +2998,6 @@ d2i_DSAparams
 d2i_DSAparams_bio
 d2i_DSAparams_fp
 d2i_ECDSA_SIG
-d2i_ECPKPARAMETERS
 d2i_ECPKParameters
 d2i_ECParameters
 d2i_ECPrivateKey
@@ -3191,7 +3187,6 @@ i2d_DSAparams
 i2d_DSAparams_bio
 i2d_DSAparams_fp
 i2d_ECDSA_SIG
-i2d_ECPKPARAMETERS
 i2d_ECPKParameters
 i2d_ECParameters
 i2d_ECPrivateKey
