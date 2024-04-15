@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.18 2023/08/08 13:09:28 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.19 2024/04/15 15:49:37 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -84,7 +84,7 @@ static const ASN1_TEMPLATE ECDSA_SIG_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM ECDSA_SIG_it = {
+static const ASN1_ITEM ECDSA_SIG_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = ECDSA_SIG_seq_tt,

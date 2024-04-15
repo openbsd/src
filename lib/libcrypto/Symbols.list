@@ -820,7 +820,6 @@ DSAPublicKey_it
 DSA_OpenSSL
 DSA_SIG_free
 DSA_SIG_get0
-DSA_SIG_it
 DSA_SIG_new
 DSA_SIG_set0
 DSA_bits
@@ -876,7 +875,6 @@ ECDSA_SIG_free
 ECDSA_SIG_get0
 ECDSA_SIG_get0_r
 ECDSA_SIG_get0_s
-ECDSA_SIG_it
 ECDSA_SIG_new
 ECDSA_SIG_set0
 ECDSA_do_sign

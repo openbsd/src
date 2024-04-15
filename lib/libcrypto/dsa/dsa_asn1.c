@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.31 2023/07/08 14:28:15 beck Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.32 2024/04/15 15:49:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -109,7 +109,7 @@ static const ASN1_TEMPLATE DSA_SIG_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM DSA_SIG_it = {
+static const ASN1_ITEM DSA_SIG_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = DSA_SIG_seq_tt,
