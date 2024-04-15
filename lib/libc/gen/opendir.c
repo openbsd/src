@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.30 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: opendir.c,v 1.31 2024/04/15 15:47:58 florian Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,6 @@
 
 #include "telldir.h"
 
-static DIR *__fdopendir(int fd);
 
 /*
  * Open a directory specified by name.
@@ -89,7 +88,7 @@ fdopendir(int fd)
 }
 DEF_WEAK(fdopendir);
 
-static DIR *
+DIR *
 __fdopendir(int fd)
 {
 	DIR *dirp;

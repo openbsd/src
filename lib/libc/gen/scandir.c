@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.22 2024/04/14 11:21:08 florian Exp $ */
+/*	$OpenBSD: scandir.c,v 1.23 2024/04/15 15:47:58 florian Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,9 +39,11 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "telldir.h"
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
@@ -57,8 +59,8 @@
 	((sizeof(struct dirent) - sizeof(dp)->d_name) +			\
 	    (((dp)->d_namlen + 1 + 3) &~ 3))
 
-int
-scandir(const char *dirname, struct dirent ***namelist,
+static int
+scandir_dirp(DIR *dirp, struct dirent ***namelist,
     int (*select)(const struct dirent *),
     int (*dcomp)(const struct dirent **, const struct dirent **))
 {
@@ -66,10 +68,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 	size_t nitems = 0;
 	struct stat stb;
 	long arraysz;
-	DIR *dirp;
 
-	if ((dirp = opendir(dirname)) == NULL)
-		return (-1);
 	if (fstat(dirp->dd_fd, &stb) == -1)
 		goto fail;
 
@@ -138,6 +137,38 @@ fail:
 	free(names);
 	closedir(dirp);
 	return (-1);
+}
+
+int
+scandir(const char *dirname, struct dirent ***namelist,
+    int (*select)(const struct dirent *),
+    int (*dcomp)(const struct dirent **, const struct dirent **))
+{
+	DIR *dirp;
+
+	if ((dirp = opendir(dirname)) == NULL)
+		return (-1);
+
+	return (scandir_dirp(dirp, namelist, select, dcomp));
+}
+
+int
+scandirat(int dirfd, const char *dirname, struct dirent ***namelist,
+    int (*select)(const struct dirent *),
+    int (*dcomp)(const struct dirent **, const struct dirent **))
+{
+	DIR *dirp;
+	int fd;
+
+	fd = HIDDEN(openat)(dirfd, dirname, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+	if (fd == -1)
+		return (-1);
+	dirp = __fdopendir(fd);
+	if (dirp == NULL) {
+		HIDDEN(close)(fd);
+		return (-1);
+	}
+	return (scandir_dirp(dirp, namelist, select, dcomp));
 }
 
 /*

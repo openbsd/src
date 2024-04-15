@@ -750,6 +750,7 @@ readdir_r
 readpassphrase
 rewinddir
 scandir
+scandirat
 seekdir
 setclasscontext
 setdomainname
