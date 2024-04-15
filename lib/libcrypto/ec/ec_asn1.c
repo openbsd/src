@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.48 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.49 2024/04/15 15:41:27 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -448,16 +448,16 @@ const ASN1_ITEM ECPARAMETERS_it = {
 	.sname = "ECPARAMETERS",
 };
 
-ECPARAMETERS *ECPARAMETERS_new(void);
-void ECPARAMETERS_free(ECPARAMETERS *a);
+static ECPARAMETERS *ECPARAMETERS_new(void);
+static void ECPARAMETERS_free(ECPARAMETERS *a);
 
-ECPARAMETERS *
+static ECPARAMETERS *
 ECPARAMETERS_new(void)
 {
 	return (ECPARAMETERS*)ASN1_item_new(&ECPARAMETERS_it);
 }
 
-void
+static void
 ECPARAMETERS_free(ECPARAMETERS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ECPARAMETERS_it);
