@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.267 2024/01/01 14:16:59 semarie Exp $
+.\"	$OpenBSD: port-modules.5,v 1.268 2024/04/15 16:11:01 bentley Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 1 2024 $
+.Dd $Mdocdate: April 15 2024 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -689,18 +689,16 @@ and
 Appends to
 .Ev CATEGORIES .
 When
-.Ev TYPEFACE
+.Ev MODFONT_FAMILY
 is set in combination with
-.Ev V
-or
-.Ev VERSION ,
+.Ev MODFONT_VERSION ,
 it sets
 .Ev PKGNAME .
-.Ev TYPEFACE
-should be set to the name of the typeface.
+.Ev MODFONT_FAMILY
+should be set to the name of the font family.
 This sets
-.Ev FONTDIR
-using said typeface name.
+.Ev MODFONT_DIR
+using said family name.
 A
 .Cm do-install
 target is provided if the port itself does not provide it.
@@ -708,7 +706,7 @@ This installs fonts from
 .Ev WRKSRC
 in the distribution.
 If one or more file extensions are listed in
-.Ev FONTTYPES ,
+.Ev MODFONT_TYPES ,
 files of those types will be used.
 Otherwise, otf files are preferred, with a fallback to ttf.
 .It fortran
