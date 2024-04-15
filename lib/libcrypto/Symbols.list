@@ -197,7 +197,6 @@ ASN1_put_eoc
 ASN1_put_object
 ASN1_tag2bit
 ASN1_tag2str
-ASN1_time_tm_clamp_notafter
 ASRange_free
 ASRange_it
 ASRange_new
