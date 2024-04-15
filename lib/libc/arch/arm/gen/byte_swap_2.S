@@ -1,4 +1,4 @@
-/*	$OpenBSD: byte_swap_2.S,v 1.4 2022/05/24 17:15:23 guenther Exp $	*/
+/*	$OpenBSD: byte_swap_2.S,v 1.5 2024/04/15 14:30:48 naddy Exp $	*/
 /*	$NetBSD: byte_swap_2.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*-
@@ -33,14 +33,8 @@
 #include "DEFS.h"
 
 _ENTRY(__bswap16)
-_ENTRY_NB(ntohs)
-ENTRY_NB(htons)
 	and		r1, r0, #0xff
 	mov		r0, r0, lsr #8
 	orr		r0, r0, r1, lsl #8
 	mov		pc, lr  
-END(htons)
-_END(ntohs)
 _END(__bswap16)
-	.weak	htons
-	.weak	ntohs

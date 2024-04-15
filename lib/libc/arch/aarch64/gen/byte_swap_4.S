@@ -1,4 +1,4 @@
-/*	$OpenBSD: byte_swap_4.S,v 1.3 2022/05/24 22:34:02 guenther Exp $	*/
+/*	$OpenBSD: byte_swap_4.S,v 1.4 2024/04/15 14:30:48 naddy Exp $	*/
 /*	$NetBSD: byte_swap_4.S,v 1.2 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*-
@@ -33,14 +33,8 @@
 #include "DEFS.h"
 
 _ENTRY(__bswap32)
-_ENTRY_NB(ntohl)
-ENTRY_NB(htonl)
 	RETGUARD_SETUP(__bswap32, x15)
 	rev	w0, w0
 	RETGUARD_CHECK(__bswap32, x15)
 	ret
-END(htonl)
-_END(ntohl)
 _END(__bswap32)
-	.weak	htonl
-	.weak	ntohl

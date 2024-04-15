@@ -1,4 +1,4 @@
-/*	$OpenBSD: byte_swap_2.S,v 1.3 2022/05/24 22:34:02 guenther Exp $	*/
+/*	$OpenBSD: byte_swap_2.S,v 1.4 2024/04/15 14:30:48 naddy Exp $	*/
 /*	$NetBSD: byte_swap_2.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*-
@@ -33,16 +33,10 @@
 #include "DEFS.h"
 
 _ENTRY(__bswap16)
-_ENTRY_NB(ntohs)
-ENTRY_NB(htons)
 	RETGUARD_SETUP(__bswap16, x15)
 	and     w8, w0, #0xffff
         ubfx    w0, w0, #8, #8
 	bfi     w0, w8, #8, #16
 	RETGUARD_CHECK(__bswap16, x15)
 	ret
-END(htons)
-_END(ntohs)
 _END(__bswap16)
-	.weak	htons
-	.weak	ntohs

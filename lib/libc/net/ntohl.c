@@ -1,6 +1,5 @@
-/*	$OpenBSD: ntohl.c,v 1.7 2014/07/21 01:51:10 guenther Exp $ */
+/*	$OpenBSD: ntohl.c,v 1.8 2024/04/15 14:30:48 naddy Exp $ */
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
  */
 
@@ -9,13 +8,8 @@
 
 #undef ntohl
 
-u_int32_t
-ntohl(u_int32_t x)
+uint32_t
+ntohl(uint32_t x)
 {
-#if BYTE_ORDER == LITTLE_ENDIAN
-	u_char *s = (u_char *)&x;
-	return (u_int32_t)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
-#else
-	return x;
-#endif
+	return be32toh(x);
 }
