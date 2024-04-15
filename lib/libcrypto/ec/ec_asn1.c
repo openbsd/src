@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.50 2024/04/15 15:42:23 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.51 2024/04/15 15:44:15 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -558,7 +558,7 @@ static const ASN1_TEMPLATE EC_PRIVATEKEY_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM EC_PRIVATEKEY_it = {
+static const ASN1_ITEM EC_PRIVATEKEY_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
 	.templates = EC_PRIVATEKEY_seq_tt,
@@ -568,31 +568,31 @@ const ASN1_ITEM EC_PRIVATEKEY_it = {
 	.sname = "EC_PRIVATEKEY",
 };
 
-EC_PRIVATEKEY *EC_PRIVATEKEY_new(void);
-void EC_PRIVATEKEY_free(EC_PRIVATEKEY *a);
-EC_PRIVATEKEY *d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len);
-int i2d_EC_PRIVATEKEY(const EC_PRIVATEKEY *a, unsigned char **out);
+static EC_PRIVATEKEY *EC_PRIVATEKEY_new(void);
+static void EC_PRIVATEKEY_free(EC_PRIVATEKEY *a);
+static EC_PRIVATEKEY *d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len);
+static int i2d_EC_PRIVATEKEY(const EC_PRIVATEKEY *a, unsigned char **out);
 
-EC_PRIVATEKEY *
+static EC_PRIVATEKEY *
 d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len)
 {
 	return (EC_PRIVATEKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &EC_PRIVATEKEY_it);
 }
 
-int
+static int
 i2d_EC_PRIVATEKEY(const EC_PRIVATEKEY *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &EC_PRIVATEKEY_it);
 }
 
-EC_PRIVATEKEY *
+static EC_PRIVATEKEY *
 EC_PRIVATEKEY_new(void)
 {
 	return (EC_PRIVATEKEY *)ASN1_item_new(&EC_PRIVATEKEY_it);
 }
 
-void
+static void
 EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &EC_PRIVATEKEY_it);

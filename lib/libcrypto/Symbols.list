@@ -1003,9 +1003,6 @@ EC_POINT_set_compressed_coordinates_GFp
 EC_POINT_set_to_infinity
 EC_POINTs_make_affine
 EC_POINTs_mul
-EC_PRIVATEKEY_free
-EC_PRIVATEKEY_it
-EC_PRIVATEKEY_new
 EC_curve_nid2nist
 EC_curve_nist2nid
 EC_get_builtin_curves
@@ -3003,7 +3000,6 @@ d2i_ECParameters
 d2i_ECPrivateKey
 d2i_ECPrivateKey_bio
 d2i_ECPrivateKey_fp
-d2i_EC_PRIVATEKEY
 d2i_EC_PUBKEY
 d2i_EC_PUBKEY_bio
 d2i_EC_PUBKEY_fp
@@ -3192,7 +3188,6 @@ i2d_ECParameters
 i2d_ECPrivateKey
 i2d_ECPrivateKey_bio
 i2d_ECPrivateKey_fp
-i2d_EC_PRIVATEKEY
 i2d_EC_PUBKEY
 i2d_EC_PUBKEY_bio
 i2d_EC_PUBKEY_fp
