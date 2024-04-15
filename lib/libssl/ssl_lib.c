@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.322 2024/03/27 06:47:52 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.323 2024/04/15 16:00:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -160,8 +160,6 @@
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 #include "tls12_internal.h"
-
-const char *SSL_version_str = OPENSSL_VERSION_TEXT;
 
 int
 SSL_clear(SSL *s)

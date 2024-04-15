@@ -338,7 +338,6 @@ SSL_use_certificate_chain_file
 SSL_use_certificate_file
 SSL_verify_client_post_handshake
 SSL_version
-SSL_version_str
 SSL_want
 SSL_write
 SSL_write_early_data
