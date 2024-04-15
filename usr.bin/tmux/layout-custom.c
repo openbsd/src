@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.22 2023/02/02 09:24:59 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.23 2024/04/15 08:19:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -230,7 +230,7 @@ layout_parse(struct window *w, const char *layout, char **cause)
 	/* Check the new layout. */
 	if (!layout_check(lc)) {
 		*cause = xstrdup("size mismatch after applying layout");
-		return (-1);
+		goto fail;
 	}
 
 	/* Resize to the layout size. */
