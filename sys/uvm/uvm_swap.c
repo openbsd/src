@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.169 2024/02/03 18:51:59 beck Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.170 2024/04/16 10:06:37 claudio Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1088,6 +1088,7 @@ swap_off(struct proc *p, struct swapdev *sdp)
 	 */
 	if (sdp->swd_vp->v_type == VREG) {
 		crfree(sdp->swd_cred);
+		bufq_destroy(&sdp->swd_bufq);
 	}
 	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
