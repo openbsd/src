@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.17 2024/04/16 13:11:37 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.18 2024/04/16 13:14:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,7 +168,7 @@ bn_bin2bn_cbs(BIGNUM **bnp, CBS *cbs)
 	if (!bn_expand_bytes(bn, CBS_len(cbs)))
 		goto err;
 
-	b = BN_BITS2;
+	b = 0;
 	i = 0;
 	w = 0;
 
@@ -176,11 +176,11 @@ bn_bin2bn_cbs(BIGNUM **bnp, CBS *cbs)
 		if (!CBS_get_last_u8(cbs, &v))
 			goto err;
 
-		w |= (BN_ULONG)v << (BN_BITS2 - b);
-		b -= 8;
+		w |= (BN_ULONG)v << b;
+		b += 8;
 
-		if (b == 0 || CBS_len(cbs) == 0) {
-			b = BN_BITS2;
+		if (b == BN_BITS2 || CBS_len(cbs) == 0) {
+			b = 0;
 			bn->d[i++] = w;
 			w = 0;
 		}
@@ -657,7 +657,7 @@ bn_hex2bn_cbs(BIGNUM **bnp, CBS *cbs)
 	if (!CBS_get_bytes(cbs, cbs, digits))
 		goto err;
 
-	b = BN_BITS2;
+	b = 0;
 	i = 0;
 	w = 0;
 
@@ -675,11 +675,11 @@ bn_hex2bn_cbs(BIGNUM **bnp, CBS *cbs)
 		else
 			goto err;
 
-		w |= (BN_ULONG)v << (BN_BITS2 - b);
-		b -= 4;
+		w |= (BN_ULONG)v << b;
+		b += 4;
 
-		if (b == 0 || digits == 0) {
-			b = BN_BITS2;
+		if (b == BN_BITS2 || digits == 0) {
+			b = 0;
 			bn->d[i++] = w;
 			w = 0;
 		}
