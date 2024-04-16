@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.148 2024/04/04 08:02:21 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.149 2024/04/16 17:46:30 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1491,6 +1491,45 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	if (!tlsext_extension_processed(s, TLSEXT_TYPE_supported_groups)) {
 		*alert = SSL_AD_INTERNAL_ERROR;
 		return 0;
+	}
+
+	if (s->s3->hs.tls13.hrr) {
+		if (!CBS_get_u16_length_prefixed(cbs, &client_shares))
+			return 0;
+
+		/* Unpack client share. */
+		if (!CBS_get_u16(&client_shares, &group))
+			return 0;
+		if (!CBS_get_u16_length_prefixed(&client_shares, &key_exchange))
+			return 0;
+
+		/* There should only be one share. */
+		if (CBS_len(&client_shares) != 0)
+			return 0;
+
+		if (group != s->s3->hs.tls13.server_group) {
+			*alert = SSL_AD_ILLEGAL_PARAMETER;
+			return 0;
+		}
+
+		if (s->s3->hs.key_share != NULL) {
+			*alert = SSL_AD_INTERNAL_ERROR;
+			return 0;
+		}
+
+		/* Decode and store the selected key share. */
+		if ((s->s3->hs.key_share = tls_key_share_new(group)) == NULL) {
+			*alert = SSL_AD_INTERNAL_ERROR;
+			return 0;
+		}
+		if (!tls_key_share_peer_public(s->s3->hs.key_share,
+		    &key_exchange, &decode_error, NULL)) {
+			if (!decode_error)
+				*alert = SSL_AD_INTERNAL_ERROR;
+			return 0;
+		}
+
+		return 1;
 	}
 
 	/*
