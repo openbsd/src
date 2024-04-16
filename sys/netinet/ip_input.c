@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.392 2024/04/14 20:46:27 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.393 2024/04/16 12:56:39 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ extern struct niqueue		arpinq;
 
 int	ip_ours(struct mbuf **, int *, int, int);
 int	ip_dooptions(struct mbuf *, struct ifnet *);
-int	in_ouraddr(struct mbuf *, struct ifnet *, struct rtentry **);
+int	in_ouraddr(struct mbuf *, struct ifnet *, struct route *);
 
 int		ip_fragcheck(struct mbuf **, int *);
 struct mbuf *	ip_reass(struct ipqent *, struct ipq *);
@@ -424,9 +424,9 @@ bad:
 int
 ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 {
-	struct mbuf	*m;
-	struct rtentry	*rt = NULL;
-	struct ip	*ip;
+	struct route ro;
+	struct mbuf *m;
+	struct ip *ip;
 	int hlen;
 #if NPF > 0
 	struct in_addr odst;
@@ -435,6 +435,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 	KASSERT(*offp == 0);
 
+	ro.ro_rt = NULL;
 	ipstat_inc(ips_total);
 	m = *mp = ipv4_check(ifp, *mp);
 	if (m == NULL)
@@ -482,7 +483,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto out;
 	}
 
-	switch(in_ouraddr(m, ifp, &rt)) {
+	switch(in_ouraddr(m, ifp, &ro)) {
 	case 2:
 		goto bad;
 	case 1:
@@ -584,14 +585,14 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 #endif /* IPSEC */
 
-	ip_forward(m, ifp, rt, pfrdr);
+	ip_forward(m, ifp, &ro, pfrdr);
 	*mp = NULL;
 	return IPPROTO_DONE;
  bad:
 	nxt = IPPROTO_DONE;
 	m_freemp(mp);
  out:
-	rtfree(rt);
+	rtfree(ro.ro_rt);
 	return nxt;
 }
 
@@ -805,11 +806,10 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af, int shared)
 #undef IPSTAT_INC
 
 int
-in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
+in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct route *ro)
 {
 	struct rtentry		*rt;
 	struct ip		*ip;
-	struct sockaddr_in	 sin;
 	int			 match = 0;
 
 #if NPF > 0
@@ -826,13 +826,8 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 
 	ip = mtod(m, struct ip *);
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr = ip->ip_dst;
-	rt = rtalloc_mpath(sintosa(&sin), &ip->ip_src.s_addr,
-	    m->m_pkthdr.ph_rtableid);
-	if (rtisvalid(rt)) {
+	rt = route_mpath(ro, &ip->ip_dst, &ip->ip_src, m->m_pkthdr.ph_rtableid);
+	if (rt != NULL) {
 		if (ISSET(rt->rt_flags, RTF_LOCAL))
 			match = 1;
 
@@ -848,7 +843,6 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct rtentry **prt)
 			m->m_flags |= M_BCAST;
 		}
 	}
-	*prt = rt;
 
 	if (!match) {
 		struct ifaddr *ifa;
@@ -1527,11 +1521,12 @@ const u_char inetctlerrmap[PRC_NCMDS] = {
  * via a source route.
  */
 void
-ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
+ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int srcrt)
 {
 	struct mbuf mfake, *mcopy;
 	struct ip *ip = mtod(m, struct ip *);
-	struct route ro;
+	struct route iproute;
+	struct rtentry *rt;
 	int error = 0, type = 0, code = 0, destmtu = 0, fake = 0, len;
 	u_int32_t dest;
 
@@ -1546,19 +1541,16 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		goto done;
 	}
 
-	ro.ro_rt = NULL;
-	route_cache(&ro, &ip->ip_dst, &ip->ip_src, m->m_pkthdr.ph_rtableid);
-	if (!rtisvalid(rt)) {
-		rtfree(rt);
-		rt = rtalloc_mpath(&ro.ro_dstsa, &ip->ip_src.s_addr,
-		    m->m_pkthdr.ph_rtableid);
-		if (rt == NULL) {
-			ipstat_inc(ips_noroute);
-			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
-			return;
-		}
+	if (ro == NULL) {
+		ro = &iproute;
+		ro->ro_rt = NULL;
 	}
-	ro.ro_rt = rt;
+	rt = route_mpath(ro, &ip->ip_dst, &ip->ip_src, m->m_pkthdr.ph_rtableid);
+	if (rt == NULL) {
+		ipstat_inc(ips_noroute);
+		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
+		goto done;
+	}
 
 	/*
 	 * Save at most 68 bytes of the packet in case
@@ -1609,10 +1601,10 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		}
 	}
 
-	error = ip_output(m, NULL, &ro,
+	error = ip_output(m, NULL, ro,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
 	    NULL, NULL, 0);
-	rt = ro.ro_rt;
+	rt = ro->ro_rt;
 	if (error)
 		ipstat_inc(ips_cantforward);
 	else {
@@ -1680,9 +1672,10 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		icmp_error(mcopy, type, code, dest, destmtu);
 
  done:
+	if (ro == &iproute)
+		rtfree(ro->ro_rt);
 	if (fake)
 		m_tag_delete_chain(&mfake);
-	rtfree(rt);
 }
 
 int

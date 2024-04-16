@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.260 2024/04/14 20:46:27 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.261 2024/04/16 12:56:39 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -356,10 +356,10 @@ bad:
 int
 ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 {
+	struct route ro;
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
-	struct sockaddr_in6 sin6;
-	struct rtentry *rt = NULL;
+	struct rtentry *rt;
 	int ours = 0;
 	u_int16_t src_scope, dst_scope;
 #if NPF > 0
@@ -369,8 +369,8 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 	KASSERT(*offp == 0);
 
+	ro.ro_rt = NULL;
 	ip6stat_inc(ip6s_total);
-
 	m = *mp = ipv6_check(ifp, *mp);
 	if (m == NULL)
 		goto bad;
@@ -516,18 +516,14 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	/*
 	 *  Unicast check
 	 */
-	memset(&sin6, 0, sizeof(struct sockaddr_in6));
-	sin6.sin6_len = sizeof(struct sockaddr_in6);
-	sin6.sin6_family = AF_INET6;
-	sin6.sin6_addr = ip6->ip6_dst;
-	rt = rtalloc_mpath(sin6tosa(&sin6), &ip6->ip6_src.s6_addr32[0],
+	rt = route6_mpath(&ro, &ip6->ip6_dst, &ip6->ip6_src,
 	    m->m_pkthdr.ph_rtableid);
 
 	/*
 	 * Accept the packet if the route to the destination is marked
 	 * as local.
 	 */
-	if (rtisvalid(rt) && ISSET(rt->rt_flags, RTF_LOCAL)) {
+	if (rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL)) {
 		struct in6_ifaddr *ia6 = ifatoia6(rt->rt_ifa);
 
 		if (ip6_forwarding == 0 && rt->rt_ifidx != ifp->if_index &&
@@ -617,14 +613,14 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 #endif /* IPSEC */
 
-	ip6_forward(m, rt, pfrdr);
+	ip6_forward(m, &ro, pfrdr);
 	*mp = NULL;
 	return IPPROTO_DONE;
  bad:
 	nxt = IPPROTO_DONE;
 	m_freemp(mp);
  out:
-	rtfree(rt);
+	rtfree(ro.ro_rt);
 	return nxt;
 }
 
