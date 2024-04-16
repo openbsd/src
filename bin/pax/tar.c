@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.83 2024/04/16 20:51:11 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.84 2024/04/16 22:58:10 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -61,9 +61,6 @@ struct xheader_record {
 
 /* shortest possible extended record: "5 a=\n" */
 #define MINXHDRSZ	5
-
-/* longest record we'll accept */
-#define MAXXHDRSZ	BLKMULT
 
 /*
  * Routines for reading, writing and header identify of various versions of tar
@@ -1588,7 +1585,11 @@ rd_size(off_t *size, const char *keyword, char *p)
 static int
 rd_xheader(ARCHD *arcn, int global, off_t size)
 {
-	char buf[MAXXHDRSZ];
+	/*
+	 * The pax format supposedly supports arbitrarily sized extended
+	 * record headers, this implementation doesn't.
+	 */
+	char buf[sizeof("30xx linkpath=") - 1 + PAXPATHLEN + sizeof("\n")];
 	long len;
 	char *delim, *keyword;
 	char *nextp, *p, *end;
