@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.109 2024/04/15 22:07:08 caspar Exp $	*/
+/*	$OpenBSD: options.c,v 1.110 2024/04/16 18:52:43 jca Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -228,7 +228,7 @@ FSUB fsub[] = {
 /* 9: gzip, to detect failure to use -z */
 	{NULL, 0, 4, 0, 0, 0, 0, gzip_id},
 /* 10: POSIX PAX */
-	{"pax", 5120, BLKMULT, 0, 1, BLKMULT, 0, ustar_id, no_op,
+	{"pax", 5120, BLKMULT, 0, 1, BLKMULT, 0, pax_id, no_op,
 	ustar_rd, tar_endrd, no_op, pax_wr, tar_endwr, tar_trail,
 	tar_opt},
 #endif
@@ -249,7 +249,7 @@ FSUB fsub[] = {
  * of archive we are dealing with. This helps to properly id archive formats
  * some formats may be subsets of others....
  */
-int ford[] = {5, 4, 9, 8, 7, 6, 3, 2, 1, 0, -1};
+int ford[] = {10, 5, 4, 9, 8, 7, 6, 3, 2, 1, 0, -1};
 
 /*
  * Do we have -C anywhere and what is it?

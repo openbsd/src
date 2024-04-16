@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.79 2024/01/20 17:34:50 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.80 2024/04/16 18:52:43 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1390,6 +1390,46 @@ ustar_wr(ARCHD *arcn)
 {
 	return wr_ustar_or_pax(arcn, 1);
 }
+
+/*
+ * pax_id()
+ *	determine if a block given to us is a valid pax header.
+ * Return:
+ *	0 if a pax header, -1 otherwise
+ */
+#ifndef SMALL
+int
+pax_id(char *blk, int size)
+{
+	HD_USTAR *hd;
+
+	if (size < BLKMULT)
+		return(-1);
+	hd = (HD_USTAR *)blk;
+
+	/*
+	 * check for block of zero's first, a simple and fast test then check
+	 * ustar magic cookie. We should use TMAGLEN, but some USTAR archive
+	 * programs are fouled up and create archives missing the \0. Last we
+	 * check the checksum and the type flag. If ok we have to assume it is
+	 * a valid pax header.
+	 */
+	if (hd->prefix[0] == '\0' && hd->name[0] == '\0')
+		return(-1);
+	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0)
+		return(-1);
+	if (asc_ul(hd->chksum,sizeof(hd->chksum),OCT) != tar_chksm(blk,BLKMULT))
+		return(-1);
+	/*
+	 * It is valid for a pax formatted archive not to start with
+	 * a global header nor with an extended header. In that case
+	 * we'll fall back to ustar in append mode.
+	 */
+	if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE)
+		return(0);
+	return (-1);
+}
+#endif
 
 /*
  * pax_wr()
