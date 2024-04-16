@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.16 2024/04/16 13:04:05 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.17 2024/04/16 13:11:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,46 +153,69 @@ BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 }
 LCRYPTO_ALIAS(BN_bn2binpad);
 
-BIGNUM *
-BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
+static int
+bn_bin2bn_cbs(BIGNUM **bnp, CBS *cbs)
 {
-	unsigned int i, m;
-	unsigned int n;
-	BN_ULONG l;
 	BIGNUM *bn = NULL;
+	BN_ULONG w;
+	uint8_t v;
+	int b, i;
 
-	if (len < 0)
-		return (NULL);
-	if (ret == NULL)
-		ret = bn = BN_new();
-	if (ret == NULL)
-		return (NULL);
-	l = 0;
-	n = len;
-	if (n == 0) {
-		ret->top = 0;
-		return (ret);
-	}
-	i = ((n - 1) / BN_BYTES) + 1;
-	m = ((n - 1) % (BN_BYTES));
-	if (!bn_wexpand(ret, (int)i)) {
-		BN_free(bn);
-		return NULL;
-	}
-	ret->top = i;
-	ret->neg = 0;
-	while (n--) {
-		l = (l << 8L) | *(s++);
-		if (m-- == 0) {
-			ret->d[--i] = l;
-			l = 0;
-			m = BN_BYTES - 1;
+	if ((bn = *bnp) == NULL)
+		bn = BN_new();
+	if (bn == NULL)
+		goto err;
+	if (!bn_expand_bytes(bn, CBS_len(cbs)))
+		goto err;
+
+	b = BN_BITS2;
+	i = 0;
+	w = 0;
+
+	while (CBS_len(cbs) > 0) {
+		if (!CBS_get_last_u8(cbs, &v))
+			goto err;
+
+		w |= (BN_ULONG)v << (BN_BITS2 - b);
+		b -= 8;
+
+		if (b == 0 || CBS_len(cbs) == 0) {
+			b = BN_BITS2;
+			bn->d[i++] = w;
+			w = 0;
 		}
 	}
-	/* need to call this due to clear byte at top if avoiding
-	 * having the top bit set (-ve number) */
-	bn_correct_top(ret);
-	return (ret);
+
+	bn->neg = 0;
+	bn->top = i;
+
+	bn_correct_top(bn);
+
+	*bnp = bn;
+
+	return 1;
+
+ err:
+	if (*bnp == NULL)
+		BN_free(bn);
+
+	return 0;
+}
+
+BIGNUM *
+BN_bin2bn(const unsigned char *d, int len, BIGNUM *bn)
+{
+	CBS cbs;
+
+	if (len < 0)
+		return NULL;
+
+	CBS_init(&cbs, d, len);
+
+	if (!bn_bin2bn_cbs(&bn, &cbs))
+		return NULL;
+
+	return bn;
 }
 LCRYPTO_ALIAS(BN_bin2bn);
 
