@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.81 2024/04/16 19:04:11 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.82 2024/04/16 19:09:06 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1588,15 +1588,7 @@ rd_size(off_t *size, const char *keyword, char *p)
 static int
 rd_xheader(ARCHD *arcn, int global, off_t size)
 {
-	/*
-	 * We want a buffer big enough to store
-	 * a large path.  Avert your eyes...
-	 */
-	char buf[
-	    14 /* strlen("1xxx linkpath=") */
-	    + PATH_MAX + 100000
-	    + 1 /* strlen("\n") */
-	];
+	char buf[MAXXHDRSZ];
 	long len;
 	char *delim, *keyword;
 	char *nextp, *p, *end;
