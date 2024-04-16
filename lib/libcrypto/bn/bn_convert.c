@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.15 2023/07/09 18:37:58 tb Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.16 2024/04/16 13:04:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -431,7 +431,7 @@ bn_dec2bn_cbs(BIGNUM **bnp, CBS *cbs)
 		bn = BN_new();
 	if (bn == NULL)
 		goto err;
-	if (!bn_expand(bn, digits * 4))
+	if (!bn_expand_bits(bn, digits * 4))
 		goto err;
 
 	if ((d = digits % BN_DEC_NUM) == 0)
@@ -628,7 +628,7 @@ bn_hex2bn_cbs(BIGNUM **bnp, CBS *cbs)
 		bn = BN_new();
 	if (bn == NULL)
 		goto err;
-	if (!bn_expand(bn, digits * 4))
+	if (!bn_expand_bits(bn, digits * 4))
 		goto err;
 
 	if (!CBS_get_bytes(cbs, cbs, digits))
