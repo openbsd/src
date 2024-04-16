@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.92 2024/04/16 13:04:05 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.93 2024/04/16 13:07:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,6 +227,19 @@ bn_expand_bits(BIGNUM *bn, size_t bits)
 		return 0;
 
 	words = (bits + BN_BITS2 - 1) / BN_BITS2;
+
+	return bn_wexpand(bn, words);
+}
+
+int
+bn_expand_bytes(BIGNUM *bn, size_t bytes)
+{
+	int words;
+
+	if (bytes > (INT_MAX - BN_BYTES + 1))
+		return 0;
+
+	words = (bytes + BN_BYTES - 1) / BN_BYTES;
 
 	return bn_wexpand(bn, words);
 }
