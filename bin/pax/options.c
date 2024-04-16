@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.110 2024/04/16 18:52:43 jca Exp $	*/
+/*	$OpenBSD: options.c,v 1.111 2024/04/16 19:04:11 jca Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -725,9 +725,10 @@ static void
 tar_options(int argc, char **argv)
 {
 	int c;
-	int Oflag = 0;
 	int nincfiles = 0;
 	int incfiles_max = 0;
+	unsigned int i;
+	unsigned int format = F_TAR;
 	struct incfile {
 		char *file;
 		char *dir;
@@ -743,7 +744,7 @@ tar_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "b:cef:hjmopqruts:vwxzBC:HI:LNOPXZ014578")) != -1) {
+	    "b:cef:hjmopqruts:vwxzBC:F:HI:LNOPXZ014578")) != -1) {
 		switch (c) {
 		case 'b':
 			/*
@@ -792,10 +793,10 @@ tar_options(int argc, char **argv)
 			pmtime = 0;
 			break;
 		case 'O':
-			Oflag = 1;
+			format = F_OTAR;
 			break;
 		case 'o':
-			Oflag = 2;
+			format = F_OTAR;
 			tar_nodir = 1;
 			break;
 		case 'p':
@@ -867,6 +868,24 @@ tar_options(int argc, char **argv)
 		case 'C':
 			havechd++;
 			chdname = optarg;
+			break;
+		case 'F':
+			for (i = 0; i < sizeof(fsub)/sizeof(FSUB); ++i)
+				if (fsub[i].name != NULL &&
+				    strcmp(fsub[i].name, optarg) == 0)
+					break;
+			if (i < sizeof(fsub)/sizeof(FSUB)) {
+				format = i;
+				break;
+			}
+			paxwarn(1, "Unknown -F format: %s", optarg);
+			(void)fputs("tar: Known -F formats are:", stderr);
+			for (i = 0; i < (sizeof(fsub)/sizeof(FSUB)); ++i)
+				if (fsub[i].name != NULL)
+					(void)fprintf(stderr, " %s",
+					    fsub[i].name);
+			(void)fputs("\n\n", stderr);
+			tar_usage();
 			break;
 		case 'H':
 			/*
@@ -1042,7 +1061,7 @@ tar_options(int argc, char **argv)
 		break;
 	case ARCHIVE:
 	case APPND:
-		frmt = &(fsub[Oflag ? F_OTAR : F_TAR]);
+		frmt = &fsub[format];
 
 		if (chdname != NULL) {	/* initial chdir() */
 			if (ftree_add(chdname, 1) < 0)
@@ -1704,11 +1723,12 @@ void
 tar_usage(void)
 {
 	(void)fputs(
-	    "usage: tar {crtux}[014578befHhjLmNOoPpqsvwXZz]\n"
-	    "           [blocking-factor | archive | replstr] [-C directory] [-I file]\n"
-	    "           [file ...]\n"
+	    "usage: tar {crtux}[014578beFfHhjLmNOoPpqsvwXZz]\n"
+	    "           [blocking-factor | format | archive | replstr]\n"
+	    "           [-C directory] [-I file] [file ...]\n"
 	    "       tar {-crtux} [-014578eHhjLmNOoPpqvwXZz] [-b blocking-factor]\n"
-	    "           [-C directory] [-f archive] [-I file] [-s replstr] [file ...]\n",
+	    "           [-C directory] [-F format] [-f archive] [-I file]\n"
+	    "           [-s replstr] [file ...]\n",
 	    stderr);
 	exit(1);
 }
