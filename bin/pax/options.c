@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.111 2024/04/16 19:04:11 jca Exp $	*/
+/*	$OpenBSD: options.c,v 1.112 2024/04/16 23:09:35 jca Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -237,10 +237,11 @@ FSUB fsub[] = {
 #define	F_ACPIO	1	/* format when called as cpio -c */
 #define	F_CPIO	3	/* format when called as cpio */
 #define F_OTAR	4	/* format when called as tar -o */
-#define F_TAR	5	/* format when called as tar */
 #ifdef SMALL
+# define F_TAR	5	/* default write format when called as tar: ustar */
 # define DEFLT	5	/* default write format when called as pax: ustar */
 #else
+# define F_TAR	10	/* default write format when called as tar: ustar */
 # define DEFLT	10	/* default write format when called as pax: pax */
 #endif
 
