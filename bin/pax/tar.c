@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.82 2024/04/16 19:09:06 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.83 2024/04/16 20:51:11 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1135,7 +1135,7 @@ wr_ustar_or_pax(ARCHD *arcn, int ustar)
 			return(1);
 		}
 #ifndef SMALL
-		else if (xheader_add(&xhdr, "linkpath", arcn->name) == -1) {
+		else if (xheader_add(&xhdr, "linkpath", arcn->ln_name) == -1) {
 			paxwarn(1, "Link name too long for pax %s",
 			    arcn->ln_name);
 			xheader_free(&xhdr);
