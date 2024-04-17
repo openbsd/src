@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.53 2024/04/14 15:41:09 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.54 2024/04/17 13:47:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -1013,7 +1013,7 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 		goto err;
 	if (EVP_CIPHER_param_to_asn1(ctx, wrap_alg->parameter) <= 0)
 		goto err;
-	if (ASN1_TYPE_get(wrap_alg->parameter) == NID_undef) {
+	if (ASN1_TYPE_get(wrap_alg->parameter) == V_ASN1_UNDEF) {
 		ASN1_TYPE_free(wrap_alg->parameter);
 		wrap_alg->parameter = NULL;
 	}
