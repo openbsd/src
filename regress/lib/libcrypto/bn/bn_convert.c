@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_convert.c,v 1.5 2024/04/09 16:06:01 tb Exp $ */
+/*	$OpenBSD: bn_convert.c,v 1.6 2024/04/17 08:51:11 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -25,7 +25,6 @@
  *
  * - BN_bn2binpad()
  * - BN_bn2lebinpad()
- * - BN_lebin2bn()
  * - BN_print()/BN_print_fp()
  *
  * - Invalid inputs to {asc,dec,hex,mpi}2bn
@@ -440,9 +439,10 @@ test_bn_convert(void)
 	const struct bn_convert_test *bct;
 	uint8_t *mpi_out = NULL;
 	char *out_str = NULL;
+	uint8_t lebin[64];
 	BIGNUM *bn = NULL;
 	int mpi_len;
-	size_t i;
+	size_t i, j;
 	int failed = 1;
 
 	for (i = 0; i < N_BN_CONVERT_TESTS; i++) {
@@ -456,6 +456,20 @@ test_bn_convert(void)
 		BN_set_negative(bn, bct->neg);
 
 		if (check_bin_output(i, "BN_bin2bn()", bct->bin, bct->bin_len,
+		    bn) != 0)
+			goto failure;
+
+		for (j = 0; j < bct->bin_len; j++)
+			lebin[j] = bct->bin[bct->bin_len - j - 1];
+
+		BN_free(bn);
+		if ((bn = BN_lebin2bn(lebin, bct->bin_len, NULL)) == NULL) {
+			fprintf(stderr, "FAIL: BN_lebin2bn() failed\n");
+			goto failure;
+		}
+		BN_set_negative(bn, bct->neg);
+
+		if (check_bin_output(i, "BN_lebin2bn()", bct->bin, bct->bin_len,
 		    bn) != 0)
 			goto failure;
 
