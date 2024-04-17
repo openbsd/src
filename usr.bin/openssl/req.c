@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.28 2023/07/02 07:05:14 tb Exp $ */
+/* $OpenBSD: req.c,v 1.29 2024/04/17 01:24:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1697,6 +1697,7 @@ set_keygen_ctx(BIO * err, const char *gstr, int *pkey_type,
 	if (EVP_PKEY_keygen_init(gctx) <= 0) {
 		BIO_puts(err, "Error initializing keygen context\n");
 		ERR_print_errors(err);
+		EVP_PKEY_CTX_free(gctx);
 		return NULL;
 	}
 	if ((*pkey_type == EVP_PKEY_RSA) && (keylen != -1)) {
