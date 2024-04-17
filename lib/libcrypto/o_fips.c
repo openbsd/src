@@ -1,4 +1,4 @@
-/* $OpenBSD: o_fips.c,v 1.8 2024/04/15 16:05:49 tb Exp $ */
+/* $OpenBSD: o_fips.c,v 1.9 2024/04/17 22:43:42 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2011.
  */
@@ -56,9 +56,8 @@
  *
  */
 
-#include <openssl/err.h>
-
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 
 int
 FIPS_mode(void)
