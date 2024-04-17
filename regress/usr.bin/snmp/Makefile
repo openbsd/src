@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2024/02/08 17:09:51 martijn Exp $
+# $OpenBSD: Makefile,v 1.8 2024/04/17 06:18:18 claudio Exp $
 
 SNMP?=			/usr/bin/snmp
 SNMPD?=			/usr/sbin/snmpd -f ${.OBJDIR}/snmpd.conf
@@ -18,8 +18,8 @@ REGRESS_CLEANUP=	stop
 REGRESS_SKIP_TARGETS=
 CLEANFILES=
 
-IFIDX!=			ifconfig egress | awk '/index/{print $$2}'
-IFLLADDR!=		ifconfig egress | awk '/lladdr/{gsub(":", " ", $$2); print toupper($$2)}'
+IFIDX!=			ifconfig egress | awk '/index/{print $$2; exit}'
+IFLLADDR!=		ifconfig egress | awk '/lladdr/{gsub(":", " ", $$2); print toupper($$2); exit}'
 
 CLEANFILES+=		snmpd.conf
 snmpd.conf: Makefile
