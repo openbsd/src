@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.263 2024/04/16 14:37:49 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.264 2024/04/17 08:36:30 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * The destination address for a p2p link must have a family
 	 * of AF_UNSPEC or AF_INET6.
 	 */
-	if ((ifp->if_flags & IFF_POINTOPOINT) &&
+	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
 	    ifra->ifra_dstaddr.sin6_family != AF_INET6 &&
 	    ifra->ifra_dstaddr.sin6_family != AF_UNSPEC)
 		return (EAFNOSUPPORT);
@@ -603,18 +603,19 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * zone identifier.
 	 */
 	dst6 = ifra->ifra_dstaddr;
-	if ((ifp->if_flags & IFF_POINTOPOINT) &&
+	if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) != 0 &&
 	    (dst6.sin6_family == AF_INET6)) {
 		error = in6_check_embed_scope(&dst6, ifp->if_index);
 		if (error)
 			return error;
 	}
 	/*
-	 * The destination address can be specified only for a p2p interface.
-	 * If specified, the corresponding prefix length must be 128.
+	 * The destination address can be specified only for a p2p or a
+	 * loopback interface.  If specified, the corresponding prefix length
+	 * must be 128.
 	 */
 	if (ifra->ifra_dstaddr.sin6_family == AF_INET6) {
-		if (!(ifp->if_flags & IFF_POINTOPOINT))
+		if ((ifp->if_flags & (IFF_POINTOPOINT|IFF_LOOPBACK)) == 0)
 			return (EINVAL);
 		if (plen != 128)
 			return (EINVAL);
@@ -651,7 +652,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia6->ia_addr.sin6_family = AF_INET6;
 		ia6->ia_addr.sin6_len = sizeof(ia6->ia_addr);
 		ia6->ia6_updatetime = getuptime();
-		if (ifp->if_flags & IFF_POINTOPOINT) {
+		if ((ifp->if_flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) != 0) {
 			/*
 			 * XXX: some functions expect that ifa_dstaddr is not
 			 * NULL for p2p interfaces.
@@ -686,7 +687,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	/*
 	 * If a new destination address is specified, scrub the old one and
 	 * install the new destination.  Note that the interface must be
-	 * p2p (see the check above.)
+	 * p2p or loopback (see the check above.)
 	 */
 	if ((ifp->if_flags & IFF_POINTOPOINT) && dst6.sin6_family == AF_INET6 &&
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia6->ia_dstaddr.sin6_addr)) {
