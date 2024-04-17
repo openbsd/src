@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.61 2024/04/17 13:58:55 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.62 2024/04/17 14:00:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -917,7 +917,7 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	X509_ALGOR *talg, *wrap_alg = NULL;
 	const ASN1_OBJECT *aoid;
 	ASN1_BIT_STRING *pubkey;
-	ASN1_STRING *wrap_str;
+	ASN1_STRING *wrap_str = NULL;
 	ASN1_OCTET_STRING *ukm;
 	unsigned char *penc = NULL;
 	int penclen;
@@ -986,14 +986,18 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	wrap_nid = EVP_CIPHER_CTX_type(ctx);
 	keylen = EVP_CIPHER_CTX_key_length(ctx);
 
-	/* Package wrap algorithm in an AlgorithmIdentifier */
+	/*
+	 * Package wrap algorithm in an AlgorithmIdentifier.
+	 *
+	 * Incompatibility of X509_ALGOR_set0() with EVP_CIPHER_param_to_asn1()
+	 * makes this really gross.
+	 */
 
-	wrap_alg = X509_ALGOR_new();
-	if (wrap_alg == NULL)
+	if ((wrap_alg = X509_ALGOR_new()) == NULL)
 		goto err;
-	wrap_alg->algorithm = OBJ_nid2obj(wrap_nid);
-	wrap_alg->parameter = ASN1_TYPE_new();
-	if (wrap_alg->parameter == NULL)
+	if ((wrap_alg->algorithm = OBJ_nid2obj(wrap_nid)) == NULL)
+		goto err;
+	if ((wrap_alg->parameter = ASN1_TYPE_new()) == NULL)
 		goto err;
 	if (EVP_CIPHER_param_to_asn1(ctx, wrap_alg->parameter) <= 0)
 		goto err;
@@ -1014,23 +1018,27 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	penc = NULL;
 
 	/*
-	 * Now need to wrap encoding of wrap AlgorithmIdentifier into parameter
-	 * of another AlgorithmIdentifier.
+	 * Wrap encoded wrap AlgorithmIdentifier into parameter of another
+	 * AlgorithmIdentifier.
 	 */
-	penclen = i2d_X509_ALGOR(wrap_alg, &penc);
-	if (penclen <= 0)
+
+	if ((penclen = i2d_X509_ALGOR(wrap_alg, &penc)) <= 0)
 		goto err;
-	wrap_str = ASN1_STRING_new();
-	if (wrap_str == NULL)
+
+	if ((wrap_str = ASN1_STRING_new()) == NULL)
 		goto err;
 	ASN1_STRING_set0(wrap_str, penc, penclen);
 	penc = NULL;
-	X509_ALGOR_set0(talg, OBJ_nid2obj(kdf_nid), V_ASN1_SEQUENCE, wrap_str);
+
+	if (!X509_ALGOR_set0_by_nid(talg, kdf_nid, V_ASN1_SEQUENCE, wrap_str))
+		goto err;
+	wrap_str = NULL;
 
 	ret = 1;
 
  err:
 	free(penc);
+	ASN1_STRING_free(wrap_str);
 	X509_ALGOR_free(wrap_alg);
 
 	return ret;
