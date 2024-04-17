@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.52 2024/04/15 15:46:29 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.53 2024/04/17 23:24:18 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -74,7 +74,6 @@ EC_GROUP_get_basis_type(const EC_GROUP *group)
 }
 LCRYPTO_ALIAS(EC_GROUP_get_basis_type);
 
-/* some structures needed for the asn1 encoding */
 typedef struct x9_62_pentanomial_st {
 	long k1;
 	long k2;
@@ -134,7 +133,6 @@ typedef struct ecpk_parameters_st {
 	} value;
 } ECPKPARAMETERS;
 
-/* SEC1 ECPrivateKey */
 typedef struct ec_privatekey_st {
 	long version;
 	ASN1_OCTET_STRING *privateKey;
@@ -142,7 +140,6 @@ typedef struct ec_privatekey_st {
 	ASN1_BIT_STRING *publicKey;
 } EC_PRIVATEKEY;
 
-/* the OpenSSL ASN.1 definitions */
 static const ASN1_TEMPLATE X9_62_PENTANOMIAL_seq_tt[] = {
 	{
 		.flags = 0,
@@ -418,9 +415,6 @@ const ASN1_ITEM ECPARAMETERS_it = {
 	.sname = "ECPARAMETERS",
 };
 
-static ECPARAMETERS *ECPARAMETERS_new(void);
-static void ECPARAMETERS_free(ECPARAMETERS *a);
-
 static ECPARAMETERS *
 ECPARAMETERS_new(void)
 {
@@ -466,11 +460,6 @@ const ASN1_ITEM ECPKPARAMETERS_it = {
 	.size = sizeof(ECPKPARAMETERS),
 	.sname = "ECPKPARAMETERS",
 };
-
-static ECPKPARAMETERS *ECPKPARAMETERS_new(void);
-static void ECPKPARAMETERS_free(ECPKPARAMETERS *a);
-static ECPKPARAMETERS *d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len);
-static int i2d_ECPKPARAMETERS(const ECPKPARAMETERS *a, unsigned char **out);
 
 static ECPKPARAMETERS *
 d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len)
@@ -538,11 +527,6 @@ static const ASN1_ITEM EC_PRIVATEKEY_it = {
 	.sname = "EC_PRIVATEKEY",
 };
 
-static EC_PRIVATEKEY *EC_PRIVATEKEY_new(void);
-static void EC_PRIVATEKEY_free(EC_PRIVATEKEY *a);
-static EC_PRIVATEKEY *d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len);
-static int i2d_EC_PRIVATEKEY(const EC_PRIVATEKEY *a, unsigned char **out);
-
 static EC_PRIVATEKEY *
 d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len)
 {
@@ -567,28 +551,6 @@ EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &EC_PRIVATEKEY_it);
 }
-
-/* some declarations of internal function */
-
-/* ec_asn1_group2fieldid() sets the values in a X9_62_FIELDID object */
-static int ec_asn1_group2fieldid(const EC_GROUP *, X9_62_FIELDID *);
-/* ec_asn1_group2curve() sets the values in a X9_62_CURVE object */
-static int ec_asn1_group2curve(const EC_GROUP *, X9_62_CURVE *);
-/* ec_asn1_parameters2group() creates a EC_GROUP object from a
- * ECPARAMETERS object */
-static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *);
-/* ec_asn1_group2parameters() creates a ECPARAMETERS object from a
- * EC_GROUP object */
-static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *, ECPARAMETERS *);
-/* ec_asn1_pkparameters2group() creates a EC_GROUP object from a
- * ECPKPARAMETERS object */
-static EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *);
-/* ec_asn1_group2pkparameters() creates a ECPKPARAMETERS object from a
- * EC_GROUP object */
-static ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *,
-    ECPKPARAMETERS *);
-
-/* the function definitions */
 
 static int
 ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
@@ -1046,8 +1008,6 @@ ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 	return ret;
 }
 
-/* EC_GROUP <-> DER encoding of ECPKPARAMETERS */
-
 EC_GROUP *
 d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 {
@@ -1092,8 +1052,6 @@ i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 	return (ret);
 }
 LCRYPTO_ALIAS(i2d_ECPKParameters);
-
-/* some EC_KEY functions */
 
 EC_KEY *
 d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
