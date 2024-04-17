@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.18 2024/04/12 09:41:39 tb Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.19 2024/04/17 08:24:11 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -87,7 +87,7 @@ EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 {
 	int ret;
 
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->paramgen) {
+	if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->paramgen == NULL) {
 		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 	}
@@ -97,17 +97,19 @@ EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 		return -1;
 	}
 
-	if (!ppkey)
+	if (ppkey == NULL)
 		return -1;
 
-	if (!*ppkey)
+	if (*ppkey == NULL)
 		*ppkey = EVP_PKEY_new();
+	if (*ppkey == NULL)
+		return -1;
 
-	ret = ctx->pmeth->paramgen(ctx, *ppkey);
-	if (ret <= 0) {
+	if ((ret = ctx->pmeth->paramgen(ctx, *ppkey)) <= 0) {
 		EVP_PKEY_free(*ppkey);
 		*ppkey = NULL;
 	}
+
 	return ret;
 }
 LCRYPTO_ALIAS(EVP_PKEY_paramgen);
