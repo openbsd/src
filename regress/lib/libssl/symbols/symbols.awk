@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.2 2023/07/19 21:01:29 tb Exp $
+# $OpenBSD: symbols.awk,v 1.3 2024/04/17 22:48:17 tb Exp $
 
 # Copyright (c) 2018,2020,2023 Theo Buehler <tb@openbsd.org>
 #
@@ -27,10 +27,6 @@ BEGIN {
 	printf("#include <openssl/tls1.h>\n\n")
 
 	printf("#include <openssl/srtp.h>\n\n")		# depends on ssl.h
-}
-
-/^SSL_version_str$/ {
-	printf("extern const char *%s;\n", $0)
 }
 
 {
