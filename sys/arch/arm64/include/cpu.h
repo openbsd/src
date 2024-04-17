@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.43 2024/02/25 19:15:50 cheloha Exp $ */
+/* $OpenBSD: cpu.h,v 1.44 2024/04/17 13:12:58 mpi Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -108,6 +108,7 @@ void	arm32_vector_init(vaddr_t, int);
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
+#include <uvm/uvm_percpu.h>
 
 struct cpu_info {
 	struct device		*ci_dev; /* Device corresponding to this CPU */
@@ -161,6 +162,8 @@ struct cpu_info {
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+#define __HAVE_UVM_PERCPU
+	struct uvm_pmr_cache	ci_uvm;
 	volatile int		ci_flags;
 
 	volatile int		ci_ddb_paused;

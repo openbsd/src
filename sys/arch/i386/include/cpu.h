@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.185 2024/02/25 19:15:50 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.186 2024/04/17 13:12:58 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@
 #include <sys/sched.h>
 #include <sys/sensors.h>
 #include <sys/srp.h>
+#include <uvm/uvm_percpu.h>
 
 struct intrsource;
 
@@ -99,6 +100,8 @@ struct cpu_info {
 
 #if defined(MULTIPROCESSOR)
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+#define __HAVE_UVM_PERCPU
+	struct uvm_pmr_cache	ci_uvm;
 #endif
 
 	/*

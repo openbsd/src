@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.174 2024/02/13 10:16:28 miod Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.175 2024/04/17 13:12:58 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -877,13 +877,11 @@ uvm_pagerealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
  * => only one of obj or anon can be non-null
  * => caller must activate/deactivate page if it is not wired.
  */
-
 struct vm_page *
 uvm_pagealloc(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
     int flags)
 {
-	struct vm_page *pg;
-	struct pglist pgl;
+	struct vm_page *pg = NULL;
 	int pmr_flags;
 
 	KASSERT(obj == NULL || anon == NULL);
@@ -906,13 +904,10 @@ uvm_pagealloc(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 
 	if (flags & UVM_PGA_ZERO)
 		pmr_flags |= UVM_PLA_ZERO;
-	TAILQ_INIT(&pgl);
-	if (uvm_pmr_getpages(1, 0, 0, 1, 0, 1, pmr_flags, &pgl) != 0)
-		goto fail;
 
-	pg = TAILQ_FIRST(&pgl);
-	KASSERT(pg != NULL && TAILQ_NEXT(pg, pageq) == NULL);
-
+	pg = uvm_pmr_cache_get(pmr_flags);
+	if (pg == NULL)
+		return NULL;
 	uvm_pagealloc_pg(pg, obj, off, anon);
 	KASSERT((pg->pg_flags & PG_DEV) == 0);
 	if (flags & UVM_PGA_ZERO)
@@ -921,9 +916,6 @@ uvm_pagealloc(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		atomic_setbits_int(&pg->pg_flags, PG_CLEAN);
 
 	return pg;
-
-fail:
-	return NULL;
 }
 
 /*
@@ -1025,7 +1017,7 @@ void
 uvm_pagefree(struct vm_page *pg)
 {
 	uvm_pageclean(pg);
-	uvm_pmr_freepages(pg, 1);
+	uvm_pmr_cache_put(pg);
 }
 
 /*

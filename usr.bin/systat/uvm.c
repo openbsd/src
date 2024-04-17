@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.c,v 1.6 2022/11/27 23:18:54 kn Exp $	*/
+/*	$OpenBSD: uvm.c,v 1.7 2024/04/17 13:12:58 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -80,11 +80,10 @@ struct uvmline uvmline[] = {
 	{ &uvmexp.zeropages, &last_uvmexp.zeropages, "zeropages",
 	  &uvmexp.pageins, &last_uvmexp.pageins, "pageins",
 	  &uvmexp.fltrelckok, &last_uvmexp.fltrelckok, "fltrelckok" },
-	{ &uvmexp.reserve_pagedaemon, &last_uvmexp.reserve_pagedaemon,
-	  "reserve_pagedaemon",
+	{ &uvmexp.percpucaches, &last_uvmexp.percpucaches, "percpucaches",
 	  &uvmexp.pgswapin, &last_uvmexp.pgswapin, "pgswapin",
 	  &uvmexp.fltanget, &last_uvmexp.fltanget, "fltanget" },
-	{ &uvmexp.reserve_kernel, &last_uvmexp.reserve_kernel, "reserve_kernel",
+	{ NULL, NULL, NULL,
 	  &uvmexp.pgswapout, &last_uvmexp.pgswapout, "pgswapout",
 	  &uvmexp.fltanretry, &last_uvmexp.fltanretry, "fltanretry" },
 	{ NULL, NULL, NULL,
@@ -143,13 +142,13 @@ struct uvmline uvmline[] = {
 	  NULL, NULL, NULL },
 	{ &uvmexp.pagesize, &last_uvmexp.pagesize, "pagesize",
 	  &uvmexp.pdpending, &last_uvmexp.pdpending, "pdpending",
-	  NULL, NULL, NULL },
+	  NULL, NULL, "Per-CPU Counters" },
 	{ &uvmexp.pagemask, &last_uvmexp.pagemask, "pagemask",
 	  &uvmexp.pddeact, &last_uvmexp.pddeact, "pddeact",
-	  NULL, NULL, NULL },
+	  &uvmexp.pcphit, &last_uvmexp.pcphit, "pcphit" },
 	{ &uvmexp.pageshift, &last_uvmexp.pageshift, "pageshift",
 	  NULL, NULL, NULL,
-	  NULL, NULL, NULL }
+	  &uvmexp.pcpmiss, &last_uvmexp.pcpmiss, "pcpmiss" }
 };
 
 field_def fields_uvm[] = {

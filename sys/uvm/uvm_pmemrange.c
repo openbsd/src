@@ -1,6 +1,7 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.63 2023/04/10 04:21:20 jsg Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.64 2024/04/17 13:12:58 mpi Exp $	*/
 
 /*
+ * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1262,6 +1263,28 @@ out:
 }
 
 /*
+ * Acquire a single page.
+ *
+ * flags:	UVM_PLA_* flags
+ * result:	returned page.
+ */
+struct vm_page *
+uvm_pmr_getone(int flags)
+{
+	struct vm_page *pg;
+	struct pglist pgl;
+
+	TAILQ_INIT(&pgl);
+	if (uvm_pmr_getpages(1, 0, 0, 1, 0, 1, flags, &pgl) != 0)
+		return NULL;
+
+	pg = TAILQ_FIRST(&pgl);
+	KASSERT(pg != NULL && TAILQ_NEXT(pg, pageq) == NULL);
+
+	return pg;
+}
+
+/*
  * Free a number of contig pages (invoked by uvm_page_init).
  */
 void
@@ -2190,3 +2213,133 @@ uvm_pagezero_thread(void *arg)
 		yield();
 	}
 }
+
+#if defined(MULTIPROCESSOR) && defined(__HAVE_UVM_PERCPU)
+int
+uvm_pmr_cache_alloc(struct uvm_pmr_cache_item *upci)
+{
+	struct vm_page *pg;
+	struct pglist pgl;
+	int flags = UVM_PLA_NOWAIT|UVM_PLA_NOWAKE;
+	int npages = UVM_PMR_CACHEMAGSZ;
+
+	KASSERT(upci->upci_npages == 0);
+
+	TAILQ_INIT(&pgl);
+	if (uvm_pmr_getpages(npages, 0, 0, 1, 0, npages, flags, &pgl))
+		return -1;
+
+	while ((pg = TAILQ_FIRST(&pgl)) != NULL) {
+		TAILQ_REMOVE(&pgl, pg, pageq);
+		upci->upci_pages[upci->upci_npages] = pg;
+		upci->upci_npages++;
+	}
+	atomic_add_int(&uvmexp.percpucaches, npages);
+
+	return 0;
+}
+
+struct vm_page *
+uvm_pmr_cache_get(int flags)
+{
+	struct uvm_pmr_cache *upc = &curcpu()->ci_uvm;
+	struct uvm_pmr_cache_item *upci;
+	struct vm_page *pg;
+
+	upci = &upc->upc_magz[upc->upc_actv];
+	if (upci->upci_npages == 0) {
+		unsigned int prev;
+
+		prev = (upc->upc_actv == 0) ?  1 : 0;
+		upci = &upc->upc_magz[prev];
+		if (upci->upci_npages == 0) {
+			atomic_inc_int(&uvmexp.pcpmiss);
+			if (uvm_pmr_cache_alloc(upci))
+				return uvm_pmr_getone(flags);
+		}
+		/* Swap magazines */
+		upc->upc_actv = prev;
+	} else {
+		atomic_inc_int(&uvmexp.pcphit);
+	}
+
+	atomic_dec_int(&uvmexp.percpucaches);
+	upci->upci_npages--;
+	pg = upci->upci_pages[upci->upci_npages];
+
+	if (flags & UVM_PLA_ZERO)
+		uvm_pagezero(pg);
+
+	return pg;
+}
+
+void
+uvm_pmr_cache_free(struct uvm_pmr_cache_item *upci)
+{
+	struct pglist pgl;
+	unsigned int i;
+
+	TAILQ_INIT(&pgl);
+	for (i = 0; i < upci->upci_npages; i++)
+		TAILQ_INSERT_TAIL(&pgl, upci->upci_pages[i], pageq);
+
+	uvm_pmr_freepageq(&pgl);
+
+	atomic_sub_int(&uvmexp.percpucaches, upci->upci_npages);
+	upci->upci_npages = 0;
+	memset(upci->upci_pages, 0, sizeof(upci->upci_pages));
+}
+
+void
+uvm_pmr_cache_put(struct vm_page *pg)
+{
+	struct uvm_pmr_cache *upc = &curcpu()->ci_uvm;
+	struct uvm_pmr_cache_item *upci;
+
+	upci = &upc->upc_magz[upc->upc_actv];
+	if (upci->upci_npages >= UVM_PMR_CACHEMAGSZ) {
+		unsigned int prev;
+
+		prev = (upc->upc_actv == 0) ?  1 : 0;
+		upci = &upc->upc_magz[prev];
+		if (upci->upci_npages > 0)
+			uvm_pmr_cache_free(upci);
+
+		/* Swap magazines */
+		upc->upc_actv = prev;
+		KASSERT(upci->upci_npages == 0);
+	}
+
+	upci->upci_pages[upci->upci_npages] = pg;
+	upci->upci_npages++;
+	atomic_inc_int(&uvmexp.percpucaches);
+}
+
+void
+uvm_pmr_cache_drain(void)
+{
+	struct uvm_pmr_cache *upc = &curcpu()->ci_uvm;
+
+	uvm_pmr_cache_free(&upc->upc_magz[0]);
+	uvm_pmr_cache_free(&upc->upc_magz[1]);
+}
+
+#else /* !(MULTIPROCESSOR && __HAVE_UVM_PERCPU) */
+
+struct vm_page *
+uvm_pmr_cache_get(int flags)
+{
+	return uvm_pmr_getone(flags);
+}
+
+void
+uvm_pmr_cache_put(struct vm_page *pg)
+{
+	uvm_pmr_freepages(pg, 1);
+}
+
+void
+uvm_pmr_cache_drain(void)
+{
+}
+#endif
