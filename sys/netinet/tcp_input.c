@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.404 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.405 2024/04/17 20:48:51 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ findpcb:
 			    &tdbi->dst, tdbi->proto);
 		}
 		error = ipsp_spd_lookup(m, af, iphlen, IPSP_DIRECTION_IN,
-		    tdb, inp ? inp->inp_seclevel : NULL, NULL, NULL);
+		    tdb, inp ? &inp->inp_seclevel : NULL, NULL, NULL);
 		tdb_unref(tdb);
 		if (error) {
 			tcpstat_inc(tcps_rcvnosec);
@@ -3541,8 +3541,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * from the old pcb. Ditto for any other
 	 * IPsec-related information.
 	 */
-	memcpy(inp->inp_seclevel, oldinp->inp_seclevel,
-	    sizeof(oldinp->inp_seclevel));
+	inp->inp_seclevel = oldinp->inp_seclevel;
 #endif /* IPSEC */
 #ifdef INET6
 	if (ISSET(inp->inp_flags, INP_IPV6)) {
@@ -4150,7 +4149,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 
 		error = ip_output(m, sc->sc_ipopts, &sc->sc_route,
 		    (ip_mtudisc ? IP_MTUDISC : 0),  NULL,
-		    inp ? inp->inp_seclevel : NULL, 0);
+		    inp ? &inp->inp_seclevel : NULL, 0);
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -4161,7 +4160,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 		/* leave flowlabel = 0, it is legal and require no state mgmt */
 
 		error = ip6_output(m, NULL /*XXX*/, &sc->sc_route, 0,
-		    NULL, inp ? inp->inp_seclevel : NULL);
+		    NULL, inp ? &inp->inp_seclevel : NULL);
 		break;
 #endif
 	}

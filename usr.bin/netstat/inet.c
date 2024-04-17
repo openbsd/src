@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.181 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.182 2024/04/17 20:48:51 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1489,10 +1489,10 @@ inpcb_dump(u_long off, short protocol, int af)
 	printf("ro_dst %s\n ", raddr);
 	p("%#.8x", inp_flags, "\n ");
 	p("%d", inp_hops, "\n ");
-	p("%u", inp_seclevel[0], ", ");
-	p("%u", inp_seclevel[1], ", ");
-	p("%u", inp_seclevel[2], ", ");
-	p("%u", inp_seclevel[3], "\n ");
+	p("%u", inp_seclevel.sl_auth, ", ");
+	p("%u", inp_seclevel.sl_esp_trans, ", ");
+	p("%u", inp_seclevel.sl_esp_network, ", ");
+	p("%u", inp_seclevel.sl_ipcomp, "\n ");
 	p("%u", inp_ip_minttl, "\n ");
 	p("%d", inp_cksum6, "\n ");
 	pp("%p", inp_icmp6filt, "\n ");

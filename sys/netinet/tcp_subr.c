@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.200 2024/04/12 16:07:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.201 2024/04/17 20:48:51 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -406,7 +406,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
 		    tp ? &tp->t_inpcb->inp_route : NULL,
 		    0, NULL,
-		    tp ? tp->t_inpcb->inp_seclevel : NULL);
+		    tp ? &tp->t_inpcb->inp_seclevel : NULL);
 		break;
 #endif /* INET6 */
 	case AF_INET:
@@ -416,7 +416,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip_output(m, NULL,
 		    tp ? &tp->t_inpcb->inp_route : NULL,
 		    ip_mtudisc ? IP_MTUDISC : 0, NULL,
-		    tp ? tp->t_inpcb->inp_seclevel : NULL, 0);
+		    tp ? &tp->t_inpcb->inp_seclevel : NULL, 0);
 		break;
 	}
 }

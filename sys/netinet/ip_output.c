@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.397 2024/04/09 11:05:05 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.398 2024/04/17 20:48:51 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -84,8 +84,8 @@ void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 static u_int16_t in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
 
-int ip_output_ipsec_lookup(struct mbuf *m, int hlen, const u_char seclevel[],
-    struct tdb **, int ipsecflowinfo);
+int ip_output_ipsec_lookup(struct mbuf *m, int hlen,
+    const struct ipsec_level *seclevel, struct tdb **, int ipsecflowinfo);
 void ip_output_ipsec_pmtu_update(struct tdb *, struct route *, struct in_addr,
     int, int);
 int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
@@ -98,7 +98,8 @@ int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
  */
 int
 ip_output(struct mbuf *m, struct mbuf *opt, struct route *ro, int flags,
-    struct ip_moptions *imo, const u_char seclevel[], u_int32_t ipsecflowinfo)
+    struct ip_moptions *imo, const struct ipsec_level *seclevel,
+    u_int32_t ipsecflowinfo)
 {
 	struct ip *ip;
 	struct ifnet *ifp = NULL;
@@ -498,8 +499,8 @@ bad:
 
 #ifdef IPSEC
 int
-ip_output_ipsec_lookup(struct mbuf *m, int hlen, const u_char seclevel[],
-    struct tdb **tdbout, int ipsecflowinfo)
+ip_output_ipsec_lookup(struct mbuf *m, int hlen,
+    const struct ipsec_level *seclevel, struct tdb **tdbout, int ipsecflowinfo)
 {
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
@@ -1019,7 +1020,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 					error = EACCES;
 					break;
 				}
-				inp->inp_seclevel[SL_AUTH] = optval;
+				inp->inp_seclevel.sl_auth = optval;
 				break;
 
 			case IP_ESP_TRANS_LEVEL:
@@ -1028,7 +1029,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 					error = EACCES;
 					break;
 				}
-				inp->inp_seclevel[SL_ESP_TRANS] = optval;
+				inp->inp_seclevel.sl_esp_trans = optval;
 				break;
 
 			case IP_ESP_NETWORK_LEVEL:
@@ -1037,7 +1038,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 					error = EACCES;
 					break;
 				}
-				inp->inp_seclevel[SL_ESP_NETWORK] = optval;
+				inp->inp_seclevel.sl_esp_network = optval;
 				break;
 			case IP_IPCOMP_LEVEL:
 				if (optval < IPSEC_IPCOMP_LEVEL_DEFAULT &&
@@ -1045,7 +1046,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 					error = EACCES;
 					break;
 				}
-				inp->inp_seclevel[SL_IPCOMP] = optval;
+				inp->inp_seclevel.sl_ipcomp = optval;
 				break;
 			}
 #endif
@@ -1189,18 +1190,18 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 			m->m_len = sizeof(int);
 			switch (optname) {
 			case IP_AUTH_LEVEL:
-				optval = inp->inp_seclevel[SL_AUTH];
+				optval = inp->inp_seclevel.sl_auth;
 				break;
 
 			case IP_ESP_TRANS_LEVEL:
-				optval = inp->inp_seclevel[SL_ESP_TRANS];
+				optval = inp->inp_seclevel.sl_esp_trans;
 				break;
 
 			case IP_ESP_NETWORK_LEVEL:
-				optval = inp->inp_seclevel[SL_ESP_NETWORK];
+				optval = inp->inp_seclevel.sl_esp_network;
 				break;
 			case IP_IPCOMP_LEVEL:
-				optval = inp->inp_seclevel[SL_IPCOMP];
+				optval = inp->inp_seclevel.sl_ipcomp;
 				break;
 			}
 			*mtod(m, int *) = optval;

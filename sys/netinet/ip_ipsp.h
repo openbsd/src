@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.244 2023/11/26 22:08:10 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.245 2024/04/17 20:48:51 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -147,6 +147,13 @@ struct ipsecstat {
 	uint64_t	ipsec_notdb;		/* No TDB was found */
 	uint64_t	ipsec_noxform;		/* Crypto error */
 	uint64_t	ipsec_exctdb;		/* TDBs with hardlimit excess */
+};
+
+struct ipsec_level {
+	u_char	sl_auth;	/* Authentication level */
+	u_char	sl_esp_trans;	/* ESP transport level */
+	u_char	sl_esp_network;	/* ESP network (encapsulation) level */
+	u_char	sl_ipcomp;	/* Compression level */
 };
 
 #ifdef _KERNEL
@@ -671,7 +678,7 @@ int	checkreplaywindow(struct tdb *, u_int64_t, u_int32_t, u_int32_t *, int);
 int	ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
 int	ipsp_process_done(struct mbuf *, struct tdb *);
 int	ipsp_spd_lookup(struct mbuf *, int, int, int, struct tdb *,
-	    const u_char[], struct tdb **, struct ipsec_ids *);
+	    const struct ipsec_level *, struct tdb **, struct ipsec_ids *);
 int	ipsp_is_unspecified(union sockaddr_union);
 int	ipsp_aux_match(struct tdb *, struct ipsec_ids *,
 	    struct sockaddr_encap *, struct sockaddr_encap *);

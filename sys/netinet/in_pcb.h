@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.155 2024/04/15 18:31:04 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.156 2024/04/17 20:48:51 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -166,11 +166,7 @@ struct inpcb {
 	} inp_mou;
 #define inp_moptions inp_mou.mou_mo	/* [N] IPv4 multicast options */
 #define inp_moptions6 inp_mou.mou_mo6	/* [N] IPv6 multicast options */
-	u_char	  inp_seclevel[4];	/* [N] IPsec level of socket */
-#define SL_AUTH           0             /* Authentication level */
-#define SL_ESP_TRANS      1             /* ESP transport level */
-#define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */
-#define SL_IPCOMP         3             /* Compression level */
+	struct	ipsec_level   inp_seclevel;	/* [N] IPsec level of socket */
 	u_char	inp_ip_minttl;		/* minimum TTL or drop */
 #define inp_ip6_minhlim inp_ip_minttl	/* minimum Hop Limit or drop */
 #define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow

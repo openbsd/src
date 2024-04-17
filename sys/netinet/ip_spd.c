@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.119 2023/11/26 22:08:10 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.120 2024/04/17 20:48:51 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -39,8 +39,8 @@
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 
-int	ipsp_spd_inp(struct mbuf *, const u_char *, struct ipsec_policy *,
-	    struct tdb **);
+int	ipsp_spd_inp(struct mbuf *, const struct ipsec_level *,
+	    struct ipsec_policy *, struct tdb **);
 int	ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 	    union sockaddr_union *, struct sockaddr_encap *, struct mbuf *);
 int	ipsp_pending_acquire(struct ipsec_policy *, union sockaddr_union *);
@@ -153,7 +153,7 @@ spd_table_walk(unsigned int rtableid,
  */
 int
 ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
-    struct tdb *tdbin, const u_char seclevel[], struct tdb **tdbout,
+    struct tdb *tdbin, const struct ipsec_level *seclevel, struct tdb **tdbout,
     struct ipsec_ids *ipsecflowinfo_ids)
 {
 	struct radix_node_head *rnh;
@@ -178,9 +178,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 	 * If an input packet is destined to a BYPASS socket, just accept it.
 	 */
 	if ((seclevel != NULL) && (direction == IPSP_DIRECTION_IN) &&
-	    (seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
-	    (seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
-	    (seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
+	    (seclevel->sl_esp_trans == IPSEC_LEVEL_BYPASS) &&
+	    (seclevel->sl_esp_network == IPSEC_LEVEL_BYPASS) &&
+	    (seclevel->sl_auth == IPSEC_LEVEL_BYPASS)) {
 		if (tdbout != NULL)
 			*tdbout = NULL;
 		return 0;
@@ -385,9 +385,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 		 * option set, skip IPsec processing.
 		 */
 		if ((seclevel != NULL) &&
-		    (seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
-		    (seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
-		    (seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
+		    (seclevel->sl_esp_trans == IPSEC_LEVEL_BYPASS) &&
+		    (seclevel->sl_esp_network == IPSEC_LEVEL_BYPASS) &&
+		    (seclevel->sl_auth == IPSEC_LEVEL_BYPASS)) {
 			/* Direct match. */
 			if (dignore ||
 			    !memcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len)) {
@@ -904,8 +904,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
  * Deal with PCB security requirements.
  */
 int
-ipsp_spd_inp(struct mbuf *m, const u_char seclevel[], struct ipsec_policy *ipo,
-    struct tdb **tdbout)
+ipsp_spd_inp(struct mbuf *m, const struct ipsec_level *seclevel,
+    struct ipsec_policy *ipo, struct tdb **tdbout)
 {
 	/* Sanity check. */
 	if (seclevel == NULL)
@@ -913,14 +913,14 @@ ipsp_spd_inp(struct mbuf *m, const u_char seclevel[], struct ipsec_policy *ipo,
 
 	/* We only support IPSEC_LEVEL_BYPASS or IPSEC_LEVEL_AVAIL */
 
-	if (seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS &&
-	    seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
-	    seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)
+	if (seclevel->sl_esp_trans == IPSEC_LEVEL_BYPASS &&
+	    seclevel->sl_esp_network == IPSEC_LEVEL_BYPASS &&
+	    seclevel->sl_auth == IPSEC_LEVEL_BYPASS)
 		goto justreturn;
 
-	if (seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_AVAIL &&
-	    seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_AVAIL &&
-	    seclevel[SL_AUTH] == IPSEC_LEVEL_AVAIL)
+	if (seclevel->sl_esp_trans == IPSEC_LEVEL_AVAIL &&
+	    seclevel->sl_esp_network == IPSEC_LEVEL_AVAIL &&
+	    seclevel->sl_auth == IPSEC_LEVEL_AVAIL)
 		goto justreturn;
 
 	return -EINVAL;  /* Silently drop packet. */

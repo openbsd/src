@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.116 2024/04/16 12:56:39 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.117 2024/04/17 20:48:51 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -235,6 +235,7 @@ extern struct pool ipqent_pool;
 struct rtentry;
 struct route;
 struct inpcb;
+struct ipsec_level;
 
 int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf *);
 int	 ip_fragment(struct mbuf *, struct mbuf_list *, struct ifnet *, u_long);
@@ -246,7 +247,7 @@ struct mbuf*
 int	 ip_mforward(struct mbuf *, struct ifnet *);
 int	 ip_optcopy(struct ip *, struct ip *);
 int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
-	    struct ip_moptions *, const u_char[], u_int32_t);
+	    struct ip_moptions *, const struct ipsec_level *, u_int32_t);
 u_int16_t
 	 ip_randomid(void);
 void	 ip_send(struct mbuf *);

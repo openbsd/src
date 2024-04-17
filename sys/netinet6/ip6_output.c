@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.290 2024/04/16 12:56:39 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.291 2024/04/17 20:48:51 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ struct idgen32_ctx ip6_id_ctx;
  */
 int
 ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route *ro,
-    int flags, struct ip6_moptions *im6o, const u_char seclevel[])
+    int flags, struct ip6_moptions *im6o, const struct ipsec_level *seclevel)
 {
 	struct ip6_hdr *ip6;
 	struct ifnet *ifp = NULL;
@@ -1326,7 +1326,7 @@ do { \
 					error = EACCES;
 					break;
 				}
-				inp->inp_seclevel[SL_AUTH] = optval;
+				inp->inp_seclevel.sl_auth = optval;
 				break;
 
 			case IPV6_ESP_TRANS_LEVEL:
@@ -1335,7 +1335,7 @@ do { \
 					error = EACCES;
 					break;
 				}
-				inp->inp_seclevel[SL_ESP_TRANS] = optval;
+				inp->inp_seclevel.sl_esp_trans = optval;
 				break;
 
 			case IPV6_ESP_NETWORK_LEVEL:
@@ -1344,7 +1344,7 @@ do { \
 					error = EACCES;
 					break;
 				}
-				inp->inp_seclevel[SL_ESP_NETWORK] = optval;
+				inp->inp_seclevel.sl_esp_network = optval;
 				break;
 
 			case IPV6_IPCOMP_LEVEL:
@@ -1353,7 +1353,7 @@ do { \
 					error = EACCES;
 					break;
 				}
-				inp->inp_seclevel[SL_IPCOMP] = optval;
+				inp->inp_seclevel.sl_ipcomp = optval;
 				break;
 			}
 #endif
@@ -1548,21 +1548,21 @@ do { \
 			m->m_len = sizeof(int);
 			switch (optname) {
 			case IPV6_AUTH_LEVEL:
-				optval = inp->inp_seclevel[SL_AUTH];
+				optval = inp->inp_seclevel.sl_auth;
 				break;
 
 			case IPV6_ESP_TRANS_LEVEL:
 				optval =
-				    inp->inp_seclevel[SL_ESP_TRANS];
+				    inp->inp_seclevel.sl_esp_trans;
 				break;
 
 			case IPV6_ESP_NETWORK_LEVEL:
 				optval =
-				    inp->inp_seclevel[SL_ESP_NETWORK];
+				    inp->inp_seclevel.sl_esp_network;
 				break;
 
 			case IPV6_IPCOMP_LEVEL:
-				optval = inp->inp_seclevel[SL_IPCOMP];
+				optval = inp->inp_seclevel.sl_ipcomp;
 				break;
 			}
 			*mtod(m, int *) = optval;
@@ -2730,7 +2730,7 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 
 #ifdef IPSEC
 int
-ip6_output_ipsec_lookup(struct mbuf *m, const u_char seclevel[],
+ip6_output_ipsec_lookup(struct mbuf *m, const struct ipsec_level *seclevel,
     struct tdb **tdbout)
 {
 	struct tdb *tdb;

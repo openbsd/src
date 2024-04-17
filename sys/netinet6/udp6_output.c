@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp6_output.c,v 1.64 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: udp6_output.c,v 1.65 2024/04/17 20:48:51 bluhm Exp $	*/
 /*	$KAME: udp6_output.c,v 1.21 2001/02/07 11:51:54 itojun Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ udp6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr6,
 #endif
 
 	error = ip6_output(m, optp, &inp->inp_route,
-	    flags, inp->inp_moptions6, inp->inp_seclevel);
+	    flags, inp->inp_moptions6, &inp->inp_seclevel);
 	goto releaseopt;
 
 release:
