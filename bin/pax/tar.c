@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.84 2024/04/16 22:58:10 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.85 2024/04/17 18:12:12 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -1444,6 +1444,29 @@ int
 pax_wr(ARCHD *arcn)
 {
 	return wr_ustar_or_pax(arcn, 0);
+}
+#endif
+
+/*
+ * pax_opt()
+ *	handle pax format specific -o options
+ * Return:
+ *	0 if ok -1 otherwise
+ */
+#ifndef SMALL
+int
+pax_opt(void)
+{
+	OPLIST *opt;
+
+	while ((opt = opt_next()) != NULL) {
+		if (1) {
+			paxwarn(1, "Unknown pax format -o option/value pair %s=%s",
+			    opt->name, opt->value);
+			return(-1);
+		}
+	}
+	return 0;
 }
 #endif
 
