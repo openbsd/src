@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.9 2024/03/28 08:36:13 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.10 2024/04/17 14:43:37 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -25,6 +25,73 @@
 
 #define CTASSERT(x) \
     extern char _ctassert[(x) ? 1 : -1] __attribute__((__unused__))
+
+/*
+ * Constant time operations for uint8_t.
+ */
+#ifndef HAVE_CRYPTO_CT_NE_ZERO_U8
+static inline int
+crypto_ct_ne_zero_u8(uint8_t v)
+{
+	return (uint8_t)(v | ~(v - 1)) >> ((sizeof(v) * 8) - 1);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_NE_ZERO_MASK_U8
+static inline uint8_t
+crypto_ct_ne_zero_mask_u8(uint8_t v)
+{
+	return 0 - crypto_ct_ne_zero_u8(v);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_EQ_ZERO_U8
+static inline int
+crypto_ct_eq_zero_u8(uint8_t v)
+{
+	return 1 - crypto_ct_ne_zero_u8(v);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_EQ_ZERO_MASK_U8
+static inline uint8_t
+crypto_ct_eq_zero_mask_u8(uint8_t v)
+{
+	return 0 - crypto_ct_eq_zero_u8(v);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_NE_U8
+static inline int
+crypto_ct_ne_u8(uint8_t a, uint8_t b)
+{
+	return crypto_ct_ne_zero_u8(a - b);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_NE_MASK_U8
+static inline uint8_t
+crypto_ct_ne_mask_u8(uint8_t a, uint8_t b)
+{
+	return 0 - crypto_ct_ne_u8(a, b);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_EQ_U8
+static inline int
+crypto_ct_eq_u8(uint8_t a, uint8_t b)
+{
+	return crypto_ct_eq_zero_u8(a - b);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_CT_EQ_MASK_U8
+static inline uint8_t
+crypto_ct_eq_mask_u8(uint8_t a, uint8_t b)
+{
+	return 0 - crypto_ct_eq_u8(a, b);
+}
+#endif
 
 /*
  * crypto_load_be32toh() loads a 32 bit unsigned big endian value as a 32 bit
