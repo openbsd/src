@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.80 2023/09/13 14:25:49 claudio Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.81 2024/04/17 09:41:44 claudio Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -476,8 +476,9 @@ dogetrusage(struct proc *p, int who, struct rusage *rup)
 	struct process *pr = p->p_p;
 	struct proc *q;
 
-	switch (who) {
+	KERNEL_ASSERT_LOCKED();
 
+	switch (who) {
 	case RUSAGE_SELF:
 		/* start with the sum of dead threads, if any */
 		if (pr->ps_ru != NULL)
