@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.59 2024/04/17 13:56:36 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.60 2024/04/17 13:57:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -958,8 +958,6 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	if (EVP_PKEY_CTX_set_ecdh_kdf_type(pctx, EVP_PKEY_ECDH_KDF_X9_63) <= 0)
 		goto err;
 
-	if (!EVP_PKEY_CTX_get_ecdh_kdf_md(pctx, &kdf_md))
-		goto err;
 	ecdh_nid = EVP_PKEY_CTX_get_ecdh_cofactor_mode(pctx);
 	if (ecdh_nid < 0)
 		goto err;
@@ -968,6 +966,8 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	else if (ecdh_nid == 1)
 		ecdh_nid = NID_dh_cofactor_kdf;
 
+	if (!EVP_PKEY_CTX_get_ecdh_kdf_md(pctx, &kdf_md))
+		goto err;
 	if (kdf_md == NULL) {
 		/* Fixme later for better MD */
 		kdf_md = EVP_sha1();
