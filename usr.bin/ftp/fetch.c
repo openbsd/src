@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.216 2023/06/28 17:35:06 op Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.217 2024/04/17 09:51:18 tb Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -705,7 +705,8 @@ noslash:
 		 */
 		ftp_printf(fin, "GET %s HTTP/1.1\r\n"
 		    "Connection: close\r\n"
-		    "Host: %s\r\n%s%s\r\n",
+		    "Host: %s\r\n%s%s\r\n"
+		    "Accept: */*\r\n",
 		    epath, proxyhost, buf ? buf : "", httpuseragent);
 		if (credentials)
 			ftp_printf(fin, "Authorization: Basic %s\r\n",
@@ -773,8 +774,8 @@ noslash:
 			ftp_printf(fin, "\r\nIf-Modified-Since: %s", tmbuf);
 #endif /* SMALL */
 
-		ftp_printf(fin, "\r\n%s%s\r\n",
-		    buf ? buf : "", httpuseragent);
+		ftp_printf(fin, "\r\n%s%s\r\n", buf ? buf : "", httpuseragent);
+		ftp_printf(fin, "Accept: */*\r\n");
 		if (credentials)
 			ftp_printf(fin, "Authorization: Basic %s\r\n",
 			    credentials);
