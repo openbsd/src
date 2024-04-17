@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.54 2024/04/17 13:47:18 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.55 2024/04/17 13:49:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -924,11 +924,10 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	int penclen;
 	int ecdh_nid, kdf_type, kdf_nid, wrap_nid;
 	const EVP_MD *kdf_md;
-	int rv = 0;
+	int ret = 0;
 
-	pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
-	if (!pctx)
-		return 0;
+	if ((pctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) == NULL)
+		goto err;
 	/* Get ephemeral key */
 	pkey = EVP_PKEY_CTX_get0_pkey(pctx);
 	if (!CMS_RecipientInfo_kari_get0_orig_id(ri, &talg, &pubkey,
@@ -1043,12 +1042,13 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	penc = NULL;
 	X509_ALGOR_set0(talg, OBJ_nid2obj(kdf_nid), V_ASN1_SEQUENCE, wrap_str);
 
-	rv = 1;
+	ret = 1;
 
  err:
 	free(penc);
 	X509_ALGOR_free(wrap_alg);
-	return rv;
+
+	return ret;
 }
 
 #endif
