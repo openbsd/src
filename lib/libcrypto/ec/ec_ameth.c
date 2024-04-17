@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.62 2024/04/17 14:00:17 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.63 2024/04/17 14:01:33 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -1006,13 +1006,11 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 		wrap_alg->parameter = NULL;
 	}
 
+	if ((penclen = CMS_SharedInfo_encode(&penc, wrap_alg, ukm, keylen)) <= 0)
+		goto err;
+
 	if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
 		goto err;
-
-	penclen = CMS_SharedInfo_encode(&penc, wrap_alg, ukm, keylen);
-	if (penclen <= 0)
-		goto err;
-
 	if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, penc, penclen) <= 0)
 		goto err;
 	penc = NULL;
