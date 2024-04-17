@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.58 2024/04/17 13:54:39 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.59 2024/04/17 13:56:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -921,7 +921,7 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	ASN1_OCTET_STRING *ukm;
 	unsigned char *penc = NULL;
 	int penclen;
-	int ecdh_nid, kdf_type, kdf_nid, wrap_nid;
+	int ecdh_nid, kdf_nid, wrap_nid;
 	const EVP_MD *kdf_md;
 	int ret = 0;
 
@@ -953,10 +953,11 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 			goto err;
 	}
 
-	/* See if custom parameters set */
-	kdf_type = EVP_PKEY_CTX_get_ecdh_kdf_type(pctx);
-	if (kdf_type <= 0)
+	if (EVP_PKEY_CTX_get_ecdh_kdf_type(pctx) != EVP_PKEY_ECDH_KDF_NONE)
 		goto err;
+	if (EVP_PKEY_CTX_set_ecdh_kdf_type(pctx, EVP_PKEY_ECDH_KDF_X9_63) <= 0)
+		goto err;
+
 	if (!EVP_PKEY_CTX_get_ecdh_kdf_md(pctx, &kdf_md))
 		goto err;
 	ecdh_nid = EVP_PKEY_CTX_get_ecdh_cofactor_mode(pctx);
@@ -967,14 +968,6 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	else if (ecdh_nid == 1)
 		ecdh_nid = NID_dh_cofactor_kdf;
 
-	if (kdf_type == EVP_PKEY_ECDH_KDF_NONE) {
-		kdf_type = EVP_PKEY_ECDH_KDF_X9_63;
-		if (EVP_PKEY_CTX_set_ecdh_kdf_type(pctx, kdf_type) <= 0)
-			goto err;
-	} else {
-		/* Unknown KDF */
-		goto err;
-	}
 	if (kdf_md == NULL) {
 		/* Fixme later for better MD */
 		kdf_md = EVP_sha1();
