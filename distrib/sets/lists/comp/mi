@@ -1485,6 +1485,7 @@
 ./usr/include/uvm/uvm_page.h
 ./usr/include/uvm/uvm_pager.h
 ./usr/include/uvm/uvm_param.h
+./usr/include/uvm/uvm_percpu.h
 ./usr/include/uvm/uvm_pmap.h
 ./usr/include/uvm/uvm_pmemrange.h
 ./usr/include/uvm/uvm_swap.h
