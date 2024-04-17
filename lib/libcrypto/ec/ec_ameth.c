@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.56 2024/04/17 13:50:01 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.57 2024/04/17 13:51:41 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -912,7 +912,6 @@ static int
 ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 {
 	EVP_PKEY_CTX *pctx;
-	EVP_PKEY *pkey;
 	EVP_CIPHER_CTX *ctx;
 	int keylen;
 	X509_ALGOR *talg, *wrap_alg = NULL;
@@ -928,8 +927,6 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
 	if ((pctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) == NULL)
 		goto err;
-	/* Get ephemeral key */
-	pkey = EVP_PKEY_CTX_get0_pkey(pctx);
 	if (!CMS_RecipientInfo_kari_get0_orig_id(ri, &talg, &pubkey,
 	    NULL, NULL, NULL))
 		goto err;
@@ -937,19 +934,13 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
 	/* Is everything uninitialised? */
 	if (aoid == OBJ_nid2obj(NID_undef)) {
-		EC_KEY *eckey = pkey->pkey.ec;
-		unsigned char *p;
+		EVP_PKEY *pkey;
 
-		/* Set the key */
-		penclen = i2o_ECPublicKey(eckey, NULL);
-		if (penclen <= 0)
+		if ((pkey = EVP_PKEY_CTX_get0_pkey(pctx)) == NULL)
 			goto err;
-		penc = malloc(penclen);
-		if (penc == NULL)
-			goto err;
-		p = penc;
-		penclen = i2o_ECPublicKey(eckey, &p);
-		if (penclen <= 0)
+
+		penc = NULL;
+		if ((penclen = i2o_ECPublicKey(pkey->pkey.ec, &penc)) <= 0)
 			goto err;
 
 		ASN1_STRING_set0(pubkey, penc, penclen);
