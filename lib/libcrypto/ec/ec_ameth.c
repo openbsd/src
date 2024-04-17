@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.57 2024/04/17 13:51:41 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.58 2024/04/17 13:54:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -930,9 +930,8 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	if (!CMS_RecipientInfo_kari_get0_orig_id(ri, &talg, &pubkey,
 	    NULL, NULL, NULL))
 		goto err;
-	X509_ALGOR_get0(&aoid, NULL, NULL, talg);
 
-	/* Is everything uninitialised? */
+	X509_ALGOR_get0(&aoid, NULL, NULL, talg);
 	if (aoid == OBJ_nid2obj(NID_undef)) {
 		EVP_PKEY *pkey;
 
@@ -949,8 +948,9 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 		if (!asn1_abs_set_unused_bits(pubkey, 0))
 			goto err;
 
-		X509_ALGOR_set0(talg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),
-		    V_ASN1_UNDEF, NULL);
+		if (!X509_ALGOR_set0_by_nid(talg, NID_X9_62_id_ecPublicKey,
+		    V_ASN1_UNDEF, NULL))
+			goto err;
 	}
 
 	/* See if custom parameters set */
