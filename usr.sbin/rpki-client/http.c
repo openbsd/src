@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.82 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: http.c,v 1.83 2024/04/17 14:01:17 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1221,6 +1221,7 @@ http_request(struct http_connection *conn)
 	if ((r = asprintf(&conn->buf,
 	    "GET /%s HTTP/1.1\r\n"
 	    "Host: %s\r\n"
+	    "Accept: */*\r\n"
 	    "Accept-Encoding: gzip, deflate\r\n"
 	    "User-Agent: " HTTP_USER_AGENT "\r\n"
 	    "%s\r\n",
