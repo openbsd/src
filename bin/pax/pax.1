@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pax.1,v 1.78 2024/04/15 17:33:10 jca Exp $
+.\"	$OpenBSD: pax.1,v 1.79 2024/04/17 15:48:44 jca Exp $
 .\"	$NetBSD: pax.1,v 1.3 1995/03/21 09:07:37 cgd Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 15 2024 $
+.Dd $Mdocdate: April 17 2024 $
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -762,7 +762,8 @@ the file in the destination hierarchy is replaced by the file in the source
 hierarchy or by a link to the file in the source hierarchy if the file in
 the source hierarchy is newer.
 .It Fl v
-During a list operation, produce a verbose table of contents using the format of the
+During a list operation, produce a verbose table of contents using the
+format of the
 .Xr ls 1
 utility with the
 .Fl l
