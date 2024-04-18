@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.66 2024/04/18 11:53:40 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.67 2024/04/18 11:56:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -851,6 +851,13 @@ ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 	plen = ASN1_STRING_length(parameter);
 	if ((kekalg = d2i_X509_ALGOR(NULL, &p, plen)) == NULL)
 		goto err;
+
+	/*
+	 * XXX - the reaching into kekalg below is ugly, but unfortunately the
+	 * now internal legacy EVP_CIPHER_asn1_to_param() API doesn't interact
+	 * nicely with the X509_ALGOR API.
+	 */
+
 	if ((kekctx = CMS_RecipientInfo_kari_get0_ctx(ri)) == NULL)
 		goto err;
 	if ((kekcipher = EVP_get_cipherbyobj(kekalg->algorithm)) == NULL)
@@ -998,7 +1005,7 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	 * Package wrap algorithm in an AlgorithmIdentifier.
 	 *
 	 * Incompatibility of X509_ALGOR_set0() with EVP_CIPHER_param_to_asn1()
-	 * makes this really gross.
+	 * makes this really gross. See the XXX in ecdh_cms_set_shared_info().
 	 */
 
 	if ((wrap_alg = X509_ALGOR_new()) == NULL)
