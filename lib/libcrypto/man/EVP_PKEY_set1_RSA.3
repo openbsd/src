@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.22 2024/03/05 19:21:31 tb Exp $
+.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.23 2024/04/18 16:32:22 tb Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 5 2024 $
+.Dd $Mdocdate: April 18 2024 $
 .Dt EVP_PKEY_SET1_RSA 3
 .Os
 .Sh NAME
@@ -293,7 +293,7 @@ returns the type of
 .Fa pkey
 according to the following table:
 .Pp
-.Bl -column -compact -offset 2n EVP_PKEY_GOSTR NID_X9_62_id_ecPublicKey
+.Bl -column -compact -offset 2n EVP_PKEY_RSA_PSS NID_X9_62_id_ecPublicKey
 .It Sy return value      Ta                               Ta Sy PEM type string
 .It Dv EVP_PKEY_CMAC     Ta = Dv NID_cmac                 Ta CMAC
 .It Dv EVP_PKEY_DH       Ta = Dv NID_dhKeyAgreement       Ta DH
@@ -310,7 +310,7 @@ returns the actual OID associated with
 Historically keys using the same algorithm could use different OIDs.
 The following deprecated aliases are still supported:
 .Pp
-.Bl -column -compact -offset 2n EVP_PKEY_GOSTR12_ NID_id_tc26_gost3410_2012_512
+.Bl -column -compact -offset 2n EVP_PKEY_DSA4 NID_dsaWithSHA1_2
 .It Sy return value         Ta                                  Ta Sy alias for
 .It Dv EVP_PKEY_DSA1        Ta = Dv NID_dsa_2                     Ta DSA
 .It Dv EVP_PKEY_DSA2        Ta = Dv NID_dsaWithSHA                Ta DSA
