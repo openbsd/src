@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.201 2024/03/30 13:33:20 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.202 2024/04/18 08:59:38 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -342,6 +342,9 @@ sleep_setup(const volatile void *ident, int prio, const char *wmesg)
 	if (p->p_stat != SONPROC)
 		panic("tsleep: not SONPROC");
 #endif
+	/* exiting processes are not allowed to catch signals */
+	if (p->p_flag & P_WEXIT)
+		CLR(prio, PCATCH);
 
 	SCHED_LOCK(s);
 
