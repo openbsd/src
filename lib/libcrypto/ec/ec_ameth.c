@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.64 2024/04/18 11:51:01 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.65 2024/04/18 11:51:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -841,14 +841,13 @@ ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
 	p = alg->parameter->value.sequence->data;
 	plen = alg->parameter->value.sequence->length;
-	kekalg = d2i_X509_ALGOR(NULL, &p, plen);
-	if (!kekalg)
+	if ((kekalg = d2i_X509_ALGOR(NULL, &p, plen)) == NULL)
 		goto err;
-	kekctx = CMS_RecipientInfo_kari_get0_ctx(ri);
-	if (!kekctx)
+	if ((kekctx = CMS_RecipientInfo_kari_get0_ctx(ri)) == NULL)
 		goto err;
-	kekcipher = EVP_get_cipherbyobj(kekalg->algorithm);
-	if (!kekcipher || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
+	if ((kekcipher = EVP_get_cipherbyobj(kekalg->algorithm)) == NULL)
+		goto err;
+	if (EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
 		goto err;
 	if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
 		goto err;
@@ -859,8 +858,7 @@ ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 	if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
 		goto err;
 
-	plen = CMS_SharedInfo_encode(&der, kekalg, ukm, keylen);
-	if (plen <= 0)
+	if ((plen = CMS_SharedInfo_encode(&der, kekalg, ukm, keylen)) <= 0)
 		goto err;
 
 	if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, der, plen) <= 0)
