@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.65 2024/04/18 11:51:53 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.66 2024/04/18 11:53:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -820,6 +820,10 @@ static int
 ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 {
 	X509_ALGOR *alg, *kekalg = NULL;
+	const ASN1_OBJECT *obj;
+	int nid;
+	const void *parameter;
+	int parameter_type;
 	ASN1_OCTET_STRING *ukm;
 	const unsigned char *p;
 	unsigned char *der = NULL;
@@ -831,16 +835,20 @@ ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 	if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
 		goto err;
 
-	if (!ecdh_cms_set_kdf_param(pctx, OBJ_obj2nid(alg->algorithm))) {
+	X509_ALGOR_get0(&obj, &parameter_type, &parameter, alg);
+
+	if ((nid = OBJ_obj2nid(obj)) == NID_undef)
+		goto err;
+	if (!ecdh_cms_set_kdf_param(pctx, nid)) {
 		ECerror(EC_R_KDF_PARAMETER_ERROR);
 		goto err;
 	}
 
-	if (alg->parameter->type != V_ASN1_SEQUENCE)
+	if (parameter_type != V_ASN1_SEQUENCE)
 		goto err;
-
-	p = alg->parameter->value.sequence->data;
-	plen = alg->parameter->value.sequence->length;
+	if ((p = ASN1_STRING_get0_data(parameter)) == NULL)
+		goto err;
+	plen = ASN1_STRING_length(parameter);
 	if ((kekalg = d2i_X509_ALGOR(NULL, &p, plen)) == NULL)
 		goto err;
 	if ((kekctx = CMS_RecipientInfo_kari_get0_ctx(ri)) == NULL)
