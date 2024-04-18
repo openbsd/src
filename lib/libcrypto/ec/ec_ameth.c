@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.63 2024/04/17 14:01:33 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.64 2024/04/18 11:51:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -826,18 +826,18 @@ ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 	int plen, keylen;
 	const EVP_CIPHER *kekcipher;
 	EVP_CIPHER_CTX *kekctx;
-	int rv = 0;
+	int ret = 0;
 
 	if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
-		return 0;
+		goto err;
 
 	if (!ecdh_cms_set_kdf_param(pctx, OBJ_obj2nid(alg->algorithm))) {
 		ECerror(EC_R_KDF_PARAMETER_ERROR);
-		return 0;
+		goto err;
 	}
 
 	if (alg->parameter->type != V_ASN1_SEQUENCE)
-		return 0;
+		goto err;
 
 	p = alg->parameter->value.sequence->data;
 	plen = alg->parameter->value.sequence->length;
@@ -867,11 +867,13 @@ ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 		goto err;
 	der = NULL;
 
-	rv = 1;
+	ret = 1;
+
  err:
 	X509_ALGOR_free(kekalg);
 	free(der);
-	return rv;
+
+	return ret;
 }
 
 static int
