@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.301 2024/04/17 20:48:51 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.302 2024/04/19 10:13:58 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -592,7 +592,6 @@ in_pcbdetach(struct inpcb *inp)
 	 * points.
 	 */
 	sofree(so, 1);
-	m_freem(inp->inp_options);
 	if (inp->inp_route.ro_rt) {
 		rtfree(inp->inp_route.ro_rt);
 		inp->inp_route.ro_rt = NULL;
@@ -603,8 +602,10 @@ in_pcbdetach(struct inpcb *inp)
 		ip6_freemoptions(inp->inp_moptions6);
 	} else
 #endif
+	{
+		m_freem(inp->inp_options);
 		ip_freemoptions(inp->inp_moptions);
-
+	}
 #if NPF > 0
 	pf_remove_divert_state(inp);
 	pf_inp_unlink(inp);
