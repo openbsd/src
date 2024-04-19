@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.34 2023/10/05 18:46:14 mvs Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.35 2024/04/19 19:16:26 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: October 5 2023 $
+.Dd $Mdocdate: April 19 2024 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ Each client is assigned a lease, which expires after an amount of time
 chosen by the administrator (by default, one day).
 When a leased IP address is assigned to a new hardware address,
 .Nm
-may delete the leased IP from certain
+may delete the leased address from certain
 .Xr pf 4
 tables.
 Before leases expire, the clients to which leases are assigned are expected
