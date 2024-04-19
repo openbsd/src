@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2024/02/20 20:04:51 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2024/04/19 22:20:36 bluhm Exp $
 
 # Copyright (c) 2024 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -35,6 +35,7 @@
 # Adjust it here, if you want to use something else.
 N1 =		11
 NUMS =		${N1}
+IPS !=		jot 100 100
 
 # Traffic distribution has not been implemented for IPv6.
 REGRESS_EXPECTED_FAILURES +=	run-netstat6
@@ -68,13 +69,13 @@ ifconfig: unconfig
 	${SUDO} /sbin/ifconfig lo$n rdomain $n
 	${SUDO} /sbin/ifconfig lo$n inet 10.0.0.1/8
 	${SUDO} /sbin/ifconfig lo$n inet 10.0.0.$n alias
-.for i in 0 1 2 3 4 5 6 7 8 9
+.for i in ${IPS}
 	${SUDO} /sbin/ifconfig lo$n inet 10.0.$n.$i alias
 	${SUDO} /sbin/route -n -T $n add -inet -blackhole -mpath -host \
 	    10.$n.0.0 10.0.$n.$i
 .endfor
 	${SUDO} /sbin/ifconfig lo$n inet6 fc00::$n alias
-.for i in 0 1 2 3 4 5 6 7 8 9
+.for i in ${IPS}
 	${SUDO} /sbin/ifconfig lo$n inet6 fc00::$n:$i alias
 	${SUDO} /sbin/route -n -T $n add -inet6 -blackhole -mpath -host \
 	    fc00::$n:0:0 fc00::$n:$i
@@ -94,7 +95,7 @@ unconfig:
 	# Destroy interfaces.
 .for n in ${NUMS}
 	-${SUDO} /sbin/ifconfig lo$n rdomain $n
-.for i in 0 1 2 3 4 5 6 7 8 9
+.for i in ${IPS}
 	-${SUDO} /sbin/route -n -T $n delete -inet6 -host \
 	    fc00::$n:0:0 fc00::$n:$i
 	-${SUDO} /sbin/route -n -T $n delete -inet -host \
@@ -109,7 +110,7 @@ REGRESS_TARGETS +=	run-netcat
 run-netcat netstat.log:
 	# count UDP IPv6 packets used with multipath routes
 	rm -f netstat.log
-.for i in 0 1 2 3 4 5 6 7 8 9
+.for i in ${IPS}
 	/usr/bin/nc -4 -V${N1} -u -z -s10.0.${N1}.$i 10.${N1}.0.0 discard
 .endfor
 	/usr/bin/netstat -T${N1} -f inet -rn >netstat.log
@@ -126,10 +127,10 @@ run-netstat: netstat.log
 	    }\
 	    END{\
 		print "mpath "mpath", uses "uses", max "max", used "used;\
-		if (mpath != 10) { print "not 10 mpath: " mpath; exit 1; }\
-		if (uses != 10) { print "not 10 uses: " uses; exit 1; }\
-		if (max > 5) { print "max more than 5: " max; exit 1; }\
-		if (used < 5) { print "used less than 5: " used; exit 1; }\
+		if (mpath != 100) { print "not 100 mpath: " mpath; exit 1; }\
+		if (uses != 100) { print "not 100 uses: " uses; exit 1; }\
+		if (max > 30) { print "max more than 30: " max; exit 1; }\
+		if (used < 50) { print "used less than 50: " used; exit 1; }\
 	    }' \
 	    netstat.log
 
@@ -137,7 +138,7 @@ REGRESS_TARGETS +=	run-netcat6
 run-netcat6 netstat6.log:
 	# count UDP IPv6 packets used with multipath routes
 	rm -f netstat6.log
-.for i in 0 1 2 3 4 5 6 7 8 9
+.for i in ${IPS}
 	/usr/bin/nc -6 -V${N1} -u -z -sfc00::${N1}:$i fc00::${N1}:0:0 discard
 .endfor
 	/usr/bin/netstat -T${N1} -f inet6 -rn >netstat6.log
@@ -154,10 +155,10 @@ run-netstat6: netstat6.log
 	    }\
 	    END{\
 		print "mpath "mpath", uses "uses", max "max", used "used;\
-		if (mpath != 10) { print "not 10 mpath: " mpath; exit 1; }\
-		if (uses != 10) { print "not 10 uses: " uses; exit 1; }\
-		if (max > 5) { print "max more than 5: " max; exit 1; }\
-		if (used < 5) { print "used less than 5: " used; exit 1; }\
+		if (mpath != 100) { print "not 100 mpath: " mpath; exit 1; }\
+		if (uses != 100) { print "not 100 uses: " uses; exit 1; }\
+		if (max > 30) { print "max more than 30: " max; exit 1; }\
+		if (used < 50) { print "used less than 50: " used; exit 1; }\
 	    }' \
 	    netstat6.log
 
