@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscv_cpu_intc.c,v 1.10 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: riscv_cpu_intc.c,v 1.11 2024/04/19 14:39:34 jca Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -96,7 +96,7 @@ riscv_intc_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * XXX right time to enable interrupts ??
-	 * might need to postpone untile autoconf is finished
+	 * might need to postpone until autoconf is finished
 	 */
 	intr_enable();
 }
