@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.123 2024/03/31 13:50:00 mvs Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.124 2024/04/19 06:50:37 ratchov Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -251,18 +251,6 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 		m_freem(mynam);
 		return (EINVAL);
 	}
-	if (mynam != NULL) {
-		struct sockaddr_in *sin;
-		error = in_nam2sin(mynam, &sin);
-		if (error) {
-			m_freem(mynam);
-			return (error);
-		}
-		if (ntohs(sin->sin_port) >= IPPORT_RESERVED) {
-			m_freem(mynam);
-			return (ECONNREFUSED);
-		}
-	}
 
 	if (so->so_type == SOCK_STREAM)
 		siz = NFS_MAXPACKET + sizeof (u_long);
@@ -321,6 +309,18 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 	slp->ns_flag = (SLP_VALID | SLP_NEEDQ);
 	nfsrv_wakenfsd(slp);
 	return (0);
+}
+
+static inline int nfssvc_checknam(struct mbuf *nam)
+{
+	struct sockaddr_in *sin;
+
+	if (nam == NULL ||
+	    in_nam2sin(nam, &sin) != 0 ||
+	    ntohs(sin->sin_port) >= IPPORT_RESERVED) {
+		return -1;
+	}
+	return 0;
 }
 
 /*
@@ -402,6 +402,16 @@ loop:
 	cacherep = nfsrv_getcache(nd, slp, &mreq);
 	switch (cacherep) {
 	case RC_DOIT:
+		/*
+		 * Unless this is a null request (server ping), make
+		 * sure that the client is using a reserved source port.
+		 */
+		if (nd->nd_procnum != 0 && nfssvc_checknam(nd->nd_nam) == -1) {
+			/* drop it */
+			m_freem(nd->nd_mrep);
+			m_freem(nd->nd_nam2);
+			break;
+		}
 		error = (*(nfsrv3_procs[nd->nd_procnum]))(nd, slp, nfsd->nfsd_procp, &mreq);
 		if (mreq == NULL) {
 			if (nd != NULL) {
