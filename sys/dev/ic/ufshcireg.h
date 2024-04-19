@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.4 2024/01/04 21:02:30 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.5 2024/04/19 20:43:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -362,4 +362,4 @@ struct ufshci_ucd {
 	struct upiu_command cmd;
 	struct upiu_response rsp;
 	struct ufshci_ucd_prdt prdt[UFSHCI_UCD_PRDT_MAX_SEGS];
-};
+} __packed __aligned(128);
