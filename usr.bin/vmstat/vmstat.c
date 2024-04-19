@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.156 2024/04/17 13:12:58 mpi Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.157 2024/04/19 10:22:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -513,12 +513,7 @@ dosum(void)
 		     uvmexp.reserve_pagedaemon);
 	(void)printf("%11u pages reserved for kernel\n",
 		     uvmexp.reserve_kernel);
-	(void)printf("%11u pages in per-cpu caches\n",
-		     uvmexp.percpucaches);
 
-	/* per-cpu cache */
-	(void)printf("%11u per-cpu cache hits\n", uvmexp.pcphit);
-	(void)printf("%11u per-cpu cache misses\n", uvmexp.pcpmiss);
 	/* swap */
 	(void)printf("%11u swap pages\n", uvmexp.swpages);
 	(void)printf("%11u swap pages in use\n", uvmexp.swpginuse);
