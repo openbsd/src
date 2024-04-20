@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2073 2024/04/09 01:22:19 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2074 2024/04/20 08:54:01 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3436,12 +3436,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mendocino",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PHOENIX,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PHOENIX_1,
 	    "Phoenix",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PHOENIX2,
-	    "Phoenix 2",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PHOENIX_2,
+	    "Phoenix",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PICASSO,
@@ -3498,6 +3498,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6500D_HDA,
 	    "Radeon HD 6500D HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWK_POINT_1,
+	    "Hawk Point",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWK_POINT_2,
+	    "Hawk Point",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M241P,

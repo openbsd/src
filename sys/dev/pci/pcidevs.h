@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2073 2024/04/09 01:22:19 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2074 2024/04/20 08:54:01 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1331,8 +1331,8 @@
 #define	PCI_PRODUCT_ATI_PPB_1	0x1478		/* PCIE */
 #define	PCI_PRODUCT_ATI_PPB_2	0x1479		/* PCIE */
 #define	PCI_PRODUCT_ATI_MENDOCINO	0x1506		/* Mendocino */
-#define	PCI_PRODUCT_ATI_PHOENIX	0x15bf		/* Phoenix */
-#define	PCI_PRODUCT_ATI_PHOENIX2	0x15c8		/* Phoenix 2 */
+#define	PCI_PRODUCT_ATI_PHOENIX_1	0x15bf		/* Phoenix */
+#define	PCI_PRODUCT_ATI_PHOENIX_2	0x15c8		/* Phoenix */
 #define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
@@ -1347,6 +1347,8 @@
 #define	PCI_PRODUCT_ATI_RAPHAEL	0x164e		/* Raphael */
 #define	PCI_PRODUCT_ATI_YELLOW_CARP_2	0x1681		/* Rembrandt */
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
+#define	PCI_PRODUCT_ATI_HAWK_POINT_1	0x1900		/* Hawk Point */
+#define	PCI_PRODUCT_ATI_HAWK_POINT_2	0x1901		/* Hawk Point */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Mobility Radeon X600 */
 #define	PCI_PRODUCT_ATI_FIREMV_2400_1	0x3151		/* FireMV 2400 */
 #define	PCI_PRODUCT_ATI_RADEON_X300M24	0x3152		/* Mobility Radeon X300 */
