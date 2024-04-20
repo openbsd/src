@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.112 2024/02/22 12:49:42 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.113 2024/04/20 15:45:41 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -201,8 +201,17 @@ mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
 	}
 
 	type = rtype_from_mftfile(file);
-	/* remember the filehash for the CRL in struct mft */
-	if (type == RTYPE_CRL && strcmp(file, mft->crl) == 0) {
+	if (type == RTYPE_CRL) {
+		if (*found_crl == 1) {
+			warnx("%s: RFC 6487: too many CRLs listed on MFT", fn);
+			goto out;
+		}
+		if (strcmp(file, mft->crl) != 0) {
+			warnx("%s: RFC 6487: name (%s) doesn't match CRLDP "
+			    "(%s)", fn, file, mft->crl);
+			goto out;
+		}
+		/* remember the filehash for the CRL in struct mft */
 		memcpy(mft->crlhash, fh->hash->data, SHA256_DIGEST_LENGTH);
 		*found_crl = 1;
 	}
