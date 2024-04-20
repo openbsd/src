@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_smime.c,v 1.26 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: pk7_smime.c,v 1.27 2024/04/20 10:11:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -152,14 +152,6 @@ add_cipher_smcap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
 	return 1;
 }
 
-static int
-add_digest_smcap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
-{
-	if (EVP_get_digestbynid(nid))
-		return PKCS7_simple_smimecap(sk, nid, arg);
-	return 1;
-}
-
 PKCS7_SIGNER_INFO *
 PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert, EVP_PKEY *pkey,
     const EVP_MD *md, int flags)
@@ -192,10 +184,6 @@ PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert, EVP_PKEY *pkey,
 				goto err;
 			}
 			if (!add_cipher_smcap(smcap, NID_aes_256_cbc, -1) ||
-			    !add_digest_smcap(smcap, NID_id_GostR3411_94, -1) ||
-			    !add_digest_smcap(smcap, NID_id_tc26_gost3411_2012_256, -1) ||
-			    !add_digest_smcap(smcap, NID_id_tc26_gost3411_2012_512, -1) ||
-			    !add_cipher_smcap(smcap, NID_id_Gost28147_89, -1) ||
 			    !add_cipher_smcap(smcap, NID_aes_192_cbc, -1) ||
 			    !add_cipher_smcap(smcap, NID_aes_128_cbc, -1) ||
 			    !add_cipher_smcap(smcap, NID_des_ede3_cbc, -1) ||
