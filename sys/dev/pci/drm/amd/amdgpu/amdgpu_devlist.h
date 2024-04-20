@@ -215,6 +215,9 @@ static const struct pci_matchid amdgpu_devices[] = {
 	/* GC 11.0.1, DCN 3.1.4, APU, Ryzen 7040 "Phoenix" */
 	{0x1002, 0x15bf },	/* Radeon 740M / 760M / 780M */
 
+	/* GC 11.0.1, DCN 3.1.4, APU, Ryzen 8040 "Hawk Point" */
+	{0x1002, 0x1900 },	/* Radeon 760M / 780M */
+
 	/* GC 11.0.2, DCN 3.2.1, dGPU, "Navi 33" */
 	{0x1002, 0x7480 },	/* Radeon RX 7600S, 7700S, 7600M XT,
 				   7600, 7600 XT, Pro W7600 */
@@ -225,8 +228,11 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x7470 },	/* Radeon Pro W7700 */
 	{0x1002, 0x747e },	/* Radeon RX 7700 XT, 7800 XT */
 
-	/* GC 11.0.4, DCN 3.1.4, APU, "Phoenix 2" */
+	/* GC 11.0.4, DCN 3.1.4, APU, Ryzen 7040, "Phoenix" */
 	{0x1002, 0x15c8 },	/* Radeon 740M */
+
+	/* GC 11.0.4, DCN 3.1.4, APU, Ryzen 8040, "Hawk Point" */
+	{0x1002, 0x1901 },	/* Radeon 740M */
 
 	/* GC 11.5.0, DCN 3.5.0, APU, linux >= 6.7 */
 	/* GC 11.5.1, DCN 3.5.0, APU, linux >= 6.9 */
