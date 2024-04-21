@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.56 2024/04/08 14:02:13 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.57 2024/04/21 19:27:44 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -38,7 +38,6 @@
 #include "extern.h"
 
 extern struct stats	stats;
-extern int		noop;
 extern int		rrdpon;
 extern int		repo_timeout;
 extern time_t		deadline;

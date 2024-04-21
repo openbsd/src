@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.216 2024/04/15 13:57:45 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.217 2024/04/21 19:27:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -645,8 +645,10 @@ struct msgbuf;
 
 /* global variables */
 extern int verbose;
+extern int noop;
 extern int filemode;
 extern int excludeaspa;
+extern int experimental;
 extern const char *tals[];
 extern const char *taldescs[];
 extern unsigned int talrepocnt[];

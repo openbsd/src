@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.129 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.130 2024/04/21 19:27:44 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -773,7 +773,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	}
 	X509_ALGOR_get0(&cobj, NULL, NULL, palg);
 	nid = OBJ_obj2nid(cobj);
-	if (nid == NID_ecdsa_with_SHA256) {
+	if (experimental && nid == NID_ecdsa_with_SHA256) {
 		if (verbose)
 			warnx("%s: P-256 support is experimental", fn);
 	} else if (nid != NID_sha256WithRSAEncryption) {

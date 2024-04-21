@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.40 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.41 2024/04/21 19:27:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,8 +40,6 @@
 
 #include "extern.h"
 #include "json.h"
-
-extern int		 verbose;
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);

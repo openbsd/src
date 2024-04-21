@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.43 2024/04/21 09:03:22 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.44 2024/04/21 19:27:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -257,7 +257,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	X509_ALGOR_get0(&obj, NULL, NULL, psig);
 	nid = OBJ_obj2nid(obj);
 	/* RFC7935 last paragraph of section 2 specifies the allowed psig */
-	if (nid == NID_ecdsa_with_SHA256) {
+	if (experimental && nid == NID_ecdsa_with_SHA256) {
 		if (verbose)
 			warnx("%s: P-256 support is experimental", fn);
 	} else if (nid != NID_rsaEncryption &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.48 2024/04/08 14:02:13 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.49 2024/04/21 19:27:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -22,8 +22,6 @@
 
 #include "extern.h"
 #include "json.h"
-
-extern int experimental;
 
 static void
 outputheader_json(struct stats *st)
