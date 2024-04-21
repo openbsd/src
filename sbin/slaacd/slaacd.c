@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.68 2023/02/15 13:47:00 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.69 2024/04/21 17:33:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -632,6 +632,8 @@ configure_interface(struct imsg_configure_address *address)
 
 	memcpy(&in6_addreq.ifra_addr, &address->addr,
 	    sizeof(in6_addreq.ifra_addr));
+	memcpy(&in6_addreq.ifra_dstaddr, &address->gw,
+	    sizeof(in6_addreq.ifra_dstaddr));
 	memcpy(&in6_addreq.ifra_prefixmask.sin6_addr, &address->mask,
 	    sizeof(in6_addreq.ifra_prefixmask.sin6_addr));
 	in6_addreq.ifra_prefixmask.sin6_family = AF_INET6;

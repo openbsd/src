@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.88 2024/02/11 21:29:12 bluhm Exp $	*/
+/*	$OpenBSD: engine.c,v 1.89 2024/04/21 17:33:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -2130,6 +2130,7 @@ configure_address(struct address_proposal *addr_proposal)
 
 	address.if_index = addr_proposal->if_index;
 	memcpy(&address.addr, &addr_proposal->addr, sizeof(address.addr));
+	memcpy(&address.gw, &addr_proposal->from, sizeof(address.gw));
 	memcpy(&address.mask, &addr_proposal->mask, sizeof(address.mask));
 	address.vltime = addr_proposal->vltime;
 	address.pltime = addr_proposal->pltime;
