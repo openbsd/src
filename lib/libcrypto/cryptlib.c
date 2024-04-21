@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.50 2024/04/10 14:51:02 beck Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.51 2024/04/21 13:41:14 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -277,8 +277,7 @@ CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)(
 LCRYPTO_ALIAS(CRYPTO_set_dynlock_destroy_callback);
 
 struct CRYPTO_dynlock_value *
-(*CRYPTO_get_dynlock_create_callback(void))(
-    const char *file, int line)
+(*CRYPTO_get_dynlock_create_callback(void))(const char *file, int line)
 {
 	return NULL;
 }
