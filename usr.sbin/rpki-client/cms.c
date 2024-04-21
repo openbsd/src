@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.42 2024/02/01 15:11:38 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.43 2024/04/21 09:03:22 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,7 +30,6 @@
 extern ASN1_OBJECT	*cnt_type_oid;
 extern ASN1_OBJECT	*msg_dgst_oid;
 extern ASN1_OBJECT	*sign_time_oid;
-extern ASN1_OBJECT	*bin_sign_time_oid;
 
 static int
 cms_extract_econtent(const char *fn, CMS_ContentInfo *cms, unsigned char **res,
@@ -108,8 +107,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	EVP_PKEY			*pkey;
 	X509_ALGOR			*pdig, *psig;
 	int				 i, nattrs, nid;
-	int				 has_ct = 0, has_md = 0, has_st = 0,
-					 has_bst = 0;
+	int				 has_ct = 0, has_md = 0, has_st = 0;
 	time_t				 notafter;
 	int				 rc = 0;
 
@@ -218,12 +216,6 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 			}
 			if (!cms_get_signtime(fn, attr, signtime))
 				goto out;
-		} else if (OBJ_cmp(obj, bin_sign_time_oid) == 0) {
-			if (has_bst++ != 0) {
-				warnx("%s: RFC 6488: duplicate "
-				    "signed attribute", fn);
-				goto out;
-			}
 		} else {
 			OBJ_obj2txt(buf, sizeof(buf), obj, 1);
 			warnx("%s: RFC 6488: "
@@ -239,11 +231,11 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 
-	if (has_bst)
-		warnx("%s: unsupported CMS signing-time attribute", fn);
-
-	if (!has_st)
+	if (!has_st) {
+		/* RFC-to-be draft-ietf-sidrops-cms-signing-time */
 		warnx("%s: missing CMS signing-time attribute", fn);
+		goto out;
+	}
 
 	if (CMS_unsigned_get_attr_count(si) != -1) {
 		warnx("%s: RFC 6488: CMS has unsignedAttrs", fn);

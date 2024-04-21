@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.86 2024/04/03 04:20:13 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.87 2024/04/21 09:03:22 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -39,7 +39,6 @@ ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
 ASN1_OBJECT	*cnt_type_oid;	/* pkcs-9 id-contentType */
 ASN1_OBJECT	*msg_dgst_oid;	/* pkcs-9 id-messageDigest */
 ASN1_OBJECT	*sign_time_oid;	/* pkcs-9 id-signingTime */
-ASN1_OBJECT	*bin_sign_time_oid;	/* pkcs-9 id-aa-binarySigningTime */
 ASN1_OBJECT	*rsc_oid;	/* id-ct-signedChecklist */
 ASN1_OBJECT	*aspa_oid;	/* id-ct-ASPA */
 ASN1_OBJECT	*tak_oid;	/* id-ct-SignedTAL */
@@ -97,10 +96,6 @@ static const struct {
 	{
 		.oid = "1.2.840.113549.1.9.5",
 		.ptr = &sign_time_oid,
-	},
-	{
-		.oid = "1.2.840.113549.1.9.16.2.46",
-		.ptr = &bin_sign_time_oid,
 	},
 	{
 		.oid = "1.2.840.113549.1.9.16.1.47",
