@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.116 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: in6.h,v 1.117 2024/04/21 17:32:11 florian Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -404,6 +404,7 @@ struct sockaddr_in6;
 struct ifaddr;
 struct in6_ifaddr;
 struct ifnet;
+struct rtentry;
 
 void	ipv6_input(struct ifnet *, struct mbuf *);
 struct mbuf *
@@ -413,7 +414,8 @@ int	in6_cksum(struct mbuf *, uint8_t, uint32_t, uint32_t);
 void	in6_proto_cksum_out(struct mbuf *, struct ifnet *);
 int	in6_localaddr(struct in6_addr *);
 int	in6_addrscope(struct in6_addr *);
-struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *, u_int);
+struct	in6_ifaddr *in6_ifawithscope(struct ifnet *, struct in6_addr *, u_int,
+	    struct rtentry *);
 int	in6_mask2len(struct in6_addr *, u_char *);
 int	in6_nam2sin6(const struct mbuf *, struct sockaddr_in6 **);
 int	in6_sa2sin6(struct sockaddr *, struct sockaddr_in6 **);

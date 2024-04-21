@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.251 2023/12/03 20:36:24 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.252 2024/04/21 17:32:10 florian Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1164,7 +1164,7 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 			rtfree(rt);
 			goto bad;
 		}
-		ia6 = in6_ifawithscope(rt->rt_ifa->ifa_ifp, &t, rtableid);
+		ia6 = in6_ifawithscope(rt->rt_ifa->ifa_ifp, &t, rtableid, rt);
 		if (ia6 != NULL)
 			src = &ia6->ia_addr.sin6_addr;
 		if (src == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.78 2022/11/23 07:57:39 kn Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.79 2024/04/21 17:32:11 florian Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct	in6_ifaddr {
 #define	ia_flags	ia_ifa.ifa_flags
 
 	struct	sockaddr_in6 ia_addr;	/* interface address */
+	struct	sockaddr_in6 ia_gwaddr; /* router we learned address from */
 	struct	sockaddr_in6 ia_dstaddr; /* space for destination addr */
 	struct	sockaddr_in6 ia_prefixmask; /* prefix mask */
 	TAILQ_ENTRY(in6_ifaddr) ia_list;	/* list of IP6 addresses */
