@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.168 2024/03/22 07:19:28 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.169 2024/04/22 09:36:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -331,7 +331,7 @@ int		 peer_matched(struct peer *, struct ctl_neighbor *);
 int		 imsg_ctl_parent(struct imsg *);
 int		 imsg_ctl_rde(struct imsg *);
 int		 imsg_ctl_rde_msg(int, uint32_t, pid_t);
-void		 session_stop(struct peer *, uint8_t);
+void		 session_stop(struct peer *, uint8_t, const char *);
 
 /* timer.c */
 struct timer	*timer_get(struct timer_head *, enum Timer);

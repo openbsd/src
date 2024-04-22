@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.471 2024/04/22 08:53:59 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.472 2024/04/22 09:36:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -266,11 +266,12 @@ session_main(int debug, int verbose)
 					if (p->demoted)
 						session_demote(p, -1);
 					p->conf.demote_group[0] = 0;
-					session_stop(p, ERR_CEASE_PEER_UNCONF);
+					session_stop(p, ERR_CEASE_PEER_UNCONF,
+					    NULL);
 					timer_remove_all(&p->timers);
 					tcp_md5_del_listener(conf, p);
-					log_peer_warnx(&p->conf, "removed");
 					RB_REMOVE(peer_head, &conf->peers, p);
+					log_peer_warnx(&p->conf, "removed");
 					free(p);
 					peer_cnt--;
 					continue;
@@ -513,12 +514,10 @@ session_main(int debug, int verbose)
 	}
 
 	RB_FOREACH_SAFE(p, peer_head, &conf->peers, next) {
-		RB_REMOVE(peer_head, &conf->peers, p);
-		strlcpy(p->conf.reason,
-		    "bgpd shutting down",
-		    sizeof(p->conf.reason));
-		session_stop(p, ERR_CEASE_ADMIN_DOWN);
+		session_stop(p, ERR_CEASE_ADMIN_DOWN, "bgpd shutting down");
 		timer_remove_all(&p->timers);
+		tcp_md5_del_listener(conf, p);
+		RB_REMOVE(peer_head, &conf->peers, p);
 		free(p);
 	}
 
@@ -3150,7 +3149,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 					} else if (!depend_ok && p->depend_ok) {
 						p->depend_ok = depend_ok;
 						session_stop(p,
-						    ERR_CEASE_OTHER_CHANGE);
+						    ERR_CEASE_OTHER_CHANGE,
+						    NULL);
 					}
 				}
 			break;
@@ -3616,21 +3616,21 @@ session_demote(struct peer *p, int level)
 }
 
 void
-session_stop(struct peer *peer, uint8_t subcode)
+session_stop(struct peer *peer, uint8_t subcode, const char *reason)
 {
 	struct ibuf *ibuf;
-	char *communication;
 
-	communication = peer->conf.reason;
+	if (reason != NULL)
+		strlcpy(peer->conf.reason, reason, sizeof(peer->conf.reason));
 
 	ibuf = ibuf_dynamic(0, REASON_LEN);
 
 	if ((subcode == ERR_CEASE_ADMIN_DOWN ||
 	    subcode == ERR_CEASE_ADMIN_RESET) &&
-	    communication != NULL && *communication != '\0' &&
+	    reason != NULL && *reason != '\0' &&
 	    ibuf != NULL) {
-		if (ibuf_add_n8(ibuf, strlen(communication)) == -1 ||
-		    ibuf_add(ibuf, communication, strlen(communication))) {
+		if (ibuf_add_n8(ibuf, strlen(reason)) == -1 ||
+		    ibuf_add(ibuf, reason, strlen(reason))) {
 			log_peer_warnx(&peer->conf,
 			    "trying to send overly long shutdown reason");
 			ibuf_free(ibuf);
@@ -3645,6 +3645,13 @@ session_stop(struct peer *peer, uint8_t subcode)
 		break;
 	default:
 		/* session not open, no need to send notification */
+		if (subcode >= sizeof(suberr_cease_names) / sizeof(char *) ||
+		    suberr_cease_names[subcode] == NULL)
+			log_peer_warnx(&peer->conf, "session stop: %s, "
+			    "unknown subcode %u", errnames[ERR_CEASE], subcode);
+		else
+			log_peer_warnx(&peer->conf, "session stop: %s, %s",
+			    errnames[ERR_CEASE], suberr_cease_names[subcode]);
 		break;
 	}
 	ibuf_free(ibuf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.116 2024/01/11 15:46:25 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.117 2024/04/22 09:36:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -393,31 +393,28 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 				case IMSG_CTL_NEIGHBOR_DOWN:
 					neighbor.reason[
 					    sizeof(neighbor.reason) - 1] = '\0';
-					strlcpy(p->conf.reason,
-					    neighbor.reason,
-					    sizeof(p->conf.reason));
 					p->conf.down = 1;
-					session_stop(p, ERR_CEASE_ADMIN_DOWN);
+					session_stop(p, ERR_CEASE_ADMIN_DOWN,
+					    neighbor.reason);
 					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_CLEAR:
 					neighbor.reason[
 					    sizeof(neighbor.reason) - 1] = '\0';
-					strlcpy(p->conf.reason,
-					    neighbor.reason,
-					    sizeof(p->conf.reason));
 					p->IdleHoldTime =
 					    INTERVAL_IDLE_HOLD_INITIAL;
 					p->errcnt = 0;
 					if (!p->conf.down) {
 						session_stop(p,
-						    ERR_CEASE_ADMIN_RESET);
+						    ERR_CEASE_ADMIN_RESET,
+						    neighbor.reason);
 						timer_set(&p->timers,
 						    Timer_IdleHold,
 						    SESSION_CLEAR_DELAY);
 					} else {
 						session_stop(p,
-						    ERR_CEASE_ADMIN_DOWN);
+						    ERR_CEASE_ADMIN_DOWN,
+						    neighbor.reason);
 					}
 					control_result(c, CTL_RES_OK);
 					break;
