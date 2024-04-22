@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.109 2024/04/22 10:39:51 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.110 2024/04/22 10:43:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2340,6 +2340,8 @@ ctlslot_update(struct ctlslot *s)
 		/* if control is hidden */
 		c->desc_mask |= s->self;
 	}
+	if (s->ops)
+		s->ops->sync(s->arg);
 }
 
 void
@@ -2553,6 +2555,7 @@ ctl_update(struct ctl *c)
 			c->refs_mask |= s->self;
 		/* if control is hidden */
 		c->desc_mask |= s->self;
+		s->ops->sync(s->arg);
 	}
 }
 
