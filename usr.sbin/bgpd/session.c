@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.470 2024/04/11 08:33:15 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.471 2024/04/22 08:53:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -87,7 +87,7 @@ int	parse_header(struct peer *, u_char *, uint16_t *, uint8_t *);
 int	parse_open(struct peer *);
 int	parse_update(struct peer *);
 int	parse_rrefresh(struct peer *);
-int	parse_notification(struct peer *);
+void	parse_notification(struct peer *);
 int	parse_capabilities(struct peer *, u_char *, uint16_t, uint32_t *);
 int	capa_neg_calc(struct peer *);
 void	session_dispatch_imsg(struct imsgbuf *, int, u_int *);
@@ -723,13 +723,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_OPENCONFIRM, event);
 			break;
 		case EVNT_RCVD_NOTIFICATION:
-			if (parse_notification(peer)) {
-				change_state(peer, STATE_IDLE, event);
-				/* don't punish, capa negotiation */
-				timer_set(&peer->timers, Timer_IdleHold, 0);
-				peer->IdleHoldTime /= 2;
-			} else
-				change_state(peer, STATE_IDLE, event);
+			parse_notification(peer);
 			break;
 		default:
 			session_notification(peer,
@@ -769,7 +763,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			break;
 		case EVNT_RCVD_NOTIFICATION:
 			parse_notification(peer);
-			change_state(peer, STATE_IDLE, event);
 			break;
 		default:
 			session_notification(peer,
@@ -815,7 +808,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			break;
 		case EVNT_RCVD_NOTIFICATION:
 			parse_notification(peer);
-			change_state(peer, STATE_IDLE, event);
 			break;
 		default:
 			session_notification(peer,
@@ -2326,9 +2318,6 @@ bad_len:
 			session_notification(peer, ERR_OPEN, ERR_OPEN_OPT,
 				NULL);
 			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
-			/* no punish */
-			timer_set(&peer->timers, Timer_IdleHold, 0);
-			peer->IdleHoldTime /= 2;
 			return (-1);
 		}
 	}
@@ -2493,7 +2482,7 @@ parse_rrefresh(struct peer *peer)
 	return (0);
 }
 
-int
+void
 parse_notification(struct peer *peer)
 {
 	struct ibuf	 ibuf;
@@ -2518,7 +2507,7 @@ parse_notification(struct peer *peer)
 	if (ibuf_get_n8(&ibuf, &errcode) == -1 ||
 	    ibuf_get_n8(&ibuf, &subcode) == -1) {
 		log_peer_warnx(&peer->conf, "received bad notification");
-		return (-1);
+		goto done;
 	}
 
 	peer->errcnt++;
@@ -2541,12 +2530,8 @@ parse_notification(struct peer *peer)
 		}
 	}
 
-	if (errcode == ERR_OPEN && subcode == ERR_OPEN_OPT) {
-		session_capa_ann_none(peer);
-		return (1);
-	}
-
-	return (0);
+done:
+	change_state(peer, STATE_IDLE, EVNT_RCVD_NOTIFICATION);
 }
 
 int
