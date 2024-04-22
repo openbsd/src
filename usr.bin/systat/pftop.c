@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.46 2023/07/04 11:34:19 sashan Exp $	 */
+/* $OpenBSD: pftop.c,v 1.47 2024/04/22 14:19:48 jsg Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -716,15 +716,13 @@ unmask(struct pf_addr * m)
 void
 tb_print_addr(struct pf_addr * addr, struct pf_addr * mask, int af)
 {
-		switch (af) {
-		case AF_INET: {
-			tbprintf("%s", inetname(addr->v4));
-			break;
-		}
-		case AF_INET6: {
-			tbprintf("%s", inet6name(&addr->v6));
-			break;
-		}
+	switch (af) {
+	case AF_INET:
+		tbprintf("%s", inetname(addr->v4));
+		break;
+	case AF_INET6:
+		tbprintf("%s", inet6name(&addr->v6));
+		break;
 	}
 
 	if (mask != NULL) {
