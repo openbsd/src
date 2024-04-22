@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.113 2023/03/08 04:43:12 guenther Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.114 2024/04/22 14:20:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -616,7 +616,7 @@ nextline:
 
 		q = sob(++parse);	/* Optional field */
 		if (*q == 'Z' || *q == 'z' || *q == 'B' || *q == 'b' ||
-		    *q == 'M' || *q == 'm') {
+		    *q == 'M' || *q == 'm' || *q == 'F' || *q == 'f') {
 			*(parse = son(q)) = '\0';
 			while (*q) {
 				switch (*q) {
