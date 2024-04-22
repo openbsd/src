@@ -1,4 +1,4 @@
-/*	$Id: test-tal.c,v 1.13 2023/06/20 12:52:32 job Exp $ */
+/*	$Id: test-tal.c,v 1.14 2024/04/22 05:54:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,6 +32,7 @@
 int outformats;
 int verbose;
 int filemode;
+int experimental;
 
 int
 main(int argc, char *argv[])

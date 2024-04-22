@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.23 2023/05/30 12:14:48 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.24 2024/04/22 05:54:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,6 +35,7 @@
 int outformats;
 int verbose;
 int filemode;
+int experimental;
 
 int
 main(int argc, char *argv[])
