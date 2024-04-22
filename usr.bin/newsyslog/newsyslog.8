@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.54 2017/07/20 18:39:16 jca Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.55 2024/04/22 14:16:14 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: July 20 2017 $
+.Dd $Mdocdate: April 22 2024 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -399,7 +399,7 @@ signal (usually
 to instead of
 .Pa /var/run/syslog.pid .
 .It Ar signal
-Specify the signal to send to the process instead of
+This optional field specifies the signal to send to the process instead of
 .Dv SIGHUP .
 Signal names
 must start with
