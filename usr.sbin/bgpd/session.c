@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.472 2024/04/22 09:36:04 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.473 2024/04/22 09:43:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -622,6 +622,9 @@ bgp_fsm(struct peer *peer, enum session_events event)
 				session_connect(peer);
 			}
 			peer->passive = 0;
+			break;
+		case EVNT_STOP:
+			timer_stop(&peer->timers, Timer_IdleHold);
 			break;
 		default:
 			/* ignore */
