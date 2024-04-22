@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.18 2021/07/05 08:29:59 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.19 2024/04/22 11:01:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -269,29 +269,49 @@ aparams_native(struct aparams *par)
 }
 
 /*
- * resample the given number of frames
+ * Return the number of input and output frame that would be consumed
+ * by resamp_do(p, *icnt, *ocnt).
  */
 void
-resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
+resamp_getcnt(struct resamp *p, int *icnt, int *ocnt)
+{
+	long long idiff, odiff;
+	int cdiff;
+
+	cdiff = p->oblksz - p->diff;
+	idiff = (long long)*icnt * p->oblksz;
+	odiff = (long long)*ocnt * p->iblksz;
+	if (odiff - idiff >= cdiff)
+		*ocnt = (idiff + cdiff + p->iblksz - 1) / p->iblksz;
+	else
+		*icnt = (odiff + p->diff) / p->oblksz;
+}
+
+/*
+ * Resample the given number of frames. The number of output frames
+ * must match the corresponding number of input frames. Either always
+ * use icnt and ocnt such that:
+ *
+ *	 icnt * oblksz = ocnt * iblksz
+ *
+ * or use resamp_getcnt() to calculate the proper numbers.
+ */
+void
+resamp_do(struct resamp *p, adata_t *in, adata_t *out, int icnt, int ocnt)
 {
 	unsigned int nch;
 	adata_t *idata;
 	unsigned int oblksz;
+	unsigned int ifr;
 	int s, ds, diff;
 	adata_t *odata;
 	unsigned int iblksz;
+	unsigned int ofr;
 	unsigned int c;
 	int64_t f[NCHAN_MAX];
 	adata_t *ctxbuf, *ctx;
 	unsigned int ctx_start;
 	int q, qi, qf, n;
-
-#ifdef DEBUG
-	if (todo % p->iblksz != 0) {
-		log_puts("resamp_do: partial blocks not supported\n");
-		panic();
-	}
-#endif
 
 	/*
 	 * Partially copy structures into local variables, to avoid
@@ -300,16 +320,32 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 	 */
 	idata = in;
 	odata = out;
-	diff = p->oblksz;
+	diff = p->diff;
 	iblksz = p->iblksz;
 	oblksz = p->oblksz;
 	ctxbuf = p->ctx;
 	ctx_start = p->ctx_start;
 	nch = p->nch;
+	ifr = icnt;
+	ofr = ocnt;
 
+	/*
+	 * Start conversion.
+	 */
+#ifdef DEBUG
+	if (log_level >= 4) {
+		log_puts("resamp: copying ");
+		log_puti(ifr);
+		log_puts(" -> ");
+		log_putu(ofr);
+		log_puts(" frames, diff = ");
+		log_puti(diff);
+		log_puts("\n");
+	}
+#endif
 	for (;;) {
 		if (diff >= oblksz) {
-			if (todo == 0)
+			if (ifr == 0)
 				break;
 			ctx_start = (ctx_start - 1) & (RESAMP_NCTX - 1);
 			ctx = ctxbuf + ctx_start;
@@ -318,8 +354,10 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 				ctx += RESAMP_NCTX;
 			}
 			diff -= oblksz;
-			todo--;
+			ifr--;
 		} else {
+			if (ofr == 0)
+				break;
 
 			for (c = 0; c < nch; c++)
 				f[c] = 0;
@@ -361,11 +399,40 @@ resamp_do(struct resamp *p, adata_t *in, adata_t *out, int todo)
 #endif
 				*odata++ = s;
 			}
+
 			diff += iblksz;
+			ofr--;
 		}
 	}
-
+	p->diff = diff;
 	p->ctx_start = ctx_start;
+#ifdef DEBUG
+	if (ifr != 0) {
+		log_puts("resamp_do: ");
+		log_puti(ifr);
+		log_puts(": too many input frames\n");
+		panic();
+	}
+	if (ofr != 0) {
+		log_puts("resamp_do: ");
+		log_puti(ofr);
+		log_puts(": too many output frames\n");
+		panic();
+	}
+#endif
+}
+
+static unsigned int
+uint_gcd(unsigned int a, unsigned int b)
+{
+	unsigned int r;
+
+	while (b > 0) {
+		r = a % b;
+		a = b;
+		b = r;
+	}
+	return a;
 }
 
 /*
@@ -375,8 +442,26 @@ void
 resamp_init(struct resamp *p, unsigned int iblksz,
     unsigned int oblksz, int nch)
 {
+	unsigned int g;
+
+	/*
+	 * reduce iblksz/oblksz fraction
+	 */
+	g = uint_gcd(iblksz, oblksz);
+	iblksz /= g;
+	oblksz /= g;
+
+	/*
+	 * ensure weird rates don't cause integer overflow
+	 */
+	while (iblksz > ADATA_UNIT || oblksz > ADATA_UNIT) {
+		iblksz >>= 1;
+		oblksz >>= 1;
+	}
+
 	p->iblksz = iblksz;
 	p->oblksz = oblksz;
+	p->diff = 0;
 	p->nch = nch;
 	p->ctx_start = 0;
 	memset(p->ctx, 0, sizeof(p->ctx));

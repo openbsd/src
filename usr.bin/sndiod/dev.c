@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.111 2024/04/22 10:57:36 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.112 2024/04/22 11:01:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -517,7 +517,8 @@ dev_mix_badd(struct dev *d, struct slot *s)
 	}
 
 	if (s->mix.resampbuf) {
-		resamp_do(&s->mix.resamp, in, s->mix.resampbuf, s->round);
+		resamp_do(&s->mix.resamp,
+		    in, s->mix.resampbuf, s->round, d->round);
 		in = s->mix.resampbuf;
 	}
 
@@ -654,7 +655,7 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 
 	if (s->sub.resampbuf) {
 		resamp_do(&s->sub.resamp,
-		    s->sub.resampbuf, resamp_out, d->round);
+		    s->sub.resampbuf, resamp_out, d->round, s->round);
 	}
 
 	if (s->sub.encbuf)
