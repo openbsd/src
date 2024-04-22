@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.10 2022/12/26 19:16:00 jmc Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.11 2024/04/22 12:21:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -74,9 +74,9 @@ typedef int adata_t;
 struct aparams {
 	unsigned int bps;		/* bytes per sample */
 	unsigned int bits;		/* actually used bits */
-	unsigned int le;		/* 1 if little endian, 0 if big endian */
+	unsigned int le;		/* 1 if little endian, else be */
 	unsigned int sig;		/* 1 if signed, 0 if unsigned */
-	unsigned int msb;		/* 1 if msb justified, 0 if lsb justified */
+	unsigned int msb;		/* 1 if msb justified, else lsb */
 };
 
 struct resamp {
@@ -93,7 +93,7 @@ struct conv {
 	int bfirst;			/* bytes to skip at startup */
 	unsigned int bps;		/* bytes per sample */
 	unsigned int shift;		/* shift to get 32bit MSB */
-	unsigned int bias;			/* bias of unsigned samples */
+	unsigned int bias;		/* bias of unsigned samples */
 	int bnext;			/* to reach the next byte */
 	int snext;			/* to reach the next sample */
 	int nch;
