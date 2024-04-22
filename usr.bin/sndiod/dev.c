@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.110 2024/04/22 10:43:16 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.111 2024/04/22 10:57:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -41,8 +41,6 @@ void dev_sub_bcopy(struct dev *, struct slot *);
 void dev_onmove(struct dev *, int);
 void dev_master(struct dev *, unsigned int);
 void dev_cycle(struct dev *);
-struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
-    unsigned int, unsigned int, unsigned int, unsigned int);
 void dev_adjpar(struct dev *, int, int, int);
 int dev_allocbufs(struct dev *);
 void dev_freebufs(struct dev *);
