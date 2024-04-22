@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.9 2021/11/01 14:43:25 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.10 2024/04/22 10:42:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -375,7 +375,7 @@ opt_done(struct opt *o)
  * Set opt's device, and (if necessary) move clients to
  * to the new device
  */
-void
+int
 opt_setdev(struct opt *o, struct dev *ndev)
 {
 	struct dev *odev;
@@ -385,12 +385,12 @@ opt_setdev(struct opt *o, struct dev *ndev)
 	int i;
 
 	if (!dev_ref(ndev))
-		return;
+		return 0;
 
 	odev = o->dev;
 	if (odev == ndev) {
 		dev_unref(ndev);
-		return;
+		return 1;
 	}
 
 	/* check if clients can use new device */
@@ -399,18 +399,20 @@ opt_setdev(struct opt *o, struct dev *ndev)
 			continue;
 		if (s->ops != NULL && !dev_iscompat(odev, ndev)) {
 			dev_unref(ndev);
-			return;
+			return 0;
 		}
 	}
 
 	/*
 	 * if we're using MMC, move all opts to the new device, mtc_setdev()
 	 * will call us back
+	 *
+	 * XXX: move this to the end to avoid the recursion
 	 */
 	if (o->mtc != NULL && o->mtc->dev != ndev) {
 		mtc_setdev(o->mtc, ndev);
 		dev_unref(ndev);
-		return;
+		return 1;
 	}
 
 	c = ctl_find(CTL_OPT_DEV, o, o->dev);
@@ -468,6 +470,7 @@ opt_setdev(struct opt *o, struct dev *ndev)
 	}
 
 	dev_unref(ndev);
+	return 1;
 }
 
 /*

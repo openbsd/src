@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.7 2021/11/01 14:43:25 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.8 2024/04/22 10:42:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,7 +47,7 @@ struct opt *opt_byname(char *);
 struct opt *opt_bynum(int);
 void opt_init(struct opt *);
 void opt_done(struct opt *);
-void opt_setdev(struct opt *, struct dev *);
+int opt_setdev(struct opt *, struct dev *);
 struct dev *opt_ref(struct opt *);
 void opt_unref(struct opt *);
 
