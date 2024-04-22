@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.13 2024/04/22 11:01:02 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.14 2024/04/22 11:07:42 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -107,7 +107,7 @@ struct cmap {
 	int nch;
 };
 
-#define MIDI_TO_ADATA(m)	(aparams_ctltovol[m] << (ADATA_BITS - 16))
+#define MIDI_TO_ADATA(m)	(aparams_ctltovol[m])
 extern const int aparams_ctltovol[128];
 
 void aparams_init(struct aparams *);
