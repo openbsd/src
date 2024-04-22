@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.13 2020/09/14 11:15:30 kn Exp $ */
+/*	$OpenBSD: pf.c,v 1.14 2024/04/22 13:30:22 bluhm Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -44,7 +44,8 @@ void print_fld_double(field_def *, double);
 const char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
 const char	*pf_lcounters[LCNT_MAX+1] = LCNT_NAMES;
 const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
-const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
+const char	*pf_scounters[SCNT_MAX+1] = FCNT_NAMES;
+const char	*pf_ncounters[NCNT_MAX+1] = FCNT_NAMES;
 
 static struct pf_status status;
 int num_pf = 0;
@@ -104,6 +105,7 @@ read_pf(void)
 
 	num_disp += FCNT_MAX + 2;
 	num_disp += SCNT_MAX + 2;
+	num_disp += NCNT_MAX + 2;
 	num_disp += PFRES_MAX + 1;
 	num_disp += LCNT_MAX + 1;
 
@@ -294,6 +296,17 @@ print_pf(void)
 				    (double)s->scounters[i] / (double)tm);
 		else
 			ADD_LINE_V("src track", pf_scounters[i], s->scounters[i]);
+	}
+
+	ADD_EMPTY_LINE;
+	ADD_LINE_V("fragment", "Count", s->fragments);
+
+	for (i = 0; i < NCNT_MAX; i++) {
+		if (tm > 0)
+			ADD_LINE_VR("fragment", pf_ncounters[i], s->ncounters[i],
+				    (double)s->ncounters[i] / (double)tm);
+		else
+			ADD_LINE_V("fragment", pf_ncounters[i], s->ncounters[i]);
 	}
 
 	ADD_EMPTY_LINE;

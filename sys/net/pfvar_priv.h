@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.35 2024/01/01 22:16:51 bluhm Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.36 2024/04/22 13:30:22 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -370,6 +370,7 @@ void			 pf_state_unref(struct pf_state *);
 
 extern struct rwlock	pf_lock;
 extern struct rwlock	pf_state_lock;
+extern struct mutex	pf_frag_mtx;
 extern struct mutex	pf_inp_mtx;
 
 #define PF_LOCK()		do {			\
@@ -414,6 +415,9 @@ extern struct mutex	pf_inp_mtx;
 			splassert_fail(RW_WRITE,	\
 			    rw_status(&pf_state_lock), __func__);\
 	} while (0)
+
+#define PF_FRAG_LOCK()		mtx_enter(&pf_frag_mtx)
+#define PF_FRAG_UNLOCK()	mtx_leave(&pf_frag_mtx)
 
 /* for copies to/from network byte order */
 void			pf_state_peer_hton(const struct pf_state_peer *,

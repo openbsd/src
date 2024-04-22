@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.535 2024/01/01 22:16:51 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.536 2024/04/22 13:30:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1192,6 +1192,11 @@ enum pfi_kif_refs {
 #define SCNT_SRC_NODE_REMOVALS	2
 #define SCNT_MAX		3
 
+#define NCNT_FRAG_SEARCH	0
+#define NCNT_FRAG_INSERT	1
+#define NCNT_FRAG_REMOVALS	2
+#define NCNT_MAX		3
+
 #define REASON_SET(a, x) \
 	do { \
 		if ((void *)(a) != NULL) { \
@@ -1206,6 +1211,7 @@ struct pf_status {
 	u_int64_t	lcounters[LCNT_MAX];	/* limit counters */
 	u_int64_t	fcounters[FCNT_MAX];
 	u_int64_t	scounters[SCNT_MAX];
+	u_int64_t	ncounters[NCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
 	u_int64_t	bcounters[2][2];
 	u_int64_t	stateid;
@@ -1215,6 +1221,7 @@ struct pf_status {
 	u_int32_t	states;
 	u_int32_t	states_halfopen;
 	u_int32_t	src_nodes;
+	u_int32_t	fragments;
 	u_int32_t	debug;
 	u_int32_t	hostid;
 	u_int32_t	reass;			/* reassembly */

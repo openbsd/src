@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.350 2024/02/07 23:53:44 jsg Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.351 2024/04/22 13:30:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -519,7 +519,8 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 const char	*pf_reasons[PFRES_MAX+1] = PFRES_NAMES;
 const char	*pf_lcounters[LCNT_MAX+1] = LCNT_NAMES;
 const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
-const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
+const char	*pf_scounters[SCNT_MAX+1] = FCNT_NAMES;
+const char	*pf_ncounters[NCNT_MAX+1] = FCNT_NAMES;
 
 void
 print_status(struct pf_status *s, struct pfctl_watermarks *synflwats, int opts)
@@ -613,6 +614,20 @@ print_status(struct pf_status *s, struct pfctl_watermarks *synflwats, int opts)
 			if (runtime > 0)
 				printf("%14.1f/s\n",
 				    (double)s->scounters[i] / (double)runtime);
+			else
+				printf("%14s\n", "");
+		}
+	}
+	if (opts & PF_OPT_VERBOSE) {
+		printf("Fragments\n");
+		printf("  %-25s %14u %14s\n", "current entries",
+		    s->fragments, "");
+		for (i = 0; i < NCNT_MAX; i++) {
+			printf("  %-25s %14lld ", pf_ncounters[i],
+				    s->ncounters[i]);
+			if (runtime > 0)
+				printf("%14.1f/s\n",
+				    (double)s->ncounters[i] / (double)runtime);
 			else
 				printf("%14s\n", "");
 		}
