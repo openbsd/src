@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.7 2021/03/03 10:00:27 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.8 2024/04/22 10:43:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -81,20 +81,26 @@ dev_sioctl_onval(void *arg, unsigned int addr, unsigned int val)
 	struct dev *d = arg;
 	struct ctl *c;
 
-	dev_log(d);
-	log_puts(": onctl: addr = ");
-	log_putu(addr);
-	log_puts(", val = ");
-	log_putu(val);
-	log_puts("\n");
+	if (log_level >= 2) {
+		dev_log(d);
+		log_puts(": onctl: addr = ");
+		log_putu(addr);
+		log_puts(", val = ");
+		log_putu(val);
+		log_puts("\n");
+	}
 
 	for (c = ctl_list; c != NULL; c = c->next) {
 		if (c->scope != CTL_HW || c->u.hw.addr != addr)
 			continue;
-		ctl_log(c);
-		log_puts(": new value -> ");
-		log_putu(val);
-		log_puts("\n");
+
+		if (log_level >= 2) {
+			ctl_log(c);
+			log_puts(": new value -> ");
+			log_putu(val);
+			log_puts("\n");
+		}
+
 		c->val_mask = ~0U;
 		c->curval = val;
 	}
