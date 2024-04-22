@@ -1,12 +1,11 @@
-#	$OpenBSD: Makefile,v 1.56 2024/03/26 01:18:16 beck Exp $
+#	$OpenBSD: Makefile,v 1.57 2024/04/22 07:31:54 anton Exp $
 
 SUBDIR += api
 SUBDIR += asn1
 SUBDIR += buffer
 SUBDIR += bytestring
 SUBDIR += ciphers
-#Disable for now for upcoming changes. This needs to be easier to deal with.
-#SUBDIR += client
+SUBDIR += client
 SUBDIR += dtls
 SUBDIR += exporter
 SUBDIR += handshake
