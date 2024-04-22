@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.19 2023/01/31 21:38:01 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.20 2024/04/22 10:49:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -879,12 +879,7 @@ ondesc(void *arg, struct sioctl_desc *d, int curval)
 	 */
 	for (pi = &infolist; (i = *pi) != NULL; pi = &i->next) {
 		cmp = cmpdesc(d, &i->desc);
-		if (cmp == 0) {
-			fprintf(stderr, "fatal: duplicate control:\n");
-			print_ent(i, "duplicate");
-			exit(1);
-		}
-		if (cmp < 0)
+		if (cmp <= 0)
 			break;
 	}
 	i = malloc(sizeof(struct info));
