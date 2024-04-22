@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.43 2022/12/26 19:16:03 jmc Exp $	*/
+/*	$OpenBSD: dev.h,v 1.44 2024/04/22 10:39:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -352,7 +352,7 @@ void slot_detach(struct slot *);
 
 struct ctl *ctl_new(int, void *, void *,
     int, char *, char *, int, char *, char *, int, int, int);
-void ctl_del(int, void *, void *);
+int ctl_del(int, void *, void *);
 void ctl_log(struct ctl *);
 int ctl_setval(struct ctl *c, int val);
 int ctl_match(struct ctl *, int, void *, void *);

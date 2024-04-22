@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.108 2024/04/02 05:21:32 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.109 2024/04/22 10:39:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2601,16 +2601,18 @@ ctl_onval(int scope, void *arg0, void *arg1, int val)
 	return 1;
 }
 
-void
+int
 ctl_del(int scope, void *arg0, void *arg1)
 {
 	struct ctl *c, **pc;
+	int found;
 
+	found = 0;
 	pc = &ctl_list;
 	for (;;) {
 		c = *pc;
 		if (c == NULL)
-			return;
+			return found;
 		if (ctl_match(c, scope, arg0, arg1)) {
 #ifdef DEBUG
 			if (log_level >= 2) {
@@ -2618,6 +2620,7 @@ ctl_del(int scope, void *arg0, void *arg1)
 				log_puts(": removed\n");
 			}
 #endif
+			found++;
 			c->refs_mask &= ~CTL_DEVMASK;
 			if (c->refs_mask == 0) {
 				*pc = c->next;
