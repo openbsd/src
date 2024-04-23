@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.25 2023/04/27 16:56:52 phessler Exp $	*/
+/*	$OpenBSD: rad.h,v 1.26 2024/04/23 22:11:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -93,6 +93,7 @@ struct ra_options_conf {
 	int		cur_hl;			/* current hop limit */
 	int		m_flag;			/* managed address conf flag */
 	int		o_flag;			/* other conf flag */
+	int		rtpref;			/* router preference */
 	int		router_lifetime;	/* default router lifetime */
 	uint32_t	reachable_time;
 	uint32_t	retrans_timer;

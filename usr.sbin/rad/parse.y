@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2022/10/15 13:27:45 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2024/04/23 22:11:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 
 #include <netinet/in.h>
+#include <netinet/icmp6.h>
 #include <net/if.h>
 
 #include <arpa/inet.h>
@@ -119,8 +120,8 @@ typedef struct {
 %token	RA_IFACE YES NO INCLUDE ERROR
 %token	DEFAULT ROUTER HOP LIMIT MANAGED ADDRESS
 %token	CONFIGURATION OTHER LIFETIME REACHABLE TIME RETRANS TIMER
-%token	AUTO PREFIX VALID PREFERRED LIFETIME ONLINK AUTONOMOUS
-%token	ADDRESS_CONFIGURATION DNS NAMESERVER SEARCH MTU NAT64
+%token	AUTO PREFIX VALID PREFERENCE PREFERRED LIFETIME ONLINK AUTONOMOUS
+%token	ADDRESS_CONFIGURATION DNS NAMESERVER SEARCH MTU NAT64 HIGH MEDIUM LOW
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -209,6 +210,15 @@ ra_opt_block	: DEFAULT ROUTER yesno {
 		}
 		| ROUTER LIFETIME NUMBER {
 			ra_options->router_lifetime = $3;
+		}
+		| ROUTER PREFERENCE HIGH {
+			ra_options->rtpref = ND_RA_FLAG_RTPREF_HIGH;
+		}
+		| ROUTER PREFERENCE MEDIUM {
+			ra_options->rtpref = ND_RA_FLAG_RTPREF_MEDIUM;
+		}
+		| ROUTER PREFERENCE LOW {
+			ra_options->rtpref = ND_RA_FLAG_RTPREF_LOW;
 		}
 		| REACHABLE TIME NUMBER {
 			ra_options->reachable_time = $3;
@@ -507,18 +517,22 @@ lookup(char *s)
 		{"configuration",	CONFIGURATION},
 		{"default",		DEFAULT},
 		{"dns",			DNS},
+		{"high",		HIGH},
 		{"hop",			HOP},
 		{"include",		INCLUDE},
 		{"interface",		RA_IFACE},
 		{"lifetime",		LIFETIME},
 		{"limit",		LIMIT},
+		{"low",			LOW},
 		{"managed",		MANAGED},
+		{"medium",		MEDIUM},
 		{"mtu",			MTU},
 		{"nameserver",		NAMESERVER},
 		{"nat64",		NAT64},
 		{"no",			NO},
 		{"on-link",		ONLINK},
 		{"other",		OTHER},
+		{"preference",		PREFERENCE},
 		{"preferred",		PREFERRED},
 		{"prefix",		PREFIX},
 		{"reachable",		REACHABLE},

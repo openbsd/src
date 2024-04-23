@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.7 2022/10/15 13:26:15 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.8 2024/04/23 22:11:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/uio.h>
 
 #include <netinet/in.h>
+#include <netinet/icmp6.h>
 #include <net/if.h>
 
 #include <arpa/inet.h>
@@ -34,6 +35,7 @@
 #include "rad.h"
 
 const char*	yesno(int);
+const char*	rtpref(int);
 void		print_ra_options(const char*, const struct ra_options_conf*);
 void		print_prefix_options(const char*, const struct ra_prefix_conf*);
 
@@ -41,6 +43,22 @@ const char*
 yesno(int flag)
 {
 	return flag ? "yes" : "no";
+}
+
+const char*
+rtpref(int rtpref)
+{
+	switch (rtpref & ND_RA_FLAG_RTPREF_MASK) {
+	case ND_RA_FLAG_RTPREF_HIGH:
+		return "high";
+	case ND_RA_FLAG_RTPREF_MEDIUM:
+		return "medium";
+	case ND_RA_FLAG_RTPREF_LOW:
+		return "low";
+	default:
+		return "invalid";
+	}
+
 }
 
 void
@@ -56,6 +74,7 @@ print_ra_options(const char *indent, const struct ra_options_conf *ra_options)
 	printf("%smanaged address configuration %s\n", indent,
 	    yesno(ra_options->m_flag));
 	printf("%sother configuration %s\n", indent, yesno(ra_options->o_flag));
+	printf("%srouter preference %s\n", indent, rtpref(ra_options->rtpref));
 	printf("%srouter lifetime %d\n", indent, ra_options->router_lifetime);
 	printf("%sreachable time %u\n", indent, ra_options->reachable_time);
 	printf("%sretrans timer %u\n", indent, ra_options->retrans_timer);

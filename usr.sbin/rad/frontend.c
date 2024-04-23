@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.44 2024/02/11 21:29:12 bluhm Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.45 2024/04/23 22:11:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1157,6 +1157,14 @@ build_packet(struct ra_iface *ra_iface)
 	else if (ra_options_conf->dfr) {
 		ra->nd_ra_router_lifetime =
 		    htons(ra_options_conf->router_lifetime);
+		/*
+		 * RFC 4191
+		 * If the Router Lifetime is zero, the preference value MUST be
+		 * set to (00) by the sender and MUST be ignored by the
+		 * receiver.
+		 */
+		if (ra_options_conf->router_lifetime > 0)
+			ra->nd_ra_flags_reserved |= ra_options_conf->rtpref;
 	}
 	ra->nd_ra_reachable = htonl(ra_options_conf->reachable_time);
 	ra->nd_ra_retransmit = htonl(ra_options_conf->retrans_timer);
