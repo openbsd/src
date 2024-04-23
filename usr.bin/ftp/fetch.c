@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.217 2024/04/17 09:51:18 tb Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.218 2024/04/23 08:50:38 sthen Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1725,11 +1725,13 @@ proxy_connect(int socket, char *host, char *cookie)
 
 	if (cookie) {
 		l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\r\n"
+			"Host: %s:%s\r\n"
 			"Proxy-Authorization: Basic %s\r\n%s\r\n\r\n",
-			host, port, cookie, HTTP_USER_AGENT);
+			host, port, host, port, cookie, HTTP_USER_AGENT);
 	} else {
-		l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\r\n%s\r\n\r\n",
-			host, port, HTTP_USER_AGENT);
+		l = asprintf(&connstr, "CONNECT %s:%s HTTP/1.1\r\n"
+			"Host: %s:%s\r\n%s\r\n\r\n",
+			host, port, host, port, HTTP_USER_AGENT);
 	}
 
 	if (l == -1)
