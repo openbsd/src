@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.22 2023/10/25 15:51:45 deraadt Exp $
+dnl	$OpenBSD: hardware,v 1.23 2024/04/23 10:17:20 fcambus Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5/H6
@@ -32,11 +32,14 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Apple MacBook Pro (14-inch, M1 Pro/Max, 2021)
 		Apple MacBook Pro (16-inch, M1 Pro/Max, 2021)
 		Apple Studio (M1 Max/Ultra, 2022)
+		Apple Mac mini (M2, 2023)
 		Apple MacBook Air (13-inch, M2, 2022)
 		Apple MacBook Pro (13-inch, M2, 2022)
 		Apple MacBook Air (15-inch, M2, 2023)
+		Apple Mac mini (M2 Pro, 2023)
 		Apple MacBook Pro (14-inch, M2 Pro/Max, 2023)
 		Apple MacBook Pro (16-inch, M2 Pro/Max, 2023)
+		Apple Studio (M2 Max/Ultra, 2023)
 	Broadcom BCM2837/BCM2711
 		Raspberry Pi 3
 		Raspberry Pi 3 Model B+
@@ -49,6 +52,10 @@ The following machines are targeted by OpenBSD/MACHINE:
 		GL.iNet Brume
 	Marvell ARMADA 7K/8K
 		SolidRun/Marvell MACCHIATObin
+	NXP i.MX 8M Quad/Mini/Plus
+		MNT Reform
+		SolidRun CuBox-M
+		SolidRun HummingBoard
 	Qualcomm Snapdragon 7cx (SC7180/SC7180P)
 		Acer Aspire One
 	Qualcomm Snapdragon 8cx Gen 3 (SC8280XP)
@@ -68,5 +75,9 @@ The following machines are targeted by OpenBSD/MACHINE:
 		ROC-RK3566-PC
 		NanoPi R5S
 		Radxa ROCK 3A
+	Rockchip RK3588
+		Radxa ROCK 5B
+		NanoPi R6C
+		NanoPi R6S
 	Socionext SC2A11
 		Socionext SynQuacer-E Developerbox
