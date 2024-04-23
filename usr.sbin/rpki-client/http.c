@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.84 2024/04/23 09:09:29 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.85 2024/04/23 10:27:46 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1163,7 +1163,7 @@ proxy_connect(struct http_connection *conn)
 	/* XXX handle auth */
 	if ((r = asprintf(&conn->buf, "CONNECT %s HTTP/1.1\r\n"
 	    "Host: %s\r\n"
-	    "User-Agent: " HTTP_USER_AGENT "\r\n%s\r\n", host, host
+	    "User-Agent: " HTTP_USER_AGENT "\r\n%s\r\n", host, host,
 	    proxy.proxyauth)) == -1)
 		err(1, NULL);
 	conn->bufsz = r;
