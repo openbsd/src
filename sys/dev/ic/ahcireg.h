@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahcireg.h,v 1.5 2015/02/11 07:13:44 jmatthew Exp $ */
+/*	$OpenBSD: ahcireg.h,v 1.6 2024/04/23 13:09:21 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -42,7 +42,7 @@
 #define  AHCI_REG_CAP_SMPS		(1<<28) /* Mech Presence Switch */
 #define  AHCI_REG_CAP_SSNTF		(1<<29) /* SNotification Register */
 #define  AHCI_REG_CAP_SNCQ		(1<<30) /* Native Cmd Queuing */
-#define  AHCI_REG_CAP_S64A		(1<<31) /* 64bit Addressing */
+#define  AHCI_REG_CAP_S64A		(1U<<31) /* 64bit Addressing */
 #define  AHCI_FMT_CAP		"\020" "\040S64A" "\037NCQ" "\036SSNTF" \
 				    "\035SMPS" "\034SSS" "\033SALP" "\032SAL" \
 				    "\031SCLO" "\024SNZO" "\023SAM" "\022SPM" \
@@ -52,7 +52,7 @@
 #define  AHCI_REG_GHC_HR		(1<<0) /* HBA Reset */
 #define  AHCI_REG_GHC_IE		(1<<1) /* Interrupt Enable */
 #define  AHCI_REG_GHC_MRSM		(1<<2) /* MSI Revert to Single Msg */
-#define  AHCI_REG_GHC_AE		(1<<31) /* AHCI Enable */
+#define  AHCI_REG_GHC_AE		(1U<<31) /* AHCI Enable */
 #define AHCI_FMT_GHC		"\020" "\040AE" "\003MRSM" "\002IE" "\001HR"
 #define AHCI_REG_IS		0x008 /* Interrupt Status */
 #define AHCI_REG_PI		0x00c /* Ports Implemented */
@@ -103,7 +103,7 @@
 #define  AHCI_PREG_IS_HBDS		(1<<28) /* Host Bus Data Error */
 #define  AHCI_PREG_IS_HBFS		(1<<29) /* Host Bus Fatal Error */
 #define  AHCI_PREG_IS_TFES		(1<<30) /* Task File Error */
-#define  AHCI_PREG_IS_CPDS		(1<<31) /* Cold Presence Detect */
+#define  AHCI_PREG_IS_CPDS		(1U<<31) /* Cold Presence Detect */
 #define AHCI_PFMT_IS		"\20" "\040CPDS" "\037TFES" "\036HBFS" \
 				    "\035HBDS" "\034IFS" "\033INFS" "\031OFS" \
 				    "\030IPMS" "\027PRCS" "\010DMPS" "\006DPS" \
@@ -126,7 +126,7 @@
 #define  AHCI_PREG_IE_HBDE		(1<<28) /* Host Bus Data Error */
 #define  AHCI_PREG_IE_HBFE		(1<<29) /* Host Bus Fatal Error */
 #define  AHCI_PREG_IE_TFEE		(1<<30) /* Task File Error */
-#define  AHCI_PREG_IE_CPDE		(1<<31) /* Cold Presence Detect */
+#define  AHCI_PREG_IE_CPDE		(1U<<31) /* Cold Presence Detect */
 #define AHCI_PFMT_IE		"\20" "\040CPDE" "\037TFEE" "\036HBFE" \
 				    "\035HBDE" "\034IFE" "\033INFE" "\031OFE" \
 				    "\030IPME" "\027PRCE" "\010DMPE" "\007PCE" \
@@ -275,7 +275,7 @@ struct ahci_prdt {
 	u_int64_t		dba;
 	u_int32_t		reserved;
 	u_int32_t		flags;
-#define AHCI_PRDT_FLAG_INTR		(1<<31) /* interrupt on completion */
+#define AHCI_PRDT_FLAG_INTR		(1U<<31) /* interrupt on completion */
 } __packed __aligned(8);
 
 /* this makes ahci_cmd_table 512 bytes, supporting 128-byte alignment */
