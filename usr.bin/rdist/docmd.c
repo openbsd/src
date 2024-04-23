@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.35 2022/01/28 06:18:41 guenther Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.36 2024/04/23 13:34:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -485,31 +485,31 @@ doarrow(struct cmd *cmd, char **filev)
 	 * b) basename of destination in "install" directive is "."
 	 *    (e.g. install /tmp/.;)
 	 * c) name on left side of -> directive is a directory on local system.
- 	 *
- 	 * We need 2 destdir flags (destdir and ddir) because single directory
- 	 * source is handled differently.  In this case, ddir is 0 (which
- 	 * tells install() not to send DIRTARGET directive to remote rdistd)
- 	 * and destdir is 1 (which tells remfilename() how to build the FILE
- 	 * variables correctly).  In every other case, destdir and ddir will
- 	 * have the same value.
+	 *
+	 * We need 2 destdir flags (destdir and ddir) because single directory
+	 * source is handled differently.  In this case, ddir is 0 (which
+	 * tells install() not to send DIRTARGET directive to remote rdistd)
+	 * and destdir is 1 (which tells remfilename() how to build the FILE
+	 * variables correctly).  In every other case, destdir and ddir will
+	 * have the same value.
 	 */
-  	ddir = files->n_next != NULL;	/* destination is a directory */
+	ddir = files->n_next != NULL;	/* destination is a directory */
 	if (!ddir) {
 		struct stat s;
- 		int isadir = 0;
+		int isadir = 0;
 
 		if (lstat(files->n_name, &s) == 0)
- 			isadir = S_ISDIR(s.st_mode);
- 		if (!isadir && sc->sc_name && *sc->sc_name)
- 			ddir = !strcmp(xbasename(sc->sc_name),".");
- 		destdir = isadir | ddir;
- 	} else
- 		destdir = ddir;
+			isadir = S_ISDIR(s.st_mode);
+		if (!isadir && sc->sc_name && *sc->sc_name)
+			ddir = !strcmp(xbasename(sc->sc_name),".");
+		destdir = isadir | ddir;
+	} else
+		destdir = ddir;
 
 	debugmsg(DM_MISC,
 		 "Debug files->n_next= %p, destdir=%d, ddir=%d",
 		 files->n_next, destdir, ddir);
- 
+
 	if (!sc->sc_name || !*sc->sc_name) {
 		destdir = 0;
 		ddir = 0;

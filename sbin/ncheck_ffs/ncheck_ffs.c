@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.55 2019/07/03 03:24:02 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.56 2024/04/23 13:34:50 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -462,7 +462,7 @@ searchdir(ufsino_t ino, daddr_t blkno, long size, off_t filesize,
 			if (dp->d_name[0] == '.') {
 				if (dp->d_name[1] == '\0' ||
 				    (dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
-				continue;
+					continue;
 			}
 			if (asprintf(&npath, "%s/%s", path, dp->d_name) == -1)
 				errx(1, "malloc");

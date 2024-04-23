@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.19 2022/12/28 21:30:15 jmc Exp $
+ *	$Id: amq_subr.c,v 1.20 2024/04/23 13:34:51 jsg Exp $
  */
 
 /*
@@ -300,7 +300,7 @@ xdr_amq_mount_stats(XDR *xdrs, amq_mount_stats *objp)
 bool_t
 xdr_amq_mount_tree_list(XDR *xdrs, amq_mount_tree_list *objp)
 {
-	 if (!xdr_array(xdrs, (char **)&objp->amq_mount_tree_list_val, (u_int *)&objp->amq_mount_tree_list_len, ~0, sizeof(amq_mount_tree_p), xdr_amq_mount_tree_p)) {
+	if (!xdr_array(xdrs, (char **)&objp->amq_mount_tree_list_val, (u_int *)&objp->amq_mount_tree_list_len, ~0, sizeof(amq_mount_tree_p), xdr_amq_mount_tree_p)) {
 		return (FALSE);
 	}
 	return (TRUE);

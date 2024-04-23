@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.62 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.63 2024/04/23 13:34:50 jsg Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -810,8 +810,8 @@ c_typeset(char **wp)
 						if ((vp->flag&INT_U))
 							shprintf("-U ");
 						shprintf("%s\n", vp->name);
-						    if (vp->flag&ARRAY)
-						break;
+						if (vp->flag&ARRAY)
+							break;
 					} else {
 						if (pflag)
 							shprintf("%s ",

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.35 2022/07/03 12:07:52 florian Exp $ */
+/* $Id: rdata.c,v 1.36 2024/04/23 13:34:50 jsg Exp $ */
 
 /*! \file */
 
@@ -1430,25 +1430,24 @@ byte_btoa(int c, isc_buffer_t *target, struct state *state) {
 			tr.base[0] = 'z';
 			isc_buffer_add(target, 1);
 		} else {
-		    register int tmp = 0;
-		    register int32_t tmpword = word;
+			register int tmp = 0;
+			register int32_t tmpword = word;
 
-		    if (tmpword < 0) {
-			   /*
-			    * Because some don't support u_long.
-			    */
-			tmp = 32;
-			tmpword -= (int32_t)(85 * 85 * 85 * 85 * 32);
-		    }
-		    if (tmpword < 0) {
-			tmp = 64;
-			tmpword -= (int32_t)(85 * 85 * 85 * 85 * 32);
-		    }
+			if (tmpword < 0) {
+				/*
+				 * Because some don't support u_long.
+				 */
+				tmp = 32;
+				tmpword -= (int32_t)(85 * 85 * 85 * 85 * 32);
+			}
+			if (tmpword < 0) {
+				tmp = 64;
+				tmpword -= (int32_t)(85 * 85 * 85 * 85 * 32);
+			}
 			if (tr.length < 5)
 				return (ISC_R_NOSPACE);
 			tr.base[0] = atob_digits[(tmpword /
-					      (int32_t)(85 * 85 * 85 * 85))
-						+ tmp];
+			    (int32_t)(85 * 85 * 85 * 85)) + tmp];
 			tmpword %= (int32_t)(85 * 85 * 85 * 85);
 			tr.base[1] = atob_digits[tmpword / (85 * 85 * 85)];
 			tmpword %= (85 * 85 * 85);

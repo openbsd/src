@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.40 2022/12/26 19:16:03 jmc Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.41 2024/04/23 13:34:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -233,7 +233,7 @@ main(int argc, char *argv[])
 				errx(1, "-3K");
 			}
 			privkeylevel = USM_KEY_LOCALIZED;
-				break;
+			break;
 		case 'k':
 			authkey = snmpc_hex2bin(optarg, &authkeylen);
 			if (authkey == NULL) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.347 2024/03/26 10:20:20 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.348 2024/04/23 13:34:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4694,7 +4694,7 @@ window_copy_get_selection(struct window_mode_entry *wme, size_t *len)
 	if (keys == MODEKEY_EMACS || lastex <= ey_last) {
 		if (~grid_get_line(data->backing->grid, ey)->flags &
 		    GRID_LINE_WRAPPED || lastex != ey_last)
-		off -= 1;
+			off -= 1;
 	}
 	*len = off;
 	return (buf);

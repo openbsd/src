@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.5 2023/06/26 10:08:56 claudio Exp $ */
+/*	$OpenBSD: probe.c,v 1.6 2024/04/23 13:34:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -115,7 +115,7 @@ recv_probe(struct iface *iface, struct in_addr src, u_int32_t src_ip,
 		if (nbr_id == iface->addr.s_addr) {
 			/* seen myself */
 			if (nbr->state < NBR_STA_2_WAY)
-			nbr_fsm(nbr, NBR_EVT_2_WAY_RCVD);
+				nbr_fsm(nbr, NBR_EVT_2_WAY_RCVD);
 			break;
 		}
 		buf += sizeof(nbr_id);

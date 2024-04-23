@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.15 2012/05/01 04:23:21 gsoares Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.16 2024/04/23 13:34:51 jsg Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ read_ahead(FILE *file, int convert, int segment_size)
 				newline = 1;
 			}
 		}
-	       *p++ = c;
+		*p++ = c;
 	}
 	b->counter = (int)(p - dp->th_data);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.23 2021/01/19 12:29:46 claudio Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.24 2024/04/23 13:34:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -314,7 +314,7 @@ dvmrpe_dispatch_rde(int fd, short event, void *bula)
 	ssize_t			 n;
 	int			 shut = 0;
 
-	 if (event & EV_READ) {
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */

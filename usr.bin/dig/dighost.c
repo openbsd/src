@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.37 2020/12/21 11:41:08 florian Exp $ */
+/* $Id: dighost.c,v 1.38 2024/04/23 13:34:50 jsg Exp $ */
 
 /*! \file
  *  \note
@@ -3643,15 +3643,14 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	} else {
 
 		if (msg->rcode == dns_rcode_noerror || l->origin == NULL) {
-
-				dighost_received(b->used, &sevent->address, query);
+			dighost_received(b->used, &sevent->address, query);
 		}
 
 		if (!query->lookup->ns_search_only)
 			query->lookup->pending = 0;
 		if (!query->lookup->ns_search_only ||
 		    query->lookup->trace_root || docancel) {
-				dns_message_destroy(&msg);
+			dns_message_destroy(&msg);
 
 			cancel_lookup(l);
 		}

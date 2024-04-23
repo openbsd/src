@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_variables.c,v 1.9 2023/03/19 16:43:44 millert Exp $	*/
+/*	$OpenBSD: mda_variables.c,v 1.10 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011-2017 Gilles Chehade <gilles@poolp.org>
@@ -74,27 +74,27 @@ mda_expand_token(char *dest, size_t len, const char *token,
 			return -1;
 
 		*lbracket = *rbracket = '\0';
-		 content  = lbracket + 1;
+		content  = lbracket + 1;
 
-		 if ((sep = strchr(content, ':')) == NULL)
-			 endoff = begoff = strtonum(content, -EXPAND_BUFFER,
-			     EXPAND_BUFFER, &errstr);
-		 else {
-			 *sep = '\0';
-			 if (content != sep)
-				 begoff = strtonum(content, -EXPAND_BUFFER,
-				     EXPAND_BUFFER, &errstr);
-			 if (*(++sep)) {
-				 if (errstr == NULL)
-					 endoff = strtonum(sep, -EXPAND_BUFFER,
-					     EXPAND_BUFFER, &errstr);
-			 }
-		 }
-		 if (errstr)
-			 return -1;
+		if ((sep = strchr(content, ':')) == NULL)
+			endoff = begoff = strtonum(content, -EXPAND_BUFFER,
+			    EXPAND_BUFFER, &errstr);
+		else {
+			*sep = '\0';
+			if (content != sep)
+				begoff = strtonum(content, -EXPAND_BUFFER,
+				    EXPAND_BUFFER, &errstr);
+			if (*(++sep)) {
+				if (errstr == NULL)
+					endoff = strtonum(sep, -EXPAND_BUFFER,
+					    EXPAND_BUFFER, &errstr);
+			}
+		}
+		if (errstr)
+			return -1;
 
-		 /* token:mod_1,mod_2,mod_n -> extract modifiers */
-		 mods = strchr(rbracket + 1, ':');
+		/* token:mod_1,mod_2,mod_n -> extract modifiers */
+		mods = strchr(rbracket + 1, ':');
 	} else {
 		if ((mods = strchr(rtoken, ':')) != NULL)
 			*mods++ = '\0';

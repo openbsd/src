@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.36 2019/07/11 03:54:27 deraadt Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.37 2024/04/23 13:34:51 jsg Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -1359,7 +1359,7 @@ env_opt_add(char *ep)
 			opt_add(c);
 		}
 		if ((ep = vp)) {
-				opt_add(NEW_ENV_VALUE);
+			opt_add(NEW_ENV_VALUE);
 			vp = NULL;
 		} else
 			break;

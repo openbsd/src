@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.41 2023/03/08 04:43:04 guenther Exp $       */
+/*    $OpenBSD: func.c,v 1.42 2024/04/23 13:34:50 jsg Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -866,8 +866,8 @@ xecho(int sep, Char **v)
 	(void) fflush(cshout);
     if (setintr)
 	sigprocmask(SIG_BLOCK, &sigset, NULL);
-	blkfree(gargv);
-	gargv = NULL;
+    blkfree(gargv);
+    gargv = NULL;
 }
 
 void

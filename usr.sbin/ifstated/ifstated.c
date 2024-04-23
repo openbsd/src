@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.67 2022/12/28 21:30:16 jmc Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.68 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -548,7 +548,7 @@ adjust_expressions(struct ifsd_expression_list *expressions, int depth)
 			}
 			if (expression->parent != NULL) {
 				if (TAILQ_EMPTY(&nexpressions))
-				te = NULL;
+					te = NULL;
 				TAILQ_FOREACH(te, &nexpressions, eval)
 					if (expression->parent == te)
 						break;

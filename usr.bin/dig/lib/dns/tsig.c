@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.14 2020/09/14 08:40:43 florian Exp $
+ * $Id: tsig.c,v 1.15 2024/04/23 13:34:50 jsg Exp $
  */
 /*! \file */
 
@@ -295,8 +295,8 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
 						    &b, &dstkey);
-				if (result != ISC_R_SUCCESS)
-					return (result);
+			if (result != ISC_R_SUCCESS)
+				return (result);
 		}
 	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA224_NAME)) {
 		if (secret != NULL) {
@@ -308,8 +308,8 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
 						    &b, &dstkey);
-				if (result != ISC_R_SUCCESS)
-					return (result);
+			if (result != ISC_R_SUCCESS)
+				return (result);
 		}
 	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA256_NAME)) {
 		if (secret != NULL) {
@@ -321,8 +321,8 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
 						    &b, &dstkey);
-				if (result != ISC_R_SUCCESS)
-					return (result);
+			if (result != ISC_R_SUCCESS)
+				return (result);
 		}
 	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA384_NAME)) {
 		if (secret != NULL) {
@@ -334,8 +334,8 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
 						    &b, &dstkey);
-				if (result != ISC_R_SUCCESS)
-					return (result);
+			if (result != ISC_R_SUCCESS)
+				return (result);
 		}
 	} else if (dns_name_equal(algorithm, DNS_TSIG_HMACSHA512_NAME)) {
 		if (secret != NULL) {
@@ -347,8 +347,8 @@ dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
 						    DNS_KEYOWNER_ENTITY,
 						    DNS_KEYPROTO_DNSSEC,
 						    &b, &dstkey);
-				if (result != ISC_R_SUCCESS)
-					return (result);
+			if (result != ISC_R_SUCCESS)
+				return (result);
 		}
 	} else if (length > 0)
 		return (DNS_R_BADALG);

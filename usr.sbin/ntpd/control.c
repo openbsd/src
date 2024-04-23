@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.20 2023/12/20 15:36:36 otto Exp $ */
+/*	$OpenBSD: control.c,v 1.21 2024/04/23 13:34:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -251,7 +251,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				build_show_sensor(&c_sensor, s);
 				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_SENSORS,
 				    0, 0, -1, &c_sensor, sizeof(c_sensor));
-			cnt++;
+				cnt++;
 			}
 			imsg_compose(&c->ibuf, IMSG_CTL_SHOW_SENSORS_END,
 			    0, 0, -1, &cnt, sizeof(cnt));
@@ -276,7 +276,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				build_show_sensor(&c_sensor, s);
 				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_SENSORS,
 				    0, 0, -1, &c_sensor, sizeof(c_sensor));
-			cnt++;
+				cnt++;
 			}
 			imsg_compose(&c->ibuf, IMSG_CTL_SHOW_SENSORS_END,
 			    0, 0, -1, &cnt, sizeof(cnt));

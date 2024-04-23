@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.56 2024/02/03 18:51:57 beck Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.57 2024/04/23 13:34:50 jsg Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -984,7 +984,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 			    (d % sblock.fs_fpg) / sblock.fs_frag);
 			acg.cg_cs.cs_nbfree++;
 			sblock.fs_cstotal.cs_nbfree++;
-			 if (sblock.fs_contigsumsize > 0) {
+			if (sblock.fs_contigsumsize > 0) {
 				setbit(cg_clustersfree(&acg),
 				    (d % sblock.fs_fpg) / sblock.fs_frag);
 				/*
@@ -1896,7 +1896,7 @@ main(int argc, char **argv)
 		sblock.fs_ncyl = sblock.fs_size * NSPF(&sblock) / sblock.fs_spc;
 		if (sblock.fs_size * NSPF(&sblock) >
 		    sblock.fs_ncyl * sblock.fs_spc)
-		sblock.fs_ncyl++;
+			sblock.fs_ncyl++;
 	}
 	sblock.fs_ncg = howmany(sblock.fs_size, sblock.fs_fpg);
 	if ((ino_t)sblock.fs_ncg * sblock.fs_ipg > UINT_MAX)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ostern.c,v 1.9 2019/01/17 06:15:44 tedu Exp $	*/
+/*	$OpenBSD: ostern.c,v 1.10 2024/04/23 13:34:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -62,7 +62,7 @@ easter(int year)	/* 0 ... abcd, NOT since 1900 */
 		e_q++;
 
 	if (e_n == 4)
-	e_q += 31;
+		e_q += 31;
 
 #if DEBUG
 	printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",

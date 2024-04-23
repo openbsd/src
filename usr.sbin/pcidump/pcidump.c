@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.70 2024/02/01 18:26:45 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.71 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -337,11 +337,11 @@ probe(int bus, int dev, int func)
 
 	if (vendor != NULL) {
 		for (pkp = pci_known_products; pkp->productname != NULL; pkp++)
-		if (pkp->vendor == PCI_VENDOR(id_reg) &&
-		    pkp->product == PCI_PRODUCT(id_reg)) {
-			product = pkp->productname;
-			break;
-		}
+			if (pkp->vendor == PCI_VENDOR(id_reg) &&
+				pkp->product == PCI_PRODUCT(id_reg)) {
+				product = pkp->productname;
+				break;
+			}
 	}
 
 	printf(" %d:%d:%d: %s %s\n", bus, dev, func,

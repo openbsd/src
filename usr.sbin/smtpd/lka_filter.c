@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.74 2023/11/03 13:38:28 op Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.75 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -729,7 +729,7 @@ filter_protocol_internal(struct filter_session *fs, uint64_t *token, uint64_t re
 			    filter->name,
 			    param,
 			    filter->config->rewrite);
-			    filter_result_rewrite(reqid, filter->config->rewrite);
+			filter_result_rewrite(reqid, filter->config->rewrite);
 			return;
 		}
 		else if (filter->config->disconnect) {

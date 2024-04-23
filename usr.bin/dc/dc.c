@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.20 2017/12/06 13:48:05 otto Exp $	*/
+/*	$OpenBSD: dc.c,v 1.21 2024/04/23 13:34:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -110,7 +110,7 @@ dc_main(int argc, char *argv[])
 		 * BSD and Solaris dc(1) continue with stdin after processing
 		 * the file given as the argument. We follow GNU dc(1).
 		 */
-		 return (0);
+		return (0);
 	}
 
 	src_setstream(&src, stdin);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.22 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.23 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -343,7 +343,7 @@ ospf_print_lsa(const struct lsa *lsap)
 				    (u_int32_t)ntohl(mcp->mcla_vtype));
 				break;
 			}
-		++mcp;
+			++mcp;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_standard.c,v 1.4 2024/02/09 07:41:32 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_standard.c,v 1.5 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -272,7 +272,7 @@ module_standard_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 	TAILQ_FOREACH(attr, &module->remove_resattrs, next) {
 		if (radres == NULL &&
 		    (radres = radius_convert_packet(res, reslen)) == NULL) {
-			 syslog(LOG_ERR,
+			syslog(LOG_ERR,
 			    "%s: radius_convert_packet() failed: %m", __func__);
 			module_stop(module->base);
 			return;

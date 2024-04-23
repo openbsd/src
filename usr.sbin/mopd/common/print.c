@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.14 2022/12/28 21:30:17 jmc Exp $ */
+/*	$OpenBSD: print.c,v 1.15 2024/04/23 13:34:51 jsg Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -135,7 +135,7 @@ mopPrintOneline(FILE *fd, u_char *pkt, int trans)
 	mopPrintHWA(fd, src); fprintf(fd, " > ");
 	mopPrintHWA(fd, dst);
 	if (len < 1600)
-	fprintf(fd, " len %4d code %02x ", len, code);
+		fprintf(fd, " len %4d code %02x ", len, code);
 	else
 		fprintf(fd, " len %4d code %02x ",
 		    (len % 256)*256 + (len /256), code);

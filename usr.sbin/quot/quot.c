@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.32 2018/09/18 03:09:55 millert Exp $	*/
+/*	$OpenBSD: quot.c,v 1.33 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -103,8 +103,9 @@ get_inode(int fd, struct fs *super, ino_t ino)
 			if (pread(fd, cgp, super->fs_cgsize,
 			    (off_t)cgtod(super, cg) << super->fs_fshift)
 			    != super->fs_cgsize)
-			if (read(fd, cgp, super->fs_cgsize) != super->fs_cgsize)
-				err(1, "read cg");
+				if (read(fd, cgp, super->fs_cgsize) !=
+				    super->fs_cgsize)
+					err(1, "read cg");
 			if (!cg_chkmagic(cgp))
 				errx(1, "cg has bad magic");
 		}

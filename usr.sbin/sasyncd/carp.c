@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.18 2023/02/08 08:20:54 tb Exp $	*/
+/*	$OpenBSD: carp.c,v 1.19 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -127,7 +127,7 @@ carp_demote(int demote, int force)
 			log_msg(1, "carp_demote: unable to get "
 			    "the demote state of group '%s'",
 			    cfgstate.carp_ifgroup);
-			    goto done;
+			goto done;
 		}
 
 		if (ifgr.ifgr_attrib.ifg_carp_demoted == 0)

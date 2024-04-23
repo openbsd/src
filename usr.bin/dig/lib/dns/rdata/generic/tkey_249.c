@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
+/* $Id: tkey_249.c,v 1.14 2024/04/23 13:34:50 jsg Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -127,18 +127,18 @@ totext_tkey(ARGS_TOTEXT) {
 	 */
 	REQUIRE(n <= sr.length);
 	if (n != 0U) {
-	    dr = sr;
-	    dr.length = n;
-	    if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		    RETERR(isc_str_tobuffer(" (", target));
-	    RETERR(isc_str_tobuffer(tctx->linebreak, target));
+		dr = sr;
+		dr.length = n;
+		if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+			RETERR(isc_str_tobuffer(" (", target));
+		RETERR(isc_str_tobuffer(tctx->linebreak, target));
 		if (tctx->width == 0)   /* No splitting */
 			RETERR(isc_base64_totext(&dr, 60, "", target));
 		else
 			RETERR(isc_base64_totext(&dr, tctx->width - 2,
-						 tctx->linebreak, target));
-	    if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
-		    RETERR(isc_str_tobuffer(" )", target));
+			    tctx->linebreak, target));
+		if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+			RETERR(isc_str_tobuffer(" )", target));
 	}
 	return (ISC_R_SUCCESS);
 }

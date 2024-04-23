@@ -1,4 +1,4 @@
-/* 	$OpenBSD: print-slow.c,v 1.4 2015/11/16 00:16:39 mmcc Exp $ 	*/
+/* 	$OpenBSD: print-slow.c,v 1.5 2024/04/23 13:34:51 jsg Exp $ 	*/
 
 /*
  * Copyright (c) 1998-2005 The TCPDUMP project
@@ -261,7 +261,7 @@ slow_print(const u_char *pptr, u_int len)
 		tlen -= tlv_len;
 	}
 
-    return;
+	return;
 trunc:
-    printf("\n\t[|slow]");
+	printf("\n\t[|slow]");
 }

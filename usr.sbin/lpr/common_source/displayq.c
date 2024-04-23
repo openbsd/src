@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.40 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.41 2024/04/23 13:34:51 jsg Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -462,9 +462,9 @@ dump(char *nfile, char *file, int copies)
 	 * Print as many files as will fit
 	 *  (leaving room for the total size)
 	 */
-	 fill = first ? 0 : 2;	/* fill space for ``, '' */
-	 if (((n = strlen(nfile)) + col + fill) >=
-	     (termwidth - (80 - SIZCOL)) - 4) {
+	fill = first ? 0 : 2;	/* fill space for ``, '' */
+	if (((n = strlen(nfile)) + col + fill) >=
+	    (termwidth - (80 - SIZCOL)) - 4) {
 		if (col < (termwidth - (80 - SIZCOL))) {
 			printf(" ..."), col += 4;
 			blankfill(termwidth - (80 - SIZCOL));

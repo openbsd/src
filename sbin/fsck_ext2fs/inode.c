@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.29 2019/07/01 07:13:44 kevlo Exp $	*/
+/*	$OpenBSD: inode.c,v 1.30 2024/04/23 13:34:50 jsg Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ inosize(struct ext2fs_dinode *dp)
 		size |= (u_int64_t)letoh32(dp->e2di_size_hi) << 32;
 	if (size >= 0x80000000U)
 		 (void)setlarge();
-	 return size;
+	return size;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.248 2022/12/01 07:34:06 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.249 2024/04/23 13:34:50 jsg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -378,7 +378,7 @@ main(int argc, char *argv[])
 		case 'p':		/* fill buffer with user pattern */
 			options |= F_PINGFILLED;
 			fill((char *)datap, optarg);
-				break;
+			break;
 		case 'q':
 			options |= F_QUIET;
 			break;

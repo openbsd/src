@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.247 2024/01/03 08:11:15 op Exp $	*/
+/*	$OpenBSD: mta.c,v 1.248 2024/04/23 13:34:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1364,7 +1364,7 @@ mta_connect(struct mta_connector *c)
 	mta_session(c->relay, route, mx->mxname);	/* this never fails synchronously */
 	mta_relay_ref(c->relay);
 
-    goto again;
+	goto again;
 }
 
 static void
