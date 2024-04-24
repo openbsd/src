@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.461 2024/04/11 18:07:55 tb Exp $ */
+/*	$OpenBSD: parse.y,v 1.462 2024/04/24 10:41:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -246,7 +246,7 @@ typedef struct {
 %token	EBGP IBGP
 %token	FLOWSPEC PROTO FLAGS FRAGMENT TOS LENGTH ICMPTYPE CODE
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
-%token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH
+%token	ANNOUNCE REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH
 %token	SEND RECV PLUS POLICY ROLE
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
@@ -1912,9 +1912,6 @@ peeropts	: REMOTEAS as4number	{
 					curpeer->conf.capabilities.mp[aid] = 1;
 			}
 		}
-		| ANNOUNCE CAPABILITIES yesno {
-			curpeer->conf.announce_capa = $3;
-		}
 		| ANNOUNCE REFRESH yesnoenforce {
 			curpeer->conf.capabilities.refresh = $3;
 		}
@@ -3522,7 +3519,6 @@ lookup(char *s)
 		{ "aspa-set",		ASPASET},
 		{ "avs",		AVS},
 		{ "blackhole",		BLACKHOLE},
-		{ "capabilities",	CAPABILITIES},
 		{ "community",		COMMUNITY},
 		{ "compare",		COMPARE},
 		{ "connect-retry",	CONNECTRETRY},
@@ -4635,7 +4631,6 @@ alloc_peer(void)
 	p->reconf_action = RECONF_REINIT;
 	p->conf.distance = 1;
 	p->conf.export_type = EXPORT_UNSET;
-	p->conf.announce_capa = 1;
 	p->conf.capabilities.refresh = 1;
 	p->conf.capabilities.grestart.restart = 1;
 	p->conf.capabilities.as4byte = 1;

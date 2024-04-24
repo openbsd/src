@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.473 2024/04/22 09:43:11 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.474 2024/04/24 10:41:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -66,7 +66,6 @@ int	session_setup_socket(struct peer *);
 void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
-void	session_capa_ann_none(struct peer *);
 int	session_capa_add(struct ibuf *, uint8_t, uint8_t);
 int	session_capa_add_mp(struct ibuf *, uint8_t);
 int	session_capa_add_afi(struct ibuf *, uint8_t, uint8_t);
@@ -931,8 +930,6 @@ change_state(struct peer *peer, enum session_state state,
 			/* initialize capability negotiation structures */
 			memcpy(&peer->capa.ann, &peer->conf.capabilities,
 			    sizeof(peer->capa.ann));
-			if (!peer->conf.announce_capa)
-				session_capa_ann_none(peer);
 		}
 		break;
 	case STATE_CONNECT:
@@ -1328,12 +1325,6 @@ session_tcp_established(struct peer *peer)
 
 	get_alternate_addr(&peer->local, &peer->remote, &peer->local_alt,
 	    &peer->if_scope);
-}
-
-void
-session_capa_ann_none(struct peer *peer)
-{
-	memset(&peer->capa.ann, 0, sizeof(peer->capa.ann));
 }
 
 int

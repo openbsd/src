@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.491 2024/04/09 12:09:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.492 2024/04/24 10:41:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -479,7 +479,6 @@ struct peer_config {
 	uint8_t			 distance;	/* 1 = direct, >1 = multihop */
 	uint8_t			 passive;
 	uint8_t			 down;
-	uint8_t			 announce_capa;
 	uint8_t			 reflector_client;
 	uint8_t			 ttlsec;	/* TTL security hack */
 	uint8_t			 flags;

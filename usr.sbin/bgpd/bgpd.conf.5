@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.239 2024/04/09 09:03:18 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.240 2024/04/24 10:41:34 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 9 2024 $
+.Dd $Mdocdate: April 24 2024 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1060,17 +1060,6 @@ If
 .Ic enforce
 is set, the session will only be established if the neighbor also announces
 the capability.
-The default is
-.Ic yes .
-.Pp
-.It Xo
-.Ic announce capabilities
-.Pq Ic yes Ns | Ns Ic no
-.Xc
-If set to
-.Ic no ,
-capability negotiation is disabled during the establishment of the session.
-This can be helpful to connect to old or broken BGP implementations.
 The default is
 .Ic yes .
 .Pp
