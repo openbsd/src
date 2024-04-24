@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.35 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: magma.c,v 1.36 2024/04/24 09:30:30 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -187,8 +187,6 @@ struct cfdriver mbpp_cd = {
  *
  *	cd1400_compute_baud		calculate COR/BPR register values
  *	cd1400_write_ccr		write a value to CD1400 ccr
- *	cd1400_read_reg			read from a CD1400 register
- *	cd1400_write_reg		write to a CD1400 register
  *	cd1400_enable_transmitter	enable transmitting on CD1400 channel
  */
 
@@ -224,11 +222,11 @@ cd1400_compute_baud(speed_t speed, int clock, int *cor, int *bpr)
 /*
  * Write a CD1400 channel command, should have a timeout?
  */
-__inline void
+static inline void
 cd1400_write_ccr(struct cd1400 *cd, u_char cmd)
 {
 	while (CD1400_READ_REG(cd, CD1400_CCR))
-		/*EMPTY*/;
+		continue;
 
 	CD1400_WRITE_REG(cd, CD1400_CCR, cmd);
 }

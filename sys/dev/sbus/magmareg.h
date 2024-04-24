@@ -1,4 +1,4 @@
-/*	$OpenBSD: magmareg.h,v 1.10 2020/02/18 00:12:08 cheloha Exp $	*/
+/*	$OpenBSD: magmareg.h,v 1.11 2024/04/24 09:30:30 claudio Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -197,9 +197,6 @@ struct mbpp_softc {
 /* internal function prototypes */
 
 int cd1400_compute_baud(speed_t, int, int *, int *);
-__inline void cd1400_write_ccr(struct cd1400 *, u_char);
-__inline u_char cd1400_read_reg(struct cd1400 *, int);
-__inline void cd1400_write_reg(struct cd1400 *, int, u_char);
 void cd1400_enable_transmitter(struct cd1400 *, int);
 
 int magma_match(struct device *, void *, void *);
