@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.42 2024/01/31 11:23:20 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.43 2024/04/24 10:42:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -250,7 +250,6 @@ json_neighbor_full(struct peer *p)
 		json_do_string("role", log_policy(p->conf.role));
 
 	/* capabilities */
-	json_do_bool("announce_capabilities", p->conf.announce_capa);
 	json_neighbor_capabilities(&p->conf.capabilities);
 
 	json_do_end();
