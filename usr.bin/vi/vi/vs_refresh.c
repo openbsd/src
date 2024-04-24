@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.23 2024/02/12 16:42:43 job Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.24 2024/04/24 15:15:40 job Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -782,6 +782,7 @@ vs_modeline(SCR *sp)
 	const char *t = NULL;
 	int ellipsis;
 	char *p, buf[20];
+	recno_t last;
 
 	/*
 	 * It's possible that this routine will be called after sp->frp
@@ -857,8 +858,14 @@ vs_modeline(SCR *sp)
 	cols = sp->cols - 1;
 	if (O_ISSET(sp, O_RULER)) {
 		vs_column(sp, &curcol);
-		len = snprintf(buf, sizeof(buf), "%lu,%zu",
-		    (ulong)sp->lno, curcol + 1);
+
+		if (db_last(sp, &last))
+			len = snprintf(buf, sizeof(buf), "%lu,%zu",
+			    (ulong)sp->lno, curcol + 1);
+		else
+			len = snprintf(buf, sizeof(buf), "%lu,%zu %lu%%",
+			    (ulong)sp->lno, curcol + 1,
+			    (unsigned long)(sp->lno * 100) / last);
 
 		midpoint = (cols - ((len + 1) / 2)) / 2;
 		if (curlen < midpoint) {

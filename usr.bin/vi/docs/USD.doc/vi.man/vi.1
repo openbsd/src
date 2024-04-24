@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.84 2024/02/12 16:42:42 job Exp $
+.\"	$OpenBSD: vi.1,v 1.85 2024/04/24 15:15:40 job Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: February 12 2024 $
+.Dd $Mdocdate: April 24 2024 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2461,7 +2461,7 @@ Set the number of lines about which the editor reports changes or yanks.
 .It Cm ruler Bq off
 .Nm vi
 only.
-Display a row/column ruler on the colon command line.
+Display a row/column/percentage ruler on the colon command line.
 .It Cm scroll , scr Bq "($LINES \- 1) / 2"
 Set the number of lines scrolled.
 .It Cm searchincr Bq off
