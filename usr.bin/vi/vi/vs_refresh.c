@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.24 2024/04/24 15:15:40 job Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.25 2024/04/25 09:58:17 job Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -781,7 +781,7 @@ vs_modeline(SCR *sp)
 	size_t cols, curcol, curlen, endpoint, len, midpoint;
 	const char *t = NULL;
 	int ellipsis;
-	char *p, buf[20];
+	char *p, buf[30];
 	recno_t last;
 
 	/*
@@ -859,7 +859,7 @@ vs_modeline(SCR *sp)
 	if (O_ISSET(sp, O_RULER)) {
 		vs_column(sp, &curcol);
 
-		if (db_last(sp, &last))
+		if (db_last(sp, &last) || last == 0)
 			len = snprintf(buf, sizeof(buf), "%lu,%zu",
 			    (ulong)sp->lno, curcol + 1);
 		else
