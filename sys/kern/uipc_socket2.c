@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.149 2024/04/11 13:32:51 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.150 2024/04/25 17:32:53 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -559,7 +559,7 @@ sblock(struct socket *so, struct sockbuf *sb, int flags)
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
 		mtx_leave(&sb->sb_mtx);
-		error = sosleep_nsec(so, &sb->sb_flags, prio, "netlck", INFSLP);
+		error = sosleep_nsec(so, &sb->sb_flags, prio, "sblock", INFSLP);
 		if (error)
 			return (error);
 		mtx_enter(&sb->sb_mtx);
