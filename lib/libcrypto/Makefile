@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.193 2024/04/15 15:55:01 tb Exp $
+# $OpenBSD: Makefile,v 1.194 2024/04/25 16:14:00 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -707,7 +707,6 @@ HDRS=\
 	${LCRYPTO_SRC}/opensslv.h \
 	${LCRYPTO_SRC}/ossl_typ.h \
 	${LCRYPTO_SRC}/pem/pem.h \
-	${LCRYPTO_SRC}/pem/pem2.h \
 	${LCRYPTO_SRC}/pkcs12/pkcs12.h \
 	${LCRYPTO_SRC}/pkcs7/pkcs7.h \
 	${LCRYPTO_SRC}/poly1305/poly1305.h \
