@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqereg.h,v 1.6 2024/04/25 08:51:37 jmatthew Exp $	*/
+/*	$OpenBSD: dwqereg.h,v 1.7 2024/04/25 11:37:39 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -235,14 +235,44 @@ struct dwqe_desc {
 #define TDES3_FS		(1 << 29)
 #define TDES3_OWN		(1U << 31)
 
-/* Rx bits */
+/* Rx bits (read format; host to device) */
+#define RDES3_BUF1V		(1 << 24)
+#define RDES3_BUF2V		(1 << 25)
+#define RDES3_IC		(1 << 30)
+#define RDES3_OWN		(1U << 31)
+
+/* Rx bits (writeback format; device to host) */
+#define RDES1_IP_PAYLOAD_TYPE	0x7
+#define   RDES1_IP_PAYLOAD_UNKNOWN	0x0
+#define   RDES1_IP_PAYLOAD_UDP		0x1
+#define   RDES1_IP_PAYLOAD_TCP		0x2
+#define   RDES1_IP_PAYLOAD_ICMP		0x3
+#define RDES1_IP_HDR_ERROR	(1 << 3)
+#define RDES1_IPV4_HDR		(1 << 4)
+#define RDES1_IPV6_HDR		(1 << 5)
+#define RDES1_IP_CSUM_BYPASS	(1 << 6)
+#define RDES1_IP_PAYLOAD_ERROR	(1 << 7)
+#define RDES3_LENGTH		(0x7fff << 0)
 #define RDES3_ES		(1 << 15)
+#define RDES3_LENTYPE		0x70000
+#define   RDES3_LENTYPE_LENGTH	(0x0 << 16)
+#define   RDES3_LENTYPE_TYPE	(0x1 << 16)
+				/* 0x2 is reserved */
+#define   RDES3_LENTYPE_ARP	(0x3 << 16)
+#define   RDES3_LENTYPE_VLAN	(0x4 << 16)
+#define   RDES3_LENTYPE_2VLAN	(0x5 << 16)
+#define   RDES3_LENTYPE_MACCTL	(0x6 << 16)
+#define   RDES3_LENTYPE_OAM	(0x7 << 16)
 #define RDES3_DE		(1 << 19)
 #define RDES3_RE		(1 << 20)
 #define RDES3_OE		(1 << 21)
 #define RDES3_RWT		(1 << 22)
+#define RDES3_GP		(1 << 23)
 #define RDES3_CE		(1 << 24)
-#define RDES3_BUF1V		(1 << 24)
-#define RDES3_IC		(1 << 30)
-#define RDES3_OWN		(1U << 31)
-#define RDES3_LENGTH		(0x7fff << 0)
+#define RDES3_RDES0_VALID	(1 << 25)
+#define RDES3_RDES1_VALID	(1 << 26)
+#define RDES3_RDES2_VALID	(1 << 27)
+#define RDES3_LD		(1 << 28)
+#define RDES3_FD		(1 << 29)
+#define RDES3_CTXT		(1 << 30)
+/* Bit 31 is the OWN bit, as in "read" format. */
