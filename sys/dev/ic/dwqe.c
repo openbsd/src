@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.18 2024/03/29 08:19:40 stsp Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.19 2024/04/25 08:51:37 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -213,6 +213,8 @@ dwqe_attach(struct dwqe_softc *sc)
 	/* Disable interrupts. */
 	dwqe_write(sc, GMAC_INT_EN, 0);
 	dwqe_write(sc, GMAC_CHAN_INTR_ENA(0), 0);
+	dwqe_write(sc, GMAC_MMC_RX_INT_MASK, 0xffffffff); 
+	dwqe_write(sc, GMAC_MMC_TX_INT_MASK, 0xffffffff); 
 
 	return 0;
 }

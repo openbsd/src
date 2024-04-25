@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqereg.h,v 1.5 2023/11/11 16:32:56 stsp Exp $	*/
+/*	$OpenBSD: dwqereg.h,v 1.6 2024/04/25 08:51:37 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -83,6 +83,8 @@
 #define GMAC_MAC_MDIO_DATA	0x0204
 #define GMAC_MAC_ADDR0_HI	0x0300
 #define GMAC_MAC_ADDR0_LO	0x0304
+#define GMAC_MMC_RX_INT_MASK	0x070c
+#define GMAC_MMC_TX_INT_MASK	0x0710
 
 #define GMAC_MTL_OPERATION_MODE	0x0c00
 #define  GMAC_MTL_FRPE			(1 << 15)
