@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.108 2024/01/28 00:40:22 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.109 2024/04/25 05:23:45 miod Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -29,11 +29,7 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
 		-Wframe-larger-than=2047
 
-.if ${COMPILER_VERSION:Mclang}
-CMACHFLAGS=	-Wa,-Av9b -msoft-float
-.else
-CMACHFLAGS=	-Wa,-Av9b, -mno-fpu
-.endif
+CMACHFLAGS=	-Wa,-Av9b -mno-fpu
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
 SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
@@ -44,6 +40,7 @@ SORTR=		cat
 COPTIMIZE?=	-Oz
 .endif
 .if ${COMPILER_VERSION:Mclang}
+NO_INTEGR_AS=	-no-integrated-as
 CWARNFLAGS+=	-Wno-unused-command-line-argument
 CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant
@@ -105,7 +102,7 @@ LINKFLAGS+=	-S
 assym.h: $S/kern/genassym.sh Makefile \
 	 ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf
 	cat ${_archdir}/${_arch}/genassym.cf ${_machdir}/${_mach}/genassym.cf | \
-	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} -MF assym.P > assym.h.tmp
+	    sh $S/kern/genassym.sh ${CC} ${NO_INTEGR_AS} ${CFLAGS} ${CPPFLAGS} -MF assym.P > assym.h.tmp
 	sed '1s/.*/assym.h: \\/' assym.P > assym.d
 	sort -u assym.h.tmp > assym.h
 
