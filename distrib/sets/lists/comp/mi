@@ -1147,7 +1147,6 @@
 ./usr/include/openssl/opensslv.h
 ./usr/include/openssl/ossl_typ.h
 ./usr/include/openssl/pem.h
-./usr/include/openssl/pem2.h
 ./usr/include/openssl/pkcs12.h
 ./usr/include/openssl/pkcs7.h
 ./usr/include/openssl/poly1305.h
