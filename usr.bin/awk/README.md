@@ -38,6 +38,7 @@ Regular expressions may include UTF-8 code points, including `\u`.
 The option `--csv` turns on CSV processing of input:
 fields are separated by commas, fields may be quoted with
 double-quote (`"`) characters, quoted fields may contain embedded newlines.
+Double-quotes in fields have to be doubled and enclosed in quoted fields.
 In CSV mode, `FS` is ignored.
 
 If no explicit separator argument is provided,
@@ -112,6 +113,8 @@ move this to some place like `/usr/bin/awk`.
 
 If your system does not have `yacc` or `bison` (the GNU
 equivalent), you need to install one of them first.
+The default in the `makefile` is `bison`; you will have
+to edit the `makefile` to use `yacc`.
 
 NOTE: This version uses ISO/IEC C99, as you should also.  We have
 compiled this without any changes using `gcc -Wall` and/or local C
@@ -131,4 +134,4 @@ We don't usually do releases.
 
 #### Last Updated
 
-Mon 30 Oct 2023 12:53:07 MDT
+Mon 05 Feb 2024 08:46:55 IST
