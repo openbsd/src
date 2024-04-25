@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.34 2023/02/23 19:48:21 miod Exp $
+.\"	$OpenBSD: boot.8,v 1.35 2024/04/25 18:31:49 kn Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: February 23 2023 $
+.Dd $Mdocdate: April 25 2024 $
 .Dt BOOT 8 amd64
 .Os
 .Sh NAME
@@ -245,6 +245,19 @@ If
 .Ar mode
 is not given,
 a list of available modes is shown.
+.It Ic idle Op Ar secs
+On
+.Xr efi 4
+systems,
+sets the timeout in seconds to power down the machine,
+if no input has been given at the
+.Xr softraid 4
+passphrase prompt.
+A value of 0 unsets the timeout.
+If
+.Ar secs
+is not given,
+the current timeout is shown.
 .It Ic memory
 If used without any arguments, this command will print out
 the memory configuration as determined through BIOS routines.
@@ -426,6 +439,7 @@ option.
 .Xr gzip 1 ,
 .Xr autoconf 4 ,
 .Xr ddb 4 ,
+.Xr efi 4 ,
 .Xr softraid 4 ,
 .Xr biosboot 8 ,
 .Xr boot_amd64 8 ,

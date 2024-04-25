@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.6 2024/03/24 05:50:20 jsg Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.7 2024/04/25 18:31:49 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -150,6 +150,10 @@ sr_crypto_passphrase_decrypt(struct sr_meta_crypto *cm,
 
 	for (;;) {
 		printf("Passphrase: ");
+#ifdef IDLE_POWEROFF
+extern int idle_poweroff(void);
+		idle_poweroff();
+#endif /* IDLE_POWEROFF */
 		for (i = 0; i < PASSPHRASE_LENGTH - 1; i++) {
 			c = cngetc();
 			if (c == '\r' || c == '\n') {

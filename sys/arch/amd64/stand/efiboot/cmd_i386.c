@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.1 2019/05/10 21:20:42 mlarkin Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.2 2024/04/25 18:31:49 kn Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -61,6 +61,9 @@ const struct cmd_table cmd_machine[] = {
 	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
 #ifdef DEBUG
 	{ "regs",	CMDT_CMD, Xregs },
+#endif
+#ifdef IDLE_POWEROFF
+	{ "idle",	CMDT_CMD, Xidle_efi },
 #endif
 	{ NULL, 0 }
 };
