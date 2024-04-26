@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.7 2017/12/15 14:45:51 bluhm Exp $ */
+/*	$OpenBSD: manager.c,v 1.8 2024/04/26 04:44:43 jsg Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -330,7 +330,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 		}
 
 		/* grab pledged syscall from dmesg */
-		if ((signal == SIGKILL) || (signal = SIGABRT)) {
+		if (signal == SIGKILL || signal == SIGABRT) {
 			int syscall = grab_syscall(pid);
 			switch (syscall) {
 			case -1:	/* error */
