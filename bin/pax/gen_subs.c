@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.32 2016/08/26 05:06:14 guenther Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.33 2024/04/27 14:57:02 florian Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -75,6 +75,7 @@ void
 ls_list(ARCHD *arcn, time_t now, FILE *fp)
 {
 	struct stat *sbp;
+	struct tm * tm;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
 	int term;
@@ -103,8 +104,10 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	/*
 	 * print file mode, link count, uid, gid and time
 	 */
-	if (strftime(f_date, sizeof(f_date), TIMEFMT(sbp->st_mtime, now),
-	    localtime(&(sbp->st_mtime))) == 0)
+	if ((tm = localtime(&(sbp->st_mtime))) == NULL)
+		f_date[0] = '\0';
+	else if (strftime(f_date, sizeof(f_date), TIMEFMT(sbp->st_mtime, now),
+	    tm) == 0)
 		f_date[0] = '\0';
 	(void)fprintf(fp, "%s%2u %-*.*s %-*.*s ", f_mode, sbp->st_nlink,
 		NAME_WIDTH, UT_NAMESIZE, user_from_uid(sbp->st_uid, 0),
@@ -146,6 +149,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 void
 ls_tty(ARCHD *arcn)
 {
+	struct tm * tm;
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
 	time_t now = time(NULL);
@@ -153,8 +157,10 @@ ls_tty(ARCHD *arcn)
 	/*
 	 * convert time to string, and print
 	 */
-	if (strftime(f_date, DATELEN, TIMEFMT(arcn->sb.st_mtime, now),
-	    localtime(&(arcn->sb.st_mtime))) == 0)
+	if ((tm = localtime(&(arcn->sb.st_mtime))) == NULL)
+		f_date[0] = '\0';
+	else if (strftime(f_date, DATELEN, TIMEFMT(arcn->sb.st_mtime, now),
+	    tm) == 0)
 		f_date[0] = '\0';
 	strmode(arcn->sb.st_mode, f_mode);
 	tty_prnt("%s%s %s\n", f_mode, f_date, arcn->name);
