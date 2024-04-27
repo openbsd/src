@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.33 2024/04/27 14:57:02 florian Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.34 2024/04/27 19:49:42 florian Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ void
 ls_list(ARCHD *arcn, time_t now, FILE *fp)
 {
 	struct stat *sbp;
-	struct tm * tm;
+	struct tm *tm;
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
 	int term;
@@ -149,7 +149,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 void
 ls_tty(ARCHD *arcn)
 {
-	struct tm * tm;
+	struct tm *tm;
 	char f_date[DATELEN];
 	char f_mode[MODELEN];
 	time_t now = time(NULL);
