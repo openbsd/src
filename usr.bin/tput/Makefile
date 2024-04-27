@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2023/10/17 09:52:11 nicm Exp $
+#	$OpenBSD: Makefile,v 1.14 2024/04/27 15:05:55 jmc Exp $
 
 PROG=	tput
 SRCS=	clear_cmd.c reset_cmd.c tparm_type.c tput.c transform.c \
@@ -11,6 +11,7 @@ TIC= ${.CURDIR}/../tic
 CFLAGS+= -I${CURSES} -I${TIC} -I${.CURDIR} -I.
 .PATH:  ${TIC}
 CLEANFILES+= termsort.h
+MAN+=	clear.1
 
 termsort.h: ${TIC}/MKtermsort.sh
 	sh ${TIC}/MKtermsort.sh awk ${CURSES}/Caps > ${.TARGET}
