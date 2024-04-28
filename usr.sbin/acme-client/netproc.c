@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.33 2022/12/14 18:32:26 florian Exp $ */
+/*	$Id: netproc.c,v 1.34 2024/04/28 08:29:56 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,34 +54,19 @@ struct	conn {
 /*
  * If something goes wrong (or we're tracing output), we dump the
  * current transfer's data as a debug message.
- * Make sure that print all non-printable characters as question marks
- * so that we don't spam the console.
- * Also, consolidate white-space.
- * This of course will ruin string literals, but the intent here is just
- * to show the message, not to replicate it.
  */
 static void
 buf_dump(const struct buf *buf)
 {
-	size_t	 i;
-	int	 j;
 	char	*nbuf;
 
 	if (buf->sz == 0)
 		return;
-	if ((nbuf = malloc(buf->sz)) == NULL)
-		err(EXIT_FAILURE, "malloc");
-
-	for (j = 0, i = 0; i < buf->sz; i++)
-		if (isspace((unsigned char)buf->buf[i])) {
-			nbuf[j++] = ' ';
-			while (isspace((unsigned char)buf->buf[i]))
-				i++;
-			i--;
-		} else
-			nbuf[j++] = isprint((unsigned char)buf->buf[i]) ?
-			    buf->buf[i] : '?';
-	dodbg("transfer buffer: [%.*s] (%zu bytes)", j, nbuf, buf->sz);
+	/* must be at least 4 * srclen + 1 long */
+	if ((nbuf = calloc(buf->sz + 1, 4)) == NULL)
+		err(EXIT_FAILURE, "calloc");
+	strvisx(nbuf, buf->buf, buf->sz, VIS_SAFE);
+	dodbg("transfer buffer: [%s] (%zu bytes)", nbuf, buf->sz);
 	free(nbuf);
 }
 
