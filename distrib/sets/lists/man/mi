@@ -40,6 +40,7 @@
 ./usr/share/man/man1/ci.1
 ./usr/share/man/man1/cksum.1
 ./usr/share/man/man1/clean-old-distfiles.1
+./usr/share/man/man1/clear.1
 ./usr/share/man/man1/cmp.1
 ./usr/share/man/man1/co.1
 ./usr/share/man/man1/col.1
@@ -487,7 +488,6 @@
 ./usr/share/man/man1/tmux.1
 ./usr/share/man/man1/top.1
 ./usr/share/man/man1/touch.1
-./usr/share/man/man1/tput.1
 ./usr/share/man/man1/tr.1
 ./usr/share/man/man1/tradcpp.1
 ./usr/share/man/man1/true.1
