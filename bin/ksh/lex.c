@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.79 2023/02/08 17:22:10 kn Exp $	*/
+/*	$OpenBSD: lex.c,v 1.80 2024/04/28 16:43:15 florian Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1251,7 +1251,11 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 			case 'd':	/* '\' 'd' Dow Mon DD */
 				time(&t);
 				tm = localtime(&t);
-				strftime(strbuf, sizeof strbuf, "%a %b %d", tm);
+				if (tm)
+					strftime(strbuf, sizeof strbuf,
+					    "%a %b %d", tm);
+				else
+					strbuf[0] = '\0';
 				break;
 			case 'D': /* '\' 'D' '{' strftime format '}' */
 				p = strchr(cp + 2, '}');
@@ -1266,7 +1270,11 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 					*p = '\0';
 				time(&t);
 				tm = localtime(&t);
-				strftime(strbuf, sizeof strbuf, tmpbuf, tm);
+				if (tm)
+					strftime(strbuf, sizeof strbuf, tmpbuf,
+					    tm);
+				else
+					strbuf[0] = '\0';
 				cp = strchr(cp + 2, '}');
 				break;
 			case 'e':	/* '\' 'e' escape */
@@ -1315,22 +1323,38 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 			case 't':	/* '\' 't' 24 hour HH:MM:SS */
 				time(&t);
 				tm = localtime(&t);
-				strftime(strbuf, sizeof strbuf, "%T", tm);
+				if (tm)
+					strftime(strbuf, sizeof strbuf, "%T",
+					    tm);
+				else
+					strbuf[0] = '\0';
 				break;
 			case 'T':	/* '\' 'T' 12 hour HH:MM:SS */
 				time(&t);
 				tm = localtime(&t);
-				strftime(strbuf, sizeof strbuf, "%l:%M:%S", tm);
+				if (tm)
+					strftime(strbuf, sizeof strbuf,
+					    "%l:%M:%S", tm);
+				else
+					strbuf[0] = '\0';
 				break;
 			case '@':	/* '\' '@' 12 hour am/pm format */
 				time(&t);
 				tm = localtime(&t);
-				strftime(strbuf, sizeof strbuf, "%r", tm);
+				if (tm)
+					strftime(strbuf, sizeof strbuf, "%r",
+					    tm);
+				else
+					strbuf[0] = '\0';
 				break;
 			case 'A':	/* '\' 'A' 24 hour HH:MM */
 				time(&t);
 				tm = localtime(&t);
-				strftime(strbuf, sizeof strbuf, "%R", tm);
+				if (tm)
+					strftime(strbuf, sizeof strbuf, "%R",
+					    tm);
+				else
+					strbuf[0] = '\0';
 				break;
 			case 'u':	/* '\' 'u' username */
 				strlcpy(strbuf, username, sizeof strbuf);

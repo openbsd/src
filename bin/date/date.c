@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.59 2022/09/23 16:58:33 florian Exp $	*/
+/*	$OpenBSD: date.c,v 1.60 2024/04/28 16:43:15 florian Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -151,6 +151,8 @@ setthetime(char *p, const char *pformat)
 		err(1, "pledge");
 
 	lt = localtime(&tval);
+	if (lt == NULL)
+		errx(1, "conversion error");
 
 	lt->tm_isdst = -1;			/* correct for DST */
 

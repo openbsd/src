@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.28 2019/06/24 03:33:09 deraadt Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.29 2024/04/28 16:43:15 florian Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -572,7 +572,8 @@ str_sec(const char *p, time_t *tval)
 		return(-1);
 	}
 
-	lt = localtime(tval);
+	if ((lt = localtime(tval)) == NULL)
+		return (-1);
 
 	if (dot != NULL) {			/* .SS */
 		if (strlen(++dot) != 2)
