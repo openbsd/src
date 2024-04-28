@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.25 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.26 2024/04/28 16:42:53 florian Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -102,9 +102,14 @@ print_mesg(FILE *tf, CTL_MSG *request, char *remote_machine)
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
-	(void)snprintf(line_buf[i], N_CHARS,
-	    "Message from Talk_Daemon@%s at %d:%02d ...",
-	    hostname, localclock->tm_hour , localclock->tm_min );
+	if (localclock) {
+		(void)snprintf(line_buf[i], N_CHARS,
+		    "Message from Talk_Daemon@%s at %d:%02d ...",
+		    hostname, localclock->tm_hour , localclock->tm_min );
+	} else {
+		(void)snprintf(line_buf[i], N_CHARS,
+		    "Message from Talk_Daemon@%s ...", hostname);
+	}
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;

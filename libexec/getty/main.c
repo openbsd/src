@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2024/04/28 16:42:53 florian Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -562,10 +562,12 @@ putf(char *cp)
 			break;
 
 		case 'd': {
-			(void)time(&t);
-			(void)strftime(db, sizeof(db),
-			    "%l:%M%p on %A, %d %B %Y", localtime(&t));
-			xputs(db);
+			struct tm *tm;
+			time(&t);
+			if ((tm = localtime(&t)) != NULL)
+				if (strftime(db, sizeof(db),
+				    "%l:%M%p on %A, %d %B %Y", tm) != 0)
+					xputs(db);
 			break;
 		}
 

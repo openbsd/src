@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.74 2023/03/08 04:43:05 guenther Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.75 2024/04/28 16:42:53 florian Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -613,6 +613,11 @@ cmd
 				} else {
 					struct tm *t;
 					t = gmtime(&stbuf.st_mtime);
+					if (t == NULL) {
+						/* invalid time, use epoch */
+						stbuf.st_mtime = 0;
+						t = gmtime(&stbuf.st_mtime);
+					}
 					reply(213,
 					    "%04d%02d%02d%02d%02d%02d",
 					    1900 + t->tm_year,
