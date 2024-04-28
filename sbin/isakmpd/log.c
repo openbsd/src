@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.64 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: log.c,v 1.65 2024/04/28 16:43:42 florian Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -182,7 +182,11 @@ _log_print(int error, int syslog_level, const char *fmt, va_list ap,
 	if (log_output) {
 		gettimeofday(&now, 0);
 		t = now.tv_sec;
-		tm = localtime(&t);
+		if ((tm = localtime(&t)) == NULL) {
+			/* Invalid time, use the epoch. */
+			t = 0;
+			tm = localtime(&t);
+		}
 		if (class >= 0)
 			snprintf(nbuf, sizeof nbuf,
 			    "%02d%02d%02d.%06ld %s %02d ",

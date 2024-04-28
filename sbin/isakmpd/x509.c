@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.125 2022/01/16 14:30:11 naddy Exp $	 */
+/* $OpenBSD: x509.c,v 1.126 2024/04/28 16:43:42 florian Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -222,8 +222,15 @@ x509_generate_kn(int id, X509 *cert)
 	if (((tm = X509_get_notBefore(cert)) == NULL) ||
 	    (tm->type != V_ASN1_UTCTIME &&
 		tm->type != V_ASN1_GENERALIZEDTIME)) {
-		tt = time(0);
-		strftime(before, 14, "%Y%m%d%H%M%S", localtime(&tt));
+		struct tm *ltm;
+
+		tt = time(NULL);
+		if ((ltm = localtime(&tt)) == NULL) {
+			LOG_DBG((LOG_POLICY, 30,
+			    "x509_generate_kn: invalid local time"));
+			goto fail;
+		}
+		strftime(before, 14, "%Y%m%d%H%M%S", ltm);
 		timecomp = "LocalTimeOfDay";
 	} else {
 		if (tm->data[tm->length - 1] == 'Z') {
@@ -312,8 +319,15 @@ x509_generate_kn(int id, X509 *cert)
 	if (tm == NULL ||
 	    (tm->type != V_ASN1_UTCTIME &&
 		tm->type != V_ASN1_GENERALIZEDTIME)) {
+		struct tm *ltm;
+
 		tt = time(0);
-		strftime(after, 14, "%Y%m%d%H%M%S", localtime(&tt));
+		if ((ltm = localtime(&tt)) == NULL) {
+			LOG_DBG((LOG_POLICY, 30,
+			    "x509_generate_kn: invalid local time"));
+			goto fail;
+		}
+		strftime(after, 14, "%Y%m%d%H%M%S", ltm);
 		timecomp2 = "LocalTimeOfDay";
 	} else {
 		if (tm->data[tm->length - 1] == 'Z') {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.28 2021/07/11 15:39:58 kettenis Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.29 2024/04/28 16:43:42 florian Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -550,7 +550,9 @@ main(int argc, char *argv[])
     if (!opt_N) {
 	gettimeofday(&tv, NULL);
 	now = tv.tv_sec;
-	tm = localtime(&now);
+	if ((tm = localtime(&now)) == NULL)
+		errx(1, "Invalid time");
+
 	if (!(img = malloc(bpb.bps)))
 	    err(1, NULL);
 	dir = bpb.res + (bpb.spf ? bpb.spf : bpb.bspf) * bpb.nft;

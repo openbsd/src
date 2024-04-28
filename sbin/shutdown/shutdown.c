@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.55 2023/04/19 12:58:15 jsg Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.56 2024/04/28 16:43:42 florian Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -345,8 +345,13 @@ timewarn(time_t timeleft)
 	if (timeleft > 10 * 60) {
 		shuttime = time(NULL) + timeleft;
 		lt = localtime(&shuttime);
-		strftime(when, sizeof(when), "%H:%M %Z", lt);
-		dprintf(fd[1], "System going down at %s\n\n", when);
+		if (lt != NULL) {
+			strftime(when, sizeof(when), "%H:%M %Z", lt);
+			dprintf(fd[1], "System going down at %s\n\n", when);
+		} else
+			dprintf(fd[1], "System going down in %lld minute%s\n\n",
+			    (long long)(timeleft / 60),
+			    (timeleft > 60) ? "s" : "");
 	} else if (timeleft > 59) {
 		dprintf(fd[1], "System going down in %lld minute%s\n\n",
 		    (long long)(timeleft / 60), (timeleft > 60) ? "s" : "");
@@ -525,6 +530,9 @@ getoffset(char *timearg)
 	time(&now);
 	lt = localtime(&now);				/* current time val */
 
+	if (lt == NULL)
+		badtime();
+
 	switch (strlen(timearg)) {
 	case 10:
 		this_year = lt->tm_year;
@@ -595,10 +603,17 @@ nolog(time_t timeleft)
 	(void)signal(SIGTERM, finish);
 	shuttime = time(NULL) + timeleft;
 	tm = localtime(&shuttime);
-	if (tm && (logfd = open(_PATH_NOLOGIN, O_WRONLY|O_CREAT|O_TRUNC,
+	if ((logfd = open(_PATH_NOLOGIN, O_WRONLY|O_CREAT|O_TRUNC,
 	    0664)) >= 0) {
-		strftime(when, sizeof(when), "at %H:%M %Z", tm);
-		dprintf(logfd, "\n\nNO LOGINS: System going down %s\n\n", when);
+		if (tm) {
+			strftime(when, sizeof(when), "at %H:%M %Z", tm);
+			dprintf(logfd,
+			    "\n\nNO LOGINS: System going down %s\n\n", when);
+		} else
+			dprintf(logfd,
+			    "\n\nNO LOGINS: System going in %lld minute%s\n\n",
+			    (long long)(timeleft / 60),
+			    (timeleft > 60) ? "s" : "");
 		close(logfd);
 	}
 }
