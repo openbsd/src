@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.34 2024/04/28 08:29:56 florian Exp $ */
+/*	$Id: netproc.c,v 1.35 2024/04/28 10:09:25 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -663,7 +663,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 {
 	int		 rc = 0;
 	size_t		 i;
-	char		*cert = NULL, *thumb = NULL, *url = NULL, *error = NULL;
+	char		*cert = NULL, *thumb = NULL, *error = NULL;
 	struct conn	 c;
 	struct capaths	 paths;
 	struct order	 order;
@@ -898,7 +898,6 @@ out:
 	close(dfd);
 	close(rfd);
 	free(cert);
-	free(url);
 	free(thumb);
 	free(c.kid);
 	free(c.buf.buf);
