@@ -488,6 +488,7 @@
 ./usr/share/man/man1/tmux.1
 ./usr/share/man/man1/top.1
 ./usr/share/man/man1/touch.1
+./usr/share/man/man1/tput.1
 ./usr/share/man/man1/tr.1
 ./usr/share/man/man1/tradcpp.1
 ./usr/share/man/man1/true.1
