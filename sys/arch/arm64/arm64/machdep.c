@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.88 2024/03/17 13:05:40 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.89 2024/04/29 13:01:54 jsg Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -619,11 +619,6 @@ dumpsys(void)
 	void *va;
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
-
-#if 0
-	/* Save registers. */
-	savectx(&dumppcb);
-#endif
 
 	if (dumpdev == NODEV)
 		return;
