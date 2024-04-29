@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2024/04/06 18:33:54 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.41 2024/04/29 10:07:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -342,36 +342,6 @@ pmap_vp_lookup(pmap_t pm, vaddr_t va, pt_entry_t **pl3entry)
 
 	return pted;
 }
-
-/*
- * Remove, and return, pted at specified address, NULL if not present
- */
-struct pte_desc *
-pmap_vp_remove(pmap_t pm, vaddr_t va)
-{
-	struct pmapvp1 *vp1;
-	struct pmapvp2 *vp2;
-	struct pmapvp3 *vp3;
-	struct pte_desc *pted;
-
-	vp1 = pm->pm_vp.l1;
-
-	vp2 = vp1->vp[VP_IDX1(va)];
-	if (vp2 == NULL) {
-		return NULL;
-	}
-
-	vp3 = vp2->vp[VP_IDX2(va)];
-	if (vp3 == NULL) {
-		return NULL;
-	}
-
-	pted = vp3->vp[VP_IDX3(va)];
-	vp3->vp[VP_IDX3(va)] = NULL;
-
-	return pted;
-}
-
 
 /*
  * Create a V -> P mapping for the given pmap and virtual address
