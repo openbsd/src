@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.12 2022/01/03 03:06:50 jsg Exp $ */
+/* $OpenBSD: intc.c,v 1.13 2024/04/29 12:33:17 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -90,8 +90,6 @@ struct intrq {
 	int iq_levels;			/* IPL_*'s this IRQ has */
 	int iq_ist;			/* share type */
 };
-
-volatile int softint_pending;
 
 struct intrq intc_handler[INTC_MAX_IRQ];
 u_int32_t intc_smask[NIPL];

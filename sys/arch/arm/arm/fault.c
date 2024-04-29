@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.47 2023/01/05 20:35:44 kettenis Exp $	*/
+/*	$OpenBSD: fault.c,v 1.48 2024/04/29 12:33:17 jsg Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -95,10 +95,6 @@
 #include <arm/db_machdep.h>
 #include <arm/machdep.h>
 #include <arm/vfp.h>
- 
-#ifdef DEBUG
-int last_fault_code;	/* For the benefit of pmap_fault_fixup() */
-#endif
 
 struct sigdata {
 	int signo;

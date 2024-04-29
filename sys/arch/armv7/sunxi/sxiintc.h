@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.h,v 1.3 2024/04/29 12:24:46 jsg Exp $ */
+/*	$OpenBSD: sxiintc.h,v 1.4 2024/04/29 12:33:17 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -24,8 +24,6 @@
 #include <arm/cpufunc.h>
 #include <machine/intr.h>
 #include <arm/softintr.h>
-
-extern volatile int softint_pending;
 
 #define SI_TO_IRQBIT(si)  (1U<<(si))
 void sxiintc_setipl(int);
