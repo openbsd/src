@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.24 2024/04/13 21:57:22 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.25 2024/04/29 14:47:05 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3691,18 +3691,14 @@ vm_run(struct vm_run_params *vrp)
 	}
 
 	/*
-	 * We may be returning from userland helping us from the last exit.
-	 * If so (vrp_continue == 1), copy in the exit data from vmd. The
-	 * exit data will be consumed before the next entry (this typically
-	 * comprises VCPU register changes as the result of vmd(8)'s actions).
+	 * We may be returning from userland helping us from the last
+	 * exit. Copy in the exit data from vmd. The exit data will be
+	 * consumed before the next entry (this typically comprises
+	 * VCPU register changes as the result of vmd(8)'s actions).
 	 */
-	if (vrp->vrp_continue) {
-		if (copyin(vrp->vrp_exit, &vcpu->vc_exit,
-		    sizeof(struct vm_exit)) == EFAULT) {
-			ret = EFAULT;
-			goto out_unlock;
-		}
-	}
+	ret = copyin(vrp->vrp_exit, &vcpu->vc_exit, sizeof(struct vm_exit));
+	if (ret)
+		goto out_unlock;
 
 	vcpu->vc_inject.vie_type = vrp->vrp_inject.vie_type;
 	vcpu->vc_inject.vie_vector = vrp->vrp_inject.vie_vector;
@@ -4001,67 +3997,28 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	else
 		vcpu->vc_intr = 0;
 
-	if (vrp->vrp_continue) {
-		switch (vcpu->vc_gueststate.vg_exit_reason) {
-		case VMX_EXIT_IO:
-			if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN)
-				vcpu->vc_gueststate.vg_rax =
-				    vcpu->vc_exit.vei.vei_data;
-			vcpu->vc_gueststate.vg_rip =
-			    vcpu->vc_exit.vrs.vrs_gprs[VCPU_REGS_RIP];
-			if (vmwrite(VMCS_GUEST_IA32_RIP,
-			    vcpu->vc_gueststate.vg_rip)) {
-				printf("%s: failed to update rip\n", __func__);
-				return (EINVAL);
-			}
-			break;
-		case VMX_EXIT_EPT_VIOLATION:
-			ret = vcpu_writeregs_vmx(vcpu, VM_RWREGS_GPRS, 0,
-			    &vcpu->vc_exit.vrs);
-			if (ret) {
-				printf("%s: vm %d vcpu %d failed to update "
-				    "registers\n", __func__,
-				    vcpu->vc_parent->vm_id, vcpu->vc_id);
-				return (EINVAL);
-			}
-			break;
-		case VM_EXIT_NONE:
-		case VMX_EXIT_HLT:
-		case VMX_EXIT_INT_WINDOW:
-		case VMX_EXIT_EXTINT:
-		case VMX_EXIT_CPUID:
-		case VMX_EXIT_XSETBV:
-			break;
-#ifdef VMM_DEBUG
-		case VMX_EXIT_TRIPLE_FAULT:
-			DPRINTF("%s: vm %d vcpu %d triple fault\n",
-			    __func__, vcpu->vc_parent->vm_id,
-			    vcpu->vc_id);
-			vmx_vcpu_dump_regs(vcpu);
-			dump_vcpu(vcpu);
-			vmx_dump_vmcs(vcpu);
-			break;
-		case VMX_EXIT_ENTRY_FAILED_GUEST_STATE:
-			DPRINTF("%s: vm %d vcpu %d failed entry "
-			    "due to invalid guest state\n",
-			    __func__, vcpu->vc_parent->vm_id,
-			    vcpu->vc_id);
-			vmx_vcpu_dump_regs(vcpu);
-			dump_vcpu(vcpu);
+	switch (vcpu->vc_gueststate.vg_exit_reason) {
+	case VMX_EXIT_IO:
+		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN)
+			vcpu->vc_gueststate.vg_rax = vcpu->vc_exit.vei.vei_data;
+		vcpu->vc_gueststate.vg_rip =
+		    vcpu->vc_exit.vrs.vrs_gprs[VCPU_REGS_RIP];
+		if (vmwrite(VMCS_GUEST_IA32_RIP, vcpu->vc_gueststate.vg_rip)) {
+			printf("%s: failed to update rip\n", __func__);
 			return (EINVAL);
-		default:
-			DPRINTF("%s: unimplemented exit type %d (%s)\n",
-			    __func__,
-			    vcpu->vc_gueststate.vg_exit_reason,
-			    vmx_exit_reason_decode(
-				vcpu->vc_gueststate.vg_exit_reason));
-			vmx_vcpu_dump_regs(vcpu);
-			dump_vcpu(vcpu);
-			break;
-#endif /* VMM_DEBUG */
 		}
-		memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
+		break;
+	case VMX_EXIT_EPT_VIOLATION:
+		ret = vcpu_writeregs_vmx(vcpu, VM_RWREGS_GPRS, 0,
+		    &vcpu->vc_exit.vrs);
+		if (ret) {
+			printf("%s: vm %d vcpu %d failed to update registers\n",
+			    __func__, vcpu->vc_parent->vm_id, vcpu->vc_id);
+			return (EINVAL);
+		}
+		break;
 	}
+	memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
 
 	/* Host CR3 */
 	cr3 = rcr3();
@@ -6519,31 +6476,29 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	 * needs to be fixed up depends on what vmd populated in the
 	 * exit data structure.
 	 */
-	if (vrp->vrp_continue) {
-		switch (vcpu->vc_gueststate.vg_exit_reason) {
-		case SVM_VMEXIT_IOIO:
-			if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN) {
-				vcpu->vc_gueststate.vg_rax =
-				    vcpu->vc_exit.vei.vei_data;
-				vmcb->v_rax = vcpu->vc_gueststate.vg_rax;
-			}
-			vcpu->vc_gueststate.vg_rip =
-			    vcpu->vc_exit.vrs.vrs_gprs[VCPU_REGS_RIP];
-			vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
-			break;
-		case SVM_VMEXIT_NPF:
-			ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_GPRS,
-			    &vcpu->vc_exit.vrs);
-			if (ret) {
-				printf("%s: vm %d vcpu %d failed to update "
-				    "registers\n", __func__,
-				    vcpu->vc_parent->vm_id, vcpu->vc_id);
-				return (EINVAL);
-			}
-			break;
+	switch (vcpu->vc_gueststate.vg_exit_reason) {
+	case SVM_VMEXIT_IOIO:
+		if (vcpu->vc_exit.vei.vei_dir == VEI_DIR_IN) {
+			vcpu->vc_gueststate.vg_rax =
+			    vcpu->vc_exit.vei.vei_data;
+			vmcb->v_rax = vcpu->vc_gueststate.vg_rax;
 		}
-		memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
+		vcpu->vc_gueststate.vg_rip =
+		    vcpu->vc_exit.vrs.vrs_gprs[VCPU_REGS_RIP];
+		vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
+		break;
+	case SVM_VMEXIT_NPF:
+		ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_GPRS,
+		    &vcpu->vc_exit.vrs);
+		if (ret) {
+			printf("%s: vm %d vcpu %d failed to update "
+			    "registers\n", __func__,
+			    vcpu->vc_parent->vm_id, vcpu->vc_id);
+			return (EINVAL);
+		}
+		break;
 	}
+	memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
 
 	while (ret == 0) {
 		vmm_update_pvclock(vcpu);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.99 2024/04/09 21:55:16 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.100 2024/04/29 14:47:06 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1538,7 +1538,6 @@ vcpu_run_loop(void *arg)
 	intptr_t ret = 0;
 	uint32_t n;
 
-	vrp->vrp_continue = 0;
 	n = vrp->vrp_vcpu_id;
 
 	for (;;) {
@@ -1916,8 +1915,6 @@ vcpu_exit(struct vm_run_params *vrp)
 		log_debug("%s: unknown exit reason 0x%x",
 		    __progname, vrp->vrp_exit_reason);
 	}
-
-	vrp->vrp_continue = 1;
 
 	return (0);
 }
