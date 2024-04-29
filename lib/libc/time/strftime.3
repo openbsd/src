@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strftime.3,v 1.38 2019/05/16 13:35:17 schwarze Exp $
+.\"	$OpenBSD: strftime.3,v 1.39 2024/04/29 13:34:19 naddy Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
 .\"
-.Dd $Mdocdate: May 16 2019 $
+.Dd $Mdocdate: April 29 2024 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -110,11 +110,21 @@ is replaced by the date in the format
 .It Cm \&%G
 is replaced by the
 .St -iso8601
-year with century as a decimal number.
+week-numbering year with century as a decimal number.
+See also the
+.Cm \&%V
+conversion specification and the
+.Sx STANDARDS
+section for more details.
 .It Cm \&%g
 is replaced by the
 .St -iso8601
-year without century as a decimal number (00\-99).
+week-numbering year without century as a decimal number (00\-99).
+See also the
+.Cm \&%V
+conversion specification and the
+.Sx STANDARDS
+section for more details.
 .It Cm \&%H
 is replaced by the hour (24-hour clock) as a decimal number (00\-23).
 .It Cm \&%I
@@ -169,6 +179,12 @@ the week) as a decimal number (01\-53).
 If the week containing January
 1 has four or more days in the new year, then it is week 1; otherwise
 it is week 53 of the previous year, and the next week is week 1.
+The year is given by the
+.Cm \&%G
+conversion specification.
+See the
+.Sx STANDARDS
+section for more details.
 .It Cm \&%v
 is replaced by the date in the format
 .Dq Li "%e-%b-%Y" .
