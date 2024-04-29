@@ -1,4 +1,4 @@
-/*	$OpenBSD: intc.h,v 1.7 2024/04/29 12:42:06 jsg Exp $ */
+/*	$OpenBSD: intc.h,v 1.8 2024/04/29 12:46:22 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -30,22 +30,6 @@ void intc_setipl(int new);
 void intc_splx(int new);
 int intc_splraise(int ipl);
 int intc_spllower(int ipl);
-
-/*
- * An useful function for interrupt handlers.
- * XXX: This shouldn't be here.
- */
-static __inline int
-find_first_bit( uint32_t bits )
-{
-	int count;
-
-	/* since CLZ is available only on ARMv5, this isn't portable
-	 * to all ARM CPUs.  This file is for OMAPINTC processor.
-	 */
-	asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
-	return 31-count;
-}
 
 void intc_irq_handler(void *);
 void *intc_intr_establish(int irqno, int level, struct cpu_info *ci,
