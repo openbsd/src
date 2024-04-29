@@ -1,6 +1,7 @@
-.\"	$OpenBSD: efi.4,v 1.2 2018/04/07 13:52:48 jmc Exp $
+.\"	$OpenBSD: efi.4,v 1.1 2024/04/29 20:18:12 kn Exp $
 .\"
 .\" Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
+.\" Copyright (c) 2024 Klemens Nanni <kn@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,31 +15,45 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 7 2018 $
-.Dt EFI 4 arm64
+.Dd $Mdocdate: April 29 2024 $
+.Dt EFI 4
 .Os
 .Sh NAME
 .Nm efi
-.Nd EFI runtime services
+.Nd Unified Extensible Firmware Interface
 .Sh SYNOPSIS
+.Cd "# amd64"
+.Cd "efi* at bios?"
+.Pp
+.Cd "# arm64"
 .Cd "efi* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for EFI runtime services offered by UEFI
 firmware implementations.
-Support is currently limited to reading and setting the Real Time
-Clock on systems that offer such functionality.
+It can read and write the Real Time Clock and provides userland applications
+.Xr ioctl 2
+access to the System Resource Table and to read and write variables.
+.Sh FILES
+.Bl -tag -width /dev/efi -compact
+.It Pa /dev/efi
+.El
 .Sh SEE ALSO
+.Xr ioctl 2 ,
 .Xr intro 4
 .Sh HISTORY
 The
 .Nm
-device driver first appeared in
+device driver first appeared for arm64 in
 .Ox 6.3 .
+Support for amd64, the ESRT and EFI variables appeard in
+.Ox 7.3 .
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
 driver was written by
 .An Mark Kettenis Aq Mt kettenis@openbsd.org .
+Support for the ESRT and EFI variables is heavily based on work done by
+.An Sergii Dmytruk Aq Mt sergii.dmytruk@3meb.com .
