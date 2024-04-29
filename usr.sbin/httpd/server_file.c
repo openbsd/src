@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.79 2024/04/16 17:15:50 florian Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.80 2024/04/29 16:17:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -287,6 +287,7 @@ server_file_request(struct httpd *env, struct client *clt, struct media_type
 		if ((ret = server_response_http(clt, ret, media, -1,
 		    MINIMUM(time(NULL), st->st_mtim.tv_sec))) == -1)
 			goto fail;
+		close(fd);
 		goto done;
 	}
 
