@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.h,v 1.2 2020/07/14 15:34:15 patrick Exp $ */
+/*	$OpenBSD: sxiintc.h,v 1.3 2024/04/29 12:24:46 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -25,16 +25,13 @@
 #include <machine/intr.h>
 #include <arm/softintr.h>
 
-extern volatile int current_spl_level;
 extern volatile int softint_pending;
-void sxiintc_do_pending(void);
 
 #define SI_TO_IRQBIT(si)  (1U<<(si))
 void sxiintc_setipl(int);
 void sxiintc_splx(int);
 int sxiintc_splraise(int);
 int sxiintc_spllower(int);
-void sxiintc_setsoftintr(int);
 
 void sxiintc_irq_handler(void *);
 void *sxiintc_intr_establish(int, int, struct cpu_info *,

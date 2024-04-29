@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.55 2023/12/11 22:12:53 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.56 2024/04/29 12:24:46 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -154,18 +154,6 @@ union pmap_cache_state {
 #define	PMAP_CACHE_STATE_ALL	0xffffffffu
 
 /*
- * This structure is used by machine-dependent code to describe
- * static mappings of devices, created at bootstrap time.
- */
-struct pmap_devmap {
-	vaddr_t		pd_va;		/* virtual address */
-	paddr_t		pd_pa;		/* physical address */
-	psize_t		pd_size;	/* size of region */
-	vm_prot_t	pd_prot;	/* protection code */
-	int		pd_cache;	/* cache attributes */
-};
-
-/*
  * The pmap structure itself
  */
 struct pmap {
@@ -245,12 +233,6 @@ extern struct pmap	kernel_pmap_store;
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 
-/*
- * Functions that we need to export
- */
-void	pmap_remove_all(pmap_t);
-void	pmap_uncache_page(paddr_t, vaddr_t);
-
 #define PMAP_CHECK_COPYIN	1
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
@@ -258,7 +240,6 @@ void	pmap_uncache_page(paddr_t, vaddr_t);
 /* Functions we use internally. */
 void	pmap_bootstrap(pd_entry_t *, vaddr_t, vaddr_t);
 
-int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
 int pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
 int pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
 void	pmap_set_pcb_pagedir(pmap_t, struct pcb *);
@@ -270,16 +251,11 @@ void	vector_page_setprot(int);
 /* XXX */
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 
-const struct pmap_devmap *pmap_devmap_find_pa(paddr_t, psize_t);
-const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
-
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
 vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
 void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
-void	pmap_devmap_bootstrap(vaddr_t, const struct pmap_devmap *);
-void	pmap_devmap_register(const struct pmap_devmap *);
 
 /*
  * The current top of kernel VM
