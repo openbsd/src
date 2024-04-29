@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2024/02/25 19:15:50 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2024/04/29 13:07:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -228,16 +228,11 @@ void need_resched(struct cpu_info *);
 
 // asm code to start new kernel contexts.
 void	proc_trampoline(void);
-void	child_trampoline(void);
 
 /*
  * Random cruft
  */
 void	dumpconf(void);
-
-/* cpuswitch.S */
-struct pcb;
-void	savectx		(struct pcb *pcb);
 
 static inline void
 intr_enable(void)
