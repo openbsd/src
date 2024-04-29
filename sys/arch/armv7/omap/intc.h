@@ -1,4 +1,4 @@
-/*	$OpenBSD: intc.h,v 1.6 2024/04/29 12:33:17 jsg Exp $ */
+/*	$OpenBSD: intc.h,v 1.7 2024/04/29 12:42:06 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -46,16 +46,6 @@ find_first_bit( uint32_t bits )
 	asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
 	return 31-count;
 }
-
-
-/*
- * This function *MUST* be called very early on in a port's
- * initarm() function, before ANY spl*() functions are called.
- *
- * The parameter is the virtual address of the OMAPINTC's Interrupt
- * Controller registers.
- */
-void intc_intr_bootstrap(vaddr_t);
 
 void intc_irq_handler(void *);
 void *intc_intr_establish(int irqno, int level, struct cpu_info *ci,
