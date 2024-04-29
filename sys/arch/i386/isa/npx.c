@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.74 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: npx.c,v 1.75 2024/04/29 00:29:48 jsg Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -132,10 +132,6 @@ static	volatile u_int		npx_intrs_while_probing
 static	volatile u_int		npx_traps_while_probing
 				    __attribute__((section(".kudata")));
 
-extern int i386_fpu_present;
-extern int i386_fpu_exception;
-extern int i386_fpu_fdivbug;
-
 #define fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
 #define fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
@@ -235,7 +231,6 @@ npxprobe1(struct isa_attach_args *ia)
 				 */
 				npx_type = NPX_EXCEPTION;
 				ia->ia_irq = IRQUNK;	/* zap the interrupt */
-				i386_fpu_exception = 1;
 			} else if (npx_intrs_while_probing != 0) {
 				/*
 				 * Bad, we are stuck with IRQ13.
@@ -278,7 +273,6 @@ npxprobe(struct device *parent, void *match, void *aux)
 
 	if (cpu_feature & CPUID_FPU) {
 		npx_type = NPX_CPUID;
-		i386_fpu_exception = 1;
 		ia->ia_irq = IRQUNK;	/* Don't want the interrupt vector */
 		ia->ia_iosize = 16;
 		ia->ia_msize = 0;
@@ -348,7 +342,6 @@ npxinit(struct cpu_info *ci)
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0) {
-		i386_fpu_fdivbug = 1;
 		printf("%s: WARNING: Pentium FDIV bug detected!\n",
 		    ci->ci_dev->dv_xname);
 	}
@@ -397,7 +390,6 @@ npxattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	npxinit(&cpu_info_primary);
-	i386_fpu_present = 1;
 
 	if (i386_use_fxsave)
 		npxdna_func = npxdna_xmm;

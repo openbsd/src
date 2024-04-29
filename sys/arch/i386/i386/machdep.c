@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.669 2023/08/23 01:55:46 cheloha Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.670 2024/04/29 00:29:48 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -191,9 +191,6 @@ int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 
 int	cpu_class;
-int	i386_fpu_present;
-int	i386_fpu_exception;
-int	i386_fpu_fdivbug;
 
 int	i386_use_fxsave;
 int	i386_has_sse;
@@ -207,7 +204,6 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 #if !defined(SMALL_KERNEL)
-int p4_model;
 int p3_early;
 void (*update_cpuspeed)(void) = NULL;
 void	via_update_sensor(void *args);
@@ -1547,7 +1543,6 @@ intel686_p4_cpu_setup(struct cpu_info *ci)
 	intel686_common_cpu_setup(ci);
 
 #if !defined(SMALL_KERNEL)
-	p4_model = (ci->ci_signature >> 4) & 15;
 	update_cpuspeed = p4_update_cpuspeed;
 #endif
 }

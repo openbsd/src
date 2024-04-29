@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.84 2018/04/11 04:48:31 ratchov Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.85 2024/04/29 00:29:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -68,17 +68,6 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/ic/ac97.h>
-
-
-/* default parameters; supported by all ac97 codecs */
-const struct audio_params ac97_audio_default = {
-	48000,		/* sample_rate */
-	AUDIO_ENCODING_SLINEAR_LE, /* encoding */
-	16,		/* precision */
-	2,		/* bps */
-	1,		/* msb */
-	2		/* channels */
-};
 
 const struct audio_mixer_enum ac97_on_off = {
 	2,

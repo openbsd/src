@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.49 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.50 2024/04/29 00:29:48 jsg Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -101,7 +101,6 @@
 #include <machine/biosvar.h>
 
 int pcibios_flags;
-int pcibios_present;
 
 struct pcibios_pir_header pcibios_pir_header;
 struct pcibios_intr_routing *pcibios_pir_table;
@@ -186,8 +185,6 @@ pcibiosattach(struct device *parent, struct device *self, void *aux)
 	 * so that pci_mode_detect() doesn't have to look for it.
 	 */
 	pci_mode = mech1 ? 1 : 2;
-
-	pcibios_present = 1;
 
 	/*
 	 * Find the PCI IRQ Routing table.

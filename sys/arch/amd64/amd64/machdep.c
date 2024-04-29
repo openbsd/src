@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.292 2024/04/03 02:01:21 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.293 2024/04/29 00:29:48 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -178,10 +178,7 @@ int biosbasemem = 0;		/* base memory reported by BIOS */
 u_int bootapiver = 0;		/* /boot API version */
 
 int	physmem;
-u_int64_t	dumpmem_low;
-u_int64_t	dumpmem_high;
 extern int	boothowto;
-int	cpu_class;
 
 paddr_t	dumpmem_paddr;
 vaddr_t	dumpmem_vaddr;
