@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.124 2024/04/30 17:04:23 miod Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.125 2024/04/30 17:05:20 miod Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -82,10 +82,8 @@
 /* Global vars */
 extern u_int32_t nfs_xdrneg1;
 extern u_int32_t nfs_false, nfs_true;
-extern enum vtype nv3tov_type[8];
+extern const enum vtype nv3tov_type[8];
 extern struct nfsstats nfsstats;
-extern nfstype nfsv2_type[9];
-extern nfstype nfsv3_type[9];
 
 int nfsrv_access(struct vnode *, int, struct ucred *, int, struct proc *, int);
 

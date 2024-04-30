@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.29 2019/12/05 10:41:57 mpi Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.30 2024/04/30 17:05:20 miod Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 #include <nfs/nfs_var.h>
 
 extern struct nfsstats nfsstats;
-extern int nfsv2_procid[NFS_NPROCS];
+extern const int nfsv2_procid[NFS_NPROCS];
 long numnfsrvcache, desirednfsrvcache = NFSRVCACHESIZ;
 
 struct nfsrvcache	*nfsrv_lookupcache(struct nfsrv_descript *);
@@ -75,14 +75,14 @@ u_long nfsrvhash;
 	(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_UNSPEC)
 
 /* Array that defines which nfs rpc's are nonidempotent */
-int nonidempotent[NFS_NPROCS] = {
+static const int nonidempotent[NFS_NPROCS] = {
 	0, 0, 1, 0, 0, 0, 0, 1,
 	1, 1, 1, 1, 1, 1, 1, 1,
 	0, 0, 0, 0, 0, 0, 0
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
-int nfsv2_repstat[NFS_NPROCS] = {
+static const int nfsv2_repstat[NFS_NPROCS] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 1, 1, 1, 1, 0, 1,
 	0, 0

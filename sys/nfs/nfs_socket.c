@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.149 2024/04/30 17:04:23 miod Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.150 2024/04/30 17:05:20 miod Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ extern u_int32_t rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers,
 	rpc_auth_unix, rpc_msgaccepted, rpc_call, rpc_autherr;
 extern u_int32_t nfs_prog;
 extern struct nfsstats nfsstats;
-extern int nfsv3_procid[NFS_NPROCS];
+extern const int nfsv3_procid[NFS_NPROCS];
 extern int nfs_ticks;
 
 extern struct pool nfsrv_descript_pl;
@@ -92,10 +92,10 @@ extern struct pool nfsrv_descript_pl;
  */
 #define	NFS_CWNDSCALE	256
 #define	NFS_MAXCWND	(NFS_CWNDSCALE * 32)
-int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
+static const int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
 /* RTT estimator */
-enum nfs_rto_timers nfs_ptimers[NFS_NPROCS] = {
+static const enum nfs_rto_timers nfs_ptimers[NFS_NPROCS] = {
 	NFS_DEFAULT_TIMER,	/* NULL */
 	NFS_GETATTR_TIMER,	/* GETATTR */
 	NFS_DEFAULT_TIMER,	/* SETATTR */

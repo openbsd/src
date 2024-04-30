@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.196 2024/04/30 17:04:23 miod Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.197 2024/04/30 17:05:20 miod Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ const struct vops nfs_fifovops = {
 extern u_int32_t nfs_true, nfs_false;
 extern u_int32_t nfs_xdrneg1;
 extern struct nfsstats nfsstats;
-extern nfstype nfsv3_type[9];
+extern const nfstype nfsv3_type[9];
 int nfs_numasync = 0;
 
 void
