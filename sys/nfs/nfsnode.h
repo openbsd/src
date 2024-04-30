@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.42 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.43 2024/04/30 17:04:23 miod Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -62,12 +62,6 @@ struct sillyrename {
  * There is a unique nfsnode allocated for each active file,
  * each current directory, each mounted-on file, text file, and the root.
  * An nfsnode is 'named' by its file handle. (nget/nfs_node.c)
- * If this structure exceeds 256 bytes (it is currently 256 using 4.4BSD-Lite
- * type definitions), file handles of > 32 bytes should probably be split out
- * into a separate malloc()'d data structure. (Reduce the size of nfsfh_t by
- * changing the definition in sys/mount.h of NFS_SMALLFH.)
- * NB: Hopefully the current order of the fields is such that everything will
- *     be well aligned and, therefore, tightly packed.
  */
 struct nfsnode {
 	RB_ENTRY(nfsnode)	n_entry;	/* filehandle/node tree. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.63 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.64 2024/04/30 17:04:23 miod Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -152,7 +152,6 @@ int nfsm_mbuftouio(struct mbuf **, struct uio *, int, caddr_t *);
 void nfsm_uiotombuf(struct mbuf **, struct uio *, size_t);
 void nfsm_strtombuf(struct mbuf **, void *, size_t);
 void nfsm_buftombuf(struct mbuf **, void *, size_t);
-int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
 int nfs_adv(struct mbuf **, caddr_t *, int, int);
 int nfsm_strtmbuf(struct mbuf **, char **, char *, long);
 int nfs_vfs_init(struct vfsconf *);
@@ -164,6 +163,7 @@ int nfs_namei(struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
 		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
 		   struct proc *);
 void nfsm_v3attrbuild(struct mbuf **, struct vattr *, int);
+int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
 void nfsm_adj(struct mbuf *, int, int);
 void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
 		      struct vattr *, struct nfsm_info *);

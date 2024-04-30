@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.146 2022/01/12 20:17:08 mbuhl Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.147 2024/04/30 17:04:23 miod Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -37,9 +37,9 @@
 
 
 /*
- * These functions support the macros and help fiddle mbuf chains for
- * the nfs op functions. They do things like create the rpc header and
- * copy data between mbuf chains and uio lists.
+ * These functions support the nfsm_subs.h inline functions and help fiddle
+ * mbuf chains for the nfs op functions. They do things such as creating the
+ * rpc header and copying data between mbuf chains and uio lists.
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,9 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfs.h>
 #include <nfs/xdr_subs.h>
-#include <nfs/nfsm_subs.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfs_var.h>
+#include <nfs/nfsm_subs.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -791,8 +791,7 @@ nfsm_strtombuf(struct mbuf **mp, void *str, size_t len)
 /*
  * Help break down an mbuf chain by setting the first siz bytes contiguous
  * pointed to by returned val.
- * This is used by the macros nfsm_dissect and nfsm_dissecton for tough
- * cases. (The macros use the vars. dpos and dpos2)
+ * This is used by nfsm_dissect for tough cases.
  */
 int
 nfsm_disct(struct mbuf **mdp, caddr_t *dposp, int siz, int left, caddr_t *cp2)
@@ -824,7 +823,7 @@ nfsm_disct(struct mbuf **mdp, caddr_t *dposp, int siz, int left, caddr_t *cp2)
 		mp = mp2;
 		*cp2 = p = mtod(mp, caddr_t);
 		bcopy(*dposp, p, left);		/* Copy what was left */
-		siz2 = siz-left;
+		siz2 = siz - left;
 		p += left;
 		mp2 = mp->m_next;
 		/* Loop around copying up the siz2 bytes */
@@ -939,8 +938,7 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 	struct nfs_fattr *fp;
 	extern const struct vops nfs_specvops;
 	struct nfsnode *np;
-	int32_t t1;
-	caddr_t cp2;
+	int32_t avail;
 	int error = 0;
 	int32_t rdev;
 	struct mbuf *md;
@@ -953,11 +951,10 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 	gid_t gid;
 
 	md = *mdp;
-	t1 = (mtod(md, caddr_t) + md->m_len) - *dposp;
-	error = nfsm_disct(mdp, dposp, NFSX_FATTR(v3), t1, &cp2);
+	avail = (mtod(md, caddr_t) + md->m_len) - *dposp;
+	error = nfsm_disct(mdp, dposp, NFSX_FATTR(v3), avail, (caddr_t *)&fp);
 	if (error)
 		return (error);
-	fp = (struct nfs_fattr *)cp2;
 	if (v3) {
 		vtyp = nfsv3tov_type(fp->fa_type);
 		vmode = fxdr_unsigned(mode_t, fp->fa_mode);
@@ -1050,34 +1047,29 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 		     fxdr_unsigned(int32_t, fp->fa2_blocksize);
 		break;
 	}
+	vap->va_nlink = fxdr_unsigned(nlink_t, fp->fa_nlink);
+	vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
+	vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 	if (v3) {
-		vap->va_nlink = fxdr_unsigned(nlink_t, fp->fa_nlink);
-		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
-		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		vap->va_size = fxdr_hyper(&fp->fa3_size);
 		vap->va_bytes = fxdr_hyper(&fp->fa3_used);
 		vap->va_fileid = fxdr_hyper(&fp->fa3_fileid);
 		fxdr_nfsv3time(&fp->fa3_atime, &vap->va_atime);
 		fxdr_nfsv3time(&fp->fa3_ctime, &vap->va_ctime);
-		vap->va_flags = 0;
-		vap->va_filerev = 0;
 	} else {
-		vap->va_nlink = fxdr_unsigned(nlink_t, fp->fa_nlink);
-		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
-		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		vap->va_size = fxdr_unsigned(u_int32_t, fp->fa2_size);
 		vap->va_bytes =
 		    (u_quad_t)fxdr_unsigned(int32_t, fp->fa2_blocks) *
 		    NFS_FABLKSIZE;
 		vap->va_fileid = fxdr_unsigned(int32_t, fp->fa2_fileid);
 		fxdr_nfsv2time(&fp->fa2_atime, &vap->va_atime);
-		vap->va_flags = 0;
 		vap->va_ctime.tv_sec = fxdr_unsigned(u_int32_t,
 		    fp->fa2_ctime.nfsv2_sec);
 		vap->va_ctime.tv_nsec = 0;
 		vap->va_gen = fxdr_unsigned(u_int32_t,fp->fa2_ctime.nfsv2_usec);
-		vap->va_filerev = 0;
 	}
+	vap->va_flags = 0;
+	vap->va_filerev = 0;
 
 	if (vap->va_size != np->n_size) {
 		if (vap->va_type == VREG) {
@@ -1116,8 +1108,7 @@ nfs_attrtimeo(struct nfsnode *np)
 	if (vp->v_type == VDIR) {
 		maxto = nmp->nm_acdirmax;
 		minto = nmp->nm_acdirmin;
-	}
-	else {
+	} else {
 		maxto = nmp->nm_acregmax;
 		minto = nmp->nm_acregmin;
 	}
@@ -1338,7 +1329,7 @@ nfsm_adj(struct mbuf *mp, int len, int nul)
 }
 
 /*
- * Make these functions instead of macros, so that the kernel text size
+ * Make these non-inline functions, so that the kernel text size
  * doesn't get too big...
  */
 void
@@ -1835,44 +1826,64 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
     caddr_t *dposp)
 {
 	struct nfsm_info	info;
-	uint32_t *tl, t1;
-	caddr_t cp2;
 	int error = 0;
+	uint32_t *tl;
 
 	info.nmi_md = *mp;
 	info.nmi_dpos = *dposp;
 	info.nmi_mrep = mrep;
+	info.nmi_errorp = &error;
 
-	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	if (tl == NULL)
+		return error;
 	if (*tl == nfs_true) {
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+		if (tl == NULL)
+			return error;
 		va->va_mode = nfstov_mode(*tl);
 	}
 
-	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	if (tl == NULL)
+		return error;
 	if (*tl == nfs_true) {
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+		if (tl == NULL)
+			return error;
 		va->va_uid = fxdr_unsigned(uid_t, *tl);
 	}
 
-	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	if (tl == NULL)
+		return error;
 	if (*tl == nfs_true) {
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+		if (tl == NULL)
+			return error;
 		va->va_gid = fxdr_unsigned(gid_t, *tl);
 	}
 
-	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	if (tl == NULL)
+		return error;
 	if (*tl == nfs_true) {
-		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsm_dissect(&info, 2 * NFSX_UNSIGNED);
+		if (tl == NULL)
+			return error;
 		va->va_size = fxdr_hyper(tl);
 	}
 
-	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	if (tl == NULL)
+		return error;
 	switch (fxdr_unsigned(int, *tl)) {
 	case NFSV3SATTRTIME_TOCLIENT:
 		va->va_vaflags |= VA_UTIMES_CHANGE;
 		va->va_vaflags &= ~VA_UTIMES_NULL;
-		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsm_dissect(&info, 2 * NFSX_UNSIGNED);
+		if (tl == NULL)
+			return error;
 		fxdr_nfsv3time(tl, &va->va_atime);
 		break;
 	case NFSV3SATTRTIME_TOSERVER:
@@ -1881,12 +1892,16 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 		break;
 	};
 
-	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
+	tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
+	if (tl == NULL)
+		return error;
 	switch (fxdr_unsigned(int, *tl)) {
 	case NFSV3SATTRTIME_TOCLIENT:
 		va->va_vaflags |= VA_UTIMES_CHANGE;
 		va->va_vaflags &= ~VA_UTIMES_NULL;
-		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
+		tl = (uint32_t *)nfsm_dissect(&info, 2 * NFSX_UNSIGNED);
+		if (tl == NULL)
+			return error;
 		fxdr_nfsv3time(tl, &va->va_mtime);
 		break;
 	case NFSV3SATTRTIME_TOSERVER:
@@ -1897,8 +1912,7 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 
 	*dposp = info.nmi_dpos;
 	*mp = info.nmi_md;
-nfsmout:
-	return (error);
+	return 0;
 }
 
 void

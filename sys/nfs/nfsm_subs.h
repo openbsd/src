@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.47 2019/01/18 13:59:18 bluhm Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.48 2024/04/30 17:04:23 miod Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -40,217 +40,140 @@
 #define _NFS_NFSM_SUBS_H_
 
 struct nfsm_info {
-	struct mbuf	 *nmi_mreq;
-	struct mbuf	 *nmi_mrep;
+	struct mbuf	*nmi_mreq;
+	struct mbuf	*nmi_mrep;
 
-	struct proc	 *nmi_procp;	/* XXX XXX XXX */
-	struct ucred	 *nmi_cred;	/* XXX XXX XXX */
+	struct proc	*nmi_procp;	/* XXX XXX XXX */
+	struct ucred	*nmi_cred;	/* XXX XXX XXX */
 
 	/* Setting up / Tearing down. */
-	struct mbuf	 *nmi_md;
-	struct mbuf	 *nmi_mb;
-	caddr_t		  nmi_dpos;
+	struct mbuf	*nmi_md;
+	struct mbuf	*nmi_mb;
+	caddr_t		 nmi_dpos;
 
-	int		  nmi_v3;  
+	int		 nmi_v3;  
+
+	int		*nmi_errorp;
 };
 
-#define nfsm_dissect(a, c, s) {						\
-	t1 = mtod(info.nmi_md, caddr_t) + info.nmi_md->m_len -		\
-	    info.nmi_dpos;						\
-	if (t1 >= (s)) {						\
-		(a) = (c)(info.nmi_dpos);				\
-		info.nmi_dpos += (s);					\
-	} else if ((t1 =						\
-		  nfsm_disct(&info.nmi_md, &info.nmi_dpos, (s), t1,	\
-		      &cp2)) != 0) {					\
-		error = t1;						\
-		m_freem(info.nmi_mrep);					\
-		goto nfsmout;						\
-	} else {							\
-		(a) = (c)cp2;						\
-	}								\
-}
+static inline void *
+nfsm_dissect(struct nfsm_info *infop, int s)
+{
+	caddr_t ret;
+	int avail, error;
 
-#define nfsm_srvpostop_fh(f) {						\
-	tl = nfsm_build(&info.nmi_mb, 2 * NFSX_UNSIGNED + NFSX_V3FH);	\
-	*tl++ = nfs_true;						\
-	*tl++ = txdr_unsigned(NFSX_V3FH);				\
-	bcopy((f), tl, NFSX_V3FH);			\
-}
-
-#define nfsm_mtofh(d, v, v3, f)	{					\
-	struct nfsnode *ttnp; nfsfh_t *ttfhp; int ttfhsize;		\
-	if (v3) {							\
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);		\
-		(f) = fxdr_unsigned(int, *tl);				\
-	} else								\
-		(f) = 1;						\
-	if (f) {							\
-		nfsm_getfh(ttfhp, ttfhsize, (v3));			\
-		if ((t1 = nfs_nget((d)->v_mount, ttfhp, ttfhsize, 	\
-		    &ttnp)) != 0) {					\
-			error = t1;					\
-			m_freem(info.nmi_mrep);				\
-			goto nfsmout;					\
-		}							\
-		(v) = NFSTOV(ttnp);					\
-	}								\
-	if (v3) {							\
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);		\
-		if (f)							\
-			(f) = fxdr_unsigned(int, *tl);			\
-		else if (fxdr_unsigned(int, *tl))			\
-			nfsm_adv(NFSX_V3FATTR);				\
-	}								\
-	if (f)								\
-		nfsm_loadattr((v), NULL);				\
-}
-
-#define nfsm_getfh(f, s, v3) {						\
-	if (v3) {							\
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);		\
-		if (((s) = fxdr_unsigned(int, *tl)) <= 0 ||		\
-			(s) > NFSX_V3FHMAX) {				\
-			m_freem(info.nmi_mrep);				\
-			error = EBADRPC;				\
-			goto nfsmout;					\
-		}							\
-	} else								\
-		(s) = NFSX_V2FH;					\
-	nfsm_dissect((f), nfsfh_t *, nfsm_rndup(s)); 			\
-}
-
-#define nfsm_loadattr(v, a) {						\
-	struct vnode *ttvp = (v);					\
-	if ((t1 = nfs_loadattrcache(&ttvp, &info.nmi_md,		\
-	    &info.nmi_dpos, (a))) != 0) {				\
-		error = t1;						\
-		m_freem(info.nmi_mrep);					\
-		goto nfsmout;						\
-	}								\
-	(v) = ttvp;							\
-}
-
-#define nfsm_postop_attr(v, f) { if (info.nmi_mrep != NULL) {		\
-	struct vnode *ttvp = (v);					\
-	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);			\
-	if (((f) = fxdr_unsigned(int, *tl)) != 0) {			\
-		if ((t1 = nfs_loadattrcache(&ttvp, &info.nmi_md,	\
-		    &info.nmi_dpos, NULL)) != 0) {			\
-			error = t1;					\
-			(f) = 0;					\
-			m_freem(info.nmi_mrep);				\
-			goto nfsmout;					\
-		}							\
-		(v) = ttvp;						\
-	}								\
-} }
-
-/* Used as (f) for nfsm_wcc_data() */
-#define NFSV3_WCCRATTR	0
-#define NFSV3_WCCCHK	1
-
-#define nfsm_wcc_data(v, f) do { if (info.nmi_mrep != NULL) {		\
-	struct timespec	 _mtime;					\
-	int		 ttattrf, ttretf = 0;				\
-									\
-	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);			\
-	if (*tl == nfs_true) {						\
-		nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED);	\
-		fxdr_nfsv3time(tl + 2, &_mtime);			\
-		if (f) {						\
-			ttretf = timespeccmp(&VTONFS(v)->n_mtime,	\
-			    &_mtime, !=);				\
-		}							\
-	}								\
-	nfsm_postop_attr((v), ttattrf);					\
-	if (f) {							\
-		(f) = ttretf;						\
-	} else {							\
-		(f) = ttattrf;						\
-	}								\
-} } while (0)
-
-#define nfsm_strsiz(s, m) {						\
-	nfsm_dissect(tl, u_int32_t *,NFSX_UNSIGNED);			\
-	if (((s) = fxdr_unsigned(int32_t, *tl)) < 0 || (s) > (m)) {	\
-		m_freem(info.nmi_mrep);					\
-		error = EBADRPC;					\
-		goto nfsmout;						\
-	}								\
-}
-
-#define nfsm_srvnamesiz(s) {						\
-	nfsm_dissect(tl, u_int32_t *,NFSX_UNSIGNED);			\
-	if (((s) = fxdr_unsigned(int32_t, *tl)) > NFS_MAXNAMLEN) 	\
-		error = NFSERR_NAMETOL;					\
-	if ((s) <= 0)							\
-		error = EBADRPC;					\
-	if (error)							\
-		nfsm_reply(0);						\
-}
-
-#define nfsm_mtouio(p, s)						\
-	if ((s) > 0 &&							\
-	    (t1 = nfsm_mbuftouio(&info.nmi_md, (p), (s),		\
-	        &info.nmi_dpos)) != 0) {				\
-		error = t1;						\
-		m_freem(info.nmi_mrep);					\
-		goto nfsmout;						\
+	avail = mtod(infop->nmi_md, caddr_t) + infop->nmi_md->m_len -
+	    infop->nmi_dpos;
+	if (avail >= s) {
+		ret = infop->nmi_dpos;
+		infop->nmi_dpos += s;
+		return ret;
 	}
+	error = nfsm_disct(&infop->nmi_md, &infop->nmi_dpos, s, avail, &ret);
+	if (error != 0) {
+		m_freem(infop->nmi_mrep);
+		*infop->nmi_errorp = error;
+		return NULL;
+	} else {
+		return ret;
+	}
+}
 
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
 
-#define nfsm_strtom(a, s, m)						\
-	if ((s) > (m)) {						\
-		m_freem(info.nmi_mreq);					\
-		error = ENAMETOOLONG;					\
-		goto nfsmout;						\
-	}								\
-	nfsm_strtombuf(&info.nmi_mb, (a), (s))
-
-#define nfsm_reply(s) {							\
-	nfsd->nd_repstat = error;					\
-	if (error && !(nfsd->nd_flag & ND_NFSV3))			\
-	   (void) nfs_rephead(0, nfsd, slp, error,			\
-		&info.nmi_mreq, &info.nmi_mb);				\
-	else								\
-	   (void) nfs_rephead((s), nfsd, slp, error,			\
-		&info.nmi_mreq, &info.nmi_mb);				\
-	if (info.nmi_mrep != NULL) {					\
-		m_freem(info.nmi_mrep);					\
-		info.nmi_mrep = NULL;					\
-	}								\
-	*mrq = info.nmi_mreq;						\
-	if (error && (!(nfsd->nd_flag & ND_NFSV3) || error == EBADRPC))	\
-		return(0);						\
+static inline int
+nfsm_adv(struct nfsm_info *infop, int s)
+{
+	int avail, error;
+       
+	avail = mtod(infop->nmi_md, caddr_t) + infop->nmi_md->m_len -
+	    infop->nmi_dpos;
+	if (avail >= s) {
+		infop->nmi_dpos += s;
+		return 0;
+	}
+	error = nfs_adv(&infop->nmi_md, &infop->nmi_dpos, s, avail);
+	if (error != 0) {
+		m_freem(infop->nmi_mrep);
+		*infop->nmi_errorp = error;
+		return error;
+	}
+	return 0;
 }
 
-#define nfsm_adv(s) {							\
-	t1 = mtod(info.nmi_md, caddr_t) + info.nmi_md->m_len -		\
-	    info.nmi_dpos;						\
-	if (t1 >= (s)) {						\
-		info.nmi_dpos += (s);					\
-	} else if ((t1 = nfs_adv(&info.nmi_md, &info.nmi_dpos,		\
-	      (s), t1)) != 0) {						\
-		error = t1;						\
-		m_freem(info.nmi_mrep);					\
-		goto nfsmout;						\
-	}								\
+static inline int
+nfsm_postop_attr(struct nfsm_info *infop, struct vnode **vpp, int *attrflagp)
+{
+	uint32_t *tl;
+	struct vnode *ttvp;
+	int attrflag, error;
+
+	if (infop->nmi_mrep == NULL)
+		return 0;
+
+	ttvp = *vpp;
+	tl = (uint32_t *)nfsm_dissect(infop, NFSX_UNSIGNED);
+	if (tl == NULL)
+		return 1;	/* anything nonzero */
+	attrflag = fxdr_unsigned(int, *tl);
+	if (attrflag != 0) {
+		error = nfs_loadattrcache(&ttvp, &infop->nmi_md,
+		    &infop->nmi_dpos, NULL);
+		if (error != 0) {
+			m_freem(infop->nmi_mrep);
+			*infop->nmi_errorp = error;
+			return error;
+		}
+		*vpp = ttvp;
+	}
+	*attrflagp = attrflag;
+	return 0;
 }
 
-#define nfsm_srvmtofh(f) {						\
-	if (nfsd->nd_flag & ND_NFSV3) {					\
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);		\
-		if (fxdr_unsigned(int, *tl) != NFSX_V3FH) {		\
-			error = EBADRPC;				\
-			nfsm_reply(0);					\
-		}							\
-	}								\
-	nfsm_dissect(tl, u_int32_t *, NFSX_V3FH);			\
-	bcopy(tl, (f), NFSX_V3FH);			\
-	if ((nfsd->nd_flag & ND_NFSV3) == 0)				\
-	nfsm_adv(NFSX_V2FH - NFSX_V3FH);				\
+static inline int
+nfsm_strsiz(struct nfsm_info *infop, int *lenp, int maxlen)
+{
+	uint32_t *tl = (uint32_t *)nfsm_dissect(infop, NFSX_UNSIGNED);
+	int len;
+	if (tl == NULL)
+		return 1;
+	len = fxdr_unsigned(int32_t, *tl);
+	if (len < 0 || len > maxlen) {
+		m_freem(infop->nmi_mrep);
+		*infop->nmi_errorp = EBADRPC;
+		return 1;
+	}
+	*lenp = len;
+	return 0;
+}
+
+static inline int
+nfsm_mtouio(struct nfsm_info *infop, struct uio *uiop, int len)
+{
+	int error;
+
+	if (len <= 0)
+		return 0;
+
+	error = nfsm_mbuftouio(&infop->nmi_md, uiop, len, &infop->nmi_dpos);
+	if (error != 0) {
+		m_freem(infop->nmi_mrep);
+		*infop->nmi_errorp = error;
+		return error;
+	}
+	return 0;
+}
+
+static inline int
+nfsm_strtom(struct nfsm_info *infop, char *str, size_t len, size_t maxlen)
+{
+	if (len > maxlen) {
+		m_freem(infop->nmi_mreq);
+		*infop->nmi_errorp = ENAMETOOLONG;
+		return 1;
+	}
+	nfsm_strtombuf(&infop->nmi_mb, str, len);
+	return 0;
 }
 
 #endif
