@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.51 2024/03/31 19:17:53 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.52 2024/04/30 01:53:49 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,7 +21,6 @@ makeoptions	KERNEL_BASE_VIRT="0xffffffc000200000"
 #option		DEBUG
 #option		DEBUG_AUTOCONF
 #option		DEBUG_INTC
-#option		DEBUG_TIMER
 
 option		WSDISPLAY_COMPAT_USL
 option		WSDISPLAY_COMPAT_RAWKBD
