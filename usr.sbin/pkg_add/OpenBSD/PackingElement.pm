@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.290 2023/11/22 11:18:37 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.291 2024/04/30 14:26:50 sthen Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1957,7 +1957,9 @@ sub iso8601($self)
 
 sub _iso8601_to_time($s)
 {
-	if ($s =~ m/^(\d{4})\-(\d{2})\-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})Z$/) {
+	# XXX RFC 9557 explicitly wants +00:00 instead of Z for UTC,
+	# so recognize both
+	if ($s =~ m/^(\d{4})\-(\d{2})\-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})(?:Z|\+00\:00)$/) {
 		my ($year, $month, $day, $hour, $min, $sec) =
 		    ($1 - 1900, $2-1, $3, $4, $5, $6);
 		require POSIX;
