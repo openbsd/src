@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.84 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.85 2024/04/30 16:54:47 miod Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ again:
 		np->n_flag |= NMODIFIED;
 		if (uio->uio_offset + n > np->n_size) {
 			np->n_size = uio->uio_offset + n;
-			uvm_vnp_setsize(vp, (u_long)np->n_size);
+			uvm_vnp_setsize(vp, np->n_size);
 			extended = 1;
 		} else if (uio->uio_offset + n < np->n_size)
 			truncated = 1;
