@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.138 2022/09/03 18:17:15 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.139 2024/04/30 17:12:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1134,7 +1134,7 @@ hibernate_resume(void)
 	if (hibernate_block_io(&hib,
 	    hib.sig_offset,
 	    DEV_BSIZE, (vaddr_t)&disk_hib, 0)) {
-		DPRINTF("error in hibernate read");
+		DPRINTF("error in hibernate read\n");
 		splx(s);
 		return;
 	}
