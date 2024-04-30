@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.150 2024/04/25 17:32:53 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.151 2024/04/30 17:59:15 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -142,10 +142,15 @@ soisdisconnecting(struct socket *so)
 	soassertlocked(so);
 	so->so_state &= ~SS_ISCONNECTING;
 	so->so_state |= SS_ISDISCONNECTING;
+
 	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_state |= SS_CANTRCVMORE;
 	mtx_leave(&so->so_rcv.sb_mtx);
+
+	mtx_enter(&so->so_snd.sb_mtx);
 	so->so_snd.sb_state |= SS_CANTSENDMORE;
+	mtx_leave(&so->so_snd.sb_mtx);
+
 	wakeup(&so->so_timeo);
 	sowwakeup(so);
 	sorwakeup(so);
@@ -157,10 +162,15 @@ soisdisconnected(struct socket *so)
 	soassertlocked(so);
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
 	so->so_state |= SS_ISDISCONNECTED;
+
 	mtx_enter(&so->so_rcv.sb_mtx);
 	so->so_rcv.sb_state |= SS_CANTRCVMORE;
 	mtx_leave(&so->so_rcv.sb_mtx);
+
+	mtx_enter(&so->so_snd.sb_mtx);
 	so->so_snd.sb_state |= SS_CANTSENDMORE;
+	mtx_leave(&so->so_snd.sb_mtx);
+
 	wakeup(&so->so_timeo);
 	sowwakeup(so);
 	sorwakeup(so);
@@ -315,7 +325,9 @@ void
 socantsendmore(struct socket *so)
 {
 	soassertlocked(so);
+	mtx_enter(&so->so_snd.sb_mtx);
 	so->so_snd.sb_state |= SS_CANTSENDMORE;
+	mtx_leave(&so->so_snd.sb_mtx);
 	sowwakeup(so);
 }
 
@@ -666,6 +678,8 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
 	soassertlocked(so);
 
+	mtx_enter(&so->so_rcv.sb_mtx);
+	mtx_enter(&so->so_snd.sb_mtx);
 	if (sbreserve(so, &so->so_snd, sndcc))
 		goto bad;
 	so->so_snd.sb_wat = sndcc;
@@ -673,21 +687,20 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 		so->so_snd.sb_lowat = MCLBYTES;
 	if (so->so_snd.sb_lowat > so->so_snd.sb_hiwat)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
-
-	mtx_enter(&so->so_rcv.sb_mtx);
-	if (sbreserve(so, &so->so_rcv, rcvcc)) {
-		mtx_leave(&so->so_rcv.sb_mtx);
+	if (sbreserve(so, &so->so_rcv, rcvcc))
 		goto bad2;
-	}
 	so->so_rcv.sb_wat = rcvcc;
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
+	mtx_leave(&so->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
 
 	return (0);
 bad2:
 	sbrelease(so, &so->so_snd);
 bad:
+	mtx_leave(&so->so_snd.sb_mtx);
+	mtx_leave(&so->so_rcv.sb_mtx);
 	return (ENOBUFS);
 }
 

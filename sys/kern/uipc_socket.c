@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.330 2024/04/15 21:31:29 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.331 2024/04/30 17:59:15 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -146,8 +146,8 @@ soalloc(const struct protosw *prp, int wait)
 	refcnt_init(&so->so_refcnt);
 	rw_init(&so->so_rcv.sb_lock, "sbufrcv");
 	rw_init(&so->so_snd.sb_lock, "sbufsnd");
-	mtx_init(&so->so_rcv.sb_mtx, IPL_MPFLOOR);
-	mtx_init(&so->so_snd.sb_mtx, IPL_MPFLOOR);
+	mtx_init_flags(&so->so_rcv.sb_mtx, IPL_MPFLOOR, "sbrcv", 0);
+	mtx_init_flags(&so->so_snd.sb_mtx, IPL_MPFLOOR, "sbsnd", 0);
 	klist_init_mutex(&so->so_rcv.sb_klist, &so->so_rcv.sb_mtx);
 	klist_init_mutex(&so->so_snd.sb_klist, &so->so_snd.sb_mtx);
 	sigio_init(&so->so_sigio);
@@ -158,8 +158,10 @@ soalloc(const struct protosw *prp, int wait)
 	case AF_INET:
 	case AF_INET6:
 		switch (prp->pr_type) {
-		case SOCK_DGRAM:
 		case SOCK_RAW:
+			so->so_snd.sb_flags |= SB_MTXLOCK | SB_OWNLOCK;
+			/* FALLTHROUGH */
+		case SOCK_DGRAM:
 			so->so_rcv.sb_flags |= SB_MTXLOCK | SB_OWNLOCK;
 			break;
 		}
@@ -346,7 +348,10 @@ sofree(struct socket *so, int keep_lock)
 		sounsplice(so, so->so_sp->ssp_socket, freeing);
 	}
 #endif /* SOCKET_SPLICE */
+
+	mtx_enter(&so->so_snd.sb_mtx);
 	sbrelease(so, &so->so_snd);
+	mtx_leave(&so->so_snd.sb_mtx);
 
 	/*
 	 * Regardless on '_locked' postfix, must release solock() before
@@ -569,6 +574,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	size_t resid;
 	int error;
 	int atomic = sosendallatonce(so) || top;
+	int dosolock = ((so->so_snd.sb_flags & SB_OWNLOCK) == 0);
 
 	if (uio)
 		resid = uio->uio_resid;
@@ -601,16 +607,17 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 
 #define	snderr(errno)	{ error = errno; goto release; }
 
-	solock_shared(so);
+	if (dosolock)
+		solock_shared(so);
 restart:
 	if ((error = sblock(so, &so->so_snd, SBLOCKWAIT(flags))) != 0)
 		goto out;
+	sb_mtx_lock(&so->so_snd);
 	so->so_snd.sb_state |= SS_ISSENDING;
 	do {
 		if (so->so_snd.sb_state & SS_CANTSENDMORE)
 			snderr(EPIPE);
-		if (so->so_error) {
-			error = so->so_error;
+		if ((error = READ_ONCE(so->so_error))) {
 			so->so_error = 0;
 			snderr(error);
 		}
@@ -638,8 +645,14 @@ restart:
 			if (flags & MSG_DONTWAIT)
 				snderr(EWOULDBLOCK);
 			sbunlock(so, &so->so_snd);
-			error = sbwait(so, &so->so_snd);
+
+			if (so->so_snd.sb_flags & SB_MTXLOCK)
+				error = sbwait_locked(so, &so->so_snd);
+			else
+				error = sbwait(so, &so->so_snd);
+
 			so->so_snd.sb_state &= ~SS_ISSENDING;
+			sb_mtx_unlock(&so->so_snd);
 			if (error)
 				goto out;
 			goto restart;
@@ -654,9 +667,13 @@ restart:
 				if (flags & MSG_EOR)
 					top->m_flags |= M_EOR;
 			} else {
-				sounlock_shared(so);
+				sb_mtx_unlock(&so->so_snd);
+				if (dosolock)
+					sounlock_shared(so);
 				error = m_getuio(&top, atomic, space, uio);
-				solock_shared(so);
+				if (dosolock)
+					solock_shared(so);
+				sb_mtx_lock(&so->so_snd);
 				if (error)
 					goto release;
 				space -= top->m_pkthdr.len;
@@ -668,10 +685,16 @@ restart:
 				so->so_snd.sb_state &= ~SS_ISSENDING;
 			if (top && so->so_options & SO_ZEROIZE)
 				top->m_flags |= M_ZEROIZE;
+			sb_mtx_unlock(&so->so_snd);
+			if (!dosolock)
+				solock_shared(so);
 			if (flags & MSG_OOB)
 				error = pru_sendoob(so, top, addr, control);
 			else
 				error = pru_send(so, top, addr, control);
+			if (!dosolock)
+				sounlock_shared(so);
+			sb_mtx_lock(&so->so_snd);
 			clen = 0;
 			control = NULL;
 			top = NULL;
@@ -682,9 +705,11 @@ restart:
 
 release:
 	so->so_snd.sb_state &= ~SS_ISSENDING;
+	sb_mtx_unlock(&so->so_snd);
 	sbunlock(so, &so->so_snd);
 out:
-	sounlock_shared(so);
+	if (dosolock)
+		sounlock_shared(so);
 	m_freem(top);
 	m_freem(control);
 	return (error);
