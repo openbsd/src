@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.167 2024/04/19 10:22:50 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.168 2024/05/01 12:54:27 mpi Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@
 #include <sys/sched.h>
 #include <sys/sensors.h>
 #include <sys/srp.h>
+#include <uvm/uvm_percpu.h>
 
 #ifdef _KERNEL
 
@@ -210,6 +211,8 @@ struct cpu_info {
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+#define __HAVE_UVM_PERCPU
+	struct uvm_pmr_cache	ci_uvm;		/* [o] page cache */
 #endif
 
 	struct ksensordev	ci_sensordev;

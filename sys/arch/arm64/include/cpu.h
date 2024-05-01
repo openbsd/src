@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.46 2024/04/29 13:01:54 jsg Exp $ */
+/* $OpenBSD: cpu.h,v 1.47 2024/05/01 12:54:27 mpi Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -104,6 +104,7 @@ extern uint64_t cpu_id_aa64pfr1;
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
+#include <uvm/uvm_percpu.h>
 
 struct cpu_info {
 	struct device		*ci_dev; /* Device corresponding to this CPU */
@@ -157,6 +158,8 @@ struct cpu_info {
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+#define __HAVE_UVM_PERCPU
+	struct uvm_pmr_cache	ci_uvm;
 	volatile int		ci_flags;
 
 	volatile int		ci_ddb_paused;
