@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.125 2024/04/30 17:05:20 miod Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.126 2024/05/01 13:15:59 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -66,9 +66,7 @@
 #include <sys/mbuf.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
-#include <sys/kernel.h>
 #include <sys/pool.h>
-#include <sys/queue.h>
 #include <sys/unistd.h>
 
 #include <ufs/ufs/dir.h>

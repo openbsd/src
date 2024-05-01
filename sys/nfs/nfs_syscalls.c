@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.125 2024/04/30 17:05:20 miod Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.126 2024/05/01 13:15:59 jsg Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -37,14 +37,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
@@ -52,8 +48,6 @@
 #include <sys/socketvar.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
-#include <sys/namei.h>
-#include <sys/syslog.h>
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
 #include <sys/kthread.h>
@@ -63,12 +57,9 @@
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <nfs/xdr_subs.h>
-#include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsrvcache.h>
-#include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 

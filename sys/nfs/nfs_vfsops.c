@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.129 2024/04/30 17:04:23 miod Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.130 2024/05/01 13:15:59 jsg Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -37,16 +37,12 @@
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/ioctl.h>
-#include <sys/signal.h>
 #include <sys/proc.h>
-#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/swap.h>
-#include <sys/buf.h>
 #include <sys/mbuf.h>
 #include <sys/dirent.h>
 #include <sys/socket.h>
@@ -57,7 +53,6 @@
 
 #include <netinet/in.h>
 
-#include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfs.h>

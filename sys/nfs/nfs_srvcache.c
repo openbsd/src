@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.30 2024/04/30 17:05:20 miod Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.31 2024/05/01 13:15:59 jsg Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
  */
 #include <sys/param.h>
 #include <sys/mount.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>

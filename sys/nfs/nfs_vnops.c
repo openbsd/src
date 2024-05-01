@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.197 2024/04/30 17:05:20 miod Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.198 2024/05/01 13:15:59 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -41,16 +41,13 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/resourcevar.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mbuf.h>
-#include <sys/conf.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
@@ -63,7 +60,6 @@
 
 #include <miscfs/fifofs/fifo.h>
 
-#include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
@@ -71,10 +67,6 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfs_var.h>
 #include <nfs/nfsm_subs.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <netinet/in.h>
 
 int nfs_access(void *);
 int nfs_advlock(void *);

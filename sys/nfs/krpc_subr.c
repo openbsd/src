@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.38 2023/08/03 09:49:09 mvs Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.39 2024/05/01 13:15:59 jsg Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -45,12 +45,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/mount.h>
 #include <sys/mbuf.h>
-#include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 

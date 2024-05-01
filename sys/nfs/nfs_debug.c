@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_debug.c,v 1.6 2014/09/14 14:17:26 jsg Exp $ */
+/*	$OpenBSD: nfs_debug.c,v 1.7 2024/05/01 13:15:59 jsg Exp $ */
 /*
  * Copyright (c) 2009 Thordur I. Bjornsson. <thib@openbsd.org>
  *
@@ -16,18 +16,13 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 #include <sys/mount.h>
-#include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/vnode.h>
 
-#include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
-#include <nfs/nfsmount.h>
-#include <nfs/nfs_var.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>

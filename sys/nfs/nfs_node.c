@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.75 2022/06/27 13:39:58 visa Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.76 2024/05/01 13:15:59 jsg Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -43,13 +43,10 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/rwlock.h>
-#include <sys/queue.h>
 
-#include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfsmount.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.48 2022/03/05 09:50:49 jsg Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.49 2024/05/01 13:15:59 jsg Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -31,11 +31,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/mbuf.h>
-#include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/queue.h>
