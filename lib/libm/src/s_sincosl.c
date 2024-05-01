@@ -72,12 +72,14 @@ sincosl(long double x, long double *sn, long double *cs)
 			*cs = 1;
 		} else
 			__kernel_sincosl(x, 0, 0, sn, cs);
+		return;
 	}
 
 	/* If x = NaN or Inf, then sin(x) and cos(x) are NaN. */
 	if (z.bits.ext_exp == 32767) {
 		*sn = x - x;
 		*cs = x - x;
+		return;
 	}
 
 	/* Split z.e into a 24-bit representation. */
