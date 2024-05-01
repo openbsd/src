@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.211 2024/03/07 17:09:02 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.212 2024/05/01 10:43:42 jan Exp $	*/
 
 /******************************************************************************
 
@@ -154,7 +154,7 @@ void	ixgbe_enable_intr(struct ix_softc *);
 void	ixgbe_disable_intr(struct ix_softc *);
 int	ixgbe_txeof(struct tx_ring *);
 int	ixgbe_rxeof(struct rx_ring *);
-void	ixgbe_rx_checksum(uint32_t, struct mbuf *);
+void	ixgbe_rx_offload(uint32_t, uint16_t, struct mbuf *);
 void	ixgbe_iff(struct ix_softc *);
 void	ixgbe_map_queue_statistics(struct ix_softc *);
 void	ixgbe_update_link_status(struct ix_softc *);
@@ -3245,65 +3245,11 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			sendmp = NULL;
 			mp->m_next = nxbuf->buf;
 		} else { /* Sending this frame? */
-			uint16_t pkts;
+			ixgbe_rx_offload(staterr, vtag, sendmp);
 
-			ixgbe_rx_checksum(staterr, sendmp);
-#if NVLAN > 0
-			if (staterr & IXGBE_RXD_STAT_VP) {
-				sendmp->m_pkthdr.ether_vtag = vtag;
-				SET(sendmp->m_flags, M_VLANTAG);
-			}
-#endif
 			if (hashtype != IXGBE_RXDADV_RSSTYPE_NONE) {
 				sendmp->m_pkthdr.ph_flowid = hash;
 				SET(sendmp->m_pkthdr.csum_flags, M_FLOWID);
-			}
-
-			pkts = sendmp->m_pkthdr.ph_mss;
-			sendmp->m_pkthdr.ph_mss = 0;
-
-			if (pkts > 1) {
-				struct ether_extracted ext;
-				uint32_t paylen;
-
-				/*
-				 * Calculate the payload size:
-				 *
-				 * The packet length returned by the NIC
-				 * (sendmp->m_pkthdr.len) can contain
-				 * padding, which we don't want to count
-				 * in to the payload size.  Therefore, we
-				 * calculate the real payload size based
-				 * on the total ip length field (ext.iplen).
-				 */
-				ether_extract_headers(sendmp, &ext);
-				paylen = ext.iplen;
-				if (ext.ip4 || ext.ip6)
-					paylen -= ext.iphlen;
-				if (ext.tcp) {
-					paylen -= ext.tcphlen;
-					tcpstat_inc(tcps_inhwlro);
-					tcpstat_add(tcps_inpktlro, pkts);
-				} else {
-					tcpstat_inc(tcps_inbadlro);
-				}
-
-				/*
-				 * If we gonna forward this packet, we have to
-				 * mark it as TSO, set a correct mss,
-				 * and recalculate the TCP checksum.
-				 */
-				if (ext.tcp && paylen >= pkts) {
-					SET(sendmp->m_pkthdr.csum_flags,
-					    M_TCP_TSO);
-					sendmp->m_pkthdr.ph_mss = paylen / pkts;
-				}
-				if (ext.tcp &&
-				    ISSET(sendmp->m_pkthdr.csum_flags,
-				    M_TCP_CSUM_IN_OK)) {
-					SET(sendmp->m_pkthdr.csum_flags,
-					    M_TCP_CSUM_OUT);
-				}
 			}
 
 			ml_enqueue(&ml, sendmp);
@@ -3331,28 +3277,102 @@ next_desc:
 
 /*********************************************************************
  *
+ *  Check VLAN indication from hardware and inform the stack about the
+ *  annotated TAG.
+ *
  *  Verify that the hardware indicated that the checksum is valid.
  *  Inform the stack about the status of checksum so that stack
  *  doesn't spend time verifying the checksum.
  *
+ *  Propagate TCP LRO packet from hardware to the stack with MSS annotation.
+ *
  *********************************************************************/
 void
-ixgbe_rx_checksum(uint32_t staterr, struct mbuf * mp)
+ixgbe_rx_offload(uint32_t staterr, uint16_t vtag, struct mbuf *m)
 {
 	uint16_t status = (uint16_t) staterr;
 	uint8_t  errors = (uint8_t) (staterr >> 24);
+	int16_t  pkts;
 
-	if (status & IXGBE_RXD_STAT_IPCS) {
-		if (!(errors & IXGBE_RXD_ERR_IPE)) {
-			/* IP Checksum Good */
-			mp->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
-		} else
-			mp->m_pkthdr.csum_flags = 0;
+	/*
+	 * VLAN Offload
+	 */
+
+#if NVLAN > 0
+	if (ISSET(staterr, IXGBE_RXD_STAT_VP)) {
+		m->m_pkthdr.ether_vtag = vtag;
+		SET(m->m_flags, M_VLANTAG);
 	}
-	if (status & IXGBE_RXD_STAT_L4CS) {
-		if (!(errors & IXGBE_RXD_ERR_TCPE))
-			mp->m_pkthdr.csum_flags |=
-				M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+#endif
+
+	/*
+	 * Checksum Offload
+	 */
+
+	if (ISSET(status, IXGBE_RXD_STAT_IPCS)) {
+		if (ISSET(errors, IXGBE_RXD_ERR_IPE))
+			SET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_BAD);
+		else
+			SET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_IN_OK);
+	}
+	if (ISSET(status, IXGBE_RXD_STAT_L4CS) &&
+	    !ISSET(status, IXGBE_RXD_STAT_UDPCS)) {
+		if (ISSET(errors, IXGBE_RXD_ERR_TCPE)) {
+			/* on some hardware IPv6 + TCP + Bad is broken */
+			if (ISSET(status, IXGBE_RXD_STAT_IPCS))
+				SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_BAD);
+		} else
+			SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK);
+	}
+	if (ISSET(status, IXGBE_RXD_STAT_L4CS) &&
+	    ISSET(status, IXGBE_RXD_STAT_UDPCS)) {
+		if (ISSET(errors, IXGBE_RXD_ERR_TCPE))
+			SET(m->m_pkthdr.csum_flags, M_UDP_CSUM_IN_BAD);
+		else
+			SET(m->m_pkthdr.csum_flags, M_UDP_CSUM_IN_OK);
+	}
+
+	/*
+	 * TCP Large Receive Offload
+	 */
+
+	pkts = m->m_pkthdr.ph_mss;
+	m->m_pkthdr.ph_mss = 0;
+
+	if (pkts > 1) {
+		struct ether_extracted ext;
+		uint32_t paylen;
+
+		/*
+		 * Calculate the payload size:
+		 *
+		 * The packet length returned by the NIC (m->m_pkthdr.len)
+		 * can contain padding, which we don't want to count in to the
+		 * payload size.  Therefore, we calculate the real payload size
+		 * based on the total ip length field (ext.iplen).
+		 */
+		ether_extract_headers(m, &ext);
+		paylen = ext.iplen;
+		if (ext.ip4 || ext.ip6)
+			paylen -= ext.iphlen;
+		if (ext.tcp) {
+			paylen -= ext.tcphlen;
+			tcpstat_inc(tcps_inhwlro);
+			tcpstat_add(tcps_inpktlro, pkts);
+		} else {
+			tcpstat_inc(tcps_inbadlro);
+		}
+
+		/*
+		 * If we gonna forward this packet, we have to mark it as TSO,
+		 * set a correct mss, and recalculate the TCP checksum.
+		 */
+		if (ext.tcp && paylen >= pkts) {
+			SET(m->m_pkthdr.csum_flags, M_TCP_TSO);
+			m->m_pkthdr.ph_mss = paylen / pkts;
+		}
+		if (ext.tcp && ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK))
+			SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
 	}
 }
 
