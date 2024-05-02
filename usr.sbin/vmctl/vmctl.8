@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.76 2024/02/16 01:48:06 jsg Exp $
+.\"	$OpenBSD: vmctl.8,v 1.77 2024/05/02 15:46:10 mlarkin Exp $
 .\"
 .\" Copyright (c) 2015-2024 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2024 $
+.Dd $Mdocdate: May 2 2024 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -245,9 +245,12 @@ The instance will inherit settings from the parent VM,
 except for exclusive options such as disk, interface lladdr, and
 interface names.
 .El
-.It Cm status Op Ar id
+.It Cm status Oo Fl r Oc Op Ar id
 List VMs running on the host, optionally listing just the selected VM
 .Ar id .
+If the
+.Fl r
+flag is present, the output will only contain running VMs.
 .It Cm stop Oo Fl fw Oc Oo Fl a | Ar id Oc
 Stop (terminate) a VM defined by the specified VM
 .Ar id

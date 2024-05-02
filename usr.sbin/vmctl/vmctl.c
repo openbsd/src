@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.89 2023/11/09 12:26:08 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.90 2024/05/02 15:46:10 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -779,6 +779,7 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 	char user[16], group[16];
 	const char *name;
 	int running;
+	extern int stat_rflag;
 
 	printf("%5s %5s %5s %7s %7s %7s %12s %8s %s\n", "ID", "PID", "VCPUS",
 	    "MAXMEM", "CURMEM", "TTY", "OWNER", "STATE", "NAME");
@@ -787,6 +788,8 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 		vmi = &list[i];
 		vir = &vmi->vir_info;
 		running = (vir->vir_creator_pid != 0 && vir->vir_id != 0);
+		if (!running && stat_rflag)
+			continue;
 		if (check_info_id(vir->vir_name, vir->vir_id)) {
 			/* get user name */
 			name = user_from_uid(vmi->vir_uid, 1);
