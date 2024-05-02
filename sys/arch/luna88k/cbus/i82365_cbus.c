@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_cbus.c,v 1.7 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: i82365_cbus.c,v 1.8 2024/05/02 09:38:59 aoyama Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -77,7 +77,7 @@
 #define  PCIC_CIRRUS_MISC_CTL_1_PULSE_SYS_IRQ	0x08
 
 #define PCEXMEM_BASE		PC_BASE
-#define PCEXIO_BASE		PC_BASE + 0x1000000		
+#define PCEXIO_BASE		PC_BASE + 0x1000000
 
 /* prototypes */
 void	*pcic_cbus_chip_intr_establish(pcmcia_chipset_handle_t,
@@ -177,8 +177,8 @@ pcic_cbus_probe(parent, match, aux)
 	bus_size_t msize;
 	int val, found;
 
-        if (strcmp(caa->ca_name, cf->cf_driver->cd_name) != 0)
-                return (0);
+	if (strcmp(caa->ca_name, cf->cf_driver->cd_name) != 0)
+		return (0);
 
 	SET_TAG_LITTLE_ENDIAN(iot);
 	SET_TAG_LITTLE_ENDIAN(memt);
@@ -449,7 +449,7 @@ pcic_cbus_intlevel_find(void)
 	u_int8_t cbus_not_used = ~cbus_intr_registered();
 
 	for (intlevel = 0; intlevel < NCBUSISR; intlevel++)
-		if (cbus_not_used & (1 << (6 - intlevel))) { 
+		if (cbus_not_used & (1 << (6 - intlevel))) {
 			irq = pcic_cbus_int2irq[intlevel];
 			if ((1 << irq) & PCIC_INTR_IRQ_VALIDMASK)
 				break;
@@ -489,7 +489,7 @@ pcic_cbus_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 		DPRINTF(("pcic_cbus_chip_io_alloc map port %lx+%lx\n",
 		    (u_long)ioaddr, (u_long)size));
 	} else if (sc->ranges) {
- 		/*
+		/*
 		 * In this case, we know the "size" and "align" that
 		 * we want.  So we need to start walking down
 		 * sc->ranges, searching for a similar space that
@@ -541,7 +541,7 @@ pcic_cbus_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 	return (0);
 }
 
-void 
+void
 pcic_cbus_chip_io_free(pcmcia_chipset_handle_t pch,
     struct pcmcia_io_handle *pcihp)
 {

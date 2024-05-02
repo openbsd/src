@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hw.c,v 1.9 2022/11/02 10:41:34 kn Exp $	*/
+/*	$OpenBSD: nec86hw.c,v 1.10 2024/05/02 09:38:59 aoyama Exp $	*/
 /*	$NecBSD: nec86hw.c,v 1.13 1998/03/14 07:04:54 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -108,7 +108,7 @@ static struct nec86hw_functable_entry nec86hw_functable[] = {
 	/* precision, channels,
 	   output function, input function (without resampling),
 	   output function, input function (with resampling) */
-	{ 8, 1, 
+	{ 8, 1,
 	    nec86fifo_output_mono_8_direct, nec86fifo_input_mono_8_direct },
 	{ 16, 1,
 	    nec86fifo_output_mono_16_direct, nec86fifo_input_mono_16_direct },
@@ -894,7 +894,7 @@ nec86hw_output_chunk(struct nec86hw_softc *sc)
 
 		sc->pdma_nchunk--;
 		sc->pdma_count -= cc;
-		sc->pdma_ptr += nbyte; 
+		sc->pdma_ptr += nbyte;
 	} else {
 		/* ??? -  This should never happen. */
 		nbyte = 0;
