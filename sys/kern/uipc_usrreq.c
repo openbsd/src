@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.204 2024/04/10 12:04:41 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.205 2024/05/02 17:10:55 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -459,9 +459,9 @@ uipc_shutdown(struct socket *so)
 
 	socantsendmore(so);
 
-	if ((so2 = unp_solock_peer(unp->unp_socket))){
+	if (unp->unp_conn != NULL) {
+		so2 = unp->unp_conn->unp_socket;
 		socantrcvmore(so2);
-		sounlock(so2);
 	}
 
 	return (0);
