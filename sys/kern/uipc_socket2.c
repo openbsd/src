@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.151 2024/04/30 17:59:15 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.152 2024/05/02 21:26:52 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -334,7 +334,7 @@ socantsendmore(struct socket *so)
 void
 socantrcvmore(struct socket *so)
 {
-	if ((so->so_rcv.sb_flags & SB_OWNLOCK) == 0)
+	if ((so->so_rcv.sb_flags & SB_MTXLOCK) == 0)
 		soassertlocked(so);
 
 	mtx_enter(&so->so_rcv.sb_mtx);
