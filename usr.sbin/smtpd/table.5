@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.13 2023/12/27 11:29:56 op Exp $
+.\"	$OpenBSD: table.5,v 1.14 2024/05/02 18:14:33 op Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 27 2023 $
+.Dd $Mdocdate: May 2 2024 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -173,10 +173,11 @@ of addresses in the table until a match is found.
 A netaddr table can contain exact addresses or netmasks, and looks as follow:
 .Bd -literal -offset indent
 192.168.1.1
-::1
-ipv6:::1
+[::1]
 192.168.1.0/24
 .Ed
+.Pp
+IPv6 addresses must be enclosed in square brackets.
 .Ss Userinfo tables
 Userinfo tables are used in rule context to specify an alternate userbase,
 mapping virtual users to local system users by UID, GID and home directory.
@@ -214,11 +215,11 @@ A source table looks as follow:
 .Bd -literal -offset indent
 192.168.1.2
 192.168.1.3
-::1
-::2
-ipv6:::3
-ipv6:::4
+[::1]
+[::2]
 .Ed
+.Pp
+IPv6 address must be enclosed in square brackets.
 .Ss Mailaddr tables
 Mailaddr tables are lists of email addresses.
 They can be used in the following contexts:
@@ -254,10 +255,12 @@ outgoing connection.
 .Pp
 The format is a mapping from inet4 or inet6 addresses to hostnames:
 .Bd -literal -offset indent
-::1		localhost
+[::1]		localhost
 127.0.0.1	localhost
 88.190.23.165	www.opensmtpd.org
 .Ed
+.Pp
+IPv6 addresses must be enclosed in square brackets.
 .Sh SEE ALSO
 .Xr smtpd.conf 5 ,
 .Xr makemap 8 ,

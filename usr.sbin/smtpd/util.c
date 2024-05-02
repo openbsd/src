@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.156 2024/02/11 09:24:26 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.157 2024/05/02 18:14:33 op Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -855,7 +855,7 @@ int
 parse_table_line(FILE *fp, char **line, size_t *linesize,
     int *type, char **key, char **val, int *malformed)
 {
-	char	*keyp, *valp, *p;
+	char	*keyp, *valp;
 	ssize_t	 linelen;
 
 	*key = NULL;
@@ -885,16 +885,17 @@ parse_table_line(FILE *fp, char **line, size_t *linesize,
 		return 0;
 	}
 
-	if (*type == T_NONE) {
-		for (p = keyp; *p; p++) {
-			if (*p == ' ' || *p == '\t' || *p == ':') {
-				*type = T_HASH;
-				break;
-			}
+	if (*keyp == '[') {
+		if ((valp = strchr(keyp, ']')) == NULL) {
+			*malformed = 1;
+			return (0);
 		}
-		if (*type == T_NONE)
-			*type = T_LIST;
-	}
+		valp++;
+	} else
+		valp = keyp + strcspn(keyp, " \t:");
+
+	if (*type == T_NONE)
+		*type = (*valp == '\0') ? T_LIST : T_HASH;
 
 	if (*type == T_LIST) {
 		*key = keyp;
@@ -902,20 +903,11 @@ parse_table_line(FILE *fp, char **line, size_t *linesize,
 	}
 
 	/* T_HASH */
-	valp = keyp;
-	strsep(&valp, " \t:");
-	if (valp) {
-		while (*valp) {
-			if (!isspace((unsigned char)*valp) &&
-			    !(*valp == ':' &&
-			    isspace((unsigned char)*(valp + 1))))
-				break;
-			++valp;
-		}
-		if (*valp == '\0')
-			valp = NULL;
+	if (*valp != '\0') {
+		*valp++ = '\0';
+		valp += strspn(valp, " \t");
 	}
-	if (valp == NULL)
+	if (*valp == '\0')
 		*malformed = 1;
 
 	*key = keyp;
