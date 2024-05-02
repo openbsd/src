@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.331 2024/04/30 17:59:15 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.332 2024/05/02 11:55:31 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1426,7 +1426,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if (sosp->so_sp == NULL)
 		sosp->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
 
-	if ((error = sblock(so, &sosp->so_snd, SBL_WAIT)) != 0) {
+	if ((error = sblock(sosp, &sosp->so_snd, SBL_WAIT)) != 0) {
 		goto out;
 	}
 
