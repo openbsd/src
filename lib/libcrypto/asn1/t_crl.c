@@ -1,4 +1,4 @@
-/* $OpenBSD: t_crl.c,v 1.25 2024/05/02 15:33:59 tb Exp $ */
+/* $OpenBSD: t_crl.c,v 1.26 2024/05/03 02:52:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -96,9 +96,15 @@ X509_CRL_print(BIO *out, X509_CRL *x)
 
 	BIO_printf(out, "Certificate Revocation List (CRL):\n");
 	l = X509_CRL_get_version(x);
-	if (l < 0 || l == LONG_MAX)
-		goto err;
-	BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l + 1, l);
+	if (l >= 0 && l <= 1) {
+		if (BIO_printf(out, "%8sVersion: %lu (0x%lx)\n",
+		    "", l + 1, l) <= 0)
+			goto err;
+	} else {
+		if (BIO_printf(out, "%8sVersion: unknown (%ld)\n",
+		    "", l) <= 0)
+			goto err;
+	}
 	if (X509_signature_print(out, x->sig_alg, NULL) == 0)
 		goto err;
 	p = X509_NAME_oneline(X509_CRL_get_issuer(x), NULL, 0);

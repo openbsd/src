@@ -1,4 +1,4 @@
-/* $OpenBSD: t_req.c,v 1.27 2024/04/09 13:55:02 beck Exp $ */
+/* $OpenBSD: t_req.c,v 1.28 2024/05/03 02:52:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,7 +99,6 @@ X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 {
 	unsigned long l;
 	int i;
-	const char *neg;
 	X509_REQ_INFO *ri;
 	EVP_PKEY *pkey;
 	STACK_OF(X509_ATTRIBUTE) *sk;
@@ -124,15 +123,14 @@ X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 			goto err;
 	}
 	if (!(cflag & X509_FLAG_NO_VERSION)) {
-		neg = (ri->version->type == V_ASN1_NEG_INTEGER) ? "-" : "";
-		l = 0;
-		for (i = 0; i < ri->version->length; i++) {
-			l <<= 8;
-			l += ri->version->data[i];
+		if ((l = X509_REQ_get_version(x)) == 0) {
+			if (BIO_printf(bp, "%8sVersion: 1 (0x0)\n", "") <= 0)
+				goto err;
+		} else {
+			if (BIO_printf(bp, "%8sVersion: unknown (%ld)\n",
+			    "", l) <= 0)
+				goto err;
 		}
-		if (BIO_printf(bp, "%8sVersion: %s%lu (%s0x%lx)\n", "", neg,
-		    l, neg, l) <= 0)
-			goto err;
 	}
 	if (!(cflag & X509_FLAG_NO_SUBJECT)) {
 		if (BIO_printf(bp, "        Subject:%c", mlch) <= 0)
