@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.19 2024/04/25 08:51:37 jmatthew Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.20 2024/05/03 13:02:18 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -643,6 +643,66 @@ dwqe_tx_proc(struct dwqe_softc *sc)
 	}
 }
 
+int
+dwqe_have_rx_csum_offload(struct dwqe_softc *sc)
+{
+	return (sc->sc_hw_feature[0] & GMAC_MAC_HW_FEATURE0_RXCOESEL);
+}
+
+void
+dwqe_rx_csum(struct dwqe_softc *sc, struct mbuf *m, struct dwqe_desc *rxd)
+{
+	uint16_t csum_flags = 0;
+
+	/*
+	 * Checksum offload must be supported, the Last-Descriptor bit
+	 * must be set, RDES1 must be valid, and checksumming must not
+	 * have been bypassed (happens for unknown packet types), and
+	 * an IP header must have been detected.
+	 */
+	if (!dwqe_have_rx_csum_offload(sc) ||
+	    (rxd->sd_tdes3 & RDES3_LD) == 0 ||
+	    (rxd->sd_tdes3 & RDES3_RDES1_VALID) == 0 ||
+	    (rxd->sd_tdes1 & RDES1_IP_CSUM_BYPASS) ||
+	    (rxd->sd_tdes1 & (RDES1_IPV4_HDR | RDES1_IPV6_HDR)) == 0)
+		return;
+
+	/* If the IP header checksum is invalid then the payload is ignored. */
+	if (rxd->sd_tdes1 & RDES1_IP_HDR_ERROR) {
+		if (rxd->sd_tdes1 & RDES1_IPV4_HDR)
+			csum_flags |= M_IPV4_CSUM_IN_BAD;
+	} else {
+		if (rxd->sd_tdes1 & RDES1_IPV4_HDR)
+			csum_flags |= M_IPV4_CSUM_IN_OK;
+
+		/* Detect payload type and corresponding checksum errors. */
+		switch (rxd->sd_tdes1 & RDES1_IP_PAYLOAD_TYPE) {
+		case RDES1_IP_PAYLOAD_UDP:
+			if (rxd->sd_tdes1 & RDES1_IP_PAYLOAD_ERROR)
+				csum_flags |= M_UDP_CSUM_IN_BAD;
+			else
+				csum_flags |= M_UDP_CSUM_IN_OK;
+			break;
+		case RDES1_IP_PAYLOAD_TCP:
+			if (rxd->sd_tdes1 & RDES1_IP_PAYLOAD_ERROR)
+				csum_flags |= M_TCP_CSUM_IN_BAD;
+			else
+				csum_flags |= M_TCP_CSUM_IN_OK;
+			break;
+		case RDES1_IP_PAYLOAD_ICMP:
+			if (rxd->sd_tdes1 & RDES1_IP_PAYLOAD_ERROR)
+				csum_flags |= M_ICMP_CSUM_IN_BAD;
+			else
+				csum_flags |= M_ICMP_CSUM_IN_OK;
+			break;
+		default:
+			break;
+		}
+	}
+
+	m->m_pkthdr.csum_flags |= csum_flags;
+}
+
 void
 dwqe_rx_proc(struct dwqe_softc *sc)
 {
@@ -691,6 +751,7 @@ dwqe_rx_proc(struct dwqe_softc *sc)
 
 			m->m_pkthdr.len = m->m_len = len;
 
+			dwqe_rx_csum(sc, m, rxd);
 			ml_enqueue(&ml, m);
 		}
 
@@ -866,6 +927,12 @@ dwqe_up(struct dwqe_softc *sc)
 
 	if (!sc->sc_fixed_link)
 		timeout_add_sec(&sc->sc_phy_tick, 1);
+
+	if (dwqe_have_rx_csum_offload(sc)) {
+		reg = dwqe_read(sc, GMAC_MAC_CONF);
+		reg |= GMAC_MAC_CONF_IPC;
+		dwqe_write(sc, GMAC_MAC_CONF, reg);
+	}
 }
 
 void
