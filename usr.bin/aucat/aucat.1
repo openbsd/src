@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.120 2024/03/20 08:42:11 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.121 2024/05/03 16:48:41 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2024 $
+.Dd $Mdocdate: May 3 2024 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -224,26 +224,26 @@ MIDI control is intended to be used together with
 .Xr sndiod 8 .
 For instance, the following command will create two devices:
 the default
-.Va snd/0
+.Va snd/default
 and a MMC-controlled one
-.Va snd/0.mmc :
+.Va snd/defaul.mmc :
 .Bd -literal -offset indent
 $ sndiod -r 48000 -z 480 -s default -t slave -s mmc
 .Ed
 .Pp
 Programs using
-.Va snd/0
+.Va snd/default
 behave normally, while programs using
-.Va snd/0.mmc
+.Va snd/mmc
 wait for the MMC start signal and start synchronously.
 Then, the following command will play a file on the
-.Va snd/0.mmc
+.Va snd/mmc
 audio device, giving full control to MIDI software or hardware
 connected to the
 .Va midithru/0
 MIDI port:
 .Bd -literal -offset indent
-$ aucat -f snd/0.mmc -q midithru/0 -i file.wav
+$ aucat -f snd/mmc -q midithru/0 -i file.wav
 .Ed
 .Pp
 At this stage,
@@ -253,9 +253,9 @@ actions in the MIDI sequencer, assuming it's configured to
 transmit MMC on
 .Va midithru/0
 and
-.Va snd/0.mmc .
+.Va snd/mmc .
 Furthermore, the MIDI sequencer could be configured to use the
-.Va snd/0.mmc
+.Va snd/mmc
 port as MTC clock source, assured to be synchronous to playback of
 .Pa file.wav .
 .Sh EXAMPLES
