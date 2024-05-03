@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.39 2024/05/03 18:15:27 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.40 2024/05/03 18:22:26 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -322,15 +322,14 @@ static int
 ASN1_TIME_set_string_internal(ASN1_TIME *s, const char *str, int mode)
 {
 	struct tm tm;
-	int type;
 
-	if ((type = ASN1_time_parse(str, strlen(str), &tm, mode)) == -1)
+	if (ASN1_time_parse(str, strlen(str), &tm, mode) == -1)
 		return 0;
 	switch (mode) {
 	case V_ASN1_UTCTIME:
-		return type == mode && tm_to_utctime(&tm, s);
+		return tm_to_utctime(&tm, s);
 	case V_ASN1_GENERALIZEDTIME:
-		return type == mode && tm_to_gentime(&tm, s);
+		return tm_to_gentime(&tm, s);
 	case RFC5280:
 		return tm_to_rfc5280_time(&tm, s);
 	default:
