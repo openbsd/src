@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.58 2024/03/09 23:29:53 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.59 2024/05/03 14:32:11 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -206,10 +206,6 @@ qwx_init(struct ifnet *ifp)
 	if (error)
 		return error;
 
-	/* Configure channel information obtained from firmware. */
-	ieee80211_channel_init(ifp);
-	ieee80211_media_init(ifp, qwx_media_change, ieee80211_media_status);
-
 	if (sc->attached) {
 		/* Update MAC in case the upper layers changed it. */
 		IEEE80211_ADDR_COPY(ic->ic_myaddr,
@@ -217,12 +213,18 @@ qwx_init(struct ifnet *ifp)
 	} else {
 		sc->attached = 1;
 
+		/* Configure channel information obtained from firmware. */
+		ieee80211_channel_init(ifp);
+
 		/* Configure initial MAC address. */
 		error = if_setlladdr(ifp, ic->ic_myaddr);
 		if (error)
 			printf("%s: could not set MAC address %s: %d\n",
 			    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr),
 			    error);
+
+		ieee80211_media_init(ifp, qwx_media_change,
+		    ieee80211_media_status);
 	}
 
 	if (ifp->if_flags & IFF_UP) {
@@ -24336,6 +24338,13 @@ qwx_scan(struct qwx_softc *sc)
 #ifdef notyet
 		spin_unlock_bh(&ar->data_lock);
 #endif
+	} else {
+		/*
+		 * The current mode might have been fixed during association.
+		 * Ensure all channels get scanned.
+		 */
+		if (IFM_SUBTYPE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
+			ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
 	}
 #if 0
 	timeout_add_msec(&sc->scan.timeout, scan_timeout);
