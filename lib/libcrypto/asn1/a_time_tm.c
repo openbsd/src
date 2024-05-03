@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.40 2024/05/03 18:22:26 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.41 2024/05/03 18:29:43 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -325,6 +325,11 @@ ASN1_TIME_set_string_internal(ASN1_TIME *s, const char *str, int mode)
 
 	if (ASN1_time_parse(str, strlen(str), &tm, mode) == -1)
 		return 0;
+
+	/* Only check str's format, as documented. */
+	if (s == NULL)
+		return 1;
+
 	switch (mode) {
 	case V_ASN1_UTCTIME:
 		return tm_to_utctime(&tm, s);
