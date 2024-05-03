@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.25 2024/04/29 14:47:05 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.26 2024/05/03 13:48:29 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -91,10 +91,6 @@ int vcpu_run_svm(struct vcpu *, struct vm_run_params *);
 void vcpu_deinit(struct vcpu *);
 void vcpu_deinit_svm(struct vcpu *);
 void vcpu_deinit_vmx(struct vcpu *);
-int vm_impl_init(struct vm *, struct proc *);
-int vm_impl_init_vmx(struct vm *, struct proc *);
-int vm_impl_init_svm(struct vm *, struct proc *);
-void vm_impl_deinit(struct vm *);
 int vcpu_vmx_check_cap(struct vcpu *, uint32_t, uint32_t, int);
 int vcpu_vmx_compute_ctrl(uint64_t, uint16_t, uint32_t, uint32_t, uint32_t *);
 int vmx_get_exit_info(uint64_t *, uint64_t *);
@@ -1205,146 +1201,71 @@ vmx_remote_vmclear(struct cpu_info *ci, struct vcpu *vcpu)
 #endif /* MULTIPROCESSOR */
 
 /*
- * vm_impl_init_vmx
- *
- * Intel VMX specific VM initialization routine
- *
- * Parameters:
- *  vm: the VM being initialized
- *   p: vmd process owning the VM
- *
- * Return values:
- *  0: the initialization was successful
- *  ENOMEM: the initialization failed (lack of resources)
- */
-int
-vm_impl_init_vmx(struct vm *vm, struct proc *p)
-{
-	int i, ret;
-	vaddr_t mingpa, maxgpa;
-	struct vm_mem_range *vmr;
-
-	/* If not EPT, nothing to do here */
-	if (vmm_softc->mode != VMM_MODE_EPT)
-		return (0);
-
-	vmr = &vm->vm_memranges[0];
-	mingpa = vmr->vmr_gpa;
-	vmr = &vm->vm_memranges[vm->vm_nmemranges - 1];
-	maxgpa = vmr->vmr_gpa + vmr->vmr_size;
-
-	/*
-	 * uvmspace_alloc (currently) always returns a valid vmspace
-	 */
-	vm->vm_vmspace = uvmspace_alloc(mingpa, maxgpa, TRUE, FALSE);
-	vm->vm_map = &vm->vm_vmspace->vm_map;
-
-	/* Map the new map with an anon */
-	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
-	for (i = 0; i < vm->vm_nmemranges; i++) {
-		vmr = &vm->vm_memranges[i];
-		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,
-		    PROT_READ | PROT_WRITE | PROT_EXEC,
-		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
-		if (ret) {
-			printf("%s: uvm_share failed (%d)\n", __func__, ret);
-			/* uvmspace_free calls pmap_destroy for us */
-			uvmspace_free(vm->vm_vmspace);
-			vm->vm_vmspace = NULL;
-			return (ENOMEM);
-		}
-	}
-
-	pmap_convert(vm->vm_map->pmap, PMAP_TYPE_EPT);
-
-	return (0);
-}
-
-/*
- * vm_impl_init_svm
- *
- * AMD SVM specific VM initialization routine
- *
- * Parameters:
- *  vm: the VM being initialized
- *   p: vmd process owning the VM
- *
- * Return values:
- *  0: the initialization was successful
- *  ENOMEM: the initialization failed (lack of resources)
- */
-int
-vm_impl_init_svm(struct vm *vm, struct proc *p)
-{
-	int i, ret;
-	vaddr_t mingpa, maxgpa;
-	struct vm_mem_range *vmr;
-
-	/* If not RVI, nothing to do here */
-	if (vmm_softc->mode != VMM_MODE_RVI)
-		return (0);
-
-	vmr = &vm->vm_memranges[0];
-	mingpa = vmr->vmr_gpa;
-	vmr = &vm->vm_memranges[vm->vm_nmemranges - 1];
-	maxgpa = vmr->vmr_gpa + vmr->vmr_size;
-
-	/*
-	 * uvmspace_alloc (currently) always returns a valid vmspace
-	 */
-	vm->vm_vmspace = uvmspace_alloc(mingpa, maxgpa, TRUE, FALSE);
-	vm->vm_map = &vm->vm_vmspace->vm_map;
-
-	/* Map the new map with an anon */
-	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
-	for (i = 0; i < vm->vm_nmemranges; i++) {
-		vmr = &vm->vm_memranges[i];
-		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,
-		    PROT_READ | PROT_WRITE | PROT_EXEC,
-		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
-		if (ret) {
-			printf("%s: uvm_share failed (%d)\n", __func__, ret);
-			/* uvmspace_free calls pmap_destroy for us */
-			uvmspace_free(vm->vm_vmspace);
-			vm->vm_vmspace = NULL;
-			return (ENOMEM);
-		}
-	}
-
-	/* Convert pmap to RVI */
-	pmap_convert(vm->vm_map->pmap, PMAP_TYPE_RVI);
-
-	return (0);
-}
-
-/*
  * vm_impl_init
  *
- * Calls the architecture-specific VM init routine
+ * VM address space initialization routine
  *
  * Parameters:
  *  vm: the VM being initialized
  *   p: vmd process owning the VM
  *
- * Return values (from architecture-specific init routines):
+ * Return values:
  *  0: the initialization was successful
+ *  EINVAL: unsupported vmm mode
  *  ENOMEM: the initialization failed (lack of resources)
  */
 int
 vm_impl_init(struct vm *vm, struct proc *p)
 {
-	int ret;
+	int i, mode, ret;
+	vaddr_t mingpa, maxgpa;
+	struct vm_mem_range *vmr;
 
-	KERNEL_LOCK();
-	if (vmm_softc->mode == VMM_MODE_EPT)
-		ret = vm_impl_init_vmx(vm, p);
-	else if	(vmm_softc->mode == VMM_MODE_RVI)
-		ret = vm_impl_init_svm(vm, p);
-	else
-		panic("%s: unknown vmm mode: %d", __func__, vmm_softc->mode);
-	KERNEL_UNLOCK();
+	/* If not EPT or RVI, nothing to do here */
+	switch (vmm_softc->mode) {
+	case VMM_MODE_EPT:
+		mode = PMAP_TYPE_EPT;
+		break;
+	case VMM_MODE_RVI:
+		mode = PMAP_TYPE_RVI;
+		break;
+	default:
+		printf("%s: invalid vmm mode %d\n", __func__, vmm_softc->mode);
+		return (EINVAL);
+	}
 
-	return (ret);
+	vmr = &vm->vm_memranges[0];
+	mingpa = vmr->vmr_gpa;
+	vmr = &vm->vm_memranges[vm->vm_nmemranges - 1];
+	maxgpa = vmr->vmr_gpa + vmr->vmr_size;
+
+	/*
+	 * uvmspace_alloc (currently) always returns a valid vmspace
+	 */
+	vm->vm_vmspace = uvmspace_alloc(mingpa, maxgpa, TRUE, FALSE);
+	vm->vm_map = &vm->vm_vmspace->vm_map;
+
+	/* Map the new map with an anon */
+	DPRINTF("%s: created vm_map @ %p\n", __func__, vm->vm_map);
+	for (i = 0; i < vm->vm_nmemranges; i++) {
+		vmr = &vm->vm_memranges[i];
+		ret = uvm_share(vm->vm_map, vmr->vmr_gpa,
+		    PROT_READ | PROT_WRITE | PROT_EXEC,
+		    &p->p_vmspace->vm_map, vmr->vmr_va, vmr->vmr_size);
+		if (ret) {
+			printf("%s: uvm_share failed (%d)\n", __func__, ret);
+			/* uvmspace_free calls pmap_destroy for us */
+			KERNEL_LOCK();
+			uvmspace_free(vm->vm_vmspace);
+			vm->vm_vmspace = NULL;
+			KERNEL_UNLOCK();
+			return (ENOMEM);
+		}
+	}
+
+	pmap_convert(vm->vm_map->pmap, mode);
+
+	return (0);
 }
 
 void

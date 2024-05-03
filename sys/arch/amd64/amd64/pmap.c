@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.166 2024/04/03 18:43:32 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.167 2024/05/03 13:48:29 dv Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3119,6 +3119,7 @@ pmap_convert(struct pmap *pmap, int mode)
 {
 	pt_entry_t *pte;
 
+	mtx_enter(&pmap->pm_mtx);
 	pmap->pm_type = mode;
 
 	if (mode == PMAP_TYPE_EPT) {
@@ -3132,6 +3133,7 @@ pmap_convert(struct pmap *pmap, int mode)
 			pmap->pm_pdir_intel = NULL;
 		}
 	}
+	mtx_leave(&pmap->pm_mtx);
 }
 
 #ifdef MULTIPROCESSOR
