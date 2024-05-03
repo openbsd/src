@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.38 2024/04/11 06:49:19 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.39 2024/05/03 18:15:27 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -293,7 +293,6 @@ asn1_time_parse_cbs(const CBS *cbs, int is_gentime, struct tm *out_tm)
 int
 ASN1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 {
-	struct tm tml, *tmp = tm ? tm : &tml;
 	int type = 0;
 	CBS cbs;
 
@@ -306,7 +305,7 @@ ASN1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 		type = V_ASN1_UTCTIME;
 	if (CBS_len(&cbs) == GENTIME_LENGTH)
 		type = V_ASN1_GENERALIZEDTIME;
-	if (asn1_time_parse_cbs(&cbs, type == V_ASN1_GENERALIZEDTIME, tmp)) {
+	if (asn1_time_parse_cbs(&cbs, type == V_ASN1_GENERALIZEDTIME, tm)) {
 		if (mode != 0 && mode != type)
 			return -1;
 		return type;
