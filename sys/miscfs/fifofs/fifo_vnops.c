@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.104 2024/03/26 09:46:47 mvs Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.105 2024/05/03 17:43:09 mvs Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -174,10 +174,10 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_readers = fip->fi_writers = 0;
-		solock(wso);
+		mtx_enter(&wso->so_snd.sb_mtx);
 		wso->so_snd.sb_state |= SS_CANTSENDMORE;
 		wso->so_snd.sb_lowat = PIPE_BUF;
-		sounlock(wso);
+		mtx_leave(&wso->so_snd.sb_mtx);
 	} else {
 		rso = fip->fi_readsock;
 		wso = fip->fi_writesock;
@@ -185,9 +185,9 @@ fifo_open(void *v)
 	if (ap->a_mode & FREAD) {
 		fip->fi_readers++;
 		if (fip->fi_readers == 1) {
-			solock(wso);
+			mtx_enter(&wso->so_snd.sb_mtx);
 			wso->so_snd.sb_state &= ~SS_CANTSENDMORE;
-			sounlock(wso);
+			mtx_leave(&wso->so_snd.sb_mtx);
 			if (fip->fi_writers > 0)
 				wakeup(&fip->fi_writers);
 		}
@@ -554,7 +554,6 @@ filt_fifowrite(struct knote *kn, long hint)
 	struct socket *so = kn->kn_hook;
 	int rv;
 
-	soassertlocked(so);
 	MUTEX_ASSERT_LOCKED(&so->so_snd.sb_mtx);
 
 	kn->kn_data = sbspace(so, &so->so_snd);
@@ -625,11 +624,9 @@ filt_fifowmodify(struct kevent *kev, struct knote *kn)
 	struct socket *so = kn->kn_hook;
 	int rv;
 
-	solock(so);
 	mtx_enter(&so->so_snd.sb_mtx);
 	rv = knote_modify(kev, kn);
 	mtx_leave(&so->so_snd.sb_mtx);
-	sounlock(so);
 
 	return (rv);
 }
@@ -640,11 +637,9 @@ filt_fifowprocess(struct knote *kn, struct kevent *kev)
 	struct socket *so = kn->kn_hook;
 	int rv;
 
-	solock(so);
 	mtx_enter(&so->so_snd.sb_mtx);
 	rv = knote_process(kn, kev);
 	mtx_leave(&so->so_snd.sb_mtx);
-	sounlock(so);
 
 	return (rv);
 }

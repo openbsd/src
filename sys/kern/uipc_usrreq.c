@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.205 2024/05/02 17:10:55 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.206 2024/05/03 17:43:09 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -477,20 +477,24 @@ uipc_dgram_shutdown(struct socket *so)
 void
 uipc_rcvd(struct socket *so)
 {
+	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
 
-	if ((so2 = unp_solock_peer(so)) == NULL)
+	if (unp->unp_conn == NULL)
 		return;
+	so2 = unp->unp_conn->unp_socket;
+
 	/*
 	 * Adjust backpressure on sender
 	 * and wakeup any waiting to write.
 	 */
 	mtx_enter(&so->so_rcv.sb_mtx);
+	mtx_enter(&so2->so_snd.sb_mtx);
 	so2->so_snd.sb_mbcnt = so->so_rcv.sb_mbcnt;
 	so2->so_snd.sb_cc = so->so_rcv.sb_cc;
+	mtx_leave(&so2->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
 	sowwakeup(so2);
-	sounlock(so2);
 }
 
 int
@@ -509,10 +513,6 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			goto out;
 	}
 
-	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
-		error = EPIPE;
-		goto dispose;
-	}
 	if (unp->unp_conn == NULL) {
 		error = ENOTCONN;
 		goto dispose;
@@ -525,11 +525,23 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	 * send buffer counts to maintain backpressure.
 	 * Wake up readers.
 	 */
+	/*
+	 * sbappend*() should be serialized together
+	 * with so_snd modification.
+	 */
 	mtx_enter(&so2->so_rcv.sb_mtx);
+	mtx_enter(&so->so_snd.sb_mtx);
+	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
+		mtx_leave(&so->so_snd.sb_mtx);
+		mtx_leave(&so2->so_rcv.sb_mtx);
+		error = EPIPE;
+		goto dispose;
+	}
 	if (control) {
 		if (sbappendcontrol(so2, &so2->so_rcv, m, control)) {
 			control = NULL;
 		} else {
+			mtx_leave(&so->so_snd.sb_mtx);
 			mtx_leave(&so2->so_rcv.sb_mtx);
 			error = ENOBUFS;
 			goto dispose;
@@ -542,6 +554,7 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	so->so_snd.sb_cc = so2->so_rcv.sb_cc;
 	if (so2->so_rcv.sb_cc > 0)
 		dowakeup = 1;
+	mtx_leave(&so->so_snd.sb_mtx);
 	mtx_leave(&so2->so_rcv.sb_mtx);
 
 	if (dowakeup)

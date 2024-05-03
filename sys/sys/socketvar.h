@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.129 2024/04/11 13:32:51 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.130 2024/05/03 17:43:09 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -134,8 +134,7 @@ struct socket {
 #define SB_ASYNC	0x0010		/* ASYNC I/O, need signals */
 #define SB_SPLICE	0x0020		/* buffer is splice source or drain */
 #define SB_NOINTR	0x0040		/* operations not interruptible */
-#define SB_MTXLOCK	0x0080		/* use sb_mtx for sockbuf protection */
-#define SB_OWNLOCK	0x0100		/* sblock() doesn't need solock() */
+#define SB_MTXLOCK	0x0080		/* sblock() doesn't need solock() */
 
 	void	(*so_upcall)(struct socket *so, caddr_t arg, int waitf);
 	caddr_t	so_upcallarg;		/* Arg for above */

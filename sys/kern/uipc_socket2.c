@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.152 2024/05/02 21:26:52 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.153 2024/05/03 17:43:09 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -228,9 +228,10 @@ sonewconn(struct socket *head, int connstatus, int wait)
 	 */
 	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat))
 		goto fail;
+
+	mtx_enter(&head->so_snd.sb_mtx);
 	so->so_snd.sb_wat = head->so_snd.sb_wat;
 	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
-	mtx_enter(&head->so_snd.sb_mtx);
 	so->so_snd.sb_timeo_nsecs = head->so_snd.sb_timeo_nsecs;
 	mtx_leave(&head->so_snd.sb_mtx);
 
@@ -543,7 +544,7 @@ sblock(struct socket *so, struct sockbuf *sb, int flags)
 {
 	int error = 0, prio = PSOCK;
 
-	if (sb->sb_flags & SB_OWNLOCK) {
+	if (sb->sb_flags & SB_MTXLOCK) {
 		int rwflags = RW_WRITE;
 
 		if (!(flags & SBL_NOINTR || sb->sb_flags & SB_NOINTR))
@@ -586,7 +587,7 @@ out:
 void
 sbunlock_locked(struct socket *so, struct sockbuf *sb)
 {
-	if (sb->sb_flags & SB_OWNLOCK) {
+	if (sb->sb_flags & SB_MTXLOCK) {
 		rw_exit(&sb->sb_lock);
 		return;
 	}
@@ -603,7 +604,7 @@ sbunlock_locked(struct socket *so, struct sockbuf *sb)
 void
 sbunlock(struct socket *so, struct sockbuf *sb)
 {
-	if (sb->sb_flags & SB_OWNLOCK) {
+	if (sb->sb_flags & SB_MTXLOCK) {
 		rw_exit(&sb->sb_lock);
 		return;
 	}
