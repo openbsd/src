@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.29 2021/11/01 14:43:25 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.30 2024/05/03 05:18:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -152,6 +152,23 @@ midi_link(struct midi *ep, struct midi *peer)
 		/* ep has empty buffer, so no need to call midi_tickets() */
 		peer->txmask |= ep->self;
 	}
+}
+
+/*
+ * return the list of endpoints the given one receives from
+ */
+unsigned int
+midi_rxmask(struct midi *ep)
+{
+	int i, rxmask;
+
+	for (rxmask = 0, i = 0; i < MIDI_NEP; i++) {
+		if ((midi_ep[i].txmask & ep->self) == 0)
+			continue;
+		rxmask |= midi_ep[i].self;
+	}
+
+	return rxmask;
 }
 
 /*

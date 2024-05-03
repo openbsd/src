@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.48 2022/03/07 08:58:33 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.49 2024/05/03 05:18:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -254,6 +254,89 @@ opt_mode(void)
 	return mode;
 }
 
+/*
+ * Open all devices. Possibly switch to the new devices if they have higher
+ * priorities than the current ones.
+ */
+static void
+reopen_devs(void)
+{
+	struct opt *o;
+	struct dev *d, *a;
+
+	for (o = opt_list; o != NULL; o = o->next) {
+
+		/* skip unused logical devices and ones with fixed hardware */
+		if (o->refcnt == 0 || strcmp(o->name, o->dev->name) == 0)
+			continue;
+
+		/* circulate to the device with the highest prio */
+		a = o->alt_first;
+		for (d = a; d->alt_next != a; d = d->alt_next) {
+			if (d->num > o->alt_first->num)
+				o->alt_first = d;
+		}
+
+		/* switch to the first working one, in pririty order */
+		d = o->alt_first;
+		while (d != o->dev) {
+			if (opt_setdev(o, d))
+				break;
+			d = d->alt_next;
+		}
+	}
+
+	/*
+	 * retry to open the remaining devices that are not used but need
+	 * to stay open (ex. '-a on')
+	 */
+	for (d = dev_list; d != NULL; d = d->next) {
+		if (d->refcnt > 0 && d->pstate == DEV_CFG)
+			dev_open(d);
+	}
+}
+
+/*
+ * For each port, open the alt with the highest priority and switch to it
+ */
+static void
+reopen_ports(void)
+{
+	struct port *p, *a, *apri;
+	int inuse;
+
+	for (p = port_list; p != NULL; p = a->next) {
+
+		/* skip unused ports */
+		inuse = 0;
+		a = p;
+		while (1) {
+			if (midi_rxmask(a->midi) || a->midi->txmask)
+				inuse = 1;
+			if (a->alt_next == p)
+				break;
+			a = a->alt_next;
+		}
+		if (!inuse)
+			continue;
+
+		/* open the alt with the highest prio */
+		apri = port_alt_ref(p->num);
+
+		/* switch to it */
+		a = p;
+		while (1) {
+			if (a != apri) {
+				midi_migrate(a->midi, apri->midi);
+				port_unref(a);
+			}
+			if (a->alt_next == p)
+				break;
+			a = a->alt_next;
+		}
+	}
+}
+
 void
 setsig(void)
 {
@@ -461,7 +544,6 @@ main(int argc, char **argv)
 	char base[SOCKPATH_MAX], path[SOCKPATH_MAX];
 	unsigned int mode, dup, mmc, vol;
 	unsigned int hold, autovol, bufsz, round, rate;
-	unsigned int reopen_list;
 	const char *str;
 	struct aparams par;
 	struct opt *o;
@@ -712,33 +794,14 @@ main(int argc, char **argv)
 		if (pledge("stdio audio recvfd unix", NULL) == -1)
 			err(1, "pledge");
 	}
+
 	for (;;) {
 		if (quit_flag)
 			break;
 		if (reopen_flag) {
 			reopen_flag = 0;
-
-			reopen_list = 0;
-			for (d = dev_list; d != NULL; d = d->next) {
-				if (d->pstate != DEV_CFG)
-					reopen_list |= (1 << d->num);
-			}
-			for (d = dev_list; d != NULL; d = d->next) {
-				if (reopen_list & (1 << d->num))
-					dev_migrate(d);
-			}
-
-			reopen_list = 0;
-			for (p = port_list; p != NULL; p = p->next) {
-				if (p->state != PORT_CFG)
-					reopen_list |= (1 << p->num);
-			}
-			for (p = port_list; p != NULL; p = p->next) {
-				if (reopen_list & (1 << p->num)) {
-					if (port_migrate(p) != p)
-						port_close(p);
-				}
-			}
+			reopen_devs();
+			reopen_ports();
 		}
 		if (!fdpass_peer)
 			break;
