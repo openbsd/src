@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.16 2022/03/07 08:58:33 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.17 2024/05/03 16:47:15 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 7 2022 $
+.Dd $Mdocdate: May 3 2024 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -404,7 +404,7 @@ is
 and the default sub-device exposed by
 .Nm
 is
-.Pa snd/0 .
+.Pa snd/default .
 .Pp
 If
 .Nm
@@ -506,17 +506,17 @@ are recommended:
 .Pp
 For instance, the following command will create two devices:
 the default
-.Va snd/0
+.Va snd/default
 and a MIDI-controlled
-.Va snd/0.mmc :
+.Va snd/mmc :
 .Bd -literal -offset indent
 $ sndiod -r 48000 -z 400 -s default -t slave -s mmc
 .Ed
 .Pp
 Streams connected to
-.Va snd/0
+.Va snd/default
 behave normally, while streams connected to
-.Va snd/0.mmc
+.Va snd/mmc
 wait for the MMC start signal and start synchronously.
 Regardless of which device a stream is connected to,
 its playback volume knob is exposed.
@@ -547,9 +547,9 @@ and to fall back to the PCI one when it's disconnected.
 Start server using default parameters, creating an
 additional sub-device for output to channels 2:3 only (rear speakers
 on most cards), exposing the
-.Pa snd/0
+.Pa snd/default
 and
-.Pa snd/0.rear
+.Pa snd/rear
 devices:
 .Bd -literal -offset indent
 $ sndiod -s default -c 2:3 -s rear
@@ -557,9 +557,9 @@ $ sndiod -s default -c 2:3 -s rear
 .Pp
 Start server creating the default sub-device with low volume and
 an additional sub-device for high volume output, exposing the
-.Pa snd/0
+.Pa snd/default
 and
-.Pa snd/0.max
+.Pa snd/max
 devices:
 .Bd -literal -offset indent
 $ sndiod -v 65 -s default -v 127 -s max
