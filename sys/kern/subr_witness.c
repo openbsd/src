@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.50 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.51 2024/05/03 13:45:42 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -652,8 +652,9 @@ witness_ddb_display_descendants(int(*prnt)(const char *fmt, ...),
 
 	for (i = 0; i < indent; i++)
 		prnt(" ");
-	prnt("%s (type: %s, depth: %d)",
-	     w->w_type->lt_name, w->w_class->lc_name, w->w_ddb_level);
+	prnt("%s (%s) (type: %s, depth: %d)",
+	    w->w_subtype, w->w_type->lt_name,
+	    w->w_class->lc_name, w->w_ddb_level);
 	if (w->w_displayed) {
 		prnt(" -- (already displayed)\n");
 		return;
@@ -719,7 +720,8 @@ witness_ddb_display(int(*prnt)(const char *fmt, ...))
 	SLIST_FOREACH(w, &w_all, w_list) {
 		if (w->w_acquired)
 			continue;
-		prnt("%s (type: %s, depth: %d)\n", w->w_type->lt_name,
+		prnt("%s (%s) (type: %s, depth: %d)\n",
+		    w->w_subtype, w->w_type->lt_name,
 		    w->w_class->lc_name, w->w_ddb_level);
 	}
 }
