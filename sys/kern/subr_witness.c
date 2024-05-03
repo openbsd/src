@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.51 2024/05/03 13:45:42 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.52 2024/05/03 13:47:31 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -369,6 +369,13 @@ static struct witness_lock_order_data	*witness_lock_order_get(
 					    struct witness *child);
 static void	witness_list_lock(struct lock_instance *instance,
 		    int (*prnt)(const char *fmt, ...));
+static void	witness_print_cycle(int (*prnt)(const char *fmt, ...),
+		    struct witness *parent, struct witness *child);
+static void	witness_print_cycle_edge(int (*prnt)(const char *fmt, ...),
+		    struct witness *parent, struct witness *child,
+		    int step, int last);
+static int	witness_search(struct witness *w, struct witness *target,
+		    struct witness **path, int depth, int *remaining);
 static void	witness_setflag(struct lock_object *lock, int flag, int set);
 
 /*
@@ -1068,47 +1075,8 @@ witness_checkorder(struct lock_object *lock, int flags,
 				printf(" 3rd %p %s (%s)\n", lock,
 				    lock->lo_name, w->w_type->lt_name);
 			}
-			if (witness_watch > 1) {
-				struct witness_lock_order_data *wlod1, *wlod2;
-
-				mtx_enter(&w_mtx);
-				wlod1 = witness_lock_order_get(w, w1);
-				wlod2 = witness_lock_order_get(w1, w);
-				mtx_leave(&w_mtx);
-
-				/*
-				 * It is safe to access saved stack traces,
-				 * w_type, and w_class without the lock.
-				 * Once written, they never change.
-				 */
-
-				if (wlod1 != NULL) {
-					printf("lock order \"%s\"(%s) -> "
-					    "\"%s\"(%s) first seen at:\n",
-					    w->w_type->lt_name,
-					    w->w_class->lc_name,
-					    w1->w_type->lt_name,
-					    w1->w_class->lc_name);
-					stacktrace_print(
-					    &wlod1->wlod_stack, printf);
-				} else {
-					printf("lock order data "
-					    "w2 -> w1 missing\n");
-				}
-				if (wlod2 != NULL) {
-					printf("lock order \"%s\"(%s) -> "
-					    "\"%s\"(%s) first seen at:\n",
-					    w1->w_type->lt_name,
-					    w1->w_class->lc_name,
-					    w->w_type->lt_name,
-					    w->w_class->lc_name);
-					stacktrace_print(
-					    &wlod2->wlod_stack, printf);
-				} else {
-					printf("lock order data "
-					    "w1 -> w2 missing\n");
-				}
-			}
+			if (witness_watch > 1)
+				witness_print_cycle(printf, w1, w);
 			witness_debugger(0);
 			goto out_splx;
 		}
@@ -1877,6 +1845,92 @@ witness_list_lock(struct lock_instance *instance,
 		stacktrace_print(&instance->li_stack->ls_stack, prnt);
 }
 
+static int
+witness_search(struct witness *w, struct witness *target,
+    struct witness **path, int depth, int *remaining)
+{
+	int i, any_remaining;
+
+	if (depth == 0) {
+		*remaining = 1;
+		return (w == target);
+	}
+
+	any_remaining = 0;
+	for (i = 1; i <= w_max_used_index; i++) {
+		if (w_rmatrix[w->w_index][i] & WITNESS_PARENT) {
+			if (witness_search(&w_data[i], target, path, depth - 1,
+			    remaining)) {
+				path[depth - 1] = &w_data[i];
+				*remaining = 1;
+				return 1;
+			}
+			if (remaining)
+				any_remaining = 1;
+		}
+	}
+	*remaining = any_remaining;
+	return 0;
+}
+
+static void
+witness_print_cycle_edge(int(*prnt)(const char *fmt, ...),
+    struct witness *parent, struct witness *child, int step, int last)
+{
+	struct witness_lock_order_data *wlod;
+	int next;
+
+	if (last)
+		next = 1;
+	else
+		next = step + 1;
+	prnt("lock order [%d] %s (%s) -> [%d] %s (%s)\n",
+	    step, parent->w_subtype, parent->w_type->lt_name,
+	    next, child->w_subtype, child->w_type->lt_name);
+	if (witness_watch > 1) {
+		mtx_enter(&w_mtx);
+		wlod = witness_lock_order_get(parent, child);
+		mtx_leave(&w_mtx);
+
+		if (wlod != NULL)
+			stacktrace_print(&wlod->wlod_stack, printf);
+		else
+			prnt("lock order data %p -> %p is missing\n",
+			    parent->w_type->lt_name, child->w_type->lt_name);
+	}
+}
+
+static void
+witness_print_cycle(int(*prnt)(const char *fmt, ...),
+    struct witness *parent, struct witness *child)
+{
+	struct witness *path[4];
+	struct witness *w;
+	int depth, remaining;
+	int step = 0;
+
+	/*
+	 * Use depth-limited search to find the shortest path
+	 * from child to parent.
+	 */
+	for (depth = 1; depth < nitems(path); depth++) {
+		if (witness_search(child, parent, path, depth, &remaining))
+			goto found;
+		if (!remaining)
+			break;
+	}
+	prnt("witness: incomplete path, depth %d\n", depth);
+	return;
+
+found:
+	witness_print_cycle_edge(prnt, parent, child, ++step, 0);
+	for (w = child; depth > 0; depth--) {
+		witness_print_cycle_edge(prnt, w, path[depth - 1], ++step,
+		    depth == 1);
+		w = path[depth - 1];
+	}
+}
+
 #ifdef DDB
 static int
 witness_thread_has_locks(struct proc *p)
@@ -2125,9 +2179,6 @@ db_witness_list_all(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 witness_print_badstacks(void)
 {
-	static struct witness tmp_w1, tmp_w2;
-	static struct witness_lock_order_data tmp_data1, tmp_data2;
-	struct witness_lock_order_data *data1, *data2;
 	struct witness *w1, *w2;
 	int error, generation, i, j;
 
@@ -2140,11 +2191,6 @@ witness_print_badstacks(void)
 		return;
 	}
 	error = 0;
-
-	memset(&tmp_w1, 0, sizeof(tmp_w1));
-	memset(&tmp_w2, 0, sizeof(tmp_w2));
-	memset(&tmp_data1, 0, sizeof(tmp_data1));
-	memset(&tmp_data2, 0, sizeof(tmp_data2));
 
 restart:
 	mtx_enter(&w_mtx);
@@ -2167,12 +2213,9 @@ restart:
 			mtx_leave(&w_mtx);
 			continue;
 		}
-
-		/* Copy w1 locally so we can release the spin lock. */
-		tmp_w1 = *w1;
 		mtx_leave(&w_mtx);
 
-		if (tmp_w1.w_reversed == 0)
+		if (w1->w_reversed == 0)
 			continue;
 		for (j = 1; j < w_max_used_index; j++) {
 			if ((w_rmatrix[i][j] & WITNESS_REVERSAL) == 0 || i > j)
@@ -2189,47 +2232,13 @@ restart:
 			}
 
 			w2 = &w_data[j];
-			data1 = witness_lock_order_get(w1, w2);
-			data2 = witness_lock_order_get(w2, w1);
-
-			/*
-			 * Copy information locally so we can release the
-			 * spin lock.
-			 */
-			tmp_w2 = *w2;
-
-			if (data1)
-				tmp_data1.wlod_stack = data1->wlod_stack;
-			if (data2 && data2 != data1)
-				tmp_data2.wlod_stack = data2->wlod_stack;
 			mtx_leave(&w_mtx);
 
 			db_printf("\nLock order reversal between \"%s\"(%s) "
 			    "and \"%s\"(%s)!\n",
-			    tmp_w1.w_type->lt_name, tmp_w1.w_class->lc_name,
-			    tmp_w2.w_type->lt_name, tmp_w2.w_class->lc_name);
-			if (data1) {
-				db_printf("Lock order \"%s\"(%s) -> \"%s\"(%s) "
-				    "first seen at:\n",
-				    tmp_w1.w_type->lt_name,
-				    tmp_w1.w_class->lc_name,
-				    tmp_w2.w_type->lt_name,
-				    tmp_w2.w_class->lc_name);
-				stacktrace_print(&tmp_data1.wlod_stack,
-				    db_printf);
-				db_printf("\n");
-			}
-			if (data2 && data2 != data1) {
-				db_printf("Lock order \"%s\"(%s) -> \"%s\"(%s) "
-				    "first seen at:\n",
-				    tmp_w2.w_type->lt_name,
-				    tmp_w2.w_class->lc_name,
-				    tmp_w1.w_type->lt_name,
-				    tmp_w1.w_class->lc_name);
-				stacktrace_print(&tmp_data2.wlod_stack,
-				    db_printf);
-				db_printf("\n");
-			}
+			    w1->w_type->lt_name, w1->w_class->lc_name,
+			    w2->w_type->lt_name, w2->w_class->lc_name);
+			witness_print_cycle(db_printf, w1, w2);
 		}
 	}
 	mtx_enter(&w_mtx);
