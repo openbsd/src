@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.41 2024/05/03 18:29:43 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.42 2024/05/03 18:33:27 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -88,9 +88,6 @@ tm_to_gentime(struct tm *tm, ASN1_TIME *atime)
 		return 0;
 	}
 
-	if (atime == NULL)
-		return 1;
-
 	if (asprintf(&time_str, "%04u%02u%02u%02u%02u%02uZ", tm->tm_year + 1900,
 	    tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
 	    tm->tm_sec) == -1) {
@@ -116,9 +113,6 @@ tm_to_utctime(struct tm *tm, ASN1_TIME *atime)
 		ASN1error(ASN1_R_ILLEGAL_TIME_VALUE);
 		return 0;
 	}
-
-	if (atime == NULL)
-		return 1;
 
 	if (asprintf(&time_str, "%02u%02u%02u%02u%02u%02uZ",
 	    tm->tm_year % 100,  tm->tm_mon + 1, tm->tm_mday,
