@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.77 2024/05/02 15:46:10 mlarkin Exp $
+.\"	$OpenBSD: vmctl.8,v 1.78 2024/05/04 07:51:21 jmc Exp $
 .\"
 .\" Copyright (c) 2015-2024 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 2 2024 $
+.Dd $Mdocdate: May 4 2024 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -143,7 +143,7 @@ not the disk image.
 In order to move a VM from one host to another, disk files must be
 synced between the send and the receive processes and must be located
 under the same path.
-.It Cm show Op Ar id
+.It Cm show Oo Fl r Oc Op Ar id
 An alias for the
 .Cm status
 command.
