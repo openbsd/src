@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.335 2023/11/10 17:43:39 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.336 2024/05/04 16:40:38 kn Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1771,7 +1771,7 @@ validate:
 	}
 
 	if (dp.disksize == 0)
-		goto die;
+		return -1;
 
 	/*
 	 * Restrict secsize values to powers of two between 512 and 64k.
