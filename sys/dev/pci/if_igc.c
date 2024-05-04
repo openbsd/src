@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.20 2024/04/12 19:27:43 jan Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.21 2024/05/04 13:35:26 mbuhl Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -44,10 +44,14 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/route.h>
 #include <net/toeplitz.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -796,6 +800,7 @@ igc_setup_interface(struct igc_softc *sc)
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
+	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->media, IFM_IMASK, igc_media_change, igc_media_status);
@@ -2025,12 +2030,10 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 {
 	struct ether_extracted ext;
 	struct igc_adv_tx_context_desc *txdesc;
+	uint32_t mss_l4len_idx = 0;
 	uint32_t type_tucmd_mlhl = 0;
 	uint32_t vlan_macip_lens = 0;
 	int off = 0;
-
-	ether_extract_headers(mp, &ext);
-	vlan_macip_lens |= (sizeof(*ext.eh) << IGC_ADVTXD_MACLEN_SHIFT);
 
 	/*
 	 * In advanced descriptors the vlan tag must
@@ -2045,6 +2048,10 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 		off = 1;
 	}
 #endif
+
+	ether_extract_headers(mp, &ext);
+
+	vlan_macip_lens |= (sizeof(*ext.eh) << IGC_ADVTXD_MACLEN_SHIFT);
 
 	if (ext.ip4) {
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV4;
@@ -2075,6 +2082,30 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 		}
 	}
 
+	if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_TSO)) {
+		if (ext.tcp) {
+			uint32_t hdrlen, thlen, paylen, outlen;
+
+			thlen = ext.tcphlen;
+
+			outlen = mp->m_pkthdr.ph_mss;
+			mss_l4len_idx |= outlen << IGC_ADVTXD_MSS_SHIFT;
+			mss_l4len_idx |= thlen << IGC_ADVTXD_L4LEN_SHIFT;
+
+			hdrlen = sizeof(*ext.eh) + ext.iphlen + thlen;
+			paylen = mp->m_pkthdr.len - hdrlen;
+			CLR(*olinfo_status, IGC_ADVTXD_PAYLEN_MASK);
+			*olinfo_status |= paylen << IGC_ADVTXD_PAYLEN_SHIFT;
+
+			*cmd_type_len |= IGC_ADVTXD_DCMD_TSE;
+			off = 1;
+
+			tcpstat_add(tcps_outpkttso,
+			    (paylen + outlen - 1) / outlen);
+		} else
+			tcpstat_inc(tcps_outbadtso);
+	}
+
 	if (off == 0)
 		return 0;
 
@@ -2085,7 +2116,7 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	htolem32(&txdesc->vlan_macip_lens, vlan_macip_lens);
 	htolem32(&txdesc->type_tucmd_mlhl, type_tucmd_mlhl);
 	htolem32(&txdesc->seqnum_seed, 0);
-	htolem32(&txdesc->mss_l4len_idx, 0);
+	htolem32(&txdesc->mss_l4len_idx, mss_l4len_idx);
 
 	return 1;
 }

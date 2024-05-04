@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_base.h,v 1.2 2024/03/25 20:25:13 mbuhl Exp $	*/
+/*	$OpenBSD: igc_base.h,v 1.3 2024/05/04 13:35:26 mbuhl Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -66,6 +66,7 @@ struct igc_adv_tx_context_desc {
 #define IGC_ADVTXD_POPTS_ISCO_FULL	0x00001800
 #define IGC_ADVTXD_POPTS_IPSEC	0x00000400 /* IPSec offload request */
 #define IGC_ADVTXD_PAYLEN_SHIFT	14 /* Adv desc PAYLEN shift */
+#define IGC_ADVTXD_PAYLEN_MASK	0xFFFFD000 /* Adv desc PAYLEN shift */
 
 /* Advanced Transmit Context Descriptor Config */
 #define IGC_ADVTXD_MACLEN_SHIFT		9 /* Adv ctxt desc mac len shift */
