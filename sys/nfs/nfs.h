@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.53 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.54 2024/05/04 10:53:37 jsg Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #define	NFS_TIMEO	(1 * NFS_HZ)	/* Default timeout = 1 second */
 #define	NFS_MINTIMEO	(1 * NFS_HZ)	/* Min timeout to use */
 #define	NFS_MAXTIMEO	(60 * NFS_HZ)	/* Max timeout to backoff to */
-#define	NFS_MINIDEMTIMEO (5 * NFS_HZ)	/* Min timeout for non-idempotent ops*/
 #define	NFS_TIMEOUTMUL	2		/* Timeout/Delay multiplier */
 #define	NFS_MAXREXMIT	100		/* Stop counting after this many */
 #define	NFS_RETRANS	10		/* Num of retrans for soft mounts */
@@ -73,19 +72,6 @@
 #define NFS_SRVMAXDATA(n) \
 		(((n)->nd_flag & ND_NFSV3) ? (((n)->nd_nam2) ? \
 		 NFS_MAXDGRAMDATA : NFS_MAXDATA) : NFS_V2MAXDATA)
-
-/*
- * sys/malloc.h needs M_NFSDIROFF, M_NFSRVDESC and M_NFSBIGFH added.
- */
-#ifndef M_NFSRVDESC
-#define M_NFSRVDESC	M_TEMP
-#endif
-#ifndef M_NFSDIROFF
-#define M_NFSDIROFF	M_TEMP
-#endif
-#ifndef M_NFSBIGFH
-#define M_NFSBIGFH	M_TEMP
-#endif
 
 /*
  * The B_INVAFTERWRITE flag should be set to whatever is required by the
@@ -159,13 +145,8 @@ struct nfsstats {
 /*
  * Flags for nfssvc() system call.
  */
-#define	NFSSVC_BIOD	0x002
 #define	NFSSVC_NFSD	0x004
 #define	NFSSVC_ADDSOCK	0x008
-#define	NFSSVC_AUTHIN	0x010
-#define	NFSSVC_GOTAUTH	0x040
-#define	NFSSVC_AUTHINFAIL 0x080
-#define	NFSSVC_MNTD	0x100
 
 /*
  * fs.nfs sysctl(3) identifiers
@@ -306,8 +287,6 @@ struct nfsd {
 /* Bits for "nfsd_flag" */
 #define	NFSD_WAITING	0x01
 #define	NFSD_REQINPROG	0x02
-#define	NFSD_NEEDAUTH	0x04
-#define	NFSD_AUTHFAIL	0x08
 
 /*
  * This structure is used by the server for describing each request.
