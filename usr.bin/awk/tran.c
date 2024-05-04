@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.38 2023/10/30 17:52:54 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.39 2024/05/04 22:59:21 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -58,8 +58,7 @@ Cell	*fnrloc;	/* FNR */
 Cell	*ofsloc;	/* OFS */
 Cell	*orsloc;	/* ORS */
 Cell	*rsloc;		/* RS */
-Array	*ARGVtab;	/* symbol table containing ARGV[...] */
-Array	*ENVtab;	/* symbol table containing ENVIRON[...] */
+Cell	*ARGVcell;	/* cell with symbol table containing ARGV[...] */
 Cell	*rstartloc;	/* RSTART */
 Cell	*rlengthloc;	/* RLENGTH */
 Cell	*subseploc;	/* SUBSEP */
@@ -108,36 +107,39 @@ void syminit(void)	/* initialize symbol table with builtin vars */
 
 void arginit(int ac, char **av)	/* set up ARGV and ARGC */
 {
+	Array *ap;
 	Cell *cp;
 	int i;
 	char temp[50];
 
 	ARGC = &setsymtab("ARGC", "", (Awkfloat) ac, NUM, symtab)->fval;
 	cp = setsymtab("ARGV", "", 0.0, ARR, symtab);
-	ARGVtab = makesymtab(NSYMTAB);	/* could be (int) ARGC as well */
+	ap = makesymtab(NSYMTAB);	/* could be (int) ARGC as well */
 	free(cp->sval);
-	cp->sval = (char *) ARGVtab;
+	cp->sval = (char *) ap;
 	for (i = 0; i < ac; i++) {
 		double result;
 
 		snprintf(temp, sizeof(temp), "%d", i);
 		if (is_number(*av, & result))
-			setsymtab(temp, *av, result, STR|NUM, ARGVtab);
+			setsymtab(temp, *av, result, STR|NUM, ap);
 		else
-			setsymtab(temp, *av, 0.0, STR, ARGVtab);
+			setsymtab(temp, *av, 0.0, STR, ap);
 		av++;
 	}
+	ARGVcell = cp;
 }
 
 void envinit(char **envp)	/* set up ENVIRON variable */
 {
+	Array *ap;
 	Cell *cp;
 	char *p;
 
 	cp = setsymtab("ENVIRON", "", 0.0, ARR, symtab);
-	ENVtab = makesymtab(NSYMTAB);
+	ap = makesymtab(NSYMTAB);
 	free(cp->sval);
-	cp->sval = (char *) ENVtab;
+	cp->sval = (char *) ap;
 	for ( ; *envp; envp++) {
 		double result;
 
@@ -147,9 +149,9 @@ void envinit(char **envp)	/* set up ENVIRON variable */
 			continue;
 		*p++ = 0;	/* split into two strings at = */
 		if (is_number(p, & result))
-			setsymtab(*envp, p, result, STR|NUM, ENVtab);
+			setsymtab(*envp, p, result, STR|NUM, ap);
 		else
-			setsymtab(*envp, p, 0.0, STR, ENVtab);
+			setsymtab(*envp, p, 0.0, STR, ap);
 		p[-1] = '=';	/* restore in case env is passed down to a shell */
 	}
 }

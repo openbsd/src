@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.85 2024/04/25 18:33:53 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.86 2024/05/04 22:59:21 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -725,7 +725,7 @@ int u8_byte2char(const char *s, int bytenum)
 	return charnum;
 }
 
-/* runetochar() adapted from rune.c in the Plan 9 distributione */
+/* runetochar() adapted from rune.c in the Plan 9 distribution */
 
 enum
 {
@@ -2063,7 +2063,7 @@ static char *nawk_tolower(const char *s)
 Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg list */
 {
 	Cell *x, *y;
-	Awkfloat u;
+	Awkfloat u = 0;
 	int t, sz;
 	Awkfloat tmp;
 	char *buf, *fmt;
@@ -2539,7 +2539,7 @@ Cell *dosub(Node **a, int subop)        /* sub and gsub */
 	const char *start;
 	const char *noempty = NULL;      /* empty match disallowed here */
 	size_t m = 0;                    /* match count */
-	size_t whichm;                   /* which match to select, 0 = global */
+	size_t whichm = 0;               /* which match to select, 0 = global */
 	int mtype;                       /* match type */
 
 	if (a[0] == NULL) {	/* 0 => a[1] is already-compiled regexpr */
