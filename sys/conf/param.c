@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.49 2023/07/04 09:47:51 jsg Exp $	*/
+/*	$OpenBSD: param.c,v 1.50 2024/05/05 06:14:37 jsg Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -39,13 +39,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/socket.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/file.h>
-#include <sys/timeout.h>
-#include <sys/mbuf.h>
-#include <ufs/ufs/quota.h>
 #include <sys/kernel.h>
 #include <sys/utsname.h>
 #ifdef SYSVSHM
@@ -54,9 +47,6 @@
 #endif
 #ifdef SYSVSEM
 #include <sys/sem.h>
-#endif
-#ifdef SYSVMSG
-#include <sys/msg.h>
 #endif
 
 /*
