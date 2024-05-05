@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.56 2024/05/04 22:59:21 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.57 2024/05/05 02:55:34 jsg Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -332,14 +332,16 @@ int readcsvrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag) /* csv can h
 
 char *getargv(int n)	/* get ARGV[n] */
 {
+	Array *ap;
 	Cell *x;
 	char *s, temp[50];
-	extern Array *ARGVtab;
+	extern Cell *ARGVcell;
 
+	ap = (Array *)ARGVcell->sval;
 	snprintf(temp, sizeof(temp), "%d", n);
-	if (lookup(temp, ARGVtab) == NULL)
+	if (lookup(temp, ap) == NULL)
 		return NULL;
-	x = setsymtab(temp, "", 0.0, STR, ARGVtab);
+	x = setsymtab(temp, "", 0.0, STR, ap);
 	s = getsval(x);
 	DPRINTF("getargv(%d) returns |%s|\n", n, s);
 	return s;
