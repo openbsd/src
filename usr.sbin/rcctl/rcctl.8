@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.44 2023/03/01 17:27:45 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.45 2024/05/05 08:16:45 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2023 $
+.Dd $Mdocdate: May 5 2024 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -187,8 +187,8 @@ exits with 0 if the daemon or service is enabled and 1 if it is not.
 .Nm Cm getdef Ar daemon | service Op Cm status
 exits with 0 if the daemon or service is enabled by default
 and 1 if it is not.
-.Nm Cm ls failed
-exits with 1 if an enabled daemon is not running.
+.Nm Cm ls failed | rogue
+exits with 1 if an enabled daemon is not running or vice versa.
 Otherwise, the
 .Nm
 utility exits with 0 on success, and >0 if an error occurs
