@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.270 2023/12/14 13:34:23 claudio Exp $
+.\"	$OpenBSD: options.4,v 1.271 2024/05/05 07:26:58 jsg Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: December 14 2023 $
+.Dd $Mdocdate: May 5 2024 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -253,18 +253,6 @@ With this option, only the superuser can set them, and they can't be cleared
 if the securelevel is greater than 0.
 See also
 .Xr chflags 1 .
-.It Cd option FFS_SOFTUPDATES
-Enables a scheme that uses partial ordering of buffer cache operations
-to allow metadata updates in FFS to happen asynchronously, increasing write
-performance significantly.
-Normally, the FFS filesystem writes metadata updates synchronously which exacts
-a performance penalty in favor of filesystem integrity.
-With soft updates, the performance of asynchronous writes is gained while
-retaining the safety of synchronous metadata updates.
-.Pp
-Soft updates must be enabled on a per-filesystem basis.
-See
-.Xr mount 8 .
 .It Cd option FIFO
 Adds support for
 .At V

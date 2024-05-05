@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.295 2024/03/13 14:43:31 bluhm Exp $
+#	$OpenBSD: GENERIC,v 1.296 2024/05/05 07:26:58 jsg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -29,7 +29,6 @@ option		UVM_SWAP_ENCRYPT# support encryption of pages going to swap
 
 option		FFS		# UFS
 option		FFS2		# UFS2
-option		FFS_SOFTUPDATES	# Soft updates
 option		UFS_DIRHASH	# hash large directories
 option		QUOTA		# UFS quotas
 option		EXT2FS		# Second Extended Filesystem
