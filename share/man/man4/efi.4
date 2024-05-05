@@ -1,4 +1,4 @@
-.\"	$OpenBSD: efi.4,v 1.2 2024/04/30 05:05:23 jmc Exp $
+.\"	$OpenBSD: efi.4,v 1.3 2024/05/05 19:13:13 kn Exp $
 .\"
 .\" Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
 .\" Copyright (c) 2024 Klemens Nanni <kn@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2024 $
+.Dd $Mdocdate: May 5 2024 $
 .Dt EFI 4
 .Os
 .Sh NAME
@@ -35,6 +35,49 @@ firmware implementations.
 It can read and write the Real Time Clock and provides userland applications
 .Xr ioctl 2
 access to the System Resource Table and to read and write variables.
+.Sh IOCTLS
+.Nm
+supports the following
+.Xr ioctl 2
+commands, available through
+.In dev/efi/efi.h
+.In dev/efi/efiio.h :
+.Bl -tag -width xxxx
+.It Dv EFIIOC_GET_TABLE Fa "struct efi_get_table_ioc *"
+.Bd -literal
+struct efi_get_table_ioc {
+	void *buf;          /* Pointer to userspace buffer */
+	struct uuid uuid;   /* UUID to look up */
+	size_t table_len;   /* Table size */
+	size_t buf_len;     /* Size of the buffer */
+};
+.Ed
+.Pp
+Read a table.
+.It Dv EFIIOC_VAR_GET Fa "struct efi_var_ioc *"
+.Bd -literal
+struct efi_var_ioc {
+	uint16_t *name;     /* User pointer to name, in UCS2 chars */
+	size_t namesize;    /* Number of *bytes* in the name
+	                       including terminator */
+	struct uuid vendor; /* Vendor's UUID for variable */
+	uint32_t attrib;    /* Attributes */
+	void *data;         /* User pointer to value */
+	size_t datasize;    /* Number of *bytes* in the value */
+};
+.Ed
+.Pp
+Read a variable.
+.It Dv EFIIOC_VAR_NEXT Fa "struct efi_var_ioc *"
+Enumerate all variables.
+The first command must use the empty name.
+Further ones must denote the previous variable's name and UUID.
+.It Dv EFIIOC_VAR_SET Fa "struct efi_var_ioc *"
+Write a variable.
+Delete it if
+.Va datasize
+is zero.
+.El
 .Sh FILES
 .Bl -tag -width /dev/efi -compact
 .It Pa /dev/efi
