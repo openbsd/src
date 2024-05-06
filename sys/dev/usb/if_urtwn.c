@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.108 2023/06/12 11:27:30 jsg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.109 2024/05/06 05:02:25 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -344,6 +344,7 @@ static const struct urtwn_type {
 	/* URTWN_RTL8192EU */
 	URTWN_DEV_8192EU(DLINK,		DWA131E1),
 	URTWN_DEV_8192EU(REALTEK,	RTL8192EU),
+	URTWN_DEV_8192EU(REALTEK,	RTL8192EU_2),
 	URTWN_DEV_8192EU(TPLINK,	RTL8192EU),
 	URTWN_DEV_8192EU(TPLINK,	RTL8192EU_2),
 	URTWN_DEV_8192EU(TPLINK,	RTL8192EU_3)
