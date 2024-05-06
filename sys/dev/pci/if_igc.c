@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.21 2024/05/04 13:35:26 mbuhl Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.22 2024/05/06 04:25:52 dlg Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -30,6 +30,7 @@
 
 #include "bpfilter.h"
 #include "vlan.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +42,7 @@
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/intrmap.h>
+#include <sys/kstat.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -147,6 +149,10 @@ void	igc_initialize_rss_mapping(struct igc_softc *);
 void	igc_get_hw_control(struct igc_softc *);
 void	igc_release_hw_control(struct igc_softc *);
 int	igc_is_valid_ether_addr(uint8_t *);
+
+#if NKSTAT > 0
+void	igc_kstat_attach(struct igc_softc *);
+#endif
 
 /*********************************************************************
  *  OpenBSD Device Interface Entry Points
@@ -282,6 +288,10 @@ igc_attach(struct device *parent, struct device *self, void *aux)
 	igc_get_hw_control(sc);
 
 	printf(", address %s\n", ether_sprintf(sc->hw.mac.addr));
+
+#if NKSTAT > 0
+	igc_kstat_attach(sc);
+#endif
 	return;
 
 err_late:
@@ -2482,3 +2492,328 @@ igc_is_valid_ether_addr(uint8_t *addr)
 
 	return 1;
 }
+
+#if NKSTAT > 0
+
+/*
+ * the below are read to clear, so they need to be accumulated for
+ * userland to see counters. periodically fetch the counters from a
+ * timeout to avoid a 32 roll-over between kstat reads.
+ */
+
+enum igc_stat {
+	igc_stat_crcerrs,
+	igc_stat_algnerrc,
+	igc_stat_rxerrc,
+	igc_stat_mpc,
+	igc_stat_scc,
+	igc_stat_ecol,
+	igc_stat_mcc,
+	igc_stat_latecol,
+	igc_stat_colc,
+	igc_stat_rerc,
+	igc_stat_dc,
+	igc_stat_tncrs,
+	igc_stat_htdpmc,
+	igc_stat_rlec,
+	igc_stat_xonrxc,
+	igc_stat_xontxc,
+	igc_stat_xoffrxc,
+	igc_stat_xofftxc,
+	igc_stat_fcruc,
+	igc_stat_prc64,
+	igc_stat_prc127,
+	igc_stat_prc255,
+	igc_stat_prc511,
+	igc_stat_prc1023,
+	igc_stat_prc1522,
+	igc_stat_gprc,
+	igc_stat_bprc,
+	igc_stat_mprc,
+	igc_stat_gptc,
+	igc_stat_gorc,
+	igc_stat_gotc,
+	igc_stat_rnbc,
+	igc_stat_ruc,
+	igc_stat_rfc,
+	igc_stat_roc,
+	igc_stat_rjc,
+	igc_stat_mgtprc,
+	igc_stat_mgtpdc,
+	igc_stat_mgtptc,
+	igc_stat_tor,
+	igc_stat_tot,
+	igc_stat_tpr,
+	igc_stat_tpt,
+	igc_stat_ptc64,
+	igc_stat_ptc127,
+	igc_stat_ptc255,
+	igc_stat_ptc511,
+	igc_stat_ptc1023,
+	igc_stat_ptc1522,
+	igc_stat_mptc,
+	igc_stat_bptc,
+	igc_stat_tsctc,
+
+	igc_stat_iac,
+	igc_stat_rpthc,
+	igc_stat_tlpic,
+	igc_stat_rlpic,
+	igc_stat_hgptc,
+	igc_stat_rxdmtc,
+	igc_stat_hgorc,
+	igc_stat_hgotc,
+	igc_stat_lenerrs,
+
+	igc_stat_count
+};
+
+struct igc_counter {
+	const char		*name;
+	enum kstat_kv_unit	 unit;
+	uint32_t		 reg;
+};
+
+static const struct igc_counter igc_counters[igc_stat_count] = {
+	[igc_stat_crcerrs] =
+	    { "crc errs",		KSTAT_KV_U_NONE,	IGC_CRCERRS },
+	[igc_stat_algnerrc] =
+	    { "alignment errs",		KSTAT_KV_U_NONE,	IGC_ALGNERRC },
+	[igc_stat_rxerrc] =
+	    { "rx errs",		KSTAT_KV_U_NONE,	IGC_RXERRC },
+	[igc_stat_mpc] =
+	    { "missed pkts",		KSTAT_KV_U_NONE,	IGC_MPC },
+	[igc_stat_scc] =
+	    { "single colls",		KSTAT_KV_U_NONE,	IGC_SCC },
+	[igc_stat_ecol] =
+	    { "excessive colls",	KSTAT_KV_U_NONE,	IGC_ECOL },
+	[igc_stat_mcc] =
+	    { "multiple colls",		KSTAT_KV_U_NONE,	IGC_MCC },
+	[igc_stat_latecol] =
+	    { "late colls",		KSTAT_KV_U_NONE,	IGC_LATECOL },
+	[igc_stat_colc] =
+	    { "collisions",		KSTAT_KV_U_NONE, 	IGC_COLC },
+	[igc_stat_rerc] =
+	    { "recv errs",		KSTAT_KV_U_NONE,	IGC_RERC },
+	[igc_stat_dc] =
+	    { "defers",			KSTAT_KV_U_NONE,	IGC_DC },
+	[igc_stat_tncrs] =
+	    { "tx no crs",		KSTAT_KV_U_NONE,	IGC_TNCRS},
+	[igc_stat_htdpmc] =
+	    { "host tx discards",	KSTAT_KV_U_NONE,	IGC_HTDPMC },
+	[igc_stat_rlec] =
+	    { "recv len errs",		KSTAT_KV_U_NONE,	IGC_RLEC },
+	[igc_stat_xonrxc] =
+	    { "xon rx",			KSTAT_KV_U_NONE,	IGC_XONRXC },
+	[igc_stat_xontxc] =
+	    { "xon tx",			KSTAT_KV_U_NONE,	IGC_XONTXC },
+	[igc_stat_xoffrxc] =
+	    { "xoff rx",		KSTAT_KV_U_NONE,	IGC_XOFFRXC },
+	[igc_stat_xofftxc] =
+	    { "xoff tx",		KSTAT_KV_U_NONE,	IGC_XOFFTXC },
+	[igc_stat_fcruc] =
+	    { "fc rx unsupp",		KSTAT_KV_U_NONE,	IGC_FCRUC },
+	[igc_stat_prc64] =
+	    { "rx 64B",			KSTAT_KV_U_PACKETS,	IGC_PRC64 },
+	[igc_stat_prc127] =
+	    { "rx 65-127B",		KSTAT_KV_U_PACKETS,	IGC_PRC127 },
+	[igc_stat_prc255] =
+	    { "rx 128-255B",		KSTAT_KV_U_PACKETS,	IGC_PRC255 },
+	[igc_stat_prc511] =
+	    { "rx 256-511B",		KSTAT_KV_U_PACKETS,	IGC_PRC511 },
+	[igc_stat_prc1023] =
+	    { "rx 512-1023B",		KSTAT_KV_U_PACKETS,	IGC_PRC1023 },
+	[igc_stat_prc1522] =
+	    { "rx 1024-maxB",		KSTAT_KV_U_PACKETS,	IGC_PRC1522 },
+	[igc_stat_gprc] =
+	    { "rx good",		KSTAT_KV_U_PACKETS,	IGC_GPRC },
+	[igc_stat_bprc] =
+	    { "rx bcast",		KSTAT_KV_U_PACKETS,	IGC_BPRC },
+	[igc_stat_mprc] =
+	    { "rx mcast",		KSTAT_KV_U_PACKETS,	IGC_MPRC },
+	[igc_stat_gptc] =
+	    { "tx good",		KSTAT_KV_U_PACKETS,	IGC_GPTC },
+	[igc_stat_gorc] =
+	    { "rx good bytes",		KSTAT_KV_U_BYTES,	0 },
+	[igc_stat_gotc] =
+	    { "tx good bytes",		KSTAT_KV_U_BYTES,	0 },
+	[igc_stat_rnbc] =
+	    { "rx no bufs",		KSTAT_KV_U_NONE,	IGC_RNBC },
+	[igc_stat_ruc] =
+	    { "rx undersize",		KSTAT_KV_U_NONE,	IGC_RUC },
+	[igc_stat_rfc] =
+	    { "rx frags",		KSTAT_KV_U_NONE,	IGC_RFC },
+	[igc_stat_roc] =
+	    { "rx oversize",		KSTAT_KV_U_NONE,	IGC_ROC },
+	[igc_stat_rjc] =
+	    { "rx jabbers",		KSTAT_KV_U_NONE,	IGC_RJC },
+	[igc_stat_mgtprc] =
+	    { "rx mgmt",		KSTAT_KV_U_PACKETS,	IGC_MGTPRC },
+	[igc_stat_mgtpdc] =
+	    { "rx mgmt drops",		KSTAT_KV_U_PACKETS,	IGC_MGTPDC },
+	[igc_stat_mgtptc] =
+	    { "tx mgmt",		KSTAT_KV_U_PACKETS,	IGC_MGTPTC },
+	[igc_stat_tor] =
+	    { "rx total bytes",		KSTAT_KV_U_BYTES,	0 },
+	[igc_stat_tot] =
+	    { "tx total bytes",		KSTAT_KV_U_BYTES,	0 },
+	[igc_stat_tpr] =
+	    { "rx total",		KSTAT_KV_U_PACKETS,	IGC_TPR },
+	[igc_stat_tpt] =
+	    { "tx total",		KSTAT_KV_U_PACKETS,	IGC_TPT },
+	[igc_stat_ptc64] =
+	    { "tx 64B",			KSTAT_KV_U_PACKETS,	IGC_PTC64 },
+	[igc_stat_ptc127] =
+	    { "tx 65-127B",		KSTAT_KV_U_PACKETS,	IGC_PTC127 },
+	[igc_stat_ptc255] =
+	    { "tx 128-255B",		KSTAT_KV_U_PACKETS,	IGC_PTC255 },
+	[igc_stat_ptc511] =
+	    { "tx 256-511B",		KSTAT_KV_U_PACKETS,	IGC_PTC511 },
+	[igc_stat_ptc1023] =
+	    { "tx 512-1023B",		KSTAT_KV_U_PACKETS,	IGC_PTC1023 },
+	[igc_stat_ptc1522] =
+	    { "tx 1024-maxB",		KSTAT_KV_U_PACKETS,	IGC_PTC1522 },
+	[igc_stat_mptc] =
+	    { "tx mcast",		KSTAT_KV_U_PACKETS,	IGC_MPTC },
+	[igc_stat_bptc] =
+	    { "tx bcast",		KSTAT_KV_U_PACKETS,	IGC_BPTC },
+	[igc_stat_tsctc] =
+	    { "tx tso ctx",		KSTAT_KV_U_NONE,	IGC_TSCTC },
+
+	[igc_stat_iac] =
+	    { "interrupts",		KSTAT_KV_U_NONE,	IGC_IAC },
+	[igc_stat_rpthc] =
+	    { "rx to host",		KSTAT_KV_U_PACKETS,	IGC_RPTHC },
+	[igc_stat_tlpic] =
+	    { "eee tx lpi",		KSTAT_KV_U_NONE,	IGC_TLPIC },
+	[igc_stat_rlpic] =
+	    { "eee rx lpi",		KSTAT_KV_U_NONE,	IGC_RLPIC },
+	[igc_stat_hgptc] =
+	    { "host rx",		KSTAT_KV_U_PACKETS,	IGC_HGPTC },
+	[igc_stat_rxdmtc] =
+	    { "rxd min thresh",		KSTAT_KV_U_NONE,	IGC_RXDMTC },
+	[igc_stat_hgorc] =
+	    { "host good rx",		KSTAT_KV_U_BYTES,	0 },
+	[igc_stat_hgotc] =
+	    { "host good tx",		KSTAT_KV_U_BYTES,	0 },
+	[igc_stat_lenerrs] =
+	    { "len errs",		KSTAT_KV_U_NONE,	IGC_LENERRS },
+};
+
+static void
+igc_stat_read(struct igc_softc *sc)
+{
+	struct igc_hw *hw = &sc->hw;
+	struct kstat *ks = sc->ks;
+	struct kstat_kv *kvs = ks->ks_data;
+	uint32_t hi, lo;
+	unsigned int i;
+
+	for (i = 0; i < nitems(igc_counters); i++) {
+		const struct igc_counter *c = &igc_counters[i];
+		if (c->reg == 0)
+			continue;
+
+		kstat_kv_u64(&kvs[i]) += IGC_READ_REG(hw, c->reg);
+	}
+
+	lo = IGC_READ_REG(hw, IGC_GORCL);
+	hi = IGC_READ_REG(hw, IGC_GORCH);
+	kstat_kv_u64(&kvs[igc_stat_gorc]) +=
+	    ((uint64_t)hi << 32) | ((uint64_t)lo << 0);
+
+	lo = IGC_READ_REG(hw, IGC_GOTCL);
+	hi = IGC_READ_REG(hw, IGC_GOTCH);
+	kstat_kv_u64(&kvs[igc_stat_gotc]) +=
+	    ((uint64_t)hi << 32) | ((uint64_t)lo << 0);
+
+	lo = IGC_READ_REG(hw, IGC_TORL);
+	hi = IGC_READ_REG(hw, IGC_TORH);
+	kstat_kv_u64(&kvs[igc_stat_tor]) +=
+	    ((uint64_t)hi << 32) | ((uint64_t)lo << 0);
+
+	lo = IGC_READ_REG(hw, IGC_TOTL);
+	hi = IGC_READ_REG(hw, IGC_TOTH);
+	kstat_kv_u64(&kvs[igc_stat_tot]) +=
+	    ((uint64_t)hi << 32) | ((uint64_t)lo << 0);
+
+	lo = IGC_READ_REG(hw, IGC_HGORCL);
+	hi = IGC_READ_REG(hw, IGC_HGORCH);
+	kstat_kv_u64(&kvs[igc_stat_hgorc]) +=
+	    ((uint64_t)hi << 32) | ((uint64_t)lo << 0);
+
+	lo = IGC_READ_REG(hw, IGC_HGOTCL);
+	hi = IGC_READ_REG(hw, IGC_HGOTCH);
+	kstat_kv_u64(&kvs[igc_stat_hgotc]) +=
+	    ((uint64_t)hi << 32) | ((uint64_t)lo << 0);
+}
+
+static void
+igc_kstat_tick(void *arg)
+{
+	struct igc_softc *sc = arg;
+
+	if (mtx_enter_try(&sc->ks_mtx)) {
+		igc_stat_read(sc);
+		mtx_leave(&sc->ks_mtx);
+	}
+
+	timeout_add_sec(&sc->ks_tmo, 4);
+}
+
+static int
+igc_kstat_read(struct kstat *ks)
+{
+	struct igc_softc *sc = ks->ks_softc;
+
+	igc_stat_read(sc);
+	nanouptime(&ks->ks_updated);
+
+	return (0);
+}
+
+void
+igc_kstat_attach(struct igc_softc *sc)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	size_t len;
+	unsigned int i;
+
+	mtx_init(&sc->ks_mtx, IPL_SOFTCLOCK);
+	timeout_set(&sc->ks_tmo, igc_kstat_tick, sc);
+
+	kvs = mallocarray(sizeof(*kvs), nitems(igc_counters), M_DEVBUF,
+	    M_WAITOK|M_ZERO|M_CANFAIL);
+	if (kvs == NULL) {
+		printf("%s: unable to allocate igc kstats\n", DEVNAME(sc));
+		return;
+	}
+	len = sizeof(*kvs) * nitems(igc_counters);
+
+	ks = kstat_create(DEVNAME(sc), 0, "igc-stats", 0, KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		printf("%s: unable to create igc kstats\n", DEVNAME(sc));
+		free(kvs, M_DEVBUF, len);
+		return;
+	}
+
+	for (i = 0; i < nitems(igc_counters); i++) {
+		const struct igc_counter *c = &igc_counters[i];
+		kstat_kv_unit_init(&kvs[i], c->name,
+		    KSTAT_KV_T_COUNTER64, c->unit);
+	}
+
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = len;
+	ks->ks_read = igc_kstat_read;
+	kstat_set_mutex(ks, &sc->ks_mtx);
+
+	kstat_install(ks);
+
+	sc->ks = ks;
+
+	igc_kstat_tick(sc); /* let's gooo */
+}
+#endif /* NKSTAT > 0 */

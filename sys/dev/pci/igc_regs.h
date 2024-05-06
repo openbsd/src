@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_regs.h,v 1.2 2023/08/15 08:27:30 miod Exp $	*/
+/*	$OpenBSD: igc_regs.h,v 1.3 2024/05/06 04:25:52 dlg Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -164,6 +164,7 @@
 /* Statistics Register Descriptions */
 #define IGC_CRCERRS		0x04000  /* CRC Error Count - R/clr */
 #define IGC_ALGNERRC		0x04004  /* Alignment Error Count - R/clr */
+#define IGC_RXERRC		0x04004  /* Receive Error Count - R/clr */
 #define IGC_MPC			0x04010  /* Missed Packet Count - R/clr */
 #define IGC_SCC			0x04014  /* Single Collision Count - R/clr */
 #define IGC_ECOL		0x04018  /* Excessive Collision Count - R/clr */
@@ -218,7 +219,14 @@
 #define IGC_BPTC		0x040F4  /* Broadcast Packets Tx Count - R/clr */
 #define IGC_TSCTC		0x040F8  /* TCP Segmentation Context Tx - R/clr */
 #define IGC_IAC			0x04100  /* Interrupt Assertion Count */
+#define IGC_RPTHC		0x04104  /* Rx Packets To Host */
+#define IGC_HGPTC		0x04118  /* Host Good Packets Tx Count */
 #define IGC_RXDMTC		0x04120  /* Rx Descriptor Minimum Threshold Count */
+#define IGC_HGORCL		0x04128  /* Host Good Octets Received Count Low */
+#define IGC_HGORCH		0x0412C  /* Host Good Octets Received Count High */
+#define IGC_HGOTCL		0x04130  /* Host Good Octets Transmit Count Low */
+#define IGC_HGOTCH		0x04134  /* Host Good Octets Transmit Count High */
+#define IGC_LENERRS		0x04138  /* Length Errors Count */
 
 #define IGC_VFGPRC		0x00F10
 #define IGC_VFGORC		0x00F18
@@ -229,11 +237,7 @@
 #define IGC_VFGPTLBC		0x00F44
 #define IGC_VFGORLBC		0x00F48
 #define IGC_VFGPRLBC		0x00F40
-#define IGC_HGORCL		0x04128  /* Host Good Octets Received Count Low */
-#define IGC_HGORCH		0x0412C  /* Host Good Octets Received Count High */
-#define IGC_HGOTCL		0x04130  /* Host Good Octets Transmit Count Low */
-#define IGC_HGOTCH		0x04134  /* Host Good Octets Transmit Count High */
-#define IGC_LENERRS		0x04138  /* Length Errors Count */
+
 #define IGC_PCS_ANADV		0x04218  /* AN advertisement - RW */
 #define IGC_PCS_LPAB		0x0421C  /* Link Partner Ability - RW */
 #define IGC_RXCSUM		0x05000  /* Rx Checksum Control - RW */
