@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.112 2024/04/22 11:01:02 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.113 2024/05/06 05:37:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2450,8 +2450,8 @@ ctl_setval(struct ctl *c, int val)
 		c->curval = val;
 		return 1;
 	case CTL_OPT_DEV:
-		c->u.opt_dev.opt->alt_first = c->u.opt_dev.dev;
-		opt_setdev(c->u.opt_dev.opt, c->u.opt_dev.dev);
+		if (opt_setdev(c->u.opt_dev.opt, c->u.opt_dev.dev))
+			c->u.opt_dev.opt->alt_first = c->u.opt_dev.dev;
 		return 1;
 	default:
 		if (log_level >= 2) {
