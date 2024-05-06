@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.41 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.42 2024/05/06 16:54:22 cheloha Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -101,11 +101,6 @@ int		dk_ndrive = 0;
 int		*dk_select;
 char		**dr_name;
 
-/* Missing from <sys/time.h> */
-#define timerset(tvp, uvp) \
-	((uvp)->tv_sec = (tvp)->tv_sec);		\
-	((uvp)->tv_usec = (tvp)->tv_usec)
-
 #define SWAP(fld)	tmp = cur.fld;				\
 			cur.fld -= last.fld;			\
 			last.fld = tmp
@@ -135,11 +130,9 @@ dkswap(void)
 		SWAP(dk_wbytes[i]);
 
 		/* Delta Time. */
-		timerclear(&tmp_timer);
-		timerset(&(cur.dk_time[i]), &tmp_timer);
-		timersub(&tmp_timer, &(last.dk_time[i]), &(cur.dk_time[i]));
-		timerclear(&(last.dk_time[i]));
-		timerset(&tmp_timer, &(last.dk_time[i]));
+		tmp_timer = cur.dk_time[i];
+		timersub(&tmp_timer, &last.dk_time[i], &cur.dk_time[i]);
+		last.dk_time[i] = tmp_timer;
 	}
 	for (i = 0; i < CPUSTATES; i++) {
 		long ltmp;
@@ -370,7 +363,7 @@ dkreadstats(void)
 			cur.dk_seek[i] = q[i].ds_seek;
 			cur.dk_rbytes[i] = q[i].ds_rbytes;
 			cur.dk_wbytes[i] = q[i].ds_wbytes;
-			timerset(&(q[i].ds_time), &(cur.dk_time[i]));
+			cur.dk_time[i] = q[i].ds_time;
 		}
 		free(q);
 
@@ -408,7 +401,7 @@ dkreadstats(void)
 			cur.dk_seek[i] = cur_disk.dk_seek;
 			cur.dk_rbytes[i] = cur_disk.dk_rbytes;
 			cur.dk_wbytes[i] = cur_disk.dk_wbytes;
-			timerset(&(cur_disk.dk_time), &(cur.dk_time[i]));
+			cur.dk_time[i] = cur_disk.dk_time;
 			p = TAILQ_NEXT(&cur_disk, dk_link);
 		}
 		deref_nl(X_CP_TIME, cur.cp_time, sizeof(cur.cp_time));
