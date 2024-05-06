@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqereg.h,v 1.8 2024/05/03 13:02:18 stsp Exp $	*/
+/*	$OpenBSD: dwqereg.h,v 1.9 2024/05/06 09:54:38 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -230,13 +230,36 @@ struct dwqe_desc {
 	uint32_t sd_tdes3;
 };
 
-/* Tx bits */
+/* Tx bits (read format; host to device) */
+#define TDES2_HDR_LEN		0x000003ff	/* if TSO is enabled */
+#define TDES2_BUF1_LEN		0x00003fff	/* if TSO is disabled */
+#define TDES2_VLAN_TIR		0x0000c000
+#define   TDES2_NO_VLAN_TAGGING		(0x0 << 14)
+#define   TDES2_VLAN_TAG_STRIP		(0x1 << 14)
+#define   TDES2_VLAN_TAG_INSERT		(0x2 << 14)
+#define   TDES2_VLAN_TAG_REPLACE	(0x3 << 14)
+#define TDES2_BUF2_LEN		0x3fff0000
+#define TDES2_TX_TIMESTAMP_EN	(1 << 30)	/* if TSO is disabled */
+#define TDES2_TSO_EXTMEM_DIS	(1 << 30)	/* if TSO is enabled */
 #define TDES2_IC		(1U << 31)
-#define TDES3_ES		(1 << 15)
-#define TDES3_DE		(1 << 23)
+#define TDES3_TCP_PAYLOAD_LEN	0x0003ffff	/* if TSO is enabled */
+#define TDES3_FRAME_LEN		0x00007fff	/* if TSO is disabled */
+#define TDES3_CIC		0x00030000	/* if TSO is disabled */
+#define   TDES3_CSUM_DISABLE			(0x0 << 16)
+#define   TDES3_CSUM_IPHDR			(0x1 << 16)
+#define   TDES3_CSUM_IPHDR_PAYLOAD		(0x2 << 16)
+#define   TDES3_CSUM_IPHDR_PAYLOAD_PSEUDOHDR	(0x3 << 16)
+#define TDES3_TSO_EN		(1 << 18)
 #define TDES3_LS		(1 << 28)
 #define TDES3_FS		(1 << 29)
 #define TDES3_OWN		(1U << 31)
+
+/* Tx bits (writeback format; device to host) */
+#define TDES3_ES		(1 << 15)
+#define TDES3_DE		(1 << 23)
+/* Bit 28 is the LS bit, as in "read" format. */
+/* Bit 29 is the FS bit, as in "read" format. */
+/* Bit 31 is the OWN bit, as in "read" format. */
 
 /* Rx bits (read format; host to device) */
 #define RDES3_BUF1V		(1 << 24)

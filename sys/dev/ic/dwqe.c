@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.20 2024/05/03 13:02:18 stsp Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.21 2024/05/06 09:54:38 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -94,6 +94,12 @@ struct mbuf *dwqe_alloc_mbuf(struct dwqe_softc *, bus_dmamap_t);
 void	dwqe_fill_rx_ring(struct dwqe_softc *);
 
 int
+dwqe_have_tx_csum_offload(struct dwqe_softc *sc)
+{
+	return (sc->sc_hw_feature[0] & GMAC_MAC_HW_FEATURE0_TXCOESEL);
+}
+
+int
 dwqe_attach(struct dwqe_softc *sc)
 {
 	struct ifnet *ifp;
@@ -121,6 +127,11 @@ dwqe_attach(struct dwqe_softc *sc)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	if (dwqe_have_tx_csum_offload(sc)) {
+		ifp->if_capabilities |= (IFCAP_CSUM_IPv4 |
+		    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+		    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6);
+	}
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = dwqe_mii_readreg;
@@ -1077,6 +1088,25 @@ dwqe_iff(struct dwqe_softc *sc)
 	dwqe_write(sc, GMAC_MAC_PACKET_FILTER, reg);
 }
 
+void
+dwqe_tx_csum(struct dwqe_softc *sc, struct mbuf *m, struct dwqe_desc *txd)
+{
+	if (!dwqe_have_tx_csum_offload(sc))
+		return;
+
+	/* Checksum flags are valid only on first descriptor. */
+	if ((txd->sd_tdes3 & TDES3_FS) == 0)
+		return;
+
+	/* TSO and Tx checksum offloading are incompatible. */
+	if (txd->sd_tdes3 & TDES3_TSO_EN)
+		return;
+
+	if (m->m_pkthdr.csum_flags & (M_IPV4_CSUM_OUT |
+	    M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
+		txd->sd_tdes3 |= TDES3_CSUM_IPHDR_PAYLOAD_PSEUDOHDR;
+}
+
 int
 dwqe_encap(struct dwqe_softc *sc, struct mbuf *m, int *idx, int *used)
 {
@@ -1107,8 +1137,10 @@ dwqe_encap(struct dwqe_softc *sc, struct mbuf *m, int *idx, int *used)
 		txd->sd_tdes1 = (uint32_t)(map->dm_segs[i].ds_addr >> 32);
 		txd->sd_tdes2 = map->dm_segs[i].ds_len;
 		txd->sd_tdes3 = m->m_pkthdr.len;
-		if (i == 0)
+		if (i == 0) {
 			txd->sd_tdes3 |= TDES3_FS;
+			dwqe_tx_csum(sc, m, txd);
+		}
 		if (i == (map->dm_nsegs - 1)) {
 			txd->sd_tdes2 |= TDES2_IC;
 			txd->sd_tdes3 |= TDES3_LS;
