@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.23 2024/05/06 14:36:05 jsing Exp $ */
+/* $OpenBSD: lhash.c,v 1.24 2024/05/06 14:38:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -399,7 +399,8 @@ contract(_LHASH *lh)
 	}
 }
 
-static LHASH_NODE **getrn(_LHASH *lh, const void *data, unsigned long *rhash)
+static LHASH_NODE **
+getrn(_LHASH *lh, const void *data, unsigned long *rhash)
 {
 	LHASH_NODE **ret, *n1;
 	unsigned long hash, nn;
