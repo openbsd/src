@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrrsetbyname_async.c,v 1.13 2023/03/15 22:12:00 millert Exp $	*/
+/*	$OpenBSD: getrrsetbyname_async.c,v 1.14 2024/05/07 23:40:53 djm Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -170,7 +170,7 @@ getrrsetbyname_async_run(struct asr_query *as, struct asr_result *ar)
 
 /* The rest of this file is taken from the original implementation. */
 
-/* $OpenBSD: getrrsetbyname_async.c,v 1.13 2023/03/15 22:12:00 millert Exp $ */
+/* $OpenBSD: getrrsetbyname_async.c,v 1.14 2024/05/07 23:40:53 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -334,13 +334,14 @@ get_response(struct asr_result *ar, const char *pkt, int pktlen)
 
 		if (rdata) {
 			rdata->rdi_length = rr->size;
-			rdata->rdi_data   = malloc(rr->size);
-
-			if (rdata->rdi_data == NULL) {
-				ar->ar_rrset_errno = ERRSET_NOMEMORY;
-				goto fail;
+			if (rr->size != 0) {
+				rdata->rdi_data = malloc(rr->size);
+				if (rdata->rdi_data == NULL) {
+					ar->ar_rrset_errno = ERRSET_NOMEMORY;
+					goto fail;
+				}
+				memcpy(rdata->rdi_data, rr->rdata, rr->size);
 			}
-			memcpy(rdata->rdi_data, rr->rdata, rr->size);
 		}
 	}
 	free_dns_response(response);
@@ -552,12 +553,13 @@ parse_dns_rrsection(const u_char *answer, int size, const u_char **cp,
 
 		/* rdata itself */
 		NEED(curr->size);
-		curr->rdata = malloc(curr->size);
-		if (curr->rdata == NULL) {
-			free_dns_rr(head);
-			return (NULL);
+		if (curr->size != 0) {
+			if ((curr->rdata = malloc(curr->size)) == NULL) {
+				free_dns_rr(head);
+				return (NULL);
+			}
+			memcpy(curr->rdata, *cp, curr->size);
 		}
-		memcpy(curr->rdata, *cp, curr->size);
 		*cp += curr->size;
 	}
 #undef NEED
