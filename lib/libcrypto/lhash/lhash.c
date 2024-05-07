@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.24 2024/05/06 14:38:20 jsing Exp $ */
+/* $OpenBSD: lhash.c,v 1.25 2024/05/07 13:40:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,9 +110,124 @@
 #define UP_LOAD		(2*LH_LOAD_MULT) /* load times 256  (default 2) */
 #define DOWN_LOAD	(LH_LOAD_MULT)   /* load times 256  (default 1) */
 
-static void expand(_LHASH *lh);
-static void contract(_LHASH *lh);
-static LHASH_NODE **getrn(_LHASH *lh, const void *data, unsigned long *rhash);
+static void
+expand(_LHASH *lh)
+{
+	LHASH_NODE **n, **n1, **n2, *np;
+	unsigned int p, i, j;
+	unsigned long hash, nni;
+
+	lh->num_nodes++;
+	lh->num_expands++;
+	p = (int)lh->p++;
+	n1 = &(lh->b[p]);
+	n2 = &(lh->b[p + (int)lh->pmax]);
+	*n2 = NULL;        /* 27/07/92 - eay - undefined pointer bug */
+	nni = lh->num_alloc_nodes;
+
+	for (np = *n1; np != NULL; ) {
+#ifndef OPENSSL_NO_HASH_COMP
+		hash = np->hash;
+#else
+		hash = lh->hash(np->data);
+		lh->num_hash_calls++;
+#endif
+		if ((hash % nni) != p) { /* move it */
+			*n1 = (*n1)->next;
+			np->next= *n2;
+			*n2 = np;
+		} else
+			n1 = &((*n1)->next);
+		np= *n1;
+	}
+
+	if ((lh->p) >= lh->pmax) {
+		j = (int)lh->num_alloc_nodes * 2;
+		n = reallocarray(lh->b, j, sizeof(LHASH_NODE *));
+		if (n == NULL) {
+/*			fputs("realloc error in lhash", stderr); */
+			lh->error++;
+			lh->p = 0;
+			return;
+		}
+		/* else */
+		for (i = (int)lh->num_alloc_nodes; i < j; i++)/* 26/02/92 eay */
+			n[i] = NULL;			  /* 02/03/92 eay */
+		lh->pmax = lh->num_alloc_nodes;
+		lh->num_alloc_nodes = j;
+		lh->num_expand_reallocs++;
+		lh->p = 0;
+		lh->b = n;
+	}
+}
+
+static void
+contract(_LHASH *lh)
+{
+	LHASH_NODE **n, *n1, *np;
+
+	np = lh->b[lh->p + lh->pmax - 1];
+	lh->b[lh->p+lh->pmax - 1] = NULL; /* 24/07-92 - eay - weird but :-( */
+	if (lh->p == 0) {
+		n = reallocarray(lh->b, lh->pmax, sizeof(LHASH_NODE *));
+		if (n == NULL) {
+/*			fputs("realloc error in lhash", stderr); */
+			lh->error++;
+			return;
+		}
+		lh->num_contract_reallocs++;
+		lh->num_alloc_nodes /= 2;
+		lh->pmax /= 2;
+		lh->p = lh->pmax - 1;
+		lh->b = n;
+	} else
+		lh->p--;
+
+	lh->num_nodes--;
+	lh->num_contracts++;
+
+	n1 = lh->b[(int)lh->p];
+	if (n1 == NULL)
+		lh->b[(int)lh->p] = np;
+	else {
+		while (n1->next != NULL)
+			n1 = n1->next;
+		n1->next = np;
+	}
+}
+
+static LHASH_NODE **
+getrn(_LHASH *lh, const void *data, unsigned long *rhash)
+{
+	LHASH_NODE **ret, *n1;
+	unsigned long hash, nn;
+	LHASH_COMP_FN_TYPE cf;
+
+	hash = (*(lh->hash))(data);
+	lh->num_hash_calls++;
+	*rhash = hash;
+
+	nn = hash % lh->pmax;
+	if (nn < lh->p)
+		nn = hash % lh->num_alloc_nodes;
+
+	cf = lh->comp;
+	ret = &(lh->b[(int)nn]);
+	for (n1 = *ret; n1 != NULL; n1 = n1->next) {
+#ifndef OPENSSL_NO_HASH_COMP
+		lh->num_hash_comps++;
+		if (n1->hash != hash) {
+			ret = &(n1->next);
+			continue;
+		}
+#endif
+		lh->num_comp_calls++;
+		if (cf(n1->data, data) == 0)
+			break;
+		ret = &(n1->next);
+	}
+	return (ret);
+}
 
 _LHASH *
 lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c)
@@ -312,125 +427,6 @@ lh_doall_arg(_LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg)
 	doall_util_fn(lh, 1, (LHASH_DOALL_FN_TYPE)0, func, arg);
 }
 LCRYPTO_ALIAS(lh_doall_arg);
-
-static void
-expand(_LHASH *lh)
-{
-	LHASH_NODE **n, **n1, **n2, *np;
-	unsigned int p, i, j;
-	unsigned long hash, nni;
-
-	lh->num_nodes++;
-	lh->num_expands++;
-	p = (int)lh->p++;
-	n1 = &(lh->b[p]);
-	n2 = &(lh->b[p + (int)lh->pmax]);
-	*n2 = NULL;        /* 27/07/92 - eay - undefined pointer bug */
-	nni = lh->num_alloc_nodes;
-
-	for (np = *n1; np != NULL; ) {
-#ifndef OPENSSL_NO_HASH_COMP
-		hash = np->hash;
-#else
-		hash = lh->hash(np->data);
-		lh->num_hash_calls++;
-#endif
-		if ((hash % nni) != p) { /* move it */
-			*n1 = (*n1)->next;
-			np->next= *n2;
-			*n2 = np;
-		} else
-			n1 = &((*n1)->next);
-		np= *n1;
-	}
-
-	if ((lh->p) >= lh->pmax) {
-		j = (int)lh->num_alloc_nodes * 2;
-		n = reallocarray(lh->b, j, sizeof(LHASH_NODE *));
-		if (n == NULL) {
-/*			fputs("realloc error in lhash", stderr); */
-			lh->error++;
-			lh->p = 0;
-			return;
-		}
-		/* else */
-		for (i = (int)lh->num_alloc_nodes; i < j; i++)/* 26/02/92 eay */
-			n[i] = NULL;			  /* 02/03/92 eay */
-		lh->pmax = lh->num_alloc_nodes;
-		lh->num_alloc_nodes = j;
-		lh->num_expand_reallocs++;
-		lh->p = 0;
-		lh->b = n;
-	}
-}
-
-static void
-contract(_LHASH *lh)
-{
-	LHASH_NODE **n, *n1, *np;
-
-	np = lh->b[lh->p + lh->pmax - 1];
-	lh->b[lh->p+lh->pmax - 1] = NULL; /* 24/07-92 - eay - weird but :-( */
-	if (lh->p == 0) {
-		n = reallocarray(lh->b, lh->pmax, sizeof(LHASH_NODE *));
-		if (n == NULL) {
-/*			fputs("realloc error in lhash", stderr); */
-			lh->error++;
-			return;
-		}
-		lh->num_contract_reallocs++;
-		lh->num_alloc_nodes /= 2;
-		lh->pmax /= 2;
-		lh->p = lh->pmax - 1;
-		lh->b = n;
-	} else
-		lh->p--;
-
-	lh->num_nodes--;
-	lh->num_contracts++;
-
-	n1 = lh->b[(int)lh->p];
-	if (n1 == NULL)
-		lh->b[(int)lh->p] = np;
-	else {
-		while (n1->next != NULL)
-			n1 = n1->next;
-		n1->next = np;
-	}
-}
-
-static LHASH_NODE **
-getrn(_LHASH *lh, const void *data, unsigned long *rhash)
-{
-	LHASH_NODE **ret, *n1;
-	unsigned long hash, nn;
-	LHASH_COMP_FN_TYPE cf;
-
-	hash = (*(lh->hash))(data);
-	lh->num_hash_calls++;
-	*rhash = hash;
-
-	nn = hash % lh->pmax;
-	if (nn < lh->p)
-		nn = hash % lh->num_alloc_nodes;
-
-	cf = lh->comp;
-	ret = &(lh->b[(int)nn]);
-	for (n1 = *ret; n1 != NULL; n1 = n1->next) {
-#ifndef OPENSSL_NO_HASH_COMP
-		lh->num_hash_comps++;
-		if (n1->hash != hash) {
-			ret = &(n1->next);
-			continue;
-		}
-#endif
-		lh->num_comp_calls++;
-		if (cf(n1->data, data) == 0)
-			break;
-		ret = &(n1->next);
-	}
-	return (ret);
-}
 
 /* The following hash seems to work very well on normal text strings
  * no collisions on /usr/dict/words and it distributes on %2^n quite
