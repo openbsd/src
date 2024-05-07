@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.2 2020/06/08 14:12:00 naddy Exp $ */
+/*	$OpenBSD: endian.h,v 1.3 2024/05/07 14:26:48 naddy Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -26,71 +26,6 @@
 
 #ifndef _MACHINE_ENDIAN_H_
 #define _MACHINE_ENDIAN_H_
-
-#ifdef _KERNEL
-
-static inline __uint16_t
-__mswap16(volatile const __uint16_t *m)
-{
-	__uint16_t v;
-
-	__asm("lhbrx %0, 0, %1"
-	    : "=r" (v)
-	    : "r" (m), "m" (*m));
-
-	return (v);
-}
-
-static inline __uint32_t
-__mswap32(volatile const __uint32_t *m)
-{
-	__uint32_t v;
-
-	__asm("lwbrx %0, 0, %1"
-	    : "=r" (v)
-	    : "r" (m), "m" (*m));
-
-	return (v);
-}
-
-static inline __uint64_t
-__mswap64(volatile const __uint64_t *m)
-{
-	__uint64_t v;
-
-	__asm("ldbrx %0, 0, %1"
-	    : "=r" (v)
-	    : "r" (m), "m" (*m));
-
-	return (v);
-}
-
-static inline void
-__swapm16(volatile __uint16_t *m, __uint16_t v)
-{
-	__asm("sthbrx %1, 0, %2"
-	    : "=m" (*m)
-	    : "r" (v), "r" (m));
-}
-
-static inline void
-__swapm32(volatile __uint32_t *m, __uint32_t v)
-{
-	__asm("stwbrx %1, 0, %2"
-	    : "=m" (*m)
-	    : "r" (v), "r" (m));
-}
-
-static inline void
-__swapm64(volatile __uint64_t *m, __uint64_t v)
-{
-	__asm("stdbrx %1, 0, %2"
-	    : "=m" (*m)
-	    : "r" (v), "r" (m));
-}
-
-#define __HAVE_MD_SWAPIO
-#endif /* _KERNEL */
 
 #undef _BIG_ENDIAN	/* XXX - gcc may define _BIG_ENDIAN too */
 #define _BYTE_ORDER _BIG_ENDIAN

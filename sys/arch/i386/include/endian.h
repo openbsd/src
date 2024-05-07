@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.19 2018/10/02 21:30:44 naddy Exp $	*/
+/*	$OpenBSD: endian.h,v 1.20 2024/05/07 14:26:48 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -26,34 +26,6 @@
 
 #ifndef _MACHINE_ENDIAN_H_
 #define _MACHINE_ENDIAN_H_
-
-#ifndef __FROM_SYS__ENDIAN
-#include <sys/_types.h>
-#endif
-
-static __inline __uint16_t
-__swap16md(__uint16_t _x)
-{
-	__asm ("rorw $8, %w0" : "+r" (_x));
-	return (_x);
-}
-
-static __inline __uint32_t
-__swap32md(__uint32_t _x)
-{
-	__asm ("bswap %0" : "+r" (_x));
-	return (_x);
-}
-
-static __inline __uint64_t
-__swap64md(__uint64_t _x)
-{
-	return ((__uint64_t)__swap32md(_x >> 32) |
-	    (__uint64_t)__swap32md(_x & 0xffffffff) << 32);
-}
-
-/* Tell sys/endian.h we have MD variants of the swap macros.  */
-#define __HAVE_MD_SWAP
 
 #define _BYTE_ORDER _LITTLE_ENDIAN
 
