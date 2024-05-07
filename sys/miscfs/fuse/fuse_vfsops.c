@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.45 2021/05/01 16:18:29 gnezdo Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.46 2024/05/07 14:27:11 mvs Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -114,7 +114,8 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 	fmp->allow_other = args->allow_other;
 
 	mp->mnt_data = fmp;
-	mp->mnt_flag |= MNT_LOCAL;
+	/* FUSE file system is not truly local. */
+	mp->mnt_flag &= ~MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
 	memset(mp->mnt_stat.f_mntonname, 0, MNAMELEN);
