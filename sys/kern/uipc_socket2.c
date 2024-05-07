@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.153 2024/05/03 17:43:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.154 2024/05/07 15:54:23 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -552,7 +552,10 @@ sblock(struct socket *so, struct sockbuf *sb, int flags)
 		if (!(flags & SBL_WAIT))
 			rwflags |= RW_NOSLEEP;
 
-		return rw_enter(&sb->sb_lock, rwflags);
+		error = rw_enter(&sb->sb_lock, rwflags);
+		if (error == EBUSY)
+			error = EWOULDBLOCK;
+		return error;
 	}
 
 	soassertlocked(so);
