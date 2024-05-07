@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.350 2024/04/24 21:31:31 op Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.351 2024/05/07 12:10:06 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1127,7 +1127,8 @@ load_pki_keys(void)
 }
 
 int
-fork_proc_backend(const char *key, const char *conf, const char *procname)
+fork_proc_backend(const char *key, const char *conf, const char *procname,
+    int do_stdout)
 {
 	pid_t		pid;
 	int		sp[2];
@@ -1165,6 +1166,8 @@ fork_proc_backend(const char *key, const char *conf, const char *procname)
 	if (pid == 0) {
 		/* child process */
 		dup2(sp[0], STDIN_FILENO);
+		if (do_stdout)
+			dup2(sp[0], STDOUT_FILENO);
 		if (closefrom(STDERR_FILENO + 1) == -1)
 			exit(1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_proc.c,v 1.9 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: scheduler_proc.c,v 1.10 2024/05/07 12:10:06 op Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -100,7 +100,7 @@ scheduler_proc_init(const char *conf)
 	int		fd, r;
 	uint32_t	version;
 
-	fd = fork_proc_backend("scheduler", conf, "scheduler-proc");
+	fd = fork_proc_backend("scheduler", conf, "scheduler-proc", 0);
 	if (fd == -1)
 		fatalx("scheduler-proc: exiting");
 

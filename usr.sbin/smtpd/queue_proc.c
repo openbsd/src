@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_proc.c,v 1.10 2024/01/20 09:01:03 claudio Exp $	*/
+/*	$OpenBSD: queue_proc.c,v 1.11 2024/05/07 12:10:06 op Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -287,7 +287,7 @@ queue_proc_init(struct passwd *pw, int server, const char *conf)
 	uint32_t	version;
 	int		fd;
 
-	fd = fork_proc_backend("queue", conf, "queue-proc");
+	fd = fork_proc_backend("queue", conf, "queue-proc", 0);
 	if (fd == -1)
 		fatalx("queue-proc: exiting");
 

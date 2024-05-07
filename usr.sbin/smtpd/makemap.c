@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.76 2024/02/11 09:24:26 op Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.77 2024/05/07 12:10:06 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -57,7 +57,8 @@ enum output_type {
  * Stub functions so that makemap compiles using minimum object files.
  */
 int
-fork_proc_backend(const char *backend, const char *conf, const char *procname)
+fork_proc_backend(const char *backend, const char *conf, const char *procname,
+    int do_stdout)
 {
 	return (-1);
 }

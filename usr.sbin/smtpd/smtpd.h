@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.683 2024/03/02 22:40:28 op Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.684 2024/05/07 12:10:06 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1620,7 +1620,7 @@ const char *proc_name(enum smtp_proc_type);
 const char *proc_title(enum smtp_proc_type);
 const char *imsg_to_str(int);
 void log_imsg(int, int, struct imsg *);
-int fork_proc_backend(const char *, const char *, const char *);
+int fork_proc_backend(const char *, const char *, const char *, int);
 
 
 /* srs.c */
@@ -1640,6 +1640,8 @@ struct stat_value *stat_timespec(struct timespec *);
 
 
 /* table.c */
+const char *table_service_name(enum table_service);
+int table_service_from_name(const char *);
 struct table *table_find(struct smtpd *, const char *);
 struct table *table_create(struct smtpd *, const char *, const char *,
     const char *);

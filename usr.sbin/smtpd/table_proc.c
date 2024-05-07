@@ -1,6 +1,7 @@
-/*	$OpenBSD: table_proc.c,v 1.17 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.18 2024/05/07 12:10:06 op Exp $	*/
 
 /*
+ * Copyright (c) 2024 Omar Polo <op@openbsd.org>
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,85 +18,102 @@
  */
 
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "smtpd.h"
 #include "log.h"
 
+#define PROTOCOL_VERSION	"0.1"
+
 struct table_proc_priv {
-	pid_t		pid;
-	struct imsgbuf	ibuf;
+	FILE		*in;
+	FILE		*out;
+	char		*line;
+	size_t		 linesize;
+
+	/*
+	 * The last ID used in a request.  At the moment the protocol
+	 * is synchronous from our point of view, so it's used to
+	 * assert that the table replied with the correct ID.
+	 */
+	char		 lastid[16];
 };
 
-static struct imsg	 imsg;
-static size_t		 rlen;
-static char		*rdata;
+static char *
+table_proc_nextid(struct table *table)
+{
+	struct table_proc_priv	*priv = table->t_handle;
+	int			 r;
 
-extern char	**environ;
+	r = snprintf(priv->lastid, sizeof(priv->lastid), "%lld",
+	    (unsigned long long)arc4random());
+	if (r < 0 || (size_t)r >= sizeof(priv->lastid))
+		fatal("table-proc: snprintf");
+
+	return (priv->lastid);
+}
 
 static void
-table_proc_call(struct table_proc_priv *p)
+table_proc_send(struct table *table, const char *type, int service,
+    const char *param)
 {
-	ssize_t	n;
+	struct table_proc_priv	*priv = table->t_handle;
+	struct timeval		 tv;
 
-	if (imsg_flush(&p->ibuf) == -1) {
-		log_warn("warn: table-proc: imsg_flush");
-		fatalx("table-proc: exiting");
-	}
+	gettimeofday(&tv, NULL);
+	fprintf(priv->out, "table|%s|%lld.%06ld|%s|%s",
+	    PROTOCOL_VERSION, (long long)tv.tv_sec, (long)tv.tv_usec,
+	    table->t_name, type);
+	if (service != -1) {
+		fprintf(priv->out, "|%s|%s", table_service_name(service),
+		    table_proc_nextid(table));
+		if (param)
+			fprintf(priv->out, "|%s", param);
+		fputc('\n', priv->out);
+	} else
+		fprintf(priv->out, "|%s\n", table_proc_nextid(table));
 
-	while (1) {
-		if ((n = imsg_get(&p->ibuf, &imsg)) == -1) {
-			log_warn("warn: table-proc: imsg_get");
-			break;
-		}
-		if (n) {
-			rlen = imsg.hdr.len - IMSG_HEADER_SIZE;
-			rdata = imsg.data;
+	if (fflush(priv->out) == EOF)
+		fatal("table-proc: fflush");
+}
 
-			if (imsg.hdr.type != PROC_TABLE_OK) {
-				log_warnx("warn: table-proc: bad response");
-				break;
-			}
-			return;
-		}
+static const char *
+table_proc_recv(struct table *table, const char *type)
+{
+	struct table_proc_priv	*priv = table->t_handle;
+	const char		*l;
+	ssize_t			 linelen;
+	size_t			 len;
 
-		if ((n = imsg_read(&p->ibuf)) == -1 && errno != EAGAIN) {
-			log_warn("warn: table-proc: imsg_read");
-			break;
-		}
+	if ((linelen = getline(&priv->line, &priv->linesize, priv->in)) == -1)
+		fatal("table-proc: getline");
+	priv->line[strcspn(priv->line, "\n")] = '\0';
+	l = priv->line;
 
-		if (n == 0) {
-			log_warnx("warn: table-proc: pipe closed");
-			break;
-		}
-	}
+	len = strlen(type);
+	if (strncmp(l, type, len) != 0)
+		goto err;
+	l += len;
 
+	if (*l != '|')
+		goto err;
+	l++;
+
+	len = strlen(priv->lastid);
+	if (strncmp(l, priv->lastid, len) != 0)
+		goto err;
+	l += len;
+
+	if (*l != '|')
+		goto err;
+	return (++l);
+
+ err:
+	log_warnx("warn: table-proc: failed to parse reply");
 	fatalx("table-proc: exiting");
-}
-
-static void
-table_proc_read(void *dst, size_t len)
-{
-	if (len > rlen) {
-		log_warnx("warn: table-proc: bad msg len");
-		fatalx("table-proc: exiting");
-	}
-
-	if (dst)
-		memmove(dst, rdata, len);
-
-	rlen -= len;
-	rdata += len;
-}
-
-static void
-table_proc_end(void)
-{
-	if (rlen) {
-		log_warnx("warn: table-proc: bogus data");
-		fatalx("table-proc: exiting");
-	}
-	imsg_free(&imsg);
 }
 
 /*
@@ -106,24 +124,53 @@ static int
 table_proc_open(struct table *table)
 {
 	struct table_proc_priv	*priv;
-	struct table_open_params op;
-	int			 fd;
+	const char		*s;
+	ssize_t			 len;
+	int			 service, services = 0;
+	int			 fd, fdd;
 
 	priv = xcalloc(1, sizeof(*priv));
 
-	fd = fork_proc_backend("table", table->t_config, table->t_name);
+	fd = fork_proc_backend("table", table->t_config, table->t_name, 1);
 	if (fd == -1)
 		fatalx("table-proc: exiting");
+	if ((fdd = dup(fd)) == -1) {
+		log_warnx("warn: table-proc: dup");
+		fatalx("table-proc: exiting");
+	}
+	if ((priv->in = fdopen(fd, "r")) == NULL)
+		fatalx("table-proc: fdopen");
+	if ((priv->out = fdopen(fdd, "w")) == NULL)
+		fatalx("table-proc: fdopen");
 
-	imsg_init(&priv->ibuf, fd);
+	fprintf(priv->out, "config|smtpd-version|"SMTPD_VERSION"\n");
+	fprintf(priv->out, "config|protocol|"PROTOCOL_VERSION"\n");
+	fprintf(priv->out, "config|tablename|%s\n", table->t_name);
+	fprintf(priv->out, "config|ready\n");
+	if (fflush(priv->out) == EOF)
+		fatalx("table-proc: fflush");
 
-	memset(&op, 0, sizeof op);
-	op.version = PROC_TABLE_API_VERSION;
-	(void)strlcpy(op.name, table->t_name, sizeof op.name);
-	imsg_compose(&priv->ibuf, PROC_TABLE_OPEN, 0, 0, -1, &op, sizeof op);
+	while ((len = getline(&priv->line, &priv->linesize, priv->in)) != -1) {
+		priv->line[strcspn(priv->line, "\n")] = '\0';
 
-	table_proc_call(priv);
-	table_proc_end();
+		if (strncmp(priv->line, "register|", 9) != 0)
+			fatalx("table-proc: invalid handshake reply");
+
+		s = priv->line + 9;
+		if (!strcmp(s, "ready"))
+			break;
+		service = table_service_from_name(s);
+		if (service == -1 || service == K_NONE)
+			fatalx("table-proc: unknown service %s", s);
+
+		services |= service;
+	}
+
+	if (ferror(priv->in))
+		fatalx("table-proc: getline");
+
+	if (services == 0)
+		fatalx("table-proc: no services registered");
 
 	table->t_handle = priv;
 
@@ -133,16 +180,17 @@ table_proc_open(struct table *table)
 static int
 table_proc_update(struct table *table)
 {
-	struct table_proc_priv	*priv = table->t_handle;
-	int r;
+	const char		*r;
 
-	imsg_compose(&priv->ibuf, PROC_TABLE_UPDATE, 0, 0, -1, NULL, 0);
+	table_proc_send(table, "update", -1, NULL);
+	r = table_proc_recv(table, "update-result");
+	if (!strcmp(r, "ok"))
+		return (1);
+	if (!strcmp(r, "error"))
+		return (0);
 
-	table_proc_call(priv);
-	table_proc_read(&r, sizeof(r));
-	table_proc_end();
-
-	return (r);
+	log_warnx("warn: table-proc: failed parse reply");
+	fatalx("table-proc: exiting");
 }
 
 static void
@@ -150,105 +198,85 @@ table_proc_close(struct table *table)
 {
 	struct table_proc_priv	*priv = table->t_handle;
 
-	imsg_compose(&priv->ibuf, PROC_TABLE_CLOSE, 0, 0, -1, NULL, 0);
-	if (imsg_flush(&priv->ibuf) == -1)
-		fatal("imsg_flush");
+	if (fclose(priv->in) == EOF)
+		fatal("table-proc: fclose");
+	if (fclose(priv->out) == EOF)
+		fatal("table-proc: fclose");
+	free(priv->line);
+	free(priv);
 
 	table->t_handle = NULL;
 }
 
 static int
-imsg_add_params(struct ibuf *buf)
-{
-	size_t count = 0;
-
-	if (imsg_add(buf, &count, sizeof(count)) == -1)
-		return (-1);
-
-	return (0);
-}
-
-static int
 table_proc_lookup(struct table *table, enum table_service s, const char *k, char **dst)
 {
-	struct table_proc_priv	*priv = table->t_handle;
-	struct ibuf		*buf;
-	int			 r;
+	const char		*req = "lookup", *res = "lookup-result";
+	const char		*r;
 
-	buf = imsg_create(&priv->ibuf,
-	    dst ? PROC_TABLE_LOOKUP : PROC_TABLE_CHECK, 0, 0,
-	    sizeof(s) + strlen(k) + 1);
-
-	if (buf == NULL)
-		return (-1);
-	if (imsg_add(buf, &s, sizeof(s)) == -1)
-		return (-1);
-	if (imsg_add_params(buf) == -1)
-		return (-1);
-	if (imsg_add(buf, k, strlen(k) + 1) == -1)
-		return (-1);
-	imsg_close(&priv->ibuf, buf);
-
-	table_proc_call(priv);
-	table_proc_read(&r, sizeof(r));
-
-	if (r == 1 && dst) {
-		if (rlen == 0) {
-			log_warnx("warn: table-proc: empty response");
-			fatalx("table-proc: exiting");
-		}
-		if (rdata[rlen - 1] != '\0') {
-			log_warnx("warn: table-proc: not NUL-terminated");
-			fatalx("table-proc: exiting");
-		}
-		*dst = strdup(rdata);
-		if (*dst == NULL)
-			r = -1;
-		table_proc_read(NULL, rlen);
+	if (dst == NULL) {
+		req = "check";
+		res = "check-result";
 	}
 
-	table_proc_end();
+	table_proc_send(table, req, s, k);
+	r = table_proc_recv(table, res);
 
-	return (r);
+	/* common replies */
+	if (!strcmp(r, "not-found"))
+		return (0);
+	if (!strcmp(r, "error"))
+		return (-1);
+
+	if (dst == NULL) {
+		/* check op */
+		if (!strncmp(r, "found", 5))
+			return (1);
+		log_warnx("warn: table-proc: failed to parse reply");
+		fatalx("table-proc: exiting");
+	}
+
+	/* lookup op */
+	if (strncmp(r, "found|", 6) != 0) {
+		log_warnx("warn: table-proc: failed to parse reply");
+		fatalx("table-proc: exiting");
+	}
+	r += 6;
+	if (*r == '\0') {
+		log_warnx("warn: table-proc: empty response");
+		fatalx("table-proc: exiting");
+	}
+	if ((*dst = strdup(r)) == NULL)
+		return (-1);
+	return (1);
 }
 
 static int
 table_proc_fetch(struct table *table, enum table_service s, char **dst)
 {
-	struct table_proc_priv	*priv = table->t_handle;
-	struct ibuf		*buf;
-	int			 r;
+	const char		*r;
 
-	buf = imsg_create(&priv->ibuf, PROC_TABLE_FETCH, 0, 0, sizeof(s));
-	if (buf == NULL)
-		return (-1);
-	if (imsg_add(buf, &s, sizeof(s)) == -1)
-		return (-1);
-	if (imsg_add_params(buf) == -1)
-		return (-1);
-	imsg_close(&priv->ibuf, buf);
+	table_proc_send(table, "fetch", s, NULL);
+	r = table_proc_recv(table, "fetch-result");
 
-	table_proc_call(priv);
-	table_proc_read(&r, sizeof(r));
+	if (!strcmp(r, "not-found"))
+		return (0);
+	if (!strcmp(r, "error"))
+		return (-1);
 
-	if (r == 1) {
-		if (rlen == 0) {
-			log_warnx("warn: table-proc: empty response");
-			fatalx("table-proc: exiting");
-		}
-		if (rdata[rlen - 1] != '\0') {
-			log_warnx("warn: table-proc: not NUL-terminated");
-			fatalx("table-proc: exiting");
-		}
-		*dst = strdup(rdata);
-		if (*dst == NULL)
-			r = -1;
-		table_proc_read(NULL, rlen);
+	if (strncmp(r, "found|", 6) != 0) {
+		log_warnx("warn: table-proc: failed to parse reply");
+		fatalx("table-proc: exiting");
+	}
+	r += 6;
+	if (*r == '\0') {
+		log_warnx("warn: table-proc: empty response");
+		fatalx("table-proc: exiting");
 	}
 
-	table_proc_end();
-
-	return (r);
+	if ((*dst = strdup(r)) == NULL)
+		return (-1);
+	return (1);
 }
 
 struct table_backend table_backend_proc = {
