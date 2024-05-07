@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.325 2024/04/18 09:06:42 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.326 2024/05/07 10:46:35 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1171,7 +1171,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
 			wakeparent = 1;
 			if (action == SIG_DFL)
-				atomic_clearbits_int(siglist, mask);
+				mask = 0;
 			if (action == SIG_CATCH)
 				goto runfast;
 			if (p->p_wchan == NULL)
