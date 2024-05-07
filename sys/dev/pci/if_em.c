@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.374 2024/02/16 22:30:54 mglocker Exp $ */
+/* $OpenBSD: if_em.c,v 1.375 2024/05/07 18:35:23 jan Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2452,7 +2452,7 @@ em_tso_setup(struct em_queue *que, struct mbuf *mp, u_int head,
 #endif
 
 	ether_extract_headers(mp, &ext);
-	if (ext.tcp == NULL)
+	if (ext.tcp == NULL || mp->m_pkthdr.ph_mss == 0)
 		goto out;
 
 	vlan_macip_lens |= (sizeof(*ext.eh) << E1000_ADVTXD_MACLEN_SHIFT);

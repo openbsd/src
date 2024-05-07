@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.32 2024/04/10 19:55:50 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.33 2024/05/07 18:35:23 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -777,7 +777,7 @@ vio_tx_offload(struct virtio_net_hdr *hdr, struct mbuf *m)
 	if (!ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO))
 		return;
 
-	if (!ext.tcp) {
+	if (!ext.tcp || m->m_pkthdr.ph_mss == 0) {
 		tcpstat_inc(tcps_outbadtso);
 		return;
 	}

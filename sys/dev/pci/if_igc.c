@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.22 2024/05/06 04:25:52 dlg Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.23 2024/05/07 18:35:23 jan Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -2093,7 +2093,7 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 	}
 
 	if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_TSO)) {
-		if (ext.tcp) {
+		if (ext.tcp && mp->m_pkthdr.ph_mss > 0) {
 			uint32_t hdrlen, thlen, paylen, outlen;
 
 			thlen = ext.tcphlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.48 2024/04/12 19:27:43 jan Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.49 2024/05/07 18:35:23 jan Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1427,7 +1427,7 @@ bnxt_start(struct ifqueue *ifq)
 			uint32_t paylen;
 
 			ether_extract_headers(m, &ext);
-			if (ext.tcp) {
+			if (ext.tcp && m->m_pkthdr.ph_mss > 0) {
 				lflags |= TX_BD_LONG_LFLAGS_LSO;
 				hdrsize = sizeof(*ext.eh);
 				if (ext.ip4 || ext.ip6)

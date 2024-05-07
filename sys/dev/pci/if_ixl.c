@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.98 2024/04/12 19:27:43 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.99 2024/05/07 18:35:23 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2848,7 +2848,7 @@ ixl_tx_setup_offload(struct mbuf *m0, struct ixl_tx_ring *txr,
 	}
 
 	if (ISSET(m0->m_pkthdr.csum_flags, M_TCP_TSO)) {
-		if (ext.tcp) {
+		if (ext.tcp && m0->m_pkthdr.ph_mss > 0) {
 			struct ixl_tx_desc *ring, *txd;
 			uint64_t cmd = 0, paylen, outlen;
 

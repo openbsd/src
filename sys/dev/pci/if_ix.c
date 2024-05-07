@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.212 2024/05/01 10:43:42 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.213 2024/05/07 18:35:23 jan Exp $	*/
 
 /******************************************************************************
 
@@ -2535,7 +2535,7 @@ ixgbe_tx_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 	}
 
 	if (mp->m_pkthdr.csum_flags & M_TCP_TSO) {
-		if (ext.tcp) {
+		if (ext.tcp && mp->m_pkthdr.ph_mss > 0) {
 			uint32_t hdrlen, thlen, paylen, outlen;
 
 			thlen = ext.tcphlen;

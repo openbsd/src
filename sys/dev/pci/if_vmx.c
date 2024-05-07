@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.83 2024/04/02 20:59:48 jan Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.84 2024/05/07 18:35:23 jan Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1463,7 +1463,7 @@ vmxnet3_tx_offload(struct vmxnet3_txdesc *sop, struct mbuf *m)
 	 * TCP Segmentation Offload
 	 */
 
-	if (ext.tcp == NULL) {
+	if (ext.tcp == NULL || m->m_pkthdr.ph_mss == 0) {
 		tcpstat_inc(tcps_outbadtso);
 		return;
 	}
