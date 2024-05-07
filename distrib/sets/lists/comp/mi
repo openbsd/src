@@ -1448,7 +1448,6 @@
 ./usr/include/ufs/ffs
 ./usr/include/ufs/ffs/ffs_extern.h
 ./usr/include/ufs/ffs/fs.h
-./usr/include/ufs/ffs/softdep.h
 ./usr/include/ufs/mfs
 ./usr/include/ufs/mfs/mfs_extern.h
 ./usr/include/ufs/mfs/mfsnode.h
