@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.138 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.139 2024/05/08 14:02:59 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -569,6 +569,9 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	}
 
  fallback:
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		goto bad;
+
 	if (m->m_len < sizeof(struct ether_header)) {
 		m = m_pullup(m, sizeof(struct ether_header));
 		if (m == NULL) {
