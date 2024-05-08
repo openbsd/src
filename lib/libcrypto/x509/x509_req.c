@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.33 2023/04/25 09:46:36 job Exp $ */
+/* $OpenBSD: x509_req.c,v 1.34 2024/05/08 07:55:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,20 +194,6 @@ X509_REQ_extension_nid(int req_nid)
 }
 LCRYPTO_ALIAS(X509_REQ_extension_nid);
 
-int *
-X509_REQ_get_extension_nids(void)
-{
-	return ext_nids;
-}
-LCRYPTO_ALIAS(X509_REQ_get_extension_nids);
-
-void
-X509_REQ_set_extension_nids(int *nids)
-{
-	ext_nids = nids;
-}
-LCRYPTO_ALIAS(X509_REQ_set_extension_nids);
-
 STACK_OF(X509_EXTENSION) *
 X509_REQ_get_extensions(X509_REQ *req)
 {
@@ -354,3 +340,22 @@ i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
 	return i2d_X509_REQ_INFO(req->req_info, pp);
 }
 LCRYPTO_ALIAS(i2d_re_X509_REQ_tbs);
+
+/*
+ * XXX - remove the API below in the next major bump
+ */
+
+int *
+X509_REQ_get_extension_nids(void)
+{
+	X509error(ERR_R_DISABLED);
+	return NULL;
+}
+LCRYPTO_ALIAS(X509_REQ_get_extension_nids);
+
+void
+X509_REQ_set_extension_nids(int *nids)
+{
+	X509error(ERR_R_DISABLED);
+}
+LCRYPTO_ALIAS(X509_REQ_set_extension_nids);
