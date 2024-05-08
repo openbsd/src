@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.34 2024/05/08 07:55:10 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.35 2024/05/08 08:11:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,17 +180,9 @@ static int ext_nid_list[] = {NID_ext_req, NID_ms_ext_req, NID_undef};
 static int *ext_nids = ext_nid_list;
 
 int
-X509_REQ_extension_nid(int req_nid)
+X509_REQ_extension_nid(int nid)
 {
-	int i, nid;
-
-	for (i = 0; ; i++) {
-		nid = ext_nids[i];
-		if (nid == NID_undef)
-			return 0;
-		else if (req_nid == nid)
-			return 1;
-	}
+	return nid == NID_ext_req || nid == NID_ms_ext_req;
 }
 LCRYPTO_ALIAS(X509_REQ_extension_nid);
 
