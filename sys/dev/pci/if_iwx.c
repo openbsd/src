@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.183 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.184 2024/05/08 14:03:54 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8323,15 +8323,15 @@ iwx_run(struct iwx_softc *sc)
 		return err;
 	}
 #endif
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		return 0;
+
 	err = iwx_power_mac_update_mode(sc, in);
 	if (err) {
 		printf("%s: could not update MAC power (error %d)\n",
 		    DEVNAME(sc), err);
 		return err;
 	}
-
-	if (ic->ic_opmode == IEEE80211_M_MONITOR)
-		return 0;
 
 	/* Start at lowest available bit-rate. Firmware will raise. */
 	in->in_ni.ni_txrate = 0;

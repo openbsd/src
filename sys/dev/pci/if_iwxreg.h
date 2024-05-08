@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.52 2023/10/06 15:15:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.53 2024/05/08 14:03:54 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1760,7 +1760,7 @@ struct iwx_gen3_bc_tbl_entry {
 #define IWX_DQA_CMD_QUEUE		0
 #define IWX_DQA_AUX_QUEUE		1
 
-#define IWX_DQA_INJECT_MONITOR_QUEUE	2 /* used in monitor mode only */
+#define IWX_DQA_INJECT_MONITOR_QUEUE	1 /* used in monitor mode only */
 #define IWX_DQA_MGMT_QUEUE		1 /* default queue other modes */
 
 /* Reserve 8 DQA Tx queues for QoS data frames. */
