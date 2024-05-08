@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.326 2024/05/07 10:46:35 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.327 2024/05/08 13:05:33 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -921,7 +921,7 @@ void
 ptsignal(struct proc *p, int signum, enum signal_type type)
 {
 	int s, prop;
-	sig_t action;
+	sig_t action, altaction = SIG_DFL;
 	sigset_t mask, sigmask;
 	int *siglist;
 	struct process *pr = p->p_p;
@@ -1026,6 +1026,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			return;
 		if (sigmask & mask) {
 			action = SIG_HOLD;
+			if (sigcatch & mask)
+				altaction = SIG_CATCH;
 		} else if (sigcatch & mask) {
 			action = SIG_CATCH;
 		} else {
@@ -1050,15 +1052,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	 * marked at thread level.
 	 */
 	siglist = (type == SPROCESS) ? &pr->ps_siglist : &p->p_siglist;
-	if (prop & SA_CONT) {
+	if (prop & (SA_CONT | SA_STOP))
 		siglist = &p->p_siglist;
-		atomic_clearbits_int(siglist, STOPSIGMASK);
-	}
-	if (prop & SA_STOP) {
-		siglist = &p->p_siglist;
-		atomic_clearbits_int(siglist, CONTSIGMASK);
-		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
-	}
 
 	/*
 	 * XXX delay processing of SA_STOP signals unless action == SIG_DFL?
@@ -1067,16 +1062,6 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link)
 			if (q != p)
 				ptsignal(q, signum, SPROPAGATED);
-
-	/*
-	 * Defer further processing for signals which are held,
-	 * except that stopped processes must be continued by SIGCONT.
-	 */
-	if (action == SIG_HOLD && ((prop & SA_CONT) == 0 ||
-	    p->p_stat != SSTOP)) {
-		atomic_setbits_int(siglist, mask);
-		return;
-	}
 
 	SCHED_LOCK(s);
 
@@ -1107,6 +1092,25 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		sigmask = READ_ONCE(p->p_sigmask);
 		if (sigmask & mask)
 			goto out;
+		else if (action == SIG_HOLD) {
+			/* signal got unmasked, get proper action */
+			action = altaction;
+
+			if (action == SIG_DFL) {
+				if (prop & SA_KILL && pr->ps_nice > NZERO)
+					 pr->ps_nice = NZERO;
+
+				/*
+				 * Discard tty stop signals sent to an
+				 * orphaned process group, see above.
+				 */
+				if (prop & SA_TTYSTOP &&
+				    pr->ps_pgrp->pg_jobc == 0) {
+					SCHED_UNLOCK(s);
+					return;
+				}
+			}
+		}
 
 		/*
 		 * If SIGCONT is default (or ignored) and process is
@@ -1181,6 +1185,13 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			goto out;
 		}
 
+		/*
+		 * Defer further processing for signals which are held,
+		 * except that stopped processes must be continued by SIGCONT.
+		 */
+		if (action == SIG_HOLD)
+			goto out;
+
 		if (prop & SA_STOP) {
 			/*
 			 * Already stopped, don't need to stop again.
@@ -1201,6 +1212,9 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		goto out;
 
 	case SONPROC:
+		if (action == SIG_HOLD)
+			goto out;
+
 		/* set siglist before issuing the ast */
 		atomic_setbits_int(siglist, mask);
 		mask = 0;
@@ -1229,6 +1243,14 @@ out:
 	/* finally adjust siglist */
 	if (mask)
 		atomic_setbits_int(siglist, mask);
+	if (prop & SA_CONT) {
+		atomic_clearbits_int(siglist, STOPSIGMASK);
+	}
+	if (prop & SA_STOP) {
+		atomic_clearbits_int(siglist, CONTSIGMASK);
+		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
+	}
+
 	SCHED_UNLOCK(s);
 	if (wakeparent)
 		wakeup(pr->ps_pptr);
