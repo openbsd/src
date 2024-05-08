@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.35 2024/05/08 08:11:50 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.36 2024/05/08 08:20:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,15 +170,6 @@ X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
 }
 LCRYPTO_ALIAS(X509_REQ_check_private_key);
 
-/* It seems several organisations had the same idea of including a list of
- * extensions in a certificate request. There are at least two OIDs that are
- * used and there may be more: so the list is configurable.
- */
-
-static int ext_nid_list[] = {NID_ext_req, NID_ms_ext_req, NID_undef};
-
-static int *ext_nids = ext_nid_list;
-
 int
 X509_REQ_extension_nid(int nid)
 {
@@ -191,21 +182,21 @@ X509_REQ_get_extensions(X509_REQ *req)
 {
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *ext = NULL;
-	int idx, *pnid;
+	int idx;
 	const unsigned char *p;
 
-	if (req == NULL || req->req_info == NULL || ext_nids == NULL)
+	if (req == NULL || req->req_info == NULL)
 		return NULL;
-	for (pnid = ext_nids; *pnid != NID_undef; pnid++) {
-		idx = X509_REQ_get_attr_by_NID(req, *pnid, -1);
-		if (idx == -1)
-			continue;
-		attr = X509_REQ_get_attr(req, idx);
-		ext = X509_ATTRIBUTE_get0_type(attr, 0);
-		break;
-	}
-	if (ext == NULL)
-		return sk_X509_EXTENSION_new_null();
+
+	if ((idx = X509_REQ_get_attr_by_NID(req, NID_ext_req, -1)) == -1)
+		idx = X509_REQ_get_attr_by_NID(req, NID_ms_ext_req, -1);
+	if (idx == -1)
+		return NULL;
+
+	if ((attr = X509_REQ_get_attr(req, idx)) == NULL)
+		return NULL;
+	if ((ext = X509_ATTRIBUTE_get0_type(attr, 0)) == NULL)
+		return NULL;
 	if (ext->type != V_ASN1_SEQUENCE)
 		return NULL;
 	p = ext->value.sequence->data;
