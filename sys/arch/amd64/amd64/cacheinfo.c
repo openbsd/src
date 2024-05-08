@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.13 2024/04/03 02:01:21 guenther Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.14 2024/05/08 18:00:55 guenther Exp $	*/
 
 /*
  * Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
@@ -22,17 +22,36 @@
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 
+#define MAX_CACHE_LEAF	10
+
+#ifdef MULTIPROCESSOR
+uint32_t prev_cache[MAX_CACHE_LEAF][3];
+# define prev_e5_ecx	prev_cache[0][0]
+# define prev_e5_edx	prev_cache[0][1]
+# define prev_e6_ecx	prev_cache[0][2]
+# define PREV_SET(x,y)	(x) = (y)
+# define PREV_SAME(x,y)	((x) == (y))
+#else
+# define PREV_SET(x,y)	(void)0
+# define PREV_SAME(x,y)	0
+#endif
+
 void
 amd64_print_l1_cacheinfo(struct cpu_info *ci)
 {
 	u_int ways, linesize, totalsize;
-	u_int eax, ebx, ecx, edx;
+	u_int dummy, ecx, edx;
 
-	if (ci->ci_pnfeatset < 0x80000006)
+	if (ci->ci_pnfeatset < 0x80000005)
 		return;
 
-	CPUID(0x80000005, eax, ebx, ecx, edx);
+	CPUID(0x80000005, dummy, dummy, ecx, edx);
 
+	if (!CPU_IS_PRIMARY(ci) && PREV_SAME(ecx, prev_e5_ecx) &&
+	    PREV_SAME(edx, prev_e5_edx))
+		return;
+	PREV_SET(prev_e5_ecx, ecx);
+	PREV_SET(prev_e5_edx, edx);
 	if (ecx == 0)
 		return;
 
@@ -91,13 +110,16 @@ void
 amd64_print_l2_cacheinfo(struct cpu_info *ci)
 {
 	u_int ways, linesize, totalsize;
-	u_int eax, ebx, ecx, edx;
+	u_int dummy, ecx;
 
 	if (ci->ci_pnfeatset < 0x80000006)
 		return;
 
-	CPUID(0x80000006, eax, ebx, ecx, edx);
+	CPUID(0x80000006, dummy, dummy, ecx, dummy);
 
+	if (!CPU_IS_PRIMARY(ci) && PREV_SAME(ecx, prev_e6_ecx))
+		return;
+	PREV_SET(prev_e6_ecx, ecx);
 	if (ecx == 0)
 		return;
 
@@ -157,50 +179,93 @@ amd64_print_l2_cacheinfo(struct cpu_info *ci)
 	printf(" L2 cache\n");
 }
 
+static inline int
+intel_print_one_cache(struct cpu_info *ci, int leaf, u_int eax, u_int ebx,
+    u_int ecx)
+{
+	u_int ways, partitions, linesize, sets, totalsize;
+	int type, level;
+
+	type = eax & 0x1f;
+	if (type == 0)
+		return 1;
+	level = (eax >> 5) & 7;
+
+	ways = (ebx >> 22) + 1;
+	linesize = (ebx & 0xfff) + 1;
+	partitions =  ((ebx >> 12) & 0x3ff) + 1;
+	sets = ecx + 1;
+
+	totalsize = ways * linesize * partitions * sets;
+
+	if (leaf == 0)
+		printf("%s: ", ci->ci_dev->dv_xname);
+	else
+		printf(", ");
+
+	if (totalsize < 1024*1024)
+		printf("%dKB ", totalsize >> 10);
+	else
+		printf("%dMB ", totalsize >> 20);
+	printf("%db/line %d-way ", linesize, ways);
+
+	if (level == 1) {
+		if (type == 1)
+			printf("D");
+		else if (type == 2)
+			printf("I");
+		else if (type == 3)
+			printf("U");
+		printf("-cache");
+	} else {
+		printf("L%d cache", level);
+	}
+	return 0;
+}
+
 void
 intel_print_cacheinfo(struct cpu_info *ci, u_int fn)
 {
-	u_int ways, partitions, linesize, sets, totalsize;
-	int type, level, leaf;
-	u_int eax, ebx, ecx, edx;
+	int leaf;
+	u_int eax, ebx, ecx, dummy;
 
-	printf("%s: ", ci->ci_dev->dv_xname);
-
-	for (leaf = 0; leaf < 10; leaf++) {
-		CPUID_LEAF(fn, leaf, eax, ebx, ecx, edx);
-		type =  eax & 0x1f;
-		if (type == 0)
-			break;
-		level = (eax >> 5) & 7;
-	
-		ways = (ebx >> 22) + 1;
-		linesize = (ebx & 0xfff) + 1;
-		partitions =  ((ebx >> 12) & 0x3ff) + 1;
-		sets = ecx + 1;
-
-		totalsize = ways * linesize * partitions * sets;
-
-		if (leaf > 0)
-			printf(", ");
-
-		if (totalsize < 1024*1024)
-			printf("%dKB ", totalsize >> 10);
-		else
-			printf("%dMB ", totalsize >> 20);
-		printf("%db/line %d-way ", linesize, ways);
-
-		if (level == 1) {
-			if (type == 1)
-				printf("D");
-			else if (type == 2)
-				printf("I");
-			else if (type == 3)
-				printf("U");
-			printf("-cache");
-		} else {
-			printf("L%d cache", level);
+	leaf = 0;
+#ifdef MULTIPROCESSOR
+	if (! CPU_IS_PRIMARY(ci)) {
+		int i;
+		/* find the first level that differs, if any */
+		for (; leaf < MAX_CACHE_LEAF; leaf++) {
+			CPUID_LEAF(fn, leaf, eax, ebx, ecx, dummy);
+			if (PREV_SAME(prev_cache[leaf][0], eax) &&
+			    PREV_SAME(prev_cache[leaf][1], ebx) &&
+			    PREV_SAME(prev_cache[leaf][2], ecx)) {
+				/* last level? */
+				if ((eax & 0x1f) == 0)
+					break;
+				continue;
+			}
+			/* print lower levels that were the same */
+			for (i = 0; i < leaf; i++)
+				intel_print_one_cache(ci, i, prev_cache[leaf][0],
+				    prev_cache[leaf][1], prev_cache[leaf][2]);
+			/* print this (differing) level and higher levels */
+			goto printit;
 		}
-		
+		/* same as previous */
+		return;
+	}
+#endif
+
+	for (; leaf < MAX_CACHE_LEAF; leaf++) {
+		CPUID_LEAF(fn, leaf, eax, ebx, ecx, dummy);
+#ifdef MULTIPROCESSOR
+printit:
+#endif
+		PREV_SET(prev_cache[leaf][0], eax);
+		PREV_SET(prev_cache[leaf][1], ebx);
+		PREV_SET(prev_cache[leaf][2], ecx);
+		if (intel_print_one_cache(ci, leaf, eax, ebx, ecx))
+			break;
 	}
 	printf("\n");
 }
@@ -218,7 +283,7 @@ x86_print_cacheinfo(struct cpu_info *ci)
 	}
 
 	if (ci->ci_vendor == CPUV_AMD &&
-	    (ecpu_ecxfeature & CPUIDECX_TOPEXT)) {
+	    (ci->ci_efeature_ecx & CPUIDECX_TOPEXT)) {
 		intel_print_cacheinfo(ci, 0x8000001d);
 		return;
 	}
