@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.99 2024/05/07 18:35:23 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.100 2024/05/08 17:52:11 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2854,7 +2854,11 @@ ixl_tx_setup_offload(struct mbuf *m0, struct ixl_tx_ring *txr,
 
 			hlen += ext.tcphlen;
 
-			outlen = m0->m_pkthdr.ph_mss;
+			/*
+			 * The MSS should not be set to a lower value than 64
+			 * or larger than 9668 bytes.
+			 */
+			outlen = MIN(9668, MAX(64, m0->m_pkthdr.ph_mss));
 			paylen = m0->m_pkthdr.len - ETHER_HDR_LEN - hlen;
 
 			ring = IXL_DMA_KVA(&txr->txr_mem);
