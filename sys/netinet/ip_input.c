@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.393 2024/04/16 12:56:39 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.394 2024/05/08 13:01:30 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -587,6 +587,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 	ip_forward(m, ifp, &ro, pfrdr);
 	*mp = NULL;
+	rtfree(ro.ro_rt);
 	return IPPROTO_DONE;
  bad:
 	nxt = IPPROTO_DONE;
