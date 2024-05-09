@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.27 2022/11/26 16:08:56 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.28 2024/05/09 07:12:03 tb Exp $ */
 /*
  * Copyright (c) 2020-2022 Theo Buehler <tb@openbsd.org>
  *
@@ -445,19 +445,26 @@ ssl_security_group(const SSL *ssl, uint16_t group_id, int secop)
 	int bits, nid;
 	uint8_t group[2];
 
+	memset(&cbb, 0, sizeof(cbb));
+
 	if (!tls1_ec_group_id2bits(group_id, &bits))
-		return 0;
+		goto err;
 	if (!tls1_ec_group_id2nid(group_id, &nid))
-		return 0;
+		goto err;
 
 	if (!CBB_init_fixed(&cbb, group, sizeof(group)))
-		return 0;
+		goto err;
 	if (!CBB_add_u16(&cbb, group_id))
-		return 0;
+		goto err;
 	if (!CBB_finish(&cbb, NULL, NULL))
-		return 0;
+		goto err;
 
 	return ssl_security(ssl, secop, bits, nid, group);
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return 0;
 }
 
 int
