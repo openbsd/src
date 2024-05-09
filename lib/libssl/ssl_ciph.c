@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.140 2024/03/02 11:45:51 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.141 2024/05/09 07:47:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1344,7 +1344,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 char *
 SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
-	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, alg2;
+	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
 	const char *ver, *kx, *au, *enc, *mac;
 	char *ret;
 	int l;
@@ -1354,8 +1354,6 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	alg_enc = cipher->algorithm_enc;
 	alg_mac = cipher->algorithm_mac;
 	alg_ssl = cipher->algorithm_ssl;
-
-	alg2 = cipher->algorithm2;
 
 	if (alg_ssl & SSL_SSLV3)
 		ver = "SSLv3";
@@ -1409,7 +1407,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		enc = "3DES(168)";
 		break;
 	case SSL_RC4:
-		enc = alg2 & SSL2_CF_8_BYTE_ENC ? "RC4(64)" : "RC4(128)";
+		enc = "RC4(128)";
 		break;
 	case SSL_eNULL:
 		enc = "None";
