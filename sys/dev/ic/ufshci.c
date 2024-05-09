@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.11 2024/05/09 08:04:48 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.12 2024/05/09 08:06:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -130,6 +130,7 @@ ufshci_intr(void *arg)
 		/* Reset Interrupt Aggregation Counter and Timer. */
 		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
 		    UFSHCI_REG_UTRIACR_IAEN | UFSHCI_REG_UTRIACR_CTR);
+		sc->sc_intraggr_enabled = 0;
 
 		ufshci_xfer_complete(sc);
 
@@ -195,7 +196,12 @@ ufshci_attach(struct ufshci_softc *sc)
 		printf("%s: NUTRS can't be >32 (is %d)!\n",
 		    sc->sc_dev.dv_xname, sc->sc_nutrs);
 		return 1;
+	} else if (sc->sc_nutrs == 1) {
+		sc->sc_iacth = sc->sc_nutrs;
+	} else if (sc->sc_nutrs > 1) {
+		sc->sc_iacth = sc->sc_nutrs - 1;
 	}
+	DPRINTF("IACTH=%d\n", sc->sc_iacth);
 
 	ufshci_init(sc);
 
@@ -373,24 +379,6 @@ ufshci_init(struct ufshci_softc *sc)
 	/* 7.1.1 Host Controller Initialization: 11) */
 	reg = UFSHCI_READ_4(sc, UFSHCI_REG_UTRIACR);
 	DPRINTF("%s: UTRIACR=0x%08x\n", __func__, reg);
-	/*
-	 * Only enable interrupt aggregation when interrupts are available.
-	 * Otherwise, the interrupt aggregation counter already starts to
-	 * count completed commands, and will keep interrupts disabled once
-	 * reaching the threshold.  We only issue the interrupt aggregation
-	 * counter reset in the interrupt handler during runtime, so we would
-	 * have a kind of chicken/egg problem.
-	 */
-	if (!cold) {
-		DPRINTF("%s: Enable interrupt aggregation\n", __func__);
-		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-		    UFSHCI_REG_UTRIACR_IAEN |
-		    UFSHCI_REG_UTRIACR_IAPWEN |
-		    UFSHCI_REG_UTRIACR_CTR |
-		    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
-		sc->sc_intraggr_enabled = 1;
-	}
 
 	/*
 	 * 7.1.1 Host Controller Initialization: 12)
@@ -577,16 +565,6 @@ ufshci_utr_cmd_nop(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		return -1;
 	}
 
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 10) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 11) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 12) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 13) */
-	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-	    UFSHCI_REG_UTRIACR_IAEN |
-	    UFSHCI_REG_UTRIACR_IAPWEN |
-	    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-	    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
-
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
 	ufshci_doorbell_write(sc, slot);
@@ -687,16 +665,6 @@ ufshci_utr_cmd_lun(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		return -1;
 	}
 
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 10) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 11) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 12) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 13) */
-	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-	    UFSHCI_REG_UTRIACR_IAEN |
-	    UFSHCI_REG_UTRIACR_IAPWEN |
-	    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-	    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
-
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
 	ufshci_doorbell_write(sc, slot);
@@ -793,18 +761,6 @@ ufshci_utr_cmd_inquiry(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		printf("%s: %s: UTRLRSR not set\n",
 		    sc->sc_dev.dv_xname, __func__);
 		return -1;
-	}
-
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 10) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 11) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 12) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 13) */
-	if (!ISSET(xs->flags, SCSI_POLL)) {
-		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-		    UFSHCI_REG_UTRIACR_IAEN |
-		    UFSHCI_REG_UTRIACR_IAPWEN |
-		    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
 	}
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
@@ -909,18 +865,6 @@ ufshci_utr_cmd_capacity16(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		return -1;
 	}
 
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 10) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 11) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 12) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 13) */
-	if (!ISSET(xs->flags, SCSI_POLL)) {
-		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-		    UFSHCI_REG_UTRIACR_IAEN |
-		    UFSHCI_REG_UTRIACR_IAPWEN |
-		    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
-	}
-
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
 	ufshci_doorbell_write(sc, slot);
@@ -1020,18 +964,6 @@ ufshci_utr_cmd_capacity(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		printf("%s: %s: UTRLRSR not set\n",
 		    sc->sc_dev.dv_xname, __func__);
 		return -1;
-	}
-
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 10) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 11) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 12) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 13) */
-	if (!ISSET(xs->flags, SCSI_POLL)) {
-		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-		    UFSHCI_REG_UTRIACR_IAEN |
-		    UFSHCI_REG_UTRIACR_IAPWEN |
-		    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
 	}
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
@@ -1138,18 +1070,6 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		return -1;
 	}
 
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 10) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 11) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 12) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 13) */
-	if (!ISSET(xs->flags, SCSI_POLL)) {
-		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-		    UFSHCI_REG_UTRIACR_IAEN |
-		    UFSHCI_REG_UTRIACR_IAPWEN |
-		    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
-	}
-
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
 	ufshci_doorbell_write(sc, slot);
@@ -1240,18 +1160,6 @@ ufshci_utr_cmd_sync(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		printf("%s: %s: UTRLRSR not set\n",
 		    sc->sc_dev.dv_xname, __func__);
 		return -1;
-	}
-
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 10) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 11) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 12) */
-	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 13) */
-	if (!ISSET(xs->flags, SCSI_POLL)) {
-		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-		    UFSHCI_REG_UTRIACR_IAEN |
-		    UFSHCI_REG_UTRIACR_IAPWEN |
-		    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
-		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
 	}
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
@@ -1408,13 +1316,13 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 
 	DPRINTF("%s: cmd=0x%x\n", __func__, xs->cmd.opcode);
 
-	if (!cold && !sc->sc_intraggr_enabled) {
-		DPRINTF("%s: Enable interrupt aggregation\n", __func__);
+	/* Schedule interrupt aggregation. */
+	if (ISSET(xs->flags, SCSI_POLL) == 0 && sc->sc_intraggr_enabled == 0) {
 		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
 		    UFSHCI_REG_UTRIACR_IAEN |
 		    UFSHCI_REG_UTRIACR_IAPWEN |
 		    UFSHCI_REG_UTRIACR_CTR |
-		    UFSHCI_REG_UTRIACR_IACTH(UFSHCI_INTR_AGGR_COUNT) |
+		    UFSHCI_REG_UTRIACR_IACTH(sc->sc_iacth) |
 		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
 		sc->sc_intraggr_enabled = 1;
 	}
