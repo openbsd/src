@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.41 2024/05/09 20:40:42 tb Exp $ */
+/* $OpenBSD: dh_key.c,v 1.42 2024/05/09 20:43:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -223,7 +223,7 @@ DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 }
 LCRYPTO_ALIAS(DH_compute_key);
 
-static DH_METHOD dh_ossl = {
+static const DH_METHOD dh_ossl = {
 	.name = "OpenSSL DH Method",
 	.generate_key = generate_key,
 	.compute_key = compute_key,
