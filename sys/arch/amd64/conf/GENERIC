@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.522 2024/02/15 16:33:56 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.523 2024/05/09 17:05:22 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -460,6 +460,7 @@ pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 #trm*	at pci?				# Tekram DC-3x5U SCSI Controllers
 vmwpvs*	at pci?				# VMware ParaVirtual SCSI
 nvme*	at pci?				# NVMe controllers
+ufshci*	at pci?				# UFSHCI controllers
 
 scsibus* at scsi?
 sd*	at scsibus?			# SCSI disk drives

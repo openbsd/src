@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.205 2024/02/15 16:33:56 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.206 2024/05/09 17:05:22 mglocker Exp $
 
 machine		amd64
 maxusers	4
@@ -184,6 +184,7 @@ adw*		at pci?			# AdvanSys ULTRA WIDE SCSI
 pcscp*		at pci?			# AMD 53c974 PCscsi-PCI SCSI
 vmwpvs*		at pci?			# VMware ParaVirtual SCSI
 nvme*		at pci?			# NVMe controllers
+ufshci*		at pci?			# UFSHCI controllers
 softraid0	at root
 
 scsibus*	at scsi?
