@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.10 2024/05/09 08:02:59 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.11 2024/05/09 08:04:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -152,6 +152,7 @@ ufshci_attach(struct ufshci_softc *sc)
 {
 	struct scsibus_attach_args saa;
 
+	mtx_init(&sc->sc_cmd_mtx, IPL_BIO);
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	SIMPLEQ_INIT(&sc->sc_ccb_list);
 	scsi_iopool_init(&sc->sc_iopool, sc, ufshci_ccb_get, ufshci_ccb_put);
@@ -1267,6 +1268,8 @@ ufshci_xfer_complete(struct ufshci_softc *sc)
 	uint32_t reg;
 	int i;
 
+	mtx_enter(&sc->sc_cmd_mtx);
+
 	/* Wait for all commands to complete. */
 	while ((reg = ufshci_doorbell_read(sc))) {
 		DPRINTF("%s: doorbell reg=0x%x\n", __func__, reg);
@@ -1292,6 +1295,7 @@ ufshci_xfer_complete(struct ufshci_softc *sc)
 
 		DPRINTF("slot %d completed\n", i);
 	}
+	mtx_leave(&sc->sc_cmd_mtx);
 
 	/*
 	 * Complete the CCB, which will re-schedule new transfers if any are
@@ -1400,6 +1404,8 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_link *link = xs->sc_link;
 	struct ufshci_softc *sc = link->bus->sb_adapter_softc;
 
+	mtx_enter(&sc->sc_cmd_mtx);
+
 	DPRINTF("%s: cmd=0x%x\n", __func__, xs->cmd.opcode);
 
 	if (!cold && !sc->sc_intraggr_enabled) {
@@ -1420,44 +1426,45 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 	case READ_12:
 	case READ_16:
 		ufshci_scsi_io(xs, SCSI_DATA_IN);
-		return;
+		break;
 
 	case WRITE_COMMAND:
 	case WRITE_10:
 	case WRITE_12:
 	case WRITE_16:
 		ufshci_scsi_io(xs, SCSI_DATA_OUT);
-		return;
+		break;
 
 	case SYNCHRONIZE_CACHE:
 		ufshci_scsi_sync(xs);
-		return;
+		break;
 
 	case INQUIRY:
 		ufshci_scsi_inquiry(xs);
-		return;
+		break;
 
 	case READ_CAPACITY_16:
 		ufshci_scsi_capacity16(xs);
-		return;
+		break;
 	case READ_CAPACITY:
 		ufshci_scsi_capacity(xs);
-		return;
+		break;
 
 	case TEST_UNIT_READY:
 	case PREVENT_ALLOW:
 	case START_STOP:
 		xs->error = XS_NOERROR;
 		scsi_done(xs);
-		return;
+		break;
 	default:
 		DPRINTF("%s: unhandled scsi command 0x%02x\n",
 		    __func__, xs->cmd.opcode);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
 		break;
 	}
 
-	xs->error = XS_DRIVER_STUFFUP;
-	scsi_done(xs);
+	mtx_leave(&sc->sc_cmd_mtx);
 }
 
 void
