@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.37 2024/05/09 14:00:52 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.38 2024/05/09 14:20:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,41 +75,38 @@
 #include "x509_local.h"
 
 X509_REQ *
-X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
+X509_to_X509_REQ(X509 *x509, EVP_PKEY *signing_key, const EVP_MD *signing_md)
 {
-	X509_REQ *ret;
-	int i;
-	EVP_PKEY *pktmp;
+	X509_REQ *req;
+	X509_NAME *subject;
+	EVP_PKEY *public_key;
 
-	ret = X509_REQ_new();
-	if (ret == NULL) {
+	if ((req = X509_REQ_new()) == NULL) {
 		X509error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!X509_REQ_set_version(ret, 0))
+	if ((subject = X509_get_subject_name(x509)) == NULL)
+		goto err;
+	if (!X509_REQ_set_subject_name(req, subject))
 		goto err;
 
-	if (!X509_REQ_set_subject_name(ret, X509_get_subject_name(x)))
+	if ((public_key = X509_get0_pubkey(x509)) == NULL)
+		goto err;
+	if (!X509_REQ_set_pubkey(req, public_key))
 		goto err;
 
-	if ((pktmp = X509_get_pubkey(x)) == NULL)
-		goto err;
-
-	i = X509_REQ_set_pubkey(ret, pktmp);
-	EVP_PKEY_free(pktmp);
-	if (!i)
-		goto err;
-
-	if (pkey != NULL) {
-		if (!X509_REQ_sign(ret, pkey, md))
+	if (signing_key != NULL) {
+		if (!X509_REQ_sign(req, signing_key, signing_md))
 			goto err;
 	}
-	return (ret);
 
-err:
-	X509_REQ_free(ret);
-	return (NULL);
+	return req;
+
+ err:
+	X509_REQ_free(req);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(X509_to_X509_REQ);
 
