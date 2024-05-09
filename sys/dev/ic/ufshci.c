@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.13 2024/05/09 08:09:17 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.14 2024/05/09 08:12:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -489,7 +489,8 @@ ufshci_utr_cmd_nop(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 1) */
 	slot = ccb->ccb_slot;
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += slot;
 	memset(utrd, 0, sizeof(*utrd));
 	DPRINTF("%s: slot=%d\n", __func__, slot);
 
@@ -506,7 +507,8 @@ ufshci_utr_cmd_nop(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2e) */
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += slot;
 	memset(ucd, 0, sizeof(*ucd));
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2f) */
@@ -572,7 +574,8 @@ ufshci_utr_cmd_lun(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 1) */
 	slot = ccb->ccb_slot;
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += slot;
 	memset(utrd, 0, sizeof(*utrd));
 	DPRINTF("%s: slot=%d\n", __func__, slot);
 
@@ -589,7 +592,8 @@ ufshci_utr_cmd_lun(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2e) */
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += slot;
 	memset(ucd, 0, sizeof(*ucd));
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2f) */
@@ -672,7 +676,8 @@ ufshci_utr_cmd_inquiry(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 1) */
 	slot = ccb->ccb_slot;
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += slot;
 	memset(utrd, 0, sizeof(*utrd));
 	DPRINTF("%s: slot=%d\n", __func__, slot);
 
@@ -689,7 +694,8 @@ ufshci_utr_cmd_inquiry(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2e) */
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += slot;
 	memset(ucd, 0, sizeof(*ucd));
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2f) */
@@ -770,7 +776,8 @@ ufshci_utr_cmd_capacity16(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 1) */
 	slot = ccb->ccb_slot;
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += slot;
 	memset(utrd, 0, sizeof(*utrd));
 	DPRINTF("%s: slot=%d\n", __func__, slot);
 
@@ -787,7 +794,8 @@ ufshci_utr_cmd_capacity16(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2e) */
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += slot;
 	memset(ucd, 0, sizeof(*ucd));
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2f) */
@@ -872,7 +880,8 @@ ufshci_utr_cmd_capacity(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 1) */
 	slot = ccb->ccb_slot;
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += slot;
 	memset(utrd, 0, sizeof(*utrd));
 	DPRINTF("%s: slot=%d\n", __func__, slot);
 
@@ -889,7 +898,8 @@ ufshci_utr_cmd_capacity(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2e) */
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += slot;
 	memset(ucd, 0, sizeof(*ucd));
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2f) */
@@ -973,7 +983,8 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 1) */
 	slot = ccb->ccb_slot;
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += slot;
 	memset(utrd, 0, sizeof(*utrd));
 	DPRINTF("%s: slot=%d\n", __func__, slot);
 
@@ -993,7 +1004,8 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2e) */
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += slot;
 	memset(ucd, 0, sizeof(*ucd));
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2f) */
@@ -1076,7 +1088,8 @@ ufshci_utr_cmd_sync(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 1) */
 	slot = ccb->ccb_slot;
-	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd) + (sizeof(*utrd) * slot);
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += slot;
 	memset(utrd, 0, sizeof(*utrd));
 	DPRINTF("%s: slot=%d\n", __func__, slot);
 
@@ -1093,7 +1106,8 @@ ufshci_utr_cmd_sync(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2e) */
-	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd) + (sizeof(*ucd) * slot);
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += slot;
 	memset(ucd, 0, sizeof(*ucd));
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2f) */
