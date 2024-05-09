@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.233 2023/03/08 04:43:05 guenther Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.234 2024/05/09 08:35:03 florian Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2739,7 +2739,10 @@ logxfer(const char *name, off_t size, time_t start)
 	int len;
 
 	if ((statfd >= 0) && (getcwd(dir, sizeof(dir)) != NULL)) {
+		char *cnow;
+
 		time(&now);
+		cnow = ctime(&now);
 
 		vpw = malloc(strlen(guest ? guestpw : pw->pw_name) * 4 + 1);
 		if (vpw == NULL)
@@ -2755,7 +2758,8 @@ logxfer(const char *name, off_t size, time_t start)
 
 		len = snprintf(buf, sizeof(buf),
 		    "%.24s %lld %s %lld %s %c %s %c %c %s ftp %d %s %s\n",
-		    ctime(&now), (long long)(now - start + (now == start)),
+		    cnow ? cnow : "?",
+		    (long long)(now - start + (now == start)),
 		    vremotehost, (long long)size, vpath,
 		    ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
 		    'o', ((guest) ? 'a' : 'r'),

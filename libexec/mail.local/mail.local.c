@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.42 2023/06/05 08:07:18 op Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.43 2024/05/09 08:35:03 florian Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -112,7 +112,7 @@ storemail(char *from)
 	FILE *fp = NULL;
 	time_t tval;
 	int fd, eline = 1;
-	char *tbuf, *line = NULL;
+	char *tbuf, *line = NULL, *cnow;
 	size_t linesize = 0;
 	ssize_t linelen;
 
@@ -124,7 +124,8 @@ storemail(char *from)
 	free(tbuf);
 
 	(void)time(&tval);
-	(void)fprintf(fp, "From %s %s", from, ctime(&tval));
+	cnow = ctime(&tval);
+	(void)fprintf(fp, "From %s %s", from, cnow ? cnow : "?\n");
 
 	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
 		if (line[linelen - 1] == '\n')
