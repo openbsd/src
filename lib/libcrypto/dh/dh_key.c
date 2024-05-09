@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.40 2023/08/03 18:53:55 tb Exp $ */
+/* $OpenBSD: dh_key.c,v 1.41 2024/05/09 20:40:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,43 +64,6 @@
 
 #include "bn_local.h"
 #include "dh_local.h"
-
-static int generate_key(DH *dh);
-static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
-static int dh_bn_mod_exp(const DH *dh, BIGNUM *r, const BIGNUM *a,
-	    const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-static int dh_init(DH *dh);
-static int dh_finish(DH *dh);
-
-int
-DH_generate_key(DH *dh)
-{
-	return dh->meth->generate_key(dh);
-}
-LCRYPTO_ALIAS(DH_generate_key);
-
-int
-DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
-{
-	return dh->meth->compute_key(key, pub_key, dh);
-}
-LCRYPTO_ALIAS(DH_compute_key);
-
-static DH_METHOD dh_ossl = {
-	.name = "OpenSSL DH Method",
-	.generate_key = generate_key,
-	.compute_key = compute_key,
-	.bn_mod_exp = dh_bn_mod_exp,
-	.init = dh_init,
-	.finish = dh_finish,
-};
-
-const DH_METHOD *
-DH_OpenSSL(void)
-{
-	return &dh_ossl;
-}
-LCRYPTO_ALIAS(DH_OpenSSL);
 
 static int
 generate_key(DH *dh)
@@ -245,3 +208,33 @@ dh_finish(DH *dh)
 	BN_MONT_CTX_free(dh->method_mont_p);
 	return 1;
 }
+
+int
+DH_generate_key(DH *dh)
+{
+	return dh->meth->generate_key(dh);
+}
+LCRYPTO_ALIAS(DH_generate_key);
+
+int
+DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
+{
+	return dh->meth->compute_key(key, pub_key, dh);
+}
+LCRYPTO_ALIAS(DH_compute_key);
+
+static DH_METHOD dh_ossl = {
+	.name = "OpenSSL DH Method",
+	.generate_key = generate_key,
+	.compute_key = compute_key,
+	.bn_mod_exp = dh_bn_mod_exp,
+	.init = dh_init,
+	.finish = dh_finish,
+};
+
+const DH_METHOD *
+DH_OpenSSL(void)
+{
+	return &dh_ossl;
+}
+LCRYPTO_ALIAS(DH_OpenSSL);
