@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.17 2024/05/09 08:18:20 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.18 2024/05/09 08:21:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1370,6 +1370,7 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 	case READ_10:
 	case READ_12:
 	case READ_16:
+		DPRINTF("io read\n");
 		ufshci_scsi_io(xs, SCSI_DATA_IN);
 		break;
 
@@ -1377,21 +1378,26 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 	case WRITE_10:
 	case WRITE_12:
 	case WRITE_16:
+		DPRINTF("io write\n");
 		ufshci_scsi_io(xs, SCSI_DATA_OUT);
 		break;
 
 	case SYNCHRONIZE_CACHE:
+		DPRINTF("sync\n");
 		ufshci_scsi_sync(xs);
 		break;
 
 	case INQUIRY:
+		DPRINTF("inquiry\n");
 		ufshci_scsi_inquiry(xs);
 		break;
 
 	case READ_CAPACITY_16:
+		DPRINTF("capacity16\n");
 		ufshci_scsi_capacity16(xs);
 		break;
 	case READ_CAPACITY:
+		DPRINTF("capacity\n");
 		ufshci_scsi_capacity(xs);
 		break;
 
