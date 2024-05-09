@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.36 2024/05/08 08:20:08 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.37 2024/05/09 14:00:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,6 +70,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#include "asn1_local.h"
 #include "evp_local.h"
 #include "x509_local.h"
 
@@ -183,7 +184,6 @@ X509_REQ_get_extensions(X509_REQ *req)
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *ext = NULL;
 	int idx;
-	const unsigned char *p;
 
 	if (req == NULL || req->req_info == NULL)
 		return NULL;
@@ -197,10 +197,8 @@ X509_REQ_get_extensions(X509_REQ *req)
 		return NULL;
 	if ((ext = X509_ATTRIBUTE_get0_type(attr, 0)) == NULL)
 		return NULL;
-	if (ext->type != V_ASN1_SEQUENCE)
-		return NULL;
-	p = ext->value.sequence->data;
-	return d2i_X509_EXTENSIONS(NULL, &p, ext->value.sequence->length);
+
+	return ASN1_TYPE_unpack_sequence(&X509_EXTENSIONS_it, ext);
 }
 LCRYPTO_ALIAS(X509_REQ_get_extensions);
 
