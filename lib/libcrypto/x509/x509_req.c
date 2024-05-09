@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.40 2024/05/09 14:27:21 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.41 2024/05/09 14:29:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -211,16 +211,15 @@ X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 {
 	unsigned char *ext = NULL;
 	int extlen;
-	int rv;
+	int ret;
 
-	extlen = i2d_X509_EXTENSIONS(exts, &ext);
-	if (extlen <= 0)
+	if ((extlen = i2d_X509_EXTENSIONS(exts, &ext)) <= 0)
 		return 0;
 
-	rv = X509_REQ_add1_attr_by_NID(req, nid, V_ASN1_SEQUENCE, ext, extlen);
+	ret = X509_REQ_add1_attr_by_NID(req, nid, V_ASN1_SEQUENCE, ext, extlen);
 	free(ext);
 
-	return rv;
+	return ret;
 }
 LCRYPTO_ALIAS(X509_REQ_add_extensions_nid);
 
