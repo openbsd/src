@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.141 2024/05/09 07:47:50 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.142 2024/05/09 07:55:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -522,8 +522,7 @@ ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md)
 	if (s->s3->hs.cipher == NULL)
 		return 0;
 
-	handshake_mac = s->s3->hs.cipher->algorithm2 &
-	    SSL_HANDSHAKE_MAC_MASK;
+	handshake_mac = s->s3->hs.cipher->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
 
 	/* For TLSv1.2 we upgrade the default MD5+SHA1 MAC to SHA256. */
 	if (SSL_USE_SHA256_PRF(s) && handshake_mac == SSL_HANDSHAKE_MAC_DEFAULT)
