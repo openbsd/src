@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.39 2024/05/09 14:22:16 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.40 2024/05/09 14:27:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,42 +129,43 @@ X509_REQ_get0_pubkey(X509_REQ *req)
 LCRYPTO_ALIAS(X509_REQ_get0_pubkey);
 
 int
-X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
+X509_REQ_check_private_key(X509_REQ *req, EVP_PKEY *pkey)
 {
-	EVP_PKEY *xk = NULL;
-	int ok = 0;
+	EVP_PKEY *req_pubkey = NULL;
+	int ret;
 
-	if ((xk = X509_REQ_get0_pubkey(x)) == NULL)
+	if ((req_pubkey = X509_REQ_get0_pubkey(req)) == NULL)
 		return 0;
 
-	switch (EVP_PKEY_cmp(xk, k)) {
-	case 1:
-		ok = 1;
-		break;
+	if ((ret = EVP_PKEY_cmp(req_pubkey, pkey)) == 1)
+		return 1;
+
+	switch (ret) {
 	case 0:
 		X509error(X509_R_KEY_VALUES_MISMATCH);
-		break;
+		return 0;
 	case -1:
 		X509error(X509_R_KEY_TYPE_MISMATCH);
-		break;
+		return 0;
 	case -2:
 #ifndef OPENSSL_NO_EC
-		if (k->type == EVP_PKEY_EC) {
+		if (pkey->type == EVP_PKEY_EC) {
 			X509error(ERR_R_EC_LIB);
-			break;
+			return 0;
 		}
 #endif
 #ifndef OPENSSL_NO_DH
-		if (k->type == EVP_PKEY_DH) {
+		if (pkey->type == EVP_PKEY_DH) {
 			/* No idea */
 			X509error(X509_R_CANT_CHECK_DH_KEY);
-			break;
+			return 0;
 		}
 #endif
 		X509error(X509_R_UNKNOWN_KEY_TYPE);
+		return 0;
 	}
 
-	return (ok);
+	return 0;
 }
 LCRYPTO_ALIAS(X509_REQ_check_private_key);
 
