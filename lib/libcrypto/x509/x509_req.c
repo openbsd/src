@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.38 2024/05/09 14:20:57 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.39 2024/05/09 14:22:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -113,9 +113,9 @@ LCRYPTO_ALIAS(X509_to_X509_REQ);
 EVP_PKEY *
 X509_REQ_get_pubkey(X509_REQ *req)
 {
-	if ((req == NULL) || (req->req_info == NULL))
-		return (NULL);
-	return (X509_PUBKEY_get(req->req_info->pubkey));
+	if (req == NULL || req->req_info == NULL)
+		return NULL;
+	return X509_PUBKEY_get(req->req_info->pubkey);
 }
 LCRYPTO_ALIAS(X509_REQ_get_pubkey);
 
