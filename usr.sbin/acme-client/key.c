@@ -1,4 +1,4 @@
-/*	$Id: key.c,v 1.8 2023/08/29 14:44:53 op Exp $ */
+/*	$Id: key.c,v 1.9 2024/05/09 06:08:11 tb Exp $ */
 /*
  * Copyright (c) 2019 Renaud Allard <renaud@allard.it>
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -42,79 +42,76 @@ rsa_key_create(FILE *f, const char *fname)
 	EVP_PKEY_CTX	*ctx = NULL;
 	EVP_PKEY	*pkey = NULL;
 
-	/* First, create the context and the key. */
-
 	if ((ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL)) == NULL) {
 		warnx("EVP_PKEY_CTX_new_id");
 		goto err;
-	} else if (EVP_PKEY_keygen_init(ctx) <= 0) {
+	}
+	if (EVP_PKEY_keygen_init(ctx) <= 0) {
 		warnx("EVP_PKEY_keygen_init");
 		goto err;
-	} else if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, KBITS) <= 0) {
+	}
+	if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, KBITS) <= 0) {
 		warnx("EVP_PKEY_set_rsa_keygen_bits");
 		goto err;
-	} else if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
+	}
+	if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
 		warnx("EVP_PKEY_keygen");
 		goto err;
 	}
 
 	/* Serialise the key to the disc. */
 
-	if (PEM_write_PrivateKey(f, pkey, NULL, NULL, 0, NULL, NULL))
-		goto out;
+	if (!PEM_write_PrivateKey(f, pkey, NULL, NULL, 0, NULL, NULL)) {
+		warnx("%s: PEM_write_PrivateKey", fname);
+		goto err;
+	}
 
-	warnx("%s: PEM_write_PrivateKey", fname);
+	EVP_PKEY_CTX_free(ctx);
+	return pkey;
 
 err:
 	EVP_PKEY_free(pkey);
-	pkey = NULL;
-out:
 	EVP_PKEY_CTX_free(ctx);
-	return pkey;
+	return NULL;
 }
 
 EVP_PKEY *
 ec_key_create(FILE *f, const char *fname)
 {
-	EC_KEY		*eckey = NULL;
+	EVP_PKEY_CTX	*ctx = NULL;
 	EVP_PKEY	*pkey = NULL;
 
-	if ((eckey = EC_KEY_new_by_curve_name(NID_secp384r1)) == NULL) {
-		warnx("EC_KEY_new_by_curve_name");
+	if ((ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) == NULL) {
+		warnx("EVP_PKEY_CTX_new_id");
+		goto err;
+	}
+	if (EVP_PKEY_keygen_init(ctx) <= 0) {
+		warnx("EVP_PKEY_keygen_init");
+		goto err;
+	}
+	if (EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, NID_secp384r1) <= 0) {
+		warnx("EVP_PKEY_CTX_set_ec_paramgen_curve_nid");
+		goto err;
+	}
+	if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
+		warnx("EVP_PKEY_keygen");
 		goto err;
 	}
 
-	if (!EC_KEY_generate_key(eckey)) {
-		warnx("EC_KEY_generate_key");
+	/* Serialise the key to the disc. */
+
+	if (!PEM_write_PrivateKey(f, pkey, NULL, NULL, 0, NULL, NULL)) {
+		warnx("%s: PEM_write_PrivateKey", fname);
 		goto err;
 	}
 
-	/* Serialise the key to the disc in EC format */
-
-	if (!PEM_write_ECPrivateKey(f, eckey, NULL, NULL, 0, NULL, NULL)) {
-		warnx("%s: PEM_write_ECPrivateKey", fname);
-		goto err;
-	}
-
-	/* Convert the EC key into a PKEY structure */
-
-	if ((pkey = EVP_PKEY_new()) == NULL) {
-		warnx("EVP_PKEY_new");
-		goto err;
-	}
-	if (!EVP_PKEY_set1_EC_KEY(pkey, eckey)) {
-		warnx("EVP_PKEY_set1_EC_KEY");
-		goto err;
-	}
-
-	goto out;
+	EVP_PKEY_CTX_free(ctx);
+	return pkey;
 
 err:
 	EVP_PKEY_free(pkey);
-	pkey = NULL;
-out:
-	EC_KEY_free(eckey);
-	return pkey;
+	EVP_PKEY_CTX_free(ctx);
+	return NULL;
 }
 
 EVP_PKEY *
