@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.15 2024/05/09 08:13:57 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.16 2024/05/09 08:16:32 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -555,6 +555,11 @@ ufshci_utr_cmd_nop(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		return -1;
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * slot, sizeof(*utrd), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * slot, sizeof(*ucd), BUS_DMASYNC_PREWRITE);
+
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
 	ufshci_doorbell_write(sc, slot);
@@ -657,6 +662,11 @@ ufshci_utr_cmd_lun(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		return -1;
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * slot, sizeof(*utrd), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * slot, sizeof(*ucd), BUS_DMASYNC_PREWRITE);
+
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
 	ufshci_doorbell_write(sc, slot);
@@ -756,6 +766,11 @@ ufshci_utr_cmd_inquiry(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		    sc->sc_dev.dv_xname, __func__);
 		return -1;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * slot, sizeof(*utrd), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * slot, sizeof(*ucd), BUS_DMASYNC_PREWRITE);
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
@@ -861,6 +876,11 @@ ufshci_utr_cmd_capacity16(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		return -1;
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * slot, sizeof(*utrd), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * slot, sizeof(*ucd), BUS_DMASYNC_PREWRITE);
+
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
 	ufshci_doorbell_write(sc, slot);
@@ -963,6 +983,11 @@ ufshci_utr_cmd_capacity(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		    sc->sc_dev.dv_xname, __func__);
 		return -1;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * slot, sizeof(*utrd), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * slot, sizeof(*ucd), BUS_DMASYNC_PREWRITE);
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
@@ -1070,6 +1095,11 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		return -1;
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * slot, sizeof(*utrd), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * slot, sizeof(*ucd), BUS_DMASYNC_PREWRITE);
+
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
 	ufshci_doorbell_write(sc, slot);
@@ -1163,6 +1193,11 @@ ufshci_utr_cmd_sync(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		    sc->sc_dev.dv_xname, __func__);
 		return -1;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * slot, sizeof(*utrd), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * slot, sizeof(*ucd), BUS_DMASYNC_PREWRITE);
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 14) */
 	ccb->ccb_status = CCB_STATUS_INPROGRESS;
@@ -1665,12 +1700,21 @@ ufshci_scsi_io_done(struct ufshci_softc *sc, struct ufshci_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_cookie;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	struct ufshci_ucd *ucd;
+	struct ufshci_utrd *utrd;
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    ISSET(xs->flags, SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 	    BUS_DMASYNC_POSTWRITE);
 
 	bus_dmamap_unload(sc->sc_dmat, dmap);
+
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * ccb->ccb_slot, sizeof(*ucd),
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * ccb->ccb_slot, sizeof(*utrd),
+	    BUS_DMASYNC_POSTWRITE);
 
 	ccb->ccb_cookie = NULL;
 	ccb->ccb_status = CCB_STATUS_FREE;
@@ -1686,6 +1730,15 @@ void
 ufshci_scsi_done(struct ufshci_softc *sc, struct ufshci_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_cookie;
+	struct ufshci_ucd *ucd;
+	struct ufshci_utrd *utrd;
+
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_ucd),
+	    sizeof(*ucd) * ccb->ccb_slot, sizeof(*ucd),
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, UFSHCI_DMA_MAP(sc->sc_dmamem_utrd),
+	    sizeof(*utrd) * ccb->ccb_slot, sizeof(*utrd),
+	    BUS_DMASYNC_POSTWRITE);
 
 	ccb->ccb_cookie = NULL;
 	ccb->ccb_status = CCB_STATUS_FREE;
