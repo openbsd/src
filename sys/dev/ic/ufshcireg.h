@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.6 2024/05/09 08:06:42 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.7 2024/05/09 08:20:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -256,7 +256,7 @@ struct ufshci_utrd {
 	uint32_t dw5; /* UTP Cmd. Desc. Base Addr. Upper 32-bits (UCDBAU) */
 	uint32_t dw6; /* RUO, RUL */
 	uint32_t dw7; /* PRDTO, PRDTL */
-};
+} __packed;
 
 /*
  * UTP Command Descriptor, PRDT (Physical Region Description Table) Structure
@@ -273,7 +273,7 @@ struct ufshci_ucd_prdt {
 	uint32_t dw1; /* Data base Address Upper 32-bits (DBAU) */
 	uint32_t dw2; /* Reserved */
 	uint32_t dw3; /* Data Byte Count (DBC) */
-};
+} __packed;
 
 /*
  * UTP Task Management Request Descriptor Structure
@@ -305,7 +305,7 @@ struct ufshci_utmrd {
 	uint32_t dw3; /* Reserved */
 	uint8_t dw4_w11[32]; /* Task Management Request UPIU */
 	uint8_t dw12_dw19[32]; /* Task Management Response UPIU */
-};
+} __packed;
 
 /*
  * ****************************************************************************
@@ -343,19 +343,19 @@ struct upiu_hdr {
 	uint8_t ehs_len;
 	uint8_t device_info;
 	uint16_t ds_len;		/* Data Segment Length */
-};
+} __packed;
 
 struct upiu_command {
 	struct upiu_hdr hdr;
 	uint32_t expected_xfer_len;
 	uint8_t cdb[16];
-};
+} __packed;
 
 struct upiu_response {
 	struct upiu_hdr hdr;
 	uint32_t residual_xfer_len;
 	uint8_t cdb[16];
-};
+} __packed;
 
 struct ufshci_ucd {
 	struct upiu_command cmd;
