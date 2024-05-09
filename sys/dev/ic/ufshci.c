@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.14 2024/05/09 08:12:22 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.15 2024/05/09 08:13:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -451,7 +451,7 @@ ufshci_doorbell_write(struct ufshci_softc *sc, int slot)
 {
 	uint32_t reg;
 
-	reg = (1 << slot);
+	reg = (1U << slot);
 
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRLDBR, reg);
 }
@@ -466,7 +466,7 @@ ufshci_doorbell_poll(struct ufshci_softc *sc, int slot)
 
 	for (i = 0; i < retry; i++) {
 		reg = UFSHCI_READ_4(sc, UFSHCI_REG_UTRLDBR);
-		if ((reg & (1 << slot)) == 0)
+		if ((reg & (1U << slot)) == 0)
 			break;
 		delay(10);
 	}
