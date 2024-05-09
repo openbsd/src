@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.16 2024/05/09 08:16:32 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.17 2024/05/09 08:18:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1716,11 +1716,22 @@ ufshci_scsi_io_done(struct ufshci_softc *sc, struct ufshci_ccb *ccb)
 	    sizeof(*utrd) * ccb->ccb_slot, sizeof(*utrd),
 	    BUS_DMASYNC_POSTWRITE);
 
+	/* TODO: Do more checks on the Response UPIU in case of errors? */
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += ccb->ccb_slot;
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += ccb->ccb_slot;
+	if (utrd->dw2 != UFSHCI_UTRD_DW2_OCS_SUCCESS) {
+		printf("%s: error: slot=%d, ocs=0x%x, rsp-tc=0x%x\n",
+		    __func__, ccb->ccb_slot, utrd->dw2, ucd->rsp.hdr.tc);
+	}
+
 	ccb->ccb_cookie = NULL;
 	ccb->ccb_status = CCB_STATUS_FREE;
 	ccb->ccb_done = NULL;
 
-	xs->error = XS_NOERROR;
+	xs->error = (utrd->dw2 == UFSHCI_UTRD_DW2_OCS_SUCCESS) ?
+	    XS_NOERROR : XS_DRIVER_STUFFUP;
 	xs->status = SCSI_OK;
 	xs->resid = 0;
 	scsi_done(xs);
@@ -1740,11 +1751,22 @@ ufshci_scsi_done(struct ufshci_softc *sc, struct ufshci_ccb *ccb)
 	    sizeof(*utrd) * ccb->ccb_slot, sizeof(*utrd),
 	    BUS_DMASYNC_POSTWRITE);
 
+	/* TODO: Do more checks on the Response UPIU in case of errors? */
+	utrd = UFSHCI_DMA_KVA(sc->sc_dmamem_utrd);
+	utrd += ccb->ccb_slot;
+	ucd = UFSHCI_DMA_KVA(sc->sc_dmamem_ucd);
+	ucd += ccb->ccb_slot;
+	if (utrd->dw2 != UFSHCI_UTRD_DW2_OCS_SUCCESS) {
+		printf("%s: error: slot=%d, ocs=0x%x, rsp-tc=0x%x\n",
+		    __func__, ccb->ccb_slot, utrd->dw2, ucd->rsp.hdr.tc);
+	}
+
 	ccb->ccb_cookie = NULL;
 	ccb->ccb_status = CCB_STATUS_FREE;
 	ccb->ccb_done = NULL;
 
-	xs->error = XS_NOERROR;
+	xs->error = (utrd->dw2 == UFSHCI_UTRD_DW2_OCS_SUCCESS) ?
+	    XS_NOERROR : XS_DRIVER_STUFFUP;
 	xs->status = SCSI_OK;
 	xs->resid = 0;
 	scsi_done(xs);
