@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.54 2024/05/09 20:56:52 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.55 2024/05/09 20:57:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -412,7 +412,7 @@ dsa_finish(DSA *dsa)
 	return 1;
 }
 
-static DSA_METHOD openssl_dsa_meth = {
+static const DSA_METHOD openssl_dsa_meth = {
 	.name = "OpenSSL DSA method",
 	.dsa_do_sign = dsa_do_sign,
 	.dsa_sign_setup = dsa_sign_setup,
