@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.77 2023/07/23 23:21:19 kn Exp $	*/
+/*	$OpenBSD: mount.c,v 1.78 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -503,9 +503,10 @@ prmount(struct statfs *sf)
 		char buf[26];
 		time_t t = sf->f_ctime;
 
-		ctime_r(&t, buf);
-		buf[24] = '\0';
-		printf(", ctime=%s", buf);
+		if (ctime_r(&t, buf))
+			printf(", ctime=%.24s", buf);
+		else
+			printf(", ctime=%lld", t);
 	}
 
 	/*

@@ -1084,7 +1084,11 @@ trustanchor_state2str(autr_state_type s)
 /** ctime r for autotrust */
 static char* autr_ctime_r(time_t* t, char* s)
 {
-	ctime_r(t, s);
+	if (ctime_r(t, s) == NULL) {
+		s[0] = '?';
+		s[1] = '\n';
+		s[2] = '\0';
+	}
 #ifdef USE_WINSOCK
 	if(strlen(s) > 10 && s[7]==' ' && s[8]=='0')
 		s[8]=' '; /* fix error in windows ctime */

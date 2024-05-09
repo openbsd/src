@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.20 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.21 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -127,17 +127,25 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 	    DIP(dp, di_mode), DIP(dp, di_size));
 	t = DIP(dp, di_mtime);
 	p = ctime(&t);
-	printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
-	    DIP(dp, di_mtimensec));
+	if (p)
+		printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
+		    DIP(dp, di_mtimensec));
+	else
+		printf("\n\tMTIME=%lld [%d nsec]", t, DIP(dp, di_mtimensec));
 	t = DIP(dp, di_ctime);
 	p = ctime(&t);
-	printf("\n\tCTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
-	    DIP(dp, di_ctimensec));
+	if (p)
+		printf("\n\tCTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
+		    DIP(dp, di_ctimensec));
+	else
+		printf("\n\tCTIME=%lld [%d nsec]", t, DIP(dp, di_ctimensec));
 	t = DIP(dp, di_atime);
 	p = ctime(&t);
-	printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
-	    DIP(dp, di_atimensec));
-
+	if (p)
+		printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
+		    DIP(dp, di_atimensec));
+	else
+		printf("\n\tATIME=%lld [%d nsec]\n", t, DIP(dp, di_atimensec));
 	if ((name = user_from_uid(DIP(dp, di_uid), 1)) != NULL)
 		printf("OWNER=%s ", name);
 	else

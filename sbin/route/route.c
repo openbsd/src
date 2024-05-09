@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.266 2024/04/28 16:43:42 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.267 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1140,6 +1140,7 @@ monitor(int argc, char *argv[])
 	int n;
 	char msg[2048];
 	time_t now;
+	char *ct;
 
 	verbose = 1;
 	for (;;) {
@@ -1149,7 +1150,11 @@ monitor(int argc, char *argv[])
 			err(1, "read");
 		}
 		now = time(NULL);
-		printf("got message of size %d on %s", n, ctime(&now));
+		ct = ctime(&now);
+		if (ct)
+			printf("got message of size %d on %s", n, ct);
+		else
+			printf("got message of size %d on %lld\n", n, now);
 		print_rtmsg((struct rt_msghdr *)msg, n);
 	}
 }

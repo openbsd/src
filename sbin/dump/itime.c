@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.26 2023/12/21 08:01:21 otto Exp $	*/
+/*	$OpenBSD: itime.c,v 1.27 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -162,7 +162,7 @@ putdumptime(void)
 	FILE *df;
 	struct dumpdates *dtwalk;
 	int fd, i;
-	char *fname;
+	char *fname, *ct;
 	time_t t;
 
 	if(uflag == 0)
@@ -213,12 +213,21 @@ putdumptime(void)
 		quit("ftruncate (%s): %s\n", dumpdates, strerror(errno));
 	(void) fclose(df);
 	t = (time_t)spcl.c_date;
-	msg("level %c dump on %s", level, t == 0 ? "the epoch\n" : ctime(&t));
+	if (t == 0)
+		ct = "the epoch\n";
+	else if ((ct = ctime(&t)) == NULL)
+		ct = "?\n";
+	msg("level %c dump on %s", level, ct);
 }
 
 static void
 dumprecout(FILE *file, struct dumpdates *what)
 {
+	char *ct;
+
+	ct = ctime(&what->dd_ddate);
+	if (ct == NULL)
+		quit("Cannot convert date\n");
 
 	if (fprintf(file, DUMPOUTFMT,
 		    what->dd_name,
@@ -243,8 +252,22 @@ getrecord(FILE *df, struct dumpdates *ddatep)
 			dumpdates, recno);
 
 #ifdef FDEBUG
-	msg("getrecord: %s %c %s", ddatep->dd_name, ddatep->dd_level,
-	    ddatep->dd_ddate == 0 ? "the epoch\n" : ctime(&ddatep->dd_ddate));
+	{
+		char *ct;
+
+		if (ddatep->dd_ddate == 0)
+			ct = "the epoch\n";
+		else
+			ct = ctime(&ddatep->dd_ddate);
+
+		if (ct)
+			msg("getrecord: %s %c %s", ddatep->dd_name,
+			    ddatep->dd_level, ct);
+		else
+			msg("getrecord: %s %c %lld seconds after the epoch\n",
+			    ddatep->dd_name, ddatep->dd_level,
+			    ddatep->dd_ddate);
+	}
 #endif
 	return(0);
 }

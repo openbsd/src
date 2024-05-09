@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.30 2024/04/23 13:34:50 jsg Exp $	*/
+/*	$OpenBSD: inode.c,v 1.31 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -581,7 +581,10 @@ pinode(ino_t ino)
 	printf("SIZE=%llu ", (long long)inosize(dp));
 	t = (time_t) letoh32(dp->e2di_mtime);
 	p = ctime(&t);
-	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
+	if (p)
+		printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
+	else
+		printf("MTIME=%lld ", t);
 }
 
 void

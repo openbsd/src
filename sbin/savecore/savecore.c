@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.65 2022/12/04 23:50:47 cheloha Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.66 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -608,6 +608,7 @@ int
 get_crashtime(void)
 {
 	time_t dumptime;			/* Time the dump was taken. */
+	char *ct;
 
 	(void)KREAD(kd_dump, dump_nl[X_TIME].n_value, &dumptime);
 	if (dumptime == 0) {
@@ -615,7 +616,12 @@ get_crashtime(void)
 			syslog(LOG_ERR, "dump time is zero");
 		return (0);
 	}
-	(void)printf("savecore: system went down at %s", ctime(&dumptime));
+	ct = ctime(&dumptime);
+	if (ct)
+		printf("savecore: system went down at %s", ct);
+	else
+		printf("savecore: system went down %lld seconds after the"
+		    " epoch\n", dumptime);
 #define	SECSPERDAY	(24 * 60 * 60)
 #define	LEEWAY		(7 * SECSPERDAY)
 	if (dumptime < now - LEEWAY || dumptime > now + LEEWAY) {

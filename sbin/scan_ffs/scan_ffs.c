@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.23 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.24 2024/05/09 08:35:40 florian Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -47,6 +47,28 @@
 
 static void usage(void);
 
+static void
+print_info(int flags, struct fs *sb, long long at, char* lastmount)
+{
+	if (flags & FLAG_LABELS ) {
+		printf("X: %lld %lld 4.2BSD %d %d %d # %s\n",
+		    ((off_t)sb->fs_ffs1_size * sb->fs_fsize / 512), at,
+		    sb->fs_fsize, sb->fs_bsize, sb->fs_cpg, lastmount);
+	} else {
+		/* XXX 2038 */
+		time_t t = sb->fs_ffs1_time;
+		char *ct = ctime(&t);
+		if (ct)
+			printf("ffs at %lld size %lld mount %s time %s", at,
+			    (long long)(off_t) sb->fs_ffs1_size * sb->fs_fsize,
+			    lastmount, ct);
+		else
+			printf("ffs at %lld size %lld mount %s time %lld\n", at,
+			    (long long)(off_t) sb->fs_ffs1_size * sb->fs_fsize,
+			    lastmount, t);
+	}
+}
+
 static int
 ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 {
@@ -76,27 +98,9 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 					    sb->fs_ffs1_size);
 
 				if (((blk+(n/512)) - lastblk) == (SBSIZE/512)) {
-					if (flags & FLAG_LABELS ) {
-						printf("X: %lld %lld 4.2BSD %d %d %d # %s\n",
-						    ((off_t)sb->fs_ffs1_size *
-						    sb->fs_fsize / 512),
-						    (long long)(blk + (n/512) -
-						    (2*SBSIZE/512)),
-						    sb->fs_fsize, sb->fs_bsize,
-						    sb->fs_cpg, lastmount);
-					} else {
-						/* XXX 2038 */
-						time_t t = sb->fs_ffs1_time;
-
-						printf("ffs at %lld size %lld "
-						    "mount %s time %s",
-						    (long long)(blk+(n/512) -
-						    (2*SBSIZE/512)),
-						    (long long)(off_t)sb->fs_ffs1_size *
-						    sb->fs_fsize,
-						    lastmount, ctime(&t));
-					}
-
+					print_info(flags, sb,
+					    (long long)(blk + (n/512) -
+					    (2*SBSIZE/512)),  lastmount);
 					if (flags & FLAG_SMART) {
 						off_t size = (off_t)sb->fs_ffs1_size *
 						    sb->fs_fsize;

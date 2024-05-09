@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.48 2023/03/08 04:43:06 guenther Exp $	*/
+/*	$OpenBSD: tape.c,v 1.49 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -231,11 +231,13 @@ do_stats(void)
 {
 	time_t tnow, ttaken;
 	int64_t blocks;
+	char *ct;
 
 	(void)time(&tnow);
 	ttaken = tnow - tstart_volume;
 	blocks = spcl.c_tapea - tapea_volume;
-	msg("Volume %d completed at: %s", tapeno, ctime(&tnow));
+	ct = ctime(&tnow);
+	msg("Volume %d completed at: %s", tapeno, ct ? ct : "?\n");
 	if (ttaken > 0) {
 		msg("Volume %d took %lld:%02lld:%02lld\n", tapeno,
 		    (long long)ttaken / 3600, ((long long)ttaken % 3600) / 60,
@@ -565,7 +567,7 @@ startnewtape(int top)
 	pid_t	childpid;
 	int	status;
 	pid_t	waitingpid;
-	char	*p;
+	char	*p, *ct;
 	sig_t	interrupt_save;
 
 	interrupt_save = signal(SIGINT, SIG_IGN);
@@ -688,7 +690,8 @@ restore_check_point:
 		writeheader((ino_t)slp->inode);
 		if (sblock->fs_magic != FS_UFS2_MAGIC)
 			spcl.c_flags &=~ DR_NEWHEADER;
-		msg("Volume %d started at: %s", tapeno, ctime(&tstart_volume));
+		ct = ctime(&tstart_volume);
+		msg("Volume %d started at: %s", tapeno, ct ? ct : "?\n");
 		if (tapeno > 1)
 			msg("Volume %d begins with blocks from inode %llu\n",
 			    tapeno, (unsigned long long)slp->inode);

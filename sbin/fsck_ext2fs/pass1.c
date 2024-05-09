@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.18 2019/07/01 07:13:44 kevlo Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.19 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $	*/
 
 /*
@@ -167,8 +167,12 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	if (dp->e2di_dtime != 0) {
 		time_t t = letoh32(dp->e2di_dtime);
 		char *p = ctime(&t);
-		pwarn("INODE I=%llu HAS DTIME=%12.12s %4.4s",
-		    (unsigned long long)inumber, &p[4], &p[20]);
+		if (p)
+			pwarn("INODE I=%llu HAS DTIME=%12.12s %4.4s",
+			    (unsigned long long)inumber, &p[4], &p[20]);
+		else
+			pwarn("INODE I=%llu HAS DTIME=%lld",
+			    (unsigned long long)inumber, t);
 		if (preen) {
 			printf(" (CORRECTED)\n");
 		}

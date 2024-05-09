@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.41 2023/03/08 04:43:06 guenther Exp $	*/
+/*	$OpenBSD: optr.c,v 1.42 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -394,8 +394,11 @@ lastdump(int arg)
 		if (strncmp(lastname, dtwalk->dd_name,
 		    sizeof(dtwalk->dd_name)) == 0)
 			continue;
-		date = (char *)ctime(&dtwalk->dd_ddate);
-		date[16] = '\0';	/* blast away seconds and year */
+		date = ctime(&dtwalk->dd_ddate);
+		if (date)
+			date[16] = '\0'; /* blast away seconds and year */
+		else
+			date = "?";
 		lastname = dtwalk->dd_name;
 		dt = fstabsearch(dtwalk->dd_name);
 		dumpme = (dt != NULL &&

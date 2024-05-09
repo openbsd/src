@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.53 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: tape.c,v 1.54 2024/05/09 08:35:40 florian Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -387,8 +387,18 @@ gethdr:
 	}
 	if (tmpbuf.c_date != dumpdate || tmpbuf.c_ddate != dumptime) {
 		time_t t = (time_t)tmpbuf.c_date;
-		fprintf(stderr, "Wrong dump date\n\tgot: %s", ctime(&t));
-		fprintf(stderr, "\twanted: %s", ctime(&dumpdate));
+		char ct1buf[26], ct2buf[26];
+		char *ct1, *ct2;
+
+		ct1 = ctime_r(&t, ct1buf);
+		ct2 = ctime_r(&dumpdate, ct2buf);
+		if (ct1 && ct2) {
+			fprintf(stderr, "Wrong dump date\n\tgot: %s", ct1);
+			fprintf(stderr, "\twanted: %s", ct2);
+		} else {
+			fprintf(stderr, "Wrong dump date\n\tgot: %lld\n", t);
+			fprintf(stderr, "\twanted: %lld\n", dumpdate);
+		}
 		volno = 0;
 		goto again;
 	}
@@ -488,12 +498,21 @@ void
 printdumpinfo(void)
 {
 	time_t t;
+	char *ct;
 
 	t = (time_t)spcl.c_date;
-	fprintf(stdout, "Dump   date: %s", ctime(&t));
+	ct = ctime(&t);
+	if (ct)
+		fprintf(stdout, "Dump   date: %s", ct);
+	else
+		fprintf(stdout, "Dump   date: %lld\n", t);
 	t = (time_t)spcl.c_ddate;
-	fprintf(stdout, "Dumped from: %s",
-	    (spcl.c_ddate == 0) ? "the epoch\n" : ctime(&t));
+	ct = ctime(&t);
+	if (ct)
+		fprintf(stdout, "Dumped from: %s",
+		    (spcl.c_ddate == 0) ? "the epoch\n" : ct);
+	else
+		fprintf(stdout, "Dumped from: %lld\n", t);
 	if (spcl.c_host[0] == '\0')
 		return;
 	fprintf(stderr, "Level %d dump of %s on %s:%s\n",
