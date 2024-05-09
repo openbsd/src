@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.53 2023/08/03 18:53:55 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.54 2024/05/09 20:56:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,30 +68,6 @@
 
 #include "bn_local.h"
 #include "dsa_local.h"
-
-static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
-static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-    BIGNUM **rp);
-static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
-    DSA *dsa);
-static int dsa_init(DSA *dsa);
-static int dsa_finish(DSA *dsa);
-
-static DSA_METHOD openssl_dsa_meth = {
-	.name = "OpenSSL DSA method",
-	.dsa_do_sign = dsa_do_sign,
-	.dsa_sign_setup = dsa_sign_setup,
-	.dsa_do_verify = dsa_do_verify,
-	.init = dsa_init,
-	.finish = dsa_finish,
-};
-
-const DSA_METHOD *
-DSA_OpenSSL(void)
-{
-	return &openssl_dsa_meth;
-}
-LCRYPTO_ALIAS(DSA_OpenSSL);
 
 /*
  * Since DSA parameters are entirely arbitrary and checking them to be
@@ -435,6 +411,22 @@ dsa_finish(DSA *dsa)
 	BN_MONT_CTX_free(dsa->method_mont_p);
 	return 1;
 }
+
+static DSA_METHOD openssl_dsa_meth = {
+	.name = "OpenSSL DSA method",
+	.dsa_do_sign = dsa_do_sign,
+	.dsa_sign_setup = dsa_sign_setup,
+	.dsa_do_verify = dsa_do_verify,
+	.init = dsa_init,
+	.finish = dsa_finish,
+};
+
+const DSA_METHOD *
+DSA_OpenSSL(void)
+{
+	return &openssl_dsa_meth;
+}
+LCRYPTO_ALIAS(DSA_OpenSSL);
 
 DSA_SIG *
 DSA_SIG_new(void)
