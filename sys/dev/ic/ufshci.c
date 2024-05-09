@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.18 2024/05/09 08:21:52 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.19 2024/05/09 08:24:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1052,8 +1052,6 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.expected_xfer_len = htobe32(xs->datalen);
 
 	memcpy(ucd->cmd.cdb, &xs->cmd, sizeof(ucd->cmd.cdb));
-	if (dir == SCSI_DATA_OUT)
-		ucd->cmd.cdb[1] = (1 << 3); /* FUA: Force Unit Access */
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2g) */
 	/* Already done with above memset */
