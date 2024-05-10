@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.63 2022/02/22 17:35:01 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.64 2024/05/10 06:46:14 asou Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ _kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 	 */
 	if (KREAD(kd, (u_long)p->p_vmspace, &vm))
 		return (NULL);
-	addr = (u_long)&vm.vm_map.addr.rbh_root.rbt_root;
+	addr = (u_long)vm.vm_map.addr.rbh_root.rbt_root;
 	while (1) {
 		if (addr == 0)
 			return (NULL);
@@ -228,7 +228,7 @@ _kvm_ureadm(kvm_t *kd, const struct kinfo_proc *p, u_long va, u_long *cnt)
 			return (NULL);
 
 		if (_kvm_pread(kd, kd->pmfd, (void *)kd->swapspc,
-		    (size_t)kd->nbpg, (off_t)pg.phys_addr) != kd->nbpg)
+		    (size_t)kd->nbpg, _kvm_pa2off(kd, pg.phys_addr)) != kd->nbpg)
 			return (NULL);
 	} else {
 		if (kd->swfd == -1 ||
@@ -432,21 +432,20 @@ static char **
 kvm_doargv(kvm_t *kd, const struct kinfo_proc *p, int nchr, int isenv,
     void (*info)(struct ps_strings *, u_long *, int *))
 {
-	static struct ps_strings *ps;
+	struct proc pp;
+	struct process pr;
+	struct ps_strings *ps;
 	struct ps_strings arginfo;
 	u_long addr;
 	char **ap;
 	int cnt;
 
-	if (ps == NULL) {
-		struct _ps_strings _ps;
-		const int mib[2] = { CTL_VM, VM_PSSTRINGS };
-		size_t len;
-
-		len = sizeof(_ps);
-		sysctl(mib, 2, &_ps, &len, NULL, 0);
-		ps = (struct ps_strings *)_ps.val;
-	}
+	/* get ps_strings address */
+	if (KREAD(kd, (u_long)p->p_paddr, &pp))
+		return (0);
+	if (KREAD(kd, (u_long)pp.p_p, &pr))
+		return (0);
+	ps = (struct ps_strings *)pr.ps_strings;
 
 	/*
 	 * Pointers are stored at the top of the user stack.
