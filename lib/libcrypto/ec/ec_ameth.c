@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.67 2024/04/18 11:56:53 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.68 2024/05/10 05:12:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -173,6 +173,7 @@ eckey_from_object(const ASN1_OBJECT *aobj, EC_KEY **out_eckey)
 {
 	int nid;
 
+	EC_KEY_free(*out_eckey);
 	*out_eckey = NULL;
 
 	if ((nid = OBJ_obj2nid(aobj)) == NID_undef)
@@ -206,6 +207,7 @@ eckey_to_params(EC_KEY *eckey, int *out_type, void **out_val)
 static int
 eckey_from_params(int ptype, const void *pval, EC_KEY **out_eckey)
 {
+	EC_KEY_free(*out_eckey);
 	*out_eckey = NULL;
 
 	if (ptype == V_ASN1_SEQUENCE)
