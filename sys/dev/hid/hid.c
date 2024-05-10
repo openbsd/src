@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.6 2023/08/12 20:47:06 miod Exp $ */
+/*	$OpenBSD: hid.c,v 1.7 2024/05/10 10:49:10 mglocker Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -691,7 +691,7 @@ hid_get_id_of_collection(const void *desc, int size, int32_t usage,
 
 	hd = hid_start_parse(desc, size, hid_all);
 
-	DPRINTF("%s: id=%d usage=0x%x\n", __func__, id, usage);
+	DPRINTF("%s: usage=0x%x\n", __func__, usage);
 	while (hid_get_item(hd, &hi)) {
 		DPRINTF("%s: kind=%d id=%d usage=0x%x(0x%x)\n", __func__,
 		    hi.kind, hi.report_ID, hi.usage, usage);

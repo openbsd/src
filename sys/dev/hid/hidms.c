@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.10 2023/08/12 20:47:06 miod Exp $ */
+/*	$OpenBSD: hidms.c,v 1.11 2024/05/10 10:49:10 mglocker Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -79,14 +79,14 @@ hidms_stylus_hid_parse(struct hidms *ms, struct hid_data *d,
 		switch (h.usage) {
 		/* Buttons */
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_TIP_SWITCH):
-			DPRINTF("Stylus usage tip set\n");
+			DPRINTF(("Stylus usage tip set\n"));
 			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
 				break;
 			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
 			ms->sc_flags |= HIDMS_TIP;
 			break;
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_BARREL_SWITCH):
-			DPRINTF("Stylus usage barrel set\n");
+			DPRINTF(("Stylus usage barrel set\n"));
 			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
 				break;
 			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
@@ -94,48 +94,48 @@ hidms_stylus_hid_parse(struct hidms *ms, struct hid_data *d,
 			break;
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS,
 		    HUD_SECONDARY_BARREL_SWITCH):
-			DPRINTF("Stylus usage secondary barrel set\n");
+			DPRINTF(("Stylus usage secondary barrel set\n"));
 			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
 				break;
 			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
 			ms->sc_flags |= HIDMS_SEC_BARREL;
 			break;
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_IN_RANGE):
-			DPRINTF("Stylus usage in range set\n");
+			DPRINTF(("Stylus usage in range set\n"));
 			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
 				break;
 			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
 			break;
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_QUALITY):
-			DPRINTF("Stylus usage quality set\n");
+			DPRINTF(("Stylus usage quality set\n"));
 			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
 				break;
 			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
 			break;
 		/* Axes */
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_X):
-			DPRINTF("Stylus usage x set\n");
+			DPRINTF(("Stylus usage x set\n"));
 			ms->sc_loc_x = h.loc;
 			ms->sc_tsscale.minx = h.logical_minimum;
 			ms->sc_tsscale.maxx = h.logical_maximum;
 			ms->sc_flags |= HIDMS_ABSX;
 			break;
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_Y):
-			DPRINTF("Stylus usage y set\n");
+			DPRINTF(("Stylus usage y set\n"));
 			ms->sc_loc_y = h.loc;
 			ms->sc_tsscale.miny = h.logical_minimum;
 			ms->sc_tsscale.maxy = h.logical_maximum;
 			ms->sc_flags |= HIDMS_ABSY;
 			break;
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_TIP_PRESSURE):
-			DPRINTF("Stylus usage pressure set\n");
+			DPRINTF(("Stylus usage pressure set\n"));
 			ms->sc_loc_z = h.loc;
 			ms->sc_tsscale.minz = h.logical_minimum;
 			ms->sc_tsscale.maxz = h.logical_maximum;
 			ms->sc_flags |= HIDMS_Z;
 			break;
 		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_DISTANCE):
-			DPRINTF("Stylus usage distance set\n");
+			DPRINTF(("Stylus usage distance set\n"));
 			ms->sc_loc_w = h.loc;
 			ms->sc_tsscale.minw = h.logical_minimum;
 			ms->sc_tsscale.maxw = h.logical_maximum;
@@ -189,19 +189,19 @@ hidms_wacom_setup(struct device *self, struct hidms *ms, void *desc, int dlen)
 	if ((hd = hid_get_collection_data(desc, dlen,
 	     HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_DIGITIZER),
 	     HCOLL_APPLICATION))) {
-		DPRINTF("found the global collection\n");
+		DPRINTF(("found the global collection\n"));
 		hid_end_parse(hd);
 		if ((hd = hid_get_collection_data(desc, dlen,
 		     HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_STYLUS),
 		     HCOLL_PHYSICAL))) {
-			DPRINTF("found stylus collection\n");
+			DPRINTF(("found stylus collection\n"));
 			hidms_stylus_hid_parse(ms, hd, loc_stylus_btn);
 			hid_end_parse(hd);
 		}
 		if ((hd = hid_get_collection_data(desc, dlen,
 		     HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_TABLET_FKEYS),
 		     HCOLL_PHYSICAL))) {
-			DPRINTF("found tablet keys collection\n");
+			DPRINTF(("found tablet keys collection\n"));
 			hidms_pad_buttons_hid_parse(ms, hd, loc_pad_btn);
 			hid_end_parse(hd);
 		}
@@ -209,7 +209,7 @@ hidms_wacom_setup(struct device *self, struct hidms *ms, void *desc, int dlen)
 		if ((hd = hid_get_collection_data(desc, dlen,
 		     HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_BATTERY),
 		     HCOLL_PHYSICAL))) {
-			DPRINTF("found battery collection\n");
+			DPRINTF(("found battery collection\n"));
 			/* parse and set the battery info */
 			/* not yet used */
 			hid_end_parse(hd);
@@ -233,7 +233,7 @@ hidms_wacom_setup(struct device *self, struct hidms *ms, void *desc, int dlen)
 		memcpy(&ms->sc_loc_btn[i], &loc_pad_btn[i],
 		    sizeof(struct hid_location));
 	ms->sc_num_buttons = i;
-	DPRINTF("Button information\n");
+	DPRINTF(("Button information\n"));
 #ifdef HIDMS_DEBUG
 	for (i = 0; i < ms->sc_num_buttons; i++)
 		printf("size: 0x%x, pos: 0x%x, count: 0x%x\n",
