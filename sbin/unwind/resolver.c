@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.164 2024/02/25 10:13:09 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.165 2024/05/10 15:02:26 florian Exp $	*/
 
 
 /*
@@ -1211,6 +1211,7 @@ static const struct {
 	{ "target-fetch-policy:", "0 0 0 0 0" },
 	{ "outgoing-range:", "64" },
 	{ "val-max-restart:", "0" },
+	{ "infra-keep-probing", "yes" },
 };
 
 struct uw_resolver *
