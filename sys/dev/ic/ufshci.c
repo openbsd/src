@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.19 2024/05/09 08:24:09 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.20 2024/05/10 06:14:10 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -42,8 +42,7 @@
 #include <dev/ic/ufshcivar.h>
 #include <dev/ic/ufshcireg.h>
 
-//#define UFSHCI_DEBUG 1
-
+//#define UFSHCI_DEBUG
 #ifdef UFSHCI_DEBUG
 int ufshci_dbglvl = 1;
 #define DPRINTF(x...)	do { printf(x); } while (0)
@@ -174,7 +173,7 @@ ufshci_attach(struct ufshci_softc *sc)
 	/* XXX: Using more than one slot currently causes OCS errors */
 	sc->sc_nutrs = 1;
 
-#if UFSHCI_DEBUG
+#ifdef UFSHCI_DEBUG
 	printf("Capabilities (0x%08x):\n", sc->sc_cap);
 	printf(" CS=%d\n", sc->sc_cap & UFSHCI_REG_CAP_CS ? 1 : 0);
 	printf(" UICDMETMS=%d\n",
@@ -1653,10 +1652,8 @@ ufshci_scsi_io(struct scsi_xfer *xs, int dir)
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) != dir)
 		goto error1;
 
-	DPRINTF("%s: %s, lba=%llu, blocks=%u, datalen=%d (%s)\n",
-	    __func__,
-	    ISSET(xs->flags, SCSI_DATA_IN) ? "READ" : "WRITE",
-	    lba, blocks, xs->datalen,
+	DPRINTF("%s: %s, datalen=%d (%s)\n", __func__,
+	    ISSET(xs->flags, SCSI_DATA_IN) ? "READ" : "WRITE", xs->datalen,
 	    ISSET(xs->flags, SCSI_POLL) ? "poll"  : "no poll");
 
 	error = bus_dmamap_load(sc->sc_dmat, dmap, xs->data, xs->datalen, NULL,
