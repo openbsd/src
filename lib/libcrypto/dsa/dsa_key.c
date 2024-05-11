@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.36 2024/05/10 04:53:55 tb Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.37 2024/05/11 06:43:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,9 +75,6 @@ DSA_generate_key(DSA *dsa)
 	BIGNUM *pub_key = NULL, *priv_key = NULL;
 	BN_CTX *ctx = NULL;
 	int ok = 0;
-
-	if (dsa->meth->dsa_keygen != NULL)
-		return dsa->meth->dsa_keygen(dsa);
 
 	if ((priv_key = BN_new()) == NULL)
 		goto err;

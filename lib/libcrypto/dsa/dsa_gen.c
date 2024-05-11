@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.31 2024/03/02 09:33:14 tb Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.32 2024/05/11 06:43:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,24 +75,19 @@ int
 DSA_generate_parameters_ex(DSA *ret, int bits, const unsigned char *seed_in,
     int seed_len, int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 {
-	if (ret->meth->dsa_paramgen)
-		return ret->meth->dsa_paramgen(ret, bits, seed_in, seed_len,
-		    counter_ret, h_ret, cb);
-	else {
-		const EVP_MD *evpmd;
-		size_t qbits;
+	const EVP_MD *evpmd;
+	size_t qbits;
 
-		if (bits >= 2048) {
-			qbits = 256;
-			evpmd = EVP_sha256();
-		} else {
-			qbits = 160;
-			evpmd = EVP_sha1();
-		}
-
-		return dsa_builtin_paramgen(ret, bits, qbits, evpmd, seed_in,
-		    seed_len, NULL, counter_ret, h_ret, cb);
+	if (bits >= 2048) {
+		qbits = 256;
+		evpmd = EVP_sha256();
+	} else {
+		qbits = 160;
+		evpmd = EVP_sha1();
 	}
+
+	return dsa_builtin_paramgen(ret, bits, qbits, evpmd, seed_in, seed_len,
+	    NULL, counter_ret, h_ret, cb);
 }
 LCRYPTO_ALIAS(DSA_generate_parameters_ex);
 

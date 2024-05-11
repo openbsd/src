@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.55 2024/05/09 20:57:49 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.56 2024/05/11 06:43:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -268,15 +268,8 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	    !bn_copy(k, BN_num_bits(l) > q_bits ? l : m))
 		goto err;
 
-	if (dsa->meth->bn_mod_exp != NULL) {
-		if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, k, dsa->p, ctx,
-		    dsa->method_mont_p))
-			goto err;
-	} else {
-		if (!BN_mod_exp_mont_ct(r, dsa->g, k, dsa->p, ctx,
-		    dsa->method_mont_p))
-			goto err;
-	}
+	if (!BN_mod_exp_mont_ct(r, dsa->g, k, dsa->p, ctx, dsa->method_mont_p))
+		goto err;
 
 	if (!BN_mod_ct(r, r, dsa->q, ctx))
 		goto err;
@@ -372,15 +365,9 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 			goto err;
 	}
 
-	if (dsa->meth->dsa_mod_exp != NULL) {
-		if (!dsa->meth->dsa_mod_exp(dsa, t1, dsa->g, u1, dsa->pub_key,
-		    u2, dsa->p, ctx, mont))
-			goto err;
-	} else {
-		if (!BN_mod_exp2_mont(t1, dsa->g, u1, dsa->pub_key, u2,
-		    dsa->p, ctx, mont))
-			goto err;
-	}
+	if (!BN_mod_exp2_mont(t1, dsa->g, u1, dsa->pub_key, u2, dsa->p,
+	    ctx, mont))
+		goto err;
 
 	/* let u1 = u1 mod q */
 	if (!BN_mod_ct(u1, t1, dsa->q, ctx))

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_local.h,v 1.3 2023/11/29 21:35:57 tb Exp $ */
+/* $OpenBSD: dsa_local.h,v 1.4 2024/05/11 06:43:50 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
@@ -69,20 +69,9 @@ struct dsa_method {
 	    BIGNUM **rp);
 	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
 	    DSA_SIG *sig, DSA *dsa);
-	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-	    BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
-	    BN_MONT_CTX *in_mont);
-	int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-	    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx); /* Can be null */
 	int (*init)(DSA *dsa);
 	int (*finish)(DSA *dsa);
 	int flags;
-	char *app_data;
-	/* If this is non-NULL, it is used to generate DSA parameters */
-	int (*dsa_paramgen)(DSA *dsa, int bits, const unsigned char *seed,
-	    int seed_len, int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
-	/* If this is non-NULL, it is used to generate DSA keys */
-	int (*dsa_keygen)(DSA *dsa);
 } /* DSA_METHOD */;
 
 struct dsa_st {
