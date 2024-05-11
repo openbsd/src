@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.17 2024/03/02 10:35:32 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.18 2024/05/11 18:48:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -180,8 +180,7 @@ X509V3_EXT_d2i(X509_EXTENSION *ext)
 		return NULL;
 	p = ext->value->data;
 	if (method->it)
-		return ASN1_item_d2i(NULL, &p, ext->value->length,
-		    method->it);
+		return ASN1_item_d2i(NULL, &p, ext->value->length, method->it);
 	return method->d2i(NULL, &p, ext->value->length);
 }
 LCRYPTO_ALIAS(X509V3_EXT_d2i);
