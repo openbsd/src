@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DSA_set_method.3,v 1.11 2023/11/19 10:34:26 tb Exp $
+.\"	$OpenBSD: DSA_set_method.3,v 1.12 2024/05/11 06:53:19 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 19 2023 $
+.Dd $Mdocdate: May 11 2024 $
 .Dt DSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -127,44 +127,23 @@ The
 .Vt DSA_METHOD
 structure is defined as follows:
 .Bd -literal
-struct
-{
-     /* name of the implementation */
+struct {
+	/* name of the implementation */
 	const char *name;
-
-     /* sign */
+	/* sign */
 	DSA_SIG *(*dsa_do_sign)(const unsigned char *dgst, int dlen,
-                                 DSA *dsa);
-
-     /* pre-compute k^-1 and r */
+	    DSA *dsa);
+	/* pre-compute k^-1 and r */
 	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-                                 BIGNUM **rp);
-
-     /* verify */
+	    BIGNUM **rp);
+	/* verify */
 	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
-                                 DSA_SIG *sig, DSA *dsa);
-
-     /* compute rr = a1^p1 * a2^p2 mod m (May be NULL for some
-                                          implementations) */
-	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-                                 BIGNUM *a2, BIGNUM *p2, BIGNUM *m,
-                                 BN_CTX *ctx, BN_MONT_CTX *in_mont);
-
-     /* compute r = a ^ p mod m (May be NULL for some implementations) */
-        int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a,
-                                 const BIGNUM *p, const BIGNUM *m,
-                                 BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-
-     /* called at DSA_new */
-        int (*init)(DSA *DSA);
-
-     /* called at DSA_free */
-        int (*finish)(DSA *DSA);
-
-        int flags;
-
-        char *app_data; /* ?? */
-
+	    DSA_SIG *sig, DSA *dsa);
+	/* called at DSA_new */
+	int (*init)(DSA *DSA);
+	/* called at DSA_free */
+	int (*finish)(DSA *DSA);
+	int flags;
 } DSA_METHOD;
 .Ed
 .Sh RETURN VALUES
