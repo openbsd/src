@@ -1,4 +1,4 @@
-/*	$OpenBSD: iosfvar.h,v 1.1 2023/04/23 00:20:26 dlg Exp $ */
+/*	$OpenBSD: iosfvar.h,v 1.2 2024/05/11 14:49:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -43,7 +43,7 @@ int	iosf_mbi_available(void);
 
 /* for i2c */
 int	iosf_i2c_acquire(int);
-void	iosf_i2c_relese(int);
+void	iosf_i2c_release(int);
 
 /* for drm to coordinate with the rest of the kernel */
 void	iosf_mbi_punit_acquire(void);
