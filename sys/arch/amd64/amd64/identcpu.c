@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.140 2024/04/03 02:01:21 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.141 2024/05/11 19:21:47 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -72,211 +72,6 @@ int amd64_has_aesni;
 #endif
 int has_rdrand;
 int has_rdseed;
-
-const struct {
-	u_int32_t	bit;
-	char		str[12];
-} cpu_cpuid_features[] = {
-	{ CPUID_FPU,	"FPU" },
-	{ CPUID_VME,	"VME" },
-	{ CPUID_DE,	"DE" },
-	{ CPUID_PSE,	"PSE" },
-	{ CPUID_TSC,	"TSC" },
-	{ CPUID_MSR,	"MSR" },
-	{ CPUID_PAE,	"PAE" },
-	{ CPUID_MCE,	"MCE" },
-	{ CPUID_CX8,	"CX8" },
-	{ CPUID_APIC,	"APIC" },
-	{ CPUID_SEP,	"SEP" },
-	{ CPUID_MTRR,	"MTRR" },
-	{ CPUID_PGE,	"PGE" },
-	{ CPUID_MCA,	"MCA" },
-	{ CPUID_CMOV,	"CMOV" },
-	{ CPUID_PAT,	"PAT" },
-	{ CPUID_PSE36,	"PSE36" },
-	{ CPUID_PSN,	"PSN" },
-	{ CPUID_CFLUSH,	"CFLUSH" },
-	{ CPUID_DS,	"DS" },
-	{ CPUID_ACPI,	"ACPI" },
-	{ CPUID_MMX,	"MMX" },
-	{ CPUID_FXSR,	"FXSR" },
-	{ CPUID_SSE,	"SSE" },
-	{ CPUID_SSE2,	"SSE2" },
-	{ CPUID_SS,	"SS" },
-	{ CPUID_HTT,	"HTT" },
-	{ CPUID_TM,	"TM" },
-	{ CPUID_PBE,	"PBE" }
-}, cpu_ecpuid_features[] = {
-	{ CPUID_MPC,		"MPC" },
-	{ CPUID_NXE,		"NXE" },
-	{ CPUID_MMXX,		"MMXX" },
-	{ CPUID_FFXSR,		"FFXSR" },
-	{ CPUID_PAGE1GB,	"PAGE1GB" },
-	{ CPUID_RDTSCP,		"RDTSCP" },
-	{ CPUID_LONG,		"LONG" },
-	{ CPUID_3DNOW2,		"3DNOW2" },
-	{ CPUID_3DNOW,		"3DNOW" }
-}, cpu_cpuid_ecxfeatures[] = {
-	{ CPUIDECX_SSE3,	"SSE3" },
-	{ CPUIDECX_PCLMUL,	"PCLMUL" },
-	{ CPUIDECX_DTES64,	"DTES64" },
-	{ CPUIDECX_MWAIT,	"MWAIT" },
-	{ CPUIDECX_DSCPL,	"DS-CPL" },
-	{ CPUIDECX_VMX,		"VMX" },
-	{ CPUIDECX_SMX,		"SMX" },
-	{ CPUIDECX_EST,		"EST" },
-	{ CPUIDECX_TM2,		"TM2" },
-	{ CPUIDECX_SSSE3,	"SSSE3" },
-	{ CPUIDECX_CNXTID,	"CNXT-ID" },
-	{ CPUIDECX_SDBG,	"SDBG" },
-	{ CPUIDECX_FMA3,	"FMA3" },
-	{ CPUIDECX_CX16,	"CX16" },
-	{ CPUIDECX_XTPR,	"xTPR" },
-	{ CPUIDECX_PDCM,	"PDCM" },
-	{ CPUIDECX_PCID,	"PCID" },
-	{ CPUIDECX_DCA,		"DCA" },
-	{ CPUIDECX_SSE41,	"SSE4.1" },
-	{ CPUIDECX_SSE42,	"SSE4.2" },
-	{ CPUIDECX_X2APIC,	"x2APIC" },
-	{ CPUIDECX_MOVBE,	"MOVBE" },
-	{ CPUIDECX_POPCNT,	"POPCNT" },
-	{ CPUIDECX_DEADLINE,	"DEADLINE" },
-	{ CPUIDECX_AES,		"AES" },
-	{ CPUIDECX_XSAVE,	"XSAVE" },
-	{ CPUIDECX_OSXSAVE,	"OSXSAVE" },
-	{ CPUIDECX_AVX,		"AVX" },
-	{ CPUIDECX_F16C,	"F16C" },
-	{ CPUIDECX_RDRAND,	"RDRAND" },
-	{ CPUIDECX_HV,		"HV" },
-}, cpu_ecpuid_ecxfeatures[] = {
-	{ CPUIDECX_LAHF,	"LAHF" },
-	{ CPUIDECX_CMPLEG,	"CMPLEG" },
-	{ CPUIDECX_SVM,		"SVM" },
-	{ CPUIDECX_EAPICSP,	"EAPICSP"},
-	{ CPUIDECX_AMCR8,	"AMCR8"},
-	{ CPUIDECX_ABM,		"ABM" },
-	{ CPUIDECX_SSE4A,	"SSE4A" },
-	{ CPUIDECX_MASSE,	"MASSE" },
-	{ CPUIDECX_3DNOWP,	"3DNOWP" },
-	{ CPUIDECX_OSVW,	"OSVW" },
-	{ CPUIDECX_IBS,		"IBS" },
-	{ CPUIDECX_XOP,		"XOP" },
-	{ CPUIDECX_SKINIT,	"SKINIT" },
-	{ CPUIDECX_LWP,		"WDT" },
-	{ CPUIDECX_FMA4,	"FMA4" },
-	{ CPUIDECX_TCE,		"TCE" },
-	{ CPUIDECX_NODEID,	"NODEID" },
-	{ CPUIDECX_TBM,		"TBM" },
-	{ CPUIDECX_TOPEXT,	"TOPEXT" },
-	{ CPUIDECX_CPCTR,	"CPCTR" },
-	{ CPUIDECX_DBKP,	"DBKP" },
-	{ CPUIDECX_PERFTSC,	"PERFTSC" },
-	{ CPUIDECX_PCTRL3,	"PCTRL3" },
-	{ CPUIDECX_MWAITX,	"MWAITX" },
-}, cpu_seff0_ebxfeatures[] = {
-	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
-	{ SEFF0EBX_TSC_ADJUST,	"TSC_ADJUST" },
-	{ SEFF0EBX_SGX,		"SGX" },
-	{ SEFF0EBX_BMI1,	"BMI1" },
-	{ SEFF0EBX_HLE,		"HLE" },
-	{ SEFF0EBX_AVX2,	"AVX2" },
-	{ SEFF0EBX_SMEP,	"SMEP" },
-	{ SEFF0EBX_BMI2,	"BMI2" },
-	{ SEFF0EBX_ERMS,	"ERMS" },
-	{ SEFF0EBX_INVPCID,	"INVPCID" },
-	{ SEFF0EBX_RTM,		"RTM" },
-	{ SEFF0EBX_PQM,		"PQM" },
-	{ SEFF0EBX_MPX,		"MPX" },
-	{ SEFF0EBX_AVX512F,	"AVX512F" },
-	{ SEFF0EBX_AVX512DQ,	"AVX512DQ" },
-	{ SEFF0EBX_RDSEED,	"RDSEED" },
-	{ SEFF0EBX_ADX,		"ADX" },
-	{ SEFF0EBX_SMAP,	"SMAP" },
-	{ SEFF0EBX_AVX512IFMA,	"AVX512IFMA" },
-	{ SEFF0EBX_PCOMMIT,	"PCOMMIT" },
-	{ SEFF0EBX_CLFLUSHOPT,	"CLFLUSHOPT" },
-	{ SEFF0EBX_CLWB,	"CLWB" },
-	{ SEFF0EBX_PT,		"PT" },
-	{ SEFF0EBX_AVX512PF,	"AVX512PF" },
-	{ SEFF0EBX_AVX512ER,	"AVX512ER" },
-	{ SEFF0EBX_AVX512CD,	"AVX512CD" },
-	{ SEFF0EBX_SHA,		"SHA" },
-	{ SEFF0EBX_AVX512BW,	"AVX512BW" },
-	{ SEFF0EBX_AVX512VL,	"AVX512VL" },
-}, cpu_seff0_ecxfeatures[] = {
-	{ SEFF0ECX_PREFETCHWT1,	"PREFETCHWT1" },
-	{ SEFF0ECX_AVX512VBMI,	"AVX512VBMI" },
-	{ SEFF0ECX_UMIP,	"UMIP" },
-	{ SEFF0ECX_PKU,		"PKU" },
-	{ SEFF0ECX_WAITPKG,	"WAITPKG" },
-	{ SEFF0ECX_PKS,		"PKS" },
-}, cpu_seff0_edxfeatures[] = {
-	{ SEFF0EDX_AVX512_4FNNIW, "AVX512FNNIW" },
-	{ SEFF0EDX_AVX512_4FMAPS, "AVX512FMAPS" },
-	{ SEFF0EDX_SRBDS_CTRL,	"SRBDS_CTRL" },
-	{ SEFF0EDX_MD_CLEAR,	"MD_CLEAR" },
-	{ SEFF0EDX_TSXFA,	"TSXFA" },
-	{ SEFF0EDX_IBT,		"IBT" },
-	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
-	{ SEFF0EDX_STIBP,	"STIBP" },
-	{ SEFF0EDX_L1DF,	"L1DF" },
-	 /* SEFF0EDX_ARCH_CAP (not printed) */
-	{ SEFF0EDX_SSBD,	"SSBD" },
-}, cpu_tpm_eaxfeatures[] = {
-	{ TPM_SENSOR,		"SENSOR" },
-	{ TPM_ARAT,		"ARAT" },
-}, cpu_cpuid_perf_eax[] = {
-	{ CPUIDEAX_VERID,	"PERF" },
-}, cpu_cpuid_apmi_edx[] = {
-	{ CPUIDEDX_HWPSTATE,	"HWPSTATE" },
-	{ CPUIDEDX_ITSC,	"ITSC" },
-}, cpu_amdspec_ebxfeatures[] = {
-	{ CPUIDEBX_INVLPGB,		"INVLPGB" },
-	{ CPUIDEBX_IBPB,		"IBPB" },
-	{ CPUIDEBX_IBRS,		"IBRS" },
-	{ CPUIDEBX_STIBP,		"STIBP" },
-	{ CPUIDEBX_IBRS_ALWAYSON,	"IBRS_ALL" },
-	{ CPUIDEBX_STIBP_ALWAYSON,	"STIBP_ALL" },
-	{ CPUIDEBX_IBRS_PREF,		"IBRS_PREF" },
-	{ CPUIDEBX_IBRS_SAME_MODE,	"IBRS_SM" },
-	{ CPUIDEBX_SSBD,		"SSBD" },
-	{ CPUIDEBX_VIRT_SSBD,		"VIRTSSBD" },
-	{ CPUIDEBX_SSBD_NOTREQ,		"SSBDNR" },
-}, cpu_xsave_extfeatures[] = {
-	{ XSAVE_XSAVEOPT,	"XSAVEOPT" },
-	{ XSAVE_XSAVEC,		"XSAVEC" },
-	{ XSAVE_XGETBV1,	"XGETBV1" },
-	{ XSAVE_XSAVES,		"XSAVES" },
-	{ XSAVE_XFD,		"XFD" },
-}, cpu_arch_cap_features[] = {
-	/* ARCH_CAP_RDCL_NO (not printed) == !MELTDOWN */
-	{ ARCH_CAP_IBRS_ALL,		"IBRS_ALL" },
-	{ ARCH_CAP_RSBA,		"RSBA" },
-	{ ARCH_CAP_SKIP_L1DFL_VMENTRY,	"SKIP_L1DFL" },
-	{ ARCH_CAP_SSB_NO,		"SSB_NO" },
-	{ ARCH_CAP_MDS_NO,		"MDS_NO" },
-	{ ARCH_CAP_IF_PSCHANGE_MC_NO,	"IF_PSCHANGE" },
-	{ ARCH_CAP_TSX_CTRL,		"TSX_CTRL" },
-	{ ARCH_CAP_TAA_NO,		"TAA_NO" },
-	{ ARCH_CAP_MCU_CONTROL,		"MCU_CONTROL" },
-	{ ARCH_CAP_MISC_PACKAGE_CTLS,	"MISC_PKG_CT" },
-	{ ARCH_CAP_ENERGY_FILTERING_CTL, "ENERGY_FILT" },
-	{ ARCH_CAP_DOITM,		"DOITM" },
-	{ ARCH_CAP_SBDR_SSDP_NO,	"SBDR_SSDP_N" },
-	{ ARCH_CAP_FBSDP_NO,		"FBSDP_NO" },
-	{ ARCH_CAP_PSDP_NO,		"PSDP_NO" },
-	{ ARCH_CAP_FB_CLEAR,		"FB_CLEAR" },
-	{ ARCH_CAP_FB_CLEAR_CTRL,	"FB_CLEAR_CT" },
-	{ ARCH_CAP_RRSBA,		"RRSBA" },
-	{ ARCH_CAP_BHI_NO,		"BHI_NO" },
-	{ ARCH_CAP_XAPIC_DISABLE_STATUS, "XAPIC_DIS" },
-	{ ARCH_CAP_OVERCLOCKING_STATUS,	"OVERCLOCK" },
-	{ ARCH_CAP_PBRSB_NO,		"PBRSB_NO" },
-	{ ARCH_CAP_GDS_CTRL,		"GDS_CTRL" },
-	{ ARCH_CAP_GDS_NO,		"GDS_NO" },
-	{ ARCH_CAP_RFDS_NO,		"RFDS_NO" },
-	{ ARCH_CAP_RFDS_CLEAR,		"RFDS_CLEAR" },
-};
 
 int
 cpu_amd64speed(int *freq)
@@ -545,28 +340,197 @@ cpu_freq(struct cpu_info *ci)
 	return ((count - last_count) * 10);
 }
 
+/* print flags from one cpuid for cpu0 */
+static inline void
+pcpu0id3(const char *id, char reg1, uint32_t val1, const char *bits1,
+    char reg2, uint32_t val2, const char *bits2,
+    char reg3, uint32_t val3, const char *bits3)
+{
+	if (val1 || val2 || val3) {
+		printf("\ncpu0: cpuid %s", id);
+		if (val1)
+			printf(" e%cx=%b", reg1, val1, bits1);
+		if (val2)
+			printf(" e%cx=%b", reg2, val2, bits2);
+		if (val3)
+			printf(" e%cx=%b", reg3, val3, bits3);
+	}
+}
+
+/* print flags from one, 32-bit MSR for cpu0 */
+static inline void
+pmsr032(uint32_t msr, uint32_t value, const char *bits)
+{
+	if (value)
+		printf("\ncpu0: msr %x=%b", msr, value, bits);
+}
+
+static void
+pbitdiff(uint32_t value, uint32_t base_value, const char *bits)
+{
+	uint32_t minus;
+	if (value == base_value)
+		return;
+	minus = base_value & ~value;
+	value &= ~base_value;
+	if (minus)
+		printf("-%b", minus, bits);
+	if (value)
+		printf("+%b", value, bits);
+}
+
+static inline void
+pcpuid(struct cpu_info *ci, const char *id, char reg, uint32_t val,
+    uint32_t prev_val, const char *bits)
+{
+	if (CPU_IS_PRIMARY(ci))
+		pcpu0id3(id, reg, val, bits, 0, 0, NULL, 0, 0, NULL);
+	else if (val != prev_val) {
+		printf("\n%s: cpuid %s e%cx=", ci->ci_dev->dv_xname, id, reg);
+		pbitdiff(val, prev_val, bits);
+	}
+}
+
+static inline void
+pcpuid2(struct cpu_info *ci, const char *id,
+    char reg1, uint32_t val1, uint32_t prev_val1, const char *bits1,
+    char reg2, uint32_t val2, uint32_t prev_val2, const char *bits2)
+{
+	if (CPU_IS_PRIMARY(ci))
+		pcpu0id3(id, reg1, val1, bits1, reg2, val2, bits2, 0, 0,
+		    NULL);
+	else if (val1 != prev_val1 || val2 != prev_val2) {
+		printf("\n%s: cpuid %s", ci->ci_dev->dv_xname, id);
+		if (val1 != prev_val1) {
+			printf(" e%cx=", reg1);
+			pbitdiff(val1, prev_val1, bits1);
+		}
+		if (val2 != prev_val2) {
+			printf(" e%cx=", reg2);
+			pbitdiff(val2, prev_val2, bits2);
+		}
+	}
+}
+
+static inline void
+pcpuid3(struct cpu_info *ci, const char *id,
+    char reg1, uint32_t val1, uint32_t prev_val1, const char *bits1,
+    char reg2, uint32_t val2, uint32_t prev_val2, const char *bits2,
+    char reg3, uint32_t val3, uint32_t prev_val3, const char *bits3)
+{
+	if (CPU_IS_PRIMARY(ci))
+		pcpu0id3(id, reg1, val1, bits1, reg2, val2, bits2, reg3, val3,
+		    bits3);
+	else if (val1 != prev_val1 || val2 != prev_val2 || val3 != prev_val3) {
+		printf("\n%s: cpuid %s", ci->ci_dev->dv_xname, id);
+		if (val1 != prev_val1) {
+			printf(" e%cx=", reg1);
+			pbitdiff(val1, prev_val1, bits1);
+		}
+		if (val2 != prev_val2) {
+			printf(" e%cx=", reg2);
+			pbitdiff(val2, prev_val2, bits2);
+		}
+		if (val3 != prev_val3) {
+			printf(" e%cx=", reg3);
+			pbitdiff(val3, prev_val3, bits3);
+		}
+	}
+}
+
+static inline void
+pmsr32(struct cpu_info *ci, uint32_t msr, uint32_t value, uint32_t prev_value,
+    const char *bits)
+{
+	if (CPU_IS_PRIMARY(ci))
+		pmsr032(msr, value, bits);
+	else if (value != prev_value) {
+		printf("\n%s: msr %x=", ci->ci_dev->dv_xname, msr);
+		pbitdiff(value, prev_value, bits);
+	}
+}
+
+#ifdef MULTIPROCESSOR
+static uint32_t prevcpu_perf_eax;
+static uint32_t prevcpu_perf_edx;
+#endif
+
+static inline void
+print_perf_cpuid(struct cpu_info *ci)
+{
+	uint32_t eax, edx, version;
+
+	if (CPU_IS_PRIMARY(ci)) {
+		eax = cpu_perf_eax;
+		edx = cpu_perf_edx;
+		version = eax & CPUIDEAX_VERID;
+		if (version == 0)
+			return;
+	}
+#ifdef MULTIPROCESSOR
+	else {
+		uint32_t dummy;
+		CPUID(0xa, eax, dummy, dummy, edx);
+		/* if no difference on the bits we care about, say nothing */
+		if (((eax ^ prevcpu_perf_eax) & 0x00ffffff) == 0 &&
+		    ((edx ^ prevcpu_perf_edx) & 0x00001fff) == 0)
+			return;
+		version = eax & CPUIDEAX_VERID;
+	}
+	prevcpu_perf_eax = eax;
+	prevcpu_perf_edx = edx;
+#endif
+
+	printf("\n%s: cpuid a vers=%d", ci->ci_dev->dv_xname, version);
+	if (version) {
+		printf(", gp=%d, gpwidth=%d", CPUIDEAX_NUM_GC(eax),
+		    CPUIDEAX_BIT_GC(eax));
+		if (version > 1) {
+			printf(", ff=%d, ffwidth=%d", CPUIDEDX_NUM_FC(edx),
+			    CPUIDEDX_BIT_FC(edx));
+		}
+	}
+}
+
 void
 identifycpu(struct cpu_info *ci)
 {
+	static uint32_t prevcpu_1_ecx, prevcpu_tpm_ecxflags, prevcpu_d_1_eax;
+	static uint32_t prevcpu_apmi_edx, prevcpu_arch_capa;
+	static struct cpu_info *prevci = &cpu_info_primary;
+#define CPUID_MEMBER(member)	ci->member, prevci->member
+	uint32_t cflushsz, curcpu_1_ecx, curcpu_apmi_edx = 0;
+	uint32_t curcpu_tpm_ecxflags = 0, curcpu_d_1_eax = 0;
 	uint64_t freq = 0;
-	u_int32_t dummy, val, cpu_tpm_ecxflags = 0;
+	u_int32_t dummy;
 	char mycpu_model[48];
-	int i;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
 
-	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000000, ci->ci_pnfeatset, dummy, dummy, dummy);
-	if (ci->ci_pnfeatset >= 0x80000001) {
-		CPUID(0x80000001, ci->ci_efeature_eax, dummy,
-		    ci->ci_efeature_ecx, ci->ci_feature_eflags);
-		/* Other bits may clash */
-		ci->ci_feature_flags |= (ci->ci_feature_eflags & CPUID_NXE);
-		if (CPU_IS_PRIMARY(ci))
-			ecpu_ecxfeature = ci->ci_efeature_ecx;
+	CPUID(0x80000001, ci->ci_efeature_eax, dummy, ci->ci_efeature_ecx,
+	    ci->ci_feature_eflags);
+
+	if (CPU_IS_PRIMARY(ci)) {
+		ci->ci_signature = cpu_id;
+		ci->ci_feature_flags = cpu_feature & ~CPUID_NXE;
+		cflushsz = cpu_ebxfeature;
+		curcpu_1_ecx = cpu_ecxfeature;
+		ecpu_ecxfeature = ci->ci_efeature_ecx;
+		curcpu_apmi_edx = cpu_apmi_edx;
+	} else {
+		CPUID(1, ci->ci_signature, cflushsz, curcpu_1_ecx,
+		    ci->ci_feature_flags);
 		/* Let cpu_feature be the common bits */
-		cpu_feature &= ci->ci_feature_flags;
+		cpu_feature &= ci->ci_feature_flags |
+		    (ci->ci_feature_eflags & CPUID_NXE);
+		if (ci->ci_pnfeatset >= 0x80000007) {
+			CPUID(0x80000007, dummy, dummy, dummy,
+			    curcpu_apmi_edx);
+		}
 	}
+	/* cflush cacheline size is equal to bits 15-8 of ebx * 8 */
+	ci->ci_cflushsz = ((cflushsz >> 8) & 0xff) * 8;
 
 	CPUID(0x80000002, ci->ci_brand[0],
 	    ci->ci_brand[1], ci->ci_brand[2], ci->ci_brand[3]);
@@ -641,6 +605,14 @@ identifycpu(struct cpu_info *ci)
 
 	freq = cpu_freq(ci);
 
+	if (ci->ci_cpuid_level >= 0x07) {
+		/* "Structured Extended Feature Flags" */
+		CPUID_LEAF(0x7, 0, dummy, ci->ci_feature_sefflags_ebx,
+		    ci->ci_feature_sefflags_ecx, ci->ci_feature_sefflags_edx);
+		/* SEFF0ECX_OSPKE is set late on AP */
+		ci->ci_feature_sefflags_ecx &= ~SEFF0ECX_OSPKE;
+	}
+
 	printf("%s: %s", ci->ci_dev->dv_xname, mycpu_model);
 
 	if (freq != 0)
@@ -670,89 +642,61 @@ identifycpu(struct cpu_info *ci)
 			printf(", patch %08llx", level);
 	}
 
-	printf("\n%s: ", ci->ci_dev->dv_xname);
+	if (ci->ci_cpuid_level >= 0x06)
+		CPUID(0x06, ci->ci_feature_tpmflags, dummy,
+		    curcpu_tpm_ecxflags, dummy);
+	if (ci->ci_vendor == CPUV_AMD && ci->ci_family >= 0x12)
+		ci->ci_feature_tpmflags |= TPM_ARAT;
 
-	for (i = 0; i < nitems(cpu_cpuid_features); i++)
-		if (ci->ci_feature_flags & cpu_cpuid_features[i].bit)
-			printf("%s%s", i? "," : "", cpu_cpuid_features[i].str);
-	for (i = 0; i < nitems(cpu_cpuid_ecxfeatures); i++)
-		if (cpu_ecxfeature & cpu_cpuid_ecxfeatures[i].bit)
-			printf(",%s", cpu_cpuid_ecxfeatures[i].str);
-	for (i = 0; i < nitems(cpu_ecpuid_features); i++)
-		if (ci->ci_feature_eflags & cpu_ecpuid_features[i].bit)
-			printf(",%s", cpu_ecpuid_features[i].str);
-	for (i = 0; i < nitems(cpu_ecpuid_ecxfeatures); i++)
-		if (ecpu_ecxfeature & cpu_ecpuid_ecxfeatures[i].bit)
-			printf(",%s", cpu_ecpuid_ecxfeatures[i].str);
-	for (i = 0; i < nitems(cpu_cpuid_perf_eax); i++)
-		if (cpu_perf_eax & cpu_cpuid_perf_eax[i].bit)
-			printf(",%s", cpu_cpuid_perf_eax[i].str);
-	for (i = 0; i < nitems(cpu_cpuid_apmi_edx); i++)
-		if (cpu_apmi_edx & cpu_cpuid_apmi_edx[i].bit)
-			printf(",%s", cpu_cpuid_apmi_edx[i].str);
+	/* xsave subfeatures */
+	if (ci->ci_cpuid_level >= 0xd)
+		CPUID_LEAF(0xd, 1, curcpu_d_1_eax, dummy, dummy, dummy);
 
-	if (ci->ci_cpuid_level >= 0x07) {
-		/* "Structured Extended Feature Flags" */
-		CPUID_LEAF(0x7, 0, dummy, ci->ci_feature_sefflags_ebx,
-		    ci->ci_feature_sefflags_ecx, ci->ci_feature_sefflags_edx);
-		for (i = 0; i < nitems(cpu_seff0_ebxfeatures); i++)
-			if (ci->ci_feature_sefflags_ebx &
-			    cpu_seff0_ebxfeatures[i].bit)
-				printf(",%s", cpu_seff0_ebxfeatures[i].str);
-		for (i = 0; i < nitems(cpu_seff0_ecxfeatures); i++)
-			if (ci->ci_feature_sefflags_ecx &
-			    cpu_seff0_ecxfeatures[i].bit)
-				printf(",%s", cpu_seff0_ecxfeatures[i].str);
-		for (i = 0; i < nitems(cpu_seff0_edxfeatures); i++)
-			if (ci->ci_feature_sefflags_edx &
-			    cpu_seff0_edxfeatures[i].bit)
-				printf(",%s", cpu_seff0_edxfeatures[i].str);
-	}
-
-	if (ci->ci_vendor == CPUV_INTEL && ci->ci_cpuid_level >= 0x06) {
-		CPUID(0x06, ci->ci_feature_tpmflags, dummy, cpu_tpm_ecxflags,
-		    dummy);
-		for (i = 0; i < nitems(cpu_tpm_eaxfeatures); i++)
-			if (ci->ci_feature_tpmflags &
-			    cpu_tpm_eaxfeatures[i].bit)
-				printf(",%s", cpu_tpm_eaxfeatures[i].str);
-	} else if (ci->ci_vendor == CPUV_AMD) {
-		CPUID(0x06, ci->ci_feature_tpmflags, dummy, cpu_tpm_ecxflags,
-		    dummy);
-		if (ci->ci_family >= 0x12)
-			ci->ci_feature_tpmflags |= TPM_ARAT;
-	}
+	pcpuid2(ci, "1", 'd', CPUID_MEMBER(ci_feature_flags), CPUID_EDX_BITS,
+	    'c', curcpu_1_ecx, prevcpu_1_ecx, CPUID_ECX_BITS);
+	pcpuid2(ci, "6", 'a', CPUID_MEMBER(ci_feature_tpmflags), TPM_EAX_BITS,
+	    'c', curcpu_tpm_ecxflags, prevcpu_tpm_ecxflags, TPM_ECX_BITS);
+	pcpuid3(ci, "7.0",
+	    'b', CPUID_MEMBER(ci_feature_sefflags_ebx), SEFF0_EBX_BITS,
+	    'c', CPUID_MEMBER(ci_feature_sefflags_ecx), SEFF0_ECX_BITS,
+	    'd', CPUID_MEMBER(ci_feature_sefflags_edx), SEFF0_EDX_BITS);
+	print_perf_cpuid(ci);
+	pcpuid(ci, "d.1", 'a', curcpu_d_1_eax, prevcpu_d_1_eax, XSAVE_BITS);
+	pcpuid2(ci, "80000001",
+	    'd', CPUID_MEMBER(ci_feature_eflags), CPUIDE_EDX_BITS,
+	    'c', CPUID_MEMBER(ci_efeature_ecx), CPUIDE_ECX_BITS);
+	pcpuid(ci, "80000007", 'd', curcpu_apmi_edx, prevcpu_apmi_edx,
+	    CPUID_APMI_EDX_BITS);
+#ifdef MULTIPROCESSOR
+	prevcpu_1_ecx = curcpu_1_ecx;
+	prevcpu_tpm_ecxflags = curcpu_tpm_ecxflags;
+	prevcpu_d_1_eax = curcpu_d_1_eax;
+	prevcpu_apmi_edx = curcpu_apmi_edx;
+#endif
 
 	/* speculation control features */
 	if (ci->ci_vendor == CPUV_AMD) {
 		if (ci->ci_pnfeatset >= 0x80000008) {
 			CPUID(0x80000008, dummy, ci->ci_feature_amdspec_ebx,
 			    dummy, dummy);
-			for (i = 0; i < nitems(cpu_amdspec_ebxfeatures); i++)
-				if (ci->ci_feature_amdspec_ebx &
-				    cpu_amdspec_ebxfeatures[i].bit)
-					printf(",%s",
-					    cpu_amdspec_ebxfeatures[i].str);
+			pcpuid(ci, "80000008", 'b',
+			    CPUID_MEMBER(ci_feature_amdspec_ebx),
+			    CPUID_AMDSPEC_EBX_BITS);
 		}
-	} else if (ci->ci_vendor == CPUV_INTEL &&
-	    (ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP)) {
-		uint64_t msr = rdmsr(MSR_ARCH_CAPABILITIES);
+	} else if (ci->ci_vendor == CPUV_INTEL) {
+		if (ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) {
+			uint32_t msr = rdmsr(MSR_ARCH_CAPABILITIES);
 
-		for (i = 0; i < nitems(cpu_arch_cap_features); i++)
-			if (msr & cpu_arch_cap_features[i].bit)
-				printf(",%s", cpu_arch_cap_features[i].str);
+			pmsr32(ci, MSR_ARCH_CAPABILITIES, msr,
+			    prevcpu_arch_capa, ARCH_CAP_MSR_BITS);
+			prevcpu_arch_capa = msr;
+			if (!CPU_IS_PRIMARY(ci) && cpu_meltdown &&
+			    (msr & ARCH_CAP_RDCL_NO))
+				printf("\n%s: -MELTDOWN", ci->ci_dev->dv_xname);
+		}
+		if (cpu_meltdown && CPU_IS_PRIMARY(ci))
+			printf("\n%s: MELTDOWN", ci->ci_dev->dv_xname);
 	}
-
-	/* xsave subfeatures */
-	if (ci->ci_cpuid_level >= 0xd) {
-		CPUID_LEAF(0xd, 1, val, dummy, dummy, dummy);
-		for (i = 0; i < nitems(cpu_xsave_extfeatures); i++)
-			if (val & cpu_xsave_extfeatures[i].bit)
-				printf(",%s", cpu_xsave_extfeatures[i].str);
-	}
-
-	if (cpu_meltdown)
-		printf(",MELTDOWN");
 
 	printf("\n");
 
@@ -763,9 +707,7 @@ identifycpu(struct cpu_info *ci)
 #ifndef SMALL_KERNEL
 		if (ci->ci_vendor == CPUV_AMD &&
 		    ci->ci_pnfeatset >= 0x80000007) {
-			CPUID(0x80000007, dummy, dummy, dummy, val);
-
-			if (val & 0x06) {
+			if (curcpu_apmi_edx & 0x06) {
 				if ((ci->ci_signature & 0xF00) == 0xF00)
 					setperf_setup = k8_powernow_init;
 			}
@@ -785,14 +727,6 @@ identifycpu(struct cpu_info *ci)
 
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_SMAP)
 			replacesmap();
-	}
-
-	if (ci->ci_feature_flags & CPUID_CFLUSH) {
-		u_int32_t cflushsz;
-
-		CPUID(0x01, dummy, cflushsz, dummy, dummy);
-		/* cflush cacheline size is equal to bits 15-8 of ebx * 8 */
-		ci->ci_cflushsz = ((cflushsz >> 8) & 0xff) * 8;
 	}
 
 #ifndef SMALL_KERNEL
@@ -830,13 +764,14 @@ identifycpu(struct cpu_info *ci)
 #endif /* NVMM > 0 */
 
 	/* Check for effective frequency via MPERF, APERF */
-	if ((cpu_tpm_ecxflags & TPM_EFFFREQ) && ci->ci_smt_id == 0) {
+	if ((curcpu_tpm_ecxflags & TPM_EFFFREQ) && ci->ci_smt_id == 0) {
 #ifndef SMALL_KERNEL
 		ci->ci_hz_sensor.type = SENSOR_FREQ;
 		sensor_task_register(ci, cpu_hz_update_sensor, 1);
 		sensor_attach(&ci->ci_sensordev, &ci->ci_hz_sensor);
 #endif
 	}
+	prevci = ci;
 }
 
 #ifndef SMALL_KERNEL
