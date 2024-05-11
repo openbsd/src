@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.19 2024/05/11 18:52:52 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.20 2024/05/11 18:59:39 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -160,13 +160,6 @@ X509V3_EXT_get(X509_EXTENSION *ext)
 	return X509V3_EXT_get_nid(nid);
 }
 LCRYPTO_ALIAS(X509V3_EXT_get);
-
-int
-X509V3_add_standard_extensions(void)
-{
-	return 1;
-}
-LCRYPTO_ALIAS(X509V3_add_standard_extensions);
 
 /* Return an extension internal structure */
 
@@ -332,3 +325,10 @@ err:
 	return 0;
 }
 LCRYPTO_ALIAS(X509V3_add1_i2d);
+
+int
+X509V3_add_standard_extensions(void)
+{
+	return 1;
+}
+LCRYPTO_ALIAS(X509V3_add_standard_extensions);
