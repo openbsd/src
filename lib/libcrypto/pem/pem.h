@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.27 2024/03/29 02:22:18 jsing Exp $ */
+/* $OpenBSD: pem.h,v 1.28 2024/05/11 05:41:28 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,55 +141,6 @@ extern "C" {
 #define PEM_TYPE_MIC_ONLY       20
 #define PEM_TYPE_MIC_CLEAR      30
 #define PEM_TYPE_CLEAR		40
-
-typedef struct pem_recip_st {
-	char *name;
-	X509_NAME *dn;
-
-	int cipher;
-	int key_enc;
-	/*	char iv[8]; unused and wrong size */
-} PEM_USER;
-
-typedef struct pem_ctx_st {
-	int type;		/* what type of object */
-
-	struct	{
-		int version;
-		int mode;
-	} proc_type;
-
-	char *domain;
-
-	struct	{
-		int cipher;
-	/* unused, and wrong size
-	   unsigned char iv[8]; */
-	} DEK_info;
-
-	PEM_USER *originator;
-
-	int num_recipient;
-	PEM_USER **recipient;
-
-	/* XXX(ben): don#t think this is used!
-		STACK *x509_chain;	/ * certificate chain */
-	EVP_MD *md;		/* signature type */
-
-	int md_enc;		/* is the md encrypted or not? */
-	int md_len;		/* length of md_data */
-	char *md_data;		/* message digest, could be pkey encrypted */
-
-	EVP_CIPHER *dec;	/* date encryption cipher */
-	int key_len;		/* key length */
-	unsigned char *key;	/* key */
-	/* unused, and wrong size
-	   unsigned char iv[8]; */
-
-	int  data_enc;		/* is the data encrypted */
-	int data_len;
-	unsigned char *data;
-} PEM_CTX;
 
 #ifndef LIBRESSL_INTERNAL
 /* These macros make the PEM_read/PEM_write functions easier to maintain and
