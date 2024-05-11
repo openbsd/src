@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.18 2024/05/11 18:48:47 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.19 2024/05/11 18:52:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -176,10 +176,10 @@ X509V3_EXT_d2i(X509_EXTENSION *ext)
 	const X509V3_EXT_METHOD *method;
 	const unsigned char *p;
 
-	if (!(method = X509V3_EXT_get(ext)))
+	if ((method = X509V3_EXT_get(ext)) == NULL)
 		return NULL;
 	p = ext->value->data;
-	if (method->it)
+	if (method->it != NULL)
 		return ASN1_item_d2i(NULL, &p, ext->value->length, method->it);
 	return method->d2i(NULL, &p, ext->value->length);
 }
