@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.286 2024/03/06 02:34:14 tb Exp $
+# $OpenBSD: Makefile,v 1.287 2024/05/12 11:50:36 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -304,6 +304,7 @@ MAN=	\
 	UI_get_string_type.3 \
 	UI_new.3 \
 	X25519.3 \
+	X509V3_EXT_get_nid.3 \
 	X509V3_EXT_print.3 \
 	X509V3_extensions_print.3 \
 	X509V3_get_d2i.3 \
