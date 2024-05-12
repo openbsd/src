@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.5 2023/11/16 20:27:43 schwarze Exp $
+.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.6 2024/05/12 05:08:59 tb Exp $
 .\"
 .\" Copyright (c) 2021, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: May 12 2024 $
 .Dt X509_STORE_GET_BY_SUBJECT 3
 .Os
 .Sh NAME
@@ -95,8 +95,7 @@ to retrieve a revocation list.
 .Pp
 If the store does not yet contain a matching object or if the type is
 .Dv X509_LU_CRL ,
-.Xr X509_LOOKUP_by_subject 3
-is called on
+a lookup by subject is performed on
 .Vt X509_LOOKUP
 objects associated with the store until a match is found,
 which may add zero or more objects to the store.
@@ -172,8 +171,7 @@ and
 .Fn X509_STORE_get_by_subject
 return 1 if a match is found or 0 on failure.
 In addition to simply not finding a match,
-they may also fail due to memory allocation failure in
-.Xr X509_LOOKUP_by_subject 3 .
+they may also fail due to memory allocation failure.
 With library implementations other than LibreSSL,
 they might also return negative values for internal errors.
 .Pp
@@ -215,7 +213,6 @@ it might also return negative values for internal errors.
 .Xr X509_check_issued 3 ,
 .Xr X509_CRL_new 3 ,
 .Xr X509_get_issuer_name 3 ,
-.Xr X509_LOOKUP_by_subject 3 ,
 .Xr X509_NAME_new 3 ,
 .Xr X509_new 3 ,
 .Xr X509_OBJECT_retrieve_by_subject 3 ,
