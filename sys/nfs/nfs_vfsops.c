@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.130 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.131 2024/05/12 09:09:39 jsg Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
-extern u_int32_t nfs_procids[NFS_NPROCS];
 
 int	nfs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 	    struct proc *);
