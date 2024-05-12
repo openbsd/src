@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.14 2024/03/02 19:52:41 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.15 2024/05/12 20:02:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -19,6 +19,10 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
+
+#include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_regulator.h>
@@ -47,6 +51,20 @@
 #define RK808_RTC_STATUS	0x11
 #define RK809_RTC_STATUS	0x0e
 #define  RK80X_RTC_STATUS_POWER_UP	0x80
+
+#define RK809_PMIC_SYS_CFG3	0xf4
+#define  RK809_PMIC_SYS_CFG3_SLP_FUN_MASK	0x18
+#define  RK809_PMIC_SYS_CFG3_SLP_FUN_NONE	0x00
+#define  RK809_PMIC_SYS_CFG3_SLP_FUN_SLEEP	0x08
+#define RK809_PMIC_INT_STS0	0xf8
+#define RK809_PMIC_INT_MSK0	0xf9
+#define  RK809_PMIC_INT_MSK0_PWRON_FALL_INT_IM	0x01
+#define RK809_PMIC_INT_STS1	0xfa
+#define RK809_PMIC_INT_MSK1	0xfb
+#define RK809_PMIC_INT_STS2	0xfc
+#define RK809_PMIC_INT_MSK2	0xfd
+#define RK809_PMIC_GPIO_INT_CONFIG	0xfe
+#define  RK809_PMIC_GPIO_INT_CONFIG_INT_POL	0x02
 
 #define RKSPI_CMD_READ		(0 << 7)
 #define RKSPI_CMD_WRITE		(1 << 7)
@@ -322,6 +340,8 @@ struct rkpmic_softc {
 
 	int (*sc_read)(struct rkpmic_softc *, uint8_t, void *, size_t);
 	int (*sc_write)(struct rkpmic_softc *, uint8_t, void *, size_t);
+
+	void *sc_ih;
 };
 
 int	rkpmic_i2c_match(struct device *, void *, void *);
@@ -335,9 +355,11 @@ int	rkpmic_spi_read(struct rkpmic_softc *, uint8_t, void *, size_t);
 int	rkpmic_spi_write(struct rkpmic_softc *, uint8_t, void *, size_t);
 
 void	rkpmic_attach(struct device *, struct device *, void *);
+int	rkpmic_activate(struct device *, int);
 
 const struct cfattach rkpmic_i2c_ca = {
-	sizeof(struct rkpmic_softc), rkpmic_i2c_match, rkpmic_i2c_attach
+	sizeof(struct rkpmic_softc), rkpmic_i2c_match, rkpmic_i2c_attach,
+	NULL, rkpmic_activate
 };
 
 const struct cfattach rkpmic_spi_ca = {
@@ -348,6 +370,7 @@ struct cfdriver rkpmic_cd = {
 	NULL, "rkpmic", DV_DULL
 };
 
+int	rkpmic_intr(void *);
 void	rkpmic_attach_regulator(struct rkpmic_softc *, int);
 uint8_t	rkpmic_reg_read(struct rkpmic_softc *, int);
 void	rkpmic_reg_write(struct rkpmic_softc *, int, uint8_t);
@@ -414,6 +437,7 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkpmic_softc *sc = (struct rkpmic_softc *)self;
 	const char *chip;
+	uint8_t val;
 	int node;
 
 	if (OF_is_compatible(sc->sc_node, "rockchip,rk805")) {
@@ -455,6 +479,78 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	for (node = OF_child(node); node; node = OF_peer(node))
 		rkpmic_attach_regulator(sc, node);
+
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk809")) {
+		/* Mask all interrupts. */
+		rkpmic_reg_write(sc, RK809_PMIC_INT_MSK0, 0xff);
+		rkpmic_reg_write(sc, RK809_PMIC_INT_MSK1, 0xff);
+		rkpmic_reg_write(sc, RK809_PMIC_INT_MSK2, 0xff);
+
+		/* Ack all interrupts. */
+		rkpmic_reg_write(sc, RK809_PMIC_INT_STS0, 0xff);
+		rkpmic_reg_write(sc, RK809_PMIC_INT_STS1, 0xff);
+		rkpmic_reg_write(sc, RK809_PMIC_INT_STS2, 0xff);
+
+		/* Set interrupt pin to active-low. */
+		val = rkpmic_reg_read(sc, RK809_PMIC_GPIO_INT_CONFIG);
+		rkpmic_reg_write(sc, RK809_PMIC_GPIO_INT_CONFIG,
+		    val & ~RK809_PMIC_GPIO_INT_CONFIG_INT_POL);
+
+		sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_TTY,
+		    rkpmic_intr, sc, sc->sc_dev.dv_xname);
+
+		/* Unmask power button interrupt. */
+		rkpmic_reg_write(sc, RK809_PMIC_INT_MSK0,
+		    ~RK809_PMIC_INT_MSK0_PWRON_FALL_INT_IM);
+
+#ifdef SUSPEND
+		if (OF_getpropbool(sc->sc_node, "wakeup-source"))
+			device_register_wakeup(&sc->sc_dev);
+#endif
+	}
+}
+
+int
+rkpmic_activate(struct device *self, int act)
+{
+	struct rkpmic_softc *sc = (struct rkpmic_softc *)self;
+	uint8_t val;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (OF_is_compatible(sc->sc_node, "rockchip,rk809")) {
+			val = rkpmic_reg_read(sc, RK809_PMIC_SYS_CFG3);
+			val &= ~RK809_PMIC_SYS_CFG3_SLP_FUN_MASK;
+			val |= RK809_PMIC_SYS_CFG3_SLP_FUN_SLEEP;
+			rkpmic_reg_write(sc, RK809_PMIC_SYS_CFG3, val);
+		}
+		break;
+	case DVACT_RESUME:
+		if (OF_is_compatible(sc->sc_node, "rockchip,rk809")) {
+			val = rkpmic_reg_read(sc, RK809_PMIC_SYS_CFG3);
+			val &= ~RK809_PMIC_SYS_CFG3_SLP_FUN_MASK;
+			val |= RK809_PMIC_SYS_CFG3_SLP_FUN_NONE;
+			rkpmic_reg_write(sc, RK809_PMIC_SYS_CFG3, val);
+		}
+		break;
+	}
+
+	return 0;
+}
+
+int
+rkpmic_intr(void *arg)
+{
+	extern int allowpowerdown;
+	struct rkpmic_softc *sc = arg;
+
+	if (allowpowerdown) {
+		allowpowerdown = 0;
+		prsignal(initprocess, SIGUSR2);
+	}
+
+	rkpmic_reg_write(sc, RK809_PMIC_INT_STS0, 0xff);
+	return 1;
 }
 
 struct rkpmic_regulator {
