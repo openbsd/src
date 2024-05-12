@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.59 2022/01/11 11:51:14 uaa Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.60 2024/05/12 08:42:13 jsg Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -170,7 +170,6 @@ extern int comdefaultrate;
 extern int comconsrate;
 extern int comconsfreq;
 extern bus_addr_t comconsaddr;
-extern bus_addr_t comsiraddr;
 extern int comconsattached;
 extern bus_space_tag_t comconsiot;
 extern bus_space_handle_t comconsioh;
