@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.31 2015/11/04 12:11:59 dlg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.32 2024/05/12 08:44:09 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -431,8 +431,6 @@ struct rtw_softc {
 #define	sc_if		sc_ic.ic_if
 #define sc_rxtap	sc_rxtapu.tap
 #define sc_txtap	sc_txtapu.tap
-
-extern int rtw_host_rfio;
 
 void rtw_txdac_enable(struct rtw_softc *, int);
 void rtw_anaparm_enable(struct rtw_regs *, int);
