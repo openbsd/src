@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.168 2024/05/01 12:54:27 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.169 2024/05/12 16:49:38 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -393,10 +393,6 @@ struct timeval;
 extern int cpu_feature;
 extern int cpu_ebxfeature;
 extern int cpu_ecxfeature;
-extern int cpu_perf_eax;
-extern int cpu_perf_ebx;
-extern int cpu_perf_edx;
-extern int cpu_apmi_edx;
 extern int ecpu_ecxfeature;
 extern int cpu_id;
 extern char cpu_vendor[];

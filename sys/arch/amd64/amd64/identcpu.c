@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.141 2024/05/11 19:21:47 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.142 2024/05/12 16:49:38 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -288,7 +288,8 @@ via_update_sensor(void *args)
 #endif
 
 uint64_t
-cpu_freq_ctr(struct cpu_info *ci)
+cpu_freq_ctr(struct cpu_info *ci, uint32_t cpu_perf_eax,
+    uint32_t cpu_perf_edx)
 {
 	uint64_t count, last_count, msr;
 
@@ -328,10 +329,6 @@ uint64_t
 cpu_freq(struct cpu_info *ci)
 {
 	uint64_t last_count, count;
-
-	count = cpu_freq_ctr(ci);
-	if (count != 0)
-		return (count);
 
 	last_count = rdtsc();
 	delay(100000);
@@ -456,38 +453,36 @@ static uint32_t prevcpu_perf_edx;
 #endif
 
 static inline void
-print_perf_cpuid(struct cpu_info *ci)
+print_perf_cpuid(struct cpu_info *ci, uint32_t cpu_perf_eax,
+    uint32_t cpu_perf_edx)
 {
-	uint32_t eax, edx, version;
+	uint32_t version;
 
 	if (CPU_IS_PRIMARY(ci)) {
-		eax = cpu_perf_eax;
-		edx = cpu_perf_edx;
-		version = eax & CPUIDEAX_VERID;
+		version = cpu_perf_eax & CPUIDEAX_VERID;
 		if (version == 0)
 			return;
 	}
 #ifdef MULTIPROCESSOR
 	else {
-		uint32_t dummy;
-		CPUID(0xa, eax, dummy, dummy, edx);
 		/* if no difference on the bits we care about, say nothing */
-		if (((eax ^ prevcpu_perf_eax) & 0x00ffffff) == 0 &&
-		    ((edx ^ prevcpu_perf_edx) & 0x00001fff) == 0)
+		if (((cpu_perf_eax ^ prevcpu_perf_eax) & 0x00ffffff) == 0 &&
+		    ((cpu_perf_edx ^ prevcpu_perf_edx) & 0x00001fff) == 0)
 			return;
-		version = eax & CPUIDEAX_VERID;
+		version = cpu_perf_eax & CPUIDEAX_VERID;
 	}
-	prevcpu_perf_eax = eax;
-	prevcpu_perf_edx = edx;
+	prevcpu_perf_eax = cpu_perf_eax;
+	prevcpu_perf_edx = cpu_perf_edx;
 #endif
 
 	printf("\n%s: cpuid a vers=%d", ci->ci_dev->dv_xname, version);
 	if (version) {
-		printf(", gp=%d, gpwidth=%d", CPUIDEAX_NUM_GC(eax),
-		    CPUIDEAX_BIT_GC(eax));
+		printf(", gp=%d, gpwidth=%d", CPUIDEAX_NUM_GC(cpu_perf_eax),
+		    CPUIDEAX_BIT_GC(cpu_perf_eax));
 		if (version > 1) {
-			printf(", ff=%d, ffwidth=%d", CPUIDEDX_NUM_FC(edx),
-			    CPUIDEDX_BIT_FC(edx));
+			printf(", ff=%d, ffwidth=%d",
+			    CPUIDEDX_NUM_FC(cpu_perf_edx),
+			    CPUIDEDX_BIT_FC(cpu_perf_edx));
 		}
 	}
 }
@@ -500,6 +495,7 @@ identifycpu(struct cpu_info *ci)
 	static struct cpu_info *prevci = &cpu_info_primary;
 #define CPUID_MEMBER(member)	ci->member, prevci->member
 	uint32_t cflushsz, curcpu_1_ecx, curcpu_apmi_edx = 0;
+	uint32_t curcpu_perf_eax = 0, curcpu_perf_edx = 0;
 	uint32_t curcpu_tpm_ecxflags = 0, curcpu_d_1_eax = 0;
 	uint64_t freq = 0;
 	u_int32_t dummy;
@@ -517,17 +513,12 @@ identifycpu(struct cpu_info *ci)
 		cflushsz = cpu_ebxfeature;
 		curcpu_1_ecx = cpu_ecxfeature;
 		ecpu_ecxfeature = ci->ci_efeature_ecx;
-		curcpu_apmi_edx = cpu_apmi_edx;
 	} else {
 		CPUID(1, ci->ci_signature, cflushsz, curcpu_1_ecx,
 		    ci->ci_feature_flags);
 		/* Let cpu_feature be the common bits */
 		cpu_feature &= ci->ci_feature_flags |
 		    (ci->ci_feature_eflags & CPUID_NXE);
-		if (ci->ci_pnfeatset >= 0x80000007) {
-			CPUID(0x80000007, dummy, dummy, dummy,
-			    curcpu_apmi_edx);
-		}
 	}
 	/* cflush cacheline size is equal to bits 15-8 of ebx * 8 */
 	ci->ci_cflushsz = ((cflushsz >> 8) & 0xff) * 8;
@@ -577,6 +568,9 @@ identifycpu(struct cpu_info *ci)
 		pvbus_identify();
 #endif
 
+	if (ci->ci_pnfeatset >= 0x80000007)
+		CPUID(0x80000007, dummy, dummy, dummy, curcpu_apmi_edx);
+
 	if (ci->ci_feature_flags && ci->ci_feature_flags & CPUID_TSC) {
 		/* Has TSC, check if it's constant */
 		if (ci->ci_vendor == CPUV_INTEL) {
@@ -590,20 +584,26 @@ identifycpu(struct cpu_info *ci)
 				atomic_setbits_int(&ci->ci_flags, CPUF_CONST_TSC);
 			}
 		} else if (ci->ci_vendor == CPUV_AMD) {
-			if (cpu_apmi_edx & CPUIDEDX_ITSC) {
+			if (curcpu_apmi_edx & CPUIDEDX_ITSC) {
 				/* Invariant TSC indicates constant TSC on AMD */
 				atomic_setbits_int(&ci->ci_flags, CPUF_CONST_TSC);
 			}
 		}
 
 		/* Check if it's an invariant TSC */
-		if (cpu_apmi_edx & CPUIDEDX_ITSC)
+		if (curcpu_apmi_edx & CPUIDEDX_ITSC)
 			atomic_setbits_int(&ci->ci_flags, CPUF_INVAR_TSC);
 
 		tsc_identify(ci);
 	}
 
-	freq = cpu_freq(ci);
+	if (ci->ci_cpuid_level >= 0xa) {
+		CPUID(0xa, curcpu_perf_eax, dummy, dummy, curcpu_perf_edx);
+
+		freq = cpu_freq_ctr(ci, curcpu_perf_eax, curcpu_perf_edx);
+	}
+	if (freq == 0)
+		freq = cpu_freq(ci);
 
 	if (ci->ci_cpuid_level >= 0x07) {
 		/* "Structured Extended Feature Flags" */
@@ -660,7 +660,7 @@ identifycpu(struct cpu_info *ci)
 	    'b', CPUID_MEMBER(ci_feature_sefflags_ebx), SEFF0_EBX_BITS,
 	    'c', CPUID_MEMBER(ci_feature_sefflags_ecx), SEFF0_ECX_BITS,
 	    'd', CPUID_MEMBER(ci_feature_sefflags_edx), SEFF0_EDX_BITS);
-	print_perf_cpuid(ci);
+	print_perf_cpuid(ci, curcpu_perf_eax, curcpu_perf_edx);
 	pcpuid(ci, "d.1", 'a', curcpu_d_1_eax, prevcpu_d_1_eax, XSAVE_BITS);
 	pcpuid2(ci, "80000001",
 	    'd', CPUID_MEMBER(ci_feature_eflags), CPUIDE_EDX_BITS,

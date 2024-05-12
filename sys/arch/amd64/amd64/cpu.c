@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.186 2024/04/14 09:59:04 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.187 2024/05/12 16:49:38 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -156,10 +156,6 @@ int cpu_id = 0;			/* cpuid(1).eax */
 int cpu_ebxfeature = 0;		/* cpuid(1).ebx */
 int cpu_ecxfeature = 0;		/* cpuid(1).ecx */
 int cpu_feature = 0;		/* cpuid(1).edx */
-int cpu_perf_eax = 0;		/* cpuid(0xa).eax */
-int cpu_perf_ebx = 0;		/* cpuid(0xa).ebx */
-int cpu_perf_edx = 0;		/* cpuid(0xa).edx */
-int cpu_apmi_edx = 0;		/* cpuid(0x80000007).edx */
 int ecpu_ecxfeature = 0;	/* cpuid(0x80000001).ecx */
 int cpu_meltdown = 0;
 int cpu_use_xsaves = 0;

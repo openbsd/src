@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.22 2023/07/21 04:04:51 guenther Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.23 2024/05/12 16:49:38 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -250,12 +250,6 @@ bi_size_ok:
 	movl	%ecx,RELOC(cpu_ecxfeature)
 	movl	%edx,RELOC(cpu_feature)
 
-	movl	$0x0a,%eax
-	cpuid
-	movl	%eax,RELOC(cpu_perf_eax)
-	movl	%ebx,RELOC(cpu_perf_ebx)
-	movl	%edx,RELOC(cpu_perf_edx)
-
 	movl	$0x80000001, %eax
 	cpuid
 	andl	$CPUID_NXE, %edx	/* other bits may clash */
@@ -273,10 +267,6 @@ bi_size_ok:
 	popl	%edx
 cont:
 	orl	%edx, RELOC(cpu_feature)
-
-	movl	$0x80000007,%eax
-	cpuid
-	movl	%edx,RELOC(cpu_apmi_edx)
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
