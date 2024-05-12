@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.536 2024/04/22 13:30:22 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.537 2024/05/12 08:31:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1590,13 +1590,11 @@ TAILQ_HEAD(pf_queuehead, pf_queuespec);
 extern struct pf_queuehead		  pf_queues[2];
 extern struct pf_queuehead		 *pf_queues_active, *pf_queues_inactive;
 
-extern u_int32_t		 ticket_pabuf;
 extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
 				    pf_rule_item_pl, pf_queue_pl,
 				    pf_pktdelay_pl, pf_anchor_pl;
 extern struct pool		 pf_state_scrub_pl;
-extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;
 
 extern int			 pf_tbladdr_setup(struct pf_ruleset *,
