@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.49 2024/04/17 04:36:39 kn Exp $
+#	$OpenBSD: install.md,v 1.50 2024/05/12 19:47:14 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,10 +39,11 @@ MOUNT_ARGS_msdos="-o-l"
 KEEP_EFI_SYS=false
 
 md_installboot() {
-	local _disk=$1 _chunks _bootdisk _mdec _plat
+	local _disk=$1 _reason=$2 _rerun=false _chunks _bootdisk _mdec _plat
 
 	case ${COMPATIBLE} in
-	apple,*)		_plat=apple;;
+	apple,*)		_plat=apple
+				[[ $_reason == apple-boot ]] && _rerun=true;;
 	raspberrypi,*)		_plat=rpi;;
 	esac
 
@@ -51,6 +52,8 @@ md_installboot() {
 		echo "You will not be able to boot OpenBSD from $_disk."
 		exit
 	fi
+
+	$_rerun && return
 
 	# Apply some final tweaks on selected platforms
 	_mdec=/usr/mdec/$_plat
@@ -81,6 +84,10 @@ md_installboot() {
 		umount /mnt/mnt
 		;;
 	esac
+}
+
+md_fw() {
+	md_installboot "$@"
 }
 
 md_prep_fdisk() {

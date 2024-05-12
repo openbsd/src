@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1263 2024/03/15 17:31:21 kn Exp $
+#	$OpenBSD: install.sub,v 1.1264 2024/05/12 19:47:14 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3011,7 +3011,11 @@ if ((${#_KERNV[*]} == 1)); then
 fi
 __EOT
 
-	[ -x /mnt/usr/sbin/fw_update ] && DESTDIR=/mnt /mnt/usr/sbin/fw_update
+	if [[ -x /mnt/usr/sbin/fw_update ]]; then
+		DESTDIR=/mnt /mnt/usr/sbin/fw_update
+		# Rerun installboot(8) to pick up just fetched boot firmware.
+		typeset -f md_fw >/dev/null && md_fw $ROOTDISK apple-boot
+	fi
 
 	if [[ -f $_kernel_dir.tgz ]]; then
 		echo -n "Relinking to create unique kernel..."
@@ -3584,6 +3588,7 @@ umount -af >/dev/null 2>&1
 #	md_consoleinfo()	  - set CDEV, CTTY, CSPEED, CPROM
 #
 # The following functions can be provided if required:
+#	md_fw()                   - device specific firmware quirks
 #	md_prep_fdisk()           - put a partition table on the disk
 #
 # The following variables can be provided if required:
