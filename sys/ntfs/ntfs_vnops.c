@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.47 2021/10/15 06:30:06 semarie Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.48 2024/05/12 16:51:05 semarie Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -681,4 +681,21 @@ const struct vops ntfs_vops = {
 	.vop_strategy	= ntfs_strategy,
 	.vop_bwrite	= vop_generic_bwrite,
 	.vop_read	= ntfs_read,
+
+	.vop_abortop	= NULL,
+	.vop_advlock	= NULL,
+	.vop_create	= NULL,
+	.vop_ioctl	= NULL,
+	.vop_link	= NULL,
+	.vop_mknod	= NULL,
+	.vop_readlink	= NULL,
+	.vop_remove	= NULL,
+	.vop_rename	= NULL,
+	.vop_revoke	= NULL,
+	.vop_mkdir	= NULL,
+	.vop_rmdir	= NULL,
+	.vop_setattr	= NULL,
+	.vop_symlink	= NULL,
+	.vop_write	= NULL,
+	.vop_kqfilter	= NULL
 };

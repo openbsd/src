@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.70 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.71 2024/05/12 16:51:05 semarie Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -75,7 +75,24 @@ const struct vops udf_vops = {
 	.vop_unlock	= udf_unlock,
 	.vop_pathconf	= udf_pathconf,
 	.vop_islocked	= udf_islocked,
-	.vop_print	= udf_print
+	.vop_print	= udf_print,
+
+	.vop_abortop	= NULL,
+	.vop_advlock	= NULL,
+	.vop_bwrite	= NULL,
+	.vop_create	= NULL,
+	.vop_fsync	= NULL,
+	.vop_link	= NULL,
+	.vop_mknod	= NULL,
+	.vop_remove	= NULL,
+	.vop_rename	= NULL,
+	.vop_revoke	= NULL,
+	.vop_mkdir	= NULL,
+	.vop_rmdir	= NULL,
+	.vop_setattr	= NULL,
+	.vop_symlink	= NULL,
+	.vop_write	= NULL,
+	.vop_kqfilter	= NULL
 };
 
 #define UDF_INVALID_BMAP	-1

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.70 2024/02/03 18:51:58 beck Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.71 2024/05/12 16:51:05 semarie Exp $  */
 
 /*
  *  Portions of this code are:
@@ -220,7 +220,34 @@ const struct vops sync_vops = {
 	.vop_lock	= nullop,
 	.vop_unlock	= nullop,
 	.vop_islocked	= nullop,
-	.vop_print	= sync_print
+	.vop_print	= sync_print,
+
+	.vop_abortop	= NULL,
+	.vop_access	= NULL,
+	.vop_advlock	= NULL,
+	.vop_bmap	= NULL,
+	.vop_bwrite	= NULL,
+	.vop_create	= NULL,
+	.vop_getattr	= NULL,
+	.vop_ioctl	= NULL,
+	.vop_link	= NULL,
+	.vop_lookup	= NULL,
+	.vop_mknod	= NULL,
+	.vop_open	= NULL,
+	.vop_pathconf	= NULL,
+	.vop_read	= NULL,
+	.vop_readdir	= NULL,
+	.vop_readlink	= NULL,
+	.vop_remove	= NULL,
+	.vop_rename	= NULL,
+	.vop_revoke	= NULL,
+	.vop_mkdir	= NULL,
+	.vop_rmdir	= NULL,
+	.vop_setattr	= NULL,
+	.vop_strategy	= NULL,
+	.vop_symlink	= NULL,
+	.vop_write	= NULL,
+	.vop_kqfilter	= NULL
 };
 
 /*
