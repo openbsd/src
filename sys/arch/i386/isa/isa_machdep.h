@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.25 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.26 2024/05/13 00:16:09 jsg Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.7 1997/06/06 23:28:42 thorpej Exp $	*/
 
 /*-
@@ -137,58 +137,6 @@ struct isa_dma_cookie {
 #define	ID_MIGHT_NEED_BOUNCE	0x01	/* map could need bounce buffers */
 #define	ID_HAS_BOUNCE		0x02	/* map currently has bounce buffers */
 #define	ID_IS_BOUNCING		0x04	/* map is bouncing current xfer */
-
-/*
- * XXX Various seemingly PC-specific constants, some of which may be
- * unnecessary anyway.
- */
-
-/*
- * RAM Physical Address Space (ignoring the above mentioned "hole")
- */
-#define	RAM_BEGIN	0x0000000	/* Start of RAM Memory */
-#define	RAM_END		0x1000000	/* End of RAM Memory */
-#define	RAM_SIZE	(RAM_END - RAM_BEGIN)
-
-/*
- * Oddball Physical Memory Addresses
- */
-#define	COMPAQ_RAMRELOC	0x80c00000	/* Compaq RAM relocation/diag */
-#define	COMPAQ_RAMSETUP	0x80c00002	/* Compaq RAM setup */
-#define	WEITEK_FPU	0xC0000000	/* WTL 2167 */
-#define	CYRIX_EMC	0xC0000000	/* Cyrix EMC */
-
-/*
- * stuff that used to be in pccons.c
- */
-#define	MONO_BUF	0xB0000
-#define	CGA_BUF		0xB8000
-#define	IOPHYSMEM	0xA0000
-
-
-/*
- * ISA DMA bounce buffers.
- * XXX should be made partially machine- and bus-mapping-independent.
- *
- * DMA_BOUNCE is the number of pages of low-addressed physical memory
- * to acquire for ISA bounce buffers. If physical memory below 16 MB
- * then DMA_BOUNCE_LOW will be used.
- *
- * isaphysmem is the address of this physical contiguous low memory.
- * isaphysmempgs is the number of pages allocated.
- */
-
-#ifndef DMA_BOUNCE
-#define	DMA_BOUNCE      48		/* number of pages if memory > 16M */
-#endif
-
-#ifndef DMA_BOUNCE_LOW
-#define	DMA_BOUNCE_LOW  16		/* number of pages if memory <= 16M */
-#endif
-
-extern vaddr_t isaphysmem;
-extern int isaphysmempgs;
-
 
 /*
  * Variables and macros to deal with the ISA I/O hole.
