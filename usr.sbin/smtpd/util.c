@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.157 2024/05/02 18:14:33 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.158 2024/05/13 06:48:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -744,22 +744,24 @@ parse_mailname_file(char *hostname, size_t len)
 	if ((fp = fopen(MAILNAME_FILE, "r")) == NULL)
 		return 1;
 
-	if ((buflen = getline(&buf, &bufsz, fp)) == -1)
-		goto error;
+	buflen = getline(&buf, &bufsz, fp);
+	fclose(fp);
+	if (buflen == -1) {
+		free(buf);
+		return 1;
+	}
 
 	if (buf[buflen - 1] == '\n')
 		buf[buflen - 1] = '\0';
 
-	if (strlcpy(hostname, buf, len) >= len) {
+	bufsz = strlcpy(hostname, buf, len);
+	free(buf);
+	if (bufsz >= len) {
 		fprintf(stderr, MAILNAME_FILE " entry too long");
-		goto error;
+		return 1;
 	}
 
 	return 0;
-error:
-	fclose(fp);
-	free(buf);
-	return 1;
 }
 
 int

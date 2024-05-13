@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.20 2023/05/16 17:48:52 op Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.21 2024/05/13 06:48:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -399,6 +399,7 @@ parse_message(FILE *ifp)
 			fatal("fputc");
 	}
 
+	free(line);
 	fclose(ifp);
 	rewind(mail.fp);
 }
