@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.416 2024/04/22 13:30:22 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.417 2024/05/13 01:15:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -89,7 +89,6 @@
 struct pool		 pf_tag_pl;
 
 void			 pfattach(int);
-void			 pf_thread_create(void *);
 int			 pfopen(dev_t, int, int, struct proc *);
 int			 pfclose(dev_t, int, int, struct proc *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.20 2024/01/20 11:22:46 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.21 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -240,8 +240,6 @@ int	apldart_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
 int	apldart_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int);
 void	apldart_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-
-void	apldart_write(struct apldart_softc *sc, bus_size_t, uint32_t);
 
 int
 apldart_match(struct device *parent, void *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.8 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: ams.c,v 1.9 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -70,7 +70,6 @@ const struct wsmouse_accessops ams_accessops = {
 
 void	ems_init(struct ams_softc *);
 void	ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
-void	ms_handoff(adb_event_t *event, struct ams_softc *);
 void	ms_processevent(adb_event_t *event, struct ams_softc *);
 
 int

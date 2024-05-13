@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.68 2023/09/17 14:50:51 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.69 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -105,7 +105,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
 
-void	spinwait(int);
 int	clockintr(void *);
 int	gettick(void);
 int	rtcget(mc_todregs *);

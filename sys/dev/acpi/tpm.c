@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.18 2023/08/15 08:27:29 miod Exp $ */
+/* $OpenBSD: tpm.c,v 1.19 2024/05/13 01:15:50 jsg Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -218,8 +218,6 @@ int	tpm_request_locality_tis(struct tpm_softc *, int);
 int	tpm_request_locality_crb(struct tpm_softc *, int);
 void	tpm_release_locality_tis(struct tpm_softc *);
 void	tpm_release_locality_crb(struct tpm_softc *);
-int	tpm_getburst_tis(struct tpm_softc *);
-int	tpm_getburst_crb(struct tpm_softc *);
 uint8_t	tpm_status(struct tpm_softc *);
 
 uint32_t tpm2_start_method(struct acpi_softc *);

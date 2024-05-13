@@ -531,6 +531,5 @@ enum {
 
 void	acpidmar_pci_hook(pci_chipset_tag_t, struct pci_attach_args *);
 void	dmar_ptmap(bus_dma_tag_t, bus_addr_t);
-void	acpidmar_sw(int);
 
 #define __EXTRACT(v,m) (((v) >> m##_SHIFT) & m##_MASK)

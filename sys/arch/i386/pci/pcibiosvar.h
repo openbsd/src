@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.18 2010/07/02 16:11:19 jsg Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.19 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -104,8 +104,6 @@ struct pcibios_pir_header {
 #define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)
 #define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)
 #define	PIR_DEVFUNC_COMPOSE(dev,func)	((((dev) &0x1f) << 3) | ((func) & 7))
-
-void	pcibios_init(void);
 
 extern struct pcibios_pir_header pcibios_pir_header;
 extern struct pcibios_intr_routing *pcibios_pir_table;

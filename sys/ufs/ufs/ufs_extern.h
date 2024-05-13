@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.39 2024/02/03 18:51:58 beck Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.40 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -67,7 +67,6 @@ int	 ufs_lock(void *);
 int	 ufs_lookup(void *);
 int	 ufs_mkdir(void *);
 int	 ufs_mknod(void *);
-int	 ufs_mmap(void *);
 int	 ufs_open(void *);
 int	 ufs_pathconf(void *);
 int	 ufs_print(void *);

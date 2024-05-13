@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.57 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: mpath.c,v 1.58 2024/05/13 01:15:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -34,7 +34,6 @@
 
 int		mpath_match(struct device *, void *, void *);
 void		mpath_attach(struct device *, struct device *, void *);
-void		mpath_shutdown(void *);
 
 TAILQ_HEAD(mpath_paths, mpath_path);
 

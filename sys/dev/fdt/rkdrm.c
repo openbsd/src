@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.21 2024/02/15 09:48:03 jsg Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.22 2024/05/13 01:15:50 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,11 +51,6 @@ int	rkdrm_match(struct device *, void *, void *);
 void	rkdrm_attach(struct device *, struct device *, void *);
 void	rkdrm_attachhook(struct device *);
 
-#ifdef notyet
-vmem_t	*rkdrm_alloc_cma_pool(struct drm_device *, size_t);
-#endif
-
-int	rkdrm_load(struct drm_device *, unsigned long);
 int	rkdrm_unload(struct drm_device *);
 
 struct drm_driver rkdrm_driver = {
@@ -212,8 +207,6 @@ int rkdrm_show_screen(void *, void *, int,
     void (*)(void *, int, int), void *);
 void rkdrm_doswitch(void *);
 void rkdrm_enter_ddb(void *, void *);
-int rkdrm_get_param(struct wsdisplay_param *);
-int rkdrm_set_param(struct wsdisplay_param *);
 
 struct wsscreen_descr rkdrm_stdscreen = {
 	"std",

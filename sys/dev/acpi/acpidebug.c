@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.33 2022/08/10 16:58:16 patrick Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.34 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -47,10 +47,6 @@ void			db_aml_dump(int, uint8_t *);
 void			db_aml_showvalue(struct aml_value *);
 void			db_aml_walktree(struct aml_node *);
 void			db_disprint(void *, const char *, ...);
-
-const char		*db_aml_fieldacc(int);
-const char		*db_aml_fieldlock(int);
-const char		*db_aml_fieldupdate(int);
 
 /* name of scope for lexer */
 char			scope[80];

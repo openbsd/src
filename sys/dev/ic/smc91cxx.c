@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.52 2022/08/15 01:59:00 jsg Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.53 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -177,7 +177,6 @@ int	smc91cxx_set_media(struct smc91cxx_softc *, uint64_t);
 void	smc91cxx_read(struct smc91cxx_softc *);
 void	smc91cxx_reset(struct smc91cxx_softc *);
 void	smc91cxx_start(struct ifnet *);
-void	smc91cxx_resume(struct smc91cxx_softc *);
 void	smc91cxx_watchdog(struct ifnet *);
 int	smc91cxx_ioctl(struct ifnet *, u_long, caddr_t);
 

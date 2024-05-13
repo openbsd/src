@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.69 2023/04/13 15:07:43 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.70 2024/05/13 01:15:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -75,7 +75,6 @@ struct vgafb_softc {
 };
 
 int vgafb_mapregs(struct vgafb_softc *, struct pci_attach_args *);
-int vgafb_rommap(struct vgafb_softc *, struct pci_attach_args *);
 int vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t vgafb_mmap(void *, off_t, int);
 int vgafb_is_console(int);

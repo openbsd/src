@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.17 2022/07/15 17:57:25 kettenis Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.18 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -91,7 +91,6 @@ struct amdisplay_softc {
 int	amdisplay_match(struct device *, void *, void *);
 void	amdisplay_attach(struct device *, struct device *, void *);
 int	amdisplay_detach(struct device *, int);
-int	amdisplay_activate(struct device *, int);
 int	amdisplay_intr(void *);
 
 int	amdisplay_ioctl(void *, u_long, caddr_t, int, struct proc *);

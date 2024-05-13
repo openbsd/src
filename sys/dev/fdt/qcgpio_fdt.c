@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio_fdt.c,v 1.2 2022/11/08 11:51:34 patrick Exp $	*/
+/*	$OpenBSD: qcgpio_fdt.c,v 1.3 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -93,7 +93,6 @@ void	qcgpio_fdt_intr_disestablish(void *);
 void	qcgpio_fdt_intr_enable(void *);
 void	qcgpio_fdt_intr_disable(void *);
 void	qcgpio_fdt_intr_barrier(void *);
-int	qcgpio_fdt_pin_intr(struct qcgpio_softc *, int);
 int	qcgpio_fdt_intr(void *);
 
 int

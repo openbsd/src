@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.18 2021/10/24 17:52:28 mpi Exp $ */
+/* $OpenBSD: prcm.c,v 1.19 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -88,7 +88,6 @@ struct prcm_softc {
 	uint32_t		cm2_avail;
 };
 
-int	prcm_match(struct device *, void *, void *);
 void	prcm_attach(struct device *, struct device *, void *);
 int	prcm_setup_dpll5(struct prcm_softc *);
 uint32_t prcm_v3_bit(int mod);

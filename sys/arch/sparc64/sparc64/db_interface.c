@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.64 2024/04/11 18:58:44 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.65 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -219,8 +219,6 @@ void db_pmap_kernel(db_expr_t, int, db_expr_t, char *);
 void db_pload_cmd(db_expr_t, int, db_expr_t, char *);
 void db_pmap_cmd(db_expr_t, int, db_expr_t, char *);
 void db_lock(db_expr_t, int, db_expr_t, char *);
-void db_dump_buf(db_expr_t, int, db_expr_t, char *);
-void db_dump_espcmd(db_expr_t, int, db_expr_t, char *);
 void db_watch(db_expr_t, int, db_expr_t, char *);
 void db_xir(db_expr_t, int, db_expr_t, char *);
 

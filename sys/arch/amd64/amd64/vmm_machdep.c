@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.26 2024/05/03 13:48:29 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.27 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -115,7 +115,6 @@ int vmm_inject_ud(struct vcpu *);
 int vmm_inject_gp(struct vcpu *);
 int vmm_inject_db(struct vcpu *);
 void vmx_handle_intr(struct vcpu *);
-void vmx_handle_intwin(struct vcpu *);
 void vmx_handle_misc_enable_msr(struct vcpu *);
 int vmm_get_guest_memtype(struct vm *, paddr_t);
 int vmx_get_guest_faulttype(void);

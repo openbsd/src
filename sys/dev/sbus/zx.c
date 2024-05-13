@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.24 2022/07/15 17:57:27 kettenis Exp $	*/
+/*	$OpenBSD: zx.c,v 1.25 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -151,8 +151,6 @@ void	zx_copyrect(struct rasops_info *, int, int, int, int, int, int);
 int	zx_cross_loadwid(struct zx_softc *, u_int, u_int, u_int);
 int	zx_cross_wait(struct zx_softc *);
 void	zx_fillrect(struct rasops_info *, int, int, int, int, uint32_t, int);
-int	zx_intr(void *);
-void	zx_prom(void *);
 
 int	zx_putchar(void *, int, int, u_int, uint32_t);
 int	zx_copycols(void *, int, int, int, int);

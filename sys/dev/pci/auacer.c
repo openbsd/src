@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.28 2022/10/26 20:19:07 kn Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.29 2024/05/13 01:15:51 jsg Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -174,7 +174,6 @@ int	auacer_allocmem(struct auacer_softc *, size_t, size_t,
 int	auacer_freemem(struct auacer_softc *, struct auacer_dma *);
 
 int	auacer_set_rate(struct auacer_softc *, int, u_long);
-void	auacer_finish_attach(struct device *);
 
 static	void auacer_reset(struct auacer_softc *sc);
 

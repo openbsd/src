@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.13 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: agten.c,v 1.14 2024/05/13 01:15:51 jsg Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -106,7 +106,6 @@ struct agten_softc {
 
 int agten_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t agten_mmap(void *, off_t, int);
-void agten_reset(struct agten_softc *);
 void agten_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 static __inline__ void ibm561_write(struct agten_softc *, u_int32_t, u_int32_t);

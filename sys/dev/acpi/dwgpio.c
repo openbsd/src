@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwgpio.c,v 1.7 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: dwgpio.c,v 1.8 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -91,7 +91,6 @@ int	dwgpio_found_hid(struct aml_node *, void *);
 int	dwgpio_read_pin(void *, int);
 void	dwgpio_write_pin(void *, int, int);
 void	dwgpio_intr_establish(void *, int, int, int (*)(void *), void *);
-int	dwgpio_pin_intr(struct dwgpio_softc *, int);
 int	dwgpio_intr(void *);
 
 int

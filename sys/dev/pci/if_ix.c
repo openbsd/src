@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.213 2024/05/07 18:35:23 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.214 2024/05/13 01:15:51 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -125,7 +125,6 @@ int	ixgbe_allocate_msix(struct ix_softc *);
 void	ixgbe_setup_msix(struct ix_softc *);
 int	ixgbe_allocate_queues(struct ix_softc *);
 void	ixgbe_free_pci_resources(struct ix_softc *);
-void	ixgbe_local_timer(void *);
 void	ixgbe_setup_interface(struct ix_softc *);
 void	ixgbe_config_gpie(struct ix_softc *);
 void	ixgbe_config_delay_values(struct ix_softc *);
@@ -182,7 +181,6 @@ int	ixgbe_legacy_intr(void *);
 void	ixgbe_enable_queue(struct ix_softc *, uint32_t);
 void	ixgbe_enable_queues(struct ix_softc *);
 void	ixgbe_disable_queue(struct ix_softc *, uint32_t);
-void	ixgbe_rearm_queue(struct ix_softc *, uint32_t);
 
 /* MSI-X (multiple vectors interrupt handlers)  */
 int	ixgbe_link_intr(void *);

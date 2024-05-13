@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.95 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.96 2024/05/13 01:15:51 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -103,9 +103,6 @@ void	agp_i810_flush_tlb(void *);
 int	agp_i810_enable(void *, u_int32_t mode);
 void	intagp_write_gtt(struct agp_i810_softc *, bus_size_t, paddr_t);
 int	intagp_gmch_match(struct pci_attach_args *);
-
-extern void	intagp_dma_sync(bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int);
 
 const struct cfattach intagp_ca = {
 	sizeof(struct agp_i810_softc), agp_i810_probe, agp_i810_attach,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.9 2024/04/07 21:08:59 kettenis Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.10 2024/05/13 01:15:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -37,7 +37,6 @@ int mainbus_match_status(struct device *, void *, void *);
 void mainbus_attach_cpus(struct device *, cfmatch_t);
 int mainbus_match_primary(struct device *, void *, void *);
 int mainbus_match_secondary(struct device *, void *, void *);
-void mainbus_attach_efi(struct device *);
 void mainbus_attach_framebuffer(struct device *);
 
 struct mainbus_softc {

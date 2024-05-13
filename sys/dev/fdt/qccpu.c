@@ -1,4 +1,4 @@
-/*	$OpenBSD: qccpu.c,v 1.2 2023/07/01 18:59:11 drahn Exp $	*/
+/*	$OpenBSD: qccpu.c,v 1.3 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2023 Dale Rahn <drahn@openbsd.org>
  *
@@ -78,7 +78,6 @@ struct qccpu_softc {
 
 int	qccpu_match(struct device *, void *, void *);
 void	qccpu_attach(struct device *, struct device *, void *);
-void	qccpu_enable(void *, uint32_t *, int);
 int	qccpu_set_frequency(void *, uint32_t *, uint32_t);
 uint32_t qccpu_get_frequency(void *, uint32_t *);
 uint32_t qccpu_lut_to_freq(struct qccpu_softc *, int, uint32_t);

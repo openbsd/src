@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.426 2024/01/08 19:52:29 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.427 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -106,8 +106,6 @@ void	acpi_create_thread(void *);
 void	acpi_init_pm(struct acpi_softc *);
 
 int	acpi_founddock(struct aml_node *, void *);
-int	acpi_foundpss(struct aml_node *, void *);
-int	acpi_foundtmp(struct aml_node *, void *);
 int	acpi_foundprw(struct aml_node *, void *);
 int	acpi_foundvideo(struct aml_node *, void *);
 int	acpi_foundsbs(struct aml_node *node, void *);

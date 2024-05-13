@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci_pci.c,v 1.2 2024/04/10 10:40:27 mglocker Exp $ */
+/*	$OpenBSD: ufshci_pci.c,v 1.3 2024/05/13 01:15:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2024 Marcus Glocker <mglocker@openbsd.org>
@@ -41,7 +41,6 @@ struct ufshci_pci_softc {
 int	ufshci_pci_match(struct device *, void *, void *);
 void	ufshci_pci_attach(struct device *, struct device *, void *);
 int	ufshci_pci_detach(struct device *, int);
-int	ufshci_pci_activate(struct device *, int);
 
 const struct cfattach ufshci_pci_ca = {
 	sizeof(struct ufshci_pci_softc),

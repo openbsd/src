@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.93 2024/02/16 22:30:54 mglocker Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.94 2024/05/13 01:15:51 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -343,7 +343,6 @@ struct em_softc;
 int32_t em_reset_hw(struct em_hw *hw);
 int32_t em_init_hw(struct em_softc *sc);
 int32_t em_set_mac_type(struct em_hw *hw);
-int em_max_queues(struct em_hw *hw);
 void em_set_media_type(struct em_hw *hw);
 
 /* Link Configuration */
@@ -361,9 +360,6 @@ int32_t em_read_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data)
 int32_t em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t data);
 int32_t em_phy_hw_reset(struct em_hw *hw);
 int32_t em_phy_reset(struct em_hw *hw);
-int32_t em_phy_get_info(struct em_hw *hw, struct em_phy_info *phy_info);
-int32_t em_validate_mdi_setting(struct em_hw *hw);
-void em_phy_powerdown_workaround(struct em_hw *hw);
 int em_sgmii_uses_mdio_82575(struct em_hw *);
 int32_t em_read_phy_reg_i2c(struct em_hw *, uint32_t, uint16_t *);
 int32_t em_write_phy_reg_i2c(struct em_hw *, uint32_t, uint16_t);
@@ -371,9 +367,6 @@ int32_t em_read_sfp_data_byte(struct em_hw *, uint16_t, uint8_t *);
 
 /* EEPROM Functions */
 int32_t em_init_eeprom_params(struct em_hw *hw);
-
-/* MNG HOST IF functions */
-uint32_t em_enable_mng_pass_thru(struct em_hw *hw);
 
 #define E1000_MNG_DHCP_TX_PAYLOAD_CMD   64
 #define E1000_HI_MAX_MNG_DATA_LENGTH    0x6F8   /* Host Interface data length */
@@ -432,21 +425,11 @@ void em_mc_addr_list_update(struct em_hw *hw, uint8_t * mc_addr_list, uint32_t m
 uint32_t em_hash_mc_addr(struct em_hw *hw, uint8_t *mc_addr);
 void em_mta_set(struct em_hw *hw, uint32_t hash_value);
 void em_rar_set(struct em_hw *hw, uint8_t *mc_addr, uint32_t rar_index);
-void em_write_vfta(struct em_hw *hw, uint32_t offset, uint32_t value);
-
-/* LED functions */
-int32_t em_setup_led(struct em_hw *hw);
-int32_t em_cleanup_led(struct em_hw *hw);
-int32_t em_led_on(struct em_hw *hw);
-int32_t em_led_off(struct em_hw *hw);
-int32_t em_blink_led_start(struct em_hw *hw);
 
 /* Adaptive IFS Functions */
 
 /* Everything else */
 void em_clear_hw_cntrs(struct em_hw *hw);
-void em_reset_adaptive(struct em_hw *hw);
-void em_update_adaptive(struct em_hw *hw);
 void em_get_bus_info(struct em_hw *hw);
 void em_pci_set_mwi(struct em_hw *hw);
 void em_pci_clear_mwi(struct em_hw *hw);

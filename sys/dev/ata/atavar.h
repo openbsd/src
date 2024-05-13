@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.22 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.23 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -168,7 +168,6 @@ void wdc_reset_channel(struct ata_drive_datas *, int);
 
 int wdc_ata_addref(struct ata_drive_datas *);
 void wdc_ata_delref(struct ata_drive_datas *);
-void wdc_ata_kill_pending(struct ata_drive_datas *);
 
 int ata_get_params(struct ata_drive_datas*, u_int8_t,
 	struct ataparams *);

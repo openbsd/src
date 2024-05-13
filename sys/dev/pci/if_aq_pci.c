@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.26 2023/11/10 15:51:20 bluhm Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.27 2024/05/13 01:15:51 jsg Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -1106,7 +1106,6 @@ const struct aq_product {
 
 int	aq_match(struct device *, void *, void *);
 void	aq_attach(struct device *, struct device *, void *);
-int	aq_detach(struct device *, int);
 int	aq_activate(struct device *, int);
 int	aq_intr(void *);
 int	aq_intr_link(void *);
@@ -1115,7 +1114,6 @@ int	aq_init_rss(struct aq_softc *);
 int	aq_hw_reset(struct aq_softc *);
 int	aq_hw_init(struct aq_softc *, int, int);
 void	aq_hw_qos_set(struct aq_softc *);
-void	aq_l3_filter_set(struct aq_softc *);
 void	aq_hw_init_tx_path(struct aq_softc *);
 void	aq_hw_init_rx_path(struct aq_softc *);
 int	aq_set_mac_addr(struct aq_softc *, int, uint8_t *);
@@ -1156,7 +1154,6 @@ static inline unsigned int aq_rx_fill_slots(struct aq_softc *,
 
 int	aq_dmamem_alloc(struct aq_softc *, struct aq_dmamem *,
 	    bus_size_t, u_int);
-void	aq_dmamem_zero(struct aq_dmamem *);
 void	aq_dmamem_free(struct aq_softc *, struct aq_dmamem *);
 
 int	aq1_get_mac_addr(struct aq_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.364 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.365 2024/05/13 01:15:51 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -239,9 +239,6 @@ int  pdc203xx_dma_finish(void *, int, int, int);
 int  pdc205xx_pci_intr(void *);
 void pdc205xx_do_reset(struct channel_softc *);
 void pdc205xx_drv_probe(struct channel_softc *);
-
-void opti_chip_map(struct pciide_softc *, struct pci_attach_args *);
-void opti_setup_channel(struct channel_softc *);
 
 void hpt_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void hpt_setup_channel(struct channel_softc *);

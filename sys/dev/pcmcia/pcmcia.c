@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.50 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.51 2024/05/13 01:15:51 jsg Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -56,7 +56,6 @@ int	pcmcia_submatch(struct device *, void *, void *);
 void	pcmcia_attach(struct device *, struct device *, void *);
 int	pcmcia_activate(struct device *, int);
 int	pcmcia_print(void *, const char *);
-void	pcmcia_card_detach_notify(struct device *, void *);
 int	pcmcia_card_intr(void *);
 
 struct cfdriver pcmcia_cd = {

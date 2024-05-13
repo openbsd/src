@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.137 2024/01/01 18:47:02 mvs Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.138 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -127,8 +127,6 @@ int	gif_down(struct gif_softc *);
 int	gif_set_tunnel(struct gif_softc *, struct if_laddrreq *);
 int	gif_get_tunnel(struct gif_softc *, struct if_laddrreq *);
 int	gif_del_tunnel(struct gif_softc *);
-int	in_gif_output(struct ifnet *, int, struct mbuf **);
-int	in6_gif_output(struct ifnet *, int, struct mbuf **);
 int	gif_input(struct gif_tunnel *, struct mbuf **, int *, int, int,
 	    uint8_t);
 

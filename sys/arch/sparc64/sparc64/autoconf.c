@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.149 2024/04/14 19:08:09 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.150 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -137,8 +137,6 @@ void bootpath_nodes(struct bootpath *, int);
 
 struct openbsd_bootdata obd __attribute__((section(".openbsd.bootdata")));
 
-int bus_class(struct device *);
-int instance_match(struct device *, void *, struct bootpath *bp);
 void nail_bootdev(struct device *, struct bootpath *);
 
 /* Global interrupt mappings for all device types.  Match against the OBP

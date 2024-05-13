@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.18 2021/05/06 19:45:16 kettenis Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.19 2024/05/13 01:15:51 jsg Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -78,12 +78,6 @@ void (*OF_set_callback(void (*newfunc)(void *))) ();
 int OF_getnodebyname(int, const char *);
 int OF_getnodebyphandle(uint32_t);
 int OF_getindex(int, const char *, const char *);
-
-/*
- * Some generic routines for OpenFirmware handling.
- */
-int ofnmmatch(char *cp1, char *cp2);
-void ofw_intr_establish(void);
 
 /*
  * Generic OpenFirmware probe argument.

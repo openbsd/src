@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.16 2018/06/05 06:39:10 guenther Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.17 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -65,10 +65,6 @@
 
 static __inline struct trapframe *process_frame(struct proc *);
 static __inline struct fxsave64 *process_fpframe(struct proc *);
-#if 0
-static __inline int verr_gdt(struct pmap *, int sel);
-static __inline int verr_ldt(struct pmap *, int sel);
-#endif
 
 static __inline struct trapframe *
 process_frame(struct proc *p)

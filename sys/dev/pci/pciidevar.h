@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.21 2015/09/10 18:10:34 deraadt Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.22 2024/05/13 01:15:51 jsg Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -179,8 +179,6 @@ int	 pciide_unmapregs_compat(struct pciide_softc *,
 	     struct pciide_channel *);
 int	 pciide_unmapregs_native(struct pciide_softc *,
 	     struct pciide_channel *);
-int	 pciide_dma_table_free(struct pciide_softc *, int, int);
-void	 pciide_channel_dma_free(struct pciide_channel *);
 
 /*
  * Functions defined by machine-dependent code.

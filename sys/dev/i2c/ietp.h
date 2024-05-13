@@ -1,4 +1,4 @@
-/* $OpenBSD: ietp.h,v 1.1 2023/07/08 02:43:02 jcs Exp $ */
+/* $OpenBSD: ietp.h,v 1.2 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Elantech touchpad I2C driver
  *
@@ -59,8 +59,6 @@ struct ietp_softc {
 	bool		is_clickpad;
 };
 
-int ietp_open(struct ietp_softc *);
-void ietp_close(struct ietp_softc *);
 int ietp_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int ietp_enable(void *dev);
 void ietp_disable(void *dev);

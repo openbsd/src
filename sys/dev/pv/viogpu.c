@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.3 2023/05/29 08:13:35 sf Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.4 2024/05/13 01:15:51 jsg Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -62,8 +62,6 @@ int	viogpu_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, uint32_t *);
 int	viogpu_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
-void	viogpu_enter_ddb(void *, void *);
-void	viogpu_doswitch(void *);
 
 #define VIOGPU_HEIGHT		160
 #define VIOGPU_WIDTH		160

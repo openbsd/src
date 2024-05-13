@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_extern.h,v 1.21 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_extern.h,v 1.22 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: db_extern.h,v 1.1 1996/02/05 01:57:00 christos Exp $	*/
 
 /*
@@ -55,7 +55,6 @@ int db_readline(char *, int);
 void db_trap(int, int);
 
 /* db_prof.c */
-void db_prof_init(void);
 int db_prof_enable(void);
 void db_prof_disable(void);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.177 2024/04/12 16:07:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.178 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -724,7 +724,6 @@ u_int	 tcp_hdrsz(struct tcpcb *);
 void	 tcp_mtudisc(struct inpcb *, int);
 void	 tcp_mtudisc_increase(struct inpcb *, int);
 #ifdef INET6
-void	tcp6_mtudisc(struct inpcb *, int);
 void	tcp6_mtudisc_callback(struct sockaddr_in6 *, u_int);
 #endif
 struct tcpcb *
@@ -771,7 +770,6 @@ int	 tcp_rcvoob(struct socket *, struct mbuf *, int);
 int	 tcp_sendoob(struct socket *, struct mbuf *, struct mbuf *,
 	     struct mbuf *);
 void	 tcp_xmit_timer(struct tcpcb *, int32_t);
-void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
 void	 tcp_update_sack_list(struct tcpcb *tp, tcp_seq, tcp_seq);
 void	 tcp_del_sackholes(struct tcpcb *, struct tcphdr *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.24 2024/03/02 15:18:57 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.25 2024/05/13 01:15:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -806,8 +806,6 @@ enum hal_ce_desc {
 	HAL_CE_DESC_DST,
 	HAL_CE_DESC_DST_STATUS,
 };
-
-void qwx_ce_byte_swap(void *mem, uint32_t len);
 
 struct ce_ie_addr {
 	uint32_t ie1_reg_addr;

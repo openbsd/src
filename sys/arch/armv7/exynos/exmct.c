@@ -1,4 +1,4 @@
-/* $OpenBSD: exmct.c,v 1.6 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: exmct.c,v 1.7 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -45,8 +45,6 @@ struct exmct_softc *exmct_sc;
 
 int exmct_match(struct device *, void *, void *);
 void exmct_attach(struct device *, struct device *, void *);
-void exmct_stop(void);
-void exmct_reset(void);
 
 const struct cfattach	exmct_ca = {
 	sizeof (struct exmct_softc), exmct_match, exmct_attach

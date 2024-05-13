@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.55 2024/02/03 10:37:25 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.56 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -255,9 +255,7 @@ void		agintc_route(struct agintc_softc *, int, int,
 		    struct cpu_info *);
 void		agintc_route_irq(void *, int, struct cpu_info *);
 void		agintc_intr_barrier(void *);
-void		agintc_wait_rwp(struct agintc_softc *sc);
 void		agintc_r_wait_rwp(struct agintc_softc *sc);
-uint32_t	agintc_r_ictlr(void);
 
 int		agintc_ipi_ddb(void *v);
 int		agintc_ipi_halt(void *v);

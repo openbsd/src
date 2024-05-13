@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.70 2024/05/12 09:41:09 jsg Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.71 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -228,7 +228,6 @@ void		uvm_page_unbusy(struct vm_page **, int);
 struct vm_page	*uvm_pagelookup(struct uvm_object *, voff_t);
 void		uvm_pageunwire(struct vm_page *);
 void		uvm_pagewait(struct vm_page *, struct rwlock *, const char *);
-void		uvm_pagewake(struct vm_page *);
 void		uvm_pagewire(struct vm_page *);
 void		uvm_pagezero(struct vm_page *);
 void		uvm_pagealloc_pg(struct vm_page *, struct uvm_object *,

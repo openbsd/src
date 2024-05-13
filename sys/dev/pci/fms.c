@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.36 2022/10/26 20:19:08 kn Exp $ */
+/*	$OpenBSD: fms.c,v 1.37 2024/05/13 01:15:51 jsg Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -121,7 +121,6 @@ void	fms_reset_codec(void *);
 
 int	fms_allocmem(struct fms_softc *, size_t, size_t,
 			  struct fms_dma *);
-int	fms_freemem(struct fms_softc *, struct fms_dma *);
 
 int
 fms_match(struct device *parent, void *match, void *aux)

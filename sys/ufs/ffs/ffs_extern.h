@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.49 2024/04/13 15:08:37 jca Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.50 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ int ffs_vptofh(struct vnode *, struct fid *);
 int ffs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *);
 int ffs_sbupdate(struct ufsmount *, int);
-int ffs_cgupdate(struct ufsmount *, int);
 
 /* ffs_vnops.c */
 int ffs_read(void *);

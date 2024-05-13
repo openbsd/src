@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.178 2023/09/11 08:41:26 mvs Exp $	*/
+/*	$OpenBSD: com.c,v 1.179 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ static u_char tiocm_xxx2mcr(int);
 
 void	compwroff(struct com_softc *);
 void	cominit(bus_space_tag_t, bus_space_handle_t, int, int);
-int	com_is_console(bus_space_tag_t, bus_addr_t);
 
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY

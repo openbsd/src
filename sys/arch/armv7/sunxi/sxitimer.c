@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.24 2023/09/17 14:50:51 cheloha Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.25 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -75,7 +75,6 @@
 int	sxitimer_match(struct device *, void *, void *);
 void	sxitimer_attach(struct device *, struct device *, void *);
 int	sxitimer_tickintr(void *);
-int	sxitimer_statintr(void *);
 void	sxitimer_cpu_initclocks(void);
 void	sxitimer_cpu_startclock(void);
 void	sxitimer_setstatclockrate(int);

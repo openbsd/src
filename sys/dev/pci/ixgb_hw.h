@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.h,v 1.3 2010/09/20 07:50:19 deraadt Exp $ */ 
+/* $OpenBSD: ixgb_hw.h,v 1.4 2024/05/13 01:15:51 jsg Exp $ */ 
 
 #ifndef _IXGB_HW_H_
 #define _IXGB_HW_H_
@@ -815,7 +815,6 @@ struct ixgb_hw_stats {
 /* Function Prototypes */
 extern boolean_t ixgb_adapter_stop(struct ixgb_hw *hw);
 extern boolean_t ixgb_init_hw(struct ixgb_hw *hw);
-extern boolean_t ixgb_adapter_start(struct ixgb_hw *hw);
 extern void ixgb_check_for_link(struct ixgb_hw *hw);
 extern boolean_t ixgb_check_for_bad_link(struct ixgb_hw *hw);
 extern void ixgb_rar_set(struct ixgb_hw *hw, uint8_t *addr, uint32_t index);

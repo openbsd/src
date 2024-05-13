@@ -1,4 +1,4 @@
-/* $OpenBSD: imt.c,v 1.5 2020/07/09 21:01:56 jcs Exp $ */
+/* $OpenBSD: imt.c,v 1.6 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * HID-over-i2c multitouch trackpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -45,7 +45,6 @@ struct imt_softc {
 };
 
 int	imt_enable(void *);
-int	imt_open(struct ihidev *);
 void	imt_intr(struct ihidev *, void *, u_int);
 void	imt_disable(void *);
 int	imt_ioctl(void *, u_long, caddr_t, int, struct proc *);

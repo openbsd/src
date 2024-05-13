@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.84 2024/05/07 18:35:23 jan Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.85 2024/05/13 01:15:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -209,8 +209,6 @@ void vmxnet3_reset(struct vmxnet3_softc *);
 int vmxnet3_init(struct vmxnet3_softc *);
 int vmxnet3_ioctl(struct ifnet *, u_long, caddr_t);
 void vmxnet3_start(struct ifqueue *);
-int vmxnet3_load_mbuf(struct vmxnet3_softc *, struct vmxnet3_txring *,
-    struct mbuf **);
 void vmxnet3_watchdog(struct ifnet *);
 void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
 int vmxnet3_media_change(struct ifnet *);

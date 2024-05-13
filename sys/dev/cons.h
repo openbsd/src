@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.19 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: cons.h,v 1.20 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: cons.h,v 1.14 1996/03/14 19:08:35 christos Exp $	*/
 
 /*
@@ -86,7 +86,6 @@ int	cngetc(void);
 void	cnputc(int);
 void	cnpollc(int);
 void	cnbell(u_int, u_int, u_int);
-void	cnrint(void);
 void	nullcnpollc(dev_t, int);
 
 /* console-specific types */

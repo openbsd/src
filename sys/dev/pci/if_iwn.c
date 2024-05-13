@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.261 2024/02/16 11:44:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.262 2024/05/13 01:15:51 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -230,7 +230,6 @@ void		iwn_tune_sensitivity(struct iwn_softc *,
 		    const struct iwn_rx_stats *);
 int		iwn_send_sensitivity(struct iwn_softc *);
 int		iwn_set_pslevel(struct iwn_softc *, int, int, int);
-int		iwn_send_temperature_offset(struct iwn_softc *);
 int		iwn_send_btcoex(struct iwn_softc *);
 int		iwn_send_advanced_btcoex(struct iwn_softc *);
 int		iwn5000_runtime_calib(struct iwn_softc *);

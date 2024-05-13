@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.17 2011/09/23 10:40:06 miod Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.18 2024/05/13 01:15:50 jsg Exp $ */
 /*	$NetBSD: siopvar.h,v 1.22 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -137,4 +137,3 @@ struct siop_softc {
 void    siop_attach(struct siop_softc *);
 int	siop_intr(void *);
 void	siop_add_dev(struct siop_softc *, int, int);
-void	siop_del_dev(struct siop_softc *, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.56 2023/09/26 19:55:24 mvs Exp $	*/
+/*	$OpenBSD: midi.c,v 1.57 2024/05/13 01:15:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -50,7 +50,6 @@ void	midi_timeout(void *);
 void	midi_out_start(struct midi_softc *);
 void	midi_out_stop(struct midi_softc *);
 void	midi_out_do(struct midi_softc *);
-void	midi_attach(struct midi_softc *, struct device *);
 
 
 const struct cfattach midi_ca = {

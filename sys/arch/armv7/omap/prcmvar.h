@@ -1,4 +1,4 @@
-/* $OpenBSD: prcmvar.h,v 1.8 2020/04/05 13:11:13 kettenis Exp $ */
+/* $OpenBSD: prcmvar.h,v 1.9 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,7 +17,6 @@
 
 void prcm_setclock(int clock, int speed);
 void prcm_enablemodule(int mod);
-void prcm_disablemodule(int mod);
 
 #define PRCM_CLK_SPEED_32	0
 #define PRCM_CLK_SPEED_SYS	1

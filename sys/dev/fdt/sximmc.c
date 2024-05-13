@@ -1,4 +1,4 @@
-/* $OpenBSD: sximmc.c,v 1.14 2024/02/07 22:35:08 kettenis Exp $ */
+/* $OpenBSD: sximmc.c,v 1.15 2024/05/13 01:15:50 jsg Exp $ */
 /* $NetBSD: awin_mmc.c,v 1.23 2015/11/14 10:32:40 bouyer Exp $ */
 
 /*-
@@ -214,7 +214,6 @@ int	sximmc_host_reset(sdmmc_chipset_handle_t);
 uint32_t sximmc_host_ocr(sdmmc_chipset_handle_t);
 int	sximmc_host_maxblklen(sdmmc_chipset_handle_t);
 int	sximmc_card_detect(sdmmc_chipset_handle_t);
-int	sximmc_write_protect(sdmmc_chipset_handle_t);
 int	sximmc_bus_power(sdmmc_chipset_handle_t, uint32_t);
 int	sximmc_bus_clock(sdmmc_chipset_handle_t, int, int);
 int	sximmc_bus_width(sdmmc_chipset_handle_t, int);

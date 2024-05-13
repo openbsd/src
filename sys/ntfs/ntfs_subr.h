@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.h,v 1.11 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: ntfs_subr.h,v 1.12 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$NetBSD: ntfs_subr.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
 
 /*-
@@ -78,13 +78,10 @@ int ntfs_readntvattr_plain( struct ntfsmount *, struct ntnode *, struct ntvattr 
 int ntfs_readattr_plain( struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *,size_t *, struct uio *);
 int ntfs_readattr( struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *, struct uio *);
 int ntfs_filesize( struct ntfsmount *, struct fnode *, u_int64_t *, u_int64_t *);
-int ntfs_times( struct ntfsmount *, struct ntnode *, ntfs_times_t *);
 struct timespec	ntfs_nttimetounix( u_int64_t );
 int ntfs_runtovrun( cn_t **, cn_t **, u_long *, u_int8_t *);
 int ntfs_attrtontvattr( struct ntfsmount *, struct ntvattr **, struct attr * );
 void ntfs_freentvattr( struct ntvattr * );
-int ntfs_loadntvattrs( struct ntfsmount *, struct vnode *, caddr_t, struct ntvattr **);
-struct ntvattr * ntfs_findntvattr( struct ntfsmount *, struct ntnode *, u_int32_t, cn_t );
 int ntfs_isnamepermitted(struct ntfsmount *, struct attr_indexentry * );
 int ntfs_ntvattrrele(struct ntvattr * );
 int ntfs_ntvattrget(struct ntfsmount *, struct ntnode *, u_int32_t, const char *, cn_t , struct ntvattr **);

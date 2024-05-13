@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.60 2023/09/11 08:41:27 mvs Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.61 2024/05/13 01:15:51 jsg Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -125,7 +125,6 @@ struct com_pcmcia_product {
 int com_pcmcia_match(struct device *, void *, void *);
 void com_pcmcia_attach(struct device *, struct device *, void *);
 int com_pcmcia_detach(struct device *, int);
-void com_pcmcia_cleanup(void *);
 int com_pcmcia_activate(struct device *, int);
 
 int com_pcmcia_enable(struct com_softc *);

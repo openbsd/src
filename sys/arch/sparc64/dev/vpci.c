@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.35 2024/03/29 21:29:33 miod Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.36 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -141,15 +141,6 @@ int vpci_msi_eq_intr(void *);
 
 int vpci_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
-void vpci_dmamap_destroy(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t);
-int vpci_dmamap_load(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
-    void *, bus_size_t, struct proc *, int);
-void vpci_dmamap_unload(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t);
-int vpci_dmamem_alloc(bus_dma_tag_t, bus_dma_tag_t, bus_size_t,
-    bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int);
-int vpci_dmamem_map(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *,
-    int, size_t, caddr_t *, int);
-void vpci_dmamem_unmap(bus_dma_tag_t, bus_dma_tag_t, caddr_t, size_t);
 
 int
 vpci_match(struct device *parent, void *match, void *aux)

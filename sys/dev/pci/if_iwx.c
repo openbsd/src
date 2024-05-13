@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.184 2024/05/08 14:03:54 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.185 2024/05/13 01:15:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -453,7 +453,6 @@ uint16_t iwx_rs_vht_rates(struct iwx_softc *, struct ieee80211_node *, int);
 int	iwx_rs_init_v3(struct iwx_softc *, struct iwx_node *);
 int	iwx_rs_init_v4(struct iwx_softc *, struct iwx_node *);
 int	iwx_rs_init(struct iwx_softc *, struct iwx_node *);
-int	iwx_enable_data_tx_queues(struct iwx_softc *);
 int	iwx_phy_send_rlc(struct iwx_softc *, struct iwx_phy_ctxt *,
 	    uint8_t, uint8_t);
 int	iwx_phy_ctxt_update(struct iwx_softc *, struct iwx_phy_ctxt *,

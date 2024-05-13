@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.65 2023/12/23 10:52:54 bluhm Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.66 2024/05/13 01:15:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,10 +38,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif /* NBPFILTER */
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
-#endif
 
 struct mpw_neighbor {
 	struct shim_hdr		n_rshim;
@@ -75,9 +70,6 @@ int	mpw_ioctl(struct ifnet *, u_long, caddr_t);
 int	mpw_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
 void	mpw_start(struct ifnet *);
-#if NVLAN > 0
-struct	mbuf *mpw_vlan_handle(struct mbuf *, struct mpw_softc *);
-#endif /* NVLAN */
 
 struct if_clone mpw_cloner =
     IF_CLONE_INITIALIZER("mpw", mpw_clone_create, mpw_clone_destroy);

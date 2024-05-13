@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.7 2022/02/21 11:03:39 mpi Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.8 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -85,7 +85,6 @@ const char *acpipci_hids[] = {
 	NULL
 };
 
-void	acpipci_attach_deferred(struct device *);
 int	acpipci_print(void *, const char *);
 int	acpipci_parse_resources(int, union acpi_resource *, void *);
 void	acpipci_osc(struct acpipci_softc *);

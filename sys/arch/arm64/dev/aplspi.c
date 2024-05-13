@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplspi.c,v 1.5 2023/07/23 11:17:50 kettenis Exp $	*/
+/*	$OpenBSD: aplspi.c,v 1.6 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -89,7 +89,6 @@ int	 aplspi_acquire_bus(void *, int);
 void	 aplspi_release_bus(void *, int);
 
 void	 aplspi_set_cs(struct aplspi_softc *, int, int);
-int	 aplspi_wait_state(struct aplspi_softc *, uint32_t, uint32_t);
 
 void	 aplspi_scan(struct aplspi_softc *);
 

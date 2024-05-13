@@ -1,4 +1,4 @@
-/* $OpenBSD: umt.c,v 1.5 2021/11/15 15:36:24 anton Exp $ */
+/* $OpenBSD: umt.c,v 1.6 2024/05/13 01:15:53 jsg Exp $ */
 /*
  * USB multitouch touchpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -52,7 +52,6 @@ struct umt_softc {
 };
 
 int	umt_enable(void *);
-int	umt_open(struct uhidev *);
 void	umt_intr(struct uhidev *, void *, u_int);
 void	umt_disable(void *);
 int	umt_ioctl(void *, u_long, caddr_t, int, struct proc *);

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.375 2024/05/07 18:35:23 jan Exp $ */
+/* $OpenBSD: if_em.c,v 1.376 2024/05/13 01:15:51 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -277,7 +277,6 @@ void em_enable_intr(struct em_softc *);
 void em_disable_intr(struct em_softc *);
 void em_free_transmit_structures(struct em_softc *);
 void em_free_receive_structures(struct em_softc *);
-void em_update_stats_counters(struct em_softc *);
 void em_disable_aspm(struct em_softc *);
 void em_txeof(struct em_queue *);
 int  em_allocate_receive_structures(struct em_softc *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: omapid.c,v 1.5 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: omapid.c,v 1.6 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2013 Dale Rahn <drahn@dalerahn.com>
  *
@@ -44,7 +44,6 @@ struct omapid_softc *omapid_sc;
 
 
 void omapid_attach(struct device *parent, struct device *self, void *args);
-void omapid_wpending(int flags);
 
 const struct cfattach	omapid_ca = {
 	sizeof (struct omapid_softc), NULL, omapid_attach

@@ -1,4 +1,4 @@
-/* $OpenBSD: rkspi.c,v 1.1 2024/03/02 19:50:30 kettenis Exp $ */
+/* $OpenBSD: rkspi.c,v 1.2 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2018,2023 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2024 Mark Kettenis <kettenis@openbsd.org>
@@ -105,7 +105,6 @@ struct rkspi_softc {
 int	 rkspi_match(struct device *, void *, void *);
 void	 rkspi_attach(struct device *, struct device *, void *);
 int	 rkspi_detach(struct device *, int);
-int	 rkspi_intr(void *);
 
 void	 rkspi_config(void *, struct spi_config *);
 int	 rkspi_transfer(void *, char *, char *, int, int);

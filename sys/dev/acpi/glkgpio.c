@@ -1,4 +1,4 @@
-/*	$OpenBSD: glkgpio.c,v 1.6 2022/10/20 20:40:57 kettenis Exp $	*/
+/*	$OpenBSD: glkgpio.c,v 1.7 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -73,7 +73,6 @@ const char *glkgpio_hids[] = {
 	NULL
 };
 
-int	glkgpio_parse_resources(int, union acpi_resource *, void *);
 int	glkgpio_read_pin(void *, int);
 void	glkgpio_write_pin(void *, int, int);
 void	glkgpio_intr_establish(void *, int, int, int (*)(void *), void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcu.c,v 1.6 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: gcu.c,v 1.7 2024/05/13 01:15:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -32,7 +32,6 @@
 
 int gcu_probe(struct device *, void *, void *);
 void gcu_attach(struct device *, struct device *, void *);
-int gcu_detach(struct device *, int);
 
 const struct pci_matchid gcu_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_GCU }

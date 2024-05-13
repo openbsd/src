@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.100 2022/04/21 21:03:02 stsp Exp $	*/
+/*	$OpenBSD: atw.c,v 1.101 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -161,10 +161,6 @@ void atw_si4126_print(struct atw_softc *);
 #define	DPRINTF(sc, x)	/* nothing */
 #define	DPRINTF2(sc, x)	/* nothing */
 #define	DPRINTF3(sc, x)	/* nothing */
-#endif
-
-#ifdef ATW_STATS
-void	atw_print_stats(struct atw_softc *);
 #endif
 
 const char *atw_printmac(u_int8_t);

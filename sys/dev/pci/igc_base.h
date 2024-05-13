@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_base.h,v 1.3 2024/05/04 13:35:26 mbuhl Exp $	*/
+/*	$OpenBSD: igc_base.h,v 1.4 2024/05/13 01:15:51 jsg Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -15,7 +15,6 @@ struct igc_hw;
 
 int		igc_init_hw_base(struct igc_hw *hw);
 void		igc_power_down_phy_copper_base(struct igc_hw *hw);
-extern void	igc_rx_fifo_flush_base(struct igc_hw *hw);
 int		igc_acquire_phy_base(struct igc_hw *hw);
 void		igc_release_phy_base(struct igc_hw *hw);
 

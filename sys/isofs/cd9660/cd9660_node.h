@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.22 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.23 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -103,7 +103,6 @@ int	cd9660_mmap(void *);
 int	cd9660_seek(void *);
 int	cd9660_readdir(void *);
 int	cd9660_readlink(void *);
-int	cd9660_abortop(void *);
 int	cd9660_inactive(void *);
 int	cd9660_reclaim(void *);
 int	cd9660_link(void *);

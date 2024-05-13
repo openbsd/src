@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.20 2022/01/27 18:28:45 bluhm Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.21 2024/05/13 01:15:51 jsg Exp $	*/
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -46,7 +46,6 @@
 #define IXGBE_82598_VFT_TBL_SIZE 128
 #define IXGBE_82598_RX_PB_SIZE   512
 
-uint32_t ixgbe_get_pcie_msix_count_82598(struct ixgbe_hw *hw);
 int32_t ixgbe_get_link_capabilities_82598(struct ixgbe_hw *hw,
 					  ixgbe_link_speed *speed,
 					  bool *autoneg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.52 2024/03/18 21:37:44 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.53 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -284,7 +284,6 @@ void	mvpp2_inband_statchg(struct mvpp2_port *);
 void	mvpp2_port_change(struct mvpp2_port *);
 
 void	mvpp2_tick(void *);
-void	mvpp2_rxtick(void *);
 
 int	mvpp2_link_intr(void *);
 int	mvpp2_intr(void *);
@@ -322,7 +321,6 @@ struct mvpp2_dmamem *
 	mvpp2_dmamem_alloc(struct mvpp2_softc *, bus_size_t, bus_size_t);
 void	mvpp2_dmamem_free(struct mvpp2_softc *, struct mvpp2_dmamem *);
 struct mbuf *mvpp2_alloc_mbuf(struct mvpp2_softc *, bus_dmamap_t);
-void	mvpp2_fill_rx_ring(struct mvpp2_softc *);
 
 void	mvpp2_interrupts_enable(struct mvpp2_port *, int);
 void	mvpp2_interrupts_disable(struct mvpp2_port *, int);

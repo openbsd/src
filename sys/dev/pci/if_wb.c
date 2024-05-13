@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.75 2023/11/10 15:51:24 bluhm Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.76 2024/05/13 01:15:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -127,7 +127,6 @@
 int wb_probe(struct device *, void *, void *);
 void wb_attach(struct device *, struct device *, void *);
 
-void wb_bfree(caddr_t, u_int, void *);
 void wb_newbuf(struct wb_softc *, struct wb_chain_onefrag *);
 int wb_encap(struct wb_softc *, struct wb_chain *, struct mbuf *);
 

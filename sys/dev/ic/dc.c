@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.156 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: dc.c,v 1.157 2024/05/13 01:15:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -134,7 +134,6 @@
 #endif
 
 int dc_intr(void *);
-struct dc_type *dc_devtype(void *);
 int dc_newbuf(struct dc_softc *, int, struct mbuf *);
 int dc_encap(struct dc_softc *, bus_dmamap_t, struct mbuf *, u_int32_t *);
 

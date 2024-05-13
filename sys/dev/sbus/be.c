@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.44 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: be.c,v 1.45 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -172,7 +172,6 @@ static int	be_tcvr_read_bit(struct be_softc *, int);
 static void	be_tcvr_write_bit(struct be_softc *, int, int);
 
 void	be_tick(void *);
-void	be_intphy_auto(struct be_softc *);
 void	be_intphy_status(struct be_softc *);
 int	be_intphy_service(struct be_softc *, struct mii_data *, int);
 

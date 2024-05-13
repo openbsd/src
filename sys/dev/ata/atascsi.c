@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.153 2022/04/16 19:19:58 naddy Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.154 2024/05/13 01:15:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -128,7 +128,6 @@ void		atascsi_atapi_cmd(struct scsi_xfer *);
 void		atascsi_atapi_cmd_done(struct ata_xfer *);
 
 void		atascsi_pmp_cmd(struct scsi_xfer *);
-void		atascsi_pmp_cmd_done(struct ata_xfer *);
 void		atascsi_pmp_sense(struct scsi_xfer *xs);
 void		atascsi_pmp_inq(struct scsi_xfer *xs);
 

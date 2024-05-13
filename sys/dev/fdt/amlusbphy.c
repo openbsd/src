@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlusbphy.c,v 1.3 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: amlusbphy.c,v 1.4 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -109,8 +109,6 @@ struct cfdriver amlusbphy_cd = {
 };
 
 int	amlusbphy_enable(void *, uint32_t *);
-uint16_t amlusbphy_read(struct amlusbphy_softc *, bus_addr_t);
-void	amlusbphy_write(struct amlusbphy_softc *, bus_addr_t, uint16_t);
 
 int
 amlusbphy_match(struct device *parent, void *match, void *aux)

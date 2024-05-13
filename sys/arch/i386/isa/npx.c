@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.75 2024/04/29 00:29:48 jsg Exp $	*/
+/*	$OpenBSD: npx.c,v 1.76 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -157,7 +157,6 @@ npxdna_notset(struct cpu_info *ci)
 int    (*npxdna_func)(struct cpu_info *) = npxdna_notset;
 int    npxdna_s87(struct cpu_info *);
 int    npxdna_xmm(struct cpu_info *);
-void   npxexit(void);
 
 /*
  * Special interrupt handlers.  Someday intr0-intr15 will be used to count

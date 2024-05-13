@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplefuse.c,v 1.1 2022/12/17 11:56:44 kettenis Exp $	*/
+/*	$OpenBSD: aplefuse.c,v 1.2 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -47,7 +47,6 @@ struct cfdriver aplefuse_cd = {
 };
 
 int	aplefuse_nvmem_read(void *, bus_addr_t, void *, bus_size_t);
-int	aplefuse_nvmem_write(void *, bus_addr_t, const void *, bus_size_t);
 
 int
 aplefuse_match(struct device *parent, void *match, void *aux)

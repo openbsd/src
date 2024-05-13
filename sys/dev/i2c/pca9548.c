@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9548.c,v 1.6 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: pca9548.c,v 1.7 2024/05/13 01:15:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis
@@ -93,7 +93,6 @@ void	pcamux_attach_acpi(struct pcamux_softc *, struct i2c_attach_args *);
 int	pcamux_attach_acpi_mux(struct aml_node *, void *);
 void	pcamux_acpi_bus_scan(struct device *,
 	    struct i2cbus_attach_args *, void *);
-int	pcamux_acpi_found_channel(struct aml_node *, void *);
 int	pcamux_acpi_found_hid(struct aml_node *, void *);
 int	pcamux_acpi_parse_crs(int, union acpi_resource *, void *);
 #endif

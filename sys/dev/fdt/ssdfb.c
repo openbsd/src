@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.13 2022/07/15 17:57:26 kettenis Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.14 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -119,7 +119,6 @@ void	 ssdfb_write_command(struct ssdfb_softc *, char *, size_t);
 void	 ssdfb_write_data(struct ssdfb_softc *, char *, size_t);
 
 void	 ssdfb_init(struct ssdfb_softc *);
-void	 ssdfb_update(void *);
 
 void	 ssdfb_partial(struct ssdfb_softc *, uint32_t, uint32_t,
 	    uint32_t, uint32_t);

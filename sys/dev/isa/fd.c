@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.108 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: fd.c,v 1.109 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -138,7 +138,6 @@ struct cfdriver fd_cd = {
 };
 
 int fdgetdisklabel(dev_t, struct fd_softc *, struct disklabel *, int);
-int fd_get_parms(struct fd_softc *);
 void fdstrategy(struct buf *);
 void fdstart(struct fd_softc *);
 int fdintr(struct fdc_softc *);

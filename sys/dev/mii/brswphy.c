@@ -1,4 +1,4 @@
-/*	$OpenBSD: brswphy.c,v 1.4 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: brswphy.c,v 1.5 2024/05/13 01:15:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Paul Irofti <paul@irofti.net>
@@ -160,7 +160,6 @@ struct cfdriver brswphy_cd = {
 
 int	brswphy_service(struct mii_softc *, struct mii_data *, int);
 void	brswphy_status(struct mii_softc *);
-void	brswphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs brswphy_funcs = {
 	brswphy_service, brswphy_status, mii_phy_reset,

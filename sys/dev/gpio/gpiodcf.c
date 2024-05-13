@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiodcf.c,v 1.10 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: gpiodcf.c,v 1.11 2024/05/13 01:15:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -89,7 +89,6 @@ struct gpiodcf_softc {
 #define	T_WARN		300000	/* degrade sensor status to warning (5min) */
 #define	T_CRIT		900000	/* degrade sensor status to critical (15min) */
 
-void	gpiodcf_intr(void *);
 void	gpiodcf_probe(void *);
 void	gpiodcf_bv_probe(void *);
 void	gpiodcf_mg_probe(void *);

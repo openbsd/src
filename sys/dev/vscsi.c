@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.62 2023/10/25 09:36:47 mvs Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.63 2024/05/13 01:15:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -41,7 +41,6 @@
 
 int		vscsi_match(struct device *, void *, void *);
 void		vscsi_attach(struct device *, struct device *, void *);
-void		vscsi_shutdown(void *);
 
 struct vscsi_ccb {
 	TAILQ_ENTRY(vscsi_ccb)	ccb_entry;

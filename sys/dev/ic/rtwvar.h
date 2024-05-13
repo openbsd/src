@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.32 2024/05/12 08:44:09 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.33 2024/05/13 01:15:50 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -446,7 +446,6 @@ void rtw_disable(struct rtw_softc *);
 int rtw_enable(struct rtw_softc *);
 
 int rtw_activate(struct device *, int);
-void rtw_shutdown(void *);
 
 const char *rtw_pwrstate_string(enum rtw_pwrstate);
 

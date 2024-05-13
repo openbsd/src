@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.33 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.34 2024/05/13 01:15:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -98,12 +98,6 @@ struct uvm_addr_state uaddr_kbootstrap;
 struct vm_map_entry	*uvm_addr_entrybyspace(struct uaddr_free_rbtree*,
 			    vsize_t);
 #endif /* !SMALL_KERNEL */
-void			 uaddr_kinsert(struct vm_map *,
-			    struct uvm_addr_state *, struct vm_map_entry *);
-void			 uaddr_kremove(struct vm_map *,
-			    struct uvm_addr_state *, struct vm_map_entry *);
-void			 uaddr_kbootstrapdestroy(struct uvm_addr_state *);
-
 void			 uaddr_destroy(struct uvm_addr_state *);
 void			 uaddr_kbootstrap_destroy(struct uvm_addr_state *);
 void			 uaddr_rnd_destroy(struct uvm_addr_state *);

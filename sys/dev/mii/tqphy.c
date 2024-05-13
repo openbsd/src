@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.19 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.20 2024/05/13 01:15:51 jsg Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -78,7 +78,6 @@
 
 int	tqphymatch(struct device *, void *, void *);
 void	tqphyattach(struct device *, struct device *, void *);
-int	tqphydetach(struct device *, int);
 
 const struct cfattach tqphy_ca = {
 	sizeof(struct mii_softc), tqphymatch, tqphyattach, mii_phy_detach

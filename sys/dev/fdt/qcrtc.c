@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcrtc.c,v 1.3 2023/07/22 22:48:35 patrick Exp $	*/
+/*	$OpenBSD: qcrtc.c,v 1.4 2024/05/13 01:15:50 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -59,8 +59,6 @@ struct cfdriver qcrtc_cd = {
 
 int	qcrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int	qcrtc_settime(struct todr_chip_handle *, struct timeval *);
-
-void	qcrtc_tick(void *);
 
 extern int qcscm_uefi_rtc_get(uint32_t *);
 extern int qcscm_uefi_rtc_set(uint32_t);

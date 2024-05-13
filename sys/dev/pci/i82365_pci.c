@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.14 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.15 2024/05/13 01:15:51 jsg Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -93,8 +93,6 @@ pcic_pci_match(struct device *parent, void *match, void *aux)
 		return (1);
 	return (0);
 }
-
-void pcic_isa_config_interrupts(struct device *);
 
 void
 pcic_pci_attach(struct device *parent, struct device *self, void *aux)

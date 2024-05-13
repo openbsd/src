@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.24 2024/04/14 03:26:25 jsg Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.25 2024/05/13 01:15:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -227,7 +227,6 @@ int auglx_trigger_output(void *, void *, void *, int, void (*)(void *),
     void *, struct audio_params *);
 int auglx_trigger_input(void *, void *, void *, int, void (*)(void *),
     void *, struct audio_params *);
-int auglx_alloc_cdata(struct auglx_softc *);
 int auglx_alloc_prd(struct auglx_softc *, size_t, struct auglx_ring *);
 void auglx_free_prd(struct auglx_softc *sc, struct auglx_ring *bm);
 int auglx_allocmem(struct auglx_softc *, size_t, size_t, struct auglx_dma *);

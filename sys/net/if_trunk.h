@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.30 2020/07/22 02:16:02 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.31 2024/05/13 01:15:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -249,7 +249,6 @@ struct trunk_lb {
 	struct trunk_port	*lb_ports[TRUNK_MAX_PORTS];
 };
 
-int		trunk_enqueue(struct ifnet *, struct mbuf *);
 u_int32_t	trunk_hashmbuf(struct mbuf *, SIPHASH_KEY *);
 #endif /* _KERNEL */
 

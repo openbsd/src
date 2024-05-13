@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.58 2021/01/29 17:12:19 sthen Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.59 2024/05/13 01:15:53 jsg Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -102,8 +102,6 @@ struct ulpt_softc {
 
 	struct ulpt_fwdev *sc_fwdev;
 };
-
-void ulpt_disco(void *);
 
 int ulpt_do_write(struct ulpt_softc *, struct uio *uio, int);
 int ulpt_status(struct ulpt_softc *);

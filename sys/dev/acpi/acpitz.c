@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.59 2022/08/10 16:58:16 patrick Exp $ */
+/* $OpenBSD: acpitz.c,v 1.60 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -78,7 +78,6 @@ struct cfdriver acpitz_cd = {
 
 void	acpitz_init_perf(void *);
 void	acpitz_setperf(int);
-void	acpitz_monitor(struct acpitz_softc *);
 void	acpitz_refresh(void *);
 int	acpitz_notify(struct aml_node *, int, void *);
 int	acpitz_gettempreading(struct acpitz_softc *, char *);

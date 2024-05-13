@@ -1,4 +1,4 @@
-/* $OpenBSD: imxspi.c,v 1.4 2022/02/14 00:53:40 jsg Exp $ */
+/* $OpenBSD: imxspi.c,v 1.5 2024/05/13 01:15:50 jsg Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -106,7 +106,6 @@ int	 imxspi_match(struct device *, void *, void *);
 void	 imxspi_attach(struct device *, struct device *, void *);
 void	 imxspi_attachhook(struct device *);
 int	 imxspi_detach(struct device *, int);
-int	 imxspi_intr(void *);
 
 void	 imxspi_config(void *, struct spi_config *);
 uint32_t imxspi_clkdiv(struct imxspi_softc *, uint32_t);

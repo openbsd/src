@@ -82,7 +82,6 @@ int exiic_detach(struct device *, int);
 void exiic_scan(struct device *, struct i2cbus_attach_args *, void *);
 void exiic_setspeed(struct exiic_softc *, int);
 int exiic_wait_state(struct exiic_softc *, uint32_t, uint32_t, uint32_t);
-int exiic_start(struct exiic_softc *, int, int, void *, int);
 
 void exiic_xfer_start(struct exiic_softc *);
 int exiic_xfer_wait(struct exiic_softc *);

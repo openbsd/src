@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.116 2024/04/17 20:48:51 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.117 2024/05/13 01:15:53 jsg Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -364,7 +364,6 @@ int	rip6_send(struct socket *, struct mbuf *, struct mbuf *,
 int	rip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 int	dest6_input(struct mbuf **, int *, int, int);
-int	none_input(struct mbuf **, int *, int);
 
 int	in6_pcbselsrc(const struct in6_addr **, struct sockaddr_in6 *,
 	    struct inpcb *, struct ip6_pktopts *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.104 2022/06/03 10:38:40 dlg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.105 2024/05/13 01:15:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1091,6 +1091,5 @@ struct rl_softc {
 
 extern int rl_attach(struct rl_softc *);
 extern int rl_intr(void *);
-extern void rl_setmulti(struct rl_softc *);
 int rl_detach(struct rl_softc *);
 int rl_activate(struct device *, int);

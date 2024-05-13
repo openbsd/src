@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.34 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.35 2024/05/13 01:15:51 jsg Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -189,11 +189,5 @@ int	 agp_release(void *);
  * defined in <dev/pci/agpreg.h>
  */
 int	 agp_enable(void *, u_int32_t);
-
-/*
- * Retrieve information about a memory block allocated with
- * agp_alloc_memory().
- */
-void	 agp_memory_info(void *, void *, struct agp_memory_info *);
 
 #endif /* !_PCI_AGPVAR_H_ */
