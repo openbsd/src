@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.198 2024/05/01 13:15:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.199 2024/05/13 11:17:40 semarie Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1725,11 +1725,6 @@ nfs_remove(void *v)
 	NFS_INVALIDATE_ATTRCACHE(np);
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	if (vp == dvp)
-		vrele(vp);
-	else
-		vput(vp);
-	vput(dvp);
 	return (error);
 }
 

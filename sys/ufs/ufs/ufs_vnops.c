@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.161 2024/03/25 17:57:07 guenther Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.162 2024/05/13 11:17:41 semarie Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -595,11 +595,6 @@ ufs_remove(void *v)
 	VN_KNOTE(vp, NOTE_DELETE);
 	VN_KNOTE(dvp, NOTE_WRITE);
  out:
-	if (dvp == vp)
-		vrele(vp);
-	else
-		vput(vp);
-	vput(dvp);
 	return (error);
 }
 

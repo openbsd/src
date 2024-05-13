@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.93 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.94 2024/05/13 11:17:41 semarie Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -410,11 +410,6 @@ ext2fs_remove(void *v)
 		ip->i_flag |= IN_CHANGE;
 	}
 out:
-	if (dvp == vp)
-		vrele(vp);
-	else
-		vput(vp);
-	vput(dvp);
 	return (error);
 }
 

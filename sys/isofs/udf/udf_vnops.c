@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.71 2024/05/12 16:51:05 semarie Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.72 2024/05/13 11:17:40 semarie Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -84,7 +84,7 @@ const struct vops udf_vops = {
 	.vop_fsync	= NULL,
 	.vop_link	= NULL,
 	.vop_mknod	= NULL,
-	.vop_remove	= NULL,
+	.vop_remove	= eopnotsupp,
 	.vop_rename	= NULL,
 	.vop_revoke	= NULL,
 	.vop_mkdir	= NULL,

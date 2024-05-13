@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.68 2024/03/25 17:57:07 guenther Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.69 2024/05/13 11:17:40 semarie Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -1512,11 +1512,6 @@ fusefs_remove(void *v)
 	fb_delete(fbuf);
 out:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
-	if (dvp == vp)
-		vrele(vp);
-	else
-		vput(vp);
-	vput(dvp);
 	return (error);
 }
 

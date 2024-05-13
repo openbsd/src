@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.54 2024/03/25 17:57:07 guenther Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.55 2024/05/13 11:17:41 semarie Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -692,8 +692,6 @@ tmpfs_remove(void *v)
 	tmpfs_dirent_t *de;
 	int error;
 
-	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(VOP_ISLOCKED(vp));
 	KASSERT(cnp->cn_flags & HASBUF);
 
 	if (vp->v_type == VDIR) {
@@ -742,13 +740,6 @@ tmpfs_remove(void *v)
 	error = 0;
 out:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
-	/* Drop the references and unlock the vnodes. */
-	vput(vp);
-	if (dvp == vp) {
-		vrele(dvp);
-	} else {
-		vput(dvp);
-	}
 	return error;
 }
 

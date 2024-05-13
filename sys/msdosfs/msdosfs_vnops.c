@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.140 2023/09/08 20:00:28 mvs Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.141 2024/05/13 11:17:40 semarie Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -810,12 +810,6 @@ msdosfs_remove(void *v)
 	printf("msdosfs_remove(), dep %p, v_usecount %d\n", dep,
 	    ap->a_vp->v_usecount);
 #endif
-	if (ddep == dep)
-		vrele(ap->a_vp);
-	else
-		vput(ap->a_vp);	/* causes msdosfs_inactive() to be called
-				 * via vrele() */
-	vput(ap->a_dvp);
 	return (error);
 }
 

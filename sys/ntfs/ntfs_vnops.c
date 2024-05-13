@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.48 2024/05/12 16:51:05 semarie Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.49 2024/05/13 11:17:40 semarie Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -689,7 +689,7 @@ const struct vops ntfs_vops = {
 	.vop_link	= NULL,
 	.vop_mknod	= NULL,
 	.vop_readlink	= NULL,
-	.vop_remove	= NULL,
+	.vop_remove	= eopnotsupp,
 	.vop_rename	= NULL,
 	.vop_revoke	= NULL,
 	.vop_mkdir	= NULL,

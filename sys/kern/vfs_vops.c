@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.35 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.36 2024/05/13 11:17:40 semarie Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -319,6 +319,7 @@ VOP_FSYNC(struct vnode *vp, struct ucred *cred, int waitfor,
 int
 VOP_REMOVE(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 {
+	int error;
 	struct vop_remove_args a;
 	a.a_dvp = dvp;
         a.a_vp = vp;
@@ -327,10 +328,15 @@ VOP_REMOVE(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	ASSERT_VP_ISLOCKED(dvp);
 	ASSERT_VP_ISLOCKED(vp);
 
-	if (dvp->v_op->vop_remove == NULL)
-		return (EOPNOTSUPP);
+	error = dvp->v_op->vop_remove(&a);
 
-	return ((dvp->v_op->vop_remove)(&a));
+	if (dvp == vp)
+		vrele(vp);
+	else
+		vput(vp);
+	vput(dvp);
+
+	return error;
 }
 
 int

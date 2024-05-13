@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.71 2024/05/12 16:51:05 semarie Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.72 2024/05/13 11:17:40 semarie Exp $  */
 
 /*
  *  Portions of this code are:
@@ -238,7 +238,7 @@ const struct vops sync_vops = {
 	.vop_read	= NULL,
 	.vop_readdir	= NULL,
 	.vop_readlink	= NULL,
-	.vop_remove	= NULL,
+	.vop_remove	= eopnotsupp,
 	.vop_rename	= NULL,
 	.vop_revoke	= NULL,
 	.vop_mkdir	= NULL,
