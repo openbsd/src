@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.63 2024/04/15 08:19:55 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.64 2024/05/13 11:45:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -164,15 +164,17 @@ args_parse_flag_argument(struct args_value *values, u_int count, char **cause,
 		argument = &values[*i];
 		if (argument->type != ARGS_STRING) {
 			xasprintf(cause, "-%c argument must be a string", flag);
+			args_free_value(new);
+			free(new);
 			return (-1);
 		}
 	}
 	if (argument == NULL) {
+		args_free_value(new);
+		free(new);
 		if (optional_argument) {
 			log_debug("%s: -%c (optional)", __func__, flag);
 			args_set(args, flag, NULL, ARGS_ENTRY_OPTIONAL_VALUE);
-			args_free_value(new);
-			free(new);
 			return (0); /* either - or end */
 		}
 		xasprintf(cause, "-%c expects an argument", flag);
