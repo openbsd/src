@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_hw.h,v 1.2 2022/05/11 06:14:15 kevlo Exp $	*/
+/*	$OpenBSD: igc_hw.h,v 1.3 2024/05/13 01:22:47 jsg Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -259,15 +259,6 @@ struct igc_nvm_operations {
 	int	(*validate)(struct igc_hw *);
 	int	(*write)(struct igc_hw *, uint16_t, uint16_t, uint16_t *);
 };
-
-struct igc_info {
-	int				(*get_invariants)(struct igc_hw *hw);
-	struct igc_mac_operations	*mac_ops;
-	const struct igc_phy_operations	*phy_ops;
-	struct igc_nvm_operations	*nvm_ops;
-};
-
-extern const struct igc_info igc_i225_info;
 
 struct igc_mac_info {
 	struct igc_mac_operations	ops;
