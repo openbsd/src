@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.79 2024/02/02 21:13:35 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.80 2024/05/13 10:01:53 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -349,11 +349,55 @@ struct pic msi_pic = {
 void
 msi_hwmask(struct pic *pic, int pin)
 {
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int vec = PCI_MSI_VEC(pin);
+	pcireg_t reg, mask;
+	int off;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
+		return;
+
+	/* We can't mask if per-vector masking isn't implemented. */
+	if ((reg & PCI_MSI_MC_PVMASK) == 0)
+		return;
+
+	if (reg & PCI_MSI_MC_C64) {
+		mask = pci_conf_read(pc, tag, off + PCI_MSI_MASK64);
+		pci_conf_write(pc, tag, off + PCI_MSI_MASK64,
+		    mask | (1U << vec));
+	} else {
+		mask = pci_conf_read(pc, tag, off + PCI_MSI_MASK32);
+		pci_conf_write(pc, tag, off + PCI_MSI_MASK32,
+		    mask | (1U << vec));
+	}
 }
 
 void
 msi_hwunmask(struct pic *pic, int pin)
 {
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int vec = PCI_MSI_VEC(pin);
+	pcireg_t reg, mask;
+	int off;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
+		return;
+
+	/* We can't mask if per-vector masking isn't implemented. */
+	if ((reg & PCI_MSI_MC_PVMASK) == 0)
+		return;
+
+	if (reg & PCI_MSI_MC_C64) {
+		mask = pci_conf_read(pc, tag, off + PCI_MSI_MASK64);
+		pci_conf_write(pc, tag, off + PCI_MSI_MASK64,
+		    mask & ~(1U << vec));
+	} else {
+		mask = pci_conf_read(pc, tag, off + PCI_MSI_MASK32);
+		pci_conf_write(pc, tag, off + PCI_MSI_MASK32,
+		    mask & ~(1U << vec));
+	}
 }
 
 void
@@ -531,11 +575,51 @@ struct pic msix_pic = {
 void
 msix_hwmask(struct pic *pic, int pin)
 {
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	bus_space_tag_t memt = X86_BUS_SPACE_MEM; /* XXX */
+	bus_space_handle_t memh;
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int entry = PCI_MSI_VEC(pin);
+	pcireg_t reg;
+	uint32_t ctrl;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		return;
+
+	KASSERT(entry <= PCI_MSIX_MC_TBLSZ(reg));
+
+	if (pci_msix_table_map(pc, tag, memt, &memh))
+		panic("%s: cannot map registers", __func__);
+
+	ctrl = bus_space_read_4(memt, memh, PCI_MSIX_VC(entry));
+	bus_space_write_4(memt, memh, PCI_MSIX_VC(entry),
+	    ctrl | PCI_MSIX_VC_MASK);
+
+	pci_msix_table_unmap(pc, tag, memt, memh);
 }
 
 void
 msix_hwunmask(struct pic *pic, int pin)
 {
+	pci_chipset_tag_t pc = NULL; /* XXX */
+	bus_space_tag_t memt = X86_BUS_SPACE_MEM; /* XXX */
+	bus_space_handle_t memh;
+	pcitag_t tag = PCI_MSI_TAG(pin);
+	int entry = PCI_MSI_VEC(pin);
+	pcireg_t reg;
+	uint32_t ctrl;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0) 
+		return;
+
+	if (pci_msix_table_map(pc, tag, memt, &memh))
+		panic("%s: cannot map registers", __func__);
+
+	ctrl = bus_space_read_4(memt, memh, PCI_MSIX_VC(entry));
+	bus_space_write_4(memt, memh, PCI_MSIX_VC(entry),
+	    ctrl & ~PCI_MSIX_VC_MASK);
+
+	pci_msix_table_unmap(pc, tag, memt, memh);
 }
 
 void
