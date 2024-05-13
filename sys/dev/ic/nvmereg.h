@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.13 2023/12/20 13:37:25 krw Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.14 2024/05/13 11:41:52 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -290,16 +290,30 @@ struct nvm_identify_controller {
 	u_int8_t	mdts;		/* Maximum Data Transfer Size */
 	u_int16_t	cntlid;		/* Controller ID */
 
-	u_int8_t	_reserved1[176];
+	u_int8_t	_reserved1[16];
+	u_int32_t	ctratt;
+#define NVM_ID_CTRL_CTRATT_FMT			"\020" \
+	"\016DELEG" "\017DEVNVM" "\020ELBAS" "\005ENDURGRPS" \
+	"\014FIXCAPMGMT" "\001HOSTID" "\013MDS" "\002NOPSPM" \
+	"\010NSGRAN" "\003NVMSETS" "\006PREDLATENCY" "\004READRCVRY" \
+	"\011SQASSOC" "\007TBKAS" "\012UUIDLIST" "\015VARCAPMGMT"
+
+	u_int8_t	_reserved9[156];
 
 	/* Admin Command Set Attributes & Optional Controller Capabilities */
 
 	u_int16_t	oacs;		/* Optional Admin Command Support */
+#define NVM_ID_CTRL_OACS_FMT			"\020" \
+	"\013CAFL" "\011DBBC" "\006DIREC" "\005DST" "\012GLBAS" \
+	"\002FORMAT" "\003FWCD" "\007MISR" "\004NSMGMT" "\001SECSR" \
+	"\010VM"
+
 	u_int8_t	acl;		/* Abort Command Limit */
 	u_int8_t	aerl;		/* Asynchronous Event Request Limit */
 
 	u_int8_t	frmw;		/* Firmware Updates */
 	u_int8_t	lpa;		/* Log Page Attributes */
+#define NVM_ID_CTRL_LPA_PE		(1 << 4)
 	u_int8_t	elpe;		/* Error Log Page Entries */
 	u_int8_t	npss;		/* Number of Power States Support */
 
@@ -308,7 +322,11 @@ struct nvm_identify_controller {
 	u_int8_t	apsta;		/* Autonomous Power State Transition
 					   Attributes */
 
-	u_int8_t	_reserved2[246];
+	u_int8_t	_reserved2[62];
+	u_int32_t	sanicap;
+#define NVM_ID_CTRL_SANICAP_FMT			"\020" \
+	"\002BlockErase" "\001CryptoErase" "\003Overwrite"
+	u_int8_t	_reserved10[180];
 
 	/* NVM Command Set Attributes */
 
@@ -319,10 +337,16 @@ struct nvm_identify_controller {
 	u_int32_t	nn;		/* Number of Namespaces */
 
 	u_int16_t	oncs;		/* Optional NVM Command Support */
+#define NVM_ID_CTRL_ONCS_FMT			"\020" \
+	"\006RSV" "\001SCMP" "\011SCPY" "\003SDMGMT" "\005SF" \
+	"\010SV" "\002SWU" "\004SWZ" "\007TS"
+
 	u_int16_t	fuses;		/* Fused Operation Support */
 
 	u_int8_t	fna;		/* Format NVM Attributes */
+#define NVM_ID_CTRL_FNA_CRYPTOFORMAT		(1 << 2)
 	u_int8_t	vwc;		/* Volatile Write Cache */
+#define NVM_ID_CTRL_VWC_PRESENT			(1 << 0)
 	u_int16_t	awun;		/* Atomic Write Unit Normal */
 
 	u_int16_t	awupf;		/* Atomic Write Unit Power Fail */
@@ -364,16 +388,24 @@ struct nvm_identify_namespace {
 
 	u_int8_t	nsfeat;		/* Namespace Features */
 #define	NVME_ID_NS_NSFEAT_THIN_PROV	(1 << 0)
+#define NVME_ID_NS_NSFEAT_FMT		"\020" \
+	"\002NSABP" "\005OPTPERF" "\001THIN_PROV" "\004UIDREUSE" "\003DAE"
+
 	u_int8_t	nlbaf;		/* Number of LBA Formats */
 	u_int8_t	flbas;		/* Formatted LBA Size */
-#define NVME_ID_NS_FLBAS(_f)			((_f) & 0x0f)
-#define NVME_ID_NS_FLBAS_MD			0x10
+#define NVME_ID_NS_FLBAS(_f)		((_f) & 0x0f)
+#define NVME_ID_NS_FLBAS_MD		0x10
 	u_int8_t	mc;		/* Metadata Capabilities */
+
 	u_int8_t	dpc;		/* End-to-end Data Protection
 					   Capabilities */
 	u_int8_t	dps;		/* End-to-end Data Protection Type Settings */
+#define NVME_ID_NS_DPS_PIP		(1 << 3)
+#define NVME_ID_NS_DPS_TYPE(_f)		((_f) & 0x7)
 
-	u_int8_t	_reserved1[98];
+	u_int8_t	_reserved1[74];
+	uint8_t		nguid[16];
+	uint8_t		eui64[8];	/* BIG-endian */
 
 	struct nvm_namespace_format
 			lbaf[16];	/* LBA Format Support */

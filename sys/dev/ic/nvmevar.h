@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.28 2021/08/29 12:02:52 kettenis Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.29 2024/05/13 11:41:52 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -125,6 +125,8 @@ struct nvme_softc {
 	struct nvme_ccb_list	sc_ccb_list;
 	struct nvme_dmamem	*sc_ccb_prpls;
 	struct scsi_iopool	sc_iopool;
+	struct rwlock		sc_lock;
+	struct scsibus_softc	*sc_scsibus;
 };
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.110 2024/05/10 21:23:32 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.111 2024/05/13 11:41:52 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -16,7 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "bio.h"
+
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -25,6 +28,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
+#include <sys/disk.h>
 
 #include <sys/atomic.h>
 
@@ -33,7 +37,9 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+#include <scsi/sdvar.h>
 
+#include <dev/biovar.h>
 #include <dev/ic/nvmereg.h>
 #include <dev/ic/nvmevar.h>
 
@@ -83,16 +89,26 @@ void	nvme_scsi_cmd(struct scsi_xfer *);
 void	nvme_minphys(struct buf *, struct scsi_link *);
 int	nvme_scsi_probe(struct scsi_link *);
 void	nvme_scsi_free(struct scsi_link *);
-uint64_t nvme_scsi_size(struct nvm_identify_namespace *);
+uint64_t nvme_scsi_size(const struct nvm_identify_namespace *);
 
 #ifdef HIBERNATE
 #include <uvm/uvm_extern.h>
 #include <sys/hibernate.h>
-#include <sys/disk.h>
 #include <sys/disklabel.h>
 
 int	nvme_hibernate_io(dev_t, daddr_t, vaddr_t, size_t, int, void *);
 #endif
+
+#if NBIO > 0
+void	nvme_bio_status(struct bio_status *, const char *, ...);
+
+const char *nvme_bioctl_sdname(const struct nvme_softc *, int);
+
+int	nvme_bioctl(struct device *, u_long, caddr_t);
+int	nvme_bioctl_inq(struct nvme_softc *, struct bioc_inq *);
+int	nvme_bioctl_vol(struct nvme_softc *, struct bioc_vol *);
+int	nvme_bioctl_disk(struct nvme_softc *, struct bioc_disk *);
+#endif	/* NBIO > 0 */
 
 const struct scsi_adapter nvme_switch = {
 	nvme_scsi_cmd, nvme_minphys, nvme_scsi_probe, nvme_scsi_free, NULL
@@ -283,6 +299,7 @@ nvme_attach(struct nvme_softc *sc)
 	u_int nccbs = 0;
 
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
+	rw_init(&sc->sc_lock, "nvme_lock");
 	SIMPLEQ_INIT(&sc->sc_ccb_list);
 	scsi_iopool_init(&sc->sc_iopool, sc, nvme_ccb_get, nvme_ccb_put);
 	if (sc->sc_ops == NULL)
@@ -384,7 +401,12 @@ nvme_attach(struct nvme_softc *sc)
 	saa.saa_quirks = saa.saa_flags = 0;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
 
-	config_found(&sc->sc_dev, &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
+	    &saa, scsiprint);
+#if NBIO > 0
+	if (bio_register(&sc->sc_dev, nvme_bioctl) != 0)
+		printf("%s: unable to register bioctl\n", DEVNAME(sc));
+#endif	/* NBIO > 0 */
 
 	return (0);
 
@@ -889,7 +911,7 @@ nvme_scsi_free(struct scsi_link *link)
 }
 
 uint64_t
-nvme_scsi_size(struct nvm_identify_namespace *ns)
+nvme_scsi_size(const struct nvm_identify_namespace *ns)
 {
 	uint64_t		ncap, nsze;
 
@@ -1716,3 +1738,274 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 }
 
 #endif
+
+#if NBIO > 0
+int
+nvme_bioctl(struct device *self, u_long cmd, caddr_t data)
+{
+	struct nvme_softc	*sc = (struct nvme_softc *)self;
+	int error = 0;
+
+	rw_enter_write(&sc->sc_lock);
+
+	switch (cmd) {
+	case BIOCINQ:
+		error = nvme_bioctl_inq(sc, (struct bioc_inq *)data);
+		break;
+	case BIOCVOL:
+		error = nvme_bioctl_vol(sc, (struct bioc_vol *)data);
+		break;
+	case BIOCDISK:
+		error = nvme_bioctl_disk(sc, (struct bioc_disk *)data);
+		break;
+	default:
+		printf("nvme_bioctl() Unknown command (%lu)\n", cmd);
+		error = ENOTTY;
+	}
+
+	rw_exit_write(&sc->sc_lock);
+
+	return error;
+}
+
+void
+nvme_bio_status(struct bio_status *bs, const char *fmt, ...)
+{
+	va_list			ap;
+
+	va_start(ap, fmt);
+	bio_status(bs, 0, BIO_MSG_INFO, fmt, &ap);
+	va_end(ap);
+}
+
+const char *
+nvme_bioctl_sdname(const struct nvme_softc *sc, int target)
+{
+	const struct scsi_link		*link;
+	const struct sd_softc		*sd;
+
+	link = scsi_get_link(sc->sc_scsibus, target, 0);
+	if (link) {
+		sd = (struct sd_softc *)(link->device_softc);
+		if (ISSET(link->state, SDEV_S_DYING) || sd == NULL ||
+		    ISSET(sd->flags, SDF_DYING))
+			return NULL;
+	}
+
+	if (nvme_read4(sc, NVME_VS) == 0xffffffff)
+		return NULL;
+
+	return DEVNAME(sd);
+}
+
+int
+nvme_bioctl_inq(struct nvme_softc *sc, struct bioc_inq *bi)
+{
+	char				 sn[41], mn[81], fr[17];
+	struct nvm_identify_controller	*idctrl = &sc->sc_identify;
+	struct bio_status		*bs;
+	unsigned int			 nn;
+	uint32_t			 cc, csts, vs;
+
+	/* Don't tell bioctl about namespaces > last configured namespace. */
+	for (nn = sc->sc_nn; nn > 0; nn--) {
+		if (sc->sc_namespaces[nn].ident)
+			break;
+	}
+	bi->bi_novol = bi->bi_nodisk = nn;
+	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
+
+	bs = &bi->bi_bio.bio_status;
+	bio_status_init(bs, &sc->sc_dev);
+	bs->bs_status = BIO_STATUS_SUCCESS;
+
+	scsi_strvis(sn, idctrl->sn, sizeof(idctrl->sn));
+	scsi_strvis(mn, idctrl->mn, sizeof(idctrl->mn));
+	scsi_strvis(fr, idctrl->fr, sizeof(idctrl->fr));
+
+	nvme_bio_status(bs, "%s, %s, %s", mn, fr, sn);
+	nvme_bio_status(bs, "Max i/o %zu bytes%s%s%s, Sanitize 0x%b",
+	    sc->sc_mdts,
+	    ISSET(idctrl->lpa, NVM_ID_CTRL_LPA_PE) ?
+	    ", Persisent Event Log" : "",
+	    ISSET(idctrl->fna, NVM_ID_CTRL_FNA_CRYPTOFORMAT) ?
+	    ", CryptoFormat" : "",
+	    ISSET(idctrl->vwc, NVM_ID_CTRL_VWC_PRESENT) ?
+	    ", Volatile Write Cache" : "",
+	    lemtoh32(&idctrl->sanicap), NVM_ID_CTRL_SANICAP_FMT
+	);
+
+	if (idctrl->ctratt != 0)
+		nvme_bio_status(bs, "Features 0x%b", lemtoh32(&idctrl->ctratt),
+		    NVM_ID_CTRL_CTRATT_FMT);
+
+	if (idctrl->oacs || idctrl->oncs) {
+		nvme_bio_status(bs, "Admin commands 0x%b, NVM commands 0x%b",
+		    lemtoh16(&idctrl->oacs), NVM_ID_CTRL_OACS_FMT,
+		    lemtoh16(&idctrl->oncs), NVM_ID_CTRL_ONCS_FMT);
+	}
+
+	cc = nvme_read4(sc, NVME_CC);
+	csts = nvme_read4(sc, NVME_CSTS);
+	vs = nvme_read4(sc, NVME_VS);
+
+	if (vs == 0xffffffff) {
+		nvme_bio_status(bs, "Invalid PCIe register mapping");
+		return 0;
+	}
+
+	nvme_bio_status(bs, "NVMe %u.%u%s%s%sabled, %sReady%s%s%s%s",
+	    NVME_VS_MJR(vs), NVME_VS_MNR(vs),
+	    (NVME_CC_CSS_R(cc) == NVME_CC_CSS_NVM) ? ", NVM I/O command set" : "",
+	    (NVME_CC_CSS_R(cc) == 0x7) ? ", Admin command set only" : "",
+	    ISSET(cc, NVME_CC_EN) ? ", En" : "Dis",
+	    ISSET(csts, NVME_CSTS_RDY) ? "" : "Not ",
+	    ISSET(csts, NVME_CSTS_CFS) ? ", Fatal Error, " : "",
+	    (NVME_CC_SHN_R(cc) == NVME_CC_SHN_NORMAL) ? ", Normal shutdown" : "",
+	    (NVME_CC_SHN_R(cc) == NVME_CC_SHN_ABRUPT) ? ", Abrupt shutdown" : "",
+	    ISSET(csts, NVME_CSTS_SHST_DONE) ? " complete" : "");
+
+	return 0;
+}
+
+int
+nvme_bioctl_vol(struct nvme_softc *sc, struct bioc_vol *bv)
+{
+	const struct nvm_identify_namespace	*idns;
+	const char				*sd;
+	int					 target;
+	unsigned int 				 lbaf;
+
+	target = bv->bv_volid + 1;
+	if (target > sc->sc_nn) {
+		bv->bv_status = BIOC_SVINVALID;
+		return 0;
+	}
+
+	bv->bv_level = 'c';
+	bv->bv_nodisk = 1;
+
+	idns = sc->sc_namespaces[target].ident;
+	if (idns == NULL) {
+		bv->bv_status = BIOC_SVINVALID;
+		return 0;
+	}
+
+	lbaf = NVME_ID_NS_FLBAS(idns->flbas);
+	if (idns->nlbaf > 16)
+		lbaf |= (idns->flbas >> 1) & 0x3f;
+	bv->bv_size = nvme_scsi_size(idns) << idns->lbaf[lbaf].lbads;
+
+	sd = nvme_bioctl_sdname(sc, target);
+	if (sd) {
+		strlcpy(bv->bv_dev, sd, sizeof(bv->bv_dev));
+		bv->bv_status = BIOC_SVONLINE;
+	} else
+		bv->bv_status = BIOC_SVOFFLINE;
+
+	return 0;
+}
+
+int
+nvme_bioctl_disk(struct nvme_softc *sc, struct bioc_disk *bd)
+{
+	const char 			*rpdesc[4] = {
+		" (Best)",
+		" (Better)",
+		" (Good)",
+		" (Degraded)"
+	};
+	const char			*protection[4] = {
+		"not enabled",
+		"Type 1",
+		"Type 2",
+		"Type 3",
+	};
+	char				 buf[32], msg[BIO_MSG_LEN];
+	struct nvm_identify_namespace	*idns;
+	struct bio_status		*bs;
+	uint64_t			 id1, id2;
+	unsigned int			 i, lbaf, target;
+	uint16_t			 ms;
+	uint8_t				 dps;
+
+	target = bd->bd_volid + 1;
+	if (target > sc->sc_nn)
+		return EINVAL;
+	bd->bd_channel = sc->sc_scsibus->sc_dev.dv_unit;
+	bd->bd_target = target;
+	bd->bd_lun = 0;
+	snprintf(bd->bd_procdev, sizeof(bd->bd_procdev), "Namespace %u", target);
+
+	bs = &bd->bd_bio.bio_status;
+	bs->bs_status = BIO_STATUS_SUCCESS;
+	snprintf(bs->bs_controller, sizeof(bs->bs_controller), "%11u",
+	    bd->bd_diskid);
+
+	idns = sc->sc_namespaces[target].ident;
+	if (idns == NULL) {
+		bd->bd_status = BIOC_SDUNUSED;
+		return 0;
+	}
+
+	lbaf = NVME_ID_NS_FLBAS(idns->flbas);
+	if (idns->nlbaf > nitems(idns->lbaf))
+		lbaf |= (idns->flbas >> 1) & 0x3f;
+	bd->bd_size = lemtoh64(&idns->nsze) << idns->lbaf[lbaf].lbads;
+
+	if (memcmp(idns->nguid, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16)) {
+		memcpy(&id1, idns->nguid, sizeof(uint64_t));
+		memcpy(&id2, idns->nguid + sizeof(uint64_t), sizeof(uint64_t));
+		snprintf(bd->bd_serial, sizeof(bd->bd_serial), "%08llx%08llx",
+		    id1, id2);
+	} else if (memcmp(idns->eui64, "\0\0\0\0\0\0\0\0", 8)) {
+		memcpy(&id1, idns->eui64, sizeof(uint64_t));
+		snprintf(bd->bd_serial, sizeof(bd->bd_serial), "%08llx", id1);
+	}
+
+	msg[0] = '\0';
+	for (i = 0; i <= idns->nlbaf; i++) {
+		if (idns->lbaf[i].lbads == 0)
+			continue;
+		snprintf(buf, sizeof(buf), "%s%s%u",
+		    strlen(msg) ? ", " : "", (i == lbaf) ? "*" : "",
+		    1 << idns->lbaf[i].lbads);
+		strlcat(msg, buf, sizeof(msg));
+		ms = lemtoh16(&idns->lbaf[i].ms);
+		if (ms) {
+			snprintf(buf, sizeof(buf), "+%u", ms);
+			strlcat(msg, buf, sizeof(msg));
+		}
+		strlcat(msg, rpdesc[idns->lbaf[i].rp], sizeof(msg));
+	}
+	nvme_bio_status(bs, "Formats %s", msg);
+
+	if (idns->nsfeat)
+		nvme_bio_status(bs, "Features 0x%b", idns->nsfeat,
+		    NVME_ID_NS_NSFEAT_FMT);
+
+	if (idns->dps) {
+		dps = idns->dps;
+		snprintf(msg, sizeof(msg), "Data Protection (0x%02x) "
+		    "Protection Data in ", dps);
+		if (ISSET(dps, NVME_ID_NS_DPS_PIP))
+			strlcat(msg, "first", sizeof(msg));
+		else
+			strlcat(msg, "last", sizeof(msg));
+		strlcat(msg, "bytes of metadata, Protection ", sizeof(msg));
+		if (NVME_ID_NS_DPS_TYPE(dps) >= nitems(protection))
+			strlcat(msg, "Type unknown", sizeof(msg));
+		else
+			strlcat(msg, protection[NVME_ID_NS_DPS_TYPE(dps)],
+			    sizeof(msg));
+		nvme_bio_status(bs, "%s", msg);
+	}
+
+	if (nvme_bioctl_sdname(sc, target) == NULL)
+		bd->bd_status = BIOC_SDOFFLINE;
+	else
+		bd->bd_status = BIOC_SDONLINE;
+
+	return 0;
+}
+#endif	/* NBIO > 0 */
