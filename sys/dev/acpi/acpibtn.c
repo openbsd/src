@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.51 2023/06/29 20:58:08 dv Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.52 2024/05/13 19:56:37 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -228,6 +228,10 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 
 	dnprintf(10, "acpibtn_notify: %.2x %s\n", notify_type,
 	    sc->sc_devnode->name);
+
+	/* Ignore button events if we're resuming. */
+	if (acpi_resuming(sc->sc_acpi))
+		return (0);
 
 	switch (sc->sc_btn_type) {
 	case ACPIBTN_LID:

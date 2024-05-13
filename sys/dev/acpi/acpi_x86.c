@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.17 2023/07/06 06:58:07 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.18 2024/05/13 19:56:37 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -113,6 +113,8 @@ int
 sleep_resume(void *v)
 {
 	struct acpi_softc *sc = v;
+
+	sc->sc_resume_time = getuptime();
 
 	acpibtn_disable_psw();		/* disable _LID for wakeup */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.126 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.127 2024/05/13 19:56:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -269,6 +269,7 @@ struct acpi_softc {
 	struct aml_node		*sc_sst;
 	struct aml_node		*sc_wak;
 	int			sc_state;
+	time_t			sc_resume_time;
 	struct acpiec_softc	*sc_ec;		/* XXX assume single EC */
 
 	struct acpi_ac_head	sc_ac;
@@ -340,6 +341,7 @@ int	 acpi_sleep_cpu(struct acpi_softc *, int);
 void	 acpi_sleep_pm(struct acpi_softc *, int);
 void	 acpi_resume_pm(struct acpi_softc *, int);
 void	 acpi_resume_cpu(struct acpi_softc *, int);
+int	 acpi_resuming(struct acpi_softc *);
 
 #define ACPI_IOREAD 0
 #define ACPI_IOWRITE 1
