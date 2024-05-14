@@ -256,6 +256,9 @@
 ./usr/share/man/man1/perl5361delta.1
 ./usr/share/man/man1/perl5362delta.1
 ./usr/share/man/man1/perl5363delta.1
+./usr/share/man/man1/perl5380delta.1
+./usr/share/man/man1/perl5381delta.1
+./usr/share/man/man1/perl5382delta.1
 ./usr/share/man/man1/perl561delta.1
 ./usr/share/man/man1/perl56delta.1
 ./usr/share/man/man1/perl581delta.1
@@ -276,6 +279,8 @@
 ./usr/share/man/man1/perlbug.1
 ./usr/share/man/man1/perlcall.1
 ./usr/share/man/man1/perlcheat.1
+./usr/share/man/man1/perlclass.1
+./usr/share/man/man1/perlclassguts.1
 ./usr/share/man/man1/perlclib.1
 ./usr/share/man/man1/perlcommunity.1
 ./usr/share/man/man1/perldata.1
@@ -791,8 +796,6 @@
 ./usr/share/man/man3p/Memoize.3p
 ./usr/share/man/man3p/Memoize::AnyDBM_File.3p
 ./usr/share/man/man3p/Memoize::Expire.3p
-./usr/share/man/man3p/Memoize::ExpireFile.3p
-./usr/share/man/man3p/Memoize::ExpireTest.3p
 ./usr/share/man/man3p/Memoize::NDBM_File.3p
 ./usr/share/man/man3p/Memoize::SDBM_File.3p
 ./usr/share/man/man3p/Memoize::Storable.3p
@@ -1119,6 +1122,7 @@
 ./usr/share/man/man3p/re.3p
 ./usr/share/man/man3p/sigtrap.3p
 ./usr/share/man/man3p/sort.3p
+./usr/share/man/man3p/stable.3p
 ./usr/share/man/man3p/strict.3p
 ./usr/share/man/man3p/subs.3p
 ./usr/share/man/man3p/threads.3p

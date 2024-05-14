@@ -77,6 +77,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perliol.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perlsdio.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/perlstatic.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perlvars.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perly.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/pp.h
@@ -85,10 +86,13 @@
 ./usr/libdata/perl5/powerpc-openbsd/CORE/reentr.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/regcharclass.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/regcomp.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/regcomp_internal.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/regexp.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/reginline.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/regnodes.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/scope.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/scope_types.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/sv.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/sv_inline.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/syscall_emulator.h

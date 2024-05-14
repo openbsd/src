@@ -73,6 +73,7 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perliol.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perlsdio.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/perlstatic.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perlvars.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perly.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/pp.h
@@ -81,10 +82,13 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/reentr.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regcharclass.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regcomp.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/regcomp_internal.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regexp.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/reginline.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regnodes.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/scope.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/scope_types.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/sv.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/sv_inline.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/syscall_emulator.h
