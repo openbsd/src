@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.216 2024/03/29 21:29:34 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.217 2024/05/14 08:26:13 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -138,11 +138,6 @@ void    _bus_dmamem_unmap(bus_dma_tag_t tag, bus_dma_tag_t, caddr_t kva,
             size_t size);
 paddr_t _bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_tag_t,
 	    bus_dma_segment_t *segs, int nsegs, off_t off, int prot, int flags);
-
-int     _bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_dma_tag_t,
-	    bus_size_t size, bus_size_t alignment, bus_size_t boundary,
-            bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-            vaddr_t low, vaddr_t high);
 
 /*
  * The "bus_space_debug" flags used by macros elsewhere.

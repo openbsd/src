@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.25 2022/08/17 15:26:56 visa Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.26 2024/05/14 08:26:13 jsg Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -72,7 +72,6 @@ void	vldcp_attach(struct device *, struct device *, void *);
 void	filt_vldcprdetach(struct knote *);
 void	filt_vldcpwdetach(struct knote *);
 int	filt_vldcpread(struct knote *, long);
-int	filt_vldcpwrite(struct knote *, long);
 int	vldcpkqfilter(dev_t, struct knote *);
 
 const struct cfattach vldcp_ca = {

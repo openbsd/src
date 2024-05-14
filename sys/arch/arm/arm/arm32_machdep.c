@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.62 2021/05/16 03:39:27 jsg Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.63 2024/05/14 08:26:13 jsg Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ struct consdev *cn_tab;
 
 void data_abort_handler		(trapframe_t *frame);
 void prefetch_abort_handler	(trapframe_t *frame);
-extern void configure		(void);
 
 /*
  * arm32_vector_init:

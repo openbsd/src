@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.26 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.27 2024/05/14 08:26:13 jsg Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -88,7 +88,6 @@ struct cfdriver ebus_cd = {
 
 
 void	ebus_find_ino(struct ebus_softc *, struct ebus_attach_args *);
-int	ebus_find_node(struct pci_attach_args *);
 
 /*
  * here are our bus space and bus dma routines.

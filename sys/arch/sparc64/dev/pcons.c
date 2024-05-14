@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.28 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.29 2024/05/14 08:26:13 jsg Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -522,7 +522,6 @@ cn_get_magic(char *magic, int maglen) {
 
 int	pcons_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, uint32_t *);
-void	pcons_cursor(void *, int, int, int);
 void	pcons_free_screen(void *, void *);
 int	pcons_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	pcons_mapchar(void *, int, unsigned int *);

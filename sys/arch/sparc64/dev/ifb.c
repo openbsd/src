@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.26 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.27 2024/05/14 08:26:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -338,7 +338,6 @@ int	ifb_copyrows_dumb(void *, int, int, int);
 int	ifb_eraserows_dumb(void *, int, int, uint32_t);
 int	ifb_do_cursor_dumb(struct rasops_info *);
 
-int	ifb_putchar(void *, int, int, u_int, uint32_t);
 int	ifb_copycols(void *, int, int, int, int);
 int	ifb_erasecols(void *, int, int, int, uint32_t);
 int	ifb_copyrows(void *, int, int, int);

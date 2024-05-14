@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_fifoops.c,v 1.8 2024/05/12 16:54:56 semarie Exp $	*/
+/*	$OpenBSD: tmpfs_fifoops.c,v 1.9 2024/05/14 08:26:13 jsg Exp $	*/
 /*	$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <miscfs/fifofs/fifo.h>
 #include <tmpfs/tmpfs_vnops.h>
 
-int	tmpfs_fifo_close	(void *);
 int	tmpfs_fifo_read		(void *);
 int	tmpfs_fifo_write	(void *);
 int	tmpfs_fifo_fsync	(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1195 2024/05/10 03:50:12 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1196 2024/05/14 08:26:13 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -237,8 +237,6 @@ int			 pf_find_state(struct pf_pdesc *,
 			    struct pf_state_key_cmp *, struct pf_state **);
 int			 pf_src_connlimit(struct pf_state **);
 int			 pf_match_rcvif(struct mbuf *, struct pf_rule *);
-int			 pf_step_into_anchor(struct pf_test_ctx *,
-			    struct pf_rule *);
 enum pf_test_status	 pf_match_rule(struct pf_test_ctx *,
 			    struct pf_ruleset *);
 void			 pf_counters_inc(int, struct pf_pdesc *,

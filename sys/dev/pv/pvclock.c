@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.9 2023/02/04 19:19:37 cheloha Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.10 2024/05/14 08:26:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -51,8 +51,6 @@ void	 pvclock_attach(struct device *, struct device *, void *);
 int	 pvclock_activate(struct device *, int);
 
 uint	 pvclock_get_timecount(struct timecounter *);
-void	 pvclock_read_time_info(struct pvclock_softc *,
-	    struct pvclock_time_info *);
 
 static inline uint32_t
 	 pvclock_read_begin(const struct pvclock_time_info *);
