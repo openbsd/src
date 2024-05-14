@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbm_dump.c,v 1.2 2016/08/30 22:20:03 schwarze Exp $ */
+/*	$OpenBSD: dbm_dump.c,v 1.3 2024/05/14 00:31:48 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -196,7 +196,7 @@ dump_str(const char **cp)
 		printf("(NULL)");
 		return;
 	}
-	if (**cp <= (char)NAME_MASK) {
+	if ((unsigned char)**cp <= NAME_MASK) {
 		putchar('[');
 		if (**cp & NAME_FILE)
 			putchar('f');
