@@ -237,8 +237,8 @@ $a = <FOO> ;
 use warnings 'io' ;
 $a = <FOO> ;
 $a = <FH> ;
-close (FH) or die $! ;
-close (FOO) or die $! ;
+close (FH);
+close (FOO);
 unlink $file ;
 EXPECT
 Filehandle FH opened only for output at - line 5.

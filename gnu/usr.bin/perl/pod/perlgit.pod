@@ -785,6 +785,27 @@ When describing the merge commit, explain the purpose of the branch, and
 keep in mind that this description will probably be used by the
 eventual release engineer when reviewing the next perldelta document.
 
+If the subsequent I<push> fails then you must be careful on how you I<rebase>.
+If you use
+
+  % git rebase p5p/blead
+
+or
+
+  % git pull --rebase
+
+then your carefully created merge commit will be lost! To avoid this you
+can use:
+
+  % git fetch p5p
+  % git rebase --rebase-merges p5p/blead
+
+This will recreate your merge commit.
+
+(Should you be stuck with an older version of git (prior to 2.18), then
+C<git rebase> will not have the C<--rebase-merges> switch, instead you
+have to use the C<--preserve-merges> switch.)
+
 =head2 Committing to maintenance versions
 
 Maintenance versions should only be altered to add critical bug fixes,

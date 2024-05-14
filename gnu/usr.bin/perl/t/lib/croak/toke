@@ -2,8 +2,7 @@ __END__
 # NAME foo found where operator expected
 myfunc 1,2,3
 EXPECT
-Number found where operator expected at - line 1, near "myfunc 1"
-	(Do you need to predeclare myfunc?)
+Number found where operator expected (Do you need to predeclare "myfunc"?) at - line 1, near "myfunc 1"
 syntax error at - line 1, near "myfunc 1"
 Execution of - aborted due to compilation errors.
 ########
@@ -14,45 +13,37 @@ $foo;
 myfunc 1,2,3
 EXPECT
 Global symbol "$foo" requires explicit package name (did you forget to declare "my $foo"?) at - line 3.
-Number found where operator expected at - line 4, near "myfunc 1"
-	(Do you need to predeclare myfunc?)
+Number found where operator expected (Do you need to predeclare "myfunc"?) at - line 4, near "myfunc 1"
 syntax error at - line 4, near "myfunc 1"
 Execution of - aborted due to compilation errors.
 ########
-# NAME (Missing operator before ${?) [perl #123737]
+# NAME (Missing operator before "${"?) [perl #123737]
 0${
 EXPECT
-Scalar found where operator expected at - line 1, near "0${"
-	(Missing operator before ${?)
+Scalar found where operator expected (Missing operator before "${"?) at - line 1, near "0${"
 syntax error at - line 1, near "0$"
-Missing right curly or square bracket at - line 1, at end of line
 Execution of - aborted due to compilation errors.
 ########
-# NAME (Missing operator before $#{?) [perl #123737]
+# NAME (Missing operator before "$#{"?) [perl #123737]
 0$#{
 EXPECT
-Array length found where operator expected at - line 1, near "0$#{"
-	(Missing operator before $#{?)
+Array length found where operator expected (Missing operator before "$#{"?) at - line 1, near "0$#{"
 syntax error at - line 1, near "0$#"
-Missing right curly or square bracket at - line 1, at end of line
 Execution of - aborted due to compilation errors.
 ########
-# NAME (Missing operator before @foo) [perl #123737]
+# NAME (Missing operator before "@foo") [perl #123737]
 0@foo
 EXPECT
-Array found where operator expected at - line 1, near "0@foo"
-	(Missing operator before @foo?)
+Array found where operator expected (Missing operator before "@foo"?) at - line 1, near "0@foo"
 syntax error at - line 1, near "0@foo
 "
 Execution of - aborted due to compilation errors.
 ########
-# NAME (Missing operator before @{) [perl #123737]
+# NAME (Missing operator before "@{") [perl #123737]
 0@{
 EXPECT
-Array found where operator expected at - line 1, near "0@{"
-	(Missing operator before @{?)
+Array found where operator expected (Missing operator before "@{"?) at - line 1, near "0@{"
 syntax error at - line 1, near "0@"
-Missing right curly or square bracket at - line 1, at end of line
 Execution of - aborted due to compilation errors.
 ########
 # NAME Unterminated here-doc in string eval
@@ -342,9 +333,8 @@ has cxxc => (
     default => sub { 1 }
 );
 EXPECT
-Bareword found where operator expected at - line 9, near "isa => 'Int"
+Bareword found where operator expected (Do you need to predeclare "isa"?) at - line 9, near "isa => 'Int"
   (Might be a runaway multi-line '' string starting on line 4)
-	(Do you need to predeclare isa?)
 Bad name after Int' at - line 9.
 ########
 # NAME Bad name after :: (with other helpful messages)
@@ -361,9 +351,8 @@ has cxxc => (
     default => sub { 1 }
 );
 EXPECT
-Bareword found where operator expected at - line 9, near "isa => "Foo"
+Bareword found where operator expected (Do you need to predeclare "isa"?) at - line 9, near "isa => "Foo"
   (Might be a runaway multi-line "" string starting on line 4)
-	(Do you need to predeclare isa?)
 Bad name after Foo:: at - line 9.
 ########
 # NAME Unterminated delimiter for here document
@@ -482,10 +471,7 @@ Use of bare << to mean <<"" is forbidden at - line 1.
 # NAME incomplete floating point decimal exponent (#131725)
 1e--5
 EXPECT
-Bareword found where operator expected at - line 1, near "1e"
-	(Missing operator before e?)
-Number found where operator expected at - line 1, near "--5"
-	(Missing operator before 5?)
+Bareword found where operator expected (Missing operator before "e"?) at - line 1, near "1e"
 syntax error at - line 1, near "1e"
 Execution of - aborted due to compilation errors.
 ########
@@ -507,8 +493,7 @@ Execution of - aborted due to compilation errors.
 01.1234567p0;
 07.8p0;
 EXPECT
-Bareword found where operator expected at - line 2, near "8p0"
-	(Missing operator before p0?)
+Bareword found where operator expected (Missing operator before "p0"?) at - line 2, near "8p0"
 syntax error at - line 2, near "8p0"
 Execution of - aborted due to compilation errors.
 ########
@@ -516,8 +501,7 @@ Execution of - aborted due to compilation errors.
 0b1.10p0;
 0b1.2p0;
 EXPECT
-Bareword found where operator expected at - line 2, near "2p0"
-	(Missing operator before p0?)
+Bareword found where operator expected (Missing operator before "p0"?) at - line 2, near "2p0"
 syntax error at - line 2, near "2p0"
 Execution of - aborted due to compilation errors.
 ########
@@ -572,11 +556,7 @@ Execution of - aborted due to compilation errors.
 # NAME [perl #134310] don't confuse S_no_op() with PL_bufptr after s
 0 0x@
 EXPECT
-Number found where operator expected at - line 1, near "0 0x"
-	(Missing operator before  0x?)
-Array found where operator expected at - line 1, near "0x@
-;"
-	(Missing operator before ;?)
+Number found where operator expected (Missing operator before "0x"?) at - line 1, near "0 0x"
 No digits found for hexadecimal literal at - line 1, near "0 0x@"
 syntax error at - line 1, near "0 0x"
 Execution of - aborted due to compilation errors.

@@ -19,10 +19,16 @@ elsif ($^O eq 'VMS') {
   map { s/;.*$//; delete $files{lc($_)}; } split /[\n]/, `directory/noheading/notrailing/versions=1 [.op]`,
 }
 else {
+  local %ENV = %ENV;
+  # disable any env vars that might cause ls or dir to add colors or
+  # otherwise modify the output.
+  /COLOR|LS|CLI/i and delete $ENV{$_} for keys %ENV;
+
   map { $files{$_}++ } <op/*>;
-  map { delete $files{$_} } split /\n/, `ls op/* | cat`;
+  map { delete $files{"op/$_"} } split /\n/, `ls op/ | cat`;
 }
-ok( !(keys(%files)),'leftover op/* files' ) or diag(join(' ',sort keys %files));
+ok( !(keys(%files)),'glob and directory listing agree' )
+    or diag(join(' ',sort keys %files));
 
 cmp_ok($/,'eq',"\n",'sane input record separator');
 

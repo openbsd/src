@@ -1183,10 +1183,9 @@ for my $restriction (sort keys %restriction_types) {
 
 SKIP:
 {
-    isASCII
-      or skip "These tests probably break on non-ASCII", 1;
     my $simple = join "", "A" .. "J";
-    my $utf_ch = "\x{7fffffff}";
+    my $utf_ch = "\x{3f_ffff}";     # Highest code point that is same number
+                                    # of bytes on ASCII and EBCDIC: 5
     utf8::encode($utf_ch);
     my $utf_ch_len = length $utf_ch;
     note "utf_ch_len $utf_ch_len";
@@ -1195,10 +1194,9 @@ SKIP:
     # $bad_end ends with a start byte and a single continuation
     my $bad_end = substr($utf, 0, length($utf)-$utf_ch_len+2);
 
-    # WARNING: all offsets are *byte* offsets
     my @hop_tests =
-      (
-       # string      s                off        expected         name
+      (  #           start byte      chars
+       # string      in 'string'     to hop      expected         name
        [ $simple,    0,               5,         5,               "simple in range, forward" ],
        [ $simple,    10,              -5,        5,               "simple in range, backward" ],
        [ $simple,    5,               10,        10,              "simple out of range, forward" ],
@@ -1209,9 +1207,10 @@ SKIP:
        [ $utf,       $utf_ch_len * 5, -4,        $utf_ch_len,     "utf in range b, backward" ],
        [ $utf,       $utf_ch_len * 5, 6,         length($utf),    "utf out of range, forward" ],
        [ $utf,       $utf_ch_len * 5, -6,        0,               "utf out of range, backward"  ],
-       [ $bad_start, 0,               1,         1,               "bad start, forward 1 from 0" ],
-       [ $bad_start, 0,               $utf_ch_len-1, $utf_ch_len-1, "bad start, forward ch_len-1 from 0" ],
-       [ $bad_start, 0,               $utf_ch_len, $utf_ch_len*2-1, "bad start, forward ch_len from 0" ],
+       [ $bad_start, 0,               1,         $utf_ch_len-1,   "bad start, forward 1 from 0" ],
+       [ $bad_start, 0,               5,         5 * $utf_ch_len-1, "bad start, forward 5 chars from 0" ],
+       [ $bad_start, 0,                9,        length($bad_start)-$utf_ch_len, "bad start, forward 9 chars from 0" ],
+       [ $bad_start, 0,               10,        length $bad_start, "bad start, forward 10 chars from 0" ],
        [ $bad_start, $utf_ch_len-1,   -1,        0,                "bad start, back 1 from first start byte" ],
        [ $bad_start, $utf_ch_len-2,   -1,        0,                "bad start, back 1 from before first start byte" ],
        [ $bad_start, 0,               -1,        0,                "bad start, back 1 from 0" ],
@@ -1221,8 +1220,8 @@ SKIP:
        );
 
     for my $test (@hop_tests) {
-        my ($str, $s_off, $off, $want, $name) = @$test;
-        my $result = test_utf8_hop_safe($str, $s_off, $off);
+        my ($str, $s_off, $hop, $want, $name) = @$test;
+        my $result = test_utf8_hop_safe($str, $s_off, $hop);
         is($result, $want, "utf8_hop_safe: $name");
     }
 }

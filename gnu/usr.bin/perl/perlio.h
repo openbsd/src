@@ -32,7 +32,7 @@
 #  error "stdio is no longer supported as the default base layer -- use perlio."
 #endif
 
-/* --------------------  End of Configure controls ---------------------------- */
+/*--------------------  End of Configure controls ---------------------------*/
 
 /*
  * Although we may not want stdio to be used including <stdio.h> here

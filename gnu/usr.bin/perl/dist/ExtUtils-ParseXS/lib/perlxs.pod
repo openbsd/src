@@ -1332,6 +1332,46 @@ C<BAR::getit()> for this function.
         OUTPUT:
           timep
 
+A warning will be produced when you create more than one alias to the same
+value. This may be worked around in a backwards compatible way by creating
+multiple defines which resolve to the same value, or with a modern version
+of ExtUtils::ParseXS you can use a symbolic alias, which are denoted with
+a C<< => >> instead of a C<< = >>. For instance you could change the above
+so that the alias section looked like this:
+
+	ALIAS:
+	    FOO::gettime = 1
+	    BAR::getit = 2
+            BAZ::gettime => FOO::gettime
+
+this would have the same effect as this:
+
+	ALIAS:
+	    FOO::gettime = 1
+	    BAR::getit = 2
+            BAZ::gettime = 1
+
+except that the latter will produce warnings during the build process. A
+mechanism that would work in a backwards compatible way with older
+versions of our tool chain would be to do this:
+
+    #define FOO_GETTIME 1
+    #define BAR_GETIT 2
+    #define BAZ_GETTIME 1
+
+    bool_t
+    rpcb_gettime(host,timep)
+          char *host
+          time_t &timep
+	ALIAS:
+	    FOO::gettime = FOO_GETTIME
+	    BAR::getit = BAR_GETIT
+            BAZ::gettime = BAZ_GETTIME
+	INIT:
+	  printf("# ix = %d\n", ix );
+        OUTPUT:
+          timep
+
 =head2 The OVERLOAD: Keyword
 
 Instead of writing an overloaded interface using pure Perl, you
@@ -2369,7 +2409,18 @@ or use the methods given in L<perlcall>.
 =head1 XS VERSION
 
 This document covers features supported by C<ExtUtils::ParseXS>
-(also known as C<xsubpp>) 3.13_01.
+(also known as C<xsubpp>) 3.51
+
+=head1 AUTHOR DIAGNOSTICS
+
+As of version 3.49 certain warnings are disabled by default. While developing
+you can set C<$ENV{AUTHOR_WARNINGS}> to true in your environment or in your
+Makefile.PL, or set C<$ExtUtils::ParseXS::AUTHOR_WARNINGS> to true via code, or
+pass C<< author_warnings=>1 >> into process_file() explicitly.  Currently this will
+enable stricter alias checking but more warnings might be added in the future.
+The kind of warnings this will enable are only helpful to the author of the XS
+file, and the diagnostics produced will not include installation specific
+details so they are only useful to the maintainer of the XS code itself.
 
 =head1 AUTHOR
 

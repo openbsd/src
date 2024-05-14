@@ -34,6 +34,10 @@ SOFTWARE.
  * header files, because they depend on proto.h (included after most other
  * headers) or struct definitions.
  *
+ * Note also perlstatic.h for functions that can't or shouldn't be inlined, but
+ * whose details should be exposed to the compiler, for such things as tail
+ * call optimization.
+ *
  * Each section names the header file that the functions "belong" to.
  */
 
@@ -140,6 +144,78 @@ Perl_av_fetch_simple(pTHX_ AV *av, SSize_t key, I32 lval)
     }
 }
 
+/*
+=for apidoc av_push_simple
+
+This is a cut-down version of av_push that assumes that the array is very
+straightforward - no magic, not readonly, and AvREAL - and that C<key> is
+not less than -1. This function MUST NOT be used in situations where any
+of those assumptions may not hold.
+
+Pushes an SV (transferring control of one reference count) onto the end of the
+array.  The array will grow automatically to accommodate the addition.
+
+Perl equivalent: C<push @myarray, $val;>.
+
+=cut
+*/
+
+PERL_STATIC_INLINE void
+Perl_av_push_simple(pTHX_ AV *av, SV *val)
+{
+    PERL_ARGS_ASSERT_AV_PUSH_SIMPLE;
+    assert(SvTYPE(av) == SVt_PVAV);
+    assert(!SvMAGICAL(av));
+    assert(!SvREADONLY(av));
+    assert(AvREAL(av));
+    assert(AvFILLp(av) > -2);
+
+    (void)av_store_simple(av,AvFILLp(av)+1,val);
+}
+
+/*
+=for apidoc av_new_alloc
+
+This implements L<perlapi/C<newAV_alloc_x>>
+and L<perlapi/C<newAV_alloc_xz>>, which are the public API for this
+functionality.
+
+Creates a new AV and allocates its SV* array.
+
+This is similar to, but more efficient than doing:
+
+    AV *av = newAV();
+    av_extend(av, key);
+
+The size parameter is used to pre-allocate a SV* array large enough to
+hold at least elements C<0..(size-1)>.  C<size> must be at least 1.
+
+The C<zeroflag> parameter controls whether or not the array is NULL
+initialized.
+
+=cut
+*/
+
+PERL_STATIC_INLINE AV *
+Perl_av_new_alloc(pTHX_ SSize_t size, bool zeroflag)
+{
+    AV * const av = newAV();
+    SV** ary;
+    PERL_ARGS_ASSERT_AV_NEW_ALLOC;
+    assert(size > 0);
+
+    Newx(ary, size, SV*); /* Newx performs the memwrap check */
+    AvALLOC(av) = ary;
+    AvARRAY(av) = ary;
+    AvMAX(av) = size - 1;
+
+    if (zeroflag)
+        Zero(ary, size, SV*);
+
+    return av;
+}
+
+
 /* ------------------------------- cv.h ------------------------------- */
 
 /*
@@ -203,6 +279,25 @@ S_strip_spaces(pTHX_ const char * orig, STRLEN * const len)
     *len = tmps - SvPVX(tmpsv);
                 return SvPVX(tmpsv);
 }
+#endif
+
+/* ------------------------------- iperlsys.h ------------------------------- */
+#if ! defined(PERL_IMPLICIT_SYS) && defined(USE_ITHREADS)
+
+/* Otherwise this function is implemented as macros in iperlsys.h */
+
+PERL_STATIC_INLINE bool
+S_PerlEnv_putenv(pTHX_ char * str)
+{
+    PERL_ARGS_ASSERT_PERLENV_PUTENV;
+
+    ENV_LOCK;
+    bool retval = putenv(str);
+    ENV_UNLOCK;
+
+    return retval;
+}
+
 #endif
 
 /* ------------------------------- mg.h ------------------------------- */
@@ -313,171 +408,6 @@ Perl_ReANY(const REGEXP * const re)
     return SvTYPE(re) == SVt_PVLV ? p->xpv_len_u.xpvlenu_rx
                                    : (struct regexp *)p;
 }
-
-/* ------------------------------- sv.h ------------------------------- */
-
-PERL_STATIC_INLINE bool
-Perl_SvTRUE(pTHX_ SV *sv)
-{
-    PERL_ARGS_ASSERT_SVTRUE;
-
-    if (UNLIKELY(sv == NULL))
-        return FALSE;
-    SvGETMAGIC(sv);
-    return SvTRUE_nomg_NN(sv);
-}
-
-PERL_STATIC_INLINE bool
-Perl_SvTRUE_nomg(pTHX_ SV *sv)
-{
-    PERL_ARGS_ASSERT_SVTRUE_NOMG;
-
-    if (UNLIKELY(sv == NULL))
-        return FALSE;
-    return SvTRUE_nomg_NN(sv);
-}
-
-PERL_STATIC_INLINE bool
-Perl_SvTRUE_NN(pTHX_ SV *sv)
-{
-    PERL_ARGS_ASSERT_SVTRUE_NN;
-
-    SvGETMAGIC(sv);
-    return SvTRUE_nomg_NN(sv);
-}
-
-PERL_STATIC_INLINE bool
-Perl_SvTRUE_common(pTHX_ SV * sv, const bool sv_2bool_is_fallback)
-{
-    PERL_ARGS_ASSERT_SVTRUE_COMMON;
-
-    if (UNLIKELY(SvIMMORTAL_INTERP(sv)))
-        return SvIMMORTAL_TRUE(sv);
-
-    if (! SvOK(sv))
-        return FALSE;
-
-    if (SvPOK(sv))
-        return SvPVXtrue(sv);
-
-    if (SvIOK(sv))
-        return SvIVX(sv) != 0; /* casts to bool */
-
-    if (SvROK(sv) && !(SvOBJECT(SvRV(sv)) && HvAMAGIC(SvSTASH(SvRV(sv)))))
-        return TRUE;
-
-    if (sv_2bool_is_fallback)
-        return sv_2bool_nomg(sv);
-
-    return isGV_with_GP(sv);
-}
-
-
-PERL_STATIC_INLINE SV *
-Perl_SvREFCNT_inc(SV *sv)
-{
-    if (LIKELY(sv != NULL))
-        SvREFCNT(sv)++;
-    return sv;
-}
-PERL_STATIC_INLINE SV *
-Perl_SvREFCNT_inc_NN(SV *sv)
-{
-    PERL_ARGS_ASSERT_SVREFCNT_INC_NN;
-
-    SvREFCNT(sv)++;
-    return sv;
-}
-PERL_STATIC_INLINE void
-Perl_SvREFCNT_inc_void(SV *sv)
-{
-    if (LIKELY(sv != NULL))
-        SvREFCNT(sv)++;
-}
-PERL_STATIC_INLINE void
-Perl_SvREFCNT_dec(pTHX_ SV *sv)
-{
-    if (LIKELY(sv != NULL)) {
-        U32 rc = SvREFCNT(sv);
-        if (LIKELY(rc > 1))
-            SvREFCNT(sv) = rc - 1;
-        else
-            Perl_sv_free2(aTHX_ sv, rc);
-    }
-}
-
-PERL_STATIC_INLINE void
-Perl_SvREFCNT_dec_NN(pTHX_ SV *sv)
-{
-    U32 rc = SvREFCNT(sv);
-
-    PERL_ARGS_ASSERT_SVREFCNT_DEC_NN;
-
-    if (LIKELY(rc > 1))
-        SvREFCNT(sv) = rc - 1;
-    else
-        Perl_sv_free2(aTHX_ sv, rc);
-}
-
-/*
-=for apidoc SvAMAGIC_on
-
-Indicate that C<sv> has overloading (active magic) enabled.
-
-=cut
-*/
-
-PERL_STATIC_INLINE void
-Perl_SvAMAGIC_on(SV *sv)
-{
-    PERL_ARGS_ASSERT_SVAMAGIC_ON;
-    assert(SvROK(sv));
-
-    if (SvOBJECT(SvRV(sv))) HvAMAGIC_on(SvSTASH(SvRV(sv)));
-}
-
-/*
-=for apidoc SvAMAGIC_off
-
-Indicate that C<sv> has overloading (active magic) disabled.
-
-=cut
-*/
-
-PERL_STATIC_INLINE void
-Perl_SvAMAGIC_off(SV *sv)
-{
-    PERL_ARGS_ASSERT_SVAMAGIC_OFF;
-
-    if (SvROK(sv) && SvOBJECT(SvRV(sv)))
-        HvAMAGIC_off(SvSTASH(SvRV(sv)));
-}
-
-PERL_STATIC_INLINE U32
-Perl_SvPADSTALE_on(SV *sv)
-{
-    assert(!(SvFLAGS(sv) & SVs_PADTMP));
-    return SvFLAGS(sv) |= SVs_PADSTALE;
-}
-PERL_STATIC_INLINE U32
-Perl_SvPADSTALE_off(SV *sv)
-{
-    assert(!(SvFLAGS(sv) & SVs_PADTMP));
-    return SvFLAGS(sv) &= ~SVs_PADSTALE;
-}
-#if defined(PERL_CORE) || defined (PERL_EXT)
-PERL_STATIC_INLINE STRLEN
-S_sv_or_pv_pos_u2b(pTHX_ SV *sv, const char *pv, STRLEN pos, STRLEN *lenp)
-{
-    PERL_ARGS_ASSERT_SV_OR_PV_POS_U2B;
-    if (SvGAMAGIC(sv)) {
-        U8 *hopped = utf8_hop((U8 *)pv, pos);
-        if (lenp) *lenp = (STRLEN)(utf8_hop(hopped, *lenp) - hopped);
-        return (STRLEN)(hopped - (U8 *)pv);
-    }
-    return sv_pos_u2b_flags(sv,pos,lenp,SV_CONST_RETURN);
-}
-#endif
 
 /* ------------------------------- utf8.h ------------------------------- */
 
@@ -657,7 +587,7 @@ Perl_is_utf8_invariant_string_loc(const U8* const s, STRLEN len, const U8 ** ep)
         /* Here, we know we have at least one full word to process.  Process
          * per-word as long as we have at least a full word left */
         do {
-            if ((* (PERL_UINTMAX_T *) x) & PERL_VARIANTS_WORD_MASK)  {
+            if ((* (const PERL_UINTMAX_T *) x) & PERL_VARIANTS_WORD_MASK)  {
 
                 /* Found a variant.  Just return if caller doesn't want its
                  * exact position */
@@ -668,7 +598,7 @@ Perl_is_utf8_invariant_string_loc(const U8* const s, STRLEN len, const U8 ** ep)
 #  if   BYTEORDER == 0x1234 || BYTEORDER == 0x12345678    \
      || BYTEORDER == 0x4321 || BYTEORDER == 0x87654321
 
-                *ep = x + variant_byte_number(* (PERL_UINTMAX_T *) x);
+                *ep = x + variant_byte_number(* (const PERL_UINTMAX_T *) x);
                 assert(*ep >= s && *ep < send);
 
                 return FALSE;
@@ -1200,7 +1130,8 @@ S_variant_under_utf8_count(const U8* const s, const U8* const e)
 
 #endif
 
-#ifndef PERL_IN_REGEXEC_C   /* Keep  these around for that file */
+   /* Keep  these around for these files */
+#if ! defined(PERL_IN_REGEXEC_C) && ! defined(PERL_IN_UTF8_C)
 #  undef PERL_WORDSIZE
 #  undef PERL_COUNT_MULTIPLIER
 #  undef PERL_WORD_BOUNDARY_MASK
@@ -1542,7 +1473,7 @@ Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
  * This uses adaptations of the table and algorithm given in
  * https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
  * documentation of the original version.  A copyright notice for the original
- * version is given at the beginning of this file.  The Perl adapations are
+ * version is given at the beginning of this file.  The Perl adaptations are
  * documented at the definition of PL_extended_utf8_dfa_tab[].
  *
  * This dfa is fast.  There are three exit conditions:
@@ -1599,9 +1530,10 @@ Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
                               incomplete_char_action)                       \
     STMT_START {                                                            \
         const U8 * s = s0;                                                  \
+        const U8 * e_ = e;                                                  \
         UV state = 0;                                                       \
                                                                             \
-        PERL_NON_CORE_CHECK_EMPTY(s,e);                                     \
+        PERL_NON_CORE_CHECK_EMPTY(s, e_);                                   \
                                                                             \
         do {                                                                \
             state = dfa_tab[256 + state + dfa_tab[*s]];                     \
@@ -1614,7 +1546,7 @@ Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
             if (UNLIKELY(state == 1)) { /* Rejecting state */               \
                 reject_action;                                              \
             }                                                               \
-        } while (s < e);                                                    \
+        } while (s < e_);                                                   \
                                                                             \
         /* Here, dropped out of loop before end-of-char */                  \
         incomplete_char_action;                                             \
@@ -1654,7 +1586,7 @@ machines) is a valid UTF-8 character.
 This uses an adaptation of the table and algorithm given in
 https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
 documentation of the original version.  A copyright notice for the original
-version is given at the beginning of this file.  The Perl adapation is
+version is given at the beginning of this file.  The Perl adaptation is
 documented at the definition of PL_extended_utf8_dfa_tab[].
 */
 
@@ -1723,7 +1655,7 @@ C<L</is_strict_utf8_string_loclen>> to check entire strings.
 This uses an adaptation of the tables and algorithm given in
 https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
 documentation of the original version.  A copyright notice for the original
-version is given at the beginning of this file.  The Perl adapation is
+version is given at the beginning of this file.  The Perl adaptation is
 documented at the definition of strict_extended_utf8_dfa_tab[].
 
 */
@@ -1778,7 +1710,7 @@ C<L</is_c9strict_utf8_string_loclen>> to check entire strings.
 This uses an adaptation of the tables and algorithm given in
 https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
 documentation of the original version.  A copyright notice for the original
-version is given at the beginning of this file.  The Perl adapation is
+version is given at the beginning of this file.  The Perl adaptation is
 documented at the definition of PL_c9_utf8_dfa_tab[].
 
 */
@@ -2072,11 +2004,16 @@ Perl_utf8_distance(pTHX_ const U8 *a, const U8 *b)
 =for apidoc utf8_hop
 
 Return the UTF-8 pointer C<s> displaced by C<off> characters, either
-forward or backward.
+forward (if C<off> is positive) or backward (if negative).  C<s> does not need
+to be pointing to the starting byte of a character.  If it isn't, one count of
+C<off> will be used up to get to the start of the next character for forward
+hops, and to the start of the current character for negative ones.
 
-WARNING: do not use the following unless you *know* C<off> is within
-the UTF-8 data pointed to by C<s> *and* that on entry C<s> is aligned
-on the first byte of character or just after the last byte of a character.
+WARNING: Prefer L</utf8_hop_safe> to this one.
+
+Do NOT use this function unless you B<know> C<off> is within
+the UTF-8 data pointed to by C<s> B<and> that on entry C<s> is aligned
+on the first byte of a character or just after the last byte of a character.
 
 =cut
 */
@@ -2087,10 +2024,20 @@ Perl_utf8_hop(const U8 *s, SSize_t off)
     PERL_ARGS_ASSERT_UTF8_HOP;
 
     /* Note: cannot use UTF8_IS_...() too eagerly here since e.g
-     * the bitops (especially ~) can create illegal UTF-8.
+     * the XXX bitops (especially ~) can create illegal UTF-8.
      * In other words: in Perl UTF-8 is not just for Unicode. */
 
-    if (off >= 0) {
+    if (off > 0) {
+
+        /* Get to next non-continuation byte */
+        if (UNLIKELY(UTF8_IS_CONTINUATION(*s))) {
+            do {
+                s++;
+            }
+            while (UTF8_IS_CONTINUATION(*s));
+            off--;
+        }
+
         while (off--)
             s += UTF8SKIP(s);
     }
@@ -2101,6 +2048,7 @@ Perl_utf8_hop(const U8 *s, SSize_t off)
                 s--;
         }
     }
+
     GCC_DIAG_IGNORE(-Wcast-qual)
     return (U8 *)s;
     GCC_DIAG_RESTORE
@@ -2110,7 +2058,9 @@ Perl_utf8_hop(const U8 *s, SSize_t off)
 =for apidoc utf8_hop_forward
 
 Return the UTF-8 pointer C<s> displaced by up to C<off> characters,
-forward.
+forward.  C<s> does not need to be pointing to the starting byte of a
+character.  If it isn't, one count of C<off> will be used up to get to the
+start of the next character.
 
 C<off> must be non-negative.
 
@@ -2135,6 +2085,15 @@ Perl_utf8_hop_forward(const U8 *s, SSize_t off, const U8 *end)
     assert(s <= end);
     assert(off >= 0);
 
+    if (off && UNLIKELY(UTF8_IS_CONTINUATION(*s))) {
+        /* Get to next non-continuation byte */
+        do {
+            s++;
+        }
+        while (UTF8_IS_CONTINUATION(*s));
+        off--;
+    }
+
     while (off--) {
         STRLEN skip = UTF8SKIP(s);
         if ((STRLEN)(end - s) <= skip) {
@@ -2154,7 +2113,9 @@ Perl_utf8_hop_forward(const U8 *s, SSize_t off, const U8 *end)
 =for apidoc utf8_hop_back
 
 Return the UTF-8 pointer C<s> displaced by up to C<off> characters,
-backward.
+backward.  C<s> does not need to be pointing to the starting byte of a
+character.  If it isn't, one count of C<off> will be used up to get to that
+start.
 
 C<off> must be non-positive.
 
@@ -2179,6 +2140,13 @@ Perl_utf8_hop_back(const U8 *s, SSize_t off, const U8 *start)
     assert(start <= s);
     assert(off <= 0);
 
+    /* Note: if we know that the input is well-formed, we can do per-word
+     * hop-back.  Commit d6ad3b72778369a84a215b498d8d60d5b03aa1af implemented
+     * that.  But it was reverted because doing per-word has some
+     * start-up/tear-down overhead, so only makes sense if the distance to be
+     * moved is large, and core perl doesn't currently move more than a few
+     * characters at a time.  You can reinstate it if it does become
+     * advantageous. */
     while (off++ && s > start) {
         do {
             s--;
@@ -2194,7 +2162,10 @@ Perl_utf8_hop_back(const U8 *s, SSize_t off, const U8 *start)
 =for apidoc utf8_hop_safe
 
 Return the UTF-8 pointer C<s> displaced by up to C<off> characters,
-either forward or backward.
+either forward or backward.  C<s> does not need to be pointing to the starting
+byte of a character.  If it isn't, one count of C<off> will be used up to get
+to the start of the next character for forward hops, and to the start of the
+current character for negative ones.
 
 When moving backward it will not move before C<start>.
 
@@ -2460,11 +2431,11 @@ Perl_is_utf8_fixed_width_buf_loclen_flags(const U8 * const s,
 
 PERL_STATIC_INLINE UV
 Perl_utf8n_to_uvchr_msgs(const U8 *s,
-                      STRLEN curlen,
-                      STRLEN *retlen,
-                      const U32 flags,
-                      U32 * errors,
-                      AV ** msgs)
+                         STRLEN curlen,
+                         STRLEN *retlen,
+                         const U32 flags,
+                         U32 * errors,
+                         AV ** msgs)
 {
     /* This is the inlined portion of utf8n_to_uvchr_msgs.  It handles the
      * simple cases, and, if necessary calls a helper function to deal with the
@@ -2476,7 +2447,7 @@ Perl_utf8n_to_uvchr_msgs(const U8 *s,
      * https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides
      * comprehensive documentation of the original version.  A copyright notice
      * for the original version is given at the beginning of this file.  The
-     * Perl adapation is documented at the definition of PL_strict_utf8_dfa_tab[].
+     * Perl adaptation is documented at the definition of PL_strict_utf8_dfa_tab[].
      */
 
     const U8 * const s0 = s;
@@ -2687,7 +2658,7 @@ S_lossless_NV_to_IV(const NV nv, IV *ivp)
 
 /* ------------------ pp.c, regcomp.c, toke.c, universal.c ------------ */
 
-#if defined(PERL_IN_PP_C) || defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_TOKE_C) || defined(PERL_IN_UNIVERSAL_C)
+#if defined(PERL_IN_PP_C) || defined(PERL_IN_REGCOMP_ANY) || defined(PERL_IN_TOKE_C) || defined(PERL_IN_UNIVERSAL_C)
 
 #define MAX_CHARSET_NAME_LENGTH 2
 
@@ -3086,6 +3057,8 @@ Perl_cx_poploop(pTHX_ PERL_CONTEXT *cx)
         cx->blk_loop.itersave = NULL;
         SvREFCNT_dec(cursv);
     }
+    if (cx->cx_type & (CXp_FOR_GV|CXp_FOR_LVREF))
+        SvREFCNT_dec(cx->blk_loop.itervar_u.svp);
 }
 
 
@@ -3134,6 +3107,36 @@ Perl_cx_popgiven(pTHX_ PERL_CONTEXT *cx)
     SvREFCNT_dec(sv);
 }
 
+/*
+=for apidoc newPADxVOP
+
+Constructs, checks and returns an op containing a pad offset.  C<type> is
+the opcode, which should be one of C<OP_PADSV>, C<OP_PADAV>, C<OP_PADHV>
+or C<OP_PADCV>.  The returned op will have the C<op_targ> field set by
+the C<padix> argument.
+
+This is convenient when constructing a large optree in nested function
+calls, as it avoids needing to store the pad op directly to set the
+C<op_targ> field as a side-effect. For example
+
+    o = op_append_elem(OP_LINESEQ, o,
+        newPADxVOP(OP_PADSV, 0, padix));
+
+=cut
+*/
+
+PERL_STATIC_INLINE OP *
+Perl_newPADxVOP(pTHX_ I32 type, I32 flags, PADOFFSET padix)
+{
+    PERL_ARGS_ASSERT_NEWPADXVOP;
+
+    assert(type == OP_PADSV || type == OP_PADAV || type == OP_PADHV
+            || type == OP_PADCV);
+    OP *o = newOP(type, flags);
+    o->op_targ = padix;
+    return o;
+}
+
 /* ------------------ util.h ------------------------------------------- */
 
 /*
@@ -3151,7 +3154,7 @@ range bytes match only themselves.
 */
 
 PERL_STATIC_INLINE I32
-Perl_foldEQ(const char *s1, const char *s2, I32 len)
+Perl_foldEQ(pTHX_ const char *s1, const char *s2, I32 len)
 {
     const U8 *a = (const U8 *)s1;
     const U8 *b = (const U8 *)s2;
@@ -3169,7 +3172,7 @@ Perl_foldEQ(const char *s1, const char *s2, I32 len)
 }
 
 PERL_STATIC_INLINE I32
-Perl_foldEQ_latin1(const char *s1, const char *s2, I32 len)
+Perl_foldEQ_latin1(pTHX_ const char *s1, const char *s2, I32 len)
 {
     /* Compare non-UTF-8 using Unicode (Latin1) semantics.  Works on all folds
      * representable without UTF-8, except for LATIN_SMALL_LETTER_SHARP_S, and
@@ -3203,7 +3206,7 @@ same case-insensitively in the current locale; false otherwise.
 */
 
 PERL_STATIC_INLINE I32
-Perl_foldEQ_locale(const char *s1, const char *s2, I32 len)
+Perl_foldEQ_locale(pTHX_ const char *s1, const char *s2, I32 len)
 {
     const U8 *a = (const U8 *)s1;
     const U8 *b = (const U8 *)s2;
@@ -3213,8 +3216,14 @@ Perl_foldEQ_locale(const char *s1, const char *s2, I32 len)
     assert(len >= 0);
 
     while (len--) {
-        if (*a != *b && *a != PL_fold_locale[*b])
+        if (*a != *b && *a != PL_fold_locale[*b]) {
+            DEBUG_Lv(PerlIO_printf(Perl_debug_log,
+                     "%s:%d: Our records indicate %02x is not a fold of %02x"
+                     " or its mate %02x\n",
+                     __FILE__, __LINE__, *a, *b, PL_fold_locale[*b]));
+
             return 0;
+        }
         a++,b++;
     }
     return 1;
@@ -3341,7 +3350,7 @@ Perl_mortal_getenv(const char * str)
      * the recursive calls and calls from the logger, and treat them specially.
      * Let's say we want to do getenv("foo").  We first find
      * getenv(PERL_MEM_LOG) and save it to a fixed-length per-interpreter
-     * variable, so no temporary is required.  Then we do getenv(foo}, and in
+     * variable, so no temporary is required.  Then we do getenv(foo), and in
      * the process of creating a temporary to save it, this function will be
      * called recursively to do a getenv(PERL_MEM_LOG).  On the recursed call,
      * we detect that it is such a call and return our saved value instead of
@@ -3421,7 +3430,7 @@ Perl_mortal_getenv(const char * str)
             }
         }
 
-        /* Then each of the three significant characters */
+        /* Then each of the four significant characters */
         if (strchr(ret, 'm')) {
             *mem_log_meat++ = 'm';
         }
@@ -3430,6 +3439,9 @@ Perl_mortal_getenv(const char * str)
         }
         if (strchr(ret, 't')) {
             *mem_log_meat++ = 't';
+        }
+        if (strchr(ret, 'c')) {
+            *mem_log_meat++ = 'c';
         }
         *mem_log_meat = '\0';
 
@@ -3475,8 +3487,7 @@ Perl_mortal_getenv(const char * str)
 PERL_STATIC_INLINE bool
 Perl_sv_isbool(pTHX_ const SV *sv)
 {
-    return SvIOK(sv) && SvPOK(sv) && SvIsCOW_static(sv) &&
-        (SvPVX_const(sv) == PL_Yes || SvPVX_const(sv) == PL_No);
+    return SvBoolFlagsOK(sv) && BOOL_INTERNALS_sv_isbool(sv);
 }
 
 #ifdef USE_ITHREADS
@@ -3499,6 +3510,254 @@ Perl_cop_file_avn(pTHX_ const COP *cop) {
          return NULL;
 }
 
+#endif
+
+PERL_STATIC_INLINE PADNAME *
+Perl_padname_refcnt_inc(PADNAME *pn)
+{
+    PadnameREFCNT(pn)++;
+    return pn;
+}
+
+PERL_STATIC_INLINE PADNAMELIST *
+Perl_padnamelist_refcnt_inc(PADNAMELIST *pnl)
+{
+    PadnamelistREFCNT(pnl)++;
+    return pnl;
+}
+
+/* copy a string to a safe spot */
+
+/*
+=for apidoc_section $string
+=for apidoc savepv
+
+Perl's version of C<strdup()>.  Returns a pointer to a newly allocated
+string which is a duplicate of C<pv>.  The size of the string is
+determined by C<strlen()>, which means it may not contain embedded C<NUL>
+characters and must have a trailing C<NUL>.  To prevent memory leaks, the
+memory allocated for the new string needs to be freed when no longer needed.
+This can be done with the C<L</Safefree>> function, or
+L<C<SAVEFREEPV>|perlguts/SAVEFREEPV(p)>.
+
+On some platforms, Windows for example, all allocated memory owned by a thread
+is deallocated when that thread ends.  So if you need that not to happen, you
+need to use the shared memory functions, such as C<L</savesharedpv>>.
+
+=cut
+*/
+
+PERL_STATIC_INLINE char *
+Perl_savepv(pTHX_ const char *pv)
+{
+    PERL_UNUSED_CONTEXT;
+    if (!pv)
+        return NULL;
+    else {
+        char *newaddr;
+        const STRLEN pvlen = strlen(pv)+1;
+        Newx(newaddr, pvlen, char);
+        return (char*)memcpy(newaddr, pv, pvlen);
+    }
+}
+
+/* same thing but with a known length */
+
+/*
+=for apidoc savepvn
+
+Perl's version of what C<strndup()> would be if it existed.  Returns a
+pointer to a newly allocated string which is a duplicate of the first
+C<len> bytes from C<pv>, plus a trailing
+C<NUL> byte.  The memory allocated for
+the new string can be freed with the C<Safefree()> function.
+
+On some platforms, Windows for example, all allocated memory owned by a thread
+is deallocated when that thread ends.  So if you need that not to happen, you
+need to use the shared memory functions, such as C<L</savesharedpvn>>.
+
+=cut
+*/
+
+PERL_STATIC_INLINE char *
+Perl_savepvn(pTHX_ const char *pv, Size_t len)
+{
+    char *newaddr;
+    PERL_UNUSED_CONTEXT;
+
+    Newx(newaddr,len+1,char);
+    /* Give a meaning to NULL pointer mainly for the use in sv_magic() */
+    if (pv) {
+        /* might not be null terminated */
+        newaddr[len] = '\0';
+        return (char *) CopyD(pv,newaddr,len,char);
+    }
+    else {
+        return (char *) ZeroD(newaddr,len+1,char);
+    }
+}
+
+/*
+=for apidoc savesvpv
+
+A version of C<savepv()>/C<savepvn()> which gets the string to duplicate from
+the passed in SV using C<SvPV()>
+
+On some platforms, Windows for example, all allocated memory owned by a thread
+is deallocated when that thread ends.  So if you need that not to happen, you
+need to use the shared memory functions, such as C<L</savesharedsvpv>>.
+
+=cut
+*/
+
+PERL_STATIC_INLINE char *
+Perl_savesvpv(pTHX_ SV *sv)
+{
+    STRLEN len;
+    const char * const pv = SvPV_const(sv, len);
+    char *newaddr;
+
+    PERL_ARGS_ASSERT_SAVESVPV;
+
+    ++len;
+    Newx(newaddr,len,char);
+    return (char *) CopyD(pv,newaddr,len,char);
+}
+
+/*
+=for apidoc savesharedsvpv
+
+A version of C<savesharedpv()> which allocates the duplicate string in
+memory which is shared between threads.
+
+=cut
+*/
+
+PERL_STATIC_INLINE char *
+Perl_savesharedsvpv(pTHX_ SV *sv)
+{
+    STRLEN len;
+    const char * const pv = SvPV_const(sv, len);
+
+    PERL_ARGS_ASSERT_SAVESHAREDSVPV;
+
+    return savesharedpvn(pv, len);
+}
+
+#ifndef PERL_GET_CONTEXT_DEFINED
+
+/*
+=for apidoc_section $embedding
+=for apidoc get_context
+
+Implements L<perlapi/C<PERL_GET_CONTEXT>>, which you should use instead.
+
+=cut
+*/
+
+PERL_STATIC_INLINE void *
+Perl_get_context(void)
+{
+#  if defined(USE_ITHREADS)
+#    ifdef OLD_PTHREADS_API
+    pthread_addr_t t;
+    int error = pthread_getspecific(PL_thr_key, &t);
+    if (error)
+        Perl_croak_nocontext("panic: pthread_getspecific, error=%d", error);
+    return (void*)t;
+#    elif defined(I_MACH_CTHREADS)
+    return (void*)cthread_data(cthread_self());
+#    else
+    return (void*)PTHREAD_GETSPECIFIC(PL_thr_key);
+#    endif
+#  else
+    return (void*)NULL;
+#  endif
+}
+
+#endif
+
+PERL_STATIC_INLINE MGVTBL*
+Perl_get_vtbl(pTHX_ int vtbl_id)
+{
+    PERL_UNUSED_CONTEXT;
+
+    return (vtbl_id < 0 || vtbl_id >= magic_vtable_max)
+        ? NULL : (MGVTBL*)PL_magic_vtables + vtbl_id;
+}
+
+/*
+=for apidoc my_strlcat
+
+The C library C<strlcat> if available, or a Perl implementation of it.
+This operates on C C<NUL>-terminated strings.
+
+C<my_strlcat()> appends string C<src> to the end of C<dst>.  It will append at
+most S<C<size - strlen(dst) - 1>> characters.  It will then C<NUL>-terminate,
+unless C<size> is 0 or the original C<dst> string was longer than C<size> (in
+practice this should not happen as it means that either C<size> is incorrect or
+that C<dst> is not a proper C<NUL>-terminated string).
+
+Note that C<size> is the full size of the destination buffer and
+the result is guaranteed to be C<NUL>-terminated if there is room.  Note that
+room for the C<NUL> should be included in C<size>.
+
+The return value is the total length that C<dst> would have if C<size> is
+sufficiently large.  Thus it is the initial length of C<dst> plus the length of
+C<src>.  If C<size> is smaller than the return, the excess was not appended.
+
+=cut
+
+Description stolen from http://man.openbsd.org/strlcat.3
+*/
+#ifndef HAS_STRLCAT
+PERL_STATIC_INLINE Size_t
+Perl_my_strlcat(char *dst, const char *src, Size_t size)
+{
+    Size_t used, length, copy;
+
+    used = strlen(dst);
+    length = strlen(src);
+    if (size > 0 && used < size - 1) {
+        copy = (length >= size - used) ? size - used - 1 : length;
+        memcpy(dst + used, src, copy);
+        dst[used + copy] = '\0';
+    }
+    return used + length;
+}
+#endif
+
+
+/*
+=for apidoc my_strlcpy
+
+The C library C<strlcpy> if available, or a Perl implementation of it.
+This operates on C C<NUL>-terminated strings.
+
+C<my_strlcpy()> copies up to S<C<size - 1>> characters from the string C<src>
+to C<dst>, C<NUL>-terminating the result if C<size> is not 0.
+
+The return value is the total length C<src> would be if the copy completely
+succeeded.  If it is larger than C<size>, the excess was not copied.
+
+=cut
+
+Description stolen from http://man.openbsd.org/strlcpy.3
+*/
+#ifndef HAS_STRLCPY
+PERL_STATIC_INLINE Size_t
+Perl_my_strlcpy(char *dst, const char *src, Size_t size)
+{
+    Size_t length, copy;
+
+    length = strlen(src);
+    if (size > 0) {
+        copy = (length >= size) ? size - 1 : length;
+        memcpy(dst, src, copy);
+        dst[copy] = '\0';
+    }
+    return length;
+}
 #endif
 
 /*

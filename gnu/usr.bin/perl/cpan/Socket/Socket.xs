@@ -98,6 +98,14 @@ struct sockaddr_un
 
 #endif
 
+/*
+ * The Windows implementations of inet_ntop and inet_pton are available
+ * whenever (and only when) InetNtopA is defined.
+ * Use those implementations whenever they are available.
+ * Else use the implementations provided below.
+*/
+#ifndef InetNtopA
+
 static int inet_pton(int af, const char *src, void *dst)
 {
   struct sockaddr_storage ss;
@@ -145,6 +153,8 @@ static const char *inet_ntop(int af, const void *src, char *dst, socklen_t size)
   else
     return dst;
 }
+
+#endif /* InetNtopA  not defined */
 
 #define HAS_INETPTON
 #define HAS_INETNTOP
@@ -223,10 +233,6 @@ static SV *my_newSVpvn_flags(pTHX_ const char *s, STRLEN len, U32 flags)
   return (flags & SVs_TEMP) ? sv_2mortal(sv) : sv;
 }
 #endif /* !newSVpvn_flags */
-
-#ifndef SvRV_set
-# define SvRV_set(sv, val) (SvRV(sv) = (val))
-#endif /* !SvRV_set */
 
 #ifndef SvPVbyte_nomg
 # define SvPVbyte_nomg SvPV
@@ -1191,13 +1197,14 @@ inet_ntop(af, ip_address_sv)
 	    break;
 #endif
 	  default:
-		croak("Bad address family for %s, got %d, should be"
 #ifdef AF_INET6
-		      " either AF_INET or AF_INET6",
+#    define WANT_FAMILY "either AF_INET or AF_INET6"
 #else
-		      " AF_INET",
+#    define WANT_FAMILY "AF_INET"
 #endif
+		croak("Bad address family for %s, got %d, should be " WANT_FAMILY,
 		      "Socket::inet_ntop", af);
+#undef WANT_FAMILY
 	}
 
 	if(addrlen < sizeof(addr)) {
@@ -1240,13 +1247,13 @@ inet_pton(af, host)
 	    break;
 #endif
 	  default:
-		croak("Bad address family for %s, got %d, should be"
 #ifdef AF_INET6
-		      " either AF_INET or AF_INET6",
+#    define WANT_FAMILY "either AF_INET or AF_INET6"
 #else
-		      " AF_INET",
+#    define WANT_FAMILY "AF_INET"
 #endif
-		      "Socket::inet_pton", af);
+		croak("Bad address family for %s, got %d, should be " WANT_FAMILY, "Socket::inet_pton", af);
+#undef WANT_FAMILY
 	}
 	ok = (*host != '\0') && inet_pton(af, host, &ip_address);
 

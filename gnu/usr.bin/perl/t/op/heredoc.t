@@ -7,7 +7,7 @@ BEGIN {
 }
 
 use strict;
-plan(tests => 137);
+plan(tests => 138);
 
 # heredoc without newline (#65838)
 {
@@ -93,7 +93,7 @@ HEREDOC
     fresh_perl_like(
         qq(0<<<<""0\n\n),
         # valgrind and asan reports an error between these two lines
-        qr/^Number found where operator expected at - line 1, near "<<""0"\s+\(Missing operator/,
+        qr/^Number found where operator expected \(Missing operator before "0"\?\) at - line 1, near "<<""0"/,
         {},
         "don't use an invalid oldoldbufptr"
     );
@@ -233,3 +233,13 @@ HEREDOC
         );
     }
 }
+fresh_perl_like(
+q#<<E1;
+${sub{b{]]]{} @{[ <<E2 ]}
+E2
+E1
+#,
+    qr/^syntax error/,
+    {},
+    "GH Issue #17397 - Syntax error inside of here doc causes segfault"
+);

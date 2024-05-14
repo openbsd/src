@@ -11,7 +11,7 @@ use Symbol;
 
 our $VERSION;
 BEGIN {
-  $VERSION = '3.45';
+  $VERSION = '3.51';
   require ExtUtils::ParseXS::Constants; ExtUtils::ParseXS::Constants->VERSION($VERSION);
   require ExtUtils::ParseXS::CountLines; ExtUtils::ParseXS::CountLines->VERSION($VERSION);
   require ExtUtils::ParseXS::Utilities; ExtUtils::ParseXS::Utilities->VERSION($VERSION);
@@ -31,6 +31,7 @@ use ExtUtils::ParseXS::Utilities qw(
   analyze_preprocessor_statements
   set_cond
   Warn
+  WarnHint
   current_line_number
   blurt
   death
@@ -47,7 +48,10 @@ our @EXPORT_OK = qw(
 
 ##############################
 # A number of "constants"
-
+our $DIE_ON_ERROR;
+our $AUTHOR_WARNINGS;
+$AUTHOR_WARNINGS = ($ENV{AUTHOR_WARNINGS} || 0)
+    unless defined $AUTHOR_WARNINGS;
 our ($C_group_rex, $C_arg);
 # Group in C (no support for comments or literals)
 $C_group_rex = qr/ [({\[]
@@ -103,6 +107,8 @@ sub process_file {
     typemap         => [],
     versioncheck    => 1,
     FH              => Symbol::gensym(),
+    die_on_error    => $DIE_ON_ERROR, # if true we die() and not exit() after errors
+    author_warnings    => $AUTHOR_WARNINGS,
     %options,
   );
   $args{except} = $args{except} ? ' TRY' : '';
@@ -132,6 +138,9 @@ sub process_file {
   $self->{WantVersionChk} = $args{versioncheck};
   $self->{WantLineNumbers} = $args{linenumbers};
   $self->{IncludedFiles} = {};
+
+  $self->{die_on_error} = $args{die_on_error};
+  $self->{author_warnings} = $args{author_warnings};
 
   die "Missing required parameter 'filename'" unless $args{filename};
   $self->{filepathname} = $args{filename};
@@ -627,7 +636,16 @@ EOF
           $self->print_section();
           $self->death("PPCODE must be last thing") if @{ $self->{line} };
           print "\tLEAVE;\n" if $self->{ScopeThisXSUB};
+          print "#if defined(__HP_cc) || defined(__HP_aCC)\n",
+                "#pragma diag_suppress 2111\n",
+                "#endif\n"
+            if $^O eq "hpux";
           print "\tPUTBACK;\n\treturn;\n";
+          print "#if defined(__HP_cc) || defined(__HP_aCC)\n",
+                "#pragma diag_default 2111\n",
+                "#endif\n"
+            if $^O eq "hpux";
+
         }
         elsif ($self->check_keyword("CODE")) {
           my $consumed_code = $self->print_section();
@@ -789,6 +807,10 @@ EOF
 #    if (errbuf[0])
 #    Perl_croak(aTHX_ errbuf);
 EOF
+    print "#if defined(__HP_cc) || defined(__HP_aCC)\n",
+          "#pragma diag_suppress 2128\n",
+          "#endif\n"
+      if $^O eq "hpux";
 
     if ($xsreturn) {
       print Q(<<"EOF") unless $PPCODE;
@@ -800,6 +822,10 @@ EOF
 #    XSRETURN_EMPTY;
 EOF
     }
+    print "#if defined(__HP_cc) || defined(__HP_aCC)\n",
+          "#pragma diag_default 2128\n",
+          "#endif\n"
+      if $^O eq "hpux";
 
     print Q(<<"EOF");
 #]]
@@ -873,7 +899,7 @@ EOF
        "        (void)$self->{newXS}(\"$self->{pname}\", XS_$self->{Full_func_name}$self->{file}$self->{proto});\n");
     }
 
-    for my $operator (keys %{ $self->{OverloadsThisXSUB} }) {
+    for my $operator (sort keys %{ $self->{OverloadsThisXSUB} }) {
       $self->{Overloaded}->{$self->{Package}} = $self->{Packid};
       my $overload = "$self->{Package}\::($operator";
       push(@{ $self->{InitFileCode} },
@@ -881,7 +907,7 @@ EOF
     }
   } # END 'PARAGRAPH' 'while' loop
 
-  for my $package (keys %{ $self->{Overloaded} }) { # make them findable with fetchmethod
+  for my $package (sort keys %{ $self->{Overloaded} }) { # make them findable with fetchmethod
     my $packid = $self->{Overloaded}->{$package};
     print Q(<<"EOF");
 #XS_EUPXS(XS_${packid}_nil); /* prototype to pass -Wmissing-prototypes */
@@ -905,7 +931,7 @@ MAKE_FETCHMETHOD_WORK
 
   print Q(<<"EOF");
 ##ifdef __cplusplus
-#extern "C"
+#extern "C" {
 ##endif
 EOF
 
@@ -968,7 +994,7 @@ EOF
 #
 EOF
 
-  if (%{ $self->{Overloaded} }) {
+  if (keys %{ $self->{Overloaded} }) {
     # once if any overloads
     print Q(<<"EOF");
 #    /* register the overloading (type 'A') magic */
@@ -976,7 +1002,7 @@ EOF
 #    PL_amagic_generation++;
 ##endif
 EOF
-    for my $package (keys %{ $self->{Overloaded} }) {
+    for my $package (sort keys %{ $self->{Overloaded} }) {
       # once for each package with overloads
       my $fallback = $self->{Fallback}->{$package} || "&PL_sv_undef";
       print Q(<<"EOF");
@@ -1016,6 +1042,9 @@ EOF
 ##endif
 #]]
 #
+##ifdef __cplusplus
+#}
+##endif
 EOF
 
   warn("Please specify prototyping behavior for $self->{filename} (see perlxs manual)\n")
@@ -1310,26 +1339,89 @@ sub get_aliases {
   my ($line) = @_;
   my ($orig) = $line;
 
+  # we use this later for symbolic aliases
+  my $fname = $self->{Packprefix} . $self->{func_name};
+
   # Parse alias definitions
   # format is
-  #    alias = value alias = value ...
+  #    alias = value Pack::alias = value ...
+  # or
+  #    alias => other
+  # or
+  #    alias => Pack::other
+  # or
+  #    Pack::alias => Other::alias
 
-  while ($line =~ s/^\s*([\w:]+)\s*=\s*(\w+)\s*//) {
-    my ($alias, $value) = ($1, $2);
+  while ($line =~ s/^\s*([\w:]+)\s*=(>?)\s*([\w:]+)\s*//) {
+    my ($alias, $is_symbolic, $value) = ($1, $2, $3);
     my $orig_alias = $alias;
+
+    blurt( $self, "Error: In alias definition for '$alias' the value may not"
+                  . " contain ':' unless it is symbolic.")
+        if !$is_symbolic and $value=~/:/;
 
     # check for optional package definition in the alias
     $alias = $self->{Packprefix} . $alias if $alias !~ /::/;
 
-    # check for duplicate alias name & duplicate value
-    Warn( $self, "Warning: Ignoring duplicate alias '$orig_alias'")
-      if defined $self->{XsubAliases}->{$alias};
+    if ($is_symbolic) {
+      my $orig_value = $value;
+      $value = $self->{Packprefix} . $value if $value !~ /::/;
+      if (defined $self->{XsubAliases}->{$value}) {
+        $value = $self->{XsubAliases}->{$value};
+      } elsif ($value eq $fname) {
+        $value = 0;
+      } else {
+        blurt( $self, "Error: Unknown alias '$value' in symbolic definition for '$orig_alias'");
+      }
+    }
 
-    Warn( $self, "Warning: Aliases '$orig_alias' and '$self->{XsubAliasValues}->{$value}' have identical values")
-      if $self->{XsubAliasValues}->{$value};
+    # check for duplicate alias name & duplicate value
+    my $prev_value = $self->{XsubAliases}->{$alias};
+    if (defined $prev_value) {
+      if ($prev_value eq $value) {
+        Warn( $self, "Warning: Ignoring duplicate alias '$orig_alias'")
+      } else {
+        Warn( $self, "Warning: Conflicting duplicate alias '$orig_alias'"
+                     . " changes definition from '$prev_value' to '$value'");
+        delete $self->{XsubAliasValues}->{$prev_value}{$alias};
+      }
+    }
+
+    # Check and see if this alias results in two aliases having the same
+    # value, we only check non-symbolic definitions as the whole point of
+    # symbolic definitions is to say we want to duplicate the value and
+    # it is NOT a mistake.
+    unless ($is_symbolic) {
+      my @keys= sort keys %{$self->{XsubAliasValues}->{$value}||{}};
+      # deal with an alias of 0, which might not be in the XsubAlias dataset
+      # yet as 0 is the default for the base function ($fname)
+      push @keys, $fname
+        if $value eq "0" and !defined $self->{XsubAlias}{$fname};
+      if (@keys and $self->{author_warnings}) {
+        # We do not warn about value collisions unless author_warnings
+        # are enabled. They aren't helpful to a module consumer, only
+        # the module author.
+        @keys= map { "'$_'" }
+               map { my $copy= $_;
+                     $copy=~s/^$self->{Packprefix}//;
+                     $copy
+                   } @keys;
+        WarnHint( $self,
+                  "Warning: Aliases '$orig_alias' and "
+                  . join(", ", @keys)
+                  . " have identical values of $value"
+                  . ( $value eq "0"
+                      ? " - the base function"
+                      : "" ),
+                  !$self->{XsubAliasValueClashHinted}++
+                  ? "If this is deliberate use a symbolic alias instead."
+                  : undef
+        );
+      }
+    }
 
     $self->{XsubAliases}->{$alias} = $value;
-    $self->{XsubAliasValues}->{$value} = $orig_alias;
+    $self->{XsubAliasValues}->{$value}{$alias}++;
   }
 
   blurt( $self, "Error: Cannot parse ALIAS definitions from '$orig'")
@@ -1800,11 +1892,17 @@ sub fetch_para {
     $self->_process_module_xs_line($1, $2, $3);
   }
 
+  # count how many #ifdef levels we see in this paragraph
+  # decrementing when we see an endif. if we see an elsif
+  # or endif without a corresponding #ifdef then we dont
+  # consider it part of this paragraph.
+  my $if_level = 0;
   for (;;) {
     $self->_maybe_skip_pod;
 
     $self->_maybe_parse_typemap_block;
 
+    my $final;
     if ($self->{lastline} !~ /^\s*#/ # not a CPP directive
         # CPP directives:
         #    ANSI:    if ifdef ifndef elif else endif define undef
@@ -1814,7 +1912,7 @@ sub fetch_para {
         #   others:    ident (gcc notes that some cpps have this one)
         || $self->{lastline} =~ /^\#[ \t]*
                                   (?:
-                                        (?:if|ifn?def|elif|else|endif|
+                                        (?:if|ifn?def|elif|else|endif|elifn?def|
                                            define|undef|pragma|error|
                                            warning|line\s+\d+|ident)
                                         \b
@@ -1825,6 +1923,31 @@ sub fetch_para {
     )
     {
       last if $self->{lastline} =~ /^\S/ && @{ $self->{line} } && $self->{line}->[-1] eq "";
+      if ($self->{lastline}=~/^#[ \t]*(if|ifn?def|elif|else|endif|elifn?def)\b/) {
+        my $type = $1; # highest defined capture buffer, "if" for any if like condition
+        if ($type =~ /^if/) {
+          if (@{$self->{line}}) {
+            # increment level
+            $if_level++;
+          } else {
+            $final = 1;
+          }
+        } elsif ($type eq "endif") {
+          if ($if_level) { # are we in an if that was started in this paragraph?
+            $if_level--;   # yep- so decrement to end this if block
+          } else {
+            $final = 1;
+          }
+        } elsif (!$if_level) {
+          # not in an #ifdef from this paragraph, thus
+          # this directive should not be part of this paragraph.
+          $final = 1;
+        }
+      }
+      if ($final and @{$self->{line}}) {
+        return 1;
+      }
+
       push(@{ $self->{line} }, $self->{lastline});
       push(@{ $self->{line_no} }, $self->{lastline_no});
     }
@@ -1838,6 +1961,9 @@ sub fetch_para {
 
     chomp $self->{lastline};
     $self->{lastline} =~ s/^\s+$//;
+    if ($final) {
+      last;
+    }
   }
 
   # Nuke trailing "line" entries until there's one that's not empty
@@ -2043,8 +2169,9 @@ sub generate_output {
     (my $ntype = $type) =~ s/\s*\*/Ptr/g;
     $ntype =~ s/\(\)//g;
     (my $subtype = $ntype) =~ s/(?:Array)?(?:Ptr)?$//;
+    $type =~ tr/:/_/ unless $self->{RetainCplusplusHierarchicalTypes};
 
-    my $eval_vars = {%$argsref, subtype => $subtype, ntype => $ntype, arg => $arg};
+    my $eval_vars = {%$argsref, subtype => $subtype, ntype => $ntype, arg => $arg, type => $type };
     my $expr = $outputmap->cleaned_code;
     if ($expr =~ /DO_ARRAY_ELEM/) {
       my $subtypemap = $typemaps->get_typemap(ctype => $subtype);

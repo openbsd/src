@@ -30,7 +30,7 @@ foreach my $tuple (['cop.h'],
                    ['op.h'],
                    ['opcode.h', 'OPp'],
                    ['op_reg_common.h','(?:(?:RXf_)?PMf_)'],
-                   ['pad.h','PADNAMEt_'],
+                   ['pad.h','PADNAMEf_'],
                    ['regexp.h','RXf_'],
                    ['sv.h', 'SV(?:[fps]|pad)_'],
                   ) {

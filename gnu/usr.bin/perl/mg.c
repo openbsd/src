@@ -87,7 +87,7 @@ struct magic_state {
 /* MGS is typedef'ed to struct magic_state in perl.h */
 
 STATIC void
-S_save_magic_flags(pTHX_ I32 mgs_ix, SV *sv, U32 flags)
+S_save_magic_flags(pTHX_ SSize_t mgs_ix, SV *sv, U32 flags)
 {
     MGS* mgs;
     bool bumped = FALSE;
@@ -165,7 +165,7 @@ be >= C<SVt_PVMG>.  See C<L</sv_magic>>.
 int
 Perl_mg_get(pTHX_ SV *sv)
 {
-    const I32 mgs_ix = SSNEW(sizeof(MGS));
+    const SSize_t mgs_ix = SSNEW(sizeof(MGS));
     bool saved = FALSE;
     bool have_new = 0;
     bool taint_only = TRUE; /* the only get method seen is taint */
@@ -269,7 +269,7 @@ Do magic after a value is assigned to the SV.  See C<L</sv_magic>>.
 int
 Perl_mg_set(pTHX_ SV *sv)
 {
-    const I32 mgs_ix = SSNEW(sizeof(MGS));
+    const SSize_t mgs_ix = SSNEW(sizeof(MGS));
     MAGIC* mg;
     MAGIC* nextmg;
 
@@ -297,42 +297,6 @@ Perl_mg_set(pTHX_ SV *sv)
     return 0;
 }
 
-/*
-=for apidoc mg_length
-
-Reports on the SV's length in bytes, calling length magic if available,
-but does not set the UTF8 flag on C<sv>.  It will fall back to 'get'
-magic if there is no 'length' magic, but with no indication as to
-whether it called 'get' magic.  It assumes C<sv> is a C<PVMG> or
-higher.  Use C<sv_len()> instead.
-
-=cut
-*/
-
-U32
-Perl_mg_length(pTHX_ SV *sv)
-{
-    MAGIC* mg;
-    STRLEN len;
-
-    PERL_ARGS_ASSERT_MG_LENGTH;
-
-    for (mg = SvMAGIC(sv); mg; mg = mg->mg_moremagic) {
-        const MGVTBL * const vtbl = mg->mg_virtual;
-        if (vtbl && vtbl->svt_len) {
-            const I32 mgs_ix = SSNEW(sizeof(MGS));
-            save_magic(mgs_ix, sv);
-            /* omit MGf_GSKIP -- not changed here */
-            len = vtbl->svt_len(aTHX_ sv, mg);
-            restore_magic(INT2PTR(void*, (IV)mgs_ix));
-            return len;
-        }
-    }
-
-    (void)SvPV_const(sv, len);
-    return len;
-}
-
 I32
 Perl_mg_size(pTHX_ SV *sv)
 {
@@ -343,7 +307,7 @@ Perl_mg_size(pTHX_ SV *sv)
     for (mg = SvMAGIC(sv); mg; mg = mg->mg_moremagic) {
         const MGVTBL* const vtbl = mg->mg_virtual;
         if (vtbl && vtbl->svt_len) {
-            const I32 mgs_ix = SSNEW(sizeof(MGS));
+            const SSize_t mgs_ix = SSNEW(sizeof(MGS));
             I32 len;
             save_magic(mgs_ix, sv);
             /* omit MGf_GSKIP -- not changed here */
@@ -376,7 +340,7 @@ Clear something magical that the SV represents.  See C<L</sv_magic>>.
 int
 Perl_mg_clear(pTHX_ SV *sv)
 {
-    const I32 mgs_ix = SSNEW(sizeof(MGS));
+    const SSize_t mgs_ix = SSNEW(sizeof(MGS));
     MAGIC* mg;
     MAGIC *nextmg;
 
@@ -674,15 +638,15 @@ Perl_magic_regdata_cnt(pTHX_ SV *sv, MAGIC *mg)
             const SSize_t n = (SSize_t)mg->mg_obj;
             if (n == '+') {          /* @+ */
                 /* return the number possible */
-                return RX_NPARENS(rx);
+                return RX_LOGICAL_NPARENS(rx) ? RX_LOGICAL_NPARENS(rx) : RX_NPARENS(rx);
             } else {   /* @- @^CAPTURE  @{^CAPTURE} */
                 I32 paren = RX_LASTPAREN(rx);
 
                 /* return the last filled */
-                while ( paren >= 0
-                        && (RX_OFFS(rx)[paren].start == -1
-                            || RX_OFFS(rx)[paren].end == -1) )
+                while ( paren >= 0 && !RX_OFFS_VALID(rx,paren) )
                     paren--;
+                if (paren && RX_PARNO_TO_LOGICAL(rx))
+                    paren = RX_PARNO_TO_LOGICAL(rx)[paren];
                 if (n == '-') {
                     /* @- */
                     return (U32)paren;
@@ -703,32 +667,42 @@ int
 Perl_magic_regdatum_get(pTHX_ SV *sv, MAGIC *mg)
 {
     PERL_ARGS_ASSERT_MAGIC_REGDATUM_GET;
+    REGEXP * const rx = PL_curpm ? PM_GETRE(PL_curpm) : NULL;
 
-    if (PL_curpm) {
-        REGEXP * const rx = PM_GETRE(PL_curpm);
-        if (rx) {
-            const SSize_t n = (SSize_t)mg->mg_obj;
-            /* @{^CAPTURE} does not contain $&, so we need to increment by 1 */
-            const I32 paren = mg->mg_len
-                            + (n == '\003' ? 1 : 0);
-            SSize_t s;
-            SSize_t t;
-            if (paren < 0)
-                return 0;
-            if (paren <= (I32)RX_NPARENS(rx) &&
-                (s = RX_OFFS(rx)[paren].start) != -1 &&
-                (t = RX_OFFS(rx)[paren].end) != -1)
+    if (rx) {
+        const SSize_t n = (SSize_t)mg->mg_obj;
+        /* @{^CAPTURE} does not contain $&, so we need to increment by 1 */
+        const I32 paren = mg->mg_len
+                        + (n == '\003' ? 1 : 0);
+        
+        if (paren < 0)
+            return 0;
+
+        SSize_t s;
+        SSize_t t;
+        I32 logical_nparens = (I32)RX_LOGICAL_NPARENS(rx);
+
+        if (!logical_nparens) 
+            logical_nparens = (I32)RX_NPARENS(rx);
+
+        if (n != '+' && n != '-') {
+            CALLREG_NUMBUF_FETCH(rx,paren,sv);
+            return 0;
+        }
+        if (paren <= (I32)logical_nparens) {
+            I32 true_paren = RX_LOGICAL_TO_PARNO(rx)
+                             ? RX_LOGICAL_TO_PARNO(rx)[paren]
+                             : paren;
+            do {
+                if (((s = RX_OFFS_START(rx,true_paren)) != -1) &&
+                    ((t = RX_OFFS_END(rx,true_paren)) != -1))
                 {
                     SSize_t i;
 
-                    if (n == '+')                /* @+ */
+                    if (n == '+')               /* @+ */
                         i = t;
-                    else if (n == '-')           /* @- */
+                    else                        /* @- */
                         i = s;
-                    else {                        /* @^CAPTURE @{^CAPTURE} */
-                        CALLREG_NUMBUF_FETCH(rx,paren,sv);
-                        return 0;
-                    }
 
                     if (RX_MATCH_UTF8(rx)) {
                         const char * const b = RX_SUBBEG(rx);
@@ -741,6 +715,11 @@ Perl_magic_regdatum_get(pTHX_ SV *sv, MAGIC *mg)
                     sv_setuv(sv, i);
                     return 0;
                 }
+                if (RX_PARNO_TO_LOGICAL_NEXT(rx))
+                    true_paren = RX_PARNO_TO_LOGICAL_NEXT(rx)[true_paren];
+                else
+                    break;
+            } while (true_paren);
         }
     }
     sv_set_undef(sv);
@@ -760,15 +739,16 @@ Perl_magic_regdatum_set(pTHX_ SV *sv, MAGIC *mg)
     NORETURN_FUNCTION_END;
 }
 
-#define SvRTRIM(sv) STMT_START { \
-    if (SvPOK(sv)) { \
-        STRLEN len = SvCUR(sv); \
-        char * const p = SvPVX(sv); \
-        while (len > 0 && isSPACE(p[len-1])) \
-           --len; \
-        SvCUR_set(sv, len); \
-        p[len] = '\0'; \
-    } \
+#define SvRTRIM(sv) STMT_START {                \
+    SV * sv_ = sv;                              \
+    if (SvPOK(sv_)) {                           \
+        STRLEN len = SvCUR(sv_);                \
+        char * const p = SvPVX(sv_);            \
+        while (len > 0 && isSPACE(p[len-1]))    \
+           --len;                               \
+        SvCUR_set(sv_, len);                    \
+        p[len] = '\0';                          \
+    }                                           \
 } STMT_END
 
 void
@@ -795,6 +775,39 @@ Perl_emulate_cop_io(pTHX_ const COP *const c, SV *const sv)
     }
 }
 
+int
+Perl_get_extended_os_errno(void)
+{
+
+#if defined(VMS)
+
+    return (int) vaxc$errno;
+
+#elif defined(OS2)
+
+    if (! (_emx_env & 0x200)) {	/* Under DOS */
+        return (int) errno;
+    }
+
+    if (errno != errno_isOS2) {
+        const int tmp = _syserrno();
+        if (tmp)	/* 2nd call to _syserrno() makes it 0 */
+            Perl_rc = tmp;
+    }
+    return (int) Perl_rc;
+
+#elif defined(WIN32)
+
+    return (int) GetLastError();
+
+#else
+
+    return (int) errno;
+
+#endif
+
+}
+
 STATIC void
 S_fixup_errno_string(pTHX_ SV* sv)
 {
@@ -807,37 +820,6 @@ S_fixup_errno_string(pTHX_ SV* sv)
 
     if(strEQ(SvPVX(sv), "")) {
         sv_catpv(sv, UNKNOWN_ERRNO_MSG);
-    }
-    else {
-
-        /* In some locales the error string may come back as UTF-8, in which
-         * case we should turn on that flag.  This didn't use to happen, and to
-         * avoid as many possible backward compatibility issues as possible, we
-         * don't turn on the flag unless we have to.  So the flag stays off for
-         * an entirely invariant string.  We assume that if the string looks
-         * like UTF-8 in a single script, it really is UTF-8:  "text in any
-         * other encoding that uses bytes with the high bit set is extremely
-         * unlikely to pass a UTF-8 validity test"
-         * (http://en.wikipedia.org/wiki/Charset_detection).  There is a
-         * potential that we will get it wrong however, especially on short
-         * error message text, so do an additional check. */
-        if ( ! IN_BYTES  /* respect 'use bytes' */
-            && is_utf8_non_invariant_string((U8*) SvPVX_const(sv), SvCUR(sv))
-
-#ifdef USE_LOCALE_MESSAGES
-
-            &&  _is_cur_LC_category_utf8(LC_MESSAGES)
-
-#else   /* If can't check directly, at least can see if script is consistent,
-           under UTF-8, which gives us an extra measure of confidence. */
-
-            && isSCRIPT_RUN((const U8 *) SvPVX_const(sv), (U8 *) SvEND(sv),
-                            TRUE) /* Means assume UTF-8 */
-#endif
-
-        ) {
-            SvUTF8_on(sv);
-        }
     }
 }
 
@@ -876,11 +858,16 @@ SV *
 Perl_sv_string_from_errnum(pTHX_ int errnum, SV *tgtsv)
 {
     char const *errstr;
+    utf8ness_t utf8ness;
+
     if(!tgtsv)
         tgtsv = newSV_type_mortal(SVt_PV);
-    errstr = my_strerror(errnum);
+    errstr = my_strerror(errnum, &utf8ness);
     if(errstr) {
         sv_setpv(tgtsv, errstr);
+        if (utf8ness == UTF8NESS_YES) {
+            SvUTF8_on(tgtsv);
+        }
         fixup_errno_string(tgtsv);
     } else {
         SvPVCLEAR(tgtsv);
@@ -899,10 +886,13 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
     I32 paren;
     const char *s = NULL;
     REGEXP *rx;
-    const char * const remaining = mg->mg_ptr + 1;
     char nextchar;
 
     PERL_ARGS_ASSERT_MAGIC_GET;
+
+    const char * const remaining = (mg->mg_ptr)
+                                   ? mg->mg_ptr + 1
+                                   : NULL;
 
     if (!mg->mg_ptr) {
         paren = mg->mg_len;
@@ -937,51 +927,73 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
         sv_setiv(sv, (IV)(PL_debug & DEBUG_MASK));
         break;
     case '\005':  /* ^E */
-         if (nextchar != '\0') {
-            if (strEQ(remaining, "NCODING"))
-                sv_set_undef(sv);
-            break;
-        }
+        {
+            if (nextchar != '\0') {
+                if (strEQ(remaining, "NCODING"))
+                    sv_set_undef(sv);
+                break;
+            }
 
 #if defined(VMS) || defined(OS2) || defined(WIN32)
+
+            int extended_errno = get_extended_os_errno();
+
 #   if defined(VMS)
-        {
             char msg[255];
             $DESCRIPTOR(msgdsc,msg);
-            sv_setnv(sv,(NV) vaxc$errno);
-            if (sys$getmsg(vaxc$errno,&msgdsc.dsc$w_length,&msgdsc,0,0) & 1)
+
+            sv_setnv(sv, (NV) extended_errno);
+            if (sys$getmsg(extended_errno,
+                           &msgdsc.dsc$w_length,
+                           &msgdsc,
+                           0, 0)
+                & 1)
                 sv_setpvn(sv,msgdsc.dsc$a_pointer,msgdsc.dsc$w_length);
             else
                 SvPVCLEAR(sv);
-        }
+
 #elif defined(OS2)
-        if (!(_emx_env & 0x200)) {	/* Under DOS */
-            sv_setnv(sv, (NV)errno);
-            sv_setpv(sv, errno ? my_strerror(errno) : "");
-        } else {
-            if (errno != errno_isOS2) {
-                const int tmp = _syserrno();
-                if (tmp)	/* 2nd call to _syserrno() makes it 0 */
-                    Perl_rc = tmp;
+            if (!(_emx_env & 0x200)) {	/* Under DOS */
+                sv_setnv(sv, (NV) extended_errno);
+                if (extended_errno) {
+                    utf8ness_t utf8ness;
+                    const char * errstr = my_strerror(extended_errno, &utf8ness);
+
+                    sv_setpv(sv, errstr);
+
+                    if (utf8ness == UTF8NESS_YES) {
+                        SvUTF8_on(sv);
+                    }
+                }
+                else {
+                    SvPVCLEAR(sv);
+                }
+            } else {
+                sv_setnv(sv, (NV) extended_errno);
+                sv_setpv(sv, os2error(extended_errno));
             }
-            sv_setnv(sv, (NV)Perl_rc);
-            sv_setpv(sv, os2error(Perl_rc));
-        }
-        if (SvOK(sv) && strNE(SvPVX(sv), "")) {
-            fixup_errno_string(sv);
-        }
+            if (SvOK(sv) && strNE(SvPVX(sv), "")) {
+                fixup_errno_string(sv);
+            }
+
 #   elif defined(WIN32)
-        {
-            const DWORD dwErr = GetLastError();
-            sv_setnv(sv, (NV)dwErr);
+            const DWORD dwErr = (DWORD) extended_errno;
+            sv_setnv(sv, (NV) dwErr);
             if (dwErr) {
                 PerlProc_GetOSError(sv, dwErr);
                 fixup_errno_string(sv);
+
+#     ifdef USE_LOCALE
+                if (   IN_LOCALE
+                    && get_win32_message_utf8ness(SvPV_nomg_const_nolen(sv)))
+                {
+                    SvUTF8_on(sv);
+                }
+#     endif
             }
             else
                 SvPVCLEAR(sv);
             SetLastError(dwErr);
-        }
 #   else
 #   error Missing code for platform
 #   endif
@@ -990,6 +1002,7 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
         break;
 #endif  /* End of platforms with special handling for $^E; others just fall
            through to $! */
+        }
     /* FALLTHROUGH */
 
     case '!':
@@ -1045,6 +1058,14 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
             if (PL_last_in_gv && (SV*)PL_last_in_gv != &PL_sv_undef) {
                 assert(isGV_with_GP(PL_last_in_gv));
                 sv_setrv_inc(sv, MUTABLE_SV(PL_last_in_gv));
+                sv_rvweaken(sv);
+            }
+            else
+                sv_set_undef(sv);
+        }
+        else if (strEQ(remaining, "AST_SUCCESSFUL_PATTERN")) {
+            if (PL_curpm && (rx = PM_GETRE(PL_curpm))) {
+                sv_setrv_inc(sv, MUTABLE_SV(rx));
                 sv_rvweaken(sv);
             }
             else
@@ -1120,23 +1141,31 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
                 sv_setpvn(sv, WARN_ALLstring, WARNsize);
             }
             else {
-                sv_setpvn(sv, (char *) (PL_compiling.cop_warnings + 1),
-                          *PL_compiling.cop_warnings);
+                sv_setpvn(sv, PL_compiling.cop_warnings,
+                        RCPV_LEN(PL_compiling.cop_warnings));
             }
         }
         break;
-    case '+':
+    case '+':                   /* $+ */
         if (PL_curpm && (rx = PM_GETRE(PL_curpm))) {
             paren = RX_LASTPAREN(rx);
-            if (paren)
+            if (paren) {
+                I32 *parno_to_logical = RX_PARNO_TO_LOGICAL(rx);
+                if (parno_to_logical)
+                    paren = parno_to_logical[paren];
                 goto do_numbuf_fetch;
+            }
         }
         goto set_undef;
-    case '\016':		/* ^N */
+    case '\016':		/* $^N */
         if (PL_curpm && (rx = PM_GETRE(PL_curpm))) {
             paren = RX_LASTCLOSEPAREN(rx);
-            if (paren)
+            if (paren) {
+                I32 *parno_to_logical = RX_PARNO_TO_LOGICAL(rx);
+                if (parno_to_logical)
+                    paren = parno_to_logical[paren];
                 goto do_numbuf_fetch;
+            }
         }
         goto set_undef;
     case '.':
@@ -1296,7 +1325,7 @@ Perl_magic_setenv(pTHX_ SV *sv, MAGIC *mg)
         /* defined environment variables are byte strings; unfortunately
            there is no SvPVbyte_force_nomg(), so we must do this piecewise */
         (void)SvPV_force_nomg_nolen(sv);
-        sv_utf8_downgrade(sv, /* fail_ok */ TRUE);
+        (void)sv_utf8_downgrade(sv, /* fail_ok */ TRUE);
         if (SvUTF8(sv)) {
             Perl_ck_warner_d(aTHX_ packWARN(WARN_UTF8), "Wide character in %s", "setenv");
             SvUTF8_off(sv);
@@ -1356,6 +1385,15 @@ Perl_magic_setenv(pTHX_ SV *sv, MAGIC *mg)
             const char path_sep = ':';
 #endif
 
+#ifndef __VMS
+            /* Does this apply for VMS?
+             * Empty PATH on linux is treated same as ".", which is forbidden
+             * under taint. So check if the PATH variable is empty. */
+            if (!len) {
+                MgTAINTEDDIR_on(mg);
+                return 0;
+            }
+#endif
             /* set MGf_TAINTEDDIR if any component of the new path is
              * relative or world-writeable */
             while (s < strend) {
@@ -1372,7 +1410,8 @@ Perl_magic_setenv(pTHX_ SV *sv, MAGIC *mg)
                       /* Using Unix separator, e.g. under bash, so act line Unix */
                       || (PL_perllib_sep == ':' && *tmpbuf != '/')
 #else
-                      || *tmpbuf != '/'       /* no starting slash -- assume relative path */
+                      || *tmpbuf != '/' /* no starting slash -- assume relative path */
+                      || s == strend    /* trailing empty component -- same as "." */
 #endif
                       || (PerlLIO_stat(tmpbuf, &st) == 0 && (st.st_mode & 2)) ) {
                     MgTAINTEDDIR_on(mg);
@@ -1706,7 +1745,8 @@ Perl_magic_setsig(pTHX_ SV *sv, MAGIC *mg)
                For magic_clearsig, we don't change the warnings handler if it's
                set to the &PL_warnhook.  */
             svp = &PL_warnhook;
-        } else if (sv) {
+        }
+        else if (sv) {
             SV *tmp = sv_newmortal();
             Perl_croak(aTHX_ "No such hook: %s",
                                 pv_pretty(tmp, s, len, 0, NULL, NULL, 0));
@@ -1778,8 +1818,9 @@ Perl_magic_setsig(pTHX_ SV *sv, MAGIC *mg)
         if (i) {
             (void)rsignal(i, PL_csighandlerp);
         }
-        else
+        else {
             *svp = SvREFCNT_inc_simple_NN(sv);
+        }
     } else {
         if (sv && SvOK(sv)) {
             s = SvPV_force(sv, len);
@@ -1850,6 +1891,92 @@ Perl_magic_setsigall(pTHX_ SV* sv, MAGIC* mg)
 }
 
 int
+Perl_magic_clearhook(pTHX_ SV *sv, MAGIC *mg)
+{
+    PERL_ARGS_ASSERT_MAGIC_CLEARHOOK;
+
+    magic_sethook(NULL, mg);
+    return sv_unmagic(sv, mg->mg_type);
+}
+
+/* sv of NULL signifies that we're acting as magic_clearhook.  */
+int
+Perl_magic_sethook(pTHX_ SV *sv, MAGIC *mg)
+{
+    SV** svp = NULL;
+    STRLEN len;
+    const char *s = MgPV_const(mg,len);
+
+    PERL_ARGS_ASSERT_MAGIC_SETHOOK;
+
+    if (memEQs(s, len, "require__before")) {
+        svp = &PL_hook__require__before;
+    }
+    else if (memEQs(s, len, "require__after")) {
+        svp = &PL_hook__require__after;
+    }
+    else {
+        SV *tmp = sv_newmortal();
+        Perl_croak(aTHX_ "Attempt to set unknown hook '%s' in %%{^HOOK}",
+                            pv_pretty(tmp, s, len, 0, NULL, NULL, 0));
+    }
+    if (sv && SvOK(sv) && (!SvROK(sv) || SvTYPE(SvRV(sv))!= SVt_PVCV))
+        croak("${^HOOK}{%.*s} may only be a CODE reference or undef", (int)len, s);
+
+    if (svp) {
+        if (*svp)
+            SvREFCNT_dec(*svp);
+
+        if (sv)
+            *svp = SvREFCNT_inc_simple_NN(sv);
+        else
+            *svp = NULL;
+    }
+
+    return 0;
+}
+
+int
+Perl_magic_sethookall(pTHX_ SV* sv, MAGIC* mg)
+{
+    PERL_ARGS_ASSERT_MAGIC_SETHOOKALL;
+    PERL_UNUSED_ARG(mg);
+
+    if (PL_localizing == 1) {
+        SAVEGENERICSV(PL_hook__require__before);
+        PL_hook__require__before = NULL;
+        SAVEGENERICSV(PL_hook__require__after);
+        PL_hook__require__after = NULL;
+    }
+    else
+    if (PL_localizing == 2) {
+        HV* hv = (HV*)sv;
+        HE* current;
+        hv_iterinit(hv);
+        while ((current = hv_iternext(hv))) {
+            SV* hookelem = hv_iterval(hv, current);
+            mg_set(hookelem);
+        }
+    }
+    return 0;
+}
+
+int
+Perl_magic_clearhookall(pTHX_ SV* sv, MAGIC* mg)
+{
+    PERL_ARGS_ASSERT_MAGIC_CLEARHOOKALL;
+    PERL_UNUSED_ARG(mg);
+    PERL_UNUSED_ARG(sv);
+
+    SvREFCNT_dec_set_NULL(PL_hook__require__before);
+
+    SvREFCNT_dec_set_NULL(PL_hook__require__after);
+
+    return 0;
+}
+
+
+int
 Perl_magic_setisa(pTHX_ SV *sv, MAGIC *mg)
 {
     PERL_ARGS_ASSERT_MAGIC_SETISA;
@@ -1886,7 +2013,7 @@ Perl_magic_clearisa(pTHX_ SV *sv, MAGIC *mg)
         I32 items = AvFILLp((AV *)mg->mg_obj) + 1;
         while (items--) {
             stash = GvSTASH((GV *)*svp++);
-            if (stash && HvENAME(stash)) mro_isa_changed_in(stash);
+            if (stash && HvHasENAME(stash)) mro_isa_changed_in(stash);
         }
 
         return 0;
@@ -1898,7 +2025,7 @@ Perl_magic_clearisa(pTHX_ SV *sv, MAGIC *mg)
 
     /* The stash may have been detached from the symbol table, so check its
        name before doing anything. */
-    if (stash && HvENAME_get(stash))
+    if (stash && HvHasENAME(stash))
         mro_isa_changed_in(stash);
 
     return 0;
@@ -3040,7 +3167,7 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
         else if (strEQ(mg->mg_ptr+1, "ARNING_BITS")) {
             if ( ! (PL_dowarn & G_WARN_ALL_MASK)) {
                 if (!SvPOK(sv)) {
-            free_and_set_cop_warnings(&PL_compiling, pWARN_STD);
+                    free_and_set_cop_warnings(&PL_compiling, pWARN_STD);
                     break;
                 }
                 {
@@ -3052,23 +3179,24 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
                         not_all |= ptr[i] ^ 0x55;
                     }
                     if (!not_none) {
-                free_and_set_cop_warnings(&PL_compiling, pWARN_NONE);
+                        free_and_set_cop_warnings(&PL_compiling, pWARN_NONE);
                     } else if (len >= WARNsize && !not_all) {
-                free_and_set_cop_warnings(&PL_compiling, pWARN_ALL);
-                    PL_dowarn |= G_WARN_ONCE ;
-                }
-            else {
-                             STRLEN len;
-                             const char *const p = SvPV_const(sv, len);
+                        free_and_set_cop_warnings(&PL_compiling, pWARN_ALL);
+                        PL_dowarn |= G_WARN_ONCE ;
+                    }
+                    else {
+                        STRLEN len;
+                        const char *const p = SvPV_const(sv, len);
 
-                             PL_compiling.cop_warnings
-                                 = Perl_new_warnings_bitfield(aTHX_ PL_compiling.cop_warnings,
-                                                         p, len);
+                        free_and_set_cop_warnings(
+                            &PL_compiling,
+                            Perl_new_warnings_bitfield(aTHX_ PL_compiling.cop_warnings,
+                                                     p, len)
+                        );
 
-                     if (isWARN_on(PL_compiling.cop_warnings, WARN_ONCE))
+                        if (isWARN_on(PL_compiling.cop_warnings, WARN_ONCE))
                             PL_dowarn |= G_WARN_ONCE ;
-               }
-
+                    }
                 }
             }
         }

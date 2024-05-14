@@ -26,6 +26,33 @@ THE SOFTWARE.
 
 */
 
+
+/*
+ *   This thing all things devours:
+ *   Birds, beasts, trees, flowers;
+ *   Gnaws iron, bites steel;
+ *   Grinds hard stones to meal;
+ *   Slays king, ruins town,
+ *   And beats high mountain down."
+ *
+ * Poor Bilbo sat in the dark thinking of all the horrible names of all the
+ * giants and ogres he had ever heard told of in tales, but not one of them had
+ * done all these things. He had a feeling that the answer was quite different
+ * and that he ought to know it, but he could not think of it. He began to get
+ * frightened, and that is bad for thinking. Gollum began to get out of his
+ * boat. He flapped into the water and paddled to the bank; Bilbo could see his
+ * eyes coming towards him. His tongue seemed to stick in his mouth; he wanted
+ * to shout out: "Give me more time! Give me time!" But all that came out with
+ * a sudden squeal was:
+ *
+ * "Time! Time!"
+ *
+ * Bilbo was saved by pure luck. For that of course was the answer.
+ *
+ *     [p.84 of _The Hobbit_: "Riddles in the Dark"]
+ *
+*/
+
 /*
 
 Programmers who have available to them 64-bit time values as a 'long
@@ -113,40 +140,6 @@ static const short safe_years[SOLAR_CYCLE_LENGTH] = {
 #    define TIME64_TRACE1(format, var1) ((void)0)
 #    define TIME64_TRACE2(format, var1, var2) ((void)0)
 #    define TIME64_TRACE3(format, var1, var2, var3) ((void)0)
-#endif
-
-/* Set up the mutexes for this file.  There are no races possible on
- * non-threaded perls, nor platforms that naturally don't have them.
- * Otherwise, we need to have mutexes.  If we have reentrant versions of the
- * functions below, they automatically will be substituted for the
- * non-reentrant ones.  That solves the problem of the buffers being trashed by
- * another thread, but not of the environment or locale changing during their
- * execution.  To do that, we only need a read lock (which prevents writing by
- * others).  However, if we don't have re-entrant functions, we can gain some
- * measure of thread-safety by using an exclusive lock during their execution.
- * That will protect against any other use of the functions that use the
- * mutexes, which all of core should be using. */
-#ifdef USE_REENTRANT_API  /* This indicates a platform where we need reentrant
-                             versions if have them */
-#  ifdef PERL_REENTR_USING_LOCALTIME_R
-#    define LOCALTIME_LOCK    ENV_LOCALE_READ_LOCK
-#    define LOCALTIME_UNLOCK  ENV_LOCALE_READ_UNLOCK
-#  else
-#    define LOCALTIME_LOCK    ENV_LOCALE_LOCK
-#    define LOCALTIME_UNLOCK  ENV_LOCALE_UNLOCK
-#  endif
-#  ifdef PERL_REENTR_USING_GMTIME_R
-#    define GMTIME_LOCK    ENV_LOCALE_READ_LOCK
-#    define GMTIME_UNLOCK  ENV_LOCALE_READ_UNLOCK
-#  else
-#    define GMTIME_LOCK    ENV_LOCALE_LOCK
-#    define GMTIME_UNLOCK  ENV_LOCALE_UNLOCK
-#  endif
-#else   /* Reentrant not needed, so races not possible */
-#  define LOCALTIME_LOCK    NOOP
-#  define LOCALTIME_UNLOCK  NOOP
-#  define GMTIME_LOCK       NOOP
-#  define GMTIME_UNLOCK     NOOP
 #endif
 
 static int S_is_exception_century(Year year)

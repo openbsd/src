@@ -1415,7 +1415,7 @@ BZFILE * bzopen_or_bzdopen
       case 's':
          smallMode = 1; break;
       default:
-         if (isdigit((int)(*mode))) {
+         if (isdigit((unsigned char)(*mode))) {
             blockSize100k = *mode-BZ_HDR_0;
          }
       }

@@ -391,6 +391,7 @@ d_attribute_nonnull=''
 d_attribute_noreturn=''
 d_attribute_pure=''
 d_attribute_unused=''
+d_attribute_visibility=''
 d_attribute_warn_unused_result=''
 d_printf_format_null=''
 d_backtrace=''
@@ -761,6 +762,7 @@ d_semget=''
 d_semop=''
 d_sendmsg=''
 d_setegid=''
+d_setenv=''
 d_seteuid=''
 d_setgrent=''
 d_setgrent_r=''
@@ -1069,6 +1071,7 @@ i_sysselct=''
 i_sysstat=''
 i_sysstatfs=''
 i_sysstatvfs=''
+i_syssyscall=''
 i_systimes=''
 i_systypes=''
 i_sysuio=''
@@ -1207,6 +1210,11 @@ version_patchlevel_string=''
 perl5=''
 perladmin=''
 perlpath=''
+i32dformat=''
+u32XUformat=''
+u32oformat=''
+u32uformat=''
+u32xformat=''
 d_nv_preserves_uv=''
 d_nv_zero_is_allbits_zero=''
 i16size=''
@@ -1503,7 +1511,7 @@ archname=''
 usereentrant='undef'
 : List of libraries we want.
 : If anyone needs extra -lxxx, put those in a hint file.
-libswanted="cl pthread socket bind inet nsl ndbm gdbm dbm db malloc dl ld"
+libswanted="cl pthread socket bind inet ndbm gdbm dbm db malloc dl ld"
 libswanted="$libswanted sun m crypt sec util c cposix posix ucb bsd BSD"
 : We probably want to search /usr/shlib before most other libraries.
 : This is only used by the lib/ExtUtils/MakeMaker.pm routine extliblist.
@@ -2213,6 +2221,7 @@ $startsh
 xxxm=\$dflt
 $myecho
 ans='!'
+counter=42
 case "\$fastread" in
 yes) case "\$dflt" in
 	'') ;;
@@ -2287,6 +2296,12 @@ while expr "X\$ans" : "X!" >/dev/null; do
 		$myecho
 		;;
 	esac
+	counter=\`echo \$counter | awk '{ print --\$0 }'\`
+	if [ \$counter = 0 ]; then
+		echo >&4
+		echo >&4 Too many attempts asking the same question.  Giving up.
+		exit 1
+	fi
 done
 case "\$ans" in
 '') ans="\$xxxm";;
@@ -3492,7 +3507,10 @@ EOM
 			osvers="$3"
 			;;
 		dragonfly) osname=dragonfly
-			osvers="$3"
+			case "$3" in
+			    [0-9]*) osvers="$3" ;;
+			    *) osvers="$2" ;;
+			esac
 			;;
 		dynixptx*) osname=dynixptx
 			osvers=`echo "$4"|sed 's/^v//'`
@@ -3665,47 +3683,47 @@ EOM
 		fi
 	fi
 
-        case "$targetarch" in
-        '') ;;
-        *)  hostarch=$osname
-            case "$targetarch" in
-                nto*|*-nto-*)
-                    # Will load qnx.sh, which should change osname to nto
-                    osname=qnx
-                    osvers=''
-                    ;;
-                *linux-android*)
-                    # Catch arm-linux-androideabi, mipsel-linux-android,
-                    # and i686-linux-android
-                    osname=linux-android
-                    osvers=''
-                    ;;
-                *linux*)
-                    # Something like arm-linux-gnueabihf is really just
-                    # plain linux.
-                    osname=linux
-                    osvers=''
-                    ;;
-                *solaris*|*sunos*)
-                    osname=solaris
-                    # XXX perhaps we should just assume
-                    # osvers to be 2, or maybe take the value
-                    # from targetarch. Using $run before the
-                    # hints are run is somewhat icky.
-                    set X `$run $uname -a 2>/dev/null`
-                    shift
-                    case "$3" in
-                        5*) osvers=`echo $3 | $sed 's/^5/2/g'` ;;
-                        *)  osvers="$3" ;;
-                    esac
-                    ;;
-                *)
+	case "$targetarch" in
+	'') ;;
+	*)  hostarch=$osname
+	    case "$targetarch" in
+		nto*|*-nto-*)
+		    # Will load qnx.sh, which should change osname to nto
+		    osname=qnx
+		    osvers=''
+		    ;;
+		*linux-android*)
+		    # Catch arm-linux-androideabi, mipsel-linux-android,
+		    # and i686-linux-android
+		    osname=linux-android
+		    osvers=''
+		    ;;
+		*linux*)
+		    # Something like arm-linux-gnueabihf is really just
+		    # plain linux.
+		    osname=linux
+		    osvers=''
+		    ;;
+		*solaris*|*sunos*)
+		    osname=solaris
+		    # XXX perhaps we should just assume
+		    # osvers to be 2, or maybe take the value
+		    # from targetarch. Using $run before the
+		    # hints are run is somewhat icky.
+		    set X `$run $uname -a 2>/dev/null`
+		    shift
+		    case "$3" in
+			5*) osvers=`echo $3 | $sed 's/^5/2/g'` ;;
+			*)  osvers="$3" ;;
+		    esac
+		    ;;
+		*)
 		    osname=`echo $targetarch|sed 's,^[^-]*-,,'`
 		    osvers=''
-                ;;
-            esac
-            ;;
-        esac
+		;;
+	    esac
+	    ;;
+	esac
 
 	: Now look for a hint file osname_osvers, unless one has been
 	: specified already.
@@ -5207,26 +5225,6 @@ EOM
     esac
 fi
 
-: Check if quadmath is requested
-case "$usequadmath" in
-"$define"|true|[yY]*) usequadmath="$define" ;;
-*)                    usequadmath="$undef"  ;;
-esac
-
-: Fail if both uselongdouble and usequadmath are requested
-case "$usequadmath:$uselongdouble" in
-define:define)
-	$cat <<EOM >&4
-
-*** You requested the use of the quadmath library and use
-*** of long doubles.
-***
-*** Please select one or the other.
-EOM
-	exit 1
-	;;
-esac
-
 : Looking for optional libraries
 echo " "
 echo "Checking for optional libraries..." >&4
@@ -5242,9 +5240,6 @@ case "$usesocks" in
 esac
 case "$usecbacktrace" in
 "$define") libswanted="$libswanted bfd" ;;
-esac
-case "$usequadmath" in
-"$define") libswanted="$libswanted quadmath" ;;
 esac
 libsfound=''
 libsfiles=''
@@ -5263,6 +5258,16 @@ for thislib in $libswanted; do
 		xxx=`ls $thisdir/lib$thislib.[0-9].$so 2>/dev/null|sed -n '$p'`
 	        $test -f "$xxx" && eval $libscheck
 		$test -f "$xxx" && libstyle=shared
+	    fi
+	    if test ! -f "$xxx"; then
+		xxx=$thisdir/lib$thislib.$so$_a
+		$test -f "$xxx" && eval $libscheck
+		$test -f "$xxx" && libstyle="import"
+	    fi
+	    if test ! -f "$xxx"; then
+		xxx=$thisdir/$thislib.$so$_a
+		$test -f "$xxx" && eval $libscheck
+		$test -f "$xxx" && libstyle="import"
 	    fi
 	    if test ! -f "$xxx"; then
 		xxx=$thisdir/lib$thislib.$so
@@ -5299,14 +5304,14 @@ for thislib in $libswanted; do
 		case " $dflt " in
 		*"-l$thislib "*);;
 		*) dflt="$dflt -l$thislib"
-                   libsfound="$libsfound $xxx"
-                   yyy=`basename $xxx`
-                   libsfiles="$libsfiles $yyy"
-                   yyy=`echo $xxx|$sed -e "s%/$yyy\\$%%"`
-                   case " $libsdirs " in
-                   *" $yyy "*) ;;
-                   *) libsdirs="$libsdirs $yyy" ;;
-                   esac
+		   libsfound="$libsfound $xxx"
+		   yyy=`basename $xxx`
+		   libsfiles="$libsfiles $yyy"
+		   yyy=`echo $xxx|$sed -e "s%/$yyy\\$%%"`
+		   case " $libsdirs " in
+		   *" $yyy "*) ;;
+		   *) libsdirs="$libsdirs $yyy" ;;
+		   esac
 		   ;;
 		esac
 		break
@@ -5445,25 +5450,6 @@ default|recommended)
 	2.[0-8]*) ;;
 	?*)	set strict-aliasing -fno-strict-aliasing
 		eval $checkccflag
-		;;
-	esac
-	case "$gccversion" in
-	1*) ;;
-	2*) ;;
-	?*) 	echo " "
-		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
-		echo 'int main(void) { return 0; }' > gcctest.c
-		if $cc -O2 -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
-			echo "Yes, it does." 2>&1
-			case "$ccflags" in
-			*delete-null-pointer-checks*)
-				echo "Leaving current flags $ccflags alone." 2>&1
-				;;
-			*) dflt="$dflt -fno-delete-null-pointer-checks" ;;
-			esac
-		else
-			echo "Nope, it doesn't, but that's ok." 2>&1
-		fi
 		;;
 	esac
 	# For gcc, adding -pipe speeds up compilations for some, but apparently
@@ -7141,6 +7127,26 @@ if test "${api_revision}${api_version}${api_subversion}" = "550"; then
 	api_versionstring='5.005'
 fi
 
+: Check if quadmath is requested
+case "$usequadmath" in
+"$define"|true|[yY]*) usequadmath="$define" ;;
+*)                    usequadmath="$undef"  ;;
+esac
+
+: Fail if both uselongdouble and usequadmath are requested
+case "$usequadmath:$uselongdouble" in
+define:define)
+	$cat <<EOM >&4
+
+*** You requested the use of the quadmath library and use
+*** of long doubles.
+***
+*** Please select one or the other.
+EOM
+	exit 1
+	;;
+esac
+
 : determine the architecture name
 echo " "
 if xxx=`./loc arch blurfl $pth`; $test -f "$xxx"; then
@@ -7757,36 +7763,6 @@ case "$inc_version_list" in
 	;;
 esac
 $rm -f getverlist
-
-: see if malloc/malloc.h has to be included
-set malloc/malloc.h i_mallocmalloc
-eval $inhdr
-
-: see if this is a malloc.h system
-: we want a real compile instead of Inhdr because some systems have a
-: malloc.h that just gives a compile error saying to use stdlib.h instead
-echo " "
-$cat >try.c <<EOCP
-#include <stdlib.h>
-#include <malloc.h>
-#$i_mallocmalloc I_MALLOCMALLOC
-#ifdef I_MALLOCMALLOC
-# include <malloc/malloc.h>
-#endif
-
-int main () { return 0; }
-EOCP
-set try
-if eval $compile; then
-    echo "<malloc.h> found." >&4
-    val="$define"
-else
-    echo "<malloc.h> NOT found." >&4
-    val="$undef"
-fi
-$rm_try
-set i_malloc
-eval $setvar
 
 : check for length of pointer
 echo " "
@@ -10756,7 +10732,7 @@ while test $# -ge 2; do
     shift 2
 done
 cat >> try.c <<'EOCP'
-#define	_(args) args
+#define _(args) args
 EOCP
 echo "$foo" >> try.c
 echo 'int no_real_function_has_this_name _((void)) { return 0; }' >> try.c
@@ -11318,6 +11294,34 @@ fi
 *) val="$d_attribute_always_inline" ;;
 esac
 set d_attribute_always_inline
+eval $setvar
+$rm -f attrib*
+
+: Look for GCC-style attribute visibility
+case "$d_attribute_visibility" in
+'')
+echo " "
+echo "Checking whether your compiler can handle __attribute__((visibility)) ..." >&4
+$cat >attrib.c <<'EOCP'
+#include <stdio.h>
+__attribute__((visibility("hidden"))) int I_will_be_hidden(void);
+EOCP
+if $cc $ccflags -c attrib.c >attrib.out 2>&1 ; then
+	if $compiler_warning attrib.out >/dev/null 2>&1; then
+		echo "Your C compiler doesn't support __attribute__((visibility))."
+		val="$undef"
+	else
+		echo "Your C compiler supports __attribute__((visibility))."
+		val="$define"
+	fi
+else
+	echo "Your C compiler doesn't seem to understand __attribute__ at all."
+	val="$undef"
+fi
+;;
+*) val="$d_attribute_visibility" ;;
+esac
+set d_attribute_visibility
 eval $setvar
 $rm -f attrib*
 
@@ -16198,6 +16202,36 @@ eval $inlibc
 set llroundl d_llroundl
 eval $inlibc
 
+: see if malloc/malloc.h has to be included
+set malloc/malloc.h i_mallocmalloc
+eval $inhdr
+
+: see if this is a malloc.h system
+: we want a real compile instead of Inhdr because some systems have a
+: malloc.h that just gives a compile error saying to use stdlib.h instead
+echo " "
+$cat >try.c <<EOCP
+#include <stdlib.h>
+#include <malloc.h>
+#$i_mallocmalloc I_MALLOCMALLOC
+#ifdef I_MALLOCMALLOC
+# include <malloc/malloc.h>
+#endif
+
+int main () { return 0; }
+EOCP
+set try
+if eval $compile; then
+    echo "<malloc.h> found." >&4
+    val="$define"
+else
+    echo "<malloc.h> NOT found." >&4
+    val="$undef"
+fi
+$rm_try
+set i_malloc
+eval $setvar
+
 : see if localtime_r exists
 set localtime_r d_localtime_r
 eval $inlibc
@@ -16816,17 +16850,49 @@ case "$usequadmath:$i_quadmath" in
 define:define)
   nvtype="__float128"
   nvsize=16
-  case "$libs" in
-  *quadmath*) ;;
-  *) $cat <<EOM >&4
+  : libquadmath is not in the usual places, and the place
+  : changes if the compiler is upgraded.  So ask the compiler if it
+  : can find it.
+  : We do not need to save this, if it fails we abort.
+  libs="$libs -lquadmath"
+  set try
+  $cat >try.c <<EOM
+#include <quadmath.h>
+#include <stdio.h>
+int main(int argc, char *argv[]) {
+  __float128 x = 1.0;
+  if (fabsq(logq(x)) > 1e-6) {
+     fputs("quadmath is broken\n", stderr);
+     return 1;
+  }
+  puts("define");
+  return 0;
+}
+EOM
+  yyy=''
+  if eval $compile_ok; then
+      yyy=`$run ./try`
+      case "$yyy" in
+      define) ;;
+      *) cat <<EOM >&4
+
+*** You requested the use of the quadmath library, but
+*** it appears to be nonfunctional.
+*** Cannot continue, aborting.
+
+EOM
+       exit 1
+       ;;
+       esac
+  else
+      $cat <<EOM >&4
 
 *** You requested the use of the quadmath library, but you
 *** do not seem to have the quadmath library installed.
 *** Cannot continue, aborting.
 EOM
     exit 1
-    ;;
-  esac
+  fi
   ;;
 define:*) $cat <<EOM >&4
 
@@ -16982,6 +17048,10 @@ $cat <<EOP >try.c
 #$i_stdlib I_STDLIB
 #ifdef I_STDLIB
 #include <stdlib.h>
+#endif
+#$i_inttypes I_INTTYPES
+#ifdef I_INTTYPES
+#include <inttypes.h>
 #endif
 #include <sys/types.h>
 #include <signal.h>
@@ -18033,6 +18103,10 @@ eval $inlibc
 
 : see if setegid exists
 set setegid d_setegid
+eval $inlibc
+
+: see if setenv exists
+set setenv d_setenv
 eval $inlibc
 
 : see if seteuid exists
@@ -19717,9 +19791,13 @@ eval $inlibc
 set syscall d_syscall
 eval $inlibc
 
+: see if this is a sys/syscall.h system
+set sys/syscall.h i_syssyscall
+eval $inhdr
+
 : see if prototype for syscall is available
 echo " "
-set d_syscallproto syscall $i_unistd unistd.h
+set d_syscallproto syscall $i_unistd unistd.h $i_syssyscall sys/syscall.h
 eval $hasproto
 
 : see if sysconf exists
@@ -20076,6 +20154,10 @@ EOM
 #$i_stdlib I_STDLIB
 #ifdef I_STDLIB
 #include <stdlib.h>
+#endif
+#$i_inttypes I_INTTYPES
+#ifdef I_INTTYPES
+#include <inttypes.h>
 #endif
 #include <sys/types.h>
 typedef $uvtype UV;
@@ -21021,9 +21103,9 @@ case "$ccflags" in
 	;;
 esac
 
-randfunc=drand48
-drand01="drand48()"
-seedfunc="srand48"
+randfunc=Perl_drand48
+drand01="Perl_drand48()"
+seedfunc="Perl_drand48_init"
 randbits=48
 randseedtype=U32
 
@@ -21585,7 +21667,7 @@ EOCP
 		case "$yyy" in
 		12345678901)
 			sPRId64=PRId64; sPRIi64=PRIi64; sPRIu64=PRIu64;
-			sPRIo64=PRIo64; sPRIx64=PRIx64; sPRIXU64=PRIXU64;
+			sPRIo64=PRIo64; sPRIx64=PRIx64; sPRIXU64=PRIX64;
 			echo "We will use the C9X style."
 			;;
 		esac
@@ -21808,6 +21890,49 @@ EOM
 	groupstype="$ans"
 	;;
 *)  groupstype="$gidtype";;
+esac
+
+: Check format strings for internal 32bit types
+echo " "
+$echo "Checking the format strings to be used for Perl's internal 32bit-types..." >&4
+
+case "$i32dformat" in
+'')	case "$i32type" in
+	int)
+		i32dformat='"d"'
+		u32uformat='"u"'
+		u32oformat='"o"'
+		u32xformat='"x"'
+		u32XUformat='"X"'
+		;;
+	long)
+		i32dformat='"ld"'
+		u32uformat='"lu"'
+		u32oformat='"lo"'
+		u32xformat='"lx"'
+		u32XUformat='"lX"'
+		;;
+	int_least32_t)		: will not happen currently
+		i32dformat=PRIdLEAST32
+		u32uformat=PRIuLEAST32
+		u32oformat=PRIoLEAST32
+		u32xformat=PRIxLEAST32
+		u32XUformat=PRIXLEAST32
+		;;
+	int32_t)
+		i32dformat=PRId32
+		u32uformat=PRIu32
+		u32oformat=PRIo32
+		u32xformat=PRIx32
+		u32XUformat=PRIX32
+		;;
+	esac ;;
+esac
+
+case "$i32dformat" in
+'') echo "$0: Fatal: failed to find format strings for 32-bit integers, cannot continue." >&4
+    exit 1
+    ;;
 esac
 
 : check whether make sets MAKE
@@ -23665,7 +23790,7 @@ EOF
 for i in \`$cc -v -c tmp.c 2>&1 $postprocess_cc_v\`
 do
 	case "\$i" in
-	-D*) echo "\$i" | $sed 's/^-D//';;
+	-D*) echo "\$i" | $sed 's/^-D//;s/['\''\"]//g';;
 	-A*) $test "$gccversion" && echo "\$i" | $sed 's/^-A//' | $sed 's/\(.*\)(\(.*\))/\1=\2/';;
 	esac
 done
@@ -23975,7 +24100,6 @@ xs_extensions=''
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
-	    CVS) ;;
 	    DynaLoader|dynaload) ;;
 	    *)
 	    this_ext=`echo "$xxx" | $sed -e s/-/\\\//g`;
@@ -24205,8 +24329,6 @@ esac
 nonxs_ext=''
 for xxx in $nonxs_extensions ; do
 	case "$xxx" in
-	CVS|RCS|SCCS|.svn)
-		;;
 	VMS*)
 		;;
 	*)	nonxs_ext="$nonxs_ext $xxx"
@@ -24370,7 +24492,7 @@ case " $extensions"  in
 *" Fcntl "*"_File "*" IO "*) ;; # GDBM_File
 *" Fcntl "*" IO "*"_File "*) ;; # NDBM_File
 *) echo "WARNING: Extensions DB_File or *DBM_File, Fcntl, and IO not configured." >&4
-   echo "WARNING: The Perl you are building will be quite crippled." >& 4
+   echo "WARNING: The Perl you are building will be quite crippled." >&4
    ;;
 esac
 
@@ -24585,6 +24707,7 @@ d_attribute_nonnull='$d_attribute_nonnull'
 d_attribute_noreturn='$d_attribute_noreturn'
 d_attribute_pure='$d_attribute_pure'
 d_attribute_unused='$d_attribute_unused'
+d_attribute_visibility='$d_attribute_visibility'
 d_attribute_warn_unused_result='$d_attribute_warn_unused_result'
 d_backtrace='$d_backtrace'
 d_bsd='$d_bsd'
@@ -24953,6 +25076,7 @@ d_semget='$d_semget'
 d_semop='$d_semop'
 d_sendmsg='$d_sendmsg'
 d_setegid='$d_setegid'
+d_setenv='$d_setenv'
 d_seteuid='$d_seteuid'
 d_setgrent='$d_setgrent'
 d_setgrent_r='$d_setgrent_r'
@@ -25208,6 +25332,7 @@ html3dir='$html3dir'
 html3direxp='$html3direxp'
 i16size='$i16size'
 i16type='$i16type'
+i32dformat='$i32dformat'
 i32size='$i32size'
 i32type='$i32type'
 i64size='$i64size'
@@ -25278,6 +25403,7 @@ i_syssockio='$i_syssockio'
 i_sysstat='$i_sysstat'
 i_sysstatfs='$i_sysstatfs'
 i_sysstatvfs='$i_sysstatvfs'
+i_syssyscall='$i_syssyscall'
 i_systime='$i_systime'
 i_systimek='$i_systimek'
 i_systimes='$i_systimes'
@@ -25595,8 +25721,12 @@ troff='$troff'
 ttyname_r_proto='$ttyname_r_proto'
 u16size='$u16size'
 u16type='$u16type'
+u32XUformat='$u32XUformat'
+u32oformat='$u32oformat'
 u32size='$u32size'
 u32type='$u32type'
+u32uformat='$u32uformat'
+u32xformat='$u32xformat'
 u64size='$u64size'
 u64type='$u64type'
 u8size='$u8size'

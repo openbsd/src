@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 If you read this file _as_is_, just ignore the funny characters you see.
 It is written in the POD format (see F<pod/perlpod.pod>) which is specially
 designed to be readable as is.
@@ -90,10 +92,10 @@ to F<pod/perldelta.pod> for more detailed information.
 
 =head3 Compatibility with earlier versions
 
-B<WARNING:> This version is not binary compatible with versions of Perl
-earlier than 5.36.0.  If you have built extensions (i.e. modules that
-include C code) using an earlier version of Perl, you will need to
-rebuild and reinstall those extensions.
+B<WARNING:> This version is not binary compatible with earlier versions
+of Perl.  If you have built extensions (i.e. modules that include C code)
+using an earlier version of Perl, you will need to rebuild and reinstall
+those extensions.
 
 Pure perl modules without XS or C code should continue to work fine
 without reinstallation.  See the discussion below on
@@ -101,11 +103,18 @@ L<"Coexistence with earlier versions of perl 5"> for more details.
 
 The standard extensions supplied with Perl will be handled automatically.
 
-On a related issue, old modules may possibly be affected by the changes
-in the Perl language in the current release.  Please see
-F<pod/perldelta.pod> for a description of what's changed.  See your
-installed copy of the perllocal.pod file for a (possibly incomplete)
-list of locally installed modules.  Also see the L<CPAN> module's
+On a related issue, old modules may possibly be affected by the changes in the
+Perl language in the current release.  We try hard to make new features
+"opt-in", such that existing code will work unchanged, and attempt to identify
+where bug fixes might expose code which was relying on incorrect interpreter
+behaviour.  Please see F<pod/perldelta.pod> for a description of what's
+changed between this and the previous release.  If you are upgrading from an
+earlier release, please also check the perldeltas describing changes for the
+intermediate releases, to get a full picture of what changes might affect your
+installation.
+
+See your installed copy of the perllocal.pod file for a (possibly
+incomplete) list of locally installed modules. Also see the L<CPAN> module's
 C<autobundle> function for one way to make a "bundle" of your currently
 installed modules.
 
@@ -411,6 +420,38 @@ the compiler dependency, you may need to also add "-Dcc=...".
 At C level the type is called C<__float128> (note, not "long double"),
 but Perl source knows it as NV.  (This is not "long doubles".)
 
+=head3 Taint Support
+
+Traditional perl has provided a security mechanism based on marking
+input data as untrusted unless it has been validated by a regex. This
+mechanism is called tainting and is enabled with the -T or -t options on
+the command line. This support has a performance cost on all code
+executed. It is possible to disable this support by providing the
+setting C<-Accflags=-DNO_TAINT_SUPPORT> or the setting
+C<-Accflags=-DSILENT_NO_TAINT_SUPPORT> to Configure.
+
+The former option C<NO_TAINT_SUPPORT> is more secure and disables taint
+support while making the use of the C<-T> or C<-t> options which
+normally enable taint support into an untrappable exception to ensure
+that no-one uses them while expecting taint checks to run. With this
+build mode there can be no confusion if a script supports taint or not.
+
+The latter option, C<SILENT_NO_TAINT_SUPPORT> is less secure but more
+flexible in that it silently disables taint support while ignoring the
+C<-T> and C<-t> command line options entirely. In this build mode it is
+possible to run a script with the C<-T> or C<-t> option and expect taint
+support but not get it, so this mode is only recommended to people who
+really know what they are doing.
+
+Both modes improve performance although the amount depends on your
+workload. It is not unreasonable to expect a 5%-10% improvement in
+performance by using one of these options. At this time this build mode
+is supported but not recommended, and if you chose to use such a perl
+you do so at your own risk. It is possible that there may be
+interoperability issues with CPAN distributions as many distributions
+are unaware of this build mode and will expect test scripts to pass or
+to detect unvalidated data when run under the C<-T> or C<-t>.
+
 =head3 Algorithmic Complexity Attacks on Hashes
 
 Perl 5.18 reworked the measures used to secure its hash function
@@ -450,30 +491,39 @@ storage with 256 32-bit random values as well. In practice the RNG we use
 for seeding the SBOX32 storage is very efficient, and populating the table
 required for hashing even fairly long keys is negligible as we only do it
 during startup. By default we build with SBOX32 enabled, but you can change
-that by setting
+that by setting the C<PERL_HASH_USE_SBOX32_ALSO> in the Configure process,
+with something like this
 
-   PERL_HASH_USE_SBOX32_ALSO
+   -Accflags='-DPERL_HASH_USE_SBOX32_ALSO=0'
 
-to zero in configure. By default Perl will use SBOX32 to hash strings 24 bytes
-or shorter, you can change this length by setting
+or alternatively you can use the simple define C<PERL_HASH_NO_SBOX32> like this:
 
-    SBOX32_MAX_LEN
+    -Accflags='-DPERL_HASH_NO_SBOX32'
 
-to the desired length, with the maximum length being 256.
+By default Perl will use SBOX32 to hash strings 24 bytes
+or shorter, you can change this length by setting C<SBOX32_MAX_LEN>
+to the desired length, with the maximum length being 256. For example with
+this:
+
+    -Accflags='-DSBOX_MAX_LEN=128'
 
 As of Perl 5.18 the order returned by keys(), values(), and each() is
 non-deterministic and distinct per hash, and the insert order for
 colliding keys is randomized as well, and perl allows for controlling this
 by the PERL_PERTURB_KEYS environment setting. You can disable this behavior
-entirely with the define
+entirely with the define C<PERL_PERTURB_KEYS_DISABLED> with
 
-    PERL_PERTURB_KEYS_DISABLED
+    -Accflags='-DPERL_PERTURB_KEYS_DISABLED'
 
 You can disable the environment variable checks and compile time specify
-the type of key traversal randomization to be used by defining one of these:
+the type of key traversal randomization to be used by defining either
+C<PERL_PERTURB_KEYS_RANDOM> or C<PERL_PERTURB_KEYS_DETERMINISTIC> with
 
-    PERL_PERTURB_KEYS_RANDOM
-    PERL_PERTURB_KEYS_DETERMINISTIC
+    -Accflags='-DPERL_PERTURB_KEYS_RANDOM'
+
+or
+
+    -Accflags='-DPERL_PERTURB_KEYS_DETERMINISTIC'
 
 Since Perl 5.18 the seed used for the hash function is randomly selected
 at process start, which can be overridden by specifying a seed by setting
@@ -489,9 +539,9 @@ DETERMINISTIC in this context means "if everything else is kept the same
 the same results should be observed".
 
 You can change this behavior so that your perl is built with a hard coded
-seed with the define
+seed with the define C<NO_HASH_SEED> by providing to Configure
 
-    NO_HASH_SEED
+    -Accflags='-DNO_HASH_SEED'
 
 Note that if you do this you should modify the code in hv_func.h to specify
 your own key. In the future this define may be renamed and replaced with one
@@ -518,6 +568,38 @@ C<-Accflags=-DNO_PERL_HASH_ENV>.
 
 The C<PERL_HASH_SEED_DEBUG> environment variable can be disabled by
 configuring perl with C<-Accflags=-DNO_PERL_HASH_SEED_DEBUG>.
+
+=head3 MISCELLANEOUS CONFIG
+
+Perl uses various defines to control defaults for its behavior. These
+values are chosen to represent "sane" config, but users can override
+these values in their builds if they wish. This is a list of such
+settings.
+
+=over 2
+
+=item PERL_MAX_NESTED_EVAL_BEGIN_BLOCKS_DEFAULT
+
+This define is used to control the default maximum number of nested
+eval/BEGIN statements, and in this context require should be
+understood to be a special form of eval so this means require/BEGIN
+and "use" statements as well.
+
+Currently each C<BEGIN> block inside of an C<eval EXPR> or C<require>
+operation will use a fairly high number of frames of the perl internal
+C stack, and this value is used to prevent stack overflows. Normally
+it is defaulted to 1000 but the default can be configured to another
+value, for instance 100, like this
+
+  -Accflags='-DPERL_MAX_NESTED_EVAL_BEGIN_BLOCKS_DEFAULT=100'
+
+
+If you don't know what this is then it is safe to ignore it. Do not
+configure this to 0 or another very low value, it will break a lot of
+code. If you want to set it to a low value use the run time variable
+C<${^MAX_NESTED_EVAL_BEGIN_BLOCKS}> instead.
+
+=back
 
 =head3 SOCKS
 
@@ -612,7 +694,7 @@ for example:
 
     18126:./miniperl: /sbin/loader: Fatal Error: cannot map libperl.so
 
-There is also an potential problem with the shared perl library if you
+There is also a potential problem with the shared perl library if you
 want to have more than one "flavor" of the same version of perl (e.g.
 with and without -DDEBUGGING).  For example, suppose you build and
 install a standard Perl 5.10.0 with a shared library.  Then, suppose you
@@ -636,21 +718,6 @@ A good workaround is to specify a different directory for the
 architecture-dependent library for your -DDEBUGGING version of perl.
 You can do this by changing all the *archlib* variables in config.sh to
 point to your new architecture-dependent library.
-
-=head3 Environment access
-
-Perl often needs to write to the program's environment, such as when
-C<%ENV> is assigned to. Many implementations of the C library function
-C<putenv()> leak memory, so where possible perl will manipulate the
-environment directly to avoid these leaks. The default is now to perform
-direct manipulation whenever perl is running as a stand alone interpreter,
-and to call the safe but potentially leaky C<putenv()> function when the
-perl interpreter is embedded in another application. You can force perl
-to always use C<putenv()> by compiling with
-C<-Accflags="-DPERL_USE_SAFE_PUTENV">, see section L</"Altering Configure
-variables for C compiler switches etc.">.  You can force an embedded perl
-to use direct manipulation by setting C<PL_use_safe_putenv = 0;> after
-the C<perl_construct()> call.
 
 =head3 External glob
 
@@ -683,7 +750,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.36.3.
+By default, Configure will use the following directories for 5.38.2.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -826,7 +893,7 @@ separated list of directories, like this
 
        sh Configure -Accflags='-DAPPLLIB_EXP=\"/usr/libperl\"'
 
-The directories defined by APPLLIB_EXP get added to @INC I<first>,
+The directories defined by APPLLIB_EXP get added to @INC B<first>,
 ahead of any others, and so provide a way to override the standard perl
 modules should you, for example, want to distribute fixes without
 touching the perl distribution proper.  And, like otherlib dirs,
@@ -1257,6 +1324,13 @@ options.  Try
 	./configure.gnu --help
 
 for a listing.
+
+Unrecognized arguments with a double dash prefix produce an error.
+
+Any other arguments are passed through to C<Configure>, so you could
+build a threaded perl with:
+
+        CC=gcc ./configure.gnu -Dusethreads
 
 (The file is called configure.gnu to avoid problems on systems
 that would not distinguish the files "Configure" and "configure".)
@@ -2506,8 +2580,8 @@ L<https://www.chiark.greenend.org.uk/~sgtatham/bugs.html>
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.36.3 is not binary compatible with versions of Perl earlier than.
-5.36.0.  In other words, you will have to recompile your XS modules.
+Perl 5.38.2 is not binary compatible with earlier versions of Perl.
+In other words, you will have to recompile your XS modules.
 
 In general, you can usually safely upgrade from one stable version of Perl
 (e.g. 5.30.0) to another similar minor version (e.g. 5.30.1) without
@@ -2581,9 +2655,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.36.3
+	sh Configure -Dprefix=/opt/perl5.38.2
 
-and adding /opt/perl5.36.3/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.38.2/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2596,13 +2670,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.35.11 or earlier
+=head2 Upgrading from 5.36.0 or earlier
 
-B<Perl 5.36.3 may not be binary compatible with Perl 5.35.11 or
+B<Perl 5.38.2 may not be binary compatible with Perl 5.36.0 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.36.3.  If you find you do need to rebuild an extension with
-5.36.3, you may safely do so without disturbing the older
+used with 5.38.2.  If you find you do need to rebuild an extension with
+5.38.2, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2635,15 +2709,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.36.3 is as follows (under $Config{prefix}):
+in Linux with perl-5.38.2 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.36.3/strict.pm
-  ./lib/perl5/5.36.3/warnings.pm
-  ./lib/perl5/5.36.3/i686-linux/File/Glob.pm
-  ./lib/perl5/5.36.3/feature.pm
-  ./lib/perl5/5.36.3/XSLoader.pm
-  ./lib/perl5/5.36.3/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.38.2/strict.pm
+  ./lib/perl5/5.38.2/warnings.pm
+  ./lib/perl5/5.38.2/i686-linux/File/Glob.pm
+  ./lib/perl5/5.38.2/feature.pm
+  ./lib/perl5/5.38.2/XSLoader.pm
+  ./lib/perl5/5.38.2/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591
 files, (of which 510 are for lib/unicore) totaling about 3.5MB in its
@@ -2756,10 +2830,15 @@ by perl itself; for source compatibility reasons, though, they weren't
 completely removed.
 
 =head2 C<-DNO_PERL_INTERNAL_RAND_SEED>
-X<PERL_INTERNAL_RAND_SEED>
 
 If you configure perl with C<-Accflags=-DNO_PERL_INTERNAL_RAND_SEED>,
 perl will ignore the C<PERL_INTERNAL_RAND_SEED> environment variable.
+
+=head2 C<-DNO_PERL_RAND_SEED>
+X<PERL_RAND_SEED>
+
+If you configure perl with C<-Accflags=-DNO_PERL_RAND_SEED>,
+perl will ignore the C<PERL_RAND_SEED> environment variable.
 
 =head1 DOCUMENTATION
 

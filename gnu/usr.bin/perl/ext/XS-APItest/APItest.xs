@@ -23,6 +23,16 @@ typedef PerlIO * OutputStream;
 #define croak_fail_nep(h, w) croak("fail %p!=%p at " __FILE__ " line %d", (h), (w), __LINE__)
 #define croak_fail_nei(h, w) croak("fail %d!=%d at " __FILE__ " line %d", (int)(h), (int)(w), __LINE__)
 
+/* assumes that there is a 'failed' variable in scope */
+#define TEST_EXPR(s) STMT_START {           \
+    if (s) {                                \
+        printf("# ok: %s\n", #s);           \
+    } else {                                \
+        printf("# not ok: %s\n", #s);       \
+        failed++;                           \
+    }                                       \
+} STMT_END
+
 #if IVSIZE == 8
 #  define TEST_64BIT 1
 #else
@@ -115,8 +125,19 @@ S_myset_set(pTHX_ SV* sv, MAGIC* mg)
     return 0;
 }
 
+static int
+S_myset_set_dies(pTHX_ SV* sv, MAGIC* mg)
+{
+    PERL_UNUSED_ARG(sv);
+    PERL_UNUSED_ARG(mg);
+    croak("in S_myset_set_dies");
+    return 0;
+}
+
+
 static MGVTBL vtbl_foo, vtbl_bar;
 static MGVTBL vtbl_myset = { 0, S_myset_set, 0, 0, 0, 0, 0, 0 };
+static MGVTBL vtbl_myset_dies = { 0, S_myset_set_dies, 0, 0, 0, 0, 0, 0 };
 
 static int
 S_mycopy_copy(pTHX_ SV *sv, MAGIC* mg, SV *nsv, const char *name, I32 namlen) {
@@ -1443,7 +1464,61 @@ my_ck_rv2cv(pTHX_ OP *o)
     return old_ck_rv2cv(aTHX_ o);
 }
 
+#define test_bool_internals_macro(true_sv, false_sv) \
+    test_bool_internals_func(true_sv, false_sv,\
+        #true_sv " and " #false_sv)
+
+U32
+test_bool_internals_func(SV *true_sv, SV *false_sv, const char *msg) {
+    U32 failed = 0;
+    printf("# Testing '%s'\n", msg);
+    TEST_EXPR(SvCUR(true_sv) == 1);
+    TEST_EXPR(SvCUR(false_sv) == 0);
+    TEST_EXPR(SvLEN(true_sv) == 0);
+    TEST_EXPR(SvLEN(false_sv) == 0);
+    TEST_EXPR(SvIV(true_sv) == 1);
+    TEST_EXPR(SvIV(false_sv) == 0);
+    TEST_EXPR(SvIsCOW(true_sv));
+    TEST_EXPR(SvIsCOW(false_sv));
+    TEST_EXPR(strEQ(SvPV_nolen(true_sv),"1"));
+    TEST_EXPR(strEQ(SvPV_nolen(false_sv),""));
+    TEST_EXPR(SvIOK(true_sv));
+    TEST_EXPR(SvIOK(false_sv));
+    TEST_EXPR(SvPOK(true_sv));
+    TEST_EXPR(SvPOK(false_sv));
+    TEST_EXPR(SvBoolFlagsOK(true_sv));
+    TEST_EXPR(SvBoolFlagsOK(false_sv));
+    TEST_EXPR(SvTYPE(true_sv) >= SVt_PVNV);
+    TEST_EXPR(SvTYPE(false_sv) >= SVt_PVNV);
+    TEST_EXPR(SvBoolFlagsOK(true_sv) && BOOL_INTERNALS_sv_isbool(true_sv));
+    TEST_EXPR(SvBoolFlagsOK(false_sv) && BOOL_INTERNALS_sv_isbool(false_sv));
+    TEST_EXPR(SvBoolFlagsOK(true_sv) && BOOL_INTERNALS_sv_isbool_true(true_sv));
+    TEST_EXPR(SvBoolFlagsOK(false_sv) && BOOL_INTERNALS_sv_isbool_false(false_sv));
+    TEST_EXPR(SvBoolFlagsOK(true_sv) && !BOOL_INTERNALS_sv_isbool_false(true_sv));
+    TEST_EXPR(SvBoolFlagsOK(false_sv) && !BOOL_INTERNALS_sv_isbool_true(false_sv));
+    TEST_EXPR(SvTRUE(true_sv));
+    TEST_EXPR(!SvTRUE(false_sv));
+    if (failed) {
+        PerlIO_printf(Perl_debug_log, "# '%s' the tested true_sv:\n", msg);
+        sv_dump(true_sv);
+        PerlIO_printf(Perl_debug_log, "# PL_sv_yes:\n");
+        sv_dump(&PL_sv_yes);
+        PerlIO_printf(Perl_debug_log, "# '%s' tested false_sv:\n",msg);
+        sv_dump(false_sv);
+        PerlIO_printf(Perl_debug_log, "# PL_sv_no:\n");
+        sv_dump(&PL_sv_no);
+    }
+    fflush(stdout);
+    SvREFCNT_dec(true_sv);
+    SvREFCNT_dec(false_sv);
+    return failed;
+}
 #include "const-c.inc"
+
+void
+destruct_test(pTHX_ void *p) {
+    warn("In destruct_test: %" SVf "\n", (SV*)p);
+}
 
 MODULE = XS::APItest            PACKAGE = XS::APItest
 
@@ -1656,6 +1731,18 @@ test_uvchr_to_utf8_flags_msgs(uv, flags)
         RETVAL
 
 MODULE = XS::APItest:Overload   PACKAGE = XS::APItest::Overload
+
+void
+does_amagic_apply(sv, method, flags)
+    SV *sv
+    int method
+    int flags
+    PPCODE:
+        if(Perl_amagic_applies(aTHX_ sv, method, flags))
+            XSRETURN_YES;
+        else
+            XSRETURN_NO;
+
 
 void
 amagic_deref_call(sv, what)
@@ -2404,7 +2491,7 @@ mpushp()
         EXTEND(SP, 3);
         mPUSHp("one", 3);
         mPUSHp("two", 3);
-        mPUSHp("three", 5);
+        mPUSHpvs("three");
         XSRETURN(3);
 
 void
@@ -2439,7 +2526,7 @@ mxpushp()
         PPCODE:
         mXPUSHp("one", 3);
         mXPUSHp("two", 3);
-        mXPUSHp("three", 5);
+        mXPUSHpvs("three");
         XSRETURN(3);
 
 void
@@ -2484,19 +2571,27 @@ test_EXTEND(max_offset, nsv, use_ss)
     SV  *nsv;
     bool use_ss;
 PREINIT:
-    SV **sp = PL_stack_max + max_offset;
+    SV **new_sp = PL_stack_max + max_offset;
+    SSize_t new_offset = new_sp - PL_stack_base;
 PPCODE:
     if (use_ss) {
         SSize_t n = (SSize_t)SvIV(nsv);
-        EXTEND(sp, n);
-        *(sp + n) = NULL;
+        EXTEND(new_sp, n);
+        new_sp = PL_stack_base + new_offset;
+        assert(new_sp + n <= PL_stack_max);
+        if ((new_sp + n) > PL_stack_sp)
+            *(new_sp + n) = NULL;
     }
     else {
         IV n = SvIV(nsv);
-        EXTEND(sp, n);
-        *(sp + n) = NULL;
+        EXTEND(new_sp, n);
+        new_sp = PL_stack_base + new_offset;
+        assert(new_sp + n <= PL_stack_max);
+        if ((new_sp + n) > PL_stack_sp)
+            *(new_sp + n) = NULL;
     }
-    *PL_stack_max = NULL;
+    if (PL_stack_max > PL_stack_sp)
+        *PL_stack_max = NULL;
 
 
 void
@@ -4251,7 +4346,7 @@ CODE:
 SV *
 HvENAME(HV *hv)
 CODE:
-    RETVAL = hv && HvENAME(hv)
+    RETVAL = hv && HvHasENAME(hv)
               ? newSVpvn_flags(
                   HvENAME(hv),HvENAMELEN(hv),
                   (HvENAMEUTF8(hv) ? SVf_UTF8 : 0)
@@ -4281,30 +4376,44 @@ OUTPUT:
     RETVAL
 
 char *
-SvPVbyte(SV *sv)
+SvPVbyte(SV *sv, OUT STRLEN len)
+CODE:
+    RETVAL = SvPVbyte(sv, len);
+OUTPUT:
+    RETVAL
+
+char *
+SvPVbyte_nolen(SV *sv)
 CODE:
     RETVAL = SvPVbyte_nolen(sv);
 OUTPUT:
     RETVAL
 
 char *
-SvPVbyte_nomg(SV *sv)
+SvPVbyte_nomg(SV *sv, OUT STRLEN len)
 CODE:
-    RETVAL = SvPVbyte_nomg(sv, PL_na);
+    RETVAL = SvPVbyte_nomg(sv, len);
 OUTPUT:
     RETVAL
 
 char *
-SvPVutf8(SV *sv)
+SvPVutf8(SV *sv, OUT STRLEN len)
+CODE:
+    RETVAL = SvPVutf8(sv, len);
+OUTPUT:
+    RETVAL
+
+char *
+SvPVutf8_nolen(SV *sv)
 CODE:
     RETVAL = SvPVutf8_nolen(sv);
 OUTPUT:
     RETVAL
 
 char *
-SvPVutf8_nomg(SV *sv)
+SvPVutf8_nomg(SV *sv, OUT STRLEN len)
 CODE:
-    RETVAL = SvPVutf8_nomg(sv, PL_na);
+    RETVAL = SvPVutf8_nomg(sv, len);
 OUTPUT:
     RETVAL
 
@@ -4417,6 +4526,20 @@ sv_mortalcopy(SV *sv)
 
 SV *
 newRV(SV *sv)
+
+SV *
+newAVav(AV *av)
+    CODE:
+        RETVAL = newRV_noinc((SV *)newAVav(av));
+    OUTPUT:
+        RETVAL
+
+SV *
+newAVhv(HV *hv)
+    CODE:
+        RETVAL = newRV_noinc((SV *)newAVhv(hv));
+    OUTPUT:
+        RETVAL
 
 void
 alias_av(AV *av, IV ix, SV *sv)
@@ -4577,6 +4700,27 @@ test_MAX_types()
     OUTPUT:
         RETVAL
 
+SV *
+test_HvNAMEf(sv)
+    SV *sv
+    CODE:
+        if (!sv_isobject(sv)) XSRETURN_UNDEF;
+        HV *pkg = SvSTASH(SvRV(sv));
+        RETVAL = newSVpvf("class='%" HvNAMEf "'", pkg);
+    OUTPUT:
+        RETVAL
+
+SV *
+test_HvNAMEf_QUOTEDPREFIX(sv)
+    SV *sv
+    CODE:
+        if (!sv_isobject(sv)) XSRETURN_UNDEF;
+        HV *pkg = SvSTASH(SvRV(sv));
+        RETVAL = newSVpvf("class=%" HvNAMEf_QUOTEDPREFIX, pkg);
+    OUTPUT:
+        RETVAL
+
+
 bool
 sv_numeq(SV *sv1, SV *sv2)
     CODE:
@@ -4637,16 +4781,22 @@ void
 sv_magic_foo(SV *sv, SV *thingy)
 ALIAS:
     sv_magic_bar = 1
+    sv_magic_baz = 2
 CODE:
-    sv_magicext(SvRV(sv), NULL, PERL_MAGIC_ext, ix ? &vtbl_bar : &vtbl_foo, (const char *)thingy, 0);
+    sv_magicext(sv, NULL, ix == 2 ? PERL_MAGIC_extvalue : PERL_MAGIC_ext, ix ? &vtbl_bar : &vtbl_foo, (const char *)thingy, 0);
 
 SV *
 mg_find_foo(SV *sv)
 ALIAS:
     mg_find_bar = 1
+    mg_find_baz = 2
 CODE:
-    MAGIC *mg = mg_findext(SvRV(sv), PERL_MAGIC_ext, ix ? &vtbl_bar : &vtbl_foo);
-    RETVAL = mg ? SvREFCNT_inc((SV *)mg->mg_ptr) : &PL_sv_undef;
+	RETVAL = &PL_sv_undef;
+	if (SvTYPE(sv) >= SVt_PVMG) {
+		MAGIC *mg = mg_findext(sv, ix == 2 ? PERL_MAGIC_extvalue : PERL_MAGIC_ext, ix ? &vtbl_bar : &vtbl_foo);
+		if (mg)
+			RETVAL = SvREFCNT_inc((SV *)mg->mg_ptr);
+	}
 OUTPUT:
     RETVAL
 
@@ -4654,13 +4804,14 @@ void
 sv_unmagic_foo(SV *sv)
 ALIAS:
     sv_unmagic_bar = 1
+    sv_unmagic_baz = 2
 CODE:
-    sv_unmagicext(SvRV(sv), PERL_MAGIC_ext, ix ? &vtbl_bar : &vtbl_foo);
+    sv_unmagicext(sv, ix == 2 ? PERL_MAGIC_extvalue : PERL_MAGIC_ext, ix ? &vtbl_bar : &vtbl_foo);
 
 void
 sv_magic(SV *sv, SV *thingy)
 CODE:
-    sv_magic(SvRV(sv), NULL, PERL_MAGIC_ext, (const char *)thingy, 0);
+    sv_magic(sv, NULL, PERL_MAGIC_ext, (const char *)thingy, 0);
 
 UV
 test_get_vtbl()
@@ -4712,6 +4863,13 @@ test_get_vtbl()
     # where that magic's job is to increment thingy
 
 void
+sv_magic_myset_dies(SV *rsv, SV *thingy)
+CODE:
+    sv_magicext(SvRV(rsv), NULL, PERL_MAGIC_ext, &vtbl_myset_dies,
+        (const char *)thingy, 0);
+
+
+void
 sv_magic_myset(SV *rsv, SV *thingy)
 CODE:
     sv_magicext(SvRV(rsv), NULL, PERL_MAGIC_ext, &vtbl_myset,
@@ -4735,6 +4893,43 @@ sv_magic_mycopy_count(SV *rsv)
         RETVAL = mg ? newSViv(mg->mg_private) : &PL_sv_undef;
     OUTPUT:
         RETVAL
+
+int
+my_av_store(SV *rsv, IV i, SV *sv)
+    CODE:
+        if (av_store((AV*)SvRV(rsv), i, sv)) {
+            SvREFCNT_inc(sv);
+            RETVAL = 1;
+        } else {
+            RETVAL = 0;
+        }
+    OUTPUT:
+        RETVAL
+
+STRLEN
+sv_refcnt(SV *sv)
+    CODE:
+        RETVAL = SvREFCNT(sv);
+    OUTPUT:
+        RETVAL
+
+void
+test_mortal_destructor_sv(SV *coderef, SV *args)
+    CODE:
+        MORTALDESTRUCTOR_SV(coderef,args);
+
+void
+test_mortal_destructor_av(SV *coderef, AV *args)
+    CODE:
+        /* passing in an AV cast to SV is different from a SV ref to an AV */
+        MORTALDESTRUCTOR_SV(coderef, (SV *)args);
+
+void
+test_mortal_svfunc_x(SV *args)
+    CODE:
+        MORTALSVFUNC_X(&destruct_test,args);
+
+
 
 
 MODULE = XS::APItest            PACKAGE = XS::APItest
@@ -6553,14 +6748,14 @@ test_is_utf8_fixed_width_buf_loclen_flags(char *s, STRLEN len, U32 flags)
         RETVAL
 
 IV
-test_utf8_hop_safe(SV *s_sv, STRLEN s_off, IV off)
+test_utf8_hop_safe(SV *s_sv, STRLEN s_off, IV hop)
     PREINIT:
         STRLEN len;
         U8 *p;
         U8 *r;
     CODE:
         p = (U8 *)SvPV(s_sv, len);
-        r = utf8_hop_safe(p + s_off, off, p, p + len);
+        r = utf8_hop_safe(p + s_off, hop, p, p + len);
         RETVAL = r - p;
     OUTPUT:
         RETVAL
@@ -6991,6 +7186,19 @@ test_Perl_langinfo(SV * item)
         RETVAL = newSVpv(Perl_langinfo(SvIV(item)), 0);
     OUTPUT:
         RETVAL
+
+SV *
+gimme()
+    CODE:
+        /* facilitate tests that GIMME_V gives the right result
+         * in XS calls */
+        int gimme = GIMME_V;
+        SV* sv = get_sv("XS::APItest::GIMME_V", GV_ADD);
+        sv_setiv_mg(sv, (IV)gimme);
+        RETVAL = &PL_sv_undef;
+    OUTPUT:
+        RETVAL
+
 
 MODULE = XS::APItest            PACKAGE = XS::APItest::Backrefs
 
@@ -7432,9 +7640,9 @@ test_siphash24()
             if (hash32 != vectors_32[i]) {
                 failed++;
                 printf( "Error in 32 bit result on test vector of length %d for siphash24\n"
-                        "    have: 0x%08x\n"
-                        "    want: 0x%08x\n",
-                    i, hash32, vectors_32[i]);
+                        "    have: 0x%08" UVxf "\n"
+                        "    want: 0x%08" UVxf "\n",
+                    i, (UV)hash32, (UV)vectors_32[i]);
             }
         }
         RETVAL= failed;
@@ -7653,9 +7861,9 @@ test_siphash13()
             if (hash32 != vectors_32[i]) {
                 failed++;
                 printf( "Error in 32 bit result on test vector of length %d for siphash13\n"
-                        "    have: 0x%08x\n"
-                        "    want: 0x%08x\n",
-                    i, hash32, vectors_32[i]);
+                        "    have: 0x%08" UVxf"\n"
+                        "    want: 0x%08" UVxf"\n",
+                    i, (UV)hash32, (UV)vectors_32[i]);
             }
         }
         RETVAL= failed;
@@ -7663,4 +7871,103 @@ test_siphash13()
     OUTPUT:
         RETVAL
 
-#endif
+#endif /* END 64 BIT SIPHASH TESTS */
+
+MODULE = XS::APItest            PACKAGE = XS::APItest::BoolInternals
+
+UV
+test_bool_internals()
+    CODE:
+    {
+        U32 failed = 0;
+        SV *true_sv_setsv = newSV(0);
+        SV *false_sv_setsv = newSV(0);
+        SV *true_sv_set_true = newSV(0);
+        SV *false_sv_set_false = newSV(0);
+        SV *true_sv_set_bool = newSV(0);
+        SV *false_sv_set_bool = newSV(0);
+        SV *sviv = newSViv(1);
+        SV *svpv = newSVpvs("whatever");
+        TEST_EXPR(SvIOK(sviv) && !SvIandPOK(sviv));
+        TEST_EXPR(SvPOK(svpv) && !SvIandPOK(svpv));
+        TEST_EXPR(SvIOK(sviv) && !SvBoolFlagsOK(sviv));
+        TEST_EXPR(SvPOK(svpv) && !SvBoolFlagsOK(svpv));
+        sv_setsv(true_sv_setsv, &PL_sv_yes);
+        sv_setsv(false_sv_setsv, &PL_sv_no);
+        sv_set_true(true_sv_set_true);
+        sv_set_false(false_sv_set_false);
+        sv_set_bool(true_sv_set_bool, true);
+        sv_set_bool(false_sv_set_bool, false);
+        /* note that test_bool_internals_macro() SvREFCNT_dec's its arguments
+         * after the tests */
+        failed += test_bool_internals_macro(newSVsv(&PL_sv_yes), newSVsv(&PL_sv_no));
+        failed += test_bool_internals_macro(newSV_true(), newSV_false());
+        failed += test_bool_internals_macro(newSVbool(1), newSVbool(0));
+        failed += test_bool_internals_macro(true_sv_setsv, false_sv_setsv);
+        failed += test_bool_internals_macro(true_sv_set_true, false_sv_set_false);
+        failed += test_bool_internals_macro(true_sv_set_bool, false_sv_set_bool);
+        SvREFCNT_dec(sviv);
+        SvREFCNT_dec(svpv);
+        RETVAL = failed;
+    }
+    OUTPUT:
+        RETVAL
+
+MODULE = XS::APItest            PACKAGE = XS::APItest::CvREFCOUNTED_ANYSV
+
+UV
+test_CvREFCOUNTED_ANYSV()
+    CODE:
+    {
+        U32 failed = 0;
+
+        /* Doesn't matter what actual function we wrap because we're never
+         * actually going to call it. */
+        CV *cv = newXS("XS::APItest::(test-cv-1)", XS_XS__APItest__XSUB_XS_VERSION_undef, __FILE__);
+        SV *sv = newSV(0);
+        CvXSUBANY(cv).any_sv = SvREFCNT_inc(sv);
+        CvREFCOUNTED_ANYSV_on(cv);
+        TEST_EXPR(SvREFCNT(sv) == 2);
+
+        SvREFCNT_dec((SV *)cv);
+        TEST_EXPR(SvREFCNT(sv) == 1);
+
+        SvREFCNT_dec(sv);
+
+        RETVAL = failed;
+    }
+    OUTPUT:
+        RETVAL
+
+MODULE = XS::APItest            PACKAGE = XS::APItest::global_locale
+
+char *
+switch_to_global_and_setlocale(int category, const char * locale)
+    CODE:
+        switch_to_global_locale();
+        RETVAL = setlocale(category, locale);
+    OUTPUT:
+        RETVAL
+
+bool
+sync_locale()
+    CODE:
+        RETVAL = sync_locale();
+    OUTPUT:
+        RETVAL
+
+NV
+newSvNV(const char * string)
+    CODE:
+        RETVAL = SvNV(newSVpv(string, 0));
+    OUTPUT:
+        RETVAL
+
+MODULE = XS::APItest            PACKAGE = XS::APItest::savestack
+
+IV
+get_savestack_ix()
+    CODE:
+        RETVAL = PL_savestack_ix;
+    OUTPUT:
+        RETVAL

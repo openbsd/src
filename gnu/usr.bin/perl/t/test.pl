@@ -246,7 +246,7 @@ sub _ok {
         $name =~ s/#/\\#/g;
 	$out = $pass ? "ok $test - $name" : "not ok $test - $name";
     } else {
-	$out = $pass ? "ok $test" : "not ok $test";
+	$out = $pass ? "ok $test - [$where]" : "not ok $test - [$where]";
     }
 
     if ($TODO) {
@@ -274,8 +274,8 @@ sub _ok {
 }
 
 sub _where {
-    my @caller = caller($Level);
-    return "at $caller[1] line $caller[2]";
+    my (undef, $filename, $lineno) = caller($Level);
+    return "at $filename line $lineno";
 }
 
 # DON'T use this for matches. Use like() instead.
@@ -357,6 +357,16 @@ sub is ($$@) {
     unless ($pass) {
 	unshift(@mess, "#      got "._qq($got)."\n",
 		       "# expected "._qq($expected)."\n");
+        if (defined $got and defined $expected and
+            (length($got)>20 or length($expected)>20))
+        {
+            my $p = 0;
+            $p++ while substr($got,$p,1) eq substr($expected,$p,1);
+            push @mess,"#  diff at $p\n";
+            push @mess,"#    after "._qq(substr($got,$p-40<0 ? 0 : $p-40,40))."\n";
+            push @mess,"#     have "._qq(substr($got,$p,40))."\n";
+            push @mess,"#     want "._qq(substr($expected,$p,40))."\n";
+        }
     }
     _ok($pass, _where(), $name, @mess);
 }
@@ -473,6 +483,19 @@ sub like_yn ($$$@) {
                 : "# expected /$display_expected/\n");
     }
     local $Level = $Level + 1;
+    _ok($pass, _where(), $name, @mess);
+}
+
+sub refcount_is {
+    # Don't unpack first arg; access it directly via $_[0] to avoid creating
+    # another reference and upsetting the refcount
+    my (undef, $expected, $name, @mess) = @_;
+    my $got = &Internals::SvREFCNT($_[0]) + 1; # +1 to account for the & calling style
+    my $pass = $got == $expected;
+    unless ($pass) {
+        unshift @mess, "#      got $got references\n" .
+                       "# expected $expected\n";
+    }
     _ok($pass, _where(), $name, @mess);
 }
 
@@ -776,6 +799,11 @@ sub untaint_path {
             $path = $path . $sep;
         }
         $path = $path . '/bin';
+    } elsif (!$is_vms and !length $path) {
+        # empty PATH is the same as a path of "." on *nix so to prevent
+        # tests from dieing under taint we need to return something
+        # absolute. Perhaps "/" would be better? Anything absolute will do.
+        $path = "/usr/bin";
     }
 
     $path;
@@ -973,8 +1001,8 @@ sub _num_to_alpha {
     $max_char = 0 if !defined($max_char) or $max_char < 0;
 
     while( 1 ){
-        $alpha = $letters[ $num % 26 ] . $alpha;
-        $num = int( $num / 26 );
+        $alpha = $letters[ $num % @letters ] . $alpha;
+        $num = int( $num / @letters );
         last if $num == 0;
         $num = $num - 1;
 
@@ -1005,6 +1033,9 @@ $::tempfile_regexp = 'tmp_[A-Z]+_[A-Z]+';
 # Avoid ++, avoid ranges, avoid split //
 my $tempfile_count = 0;
 my $max_file_chars = 3;
+# Note that the max number of is NOT 26**3, it is 26**3 + 26**2 + 26,
+# as 3 character files are distinct from 2 character files, from 1 characters
+# files, etc.
 sub tempfile {
     # if you change the format returned by tempfile() you MUST change
     # the $::tempfile_regex define above.
@@ -1075,6 +1106,7 @@ sub fresh_perl {
     # it feels like the least-worse thing is to assume that auto-vivification
     # works. At least, this is only going to be a run-time failure, so won't
     # affect tests using this file but not this function.
+    my $trim= delete $runperl_args->{rtrim_result}; # hide from runperl
     $runperl_args->{progfile} ||= $tmpfile;
     $runperl_args->{stderr}     = 1 unless exists $runperl_args->{stderr};
 
@@ -1086,7 +1118,7 @@ sub fresh_perl {
     my $results = runperl(%$runperl_args);
     my $status = $?;    # Not necessary to save this, but it makes it clear to
                         # future maintainers.
-
+    $results=~s/[ \t]+\n/\n/g if $trim;
     # Clean up the results into something a bit more predictable.
     $results  =~ s/\n+$//;
     $results =~ s/at\s+$::tempfile_regexp\s+line/at - line/g;
@@ -1111,6 +1143,11 @@ sub fresh_perl {
 
 sub _fresh_perl {
     my($prog, $action, $expect, $runperl_args, $name) = @_;
+
+    local $Level = $Level + 1;
+
+    # strip trailing whitespace if requested - makes some tests easier
+    $expect=~s/[[:blank:]]+\n/\n/g if $runperl_args->{rtrim_result};
 
     my $results = fresh_perl($prog, $runperl_args);
     my $status = $?;
@@ -1155,7 +1192,7 @@ sub fresh_perl_is {
     # This will make it so the test author doesn't have to know that.
     $expected =~ s/\n+$//;
 
-    local $Level = 2;
+    local $Level = $Level + 1;
     _fresh_perl($prog, 'eq', $expected, $runperl_args, $name);
 }
 
@@ -1167,7 +1204,7 @@ sub fresh_perl_is {
 
 sub fresh_perl_like {
     my($prog, $expected, $runperl_args, $name) = @_;
-    local $Level = 2;
+    local $Level = $Level + 1;
     _fresh_perl($prog, '=~', $expected, $runperl_args, $name);
 }
 
@@ -1290,6 +1327,13 @@ sub run_multiple_progs {
         my $dummy;
         ($dummy, @prgs) = _setup_one_file(shift);
     }
+    my $taint_disabled;
+    if (! eval {require Config; 1}) {
+        warn "test.pl had problems loading Config: $@";
+        $taint_disabled = '';
+    } else {
+        $taint_disabled = $Config::Config{taint_disabled};
+    }
 
     my $tmpfile = tempfile();
 
@@ -1341,6 +1385,10 @@ sub run_multiple_progs {
     } elsif (defined $file) {
         $name = "test from $file at line $line";
     }
+
+        if ($switch=~/[Tt]/ and $taint_disabled eq "define") {
+            $reason{skip} ||= "This perl does not support taint";
+        }
 
 	if ($reason{skip}) {
 	SKIP:
@@ -1714,17 +1762,58 @@ sub warning_like {
     }
 }
 
-# Set a watchdog to timeout the entire test file
+# Set a watchdog to timeout the entire test file.  The input seconds is
+# multiplied by $ENV{PERL_TEST_TIME_OUT_FACTOR} (default 1; minimum 1).
+# Set this in your profile for slow boxes, or use it to override the timeout
+# temporarily for debugging.
+#
 # NOTE:  If the test file uses 'threads', then call the watchdog() function
 #        _AFTER_ the 'threads' module is loaded.
+{ # Closure
+    my $watchdog;
+    my $watchdog_thread;
+
 sub watchdog ($;$)
 {
     my $timeout = shift;
-    my $method  = shift || "";
+
+    # If cancelling, use the state variables to know which method was used to
+    # create the watchdog.
+    if ($timeout == 0) {
+        if ($watchdog_thread) {
+            $watchdog_thread->kill('KILL');
+            undef $watch_dog_thread;
+        }
+        elsif ($watchdog) {
+            kill('KILL', $watchdog);
+            undef $watch_dog;
+        }
+        else {
+            alarm(0);
+        }
+
+        return;
+    }
+
+    # Make sure these aren't defined.
+    undef $watchdog;
+    undef $watchdog_thread;
+
+    my $method = shift || "";
+
     my $timeout_msg = 'Test process timed out - terminating';
 
+    # Accept either spelling
+    my $timeout_factor = $ENV{PERL_TEST_TIME_OUT_FACTOR}
+                      || $ENV{PERL_TEST_TIMEOUT_FACTOR}
+                      || 1;
+    $timeout_factor = 1 if $timeout_factor < 1;
+    $timeout_factor = $1 if $timeout_factor =~ /^(\d+)$/;
+
     # Valgrind slows perl way down so give it more time before dying.
-    $timeout *= 10 if $ENV{PERL_VALGRIND};
+    $timeout_factor = 10 if $timeout_factor < 10 && $ENV{PERL_VALGRIND};
+
+    $timeout *= $timeout_factor;
 
     my $pid_to_kill = $$;   # PID for this process
 
@@ -1740,7 +1829,9 @@ sub watchdog ($;$)
     if (!$threads_on || $method eq "process") {
 
         # On Windows and VMS, try launching a watchdog process
-        #   using system(1, ...) (see perlport.pod)
+        #   using system(1, ...) (see perlport.pod).  system() returns
+        #   immediately on these platforms with effectively a pid of the new
+        #   process
         if ($is_mswin || $is_vms) {
             # On Windows, try to get the 'real' PID
             if ($is_mswin) {
@@ -1754,7 +1845,7 @@ sub watchdog ($;$)
             return if ($pid_to_kill <= 0);
 
             # Launch watchdog process
-            my $watchdog;
+            undef $watchdog;
             eval {
                 local $SIG{'__WARN__'} = sub {
                     _diag("Watchdog warning: $_[0]");
@@ -1803,7 +1894,7 @@ sub watchdog ($;$)
         }
 
         # Try using fork() to generate a watchdog process
-        my $watchdog;
+        undef $watchdog;
         eval { $watchdog = fork() };
         if (defined($watchdog)) {
             if ($watchdog) {   # Parent process
@@ -1848,9 +1939,15 @@ sub watchdog ($;$)
     # Use a watchdog thread because either 'threads' is loaded,
     #   or fork() failed
     if (eval {require threads; 1}) {
-        'threads'->create(sub {
+        $watchdog_thread = 'threads'->create(sub {
                 # Load POSIX if available
                 eval { require POSIX; };
+
+                $SIG{'KILL'} = sub { threads->exit(); };
+
+                # Detach after the signal handler is set up; the parent knows
+                # not to signal until detached.
+                'threads'->detach();
 
                 # Execute the timeout
                 my $time_left = $timeout;
@@ -1864,7 +1961,18 @@ sub watchdog ($;$)
                 POSIX::_exit(1) if (defined(&POSIX::_exit));
                 my $sig = $is_vms ? 'TERM' : 'KILL';
                 kill($sig, $pid_to_kill);
-            })->detach();
+        });
+
+        # Don't proceed until the watchdog has set up its signal handler.
+        # (Otherwise there is a possibility that we will exit with threads
+        # running.)  The watchdog tells us the handler is set by detaching
+        # itself.  (The 'is_running()' is a fail-safe.)
+        while (     $watchdog_thread->is_running()
+               && ! $watchdog_thread->is_detached())
+        {
+            'threads'->yield();
+        }
+
         return;
     }
 
@@ -1884,6 +1992,7 @@ WATCHDOG_VIA_ALARM:
         };
     }
 }
+} # End closure
 
 # Orphaned Docker or Linux containers do not necessarily attach to PID 1. They might attach to 0 instead.
 sub is_linux_container {

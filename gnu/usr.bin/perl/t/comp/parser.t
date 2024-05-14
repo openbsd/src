@@ -367,11 +367,14 @@ like($@, qr/BEGIN failed--compilation aborted/, 'BEGIN 7' );
   is(defined &zlonk, '', 'but no body defined');
 }
 
-# [perl #113016] CORE::print::foo
-sub CORE'print'foo { 43 } # apostrophes intentional; do not tempt fate
-sub CORE'foo'bar { 43 }
-is CORE::print::foo, 43, 'CORE::print::foo is not CORE::print ::foo';
-is scalar eval "CORE::foo'bar", 43, "CORE::foo'bar is not an error";
+{
+    no warnings;
+    # [perl #113016] CORE::print::foo
+    sub CORE'print'foo { 43 } # apostrophes intentional; do not tempt fate
+    sub CORE'foo'bar { 43 }
+    is CORE::print::foo, 43, 'CORE::print::foo is not CORE::print ::foo';
+    is scalar eval "CORE::foo'bar", 43, "CORE::foo'bar is not an error";
+}
 
 # bug #71748
 eval q{
@@ -448,8 +451,10 @@ END
 eval 's/${<<END}//';
 eval 's//${<<END}/';
 print "ok ", ++$test, " - unterminated here-docs in s/// in string eval\n";
-
-sub 'Hello'_he_said (_);
+{
+    no warnings qw(syntax deprecated);
+    sub 'Hello'_he_said (_);
+}
 is prototype "Hello::_he_said", '_', 'initial tick in sub declaration';
 
 {
@@ -471,11 +476,14 @@ is $pkg, 3, '[perl #114942] for my $foo()){} $foo';
 
 # Check that format 'Foo still works after removing the hack from
 # force_word
-$test++;
-format 'one =
+{
+    no warnings qw(syntax deprecated);
+    $test++;
+    format 'one =
 ok @<< - format 'foo still works
 $test
 .
+}
 {
     local $~ = "one";
     write();

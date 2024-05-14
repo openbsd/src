@@ -15,8 +15,6 @@ BEGIN {
   $^P |= 0x100; # Provide informative "file" names for evals
 }
 
-no warnings 'experimental::smartmatch';
-
 sub lis($$;$) {
   &is(map(@$_ ? "[@{[map $_//'~~u~~', @$_]}]" : 'nought', @_[0,1]), $_[2]);
 }
@@ -375,6 +373,7 @@ test_proto 'break';
 {
   $tests ++;
   my $tmp;
+  no warnings 'deprecated';
   CORE::given(1) {
     CORE::when(1) {
       &mybreak;
@@ -463,6 +462,7 @@ SKIP:
 
 test_proto 'continue';
 $tests ++;
+no warnings 'deprecated';
 CORE::given(1) {
   CORE::when(1) {
     &mycontinue();
@@ -1158,12 +1158,12 @@ like $@, qr'^Undefined format "STDOUT" called',
       File::Spec::Functions::updir,'regen','keywords.pl'
     );
   my %nottest_words = map { $_ => 1 } qw(
-    AUTOLOAD BEGIN CHECK CORE DESTROY END INIT UNITCHECK
+    ADJUST AUTOLOAD BEGIN CHECK CORE DESTROY END INIT UNITCHECK
     __DATA__ __END__
-    and catch cmp default defer do dump else elsif eq eval finally for foreach
-    format ge given goto grep gt if isa last le local lt m map my ne next no
-    or our package print printf q qq qr qw qx redo require return s say sort
-    state sub tr try unless until use when while x xor y
+    and catch class cmp default defer do dump else elsif eq eval field finally
+    for foreach format ge given goto grep gt if isa last le local lt m map
+    method my ne next no or our package print printf q qq qr qw qx redo require
+    return s say sort state sub tr try unless until use when while x xor y
   );
   open my $kh, $keywords_file
     or die "$0 cannot open $keywords_file: $!";

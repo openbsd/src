@@ -53,7 +53,7 @@ Usage: $0 [opts] [ -d | -v | -x ] [ -a | module ... ]
 -d/--diff     Display file differences using diff(1), rather than just
               listing which files have changed.
 
---diffopts    Options to pass to the diff command. Defaults to '-u --binary'
+--diffopts    Options to pass to the diff command. Defaults to '-u --text'
               (except on *BSD, where it's just '-u').
 
 -f|force      Force download from CPAN of new 02packages.details.txt file
@@ -126,9 +126,9 @@ sub run {
           if ( $reverse || $use_diff || $diff_opts );
     }
     else {
-        #$diff_opts = '-u --binary' unless defined $diff_opts;
+        #$diff_opts = '-u --text' unless defined $diff_opts;
         if (! defined $diff_opts) {
-            $diff_opts = ($^O =~ m/bsd$/i) ? '-u' : '-u --binary';
+            $diff_opts = ($^O =~ m/bsd$/i) ? '-u' : '-u --text';
         };
         usage("can't use -f without --crosscheck") if $force;
     }

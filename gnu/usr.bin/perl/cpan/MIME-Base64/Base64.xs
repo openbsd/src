@@ -67,7 +67,7 @@ static const unsigned char index_64[256] = {
           ((SvFLAGS(sv) & (SVf_POK|SVf_UTF8)) == (SVf_POK) \
            ? ((lp = SvCUR(sv)), SvPVX(sv)) : my_sv_2pvbyte(aTHX_ sv, &lp))
        static char *
-       my_sv_2pvbyte(pTHX_ register SV *sv, STRLEN *lp)
+       my_sv_2pvbyte(pTHX_ SV *sv, STRLEN *lp)
        {   
            sv_utf8_downgrade(sv,0);
            return SvPV(sv,*lp);
@@ -180,7 +180,7 @@ decode_base64(sv)
 
 	PREINIT:
 	STRLEN len;
-	register unsigned char *str = (unsigned char*)SvPV(sv, len);
+	unsigned char *str = (unsigned char*)SvPV(sv, len);
 	unsigned char const* end = str + len;
 	char *r;
 	unsigned char c[4];
@@ -276,7 +276,7 @@ decoded_base64_length(sv)
 
 	PREINIT:
 	STRLEN len;
-	register unsigned char *str = (unsigned char*)SvPV(sv, len);
+	unsigned char *str = (unsigned char*)SvPV(sv, len);
 	unsigned char const* end = str + len;
 	int i = 0;
 

@@ -1,14 +1,14 @@
-# Jamo-14.0.0.txt
-# Date: 2021-03-16, 21:43:00 GMT [KW, LI]
-# © 2021 Unicode®, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# Jamo-15.0.0.txt
+# Date: 2022-05-03, 18:52:00 GMT [KW, LI]
+# © 2022 Unicode®, Inc.
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# For documentation, see http://www.unicode.org/reports/tr44/
+# For documentation, see https://www.unicode.org/reports/tr44/
 #
 # This file defines the Jamo_Short_Name property.
 #
-# See Section 3.12 of The Unicode Standard, Version 14.0
+# See Section 3.12 of The Unicode Standard, Version 15.0
 # for more information.
 #
 # Each line contains two fields, separated by a semicolon.

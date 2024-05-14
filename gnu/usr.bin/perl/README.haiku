@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 If you read this file _as_is_, just ignore the funny characters you see.
 It is written in the POD format (see pod/perlpod.pod) which is specially
 designed to be readable as is.
@@ -22,9 +24,9 @@ The build procedure is completely standard:
 Make perl executable and create a symlink for libperl:
 
   chmod a+x /boot/common/bin/perl
-  cd /boot/common/lib; ln -s perl5/5.36.3/BePC-haiku/CORE/libperl.so .
+  cd /boot/common/lib; ln -s perl5/5.38.2/BePC-haiku/CORE/libperl.so .
 
-Replace C<5.36.3> with your respective version of Perl.
+Replace C<5.38.2> with your respective version of Perl.
 
 =head1 KNOWN PROBLEMS
 

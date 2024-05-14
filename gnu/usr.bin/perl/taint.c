@@ -34,7 +34,9 @@ Implements the L</TAINT_PROPER> macro, which you should generally use instead.
 void
 Perl_taint_proper(pTHX_ const char *f, const char *const s)
 {
-    /* Output a tainting violation, croaking unless we're just to warn.
+    /* Don't use directly; instead use TAINT_PROPER
+     *
+     * Output a tainting violation, croaking unless we're just to warn.
      * '_proper' is just to throw you off the scent */
 
 #if defined(HAS_SETEUID) && defined(DEBUGGING)
@@ -95,6 +97,8 @@ Implements the L</TAINT_ENV> macro, which you should generally use instead.
 void
 Perl_taint_env(pTHX)
 {
+    /* Don't use directly; instead use TAINT_ENV */
+
     SV** svp;
     const char* const *e;
     static const char* const misc_env[] = {

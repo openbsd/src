@@ -9,7 +9,7 @@ use Text::ParseWords;
 use IPC::Cmd qw(can_run);
 use File::Temp qw(tempfile);
 
-our $VERSION = '0.280236'; # VERSION
+our $VERSION = '0.280238'; # VERSION
 
 # More details about C/C++ compilers:
 # http://developers.sun.com/sunstudio/documentation/product/compiler.jsp
@@ -335,10 +335,24 @@ sub _do_link {
   return wantarray ? ($out, @temp_files) : $out;
 }
 
+sub quote_literal {
+  my ($self, $string) = @_;
+
+  if (length $string && $string !~ /[^a-zA-Z0-9,._+@%\/-]/) {
+    return $string;
+  }
+
+  $string =~ s{'}{'\\''}g;
+
+  return "'$string'";
+}
 
 sub do_system {
   my ($self, @cmd) = @_;
-  print "@cmd\n" if !$self->{quiet};
+  if (!$self->{quiet}) {
+    my $full = join ' ', map $self->quote_literal($_), @cmd;
+    print $full . "\n";
+  }
   return !system(@cmd);
 }
 

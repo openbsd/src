@@ -46,7 +46,7 @@ be executed.
 
 =head1 Acknowledgements
 
-Perl 5.36.2 represents approximately 1 month of development since Perl
+Perl 5.36.2 represents approximately 7 months of development since Perl
 5.36.1 and contains approximately 2,300 lines of changes across 38 files
 from 4 authors.
 

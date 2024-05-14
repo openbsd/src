@@ -36,7 +36,11 @@ for (1..5) {
     SKIP: {
         if($^O eq "haiku") {
             skip "testing stat access time on Haiku", 2;
-        }  
+        }
+        if ($ENV{PERL_FILE_ATIME_CHANGES}) {
+            # something else might access the file, changing atime
+            $lstat->[8] = $stat->[8];
+        }
         is_deeply $lstat, $stat, "write: stat and lstat returned same values";
         Time::HiRes::sleep(rand(0.1) + 0.1);
         open(X, '<', $$);

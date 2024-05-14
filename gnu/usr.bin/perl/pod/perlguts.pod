@@ -61,17 +61,17 @@ A numeric constant can be specified with L<perlapi/C<INT16_C>>,
 L<perlapi/C<UINTMAX_C>>, and similar.
 
 =for apidoc_section $integer
-=for apidoc Ayh||I8
+=for apidoc  Ayh ||IV
+=for apidoc_item ||I8
 =for apidoc_item ||I16
 =for apidoc_item ||I32
 =for apidoc_item ||I64
-=for apidoc_item ||IV
 
-=for apidoc Ayh||U8
+=for apidoc  Ayh ||UV
+=for apidoc_item ||U8
 =for apidoc_item ||U16
 =for apidoc_item ||U32
 =for apidoc_item ||U64
-=for apidoc_item ||UV
 
 =head2 Working with SVs
 
@@ -523,8 +523,8 @@ In general, though, it's best to use the C<Sv*V> macros.
 
 =head2 Working with AVs
 
-There are two ways to create and load an AV.  The first method creates an
-empty AV:
+There are two main, longstanding ways to create and load an AV.  The first
+method creates an empty AV:
 
     AV*  newAV();
 
@@ -534,6 +534,20 @@ The second method both creates the AV and initially populates it with SVs:
 
 The second argument points to an array containing C<num> C<SV*>'s.  Once the
 AV has been created, the SVs can be destroyed, if so desired.
+
+Perl v5.36 added two new ways to create an AV and allocate a SV** array
+without populating it. These are more efficient than a newAV() followed by an
+av_extend().
+
+    /* Creates but does not initialize (Zero) the SV** array */
+    AV *av = newAV_alloc_x(1);
+    /* Creates and does initialize (Zero) the SV** array */
+    AV *av = newAV_alloc_xz(1);
+
+The numerical argument refers to the number of array elements to allocate, not
+an array index, and must be >0. The first form must only ever be used when all
+elements will be initialized before any read occurs. Reading a non-initialized
+SV* - i.e. treating a random memory address as a SV* - is a serious bug.
 
 Once the AV has been created, the following operations are possible on it:
 
@@ -586,6 +600,46 @@ This returns NULL if the variable does not exist.
 
 See L</Understanding the Magic of Tied Hashes and Arrays> for more
 information on how to use the array access functions on tied arrays.
+
+=head3 More efficient working with new or vanilla AVs
+
+Perl v5.36 and v5.38 introduced streamlined, inlined versions of some
+functions:
+
+=over
+
+=item * C<av_store_simple>
+
+=item * C<av_fetch_simple>
+
+=item * C<av_push_simple>
+
+=back
+
+These are drop-in replacements, but can only be used on straightforward
+AVs that meet the following criteria:
+
+=over
+
+=item * are not magical
+
+=item * are not readonly
+
+=item * are "real" (refcounted) AVs
+
+=item * have an av_top_index value > -2
+
+=back
+
+AVs created using C<newAV()>, C<av_make>, C<newAV_alloc_x>, and
+C<newAV_alloc_xz> are all compatible at the time of creation. It is
+only if they are declared readonly or unreal, have magic attached, or
+are otherwise configured unusually that they will stop being compatible.
+
+Note that some interpreter functions may attach magic to an AV as part
+of normal operations. It is therefore safest, unless you are sure of the
+lifecycle of an AV, to only use these new functions close to the point
+of AV creation.
 
 =head2 Working with HVs
 
@@ -1456,17 +1510,17 @@ will be lost.
                                              tables
  <  PERL_MAGIC_backref        vtbl_backref   For weak ref data
  @  PERL_MAGIC_arylen_p       (none)         To move arylen out of XPVAV
- B  PERL_MAGIC_bm             vtbl_regexp    Boyer-Moore 
+ B  PERL_MAGIC_bm             vtbl_regexp    Boyer-Moore
                                              (fast string search)
- c  PERL_MAGIC_overload_table vtbl_ovrld     Holds overload table 
+ c  PERL_MAGIC_overload_table vtbl_ovrld     Holds overload table
                                              (AMT) on stash
- D  PERL_MAGIC_regdata        vtbl_regdata   Regex match position data 
+ D  PERL_MAGIC_regdata        vtbl_regdata   Regex match position data
                                              (@+ and @- vars)
  d  PERL_MAGIC_regdatum       vtbl_regdatum  Regex match position data
                                              element
  E  PERL_MAGIC_env            vtbl_env       %ENV hash
  e  PERL_MAGIC_envelem        vtbl_envelem   %ENV hash element
- f  PERL_MAGIC_fm             vtbl_regexp    Formline 
+ f  PERL_MAGIC_fm             vtbl_regexp    Formline
                                              ('compiled' format)
  g  PERL_MAGIC_regex_global   vtbl_mglob     m//g target
  H  PERL_MAGIC_hints          vtbl_hints     %^H hash
@@ -1494,18 +1548,23 @@ will be lost.
  V  PERL_MAGIC_vstring        (none)         SV was vstring literal
  v  PERL_MAGIC_vec            vtbl_vec       vec() lvalue
  w  PERL_MAGIC_utf8           vtbl_utf8      Cached UTF-8 information
+ X  PERL_MAGIC_destruct       vtbl_destruct  destruct callback
  x  PERL_MAGIC_substr         vtbl_substr    substr() lvalue
  Y  PERL_MAGIC_nonelem        vtbl_nonelem   Array element that does not
                                              exist
  y  PERL_MAGIC_defelem        vtbl_defelem   Shadow "foreach" iterator
                                              variable / smart parameter
                                              vivification
+ Z  PERL_MAGIC_hook           vtbl_hook      %{^HOOK} hash
+ z  PERL_MAGIC_hookelem       vtbl_hookelem  %{^HOOK} hash element
  \  PERL_MAGIC_lvref          vtbl_lvref     Lvalue reference
                                              constructor
  ]  PERL_MAGIC_checkcall      vtbl_checkcall Inlining/mutation of call
                                              to this CV
- ~  PERL_MAGIC_ext            (none)         Available for use by
-                                             extensions
+ ^  PERL_MAGIC_extvalue       (none)         Value magic available for
+                                             use by extensions
+ ~  PERL_MAGIC_ext            (none)         Variable magic available
+                                             for use by extensions
 
 
 =for apidoc_section $magic
@@ -1519,12 +1578,16 @@ will be lost.
 =for apidoc_item ||PERL_MAGIC_dbline
 =for apidoc_item ||PERL_MAGIC_debugvar
 =for apidoc_item ||PERL_MAGIC_defelem
+=for apidoc_item ||PERL_MAGIC_destruct
 =for apidoc_item ||PERL_MAGIC_env
 =for apidoc_item ||PERL_MAGIC_envelem
 =for apidoc_item ||PERL_MAGIC_ext
+=for apidoc_item ||PERL_MAGIC_extvalue
 =for apidoc_item ||PERL_MAGIC_fm
 =for apidoc_item ||PERL_MAGIC_hints
 =for apidoc_item ||PERL_MAGIC_hintselem
+=for apidoc_item ||PERL_MAGIC_hook
+=for apidoc_item ||PERL_MAGIC_hookelem
 =for apidoc_item ||PERL_MAGIC_isa
 =for apidoc_item ||PERL_MAGIC_isaelem
 =for apidoc_item ||PERL_MAGIC_lvref
@@ -1562,12 +1625,15 @@ uppercase letter is typically used to represent some kind of composite type
 of that composite type.  Some internals code makes use of this case
 relationship.  However, 'v' and 'V' (vec and v-string) are in no way related.
 
-The C<PERL_MAGIC_ext> and C<PERL_MAGIC_uvar> magic types are defined
-specifically for use by extensions and will not be used by perl itself.
-Extensions can use C<PERL_MAGIC_ext> magic to 'attach' private information
-to variables (typically objects).  This is especially useful because
-there is no way for normal perl code to corrupt this private information
-(unlike using extra elements of a hash object).
+The C<PERL_MAGIC_ext>, C<PERL_MAGIC_extvalue> and C<PERL_MAGIC_uvar> magic types
+are defined specifically for use by extensions and will not be used by perl
+itself.  Extensions can use C<PERL_MAGIC_ext> or C<PERL_MAGIC_extvalue> magic to
+'attach' private information to variables (typically objects).  This is
+especially useful because there is no way for normal perl code to corrupt this
+private information (unlike using extra elements of a hash object).
+C<PERL_MAGIC_extvalue> is value magic (unlike C<PERL_MAGIC_ext> and
+C<PERL_MAGIC_uvar>) meaning that on localization the new value will not be
+magical.
 
 Similarly, C<PERL_MAGIC_uvar> magic can be used much like tie() to call a
 C function any time a scalar's value is used or changed.  The C<MAGIC>'s
@@ -1829,6 +1895,32 @@ and back.
 =for apidoc Amh||SAVESPTR|SV * s
 =for apidoc Amh||SAVEPPTR|char * p
 
+=item C<SAVERCPV(char **ppv)>
+
+This macro arranges to restore the value of a C<char *> variable which
+was allocated with a call to C<rcpv_new()> to its previous state when
+the current pseudo block is completed. The pointer stored in C<*ppv> at
+the time of the call will be refcount incremented and stored on the save
+stack. Later when the current I<pseudo-block> is completed the value
+stored in C<*ppv> will be refcount decremented, and the previous value
+restored from the savestack which will also be refcount decremented.
+
+This is the C<RCPV> equivalent of C<SAVEGENERICSV()>.
+
+=for apidoc Amh||SAVERCPV|char *pv
+
+=item C<SAVEGENERICSV(SV **psv)>
+
+This macro arranges to restore the value of a C<SV *> variable to its
+previous state when the current pseudo block is completed. The pointer
+stored in C<*psv> at the time of the call will be refcount incremented
+and stored on the save stack. Later when the current I<pseudo-block> is
+completed the value stored in C<*ppv> will be refcount decremented, and
+the previous value restored from the savestack which will also be refcount
+decremented. This the C equivalent of C<local $sv>.
+
+=for apidoc Amh||SAVEGENERICSV|char **psv
+
 =item C<SAVEFREESV(SV *sv)>
 
 The refcount of C<sv> will be decremented at the end of
@@ -1853,16 +1945,25 @@ live scope has finished executing.
 
 =item C<SAVEFREEOP(OP *op)>
 
-The C<OP *> is op_free()ed at the end of I<pseudo-block>.
+The C<OP *> is C<op_free()>ed at the end of I<pseudo-block>.
 
 =for apidoc Amh||SAVEFREEOP|OP *op
 
 =item C<SAVEFREEPV(p)>
 
-The chunk of memory which is pointed to by C<p> is Safefree()ed at the
-end of I<pseudo-block>.
+The chunk of memory which is pointed to by C<p> is C<Safefree()>ed at the
+end of the current I<pseudo-block>.
 
-=for apidoc Amh||SAVEFREEPV|void * p
+=for apidoc Amh||SAVEFREEPV|char *pv
+
+=item C<SAVEFREERCPV(char *pv)>
+
+Ensures that a C<char *> which was created by a call to C<rcpv_new()> is
+C<rcpv_free()>ed at the end of the current I<pseudo-block>.
+
+This is the RCPV equivalent of C<SAVEFREESV()>.
+
+=for apidoc Amh||SAVEFREERCPV|char *pv
 
 =item C<SAVECLEARSV(SV *sv)>
 
@@ -1883,7 +1984,7 @@ this:
 =item C<SAVEDESTRUCTOR(DESTRUCTORFUNC_NOCONTEXT_t f, void *p)>
 
 At the end of I<pseudo-block> the function C<f> is called with the
-only argument C<p>.
+only argument C<p> which may be NULL.
 
 =for apidoc Ayh||DESTRUCTORFUNC_NOCONTEXT_t
 =for apidoc Amh||SAVEDESTRUCTOR|DESTRUCTORFUNC_NOCONTEXT_t f|void *p
@@ -1891,10 +1992,44 @@ only argument C<p>.
 =item C<SAVEDESTRUCTOR_X(DESTRUCTORFUNC_t f, void *p)>
 
 At the end of I<pseudo-block> the function C<f> is called with the
-implicit context argument (if any), and C<p>.
+implicit context argument (if any), and C<p> which may be NULL.
+
+Note the I<end of the current pseudo-block> may occur much later than
+the I<end of the current statement>. You may wish to look at the
+C<MORTALDESTRUCTOR_X()> macro instead.
 
 =for apidoc Ayh||DESTRUCTORFUNC_t
 =for apidoc Amh||SAVEDESTRUCTOR_X|DESTRUCTORFUNC_t f|void *p
+
+=item C<MORTALSVFUNC_X(SVFUNC_t f, SV *sv)>
+
+At the end of I<the current statement> the function C<f> is called with
+the implicit context argument (if any), and C<sv> which may be NULL.
+
+Be aware that the parameter argument to the destructor function differs
+from the related C<SAVEDESTRUCTOR_X()> in that it MUST be either NULL or
+an C<SV*>.
+
+Note the I<end of the current statement> may occur much before the
+the I<end of the current pseudo-block>.  You may wish to look at the
+C<SAVEDESTRUCTOR_X()> macro instead.
+
+=for apidoc Amh||MORTALDESTRUCTOR_X|DESTRUCTORFUNC_t f|SV *sv
+
+=item C<MORTALDESTRUCTOR_SV(SV *coderef, SV *args)>
+
+At the end of I<the current statement> the Perl function contained in
+C<coderef> is called with the arguments provided (if any) in C<args>.
+See the documentation for C<mortal_destructor_sv()> for details on
+the C<args> parameter is handled.
+
+Note the I<end of the current statement> may occur much before the
+the I<end of the current pseudo-block>.  If you wish to call a perl
+function at the end of the current pseudo block you should use the
+C<SAVEDESTRUCTOR_X()> API instead, which will require you create a
+C wrapper to call the Perl function.
+
+=for apidoc Amh||MORTALDESTRUCTOR_SV|SV *coderef|SV *args
 
 =item C<SAVESTACK_POS()>
 
@@ -1939,13 +2074,6 @@ Duplicates the current value of C<SV>. On the exit from the current
 C<ENTER>/C<LEAVE> I<pseudo-block> the value of C<SV> will be restored
 using the stored value.  It doesn't handle magic.  Use C<save_scalar> if
 magic is affected.
-
-=item C<void save_list(SV **sarg, I32 maxsarg)>
-
-=for apidoc save_list
-
-A variant of C<save_item> which takes multiple arguments via an array
-C<sarg> of C<SV*> of length C<maxsarg>.
 
 =item C<SV* save_svref(SV **sptr)>
 
@@ -2102,7 +2230,7 @@ not constantly freed/created.
 
 Each of the targets is created only once (but see
 L</Scratchpads and recursion> below), and when an opcode needs to put
-an integer, a double, or a string on stack, it just sets the
+an integer, a double, or a string on the stack, it just sets the
 corresponding parts of its I<target> and puts the I<target> on stack.
 
 The macro to put this target on stack is C<PUSHTARG>, and it is
@@ -2841,6 +2969,9 @@ that there's an undeclared identifier in those functions.)  No changes
 are needed for the XSUBs themselves, because the XS() macro is
 correctly defined to pass in the implicit context if needed.
 
+=for apidoc_section $concurrency
+=for apidoc AmnhU||PERL_NO_GET_CONTEXT
+
 The third, even more efficient way is to ape how it is done within
 the Perl guts:
 
@@ -3016,7 +3147,7 @@ compiled with C++, to maintain compliance with its standard.
 Note that any filehandle being printed to under UTF-8 must be expecting
 UTF-8 in order to get good results and avoid Wide-character warnings.
 One way to do this for typical filehandles is to invoke perl with the
-C<-C>> parameter.  (See L<perlrun/-C [numberE<sol>list]>.
+C<-C> parameter.  (See L<perlrun/-C [numberE<sol>list]>.
 
 You can use this to concatenate two scalars:
 
@@ -3024,6 +3155,24 @@ You can use this to concatenate two scalars:
  SV *var2 = get_sv("var2", GV_ADD);
  SV *var3 = newSVpvf("var1=%" SVf " and var2=%" SVf,
                      SVfARG(var1), SVfARG(var2));
+
+=for apidoc Amnh||SVf_QUOTEDPREFIX
+
+C<SVf_QUOTEDPREFIX> is similar to C<SVf> except that it restricts the
+number of the characters printed, showing at most the first
+C<PERL_QUOTEDPREFIX_LEN> characters of the argument, and rendering it with
+double quotes and with the contents escaped using double quoted string
+escaping rules. If the string is longer than this then ellipses "..."
+will be appended after the trailing quote. This is intended for error
+messages where the string is assumed to be a class name.
+
+=for apidoc Amnh||HvNAMEf
+=for apidoc Amnh||HvNAMEf_QUOTEDPREFIX
+
+C<HvNAMEf> and C<HvNAMEf_QUOTEDPREFIX> are similar to C<SVf> except they
+extract the string, length and utf8 flags from the argument using the
+C<HvNAME()>, C<HvNAMELEN()>, C<HvNAMEUTF8()> macros. This is intended
+for stringifying a class name directly from an stash HV.
 
 =head2 Formatted Printing of Strings
 
@@ -3054,10 +3203,15 @@ string.
 Note that any filehandle being printed to under UTF-8 must be expecting
 UTF-8 in order to get good results and avoid Wide-character warnings.
 One way to do this for typical filehandles is to invoke perl with the
-C<-C>> parameter.  (See L<perlrun/-C [numberE<sol>list]>.
+C<-C> parameter.  (See L<perlrun/-C [numberE<sol>list]>.
 
 =for apidoc_section $io_formats
 =for apidoc Amnh||UTF8f
+Output a possibly UTF8 value. Be sure to use UTF8fARG() to compose
+the arguments for this format.
+=for apidoc Amnh||UTF8f_QUOTEDPREFIX
+Same as C<UTF8f> but the output is quoted, escaped and length limited.
+See C<SVf_QUOTEDPREFIX> for more details on escaping.
 =for apidoc Amh||UTF8fARG|bool is_utf8|Size_t byte_len|char *str
 
 =cut
@@ -3634,12 +3788,12 @@ the only core C<PVOP>, C<OP_TRANS>, can sometimes be a C<SVOP> instead.
 =for apidoc_item OA_COP
 =for apidoc_item OA_LISTOP
 =for apidoc_item OA_LOGOP
+=for apidoc_item OA_LOOP
 =for apidoc_item OA_PADOP
 =for apidoc_item OA_PMOP
 =for apidoc_item OA_PVOP_OR_SVOP
 =for apidoc_item OA_SVOP
 =for apidoc_item OA_UNOP
-=for apidoc_item OA_LOOP
 
 =back
 

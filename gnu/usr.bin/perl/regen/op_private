@@ -199,7 +199,7 @@ use strict;
     # find which ops use 0,1,2,3 or 4 bits of op_private for arg count info
 
     $args0{$_} = 1 for qw(entersub avhvswitch
-                       rv2hv);                  # UNOPs that usurp bit 0
+                       rv2hv aelemfastlex_store);                  # UNOPs that usurp bit 0
 
     # Historically, bit ops used bit 0 to indicate 'use integer' in scope;
     # For now, ban use of bits 0..1 as an arg count, in order to detect
@@ -318,7 +318,7 @@ addbits($_, 7 => qw(OPpLVAL_INTRO LVINTRO))
     for qw(gvsv rv2sv rv2hv rv2gv rv2av aelem helem aslice split
            hslice delete padsv padav padhv enteriter entersub padrange
            pushmark cond_expr refassign lvref lvrefslice lvavref multideref
-           multiconcat),
+           multiconcat padsv_store undef emptyavhv),
            'list', # this gets set in my_attrs() for some reason
            ;
 
@@ -499,7 +499,8 @@ addbits($_, 7 => qw(OPpPV_IS_UTF8 UTF)) for qw(last redo next goto dump);
 #   \state $foo = ...
 
 addbits($_, 6 => qw(OPpPAD_STATE STATE))  for qw(padav padhv padsv lvavref
-                                                 lvref refassign pushmark);
+                                                 lvref refassign pushmark
+                                                 padsv_store undef emptyavhv);
 
 # NB: both sassign and aassign use the 'OPpASSIGN' naming convention
 # for their private flags
@@ -626,7 +627,7 @@ addbits('padrange',
 
 
 
-for (qw(aelemfast aelemfast_lex)) {
+for (qw(aelemfast aelemfast_lex aelemfastlex_store)) {
     addbits($_,
         '0..7' =>  {
                 label     => 'key',
@@ -738,6 +739,8 @@ addbits('entereval',
     3 => qw(OPpEVAL_BYTES        BYTES  ),
     4 => qw(OPpEVAL_COPHH        COPHH  ), # Construct %^H from COP hints
     5 => qw(OPpEVAL_RE_REPARSING REPARSE), # eval_sv(..., G_RE_REPARSING)
+    6 => qw(OPpEVAL_EVALSV       EVALSV ), # called from eval_sv()
+
 );
 
 
@@ -849,6 +852,39 @@ addbits('multiconcat',
 
 addbits('pushdefer',
     7 => qw(OPpDEFER_FINALLY FINALLY),
+);
+
+# undef does not have the T flag set in regen/opcodes (and therefore
+# automatically get the TARGMY flag added), as this causes S_maybe_targlex
+# to do an unwanted optimization prior to Perl_rpeep.
+addbits('undef',
+    4 => qw(OPpTARGET_MY TARGMY),
+    5 => qw(OPpUNDEF_KEEP_PV KEEP_PV),
+);
+
+addbits('emptyavhv',
+  # 7       OPpLVAL_INTRO
+  # 6       OPpPAD_STATE
+    5 => qw(OPpEMPTYAVHV_IS_HV ANONHASH),
+  # 4       OPpTARGET_MY
+);
+
+addbits('argdefelem',
+    7 => qw(OPpARG_IF_UNDEF  IF_UNDEF),
+    6 => qw(OPpARG_IF_FALSE  IF_FALSE),
+);
+
+addbits('helemexistsor',
+    7 => qw(OPpHELEMEXISTSOR_DELETE DELETE),
+);
+
+addbits('methstart',
+    7 => qw(OPpINITFIELDS INITFIELDS),
+);
+
+addbits('initfield',
+    1 => qw(OPpINITFIELD_AV INITFIELD_AV),
+    2 => qw(OPpINITFIELD_HV INITFIELD_HV),
 );
 
 1;

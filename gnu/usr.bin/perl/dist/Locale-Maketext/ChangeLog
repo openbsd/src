@@ -1,5 +1,9 @@
 Revision history for Perl suite Locale::Maketext
 
+2022-08-22
+   * Release 1.32 to CPAN
+   * Fix Makefile.PL logic for default install destination on 5.008 up to 5.011
+
 2022-04-14
    * Release 1.31 to CPAN
    * White space cleanup.

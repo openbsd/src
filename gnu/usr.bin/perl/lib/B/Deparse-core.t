@@ -354,6 +354,7 @@ my %not_tested = map { $_ => 1} qw(
     __FILE__
     __LINE__
     __PACKAGE__
+    ADJUST
     AUTOLOAD
     BEGIN
     CHECK
@@ -363,10 +364,12 @@ my %not_tested = map { $_ => 1} qw(
     INIT
     UNITCHECK
     catch
+    class
     default
     defer
     else
     elsif
+    field
     finally
     for
     foreach
@@ -374,6 +377,7 @@ my %not_tested = map { $_ => 1} qw(
     given
     if
     m
+    method
     no
     package
     q

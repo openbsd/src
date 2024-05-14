@@ -9,7 +9,13 @@ BEGIN {
 use strict;
 use warnings;
 
-plan(tests => 57);
+plan(tests => 73);
+
+
+# Dedupe @INC. In a future patch we /may/ refuse to process items
+# more than once and deduping here will prevent the tests from failing
+# should we make that change.
+my %seen; @INC = grep {!$seen{$_}++} @INC;
 
 my $nonfile = tempfile();
 
@@ -21,7 +27,7 @@ for my $file ($nonfile, ' ') {
 	require $file;
     };
 
-    like $@, qr/^Can't locate $file in \@INC \(\@INC contains: @INC\) at/,
+    like $@, qr/^Can't locate $file in \@INC \(\@INC[\w ]+: \Q@INC\E\) at/,
 	"correct error message for require '$file'";
 }
 
@@ -85,7 +91,7 @@ for my $file ($nonfile, ' ') {
                 $hint =~ s/\.pm$//;
                 $exp .= " (you may need to install the $hint module)";
             }
-            $exp .= " (\@INC contains: @INC) at";
+            $exp .= " (\@INC entries checked: @INC) at";
         }
         else {
             # undef implies a require which doesn't compile,
@@ -133,14 +139,14 @@ eval {
     require "$nonfile.ph";
 };
 
-like $@, qr/^Can't locate $nonfile\.ph in \@INC \(did you run h2ph\?\) \(\@INC contains: @INC\) at/;
+like $@, qr/^Can't locate $nonfile\.ph in \@INC \(did you run h2ph\?\) \(\@INC[\w ]+: @INC\) at/;
 
 for my $file ("$nonfile.h", ".h") {
     eval {
 	require $file
     };
 
-    like $@, qr/^Can't locate \Q$file\E in \@INC \(change \.h to \.ph maybe\?\) \(did you run h2ph\?\) \(\@INC contains: @INC\) at/,
+    like $@, qr/^Can't locate \Q$file\E in \@INC \(change \.h to \.ph maybe\?\) \(did you run h2ph\?\) \(\@INC[\w ]+: @INC\) at/,
 	"correct error message for require '$file'";
 }
 
@@ -149,7 +155,7 @@ for my $file ("$nonfile.ph", ".ph") {
 	require $file
     };
 
-    like $@, qr/^Can't locate \Q$file\E in \@INC \(did you run h2ph\?\) \(\@INC contains: @INC\) at/,
+    like $@, qr/^Can't locate \Q$file\E in \@INC \(did you run h2ph\?\) \(\@INC[\w ]+: @INC\) at/,
 	"correct error message for require '$file'";
 }
 
@@ -282,4 +288,145 @@ like $@, qr/^Can't locate \Q$nonsearch\E at/,
     ok(!eval { require CannotParse; },
        "check the second attempt also fails");
     like $@, qr/Attempt to reload/, "check we failed for the right reason";
+}
+
+{
+    fresh_perl_like(
+        'unshift @INC, sub { sub { 0 } }; require "asdasd";',
+        qr/asdasd did not return a true value/,
+        { }, '@INC hook blocks do not cause segfault');
+}
+
+{
+    # make sure that modifications to %INC during an INC hooks lifetime
+    # don't result in us having an empty string for the cop_file.
+    # Older perls will output "error at  line 1".
+
+    fresh_perl_like(
+        'use lib qq(./lib); BEGIN{ unshift @INC, '
+       .'sub { if ($_[1] eq "CannotParse.pm" and !$seen++) { '
+       .'eval q(require $_[1]); warn $@; my $code= qq[die qq(error)];'
+       .'open my $fh,"<", q(lib/Dies.pm); return $fh } } } require CannotParse;',
+        qr!\Asyntax error.*?^error at /loader/0x[A-Fa-f0-9]+/CannotParse\.pm line 1\.!ms,
+        { }, 'Inc hooks have the correct cop_file');
+}
+{
+    # this can segfault or assert prior to @INC hardening.
+    fresh_perl_like(
+        'unshift @INC, sub { *INC=["a","b"] }; '
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: CODE\(0x[A-Fa-f0-9]+\) b\)!,
+        { }, 'INC hooks do not segfault when overwritten');
+}
+{
+    # this is the defined behavior, but in older perls the error message
+    # would lie and say "contains: a b", which is true in the sense that
+    # it is the value of @INC after the require, but not the directory
+    # list that was looked at.
+    fresh_perl_like(
+        '@INC = (sub { @INC=("a","b"); () }, "z"); '
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: CODE\(0x[A-Fa-f0-9]+\) b\)!,
+        { }, 'INC hooks that overwrite @INC continue as expected (skips a and z)');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        '@INC = (sub { @INC=qw(a b); undef $INC }, "z"); '
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: CODE\(0x[A-Fa-f0-9]+\) a b\)!,
+        { }, 'INC hooks that overwrite @INC and undef $INC continue at start');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        'sub CB::INCDIR { return "b", "c","d" }; '
+       .'@INC = ("a",bless({},"CB"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: a CB=HASH\(0x[A-Fa-f0-9]+\) b c d e\)!,
+        { }, 'INCDIR works as expected');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        '@INC = ("a",bless({},"CB"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!Can't locate object method "INC", nor "INCDIR" nor string overload via package "CB" in object hook in \@INC!,
+        { }, 'Objects with no INC or INCDIR method and no overload throw an error');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        'package CB { use overload q("") => sub { "Fnorble" };} @INC = ("a",bless({},"CB"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: a Fnorble e\)!,
+        { }, 'Objects with no INC or INCDIR method but with an overload are stringified');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        'package CB { use overload q(0+) => sub { 12345 }, fallback=>1;} @INC = ("a",bless({},"CB"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: a 12345 e\)!,
+        { }, 'Objects with no INC or INCDIR method but with an overload with fallback are stringified');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        '{package CB; use overload qw("")=>sub { "blorg"};} '
+       .'@INC = ("a",bless({},"CB"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: a blorg e\)!,
+        { }, 'Objects with overload and no INC or INCDIR method are stringified');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        '@INC = ("a",bless(sub { warn "blessed sub called" },"CB"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!blessed sub called.*\(\@INC[\w ]+: a CB=CODE\(0x[a-fA-F0-9]+\) e\)!s,
+        { }, 'Blessed subs with no hook methods are executed');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        '@INC = ("a",bless(sub { die "blessed sub called" },"CB"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!INC sub hook died--halting \@INC search!s,
+        { }, 'Blessed subs that die produce expected extra message');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        'sub CB::INC { die "bad mojo" } '
+       .'@INC = ("a",bless(sub { die "blessed sub called" },"CB"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!bad mojo.*INC method hook died--halting \@INC search!s,
+        { }, 'Blessed subs with methods call method and produce expected message');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        '@INC = ("a",[bless([],"CB"),1],"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!Can't locate object method "INC", nor "INCDIR" nor string overload via package "CB" in object in ARRAY hook in \@INC!s,
+        { }, 'Blessed objects with no hook methods in array form produce expected exception');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        'sub CB::INCDIR { "i" } sub CB2::INCDIR { }'
+       .'@INC = ("a",bless(sub{"b"},"CB"),bless(sub{"c"},"CB2"),"e");'
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: a CB=CODE\(0x[a-fA-F0-9]+\) i CB2=CODE\(0x[a-fA-F0-9]+\) e\)!s,
+        { }, 'Blessed subs with INCDIR methods call INCDIR');
+}
+{
+    # as of 5.37.7
+    fresh_perl_like(
+        'sub CB::INCDIR { return @{$_[2]} }'
+       .'@INC = ("a",[bless([],"CB"),"b"],"c");'
+       .'eval "require Frobnitz" or print $@',
+        qr!\(\@INC[\w ]+: a ARRAY\(0x[a-fA-F0-9]+\) CB=ARRAY\(0x[a-fA-F0-9]+\) b c\)!s,
+        { }, 'INCDIR ref returns are stringified');
 }

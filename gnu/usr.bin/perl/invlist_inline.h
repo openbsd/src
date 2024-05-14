@@ -10,7 +10,7 @@
 #define PERL_INVLIST_INLINE_H_
 
 #if defined(PERL_IN_UTF8_C)             \
- || defined(PERL_IN_REGCOMP_C)          \
+ || defined(PERL_IN_REGCOMP_ANY)        \
  || defined(PERL_IN_REGEXEC_C)          \
  || defined(PERL_IN_TOKE_C)             \
  || defined(PERL_IN_PP_C)               \
@@ -93,7 +93,7 @@ S_invlist_array(SV* const invlist)
 }
 
 #endif
-#if defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_OP_C) || defined(PERL_IN_DOOP_C)
+#if defined(PERL_IN_REGCOMP_ANY) || defined(PERL_IN_OP_C) || defined(PERL_IN_DOOP_C)
 
 PERL_STATIC_INLINE void
 S_invlist_extend(pTHX_ SV* const invlist, const UV new_max)
@@ -161,8 +161,45 @@ S_invlist_highest(SV* const invlist)
            : array[len - 1] - 1;
 }
 
+#  if defined(PERL_IN_REGCOMP_ANY)
+
+PERL_STATIC_INLINE UV
+S_invlist_highest_range_start(SV* const invlist)
+{
+    /* Returns the lowest code point of the highest range in the inversion
+     * list parameter.  This API has an ambiguity: it returns 0 either when
+     * the lowest such point is actually 0 or when the list is empty.  If this
+     * distinction matters to you, check for emptiness before calling this
+     * function. */
+
+    UV len = _invlist_len(invlist);
+    UV *array;
+
+    PERL_ARGS_ASSERT_INVLIST_HIGHEST_RANGE_START;
+
+    if (len == 0) {
+        return 0;
+    }
+
+    array = invlist_array(invlist);
+
+    /* The last element in the array in the inversion list always starts a
+     * range that goes to infinity.  That range may be for code points that are
+     * matched in the inversion list, or it may be for ones that aren't
+     * matched.  In the first case, the lowest code point in the matching range
+     * is that the one that started the range.  If the other case, the final
+     * matching range begins at the next element down (which may be 0 in the
+     * edge case). */
+    return (ELEMENT_RANGE_MATCHES_INVLIST(len - 1))
+           ? array[len - 1]
+           : len == 1
+             ? 0
+             : array[len - 2];
+}
+
+#  endif
 #endif
-#if defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_OP_C)
+#if defined(PERL_IN_REGCOMP_ANY) || defined(PERL_IN_OP_C)
 
 PERL_STATIC_INLINE STRLEN*
 S_get_invlist_iter_addr(SV* invlist)
@@ -238,11 +275,101 @@ S_invlist_iternext(SV* invlist, UV* start, UV* end)
 
 #endif
 
-#ifndef PERL_IN_REGCOMP_C
+#ifndef PERL_IN_REGCOMP_ANY
 
 /* These symbols are only needed later in regcomp.c */
 #       undef TO_INTERNAL_SIZE
 #       undef FROM_INTERNAL_SIZE
+#endif
+
+#ifdef PERL_IN_REGCOMP_ANY
+PERL_STATIC_INLINE
+bool
+S_invlist_is_iterating(const SV* const invlist)
+{
+    PERL_ARGS_ASSERT_INVLIST_IS_ITERATING;
+
+    /* get_invlist_iter_addr()'s sv is non-const only because it returns a
+     * value that can be used to modify the invlist, it doesn't modify the
+     * invlist itself */
+    return *(get_invlist_iter_addr((SV*)invlist)) < (STRLEN) UV_MAX;
+}
+
+PERL_STATIC_INLINE
+SV *
+S_invlist_contents(pTHX_ SV* const invlist, const bool traditional_style)
+{
+    /* Get the contents of an inversion list into a string SV so that they can
+     * be printed out.  If 'traditional_style' is TRUE, it uses the format
+     * traditionally done for debug tracing; otherwise it uses a format
+     * suitable for just copying to the output, with blanks between ranges and
+     * a dash between range components */
+
+    UV start, end;
+    SV* output;
+    const char intra_range_delimiter = (traditional_style ? '\t' : '-');
+    const char inter_range_delimiter = (traditional_style ? '\n' : ' ');
+
+    if (traditional_style) {
+        output = newSVpvs("\n");
+    }
+    else {
+        output = newSVpvs("");
+    }
+
+    PERL_ARGS_ASSERT_INVLIST_CONTENTS;
+
+    assert(! invlist_is_iterating(invlist));
+
+    invlist_iterinit(invlist);
+    while (invlist_iternext(invlist, &start, &end)) {
+        if (end == UV_MAX) {
+            Perl_sv_catpvf(aTHX_ output, "%04" UVXf "%cINFTY%c",
+                                          start, intra_range_delimiter,
+                                                 inter_range_delimiter);
+        }
+        else if (end != start) {
+            Perl_sv_catpvf(aTHX_ output, "%04" UVXf "%c%04" UVXf "%c",
+                                          start,
+                                                   intra_range_delimiter,
+                                                  end, inter_range_delimiter);
+        }
+        else {
+            Perl_sv_catpvf(aTHX_ output, "%04" UVXf "%c",
+                                          start, inter_range_delimiter);
+        }
+    }
+
+    if (SvCUR(output) && ! traditional_style) {/* Get rid of trailing blank */
+        SvCUR_set(output, SvCUR(output) - 1);
+    }
+
+    return output;
+}
+
+PERL_STATIC_INLINE
+UV
+S_invlist_lowest(SV* const invlist)
+{
+    /* Returns the lowest code point that matches an inversion list.  This API
+     * has an ambiguity, as it returns 0 under either the lowest is actually
+     * 0, or if the list is empty.  If this distinction matters to you, check
+     * for emptiness before calling this function */
+
+    UV len = _invlist_len(invlist);
+    UV *array;
+
+    PERL_ARGS_ASSERT_INVLIST_LOWEST;
+
+    if (len == 0) {
+        return 0;
+    }
+
+    array = invlist_array(invlist);
+
+    return array[0];
+}
+
 #endif
 
 #endif /* PERL_INVLIST_INLINE_H_ */

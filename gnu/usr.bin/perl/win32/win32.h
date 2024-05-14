@@ -15,43 +15,14 @@
 
 /* Win32 only optimizations for faster building */
 #ifdef PERL_IS_MINIPERL
-/* this macro will remove Winsock only on miniperl, PERL_IMPLICIT_SYS and
- * makedef.pl create dependencies that will keep Winsock linked in even with
- * this macro defined, even though sockets will be umimplemented from a script
- * level in full perl
- */
-#  define WIN32_NO_SOCKETS
 /* less I/O calls during each require */
 #  define PERL_DISABLE_PMC
 
-/* unnecessery for miniperl to lookup anything from an "installed" perl */
+/* unnecessary for miniperl to lookup anything from an "installed" perl */
 #  define WIN32_NO_REGISTRY
 
 /* allow minitest to work */
 #  define PERL_TEXTMODE_SCRIPTS
-#endif
-
-#ifdef WIN32_NO_SOCKETS
-#  undef HAS_SOCKET
-#  undef HAS_GETPROTOBYNAME
-#  undef HAS_GETPROTOBYNUMBER
-#  undef HAS_GETPROTOENT
-#  undef HAS_GETNETBYNAME
-#  undef HAS_GETNETBYADDR
-#  undef HAS_GETNETENT
-#  undef HAS_GETSERVBYNAME
-#  undef HAS_GETSERVBYPORT
-#  undef HAS_GETSERVENT
-#  undef HAS_GETHOSTBYNAME
-#  undef HAS_GETHOSTBYADDR
-#  undef HAS_GETHOSTENT
-#  undef HAS_SELECT
-#  undef HAS_IOCTL
-#  undef HAS_NTOHL
-#  undef HAS_HTONL
-#  undef HAS_HTONS
-#  undef HAS_NTOHS
-#  define WIN32SCK_IS_STDSCK
 #endif
 
 #if defined(PERL_IMPLICIT_SYS)
@@ -233,10 +204,10 @@ struct utsname {
 
 /* access() mode bits */
 #ifndef R_OK
-#  define	R_OK	4
-#  define	W_OK	2
-#  define	X_OK	1
-#  define	F_OK	0
+#  define R_OK  4
+#  define W_OK  2
+#  define X_OK  1
+#  define F_OK  0
 #endif
 
 /* for waitpid() */
@@ -284,8 +255,8 @@ MSVC_DIAG_RESTORE
    importing __PL_nan_u across DLL boundaries in size in the importing DLL
    will be more than the 8 bytes it will take up being in each XS DLL if
    that DLL actually uses __PL_nan_u */
-extern const __declspec(selectany) union { unsigned __int64 __q; double __d; }
-__PL_nan_u = { 0x7FF8000000000000UI64 };
+union PerlNan { unsigned __int64 __q; double __d; };
+extern const __declspec(selectany) union PerlNan __PL_nan_u = { 0x7FF8000000000000UI64 };
 #define NV_NAN ((NV)__PL_nan_u.__d)
 
 /* The CRT was rewritten in VS2015. */
@@ -455,7 +426,6 @@ DllExport void		win32_get_child_IO(child_IO_table* ptr);
 DllExport HWND		win32_create_message_window(void);
 DllExport int		win32_async_check(pTHX);
 
-extern int		my_fclose(FILE *);
 extern char *		win32_get_privlib(WIN32_NO_REGISTRY_M_(const char *pl) STRLEN *const len);
 extern char *		win32_get_sitelib(const char *pl, STRLEN *const len);
 extern char *		win32_get_vendorlib(const char *pl, STRLEN *const len);
@@ -595,83 +565,6 @@ void win32_wait_for_children(pTHX);
 #  define PERL_WAIT_FOR_CHILDREN win32_wait_for_children(aTHX)
 #endif
 
-/* The following ioinfo struct manipulations had been removed but were
- * reinstated to fix RT#120091/118059. However, they do not work with
- * the rewritten CRT in VS2015 so they are removed once again for VS2015
- * onwards, which will therefore suffer from the reintroduction of the
- * close socket bug. */
-#if (!defined(_MSC_VER)) || (defined(_MSC_VER) && _MSC_VER < 1900)
-
-#ifdef PERL_CORE
-
-/* C doesn't like repeat struct definitions */
-#if defined(__MINGW32__) && (__MINGW32_MAJOR_VERSION>=3)
-#  undef _CRTIMP
-#endif
-#ifndef _CRTIMP
-#  define _CRTIMP __declspec(dllimport)
-#endif
-
-#ifndef __MINGW32__
-/* size of ioinfo struct is determined at runtime */
-#  define WIN32_DYN_IOINFO_SIZE
-#endif
-
-#ifndef WIN32_DYN_IOINFO_SIZE
-/*
- * Control structure for lowio file handles
- */
-typedef struct {
-    intptr_t osfhnd;/* underlying OS file HANDLE */
-    char osfile;    /* attributes of file (e.g., open in text mode?) */
-    char pipech;    /* one char buffer for handles opened on pipes */
-    int lockinitflag;
-    CRITICAL_SECTION lock;
-} ioinfo;
-#else
-typedef intptr_t ioinfo;
-#endif
-
-/*
- * Array of arrays of control structures for lowio files.
- */
-EXTERN_C _CRTIMP ioinfo* __pioinfo[];
-
-/*
- * Definition of IOINFO_L2E, the log base 2 of the number of elements in each
- * array of ioinfo structs.
- */
-#define IOINFO_L2E	    5
-
-/*
- * Definition of IOINFO_ARRAY_ELTS, the number of elements in ioinfo array
- */
-#define IOINFO_ARRAY_ELTS   (1 << IOINFO_L2E)
-
-/*
- * Access macros for getting at an ioinfo struct and its fields from a
- * file handle
- */
-#ifdef WIN32_DYN_IOINFO_SIZE
-#  define _pioinfo(i) ((intptr_t *) \
-     (((Size_t)__pioinfo[(i) >> IOINFO_L2E])/* * to head of array ioinfo [] */\
-      /* offset to the head of a particular ioinfo struct */ \
-      + (((i) & (IOINFO_ARRAY_ELTS - 1)) * w32_ioinfo_size)) \
-   )
-/* first slice of ioinfo is always the OS handle */
-#  define _osfhnd(i)  (*(_pioinfo(i)))
-#else
-#  define _pioinfo(i) (__pioinfo[(i) >> IOINFO_L2E] + ((i) & (IOINFO_ARRAY_ELTS - 1)))
-#  define _osfhnd(i)  (_pioinfo(i)->osfhnd)
-#endif
-
-/* since we are not doing a dup2(), this works fine */
-#define _set_osfhnd(fh, osfh) (void)(_osfhnd(fh) = (intptr_t)osfh)
-
-#endif /* PERL_CORE */
-
-#endif /* !defined(_MSC_VER) || _MSC_VER<1900 */
-
 /* IO.xs and POSIX.xs define PERLIO_NOT_STDIO to 1 */
 #if defined(PERL_EXT_IO) || defined(PERL_EXT_POSIX)
 #undef  PERLIO_NOT_STDIO
@@ -694,11 +587,20 @@ DllExport void *win32_signal_context(void);
 
 /* ucrt at least seems to allocate a whole bit per type,
    just mask off one bit from the mask for our symlink
-   file type.
+   and socket file types.
 */
-#define _S_IFLNK ((unsigned)(_S_IFMT ^ (_S_IFMT & -_S_IFMT)))
+#define _S_IFLNK ((unsigned)(_S_IFDIR | _S_IFCHR))
+#define _S_IFSOCK ((unsigned)(_S_IFDIR | _S_IFIFO))
+/* mingw64 defines _S_IFBLK to 0x3000 which is _S_IFDIR | _S_IFIFO */
+#ifndef _S_IFBLK
+#  define _S_IFBLK ((unsigned)(_S_IFCHR | _S_IFIFO))
+#endif
 #undef S_ISLNK
 #define S_ISLNK(mode) (((mode) & _S_IFMT) == _S_IFLNK)
+#undef S_ISSOCK
+#define S_ISSOCK(mode) (((mode) & _S_IFMT) == _S_IFSOCK)
+#undef S_ISBLK
+#define S_ISBLK(mode) (((mode) & _S_IFMT) == _S_IFBLK)
 
 /*
 

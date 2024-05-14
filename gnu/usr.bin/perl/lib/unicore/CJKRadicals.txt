@@ -1,10 +1,10 @@
-# CJKRadicals-14.0.0.txt
-# Date: 2021-03-16, 21:39:00 GMT [RC, KW, LI]
-# © 2021 Unicode®, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# CJKRadicals-15.0.0.txt
+# Date: 2022-05-03, 18:49:00 GMT [RC, KW, LI]
+# © 2022 Unicode®, Inc.
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# For documentation, see http://www.unicode.org/reports/tr44/
+# For documentation, see https://www.unicode.org/reports/tr44/
 #
 # Mapping from CJK radical numbers to characters
 #
@@ -23,7 +23,7 @@
 # and in particular they can end with a U+0027 ' APOSTROPHE.
 #
 # For more information, see UAX #38: Unicode Han Database (Unihan),
-# at http://www.unicode.org/reports/tr38/
+# at https://www.unicode.org/reports/tr38/
 #
 # This file was created for Unicode 5.2 by Richard Cook.
 # Updated for Unicode 6.0 by Richard Cook.

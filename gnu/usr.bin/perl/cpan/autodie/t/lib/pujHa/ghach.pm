@@ -1,4 +1,4 @@
-package pujHa'ghach;
+package pujHa::ghach;
 
 # Translator notes: reH Hegh is Kligon for "always dying".
 # It was the original name for this testing pragma, but
@@ -20,7 +20,7 @@ use warnings;
 use parent qw(autodie);
 
 sub exception_class {
-    return "pujHa'ghach::Dotlh";      # Dotlh - status
+    return "pujHa::ghach::Dotlh";      # Dotlh - status
 }
 
 1;

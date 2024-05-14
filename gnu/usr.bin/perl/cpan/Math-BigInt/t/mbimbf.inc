@@ -417,17 +417,15 @@ $x = $mbi->new(123400);
 $x->{_a} = 4;
 is($x->bnot(), -123400, q|$x->bnot()|);         # not -1234001
 
-# both babs() and bneg() don't need to round, since the input will already
-# be rounded (either as $x or via new($string)), and they don't change the
-# value. The two tests below peek at this by using _a (illegally) directly
+# to be consistent with other methods, babs() and bneg() also support rounding
 
 $x = $mbi->new(-123401);
 $x->{_a} = 4;
-is($x->babs(), 123401, q|$x->babs()|);
+is($x->babs(), 123400, q|$x->babs()|);
 
 $x = $mbi->new(-123401);
 $x->{_a} = 4;
-is($x->bneg(), 123401, q|$x->bneg()|);
+is($x->bneg(), 123400, q|$x->bneg()|);
 
 # test bdiv rounding to A and R (bug in v1.48 and maybe earlier versions)
 
@@ -1293,7 +1291,7 @@ while (<DATA>) {
     $try .= qq| \$y->accuracy($ya);|  if $ya ne '';
     $try .= qq| \$y->precision($yp);| if $yp ne '';
 
-    $try .= ' $x->$f($y);';
+    $try .= ' $x->' . $f . '($y);';
 
     # print "trying $try\n";
     $rc = eval $try;

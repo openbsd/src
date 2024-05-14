@@ -20,6 +20,8 @@ dist/Devel-PPPort/devel/regenerate
 dist/Devel-PPPort/devel/scanprov
 dist/Devel-PPPort/devel/update_release_date.pl
 dist/Devel-PPPort/soak
+dist/Thread-Queue/examples/callback.pl
+dist/Thread-Queue/examples/queue.pl
 installperl
 installman
 makedepend.SH
@@ -42,7 +44,6 @@ Porting/bench.pl
 Porting/bisect.pl
 Porting/bisect-example.sh
 Porting/bisect-runner.pl
-Porting/checkAUTHORS.pl
 Porting/checkURL.pl
 Porting/checkVERSION.pl
 Porting/checkansi.pl
@@ -69,3 +70,4 @@ Porting/updateAUTHORS.pl
 Porting/valgrindpp.pl
 Cross/generate_config_sh
 Cross/warp
+dist/Thread-Semaphore/examples/semaphore.pl

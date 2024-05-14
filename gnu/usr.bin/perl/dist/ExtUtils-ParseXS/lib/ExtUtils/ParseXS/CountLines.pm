@@ -1,7 +1,7 @@
 package ExtUtils::ParseXS::CountLines;
 use strict;
 
-our $VERSION = '3.45';
+our $VERSION = '3.51';
 
 our $SECTION_END_MARKER;
 

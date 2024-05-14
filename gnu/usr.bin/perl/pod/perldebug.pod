@@ -76,7 +76,7 @@ Interactively supply an arbitrary C<expression> using C<-e>.
 
 =item perl -d:ptkdb program_name
 
-Debug a given program via the C<Devel::ptkdb> GUI.
+Debug a given program via the L<Devel::ptkdb> GUI.
 
 =item perl -dt threaded_program_name
 
@@ -173,7 +173,7 @@ X<debugger command, y>
 Display all (or some) lexical variables (mnemonic: C<mY> variables)
 in the current scope or I<level> scopes higher.  You can limit the
 variables that you see with I<vars> which works exactly as it does
-for the C<V> and C<X> commands.  Requires the C<PadWalker> module
+for the C<V> and C<X> commands.  Requires the L<PadWalker> module
 version 0.08 or higher; will warn if this isn't installed.  Output
 is pretty-printed in the same style as for C<V> and the format is
 controlled by the same options.
@@ -579,13 +579,13 @@ Redo number'th previous command.
 X<debugger command, !>
 
 Redo last command that started with pattern.
-See C<o recallCommand>, too.
+See S<C<o recallCommand>>, too.
 
 =item !! cmd
 X<debugger command, !!>
 
 Run cmd in a subprocess (reads from DB::IN, writes to DB::OUT) See
-C<o shellBang>, also.  Note that the user's current shell (well,
+S<C<o shellBang>>, also.  Note that the user's current shell (well,
 their C<$ENV{SHELL}> variable) will be used, which can interfere
 with proper interpretation of exit status or signal and coredump
 information.
@@ -862,7 +862,7 @@ include lexicals in a module's file scope, or lost in closures.
 X<debugger option, history, HistFile>
 
 The path of the file from which the history (assuming a usable
-Term::ReadLine backend) will be read on the debugger's startup, and to which
+L<Term::ReadLine> backend) will be read on the debugger's startup, and to which
 it will be saved on shutdown (for persistence across sessions). Similar in
 concept to Bash's C<.bash_history> file.
 
@@ -951,7 +951,7 @@ variable settings):
   $ ( PERLDB_OPTS="NonStop frame=1 AutoTrace LineInfo=tperl.out"
       perl -d myprogram )
 
-which may be useful for debugging a program that uses C<Term::ReadLine>
+which may be useful for debugging a program that uses L<Term::ReadLine>
 itself.  Do not forget to detach your shell from the TTY in the window that
 corresponds to F</dev/ttyXX>, say, by issuing a command like
 
@@ -1145,14 +1145,14 @@ use only, and as such are subject to change without notice.
 
 As shipped, the only command-line history supplied is a simplistic one
 that checks for leading exclamation points.  However, if you install
-the Term::ReadKey and Term::ReadLine modules from CPAN (such as
-Term::ReadLine::Gnu, Term::ReadLine::Perl, ...) you will
+the L<Term::ReadKey> and L<Term::ReadLine> modules from CPAN (such as
+L<Term::ReadLine::Gnu>, L<Term::ReadLine::Perl>, ...) you will
 have full editing capabilities much like those GNU I<readline>(3) provides.
 Look for these in the F<modules/by-module/Term> directory on CPAN.
 These do not support normal B<vi> command-line editing, however.
 
 A rudimentary command-line completion is also available, including
-lexical variables in the current scope if the C<PadWalker> module
+lexical variables in the current scope if the L<PadWalker> module
 is installed.
 
 Without Readline support you may see the symbols "^[[A", "^[[C", "^[[B",

@@ -1266,7 +1266,7 @@ locales.
 
 =item *
 
-C<goto EXPR> is now documented to handle an expression that evalutes to a
+C<goto EXPR> is now documented to handle an expression that evaluates to a
 code reference as if it was C<goto &$coderef>.  This behavior is at least ten
 years old.
 

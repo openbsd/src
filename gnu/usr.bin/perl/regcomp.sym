@@ -89,13 +89,28 @@ ANYOFL      ANYOF,      sv charclass S    ; Like ANYOF, but /l is in effect
 ANYOFPOSIXL ANYOF,      sv charclass_posixl S    ; Like ANYOFL, but matches [[:posix:]] classes
 
 # Must be sequential
-ANYOFH      ANYOF,      sv 1 S    ; Like ANYOF, but only has "High" matches, none in the bitmap; the flags field contains the lowest matchable UTF-8 start byte
-ANYOFHb     ANYOF,      sv 1 S    ; Like ANYOFH, but all matches share the same UTF-8 start byte, given in the flags field
-ANYOFHr     ANYOF,      sv 1 S    ; Like ANYOFH, but the flags field contains packed bounds for all matchable UTF-8 start bytes.
-ANYOFHs     ANYOF,      sv 1 S    ; Like ANYOFHb, but has a string field that gives the leading matchable UTF-8 bytes; flags field is len
+ANYOFH      ANYOFH,     sv 1 S    ; Like ANYOF, but only has "High" matches, none in the bitmap; the flags field contains the lowest matchable UTF-8 start byte
+ANYOFHb     ANYOFH,     sv 1 S    ; Like ANYOFH, but all matches share the same UTF-8 start byte, given in the flags field
+ANYOFHr     ANYOFH,     sv 1 S    ; Like ANYOFH, but the flags field contains packed bounds for all matchable UTF-8 start bytes.
+ANYOFHs     ANYOFH,     sv:str 1 S    ; Like ANYOFHb, but has a string field that gives the leading matchable UTF-8 bytes; flags field is len
 ANYOFR      ANYOFR,     packed 1  S  ; Matches any character in the range given by its packed args: upper 12 bits is the max delta from the base lower 20; the flags field contains the lowest matchable UTF-8 start byte
 ANYOFRb     ANYOFR,     packed 1  S ; Like ANYOFR, but all matches share the same UTF-8 start byte, given in the flags field
-# There is no ANYOFRr because khw doesn't think there are likely to be real-world cases where such a large range is used.
+# There is no ANYOFRr because khw doesn't think there are likely to be
+# real-world cases where such a large range is used.
+#
+# And khw doesn't believe an ANYOFRs (which would behave like ANYOFHs) is
+# actually worth it.  On two-byte UTF-8, the first byte alone is all we need,
+# and ANYOFR already does that.  And we don't consider non-Unicode code points
+# or EBCDIC for performance decisions.  If we had it, we would be comparing the
+# strings, and if they are equal convert to UV and then test to see if it is in
+# the range.  The fast DFA we now use to do the conversion is slower than
+# comparing the strings, but not by much, and negligible in 2 or 3 byte
+# operations.  (We don't have to compare the final byte as it has to be
+# different or else this wouldn't be a range.)  So we might as well displense
+# with the comparisons that ANYOFRs would do, and go directly to do the
+# conversion .
+
+ANYOFHbbm   ANYOFHbbm   none bbm S ; Like ANYOFHb, but only for 2-byte UTF-8 characters; uses a bitmap to match the continuation byte
 
 ANYOFM      ANYOFM,     byte 1 S  ; Like ANYOF, but matches an invariant byte as determined by the mask and arg
 NANYOFM     ANYOFM,     byte 1 S  ; complement of ANYOFM
@@ -125,7 +140,7 @@ CLUMP       CLUMP,      no 0 V    ; Match any extended grapheme cluster sequence
 #*               pointer of each individual branch points; each branch
 #*               starts with the operand node of a BRANCH node.
 #*
-BRANCH      BRANCH,     node 0 V  ; Match this alternative, or the next...
+BRANCH      BRANCH,     node 1 V  ; Match this alternative, or the next...
 
 #*Literals
 # NOTE: the relative ordering of these types is important do not change it
@@ -199,13 +214,13 @@ TAIL        NOTHING,    no        ; Match empty string. Can jump here from outsi
 #*               (one character per match) are implemented with STAR
 #*               and PLUS for speed and to minimize recursive plunges.
 #*
-STAR        STAR,       node 0 V  ; Match this (simple) thing 0 or more times.
-PLUS        PLUS,       node 0 V  ; Match this (simple) thing 1 or more times.
+STAR        STAR,       node 0 V  ; Match this (simple) thing 0 or more times: /A{0,}B/ where A is width 1 char
+PLUS        PLUS,       node 0 V  ; Match this (simple) thing 1 or more times: /A{1,}B/ where A is width 1 char
 
-CURLY       CURLY,      sv 2 V    ; Match this simple thing {n,m} times.
-CURLYN      CURLY,      no 2 V    ; Capture next-after-this simple thing 
-CURLYM      CURLY,      no 2 V    ; Capture this medium-complex thing {n,m} times. 
-CURLYX      CURLY,      sv 2 V    ; Match this complex thing {n,m} times.
+CURLY       CURLY,      sv 3 V    ; Match this (simple) thing {n,m} times: /A{m,n}B/ where A is width 1 char
+CURLYN      CURLY,      no 3 V    ; Capture next-after-this simple thing: /(A){m,n}B/ where A is width 1 char
+CURLYM      CURLY,      no 3 V    ; Capture this medium-complex thing {n,m} times: /(A){m,n}B/ where A is fixed-length
+CURLYX      CURLY,      sv 3 V    ; Match/Capture this complex thing {n,m} times.
 
 #*This terminator creates a loop structure for CURLYX
 WHILEM      WHILEM,     no 0 V    ; Do curly processing and see if rest matches.
@@ -218,26 +233,26 @@ CLOSE       CLOSE,      num 1     ; Close corresponding OPEN of #n.
 SROPEN      SROPEN,     none      ; Same as OPEN, but for script run
 SRCLOSE     SRCLOSE,    none      ; Close preceding SROPEN
 
-REF         REF,        num 1 V   ; Match some already matched string
-REFF        REF,        num 1 V   ; Match already matched string, using /di rules.
-REFFL       REF,        num 1 V   ; Match already matched string, using /li rules.
+REF         REF,        num 2 V   ; Match some already matched string
+REFF        REF,        num 2 V   ; Match already matched string, using /di rules.
+REFFL       REF,        num 2 V   ; Match already matched string, using /li rules.
 # N?REFF[AU] could have been implemented using the FLAGS field of the
 # regnode, but by having a separate node type, we can use the existing switch
 # statement to avoid some tests
-REFFU       REF,        num 1 V   ; Match already matched string, usng /ui.
-REFFA       REF,        num 1 V   ; Match already matched string, using /aai rules.
+REFFU       REF,        num 2 V   ; Match already matched string, usng /ui.
+REFFA       REF,        num 2 V   ; Match already matched string, using /aai rules.
 
 #*Named references.  Code in regcomp.c assumes that these all are after
 #*the numbered references
-REFN        REF,        no-sv 1 V ; Match some already matched string
-REFFN       REF,        no-sv 1 V ; Match already matched string, using /di rules.
-REFFLN      REF,        no-sv 1 V ; Match already matched string, using /li rules.
-REFFUN      REF,        num   1 V ; Match already matched string, using /ui rules.
-REFFAN      REF,        num   1 V ; Match already matched string, using /aai rules.
+REFN        REF,        no-sv 2 V ; Match some already matched string
+REFFN       REF,        no-sv 2 V ; Match already matched string, using /di rules.
+REFFLN      REF,        no-sv 2 V ; Match already matched string, using /li rules.
+REFFUN      REF,        num   2 V ; Match already matched string, using /ui rules.
+REFFAN      REF,        num   2 V ; Match already matched string, using /aai rules.
 
 #*Support for long RE
 LONGJMP     LONGJMP,    off 1 . 1 ; Jump far away.
-BRANCHJ     BRANCHJ,    off 1 V 1 ; BRANCH with long offset.
+BRANCHJ     BRANCHJ,    off 2 V 1 ; BRANCH with long offset.
 
 #*Special Case Regops
 IFMATCH     BRANCHJ,    off 1 . 1 ; Succeeds if the following matches; non-zero flags "f", next_off "o" means lookbehind assertion starting "f..(f-o)" characters before current
@@ -248,7 +263,7 @@ GROUPP      GROUPP,     num 1     ; Whether the group matched.
 
 #*The heavy worker
 
-EVAL        EVAL,       evl/flags 2L ; Execute some Perl code.
+EVAL        EVAL,       evl/flags 2 ; Execute some Perl code.
 
 #*Modifiers
 
@@ -259,7 +274,7 @@ LOGICAL     LOGICAL,    no        ; Next opcode should set the flag only.
 RENUM       BRANCHJ,    off 1 . 1 ; Group with independently numbered parens.
 
 #*Regex Subroutines
-GOSUB       GOSUB,      num/ofs 2L    ; recurse to paren arg1 at (signed) ofs arg2
+GOSUB       GOSUB,      num/ofs 2    ; recurse to paren arg1 at (signed) ofs arg2
 
 #*Special conditionals
 GROUPPN     GROUPPN,    no-sv 1   ; Whether the group matched.
@@ -269,7 +284,7 @@ DEFINEP     DEFINEP,    none 1    ; Never execute directly.
 #*Backtracking Verbs
 ENDLIKE     ENDLIKE,    none      ; Used only for the type field of verbs
 OPFAIL      ENDLIKE,    no-sv 1   ; Same as (?!), but with verb arg
-ACCEPT      ENDLIKE,    no-sv/num 2L   ; Accepts the current matched string, with verbar
+ACCEPT      ENDLIKE,    no-sv/num 2   ; Accepts the current matched string, with verbar
 
 #*Verbs With Arguments
 VERB        VERB,       no-sv 1   ; Used only for the type field of verbs
@@ -329,3 +344,4 @@ MARKPOINT       next:FAIL
 SKIP            next:FAIL
 CUTGROUP        next:FAIL
 KEEPS           next:FAIL
+REF             next:FAIL

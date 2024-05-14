@@ -1632,7 +1632,7 @@ S_dir_unchanged(pTHX_ const char *orig_pv, MAGIC *mg) {
     S_dir_unchanged(aTHX_ (orig_psv), (mg))
 
 STATIC bool
-S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool not_implicit) {
+S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool is_explict) {
     bool retval;
 
     /* ensure args are checked before we start using them */
@@ -1679,7 +1679,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool not_implicit) {
 #endif
         }
 
-        retval = io_close(io, NULL, not_implicit, FALSE);
+        retval = io_close(io, NULL, is_explict, FALSE);
 
         if (SvIV(*pid_psv) != (IV)PerlProc_getpid()) {
             /* this is a child process, don't duplicate our rename() etc
@@ -1724,7 +1724,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool not_implicit) {
                         PerlLIO_rename(orig_pv, SvPVX(*back_psv)) < 0
 #  endif
                         ) {
-                        if (!not_implicit) {
+                        if (!is_explict) {
 #  ifdef ARGV_USE_ATFUNCTIONS
                             if (unlinkat(dfd, SvPVX_const(*temp_psv), 0) < 0 &&
                                 UNLIKELY(NotSupported(errno)) &&
@@ -1742,7 +1742,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool not_implicit) {
 #else
                     (void)UNLINK(SvPVX(*back_psv));
                     if (link(orig_pv, SvPVX(*back_psv))) {
-                        if (!not_implicit) {
+                        if (!is_explict) {
                             Perl_croak(aTHX_ "Can't rename %s to %s: %s, skipping file",
                                        SvPVX(*orig_psv), SvPVX(*back_psv), Strerror(errno));
                         }
@@ -1771,7 +1771,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool not_implicit) {
                 PerlLIO_rename(SvPVX(*temp_psv), orig_pv) < 0
 #endif
                 ) {
-                if (!not_implicit) {
+                if (!is_explict) {
 #ifdef ARGV_USE_ATFUNCTIONS
                     if (unlinkat(dfd, SvPVX_const(*temp_psv), 0) < 0 &&
                         NotSupported(errno))
@@ -1800,7 +1800,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool not_implicit) {
 #else
             UNLINK(SvPVX_const(*temp_psv));
 #endif
-            if (!not_implicit) {
+            if (!is_explict) {
                 Perl_croak(aTHX_ "Failed to close in-place work file %s: %s",
                            SvPVX(*temp_psv), Strerror(errno));
             }
@@ -1811,9 +1811,25 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool not_implicit) {
     return retval;
 }
 
-/* explicit renamed to avoid C++ conflict    -- kja */
+/*
+=for apidoc do_close
+
+Close an I/O stream.  This implements Perl L<perlfunc/C<close>>.
+
+C<gv> is the glob associated with the stream.
+
+C<is_explict> is C<true> if this is an explicit close of the stream; C<false>
+if it is part of another operation, such as closing a pipe (which involves
+implicitly closing both ends).
+
+Returns C<true> if successful; otherwise returns C<false> and sets C<errno> to
+indicate the cause.
+
+=cut
+*/
+
 bool
-Perl_do_close(pTHX_ GV *gv, bool not_implicit)
+Perl_do_close(pTHX_ GV *gv, bool is_explict)
 {
     bool retval;
     IO *io;
@@ -1822,13 +1838,13 @@ Perl_do_close(pTHX_ GV *gv, bool not_implicit)
     if (!gv)
         gv = PL_argvgv;
     if (!gv || !isGV_with_GP(gv)) {
-        if (not_implicit)
+        if (is_explict)
             SETERRNO(EBADF,SS_IVCHAN);
         return FALSE;
     }
     io = GvIO(gv);
     if (!io) {		/* never opened */
-        if (not_implicit) {
+        if (is_explict) {
             report_evil_fh(gv);
             SETERRNO(EBADF,SS_IVCHAN);
         }
@@ -1836,13 +1852,13 @@ Perl_do_close(pTHX_ GV *gv, bool not_implicit)
     }
     if ((mg = mg_findext((SV*)io, PERL_MAGIC_uvar, &argvout_vtbl))
         && mg->mg_obj) {
-        retval = argvout_final(mg, io, not_implicit);
+        retval = argvout_final(mg, io, is_explict);
         mg_freeext((SV*)io, PERL_MAGIC_uvar, &argvout_vtbl);
     }
     else {
-        retval = io_close(io, NULL, not_implicit, FALSE);
+        retval = io_close(io, NULL, is_explict, FALSE);
     }
-    if (not_implicit) {
+    if (is_explict) {
         IoLINES(io) = 0;
         IoPAGE(io) = 0;
         IoLINES_LEFT(io) = IoPAGE_LEN(io);
@@ -1852,7 +1868,7 @@ Perl_do_close(pTHX_ GV *gv, bool not_implicit)
 }
 
 bool
-Perl_io_close(pTHX_ IO *io, GV *gv, bool not_implicit, bool warn_on_fail)
+Perl_io_close(pTHX_ IO *io, GV *gv, bool is_explict, bool warn_on_fail)
 {
     bool retval = FALSE;
 
@@ -1871,7 +1887,7 @@ Perl_io_close(pTHX_ IO *io, GV *gv, bool not_implicit, bool warn_on_fail)
             */
             IoOFP(io) = IoIFP(io) = NULL;
             status = PerlProc_pclose(fh);
-            if (not_implicit) {
+            if (is_explict) {
                 STATUS_NATIVE_CHILD_SET(status);
                 retval = (STATUS_UNIX == 0);
             }
@@ -1916,7 +1932,7 @@ Perl_io_close(pTHX_ IO *io, GV *gv, bool not_implicit, bool warn_on_fail)
                                  SVfARG(get_sv("!",GV_ADD)));
         }
     }
-    else if (not_implicit) {
+    else if (is_explict) {
         SETERRNO(EBADF,SS_IVCHAN);
     }
 
@@ -2778,7 +2794,7 @@ nothing in the core.
                         {
                                 /* Under AmigaOS4 unlink only 'fails' if the filename is invalid */
                                 /* It may not remove the file if it's Locked, so check if it's still */
-                                /* arround */
+                                /* around */
                                 if((access(s,F_OK) != -1))
                                 {
                                         tot--;

@@ -880,12 +880,28 @@ it doesn't redirect stderr to stdout.
 Note that under Win32 F<t/harness> is always used instead of F<t/TEST>,
 so there is no special "test_harness" target.
 
+Under the Unix build process you may use the TEST_ARGS and TEST_FILES
+parameters to pass arguments through to the underlying harness call.
+This means that for instance you could do
+
+    make test_harness TEST_ARGS="-v -re pat"
+
+which would make, and then run the test harness in verbose mode over
+files which contain "pat". Or you could do
+
+    make test_harness TEST_ARGS="-torture" TEST_FILES="op/*.t"
+
+and run torture tests on files matching the glob "op/*.t".
+
 Under Win32's "test" target you may use the TEST_SWITCHES and
 TEST_FILES environment variables to control the behaviour of
 F<t/harness>.  This means you can say
 
     nmake test TEST_FILES="op/*.t"
     nmake test TEST_SWITCHES="-torture" TEST_FILES="op/*.t"
+
+Note that for compatibility with the unix build process TEST_ARGS
+may also be used instead of the traditional TEST_SWITCHES argument.
 
 =item * test-notty test_notty
 
@@ -925,6 +941,16 @@ more recent faster ones with fewer cores.
 Note that the command line above added a C<-j> parameter to make, so as
 to cause parallel compilation.  This may or may not work on your
 platform.
+
+Normally data on how long tests take is stored in F<t/test_state>,
+however you can change this to use a different filename by setting the
+C<PERL_TEST_STATE_FILE> environment variable to something different, or
+to a false value (0 or the empty string) to disable use of the state
+mechanism entirely.  There are no protections against the format of the
+state file changing over time, so if you have any issues related to this
+file it is up to you to delete the file manually and then let the
+harness recreate it, although the file format does not change frequently
+so this should not be necessary very often.
 
 =head2 Running tests by hand
 

@@ -805,13 +805,15 @@ case "$d_oldpthreads" in
 # and it seems to be buggy in HP-UX anyway.
 i_dbm=undef
 
-# In HP-UXes prior to 11.23 strtold() returned a HP-UX
-# specific union called long_double, not a C99 long double.
-case "`grep 'double strtold.const' /usr/include/stdlib.h`" in
-*"long double strtold"*) ;; # strtold should be safe.
-*) echo "Looks like your strtold() is non-standard..." >&4
-   d_strtold=undef ;;
-esac
+if [ "$xxOsRevMajor" -lt 11 ] || [ "$xxOsRevMajor" -eq 11 ] && [ "$xxOsRevMinor" -lt 23 ]; then
+    # In HP-UXes prior to 11.23 strtold() returned a HP-UX
+    # specific union called long_double, not a C99 long double.
+    case "`grep 'double strtold.const' /usr/include/stdlib.h`" in
+        *"long double strtold"*) ;; # strtold should be safe.
+        *) echo "Looks like your strtold() is non-standard..." >&4
+        d_strtold=undef ;;
+    esac
+fi
 
 # In pre-11 HP-UXes there really isn't isfinite(), despite what
 # Configure might think. (There is finite(), though.)

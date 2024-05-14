@@ -512,23 +512,10 @@ blead release, so you may find nothing to do here.
 =head3 update AUTHORS
 
 The AUTHORS file can be updated by running F<Porting/updateAUTHORS.pl>.
-
-(The old method was C<Porting/checkAUTHORS.pl --update --from=5.X.Y> and
-it's still used under the hood, but you should use the
-F<Porting/updateAUTHORS.pl> update.)
-
-In the old method, for MAINT and BLEAD-FINAL releases, C<v5.X.Y> needs to
-refer to the last release in the previous development cycle (so for
-example, for a 5.14.x release, this would be 5.13.11).
-
-In the old method, for BLEAD-POINT releases, it needs to refer to the
-previous BLEAD-POINT release (so for 5.15.3 this would be 5.15.2).
-
-Note: It should not be harmful to use a wider range.
-
-Note: If you have uncommitted changes this could cause some warnings,
-and you might like to use the additional argument C<--to=upstream/blead>
-to use the last known git commit by GitHub.
+This shouldn't really be necessary anymore, and in theory nothing should
+change as our CI should not pass if a commit would result in AUTHORS
+needing to change, but do it anyway to be sure. Make sure all your changes
+are committed first.
 
 Review the changes to the AUTHORS file, be sure you are not adding duplicate
 entries or removing any entries, then commit your changes.

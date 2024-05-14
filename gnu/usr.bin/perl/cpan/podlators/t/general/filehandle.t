@@ -38,7 +38,7 @@ if (!-d $tmpdir) {
 }
 
 # Load the tests.
-my $man_data_ref  = read_snippet('man/cpp');
+my $man_data_ref = read_snippet('man/cpp');
 my $text_data_ref = read_snippet('text/cpp');
 
 # Write the POD source to a temporary file for the input file handle.
@@ -50,11 +50,11 @@ close($input) or BAIL_OUT("cannot write to $infile: $!");
 
 # Write the Pod::Man output to a file.
 my $outfile = File::Spec->catfile('t', 'tmp', "tmp$$.man");
-open($input,     '<', $infile)  or BAIL_OUT("cannot open $infile: $!");
+open($input, '<', $infile) or BAIL_OUT("cannot open $infile: $!");
 open(my $output, '>', $outfile) or BAIL_OUT("cannot open $outfile: $!");
 my $parser = Pod::Man->new;
 $parser->parse_from_filehandle($input, $output);
-close($input)  or BAIL_OUT("cannot read from $infile: $!");
+close($input) or BAIL_OUT("cannot read from $infile: $!");
 close($output) or BAIL_OUT("cannot write to $outfile: $!");
 
 # Read the output back in and compare it.
@@ -66,11 +66,11 @@ unlink($outfile);
 
 # Now, do the same drill with Pod::Text.  Parse the input to a temporary file.
 $outfile = File::Spec->catfile('t', 'tmp', "tmp$$.txt");
-open($input,  '<', $infile)  or BAIL_OUT("cannot open $infile: $!");
+open($input, '<', $infile) or BAIL_OUT("cannot open $infile: $!");
 open($output, '>', $outfile) or BAIL_OUT("cannot open $outfile: $!");
 $parser = Pod::Text->new;
 $parser->parse_from_filehandle($input, $output);
-close($input)  or BAIL_OUT("cannot read from $infile: $!");
+close($input) or BAIL_OUT("cannot read from $infile: $!");
 close($output) or BAIL_OUT("cannot write to $outfile: $!");
 
 # Read the output back in and compare it.  Pod::Text adds a trailing blank

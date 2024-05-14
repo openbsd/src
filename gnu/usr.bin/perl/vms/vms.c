@@ -5659,7 +5659,7 @@ int_expanded:
   if (!DECC_EFS_CASE_PRESERVE) {
     char * tbuf;
     for (tbuf = rms_get_fna(myfab, mynam); *tbuf; tbuf++)
-      if (islower(*tbuf)) { haslower = 1; break; }
+      if (isU8_LOWER_LC(*tbuf)) { haslower = 1; break; }
   }
 
    /* Is a long or a short name expected */
@@ -6281,7 +6281,7 @@ int_fileify_dirspec(const char *dir, char *buf, int *utf8_fl)
 #endif
 
       for (cp = trndir; *cp; cp++)
-        if (islower(*cp)) { haslower = 1; break; }
+        if (isU8_LOWER_LC(*cp)) { haslower = 1; break; }
       if (!((sts = sys$parse(&dirfab)) & STS$K_SUCCESS)) {
         if ((dirfab.fab$l_sts == RMS$_DIR) ||
             (dirfab.fab$l_sts == RMS$_DNF) ||
@@ -9490,7 +9490,7 @@ mp_expand_wild_cards(pTHX_ char *item, struct list_item **head,
          */
         if (!DECC_EFS_CASE_PRESERVE) {
             for (c = string; *c; ++c)
-            if (isupper(*c))
+            if (isUPPER_L1(*c))
                 *c = toLOWER_L1(*c);
         }
         if (isunix) trim_unixpath(string,item,1);
@@ -13638,7 +13638,7 @@ mp_do_vms_realpath(pTHX_ const char *filespec, char *outbuf,
                      */
                     if (!DECC_EFS_CASE_PRESERVE) {
                         for (cp = filespec; *cp; cp++)
-                            if (islower(*cp)) { haslower = 1; break; }
+                            if (isU8_LOWER_LC(*cp)) { haslower = 1; break; }
 
                         if (haslower) __mystrtolower(rslt);
                     }
@@ -13789,7 +13789,7 @@ mp_do_vms_realname(pTHX_ const char *filespec, char *outbuf,
              */
             if (!DECC_EFS_CASE_PRESERVE) {
                 for (cp = filespec; *cp; cp++)
-                    if (islower(*cp)) { haslower = 1; break; }
+                    if (isU8_LOWER_LC(*cp)) { haslower = 1; break; }
 
                 if (haslower) __mystrtolower(outbuf);
             }

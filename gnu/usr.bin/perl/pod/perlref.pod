@@ -757,7 +757,9 @@ Glob elements can be extracted through the postfix dereferencing feature:
 
 Postfix array and scalar dereferencing I<can> be used in interpolating
 strings (double quotes or the C<qq> operator), but only if the
-C<postderef_qq> feature is enabled.
+C<postderef_qq> feature is enabled. Interpolation of postfix array highest index
+access (C<< ->$#* >>) is also supported when the C<postderef_qq> feature is
+enabled.
 
 =head2 Postfix Reference Slicing
 

@@ -103,6 +103,7 @@ like("a", qr/(?[ (?#comment) [a]])/, "Can have (?#comments)");
 if (! is_miniperl() && locales_enabled('LC_CTYPE')) {
     my $utf8_locale = find_utf8_ctype_locale;
     SKIP: {
+        skip("No LC_ALL on this platform", 8) unless locales_enabled('LC_ALL');
         skip("No utf8 locale available on this platform", 8) unless $utf8_locale;
 
         setlocale(&POSIX::LC_ALL, "C");

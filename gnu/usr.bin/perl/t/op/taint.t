@@ -25,7 +25,7 @@ if ($NoTaintSupport) {
     exit 0;
 }
 
-plan tests => 1058;
+plan tests => 1065;
 
 $| = 1;
 
@@ -145,14 +145,17 @@ my $TEST = 'TEST';
 {
     $ENV{'DCL$PATH'} = '' if $Is_VMS;
 
-    $ENV{PATH} = ($Is_Cygwin) ? '/usr/bin' : '';
+    # Empty path is the same as "." on *nix, so we have to set it
+    # to something or we will fail taint tests. perhaps setting it
+    # to "/" would be better. Anything absolute will do.
+    $ENV{PATH} = $Is_VMS ? 'sys$system:' : '/usr/bin';
     delete @ENV{@MoreEnv};
     $ENV{TERM} = 'dumb';
 
     is(eval { `$echo 1` }, "1\n");
 
     SKIP: {
-        skip "Environment tainting tests skipped", 4
+        skip "Environment tainting tests skipped", 11
           if $Is_MSWin32 || $Is_VMS;
 
 	my @vars = ('PATH', @MoreEnv);
@@ -163,6 +166,16 @@ my $TEST = 'TEST';
 	    shift @vars;
 	}
 	is("@vars", "");
+
+        # make sure that the empty path or empty path components
+        # trigger an "Insecure directory in $ENV{PATH}" error.
+        for my $path ("", ".", "/:", ":/", "/::/", ".:/", "/:.") {
+            local $ENV{PATH} = $path;
+            eval {`$echo 1`};
+            ok($@ =~ /Insecure directory in \$ENV\{PATH\}/,
+                "path '$path' is insecure as expected")
+                or diag "$@";
+        }
 
 	# tainted $TERM is unsafe only if it contains metachars
 	local $ENV{TERM};
@@ -2440,6 +2453,7 @@ EOF
 	my $desc = "tainted value returned from " . shift(@descriptions);
 
 	my $res = do {
+	    no warnings 'deprecated';
 	    given ($_) {
 		when ('x') { $letter }
 		when ('y') { goto leavegiven }
@@ -2469,7 +2483,7 @@ EOF
 # Tainted values with smartmatch
 # [perl #93590] S_do_smartmatch stealing its own string buffers
 {
-no warnings 'experimental::smartmatch';
+no warnings 'deprecated';
 ok "M$TAINT" ~~ ['m', 'M'], '$tainted ~~ ["whatever", "match"]';
 ok !("M$TAINT" ~~ ['m', undef]), '$tainted ~~ ["whatever", undef]';
 }

@@ -456,7 +456,7 @@ from C<Devel::DProf>.  The 102% figure has disappeared, for example.  This is
 where we have to use the tools at our disposal, and recognise their pros and
 cons, before using them.  Interestingly, the numbers of calls for each
 subroutine are identical in the two reports, it's the percentages which differ.
-As the author of C<Devel::Proviler> writes:
+As the author of C<Devel::Profiler> writes:
 
  ...running HTML::Template's test suite under Devel::DProf shows
  output() taking NO time but Devel::Profiler shows around 10% of the
@@ -490,7 +490,7 @@ C<-d> flag to Perl at runtime.
  words with only capital letters: 1316
  words with only vowels: 1701
 
-C<Devel::SmallProf> writes it's output into a file called F<smallprof.out>, by
+C<Devel::SmallProf> writes its output into a file called F<smallprof.out>, by
 default.  The format of the file looks like this:
 
  <num> <time> <ctime> <line>:<text>

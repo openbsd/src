@@ -24,7 +24,7 @@ CAT2(sv_setsv_cow_hashkey_, SUFFIX) () {
 
     sv_setsv(destination, source);
 
-    result = !!SvIsCOW(destination);
+    result = cBOOL(SvIsCOW(destination));
 
     SvREFCNT_dec(source);
     SvREFCNT_dec(destination);

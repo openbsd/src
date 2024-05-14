@@ -160,7 +160,7 @@
 [1mFORMATTING CODES[m
     Another test taken from Pod::Parser.
 
-    This is a test to see if I can do not only $self and "method()", but also
+    This is a test to see if I can do not only $self and method(), but also
     "$self->method()" and "$self->{FIELDNAME}" and "$Foo <=> $Bar" without
     resorting to escape sequences. If I want to refer to the right-shift
     operator I can do something like "$x >> 3" or even "$y >> 5".

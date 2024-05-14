@@ -129,11 +129,11 @@ If this is in C<< rx->extflags >> it will be passed to
 C<Perl_fbm_instr> by C<pp_split> which will treat the subject string
 as a multi-line string.
 
-=for apidoc Amnh||RXf_PMf_MULTILINE
-=for apidoc_item  RXf_PMf_SINGLELINE
+=for apidoc Amnh||RXf_PMf_EXTENDED
 =for apidoc_item  RXf_PMf_FOLD
-=for apidoc_item  RXf_PMf_EXTENDED
 =for apidoc_item  RXf_PMf_KEEPCOPY
+=for apidoc_item  RXf_PMf_MULTILINE
+=for apidoc_item  RXf_PMf_SINGLELINE
 
 =item C</s> - RXf_PMf_SINGLELINE
 
@@ -192,12 +192,12 @@ SKIPWHITE and WHITE extflags.  To do this, the Perl engine does:
 These flags can be set during compilation to enable optimizations in
 the C<split> operator.
 
-=for apidoc Amnh||RXf_SPLIT
+=for apidoc Amnh||RXf_NO_INPLACE_SUBST
+=for apidoc_item  RXf_NULL
 =for apidoc_item  RXf_SKIPWHITE
+=for apidoc_item  RXf_SPLIT
 =for apidoc_item  RXf_START_ONLY
 =for apidoc_item  RXf_WHITE
-=for apidoc_item  RXf_NULL
-=for apidoc_item  RXf_NO_INPLACE_SUBST
 
 =over 4
 
@@ -507,19 +507,19 @@ C<%+> or C<%+>, if any:
     RXapif_FIRSTKEY
     RXapif_NEXTKEY
 
-=for apidoc Amnh ||RXapif_CLEAR
+=for apidoc Amnh ||RXapif_ALL
+=for apidoc_item   RXapif_CLEAR
 =for apidoc_item   RXapif_DELETE
 =for apidoc_item   RXapif_EXISTS
 =for apidoc_item   RXapif_FETCH
 =for apidoc_item   RXapif_FIRSTKEY
 =for apidoc_item   RXapif_NEXTKEY
-=for apidoc_item   RXapif_SCALAR
-=for apidoc_item   RXapif_STORE
-=for apidoc_item   RXapif_ALL
 =for apidoc_item   RXapif_ONE
 =for apidoc_item   RXapif_REGNAME
 =for apidoc_item   RXapif_REGNAMES
 =for apidoc_item   RXapif_REGNAMES_COUNT
+=for apidoc_item   RXapif_SCALAR
+=for apidoc_item   RXapif_STORE
 
 If C<%+> or C<%-> is being operated on, if any.
 
@@ -844,9 +844,9 @@ number of bytes from the logical start of the buffer to the physical start
 characters in the offset. The latter is needed to support C<@-> and C<@+>
 which work in characters, not bytes.
 
-=for apidoc Amnh||REXEC_COPY_STR
+=for apidoc Amnh ||REXEC_COPY_SKIP_POST
 =for apidoc_item ||REXEC_COPY_SKIP_PRE
-=for apidoc_item ||REXEC_COPY_SKIP_POST
+=for apidoc_item ||REXEC_COPY_STR
 
 =head2 C<wrapped> C<wraplen>
 

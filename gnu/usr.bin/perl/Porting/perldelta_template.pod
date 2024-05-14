@@ -115,7 +115,7 @@ release manager will have to investigate the situation carefully.)
 
 =item *
 
-XXX Remove this section if not applicable.
+XXX Remove this section if Porting/corelist-perldelta.pl did not add any content here.
 
 =back
 
@@ -127,7 +127,7 @@ XXX Remove this section if not applicable.
 
 L<XXX> has been upgraded from version A.xx to B.yy.
 
-If there was something important to note about this change, include that here.
+XXX If there was something important to note about this change, include that here.
 
 =back
 
@@ -137,7 +137,7 @@ If there was something important to note about this change, include that here.
 
 =item *
 
-XXX
+XXX Remove this section if Porting/corelist-perldelta.pl did not add any content here.
 
 =back
 
@@ -357,6 +357,9 @@ XXX
 XXX Important bug fixes in the core language are summarized here.  Bug fixes in
 files in F<ext/> and F<lib/> are best summarized in L</Modules and Pragmata>.
 
+Include references to GitHub issues and PRs as: [GH #12345] and the release
+manager will later use a regex to expand these into links.
+
 [ List each fix as an =item entry ]
 
 =over 4
@@ -403,7 +406,7 @@ died, add a short obituary here.
 
 XXX Generate this with:
 
-  perl Porting/acknowledgements.pl v5.36.3..HEAD
+  perl Porting/acknowledgements.pl v5.37.12..HEAD
 
 =head1 Reporting Bugs
 

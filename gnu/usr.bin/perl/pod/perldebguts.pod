@@ -621,7 +621,7 @@ will be lost.
  ANYOFHr          sv 1       Like ANYOFH, but the flags field contains
                              packed bounds for all matchable UTF-8 start
                              bytes.
- ANYOFHs          sv 1       Like ANYOFHb, but has a string field that
+ ANYOFHs          sv:str 1   Like ANYOFHb, but has a string field that
                              gives the leading matchable UTF-8 bytes;
                              flags field is len
  ANYOFR           packed 1   Matches any character in the range given by
@@ -631,6 +631,10 @@ will be lost.
                              start byte
  ANYOFRb          packed 1   Like ANYOFR, but all matches share the same
                              UTF-8 start byte, given in the flags field
+
+ ANYOFHbbm        none bbm   Like ANYOFHb, but only for 2-byte UTF-8
+                             characters; uses a bitmap to match the
+                             continuation byte
 
  ANYOFM           byte 1     Like ANYOF, but matches an invariant byte
                              as determined by the mask and arg
@@ -664,7 +668,7 @@ will be lost.
  #               pointer of each individual branch points; each branch
  #               starts with the operand node of a BRANCH node.
  #
- BRANCH           node       Match this alternative, or the next...
+ BRANCH           node 1     Match this alternative, or the next...
 
  # Literals
 
@@ -743,14 +747,19 @@ will be lost.
  #               (one character per match) are implemented with STAR
  #               and PLUS for speed and to minimize recursive plunges.
  #
- STAR             node       Match this (simple) thing 0 or more times.
- PLUS             node       Match this (simple) thing 1 or more times.
+ STAR             node       Match this (simple) thing 0 or more times:
+                             /A{0,}B/ where A is width 1 char
+ PLUS             node       Match this (simple) thing 1 or more times:
+                             /A{1,}B/ where A is width 1 char
 
- CURLY            sv 2       Match this simple thing {n,m} times.
- CURLYN           no 2       Capture next-after-this simple thing
- CURLYM           no 2       Capture this medium-complex thing {n,m}
+ CURLY            sv 3       Match this (simple) thing {n,m} times:
+                             /A{m,n}B/ where A is width 1 char
+ CURLYN           no 3       Capture next-after-this simple thing:
+                             /(A){m,n}B/ where A is width 1 char
+ CURLYM           no 3       Capture this medium-complex thing {n,m}
+                             times: /(A){m,n}B/ where A is fixed-length
+ CURLYX           sv 3       Match/Capture this complex thing {n,m}
                              times.
- CURLYX           sv 2       Match this complex thing {n,m} times.
 
  # This terminator creates a loop structure for CURLYX
  WHILEM           no         Do curly processing and see if rest
@@ -764,30 +773,30 @@ will be lost.
  SROPEN           none       Same as OPEN, but for script run
  SRCLOSE          none       Close preceding SROPEN
 
- REF              num 1      Match some already matched string
- REFF             num 1      Match already matched string, using /di
+ REF              num 2      Match some already matched string
+ REFF             num 2      Match already matched string, using /di
                              rules.
- REFFL            num 1      Match already matched string, using /li
+ REFFL            num 2      Match already matched string, using /li
                              rules.
- REFFU            num 1      Match already matched string, usng /ui.
- REFFA            num 1      Match already matched string, using /aai
+ REFFU            num 2      Match already matched string, usng /ui.
+ REFFA            num 2      Match already matched string, using /aai
                              rules.
 
  # Named references.  Code in regcomp.c assumes that these all are after
  # the numbered references
- REFN             no-sv 1    Match some already matched string
- REFFN            no-sv 1    Match already matched string, using /di
+ REFN             no-sv 2    Match some already matched string
+ REFFN            no-sv 2    Match already matched string, using /di
                              rules.
- REFFLN           no-sv 1    Match already matched string, using /li
+ REFFLN           no-sv 2    Match already matched string, using /li
                              rules.
- REFFUN           num 1      Match already matched string, using /ui
+ REFFUN           num 2      Match already matched string, using /ui
                              rules.
- REFFAN           num 1      Match already matched string, using /aai
+ REFFAN           num 2      Match already matched string, using /aai
                              rules.
 
  # Support for long RE
  LONGJMP          off 1 1    Jump far away.
- BRANCHJ          off 1 1    BRANCH with long offset.
+ BRANCHJ          off 2 1    BRANCH with long offset.
 
  # Special Case Regops
  IFMATCH          off 1 1    Succeeds if the following matches; non-zero
@@ -805,7 +814,7 @@ will be lost.
  # The heavy worker
 
  EVAL             evl/flags  Execute some Perl code.
-                  2L
+                  2
 
  # Modifiers
 
@@ -816,7 +825,7 @@ will be lost.
  RENUM            off 1 1    Group with independently numbered parens.
 
  # Regex Subroutines
- GOSUB            num/ofs 2L recurse to paren arg1 at (signed) ofs arg2
+ GOSUB            num/ofs 2  recurse to paren arg1 at (signed) ofs arg2
 
  # Special conditionals
  GROUPPN          no-sv 1    Whether the group matched.
@@ -827,7 +836,7 @@ will be lost.
  ENDLIKE          none       Used only for the type field of verbs
  OPFAIL           no-sv 1    Same as (?!), but with verb arg
  ACCEPT           no-sv/num  Accepts the current matched string, with
-                  2L         verbar
+                  2          verbar
 
  # Verbs With Arguments
  VERB             no-sv 1    Used only for the type field of verbs

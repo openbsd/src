@@ -1943,7 +1943,7 @@ $v = 1 + prototype $fn;
 EXPECT
 Use of uninitialized value in addition (+) at - line 4.
 ########
-use warnings 'uninitialized'; no warnings 'experimental::smartmatch';
+use warnings 'uninitialized'; no warnings 'deprecated';
 my $v;
 my $fn = sub {};
 $v = 1 + (1 ~~ $fn);
@@ -2216,3 +2216,33 @@ EXPECT
 Use of uninitialized value in regexp compilation at - line 5.
 Use of uninitialized value in regexp compilation at - line 5.
 Use of uninitialized value $x in regexp compilation at - line 5.
+########
+# GH #20945
+use warnings 'uninitialized';
+my ($v, $x, $y, @arr, %hash);
+
+$v = ($x = undef) + 1;
+$v = 1 + ($x = undef);
+$v = ($x = $y) - 1;
+$v = 1 - ($x = $y);
+$v = ($x = []->[0]) + ($y = [1]->[0]);
+$v = ($x = [1]->[0]) + ($y = []->[0]);
+$v = ($x = ()) * 2;
+(my $z = $y) =~ s/a/b/;
+($arr[0] = undef) =~ s/a/b/;
+($arr[0] = $z) =~ s/a/b/;
+($hash{foo} = undef) =~ s/a/b/;
+($hash{foo} = $z) =~ s/a/b/;
+EXPECT
+Use of uninitialized value $x in addition (+) at - line 5.
+Use of uninitialized value $x in addition (+) at - line 6.
+Use of uninitialized value $x in subtraction (-) at - line 7.
+Use of uninitialized value $x in subtraction (-) at - line 8.
+Use of uninitialized value $x in addition (+) at - line 9.
+Use of uninitialized value $y in addition (+) at - line 10.
+Use of uninitialized value $x in multiplication (*) at - line 11.
+Use of uninitialized value $z in substitution (s///) at - line 12.
+Use of uninitialized value $arr[0] in substitution (s///) at - line 13.
+Use of uninitialized value $arr[0] in substitution (s///) at - line 14.
+Use of uninitialized value $hash{"foo"} in substitution (s///) at - line 15.
+Use of uninitialized value $hash{"foo"} in substitution (s///) at - line 16.

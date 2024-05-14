@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 22;
+plan tests => 26;
 
 my @expect = qw(
 b1
@@ -147,7 +147,6 @@ fresh_perl_is('END { print "ok\n" } INIT { bless {} and exit }', "ok\n",
 	       {}, 'null PL_curcop in newGP');
 
 # [perl #2754] exit(0) didn't exit from inside a UNITCHECK or CHECK block
-
 my $testblocks =
     join(" ",
         "BEGIN { \$| = 1; }",
@@ -167,21 +166,21 @@ SKIP: {
     skip "VMS doesn't have the perl #2754 bug", 3 if $^O eq 'VMS';
     fresh_perl_is(
         "$testblocks BEGIN { exit 0; }",
-        "begin\nunitcheck\ncheck\ninit\nend",
+        "begin\nunitcheck\ncheck\nend",
         {},
         "BEGIN{exit 0} doesn't exit yet"
     );
 
     fresh_perl_is(
         "$testblocks UNITCHECK { exit 0; }",
-        "begin\nunitcheck\ncheck\ninit\nmain\nend",
+        "begin\nunitcheck\ncheck\nend",
         {},
         "UNITCHECK{exit 0} doesn't exit yet"
     );
 
     fresh_perl_is(
         "$testblocks CHECK { exit 0; }",
-        "begin\nunitcheck\ncheck\ninit\nmain\nend",
+        "begin\nunitcheck\ncheck\nend",
         {},
         "CHECK{exit 0} doesn't exit yet"
     );
@@ -189,10 +188,6 @@ SKIP: {
 
 
 SKIP: {
-    if ($^O =~ /^(MSWin32|os2)$/) {
-        skip "non_UNIX plafforms and PERL_EXIT_DESTRUCT_END (RT #132863)", 6;
-    }
-
     fresh_perl_is(
         "$testblocks BEGIN { exit 1; }",
         "begin\nunitcheck\ncheck\nend",
@@ -258,6 +253,34 @@ fresh_perl_like(
     "INIT{die} should exit"
 );
 
+fresh_perl_is(
+    "BEGIN{} BEGIN(){1} print 'done'",
+    "Prototype on BEGIN block ignored at - line 1.\ndone",
+    {},
+    "Prototypes on BEGIN blocks should warn"
+);
+
+SKIP: {
+    skip "Test requires full perl, this is miniperl", 1
+        if is_miniperl;
+
+    fresh_perl_is(
+        "use attributes; BEGIN{} sub BEGIN :blerg {1} print 'done'",
+        "Attribute on BEGIN block ignored at - line 1.\ndone",
+        {},
+        "Attributes on BEGIN blocks should warn"
+    );
+}
+
+fresh_perl_is(
+    'BEGIN() {10} foreach my $p (sort {lc($a) cmp lc($b)} keys %v)',
+    "Prototype on BEGIN block ignored at - line 1.\n"
+    . "syntax error at - line 1, at EOF\n"
+    . "Execution of - aborted due to compilation errors.",
+    {},
+    "Prototype on BEGIN blocks should warn"
+);
+
 TODO: {
     local $TODO = 'RT #2917: INIT{} in eval is wrongly considered too late';
     fresh_perl_is('eval "INIT { print qq(in init); };";', 'in init', {}, 'RT #2917: No constraint on how late INIT blocks can run');
@@ -265,3 +288,7 @@ TODO: {
 
 fresh_perl_is('eval "BEGIN {goto end}"; end:', '', {}, 'RT #113934: goto out of BEGIN causes assertion failure');
 
+fresh_perl_is('package Module::Install::DSL; BEGIN { eval "INIT { print q(INIT fired in eval) }" }',
+    "Treating Module::Install::DSL::INIT block as BEGIN block as workaround at (eval 1) line 1.\n"
+    ."INIT fired in eval", {},
+   'GH Issue #16300: Module::Install::DSL workaround');

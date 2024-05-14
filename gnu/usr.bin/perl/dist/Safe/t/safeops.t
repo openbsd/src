@@ -453,7 +453,7 @@ dor		$x // $y
 dorassign	$x //= $y
 once		SKIP {use feature 'state'; state $foo = 42;}
 say		SKIP {use feature 'say'; say "foo";}
-smartmatch	no warnings 'experimental::smartmatch'; $x ~~ $y
+smartmatch	no warnings 'deprecated'; $x ~~ $y
 aeach		SKIP each @t
 akeys		SKIP keys @t
 avalues		SKIP values @t

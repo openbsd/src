@@ -23,7 +23,6 @@
 
 ~DECC~
 ~DECCXX~
-~GNUC~
 ~ARCH-TYPE~ = 1
 ~THREAD~
 ~SOCKET~
@@ -86,21 +85,6 @@ ARCHCORE = [.lib.$(ARCHNAME).$(PERL_VERSION).CORE]
 ARCHAUTO = [.lib.$(ARCHNAME).$(PERL_VERSION).auto]
 
 #: >>>>>Compiler-specific options <<<<<
-.ifdef GNUC
-.first
-	@ If F$TrnLnm("Sys").eqs."" Then Define/NoLog SYS GNU_CC_Include:[VMS]
-CC = gcc
-# -fno-builtin avoids bug in gcc up to version 2.6.2 which can destroy
-# data when memcpy() is called on large (>64 kB) blocks of memory
-# (fixed in gcc 2.6.3)
-XTRACCFLAGS = /Obj=$(MMS$TARGET_NAME)$(O)/NoCase_Hack/Optimize=2
-DBGSPECFLAGS =
-XTRADEF = 
-XTRAOBJS =
-LIBS1 = GNU_CC:[000000]GCCLIB.OLB/Library
-LIBS2 = Sys$Share:VAXCRTL/Shareable
-POSIX =
-.else
 XTRAOBJS = 
 LIBS1 = $(XTRAOBJS)
 DBGSPECFLAGS = /Show=(expansion,include)/machine
@@ -125,7 +109,6 @@ XTRACCFLAGS = /Include=[]/Standard=Relaxed_ANSI/Prefix=All/Obj=$(OBJVAL)
 .endif
 XTRADEF =
 POSIX = POSIX
-.endif
 
 #: >>>>> Configuration options <<<<<
 #: __DEBUG__: builds images with full VMS debugger support
@@ -226,27 +209,29 @@ FULLLIBS2 = $(LIBS2)|$(THRLIBS1)|$(THRLIBS2)
 
 #### End of system configuration section. ####
 
-c0 = $(MALLOC_C) av.c builtin.c caretx.c deb.c doio.c doop.c dquote.c dump.c globals.c gv.c hv.c mro_core.c
-c1 = mg.c locale.c mathoms.c miniperlmain.c numeric.c op.c pad.c perl.c perlio.c
-c2 = perly.c pp.c pp_ctl.c pp_hot.c pp_pack.c pp_sort.c pp_sys.c regcomp.c regexec.c reentr.c
-c3 = run.c scope.c sv.c taint.c time64.c toke.c universal.c utf8.c util.c vms.c keywords.c
-c = $(c0) $(c1) $(c2) $(c3)
+c0 = $(MALLOC_C) av.c builtin.c caretx.c class.c deb.c doio.c doop.c dquote.c dump.c globals.c gv.c hv.c mro_core.c
+c1 = mg.c locale.c mathoms.c miniperlmain.c numeric.c op.c pad.c peep.c perl.c perlio.c
+c2 = perly.c pp.c pp_ctl.c pp_hot.c pp_pack.c pp_sort.c pp_sys.c regcomp.c regcomp_debug.c
+c3 = regcomp_invlist.c regcomp_study.c regcomp_trie.c regexec.c reentr.c
+c4 = run.c scope.c sv.c taint.c time64.c toke.c universal.c utf8.c util.c vms.c keywords.c
+c = $(c0) $(c1) $(c2) $(c3) $(c4)
 
 obj0 = perl$(O)
-obj1 = $(MALLOC_O) av$(O) builtin$(O) caretx$(O) deb$(O) doio$(O) doop$(O) dquote$(O) dump$(O) mro_core$(O) globals$(O) gv$(O) hv$(O)
-obj2 = keywords$(O) locale$(O) mathoms$(O) mg$(O) miniperlmain$(O) numeric$(O) op$(O) pad$(O) perlio$(O) 
+obj1 = $(MALLOC_O) av$(O) builtin$(O) caretx$(O) class$(O) deb$(O) doio$(O) doop$(O) dquote$(O) dump$(O) mro_core$(O) globals$(O) gv$(O) hv$(O)
+obj2 = keywords$(O) locale$(O) mathoms$(O) mg$(O) miniperlmain$(O) numeric$(O) op$(O) pad$(O) peep$(O) perlio$(O) 
 obj3 = perly$(O) pp$(O) pp_ctl$(O) pp_hot$(O) reentr$(O) pp_pack$(O) pp_sort$(O) pp_sys$(O) regcomp$(O) 
-obj4 = regexec$(O) run$(O) scope$(O) sv$(O) taint$(O) time64$(O) toke$(O) universal$(O) utf8$(O) util$(O) vms$(O)
+obj4 = regcomp_debug$(O) regcomp_invlist$(O) regcomp_study$(O) regcomp_trie$(O)
+obj5 = regexec$(O) run$(O) scope$(O) sv$(O) taint$(O) time64$(O) toke$(O) universal$(O) utf8$(O) util$(O) vms$(O)
 
-mini_obj = perlmini$(O) $(obj1) $(obj2) $(obj3) $(obj4)
-obj = $(obj0) $(obj1) $(obj2) $(obj3) $(obj4)
+mini_obj = perlmini$(O) $(obj1) $(obj2) $(obj3) $(obj4) $(obj5)
+obj = $(obj0) $(obj1) $(obj2) $(obj3) $(obj4) $(obj5)
 
 h0 = av.h config.h cop.h cv.h embed.h embedvar.h
 h1 = EXTERN.h form.h gv.h handy.h hv.h l1_char_class_tab.h INTERN.h intrpvar.h
 h2 = iperlsys.h keywords.h mydtrace.h mg.h mg_vtable.h nostdio.h op.h 
 h3 = op_reg_common.h opcode.h opnames.h overload.h pad.h parser.h patchlevel.h 
 h4 = perl.h perlapi.h perlio.h perlsdio.h perlvars.h perly.h
-h5 = pp.h pp_proto.h proto.h regcomp.h regexp.h regnodes.h scope.h
+h5 = pp.h pp_proto.h proto.h regcomp.h regcomp_internal.h regexp.h regnodes.h scope.h
 h6 = sv.h thread.h utf8.h util.h vmsish.h warnings.h xsub.h
 h = $(h0) $(h1) $(h2) $(h3) $(h4) $(h5) $(h6)
 
@@ -313,7 +298,7 @@ utils : $(utils1) $(utils2) $(utils3) $(utils4) $(utils5)
 extra.pods : miniperl
 	@ @extra_pods.com
 
-PERLDELTA_CURRENT = [.pod]perl5363delta.pod
+PERLDELTA_CURRENT = [.pod]perl5382delta.pod
 
 $(PERLDELTA_CURRENT) : [.pod]perldelta.pod
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(PERLDELTA_CURRENT)
@@ -663,6 +648,8 @@ pad$(O) : pad.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 op$(O) : op.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+peep$(O) : peep.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 perl$(O) : perl.c git_version.h $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 perlio$(O) : perlio.c config.h $(h)
@@ -686,6 +673,14 @@ pp_sys$(O) : pp_sys.c $(h)
 reentr$(O) : reentr.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 regcomp$(O) : regcomp.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+regcomp_debug$(O) : regcomp_debug.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+regcomp_invlist$(O) : regcomp_invlist.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+regcomp_study$(O) : regcomp_study.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+regcomp_trie$(O) : regcomp_trie.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 regexec$(O) : regexec.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)

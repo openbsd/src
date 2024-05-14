@@ -2,7 +2,7 @@
 #
 # Additional tests for Pod::Man heading generation.
 #
-# Copyright 2002, 2004, 2006, 2008-2009, 2012, 2015, 2018-2019
+# Copyright 2002, 2004, 2006, 2008-2009, 2012, 2015, 2018-2019, 2022
 #     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -16,7 +16,7 @@ use warnings;
 
 use lib 't/lib';
 
-use Test::More tests => 9;
+use Test::More tests => 11;
 use Test::Podlators qw(read_test_data);
 
 BEGIN {
@@ -25,6 +25,7 @@ BEGIN {
 
 # Loop through all the test data, generate output, and compare it to the
 # desired output data.
+my $testnum = 1;
 while (defined(my $data = read_test_data(\*DATA, { options => 1 }))) {
     my $parser = Pod::Man->new(%{ $data->{options} });
     isa_ok($parser, 'Pod::Man', 'Parser object');
@@ -38,7 +39,8 @@ while (defined(my $data = read_test_data(\*DATA, { options => 1 }))) {
     my ($heading) = ($got =~ m{^ ([.]TH [^\n]+ \n)}xms);
 
     # Compare the results.
-    is($heading, $data->{output});
+    is($heading, $data->{output}, "Test $testnum");
+    $testnum++;
 }
 
 # Below the marker are sets of options, the input data, and the corresponding
@@ -55,7 +57,7 @@ release 1.0
 
 test - Test man page
 ###
-.TH STDIN 1 "2009-01-17" "1.0" "User Contributed Perl Documentation"
+.TH STDIN 1 2009-01-17 1.0 "User Contributed Perl Documentation"
 ###
 
 ###
@@ -68,7 +70,7 @@ release 2.0-beta
 
 test - Test man page
 ###
-.TH TEST 8 "2009-01-17" "2.0-beta" "User Contributed Perl Documentation"
+.TH TEST 8 2009-01-17 2.0-beta "User Contributed Perl Documentation"
 ###
 
 ###
@@ -80,7 +82,7 @@ center Testing Documentation
 
 test - Test man page
 ###
-.TH STDIN 1 "2009-01-17" "1.0" "Testing Documentation"
+.TH STDIN 1 2009-01-17 1.0 "Testing Documentation"
 ###
 
 ###
@@ -93,4 +95,18 @@ center
 test - Test man page
 ###
 .TH STDIN 1 "" "" ""
+###
+
+###
+date foo ""bar""
+release "quoted"
+section 4"
+name "BAR
+center Something
+###
+=head1 NAME
+
+test - Test man page
+###
+.TH """BAR" "4""" "foo """"bar""""" """quoted""" Something
 ###

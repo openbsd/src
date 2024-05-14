@@ -12,7 +12,7 @@
  *
  * To summarize, the way it works is:
  * To convert an EBCDIC code point to UTF-EBCDIC:
- *  1)	convert to Unicode.  No conversion is necesary for code points above
+ *  1)	convert to Unicode.  No conversion is necessary for code points above
  *      255, as Unicode and EBCDIC are identical in this range.  For smaller
  *      code points, the conversion is done by lookup in the PL_e2a table (with
  *      inverse PL_a2e) in the generated file 'ebcdic_tables.h'.  The 'a'
@@ -73,7 +73,7 @@
  * macro NATIVE_TO_I8().  However, one "shadow", or parallel table,
  * PL_utf8skip, has been constructed that doesn't require undoing things.  It
  * is such that for each byte, it says how long the sequence is if that
-* (UTF-EBCDIC) byte were to begin it
+ * (UTF-EBCDIC) byte were to begin it.
  *
  * There are actually 3 slightly different UTF-EBCDIC encodings in
  * ebcdic_tables.h, one for each of the code pages recognized by Perl.  That

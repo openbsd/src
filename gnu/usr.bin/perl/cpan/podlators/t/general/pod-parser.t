@@ -71,8 +71,8 @@ close($input) or BAIL_OUT("cannot write to $infile: $!");
 
 # Now test the pod2text function with a single output.  This will send the
 # results to standard output, so we need to redirect that to a file.
-open($output,         '>',  $outfile) or BAIL_OUT("cannot open $outfile: $!");
-open(my $save_stdout, '>&', STDOUT)   or BAIL_OUT("cannot dup stdout: $!");
+open($output, '>', $outfile) or BAIL_OUT("cannot open $outfile: $!");
+open(my $save_stdout, '>&', STDOUT) or BAIL_OUT("cannot dup stdout: $!");
 open(STDOUT, '>&', $output) or BAIL_OUT("cannot redirect stdout: $!");
 pod2text($infile);
 close($output) or BAIL_OUT("cannot write to $outfile: $!");

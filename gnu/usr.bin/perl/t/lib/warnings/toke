@@ -261,13 +261,8 @@ Reversed *= operator at - line 5.
 Reversed %= operator at - line 6.
 Reversed &= operator at - line 7.
 Reversed .= operator at - line 8.
-Reversed ^= operator at - line 9.
-Reversed |= operator at - line 10.
-Reversed <= operator at - line 11.
 syntax error at - line 8, near "=."
-syntax error at - line 9, near "=^"
-syntax error at - line 10, near "=|"
-Unterminated <> operator at - line 11.
+Execution of - aborted due to compilation errors.
 ########
 # toke.c
 no warnings 'syntax' ;
@@ -283,9 +278,7 @@ $a =< 2 ;
 $a =/ 2 ;
 EXPECT
 syntax error at - line 8, near "=."
-syntax error at - line 9, near "=^"
-syntax error at - line 10, near "=|"
-Unterminated <> operator at - line 11.
+Execution of - aborted due to compilation errors.
 ########
 # toke.c
 use warnings 'syntax' ;
@@ -415,21 +408,30 @@ sort ("")
 EXPECT
 
 ########
-use warnings 'syntax';
 @foo::bar = 1..3;
 () = "$foo'bar";
 () = "@foo'bar";
 () = "$#foo'bar";
-no warnings 'syntax' ;
+use warnings 'syntax';
+() = "$foo'bar";
+() = "@foo'bar";
+() = "$#foo'bar";
+no warnings 'syntax', 'deprecated' ;
 () = "$foo'bar";
 () = "@foo'bar";
 () = "$#foo'bar";
 EXPECT
-Old package separator used in string at - line 3.
+Old package separator used in string at - line 2.
 	(Did you mean "$foo\'bar" instead?)
-Old package separator used in string at - line 4.
+Old package separator used in string at - line 3.
 	(Did you mean "@foo\'bar" instead?)
-Old package separator used in string at - line 5.
+Old package separator used in string at - line 4.
+	(Did you mean "$#foo\'bar" instead?)
+Old package separator used in string at - line 6.
+	(Did you mean "$foo\'bar" instead?)
+Old package separator used in string at - line 7.
+	(Did you mean "@foo\'bar" instead?)
+Old package separator used in string at - line 8.
 	(Did you mean "$#foo\'bar" instead?)
 ########
 use warnings 'syntax'; use utf8;
@@ -437,7 +439,7 @@ use warnings 'syntax'; use utf8;
 () = "$fooл'barл";
 () = "@fooл'barл";
 () = "$#fooл'barл";
-no warnings 'syntax' ;
+no warnings 'syntax', 'deprecated' ;
 () = "$fooл'barл";
 () = "@fooл'barл";
 () = "$#fooл'barл";
@@ -448,6 +450,19 @@ Old package separator used in string at - line 4.
 	(Did you mean "@fooл\'barл" instead?)
 Old package separator used in string at - line 5.
 	(Did you mean "$#fooл\'barл" instead?)
+########
+# NAME deprecation of ' in names
+sub foo'bar { 1 }
+$a'b = 1;
+@a'c = ();
+%a'd = ();
+package a'e;
+EXPECT
+Old package separator "'" deprecated at - line 1.
+Old package separator "'" deprecated at - line 2.
+Old package separator "'" deprecated at - line 3.
+Old package separator "'" deprecated at - line 4.
+Old package separator "'" deprecated at - line 5.
 ########
 # toke.c
 use warnings 'ambiguous' ;
@@ -1047,10 +1062,8 @@ Operator or semicolon missing before %foo at - line 8.
 Ambiguous use of % resolved as operator % at - line 8.
 Operator or semicolon missing before %foo at - line 10.
 Ambiguous use of % resolved as operator % at - line 10.
-Bareword found where operator expected at - line 12, near "$%foo"
-	(Missing operator before foo?)
-Bareword found where operator expected at - line 13, near "$ %foo"
-	(Missing operator before foo?)
+Bareword found where operator expected (Missing operator before "foo"?) at - line 12, near "$%foo"
+Bareword found where operator expected (Missing operator before "foo"?) at - line 13, near "$ %foo"
 Illegal modulus zero at - line 3.
 ########
 # toke.c
@@ -1074,10 +1087,8 @@ Operator or semicolon missing before &foo at - line 8.
 Ambiguous use of & resolved as operator & at - line 8.
 Operator or semicolon missing before &foo at - line 10.
 Ambiguous use of & resolved as operator & at - line 10.
-Bareword found where operator expected at - line 13, near "$&foo"
-	(Missing operator before foo?)
-Bareword found where operator expected at - line 14, near "$ &foo"
-	(Missing operator before foo?)
+Bareword found where operator expected (Missing operator before "foo"?) at - line 13, near "$&foo"
+Bareword found where operator expected (Missing operator before "foo"?) at - line 14, near "$ &foo"
 Undefined subroutine &main::foo called at - line 3.
 ########
 # toke.c
@@ -1276,8 +1287,7 @@ eval q/5 6/;
 no warnings "syntax";
 eval q/5 6/;
 EXPECT
-Number found where operator expected at (eval 1) line 1, near "5 6"
-	(Missing operator before  6?)
+Number found where operator expected (Missing operator before "6"?) at (eval 1) line 1, near "5 6"
 ########
 # toke.c
 use warnings "syntax"; no warnings "deprecated";
@@ -1784,3 +1794,11 @@ Use of '》' is deprecated as a string delimiter at - line 12.
 Use of '‹' is deprecated as a string delimiter at - line 13.
 Use of '›' is deprecated as a string delimiter at - line 14.
 ########
+# NAME check bareword warning is a single error message
+BEGIN { $SIG{__WARN__}= sub { print STDERR "warn: $_[0]" }; }
+sub bar {}
+foo bar;
+EXPECT
+warn: Bareword found where operator expected (Do you need to predeclare "foo"?) at - line 3, near "foo bar"
+syntax error at - line 3, near "foo bar"
+Execution of - aborted due to compilation errors.

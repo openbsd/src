@@ -213,11 +213,6 @@ Global symbol "$m" requires explicit package name (did you forget to declare "my
 Global symbol "$d" requires explicit package name (did you forget to declare "my $d"?) at abc.pm line 6.
 Global symbol "$i" requires explicit package name (did you forget to declare "my $i"?) at abc.pm line 6.
 Global symbol "$n" requires explicit package name (did you forget to declare "my $n"?) at abc.pm line 6.
-Global symbol "$e" requires explicit package name (did you forget to declare "my $e"?) at abc.pm line 7.
-Global symbol "$j" requires explicit package name (did you forget to declare "my $j"?) at abc.pm line 7.
-Global symbol "$o" requires explicit package name (did you forget to declare "my $o"?) at abc.pm line 7.
-Global symbol "$p" requires explicit package name (did you forget to declare "my $p"?) at abc.pm line 8.
-Illegal binary digit '2' at abc.pm line 8, at end of line
 abc.pm has too many errors.
 Compilation failed in require at - line 1.
 BEGIN failed--compilation aborted at - line 1.

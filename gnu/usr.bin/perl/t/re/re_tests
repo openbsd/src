@@ -478,7 +478,7 @@ a(?:b|c|d)+(.)	acdbcdbe	y	$1	e
 a(?:b|c|d){2}(.)	acdbcdbe	y	$1	b
 a(?:b|c|d){4,5}(.)	acdbcdbe	y	$1	b
 a(?:b|c|d){4,5}?(.)	acdbcdbe	y	$1	d
-((foo)|(bar))*	foobar	y	$1-$2-$3	bar-foo-bar
+((foo)|(bar))*	foobar	y	$1-$2-$3	bar--bar		# was bar-foo-bar prior to 5.37.10
 :(?:	-	c	-	Sequence (? incomplete
 a(?:b|c|d){6,7}(.)	acdbcdbe	y	$1	e
 a(?:b|c|d){6,7}?(.)	acdbcdbe	y	$1	e
@@ -496,10 +496,12 @@ a(?:b|(c|e){1,2}?|d)+?(.)	ace	y	$1$2	ce
 ^(a(?(1)\1)){4}$	aaaaaaaaaa	y	$1	aaaa
 ^(a(?(1)\1)){4}$	aaaaaaaaa	n	-	-
 ^(a(?(1)\1)){4}$	aaaaaaaaaaa	n	-	-
+((?(1)a|b))+	baaa	y	$&	baaa		# GH 7754
+((?(1)aa|b))+	baaaa	y	$&	baaaa		# GH 7754
 ((a{4})+)	aaaaaaaaa	y	$1	aaaaaaaa
 (((aa){2})+)	aaaaaaaaaa	y	$1	aaaaaaaa
 (((a{2}){2})+)	aaaaaaaaaa	y	$1	aaaaaaaa
-(?:(f)(o)(o)|(b)(a)(r))*	foobar	y	$1:$2:$3:$4:$5:$6	f:o:o:b:a:r
+(?:(f)(o)(o)|(b)(a)(r))*	foobar	y	$1:$2:$3:$4:$5:$6	:::b:a:r
 (?<=a)b	ab	y	$&	b
 (?<=af?)b	ab	y	$&	b
 (?<=a)b	cb	n	-	-
@@ -962,8 +964,8 @@ tt+$	xxxtt	y	-	-
 (?i)		y	-	-
 (?a:((?u)\w)\W)	\xC0\xC0	y	$&	\xC0\xC0
 '(?!\A)x'm	a\nxb\n	y	-	-
-^(a(b)?)+$	aba	y	-$1-$2-	-a--
-^(aa(bb)?)+$	aabbaa	y	-$1-$2-	-aa--
+^(a(b)?)+$	aba	y	-$1-$2-	-a--		
+^(aa(bb)?)+$	aabbaa	y	-$1-$2-	-aa--		
 '^.{9}abc.*\n'm	123\nabcabcabcabc\n	y	-	-
 ^(a)?a$	a	y	-$1-	--
 ^(a)?(?(1)a|b)+$	a	n	-	-
@@ -1949,7 +1951,7 @@ A+(*PRUNE)BC(?{})	AAABC	y	$&	AAABC
 /^(.\2?)(.)(?1)$/	abcb	y	$2	b
 /^(.\1?)(?1)$/	aba	y	$1	a
 /^ (\3(?2)\3)? ((.)) (?1) $/x	aaba	y	$2	a
-/^ (a|\3(?1)\2|(?2)) ((b|c)(?4)?) (?1) (d(?1)) $/x	abbcdcabbda	y	$2	b
+/^ (a|\3(?1)\2|(?2)) ((b|c)(?4)?) (?1) (d(?1)) $/x	abbcdcabbda	y	$1-$2-$3-$4	a-b-b-da
 
 # RT #121321 - perl 5.19.10 infinite loops on backrefs > number of capture buffers (npar) where npar>9
 /(a)\2/	a\2	c	-	Reference to nonexistent group in regex
@@ -2043,9 +2045,9 @@ AB\s+\x{100}	AB \x{100}X	y	-	-
 /(?:0)|(?:)(?:[1-9])/	q0	y	$&	0	# [https://github.com/Perl/perl5/issues/17372]
 /\x{_1_0000}/	\x{10000}	y	$&	\x{10000}		# khw doesn't like leading underscores, but don't rmv them accidentally
 /\o{_1_0000}/	\o{10000}	y	$&	\o{10000}
-/(?iaax:A? \K +)/	African_Feh	c	-	\\K + is forbidden - matches null string many times in regex
-/(?iaa:A?\K+)/	African_Feh	c	-	\\K+ is forbidden - matches null string many times in regex
-/(?iaa:A?\K*)/	African_Feh	c	-	\\K* is forbidden - matches null string many times in regex
+/(?iaax:A? \K +)/	African_Feh	y	$&	
+/(?iaa:A?\K+)/	African_Feh	y	$&	
+/(?iaa:A?\K*)/	African_Feh	y	$&	
 ^((\w|<(\s)*(?1)(?3)*>)(?:(?3)*\+(?3)*(?2))*)(?3)*\+	a + b + <c + d>	y	$1	a + b		# [GH #18096]
 ^((\w|<(\s)*(?1)(?3)*>)(?:(?3)*\+(?3)*(?2))*)(?3)*\+	a + <b> + c	y	$1	a + <b>		# [GH #18096]
 /0?\xdf\xdf\xdf\xdfs\o{500}|/i	\o{600}	y	$&				# [GH #18451]
@@ -2109,6 +2111,51 @@ AB\s+\x{100}	AB \x{100}X	y	-	-
 / (A (*ACCEPT) | BC){2} D{0,4}/x	A	y	$1	A	-	# ACCEPT optimizer check
 
 \p{nv=-0}	\x{660}	y	$&	\x{660}
+(?:a|xx){0,4}?b	aaaaab 	y	$&	aaaab		# Bug is GH #8369; test is GH #19781
+(?|(?<a>a)|(?<b>b))\1(?&a)(?&b)	bbab 	y	$&	bbab		# GH 20653
+(?|(?<a>a)|(?<b>b))(?(<a>)x|y)\1	byb 	y	$&	byb		# GH 20653
+(?|(?<a>a)|(?<b>b))(?(<a>)x|y)\1	bxb 	n	-	-		# GH 20653
+(?|(?<a>a)|(?<b>b))(?(<a>)x|y)\1	axa 	y	$&	axa		# GH 20653
+(?|(?<a>a)|(?<b>b))(?(<a>)x|y)\1	aya 	n	-	-		# GH 20653
+(?|(?<a>a)|(?<b>b))	a 	y	$1-$+{a}-$+{b}	a-a-		# GH 20653
+(?|(?<a>a)|(?<b>b))	b 	y	$1-$+{a}-$+{b}	b--b		# GH 20653
+(?<pre>pre)(?|(?<a>a)(?<b>b)(?<c>c)|(?<d>d)(?<e>e)|(?<f>f))(?<post>post)	preabcpost 	y	$2-$3-$4	a-b-c		# GH 20653
+(?<pre>pre)(?|(?<a>a)(?<b>b)(?<c>c)|(?<d>d)(?<e>e)|(?<f>f))(?<post>post)	predepost 	y	$2-$3-$4	d-e-		# GH 20653
+(?<pre>pre)(?|(?<a>a)(?<b>b)(?<c>c)|(?<d>d)(?<e>e)|(?<f>f))(?<post>post)	prefpost 	y	$2-$3-$4	f--		# GH 20653
+(?<pre>pre)(?|(?<a>a)(?<b>b)(?<c>c)|(?<d>d)(?<e>e)|(?<f>f))(?<post>post)	preabcpost 	y	$+{a}-$+{b}-$+{c}	a-b-c		# GH 20653
+((?|(?<a>a)(?-1)|(?<b>b)(?-1)|(?<c>c)(?-1)))	aa 	y	$1	aa		# GH 20653
+((?|(?<a>a)(?-1)|(?<b>b)(?-1)|(?<c>c)(?-1)))	bb 	y	$1	bb		# GH 20653
+((?|(?<a>a)(?-1)|(?<b>b)(?-1)|(?<c>c)(?-1)))	cc 	y	$1	cc		# GH 20653
+
+(?|(a)|(b))	b	y	$+	b		# GH 20912
+(?|(a)(?{$::plus_got=$+})|(b)(?{$::plus_got=$+}))	b	y	$::plus_got	b		# GH 20912
+(?|(a)|(b))	b	y	$^N	b		# GH 20912
+(?|(a)(?{$::caret_n_got=$^N})|(b)(?{$::caret_n_got=$^N}))	b	y	$::caret_n_got	b		# GH 20912
+(?|(a)|(b))	a	y	$+	a		# GH 20912
+(?|(a)(?{$::plus_got=$+})|(b)(?{$::plus_got=$+}))	a	y	$::plus_got	a		# GH 20912
+(?|(a)|(b))	a	y	$^N	a		# GH 20912
+(?|(a)(?{$::caret_n_got=$^N})|(b)(?{$::caret_n_got=$^N}))	a	y	$::caret_n_got	a		# GH 20912
+
+/(([ab]+)|([cd]+)|([ef]+))+/	ace	y	$1-$2-$3-$4=$&	e---e=ace
+/(([ab]+)|([cd]+)|([ef]+))+/	aceb	Ty	$1-$2-$3-$4=$&	b-b--=aceb
+/(([ab]+)|([cd]+)|([ef]+))+/	acebd	Ty	$1-$2-$3-$4=$&	d--d-=acebd
+/(([ab]+)|([cd]+)|([ef]+))+/	acebdf	y	$1-$2-$3-$4=$&	f---f=acebdf
+/((a)(b)(c)|(a)(b)|(a))+/	abcaba	y	$1+$2-$3-$4+$5-$6+$7=$&	a+--+-+a=abcaba
+
+/^(xa|=?\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|(?:=|zzzz|)\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|(?:=|zzzz)?\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|[Z=]?\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|([Z=])?\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|([Z=]|zzzz)?\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|(=|)\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|(?:[Z=])?\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|(?:[Z=]|zzzz)?\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|(?:=|)\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|=*\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|[Z=]*\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|(?:[Z=])*\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
+/^(xa|(?:[Z=]|zzzz)*\1a){2}$/	xa=xaaa	n	-	-	# GH 10073 - RT72020
 
 # Keep these lines at the end of the file
 # pat	string	y/n/etc	expr	expected-expr	skip-reason	comment

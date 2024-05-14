@@ -115,7 +115,7 @@ hash_traversal_mask(rhv, ...)
         if (items>1) {
             hv_rand_set(hv, SvUV(ST(1)));
         }
-        if (SvOOK(hv)) {
+        if (HvHasAUX(hv)) {
             XSRETURN_UV(HvRAND_get(hv));
         } else {
             XSRETURN_UNDEF;

@@ -1,5 +1,29 @@
 Revision history for Perl distribution PathTools.
 
+3.87-3.88
+
+- Fix handling of empty path, VMS fixes.
+
+3.86
+
+- Fix compilation warning on illumos based platforms
+
+3.85
+
+- Fix issue related to tainting empty PATH
+
+3.84
+
+- Add PerlIO_readlink backcompat defines to Cws.xs
+
+3.83
+
+- More bugtracker changes, document maintainer is the Perl-5 Porters
+
+3.82
+
+- Change to build so bugreports go to GitHub
+
 3.81
 
 - compare inode numbers as strings (github #18788)

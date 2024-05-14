@@ -1,8 +1,31 @@
+use strict;
+use warnings;
 use ExtUtils::MakeMaker;
 use File::Spec;
 use Config;
+#   [ src => @deps ]
+our @files = (
+    # compiler files ########################################
+    ['regcomp.c'        => 'dquote.c', 'invlist_inline.h'   ],
+    ['regcomp_invlist.c' => 'invlist_inline.h'              ],
+    ['regcomp_study.c'                                      ],
+    ['regcomp_trie.c'                                       ],
+    ['regcomp_debug.c'                                      ],
+    # execution engine files ################################
+    ['regexec.c'        => 'invlist_inline.h'               ],
+    # misc files ############################################
+    ['dquote.c'                                             ],
+    ['invlist_inline.h'                                     ],
+    #########################################################
+);
 
-my $object = 're_exec$(OBJ_EXT) re_comp$(OBJ_EXT) re$(OBJ_EXT)';
+my @objects = 're$(OBJ_EXT)';
+foreach my $tuple (@files) {
+    my $src_file = $tuple->[0];
+    if ($src_file=~s/reg/re_/ and $src_file=~s/\.c/\$(OBJ_EXT)/) {
+        push @objects, $src_file;
+    }
+}
 
 my $defines = '-DPERL_EXT_RE_BUILD -DPERL_EXT_RE_DEBUG -DPERL_EXT';
 
@@ -15,45 +38,41 @@ WriteMakefile(
     @libs ? ( 'LIBS' => [ join(" ", map { "-l$_" } @libs) ] ) : (),
     VERSION_FROM	=> 're.pm',
     XSPROTOARG		=> '-noprototypes',
-    OBJECT		=> $object,
+    OBJECT		=> "@objects",
     DEFINE             => $defines,
     clean		=> { FILES => '*$(OBJ_EXT) invlist_inline.h *.c ../../lib/re.pm' },
 );
 
 package MY;
-
 sub upupfile {
     File::Spec->catfile(File::Spec->updir, File::Spec->updir, $_[0]);
 }
 
 sub postamble {
-    my $regcomp_c = upupfile('regcomp.c');
-    my $regexec_c = upupfile('regexec.c');
-    my $dquote_c = upupfile('dquote.c');
-    my $invlist_inline_h = upupfile('invlist_inline.h');
+    my $postamble = "";
 
+    foreach my $tuple (@::files) {
+        my ($file, @deps) = @$tuple;
+        my $src_file = upupfile($file);
+        my $target = $file;
+        $target =~ s/^reg/re_/;
+        $postamble .=
     <<EOF;
-re_comp.c : $regcomp_c
-	- \$(RM_F) re_comp.c
-	\$(CP) $regcomp_c re_comp.c
-
-re_comp\$(OBJ_EXT) : re_comp.c dquote.c invlist_inline.h
-
-re_exec.c : $regexec_c
-	- \$(RM_F) re_exec.c
-	\$(CP) $regexec_c re_exec.c
-
-re_exec\$(OBJ_EXT) : re_exec.c invlist_inline.h
-
-dquote.c : $dquote_c
-	- \$(RM_F) dquote.c
-	\$(CP) $dquote_c dquote.c
-
-invlist_inline.h : $invlist_inline_h
-	- \$(RM_F) invlist_inline.h
-	\$(CP) $invlist_inline_h invlist_inline.h
+$target : $src_file
+	- \$(RM_F) $target
+	\$(CP) $src_file $target
 
 EOF
+        next if $target eq $file;
+        my $base_name = $target;
+        if ($base_name=~s/\.c\z//) {
+            $postamble .= <<EOF
+$base_name\$(OBJ_EXT) : $target @deps
+
+EOF
+        }
+    }
+    return $postamble
 }
 
 sub MY::c_o {

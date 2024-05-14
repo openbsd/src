@@ -101,7 +101,6 @@ reference to that variable.
 
     $aref = \@array;         # $aref now holds a reference to @array
     $href = \%hash;          # $href now holds a reference to %hash
-    $sref = \$scalar;        # $sref now holds a reference to $scalar
 
 Once the reference is stored in a variable like $aref or $href, you
 can copy it or store it just the same as any other scalar value:

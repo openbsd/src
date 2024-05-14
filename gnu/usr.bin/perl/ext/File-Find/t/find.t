@@ -33,15 +33,21 @@ use Testing qw(
     symlink_ok
     dir_path
     file_path
+    _cleanup_start
 );
 use Errno ();
+use File::Temp qw(tempdir);
 
 my %Expect_File = (); # what we expect for $_
 my %Expect_Name = (); # what we expect for $File::Find::name/fullname
 my %Expect_Dir  = (); # what we expect for $File::Find::dir
 my (@files);
 
-my $orig_dir = cwd();
+my $test_root_dir = cwd();
+ok($test_root_dir,"We were able to determine our starting directory");
+my $test_temp_dir = tempdir("FF_find_t_XXXXXX",CLEANUP=>1);
+ok($test_temp_dir,"We were able to set up a temp directory");
+
 
 # Uncomment this to see where File::Find is chdir-ing to.  Helpful for
 # debugging its little jaunts around the filesystem.
@@ -59,8 +65,6 @@ my $orig_dir = cwd();
 #     };
 # }
 
-cleanup();
-
 ##### Sanity checks #####
 # Do find() and finddepth() work correctly with an empty list of
 # directories?
@@ -73,23 +77,34 @@ cleanup();
 }
 
 # Do find() and finddepth() work correctly in the directory
-# from which we start?  (Test presumes the presence of 'taint.t' in same
+# from which we start?  (Test presumes the presence of 'find.t' in same
 # directory as this test file.)
 
-$::count_taint = 0;
-find({wanted => sub { ++$::count_taint if $_ eq 'taint.t'; } },
+my $count_found = 0;
+find({wanted => sub { ++$count_found if $_ eq 'find.t'; } },
    File::Spec->curdir);
-is($::count_taint, 1, "'find' found exactly 1 file named 'taint.t'");
+is($count_found, 1, "'find' found exactly 1 file named 'find.t'");
 
-$::count_taint = 0;
-finddepth({wanted => sub { ++$::count_taint if $_ eq 'taint.t'; } },
+$count_found = 0;
+finddepth({wanted => sub { ++$count_found if $_ eq 'find.t'; } },
     File::Spec->curdir);
-is($::count_taint, 1, "'finddepth' found exactly 1 file named 'taint.t'");
+is($count_found, 1, "'finddepth' found exactly 1 file named 'find.t'");
 
 my $FastFileTests_OK = 0;
 
+my $chdir_error = "";
+chdir($test_temp_dir)
+    or $chdir_error = "Failed to chdir to '$test_temp_dir': $!";
+is($chdir_error,"","chdir to temp dir '$test_temp_dir' successful")
+    or die $chdir_error;
+
 sub cleanup {
-    chdir($orig_dir);
+    # the following chdirs into $test_root_dir/$test_temp_dir but
+    # handles various possible edge case errors cleanly. If it returns
+    # false then we bail out of the cleanup.
+    _cleanup_start($test_root_dir, $test_temp_dir)
+        or return;
+
     my $need_updir = 0;
     if (-d dir_path('for_find')) {
         $need_updir = 1 if chdir(dir_path('for_find'));
@@ -138,6 +153,7 @@ sub cleanup {
     if (-d dir_path('for_find')) {
         rmdir dir_path('for_find') or print "# Can't rmdir for_find: $!\n";
     }
+    chdir($test_root_dir) or die "Failed to chdir to '$test_root_dir': $!";
 }
 
 END {
@@ -235,7 +251,6 @@ sub my_postprocess {
 *file_path_name = \&file_path;
 
 ##### Create directories, files and symlinks used in testing #####
-
 mkdir_ok( dir_path('for_find'), 0770 );
 ok( chdir( dir_path('for_find')), "Able to chdir to 'for_find'")
     or die("Unable to chdir to 'for_find'");
@@ -865,7 +880,7 @@ if ( $symlink_exists ) {
 
 if ($^O eq 'MSWin32') {
     require File::Spec::Win32;
-    my ($volume) = File::Spec::Win32->splitpath($orig_dir, 1);
+    my ($volume) = File::Spec::Win32->splitpath($test_root_dir, 1);
     print STDERR "VOLUME = $volume\n";
 
     ##### #####
@@ -1023,7 +1038,7 @@ if ($^O eq 'MSWin32') {
     # Check F:F:f correctly handles a root directory path.
     # Rather than processing the entire drive (!), simply test that the
     # first file passed to the wanted routine is correct and then bail out.
-    $orig_dir =~ /^(\w:)/ or die "expected a drive: $orig_dir";
+    $test_root_dir =~ /^(\w:)/ or die "expected a drive: $test_root_dir";
     my $drive = $1;
 
     # Determine the file in the root directory which would be
@@ -1050,7 +1065,7 @@ if ($^O eq 'MSWin32') {
         # Run F:F:f with/without no_chdir for each possible style of root path.
         # NB. If HOME were "/", then an inadvertent chdir('') would fluke the
         # expected result, so ensure it is something else:
-        local $ENV{HOME} = $orig_dir;
+        local $ENV{HOME} = $test_root_dir;
         foreach my $no_chdir (0, 1) {
             foreach my $root_dir ("/", "\\", "$drive/", "$drive\\") {
                 eval {
@@ -1060,7 +1075,7 @@ if ($^O eq 'MSWin32') {
                             'wanted' => sub {
                                 -f or return; # the first call is for $root_dir itself.
                                 my $got = $File::Find::name;
-                                my $exp = "$root_dir$expected_first_file";
+                                (my $exp = "$root_dir$expected_first_file") =~ s|\\|/|g;
                                 print "# no_chdir=$no_chdir $root_dir '$got'\n";
                                 is($got, $exp,
                                    "Win32: Run 'find' with 'no_chdir' set to $no_chdir" );
@@ -1111,5 +1126,4 @@ if ($^O eq 'MSWin32') {
     like($@, qr/invalid top directory/,
         "find() correctly died due to undefined top directory");
 }
-
 done_testing();

@@ -8,7 +8,7 @@ BEGIN {
 use strict;
 use warnings;
 no warnings 'uninitialized';
-no warnings 'experimental::smartmatch';
+no warnings 'deprecated';    # smartmatch is deprecated and will be removed in 5.042
 
 ++$|;
 
@@ -146,7 +146,7 @@ sub NOT_DEF() { undef }
   # re-introduced it will probably crash in one of the many smoke
   # builds.
   fresh_perl_is('print (q(x) ~~ q(x)) | (/x/ ~~ %!)', "1",
-		{ switches => [ "-MErrno", "-M-warnings=experimental::smartmatch" ] },
+		{ switches => [ "-MErrno", "-M-warnings=deprecated" ] },
 		 "don't fill the stack with rubbish");
 }
 
@@ -194,10 +194,10 @@ sub NOT_DEF() { undef }
     # if there was some other operator's arguments left on the stack, as with
     # the test cases.
     fresh_perl_is('print(0->[0 =~ qr/1/ ~~ 0])', '',
-                  { switches => [ "-M-warnings=experimental::smartmatch" ] },
+                  { switches => [ "-M-warnings=deprecated" ] },
                   "don't qr-ify left-side match against a stacked argument");
     fresh_perl_is('print(0->[0 ~~ (0 =~ qr/1/)])', '',
-                  { switches => [ "-M-warnings=experimental::smartmatch" ] },
+                  { switches => [ "-M-warnings=deprecated" ] },
                   "don't qr-ify right-side match against a stacked argument");
 }
 

@@ -6,30 +6,61 @@ BEGIN {
 use XS::APItest;
 use Config;
 
-skip_all("locales not available") unless locales_enabled('LC_NUMERIC');
+skip_all("locales not available") unless locales_enabled();
 
 my @locales = eval { find_locales( &LC_NUMERIC ) };
-skip_all("no LC_NUMERIC locales available") unless @locales;
-
-my $non_dot_locale;
-for (@locales) {
+my $comma_locale;
+for my $locale (@locales) {
+    use POSIX;
     use locale;
-    setlocale(LC_NUMERIC, $_) or next;
+    setlocale(LC_NUMERIC, $locale) or next;
     my $in = 4.2; # avoid any constant folding bugs
-    if (sprintf("%g", $in) ne "4.2") {
-        $non_dot_locale = $_;
+    my $s = sprintf("%g", $in);
+    if ($s eq "4,2")  {
+        $comma_locale = $locale;
         last;
     }
 }
 
+SKIP: {
+          if ($Config{usequadmath}) {
+              skip "no gconvert with usequadmath", 2;
+          }
+          is(test_Gconvert(4.179, 2), "4.2", "Gconvert doesn't recognize underlying locale outside 'use locale'");
+          use locale;
+          is(test_Gconvert(4.179, 2), "4.2", "Gconvert doesn't recognize underlying locale inside 'use locale'");
+      }
+
+sub check_in_bounds($$$) {
+    my ($value, $lower, $upper) = @_;
+
+    $value >= $lower && $value <= $upper
+}
 
 SKIP: {
-      if ($Config{usequadmath}) {
-            skip "no gconvert with usequadmath", 2;
-      }
-      is(test_Gconvert(4.179, 2), "4.2", "Gconvert doesn't recognize underlying locale outside 'use locale'");
-      use locale;
-      is(test_Gconvert(4.179, 2), "4.2", "Gconvert doesn't recognize underlying locale inside 'use locale'");
+    # This checks that when switching to the global locale, the service that
+    # Perl provides of transparently dealing with locales that have a non-dot
+    # radix is turned off, but gets turned on again after a sync_locale();
+
+    skip "no locale with a comma radix available", 5 unless $comma_locale;
+
+    my $global_locale = switch_to_global_and_setlocale(LC_NUMERIC,
+                                                       $comma_locale);
+    # Can't do a compare of $global_locale and $comma_locale because what the
+    # system returns may be an alias.  ALl we can do is test for
+    # success/failure
+    ok($global_locale, "Successfully switched to $comma_locale");
+    is(newSvNV("4.888"), 4, "dot not recognized in global comma locale for SvNV");
+
+    no warnings 'numeric';  # Otherwise get "Argument isn't numeric in
+                            # subroutine entry"
+
+    is(check_in_bounds(newSvNV("4,888"), 4.88, 4.89), 1,
+       "comma recognized in global comma locale for SvNV");
+    isnt(sync_locale, 0, "sync_locale() returns that was in the global locale");
+
+    is(check_in_bounds(newSvNV("4.888"), 4.88, 4.89), 1,
+    "dot recognized in perl-controlled comma locale for SvNV");
 }
 
 my %correct_C_responses = (
@@ -98,7 +129,7 @@ open my $fh, "<", $hdr;
 $|=1;
 
 SKIP: {
-    skip "No LC_ALL", 1 unless find_locales( &LC_ALL );
+    skip "No LC_ALL", 1 unless locales_enabled('LC_ALL');
 
     use POSIX;
     setlocale(LC_ALL, "C");
@@ -118,7 +149,7 @@ SKIP: {
         chomp;
         next unless / - \d+ $ /x;
         s/ ^ \# \s* define \s*//x;
-        m/ (.*) \  (.*) /x;
+        m/ (\S+) \s+ (.*) /x;
         $items{$1} = ($has_nl_langinfo)
                      ? $1       # Yields 'YESSTR'
                      : $2;      # Yields -54
@@ -144,6 +175,27 @@ SKIP: {
             else {
                 fail("Returned undef for $formal_item");
             }
+        }
+    }
+}
+
+@locales = eval { find_locales( &LC_TIME ) };
+
+SKIP: {
+    skip("no LC_TIME locales available") unless @locales;
+
+    for my $locale (@locales) {
+        use POSIX 'strftime';
+        use locale;
+        setlocale(LC_TIME, $locale) or next;
+
+        # This isn't guaranteed to find failing locales, as it is impractical
+        # to test all possible dates.  But it is much better than no test at
+        # all
+        if (strftime('%c', 0, 0, , 12, 18, 11, 87) eq "") {
+            fail('strftime() built-in expansion factor works for all locales');
+            diag("Failed for locale $locale");
+            last;
         }
     }
 }

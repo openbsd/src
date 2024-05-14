@@ -1,4 +1,5 @@
 #!./miniperl -w
+# vim: syntax=perl
 #
 # configpm
 #
@@ -28,10 +29,14 @@
 # this case, since for example an extension makefile that has a dependency
 # on Config.pm should trigger even if only Config_heavy.pl has changed.
 
-sub usage { die <<EOF }
-usage: $0  [ options ]
-    --no-glossary       don't include Porting/Glossary in lib/Config.pod
-    --chdir=dir         change directory before writing files
+sub uncomment($) { 
+    return $_[0]=~s/^#(?:    )?//mgr;
+}
+
+sub usage { die uncomment <<EOF }
+#    usage: $0  [ options ]
+#        --no-glossary       don't include Porting/Glossary in lib/Config.pod
+#        --chdir=dir         change directory before writing files
 EOF
 
 use strict;
@@ -135,74 +140,74 @@ die "Can't automatically determine name for Config_heavy.pl from '$Config_PM'"
 my $config_txt;
 my $heavy_txt;
 
-my $export_funcs = <<'EOT';
-my %Export_Cache = (myconfig => 1, config_sh => 1, config_vars => 1,
-		    config_re => 1, compile_date => 1, local_patches => 1,
-		    bincompat_options => 1, non_bincompat_options => 1,
-		    header_files => 1);
+my $export_funcs = uncomment <<'EOT';
+#    my %Export_Cache = (myconfig => 1, config_sh => 1, config_vars => 1,
+#                        config_re => 1, compile_date => 1, local_patches => 1,
+#                        bincompat_options => 1, non_bincompat_options => 1,
+#                        header_files => 1);
 EOT
 
 my %export_ok = eval $export_funcs or die;
 
-$config_txt .= sprintf << 'EOT', $], $export_funcs;
-# This file was created by configpm when Perl was built. Any changes
-# made to this file will be lost the next time perl is built.
-
-# for a description of the variables, please have a look at the
-# Glossary file, as written in the Porting folder, or use the url:
-# https://github.com/Perl/perl5/blob/blead/Porting/Glossary
-
-package Config;
-use strict;
-use warnings;
-our ( %%Config, $VERSION );
-
-$VERSION = "%s";
-
-# Skip @Config::EXPORT because it only contains %%Config, which we special
-# case below as it's not a function. @Config::EXPORT won't change in the
-# lifetime of Perl 5.
-%s
-@Config::EXPORT = qw(%%Config);
-@Config::EXPORT_OK = keys %%Export_Cache;
-
-# Need to stub all the functions to make code such as print Config::config_sh
-# keep working
-
+$config_txt .= sprintf uncomment << 'EOT', $], $export_funcs;
+#    # This file was created by configpm when Perl was built. Any changes
+#    # made to this file will be lost the next time perl is built.
+#
+#    # for a description of the variables, please have a look at the
+#    # Glossary file, as written in the Porting folder, or use the url:
+#    # https://github.com/Perl/perl5/blob/blead/Porting/Glossary
+#
+#    package Config;
+#    use strict;
+#    use warnings;
+#    our ( %%Config, $VERSION );
+#
+#    $VERSION = "%s";
+#
+#    # Skip @Config::EXPORT because it only contains %%Config, which we special
+#    # case below as it's not a function. @Config::EXPORT won't change in the
+#    # lifetime of Perl 5.
+#    %s
+#    @Config::EXPORT = qw(%%Config);
+#    @Config::EXPORT_OK = keys %%Export_Cache;
+#
+#    # Need to stub all the functions to make code such as print Config::config_sh
+#    # keep working
+#
 EOT
 
 $config_txt .= "sub $_;\n" foreach sort keys %export_ok;
 
 my $myver = sprintf "%vd", $^V;
 
-$config_txt .= sprintf <<'ENDOFBEG', ($myver) x 3;
-
-# Define our own import method to avoid pulling in the full Exporter:
-sub import {
-    shift;
-    @_ = @Config::EXPORT unless @_;
-
-    my @funcs = grep $_ ne '%%Config', @_;
-    my $export_Config = @funcs < @_ ? 1 : 0;
-
-    no strict 'refs';
-    my $callpkg = caller(0);
-    foreach my $func (@funcs) {
-	die qq{"$func" is not exported by the Config module\n}
-	    unless $Export_Cache{$func};
-	*{$callpkg.'::'.$func} = \&{$func};
-    }
-
-    *{"$callpkg\::Config"} = \%%Config if $export_Config;
-    return;
-}
-
-die "$0: Perl lib version (%s) doesn't match executable '$^X' version ($])"
-    unless $^V;
-
-$^V eq %s
-    or die sprintf "%%s: Perl lib version (%s) doesn't match executable '$^X' version (%%vd)", $0, $^V;
-
+$config_txt .= sprintf uncomment <<'ENDOFBEG', ($myver) x 3;
+#
+#    # Define our own import method to avoid pulling in the full Exporter:
+#    sub import {
+#        shift;
+#        @_ = @Config::EXPORT unless @_;
+#
+#        my @funcs = grep $_ ne '%%Config', @_;
+#        my $export_Config = @funcs < @_ ? 1 : 0;
+#
+#        no strict 'refs';
+#        my $callpkg = caller(0);
+#        foreach my $func (@funcs) {
+#            die qq{"$func" is not exported by the Config module\n}
+#                unless $Export_Cache{$func};
+#            *{$callpkg.'::'.$func} = \&{$func};
+#        }
+#
+#        *{"$callpkg\::Config"} = \%%Config if $export_Config;
+#        return;
+#    }
+#
+#    die "$0: Perl lib version (%s) doesn't match executable '$^X' version ($])"
+#        unless $^V;
+#
+#    $^V eq %s
+#        or die sprintf "%%s: Perl lib version (%s) doesn't match executable '$^X' version (%%vd)", $0, $^V;
+#
 ENDOFBEG
 
 
@@ -217,12 +222,12 @@ my $quote;
 # (at least up to version 804.034) fails to build without them. We force them
 # to be emitted to Config_heavy.pl for backcompat with such modules (and we may
 # find that this set needs to be extended in future). See RT#132347.
-my @v_forced = map "$_\n", split /\n+/, <<'EOT';
-i_limits='define'
-i_stdlib='define'
-i_string='define'
-i_time='define'
-prototype='define'
+my @v_forced = map "$_\n", split /\n+/, uncomment <<'EOT';
+#    i_limits='define'
+#    i_stdlib='define'
+#    i_string='define'
+#    i_time='define'
+#    prototype='define'
 EOT
 
 
@@ -282,47 +287,47 @@ my %seen_quotes;
 # This is somewhat grim, but I want the code for parsing config.sh here and
 # now so that I can expand $Config{ivsize} and $Config{ivtype}
 
-my $fetch_string = <<'EOT';
-
-# Search for it in the big string
-sub fetch_string {
-    my($self, $key) = @_;
-
+my $fetch_string = uncomment <<'EOT';
+#
+#    # Search for it in the big string
+#    sub fetch_string {
+#        my($self, $key) = @_;
+#
 EOT
 
 if ($seen_quotes{'"'}) {
     # We need the full ' and " code
 
-$fetch_string .= <<'EOT';
-    return undef unless my ($quote_type, $value) = $Config_SH_expanded =~ /\n$key=(['"])(.*?)\1\n/s;
-
-    # If we had a double-quote, we'd better eval it so escape
-    # sequences and such can be interpolated. Since the incoming
-    # value is supposed to follow shell rules and not perl rules,
-    # we escape any perl variable markers
-
-    # Historically, since " 'support' was added in change 1409, the
-    # interpolation was done before the undef. Stick to this arguably buggy
-    # behaviour as we're refactoring.
-    if ($quote_type eq '"') {
-	$value =~ s/\$/\\\$/g;
-	$value =~ s/\@/\\\@/g;
-	eval "\$value = \"$value\"";
-    }
-
-    # So we can say "if $Config{'foo'}".
-    $self->{$key} = $value eq 'undef' ? undef : $value; # cache it
-}
+$fetch_string .= uncomment <<'EOT';
+#        return undef unless my ($quote_type, $value) = $Config_SH_expanded =~ /\n$key=(['"])(.*?)\1\n/s;
+#
+#        # If we had a double-quote, we'd better eval it so escape
+#        # sequences and such can be interpolated. Since the incoming
+#        # value is supposed to follow shell rules and not perl rules,
+#        # we escape any perl variable markers
+#
+#        # Historically, since " 'support' was added in change 1409, the
+#        # interpolation was done before the undef. Stick to this arguably buggy
+#        # behaviour as we're refactoring.
+#        if ($quote_type eq '"') {
+#            $value =~ s/\$/\\\$/g;
+#            $value =~ s/\@/\\\@/g;
+#            eval "\$value = \"$value\"";
+#        }
+#
+#        # So we can say "if $Config{'foo'}".
+#        $self->{$key} = $value eq 'undef' ? undef : $value; # cache it
+#    }
 EOT
 
 } else {
     # We only have ' delimited.
 
-$fetch_string .= <<'EOT';
-    return undef unless $Config_SH_expanded =~ /\n$key=\'(.*?)\'\n/s;
-    # So we can say "if $Config{'foo'}".
-    $self->{$key} = $1 eq 'undef' ? undef : $1;
-}
+$fetch_string .= uncomment <<'EOT';
+#        return undef unless $Config_SH_expanded =~ /\n$key=\'(.*?)\'\n/s;
+#        # So we can say "if $Config{'foo'}".
+#        $self->{$key} = $1 eq 'undef' ? undef : $1;
+#    }
 EOT
 
 }
@@ -429,32 +434,32 @@ if (fetch_string({}, 'otherlibdirs') =~ m!\.\.\./!) {
     $need_relocation{otherlibdirs} = 'otherlibdirs';
 }
 
-my $relocation_code = <<'EOT';
-
-sub relocate_inc {
-  my $libdir = shift;
-  return $libdir unless $libdir =~ s!^\.\.\./!!;
-  my $prefix = $^X;
-  if ($prefix =~ s!/[^/]*$!!) {
-    while ($libdir =~ m!^\.\./!) {
-      # Loop while $libdir starts "../" and $prefix still has a trailing
-      # directory
-      last unless $prefix =~ s!/([^/]+)$!!;
-      # but bail out if the directory we picked off the end of $prefix is .
-      # or ..
-      if ($1 eq '.' or $1 eq '..') {
-	# Undo! This should be rare, hence code it this way rather than a
-	# check each time before the s!!! above.
-	$prefix = "$prefix/$1";
-	last;
-      }
-      # Remove that leading ../ and loop again
-      substr ($libdir, 0, 3, '');
-    }
-    $libdir = "$prefix/$libdir";
-  }
-  $libdir;
-}
+my $relocation_code = uncomment <<'EOT';
+#
+#    sub relocate_inc {
+#      my $libdir = shift;
+#      return $libdir unless $libdir =~ s!^\.\.\./!!;
+#      my $prefix = $^X;
+#      if ($prefix =~ s!/[^/]*$!!) {
+#        while ($libdir =~ m!^\.\./!) {
+#          # Loop while $libdir starts "../" and $prefix still has a trailing
+#          # directory
+#          last unless $prefix =~ s!/([^/]+)$!!;
+#          # but bail out if the directory we picked off the end of $prefix is .
+#          # or ..
+#          if ($1 eq '.' or $1 eq '..') {
+#            # Undo! This should be rare, hence code it this way rather than a
+#            # check each time before the s!!! above.
+#            $prefix = "$prefix/$1";
+#            last;
+#          }
+#          # Remove that leading ../ and loop again
+#          substr ($libdir, 0, 3, '');
+#        }
+#        $libdir = "$prefix/$libdir";
+#      }
+#      $libdir;
+#    }
 EOT
 
 my $osname = fetch_string({}, 'osname');
@@ -462,66 +467,66 @@ my $from = $osname eq 'VMS' ? 'PERLSHR image' : 'binary (from libperl)';
 my $env_cygwin = $osname eq 'cygwin'
     ? 'push @env, "CYGWIN=\"$ENV{CYGWIN}\"" if $ENV{CYGWIN};' . "\n" : "";
 
-$heavy_txt .= sprintf <<'ENDOFBEG', $osname, $osname, $from, $osname, $env_cygwin;
-# This file was created by configpm when Perl was built. Any changes
-# made to this file will be lost the next time perl is built.
-
-package Config;
-use strict;
-use warnings;
-our %%Config;
-
-sub bincompat_options {
-    return split ' ', (Internals::V())[0];
-}
-
-sub non_bincompat_options {
-    return split ' ', (Internals::V())[1];
-}
-
-sub compile_date {
-    return (Internals::V())[2]
-}
-
-sub local_patches {
-    my (undef, undef, undef, @patches) = Internals::V();
-    return @patches;
-}
-
-sub _V {
-    die "Perl lib was built for '%s' but is being run on '$^O'"
-        unless "%s" eq $^O;
-
-    my ($bincompat, $non_bincompat, $date, @patches) = Internals::V();
-
-    my @opts = sort split ' ', "$bincompat $non_bincompat";
-
-    print Config::myconfig();
-    print "\nCharacteristics of this %s: \n";
-
-    print "  Compile-time options:\n";
-    print "    $_\n" for @opts;
-
-    if (@patches) {
-        print "  Locally applied patches:\n";
-        print "    $_\n" foreach @patches;
-    }
-
-    print "  Built under %s\n";
-
-    print "  $date\n" if defined $date;
-
-    my @env = map { "$_=\"$ENV{$_}\"" } sort grep {/^PERL/} keys %%ENV;
-%s
-    if (@env) {
-        print "  \%%ENV:\n";
-        print "    $_\n" foreach @env;
-    }
-    print "  \@INC:\n";
-    print "    $_\n" foreach @INC;
-}
-
-sub header_files {
+$heavy_txt .= sprintf uncomment <<'ENDOFBEG', $osname, $osname, $from, $osname, $env_cygwin;
+#    # This file was created by configpm when Perl was built. Any changes
+#    # made to this file will be lost the next time perl is built.
+#
+#    package Config;
+#    use strict;
+#    use warnings;
+#    our %%Config;
+#
+#    sub bincompat_options {
+#        return split ' ', (Internals::V())[0];
+#    }
+#
+#    sub non_bincompat_options {
+#        return split ' ', (Internals::V())[1];
+#    }
+#
+#    sub compile_date {
+#        return (Internals::V())[2]
+#    }
+#
+#    sub local_patches {
+#        my (undef, undef, undef, @patches) = Internals::V();
+#        return @patches;
+#    }
+#
+#    sub _V {
+#        die "Perl lib was built for '%s' but is being run on '$^O'"
+#            unless "%s" eq $^O;
+#
+#        my ($bincompat, $non_bincompat, $date, @patches) = Internals::V();
+#
+#        my @opts = sort split ' ', "$bincompat $non_bincompat";
+#
+#        print Config::myconfig();
+#        print "\nCharacteristics of this %s: \n";
+#
+#        print "  Compile-time options:\n";
+#        print "    $_\n" for @opts;
+#
+#        if (@patches) {
+#            print "  Locally applied patches:\n";
+#            print "    $_\n" foreach @patches;
+#        }
+#
+#        print "  Built under %s\n";
+#
+#        print "  $date\n" if defined $date;
+#
+#        my @env = map { "$_=\"$ENV{$_}\"" } sort grep {/^PERL/} keys %%ENV;
+#    %s
+#        if (@env) {
+#            print "  \%%ENV:\n";
+#            print "    $_\n" foreach @env;
+#        }
+#        print "  \@INC:\n";
+#        print "    $_\n" foreach @INC;
+#    }
+#
+#    sub header_files {
 ENDOFBEG
 
 $heavy_txt .= $header_files . "\n}\n\n";
@@ -548,33 +553,35 @@ open(MYCONFIG,'<','myconfig.SH') || die "open myconfig.SH failed: $!";
 do { $heavy_txt .= $_ } until !defined($_ = <MYCONFIG>) || /^\s*$/;
 close(MYCONFIG);
 
-$heavy_txt .= "\n!END!\n" . <<'EOT';
-my $summary_expanded;
-
-sub myconfig {
-    return $summary_expanded if $summary_expanded;
-    ($summary_expanded = $summary) =~ s{\$(\w+)}
-		 { 
-			my $c;
-			if ($1 eq 'git_ancestor_line') {
-				if ($Config::Config{git_ancestor}) {
-					$c= "\n  Ancestor: $Config::Config{git_ancestor}";
-				} else {
-					$c= "";
-				}
-			} else {
-                     		$c = $Config::Config{$1}; 
-			}
-			defined($c) ? $c : 'undef' 
-		}ge;
-    $summary_expanded;
-}
-
-local *_ = \my $a;
-$_ = <<'!END!';
+$heavy_txt .= "\n!END!\n" . uncomment <<'EOT';
+#    my $summary_expanded;
+#
+#    sub myconfig {
+#        return $summary_expanded if $summary_expanded;
+#        ($summary_expanded = $summary) =~ s{\$(\w+)}
+#                     {
+#                            my $c;
+#                            if ($1 eq 'git_ancestor_line') {
+#                                    if ($Config::Config{git_ancestor}) {
+#                                            $c= "\n  Ancestor: $Config::Config{git_ancestor}";
+#                                    } else {
+#                                            $c= "";
+#                                    }
+#                            } else {
+#                                    $c = $Config::Config{$1};
+#                            }
+#                            defined($c) ? $c : 'undef'
+#                    }ge;
+#        $summary_expanded;
+#    }
+#
+#    local *_ = \my $a;
+#    $_ = <<'!END!';
 EOT
 #proper lexicographical order of the keys
 my %seen_var;
+my @v_define = ( "taint_support=''\n",
+                 "taint_disabled=''\n" );
 $heavy_txt .= join('',
     map { $_->[-1] }
     sort {$a->[0] cmp $b->[0] }
@@ -582,7 +589,7 @@ $heavy_txt .= join('',
     map {
         /^([^=]+)/ ? [ $1, $_ ]
                    : [ $_, $_ ] # shouldnt happen
-    } @v_others, @v_forced
+    } (@v_others, @v_forced, @v_define)
 ) . "!END!\n";
 
 # Only need the dynamic byteorder code in Config.pm if 'byteorder' is one of
@@ -593,29 +600,53 @@ if ($Common{byteorder}) {
     $heavy_txt .= $byteorder_code;
 }
 
+$heavy_txt .= uncomment <<'EOT';
+#    s/(byteorder=)(['"]).*?\2/$1$2$Config::byteorder$2/m;
+#
+EOT
+
+$heavy_txt .= uncomment <<'EOF_TAINT_INIT';
+#    {
+#        # We have to set this up late as Win32 does not build miniperl
+#        # with the same defines and CC flags as it builds perl itself.
+#        my $defines = join " ", (Internals::V)[0,1];
+#        if (
+#            $defines =~ /\b(SILENT_NO_TAINT_SUPPORT)\b/ ||
+#            $defines =~ /\b(NO_TAINT_SUPPORT)\b/
+#        ){
+#            my $which = $1;
+#            my $taint_disabled = ($which eq "SILENT_NO_TAINT_SUPPORT")
+#                                 ? "silent" : "define";
+#            s/^(taint_disabled=['"])(["'])/$1$taint_disabled$2/m;
+#        }
+#        else {
+#            my $taint_support = 'define';
+#            s/^(taint_support=['"])(["'])/$1$taint_support$2/m;
+#        }
+#    }
+EOF_TAINT_INIT
+
 if (@need_relocation) {
 $heavy_txt .= 'foreach my $what (qw(' . join (' ', @need_relocation) .
-      ")) {\n" . <<'EOT';
-    s/^($what=)(['"])(.*?)\2/$1 . $2 . relocate_inc($3) . $2/me;
-}
+      ")) {\n" . uncomment <<'EOT';
+#        s/^($what=)(['"])(.*?)\2/$1 . $2 . relocate_inc($3) . $2/me;
+#    }
 EOT
 # Currently it only makes sense to do the ... relocation on Unix, so there's
 # no need to emulate the "which separator for this platform" logic in perl.c -
 # ':' will always be applicable
 if ($need_relocation{otherlibdirs}) {
-$heavy_txt .= << 'EOT';
-s{^(otherlibdirs=)(['"])(.*?)\2}
- {$1 . $2 . join ':', map {relocate_inc($_)} split ':', $3 . $2}me;
+$heavy_txt .= uncomment << 'EOT';
+#    s{^(otherlibdirs=)(['"])(.*?)\2}
+#     {$1 . $2 . join ':', map {relocate_inc($_)} split ':', $3 . $2}me;
 EOT
 }
 }
 
-$heavy_txt .= <<'EOT';
-s/(byteorder=)(['"]).*?\2/$1$2$Config::byteorder$2/m;
-
-my $config_sh_len = length $_;
-
-our $Config_SH_expanded = "\n$_" . << 'EOVIRTUAL';
+$heavy_txt .= uncomment <<'EOT';
+#    my $config_sh_len = length $_;
+#
+#    our $Config_SH_expanded = "\n$_" . << 'EOVIRTUAL';
 EOT
 
 foreach my $prefix (qw(ccflags ldflags)) {
@@ -670,129 +701,129 @@ if (open(my $fh, '<', 'cflags')) {
 
 $heavy_txt .= "EOVIRTUAL\n";
 
-$heavy_txt .= <<'ENDOFGIT';
-eval {
-	# do not have hairy conniptions if this isnt available
-	require 'Config_git.pl';
-	$Config_SH_expanded .= $Config::Git_Data;
-	1;
-} or warn "Warning: failed to load Config_git.pl, something strange about this perl...\n";
+$heavy_txt .= uncomment <<'ENDOFGIT';
+#    eval {
+#            # do not have hairy conniptions if this isnt available
+#            require 'Config_git.pl';
+#            $Config_SH_expanded .= $Config::Git_Data;
+#            1;
+#    } or warn "Warning: failed to load Config_git.pl, something strange about this perl...\n";
 ENDOFGIT
 
 $heavy_txt .= $fetch_string;
 
-$config_txt .= <<'ENDOFEND';
-
-sub FETCH {
-    my($self, $key) = @_;
-
-    # check for cached value (which may be undef so we use exists not defined)
-    return exists $self->{$key} ? $self->{$key} : $self->fetch_string($key);
-}
-
+$config_txt .= uncomment <<'ENDOFEND';
+#
+#    sub FETCH {
+#        my($self, $key) = @_;
+#
+#        # check for cached value (which may be undef so we use exists not defined)
+#        return exists $self->{$key} ? $self->{$key} : $self->fetch_string($key);
+#    }
+#
 ENDOFEND
 
-$heavy_txt .= <<'ENDOFEND';
-
-my $prevpos = 0;
-
-sub FIRSTKEY {
-    $prevpos = 0;
-    substr($Config_SH_expanded, 1, index($Config_SH_expanded, '=') - 1 );
-}
-
-sub NEXTKEY {
+$heavy_txt .= uncomment <<'ENDOFEND';
+#
+#    my $prevpos = 0;
+#
+#    sub FIRSTKEY {
+#        $prevpos = 0;
+#        substr($Config_SH_expanded, 1, index($Config_SH_expanded, '=') - 1 );
+#    }
+#
+#    sub NEXTKEY {
 ENDOFEND
 if ($seen_quotes{'"'}) {
-$heavy_txt .= <<'ENDOFEND';
-    # Find out how the current key's quoted so we can skip to its end.
-    my $quote = substr($Config_SH_expanded,
-		       index($Config_SH_expanded, "=", $prevpos)+1, 1);
-    my $pos = index($Config_SH_expanded, qq($quote\n), $prevpos) + 2;
+$heavy_txt .= uncomment <<'ENDOFEND';
+#        # Find out how the current key's quoted so we can skip to its end.
+#        my $quote = substr($Config_SH_expanded,
+#                           index($Config_SH_expanded, "=", $prevpos)+1, 1);
+#        my $pos = index($Config_SH_expanded, qq($quote\n), $prevpos) + 2;
 ENDOFEND
 } else {
     # Just ' quotes, so it's much easier.
-$heavy_txt .= <<'ENDOFEND';
-    my $pos = index($Config_SH_expanded, qq('\n), $prevpos) + 2;
+$heavy_txt .= uncomment <<'ENDOFEND';
+#        my $pos = index($Config_SH_expanded, qq('\n), $prevpos) + 2;
 ENDOFEND
 }
-$heavy_txt .= <<'ENDOFEND';
-    my $len = index($Config_SH_expanded, "=", $pos) - $pos;
-    $prevpos = $pos;
-    $len > 0 ? substr($Config_SH_expanded, $pos, $len) : undef;
-}
-
-sub EXISTS {
-    return 1 if exists($_[0]->{$_[1]});
-
-    return(index($Config_SH_expanded, "\n$_[1]='") != -1
+$heavy_txt .= uncomment <<'ENDOFEND';
+#        my $len = index($Config_SH_expanded, "=", $pos) - $pos;
+#        $prevpos = $pos;
+#        $len > 0 ? substr($Config_SH_expanded, $pos, $len) : undef;
+#    }
+#
+#    sub EXISTS {
+#        return 1 if exists($_[0]->{$_[1]});
+#
+#        return(index($Config_SH_expanded, "\n$_[1]='") != -1
 ENDOFEND
 if ($seen_quotes{'"'}) {
-$heavy_txt .= <<'ENDOFEND';
-           or index($Config_SH_expanded, "\n$_[1]=\"") != -1
+$heavy_txt .= uncomment <<'ENDOFEND';
+#               or index($Config_SH_expanded, "\n$_[1]=\"") != -1
 ENDOFEND
 }
-$heavy_txt .= <<'ENDOFEND';
-          );
-}
-
-sub STORE  { die "\%Config::Config is read-only\n" }
-*DELETE = *CLEAR = \*STORE; # Typeglob aliasing uses less space
-
-sub config_sh {
-    substr $Config_SH_expanded, 1, $config_sh_len;
-}
-
-sub config_re {
-    my $re = shift;
-    return map { chomp; $_ } grep eval{ /^(?:$re)=/ }, split /^/,
-    $Config_SH_expanded;
-}
-
-sub config_vars {
-    # implements -V:cfgvar option (see perlrun -V:)
-    foreach (@_) {
-	# find optional leading, trailing colons; and query-spec
-	my ($notag,$qry,$lncont) = m/^(:)?(.*?)(:)?$/;	# flags fore and aft, 
-	# map colon-flags to print decorations
-	my $prfx = $notag ? '': "$qry=";		# tag-prefix for print
-	my $lnend = $lncont ? ' ' : ";\n";		# line ending for print
-
-	# all config-vars are by definition \w only, any \W means regex
-	if ($qry =~ /\W/) {
-	    my @matches = config_re($qry);
-	    print map "$_$lnend", @matches ? @matches : "$qry: not found"		if !$notag;
-	    print map { s/\w+=//; "$_$lnend" } @matches ? @matches : "$qry: not found"	if  $notag;
-	} else {
-	    my $v = (exists $Config::Config{$qry}) ? $Config::Config{$qry}
-						   : 'UNKNOWN';
-	    $v = 'undef' unless defined $v;
-	    print "${prfx}'${v}'$lnend";
-	}
-    }
-}
-
-# Called by the real AUTOLOAD
-sub launcher {
-    undef &AUTOLOAD;
-    goto \&$Config::AUTOLOAD;
-}
-
-1;
+$heavy_txt .= uncomment <<'ENDOFEND';
+#              );
+#    }
+#
+#    sub STORE  { die "\%Config::Config is read-only\n" }
+#    *DELETE = *CLEAR = \*STORE; # Typeglob aliasing uses less space
+#
+#    sub config_sh {
+#        substr $Config_SH_expanded, 1, $config_sh_len;
+#    }
+#
+#    sub config_re {
+#        my $re = shift;
+#        return map { chomp; $_ } grep eval{ /^(?:$re)=/ }, split /^/,
+#        $Config_SH_expanded;
+#    }
+#
+#    sub config_vars {
+#        # implements -V:cfgvar option (see perlrun -V:)
+#        foreach (@_) {
+#            # find optional leading, trailing colons; and query-spec
+#            my ($notag,$qry,$lncont) = m/^(:)?(.*?)(:)?$/;  # flags fore and aft,
+#            # map colon-flags to print decorations
+#            my $prfx = $notag ? '': "$qry=";                # tag-prefix for print
+#            my $lnend = $lncont ? ' ' : ";\n";              # line ending for print
+#
+#            # all config-vars are by definition \w only, any \W means regex
+#            if ($qry =~ /\W/) {
+#                my @matches = config_re($qry);
+#                print map "$_$lnend", @matches ? @matches : "$qry: not found"               if !$notag;
+#                print map { s/\w+=//; "$_$lnend" } @matches ? @matches : "$qry: not found"  if  $notag;
+#            } else {
+#                my $v = (exists $Config::Config{$qry}) ? $Config::Config{$qry}
+#                                                       : 'UNKNOWN';
+#                $v = 'undef' unless defined $v;
+#                print "${prfx}'${v}'$lnend";
+#            }
+#        }
+#    }
+#
+#    # Called by the real AUTOLOAD
+#    sub launcher {
+#        undef &AUTOLOAD;
+#        goto \&$Config::AUTOLOAD;
+#    }
+#
+#    1;
 ENDOFEND
 
 if ($^O eq 'os2') {
-    $config_txt .= <<'ENDOFSET';
-my %preconfig;
-if ($OS2::is_aout) {
-    my ($value, $v) = $Config_SH_expanded =~ m/^used_aout='(.*)'\s*$/m;
-    for (split ' ', $value) {
-        ($v) = $Config_SH_expanded =~ m/^aout_$_='(.*)'\s*$/m;
-        $preconfig{$_} = $v eq 'undef' ? undef : $v;
-    }
-}
-$preconfig{d_fork} = undef unless $OS2::can_fork; # Some funny cases can't
-sub TIEHASH { bless {%preconfig} }
+    $config_txt .= uncomment <<'ENDOFSET';
+#    my %preconfig;
+#    if ($OS2::is_aout) {
+#        my ($value, $v) = $Config_SH_expanded =~ m/^used_aout='(.*)'\s*$/m;
+#        for (split ' ', $value) {
+#            ($v) = $Config_SH_expanded =~ m/^aout_$_='(.*)'\s*$/m;
+#            $preconfig{$_} = $v eq 'undef' ? undef : $v;
+#        }
+#    }
+#    $preconfig{d_fork} = undef unless $OS2::can_fork; # Some funny cases can't
+#    sub TIEHASH { bless {%preconfig} }
 ENDOFSET
     # Extract the name of the DLL from the makefile to avoid duplication
     my ($f) = grep -r, qw(GNUMakefile Makefile);
@@ -802,14 +833,14 @@ ENDOFSET
 	    $dll = $1, last if /^PERL_DLL_BASE\s*=\s*(\S*)\s*$/;
 	}
     }
-    $config_txt .= <<ENDOFSET if $dll;
-\$preconfig{dll_name} = '$dll';
+    $config_txt .= uncomment <<ENDOFSET if $dll;
+#    \$preconfig{dll_name} = '$dll';
 ENDOFSET
 } else {
-    $config_txt .= <<'ENDOFSET';
-sub TIEHASH {
-    bless $_[1], $_[0];
-}
+    $config_txt .= uncomment <<'ENDOFSET';
+#    sub TIEHASH {
+#        bless $_[1], $_[0];
+#    }
 ENDOFSET
 }
 
@@ -840,202 +871,194 @@ my $fast_config = join '', map { "    $_,\n" } sort values %Common;
 
 # Sanity check needed to stop an infinite loop if Config_heavy.pl fails to
 # define &launcher for some reason (eg it got truncated)
-$config_txt .= sprintf <<'ENDOFTIE', $fast_config;
-
-sub DESTROY { }
-
-sub AUTOLOAD {
-    require 'Config_heavy.pl';
-    goto \&launcher unless $Config::AUTOLOAD =~ /launcher$/;
-    die "&Config::AUTOLOAD failed on $Config::AUTOLOAD";
-}
-
-# tie returns the object, so the value returned to require will be true.
-tie %%Config, 'Config', {
-%s};
+$config_txt .= sprintf uncomment <<'ENDOFTIE', $fast_config;
+#
+#    sub DESTROY { }
+#
+#    sub AUTOLOAD {
+#        require 'Config_heavy.pl';
+#        goto \&launcher unless $Config::AUTOLOAD =~ /launcher$/;
+#        die "&Config::AUTOLOAD failed on $Config::AUTOLOAD";
+#    }
+#
+#    # tie returns the object, so the value returned to require will be true.
+#    tie %%Config, 'Config', {
+#    %s};
 ENDOFTIE
 
 
 open(CONFIG_POD, '>:raw', $Config_POD) or die "Can't open $Config_POD: $!";
-print CONFIG_POD <<'ENDOFTAIL';
-=head1 NAME
-
-=for comment  Generated by configpm.  Any changes made here will be lost!
-
-Config - access Perl configuration information
-
-=head1 SYNOPSIS
-
-    use Config;
-    if ($Config{usethreads}) {
-	print "has thread support\n"
-    } 
-
-    use Config qw(myconfig config_sh config_vars config_re);
-
-    print myconfig();
-
-    print config_sh();
-
-    print config_re();
-
-    config_vars(qw(osname archname));
-
-
-=head1 DESCRIPTION
-
-The Config module contains all the information that was available to
-the C<Configure> program at Perl build time (over 900 values).
-
-Shell variables from the F<config.sh> file (written by Configure) are
-stored in the readonly-variable C<%Config>, indexed by their names.
-
-Values stored in config.sh as 'undef' are returned as undefined
-values.  The perl C<exists> function can be used to check if a
-named variable exists.
-
-For a description of the variables, please have a look at the
-Glossary file, as written in the Porting folder, or use the url:
-https://github.com/Perl/perl5/blob/blead/Porting/Glossary
-
-=over 4
-
-=item myconfig()
-
-Returns a textual summary of the major perl configuration values.
-See also C<-V> in L<perlrun/Command Switches>.
-
-=item config_sh()
-
-Returns the entire perl configuration information in the form of the
-original config.sh shell variable assignment script.
-
-=item config_re($regex)
-
-Like config_sh() but returns, as a list, only the config entries who's
-names match the $regex.
-
-=item config_vars(@names)
-
-Prints to STDOUT the values of the named configuration variable. Each is
-printed on a separate line in the form:
-
-  name='value';
-
-Names which are unknown are output as C<name='UNKNOWN';>.
-See also C<-V:name> in L<perlrun/Command Switches>.
-
-=item bincompat_options()
-
-Returns a list of C pre-processor options used when compiling this F<perl>
-binary, which affect its binary compatibility with extensions.
-C<bincompat_options()> and C<non_bincompat_options()> are shown together in
-the output of C<perl -V> as I<Compile-time options>.
-
-=item non_bincompat_options()
-
-Returns a list of C pre-processor options used when compiling this F<perl>
-binary, which do not affect binary compatibility with extensions.
-
-=item compile_date()
-
-Returns the compile date (as a string), equivalent to what is shown by
-C<perl -V>
-
-=item local_patches()
-
-Returns a list of the names of locally applied patches, equivalent to what
-is shown by C<perl -V>.
-
-=item header_files()
-
-Returns a list of the header files that should be used as dependencies for
-XS code, for this version of Perl on this platform.
-
-=back
-
-=head1 EXAMPLE
-
-Here's a more sophisticated example of using %Config:
-
-    use Config;
-    use strict;
-
-    my %sig_num;
-    my @sig_name;
-    unless($Config{sig_name} && $Config{sig_num}) {
-	die "No sigs?";
-    } else {
-	my @names = split ' ', $Config{sig_name};
-	@sig_num{@names} = split ' ', $Config{sig_num};
-	foreach (@names) {
-	    $sig_name[$sig_num{$_}] ||= $_;
-	}   
-    }
-
-    print "signal #17 = $sig_name[17]\n";
-    if ($sig_num{ALRM}) { 
-	print "SIGALRM is $sig_num{ALRM}\n";
-    }   
-
-=head1 WARNING
-
-Because this information is not stored within the perl executable
-itself it is possible (but unlikely) that the information does not
-relate to the actual perl binary which is being used to access it.
-
-The Config module is installed into the architecture and version
-specific library directory ($Config{installarchlib}) and it checks the
-perl version number when loaded.
-
-The values stored in config.sh may be either single-quoted or
-double-quoted. Double-quoted strings are handy for those cases where you
-need to include escape sequences in the strings. To avoid runtime variable
-interpolation, any C<$> and C<@> characters are replaced by C<\$> and
-C<\@>, respectively. This isn't foolproof, of course, so don't embed C<\$>
-or C<\@> in double-quoted strings unless you're willing to deal with the
-consequences. (The slashes will end up escaped and the C<$> or C<@> will
-trigger variable interpolation)
-
-=head1 GLOSSARY
-
-Most C<Config> variables are determined by the C<Configure> script
-on platforms supported by it (which is most UNIX platforms).  Some
-platforms have custom-made C<Config> variables, and may thus not have
-some of the variables described below, or may have extraneous variables
-specific to that particular port.  See the port specific documentation
-in such cases.
-
-=cut
-
+print CONFIG_POD uncomment <<'ENDOFTAIL';
+#    =head1 NAME
+#
+#    =for comment  Generated by configpm.  Any changes made here will be lost!
+#
+#    Config - access Perl configuration information
+#
+#    =head1 SYNOPSIS
+#
+#        use Config;
+#        if ($Config{usethreads}) {
+#            print "has thread support\n"
+#        }
+#
+#        use Config qw(myconfig config_sh config_vars config_re);
+#
+#        print myconfig();
+#
+#        print config_sh();
+#
+#        print config_re();
+#
+#        config_vars(qw(osname archname));
+#
+#
+#    =head1 DESCRIPTION
+#
+#    The Config module contains all the information that was available to
+#    the F<Configure> program at Perl build time (over 900 values).
+#
+#    Shell variables from the F<config.sh> file (written by Configure) are
+#    stored in the readonly-variable C<%Config>, indexed by their names.
+#
+#    Values stored in config.sh as 'undef' are returned as undefined
+#    values.  The perl C<exists> function can be used to check if a
+#    named variable exists.
+#
+#    For a description of the variables, please have a look at the
+#    Glossary file, as written in the Porting folder, or use the url:
+#    https://github.com/Perl/perl5/blob/blead/Porting/Glossary
+#
+#    =over 4
+#
+#    =item myconfig()
+#
+#    Returns a textual summary of the major perl configuration values.
+#    See also C<-V> in L<perlrun/Command Switches>.
+#
+#    =item config_sh()
+#
+#    Returns the entire perl configuration information in the form of the
+#    original config.sh shell variable assignment script.
+#
+#    =item config_re($regex)
+#
+#    Like config_sh() but returns, as a list, only the config entries who's
+#    names match the $regex.
+#
+#    =item config_vars(@names)
+#
+#    Prints to STDOUT the values of the named configuration variable. Each is
+#    printed on a separate line in the form:
+#
+#      name='value';
+#
+#    Names which are unknown are output as C<name='UNKNOWN';>.
+#    See also C<-V:name> in L<perlrun/Command Switches>.
+#
+#    =item bincompat_options()
+#
+#    Returns a list of C pre-processor options used when compiling this F<perl>
+#    binary, which affect its binary compatibility with extensions.
+#    C<bincompat_options()> and C<non_bincompat_options()> are shown together in
+#    the output of C<perl -V> as I<Compile-time options>.
+#
+#    =item non_bincompat_options()
+#
+#    Returns a list of C pre-processor options used when compiling this F<perl>
+#    binary, which do not affect binary compatibility with extensions.
+#
+#    =item compile_date()
+#
+#    Returns the compile date (as a string), equivalent to what is shown by
+#    C<perl -V>
+#
+#    =item local_patches()
+#
+#    Returns a list of the names of locally applied patches, equivalent to what
+#    is shown by C<perl -V>.
+#
+#    =item header_files()
+#
+#    Returns a list of the header files that should be used as dependencies for
+#    XS code, for this version of Perl on this platform.
+#
+#    =back
+#
+#    =head1 EXAMPLE
+#
+#    Here's a more sophisticated example of using %Config:
+#
+#        use Config;
+#        use strict;
+#
+#        my %sig_num;
+#        my @sig_name;
+#        unless($Config{sig_name} && $Config{sig_num}) {
+#            die "No sigs?";
+#        } else {
+#            my @names = split ' ', $Config{sig_name};
+#            @sig_num{@names} = split ' ', $Config{sig_num};
+#            foreach (@names) {
+#                $sig_name[$sig_num{$_}] ||= $_;
+#            }
+#        }
+#
+#        print "signal #17 = $sig_name[17]\n";
+#        if ($sig_num{ALRM}) {
+#            print "SIGALRM is $sig_num{ALRM}\n";
+#        }
+#
+#    =head1 WARNING
+#
+#    Because this information is not stored within the perl executable
+#    itself it is possible (but unlikely) that the information does not
+#    relate to the actual perl binary which is being used to access it.
+#
+#    The Config module is installed into the architecture and version
+#    specific library directory ($Config{installarchlib}) and it checks the
+#    perl version number when loaded.
+#
+#    The values stored in config.sh may be either single-quoted or
+#    double-quoted. Double-quoted strings are handy for those cases where you
+#    need to include escape sequences in the strings. To avoid runtime variable
+#    interpolation, any C<$> and C<@> characters are replaced by C<\$> and
+#    C<\@>, respectively. This isn't foolproof, of course, so don't embed C<\$>
+#    or C<\@> in double-quoted strings unless you're willing to deal with the
+#    consequences. (The slashes will end up escaped and the C<$> or C<@> will
+#    trigger variable interpolation)
+#
+#    =head1 GLOSSARY
+#
+#    Most C<Config> variables are determined by the C<Configure> script
+#    on platforms supported by it (which is most UNIX platforms).  Some
+#    platforms have custom-made C<Config> variables, and may thus not have
+#    some of the variables described below, or may have extraneous variables
+#    specific to that particular port.  See the port specific documentation
+#    in such cases.
+#
+#    =cut
+#
 ENDOFTAIL
 
 if ($Opts{glossary}) {
   open(GLOS, '<', $Glossary) or die "Can't open $Glossary: $!";
 }
-my %seen = ();
 my $text = 0;
 $/ = '';
 my $errors= 0;
 
+my %glossary;
+
+my $fc;
+my $item;
+
 sub process {
   if (s/\A(\w*)\s+\(([\w.]+)\):\s*\n(\t?)/=item C<$1>\n\nFrom F<$2>:\n\n/m) {
-    my $c = substr $1, 0, 1;
-    unless ($seen{$c}++) {
-      print CONFIG_POD <<EOF if $text;
-=back
-
-EOF
-      print CONFIG_POD <<EOF;
-=head2 $c
-
-=over 4
-
-EOF
-     $text = 1;
-    }
+    $item = $1;
+    $fc = substr $item, 0, 1;
   }
-  elsif (!$text || !/\A\t/) {
+  elsif (!$item || !/\A\t/) {
     warn "Expected a Configure variable header",
       ($text ? " or another paragraph of description" : () ),
       ", instead we got:\n$_";
@@ -1067,6 +1090,7 @@ EOF
   s/(?<![.<\'\"])\b([A-Z_]{2,})\b(?![\'\"])/C<$1>/g;	# UNISTD
   s/(?<![.<\'\"])\b(?!the\b)(\w+)\s+macro\b/C<$1> macro/g; # FILE_cnt macro
   s/n[\0]t/n't/g;		# undo can't, won't damage
+  $glossary{$fc}{$item} .= $_;
 }
 
 if ($Opts{glossary}) {
@@ -1074,7 +1098,6 @@ if ($Opts{glossary}) {
     <GLOS>;				# Skip the preamble
   while (<GLOS>) {
     process;
-    print CONFIG_POD;
   }
   if ($errors) {
     die "Errors encountered while processing $Glossary. ",
@@ -1085,33 +1108,67 @@ if ($Opts{glossary}) {
   }
 }
 
-print CONFIG_POD <<'ENDOFTAIL';
+$glossary{t}{taint_support} //= uncomment <<EOF_TEXT;
+#    =item C<taint_support>
+#
+#    From define: C<SILENT_NO_TAINT_SUPPORT> or C<NO_TAINT_SUPPORT>
+#
+#    If this perl is compiled with support for taint mode this variable will
+#    be set to 'define', if it is not it will be set to the empty string.
+#    Either of the above defines will result in it being empty.  This property
+#    was added in version 5.37.11. See also L</taint_disabled>.
+#
+EOF_TEXT
 
-=back
+$glossary{t}{taint_disabled} //= uncomment <<EOF_TEXT;
+#    =item C<taint_disabled>
+#
+#    From define: C<SILENT_NO_TAINT_SUPPORT> or C<NO_TAINT_SUPPORT>
+#
+#    If this perl is compiled with support for taint mode this variable will
+#    be set to the empty string, if it was compiled with
+#    C<SILENT_NO_TAINT_SUPPORT> defined then it will be set to be "silent",
+#    and if it was compiled with C<NO_TAINT_SUPPORT> defined it will be
+#    'define'. Either of the above defines will results in it being a true
+#    value. This property was added in 5.37.11. See also L</taint_support>.
+#
+EOF_TEXT
 
-=head1 GIT DATA
+if ($Opts{glossary}) {
+    foreach my $fc (sort keys %glossary) {
+        print CONFIG_POD "=head2 $fc\n\n=over 4\n\n";
+        foreach my $item (sort keys %{$glossary{$fc}}) {
+            print CONFIG_POD $glossary{$fc}{$item};
+        }
+        print CONFIG_POD "=back\n\n";
+    }
+}
 
-Information on the git commit from which the current perl binary was compiled
-can be found in the variable C<$Config::Git_Data>.  The variable is a
-structured string that looks something like this:
-
-  git_commit_id='ea0c2dbd5f5ac6845ecc7ec6696415bf8e27bd52'
-  git_describe='GitLive-blead-1076-gea0c2db'
-  git_branch='smartmatch'
-  git_uncommitted_changes=''
-  git_commit_id_title='Commit id:'
-  git_commit_date='2009-05-09 17:47:31 +0200'
-
-Its format is not guaranteed not to change over time.
-
-=head1 NOTE
-
-This module contains a good example of how to use tie to implement a
-cache and an example of how to make a tied variable readonly to those
-outside of it.
-
-=cut
-
+print CONFIG_POD uncomment <<'ENDOFTAIL';
+#
+#    =head1 GIT DATA
+#
+#    Information on the git commit from which the current perl binary was compiled
+#    can be found in the variable C<$Config::Git_Data>.  The variable is a
+#    structured string that looks something like this:
+#
+#      git_commit_id='ea0c2dbd5f5ac6845ecc7ec6696415bf8e27bd52'
+#      git_describe='GitLive-blead-1076-gea0c2db'
+#      git_branch='smartmatch'
+#      git_uncommitted_changes=''
+#      git_commit_id_title='Commit id:'
+#      git_commit_date='2009-05-09 17:47:31 +0200'
+#
+#    Its format is not guaranteed not to change over time.
+#
+#    =head1 NOTE
+#
+#    This module contains a good example of how to use tie to implement a
+#    cache and an example of how to make a tied variable readonly to those
+#    outside of it.
+#
+#    =cut
+#
 ENDOFTAIL
 
 close(GLOS) if $Opts{glossary};
@@ -1128,18 +1185,6 @@ my $orig_heavy_txt = "";
 }
 
 if ($orig_config_txt ne $config_txt or $orig_heavy_txt ne $heavy_txt) {
-    # During the build don't look in /usr/local for libs or includes
-    # but after, we want to let modules look there.
-    my $install_heavy_txt = $heavy_txt;
-    $install_heavy_txt =~ s,^(ccflags|cppflags)[^=]*='[^']+,$& -I/usr/local/include,gm;
-    $install_heavy_txt =~ s,^(ldflags|lddlflags)[^=]*='[^']+,$& -L/usr/local/lib,gm;
-
-    open INSTALL_CONFIG_HEAVY, ">", "$Config_heavy.install"
-         or die "Can't open install $Config_heavy: $!\n";
-    print INSTALL_CONFIG_HEAVY $install_heavy_txt;
-    close INSTALL_CONFIG_HEAVY;
-    print "updated install $Config_heavy\n";
-
     open CONFIG, ">", $Config_PM or die "Can't open $Config_PM: $!\n";
     open CONFIG_HEAVY, ">", $Config_heavy or die "Can't open $Config_heavy: $!\n";
     print CONFIG $config_txt;

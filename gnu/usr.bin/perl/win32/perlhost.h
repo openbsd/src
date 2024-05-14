@@ -108,7 +108,7 @@ public:
     };
 
 /* IPerlMemParse */
-    /* Assume something else is using locks to mangaging serialize
+    /* Assume something else is using locks to manage serialization
        on a batch basis
      */
     inline void GetLockParse(void) { m_pVMemParse->GetLock(); };

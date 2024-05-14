@@ -1,4 +1,4 @@
-/* -*- buffer-read-only: t -*-
+/* -*- mode: C; buffer-read-only: t -*-
  *
  *    overload.h
  *
@@ -95,4 +95,4 @@ enum {
 
 #define NofAMmeth max_amg_code
 
-/* ex: set ro: */
+/* ex: set ro ft=c: */

@@ -1,4 +1,4 @@
-package pujHa'ghach::Dotlh;
+package pujHa::ghach::Dotlh;
 
 # Translator notes: Dotlh = status
 

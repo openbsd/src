@@ -28,13 +28,13 @@ datum	nextkey(datum key);
 
 #ifdef DBM_BUG_DUPLICATE_FREE 
 /*
- * DBM on at least Ultrix and HPUX call dbmclose() from dbminit(),
+ * DBM on at least HPUX call dbmclose() from dbminit(),
  * resulting in duplicate free() because dbmclose() does *not*
  * check if it has already been called for this DBM.
  * If some malloc/free calls have been done between dbmclose() and
  * the next dbminit(), the memory might be used for something else when
  * it is freed.
- * Verified to work on ultrix4.3.  Probably will work on HP/UX.
+ * Probably will work on HP/UX.
  * Set DBM_BUG_DUPLICATE_FREE in the extension hint file.
  */
 /* Close the previous dbm, and fail to open a new dbm */

@@ -2,13 +2,11 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#ifdef USE_PPPORT_H
-#  define NEED_my_snprintf
-#  define NEED_my_sprintf
-#  define NEED_sv_2pv_flags
-#  define NEED_utf8_to_uvchr_buf
-#  include "ppport.h"
-#endif
+#define NEED_my_snprintf
+#define NEED_my_sprintf
+#define NEED_sv_2pv_flags
+#define NEED_utf8_to_uvchr_buf
+#include "ppport.h"
 
 #ifndef strlcpy
 #  ifdef my_strlcpy
@@ -1279,6 +1277,17 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    }
 	}
 
+#ifdef SvIsBOOL
+	if (SvIsBOOL(val)) {
+		if (SvTRUE(val)) {
+			sv_catpvs(retval, "!!1");
+		}
+		else {
+			sv_catpvs(retval, "!!0");
+		}
+	}
+    else
+#endif
         if (DD_is_integer(val)) {
             STRLEN len;
 	    if (SvIsUV(val))
@@ -1315,7 +1324,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		SvCUR_set(retval, SvCUR(retval)+2);
                 i = 3 + esc_q_utf8(aTHX_ retval, c, i,
 #ifdef GvNAMEUTF8
-			!!GvNAMEUTF8(val), style->useqq
+			cBOOL(GvNAMEUTF8(val)), style->useqq
 #else
 			0, style->useqq || globname_supra_ascii(c, i)
 #endif

@@ -24,12 +24,17 @@
 #  define BIT_BUCKET "\\dev\\nul" /* "wanna be like, umm, Newlined, or somethin?" */
 #endif
 
+/* Generally add things last-in first-terminated.  IO and memory terminations
+ * need to be generally last
+ *
+ * BEWARE that using PerlIO in these will be using freed memory, so may appear
+ * to work, but must NOT be retained in production code. */
 #ifndef PERL_SYS_TERM_BODY
 #  define PERL_SYS_TERM_BODY()                         \
+    ENV_TERM; USER_PROP_MUTEX_TERM; LOCALE_TERM;       \
     HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;      \
-    OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM; PERLIO_TERM;  \
-    MALLOC_TERM; LOCALE_TERM; USER_PROP_MUTEX_TERM;    \
-    ENV_TERM;
+    OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM;               \
+    PERLIO_TERM; MALLOC_TERM; 
 #endif
 #define dXSUB_SYS dNOOP
 
@@ -104,6 +109,10 @@
 
 /* Don't go reading from /dev/urandom */
 #define PERL_NO_DEV_RANDOM
+
+#ifdef WIN32
+#  define NO_ENVIRON_ARRAY
+#endif
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

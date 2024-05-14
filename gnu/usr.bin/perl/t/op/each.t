@@ -266,24 +266,32 @@ for my $k (qw(each keys values)) {
     is join ("-", each %h), '1-2',
 	'each on apparently empty hash does not leave RITER set';
 }
-{
+SKIP:{
+    my $code= <<'TEST_CODE';
     my $warned= 0;
     local $SIG{__WARN__}= sub {
         /\QUse of each() on hash after insertion without resetting hash iterator results in undefined behavior\E/
-            and $warned++ for @_;
+            and $warned=1 for @_;
     };
     my %h= map { $_ => $_ } "A".."F";
     while (my ($k, $v)= each %h) {
         $h{"$k$k"}= $v;
     }
-    ok($warned,"each() after insert produces warnings");
+    print "a:$warned,";
     no warnings 'internal';
     $warned= 0;
     %h= map { $_ => $_ } "A".."F";
     while (my ($k, $v)= each %h) {
         $h{"$k$k"}= $v;
     }
-    ok(!$warned, "no warnings 'internal' silences each() after insert warnings");
+    print "b:$warned\n";
+TEST_CODE
+    local $ENV{PERL_HASH_SEED};
+    local $ENV{PERL_PERTURB_KEYS};
+    fresh_perl_like($code,
+            qr/\Aa:1,b:0\z/,
+            undef,
+            'Hash iterator reset warnings fires when expected');
 }
 {
     # Test that the call to hv_iternext_flags() that calls prime_env_iter()

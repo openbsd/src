@@ -14,12 +14,9 @@
 
 package Pod::Man;
 
-use 5.008;
+use 5.010;
 use strict;
 use warnings;
-
-use subs qw(makespace);
-use vars qw(@ISA %ESCAPES $PREAMBLE $VERSION);
 
 use Carp qw(carp croak);
 use Pod::Simple ();
@@ -27,23 +24,23 @@ use Pod::Simple ();
 # Conditionally import Encode and set $HAS_ENCODE if it is available.  This is
 # required to support building as part of Perl core, since podlators is built
 # before Encode is.
-our $HAS_ENCODE;
+my $HAS_ENCODE;
 BEGIN {
     $HAS_ENCODE = eval { require Encode };
 }
 
-@ISA = qw(Pod::Simple);
+our @ISA = qw(Pod::Simple);
+our $VERSION = '5.01';
 
-$VERSION = '4.14';
-
-# Set the debugging level.  If someone has inserted a debug function into this
-# class already, use that.  Otherwise, use any Pod::Simple debug function
-# that's defined, and failing that, define a debug level of 10.
-BEGIN {
-    my $parent = defined (&Pod::Simple::DEBUG) ? \&Pod::Simple::DEBUG : undef;
-    unless (defined &DEBUG) {
-        *DEBUG = $parent || sub () { 10 };
-    }
+# Ensure that $Pod::Simple::nbsp and $Pod::Simple::shy are available.  Code
+# taken from Pod::Simple 3.32, but was only added in 3.30.
+my ($NBSP, $SHY);
+if ($Pod::Simple::VERSION ge 3.30) {
+    $NBSP = $Pod::Simple::nbsp;
+    $SHY  = $Pod::Simple::shy;
+} else {
+    $NBSP = chr utf8::unicode_to_native(0xA0);
+    $SHY  = chr utf8::unicode_to_native(0xAD);
 }
 
 # Import the ASCII constant from Pod::Simple.  This is true iff we're in an
@@ -51,15 +48,12 @@ BEGIN {
 # generally only false for EBCDIC.
 BEGIN { *ASCII = \&Pod::Simple::ASCII }
 
-# Pretty-print a data structure.  Only used for debugging.
-BEGIN { *pretty = \&Pod::Simple::pretty }
-
 # Formatting instructions for various types of blocks.  cleanup makes hyphens
 # hard, adds spaces between consecutive underscores, and escapes backslashes.
 # convert translates characters into escapes.  guesswork means to apply the
-# transformations done by the guesswork sub.  literal says to protect literal
-# quotes from being turned into UTF-8 quotes.  By default, all transformations
-# are on except literal, but some elements override.
+# transformations done by the guesswork sub (if enabled).  literal says to
+# protect literal quotes from being turned into UTF-8 quotes.  By default, all
+# transformations are on except literal, but some elements override.
 #
 # DEFAULT specifies the default settings.  All other elements should list only
 # those settings that they are overriding.  Data indicates =for roff blocks,
@@ -75,6 +69,98 @@ my %FORMATTING = (
     X        => { cleanup => 0,               guesswork => 0               },
 );
 
+# Try to map an encoding as understood by Perl Encode to an encoding
+# understood by groff's preconv.  Encode doesn't care about hyphens or
+# capitalization, but preconv does.  The key is the canonicalized Encode
+# encoding, and the value is something preconv might understand.
+#
+# FreeBSD mandoc only understands utf-8 and iso-latin-1 as of 2022-09-24.
+# groff preconv prefers iso-8859-1, but also understands iso-latin-1, so
+# convert ISO-8859-1 to iso-latin-1 for FreeBSD.
+my %ENCODINGS = (
+    ascii     => 'us-ascii',
+    big5      => 'big5',
+    big5eten  => 'big5',
+    cp950     => 'big5',
+    cp1047    => 'cp1047',
+    euccn     => 'gb2312',
+    eucjp     => 'euc-jp',
+    euckr     => 'euc-kr',
+    gb2312    => 'gb2312',
+    gb2312raw => 'gb2312',
+    iso88591  => 'iso-latin-1',
+    iso88592  => 'iso-8859-2',
+    iso88595  => 'iso-8859-5',
+    iso88597  => 'iso-8859-7',
+    iso88599  => 'iso-8859-9',
+    iso885913 => 'iso-8859-13',
+    iso885915 => 'iso-8859-15',
+    koi8r     => 'koi8-r',
+    latin1    => 'iso-8859-1',
+    usascii   => 'us-ascii',
+    utf8      => 'utf-8',
+    utf16     => 'utf-16',
+    utf16be   => 'utf-16be',
+    utf16le   => 'utf-16le',
+);
+
+##############################################################################
+# Translation tables
+##############################################################################
+
+# The following table is adapted from Tom Christiansen's pod2man.  It is only
+# used with roff output.  It assumes that the standard preamble has already
+# been printed, since that's what defines all of the accent marks.  We really
+# want to do something better than this when *roff actually supports other
+# character sets itself, since these results are pretty poor.
+#
+# This only works in an ASCII world.  What to do in a non-ASCII world is very
+# unclear, so we just output what we get and hope for the best.
+my %ESCAPES;
+@ESCAPES{0xA0 .. 0xFF} = (
+    $NBSP, undef, undef, undef,            undef, undef, undef, undef,
+    undef, undef, undef, undef,            undef, $SHY,  undef, undef,
+
+    undef, undef, undef, undef,            undef, undef, undef, undef,
+    undef, undef, undef, undef,            undef, undef, undef, undef,
+
+    "A\\*`",  "A\\*'", "A\\*^", "A\\*~",   "A\\*:", "A\\*o", "\\*(Ae", "C\\*,",
+    "E\\*`",  "E\\*'", "E\\*^", "E\\*:",   "I\\*`", "I\\*'", "I\\*^",  "I\\*:",
+
+    "\\*(D-", "N\\*~", "O\\*`", "O\\*'",   "O\\*^", "O\\*~", "O\\*:",  undef,
+    "O\\*/",  "U\\*`", "U\\*'", "U\\*^",   "U\\*:", "Y\\*'", "\\*(Th", "\\*8",
+
+    "a\\*`",  "a\\*'", "a\\*^", "a\\*~",   "a\\*:", "a\\*o", "\\*(ae", "c\\*,",
+    "e\\*`",  "e\\*'", "e\\*^", "e\\*:",   "i\\*`", "i\\*'", "i\\*^",  "i\\*:",
+
+    "\\*(d-", "n\\*~", "o\\*`", "o\\*'",   "o\\*^", "o\\*~", "o\\*:",  undef,
+    "o\\*/" , "u\\*`", "u\\*'", "u\\*^",   "u\\*:", "y\\*'", "\\*(th", "y\\*:",
+) if ASCII;
+
+##############################################################################
+# Utility functions
+##############################################################################
+
+# Quote an argument to a macro.
+#
+# $arg - Intended argument to the macro
+#
+# Returns: $arg suitably escaped and quoted
+sub _quote_macro_argument {
+    my ($arg) = @_;
+    if (length($arg) > 0 && $arg !~ m{ [\s\"] }xms) {
+        return $arg;
+    }
+    $arg =~ s{ \" }{""}xmsg;
+    return qq("$arg");
+}
+
+# Returns whether the given encoding needs a call to Encode::encode.
+sub _needs_encode {
+    my ($encoding) = @_;
+    return $encoding ne 'roff' && $encoding ne 'groff';
+}
+
 ##############################################################################
 # Object initialization
 ##############################################################################
@@ -87,9 +173,6 @@ my %FORMATTING = (
 sub new {
     my $class = shift;
     my $self = $class->SUPER::new;
-
-    # Tell Pod::Simple not to handle S<> by automatically inserting &nbsp;.
-    $self->nbsp_for_S (1);
 
     # Tell Pod::Simple to keep whitespace whenever possible.
     if (my $preserve_whitespace = $self->can ('preserve_whitespace')) {
@@ -109,36 +192,14 @@ sub new {
     # to put them in our object as hash keys and values.  This could cause
     # problems if we ever clash with Pod::Simple's own internal class
     # variables.
-    %$self = (%$self, @_);
+    my %opts = @_;
+    my @opts = map { ("opt_$_", $opts{$_}) } keys %opts;
+    %$self = (%$self, @opts);
 
-    # Send errors to stderr if requested.
-    if ($$self{stderr} and not $$self{errors}) {
-        $$self{errors} = 'stderr';
-    }
-    delete $$self{stderr};
-
-    # Validate the errors parameter and act on it.
-    if (not defined $$self{errors}) {
-        $$self{errors} = 'pod';
-    }
-    if ($$self{errors} eq 'stderr' || $$self{errors} eq 'die') {
-        $self->no_errata_section (1);
-        $self->complain_stderr (1);
-        if ($$self{errors} eq 'die') {
-            $$self{complain_die} = 1;
-        }
-    } elsif ($$self{errors} eq 'pod') {
-        $self->no_errata_section (0);
-        $self->complain_stderr (0);
-    } elsif ($$self{errors} eq 'none') {
-        $self->no_errata_section (1);
-        $self->no_whining (1);
-    } else {
-        croak (qq(Invalid errors setting: "$$self{errors}"));
-    }
-    delete $$self{errors};
-
-    # Degrade back to non-utf8 if Encode is not available.
+    # Pod::Simple uses encoding internally, so we need to store it as
+    # ENCODING.  Set the default to UTF-8 if not specified.
+    #
+    # Degrade to the old roff encoding if Encode is not available.
     #
     # Suppress the warning message when PERL_CORE is set, indicating this is
     # running as part of the core Perl build.  Perl builds podlators (and all
@@ -146,26 +207,69 @@ sub new {
     # yet be available.  Rely on the Perl core build to generate man pages
     # later, after all the modules are available, so that UTF-8 handling will
     # be correct.
-    if ($$self{utf8} and !$HAS_ENCODE) {
-        if (!$ENV{PERL_CORE}) {
-            carp ('utf8 mode requested but Encode module not available,'
-                    . ' falling back to non-utf8');
-        }
-        delete $$self{utf8};
+    my %options = @_;
+    if (defined $self->{opt_encoding}) {
+        $$self{ENCODING} = $self->{opt_encoding};
+    } elsif (ASCII) {
+        $$self{ENCODING} = 'UTF-8';
+    } else {
+        $$self{ENCODING} = 'groff';
     }
+    if (_needs_encode($$self{ENCODING}) && !$HAS_ENCODE) {
+        if (!$ENV{PERL_CORE}) {
+            carp ('encoding requested but Encode module not available,'
+                    . ' falling back to groff escapes');
+        }
+        $$self{ENCODING} = 'groff';
+    }
+
+    # Send errors to stderr if requested.
+    if ($self->{opt_stderr} and not $self->{opt_errors}) {
+        $self->{opt_errors} = 'stderr';
+    }
+    delete $self->{opt_stderr};
+
+    # Validate the errors parameter and act on it.
+    $self->{opt_errors} //= 'pod';
+    if ($self->{opt_errors} eq 'stderr' || $self->{opt_errors} eq 'die') {
+        $self->no_errata_section (1);
+        $self->complain_stderr (1);
+        if ($self->{opt_errors} eq 'die') {
+            $self->{complain_die} = 1;
+        }
+    } elsif ($self->{opt_errors} eq 'pod') {
+        $self->no_errata_section (0);
+        $self->complain_stderr (0);
+    } elsif ($self->{opt_errors} eq 'none') {
+        $self->no_errata_section (1);
+        $self->no_whining (1);
+    } else {
+        croak (qq(Invalid errors setting: "$self->{opt_errors}"));
+    }
+    delete $self->{opt_errors};
 
     # Initialize various other internal constants based on our arguments.
     $self->init_fonts;
     $self->init_quotes;
     $self->init_page;
 
-    # For right now, default to turning on all of the magic.
-    $$self{MAGIC_CPP}       = 1;
-    $$self{MAGIC_EMDASH}    = 1;
-    $$self{MAGIC_FUNC}      = 1;
-    $$self{MAGIC_MANREF}    = 1;
-    $$self{MAGIC_SMALLCAPS} = 1;
-    $$self{MAGIC_VARS}      = 1;
+    # Configure guesswork based on options.
+    my $guesswork = $self->{opt_guesswork} || q{};
+    my %guesswork = map { $_ => 1 } split(m{,}xms, $guesswork);
+    if (!%guesswork || $guesswork{all}) {
+        #<<<
+        $$self{GUESSWORK} = {
+            functions => 1,
+            manref    => 1,
+            quoting   => 1,
+            variables => 1,
+        };
+        #>>>
+    } elsif ($guesswork{none}) {
+        $$self{GUESSWORK} = {};
+    } else {
+        $$self{GUESSWORK} = {%guesswork};
+    }
 
     return $self;
 }
@@ -182,29 +286,41 @@ sub init_fonts {
 
     # Figure out the fixed-width font.  If user-supplied, make sure that they
     # are the right length.
-    for (qw/fixed fixedbold fixeditalic fixedbolditalic/) {
-        my $font = $$self{$_};
-        if (defined ($font) && (length ($font) < 1 || length ($font) > 2)) {
-            croak qq(roff font should be 1 or 2 chars, not "$font");
+    for (qw(fixed fixedbold fixeditalic fixedbolditalic)) {
+        my $font = $self->{"opt_$_"};
+        if (defined($font) && (length($font) < 1 || length($font) > 2)) {
+            croak(qq(roff font should be 1 or 2 chars, not "$font"));
         }
     }
 
     # Set the default fonts.  We can't be sure portably across different
     # implementations what fixed bold-italic may be called (if it's even
     # available), so default to just bold.
-    $$self{fixed}           ||= 'CW';
-    $$self{fixedbold}       ||= 'CB';
-    $$self{fixeditalic}     ||= 'CI';
-    $$self{fixedbolditalic} ||= 'CB';
+    #<<<
+    $self->{opt_fixed}           ||= 'CW';
+    $self->{opt_fixedbold}       ||= 'CB';
+    $self->{opt_fixeditalic}     ||= 'CI';
+    $self->{opt_fixedbolditalic} ||= 'CB';
+    #>>>
 
     # Set up a table of font escapes.  First number is fixed-width, second is
     # bold, third is italic.
-    $$self{FONTS} = { '000' => '\fR', '001' => '\fI',
-                      '010' => '\fB', '011' => '\f(BI',
-                      '100' => toescape ($$self{fixed}),
-                      '101' => toescape ($$self{fixeditalic}),
-                      '110' => toescape ($$self{fixedbold}),
-                      '111' => toescape ($$self{fixedbolditalic}) };
+    $self->{FONTS} = {
+        '000' => '\fR',
+        '001' => '\fI',
+        '010' => '\fB',
+        '011' => '\f(BI',
+        '100' => toescape($self->{opt_fixed}),
+        '101' => toescape($self->{opt_fixeditalic}),
+        '110' => toescape($self->{opt_fixedbold}),
+        '111' => toescape($self->{opt_fixedbolditalic}),
+    };
+
+    # Precalculate a regex that matches all fixed-width fonts, which will be
+    # used later by switchquotes.
+    my @fixedpat = map { quotemeta($self->{FONTS}{$_}) } qw(100 101 110 111);
+    my $fixedpat = join('|', @fixedpat);
+    $self->{FIXEDPAT} = qr{ $fixedpat }xms;
 }
 
 # Initialize the quotes that we'll be using for C<> text.  This requires some
@@ -215,32 +331,28 @@ sub init_quotes {
     my ($self) = (@_);
 
     # Handle the quotes option first, which sets both quotes at once.
-    $$self{quotes} ||= '"';
-    if ($$self{quotes} eq 'none') {
+    $self->{opt_quotes} ||= '"';
+    if ($self->{opt_quotes} eq 'none') {
         $$self{LQUOTE} = $$self{RQUOTE} = '';
-    } elsif (length ($$self{quotes}) == 1) {
-        $$self{LQUOTE} = $$self{RQUOTE} = $$self{quotes};
-    } elsif (length ($$self{quotes}) % 2 == 0) {
-        my $length = length ($$self{quotes}) / 2;
-        $$self{LQUOTE} = substr ($$self{quotes}, 0, $length);
-        $$self{RQUOTE} = substr ($$self{quotes}, $length);
+    } elsif (length ($self->{opt_quotes}) == 1) {
+        $$self{LQUOTE} = $$self{RQUOTE} = $self->{opt_quotes};
+    } elsif (length ($self->{opt_quotes}) % 2 == 0) {
+        my $length = length ($self->{opt_quotes}) / 2;
+        $$self{LQUOTE} = substr ($self->{opt_quotes}, 0, $length);
+        $$self{RQUOTE} = substr ($self->{opt_quotes}, $length);
     } else {
-        croak(qq(Invalid quote specification "$$self{quotes}"))
+        croak(qq(Invalid quote specification "$self->{opt_quotes}"))
     }
 
     # Now handle the lquote and rquote options.
-    if (defined $$self{lquote}) {
-        $$self{LQUOTE} = $$self{lquote} eq 'none' ? q{} : $$self{lquote};
+    if (defined($self->{opt_lquote})) {
+        $self->{opt_lquote} = q{} if $self->{opt_lquote} eq 'none';
+        $$self{LQUOTE} = $self->{opt_lquote};
     }
-    if (defined $$self{rquote}) {
-        $$self{RQUOTE} = $$self{rquote} eq 'none' ? q{} : $$self{rquote};
+    if (defined $self->{opt_rquote}) {
+        $self->{opt_rquote} = q{} if $self->{opt_rquote} eq 'none';
+        $$self{RQUOTE} = $self->{opt_rquote};
     }
-
-    # Double the first quote; note that this should not be s///g as two double
-    # quotes is represented in *roff as three double quotes, not four.  Weird,
-    # I know.
-    $$self{LQUOTE} =~ s/\"/\"\"/;
-    $$self{RQUOTE} =~ s/\"/\"\"/;
 }
 
 # Initialize the page title information and indentation from our arguments.
@@ -254,17 +366,9 @@ sub init_page {
 
     # Set the defaults for page titles and indentation if the user didn't
     # override anything.
-    $$self{center} = 'User Contributed Perl Documentation'
-        unless defined $$self{center};
-    $$self{release} = 'perl v' . $version
-        unless defined $$self{release};
-    $$self{indent} = 4
-        unless defined $$self{indent};
-
-    # Double quotes in things that will be quoted.
-    for (qw/center release/) {
-        $$self{$_} =~ s/\"/\"\"/g if $$self{$_};
-    }
+    $self->{opt_center}  //= 'User Contributed Perl Documentation';
+    $self->{opt_release} //= 'perl v' . $version;
+    $self->{opt_indent}  //= 4;
 }
 
 ##############################################################################
@@ -289,7 +393,6 @@ sub init_page {
 # according to the current formatting instructions as we do.
 sub _handle_text {
     my ($self, $text) = @_;
-    DEBUG > 3 and print "== $text\n";
     my $tag = $$self{PENDING}[-1];
     $$tag[2] .= $self->format_text ($$tag[1], $text);
 }
@@ -308,7 +411,6 @@ sub method_for_element {
 # text and nested elements.  Otherwise, if start_element is defined, call it.
 sub _handle_element_start {
     my ($self, $element, $attrs) = @_;
-    DEBUG > 3 and print "++ $element (<", join ('> <', %$attrs), ">)\n";
     my $method = $self->method_for_element ($element);
 
     # If we have a command handler, we need to accumulate the contents of the
@@ -316,7 +418,6 @@ sub _handle_element_start {
     # <Para> and the formatting codes so that IN_NAME isn't still set for the
     # first heading after the NAME heading.
     if ($self->can ("cmd_$method")) {
-        DEBUG > 2 and print "<$element> starts saving a tag\n";
         $$self{IN_NAME} = 0 if ($element ne 'Para' && length ($element) > 1);
 
         # How we're going to format embedded text blocks depends on the tag
@@ -328,11 +429,8 @@ sub _handle_element_start {
             %{ $FORMATTING{$element} || {} },
         };
         push (@{ $$self{PENDING} }, [ $attrs, $formatting, '' ]);
-        DEBUG > 4 and print "Pending: [", pretty ($$self{PENDING}), "]\n";
     } elsif (my $start_method = $self->can ("start_$method")) {
         $self->$start_method ($attrs, '');
-    } else {
-        DEBUG > 2 and print "No $method start method, skipping\n";
     }
 }
 
@@ -341,16 +439,12 @@ sub _handle_element_start {
 # an end_ method for the element, call that.
 sub _handle_element_end {
     my ($self, $element) = @_;
-    DEBUG > 3 and print "-- $element\n";
     my $method = $self->method_for_element ($element);
 
     # If we have a command handler, pull off the pending text and pass it to
     # the handler along with the saved attribute hash.
     if (my $cmd_method = $self->can ("cmd_$method")) {
-        DEBUG > 2 and print "</$element> stops saving a tag\n";
         my $tag = pop @{ $$self{PENDING} };
-        DEBUG > 4 and print "Popped: [", pretty ($tag), "]\n";
-        DEBUG > 4 and print "Pending: [", pretty ($$self{PENDING}), "]\n";
         my $text = $self->$cmd_method ($$tag[0], $$tag[2]);
         if (defined $text) {
             if (@{ $$self{PENDING} } > 1) {
@@ -361,8 +455,6 @@ sub _handle_element_end {
         }
     } elsif (my $end_method = $self->can ("end_$method")) {
         $self->$end_method ();
-    } else {
-        DEBUG > 2 and print "No $method end method, skipping\n";
     }
 }
 
@@ -381,31 +473,40 @@ sub format_text {
     my $literal = $$options{literal};
 
     # Cleanup just tidies up a few things, telling *roff that the hyphens are
-    # hard, putting a bit of space between consecutive underscores, and
-    # escaping backslashes.  Be careful not to mangle our character
-    # translations by doing this before processing character translation.
+    # hard, putting a bit of space between consecutive underscores, escaping
+    # backslashes, and converting zero-width spaces to zero-width break
+    # points.
     if ($cleanup) {
         $text =~ s/\\/\\e/g;
         $text =~ s/-/\\-/g;
         $text =~ s/_(?=_)/_\\|/g;
+        $text =~ s/\x{200B}/\\:/g;
     }
 
-    # Normally we do character translation, but we won't even do that in
-    # <Data> blocks or if UTF-8 output is desired.
-    if ($convert && !$$self{utf8} && ASCII) {
-        $text =~ s/([^\x00-\x7F])/$ESCAPES{ord ($1)} || "X"/eg;
+    # Except in <Data> blocks, if groff or roff encoding is requested and
+    # we're in an ASCII environment, do the encoding.  For EBCDIC, we just
+    # write what we get and hope for the best.  Leave non-breaking spaces and
+    # soft hyphens alone; we'll convert those at the last minute.
+    if ($convert) {
+        if (ASCII) {
+            if ($$self{ENCODING} eq 'groff') {
+                $text =~ s{ ([^\x00-\x7F\xA0\xAD]) }{
+                    '\\[u' . sprintf('%04X', ord($1)) . ']'
+                }xmsge;
+            } elsif ($$self{ENCODING} eq 'roff') {
+                $text =~ s/([^\x00-\x7F\xA0\xAD])/$ESCAPES{ord ($1)} || "X"/eg;
+            }
+        }
     }
 
     # Ensure that *roff doesn't convert literal quotes to UTF-8 single quotes,
-    # but don't mess up our accept escapes.
+    # but don't mess up accent escapes.
     if ($literal) {
         $text =~ s/(?<!\\\*)\'/\\*\(Aq/g;
         $text =~ s/(?<!\\\*)\`/\\\`/g;
     }
 
-    # If guesswork is asked for, do that.  This involves more substantial
-    # formatting based on various heuristics that may only be appropriate for
-    # particular documents.
+    # If guesswork is is viable for this block, do that.
     if ($guesswork) {
         $text = $self->guesswork ($text);
     }
@@ -420,31 +521,45 @@ sub quote_literal {
     my $self = shift;
     local $_ = shift;
 
+    # If in NAME section, just return an ASCII quoted string to avoid
+    # confusing tools like whatis.
+    if ($$self{IN_NAME}) {
+        return $self->{LQUOTE} . $_ . $self->{RQUOTE};
+    }
+
     # A regex that matches the portion of a variable reference that's the
     # array or hash index, separated out just because we want to use it in
     # several places in the following regex.
-    my $index = '(?: \[.*\] | \{.*\} )?';
-
-    # If in NAME section, just return an ASCII quoted string to avoid
-    # confusing tools like whatis.
-    return qq{"$_"} if $$self{IN_NAME};
+    my $index = '(?: \[[^]]+\] | \{[^}]+\} )?';
 
     # Check for things that we don't want to quote, and if we find any of
     # them, return the string with just a font change and no quoting.
+    #
+    # Traditionally, Pod::Man has not quoted Perl variables, functions,
+    # numbers, or hex constants, but this is not always desirable.  Make this
+    # optional on the quoting guesswork flag.
+    my $extra = qr{(?!)}xms;    # never matches
+    if ($$self{GUESSWORK}{quoting}) {
+        $extra = qr{
+             \$+ [\#^]? \S $index                    # special ($^F, $")
+           | [\$\@%&*]+ \#? [:\'\w]+ $index          # plain var or func
+           | [\$\@%&*]* [:\'\w]+
+             (?: \\-> )? \(\s*[^\s,\)]*\s*\)         # 0/1-arg func call
+           | (?: [+] || \\- )? ( \d[\d.]* | \.\d+ )
+             (?: [eE] (?: [+] || \\- )? \d+ )?       # a number
+           | 0x [a-fA-F\d]+                          # a hex constant
+         }xms;
+    }
     m{
       ^\s*
       (?:
-         ( [\'\`\"] ) .* \1                             # already quoted
-       | \\\*\(Aq .* \\\*\(Aq                           # quoted and escaped
-       | \\?\` .* ( \' | \\\*\(Aq )                     # `quoted'
-       | \$+ [\#^]? \S $index                           # special ($^Foo, $")
-       | [\$\@%&*]+ \#? [:\'\w]+ $index                 # plain var or func
-       | [\$\@%&*]* [:\'\w]+ (?: -> )? \(\s*[^\s,]\s*\) # 0/1-arg func call
-       | [-+]? ( \d[\d.]* | \.\d+ ) (?: [eE][-+]?\d+ )? # a number
-       | 0x [a-fA-F\d]+                                 # a hex constant
+         ( [\'\"] ) .* \1                    # already quoted
+       | \\\*\(Aq .* \\\*\(Aq                # quoted and escaped
+       | \\?\` .* ( \' | \\?\` | \\\*\(Aq )  # `quoted' or `quoted`
+       | $extra
       )
       \s*\z
-     }xso and return '\f(FS' . $_ . '\f(FE';
+     }xms and return '\f(FS' . $_ . '\f(FE';
 
     # If we didn't return, go ahead and quote the text.
     return '\f(FS\*(C`' . $_ . "\\*(C'\\f(FE";
@@ -453,10 +568,8 @@ sub quote_literal {
 # Takes a text block to perform guesswork on.  Returns the text block with
 # formatting codes added.  This is the code that marks up various Perl
 # constructs and things commonly used in man pages without requiring the user
-# to add any explicit markup, and is applied to all non-literal text.  We're
-# guaranteed that the text we're applying guesswork to does not contain any
-# *roff formatting codes.  Note that the inserted font sequences must be
-# treated later with mapfonts or textmapfonts.
+# to add any explicit markup, and is applied to all non-literal text.  Note
+# that the inserted font sequences must be treated later with mapfonts.
 #
 # This method is very fragile, both in the regular expressions it uses and in
 # the ordering of those modifications.  Care and testing is required when
@@ -464,7 +577,6 @@ sub quote_literal {
 sub guesswork {
     my $self = shift;
     local $_ = shift;
-    DEBUG > 5 and print "   Guesswork called on [$_]\n";
 
     # By the time we reach this point, all hyphens will be escaped by adding a
     # backslash.  We want to undo that escaping if they're part of regular
@@ -475,9 +587,9 @@ sub guesswork {
     # Note that this is not user-controllable; we pretty much have to do this
     # transformation or *roff will mangle the output in unacceptable ways.
     s{
-        ( (?:\G|^|\s) [\(\"]* [a-zA-Z] ) ( \\- )?
+        ( (?:\G|^|\s|$NBSP) [\(\"]* [a-zA-Z] ) ( \\- )?
         ( (?: [a-zA-Z\']+ \\-)+ )
-        ( [a-zA-Z\']+ ) (?= [\)\".?!,;:]* (?:\s|\Z|\\\ ) )
+        ( [a-zA-Z\']+ ) (?= [\)\".?!,;:]* (?:\s|$NBSP|\Z|\\\ ) )
         \b
     } {
         my ($prefix, $hyphen, $main, $suffix) = ($1, $2, $3, $4);
@@ -486,52 +598,17 @@ sub guesswork {
         $prefix . $hyphen . $main . $suffix;
     }egx;
 
-    # Translate "--" into a real em-dash if it's used like one.  This means
-    # that it's either surrounded by whitespace, it follows a regular word, or
-    # it occurs between two regular words.
-    if ($$self{MAGIC_EMDASH}) {
-        s{          (\s) \\-\\- (\s)                } { $1 . '\*(--' . $2 }egx;
-        s{ (\b[a-zA-Z]+) \\-\\- (\s|\Z|[a-zA-Z]+\b) } { $1 . '\*(--' . $2 }egx;
-    }
-
-    # Make words in all-caps a little bit smaller; they look better that way.
-    # However, we don't want to change Perl code (like @ARGV), nor do we want
-    # to fix the MIME in MIME-Version since it looks weird with the
-    # full-height V.
-    #
-    # We change only a string of all caps (2) either at the beginning of the
-    # line or following regular punctuation (like quotes) or whitespace (1),
-    # and followed by either similar punctuation, an em-dash, or the end of
-    # the line (3).
-    #
-    # Allow the text we're changing to small caps to include double quotes,
-    # commas, newlines, and periods as long as it doesn't otherwise interrupt
-    # the string of small caps and still fits the criteria.  This lets us turn
-    # entire warranty disclaimers in man page output into small caps.
-    if ($$self{MAGIC_SMALLCAPS}) {
-        s{
-            ( ^ | [\s\(\"\'\`\[\{<>] | \\[ ]  )                           # (1)
-            ( [A-Z] [A-Z] (?: \s? [/A-Z+:\d_\$&] | \\- | \s? [.,\"] )* )  # (2)
-            (?= [\s>\}\]\(\)\'\".?!,;] | \\*\(-- | \\[ ] | $ )            # (3)
-        } {
-            $1 . '\s-1' . $2 . '\s0'
-        }egx;
-    }
-
-    # Note that from this point forward, we have to adjust for \s-1 and \s-0
-    # strings inserted around things that we've made small-caps if later
-    # transforms should work on those strings.
-
     # Embolden functions in the form func(), including functions that are in
-    # all capitals, but don't embolden if there's anything between the parens.
+    # all capitals, but don't embolden if there's anything inside the parens.
     # The function must start with an alphabetic character or underscore and
     # then consist of word characters or colons.
-    if ($$self{MAGIC_FUNC}) {
+    if ($$self{GUESSWORK}{functions}) {
         s{
-            ( \b | \\s-1 )
-            ( [A-Za-z_] ([:\w] | \\s-?[01])+ \(\) )
+            (?<! \\ )
+            \b
+            ( [A-Za-z_] [:\w]+ \(\) )
         } {
-            $1 . '\f(BS' . $2 . '\f(BE'
+            '\f(BS' . $1 . '\f(BE'
         }egx;
     }
 
@@ -542,21 +619,21 @@ sub guesswork {
     # configuration file man pages), or colons, and n is a single digit,
     # optionally followed by some number of lowercase letters.  Note that this
     # does not recognize man page references like perl(l) or socket(3SOCKET).
-    if ($$self{MAGIC_MANREF}) {
+    if ($$self{GUESSWORK}{manref}) {
         s{
-            ( \b | \\s-1 )
-            (?<! \\ )                                   # rule out \s0(1)
-            ( [A-Za-z_] (?:[.:\w] | \\- | \\s-?[01])+ )
+            \b
+            (?<! \\ )                                   # rule out \e0(1)
+            ( [A-Za-z_] (?:[.:\w] | \\-)+ )
             ( \( \d [a-z]* \) )
         } {
-            $1 . '\f(BS' . $2 . '\f(BE\|' . $3
+            '\f(BS' . $1 . '\f(BE\|' . $2
         }egx;
     }
 
     # Convert simple Perl variable references to a fixed-width font.  Be
     # careful not to convert functions, though; there are too many subtleties
     # with them to want to perform this transformation.
-    if ($$self{MAGIC_VARS}) {
+    if ($$self{GUESSWORK}{variables}) {
         s{
            ( ^ | \s+ )
            ( [\$\@%] [\w:]+ )
@@ -566,19 +643,7 @@ sub guesswork {
         }egx;
     }
 
-    # Fix up double quotes.  Unfortunately, we miss this transformation if the
-    # quoted text contains any code with formatting codes and there's not much
-    # we can effectively do about that, which makes it somewhat unclear if
-    # this is really a good idea.
-    s{ \" ([^\"]+) \" } { '\*(L"' . $1 . '\*(R"' }egx;
-
-    # Make C++ into \*(C+, which is a squinched version.
-    if ($$self{MAGIC_CPP}) {
-        s{ \b C\+\+ } {\\*\(C+}gx;
-    }
-
     # Done.
-    DEBUG > 5 and print "   Guesswork returning [$_]\n";
     return $_;
 }
 
@@ -592,111 +657,106 @@ sub guesswork {
 # the right start and end codes.
 #
 # We add this level of complexity because the old pod2man didn't get code like
-# B<someI<thing> else> right; after I<> it switched back to normal text rather
-# than bold.  We take care of this by using variables that state whether bold,
-# italic, or fixed are turned on as a combined pointer to our current font
-# sequence, and set each to the number of current nestings of start tags for
-# that font.
+# B<< someI<thing> else>> right.  After I<> it switched back to normal text
+# rather than bold.  We take care of this by using variables that state
+# whether bold, italic, or fixed are turned on as a combined pointer to our
+# current font sequence, and set each to the number of current nestings of
+# start tags for that font.
 #
-# \fP changes to the previous font, but only one previous font is kept.  We
-# don't know what the outside level font is; normally it's R, but if we're
-# inside a heading it could be something else.  So arrange things so that the
-# outside font is always the "previous" font and end with \fP instead of \fR.
-# Idea from Zack Weinberg.
+# The base font must be either \fP or \fR.  \fP changes to the previous font,
+# but only one previous font is kept.  Unfortunately, there is a bug in
+# Solaris 2.6 nroff (not present in GNU groff) where the sequence
+# \fB\fP\f(CW\fP leaves the font set to B rather than R, presumably because
+# \f(CW doesn't actually do a font change.  Because of this, we prefer to use
+# \fR where possible.
+#
+# Unfortunately, this isn't possible for arguments to heading macros, since
+# there we don't know what the outside level font is.  In that case, arrange
+# things so that the outside font is always the "previous" font and end with
+# \fP instead of \fR.  Idea from Zack Weinberg.
+#
+# This function used to be much simpler outside of macro arguments because it
+# went directly from \fB to \f(CW and relied on \f(CW clearing bold since it
+# wasn't \f(CB.  Unfortunately, while this works for mandoc, this is not how
+# groff works; \fBfoo\f(CWbar still prints bar in bold.  Therefore, we force
+# the font back to the base font before each font change.
 sub mapfonts {
-    my ($self, $text) = @_;
+    my ($self, $text, $base) = @_;
+
+    # The closure used to process each font escape, expected to be called from
+    # the right-hand side of an s/// expression.
     my ($fixed, $bold, $italic) = (0, 0, 0);
     my %magic = (F => \$fixed, B => \$bold, I => \$italic);
     my $last = '\fR';
-    $text =~ s<
-        \\f\((.)(.)
-    > <
-        my $sequence = '';
-        my $f;
-        if ($last ne '\fR') { $sequence = '\fP' }
-        ${ $magic{$1} } += ($2 eq 'S') ? 1 : -1;
-        $f = $$self{FONTS}{ ($fixed && 1) . ($bold && 1) . ($italic && 1) };
-        if ($f eq $last) {
-            '';
-        } else {
-            if ($f ne '\fR') { $sequence .= $f }
-            $last = $f;
-            $sequence;
+    my $process = sub {
+        my ($style, $start_stop) = @_;
+        my $sequence = ($last ne '\fR') ? $base : q{};
+        ${ $magic{$style} } += ($start_stop eq 'S') ? 1 : -1;
+        my $f = $self->{FONTS}{($fixed && 1) . ($bold && 1) . ($italic && 1)};
+        return q{} if ($f eq $last);
+        if ($f ne '\fR') {
+            $sequence .= $f;
         }
-    >gxe;
-    return $text;
-}
+        $last = $f;
+        return $sequence;
+    };
 
-# Unfortunately, there is a bug in Solaris 2.6 nroff (not present in GNU
-# groff) where the sequence \fB\fP\f(CW\fP leaves the font set to B rather
-# than R, presumably because \f(CW doesn't actually do a font change.  To work
-# around this, use a separate textmapfonts for text blocks where the default
-# font is always R and only use the smart mapfonts for headings.
-sub textmapfonts {
-    my ($self, $text) = @_;
-    my ($fixed, $bold, $italic) = (0, 0, 0);
-    my %magic = (F => \$fixed, B => \$bold, I => \$italic);
-    $text =~ s<
-        \\f\((.)(.)
-    > <
-        ${ $magic{$1} } += ($2 eq 'S') ? 1 : -1;
-        $$self{FONTS}{ ($fixed && 1) . ($bold && 1) . ($italic && 1) };
-    >gxe;
+    # Now, do the actual work.
+    $text =~ s{ \\f\((.)(.) }{$process->($1, $2)}xmsge;
+
+    # We can do a bit of cleanup by collapsing sequences like \fR\fB\fR\fI
+    # into just \fI.
+    $text =~ s{ (?: \\fR )? (?: \\f (.|\(..) \\fR )+ }{\\fR}xms;
+
     return $text;
 }
 
 # Given a command and a single argument that may or may not contain double
-# quotes, handle double-quote formatting for it.  If there are no double
-# quotes, just return the command followed by the argument in double quotes.
-# If there are double quotes, use an if statement to test for nroff, and for
-# nroff output the command followed by the argument in double quotes with
-# embedded double quotes doubled.  For other formatters, remap paired double
-# quotes to LQUOTE and RQUOTE.
+# quotes and fixed-width text, handle double-quote formatting for it.  If
+# there is no fixed-width text, just return the command followed by the
+# argument with proper quoting.  If there is fixed-width text, work around a
+# Solaris nroff bug with fixed-width fonts by converting fixed-width to
+# regular fonts (nroff sees no difference).
 sub switchquotes {
     my ($self, $command, $text, $extra) = @_;
-    $text =~ s/\\\*\([LR]\"/\"/g;
 
-    # We also have to deal with \*C` and \*C', which are used to add the
-    # quotes around C<> text, since they may expand to " and if they do this
-    # confuses the .SH macros and the like no end.  Expand them ourselves.
-    # Also separate troff from nroff if there are any fixed-width fonts in use
-    # to work around problems with Solaris nroff.
-    my $c_is_quote = ($$self{LQUOTE} =~ /\"/) || ($$self{RQUOTE} =~ /\"/);
-    my $fixedpat = join '|', @{ $$self{FONTS} }{'100', '101', '110', '111'};
-    $fixedpat =~ s/\\/\\\\/g;
-    $fixedpat =~ s/\(/\\\(/g;
-    if ($text =~ m/\"/ || $text =~ m/$fixedpat/) {
-        $text =~ s/\"/\"\"/g;
+    # Separate troff from nroff if there are any fixed-width fonts in use to
+    # work around problems with Solaris nroff.
+    if ($text =~ $self->{FIXEDPAT}) {
         my $nroff = $text;
         my $troff = $text;
-        $troff =~ s/\"\"([^\"]*)\"\"/\`\`$1\'\'/g;
-        if ($c_is_quote and $text =~ m/\\\*\(C[\'\`]/) {
-            $nroff =~ s/\\\*\(C\`/$$self{LQUOTE}/g;
-            $nroff =~ s/\\\*\(C\'/$$self{RQUOTE}/g;
-            $troff =~ s/\\\*\(C[\'\`]//g;
-        }
-        $nroff = qq("$nroff") . ($extra ? " $extra" : '');
-        $troff = qq("$troff") . ($extra ? " $extra" : '');
 
         # Work around the Solaris nroff bug where \f(CW\fP leaves the font set
         # to Roman rather than the actual previous font when used in headings.
         # troff output may still be broken, but at least we can fix nroff by
         # just switching the font changes to the non-fixed versions.
-        my $font_end = "(?:\\f[PR]|\Q$$self{FONTS}{100}\E)";
-        $nroff =~ s/\Q$$self{FONTS}{100}\E(.*?)\\f([PR])/$1/g;
-        $nroff =~ s/\Q$$self{FONTS}{101}\E(.*?)$font_end/\\fI$1\\fP/g;
-        $nroff =~ s/\Q$$self{FONTS}{110}\E(.*?)$font_end/\\fB$1\\fP/g;
-        $nroff =~ s/\Q$$self{FONTS}{111}\E(.*?)$font_end/\\f\(BI$1\\fP/g;
+        my $font_end = qr{ (?: \\f[PR] | \Q$self->{FONTS}{100}\E ) }xms;
+        $nroff =~ s{\Q$self->{FONTS}{100}\E(.*?)\\f([PR])}{$1}xmsg;
+        $nroff =~ s{\Q$self->{FONTS}{101}\E}{\\fI}xmsg;
+        $nroff =~ s{\Q$self->{FONTS}{110}\E}{\\fB}xmsg;
+        $nroff =~ s{\Q$self->{FONTS}{111}\E}{\\f\(BI}xmsg;
+
+        # We have to deal with \*C` and \*C', which are used to add the quotes
+        # around C<> text, since they may expand to " and if they do this
+        # confuses the .SH macros and the like no end.  Expand them ourselves.
+        my $c_is_quote = index("$self->{LQUOTE}$self->{RQUOTE}", qq(\")) != -1;
+        if ($c_is_quote && $text =~ m{ \\[*]\(C[\'\`] }xms) {
+            $nroff =~ s{ \\[*]\(C\` }{$self->{LQUOTE}}xmsg;
+            $nroff =~ s{ \\[*]\(C\' }{$self->{RQUOTE}}xmsg;
+            $troff =~ s{ \\[*]\(C[\'\`] }{}xmsg;
+        }
 
         # Now finally output the command.  Bother with .ie only if the nroff
         # and troff output aren't the same.
+        $nroff = _quote_macro_argument($nroff) . ($extra ? " $extra" : '');
+        $troff = _quote_macro_argument($troff) . ($extra ? " $extra" : '');
         if ($nroff ne $troff) {
             return ".ie n $command $nroff\n.el $command $troff\n";
         } else {
             return "$command $nroff\n";
         }
     } else {
-        $text = qq("$text") . ($extra ? " $extra" : '');
+        $text = _quote_macro_argument($text) . ($extra ? " $extra" : '');
         return "$command $text\n";
     }
 }
@@ -761,10 +821,22 @@ sub outindex {
 # Output some text, without any additional changes.
 sub output {
     my ($self, @text) = @_;
-    if ($$self{ENCODE}) {
-        print { $$self{output_fh} } Encode::encode ('UTF-8', join ('', @text));
+    my $text = join('', @text);
+    $text =~ s{$NBSP}{\\ }g;
+    $text =~ s{$SHY}{\\%}g;
+
+    if ($$self{ENCODE} && _needs_encode($$self{ENCODING})) {
+        my $check = sub {
+            my ($char) = @_;
+            my $display = '"\x{' . hex($char) . '}"';
+            my $error = "$display does not map to $$self{ENCODING}";
+            $self->whine ($self->line_count(), $error);
+            return Encode::encode ($$self{ENCODING}, chr($char));
+        };
+        my $output = Encode::encode ($$self{ENCODING}, $text, $check);
+        print { $$self{output_fh} } $output;
     } else {
-        print { $$self{output_fh} } @text;
+        print { $$self{output_fh} } $text;
     }
 }
 
@@ -777,21 +849,20 @@ sub output {
 sub start_document {
     my ($self, $attrs) = @_;
     if ($$attrs{contentless} && !$$self{ALWAYS_EMIT_SOMETHING}) {
-        DEBUG and print "Document is contentless\n";
         $$self{CONTENTLESS} = 1;
     } else {
         delete $$self{CONTENTLESS};
     }
 
-    # When UTF-8 output is set, check whether our output file handle already
-    # has a PerlIO encoding layer set.  If it does not, we'll need to encode
-    # our output before printing it (handled in the output() sub).  Wrap the
-    # check in an eval to handle versions of Perl without PerlIO.
+    # When an encoding is requested, check whether our output file handle
+    # already has a PerlIO encoding layer set.  If it does not, we'll need to
+    # encode our output before printing it (handled in the output() sub).
+    # Wrap the check in an eval to handle versions of Perl without PerlIO.
     #
     # PerlIO::get_layers still requires its argument be a glob, so coerce the
     # file handle to a glob.
     $$self{ENCODE} = 0;
-    if ($$self{utf8}) {
+    if ($$self{ENCODING}) {
         $$self{ENCODE} = 1;
         eval {
             my @options = (output => 1, details => 1);
@@ -806,15 +877,15 @@ sub start_document {
     # document was content-free.
     if (!$$self{CONTENTLESS}) {
         my ($name, $section);
-        if (defined $$self{name}) {
-            $name = $$self{name};
-            $section = $$self{section} || 1;
+        if (defined $self->{opt_name}) {
+            $name = $self->{opt_name};
+            $section = $self->{opt_section} || 1;
         } else {
             ($name, $section) = $self->devise_title;
         }
-        my $date = defined($$self{date}) ? $$self{date} : $self->devise_date;
+        my $date = $self->{opt_date} // $self->devise_date();
         $self->preamble ($name, $section, $date)
-            unless $self->bare_output or DEBUG > 9;
+            unless $self->bare_output;
     }
 
     # Initialize a few per-document variables.
@@ -839,7 +910,6 @@ sub end_document {
     }
     return if $self->bare_output;
     return if ($$self{CONTENTLESS} && !$$self{ALWAYS_EMIT_SOMETHING});
-    $self->output (q(.\" [End document]) . "\n") if DEBUG;
 }
 
 # Try to figure out the name and section from the file name and return them as
@@ -848,8 +918,8 @@ sub end_document {
 sub devise_title {
     my ($self) = @_;
     my $name = $self->source_filename || '';
-    my $section = $$self{section} || 1;
-    $section = 3 if (!$$self{section} && $name =~ /\.pm\z/i);
+    my $section = $self->{opt_section} || 1;
+    $section = 3 if (!$self->{opt_section} && $name =~ /\.pm\z/i);
     $name =~ s/\.p(od|[lm])\z//i;
 
     # If Pod::Parser gave us an IO::File reference as the source file name,
@@ -900,8 +970,6 @@ sub devise_title {
                     $cut = $i + 1;
                     $cut++ if ($dirs[$i + 1] && $dirs[$i + 1] eq 'lib');
                     last;
-                } elsif ($dirs[$i] eq 'lib' && $dirs[$i + 1] && $dirs[0] eq 'ext') {
-                    $cut = $i + 1;
                 }
             }
             if ($cut > 0) {
@@ -983,34 +1051,53 @@ sub devise_date {
 # module, but this order is correct for both Solaris and Linux.
 sub preamble {
     my ($self, $name, $section, $date) = @_;
-    my $preamble = $self->preamble_template (!$$self{utf8});
+    my $preamble = $self->preamble_template();
 
-    # Build the index line and make sure that it will be syntactically valid.
-    my $index = "$name $section";
-    $index =~ s/\"/\"\"/g;
-
-    # If name or section contain spaces, quote them (section really never
-    # should, but we may as well be cautious).
-    for ($name, $section) {
-        if (/\s/) {
-            s/\"/\"\"/g;
-            $_ = '"' . $_ . '"';
+    # groff's preconv script will use this line to correctly determine the
+    # input encoding if the encoding is one of the ones it recognizes.  It
+    # must be the first or second line.
+    #
+    # If the output encoding is some version of Unicode, we could also add a
+    # Unicode Byte Order Mark to the start of the file, but the BOM is now
+    # deprecated and I am concerned that may break a *roff implementation that
+    # might otherwise cope with Unicode.  Revisit this if someone files a bug
+    # report about it.
+    if (_needs_encode($$self{ENCODING})) {
+        my $normalized = lc($$self{ENCODING});
+        $normalized =~ s{-}{}g;
+        my $coding = $ENCODINGS{$normalized} || lc($$self{ENCODING});
+        if ($coding ne 'us-ascii') {
+            $self->output(qq{.\\\" -*- mode: troff; coding: $coding -*-\n});
         }
     }
 
-    # Double quotes in date, since it will be quoted.
-    $date =~ s/\"/\"\"/g;
-
-    # Substitute into the preamble the configuration options.
-    $preamble =~ s/\@CFONT\@/$$self{fixed}/;
-    $preamble =~ s/\@LQUOTE\@/$$self{LQUOTE}/;
-    $preamble =~ s/\@RQUOTE\@/$$self{RQUOTE}/;
-    chomp $preamble;
+    # Substitute into the preamble the configuration options.  Because it's
+    # used as the argument to defining a string, any leading double quote (but
+    # no other double quotes) in LQUOTE and RQUOTE has to be doubled.
+    $preamble =~ s{ [@] CFONT [@] }{$self->{opt_fixed}}xms;
+    my $lquote = $self->{LQUOTE};
+    my $rquote = $self->{RQUOTE};
+    $lquote =~ s{ \A \" }{""}xms;
+    $rquote =~ s{ \A \" }{""}xms;
+    $preamble =~ s{ [@] LQUOTE [@] }{$lquote}xms;
+    $preamble =~ s{ [@] RQUOTE [@] }{$rquote}xms;
+    chomp($preamble);
 
     # Get the version information.
-    my $version = $self->version_report;
+    my $version = $self->version_report();
 
-    # Finally output everything.
+    # Build the index line and make sure that it will be syntactically valid.
+    my $index = _quote_macro_argument("$name $section");
+
+    # Quote the arguments to the .TH macro.  (Section should never require
+    # this, but we may as well be cautious.)
+    $name = _quote_macro_argument($name);
+    $section = _quote_macro_argument($section);
+    $date = _quote_macro_argument($date);
+    my $center = _quote_macro_argument($self->{opt_center});
+    my $release = _quote_macro_argument($self->{opt_release});
+
+    # Output the majority of the preamble.
     $self->output (<<"----END OF HEADER----");
 .\\" Automatically generated by $version
 .\\"
@@ -1019,14 +1106,19 @@ sub preamble {
 $preamble
 .\\" ========================================================================
 .\\"
-.IX Title "$index"
-.TH $name $section "$date" "$$self{release}" "$$self{center}"
+.IX Title $index
+.TH $name $section $date $release $center
 .\\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\\" way too many mistakes in technical documents.
 .if n .ad l
 .nh
 ----END OF HEADER----
-    $self->output (".\\\" [End of preamble]\n") if DEBUG;
+
+    # If the language was specified, output the language configuration.
+    if ($self->{opt_language}) {
+        $self->output(".mso $self->{opt_language}.tmac\n");
+        $self->output(".hla $self->{opt_language}\n");
+    }
 }
 
 ##############################################################################
@@ -1051,11 +1143,6 @@ sub cmd_para {
         $$self{SHIFTWAIT} = 0;
     }
 
-    # Add the line number for debugging, but not in the NAME section just in
-    # case the comment would confuse apropos.
-    $self->output (".\\\" [At source line $line]\n")
-        if defined ($line) && DEBUG && !$$self{IN_NAME};
-
     # Force exactly one newline at the end and strip unwanted trailing
     # whitespace at the end, but leave "\ " backslashed space from an S< > at
     # the end of a line.  Reverse the text first, to avoid having to scan the
@@ -1065,8 +1152,8 @@ sub cmd_para {
     $text = reverse $text;
 
     # Output the paragraph.
-    $self->output ($self->protect ($self->textmapfonts ($text)));
-    $self->outindex;
+    $self->output($self->protect($self->mapfonts($text, '\fR')));
+    $self->outindex();
     $$self{NEEDSPACE} = 1;
     return '';
 }
@@ -1078,45 +1165,44 @@ sub cmd_verbatim {
     my ($self, $attrs, $text) = @_;
 
     # Ignore an empty verbatim paragraph.
-    return unless $text =~ /\S/;
+    return if $text !~ m{ \S }xms;
 
     # Force exactly one newline at the end and strip unwanted trailing
-    # whitespace at the end.  Reverse the text first, to avoid having to scan
-    # the entire paragraph.
-    $text = reverse $text;
-    $text =~ s/\A\s*/\n/;
-    $text = reverse $text;
+    # whitespace at the end.
+    $text =~ s{ \s* \z }{\n}xms;
 
     # Get a count of the number of lines before the first blank line, which
     # we'll pass to .Vb as its parameter.  This tells *roff to keep that many
     # lines together.  We don't want to tell *roff to keep huge blocks
     # together.
-    my @lines = split (/\n/, $text);
+    my @lines = split (m{ \n }xms, $text);
     my $unbroken = 0;
-    for (@lines) {
-        last if /^\s*$/;
+    for my $line (@lines) {
+        last if $line =~ m{ \A \s* \z }xms;
         $unbroken++;
     }
-    $unbroken = 10 if ($unbroken > 12 && !$$self{MAGIC_VNOPAGEBREAK_LIMIT});
+    if ($unbroken > 12) {
+        $unbroken = 10;
+    }
 
-    # Prepend a null token to each line.
-    $text =~ s/^/\\&/gm;
+    # Prepend a null token to each line to preserve indentation.
+    $text =~ s{ ^ }{\\&}xmsg;
 
     # Output the results.
-    $self->makespace;
-    $self->output (".Vb $unbroken\n$text.Ve\n");
+    $self->makespace();
+    $self->output(".Vb $unbroken\n$text.Ve\n");
     $$self{NEEDSPACE} = 1;
-    return '';
+    return q{};
 }
 
 # Handle literal text (produced by =for and similar constructs).  Just output
 # it with the minimum of changes.
 sub cmd_data {
     my ($self, $attrs, $text) = @_;
-    $text =~ s/^\n+//;
-    $text =~ s/\n{0,2}$/\n/;
-    $self->output ($text);
-    return '';
+    $text =~ s{ \A \n+ }{}xms;
+    $text =~ s{ \n{0,2} \z }{\n}xms;
+    $self->output($text);
+    return q{};
 }
 
 ##############################################################################
@@ -1138,9 +1224,6 @@ sub heading_common {
         $self->output (".PD\n");
     }
 
-    # Output the current source line.
-    $self->output ( ".\\\" [At source line $line]\n" )
-        if defined ($line) && DEBUG;
     return $text;
 }
 
@@ -1153,7 +1236,7 @@ sub cmd_head1 {
     $text =~ s/\\s-?\d//g;
     $text = $self->heading_common ($text, $$attrs{start_line});
     my $isname = ($text eq 'NAME' || $text =~ /\(NAME\)/);
-    $self->output ($self->switchquotes ('.SH', $self->mapfonts ($text)));
+    $self->output($self->switchquotes('.SH', $self->mapfonts($text, '\fP')));
     $self->outindex ('Header', $text) unless $isname;
     $$self{NEEDSPACE} = 0;
     $$self{IN_NAME} = $isname;
@@ -1164,7 +1247,7 @@ sub cmd_head1 {
 sub cmd_head2 {
     my ($self, $attrs, $text) = @_;
     $text = $self->heading_common ($text, $$attrs{start_line});
-    $self->output ($self->switchquotes ('.SS', $self->mapfonts ($text)));
+    $self->output($self->switchquotes('.SS', $self->mapfonts($text, '\fP')));
     $self->outindex ('Subsection', $text);
     $$self{NEEDSPACE} = 0;
     return '';
@@ -1176,7 +1259,7 @@ sub cmd_head3 {
     my ($self, $attrs, $text) = @_;
     $text = $self->heading_common ($text, $$attrs{start_line});
     $self->makespace;
-    $self->output ($self->textmapfonts ('\f(IS' . $text . '\f(IE') . "\n");
+    $self->output($self->mapfonts('\f(IS' . $text . '\f(IE', '\fR') . "\n");
     $self->outindex ('Subsection', $text);
     $$self{NEEDSPACE} = 1;
     return '';
@@ -1188,7 +1271,7 @@ sub cmd_head4 {
     my ($self, $attrs, $text) = @_;
     $text = $self->heading_common ($text, $$attrs{start_line});
     $self->makespace;
-    $self->output ($self->textmapfonts ($text) . "\n");
+    $self->output($self->mapfonts($text, '\fR') . "\n");
     $self->outindex ('Subsection', $text);
     $$self{NEEDSPACE} = 1;
     return '';
@@ -1204,6 +1287,13 @@ sub cmd_b { return $_[0]->{IN_NAME} ? $_[2] : '\f(BS' . $_[2] . '\f(BE' }
 sub cmd_i { return $_[0]->{IN_NAME} ? $_[2] : '\f(IS' . $_[2] . '\f(IE' }
 sub cmd_f { return $_[0]->{IN_NAME} ? $_[2] : '\f(IS' . $_[2] . '\f(IE' }
 sub cmd_c { return $_[0]->quote_literal ($_[2]) }
+
+# Convert all internal whitespace to $NBSP.
+sub cmd_s {
+    my ($self, $attrs, $text) = @_;
+    $text =~ s{ \s }{$NBSP}xmsg;
+    return $text;
+}
 
 # Index entries are just added to the pending entries.
 sub cmd_x {
@@ -1226,7 +1316,7 @@ sub cmd_l {
         }
         if (not defined ($to) or $to eq $text) {
             return "<$text>";
-        } elsif ($$self{nourls}) {
+        } elsif ($self->{opt_nourls}) {
             return $text;
         } else {
             return "$text <$$attrs{to}>";
@@ -1247,12 +1337,10 @@ sub over_common_start {
     my ($self, $type, $attrs) = @_;
     my $line = $$attrs{start_line};
     my $indent = $$attrs{indent};
-    DEBUG > 3 and print " Starting =over $type (line $line, indent ",
-        ($indent || '?'), "\n";
 
     # Find the indentation level.
     unless (defined ($indent) && $indent =~ /^[-+]?\d{1,4}\s*$/) {
-        $indent = $$self{indent};
+        $indent = $self->{opt_indent};
     }
 
     # If we've gotten multiple indentations in a row, we need to emit the
@@ -1281,7 +1369,6 @@ sub over_common_start {
 # .RE and then a new .RS to unconfuse *roff.
 sub over_common_end {
     my ($self) = @_;
-    DEBUG > 3 and print " Ending =over\n";
     $$self{INDENT} = pop @{ $$self{INDENTS} };
     pop @{ $$self{ITEMTYPES} };
 
@@ -1320,7 +1407,6 @@ sub end_over_block  { $_[0]->over_common_end }
 sub item_common {
     my ($self, $type, $attrs, $text) = @_;
     my $line = $$attrs{start_line};
-    DEBUG > 3 and print "  $type item (line $line): $text\n";
 
     # Clean up the text.  We want to end up with two variables, one ($text)
     # which contains any body text after taking out the item portion, and
@@ -1352,8 +1438,8 @@ sub item_common {
     $self->output (".PD 0\n") if ($$self{ITEMS} == 1);
 
     # Now, output the item tag itself.
-    $item = $self->textmapfonts ($item);
-    $self->output ($self->switchquotes ('.IP', $item, $$self{INDENT}));
+    $item = $self->mapfonts($item, '\fR');
+    $self->output($self->switchquotes('.IP', $item, $$self{INDENT}));
     $$self{NEEDSPACE} = 0;
     $$self{ITEMS}++;
     $$self{SHIFTWAIT} = 0;
@@ -1362,7 +1448,7 @@ sub item_common {
     if ($text) {
         $text =~ s/\s*$/\n/;
         $self->makespace;
-        $self->output ($self->protect ($self->textmapfonts ($text)));
+        $self->output($self->protect($self->mapfonts($text, '\fR')));
         $$self{NEEDSPACE} = 1;
     }
     $self->outindex ($index ? ('Item', $index) : ());
@@ -1450,48 +1536,15 @@ sub parse_string_document {
 }
 
 ##############################################################################
-# Translation tables
-##############################################################################
-
-# The following table is adapted from Tom Christiansen's pod2man.  It assumes
-# that the standard preamble has already been printed, since that's what
-# defines all of the accent marks.  We really want to do something better than
-# this when *roff actually supports other character sets itself, since these
-# results are pretty poor.
-#
-# This only works in an ASCII world.  What to do in a non-ASCII world is very
-# unclear -- hopefully we can assume UTF-8 and just leave well enough alone.
-@ESCAPES{0xA0 .. 0xFF} = (
-    "\\ ", undef, undef, undef,            undef, undef, undef, undef,
-    undef, undef, undef, undef,            undef, "\\%", undef, undef,
-
-    undef, undef, undef, undef,            undef, undef, undef, undef,
-    undef, undef, undef, undef,            undef, undef, undef, undef,
-
-    "A\\*`",  "A\\*'", "A\\*^", "A\\*~",   "A\\*:", "A\\*o", "\\*(Ae", "C\\*,",
-    "E\\*`",  "E\\*'", "E\\*^", "E\\*:",   "I\\*`", "I\\*'", "I\\*^",  "I\\*:",
-
-    "\\*(D-", "N\\*~", "O\\*`", "O\\*'",   "O\\*^", "O\\*~", "O\\*:",  undef,
-    "O\\*/",  "U\\*`", "U\\*'", "U\\*^",   "U\\*:", "Y\\*'", "\\*(Th", "\\*8",
-
-    "a\\*`",  "a\\*'", "a\\*^", "a\\*~",   "a\\*:", "a\\*o", "\\*(ae", "c\\*,",
-    "e\\*`",  "e\\*'", "e\\*^", "e\\*:",   "i\\*`", "i\\*'", "i\\*^",  "i\\*:",
-
-    "\\*(d-", "n\\*~", "o\\*`", "o\\*'",   "o\\*^", "o\\*~", "o\\*:",  undef,
-    "o\\*/" , "u\\*`", "u\\*'", "u\\*^",   "u\\*:", "y\\*'", "\\*(th", "y\\*:",
-) if ASCII;
-
-##############################################################################
 # Premable
 ##############################################################################
 
-# The following is the static preamble which starts all *roff output we
-# generate.  Most is static except for the font to use as a fixed-width font,
-# which is designed by @CFONT@, and the left and right quotes to use for C<>
-# text, designated by @LQOUTE@ and @RQUOTE@.  However, the second part, which
-# defines the accent marks, is only used if $escapes is set to true.
+# The preamble which starts all *roff output we generate.  Most is static
+# except for the font to use as a fixed-width font (designed by @CFONT@), and
+# the left and right quotes to use for C<> text (designated by @LQOUTE@ and
+# @RQUOTE@).  Accent marks are only defined if the output encoding is roff.
 sub preamble_template {
-    my ($self, $accents) = @_;
+    my ($self) = @_;
     my $preamble = <<'----END OF PREAMBLE----';
 .de Sp \" Vertical space (when we can't use .PP)
 .if t .sp .5v
@@ -1506,29 +1559,12 @@ sub preamble_template {
 .ft R
 .fi
 ..
-.\" Set up some character translations and predefined strings.  \*(-- will
-.\" give an unbreakable dash, \*(PI will give pi, \*(L" will give a left
-.\" double quote, and \*(R" will give a right double quote.  \*(C+ will
-.\" give a nicer C++.  Capital omega is used to do unbreakable dashes and
-.\" therefore won't be available.  \*(C` and \*(C' expand to `' in nroff,
-.\" nothing in troff, for use with C<>.
-.tr \(*W-
-.ds C+ C\v'-.1v'\h'-1p'\s-2+\h'-1p'+\s0\v'.1v'\h'-1p'
+.\" \*(C` and \*(C' are quotes in nroff, nothing in troff, for use with C<>.
 .ie n \{\
-.    ds -- \(*W-
-.    ds PI pi
-.    if (\n(.H=4u)&(1m=24u) .ds -- \(*W\h'-12u'\(*W\h'-12u'-\" diablo 10 pitch
-.    if (\n(.H=4u)&(1m=20u) .ds -- \(*W\h'-12u'\(*W\h'-8u'-\"  diablo 12 pitch
-.    ds L" ""
-.    ds R" ""
 .    ds C` @LQUOTE@
 .    ds C' @RQUOTE@
 'br\}
 .el\{\
-.    ds -- \|\(em\|
-.    ds PI \(*p
-.    ds L" ``
-.    ds R" ''
 .    ds C`
 .    ds C'
 'br\}
@@ -1562,7 +1598,7 @@ sub preamble_template {
 ----END OF PREAMBLE----
 #'# for cperl-mode
 
-    if ($accents) {
+    if ($$self{ENCODING} eq 'roff') {
         $preamble .= <<'----END OF PREAMBLE----'
 .\"
 .\" Accent mark definitions (@(#)ms.acc 1.5 88/02/08 SMI; from UCB 4.2).
@@ -1592,7 +1628,7 @@ sub preamble_template {
 .    ds /
 .\}
 .if t \{\
-.    ds ' \\k:\h'-(\\n(.wu*8/10-\*(#H)'\'\h"|\\n:u"
+.    ds ' \\k:\h'-(\\n(.wu*8/10-\*(#H)'\'\h'|\\n:u'
 .    ds ` \\k:\h'-(\\n(.wu*8/10-\*(#H)'\`\h'|\\n:u'
 .    ds ^ \\k:\h'-(\\n(.wu*10/11-\*(#H)'^\h'|\\n:u'
 .    ds , \\k:\h'-(\\n(.wu*8/10)',\h'|\\n:u'
@@ -1639,10 +1675,13 @@ sub preamble_template {
 1;
 __END__
 
+=encoding UTF-8
+
 =for stopwords
 en em ALLCAPS teeny fixedbold fixeditalic fixedbolditalic stderr utf8 UTF-8
 Allbery Sean Burke Ossanna Solaris formatters troff uppercased Christiansen
-nourls parsers Kernighan lquote rquote
+nourls parsers Kernighan lquote rquote unrepresentable mandoc NetBSD PostScript
+SMP macOS EBCDIC fallbacks manref reflowed reflowing FH overridable
 
 =head1 NAME
 
@@ -1668,100 +1707,197 @@ using L<nroff(1)>, normally via L<man(1)>, or printing using L<troff(1)>.
 It is conventionally invoked using the driver script B<pod2man>, but it can
 also be used directly.
 
-As a derived class from Pod::Simple, Pod::Man supports the same methods and
-interfaces.  See L<Pod::Simple> for all the details.
+By default (on non-EBCDIC systems), Pod::Man outputs UTF-8.  Its output should
+work with the B<man> program on systems that use B<groff> (most Linux
+distributions) or B<mandoc> (most BSD variants), but may result in mangled
+output on older UNIX systems.  To choose a different, possibly more
+backward-compatible output mangling on such systems, set the C<encoding>
+option to C<roff> (the default in earlier Pod::Man versions).  See the
+C<encoding> option and L</ENCODING> for more details.
 
-new() can take options, in the form of key/value pairs that control the
-behavior of the parser.  See below for details.
+See L</COMPATIBILTY> for the versions of Pod::Man with significant
+backward-incompatible changes (other than constructor options, whose versions
+are documented below), and the versions of Perl that included them.
 
-If no options are given, Pod::Man uses the name of the input file with any
-trailing C<.pod>, C<.pm>, or C<.pl> stripped as the man page title, to
-section 1 unless the file ended in C<.pm> in which case it defaults to
-section 3, to a centered title of "User Contributed Perl Documentation", to
-a centered footer of the Perl version it is run with, and to a left-hand
-footer of the modification date of its input (or the current date if given
-C<STDIN> for input).
+=head1 CLASS METHODS
 
-Pod::Man assumes that your *roff formatters have a fixed-width font named
-C<CW>.  If yours is called something else (like C<CR>), use the C<fixed>
-option to specify it.  This generally only matters for troff output for
-printing.  Similarly, you can set the fonts used for bold, italic, and
-bold italic fixed-width output.
+=over 4
 
-Besides the obvious pod conversions, Pod::Man also takes care of
-formatting func(), func(3), and simple variable references like $foo or
-@bar so you don't have to use code escapes for them; complex expressions
-like C<$fred{'stuff'}> will still need to be escaped, though.  It also
-translates dashes that aren't used as hyphens into en dashes, makes long
-dashes--like this--into proper em dashes, fixes "paired quotes," makes C++
-look right, puts a little space between double underscores, makes ALLCAPS
-a teeny bit smaller in B<troff>, and escapes stuff that *roff treats as
-special so that you don't have to.
+=item new(ARGS)
 
-The recognized options to new() are as follows.  All options take a single
-argument.
+Create a new Pod::Man object.  ARGS should be a list of key/value pairs, where
+the keys are chosen from the following.  Each option is annotated with the
+version of Pod::Man in which that option was added with its current meaning.
 
 =over 4
 
 =item center
 
-Sets the centered page header for the C<.TH> macro.  The default, if this
-option is not specified, is "User Contributed Perl Documentation".
+[1.00] Sets the centered page header for the C<.TH> macro.  The default, if
+this option is not specified, is C<User Contributed Perl Documentation>.
 
 =item date
 
-Sets the left-hand footer for the C<.TH> macro.  If this option is not set,
-the contents of the environment variable POD_MAN_DATE, if set, will be used.
-Failing that, the value of SOURCE_DATE_EPOCH, the modification date of the
-input file, or the current time if stat() can't find that file (which will be
-the case if the input is from C<STDIN>) will be used.  If obtained from the
-file modification date or the current time, the date will be formatted as
-C<YYYY-MM-DD> and will be based on UTC (so that the output will be
-reproducible regardless of local time zone).
+[4.00] Sets the left-hand footer for the C<.TH> macro.  If this option is not
+set, the contents of the environment variable POD_MAN_DATE, if set, will be
+used.  Failing that, the value of SOURCE_DATE_EPOCH, the modification date of
+the input file, or the current time if stat() can't find that file (which will
+be the case if the input is from C<STDIN>) will be used.  If taken from any
+source other than POD_MAN_DATE (which is used verbatim), the date will be
+formatted as C<YYYY-MM-DD> and will be based on UTC (so that the output will
+be reproducible regardless of local time zone).
+
+=item encoding
+
+[5.00] Specifies the encoding of the output.  The value must be an encoding
+recognized by the L<Encode> module (see L<Encode::Supported>), or the special
+values C<roff> or C<groff>.  The default on non-EBCDIC systems is UTF-8.
+
+If the output contains characters that cannot be represented in this encoding,
+that is an error that will be reported as configured by the C<errors> option.
+If error handling is other than C<die>, the unrepresentable character will be
+replaced with the Encode substitution character (normally C<?>).
+
+If the C<encoding> option is set to the special value C<groff> (the default on
+EBCDIC systems), or if the Encode module is not available and the encoding is
+set to anything other than C<roff>, Pod::Man will translate all non-ASCII
+characters to C<\[uNNNN]> Unicode escapes.  These are not traditionally part
+of the *roff language, but are supported by B<groff> and B<mandoc> and thus by
+the majority of manual page processors in use today.
+
+If the C<encoding> option is set to the special value C<roff>, Pod::Man will
+do its historic transformation of (some) ISO 8859-1 characters into *roff
+escapes that may be adequate in troff and may be readable (if ugly) in nroff.
+This was the default behavior of versions of Pod::Man before 5.00.  With this
+encoding, all other non-ASCII characters will be replaced with C<X>.  It may
+be required for very old troff and nroff implementations that do not support
+UTF-8, but its representation of any non-ASCII character is very poor and
+often specific to European languages.
+
+If the output file handle has a PerlIO encoding layer set, setting C<encoding>
+to anything other than C<groff> or C<roff> will be ignored and no encoding
+will be done by Pod::Man.  It will instead rely on the encoding layer to make
+whatever output encoding transformations are desired.
+
+WARNING: The input encoding of the POD source is independent from the output
+encoding, and setting this option does not affect the interpretation of the
+POD input.  Unless your POD source is US-ASCII, its encoding should be
+declared with the C<=encoding> command in the source.  If this is not done,
+Pod::Simple will will attempt to guess the encoding and may be successful if
+it's Latin-1 or UTF-8, but it will produce warnings.  See L<perlpod(1)> for
+more information.
 
 =item errors
 
-How to report errors.  C<die> says to throw an exception on any POD
-formatting error.  C<stderr> says to report errors on standard error, but
-not to throw an exception.  C<pod> says to include a POD ERRORS section
-in the resulting documentation summarizing the errors.  C<none> ignores
-POD errors entirely, as much as possible.
+[2.27] How to report errors.  C<die> says to throw an exception on any POD
+formatting error.  C<stderr> says to report errors on standard error, but not
+to throw an exception.  C<pod> says to include a POD ERRORS section in the
+resulting documentation summarizing the errors.  C<none> ignores POD errors
+entirely, as much as possible.
 
 The default is C<pod>.
 
 =item fixed
 
-The fixed-width font to use for verbatim text and code.  Defaults to
-C<CW>.  Some systems may want C<CR> instead.  Only matters for B<troff>
-output.
+[1.00] The fixed-width font to use for verbatim text and code.  Defaults to
+C<CW>.  Some systems prefer C<CR> instead.  Only matters for B<troff> output.
 
 =item fixedbold
 
-Bold version of the fixed-width font.  Defaults to C<CB>.  Only matters
+[1.00] Bold version of the fixed-width font.  Defaults to C<CB>.  Only matters
 for B<troff> output.
 
 =item fixeditalic
 
-Italic version of the fixed-width font (actually, something of a misnomer,
-since most fixed-width fonts only have an oblique version, not an italic
-version).  Defaults to C<CI>.  Only matters for B<troff> output.
+[1.00] Italic version of the fixed-width font (something of a misnomer, since
+most fixed-width fonts only have an oblique version, not an italic version).
+Defaults to C<CI>.  Only matters for B<troff> output.
 
 =item fixedbolditalic
 
-Bold italic (probably actually oblique) version of the fixed-width font.
-Pod::Man doesn't assume you have this, and defaults to C<CB>.  Some
-systems (such as Solaris) have this font available as C<CX>.  Only matters
-for B<troff> output.
+[1.00] Bold italic (in theory, probably oblique in practice) version of the
+fixed-width font.  Pod::Man doesn't assume you have this, and defaults to
+C<CB>.  Some systems (such as Solaris) have this font available as C<CX>.
+Only matters for B<troff> output.
+
+=item guesswork
+
+[5.00] By default, Pod::Man applies some default formatting rules based on
+guesswork and regular expressions that are intended to make writing Perl
+documentation easier and require less explicit markup.  These rules may not
+always be appropriate, particularly for documentation that isn't about Perl.
+This option allows turning all or some of it off.
+
+The special value C<all> enables all guesswork.  This is also the default for
+backward compatibility reasons.  The special value C<none> disables all
+guesswork.  Otherwise, the value of this option should be a comma-separated
+list of one or more of the following keywords:
+
+=over 4
+
+=item functions
+
+Convert function references like C<foo()> to bold even if they have no markup.
+The function name accepts valid Perl characters for function names (including
+C<:>), and the trailing parentheses must be present and empty.
+
+=item manref
+
+Make the first part (before the parentheses) of manual page references like
+C<foo(1)> bold even if they have no markup.  The section must be a single
+number optionally followed by lowercase letters.
+
+=item quoting
+
+If no guesswork is enabled, any text enclosed in CZ<><> is surrounded by
+double quotes in nroff (terminal) output unless the contents are already
+quoted.  When this guesswork is enabled, quote marks will also be suppressed
+for Perl variables, function names, function calls, numbers, and hex
+constants.
+
+=item variables
+
+Convert Perl variable names to a fixed-width font even if they have no markup.
+This transformation will only be apparent in troff output, or some other
+output format (unlike nroff terminal output) that supports fixed-width fonts.
+
+=back
+
+Any unknown guesswork name is silently ignored (for potential future
+compatibility), so be careful about spelling.
+
+=item language
+
+[5.00] Add commands telling B<groff> that the input file is in the given
+language.  The value of this setting must be a language abbreviation for which
+B<groff> provides supplemental configuration, such as C<ja> (for Japanese) or
+C<zh> (for Chinese).
+
+Specifically, this adds:
+
+    .mso <language>.tmac
+    .hla <language>
+
+to the start of the file, which configure correct line breaking for the
+specified language.  Without these commands, groff may not know how to add
+proper line breaks for Chinese and Japanese text if the manual page is
+installed into the normal manual page directory, such as F</usr/share/man>.
+
+On many systems, this will be done automatically if the manual page is
+installed into a language-specific manual page directory, such as
+F</usr/share/man/zh_CN>.  In that case, this option is not required.
+
+Unfortunately, the commands added with this option are specific to B<groff>
+and will not work with other B<troff> and B<nroff> implementations.
 
 =item lquote
 
 =item rquote
 
-Sets the quote marks used to surround CE<lt>> text.  C<lquote> sets the
-left quote mark and C<rquote> sets the right quote mark.  Either may also
-be set to the special value C<none>, in which case no quote mark is added
-on that side of CE<lt>> text (but the font is still changed for troff
-output).
+[4.08] Sets the quote marks used to surround CE<lt>> text.  C<lquote> sets the
+left quote mark and C<rquote> sets the right quote mark.  Either may also be
+set to the special value C<none>, in which case no quote mark is added on that
+side of CE<lt>> text (but the font is still changed for troff output).
 
 Also see the C<quotes> option, which can be used to set both quotes at once.
 If both C<quotes> and one of the other options is set, C<lquote> or C<rquote>
@@ -1769,21 +1905,21 @@ overrides C<quotes>.
 
 =item name
 
-Set the name of the manual page for the C<.TH> macro.  Without this
-option, the manual name is set to the uppercased base name of the file
-being converted unless the manual section is 3, in which case the path is
-parsed to see if it is a Perl module path.  If it is, a path like
-C<.../lib/Pod/Man.pm> is converted into a name like C<Pod::Man>.  This
-option, if given, overrides any automatic determination of the name.
+[4.08] Set the name of the manual page for the C<.TH> macro.  Without this
+option, the manual name is set to the uppercased base name of the file being
+converted unless the manual section is 3, in which case the path is parsed to
+see if it is a Perl module path.  If it is, a path like C<.../lib/Pod/Man.pm>
+is converted into a name like C<Pod::Man>.  This option, if given, overrides
+any automatic determination of the name.
 
 If generating a manual page from standard input, the name will be set to
-C<STDIN> if this option is not provided.  Providing this option is strongly
-recommended to set a meaningful manual page name.
+C<STDIN> if this option is not provided.  In this case, providing this option
+is strongly recommended to set a meaningful manual page name.
 
 =item nourls
 
-Normally, LZ<><> formatting codes with a URL but anchor text are formatted
-to show both the anchor text and the URL.  In other words:
+[2.27] Normally, LZ<><> formatting codes with a URL but anchor text are
+formatted to show both the anchor text and the URL.  In other words:
 
     L<foo|http://example.com/>
 
@@ -1798,10 +1934,10 @@ important.
 
 =item quotes
 
-Sets the quote marks used to surround CE<lt>> text.  If the value is a
-single character, it is used as both the left and right quote.  Otherwise,
-it is split in half, and the first half of the string is used as the left
-quote and the second is used as the right quote.
+[4.00] Sets the quote marks used to surround CE<lt>> text.  If the value is a
+single character, it is used as both the left and right quote.  Otherwise, it
+is split in half, and the first half of the string is used as the left quote
+and the second is used as the right quote.
 
 This may also be set to the special value C<none>, in which case no quote
 marks are added around CE<lt>> text (but the font is still changed for troff
@@ -1813,82 +1949,258 @@ options is set, C<lquote> or C<rquote> overrides C<quotes>.
 
 =item release
 
-Set the centered footer for the C<.TH> macro.  By default, this is set to
-the version of Perl you run Pod::Man under.  Setting this to the empty
-string will cause some *roff implementations to use the system default
-value.
+[1.00] Set the centered footer for the C<.TH> macro.  By default, this is set
+to the version of Perl you run Pod::Man under.  Setting this to the empty
+string will cause some *roff implementations to use the system default value.
 
-Note that some system C<an> macro sets assume that the centered footer
-will be a modification date and will prepend something like "Last
-modified: ".  If this is the case for your target system, you may want to
-set C<release> to the last modified date and C<date> to the version
-number.
+Note that some system C<an> macro sets assume that the centered footer will be
+a modification date and will prepend something like C<Last modified: >.  If
+this is the case for your target system, you may want to set C<release> to the
+last modified date and C<date> to the version number.
 
 =item section
 
-Set the section for the C<.TH> macro.  The standard section numbering
-convention is to use 1 for user commands, 2 for system calls, 3 for
-functions, 4 for devices, 5 for file formats, 6 for games, 7 for
-miscellaneous information, and 8 for administrator commands.  There is a lot
-of variation here, however; some systems (like Solaris) use 4 for file
-formats, 5 for miscellaneous information, and 7 for devices.  Still others
-use 1m instead of 8, or some mix of both.  About the only section numbers
-that are reliably consistent are 1, 2, and 3.
+[1.00] Set the section for the C<.TH> macro.  The standard section numbering
+convention is to use 1 for user commands, 2 for system calls, 3 for functions,
+4 for devices, 5 for file formats, 6 for games, 7 for miscellaneous
+information, and 8 for administrator commands.  There is a lot of variation
+here, however; some systems (like Solaris) use 4 for file formats, 5 for
+miscellaneous information, and 7 for devices.  Still others use 1m instead of
+8, or some mix of both.  About the only section numbers that are reliably
+consistent are 1, 2, and 3.
 
 By default, section 1 will be used unless the file ends in C<.pm> in which
 case section 3 will be selected.
 
 =item stderr
 
-Send error messages about invalid POD to standard error instead of
-appending a POD ERRORS section to the generated *roff output.  This is
-equivalent to setting C<errors> to C<stderr> if C<errors> is not already
-set.  It is supported for backward compatibility.
+[2.19] If set to a true value, send error messages about invalid POD to
+standard error instead of appending a POD ERRORS section to the generated
+*roff output.  This is equivalent to setting C<errors> to C<stderr> if
+C<errors> is not already set.
+
+This option is for backward compatibility with Pod::Man versions that did not
+support C<errors>.  Normally, the C<errors> option should be used instead.
 
 =item utf8
 
-By default, Pod::Man produces the most conservative possible *roff output
-to try to ensure that it will work with as many different *roff
-implementations as possible.  Many *roff implementations cannot handle
-non-ASCII characters, so this means all non-ASCII characters are converted
-either to a *roff escape sequence that tries to create a properly accented
-character (at least for troff output) or to C<X>.
-
-If this option is set, Pod::Man will instead output UTF-8.  If your *roff
-implementation can handle it, this is the best output format to use and
-avoids corruption of documents containing non-ASCII characters.  However,
-be warned that *roff source with literal UTF-8 characters is not supported
-by many implementations and may even result in segfaults and other bad
-behavior.
-
-Be aware that, when using this option, the input encoding of your POD
-source should be properly declared unless it's US-ASCII.  Pod::Simple will
-attempt to guess the encoding and may be successful if it's Latin-1 or
-UTF-8, but it will produce warnings.  Use the C<=encoding> command to
-declare the encoding.  See L<perlpod(1)> for more information.
+[2.21] This option used to set the output encoding to UTF-8.  Since this is
+now the default, it is ignored and does nothing.
 
 =back
 
-The standard Pod::Simple method parse_file() takes one argument naming the
-POD file to read from.  By default, the output is sent to C<STDOUT>, but
-this can be changed with the output_fh() method.
+=back
 
-The standard Pod::Simple method parse_from_file() takes up to two
-arguments, the first being the input file to read POD from and the second
-being the file to write the formatted output to.
+=head1 INSTANCE METHODS
 
-You can also call parse_lines() to parse an array of lines or
-parse_string_document() to parse a document already in memory.  As with
-parse_file(), parse_lines() and parse_string_document() default to sending
-their output to C<STDOUT> unless changed with the output_fh() method.  Be
-aware that parse_lines() and parse_string_document() both expect raw bytes,
-not decoded characters.
+As a derived class from Pod::Simple, Pod::Man supports the same methods and
+interfaces.  See L<Pod::Simple> for all the details.  This section summarizes
+the most-frequently-used methods and the ones added by Pod::Man.
 
-To put the output from any parse method into a string instead of a file
-handle, call the output_string() method instead of output_fh().
+=over 4
 
-See L<Pod::Simple> for more specific details on the methods available to
-all derived parsers.
+=item output_fh(FH)
+
+Direct the output from parse_file(), parse_lines(), or parse_string_document()
+to the file handle FH instead of C<STDOUT>.
+
+=item output_string(REF)
+
+Direct the output from parse_file(), parse_lines(), or parse_string_document()
+to the scalar variable pointed to by REF, rather than C<STDOUT>.  For example:
+
+    my $man = Pod::Man->new();
+    my $output;
+    $man->output_string(\$output);
+    $man->parse_file('/some/input/file');
+
+Be aware that the output in that variable will already be encoded in UTF-8.
+
+=item parse_file(PATH)
+
+Read the POD source from PATH and format it.  By default, the output is sent
+to C<STDOUT>, but this can be changed with the output_fh() or output_string()
+methods.
+
+=item parse_from_file(INPUT, OUTPUT)
+
+=item parse_from_filehandle(FH, OUTPUT)
+
+Read the POD source from INPUT, format it, and output the results to OUTPUT.
+
+parse_from_filehandle() is provided for backward compatibility with older
+versions of Pod::Man.  parse_from_file() should be used instead.
+
+=item parse_lines(LINES[, ...[, undef]])
+
+Parse the provided lines as POD source, writing the output to either C<STDOUT>
+or the file handle set with the output_fh() or output_string() methods.  This
+method can be called repeatedly to provide more input lines.  An explicit
+C<undef> should be passed to indicate the end of input.
+
+This method expects raw bytes, not decoded characters.
+
+=item parse_string_document(INPUT)
+
+Parse the provided scalar variable as POD source, writing the output to either
+C<STDOUT> or the file handle set with the output_fh() or output_string()
+methods.
+
+This method expects raw bytes, not decoded characters.
+
+=back
+
+=head1 ENCODING
+
+As of Pod::Man 5.00, the default output encoding for Pod::Man is UTF-8.  This
+should work correctly on any modern system that uses either B<groff> (most
+Linux distributions) or B<mandoc> (Alpine Linux and most BSD variants,
+including macOS).
+
+The user will probably have to use a UTF-8 locale to see correct output.  This
+may be done by default; if not, set the LANG or LC_CTYPE environment variables
+to an appropriate local.  The locale C<C.UTF-8> is available on most systems
+if one wants correct output without changing the other things locales affect,
+such as collation.
+
+The backward-compatible output format used in Pod::Man versions before 5.00 is
+available by setting the C<encoding> option to C<roff>.  This may produce
+marginally nicer results on older UNIX versions that do not use B<groff> or
+B<mandoc>, but none of the available options will correctly render Unicode
+characters on those systems.
+
+Below are some additional details about how this choice was made and some
+discussion of alternatives.
+
+=head2 History
+
+The default output encoding for Pod::Man has been a long-standing problem.
+B<troff> and B<nroff> predate Unicode by a significant margin, and their
+implementations for many UNIX systems reflect that legacy.  It's common for
+Unicode to not be supported in any form.
+
+Because of this, versions of Pod::Man prior to 5.00 maintained the highly
+conservative output of the original pod2man, which output pure ASCII with
+complex macros to simulate common western European accented characters when
+processed with troff.  The nroff output was awkward and sometimes incorrect,
+and characters not used in western European scripts were replaced with C<X>.
+This choice maximized backwards compatibility with B<man> and
+B<nroff>/B<troff> implementations at the cost of incorrect rendering of many
+POD documents, particularly those containing people's names.
+
+The modern implementations, B<groff> (used in most Linux distributions) and
+B<mandoc> (used by most BSD variants), do now support Unicode.  Other UNIX
+systems often do not, but they're now a tiny minority of the systems people
+use on a daily basis.  It's increasingly common (for very good reasons) to use
+Unicode characters for POD documents rather than using ASCII conversions of
+people's names or avoiding non-English text, making the limitations in the old
+output format more apparent.
+
+Four options have been proposed to fix this:
+
+=over 2
+
+=item * 
+
+Optionally support UTF-8 output but don't change the default.  This is the
+approach taken since Pod::Man 2.1.0, which added the C<utf8> option.  Some
+Pod::Man users use this option for better output on platforms known to support
+Unicode, but since the defaults have not changed, people continued to
+encounter (and file bug reports about) the poor default rendering.
+
+=item *
+
+Convert characters to troff C<\(xx> escapes.  This requires maintaining a
+large translation table and addresses only a tiny part of the problem, since
+many Unicode characters have no standard troff name.  B<groff> has the largest
+list, but if one is willing to assume B<groff> is the formatter, the next
+option is better.
+
+=item *
+
+Convert characters to groff C<\[uNNNN]> escapes.  This is implemented as the
+C<groff> encoding for those who want to use it, and is supported by both
+B<groff> and B<mandoc>.  However, it is no better than UTF-8 output for
+portability to other implementations.  See L</Testing results> for more
+details.
+
+=item *
+
+Change the default output format to UTF-8 and ask those who want maximum
+backward compatibility to explicitly select the old encoding.  This fixes the
+issue for most users at the cost of backwards compatibility.  While the
+rendering of non-ASCII characters is different on older systems that don't
+support UTF-8, it's not always worse than the old output.
+
+=back
+
+Pod::Man 5.00 and later makes the last choice.  This arguably produces worse
+output when manual pages are formatted with B<troff> into PostScript or PDF,
+but doing this is rare and normally manual, so the encoding can be changed in
+those cases.  The older output encoding is available by setting C<encoding> to
+C<roff>.
+
+=head2 Testing results
+
+Here is the results of testing C<encoding> values of C<utf-8> and C<groff> on
+various operating systems.  The testing methodology was to create F<man/man1>
+in the current directory, copy F<encoding.utf8> or F<encoding.groff> from the
+podlators 5.00 distribution to F<man/man1/encoding.1>, and then run:
+
+    LANG=C.UTF-8 MANPATH=$(pwd)/man man 1 encoding
+
+If the locale is not explicitly set to one that includes UTF-8, the Unicode
+characters were usually converted to ASCII (by, for example, dropping an
+accent) or deleted or replaced with C<< <?> >> if there was no conversion.
+
+Tested on 2022-09-25.  Many thanks to the GCC Compile Farm project for access
+to testing hosts.
+
+    OS                   UTF-8      groff
+    ------------------   -------    -------
+    AIX 7.1              no [1]     no [2]
+    Alpine 3.15.0        yes        yes
+    CentOS 7.9           yes        yes
+    Debian 7             yes        yes
+    FreeBSD 13.0         yes        yes
+    NetBSD 9.2           yes        yes
+    OpenBSD 7.1          yes        yes
+    openSUSE Leap 15.4   yes        yes
+    Solaris 10           yes        no [2]
+    Solaris 11           no [3]     no [3]
+
+I did not have access to a macOS system for testing, but since it uses
+B<mandoc>, it's behavior is probably the same as the BSD hosts.
+
+Notes:
+
+=over 4
+
+=item [1]
+
+Unicode characters were converted to one or two random ASCII characters
+unrelated to the original character.
+
+=item [2]
+
+Unicode characters were shown as the body of the groff escape rather than the
+indicated character (in other words, text like C<[u00EF]>).
+
+=item [3]
+
+Unicode characters were deleted entirely, as if they weren't there.  Using
+C<nroff -man> instead of B<man> to format the page showed the same results as
+Solaris 10.  Using C<groff -k -man -Tutf8> to format the page produced the
+correct output.
+
+=back
+
+PostScript and PDF output using groff on a Debian 12 system do not support
+combining accent marks or SMP characters due to a lack of support in the
+default output font.
+
+Testing on additional platforms is welcome.  Please let the author know if you
+have additional results.
 
 =head1 DIAGNOSTICS
 
@@ -1924,9 +2236,9 @@ option was set to C<die>.
 
 =item PERL_CORE
 
-If set and Encode is not available, silently fall back to non-UTF-8 mode
-without complaining to standard error.  This environment variable is set
-during Perl core builds, which build Encode after podlators.  Encode is
+If set and Encode is not available, silently fall back to an encoding of
+C<groff> without complaining to standard error.  This environment variable is
+set during Perl core builds, which build Encode after podlators.  Encode is
 expected to not (yet) be available in that case.
 
 =item POD_MAN_DATE
@@ -1955,65 +2267,104 @@ reliable if this variable overrode the timestamp of the input file.)
 
 =back
 
+=head1 COMPATIBILITY
+
+Pod::Man 1.02 (based on L<Pod::Parser>) was the first version included with
+Perl, in Perl 5.6.0.
+
+The current API based on L<Pod::Simple> was added in Pod::Man 2.00.  Pod::Man
+2.04 was included in Perl 5.9.3, the first version of Perl to incorporate
+those changes.  This is the first version that correctly supports all modern
+POD syntax.  The parse_from_filehandle() method was re-added for backward
+compatibility in Pod::Man 2.09, included in Perl 5.9.4.
+
+Support for anchor text in LZ<><> links of type URL was added in Pod::Man
+2.23, included in Perl 5.11.5.
+
+parse_lines(), parse_string_document(), and parse_file() set a default output
+file handle of C<STDOUT> if one was not already set as of Pod::Man 2.28,
+included in Perl 5.19.5.
+
+Support for SOURCE_DATE_EPOCH and POD_MAN_DATE was added in Pod::Man 4.00,
+included in Perl 5.23.7, and generated dates were changed to use UTC instead
+of the local time zone.  This is also the first release that aligned the
+module version and the version of the podlators distribution.  All modules
+included in podlators, and the podlators distribution itself, share the same
+version number from this point forward.
+
+Pod::Man 4.10, included in Perl 5.27.8, changed the formatting for manual page
+references and function names to bold instead of italic, following the current
+Linux manual page standard.
+
+Pod::Man 5.00 changed the default output encoding to UTF-8, overridable with
+the new C<encoding> option.  It also fixed problems with bold or italic
+extending too far when used with CZ<><> escapes, and began converting Unicode
+zero-width spaces (U+200B) to the C<\:> *roff escape.  It also dropped
+attempts to add subtle formatting corrections in the output that would only be
+visible when typeset with B<troff>, which had previously been a significant
+source of bugs.
+
 =head1 BUGS
 
-Encoding handling assumes that PerlIO is available and does not work
-properly if it isn't.  The C<utf8> option is therefore not supported
-unless Perl is built with PerlIO support.
-
-There is currently no way to turn off the guesswork that tries to format
-unmarked text appropriately, and sometimes it isn't wanted (particularly
-when using POD to document something other than Perl).  Most of the work
-toward fixing this has now been done, however, and all that's still needed
-is a user interface.
-
-The NAME section should be recognized specially and index entries emitted
-for everything in that section.  This would have to be deferred until the
-next section, since extraneous things in NAME tends to confuse various man
-page processors.  Currently, no index entries are emitted for anything in
-NAME.
+There are numerous bugs and language-specific assumptions in the nroff
+fallbacks for accented characters in the C<roff> encoding.  Since the point of
+this encoding is backward compatibility with the output from earlier versions
+of Pod::Man, and it is deprecated except when necessary to support old
+systems, those bugs are unlikely to ever be fixed.
 
 Pod::Man doesn't handle font names longer than two characters.  Neither do
-most B<troff> implementations, but GNU troff does as an extension.  It would
-be nice to support as an option for those who want to use it.
-
-The preamble added to each output file is rather verbose, and most of it
-is only necessary in the presence of non-ASCII characters.  It would
-ideally be nice if all of those definitions were only output if needed,
-perhaps on the fly as the characters are used.
-
-Pod::Man is excessively slow.
+most B<troff> implementations, but groff does as an extension.  It would be
+nice to support as an option for those who want to use it.
 
 =head1 CAVEATS
 
-If Pod::Man is given the C<utf8> option, the encoding of its output file
-handle will be forced to UTF-8 if possible, overriding any existing
-encoding.  This will be done even if the file handle is not created by
-Pod::Man and was passed in from outside.  This maintains consistency
-regardless of PERL_UNICODE and other settings.
+=head2 Sentence spacing
 
-The handling of hyphens and em dashes is somewhat fragile, and one may get
-the wrong one under some circumstances.  This should only matter for
-B<troff> output.
+Pod::Man copies the input spacing verbatim to the output *roff document.  This
+means your output will be affected by how B<nroff> generally handles sentence
+spacing.
 
-When and whether to use small caps is somewhat tricky, and Pod::Man doesn't
-necessarily get it right.
+B<nroff> dates from an era in which it was standard to use two spaces after
+sentences, and will always add two spaces after a line-ending period (or
+similar punctuation) when reflowing text.  For example, the following input:
 
-Converting neutral double quotes to properly matched double quotes doesn't
-work unless there are no formatting codes between the quote marks.  This
-only matters for troff output.
+    =pod
+
+    One sentence.
+    Another sentence.
+
+will result in two spaces after the period when the text is reflowed.  If you
+use two spaces after sentences anyway, this will be consistent, although you
+will have to be careful to not end a line with an abbreviation such as C<e.g.>
+or C<Ms.>.  Output will also be consistent if you use the *roff style guide
+(and L<XKCD 1285|https://xkcd.com/1285/>) recommendation of putting a line
+break after each sentence, although that will consistently produce two spaces
+after each sentence, which may not be what you want.
+
+If you prefer one space after sentences (which is the more modern style), you
+will unfortunately need to ensure that no line in the middle of a paragraph
+ends in a period or similar sentence-ending paragraph.  Otherwise, B<nroff>
+will add a two spaces after that sentence when reflowing, and your output
+document will have inconsistent spacing.
+
+=head2 Hyphens
+
+The handling of hyphens versus dashes is somewhat fragile, and one may get a
+the wrong one under some circumstances.  This will normally only matter for
+line breaking and possibly for troff output.
 
 =head1 AUTHOR
 
-Russ Allbery <rra@cpan.org>, based I<very> heavily on the original B<pod2man>
-by Tom Christiansen <tchrist@mox.perl.com>.  The modifications to work with
-Pod::Simple instead of Pod::Parser were originally contributed by Sean Burke
-<sburke@cpan.org> (but I've since hacked them beyond recognition and all bugs
-are mine).
+Written by Russ Allbery <rra@cpan.org>, based on the original B<pod2man> by
+Tom Christiansen <tchrist@mox.perl.com>.
+
+The modifications to work with Pod::Simple instead of Pod::Parser were
+contributed by Sean Burke <sburke@cpan.org>, but I've since hacked them beyond
+recognition and all bugs are mine.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999-2010, 2012-2019 Russ Allbery <rra@cpan.org>
+Copyright 1999-2010, 2012-2020, 2022 Russ Allbery <rra@cpan.org>
 
 Substantial contributions by Sean Burke <sburke@cpan.org>.
 
@@ -2022,18 +2373,19 @@ under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<Pod::Simple>, L<perlpod(1)>, L<pod2man(1)>, L<nroff(1)>, L<troff(1)>,
-L<man(1)>, L<man(7)>
+L<Encode::Supported>, L<Pod::Simple>, L<perlpod(1)>, L<pod2man(1)>,
+L<nroff(1)>, L<troff(1)>, L<man(1)>, L<man(7)>
 
 Ossanna, Joseph F., and Brian W. Kernighan.  "Troff User's Manual,"
 Computing Science Technical Report No. 54, AT&T Bell Laboratories.  This is
 the best documentation of standard B<nroff> and B<troff>.  At the time of
 this writing, it's available at L<http://www.troff.org/54.pdf>.
 
-The man page documenting the man macro set may be L<man(5)> instead of
-L<man(7)> on your system.  Also, please see L<pod2man(1)> for extensive
-documentation on writing manual pages if you've not done it before and
-aren't familiar with the conventions.
+The manual page documenting the man macro set may be L<man(5)> instead of
+L<man(7)> on your system.
+
+See L<perlpodstyle(1)> for documentation on writing manual pages in POD if
+you've not done it before and aren't familiar with the conventions.
 
 The current version of this module is always available from its web site at
 L<https://www.eyrie.org/~eagle/software/podlators/>.  It is also part of the

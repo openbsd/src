@@ -33,7 +33,7 @@ my %extra_input_pods = ( 'dist/ExtUtils-ParseXS/lib/perlxs.pod' => 1 );
 # the legal section names, or an error is thrown.  $section_name_variable must
 # be one of the legal section name variables defined below; these expand to
 # legal section names.  This form is used so that minor wording changes in
-# these titles can be confied to this file.  All the names of the variables
+# these titles can be confined to this file.  All the names of the variables
 # end in '_scn'; this suffix is optional in the apidoc_section lines.
 #
 # All API elements defined between this line and the next 'apidoc_section'
@@ -369,7 +369,7 @@ my $apidoc_re = qr/ ^ (\s*)            # $1
                       (.*?)            # $7
                       \s* \n /x;
 # Only certain flags, dealing with display, are acceptable for apidoc_item
-my $display_flags = "fFnDopsTx";
+my $display_flags = "fFnDopTx;";
 
 sub check_api_doc_line ($$) {
     my ($file, $in) = @_;
@@ -529,12 +529,18 @@ sub autodoc ($$) { # parse a file and extract documentation info
             }
 
             die "flag '$1' is not legal (for function $element_name (from $file))"
-                        if $flags =~ / ( [^AabCDdEeFfGhiIMmNnTOoPpRrSsUuWXxy] ) /x;
+                        if $flags =~ / ( [^AabCDdEeFfGhiIMmNnTOoPpRrSsUuWXxy;#] ) /x;
 
             die "'u' flag must also have 'm' or 'y' flags' for $element_name"
                                             if $flags =~ /u/ && $flags !~ /[my]/;
             warn ("'$element_name' not \\w+ in '$proto_in_file' in $file")
                         if $flags !~ /N/ && $element_name !~ / ^ [_[:alpha:]] \w* $ /x;
+
+            if ($flags =~ /#/) {
+                die "Return type must be empty for '$element_name'"
+                                                                   if $ret_type;
+                $ret_type = '#ifdef';
+            }
 
             if (exists $seen{$element_name} && $flags !~ /h/) {
                 die ("'$element_name' in $file was already documented in $seen{$element_name}");
@@ -633,21 +639,23 @@ sub autodoc ($$) { # parse a file and extract documentation info
         if ($element_name) {
 
             # Here, we have accumulated into $text, the pod for $element_name
-            my $where = $flags =~ /A/ ? 'api' : 'guts';
+            my $where = $flags =~ /A/ ? 'api' : 'intern';
 
             die "No =for apidoc_section nor =head1 in $file for '$element_name'\n"
                                                     unless defined $section;
-            if (exists $docs{$where}{$section}{$element_name}) {
+            my $is_link_only = ($flags =~ /h/);
+            if (! $is_link_only && exists $docs{$where}{$section}{$element_name}) {
                 warn "$0: duplicate API entry for '$element_name' in"
                     . " $where/$section\n";
                 next;
             }
 
             # Override the text with just a link if the flags call for that
-            my $is_link_only = ($flags =~ /h/);
             if ($is_link_only) {
                 if ($file_is_C) {
-                    die "Can't currently handle link with items to it:\n$in" if @items;
+                    die "Can't currently handle link with items to it:\n$in"
+                                                                       if @items;
+                    $docs{$where}{$section}{X_tags}{$element_name} = $file;
                     redo;    # Don't put anything if C source
                 }
 
@@ -664,7 +672,7 @@ sub autodoc ($$) { # parse a file and extract documentation info
                 # Don't output a usage example for linked to documentation if
                 # it is trivial (has no arguments) and we aren't to add a
                 # semicolon
-                $flags .= 'U' if $flags =~ /n/ && $flags !~ /[Us]/;
+                $flags .= 'U' if $flags =~ /n/ && $flags !~ /[U;]/;
 
                 # Keep track of all the pod files that we refer to.
                 push $described_elsewhere{$podname}->@*, $podname;
@@ -1313,7 +1321,9 @@ sub docout ($$$) { # output the docs for one function group
         if (   ($item_flags =~ /p/ && $item_flags =~ /o/ && $item_flags !~ /M/)
 
                 # Can't handle threaded varargs
-            || ($item_flags =~ /f/ && $item_flags !~ /T/))
+            || (   $item_flags =~ /f/
+                && $item_flags !~ /T/
+                && $item_name !~ /strftime/))
         {
             $item->{name} = "Perl_$item_name";
             print $fh <<~"EOT";
@@ -1328,8 +1338,8 @@ sub docout ($$$) { # output the docs for one function group
 
     if ($flags =~ /[Uy]/) { # no usage; typedefs are considered simple enough
                             # to never warrant a usage line
-        warn("U and s flags are incompatible")
-                                            if $flags =~ /U/ && $flags =~ /s/;
+        warn("U and ; flags are incompatible")
+                                            if $flags =~ /U/ && $flags =~ /;/;
         # nothing
     } else {
 
@@ -1361,11 +1371,12 @@ sub docout ($$$) { # output the docs for one function group
             my @base_args = $items[0]->{args}->@*;
             my $base_thread_context = $items[0]->{flags} =~ /T/;
             for (my $i = 1; $i < @items; $i++) {
-                no warnings 'experimental::smartmatch';
                 my $item = $items[$i];
+                my $args_are_equal = $item->{args}->@* == @base_args
+                  && !grep $item->{args}[$_] ne $base_args[$_], keys @base_args;
                 $need_individual_usage = 1
                                     if    $item->{ret_type} ne $base_ret_type
-                                    || ! ($item->{args}->@* ~~ @base_args)
+                                    || !  $args_are_equal
                                     ||   (   $item->{flags} =~ /T/
                                           != $base_thread_context);
                 my $ret_length = length $item->{ret_type};
@@ -1492,7 +1503,7 @@ sub docout ($$$) { # output the docs for one function group
                     print $fh ")";
                 }
 
-                print $fh ";" if $item_flags =~ /s/; # semicolon: "dTHR;"
+                print $fh ";" if $item_flags =~ /;/; # semicolon: "dTHR;"
                 print $fh "\n";
 
                 # Only the first entry is normally displayed
@@ -1508,44 +1519,14 @@ sub docout ($$$) { # output the docs for one function group
 }
 
 sub construct_missings_section {
-    my ($pod_name, $missings_ref) = @_;
+    my ($missings_hdr, $missings_ref) = @_;
     my $text = "";
 
-    return $text unless $missings_ref->@*;
+    $text .= "$missings_hdr\n" . format_pod_indexes($missings_ref);
 
-    $text .= <<~EOT;
-
-        =head1 $undocumented_scn
-
-        EOT
-    if ($pod_name eq 'perlapi') {
-        $text .= <<~'EOT';
-            The following functions have been flagged as part of the public
-            API, but are currently undocumented.  Use them at your own risk,
-            as the interfaces are subject to change.  Functions that are not
-            listed in this document are not intended for public use, and
-            should NOT be used under any circumstances.
-
-            If you feel you need to use one of these functions, first send
-            email to L<perl5-porters@perl.org|mailto:perl5-porters@perl.org>.
-            It may be that there is a good reason for the function not being
-            documented, and it should be removed from this list; or it may
-            just be that no one has gotten around to documenting it.  In the
-            latter case, you will be asked to submit a patch to document the
-            function.  Once your patch is accepted, it will indicate that the
-            interface is stable (unless it is explicitly marked otherwise) and
-            usable by you.
-            EOT
+    if ($missings_ref->@* == 0) {
+        return $text . "\nThere are currently no items of this type\n";
     }
-    else {
-        $text .= <<~'EOT';
-            The following functions are currently undocumented.  If you use
-            one of them, you may wish to consider creating and submitting
-            documentation for it.
-            EOT
-    }
-
-    $text .= "\n" . format_pod_indexes($missings_ref);
 
     # Sort the elements.
     my @missings = sort dictionary_order $missings_ref->@*;
@@ -1654,19 +1635,74 @@ sub construct_missings_section {
 }
 
 sub dictionary_order {
-    # Do a case-insensitive dictionary sort, with only alphabetics
-    # significant, falling back to using everything for determinancy
-    return (uc($a =~ s/[[:^alpha:]]//r) cmp uc($b =~ s/[[:^alpha:]]//r))
-           || uc($a) cmp uc($b)
-           || $a cmp $b;
+    # Do a case-insensitive dictionary sort, falling back in stages to using
+    # everything for determinancy.  The initial comparison ignores
+    # all non-word characters and non-trailing underscores and digits, with
+    # trailing ones collating to after any other characters.  This collation
+    # order continues in case tie breakers are needed; sequences of digits
+    # that do get looked at always compare numerically.  The first tie
+    # breaker takes all digits and underscores into account.  The next tie
+    # breaker uses a caseless character-by-character comparison of everything
+    # (including non-word characters).  Finally is a cased comparison.
+    #
+    # This gives intuitive results, but obviously could be tweaked.
+
+    no warnings 'non_unicode';
+
+    local $a = $a;
+    local $b = $b;
+
+    # Convert all digit sequences to same length with leading zeros, so for
+    # example, 8 will compare less than 16 (using a fill length value that
+    # should be longer than any sequence in the input).
+    $a =~ s/(\d+)/sprintf "%06d", $1/ge;
+    $b =~ s/(\d+)/sprintf "%06d", $1/ge;
+
+    # Translate any underscores and digits so they compare after all Unicode
+    # characters
+    $a =~ tr[_0-9]/\x{110000}-\x{11000A}/;
+    $b =~ tr[_0-9]/\x{110000}-\x{11000A}/;
+
+    use feature 'state';
+    # Modify \w, \W to reflect the changes.
+    state $ud = '\x{110000}-\x{11000A}';    # xlated underscore, digits
+    state $w = "\\w$ud";                    # new \w string
+    state $mod_w = qr/[$w]/;
+    state $mod_W = qr/[^$w]/;
+
+    # Only \w for initial comparison
+    my $a_only_word = uc($a =~ s/$mod_W//gr);
+    my $b_only_word = uc($b =~ s/$mod_W//gr);
+
+    # And not initial nor interior underscores nor digits (by squeezing them
+    # out)
+    my $a_stripped = $a_only_word =~ s/ (*atomic:[$ud]+) (*pla: $mod_w ) //grxx;
+    my $b_stripped = $b_only_word =~ s/ (*atomic:[$ud]+) (*pla: $mod_w ) //grxx;
+
+    # If the stripped versions differ, use that as the comparison.
+    my $cmp = $a_stripped cmp $b_stripped;
+    return $cmp if $cmp;
+
+    # For the first tie breaker, repeat, but consider initial and interior
+    # underscores and digits, again having those compare after all Unicode
+    # characters
+    $cmp = $a_only_word cmp $b_only_word;
+    return $cmp if $cmp;
+
+    # Next tie breaker is just a caseless comparison
+    $cmp = uc($a) cmp uc($b);
+    return $cmp if $cmp;
+
+    # Finally a straight comparison
+    return $a cmp $b;
 }
 
 sub output {
-    my ($podname, $header, $dochash, $missings_ref, $footer) = @_;
+    my ($podname, $header, $dochash, $footer, @missings_refs) = @_;
     #
     # strip leading '|' from each line which had been used to hide
     # pod from pod checkers.
-    s/^\|//gm for $header, $footer;
+    s/^\|//gm for $header, $footer, @missings_refs;
 
     my $fh = open_new("pod/$podname.pod", undef,
                       {by => "$0 extracting documentation",
@@ -1684,6 +1720,12 @@ sub output {
         }
 
         print $fh "\n=head1 $section_name\n";
+
+        if ($section_info->{X_tags}) {
+            print $fh "X<$_>" for sort keys $section_info->{X_tags}->%*;
+            print $fh "\n";
+            delete $section_info->{X_tags};
+        }
 
         if ($podname eq 'perlapi') {
             print $fh "\n", $valid_sections{$section_name}{header}, "\n"
@@ -1703,7 +1745,9 @@ sub output {
             }
         }
         else {
-            print $fh "\nThere are only public API items currently in $section_name\n";
+            my $pod_type = ($podname eq 'api') ? "public" : "internal";
+            print $fh "\nThere are currently no $pod_type API items in ",
+                      $section_name, "\n";
         }
 
         print $fh "\n", $valid_sections{$section_name}{footer}, "\n"
@@ -1711,7 +1755,23 @@ sub output {
                             && defined $valid_sections{$section_name}{footer};
     }
 
-    print $fh construct_missings_section($podname, $missings_ref);
+
+    my $first_time = 1;
+    while (1) {
+        my $missings_hdr = shift @missings_refs or last;
+        my $missings_ref = shift @missings_refs or die "Foo";
+
+        if ($first_time) {
+            $first_time = 0;
+            print $fh <<~EOT;
+
+                =head1 $undocumented_scn
+
+                EOT
+        }
+
+        print $fh construct_missings_section($missings_hdr, $missings_ref);
+    }
 
     print $fh "\n$footer\n=cut\n";
 
@@ -1719,14 +1779,16 @@ sub output {
 }
 
 foreach (@{(setup_embed())[0]}) {
-    next if @$_ < 2;
-    my ($flags, $ret_type, $func, @args) = @$_;
-    s/\b(?:NN|NULLOK)\b\s+//g for @args;
+    my $embed= $_->{embed}
+        or next;
+    my ($flags, $ret_type, $func, $args) = @{$embed}{qw(flags return_type name args)};
+    my @munged_args= @$args;
+    s/\b(?:NN|NULLOK)\b\s+//g for @munged_args;
 
     $funcflags{$func} = {
                          flags => $flags,
                          ret_type => $ret_type,
-                         args => \@args,
+                         args => \@munged_args,
                         };
 }
 
@@ -1761,10 +1823,26 @@ foreach (sort keys %missing) {
 
 # List of funcs in the public API that aren't also marked as core-only,
 # experimental nor deprecated.
-my @missing_api = grep $funcflags{$_}{flags} =~ /A/
-                    && $funcflags{$_}{flags} !~ /[xD]/
-                    && !$docs{api}{$_}, keys %funcflags;
+
+my @undocumented_api =    grep {        $funcflags{$_}{flags} =~ /A/
+                                   && ! $docs{api}{$_}
+                               } keys %funcflags;
+my @undocumented_intern = grep {        $funcflags{$_}{flags} !~ /[AS]/
+                                   && ! $docs{intern}{$_}
+                               } keys %funcflags;
+my @undocumented_deprecated_api    = grep { $funcflags{$_}{flags} =~ /D/ }
+                                                            @undocumented_api;
+my @undocumented_deprecated_intern = grep { $funcflags{$_}{flags} =~ /D/ }
+                                                           @undocumented_intern;
+my @undocumented_experimental_api    =  grep { $funcflags{$_}{flags} =~ /x/ }
+                                                            @undocumented_api;
+my @undocumented_experimental_intern =  grep { $funcflags{$_}{flags} =~ /x/ }
+                                                           @undocumented_intern;
+my @missing_api = grep { $funcflags{$_}{flags} !~ /[xD]/ } @undocumented_api;
 push @missing_api, keys %missing_macros;
+
+my @missing_intern = grep { $funcflags{$_}{flags} !~ /[xD]/ }
+                                                           @undocumented_intern;
 
 my @other_places = ( qw(perlclib ), keys %described_elsewhere );
 my $places_other_than_intern = join ", ",
@@ -1785,7 +1863,9 @@ my $section_list = join "\n\n", map { "=item L</$_>" }
                                 sort(dictionary_order keys %valid_sections),
                                 $undocumented_scn;  # Keep last
 
-output('perlapi', <<"_EOB_", $docs{api}, \@missing_api, <<"_EOE_");
+# Leading '|' is to hide these lines from pod checkers.  khw is unsure if this
+# is still needed.
+my $api_hdr = <<"_EOB_";
 |=encoding UTF-8
 |
 |=head1 NAME
@@ -1826,7 +1906,7 @@ output('perlapi', <<"_EOB_", $docs{api}, \@missing_api, <<"_EOE_");
 |
 |Note that all Perl API global variables must be referenced with the C<PL_>
 |prefix.  Again, those not listed here are not to be used by extension writers,
-|and can be changed or removed without notice; same with macros.
+|and may be changed or removed without notice; same with macros.
 |Some macros are provided for compatibility with the older,
 |unadorned names, but this support may be disabled in a future release.
 |
@@ -1870,6 +1950,8 @@ output('perlapi', <<"_EOB_", $docs{api}, \@missing_api, <<"_EOE_");
 |
 |The listing below is alphabetical, case insensitive.
 _EOB_
+
+my $api_footer = <<"_EOE_";
 |=head1 AUTHORS
 |
 |Until May 1997, this document was maintained by Jeff Okamoto
@@ -1889,11 +1971,45 @@ _EOB_
 |F<config.h>, $places_other_than_api
 _EOE_
 
-# List of non-static internal functions
-my @missing_guts =
- grep $funcflags{$_}{flags} !~ /[AS]/ && !$docs{guts}{$_}, keys %funcflags;
+my $api_missings_hdr = <<'_EOT_';
+|The following functions have been flagged as part of the public
+|API, but are currently undocumented.  Use them at your own risk,
+|as the interfaces are subject to change.  Functions that are not
+|listed in this document are not intended for public use, and
+|should NOT be used under any circumstances.
+|
+|If you feel you need to use one of these functions, first send
+|email to L<perl5-porters@perl.org|mailto:perl5-porters@perl.org>.
+|It may be that there is a good reason for the function not being
+|documented, and it should be removed from this list; or it may
+|just be that no one has gotten around to documenting it.  In the
+|latter case, you will be asked to submit a patch to document the
+|function.  Once your patch is accepted, it will indicate that the
+|interface is stable (unless it is explicitly marked otherwise) and
+|usable by you.
+_EOT_
 
-output('perlintern', <<'_EOB_', $docs{guts}, \@missing_guts, <<"_EOE_");
+my $api_experimental_hdr = <<"_EOT_";
+|
+|Next are the API-flagged elements that are considered experimental.  Using one
+|of these is even more risky than plain undocumented ones.  They are listed
+|here because they should be listed somewhere (so their existence doesn't get
+|lost) and this is the best place for them.
+_EOT_
+
+my $api_deprecated_hdr = <<"_EOT_";
+|
+|Finally are deprecated undocumented API elements.
+|Do not use any for new code; remove all occurrences of all of these from
+|existing code.
+_EOT_
+
+output('perlapi', $api_hdr, $docs{api}, $api_footer,
+       $api_missings_hdr, \@missing_api,
+       $api_experimental_hdr, \@undocumented_experimental_api,
+       $api_deprecated_hdr, \@undocumented_deprecated_api);
+
+my $intern_hdr = <<"_EOB_";
 |=head1 NAME
 |
 |perlintern - autogenerated documentation of purely B<internal>
@@ -1910,6 +2026,8 @@ output('perlintern', <<'_EOB_', $docs{guts}, \@missing_guts, <<"_EOE_");
 |It has the same sections as L<perlapi>, though some may be empty.
 |
 _EOB_
+
+my $intern_footer = <<"_EOE_";
 |
 |=head1 AUTHORS
 |
@@ -1921,3 +2039,33 @@ _EOB_
 |
 |F<config.h>, $places_other_than_intern
 _EOE_
+
+my $intern_missings_hdr = <<"_EOT_";
+|
+|This section lists the elements that are otherwise undocumented.  If you use
+|any of them, please consider creating and submitting documentation for it.
+|
+|Experimental and deprecated undocumented elements are listed separately at the
+|end.
+|
+_EOT_
+
+my $intern_experimental_hdr = <<"_EOT_";
+|
+|Next are the experimental undocumented elements
+|
+_EOT_
+
+my $intern_deprecated_hdr = <<"_EOT_";
+|
+|Finally are the deprecated undocumented elements.
+|Do not use any for new code; remove all occurrences of all of these from
+|existing code.
+|
+_EOT_
+
+output('perlintern', $intern_hdr, $docs{intern}, $intern_footer,
+       $intern_missings_hdr, \@missing_intern,
+       $intern_experimental_hdr, \@undocumented_experimental_intern,
+       $intern_deprecated_hdr, \@undocumented_deprecated_intern
+      );

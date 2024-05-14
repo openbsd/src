@@ -11,7 +11,7 @@ BEGIN {
 use strict;
 
 # must use a BEGIN or the prototypes wont be respected meaning 
-    # tests could pass that shouldn't
+# tests could pass that shouldn't
 BEGIN { require "../../t/test.pl"; }
 my $out = runperl(progfile => "t/lexical_debug.pl", stderr => 1 );
 

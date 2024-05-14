@@ -11,7 +11,7 @@ BEGIN {
     require './loc_tools.pl';
 }
 
-plan(tests => 278);
+plan(tests => 281);
 
 $_ = 'david';
 $a = s/david/rules/r;
@@ -87,9 +87,9 @@ $b = $m =~ s/xxx/yyy/r;
 ok( ! defined tied($b), 's///r magic isn\'t contagious' );
 
 my $ref = \("aaa" =~ s/aaa/bbb/r);
-is (Internals::SvREFCNT($$ref), 1, 's///r does not leak');
+refcount_is $ref, 1, 's///r does not leak';
 $ref = \("aaa" =~ s/aaa/bbb/rg);
-is (Internals::SvREFCNT($$ref), 1, 's///rg does not leak');
+refcount_is $ref, 1, 's///rg does not leak';
 
 $x = 'foo';
 $_ = "x";
@@ -1010,7 +1010,7 @@ eval { for (__PACKAGE__) { s/b/c/; } };
 like $@, qr/^Modification of a read-only value/,
     'read-only COW =~ s/does not match// should croak';
 
-SKIP: {
+{
     my $a_acute = chr utf8::unicode_to_native(0xE1); # LATIN SMALL LETTER A WITH ACUTE
     my $egrave = chr utf8::unicode_to_native(0xE8);  # LATIN SMALL LETTER E WITH GRAVE
     my $u_umlaut = chr utf8::unicode_to_native(0xFC);  # LATIN SMALL LETTER U WITH DIAERESIS
@@ -1059,21 +1059,21 @@ SKIP: {
         '[perl #126319: Segmentation fault in Perl_sv_catpvn_flags with \b{sb}'
     );
 
-SKIP: {
-    if (! locales_enabled('LC_ALL')) {
-        skip "Can't test locale (maybe you are missing POSIX)", 6;
+    SKIP: {
+        if (! locales_enabled('LC_ALL')) {
+            skip "Can't test locale (maybe you are missing POSIX)", 6;
+        }
+
+        setlocale(&POSIX::LC_ALL, "C");
+        use locale;
+        is("a.b" =~ s/\b/!/gr, "!a!.!b!", '\\b matches ASCII before string, mid, and end, /l');
+        is("$a_acute.$egrave" =~ s/\b/!/gr, "$a_acute.$egrave", '\\b matches Latin1 before string, mid, and end, /l');
+        is("\x{100}\x{101}.\x{102}" =~ s/\b/!/gr, "!\x{100}\x{101}!.!\x{102}!", '\\b matches above-Latin1 before string, mid, and end, /l');
+
+        is("..." =~ s/\B/!/gr, "!.!.!.!", '\\B matches ASCII before string, mid, and end, /l');
+        is("$division$division$division" =~ s/\B/!/gr, "!$division!$division!$division!", '\\B matches Latin1 before string, mid, and end, /l');
+        is("\x{2028}\x{2028}\x{2028}" =~ s/\B/!/gr, "!\x{2028}!\x{2028}!\x{2028}!", '\\B matches above-Latin1 before string, mid, and end, /l');
     }
-
-    setlocale(&POSIX::LC_ALL, "C");
-    use locale;
-    is("a.b" =~ s/\b/!/gr, "!a!.!b!", '\\b matches ASCII before string, mid, and end, /l');
-    is("$a_acute.$egrave" =~ s/\b/!/gr, "$a_acute.$egrave", '\\b matches Latin1 before string, mid, and end, /l');
-    is("\x{100}\x{101}.\x{102}" =~ s/\b/!/gr, "!\x{100}\x{101}!.!\x{102}!", '\\b matches above-Latin1 before string, mid, and end, /l');
-
-    is("..." =~ s/\B/!/gr, "!.!.!.!", '\\B matches ASCII before string, mid, and end, /l');
-    is("$division$division$division" =~ s/\B/!/gr, "!$division!$division!$division!", '\\B matches Latin1 before string, mid, and end, /l');
-    is("\x{2028}\x{2028}\x{2028}" =~ s/\B/!/gr, "!\x{2028}!\x{2028}!\x{2028}!", '\\B matches above-Latin1 before string, mid, and end, /l');
-}
 
 }
 
@@ -1182,4 +1182,21 @@ __EOF__
 
 {
     fresh_perl_is("s//00000000000format            \0          '0000000\\x{800}/;eval", "", {}, "RT #133882");
+}
+
+{   # GH Issue 20690
+    my @ret;
+    my $str = "abc";
+    for my $upgrade (0,1) {
+        my $copy = $str;
+        utf8::upgrade($copy) if $upgrade;
+        my $r= $copy=~s/b{0}//gr;
+        push @ret, $r;
+    }
+    is( $ret[1], $ret[0], 
+        "Issue #20690 - s/b{0}//gr should work the same for utf8 and non-utf8 strings");
+    is( $ret[0], $str,
+        "Issue #20690 - s/b{0}//gr on non-utf8 string should not remove anything");
+    is( $ret[1], $str,
+        "Issue #20690 - s/b{0}//gr on utf8 string should not remove anything");
 }

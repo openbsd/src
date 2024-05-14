@@ -309,6 +309,211 @@ C<-xc99>
 
 =back
 
+=head2 Symbol Names and Namespace Pollution
+
+=head3 Choosing legal symbol names
+
+C reserves for its implementation any symbol whose name begins with an
+underscore followed immediately by either an uppercase letter C<[A-Z]>
+or another underscore.  C++ further reserves any symbol containing two
+consecutive underscores, and further reserves in the global name space any
+symbol beginning with an underscore, not just ones followed by a
+capital.  We care about C++ because C<hdr> files need to be compilable by
+it, and some people do all their development using a C++ compiler.
+
+The consequences of failing to do this are probably none.  Unless you
+stumble on a name that the implementation uses, things will work.
+Indeed, the perl core has more than a few instances of using
+implementation-reserved symbols.  (These are gradually being changed.)
+But your code might stop working any time that the implementation
+decides to use a name you already had chosen, potentially many years
+before.
+
+It's best then to:
+
+=over
+
+=item B<Don't begin a symbol name with an underscore>; (I<e.g.>, don't
+use: C<_FOOBAR>)
+
+=item B<Don't use two consecutive underscores in a symbol name>;
+(I<e.g.>, don't use C<FOO__BAR>)
+
+=back
+
+POSIX also reserves many symbols.  See Section 2.2.2 in
+L<http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html>.
+Perl also has conflicts with that.
+
+Perl reserves for its use any symbol beginning with C<Perl>, C<perl>, or
+C<PL_>.  Any time you introduce a macro into a C<hdr> file that doesn't
+follow that convention, you are creating the possiblity of a namespace
+clash with an existing XS module, unless you restrict it by, say,
+
+ #ifdef PERL_CORE
+ #  define my_symbol
+ #endif
+
+There are many symbols in C<hdr> files that aren't of this form, and
+which are accessible from XS namespace, intentionally or not, just about
+anything in F<config.h>, for example.
+
+Having to use one of these prefixes detracts from the readability of the
+code, and hasn't been an actual issue for non-trivial names.  Things
+like perl defining its own C<MAX> macro have been problematic, but they
+were quickly discovered, and a S<C<#ifdef PERL_CORE>> guard added.
+
+So there's no rule imposed about using such symbols, just be aware of
+the issues.
+
+=head3 Choosing good symbol names
+
+Ideally, a symbol name name should correctly and precisely describe its
+intended purpose.  But there is a tension between that and getting names
+that are overly long and hence awkward to type and read.  Metaphors
+could be helpful (a poetic name), but those tend to be culturally
+specific, and may not translate for someone whose native language isn't
+English, or even comes from a different cultural background.  Besides,
+the talent of writing poetry seems to be rare in programmers.
+
+Certain symbol names don't reflect their purpose, but are nonetheless
+fine to use because of long-standing conventions.  These often
+originated in the field of Mathematics, where C<i> and C<j> are
+frequently used as subscripts, and C<n> as a population count.  Since at
+least the 1950's, computer programs have used C<i>, I<etc.> as loop
+variables.
+
+Our guidance is to choose a name that reasonably describes the purpose,
+and to comment its declaration more precisely.
+
+One certainly shouldn't use misleading nor ambiguous names.  C<last_foo>
+could mean either the final C<foo> or the previous C<foo>, and so could
+be confusing to the reader, or even to the writer coming back to the
+code after a few months of working on something else.  Sometimes the
+programmer has a particular line of thought in mind, and it doesn't
+occur to them that ambiguity is present.
+
+There are probably still many off-by-1 bugs around because the name
+L<perlapi/C<av_len>> doesn't correspond to what other I<-len> constructs
+mean, such as L<perlapi/C<sv_len>>.  Awkward (and controversial)
+synonyms were created to use instead that conveyed its true meaning
+(L<perlapi/C<av_top_index>>).  Eventually, though someone had the better
+idea to create a new name to signify what most people think C<-len>
+signifies.  So L<perlapi/C<av_count>> was born.  And we wish it had been
+thought up much earlier.
+
+=head2 Writing safer macros
+
+Macros are used extensively in the Perl core for such things as hiding
+internal details from the caller, so that it doesn't have to be
+concerned about them.  For example, most lines of code don't need
+to know if they are running on a threaded versus unthreaded perl.  That
+detail is automatically mostly hidden.
+
+It is often better to use an inline function instead of a macro.  They
+are immune to name collisions with the caller, and don't magnify
+problems when called with parameters that are expressions with side
+effects.  There was a time when one might choose a macro over an inline
+function because compiler support for inline functions was quite
+limited.  Some only would actually only inline the first two or three
+encountered in a compilation.  But those days are long gone, and inline
+functions are fully supported in modern compilers.
+
+Nevertheless, there are situations where a function won't do, and a
+macro is required.  One example is when a parameter can be any of
+several types.  A function has to be declared with a single explicit
+
+Or maybe the code involved is so trivial that a function would be just
+complicating overkill, such as when the macro simply creates a mnemonic
+name for some constant value.
+
+If you do choose to use a non-trivial macro, be aware that there are
+several avoidable pitfalls that can occur.  Keep in mind that a macro is
+expanded within the lexical context of each place in the source it is
+called.  If you have a token C<foo> in the macro and the source happens
+also to have C<foo>, the meaning of the macro's C<foo> will become that
+of the caller's.  Sometimes that is exactly the behavior you want, but
+be aware that this tends to be confusing later on.  It effectively turns
+C<foo> into a reserved word for any code that calls the macro, and this
+fact is usually not documented nor considered.  It is safer to pass
+C<foo> as a parameter, so that C<foo> remains freely available to the
+caller and the macro interface is explicitly specified.
+
+Worse is when the equivalence between the two C<foo>'s is coincidental.
+Suppose for example, that the macro declares a variable
+
+ int foo
+
+That works fine as long as the caller doesn't define the string C<foo>
+in some way.  And it might not be until years later that someone comes
+along with an instance where C<foo> is used.  For example a future
+caller could do this:
+
+ #define foo  bar
+
+Then that declaration of C<foo> in the macro suddenly becomes
+
+ int bar
+
+That could mean that something completely different happens than
+intended.  It is hard to debug; the macro and call may not even be in
+the same file, so it would require some digging and gnashing of teeth to
+figure out.
+
+Therefore, if a macro does use variables, their names should be such
+that it is very unlikely that they would collide with any caller, now or
+forever.  One way to do that, now being used in the perl source, is to
+include the name of the macro itself as part of the name of each
+variable in the macro.  Suppose the macro is named C<SvPV>  Then we
+could have
+
+ int foo_svpv_ = 0;
+
+This is harder to read than plain C<foo>, but it is pretty much
+guaranteed that a caller will never naively use C<foo_svpv_> (and run
+into problems).  (The lowercasing makes it clearer that this is a
+variable, but assumes that there won't be two elements whose names
+differ only in the case of their letters.)  The trailing underscore
+makes it even more unlikely to clash, as those, by convention, signify a
+private variable name.  (See L</Choosing legal symbol names> for
+restrictions on what names you can use.)
+
+This kind of name collision doesn't happen with the macro's formal
+parameters, so they don't need to have complicated names.  But there are
+pitfalls when a a parameter is an expression, or has some Perl magic
+attached.  When calling a function, C will evaluate the parameter once,
+and pass the result to the function.  But when calling a macro, the
+parameter is copied as-is by the C preprocessor to each instance inside
+the macro.  This means that when evaluating a parameter having side
+effects, the function and macro results differ.  This is particularly
+fraught when a parameter has overload magic, say it is a tied variable
+that reads the next line in a file upon each evaluation.  Having it read
+multiple lines per call is probably not what the caller intended.  If a
+macro refers to a potentially overloadable parameter more than once, it
+should first make a copy and then use that copy the rest of the time.
+There are macros in the perl core that violate this, but are gradually
+being converted, usually by changing to use inline functions instead.
+
+Above we said "first make a copy".  In a macro, that is easier said than
+done, because macros are normally expressions, and declarations aren't
+allowed in expressions.  But the S<C<STMT_START> .. C<STMT_END>>
+construct, described in L<perlapi|perlapi/STMT_START>, allows you to
+have declarations in most contexts, as long as you don't need a return
+value.  If you do need a value returned, you can make the interface such
+that a pointer is passed to the construct, which then stores its result
+there.  (Or you can use GCC brace groups.  But these require a fallback
+if the code will ever get executed on a platform that lacks this
+non-standard extension to C.  And that fallback would be another code
+path, which can get out-of-sync with the brace group one, so doing this
+isn't advisable.)  In situations where there's no other way, Perl does
+furnish L<perlintern/C<PL_Sv>> and L<perlapi/C<PL_na>> to use (with a
+slight performance penalty) for some such common cases.  But beware that
+a call chain involving multiple macros using them will zap the other's
+use.  These have been very difficult to debug.
+
+For a concrete example of these pitfalls in action, see
+L<https://perlmonks.org/?node_id=11144355>
+
 =head2 Portability problems
 
 The following are common causes of compilation and/or execution
@@ -690,15 +895,19 @@ C<PERL_STATIC_INLINE> to transparently fall back to emulation where needed.
 
 Binding together several statements in a macro
 
-Use the macros STMT_START and STMT_END.
+Use the macros C<STMT_START> and C<STMT_END>.
 
    STMT_START {
       ...
    } STMT_END
 
+But there can be subtle (but avoidable if you do it right) bugs
+introduced with these; see L<perlapi/C<STMT_START>> for best practices
+for their use.
+
 =item *
 
-Testing for operating systems or versions when should be testing for
+Testing for operating systems or versions when you should be testing for
 features
 
   #ifdef __FOONIX__    /* BAD */
@@ -1695,6 +1904,8 @@ determine whether to log the event, and if so how:
 
     $ENV{PERL_MEM_LOG} =~ /m/           Log all memory ops
     $ENV{PERL_MEM_LOG} =~ /s/           Log all SV ops
+    $ENV{PERL_MEM_LOG} =~ /c/           Additionally log C backtrace for
+                                        new_SV events
     $ENV{PERL_MEM_LOG} =~ /t/           include timestamp in Log
     $ENV{PERL_MEM_LOG} =~ /^(\d+)/      write to FD given (default is 2)
 
@@ -1709,6 +1920,10 @@ Since the logging doesn't use PerlIO, all SV allocations are logged and
 no extra SV allocations are introduced by enabling the logging.  If
 compiled with C<-DDEBUG_LEAKING_SCALARS>, the serial number for each SV
 allocation is also logged.
+
+The C<c> option uses the C<Perl_c_backtrace> facility, and therefore
+additionally requires the Configure C<-Dusecbacktrace> compile flag in
+order to access it.
 
 =head2 DDD over gdb
 

@@ -447,7 +447,8 @@ my $non_pods = qr/
                            | core .*
                        )
                  $
-               ) | ~$
+               ) | ~$                    # Vim droppings
+                 | \.bak$                # Other editor droppings
                  | \ \(Autosaved\)\.txt$ # Other editor droppings
                  | ^cxx\$demangler_db\.$ # VMS name mangler database
                  | ^typemap\.?$          # typemap files
@@ -455,6 +456,10 @@ my $non_pods = qr/
                  | ^core (?: $ | \. .* )
                  | ^vgcore\.[1-9][0-9]*$
                  | \b Changes \b
+
+                   # This is a pod, but is part of a corpus to test agains; we
+                   # don't care about any issues in it.
+                 | ext\/Pod-Html\/corpus\/perlvar-copy.pod
              /x;
 
 # Matches something that looks like a file name, but is enclosed in C<...>
@@ -1130,7 +1135,8 @@ package My::Pod::Checker {      # Extend Pod::Checker
 
             $self->poderror({ -line => $start_line{$addr} + $i,
                 -msg => $line_length,
-                parameter => "+$exceeds (including " . ($indent - $INDENT) . " from =over's)",
+                parameter => "+$exceeds (including " . ($indent - $INDENT) .
+                             " from =over's and $INDENT as base indent)",
             });
         }
 
@@ -1587,8 +1593,9 @@ sub is_pod_file {
 
     if (-d) {
         # Don't look at files in directories that are for tests, nor those
-        # beginning with a dot
-        if (m!/t\z! || m!/\.!) {
+        # beginning with a dot, nor those in the directory where Windows
+        # builds generate HTML from other POD sources.
+        if (m!/t\z! || m!/\.! || m!^./win32/html\z!) {
             $File::Find::prune = 1;
         }
         return;
@@ -2212,7 +2219,7 @@ following:
 
 1) If a problem is about a link to an unknown module or man page that
    you know exists, re-run the command something like:
-      ./perl -I../lib porting/podcheck.t --add-link MODULE man_page ...
+      ./perl -I../lib porting/podcheck.t --add-link { MODULE | man_page ... }
    (MODULEs should look like Foo::Bar, and man_pages should look like
    bar(3c); don't do this for a module or man page that you aren't sure
    about; instead treat as another type of issue and follow the

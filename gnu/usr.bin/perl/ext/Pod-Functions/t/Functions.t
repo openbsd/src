@@ -115,10 +115,11 @@ Functions for filehandles, files, or directories:
 Keywords related to the control flow of your Perl program:
      __FILE__, __LINE__, __PACKAGE__, __SUB__, break, caller,
      continue, die, do, dump, eval, evalbytes, exit, goto,
-     last, next, redo, return, sub, wantarray
+     last, method, next, redo, return, sub, wantarray
 
 Keywords related to scoping:
-     caller, import, local, my, our, package, state, use
+     caller, class, field, import, local, my, our, package,
+     state, use
 
 Miscellaneous functions:
      defined, formline, lock, prototype, reset, scalar, undef
@@ -132,8 +133,8 @@ Keywords related to Perl modules:
      do, import, no, package, require, use
 
 Keywords related to classes and object-orientation:
-     bless, dbmclose, dbmopen, package, ref, tie, tied, untie,
-     use
+     bless, class, dbmclose, dbmopen, field, method, package,
+     ref, tie, tied, untie, use
 
 Low-level socket functions:
      accept, bind, connect, getpeername, getsockname,

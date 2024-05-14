@@ -14,7 +14,8 @@ static const struct mro_alg c3_alg =
 =for apidoc mro_get_linear_isa_c3
 
 Returns the C3 linearization of C<@ISA>
-the given stash.  The return value is a read-only AV*.
+the given stash.  The return value is a read-only AV*
+whose values are string SVs giving class names.
 C<level> should be 0 (it is used internally in this
 function's recursion).
 
@@ -504,7 +505,6 @@ mro__nextcan(...)
         cxix = __dopoptosub_at(ccstack, cxix);
         for (;;) {
 	    GV* cvgv;
-	    STRLEN fq_subname_len;
 
             /* we may be in a higher stacklevel, so dig down deeper */
             while (cxix < 0) {
@@ -545,19 +545,14 @@ mro__nextcan(...)
 
 	    if(SvPOK(sv)) {
 		fq_subname = SvPVX(sv);
-		fq_subname_len = SvCUR(sv);
-
-                subname_utf8 = SvUTF8(sv) ? 1 : 0;
 		subname = strrchr(fq_subname, ':');
-	    } else {
-		subname = NULL;
-	    }
-
+            }
             if(!subname)
                 Perl_croak(aTHX_ "next::method/next::can/maybe::next::method cannot find enclosing method");
 
+            subname_utf8 = SvUTF8(sv) ? 1 : 0;
             subname++;
-            subname_len = fq_subname_len - (subname - fq_subname);
+            subname_len = SvCUR(sv) - (subname - fq_subname);
             if(memEQs(subname, subname_len, "__ANON__")) {
                 cxix = __dopoptosub_at(ccstack, cxix - 1);
                 continue;

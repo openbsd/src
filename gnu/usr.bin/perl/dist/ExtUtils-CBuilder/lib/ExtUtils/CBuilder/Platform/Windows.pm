@@ -8,7 +8,7 @@ use File::Spec;
 use ExtUtils::CBuilder::Base;
 use IO::File;
 
-our $VERSION = '0.280236'; # VERSION
+our $VERSION = '0.280238'; # VERSION
 our @ISA = qw(ExtUtils::CBuilder::Base);
 
 =begin comment
@@ -51,6 +51,22 @@ sub _compiler_type {
 	  : 'GCC');
 }
 
+# native quoting, not shell quoting
+sub quote_literal {
+  my ($self, $string) = @_;
+
+  # some of these characters don't need to be quoted for "native" quoting, but
+  # quote them anyway so they are more likely to make it through cmd.exe
+  if (length $string && $string !~ /[ \t\n\x0b"|<>%]/) {
+    return $string;
+  }
+
+  $string =~ s{(\\*)(?="|\z)}{$1$1}g;
+  $string =~ s{"}{\\"}g;
+
+  return qq{"$string"};
+}
+
 sub split_like_shell {
   # Since Windows will pass the whole command string (not an argument
   # array) to the target program and make the program parse it itself,
@@ -65,10 +81,15 @@ sub split_like_shell {
 sub do_system {
   # See above
   my $self = shift;
-  my $cmd = join(" ",
-		 grep length,
-		 map {$a=$_;$a=~s/\t/ /g;$a=~s/^\s+|\s+$//;$a}
-		 grep defined, @_);
+  my $cmd = join ' ',
+    grep length,
+    map {$a=$_;$a=~s/\t/ /g;$a=~s/^\s+|\s+$//;$a}
+    grep defined, @_;
+
+  if (!$self->{quiet}) {
+    print $cmd . "\n";
+  }
+  local $self->{quiet} = 1;
   return $self->SUPER::do_system($cmd);
 }
 

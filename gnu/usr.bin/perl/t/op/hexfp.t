@@ -138,10 +138,10 @@ sub get_warn() {
 
 { # Test certain things that are not hexfloats and should stay that way.
     eval '0xp3';
-    like(get_warn(), qr/Missing operator before p3/);
+    like(get_warn(), qr/Missing operator before "p3"/);
 
     eval '5p3';
-    like(get_warn(), qr/Missing operator before p3/);
+    like(get_warn(), qr/Missing operator before "p3"/);
 
     my @a;
     eval '@a = 0x3..5';

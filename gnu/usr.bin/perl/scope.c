@@ -63,10 +63,10 @@ Perl_stack_grow(pTHX_ SV **sp, SV **p, SSize_t n)
     return PL_stack_sp;
 }
 
-#ifndef STRESS_REALLOC
-#define GROW(old) ((old) * 3 / 2)
-#else
+#ifdef STRESS_REALLOC
 #define GROW(old) ((old) + 1)
+#else
+#define GROW(old) ((old) * 3 / 2)
 #endif
 
 PERL_SI *
@@ -166,25 +166,44 @@ Perl_markstack_grow(pTHX)
 void
 Perl_savestack_grow(pTHX)
 {
-    IV new_max;
-#ifdef STRESS_REALLOC
-    new_max = PL_savestack_max + SS_MAXPUSH;
-#else
-    new_max = GROW(PL_savestack_max);
-#endif
-    /* Note that we allocate SS_MAXPUSH slots higher than ss_max
-     * so that SS_ADD_END(), SSGROW() etc can do a simper check */
-    Renew(PL_savestack, new_max + SS_MAXPUSH, ANY);
-    PL_savestack_max = new_max;
+    const I32 by = PL_savestack_max - PL_savestack_ix;
+    Perl_savestack_grow_cnt(aTHX_ by);
 }
 
 void
 Perl_savestack_grow_cnt(pTHX_ I32 need)
 {
-    const IV new_max = PL_savestack_ix + need;
-    /* Note that we allocate SS_MAXPUSH slots higher than ss_max
-     * so that SS_ADD_END(), SSGROW() etc can do a simper check */
-    Renew(PL_savestack, new_max + SS_MAXPUSH, ANY);
+    /* NOTE: PL_savestack_max and PL_savestack_ix are I32.
+     *
+     * This makes sense when you consider that having I32_MAX items on
+     * the stack would be quite large.
+     *
+     * However, we use IV here so that we can detect if the new requested
+     * amount is larger than I32_MAX.
+     */
+    const IV new_floor = PL_savestack_max + need; /* what we need */
+    /* the GROW() macro normally does scales by 1.5 but under
+     * STRESS_REALLOC it simply adds 1 */
+    IV new_max         = GROW(new_floor); /* and some extra */
+
+    /* the new_max < PL_savestack_max is for cases where IV is I32
+     * and we have rolled over from I32_MAX to a small value */
+    if (new_max > I32_MAX || new_max < PL_savestack_max) {
+        if (new_floor > I32_MAX || new_floor < PL_savestack_max) {
+            Perl_croak(aTHX_ "panic: savestack overflows I32_MAX");
+        }
+        new_max = new_floor;
+    }
+
+    /* Note that we add an additional SS_MAXPUSH slots on top of
+     * PL_savestack_max so that SS_ADD_END(), SSGROW() etc can do
+     * a simper check and if necessary realloc *after* apparently
+     * overwriting the current PL_savestack_max. See scope.h.
+     *
+     * The +1 is because new_max/PL_savestack_max is the highest
+     * index, by Renew needs the number of items, which is one
+     * larger than the highest index. */
+    Renew(PL_savestack, new_max + SS_MAXPUSH + 1, ANY);
     PL_savestack_max = new_max;
 }
 
@@ -237,6 +256,27 @@ Perl_free_tmps(pTHX)
         }
     }
 }
+
+/*
+=for apidoc save_scalar_at
+
+A helper function for localizing the SV referenced by C<*sptr>.
+
+If C<SAVEf_KEEPOLDELEM> is set in in C<flags>, the function returns the input
+scalar untouched.
+
+Otherwise it replaces C<*sptr> with a new C<undef> scalar, and returns that.
+The new scalar will have the old one's magic (if any) copied to it.
+If there is such magic, and C<SAVEf_SETMAGIC> is set in in C<flags>, 'set'
+magic will be processed on the new scalar.  If unset, 'set' magic will be
+skipped.  The latter typically means that assignment will soon follow (I<e.g.>,
+S<C<'local $x = $y'>>), and that will handle the magic.
+
+=for apidoc Amnh ||SAVEf_KEEPOLDELEM
+=for apidoc Amnh ||SAVEf_SETMAGIC
+
+=cut
+*/
 
 STATIC SV *
 S_save_scalar_at(pTHX_ SV **sptr, const U32 flags)
@@ -302,6 +342,43 @@ Perl_save_generic_svref(pTHX_ SV **sptr)
 
     save_pushptrptr(sptr, SvREFCNT_inc(*sptr), SAVEt_GENERIC_SVREF);
 }
+
+
+/*
+=for apidoc save_rcpv
+
+Implements C<SAVERCPV>.
+
+Saves and restores a refcounted string, similar to what
+save_generic_svref would do for a SV*. Can be used to restore
+a refcounted string to its previous state. Performs the 
+appropriate refcount counting so that nothing should leak
+or be prematurely freed.
+
+=cut
+ */
+void
+Perl_save_rcpv(pTHX_ char **prcpv) {
+    PERL_ARGS_ASSERT_SAVE_RCPV;
+    save_pushptrptr(prcpv, rcpv_copy(*prcpv), SAVEt_RCPV);
+}
+
+/*
+=for apidoc save_freercpv
+
+Implements C<SAVEFREERCPV>.
+
+Saves and frees a refcounted string. Calls rcpv_free()
+on the argument when the current pseudo block is finished.
+
+=cut
+ */
+void
+Perl_save_freercpv(pTHX_ char *rcpv) {
+    PERL_ARGS_ASSERT_SAVE_FREERCPV;
+    save_pushptr(rcpv, SAVEt_FREERCPV);
+}
+
 
 /*
 =for apidoc_section $callback
@@ -410,7 +487,7 @@ Perl_save_gp(pTHX_ GV *gv, I32 empty)
         HV * const stash = GvSTASH(gv);
         bool isa_changed = 0;
 
-        if (stash && HvENAME(stash)) {
+        if (stash && HvHasENAME(stash)) {
             if (memEQs(GvNAME(gv), GvNAMELEN(gv), "ISA"))
                 isa_changed = TRUE;
             else if (GvCVu(gv))
@@ -592,7 +669,7 @@ Perl_save_iv(pTHX_ IV *ivp)
 {
     PERL_ARGS_ASSERT_SAVE_IV;
 
-    SSCHECK(3);
+    SSGROW(3);
     SSPUSHIV(*ivp);
     SSPUSHPTR(ivp);
     SSPUSHUV(SAVEt_IV);
@@ -672,6 +749,20 @@ Perl_save_aptr(pTHX_ AV **aptr)
     save_pushptrptr(*aptr, aptr, SAVEt_APTR);
 }
 
+/*
+=for apidoc_section $callback
+=for apidoc save_pushptr
+
+The refcnt of object C<ptr> will be decremented at the end of the current
+I<pseudo-block>.  C<type> gives the type of C<ptr>, expressed as one of the
+constants in F<scope.h> whose name begins with C<SAVEt_>.
+
+This is the underlying implementation of several macros, like
+C<SAVEFREESV>.
+
+=cut
+*/
+
 void
 Perl_save_pushptr(pTHX_ void *const ptr, const int type)
 {
@@ -690,6 +781,7 @@ Perl_save_clearsv(pTHX_ SV **svp)
     PERL_ARGS_ASSERT_SAVE_CLEARSV;
 
     ASSERT_CURPAD_ACTIVE("save_clearsv");
+    assert(*svp);
     SvPADSTALE_off(*svp); /* mark lexical as active */
     if (UNLIKELY((offset_shifted >> SAVE_TIGHT_SHIFT) != offset)) {
         Perl_croak(aTHX_ "panic: pad offset %" UVuf " out of range (%p-%p)",
@@ -824,6 +916,28 @@ S_save_pushptri32ptr(pTHX_ void *const ptr1, const I32 i, void *const ptr2,
     SS_ADD_END(4);
 }
 
+/*
+=for apidoc_section $callback
+=for apidoc      save_aelem
+=for apidoc_item save_aelem_flags
+
+These each arrange for the value of the array element C<av[idx]> to be restored
+at the end of the enclosing I<pseudo-block>.
+
+In C<save_aelem>, the SV at C**sptr> will be replaced by a new C<undef>
+scalar.  That scalar will inherit any magic from the original C<**sptr>,
+and any 'set' magic will be processed.
+
+In C<save_aelem_flags>, C<SAVEf_KEEPOLDELEM> being set in C<flags> causes
+the function to forgo all that:  the scalar at C<**sptr> is untouched.
+If C<SAVEf_KEEPOLDELEM> is not set, the SV at C**sptr> will be replaced by a
+new C<undef> scalar.  That scalar will inherit any magic from the original
+C<**sptr>.  Any 'set' magic will be processed if and only if C<SAVEf_SETMAGIC>
+is set in in C<flags>.
+
+=cut
+*/
+
 void
 Perl_save_aelem_flags(pTHX_ AV *av, SSize_t idx, SV **sptr,
                             const U32 flags)
@@ -854,6 +968,28 @@ Perl_save_aelem_flags(pTHX_ AV *av, SSize_t idx, SV **sptr,
     if (UNLIKELY(SvTIED_mg((const SV *)av, PERL_MAGIC_tied)))
         sv_2mortal(sv);
 }
+
+/*
+=for apidoc_section $callback
+=for apidoc      save_helem
+=for apidoc_item save_helem_flags
+
+These each arrange for the value of the hash element (in Perlish terms)
+C<$hv{key}]> to be restored at the end of the enclosing I<pseudo-block>.
+
+In C<save_helem>, the SV at C**sptr> will be replaced by a new C<undef>
+scalar.  That scalar will inherit any magic from the original C<**sptr>,
+and any 'set' magic will be processed.
+
+In C<save_helem_flags>, C<SAVEf_KEEPOLDELEM> being set in C<flags> causes
+the function to forgo all that:  the scalar at C<**sptr> is untouched.
+If C<SAVEf_KEEPOLDELEM> is not set, the SV at C**sptr> will be replaced by a
+new C<undef> scalar.  That scalar will inherit any magic from the original
+C<**sptr>.  Any 'set' magic will be processed if and only if C<SAVEf_SETMAGIC>
+is set in in C<flags>.
+
+=cut
+*/
 
 void
 Perl_save_helem_flags(pTHX_ HV *hv, SV *key, SV **sptr, const U32 flags)
@@ -914,10 +1050,10 @@ function.
 =cut
 */
 
-I32
-Perl_save_alloc(pTHX_ I32 size, I32 pad)
+SSize_t
+Perl_save_alloc(pTHX_ SSize_t size, I32 pad)
 {
-    const I32 start = pad + ((char*)&PL_savestack[PL_savestack_ix]
+    const SSize_t start = pad + ((char*)&PL_savestack[PL_savestack_ix]
                           - (char*)PL_savestack);
     const UV elems = 1 + ((size + pad - 1) / sizeof(*PL_savestack));
     const UV elems_shifted = elems << SAVE_TIGHT_SHIFT;
@@ -934,65 +1070,6 @@ Perl_save_alloc(pTHX_ I32 size, I32 pad)
     return start;
 }
 
-
-static const U8 arg_counts[] = {
-    0, /* SAVEt_ALLOC              */
-    0, /* SAVEt_CLEARPADRANGE      */
-    0, /* SAVEt_CLEARSV            */
-    0, /* SAVEt_REGCONTEXT         */
-    1, /* SAVEt_TMPSFLOOR          */
-    1, /* SAVEt_BOOL               */
-    1, /* SAVEt_COMPILE_WARNINGS   */
-    1, /* SAVEt_COMPPAD            */
-    1, /* SAVEt_FREECOPHH          */
-    1, /* SAVEt_FREEOP             */
-    1, /* SAVEt_FREEPV             */
-    1, /* SAVEt_FREESV             */
-    1, /* SAVEt_I16                */
-    1, /* SAVEt_I32_SMALL          */
-    1, /* SAVEt_I8                 */
-    1, /* SAVEt_INT_SMALL          */
-    1, /* SAVEt_MORTALIZESV        */
-    1, /* SAVEt_NSTAB              */
-    1, /* SAVEt_OP                 */
-    1, /* SAVEt_PARSER             */
-    1, /* SAVEt_STACK_POS          */
-    1, /* SAVEt_READONLY_OFF       */
-    1, /* SAVEt_FREEPADNAME        */
-    1, /* SAVEt_STRLEN_SMALL       */
-    2, /* SAVEt_AV                 */
-    2, /* SAVEt_DESTRUCTOR         */
-    2, /* SAVEt_DESTRUCTOR_X       */
-    2, /* SAVEt_GENERIC_PVREF      */
-    2, /* SAVEt_GENERIC_SVREF      */
-    2, /* SAVEt_GP                 */
-    2, /* SAVEt_GVSV               */
-    2, /* SAVEt_HINTS              */
-    2, /* SAVEt_HPTR               */
-    2, /* SAVEt_HV                 */
-    2, /* SAVEt_I32                */
-    2, /* SAVEt_INT                */
-    2, /* SAVEt_ITEM               */
-    2, /* SAVEt_IV                 */
-    2, /* SAVEt_LONG               */
-    2, /* SAVEt_PPTR               */
-    2, /* SAVEt_SAVESWITCHSTACK    */
-    2, /* SAVEt_SHARED_PVREF       */
-    2, /* SAVEt_SPTR               */
-    2, /* SAVEt_STRLEN             */
-    2, /* SAVEt_SV                 */
-    2, /* SAVEt_SVREF              */
-    2, /* SAVEt_VPTR               */
-    2, /* SAVEt_ADELETE            */
-    2, /* SAVEt_APTR               */
-    3, /* SAVEt_HELEM              */
-    3, /* SAVEt_PADSV_AND_MORTALIZE*/
-    3, /* SAVEt_SET_SVFLAGS        */
-    3, /* SAVEt_GVSLOT             */
-    3, /* SAVEt_AELEM              */
-    3, /* SAVEt_DELETE             */
-    3  /* SAVEt_HINTS_HH           */
-};
 
 
 /*
@@ -1029,7 +1106,7 @@ Perl_leave_scope(pTHX_ I32 base)
             ap = &PL_savestack[ix];
             uv = ap->any_uv;
             type = (U8)uv & SAVE_MASK;
-            argcount = arg_counts[type];
+            argcount = leave_scope_arg_counts[type];
             PL_savestack_ix = ix - argcount;
             ap -= argcount;
         }
@@ -1102,6 +1179,7 @@ Perl_leave_scope(pTHX_ I32 base)
             a0.any_svp = &GvSV(a0.any_gv);
             goto restore_svp;
 
+
         case SAVEt_GENERIC_SVREF:		/* generic sv */
             a0 = ap[0]; a1 = ap[1];
         restore_svp:
@@ -1114,12 +1192,30 @@ Perl_leave_scope(pTHX_ I32 base)
             break;
         }
 
+        case SAVEt_RCPV:           /* like generic sv, but for struct rcpv */
+        {
+            a0 = ap[0]; a1 = ap[1];
+            char *old = *a0.any_pvp;
+            *a0.any_pvp = a1.any_pv;
+            (void)rcpv_free(old);
+            (void)rcpv_free(a1.any_pv);
+            break;
+        }
+
+        case SAVEt_FREERCPV:           /* like SAVEt_FREEPV but for a RCPV */
+        {
+            a0 = ap[0];
+            char *rcpv = a0.any_pv;
+            (void)rcpv_free(rcpv);
+            break;
+        }
+
         case SAVEt_GVSLOT:			/* any slot in GV */
         {
             HV * hv;
             a0 = ap[0]; a1 = ap[1]; a2 = ap[2];
             hv = GvSTASH(a0.any_gv);
-            if (hv && HvENAME(hv) && (
+            if (hv && HvHasENAME(hv) && (
                     (a2.any_sv && SvTYPE(a2.any_sv) == SVt_PVCV)
                  || (*a1.any_svp && SvTYPE(*a1.any_svp) == SVt_PVCV)
                ))
@@ -1231,10 +1327,10 @@ Perl_leave_scope(pTHX_ I32 base)
 
             a0 = ap[0]; a1 = ap[1];
             /* possibly taking a method out of circulation */	
-            had_method = !!GvCVu(a0.any_gv);
+            had_method = cBOOL(GvCVu(a0.any_gv));
             gp_free(a0.any_gv);
             GvGP_set(a0.any_gv, (GP*)a1.any_ptr);
-            if ((hv=GvSTASH(a0.any_gv)) && HvENAME_get(hv)) {
+            if ((hv=GvSTASH(a0.any_gv)) && HvHasENAME(hv)) {
                 if (memEQs(GvNAME(a0.any_gv), GvNAMELEN(a0.any_gv), "ISA"))
                     mro_isa_changed_in(hv);
                 else if (had_method || GvCVu(a0.any_gv))
@@ -1317,12 +1413,10 @@ Perl_leave_scope(pTHX_ I32 base)
                         if (SvREADONLY(sv))
                             SvREADONLY_off(sv);
 
-                        if (SvOOK(sv)) { /* OOK or HvAUX */
-                            if (SvTYPE(sv) == SVt_PVHV)
-                                Perl_hv_kill_backrefs(aTHX_ MUTABLE_HV(sv));
-                            else
-                                sv_backoff(sv);
-                        }
+                        if (SvTYPE(sv) == SVt_PVHV && HvHasAUX(sv))
+                            Perl_hv_kill_backrefs(aTHX_ MUTABLE_HV(sv));
+                        else if(SvOOK(sv))
+                            sv_backoff(sv);
 
                         if (SvMAGICAL(sv)) {
                             /* note that backrefs (either in HvAUX or magic)
@@ -1589,8 +1683,19 @@ Perl_leave_scope(pTHX_ I32 base)
             break;
 
         case SAVEt_COMPILE_WARNINGS:
+            /* NOTE: we can't put &PL_compiling or PL_curcop on the save
+             *       stack directly, as we currently cannot translate
+             *       them to the correct addresses after a thread start
+             *       or win32 fork start. - Yves
+             */
             a0 = ap[0];
-        free_and_set_cop_warnings(&PL_compiling, (STRLEN*) a0.any_ptr);
+            free_and_set_cop_warnings(&PL_compiling, a0.any_pv);
+            break;
+
+        case SAVEt_CURCOP_WARNINGS:
+            /* NOTE: see comment above about SAVEt_COMPILE_WARNINGS */
+            a0 = ap[0];
+            free_and_set_cop_warnings(PL_curcop, a0.any_pv);
             break;
 
         case SAVEt_PARSER:
@@ -1740,6 +1845,145 @@ Perl_cx_dump(pTHX_ PERL_CONTEXT *cx)
     PERL_UNUSED_ARG(cx);
 #endif	/* DEBUGGING */
 }
+
+/*
+=for apidoc_section $callback
+=for apidoc mortal_destructor_sv
+
+This function arranges for either a Perl code reference, or a C function
+reference to be called at the B<end of the current statement>.
+
+The C<coderef> argument determines the type of function that will be
+called. If it is C<SvROK()> it is assumed to be a reference to a CV and
+will arrange for the coderef to be called. If it is not SvROK() then it
+is assumed to be a C<SvIV()> which is C<SvIOK()> whose value is a pointer
+to a C function of type C<DESTRUCTORFUNC_t> created using C<PTR2INT()>.
+Either way the C<args> parameter will be provided to the callback as a
+parameter, although the rules for doing so differ between the Perl and
+C mode. Normally this function is only used directly for the Perl case
+and the wrapper C<mortal_destructor_x()> is used for the C function case.
+
+When operating in Perl callback mode the C<args> parameter may be NULL
+in which case the code reference is called with no arguments, otherwise
+if it is an AV (SvTYPE(args) == SVt_PVAV) then the contents of the AV
+will be used as the arguments to the code reference, and if it is any
+other type then the C<args> SV will be provided as a single argument to
+the code reference.
+
+When operating in a C callback mode the C<args> parameter will be passed
+directly to the C function as a C<void *> pointer. No additional
+processing of the argument will be peformed, and it is the callers
+responsibility to free the C<args> parameter if necessary.
+
+Be aware that there is a signficant difference in timing between the
+I<end of the current statement> and the I<end of the current pseudo
+block>. If you are looking for a mechanism to trigger a function at the
+end of the B<current pseudo block> you should look at
+C<SAVEDESTRUCTORX()> instead of this function.
+
+=for apidoc mortal_svfunc_x
+
+This function arranges for a C function reference to be called at the
+B<end of the current statement> with the arguments provided. It is a
+wrapper around C<mortal_destructor_sv()> which ensures that the latter
+function is called appropriately.
+
+Be aware that there is a signficant difference in timing between the
+I<end of the current statement> and the I<end of the current pseudo
+block>. If you are looking for a mechanism to trigger a function at the
+end of the B<current pseudo block> you should look at
+C<SAVEDESTRUCTORX()> instead of this function.
+
+=for apidoc magic_freedestruct
+
+This function is called via magic to implement the
+C<mortal_destructor_sv()> and C<mortal_destructor_x()> functions. It
+should not be called directly and has no user servicable parts.
+
+=cut
+*/
+
+void
+Perl_mortal_destructor_sv(pTHX_ SV *coderef, SV *args) {
+    PERL_ARGS_ASSERT_MORTAL_DESTRUCTOR_SV;
+    assert(
+        (SvROK(coderef) && SvTYPE(SvRV(coderef)) == SVt_PVCV) /* perl coderef */
+         ||
+        (SvIOK(coderef) && !SvROK(coderef))                  /* C function ref */
+    );
+    SV *variable = newSV_type_mortal(SVt_IV);
+    (void)sv_magicext(variable, coderef, PERL_MAGIC_destruct,
+                      &PL_vtbl_destruct, (char *)args, args ? HEf_SVKEY : 0);
+}
+
+
+void
+Perl_mortal_svfunc_x(pTHX_ SVFUNC_t f, SV *sv) {
+    PERL_ARGS_ASSERT_MORTAL_SVFUNC_X;
+    SV *sviv = newSViv(PTR2IV(f));
+    mortal_destructor_sv(sviv,sv);
+}
+
+
+int
+Perl_magic_freedestruct(pTHX_ SV* sv, MAGIC* mg) {
+    PERL_ARGS_ASSERT_MAGIC_FREEDESTRUCT;
+    dSP;
+    union {
+        SV   *sv;
+        AV   *av;
+        char *pv;
+    } args_any;
+    SV *coderef;
+
+    IV nargs = 0;
+    if (PL_phase == PERL_PHASE_DESTRUCT) {
+        Perl_warn(aTHX_ "Can't call destructor for 0x%p in global destruction\n", sv);
+        return 1;
+    }
+
+    args_any.pv = mg->mg_ptr;
+    coderef = mg->mg_obj;
+
+    /* Deal with C function destructor */
+    if (SvTYPE(coderef) == SVt_IV && !SvROK(coderef)) {
+        SVFUNC_t f = INT2PTR(SVFUNC_t, SvIV(coderef));
+        (f)(aTHX_ args_any.sv);
+        return 0;
+    }
+
+    if (args_any.sv) {
+        if (SvTYPE(args_any.sv) == SVt_PVAV) {
+            nargs = av_len(args_any.av) + 1;
+        } else {
+            nargs = 1;
+        }
+    }
+    PUSHSTACKi(PERLSI_MAGIC);
+    ENTER_with_name("call_freedestruct");
+    SAVETMPS;
+    EXTEND(SP, nargs);
+    PUSHMARK(SP);
+    if (args_any.sv) {
+        if (SvTYPE(args_any.sv) == SVt_PVAV) {
+            IV n;
+            for (n = 0 ; n < nargs ; n++ ) {
+                SV **argp = av_fetch(args_any.av, n, 0);
+                if (argp && *argp)
+                    PUSHs(*argp);
+            }
+        } else {
+            PUSHs(args_any.sv);
+        }
+    }
+    PUTBACK;
+    (void)call_sv(coderef, G_VOID | G_EVAL | G_KEEPERR);
+    FREETMPS;
+    LEAVE_with_name("call_freedestruct");
+    POPSTACK;
+    return 0;
+}
+
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

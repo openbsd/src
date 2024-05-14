@@ -20,7 +20,7 @@ static char *usage = "%s [-R] cat | look |... dbmname";
 #define DLOOK	1
 #define DINSERT	2
 #define DDELETE 3
-#define	DCAT	4
+#define DCAT    4
 #define DBUILD	5
 #define DPRESS	6
 #define DCREAT	7

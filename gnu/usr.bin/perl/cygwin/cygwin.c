@@ -19,6 +19,8 @@
 #include <wchar.h>
 #endif
 
+#define PATH_LEN_GUESS (260 + 1001)
+
 /*
  * pp_system() implemented via spawn()
  * - more efficient and useful when embedding Perl in non-Cygwin apps
@@ -158,57 +160,50 @@ leave:
 
 #if (CYGWIN_VERSION_API_MINOR >= 181)
 char*
-wide_to_utf8(const wchar_t *wbuf)
+wide_to_utf8(const wchar_t *wsrc)
 {
-    char *buf;
-    int wlen = 0;
-    char *oldlocale;
+    dTHX;
+    const Size_t wlen = (wcslen(wsrc) + 1) * sizeof(wchar_t);
 
-    /* Here and elsewhere in this file, we have a critical section to prevent
-     * another thread from changing the locale out from under us.  XXX But why
-     * not just use uvchr_to_utf8? */
-    SETLOCALE_LOCK;
+    /* Max expansion factor is 3/2 */
+    Size_t blen = wlen * 3 / 2;
 
-    oldlocale = setlocale(LC_CTYPE, NULL);
-    setlocale(LC_CTYPE, "utf-8");
+    char *buf = (char *) safemalloc(blen);
 
-    /* uvchr_to_utf8(buf, chr) or Encoding::_bytes_to_utf8(sv, "UCS-2BE"); */
-    wlen = wcsrtombs(NULL, (const wchar_t **)&wbuf, wlen, NULL);
-    buf = (char *) safemalloc(wlen+1);
-    wcsrtombs(buf, (const wchar_t **)&wbuf, wlen, NULL);
-
-    if (oldlocale) setlocale(LC_CTYPE, oldlocale);
-    else setlocale(LC_CTYPE, "C");
-
-    SETLOCALE_UNLOCK;
+    utf16_to_utf8((U8 *) wsrc, buf, wlen, &blen);
 
     return buf;
 }
 
 wchar_t*
+utf8_to_wide_extra_len(const char *buf, Size_t *extra_len)
+{
+    /* Return the conversion to UTF-16 of the UTF-8 string 'buf'
+     * (terminated by a NUL), making sure to have space for at least *extra_len
+     * extra (wide) characters in the result.  The result must be freed by the
+     * caller when no longer needed */
+
+    dTHX;
+    Size_t len = strlen(buf) + extra_len + 1;
+
+    /* Max expansion factor is sizeof(wchar_t) */
+    Size_t wlen = sizeof(wchar_t) * len;
+
+    wchar_t* wsrc = (wchar_t *) safemalloc(wlen);
+
+    utf8_to_utf16(buf, (U8 *) wsrc, len, &wlen);
+
+    return wsrc;
+}
+
+wchar_t*
 utf8_to_wide(const char *buf)
 {
-    wchar_t *wbuf;
-    mbstate_t mbs;
-    char *oldlocale;
-    int wlen = sizeof(wchar_t)*strlen(buf);
+    Size_t extra_len = 0;
 
-    SETLOCALE_LOCK;
-
-    oldlocale = setlocale(LC_CTYPE, NULL);
-
-    setlocale(LC_CTYPE, "utf-8");
-    wbuf = (wchar_t *) safemalloc(wlen);
-    /* utf8_to_uvchr_buf(pathname, pathname + wlen, wpath) or Encoding::_utf8_to_bytes(sv, "UCS-2BE"); */
-    wlen = mbsrtowcs(wbuf, (const char**)&buf, wlen, &mbs);
-
-    if (oldlocale) setlocale(LC_CTYPE, oldlocale);
-    else setlocale(LC_CTYPE, "C");
-
-    SETLOCALE_UNLOCK;
-
-    return wbuf;
+    return utf8_to_wide_extra_len(buf, &extra_len);
 }
+
 #endif /* cygwin 1.7 */
 
 /* see also Cwd.pm */
@@ -272,113 +267,33 @@ XS(XS_Cygwin_winpid_to_pid)
     XSRETURN_UNDEF;
 }
 
-XS(XS_Cygwin_win_to_posix_path)
+/* The conversion between Posix and Windows paths is essentially the same in
+ * either direction, so a common function is used, with which direction passed
+ * in.
+ *
+ * These numbers are chosen so can be or'd with absolute flag to get 0..3 */
+typedef enum {
+    to_posix = 0,
+    to_win   = 2
+} direction_t;
 
+static void
+S_convert_path_common(pTHX_ const direction_t direction)
 {
     dXSARGS;
-    int absolute_flag = 0;
+    bool absolute_flag = 0;
     STRLEN len;
     int err = 0;
     char *src_path;
-    char *posix_path;
+    char *converted_path;
     int isutf8 = 0;
 
-    if (items < 1 || items > 2)
-        Perl_croak(aTHX_ "Usage: Cygwin::win_to_posix_path(pathname, [absolute])");
-
-    src_path = SvPV(ST(0), len);
-    if (items == 2)
-        absolute_flag = SvTRUE(ST(1));
-
-    if (!len)
-        Perl_croak(aTHX_ "can't convert empty path");
-    isutf8 = SvUTF8(ST(0));
-
-#if (CYGWIN_VERSION_API_MINOR >= 181)
-    /* Check utf8 flag and use wide api then.
-       Size calculation: On overflow let cygwin_conv_path calculate the final size.
-     */
-    if (isutf8) {
-        int what = absolute_flag ? CCP_WIN_W_TO_POSIX : CCP_WIN_W_TO_POSIX | CCP_RELATIVE;
-        STRLEN wlen = sizeof(wchar_t)*(len + 260 + 1001);
-        wchar_t *wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
-        wchar_t *wbuf = (wchar_t *) safemalloc(wlen);
-        if (!IN_BYTES) {
-            mbstate_t mbs;
-            char *oldlocale;
-
-            SETLOCALE_LOCK;
-
-            oldlocale = setlocale(LC_CTYPE, NULL);
-            setlocale(LC_CTYPE, "utf-8");
-            /* utf8_to_uvchr_buf(src_path, src_path + wlen, wpath) or Encoding::_utf8_to_bytes(sv, "UCS-2BE"); */
-            wlen = mbsrtowcs(wpath, (const char**)&src_path, wlen, &mbs);
-            if (wlen > 0)
-                err = cygwin_conv_path(what, wpath, wbuf, wlen);
-            if (oldlocale) setlocale(LC_CTYPE, oldlocale);
-            else setlocale(LC_CTYPE, "C");
-
-            SETLOCALE_UNLOCK;
-        } else { /* use bytes; assume already ucs-2 encoded bytestream */
-            err = cygwin_conv_path(what, src_path, wbuf, wlen);
-        }
-        if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-            int newlen = cygwin_conv_path(what, wpath, wbuf, 0);
-            wbuf = (wchar_t *) realloc(&wbuf, newlen);
-            err = cygwin_conv_path(what, wpath, wbuf, newlen);
-            wlen = newlen;
-        }
-        /* utf16_to_utf8(*p, *d, bytlen, *newlen) */
-        posix_path = (char *) safemalloc(wlen*3);
-        Perl_utf16_to_utf8(aTHX_ (U8*)&wpath, (U8*)posix_path, wlen*2, &len);
-        /*
-        wlen = wcsrtombs(NULL, (const wchar_t **)&wbuf, wlen, NULL);
-        posix_path = (char *) safemalloc(wlen+1);
-        wcsrtombs(posix_path, (const wchar_t **)&wbuf, wlen, NULL);
-        */
-    } else {
-        int what = absolute_flag ? CCP_WIN_A_TO_POSIX : CCP_WIN_A_TO_POSIX | CCP_RELATIVE;
-        posix_path = (char *) safemalloc (len + 260 + 1001);
-        err = cygwin_conv_path(what, src_path, posix_path, len + 260 + 1001);
-        if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-            int newlen = cygwin_conv_path(what, src_path, posix_path, 0);
-            posix_path = (char *) realloc(&posix_path, newlen);
-            err = cygwin_conv_path(what, src_path, posix_path, newlen);
-        }
+    if (items < 1 || items > 2) {
+        char *name = (direction == to_posix)
+                     ? "win::win_to_posix_path"
+                     : "posix_to_win_path";
+        Perl_croak(aTHX_ "Usage: Cygwin::%s(pathname, [absolute])", name);
     }
-#else
-    posix_path = (char *) safemalloc (len + 260 + 1001);
-    if (absolute_flag)
-        err = cygwin_conv_to_full_posix_path(src_path, posix_path);
-    else
-        err = cygwin_conv_to_posix_path(src_path, posix_path);
-#endif
-    if (!err) {
-        EXTEND(SP, 1);
-        ST(0) = sv_2mortal(newSVpv(posix_path, 0));
-        if (isutf8) { /* src was utf-8, so result should also */
-            /* TODO: convert ANSI (local windows encoding) to utf-8 on cygwin-1.5 */
-            SvUTF8_on(ST(0));
-        }
-        safefree(posix_path);
-        XSRETURN(1);
-    } else {
-        safefree(posix_path);
-        XSRETURN_UNDEF;
-    }
-}
-
-XS(XS_Cygwin_posix_to_win_path)
-{
-    dXSARGS;
-    int absolute_flag = 0;
-    STRLEN len;
-    int err = 0;
-    char *src_path, *win_path;
-    int isutf8 = 0;
-
-    if (items < 1 || items > 2)
-        Perl_croak(aTHX_ "Usage: Cygwin::posix_to_win_path(pathname, [absolute])");
 
     src_path = SvPVx(ST(0), len);
     if (items == 2)
@@ -387,75 +302,106 @@ XS(XS_Cygwin_posix_to_win_path)
     if (!len)
         Perl_croak(aTHX_ "can't convert empty path");
     isutf8 = SvUTF8(ST(0));
+
 #if (CYGWIN_VERSION_API_MINOR >= 181)
     /* Check utf8 flag and use wide api then.
        Size calculation: On overflow let cygwin_conv_path calculate the final size.
      */
     if (isutf8) {
-        int what = absolute_flag ? CCP_POSIX_TO_WIN_W : CCP_POSIX_TO_WIN_W | CCP_RELATIVE;
-        int wlen = sizeof(wchar_t)*(len + 260 + 1001);
-        wchar_t *wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
-        wchar_t *wbuf = (wchar_t *) safemalloc(wlen);
-        char *oldlocale;
+        int what =  ((absolute_flag) ? 0 : CCP_RELATIVE)
+                  | ((direction == to_posix)
+                     ? CCP_WIN_W_TO_POSIX
+                     : CCP_POSIX_TO_WIN_W);
+        STRLEN wlen;
+        wchar_t *wsrc = NULL;       /* The source, as a wchar_t */
+        wchar_t *wconverted = NULL; /* wsrc, converted to the destination */
 
-        SETLOCALE_LOCK;
+        /* ptr to either wsrc, or under BYTES, the src_path so can have common
+         * code below */
+        wchar_t *which_src = (wchar_t *) src_path;
 
-        oldlocale = setlocale(LC_CTYPE, NULL);
-        setlocale(LC_CTYPE, "utf-8");
-        if (!IN_BYTES) {
-            mbstate_t mbs;
-            /* utf8_to_uvchr_buf(src_path, src_path + wlen, wpath) or Encoding::_utf8_to_bytes(sv, "UCS-2BE"); */
-            wlen = mbsrtowcs(wpath, (const char**)&src_path, wlen, &mbs);
-            if (wlen > 0)
-                err = cygwin_conv_path(what, wpath, wbuf, wlen);
-        } else { /* use bytes; assume already ucs-2 encoded bytestream */
-            err = cygwin_conv_path(what, src_path, wbuf, wlen);
+        if (LIKELY(! IN_BYTES)) {    /* Normal case, convert UTF-8 to UTF-16 */
+            wlen = PATH_LEN_GUESS;
+            wsrc = utf8_to_wide_extra_len(src_path, &wlen);
+            which_src = wsrc;
         }
+        else { /* use bytes; assume already UTF-16 encoded bytestream */
+            wlen = sizeof(wchar_t) * (len + PATH_LEN_GUESS);
+        }
+
+        if (LIKELY(wlen > 0)) { /* Make sure didn't get an error */
+            wconverted = (wchar_t *) safemalloc(wlen);
+            err = cygwin_conv_path(what, which_src, wconverted, wlen);
+        }
+
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-            int newlen = cygwin_conv_path(what, wpath, wbuf, 0);
-            wbuf = (wchar_t *) realloc(&wbuf, newlen);
-            err = cygwin_conv_path(what, wpath, wbuf, newlen);
-            wlen = newlen;
+            int newlen = cygwin_conv_path(what, which_src, wconverted, 0);
+            wconverted = (wchar_t *) realloc(&wconverted, newlen);
+            err = cygwin_conv_path(what, which_src, wconverted, newlen);
         }
-        /* also see utf8.c: Perl_utf16_to_utf8() or Encoding::_bytes_to_utf8(sv, "UCS-2BE"); */
-        wlen = wcsrtombs(NULL, (const wchar_t **)&wbuf, wlen, NULL);
-        win_path = (char *) safemalloc(wlen+1);
-        wcsrtombs(win_path, (const wchar_t **)&wbuf, wlen, NULL);
-        if (oldlocale) setlocale(LC_CTYPE, oldlocale);
-        else setlocale(LC_CTYPE, "C");
 
-        SETLOCALE_UNLOCK;
+        converted_path = wide_to_utf8(wconverted);
+
+        safefree(wconverted);
+        safefree(wsrc);
     } else {
-        int what = absolute_flag ? CCP_POSIX_TO_WIN_A : CCP_POSIX_TO_WIN_A | CCP_RELATIVE;
-        win_path = (char *) safemalloc(len + 260 + 1001);
-        err = cygwin_conv_path(what, src_path, win_path, len + 260 + 1001);
+        int what =  ((absolute_flag) ? 0 : CCP_RELATIVE)
+                  | ((direction == to_posix)
+                     ? CCP_WIN_A_TO_POSIX
+                     : CCP_POSIX_TO_WIN_A);
+
+        converted_path = (char *) safemalloc (len + PATH_LEN_GUESS);
+        err = cygwin_conv_path(what, src_path, converted_path, len + PATH_LEN_GUESS);
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-            int newlen = cygwin_conv_path(what, src_path, win_path, 0);
-            win_path = (char *) realloc(&win_path, newlen);
-            err = cygwin_conv_path(what, src_path, win_path, newlen);
+            int newlen = cygwin_conv_path(what, src_path, converted_path, 0);
+            converted_path = (char *) realloc(&converted_path, newlen);
+            err = cygwin_conv_path(what, src_path, converted_path, newlen);
         }
     }
+
 #else
-    if (isutf8)
-        Perl_warn(aTHX_ "can't convert utf8 path");
-    win_path = (char *) safemalloc(len + 260 + 1001);
-    if (absolute_flag)
-        err = cygwin_conv_to_full_win32_path(src_path, win_path);
-    else
-        err = cygwin_conv_to_win32_path(src_path, win_path);
+    converted_path = (char *) safemalloc (len + PATH_LEN_GUESS);
+
+    switch (absolute_flag | direction) {
+      case (1|to_posix):
+        err = cygwin_conv_to_full_posix_path(src_path, converted_path);
+        break;
+      case (0|to_posix):
+        err = cygwin_conv_to_posix_path(src_path, converted_path);
+        break;
+      case (1|to_win):
+        err = cygwin_conv_to_full_win32_path(src_path, converted_path);
+        break;
+      case (0|to_win):
+        err = cygwin_conv_to_win32_path(src_path, converted_path);
+        break;
+    }
+
 #endif
+
     if (!err) {
         EXTEND(SP, 1);
-        ST(0) = sv_2mortal(newSVpv(win_path, 0));
-        if (isutf8) {
+        ST(0) = sv_2mortal(newSVpv(converted_path, 0));
+        if (isutf8) { /* src was utf-8, so result should also */
+            /* TODO: convert ANSI (local windows encoding) to utf-8 on cygwin-1.5 */
             SvUTF8_on(ST(0));
         }
-        safefree(win_path);
+        safefree(converted_path);
         XSRETURN(1);
     } else {
-        safefree(win_path);
+        safefree(converted_path);
         XSRETURN_UNDEF;
     }
+}
+
+XS(XS_Cygwin_win_to_posix_path)
+{
+    S_convert_path_common(aTHX_ to_posix);
+}
+
+XS(XS_Cygwin_posix_to_win_path)
+{
+    S_convert_path_common(aTHX_ to_win);
 }
 
 XS(XS_Cygwin_mount_table)

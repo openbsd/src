@@ -19,7 +19,6 @@ PL_EXACT_REQ8_bitmask
 PL_extended_utf8_dfa_tab
 PL_fold
 PL_fold_latin1
-PL_fold_locale
 PL_hexdigit
 PL_inf
 PL_interp_size
@@ -58,8 +57,8 @@ PL_phase_names
 PL_ppaddr
 PL_reg_extflags_name
 PL_reg_intflags_name
-PL_reg_name
-PL_regkind
+PL_regnode_info
+PL_regnode_name
 PL_revision
 PL_runops_dbg
 PL_runops_std

@@ -42,6 +42,7 @@ sub init_a2c{
         'arabic'   => 'iso-8859-6',
         'greek'    => 'iso-8859-7',
         'hebrew'   => 'iso-8859-8',
+        'iso-8859-8-I' => 'iso-8859-8',
         'thai'     => 'iso-8859-11',
         'tis620'   => 'iso-8859-11',
         'tis-620'   => 'iso-8859-11',

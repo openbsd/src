@@ -361,6 +361,7 @@ like ($text, qr/frobnicate - do what I mean/, "Output test pod2usage with relati
   *Pod::Usage::initialize = sub { 1; };
 }
 
+our $TODO;
 SKIP: {
     my $perldoc = $^X . 'doc';
     skip "Missing perldoc binary", 2 unless -x $perldoc;
@@ -378,8 +379,10 @@ SKIP: {
       } );
     is ($exit, 0,                 "Exit status pod2usage with special perldoc case");
     # output went to devnull
-    like ($text, qr/^\s*$/s, "Output test pod2usage with special perldoc case") or diag "Got:\n$text\n";
-
+    TODO: {
+        local $TODO = q[Can get output from stty view #14];
+        is( length($text), 0, "Output test pod2usage with special perldoc case") or diag "Got:\n$text\n";
+    }
 }
 
 # bad regexp syntax

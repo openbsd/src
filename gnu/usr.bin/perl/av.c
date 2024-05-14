@@ -103,19 +103,12 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
             "panic: av_extend_guts() negative count (%" IVdf ")", (IV)key);
 
     if (key > *maxp) {
-        SSize_t ary_offset = *maxp + 1; /* Start NULL initialization
-                                         * from this element */
-        SSize_t to_null = 0; /* How many elements to Zero */
+        SSize_t ary_offset = *maxp + 1;
+        SSize_t to_null = 0;
         SSize_t newmax  = 0;
 
         if (av && *allocp != *arrayp) { /* a shifted SV* array exists */
-
-            /* to_null will contain the number of elements currently
-             * shifted and about to be unshifted. If the array has not
-             * been shifted to the maximum possible extent, this will be
-             * a smaller number than (*maxp - AvFILLp(av)). */
             to_null = *arrayp - *allocp;
-
             *maxp += to_null;
             ary_offset = AvFILLp(av) + 1;
 
@@ -123,13 +116,6 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
 
             if (key > *maxp - 10) {
                 newmax = key + *maxp;
-
-                /* Zero everything above AvFILLp(av), which could be more
-                 * elements than have actually been shifted. If we don't
-                 * do this, trailing elements at the end of the resized
-                 * array may not be correctly initialized. */
-                to_null = *maxp - AvFILLp(av);
-
                 goto resize;
             }
         } else if (*allocp) { /* a full SV* array exists */
@@ -181,9 +167,7 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
 #ifdef Perl_safesysmalloc_size
           resized:
 #endif
-            to_null += newmax - *maxp; /* Initialize all new elements
-                                        * (newmax - *maxp) in addition to
-                                        * any previously specified */
+            to_null += newmax - *maxp;
             *maxp = newmax;
 
             /* See GH#18014 for discussion of when this might be needed: */
@@ -193,7 +177,8 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
                 PL_stack_max = PL_stack_base + newmax;
             }
         } else { /* there is no SV* array yet */
-            *maxp = key < 3 ? 3 : key;
+            *maxp = key < PERL_ARRAY_NEW_MIN_KEY ?
+                          PERL_ARRAY_NEW_MIN_KEY : key;
             {
                 /* see comment above about newmax+1*/
                 MEM_WRAP_CHECK_s(*maxp, SV*,
@@ -209,7 +194,7 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
              * don't get any special treatment here.
              * See https://github.com/Perl/perl5/pull/18690 for more detail */
             ary_offset = 0;
-            to_null = *maxp+1; /* Initialize all new array elements */
+            to_null = *maxp+1;
             goto zero;
         }
 
@@ -302,11 +287,11 @@ Perl_av_fetch(pTHX_ AV *av, SSize_t key, I32 lval)
     if ((Size_t)key >= (Size_t)size) {
         if (UNLIKELY(neg))
             return NULL;
-        goto emptyness;
+        goto emptiness;
     }
 
     if (!AvARRAY(av)[key]) {
-      emptyness:
+      emptiness:
         return lval ? av_store(av,key,newSV_type(SVt_NULL)) : NULL;
     }
 
@@ -388,10 +373,47 @@ Perl_av_store(pTHX_ AV *av, SSize_t key, SV *val)
     }
     else if (AvREAL(av))
         SvREFCNT_dec(ary[key]);
+
+    /* store the val into the AV before we call magic so that the magic can
+     * "see" the new value. Especially set magic on the AV itself. */
     ary[key] = val;
+
     if (SvSMAGICAL(av)) {
         const MAGIC *mg = SvMAGIC(av);
         bool set = TRUE;
+        /* We have to increment the refcount on val before we call any magic,
+         * as it is now stored in the AV (just before this block), we will
+         * then call the magic handlers which might die/Perl_croak, and
+         * longjmp up the stack to the most recent exception trap. Which means
+         * the caller code that would be expected to handle the refcount
+         * increment likely would never be executed, leading to a double free.
+         * This can happen in a case like
+         *
+         * @ary = (1);
+         *
+         * or this:
+         *
+         * if (av_store(av,n,sv)) SvREFCNT_inc(sv);
+         *
+         * where @ary/av has set magic applied to it which can die. In the
+         * first case the sv representing 1 would be mortalized, so when the
+         * set magic threw an exception it would be freed as part of the
+         * normal stack unwind. However this leaves the av structure still
+         * holding a valid visible pointer to the now freed value. In practice
+         * the next SV created will reuse the same reference, but without the
+         * refcount to account for the previous ownership and we end up with
+         * warnings about a totally different variable being double freed in
+         * the form of "attempt to free unreferenced variable"
+         * warnings/errors.
+         *
+         * https://github.com/Perl/perl5/issues/20675
+         *
+         * Arguably the API for av_store is broken in the face of magic. Instead
+         * av_store should be responsible for the refcount increment, and only
+         * not do it when specifically told to do so (eg, when storing an
+         * otherwise unreferenced scalar into an AV).
+         */
+        SvREFCNT_inc(val);  /* see comment above */
         for (; mg; mg = mg->mg_moremagic) {
           if (!isUPPER(mg->mg_type)) continue;
           if (val) {
@@ -404,50 +426,12 @@ Perl_av_store(pTHX_ AV *av, SSize_t key, SV *val)
         }
         if (set)
            mg_set(MUTABLE_SV(av));
+        /* And now we are done the magic, we have to decrement it back as the av_store() api
+         * says the caller is responsible for the refcount increment, assuming
+         * av_store returns true. */
+        SvREFCNT_dec(val);
     }
     return &ary[key];
-}
-
-/*
-=for apidoc av_new_alloc
-
-This implements L<perlapi/C<newAV_alloc_x>>
-and L<perlapi/C<newAV_alloc_xz>>, which are the public API for this
-functionality.
-
-Creates a new AV and allocates its SV* array.
-
-This is similar to, but more efficient than doing:
-
-    AV *av = newAV();
-    av_extend(av, key);
-
-The size parameter is used to pre-allocate a SV* array large enough to
-hold at least elements C<0..(size-1)>.  C<size> must be at least 1.
-
-The C<zeroflag> parameter controls whether or not the array is NULL
-initialized.
-
-=cut
-*/
-
-AV *
-Perl_av_new_alloc(pTHX_ SSize_t size, bool zeroflag)
-{
-    AV * const av = newAV();
-    SV** ary;
-    PERL_ARGS_ASSERT_AV_NEW_ALLOC;
-    assert(size > 0);
-
-    Newx(ary, size, SV*); /* Newx performs the memwrap check */
-    AvALLOC(av) = ary;
-    AvARRAY(av) = ary;
-    AvMAX(av) = size - 1;
-
-    if (zeroflag)
-        Zero(ary, size, SV*);
-
-    return av;
 }
 
 /*
@@ -505,6 +489,113 @@ Perl_av_make(pTHX_ SSize_t size, SV **strp)
             PL_tmps_stack[orig_ix] = &PL_sv_undef;
     }
     return av;
+}
+
+/*
+=for apidoc newAVav
+
+Creates a new AV and populates it with values copied from an existing AV.  The
+new AV will have a reference count of 1, and will contain newly created SVs
+copied from the original SV.  The original source will remain unchanged.
+
+Perl equivalent: C<my @new_array = @existing_array;>
+
+=cut
+*/
+
+AV *
+Perl_newAVav(pTHX_ AV *oav)
+{
+    PERL_ARGS_ASSERT_NEWAVAV;
+
+    Size_t count = av_count(oav);
+
+    if(UNLIKELY(!oav) || count == 0)
+        return newAV();
+
+    AV *ret = newAV_alloc_x(count);
+
+    /* avoid ret being leaked if croak when calling magic below */
+    EXTEND_MORTAL(1);
+    PL_tmps_stack[++PL_tmps_ix] = (SV *)ret;
+    SSize_t ret_at_tmps_ix = PL_tmps_ix;
+
+    Size_t i;
+    if(LIKELY(!SvRMAGICAL(oav) && AvREAL(oav) && (SvTYPE(oav) == SVt_PVAV))) {
+        for(i = 0; i < count; i++) {
+            SV **svp = av_fetch_simple(oav, i, 0);
+            av_push_simple(ret, svp ? newSVsv(*svp) : &PL_sv_undef);
+        }
+    } else {
+        for(i = 0; i < count; i++) {
+            SV **svp = av_fetch(oav, i, 0);
+            av_push_simple(ret, svp ? newSVsv(*svp) : &PL_sv_undef);
+        }
+    }
+
+    /* disarm leak guard */
+    if(LIKELY(PL_tmps_ix == ret_at_tmps_ix))
+        PL_tmps_ix--;
+    else
+        PL_tmps_stack[ret_at_tmps_ix] = &PL_sv_undef;
+
+    return ret;
+}
+
+/*
+=for apidoc newAVhv
+
+Creates a new AV and populates it with keys and values copied from an existing
+HV.  The new AV will have a reference count of 1, and will contain newly
+created SVs copied from the original HV.  The original source will remain
+unchanged.
+
+Perl equivalent: C<my @new_array = %existing_hash;>
+
+=cut
+*/
+
+AV *
+Perl_newAVhv(pTHX_ HV *ohv)
+{
+    PERL_ARGS_ASSERT_NEWAVHV;
+
+    if(UNLIKELY(!ohv))
+        return newAV();
+
+    bool tied = SvRMAGICAL(ohv) && mg_find(MUTABLE_SV(ohv), PERL_MAGIC_tied);
+
+    Size_t nkeys = hv_iterinit(ohv);
+    /* This number isn't perfect but it doesn't matter; it only has to be
+     * close to make the initial allocation about the right size
+     */
+    AV *ret = newAV_alloc_xz(nkeys ? nkeys * 2 : 2);
+
+    /* avoid ret being leaked if croak when calling magic below */
+    EXTEND_MORTAL(1);
+    PL_tmps_stack[++PL_tmps_ix] = (SV *)ret;
+    SSize_t ret_at_tmps_ix = PL_tmps_ix;
+
+
+    HE *he;
+    while((he = hv_iternext(ohv))) {
+        if(tied) {
+            av_push_simple(ret, newSVsv(hv_iterkeysv(he)));
+            av_push_simple(ret, newSVsv(hv_iterval(ohv, he)));
+        }
+        else {
+            av_push_simple(ret, newSVhek(HeKEY_hek(he)));
+            av_push_simple(ret, HeVAL(he) ? newSVsv(HeVAL(he)) : &PL_sv_undef);
+        }
+    }
+
+    /* disarm leak guard */
+    if(LIKELY(PL_tmps_ix == ret_at_tmps_ix))
+        PL_tmps_ix--;
+    else
+        PL_tmps_stack[ret_at_tmps_ix] = &PL_sv_undef;
+
+    return ret;
 }
 
 /*
@@ -605,7 +696,7 @@ void
 Perl_av_undef(pTHX_ AV *av)
 {
     bool real;
-    SSize_t orig_ix = PL_tmps_ix; /* silence bogus warning about possible unitialized use */
+    SSize_t orig_ix = PL_tmps_ix; /* silence bogus warning about possible uninitialized use */
 
     PERL_ARGS_ASSERT_AV_UNDEF;
     assert(SvTYPE(av) == SVt_PVAV);

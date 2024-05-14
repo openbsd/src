@@ -249,7 +249,7 @@ PerlIO *Perl_my_popen(pTHX_ const char *cmd, const char *mode)
         }
 
         /* Our new process is running and will close it streams etc
-         * once its done. All we need to is open the pipe via stdio
+         * once it's done. All we need to is open the pipe via stdio
          */
 
         return result;

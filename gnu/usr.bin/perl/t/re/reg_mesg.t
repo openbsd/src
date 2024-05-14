@@ -108,7 +108,7 @@ sub mark_as_utf8 {
     return @ret;
 }
 
-my $inf_m1 = ($Config::Config{reg_infty} || 65535) - 1;
+my $inf_m1 = ($Config::Config{reg_infty} || ((1<<31)-1)) - 1;
 my $inf_p1 = $inf_m1 + 2;
 
 my $B_hex = sprintf("\\x%02X", ord "B");

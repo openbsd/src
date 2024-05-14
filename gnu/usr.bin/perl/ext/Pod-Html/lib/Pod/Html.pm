@@ -2,10 +2,9 @@ package Pod::Html;
 use strict;
 use Exporter 'import';
 
-our $VERSION = 1.33;
+our $VERSION = 1.34;
 $VERSION = eval $VERSION;
-our @EXPORT = qw(pod2html htmlify);
-our @EXPORT_OK = qw(anchorify relativize_url);
+our @EXPORT = qw(pod2html);
 
 use Config;
 use Cwd;
@@ -195,7 +194,7 @@ Display progress messages.  By default, they won't be displayed.
 
 =back
 
-=head2 Auxiliary Functions
+=head2 Formerly Exported Auxiliary Functions
 
 Prior to perl-5.36, the following three functions were exported by
 F<Pod::Html>, either by default or on request:
@@ -213,10 +212,8 @@ F<Pod::Html>, either by default or on request:
 The definition and documentation of these functions have been moved to
 F<Pod::Html::Util>, viewable via C<perldoc Pod::Html::Util>.
 
-In perl-5.36, these functions will be importable from either F<Pod::Html> or
-F<Pod::Html::Util>.  However, beginning with perl-5.38 they will only be
-importable, upon request, from F<Pod::Html::Util>.  Please modify your code as
-needed.
+Beginning with perl-5.38 these functions must be explicitly imported from
+F<Pod::Html::Util>.  Please modify your code as needed.
 
 =head1 ENVIRONMENT
 

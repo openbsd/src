@@ -118,32 +118,52 @@ $| = 1;
 #BEGIN { require '../lib/strict.pm'; "strict"->import() };
 #BEGIN { require '../lib/warnings.pm'; "warnings"->import() };
 
-# remove empty elements due to insertion of empty symbols via "''p1'" syntax
-@ARGV = grep($_,@ARGV) if $^O eq 'VMS';
+my $OS = $ENV{FAKE_OS} || $^O;
 
-# String eval to avoid loading File::Glob on non-miniperl.
-# (Windows only uses this script for miniperl.)
-@ARGV = eval 'map glob, @ARGV' if $^O eq 'MSWin32';
+my $is_vms   = $OS eq "VMS";
+my $is_win32 = $OS eq "MSWin32";
+my $is_os2   = $OS eq "os2";
+
+# remove empty elements due to insertion of empty symbols via "''p1'" syntax
+@ARGV = grep($_,@ARGV) if $is_vms;
 
 our $show_elapsed_time = $ENV{HARNESS_TIMER} || 0;
+
+my $dump_tests = 0;
 
 # Cheesy version of Getopt::Std.  We can't replace it with that, because we
 # can't rely on require working.
 {
+    my %opt_vars = (
+	benchmark => \$::benchmark,
+	core      => \$::core,
+	v         => \$::verbose,
+	torture	  => \$::torture,
+	utf8      => \$::with_utf8,
+	utf16     => \$::with_utf16,
+	taintwarn => \$::taintwarn,
+	dumptests => \$dump_tests,
+    );
+
     my @argv = ();
     foreach my $idx (0..$#ARGV) {
-	push( @argv, $ARGV[$idx] ), next unless $ARGV[$idx] =~ /^-(\S+)$/;
-	$::benchmark = 1 if $1 eq 'benchmark';
-	$::core    = 1 if $1 eq 'core';
-	$::verbose = 1 if $1 eq 'v';
-	$::torture = 1 if $1 eq 'torture';
-	$::with_utf8 = 1 if $1 eq 'utf8';
-	$::with_utf16 = 1 if $1 eq 'utf16';
-	$::taintwarn = 1 if $1 eq 'taintwarn';
-	if ($1 =~ /^deparse(,.+)?$/) {
+	my $opt;
+	if ($ARGV[$idx] =~ /^-?-(\S+)$/) {
+	    $opt = $1;
+	} else {
+	    push @argv, $ARGV[$idx];
+	    next;
+	}
+	if (my $ref = $opt_vars{$opt}) {
+	    $$ref = 1;
+	}
+	elsif ($opt =~ /^deparse(,.+)?$/) {
 	    $::deparse = 1;
 	    $::deparse_opts = $1;
             _process_deparse_config();
+	}
+	else {
+	    die "Unknown option '$opt'\n";
 	}
     }
     @ARGV = @argv;
@@ -156,6 +176,17 @@ if (-f 'TEST' && -f 'harness' && -d '../lib') {
 
 die "You need to run \"make test_prep\" first to set things up.\n"
   unless -e 'perl' or -e 'perl.exe' or -e 'perl.pm';
+
+if ($is_win32) {
+    # String eval to avoid loading File::Glob on non-miniperl.
+    # (Windows only uses this script for miniperl.)
+    my @argv;
+    if (eval '@argv = map glob, @ARGV; 1') {
+	@ARGV = @argv;
+    } else {
+	die "Failed to glob \@ARGV: $@";
+    }
+}
 
 # check leakage for embedders
 $ENV{PERL_DESTRUCT_LEVEL} = 2 unless exists $ENV{PERL_DESTRUCT_LEVEL};
@@ -176,7 +207,7 @@ sub _find_files {
 	opendir DIR, $dir or die "Trouble opening $dir: $!";
 	foreach my $f (sort { $a cmp $b } readdir DIR) {
 	    next if $skip{$f};
-
+	    $dir =~ s/(?<!\^)\.dir(;1)?$//i if $is_vms; # trim .DIR extension
 	    my $fullpath = "$dir/$f";
 	    if (-d $fullpath) {
 		_find_files($patt, $fullpath);
@@ -222,7 +253,7 @@ sub _scan_test {
 
     close $script;
 
-    my $perl = $^O eq 'MSWin32' ? '.\perl' : './perl';
+    my $perl = $is_win32 ? '.\perl' : './perl';
     my $lib  = '../lib';
     my $run_dir;
     my $return_dir;
@@ -288,7 +319,7 @@ sub _cmd {
     }
     elsif ($type eq 'perl') {
         my $perl = $options->{perl};
-        my $redir = $^O eq 'VMS' ? '2>&1' : '';
+        my $redir = $is_vms ? '2>&1' : '';
 
         if ($ENV{PERL_VALGRIND}) {
             my $perl_supp = $options->{return_dir} ? "$options->{return_dir}/perl.supp" : "perl.supp";
@@ -379,7 +410,7 @@ sub _quote_args {
     foreach (split(/\s+/,$args)) {
        # In VMS protect with doublequotes because otherwise
        # DCL will lowercase -- unless already doublequoted.
-       $_ = q(").$_.q(") if ($^O eq 'VMS') && !/^\"/ && length($_) > 0;
+       $_ = q(").$_.q(") if $is_vms && !/^\"/ && length($_) > 0;
        $argstring = $argstring . ' ' . $_;
     }
     return $argstring;
@@ -391,7 +422,9 @@ sub _populate_hash {
 }
 
 sub _tests_from_manifest {
-    my ($extensions, $known_extensions) = @_;
+    my ($extensions, $known_extensions, $all) = @_;
+    s/\bCwd\b/PathTools/, s!\bList/Util\b!Scalar/List/Utils!
+	for $extensions, $known_extensions;
     my %skip;
     my %extensions = _populate_hash($extensions);
     my %known_extensions = _populate_hash($known_extensions);
@@ -402,10 +435,14 @@ sub _tests_from_manifest {
     }
 
     my @results;
+    my %non_ext;
+    push @results, \%non_ext if $all;
     my $mani = '../MANIFEST';
     if (open(MANI, $mani)) {
 	while (<MANI>) {
-	    if (m!^((?:cpan|dist|ext)/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
+	    chomp;
+	    my ($file)= split /\t/, $_;
+	    if ($file =~ m!^((?:cpan|dist|ext)/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\z!) {
 		my $t = $1;
 		my $extension = $2;
 
@@ -456,6 +493,17 @@ sub _tests_from_manifest {
 		    $::path_to_name{$path} = $t;
 		}
 	    }
+	    elsif ($file=~m!/(?:test\.pl|[^/\s]+\.t)\z! and $file ne "t/test.pl") {
+		my $munged = $file;
+		next if $munged=~m!^(?:t/)?os2/!	and !$is_os2;
+		next if $munged=~m!^(?:t/)?win32/!	and !$is_win32;
+		next if $munged=~m!^(?:t/)?japh/!	and !($::torture or $ENV{PERL_TORTURE_TEST});
+		next if $munged=~m!^(?:t/)?benchmark/!	and !($::benchmark or $ENV{PERL_BENCHMARK});
+		next if $munged=~m!^(?:t/)?bigmem/!	and !$ENV{PERL_TEST_MEMORY};
+		$munged =~ s!t/!! or $munged = "../$munged";
+
+		$non_ext{$munged}++;
+	    }
 	}
 	close MANI;
     } else {
@@ -464,18 +512,62 @@ sub _tests_from_manifest {
     return @results;
 }
 
+sub dump_tests {
+    my ($ary) = @_;
+    for my $test (sort @$ary) {
+        # convert it to a path from the root of the repo
+        $test=~s!^\.\./!! or $test=~s!^!t/!;
+        print "$test\n";
+    }
+    exit(0);
+}
+
+sub filter_taint_tests {
+    my $tests = shift;
+    require Config;
+    return unless $Config::Config{taint_disabled} eq "define";
+
+    # These are test files which are known to fail with -DNO_TAINT_SUPPORT
+    # but which do not have "taint" in their name, nor have shebang lines
+    # with -t or -T in them. So we exclude them specifically instead.
+    my %known_tainter = map { $_ => 0 } (
+        '../cpan/Test-Harness/t/regression.t',
+        '../cpan/Test-Harness/t/source_handler.t',
+        '../cpan/Test-Harness/t/compat/inc-propagation.t',
+    );
+    @$tests = grep {
+        my $file = $_;
+        open my $ifh, "<", $file
+            or die "Failed to read: '$file': $!";
+        my $line = <$ifh>;
+        my $keep = $file=~/taint/ ? 0 : ($known_tainter{$file} // 1);
+        if ($line=~/^#!.*perl\s+-(\w+)/) {
+            my $switch = $1;
+            if ($switch =~ s/[Tt]//) {
+                $keep = 0;
+            }
+        }
+        $keep
+    } @$tests;
+}
+
+
 unless (@ARGV) {
     # base first, as TEST bails out if that can't run
     # then comp, to validate that require works
     # then run, to validate that -M works
     # then we know we can -MTestInit for everything else, making life simpler
-    foreach my $dir (qw(base comp run cmd io re opbasic op uni mro perf)) {
+
+    # NOTE that _find_tests() is recursive, unlike what test_harness uses.
+    foreach my $dir (qw(base comp run cmd io re opbasic op uni mro class perf test_pl)) {
 	_find_tests($dir);
     }
     unless ($::core) {
 	_find_tests('porting');
         _find_tests("lib");
     }
+    _find_tests('win32') if $is_win32;
+    _find_tests('os2')	 if $is_os2;
     # Config.pm may be broken for make minitest. And this is only a refinement
     # for skipping tests on non-default builds, so it is allowed to fail.
     # What we want to do is make a list of extensions which we did not build.
@@ -504,13 +596,14 @@ unless (@ARGV) {
     # something is that badly wrong.
     push @ARGV, _tests_from_manifest($extensions, $known_extensions);
     unless ($::core) {
-	_find_tests('japh') if $::torture;
+	_find_tests('japh') if $::torture or $ENV{PERL_TORTURE_TEST};
 	_find_tests('benchmark') if $::benchmark or $ENV{PERL_BENCHMARK};
 	_find_tests('bigmem') if $ENV{PERL_TEST_MEMORY};
     }
 }
 @ARGV= do {
     my @order= (
+	"test_pl",
 	"base",
 	"comp",
 	"run",
@@ -519,8 +612,10 @@ unless (@ARGV) {
 	"re",
 	"opbasic",
 	"op",
+	"op/hook",
 	"uni",
 	"mro",
+	"class",
 	"lib",
 	"ext",
 	"dist",
@@ -540,6 +635,10 @@ unless (@ARGV) {
 	[ $_, $idx++, $root, $order{$root}||=0 ]
     } @ARGV;
 };
+
+dump_tests(\@ARGV) if $dump_tests;
+
+filter_taint_tests(\@ARGV);
 
 if ($::deparse) {
     _testprogs('deparse', '',   @ARGV);
@@ -630,7 +729,7 @@ EOT
 	my $te = $::path_to_name{$test} . '.'
 		    x ($dotdotdot - length($::path_to_name{$test})) .' ';
 
-	if ($^O ne 'VMS') {  # defer printing on VMS due to piping bug
+	if (!$is_vms) {  # defer printing on VMS due to piping bug
 	    print $te;
 	    $te = '';
 	}
@@ -648,7 +747,7 @@ EOT
 	my %todo;
 	while (<$results>) {
 	    next if /^\s*$/; # skip blank lines
-	    if (/^1..$/ && ($^O eq 'VMS')) {
+	    if (/^1..$/ && $is_vms) {
 		# VMS pipe bug inserts blank lines.
 		my $l2 = <$results>;
 		if ($l2 =~ /^\s*$/) {
@@ -909,7 +1008,7 @@ sub gather_conf_platform_info {
 	@platform = grep /name|cpu/, <$fh>;
 	chomp $_ for @platform;
     }
-    unshift @platform, $^O;
+    unshift @platform, $OS;
 
     return (
 	conf => \%conf,

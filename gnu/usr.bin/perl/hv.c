@@ -56,20 +56,10 @@ static const char S_strtab_error[]
  */
 #if IVSIZE == 8
 /* 64 bit version */
-#define XORSHIFT_RAND_BITS(x)   \
-STMT_START {                    \
-    (x) ^= (x) << 13;           \
-    (x) ^= (x) >> 17;           \
-    (x) ^= (x) << 5;            \
-} STMT_END
+#define XORSHIFT_RAND_BITS(x)   PERL_XORSHIFT64_A(x)
 #else
 /* 32 bit version */
-#define XORSHIFT_RAND_BITS(x)   \
-STMT_START {                    \
-    (x) ^= (x) << 13;           \
-    (x) ^= (x) >> 7;            \
-    (x) ^= (x) << 17;           \
-} STMT_END
+#define XORSHIFT_RAND_BITS(x)   PERL_XORSHIFT32_A(x)
 #endif
 
 #define UPDATE_HASH_RAND_BITS_KEY(key,klen)                             \
@@ -337,28 +327,44 @@ S_hv_notallowed(pTHX_ int flags, const char *key, I32 klen,
  * contains an SV* */
 
 /*
-=for apidoc hv_store
+=for apidoc      hv_store
+=for apidoc_item hv_stores
 
-Stores an SV in a hash.  The hash key is specified as C<key> and the
-absolute value of C<klen> is the length of the key.  If C<klen> is
-negative the key is assumed to be in UTF-8-encoded Unicode.  The
-C<hash> parameter is the precomputed hash value; if it is zero then
-Perl will compute it.
+These each store SV C<val> with the specified key in hash C<hv>, returning NULL
+if the operation failed or if the value did not need to be actually stored
+within the hash (as in the case of tied hashes).  Otherwise it can be
+dereferenced to get the original C<SV*>.
 
-The return value will be
-C<NULL> if the operation failed or if the value did not need to be actually
-stored within the hash (as in the case of tied hashes).  Otherwise it can
-be dereferenced to get the original C<SV*>.  Note that the caller is
+They differ only in how the hash key is specified.
+
+In C<hv_stores>, the key is a C language string literal, enclosed in double
+quotes.  It is never treated as being in UTF-8.
+
+In C<hv_store>, C<key> is either NULL or points to the first byte of the string
+specifying the key, and its length in bytes is given by the absolute value of
+an additional parameter, C<klen>.  A NULL key indicates the key is to be
+treated as C<undef>, and C<klen> is ignored; otherwise the key string may
+contain embedded-NUL bytes.  If C<klen> is negative, the string is treated as
+being encoded in UTF-8; otherwise not.
+
+C<hv_store> has another extra parameter, C<hash>, a precomputed hash of the key
+string, or zero if it has not been precomputed.  This parameter is omitted from
+C<hv_stores>, as it is computed automatically at compile time.
+
+If <hv> is NULL, NULL is returned and no action is taken.
+
+If C<val> is NULL, it is treated as being C<undef>; otherwise the caller is
 responsible for suitably incrementing the reference count of C<val> before
 the call, and decrementing it if the function returned C<NULL>.  Effectively
 a successful C<hv_store> takes ownership of one reference to C<val>.  This is
 usually what you want; a newly created SV has a reference count of one, so
 if all your code does is create SVs then store them in a hash, C<hv_store>
 will own the only reference to the new SV, and your code doesn't need to do
-anything further to tidy up.  C<hv_store> is not implemented as a call to
-C<hv_store_ent>, and does not create a temporary SV for the key, so if your
-key data is not already in SV form then use C<hv_store> in preference to
-C<hv_store_ent>.
+anything further to tidy up.
+
+C<hv_store> is not implemented as a call to L</C<hv_store_ent>>, and does not
+create a temporary SV for the key, so if your key data is not already in SV
+form then use C<hv_store> in preference to C<hv_store_ent>.
 
 See L<perlguts/"Understanding the Magic of Tied Hashes and Arrays"> for more
 information on how to use this function on tied hashes.
@@ -474,7 +480,7 @@ Perl_hv_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
 
     if (!hv)
         return NULL;
-    if (SvTYPE(hv) == (svtype)SVTYPEMASK)
+    if (SvIS_FREED(hv))
         return NULL;
 
     assert(SvTYPE(hv) == SVt_PVHV);
@@ -587,7 +593,7 @@ Perl_hv_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
                 for (i = 0; i < klen; ++i)
                     if (isLOWER(key[i])) {
                         /* Would be nice if we had a routine to do the
-                           copy and upercase in a single pass through.  */
+                           copy and uppercase in a single pass through.  */
                         const char * const nkey = strupr(savepvn(key,klen));
                         /* Note that this fetch is for nkey (the uppercased
                            key) whereas the store is for key (the original)  */
@@ -1000,7 +1006,7 @@ Perl_hv_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
         *oentry = entry;
     }
 #ifdef PERL_HASH_RANDOMIZE_KEYS
-    if (SvOOK(hv)) {
+    if (HvHasAUX(hv)) {
         /* Currently this makes various tests warn in annoying ways.
          * So Silenced for now. - Yves | bogus end of comment =>* /
         if (HvAUX(hv)->xhv_riter != -1) {
@@ -1416,11 +1422,11 @@ S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
         else {
             HeVAL(entry) = NULL;
             *oentry = HeNEXT(entry);
-            if (SvOOK(hv) && entry == HvAUX(hv)->xhv_eiter /* HvEITER(hv) */) {
+            if (HvHasAUX(hv) && entry == HvAUX(hv)->xhv_eiter /* HvEITER(hv) */) {
                 HvLAZYDEL_on(hv);
             }
             else {
-                if (SvOOK(hv) && HvLAZYDEL(hv) &&
+                if (HvHasAUX(hv) && HvLAZYDEL(hv) &&
                     entry == HeNEXT(HvAUX(hv)->xhv_eiter))
                     HeNEXT(HvAUX(hv)->xhv_eiter) = HeNEXT(entry);
                 hv_free_ent(NULL, entry);
@@ -1433,7 +1439,7 @@ S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
         /* If this is a stash and the key ends with ::, then someone is 
          * deleting a package.
          */
-        if (sv && SvTYPE(sv) == SVt_PVGV && HvENAME_get(hv)) {
+        if (sv && SvTYPE(sv) == SVt_PVGV && HvHasENAME(hv)) {
                 gv = (GV *)sv;
                 if ((
                      (klen > 1 && key[klen-2] == ':' && key[klen-1] == ':')
@@ -1442,7 +1448,7 @@ S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
                     )
                  && (klen != 6 || hv!=PL_defstash || memNE(key,"main::",6))
                  && (stash = GvHV((GV *)gv))
-                 && HvENAME_get(stash)) {
+                 && HvHasENAME(stash)) {
                         /* A previous version of this code checked that the
                          * GV was still in the symbol table by fetching the
                          * GV with its name. That is not necessary (and
@@ -1470,11 +1476,13 @@ S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
                             SV **svp, **end;
                         strip_magic:
                             svp = AvARRAY(isa);
-                            end = svp + (AvFILLp(isa)+1);
-                            while (svp < end) {
-                                if (*svp)
-                                    mg_free_type(*svp, PERL_MAGIC_isaelem);
-                                ++svp;
+                            if (svp) {
+                                end = svp + (AvFILLp(isa)+1);
+                                while (svp < end) {
+                                    if (*svp)
+                                        mg_free_type(*svp, PERL_MAGIC_isaelem);
+                                    ++svp;
+                                }
                             }
                             mg_free_type((SV*)GvAV(gv), PERL_MAGIC_isa);
                         }
@@ -1529,7 +1537,7 @@ S_hv_delete_common(pTHX_ HV *hv, SV *keysv, const char *key, STRLEN klen,
         if (sv) {
             /* deletion of method from stash */
             if (isGV(sv) && isGV_with_GP(sv) && GvCVu(sv)
-             && HvENAME_get(hv))
+             && HvHasENAME(hv))
                 mro_method_changed_in(hv);
 
             if (d_flags & G_DISCARD) {
@@ -1586,7 +1594,7 @@ static bool
 S_large_hash_heuristic(pTHX_ HV *hv, STRLEN size) {
     if (size > 42
         && !SvOBJECT(hv)
-        && !(SvOOK(hv) && HvENAME_get(hv))) {
+        && !(HvHasAUX(hv) && HvENAME_get(hv))) {
         /* This hash appears to be growing quite large.
            We gamble that it is not sharing keys with other hashes. */
         return TRUE;
@@ -1679,6 +1687,19 @@ S_hsplit(pTHX_ HV *hv, STRLEN const oldsize, STRLEN newsize)
     } while (i++ < oldsize);
 }
 
+/*
+=for apidoc hv_ksplit
+
+Attempt to grow the hash C<hv> so it has at least C<newmax> buckets available.
+Perl chooses the actual number for its convenience.
+
+This is the same as doing the following in Perl code:
+
+ keys %hv = newmax;
+
+=cut
+*/
+
 void
 Perl_hv_ksplit(pTHX_ HV *hv, IV newmax)
 {
@@ -1716,11 +1737,11 @@ Perl_hv_ksplit(pTHX_ HV *hv, IV newmax)
     a = (char *) HvARRAY(hv);
     if (a) {
 #ifdef PERL_HASH_RANDOMIZE_KEYS
-        U32 was_ook = SvOOK(hv);
+        U32 was_ook = HvHasAUX(hv);
 #endif
         hsplit(hv, oldsize, newsize);
 #ifdef PERL_HASH_RANDOMIZE_KEYS
-        if (was_ook && SvOOK(hv) && HvTOTALKEYS(hv)) {
+        if (was_ook && HvHasAUX(hv) && HvTOTALKEYS(hv)) {
             MAYBE_UPDATE_HASH_RAND_BITS();
             HvAUX(hv)->xhv_rand = (U32)PL_hash_rand_bits;
         }
@@ -2018,7 +2039,7 @@ Perl_hv_clear(pTHX_ HV *hv)
 
         HvHASKFLAGS_off(hv);
     }
-    if (SvOOK(hv)) {
+    if (HvHasAUX(hv)) {
         if(HvENAME_get(hv))
             mro_isa_changed_in(hv);
         HvEITER_set(hv, NULL);
@@ -2079,7 +2100,7 @@ S_clear_placeholders(pTHX_ HV *hv, const U32 placeholders)
                 if (entry == HvEITER_get(hv))
                     HvLAZYDEL_on(hv);
                 else {
-                    if (SvOOK(hv) && HvLAZYDEL(hv) &&
+                    if (HvHasAUX(hv) && HvLAZYDEL(hv) &&
                         entry == HeNEXT(HvAUX(hv)->xhv_eiter))
                         HeNEXT(HvAUX(hv)->xhv_eiter) = HeNEXT(entry);
                     hv_free_ent(NULL, entry);
@@ -2138,7 +2159,7 @@ Perl_hfree_next_entry(pTHX_ HV *hv, STRLEN *indexp)
 
     PERL_ARGS_ASSERT_HFREE_NEXT_ENTRY;
 
-    if (SvOOK(hv) && ((iter = HvAUX(hv)))) {
+    if (HvHasAUX(hv) && ((iter = HvAUX(hv)))) {
         if ((entry = iter->xhv_eiter)) {
             /* the iterator may get resurrected after each
              * destructor call, so check each time */
@@ -2169,9 +2190,9 @@ Perl_hfree_next_entry(pTHX_ HV *hv, STRLEN *indexp)
     array[*indexp] = HeNEXT(entry);
     ((XPVHV*) SvANY(hv))->xhv_keys--;
 
-    if (   PL_phase != PERL_PHASE_DESTRUCT && HvENAME(hv)
+    if (   PL_phase != PERL_PHASE_DESTRUCT && HvHasENAME(hv)
         && HeVAL(entry) && isGV(HeVAL(entry))
-        && GvHV(HeVAL(entry)) && HvENAME(GvHV(HeVAL(entry)))
+        && GvHV(HeVAL(entry)) && HvHasENAME(GvHV(HeVAL(entry)))
     ) {
         STRLEN klen;
         const char * const key = HePV(entry,klen);
@@ -2205,7 +2226,7 @@ void
 Perl_hv_undef_flags(pTHX_ HV *hv, U32 flags)
 {
     bool save;
-    SSize_t orig_ix = PL_tmps_ix; /* silence compiler warning about unitialized vars */
+    SSize_t orig_ix = PL_tmps_ix; /* silence compiler warning about uninitialized vars */
 
     if (!hv)
         return;
@@ -2222,7 +2243,7 @@ Perl_hv_undef_flags(pTHX_ HV *hv, U32 flags)
        if they will be freed anyway. */
     /* note that the code following prior to hv_free_entries is duplicated
      * in sv_clear(), and changes here should be done there too */
-    if (PL_phase != PERL_PHASE_DESTRUCT && HvNAME(hv)) {
+    if (PL_phase != PERL_PHASE_DESTRUCT && HvHasNAME(hv)) {
         if (PL_stashcache) {
             DEBUG_o(Perl_deb(aTHX_ "hv_undef_flags clearing PL_stashcache for '%"
                              HEKf "'\n", HEKfARG(HvNAME_HEK(hv))));
@@ -2243,7 +2264,7 @@ Perl_hv_undef_flags(pTHX_ HV *hv, U32 flags)
        HE* that needs to be explicitly freed. */
     hv_free_entries(hv);
 
-    /* SvOOK() is true for a hash if it has struct xpvhv_aux allocated. That
+    /* HvHasAUX() is true for a hash if it has struct xpvhv_aux allocated. That
        structure has several other pieces of allocated memory - hence those must
        be freed before the structure itself can be freed. Some can be freed when
        a hash is "undefined" (this function), but some must persist until it is
@@ -2256,32 +2277,36 @@ Perl_hv_undef_flags(pTHX_ HV *hv, U32 flags)
        must remain consistent, because this code can no longer clear SVf_OOK,
        meaning that this structure might be read again at any point in the
        future without further checks or reinitialisation. */
-    if (SvOOK(hv)) {
+    if (HvHasAUX(hv)) {
+      struct xpvhv_aux *aux = HvAUX(hv);
       struct mro_meta *meta;
       const char *name;
 
-      if (HvENAME_get(hv)) {
+      if (HvHasENAME(hv)) {
         if (PL_phase != PERL_PHASE_DESTRUCT)
             mro_isa_changed_in(hv);
         if (PL_stashcache) {
             DEBUG_o(Perl_deb(aTHX_ "hv_undef_flags clearing PL_stashcache for effective name '%"
-                             HEKf "'\n", HEKfARG(HvENAME_HEK(hv))));
-            (void)hv_deletehek(PL_stashcache, HvENAME_HEK(hv), G_DISCARD);
+                             HEKf "'\n", HEKfARG(HvENAME_HEK_NN(hv))));
+            (void)hv_deletehek(PL_stashcache, HvENAME_HEK_NN(hv), G_DISCARD);
         }
       }
 
       /* If this call originated from sv_clear, then we must check for
        * effective names that need freeing, as well as the usual name. */
       name = HvNAME(hv);
-      if (flags & HV_NAME_SETALL ? !!HvAUX(hv)->xhv_name_u.xhvnameu_name : !!name) {
+      if (flags & HV_NAME_SETALL
+          ? cBOOL(aux->xhv_name_u.xhvnameu_name)
+          : cBOOL(name))
+      {
         if (name && PL_stashcache) {
             DEBUG_o(Perl_deb(aTHX_ "hv_undef_flags clearing PL_stashcache for name '%"
-                             HEKf "'\n", HEKfARG(HvNAME_HEK(hv))));
-            (void)hv_deletehek(PL_stashcache, HvNAME_HEK(hv), G_DISCARD);
+                             HEKf "'\n", HEKfARG(HvNAME_HEK_NN(hv))));
+            (void)hv_deletehek(PL_stashcache, HvNAME_HEK_NN(hv), G_DISCARD);
         }
         hv_name_set(hv, NULL, 0, flags);
       }
-      if((meta = HvAUX(hv)->xhv_mro_meta)) {
+      if((meta = aux->xhv_mro_meta)) {
         if (meta->mro_linear_all) {
             SvREFCNT_dec_NN(meta->mro_linear_all);
             /* mro_linear_current is just acting as a shortcut pointer,
@@ -2295,7 +2320,20 @@ Perl_hv_undef_flags(pTHX_ HV *hv, U32 flags)
         SvREFCNT_dec(meta->isa);
         SvREFCNT_dec(meta->super);
         Safefree(meta);
-        HvAUX(hv)->xhv_mro_meta = NULL;
+        aux->xhv_mro_meta = NULL;
+      }
+
+      if(HvSTASH_IS_CLASS(hv)) {
+          SvREFCNT_dec(aux->xhv_class_superclass);
+          SvREFCNT_dec(aux->xhv_class_initfields_cv);
+          SvREFCNT_dec(aux->xhv_class_adjust_blocks);
+          if(aux->xhv_class_fields)
+            PadnamelistREFCNT_dec(aux->xhv_class_fields);
+          SvREFCNT_dec(aux->xhv_class_param_map);
+          Safefree(aux->xhv_class_suspended_initfields_compcv);
+          aux->xhv_class_suspended_initfields_compcv = NULL;
+
+          aux->xhv_aux_flags &= ~HvAUXf_IS_CLASS;
       }
     }
 
@@ -2375,7 +2413,7 @@ S_hv_auxinit(pTHX_ HV *hv) {
 
     PERL_ARGS_ASSERT_HV_AUXINIT;
 
-    if (!SvOOK(hv)) {
+    if (!HvHasAUX(hv)) {
         char *array = (char *) HvARRAY(hv);
         if (!array) {
             Newxz(array, PERL_HV_ARRAY_ALLOC_BYTES(HvMAX(hv) + 1), char);
@@ -2423,7 +2461,7 @@ Perl_hv_iterinit(pTHX_ HV *hv)
 {
     PERL_ARGS_ASSERT_HV_ITERINIT;
 
-    if (SvOOK(hv)) {
+    if (HvHasAUX(hv)) {
         struct xpvhv_aux * iter = HvAUX(hv);
         HE * const entry = iter->xhv_eiter; /* HvEITER(hv) */
         if (entry && HvLAZYDEL(hv)) {	/* was deleted earlier? */
@@ -2457,7 +2495,7 @@ Perl_hv_riter_p(pTHX_ HV *hv) {
 
     PERL_ARGS_ASSERT_HV_RITER_P;
 
-    iter = SvOOK(hv) ? HvAUX(hv) : hv_auxinit(hv);
+    iter = HvHasAUX(hv) ? HvAUX(hv) : hv_auxinit(hv);
     return &(iter->xhv_riter);
 }
 
@@ -2475,7 +2513,7 @@ Perl_hv_eiter_p(pTHX_ HV *hv) {
 
     PERL_ARGS_ASSERT_HV_EITER_P;
 
-    iter = SvOOK(hv) ? HvAUX(hv) : hv_auxinit(hv);
+    iter = HvHasAUX(hv) ? HvAUX(hv) : hv_auxinit(hv);
     return &(iter->xhv_eiter);
 }
 
@@ -2493,7 +2531,7 @@ Perl_hv_riter_set(pTHX_ HV *hv, I32 riter) {
 
     PERL_ARGS_ASSERT_HV_RITER_SET;
 
-    if (SvOOK(hv)) {
+    if (HvHasAUX(hv)) {
         iter = HvAUX(hv);
     } else {
         if (riter == -1)
@@ -2511,7 +2549,7 @@ Perl_hv_rand_set(pTHX_ HV *hv, U32 new_xhv_rand) {
     PERL_ARGS_ASSERT_HV_RAND_SET;
 
 #ifdef PERL_HASH_RANDOMIZE_KEYS
-    if (SvOOK(hv)) {
+    if (HvHasAUX(hv)) {
         iter = HvAUX(hv);
     } else {
         iter = hv_auxinit(hv);
@@ -2536,7 +2574,7 @@ Perl_hv_eiter_set(pTHX_ HV *hv, HE *eiter) {
 
     PERL_ARGS_ASSERT_HV_EITER_SET;
 
-    if (SvOOK(hv)) {
+    if (HvHasAUX(hv)) {
         iter = HvAUX(hv);
     } else {
         /* 0 is the default so don't go malloc()ing a new structure just to
@@ -2548,6 +2586,31 @@ Perl_hv_eiter_set(pTHX_ HV *hv, HE *eiter) {
     }
     iter->xhv_eiter = eiter;
 }
+
+/*
+=for apidoc        hv_name_set
+=for apidoc_item ||hv_name_sets|HV *hv|"name"|U32 flags
+
+These each set the name of stash C<hv> to the specified name.
+
+They differ only in how the name is specified.
+
+In C<hv_name_sets>, the name is a literal C string, enclosed in double quotes.
+
+In C<hv_name_set>, C<name> points to the first byte of the name, and an
+additional parameter, C<len>, specifies its length in bytes.  Hence, the name
+may contain embedded-NUL characters.
+
+If C<SVf_UTF8> is set in C<flags>, the name is treated as being in UTF-8;
+otherwise not.
+
+If C<HV_NAME_SETALL> is set in C<flags>, both the name and the effective name
+are set.
+
+=for apidoc Amnh||HV_NAME_SETALL
+
+=cut
+*/
 
 void
 Perl_hv_name_set(pTHX_ HV *hv, const char *name, U32 len, U32 flags)
@@ -2561,7 +2624,7 @@ Perl_hv_name_set(pTHX_ HV *hv, const char *name, U32 len, U32 flags)
     if (len > I32_MAX)
         Perl_croak(aTHX_ "panic: hv name too long (%" UVuf ")", (UV) len);
 
-    if (SvOOK(hv)) {
+    if (HvHasAUX(hv)) {
         iter = HvAUX(hv);
         if (iter->xhv_name_u.xhvnameu_name) {
             if(iter->xhv_name_count) {
@@ -2657,7 +2720,7 @@ table.
 void
 Perl_hv_ename_add(pTHX_ HV *hv, const char *name, U32 len, U32 flags)
 {
-    struct xpvhv_aux *aux = SvOOK(hv) ? HvAUX(hv) : hv_auxinit(hv);
+    struct xpvhv_aux *aux = HvHasAUX(hv) ? HvAUX(hv) : hv_auxinit(hv);
     U32 hash;
 
     PERL_ARGS_ASSERT_HV_ENAME_ADD;
@@ -2727,7 +2790,7 @@ Perl_hv_ename_delete(pTHX_ HV *hv, const char *name, U32 len, U32 flags)
     if (len > I32_MAX)
         Perl_croak(aTHX_ "panic: hv name too long (%" UVuf ")", (UV) len);
 
-    if (!SvOOK(hv)) return;
+    if (!HvHasAUX(hv)) return;
 
     aux = HvAUX(hv);
     if (!aux->xhv_name_u.xhvnameu_name) return;
@@ -2787,7 +2850,7 @@ Perl_hv_backreferences_p(pTHX_ HV *hv) {
     PERL_ARGS_ASSERT_HV_BACKREFERENCES_P;
     /* See also Perl_sv_get_backrefs in sv.c where this logic is unrolled */
     {
-        struct xpvhv_aux * const iter = SvOOK(hv) ? HvAUX(hv) : hv_auxinit(hv);
+        struct xpvhv_aux * const iter = HvHasAUX(hv) ? HvAUX(hv) : hv_auxinit(hv);
         return &(iter->xhv_backreferences);
     }
 }
@@ -2798,7 +2861,7 @@ Perl_hv_kill_backrefs(pTHX_ HV *hv) {
 
     PERL_ARGS_ASSERT_HV_KILL_BACKREFS;
 
-    if (!SvOOK(hv))
+    if (!HvHasAUX(hv))
         return;
 
     av = HvAUX(hv)->xhv_backreferences;
@@ -2853,7 +2916,7 @@ Perl_hv_iternext_flags(pTHX_ HV *hv, I32 flags)
 
     PERL_ARGS_ASSERT_HV_ITERNEXT_FLAGS;
 
-    if (!SvOOK(hv)) {
+    if (!HvHasAUX(hv)) {
         /* Too many things (well, pp_each at least) merrily assume that you can
            call hv_iternext without calling hv_iterinit, so we'll have to deal
            with it.  */
@@ -3068,7 +3131,7 @@ Perl_hv_iterkeysv(pTHX_ HE *entry)
 {
     PERL_ARGS_ASSERT_HV_ITERKEYSV;
 
-    return sv_2mortal(newSVhek(HeKEY_hek(entry)));
+    return newSVhek_mortal(HeKEY_hek(entry));
 }
 
 /*
@@ -3316,7 +3379,7 @@ S_share_hek_flags(pTHX_ const char *str, STRLEN len, U32 hash, int flags)
     if (!entry) {
         /* What used to be head of the list.
            If this is NULL, then we're the first entry for this slot, which
-           means we need to increate fill.  */
+           means we need to increase fill.  */
         struct shared_he *new_entry;
         HEK *hek;
         char *k;
@@ -3521,8 +3584,8 @@ Perl_refcounted_he_chain_2hv(pTHX_ const struct refcounted_he *chain, U32 flags)
                 const STRLEN klen = HeKLEN(entry);
                 const char *const key = HeKEY(entry);
                 if (klen == chain->refcounted_he_keylen
-                    && (!!HeKUTF8(entry)
-                        == !!(chain->refcounted_he_data[0] & HVhek_UTF8))
+                    && (cBOOL(HeKUTF8(entry))
+                        == cBOOL((chain->refcounted_he_data[0] & HVhek_UTF8)))
                     && memEQ(key, REF_HE_KEY(chain), klen))
                     goto next_please;
 #else
@@ -3967,7 +4030,7 @@ Upon return, C<*flags> will be set to either C<SVf_UTF8> or 0.
 Alternatively, use the macro C<L</CopLABEL_len_flags>>;
 or if you don't need to know if the label is UTF-8 or not, the macro
 C<L</CopLABEL_len>>;
-or if you additionally dont need to know the length, C<L</CopLABEL>>.
+or if you additionally don't need to know the length, C<L</CopLABEL>>.
 
 =cut
 */

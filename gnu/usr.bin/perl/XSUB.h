@@ -74,28 +74,28 @@ Macro to declare an XSUB and its C parameter list explicitly exporting the symbo
 Macro used by C<L</XS_INTERNAL>> and C<L</XS_EXTERNAL>> to declare a function
 prototype.  You probably shouldn't be using this directly yourself.
 
-=for apidoc Amns||dAX
+=for apidoc Amn;||dAX
 Sets up the C<ax> variable.
 This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
 
-=for apidoc Amns||dAXMARK
+=for apidoc Amn;||dAXMARK
 Sets up the C<ax> variable and stack marker variable C<mark>.
 This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
 
-=for apidoc Amns||dITEMS
+=for apidoc Amn;||dITEMS
 Sets up the C<items> variable.
 This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
 
-=for apidoc Amns||dXSARGS
+=for apidoc Amn;||dXSARGS
 Sets up stack and mark pointers for an XSUB, calling C<dSP> and C<dMARK>.
 Sets up the C<ax> and C<items> variables by calling C<dAX> and C<dITEMS>.
 This is usually handled automatically by C<xsubpp>.
 
-=for apidoc Amns||dXSI32
+=for apidoc Amn;||dXSI32
 Sets up the C<ix> variable for an XSUB which has aliases.  This is usually
 handled automatically by C<xsubpp>.
 
-=for apidoc Amns||dUNDERBAR
+=for apidoc Amn;||dUNDERBAR
 Sets up any variable needed by the C<UNDERBAR> macro.  It used to define
 C<padoff_du>, but it is currently a noop.  However, it is strongly advised
 to still use it for ensuring past and future compatibility.
@@ -261,16 +261,16 @@ Return a double from an XSUB immediately.  Uses C<XST_mNV>.
 =for apidoc Am|void|XSRETURN_PV|char* str
 Return a copy of a string from an XSUB immediately.  Uses C<XST_mPV>.
 
-=for apidoc Amns||XSRETURN_NO
+=for apidoc Amn;||XSRETURN_NO
 Return C<&PL_sv_no> from an XSUB immediately.  Uses C<XST_mNO>.
 
-=for apidoc Amns||XSRETURN_YES
+=for apidoc Amn;||XSRETURN_YES
 Return C<&PL_sv_yes> from an XSUB immediately.  Uses C<XST_mYES>.
 
-=for apidoc Amns||XSRETURN_UNDEF
+=for apidoc Amn;||XSRETURN_UNDEF
 Return C<&PL_sv_undef> from an XSUB immediately.  Uses C<XST_mUNDEF>.
 
-=for apidoc Amns||XSRETURN_EMPTY
+=for apidoc Amn;||XSRETURN_EMPTY
 Return an empty list from an XSUB immediately.
 
 =for apidoc AmU||newXSproto|char* name|XSUBADDR_t f|char* filename|const char *proto
@@ -282,18 +282,18 @@ The version identifier for an XS module.  This is usually
 handled automatically by C<ExtUtils::MakeMaker>.  See
 C<L</XS_VERSION_BOOTCHECK>>.
 
-=for apidoc Amns||XS_VERSION_BOOTCHECK
+=for apidoc Amn;||XS_VERSION_BOOTCHECK
 Macro to verify that a PM module's C<$VERSION> variable matches the XS
 module's C<XS_VERSION> variable.  This is usually handled automatically by
 C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 
-=for apidoc Amns||XS_APIVERSION_BOOTCHECK
+=for apidoc Amn;||XS_APIVERSION_BOOTCHECK
 Macro to verify that the perl api version an XS module has been compiled against
 matches the api version of the perl interpreter it's being loaded into.
 
 =for apidoc_section $exceptions
 
-=for apidoc Amns||dXCPT
+=for apidoc Amn;||dXCPT
 Set up necessary local variables for exception handling.
 See L<perlguts/"Exception Handling">.
 
@@ -306,7 +306,7 @@ Ends a try block.  See L<perlguts/"Exception Handling">.
 =for apidoc AmnU||XCPT_CATCH
 Introduces a catch block.  See L<perlguts/"Exception Handling">.
 
-=for apidoc Amns||XCPT_RETHROW
+=for apidoc Amn;||XCPT_RETHROW
 Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 
 =cut
@@ -329,15 +329,15 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
         return;						\
     } STMT_END
 
-#define XSRETURN_IV(v) STMT_START { XST_mIV(0,v);  XSRETURN(1); } STMT_END
-#define XSRETURN_UV(v) STMT_START { XST_mUV(0,v);  XSRETURN(1); } STMT_END
-#define XSRETURN_NV(v) STMT_START { XST_mNV(0,v);  XSRETURN(1); } STMT_END
-#define XSRETURN_PV(v) STMT_START { XST_mPV(0,v);  XSRETURN(1); } STMT_END
-#define XSRETURN_PVN(v,n) STMT_START { XST_mPVN(0,v,n);  XSRETURN(1); } STMT_END
-#define XSRETURN_NO    STMT_START { XST_mNO(0);    XSRETURN(1); } STMT_END
-#define XSRETURN_YES   STMT_START { XST_mYES(0);   XSRETURN(1); } STMT_END
-#define XSRETURN_UNDEF STMT_START { XST_mUNDEF(0); XSRETURN(1); } STMT_END
-#define XSRETURN_EMPTY STMT_START {                XSRETURN(0); } STMT_END
+#define XSRETURN_IV(v)    STMT_START { XST_mIV(0,v);    XSRETURN(1); } STMT_END
+#define XSRETURN_UV(v)    STMT_START { XST_mUV(0,v);    XSRETURN(1); } STMT_END
+#define XSRETURN_NV(v)    STMT_START { XST_mNV(0,v);    XSRETURN(1); } STMT_END
+#define XSRETURN_PV(v)    STMT_START { XST_mPV(0,v);    XSRETURN(1); } STMT_END
+#define XSRETURN_PVN(v,n) STMT_START { XST_mPVN(0,v,n); XSRETURN(1); } STMT_END
+#define XSRETURN_NO       STMT_START { XST_mNO(0);      XSRETURN(1); } STMT_END
+#define XSRETURN_YES      STMT_START { XST_mYES(0);     XSRETURN(1); } STMT_END
+#define XSRETURN_UNDEF    STMT_START { XST_mUNDEF(0);   XSRETURN(1); } STMT_END
+#define XSRETURN_EMPTY    STMT_START {                  XSRETURN(0); } STMT_END
 
 #define newXSproto(a,b,c,d)	newXS_flags(a,b,c,d,0)
 
@@ -426,7 +426,7 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
         } STMT_END
 
 #define DBM_ckFilter(arg,type,name)				\
-        STMT_START {						\
+    STMT_START {						\
         if (db->type) {						\
             if (db->filtering) {				\
                 croak("recursion detected in %s", name) ;	\
@@ -450,7 +450,8 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
             if (name[7] == 's'){                                \
                 arg = sv_2mortal(arg);                          \
             }                                                   \
-        } } STMT_END
+        }                                                       \
+    } STMT_END
 
 #if 1		/* for compatibility */
 #  define VTBL_sv		&PL_vtbl_sv

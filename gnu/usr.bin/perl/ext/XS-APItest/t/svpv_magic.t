@@ -33,7 +33,7 @@ is(eval { XS::APItest::first_byte($1) } || $@, 0303,
 sub TIESCALAR { bless [], shift }
 sub FETCH { ++$f; *{chr utf8::unicode_to_native(255)} }
 tie $t, "main";
-is SvPVutf8($t), "*main::" . byte_utf8a_to_utf8n("\xc3\xbf"),
+is SvPVutf8_nolen($t), "*main::" . byte_utf8a_to_utf8n("\xc3\xbf"),
   'SvPVutf8 works with get-magic changing the SV type';
 is $f, 1, 'SvPVutf8 calls get-magic once';
 
@@ -44,7 +44,7 @@ package t {
 }
 tie $t, "t";
 undef $f;
-is SvPVutf8($t), byte_utf8a_to_utf8n("\xc3\xbf"),
+is SvPVutf8_nolen($t), byte_utf8a_to_utf8n("\xc3\xbf"),
   'SvPVutf8 works with get-magic downgrading the SV';
 is $f, 1, 'SvPVutf8 calls get-magic once';
 ()="$t";

@@ -22,10 +22,30 @@
 
 typedef SSize_t regnode_offset;
 
+struct regnode_meta {
+    U8 type;
+    U8 arg_len;
+    U8 arg_len_varies;
+    U8 off_by_arg;
+};
+
+/* this ensures that on alignment sensitive platforms
+ * this struct is aligned on 32 bit boundaries */
+union regnode_head {
+    struct {
+        union {
+            U8 flags;
+            U8 str_len_u8;
+            U8 first_byte;
+        } u_8;
+        U8  type;
+        U16 next_off;
+    } data;
+    U32 data_u32;
+};
+
 struct regnode {
-    U8	flags;
-    U8  type;
-    U16 next_off;
+    union regnode_head head;
 };
 
 typedef struct regnode regnode;
@@ -39,7 +59,7 @@ struct regexp;
 
 struct reg_substr_datum {
     SSize_t min_offset; /* min pos (in chars) that substr must appear */
-    SSize_t max_offset  /* max pos (in chars) that substr must appear */;
+    SSize_t max_offset; /* max pos (in chars) that substr must appear */
     SV *substr;		/* non-utf8 variant */
     SV *utf8_substr;	/* utf8 variant */
     SSize_t end_shift;  /* how many fixed chars must end the string */
@@ -55,11 +75,13 @@ struct reg_substr_data {
 #    define SV_SAVED_COPY
 #  endif
 
-/* offsets within a string of a particular /(.)/ capture */
-
+/* offsets within a string of a particular /(.)/ capture
+ * if you change this by adding new non-temporary fields
+ * then be sure to update Perl_rxres_save() in pp_ctl.c */
 typedef struct regexp_paren_pair {
     SSize_t start;
     SSize_t end;
+
     /* 'start_tmp' records a new opening position before the matching end
      * has been found, so that the old start and end values are still
      * valid, e.g.
@@ -69,7 +91,7 @@ typedef struct regexp_paren_pair {
     SSize_t start_tmp;
 } regexp_paren_pair;
 
-#  if defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_UTF8_C)
+#  if defined(PERL_IN_REGCOMP_ANY) || defined(PERL_IN_UTF8_C)
 #    define _invlist_union(a, b, output) _invlist_union_maybe_complement_2nd(a, b, FALSE, output)
 #    define _invlist_intersection(a, b, output) _invlist_intersection_maybe_complement_2nd(a, b, FALSE, output)
 
@@ -118,13 +140,23 @@ typedef struct regexp {
      * Information about the match that the perl core uses to manage things
      */
 
+    /* see comment in regcomp_internal.h about branch reset to understand
+       the distinction between physical and logical capture buffers */
+    U32 nparens;                    /* physical number of capture buffers */
+    U32 logical_nparens;            /* logical_number of capture buffers */
+    I32 *logical_to_parno;          /* map logical parno to first physcial */
+    I32 *parno_to_logical;          /* map every physical parno to logical */
+    I32 *parno_to_logical_next;     /* map every physical parno to the next
+                                       physical with the same logical id */
+
     U32 extflags;      /* Flags used both externally and internally */
-    U32 nparens;       /* number of capture buffers */
+    SSize_t maxlen;    /* maximum possible number of chars in string to match */
     SSize_t minlen;    /* minimum possible number of chars in string to match */
-    SSize_t minlenret; /* mininum possible number of chars in $& */
+    SSize_t minlenret; /* minimum possible number of chars in $& */
     STRLEN gofs;       /* chars left of pos that we search from */
                        /* substring data about strings that must appear in
                         * the final match, used for optimisations */
+
     struct reg_substr_data *substrs;
 
     /* private engine specific data */
@@ -142,6 +174,7 @@ typedef struct regexp {
     char **recurse_locinput; /* used to detect infinite recursion, XXX: move to internal */
     U32 lastcloseparen;      /* last close paren matched ($^N) */
 
+
     /*---------------------------------------------------------------------- */
 
     /* offset from wrapped to the start of precomp */
@@ -158,7 +191,6 @@ typedef struct regexp {
     SSize_t sublen;     /* Length of string pointed by subbeg */
     SSize_t suboffset;  /* byte offset of subbeg from logical start of str */
     SSize_t subcoffset; /* suboffset equiv, but in chars (for @-/@+) */
-    SSize_t maxlen;  /* minimum possible number of chars in string to match */
 
     /*---------------------------------------------------------------------- */
 
@@ -167,7 +199,20 @@ typedef struct regexp {
 } regexp;
 
 
-#  define RXp_PAREN_NAMES(rx)	((rx)->paren_names)
+#define RXp_PAREN_NAMES(rx) ((rx)->paren_names)
+
+#define RXp_OFFS_START(rx,n) \
+     RXp_OFFSp(rx)[(n)].start 
+
+#define RXp_OFFS_END(rx,n) \
+     RXp_OFFSp(rx)[(n)].end 
+
+#define RXp_OFFS_VALID(rx,n) \
+     (RXp_OFFSp(rx)[(n)].end != -1 && RXp_OFFSp(rx)[(n)].start != -1 )
+
+#define RX_OFFS_START(rx_sv,n)  RXp_OFFS_START(ReANY(rx_sv),n)
+#define RX_OFFS_END(rx_sv,n)    RXp_OFFS_END(ReANY(rx_sv),n)
+#define RX_OFFS_VALID(rx_sv,n)  RXp_OFFS_VALID(ReANY(rx_sv),n)
 
 /* used for high speed searches */
 typedef struct re_scream_pos_data_s
@@ -526,30 +571,53 @@ and check for NULL.
 #  define RX_COMPFLAGS(rx_sv)             RXp_COMPFLAGS(ReANY(rx_sv))
 #  define RXp_ENGINE(prog)                ((prog)->engine)
 #  define RX_ENGINE(rx_sv)                (RXp_ENGINE(ReANY(rx_sv)))
-#  define RXp_SUBBEG(prog)                (prog->subbeg)
+#  define RXp_SUBBEG(prog)                ((prog)->subbeg)
 #  define RX_SUBBEG(rx_sv)                (RXp_SUBBEG(ReANY(rx_sv)))
-#  define RXp_SUBOFFSET(prog)             (prog->suboffset)
+#  define RXp_SUBOFFSET(prog)             ((prog)->suboffset)
 #  define RX_SUBOFFSET(rx_sv)             (RXp_SUBOFFSET(ReANY(rx_sv)))
-#  define RX_SUBCOFFSET(rx_sv)            (ReANY(rx_sv)->subcoffset)
-#  define RXp_OFFS(prog)                  (prog->offs)
-#  define RX_OFFS(rx_sv)                  (RXp_OFFS(ReANY(rx_sv)))
-#  define RXp_NPARENS(prog)               (prog->nparens)
+#  define RXp_SUBCOFFSET(prog)            ((prog)->subcoffset)
+#  define RX_SUBCOFFSET(rx_sv)            (RXp_SUBCOFFSET(ReANY(rx_sv)))
+#  define RXp_OFFSp(prog)                 ((prog)->offs)
+#  define RX_OFFSp(rx_sv)                 (RXp_OFFSp(ReANY(rx_sv)))
+#  define RXp_LOGICAL_NPARENS(prog)       ((prog)->logical_nparens)
+#  define RX_LOGICAL_NPARENS(rx_sv)       (RXp_LOGICAL_NPARENS(ReANY(rx_sv)))
+#  define RXp_LOGICAL_TO_PARNO(prog)      ((prog)->logical_to_parno)
+#  define RX_LOGICAL_TO_PARNO(rx_sv)      (RXp_LOGICAL_TO_PARNO(ReANY(rx_sv)))
+#  define RXp_PARNO_TO_LOGICAL(prog)      ((prog)->parno_to_logical)
+#  define RX_PARNO_TO_LOGICAL(rx_sv)      (RXp_PARNO_TO_LOGICAL(ReANY(rx_sv)))
+#  define RXp_PARNO_TO_LOGICAL_NEXT(prog) ((prog)->parno_to_logical_next)
+#  define RX_PARNO_TO_LOGICAL_NEXT(rx_sv) (RXp_PARNO_TO_LOGICAL_NEXT(ReANY(rx_sv)))
+#  define RXp_NPARENS(prog)               ((prog)->nparens)
 #  define RX_NPARENS(rx_sv)               (RXp_NPARENS(ReANY(rx_sv)))
-#  define RX_SUBLEN(rx_sv)                (ReANY(rx_sv)->sublen)
-#  define RXp_MINLEN(prog)                (prog->minlen)
+#  define RXp_SUBLEN(prog)                ((prog)->sublen)
+#  define RX_SUBLEN(rx_sv)                (RXp_SUBLEN(ReANY(rx_sv)))
+#  define RXp_MINLEN(prog)                ((prog)->minlen)
 #  define RX_MINLEN(rx_sv)                (RXp_MINLEN(ReANY(rx_sv)))
-#  define RXp_MINLENRET(prog)             (prog->minlenret)
+#  define RXp_MINLENRET(prog)             ((prog)->minlenret)
 #  define RX_MINLENRET(rx_sv)             (RXp_MINLENRET(ReANY(rx_sv)))
-#  define RXp_GOFS(prog)                  (prog->gofs)
+#  define RXp_GOFS(prog)                  ((prog)->gofs)
 #  define RX_GOFS(rx_sv)                  (RXp_GOFS(ReANY(rx_sv)))
-#  define RX_LASTPAREN(rx_sv)             (ReANY(rx_sv)->lastparen)
-#  define RX_LASTCLOSEPAREN(rx_sv)        (ReANY(rx_sv)->lastcloseparen)
-#  define RXp_SAVED_COPY(prog)            (prog->saved_copy)
+#  define RXp_LASTPAREN(prog)             ((prog)->lastparen)
+#  define RX_LASTPAREN(rx_sv)             (RXp_LASTPAREN(ReANY(rx_sv)))
+#  define RXp_LASTCLOSEPAREN(prog)        ((prog)->lastcloseparen)
+#  define RX_LASTCLOSEPAREN(rx_sv)        (RXp_LASTCLOSEPAREN(ReANY(rx_sv)))
+#  define RXp_SAVED_COPY(prog)            ((prog)->saved_copy)
 #  define RX_SAVED_COPY(rx_sv)            (RXp_SAVED_COPY(ReANY(rx_sv)))
+#  define RXp_SUBSTRS(prog)               ((prog)->substrs)
+#  define RX_SUBSTRS(rx_sv)               (RXp_SUBSTRS(ReANY(rx_sv)))
+#  define RXp_PPRIVATE(prog)              ((prog)->pprivate)
+#  define RX_PPRIVATE(rx_sv)              (RXp_PPRIVATE(ReANY(rx_sv)))
+#  define RXp_QR_ANONCV(prog)             ((prog)->qr_anoncv)
+#  define RX_QR_ANONCV(rx_sv)             (RXp_QR_ANONCV(ReANY(rx_sv)))
+#  define RXp_MOTHER_RE(prog)             ((prog)->mother_re)
+#  define RX_MOTHER_RE(rx_sv)             (RXp_MOTHER_RE(ReANY(rx_sv)))
+#  define RXp_PRE_PREFIX(prog)            ((prog)->pre_prefix)
+#  define RX_PRE_PREFIX(rx_sv)            (RXp_PRE_PREFIX(ReANY(rx_sv)))
+
 /* last match was zero-length */
 #  define RXp_ZERO_LEN(prog) \
-        (RXp_OFFS(prog)[0].start + (SSize_t)RXp_GOFS(prog) \
-          == RXp_OFFS(prog)[0].end)
+        (RXp_OFFS_START(prog,0) + (SSize_t)RXp_GOFS(prog) \
+          == RXp_OFFS_END(prog,0))
 #  define RX_ZERO_LEN(rx_sv)              (RXp_ZERO_LEN(ReANY(rx_sv)))
 
 #endif /* PLUGGABLE_RE_EXTENSION */
@@ -557,20 +625,24 @@ and check for NULL.
 /* Stuff that needs to be included in the pluggable extension goes below here */
 
 #ifdef PERL_ANY_COW
-#  define RXp_MATCH_COPY_FREE(prog) \
-        STMT_START {if (RXp_SAVED_COPY(prog)) { \
-            SV_CHECK_THINKFIRST_COW_DROP(RXp_SAVED_COPY(prog)); \
-        } \
-        if (RXp_MATCH_COPIED(prog)) { \
-            Safefree(RXp_SUBBEG(prog)); \
-            RXp_MATCH_COPIED_off(prog); \
-        }} STMT_END
+#  define RXp_MATCH_COPY_FREE(prog)                                 \
+    STMT_START {                                                    \
+        if (RXp_SAVED_COPY(prog)) {                                 \
+            SV_CHECK_THINKFIRST_COW_DROP(RXp_SAVED_COPY(prog));     \
+        }                                                           \
+        if (RXp_MATCH_COPIED(prog)) {                               \
+            Safefree(RXp_SUBBEG(prog));                             \
+            RXp_MATCH_COPIED_off(prog);                             \
+        }                                                           \
+    } STMT_END
 #else
-#  define RXp_MATCH_COPY_FREE(prog) \
-        STMT_START {if (RXp_MATCH_COPIED(prog)) { \
-            Safefree(RXp_SUBBEG(prog)); \
-            RXp_MATCH_COPIED_off(prog); \
-        }} STMT_END
+#  define RXp_MATCH_COPY_FREE(prog)                     \
+    STMT_START {                                        \
+        if (RXp_MATCH_COPIED(prog)) {                   \
+            Safefree(RXp_SUBBEG(prog));                 \
+            RXp_MATCH_COPIED_off(prog);                 \
+        }                                               \
+    } STMT_END
 #endif
 #define RX_MATCH_COPY_FREE(rx_sv)       RXp_MATCH_COPY_FREE(ReANY(rx_sv))
 
@@ -779,43 +851,71 @@ typedef struct regmatch_state {
             struct regmatch_state *prev_yes_state;
         } yes;
 
+
+        /* NOTE: Regarding 'cp' and 'lastcp' in the following structs...
+         *
+         * In the majority of cases we use 'cp' for the "normal"
+         * checkpoint for paren saves, and 'lastcp' for the addtional
+         * paren saves that are done only under RE_PESSIMISTIC_PARENS.
+         *
+         * There may be a few cases where both are used always.
+         * Regardless they tend be used something like this:
+         *
+         *   ST.cp = regcppush(rex, 0, maxopenparen);
+         *   REGCP_SET(ST.lastcp);
+         *
+         * thus ST.cp holds the checkpoint from before we push parens,
+         * and ST.lastcp holds the checkpoint from afterwards.
+         */
+
         /* branchlike members */
         /* this is a fake union member that matches the first elements
          * of each member that needs to behave like a branch */
         struct {
             /* this first element must match u.yes */
             struct regmatch_state *prev_yes_state;
-            U32 lastparen;
-            U32 lastcloseparen;
-            CHECKPOINT cp;
+            U32         lastparen;
+            U32         lastcloseparen;
+            CHECKPOINT  cp;         /* see note above "struct branchlike" */
+            CHECKPOINT  lastcp;     /* see note above "struct branchlike" */
+            U16         before_paren;
+            U16         after_paren;
 
         } branchlike;
 
         struct {
             /* the first elements must match u.branchlike */
             struct regmatch_state *prev_yes_state;
-            U32 lastparen;
-            U32 lastcloseparen;
-            CHECKPOINT cp;
+            U32         lastparen;
+            U32         lastcloseparen;
+            CHECKPOINT  cp;         /* see note above "struct branchlike" */
+            CHECKPOINT  lastcp;     /* see note above "struct branchlike" */
+            U16         before_paren;
+            U16         after_paren;
 
-            regnode *next_branch; /* next branch node */
+            regnode *next_branch;   /* next branch node */
         } branch;
 
         struct {
             /* the first elements must match u.branchlike */
             struct regmatch_state *prev_yes_state;
-            U32 lastparen;
-            U32 lastcloseparen;
-            CHECKPOINT cp;
+            U32         lastparen;
+            U32         lastcloseparen;
+            CHECKPOINT  cp;         /* see note above "struct branchlike" */
+            CHECKPOINT  lastcp;     /* see note above "struct branchlike" */
+            U16         before_paren;
+            U16         after_paren;
 
-            U32		accepted; /* how many accepting states left */
-            bool	longfold;/* saw a fold with a 1->n char mapping */
-            U16         *jump;  /* positive offsets from me */
-            regnode	*me;	/* Which node am I - needed for jump tries*/
-            U8		*firstpos;/* pos in string of first trie match */
-            U32		firstchars;/* len in chars of firstpos from start */
-            U16		nextword;/* next word to try */
-            U16		topword; /* longest accepted word */
+            U32         accepted;   /* how many accepting states left */
+            bool        longfold;   /* saw a fold with a 1->n char mapping */
+            U16         *jump;      /* positive offsets from me */
+            U16         *j_before_paren;
+            U16         *j_after_paren;
+            regnode     *me;        /* Which node am I - needed for jump tries*/
+            U8          *firstpos;  /* pos in string of first trie match */
+            U32         firstchars; /* len in chars of firstpos from start */
+            U16         nextword;   /* next word to try */
+            U16         topword;    /* longest accepted word */
         } trie;
 
         /* special types - these members are used to store state for special
@@ -826,31 +926,31 @@ typedef struct regmatch_state {
             struct regmatch_state *prev_curlyx;
             struct regmatch_state *prev_eval;
             REGEXP	*prev_rex;
-            CHECKPOINT	cp;	/* remember current savestack indexes */
-            CHECKPOINT	lastcp;
-            U32         close_paren; /* which close bracket is our end (+1) */
-            regnode	*B;	/* the node following us  */
+            CHECKPOINT  cp;             /* see note above "struct branchlike" */
+            CHECKPOINT  lastcp;         /* see note above "struct branchlike" */
+            U32         close_paren;    /* which close bracket is our end (+1) */
+            regnode     *B;             /* the node following us  */
             char        *prev_recurse_locinput;
         } eval;
 
         struct {
             /* this first element must match u.yes */
             struct regmatch_state *prev_yes_state;
-            I32 wanted;
-            I32 logical;	/* saved copy of 'logical' var */
-            U8  count;          /* number of beginning positions */
-            char *start;
-            char *end;
-            regnode  *me; /* the IFMATCH/SUSPEND/UNLESSM node  */
-            char *prev_match_end;
-        } ifmatch; /* and SUSPEND/UNLESSM */
+            I32     wanted;
+            I32     logical;    /* saved copy of 'logical' var */
+            U8      count;      /* number of beginning positions */
+            char    *start;
+            char    *end;
+            regnode *me;        /* the IFMATCH/SUSPEND/UNLESSM node  */
+            char    *prev_match_end;
+        } ifmatch;              /* and SUSPEND/UNLESSM */
 
         struct {
             /* this first element must match u.yes */
             struct regmatch_state *prev_yes_state;
             struct regmatch_state *prev_mark;
-            SV* mark_name;
-            char *mark_loc;
+            SV      *mark_name;
+            char    *mark_loc;
         } mark;
 
         struct {
@@ -863,24 +963,25 @@ typedef struct regmatch_state {
             /* this first element must match u.yes */
             struct regmatch_state *prev_yes_state;
             struct regmatch_state *prev_curlyx; /* previous cur_curlyx */
-            regnode	*me;	/* the CURLYX node  */
-            regnode	*B;	/* the B node in /A*B/  */
-            CHECKPOINT	cp;	/* remember current savestack index */
+            regnode     *me;        /* the CURLYX node  */
+            regnode     *B;         /* the B node in /A*B/  */
+            CHECKPOINT  cp;         /* see note above "struct branchlike" */
+            CHECKPOINT  lastcp;     /* see note above "struct branchlike" */
             bool	minmod;
-            int		parenfloor;/* how far back to strip paren data */
+            int         parenfloor; /* how far back to strip paren data */
 
             /* these two are modified by WHILEM */
-            int		count;	/* how many instances of A we've matched */
-            char	*lastloc;/* where previous A matched (0-len detect) */
+            int         count;      /* how many instances of A we've matched */
+            char        *lastloc;   /* where previous A matched (0-len detect) */
         } curlyx;
 
         struct {
             /* this first element must match u.yes */
             struct regmatch_state *prev_yes_state;
             struct regmatch_state *save_curlyx;
-            CHECKPOINT	cp;	/* remember current savestack indexes */
-            CHECKPOINT	lastcp;
-            char	*save_lastloc;	/* previous curlyx.lastloc */
+            CHECKPOINT  cp;             /* see note above "struct branchlike" */
+            CHECKPOINT  lastcp;         /* see note above "struct branchlike" */
+            char        *save_lastloc;  /* previous curlyx.lastloc */
             I32		cache_offset;
             I32		cache_mask;
         } whilem;
@@ -888,30 +989,36 @@ typedef struct regmatch_state {
         struct {
             /* this first element must match u.yes */
             struct regmatch_state *prev_yes_state;
-            CHECKPOINT cp;
-            U32 lastparen;
-            U32 lastcloseparen;
-            I32 alen;		/* length of first-matched A string */
-            I32 count;
-            bool minmod;
-            regnode *A, *B;	/* the nodes corresponding to /A*B/  */
-            regnode *me;	/* the curlym node */
+            U32         lastparen;
+            U32         lastcloseparen;
+            CHECKPOINT  cp;         /* see note above "struct branchlike" */
+            CHECKPOINT  lastcp;     /* see note above "struct branchlike" */
+            I32         alen;       /* length of first-matched A string */
+            I32         count;
+            bool        minmod;
+            regnode     *A, *B;     /* the nodes corresponding to /A*B/  */
+            regnode     *me;        /* the curlym node */
             struct next_matchable_info Binfo;
         } curlym;
 
         struct {
-            U32 paren;
-            CHECKPOINT cp;
-            U32 lastparen;
-            U32 lastcloseparen;
-            char *maxpos;	/* highest possible point in string to match */
-            char *oldloc;	/* the previous locinput */
-            int count;
-            int min, max;	/* {m,n} */
-            regnode *A, *B;	/* the nodes corresponding to /A*B/  */
+            U32         paren;
+            U32         lastparen;
+            U32         lastcloseparen;
+            CHECKPOINT  cp;         /* see note above "struct branchlike" */
+            CHECKPOINT  lastcp;     /* see note above "struct branchlike" */
+            char        *maxpos;    /* highest possible point in string to match */
+            char        *oldloc;    /* the previous locinput */
+            int         count;
+            int         min, max;   /* {m,n} */
+            regnode     *A, *B;     /* the nodes corresponding to /A*B/  */
             struct next_matchable_info Binfo;
         } curly; /* and CURLYN/PLUS/STAR */
 
+        struct {
+            CHECKPOINT  cp;
+            CHECKPOINT  lastcp;
+        } backref; /* REF and friends */
     } u;
 } regmatch_state;
 
@@ -930,6 +1037,7 @@ typedef struct regmatch_slab {
 } regmatch_slab;
 
 
+#define REG_FETCH_ABSOLUTE 1
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

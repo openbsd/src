@@ -11,7 +11,7 @@ require OS2::DLL;
 # Other items we are prepared to export if requested
 @EXPORT_OK = qw(drop register);
 
-$VERSION = '1.05';
+$VERSION = '1.06';
 
 # We cannot just put OS2::DLL in @ISA, since some scripts would use
 # function interface, not method interface...
@@ -428,7 +428,7 @@ overridden. So unless you know better than I do, do not access REXX
 variables (probably tied to Perl variables) or call REXX functions
 which access REXX queues or REXX variables in signal handlers.
 
-See C<t/rx*.t> and the next section for examples.
+See F<t/rx*.t> and the next section for examples.
 
 =head1 EXAMPLE
 

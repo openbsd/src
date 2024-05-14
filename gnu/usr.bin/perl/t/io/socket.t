@@ -307,6 +307,80 @@ SKIP:
        "set SO_REUSEADDR from magic");
     isnt(getsockopt($sock, SOL_SOCKET, SO_REUSEADDR), pack("i", 0),
        "check SO_REUSEADDR set correctly");
+
+    # test whether boolean value treated as a number
+    ok(setsockopt($sock, SOL_SOCKET, SO_REUSEADDR, !1),
+       "clear SO_REUSEADDR by a boolean false");
+    is(getsockopt($sock, SOL_SOCKET, SO_REUSEADDR), pack("i", 0),
+       "check SO_REUSEADDR cleared correctly");
+    ok(setsockopt($sock, SOL_SOCKET, SO_REUSEADDR, !0),
+       "set SO_REUSEADDR by a boolean true");
+    isnt(getsockopt($sock, SOL_SOCKET, SO_REUSEADDR), pack("i", 0),
+         "check SO_REUSEADDR set correctly");
+}
+
+# GH #18642 - test whether setsockopt works with a numeric OPTVAL which also
+# has a cached stringified value
+SKIP: {
+    defined(my $IPPROTO_IP = eval { Socket::IPPROTO_IP() })
+        or skip 'no IPPROTO_IP', 4;
+    defined(my $IP_TTL = eval { Socket::IP_TTL() })
+        or skip 'no IP_TTL', 4;
+
+    my $sock;
+    socket($sock, PF_INET, SOCK_STREAM, $tcp) or BAIL_OUT "socket: $!";
+
+    my $ttl = 7;
+    my $integer_only_ttl = 0 + $ttl;
+    ok(setsockopt($sock, $IPPROTO_IP, $IP_TTL, $integer_only_ttl),
+       'setsockopt with an integer-only OPTVAL');
+    my $set_ttl = getsockopt($sock, $IPPROTO_IP, $IP_TTL);
+    is(unpack('i', $set_ttl // ''), $ttl, 'TTL set to desired value');
+
+    my $also_string_ttl = $ttl;
+    my $string = "$also_string_ttl";
+    ok(setsockopt($sock, $IPPROTO_IP, $IP_TTL, $also_string_ttl),
+       'setsockopt with an integer OPTVAL with stringified value');
+    $set_ttl = getsockopt($sock, $IPPROTO_IP, $IP_TTL);
+    is(unpack('i', $set_ttl // ''), $ttl, 'TTL set to desired value');
+}
+
+# GH #19892
+SKIP: {
+    eval { Socket::IPPROTO_TCP(); 1 } or skip 'no IPPROTO_TCP', 1;
+    eval { Socket::SOL_SOCKET(); 1 } or skip 'no SOL_SOCKET', 1;
+    eval { Socket::SO_SNDBUF(); 1 } or skip 'no SO_SNDBUF', 1;
+    skip 'setting socket buffer size requires elevated privileges', 1 if $^O eq 'VMS';
+
+    # The value of SNDBUF_SIZE constant below is changed from #19892 testcase;
+    # original "262144" may be clamped on low-memory systems.
+    fresh_perl_is(<<'EOP', "Ok.\n", {}, 'setsockopt works for a constant that is once stringified');
+use warnings;
+use strict;
+
+use Socket qw'PF_INET SOCK_STREAM IPPROTO_TCP SOL_SOCKET SO_SNDBUF';
+
+use constant { SNDBUF_SIZE => 32768 };
+
+socket(my $sock, PF_INET, SOCK_STREAM, IPPROTO_TCP)
+  or die "Could not create socket - $!\n";
+
+setsockopt($sock,SOL_SOCKET,SO_SNDBUF,SNDBUF_SIZE)
+  or die "Could not set SO_SNDBUF on socket - $!\n";
+
+my $sndBuf=getsockopt($sock,SOL_SOCKET,SO_SNDBUF)
+  or die "Could not get SO_SNDBUF on socket - $!\n";
+
+$sndBuf=unpack('i',$sndBuf);
+
+die "Unexpected SO_SNDBUF value: $sndBuf\n"
+  unless($sndBuf == SNDBUF_SIZE || $sndBuf == 2*SNDBUF_SIZE);
+
+print "Ok.\n";
+exit;
+
+sub bug {SNDBUF_SIZE.''}
+EOP
 }
 
 done_testing();

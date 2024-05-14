@@ -19,16 +19,16 @@ use Config;
 
 my $piped;
 eval {
-	pipe my $in, my $out;
-	$piped = 1;
+    pipe my $in, my $out;
+    $piped = 1;
 };
 if (!$piped) {
-	skip_all('pipe not implemented');
-	exit 0;
+    skip_all('pipe not implemented');
+    exit 0;
 }
 unless (exists  $Config{'d_alarm'}) {
-	skip_all('alarm not implemented');
-	exit 0;
+    skip_all('alarm not implemented');
+    exit 0;
 }
 
 # XXX for some reason the stdio layer doesn't seem to interrupt
@@ -36,8 +36,8 @@ unless (exists  $Config{'d_alarm'}) {
 # hang.
 
 if (exists $ENV{PERLIO} && $ENV{PERLIO} =~ /stdio/  ) {
-	skip_all('stdio not supported for this script');
-	exit 0;
+    skip_all('stdio not supported for this script');
+    exit 0;
 }
 
 # on Win32, alarm() won't interrupt the read/write call.
@@ -55,13 +55,13 @@ if ($^O eq 'VMS' || $^O eq 'MSWin32' || $^O eq 'cygwin' || $^O =~ /freebsd/ || $
      ($^O eq 'darwin' && $osmajmin < 9) ||
     ((int($]*1000) & 1) == 0)
 ) {
-	skip_all('various portability issues');
-	exit 0;
+    skip_all('various portability issues');
+    exit 0;
 }
 
 
 
-my ($in, $out, $st, $sigst, $buf);
+my ($in, $out, $st, $sigst, $buf, $pipe_buf_size, $pipe_buf_err);
 
 plan(tests => 10);
 
@@ -69,10 +69,34 @@ plan(tests => 10);
 # make two handles that will always block
 
 sub fresh_io {
-	close $in if $in; close $out if $out;
-	undef $in; undef $out; # use fresh handles each time
-	pipe $in, $out;
-	$sigst = "";
+    close $in if $in; close $out if $out;
+    undef $in; undef $out; # use fresh handles each time
+    pipe $in, $out;
+    $sigst = "";
+    $pipe_buf_err = "";
+
+    # This used to be 1_000_000, but on Linux/ppc64 (POWER7) this kept
+    # consistently failing. At exactly 0x100000 it started passing
+    # again. Now we're asking the kernel what the pipe buffer is, and if
+    # that fails, hoping this number is bigger than any pipe buffer.
+    $pipe_buf_size = eval {
+        use Fcntl qw(F_GETPIPE_SZ);
+        # When F_GETPIPE_SZ isn't implemented then fcntl() raises an exception:
+        #   "Your vendor has not defined Fcntl macro F_GETPIPE_SZ ..."
+        # When F_GETPIPE_SZ is implemented then errors are still possible
+        # (EINVAL, EBADF, ...). These are not exceptions (i.e. these don't die)
+        # but instead these set $! and make fcntl() return undef.
+        fcntl($out, F_GETPIPE_SZ, 0) or die "$!\n";
+    };
+    if ($@ or not $pipe_buf_size) {
+        my $err = $@;;
+        chomp $err;
+        $pipe_buf_size = 0xfffff;
+        $pipe_buf_err = "fcntl F_GETPIPE_SZ failed" . ($err ? " ($err)" : "") .
+                        ", falling back to $pipe_buf_size";
+    };
+    $pipe_buf_size++; # goal is to completely fill the buffer so write one
+                      # byte more then the buffer size
 }
 
 $SIG{PIPE} = 'IGNORE';
@@ -84,9 +108,10 @@ $SIG{ALRM} = sub { $sigst = close($in) ? "ok" : "nok" };
 alarm(1);
 $st = read($in, $buf, 1);
 alarm(0);
-is($sigst, 'ok', 'read/close: sig handler close status');
-ok(!$st, 'read/close: read status');
-ok(!close($in), 'read/close: close status');
+my $result = is($sigst, 'ok', 'read/close: sig handler close status');
+$result &= ok(!$st, 'read/close: read status');
+$result &= ok(!close($in), 'read/close: close status');
+diag($pipe_buf_err) if (not $result and $pipe_buf_err);
 
 # die during read
 
@@ -95,49 +120,43 @@ $SIG{ALRM} = sub { die };
 alarm(1);
 $st = eval { read($in, $buf, 1) };
 alarm(0);
-ok(!$st, 'read/die: read status');
-ok(close($in), 'read/die: close status');
+$result = ok(!$st, 'read/die: read status');
+$result &= ok(close($in), 'read/die: close status');
+diag($pipe_buf_err) if (not $result and $pipe_buf_err);
 
 SKIP: {
     skip "Tests hang on older versions of Darwin", 5
           if $^O eq 'darwin' && $osmajmin < 16;
 
-    # This used to be 1_000_000, but on Linux/ppc64 (POWER7) this kept
-    # consistently failing. At exactly 0x100000 it started passing
-    # again. Now we're asking the kernel what the pipe buffer is, and if
-    # that fails, hoping this number is bigger than any pipe buffer.
-    my $surely_this_arbitrary_number_is_fine = (eval {
-        use Fcntl qw(F_GETPIPE_SZ);
-        fcntl($out, F_GETPIPE_SZ, 0);
-    } || 0xfffff) + 1;
-
     # close during print
 
     fresh_io;
     $SIG{ALRM} = sub { $sigst = close($out) ? "ok" : "nok" };
-    $buf = "a" x $surely_this_arbitrary_number_is_fine . "\n";
+    $buf = "a" x $pipe_buf_size . "\n";
     select $out; $| = 1; select STDOUT;
     alarm(1);
     $st = print $out $buf;
     alarm(0);
-    is($sigst, 'nok', 'print/close: sig handler close status');
-    ok(!$st, 'print/close: print status');
-    ok(!close($out), 'print/close: close status');
+    $result = is($sigst, 'nok', 'print/close: sig handler close status');
+    $result &= ok(!$st, 'print/close: print status');
+    $result &= ok(!close($out), 'print/close: close status');
+    diag($pipe_buf_err) if (not $result and $pipe_buf_err);
 
     # die during print
 
     fresh_io;
     $SIG{ALRM} = sub { die };
-    $buf = "a" x $surely_this_arbitrary_number_is_fine . "\n";
+    $buf = "a" x $pipe_buf_size . "\n";
     select $out; $| = 1; select STDOUT;
     alarm(1);
     $st = eval { print $out $buf };
     alarm(0);
-    ok(!$st, 'print/die: print status');
+    $result = ok(!$st, 'print/die: print status');
     # the close will hang since there's data to flush, so use alarm
     alarm(1);
-    ok(!eval {close($out)}, 'print/die: close status');
+    $result &= ok(!eval {close($out)}, 'print/die: close status');
     alarm(0);
+    diag($pipe_buf_err) if (not $result and $pipe_buf_err);
 
     # close during close
 

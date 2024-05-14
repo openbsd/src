@@ -800,12 +800,12 @@ PPCODE:
         }
     }
 
-    if ( end < start ) {
+    if ( end <= start ) {
         XSRETURN(0);
     }
     else {
         EXTEND( SP, end - start );
-        for ( i = start; i <= end; i++ ) {
+        for ( i = start; i < end; i++ ) {
             PUSHs( sv_2mortal( newSVsv( ST(i) ) ) );
         }
         XSRETURN( end - start );

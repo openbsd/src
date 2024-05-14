@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 If you read this file _as_is_, just ignore the equal signs on the left.
 This file is written in the POD format (see [.pod]perlpod.pod) which is
 specially designed to be readable as is.
@@ -137,11 +139,11 @@ You may need to set up a foreign symbol for the unpacking utility of
 choice.  Once you have done so, use a command like the following to
 unpack the archive:
 
-    vmstar -xvf perl-5^.36^.3.tar
+    vmstar -xvf perl-5^.38^.2.tar
 
 Then set default to the top-level source directory like so:
 
-    set default [.perl-5^.36^.3]
+    set default [.perl-5^.38^.2]
 
 and proceed with configuration as described in the next section.
 

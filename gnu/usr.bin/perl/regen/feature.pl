@@ -11,8 +11,9 @@
 # This script is normally invoked from regen.pl.
 
 BEGIN {
-    require './regen/regen_lib.pl';
     push @INC, './lib';
+    require './regen/regen_lib.pl';
+    require './regen/HeaderParser.pm';
 }
 
 use strict;
@@ -23,26 +24,28 @@ use warnings;
 
 # (feature name) => (internal name, used in %^H and macro names)
 my %feature = (
-    say             => 'say',
-    state           => 'state',
-    switch          => 'switch',
-    bitwise         => 'bitwise',
-    evalbytes       => 'evalbytes',
-    current_sub     => '__SUB__',
-    refaliasing     => 'refaliasing',
-    postderef_qq    => 'postderef_qq',
-    unicode_eval    => 'unieval',
-    declared_refs   => 'myref',
-    unicode_strings => 'unicode',
-    fc              => 'fc',
-    signatures      => 'signatures',
-    isa             => 'isa',
-    indirect        => 'indirect',
-    multidimensional => 'multidimensional',
-    bareword_filehandles => 'bareword_filehandles',
-    try             => 'try',
-    defer           => 'defer',
+    say                     => 'say',
+    state                   => 'state',
+    switch                  => 'switch',
+    bitwise                 => 'bitwise',
+    evalbytes               => 'evalbytes',
+    current_sub             => '__SUB__',
+    refaliasing             => 'refaliasing',
+    postderef_qq            => 'postderef_qq',
+    unicode_eval            => 'unieval',
+    declared_refs           => 'myref',
+    unicode_strings         => 'unicode',
+    fc                      => 'fc',
+    signatures              => 'signatures',
+    isa                     => 'isa',
+    indirect                => 'indirect',
+    multidimensional        => 'multidimensional',
+    bareword_filehandles    => 'bareword_filehandles',
+    try                     => 'try',
+    defer                   => 'defer',
     extra_paired_delimiters => 'more_delims',
+    module_true             => 'module_true',
+    class                   => 'class',
 );
 
 # NOTE: If a feature is ever enabled in a non-contiguous range of Perl
@@ -62,6 +65,11 @@ use constant V5_35  => sort grep {; $_ ne 'switch'
                                  && $_ ne 'indirect'
                                  && $_ ne 'multidimensional' } +V5_27, qw{isa signatures};
 
+use constant V5_37  => sort grep {; $_ ne 'bareword_filehandles' } +V5_35, qw{module_true};
+
+#
+# when updating features please also update the Pod entry for L</"FEATURES CHEAT SHEET">
+#
 my %feature_bundle = (
     all     => [ sort keys %feature ],
     default => [ qw{indirect multidimensional bareword_filehandles} ],
@@ -86,6 +94,8 @@ my %feature_bundle = (
     "5.33"  => [ +V5_27 ],
     # using 5.35 features bundle
     "5.35"  => [ +V5_35 ],
+    # using 5.37 features bundle
+    "5.37"  => [ +V5_37 ],
 );
 
 my @noops = qw( postderef lexical_subs );
@@ -142,12 +152,15 @@ for my $bund (
 my $HintShift;
 my $HintMask;
 my $Uni8Bit;
+my $hp = HeaderParser->new()->read_file("perl.h");
 
-open "perl.h", "<", "perl.h" or die "$0 cannot open perl.h: $!";
-while (readline "perl.h") {
-    next unless /#\s*define\s+(HINT_FEATURE_MASK|HINT_UNI_8_BIT)/;
+foreach my $line_data (@{$hp->lines}) {
+    next unless $line_data->{type} eq "content"
+            and $line_data->{sub_type} eq "#define";
+    my $line = $line_data->{line};
+    next unless $line=~/^\s*#\s*define\s+(HINT_FEATURE_MASK|HINT_UNI_8_BIT)/;
     my $is_u8b = $1 =~ 8;
-    /(0x[A-Fa-f0-9]+)/ or die "No hex number in:\n\n$_\n ";
+    $line=~/(0x[A-Fa-f0-9]+)/ or die "No hex number in:\n\n$line\n ";
     if ($is_u8b) {
 	$Uni8Bit = $1;
     }
@@ -155,20 +168,18 @@ while (readline "perl.h") {
 	my $hex = $HintMask = $1;
 	my $bits = sprintf "%b", oct $1;
 	$bits =~ /^0*1+(0*)\z/
-	 or die "Non-contiguous bits in $bits (binary for $hex):\n\n$_\n ";
+         or die "Non-contiguous bits in $bits (binary for $hex):\n\n$line\n ";
 	$HintShift = length $1;
 	my $bits_needed =
 	    length sprintf "%b", scalar keys %UniqueBundles;
 	$bits =~ /1{$bits_needed}/
 	    or die "Not enough bits (need $bits_needed)"
-		 . " in $bits (binary for $hex):\n\n$_\n ";
+                 . " in $bits (binary for $hex):\n\n$line\n ";
     }
     if ($Uni8Bit && $HintMask) { last }
 }
 die "No HINT_FEATURE_MASK defined in perl.h" unless $HintMask;
 die "No HINT_UNI_8_BIT defined in perl.h"    unless $Uni8Bit;
-
-close "perl.h";
 
 my @HintedBundles =
     ('default', grep !/[^\d.]/, sort values %UniqueBundles);
@@ -298,8 +309,13 @@ for (@HintedBundles) {
 print $h <<'EOH';
 #define FEATURE_BUNDLE_CUSTOM	(HINT_FEATURE_MASK >> HINT_FEATURE_SHIFT)
 
-#define CURRENT_HINTS \
+/* this is preserved for testing and asserts */
+#define OLD_CURRENT_HINTS \
     (PL_curcop == &PL_compiling ? PL_hints : PL_curcop->cop_hints)
+/* this is the same thing, but simpler (no if) as PL_hints expands
+   to PL_compiling.cop_hints */
+#define CURRENT_HINTS \
+    PL_curcop->cop_hints
 #define CURRENT_FEATURE_BUNDLE \
     ((CURRENT_HINTS & HINT_FEATURE_MASK) >> HINT_FEATURE_SHIFT)
 
@@ -485,8 +501,7 @@ read_only_bottom_close_and_rename($h);
 
 __END__
 package feature;
-
-our $VERSION = '1.72';
+our $VERSION = '1.82';
 
 FEATURES
 
@@ -508,13 +523,13 @@ feature - Perl pragma to enable new features
     say "The case-folded version of $x is: " . fc $x;
 
 
-    # set features to match the :5.10 bundle, which may turn off or on
-    # multiple features (see below)
-    use feature ':5.10';
+    # set features to match the :5.36 bundle, which may turn off or on
+    # multiple features (see "FEATURE BUNDLES" below)
+    use feature ':5.36';
 
 
-    # implicitly loads :5.10 feature bundle
-    use v5.10;
+    # implicitly loads :5.36 feature bundle
+    use v5.36;
 
 =head1 DESCRIPTION
 
@@ -556,6 +571,8 @@ disable I<all> features (an unusual request!) use C<no feature ':all'>.
 
 =head1 AVAILABLE FEATURES
 
+Read L</"FEATURE BUNDLES"> for the feature cheat sheet summary.
+
 =head2 The 'say' feature
 
 C<use feature 'say'> tells the compiler to enable the Raku-inspired
@@ -588,6 +605,9 @@ given/when construct.
 See L<perlsyn/"Switch Statements"> for details.
 
 This feature is available starting with Perl 5.10.
+It is deprecated starting with Perl 5.38, and using
+C<given>, C<when> or smartmatch will throw a warning.
+It will be removed in Perl 5.42.
 
 =head2 The 'unicode_strings' feature
 
@@ -678,9 +698,10 @@ regardless of what feature declarations are in scope.
 =head2 The 'postderef' and 'postderef_qq' features
 
 The 'postderef_qq' feature extends the applicability of L<postfix
-dereference syntax|perlref/Postfix Dereference Syntax> so that postfix array
-and scalar dereference are available in double-quotish interpolations. For
-example, it makes the following two statements equivalent:
+dereference syntax|perlref/Postfix Dereference Syntax> so that
+postfix array dereference, postfix scalar dereference, and
+postfix array highest index access are available in double-quotish interpolations.
+For example, it makes the following two statements equivalent:
 
   my $s = "[@{ $h->{a} }]";
   my $s = "[$h->{a}->@*]";
@@ -771,7 +792,7 @@ warn when you use the feature, unless you have explicitly disabled the warning:
     no warnings "experimental::declared_refs";
 
 This allows a reference to a variable to be declared with C<my>, C<state>,
-our C<our>, or localized with C<local>.  It is intended mainly for use in
+or C<our>, or localized with C<local>.  It is intended mainly for use in
 conjunction with the "refaliasing" feature.  See L<perlref/Declaring a
 Reference to a Variable> for examples.
 
@@ -823,7 +844,7 @@ previous versions, it was simply on all the time.
 You can use the L<multidimensional> module on CPAN to disable
 multidimensional array emulation for older versions of Perl.
 
-=head2 The 'bareword_filehandles' feature.
+=head2 The 'bareword_filehandles' feature
 
 This feature enables bareword filehandles for builtin functions
 operations, a generally discouraged practice.  It is enabled by
@@ -839,7 +860,7 @@ previous versions it was simply on all the time.
 You can use the L<bareword::filehandles> module on CPAN to disable
 bareword filehandles for older versions of perl.
 
-=head2 The 'try' feature.
+=head2 The 'try' feature
 
 B<WARNING>: This feature is still experimental and the implementation may
 change or be removed in future versions of Perl.  For this reason, Perl will
@@ -876,6 +897,10 @@ warn when you use the feature, unless you have explicitly disabled the warning:
 This feature enables the use of more paired string delimiters than the
 traditional four, S<C<< <  > >>>, S<C<( )>>, S<C<{ }>>, and S<C<[ ]>>.  When
 this feature is on, for example, you can say S<C<qrE<171>patE<187>>>.
+
+As with any usage of non-ASCII delimiters in a UTF-8-encoded source file, you
+will want to ensure the parser will decode the source code from UTF-8 bytes
+with a declaration such as C<use utf8>.
 
 This feature is available starting in Perl 5.36.
 
@@ -1269,6 +1294,25 @@ The complete list of accepted paired delimiters as of Unicode 14.0 is:
  🢫  🢪    U+1F8AB, U+1F8AA RIGHT/LEFTWARDS FRONT-TILTED SHADOWED WHITE
                           ARROW
 
+=head2 The 'module_true' feature
+
+This feature removes the need to return a true value at the end of a module
+loaded with C<require> or C<use>. Any errors during compilation will cause
+failures, but reaching the end of the module when this feature is in effect
+will prevent C<perl> from throwing an exception that the module "did not return
+a true value".
+
+=head2 The 'class' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change or be removed in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the warning:
+
+    no warnings "experimental::class";
+
+This feature enables the C<class> block syntax and other associated keywords
+which implement the "new" object system, previously codenamed "Corinna".
+
 =head1 FEATURE BUNDLES
 
 It's possible to load multiple features together, using
@@ -1311,12 +1355,12 @@ main compilation unit (that is, the one-liner that follows C<-E>).
 By explicitly requiring a minimum Perl version number for your program, with
 the C<use VERSION> construct.  That is,
 
-    use v5.10.0;
+    use v5.36.0;
 
 will do an implicit
 
     no feature ':all';
-    use feature ':5.10';
+    use feature ':5.36';
 
 and so on.  Note how the trailing sub-version
 is automatically stripped from the
@@ -1324,7 +1368,7 @@ version.
 
 But to avoid portability warnings (see L<perlfunc/use>), you may prefer:
 
-    use 5.010;
+    use 5.036;
 
 with the same effect.
 

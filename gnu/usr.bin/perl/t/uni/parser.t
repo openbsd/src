@@ -267,6 +267,7 @@ eval "sort \x{100}%";
 die $@;
 EOS
 syntax error at (eval 1) line 1, at EOF
+Execution of (eval 1) aborted due to compilation errors.
 EXPECT
 
 # New tests go here ^^^^^

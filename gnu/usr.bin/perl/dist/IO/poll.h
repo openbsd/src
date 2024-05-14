@@ -10,7 +10,7 @@
 #ifndef POLL_H
 #  define POLL_H
 
-#if (defined(HAS_POLL) && defined(I_POLL)) || defined(POLLWRBAND)
+#if (defined(HAS_POLL) && defined(I_POLL)) || (defined(POLLWRBAND) && !defined(_WIN32))
 #  include <poll.h>
 #elif (defined(HAS_POLL) && defined(I_SYS_POLL))
 #  include <sys/poll.h>
@@ -22,31 +22,38 @@
 
 #define EMULATE_POLL_WITH_SELECT
 
+#ifdef _WIN32
+#  include <winsock2.h>
+#endif
+
 #ifdef poll
 # undef poll
 #endif
 #define poll Perl_my_poll
 
+#if WINVER < 0x0600
 typedef struct pollfd {
     int fd;
     short events;
     short revents;
 } pollfd_t;
 
-#define	POLLIN		0x0001
-#define	POLLPRI		0x0002
-#define	POLLOUT		0x0004
-#define	POLLRDNORM	0x0040
-#define	POLLWRNORM	POLLOUT
-#define	POLLRDBAND	0x0080
-#define	POLLWRBAND	0x0100
-#define	POLLNORM	POLLRDNORM
+#define POLLIN          0x0001
+#define POLLPRI         0x0002
+#define POLLOUT         0x0004
+#define POLLRDNORM      0x0040
+#define POLLWRNORM      POLLOUT
+#define POLLRDBAND      0x0080
+#define POLLWRBAND      0x0100
+#define POLLNORM        POLLRDNORM
 
 /* Return ONLY events (NON testable) */
 
-#define	POLLERR		0x0008
-#define	POLLHUP		0x0010
-#define	POLLNVAL	0x0020
+#define POLLERR         0x0008
+#define POLLHUP         0x0010
+#define POLLNVAL        0x0020
+
+#endif
 
 int poll (struct pollfd *, unsigned long, int);
 

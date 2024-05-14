@@ -410,25 +410,25 @@ union	overhead {
                 u_int	ovu_rmagic;	/* range magic number */
 #endif
         } ovu;
-#define	ov_magic	ovu.ovu_magic
-#define	ov_index	ovu.ovu_index
-#define	ov_size		ovu.ovu_size
-#define	ov_rmagic	ovu.ovu_rmagic
+#define ov_magic        ovu.ovu_magic
+#define ov_index        ovu.ovu_index
+#define ov_size         ovu.ovu_size
+#define ov_rmagic       ovu.ovu_rmagic
 };
 
-#define	MAGIC		0xff		/* magic # on accounting info */
+#define MAGIC           0xff            /* magic # on accounting info */
 #define RMAGIC		0x55555555	/* magic # on range info */
 #define RMAGIC_C	0x55		/* magic # on range info */
 
 #ifdef RCHECK
-#  define	RMAGIC_SZ	sizeof (u_int) /* Overhead at end of bucket */
+#  define RMAGIC_SZ     sizeof (u_int) /* Overhead at end of bucket */
 #  ifdef TWO_POT_OPTIMIZE
 #    define MAX_SHORT_BUCKET (12 * BUCKETS_PER_POW2) /* size-1 fits in short */
 #  else
 #    define MAX_SHORT_BUCKET (13 * BUCKETS_PER_POW2)
 #  endif 
 #else
-#  define	RMAGIC_SZ	0
+#  define RMAGIC_SZ     0
 #endif
 
 #if !defined(PACK_MALLOC) && defined(BUCKETS_ROOT2)
@@ -583,7 +583,7 @@ static const u_short buck_size[MAX_BUCKET_BY_TABLE + 1] =
  *
  * This allows for an additional optimization: the above scheme leads
  * to giant overheads for sizes 128 or more (one whole chunk needs to
- * be sacrifised to keep INDEX).  Instead we use chunks not of size
+ * be sacrificed to keep INDEX).  Instead we use chunks not of size
  * 2^k, but of size 2^k-ALIGN.  If we pack these chunks at the end of
  * the arena, then the beginnings are still in different 2^k-long
  * sections of the arena if k>=7 for ALIGN==4, and k>=8 if ALIGN=8.
@@ -812,7 +812,7 @@ static int	getpages_adjacent(MEM_SIZE require);
  * smallest allocatable block is 8 bytes.  The overhead information
  * precedes the data area returned to the user.
  */
-#define	NBUCKETS (BITS_IN_PTR*BUCKETS_PER_POW2 + 1)
+#define NBUCKETS (BITS_IN_PTR*BUCKETS_PER_POW2 + 1)
 static	union overhead *nextf[NBUCKETS];
 
 #if defined(PURIFY) && !defined(USE_PERL_SBRK)
@@ -1059,7 +1059,7 @@ emergency_sbrk(MEM_SIZE size)
 
 #ifdef DEBUGGING
 #undef ASSERT
-#define	ASSERT(p,diag)   if (!(p)) botch(diag,STRINGIFY(p),__FILE__,__LINE__);
+#define ASSERT(p,diag)   if (!(p)) botch(diag,STRINGIFY(p),__FILE__,__LINE__);
 
 static void
 botch(const char *diag, const char *s, const char *file, int line)
@@ -1095,7 +1095,7 @@ botch(const char *diag, const char *s, const char *file, int line)
     }
 }
 #else
-#define	ASSERT(p, diag)
+#define ASSERT(p, diag)
 #endif
 
 #ifdef MALLOC_FILL

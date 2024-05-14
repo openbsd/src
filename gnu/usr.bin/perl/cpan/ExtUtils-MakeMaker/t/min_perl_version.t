@@ -17,7 +17,7 @@ use ExtUtils::MM;
 use Test::More
     !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
     ? (skip_all => "cross-compiling and make not available")
-    : (tests => 35);
+    : (tests => 37);
 use File::Path;
 
 use ExtUtils::MakeMaker;
@@ -121,6 +121,17 @@ note "Argument verification"; {
         );
     };
     is( $warnings, '', 'MIN_PERL_VERSION=X.Y.Z does not trigger a warning' );
+    is( $@, '',        '  nor a hard failure' );
+
+
+    $warnings = '';
+    eval {
+        WriteMakefile(
+            NAME             => 'Min::PerlVers',
+            MIN_PERL_VERSION => '5.005_04',
+        );
+    };
+    is( $warnings, '', 'MIN_PERL_VERSION=5.005_04 does not trigger a warning' );
     is( $@, '',        '  nor a hard failure' );
 
 

@@ -9,7 +9,7 @@ use File::Path ();
 use POSIX ":sys_wait_h"; 
 @CPAN::Distribution::ISA = qw(CPAN::InfoObj);
 use vars qw($VERSION);
-$VERSION = "2.33";
+$VERSION = "2.34";
 
 my $run_allow_installing_within_test = 1; # boolean; either in test or in install, there is no third option
 
@@ -2950,7 +2950,7 @@ sub prereqs_for_slot {
         }
         if (-f "Build.PL"
             && ! -f File::Spec->catfile($self->{build_dir},"Makefile.PL")
-            && ! $merged->requirements_for_module("Module::Build")
+            && ! @{[ $merged->required_modules ]}
             && ! $CPAN::META->has_inst("Module::Build")
            ) {
             $CPAN::Frontend->mywarn(

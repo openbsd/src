@@ -81,9 +81,9 @@ static char sscsid[]=  "$OpenBSD: glob.c,v 1.8.10.1 2001/04/10 jason Exp $";
 
 #ifndef MAXPATHLEN
 #  ifdef PATH_MAX
-#    define	MAXPATHLEN	PATH_MAX
+#    define MAXPATHLEN  PATH_MAX
 #  else
-#    define	MAXPATHLEN	1024
+#    define MAXPATHLEN  1024
 #  endif
 #endif
 
@@ -91,71 +91,71 @@ static char sscsid[]=  "$OpenBSD: glob.c,v 1.8.10.1 2001/04/10 jason Exp $";
 
 #ifndef ARG_MAX
 #  ifdef _SC_ARG_MAX
-#    define		ARG_MAX		(sysconf(_SC_ARG_MAX))
+#    define     ARG_MAX         (sysconf(_SC_ARG_MAX))
 #  else
 #    ifdef _POSIX_ARG_MAX
-#      define		ARG_MAX		_POSIX_ARG_MAX
+#      define   ARG_MAX         _POSIX_ARG_MAX
 #    else
 #      ifdef WIN32
-#        define	ARG_MAX		14500	/* from VC's limits.h */
+#        define ARG_MAX         14500   /* from VC's limits.h */
 #      else
-#        define	ARG_MAX		4096	/* from POSIX, be conservative */
+#        define ARG_MAX         4096    /* from POSIX, be conservative */
 #      endif
 #    endif
 #  endif
 #endif
 
-#define	BG_DOLLAR	'$'
-#define	BG_DOT		'.'
-#define	BG_EOS		'\0'
-#define	BG_LBRACKET	'['
-#define	BG_NOT		'!'
-#define	BG_QUESTION	'?'
-#define	BG_QUOTE	'\\'
-#define	BG_RANGE	'-'
-#define	BG_RBRACKET	']'
-#define	BG_SEP	'/'
+#define BG_DOLLAR       '$'
+#define BG_DOT          '.'
+#define BG_EOS          '\0'
+#define BG_LBRACKET     '['
+#define BG_NOT          '!'
+#define BG_QUESTION     '?'
+#define BG_QUOTE        '\\'
+#define BG_RANGE        '-'
+#define BG_RBRACKET     ']'
+#define BG_SEP  '/'
 #ifdef DOSISH
 #define BG_SEP2		'\\'
 #endif
-#define	BG_STAR		'*'
-#define	BG_TILDE	'~'
-#define	BG_UNDERSCORE	'_'
-#define	BG_LBRACE	'{'
-#define	BG_RBRACE	'}'
-#define	BG_SLASH	'/'
-#define	BG_COMMA	','
+#define BG_STAR         '*'
+#define BG_TILDE        '~'
+#define BG_UNDERSCORE   '_'
+#define BG_LBRACE       '{'
+#define BG_RBRACE       '}'
+#define BG_SLASH        '/'
+#define BG_COMMA        ','
 
 #ifndef GLOB_DEBUG
 
-#define	M_QUOTE		0x8000
-#define	M_PROTECT	0x4000
-#define	M_MASK		0xffff
-#define	M_ASCII		0x00ff
+#define M_QUOTE         0x8000
+#define M_PROTECT       0x4000
+#define M_MASK          0xffff
+#define M_ASCII         0x00ff
 
 typedef U16 Char;
 
 #else
 
-#define	M_QUOTE		0x80
-#define	M_PROTECT	0x40
-#define	M_MASK		0xff
-#define	M_ASCII		0x7f
+#define M_QUOTE         0x80
+#define M_PROTECT       0x40
+#define M_MASK          0xff
+#define M_ASCII         0x7f
 
 typedef U8 Char;
 
 #endif /* !GLOB_DEBUG */
 
 
-#define	CHAR(c)		((Char)((c)&M_ASCII))
-#define	META(c)		((Char)((c)|M_QUOTE))
-#define	M_ALL		META('*')
-#define	M_END		META(']')
-#define	M_NOT		META('!')
-#define	M_ONE		META('?')
-#define	M_RNG		META('-')
-#define	M_SET		META('[')
-#define	ismeta(c)	(((c)&M_QUOTE) != 0)
+#define CHAR(c)         ((Char)((c)&M_ASCII))
+#define META(c)         ((Char)((c)|M_QUOTE))
+#define M_ALL           META('*')
+#define M_END           META(']')
+#define M_NOT           META('!')
+#define M_ONE           META('?')
+#define M_RNG           META('-')
+#define M_SET           META('[')
+#define ismeta(c)       (((c)&M_QUOTE) != 0)
 
 
 static int	 compare(const void *, const void *);
@@ -204,7 +204,7 @@ my_readdir(DIR *d)
 }
 #   else
 
-#       define	my_readdir	readdir
+#       define my_readdir       readdir
 
 #   endif
 

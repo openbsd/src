@@ -58,21 +58,18 @@ BEGIN {
 }
 
 use feature 'fc';
+use I18N::Langinfo qw(langinfo CODESET CRNCYSTR RADIXCHAR);
 
 # =1 adds debugging output; =2 increases the verbosity somewhat
 our $debug = $ENV{PERL_DEBUG_FULL_TEST} // 0;
 
 # Certain tests have been shown to be problematical for a few locales.  Don't
 # fail them unless at least this percentage of the tested locales fail.
-# On AIX machines, many locales call a no-break space a graphic.
-# (There aren't 1000 locales currently in existence, so 99.9 works)
 # EBCDIC os390 has more locales fail than normal, because it has locales that
 # move various critical characters like '['.
-my $acceptable_failure_percentage = ($os =~ / ^ ( aix ) $ /x)
-                                     ? 99.9
-                                     : ($os =~ / ^ ( os390 ) $ /x)
-                                       ? 10
-                                       : 5;
+my $acceptable_failure_percentage = ($os =~ / ^ ( os390 ) $ /x)
+                                    ? 10
+                                    : 5;
 
 # The list of test numbers of the problematic tests.
 my %problematical_tests;
@@ -792,18 +789,24 @@ my $final_without_setlocale = $test_num;
 debug "Scanning for locales...\n";
 
 require POSIX; import POSIX ':locale_h';
-
 my $categories = [ 'LC_CTYPE', 'LC_NUMERIC', 'LC_ALL' ];
-debug "Scanning for just compatible";
-my @Locale = find_locales($categories);
-debug "Scanning for even incompatible";
-my @include_incompatible_locales = find_locales($categories,
-                                                'even incompatible locales');
-
+my @Locale;
+my @include_incompatible_locales;
+if ($^O eq "aix"
+    and version->new(($Config{osvers} =~ /^(\d+(\.\d+))/)[0]) < 7) {
+    # https://www.ibm.com/support/pages/apar/IV22097
+    skip("setlocale broken on old AIX");
+}
+else {
+    debug "Scanning for just compatible";
+    @Locale = find_locales($categories);
+    debug "Scanning for even incompatible";
+    @include_incompatible_locales = find_locales($categories,
+                                              'even incompatible locales');
+}
 # The locales included in the incompatible list that aren't in the compatible
 # one.
 my @incompatible_locales;
-
 if (@Locale < @include_incompatible_locales) {
     my %seen;
     @seen{@Locale} = ();
@@ -1058,9 +1061,12 @@ foreach my $Locale (@Locale) {
 
     my $is_utf8_locale = is_locale_utf8($Locale);
 
-    debug "is utf8 locale? = $is_utf8_locale\n";
-
-    debug "radix = " . disp_str(localeconv()->{decimal_point}) . "\n";
+    if ($debug) {
+        debug "code set = " . langinfo(CODESET);
+        debug "is utf8 locale? = $is_utf8_locale\n";
+        debug "radix = " . disp_str(langinfo(RADIXCHAR)) . "\n";
+        debug "currency = " . disp_str(langinfo(CRNCYSTR));
+    }
 
     if (! $is_utf8_locale) {
         use locale;
@@ -2136,19 +2142,22 @@ foreach my $Locale (@Locale) {
     }
 
     $ok19 = $ok20 = 1;
-    if (setlocale(&POSIX::LC_TIME, $Locale)) { # These tests aren't affected by
-                                               # :not_characters
-        my @times = CORE::localtime();
+    if (locales_enabled('LC_TIME')) {
+        if (setlocale(&POSIX::LC_TIME, $Locale)) { # These tests aren't
+                                                   # affected by
+                                                   # :not_characters
+            my @times = CORE::localtime();
 
-        use locale;
-        $ok19 = POSIX::strftime("%p", @times) ne "%p"; # [perl #119425]
-        my $date = POSIX::strftime("'%A'  '%B'  '%Z'  '%p'", @times);
-        debug("'Day' 'Month' 'TZ' 'am/pm' = ", disp_str($date));
+            use locale;
+            $ok19 = POSIX::strftime("%p", @times) ne "%p"; # [perl #119425]
+            my $date = POSIX::strftime("'%A'  '%B'  '%Z'  '%p'", @times);
+            debug("'Day' 'Month' 'TZ' 'am/pm' = ", disp_str($date));
 
-        # If there is any non-ascii, it better be UTF-8 in a UTF-8 locale, and
-        # not UTF-8 if the locale isn't UTF-8.
-        $ok20 = $date =~ / ^ \p{ASCII}+ $ /x
-                || $is_utf8_locale == utf8::is_utf8($date);
+            # If there is any non-ascii, it better be UTF-8 in a UTF-8 locale,
+            # and not UTF-8 if the locale isn't UTF-8.
+            $ok20 = $date =~ / ^ \p{ASCII}+ $ /x
+                    || $is_utf8_locale == utf8::is_utf8($date);
+        }
     }
 
     $ok21 = 1;
@@ -2435,7 +2444,7 @@ foreach my $Locale (@Locale) {
         $test_names{$locales_test_number} = 'Verify atof with locale radix and negative exponent';
         $problematical_tests{$locales_test_number} = 1;
 
-        my $radix = POSIX::localeconv()->{decimal_point};
+        my $radix = langinfo(RADIXCHAR);
         my @nums = (
              "3.14e+9",  "3${radix}14e+9",  "3.14e-9",  "3${radix}14e-9",
             "-3.14e+9", "-3${radix}14e+9", "-3.14e-9", "-3${radix}14e-9",

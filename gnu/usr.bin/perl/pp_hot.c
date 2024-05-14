@@ -58,6 +58,7 @@ PP(pp_nextstate)
 PP(pp_gvsv)
 {
     dSP;
+    assert(SvTYPE(cGVOP_gv) == SVt_PVGV);
     EXTEND(SP,1);
     if (UNLIKELY(PL_op->op_private & OPpLVAL_INTRO))
         PUSHs(save_scalar(cGVOP_gv));
@@ -96,6 +97,9 @@ PP(pp_stringify)
 PP(pp_gv)
 {
     dSP;
+    /* cGVOP_gv might be a real GV or might be an RV to a CV */
+    assert(SvTYPE(cGVOP_gv) == SVt_PVGV ||
+           (SvTYPE(cGVOP_gv) <= SVt_PVMG && SvROK(cGVOP_gv) && SvTYPE(SvRV(cGVOP_gv)) == SVt_PVCV));
     XPUSHs(MUTABLE_SV(cGVOP_gv));
     RETURN;
 }
@@ -121,6 +125,98 @@ PP(pp_and)
             return cLOGOP->op_other;
         }
     }
+}
+
+/*
+ * Mashup of simple padsv + sassign OPs
+ * Doesn't support the following lengthy and unlikely sassign case:
+ *    (UNLIKELY(PL_op->op_private & OPpASSIGN_CV_TO_GV))
+ *  These cases have a separate optimization, so are not handled here:
+ *    (PL_op->op_private & OPpASSIGN_BACKWARDS) {or,and,dor}assign
+*/
+
+PP(pp_padsv_store)
+{
+    dSP;
+    OP * const op = PL_op;
+    SV** const padentry = &PAD_SVl(op->op_targ);
+    SV* targ = *padentry; /* lvalue to assign into */
+    SV* const val = TOPs; /* RHS value to assign */
+
+    /* !OPf_STACKED is not handled by this OP */
+    assert(op->op_flags & OPf_STACKED);
+
+    /* Inlined, simplified pp_padsv here */
+    if ((op->op_private & (OPpLVAL_INTRO|OPpPAD_STATE)) == OPpLVAL_INTRO) {
+        save_clearsv(padentry);
+    }
+
+    /* Inlined, simplified pp_sassign from here */
+    assert(TAINTING_get || !TAINT_get);
+    if (UNLIKELY(TAINT_get) && !SvTAINTED(val))
+        TAINT_NOT;
+
+    if (
+      UNLIKELY(SvTEMP(targ)) && !SvSMAGICAL(targ) && SvREFCNT(targ) == 1 &&
+      (!isGV_with_GP(targ) || SvFAKE(targ)) && ckWARN(WARN_MISC)
+    )
+        Perl_warner(aTHX_
+            packWARN(WARN_MISC), "Useless assignment to a temporary"
+        );
+    SvSetMagicSV(targ, val);
+
+    SETs(targ);
+    RETURN;
+}
+
+/* A mashup of simplified AELEMFAST_LEX + SASSIGN OPs */
+
+PP(pp_aelemfastlex_store)
+{
+    dSP;
+    OP * const op = PL_op;
+    SV* const val = TOPs; /* RHS value to assign */
+    AV * const av = MUTABLE_AV(PAD_SV(op->op_targ));
+    const I8 key   = (I8)PL_op->op_private;
+    SV * targ = NULL;
+
+    /* !OPf_STACKED is not handled by this OP */
+    assert(op->op_flags & OPf_STACKED);
+
+    /* Inlined, simplified pp_aelemfast here */
+    assert(SvTYPE(av) == SVt_PVAV);
+
+    /* inlined av_fetch() for simple cases ... */
+    if (!SvRMAGICAL(av) && key >=0 && key <= AvFILLp(av)) {
+        targ = AvARRAY(av)[key];
+    }
+    /* ... else do it the hard way */
+    if (!targ) {
+        SV **svp = av_fetch(av, key, 1);
+
+        if (svp)
+            targ = *svp;
+        else
+            DIE(aTHX_ PL_no_aelem, (int)key);
+    }
+
+    /* Inlined, simplified pp_sassign from here */
+    assert(TAINTING_get || !TAINT_get);
+    if (UNLIKELY(TAINT_get) && !SvTAINTED(val))
+        TAINT_NOT;
+
+    /* This assertion is a deviation from pp_sassign, which uses an if()
+     * condition to check for "Useless assignment to a temporary" and
+     * warns if the condition is true. Here, the condition should NEVER
+     * be true when the LHS is the result of an array fetch. The
+     * assertion is here as a final check that this remains the case.
+     */
+    assert(!(SvTEMP(targ) && SvREFCNT(targ) == 1 && !SvSMAGICAL(targ)));
+
+    SvSetMagicSV(targ, val);
+
+    SETs(targ);
+    RETURN;
 }
 
 PP(pp_sassign)
@@ -1638,6 +1734,9 @@ PP(pp_aelemfast)
         if (sv) {
             PUSHs(sv);
             RETURN;
+        } else if (!lval) {
+            PUSHs(&PL_sv_undef);
+            RETURN;
         }
     }
 
@@ -1774,12 +1873,7 @@ PP(pp_print)
 PERL_STATIC_INLINE OP*
 S_padhv_rv2hv_common(pTHX_ HV *hv, U8 gimme, bool is_keys, bool has_targ)
 {
-    bool is_tied;
-    bool is_bool;
-    MAGIC *mg;
     dSP;
-    IV  i;
-    SV *sv;
 
     assert(PL_op->op_type == OP_PADHV || PL_op->op_type == OP_RV2HV);
 
@@ -1795,12 +1889,17 @@ S_padhv_rv2hv_common(pTHX_ HV *hv, U8 gimme, bool is_keys, bool has_targ)
     if (gimme == G_VOID)
         return NORMAL;
 
-    is_bool = (     PL_op->op_private & OPpTRUEBOOL
-              || (  PL_op->op_private & OPpMAYBE_TRUEBOOL
-                  && block_gimme() == G_VOID));
-    is_tied = SvRMAGICAL(hv) && (mg = mg_find(MUTABLE_SV(hv), PERL_MAGIC_tied));
+    bool is_bool = (     PL_op->op_private & OPpTRUEBOOL
+                   || (  PL_op->op_private & OPpMAYBE_TRUEBOOL
+                      && block_gimme() == G_VOID));
 
-    if (UNLIKELY(is_tied)) {
+    MAGIC *is_tied_mg = SvRMAGICAL(hv)
+                        ? mg_find(MUTABLE_SV(hv), PERL_MAGIC_tied)
+                        : NULL;
+
+    IV  i = 0;
+    SV *sv = NULL;
+    if (UNLIKELY(is_tied_mg)) {
         if (is_keys && !is_bool) {
             i = 0;
             while (hv_iternext(hv))
@@ -1808,7 +1907,7 @@ S_padhv_rv2hv_common(pTHX_ HV *hv, U8 gimme, bool is_keys, bool has_targ)
             goto push_i;
         }
         else {
-            sv = magic_scalarpack(hv, mg);
+            sv = magic_scalarpack(hv, is_tied_mg);
             goto push_sv;
         }
     }
@@ -2223,7 +2322,7 @@ PP(pp_aassign)
     SV **relem;
     SV **lelem;
     U8 gimme;
-    /* PL_delaymagic is restored by JUMPENV_POP on dieing, so we
+    /* PL_delaymagic is restored by JMPENV_POP on dieing, so we
      * only need to save locally, not on the save stack */
     U16 old_delaymagic = PL_delaymagic;
 #ifdef DEBUGGING
@@ -3091,7 +3190,7 @@ PP(pp_match)
     if (global && (gimme != G_LIST || (dynpm->op_pmflags & PMf_CONTINUE))) {
         if (!mg)
             mg = sv_magicext_mglob(TARG);
-        MgBYTEPOS_set(mg, TARG, truebase, RXp_OFFS(prog)[0].end);
+        MgBYTEPOS_set(mg, TARG, truebase, RXp_OFFS_END(prog,0));
         if (RXp_ZERO_LEN(prog))
             mg->mg_flags |= MGf_MINMATCH;
         else
@@ -3106,38 +3205,90 @@ PP(pp_match)
     /* push captures on stack */
 
     {
-        const I32 nparens = RXp_NPARENS(prog);
-        I32 i = (global && !nparens) ? 1 : 0;
+        const I32 logical_nparens = RXp_LOGICAL_NPARENS(prog);
+        /* This following statement is *devious* code. If we are in a global
+           match and the pattern has no parens in it we should return $&
+           (offset pair 0). So we set logical_paren to 1 when we should return
+           $&, otherwise we set it to 0.
+
+           This allows us to simply add logical_nparens to logical_paren to
+           compute the number of elements we are going to return.
+
+           In the loop intit we "not" it with: logical_paren = !logical_paren
+           which results in it being 0 inside the loop when we want to return
+           $&, and results in it being 1 when we want to return the parens.
+           Thus we either loop over 1..logical_nparens, or just over 0.
+
+           This is an elegant way to do this code wise, but is super devious
+           and potentially confusing. When I first saw this logic I thought
+           "WTF?". But it makes sense after you poke it a while.
+
+           Frankly I probably would have done it differently, but it works so
+           I am leaving it. - Yves */
+        I32 logical_paren = (global && !logical_nparens) ? 1 : 0;
+        I32 *l2p = RXp_LOGICAL_TO_PARNO(prog);
+        /* this is used to step through the physical parens associated
+         * with a given logical paren. */
+        I32 *p2l_next = RXp_PARNO_TO_LOGICAL_NEXT(prog);
 
         SPAGAIN;			/* EVAL blocks could move the stack. */
-        EXTEND(SP, nparens + i);
-        EXTEND_MORTAL(nparens + i);
-        for (i = !i; i <= nparens; i++) {
-            if (LIKELY((RXp_OFFS(prog)[i].start != -1)
-                     && RXp_OFFS(prog)[i].end   != -1 ))
-            {
-                const I32 len = RXp_OFFS(prog)[i].end - RXp_OFFS(prog)[i].start;
-                const char * const s = RXp_OFFS(prog)[i].start + truebase;
-                if (UNLIKELY(  RXp_OFFS(prog)[i].end   < 0
-                            || RXp_OFFS(prog)[i].start < 0
-                            || len < 0
-                            || len > strend - s)
-                )
-                    DIE(aTHX_ "panic: pp_match start/end pointers, i=%ld, "
-                        "start=%ld, end=%ld, s=%p, strend=%p, len=%" UVuf,
-                        (long) i, (long) RXp_OFFS(prog)[i].start,
-                        (long)RXp_OFFS(prog)[i].end, s, strend, (UV) len);
-                PUSHs(newSVpvn_flags(s, len,
-                    (DO_UTF8(TARG))
-                    ? SVf_UTF8|SVs_TEMP
-                    : SVs_TEMP)
-                );
-            } else {
-                PUSHs(sv_newmortal());
+        EXTEND(SP, logical_nparens + logical_paren);    /* devious code ... */
+        EXTEND_MORTAL(logical_nparens + logical_paren); /* ... see above */
+
+        /* loop over the logical parens in the pattern. This may not
+           correspond to the actual paren checked, as branch reset may
+           mean that there is more than one paren "behind" the logical
+           parens. Eg, in /(?|(a)|(b))/ there are two parens, but one
+           logical paren. */
+        for (logical_paren = !logical_paren;
+             logical_paren <= logical_nparens;
+             logical_paren++)
+        {
+            /* now convert the logical_paren to the physical parens which
+               are "behind" it. If branch reset was not used then
+               physical_paren and logical_paren are the same as each other
+               and we will only perform one iteration of the loop */
+            I32 phys_paren = l2p ? l2p[logical_paren] : logical_paren;
+            SSize_t offs_start, offs_end;
+            /* We check the loop invariants below and break out of the loop
+               explicitly if our checks fail, so we use while (1) here to
+               avoid double testing a conditional. */
+            while (1) {
+                /* Check end offset first, as the start might be >=0 even
+                   though the end is -1, so testing the end first helps
+                   use avoid the start check.  Really we should be able to
+                   get away with ONLY testing the end, but testing both
+                   doesn't hurt much and preserves sanity. */
+                if (((offs_end   = RXp_OFFS_END(prog, phys_paren))   != -1) &&
+                    ((offs_start = RXp_OFFS_START(prog, phys_paren)) != -1))
+                {
+                    const SSize_t len = offs_end - offs_start;
+                    const char * const s = offs_start + truebase;
+                    if ( UNLIKELY( len < 0 || len > strend - s) ) {
+                        DIE(aTHX_ "panic: pp_match start/end pointers, paren=%" I32df ", "
+                            "start=%zd, end=%zd, s=%p, strend=%p, len=%zd",
+                            phys_paren, offs_start, offs_end, s, strend, len);
+                    }
+                    PUSHs(newSVpvn_flags(s, len,
+                        (DO_UTF8(TARG))
+                        ? SVf_UTF8|SVs_TEMP
+                        : SVs_TEMP)
+                    );
+                    break;
+                } else if (!p2l_next || !(phys_paren = p2l_next[phys_paren])) {
+                    /* Either logical_paren and phys_paren are the same and
+                       we won't have a p2l_next, or they aren't the same (and
+                       we do have a p2l_next) but we have exhausted the list
+                       of physical parens associated with this logical paren.
+                       Either way we are done, and we can push undef and break
+                       out of the loop. */
+                    PUSHs(sv_newmortal());
+                    break;
+                }
             }
         }
         if (global) {
-            curpos = (UV)RXp_OFFS(prog)[0].end;
+            curpos = (UV)RXp_OFFS_END(prog,0);
             had_zerolen = RXp_ZERO_LEN(prog);
             PUTBACK;			/* EVAL blocks may use stack */
             r_flags |= REXEC_IGNOREPOS | REXEC_NOT_FIRST;
@@ -3286,14 +3437,19 @@ Perl_do_readline(pTHX)
                 || SNARF_EOF(gimme, PL_rs, io, sv)
                 || PerlIO_error(fp)))
         {
-            PerlIO_clearerr(fp);
             if (IoFLAGS(io) & IOf_ARGV) {
                 fp = nextargv(PL_last_in_gv, PL_op->op_flags & OPf_SPECIAL);
-                if (fp)
+                if (fp) {
                     continue;
+                }
                 (void)do_close(PL_last_in_gv, FALSE);
             }
             else if (type == OP_GLOB) {
+                /* clear any errors here so we only fail on the pclose()
+                   failing, which should only happen on the child
+                   failing
+                */
+                PerlIO_clearerr(fp);
                 if (!do_close(PL_last_in_gv, FALSE)) {
                     Perl_ck_warner(aTHX_ packWARN(WARN_GLOB),
                                    "glob failed (child exited with status %d%s)",
@@ -3390,10 +3546,9 @@ PP(pp_helem)
         MAGIC *mg;
         HV *stash;
 
-        /* If we can determine whether the element exists,
-         * Try to preserve the existenceness of a tied hash
+        /* Try to preserve the existence of a tied hash
          * element by using EXISTS and DELETE if possible.
-         * Fallback to FETCH and STORE otherwise. */
+         * Fall back to FETCH and STORE otherwise. */
         if (SvCANEXISTDELETE(hv))
             preeminent = hv_exists_ent(hv, keysv, 0);
     }
@@ -3476,7 +3631,7 @@ S_softref2xv_lite(pTHX_ SV *const sv, const char *const what,
  * op_aux points to an array of unions of UV / IV / SV* / PADOFFSET.
  * Each of these either contains a set of actions, or an argument, such as
  * an IV to use as an array index, or a lexical var to retrieve.
- * Several actions re stored per UV; we keep shifting new actions off the
+ * Several actions are stored per UV; we keep shifting new actions off the
  * one UV, and only reload when it becomes zero.
  */
 
@@ -3491,7 +3646,7 @@ PP(pp_multideref)
     PL_multideref_pc = items;
 
     while (1) {
-        /* there are three main classes of action; the first retrieve
+        /* there are three main classes of action; the first retrieves
          * the initial AV or HV from a variable or the stack; the second
          * does the equivalent of an unrolled (/DREFAV, rv2av, aelem),
          * the third an unrolled (/DREFHV, rv2hv, helem).
@@ -3635,10 +3790,9 @@ PP(pp_multideref)
                         MAGIC *mg;
                         HV *stash;
 
-                        /* If we can determine whether the element exist,
-                         * Try to preserve the existenceness of a tied array
+                        /* Try to preserve the existence of a tied array
                          * element by using EXISTS and DELETE if possible.
-                         * Fallback to FETCH and STORE otherwise. */
+                         * Fall back to FETCH and STORE otherwise. */
                         if (SvCANEXISTDELETE(av))
                             preeminent = av_exists(av, elem);
                     }
@@ -3828,10 +3982,9 @@ PP(pp_multideref)
                         MAGIC *mg;
                         HV *stash;
 
-                        /* If we can determine whether the element exist,
-                         * Try to preserve the existenceness of a tied hash
+                        /* Try to preserve the existence of a tied hash
                          * element by using EXISTS and DELETE if possible.
-                         * Fallback to FETCH and STORE otherwise. */
+                         * Fall back to FETCH and STORE otherwise. */
                         if (SvCANEXISTDELETE(hv))
                             preeminent = hv_exists_ent(hv, keysv, 0);
                     }
@@ -3972,7 +4125,7 @@ PP(pp_iter)
                 if (UNLIKELY(pad_it)) {
                     /* We're "beyond the end" of the iterator here, filling the
                        extra lexicals with undef, so we mustn't do anything
-                       (further) to the the iterator itself at this point.
+                       (further) to the iterator itself at this point.
                        (Observe how the other two blocks modify the iterator's
                        value) */
                 }
@@ -4248,7 +4401,6 @@ PP(pp_subst)
     STRLEN len;
     int force_on_match = 0;
     const I32 oldsave = PL_savestack_ix;
-    STRLEN slen;
     bool doutf8 = FALSE; /* whether replacement is in utf8 */
 #ifdef PERL_ANY_COW
     bool was_cow;
@@ -4314,10 +4466,12 @@ PP(pp_subst)
         DIE(aTHX_ "panic: pp_subst, pm=%p, orig=%p", pm, orig);
 
     strend = orig + len;
-    slen = DO_UTF8(TARG) ? utf8_length((U8*)orig, (U8*)strend) : len;
-    maxiters = 2 * slen + 10;	/* We can match twice at each
-                                   position, once with zero-length,
-                                   second time with non-zero. */
+    /* We can match twice at each position, once with zero-length,
+     * second time with non-zero.
+     * Don't handle utf8 specially; we can use length-in-bytes as an
+     * upper bound on length-in-characters, and avoid the cpu-cost of
+     * computing a tighter bound. */
+    maxiters = 2 * len + 10;
 
     /* handle the empty pattern */
     if (!RX_PRELEN(rx) && PL_curpm && !prog->mother_re) {
@@ -4415,8 +4569,8 @@ PP(pp_subst)
             char *d, *m;
             if (RXp_MATCH_TAINTED(prog)) /* run time pattern taint, eg locale */
                 rxtainted |= SUBST_TAINT_PAT;
-            m = orig + RXp_OFFS(prog)[0].start;
-            d = orig + RXp_OFFS(prog)[0].end;
+            m = orig + RXp_OFFS_START(prog,0);
+            d = orig + RXp_OFFS_END(prog,0);
             s = orig;
             if (m - s > strend - d) {  /* faster to shorten from end */
                 I32 i;
@@ -4446,7 +4600,7 @@ PP(pp_subst)
         }
         else {
             char *d, *m;
-            d = s = RXp_OFFS(prog)[0].start + orig;
+            d = s = RXp_OFFS_START(prog,0) + orig;
             do {
                 I32 i;
                 if (UNLIKELY(iters++ > maxiters))
@@ -4454,7 +4608,7 @@ PP(pp_subst)
                 /* run time pattern taint, eg locale */
                 if (UNLIKELY(RXp_MATCH_TAINTED(prog)))
                     rxtainted |= SUBST_TAINT_PAT;
-                m = RXp_OFFS(prog)[0].start + orig;
+                m = RXp_OFFS_START(prog,0) + orig;
                 if ((i = m - s)) {
                     if (s != d)
                         Move(s, d, i, char);
@@ -4464,7 +4618,7 @@ PP(pp_subst)
                     Copy(c, d, clen, char);
                     d += clen;
                 }
-                s = RXp_OFFS(prog)[0].end + orig;
+                s = RXp_OFFS_END(prog,0) + orig;
             } while (CALLREGEXEC(rx, s, strend, orig,
                                  s == m, /* don't match same null twice */
                                  TARG, NULL,
@@ -4507,7 +4661,7 @@ PP(pp_subst)
         if (RXp_MATCH_TAINTED(prog)) /* run time pattern taint, eg locale */
             rxtainted |= SUBST_TAINT_PAT;
         repl = dstr;
-        s = RXp_OFFS(prog)[0].start + orig;
+        s = RXp_OFFS_START(prog,0) + orig;
         dstr = newSVpvn_flags(orig, s-orig,
                     SVs_TEMP | (DO_UTF8(TARG) ? SVf_UTF8 : 0));
         if (!c) {
@@ -4537,9 +4691,9 @@ PP(pp_subst)
                 s = orig + (old_s - old_orig);
                 strend = s + (strend - old_s);
             }
-            m = RXp_OFFS(prog)[0].start + orig;
+            m = RXp_OFFS_START(prog,0) + orig;
             sv_catpvn_nomg_maybeutf8(dstr, s, m - s, DO_UTF8(TARG));
-            s = RXp_OFFS(prog)[0].end + orig;
+            s = RXp_OFFS_END(prog,0) + orig;
             if (first) {
                 /* replacement already stringified */
               if (clen)
@@ -4625,6 +4779,57 @@ PP(pp_subst)
 
 PP(pp_grepwhile)
 {
+    /* Understanding the stack during a grep.
+     *
+     * 'grep expr, args' is implemented in the form of
+     *     grepstart;
+     *     do {
+     *          expr;
+     *          grepwhile;
+     *     } while (args);
+     *
+     * The stack examples below are in the form of 'perl -Ds' output,
+     * where any stack element indexed by PL_markstack_ptr[i] has a star
+     * just to the right of it.  In addition, the corresponding i value
+     * is displayed under the indexed stack element.
+     *
+     * On entry to grepwhile, the stack looks like this:
+     *
+     *      =>   *  M1..Mn  X1  *  X2..Xn  C  *  R1..Rn  BOOL
+     *       [-2]          [-1]           [0]
+     *
+     * where:
+     *   M1..Mn   Accumulated args which have been matched so far.
+     *   X1..Xn   Random discardable elements from previous iterations.
+     *   C        The current (just processed) arg, still aliased to $_.
+     *   R1..Rn   The args remaining to be processed.
+     *   BOOL     the result of the just-executed grep expression.
+     *
+     * Note that it is easiest to think of the top two stack marks as both
+     * being one too high, and so it would make more sense to have had the
+     * marks like this:
+     *
+     *      =>   *  M1..Mn  *  X1..Xn  *  C  R1..Rn  BOOL
+     *      [-2]       [-1]        [0]
+     *
+     * where the stack is divided neatly into 3 groups:
+     *   - matched,
+     *   - discarded,
+     *   - being, or yet to be, processed.
+     * But off-by-one is the way it is currently, and it works as long as
+     * we keep it consistent and bear it in mind.
+     *
+     * pp_grepwhile() does the following:
+     *
+     * - for a match, replace the X1 pointer with a pointer to C and bump
+     *     PL_markstack_ptr[-1]
+     * - if more args to process, bump PL_markstack_ptr[0] and update the
+     *     $_ alias, else
+     * - remove top 3 MARKs and return M1..Mn, or a scalar,
+     *     or void as appropriate.
+     *
+     */
+
     dSP;
     dPOPss;
 
@@ -4756,13 +4961,9 @@ Perl_leave_adjust_stacks(pTHX_ SV **from_sp, SV **to_sp, U8 gimme, int pass)
             assert(from_sp == SP);
             EXTEND(SP, 1);
             *++SP = &PL_sv_undef;
-            to_sp = SP;
-            nargs   = 0;
         }
-        else {
-            from_sp = SP;
-            nargs   = 1;
-        }
+        from_sp = SP;
+        nargs   = 1;
     }
 
     /* common code for G_SCALAR and G_LIST */
@@ -5048,7 +5249,8 @@ Perl_clear_defarray(pTHX_ AV* av, bool abandon)
     else {
         const SSize_t size = AvFILLp(av) + 1;
         /* The ternary gives consistency with av_extend() */
-        AV *newav = newAV_alloc_x(size < 4 ? 4 : size);
+        AV *newav = newAV_alloc_x(size < PERL_ARRAY_NEW_MIN_KEY ?
+                                         PERL_ARRAY_NEW_MIN_KEY : size);
         AvREIFY_only(newav);
         PAD_SVl(0) = MUTABLE_SV(newav);
         SvREFCNT_dec_NN(av);
@@ -5439,10 +5641,9 @@ PP(pp_aelem)
         MAGIC *mg;
         HV *stash;
 
-        /* If we can determine whether the element exist,
-         * Try to preserve the existenceness of a tied array
+        /* Try to preserve the existence of a tied array
          * element by using EXISTS and DELETE if possible.
-         * Fallback to FETCH and STORE otherwise. */
+         * Fall back to FETCH and STORE otherwise. */
         if (SvCANEXISTDELETE(av))
             preeminent = av_exists(av, elem);
     }
@@ -5658,7 +5859,7 @@ PP(pp_method_named)
 {
     dSP;
     GV* gv;
-    SV* const meth = cMETHOPx_meth(PL_op);
+    SV* const meth = cMETHOP_meth;
     HV* const stash = opmethod_stash(meth);
 
     if (LIKELY(SvTYPE(stash) == SVt_PVHV)) {
@@ -5677,7 +5878,7 @@ PP(pp_method_super)
     dSP;
     GV* gv;
     HV* cache;
-    SV* const meth = cMETHOPx_meth(PL_op);
+    SV* const meth = cMETHOP_meth;
     HV* const stash = CopSTASH(PL_curcop);
     /* Actually, SUPER doesn't need real object's (or class') stash at all,
      * as it uses CopSTASH. However, we must ensure that object(class) is
@@ -5699,12 +5900,12 @@ PP(pp_method_redir)
 {
     dSP;
     GV* gv;
-    SV* const meth = cMETHOPx_meth(PL_op);
-    HV* stash = gv_stashsv(cMETHOPx_rclass(PL_op), 0);
+    SV* const meth = cMETHOP_meth;
+    HV* stash = gv_stashsv(cMETHOP_rclass, 0);
     opmethod_stash(meth); /* not used but needed for error checks */
 
     if (stash) { METHOD_CHECK_CACHE(stash, stash, meth); }
-    else stash = MUTABLE_HV(cMETHOPx_rclass(PL_op));
+    else stash = MUTABLE_HV(cMETHOP_rclass);
 
     gv = gv_fetchmethod_sv_flags(stash, meth, GV_AUTOLOAD|GV_CROAK);
     assert(gv);
@@ -5718,11 +5919,11 @@ PP(pp_method_redir_super)
     dSP;
     GV* gv;
     HV* cache;
-    SV* const meth = cMETHOPx_meth(PL_op);
-    HV* stash = gv_stashsv(cMETHOPx_rclass(PL_op), 0);
+    SV* const meth = cMETHOP_meth;
+    HV* stash = gv_stashsv(cMETHOP_rclass, 0);
     opmethod_stash(meth); /* not used but needed for error checks */
 
-    if (UNLIKELY(!stash)) stash = MUTABLE_HV(cMETHOPx_rclass(PL_op));
+    if (UNLIKELY(!stash)) stash = MUTABLE_HV(cMETHOP_rclass);
     else if ((cache = HvMROMETA(stash)->super)) {
          METHOD_CHECK_CACHE(stash, cache, meth);
     }

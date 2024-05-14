@@ -1100,7 +1100,7 @@ is("a$utfvar", "a".200.2.1); # 224 - overload via sv_2pv_flags
 # were to eval the overload code in the caller's namespace, the privatisation
 # would be quite transparent.
 package Hderef;
-use overload '%{}' => sub { (caller(0))[0] eq 'Foo' ? $_[0] : die "zap" };
+use overload '%{}' => sub { caller(0) eq 'Foo' ? $_[0] : die "zap" };
 package Foo;
 @Foo::ISA = 'Hderef';
 sub new { bless {}, shift }
@@ -1906,11 +1906,11 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 
 	# eval should do tie, overload on its arg before checking taint */
 	push @tests, [ '1;', 'eval q(eval %s); $@ =~ /Insecure/',
-		'("")', '("")', [ 1, 2, 0 ], 0 ];
+		'("")', '("")', [ 1, 1, 0 ], 0 ];
 
 
 	for my $sub (keys %subs) {
-	    no warnings 'experimental::smartmatch';
+	    no warnings 'deprecated';
 	    my $term = $subs{$sub};
 	    my $t = sprintf $term, '$_[0][0]';
 	    my $e ="sub { \$funcs .= '($sub)'; my \$r; if (\$use_int) {"
@@ -1952,7 +1952,7 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 				    ? "-\$_[0][0]"
 				    : "$_[3](\$_[0][0])";
 			my $r;
-			no warnings 'experimental::smartmatch';
+			no warnings 'deprecated';
 			if ($use_int) {
 			    use integer; $r = eval $e;
 			}
@@ -1999,7 +1999,7 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 	    $use_int = ($int ne '');
 	    my $plain = $tainted_val;
 	    my $plain_term = $int . sprintf $sub_term, '$plain';
-	    my $exp = do {no warnings 'experimental::smartmatch'; eval $plain_term };
+	    my $exp = do {no warnings 'deprecated'; eval $plain_term };
 	    diag("eval of plain_term <$plain_term> gave <$@>") if $@;
 	    SKIP: {
 		is_if_taint_supported(tainted($exp), $exp_taint,
@@ -2029,7 +2029,7 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 
 		    my $res_term  = $int . sprintf $sub_term, $var;
 		    my $desc =  "<$res_term> $ov_pkg" ;
-		    my $res = do { no warnings 'experimental::smartmatch'; eval $res_term };
+		    my $res = do { no warnings 'deprecated'; eval $res_term };
 		    diag("eval of res_term $desc gave <$@>") if $@;
 		    # uniquely, the inc/dec ops return the original
 		    # ref rather than a copy, so stringify it to

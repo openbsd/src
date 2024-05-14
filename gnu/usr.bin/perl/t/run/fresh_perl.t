@@ -619,19 +619,6 @@ EXPECT
 -w
 "x" =~ /(\G?x)?/;
 ########
-# Bug 20010515.004 (#6998)
-my @h = 1 .. 10;
-bad(@h);
-sub bad {
-   undef @h;
-   warn "O\n";
-   print for @_;
-   warn "K\n";
-}
-EXPECT
-O
-Use of freed value in iteration at - line 7.
-########
 # Bug 20010506.041 (#6952)
 "abcd\x{1234}" =~ /(a)(b[c])(d+)?/i and print "ok\n";
 EXPECT
@@ -817,8 +804,6 @@ meow {
 };
 EXPECT
 syntax error at - line 12, near "used"
-syntax error at - line 12, near "used}"
-Unmatched right curly bracket at - line 14, at end of line
 Execution of - aborted due to compilation errors.
 ######## [perl #112312] crash on syntax error - another test
 # SKIP: !defined &DynaLoader::boot_DynaLoader # miniperl
@@ -849,6 +834,4 @@ sub testo {
 
 EXPECT
 syntax error at - line 15, near "used"
-syntax error at - line 15, near "used}"
-Unmatched right curly bracket at - line 17, at end of line
 Execution of - aborted due to compilation errors.

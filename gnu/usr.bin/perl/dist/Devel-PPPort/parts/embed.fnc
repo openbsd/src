@@ -523,7 +523,7 @@
 :
 :   U  autodoc.pl will not output a usage example
 :
-:   W  Add a _pDEPTH argument to function prototypes, and an _aDEPTH
+:   W  Add a comma_pDEPTH argument to function prototypes, and a comma_aDEPTH
 :      argument to the function calls. This means that under DEBUGGING
 :      a depth argument is added to the functions, which is used for
 :      example by the regex engine for debugging and trace output.
@@ -1943,7 +1943,7 @@ Apd	|bool	|sv_streq_flags	|NULLOK SV* sv1|NULLOK SV* sv2|const U32 flags
 CpMdb	|void	|sv_taint	|NN SV* sv
 CpdR	|bool	|sv_tainted	|NN SV *const sv
 Apd	|int	|sv_unmagic	|NN SV *const sv|const int type
-Apd	|int	|sv_unmagicext	|NN SV *const sv|const int type|NULLOK MGVTBL *vtbl
+Apd	|int	|sv_unmagicext	|NN SV *const sv|const int type|NULLOK const MGVTBL *vtbl
 ApdMb	|void	|sv_unref	|NN SV* sv
 Apd	|void	|sv_unref_flags	|NN SV *const ref|const U32 flags
 Cpd	|void	|sv_untaint	|NN SV *const sv

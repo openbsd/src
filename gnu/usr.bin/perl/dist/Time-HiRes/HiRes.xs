@@ -11,18 +11,15 @@
  * it under the same terms as Perl itself.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 #include "reentr.h"
-#ifdef USE_PPPORT_H
+#if !defined(IS_SAFE_PATHNAME) && defined(TIME_HIRES_UTIME) && defined(HAS_UTIMENSAT)
 #define NEED_ck_warner
-#  include "ppport.h"
 #endif
+#include "ppport.h"
 #if defined(__CYGWIN__) && defined(HAS_W32API_WINDOWS_H)
 #  include <w32api/windows.h>
 #  define CYGWIN_WITH_W32API
@@ -39,9 +36,6 @@ extern "C" {
 #endif
 #if defined(TIME_HIRES_CLOCK_GETTIME_SYSCALL) || defined(TIME_HIRES_CLOCK_GETRES_SYSCALL)
 #  include <syscall.h>
-#endif
-#ifdef __cplusplus
-}
 #endif
 
 #ifndef GCC_DIAG_IGNORE
@@ -263,8 +257,6 @@ _gettimeofday(pTHX_ struct timeval *tp, void *not_used)
 static int
 _clock_gettime(pTHX_ clockid_t clock_id, struct timespec *tp)
 {
-    FT_t ft;
-
     switch (clock_id) {
     case CLOCK_REALTIME: {
         FT_t ft;
@@ -1193,7 +1185,7 @@ gettimeofday()
         int status;
         status = gettimeofday (&Tp, NULL);
         if (status == 0) {
-            if (GIMME == G_LIST) {
+            if (GIMME_V == G_LIST) {
                 EXTEND(sp, 2);
                 PUSHs(sv_2mortal(newSViv(Tp.tv_sec)));
                 PUSHs(sv_2mortal(newSViv(Tp.tv_usec)));
@@ -1250,7 +1242,7 @@ setitimer(which, seconds, interval = 0)
         if (setitimer(which, &newit, &oldit) == 0) {
             EXTEND(sp, 1);
             PUSHs(sv_2mortal(newSVnv(TV2NV(oldit.it_value))));
-            if (GIMME == G_LIST) {
+            if (GIMME_V == G_LIST) {
                 EXTEND(sp, 1);
                 PUSHs(sv_2mortal(newSVnv(TV2NV(oldit.it_interval))));
             }
@@ -1270,7 +1262,7 @@ getitimer(which)
         if (getitimer(which, &nowit) == 0) {
             EXTEND(sp, 1);
             PUSHs(sv_2mortal(newSVnv(TV2NV(nowit.it_value))));
-            if (GIMME == G_LIST) {
+            if (GIMME_V == G_LIST) {
                 EXTEND(sp, 1);
                 PUSHs(sv_2mortal(newSVnv(TV2NV(nowit.it_interval))));
             }

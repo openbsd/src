@@ -53,6 +53,7 @@ gvsv		scalar variable		ck_null		ds$
 gv		glob value		ck_null		ds$	
 gelem		glob elem		ck_null		ds2	S S
 padsv		private variable	ck_null		ds0
+padsv_store	padsv scalar assignment	ck_sassign	s1	S S
 padav		private array		ck_null		d0
 padhv		private hash		ck_null		d0
 padany		private value		ck_null		d0
@@ -222,6 +223,7 @@ quotemeta	quotemeta		ck_fun		fstu%	S?
 rv2av		array dereference	ck_rvconst	dt1	
 aelemfast	constant array element	ck_null		ds$	A S
 aelemfast_lex	constant lexical array element	ck_null		d0	A S
+aelemfastlex_store	const lexical array element store	ck_null		d1	A S
 aelem		array element		ck_null		s2	A S
 aslice		array slice		ck_null		m@	A L
 kvaslice	index/value array slice	ck_null		m@	A L
@@ -259,6 +261,7 @@ list		list			ck_null		m@	L
 lslice		list slice		ck_null		2	H L L
 anonlist	anonymous array ([])	ck_fun		ms@	L
 anonhash	anonymous hash ({})	ck_fun		ms@	L
+emptyavhv	empty anon hash/array	ck_fun		sT@	L
 
 splice		splice			ck_fun		m@	A S? S? L
 push		push			ck_fun		imsT@	A L
@@ -584,8 +587,8 @@ poptry		pop try			ck_null		@
 catch		catch {} block		ck_null		|
 pushdefer	push defer {} block	ck_null		|
 
-is_bool		boolean type test	ck_null		fsT1
-is_weak		weakref type test	ck_null		fsT1
+is_bool		boolean type test	ck_null		fs1
+is_weak		weakref type test	ck_null		fs1
 weaken		reference weaken	ck_null		1
 unweaken	reference unweaken	ck_null		1
 blessed		blessed			ck_null		fs1
@@ -593,3 +596,10 @@ refaddr		refaddr			ck_null		fsT1
 reftype		reftype			ck_null		fsT1
 ceil		ceil			ck_null		fsT1
 floor		floor			ck_null		fsT1
+is_tainted	is_tainted		ck_null		fs1
+
+# exists-or; not currently exposed as a Perl-callable op
+helemexistsor	hash element exists or	ck_helemexistsor	|	S S
+
+methstart	method start		ck_null		+
+initfield	initialise field	ck_null		+

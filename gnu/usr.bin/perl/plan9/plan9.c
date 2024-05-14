@@ -106,7 +106,7 @@ void setprotoent(int a)
 
 void setservent(int a)
 {
-    croak("Function \"setservent\"  not implemented in this version of perl.");
+    croak("Function \"setservent\" not implemented in this version of perl.");
 }
 
 void endnetent()

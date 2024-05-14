@@ -81,6 +81,9 @@ the $s variable in package C<owner>, which is probably not what you meant.
 Use braces to disambiguate, as in C<"This is ${owner}'s house">.
 X<::> X<'>
 
+Using C<'> as a package separator is deprecated and will be removed in
+Perl 5.40.
+
 Packages may themselves contain package separators, as in
 C<$OUTER::INNER::var>.  This implies nothing about the order of
 name lookups, however.  There are no relative packages: all symbols

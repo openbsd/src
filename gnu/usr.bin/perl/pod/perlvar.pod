@@ -542,6 +542,23 @@ by default inserted into C<%INC> in place of a filename.  Note, however,
 that the hook may have set the C<%INC> entry by itself to provide some more
 specific info.
 
+=item $INC
+X<$INC>
+
+As of 5.37.7 when an C<@INC> hook is executed the index of the C<@INC>
+array that holds the hook will be localized into the C<$INC> variable.
+When the hook returns the integer successor of its value will be used to
+determine the next index in C<@INC> that will be checked, thus if it is
+set to -1 (or C<undef>) the traversal over the C<@INC> array will be
+restarted from its beginning.
+
+Normally traversal through the C<@INC> array is from beginning to end
+(C<0 .. $#INC>), and if the C<@INC> array is modified by the hook the
+iterator may be left in a state where newly added entries are skipped.
+Changing this value allows an C<@INC> hook to rewrite the C<@INC> array
+and tell Perl where to continue afterwards. See L<perlfunc/require> for
+details on C<@INC> hooks.
+
 =item $INPLACE_EDIT
 
 =item $^I
@@ -577,12 +594,60 @@ Then
     $^M = 'a' x (1 << 16);
 
 would allocate a 64K buffer for use in an emergency.  See the
-F<INSTALL> file in the Perl distribution for information on how to
+L<INSTALL> file in the Perl distribution for information on how to
 add custom C compilation flags when compiling perl.  To discourage casual
 use of this advanced feature, there is no L<English|English> long name for
 this variable.
 
 This variable was added in Perl 5.004.
+
+=item ${^MAX_NESTED_EVAL_BEGIN_BLOCKS}
+
+This variable determines the maximum number C<eval EXPR>/C<BEGIN> or
+C<require>/C<BEGIN> block nesting that is allowed. This means it also
+controls the maximum nesting of C<use> statements as well.
+
+The default of 1000 should be sufficiently large for normal working
+purposes, and if you must raise it then you should be conservative
+with your choice or you may encounter segfaults from exhaustion of
+the C stack. It seems unlikely that real code has a use depth above
+1000, but we have left this configurable just in case.
+
+When set to C<0> then C<BEGIN> blocks inside of C<eval EXPR> or
+C<require EXPR> are forbidden entirely and will trigger an exception
+which will terminate the compilation and in the case of C<require>
+will throw an exception, or in the case of C<eval> return the error in
+C<$@> as usual.
+
+Consider the code
+
+ perl -le'sub f { eval "BEGIN { f() }"; } f()'
+
+each invocation of C<f()> will consume considerable C stack, and this
+variable is used to cause code like this to die instead of exhausting
+the C stack and triggering a segfault. Needless to say code like this is
+unusual, it is unlikely you will actually need to raise the setting.
+However it may be useful to set it to 0 for a limited time period to
+prevent BEGIN{} blocks from being executed during an C<eval EXPR>.
+
+Note that setting this to 1 would NOT affect code like this:
+
+    BEGIN { $n += 1; BEGIN { $n += 2; BEGIN { $n += 4 } } }
+
+The reason is that BEGIN blocks are executed immediately after they are
+completed, thus the innermost will execute before the ones which contain
+it have even finished compiling, and the depth will not go above 1. In
+fact the above code is equivalent to
+
+    BEGIN { $n+=4 }
+    BEGIN { $n+=2 }
+    BEGIN { $n+=1 }
+
+which makes it obvious why a ${^MAX_EVAL_BEGIN_DEPTH} of 1 would not
+block this code.
+
+Only C<BEGIN>'s executed inside of an C<eval> or C<require> (possibly via
+C<use>) are affected.
 
 =item $OSNAME
 
@@ -682,7 +747,7 @@ The C<$SIG{__DIE__}> hook is called even inside an C<eval()>. It was
 never intended to happen this way, but an implementation glitch made
 this possible. This used to be deprecated, as it allowed strange action
 at a distance like rewriting a pending exception in C<$@>. Plans to
-rectify this have been scrapped, as users found that rewriting a 
+rectify this have been scrapped, as users found that rewriting a
 pending exception is actually a useful feature, and not a bug.
 
 The C<$SIG{__DIE__}> doesn't support C<'IGNORE'>; it has the same
@@ -713,6 +778,71 @@ and use an C<END{}> or CORE::GLOBAL::die override instead.
 
 See L<perlfunc/die>, L<perlfunc/warn>, L<perlfunc/eval>, and
 L<warnings> for additional information.
+
+=item %{^HOOK}
+X<%{^HOOK}>
+
+This hash contains coderefs which are called when various perl keywords
+which are hard or impossible to wrap are called. The keys of this hash
+are named after the keyword that is being hooked, followed by two
+underbars and then a phase term; either "before" or "after".
+
+Perl will throw an error if you attempt modify a key which is not
+documented to exist, or if you attempt to store anything other than a
+code reference or undef in the hash.  If you wish to use an object to
+implement a hook you can use currying to embed the object into an
+anonymous code reference.
+
+Currently there is only one keyword which can be hooked, C<require>, but
+it is expected that in future releases there will be additional keywords
+with hook support.
+
+=over 4
+
+=item require__before
+
+The routine indicated by C<${^HOOK}{require__before}> is called by
+C<require> B<before> it checks C<%INC>, looks up C<@INC>, calls INC
+hooks, or compiles any code.  It is called with a single argument, the
+filename for the item being required (package names are converted to
+paths).  It may alter this filename to change what file is loaded.  If
+the hook dies during execution then it will block the require from executing.
+
+In order to make it easy to perform an action with shared state both
+before and after the require keyword was executed the C<require__before>
+hook may return a "post-action" coderef which will in turn be executed when
+the C<require> completes.  This coderef will be executed regardless as to
+whether the require completed succesfully or threw an exception.  It will
+be called with the filename that was required.  You can check %INC to
+determine if the require was successful.  Any other return from the
+C<require__before> hook will be silently ignored.
+
+C<require__before> hooks are called in FIFO order, and if the hook
+returns a code reference those code references will be called in FILO
+order.  In other words if A requires B requires C, then
+C<require__before> will be called first for A, then B and then C, and
+the post-action code reference will executed first for C, then B and
+then finally A.
+
+Well behaved code should ensure that when setting up a
+C<require__before> hook that any prior installed hook will be called,
+and that their return value, if a code reference, will be called as
+well.  See L<perlfunc/require> for an example implementation.
+
+=item require__after
+
+The routine indicated by C<${^HOOK}{require__after}> is called by
+C<require> B<after> the require completes.  It is called with a single
+argument, the filename for the item being required (package names are
+converted to paths).  It is executed when the C<require> completes,
+either via exception or via completion of the require statement, and you
+can check C<%INC> to determine if the require was successful.
+
+The C<require__after> hook is called for each required file in FILO
+order. In other words if A requires B requires C, then C<require__after>
+will be called first for C, then B and then A.
+
+=back
 
 =item $BASETIME
 
@@ -823,49 +953,77 @@ command or referenced as a file.
 =head2 Variables related to regular expressions
 
 Most of the special variables related to regular expressions are side
-effects.  Perl sets these variables when it has a successful match, so
-you should check the match result before using them.  For instance:
+effects. Perl sets these variables when it has completed a match
+successfully, so you should check the match result before using them.
+For instance:
 
     if( /P(A)TT(ER)N/ ) {
         print "I found $1 and $2\n";
     }
 
-These variables are read-only and dynamically-scoped, unless we note
-otherwise.
+These variables are read-only and behave similarly to a dynamically
+scoped variable, with only a few exceptions which are explicitly
+documented as behaving otherwise.  See the following section for more
+details.
 
-The dynamic nature of the regular expression variables means that
-their value is limited to the block that they are in, as demonstrated
-by this bit of code:
+=head3 Scoping Rules of Regex Variables
 
-    my $outer = 'Wallace and Grommit';
-    my $inner = 'Mutt and Jeff';
+Regular expression variables allow the programmer to access the state of
+the most recent I<successful> regex match in the current dynamic scope.
 
-    my $pattern = qr/(\S+) and (\S+)/;
+The variables themselves are global and unscoped, but the data they
+access is scoped similarly to dynamically scoped variables, in that
+every successful match behaves as though it localizes a global state
+object to the current block or file scope.
+(See L<perlsyn/"Compound Statements"> for more details on dynamic
+scoping and the C<local> keyword.)
 
-    sub show_n { print "\$1 is $1; \$2 is $2\n" }
+A I<successful match> includes any successful match performed by the
+search and replace operator C<s///> as well as those performed by the
+C<m//> operator.
 
-    {
-    OUTER:
-        show_n() if $outer =~ m/$pattern/;
+Consider the following code:
 
-        INNER: {
-            show_n() if $inner =~ m/$pattern/;
-        }
-
-        show_n();
+    my @state;
+    sub matchit {
+        push @state, $1;            # pushes "baz"
+        my $str = shift;
+        $str =~ /(zat)/;            # matches "zat"
+        push @state, $1;            # pushes "zat"
     }
 
-The output shows that while in the C<OUTER> block, the values of C<$1>
-and C<$2> are from the match against C<$outer>.  Inside the C<INNER>
-block, the values of C<$1> and C<$2> are from the match against
-C<$inner>, but only until the end of the block (i.e. the dynamic
-scope).  After the C<INNER> block completes, the values of C<$1> and
-C<$2> return to the values for the match against C<$outer> even though
-we have not made another match:
+    {
+        $str = "foo bar baz blorp zat";
+        $str =~ /(foo)/;            # matches "foo"
+        push @state, $1;            # pushes "foo"
+        {
+            $str =~ /(pizza)/;      # does NOT match
+            push @state, $1;        # pushes "foo"
+            $str =~ /(bar)/;        # matches "bar"
+            push @state, $1;        # pushes "bar"
+            $str =~ /(baz)/;        # matches "baz"
+            matchit($str);          # see above
+            push @state, $1;        # pushes "baz"
+        }
+        $str =~ s/noodles/rice/;    # does NOT match
+        push @state, $1;            # pushes "foo"
+        $str =~ s/(blorp)/zwoop/;   # matches "blorp"
+        push @state, $1;            # pushes "blorp"
+    }
+    # the following prints "foo, foo, bar, baz, zat, baz, foo, blorp"
+    print join ",", @state;
 
-    $1 is Wallace; $2 is Grommit
-    $1 is Mutt; $2 is Jeff
-    $1 is Wallace; $2 is Grommit
+Notice that each successful match in the exact same scope overrides the
+match context of the previous successful match, but that unsuccessful
+matches do not. Also note that in an inner nested scope the previous
+state from an outer dynamic scope persists until it has been overriden
+by another successful match, but that when the inner nested scope exits
+whatever match context was in effect before the inner successful match
+is restored when the scope concludes.
+
+It is a known issue that C<goto LABEL> may interact poorly with the
+dynamically scoped match context. This may not be fixable, and is
+considered to be one of many good reasons to avoid C<goto LABEL>.
 
 =head3 Performance issues
 
@@ -907,8 +1065,8 @@ difference in something like
     $str =~ /x/g # one char copied a million times, not a million chars
 
 In Perl 5.20.0 a new copy-on-write system was enabled by default, which
-finally fixes all performance issues with these three variables, and makes
-them safe to use anywhere.
+finally fixes most of the performance issues with these three variables, and
+makes them safe to use anywhere.
 
 The C<Devel::NYTProf> and C<Devel::FindAmpersand> modules can help you
 find uses of these problematic match variables in your code.
@@ -919,14 +1077,14 @@ find uses of these problematic match variables in your code.
 X<$1> X<$2> X<$3> X<$I<digits>>
 
 Contains the subpattern from the corresponding set of capturing
-parentheses from the last successful pattern match, not counting patterns
-matched in nested blocks that have been exited already.
+parentheses from the last successful pattern match in the current
+dynamic scope. (See L</Scoping Rules of Regex Variables>.)
 
 Note there is a distinction between a capture buffer which matches
 the empty string a capture buffer which is optional. Eg, C<(x?)> and
 C<(x)?> The latter may be undef, the former not.
 
-These variables are read-only and dynamically-scoped.
+These variables are read-only.
 
 Mnemonic: like \digits.
 
@@ -966,75 +1124,71 @@ This variable was added in 5.25.7
 =item $&
 X<$&> X<$MATCH>
 
-The string matched by the last successful pattern match (not counting
-any matches hidden within a BLOCK or C<eval()> enclosed by the current
-BLOCK).
+The string matched by the last successful pattern match.
+(See L</Scoping Rules of Regex Variables>.)
 
 See L</Performance issues> above for the serious performance implications
 of using this variable (even once) in your code.
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
 
 Mnemonic: like C<&> in some editors.
 
 =item ${^MATCH}
 X<${^MATCH}>
 
-This is similar to C<$&> (C<$MATCH>) except that it does not incur the
-performance penalty associated with that variable.
+It is only guaranteed to return a defined value when the pattern was
+compiled or executed with the C</p> modifier.
+
+This is similar to C<$&> (C<$MATCH>) except that to use it you must
+use the C</p> modifier when executing the pattern, and it does not incur
+and performance penalty associated with that variable.
 
 See L</Performance issues> above.
 
-In Perl v5.18 and earlier, it is only guaranteed
-to return a defined value when the pattern was compiled or executed with
-the C</p> modifier.  In Perl v5.20, the C</p> modifier does nothing, so
-C<${^MATCH}> does the same thing as C<$MATCH>.
-
 This variable was added in Perl v5.10.0.
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
 
 =item $PREMATCH
 
 =item $`
-X<$`> X<$PREMATCH> X<${^PREMATCH}>
+X<$`> X<$PREMATCH>
 
 The string preceding whatever was matched by the last successful
-pattern match, not counting any matches hidden within a BLOCK or C<eval>
-enclosed by the current BLOCK.
+pattern match. (See L</Scoping Rules of Regex Variables>).
 
 See L</Performance issues> above for the serious performance implications
 of using this variable (even once) in your code.
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
 
 Mnemonic: C<`> often precedes a quoted string.
 
 =item ${^PREMATCH}
-X<$`> X<${^PREMATCH}>
+X<${^PREMATCH}>
 
-This is similar to C<$`> ($PREMATCH) except that it does not incur the
-performance penalty associated with that variable.
+It is only guaranteed to return a defined value when the pattern was
+executed with the C</p> modifier.
+
+This is similar to C<$`> ($PREMATCH) except that to use it you must
+use the C</p> modifier when executing the pattern, and it does not incur
+and performance penalty associated with that variable.
 
 See L</Performance issues> above.
 
-In Perl v5.18 and earlier, it is only guaranteed
-to return a defined value when the pattern was compiled or executed with
-the C</p> modifier.  In Perl v5.20, the C</p> modifier does nothing, so
-C<${^PREMATCH}> does the same thing as C<$PREMATCH>.
 
 This variable was added in Perl v5.10.0.
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
 
 =item $POSTMATCH
 
 =item $'
-X<$'> X<$POSTMATCH> X<${^POSTMATCH}> X<@->
+X<$'> X<$POSTMATCH> X<@->
 
 The string following whatever was matched by the last successful
-pattern match (not counting any matches hidden within a BLOCK or C<eval()>
-enclosed by the current BLOCK).  Example:
+pattern match. (See L</Scoping Rules of Regex Variables>). Example:
 
     local $_ = 'abcdefghi';
     /def/;
@@ -1043,26 +1197,25 @@ enclosed by the current BLOCK).  Example:
 See L</Performance issues> above for the serious performance implications
 of using this variable (even once) in your code.
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
 
 Mnemonic: C<'> often follows a quoted string.
 
 =item ${^POSTMATCH}
-X<${^POSTMATCH}> X<$'> X<$POSTMATCH>
+X<${^POSTMATCH}>
 
-This is similar to C<$'> (C<$POSTMATCH>) except that it does not incur the
-performance penalty associated with that variable.
+It is only guaranteed to return a defined value when the pattern was
+compiled or executed with the C</p> modifier.
+
+This is similar to C<$'> (C<$POSTMATCH>) except that to use it you must
+use the C</p> modifier when executing the pattern, and it does not incur
+and performance penalty associated with that variable.
 
 See L</Performance issues> above.
 
-In Perl v5.18 and earlier, it is only guaranteed
-to return a defined value when the pattern was compiled or executed with
-the C</p> modifier.  In Perl v5.20, the C</p> modifier does nothing, so
-C<${^POSTMATCH}> does the same thing as C<$POSTMATCH>.
-
 This variable was added in Perl v5.10.0.
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
 
 =item $LAST_PAREN_MATCH
 
@@ -1070,7 +1223,8 @@ This variable is read-only and dynamically-scoped.
 X<$+> X<$LAST_PAREN_MATCH>
 
 The text matched by the highest used capture group of the last
-successful search pattern.  It is logically equivalent to the highest
+successful search pattern. (See L</Scoping Rules of Regex Variables>).
+It is logically equivalent to the highest
 numbered capture variable (C<$1>, C<$2>, ...) which has a defined value.
 
 This is useful if you don't know which one of a set of alternative patterns
@@ -1078,7 +1232,7 @@ matched.  For example:
 
     /Version: (.*)|Revision: (.*)/ && ($rev = $+);
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
 
 Mnemonic: be positive and forward looking.
 
@@ -1088,8 +1242,11 @@ Mnemonic: be positive and forward looking.
 X<$^N> X<$LAST_SUBMATCH_RESULT>
 
 The text matched by the used group most-recently closed (i.e. the group
-with the rightmost closing parenthesis) of the last successful search
-pattern. This is subtly different from C<$+>. For example in
+with the rightmost closing parenthesis) of the last successful match.
+(See L</Scoping Rules of Regex Variables>).
+
+
+This is subtly different from C<$+>. For example in
 
     "ab" =~ /^((.)(.))$/
 
@@ -1108,6 +1265,8 @@ recently matched.  For example, to effectively capture text to a variable
 By setting and then using C<$var> in this way relieves you from having to
 worry about exactly which numbered set of parentheses they are.
 
+This variable is read-only, and its value is dynamically scoped.
+
 This variable was added in Perl v5.8.0.
 
 Mnemonic: the (possibly) Nested parenthesis that most recently closed.
@@ -1118,15 +1277,24 @@ Mnemonic: the (possibly) Nested parenthesis that most recently closed.
 X<@+> X<@LAST_MATCH_END>
 
 This array holds the offsets of the ends of the last successful
-submatches in the currently active dynamic scope.  C<$+[0]> is
-the offset into the string of the end of the entire match.  This
-is the same value as what the C<pos> function returns when called
-on the variable that was matched against.  The I<n>th element
-of this array holds the offset of the I<n>th submatch, so
-C<$+[1]> is the offset past where C<$1> ends, C<$+[2]> the offset
-past where C<$2> ends, and so on.  You can use C<$#+> to determine
-how many subgroups were in the last successful match.  See the
-examples given for the C<@-> variable.
+match and any matching capture buffers that the pattern contains.
+(See L</Scoping Rules of Regex Variables>)
+
+The number of elements it contains will be one more than the number
+of capture buffers in the pattern, regardless of which capture buffers
+actually matched. You can use this to determine how many capture
+buffers there are in the pattern. (As opposed to C<@-> which may
+have fewer elements.)
+
+C<$+[0]> is the offset into the string of the end of the entire match.
+This is the same value as what the C<pos> function returns when called
+on the variable that was matched against. The I<n>th element of this
+array holds the offset of the I<n>th submatch, so C<$+[1]> is the offset
+past where C<$1> ends, C<$+[2]> the offset past where C<$2> ends, and so
+on. You can use C<$#+> to determine how many subgroups were in the last
+successful match. See the examples given for the C<@-> variable.
+
+This variable is read-only, and its value is dynamically scoped.
 
 This variable was added in Perl v5.6.0.
 
@@ -1139,7 +1307,7 @@ X<%+> X<%LAST_PAREN_MATCH> X<%{^CAPTURE}>
 
 Similar to C<@+>, the C<%+> hash allows access to the named capture
 buffers, should they exist, in the last successful match in the
-currently active dynamic scope.
+currently active dynamic scope. (See L</Scoping Rules of Regex Variables>).
 
 For example, C<$+{foo}> is equivalent to C<$1> after the following match:
 
@@ -1163,27 +1331,33 @@ surprising.
 This variable was added in Perl v5.10.0. The C<%{^CAPTURE}> alias was
 added in 5.25.7.
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
 
 =item @LAST_MATCH_START
 
 =item @-
 X<@-> X<@LAST_MATCH_START>
 
+This array holds the offsets of the beginnings of the last successful
+match and any capture buffers it contains.
+(See L</Scoping Rules of Regex Variables>).
+
+The number of elements it contains will be one more than the number of
+the highest capture buffers (also called a subgroup) that actually
+matched something. (As opposed to C<@+> which may have fewer elements.)
+
 C<$-[0]> is the offset of the start of the last successful match.
 C<$-[I<n>]> is the offset of the start of the substring matched by
 I<n>-th subpattern, or undef if the subpattern did not match.
 
-Thus, after a match against C<$_>, C<$&> coincides with C<substr $_, $-[0],
-$+[0] - $-[0]>.  Similarly, $I<n> coincides with C<substr $_, $-[n],
-$+[n] - $-[n]> if C<$-[n]> is defined, and $+ coincides with
-C<substr $_, $-[$#-], $+[$#-] - $-[$#-]>.  One can use C<$#-> to find the
-last matched subgroup in the last successful match.  Contrast with
-C<$#+>, the number of subgroups in the regular expression.  Compare
-with C<@+>.
+Thus, after a match against C<$_>, C<$&> coincides with
+C<substr $_, $-[0], $+[0] - $-[0]>.  Similarly, C<$I<n>> coincides
+with C<substr $_, $-[n], $+[n] - $-[n]> if C<$-[n]> is defined, and
+C<$+> coincides with C<substr $_, $-[$#-], $+[$#-] - $-[$#-]>.
+One can use C<$#-> to find the last matched subgroup in the last
+successful match.  Contrast with C<$#+>, the number of subgroups
+in the regular expression.
 
-This array holds the offsets of the beginnings of the last
-successful submatches in the currently active dynamic scope.
 C<$-[0]> is the offset into the string of the beginning of the
 entire match.  The I<n>th element of this array holds the offset
 of the I<n>th submatch, so C<$-[1]> is the offset where C<$1>
@@ -1207,6 +1381,8 @@ After a match against some variable C<$var>:
 
 =back
 
+This variable is read-only, and its value is dynamically scoped.
+
 This variable was added in Perl v5.6.0.
 
 =item %{^CAPTURE_ALL}
@@ -1215,12 +1391,12 @@ X<%{^CAPTURE_ALL}>
 =item %-
 X<%->
 
-Similar to C<%+>, this variable allows access to the named capture groups
-in the last successful match in the currently active dynamic scope.  To
-each capture group name found in the regular expression, it associates a
-reference to an array containing the list of values captured by all
-buffers with that name (should there be several of them), in the order
-where they appear.
+Similar to C<%+>, this variable allows access to the named capture
+groups in the last successful match in the currently active dynamic
+scope. (See L</Scoping Rules of Regex Variables>). To each capture group
+name found in the regular expression, it associates a reference to an
+array containing the list of values captured by all buffers with that
+name (should there be several of them), in the order where they appear.
 
 Here's an example:
 
@@ -1254,12 +1430,33 @@ B<Note:> C<%-> and C<%+> are tied views into a common internal hash
 associated with the last successful regular expression.  Therefore mixing
 iterative access to them via C<each> may have unpredictable results.
 Likewise, if the last successful match changes, then the results may be
-surprising.
+surprising. See L</Scoping Rules of Regex Variables>.
 
 This variable was added in Perl v5.10.0. The C<%{^CAPTURE_ALL}> alias was
 added in 5.25.7.
 
-This variable is read-only and dynamically-scoped.
+This variable is read-only, and its value is dynamically scoped.
+
+=item ${^LAST_SUCCESSFUL_PATTERN}
+
+The last successful pattern that matched in the current scope.  The empty
+pattern defaults to matching to this. For instance:
+
+    if (m/foo/ || m/bar/) {
+        s//BLAH/;
+    }
+
+and
+
+    if (m/foo/ || m/bar/) {
+        s/${^LAST_SUCCESSFUL_PATTERN}/BLAH/;
+    }
+
+are equivalent.
+
+You can use this to debug which pattern matched last, or to match with it again.
+
+Added in Perl 5.37.10.
 
 =item $LAST_REGEXP_CODE_RESULT
 
@@ -1267,7 +1464,10 @@ This variable is read-only and dynamically-scoped.
 X<$^R> X<$LAST_REGEXP_CODE_RESULT>
 
 The result of evaluation of the last successful C<(?{ code })>
-regular expression assertion (see L<perlre>).  May be written to.
+regular expression assertion (see L<perlre>).
+
+This variable may be written to, and its value is scoped normally,
+unlike most other regex variables.
 
 This variable was added in Perl 5.005.
 
@@ -1539,7 +1739,7 @@ Suppose we wrote the following string to a file:
     $string .= "epsilon zeta eta\n\n";
     $string .= "theta\n";
 
-    my $file = 'simple_file.txt'; 
+    my $file = 'simple_file.txt';
     open my $OUT, '>', $file or die;
     print $OUT $string;
     close $OUT or die;
@@ -2168,7 +2368,7 @@ value when the interpreter started to compile the BLOCK.
 
 Each time a statement completes being compiled, the current value of
 C<$^H> is stored with that statement, and can later be retrieved via
-C<(caller($level))[8]>.
+C<(caller($level))[8]>.  See L<perlfunc/caller EXPR>.
 
 When perl begins to parse any block construct that provides a lexical scope
 (e.g., eval body, required file, subroutine body, loop body, or conditional
@@ -2212,15 +2412,14 @@ This variable was added in Perl 5.003.
 =item %^H
 X<%^H>
 
-The C<%^H> hash provides the same scoping semantic as C<$^H>.  This makes
-it useful for implementation of lexically scoped pragmas.  See
-L<perlpragma>.   All the entries are stringified when accessed at
-runtime, so only simple values can be accommodated.  This means no
-pointers to objects, for example.
+The C<%^H> hash provides the same scoping semantics as L<C<$^H>|/$^H>.  This
+makes it useful for implementing lexically scoped pragmas.  See L<perlpragma>.
+All the entries are stringified when accessed at runtime, so only simple values
+can be accommodated.  This means no references to objects, for example.
 
 Each time a statement completes being compiled, the current value of
 C<%^H> is stored with that statement, and can later be retrieved via
-C<(caller($level))[10]>.
+C<(caller($level))[10]>.  See L<perlfunc/caller EXPR>.
 
 When putting items into C<%^H>, in order to avoid conflicting with other
 users of the hash there is a convention regarding which keys to use.

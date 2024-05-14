@@ -434,8 +434,13 @@ EOP
 }
 
 # Check that assigning to $0 properly handles UTF-8-stored strings:
+SKIP:
 {
-
+  # setproctitle() misbehaves on dragonfly
+  # https://bugs.dragonflybsd.org/issues/3319
+  # https://github.com/Perl/perl5/issues/19894
+  skip "setproctitle() is flaky on DragonflyBSD", 11
+      if $^O eq "dragonfly";
   # Test both ASCII and EBCDIC systems:
   my $char = chr( utf8::native_to_unicode(0xe9) );
 

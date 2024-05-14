@@ -68,11 +68,20 @@ __EOD__
             }
         }
 
-        my $ccflags = $Config{'ccflags'} . ' ' . "-I$COREincdir"
-         . ' -DPERL_NO_INLINE_FUNCTIONS';
+        my $ccflags = $Config{'ccflags'} . ' ';
+        my @osvers = split /\./, $Config{osvers};
+        if ($^O eq "darwin"
+            && $^X eq "/usr/bin/perl"
+            && $osvers[0] >= 18) {
+            $ccflags .= qq(-iwithsysroot "$COREincdir");
+        }
+        else {
+            $ccflags .= "-I$COREincdir"
+        }
+        $ccflags .= ' -DPERL_NO_INLINE_FUNCTIONS';
 
         if ($^O eq 'VMS') {
-            $cccmd = "$Config{'cc'} /include=($COREincdir) $tmp.c";
+            $cccmd = "$Config{'cc'} $Config{'ccflags'} /include=($COREincdir) $tmp.c";
         }
 
         if ($args{silent} || !$VERBOSE) {
@@ -841,6 +850,11 @@ EOM
             print "NOT found.\n";
         }
     }
+    if ($^O eq "darwin") {
+        # the system perl on darwin doesn't seem to include -DPERL_DARWIN
+        # which breaks setting up emulation
+        DEFINE("PERL_DARWIN");
+    }
 
     if ($DEFINE) {
         $DEFINE =~ s/^\s+//;
@@ -853,8 +867,6 @@ EOM
 
 sub doMakefile {
     my @makefileopts = ();
-
-    DEFINE('USE_PPPORT_H') unless $ENV{PERL_CORE};
 
     push (@makefileopts,
         'NAME'  => 'Time::HiRes',

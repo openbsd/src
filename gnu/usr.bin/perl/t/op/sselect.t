@@ -13,7 +13,7 @@ BEGIN {
 skip_all("Win32 miniperl has no socket select")
   if $^O eq "MSWin32" && is_miniperl();
 
-plan (16);
+plan (23);
 
 my $blank = "";
 eval {select undef, $blank, $blank, 0};
@@ -103,4 +103,81 @@ package _131645{
 }
 tie $tie, _131645::;
 select ($tie, undef, undef, $tie);
-ok("no crash from select $numeric_tie, undef, undef, $numeric_tie")
+ok("no crash from select $numeric_tie, undef, undef, $numeric_tie");
+
+SKIP: {
+    skip "Can't load modules under miniperl", 4 if is_miniperl;
+    my $SKIP_CR = sub {
+        skip shift, 4;
+    };
+
+    if ($^O =~ m<win32|vms>i) {
+        $SKIP_CR->("Perl's 4-arg select() in $^O only works with sockets.");
+    }
+
+    eval { require POSIX } or do {
+        $SKIP_CR->("Failed to load POSIX.pm: $@");
+    };
+
+    my $mask;
+
+    for (my $f=0; $f<100; $f++) {
+        my $fd = POSIX::dup(fileno \*STDOUT);
+
+        if (!defined $fd) {
+            $SKIP_CR->("dup(STDOUT): $!");
+            last UTF8TEST;
+        }
+
+        vec( my $curmask, $fd, 1 ) = 1;
+
+        if ($curmask =~ tr<\x80-\xff><>) {
+            note("FD = $fd");
+            $mask = $curmask;
+            last;
+        }
+    }
+
+
+    if (defined $mask) {
+        utf8::downgrade($mask);
+        my $mask2;
+
+        my $result = select $mask2 = $mask, undef, undef, 0;
+
+        isnt( $result, -1, 'select() read on non-utf8-flagged mask' );
+
+        utf8::upgrade($mask);
+        $result = select $mask2 = $mask, undef, undef, 0;
+
+        isnt( $result, -1, 'select() read on utf8-flagged mask' );
+
+        # ----------------------------------------
+
+        utf8::downgrade($mask);
+        $result = select undef, $mask2 = $mask, undef, 0;
+
+        isnt( $result, -1, 'select() write on non-utf8-flagged mask' );
+
+        utf8::upgrade($mask);
+        $result = select undef, $mask2 = $mask, undef, 0;
+
+        isnt( $result, -1, 'select() write on utf8-flagged mask' );
+    }
+    else {
+        $SKIP_CR->("No suitable file descriptor for UTF-8-flag test found.");
+    }
+}
+
+{
+    my $badmask = "\x{100}";
+
+    eval { select $badmask, undef, undef, 0 };
+    ok( $@, 'select() read fails when given a wide character' );
+
+    eval { select undef, $badmask, undef, 0 };
+    ok( $@, 'select() write fails when given a wide character' );
+
+    eval { select undef, undef, $badmask, 0 };
+    ok( $@, 'select() exception fails when given a wide character' );
+}

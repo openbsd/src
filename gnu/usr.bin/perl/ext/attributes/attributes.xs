@@ -78,9 +78,9 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 		case 'h':
 		    if (memEQs(name, 6, "method")) {
 			if (negated)
-			    CvFLAGS(MUTABLE_CV(sv)) &= ~CVf_METHOD;
+			    CvFLAGS(MUTABLE_CV(sv)) &= ~CVf_NOWARN_AMBIGUOUS;
 			else
-			    CvFLAGS(MUTABLE_CV(sv)) |= CVf_METHOD;
+			    CvFLAGS(MUTABLE_CV(sv)) |= CVf_NOWARN_AMBIGUOUS;
 			continue;
 		    }
 		    break;
@@ -173,7 +173,7 @@ usage:
 	cvflags = CvFLAGS((const CV *)sv);
 	if (cvflags & CVf_LVALUE)
 	    XPUSHs(newSVpvs_flags("lvalue", SVs_TEMP));
-	if (cvflags & CVf_METHOD)
+	if (cvflags & CVf_NOWARN_AMBIGUOUS)
 	    XPUSHs(newSVpvs_flags("method", SVs_TEMP));
 	break;
     default:

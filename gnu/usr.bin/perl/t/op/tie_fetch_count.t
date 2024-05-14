@@ -165,7 +165,7 @@ $_ = "foo";
 $dummy  =  $var =~ m/ / ; check_count 'm//';
 $dummy  =  $var =~ s/ //; check_count 's///';
 {
-    no warnings 'experimental::smartmatch';
+    no warnings 'deprecated';
     $dummy  =  $var ~~    1 ; check_count '~~';
 }
 $dummy  =  $var =~ y/ //; check_count 'y///';

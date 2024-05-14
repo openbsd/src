@@ -5047,14 +5047,14 @@ my_tmpnam (char *str)
     char *p = PerlEnv_getenv("TMP"), *tpath;
 
     if (!p) p = PerlEnv_getenv("TEMP");
-    ENV_LOCK;
+    ENV_READ_LOCK;
     tpath = tempnam(p, "pltmp");
     if (str && tpath) {
         strcpy(str, tpath);
-        ENV_UNLOCK;
+        ENV_READ_UNLOCK;
         return str;
     }
-    ENV_UNLOCK;
+    ENV_READ_UNLOCK;
     return tpath;
 }
 

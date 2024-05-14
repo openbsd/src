@@ -18,7 +18,7 @@ BEGIN {
 # strict
 use strict;
 
-print "1..215\n";
+print "1..216\n";
 
 my $i = 1;
 
@@ -892,3 +892,24 @@ $_ = sub ($$$$$$$) {};
 @_ = (1, 2, 3, prototype(), 4, 5, 6);
 print "not " unless "@_" eq '1 2 3 $$$$$$$ 4 5 6';
 print "ok ", $i++, " - [perl #123514] (got @_)\n";
+
+{
+    my $weird_failure = q<>;
+
+    if (eval 'sub scalarref (\$) { }; scalarref( sub {} ); 1') {
+        print "not ok $i: Unexpected scalarref success!\n";
+    }
+    else {
+        if ($@ !~ m/anonymous subroutine/ || $@ !~ m/scalarref/) {
+            $weird_failure = $@;
+
+            $weird_failure =~ s/^/# /m;
+
+            print "# Unexpected error (or none):$/$weird_failure";
+        }
+
+        print( ($weird_failure ? 'not ok' : 'ok') . " $i - anonsub passed to \\\$\n" );
+    }
+
+    $i++;
+}

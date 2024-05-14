@@ -1,10 +1,10 @@
-# NameAliases-14.0.0.txt
-# Date: 2020-10-21, 22:28:00 GMT [KW, LI]
-# © 2020 Unicode®, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# NameAliases-15.0.0.txt
+# Date: 2022-07-26, 20:13:00 GMT [KW]
+# © 2022 Unicode®, Inc.
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# For documentation, see http://www.unicode.org/reports/tr44/
+# For documentation, see https://www.unicode.org/reports/tr44/
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
@@ -40,7 +40,7 @@
 # control codes (which for historical reasons have no Unicode character name)
 # or for format characters.
 #
-# For documentation, see NamesList.html and http://www.unicode.org/reports/tr44/
+# For documentation, see NamesList.html and https://www.unicode.org/reports/tr44/
 #
 # FORMAT
 #
@@ -135,6 +135,7 @@
 0018;CAN;abbreviation
 0019;END OF MEDIUM;control
 0019;EOM;abbreviation
+0019;EM;abbreviation
 001A;SUBSTITUTE;control
 001A;SUB;abbreviation
 001B;ESCAPE;control
@@ -163,7 +164,7 @@
 # (and corresponding abbreviations) for these code
 # points are included here because these names leaked
 # out from the draft documents and were published in
-# at least one RFC whose names for code points was
+# at least one RFC whose names for code points were
 # implemented in Perl regex expressions.
 
 0080;PADDING CHARACTER;figment
@@ -254,6 +255,7 @@
 01A2;LATIN CAPITAL LETTER GHA;correction
 01A3;LATIN SMALL LETTER GHA;correction
 034F;CGJ;abbreviation
+0616;ARABIC SMALL HIGH LIGATURE ALEF WITH YEH BARREE;correction
 061C;ALM;abbreviation
 0709;SYRIAC SUBLINEAR COLON SKEWED LEFT;correction
 0CDE;KANNADA LETTER LLLA;correction
@@ -271,6 +273,7 @@
 180D;FVS3;abbreviation
 180E;MVS;abbreviation
 180F;FVS4;abbreviation
+1BBD;SUNDANESE LETTER ARCHAIC I;correction
 200B;ZWSP;abbreviation
 200C;ZWNJ;abbreviation
 200D;ZWJ;abbreviation

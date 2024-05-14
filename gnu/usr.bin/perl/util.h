@@ -184,7 +184,7 @@ typedef struct {
 /* uses var file to set default filename for newXS_deffile to use for CvFILE */
 #define HSf_SETXSUBFN 0x00000020
 #define HSf_POPMARK 0x00000040 /* popmark mode or you must supply ax and items */
-#define HSf_IMP_CXT 0x00000080 /* ABI, threaded/MULTIPLICITY, pTHX_ present */
+#define HSf_IMP_CXT 0x00000080 /* ABI, threaded, MULTIPLICITY, pTHX_ present */
 #define HSm_INTRPSIZE 0xFFFF0000 /* ABI, interp struct size */
 /* A mask of bits in the key which must always match between a XS mod and interp.
    Also if all ABI bits in a key are true, skip all ABI checks, it is very
@@ -247,7 +247,9 @@ returning NULL if not found.  The terminating NUL bytes are not compared.
 
 #ifdef HAS_MEMMEM
 #   define ninstr(big, bigend, little, lend)                                \
-            ((char *) memmem((big), (bigend) - (big),                       \
+            (__ASSERT_(bigend >= big)                                       \
+             __ASSERT_(lend >= little)                                      \
+             (char *) memmem((big), (bigend) - (big),                       \
                              (little), (lend) - (little)))
 #else
 #   define ninstr(a,b,c,d) Perl_ninstr(a,b,c,d)

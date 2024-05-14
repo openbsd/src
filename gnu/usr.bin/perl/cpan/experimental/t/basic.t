@@ -18,7 +18,9 @@ if ($] >= 5.010000) {
 END
 }
 
-if ($] >= 5.010001) {
+use warnings ();
+if ( $] >= 5.010001
+    && ( $] < 5.017011 || exists $warnings::Offsets{"experimental::smartmatch"} ) ) {
 	is (eval <<'END', 1, 'switch compiles') or diag $@;
 	use experimental 'switch';
 	sub bar { 1 };
@@ -34,7 +36,8 @@ if ($] >= 5.010001) {
 END
 }
 
-if ($] >= 5.010001) {
+if ( $] >= 5.010001
+    && ( $] < 5.017011 || exists $warnings::Offsets{"experimental::smartmatch"} ) ) {
 	is (eval <<'END', 1, 'smartmatch compiles') or diag $@;
 	use experimental 'smartmatch';
 	sub baz { 1 };

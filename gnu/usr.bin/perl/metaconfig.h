@@ -14,9 +14,5 @@
  * they should be removed from here.
  *
  * HAS_NON_INT_BITFIELDS
- * HAS_STRXFRM_L
- * HAS_NL_LANGINFO_L
- * HAS_FFS
- * HAS_FFSL
  *
  */

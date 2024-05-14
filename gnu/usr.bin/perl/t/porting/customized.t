@@ -28,9 +28,12 @@ sub filter_customized {
     return @files
         unless my $customized = $Modules{$m}{CUSTOMIZED};
 
-    my ($pat) = map { qr/$_/ } join '|' => map {
-        ref $_ ? $_ : qr/\b\Q$_\E$/
-    } @{ $customized };
+    my ($pat) = map { qr/$_/ }
+        join ( '|' =>
+            map { ref $_ ? $_ : qr/\b\Q$_\E$/ } @{ $customized },
+            # https://github.com/Perl/perl5/issues/20228
+            qr/pod\/perlfilter\.pod/
+        );
 
     return grep { $_ =~ $pat } @files;
 }

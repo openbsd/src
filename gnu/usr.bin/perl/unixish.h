@@ -21,7 +21,7 @@
  *	This symbol, if defined, indicates that the ioctl() routine is
  *	available to set I/O characteristics
  */
-#define	HAS_IOCTL		/**/
+#define HAS_IOCTL               /**/
  
 /* HAS_UTIME:
  *	This symbol, if defined, indicates that the routine utime() is
@@ -136,28 +136,34 @@ int afstat(int fd, struct stat *statb);
 #define Mkdir(path,mode)   mkdir((path),(mode))
 
 #if defined(__amigaos4__)
-#  define PERL_SYS_INIT_BODY(c,v)					\
-        MALLOC_CHECK_TAINT2(*c,*v) PERL_FPU_INIT; PERLIO_INIT; MALLOC_INIT; amigaos4_init_fork_array(); amigaos4_init_environ_sema();
-#  define PERL_SYS_TERM_BODY()                         \
-    HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;      \
-    OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM; PERLIO_TERM;  \
-    MALLOC_TERM; LOCALE_TERM; USER_PROP_MUTEX_TERM;    \
-    ENV_TERM;                                          \
-    amigaos4_dispose_fork_array();
+#  define PLATFORM_SYS_TERM_  amigaos4_dispose_fork_array()
+#  define PLATFORM_SYS_INIT_ STMT_START {                       \
+                                amigaos4_init_fork_array();     \
+                                amigaos4_init_environ_sema();   \
+                             } STMT_END
+#else 
+#  define PLATFORM_SYS_TERM_  NOOP
+#  define PLATFORM_SYS_INIT_  NOOP
 #endif
 
 #ifndef PERL_SYS_INIT_BODY
-#  define PERL_SYS_INIT_BODY(c,v)					\
-        MALLOC_CHECK_TAINT2(*c,*v) PERL_FPU_INIT; PERLIO_INIT; MALLOC_INIT
+#define PERL_SYS_INIT_BODY(c,v)					\
+	MALLOC_CHECK_TAINT2(*c,*v) PERL_FPU_INIT; PERLIO_INIT;  \
+        MALLOC_INIT; PLATFORM_SYS_INIT_;
 #endif
 
+/* Generally add things last-in first-terminated.  IO and memory terminations
+ * need to be generally last
+ *
+ * BEWARE that using PerlIO in these will be using freed memory, so may appear
+ * to work, but must NOT be retained in production code. */
 #ifndef PERL_SYS_TERM_BODY
-#  define PERL_SYS_TERM_BODY()                         \
-    HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;      \
-    OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM; PERLIO_TERM;  \
-    MALLOC_TERM; LOCALE_TERM; USER_PROP_MUTEX_TERM;    \
-    ENV_TERM;
-
+#  define PERL_SYS_TERM_BODY()                                          \
+                    ENV_TERM; USER_PROP_MUTEX_TERM; LOCALE_TERM;        \
+                    HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;       \
+                    OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM;                \
+                    PERLIO_TERM; MALLOC_TERM;                           \
+                    PLATFORM_SYS_TERM_;
 #endif
 
 #define BIT_BUCKET "/dev/null"

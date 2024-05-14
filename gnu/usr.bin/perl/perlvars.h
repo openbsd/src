@@ -48,10 +48,6 @@ PERLVAR(G, thr_key,	perl_key)	/* key to retrieve per-thread struct */
 /* XXX does anyone even use this? */
 PERLVARI(G, do_undump,	bool,	FALSE)	/* -u or dump seen? */
 
-#ifndef PERL_USE_SAFE_PUTENV
-PERLVARI(G, use_safe_putenv, bool, TRUE)
-#endif
-
 #if defined(FAKE_PERSISTENT_SIGNAL_HANDLERS)||defined(FAKE_DEFAULT_SIGNAL_HANDLERS)
 PERLVARI(G, sig_handlers_initted, int, 0)
 #endif
@@ -106,13 +102,10 @@ PERLVARI(G, mmap_page_size, IV, 0)
 PERLVAR(G, hints_mutex, perl_mutex)    /* Mutex for refcounted he refcounting */
 PERLVAR(G, env_mutex, perl_RnW1_mutex_t)      /* Mutex for accessing ENV */
 PERLVAR(G, locale_mutex, perl_mutex)   /* Mutex related to locale handling */
-#  ifndef USE_THREAD_SAFE_LOCALE
-PERLVAR(G, lc_numeric_mutex, perl_mutex)   /* Mutex for switching LC_NUMERIC */
-#  endif
 #endif
 
 #ifdef USE_POSIX_2008_LOCALE
-PERLVAR(G, C_locale_obj, locale_t)
+PERLVARI(G, C_locale_obj, locale_t, NULL)
 #endif
 
 PERLVARI(G, watch_pvx,	char *, NULL)
@@ -176,6 +169,7 @@ PERLVAR(G, check_mutex,	perl_mutex)	/* Mutex for PL_check */
 #ifdef MULTIPLICITY
 # ifdef USE_ITHREADS
 PERLVAR(G, my_ctx_mutex, perl_mutex)
+PERLVARI(G, veto_switch_non_tTHX_context, int, FALSE)
 # endif
 PERLVARI(G, my_cxt_index, int,	0)
 #endif
@@ -241,9 +235,106 @@ Instead, use the function L</wrap_keyword_plugin>.
 */
 
 #if defined(USE_ITHREADS)
-PERLVAR(G, keyword_plugin_mutex, perl_mutex)   /* Mutex for PL_keyword_plugin */
+PERLVAR(G, keyword_plugin_mutex, perl_mutex)   /* Mutex for PL_keyword_plugin and PL_infix_plugin */
 #endif
 PERLVARI(G, keyword_plugin, Perl_keyword_plugin_t, Perl_keyword_plugin_standard)
+
+/*
+=for apidoc AmnUx|Perl_infix_plugin_t|PL_infix_plugin
+
+B<NOTE:> This API exists entirely for the purpose of making the CPAN module
+C<XS::Parse::Infix> work. It is not expected that additional modules will make
+use of it; rather, that they should use C<XS::Parse::Infix> to provide parsing
+of new infix operators.
+
+Function pointer, pointing at a function used to handle extended infix
+operators. The function should be declared as
+
+        int infix_plugin_function(pTHX_
+                char *opname, STRLEN oplen,
+                struct Perl_custom_infix **infix_ptr)
+
+The function is called from the tokenizer whenever a possible infix operator
+is seen. C<opname> points to the operator name in the parser's input buffer,
+and C<oplen> gives the I<maximum> number of bytes of it that should be
+consumed; it is not null-terminated. The function is expected to examine the
+operator name and possibly other state such as L<%^H|perlvar/%^H>, to
+determine whether it wants to handle the operator name.
+
+As compared to the single stage of C<PL_keyword_plugin>, parsing of additional
+infix operators occurs in three separate stages. This is because of the more
+complex interactions it has with the parser, to ensure that operator
+precedence rules work correctly. These stages are co-ordinated by the use of
+an additional information structure.
+
+If the function wants to handle the infix operator, it must set the variable
+pointed to by C<infix_ptr> to the address of a structure that provides this
+additional information about the subsequent parsing stages. If it does not,
+it should make a call to the next function in the chain.
+
+This structure has the following definition:
+
+	struct Perl_custom_infix {
+	    enum Perl_custom_infix_precedence prec;
+	    void (*parse)(pTHX_ SV **opdata,
+		struct Perl_custom_infix *);
+	    OP *(*build_op)(pTHX_ SV **opdata, OP *lhs, OP *rhs,
+		struct Perl_custom_infix *);
+	};
+
+The function must then return an integer giving the number of bytes consumed
+by the name of this operator. In the case of an operator whose name is
+composed of identifier characters, this must be equal to C<oplen>. In the case
+of an operator named by non-identifier characters, this is permitted to be
+shorter than C<oplen>, and any additional characters after it will not be
+claimed by the infix operator but instead will be consumed by the tokenizer
+and parser as normal.
+
+If the optional C<parse> function is provided, it is called immediately by the
+parser to let the operator's definition consume any additional syntax from the
+source code. This should I<not> be used for normal operand parsing, but it may
+be useful when implementing things like parametric operators or meta-operators
+that consume more syntax themselves. This function may use the variable
+pointed to by C<opdata> to provide an SV containing additional data to be
+passed into the C<build_op> function later on.
+
+The information structure gives the operator precedence level in the C<prec>
+field. This is used to tell the parser how much of the surrounding syntax
+before and after should be considered as operands to the operator.
+
+The tokenizer and parser will then continue to operate as normal until enough
+additional input has been parsed to form both the left- and right-hand side
+operands to the operator, according to the precedence level. At this point the
+C<build_op> function is called, being passed the left- and right-hand operands
+as optree fragments. It is expected to combine them into the resulting optree
+fragment, which it should return.
+
+After the C<build_op> function has returned, if the variable pointed to by
+C<opdata> was set to a non-C<NULL> value, it will then be destroyed by calling
+C<SvREFCNT_dec()>.
+
+For thread safety, modules should not set this variable directly.
+Instead, use the function L</wrap_infix_plugin>.
+
+However, that all said, the introductory note above still applies. This
+variable is provided in core perl only for the benefit of the
+C<XS::Parse::Infix> module. That module acts as a central registry for infix
+operators, automatically handling things like deparse support and
+discovery/reflection, and these abilities only work because it knows all the
+registered operators. Other modules should not use this interpreter variable
+directly to implement them because then those central features would no longer
+work properly.
+
+Furthermore, it is likely that this (experimental) API will be replaced in a
+future Perl version by a more complete API that fully implements the central
+registry and other semantics currently provided by C<XS::Parse::Infix>, once
+the module has had sufficient experimental testing time. This current
+mechanism exists only as an interim measure to get to that stage.
+
+=cut
+*/
+
+PERLVARI(G, infix_plugin, Perl_infix_plugin_t, Perl_infix_plugin_standard)
 
 PERLVARI(G, op_sequence, HV *, NULL)	/* dump.c */
 PERLVARI(G, op_seq,	UV,	0)	/* dump.c */
@@ -264,12 +355,13 @@ PERLVAR(G, malloc_mutex, perl_mutex)	/* Mutex for malloc */
 #endif
 
 PERLVARI(G, hash_seed_set, bool, FALSE)	/* perl.c */
-PERLVARA(G, hash_seed_w, PERL_HASH_SEED_WORDS, __PERL_HASH_WORD_TYPE) /* perl.c and hv.h */
+PERLVARA(G, hash_seed_w, PERL_HASH_SEED_WORDS, PVT__PERL_HASH_WORD_TYPE) /* perl.c and hv.h */
 #if defined(PERL_HASH_STATE_BYTES)
-PERLVARA(G, hash_state_w, PERL_HASH_STATE_WORDS, __PERL_HASH_WORD_TYPE) /* perl.c and hv.h */
+PERLVARA(G, hash_state_w, PERL_HASH_STATE_WORDS, PVT__PERL_HASH_WORD_TYPE) /* perl.c and hv.h */
 #endif
 #if defined(PERL_USE_SINGLE_CHAR_HASH_CACHE)
-PERLVARA(G, hash_chars, (1+256) * sizeof(U32), unsigned char) /* perl.c and hv.h */
+#define PERL_SINGLE_CHAR_HASH_CACHE_ELEMS ((1+256) * sizeof(U32))
+PERLVARA(G, hash_chars, PERL_SINGLE_CHAR_HASH_CACHE_ELEMS, unsigned char) /* perl.c and hv.h */
 #endif
 
 /* The path separator can vary depending on whether we're running under DCL or
@@ -305,3 +397,6 @@ PERLVARI(G, strategy_socket,     int, 0)	/* doio.c */
 PERLVARI(G, strategy_accept,     int, 0)	/* doio.c */
 PERLVARI(G, strategy_pipe,       int, 0)	/* doio.c */
 PERLVARI(G, strategy_socketpair, int, 0)	/* doio.c */
+
+PERLVARI(G, my_environ, char **, NULL)
+PERLVARI(G, origenviron, char **, NULL)

@@ -14,7 +14,7 @@ BEGIN {
     plan(538);
     use_ok('XS::APItest')
 };
-
+use Config;
 #########################
 
 # f(): general test sub to be called by call_sv() etc.
@@ -343,8 +343,11 @@ for my $fn_type (qw(eval_pv eval_sv call_sv)) {
 # DAPM 9-Aug-04. A taint test in eval_sv() could die after setting up
 # a new jump level but before pushing an eval context, leading to
 # stack corruption
+SKIP: {
+    skip("Your perl was built without taint support", 1)
+        unless $Config{taint_support};
 
-fresh_perl_is(<<'EOF', "x=2", { switches => ['-T', '-I../../lib'] }, 'eval_sv() taint');
+    fresh_perl_is(<<'EOF', "x=2", { switches => ['-T', '-I../../lib'] }, 'eval_sv() taint');
 use XS::APItest;
 
 my $x = 0;
@@ -357,4 +360,4 @@ sub f {
 eval { my @a = sort f 2, 1;  $x++};
 print "x=$x\n";
 EOF
-
+}

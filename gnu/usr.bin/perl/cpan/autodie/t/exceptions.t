@@ -8,8 +8,11 @@ BEGIN { plan skip_all => "Perl 5.10 only tests" if $] < 5.010; }
 # Basic tests should go in basic_exceptions.t
 
 use 5.010;
+use warnings ();
 use constant NO_SUCH_FILE => 'this_file_had_better_not_exist_xyzzy';
 no if $] >= 5.017011, warnings => "experimental::smartmatch";
+no if exists $warnings::Offsets{"deprecated::smartmatch"},
+  warnings => "deprecated";
 
 plan 'no_plan';
 

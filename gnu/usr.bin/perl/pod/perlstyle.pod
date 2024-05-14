@@ -23,7 +23,7 @@ well as several other useful L<named features|feature/AVAILABLE FEATURES>).
 
     use v5.36;
 
-Regarding aesthetics of code lay out, about the only thing Larry
+Regarding aesthetics of code layout, about the only thing Larry
 cares strongly about is that the closing curly bracket of
 a multi-line BLOCK should line up with the keyword that started the construct.
 Beyond that, he has other preferences that aren't so strong:
@@ -225,7 +225,7 @@ Don't use slash as a delimiter when your regexp has slashes or backslashes.
 
 =item *
 
-Use the new C<and> and C<or> operators to avoid having to parenthesize
+Use the C<and> and C<or> operators to avoid having to parenthesize
 list operators so much, and to reduce the incidence of punctuation
 operators like C<&&> and C<||>.  Call your subroutines as if they were
 functions or list operators to avoid excessive ampersands and parentheses.

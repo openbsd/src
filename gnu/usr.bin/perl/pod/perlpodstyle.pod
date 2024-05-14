@@ -135,7 +135,7 @@ values should be given here.
 
 All possible messages the program can print out and what they mean.  You
 may wish to follow the same documentation style as the Perl documentation;
-see L<perldiag> for more details (and look at the POD source as well).
+see perldiag(1) for more details (and look at the POD source as well).
 
 If applicable, please include details on what the user should do to
 correct the error; documenting an error as indicating "the input buffer is

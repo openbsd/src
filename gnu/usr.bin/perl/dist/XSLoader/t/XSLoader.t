@@ -7,11 +7,6 @@ use Config;
 
 my $db_file;
 BEGIN {
-    if (not eval "use Test::More; 1") {
-        print "1..0 # Skip: Test::More not available\n";
-        die "Test::More not available\n";
-    }
-
     use Config;
     foreach (qw/SDBM_File GDBM_File ODBM_File NDBM_File DB_File/) {
         if ($Config{extensions} =~ /\b$_\b/) {
@@ -21,6 +16,106 @@ BEGIN {
     }
 }
 
+# mini test implementation. We're going to be playing with the XS bits of
+# various modules that may be used by Test::More, so it's best to avoid. Since
+# XSLoader is dual life, we can't use something like perl's t/test.pl
+my $planned_tests;
+my $tests;
+my $passed_tests;
+sub ok ($;$) {
+    my ($ok, $name) = @_;
+    $tests++;
+    $passed_tests += 1 if $ok;
+    print STDOUT "not "
+        if !$ok;
+    print STDOUT "ok $tests";
+    print STDOUT " - $name"
+        if defined $name;
+    print "\n";
+    return $ok;
+}
+sub is ($$;$) {
+    my ($got, $want, $name) = @_;
+
+    my $ok
+        = !defined $want && !defined $got
+        || defined $want && defined $got && $got eq $want;
+
+    defined $_ or $_ = '[undef]'
+        for $got, $want;
+
+    ok($ok, $name)
+        or diag("Got: $got\nExpected: $want");
+
+    return $ok;
+}
+sub can_ok ($@) {
+    my ($inv, @methods) = @_;
+    die "only supports one method"
+        if @methods != 1;
+    ok $inv->can($methods[0]), "$inv->can('$methods[0]')";
+}
+sub skip ($$) {
+    my ($message, $count) = @_;
+    die "bad skip"
+        if !$count || $count =~ /[^0-9]/;
+    for (1..$count) {
+        $tests++;
+        print STDOUT "ok $tests # skip $message\n";
+    }
+    $passed_tests += $count;
+    no warnings 'exiting';
+    last SKIP;
+}
+sub like ($$;$) {
+    my ($got, $want_re, $name) = @_;
+    if (!ref $want_re) {
+        $want_re =~ m{\A/(.*)/([a-z]*)\z}
+            or die "bad regex $want_re";
+        $want_re = (length $2 ? "(?$2)" : '') . $1;
+    }
+    my $ok = $got =~ $want_re;
+    ok($ok, $name)
+        or diag("Got: $got\nExpected: $want_re");
+    return $ok;
+}
+sub diag {
+    my ($message) = @_;
+    $message =~ s/\n?\z/\n/;
+    $message =~ s/^/# /gm;
+    print STDERR $message;
+}
+END {
+    if (!defined $planned_tests) {
+        print STDERR "# No plan was declared!\n";
+        $? = 254;
+        return;
+    }
+
+    if ($tests != $planned_tests) {
+        print STDERR "# Looks like you planned $planned_tests test but ran $tests.\n";
+        $? = abs($planned_tests - $tests);
+    }
+    elsif ($passed_tests != $tests) {
+        my $failed = $tests - $passed_tests;
+        print STDERR "# Looks like you failed $failed test but ran $tests.\n";
+    }
+}
+sub plan {
+    my %opts = @_;
+    die "already planned"
+        if defined $planned_tests;
+    if (my $skip_all = $opts{skip_all}) {
+        print STDOUT "1..0 # SKIP $skip_all\n";
+        $planned_tests = 0;
+        exit 0;
+    }
+    elsif ($planned_tests = $opts{tests}) {
+        print STDOUT "1..$planned_tests\n";
+    }
+}
+
+###
 
 my %modules = (
     # ModuleName  => q|code to check that it was loaded|,
@@ -33,10 +128,9 @@ my %modules = (
     'Time::HiRes'=> q| ::can_ok( 'Time::HiRes' => 'usleep'  ) |,  # 5.7.3
 );
 
-plan tests => keys(%modules) * 3 + 10;
+plan tests => keys(%modules) * 3 + 9;
 
-# Try to load the module
-use_ok( 'XSLoader' );
+use XSLoader;
 
 # Check functions
 can_ok( 'XSLoader' => 'load' );

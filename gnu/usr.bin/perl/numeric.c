@@ -31,8 +31,8 @@ values, including such things as replacements for the OS's atof() function
 PERL_STATIC_INLINE NV
 S_strtod(pTHX_ const char * const s, char ** e)
 {
-    NV result;
     DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+    NV result;
 
     STORE_LC_NUMERIC_SET_TO_NEEDED();
 
@@ -426,42 +426,42 @@ Perl_grok_bin_oct_hex(pTHX_ const char *start,
       case 0:
           return 0;
       default:
-          if (UNLIKELY(! _generic_isCC(*s, class_bit)))  break;
+          if (UNLIKELY(! generic_isCC_(*s, class_bit)))  break;
           value = (value << shift) | XDIGIT_VALUE(*s);
           s++;
           /* FALLTHROUGH */
       case 7:
-          if (UNLIKELY(! _generic_isCC(*s, class_bit)))  break;
+          if (UNLIKELY(! generic_isCC_(*s, class_bit)))  break;
           value = (value << shift) | XDIGIT_VALUE(*s);
           s++;
           /* FALLTHROUGH */
       case 6:
-          if (UNLIKELY(! _generic_isCC(*s, class_bit)))  break;
+          if (UNLIKELY(! generic_isCC_(*s, class_bit)))  break;
           value = (value << shift) | XDIGIT_VALUE(*s);
           s++;
           /* FALLTHROUGH */
       case 5:
-          if (UNLIKELY(! _generic_isCC(*s, class_bit)))  break;
+          if (UNLIKELY(! generic_isCC_(*s, class_bit)))  break;
           value = (value << shift) | XDIGIT_VALUE(*s);
           s++;
           /* FALLTHROUGH */
       case 4:
-          if (UNLIKELY(! _generic_isCC(*s, class_bit)))  break;
+          if (UNLIKELY(! generic_isCC_(*s, class_bit)))  break;
           value = (value << shift) | XDIGIT_VALUE(*s);
           s++;
           /* FALLTHROUGH */
       case 3:
-          if (UNLIKELY(! _generic_isCC(*s, class_bit)))  break;
+          if (UNLIKELY(! generic_isCC_(*s, class_bit)))  break;
           value = (value << shift) | XDIGIT_VALUE(*s);
           s++;
           /* FALLTHROUGH */
       case 2:
-          if (UNLIKELY(! _generic_isCC(*s, class_bit)))  break;
+          if (UNLIKELY(! generic_isCC_(*s, class_bit)))  break;
           value = (value << shift) | XDIGIT_VALUE(*s);
           s++;
           /* FALLTHROUGH */
       case 1:
-          if (UNLIKELY(! _generic_isCC(*s, class_bit)))  break;
+          if (UNLIKELY(! generic_isCC_(*s, class_bit)))  break;
           value = (value << shift) | XDIGIT_VALUE(*s);
 
           if (LIKELY(len <= 8)) {
@@ -477,7 +477,7 @@ Perl_grok_bin_oct_hex(pTHX_ const char *start,
     len -= bytes_so_far;
 
     for (; len--; s++) {
-        if (_generic_isCC(*s, class_bit)) {
+        if (generic_isCC_(*s, class_bit)) {
             /* Write it in this wonky order with a goto to attempt to get the
                compiler to make the common case integer-only loop pretty tight.
                With gcc seems to be much straighter code than old scan_hex.
@@ -527,7 +527,7 @@ Perl_grok_bin_oct_hex(pTHX_ const char *start,
         if (   *s == '_'
             && len
             && allow_underscores
-            && _generic_isCC(s[1], class_bit)
+            && generic_isCC_(s[1], class_bit)
 
                 /* Don't allow a leading underscore if the only-medial bit is
                  * set */
@@ -924,7 +924,7 @@ Perl_grok_infnan(pTHX_ const char** sp, const char* send)
                      * of UVs and NVs can be different. */
 
                     if ((nantype & IS_NUMBER_NOT_INT) ||
-                        !(nantype && IS_NUMBER_IN_UV)) {
+                        !(nantype & IS_NUMBER_IN_UV)) {
                         /* treat "NaN(invalid)" the same as "NaNgarbage" */
                         return trail;
                     }
@@ -1277,7 +1277,7 @@ no leading zeros).  Otherwise it returns TRUE, and sets C<*valptr> to that
 value.
 
 If you constrain the portion of C<pv> that is looked at by this function (by
-passing a non-NULL C<endptr>), and if the intial bytes of that portion form a
+passing a non-NULL C<endptr>), and if the initial bytes of that portion form a
 valid value, it will return TRUE, setting C<*endptr> to the byte following the
 final digit of the value.  But if there is no constraint at what's looked at,
 all of C<pv> must be valid in order for TRUE to be returned.  C<*endptr> is
@@ -1492,7 +1492,7 @@ N.B. C<s> must be NUL terminated.
     {
         DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
         STORE_LC_NUMERIC_SET_TO_NEEDED();
-        if (! (PL_numeric_radix_sv && IN_LC(LC_NUMERIC))) {
+        if (! IN_LC(LC_NUMERIC)) {
             ATOF(s,x);
         }
         else {

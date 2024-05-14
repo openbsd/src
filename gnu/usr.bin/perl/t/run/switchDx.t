@@ -48,9 +48,14 @@ END {
     fresh_perl_like("print qq(hello)", qr/define raw/,
                     { stderr => 1, switches => [ '-Di' ] },
                    "-Di defaults to stderr");
-    fresh_perl_like("print qq(hello)", qr/define raw/,
+    SKIP: {
+        skip("Your perl was built without taint support", 1)
+            unless $Config{taint_support};
+
+        fresh_perl_like("print qq(hello)", qr/define raw/,
                     { stderr => 1, switches => [ '-TDi' ] },
                    "Perlio debug output to STDERR with -TDi (no PERLIO_DEBUG)");
+    }
 }
 {
     # -DXv tests

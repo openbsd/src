@@ -32,6 +32,16 @@
 __DEPARSE_FAILURES__
 
 base/lex.t                # checks regexp stringification
+# class/*.t generally failing because OP_METHSTART not recognised
+class/class.t
+class/construct.t
+class/destruct.t
+class/field.t
+class/inherit.t
+class/method.t
+class/phasers.t
+class/threads.t
+#
 comp/final_line_num.t     # tests syntax error after BEGIN block
 comp/fold.t               # mutability of folded constants
 comp/parser.t             # crazy #line directives ==> shell syntax errors
@@ -44,7 +54,6 @@ op/attrhand.t             # Custom attrs ignored; also AH provides none
 op/caller.t
 op/goto.t
 op/gv.t                   # glob copy constants
-op/hexfp.t
 op/index.t
 op/join.t                 # mutability of folded constants
 op/length.t               # utf8ness of deparsed strings
@@ -63,14 +72,17 @@ op/sub.t
 op/switch.t
 op/symbolcache.t
 op/taint.t
+op/undef.t                # keys%{($h=undef)||{}} becomes keys%{{} unless .. }
 op/vec.t
 op/warn.t
 op/write.t
+perf/opcount.t            # keys%{($h=undef)||{}} becomes keys%{{} unless .. }
 porting/globvar.t
 re/overload.t             # [perl #123385] %^H output
 re/pat_advanced.t         # [perl #123417]
 re/pat_rt_report.t        # malformed utf8 constant; also /\c@/ -> /\c\@/
 re/pat.t                  # [perl #90590]
+re/pat_re_eval.t          # the new /(*{...})/ forms don't deparse
 re/regex_sets.t
 re/reg_fold.t             # [perl #123385] %^H output
 re/rxcode.t               # checks regexp stringification
@@ -154,31 +166,46 @@ uni/variables.t
 #    }
 
 ../cpan/bignum/t/bigexp.t
+../cpan/bignum/t/bigfloat.t
 ../cpan/bignum/t/bigint.t
 ../cpan/bignum/t/bignum.t
 ../cpan/bignum/t/bigrat.t
+../cpan/bignum/t/const-bigfloat.t
 ../cpan/bignum/t/const-bigint.t
 ../cpan/bignum/t/const-bignum.t
 ../cpan/bignum/t/const-bigrat.t
+../cpan/bignum/t/down-mbi-up-mbf.t
+../cpan/bignum/t/down-mbi-up-mbr.t
+../cpan/bignum/t/down-mbi-up-undef.t
+../cpan/bignum/t/down-undef-up-mbf.t
+../cpan/bignum/t/e_pi-bigfloat.t
 ../cpan/bignum/t/e_pi-bigint.t
 ../cpan/bignum/t/e_pi-bignum.t
 ../cpan/bignum/t/e_pi-bigrat.t
+../cpan/bignum/t/import-bigfloat.t
 ../cpan/bignum/t/import-bigint.t
 ../cpan/bignum/t/import-bignum.t
 ../cpan/bignum/t/import-bigrat.t
 ../cpan/bignum/t/in_effect.t
+../cpan/bignum/t/infnan-bigfloat.t
 ../cpan/bignum/t/infnan-bigint.t
-../cpan/bignum/t/infnan-bignum.t
+../cpan/bignum/t/infnan-bignum-mbf.t
+../cpan/bignum/t/infnan-bignum-mbr.t
 ../cpan/bignum/t/infnan-bigrat.t
+../cpan/bignum/t/option_a-bignum.t
 ../cpan/bignum/t/option_a.t
-../cpan/bignum/t/option_l.t
+../cpan/bignum/t/option_l-bigfloat.t
+../cpan/bignum/t/option_l-bigint.t
+../cpan/bignum/t/option_l-bignum.t
+../cpan/bignum/t/option_l-bigrat.t
+../cpan/bignum/t/option_p-bignum.t
 ../cpan/bignum/t/option_p.t
 ../cpan/bignum/t/overrides.t
 ../cpan/bignum/t/ratopt_a.t
+../cpan/bignum/t/scope-bigfloat.t
 ../cpan/bignum/t/scope-bigint.t
 ../cpan/bignum/t/scope-bignum.t
 ../cpan/bignum/t/scope-bigrat.t
-../cpan/bignum/t/scope-nested-const.t
 
 # -------------
 
@@ -186,10 +213,6 @@ uni/variables.t
 # This one does a plan('skip_all') in a BEGIN block, which stops the rest
 # of the test file from being compiled
 ../cpan/ExtUtils-MakeMaker/t/MM_VMS.t
-
-# see comment above about bignum failures
-../cpan/Math-BigInt/t/const-mbf.t
-../cpan/Math-BigInt/t/const-mbi.t
 
 # see comment above about bignum failures
 ../cpan/Math-BigRat/t/const-mbr.t
@@ -233,7 +256,6 @@ uni/variables.t
 ../ext/XS-APItest/t/call_checker.t
 ../ext/XS-APItest/t/cleanup.t
 ../ext/XS-APItest/t/fetch_pad_names.t
-../ext/XS-APItest/t/svpeek.t
 ../ext/XS-APItest/t/synthetic_scope.t
 ../lib/Config.t                         # Config_heavy.pl fns getting output
 ../lib/charnames.t

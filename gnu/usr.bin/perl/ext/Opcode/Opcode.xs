@@ -12,7 +12,6 @@
 typedef struct {
     HV *	x_op_named_bits;	/* cache shared for whole process */
     SV *	x_opset_all;		/* mask with all bits set	*/
-    IV		x_opset_len;		/* length of opmasks in bytes	*/
 #ifdef OPCODE_DEBUG
     int		x_opcode_debug;		/* unused warn() emitting debugging code */
 #endif
@@ -20,9 +19,11 @@ typedef struct {
 
 START_MY_CXT
 
+/* length of opmasks in bytes */
+static const STRLEN opset_len = (PL_maxo + 7) / 8;
+
 #define op_named_bits		(MY_CXT.x_op_named_bits)
 #define opset_all		(MY_CXT.x_opset_all)
-#define opset_len		(MY_CXT.x_opset_len)
 #ifdef OPCODE_DEBUG
 #  define opcode_debug		(MY_CXT.x_opcode_debug)
 #else
@@ -50,13 +51,13 @@ op_names_init(pTHX)
 {
     int i;
     STRLEN len;
-    char **op_names;
+    const char *const *op_names;
     U8 *bitmap;
     dMY_CXT;
 
     op_named_bits = newHV();
     hv_ksplit(op_named_bits, PL_maxo);
-    op_names = get_op_names();
+    op_names = PL_op_name;
     for(i=0; i < PL_maxo; ++i) {
 	SV * const sv = newSViv(i);
 	SvREADONLY_on(sv);
@@ -128,7 +129,6 @@ static SV *
 new_opset(pTHX_ SV *old_opset)
 {
     SV *opset;
-    dMY_CXT;
 
     if (old_opset) {
 	verify_opset(aTHX_ old_opset,1);
@@ -149,11 +149,10 @@ static int
 verify_opset(pTHX_ SV *opset, int fatal)
 {
     const char *err = NULL;
-    dMY_CXT;
 
     if      (!SvOK(opset))              err = "undefined";
     else if (!SvPOK(opset))             err = "wrong type";
-    else if (SvCUR(opset) != (STRLEN)opset_len) err = "wrong size";
+    else if (SvCUR(opset) != opset_len) err = "wrong size";
     if (err && fatal) {
 	croak("Invalid opset: %s", err);
     }
@@ -164,8 +163,6 @@ verify_opset(pTHX_ SV *opset, int fatal)
 static void
 set_opset_bits(pTHX_ char *bitmap, SV *bitspec, int on, const char *opname)
 {
-    dMY_CXT;
-
     if (SvIOK(bitspec)) {
 	const int myopcode = SvIV(bitspec);
 	const int offset = myopcode >> 3;
@@ -180,7 +177,7 @@ set_opset_bits(pTHX_ char *bitmap, SV *bitspec, int on, const char *opname)
 	else
 	    bitmap[offset] &= ~(1 << bit);
     }
-    else if (SvPOK(bitspec) && SvCUR(bitspec) == (STRLEN)opset_len) {
+    else if (SvPOK(bitspec) && SvCUR(bitspec) == opset_len) {
 
 	STRLEN len;
 	const char * const specbits = SvPV(bitspec, len);
@@ -200,11 +197,10 @@ set_opset_bits(pTHX_ char *bitmap, SV *bitspec, int on, const char *opname)
 static void
 opmask_add(pTHX_ SV *opset)	/* THE ONLY FUNCTION TO EDIT PL_op_mask ITSELF	*/
 {
-    int i,j;
+    int j;
     char *bitmask;
     STRLEN len;
     int myopcode = 0;
-    dMY_CXT;
 
     verify_opset(aTHX_ opset,1);		/* croaks on bad opset	*/
 
@@ -214,7 +210,7 @@ opmask_add(pTHX_ SV *opset)	/* THE ONLY FUNCTION TO EDIT PL_op_mask ITSELF	*/
     /* OPCODES ALREADY MASKED ARE NEVER UNMASKED. See opmask_addlocal()	*/
 
     bitmask = SvPV(opset, len);
-    for (i=0; i < opset_len; i++) {
+    for (STRLEN i=0; i < opset_len; i++) {
 	const U16 bits = bitmask[i];
 	if (!bits) {	/* optimise for sparse masks */
 	    myopcode += 8;
@@ -258,7 +254,6 @@ BOOT:
 {
     MY_CXT_INIT;
     STATIC_ASSERT_STMT(PL_maxo < OP_MASK_BUF_SIZE);
-    opset_len = (PL_maxo + 7) / 8;
     if (opcode_debug >= 1)
 	warn("opset_len %ld\n", (long)opset_len);
     op_names_init(aTHX);
@@ -353,7 +348,6 @@ invert_opset(opset)
 CODE:
     {
     char *bitmap;
-    dMY_CXT;
     STRLEN len = opset_len;
 
     opset = sv_2mortal(new_opset(aTHX_ opset));	/* verify and clone opset */
@@ -374,10 +368,10 @@ opset_to_ops(opset, desc = 0)
 PPCODE:
     {
     STRLEN len;
-    int i, j, myopcode;
+    STRLEN i;
+    int j, myopcode;
     const char * const bitmap = SvPV(opset, len);
-    char **names = (desc) ? get_op_descs() : get_op_names();
-    dMY_CXT;
+    const char *const *names = (desc) ? PL_op_desc : PL_op_name;
 
     verify_opset(aTHX_ opset,1);
     for (myopcode=0, i=0; i < opset_len; i++) {
@@ -467,8 +461,7 @@ PPCODE:
     int i;
     STRLEN len;
     SV **args;
-    char **op_desc = get_op_descs(); 
-    dMY_CXT;
+    const char *const *op_desc = PL_op_desc;
 
     /* copy args to a scratch area since we may push output values onto	*/
     /* the stack faster than we read values off it if masks are used.	*/
@@ -483,8 +476,9 @@ PPCODE:
 	    XPUSHs(newSVpvn_flags(op_desc[myopcode], strlen(op_desc[myopcode]),
 				  SVs_TEMP));
 	}
-	else if (SvPOK(bitspec) && SvCUR(bitspec) == (STRLEN)opset_len) {
-	    int b, j;
+        else if (SvPOK(bitspec) && SvCUR(bitspec) == opset_len) {
+            STRLEN b;
+            int j;
 	    const char * const bitmap = SvPV_nolen_const(bitspec);
 	    int myopcode = 0;
 	    for (b=0; b < opset_len; b++) {

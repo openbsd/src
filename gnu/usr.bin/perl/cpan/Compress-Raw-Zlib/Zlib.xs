@@ -1103,7 +1103,7 @@ _deflateInit(flags,level, method, windowBits, memLevel, strategy, bufsize, dicti
             "Compress::Raw::Zlib::deflateStream", (void*)s);
         XPUSHs(obj);
     }
-    if (GIMME == G_ARRAY) {
+    if (GIMME_V == G_ARRAY) {
         SV * sv = sv_2mortal(newSViv(err)) ;
 	setDUALstatus(sv, err);
         XPUSHs(sv) ;
@@ -1176,7 +1176,7 @@ _inflateInit(flags, windowBits, bufsize, dictionary)
                    (void*)s);
         XPUSHs(obj);
     }
-    if (GIMME == G_ARRAY) {
+    if (GIMME_V == G_ARRAY) {
         SV * sv = sv_2mortal(newSViv(err)) ;
 	setDUALstatus(sv, err);
         XPUSHs(sv) ;
@@ -2294,7 +2294,7 @@ _createDeflateStream(inf_s, flags,level, method, windowBits, memLevel, strategy,
 
     XPUSHs(sv_setref_pv(sv_newmortal(),
             "Compress::Raw::Zlib::deflateStream", (void*)s));
-    if (GIMME == G_ARRAY) {
+    if (GIMME_V == G_ARRAY) {
         SV * sv = sv_2mortal(newSViv(err)) ;
         setDUALstatus(sv, err);
         XPUSHs(sv) ;

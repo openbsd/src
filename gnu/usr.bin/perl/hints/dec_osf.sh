@@ -487,7 +487,7 @@ esac
 for p in $loclibpth
 do
 	if test -d $p; then
-	    echo "Appending $p to LD_LIBRARY_PATH." >& 4
+	    echo "Appending $p to LD_LIBRARY_PATH." >&4
 	    case "$LD_LIBRARY_PATH" in
 	    '') LD_LIBRARY_PATH=$p                  ;;
 	    *)  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$p ;;
@@ -496,7 +496,7 @@ do
 done
 case "$LD_LIBRARY_PATH" in
 "$old_LD_LIBRARY_PATH") ;;
-*) echo "LD_LIBRARY_PATH is now $LD_LIBRARY_PATH." >& 4 ;;
+*) echo "LD_LIBRARY_PATH is now $LD_LIBRARY_PATH." >&4 ;;
 esac
 case "$LD_LIBRARY_PATH" in
 '') ;;

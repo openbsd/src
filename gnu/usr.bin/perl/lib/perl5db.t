@@ -404,9 +404,11 @@ results.
 
 =head1 DESCRIPTION
 
-DebugWrap is a simple class that executes a set of debugger commands
-against a program under the debugger and provides some simple methods
-to examine the results.
+DebugWrap is a simple class used when testing the Perl debugger that
+executes a set of debugger commands against a program under the
+debugger and provides some simple methods to examine the results.
+
+It is not installed to your system.
 
 =head2 Creating a DebugWrap object
 
@@ -459,7 +461,7 @@ include the output from the program under test.
 Test that the debugger output matches the given regular expression
 object (as with qr//).
 
-Equivelent to:
+Equivalent to:
 
   like($wrapper->get_contents, $re, $test_name);
 
@@ -468,7 +470,7 @@ Equivelent to:
 Test that the debugger output does not match the given regular
 expression object (as with qr//).
 
-Equivelent to:
+Equivalent to:
 
   unlike($wrapper->get_contents, $re, $test_name);
 
@@ -484,7 +486,7 @@ capturing stderr.
 Test that the program output matches the given regular expression
 object (as with qr//).
 
-Equivelent to:
+Equivalent to:
 
   like($wrapper->get_output, $re, $test_name);
 
@@ -493,7 +495,7 @@ Equivelent to:
 Test that the program output does not match the given regular
 expression object (as with qr//).
 
-Equivelent to:
+Equivalent to:
 
   unlike($wrapper->get_output, $re, $test_name);
 

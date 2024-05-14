@@ -1,6 +1,6 @@
 package ExtUtils::MakeMaker::FAQ;
 
-our $VERSION = '7.64';
+our $VERSION = '7.70';
 $VERSION =~ tr/_//d;
 
 1;
@@ -129,7 +129,7 @@ Let's take the following test directory structure:
     t/bar/othertest.t
     t/bar/baz/anothertest.t
 
-Now, inside of the C<WriteMakeFile()> function in your F<Makefile.PL>, specify
+Now, inside of the C<WriteMakefile()> function in your F<Makefile.PL>, specify
 where your tests are located with the C<test> directive:
 
     test => {TESTS => 't/*.t t/*/*.t t/*/*/*.t'}
@@ -536,8 +536,7 @@ And of course a very basic test:
 
   t/cool.t:
   --------
-  use Test;
-  BEGIN { plan tests => 1 };
+  use Test::More tests => 1;
   use Cool::Foo;
   use Cool::Bar;
   Cool::Foo::perl_rules();

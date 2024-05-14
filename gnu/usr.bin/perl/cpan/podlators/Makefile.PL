@@ -4,7 +4,7 @@
 # which only supports that build method, and because it is a dependency of
 # other build systems like Module::Build.
 #
-# Copyright 1999-2001, 2008, 2010, 2012, 2014-2016, 2018-2019
+# Copyright 1999-2001, 2008, 2010, 2012, 2014-2016, 2018-2019, 2022
 #     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -30,7 +30,7 @@ sub dist_version {
     open(my $fh, '<', File::Spec->catfile('lib', 'Pod', 'Man.pm'))
       or die "$0: cannot open lib/Pod/Man.pm: $!\n";
     while (defined(my $line = <$fh>)) {
-        if ($line =~ m{ \A \$VERSION \s+ = \s+ '([^\']+)' }xms) {
+        if ($line =~ m{ \A (?:our \s+)? \$VERSION \s+ = \s+ '([^\']+)' }xms) {
             close($fh) or die "$0: cannot close lib/Pod/Man.pm\n";
             return $1;
         }
@@ -81,7 +81,8 @@ sub man1pod {
 # The hash of all the metadata.  This will be modified before WriteMakefile to
 # remove keys not supported by the local version of ExtUtils::MakeMaker.
 my $dist_version = dist_version();
-my %metadata     = (
+my %metadata = (
+    #<<<
     NAME             => 'Pod',
     DISTNAME         => 'podlators',
     ABSTRACT         => 'Convert POD data to various other formats',
@@ -89,7 +90,8 @@ my %metadata     = (
     LICENSE          => 'perl_5',
     EXE_FILES        => [scripts('pod2text', 'pod2man')],
     VERSION_FROM     => 'lib/Pod/Man.pm',
-    MIN_PERL_VERSION => '5.008',
+    MIN_PERL_VERSION => '5.010',
+    #>>>
 
     # Use *.PL files to generate the driver scripts so that we get the correct
     # invocation of Perl on non-UNIX platforms.
@@ -107,11 +109,11 @@ my %metadata     = (
     },
 
     # Clean some additional files.
-    clean     => { FILES => File::Spec->catdir('t',    'tmp') },
+    clean => { FILES => File::Spec->catdir('t', 'tmp') },
     realclean => { FILES => scalar(scripts('pod2text', 'pod2man')) },
 
     # Dependencies on other modules.
-    PREREQ_PM => { 'Pod::Simple' => 3.06 },
+    PREREQ_PM => { 'Pod::Simple' => 3.26 },
 
     # Older versions of ExtUtils::MakeMaker don't pick up nested test
     # directories by default.
@@ -125,41 +127,40 @@ my %metadata     = (
     # Additional metadata.
     META_ADD => {
         'meta-spec' => { version => 2 },
-        provides    => {
+        provides => {
             'Pod::Man' => {
-                file    => 'lib/Pod/Man.pm',
+                file => 'lib/Pod/Man.pm',
                 version => $dist_version,
             },
             'Pod::ParseLink' => {
-                file    => 'lib/Pod/ParseLink.pm',
+                file => 'lib/Pod/ParseLink.pm',
                 version => $dist_version,
             },
             'Pod::Text' => {
-                file    => 'lib/Pod/Text.pm',
+                file => 'lib/Pod/Text.pm',
                 version => $dist_version,
             },
             'Pod::Text::Color' => {
-                file    => 'lib/Pod/Text/Color.pm',
+                file => 'lib/Pod/Text/Color.pm',
                 version => $dist_version,
             },
             'Pod::Text::Overstrike' => {
-                file    => 'lib/Pod/Text/Overstrike.pm',
+                file => 'lib/Pod/Text/Overstrike.pm',
                 version => $dist_version,
             },
             'Pod::Text::Termcap' => {
-                file    => 'lib/Pod/Text/Termcap.pm',
+                file => 'lib/Pod/Text/Termcap.pm',
                 version => $dist_version,
             },
         },
         resources => {
             bugtracker => {
-                mailto => 'bug-podlators@rt.cpan.org',
-                web => 'https://rt.cpan.org/Dist/Display.html?Name=podlators',
+                web => 'https://github.com/rra/podlators/issues',
             },
-            homepage   => 'https://www.eyrie.org/~eagle/software/podlators/',
+            homepage => 'https://www.eyrie.org/~eagle/software/podlators/',
             repository => {
-                url  => 'https://github.com/rra/podlators.git',
-                web  => 'https://github.com/rra/podlators',
+                url => 'https://github.com/rra/podlators.git',
+                web => 'https://github.com/rra/podlators',
                 type => 'git',
             },
         },
@@ -169,8 +170,8 @@ my %metadata     = (
 # Remove keys that aren't supported by this version of ExtUtils::MakeMaker.
 # This hash maps keys to the minimum supported version.
 my %supported = (
-    LICENSE          => 6.31,
-    META_ADD         => 6.46,
+    LICENSE => 6.31,
+    META_ADD => 6.46,
     MIN_PERL_VERSION => 6.48,
 );
 for my $key (keys(%supported)) {

@@ -357,6 +357,9 @@ EOM
         esac
     fi
 
+    # The OS is buggy with respect to this.
+    ccflags="$ccflags -DNO_POSIX_2008_LOCALE"
+
    lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
    ;;
 esac
@@ -508,16 +511,6 @@ esac
 # makefile in the same place.  Since Darwin uses GNU make, this dodges
 # the problem.
 firstmakefile=GNUmakefile;
-
-# Parts of the system call setenv(), in particular in an atfork handler.
-# This causes problems when the child tries to clean up environ[], so
-# let libc manage environ[].
-cat >> config.over <<'EOOVER'
-if test "$d_unsetenv" = "$define" -a \
-    `expr "$ccflags" : '.*-DPERL_USE_SAFE_PUTENV'` -eq 0; then
-        ccflags="$ccflags -DPERL_USE_SAFE_PUTENV"
-fi
-EOOVER
 
 # if you use a newer toolchain before OS X 10.9 these functions may be
 # incorrectly detected, so disable them

@@ -1,5 +1,5 @@
 #
-# $Id: mime-header.t,v 2.15 2017/07/18 07:15:29 dankogai Exp $
+# $Id: mime-header.t,v 2.16 2022/06/25 01:58:57 dankogai Exp $
 # This script is written in utf8
 #
 BEGIN {
@@ -24,7 +24,7 @@ use strict;
 use utf8;
 use charnames ":full";
 
-use Test::More tests => 266;
+use Test::More tests => 274;
 
 BEGIN {
     use_ok("Encode::MIME::Header");
@@ -138,6 +138,11 @@ my @decode_default_tests = (
     "=?utf-8-strict?Q?=C3=A1=f9=80=80=80=80?=" => "á�",
     # allow non-ASCII characters in q word
     "=?UTF-8?Q?\x{C3}\x{A1}?=" => "á",
+    # allow missing padding characters '=' in b word
+    "=?UTF-8?B?JQ?=" => "%",
+    "=?UTF-8?B?JQ?= =?UTF-8?B?JQ?=" => "%%",
+    "=?UTF-8?B?YWI?=" => "ab",
+    "=?UTF-8?B?YWI?= =?UTF-8?B?YWI?=" => "abab",
 );
 
 my @decode_strict_tests = (
@@ -159,6 +164,11 @@ my @decode_strict_tests = (
     "=?utf-8-strict?Q?=C3=A1?=" => "=?utf-8-strict?Q?=C3=A1?=",
     # do not allow non-ASCII characters in q word
     "=?UTF-8?Q?\x{C3}\x{A1}?=" => "=?UTF-8?Q?\x{C3}\x{A1}?=",
+    # do not allow missing padding characters '=' in b word
+    "=?UTF-8?B?JQ?=" => "=?UTF-8?B?JQ?=",
+    "=?UTF-8?B?JQ?= =?UTF-8?B?JQ?=" => "=?UTF-8?B?JQ?= =?UTF-8?B?JQ?=",
+    "=?UTF-8?B?YWI?=" => "=?UTF-8?B?YWI?=",
+    "=?UTF-8?B?YWI?= =?UTF-8?B?YWI?=" => "=?UTF-8?B?YWI?= =?UTF-8?B?YWI?=",
 );
 
 my @encode_tests = (

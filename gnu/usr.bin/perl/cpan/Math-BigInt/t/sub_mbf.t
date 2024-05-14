@@ -25,7 +25,7 @@ is($ms->{_custom}, 1, '$ms has custom attribute \$ms->{_custom}');
 # Check that subclass is a Math::BigFloat, but not a Math::Bigint
 isa_ok($ms, 'Math::BigFloat');
 ok(!$ms->isa('Math::BigInt'),
-   "An object of class '" . ref($ms) . "' isn't a 'Math::BigFloat'");
+   "An object of class '" . ref($ms) . "' isn't a 'Math::BigInt'");
 
 use Math::BigFloat;
 

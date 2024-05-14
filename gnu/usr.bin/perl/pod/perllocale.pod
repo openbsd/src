@@ -1693,7 +1693,7 @@ and so uses other non-locale constructs that aren't multi-thread-safe.
 See L<perlxs/Thread-aware system interfaces>.
 
 POSIX does not define a way to get the name of the current per-thread
-locale.  Some systems, such as Darwin and NetBSD do implement a
+locale.  Some systems, such as Darwin and FreeBSD do implement a
 function, L<querylocale(3)> to do this.  On non-Windows systems without
 it, such as Linux, there are some additional caveats:
 

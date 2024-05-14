@@ -1,15 +1,15 @@
-.SH "NAME"
+.SH NAME
 basic.pod \- Test of various basic POD features in translators.
-.SH "HEADINGS"
+.SH HEADINGS
 .IX Header "HEADINGS"
 Try a few different levels of headings, with embedded formatting codes and
 other interesting bits.
 .ie n .SH "This ""is"" a ""level 1"" heading"
-.el .SH "This \f(CWis\fP a ``level 1'' heading"
-.IX Header "This is a level 1 heading"
+.el .SH "This \f(CWis\fP a ""level 1"" heading"
+.IX Header "This is a ""level 1"" heading"
 .SS "``Level'' ""2 \fIheading\fP"
 .IX Subsection "``Level'' ""2 heading"
-\fILevel 3 \f(BIheading \f(BIwith \f(CB\*(C`weird \f(CBstuff "" (double quote)\f(CB\*(C'\f(BI\f(BI\fI\fR
+\fILevel 3 \fR\f(BIheading with \fR\f(CB\*(C`weird stuff "" (double quote)\*(C'\fR
 .IX Subsection "Level 3 heading with weird stuff """" (double quote)"
 .PP
 Level "4 \f(CW\*(C`heading\*(C'\fR
@@ -17,14 +17,14 @@ Level "4 \f(CW\*(C`heading\*(C'\fR
 .PP
 Now try again with \fBintermixed\fR \fItext\fR.
 .ie n .SH "This ""is"" a ""level 1"" heading"
-.el .SH "This \f(CWis\fP a ``level 1'' heading"
-.IX Header "This is a level 1 heading"
+.el .SH "This \f(CWis\fP a ""level 1"" heading"
+.IX Header "This is a ""level 1"" heading"
 Text.
 .SS "``Level'' 2 \fIheading\fP"
 .IX Subsection "``Level'' 2 heading"
 Text.
 .PP
-\fILevel 3 \f(BIheading \f(BIwith \f(CB\*(C`weird \f(CBstuff\f(CB\*(C'\f(BI\f(BI\fI\fR
+\fILevel 3 \fR\f(BIheading with \fR\f(CB\*(C`weird stuff\*(C'\fR
 .IX Subsection "Level 3 heading with weird stuff"
 .PP
 Text.
@@ -33,19 +33,19 @@ Level "4 \f(CW\*(C`heading\*(C'\fR
 .IX Subsection "Level ""4 heading"
 .PP
 Text.
-.SH "LINKS"
+.SH LINKS
 .IX Header "LINKS"
 These are all taken from the Pod::Parser tests.
 .PP
-Try out \fI\s-1LOTS\s0\fR of different ways of specifying references:
+Try out \fILOTS\fR of different ways of specifying references:
 .PP
-Reference the \*(L"section\*(R" in manpage
+Reference the "section" in manpage
 .PP
-Reference the \*(L"section\*(R" in \*(L"manpage\*(R"
+Reference the "section" in "manpage"
 .PP
-Reference the \*(L"section\*(R" in manpage
+Reference the "section" in manpage
 .PP
-Now try it using the new \*(L"|\*(R" stuff ...
+Now try it using the new "|" stuff ...
 .PP
 Reference the thistext|
 .PP
@@ -65,23 +65,23 @@ foo
 .PP
 foo
 .PP
-\&\*(L"bar\*(R" in foo
+"bar" in foo
 .PP
-\&\*(L"baz boo\*(R" in foo
+"baz boo" in foo
 .PP
-\&\*(L"bar\*(R"
+"bar"
 .PP
-\&\*(L"baz boo\*(R"
+"baz boo"
 .PP
-\&\*(L"baz boo\*(R"
+"baz boo"
 .PP
-\&\*(L"baz boo\*(R" in foo bar
+"baz boo" in foo bar
 .PP
-\&\*(L"boo var baz\*(R"
+"boo var baz"
 .PP
-\&\*(L"bar baz\*(R"
+"bar baz"
 .PP
-\&\*(L"boo\*(R", \*(L"bar\*(R", and \*(L"baz\*(R"
+"boo", "bar", and "baz"
 .PP
 foobar
 .PP
@@ -89,7 +89,7 @@ Testing \fIitalics\fR
 .PP
 "\fIItalic\fR text" in foo
 .PP
-"Section \f(CW\*(C`with\*(C'\fR \fI\f(BIother\fI markup\fR" in foo|bar
+"Section \f(CW\*(C`with\*(C'\fR \fR\f(BIother\fR\fI markup\fR" in foo|bar
 .SH "OVER AND ITEMS"
 .IX Header "OVER AND ITEMS"
 Taken from Pod::Parser tests, this is a test to ensure that multiline
@@ -101,31 +101,31 @@ There should be whitespace now before this line.
 .PP
 Taken from Pod::Parser tests, this is a test to ensure the nested =item
 paragraphs get indented appropriately.
-.IP "1." 2
+.IP 1. 2
 First section.
 .RS 2
-.IP "a" 2
+.IP a 2
 .IX Item "a"
 this is item a
-.IP "b" 2
+.IP b 2
 .IX Item "b"
 this is item b
 .RE
 .RS 2
 .RE
-.IP "2." 2
+.IP 2. 2
 Second section.
 .RS 2
-.IP "a" 2
+.IP a 2
 .IX Item "a"
 this is item a
-.IP "b" 2
+.IP b 2
 .IX Item "b"
 this is item b
-.IP "c" 2
+.IP c 2
 .IX Item "c"
 .PD 0
-.IP "d" 2
+.IP d 2
 .IX Item "d"
 .PD
 This is item c & d.
@@ -135,14 +135,13 @@ This is item c & d.
 .PP
 Now some additional weirdness of our own.  Make sure that multiple tags
 for one paragraph are properly compacted.
-.ie n .IP """foo""" 4
-.el .IP "``foo''" 4
-.IX Item "foo"
+.IP """foo""" 4
+.IX Item """foo"""
 .PD 0
-.IP "\fBbar\fR" 4
+.IP \fBbar\fR 4
 .IX Item "bar"
 .ie n .IP """baz""" 4
-.el .IP "\f(CWbaz\fR" 4
+.el .IP \f(CWbaz\fR 4
 .IX Item "baz"
 .PD
 There shouldn't be any spaces between any of these item tags; this idiom
@@ -155,7 +154,7 @@ few lines).
 .Sp
 Let's also make it multiple paragraphs to be sure that works.
 .PP
-Test use of =over without =item as a block \*(L"quote\*(R" or block paragraph.
+Test use of =over without =item as a block "quote" or block paragraph.
 .Sp
 .RS 4
 This should be indented four spaces but otherwise formatted the same as
@@ -174,9 +173,9 @@ This paragraph should be doubly indented.
 .RS 4
 .Sp
 This paragraph should only be singly indented.
-.IP "\(bu" 4
+.IP \(bu 4
 This is an item in the middle of a block-quote, which should be allowed.
-.IP "\(bu" 4
+.IP \(bu 4
 We're also testing tagless item commands.
 .RE
 .RS 4
@@ -187,22 +186,22 @@ Should be back to the single level of indentation.
 Should be back to regular indentation.
 .PP
 Now also check the transformation of * into real bullets for man pages.
-.IP "\(bu" 4
+.IP \(bu 4
 An item.  We're also testing using =over without a number, and making sure
 that item text wraps properly.
-.IP "\(bu" 4
+.IP \(bu 4
 Another item.
 .PP
 and now test the numbering of item blocks.
-.IP "1." 4
+.IP 1. 4
 First item.
-.IP "2." 4
+.IP 2. 4
 Second item.
 .SH "FORMATTING CODES"
 .IX Header "FORMATTING CODES"
 Another test taken from Pod::Parser.
 .PP
-This is a test to see if I can do not only \f(CW$self\fR and \f(CW\*(C`method()\*(C'\fR, but
+This is a test to see if I can do not only \f(CW$self\fR and \f(CWmethod()\fR, but
 also \f(CW\*(C`$self\->method()\*(C'\fR and \f(CW\*(C`$self\->{FIELDNAME}\*(C'\fR and
 \&\f(CW\*(C`$Foo <=> $Bar\*(C'\fR without resorting to escape sequences. If 
 I want to refer to the right-shift operator I can do something
@@ -221,14 +220,14 @@ Don't forget \f(CW\*(C`$self\->method()\->{FIELDNAME} = {FOO=>BAR}\*(C'\fR.
 And make sure that \f(CW0\fR works too!
 .PP
 Now, if I use << or >> as my delimiters, then I have to use whitespace.
-So things like \f(CW\*(C`<$self\-\*(C'\fR\fBmethod()\fR>> and \f(CW\*(C`<$self\-\*(C'\fR{\s-1FIELDNAME\s0}>> won't end
+So things like \f(CW\*(C`<$self\-\*(C'\fR\fBmethod()\fR>> and \f(CW\*(C`<$self\-\*(C'\fR{FIELDNAME}>> won't end
 up doing what you might expect since the first > will still terminate
 the first < seen.
 .PP
 Lets make sure these work for empty ones too, like \f(CW\*(C`\*(C'\fR and \f(CW\*(C`>>\*(C'\fR
 (just to be obnoxious)
 .PP
-The statement: \f(CW\*(C`This is dog kind\*(Aqs \f(CIfinest\f(CW hour!\*(C'\fR is a parody of a
+The statement: \f(CW\*(C`This is dog kind\*(Aqs \fR\f(CIfinest\fR\f(CW hour!\*(C'\fR is a parody of a
 quotation from Winston Churchill.
 .PP
 The following tests are added to those:
@@ -236,17 +235,17 @@ The following tests are added to those:
 Make sure that a few other odd \fIthings\fR still work.  This should be
 a vertical bar:  |.  Here's a test of a few more special escapes
 that have to be supported:
-.IP "&" 3
+.IP & 3
 An ampersand.
-.IP "'" 3
+.IP ' 3
 An apostrophe.
-.IP "<" 3
+.IP < 3
 A less-than sign.
-.IP ">" 3
+.IP > 3
 A greater-than sign.
 .IP """" 3
 A double quotation mark.
-.IP "/" 3
+.IP / 3
 A forward slash.
 .PP
 Try to get this bit of text over towards the edge so |that\ all\ of\ this\ text\ inside\ S<>\ won't| be wrapped.  Also test the
@@ -256,7 +255,7 @@ There is a soft hy\%phen in hyphen at hy-phen.
 .PP
 This is a test of an index entry.
 .IX Xref "index entry"
-.SH "VERBATIM"
+.SH VERBATIM
 .IX Header "VERBATIM"
 Throw in a few verbatim paragraphs.
 .PP
@@ -314,7 +313,7 @@ up.)
 \&    visually inspect the nroff output when run on the generated *roff
 \&    text, unfortunately.)
 .Ve
-.SH "CONCLUSION"
+.SH CONCLUSION
 .IX Header "CONCLUSION"
 That's all, folks!
 .SH "COPYRIGHT AND LICENSE"
@@ -326,4 +325,4 @@ permitted in any medium without royalty provided the copyright notice and
 this notice are preserved.  This file is offered as-is, without any
 warranty.
 .PP
-SPDX-License-Identifier: \s-1FSFAP\s0
+SPDX-License-Identifier: FSFAP

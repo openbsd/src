@@ -121,9 +121,9 @@ another name.
 
 Back before Perl had the XS system for connecting with C libraries,
 programmers used to get library constants by reading through the C
-header files. You may still see C<require 'syscall.ph'> or similar
+header files. You may still see S<C<require 'syscall.ph'>> or similar
 around - the F<.ph> file should be created by running F<h2ph> on the
-corresponding F<.h> file. See the F<h2ph> documentation for more on how
+corresponding F<.h> file. See the L<h2ph> documentation for more on how
 to convert a whole bunch of header files at once.
 
 =item L<h2xs>

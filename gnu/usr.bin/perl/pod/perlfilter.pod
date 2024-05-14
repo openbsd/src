@@ -12,7 +12,7 @@ about what source filters are, how they work, and how to write your
 own.
 
 The original purpose of source filters was to let you encrypt your
-program source to prevent casual piracy. This isn't all they can do, as
+program source to prevent casual reading. This isn't all they can do, as
 you'll soon learn. But first, the basics.
 
 =head1 CONCEPTS
@@ -205,18 +205,17 @@ source filter (see Decryption Filters, below).
 All decryption filters work on the principle of "security through
 obscurity." Regardless of how well you write a decryption filter and
 how strong your encryption algorithm is, anyone determined enough can
-retrieve the original source code. The reason is quite simple - once
-the decryption filter has decrypted the source back to its original
-form, fragments of it will be stored in the computer's memory as Perl
-parses it. The source might only be in memory for a short period of
-time, but anyone possessing a debugger, skill, and lots of patience can
-eventually reconstruct your program.
+retrieve the original source code. The reason is quite simple:
+in order to execute your program Perl must parse its source code.
+This means that Perl must have all the information needed to decrypt
+your program, and that means that that information is also available to
+anyone able to run the program.
 
 That said, there are a number of steps that can be taken to make life
-difficult for the potential cracker. The most important: Write your
+difficult for the potential reader. The most important: Write your
 decryption filter in C and statically link the decryption module into
 the Perl binary. For further tips to make life difficult for the
-potential cracker, see the file I<decrypt.pm> in the source filters
+potential reader, see the file I<decrypt.pm> in the source filters
 distribution.
 
 =back

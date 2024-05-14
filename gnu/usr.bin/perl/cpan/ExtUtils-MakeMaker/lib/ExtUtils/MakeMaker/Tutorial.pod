@@ -1,6 +1,6 @@
 package ExtUtils::MakeMaker::Tutorial;
 
-our $VERSION = '7.64';
+our $VERSION = '7.70';
 $VERSION =~ tr/_//d;
 
 
@@ -112,7 +112,7 @@ example:
 
     t/foo/subdir_test.t
 
-To do this, you need to inform C<WriteMakeFile()> in your I<Makefile.PL> file
+To do this, you need to inform C<WriteMakefile()> in your I<Makefile.PL> file
 in the following fashion:
 
     test => {TESTS => 't/*.t t/*/*.t'}

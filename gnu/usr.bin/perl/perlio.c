@@ -53,7 +53,7 @@
 #  include <rms.h>
 #endif
 
-#define PerlIO_lockcnt(f) (((PerlIOl*)(f))->head->flags)
+#define PerlIO_lockcnt(f) (((PerlIOl*)(void*)(f))->head->flags)
 
 /* Call the callback or PerlIOBase, and return failure. */
 #define Perl_PerlIO_or_Base(f, callback, base, failure, args) 	\
@@ -294,7 +294,7 @@ PerlIO_openn(pTHX_ const char *layers, const char *mode, int fd,
         }
     }
     else {
-        return PerlIO_fdopen(fd, (char *) mode);
+        return PerlIO_fdopen(fd, mode);
     }
     return NULL;
 }
@@ -362,14 +362,17 @@ PerlIO_debug(const char *fmt, ...)
         const char * const s = CopFILE(PL_curcop);
         /* Use fixed buffer as sv_catpvf etc. needs SVs */
         char buffer[1024];
-        const STRLEN len1 = my_snprintf(buffer, sizeof(buffer), "%.40s:%" IVdf " ", s ? s : "(none)", (IV) CopLINE(PL_curcop));
+        const STRLEN len1 = my_snprintf(buffer, sizeof(buffer), "%.40s:%" LINE_Tf " ", s ? s : "(none)", CopLINE(PL_curcop));
 #  ifdef USE_QUADMATH
 #    ifdef HAS_VSNPRINTF
         /* my_vsnprintf() isn't available with quadmath, but the native vsnprintf()
            should be, otherwise the system isn't likely to support quadmath.
            Nothing should be calling PerlIO_debug() with floating point anyway.
         */
+        DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+        STORE_LC_NUMERIC_SET_TO_NEEDED();
         const STRLEN len2 = vsnprintf(buffer + len1, sizeof(buffer) - len1, fmt, ap);
+        RESTORE_LC_NUMERIC();
 #    else
         STATIC_ASSERT_STMT(0);
 #    endif
@@ -380,8 +383,8 @@ PerlIO_debug(const char *fmt, ...)
 #else
         const char *s = CopFILE(PL_curcop);
         STRLEN len;
-        SV * const sv = Perl_newSVpvf(aTHX_ "%s:%" IVdf " ", s ? s : "(none)",
-                                      (IV) CopLINE(PL_curcop));
+        SV * const sv = Perl_newSVpvf(aTHX_ "%s:%" LINE_Tf " ",
+                                      s ? s : "(none)", CopLINE(PL_curcop));
         Perl_sv_vcatpvf(aTHX_ sv, fmt, &ap);
 
         s = SvPV_const(sv, len);
@@ -416,7 +419,7 @@ PerlIO_verify_head(pTHX_ PerlIO *f)
     assert(p);
     do {
         assert(p->head == head);
-        if (p == (PerlIOl*)f)
+        if (&p->next == f)
             seen = 1;
         p = p->next;
     } while (p);
@@ -446,14 +449,14 @@ PerlIO *
 PerlIO_allocate(pTHX)
 {
     /*
-     * Find a free slot in the table, allocating new table as necessary
+     * Find a free slot in the table, allocating new tables as necessary
      */
     PerlIOl **last;
     PerlIOl *f;
     last = &PL_perlio;
     while ((f = *last)) {
         int i;
-        last = (PerlIOl **) (f);
+        last = &f->next;
         for (i = 1; i < PERLIO_TABLE_SIZE; i++) {
             if (!((++f)->next)) {
                 goto good_exit;
@@ -464,13 +467,13 @@ PerlIO_allocate(pTHX)
     if (!f) {
         return NULL;
     }
-    *last = (PerlIOl*) f++;
+    *last = f++;
 
     good_exit:
     f->flags = 0; /* lockcnt */
     f->tab = NULL;
     f->head = f;
-    return (PerlIO*) f;
+    return &f->next;
 }
 
 #undef PerlIO_fdupopen
@@ -498,7 +501,7 @@ PerlIO_cleantable(pTHX_ PerlIOl **tablep)
     PerlIOl * const table = *tablep;
     if (table) {
         int i;
-        PerlIO_cleantable(aTHX_(PerlIOl **) & (table[0]));
+        PerlIO_cleantable(aTHX_ &table[0].next);
         for (i = PERLIO_TABLE_SIZE - 1; i > 0; i--) {
             PerlIOl * const f = table + i;
             if (f->next) {
@@ -592,7 +595,8 @@ PerlIO_clone(pTHX_ PerlInterpreter *proto, CLONE_PARAMS *param)
     DEBUG_i( PerlIO_debug("Clone %p from %p\n",(void*)aTHX,(void*)proto) );
     while ((f = *table)) {
             int i;
-            table = (PerlIOl **) (f++);
+            table = &f->next;
+            f++;
             for (i = 1; i < PERLIO_TABLE_SIZE; i++) {
                 if (f->next) {
                     (void) fp_dup(&(f->next), 0, param);
@@ -617,7 +621,8 @@ PerlIO_destruct(pTHX)
 #endif
     while ((f = *table)) {
         int i;
-        table = (PerlIOl **) (f++);
+        table = &f->next;
+        f++;
         for (i = 1; i < PERLIO_TABLE_SIZE; i++) {
             PerlIO *x = &(f->next);
             const PerlIOl *l;
@@ -690,9 +695,9 @@ PerlIO_get_layers(pTHX_ PerlIO *f)
             newSVpv(l->tab->name, 0) : &PL_sv_undef;
             SV * const arg = l->tab && l->tab->Getarg ?
             (*l->tab->Getarg)(aTHX_ &l, 0, 0) : &PL_sv_undef;
-            av_push(av, name);
-            av_push(av, arg);
-            av_push(av, newSViv((IV)l->flags));
+            av_push_simple(av, name);
+            av_push_simple(av, arg);
+            av_push_simple(av, newSViv((IV)l->flags));
             l = l->next;
         }
     }
@@ -818,7 +823,7 @@ XS(XS_io_MODIFY_SCALAR_ATTRIBUTES)
         const char * const name = SvPV_const(ST(i), len);
         SV * const layer = PerlIO_find_layer(aTHX_ name, len, 1);
         if (layer) {
-            av_push(av, SvREFCNT_inc_simple_NN(layer));
+            av_push_simple(av, SvREFCNT_inc_simple_NN(layer));
         }
         else {
             ST(count) = ST(i);
@@ -1441,7 +1446,7 @@ PerlIO_resolve_layers(pTHX_ const char *layers,
             }
             /*
              * Don't fail if handler cannot be found :via(...) etc. may do
-             * something sensible else we will just stringfy and open
+             * something sensible else we will just stringify and open
              * resulting string.
              */
         }
@@ -1628,7 +1633,8 @@ Perl_PerlIO_flush(pTHX_ PerlIO *f)
         int code = 0;
         while ((ff = *table)) {
             int i;
-            table = (PerlIOl **) (ff++);
+            table = &ff->next;
+            ff++;
             for (i = 1; i < PERLIO_TABLE_SIZE; i++) {
                 if (ff->next && PerlIO_flush(&(ff->next)) != 0)
                     code = -1;
@@ -1646,7 +1652,8 @@ PerlIOBase_flush_linebuf(pTHX)
     PerlIOl *f;
     while ((f = *table)) {
         int i;
-        table = (PerlIOl **) (f++);
+        table = &f->next;
+        f++;
         for (i = 1; i < PERLIO_TABLE_SIZE; i++) {
             if (f->next
                 && (PerlIOBase(&(f->next))->
@@ -4831,7 +4838,7 @@ Perl_PerlIO_stdin(pTHX)
     if (!PL_perlio) {
         PerlIO_stdstreams(aTHX);
     }
-    return (PerlIO*)&PL_perlio[1];
+    return &PL_perlio[1].next;
 }
 
 PerlIO *
@@ -4840,7 +4847,7 @@ Perl_PerlIO_stdout(pTHX)
     if (!PL_perlio) {
         PerlIO_stdstreams(aTHX);
     }
-    return (PerlIO*)&PL_perlio[2];
+    return &PL_perlio[2].next;
 }
 
 PerlIO *
@@ -4849,7 +4856,7 @@ Perl_PerlIO_stderr(pTHX)
     if (!PL_perlio) {
         PerlIO_stdstreams(aTHX);
     }
-    return (PerlIO*)&PL_perlio[3];
+    return &PL_perlio[3].next;
 }
 
 /*--------------------------------------------------------------------------------------*/

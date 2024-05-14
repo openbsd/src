@@ -1,5 +1,9 @@
 #!./perl
 
+# NOTE this script messes with the perl debugger flags, if you run
+# it under the perl debugger (perl -d) it might not work as expected.
+# Look for code related to $^P below and adjust accordingly.
+
 BEGIN {
     chdir 't' if -d 't';
     @INC = '.';
@@ -14,10 +18,14 @@ sub do_require {
 }
 
 # don't make this lexical
-$i = 1;
+our $i = 1;
 
-my @files_to_delete = qw (bleah.pm bleah.do bleah.flg urkkk.pm urkkk.pmc
-krunch.pm krunch.pmc whap.pm whap.pmc);
+our @module_true_tests; # this is set up in a BEGIN later on.
+our $module_true_test_count; # this is set up in a BEGIN later on.
+my @files_to_delete = qw (bleah.pm bleah.do bleah.flg blorn.pm blunge.pm
+urkkk.pm urkkk.pmc krunch.pm krunch.pmc whap.pm whap.pmc
+Demo1.pm Demo2.pm Demo3.pm Demo4.pm);
+push @files_to_delete, "$_->[0].pm" for @module_true_tests;
 
 # there may be another copy of this test script running, or the files may
 # just not have been deleted at the end of the last run; if the former, we
@@ -26,14 +34,13 @@ krunch.pm krunch.pmc whap.pm whap.pmc);
 # to why there might be multiple execution of this test file, I don't
 # know; but this is an experiment to see if random smoke failures go away.
 
-if (grep -e, @files_to_delete) {
+if (!$ENV{NO_SLEEP} and grep -e, @files_to_delete) {
     print "# Sleeping for 20 secs waiting for other process to finish\n";
     sleep 20;
 }
 
-
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 58;
+my $total_tests = 58 + $module_true_test_count;
 if ($Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
 
@@ -194,6 +201,7 @@ print "ok $i - require() context\n";
 1;
 **BLEAH**
 );
+my ($foo,@foo);
                               delete $INC{"bleah.pm"}; ++$::i;
 $foo = eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
 @foo = eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
@@ -348,6 +356,231 @@ if (defined &DynaLoader::boot_DynaLoader) {
     print "${not}ok $i - require does not localise %^H at run time\n";
 }
 
+
+BEGIN {
+    # These are the test for feature 'module_true', which when in effect
+    # avoids the requirement for a module to return a true value, and
+    # in fact forces the return value to be a simple "true"
+    # (eg, PL_sv_yes, aka 1).
+    # we have a lot of permutations of how this code might trigger, and
+    # etc. so we set up the test set here.
+
+    my @params = (
+            'use v5.37',
+            'use feature ":5.38"',
+            'use feature ":all"',
+            'use feature "module_true"',
+            'no feature "module_true"',
+            '',
+        );
+    my @module_code = (
+            '',
+            'sub foo {};',
+            'sub foo {}; 0;',
+            'sub foo {}; return 0;',
+            'sub foo {}; return (0,0,"some_true_value");',
+            'sub foo {}; return ("some_true_value",1,1);',
+            'sub foo {}; (0, return 0);',
+            'sub foo {}; "some_true_value";',
+            'sub foo {}; return "some_true_value";',
+            'sub foo {}; (0, return "some_true_value");',
+            'sub foo {}; (0, return "some_true_value");',
+            undef,
+        );
+    my @eval_code = (
+            'use PACK;',
+            'require PACK;',
+            '$return_val = require PACK;',
+            '@return_val = require PACK;',
+            'require "PACK.pm";',
+            '$return_val = require "PACK.pm";',
+            '@return_val = require "PACK.pm";',
+    );
+
+    # build a list of tuples. for now this just keeps the test
+    # indent level reasonable for the main test loop, but we could
+    # compute this at BEGIN time and then add the number of tests
+    # to the total count
+    my %seen;
+    foreach my $debugger_state (0,0xA) {
+        foreach my $param_str (@params) {
+            foreach my $mod_code (@module_code) {
+                foreach my $eval_code (@eval_code) {
+                    my $pack_name= sprintf "mttest%d", 0+@module_true_tests;
+                    my $eval_code_munged= $eval_code=~s/PACK/$pack_name/r;
+                    # this asks the debugger to preserve lines from evals.
+                    # it causes nextstate ops to convert to dbstate ops,
+                    # and we need to check that we can handle both cases.
+                    $eval_code_munged= '$^P = ' . $debugger_state .
+                                       '; ' . $eval_code_munged
+                        if $debugger_state;
+
+                    my $param_str_munged = $param_str;
+                    $param_str_munged .= ";\n" if $param_str;
+
+                    my $this_code= defined($mod_code)
+                        ? "package PACK;\n$param_str_munged$mod_code\n"
+                        : "";
+
+                    next if $seen{$eval_code_munged . "|" . $this_code}++;
+                    $this_code=~s/PACK/$pack_name/g;
+
+                    push @module_true_tests,
+                        [$pack_name, $param_str, $this_code, $mod_code, $eval_code_munged];
+
+                    if ($this_code!~/use/ and $this_code !~ /some_true_value/) {
+                        $module_true_test_count += 2;
+                    } elsif ($eval_code_munged=~/return_val/) {
+                        $module_true_test_count += 2;
+                    } else {
+                        $module_true_test_count += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    # and more later on
+    $module_true_test_count += 12;
+}
+
+{
+    foreach my $tuple (@module_true_tests) {
+        my ($pack_name, $param_str, $this_code, $mod_code, $eval_code)= @$tuple;
+
+        write_file("$pack_name.pm", $this_code);
+        %INC = ();
+        # these might be assigned to in the $eval_code
+        my $return_val;
+        my @return_val;
+
+        my $descr= !$this_code ? "empty file loaded" :
+                  !$mod_code ? "default behavior with `$mod_code`" :
+                  "`$param_str` with `$mod_code`";
+        $descr .= " via `$eval_code`";
+
+        my $not = eval "$eval_code 1" ? "" : "not ";
+        my $err= $not ? $@ : "";
+        $^P = 0; # turn the debugger off after the eval.
+
+        if ($this_code=~/use/) {
+            # test the various ways the feature can be turned on
+            $i++;
+            print "${not}ok $i - (AA) $descr did not blow up\n";
+            if ($not) {
+                # we died, show the error:
+                print "# error: $_\n" for split /\n/, $err;
+            }
+            if ($eval_code=~/\$return_val/) {
+                $not = ($return_val && $return_val eq '1') ? "" : "not ";
+                $i++;
+                print "${not}ok $i - (AB) scalar return value "
+                      . "is simple true value <$return_val>\n";
+            }
+            elsif ($eval_code=~/\@return_val/) {
+                $not = (@return_val && $return_val[0] eq '1') ? "" : "not ";
+                $i++;
+                print "${not}ok $i - (AB) list return value "
+                      . "is simple true value <$return_val[0]>\n";
+            }
+        } elsif ($this_code!~/some_true_value/) {
+            # test cases where the feature is not on and return false
+            my $not= $not ? "" : "not ";
+            $i++;
+            print "${not}ok $i - (BA) $descr should die\n";
+            if ($not) {
+                print "# error: $_\n" for split /\n/, $err;
+                print "# code: $_\n" for split /\n/, $this_code || "NO CODE";
+            }
+            $not= $err=~/did not return a true value/ ? "" : "not ";
+            $i++;
+            print "${not}ok $i - (BB) saw expected error\n";
+        } else {
+            #test cases where the feature is not on and return true
+            $i++;
+            print "${not}ok $i - (CA) $descr should not die\n";
+            if ($eval_code=~/return_val/) {
+                $not = ($return_val || @return_val) ? "" : "not ";
+                $i++;
+                print "${not}ok $i - (CB) returned expected value\n";
+            }
+            if ($not) {
+                print "# error: $_\n" for split /\n/, $err;
+                print "# code: $_\n" for split /\n/, $this_code || "NO CODE";
+            }
+        }
+    }
+
+    {
+        write_file('blorn.pm', "package blorn;\nuse v5.37;\nsub foo {};\nno feature 'module_true';\n");
+
+        local $@;
+        my $result = 0;
+        my $not = eval "\$result = require 'blorn.pm'; 1" ? 'not ' : '';
+        $i++;
+        print "${not}ok $i - disabling module_true should not return a true value ($result)\n";
+        $not = $@ =~ /did not return a true value/ ? '' : 'not ';
+        $i++;
+        print "${not}ok $i - ... and should fail to compile without a true return value\n";
+    }
+
+    {
+        write_file('blunge.pm', "package blunge;\nuse feature ':5.38';\n".
+                                "sub bar {};\nno feature 'module_true';\n3;\n");
+
+        local $@;
+        my $result = 0;
+        eval "\$result = require 'blunge.pm'; 1";
+        my $not = $result == 3 ? '' : 'not ';
+        $i++;
+        print "${not}ok $i - disabling 'module_true' and should not override module's return value ($result)\n";
+        $not = $@ eq '' ? '' : 'not ';
+        $i++;
+        print "${not}ok $i - ... but should compile successfully with a provided return value\n";
+    }
+    for $main::test_mode (1..4) {
+        my $pack= "Demo$main::test_mode";
+        write_file("$pack.pm", sprintf(<<'CODE', $pack)=~s/^#//mgr);
+#package %s;
+#use feature 'module_true';
+#
+#return 1 if $main::test_mode == 1;
+#return 0 if $main::test_mode == 2;
+#
+#{
+#  no feature 'module_true';
+#  return 0 if $main::test_mode == 3;
+#}
+#no feature 'module_true';
+CODE
+        local $@;
+        my $result = 0;
+        my $ok= eval "\$result = require '$pack.pm'; 1";
+        my $err= $ok ? "" : $@;
+        if ($main::test_mode >= 3) {
+            my $not = $ok  ? 'not ' : '';
+            $i++;
+            print "${not}ok $i - in $pack disabling module_true "
+                  . "should not return a true value ($result)\n";
+            $not = $err =~ /did not return a true value/ ? '' : 'not ';
+            $i++;
+            print "${not}ok $i - ... and should throw the expected error\n";
+            if ($not) {
+                print "# $_\n" for split /\n/, $err;
+            }
+        } else {
+            my $not = $ok ? '' : 'not ';
+            $i++;
+            print "${not}ok $i - in $pack enabling module_true "
+                  . "should not return a true value ($result)\n";
+            $not = $result == 1 ? "" : "not ";
+            $i++;
+            print "${not}ok $i - ... and should return a simple true value\n";
+        }
+    }
+
+}
+
 ##########################################
 # What follows are UTF-8 specific tests. #
 # Add generic tests before this point.   #
@@ -379,7 +612,7 @@ foreach (sort keys %templates) {
 
 END {
     foreach my $file (@files_to_delete) {
-	1 while unlink $file;
+        1 while unlink $file;
     }
 }
 

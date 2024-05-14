@@ -56,8 +56,8 @@ is( $Eval1::VERSION, '1.01' );
 
 is( $Eval2::VERSION, '1.02' );
 
-my $expected= q{/^Can't locate reallyReAlLyNotexists.pm in \@INC \(\@INC contains:/};
-$expected= q{/^Can't locate reallyReAlLyNotexists.pm in \@INC \(you may need to install the reallyReAlLyNotexists module\) \(\@INC contains:/}
+my $expected= q{/^Can't locate reallyReAlLyNotexists.pm in \@INC \(\@INC[\w ]+:/};
+$expected= q{/^Can't locate reallyReAlLyNotexists.pm in \@INC \(you may need to install the reallyReAlLyNotexists module\) \(\@INC[\w ]+:/}
     if 5.017005 <= $];
 
 eval q{use parent 'reallyReAlLyNotexists'};
@@ -74,4 +74,3 @@ like( $@, $expected, '  still failing on 2nd load');
     use parent -norequire, 'Has::Version_0';
     ::is( $Has::Version_0::VERSION, 0, '$VERSION==0 preserved' );
 }
-

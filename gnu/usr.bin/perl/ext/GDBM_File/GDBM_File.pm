@@ -733,7 +733,7 @@ require XSLoader;
 );
 
 # This module isn't dual life, so no need for dev version numbers.
-$VERSION = '1.23';
+$VERSION = '1.24';
 
 our $gdbm_errno;
 

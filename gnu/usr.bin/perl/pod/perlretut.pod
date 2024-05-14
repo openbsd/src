@@ -63,7 +63,7 @@ many examples.  The first part of the tutorial will progress from the
 simplest word searches to the basic regular expression concepts.  If
 you master the first part, you will have all the tools needed to solve
 about 98% of your needs.  The second part of the tutorial is for those
-comfortable with the basics and hungry for more power tools.  It
+comfortable with the basics, and hungry for more power tools.  It
 discusses the more advanced regular expression operators and
 introduces the latest cutting-edge innovations.
 
@@ -690,49 +690,51 @@ of what Perl does when it tries to match the regexp
 
 =over 4
 
-=item Z<>0. Start with the first letter in the string C<'a'>.
+=item 1.
 
-E<nbsp>
+Start with the first letter in the string C<'a'>.
 
-=item Z<>1. Try the first alternative in the first group C<'abd'>.
+=item 2.
 
-E<nbsp>
+Try the first alternative in the first group C<'abd'>.
 
-=item Z<>2.  Match C<'a'> followed by C<'b'>. So far so good.
+=item 3.
 
-E<nbsp>
+Match C<'a'> followed by C<'b'>. So far so good.
 
-=item Z<>3.  C<'d'> in the regexp doesn't match C<'c'> in the string - a
+=item 4.
+
+C<'d'> in the regexp doesn't match C<'c'> in the string - a
 dead end.  So backtrack two characters and pick the second alternative
 in the first group C<'abc'>.
 
-E<nbsp>
+=item 5.
 
-=item Z<>4.  Match C<'a'> followed by C<'b'> followed by C<'c'>.  We are on a roll
+Match C<'a'> followed by C<'b'> followed by C<'c'>.  We are on a roll
 and have satisfied the first group. Set C<$1> to C<'abc'>.
 
-E<nbsp>
+=item 6.
 
-=item Z<>5 Move on to the second group and pick the first alternative C<'df'>.
+Move on to the second group and pick the first alternative C<'df'>.
 
-E<nbsp>
+=item 7.
 
-=item Z<>6 Match the C<'d'>.
+Match the C<'d'>.
 
-E<nbsp>
+=item 8.
 
-=item Z<>7.  C<'f'> in the regexp doesn't match C<'e'> in the string, so a dead
+C<'f'> in the regexp doesn't match C<'e'> in the string, so a dead
 end.  Backtrack one character and pick the second alternative in the
 second group C<'d'>.
 
-E<nbsp>
+=item 9.
 
-=item Z<>8.  C<'d'> matches. The second grouping is satisfied, so set
+C<'d'> matches. The second grouping is satisfied, so set
 C<$2> to C<'d'>.
 
-E<nbsp>
+=item 10.
 
-=item Z<>9.  We are at the end of the regexp, so we are done! We have
+We are at the end of the regexp, so we are done! We have
 matched C<'abcd'> out of the string C<"abcde">.
 
 =back
@@ -1322,36 +1324,38 @@ backtracking.  Here is a step-by-step analysis of the example
 
 =over 4
 
-=item Z<>0.  Start with the first letter in the string C<'t'>.
+=item 1.
 
-E<nbsp>
+Start with the first letter in the string C<'t'>.
 
-=item Z<>1.  The first quantifier C<'.*'> starts out by matching the whole
-string "C<the cat in the hat>".
+=item 2.
 
-E<nbsp>
+The first quantifier C<'.*'> starts out by matching the whole
+string C<"the cat in the hat">.
 
-=item Z<>2.  C<'a'> in the regexp element C<'at'> doesn't match the end
+=item 3.
+
+C<'a'> in the regexp element C<'at'> doesn't match the end
 of the string.  Backtrack one character.
 
-E<nbsp>
+=item 4.
 
-=item Z<>3.  C<'a'> in the regexp element C<'at'> still doesn't match
+C<'a'> in the regexp element C<'at'> still doesn't match
 the last letter of the string C<'t'>, so backtrack one more character.
 
-E<nbsp>
+=item 5.
 
-=item Z<>4.  Now we can match the C<'a'> and the C<'t'>.
+Now we can match the C<'a'> and the C<'t'>.
 
-E<nbsp>
+=item 6.
 
-=item Z<>5.  Move on to the third element C<'.*'>.  Since we are at the
+Move on to the third element C<'.*'>.  Since we are at the
 end of the string and C<'.*'> can match 0 times, assign it the empty
 string.
 
-E<nbsp>
+=item 7.
 
-=item Z<>6.  We are done!
+We are done!
 
 =back
 
@@ -2465,10 +2469,10 @@ parentheses and the second alternative C<\([^()]*\)>  matching a
 substring delimited by parentheses.  The problem with this regexp is
 that it is pathological: it has nested indeterminate quantifiers
 of the form C<(a+|b)+>.  We discussed in Part 1 how nested quantifiers
-like this could take an exponentially long time to execute if no match
-were possible.  To prevent the exponential blowup, we need to prevent
-useless backtracking at some point.  This can be done by enclosing the
-inner quantifier as an independent subexpression:
+like this could take an exponentially long time to execute if there
+is no match possible.  To prevent the exponential blowup, we need to
+prevent useless backtracking at some point.  This can be done by
+enclosing the inner quantifier as an independent subexpression:
 
     $x =~ /\( ( (?> [ ^ () ]+ ) | \([ ^ () ]* \) )+ \)/xx;
 

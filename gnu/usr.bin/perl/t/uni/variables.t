@@ -41,6 +41,7 @@ plan (tests => 66880);
     eval q<use strict; ${flark::fleem}>;
     is($@, '', q<${package::var} works>);
 
+    no warnings qw(syntax deprecated);
     local $@;
     eval q<use strict; ${fleem'flark}>;
     is($@, '', q<...as does ${package'var}>);

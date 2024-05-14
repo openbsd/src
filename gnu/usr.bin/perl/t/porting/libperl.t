@@ -9,6 +9,9 @@
 # - freebsd
 # and on other platforms, and if things seem odd, just give up (skip_all).
 #
+# Symbol types for LTO builds don't seem to match their final section, so
+# skip on LTO builds too.
+#
 # Debugging tip: nm output (this script's input) can be faked by
 # giving one command line argument for this script: it should be
 # either the filename to read, or "-" for STDIN.  You can also append
@@ -45,6 +48,15 @@ use Config;
 if ($Config{cc} =~ /g\+\+/) {
     # XXX Could use c++filt, maybe.
     skip_all "on g++";
+}
+
+# ccname is gcc for both gcc and clang
+if ($Config{ccname} eq "gcc" && $Config{ccflags} =~ /-flto\b/) {
+    # If we compile with gcc nm marks PL_no_mem as "D" (normal data) rather than a R (read only)
+    # but the symbol still ends up in the .rodata section of the image on linking.
+    # If we compile with clang 14, nm marks PL_no_mem as "T" (text, aka code) rather than R
+    # but the symbol still ends up in the .rodata section on linking.
+    skip_all "LTO libperl.a flags don't match the final linker sections";
 }
 
 my $libperl_a;
@@ -239,6 +251,10 @@ sub nm_parse_darwin {
         $symbols->{o} = $1;
         return;
     } else {
+        if ($^V < v5.39 && !defined $symbols->{o}) {
+            skip_all "nm parser requires an update on Darwin";
+        }
+
         die "$0: undefined current object: $line" unless defined $symbols->{o};
         # 64-bit systems have 16 hexdigits, 32-bit systems have 8.
         if (s/^[0-9a-f]{8}(?:[0-9a-f]{8})? //) {
@@ -317,9 +333,8 @@ unless (exists $symbols{text}) {
 
 # These should always be true for everyone.
 
-ok($symbols{obj}{'pp.o'}, "has object pp.o");
-ok($symbols{text}{'Perl_peep'}, "has text Perl_peep");
-ok($symbols{text}{'Perl_pp_uc'}{'pp.o'}, "has text Perl_pp_uc in pp.o");
+ok($symbols{obj}{'util.o'}, "has object util.o");
+ok($symbols{text}{'Perl_croak'}{'util.o'}, "has text Perl_croak in util.o");
 ok(exists $symbols{data}{const}, "has data const symbols");
 ok($symbols{data}{const}{PL_no_mem}{'globals.o'}, "has PL_no_mem");
 

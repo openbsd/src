@@ -211,7 +211,7 @@ mg_findext(const SV * sv, int type, const MGVTBL *vtbl) {
 #if { NEED sv_unmagicext }
 
 int
-sv_unmagicext(pTHX_ SV *const sv, const int type, MGVTBL *vtbl)
+sv_unmagicext(pTHX_ SV *const sv, const int type, const MGVTBL *vtbl)
 {
     MAGIC* mg;
     MAGIC** mgp;

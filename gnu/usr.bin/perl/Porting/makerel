@@ -24,7 +24,7 @@ use warnings;
 #
 # Tim Bunce, June 1997
 
-use ExtUtils::Manifest qw(fullcheck);
+use ExtUtils::Manifest qw(manicheck);
 $ExtUtils::Manifest::Quiet = 1;
 use Getopt::Std;
 use Digest::SHA;
@@ -87,26 +87,12 @@ print "\nMaking a release for $perl in $relroot/$reldir\n\n";
 cleanup($relroot, $reldir) if $opts{c};
 
 print "Cross-checking the MANIFEST...\n";
-my ($missfile, $missentry) = fullcheck();
-@$missentry
-    = grep {$_ !~ m!^\.(?:git|github|mailmap)! and $_ !~ m!(?:/|^)\.gitignore!} @$missentry;
-if (@$missfile ) {
+my @missfile = manicheck();
+if (@missfile) {
     warn "Can't make a release with MANIFEST files missing:\n";
-    warn "\t".$_."\n" for (@$missfile);
+    warn "\t".$_."\n" for (@missfile);
 }
-if (@$missentry ) {
-    warn "Can't make a release with files not listed in MANIFEST\n";
-    warn "\t".$_."\n" for (@$missentry);
-
-}
-if ("@$missentry" =~ m/\.orig\b/) {
-    # Handy listing of find command and .orig files from patching work.
-    # I tend to run 'xargs rm' and copy and paste the file list.
-    my $cmd = "find . -name '*.orig' -print";
-    print "$cmd\n";
-    system($cmd);
-}
-die "Aborted.\n" if @$missentry or @$missfile;
+die "Aborted.\n" if @missfile;
 print "\n";
 
 # VMS no longer has hardcoded version numbers descrip.mms

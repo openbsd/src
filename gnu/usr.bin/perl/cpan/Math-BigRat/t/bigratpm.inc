@@ -339,8 +339,8 @@ abc::1
 +inf:inf
 -inf:-inf
 abcfsstr:NaN
-1:1/1
-3/1:3/1
+1:1
+3/1:3
 0.1:1/10
 
 &bnorm

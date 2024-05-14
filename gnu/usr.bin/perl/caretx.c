@@ -121,7 +121,7 @@ Perl_set_caret_X(pTHX) {
        returning the text "unknown" from the readlink rather than the path
        to the executable (or returning an error from the readlink). Any
        valid path has a '/' in it somewhere, so use that to validate the
-       result. See http://www.freebsd.org/cgi/query-pr.cgi?pr=35703
+       result. See https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=35703
     */
     if (len > 0 && memchr(buf, '/', len)) {
         sv_setpvn(caret_x, buf, len);

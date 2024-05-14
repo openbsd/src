@@ -4,7 +4,7 @@
 #include <errno.h>
 
 /* Eric Young.
- * This version of crypt has been developed from my MIT compatable
+ * This version of crypt has been developed from my MIT compatible
  * DES library.
  * The library is available at pub/DES at ftp.psy.uq.oz.au
  * eay@psych.psy.uq.oz.au

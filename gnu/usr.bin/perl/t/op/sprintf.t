@@ -30,9 +30,6 @@ if ($^O eq 'VMS') {
     $Is_VMS_VAX = $hw_model < 1024 ? 1 : 0;
 }
 
-# No %Config.
-my $Is_Ultrix_VAX = $^O eq 'ultrix' && `uname -m` =~ /^VAX$/;
-
 # The most generic VAX catcher.
 my $Is_VAX_Float = (pack("d", 1) =~ /^[\x80\x10]\x40/);
 
@@ -55,7 +52,7 @@ while (<DATA>) {
         $data   =~ s/([eE])\-101$/${1}-56/;  # larger exponents
         $result =~ s/([eE])\-102$/${1}-57/;  #  "       "
     }
-    if ($Is_VMS_VAX || $Is_Ultrix_VAX || $Is_VAX_Float) {
+    if ($Is_VMS_VAX || $Is_VAX_Float) {
 	# VAX DEC C 5.3 at least since there is no
 	# ccflags =~ /float=ieee/ on VAX.
 	# AXP is unaffected whether or not it is using ieee.

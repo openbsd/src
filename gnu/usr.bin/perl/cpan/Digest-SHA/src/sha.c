@@ -3,10 +3,10 @@
  *
  * Ref: NIST FIPS PUB 180-4 Secure Hash Standard
  *
- * Copyright (C) 2003-2018 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2023 Mark Shelor, All Rights Reserved
  *
- * Version: 6.02
- * Fri Apr 20 16:25:30 MST 2018
+ * Version: 6.04
+ * Sat Feb 25 12:00:50 PM MST 2023
  *
  */
 
@@ -279,14 +279,11 @@ static UCHR *statecpy(SHA *s, UCHR *buf)
 	return(buf);
 }
 
-#define SHA_INIT(s, algo, transform) 					\
+#define SHA_INIT(s, algo, transform, state, state_t)			\
 	do {								\
 		Zero(s, 1, SHA);					\
 		s->alg = algo; s->sha = sha ## transform;		\
-		if (s->alg <= SHA256)					\
-			Copy(H0 ## algo, s->H32, 8, SHA32);		\
-		else							\
-			Copy(H0 ## algo, s->H64, 8, SHA64);		\
+		Copy(H0 ## algo, s->state, 8, state_t);			\
 		s->blocksize = SHA ## algo ## _BLOCK_BITS;		\
 		s->digestlen = SHA ## algo ## _DIGEST_BITS >> 3;	\
 	} while (0)
@@ -294,13 +291,13 @@ static UCHR *statecpy(SHA *s, UCHR *buf)
 /* sharewind: resets digest object */
 static void sharewind(SHA *s)
 {
-	if      (s->alg == SHA1)   SHA_INIT(s, 1, 1);
-	else if (s->alg == SHA224) SHA_INIT(s, 224, 256);
-	else if (s->alg == SHA256) SHA_INIT(s, 256, 256);
-	else if (s->alg == SHA384) SHA_INIT(s, 384, 512);
-	else if (s->alg == SHA512) SHA_INIT(s, 512, 512);
-	else if (s->alg == SHA512224) SHA_INIT(s, 512224, 512);
-	else if (s->alg == SHA512256) SHA_INIT(s, 512256, 512);
+	if      (s->alg == SHA1)   SHA_INIT(s, 1, 1, H32, SHA32);
+	else if (s->alg == SHA224) SHA_INIT(s, 224, 256, H32, SHA32);
+	else if (s->alg == SHA256) SHA_INIT(s, 256, 256, H32, SHA32);
+	else if (s->alg == SHA384) SHA_INIT(s, 384, 512, H64, SHA64);
+	else if (s->alg == SHA512) SHA_INIT(s, 512, 512, H64, SHA64);
+	else if (s->alg == SHA512224) SHA_INIT(s, 512224, 512, H64, SHA64);
+	else if (s->alg == SHA512256) SHA_INIT(s, 512256, 512, H64, SHA64);
 }
 
 /* shainit: initializes digest object */

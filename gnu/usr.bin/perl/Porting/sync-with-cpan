@@ -97,7 +97,40 @@ from the filename -- but can be overwritten by the C<--version> option.
 
 =item C<--jobs> I<N>
 
-When running C<make>, pass a C<< -jI<N> >> option to it.
+When running C<make>, pass a C<< -jI<N> >> option to it to enable
+parallel building.
+
+Note that you can also set C<< TEST_JOBS=I<N> >> in the environment
+to enable parallel *testing* on top of parallel *building*.
+
+=item C<--yes>
+
+Just continue at all places where we would normally ask for the user
+to hit enter or hit CTL-C, with the exception of cases related to
+CUSTOMIZED distributions, where this option will cause the update to
+exit immediately unless the C<--force> option has also been used.
+
+=item C<--force>
+
+Do things we normally would refuse to do.
+
+=item C<--tarball>
+
+Use a predownloaded tarball and not one from CPAN.
+
+=item C<--version>
+
+Sync with a specific version, not the latest on CPAN.
+
+=item C<--no-test>
+
+=item C<--nt>
+
+Do not run tests. This is helpful for bulk updates.
+
+=item C<--help>
+
+Show help.
 
 =back
 
@@ -154,14 +187,17 @@ die "This does not look like a top level directory"
 die "Please run Configure before using $0\n"
     if !WIN32 && !-f "Makefile";
 
+#these are populated by Porting/Maintainers.pl
 our @IGNORABLE;
 our %Modules;
+our %DistName;
 
 use autodie;
 
 require "./Porting/Maintainers.pl";
 
 my $MAKE_LOG = 'make.log';
+unlink $MAKE_LOG if -e $MAKE_LOG;
 
 my %IGNORABLE    = map {$_ => 1} @IGNORABLE;
 
@@ -170,9 +206,10 @@ my $tmpdir = tmpdir();
 my $package      = "02packages.details.txt";
 my $package_url  = "http://www.cpan.org/modules/$package";
 my $package_file = "$tmpdir/$package"; # this is a cache
+my $type_dir     = "cpan";
 
 my @problematic = (
-    'podlators', # weird CUSTOMIZED section due to .PL files
+    # no current entries as of perl-5.38.2 (Jun 2023)
 );
 
 
@@ -186,11 +223,14 @@ sub usage
 GetOptions ('tarball=s'  =>  \my $tarball,
             'version=s'  =>  \my $version,
             'jobs=i'     =>  \my $make_jobs,
-             force       =>  \my $force,
-             help        =>  sub { usage 0; },
-             ) or  die "Failed to parse arguments";
+            'yes'        =>  \my $yes_to_all,
+            'force'      =>  \my $force,
+            'no-test|nt' =>  \my $no_test,
+            'help'       =>  sub { usage 0; },
+            'type=s'     =>  \$type_dir,
+        ) or  die "Failed to parse arguments";
 
-usage 1 unless @ARGV == 1 || @ARGV == 2;
+usage 1 unless @ARGV == 1;
 
 sub find_type_f {
     my @res;
@@ -220,22 +260,74 @@ sub make_writable {
     }
 }
 
-sub make {
-    my @args= @_;
+my $SEP_LINE = ("-" x 79) . "\n";
+
+sub cat_make_log {
+    my ($message) = @_;
+    print $message, $message=~/Starting/
+                    ? " and saving its output to '$MAKE_LOG' ...\n"
+                    : "\n";
+
+    open my $ofh, ">>", $MAKE_LOG
+        or die "Failed to open '$MAKE_LOG' for append\n";
+    print $ofh $SEP_LINE,"$message at ",
+                scalar(localtime),"\n",$SEP_LINE;
+    close $ofh;
+}
+
+sub run_make {
+    my @args = @_;
     unshift @args, "-j$make_jobs" if defined $make_jobs;
+    cat_make_log("Starting `make @args`");
+    my $errored;
     if (WIN32) {
         chdir "Win32";
-        system "$Config{make} @args> ..\\$MAKE_LOG 2>&1"
-            and die "Running make failed, see $MAKE_LOG";
+        $errored = system "$Config{make} @args >> ..\\$MAKE_LOG 2>&1";
         chdir '..';
     } else {
-        system "$Config{make} @args> $MAKE_LOG 2>&1"
-            and die "Running make failed, see $MAKE_LOG";
+        $errored = system "$Config{make} @args >> $MAKE_LOG 2>&1";
     };
-};
+    cat_make_log("Finished `make @args`");
+    if ($errored) {
+        if ($args[0] ne "test-prep") {
+            # see if we can extract the last Test Summary Report from
+            # the $MAKE_LOG file,
+            if (open my $ifh, "<", $MAKE_LOG) {
+                my @report;
+                my $in_summary;
+                while (<$ifh>) {
+                    if (/^Test Summary Report/) {
+                        @report = ();
+                        $in_summary = 1;
+                    } elsif ($_ eq $SEP_LINE) {
+                        $in_summary = 0;
+                    }
+                    push @report, $_ if $in_summary;
+                }
+                print for @report;
+            } else {
+                warn "Failed to open $MAKE_LOG for reading: $!";
+            }
+        }
+        die "Running `make` failed, see '$MAKE_LOG' for more details\n";
+    }
+}
 
-my ($module)  = shift;
+sub pause_for_input {
+    my ($after_message) = @_;
+    print "Hit <return> to continue; ^C to abort ";
+    if ($yes_to_all) {
+        print "\n--yes was used on command line, continuing.\n";
+    } else {
+        my $noop = <STDIN>;
+    }
+    print $after_message if $after_message;
+}
 
+my ($module)  = shift @ARGV;
+if (my $mod_name = $DistName{$module}) {
+    $module = $mod_name;
+}
 my $info = $Modules{$module};
 if (!$info) {
     # Maybe the user said "Test-Simple" instead of "Test::Simple", or
@@ -266,8 +358,33 @@ for $module in Porting/Maintainers.pl (and you'll also need to regenerate
 t/porting/customized.dat in that case; see t/porting/customized.t).
 
 EOF
-    print "Hit return to continue; ^C to abort "; <STDIN>;
+    if ($yes_to_all and !$force) {
+        die "This distribution is marked as CUSTOMIZED\n",
+            "You used --yes on the command line, but without --force.\n",
+            "Bailing out. Use --force to go ahead anyway.\n";
+    }
+    pause_for_input("\n");
 }
+
+if (!$ENV{TEST_JOBS} and !WIN32) {
+    print "*** NOTE *** For speedups you can set TEST_JOBS=N in the env before running this script.\n";
+}
+if (!$make_jobs and !WIN32) {
+    print "*** NOTE *** For speedups you can pass --jobs=N as an arg to this script.\n"
+}
+print "About to clean the $type_dir/ directory, and ensure its contents is up to date.\n";
+print "Will also checkout -f on $type_dir/, MANIFEST and Porting/Maintainers.pl\n";
+print "*** WARNING *** - this may DELETE uncommitted changes. Hit ^C if you have ANY doubts!\n";
+pause_for_input("\n");
+# clean out the cpan directory, this cleans up any temporary files that might be
+# in the way, or other issues that might come up if the user bails out of the sync
+# script and then runs it again.
+my $clean_out= `git clean -dfx $type_dir`; # use backticks to hide the output
+system git => 'checkout -f',
+              $type_dir,
+              'MANIFEST',
+              'Porting/Maintainers.pl'; # let the user see the output
+print "the $type_dir/ directory is now clean and up to date\n---\n";
 
 my  $distribution = $$info {DISTRIBUTION};
 
@@ -284,12 +401,18 @@ if (!-d $files [0] || grep { $_ eq $module } @problematic) {
 use Cwd 'cwd';
 my $orig_pwd = cwd();
 
-chdir "cpan";
+chdir "$type_dir";
 
 my  $pkg_dir      = $files[0];
     $pkg_dir      =~ s!.*/!!;
 
-my ($old_version) = $distribution =~ /-([0-9.]+(?:-TRIAL[0-9]*)?)\.tar\.gz/;
+my $tail_pat = qr/(?:\.tar\.gz|\.tgz|\.zip)\z/;
+
+my ($old_version) = $distribution =~ /-([0-9._]+(?:-TRIAL[0-9]*)?)$tail_pat/;
+
+if (!$old_version) {
+    die "WTF: failed to parse old version from '$distribution'\n";
+}
 
 sub wget {
     my ($url, $saveas) = @_;
@@ -324,12 +447,13 @@ sub wget {
 #
 my $new_file;
 my $new_version;
+my $re_update = "";
 if (defined $tarball) {
     $tarball = rel2abs( $tarball, $orig_pwd ) ;
     die "Tarball $tarball does not exist\n" if !-e $tarball;
     die "Tarball $tarball is not a plain file\n" if !-f _;
     $new_file     = $tarball;
-    $new_version  = $version // ($new_file =~ /-([0-9._]+(?:-TRIAL[0-9]*)?)\.tar\.gz/) [0];
+    $new_version  = $version // ($new_file =~ /-([0-9._]+(?:-TRIAL[0-9]*)?)$tail_pat/) [0];
     die "Blead and that tarball both have version $new_version of $module\n"
         if $new_version eq $old_version;
 }
@@ -352,8 +476,13 @@ else {
     }
     $new_file = (split '/', $new_path) [-1];
 
-    die "The latest version of $module is $new_version, but blead already has it\n"
-        if $new_version eq $old_version;
+    if ($old_version eq $new_version) {
+        $re_update = "Re-";
+        print "The latest version of $module is $new_version, but blead already has it.\n";
+        print "Continuing may update MANIFEST or other metadata so it may make sense to continue anyway.\n";
+        print "Are you sure you want to continue?\n";
+        pause_for_input();
+    }
 
     my $url = "https://cpan.metacpan.org/authors/id/$new_path";
     say "Fetching $url";
@@ -363,7 +492,7 @@ else {
     wget $url, $new_file;
 }
 
-my  $old_dir      = "$pkg_dir-$old_version";
+my  $old_dir      = "$pkg_dir-$old_version-OLD";
 
 say "Cleaning out old directory";
 system git => 'clean', '-dfxq', $pkg_dir;
@@ -371,7 +500,7 @@ system git => 'clean', '-dfxq', $pkg_dir;
 say "Unpacking $new_file";
 Archive::Tar->extract_archive( $new_file );
 
-(my $new_dir = basename($new_file)) =~ s/\.tar\.gz//;
+(my $new_dir = basename($new_file)) =~ s/$tail_pat//;
 # ensure 'make' will update all files
 my $t= time;
 for my $file (find_type_f($new_dir)) {
@@ -415,8 +544,8 @@ FILE: for my $file ( find_type_f( $new_dir )) {
         $file = $files[0] . '/' . $file;
     }
 
-    if ( $file =~ m{^cpan/} ) {
-        $file =~ s{^cpan/}{};
+    if ( $file =~ m{^$type_dir/} ) {
+        $file =~ s{^$type_dir/}{};
     }
     else {
         $file = '../' . $file;
@@ -453,10 +582,17 @@ my %old_files = map {$_ => 1} @old_files;
 my @delete;
 my @commit;
 my @gone;
+my $changes_file;
 FILE:
 foreach my $file (@new_files) {
     next if -d "$pkg_dir/$file";   # Ignore directories.
     next if $old_files {$file};    # It's already there.
+    if ($file=~/Changes/i or $file=~/Changelog/) {
+        if ($changes_file) {
+            die "More than one changes file? $file and $changes_file both exist?";
+        }
+        $changes_file = "$pkg_dir/$file";
+    }
     if ($IGNORABLE {$file}) {
         push @delete => $file;
         next;
@@ -467,6 +603,54 @@ foreach my $file (@old_files) {
     next if -d "$old_dir/$file";
     next if $new_files {$file};
     push @gone => $file;
+}
+
+my @changes_info;
+if (!$changes_file) {
+    print "Could not find a changes file!\n",
+          "If this is not correct and there is one, please consider updating this script!\n";
+} else {
+    open my $ifh, "<", $changes_file
+        or die "Failed to open '$changes_file':$!";
+    chomp(my @lines = <$ifh>);
+    close $ifh;
+    my $seen_new_version;
+    my $is_update = $new_version ne $old_version;
+
+    for(my $idx = 0; $idx < @lines; $idx++) {
+        if ($lines[$idx] =~ /$new_version/ ||
+            ($pkg_dir eq "CPAN" and $lines[$idx] =~/^\d{4}-\d{2}-\d{2}/
+             && $lines[$idx+2]
+             && $lines[$idx+2] =~ /release $new_version/)
+        ){
+            $seen_new_version = 1;
+            push @changes_info, $lines[$idx];
+        } elsif ($seen_new_version) {
+            if ($is_update && $pkg_dir eq "ExtUtils-MakeMaker") {
+                if ($lines[$idx] =~/$old_version/) {
+                    last;
+                }
+            }
+            elsif (($lines[$idx]=~/\d\.\d/ and $lines[$idx]=~/20\d\d/) ||
+                ($lines[$idx]=~/---------------------------------/) ||
+                ($pkg_dir eq "CPAN" and $lines[$idx] =~/^\d{4}-\d{2}-\d{2}/) ||
+                ($pkg_dir eq "version" and $lines[$idx] =~/^\d\.\d+/) ||
+                ($pkg_dir eq "Getopt-Long" and $lines[$idx] =~/Changes in version/) ||
+                ($pkg_dir eq "ExtUtils-Install" and $lines[$idx] =~/^\d+\.\d+/) ||
+                0 # less commit churn if we have to tweak the heuristics above
+            ){
+                last;
+            }
+            push @changes_info, $lines[$idx];
+
+        }
+    }
+    if (!@changes_info) {
+        die "No changes?";
+    } else {
+        print "Changes from $changes_file\n";
+        print $_,"\n" for @changes_info;
+    }
 }
 
 #
@@ -504,15 +688,18 @@ if (@de_exec && @delete) {
 if (@de_exec) {
     my %permitted = map { (my $x = $_) =~ tr/\n//d; $x => 1 } grep !/^#/,
         do { local @ARGV = '../Porting/exec-bit.txt'; <> };
-    @de_exec = grep !$permitted{"cpan/$pkg_dir/$_"}, @de_exec;
+    @de_exec = grep !$permitted{"$type_dir/$pkg_dir/$_"}, @de_exec;
 }
+@$_ = sort @$_ for \@delete, \@commit, \@gone, \@de_exec;
 
 say "unlink $pkg_dir/$_" for @delete;
 say "git add $pkg_dir/$_" for @commit;
 say "git rm -f $pkg_dir/$_" for @gone;
 say "chmod a-x $pkg_dir/$_" for @de_exec;
 
-print "Hit return to continue; ^C to abort "; <STDIN>;
+print "--\nWill perform the above steps and then start testing.\n";
+print "You may want to `tail -F $MAKE_LOG` in another window\n";
+pause_for_input("\n");
 
 unlink "$pkg_dir/$_"                      for @delete;
 system git   => 'add', "$pkg_dir/$_"      for @commit;
@@ -532,8 +719,11 @@ if ($$info {CUSTOMIZED}) {
 }
 
 chdir "..";
-if (@commit || @gone) {
-    say "Fixing MANIFEST";
+{
+    # we update the MANIFEST file always now, so that we can
+    # ensure each file from this sync is updated to say that we
+    # got it from the latest version.
+    say "Updating the MANIFEST file";
     my $MANIFEST     = "MANIFEST";
     my $MANIFEST_NEW = "$MANIFEST.new";
 
@@ -541,14 +731,37 @@ if (@commit || @gone) {
         or die "Failed to open $MANIFEST for reading: $!\n";
     open my $new, ">", $MANIFEST_NEW
         or die "Failed to open $MANIFEST_NEW for writing: $!\n";
-    my %gone = map +("cpan/$pkg_dir/$_" => 1), @gone;
+    my %keep = map +("$type_dir/$pkg_dir/$_" => 1), keys %new_files;
+    my %gone = map +("$type_dir/$pkg_dir/$_" => 1), @gone;
     while (my $line = <$orig>) {
-        my ($file) = $line =~ /^(\S+)/
-            or die "Can't parse MANIFEST line: $line";
-        print $new $line if !$gone{$file};
+        chomp $line;
+        my ($file, $descr) = split /\t+/, $line;
+        if (!$file) {
+            die "Can't parse MANIFEST line: '$line' at line $.\n";
+        }
+        if ($keep{$file} and !$descr) {
+            # make sure we have at least one tab, old versions of
+            # this script would add lines to MANIFEST with no tab.
+            $line =~ s/^(\S+)\z/$1\t\t/;
+
+            my $file_descr = "";
+            if ( $file =~ /\.t/ ) {
+                $file_descr = "Test file";
+            }
+            elsif ( $file =~ /\.pm/ ) {
+                $file_descr = "Module";
+            }
+            elsif ( $file =~ /\.pl/ ) {
+                $file_descr = "Script";
+            }
+            $file_descr .= " related to " if $file_descr;
+            # and update the line to show where the file came from.
+            $line =~ s/(\t+).*/$1$file_descr$module/;
+        }
+        say $new $line if !$gone{$file};
     }
 
-    say $new "cpan/$pkg_dir/$_" for @commit;
+    say $new "$type_dir/$pkg_dir/$_\t\t$pkg_dir" for @commit;
 
     close $new or die "Can't close $MANIFEST: $!\n";
 
@@ -558,10 +771,11 @@ if (@commit || @gone) {
 }
 
 
-print "Running a make and saving its output to $MAKE_LOG ... ";
-# Prepare for running (selected) tests
-make 'test-prep';
-print "done\n";
+
+# Prepare for running (selected) tests - strictly speaking this isn't
+# necessary, as we run the tests with "run_make" now, but this allows
+# us to separate build issues from test issues.
+run_make 'test-prep' unless $no_test;
 
 # The build system installs code from CPAN dists into the lib/ directory,
 # creating directories as needed. This means that the cleaning-related rules
@@ -588,64 +802,49 @@ if (@commit || @gone) {
 # Must clean up, or else t/porting/FindExt.t will fail.
 # Note that we can always retrieve the original directory with a git checkout.
 #
-print "About to clean up; hit return or abort (^C) "; <STDIN>;
+print "About to clean up the old version, update Maintainers.pl and start tests\n";
+pause_for_input("\n");
 
-remove_tree( "cpan/$old_dir" );
-unlink "cpan/$new_file" unless $tarball;
+remove_tree( "$type_dir/$old_dir" );
+unlink "$type_dir/$new_file" unless $tarball;
 
-#
-# Run the tests. First the test belonging to the module, followed by the
-# tests in t/porting
-#
-chdir "t";
-say "Running module tests";
-my @test_files = grep { /\.t$/ } find_type_f( "../cpan/$pkg_dir" );
-my $exe_dir = WIN32 ? "..\\" : './';
-my $output = `${exe_dir}perl$Config{_exe} TEST @test_files`;
-unless ($output =~ /All tests successful/) {
-    say $output;
-    exit 1;
-}
-
-print "Running tests in t/porting ";
-my @tests = glob 'porting/*.t';
-chomp @tests;
-my @failed;
-foreach my $t (@tests) {
-    my @not = grep {!/# TODO/ }
-              grep { /^not/ }
-              `${exe_dir}perl -I../lib -I.. $t`;
-    print @not ? '!' : '.';
-    push @failed => $t if @not;
-}
-print "\n";
-say "Failed tests: @failed" if @failed;
-
-
-chdir '..';
 
 open my $Maintainers_pl, '<', 'Porting/Maintainers.pl';
 open my $new_Maintainers_pl, '>', 'Maintainers.pl';
 
-my $found;
+my $found = 0;
 my $in_mod_section;
 while (<$Maintainers_pl>) {
-    if (!$found) {
-        if ($in_mod_section) {
-            if (/DISTRIBUTION/) {
-                if (s/\Q$old_version/$new_version/) {
-                    $found = 1;
-                }
+    if ($in_mod_section) {
+        if ($found == 1) {
+            # Keep track of when and who did the sync.
+            # This must be before the DISTRIBUTION check.
+            # This ensures that *something* is updated when we re-update.
+            my $date = localtime;
+            my $user = $ENV{USER} ? "$ENV{USER} on " : "";
+            my $key = "SYNCINFO";
+            if ( /^'([A-Z_]+)'\s+=>/ and $1 eq $key) {
+                s/(=>\s+)'[^']+'/$1'$user$date'/;
             }
-
-            if (/^    \}/) {
-                $in_mod_section = 0;
+            else {
+                print $new_Maintainers_pl
+                    "        '$key'     => '$user$date',\n";
+            }
+            $found = 2;
+            $in_mod_section = 0;
+        }
+        if (/DISTRIBUTION/) {
+            if (s/\Q$old_version/$new_version/) {
+                $found = 1;
             }
         }
-
-        if (/\Q$module/) {
-            $in_mod_section = 1;
+        if (/^\s*\}/) { # sanity
+            $in_mod_section = 0;
         }
+    }
+
+    if (/\Q$module\E/ and !$found) {
+        $in_mod_section = 1;
     }
 
     print $new_Maintainers_pl $_;
@@ -662,6 +861,28 @@ else {
     say "Make sure you update this by hand before committing.";
 }
 
+# Run the tests. First the test belonging to the module, followed by the
+# tests in t/porting
+
+my $shell_quote = WIN32 ? '"' : "'";
+if ($no_test) {
+    print "*** NOT RUNNING TESTS ***\n";
+} else {
+    run_make "test-harness TEST_ARGS=$shell_quote-re $pkg_dir$shell_quote";
+    run_make "test-porting";
+}
+
+my $committed;
+if (@changes_info) {
+    system git => 'commit',
+           join("\n",
+               "-m$type_dir/$pkg_dir - ${re_update}Update to version $new_version",
+               "",@changes_info),
+           "$type_dir/$pkg_dir", "MANIFEST", "Porting/Maintainers.pl"
+        or $committed = 1; # note system returns true for an error!
+}
+
+
 print <<"EOF";
 
 =======================================================================
@@ -676,11 +897,37 @@ has added an XS dependency - even if the full test suite passes just fine.
 Hopefully all will complete successfully, but if not, you can make any
 changes you need to get the tests to pass. Don't forget that you'll need
 a "CUSTOMIZED" entry in Porting/Maintainers.pl if you change any of the
-files under cpan/$pkg_dir.
-
-Once all tests pass, you can "git add -u" and "git commit" the changes
-with a message along the lines of "Update Foo::Bar to v1.234".
+files under $type_dir/$pkg_dir.
 
 EOF
+
+if ($committed) {
+    print <<"EOF";
+The changes have already been committed. If the tests above fail you can
+discard this patch with
+
+    git reset --hard HEAD^.
+
+You may also want to review the commit message and alter it with
+
+    git commit --amend
+
+Regardless you still need to push this commit upstream with something like
+
+    git push origin HEAD:$ENV{USER}/update_${pkg_dir}_v_$new_version
+
+EOF
+} else {
+    print <<"EOF";
+Once all tests pass, you can commit it with a command like:
+
+    git commit -m${shell_quote}$type_dir/$pkg_dir - Update to version $new_version${shell_quote} $type_dir/$pkg_dir
+
+and then push it upstream with a command like
+
+    git push origin HEAD:$ENV{USER}/update_${pkg_dir}_v_$new_version
+
+EOF
+}
 
 __END__

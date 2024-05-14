@@ -227,6 +227,35 @@ is($@, '', 'ex-PVBM assert'.$@);
     cmp_ok($diff, '<',  2,  "time delta is small");
 }
 
+# GH #20132 and parts of GH ##20114
+# During development of OP_PADSV_STORE, interactions with OP_PADRANGE
+# caused BBC failures not picked up by any pre-existing core tests.
+# (Problems only arose in list context, the void/scalar tests have been
+# included for completeness.)
+eval {
+    my $x = {}; my $y;
+    keys %{$y = $x};
+    1;
+};
+is($@, '', 'keys %{$y = $x}');
+
+eval {
+    my $x = {}; my $y;
+    my $foo = keys %{$y = $x};
+    1;
+};
+is($@, '', 'my $foo = keys %{$y = $x}');
+
+eval {
+    my $x = {}; my $y;
+    my @foo = keys %{$y = $x};
+    1;
+};
+is($@, '', 'my @foo = keys %{$y = $x}');
+
+fresh_perl_is('my ($x, $y); (($y = $x))', '', {}, '(($y = $x))');
+fresh_perl_is('my ($x, $y); my $z= (($y = $x))', '', {}, 'my $z= (($y = $x))');
+fresh_perl_is('my ($x, $y); my @z= (($y = $x))', '', {}, 'my @z= (($y = $x))');
 
 done_testing();
 

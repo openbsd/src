@@ -32,6 +32,83 @@
 #ifndef PERL_UTF8_H_      /* Guard against recursive inclusion */
 #define PERL_UTF8_H_ 1
 
+/*
+=for apidoc Ay||utf8ness_t
+
+This typedef is used by several core functions that return PV strings, to
+indicate the UTF-8ness of those strings.
+
+(If you write a new function, you probably should instead return the PV in an
+SV with the UTF-8 flag of the SV properly set, rather than use this mechanism.)
+
+The possible values this can be are:
+
+=over
+
+=item C<UTF8NESS_YES>
+
+This means the string definitely should be treated as a sequence of
+UTF-8-encoded characters.
+
+Most code that needs to handle this typedef should be of the form:
+
+ if (utf8ness_flag == UTF8NESS_YES) {
+     treat as utf8;  // like turning on an SV UTF-8 flag
+ }
+
+=item C<UTF8NESS_NO>
+
+This means the string definitely should be treated as a sequence of bytes, not
+encoded as UTF-8.
+
+=item C<UTF8NESS_IMMATERIAL>
+
+This means it is equally valid to treat the string as bytes, or as UTF-8
+characters; use whichever way you want.  This happens when the string consists
+entirely of characters which have the same representation whether encoded in
+UTF-8 or not.
+
+=item C<UTF8NESS_UNKNOWN>
+
+This means it is unknown how the string should be treated.  No core function
+will ever return this value to a non-core caller.  Instead, it is used by the
+caller to initialize a variable to a non-legal value.  A typical call will look like:
+
+ utf8ness_t string_is_utf8 = UTF8NESS_UNKNOWN
+ const char * string = foo(arg1, arg2, ..., &string_is_utf8);
+ if (string_is_utf8 == UTF8NESS_YES) {
+    do something for UTF-8;
+ }
+
+=back
+
+The following relationships hold between the enum values:
+
+=over
+
+=item S<C<0 E<lt>= I<enum value> E<lt>= UTF8NESS_IMMATERIAL>>
+
+the string may be treated in code as non-UTF8
+
+=item S<C<UTF8NESS_IMMATERIAL E<lt>= <I<enum value>>>
+
+the string may be treated in code as encoded in UTF-8
+
+=back
+
+=cut
+*/
+
+typedef enum {
+    UTF8NESS_NO               =  0,  /* Definitely not UTF-8 */
+    UTF8NESS_IMMATERIAL       =  1,  /* Representation is the same in UTF-8 as
+                                        not, so the UTF8ness doesn't actually
+                                        matter */
+    UTF8NESS_YES              =  2,  /* Defintely is UTF-8, wideness
+                                        unspecified */
+    UTF8NESS_UNKNOWN          = -1,  /* Undetermined so far */
+} utf8ness_t;
+
 /* Use UTF-8 as the default script encoding?
  * Turning this on will break scripts having non-UTF-8 binary
  * data (such as Latin-1) in string literals. */
@@ -331,12 +408,7 @@ C<cp> is Unicode if above 255; otherwise is platform-native.
 
 =cut
  */
-#if defined(__m88k__)
-/* XXX workaround: m88k gcc3 produces wrong code with NATIVE_TO_UNI() */
-#define UVCHR_IS_INVARIANT(cp)  (OFFUNI_IS_INVARIANT(cp))
-#else	/* the original one */
 #define UVCHR_IS_INVARIANT(cp)  (OFFUNI_IS_INVARIANT(NATIVE_TO_UNI(cp)))
-#endif
 
 /* This defines the 1-bits that are to be in the first byte of a multi-byte
  * UTF-8 encoded character that mark it as a start byte and give the number of
@@ -664,7 +736,7 @@ uppercase/lowercase/titlecase/fold into.
 #define TWO_BYTE_UTF8_TO_NATIVE(HI, LO) \
     (__ASSERT_(FITS_IN_8_BITS(HI))                                              \
      __ASSERT_(FITS_IN_8_BITS(LO))                                              \
-     __ASSERT_(PL_utf8skip[HI] == 2)                                            \
+     __ASSERT_(PL_utf8skip[(U8) HI] == 2)                                            \
      __ASSERT_(UTF8_IS_CONTINUATION(LO))                                        \
      UNI_TO_NATIVE(UTF8_ACCUMULATE((NATIVE_UTF8_TO_I8(HI) & UTF_START_MASK(2)), \
                                    (LO))))
@@ -866,8 +938,8 @@ case any call to string overloading updates the internal UTF-8 encoding flag.
 
 /* Should all strings be treated as Unicode, and not just UTF-8 encoded ones?
  * Is so within 'feature unicode_strings' or 'locale :not_characters', and not
- * within 'use bytes'.  UTF-8 locales are not tested for here, but perhaps
- * could be */
+ * within 'use bytes'.  UTF-8 locales are not tested for here, because it gets
+ * complicated by the probability of having categories in different locales. */
 #define IN_UNI_8_BIT                                                    \
             ((    (      (CopHINTS_get(PL_curcop) & HINT_UNI_8_BIT))    \
                    || (   CopHINTS_get(PL_curcop) & HINT_LOCALE_PARTIAL \

@@ -120,7 +120,7 @@ EXPECT
 ########
 # NAME Wide character in non-UTF-8 locale
 require '../loc_tools.pl';
-unless (locales_enabled()) {
+unless (locales_enabled('LC_CTYPE')) {
     print("SKIPPED\n# locales not available\n"),exit;
 }
 eval { require POSIX; POSIX->import("locale_h") };
@@ -150,7 +150,7 @@ Wide character (U+100) in pattern match (m//) at - line 16.
 ########
 # NAME Wide character in UTF-8 locale
 require '../loc_tools.pl';
-unless (locales_enabled()) {
+unless (locales_enabled('LC_CTYPE')) {
     print("SKIPPED\n# locales not available\n"),exit;
 }
 eval { require POSIX; POSIX->import("locale_h") };
@@ -172,6 +172,10 @@ setlocale(&POSIX::LC_CTYPE, $utf8_locales[0]);
 EXPECT
 ########
 # NAME \b{} in non-UTF-8 locale
+require '../loc_tools.pl';
+unless (locales_enabled('LC_CTYPE')) {
+    print("SKIPPED\n# locales not available\n"),exit;
+}
 eval { require POSIX; POSIX->import("locale_h") };
 if ($@) {
     print("SKIPPED\n# no POSIX\n"),exit;
@@ -183,12 +187,12 @@ setlocale(&POSIX::LC_CTYPE, "C");
 no warnings 'locale';
 "a" =~ /\b{gcb}/l;
 EXPECT
-Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 8.
-Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 8.
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 12.
+Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 12.
 ########
 # NAME \b{} in UTF-8 locale
 require '../loc_tools.pl';
-unless (locales_enabled()) {
+unless (locales_enabled('LC_CTYPE')) {
     print("SKIPPED\n# locales not available\n"),exit;
 }
 eval { require POSIX; POSIX->import("locale_h") };
@@ -208,15 +212,19 @@ setlocale(&POSIX::LC_CTYPE, $utf8_locale);
  "abc def" =~ /\b{wb}.*?/;
  "abc def" =~ /\B{wb}.*?/;
 EXPECT
-Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 16.
-Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 16.
-Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 17.
-Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 17.
-Use of \b{} or \B{} for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 17.
+OPTION regex
+\AUse of \\b\{\} or \\B\{\} for non-UTF-8 locale is wrong\.  Assuming a UTF-8 locale at - line 16\.
+Use of \\b\{\} or \\B\{\} for non-UTF-8 locale is wrong\.  Assuming a UTF-8 locale at - line 16\.
+Use of \\b\{\} or \\B\{\} for non-UTF-8 locale is wrong\.  Assuming a UTF-8 locale at - line 17\.
+Use of \\b\{\} or \\B\{\} for non-UTF-8 locale is wrong\.  Assuming a UTF-8 locale at - line 17\.
+Use of \\b\{\} or \\B\{\} for non-UTF-8 locale is wrong\.  Assuming a UTF-8 locale at - line 17\.(?:
+Locale '.*' contains \(at least\) the following characters which have
+unexpected meanings: .*
+The Perl program will use the expected meanings; codeset=UTF-8)?\z
 ########
 # NAME (?[ ]) in non-UTF-8 locale
 require '../loc_tools.pl';
-unless (locales_enabled()) {
+unless (locales_enabled('LC_CTYPE')) {
     print("SKIPPED\n# locales not available\n"),exit;
 }
 eval { require POSIX; POSIX->import("locale_h") };
@@ -243,7 +251,7 @@ Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 
 ########
 # NAME (?[ ]) in UTF-8 locale
 require '../loc_tools.pl';
-unless (locales_enabled()) {
+unless (locales_enabled('LC_CTYPE')) {
     print("SKIPPED\n# locales not available\n"),exit;
 }
 eval { require POSIX; POSIX->import("locale_h") };

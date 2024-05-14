@@ -2,7 +2,7 @@ package ExtUtils::Typemaps::Cmd;
 use 5.006001;
 use strict;
 use warnings;
-our $VERSION = '3.45';
+our $VERSION = '3.51';
 
 use ExtUtils::Typemaps;
 

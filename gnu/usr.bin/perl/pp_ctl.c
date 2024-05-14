@@ -35,9 +35,6 @@
 #include "perl.h"
 #include "feature.h"
 
-#define RUN_PP_CATCHABLY(thispp) \
-    STMT_START { if (CATCH_GET) return docatch(thispp); } STMT_END
-
 #define dopopto_cursub() \
     (PL_curstackinfo->si_cxsubix >= 0        \
         ? PL_curstackinfo->si_cxsubix        \
@@ -81,7 +78,7 @@ PP(pp_regcreset)
 PP(pp_regcomp)
 {
     dSP;
-    PMOP *pm = (PMOP*)cLOGOP->op_other;
+    PMOP *pm = cPMOPx(cLOGOP->op_other);
     SV **args;
     int nargs;
     REGEXP *re = NULL;
@@ -192,7 +189,7 @@ PP(pp_substcont)
 {
     dSP;
     PERL_CONTEXT *cx = CX_CUR();
-    PMOP * const pm = (PMOP*) cLOGOP->op_other;
+    PMOP * const pm = cPMOPx(cLOGOP->op_other);
     SV * const dstr = cx->sb_dstr;
     char *s = cx->sb_s;
     char *m = cx->sb_m;
@@ -323,14 +320,14 @@ PP(pp_substcont)
         s = orig + (m - s);
         cx->sb_strend = s + (cx->sb_strend - m);
     }
-    cx->sb_m = m = RX_OFFS(rx)[0].start + orig;
+    cx->sb_m = m = RX_OFFS_START(rx,0) + orig;
     if (m > s) {
         if (DO_UTF8(dstr) && !SvUTF8(cx->sb_targ))
             sv_catpvn_nomg_utf8_upgrade(dstr, s, m - s, nsv);
         else
             sv_catpvn_nomg(dstr, s, m-s);
     }
-    cx->sb_s = RX_OFFS(rx)[0].end + orig;
+    cx->sb_s = RX_OFFS_END(rx,0) + orig;
     { /* Update the pos() information. */
         SV * const sv
             = (pm->op_pmflags & PMf_NONDESTRUCT) ? cx->sb_dstr : cx->sb_targ;
@@ -382,6 +379,7 @@ Perl_rxres_save(pTHX_ void **rsp, REGEXP *rx)
     PERL_ARGS_ASSERT_RXRES_SAVE;
     PERL_UNUSED_CONTEXT;
 
+    /* deal with regexp_paren_pair items */
     if (!p || p[1] < RX_NPARENS(rx)) {
 #ifdef PERL_ANY_COW
         i = 7 + (RX_NPARENS(rx)+1) * 2;
@@ -410,8 +408,8 @@ Perl_rxres_save(pTHX_ void **rsp, REGEXP *rx)
     *p++ = (UV)RX_SUBOFFSET(rx);
     *p++ = (UV)RX_SUBCOFFSET(rx);
     for (i = 0; i <= RX_NPARENS(rx); ++i) {
-        *p++ = (UV)RX_OFFS(rx)[i].start;
-        *p++ = (UV)RX_OFFS(rx)[i].end;
+        *p++ = (UV)RX_OFFSp(rx)[i].start;
+        *p++ = (UV)RX_OFFSp(rx)[i].end;
     }
 }
 
@@ -441,8 +439,8 @@ S_rxres_restore(pTHX_ void **rsp, REGEXP *rx)
     RX_SUBOFFSET(rx) = (I32)*p++;
     RX_SUBCOFFSET(rx) = (I32)*p++;
     for (i = 0; i <= RX_NPARENS(rx); ++i) {
-        RX_OFFS(rx)[i].start = (I32)(*p++);
-        RX_OFFS(rx)[i].end = (I32)(*p++);
+        RX_OFFSp(rx)[i].start = (I32)(*p++);
+        RX_OFFSp(rx)[i].end = (I32)(*p++);
     }
 }
 
@@ -574,7 +572,9 @@ PP(pp_formline)
             source = (U8 *)f;
             f += to_copy;
             trans = '~';
-            item_is_utf8 = targ_is_utf8 ? !!DO_UTF8(formsv) : !!SvUTF8(formsv);
+            item_is_utf8 = (targ_is_utf8)
+                           ? cBOOL(DO_UTF8(formsv))
+                           : cBOOL(SvUTF8(formsv));
             goto append;
 
         case FF_SKIP: /* skip <arg> chars in format */
@@ -876,15 +876,16 @@ PP(pp_formline)
             {
                 Size_t max = SvLEN(PL_formtarget) - (t - SvPVX(PL_formtarget));
                 int len;
-                DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
-                STORE_LC_NUMERIC_SET_TO_NEEDED();
                 arg &= ~(FORM_NUM_POINT|FORM_NUM_BLANK);
 #ifdef USE_QUADMATH
                 {
                     int len;
                     if (!quadmath_format_valid(fmt))
                         Perl_croak_nocontext("panic: quadmath invalid format \"%s\"", fmt);
-                    len = quadmath_snprintf(t, max, fmt, (int) fieldsize, (int) arg, value);
+                    WITH_LC_NUMERIC_SET_TO_NEEDED(
+                        len = quadmath_snprintf(t, max, fmt, (int) fieldsize,
+                                               (int) arg, value);
+                    );
                     if (len == -1)
                         Perl_croak_nocontext("panic: quadmath_snprintf failed, format \"%s\"", fmt);
                 }
@@ -895,7 +896,6 @@ PP(pp_formline)
                 GCC_DIAG_RESTORE_STMT;
 #endif
                 PERL_MY_SNPRINTF_POST_GUARD(len, max);
-                RESTORE_LC_NUMERIC();
             }
             t += fieldsize;
             break;
@@ -969,6 +969,11 @@ PP(pp_formline)
 /* also used for: pp_mapstart() */
 PP(pp_grepstart)
 {
+    /* See the code comments at the start of pp_grepwhile() and
+     * pp_mapwhile() for an explanation of how the stack is used
+     * during a grep or map.
+     */
+
     dSP;
     SV *src;
 
@@ -979,8 +984,8 @@ PP(pp_grepstart)
         RETURNOP(PL_op->op_next->op_next);
     }
     PL_stack_sp = PL_stack_base + TOPMARK + 1;
-    Perl_pp_pushmark(aTHX);				/* push dst */
-    Perl_pp_pushmark(aTHX);				/* push src */
+    PUSHMARK(PL_stack_sp);				/* push dst */
+    PUSHMARK(PL_stack_sp);				/* push src */
     ENTER_with_name("grep");					/* enter outer scope */
 
     SAVETMPS;
@@ -998,14 +1003,70 @@ PP(pp_grepstart)
 
     PUTBACK;
     if (PL_op->op_type == OP_MAPSTART)
-        Perl_pp_pushmark(aTHX);			/* push top */
-    return ((LOGOP*)PL_op->op_next)->op_other;
+        PUSHMARK(PL_stack_sp);			/* push top */
+    return cLOGOPx(PL_op->op_next)->op_other;
 }
 
 /* pp_grepwhile() lives in pp_hot.c */
 
 PP(pp_mapwhile)
 {
+    /* Understanding the stack during a map.
+     *
+     * 'map expr, args' is implemented in the form of
+     *
+     *     grepstart; // which handles map too
+     *     do {
+     *          expr;
+     *          mapwhile;
+     *     } while (args);
+     *
+     * The stack examples below are in the form of 'perl -Ds' output,
+     * where any stack element indexed by PL_markstack_ptr[i] has a star
+     * just to the right of it.  In addition, the corresponding i value
+     * is displayed under the indexed stack element.
+     *
+     * On entry to mapwhile, the stack looks like this:
+     *
+     *      =>   *  A1..An  X1  *  X2..Xn  C  *  R1..Rn  *  E1..En
+     *      [-3]           [-2]          [-1]        [0]
+     *
+     * where:
+     *   A1..An   Accumulated results from all previous iterations of expr
+     *   X1..Xn   Random garbage
+     *   C        The current (just processed) arg, still aliased to $_.
+     *   R1..Rn   The args remaining to be processed.
+     *   E1..En   the (list) result of the just-executed map expression.
+     *
+     * Note that it is easiest to think of stack marks [-1] and [-2] as both
+     * being one too high, and so it would make more sense to have had the
+     * marks like this:
+     *
+     *      =>   *  A1..An  *  X1..Xn  *  C  R1..Rn  *  E1..En
+     *      [-3]       [-2]       [-1]           [0]
+     *
+     * where the stack is divided neatly into 4 groups:
+     *   - accumulated results
+     *   - discards and/or holes proactively created for later result storage
+     *   - being, or yet to be, processed,
+     *   - results of last expr
+     * But off-by-one is the way it is currently, and it works as long as
+     * we keep it consistent and bear it in mind.
+     *
+     * pp_mapwhile() does the following:
+     *
+     * - If there isn't enough space in the X1..Xn zone to insert the
+     *   expression results, grow the stack and shift up everything above C.
+     * - move E1..En to just above An
+     * - at the same time, manipulate the tmps stack so that temporaries
+     *   from executing expr can be freed without prematurely freeing
+     *   E1..En.
+     * - if on last iteration, pop all the marks, reset the stack pointer
+     *   and update the return args based on caller context.
+     * - else alias $_ to the next arg.
+     *
+     */
+
     dSP;
     const U8 gimme = GIMME_V;
     I32 items = (SP - PL_stack_base) - TOPMARK; /* how many new items */
@@ -1162,7 +1223,7 @@ PP(pp_flip)
     dSP;
 
     if (GIMME_V == G_LIST) {
-        RETURNOP(((LOGOP*)cUNOP->op_first)->op_other);
+        RETURNOP(cLOGOPx(cUNOP->op_first)->op_other);
     }
     else {
         dTOPss;
@@ -1191,7 +1252,7 @@ PP(pp_flip)
             else {
                 sv_setiv(targ, 0);
                 SP--;
-                RETURNOP(((LOGOP*)cUNOP->op_first)->op_other);
+                RETURNOP(cLOGOPx(cUNOP->op_first)->op_other);
             }
         }
         SvPVCLEAR(TARG);
@@ -1300,7 +1361,7 @@ PP(pp_flop)
         }
 
         if (flop) {
-            sv_setiv(PAD_SV(((UNOP*)cUNOP->op_first)->op_first->op_targ), 0);
+            sv_setiv(PAD_SV(cUNOPx(cUNOP->op_first)->op_first->op_targ), 0);
             sv_catpvs(targ, "E0");
         }
         SETs(targ);
@@ -1657,23 +1718,51 @@ void
 Perl_qerror(pTHX_ SV *err)
 {
     PERL_ARGS_ASSERT_QERROR;
+    if (err!=NULL) {
+        if (PL_in_eval) {
+            if (PL_in_eval & EVAL_KEEPERR) {
+                    Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "\t(in cleanup) %" SVf,
+                                                        SVfARG(err));
+            }
+            else {
+                sv_catsv(ERRSV, err);
+            }
+        }
+        else if (PL_errors)
+            sv_catsv(PL_errors, err);
+        else
+            Perl_warn(aTHX_ "%" SVf, SVfARG(err));
 
-    if (PL_in_eval) {
-        if (PL_in_eval & EVAL_KEEPERR) {
-                Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "\t(in cleanup) %" SVf,
-                                                    SVfARG(err));
+        if (PL_parser) {
+            ++PL_parser->error_count;
+        }
+    }
+
+    if ( PL_parser && (err == NULL ||
+         PL_parser->error_count >= PERL_STOP_PARSING_AFTER_N_ERRORS)
+    ) {
+        const char * const name = OutCopFILE(PL_curcop);
+        SV * errsv = NULL;
+        U8 raw_error_count = PERL_PARSE_ERROR_COUNT(PL_parser->error_count);
+
+        if (PL_in_eval) {
+            errsv = ERRSV;
+        }
+
+        if (err == NULL) {
+            abort_execution(errsv, name);
         }
         else
-            sv_catsv(ERRSV, err);
+        if (raw_error_count >= PERL_STOP_PARSING_AFTER_N_ERRORS) {
+            if (errsv) {
+                Perl_croak(aTHX_ "%" SVf "%s has too many errors.\n",
+                    SVfARG(errsv), name);
+            } else {
+                Perl_croak(aTHX_ "%s has too many errors.\n", name);
+            }
+        }
     }
-    else if (PL_errors)
-        sv_catsv(PL_errors, err);
-    else
-        Perl_warn(aTHX_ "%" SVf, SVfARG(err));
-    if (PL_parser)
-        ++PL_parser->error_count;
 }
-
 
 
 /* pop a CXt_EVAL context and in addition, if it was a require then
@@ -1954,7 +2043,7 @@ PP(pp_caller)
       else (void)POPs;
     }
 
-    cx = caller_cx(count + !!(PL_op->op_private & OPpOFFBYONE), &dbcx);
+    cx = caller_cx(count + cBOOL(PL_op->op_private & OPpOFFBYONE), &dbcx);
     if (!cx) {
         if (gimme != G_LIST) {
             EXTEND(SP, 1);
@@ -2067,7 +2156,7 @@ PP(pp_caller)
     mPUSHi(CopHINTS_get(cx->blk_oldcop));
     {
         SV * mask ;
-        STRLEN * const old_warnings = cx->blk_oldcop->cop_warnings ;
+        char *old_warnings = cx->blk_oldcop->cop_warnings;
 
         if  (old_warnings == pWARN_NONE)
             mask = newSVpvn(WARN_NONEstring, WARNsize) ;
@@ -2078,7 +2167,7 @@ PP(pp_caller)
             mask = newSVpvn(WARN_ALLstring, WARNsize) ;
         }
         else
-            mask = newSVpvn((char *) (old_warnings + 1), old_warnings[0]);
+            mask = newSVpvn(old_warnings, RCPV_LEN(old_warnings));
         mPUSHs(mask);
     }
 
@@ -2255,6 +2344,7 @@ PP(pp_enteriter)
         SV * const sv = POPs;
         itervarp = (void *)sv;
         if (LIKELY(isGV(sv))) {		/* symbol table variable */
+            SvREFCNT_inc_simple_void(sv);
             itersave = GvSV(sv);
             SvREFCNT_inc_simple_void(itersave);
             cxflags = CXp_FOR_GV;
@@ -2267,6 +2357,7 @@ PP(pp_enteriter)
             assert(SvMAGIC(sv)->mg_type == PERL_MAGIC_lvref);
             itersave = NULL;
             cxflags = CXp_FOR_LVREF;
+            SvREFCNT_inc_simple_void(sv);
         }
     }
     /* OPpITER_DEF (implicit $_) should only occur with a GV iter var */
@@ -2635,25 +2726,33 @@ S_unwind_loop(pTHX)
                 OP_NAME(PL_op));
     }
     else {
-        dSP;
         STRLEN label_len;
-        const char * const label =
-            PL_op->op_flags & OPf_STACKED
-                ? SvPV(TOPs,label_len)
-                : (label_len = strlen(cPVOP->op_pv), cPVOP->op_pv);
-        const U32 label_flags =
-            PL_op->op_flags & OPf_STACKED
-                ? SvUTF8(POPs)
-                : (cPVOP->op_private & OPpPV_IS_UTF8) ? SVf_UTF8 : 0;
-        PUTBACK;
+        const char * label;
+        U32 label_flags;
+        SV *sv;
+
+        if (PL_op->op_flags & OPf_STACKED) {
+            dSP;
+            sv = POPs;
+            PUTBACK;
+            label       = SvPV(sv, label_len);
+            label_flags = SvUTF8(sv);
+        }
+        else {
+            sv          = NULL; /* not needed, but shuts up compiler warn */
+            label       = cPVOP->op_pv;
+            label_len   = strlen(label);
+            label_flags = (cPVOP->op_private & OPpPV_IS_UTF8) ? SVf_UTF8 : 0;
+        }
+
         cxix = dopoptolabel(label, label_len, label_flags);
         if (cxix < 0)
             /* diag_listed_as: Label not found for "last %s" */
             Perl_croak(aTHX_ "Label not found for \"%s %" SVf "\"",
                                        OP_NAME(PL_op),
                                        SVfARG(PL_op->op_flags & OPf_STACKED
-                                              && !SvGMAGICAL(TOPp1s)
-                                              ? TOPp1s
+                                              && !SvGMAGICAL(sv)
+                                              ? sv
                                               : newSVpvn_flags(label,
                                                     label_len,
                                                     label_flags | SVs_TEMP)));
@@ -2878,6 +2977,7 @@ PP(pp_goto)
             PERL_CONTEXT *cx;
             CV *cv = MUTABLE_CV(SvRV(sv));
             AV *arg = GvAV(PL_defgv);
+            CV *old_cv = NULL;
 
             while (!CvROOT(cv) && !CvXSUB(cv)) {
                 const GV * const gv = CvGV(cv);
@@ -2981,7 +3081,13 @@ PP(pp_goto)
 
             if (CxTYPE(cx) == CXt_SUB) {
                 CvDEPTH(cx->blk_sub.cv) = cx->blk_sub.olddepth;
-                SvREFCNT_dec_NN(cx->blk_sub.cv);
+                /*on XS calls defer freeing the old CV as it could
+                 * prematurely set PL_op to NULL, which could cause
+                 * e..g XS subs using GIMME_V to SEGV */
+                if (CvISXSUB(cv))
+                    old_cv = cx->blk_sub.cv;
+                else
+                    SvREFCNT_dec_NN(cx->blk_sub.cv);
             }
 
             /* Now do some callish stuff. */
@@ -2989,10 +3095,13 @@ PP(pp_goto)
                 const SSize_t items = arg ? AvFILL(arg) + 1 : 0;
                 const bool m = arg ? cBOOL(SvRMAGICAL(arg)) : 0;
                 SV** mark;
+                UNOP fake_goto_op;
 
                 ENTER;
                 SAVETMPS;
                 SAVEFREESV(cv); /* later, undo the 'avoid premature free' hack */
+                if (old_cv)
+                    SAVEFREESV(old_cv); /* ditto, deferred freeing of old CV */
 
                 /* put GvAV(defgv) back onto stack */
                 if (items) {
@@ -3024,6 +3133,19 @@ PP(pp_goto)
                 retop = cx->blk_sub.retop;
                 PL_comppad = cx->blk_sub.prevcomppad;
                 PL_curpad = LIKELY(PL_comppad) ? AvARRAY(PL_comppad) : NULL;
+
+                /* Make a temporary a copy of the current GOTO op on the C
+                 * stack, but with a modified gimme (we can't modify the
+                 * real GOTO op as that's not thread-safe). This allows XS
+                 * users of GIMME_V to get the correct calling context,
+                 * even though there is no longer a CXt_SUB frame to
+                 * provide that information.
+                 */
+                Copy(PL_op, &fake_goto_op, 1, UNOP);
+                fake_goto_op.op_flags =
+                                  (fake_goto_op.op_flags & ~OPf_WANT)
+                                | (cx->blk_gimme & G_WANT);
+                PL_op = (OP*)&fake_goto_op;
 
                 /* XS subs don't have a CXt_SUB, so pop it;
                  * this is a cx_popblock(), less all the stuff we already did
@@ -3214,7 +3336,7 @@ PP(pp_goto)
                     ? 2
                     : 1;
             if (enterops[i])
-                deprecate("\"goto\" to jump into a construct");
+                deprecate(WARN_DEPRECATED__GOTO_CONSTRUCT, "Use of \"goto\" to jump into a construct");
         }
 
         /* pop unwanted frames */
@@ -3322,17 +3444,65 @@ S_save_lines(pTHX_ AV *array, SV *sv)
 /*
 =for apidoc docatch
 
-Check for the cases 0 or 3 of cur_env.je_ret, only used inside an eval context.
+Interpose, for the current op and RUNOPS loop,
 
-0 is used as continue inside eval,
+    - a new JMPENV stack catch frame, and
+    - an inner RUNOPS loop to run all the remaining ops following the
+      current PL_op.
 
-3 is used for a die caught by an inner eval - continue inner loop
+Then handle any exceptions raised while in that loop.
+For a caught eval at this level, re-enter the loop with the specified
+restart op (i.e. the op following the OP_LEAVETRY etc); otherwise re-throw
+the exception.
 
-See F<cop.h>: je_mustcatch, when set at any runlevel to TRUE, means eval ops must
-establish a local jmpenv to handle exception traps.
+docatch() is intended to be used like this:
+
+    PP(pp_entertry)
+    {
+        if (CATCH_GET)
+            return docatch(Perl_pp_entertry);
+
+        ... rest of function ...
+        return PL_op->op_next;
+    }
+
+If a new catch frame isn't needed, the op behaves normally. Otherwise it
+calls docatch(), which recursively calls pp_entertry(), this time with
+CATCH_GET() false, so the rest of the body of the entertry is run. Then
+docatch() calls CALLRUNOPS() which executes all the ops following the
+entertry. When the loop finally finishes, control returns to docatch(),
+which pops the JMPENV and returns to the parent pp_entertry(), which
+itself immediately returns. Note that *all* subsequent ops are run within
+the inner RUNOPS loop, not just the body of the eval. For example, in
+
+    sub TIEARRAY { eval {1}; my $x }
+    tie @a, "main";
+
+at the point the 'my' is executed, the C stack will look something like:
+
+    #10 main()
+    #9  perl_run()              # JMPENV_PUSH level 1 here
+    #8  S_run_body()
+    #7  Perl_runops_standard()  # main RUNOPS loop
+    #6  Perl_pp_tie()
+    #5  Perl_call_sv()
+    #4  Perl_runops_standard()  # unguarded RUNOPS loop: no new JMPENV
+    #3  Perl_pp_entertry()
+    #2  S_docatch()             # JMPENV_PUSH level 2 here
+    #1  Perl_runops_standard()  # docatch()'s RUNOPs loop
+    #0  Perl_pp_padsv()
+
+Basically, any section of the perl core which starts a RUNOPS loop may
+make a promise that it will catch any exceptions and restart the loop if
+necessary. If it's not prepared to do that (like call_sv() isn't), then
+it sets CATCH_GET() to true, so that any later eval-like code knows to
+set up a new handler and loop (via docatch()).
+
+See L<perlinterp/"Exception handing"> for further details.
 
 =cut
 */
+
 STATIC OP *
 S_docatch(pTHX_ Perl_ppaddr_t firstpp)
 {
@@ -3340,18 +3510,23 @@ S_docatch(pTHX_ Perl_ppaddr_t firstpp)
     OP * const oldop = PL_op;
     dJMPENV;
 
-    assert(CATCH_GET == TRUE);
-
+    assert(CATCH_GET);
     JMPENV_PUSH(ret);
+    assert(!CATCH_GET);
+
     switch (ret) {
-    case 0:
+    case 0: /* normal flow-of-control return from JMPENV_PUSH */
+
+        /* re-run the current op, this time executing the full body of the
+         * pp function */
         PL_op = firstpp(aTHX);
  redo_body:
         if (PL_op) {
             CALLRUNOPS(aTHX);
         }
         break;
-    case 3:
+
+    case 3: /* an exception raised within an eval */
         if (PL_restartjmpenv == PL_top_env) {
             /* die caught by an inner eval - continue inner loop */
 
@@ -3363,10 +3538,11 @@ S_docatch(pTHX_ Perl_ppaddr_t firstpp)
             goto redo_body;
         }
         /* FALLTHROUGH */
+
     default:
         JMPENV_POP;
         PL_op = oldop;
-        JMPENV_JUMP(ret);
+        JMPENV_JUMP(ret); /* re-throw the exception */
         NOT_REACHED; /* NOTREACHED */
     }
     JMPENV_POP;
@@ -3443,16 +3619,39 @@ Perl_find_runcv_where(pTHX_ U8 cond, IV arg, U32 *db_seqp)
 }
 
 
-/* Run yyparse() in a setjmp wrapper. Returns:
+/* S_try_yyparse():
+ *
+ * Run yyparse() in a setjmp wrapper. Returns:
  *   0: yyparse() successful
  *   1: yyparse() failed
  *   3: yyparse() died
+ *
+ * This is used to trap Perl_croak() calls that are executed
+ * during the compilation process and before the code has been
+ * completely compiled. It is expected to be called from
+ * doeval_compile() only. The parameter 'caller_op' is
+ * only used in DEBUGGING to validate the logic is working
+ * correctly.
+ *
+ * See also try_run_unitcheck().
+ *
  */
 STATIC int
-S_try_yyparse(pTHX_ int gramtype)
+S_try_yyparse(pTHX_ int gramtype, OP *caller_op)
 {
-    int ret;
+    /* if we die during compilation PL_restartop and PL_restartjmpenv
+     * will be set by Perl_die_unwind(). We need to restore their values
+     * if that happens as they are intended for the case where the code
+     * compiles and dies during execution, not where it dies during
+     * compilation. PL_restartop and caller_op->op_next should be the
+     * same anyway, and when compilation fails then caller_op->op_next is
+     * used as the next op after the compile.
+     */
+    JMPENV *restartjmpenv = PL_restartjmpenv;
+    OP *restartop = PL_restartop;
     dJMPENV;
+    int ret;
+    PERL_UNUSED_ARG(caller_op); /* only used in debugging builds */
 
     assert(CxTYPE(CX_CUR()) == CXt_EVAL);
     JMPENV_PUSH(ret);
@@ -3461,6 +3660,11 @@ S_try_yyparse(pTHX_ int gramtype)
         ret = yyparse(gramtype) ? 1 : 0;
         break;
     case 3:
+        /* yyparse() died and we trapped the error. We need to restore
+         * the old PL_restartjmpenv and PL_restartop values. */
+        assert(PL_restartop == caller_op->op_next); /* we expect these to match */
+        PL_restartjmpenv = restartjmpenv;
+        PL_restartop = restartop;
         break;
     default:
         JMPENV_POP;
@@ -3471,6 +3675,67 @@ S_try_yyparse(pTHX_ int gramtype)
     return ret;
 }
 
+/* S_try_run_unitcheck()
+ *
+ * Run PL_unitcheckav in a setjmp wrapper via call_list.
+ * Returns:
+ *   0: unitcheck blocks ran without error
+ *   3: a unitcheck block died
+ *
+ * This is used to trap Perl_croak() calls that are executed
+ * during UNITCHECK blocks executed after the compilation
+ * process has completed but before the code itself has been
+ * executed via the normal run loops. It is expected to be called
+ * from doeval_compile() only. The parameter 'caller_op' is
+ * only used in DEBUGGING to validate the logic is working
+ * correctly.
+ *
+ * See also try_yyparse().
+ */
+STATIC int
+S_try_run_unitcheck(pTHX_ OP* caller_op)
+{
+    /* if we die during compilation PL_restartop and PL_restartjmpenv
+     * will be set by Perl_die_unwind(). We need to restore their values
+     * if that happens as they are intended for the case where the code
+     * compiles and dies during execution, not where it dies during
+     * compilation. UNITCHECK runs after compilation completes, and
+     * if it dies we will execute the PL_restartop anyway via the
+     * failed compilation code path. PL_restartop and caller_op->op_next
+     * should be the same anyway, and when compilation fails then
+     * caller_op->op_next is  used as the next op after the compile.
+     */
+    JMPENV *restartjmpenv = PL_restartjmpenv;
+    OP *restartop = PL_restartop;
+    dJMPENV;
+    int ret;
+    PERL_UNUSED_ARG(caller_op); /* only used in debugging builds */
+
+    assert(CxTYPE(CX_CUR()) == CXt_EVAL);
+    JMPENV_PUSH(ret);
+    switch (ret) {
+    case 0:
+        call_list(PL_scopestack_ix, PL_unitcheckav);
+        break;
+    case 3:
+        /* call_list died */
+        /* call_list() died and we trapped the error. We should restore
+         * the old PL_restartjmpenv and PL_restartop values, as they are
+         * used only in the case where the code was actually run.
+         * The assert validates that we will still execute the PL_restartop.
+         */
+        assert(PL_restartop == caller_op->op_next); /* we expect these to match */
+        PL_restartjmpenv = restartjmpenv;
+        PL_restartop = restartop;
+        break;
+    default:
+        JMPENV_POP;
+        JMPENV_JUMP(ret);
+        NOT_REACHED; /* NOTREACHED */
+    }
+    JMPENV_POP;
+    return ret;
+}
 
 /* Compile a require/do or an eval ''.
  *
@@ -3610,22 +3875,30 @@ S_doeval_compile(pTHX_ U8 gimme, CV* outside, U32 seq, HV *hh)
 
     CALL_BLOCK_HOOKS(bhk_eval, saveop);
 
-    /* note that yyparse() may raise an exception, e.g. C<BEGIN{die}>,
-     * so honour CATCH_GET and trap it here if necessary */
-
-
+    /* we should never be CATCH_GET true here, as our immediate callers should
+     * always handle that case. */
+    assert(!CATCH_GET);
     /* compile the code */
-    yystatus = (!in_require && CATCH_GET) ? S_try_yyparse(aTHX_ GRAMPROG) : yyparse(GRAMPROG);
+
+
+    yystatus = (!in_require)
+               ? S_try_yyparse(aTHX_ GRAMPROG, saveop)
+               : yyparse(GRAMPROG);
 
     if (yystatus || PL_parser->error_count || !PL_eval_root) {
         PERL_CONTEXT *cx;
         SV *errsv;
 
         PL_op = saveop;
-        /* note that if yystatus == 3, then the require/eval died during
-         * compilation, so the EVAL CX block has already been popped, and
-         * various vars restored */
         if (yystatus != 3) {
+            /* note that if yystatus == 3, then the require/eval died during
+             * compilation, so the EVAL CX block has already been popped, and
+             * various vars restored. This block applies similar steps after
+             * the other "failed to compile" cases in yyparse, eg, where
+             * yystatus=1, "failed, but did not die". */
+
+            if (!in_require)
+                invoke_exception_hook(ERRSV,FALSE);
             if (PL_eval_root) {
                 op_free(PL_eval_root);
                 PL_eval_root = NULL;
@@ -3633,6 +3906,10 @@ S_doeval_compile(pTHX_ U8 gimme, CV* outside, U32 seq, HV *hh)
             SP = PL_stack_base + POPMARK;	/* pop original mark */
             cx = CX_CUR();
             assert(CxTYPE(cx) == CXt_EVAL);
+            /* If we are in an eval we need to make sure that $SIG{__DIE__}
+             * handler is invoked so we simulate that part of the
+             * Perl_die_unwind() process. In a require we will croak
+             * so it will happen there. */
             /* pop the CXt_EVAL, and if was a require, croak */
             S_pop_eval_context_maybe_croak(aTHX_ cx, ERRSV, 2);
         }
@@ -3645,6 +3922,7 @@ S_doeval_compile(pTHX_ U8 gimme, CV* outside, U32 seq, HV *hh)
         errsv = ERRSV;
         if (!*(SvPV_nolen_const(errsv)))
             sv_setpvs(errsv, "Compilation error");
+
 
         if (gimme != G_LIST) PUSHs(&PL_sv_undef);
         PUTBACK;
@@ -3673,9 +3951,31 @@ S_doeval_compile(pTHX_ U8 gimme, CV* outside, U32 seq, HV *hh)
         }
     }
 
-    if (PL_unitcheckav) {
+    if (PL_unitcheckav && av_count(PL_unitcheckav)>0) {
         OP *es = PL_eval_start;
-        call_list(PL_scopestack_ix, PL_unitcheckav);
+        /* TODO: are we sure we shouldn't do S_try_run_unitcheck()
+        * when `in_require` is true? */
+        if (in_require) {
+            call_list(PL_scopestack_ix, PL_unitcheckav);
+        }
+        else if (S_try_run_unitcheck(aTHX_ saveop)) {
+            /* there was an error! */
+
+            /* Restore PL_OP */
+            PL_op = saveop;
+
+            SV *errsv = ERRSV;
+            if (!*(SvPV_nolen_const(errsv))) {
+                /* This happens when using:
+                 * eval qq# UNITCHECK { die "\x00"; } #;
+                 */
+                sv_setpvs(errsv, "Unit check error");
+            }
+
+            if (gimme != G_LIST) PUSHs(&PL_sv_undef);
+            PUTBACK;
+            return FALSE;
+        }
         PL_eval_start = es;
     }
 
@@ -3934,6 +4234,46 @@ S_require_file(pTHX_ SV *sv)
     if (!(name && len > 0 && *name))
         DIE(aTHX_ "Missing or undefined argument to %s", op_name);
 
+    if (
+        PL_hook__require__before
+        && SvROK(PL_hook__require__before)
+        && SvTYPE(SvRV(PL_hook__require__before)) == SVt_PVCV
+    ) {
+        SV* name_sv = sv_mortalcopy(sv);
+        SV *post_hook__require__before_sv = NULL;
+
+        ENTER_with_name("call_PRE_REQUIRE");
+        SAVETMPS;
+        EXTEND(SP, 1);
+        PUSHMARK(SP);
+        PUSHs(name_sv); /* always use the object for method calls */
+        PUTBACK;
+        int count = call_sv(PL_hook__require__before, G_SCALAR);
+        SPAGAIN;
+        if (count && SvOK(*SP) && SvROK(*SP) && SvTYPE(SvRV(*SP)) == SVt_PVCV)
+            post_hook__require__before_sv = SvREFCNT_inc_simple_NN(*SP);
+        if (!sv_streq(name_sv,sv)) {
+            /* they modified the name argument, so do some sleight of hand */
+            name = SvPV_nomg_const(name_sv, len);
+            if (!(name && len > 0 && *name))
+                DIE(aTHX_ "Missing or undefined argument to %s via %%{^HOOK}{require__before}",
+                        op_name);
+            sv = SvREFCNT_inc_simple_NN(name_sv);
+        }
+        FREETMPS;
+        LEAVE_with_name("call_PRE_REQUIRE");
+        if (post_hook__require__before_sv) {
+            MORTALDESTRUCTOR_SV(post_hook__require__before_sv, newSVsv(sv));
+        }
+    }
+    if (
+        PL_hook__require__after
+        && SvROK(PL_hook__require__after)
+        && SvTYPE(SvRV(PL_hook__require__after)) == SVt_PVCV
+    ) {
+        MORTALDESTRUCTOR_SV(PL_hook__require__after, newSVsv(sv));
+    }
+
 #ifndef VMS
         /* try to return earlier (save the SAFE_PATHNAME check) if INC already got the name */
         if (op_is_require) {
@@ -3996,7 +4336,7 @@ S_require_file(pTHX_ SV *sv)
 
         /*XXX OPf_KIDS should always be true? -dapm 4/2017 */
         if (PL_op->op_flags & OPf_KIDS) {
-            SVOP * const kid = (SVOP*)cUNOP->op_first;
+            SVOP * const kid = cSVOPx(cUNOP->op_first);
 
             if (kid->op_type == OP_CONST && (kid->op_private & OPpCONST_BARE)) {
                 /* Make sure that a bareword module name (e.g. ::Foo::Bar)
@@ -4059,58 +4399,145 @@ S_require_file(pTHX_ SV *sv)
      *
      * For searchable paths, just search @INC normally
      */
+    AV *inc_checked = (AV*)sv_2mortal((SV*)newAV());
     if (!tryrsfp && !(errno == EACCES && !path_searchable)) {
-        AV * const ar = GvAVn(PL_incgv);
-        SSize_t i;
+        SSize_t inc_idx;
 #ifdef VMS
         if (vms_unixname)
 #endif
         {
-            SV *nsv = sv;
+            AV *incdir_av = (AV*)sv_2mortal((SV*)newAV());
+            SV *nsv = sv; /* non const copy we can change if necessary */
             namesv = newSV_type(SVt_PV);
-            for (i = 0; i <= AvFILL(ar); i++) {
-                SV * const dirsv = *av_fetch(ar, i, TRUE);
+            AV *inc_ar = GvAVn(PL_incgv);
+            SSize_t incdir_continue_inc_idx = -1;
 
-                SvGETMAGIC(dirsv);
+            for (
+                inc_idx = 0;
+                (AvFILL(incdir_av)>=0 /* we have INCDIR items pending */
+                    || inc_idx <= AvFILL(inc_ar));  /* @INC entries remain */
+                inc_idx++
+            ) {
+                SV *dirsv;
+
+                /* do we have any pending INCDIR items? */
+                if (AvFILL(incdir_av)>=0) {
+                    /* yep, shift it out */
+                    dirsv = av_shift(incdir_av);
+                    if (AvFILL(incdir_av)<0) {
+                        /* incdir is now empty, continue from where
+                         * we left off after we process this entry  */
+                        inc_idx = incdir_continue_inc_idx;
+                    }
+                } else {
+                    dirsv = *av_fetch(inc_ar, inc_idx, TRUE);
+                }
+
+                if (SvGMAGICAL(dirsv)) {
+                    SvGETMAGIC(dirsv);
+                    dirsv = newSVsv_nomg(dirsv);
+                } else {
+                    /* on the other hand, since we aren't copying we do need
+                     * to increment */
+                    SvREFCNT_inc(dirsv);
+                }
+                if (!SvOK(dirsv))
+                    continue;
+
+                av_push(inc_checked, dirsv);
+
                 if (SvROK(dirsv)) {
                     int count;
                     SV **svp;
                     SV *loader = dirsv;
+                    UV diruv = PTR2UV(SvRV(dirsv));
 
                     if (SvTYPE(SvRV(loader)) == SVt_PVAV
                         && !SvOBJECT(SvRV(loader)))
                     {
                         loader = *av_fetch(MUTABLE_AV(SvRV(loader)), 0, TRUE);
-                        SvGETMAGIC(loader);
+                        if (SvGMAGICAL(loader)) {
+                            SvGETMAGIC(loader);
+                            SV *l = sv_newmortal();
+                            sv_setsv_nomg(l, loader);
+                            loader = l;
+                        }
                     }
-
-                    Perl_sv_setpvf(aTHX_ namesv, "/loader/0x%" UVxf "/%s",
-                                   PTR2UV(SvRV(dirsv)), name);
-                    tryname = SvPVX_const(namesv);
-                    tryrsfp = NULL;
 
                     if (SvPADTMP(nsv)) {
                         nsv = sv_newmortal();
                         SvSetSV_nosteal(nsv,sv);
                     }
 
-                    ENTER_with_name("call_INC");
-                    SAVETMPS;
-                    EXTEND(SP, 2);
-
-                    PUSHMARK(SP);
-                    PUSHs(dirsv);
-                    PUSHs(nsv);
-                    PUTBACK;
-                    if (SvGMAGICAL(loader)) {
-                        SV *l = sv_newmortal();
-                        sv_setsv_nomg(l, loader);
-                        loader = l;
+                    const char *method = NULL;
+                    bool is_incdir = FALSE;
+                    SV * inc_idx_sv = save_scalar(PL_incgv);
+                    sv_setiv(inc_idx_sv,inc_idx);
+                    if (sv_isobject(loader)) {
+                        /* if it is an object and it has an INC method, then
+                         * call the method.
+                         */
+                        HV *pkg = SvSTASH(SvRV(loader));
+                        GV * gv = gv_fetchmethod_pvn_flags(pkg, "INC", 3, GV_AUTOLOAD);
+                        if (gv && isGV(gv)) {
+                            method = "INC";
+                        } else {
+                            /* no point to autoload here, it would have been found above */
+                            gv = gv_fetchmethod_pvn_flags(pkg, "INCDIR", 6, 0);
+                            if (gv && isGV(gv)) {
+                                method = "INCDIR";
+                                is_incdir = TRUE;
+                            }
+                        }
+                        /* But if we have no method, check if this is a
+                         * coderef, if it is then we treat it as an
+                         * unblessed coderef would be treated: we
+                         * execute it. If it is some other and it is in
+                         * an array ref wrapper, then really we don't
+                         * know what to do with it, (why use the
+                         * wrapper?) and we throw an exception to help
+                         * debug. If it is not in a wrapper assume it
+                         * has an overload and treat it as a string.
+                         * Maybe in the future we can detect if it does
+                         * have overloading and throw an error if not.
+                         */
+                        if (!method) {
+                            if (SvTYPE(SvRV(loader)) != SVt_PVCV) {
+                                if (amagic_applies(loader,string_amg,AMGf_unary))
+                                    goto treat_as_string;
+                                else {
+                                    croak("Can't locate object method \"INC\", nor"
+                                          " \"INCDIR\" nor string overload via"
+                                          " package %" HvNAMEf_QUOTEDPREFIX " %s"
+                                          " in @INC", pkg,
+                                          dirsv == loader
+                                          ? "in object hook"
+                                          : "in object in ARRAY hook"
+                                    );
+                                }
+                            }
+                        }
                     }
-                    if (sv_isobject(loader))
-                        count = call_method("INC", G_LIST);
-                    else
-                        count = call_sv(loader, G_LIST);
+
+                    Perl_sv_setpvf(aTHX_ namesv, "/loader/0x%" UVxf "/%s",
+                                   diruv, name);
+                    tryname = SvPVX_const(namesv);
+                    tryrsfp = NULL;
+
+                    ENTER_with_name("call_INC_hook");
+                    SAVETMPS;
+                    EXTEND(SP, 2 + ((method && (loader != dirsv)) ? 1 : 0));
+                    PUSHMARK(SP);
+                    PUSHs(method ? loader : dirsv); /* always use the object for method calls */
+                    PUSHs(nsv);
+                    if (method && (loader != dirsv)) /* add the args array for method calls */
+                        PUSHs(dirsv);
+                    PUTBACK;
+                    if (method) {
+                        count = call_method(method, G_LIST|G_EVAL);
+                    } else {
+                        count = call_sv(loader, G_LIST|G_EVAL);
+                    }
                     SPAGAIN;
 
                     if (count > 0) {
@@ -4118,6 +4545,48 @@ S_require_file(pTHX_ SV *sv)
                         SV *arg;
 
                         SP -= count - 1;
+
+                        if (is_incdir) {
+                            /* push the stringified returned items into the
+                             * incdir_av array for processing immediately
+                             * afterwards. we deliberately stringify or copy
+                             * "special" arguments, so that overload logic for
+                             * instance applies, but so that the end result is
+                             * stable. We speficially do *not* support returning
+                             * coderefs from an INCDIR call. */
+                            while (count-->0) {
+                                arg = SP[i++];
+                                SvGETMAGIC(arg);
+                                if (!SvOK(arg))
+                                    continue;
+                                if (SvROK(arg)) {
+                                    STRLEN l;
+                                    char *pv = SvPV(arg,l);
+                                    arg = newSVpvn(pv,l);
+                                }
+                                else if (SvGMAGICAL(arg)) {
+                                    arg = newSVsv_nomg(arg);
+                                }
+                                else {
+                                    SvREFCNT_inc(arg);
+                                }
+                                av_push(incdir_av, arg);
+                            }
+                            /* We copy $INC into incdir_continue_inc_idx
+                             * so that when we finish processing the items
+                             * we just inserted into incdir_av we can continue
+                             * as though we had just finished executing the INCDIR
+                             * hook. We honour $INC here just like we would for
+                             * an INC hook, the hook might have rewritten @INC
+                             * at the same time as returning something to us.
+                             */
+                            inc_idx_sv = GvSVn(PL_incgv);
+                            incdir_continue_inc_idx = SvOK(inc_idx_sv)
+                                                      ? SvIV(inc_idx_sv) : -1;
+
+                            goto done_hook;
+                        }
+
                         arg = SP[i++];
 
                         if (SvROK(arg) && (SvTYPE(SvRV(arg)) <= SVt_PVLV)
@@ -4166,15 +4635,62 @@ S_require_file(pTHX_ SV *sv)
                             tryrsfp = PerlIO_open(BIT_BUCKET,
                                                   PERL_SCRIPT_MODE);
                         }
+                        done_hook:
                         SP--;
+                    } else {
+                        SV *errsv= ERRSV;
+                        if (SvTRUE(errsv) && !SvROK(errsv)) {
+                            STRLEN l;
+                            char *pv= SvPV(errsv,l);
+                            /* Heuristic to tell if this error message
+                             * includes the standard line number info:
+                             * check if the line ends in digit dot newline.
+                             * If it does then we add some extra info so
+                             * its obvious this is coming from a hook.
+                             * If it is a user generated error we try to
+                             * leave it alone. l>12 is to ensure the
+                             * other checks are in string, but also
+                             * accounts for "at ... line 1.\n" to a
+                             * certain extent. Really we should check
+                             * further, but this is good enough for back
+                             * compat I think.
+                             */
+                            if (l>=12 && pv[l-1] == '\n' && pv[l-2] == '.' && isDIGIT(pv[l-3]))
+                                sv_catpvf(errsv, "%s %s hook died--halting @INC search",
+                                          method ? method : "INC",
+                                          method ? "method" : "sub");
+                            croak_sv(errsv);
+                        }
                     }
 
                     /* FREETMPS may free our filter_cache */
                     SvREFCNT_inc_simple_void(filter_cache);
 
+                    /*
+                     Let the hook override which @INC entry we visit
+                     next by setting $INC to a different value than it
+                     was before we called the hook. If they have
+                     completely rewritten the array they might want us
+                     to start traversing from the beginning, which is
+                     represented by -1. We use undef as an equivalent of
+                     -1. This can't be used as a way to call a hook
+                     twice, as we still dedupe.
+                     We have to do this before we LEAVE, as we localized
+                     $INC before we called the hook.
+                    */
+                    inc_idx_sv = GvSVn(PL_incgv);
+                    inc_idx = SvOK(inc_idx_sv) ? SvIV(inc_idx_sv) : -1;
+
                     PUTBACK;
                     FREETMPS;
-                    LEAVE_with_name("call_INC");
+                    LEAVE_with_name("call_INC_hook");
+
+                    /*
+                     It is possible that @INC has been replaced and that inc_ar
+                     now points at a freed AV. So we have to refresh it from
+                     the GV to be sure.
+                    */
+                    inc_ar = GvAVn(PL_incgv);
 
                     /* Now re-mortalize it. */
                     sv_2mortal(filter_cache);
@@ -4182,8 +4698,24 @@ S_require_file(pTHX_ SV *sv)
                     /* Adjust file name if the hook has set an %INC entry.
                        This needs to happen after the FREETMPS above.  */
                     svp = hv_fetch(GvHVn(PL_incgv), name, len, 0);
-                    if (svp)
-                        tryname = SvPV_nolen_const(*svp);
+                    /* we have to make sure that the value is not undef
+                     * or the empty string, if it is then we should not
+                     * set tryname to it as this will break error messages.
+                     *
+                     * This might happen if an @INC hook evals the module
+                     * which was required in the first place and which
+                     * triggered the @INC hook, and that eval dies.
+                     * See https://github.com/Perl/perl5/issues/20535
+                     */
+                    if (svp && SvOK(*svp)) {
+                        STRLEN len;
+                        const char *tmp_pv = SvPV_const(*svp,len);
+                        /* we also guard against the deliberate empty string.
+                         * We do not guard against '0', if people want to set their
+                         * file name to 0 that is up to them. */
+                        if (len)
+                            tryname = tmp_pv;
+                    }
 
                     if (tryrsfp) {
                         hook_sv = dirsv;
@@ -4201,12 +4733,13 @@ S_require_file(pTHX_ SV *sv)
                         filter_sub = NULL;
                     }
                 }
-                else if (path_searchable) {
+                else
+                    treat_as_string:
+                    if (path_searchable) {
                     /* match against a plain @INC element (non-searchable
                      * paths are only matched against refs in @INC) */
                     const char *dir;
                     STRLEN dirlen;
-
                     if (SvOK(dirsv)) {
                         dir = SvPV_nomg_const(dirsv, dirlen);
                     } else {
@@ -4286,14 +4819,15 @@ S_require_file(pTHX_ SV *sv)
                 DIE(aTHX_ "Can't locate %s:   %s: %s",
                     name, tryname, Strerror(saved_errno));
             } else {
-                if (path_searchable) {		/* did we lookup @INC? */
-                    AV * const ar = GvAVn(PL_incgv);
+                if (path_searchable) {          /* did we lookup @INC? */
                     SSize_t i;
                     SV *const msg = newSVpvs_flags("", SVs_TEMP);
                     SV *const inc = newSVpvs_flags("", SVs_TEMP);
-                    for (i = 0; i <= AvFILL(ar); i++) {
+                    for (i = 0; i <= AvFILL(inc_checked); i++) {
+                        SV **svp= av_fetch(inc_checked, i, TRUE);
+                        if (!svp || !*svp) continue;
                         sv_catpvs(inc, " ");
-                        sv_catsv(inc, *av_fetch(ar, i, TRUE));
+                        sv_catsv(inc, *svp);
                     }
                     if (memENDPs(name, len, ".pm")) {
                         const char *e = name + len - (sizeof(".pm") - 1);
@@ -4347,7 +4881,7 @@ S_require_file(pTHX_ SV *sv)
 
                     /* diag_listed_as: Can't locate %s */
                     DIE(aTHX_
-                        "Can't locate %s in @INC%" SVf " (@INC contains:%" SVf ")",
+                        "Can't locate %s in @INC%" SVf " (@INC entries checked:%" SVf ")",
                         name, msg, inc);
                 }
             }
@@ -4361,7 +4895,7 @@ S_require_file(pTHX_ SV *sv)
             /* the complication is to match the logic from doopen_pm() so
              * we don't treat do "sda1" as a previously successful "do".
             */
-            bool do_warn = namesv && ckWARN_d(WARN_DEPRECATED)
+            bool do_warn = namesv && ckWARN_d(WARN_DEPRECATED__DOT_IN_INC)
                 && PerlLIO_stat(name, &st) == 0 && !S_ISDIR(st.st_mode) && !S_ISBLK(st.st_mode)
                 && (io = PerlIO_openn(aTHX_ ":", PERL_SCRIPT_MODE, -1, 0, 0, NULL, 1, &sv)) != NULL;
             if (io)
@@ -4369,7 +4903,7 @@ S_require_file(pTHX_ SV *sv)
 
             RESTORE_ERRNO;
             if (do_warn) {
-                Perl_warner(aTHX_ packWARN(WARN_DEPRECATED),
+                Perl_warner(aTHX_ packWARN(WARN_DEPRECATED__DOT_IN_INC),
                 "do \"%s\" failed, '.' is no longer in @INC; "
                 "did you mean do \"./%s\"?",
                 name, name);
@@ -4389,10 +4923,13 @@ S_require_file(pTHX_ SV *sv)
         (void)hv_store(GvHVn(PL_incgv),
                        unixname, unixlen, newSVpv(tryname,0),0);
     } else {
+        /* store the hook in the sv, note we have to *copy* hook_sv,
+         * we don't want modifications to it to change @INC - see GH #20577
+         */
         SV** const svp = hv_fetch(GvHVn(PL_incgv), unixname, unixlen, 0);
         if (!svp)
             (void)hv_store(GvHVn(PL_incgv),
-                           unixname, unixlen, SvREFCNT_inc_simple(hook_sv), 0 );
+                           unixname, unixlen, newSVsv(hook_sv), 0 );
     }
 
     /* Now parse the file */
@@ -4441,7 +4978,15 @@ S_require_file(pTHX_ SV *sv)
 
 PP(pp_require)
 {
-    RUN_PP_CATCHABLY(Perl_pp_require);
+    /* If a suitable JMPENV catch frame isn't present, call docatch(),
+     * which will:
+     *   - add such a frame, and
+     *   - start a new RUNOPS loop, which will (as the first op to run),
+     *     recursively call this pp function again.
+     * The main body of this function is then executed by the inner call.
+     */
+    if (CATCH_GET)
+        return docatch(Perl_pp_require);
 
     {
         dSP;
@@ -4484,7 +5029,17 @@ PP(pp_entereval)
     bool bytes;
     I32 old_savestack_ix;
 
-    RUN_PP_CATCHABLY(Perl_pp_entereval);
+    /* If a suitable JMPENV catch frame isn't present, call docatch(),
+     * which will:
+     *   - add such a frame, and
+     *   - start a new RUNOPS loop, which will (as the first op to run),
+     *     recursively call this pp function again.
+     * The main body of this function is then executed by the inner call.
+     */
+    if (CATCH_GET)
+        return docatch(Perl_pp_entereval);
+
+    assert(!CATCH_GET);
 
     gimme = GIMME_V;
     was = PL_breakable_sub_gen;
@@ -4542,9 +5097,9 @@ PP(pp_entereval)
 
     if (PERLDB_NAMEEVAL && CopLINE(PL_curcop)) {
         SV * const temp_sv = sv_newmortal();
-        Perl_sv_setpvf(aTHX_ temp_sv, "_<(eval %lu)[%s:%" IVdf "]",
+        Perl_sv_setpvf(aTHX_ temp_sv, "_<(eval %lu)[%s:%" LINE_Tf "]",
                        (unsigned long)++PL_evalseq,
-                       CopFILE(PL_curcop), (IV)CopLINE(PL_curcop));
+                       CopFILE(PL_curcop), CopLINE(PL_curcop));
         tmpbuf = SvPVX(temp_sv);
         len = SvCUR(temp_sv);
     }
@@ -4602,6 +5157,9 @@ PP(pp_entereval)
         } else if (!saved_delete) {
             (void)hv_delete(PL_defstash, tmpbuf, len, G_DISCARD);
         }
+        if (PL_op->op_private & OPpEVAL_EVALSV)
+            /* signal compiletime failure to our eval_sv() caller */
+            *++PL_stack_sp = NULL;
         return PL_op->op_next;
     }
 }
@@ -4616,6 +5174,7 @@ PP(pp_leaveeval)
     PERL_CONTEXT *cx;
     OP *retop;
     int failed;
+    bool override_return = FALSE; /* is feature 'module_true' in effect? */
     CV *evalcv;
     bool keep;
 
@@ -4627,8 +5186,57 @@ PP(pp_leaveeval)
     oldsp = PL_stack_base + cx->blk_oldsp;
     gimme = cx->blk_gimme;
 
-    /* did require return a false value? */
-    failed =    CxOLD_OP_TYPE(cx) == OP_REQUIRE
+    bool is_require= CxOLD_OP_TYPE(cx) == OP_REQUIRE;
+    if (is_require) {
+        /* We are in an require. Check if use feature 'module_true' is enabled,
+         * and if so later on correct any returns from the require. */
+
+        /* we might be called for an OP_LEAVEEVAL or OP_RETURN opcode
+         * and the parse tree will look different for either case.
+         * so find the right op to check later */
+        if (OP_TYPE_IS_OR_WAS(PL_op, OP_RETURN)) {
+            if (PL_op->op_flags & OPf_SPECIAL)
+                override_return = true;
+        }
+        else if ((PL_op->op_flags & OPf_KIDS) && OP_TYPE_IS_OR_WAS(PL_op, OP_LEAVEEVAL)){
+            COP *old_pl_curcop = PL_curcop;
+            OP *check = cUNOPx(PL_op)->op_first;
+
+            /* ok, we found something to check, we need to scan through
+             * it and find the last OP_NEXTSTATE it contains and then read the
+             * feature state out of the COP data it contains.
+             */
+            if (check) {
+                if (!OP_TYPE_IS(check,OP_STUB)) {
+                    const OP *kid = cLISTOPx(check)->op_first;
+                    const OP *last_state = NULL;
+
+                    for (; kid; kid = OpSIBLING(kid)) {
+                        if (
+                               OP_TYPE_IS_OR_WAS(kid, OP_NEXTSTATE)
+                            || OP_TYPE_IS_OR_WAS(kid, OP_DBSTATE)
+                        ){
+                            last_state = kid;
+                        }
+                    }
+                    if (last_state) {
+                        PL_curcop = cCOPx(last_state);
+                        if (FEATURE_MODULE_TRUE_IS_ENABLED) {
+                            override_return = TRUE;
+                        }
+                    } else {
+                        NOT_REACHED; /* NOTREACHED */
+                    }
+                }
+            } else {
+                NOT_REACHED; /* NOTREACHED */
+            }
+            PL_curcop = old_pl_curcop;
+        }
+    }
+
+    /* we might override this later if 'module_true' is enabled */
+    failed =    is_require
              && !(gimme == G_SCALAR
                     ? SvTRUE_NN(*PL_stack_sp)
                     : PL_stack_sp > oldsp);
@@ -4658,6 +5266,19 @@ PP(pp_leaveeval)
 #endif
     CvDEPTH(evalcv) = 0;
 
+    if (override_return) {
+        /* make sure that we use a standard return when feature 'module_load'
+         * is enabled. Returns from require are problematic (consider what happens
+         * when it is called twice) */
+        if (gimme == G_SCALAR) {
+            /* this following is an optimization of POPs()/PUSHs().
+             * and does the same thing with less bookkeeping */
+            *PL_stack_sp = &PL_sv_yes;
+        }
+        assert(gimme == G_VOID || gimme == G_SCALAR);
+        failed = 0;
+    }
+
     /* pop the CXt_EVAL, and if a require failed, croak */
     S_pop_eval_context_maybe_croak(aTHX_ cx, NULL, failed);
 
@@ -4679,7 +5300,15 @@ PP(pp_entertrycatch)
     PERL_CONTEXT *cx;
     const U8 gimme = GIMME_V;
 
-    RUN_PP_CATCHABLY(Perl_pp_entertrycatch);
+    /* If a suitable JMPENV catch frame isn't present, call docatch(),
+     * which will:
+     *   - add such a frame, and
+     *   - start a new RUNOPS loop, which will (as the first op to run),
+     *     recursively call this pp function again.
+     * The main body of this function is then executed by the inner call.
+     */
+    if (CATCH_GET)
+        return docatch(Perl_pp_entertrycatch);
 
     assert(!CATCH_GET);
 
@@ -4760,7 +5389,15 @@ PP(pp_entertry)
 {
     OP *retop = cLOGOP->op_other->op_next;
 
-    RUN_PP_CATCHABLY(Perl_pp_entertry);
+    /* If a suitable JMPENV catch frame isn't present, call docatch(),
+     * which will:
+     *   - add such a frame, and
+     *   - start a new RUNOPS loop, which will (as the first op to run),
+     *     recursively call this pp function again.
+     * The main body of this function is then executed by the inner call.
+     */
+    if (CATCH_GET)
+        return docatch(Perl_pp_entertry);
 
     assert(!CATCH_GET);
 
@@ -4849,7 +5486,7 @@ PP(pp_leavegiven)
 STATIC PMOP *
 S_make_matcher(pTHX_ REGEXP *re)
 {
-    PMOP *matcher = (PMOP *) newPMOP(OP_MATCH, OPf_WANT_SCALAR | OPf_STACKED);
+    PMOP *matcher = cPMOPx(newPMOP(OP_MATCH, OPf_WANT_SCALAR | OPf_STACKED));
 
     PERL_ARGS_ASSERT_MAKE_MATCHER;
 
@@ -5587,9 +6224,9 @@ S_doparseform(pTHX_ SV *sv)
     if (mg) {
         /* still the same as previously-compiled string? */
         SV *old = mg->mg_obj;
-        if ( !(!!SvUTF8(old) ^ !!SvUTF8(sv))
-              && len == SvCUR(old)
-              && strnEQ(SvPVX(old), s, len)
+        if ( ! (cBOOL(SvUTF8(old)) ^ cBOOL(SvUTF8(sv)))
+            && len == SvCUR(old)
+            && strnEQ(SvPVX(old), s, len)
         ) {
             DEBUG_f(PerlIO_printf(Perl_debug_log,"Re-using compiled format\n"));
             return mg;

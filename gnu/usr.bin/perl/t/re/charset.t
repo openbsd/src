@@ -1,4 +1,5 @@
 # Test the /a, /d, etc regex modifiers
+# For comprehensive tests, set $ENV{PERL_DEBUG_FULL_TEST} to some true value
 
 BEGIN {
     chdir 't' if -d 't';
@@ -15,33 +16,116 @@ use Config;
 
 plan('no_plan');
 
-# Each case is a valid element of its hash key.  Choose, where available, an
-# ASCII-range, Latin-1 non-ASCII range, and above Latin1 range code point.
+# Each case is a valid element of its hash key.  Choose, where available, at
+# least one of each type: ASCII-range, non-ASCII range Latin-1, and above
+# Latin1 range code point.
 my %testcases = (
-    '\w' => [ ord("A"), utf8::unicode_to_native(0xE2), 0x16B ],   # Below expects these to all be alpha
-    '\d' => [ ord("0"), 0x0662 ],
-    '\s' => [ ord("\t"), utf8::unicode_to_native(0xA0), 0x1680 ],  # Below expects these to be [:blank:]
-    '[:cntrl:]' => [ utf8::unicode_to_native(0x00), utf8::unicode_to_native(0x88) ],
-    '[:graph:]' => [ ord("&"), utf8::unicode_to_native(0xF7), 0x02C7 ], # Below expects these to be
-                                                                     # [:print:]
-    '[:lower:]' => [ ord("g"), utf8::unicode_to_native(0xE3), 0x0127 ],
-    '[:punct:]' => [ ord('`'), ord('^'), ord('~'), ord('<'), ord('='), ord('>'), ord('|'), ord('-'), ord(','), ord(';'), ord(':'), ord('!'), ord('?'), ord('/'), ord('.'), ord('"'), ord('('), ord(')'), ord('['), ord(']'), ord('{'), ord('}'), ord('@'), ord('$'), ord('*'), ord('\\'), ord('&'), ord('#'), ord('%'), ord('+'), ord("'"), utf8::unicode_to_native(0xBF), 0x055C ],
-    '[:upper:]' => [ ord("G"), utf8::unicode_to_native(0xC3), 0x0126 ],
-    '[:xdigit:]' => [ ord("4"), 0xFF15 ],
+    '\w' => [ 0x16B ],
+    '\d' => [ ord("0"), ord("1"), ord("2"), ord("3"), ord("4"), ord("5"),
+              ord("6"), ord("7"), ord("8"), ord("9"),
+              0x0662,
+            ],
+    '[:blank:]' => [ ord("\t"), ord(" "),
+                     0x1680
+                   ],
+    '\s' => [ ord("\t"), ord("\n"), ord("\cK"), ord("\f"), ord("\r"),
+              ord(" "),
+              utf8::unicode_to_native(0x85),
+              utf8::unicode_to_native(0xA0),
+              0x2029,
+            ],
+    '[:graph:]' => [ 0x02C7 ],
+    '[:lower:]' => [ ord("a"), ord("b"), ord("c"), ord("d"), ord("e"),
+                     ord("f"), ord("g"), ord("h"), ord("i"), ord("j"),
+                     ord("k"), ord("l"), ord("m"), ord("n"), ord("o"),
+                     ord("p"), ord("q"), ord("r"), ord("s"), ord("t"),
+                     ord("u"), ord("v"), ord("w"), ord("x"), ord("y"),
+                     ord("z"),
+                     0x0127 ],
+    '[:punct:]' => [ ord('`'), ord('^'), ord('~'), ord('<'), ord('='),
+                     ord('>'), ord('|'), ord('-'), ord(','), ord(';'),
+                     ord(':'), ord('!'), ord('?'), ord('/'), ord('.'),
+                     ord('"'), ord('('), ord(')'), ord('['), ord(']'),
+                     ord('{'), ord('}'), ord('@'), ord('$'), ord('*'),
+                     ord('\\'), ord('&'), ord('#'), ord('%'), ord('+'),
+                     ord("'"),
+                     0x055C
+                   ],
+    '[:upper:]' => [ ord("A"), ord("B"), ord("C"), ord("D"), ord("E"),
+                     ord("F"), ord("G"), ord("H"), ord("I"), ord("J"),
+                     ord("K"), ord("L"), ord("M"), ord("N"), ord("O"),
+                     ord("P"), ord("Q"), ord("R"), ord("S"), ord("T"),
+                     ord("U"), ord("V"), ord("W"), ord("X"), ord("Y"),
+                     ord("Z"),
+                     0x0126
+                   ],
+    '[:xdigit:]' => [ ord("0"), ord("1"), ord("2"), ord("3"), ord("4"),
+                      ord("5"), ord("6"), ord("7"), ord("8"), ord("9"),
+                      ord("A"), ord("B"), ord("C"), ord("D"), ord("E"),
+                      ord("F"), ord("a"), ord("b"), ord("c"), ord("d"),
+                      ord("e"), ord("f"),
+                      0xFF15,
+                    ],
 );
 
-$testcases{'[:digit:]'} = $testcases{'\d'};
-$testcases{'[:alnum:]'} = $testcases{'\w'};
-$testcases{'[:alpha:]'} = $testcases{'\w'};
-$testcases{'[:blank:]'} = $testcases{'\s'};
-$testcases{'[:print:]'} = $testcases{'[:graph:]'};
-$testcases{'[:space:]'} = $testcases{'\s'};
-$testcases{'[:word:]'} = $testcases{'\w'};
+if ($ENV{PERL_DEBUG_FULL_TEST}) {
+    push @{$testcases{'[:cntrl:]'}}, utf8::unicode_to_native($_)
+                                               for (0x00 .. 0x1F, 0x7F .. 0x9F);
+    push @{$testcases{'[:blank:]'}}, utf8::unicode_to_native(0xA0);
+    push @{$testcases{'[:punct:]'}}, utf8::unicode_to_native(0xA1);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native($_)
+                                                            for (0xA2 .. 0xA6);
+    push @{$testcases{'[:punct:]'}}, utf8::unicode_to_native(0xA7);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xA8);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xA9);
+    push @{$testcases{'[:lower:]'}}, utf8::unicode_to_native(0xAA);
+    push @{$testcases{'[:punct:]'}}, utf8::unicode_to_native(0xAB);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native($_)
+                                                            for (0xAC .. 0xB4);
+    push @{$testcases{'[:lower:]'}}, utf8::unicode_to_native(0xB5);
+    push @{$testcases{'[:punct:]'}}, utf8::unicode_to_native(0xB6);
+    push @{$testcases{'[:punct:]'}}, utf8::unicode_to_native(0xB7);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xB8);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xB9);
+    push @{$testcases{'[:lower:]'}}, utf8::unicode_to_native(0xBA);
+    push @{$testcases{'[:punct:]'}}, utf8::unicode_to_native(0xBB);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xBC);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xBD);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xBE);
+    push @{$testcases{'[:punct:]'}}, utf8::unicode_to_native(0xBF);
+    push @{$testcases{'[:upper:]'}}, utf8::unicode_to_native($_)
+                                                            for (0xC0 .. 0xD6);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xD7);
+    push @{$testcases{'[:upper:]'}}, utf8::unicode_to_native($_)
+                                                            for (0xD8 .. 0xDE);
+    push @{$testcases{'[:lower:]'}}, utf8::unicode_to_native($_)
+                                                            for (0xDF .. 0xF6);
+    push @{$testcases{'[:graph:]'}}, utf8::unicode_to_native(0xF7);
+    push @{$testcases{'[:lower:]'}}, utf8::unicode_to_native($_)
+                                                            for (0xF8 .. 0xF8);
+
+    push @{$testcases{'[:alpha:]'}}, @{$testcases{'[:lower:]'}},
+                                 @{$testcases{'[:upper:]'}};
+    push @{$testcases{'[:alnum:]'}}, @{$testcases{'[:alpha:]'}},
+                                 @{$testcases{'\d'}};
+    push @{$testcases{'\w'}}, @{$testcases{'[:alnum:]'}}, ord("_");
+    push @{$testcases{'[:print:]'}}, @{$testcases{'[:graph:]'}},
+                                ord(" "),
+                                utf8::unicode_to_native(0xA0);
+}
+
+@{$testcases{'[:digit:]'}} = @{$testcases{'\d'}};
+@{$testcases{'[:space:]'}} = @{$testcases{'\s'}};
+@{$testcases{'[:word:]'}}  = @{$testcases{'\w'}};
+
+#use Data::Dumper;
+#$Data::Dumper::Sortkeys = 1;
+#print STDERR Dumper \%testcases;
 
 my $utf8_locale;
 
 my @charsets = qw(a d u aa);
-my $locales_ok = locales_enabled('LC_CTYPE');
+my $locales_ok = locales_enabled([ 'LC_CTYPE', 'LC_ALL' ]);
 if (! is_miniperl() && $locales_ok) {
     require POSIX;
     my $current_locale = POSIX::setlocale( &POSIX::LC_ALL, "C") // "";
@@ -170,8 +254,10 @@ foreach my $charset (@charsets) {
                     if ($bracketed) {
 
                         # Adds an extra char to the character class to make sure
-                        # that the class doesn't get optimized away.
-                        $lb = ($bracketed) ? '[_' : "";
+                        # that the class doesn't get optimized away.  (Make
+                        # sure to not use the character being tested.)
+                        my $extra = ($char eq "_") ? ":" : "_";
+                        $lb = ($bracketed) ? "[$extra" : "";
                         $rb = ($bracketed) ? ']' : "";
                     }
                     else {  # [:posix:] must be inside outer [ ]
@@ -215,6 +301,9 @@ foreach my $charset (@charsets) {
                 # Test \b, \B adjacent to a non-word char, both before it and
                 # after.  We test with ASCII, Latin1 and Unicode non-word chars
                 foreach my $space_ord (@{$testcases{'\s'}}) {
+
+                    # This is an anomalous character, so skip.
+                    next if $space_ord == ord("\n");
 
                     # Useless to try to test non-utf8 when the ord itself
                     # forces utf8

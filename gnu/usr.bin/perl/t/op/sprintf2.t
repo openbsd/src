@@ -1189,6 +1189,10 @@ if($Config{nvsize} == 8) {
                                    or
                                $^O eq 'VMS'
                                    or
+                               $^O eq 'hpux'
+                                   or
+                               $^O eq 'aix'
+                                   or
                                ($^O eq 'MSWin32' and
                                 $Config{cc} eq 'cl' and
                                 $Config{ccversion} =~ /^(\d+)/ and
@@ -1215,9 +1219,13 @@ elsif($Config{nvtype} eq 'long double' && $Config{longdblkind} >= 5 && $Config{l
 }
 else {
     # IEEE-754 128-bit long double or __float128
-    cmp_ok(sprintf("%.115g", 0.3), 'eq',
+    TODO: {
+        local $::TODO = 'Extended precision %g formatting' if $^O eq 'hpux';
+
+        cmp_ok(sprintf("%.115g", 0.3), 'eq',
            '0.299999999999999999999999999999999990370350278063820734720110287075363407309491758923059023800306022167205810546875',
            "sprintf( \"%.115g\", 0.3 ) renders correctly");
+    }
 }
 
 done_testing();

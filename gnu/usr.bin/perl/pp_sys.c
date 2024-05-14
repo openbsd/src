@@ -30,8 +30,6 @@
 #define PERL_IN_PP_SYS_C
 #include "perl.h"
 #include "time64.h"
-#include "syscall_emulator.h"
-#define syscall syscall_emulator
 
 #ifdef I_SHADOW
 /* Shadow password support for solaris - pdo@cs.umd.edu
@@ -58,6 +56,10 @@
 # ifdef I_SYS_SELECT
 #  include <sys/select.h>
 # endif
+#endif
+
+#ifdef I_SYS_SYSCALL
+# include <sys/syscall.h>
 #endif
 
 /* XXX Configure test needed.
@@ -934,7 +936,8 @@ PP(pp_tie)
        stash = gv_stashsv(*MARK, 0);
        if (!stash) {
            if (SvROK(*MARK))
-               DIE(aTHX_ "Can't locate object method \"%s\" via package \"%" SVf "\"",
+               DIE(aTHX_ "Can't locate object method %" PVf_QUOTEDPREFIX
+                         " via package %" SVf_QUOTEDPREFIX,
                    methname, SVfARG(*MARK));
            else if (isGV(*MARK)) {
                /* If the glob doesn't name an existing package, using
@@ -942,15 +945,17 @@ PP(pp_tie)
                 * generate the name for the error message explicitly. */
                SV *stashname = sv_newmortal();
                gv_fullname4(stashname, (GV *) *MARK, NULL, FALSE);
-               DIE(aTHX_ "Can't locate object method \"%s\" via package \"%" SVf "\"",
+               DIE(aTHX_ "Can't locate object method %" PVf_QUOTEDPREFIX
+                         " via package %" SVf_QUOTEDPREFIX,
                    methname, SVfARG(stashname));
            }
            else {
                SV *stashname = !SvPOK(*MARK) ? &PL_sv_no
                              : SvCUR(*MARK)  ? *MARK
                              :                 newSVpvs_flags("main", SVs_TEMP);
-               DIE(aTHX_ "Can't locate object method \"%s\" via package \"%" SVf "\""
-                   " (perhaps you forgot to load \"%" SVf "\"?)",
+               DIE(aTHX_ "Can't locate object method %" PVf_QUOTEDPREFIX
+                         " via package %" SVf_QUOTEDPREFIX
+                   " (perhaps you forgot to load %" SVf_QUOTEDPREFIX "?)",
                    methname, SVfARG(stashname), SVfARG(stashname));
            }
        }
@@ -959,7 +964,8 @@ PP(pp_tie)
             * been deleted from the symbol table, which this one can't
             * be, since we just looked it up by name.
             */
-           DIE(aTHX_ "Can't locate object method \"%s\" via package \"%" HEKf "\"",
+           DIE(aTHX_ "Can't locate object method %" PVf_QUOTEDPREFIX
+                     " via package %" HEKf_QUOTEDPREFIX ,
                methname, HvENAME_HEK_NN(stash));
        }
         ENTER_with_name("call_TIE");
@@ -1167,7 +1173,10 @@ PP(pp_sselect)
                 Perl_croak_no_modify();
         }
         else if (SvIsCOW(sv)) sv_force_normal_flags(sv, 0);
-        if (!SvPOK(sv)) {
+        if (SvPOK(sv)) {
+            if (SvUTF8(sv)) sv_utf8_downgrade(sv, FALSE);
+        }
+        else {
             if (!SvPOKp(sv))
                 Perl_ck_warner(aTHX_ packWARN(WARN_MISC),
                                     "Non-string passed as bitmask");
@@ -1313,6 +1322,10 @@ typeglob.  As C<PL_defoutgv> "owns" a reference on its typeglob, the reference
 count of the passed in typeglob is increased by one, and the reference count
 of the typeglob that C<PL_defoutgv> points to is decreased by one.
 
+=for apidoc AmnU||PL_defoutgv
+
+See C<L</setdefout>>.
+
 =cut
 */
 
@@ -1339,7 +1352,7 @@ PP(pp_select)
     if (!egv)
         egv = PL_defoutgv;
     hv = isGV_with_GP(egv) ? GvSTASH(egv) : NULL;
-    gvp = hv && HvENAME(hv)
+    gvp = hv && HvHasENAME(hv)
                 ? (GV**)hv_fetch(hv, GvNAME(egv), HEK_UTF8(GvNAME_HEK(egv)) ? -GvNAMELEN(egv) : GvNAMELEN(egv), FALSE)
                 : NULL;
     if (gvp && *gvp == egv) {
@@ -1845,9 +1858,8 @@ PP(pp_sysread)
            reading to:  */
         SvCUR_set(bufsv, offset);
 
-        read_target = sv_newmortal();
-        SvUPGRADE(read_target, SVt_PV);
-        buffer = SvGROW(read_target, (STRLEN)(length + 1));
+        read_target = newSV_type_mortal(SVt_PV);
+        buffer = sv_grow_fresh(read_target, (STRLEN)(length + 1));
     }
 
     if (PL_op->op_type == OP_SYSREAD) {
@@ -2274,7 +2286,8 @@ PP(pp_truncate)
 
         if (PL_op->op_flags & OPf_SPECIAL
                        ? (tmpgv = gv_fetchsv(sv, 0, SVt_PVIO), 1)
-                       : !!(tmpgv = MAYBE_DEREF_GV(sv)) ) {
+                       : cBOOL(tmpgv = MAYBE_DEREF_GV(sv)) )
+        {
             io = GvIO(tmpgv);
             if (!io)
                 result = 0;
@@ -2676,6 +2689,9 @@ PP(pp_shutdown)
     RETPUSHUNDEF;
 }
 
+#ifndef PERL_GETSOCKOPT_SIZE
+#define PERL_GETSOCKOPT_SIZE 1024
+#endif
 
 /* also used for: pp_gsockopt() */
 
@@ -2683,7 +2699,7 @@ PP(pp_ssockopt)
 {
     dSP;
     const int optype = PL_op->op_type;
-    SV * const sv = (optype == OP_GSOCKOPT) ? sv_2mortal(newSV(257)) : POPs;
+    SV * const sv = (optype == OP_GSOCKOPT) ? sv_2mortal(newSV(PERL_GETSOCKOPT_SIZE+1)) : POPs;
     const unsigned int optname = (unsigned int) POPi;
     const unsigned int lvl = (unsigned int) POPi;
     GV * const gv = MUTABLE_GV(POPs);
@@ -2702,14 +2718,14 @@ PP(pp_ssockopt)
         /* Note: there used to be an explicit SvGROW(sv,257) here, but
          * this is redundant given the sv initialization ternary above */
         (void)SvPOK_only(sv);
-        SvCUR_set(sv,256);
+        SvCUR_set(sv, PERL_GETSOCKOPT_SIZE);
         *SvEND(sv) ='\0';
         len = SvCUR(sv);
         if (PerlSock_getsockopt(fd, lvl, optname, SvPVX(sv), &len) < 0)
             goto nuts2;
 #if defined(_AIX)
         /* XXX Configure test: does getsockopt set the length properly? */
-        if (len == 256)
+        if (len == PERL_GETSOCKOPT_SIZE)
             len = sizeof(int);
 #endif
         SvCUR_set(sv, len);
@@ -2720,7 +2736,7 @@ PP(pp_ssockopt)
             const char *buf;
             int aint;
             SvGETMAGIC(sv);
-            if (SvPOKp(sv)) {
+            if (SvPOK(sv) && !SvIsBOOL(sv)) { /* sv is originally a string */
                 STRLEN l;
                 buf = SvPVbyte_nomg(sv, l);
                 len = l;
@@ -2829,7 +2845,8 @@ PP(pp_stat)
     SV* sv;
 
     if (PL_op->op_flags & OPf_REF ? (gv = cGVOP_gv, 1)
-                                  : !!(sv=POPs, gv = MAYBE_DEREF_GV(sv))) {
+                                  : cBOOL((sv=POPs, gv = MAYBE_DEREF_GV(sv))))
+    {
         if (PL_op->op_type == OP_LSTAT) {
             if (gv != PL_defgv) {
             do_fstat_warning_check:
@@ -2837,7 +2854,7 @@ PP(pp_stat)
                                "lstat() on filehandle%s%" SVf,
                                 gv ? " " : "",
                                 SVfARG(gv
-                                        ? sv_2mortal(newSVhek(GvENAME_HEK(gv)))
+                                        ? newSVhek_mortal(GvENAME_HEK(gv))
                                         : &PL_sv_no));
             } else if (PL_laststype != OP_LSTAT)
                 /* diag_listed_as: The stat preceding %s wasn't an lstat */
@@ -2976,7 +2993,13 @@ PP(pp_stat)
             Stat_t s;
             CLANG_DIAG_IGNORE_STMT(-Wtautological-compare);
             GCC_DIAG_IGNORE_STMT(-Wtype-limits);
+#if defined(__HP_cc) || defined(__HP_aCC)
+#pragma diag_suppress 2186
+#endif
             neg = PL_statcache.st_ino < 0;
+#if defined(__HP_cc) || defined(__HP_aCC)
+#pragma diag_default 2186
+#endif
             GCC_DIAG_RESTORE_STMT;
             CLANG_DIAG_RESTORE_STMT;
             if (neg) {
@@ -3098,9 +3121,11 @@ S_ft_return_true(pTHX_ SV *ret) {
 #define FT_RETURNUNDEF	return S_ft_return_false(aTHX_ &PL_sv_undef)
 #define FT_RETURNYES	return S_ft_return_true(aTHX_ &PL_sv_yes)
 
+/* NB: OPf_REF implies '-X _' and thus no arg on the stack */
 #define tryAMAGICftest_MG(chr) STMT_START { \
-        if ( (SvFLAGS(*PL_stack_sp) & (SVf_ROK|SVs_GMG)) \
-                && PL_op->op_flags & OPf_KIDS) {     \
+        if (   !(PL_op->op_flags & OPf_REF)                   \
+            && (SvFLAGS(*PL_stack_sp) & (SVf_ROK|SVs_GMG)))   \
+        {                                                     \
             OP *next = S_try_amagic_ftest(aTHX_ chr);	\
             if (next) return next;			  \
         }						   \
@@ -4225,6 +4250,7 @@ PP(pp_fork)
     sigset_t oldmask, newmask;
 #endif
 
+
     EXTEND(SP, 1);
     PERL_FLUSHALL_FOR_CHILD;
 #ifdef HAS_SIGPROCMASK
@@ -4252,6 +4278,9 @@ PP(pp_fork)
 #ifdef PERL_USES_PL_PIDSTATUS
         hv_clear(PL_pidstatus);	/* no kids, so don't wait for 'em */
 #endif
+        PERL_SRAND_OVERRIDE_NEXT_CHILD();
+    } else {
+        PERL_SRAND_OVERRIDE_NEXT_PARENT();
     }
     PUSHi(childpid);
     RETURN;
@@ -4264,6 +4293,19 @@ PP(pp_fork)
     childpid = PerlProc_fork();
     if (childpid == -1)
         RETPUSHUNDEF;
+    else if (childpid) {
+        /* we are in the parent */
+        PERL_SRAND_OVERRIDE_NEXT_PARENT();
+    }
+    else {
+        /* This is part of the logic supporting the env var
+         * PERL_RAND_SEED which causes use of rand() without an
+         * explicit srand() to use a deterministic seed. This logic is
+         * intended to give most forked children of a process a
+         * deterministic but different srand seed.
+         */
+        PERL_SRAND_OVERRIDE_NEXT_CHILD();
+    }
     PUSHi(childpid);
     RETURN;
 #else
@@ -5494,20 +5536,28 @@ PP(pp_gpwent)
     case OP_GPWNAM:
       {
         const char* const name = POPpbytex;
+        GETPWNAM_LOCK;
         pwent  = getpwnam(name);
+        GETPWNAM_UNLOCK;
       }
       break;
     case OP_GPWUID:
       {
         Uid_t uid = POPi;
+        GETPWUID_LOCK;
         pwent = getpwuid(uid);
+        GETPWUID_UNLOCK;
       }
         break;
     case OP_GPWENT:
 #   ifdef HAS_GETPWENT
         pwent  = getpwent();
 #ifdef POSIX_BC   /* In some cases pw_passwd has invalid addresses */
-        if (pwent) pwent = getpwnam(pwent->pw_name);
+        if (pwent) {
+            GETPWNAM_LOCK;
+            pwent = getpwnam(pwent->pw_name);
+            GETPWNAM_UNLOCK;
+        }
 #endif
 #   else
         DIE(aTHX_ PL_no_func, "getpwent");
@@ -5552,8 +5602,10 @@ PP(pp_gpwent)
          * has a different API than the Solaris/IRIX one. */
 #   if defined(HAS_GETSPNAM) && !defined(_AIX)
         {
+            const struct spwd * spwent;
             dSAVE_ERRNO;
-            const struct spwd * const spwent = getspnam(pwent->pw_name);
+            GETSPNAM_LOCK;
+            spwent = getspnam(pwent->pw_name);
                           /* Save and restore errno so that
                            * underprivileged attempts seem
                            * to have never made the unsuccessful
@@ -5561,6 +5613,7 @@ PP(pp_gpwent)
             RESTORE_ERRNO;
             if (spwent && spwent->sp_pwdp)
                 sv_setpv(sv, spwent->sp_pwdp);
+            GETSPNAM_UNLOCK;
         }
 #   endif
 #   ifdef PWPASSWD

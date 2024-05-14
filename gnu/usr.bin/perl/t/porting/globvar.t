@@ -27,7 +27,7 @@ my $yes = `$trial`;
 
 skip_all("Could not run `$trial`") if $?;
 
-my $defined = qr/^[0-9a-fA-F]{8,16}\s+[^Uu]\s+_?/m;
+my $defined = $^O eq "hpux" ? qr/\|/ : qr/^[0-9a-fA-F]{8,16}\s+[^Uu]\s+_?/m;
 
 skip_all("Could not spot definition of PL_Yes in output of `$trial`")
     unless $yes =~ /${defined}PL_Yes/m;
@@ -75,10 +75,14 @@ foreach (sort keys %exported) {
  }
 }
 
+$::TODO = $::TODO; # silence uninitialized warnings
 foreach (sort keys %unexported) {
  SKIP: {
         skip("We don't export '$_'", 1) if $skip{$_};
-        fail("'$_' is defined, but we do not export it");
+        TODO: {
+            local $::TODO = "HPUX exports everything" if $^O eq "hpux";
+            fail("'$_' is defined, but we do not export it");
+        }
     }
 }
 

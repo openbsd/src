@@ -1350,6 +1350,47 @@
 
     # scalar assign, OP_SASSIGN
    
+    'expr::sassign::undef_lex' => {
+        setup   => 'my $x',
+        code    => '$x = undef',
+    },
+    'expr::sassign::undef_lex_direc' => {
+        setup   => 'my $x',
+        code    => 'undef $x',
+    },
+    'expr::sassign::undef_my_lex' => {
+        setup   => '',
+        code    => 'my $x = undef',
+    },
+    'expr::sassign::undef_my_lex_direc' => {
+        setup   => '',
+        code    => 'undef my $x',
+    },
+
+    'expr::sassign::anonlist' => {
+        setup   => '',
+        code => '$x = []'
+    },
+    'expr::sassign::anonlist_lex' => {
+        setup   => 'my $x',
+        code => '$x = []'
+    },
+    'expr::sassign::my_anonlist_lex' => {
+        setup   => '',
+        code => 'my $x = []'
+    },
+    'expr::sassign::anonhash' => {
+        setup   => '',
+        code => '$x = {}'
+    },
+    'expr::sassign::anonhash_lex' => {
+        setup   => 'my $x',
+        code => '$x = {}'
+    },
+    'expr::sassign::my_anonhash_lex' => {
+        setup   => '',
+        code => 'my $x = {}'
+    },
 
     'expr::sassign::my_conststr' => {
         setup   => '',
@@ -1386,6 +1427,26 @@
         code    => '$r = []; $r = $r1;',
     },
 
+    'expr::sassign::aelemfast_lex_assign' => {
+        desc    => 'lexical $x[0] = 1',
+        setup   => 'my @x',
+        code    => '$x[0] = 1',
+    },
+    'expr::sassign::aelemfast_lex_assign_ref' => {
+        desc    => 'lexical $x[0] = []',
+        setup   => 'my @x',
+        code    => '$x[0] = []',
+    },
+    'expr::sassign::aelemfast_lex_assign_deref' => {
+        desc    => 'lexical $x[0][1]',
+        setup   => 'my @x = ([1,2])',
+        code    => '$x[0][1] = 1',
+    },
+
+    'expr::sassign::bless_lex' => {
+        setup   => 'my $x',
+        code    => '$x = bless {}, "X"'
+    },
 
     'func::grep::bool0' => {
         desc    => 'grep returning 0 items in boolean context',

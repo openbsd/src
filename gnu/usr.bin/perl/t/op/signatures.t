@@ -598,6 +598,18 @@ Mandatory parameter follows optional parameter at foo line 8, near "\$c,"
 Mandatory parameter follows optional parameter at foo line 8, near "\$d) "
 EOF
 
+sub t206 ($x, $y //= 3) { return $x + $y }
+is eval("t206(5,4)"),     9, '//= present';
+is eval("t206(5)"),       8, '//= absent';
+is eval("t206(4,undef)"), 7, '//= undef';
+is eval("t206(4,0)"),     4, '//= zero';
+
+sub t207 ($x, $y ||= 3) { return $x + $y }
+is eval("t207(5,4)"),     9, '||= present';
+is eval("t207(5)"),       8, '||= absent';
+is eval("t207(4,undef)"), 7, '||= undef';
+is eval("t207(4,0)"),     7, '||= zero';
+
 sub t034 (@abc) { join("/", @abc).";".scalar(@abc) }
 is prototype(\&t034), undef;
 is eval("t034()"), ";0";
@@ -1001,10 +1013,10 @@ like $@, _create_mismatch_regexp('main::t081', 4, 2);
 is $a, 123;
 
 eval "#line 8 foo\nsub t082 (, \$a) { }";
-is $@, qq{syntax error at foo line 8, near "(,"\n};
+is $@, qq{syntax error at foo line 8, near "(,"\nExecution of foo aborted due to compilation errors.\n};
 
 eval "#line 8 foo\nsub t083 (,) { }";
-is $@, qq{syntax error at foo line 8, near "(,"\n};
+is $@, qq{syntax error at foo line 8, near "(,"\nExecution of foo aborted due to compilation errors.\n};
 
 sub t084($a,$b){ $a.$b }
 is prototype(\&t084), undef;
@@ -1120,30 +1132,35 @@ eval "#line 8 foo\nsub t095 (\$a, 123) { }";
 is $@, <<EOF;
 A signature parameter must start with '\$', '\@' or '%' at foo line 8, near ", 1"
 syntax error at foo line 8, near ", 123"
+Execution of foo aborted due to compilation errors.
 EOF
 
 eval "#line 8 foo\nno warnings; sub t096 (\$a 123) { }";
 is $@, <<'EOF';
 Illegal operator following parameter in a subroutine signature at foo line 8, near "($a 123"
 syntax error at foo line 8, near "($a 123"
+Execution of foo aborted due to compilation errors.
 EOF
 
 eval "#line 8 foo\nsub t097 (\$a { }) { }";
 is $@, <<'EOF';
 Illegal operator following parameter in a subroutine signature at foo line 8, near "($a { }"
 syntax error at foo line 8, near "($a { }"
+Execution of foo aborted due to compilation errors.
 EOF
 
 eval "#line 8 foo\nsub t098 (\$a; \$b) { }";
 is $@, <<'EOF';
 Illegal operator following parameter in a subroutine signature at foo line 8, near "($a; "
 syntax error at foo line 8, near "($a; "
+Execution of foo aborted due to compilation errors.
 EOF
 
 eval "#line 8 foo\nsub t099 (\$\$) { }";
 is $@, <<EOF;
 Illegal character following sigil in a subroutine signature at foo line 8, near "(\$"
 syntax error at foo line 8, near "\$\$) "
+Execution of foo aborted due to compilation errors.
 EOF
 
 eval "#line 8 foo\nsub t101 (\@_) { }";

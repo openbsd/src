@@ -15,17 +15,19 @@
 #    define setjmp(x) _setjmp(x)
 #  endif
 #  if defined(__MINGW64__)
+#    include <intrin.h>
 #    define setjmp(x) _setjmpex((x), mingw_getsp())
 #  endif
 #endif
-#ifdef HAS_PPPORT_H
-#  define NEED_PL_signals
-#  define NEED_sv_2pv_flags
-#  include "ppport.h"
-#  include "threads.h"
-#endif
+#define NEED_PL_signals
+#define NEED_sv_2pv_flags
+#include "ppport.h"
+#include "threads.h"
 #ifndef sv_dup_inc
 #  define sv_dup_inc(s,t) SvREFCNT_inc(sv_dup(s,t))
+#endif
+#ifndef SvREFCNT_dec_NN
+#  define SvREFCNT_dec_NN(x)  SvREFCNT_dec(x)
 #endif
 #ifndef PERL_UNUSED_RESULT
 #  if defined(__GNUC__) && defined(HASATTRIBUTE_WARN_UNUSED_RESULT)
@@ -91,8 +93,8 @@ typedef perl_os_thread pthread_t;
 typedef struct _ithread {
     struct _ithread *next;      /* Next thread in the list */
     struct _ithread *prev;      /* Prev thread in the list */
-    PerlInterpreter *interp;    /* The threads interpreter */
-    UV tid;                     /* Threads module's thread id */
+    PerlInterpreter *interp;    /* The thread's interpreter */
+    UV tid;                     /* Thread's module's thread id */
     perl_mutex mutex;           /* Mutex for updating things in this struct */
     int count;                  /* Reference count. See S_ithread_create. */
     int state;                  /* Detached, joined, finished, etc. */
@@ -203,6 +205,9 @@ S_ithread_set(pTHX_ ithread *thread)
 {
     dMY_CXT;
     MY_CXT.context = thread;
+#ifdef PERL_SET_NON_tTHX_CONTEXT
+    PERL_SET_NON_tTHX_CONTEXT(thread->interp);
+#endif
 }
 
 STATIC ithread *
@@ -241,18 +246,31 @@ S_ithread_clear(pTHX_ ithread *thread)
     S_block_most_signals(&origmask);
 #endif
 
+#if PERL_VERSION_GE(5, 37, 5)
+    int save_veto = PL_veto_switch_non_tTHX_context;
+#endif
+
     interp = thread->interp;
     if (interp) {
         dTHXa(interp);
 
+        /* We will pretend to be a thread that we are not by switching tTHX,
+         * which doesn't work with things that don't rely on tTHX during
+         * tear-down, as they will tend to rely on a mapping from the tTHX
+         * structure, and that structure is being destroyed. */
+#if PERL_VERSION_GE(5, 37, 5)
+        PL_veto_switch_non_tTHX_context = true;
+#endif
+
         PERL_SET_CONTEXT(interp);
+
         S_ithread_set(aTHX_ thread);
 
         SvREFCNT_dec(thread->params);
         thread->params = NULL;
 
         if (thread->err) {
-            SvREFCNT_dec(thread->err);
+            SvREFCNT_dec_NN(thread->err);
             thread->err = Nullsv;
         }
 
@@ -262,6 +280,10 @@ S_ithread_clear(pTHX_ ithread *thread)
     }
 
     PERL_SET_CONTEXT(aTHX);
+#if PERL_VERSION_GE(5, 37, 5)
+    PL_veto_switch_non_tTHX_context = save_veto;
+#endif
+
 #ifdef THREAD_SIGNAL_BLOCKING
     S_set_sigmask(&origmask);
 #endif
@@ -807,6 +829,7 @@ S_ithread_create(
     thread->gimme = gimme;
     thread->state = exit_opt;
 
+
     /* "Clone" our interpreter into the thread's interpreter.
      * This gives thread access to "static data" and code.
      */
@@ -1034,10 +1057,10 @@ S_ithread_create(
     MUTEX_UNLOCK(&my_pool->create_destruct_mutex);
     return (thread);
 
-    CLANG_DIAG_IGNORE_STMT(-Wthread-safety);
+    CLANG_DIAG_IGNORE(-Wthread-safety)
     /* warning: mutex 'thread->mutex' is not held on every path through here [-Wthread-safety-analysis] */
 }
-CLANG_DIAG_RESTORE_DECL;
+CLANG_DIAG_RESTORE
 
 #endif /* USE_ITHREADS */
 
@@ -1171,6 +1194,7 @@ ithread_create(...)
         if (! thread) {
             XSRETURN_UNDEF;     /* Mutex already unlocked */
         }
+        PERL_SRAND_OVERRIDE_NEXT_PARENT();
         ST(0) = sv_2mortal(S_ithread_to_SV(aTHX_ Nullsv, thread, classname, FALSE));
 
         /* Let thread run. */
@@ -1179,7 +1203,6 @@ ithread_create(...)
         /* warning: releasing mutex 'thread->mutex' that was not held [-Wthread-safety-analysis] */
         MUTEX_UNLOCK(&thread->mutex);
         CLANG_DIAG_RESTORE_STMT;
-
         /* XSRETURN(1); - implied */
 
 

@@ -35,7 +35,7 @@ extern "C" {
 #endif
 
 #define PERL_BITS_PER_BYTE	8
-#define	PERL_NFDBITS		(sizeof(Perl_fd_mask)*PERL_BITS_PER_BYTE)
+#define PERL_NFDBITS            (sizeof(Perl_fd_mask)*PERL_BITS_PER_BYTE)
 
 typedef int			Perl_fd_mask;
 

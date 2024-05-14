@@ -1,20 +1,22 @@
 #!/usr/bin/perl
 #
-# Test for graceful degradation to non-utf8 output without Encode module.
+# Test for graceful degradation to non-UTF-8 output without Encode module.
 #
 # Copyright 2016 Niko Tyni <ntyni@iki.fi>
-# Copyright 2016, 2018-2019 Russ Allbery <rra@cpan.org>
+# Copyright 2016, 2018-2019, 2022 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.008;
+use 5.010;
 use strict;
 use warnings;
 
-use Test::More tests => 5;
+use Carp qw(croak);
+
+use Test::More tests => 8;
 
 # Remove the record of the Encode module being loaded if it already was (it
 # may have been loaded before the test suite runs), and then make it
@@ -24,7 +26,7 @@ BEGIN {
     delete $INC{'Encode.pm'};
     my $reject_encode = sub {
         if ($_[1] eq 'Encode.pm') {
-            die "refusing to load Encode\n";
+            croak('refusing to load Encode');
         }
     };
     unshift(@INC, $reject_encode);
@@ -38,41 +40,70 @@ BEGIN {
 
 # Ensure we don't get warnings by throwing an exception if we see any.  This
 # is overridden below when we enable utf8 and do expect a warning.
-local $SIG{__WARN__} = sub { die join("\n",
-                                      "No warnings expected; instead got:",
-                                      @_);
-                           };
-# First, check that everything works properly when utf8 isn't set.  We expect
-# to get accent-mangled ASCII output.  Don't use Test::Podlators, since it
-# wants to import Encode.
-#
-## no critic (ValuesAndExpressions::ProhibitEscapedCharacters)
-my $pod = "=encoding latin1\n\n=head1 NAME\n\nBeyonc"
-        . chr(utf8::unicode_to_native(0xE9))
-        . "!";
-my $parser = Pod::Man->new(utf8 => 0, name => 'test');
+local $SIG{__WARN__} = sub {
+    my @warnings = @_;
+    croak(join("\n", 'No warnings expected; instead got:', @warnings));
+};
+
+# First, check that everything works properly if an encoding of roff is set.
+# We expect to get accent-mangled ASCII output.  Don't use Test::Podlators,
+# since it wants to import Encode.
+my $invalid_char = chr(utf8::unicode_to_native(0xE9));
+my $pod = "=encoding latin1\n\n=head1 NAME\n\nBeyonc${invalid_char}!";
+my $parser = Pod::Man->new(name => 'test', encoding => 'roff');
 my $output;
 $parser->output_string(\$output);
 $parser->parse_string_document($pod);
 like(
     $output,
     qr{ Beyonce\\[*]\' }xms,
-    'Works without Encode for non-utf8 output'
+    'Works without Encode for roff encoding',
 );
 
-# Now, try with the utf8 option set.  We should then get a warning that we're
-# falling back to non-utf8 output.
+# Likewise for an encoding of groff.
+$parser = Pod::Man->new(name => 'test', encoding => 'groff');
+my $output_groff = q{};
+$parser->output_string(\$output_groff);
+$parser->parse_string_document($pod);
+like(
+    $output_groff,
+    qr{ Beyonc\\\[u00E9\] }xms,
+    'Works without Encode for groff encoding',
+);
+
+# The default output format is UTF-8, so it should produce an error message
+# and then degrade to groff.
 {
     local $SIG{__WARN__} = sub {
         like(
             $_[0],
-            qr{ falling [ ] back [ ] to [ ] non-utf8 }xms,
-            'Pod::Man warns on utf8 option with no Encode module'
+            qr{ falling [ ] back [ ] to [ ] groff [ ] escapes }xms,
+            'Pod::Man warns with no Encode module',
         );
     };
-    $parser = Pod::Man->new(utf8 => 1, name => 'test');
+    $parser = Pod::Man->new(name => 'test');
 }
-my $output_fallback;
-$parser->output_string(\$output_fallback);
+$output = q{};
+$parser->output_string(\$output);
 $parser->parse_string_document($pod);
-is($output_fallback, $output, 'Degraded gracefully to non-utf8 output');
+is($output, $output_groff, 'Degraded gracefull to groff output');
+
+# Now try with an explicit output encoding, which should produce an error
+# message and then degrade to groff.
+{
+    local $SIG{__WARN__} = sub {
+        like(
+            $_[0],
+            qr{ falling [ ] back [ ] to [ ] groff [ ] escapes }xms,
+            'Pod::Man warns with no Encode module',
+        );
+    };
+    $parser = Pod::Man->new(name => 'test', encoding => 'iso-8859-1');
+}
+$output = q{};
+$parser->output_string(\$output);
+$parser->parse_string_document($pod);
+is(
+    $output, $output_groff,
+    'Explicit degraded gracefully to groff output',
+);

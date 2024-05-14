@@ -962,7 +962,7 @@ newSVsv                        # T
 newUNOP                        # T
 Newz                           # Z added by devel/scanprov
 nextargv                       # F added by devel/scanprov
-NEXTOPER                       # Z added by devel/scanprov
+REGNODE_AFTER                       # Z added by devel/scanprov
 ninstr                         # T
 NofAMmeth                      # Z added by devel/scanprov
 no_fh_allowed                  # F added by devel/scanprov
@@ -1113,7 +1113,7 @@ pop_scope                      # T
 PP                             # Z added by devel/scanprov
 pregexec                       # T
 pregfree                       # T
-PREVOPER                       # Z added by devel/scanprov
+REGNODE_BEFORE                       # Z added by devel/scanprov
 printf                         # Z added by devel/scanprov
 PRIVLIB                        # K added by devel/scanprov
 PRIVLIB_EXP                    # K added by devel/scanprov

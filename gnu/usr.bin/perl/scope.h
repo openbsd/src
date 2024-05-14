@@ -8,76 +8,7 @@
  *
  */
 
-/* *** Update arg_counts[] in scope.c if you modify these */
-
-/* zero args */
-
-#define SAVEt_ALLOC		0
-#define SAVEt_CLEARPADRANGE	1
-#define SAVEt_CLEARSV		2
-#define SAVEt_REGCONTEXT	3
-
-/* one arg */
-
-#define SAVEt_TMPSFLOOR		4
-#define SAVEt_BOOL		5
-#define SAVEt_COMPILE_WARNINGS	6
-#define SAVEt_COMPPAD		7
-#define SAVEt_FREECOPHH		8
-#define SAVEt_FREEOP		9
-#define SAVEt_FREEPV		10
-#define SAVEt_FREESV		11
-#define SAVEt_I16		12
-#define SAVEt_I32_SMALL		13
-#define SAVEt_I8		14
-#define SAVEt_INT_SMALL		15
-#define SAVEt_MORTALIZESV	16
-#define SAVEt_NSTAB		17
-#define SAVEt_OP		18
-#define SAVEt_PARSER		19
-#define SAVEt_STACK_POS		20
-#define SAVEt_READONLY_OFF	21
-#define SAVEt_FREEPADNAME	22
-#define SAVEt_STRLEN_SMALL      23
-
-/* two args */
-
-#define SAVEt_AV		24
-#define SAVEt_DESTRUCTOR	25
-#define SAVEt_DESTRUCTOR_X	26
-#define SAVEt_GENERIC_PVREF	27
-#define SAVEt_GENERIC_SVREF	28
-#define SAVEt_GP		29
-#define SAVEt_GVSV		30
-#define SAVEt_HINTS		31
-#define SAVEt_HPTR		32
-#define SAVEt_HV		33
-#define SAVEt_I32		34
-#define SAVEt_INT		35
-#define SAVEt_ITEM		36
-#define SAVEt_IV		37
-#define SAVEt_LONG		38
-#define SAVEt_PPTR		39
-#define SAVEt_SAVESWITCHSTACK	40
-#define SAVEt_SHARED_PVREF	41
-#define SAVEt_SPTR		42
-#define SAVEt_STRLEN		43
-#define SAVEt_SV		44
-#define SAVEt_SVREF		45
-#define SAVEt_VPTR		46
-#define SAVEt_ADELETE		47
-#define SAVEt_APTR		48
-
-/* three args */
-
-#define SAVEt_HELEM		49
-#define SAVEt_PADSV_AND_MORTALIZE 50
-#define SAVEt_SET_SVFLAGS	51
-#define SAVEt_GVSLOT		52
-#define SAVEt_AELEM		53
-#define SAVEt_DELETE		54
-#define SAVEt_HINTS_HH		55
-
+#include "scope_types.h"
 
 #define SAVEf_SETMAGIC		1
 #define SAVEf_KEEPOLDELEM	2
@@ -96,8 +27,8 @@
  * macros */
 #define SS_MAXPUSH 4
 
-#define SSCHECK(need) if (UNLIKELY(PL_savestack_ix + (I32)(need) > PL_savestack_max)) savestack_grow()
 #define SSGROW(need) if (UNLIKELY(PL_savestack_ix + (I32)(need) > PL_savestack_max)) savestack_grow_cnt(need)
+#define SSCHECK(need) SSGROW(need) /* legacy */
 #define SSPUSHINT(i) (PL_savestack[PL_savestack_ix++].any_i32 = (I32)(i))
 #define SSPUSHLONG(i) (PL_savestack[PL_savestack_ix++].any_long = (long)(i))
 #define SSPUSHBOOL(p) (PL_savestack[PL_savestack_ix++].any_bool = (p))
@@ -116,7 +47,7 @@
  * like save_pushptrptr() to half its former size.
  * Of course, doing the size check *after* pushing means we must always
  * ensure there are SS_MAXPUSH free slots on the savestack. This is ensured by
- * savestack_grow() and savestack_grow_cnt always allocating SS_MAXPUSH slots
+ * savestack_grow_cnt always allocating SS_MAXPUSH slots
  * more than asked for, or that it sets PL_savestack_max to
  *
  * These are for internal core use only and are subject to change */
@@ -130,7 +61,7 @@
     ix += (need);                                               \
     PL_savestack_ix = ix;                                       \
     assert(ix <= PL_savestack_max + SS_MAXPUSH);                \
-    if (UNLIKELY(ix > PL_savestack_max)) savestack_grow();      \
+    if (UNLIKELY(ix > PL_savestack_max)) savestack_grow_cnt(ix - PL_savestack_max);      \
     assert(PL_savestack_ix <= PL_savestack_max);
 
 #define SS_ADD_INT(i)   ((ssp++)->any_i32 = (I32)(i))
@@ -155,26 +86,26 @@
 /*
 =for apidoc_section $callback
 
-=for apidoc Amns||SAVETMPS
+=for apidoc Amn;||SAVETMPS
 Opening bracket for temporaries on a callback.  See C<L</FREETMPS>> and
 L<perlcall>.
 
-=for apidoc Amns||FREETMPS
+=for apidoc Amn;||FREETMPS
 Closing bracket for temporaries on a callback.  See C<L</SAVETMPS>> and
 L<perlcall>.
 
-=for apidoc Amns||ENTER
+=for apidoc Amn;||ENTER
 Opening bracket on a callback.  See C<L</LEAVE>> and L<perlcall>.
 
-=for apidoc Amns||LEAVE
+=for apidoc Amn;||LEAVE
 Closing bracket on a callback.  See C<L</ENTER>> and L<perlcall>.
 
-=for apidoc Ams||ENTER_with_name|"name"
+=for apidoc Am;||ENTER_with_name|"name"
 
 Same as C<L</ENTER>>, but when debugging is enabled it also associates the
 given literal string with the new scope.
 
-=for apidoc Ams||LEAVE_with_name|"name"
+=for apidoc Am;||LEAVE_with_name|"name"
 
 Same as C<L</LEAVE>>, but when debugging is enabled it first checks that the
 scope has the given name. C<name> must be a literal string.
@@ -246,6 +177,8 @@ scope has the given name. C<name> must be a literal string.
 #define SAVECLEARSV(sv)             save_clearsv((SV**)&(sv))
 #define SAVEGENERICSV(s)            save_generic_svref((SV**)&(s))
 #define SAVEGENERICPV(s)            save_generic_pvref((char**)&(s))
+#define SAVERCPV(s)                 save_rcpv((char**)&(s))
+#define SAVEFREERCPV(s)             save_freercpv(s)
 #define SAVESHAREDPV(s)             save_shared_pvref((char**)&(s))
 #define SAVESETSVFLAGS(sv,mask,val) save_set_svflags(sv,mask,val)
 #define SAVEFREECOPHH(h)            save_pushptr((void *)(h), SAVEt_FREECOPHH)
@@ -261,6 +194,12 @@ scope has the given name. C<name> must be a literal string.
 
 #define SAVEDESTRUCTOR_X(f,p) \
           save_destructor_x((DESTRUCTORFUNC_t)(f), (void*)(p))
+
+#define MORTALSVFUNC_X(f,sv) \
+          mortal_svfunc_x((SVFUNC_t)(f), sv)
+
+#define MORTALDESTRUCTOR_SV(coderef,args) \
+          mortal_destructor_sv(coderef,args)
 
 #define SAVESTACK_POS() \
     STMT_START {				   \
@@ -283,19 +222,28 @@ scope has the given name. C<name> must be a literal string.
         PL_curstackinfo->si_stack = (t);		\
     } STMT_END
 
-/* Need to do the cop warnings like this, rather than a "SAVEFREESHAREDPV",
-   because realloc() means that the value can actually change. Possibly
-   could have done savefreesharedpvREF, but this way actually seems cleaner,
-   as it simplifies the code that does the saves, and reduces the load on the
-   save stack.  */
+/* Note these are special, we can't just use a save_pushptrptr() on them
+ * as the target might change after a fork or thread start. */
 #define SAVECOMPILEWARNINGS() save_pushptr(PL_compiling.cop_warnings, SAVEt_COMPILE_WARNINGS)
+#define SAVECURCOPWARNINGS()  save_pushptr(PL_curcop->cop_warnings, SAVEt_CURCOP_WARNINGS)
+
 
 #define SAVEPARSER(p) save_pushptr((p), SAVEt_PARSER)
 
 #ifdef USE_ITHREADS
 #  define SAVECOPSTASH_FREE(c)	SAVEIV((c)->cop_stashoff)
-#  define SAVECOPFILE(c)	SAVEPPTR(CopFILE(c))
-#  define SAVECOPFILE_FREE(c)	SAVESHAREDPV(CopFILE(c))
+#  define SAVECOPFILE_x(c)      SAVEPPTR((c)->cop_file)
+#  define SAVECOPFILE(c)                \
+    STMT_START {                        \
+        SAVECOPFILE_x(c);               \
+        CopFILE_debug((c),"SAVECOPFILE",0);   \
+    } STMT_END
+#  define SAVECOPFILE_FREE_x(c) SAVERCPV((c)->cop_file)
+#  define SAVECOPFILE_FREE(c)           \
+    STMT_START {                        \
+        SAVECOPFILE_FREE_x(c);          \
+        CopFILE_debug((c),"SAVECOPFILE_FREE",0);   \
+    } STMT_END
 #else
 #  /* XXX not refcounted */
 #  define SAVECOPSTASH_FREE(c)	SAVESPTR(CopSTASH(c))
@@ -307,12 +255,12 @@ scope has the given name. C<name> must be a literal string.
 
 /*
 =for apidoc_section $stack
-=for apidoc    Am|I32|SSNEW  |Size_t size
-=for apidoc_item |   |SSNEWa |Size_t_size|Size_t align
-=for apidoc_item |   |SSNEWt |Size_t size|type
-=for apidoc_item |   |SSNEWat|Size_t_size|type|Size_t align
+=for apidoc    Am|SSize_t|SSNEW  |Size_t size
+=for apidoc_item |       |SSNEWa |Size_t_size|Size_t align
+=for apidoc_item |       |SSNEWat|Size_t_size|type|Size_t align
+=for apidoc_item |       |SSNEWt |Size_t size|type
 
-These temporarily allocates data on the savestack, returning an I32 index into
+These temporarily allocates data on the savestack, returning an SSize_t index into
 the savestack, because a pointer would get broken if the savestack is moved on
 reallocation.  Use L</C<SSPTR>> to convert the returned index into a pointer.
 
@@ -325,8 +273,8 @@ L</C<MEM_ALIGNBYTES>>.  The alignment will be preserved through savestack
 reallocation B<only> if realloc returns data aligned to a size divisible by
 "align"!
 
-=for apidoc   Am|type  |SSPTR |I32 index|type
-=for apidoc_item|type *|SSPTRt|I32 index|type
+=for apidoc   Am|type  |SSPTR |SSize_t index|type
+=for apidoc_item|type *|SSPTRt|SSize_t index|type
 
 These convert the C<index> returned by L/<C<SSNEW>> and kin into actual pointers.
 
@@ -342,8 +290,8 @@ casts it to a pointer of that C<type>.
     (I32)(align - ((size_t)((caddr_t)&PL_savestack[PL_savestack_ix]) % align)) % align)
 #define SSNEWat(n,t,align)	SSNEWa((n)*sizeof(t), align)
 
-#define SSPTR(off,type)         ((type)  ((char*)PL_savestack + off))
-#define SSPTRt(off,type)        ((type*) ((char*)PL_savestack + off))
+#define SSPTR(off,type)         (assert(sizeof(off) >= sizeof(SSize_t)), (type)  ((char*)PL_savestack + off))
+#define SSPTRt(off,type)        (assert(sizeof(off) >= sizeof(SSize_t)), (type*) ((char*)PL_savestack + off))
 
 #define save_freesv(op)		save_pushptr((void *)(op), SAVEt_FREESV)
 #define save_mortalizesv(op)	save_pushptr((void *)(op), SAVEt_MORTALIZESV)

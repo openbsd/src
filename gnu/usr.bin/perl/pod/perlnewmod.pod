@@ -88,7 +88,7 @@ written.
 
 There are a lot of modules on CPAN, and it's easy to miss one that's
 similar to what you're planning on contributing. Have a good plough
-through L<http://metacpan.org> and make sure you're not the one
+through L<https://metacpan.org> and make sure you're not the one
 reinventing the wheel!
 
 =item Discuss the need
@@ -234,7 +234,7 @@ file.
 =item Get a CPAN user ID
 
 Every developer publishing modules on CPAN needs a CPAN ID.  Visit
-C<L<http://pause.perl.org/>>, select "Request PAUSE Account", and wait for
+C<L<https://pause.perl.org/>>, select "Request PAUSE Account", and wait for
 your request to be approved by the PAUSE administrators.
 
 =item Make the tarball
@@ -278,4 +278,4 @@ Updated by Kirrily "Skud" Robert, C<skud@cpan.org>
 L<perlmod>, L<perlmodlib>, L<perlmodinstall>, L<h2xs>, L<strict>,
 L<Carp>, L<Exporter>, L<perlpod>, L<Test::Simple>, L<Test::More>
 L<ExtUtils::MakeMaker>, L<Module::Build>, L<Module::Starter>
-L<http://www.cpan.org/>
+L<https://www.cpan.org/>

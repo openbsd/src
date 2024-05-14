@@ -58,7 +58,10 @@ PERLVARI(I, sub_generation, U32, 1)	/* incr to invalidate method cache */
 
 #ifdef PERL_HASH_RANDOMIZE_KEYS
 #ifdef USE_PERL_PERTURB_KEYS
-PERLVARI(I, hash_rand_bits_enabled, U8, 1) /* used to randomize hash stuff 0 == no-random, 1 == random, 2 == determinsitic */
+PERLVARI(I, hash_rand_bits_enabled, U8, 1) /* used to randomize hash stuff
+                                              0. no-random
+                                              1. random
+                                              2. deterministic */
 #endif
 PERLVARI(I, hash_rand_bits, UV, 0)      /* used to randomize hash stuff */
 #endif
@@ -83,7 +86,7 @@ PERLVARI(I, tainted,	bool, FALSE)	/* using variables controlled by $< */
  * control returns to pp_push or whatever, it sees if any of those flags
  * have been set, and if so finally calls mg_set().
  *
- * NB: PL_delaymagic is automatically saved and restored by JUMPENV_PUSH
+ * NB: PL_delaymagic is automatically saved and restored by JMPENV_PUSH
  * / POP. This removes the need to do ENTER/SAVEI16(PL_delaymagic)/LEAVE
  * in hot code like pp_push.
  */
@@ -127,7 +130,8 @@ thread's copy.
 =cut
 */
 
-PERLVAR(I, localizing,	U8)		/* are we processing a local() list? */
+PERLVAR(I, localizing,  U8)             /* are we processing a local() list?
+                                           0 = no, 1 = localizing, 2 = delocalizing */
 PERLVAR(I, in_eval,	U8)		/* trap "fatal" errors? */
 PERLVAR(I, defgv,	GV *)           /* the *_ glob */
 
@@ -232,6 +236,10 @@ fallback by macros on platforms where L<perlapi/PERL_USE_GCC_BRACE_GROUPS>> is
 unavailable, and which would otherwise evaluate their SV parameter more than
 once.
 
+B<BUT BEWARE>, if this is used in a situation where something that is using it
+is in a call stack with something else that is using it, this variable would
+get zapped, leading to hard-to-diagnose errors.
+
 =cut
 */
 PERLVAR(I, Sv,		SV *)
@@ -251,6 +259,10 @@ better named something like C<PL_temp_strlen>.
 It is is typically used with C<SvPV> when one is actually planning to discard
 the returned length, (hence the length is "Not Applicable", which is how this
 variable got its name).
+
+B<BUT BEWARE>, if this is used in a situation where something that is using it
+is in a call stack with something else that is using it, this variable would
+get zapped, leading to hard-to-diagnose errors.
 
 It is usually more efficient to either declare a local variable and use that
 instead, or to use the C<SvPV_nolen> macro.
@@ -376,16 +388,15 @@ thread's copy.
 PERLVAR(I, exit_flags,	U8)		/* was exit() unexpected, etc. */
 
 PERLVAR(I, utf8locale,	bool)		/* utf8 locale detected */
-PERLVAR(I, in_utf8_CTYPE_locale, bool)
-PERLVAR(I, in_utf8_COLLATE_locale, bool)
-PERLVAR(I, in_utf8_turkic_locale, bool)
-#if defined(USE_ITHREADS) && ! defined(USE_THREAD_SAFE_LOCALE)
-PERLVARI(I, lc_numeric_mutex_depth, int, 0)   /* Emulate general semaphore */
+
+#if defined(USE_LOCALE) && defined(USE_LOCALE_THREADS)
+PERLVARI(I, locale_mutex_depth, int, 0)     /* Emulate general semaphore */
 #endif
-PERLVARA(I, locale_utf8ness, 256, char)
 
 #ifdef USE_LOCALE_CTYPE
-    PERLVAR(I, warn_locale, SV *)
+PERLVAR(I, warn_locale, SV *)
+PERLVAR(I, in_utf8_CTYPE_locale, bool)
+PERLVAR(I, in_utf8_turkic_locale, bool)
 #endif
 
 PERLVARA(I, colors,6,	char *)		/* values from PERL_RE_COLORS env var */
@@ -485,11 +496,14 @@ PERLVAR(I, origfilename, char *)
 PERLVARI(I, xsubfilename, const char *, NULL)
 PERLVAR(I, diehook,	SV *)
 PERLVAR(I, warnhook,	SV *)
+/* keyword hooks*/
+PERLVARI(I, hook__require__before, SV *,NULL)
+PERLVARI(I, hook__require__after, SV *,NULL)
 
 /* switches */
 PERLVAR(I, patchlevel,	SV *)
 PERLVAR(I, localpatches, const char * const *)
-PERLVARI(I, splitstr,	const char *, " ")
+PERLVARI(I, splitstr,	char *, NULL)
 
 PERLVAR(I, minus_c,	bool)
 PERLVAR(I, minus_n,	bool)
@@ -700,7 +714,6 @@ PERLVARI(I, cop_seqmax,	U32,	PERL_COP_SEQMAX) /* statement sequence number */
 
 PERLVARI(I, evalseq,	U32,	0)	/* eval sequence number */
 PERLVAR(I, origalen,	U32)
-PERLVAR(I, origenviron,	char **)
 #ifdef PERL_USES_PL_PIDSTATUS
 PERLVAR(I, pidstatus,	HV *)		/* pid-to-status mappings for waitpid */
 #endif
@@ -732,20 +745,33 @@ PERLVAR(I, constpadix,	PADOFFSET)	/* lowest unused for constants */
 
 PERLVAR(I, padix_floor,	PADOFFSET)	/* how low may inner block reset padix */
 
-#if defined(USE_POSIX_2008_LOCALE)          \
- && defined(USE_THREAD_SAFE_LOCALE)         \
- && ! defined(HAS_QUERYLOCALE)
+#if defined(USE_POSIX_2008_LOCALE) && defined(MULTIPLICITY)
+PERLVARI(I, cur_locale_obj, locale_t, NULL)
+#endif
+#ifdef USE_PL_CURLOCALES
 
 /* This is the most number of categories we've encountered so far on any
- * platform */
-PERLVARA(I, curlocales, 12, char *)
+ * platform, doesn't include LC_ALL */
+PERLVARA(I, curlocales, 12, const char *)
+
+#endif
+#ifdef USE_PL_CUR_LC_ALL
+
+PERLVARI(I, cur_LC_ALL, const char *, NULL)
 
 #endif
 #ifdef USE_LOCALE_COLLATE
 
+/* The emory needed to store the collxfrm transformation of a string with
+ * length 'x' is predicted by the linear equation mx+b; m=mult, b=base */
+PERLVARI(I, collxfrm_mult,Size_t, 0)	/* Expansion factor in *xfrm();
+                                           0 => unknown or bad, depending on
+                                           base */
+PERLVAR(I, collxfrm_base, Size_t)	/* Basic overhead in *xfrm();
+                                           mult == 0, base == 0 => need to compute
+                                           mult == 0, base != 0 => ill-formed;
+                                         */
 PERLVAR(I, collation_name, char *)	/* Name of current collation */
-PERLVAR(I, collxfrm_base, Size_t)	/* Basic overhead in *xfrm() */
-PERLVARI(I, collxfrm_mult,Size_t, 2)	/* Expansion factor in *xfrm() */
 PERLVARI(I, collation_ix, U32,	0)	/* Collation generation index */
 PERLVARI(I, strxfrm_NUL_replacement, U8, 0)  /* Code point to replace NULs */
 PERLVARI(I, strxfrm_is_behaved, bool, TRUE)
@@ -753,12 +779,15 @@ PERLVARI(I, strxfrm_is_behaved, bool, TRUE)
 PERLVARI(I, strxfrm_max_cp, U8, 0)      /* Highest collating cp in locale */
 PERLVARI(I, collation_standard, bool, TRUE)
                                         /* Assume simple collation */
+PERLVAR(I, in_utf8_COLLATE_locale, bool)
 #endif /* USE_LOCALE_COLLATE */
 
-PERLVARI(I, langinfo_buf, char *, NULL)
+PERLVARI(I, langinfo_buf, const char *, NULL)
 PERLVARI(I, langinfo_bufsize, Size_t, 0)
-PERLVARI(I, setlocale_buf, char *, NULL)
+PERLVARI(I, setlocale_buf, const char *, NULL)
 PERLVARI(I, setlocale_bufsize, Size_t, 0)
+PERLVARI(I, stdize_locale_buf, const char *, NULL)
+PERLVARI(I, stdize_locale_bufsize, Size_t, 0)
 
 #ifdef PERL_SAWAMPERSAND
 PERLVAR(I, sawampersand, U8)		/* must save all match strings */
@@ -770,6 +799,8 @@ PERLVAR(I, sawampersand, U8)		/* must save all match strings */
 PERLVARI(I, phase,	enum perl_phase, PERL_PHASE_CONSTRUCT)
 
 PERLVARI(I, in_load_module, bool, FALSE)	/* to prevent recursions in PerlIO_find_layer */
+
+PERLVARI(I, eval_begin_nest_depth, U32, 0)
 
 PERLVAR(I, unsafe,	bool)
 PERLVAR(I, colorset,	bool)		/* PERL_RE_COLORS env var is in use */
@@ -806,25 +837,33 @@ PERLVARI(I, perl_destruct_level, signed char,	0)
 
 PERLVAR(I, pad_reset_pending, bool)	/* reset pad on next attempted alloc */
 
-PERLVAR(I, srand_called, bool)
-
-#ifdef USE_LOCALE_NUMERIC
+PERLVARI(I, srand_called, bool, false)      /* has random_state been initialized yet? */
+PERLVARI(I, srand_override, U32, 0)         /* Should we use a deterministic sequence? */
+PERLVARI(I, srand_override_next, U32, 0)    /* Next item in the sequence */
 
 PERLVARI(I, numeric_underlying, bool, TRUE)
                                         /* Assume underlying locale numerics */
 PERLVARI(I, numeric_underlying_is_standard, bool, TRUE)
 
-PERLVARI(I, numeric_standard, int, TRUE)
-                                        /* Assume C locale numerics */
-PERLVAR(I, numeric_name, char *)	/* Name of current numeric locale */
-PERLVAR(I, numeric_radix_sv, SV *)	/* The radix separator if not '.' */
+PERLVARI(I, numeric_standard, int, TRUE)    /* Assume C locale numerics */
+PERLVAR(I, numeric_name, char *)     /* Name of current numeric locale */
+PERLVAR(I, numeric_radix_sv, SV *)	/* The radix separator */
+PERLVAR(I, underlying_radix_sv, SV *)	/* The radix in the program's current underlying locale */
 
-#  ifdef HAS_POSIX_2008_LOCALE
+#if defined(USE_LOCALE_NUMERIC) && defined(USE_POSIX_2008_LOCALE)
 
 PERLVARI(I, underlying_numeric_obj, locale_t, NULL)
 
+#endif
+#ifdef USE_POSIX_2008_LOCALE
+PERLVARI(I, scratch_locale_obj, locale_t, 0)
+#endif
+
+#ifdef USE_LOCALE_CTYPE
+
+PERLVARI(I, ctype_name, const char *, NULL)   /* Name of current ctype locale */
+
 #  endif
-#endif /* !USE_LOCALE_NUMERIC */
 
 /* Array of signal handlers, indexed by signal number, through which the C
    signal handler dispatches.  */
@@ -888,7 +927,12 @@ PERLVARI(I, clocktick,	long,	0)	/* this many times() ticks in a second */
 PERLVARI(I, sharehook,	share_proc_t, Perl_sv_nosharing)
 PERLVARI(I, lockhook,	share_proc_t, Perl_sv_nosharing)
 
+#if defined(__HP_cc) || defined(__HP_aCC)
+#pragma diag_suppress 3215
+#endif
 GCC_DIAG_IGNORE(-Wdeprecated-declarations)
+MSVC_DIAG_IGNORE(4996)
+
 #ifdef NO_MATHOMS
 #  define PERL_UNLOCK_HOOK Perl_sv_nosharing
 #else
@@ -897,7 +941,11 @@ GCC_DIAG_IGNORE(-Wdeprecated-declarations)
 #endif
 PERLVARI(I, unlockhook,	share_proc_t, PERL_UNLOCK_HOOK)
 
+MSVC_DIAG_RESTORE
 GCC_DIAG_RESTORE
+#if defined(__HP_cc) || defined(__HP_aCC)
+#pragma diag_default 3215
+#endif
 
 PERLVARI(I, threadhook,	thrhook_proc_t,	Perl_nothreadhook)
 
@@ -925,7 +973,7 @@ PERLVAR(I, Xpv,		XPV *)		/* (unused) held temporary value */
 
 /* name of the scopes we've ENTERed. Only used with -DDEBUGGING, but needs to be
    present always, as -DDEBUGGING must be binary compatible with non.  */
-PERLVARI(I, scopestack_name, const char * *, NULL)
+PERLVARI(I, scopestack_name, const char **, NULL)
 
 PERLVAR(I, debug_pad,	struct perl_debug_pad)	/* always needed because of the re extension */
 
@@ -966,12 +1014,11 @@ PERLVARI(I, sv_serial,	U32,	0)	/* SV serial number, used in sv.c */
 PERLVARA(I, sv_consts, SV_CONSTS_COUNT, SV*)	/* constant SVs with precomputed hash value */
 
 #ifdef PERL_TRACE_OPS
-PERLVARA(I, op_exec_cnt, OP_max+2, UV)	/* Counts of executed OPs of the given type.
+PERLVARA(I, op_exec_cnt, OP_max+2, UV)  /* Counts of executed OPs of the given type.
                                            If PERL_TRACE_OPS is enabled, we'll dump
                                            a summary count of all ops executed in the
-                                           program at perl_destruct time. For
-                                           profiling/debugging only. Works only if
-                                           DEBUGGING is enabled, too. */
+                                           program at perl_destruct time. Used only
+                                           for profiling in DEBUGGING mode. */
 #endif
 
 PERLVAR(I, random_state, PL_RANDOM_STATE_TYPE)
@@ -998,6 +1045,8 @@ PERLVAR(I, LB_invlist, SV *)
 PERLVAR(I, SB_invlist, SV *)
 PERLVAR(I, SCX_invlist, SV *)
 PERLVAR(I, UpperLatin1,	SV *)   /* Code points 128 - 255 */
+
+PERLVARA(I, fold_locale, 256, U8)
 
 /* List of characters that participate in any fold defined by Unicode */
 PERLVAR(I, in_some_fold, SV *)
@@ -1040,7 +1089,8 @@ PERLVAR(I, wcrtomb_ps, mbstate_t)
 /* Enough space for the reserved byte, 1 for a potential leading 0, then enough
  * for the longest representable integer plus an extra, the 3 flag characters,
  * and NUL */
-PERLVARA(I, mem_log, 1 + 1 + TYPE_DIGITS(UV) + 1 + 3 + 1, char)
+#define PERL_MEM_LOG_ARYLEN (1 + 1 + TYPE_DIGITS(UV) + 1 + 3 + 1)
+PERLVARA(I, mem_log, PERL_MEM_LOG_ARYLEN,  char)
 #endif
 
 /* The most recently seen `use VERSION` declaration, encoded in a single

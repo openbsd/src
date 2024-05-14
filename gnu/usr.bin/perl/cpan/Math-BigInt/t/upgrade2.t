@@ -12,6 +12,7 @@ use Math::BigFloat upgrade => 'Math::BigMouse';
 
 no warnings 'once';
 @Math::BigMouse::ISA = 'Math::BigFloat';
+sub Math::BigMouse::bsqrt {};
 
 () = sqrt Math::BigInt->new(2);
 pass('sqrt on a big int does not segv if there are 2 upgrade levels');

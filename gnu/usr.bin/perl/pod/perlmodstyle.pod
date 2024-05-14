@@ -182,8 +182,7 @@ been done in Perl, and avoid re-inventing the wheel unless you have a
 good reason.
 
 Good places to look for pre-existing modules include
-L<MetaCPAN|https://metacpan.org> and L<PrePAN|http://prepan.org>
-and asking on C<module-authors@perl.org>
+L<MetaCPAN|https://metacpan.org> and asking on C<module-authors@perl.org>
 (L<https://lists.perl.org/list/module-authors.html>).
 
 If an existing module B<almost> does what you want, consider writing a
@@ -247,15 +246,11 @@ hierarchy already exists under which you could place your module.
 =head2 Get feedback before publishing
 
 If you have never uploaded a module to CPAN before (and even if you have),
-you are strongly encouraged to get feedback on L<PrePAN|http://prepan.org>.
-PrePAN is a site dedicated to discussing ideas for CPAN modules with other
-Perl developers and is a great resource for new (and experienced) Perl
-developers.
-
-You should also try to get feedback from people who are already familiar
-with the module's application domain and the CPAN naming system.  Authors
-of similar modules, or modules with similar names, may be a good place to
-start, as are community sites like L<Perl Monks|https://www.perlmonks.org>.
+you are strongly encouraged to get feedback from people who are already
+familiar with the module's application domain and the CPAN naming system.
+Authors of similar modules, or modules with similar names, may be a good
+place to start, as are community sites like
+L<Perl Monks|https://www.perlmonks.org>.
 
 =head1 DESIGNING AND WRITING YOUR MODULE
 

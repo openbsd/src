@@ -352,3 +352,25 @@ arm|mips)
   test "$optimize" || optimize='-O2'
   ;;
 esac
+
+# don't modify a supplied -Darchname
+case "$archname" in
+'')
+  cat > UU/archname.cbu <<'EOCBU'
+unamem=`uname -m`
+case "$archname" in
+"$unamem"-*)
+  arch=`uname -p`
+  archname=`echo "$archname" | sed -e "s/^$unamem-/$arch-/"`
+  ;;
+esac
+EOCBU
+  ;;
+esac
+
+# This function on this box has weird behavior.  See
+# https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=255646
+d_querylocale='undef'
+
+# See https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=265950
+d_duplocale='undef'

@@ -15,11 +15,11 @@ BEGIN {
 use B;
 
 my %unsupported = map +($_=>1), qw (
- __DATA__ __END__ AUTOLOAD BEGIN UNITCHECK CORE DESTROY END INIT CHECK
-  and catch cmp default defer do dump else elsif eq eval finally for foreach
-  format ge given goto grep gt if isa last le local lt m map my ne next
-  no  or  our  package  print  printf  q  qq  qr  qw  qx  redo  require
-  return s say sort state sub tr try unless until use
+ __DATA__ __END__ ADJUST AUTOLOAD BEGIN UNITCHECK CORE DESTROY END INIT CHECK
+  and catch class cmp default defer do dump else elsif eq eval field
+  finally for foreach format ge given goto grep gt if isa last le local
+  lt m map method my ne next no or our package print printf q qq qr qw qx
+  redo require return s say sort state sub tr try unless until use
   when while x xor y
 );
 my %args_for = (

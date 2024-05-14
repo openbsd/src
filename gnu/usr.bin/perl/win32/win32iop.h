@@ -200,7 +200,7 @@ END_EXTERN_C
 
 #define stderr				win32_stderr()
 #define stdout				win32_stdout()
-#define	stdin				win32_stdin()
+#define stdin                           win32_stdin()
 #define feof(f)				win32_feof(f)
 #define ferror(f)			win32_ferror(f)
 #define errno 				(*win32_errno())
@@ -210,17 +210,17 @@ END_EXTERN_C
  * redirect to our own version
  */
 #undef fprintf
-#define	fprintf			win32_fprintf
-#define	vfprintf		win32_vfprintf
-#define	printf			win32_printf
-#define	vprintf			win32_vprintf
+#define fprintf                 win32_fprintf
+#define vfprintf                win32_vfprintf
+#define printf                  win32_printf
+#define vprintf                 win32_vprintf
 #define fread(buf,size,count,f)	win32_fread(buf,size,count,f)
 #define fwrite(buf,size,count,f)	win32_fwrite(buf,size,count,f)
 #define fopen			win32_fopen
 #undef fdopen
 #define fdopen			win32_fdopen
 #define freopen			win32_freopen
-#define	fclose(f)		win32_fclose(f)
+#define fclose(f)               win32_fclose(f)
 #define fputs(s,f)		win32_fputs(s,f)
 #define fputc(c,f)		win32_fputc(c,f)
 #define ungetc(c,f)		win32_ungetc(c,f)

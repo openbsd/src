@@ -37,11 +37,6 @@ static const char malformed_text[] = "Malformed UTF-8 character";
 static const char unees[] =
                         "Malformed UTF-8 character (unexpected end of string)";
 
-/* strlen() of a literal string constant.  We might want this more general,
- * but using it in just this file for now.  A problem with more generality is
- * the compiler warnings about comparing unlike signs */
-#define STRLENs(s)  (sizeof("" s "") - 1)
-
 /*
 These are various utility functions for manipulating UTF8-encoded
 strings.  For the uninitiated, this is a method of representing arbitrary
@@ -49,17 +44,6 @@ Unicode characters as a variable number of bytes, in such a way that
 characters in the ASCII range are unmodified, and a zero byte never appears
 within non-zero characters.
 */
-
-/* helper for Perl__force_out_malformed_utf8_message(). Like
- * SAVECOMPILEWARNINGS(), but works with PL_curcop rather than
- * PL_compiling */
-
-static void
-S_restore_cop_warnings(pTHX_ void *p)
-{
-    free_and_set_cop_warnings(PL_curcop, (STRLEN*) p);
-}
-
 
 void
 Perl__force_out_malformed_utf8_message(pTHX_
@@ -92,10 +76,7 @@ Perl__force_out_malformed_utf8_message(pTHX_
 
     PL_dowarn = G_WARN_ALL_ON|G_WARN_ON;
     if (PL_curcop) {
-        /* this is like SAVECOMPILEWARNINGS() except with PL_curcop rather
-         * than PL_compiling */
-        SAVEDESTRUCTOR_X(S_restore_cop_warnings,
-                (void*)PL_curcop->cop_warnings);
+        SAVECURCOPWARNINGS();
         PL_curcop->cop_warnings = pWARN_ALL;
     }
 
@@ -700,7 +681,7 @@ S_does_utf8_overflow(const U8 * const s,
         return 1;
     }
 
-    /* Here, it could be the overlong malformation, and might not actuallly
+    /* Here, it could be the overlong malformation, and might not actually
      * overflow if you were to calculate it out.
      *
      * See if it actually is overlong */
@@ -1530,7 +1511,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
 
     /* A well-formed UTF-8 character, as the vast majority of calls to this
      * function will be for, has this expected length.  For efficiency, set
-     * things up here to return it.  It will be overriden only in those rare
+     * things up here to return it.  It will be overridden only in those rare
      * cases where a malformation is found */
     if (retlen) {
         *retlen = expectlen;
@@ -1729,10 +1710,10 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
      * uv                   contains the code point the input sequence
      *                      represents; or if there is a problem that prevents
      *                      a well-defined value from being computed, it is
-     *                      some subsitute value, typically the REPLACEMENT
+     *                      some substitute value, typically the REPLACEMENT
      *                      CHARACTER.
      * s0                   points to the first byte of the character
-     * s                    points to just after were we left off processing
+     * s                    points to just after where we left off processing
      *                      the character
      * send                 points to just after where that character should
      *                      end, based on how many bytes the start byte tells
@@ -2122,7 +2103,7 @@ Perl__utf8n_to_uvchr_msgs_helper(const U8 *s,
 
         /* Since there was a possible problem, the returned length may need to
          * be changed from the one stored at the beginning of this function.
-         * Instead of trying to figure out if that's needed, just do it. */
+         * Instead of trying to figure out if it has changed, just do it. */
         if (retlen) {
             *retlen = curlen;
         }
@@ -2169,43 +2150,6 @@ Perl_utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
     return utf8_to_uvchr_buf_helper(s, send, retlen);
 }
 
-/* This is marked as deprecated
- *
-=for apidoc utf8_to_uvuni_buf
-
-Only in very rare circumstances should code need to be dealing in Unicode
-(as opposed to native) code points.  In those few cases, use
-C<L<NATIVE_TO_UNI(utf8_to_uvchr_buf(...))|perlapi/utf8_to_uvchr_buf>> instead.
-If you are not absolutely sure this is one of those cases, then assume it isn't
-and use plain C<utf8_to_uvchr_buf> instead.
-
-Returns the Unicode (not-native) code point of the first character in the
-string C<s> which
-is assumed to be in UTF-8 encoding; C<send> points to 1 beyond the end of C<s>.
-C<retlen> will be set to the length, in bytes, of that character.
-
-If C<s> does not point to a well-formed UTF-8 character and UTF8 warnings are
-enabled, zero is returned and C<*retlen> is set (if C<retlen> isn't
-NULL) to -1.  If those warnings are off, the computed value if well-defined (or
-the Unicode REPLACEMENT CHARACTER, if not) is silently returned, and C<*retlen>
-is set (if C<retlen> isn't NULL) so that (S<C<s> + C<*retlen>>) is the
-next possible position in C<s> that could begin a non-malformed character.
-See L<perlapi/utf8n_to_uvchr> for details on when the REPLACEMENT CHARACTER is
-returned.
-
-=cut
-*/
-
-UV
-Perl_utf8_to_uvuni_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
-{
-    PERL_ARGS_ASSERT_UTF8_TO_UVUNI_BUF;
-
-    assert(send > s);
-
-    return NATIVE_TO_UNI(utf8_to_uvchr_buf(s, send, retlen));
-}
-
 /*
 =for apidoc utf8_length
 
@@ -2217,44 +2161,154 @@ If C<e E<lt> s> or if the scan would end up past C<e>, it raises a UTF8 warning
 and returns the number of valid characters.
 
 =cut
+
+    For long strings we process the input word-at-a-time, and count
+    continuations, instead of otherwise counting characters and using UTF8SKIP
+    to find the next one.  If our input were 13-byte characters, the per-word
+    would be a loser, as we would be doing things in 8 byte chunks (or 4 on a
+    32-bit platform).  But the maximum legal Unicode code point is 4 bytes, and
+    most text will have a significant number of 1 and 2 byte characters, so the
+    per-word is generally a winner.
+
+    There are start-up and finish costs with the per-word method, so we use the
+    standard method unless the input has a relatively large length.
 */
 
 STRLEN
-Perl_utf8_length(pTHX_ const U8 *s, const U8 *e)
+Perl_utf8_length(pTHX_ const U8 * const s0, const U8 * const e)
 {
+    STRLEN continuations = 0;
     STRLEN len = 0;
+    const U8 * s = s0;
 
     PERL_ARGS_ASSERT_UTF8_LENGTH;
 
-    /* Note: cannot use UTF8_IS_...() too eagerly here since e.g.
-     * the bitops (especially ~) can create illegal UTF-8.
-     * In other words: in Perl UTF-8 is not just for Unicode. */
+    /* For EBCDCIC and short strings, we count the characters.  The boundary
+     * was determined by eyeballing the output of Porting/bench.pl and
+     * choosing a number where the continuations method gave better results (on
+     * a 64 bit system, khw not having access to a 32 bit system with
+     * cachegrind).  The number isn't critical, as at these sizes, the total
+     * time spent isn't large either way */
 
-    while (s < e) {
-        Ptrdiff_t expected_byte_count = UTF8SKIP(s);
+#ifndef EBCDIC
 
-        if (UNLIKELY(e - s  < expected_byte_count)) {
-            goto warn_and_return;
+    if (e - s0 < 96)
+
+#endif
+
+    {
+        while (s < e) { /* Count characters directly */
+
+            /* Take extra care to not exceed 'e' (which would be undefined
+             * behavior) should the input be malformed, with a partial
+             * character at the end */
+            Ptrdiff_t expected_byte_count = UTF8SKIP(s);
+            if (UNLIKELY(e - s  < expected_byte_count)) {
+                goto warn_and_return;
+            }
+
+            len++;
+            s += expected_byte_count;
         }
 
-        len++;
-        s += expected_byte_count;
+        if (LIKELY(e == s)) {
+            return len;
+        }
+
+      warn_and_return:
+        if (ckWARN_d(WARN_UTF8)) {
+            if (PL_op)
+                Perl_warner(aTHX_ packWARN(WARN_UTF8),
+                             "%s in %s", unees, OP_DESC(PL_op));
+            else
+                Perl_warner(aTHX_ packWARN(WARN_UTF8), "%s", unees);
+        }
+
+        return s - s0;
     }
+
+#ifndef EBCDIC
+
+    /* Count continuations, word-at-a-time.
+     *
+     * We need to stop before the final start character in order to
+     * preserve the limited error checking that's always been done */
+    const U8 * e_limit = e - UTF8_MAXBYTES;
+
+    /* Points to the first byte >=s which is positioned at a word boundary.  If
+     * s is on a word boundary, it is s, otherwise it is to the next word. */
+    const U8 * partial_word_end = s + PERL_WORDSIZE * PERL_IS_SUBWORD_ADDR(s)
+                                    - (PTR2nat(s) & PERL_WORD_BOUNDARY_MASK);
+
+    /* Process up to a full word boundary. */
+    while (s < partial_word_end) {
+        const Size_t skip = UTF8SKIP(s);
+
+        continuations += skip - 1;
+        s += skip;
+    }
+
+    /* Adjust back down any overshoot */
+    continuations -= s - partial_word_end;
+    s = partial_word_end;
+
+    do { /* Process per-word */
+
+        /* The idea for counting continuation bytes came from
+         * http://www.daemonology.net/blog/2008-06-05-faster-utf8-strlen.html
+         * One thing it does that this doesn't is to prefetch the buffer
+         *      __builtin_prefetch(&s[256], 0, 0);
+         *
+         * A continuation byte has the upper 2 bits be '10', and the rest
+         * dont-cares.  The VARIANTS mask zeroes out all but the upper bit of
+         * each byte in the word.  That gets shifted to the byte's lowest bit,
+         * and 'anded' with the complement of the 2nd highest bit of the byte,
+         * which has also been shifted to that position.  Hence the bit in that
+         * position will be 1 iff the upper bit is 1 and the next one is 0.  We
+         * then use the same integer multiplcation and shifting that are used
+         * in variant_under_utf8_count() to count how many of those are set in
+         * the word. */
+
+        continuations += (((((* (const PERL_UINTMAX_T *) s)
+                                            & PERL_VARIANTS_WORD_MASK) >> 7)
+                      & (((~ (* (const PERL_UINTMAX_T *) s))) >> 6))
+                  * PERL_COUNT_MULTIPLIER)
+                >> ((PERL_WORDSIZE - 1) * CHARBITS);
+        s += PERL_WORDSIZE;
+    } while (s + PERL_WORDSIZE <= e_limit);
+
+    /* Process remainder per-byte */
+    while (s < e) {
+	if (UTF8_IS_CONTINUATION(*s)) {
+            continuations++;
+            s++;
+            continue;
+        }
+
+        /* Here is a starter byte.  Use UTF8SKIP from now on */
+        do {
+            Ptrdiff_t expected_byte_count = UTF8SKIP(s);
+            if (UNLIKELY(e - s  < expected_byte_count)) {
+                break;
+            }
+
+            continuations += expected_byte_count- 1;
+            s += expected_byte_count;
+        } while (s < e);
+
+        break;
+    }
+
+#  endif
 
     if (LIKELY(e == s)) {
-        return len;
+        return s - s0 - continuations;
     }
 
-    /* Here, s > e on entry */
+    /* Convert to characters */
+    s -= continuations;
 
-  warn_and_return:
-    if (PL_op)
-        Perl_ck_warner_d(aTHX_ packWARN(WARN_UTF8),
-                         "%s in %s", unees, OP_DESC(PL_op));
-    else
-        Perl_ck_warner_d(aTHX_ packWARN(WARN_UTF8), "%s", unees);
-
-    return len;
+    goto warn_and_return;
 }
 
 /*
@@ -2353,41 +2407,207 @@ Perl_utf8_to_bytes(pTHX_ U8 *s, STRLEN *lenp)
         return s;
     }
 
-    {
-        U8 * const save = s;
-        U8 * const send = s + *lenp;
-        U8 * d;
+    /* Nothing before 'first_variant' needs to be changed, so start the real
+     * work there */
 
-        /* Nothing before the first variant needs to be changed, so start the real
-         * work there */
-        s = first_variant;
-        while (s < send) {
+    U8 * const save = s;
+    U8 * const send = s + *lenp;
+    U8 * d;
+
+#ifndef EBCDIC      /* The below relies on the bit patterns of UTF-8 */
+
+    /* There is some start-up/tear-down overhead with this, so no real gain
+     * unless the string is long enough.  The current value is just a
+     * guess. */
+    if (*lenp > 5 * PERL_WORDSIZE) {
+
+        /* First, go through the string a word at-a-time to verify that it is
+         * downgradable.  If it contains any start byte besides C2 and C3, then
+         * it isn't. */
+
+        const PERL_UINTMAX_T C0_mask = PERL_COUNT_MULTIPLIER * 0xC0;
+        const PERL_UINTMAX_T C2_mask = PERL_COUNT_MULTIPLIER * 0xC2;
+        const PERL_UINTMAX_T FE_mask = PERL_COUNT_MULTIPLIER * 0xFE;
+
+        /* Points to the first byte >=s which is positioned at a word boundary.
+         * If s is on a word boundary, it is s, otherwise it is the first byte
+         * of the next word. */
+        U8 * partial_word_end = s + PERL_WORDSIZE * PERL_IS_SUBWORD_ADDR(s)
+                                - (PTR2nat(s) & PERL_WORD_BOUNDARY_MASK);
+
+        /* Here there is at least a full word beyond the first word boundary.
+         * Process up to that boundary. */
+        while (s < partial_word_end) {
             if (! UTF8_IS_INVARIANT(*s)) {
                 if (! UTF8_IS_NEXT_CHAR_DOWNGRADEABLE(s, send)) {
                     *lenp = ((STRLEN) -1);
-                    return 0;
+                    return NULL;
                 }
                 s++;
             }
             s++;
         }
 
-        /* Is downgradable, so do it */
-        d = s = first_variant;
-        while (s < send) {
-            U8 c = *s++;
-            if (! UVCHR_IS_INVARIANT(c)) {
-                /* Then it is two-byte encoded */
-                c = EIGHT_BIT_UTF8_TO_NATIVE(c, *s);
-                s++;
-            }
-            *d++ = c;
-        }
-        *d = '\0';
-        *lenp = d - save;
+        /* Adjust back down any overshoot */
+        s = partial_word_end;
 
-        return save;
+        /* Process per-word */
+        do {
+
+            PERL_UINTMAX_T C2_C3_start_bytes;
+
+            /* First find the bytes that are start bytes.  ANDing with
+             * C0C0...C0 causes any start byte to become C0; any other byte
+             * becomes something else.  Then XORing with C0 causes any start
+             * byte to become 0; all other bytes non-zero. */
+            PERL_UINTMAX_T start_bytes
+                          = ((* (PERL_UINTMAX_T *) s) & C0_mask) ^ C0_mask;
+
+            /* These shifts causes the most significant bit to be set to 1 for
+             * any bytes in the word that aren't completely 0.  Hence after
+             * these, only the start bytes have 0 in their msb */
+            start_bytes |= start_bytes << 1;
+            start_bytes |= start_bytes << 2;
+            start_bytes |= start_bytes << 4;
+
+            /* When we complement, then AND with 8080...80, the start bytes
+             * will have 1 in their msb, and all other bits are 0 */
+            start_bytes = ~ start_bytes & PERL_VARIANTS_WORD_MASK;
+
+            /* Now repeat the procedure, but look for bytes that match only
+             * C2-C3. */
+            C2_C3_start_bytes = ((* (PERL_UINTMAX_T *) s) & FE_mask)
+                                                                ^ C2_mask;
+            C2_C3_start_bytes |= C2_C3_start_bytes << 1;
+            C2_C3_start_bytes |= C2_C3_start_bytes << 2;
+            C2_C3_start_bytes |= C2_C3_start_bytes << 4;
+            C2_C3_start_bytes = ~ C2_C3_start_bytes
+                                & PERL_VARIANTS_WORD_MASK;
+
+            /* Here, start_bytes has a 1 in the msb of each byte that has a
+             *                                              start_byte; And
+             * C2_C3_start_bytes has a 1 in the msb of each byte that has a
+             *                                       start_byte of C2 or C3
+             * If they're not equal, there are start bytes that aren't C2
+             * nor C3, hence this is not downgradable */
+            if (start_bytes != C2_C3_start_bytes) {
+                *lenp = ((STRLEN) -1);
+                return NULL;
+            }
+
+            s += PERL_WORDSIZE;
+        } while (s + PERL_WORDSIZE <= send);
+
+        /* If the final byte was a start byte, it means that the character
+         * straddles two words, so back off one to start looking below at the
+         * first byte of the character  */
+        if (s > first_variant && UTF8_IS_START(*(s-1))) {
+            s--;
+        }
     }
+
+#endif
+
+    /* Do the straggler bytes beyond the final word boundary (or all bytes
+     * in the case of EBCDIC) */
+    while (s < send) {
+        if (! UTF8_IS_INVARIANT(*s)) {
+            if (! UTF8_IS_NEXT_CHAR_DOWNGRADEABLE(s, send)) {
+                *lenp = ((STRLEN) -1);
+                return NULL;
+            }
+            s++;
+        }
+        s++;
+    }
+
+    /* Here, we passed the tests above.  For the EBCDIC case, everything
+     * was well-formed and can be downgraded to non-UTF8.  For non-EBCDIC,
+     * it means only that all start bytes were C2 or C3, hence any
+     * well-formed sequences are downgradable.  But we didn't test, for
+     * example, that there weren't two C2's in a row.  That means that in
+     * the loop below, we have to be sure things are well-formed.  Because
+     * this is very very likely, and we don't care about having speedy
+     * handling of malformed input, the loop proceeds as if well formed,
+     * and should a malformed one come along, it undoes what it already has
+     * done */
+
+    d = s = first_variant;
+
+    while (s < send) {
+        U8 * s1;
+
+        if (UVCHR_IS_INVARIANT(*s)) {
+            *d++ = *s++;
+            continue;
+        }
+
+        /* Here it is two-byte encoded. */
+        if (   LIKELY(UTF8_IS_DOWNGRADEABLE_START(*s))
+            && LIKELY(UTF8_IS_CONTINUATION((s[1]))))
+        {
+            U8 first_byte = *s++;
+            *d++ = EIGHT_BIT_UTF8_TO_NATIVE(first_byte, *s);
+            s++;
+            continue;
+        }
+
+        /* Here, it is malformed.  This shouldn't happen on EBCDIC, and on
+         * ASCII platforms, we know that the only start bytes in the text
+         * are C2 and C3, and the code above has made sure that it doesn't
+         * end with a start byte.  That means the only malformations that
+         * are possible are a start byte without a continuation (either
+         * followed by another start byte or an invariant) or an unexpected
+         * continuation.
+         *
+         * We have to undo all we've done before, back down to the first
+         * UTF-8 variant.  Note that each 2-byte variant we've done so far
+         * (converted to single byte) slides things to the left one byte,
+         * and so we have bytes that haven't been written over.
+         *
+         * Here, 'd' points to the next position to overwrite, and 's'
+         * points to the first invalid byte.  That means 'd's contents
+         * haven't been changed yet, nor has anything else beyond it in the
+         * string.  In restoring to the original contents, we don't need to
+         * do anything past (d-1).
+         *
+         * In particular, the bytes from 'd' to 's' have not been changed.
+         * This loop uses a new variable 's1' (to avoid confusing 'source'
+         * and 'destination') set to 'd',  and moves 's' and 's1' in lock
+         * step back so that afterwards, 's1' points to the first changed
+         * byte that will be the source for the first byte (or bytes) at
+         * 's' that need to be changed back.  Note that s1 can expand to
+         * two bytes */
+        s1 = d;
+        while (s >= d) {
+            s--;
+            if (! UVCHR_IS_INVARIANT(*s1)) {
+                s--;
+            }
+            s1--;
+        }
+
+        /* Do the changing back */
+        while (s1 >= first_variant) {
+            if (UVCHR_IS_INVARIANT(*s1)) {
+                *s-- = *s1--;
+            }
+            else {
+                *s-- = UTF8_EIGHT_BIT_LO(*s1);
+                *s-- = UTF8_EIGHT_BIT_HI(*s1);
+                s1--;
+            }
+        }
+
+        *lenp = ((STRLEN) -1);
+        return NULL;
+    }
+
+    /* Success! */
+    *d = '\0';
+    *lenp = d - save;
+
+    return save;
 }
 
 /*
@@ -3042,8 +3262,8 @@ Perl__to_uni_fold_flags(pTHX_ UV c, U8* p, STRLEN *lenp, U8 flags)
     if (flags & FOLD_FLAGS_LOCALE) {
         /* Treat a non-Turkic UTF-8 locale as not being in locale at all,
          * except for potentially warning */
-        _CHECK_AND_WARN_PROBLEMATIC_LOCALE;
-        if (IN_UTF8_CTYPE_LOCALE && ! PL_in_utf8_turkic_locale) {
+        CHECK_AND_WARN_PROBLEMATIC_LOCALE_;
+        if (IN_UTF8_CTYPE_LOCALE && ! IN_UTF8_TURKIC_LOCALE) {
             flags &= ~FOLD_FLAGS_LOCALE;
         }
         else {
@@ -3096,7 +3316,8 @@ S_is_utf8_common(pTHX_ const U8 *const p, const U8 * const e,
 PERLVAR(I, seen_deprecated_macro, HV *)
 
 STATIC void
-S_warn_on_first_deprecated_use(pTHX_ const char * const name,
+S_warn_on_first_deprecated_use(pTHX_ U32 category,
+                                     const char * const name,
                                      const char * const alternative,
                                      const bool use_locale,
                                      const char * const file,
@@ -3106,7 +3327,7 @@ S_warn_on_first_deprecated_use(pTHX_ const char * const name,
 
     PERL_ARGS_ASSERT_WARN_ON_FIRST_DEPRECATED_USE;
 
-    if (ckWARN_d(WARN_DEPRECATED)) {
+    if (ckWARN_d(category)) {
 
         key = Perl_form(aTHX_ "%s;%d;%s;%d", name, use_locale, file, line);
         if (! hv_fetch(PL_seen_deprecated_macro, key, strlen(key), 0)) {
@@ -3120,14 +3341,14 @@ S_warn_on_first_deprecated_use(pTHX_ const char * const name,
             }
 
             if (instr(file, "mathoms.c")) {
-                Perl_warner(aTHX_ WARN_DEPRECATED,
+                Perl_warner(aTHX_ category,
                             "In %s, line %d, starting in Perl v5.32, %s()"
                             " will be removed.  Avoid this message by"
                             " converting to use %s().\n",
                             file, line, name, alternative);
             }
             else {
-                Perl_warner(aTHX_ WARN_DEPRECATED,
+                Perl_warner(aTHX_ category,
                             "In %s, line %d, starting in Perl v5.32, %s() will"
                             " require an additional parameter.  Avoid this"
                             " message by converting to use %s().\n",
@@ -3594,9 +3815,9 @@ S_turkic_uc(pTHX_ const U8 * const p, const U8 * const e,
                                L1_func_extra_param, turkic)                  \
                                                                              \
     if (flags & (locale_flags)) {                                            \
-        _CHECK_AND_WARN_PROBLEMATIC_LOCALE;                                  \
+        CHECK_AND_WARN_PROBLEMATIC_LOCALE_;                                  \
         if (IN_UTF8_CTYPE_LOCALE) {                                          \
-            if (UNLIKELY(PL_in_utf8_turkic_locale)) {                        \
+            if (UNLIKELY(IN_UTF8_TURKIC_LOCALE)) {                           \
                 UV ret = turkic(p, e, ustrp, lenp);                          \
                 if (ret) return ret;                                         \
             }                                                                \
@@ -4175,7 +4396,7 @@ Perl_foldEQ_utf8_flags(pTHX_ const char *s1, char **pe1, UV l1, bool u1,
 
     if (flags & FOLDEQ_LOCALE) {
         if (IN_UTF8_CTYPE_LOCALE) {
-            if (UNLIKELY(PL_in_utf8_turkic_locale)) {
+            if (UNLIKELY(IN_UTF8_TURKIC_LOCALE)) {
                 flags_for_folder |= FOLD_FLAGS_LOCALE;
             }
             else {

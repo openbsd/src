@@ -13,7 +13,7 @@
 /*
  * This file used to declare accessor functions for Perl variables
  * when PERL_GLOBAL_STRUCT was enabled, but that no longer exists.
- * This file is kept for backwards compatiblity with XS code that
+ * This file is kept for backwards compatibility with XS code that
  * might include it.
  */
 #ifndef __perlapi_h__

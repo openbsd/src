@@ -493,6 +493,10 @@ d_attribute_unused (d_attribut.U):
 	and arguments may not always be used, and to not throw warnings
 	if they don't get used.
 
+d_attribute_visibility (d_attribut.U):
+	This variable conditionally defines the HASATTRIBUTE_VISIBILITY symbol,
+	and indicates different GCC attribute visibility
+
 d_attribute_warn_unused_result (d_attribut.U):
 	This variable conditionally defines
 	HASATTRIBUTE_WARN_UNUSED_RESULT, which indicates that the C
@@ -2279,6 +2283,10 @@ d_setegid (d_setegid.U):
 	indicates to the C program that the setegid() routine is available
 	to change the effective gid of the current program.
 
+d_setenv (d_setenv.U):
+	This variable conditionally defines the HAS_SETENV symbol, which
+	indicates to the C program that the setenv routine is available.
+
 d_seteuid (d_seteuid.U):
 	This variable conditionally defines the HAS_SETEUID symbol, which
 	indicates to the C program that the seteuid() routine is available
@@ -3501,6 +3509,10 @@ i16size (perlxv.U):
 i16type (perlxv.U):
 	This variable contains the C type used for Perl's I16.
 
+i32dformat (perlx32f.U):
+	This variable contains the format string used for printing
+	a Perl I32 as a signed decimal integer.
+
 i32size (perlxv.U):
 	This variable is the size of an I32 in bytes.
 
@@ -3794,6 +3806,10 @@ i_sysstatfs (i_sysstatfs.U):
 i_sysstatvfs (i_sysstatvfs.U):
 	This variable conditionally defines the I_SYSSTATVFS symbol,
 	and indicates whether a C program should include <sys/statvfs.h>.
+
+i_syssyscall (i_syssyscall.U):
+	This variable conditionally defines the I_SYS_SYSCALL symbol,
+	and indicates whether a C program should include <sys/syscall.h>.
 
 i_systime (i_time.U):
 	This variable conditionally defines I_SYS_TIME, which indicates
@@ -5518,11 +5534,27 @@ u16size (perlxv.U):
 u16type (perlxv.U):
 	This variable contains the C type used for Perl's U16.
 
+u32oformat (perlx32f.U):
+	This variable contains the format string used for printing
+	a Perl U32 as an unsigned octal integer.
+
 u32size (perlxv.U):
 	This variable is the size of an U32 in bytes.
 
 u32type (perlxv.U):
 	This variable contains the C type used for Perl's U32.
+
+u32uformat (perlx32f.U):
+	This variable contains the format string used for printing
+	a Perl U32 as an unsigned decimal integer.
+
+u32xformat (perlx32f.U):
+	This variable contains the format string used for printing
+	a Perl U32 as an unsigned hexadecimal integer in lowercase abcdef.
+
+u32XUformat (perlx32f.U):
+	This variable contains the format string used for printing
+	a Perl U32 as an unsigned hexadecimal integer in uppercase ABCDEF.
 
 u64size (perlxv.U):
 	This variable is the size of an U64 in bytes.

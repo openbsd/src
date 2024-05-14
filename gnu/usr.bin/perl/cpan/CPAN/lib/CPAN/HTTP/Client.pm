@@ -6,7 +6,7 @@ use vars qw(@ISA);
 use CPAN::HTTP::Credentials;
 use HTTP::Tiny 0.005;
 
-$CPAN::HTTP::Client::VERSION = $CPAN::HTTP::Client::VERSION = "1.9601";
+$CPAN::HTTP::Client::VERSION = $CPAN::HTTP::Client::VERSION = "1.9602";
 
 # CPAN::HTTP::Client is adapted from parts of cpanm by Tatsuhiko Miyagawa
 # and parts of LWP by Gisle Aas
@@ -32,6 +32,7 @@ sub mirror {
 
     my $want_proxy = $self->_want_proxy($uri);
     my $http = HTTP::Tiny->new(
+        verify_SSL => 1,
         $want_proxy ? (proxy => $self->{proxy}) : ()
     );
 

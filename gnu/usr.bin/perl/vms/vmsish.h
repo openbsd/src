@@ -46,9 +46,7 @@
 #include <unixio.h>
 #include <unixlib.h>
 #include <file.h>  /* it's not <sys/file.h>, so don't use I_SYS_FILE */
-#if (defined(__DECC) && defined(__DECC_VER) && __DECC_VER > 20000000) || defined(__DECCXX)
-#  include <unistd.h> /* DECC has this; gcc doesn't */
-#endif
+#include <unistd.h>
 
 #ifdef NO_PERL_TYPEDEFS /* a2p; we don't want Perl's special routines */
 #  define DONT_MASK_RTL_CALLS
@@ -246,15 +244,9 @@
  */
 #define ALTERNATE_SHEBANG "$"
 
-/* Macros to set errno using the VAX thread-safe calls, if present */
-#if (defined(__DECC) || defined(__DECCXX)) && !defined(__ALPHA)
-#  define set_errno(v)      (cma$tis_errno_set_value(v))
-   void cma$tis_errno_set_value(int __value);  /* missing in some errno.h */
-#  define set_vaxc_errno(v) (vaxc$errno = (v))
-#else
-#  define set_errno(v)      (errno = (v))
-#  define set_vaxc_errno(v) (vaxc$errno = (v))
-#endif
+/* Macros to set errno.  */
+#define set_errno(v)      (errno = (v))
+#define set_vaxc_errno(v) (vaxc$errno = (v))
 
 /* Support for 'vmsish' behaviors enabled with C<use vmsish> pragma */
 
@@ -309,9 +301,8 @@ struct interp_intern {
 
 #define BIT_BUCKET "/dev/null"
 #define PERL_SYS_INIT_BODY(c,v)	MALLOC_CHECK_TAINT2(*c,*v) vms_image_init((c),(v)); PERLIO_INIT; MALLOC_INIT
-#define PERL_SYS_TERM_BODY()    HINTS_REFCNT_TERM; OP_REFCNT_TERM;      \
-                                PERLIO_TERM; MALLOC_TERM; LOCALE_TERM;  \
-                                ENV_TERM;
+/* Use standard PERL_SYS_TERM_BODY */
+
 #define dXSUB_SYS dNOOP
 #define HAS_KILL
 #define HAS_WAIT
@@ -340,7 +331,7 @@ struct interp_intern {
  *	This symbol, if defined, indicates that the ioctl() routine is
  *	available to set I/O characteristics
  */
-#define	HAS_IOCTL		/**/
+#define HAS_IOCTL               /**/
  
 /* HAS_UTIME:
  *	This symbol, if defined, indicates that the routine utime() is

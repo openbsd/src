@@ -2102,6 +2102,12 @@ Since Windows needs to know whether the target is a directory or not when
 creating the link the target Perl will only create the link as a directory
 link when the target exists and is a directory.
 
+Windows does not recognize forward slashes as path separators in
+symbolic links.  Hence on Windows, any C</> in the I<OLDFILE>
+parameter to symlink() are converted to C<\>.  This is reflected in
+the result returned by readlink(), the C<\> in the result are not
+converted back to C</>.
+
 (VMS)
 Implemented on 64 bit VMS 8.3.  VMS requires the symbolic link to be in Unix
 syntax if it is intended to resolve to a valid path.
@@ -2345,6 +2351,18 @@ ensure you have that library installed when building perl.
 
 =head1 EOL Platforms
 
+=head2 (Perl 5.37.1)
+
+The following platforms were supported by a previous version of
+Perl but have been officially removed from Perl's source code
+as of 5.37.1:
+
+=over
+
+=item Ultrix
+
+=back
+
 =head2 (Perl 5.36)
 
 The following platforms were supported by a previous version of
@@ -2514,7 +2532,6 @@ of any trouble.
         SVR2
         TI1500
         TitanOS
-        Ultrix
         Unisys Dynix
 
 The following platforms have their own source code distributions and

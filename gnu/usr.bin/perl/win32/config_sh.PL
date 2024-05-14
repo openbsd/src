@@ -11,7 +11,32 @@ sub mungepath {
     $p =~ s/[ ;]+$//;
     $p =~ s/'/"/g;
     my @p = map { $_ = "\"$_\"" if /\s/ and !/^".*"$/; $_ } split /;/, $p;
-    return join(' ', @p);
+    return wantarray ? @p : join(' ', @p);
+}
+
+# check that the directories in the provided var exist
+sub check_path {
+    my $opt = shift;
+    my $p = shift;
+    my @paths = mungepath($p);
+    my $header_seen = 0;
+    foreach my $path (@paths) {
+        $path =~ s/^"(.*)"$/$1/;
+        next, if -d $path;
+
+        if (not $header_seen++) {
+            print STDERR "'$opt' contains the following non-existing paths:\n";
+        }
+        print STDERR "\t$path\n";
+    }
+    if ($header_seen) {
+        print STDERR <<EOF;
+Did you provide a correct value for the 'CCHOME' option?
+
+(This check can be skipped by using the SKIP_CCHOME_CHECK=1 option)
+EOF
+        exit 1;
+    }
 }
 
 # generate an array of option strings from command-line args
@@ -111,6 +136,11 @@ if (!$opt{cf_email}) {
     $opt{cf_email} = $opt{cf_by} . '@' . $computername;
 }
 $opt{usemymalloc} = 'y' if $opt{d_mymalloc} eq 'define';
+
+unless ($opt{SKIP_CCHOME_CHECK}) {
+    check_path('CCLIBDIR', $opt{libpth});
+    check_path('CCINCDIR', $opt{incpath});
+}
 
 $opt{libpth} = mungepath($opt{libpth}) if exists $opt{libpth};
 $opt{incpath} = mungepath($opt{incpath}) if exists $opt{incpath};

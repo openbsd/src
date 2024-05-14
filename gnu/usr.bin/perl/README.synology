@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 If you read this file _as_is_, just ignore the funny characters you see.
 It is written in the POD format (see pod/perlpod.pod) which is specially
 designed to be readable as is. But if you have been into Perl you
@@ -23,19 +25,97 @@ L<Synology FAQ|https://kb.synology.com/en-global/DSM/tutorial/What_kind_of_CPU_d
 Since it is based on Linux, the NAS can run many popular Linux
 software packages, including Perl. In fact, Synology provides a
 ready-to-install package for Perl, depending on the version of DSM
-the installed perl ranges from 5.8.6 on DSM-4.3 to 5.24.0 on DSM-6.1.
+the installed perl ranges from 5.8.6 on DSM-4.3 to 5.28.1 on DSM-7.1.
 
 There is an active user community that provides many software packages
 for the Synology DSM systems; at the time of writing this document
-they provide Perl version 5.24.1.
+they provide Perl version 5.28.1.
 
 This document describes various features of Synology DSM operating
 system that will affect how Perl 5 (hereafter just Perl) is
 configured, compiled and/or runs. It has been compiled and verified by
 Johan Vromans for the Synology DS413 (QorIQ), with feedback from
-H.Merijn Brand (DS213, ARMv5tel and RS815, Intel Atom x64).
+H.Merijn Brand (DS213: ARMv5tel, RS815: Intel Atom x64, and DS218+:
+Celeron J3355).
 
 =head2 Setting up the build environment
+
+=head3 DSM 7
+
+For a comfortable development environment, Entware is currently the only
+viable solution. Just follow the detailed instructions on
+L<Install Entware on Synology NAS|https://github.com/Entware/Entware/wiki/Install-on-Synology-NAS>.
+supported architectures are armv5, armv7, mipsel, wl500g, x86_32, and x86_64.
+Check L<here|https://pkg.entware.net/binaries/> for supported platforms.
+
+That github link also shows what environments should be supported.
+
+It was tested on DSM-7.1 by H.Merijn Brand on a DS218+ and a DS220+ (both
+Intel x64).
+
+Entware comes with a precompiled 5.26.1 (Jan 2018) that allowes
+building shared XS code. Note that this installation does B<not> use
+a site_perl folder. The available C<cpan> works. If all required
+development packages are installed too, also for XS.
+
+Installing perl from the Community package center:
+
+=over 4
+
+=item *
+
+Using your favourite browser open the DSM management page and start
+the Package Center.
+
+=item *
+
+In Settings, add the following Package Sources:
+
+  Name:     Community
+  Location: https://synopackage.com/repository/spk/All
+
+=item *
+
+Still in Settings, in Channel Update, select Beta Channel.
+
+=back
+
+To complete the development environment, install make and gcc
+
+ ds220# opkg install make gcc
+
+Then, optionally, make sure you use the more recent bash and gawk.
+
+ ds220# opkg install bash gawk
+ ds220# cd /usr/bin
+ ds220# mv bash bash.syno
+ ds220# ln -s /opt/bin/bash .
+
+In order to have Configure find the required libraries
+
+ ds220# cd /opt/lib
+ ds220# ln -s libcrypt.so.?       libcrypt.so
+ ds220# ln -s libdl.so.?          libdl.so
+ ds220# ln -s libgdbm.so.?        libgdbm.so
+ ds220# ln -s libgdbm_compat.so.? libgdbm_compat.so
+ ds220# ln -s libm.so.?           libm.so
+ ds220# ln -s libpthread.so.?     libpthread.so
+ ds220# ln -s libutil.so.?        libutil.so
+
+=head3 DSM 6
+
+Using iPkg has been deprecated on DSM 6, but an alternative is available
+for DSM 6: entware/opkg. For instructions on how to use that, please read
+L<Install Entware-ng on Synology NAS|https://github.com/Entware-ng/Entware-ng/wiki/Install-on-Synology-NAS>
+
+That sadly does not (yet) work on QorIQ. At the moment of writing, the
+supported architectures are armv5, armv7, mipsel, wl500g, x86_32, and x86_64.
+Check L<here|https://pkg.entware.net/binaries/> for supported platforms.
+
+Entware-ng comes with a precompiled 5.24.1 (June 2017) that allowes
+building shared XS code. Note that this installation does B<not> use
+a site_perl folder. The available C<cpan> works. If all required
+development packages are installed too, also for XS.
 
 =head3 DSM 5
 
@@ -61,6 +141,9 @@ In Settings, add the following Package Sources:
 
   https://www.cphub.net
   http://packages.quadrat4.de
+
+As these two are both discontinued, it is unlikely you will be able
+to set up a build environment on DSM 5.
 
 =item *
 
@@ -131,21 +214,6 @@ Execute the following commands:
 B<WARNING:> When you perform a system software upgrade, these links
 will disappear and need to be re-established.
 
-=head3 DSM 6
-
-Using iPkg has been deprecated on DSM 6, but an alternative is available
-for DSM 6: entware/opkg. For instructions on how to use that, please read
-L<Install Entware-ng on Synology NAS|https://github.com/Entware-ng/Entware-ng/wiki/Install-on-Synology-NAS>
-
-That sadly does not (yet) work on QorIQ. At the moment of writing, the
-supported architectures are armv5, armv7, mipsel, wl500g, x86_32, and x86_64.
-Check L<here|https://pkg.entware.net/binaries/> for supported platforms.
-
-Entware-ng comes with a precompiled 5.24.1 (June 2017) that allowes
-building shared XS code. Note that this installation does B<not> use
-a site_perl folder. The available C<cpan> works. If all required
-development packages are installed too, also for XS.
-
 =head2 Compiling Perl 5
 
 When the build environment has been set up, building and testing Perl
@@ -158,16 +226,18 @@ sources as usual, and add a file Policy.sh as follows:
   # Install Perl in a tree in /opt/perl instead of /opt/bin.
   prefix=/opt/perl
 
-  # Select the compiler. Note that there is no 'cc' alias or link.
+  # Select the compiler. Note that there is no 'cc' alias or link
+  # on older DSM versions
   cc=gcc
+  awk=/opt/bin/gawk
 
-  # Build flags.
+  # Build flags. Optional
   ccflags="-DDEBUGGING"
 
   # Library and include paths.
-  libpth="/lib"
   locincpth="/opt/include"
-  loclibpth="/lib"
+  loclibpth="/opt/lib /usr/local/lib /usr/lib"
+  libpth="/opt/lib /usr/local/lib /usr/lib"
 
 You may want to create the destination directory and give it the right
 permissions before installing, thus eliminating the need to build Perl
@@ -176,16 +246,19 @@ as a super user.
 In the directory where you unpacked the sources, issue the familiar
 commands:
 
-  ./Configure -des
-  make
-  make test
-  make install
+  $ bash ./Configure -Dusedevel -Duseshrplib -Duse64bitall -des
+  $ make -j2
+  $ env TEST_JOBS=2 make test_harness
+  $ make install
 
 =head2 Known problems
 
 =head3 Configure
 
-No known problems yet
+The GNU C-compiler might spit out unexpected stuff under -v, which
+causes the analysis of cppsymbols to fail because of unmatched quotes.
+
+You'll note if config.sh fails with a syntax error.
 
 =head3 Build
 
@@ -216,7 +289,7 @@ some system components will start to fail.
 
 =back
 
-=head2 Smoke testing Perl 5
+=head2 Smoke testing Perl
 
 If building completes successfully, you can set up smoke testing as
 described in the Test::Smoke documentation.
@@ -267,11 +340,11 @@ the programs are run.
 
 =head1 REVISION
 
-June 2017, for Synology DSM 5.1.5022 and DSM 6.1-15101-4.
+July 2022, for DSM 5.1.5022 and DSM 6.1-15101-4, and DSM-7.1-42661-3.
 
 =head1 AUTHOR
 
 Johan Vromans <jvromans@squirrel.nl>
-H. Merijn Brand <h.m.brand@xs4all.nl>
+H. Merijn Brand <cpan@tux.freedom.nl>
 
 =cut

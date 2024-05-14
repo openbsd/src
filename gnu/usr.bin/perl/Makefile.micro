@@ -1,6 +1,6 @@
 LD = $(CC)
 CCFLAGS = -c
-DEFINES = -DPERL_CORE -DPERL_MICRO -DPERL_USE_SAFE_PUTENV -DNO_MATHOMS
+DEFINES = -DPERL_CORE -DPERL_MICRO -DNO_MATHOMS
 OPTIMIZE = 
 CFLAGS = $(DEFINES) $(OPTIMIZE)
 LDFLAGS = 
@@ -18,7 +18,8 @@ O = uav$(_O) udeb$(_O) udoio$(_O) udoop$(_O) udquote$(_O) udump$(_O) \
 	umg$(_O) uperlmain$(_O) uop$(_O) ureentr$(_O) \
 	upad$(_O) uperl$(_O) uperlio$(_O) uperly$(_O) upp$(_O) \
 	upp_ctl$(_O) upp_hot$(_O) upp_sys$(_O) upp_pack$(_O) upp_sort$(_O) \
-	uregcomp$(_O) uregexec$(_O) urun$(_O) \
+	uregcomp$(_O) uregcomp_debug$(_O) uregcomp_invlist$(_O) \
+	uregcomp_study$(_O) uregcomp_trie$(_O) uregexec$(_O) urun$(_O) \
 	uscope$(_O) usv$(_O) utaint$(_O) utime64$(_O) utoke$(_O) \
 	unumeric$(_O) ulocale$(_O) umathoms$(_O) \
 	uuniversal$(_O) uutf8$(_O) uutil$(_O) ukeywords$(_O)
@@ -138,7 +139,19 @@ upp_pack$(_O):	$(HE) pp_pack.c
 upp_sort$(_O):	$(HE) pp_sort.c
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) pp_sort.c
 
-uregcomp$(_O):	$(HE) regcomp.c regcomp.h regnodes.h INTERN.h
+uregcomp$(_O):	$(HE) regcomp.c regcomp_internal.h regcomp.h regnodes.h INTERN.h
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) regcomp.c
+
+uregcomp_debug$(_O):	$(HE) regcomp_debug.c regcomp_internal.h regcomp.h regnodes.h INTERN.h
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) regcomp.c
+
+uregcomp_invlist$(_O):	$(HE) regcomp_invlist.c regcomp_internal.h regcomp.h regnodes.h INTERN.h
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) regcomp.c
+
+uregcomp_study$(_O):	$(HE) regcomp_study.c regcomp_internal.h regcomp.h regnodes.h INTERN.h
+	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) regcomp.c
+
+uregcomp_trie$(_O):	$(HE) regcomp_trie.c regcomp_internal.h regcomp.h regnodes.h INTERN.h
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) regcomp.c
 
 uregexec$(_O):	$(HE) regexec.c regcomp.h regnodes.h

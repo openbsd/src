@@ -36,6 +36,7 @@ use feature 'signatures';
 no warnings qw( experimental::builtin );
 
 sub DEBUG () { 0 }  # Set to 0 for production; 1 for development
+$| = 1 if DEBUG;
 my $debugging_build = $Config{"ccflags"} =~ /-DDEBUGGING/;
 
 sub NON_ASCII_PLATFORM { ord("A") != 65 }
@@ -49,7 +50,7 @@ sub NON_ASCII_PLATFORM { ord("A") != 65 }
 # expected, a warning will be generated.  If an older version is being
 # compiled, any bounds tests that fail in the generated test file (-maketest
 # option) will be marked as TODO.
-my $version_of_mk_invlist_bounds = v14.0.0;
+my $version_of_mk_invlist_bounds = v15.0.0;
 
 ##########################################################################
 #
@@ -1183,7 +1184,12 @@ my $code_point_re = qr/\b$run_on_code_point_re/;
 # defaults for code points not listed (i.e., missing) in the file.  The code
 # depends on this ending with a semi-colon, so it can assume it is a valid
 # field when the line is split() by semi-colons
-my $missing_defaults_prefix = qr/^#\s+\@missing:\s+0000\.\.10FFFF\s*;/;
+my $missing_defaults_prefix = qr/ ^ \# \s+ \@missing: \s+
+                                           ($code_point_re)
+                                           \.\.
+                                           ($code_point_re)
+                                       \s* ;
+                                /x;
 
 # Property types.  Unicode has more types, but these are sufficient for our
 # purposes.
@@ -1854,8 +1860,7 @@ package main;
             no strict "refs";
 
             # Use typeglob to give the anonymous subroutine the name we want
-            *$destroy_name = sub {
-                my $self = shift;
+            *$destroy_name = sub ($self) {
                 my $addr = pack 'J', refaddr $self;
 
                 $self->$destroy_callback if $destroy_callback;
@@ -1870,9 +1875,8 @@ package main;
         unless ($package->can('dump')) {
             my $dump_name = "${package}::dump";
             no strict "refs";
-            *$dump_name = sub {
-                my $self = shift;
-                return dump_inside_out($self, $package_fields{$package}, @_);
+            *$dump_name = sub ($self, @_args) {
+                return dump_inside_out($self, $package_fields{$package}, @_args);
             }
         }
         return;
@@ -2798,19 +2802,30 @@ END
                             utf8::encode($BOM);
                             my $BOM_re = qr/ ^ (?:$BOM)? /x;
 
-                            while ($_ =~ s/$BOM_re//) { # BOM; seems to be on
-                                                        # many lines in some files!!
-                                $_ = <$file_handle>;
+                            do {
                                 chomp;
-                                if ($_ =~ /^# Version: (.*)/) {
-                                    $this_version = $1;
-                                    goto valid_version
-                                        if $this_version eq $string_version;
-                                    goto valid_version
-                                        if "$this_version.0" eq $string_version;
-                                    goto wrong_version;
+
+                                # BOM; seems to be on many lines in some
+                                # files!!
+                                $_ =~ s/$BOM_re//;
+
+                                if (/./) {
+
+                                    # Only look for the version if in the
+                                    # first comment block.
+                                    goto no_version unless $_ =~ /^#/;
+
+                                    if ($_ =~ /Version:? (\S*)/) {
+                                        $this_version = $1;
+                                        goto valid_version
+                                          if  $this_version eq $string_version;
+                                        goto valid_version
+                                            if  "$this_version.0"
+                                                            eq $string_version;
+                                    }
                                 }
-                            }
+                            } while (<$file_handle>);
+
                             goto no_version;
                         }
                     }
@@ -2936,6 +2951,9 @@ END
                     $self->carp_bad_line("Unexpected \@missing line.  Assuming no missing entries");
                 }
                 elsif ($has_missings_defaults{$addr} == $NOT_IGNORED) {
+                    my $start = $1;     # The pattern saves the beginning and
+                    my $end = $2;       # end points of the range the default
+                                        # is for
                     my @defaults = split /\s* ; \s*/x, $_;
 
                     # The first field is the @missing, which ends in a
@@ -3003,8 +3021,13 @@ END
                             $default = "Unknown";
                         }
 
-                        # Store them as a sub-arrays with both components.
-                        push @{$missings{$addr}}, [ $default, $property ];
+                        # Store them as a sub-hash as part of an array, with
+                        # both components.
+                        push @{$missings{$addr}}, { start    => hex $start,
+                                                    end      => hex $end,
+                                                    default  => $default,
+                                                    property => $property
+                                                  };
                     }
                 }
 
@@ -3218,9 +3241,9 @@ END
 
     sub get_missings($self) {
         # Returns the stored up @missings lines' values, and clears the list.
-        # The values are in an array, consisting of the default in the first
-        # element, and the property in the 2nd.  However, since these lines
-        # can be stacked up, the return is an array of all these arrays.
+        # The values are in a hash, consisting of 'default' and 'property'.
+        # However, since these lines can be stacked up, the return is an array
+        # of all these hashes.
 
         my $addr = pack 'J', refaddr $self;
 
@@ -3346,13 +3369,19 @@ END
 
 package Multi_Default;
 
+sub trace { return main::trace(@_); }
+
 # Certain properties in early versions of Unicode had more than one possible
 # default for code points missing from the files.  In these cases, one
 # default applies to everything left over after all the others are applied,
 # and for each of the others, there is a description of which class of code
 # points applies to it.  This object helps implement this by storing the
 # defaults, and for all but that final default, an eval string that generates
-# the class that it applies to.
+# the class that it applies to.  That class must be a Range_List, or contains
+# a Range_List that the overloaded operators recognize as to be operated on.
+# A string is used because this is called early when we know symbolically what
+# needs to be done, but typically before any data is gathered.  Thus the
+# evaluation gets delayed until we have at hand all the needed information.
 
 {   # Closure
 
@@ -3360,12 +3389,13 @@ package Multi_Default;
 
     my %class_defaults;
     # The defaults structure for the classes
-    main::set_access('class_defaults', \%class_defaults);
+    main::set_access('class_defaults', \%class_defaults, 'readable_array');
 
     my %other_default;
     # The default that applies to everything left over.
     main::set_access('other_default', \%other_default, 'r');
 
+    my %iterator;
 
     sub new {
         # The constructor is called with default => eval pairs, terminated by
@@ -3385,22 +3415,41 @@ package Multi_Default;
 
         my $self = bless \do{my $anonymous_scalar}, $class;
         my $addr = pack 'J', refaddr $self;
+        $iterator{$addr} = 0;
+
+        return $self unless @_;
 
         while (@_ > 1) {
-            my $default = shift;
-            my $eval = shift;
-            $class_defaults{$addr}->{$default} = $eval;
+            $self->append_default(shift, shift);
         }
 
-        $other_default{$addr} = shift;
+        $self->set_final_default(shift);
 
         return $self;
+    }
+
+    sub append_default($self, $new_default, $eval) {
+        my $addr = pack 'J', refaddr $self;
+
+        # Pushes a default setting to the current list
+        push $class_defaults{$addr}->@*, [ $new_default, $eval ];
+    }
+
+    sub set_final_default($self, $new_default) {
+        my $addr = pack 'J', refaddr $self;
+        $other_default{$addr} = $new_default;
     }
 
     sub get_next_defaults($self) {
         # Iterates and returns the next class of defaults.
 
-        return each %{$class_defaults{pack 'J', refaddr $self}};
+        my $addr = pack 'J', refaddr $self;
+        if ($iterator{$addr}++ < $class_defaults{$addr}->@*) {
+            return $class_defaults{$addr}->[$iterator{$addr}-1]->@*;
+        }
+
+        $iterator{$addr} = 0;
+        return undef;
     }
 }
 
@@ -3642,7 +3691,10 @@ sub trace { return main::trace(@_); }
         my $class = shift;
         my %args = @_;
 
-        # Optional initialization data for the range list.
+        # Optional initialization data for the range list.  NOTE: For large
+        # ranges, it is better to use Range object rather than
+        #   [ low .. high ]
+        # as it iterates through each one individually in the latter case.
         my $initialize = delete $args{'Initialize'};
 
         my $self;
@@ -8633,7 +8685,7 @@ package Property;
 # starts with unknown type, overridden by a parameter to the constructor, or
 # as match tables are added, or ranges added to the map table, the data is
 # inspected, and the type changed.  After the table is mostly or entirely
-# filled, compute_type() should be called to finalize they analysis.
+# filled, compute_type() should be called to finalize the analysis.
 #
 # There are very few operations defined.  One can safely remove a range from
 # the map table, and property_add_or_replace_non_nulls() adds the maps from another
@@ -9828,7 +9880,7 @@ sub UCD_name ($table, $alias) {
     }
 }
 
-sub dump_inside_out( $object, $fields_ref ) {
+sub dump_inside_out( $object, $fields_ref, @args ) {
     # Dump inside-out hashes in an object's state by converting them to a
     # regular hash and then calling simple_dumper on that.
 
@@ -9839,7 +9891,7 @@ sub dump_inside_out( $object, $fields_ref ) {
         $hash{$key} = $fields_ref->{$key}{$addr};
     }
 
-    return simple_dumper(\%hash, $object, $fields_ref);
+    return simple_dumper(\%hash, @args);
 }
 
 sub _operator_dot($self, $other="", $reversed=0) {
@@ -9989,8 +10041,25 @@ sub finish_property_setup($file) {
         }
     }
 
-    # The following use the Multi_Default class to create objects for
-    # defaults.
+    # For backwards compatibility with applications that may read the mapping
+    # file directly (it was documented in 5.12 and 5.14 as being thusly
+    # usable), keep it from being adjusted.  (range_size_1 is
+    # used to force the traditional format.)
+    if (defined (my $nfkc_cf = property_ref('NFKC_Casefold'))) {
+        $nfkc_cf->set_to_output_map($EXTERNAL_MAP);
+        $nfkc_cf->set_range_size_1(1);
+    }
+    if (defined (my $bmg = property_ref('Bidi_Mirroring_Glyph'))) {
+        $bmg->set_to_output_map($EXTERNAL_MAP);
+        $bmg->set_range_size_1(1);
+    }
+
+    property_ref('Numeric_Value')->set_to_output_map($OUTPUT_ADJUSTED);
+
+    # The rest of this sub is for properties that need the Multi_Default class
+    # to create objects for defaults.  As of v15.0, this is no longer needed.
+
+    return if $v_version ge v15.0.0;
 
     # Bidi class has a complicated default, but the derived file takes care of
     # the complications, leaving just 'L'.
@@ -10075,21 +10144,6 @@ sub finish_property_setup($file) {
             $lb->set_default_map($default);
         }
     }
-
-    # For backwards compatibility with applications that may read the mapping
-    # file directly (it was documented in 5.12 and 5.14 as being thusly
-    # usable), keep it from being adjusted.  (range_size_1 is
-    # used to force the traditional format.)
-    if (defined (my $nfkc_cf = property_ref('NFKC_Casefold'))) {
-        $nfkc_cf->set_to_output_map($EXTERNAL_MAP);
-        $nfkc_cf->set_range_size_1(1);
-    }
-    if (defined (my $bmg = property_ref('Bidi_Mirroring_Glyph'))) {
-        $bmg->set_to_output_map($EXTERNAL_MAP);
-        $bmg->set_range_size_1(1);
-    }
-
-    property_ref('Numeric_Value')->set_to_output_map($OUTPUT_ADJUSTED);
 
     return;
 }
@@ -10390,10 +10444,11 @@ END
     # entries in the file, and may not show up until the end.
     my @defaults = $file->get_missings;
     foreach my $default_ref (@defaults) {
-        my $default = $default_ref->[0];
-        my $property = property_ref($default_ref->[1]);
+        my $default = $default_ref->{default};
+        my $property = property_ref($default_ref->{property});
         $property->set_default_map($default);
     }
+
     return;
 }
 
@@ -10865,22 +10920,21 @@ sub output_perl_charnames_line ($code_point, $name) {
 
                 # If not the first time for this property, retrieve info about
                 # it from the cache
-                if (defined ($property_info{$property_addr}{$TYPE})) {
-                    $property_type = $property_info{$property_addr}{$TYPE};
-                    $default_map = $property_info{$property_addr}{$DEFAULT_MAP};
-                    $map_type
-                        = $property_info{$property_addr}{$PSEUDO_MAP_TYPE};
-                    $default_table
-                            = $property_info{$property_addr}{$DEFAULT_TABLE};
+                my $this_property_info = $property_info{$property_addr};
+                if (defined ($this_property_info->{$TYPE})) {
+                    $property_type = $this_property_info->{$TYPE};
+                    $default_map = $this_property_info->{$DEFAULT_MAP};
+                    $map_type = $this_property_info->{$PSEUDO_MAP_TYPE};
+                    $default_table = $this_property_info->{$DEFAULT_TABLE};
                 }
                 else {
 
                     # Here, is the first time for this property.  Set up the
                     # cache.
-                    $property_type = $property_info{$property_addr}{$TYPE}
+                    $property_type = $this_property_info->{$TYPE}
                                    = $property_object->type;
                     $map_type
-                        = $property_info{$property_addr}{$PSEUDO_MAP_TYPE}
+                        = $this_property_info->{$PSEUDO_MAP_TYPE}
                         = $property_object->pseudo_map_type;
 
                     # The Unicode files are set up so that if the map is not
@@ -10893,9 +10947,8 @@ sub output_perl_charnames_line ($code_point, $name) {
                         }
                         else {
                             $property_object->set_type($BINARY);
-                            $property_type
-                                = $property_info{$property_addr}{$TYPE}
-                                = $BINARY;
+                            $property_type = $this_property_info->{$TYPE}
+                                           = $BINARY;
                         }
                     }
 
@@ -10905,11 +10958,19 @@ sub output_perl_charnames_line ($code_point, $name) {
                     # stored by the Input_file class until we access it here.
                     # It's possible that there is more than one such line
                     # waiting for us; collect them all, and parse
-                    my @missings_list = $file->get_missings
+                    my @missings_list;
+                    @missings_list = $file->get_missings
                                             if $file->has_missings_defaults;
+
                     foreach my $default_ref (@missings_list) {
-                        my $default = $default_ref->[0];
-                        my $addr = pack 'J', refaddr property_ref($default_ref->[1]);
+
+                        # For now, we are only interested in the fallback
+                        # default for the entire property. i.e., an @missing
+                        # line that is for the whole Unicode range.
+                        next if $default_ref->{start} != 0
+                             || $default_ref->{end} != $MAX_UNICODE_CODEPOINT;
+
+                        $default_map = $default_ref->{default};
 
                         # For string properties, the default is just what the
                         # file says, but non-string properties should already
@@ -10919,105 +10980,172 @@ sub output_perl_charnames_line ($code_point, $name) {
                         if ($property_type == $STRING
                             || $property_type == $UNKNOWN)
                         {
-                            $property_info{$addr}{$MISSINGS} = $default;
+                            $this_property_info->{$MISSINGS} = $default_map;
                         }
                         else {
-                            $property_info{$addr}{$MISSINGS}
-                                        = $property_object->table($default);
+                            $default_map =
+                               $property_object->table($default_map)->full_name;
+                            $this_property_info->{$MISSINGS} = $default_map;
+                            $this_property_info->{$DEFAULT_MAP} = $default_map;
+                            if (! defined $property_object->default_map) {
+                                $property_object->set_default_map($default_map);
+                            }
                         }
                     }
 
-                    # Finished storing all the @missings defaults in the input
-                    # file so far.  Get the one for the current property.
-                    my $missings = $property_info{$property_addr}{$MISSINGS};
+                    # For later Unicode versions, multiple @missing lines for
+                    # a single property can appear in the files.  The first
+                    # always applies to the entire Unicode range, and was
+                    # handled above.  The subsequent ones are for smaller
+                    # ranges, and can be read as "But for this range, the
+                    # default is ...".  So each overrides all the preceding
+                    # ones for the range it applies to.  Typically they apply
+                    # to disjoint ranges, but don't have to.  What we do is to
+                    # set them up to work in reverse order, so that after the
+                    # rest of the table is filled, the highest priority
+                    # default range fills in any code points that haven't been
+                    # specified; then the next highest priority one is
+                    # applied, and so forth.
+                    if (@missings_list > 1 && $v_version ge v15.0.0) {
+                        if ($property_type != $ENUM) {
+                            Carp::my_carp_bug("Multiple \@missings lines only"
+                                            . " make sense for ENUM-type"
+                                            . " properties.  Changing type to"
+                                            . " that");
+                            $property_type = $this_property_info->{$TYPE}
+                                                                        = $ENUM;
+                            $property_object->set_type($ENUM);
+                        }
 
-                    # But we likely have separately stored what the default
-                    # should be.  (This is to accommodate versions of the
-                    # standard where the @missings lines are absent or
-                    # incomplete.)  Hopefully the two will match.  But check
-                    # it out.
-                    $default_map = $property_object->default_map;
+                        my $multi = Multi_Default->new();
 
-                    # If the map is a ref, it means that the default won't be
-                    # processed until later, so undef it, so next few lines
-                    # will redefine it to something that nothing will match
-                    undef $default_map if ref $default_map;
+                        # The overall default should be first on this list,
+                        # and is handled differently than the rest.
+                        $default_map = shift @missings_list;
+                        Carp::my_carp_bug("\@missings needs to be entire range")
+                            if $default_map->{start} != 0
+                            || $default_map->{end} != $MAX_UNICODE_CODEPOINT;
 
-                    # Create a $default_map if don't have one; maybe a dummy
-                    # that won't match anything.
-                    if (! defined $default_map) {
+                        # We already have looked at this line above.  Use that
+                        # result
+                        $multi->set_final_default($this_property_info->
+                                                                  {$MISSINGS});
 
-                        # Use any @missings line in the file.
-                        if (defined $missings) {
-                            if (ref $missings) {
-                                $default_map = $missings->full_name;
-                                $default_table = $missings;
+                        # Now get the individual range elements, and add them
+                        # to Multi_Default object
+                        while (@missings_list) {
+                            my $this_entry = pop @missings_list;
+                            my $subrange_default = $this_entry->{default};
+
+                            # Use the short name as a standard
+                            $subrange_default = $property_object->
+                                        table($subrange_default)->short_name;
+                            $multi->append_default($subrange_default,
+                                "Range_List->new(Initialize => Range->new("
+                              . "$this_entry->{start}, $this_entry->{end}))");
+                        }
+
+                        # Override the property's simple default with this.
+                        $property_object->set_default_map($multi);
+                    }
+
+                    if (! $default_map || $property_type != $ENUM) {
+
+                        # Finished storing all the @missings defaults in the
+                        # input file so far.  Get the one for the current
+                        # property.
+                        my $missings = $this_property_info->{$MISSINGS};
+
+                        # But we likely have separately stored what the
+                        # default should be.  (This is to accommodate versions
+                        # of the standard where the @missings lines are absent
+                        # or incomplete.)  Hopefully the two will match.  But
+                        # check it out.
+                        $default_map = $property_object->default_map;
+
+                        # If the map is a ref, it means that the default won't
+                        # be processed until later, so undef it, so next few
+                        # lines will redefine it to something that nothing
+                        # will match
+                        undef $default_map if ref $default_map;
+
+                        # Create a $default_map if don't have one; maybe a
+                        # dummy that won't match anything.
+                        if (! defined $default_map) {
+
+                            # Use any @missings line in the file.
+                            if (defined $missings) {
+                                if (ref $missings) {
+                                    $default_map = $missings->full_name;
+                                    $default_table = $missings;
+                                }
+                                else {
+                                    $default_map = $missings;
+                                }
+
+                                # And store it with the property for outside
+                                # use.
+                                $property_object->set_default_map($default_map);
                             }
                             else {
-                                $default_map = $missings;
+
+                                # Neither an @missings nor a default map.
+                                # Create a dummy one, so won't have to test
+                                # definedness in the main loop.
+                                $default_map = '_Perl This will never be in a'
+                                             . ' file from Unicode';
                             }
-
-                            # And store it with the property for outside use.
-                            $property_object->set_default_map($default_map);
                         }
-                        else {
 
-                            # Neither an @missings nor a default map.  Create
-                            # a dummy one, so won't have to test definedness
-                            # in the main loop.
-                            $default_map = '_Perl This will never be in a file
-                                            from Unicode';
-                        }
-                    }
+                        # Here, we have $default_map defined, possibly in
+                        # terms of $missings, but maybe not, and possibly is a
+                        # dummy one.
+                        if (defined $missings) {
 
-                    # Here, we have $default_map defined, possibly in terms of
-                    # $missings, but maybe not, and possibly is a dummy one.
-                    if (defined $missings) {
-
-                        # Make sure there is no conflict between the two.
-                        # $missings has priority.
-                        if (ref $missings) {
-                            $default_table
+                            # Make sure there is no conflict between the two.
+                            # $missings has priority.
+                            if (ref $missings) {
+                                $default_table
                                         = $property_object->table($default_map);
-                            if (! defined $default_table
-                                || $default_table != $missings)
-                            {
-                                if (! defined $default_table) {
-                                    $default_table = $UNDEF;
-                                }
-                                $file->carp_bad_line(<<END
+                                if ( ! defined $default_table
+                                    || $default_table != $missings)
+                                {
+                                    if (! defined $default_table) {
+                                        $default_table = $UNDEF;
+                                    }
+                                    $file->carp_bad_line(<<END
 The \@missings line for $property_name in $file says that missings default to
 $missings, but we expect it to be $default_table.  $missings used.
 END
-                                );
-                                $default_table = $missings;
-                                $default_map = $missings->full_name;
+                                    );
+                                    $default_table = $missings;
+                                    $default_map = $missings->full_name;
+                                }
+                                $this_property_info->{$DEFAULT_TABLE}
+                                                            = $default_table;
                             }
-                            $property_info{$property_addr}{$DEFAULT_TABLE}
-                                                        = $default_table;
-                        }
-                        elsif ($default_map ne $missings) {
-                            $file->carp_bad_line(<<END
+                            elsif ($default_map ne $missings) {
+                                $file->carp_bad_line(<<END
 The \@missings line for $property_name in $file says that missings default to
 $missings, but we expect it to be $default_map.  $missings used.
 END
-                            );
-                            $default_map = $missings;
+                                );
+                                $default_map = $missings;
+                            }
                         }
-                    }
 
-                    $property_info{$property_addr}{$DEFAULT_MAP}
-                                                    = $default_map;
+                        $this_property_info->{$DEFAULT_MAP} = $default_map;
 
-                    # If haven't done so already, find the table corresponding
-                    # to this map for non-string properties.
-                    if (! defined $default_table
-                        && $property_type != $STRING
-                        && $property_type != $UNKNOWN)
-                    {
-                        $default_table = $property_info{$property_addr}
-                                                        {$DEFAULT_TABLE}
-                                    = $property_object->table($default_map);
+                        # If haven't done so already, find the table
+                        # corresponding to this map for non-string properties.
+                        if (! defined $default_table
+                            && $property_type != $STRING
+                            && $property_type != $UNKNOWN)
+                        {
+                            $default_table
+                                        = $this_property_info->{$DEFAULT_TABLE}
+                                        = $property_object->table($default_map);
+                        }
                     }
                 } # End of is first time for this property
             } # End of switching properties.
@@ -11047,7 +11175,8 @@ END
                 }
             }
 
-            if ($default_map eq $CODE_POINT && $map =~ / ^ $code_point_re $/x)
+            if (   $default_map eq $CODE_POINT
+                && $map =~ / ^ $code_point_re $/x)
             {
 
                 # Here, we have a map to a particular code point, and the
@@ -11082,14 +11211,45 @@ END
                 }
             }
 
-            # If we can tell that this is a synonym for the default map, use
-            # the default one instead.
-            if ($property_type != $STRING
-                && $property_type != $UNKNOWN)
-            {
+            if ($property_type != $STRING && $property_type != $UNKNOWN) {
                 my $table = $property_object->table($map);
-                if (defined $table && $table == $default_table) {
-                    $map = $default_map;
+                if (defined $table) {
+
+                    # Unicode isn't very consistent about which synonym they
+                    # use in their .txt files, even within the same file, or
+                    # two files that are for the same property.  For enum
+                    # properties, we know already what all the synonyms are
+                    # (because we processed PropValueAliases already).
+                    # Therefore we can take the input and map it to a uniform
+                    # value now, saving us trouble later.
+                    #
+                    # Only if the map is well-behaved do we try this:
+                    # non-empty, all non-blank.
+                    if ($property_type == $ENUM && $map =~ / ^ \S+ $ /x) {
+
+                        # Use existing practice as much as easily practicable,
+                        # so that code that has assumptions about spelling
+                        # doesn't have to change
+                        my $short_name = $property_object->short_name;
+                        if ($short_name =~ / ^ (BC | EA | GC  |HST | JT |
+                                                Lb | BT | BPT | NFCQC |
+                                                NFKCQC) $ /ix)
+                        {
+                            $map = $table->short_name;
+                        }
+                        elsif ($short_name !~ / ^ ( Ccc | Age | InSC | JG |
+                                                    SB) $ /ix)
+                        {
+                            $map = $table->full_name;
+                        }
+                    }
+                    elsif ($table == $default_table) {
+
+                        # When it isn't an ENUM, we we can still tell if
+                        # this is a synonym for the default map.  If so, use
+                        # the default one instead.
+                        $map = $default_map;
+                    }
                 }
             }
 
@@ -13324,6 +13484,7 @@ END
             #
             # Go through each list.
             while (my ($default, $eval) = $default_map->get_next_defaults) {
+                last unless defined $eval;
 
                 # Get the class list, and intersect it with all the so-far
                 # unspecified code points yielding all the code points
@@ -13341,7 +13502,7 @@ END
                 # Add mappings to the property for each code point in the list
                 foreach my $range ($list->ranges) {
                     $property->add_map($range->start, $range->end, $default,
-                    Replace => $CROAK);
+                    Replace => $NO);
                 }
             }
 
@@ -17196,10 +17357,6 @@ sub make_Name_pm () {
 $HEADER
 $INTERNAL_ONLY_HEADER
 
-=head1 NAME -- Internal generated file for use by charnames
-
-=cut
-
 END
 
     # Convert these structures to output format.
@@ -19062,6 +19219,7 @@ my $Indic_Skip
             = "Provisional; for the analysis and processing of Indic scripts";
 my $Validation = "Validation Tests";
 my $Validation_Documentation = "Documentation of validation Tests";
+my $Unused_Skip = "Currently unused by Perl";
 
 # This is a list of the input files and how to handle them.  The files are
 # processed in their order in this list.  Some reordering is possible if
@@ -19623,6 +19781,18 @@ my @input_file_objects = (
                     Pre_Handler => \&setup_IdType,
                     Each_Line_Handler => \&filter_IdType_line,
                     Property => 'Identifier_Type',
+                    UCD => 0,
+                   ),
+    Input_file->new('confusables.txt', v15.0.0,
+                    Skip => $Unused_Skip,
+                    UCD => 0,
+                   ),
+    Input_file->new('confusablesSummary.txt', v15.0.0,
+                    Skip => $Unused_Skip,
+                    UCD => 0,
+                   ),
+    Input_file->new('intentional.txt', v15.0.0,
+                    Skip => $Unused_Skip,
                     UCD => 0,
                    ),
 );

@@ -2,7 +2,7 @@ package ExtUtils::Typemaps;
 use 5.006001;
 use strict;
 use warnings;
-our $VERSION = '3.45';
+our $VERSION = '3.51';
 
 require ExtUtils::ParseXS;
 require ExtUtils::ParseXS::Constants;
@@ -378,7 +378,7 @@ sub remove_inputmap {
   return $self->_remove($xstype, $self->{input_section}, $self->{input_lookup});
 }
 
-=head2 remove_inputmap
+=head2 remove_outputmap
 
 Removes an C<OUTPUT> entry from the typemap.
 

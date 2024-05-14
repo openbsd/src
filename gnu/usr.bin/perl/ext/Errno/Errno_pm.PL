@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 use Config;
 use strict;
 
-our $VERSION = "1.36";
+our $VERSION = "1.37";
 
 my %err = ();
 
@@ -18,18 +18,11 @@ if ($Config{gccversion} ne '' && $^O eq 'MSWin32') {
     # MinGW complains "warning: #pragma system_header ignored outside include
     # file" if the header files are processed individually, so include them
     # all in .c file and process that instead.
-    my %seen;
     open INCS, '>', 'includes.c' or
 	die "Cannot open includes.c";
     foreach $file (@files) {
 	next if $file eq 'errno.c';
 	next unless -f $file;
-	if ( $file eq 'avx512vpopcntdqvlintrin.h' || $file eq 'avx512bwintrin.h' ) {
-		# "Never use <avx512bwintrin.h> directly; include <immintrin.h> instead."
-		# "Never use <avx512vpopcntdqvlintrin.h> directly; include <immintrin.h> instead."
-		$file = 'immintrin.h';
-	}
-	next if ++$seen{$file} > 1;
 	print INCS qq[#include "$file"\n];
     }
     close INCS;
@@ -114,7 +107,7 @@ sub default_cpp {
 }
 
 sub get_files {
-    my %file = ();
+    my @file;
     # When cross-compiling we may store a path for gcc's "sysroot" option:
     my $sysroot = $Config{sysroot} || '';
     my $linux_errno_h;
@@ -128,19 +121,19 @@ sub get_files {
 
     # VMS keeps its include files in system libraries
     if ($^O eq 'VMS') {
-	$file{'Sys$Library:DECC$RTLDEF.TLB'} = 1;
+	push(@file, 'Sys$Library:DECC$RTLDEF.TLB');
     } elsif ($^O eq 'os390') {
 	# OS/390 C compiler doesn't generate #file or #line directives
         # and it does not tag the header as 1047 (EBCDIC), so make a local
         # copy and tag it
         my $cp = `cp /usr/include/errno.h ./errno.h`;
         my $chtag = `chtag -t -cIBM-1047 ./errno.h`;
-	$file{'./errno.h'} = 1;
+	push(@file, './errno.h');
     } elsif ($Config{archname} eq 'arm-riscos') {
 	# Watch out for cross compiling for RISC OS
 	my $dep = `echo "#include <errno.h>" | gcc -E -M -`;
 	if ($dep =~ /(\S+errno\.h)/) {
-	     $file{$1} = 1;
+	     push(@file, $1);
 	}
     } elsif ($^O eq 'linux' &&
 	      $Config{gccversion} ne '' && 
@@ -148,14 +141,14 @@ sub get_files {
 	      # might be using, say, Intel's icc
 	      $linux_errno_h
 	     ) {
-	$file{$linux_errno_h} = 1;
+	push(@file, $linux_errno_h);
     } elsif ($^O eq 'haiku') {
 	# hidden in a special place
-	$file{'/boot/system/develop/headers/posix/errno.h'} = 1;
+	push(@file, '/boot/system/develop/headers/posix/errno.h');
 
     } elsif ($^O eq 'vos') {
 	# avoid problem where cpp returns non-POSIX pathnames
-	$file{'/system/include_library/errno.h'} = 1;
+	push(@file, '/system/include_library/errno.h');
     } else {
 	open(CPPI, '>', 'errno.c') or
 	    die "Cannot open errno.c";
@@ -183,16 +176,28 @@ sub get_files {
 		if (/$pat/o) {
 		   my $f = $1;
 		   $f =~ s,\\\\,/,g;
-		   $file{$f} = 1;
+		   push(@file, $f);
 		}
 	    }
 	    else {
-		$file{$1} = 1 if /$pat/o;
+		push(@file, $1) if /$pat/o;
 	    }
 	}
 	close(CPPO);
     }
-    return keys %file;
+    return uniq(@file);
+}
+
+# 
+#
+sub uniq
+{
+	# At this point List::Util::uniq appears not to be usable so
+	# roll our own.
+	#
+	# Returns a list with unique values, while keeping the order
+	#
+	return do { my %seen; grep { !$seen{$_}++ } @_ };
 }
 
 sub write_errno_pm {
@@ -364,7 +369,7 @@ ESQ
 
     if ($IsMSWin32) {
 	print "    WINSOCK => [qw(\n";
-	$k = join(" ", grep { /^WSAE/ } keys %err);
+	$k = join(" ", grep { /^WSAE/ } sort keys %err);
 	$k =~ s/(.{50,70})\s/$1\n\t/g;
 	print "\t",$k,"\n    )],\n";
     }

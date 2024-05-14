@@ -57,10 +57,10 @@ a I<level> of 0. The core always sets I<level> to 0 when it calls your
 function - the parameter is provided to allow your implementation to track
 depth if it needs to recurse.
 
-The function should return a reference to an array containing the parent
-classes in order. The names of the classes should be the result of calling
-C<HvENAME()> on the stash. In those cases where C<HvENAME()> returns null,
-C<HvNAME()> should be used instead.
+The function should return a reference to an array containing string SVs
+giving the names of parent classes in order. The names of the classes should
+be the result of calling C<HvENAME()> on the stash. In those cases where
+C<HvENAME()> returns null, C<HvNAME()> should be used instead.
 
 The caller is responsible for incrementing the reference count of the array
 returned if it wants to keep the structure. Hence, if you have created a

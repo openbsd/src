@@ -3,6 +3,7 @@ use strict;
 our (@Changed, $TAP);
 use File::Compare;
 use Symbol;
+use Carp;
 use Text::Wrap();
 
 # Common functions needed by the regen scripts
@@ -36,8 +37,11 @@ sub safer_unlink {
 sub open_new {
     my ($final_name, $mode, $header, $force) = @_;
     my $name = $final_name . '-new';
-    my $lang = $final_name =~ /\.pod$/ ? 'Pod' :
-        $final_name =~ /\.(?:c|h|inc|tab|act)$/ ? 'C' : 'Perl';
+    my $lang =
+        $final_name =~ /\.pod\z/ ? 'Pod' :
+        $final_name =~ /\.(?:c|h|inc|tab|act)\z/ ? 'C' :
+        $final_name =~ /\.gitignore\z/ ? 'None' :
+        'Perl';
     if ($force && -e $final_name) {
         chmod 0777, $name if $Needs_Write;
         CORE::unlink $final_name
@@ -94,13 +98,21 @@ sub close_and_rename {
                 $fail = "'$name' and '$final_name' differ";
             }
         }
+        # If someone wants to run t/porting/regen.t and keep the
+        # changes then they can set this env var, otherwise we
+        # unlink the generated file regardless.
+        my $keep_changes= $ENV{"REGEN_T_KEEP_CHANGES"};
+        safer_unlink($name) unless $keep_changes;
         if ($fail) {
             print STDOUT "not ok - $0 $final_name\n";
             die "$fail\n";
         } else {
             print STDOUT "ok - $0 $final_name\n";
         }
-        safer_unlink($name);
+        # If we get here then the file hasn't changed, and we should
+        # delete the new version if they have requested we keep changes
+        # as we wont have deleted it above like we would normally.
+        safer_unlink($name) if $keep_changes;
         return;
     }
     unless ($force) {
@@ -119,7 +131,12 @@ sub close_and_rename {
     rename $name, $final_name or die "renaming $name to $final_name: $!";
 }
 
-my %lang_opener = (Perl => '# ', Pod => '', C => '/* ');
+my %lang_opener = (
+    Perl => '# ',
+    Pod  => '',
+    C    => '/* ',
+    None => '# ',
+);
 
 sub read_only_top {
     my %args = @_;
@@ -129,7 +146,8 @@ sub read_only_top {
         unless exists $lang_opener{$lang};
     my $style = $args{style} ? " $args{style} " : '   ';
 
-    my $raw = "-*- buffer-read-only: t -*-\n";
+    # Generate the "modeline" for syntax highlighting based on the language
+    my $raw = "-*- " . ($lang eq 'None' ? "" : "mode: $lang; ") . "buffer-read-only: t -*-\n";
 
     if ($args{file}) {
         $raw .= "\n   $args{file}\n";
@@ -175,6 +193,7 @@ EOM
 sub read_only_bottom_close_and_rename {
     my ($fh, $sources) = @_;
     my ($name, $lang, $final_name) = @{*{$fh}}{qw(name lang final_name)};
+    confess "bad fh in read_only_bottom_close_and_rename" unless $name;
     die "No final name specified at open time for $name"
         unless $final_name;
 
@@ -192,14 +211,16 @@ sub read_only_bottom_close_and_rename {
             $comment .= "$digest $file\n";
         }
     }
-    $comment .= "ex: set ro:";
+    $comment .= "ex: set ro" . ($lang eq 'None' ? "" : " ft=\L$lang\E") . ":";
 
-    if (defined $lang && $lang eq 'Perl') {
-        $comment =~ s/^/# /mg;
-    } elsif (!defined $lang or $lang ne 'Pod') {
+    if ($lang eq 'Pod') {
+        # nothing
+    } elsif ($lang eq 'C') {
         $comment =~ s/^/ * /mg;
         $comment =~ s! \* !/* !;
         $comment .= " */";
+    } else {
+        $comment =~ s/^/# /mg;
     }
     print $fh "\n$comment\n";
 

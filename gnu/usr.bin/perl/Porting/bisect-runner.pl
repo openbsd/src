@@ -54,39 +54,56 @@ my %defines =
 push @paths, qw(/usr/local/lib /lib /usr/lib)
         unless $linux64;
 
-unless(GetOptions(\%options,
-                  'target=s', 'make=s', 'jobs|j=i', 'crash', 'expect-pass=i',
-                  'expect-fail' => sub { $options{'expect-pass'} = 0; },
-                  'clean!', 'one-liner|e=s@', 'c', 'l', 'w', 'match=s',
-                  'no-match=s' => sub {
-                      $options{match} = $_[1];
-                      $options{'expect-pass'} = 0;
-                  },
-                  'force-manifest', 'force-regen', 'setpgrp!', 'timeout=i',
-                  'test-build', 'validate',
-                  'all-fixups', 'early-fixup=s@', 'late-fixup=s@', 'valgrind',
-                  'check-args', 'check-shebang!', 'usage|help|?', 'gold=s',
-                  'module=s', 'with-module=s', 'cpan-config-dir=s',
-                  'test-module=s', 'no-module-tests',
-                  'A=s@',
-                  'D=s@' => sub {
-                      my (undef, $val) = @_;
-                      if ($val =~ /\A([^=]+)=(.*)/s) {
-                          $defines{$1} = length $2 ? $2 : "\0";
-                      } else {
-                          $defines{$val} = '';
-                      }
-                  },
-                  'U=s@' => sub {
-                      $defines{$_[1]} = undef;
-                  },
-		 )) {
-    pod2usage(exitval => 255, verbose => 1);
-}
+my $rv = GetOptions(
+    \%options,
+    'target=s', 'make=s', 'jobs|j=i', 'crash', 'expect-pass=i',
+    'expect-fail' => sub { $options{'expect-pass'} = 0; },
+    'clean!', 'one-liner|e=s@', 'c', 'l', 'w', 'match=s',
+    'no-match=s' => sub {
+        $options{match} = $_[1];
+        $options{'expect-pass'} = 0;
+    },
+    'force-manifest', 'force-regen', 'setpgrp!', 'timeout=i',
+    'test-build', 'validate',
+    'all-fixups', 'early-fixup=s@', 'late-fixup=s@', 'valgrind',
+    'check-args', 'check-shebang!', 'usage|help|?', 'gold=s',
+    'module=s', 'with-module=s', 'cpan-config-dir=s',
+    'test-module=s', 'no-module-tests',
+    'A=s@',
+    'D=s@' => sub {
+        my (undef, $val) = @_;
+        if ($val =~ /\A([^=]+)=(.*)/s) {
+            $defines{$1} = length $2 ? $2 : "\0";
+        } else {
+            $defines{$val} = '';
+        }
+    },
+    'U=s@' => sub {
+        $defines{$_[1]} = undef;
+    },
+);
+exit 255 unless $rv;
 
 my ($target, $match) = @options{qw(target match)};
 
-@ARGV = ('sh', '-c', 'cd t && ./perl TEST base/*.t')
+# El Capitan (OS X 10.11) (and later) strip DYLD_LIBRARY_PATH
+# from the environment of /bin/sh
+# https://developer.apple.com/library/archive/documentation/Security/Conceptual/System_Integrity_Protection_Guide/RuntimeProtections/RuntimeProtections.html
+#
+# (They *could* have chosen instead to ignore it and pass it through. It would
+# have the same direct effect, but maybe needing more coding. I suspect the
+# choice to strip it was deliberate, as it will also eliminate a bunch more
+# attack vectors, because it prevents you sneaking an override "into" something
+# else you convince the user to run.)
+
+my $aggressive_apple_security = "";
+if ($^O eq 'darwin') {
+    require Cwd;
+    my $cwd = quotemeta Cwd::getcwd();
+    $aggressive_apple_security = "DYLD_LIBRARY_PATH=$cwd ";
+}
+
+@ARGV = ('sh', '-c', "cd t && $aggressive_apple_security./perl TEST base/*.t")
     if $options{validate} && !@ARGV;
 
 pod2usage(exitval => 0, verbose => 2) if $options{usage};
@@ -123,7 +140,7 @@ if (defined $target && $target =~ /\.t\z/) {
     unless ($target =~ s!\At/!!) {
         $target = "../$target";
     }
-    @ARGV = ('sh', '-c', "cd t && ./perl TEST " . quotemeta $target);
+    @ARGV = ('sh', '-c', "cd t && $aggressive_apple_security./perl TEST " . quotemeta $target);
     $target = 'test_prep';
 }
 
@@ -844,6 +861,29 @@ Display the usage information and exit.
 
 =back
 
+=head1 ABOUT BISECTION
+
+The process is all about identifying the commit that caused some change
+in behaviour - maybe good, maybe bad. But it is built around C<git bisect>,
+which is much more specifically aimed at finding "what broke the build".
+C<git> terminology embeds that assumption - commits earlier than the
+target commit are "good" commits, those at or later than the target commit
+are "bad" commits.
+
+The default behaviour of F<bisect.pl> mimics this - you supply some code
+that I<fails> with a perl built B<at or after> the target commit and
+I<succeeds> with a perl built B<before> the target commit, and F<bisect.pl>
+will find the target commit.
+
+The F<bisect.pl> option C<--expect-fail> reverses those expectations
+(and changes nothing else). So with C<--expect-fail>, you should supply
+code that I<fails> only with a perl built B<before> the target commit,
+and I<succeeds> with a perl built B<at or after> the target commit.
+
+By default, I<failure> is a piece of perl code that terminates with
+a non-zero exit code, e.g. by calling C<die()>. Options that change what
+is interpreted as failure include C<--crash>, C<--test-build> and C<--match>.
+
 =head1 EXAMPLES
 
 =head2 Code has started to crash under C<miniperl>
@@ -1062,6 +1102,90 @@ L<Commit 125e1a3|https://github.com/Perl/perl5/commit/125e1a36a939>
 
 =back
 
+=head2 When did perl stop segfaulting on certain code?
+
+=over 4
+
+=item * Problem
+
+It was reported that perl was segfaulting on this code in perl-5.36.0:
+
+    @a = sort{eval"("}1,2
+
+Bisection subsequently identified the commit at which the segfaulting first
+appeared.  But when we ran that code against what was then the HEAD of blead
+(L<Commit 70d911|https://github.com/Perl/perl5/commit/70d911984f>), we got no
+segfault.  So the next question we faced was: At what commit did the
+segfaulting cease?
+
+=item * Solution
+
+Because the code in question loaded no libraries, it was amenable to bisection
+with C<miniperl>, thereby shortening bisection time considerably.
+
+    perl Porting/bisect.pl \
+        --start=v5.36.0 \
+        --target=miniperl \
+        --expect-fail -e '@a = sort{eval"("}1,2'
+
+=item * Reference
+
+L<GH issue 20261|https://github.com/Perl/perl5/issues/20261>
+
+=back
+
+=head2 When did perl stop emitting warnings when running on certain code?
+
+=over 4
+
+=item * Background
+
+Most of the time, we bisect in order to identify the first "bad" commit:  the
+first time code failed to compile; the first time the code emitted warnings;
+and so forth.
+
+Some times, however, we want to identify the first "good" commit:  the point
+where the code began to compile; the point where the code no longer emitted
+warnings; etc.
+
+We can use this program for that purpose, but we have to reverse our sense of
+"good" and "bad" commits.  We use the C<--expect-fail> option to do that
+reversal.
+
+=item * Problem
+
+It was reported that in an older version of Perl, a warning was being emitted
+when a program was using the F<bigrat> module and
+C<Scalar::Util::looks_like_number()> was called passing a non-integral number
+(I<i.e.,> a rational).
+
+    $ perl -wE 'use Scalar::Util; use bigrat;
+      say "mercy" if Scalar::Util::looks_like_number(1/9);'
+
+In perl-5.32, this emitted:
+
+    $ Argument "1/9" isn't numeric in addition (+) at
+      /usr/local/lib/perl5/5.32/Math/BigRat.pm line 1955.
+      mercy
+
+But it was observed that there was no warning in perl-5.36.
+
+=item * Solution
+
+    $ perl Porting/bisect.pl \
+        --start=5624cfff8f \
+        --end=b80b9f7fc6 \
+        --expect-fail \
+        -we 'use Scalar::Util; use bigrat; my @w;
+            local $SIG{__WARN__} = sub { die };
+            print "mercy\n" if Scalar::Util::looks_like_number(1/9)'
+
+=item * Reference
+
+L<GH issue 20685|https://github.com/Perl/perl5/issues/20685>
+
+=back
+
 =cut
 
 # Ensure we always exit with 255, to cause git bisect to abort.
@@ -1226,9 +1350,11 @@ sub extract_from_file {
 
 sub edit_file {
     my ($file, $munger) = @_;
-    local $/;
     my $fh = open_or_die($file);
-    my $orig = <$fh>;
+    my $orig = do {
+        local $/;
+        <$fh>;
+    };
     die_255("Can't read $file: $!") unless defined $orig && close $fh;
     my $new = $munger->($orig);
     return if $new eq $orig;
@@ -1379,7 +1505,9 @@ sub apply_patch {
     my ($patch, $what, $files) = @_;
     $what = 'patch' unless defined $what;
     unless (defined $files) {
-        $patch =~ m!^--- [ab]/(\S+)\n\+\+\+ [ba]/\1!sm;
+        # Handle context diffs (*** ---) and unified diffs (+++ ---)
+        # and ignore trailing "garbage" after the filenames
+        $patch =~ m!^[-*]{3} [ab]/(\S+)[^\n]*\n[-+]{3} [ba]/\1!sm;
         $files = " $1";
     }
     my $patch_to_use = placate_patch_prog($patch);
@@ -1582,6 +1710,7 @@ if ($options{'all-fixups'}) {
     patch_SH();
     patch_C();
     patch_ext();
+    patch_t();
 }
 apply_fixups($options{'early-fixup'});
 
@@ -1623,8 +1752,11 @@ unless (extract_from_file('Configure', 'ignore_versioned_solibs')) {
     $defines{libs} = \@libs unless exists $defines{libs};
 }
 
+# a4f3eea9be6bcf3c added a test for GNU libc to Configure
+# Prior to that we really don't get much choice but to force usenm off
+# everywhere (and modern systems are fast enough that this doesn't matter)
 $defines{usenm} = undef
-    if $major < 2 && !exists $defines{usenm};
+    if $major < 4 && !exists $defines{usenm};
 
 my ($missing, $created_dirs);
 ($missing, $created_dirs) = force_manifest()
@@ -1692,8 +1824,10 @@ if ($target =~ /config\.s?h/) {
 
     run_report_and_exit(@ARGV);
 } elsif (!-f 'config.sh') {
-    # Skip if something went wrong with Configure
+    report_and_exit(undef, 'PLEASE REPORT BUG', 'could not build', 'config.sh')
+        if $options{'test-build'};
 
+    # Skip if something went wrong with Configure
     skip('could not build config.sh');
 }
 
@@ -1710,6 +1844,7 @@ if($options{'force-regen'}
 unless ($options{'all-fixups'}) {
     patch_C();
     patch_ext();
+    patch_t();
 }
 
 # Parallel build for miniperl is safe
@@ -2156,6 +2291,124 @@ index 53649d5..0635a6e 100755
 EOPATCH
     }
 
+    if ($major < 4 && extract_from_file('Configure',
+                                        qr/: see which flavor of setpgrp is in use/)) {
+        edit_file('Configure', sub {
+                      my $code = shift;
+                      my $new = <<'EOT';
+if $cc $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1; then
+EOT
+                      chomp $new;
+
+                      # before commit ecfc54246c2a6f42:
+                      # before commit 8e07c86ebc651fe9:
+                      my @old = (<<'EOT', <<'EOT');
+if $cc $ccflags -o set $ldflags set.c $libs >/dev/null 2>&1; then
+EOT
+if $cc $ccflags -o set set.c $ldflags $libs >/dev/null 2>&1; then
+EOT
+                      for my $was (@old) {
+                          # Yes, this modifies @old. No problem here:
+                          chomp $was;
+                          $was = quotemeta $was;
+                          $code =~ s/$was/$new/;
+                      }
+
+                      # also commit ecfc54246c2a6f42:
+                      $code =~ s!\tif usg; then!\tif ./usg; then!;
+
+                      return $code;
+                  });
+
+        # We need the new probe from 2afac517c48c20de, which has prototypes
+        # (but include the various C headers unconditionally)
+        apply_patch(<<'EOPATCH');
+diff --git a/Configure b/Configure
+index 18f2172435..5a75ebd767 100755
+--- a/Configure
++++ b/Configure
+@@ -4986,45 +5055,61 @@ eval $inlibc
+ set setpgrp d_setpgrp
+ eval $inlibc
+ 
+-: see which flavor of setpgrp is in use
++echo "Checking to see which flavor of setpgrp is in use . . . "
+ case "$d_setpgrp" in
+ "$define")
+ 	echo " "
+ 	$cat >set.c <<EOP
++#include <stdio.h>
++#include <sys/types.h>
++#include <unistd.h>
+ main()
+ {
+ 	if (getuid() == 0) {
+ 		printf("(I see you are running Configure as super-user...)\n");
+ 		setuid(1);
+ 	}
++#ifdef TRY_BSD_PGRP
+ 	if (-1 == setpgrp(1, 1))
+-		exit(1);
+-	exit(0);
++		exit(0);
++#else
++	if (setpgrp() != -1)
++		exit(0);
++#endif
++	exit(1);
+ }
+ EOP
+-	if $cc $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1; then
+-		./set 2>/dev/null
+-		case $? in
+-		0) echo "You have to use setpgrp() instead of setpgrp(pid, pgrp)." >&4
+-			val="$undef";;
+-		*) echo "You have to use setpgrp(pid, pgrp) instead of setpgrp()." >&4
+-			val="$define";;
+-		esac
++	if $cc -DTRY_BSD_PGRP $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1 && ./set; then
++		echo 'You have to use setpgrp(pid,pgrp) instead of setpgrp().' >&4
++		val="$define"
++	elif $cc $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1 && ./set; then
++		echo 'You have to use setpgrp() instead of setpgrp(pid,pgrp).' >&4
++		val="$undef"
+ 	else
++		echo "I can't seem to compile and run the test program."
+ 		if ./usg; then
+-			xxx="USG one, i.e. you use setpgrp()."
+-			val="$undef"
++			xxx="a USG one, i.e. you use setpgrp()."
+ 		else
+-			xxx="BSD one, i.e. you use setpgrp(pid, pgrp)."
+-			val="$define"
++			# SVR4 systems can appear rather BSD-ish.
++			case "$i_unistd" in
++			$undef)
++				xxx="a BSD one, i.e. you use setpgrp(pid,pgrp)."
++				val="$define"
++				;;
++			$define)
++				xxx="probably a USG one, i.e. you use setpgrp()."
++				val="$undef"
++				;;
++			esac
+ 		fi
+-		echo "Assuming your setpgrp is a $xxx" >&4
++		echo "Assuming your setpgrp is $xxx" >&4
+ 	fi
+ 	;;
+ *) val="$undef";;
+ esac
+-set d_bsdpgrp
++set d_bsdsetpgrp
+ eval $setvar
++d_bsdpgrp=$d_bsdsetpgrp
+ $rm -f set set.c
+ 
+ : see if bzero exists
+EOPATCH
+    }
+
     if ($major == 4 && extract_from_file('Configure', qr/^d_gethbynam=/)) {
         # Fixes a bug introduced in 4599a1dedd47b916
         apply_commit('3cbc818d1d0ac470');
@@ -2223,6 +2476,76 @@ index 53649d5..f1cd64a 100755
  		dflt=`./try`
  		case "$dflt" in
  		????|????????) echo "(The test program ran ok.)";;
+EOPATCH
+        }
+    }
+
+    if ($major < 5) {
+        my $what = extract_from_file('Configure', qr!(\s+)return __libc_main!);
+        if ($what) {
+            # To add to the fun commit commit dfe9444ca7881e71 in Feb 1988
+            # changed several things:
+            if ($what !~ /\t/) {
+                apply_patch(<<'EOPATCH');
+--- a/Configure
++++ b/Configure
+@@ -3854,11 +3911,12 @@ n) echo "OK, that should do.";;
+ int
+ main()
+ {
+-  return __libc_main();
++	return __libc_main();
+ }
+ EOM
+-if $cc $ccflags $ldflags -o gnulibc gnulibc.c $libs >/dev/null 2>&1 && \
+-    ./gnulibc | $contains '^GNU C Library' >/dev/null 2>&1; then
++set gnulibc
++if eval $compile && \
++  ./gnulibc | $contains '^GNU C Library' >/dev/null 2>&1; then
+ 	val="$define"
+ 	echo "You are using the GNU C Library"
+ else
+EOPATCH
+            }
+
+            # And commit dc45a647708b6c54 tweaks 1 line in April 1998
+            edit_file('Configure', sub {
+                          my $code = shift;
+                          $code =~ s{contains '\^GNU C Library' >/dev/null 2>&1; then}
+                                    {contains '^GNU C Library'; then};
+                          return $code;
+                      });
+
+            # This is part of aebf16e7cdbc86ec from June 1998
+            # but with compiles_ok inlined
+            apply_patch(<<'EOPATCH');
+diff --git a/Configure b/Configure
+index 38072f0e5e..43735feacf 100755
+--- a/Configure
++++ b/Configure
+@@ -4024,15 +4024,19 @@ $cc $optimize $ccflags $ldflags -o ${mc_file} $* ${mc_file}.c $libs;'
+ echo " "
+ echo "Checking for GNU C Library..." >&4
+ cat >gnulibc.c <<EOM
++#include <stdio.h>
+ int
+ main()
+ {
+-	return __libc_main();
++#ifdef __GLIBC__
++    exit(0);
++#else
++    exit(1);
++#endif
+ }
+ EOM
+ set gnulibc
+-if eval $compile && \
+-  ./gnulibc | $contains '^GNU C Library'; then
++if $cc $ccflags $ldflags -o gnulibc gnulibc.c $libs && ./gnulibc; then
+ 	val="$define"
+ 	echo "You are using the GNU C Library"
+ else
 EOPATCH
         }
     }
@@ -2325,6 +2648,18 @@ index 4b55fa6..60c3c64 100755
 EOPATCH
     }
 
+    if ($major < 6) {
+        edit_file('Configure', sub {
+                      my $code = shift;
+                      # This will cause a build failure, but it will stop
+                      # Configure looping endlessly trying to get a different
+                      # answer:
+                      $code =~ s{(dflt=)n(\n\s+rp="Function \$ans does not exist)}
+                                {$1y$2};
+                      return $code;
+                  });
+    }
+
     if ($major < 8 && $^O eq 'aix') {
         edit_file('Configure', sub {
                       my $code = shift;
@@ -2353,18 +2688,120 @@ EOPATCH
                   });
     }
 
-    if ($major == 8 || $major == 9) {
+    if ($major < 32) {
+        edit_file('Configure', sub {
+                      my $code = shift;
+
+                      # A lot of the probes used to be written assuming no need
+                      # for prototypes for exit(), printf() etc.
+                      # Curiously also the code was written to call exit()
+                      # rather than return from main - early portability?
+                      #
+                      # Commit 55954f198635e488 did most of the work in ensuring
+                      # that there was always a prototype for exit, by adding
+                      # #include <stdlib.h> in many probes. However the last
+                      # missing prototype was only addressed by f16c94bc75aefb81
+                      # (for futimes), and the last missing prototypes a few
+                      # commits later in f82f0f36c7188b6d
+                      #
+                      # As an aside, commit dc45a647708b6c54 fixes the signal
+                      # name probe (etc) - the commit tagged as perl-5.004_01
+                      # *seems* to fix the signal name probe, but actually it
+                      # fixes an error in the fallback awk code, not the C
+                      # probe's missing prototype.
+                      #
+                      # With current C compilers there is no correctness risk
+                      # from including a header more than once, so the easiest
+                      # approach to making this all work is to add includes
+                      # "to be sure to be sure"
+                      #
+                      # The trick is not to break *working* probes by
+                      # accidentally including a header *within* a construction.
+                      # So we need to have some confidence that it's the start
+                      # of a file (or somewhere safe)
+
+                      my $headers = <<'EOFIX';
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+EOFIX
+
+                      # This handles $cat and plain cat:
+                      $code =~ s{([\$\t\n ]cat > *[a-z0-9]+\.c <<[^\n]*\n)}
+                                {$1$headers}g;
+                      # Of course, there's always one that's backwards:
+                      $code =~ s{([\$\t\n ]cat <<[^\n]* > *[a-z0-9]+\.c\n)}
+                                {$1$headers}g;
+
+                      # and >> used to *create* a file.
+                      # We have to be careful to distinguish those from >> used
+                      # to append to a file. All the first lines have #include
+                      # or #ifdef. Except the few that don't...
+                      $code =~ s{
+                                    ([\$\t\n ]cat\ >>\ *[a-z]+\.c\ <<[^\n]*\n)
+                                    (
+                                        # #include/#ifdef ...
+                                        \#
+                                    |
+                                        # The non-blocking IO probe
+                                        (?:int\ )?main\(\)
+                                    |
+                                        # The alignment constraint probe
+                                        struct\ foobar
+                                    )
+                                }
+                                {$1$headers$2}gx;
+
+                      # This is part of commit c727eafaa06ca49a:
+                      $code =~ s{\(int\)exit\(0\);}
+                                {\(void\)exit\(0\);};
+
+                      return $code;
+                  });
+    }
+
+    if ($major < 10) {
         # Fix symbol detection to that of commit 373dfab3839ca168 if it's any
         # intermediate version 5129fff43c4fe08c or later, as the intermediate
         # versions don't work correctly on (at least) Sparc Linux.
         # 5129fff43c4fe08c adds the first mention of mistrustnm.
         # 373dfab3839ca168 removes the last mention of lc=""
+        #
+        # Fix symbol detection prior to 5129fff43c4fe08c to use the same
+        # approach, where we don't call printf without a prototype
+        # We can't include <stdio.h> to get its prototype, as the way this works
+        # is to create a (wrong) prototype for the probed functions, and those
+        # conflict if the function in question is in stdio.h.
         edit_file('Configure', sub {
                       my $code = shift;
                       return $code
                           if $code !~ /\btc="";/; # 373dfab3839ca168 or later
-                      return $code
-                          if $code !~ /\bmistrustnm\b/; # before 5129fff43c4fe08c
+                      if ($code !~ /\bmistrustnm\b/) {
+                          # doing this as a '' heredoc seems to be the easiest
+                          # way to avoid confusing levels of backslashes:
+                          my $now = <<'EOT';
+void *(*(p()))$tdc { extern void *$1$tdc; return &$1; } int main() { if(p()) return(0); else return(1); }
+EOT
+                          chomp $now;
+
+                          # before 5129fff43c4fe08c
+                          # befure 16d20bd98cd29be7
+                          my @old = (<<'EOT', <<'EOT');
+main() { extern short $1$tdc; printf(\"%hd\", $1$tc); }
+EOT
+main() { extern int $1$tdc; printf(\"%d\", $1$tc); }
+EOT
+                          for my $was (@old) {
+                              chomp $was;
+                              $was = quotemeta $was;
+
+                              # Prior to commit d674cd6de52ff38b there was no
+                              # 'int ' for 'int main'
+                              $code =~ s/(?:int )?$was/$now/;
+                          }
+                          return $code;
+                      }
+
                       my $fixed = <<'EOC';
 
 : is a C symbol defined?
@@ -2450,6 +2887,13 @@ index 3d2e8b9..6ce7766 100755
  
 EOPATCH
     }
+
+    if ($major < 38 && !extract_from_file('Configure', qr/Too many attempts asking the same question/)) {
+        # Without this, myread can loop infinitely trying to get a valid answer,
+        # and hence Configure gets stuck in a loop, outputting the same question
+        # repeatedly. This isn't what we need.
+        apply_commit('46bfb3c49f22629a');
+    }
 }
 
 sub patch_hints {
@@ -2505,6 +2949,66 @@ sub patch_hints {
                           $code .= "\nfirstmakefile=GNUmakefile;\n";
                       }
 
+                      return $code;
+                  });
+        }
+
+        if ($major < 8 ||
+                ($major < 10 && !extract_from_file('ext/DynaLoader/Makefile.PL',
+                                                   qr/sub MY::static /))) {
+            edit_file('hints/darwin.sh', sub {
+                          my $code = shift;
+                          # As above, the build fails if version of code in op.o
+                          # is linked to, instead of opmini.o
+                          # We don't need this after commit 908fcb8bef8cbab8,
+                          # which moves DynaLoader.o into the shared perl
+                          # library, as it *also* redoes the build so that
+                          # miniperl is linked against all the object files
+                          # (explicitly excluding op.o), instead of against the
+                          # shared library (and reyling on "flat namespaces"
+                          # - ie make Mach-O behave like ELF - to end up with
+                          # objects in the library linking against opmini.o)
+                          $code .= <<'EOHACK';
+
+# Force a flat namespace everywhere:
+echo $ldflags | grep flat_namespace || ldflags=`echo \$lddflags -flat_namespace`
+echo $lddlflags | grep flat_namespace || lddlflags=`echo \$lddlflags -flat_namespace`
+EOHACK
+                          return $code;
+                      });
+        }
+
+        if ($major < 16) {
+            edit_file('hints/darwin.sh', sub {
+                          my $code = shift;
+                          # This is commit 60a655a1ee05c577
+                          $code =~ s/usenm='true'/usenm='false'/;
+
+                          # With the Configure probes fixed (in patch_Configure)
+                          # the "d_stdstdio" logic now concludes "define".
+                          # Unfortunately that is not correct - attempting to
+                          # build 5.8.0 without this override results in SEGVs
+                          # or similar chaos.
+                          #
+                          # The problem is introduced by commit 5a3a8a022aa61cba
+                          # which enables perlio by default.
+                          # The problem is hidden after 15b61c98f82f3010, which
+                          # adds "d_faststdio" and defaults it to "undef" from
+                          # that commit onwards, but override that and the build
+                          # would break, up until "turning off perlio" was
+                          # disabled by commit dd35fa16610ef2fa
+                          $code .= "\nd_stdstdio='undef'\n";
+
+                          return $code;
+                      });
+        }
+
+        if ($major < 34) {
+            edit_file('hints/darwin.sh', sub {
+                      my $code = shift;
+                      # This is commits aadc6422eaec39c2 and 54d41b60822734cf
+                      # rolled into one:
+                      $code =~ s/    10\.\*(?: \| 11\.\*)?\)/    [1-9][0-9].*)/g;
                       return $code;
                   });
         }
@@ -2922,6 +3426,15 @@ $2!;
         }
     }
 
+    if ($major == 3) {
+        # This is part of commit f0efd8cf98c95b42:
+        edit_file('Makefile.SH', sub {
+                      my $code = shift;
+                      $code =~ s/<<!NO!SUBS!/<<'!NO!SUBS!'/;
+                      return $code;
+                  });
+    }
+
     if ($major == 7) {
         # Remove commits 9fec149bb652b6e9 and 5bab1179608f81d8, which add/amend
         # rules to automatically run regen scripts that rebuild C headers. These
@@ -2939,6 +3452,38 @@ $2!;
                                    qr/^opcode\.h opnames\.h pp_proto\.h pp\.sym: opcode\.pl$/)) {
             revert_commit('9fec149bb652b6e9');
         }
+    }
+
+    if ($^O eq 'darwin' && ($major < 8
+                                || ($major < 10
+                                    && !extract_from_file('ext/DynaLoader/Makefile.PL',
+                                                          qr/sub MY::static /)))) {
+        my $cwd = Cwd::getcwd();
+        my $wrapper = 'miniperl.sh';
+        my $fh = open_or_die($wrapper, '>');
+        print $fh <<"EOT";
+#!/bin/sh
+${aggressive_apple_security}exec $cwd/miniperl "\$\@"
+EOT
+        close_or_die($fh);
+        chmod 0755, $wrapper
+            or die "Couldn't chmod 0755 $wrapper: $!";
+
+        edit_file('ext/util/make_ext', sub {
+                      my $code = shift;
+                      # This is shell expansion syntax
+                      $code =~ s{ (\.\./\$depth/miniperl) }
+                                { $1.sh };
+                      # This is actually the same line as edited above.
+                      # We need this because (yay), without this EU::MM will
+                      # default to searching for a working perl binary
+                      # (sensible plan) but due to macOS stripping
+                      # DYLD_LIBRARY_PATH during system(...), .../miniperl
+                      # (as found from $^X) *isn't* going to work.
+                      $code =~ s{ (Makefile\.PL INSTALLDIRS=perl) }
+                                { $1 PERL=\.\./\$depth/miniperl.sh };
+                      return $code;
+                  });
     }
 
     if ($^O eq 'aix' && $major >= 8 && $major < 28
@@ -2998,6 +3543,23 @@ $2!;
 sub patch_C {
     # This is ordered by $major, as it's likely that different platforms may
     # well want to share code.
+
+    if ($major == 0) {
+        apply_patch(<<'EOPATCH');
+diff --git a/proto.h b/proto.h
+index 9ffc6bbabc..16da198342 100644
+--- a/proto.h
++++ b/proto.h
+@@ -8,6 +8,7 @@
+ #endif
+ #ifdef OVERLOAD
+ SV*	amagic_call _((SV* left,SV* right,int method,int dir));
++bool Gv_AMupdate _((HV* stash));
+ #endif /* OVERLOAD */
+ OP*	append_elem _((I32 optype, OP* head, OP* tail));
+ OP*	append_list _((I32 optype, LISTOP* first, LISTOP* last));
+EOPATCH
+    }
 
     if ($major == 2 && extract_from_file('perl.c', qr/^\tfclose\(e_fp\);$/)) {
         # need to patch perl.c to avoid calling fclose() twice on e_fp when
@@ -3084,6 +3646,36 @@ index 4608a2a..f0c9d1d 100644
  #else
      if ((pgrp != 0) || (pid != 0)) {
  	DIE("POSIX setpgrp can't take an argument");
+EOPATCH
+    }
+
+    # _(( was the macro wrapper for hiding ANSI prototypes from K&R C compilers:
+    if ($major == 3 && !extract_from_file('proto.h', qr/\bsafemalloc\s+_\(\(/)) {
+        # This is part of commit bbce6d69784bf43b:
+        # [inseparable changes from patch from perl5.003_08 to perl5.003_09]
+        # This only affects a few versions, but without this safemalloc etc get
+        # an implicit return type (of int), and that is truncating addresses on
+        # 64 bit systems. (And these days, seems that x86_64 linux has a memory
+        # map which causes malloc to return addresses >= 2**32)
+        apply_patch(<<'EOPATCH');
+diff --git a/proto.h b/proto.h
+index 851567b340..e650c8b07d 100644
+--- a/proto.h
++++ b/proto.h
+@@ -479,6 +479,13 @@ Malloc_t realloc _((Malloc_t where, MEM_SIZE nbytes));
+ Free_t   free _((Malloc_t where));
+ #endif
+ 
++#ifndef MYMALLOC
++Malloc_t safemalloc _((MEM_SIZE nbytes));
++Malloc_t safecalloc _((MEM_SIZE elements, MEM_SIZE size));
++Malloc_t saferealloc _((Malloc_t where, MEM_SIZE nbytes));
++Free_t   safefree _((Malloc_t where));
++#endif
++
+ #ifdef LEAKTEST
+ Malloc_t safexmalloc _((I32 x, MEM_SIZE size));
+ Malloc_t safexcalloc _((I32 x, MEM_SIZE elements, MEM_SIZE size));
 EOPATCH
     }
 
@@ -3627,6 +4219,38 @@ index 2a6cbcd..eab2de1 100644
 EOPATCH
     }
 
+    if ($major < 6 && extract_from_file('perl.h', qr/PL_uuemap\[\]/)) {
+        # That [] needs to be [65]:
+        apply_commit('7575fa06ca7baf15');
+    }
+
+    if ($major < 6 && $^O eq 'darwin'
+            && !extract_from_file('perl.h', qr/ifdef I_FCNTL/)) {
+        # This is part of commit 9a34ef1dede5fef4, but in a stable part of the
+        # file:
+        apply_patch(<<'EOPATCH')
+diff --git a/perl.h b/perl.h
+index 0d3f0b8333..19f6684894 100644
+--- a/perl.h
++++ b/perl.h
+@@ -310,6 +310,14 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
+ #   define BYTEORDER 0x1234
+ #endif
+ 
++#ifdef I_FCNTL
++#  include <fcntl.h>
++#endif
++
++#ifdef I_SYS_FILE
++#  include <sys/file.h>
++#endif
++
+ /* Overall memory policy? */
+ #ifndef CONSERVATIVE
+ #   define LIBERAL 1
+EOPATCH
+    }
+
     if ($major == 7 && $^O eq 'aix' && -f 'ext/List/Util/Util.xs'
         && extract_from_file('ext/List/Util/Util.xs', qr/PUSHBLOCK/)
         && !extract_from_file('makedef.pl', qr/^Perl_cxinc/)) {
@@ -3693,8 +4317,26 @@ index 900b491..6251a0b 100644
 EOPATCH
 }
 
-    if ($major < 8 && $^O eq 'openbsd'
-        && !extract_from_file('perl.h', qr/include <unistd\.h>/)) {
+    if ($major < 8 && !extract_from_file('perl.h', qr/\bshort htovs\b/)) {
+        # This is part of commit c623ac675720b314
+        apply_patch(<<'EOPATCH');
+diff --git a/perl.h b/perl.h
+index 023b90b7ea..59a21faecd 100644
+--- a/perl.h
++++ b/perl.h
+@@ -2279,4 +2279,8 @@ struct ptr_tbl {
+ # endif
+ 	/* otherwise default to functions in util.c */
++short htovs(short n);
++short vtohs(short n);
++long htovl(long n);
++long vtohl(long n);
+ #endif
+ 
+EOPATCH
+    }
+
+    if ($major < 8 && !extract_from_file('perl.h', qr/include <unistd\.h>/)) {
         # This is part of commit 3f270f98f9305540, applied at a slightly
         # different location in perl.h, where the context is stable back to
         # 5.000
@@ -3715,6 +4357,50 @@ index 9418b52..b8b1a7c 100644
  /* Use all the "standard" definitions? */
  #if defined(STANDARD_C) && defined(I_STDLIB)
 EOPATCH
+    }
+
+    if ($major < 10) {
+        # This is commit 731e259481f36b35, but adapted to remove all the
+        # variations of guards around the inclusion of <signal.h>
+        # Whilst we only hit this as a problem on arm64 macOS (so far), because
+        # it insists on prototypes for everything, I'm assuming that doing this
+        # everywhere and unconditionally might solve similar problems on other
+        # platforms. Certainly, it *ought* to be safe to include a C89 header
+        # these days.
+        for my $file (qw(doop.c mg.c mpeix/mpeixish.h plan9/plan9ish.h unixish.h util.c)) {
+            next
+                unless -f $file;
+            edit_file($file, sub {
+                          my $code = shift;
+                          $code =~ s{
+                                        \n
+                                        \#if \s+ [^\n]+
+                                        \n
+                                        \# \s* include \s+ <signal\.h>
+                                        \n
+                                        \#endif
+                                        \n
+                                }
+                                    {\n#include <signal.h>\n}x;
+                          return $code;
+                      });
+        }
+    }
+
+    if ($major == 15) {
+        # This affects a small range of commits around July 2011, but build
+        # failures here get in the way of bisecting other problems:
+
+        my $line = extract_from_file('embed.fnc', qr/^X?pR\t\|I32\t\|was_lvalue_sub$/);
+        if ($line) {
+            # Need to export Perl_was_lvalue_sub:
+            apply_commit('7b70e8177801df4e')
+                unless $line =~ /X/;
+
+            # It needs to be 'ApR' not 'XpR', to be visible to List::Util
+            # (arm64 macOS treats the missing prototypes as errors)
+            apply_commit('c73b0699db4d0b8b');
+        }
     }
 }
 
@@ -3744,7 +4430,7 @@ sub patch_ext {
         checkout_file('ext/DynaLoader/dl_dyld.xs', 'f556e5b971932902');
         apply_patch(<<'EOPATCH');
 diff -u a/ext/DynaLoader/dl_dyld.xs~ a/ext/DynaLoader/dl_dyld.xs
---- a/ext/DynaLoader/dl_dyld.xs~	2011-10-11 21:41:27.000000000 +0100
+--- a/ext/DynaLoader/dl_dyld.xs	2011-10-11 21:41:27.000000000 +0100
 +++ b/ext/DynaLoader/dl_dyld.xs	2011-10-11 21:42:20.000000000 +0100
 @@ -41,6 +41,35 @@
  #include "perl.h"
@@ -3782,20 +4468,36 @@ diff -u a/ext/DynaLoader/dl_dyld.xs~ a/ext/DynaLoader/dl_dyld.xs
  #define DL_LOADONCEONLY
  
  #include "dlutils.c"	/* SaveError() etc	*/
-@@ -185,7 +191,7 @@
+@@ -104,7 +145,7 @@
+     dl_last_error = savepv(error);
+ }
+ 
+-static char *dlopen(char *path, int mode /* mode is ignored */)
++static char *dlopen(char *path)
+ {
+     int dyld_result;
+     NSObjectFileImage ofile;
+@@ -161,13 +202,11 @@
+ dl_load_file(filename, flags=0)
+     char *	filename
+     int		flags
+-    PREINIT:
+-    int mode = 1;
      CODE:
      DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s,%x):\n", filename,flags));
      if (flags & 0x01)
 -	Perl_warn(aTHX_ "Can't make loaded symbols global on this platform while loading %s",filename);
+-    RETVAL = dlopen(filename, mode) ;
 +	Perl_warn_nocontext("Can't make loaded symbols global on this platform while loading %s",filename);
-     RETVAL = dlopen(filename, mode) ;
++    RETVAL = dlopen(filename);
      DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%x\n", RETVAL));
      ST(0) = sv_newmortal() ;
+     if (RETVAL == NULL)
 EOPATCH
         if ($major < 4 && !extract_from_file('util.c', qr/^form/m)) {
             apply_patch(<<'EOPATCH');
 diff -u a/ext/DynaLoader/dl_dyld.xs~ a/ext/DynaLoader/dl_dyld.xs
---- a/ext/DynaLoader/dl_dyld.xs~	2011-10-11 21:56:25.000000000 +0100
+--- a/ext/DynaLoader/dl_dyld.xs	2011-10-11 21:56:25.000000000 +0100
 +++ b/ext/DynaLoader/dl_dyld.xs	2011-10-11 22:00:00.000000000 +0100
 @@ -60,6 +60,18 @@
  #  define get_av perl_get_av
@@ -3823,12 +4525,13 @@ EOPATCH
     if ($major < 10) {
         if ($unfixable_db_file) {
             # Nothing we can do.
-        } elsif (!extract_from_file('ext/DB_File/DB_File.xs',
-                                    qr/^#ifdef AT_LEAST_DB_4_1$/)) {
-            # This line is changed by commit 3245f0580c13b3ab
-            my $line = extract_from_file('ext/DB_File/DB_File.xs',
-                                         qr/^(        status = \(?RETVAL->dbp->open\)?\(RETVAL->dbp, name, NULL, RETVAL->type, $)/);
-            apply_patch(<<"EOPATCH");
+        } else {
+            if (!extract_from_file('ext/DB_File/DB_File.xs',
+                                   qr/^#ifdef AT_LEAST_DB_4_1$/)) {
+                # This line is changed by commit 3245f0580c13b3ab
+                my $line = extract_from_file('ext/DB_File/DB_File.xs',
+                                             qr/^(        status = \(?RETVAL->dbp->open\)?\(RETVAL->dbp, name, NULL, RETVAL->type, $)/);
+                apply_patch(<<"EOPATCH");
 diff --git a/ext/DB_File/DB_File.xs b/ext/DB_File/DB_File.xs
 index 489ba96..fba8ded 100644
 --- a/ext/DB_File/DB_File.xs
@@ -3855,6 +4558,13 @@ index 489ba96..fba8ded 100644
  	/* printf("open returned %d %s\\n", status, db_strerror(status)) ; */
  
 EOPATCH
+            }
+
+            if (!extract_from_file('ext/DB_File/DB_File.xs',
+                                   qr/\bextern void __getBerkeleyDBInfo\b/)) {
+                # A prototype for __getBerkeleyDBInfo();
+                apply_commit('b92372bcedd4cbc4');
+            }
         }
     }
 
@@ -3897,6 +4607,28 @@ EOFIX
                   });
     }
 
+    if ($major < 10 and -f 'ext/Digest/MD5/MD5.xs') {
+        require Digest::MD5;
+        my ($was, $now);
+        # The edit to the XS is commit 9ee8e69ab2318ba3, but the testcase fixup
+        # needs to work for several earlier commits.
+        edit_file('ext/Digest/MD5/MD5.xs', sub {
+                      my $xs = shift;
+                      $was = Digest::MD5::md5_hex($xs);
+                      $xs =~ s{\Q#if PATCHLEVEL <= 4 && !defined(PL_dowarn)}
+                              {#if PERL_VERSION <= 4 && !defined(PL_dowarn)};
+                      $now = Digest::MD5::md5_hex($xs);
+                      return $xs;
+                  });
+
+        edit_file('ext/Digest/MD5/t/files.t', sub {
+                      my $testcase = shift;
+                      $testcase =~ s/$was/$now/g;
+                      return $testcase;
+                  })
+            if $was ne $now;
+    }
+
     if ($major >= 10 && $major < 20
             && !extract_from_file('ext/SDBM_File/Makefile.PL', qr/MY::subdir_x/)) {
         # Parallel make fix for SDBM_File
@@ -3905,6 +4637,75 @@ EOFIX
         # other bugs.
         # So far, only AIX make has come acropper on this bug.
         apply_commit('4d106cc5d8fd328d', 'ext/SDBM_File/Makefile.PL');
+    }
+
+    if (-f 'ext/Errno/Errno_pm.PL') {
+        if ($major < 22 && !extract_from_file('ext/Errno/Errno_pm.PL',
+                                              qr/RT#123784/)) {
+            my $gcc_major = extract_from_file('config.sh',
+                                              qr/^gccversion='([0-9]+)\./,
+                                              0);
+            if ($gcc_major >= 5) {
+                # This is the fix of commit 816b056ffb99ae54, but implemented in
+                # a way that should work back to the earliest versions of Errno:
+                edit_file('ext/Errno/Errno_pm.PL', sub {
+                              my $code = shift;
+                              $code =~ s/( \$Config\{cppflags\})/$1 -P/g;
+                              return $code;
+                          });
+            }
+        }
+        if ($major < 8 && !extract_from_file('ext/Errno/Errno_pm.PL',
+                                             qr/With the -dM option, gcc/)) {
+            # This is the fix of commit 9ae2e8df64ee1443 re-ordered slightly so
+            # that it should work back to the earliest versions of Errno:
+            apply_patch(<<'EOPATCH');
+diff --git a/ext/Errno/Errno_pm.PL b/ext/Errno/Errno_pm.PL
+index b669790314..c00d6c1a86 100644
+--- a/ext/Errno/Errno_pm.PL
++++ b/ext/Errno/Errno_pm.PL
+@@ -30,6 +30,12 @@ sub process_file {
+             warn "Cannot open '$file'";
+             return;
+ 	}     
++    } elsif ($Config{gccversion} ne '') {
++	# With the -dM option, gcc outputs every #define it finds
++	unless(open(FH,"$Config{cc} -E -dM $file |")) {
++            warn "Cannot open '$file'";
++            return;
++	}
+     } else {
+ 	unless(open(FH,"< $file")) {
+             warn "Cannot open '$file'";
+@@ -45,8 +51,12 @@ sub process_file {
+ 
+ sub get_files {
+     my %file = ();
+-    # VMS keeps its include files in system libraries (well, except for Gcc)
+-    if ($^O eq 'VMS') {
++    if ($^O eq 'linux') {
++	# Some Linuxes have weird errno.hs which generate
++	# no #file or #line directives
++	$file{'/usr/include/errno.h'} = 1;
++    } elsif ($^O eq 'VMS') {
++	# VMS keeps its include files in system libraries (well, except for Gcc)
+ 	if ($Config{vms_cc_type} eq 'decc') {
+ 	    $file{'Sys$Library:DECC$RTLDEF.TLB'} = 1;
+ 	} elsif ($Config{vms_cc_type} eq 'vaxc') {
+EOPATCH
+        }
+    }
+}
+
+sub patch_t {
+    if ($^O eq 'darwin') {
+        # This has # $x = `$^X -le "print 'hi there'"`;
+        # and it needs to pass for the automated validation self-test:
+        edit_file('t/base/term.t', sub {
+                      my $code = shift;
+                      $code =~ s/`(\$\^X )/`$aggressive_apple_security$1/;
+                      return $code;
+                  });
     }
 }
 

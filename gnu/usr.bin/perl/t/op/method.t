@@ -253,7 +253,10 @@ sub OtherSouper::method { "Isidore Ropen, Draft Manager" }
    my @ret = $o->SUPER::method('whatever');
    ::is $ret[0], $o, 'object passed to SUPER::method';
    ::is $ret[1], 'whatever', 'argument passed to SUPER::method';
-   @ret = $o->SUPER'method('whatever');
+   {
+       no warnings qw(syntax deprecated);
+       @ret = $o->SUPER'method('whatever');
+   }
    ::is $ret[0], $o, "object passed to SUPER'method";
    ::is $ret[1], 'whatever', "argument passed to SUPER'method";
    @ret = Saab->SUPER::method;
@@ -428,7 +431,7 @@ is $kalled, 1, 'calling a class method via a magic variable';
     eval {
         NulTest->${ \"method\0Whoops" };
     };
-    like $@, qr/Can't locate object method "method\0Whoops" via package "NulTest" at/,
+    like $@, qr/Can't locate object method "method\\0Whoops" via package "NulTest" at/,
             "method lookup is nul-clean";
 
     *NulTest::AUTOLOAD = sub { our $AUTOLOAD; return $AUTOLOAD };

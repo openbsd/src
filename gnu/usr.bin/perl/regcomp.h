@@ -10,7 +10,64 @@
 
 #if ! defined(PERL_REGCOMP_H_) && (   defined(PERL_CORE)            \
                                    || defined(PERL_EXT_RE_BUILD))
+
 #define PERL_REGCOMP_H_
+
+#ifndef RE_PESSIMISTIC_PARENS
+/* Define this to 1 if you want to enable a really aggressive and
+ * inefficient paren cleanup during backtracking which should ensure
+ * correctness. Doing so should fix any bugs related to backreferences,
+ * at the cost of saving and restoring paren state far more than we
+ * necessarily must.
+ *
+ * When it is set to 0 we try to optimize away unnecessary save/restore
+ * operations which could potentially introduce bugs. We should pass our
+ * test suite with this as 0, but setting it to 1 might fix cases we do
+ * not currently test for. If setting this to 1 does fix a bug, then
+ * review the code related to storing and restoring paren state.
+ *
+ * See comment for VOLATILE_REF below for more details of a
+ * related case.
+ */
+#define RE_PESSIMISTIC_PARENS 0
+#endif
+
+/* a VOLATILE_REF is a ref which is inside of a capturing group and it
+ * refers to the capturing group it is inside of or to a following capture
+ * group which might be affected by what this capture group matches, and
+ * thus the ref requires additional backtracking support. For example:
+ *
+ *  "xa=xaaa" =~ /^(xa|=?\1a){2}\z/
+ *
+ * should not match.  In older perls the matching process would go like this:
+ *
+ * Iter 1: "xa" matches in capture group.
+ * Iter 2: "xa" does not match, goes to next alternation.
+ *         "=" matches in =?
+ *         Bifurcates here (= might not match)
+ *         "xa" matches via \1 from previous iteration
+ *         "a" matches via "a" at end of second alternation
+ *         # at this point $1 is "=xaa"
+ *         \z  does not match -> backtracks.
+ * Backtracks to Iter 2 "=?" Bifurcation point where we have NOT matched "="
+ *         "=xaa" matches via \1 (as $1 has not been reset)
+ *         "a" matches via "a" at end of second alternation
+ *         "\z" does match. -> Pattern matches overall.
+ *
+ * What should happen and now does happen instead is:
+ *
+ * Backtracks to Iter 2 "=?" Bifurcation point where we have NOT matched "=",
+ *         \1 does not match as it is "xa" (as $1 was reset when backtracked)
+ *         and the current character in the string is an "="
+ *
+ * The fact that \1 in this case is marked as a VOLATILE_REF is what ensures
+ * that we reset the capture buffer properly.
+ *
+ * See 59db194299c94c6707095797c3df0e2f67ff82b2
+ * and 38508ce8fc3a1bd12a3bb65e9d4ceb9b396a18db
+ * for more details.
+ */
+#define VOLATILE_REF 1
 
 #include "regcharclass.h"
 
@@ -81,6 +138,7 @@ typedef struct regexp_internal {
 #define RXi_SET(x,y) (x)->pprivate = (void*)(y)   
 #define RXi_GET(x)   ((regexp_internal *)((x)->pprivate))
 #define RXi_GET_DECL(r,ri) regexp_internal *ri = RXi_GET(r)
+#define RXi_GET_DECL_NULL(r,ri) regexp_internal *ri = (r) ? RXi_GET(r) : NULL
 /*
  * Flags stored in regexp->intflags
  * These are used only internally to the regexp engine
@@ -106,6 +164,7 @@ typedef struct regexp_internal {
 #define PREGf_ANCH_SBOL         0x00000800
 #define PREGf_ANCH_GPOS         0x00001000
 #define PREGf_RECURSE_SEEN      0x00002000
+#define PREGf_PESSIMIZE_SEEN    0x00004000
 
 #define PREGf_ANCH              \
     ( PREGf_ANCH_SBOL | PREGf_ANCH_GPOS | PREGf_ANCH_MBOL )
@@ -119,16 +178,36 @@ typedef struct regexp_internal {
  * change things without care. If you look at regexp.h you will see it
  * contains this:
  *
- * struct regnode {
- *   U8  flags;
- *   U8  type;
- *   U16 next_off;
+ * union regnode_head {
+ *   struct {
+ *     union {
+ *       U8 flags;
+ *       U8 str_len_u8;
+ *       U8 first_byte;
+ *     } u_8;
+ *     U8  type;
+ *     U16 next_off;
+ *   } data;
+ *   U32 data_u32;
  * };
  *
- * This structure is the base unit of elements in the regexp program. When
- * we increment our way through the program we increment by the size of this
- * structure, and in all cases where regnode sizing is considered it is in
- * units of this structure.
+ * struct regnode {
+ *   union regnode_head head;
+ * };
+ *
+ * Which really is a complicated and alignment friendly version of
+ *
+ *  struct {
+ *    U8  flags;
+ *    U8  type;
+ *    U16 next_off;
+ *  };
+ *
+ * This structure is the base unit of elements in the regexp program.
+ * When we increment our way through the program we increment by the
+ * size of this structure (32 bits), and in all cases where regnode
+ * sizing is considered it is in units of this structure. All regnodes
+ * have a union regnode_head as their first parameter.
  *
  * This implies that no regnode style structure should contain 64 bit
  * aligned members. Since the base regnode is 32 bits any member might
@@ -151,36 +230,40 @@ typedef struct regexp_internal {
  * we already have support for in the data array.
  */
 
+union regnode_arg {
+    I32 i32;
+    U32 u32;
+    struct {
+        U16 u16a;
+        U16 u16b;
+    } hi_lo;
+};
+
+
 struct regnode_string {
-    U8	str_len;
-    U8  type;
-    U16 next_off;
+    union regnode_head head;
     char string[1];
 };
 
 struct regnode_lstring { /* Constructed this way to keep the string aligned. */
-    U8	flags;
-    U8  type;
-    U16 next_off;
-    U32 str_len;    /* Only 18 bits allowed before would overflow 'next_off' */
+    union regnode_head head;
+    U32 str_len_u32;    /* Only 18 bits allowed before would overflow 'next_off' */
     char string[1];
 };
 
 struct regnode_anyofhs { /* Constructed this way to keep the string aligned. */
-    U8	str_len;
-    U8  type;
-    U16 next_off;
-    U32 arg1;                           /* set by set_ANYOF_arg() */
+    union regnode_head head;
+    union regnode_arg arg1;
     char string[1];
 };
 
-/* Argument bearing node - workhorse, 
-   arg1 is often for the data field */
+/* Argument bearing node - workhorse, ARG1u() is often used for the data field
+ * Can store either a signed 32 bit value via ARG1i() or unsigned 32 bit value
+ * via ARG1u(), or two unsigned 16 bit values via ARG1a() or ARG1b()
+ */
 struct regnode_1 {
-    U8	flags;
-    U8  type;
-    U16 next_off;
-    U32 arg1;
+    union regnode_head head;
+    union regnode_arg arg1;
 };
 
 /* Node whose argument is 'SV *'.  This needs to be used very carefully in
@@ -199,31 +282,48 @@ struct regnode_1 {
  * then use inline functions to copy the data in or out.
  * */
 struct regnode_p {
-    U8	flags;
-    U8  type;
-    U16 next_off;
+    union regnode_head head;
     char arg1_sv_ptr_bytes[sizeof(SV *)];
 };
 
-/* Similar to a regnode_1 but with an extra signed argument */
-struct regnode_2L {
-    U8	flags;
-    U8  type;
-    U16 next_off;
-    U32 arg1;
-    I32 arg2;
-};
-
-/* 'Two field' -- Two 16 bit unsigned args */
+/* "Two Node" - similar to a regnode_1 but with space for an extra 32
+ * bit value, or two 16 bit valus. The first fields must match regnode_1.
+ * Extra field can be accessed as (U32)ARG2u() (I32)ARG2i() or (U16)ARG2a()
+ * and (U16)ARG2b() */
 struct regnode_2 {
-    U8	flags;
-    U8  type;
-    U16 next_off;
-    U16 arg1;
-    U16 arg2;
+    union regnode_head head;
+    union regnode_arg arg1;
+    union regnode_arg arg2;
 };
 
-#define ANYOF_BITMAP_SIZE	(NUM_ANYOF_CODE_POINTS / 8)   /* 8 bits/Byte */
+/* "Three Node" - similar to a regnode_2 but with space for an additional
+ * 32 bit value, or two 16 bit values. The first fields must match regnode_2.
+ * The extra field can be accessed as (U32)ARG3u() (I32)ARG3i() or (U16)ARG3a()
+ * and (U16)ARG3b().
+ * Currently used for the CURLY style regops used to represent quantifers,
+ * storing the min and of the quantifier via ARG1i() and ARG2i(), along with
+ * ARG3a() and ARG3b() which are used to store information about the number of
+ * parens before and inside the quantified expression. */
+struct regnode_3 {
+    union regnode_head head;
+    union regnode_arg arg1;
+    union regnode_arg arg2;
+    union regnode_arg arg3;
+};
+
+#define REGNODE_BBM_BITMAP_LEN                                                  \
+                      /* 6 info bits requires 64 bits; 5 => 32 */               \
+                    ((1 << (UTF_CONTINUATION_BYTE_INFO_BITS)) / CHARBITS)
+
+/* Used for matching any two-byte UTF-8 character whose start byte is known.
+ * The array is a bitmap capable of representing any possible continuation
+ * byte. */
+struct regnode_bbm {
+    union regnode_head head;
+    U8 bitmap[REGNODE_BBM_BITMAP_LEN];
+};
+
+#define ANYOF_BITMAP_SIZE	(NUM_ANYOF_CODE_POINTS / CHARBITS)
 
 /* Note that these form structs which are supersets of the next smaller one, by
  * appending fields.  Alignment problems can occur if one of those optional
@@ -235,22 +335,18 @@ struct regnode_2 {
  * the code that inserts and deletes regnodes.  The basic single-argument
  * regnode has a U32, which is what reganode() allocates as a unit.  Therefore
  * no field can require stricter alignment than U32. */
-
+    
 /* also used by trie */
 struct regnode_charclass {
-    U8	flags;
-    U8  type;
-    U16 next_off;
-    U32 arg1;                           /* set by set_ANYOF_arg() */
+    union regnode_head head;
+    union regnode_arg arg1;
     char bitmap[ANYOF_BITMAP_SIZE];	/* only compile-time */
 };
 
 /* has runtime (locale) \d, \w, ..., [:posix:] classes */
 struct regnode_charclass_posixl {
-    U8	flags;                      /* ANYOF_MATCHES_POSIXL bit must go here */
-    U8  type;
-    U16 next_off;
-    U32 arg1;
+    union regnode_head head;
+    union regnode_arg arg1;
     char bitmap[ANYOF_BITMAP_SIZE];		/* both compile-time ... */
     U32 classflags;	                        /* and run-time */
 };
@@ -269,10 +365,8 @@ struct regnode_charclass_posixl {
  * never a next node.
  */
 struct regnode_ssc {
-    U8	flags;                      /* ANYOF_MATCHES_POSIXL bit must go here */
-    U8  type;
-    U16 next_off;
-    U32 arg1;
+    union regnode_head head;
+    union regnode_arg arg1;
     char bitmap[ANYOF_BITMAP_SIZE];	/* both compile-time ... */
     U32 classflags;	                /* ... and run-time */
 
@@ -289,31 +383,34 @@ struct regnode_ssc {
  *  to 12 regnode units on 32-bit systems, (hence the minimum this can be (if
  *  not 0) is 11 there.  Even if things get tightly packed on a 64-bit system,
  *  it still would be more than 1. */
-#define set_ANYOF_SYNTHETIC(n) STMT_START{ OP(n) = ANYOF;              \
-                                           NEXT_OFF(n) = 1;            \
-                               } STMT_END
-#define is_ANYOF_SYNTHETIC(n) (PL_regkind[OP(n)] == ANYOF && NEXT_OFF(n) == 1)
+#define set_ANYOF_SYNTHETIC(n)  \
+    STMT_START{                 \
+        OP(n) = ANYOF;          \
+        NEXT_OFF(n) = 1;        \
+    } STMT_END
+
+#define is_ANYOF_SYNTHETIC(n) (REGNODE_TYPE(OP(n)) == ANYOF && NEXT_OFF(n) == 1)
 
 /* XXX fix this description.
    Impose a limit of REG_INFTY on various pattern matching operations
    to limit stack growth and to avoid "infinite" recursions.
 */
-/* The default size for REG_INFTY is U16_MAX, which is the same as
-   USHORT_MAX (see perl.h).  Unfortunately U16 isn't necessarily 16 bits
-   (see handy.h).  On the Cray C90, sizeof(short)==4 and hence U16_MAX is
-   ((1<<32)-1), while on the Cray T90, sizeof(short)==8 and U16_MAX is
-   ((1<<64)-1).  To limit stack growth to reasonable sizes, supply a
+/* The default size for REG_INFTY is I32_MAX, which is the same as UINT_MAX
+   (see perl.h). Unfortunately I32 isn't necessarily 32 bits (see handy.h).
+   On the Cray C90, or Cray T90, I32_MAX is considerably larger than it
+   might be elsewhere. To limit stack growth to reasonable sizes, supply a
    smaller default.
         --Andy Dougherty  11 June 1998
+        --Amended by Yves Orton 15 Jan 2023
 */
-#if SHORTSIZE > 2
+#if INTSIZE > 4
 #  ifndef REG_INFTY
-#    define REG_INFTY  nBIT_UMAX(16)
+#    define REG_INFTY  nBIT_IMAX(32)
 #  endif
 #endif
 
 #ifndef REG_INFTY
-#  define REG_INFTY U16_MAX
+#  define REG_INFTY I32_MAX
 #endif
 
 #define ARG_VALUE(arg) (arg)
@@ -323,23 +420,48 @@ struct regnode_ssc {
 #undef ARG1
 #undef ARG2
 
-#define ARG(p) ARG_VALUE(ARG_LOC(p))
-#define ARGp(p) ARGp_VALUE_inline(p)
-#define ARG1(p) ARG_VALUE(ARG1_LOC(p))
-#define ARG2(p) ARG_VALUE(ARG2_LOC(p))
-#define ARG2L(p) ARG_VALUE(ARG2L_LOC(p))
+/* convention: each arg is is 32 bits, with the "u" suffix
+ * being unsigned 32 bits, the "i" suffix being signed 32 bits,
+ * and the "a" and "b" suffixes being unsigned 16 bit fields.
+ *
+ * We provide all 4 macros for each case for consistency, even
+ * though they arent all used.
+ */
 
-#define ARG_SET(p, val) ARG__SET(ARG_LOC(p), (val))
-#define ARG1_SET(p, val) ARG__SET(ARG1_LOC(p), (val))
-#define ARG2_SET(p, val) ARG__SET(ARG2_LOC(p), (val))
-#define ARG2L_SET(p, val) ARG__SET(ARG2L_LOC(p), (val))
+#define ARG1u(p) ARG_VALUE(ARG1u_LOC(p))
+#define ARG1i(p) ARG_VALUE(ARG1i_LOC(p))
+#define ARG1a(p) ARG_VALUE(ARG1a_LOC(p))
+#define ARG1b(p) ARG_VALUE(ARG1b_LOC(p))
+
+#define ARG2u(p) ARG_VALUE(ARG2u_LOC(p))
+#define ARG2i(p) ARG_VALUE(ARG2i_LOC(p))
+#define ARG2a(p) ARG_VALUE(ARG2a_LOC(p))
+#define ARG2b(p) ARG_VALUE(ARG2b_LOC(p))
+
+#define ARG3u(p) ARG_VALUE(ARG3u_LOC(p))
+#define ARG3i(p) ARG_VALUE(ARG3i_LOC(p))
+#define ARG3a(p) ARG_VALUE(ARG3a_LOC(p))
+#define ARG3b(p) ARG_VALUE(ARG3b_LOC(p))
+
+#define ARGp(p) ARGp_VALUE_inline(p)
+
+#define ARG1u_SET(p, val) ARG__SET(ARG1u_LOC(p), (val))
+#define ARG1i_SET(p, val) ARG__SET(ARG1i_LOC(p), (val))
+#define ARG1a_SET(p, val) ARG__SET(ARG1a_LOC(p), (val))
+#define ARG1b_SET(p, val) ARG__SET(ARG1b_LOC(p), (val))
+
+#define ARG2u_SET(p, val) ARG__SET(ARG2u_LOC(p), (val))
+#define ARG2i_SET(p, val) ARG__SET(ARG2i_LOC(p), (val))
+#define ARG2a_SET(p, val) ARG__SET(ARG2a_LOC(p), (val))
+#define ARG2b_SET(p, val) ARG__SET(ARG2b_LOC(p), (val))
+
+#define ARG3u_SET(p, val) ARG__SET(ARG3u_LOC(p), (val))
+#define ARG3i_SET(p, val) ARG__SET(ARG3i_LOC(p), (val))
+#define ARG3a_SET(p, val) ARG__SET(ARG3a_LOC(p), (val))
+#define ARG3b_SET(p, val) ARG__SET(ARG3b_LOC(p), (val))
+
 #define ARGp_SET(p, val) ARGp_SET_inline((p),(val))
 
-#undef NEXT_OFF
-#undef NODE_ALIGN
-
-#define NEXT_OFF(p) ((p)->next_off)
-#define NODE_ALIGN(node)
 /* the following define was set to 0xde in 075abff3
  * as part of some linting logic. I have set it to 0
  * as otherwise in every place where we /might/ set flags
@@ -349,23 +471,32 @@ struct regnode_ssc {
  * is changed from 0 then at the very least make sure
  * that SBOL for /^/ sets the flags to 0 explicitly.
  * -- Yves */
-#define NODE_ALIGN_FILL(node) ((node)->flags = 0)
 
+#define NODE_ALIGN(node)
 #define SIZE_ALIGN NODE_ALIGN
 
 #undef OP
 #undef OPERAND
 #undef STRING
+#undef NEXT_OFF
+#undef NODE_ALIGN
 
-#define	OP(p)		((p)->type)
-#define FLAGS(p)	((p)->flags)	/* Caution: Doesn't apply to all      \
+#define NEXT_OFF(p)     ((p)->head.data.next_off)
+#define OP(p)           ((p)->head.data.type)
+#define STR_LEN_U8(p)   ((p)->head.data.u_8.str_len_u8)
+#define FIRST_BYTE(p)   ((p)->head.data.u_8.first_byte)
+#define FLAGS(p)        ((p)->head.data.u_8.flags) /* Caution: Doesn't apply to all      \
                                            regnode types.  For some, it's the \
                                            character set of the regnode */
-#define	STR_LENs(p)	(__ASSERT_(OP(p) != LEXACT && OP(p) != LEXACT_REQ8)  \
-                                    ((struct regnode_string *)p)->str_len)
-#define	STRINGs(p)	(__ASSERT_(OP(p) != LEXACT && OP(p) != LEXACT_REQ8)  \
+#define STR_LENs(p)	(__ASSERT_(OP(p) != LEXACT && OP(p) != LEXACT_REQ8)  \
+                                    STR_LEN_U8((struct regnode_string *)p))
+#define STRINGs(p)	(__ASSERT_(OP(p) != LEXACT && OP(p) != LEXACT_REQ8)  \
                                     ((struct regnode_string *)p)->string)
-#define	OPERANDs(p)	STRINGs(p)
+#define OPERANDs(p)	STRINGs(p)
+
+#define PARNO(p)        ARG1u(p)          /* APPLIES for OPEN and CLOSE only */
+
+#define NODE_ALIGN_FILL(node) (FLAGS(node) = 0)
 
 /* Long strings.  Currently limited to length 18 bits, which handles a 262000
  * byte string.  The limiting factor is the 16 bit 'next_off' field, which
@@ -379,55 +510,158 @@ struct regnode_ssc {
  * node to be an ARG2L, using the second 32 bit field for the length, and not
  * using the flags nor next_off fields at all.  One could have an llstring node
  * and even an lllstring type. */
-#define	STR_LENl(p)	(__ASSERT_(OP(p) == LEXACT || OP(p) == LEXACT_REQ8)  \
-                                    (((struct regnode_lstring *)p)->str_len))
-#define	STRINGl(p)	(__ASSERT_(OP(p) == LEXACT || OP(p) == LEXACT_REQ8)  \
+#define STR_LENl(p)	(__ASSERT_(OP(p) == LEXACT || OP(p) == LEXACT_REQ8)  \
+                                    (((struct regnode_lstring *)p)->str_len_u32))
+#define STRINGl(p)	(__ASSERT_(OP(p) == LEXACT || OP(p) == LEXACT_REQ8)  \
                                     (((struct regnode_lstring *)p)->string))
-#define	OPERANDl(p)	STRINGl(p)
+#define OPERANDl(p)	STRINGl(p)
 
-#define	STR_LEN(p)	((OP(p) == LEXACT || OP(p) == LEXACT_REQ8)           \
+#define STR_LEN(p)	((OP(p) == LEXACT || OP(p) == LEXACT_REQ8)           \
                                                ? STR_LENl(p) : STR_LENs(p))
-#define	STRING(p)	((OP(p) == LEXACT || OP(p) == LEXACT_REQ8)           \
+#define STRING(p)	((OP(p) == LEXACT || OP(p) == LEXACT_REQ8)           \
                                                ? STRINGl(p)  : STRINGs(p))
-#define	OPERAND(p)	STRING(p)
+#define OPERAND(p)	STRING(p)
 
 /* The number of (smallest) regnode equivalents that a string of length l bytes
- * occupies */
+ * occupies - Used by the REGNODE_AFTER() macros and functions. */
 #define STR_SZ(l)	(((l) + sizeof(regnode) - 1) / sizeof(regnode))
-
-/* The number of (smallest) regnode equivalents that the EXACTISH node 'p'
- * occupies */
-#define NODE_SZ_STR(p)	(STR_SZ(STR_LEN(p)) + 1 + regarglen[(p)->type])
 
 #define setSTR_LEN(p,v)                                                     \
     STMT_START{                                                             \
         if (OP(p) == LEXACT || OP(p) == LEXACT_REQ8)                        \
-            ((struct regnode_lstring *)(p))->str_len = (v);                 \
+            ((struct regnode_lstring *)(p))->str_len_u32 = (v);             \
         else                                                                \
-            ((struct regnode_string *)(p))->str_len = (v);                  \
+            STR_LEN_U8((struct regnode_string *)(p)) = (v);                 \
     } STMT_END
 
 #define ANYOFR_BASE_BITS    20
-#define ANYOFRbase(p)   (ARG(p) & nBIT_MASK(ANYOFR_BASE_BITS))
-#define ANYOFRdelta(p)  (ARG(p) >> ANYOFR_BASE_BITS)
+#define ANYOFRbase(p)   (ARG1u(p) & nBIT_MASK(ANYOFR_BASE_BITS))
+#define ANYOFRdelta(p)  (ARG1u(p) >> ANYOFR_BASE_BITS)
 
 #undef NODE_ALIGN
 #undef ARG_LOC
-#undef NEXTOPER
-#undef PREVOPER
 
-#define	NODE_ALIGN(node)
-#define	ARG_LOC(p)	(((struct regnode_1 *)p)->arg1)
+#define NODE_ALIGN(node)
 #define ARGp_BYTES_LOC(p)  (((struct regnode_p *)p)->arg1_sv_ptr_bytes)
-#define	ARG1_LOC(p)	(((struct regnode_2 *)p)->arg1)
-#define	ARG2_LOC(p)	(((struct regnode_2 *)p)->arg2)
-#define ARG2L_LOC(p)	(((struct regnode_2L *)p)->arg2)
+#define ARG1u_LOC(p)    (((struct regnode_1 *)p)->arg1.u32)
+#define ARG1i_LOC(p)    (((struct regnode_1 *)p)->arg1.i32)
+#define ARG1a_LOC(p)    (((struct regnode_1 *)p)->arg1.hi_lo.u16a)
+#define ARG1b_LOC(p)    (((struct regnode_1 *)p)->arg1.hi_lo.u16b)
+#define ARG2u_LOC(p)    (((struct regnode_2 *)p)->arg2.u32)
+#define ARG2i_LOC(p)    (((struct regnode_2 *)p)->arg2.i32)
+#define ARG2a_LOC(p)    (((struct regnode_2 *)p)->arg2.hi_lo.u16a)
+#define ARG2b_LOC(p)    (((struct regnode_2 *)p)->arg2.hi_lo.u16b)
+#define ARG3u_LOC(p)    (((struct regnode_3 *)p)->arg3.u32)
+#define ARG3i_LOC(p)    (((struct regnode_3 *)p)->arg3.i32)
+#define ARG3a_LOC(p)    (((struct regnode_3 *)p)->arg3.hi_lo.u16a)
+#define ARG3b_LOC(p)    (((struct regnode_3 *)p)->arg3.hi_lo.u16b)
 
+/* These should no longer be used directly in most cases. Please use
+ * the REGNODE_AFTER() macros instead. */
 #define NODE_STEP_REGNODE	1	/* sizeof(regnode)/sizeof(regnode) */
-#define EXTRA_STEP_2ARGS	EXTRA_SIZE(struct regnode_2)
 
-#define	NEXTOPER(p)	((p) + NODE_STEP_REGNODE)
-#define	PREVOPER(p)	((p) - NODE_STEP_REGNODE)
+/* Core macros for computing "the regnode after this one". See also
+ * Perl_regnode_after() in reginline.h
+ *
+ * At the struct level regnodes are a linked list, with each node pointing
+ * at the next (via offsets), usually via the C<next_off> field in the
+ * structure. Where there is a need for a node to have two children the
+ * immediate physical successor of the node in the compiled program is used
+ * to represent one of them. A good example is the BRANCH construct,
+ * consider the pattern C</head(?:[ab]foo|[cd]bar)tail/>
+ *
+ *      1: EXACT <head> (3)
+ *      3: BRANCH (8)
+ *      4:   ANYOFR[ab] (6)
+ *      6:   EXACT <foo> (14)
+ *      8: BRANCH (FAIL)
+ *      9:   ANYOFR[cd] (11)
+ *     11:   EXACT <bar> (14)
+ *     13: TAIL (14)
+ *     14: EXACT <tail> (16)
+ *     16: END (0)
+ *
+ * The numbers in parens at the end of each line show the "next_off" value
+ * for that regnode in the program. We can see that the C<next_off> of
+ * the first BRANCH node (#3) is the second BRANCH node (#8), and indicates
+ * where execution should go if the regnodes *following* the BRANCH node fail
+ * to accept the input string. Thus to find the "next BRANCH" we would do
+ * C<Perl_regnext()> and follow the C<next_off> pointer, and to find
+ * the "BRANCHes contents" we would use C<REGNODE_AFTER()>.
+ *
+ * Be aware that C<REGNODE_AFTER()> is not guaranteed to give a *useful*
+ * result once the regex peephole optimizer has run (it will be correct
+ * however!). By the time code in regexec.c executes various regnodes
+ * may have been optimized out of the C<next_off> chain. An example
+ * can be seen above, node 13 will never be reached during execution
+ * flow as it has been stitched out of the C<next_off> chain. Both 6 and
+ * 11 would have pointed at it during compilation, but it exists only to
+ * facilitate the construction of the BRANCH structure and is effectively
+ * a NOOP, and thus the optimizer adjusts the links so it is skipped
+ * from execution time flow. In regexec.c it is only safe to use
+ * REGNODE_AFTER() on specific node types.
+ *
+ * Conversely during compilation C<Perl_regnext()> may not work properly
+ * as the C<next_off> may not be known until "later", (such as in the
+ * case of BRANCH nodes) and thus in regcomp.c the REGNODE_AFTER() macro
+ * is used very heavily instead.
+ *
+ * There are several variants of the REGNODE_AFTER_xxx() macros which
+ * are intended for use in different situations depending on how
+ * confident the code is about what type of node it is trying to find a
+ * successor for.
+ *
+ * So for instance if you know you are dealing with a known node type of
+ * constant size then you should use REGNODE_AFTER_type(n,TYPE).
+ *
+ * If you have a regnode pointer and you know you are dealing with a
+ * regnode type of constant size and you have already extracted its
+ * opcode use: REGNODE_AFTER_opcode(n,OPCODE).
+ *
+ * If you have a regnode and you know it is variable size then you
+ * you can produce optimized code by using REGNODE_AFTER_varies(n).
+ *
+ * If you have a regnode pointer and nothing else use: REGNODE_AFTER(n)
+ * This is the safest option and wraps C<Perl_regnode_after()>. It
+ * should produce the correct result regardless of its argument. The
+ * other options only produce correct results under specific
+ * constraints.
+ */
+#define        REGNODE_AFTER_PLUS(p,extra)    ((p) + NODE_STEP_REGNODE + (extra))
+/* under DEBUGGING we check that all REGNODE_AFTER optimized macros did the
+ * same thing that Perl_regnode_after() would have done. Note that when
+ * not compiled under DEBUGGING the assert_() macro is empty. Thus we
+ * don't have to implement different versions for DEBUGGING and not DEBUGGING,
+ * and explains why all the macros use REGNODE_AFTER_PLUS_DEBUG() under the
+ * hood. */
+#define REGNODE_AFTER_PLUS_DEBUG(p,extra) \
+    (assert_(check_regnode_after(p,extra))  REGNODE_AFTER_PLUS((p),(extra)))
+
+/* find the regnode after this p by using the opcode we previously extracted
+ * with OP(p) */
+#define REGNODE_AFTER_opcode(p,op)          REGNODE_AFTER_PLUS_DEBUG((p),REGNODE_ARG_LEN(op))
+
+/* find the regnode after this p by using the size of the struct associated with
+ * the opcode for p. use this when you *know* that p is pointer to a given type*/
+#define REGNODE_AFTER_type(p,t)             REGNODE_AFTER_PLUS_DEBUG((p),EXTRA_SIZE(t))
+
+/* find the regnode after this p by using OP(p) to find the regnode type of p */
+#define REGNODE_AFTER_varies(p)            regnode_after(p,TRUE)
+
+/* find the regnode after this p by using OP(p) to find the regnode type of p */
+#define REGNODE_AFTER(p)            regnode_after(p,FALSE)
+
+
+/* REGNODE_BEFORE() is trickier to deal with in terms of validation, execution.
+ * All the places that use it assume that p will be one struct regnode large.
+ * So to validate it we do the math to go backwards and then validate that the
+ * type of regnode we landed on is actually one regnode large. In theory if
+ * things go wrong the opcode should be illegal or say the item should be larger
+ * than it is, etc. */
+#define        REGNODE_BEFORE_BASE(p)        ((p) - NODE_STEP_REGNODE)
+#define        REGNODE_BEFORE_BASE_DEBUG(p)        \
+    (assert_(check_regnode_after(REGNODE_BEFORE_BASE(p),0))  REGNODE_BEFORE_BASE(p))
+#define REGNODE_BEFORE(p) REGNODE_BEFORE_BASE_DEBUG(p)
 
 #define FILL_NODE(offset, op)                                           \
     STMT_START {                                                        \
@@ -439,24 +673,24 @@ struct regnode_ssc {
                     FILL_NODE(offset, op);                              \
                     (offset)++;                                         \
     } STMT_END
-#define FILL_ADVANCE_NODE_ARG(offset, op, arg)                          \
+#define FILL_ADVANCE_NODE_ARG1u(offset, op, arg)                        \
     STMT_START {                                                        \
-                    ARG_SET(REGNODE_p(offset), arg);                    \
+                    ARG1u_SET(REGNODE_p(offset), arg);                  \
                     FILL_ADVANCE_NODE(offset, op);                      \
                     /* This is used generically for other operations    \
                      * that have a longer argument */                   \
-                    (offset) += regarglen[op];                          \
+                    (offset) += REGNODE_ARG_LEN(op);                    \
     } STMT_END
-#define FILL_ADVANCE_NODE_ARGp(offset, op, arg)                          \
+#define FILL_ADVANCE_NODE_ARGp(offset, op, arg)                         \
     STMT_START {                                                        \
-                    ARGp_SET(REGNODE_p(offset), arg);                    \
+                    ARGp_SET(REGNODE_p(offset), arg);                   \
                     FILL_ADVANCE_NODE(offset, op);                      \
-                    (offset) += regarglen[op];                          \
+                    (offset) += REGNODE_ARG_LEN(op);                    \
     } STMT_END
-#define FILL_ADVANCE_NODE_2L_ARG(offset, op, arg1, arg2)                \
+#define FILL_ADVANCE_NODE_2ui_ARG(offset, op, arg1, arg2)               \
     STMT_START {                                                        \
-                    ARG_SET(REGNODE_p(offset), arg1);                   \
-                    ARG2L_SET(REGNODE_p(offset), arg2);                 \
+                    ARG1u_SET(REGNODE_p(offset), arg1);                 \
+                    ARG2i_SET(REGNODE_p(offset), arg2);                 \
                     FILL_ADVANCE_NODE(offset, op);                      \
                     (offset) += 2;                                      \
     } STMT_END
@@ -479,104 +713,137 @@ ARGp_SET_inline(struct regnode *node, SV *ptr) {
 
 #define REG_MAGIC 0234
 
-/* An ANYOF node is basically a bitmap with the index being a code point.  If
- * the bit for that code point is 1, the code point matches;  if 0, it doesn't
- * match (complemented if inverted).  There is an additional mechanism to deal
- * with cases where the bitmap is insufficient in and of itself.  This #define
- * indicates if the bitmap does fully represent what this ANYOF node can match.
- * The ARG is set to this special value (since 0, 1, ... are legal, but will
- * never reach this high). */
-#define ANYOF_ONLY_HAS_BITMAP	((U32) -1)
+/* An ANYOF node matches a single code point based on specified criteria.  It
+ * now comes in several styles, but originally it was just a 256 element
+ * bitmap, indexed by the code point (which was always just a byte).  If the
+ * corresponding bit for a code point is 1, the code point matches; if 0, it
+ * doesn't match (complemented if inverted).  This worked fine before Unicode
+ * existed, but making a bit map long enough to accommodate a bit for every
+ * possible Unicode code point is prohibitively large.  Therefore it is made
+ * much much smaller, and an inversion list is created to handle code points
+ * not represented by the bitmap.  (It is now possible to compile the bitmap to
+ * a larger size to avoid the slower inversion list lookup for however big the
+ * bitmap is set to, but this is rarely done).  If the bitmap is sufficient to
+ * specify all possible matches (with nothing outside it matching), no
+ * inversion list is needed nor included, and the argument to the ANYOF node is
+ * set to the following: */
 
-/* When the bitmap isn't completely sufficient for handling the ANYOF node,
- * flags (in node->flags of the ANYOF node) get set to indicate this.  These
- * are perennially in short supply.  Beyond several cases where warnings need
- * to be raised under certain circumstances, currently, there are six cases
- * where the bitmap alone isn't sufficient.  We could use six flags to
- * represent the 6 cases, but to save flags bits, we play some games.  The
- * cases are:
+#define ANYOF_MATCHES_ALL_OUTSIDE_BITMAP_VALUE   U32_MAX
+#define ANYOF_MATCHES_ALL_OUTSIDE_BITMAP(node)                              \
+                    (ARG1u(node) == ANYOF_MATCHES_ALL_OUTSIDE_BITMAP_VALUE)
+
+#define ANYOF_MATCHES_NONE_OUTSIDE_BITMAP_VALUE                             \
+   /* Assumes ALL is odd */  (ANYOF_MATCHES_ALL_OUTSIDE_BITMAP_VALUE - 1)
+#define ANYOF_MATCHES_NONE_OUTSIDE_BITMAP(node)                             \
+                    (ARG1u(node) == ANYOF_MATCHES_NONE_OUTSIDE_BITMAP_VALUE)
+
+#define ANYOF_ONLY_HAS_BITMAP_MASK  ANYOF_MATCHES_NONE_OUTSIDE_BITMAP_VALUE
+#define ANYOF_ONLY_HAS_BITMAP(node)                                         \
+  ((ARG1u(node) & ANYOF_ONLY_HAS_BITMAP_MASK) == ANYOF_ONLY_HAS_BITMAP_MASK)
+
+#define ANYOF_HAS_AUX(node)  (! ANYOF_ONLY_HAS_BITMAP(node))
+
+/* There are also ANYOFM nodes, used when the bit patterns representing the
+ * matched code points happen to be such that they can be checked by ANDing
+ * with a mask.  The regex compiler looks for and silently optimizes to using
+ * this node type in the few cases where it works out.  The eight octal digits
+ * form such a group.  These nodes are simple and fast and no further
+ * discussion is needed here.
  *
- *  1)  The bitmap has a compiled-in very finite size.  So something else needs
- *      to be used to specify if a code point that is too large for the bitmap
- *      actually matches.  The mechanism currently is an inversion
- *      list.  ANYOF_ONLY_HAS_BITMAP, described above, being TRUE indicates
- *      there are no matches of too-large code points.  But if it is FALSE,
- *      then almost certainly there are matches too large for the bitmap.  (The
- *      other cases, described below, either imply this one or are extremely
- *      rare in practice.)  So we can just assume that a too-large code point
- *      will need something beyond the bitmap if ANYOF_ONLY_HAS_BITMAP is
- *      FALSE, instead of having a separate flag for this.
- *  2)  A subset of item 1) is if all possible code points outside the bitmap
- *      match.  This is a common occurrence when the class is complemented,
- *      like /[^ij]/.  Therefore a bit is reserved to indicate this,
- *      rather than having an inversion list created,
- *      ANYOF_MATCHES_ALL_ABOVE_BITMAP.
- *  3)  Under /d rules, it can happen that code points that are in the upper
+ * And, there are ANYOFH-ish nodes which match only code points that aren't in
+ * the bitmap  (the H stands for High).  These are common for expressing
+ * Unicode properties concerning non-Latin scripts.  They dispense with the
+ * bitmap altogether and don't need any of the flags discussed below.
+ *
+ * And, there are ANYOFR-ish nodes which match within a single range.
+ *
+ * When there is a need to specify what matches outside the bitmap, it is done
+ * by allocating an AV as part of the pattern's compiled form, and the argument
+ * to the node instead of being ANYOF_ONLY_HAS_BITMAP, points to that AV.
+ *
+ * (Actually, that is an oversimplification.  The AV is placed into the
+ * pattern's struct reg_data, and what is stored in the node's argument field
+ * is its index into that struct.  And the inversion list is just one element,
+ * the zeroth, of the AV.)
+ *
+ * There are certain situations where a single inversion list can't handle all
+ * the complexity.  These are dealt with by having extra elements in the AV, by
+ * specifying flag bits in the ANYOF node, and/or special code.  As an example,
+ * there are instances where what the ANYOF node matches is not completely
+ * known until runtime.  In these cases, a flag is set, and the bitmap has a 1
+ * for the code points which are known at compile time to be 1, and a 0 for the
+ * ones that are known to be 0, or require runtime resolution.  Some missing
+ * information can be found by merely seeing if the pattern is UTF-8 or not;
+ * other cases require looking at the extra elements in the AV.
+ *
+ * There are 5 cases where the bitmap is insufficient.  These are specified by
+ * flags in the node's flags field.  We could use five bits to represent the 5
+ * cases, but to save flags bits (which are perennially in short supply), we
+ * play some games.  The cases are:
+ *
+ *  1)  As already mentioned, if some code points outside the bitmap match, and
+ *      some do not, an inversion list is specified to indicate which ones.
+ *
+ *  2)  Under /d rules, it can happen that code points that are in the upper
  *      latin1 range (\x80-\xFF or their equivalents on EBCDIC platforms) match
  *      only if the runtime target string being matched against is UTF-8.  For
- *      example /[\w[:punct:]]/d.  This happens only for posix classes (with a
- *      couple of exceptions, like \d where it doesn't happen), and all such
- *      ones also have above-bitmap matches.  Thus, 3) implies 1) as well.
+ *      example /[\w[:punct:]]/d.  This happens only for certain posix classes,
+ *      and all such ones also have above-bitmap matches.
+ *
  *      Note that /d rules are no longer encouraged; 'use 5.14' or higher
- *      deselects them.  But a flag is required so that they can be properly
- *      handled.  But it can be a shared flag: see 5) below.
- *  4)  Also under /d rules, something like /[\Wfoo]/ will match everything in
+ *      deselects them.  But they are still supported, and a flag is required
+ *      so that they can be properly handled.  But it can be a shared flag: see
+ *      4) below.
+ *
+ *  3)  Also under /d rules, something like /[\Wfoo]/ will match everything in
  *      the \x80-\xFF range, unless the string being matched against is UTF-8.
  *      An inversion list could be created for this case, but this is
  *      relatively common, and it turns out that it's all or nothing:  if any
  *      one of these code points matches, they all do.  Hence a single bit
  *      suffices.  We use a shared flag that doesn't take up space by itself:
- *      ANYOF_SHARED_d_MATCHES_ALL_NON_UTF8_NON_ASCII_non_d_WARN_SUPER.  This
- *      also implies 1), with one exception: [:^cntrl:].
- *  5)  A user-defined \p{} property may not have been defined by the time the
+ *      ANYOFD_NON_UTF8_MATCHES_ALL_NON_ASCII__shared.  This also means there
+ *      is an inversion list for the things that don't fit into the bitmap.
+ *
+ *  4)  A user-defined \p{} property may not have been defined by the time the
  *      regex is compiled.  In this case, we don't know until runtime what it
  *      will match, so we have to assume it could match anything, including
  *      code points that ordinarily would be in the bitmap.  A flag bit is
- *      necessary to indicate this, though it can be shared with the item 3)
- *      flag, as that only occurs under /d, and this only occurs under non-d.
- *      This case is quite uncommon in the field, and the /(?[ ...])/ construct
- *      is a better way to accomplish what this feature does.  This case also
- *      implies 1).
- *      ANYOF_SHARED_d_UPPER_LATIN1_UTF8_STRING_MATCHES_non_d_RUNTIME_USER_PROP
- *      is the shared flag.
- *  6)  /[foo]/il may have folds that are only valid if the runtime locale is a
- *      UTF-8 one.  These are quite rare, so it would be good to avoid the
- *      expense of looking for them.  But /l matching is slow anyway, and we've
- *      traditionally not worried too much about its performance.  And this
- *      condition requires the ANYOFL_FOLD flag to be set, so testing for
- *      that flag would be sufficient to rule out most cases of this.  So it is
- *      unclear if this should have a flag or not.  But, this flag can be
- *      shared with another, so it doesn't occupy extra space.
+ *      necessary to indicate this, though we can use the
+ *      ANYOF_HAS_EXTRA_RUNTIME_MATCHES flag, along with the node not being
+ *      ANYOFD.  The information required to construct the property is stored
+ *      in the AV pointed to by the node's argument.  This case is quite
+ *      uncommon in the field, and the /(?[...])/ construct is a better way to
+ *      accomplish what this feature does.
  *
- * At the moment, there is one spare bit, but this could be increased by
+ *  5)  /[foo]/il may have folds that are only valid if the runtime locale is a
+ *      UTF-8 one.  The ANYOF_HAS_EXTRA_RUNTIME_MATCHES flag can also be used
+ *      for these.  The list is stored in a different element of the AV, so its
+ *      existence differentiates this case from that of 4), along with the node
+ *      being ANYOFL, with the ANYOFL_FOLD flag being set.  There are a few
+ *      additional folds valid only if the UTF-8 locale is a Turkic one which
+ *      is tested for explicitly.
+ *
+ * Note that the user-defined property flag and the /il flag can affect whether
+ * an ASCII character matches in the bitmap or not.
+ *
+ * And this still isn't the end of the story.  In some cases, warnings are
+ * supposed to be raised when matching certain categories of code points in the
+ * target string.  Flags are set to indicate this.  This adds up to a bunch of
+ * flags required, and we only have 8 available.  That is why we share some.
+ * At the moment, there are two spare flag bits, but this could be increased by
  * various tricks:
  *
- * If just one more bit is needed, as of this writing it seems to khw that the
- * best choice would be to make ANYOF_MATCHES_ALL_ABOVE_BITMAP not a flag, but
- * something like
- *
- *      #define ANYOF_MATCHES_ALL_ABOVE_BITMAP      ((U32) -2)
- *
- * and access it through the ARG like ANYOF_ONLY_HAS_BITMAP is.  This flag is
- * used by all ANYOF node types, and it could be used to avoid calling the
- * handler function, as the macro REGINCLASS in regexec.c does now for other
- * cases.
- *
- * Another possibility is based on the fact that ANYOF_MATCHES_POSIXL is
- * redundant with the node type ANYOFPOSIXL.  That flag could be removed, but
- * at the expense of extra code in regexec.c.  The flag has been retained
- * because it allows us to see if we need to call reginclass, or just use the
- * bitmap in one test.
+ * ANYOF_MATCHES_POSIXL is redundant with the node type ANYOFPOSIXL.  That flag
+ * could be removed, but at the expense of having to write extra code, which
+ * would take up space, and writing this turns out to be not hard, but not
+ * trivial.
  *
  * If this is done, an extension would be to make all ANYOFL nodes contain the
- * extra 32 bits that ANYOFPOSIXL ones do.  The posix flags only occupy 30
- * bits, so the ANYOFL_SHARED_UTF8_LOCALE_fold_HAS_MATCHES_nonfold_REQD flags
- * and ANYOFL_FOLD could be moved to that extra space, but it would mean extra
- * instructions, as there are currently places in the code that assume those
- * two bits are zero.
- *
- * All told, 5 bits could be available for other uses if all of the above were
- * done.
+ * extra 32 bits that ANYOFPOSIXL ones do, doubling each instance's size.  The
+ * posix flags only occupy 30 bits, so the ANYOFL_FOLD  and
+ * ANYOFL_UTF8_LOCALE_REQD bits could be moved to that extra space, but it
+ * would also mean extra instructions, as there are currently places in the
+ * code that assume those two bits are zero.
  *
  * Some flags are not used in synthetic start class (SSC) nodes, so could be
  * shared should new flags be needed for SSCs, like SSC_MATCHES_EMPTY_STRING
@@ -602,48 +869,39 @@ ARGp_SET_inline(struct regnode *node, SV *ptr) {
  * then.  Only set under /l; never in an SSC  */
 #define ANYOFL_FOLD                             0x04
 
-/* Shared bit set only with ANYOFL and SSC nodes:
- *    If ANYOFL_FOLD is set, this flag indicates there are potential matches
- *      valid only if the locale is a UTF-8 one.
- *    If ANYOFL_FOLD is NOT set, this flag means to warn if the runtime locale
- *       isn't a UTF-8 one (and the generated node assumes a UTF-8 locale).
- *       None of INVERT, POSIXL,
- *       ANYOF_SHARED_d_UPPER_LATIN1_UTF8_STRING_MATCHES_non_d_RUNTIME_USER_PROP
- *       can be set.  */
-#define ANYOFL_SHARED_UTF8_LOCALE_fold_HAS_MATCHES_nonfold_REQD        0x08
-
-/* Convenience macros for teasing apart the meanings when reading the above bit
- * */
-#define ANYOFL_SOME_FOLDS_ONLY_IN_UTF8_LOCALE(flags)                        \
-    ((flags & ( ANYOFL_FOLD /* Both bits are set */                         \
-               |ANYOFL_SHARED_UTF8_LOCALE_fold_HAS_MATCHES_nonfold_REQD))   \
-             == ( ANYOFL_FOLD                                               \
-                 |ANYOFL_SHARED_UTF8_LOCALE_fold_HAS_MATCHES_nonfold_REQD))
-
-#define  ANYOFL_UTF8_LOCALE_REQD(flags)                                     \
-    ((flags & ( ANYOFL_FOLD /* Only REQD bit is set */                      \
-               |ANYOFL_SHARED_UTF8_LOCALE_fold_HAS_MATCHES_nonfold_REQD))   \
-             == ANYOFL_SHARED_UTF8_LOCALE_fold_HAS_MATCHES_nonfold_REQD)
+/* Warn if the runtime locale isn't a UTF-8 one (and the generated node assumes
+ * a UTF-8 locale. */
+#define ANYOFL_UTF8_LOCALE_REQD                 0x08
 
 /* Spare: Be sure to change ANYOF_FLAGS_ALL if this gets used  0x10 */
 
-/* If set, the node matches every code point NUM_ANYOF_CODE_POINTS and above.
- * Can be in an SSC */
-#define ANYOF_MATCHES_ALL_ABOVE_BITMAP          0x20
+/* Spare: Be sure to change ANYOF_FLAGS_ALL if this gets used  0x20 */
 
-/* Shared bit:
- *      Under /d it means the ANYOFD node matches more things if the target
- *          string is encoded in UTF-8; any such things will be non-ASCII,
- *          characters that are < 256, and can be accessed via the inversion
- *          list.
- *      When not under /d, it means the ANYOF node contains a user-defined
- *      property that wasn't yet defined at the time the regex was compiled,
- *      and so must be looked up at runtime, by creating an inversion list.
- * (These uses are mutually exclusive because a user-defined property is
- * specified by \p{}, and \p{} implies /u which deselects /d).  The long macro
- * name is to make sure that you are cautioned about its shared nature.  Only
- * the non-/d meaning can be in an SSC */
-#define ANYOF_SHARED_d_UPPER_LATIN1_UTF8_STRING_MATCHES_non_d_RUNTIME_USER_PROP  0x40
+/* Shared bit that indicates that there are potential additional matches stored
+ * outside the bitmap, as pointed to by the AV given by the node's argument.
+ * The node type is used at runtime (in conjunction with this flag and other
+ * information available then) to decide if the flag should be acted upon.
+ * This extra information is needed because of at least one of the following
+ * three reasons.
+ *      Under /d and the matched string is in UTF-8, it means the ANYOFD node
+ *          matches more things than in the bitmap.  Those things will be any
+ *          code point too high for the bitmap, but crucially, any non-ASCII
+ *          characters that match iff when using Unicode rules.  These all are
+ *          < 256.
+ *
+ *      Under /l and ANYOFL_FOLD is set, this flag may indicate there are
+ *          potential matches valid only if the locale is a UTF-8 one.  If so,
+ *          a list of them is stored in the AV.
+ *
+ *      For any non-ANYOFD node, there may be a user-defined property that
+ *          wasn't yet defined at the time the regex was compiled, and so must
+ *          be looked up at runtime, The information required to do so will
+ *          also be in the AV.
+ *
+ *      Note that an ANYOFL node may contain both a user-defined property, and
+ *      folds not always valid.  The important thing is that there is an AV to
+ *      look at. */
+#define ANYOF_HAS_EXTRA_RUNTIME_MATCHES 0x40
 
 /* Shared bit:
  *      Under /d it means the ANYOFD node matches all non-ASCII Latin1
@@ -652,13 +910,16 @@ ARGp_SET_inline(struct regnode *node, SV *ptr) {
  *          matching against an above-Unicode code point.
  * (These uses are mutually exclusive because the warning requires a \p{}, and
  * \p{} implies /u which deselects /d).  An SSC node only has this bit set if
- * what is meant is the warning.  The long macro name is to make sure that you
- * are cautioned about its shared nature */
-#define ANYOF_SHARED_d_MATCHES_ALL_NON_UTF8_NON_ASCII_non_d_WARN_SUPER 0x80
+ * what is meant is the warning.  The names are to make sure that you are
+ * cautioned about its shared nature */
+#define ANYOFD_NON_UTF8_MATCHES_ALL_NON_ASCII__shared 0x80
+#define ANYOF_WARN_SUPER__shared                      0x80
 
-#define ANYOF_FLAGS_ALL		((U8) ~0x10)
+#define ANYOF_FLAGS_ALL		((U8) ~(0x10|0x20))
 
-#define ANYOF_LOCALE_FLAGS (ANYOFL_FOLD | ANYOF_MATCHES_POSIXL)
+#define ANYOF_LOCALE_FLAGS (  ANYOFL_FOLD               \
+                            | ANYOF_MATCHES_POSIXL      \
+                            | ANYOFL_UTF8_LOCALE_REQD)
 
 /* These are the flags that apply to both regular ANYOF nodes and synthetic
  * start class nodes during construction of the SSC.  During finalization of
@@ -669,48 +930,48 @@ ARGp_SET_inline(struct regnode *node, SV *ptr) {
 /* Should be synchronized with a table in regprop() */
 /* 2n should be the normal one, paired with its complement at 2n+1 */
 
-#define ANYOF_ALPHA    ((_CC_ALPHA) * 2)
+#define ANYOF_ALPHA    ((CC_ALPHA_) * 2)
 #define ANYOF_NALPHA   ((ANYOF_ALPHA) + 1)
-#define ANYOF_ALPHANUMERIC   ((_CC_ALPHANUMERIC) * 2)    /* [[:alnum:]] isalnum(3), utf8::IsAlnum */
+#define ANYOF_ALPHANUMERIC   ((CC_ALPHANUMERIC_) * 2)    /* [[:alnum:]] isalnum(3), utf8::IsAlnum */
 #define ANYOF_NALPHANUMERIC  ((ANYOF_ALPHANUMERIC) + 1)
-#define ANYOF_ASCII    ((_CC_ASCII) * 2)
+#define ANYOF_ASCII    ((CC_ASCII_) * 2)
 #define ANYOF_NASCII   ((ANYOF_ASCII) + 1)
-#define ANYOF_BLANK    ((_CC_BLANK) * 2)     /* GNU extension: space and tab: non-vertical space */
+#define ANYOF_BLANK    ((CC_BLANK_) * 2)     /* GNU extension: space and tab: non-vertical space */
 #define ANYOF_NBLANK   ((ANYOF_BLANK) + 1)
-#define ANYOF_CASED    ((_CC_CASED) * 2)    /* Pseudo class for [:lower:] or
+#define ANYOF_CASED    ((CC_CASED_) * 2)    /* Pseudo class for [:lower:] or
                                                [:upper:] under /i */
 #define ANYOF_NCASED   ((ANYOF_CASED) + 1)
-#define ANYOF_CNTRL    ((_CC_CNTRL) * 2)
+#define ANYOF_CNTRL    ((CC_CNTRL_) * 2)
 #define ANYOF_NCNTRL   ((ANYOF_CNTRL) + 1)
-#define ANYOF_DIGIT    ((_CC_DIGIT) * 2)     /* \d */
+#define ANYOF_DIGIT    ((CC_DIGIT_) * 2)     /* \d */
 #define ANYOF_NDIGIT   ((ANYOF_DIGIT) + 1)
-#define ANYOF_GRAPH    ((_CC_GRAPH) * 2)
+#define ANYOF_GRAPH    ((CC_GRAPH_) * 2)
 #define ANYOF_NGRAPH   ((ANYOF_GRAPH) + 1)
-#define ANYOF_LOWER    ((_CC_LOWER) * 2)
+#define ANYOF_LOWER    ((CC_LOWER_) * 2)
 #define ANYOF_NLOWER   ((ANYOF_LOWER) + 1)
-#define ANYOF_PRINT    ((_CC_PRINT) * 2)
+#define ANYOF_PRINT    ((CC_PRINT_) * 2)
 #define ANYOF_NPRINT   ((ANYOF_PRINT) + 1)
-#define ANYOF_PUNCT    ((_CC_PUNCT) * 2)
+#define ANYOF_PUNCT    ((CC_PUNCT_) * 2)
 #define ANYOF_NPUNCT   ((ANYOF_PUNCT) + 1)
-#define ANYOF_SPACE    ((_CC_SPACE) * 2)     /* \s */
+#define ANYOF_SPACE    ((CC_SPACE_) * 2)     /* \s */
 #define ANYOF_NSPACE   ((ANYOF_SPACE) + 1)
-#define ANYOF_UPPER    ((_CC_UPPER) * 2)
+#define ANYOF_UPPER    ((CC_UPPER_) * 2)
 #define ANYOF_NUPPER   ((ANYOF_UPPER) + 1)
-#define ANYOF_WORDCHAR ((_CC_WORDCHAR) * 2)  /* \w, PL_utf8_alnum, utf8::IsWord, ALNUM */
+#define ANYOF_WORDCHAR ((CC_WORDCHAR_) * 2)  /* \w, PL_utf8_alnum, utf8::IsWord, ALNUM */
 #define ANYOF_NWORDCHAR   ((ANYOF_WORDCHAR) + 1)
-#define ANYOF_XDIGIT   ((_CC_XDIGIT) * 2)
+#define ANYOF_XDIGIT   ((CC_XDIGIT_) * 2)
 #define ANYOF_NXDIGIT  ((ANYOF_XDIGIT) + 1)
 
 /* pseudo classes below this, not stored in the class bitmap, but used as flags
    during compilation of char classes */
 
-#define ANYOF_VERTWS    ((_CC_VERTSPACE) * 2)
+#define ANYOF_VERTWS    ((CC_VERTSPACE_) * 2)
 #define ANYOF_NVERTWS   ((ANYOF_VERTWS)+1)
 
 /* It is best if this is the last one, as all above it are stored as bits in a
  * bitmap, and it isn't part of that bitmap */
-#if _CC_VERTSPACE != _HIGHEST_REGCOMP_DOT_H_SYNC
-#   error Problem with handy.h _HIGHEST_REGCOMP_DOT_H_SYNC #define
+#if CC_VERTSPACE_ != HIGHEST_REGCOMP_DOT_H_SYNC_
+#   error Problem with handy.h HIGHEST_REGCOMP_DOT_H_SYNC_ #define
 #endif
 
 #define ANYOF_POSIXL_MAX (ANYOF_VERTWS) /* So upper loop limit is written:
@@ -720,7 +981,7 @@ ARGp_SET_inline(struct regnode *node, SV *ptr) {
 #define ANYOF_MAX      ANYOF_POSIXL_MAX
 
 #if (ANYOF_POSIXL_MAX > 32)   /* Must fit in 32-bit word */
-#   error Problem with handy.h _CC_foo #defines
+#   error Problem with handy.h CC_foo_ #defines
 #endif
 
 #define ANYOF_HORIZWS	((ANYOF_POSIXL_MAX)+2) /* = (ANYOF_NVERTWS + 1) */
@@ -740,9 +1001,13 @@ ARGp_SET_inline(struct regnode *node, SV *ptr) {
 
 /* Utility macros for the bitmap and classes of ANYOF */
 
-#define ANYOF_FLAGS(p)		((p)->flags)
+#define BITMAP_BYTE(p, c)	(( (U8*) (p)) [ ( ( (UV) (c)) >> 3) ] )
+#define BITMAP_BIT(c)	        (1U << ((c) & 7))
+#define BITMAP_TEST(p, c)	(BITMAP_BYTE(p, c) & BITMAP_BIT((U8)(c)))
 
-#define ANYOF_BIT(c)		(1U << ((c) & 7))
+#define ANYOF_FLAGS(p)          (FLAGS(p))
+
+#define ANYOF_BIT(c)		BITMAP_BIT(c)
 
 #define ANYOF_POSIXL_BITMAP(p)  (((regnode_charclass_posixl*) (p))->classflags)
 
@@ -794,7 +1059,7 @@ ARGp_SET_inline(struct regnode *node, SV *ptr) {
 #define ANYOF_BITMAP_BYTE(p, c)	BITMAP_BYTE(ANYOF_BITMAP(p), c)
 #define ANYOF_BITMAP_SET(p, c)	(ANYOF_BITMAP_BYTE(p, c) |=  ANYOF_BIT(c))
 #define ANYOF_BITMAP_CLEAR(p,c)	(ANYOF_BITMAP_BYTE(p, c) &= ~ANYOF_BIT(c))
-#define ANYOF_BITMAP_TEST(p, c)	cBOOL(ANYOF_BITMAP_BYTE(p, c) &   ANYOF_BIT(c))
+#define ANYOF_BITMAP_TEST(p, c)	cBOOL(ANYOF_BITMAP_BYTE(p, c) & ANYOF_BIT(c))
 
 #define ANYOF_BITMAP_SETALL(p)		\
         memset (ANYOF_BITMAP(p), 255, ANYOF_BITMAP_SIZE)
@@ -828,6 +1093,7 @@ ARGp_SET_inline(struct regnode *node, SV *ptr) {
 #define REG_UNFOLDED_MULTI_SEEN             0x00000400
 /* spare */
 #define REG_UNBOUNDED_QUANTIFIER_SEEN       0x00001000
+#define REG_PESSIMIZE_SEEN                  0x00002000
 
 
 START_EXTERN_C
@@ -976,6 +1242,11 @@ struct _reg_trie_data {
     char            *bitmap;         /* stclass bitmap */
     U16 	    *jump;           /* optional 1 indexed array of offsets before tail 
                                         for the node following a given word. */
+    U16             *j_before_paren; /* optional 1 indexed array of parno reset data
+                                        for the given jump. */
+    U16             *j_after_paren;  /* optional 1 indexed array of parno reset data
+                                        for the given jump. */
+
     reg_trie_wordinfo *wordinfo;     /* array of info per word */
     U16             uniquecharcount; /* unique chars in trie (width of trans table) */
     U32             startstate;      /* initial state - used for common prefix optimisation */
@@ -985,6 +1256,8 @@ struct _reg_trie_data {
     U32             statecount;      /* Build only - number of states in the states array 
                                         (including the unused zero state) */
     U32             wordcount;       /* Build only */
+    U16             before_paren;
+    U16             after_paren;
 #ifdef DEBUGGING
     STRLEN          charcount;       /* Build only */
 #endif
@@ -1025,10 +1298,6 @@ typedef struct _reg_ac_data reg_ac_data;
 
 #define IS_ANYOF_TRIE(op) ((op)==TRIEC || (op)==AHOCORASICKC)
 #define IS_TRIE_AC(op) ((op)>=AHOCORASICK)
-
-
-#define BITMAP_BYTE(p, c)	(( (U8*) p) [ ( ( (UV) (c)) >> 3) ] )
-#define BITMAP_TEST(p, c)	(BITMAP_BYTE(p, c) &   ANYOF_BIT((U8)c))
 
 /* these defines assume uniquecharcount is the correct variable, and state may be evaluated twice */
 #define TRIE_NODENUM(state) (((state)-1)/(trie->uniquecharcount)+1)
@@ -1184,7 +1453,7 @@ re.pm, especially to the documentation.
                      /* get_sv() can return NULL during global destruction. */ \
         re_debug_flags_sv = PL_curcop ? get_sv(RE_DEBUG_FLAGS, GV_ADD) : NULL; \
         if (re_debug_flags_sv) {                                               \
-            if (!SvIOK(re_debug_flags_sv)) /* If doesnt exist set to default */\
+            if (!SvIOK(re_debug_flags_sv)) /* If doesn't exist set to default */\
                 sv_setuv(re_debug_flags_sv,                                    \
                         /* These defaults should be kept in sync with re.pm */ \
                             RE_DEBUG_COMPILE_DUMP | RE_DEBUG_EXECUTE_MASK );   \
@@ -1234,7 +1503,7 @@ re.pm, especially to the documentation.
 #define FIRST_NON_ASCII_DECIMAL_DIGIT 0x660  /* ARABIC_INDIC_DIGIT_ZERO */
 
 typedef enum {
-        TRADITIONAL_BOUND = _CC_WORDCHAR,
+        TRADITIONAL_BOUND = CC_WORDCHAR_,
         GCB_BOUND,
         LB_BOUND,
         SB_BOUND,
@@ -1265,6 +1534,27 @@ typedef enum {
 #define HIGHEST_ANYOF_HRx_BYTE(b)                                           \
                                   (LOWEST_ANYOF_HRx_BYTE(b)                 \
           + ((MAX_ANYOF_HRx_BYTE - LOWEST_ANYOF_HRx_BYTE(b)) >> ((b) & 3)))
+
+#if !defined(PERL_IN_XSUB_RE) || defined(PLUGGABLE_RE_EXTENSION)
+#  define GET_REGCLASS_AUX_DATA(a,b,c,d,e,f)  get_regclass_aux_data(a,b,c,d,e,f)
+#else
+#  define GET_REGCLASS_AUX_DATA(a,b,c,d,e,f)  get_re_gclass_aux_data(a,b,c,d,e,f)
+#endif
+
+#define REGNODE_TYPE(node)              (PL_regnode_info[(node)].type)
+#define REGNODE_OFF_BY_ARG(node)        (PL_regnode_info[(node)].off_by_arg)
+#define REGNODE_ARG_LEN(node)           (PL_regnode_info[(node)].arg_len)
+#define REGNODE_ARG_LEN_VARIES(node)    (PL_regnode_info[(node)].arg_len_varies)
+#define REGNODE_NAME(node)              (PL_regnode_name[(node)])
+
+#if defined(PERL_IN_REGEX_ENGINE)
+#include "reginline.h"
+#endif
+
+#define EVAL_OPTIMISTIC_FLAG    128
+#define EVAL_FLAGS_MASK         (EVAL_OPTIMISTIC_FLAG-1)
+
+
 
 #endif /* PERL_REGCOMP_H_ */
 

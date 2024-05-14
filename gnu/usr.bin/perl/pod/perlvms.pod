@@ -235,8 +235,8 @@ either don't use it at all, or make sure your entire toolchain and
 application environment support and use it.
 
 OpenVMS Alpha v7.3-1 and later and all version of OpenVMS I64 support
-case sensitivity as a process setting (see C<SET PROCESS
-/CASE_LOOKUP=SENSITIVE>). Perl does not currently support case
+case sensitivity as a process setting (see S<C<SET PROCESS
+/CASE_LOOKUP=SENSITIVE>>). Perl does not currently support case
 sensitivity on VMS, but it may in the future, so Perl programs should
 use the C<< File::Spec->case_tolerant >> method to determine the state, and
 not the C<$^O> variable.
@@ -249,7 +249,7 @@ in the filesystem and CRTL (generally 64-bit OpenVMS v8.3 and later).
 There are a number of limitations and caveats to be aware of when
 working with symbolic links on VMS.  Most notably, the target of a valid
 symbolic link must be expressed as a Unix-style path and it must exist
-on a volume visible from your POSIX root (see the C<SHOW ROOT> command
+on a volume visible from your POSIX root (see the S<C<SHOW ROOT>> command
 in DCL help).  For further details on symbolic link capabilities and
 requirements, see chapter 12 of the CRTL manual that ships with OpenVMS
 v8.3 or later.

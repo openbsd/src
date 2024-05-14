@@ -98,11 +98,6 @@ Stack Overflow is a free question-and-answer site for programmers. It's not
 focussed solely on Perl, but it does have an active group of users who do
 their best to help people with their Perl programming questions.
 
-=item L<http://prepan.org/>
-
-PrePAN is used as a place to discuss modules that you're considering uploading
-to the CPAN.  You can get feedback on their design before you upload.
-
 =back
 
 =head2 User Groups

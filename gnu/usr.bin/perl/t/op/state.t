@@ -346,7 +346,7 @@ foreach my $x (0 .. 4) {
 #
 my @spam = qw [spam ham bacon beans];
 foreach my $spam (@spam) {
-    no warnings 'experimental::smartmatch';
+    no warnings 'deprecated';
     given (state $spam = $spam) {
         when ($spam [0]) {ok 1, "given"}
         default          {ok 0, "given"}

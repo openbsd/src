@@ -21,6 +21,8 @@ my $shell = $ENV{SHELL} || '';
 SKIP: {
     skip "This test can only be run under bash or zsh"
         unless $shell =~ m{/(?:ba|z)sh$};
+    skip "LSAN noise failing to create a thread due to limits"
+        if $Config::Config{ccflags} =~ /sanitize=address/;
     my $probe = qx{
         $shell -c 'ulimit -u 1 2>/dev/null && echo good'
     };

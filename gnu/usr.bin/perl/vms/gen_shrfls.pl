@@ -56,8 +56,8 @@ my $docc = ($cc_cmd !~ /^~~/);
 print "\$docc = $docc\n" if $debug;
 
 my ( $use_threads, $use_mymalloc, $care_about_case, $shorten_symbols,
-     $debugging_enabled, $hide_mymalloc, $isgcc, $use_perlio, $dir )
-   = ( 0, 0, 0, 0, 0, 0, 0, 0 );
+     $debugging_enabled, $hide_mymalloc, $use_perlio, $dir )
+   = ( 0, 0, 0, 0, 0, 0, 0 );
 
 if (-f 'perl.h') { $dir = '[]'; }
 elsif (-f '[-]perl.h') { $dir = '[-]'; }
@@ -73,7 +73,6 @@ while(<CONFIG>) {
     $shorten_symbols++ if /d_vms_shorten_long_symbols='(define|yes|true|t|y|1)'/i;
     $debugging_enabled++ if /usedebugging_perl='(define|yes|true|t|y|1)'/i;
     $hide_mymalloc++ if /embedmymalloc='(define|yes|true|t|y|1)'/i;
-    $isgcc++ if /gccversion='[^']/;
     $use_perlio++ if /useperlio='(define|yes|true|t|y|1)'/i;
 }
 close CONFIG;
@@ -89,10 +88,6 @@ if (my ($prefix,$defines,$suffix) =
 }
 print "Filtered \$cc_cmd: \\$cc_cmd\\\n" if $debug;
 
-# check for gcc - if present, we'll need to use MACRO hack to
-# define global symbols for shared variables
-
-print "\$isgcc: $isgcc\n" if $debug;
 print "\$debugging_enabled: $debugging_enabled\n" if $debug;
 
 my $objsuffix = shift @ARGV;
@@ -127,7 +122,6 @@ while (my $line = <$makedefs>) {
   }
 }
 
-if ($debugging_enabled and $isgcc) { $vars{'colors'}++ }
 foreach (split /\s+/, $extnames) {
   my($pkgname) = $_;
   $pkgname =~ s/::/__/g;
@@ -142,9 +136,8 @@ my $marord = 1;
 open(OPTBLD,'>', "${dir}${dbgprefix}perlshr_bld.opt")
   or die "$0: Can't write to ${dir}${dbgprefix}perlshr_bld.opt: $!\n";
 
-unless ($isgcc) {
-  print OPTBLD "PSECT_ATTR=LIB\$INITIALIZE,GBL,NOEXE,NOWRT,NOSHR,LONG\n";
-}
+
+print OPTBLD "PSECT_ATTR=LIB\$INITIALIZE,GBL,NOEXE,NOWRT,NOSHR,LONG\n";
 print OPTBLD "case_sensitive=yes\n" if $care_about_case;
 my $count = 0;
 foreach my $var (sort (keys %vars)) {
@@ -157,19 +150,8 @@ foreach my $func (sort keys %fcns) {
 
 open(OPTATTR, '>', "${dir}perlshr_attr.opt")
   or die "$0: Can't write to ${dir}perlshr_attr.opt: $!\n";
-if ($isgcc) {
-# TODO -- lost ability to distinguish constant vars from others when
-# we switched to using makedef.pl for input.
-#  foreach my $var (sort keys %cvars) {
-#    print OPTATTR "PSECT_ATTR=${var},PIC,OVR,RD,NOEXE,NOWRT,SHR\n";
-#  }
-  foreach my $var (sort keys %vars) {
-    print OPTATTR "PSECT_ATTR=${var},PIC,OVR,RD,NOEXE,WRT,NOSHR\n";
-  }
-}
-else {
-  print OPTATTR "! No additional linker directives are needed when using DECC\n";
-}
+
+print OPTATTR "! No additional linker directives are needed when using DECC\n";
 close OPTATTR;
 
 my $incstr = 'perl,globals';

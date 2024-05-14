@@ -174,20 +174,20 @@
 #  ifdef MUTEX_INIT_NEEDS_MUTEX_ZEROED
     /* Temporary workaround, true bug is deeper. --jhi 1999-02-25 */
 #    define MUTEX_INIT(m) \
-    STMT_START {						\
-        int _eC_;						\
-        Zero((m), 1, perl_mutex);                               \
-        if ((_eC_ = pthread_mutex_init((m), pthread_mutexattr_default)))	\
-            Perl_croak_nocontext("panic: MUTEX_INIT (%d) [%s:%d]",	\
-                                 _eC_, __FILE__, __LINE__);	\
+    STMT_START {                                                    \
+        int _eC_;                                                   \
+        Zero((m), 1, perl_mutex);                                   \
+        if ((_eC_ = pthread_mutex_init((m), pthread_mutexattr_default)))\
+            Perl_croak_nocontext("panic: MUTEX_INIT (%d) [%s:%d]",  \
+                                 _eC_, __FILE__, __LINE__);         \
     } STMT_END
 #  else
 #    define MUTEX_INIT(m) \
     STMT_START {						\
         int _eC_;						\
-        if ((_eC_ = pthread_mutex_init((m), pthread_mutexattr_default)))	\
-            Perl_croak_nocontext("panic: MUTEX_INIT (%d) [%s:%d]",	\
-                                 _eC_, __FILE__, __LINE__);	\
+        if ((_eC_ = pthread_mutex_init((m), pthread_mutexattr_default))) \
+            Perl_croak_nocontext("panic: MUTEX_INIT (%d) [%s:%d]", \
+                                 _eC_, __FILE__, __LINE__);     \
     } STMT_END
 #  endif
 
@@ -199,28 +199,38 @@
 #    define perl_pthread_mutex_unlock(m) pthread_mutex_unlock(m)
 #  endif
 
-#  define MUTEX_LOCK(m) \
+#  define MUTEX_LOCK(m)                                         \
     STMT_START {						\
+        dSAVE_ERRNO;                                            \
         int _eC_;						\
-        if ((_eC_ = perl_pthread_mutex_lock((m))))			\
-            Perl_croak_nocontext("panic: MUTEX_LOCK (%d) [%s:%d]",	\
+        if ((_eC_ = perl_pthread_mutex_lock((m))))		\
+            Perl_croak_nocontext("panic: MUTEX_LOCK (%d) [%s:%d]",\
                                  _eC_, __FILE__, __LINE__);	\
+        RESTORE_ERRNO;                                          \
     } STMT_END
 
-#  define MUTEX_UNLOCK(m) \
+#  define MUTEX_UNLOCK(m)                                       \
     STMT_START {						\
+        dSAVE_ERRNO; /* Shouldn't be necessary as panics if fails */\
         int _eC_;						\
-        if ((_eC_ = perl_pthread_mutex_unlock((m))))			\
-            Perl_croak_nocontext("panic: MUTEX_UNLOCK (%d) [%s:%d]",	\
+        if ((_eC_ = perl_pthread_mutex_unlock((m)))) {          \
+            Perl_croak_nocontext(                               \
+                            "panic: MUTEX_UNLOCK (%d) [%s:%d]", \
                                  _eC_, __FILE__, __LINE__);	\
+        }                                                       \
+        RESTORE_ERRNO;                                          \
     } STMT_END
 
-#  define MUTEX_DESTROY(m) \
-    STMT_START {						\
-        int _eC_;						\
-        if ((_eC_ = pthread_mutex_destroy((m))))		\
-            Perl_croak_nocontext("panic: MUTEX_DESTROY (%d) [%s:%d]",	\
-                                 _eC_, __FILE__, __LINE__);	\
+#  define MUTEX_DESTROY(m)                                                  \
+    STMT_START {						            \
+        int _eC_;						            \
+        if ((_eC_ = pthread_mutex_destroy((m)))) {                          \
+            dTHX;                                                           \
+            if (PL_phase != PERL_PHASE_DESTRUCT) {                          \
+                Perl_croak_nocontext("panic: MUTEX_DESTROY (%d) [%s:%d]",   \
+                                    _eC_, __FILE__, __LINE__);	            \
+            }                                                               \
+        }                                                                   \
     } STMT_END
 #endif /* MUTEX_INIT */
 
@@ -258,11 +268,15 @@
     } STMT_END
 
 #  define COND_DESTROY(c) \
-    STMT_START {						\
-        int _eC_;						\
-        if ((_eC_ = pthread_cond_destroy((c))))			\
-            Perl_croak_nocontext("panic: COND_DESTROY (%d) [%s:%d]",	\
-                                 _eC_, __FILE__, __LINE__);	\
+    STMT_START {						            \
+        int _eC_;						            \
+        if ((_eC_ = pthread_cond_destroy((c)))) {                           \
+            dTHX;                                                           \
+            if (PL_phase != PERL_PHASE_DESTRUCT) {                          \
+                Perl_croak_nocontext("panic: COND_DESTROY (%d) [%s:%d]",    \
+                                    _eC_, __FILE__, __LINE__);	            \
+            }                                                               \
+        }                                                                   \
     } STMT_END
 #endif /* COND_INIT */
 
@@ -390,12 +404,14 @@ extern PERL_THREAD_LOCAL void *PL_current_context;
 /* We must also call pthread_setspecific() always, as C++ code has to read it
  * with pthreads (the #else side just below) */
 
-#  define PERL_SET_CONTEXT(t)                                           \
-    STMT_START {                                                        \
-        int _eC_;                                                       \
-        if ((_eC_ = pthread_setspecific(PL_thr_key, PL_current_context = (void *)(t)))) \
+#  define PERL_SET_CONTEXT(t)                                               \
+    STMT_START {                                                            \
+        int _eC_;                                                           \
+        if ((_eC_ = pthread_setspecific(PL_thr_key,                         \
+                                        PL_current_context = (void *)(t)))) \
             Perl_croak_nocontext("panic: pthread_setspecific (%d) [%s:%d]", \
-                                 _eC_, __FILE__, __LINE__);             \
+                                 _eC_, __FILE__, __LINE__);                 \
+        PERL_SET_NON_tTHX_CONTEXT(t);                                       \
     } STMT_END
 
 #else

@@ -40,6 +40,89 @@ sub cmp_delta {
     return $max/$min <= (1+$delta);
 }
 
+sub splatter {
+    my ($message) = @_;
+    my $splatter = <<~'EOF_SPLATTER';
+    Please file a ticket to report this. Our bug tracker can be found at
+
+        https://github.com/Perl/perl5/issues
+
+    Make sure you include the full output of perl -V, also uname -a,
+    and the version details for the C compiler you are using are
+    very helpful.
+
+    Please also try compiling and running the C program that can
+    be found at
+
+        https://github.com/Perl/perl5/issues/20839#issuecomment-1439286875
+
+    and provide the results (or compile errors) as part of your
+    bug report.
+
+    EOF_SPLATTER
+
+    if ( $message =~ s/\.\.\.//) {
+        $splatter =~ s/Please/please/;
+    }
+    die $message, $splatter;
+}
+
+{
+    # Benchmark may end up "looping forever" if time() or times() are
+    # broken such that they do not return different values over time.
+    # The following crude test is intended to ensure that we can rely
+    # on them and be confident that we won't infinite loop in the
+    # following tests.
+    #
+    # You can simulate a broken time or times() function by setting
+    # the appropriate env var to a true value:
+    #
+    #   time()    -> SIMULATE_BROKEN_TIME_FUNCTION
+    #   times()   -> SIMULATE_BROKEN_TIMES_FUNCTION
+    #
+    # If you have a very fast box you may need to set the FAST_CPU env
+    # var to a number larger than 1 to require these tests to perform
+    # more iterations to see the time actually tick over. (You could
+    # also set it to a value between 0 and 1 to speed this up, but I
+    # don't see why you would...)
+    #
+    # See https://github.com/Perl/perl5/issues/20839 for the ticket
+    # that motivated this test. - Yves
+
+    my @times0;
+    for ( 1 .. 3 ) {
+        my $end_time = time + 1;
+        my $count = 0;
+        my $scale = $ENV{FAST_CPU} || 1;
+        my $count_threshold = 20_000;
+        while ( $ENV{SIMULATE_BROKEN_TIME_FUNCTION} || time < $end_time ) {
+            my $x = 0.0;
+            for ( 1 .. 10_000 ) {
+                $x += sqrt(time);
+            }
+            if (++$count > $count_threshold * $scale) {
+                last;
+            }
+        }
+        cmp_ok($count,"<",$count_threshold * $scale,
+            "expecting \$count < ($count_threshold * $scale)")
+        or splatter(<<~'EOF_SPLATTER');
+        Either this system is extremely fast, or the time() function
+        is broken.
+
+        If you think this system is extremely fast you may scale up the
+        number of iterations allowed by this test by setting FAST_CPU=N
+        in the environment. Higher N will allow more ops-per-second
+        before we decide time() is broken.
+
+        If setting a higher FAST_CPU value does not fix this problem then ...
+        EOF_SPLATTER
+        push @times0, $ENV{SIMULATE_BROKEN_TIMES_FUNCTION} ? 0 : (times)[0];
+    }
+    isnt("@times0", "0 0 0", "Make sure times() does not always return 0.")
+        or splatter("It appears you have a broken a times() function.\n\n");
+}
+
 my $t0 = new Benchmark;
 isa_ok ($t0, 'Benchmark', "Ensure we can create a benchmark object");
 

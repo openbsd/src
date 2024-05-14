@@ -716,6 +716,24 @@ PP(pp_sort)
 
     ENTER;
     SAVEVPTR(PL_sortcop);
+
+    /* Important flag meanings:
+     *
+     *  OPf_STACKED        sort <function_name> args
+     *
+     * (OPf_STACKED
+     * |OPf_SPECIAL)       sort { <block> } args
+     *
+     *  ----               standard block; e.g. sort { $a <=> $b } args
+     *
+     *
+     *  OPpSORT_NUMERIC    { $a <=> $b } (as opposed to $a cmp $b)
+     *  OPpSORT_INTEGER    ditto in scope of 'use integer'
+     *  OPpSORT_DESCEND    { $b <=> $a }
+     *  OPpSORT_REVERSE    @a= reverse sort ....;
+     *  OPpSORT_INPLACE    @a = sort @a;
+     */
+
     if (flags & OPf_STACKED) {
         if (flags & OPf_SPECIAL) {
             OP *nullop = OpSIBLING(cLISTOP->op_first);  /* pass pushmark */
@@ -888,10 +906,10 @@ PP(pp_sort)
 
                     if (hasargs) {
                         /* This is mostly copied from pp_entersub */
-                        AV * const av = MUTABLE_AV(PAD_SVl(0));
+                        AV * const av0 = MUTABLE_AV(PAD_SVl(0));
 
                         cx->blk_sub.savearray = GvAV(PL_defgv);
-                        GvAV(PL_defgv) = MUTABLE_AV(SvREFCNT_inc_simple(av));
+                        GvAV(PL_defgv) = MUTABLE_AV(SvREFCNT_inc_simple(av0));
                     }
 
                 }

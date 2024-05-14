@@ -21,7 +21,7 @@ unless (is_miniperl()) {
 
 use strict;
 
-plan(tests => 68 + !is_miniperl() * (3 + 14 * $can_fork));
+plan(tests => 71 + !is_miniperl() * (4 + 14 * $can_fork));
 
 sub get_temp_fh {
     my $f = tempfile();
@@ -179,6 +179,26 @@ is( $INC{'Toto.pm'}, 'xyz',	   '  val Toto.pm is correct in %INC' );
 
 pop @INC;
 
+{
+    my $autoloaded;
+    package AutoInc {
+        sub AUTOLOAD {
+            my ($self, $filename) = @_;
+            $autoloaded = our $AUTOLOAD;
+            return ::get_temp_fh($filename);
+        }
+        sub DESTROY {}
+    }
+
+    push @INC, bless {}, "AutoInc";
+    $evalret = eval { require Quux3; 1 };
+    ok($evalret, "require Quux3 via AUTOLOADed INC");
+    ok(exists $INC{"Quux3.pm"}, "Quux3 in %INC");
+    is($autoloaded, "AutoInc::INC", "AUTOLOAD was called for INC");
+
+    pop @INC;
+}
+
 push @INC, sub {
     my ($self, $filename) = @_;
     if ($filename eq 'abc.pl') {
@@ -247,16 +267,17 @@ shift @INC;
     my $data = [];
     unshift @INC, sub { $die, $data };
 
-    my $initial_sub_refcnt = &Internals::SvREFCNT($die);
-    my $initial_data_refcnt = &Internals::SvREFCNT($data);
+    # + 1 to account for prototype-defeating &... calling convention
+    my $initial_sub_refcnt = &Internals::SvREFCNT($die) + 1;
+    my $initial_data_refcnt = &Internals::SvREFCNT($data) + 1;
 
     do "foo";
-    is(&Internals::SvREFCNT($die), $initial_sub_refcnt, "no leaks");
-    is(&Internals::SvREFCNT($data), $initial_data_refcnt, "no leaks");
+    refcount_is $die, $initial_sub_refcnt, "no leaks";
+    refcount_is $data, $initial_data_refcnt, "no leaks";
 
     do "bar";
-    is(&Internals::SvREFCNT($die), $initial_sub_refcnt, "no leaks");
-    is(&Internals::SvREFCNT($data), $initial_data_refcnt, "no leaks");
+    refcount_is $die, $initial_sub_refcnt, "no leaks";
+    refcount_is $data, $initial_data_refcnt, "no leaks";
 
     shift @INC;
 }
@@ -293,13 +314,13 @@ SKIP: {
     $$t = sub { $called ++; !1 };
     delete $INC{'foo.pm'}; # in case another test uses foo
     eval { require foo };
-    is $INCtie::count, 2, # 2nd time for "Can't locate" -- XXX correct?
+    is $INCtie::count, 1,
         'FETCH is called once on undef scalar-tied @INC elem';
     is $called, 1, 'sub in scalar-tied @INC elem is called';
     () = "$INC[0]"; # force a fetch, so the SV is ROK
     $INCtie::count = 0;
     eval { require foo };
-    is $INCtie::count, 2,
+    is $INCtie::count, 1,
         'FETCH is called once on scalar-tied @INC elem holding ref';
     is $called, 2, 'sub in scalar-tied @INC elem holding ref is called';
     $$t = [];
@@ -310,7 +331,7 @@ SKIP: {
     $$t = "string";
     $INCtie::count = 0;
     eval { require foo };
-    is $INCtie::count, 2,
+    is $INCtie::count, 1,
        'FETCH called once on scalar-tied @INC elem returning string';
 }
 
@@ -395,4 +416,13 @@ if ($can_fork) {
     require BBBLPLAST5;
 
     is ("@::bbblplast", "0 1 2 3 4 5", "All ran with a filter");
+}
+SKIP:{
+    skip "need fork",1 unless $can_fork;
+    fresh_perl_like('@INC=("A",bless({},"Hook"),"D"); '
+                 .'sub Hook::INCDIR { return "B","C"} '
+                 .'eval "require Frobnitz" or print $@;',
+                  qr/\(\@INC[\w ]+: A Hook=HASH\(0x[A-Fa-f0-9]+\) B C D\)/,
+                  {},
+                  "Check if INCDIR hook works as expected");
 }

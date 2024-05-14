@@ -1524,6 +1524,26 @@ EOT
 
 #############
 {
+  if (!Data::Dumper::SUPPORTS_CORE_BOOLS) {
+      SKIP_BOTH("Core booleans not supported on older perls");
+      last;
+  }
+  my $want = <<'EOT';
+#$VAR1 = [
+#  !!1,
+#  !!0
+#];
+EOT
+
+  $foo = [ !!1, !!0 ];
+  TEST_BOTH(q(Data::Dumper::DumperX($foo)),
+            'Booleans',
+            $want);
+}
+
+
+#############
+{
   # If XS cannot load, the pure-Perl version cannot deparse vstrings with
   # underscores properly.
   # Says the original comment. However, the story is more complex than that.

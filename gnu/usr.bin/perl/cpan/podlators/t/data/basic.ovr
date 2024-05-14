@@ -160,11 +160,10 @@ OOVVEERR  AANNDD  IITTEEMMSS
 FFOORRMMAATTTTIINNGG  CCOODDEESS
     Another test taken from Pod::Parser.
 
-    This is a test to see if I can do not only $self and "method()", but
-    also "$self->method()" and "$self->{FIELDNAME}" and "$Foo <=> $Bar"
-    without resorting to escape sequences. If I want to refer to the
-    right-shift operator I can do something like "$x >> 3" or even "$y >>
-    5".
+    This is a test to see if I can do not only $self and method(), but also
+    "$self->method()" and "$self->{FIELDNAME}" and "$Foo <=> $Bar" without
+    resorting to escape sequences. If I want to refer to the right-shift
+    operator I can do something like "$x >> 3" or even "$y >> 5".
 
     Now for the grand finale of "$self->method()->{FIELDNAME} = {FOO=>BAR}".
     And I also want to make sure that newlines work like this

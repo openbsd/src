@@ -36,7 +36,6 @@ $! VMS-isms we will need:
 $ echo = "write sys$output "
 $ cat  = "type"
 $ delete := delete ! local symbol overrides globals with qualifiers
-$ gcc_symbol = "gcc"
 $ ld = "Link/nodebug"
 $ ans = ""
 $ macros = ""
@@ -1288,7 +1287,6 @@ $!
 $ version = revision + "_" + patchlevel + "_" + subversion
 $!
 $!: see if we need a special compiler
-$! cc_list = "cc/decc|gcc" !%Config-I-VMS, compiler symbols/commands
 $!
 $ nocc = "f"
 $ vms_cc_dflt = ""
@@ -1302,8 +1300,6 @@ $ WRITE CONFIG "#include <stdio.h>"
 $ WRITE CONFIG "int main() {"
 $ WRITE CONFIG "#ifdef __DECC"
 $ WRITE CONFIG "        printf(""/DECC\n"");"
-$ WRITE CONFIG "#else"
-$ WRITE CONFIG "        printf(""/VAXC\n"");"
 $ WRITE CONFIG "#endif"
 $ WRITE CONFIG "        exit(0);"
 $ WRITE CONFIG "}"
@@ -1318,11 +1314,7 @@ $ SET ON
 $ IF (silent) THEN GOSUB Shut_up
 $ IF tmp.NE.%X10B90001
 $ THEN 
-$  IF tmp.NE.%X10000001
-$  THEN 
-$    nocc = "t"  !%X10000001 is return from gcc
-$    GOTO Gcc_initial_check
-$  ENDIF
+$   GOTO Cxx_initial_check
 $ ENDIF
 $!
 $ GOSUB List_Parse
@@ -1335,33 +1327,6 @@ $ THEN
 $   vms_cc_dflt = "/decc"
 $   vms_cc_available = vms_cc_available + "cc/decc "
 $ ENDIF
-$!
-$Gcc_initial_check:
-$ echo "Checking for gcc"
-$ OPEN/WRITE CONFIG gccvers.lis
-$ SET NOON
-$ DEFINE/USER_MODE SYS$ERROR CONFIG
-$ DEFINE/USER_MODE SYS$OUTPUT CONFIG
-$ 'gcc_symbol'/noobj/version _nla0:
-$ tmp = $status
-$ SET ON
-$ IF (silent) THEN GOSUB Shut_up
-$ CLOSE CONFIG
-$ IF (tmp.NE.%X10000001).and.(tmp.ne.%X00030001)
-$ THEN
-$   echo "Symbol ""''gcc_symbol'"" is not defined. I guess you do not have it."
-$   DELETE/NOLOG/NOCONFIRM gccvers.lis;
-$   GOTO Cxx_initial_check
-$ ENDIF
-$ OPEN/READ CONFIG gccvers.lis
-$GCC_List_Read:
-$ READ/END_OF_FILE=GCC_List_End CONFIG line
-$ GOTO GCC_List_Read
-$GCC_List_End:
-$ CLOSE CONFIG
-$ echo line
-$ vms_cc_available = vms_cc_available + "''gcc_symbol' "
-$ DELETE/NOLOG/NOCONFIRM gccvers.lis;
 $!
 $Cxx_initial_check:
 $!
@@ -1456,8 +1421,6 @@ $     dflt = "cxx"
 $   ELSE
 $     dflt = "cc''vms_cc_dflt'"  !-> "cc" in case first compile went OK
 $   ENDIF
-$ ELSE
-$   dflt = gcc_symbol
 $ ENDIF
 $ rp = "Use which C compiler? [''dflt'] "
 $ GOSUB myread
@@ -1504,11 +1467,6 @@ $   Mcc = dflt
 $   IF Mcc .EQS. "cc/decc"
 $   THEN
 $     ccname := DEC
-$     C_COMPILER_Replace = "CC=cc=''Mcc'"
-$   ENDIF
-$   IF Mcc .EQS. "gcc"
-$   THEN
-$     ccname := GCC
 $     C_COMPILER_Replace = "CC=cc=''Mcc'"
 $   ENDIF
 $ ENDIF
@@ -1562,121 +1520,7 @@ $   echo4 "adding /NOANSI_ALIAS qualifier to ccflags."
 $   ccflags = ccflags + "/NOANSI_ALIAS"
 $   DELETE/NOLOG/NOCONFIRM deccvers.*;
 $ ENDIF
-$Gcc_check:
-$ gccversion = ""
-$ IF ccname .EQS. "GCC"
-$ THEN
-$   vaxcrtl_olb = F$SEARCH("SYS$LIBRARY:VAXCRTL.OLB")
-$   vaxcrtl_exe = F$SEARCH("SYS$SHARE:VAXCRTL.EXE")
-$   gcclib_olb  = F$SEARCH("GNU_CC:[000000]GCCLIB.OLB")
-$   IF gcclib_olb .EQS. "" 
-$   THEN 
-$!    These objects/libs come w/ gcc 2.7.2 for AXP:
-$     tmp = F$SEARCH("GNU_CC:[000000]libgcc2.olb")
-$     IF tmp .NES. "" then gcclib_olb = tmp
-$     tmp = F$SEARCH("GNU_CC:[000000]libgcclib.olb")
-$     IF tmp .NES. "" 
-$     THEN 
-$       IF gcclib_olb .EQS. "" 
-$       THEN gcclib_olb = tmp
-$       ELSE gcclib_olb = gcclib_olb + "/lib," + tmp
-$       ENDIF
-$     ENDIF
-$     tmp = F$SEARCH("SYS$LIBRARY:VAXCRTL.OLB")
-$     IF tmp .NES. "" 
-$     THEN 
-$       IF gcclib_olb .EQS. "" 
-$       THEN gcclib_olb = tmp
-$       ELSE gcclib_olb = gcclib_olb + "/lib," + tmp
-$       ENDIF
-$     ENDIF
-$     tmp = F$SEARCH("GNU_CC:[000000]crt0.obj")
-$     IF tmp .NES. "" 
-$     THEN 
-$       IF gcclib_olb .EQS. "" 
-$       THEN gcclib_olb = tmp
-$       ELSE gcclib_olb = gcclib_olb + "/lib," + tmp
-$       ENDIF
-$     ENDIF
-$     IF gcclib_olb .EQS. vaxcrtl_olb THEN gcclib_olb = "" !goofy order of axplibs
-$   ELSE
-$     gcclib_olb = gcclib_olb + "/lib"
-$   ENDIF
-$   IF   gcclib_olb .NES. "" .AND. -
-     (vaxcrtl_olb .NES. "" .OR. -
-      vaxcrtl_exe .NES. "" )
-$   THEN
-$     echo ""
-$     echo4 "Checking for GNU cc in disguise and/or its version number..." !>&4
-$     OPEN/WRITE CONFIG gccvers.c
-$     WRITE CONFIG "#include <stdio.h>"
-$     WRITE CONFIG "int main() {"
-$     WRITE CONFIG "#ifdef __GNUC__"
-$     WRITE CONFIG "#ifdef __VERSION__"
-$     WRITE CONFIG "        printf(""%s\n"", __VERSION__);"
-$     WRITE CONFIG "#else"
-$     WRITE CONFIG "        printf(""%s\n"", ""1"");"
-$     WRITE CONFIG "#endif"
-$     WRITE CONFIG "#endif"
-$     WRITE CONFIG "        exit(0);"
-$     WRITE CONFIG "}"
-$     CLOSE CONFIG
-$     DEFINE SYS$ERROR _NLA0:
-$     DEFINE SYS$OUTPUT _NLA0:
-$     'Mcc' gccvers.c
-$     tmp = $status
-$     DEASSIGN SYS$ERROR _NLA0:
-$     DEASSIGN SYS$OUTPUT _NLA0:
-$     IF (silent) THEN GOSUB Shut_up
-$     DEFINE SYS$ERROR _NLA0:
-$     DEFINE SYS$OUTPUT _NLA0:
-$     IF vaxcrtl_exe .EQS. ""
-$     THEN 
-$       IF F$LOCATE("VAXCRTL",gcclib_olb).NE.F$LENGTH(gcclib_olb)
-$       THEN 
-$         link/nodebug gccvers.obj,'gcclib_olb',SYS$LIBRARY:VAXCRTL/Library
-$         tmp = $status
-$       ELSE
-$         link/nodebug gccvers.obj,'gcclib_olb'
-$         tmp = $status
-$       ENDIF
-$     ELSE
-$       OPEN/WRITE CONFIG GCCVERS.OPT
-$       WRITE CONFIG "SYS$SHARE:VAXCRTL/SHARE"
-$       CLOSE CONFIG
-$       link/nodebug gccvers.obj,GCCVERS.OPT/OPT,'gcclib_olb'
-$       tmp = $status
-$     ENDIF
-$     DEASSIGN SYS$ERROR
-$     DEASSIGN SYS$OUTPUT
-$     IF (silent) THEN GOSUB Shut_up
-$     OPEN/WRITE CONFIG gccvers.out
-$     DEFINE SYS$ERROR CONFIG
-$     DEFINE SYS$OUTPUT CONFIG
-$     mcr []gccvers.exe
-$     tmp = $status
-$     CLOSE CONFIG
-$     DEASSIGN SYS$OUTPUT
-$     DEASSIGN SYS$ERROR
-$     IF (silent) THEN GOSUB Shut_up
-$     OPEN/READ CONFIG gccvers.out
-$     READ/END_OF_FILE=Gcc_cleanup CONFIG line
-$Gcc_cleanup:
-$     CLOSE CONFIG
-$     DELETE/NOLOG/NOCONFIRM gccvers.*;
-$     IF F$LOCATE("GNU C version ",line).NE.F$LENGTH(line)
-$     THEN 
-$       echo "You are not using GNU cc."
-$       GOTO Host_name
-$     ELSE 
-$       echo "You are using GNU cc ''line'"
-$       gccversion = line
-$       ccname := "GCC"
-$       C_COMPILER_Replace = "CC=cc=''Mcc'"
-$       GOTO Include_dirs
-$     ENDIF
-$   ENDIF
-$ ENDIF
+$!
 $Cxx_Version_check:
 $ IF ccname .EQS. "CXX"
 $ THEN
@@ -1768,17 +1612,6 @@ $ line = line - tmp
 $ line = F$EDIT(line,"TRIM")       !bit redundant but we're in no big hurry
 $ DELETE/NOLOG/NOCONFIRM ccvms.lis;
 $ RETURN
-$!
-$Include_dirs:
-$!: What should the include directory be ? (.TLB text libraries)
-$ dflt = gcclib_olb 
-$ rp = "Where are the include files you want to use? "
-$ IF f$length( rp + "[''dflt'] " ) .GT. 76
-$ THEN rp = F$FAO("!AS!/!AS",rp,"[''dflt'] ")
-$ ELSE rp = rp + "[''dflt'] "
-$ ENDIF
-$ GOSUB myread
-$ usrinc = ans
 $!
 $!: see if we have to deal with yellow pages, now NIS.
 $!: now get the host name
@@ -2369,22 +2202,6 @@ $!
 $ bool_dflt = "n"
 $ vms_prefix = "perl_root"
 $ vms_prefixup = F$EDIT(vms_prefix,"UPCASE")
-$ rp = "Will you be sharing your ''vms_prefixup' with ''otherarch'? [''bool_dflt'] "
-$ GOSUB myread
-$ IF .NOT. ans
-$ THEN
-$   sharedperl = "N"
-$ ELSE
-$   sharedperl = "Y"
-$   IF (F$ELEMENT(0, "-", archname).EQS."VMS_AXP")
-$   THEN
-$     macros = macros + """AXE=1"","
-$   ENDIF
-$   IF (F$ELEMENT(0, "-", archname).EQS."VMS_IA64")
-$   THEN
-$     macros = macros + """IXE=1"","
-$   ENDIF
-$ ENDIF
 $!
 $!: is AFS running?                       !sfn
 $!: decide how portable to be.  Allow command line overrides. !sfn
@@ -3239,34 +3056,22 @@ $ ELSE
 $   uselargefiles = "undef"
 $ ENDIF
 $!
+$ i32dformat="""d"""
+$ u32uformat="""u"""
+$ u32oformat="""o"""
+$ u32xformat="""x"""
+$ u32XUformat="""X"""
+$!
 $ usemymalloc = "undef"
 $ if mymalloc then usemymalloc = "define"
 $!
 $ perl_cc=Mcc
 $!
-$ IF (sharedperl .AND. F$ELEMENT(0, "-", archname) .EQS. "VMS_AXP")
-$ THEN
-$   obj_ext=".abj"
-$   so="axe"
-$   dlext="axe"
-$   exe_ext=".axe"
-$   lib_ext=".alb"
-$ ELSE
-$   IF (sharedperl .AND. F$ELEMENT(0, "-", archname) .EQS. "VMS_IA64")
-$   THEN
-$     obj_ext=".ibj"
-$     so="ixe"
-$     dlext="ixe"
-$     exe_ext=".ixe"
-$     lib_ext=".ilb"
-$   ELSE
-$     obj_ext=".obj"
-$     so="exe"
-$     dlext="exe"
-$     exe_ext=".exe"
-$     lib_ext=".olb"
-$   ENDIF
-$ ENDIF
+$ obj_ext=".obj"
+$ so="exe"
+$ dlext="exe"
+$ exe_ext=".exe"
+$ lib_ext=".olb"
 $ dlobj="dl_vms''obj_ext'"
 $!
 $ cppstdin="''perl_cc'/noobj/comments=as_is/preprocess=sys$output sys$input"
@@ -3434,24 +3239,13 @@ $ ENDIF
 $!
 $! Some that we need to invoke the compiler for
 $!
-$!
 $! handy construction aliases/symbols
 $!
 $ OS := "open/write CONFIG []try.c"
 $ WS := "write CONFIG"
 $ CS := "close CONFIG"
 $ DS := "delete/nolog/noconfirm []try.*;*"
-$ Needs_Opt := N
 $ good_compile = %X10B90001
-$ IF ccname .EQS. "GCC"
-$ THEN
-$   open/write OPTCHAN []try.opt
-$   write OPTCHAN "Gnu_CC:[000000]gcclib.olb/library"
-$   write OPTCHAN "Sys$Share:VAXCRTL/Share"
-$   Close OPTCHAN
-$   Needs_Opt := Y
-$   good_compile = %X10000001
-$ ENDIF
 $ IF ccname .EQS. "CXX"
 $ THEN
 $   good_compile = %X15F60001
@@ -3550,14 +3344,8 @@ $ GOSUB compile_ok
 $ DEFINE/USER_MODE SYS$ERROR _NLA0:
 $ DEFINE/USER_MODE SYS$OUTPUT _NLA0:
 $ SET NOON
-$ IF Needs_Opt
-$ THEN
-$   'ld' try.obj,try.opt/opt
-$   link_status = $status
-$ ELSE
-$   'ld' try.obj
-$   link_status = $status
-$ ENDIF
+$ 'ld' try.obj
+$ link_status = $status
 $ SET ON
 $ IF F$SEARCH("try.obj") .NES. "" THEN DELETE/NOLOG/NOCONFIRM try.obj;
 $ RETURN
@@ -4569,6 +4357,23 @@ $ tmp = "acess"
 $ GOSUB inlibc
 $ d_access = tmp
 $!
+$! Check for mkostemp
+$!
+$ OS
+$ WS "#if defined(__DECC) || defined(__DECCXX)"
+$ WS "#include <stdlib.h>"
+$ WS "#endif"
+$ WS "#include <stdio.h>"
+$ WS "int main()"
+$ WS "{"
+$ WS "mkostemp(""foo"", 0);"
+$ WS "exit(0);"
+$ WS "}"
+$ CS
+$ tmp = "mkostemp"
+$ GOSUB inlibc
+$ d_mkostemp = tmp
+$!
 $! Check for mkstemp
 $!
 $ OS
@@ -5489,21 +5294,14 @@ $ ENDIF
 $!
 $! Some that are compiler or VMS version sensitive
 $!
-$! Gnu C stuff
-$ IF ccname .EQS. "GCC"
+$ IF ccname .EQS. "CXX"
 $ THEN
-$   d_attribut="define"
-$   vms_cc_type="gcc"
+$   vms_cc_type="cxx"
 $ ELSE
-$   IF ccname .EQS. "CXX"
-$   THEN
-$      vms_cc_type="cxx"
-$   ELSE
-$      vms_cc_type="cc"
-$   ENDIF
-$   d_attribut="undef"
+$   vms_cc_type="cc"
 $ ENDIF
 $!
+$ d_attribut="undef"
 $ d_getitimer="define"
 $ d_gettimeod="define"
 $ d_mmap="define"
@@ -6122,6 +5920,7 @@ $ WC "d_attribute_nonnull='undef'"
 $ WC "d_attribute_noreturn='undef'"
 $ WC "d_attribute_pure='undef'"
 $ WC "d_attribute_unused='undef'"
+$ WC "d_attribute_visibility='undef'"
 $ WC "d_attribute_warn_unused_result='undef'"
 $ WC "d_prctl='undef'"
 $ WC "d_prctl_set_name='undef'"
@@ -6369,6 +6168,7 @@ $ WC "d_mkdtemp='" + d_mkdtemp + "'"
 $ WC "d_mkfifo='undef'"
 $ WC "d_mknod='undef'"
 $ WC "d_mkostemp='undef'"
+$ WC "d_mkostemp='" + d_mkostemp + "'"
 $ WC "d_mkstemp='" + d_mkstemp + "'"
 $ WC "d_mkstemps='" + d_mkstemps + "'"
 $ WC "d_mktime='" + d_mktime + "'"
@@ -6680,7 +6480,6 @@ $ WC "freetype='void'"
 $ WC "full_ar='" + "'"
 $ WC "full_csh='" + " '"
 $ WC "full_sed='_NLA0:'"
-$ WC "gccversion='" + gccversion + "'"
 $ WC "gidformat='lu'"
 $ WC "gidsign='1'"
 $ WC "gidsize='4'"
@@ -6692,6 +6491,7 @@ $ WC "hint='none'"
 $ WC "hintfile='" + "'"
 $ WC "i16size='" + i16size + "'"
 $ WC "i16type='" + i16type + "'"
+$ WC "i32dformat='" + i32dformat + "'"
 $ WC "i32size='" + i32size + "'"
 $ WC "i32type='" + i32type + "'"
 $ WC "i64size='" + i64size + "'"
@@ -6768,6 +6568,7 @@ $ WC "i_syssockio='undef'"
 $ WC "i_sysstat='define'"
 $ WC "i_sysstatfs='undef'"
 $ WC "i_sysstatvfs='" + i_sysstatvfs + "'"
+$ WC "i_syssyscall='undef'"
 $ WC "i_systime='undef'"
 $ WC "i_systimek='undef'"
 $ WC "i_systimes='undef'"
@@ -6985,8 +6786,12 @@ $ WC "targetsh='MCR'"
 $ WC "timetype='" + timetype + "'"
 $ WC "u16size='" + u16size + "'"
 $ WC "u16type='" + u16type + "'"
+$ WC "u32oformat='" + u32oformat + "'"
+$ WC "u32uformat='" + u32uformat + "'"
 $ WC "u32size='" + u32size + "'"
 $ WC "u32type='" + u32type + "'"
+$ WC "u32xformat='" + u32xformat + "'"
+$ WC "u32XUformat='" + u32XUformat + "'"
 $ WC "u64size='" + u64size + "'"
 $ WC "u64type='" + u64type + "'"
 $ WC "u8size='" + u8size + "'"
@@ -7188,20 +6993,7 @@ $! Okay, we've gotten here. Build munchconfig.exe
 $ COPY/NOLOG [-.vms]munchconfig.c []
 $ COPY/NOLOG [-.vms]'Makefile_SH' []
 $ 'Perl_CC' 'ccflags' munchconfig.c
-$ IF Needs_Opt
-$ THEN
-$   OPEN/WRITE CONFIG []munchconfig.opt
-$   IF ccname .EQS. "GCC"
-$   THEN
-$     WRITE CONFIG "Gnu_CC:[000000]gcclib.olb/library"
-$   ENDIF
-$   WRITE CONFIG "Sys$Share:VAXCRTL/Share"
-$   CLOSE CONFIG
-$   'ld'/EXE='exe_ext' munchconfig'obj_ext',munchconfig.opt/opt
-$   DELETE/NOLOG/NOCONFIRM munchconfig.opt;
-$ ELSE
-$   'ld'/EXE='exe_ext' munchconfig'obj_ext'
-$ ENDIF
+$ 'ld'/EXE='exe_ext' munchconfig'obj_ext'
 $ IF F$SEARCH("munchconfig''obj_ext'") .NES. "" THEN DELETE/NOLOG/NOCONFIRM munchconfig'obj_ext';
 $ IF F$SEARCH("munchconfig.c") .NES. "" THEN DELETE/NOLOG/NOCONFIRM munchconfig.c;
 $ IF ccname .EQS. "CXX"
@@ -7253,7 +7045,6 @@ $ IF use_two_pot_malloc THEN WC "#define TWO_POT_OPTIMIZE"
 $ IF mymalloc THEN WC "#define EMBEDMYMALLOC"
 $ IF use_pack_malloc THEN WC "#define PACK_MALLOC"
 $ IF use_debugmalloc THEN WC "#define DEBUGGING_MSTATS"
-$ IF ccname .EQS. "GCC" THEN WC "#define GNUC_ATTRIBUTE_CHECK"
 $ IF (Has_Dec_C_Sockets)
 $ THEN
 $    WC "#define VMS_DO_SOCKETS"
@@ -7313,12 +7104,6 @@ $   DECCXX_REPLACE = "DECCXX=DECCXX=1"
 $ ELSE
 $   DECCXX_REPLACE = "DECCXX="
 $ ENDIF
-$ IF ccname .EQS. "GCC"
-$ THEN
-$   GNUC_REPLACE = "GNUC=gnuc=1"
-$ ELSE
-$   GNUC_REPLACE = "GNUC=" 
-$ ENDIF
 $ IF Has_Dec_C_Sockets
 $ THEN
 $   SOCKET_REPLACE = "SOCKET=DECC_SOCKETS=1"
@@ -7365,7 +7150,6 @@ $ WC := write CONFIG
 $ WC "''DECC_REPLACE'"
 $ WC "''DECCXX_REPLACE'"
 $ WC "''ARCH_TYPE'"
-$ WC "''GNUC_REPLACE'"
 $ WC "''SOCKET_REPLACE'"
 $ WC "''THREAD_REPLACE'"
 $ WC "''C_Compiler_Replace'"
@@ -7504,8 +7288,6 @@ $   echo ""
 $   echo4 "The perl.cld file is now being written..."
 $   OPEN/WRITE CONFIG 'file_2_find'
 $   ext = ".exe"
-$   IF (sharedperl .AND. F$ELEMENT(0, "-", archname) .EQS. "VMS_AXP") THEN ext := .AXE
-$   IF (sharedperl .AND. F$ELEMENT(0, "-", archname) .EQS. "VMS_IA64") THEN ext := .IXE
 $   IF (use_vmsdebug_perl)
 $   THEN
 $     WRITE CONFIG "define verb dbgperl"
@@ -7561,11 +7343,6 @@ $ WRITE CONFIG "$   root_spec = P1"
 $ WRITE CONFIG "$ endif"
 $ WRITE CONFIG "$ define/translation=concealed ''vms_prefix' 'root_spec'"
 $ WRITE CONFIG "$ ext = "".exe"""
-$ IF sharedperl
-$ THEN
-$ WRITE CONFIG "$ if f$getsyi(""ARCH_TYPE"") .eq. 2 then ext = "".AXE"""
-$ WRITE CONFIG "$ if f$getsyi(""ARCH_TYPE"") .eq. 3 then ext = "".IXE"""
-$ ENDIF
 $ IF (perl_symbol)
 $ THEN
 $   perl_setup_perl = "'" + "'perl'" ! triple quoted foreign command symbol

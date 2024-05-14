@@ -46,7 +46,7 @@ Perl_grok_bslash_c(pTHX_ const char   source,
         const char control = toCTRL('{');
         if (isPRINT_A(control)) {
             /* diag_listed_as: Use "%s" instead of "%s" */
-            *message = Perl_form(aTHX_ "Use \"%c\" instead of \"\\c{\"", control);
+            *message = Perl_form(aTHX_ PERL_DIAG_DIE_SYNTAX("Use \"%c\" instead of \"\\c{\""), control);
         }
         else {
             *message = "Sequence \"\\c{\" invalid";
@@ -58,7 +58,7 @@ Perl_grok_bslash_c(pTHX_ const char   source,
     if (isPRINT_A(*result) && ckWARN(WARN_SYNTAX)) {
         U8 clearer[3];
         U8 i = 0;
-        char format[] = "\"\\c%c\" is more clearly written simply as \"%s\"";
+        char format[] = PERL_DIAG_WARN_SYNTAX("\"\\c%c\" is more clearly written simply as \"%s\"");
 
         if (! isWORDCHAR(*result)) {
             clearer[i++] = '\\';

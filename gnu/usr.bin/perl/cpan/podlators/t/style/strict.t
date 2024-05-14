@@ -6,7 +6,7 @@
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2016, 2018-2019 Russ Allbery <eagle@eyrie.org>
+# Copyright 2016, 2018-2021 Russ Allbery <eagle@eyrie.org>
 # Copyright 2013-2014
 #     The Board of Trustees of the Leland Stanford Junior University
 #
@@ -30,7 +30,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.008;
+use 5.010;
 use strict;
 use warnings;
 
@@ -59,7 +59,7 @@ my %EXCLUDE = map { $_ => 1 } qw(.git blib);
 # Returns: 1 if it should be checked, undef otherwise.
 sub should_check {
     my ($file) = @_;
-    return   if $EXCLUDE{$file};
+    return if $EXCLUDE{$file};
     return 1 if -d $file;
     return 1 if $file =~ m{ [.] PL \z }xms;
     return;

@@ -1,8 +1,8 @@
-# ArabicShaping-14.0.0.txt
-# Date: 2021-05-21, 01:54:00 GMT [KW, RP]
-# © 2021 Unicode®, Inc.
+# ArabicShaping-15.0.0.txt
+# Date: 2022-02-14, 18:50:00 GMT [KW, RP]
+# © 2022 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.

@@ -30,11 +30,11 @@ sub s1 {
     my $refcnt_start = Internals::SvREFCNT($$re_weak_copy);
 
     undef $re;
-    is(Internals::SvREFCNT($$re_weak_copy), $refcnt_start - 1, "refcnt decreased");
+    refcount_is $re_weak_copy, $refcnt_start - 1, "refcnt decreased";
     is("$re_weak_copy", $str_re, "weak copy still equals original");
 
     undef $re_copy2;
-    is(Internals::SvREFCNT($$re_weak_copy), $refcnt_start - 1, "refcnt not decreased");
+    refcount_is $re_weak_copy, $refcnt_start - 1, "refcnt not decreased";
     is("$re_weak_copy", $str_re, "weak copy still equals original");
 }
 s1();

@@ -63,8 +63,6 @@ myfirstchar=$(od -A n -N 1 -t x $me | xargs | tr [:lower:] [:upper:] | tr -d 0)
 if [ "${myfirstchar}" = "23" ]; then # 23 is '#' in ASCII
   unset ebcdic
   def_os390_cflags="$def_os390_cflags -qascii"
-  # ensure that 'safe' putenv is used and avoid direct environ manipulation
-  def_os390_defs="$def_os390_defs -DPERL_USE_SAFE_PUTENV";
 else
   ebcdic=true
 fi

@@ -16,7 +16,7 @@ no strict 'refs';
 
 package XSLoader;
 
-our $VERSION = "0.31"; # remember to update version in POD!
+our $VERSION = "0.32"; # remember to update version in POD!
 
 package DynaLoader;
 
@@ -207,7 +207,7 @@ XSLoader - Dynamically load C libraries into Perl code
 
 =head1 VERSION
 
-Version 0.31
+Version 0.32
 
 =head1 SYNOPSIS
 

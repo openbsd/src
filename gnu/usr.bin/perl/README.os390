@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 This document is written in pod format hence there are punctuation
 characters in odd places. You can read more
 about pod in pod/perlpod.pod or the short summary in the INSTALL file.

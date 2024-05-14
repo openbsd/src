@@ -106,7 +106,7 @@ sub somesub {
 &somesub(27, 'main', __FILE__, __LINE__);
 
 package foo;
-&main'somesub(28, 'foo', __FILE__, __LINE__);
+&main::somesub(28, 'foo', __FILE__, __LINE__);
 
 package main;
 $i = 28;
@@ -151,28 +151,28 @@ sub iseof {
 
 {package foo;
 
- sub main'file_package {
+ sub main::file_package {
         local(*F) = @_;
 
         open(F, 'Cmd_subval.tmp') || die "can't open: $!\n";
-	$main'i++;
-        eof F ? print "not ok $main'i\n" : print "ok $main'i\n";
+	$main::i++;
+        eof F ? print "not ok $main::i\n" : print "ok $main::i\n";
  }
 
- sub main'info_package {
+ sub main::info_package {
         local(*F);
 
         open(F, 'Cmd_subval.tmp') || die "can't open: $!\n";
-	$main'i++;
-        eof F ? print "not ok $main'i\n" : print "ok $main'i\n";
+	$main::i++;
+        eof F ? print "not ok $main::i\n" : print "ok $main::i\n";
         &iseof(*F);
  }
 
  sub iseof {
         local(*UNIQ) = @_;
 
-	$main'i++;
-        eof UNIQ ? print "not ok $main'i\n" : print "ok $main'i\n";
+	$main::i++;
+        eof UNIQ ? print "not ok $main::i\n" : print "ok $main::i\n";
  }
 }
 

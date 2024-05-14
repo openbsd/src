@@ -1,4 +1,4 @@
-/* -*- buffer-read-only: t -*-
+/* -*- mode: C; buffer-read-only: t -*-
  *
  *    reentr.c
  *
@@ -677,4 +677,4 @@ Perl_reentrant_retry(const char *f, ...)
     return retptr;
 }
 
-/* ex: set ro: */
+/* ex: set ro ft=c: */

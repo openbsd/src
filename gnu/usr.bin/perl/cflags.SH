@@ -379,6 +379,19 @@ esac
 ;;
 esac
 
+# gcc version 12 and 13 are overly aggressive with use-after-free warnings
+# and have false positives on code that shouldn't warn, and they haven't
+# sorted it out yet. See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108115
+case "$gccversion" in
+"1"[23]*)
+    for f in -Wno-use-after-free
+    do
+        echo "cflags.SH: Adding $f because of false positives in gccversion '$gccversion'"
+        warn="$warn $f"
+    done
+;;
+esac
+
 echo "cflags.SH: cc       = $cc"
 echo "cflags.SH: ccflags  = $ccflags"
 echo "cflags.SH: stdflags = $stdflags"

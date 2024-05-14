@@ -1,3 +1,32 @@
+2023-05-26 21:36:00 demerphq
+    version 3.32
+        * Update security advisory to be more clear
+
+2023-02-26 00:31:32 demerphq
+    version 3.31
+        * Fixup for ppport fix in 3.30
+
+2023-02-22 09:56:27 leont
+    version 3.30
+        * Use ppport for all modules in dist.
+
+2023-01-04 17:33:24 iabyn
+    version 3.29
+        * Store code fixes identified from refcounted stack patch
+
+2022-11-08 10:12:46 tony
+    version 3.28
+        * Store hook error reporting improvements
+	* Store hook handles regex objects properly.
+
+2022-06-20 20:32:29 toddr
+    version 3.27
+        * Use cBOOL instead of !! in xs code
+
+2022-04-18 17:36:00 toddr
+    version 3.26
+        * Conform to ppport.h 3.68 recommendations
+
 2021-08-30 07:46:52 nwclark
     version 3.25
         * No changes from previous version

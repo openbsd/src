@@ -40,7 +40,7 @@
  * proxy PVLV element with attached element magic.
  *
  * Pointers to the shared SV are squirrelled away in the mg->mg_ptr field
- * of magic (with mg_len == 0), and in the IV2PTR(SvIV(sv)) field of tied
+ * of magic (with mg_len == 0), and in the INT2PTR(SvIV(sv)) field of tied
  * object SVs. These pointers have to be hidden like this because they
  * cross interpreter boundaries, and we don't want sv_clear() and friends
  * following them.
@@ -130,14 +130,11 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#ifdef HAS_PPPORT_H
-#  define NEED_sv_2pv_flags
-#  define NEED_vnewSVpvf
-#  define NEED_warner
-#  define NEED_newSVpvn_flags
-#  include "ppport.h"
-#  include "shared.h"
-#endif
+#define NEED_sv_2pv_flags
+#define NEED_vnewSVpvf
+#define NEED_warner
+#define NEED_newSVpvn_flags
+#include "ppport.h"
 
 #ifndef CLANG_DIAG_IGNORE
 # define CLANG_DIAG_IGNORE(x)
@@ -704,10 +701,10 @@ Perl_sharedsv_cond_timedwait(perl_cond *cond, perl_mutex *mut, double abs)
     abs -= (NV)ts.tv_sec;
     ts.tv_nsec = (long)(abs * 1000000000.0);
 
-    CLANG_DIAG_IGNORE_STMT(-Wthread-safety);
+    CLANG_DIAG_IGNORE(-Wthread-safety)
     /* warning: calling function 'pthread_cond_timedwait' requires holding mutex 'mut' exclusively [-Wthread-safety-analysis] */
     switch (pthread_cond_timedwait(cond, mut, &ts)) {
-	CLANG_DIAG_RESTORE_STMT;
+	CLANG_DIAG_RESTORE
 
         case 0:         got_it = 1; break;
         case ETIMEDOUT:             break;
@@ -1145,7 +1142,7 @@ sharedsv_array_mg_CLEAR(pTHX_ SV *sv, MAGIC *mg)
             I32 items = isav ? AvFILLp((AV *)ssv) + 1 : 0;
             HE *iter;
             if (!isav) hv_iterinit((HV *)ssv);
-            while (isav ? items-- : !!(iter = hv_iternext((HV *)ssv))) {
+            while (isav ? items-- : cBOOL(iter = hv_iternext((HV *)ssv))) {
                 SV *sv = isav ? *svp++ : HeVAL(iter);
                 if (!sv) continue;
                 if ( (SvOBJECT(sv) || (SvROK(sv) && (sv = SvRV(sv))))

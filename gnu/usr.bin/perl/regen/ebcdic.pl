@@ -384,9 +384,6 @@ END
  * is A-Z; all other code points map to themselves */
 END
         output_table(\@ascii_fold, "PL_fold");
-
-        # This table is also the correct folding for the default C locale
-        output_table(\@ascii_fold, "PL_fold_locale");
     }
 
     {

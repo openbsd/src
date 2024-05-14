@@ -43,6 +43,11 @@ extern Free_t free(Malloc_t);
 
 const datum nullitem = {0, 0};
 
+#ifdef WIN32
+#  undef lseek
+#  define lseek _lseeki64
+#endif
+
 /*
  * forward
  */
@@ -59,8 +64,8 @@ static int makroom(DBM *, long, int);
 #define exhash(item)	sdbm_hash((item).dptr, (item).dsize)
 #define ioerr(db)	((db)->flags |= DBM_IOERR)
 
-#define OFF_PAG(off)	(long) (off) * PBLKSIZ
-#define OFF_DIR(off)	(long) (off) * DBLKSIZ
+#define OFF_PAG(off)	(Off_t) (off) * PBLKSIZ
+#define OFF_DIR(off)	(Off_t) (off) * DBLKSIZ
 
 static const long masks[] = {
         000000000000, 000000000001, 000000000003, 000000000007,
@@ -291,7 +296,7 @@ makroom(DBM *db, long int hash, int need)
         char twin[PBLKSIZ];
 #if defined(DOSISH) || defined(WIN32)
         char zer[PBLKSIZ];
-        long oldtail;
+        Off_t oldtail;
 #endif
         char *pag = db->pagbuf;
         char *New = twin;

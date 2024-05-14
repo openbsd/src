@@ -112,6 +112,11 @@ eval 'package A; sub PS : lvalue';
 @attrs = eval 'attributes::get \&A::PS';
 is "@attrs", "lvalue";
 
+# Multiple attributes at once
+eval 'package A; sub PS2 : lvalue method';
+@attrs = eval 'attributes::get \&A::PS2';
+is "@attrs", "lvalue method", 'Multiple builtin attributes can be set at once';
+
 # Test attributes on predeclared subroutines, after definition
 eval 'package A; sub PS : lvalue; sub PS { }';
 @attrs = eval 'attributes::get \&A::PS';

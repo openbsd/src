@@ -13,10 +13,11 @@ our %Config_Override;
 
 use ExtUtils::MakeMaker qw($Verbose neatvalue _sprintf562);
 
-# If we make $VERSION an our variable parse_version() breaks
-use vars qw($VERSION);
-$VERSION = '7.64';
+# If $VERSION is in scope, parse_version() breaks
+{
+our $VERSION = '7.70';
 $VERSION =~ tr/_//d;
+}
 
 require ExtUtils::MM_Any;
 our @ISA = qw(ExtUtils::MM_Any);
@@ -34,13 +35,16 @@ BEGIN {
     $Is{SunOS4}  = $^O eq 'sunos';
     $Is{Solaris} = $^O eq 'solaris';
     $Is{SunOS}   = $Is{SunOS4} || $Is{Solaris};
-    $Is{BSD}     = ($^O =~ /^(?:free|net|open)bsd$/ or
+    $Is{BSD}     = ($^O =~ /^(?:free|midnight|net|open)bsd$/ or
                    grep( $^O eq $_, qw(bsdos interix dragonfly) )
                   );
     $Is{Android} = $^O =~ /android/;
-    if ( $^O eq 'darwin' && $^X eq '/usr/bin/perl' ) {
+    if ( $^O eq 'darwin' ) {
       my @osvers = split /\./, $Config{osvers};
-      $Is{ApplCor} = ( $osvers[0] >= 18 );
+      if ( $^X eq '/usr/bin/perl' ) {
+        $Is{ApplCor} = ( $osvers[0] >= 18 );
+      }
+      $Is{AppleRPath} = ( $osvers[0] >= 9 );
     }
 }
 
@@ -1054,7 +1058,7 @@ sub xs_make_dynamic_lib {
         if ( $Is{IRIX} ) {
             $ldrun = qq{-rpath "$self->{LD_RUN_PATH}"};
         }
-        elsif ( $^O eq 'darwin' ) {
+        elsif ( $^O eq 'darwin' && $Is{AppleRPath} ) {
             # both clang and gcc support -Wl,-rpath, but only clang supports
             # -rpath so by using -Wl,-rpath we avoid having to check for the
             # type of compiler
@@ -2193,7 +2197,7 @@ Add MM_Unix_VERSION.
 sub init_platform {
     my($self) = shift;
 
-    $self->{MM_Unix_VERSION} = $VERSION;
+    $self->{MM_Unix_VERSION} = our $VERSION;
     $self->{PERL_MALLOC_DEF} = '-DPERL_EXTMALLOC_DEF -Dmalloc=Perl_malloc '.
                                '-Dfree=Perl_mfree -Drealloc=Perl_realloc '.
                                '-Dcalloc=Perl_calloc';
@@ -2225,8 +2229,7 @@ Called by init_main.  Initializes PERL_*
 sub init_PERM {
     my($self) = shift;
 
-    my $perm_dir = $self->{PERL_CORE} ? 770 : 755;
-    $self->{PERM_DIR} = $perm_dir  unless defined $self->{PERM_DIR};
+    $self->{PERM_DIR} = 755  unless defined $self->{PERM_DIR};
     $self->{PERM_RW}  = 644  unless defined $self->{PERM_RW};
     $self->{PERM_RWX} = 755  unless defined $self->{PERM_RWX};
 

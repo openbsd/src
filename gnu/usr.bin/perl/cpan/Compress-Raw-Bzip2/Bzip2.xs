@@ -391,7 +391,7 @@ new(className, appendOut=1, blockSize100k=1, workfactor=0, verbosity=0)
         SV* obj = sv_2mortal(newSViv(PTR2IV(s))) ;
         XPUSHs(obj);
     }
-    if (GIMME == G_ARRAY) {
+    if (GIMME_V == G_ARRAY) {
         SV * sv = sv_2mortal(newSViv(err)) ;
 	setDUALstatus(sv, err);
         XPUSHs(sv) ;
@@ -447,7 +447,7 @@ new(className, appendOut=1 , consume=1, small=0, verbosity=0, limitOutput=0)
         SV* obj = sv_2mortal(newSViv(PTR2IV(s))) ;
         XPUSHs(obj);
     }
-    if (GIMME == G_ARRAY) {
+    if (GIMME_V == G_ARRAY) {
         SV * sv = sv_2mortal(newSViv(err)) ;
 	setDUALstatus(sv, err);
         XPUSHs(sv) ;

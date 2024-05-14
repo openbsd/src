@@ -11,6 +11,7 @@ BEGIN {
 }
 
 use ExtUtils::testlib;
+use Data::Dumper;
 
 use threads;
 
@@ -156,7 +157,8 @@ package main;
     rand(10);
     threads->create( sub { $rand{int(rand(10000000000))}++ } ) foreach 1..25;
     $_->join foreach threads->list;
-    ok((keys %rand >= 23), "Check that rand() is randomized in new threads");
+    ok((keys %rand >= 23), "Check that rand() is randomized in new threads")
+        or diag Dumper(\%rand);
 }
 
 # bugid #24165

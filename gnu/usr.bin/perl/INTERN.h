@@ -46,6 +46,6 @@
 #  endif
 
 #undef INIT
-#define INIT(x) = x
+#define INIT(...) = __VA_ARGS__
 
 #define DOINIT

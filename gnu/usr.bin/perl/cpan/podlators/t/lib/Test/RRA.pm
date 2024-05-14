@@ -10,7 +10,7 @@
 
 package Test::RRA;
 
-use 5.008;
+use 5.010;
 use base qw(Exporter);
 use strict;
 use warnings;
@@ -46,13 +46,13 @@ our (@EXPORT_OK, $VERSION);
 # consistency is good).
 BEGIN {
     @EXPORT_OK = qw(
-      is_file_contents skip_unless_author skip_unless_automated use_prereq
+        is_file_contents skip_unless_author skip_unless_automated use_prereq
     );
 
     # This version should match the corresponding rra-c-util release, but with
     # two digits for the minor version, including a leading zero if necessary,
     # so that it will sort properly.
-    $VERSION = '8.01';
+    $VERSION = '10.03';
 }
 
 # Compare a string to the contents of a file, similar to the standard is()
@@ -83,11 +83,11 @@ sub is_file_contents {
     eval {
         require IPC::System::Simple;
 
-        my $tmp     = File::Temp->new();
+        my $tmp = File::Temp->new();
         my $tmpname = $tmp->filename;
         print {$tmp} $got or BAIL_OUT("Cannot write to $tmpname: $!\n");
         my @command = ('diff', '-u', $expected, $tmpname);
-        my $diff    = IPC::System::Simple::capturex([0 .. 1], @command);
+        my $diff = IPC::System::Simple::capturex([0 .. 1], @command);
         diag($diff);
     };
     if ($@) {
@@ -165,15 +165,15 @@ sub use_prereq {
     ## no critic (ValuesAndExpressions::ProhibitImplicitNewlines)
     my ($result, $error, $sigdie);
     {
-        local $@            = undef;
-        local $!            = undef;
+        local $@ = undef;
+        local $! = undef;
         local $SIG{__DIE__} = undef;
         $result = eval qq{
             package $package;
             use $module $version \@imports;
             1;
         };
-        $error  = $@;
+        $error = $@;
         $sigdie = $SIG{__DIE__} || undef;
     }
 
@@ -196,7 +196,7 @@ __END__
 
 =for stopwords
 Allbery Allbery's DESC bareword sublicense MERCHANTABILITY NONINFRINGEMENT
-rra-c-util CPAN
+rra-c-util CPAN diff
 
 =head1 NAME
 
@@ -238,6 +238,14 @@ should be explicitly imported.
 
 =over 4
 
+=item is_file_contents(GOT, EXPECTED, MESSAGE)
+
+Check a string against the contents of a file, showing the differences if any
+using diff (if IPC::System::Simple and diff are available).  GOT is the output
+the test received.  EXPECTED is the path to a file containing the expected
+output (not the output itself).  MESSAGE is a message to display alongside the
+test results.
+
 =item skip_unless_author(DESC)
 
 Checks whether AUTHOR_TESTING is set in the environment and skips the whole
@@ -275,7 +283,7 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2016, 2018-2019 Russ Allbery <eagle@eyrie.org>
+Copyright 2016, 2018-2019, 2021 Russ Allbery <eagle@eyrie.org>
 
 Copyright 2013-2014 The Board of Trustees of the Leland Stanford Junior
 University

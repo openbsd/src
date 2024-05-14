@@ -86,7 +86,7 @@ BEGIN {
     $::HaveWrap = ($@ eq "");
 };
 
-our $VERSION = "1.42";
+our $VERSION = "1.43";
 
 #TODO:
 #       make sure failure (transmission-wise) of Mail::Send is accounted for.
@@ -354,12 +354,13 @@ This program provides an easy way to send a thank-you message back to the
 authors and maintainers of perl.
 
 If you wish to generate a bug report, please run it without the -T flag
+(or run the program perlbug rather than perlthanks)
 EOF
 	} else {
 	    paraprint <<"EOF";
 This program provides an easy way to generate a bug report for the core
 perl distribution (along with tests or patches).  To send a thank-you
-note to $thanksaddress instead of a bug report, please use the -T flag.
+note to $thanksaddress instead of a bug report, please run 'perlthanks'.
 
 The GitHub issue tracker at https://github.com/Perl/perl5/issues is the
 best place to submit your report so it can be tracked and resolved.
@@ -619,6 +620,10 @@ generated with the help of perlbug $VERSION running under perl $perl_version.
 
 EOF
 
+    if ($report_about_module) {
+	print REP "Module: $report_about_module\n\n";
+    }
+
     if ($body) {
 	print REP $body;
     } elsif ($usefile) {
@@ -645,12 +650,25 @@ EOF
 	    print REP <<'EOF';
 
 -----------------------------------------------------------------
-[Please describe your issue here]
+<!--[Please describe your issue here]-->
+
+**Description**
+<!-- A clear and concise description of what the bug is. -->
 
 
 
-[Please do not change anything below this line]
------------------------------------------------------------------
+**Steps to Reproduce**
+<!-- A one-liner or script to reproduce the issue. -->
+
+
+
+**Expected behavior**
+<!-- A clear and concise description of what you expected to happen. -->
+
+
+
+<!--[Please do not change anything below this line]-->
+<!------------------------------------------------------------------- -->
 EOF
 	}
     }
@@ -670,26 +688,30 @@ sub Dump {
     $severity ||= 'low';
 
     print OUT <<EFF;
+
+
 ---
-Flags:
-    category=$category
-    severity=$severity
+**Flags**
+- category=$category
+- severity=$severity
 EFF
 
     if ($has_patch) {
         print OUT <<EFF;
-    Type=Patch
-    PatchStatus=HasPatch
+- Type=Patch
+- PatchStatus=HasPatch
 EFF
     }
 
     if ($report_about_module ) { 
         print OUT <<EFF;
-    module=$report_about_module
+- module=$report_about_module
 EFF
     }
     print OUT <<EFF;
 ---
+**Perl configuration**
+```
 EFF
     print OUT "This perlbug was built using Perl $config_tag1\n",
 	    "It is being executed now by  Perl $config_tag2.\n\n"
@@ -744,6 +766,7 @@ EOF
 	    print OUT "$_='$value'\n";
 	}
     }
+    print OUT "```\n";
 } # sub Dump
 
 sub Edit {
@@ -1266,6 +1289,8 @@ S<[ B<-S> ]> S<[ B<-t> ]>  S<[ B<-d> ]>  S<[ B<-h> ]> S<[ B<-T> ]>
 B<perlbug> S<[ B<-v> ]> S<[ B<-r> I<returnaddress> ]>
  S<[ B<-ok> | B<-okay> | B<-nok> | B<-nokay> ]>
 
+B<perlthanks>
+
 =head1 DESCRIPTION
 
 
@@ -1401,8 +1426,8 @@ by Perl's test suite).
 
 =item Can you use C<perlbug> to submit a thank-you note?
 
-Yes, you can do this by using the C<-T> option.
-Thank-you notes are good. It makes people
+Yes, you can do this by either using the C<-T> option, or by invoking
+the program as C<perlthanks>. Thank-you notes are good. It makes people
 smile. 
 
 =back

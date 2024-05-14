@@ -594,7 +594,7 @@ foreach my $list (qw(Punctuation Symbol)) {
 
         if ($is_Symbol) {
 
-            # Skip if the the direction is followed by a vertical motion
+            # Skip if the direction is followed by a vertical motion
             # (which defeats the left-right directionality).
             if (        $name =~ / ^ .* $no_barb_re
                                    \b (UP|DOWN|NORTH|SOUTH) /gx
@@ -869,7 +869,7 @@ foreach my $charset (get_supported_code_pages()) {
     $max_PRINT_A = sprintf "0x%02X", $max_PRINT_A;
     print $out_fh <<"EOT";
 
-#   ifdef PERL_IN_REGCOMP_C
+#   ifdef PERL_IN_REGCOMP_ANY
 #     define MAX_PRINT_A  $max_PRINT_A   /* The max code point that isPRINT_A */
 #   endif
 EOT
@@ -931,7 +931,7 @@ $count = 0x110000 - $count;
 print $out_fh <<~"EOT";
 
     /* The number of code points not matching \\pC */
-    #ifdef PERL_IN_REGCOMP_C
+    #ifdef PERL_IN_REGCOMP_ANY
     #  define NON_OTHER_COUNT  $count
     #endif
     EOT

@@ -1,5 +1,19 @@
 Revision history for Perl extension ExtUtils::CBuilder.
 
+0.280238
+
+  Fix:
+
+  - use -isyswithroot option for the CORE directory for the system perl on darwin.
+    The compiler would fail to find EXTERN.h with -I.
+    Came up while working on a fix for the similar issue in
+    https://github.com/Perl/perl5/issues/20362
+
+0.280237 - 2022-05-09
+
+  - when not set to quiet, print commands being run in a usable form.
+    https://github.com/Perl/perl5/pull/19701
+
 0.280236 - 2021-02-12
 
   Fix:

@@ -251,3 +251,52 @@ Type of arg 1 to pop must be array (not private hash) at - line 4, near "%a;"
 Type of arg 1 to shift must be array (not private hash) at - line 5, near "%a;"
 Type of arg 1 to unshift must be array (not private hash) at - line 6, near "1;"
 Execution of - aborted due to compilation errors.
+########
+use feature 'defer';
+no warnings 'experimental::defer';
+defer { return "retval" }
+EXPECT
+Can't "return" out of a "defer" block at - line 3.
+########
+use feature 'defer';
+no warnings 'experimental::defer';
+defer { goto HERE }
+HERE:
+EXPECT
+Can't "goto" out of a "defer" block at - line 3.
+########
+use feature 'defer';
+no warnings 'experimental::defer';
+my $subB = sub {};
+defer { goto &$subB }
+EXPECT
+Can't "goto" out of a "defer" block at - line 4.
+########
+use feature 'defer';
+no warnings 'experimental::defer';
+LOOP: while(1) {
+  defer { last LOOP }
+}
+EXPECT
+Can't "last" out of a "defer" block at - line 4.
+########
+use feature 'try';
+no warnings 'experimental::try';
+try {} catch ($e) {} finally { return "123" }
+EXPECT
+Can't "return" out of a "finally" block at - line 3.
+########
+use feature 'try';
+no warnings 'experimental::try';
+try {} catch ($e) {} finally { goto HERE; }
+HERE:
+EXPECT
+Can't "goto" out of a "finally" block at - line 3.
+########
+use feature 'try';
+no warnings 'experimental::try';
+LOOP: {
+  try {} catch ($e) {} finally { last LOOP; }
+}
+EXPECT
+Can't "last" out of a "finally" block at - line 4.

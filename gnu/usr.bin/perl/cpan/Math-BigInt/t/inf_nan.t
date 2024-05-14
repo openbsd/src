@@ -1,13 +1,12 @@
 # -*- mode: perl; -*-
 
 # test inf/NaN handling all in one place
-# Thanx to Jarkko for the excellent explanations and the tables
 
 use strict;
 use warnings;
 use lib 't';
 
-use Test::More tests => 2052;
+use Test::More tests => 1044;
 
 use Math::BigInt;
 use Math::BigFloat;
@@ -17,7 +16,7 @@ use Math::BigFloat::Subclass;
 my @biclasses = qw/ Math::BigInt   Math::BigInt::Subclass   /;
 my @bfclasses = qw/ Math::BigFloat Math::BigFloat::Subclass /;
 
-my (@args, $x, $y, $z);
+my (@args, $x, $y, $z, $test);
 
 # +
 
@@ -75,13 +74,25 @@ foreach (qw/
 {
     @args = split /:/, $_;
     for my $class (@biclasses, @bfclasses) {
+        $args[2] = '0' if $args[2] eq '-0';     # Math::Big* has no -0
         $x = $class->new($args[0]);
         $y = $class->new($args[1]);
-        $args[2] = '0' if $args[2] eq '-0'; # Math::Big(Int|Float) has no -0
-        my $r = $x->badd($y);
+        $z = $x->badd($y);
 
-        is($x->bstr(), $args[2], "x $class $args[0] + $args[1]");
-        is($x->bstr(), $args[2], "r $class $args[0] + $args[1]");
+        $test = qq|\$x = $class->new("$args[0]"); |
+              . qq|\$y = $class->new("$args[1]"); |
+              . qq|\$z = \$x->badd(\$y);|;
+
+        subtest $test => sub {
+            plan tests => 6;
+
+            is(ref($x), $class, "\$x is a $class");
+            is(ref($y), $class, "\$y is still a $class");
+            is(ref($z), $class, "\$z is a $class");
+            is($x->bstr(), $args[2], 'value of $x');
+            is($y->bstr(), $args[1], 'value of $y');
+            is($z->bstr(), $args[2], 'value of $z');
+        };
     }
 }
 
@@ -141,13 +152,25 @@ foreach (qw/
 {
     @args = split /:/, $_;
     for my $class (@biclasses, @bfclasses) {
+        $args[2] = '0' if $args[2] eq '-0';     # Math::Big* has no -0
         $x = $class->new($args[0]);
         $y = $class->new($args[1]);
-        $args[2] = '0' if $args[2] eq '-0'; # Math::Big(Int|Float) has no -0
-        my $r = $x->bsub($y);
+        $z = $x->bsub($y);
 
-        is($x->bstr(), $args[2], "x $class $args[0] - $args[1]");
-        is($r->bstr(), $args[2], "r $class $args[0] - $args[1]");
+        $test = qq|\$x = $class->new("$args[0]"); |
+              . qq|\$y = $class->new("$args[1]"); |
+              . qq|\$z = \$x->bsub(\$y);|;
+
+        subtest $test => sub {
+            plan tests => 6;
+
+            is(ref($x), $class, "\$x is a $class");
+            is(ref($y), $class, "\$y is still a $class");
+            is(ref($z), $class, "\$z is a $class");
+            is($x->bstr(), $args[2], 'value of $x');
+            is($y->bstr(), $args[1], 'value of $y');
+            is($z->bstr(), $args[2], 'value of $z');
+        };
     }
 }
 
@@ -207,13 +230,25 @@ foreach (qw/
 {
     @args = split /:/, $_;
     for my $class (@biclasses, @bfclasses) {
+        $args[2] = '0' if $args[2] eq '-0';     # Math::Big* has no -0
         $x = $class->new($args[0]);
         $y = $class->new($args[1]);
-        $args[2] = '0' if $args[2] eq '-0'; # Math::Big(Int|Float) has no -0
-        my $r = $x->bmul($y);
+        $z = $x->bmul($y);
 
-        is($x->bstr(), $args[2], "x $class $args[0] * $args[1]");
-        is($r->bstr(), $args[2], "r $class $args[0] * $args[1]");
+        $test = qq|\$x = $class->new("$args[0]"); |
+              . qq|\$y = $class->new("$args[1]"); |
+              . qq|\$z = \$x->bmul(\$y);|;
+
+        subtest $test => sub {
+            plan tests => 6;
+
+            is(ref($x), $class, "\$x is a $class");
+            is(ref($y), $class, "\$y is still a $class");
+            is(ref($z), $class, "\$z is a $class");
+            is($x->bstr(), $args[2], 'value of $x');
+            is($y->bstr(), $args[1], 'value of $y');
+            is($z->bstr(), $args[2], 'value of $z');
+        };
     }
 }
 
@@ -273,34 +308,80 @@ foreach (qw/
 {
     @args = split /:/, $_;
     for my $class (@biclasses, @bfclasses) {
-        $x = $class->new($args[0]);
-        $y = $class->new($args[1]);
-        $args[2] = '0' if $args[2] eq '-0'; # Math::Big(Int|Float) has no -0
+        $args[2] = '0' if $args[2] eq '-0';     # Math::Big* has no -0
 
-        my $t = $x->copy();
-        my $tmod = $t->copy();
+        my ($q, $r);
 
         # bdiv in scalar context
+
+        $x = $class->new($args[0]);
+        $y = $class->new($args[1]);
+
         unless ($class =~ /^Math::BigFloat/) {
-            my $r = $x->bdiv($y);
-            is($x->bstr(), $args[2], "x $class $args[0] / $args[1]");
-            is($r->bstr(), $args[2], "r $class $args[0] / $args[1]");
+            $q = $x->bdiv($y);
+
+            $test = qq|\$x = $class->new("$args[0]"); |
+                  . qq|\$y = $class->new("$args[1]"); |
+                  . qq|\$q = \$x->bdiv(\$y);|;
+
+            subtest $test => sub {
+                plan tests => 6;
+
+                is(ref($x), $class, "\$x is a $class");
+                is(ref($y), $class, "\$y is still a $class");
+                is(ref($q), $class, "\$q is a $class");
+                is($x->bstr(), $args[2], 'value of $x');
+                is($y->bstr(), $args[1], 'value of $y');
+                is($q->bstr(), $args[2], 'value of $q');
+            };
         }
 
         # bmod and bdiv in list context
-        my ($d, $rem) = $t->bdiv($y);
+
+        $x = $class->new($args[0]);
+        $y = $class->new($args[1]);
+
+        ($q, $r) = $x->bdiv($y);
 
         # bdiv in list context
-        is($t->bstr(), $args[2], "t $class $args[0] / $args[1]");
-        is($d->bstr(), $args[2], "d $class $args[0] / $args[1]");
+
+        $test = qq|\$x = $class->new("$args[0]"); |
+              . qq|\$y = $class->new("$args[1]"); |
+              . qq|(\$q, \$r) = \$x->bdiv(\$y);|;
+
+        subtest $test => sub {
+            plan tests => 7;
+
+            is(ref($x), $class, "\$x is a $class");
+            is(ref($y), $class, "\$y is still a $class");
+            is(ref($q), $class, "\$q is a $class");
+            is(ref($r), $class, "\$r is a $class");
+            is($x->bstr(), $args[2], 'value of $x');
+            is($y->bstr(), $args[1], 'value of $y');
+            is($q->bstr(), $args[2], 'value of $q');
+        };
 
         # bmod
-        my $m = $tmod->bmod($y);
 
-        # bmod() agrees with bdiv?
-        is($m->bstr(), $rem->bstr(), "m $class $args[0] % $args[1]");
-        # bmod() return agrees with set value?
-        is($tmod->bstr(), $m->bstr(), "o $class $args[0] % $args[1]");
+        $x = $class->new($args[0]);
+        $y = $class->new($args[1]);
+
+        my $m = $x->bmod($y);
+
+        $test = qq|\$x = $class->new("$args[0]"); |
+              . qq|\$y = $class->new("$args[1]"); |
+              . qq|\$m = \$x->bmod(\$y);|;
+
+        subtest $test => sub {
+            plan tests => 6;
+
+            is(ref($x), $class, "\$x is a $class");
+            is(ref($y), $class, "\$y is still a $class");
+            is(ref($m), $class, "\$m is a $class");
+            is($x->bstr(), $r->bstr(), 'value of $x');
+            is($y->bstr(), $args[1], 'value of $y');
+            is($m->bstr(), $r->bstr(), 'value of $m');
+        };
     }
 }
 
@@ -360,17 +441,25 @@ foreach (qw/
 {
     @args = split /:/, $_;
     for my $class (@bfclasses) {
+        $args[2] = '0' if $args[2] eq '-0';     # Math::Big* has no -0
         $x = $class->new($args[0]);
         $y = $class->new($args[1]);
-        $args[2] = '0' if $args[2] eq '-0'; # Math::Big(Int|Float) has no -0
+        $z = $x->bdiv($y);
 
-        my $t = $x->copy();
-        my $tmod = $t->copy();
+        $test = qq|\$x = $class->new("$args[0]"); |
+              . qq|\$y = $class->new("$args[1]"); |
+              . qq|\$z = \$x->bdiv(\$y);|;
 
-        # bdiv in scalar context
-        my $r = $x->bdiv($y);
-        is($x->bstr(), $args[2], "x $class $args[0] / $args[1]");
-        is($r->bstr(), $args[2], "r $class $args[0] / $args[1]");
+        subtest $test => sub {
+            plan tests => 6;
+
+            is(ref($x), $class, "\$x is a $class");
+            is(ref($y), $class, "\$y is still a $class");
+            is(ref($z), $class, "\$z is a $class");
+            is($x->bstr(), $args[2], 'value of $x');
+            is($y->bstr(), $args[1], 'value of $y');
+            is($z->bstr(), $args[2], 'value of $z');
+        };
     }
 }
 
@@ -378,9 +467,9 @@ foreach (qw/
 # overloaded comparisons
 
 foreach my $c (@biclasses, @bfclasses) {
-    my $x = $c->bnan();
-    my $y = $c->bnan();         # test with two different objects, too
-    my $z = $c->bzero();
+    $x = $c->bnan();
+    $y = $c->bnan();            # test with two different objects, too
+    $z = $c->bzero();
 
     is($x == $y, '', 'NaN == NaN: ""');
     is($x != $y, 1,  'NaN != NaN: 1');

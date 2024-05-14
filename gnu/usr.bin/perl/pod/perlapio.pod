@@ -89,10 +89,10 @@ perlapio - perl's IO abstraction interface.
 =for apidoc_item  |         |PerlIO_flush
 =for apidoc_item  |         |PerlIO_get_base
 =for apidoc_item  |         |PerlIO_get_bufsiz
-=for apidoc_item T|int      |PerlIO_getc|PerlIO *d
 =for apidoc_item  |         |PerlIO_get_cnt
-=for apidoc_item T|int      |PerlIO_getpos|PerlIO *f|SV *save
 =for apidoc_item  |         |PerlIO_get_ptr
+=for apidoc_item T|int      |PerlIO_getc|PerlIO *d
+=for apidoc_item T|int      |PerlIO_getpos|PerlIO *f|SV *save
 =for apidoc_item T|int      |PerlIO_has_base|PerlIO *f
 =for apidoc_item T|int      |PerlIO_has_cntptr|PerlIO *f
 =for apidoc_item T|PerlIO * |PerlIO_importFILE|FILE *stdio|const char *mode
@@ -106,9 +106,9 @@ perlapio - perl's IO abstraction interface.
 =for apidoc_item T|void     |PerlIO_rewind|PerlIO *f
 =for apidoc_item  |         |PerlIO_seek
 =for apidoc_item  |         |PerlIO_set_cnt
+=for apidoc_item  |         |PerlIO_set_ptrcnt
 =for apidoc_item  |         |PerlIO_setlinebuf
 =for apidoc_item T|int      |PerlIO_setpos|PerlIO *f|SV *saved
-=for apidoc_item  |         |PerlIO_set_ptrcnt
 =for apidoc_item  |         |PerlIO_stderr
 =for apidoc_item  |         |PerlIO_stdin
 =for apidoc_item  |         |PerlIO_stdout

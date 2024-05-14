@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 If you read this file _as_is_, just ignore the funny characters you
 see. It is written in the POD format (see pod/perlpod.pod) which is
 specially designed to be readable as is.
@@ -53,7 +55,7 @@ delivering complete gcc toolchain for MS Windows:
 
 Delivers gcc toolchain building 32-bit executables (which can be used both 32 and 64 bit Windows platforms)
 
-=item L<http://mingw-w64.org>
+=item L<https://mingw-w64.org>
 
 Delivers gcc toolchain targeting both 64-bit Windows and 32-bit Windows
 platforms (despite the project name "mingw-w64" they are not only 64-bit
@@ -72,10 +74,10 @@ https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-compatibility-v
 and
 https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-sysrequirements-vs
 
-The MinGW64 compiler is available at L<http://mingw-w64.org>.
+The MinGW64 compiler is available at L<https://mingw-w64.org>.
 The latter is actually a cross-compiler targeting Win64. There's also a trimmed
 down compiler (no java, or gfortran) suitable for building perl available at:
-L<http://strawberryperl.com/package/kmx/64_gcctoolchain/>
+L<https://strawberryperl.com/package/kmx/64_gcctoolchain/>
 
 NOTE: If you're using a 32-bit compiler to build perl on a 64-bit Windows
 operating system, then you should set the WIN64 environment variable to "undef".
@@ -133,20 +135,25 @@ These free versions of Visual C++ 2013-2022 Professional contain the same
 compilers and linkers that ship with the full versions, and also contain
 everything necessary to build Perl.
 
-These packages can be downloaded by searching in the Download Center at
-L<https://www.microsoft.com/downloads/search.aspx?displaylang=en>.  (Providing exact
-links to these packages has proven a pointless task because the links keep on
-changing so often.)
+These packages can be downloaded from L<https://visualstudio.microsoft.com/>.
 
 Install Visual C++ 2013-2022 Community, then setup your environment
 using, e.g.
 
- C:\Program Files\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat
+F<C:\Program Files\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat>
 
 (assuming the default installation location was chosen).
 
-Perl should now build using the win32/Makefile.  You will need to edit that
-file to set CCTYPE to one of MSVC120-MSVC142 first.
+Perl should now build using the F<win32/Makefile>.  You will need to edit that
+file to set C<CCTYPE> to one of C<MSVC120>-C<MSVC143> first.
+
+=item Microsoft C++ Build Tools
+
+There's also a standalone (IDE-less) version of the build tools mentioned
+above containing the MSVC compiler available for download from
+L<https://visualstudio.microsoft.com/visual-cpp-build-tools/>.
+
+This is also referred to as I<Build Tools for Visual Studio>.
 
 =item GCC
 
@@ -154,7 +161,7 @@ Perl can be compiled with gcc from MinGW (version 3.4.5 or later) or from
 MinGW64 (version 4.4.3 or later).  It can be downloaded here:
 
 L<https://osdn.net/projects/mingw/>
-L<http://www.mingw-w64.org/>
+L<https://www.mingw-w64.org/>
 
 You also need gmake. Usually it comes with MinGW but its executable may have
 a different name, such as mingw32-make.exe.
@@ -167,11 +174,11 @@ or later, and with MinGW64 64-bit 6.3.0 or later.
 =item Intel C++ Compiler
 
 Experimental support for using Intel C++ Compiler has been added. Edit
-win32/Makefile and pick the correct CCTYPE for the Visual C that Intel C was
-installed into. Also uncomment __ICC to enable Intel C on Visual C support.
+F<win32/Makefile> and pick the correct C<CCTYPE> for the Visual C that Intel C
+was installed into. Also uncomment C<__ICC> to enable Intel C on Visual C support.
 To set up the build environment, from the Start Menu run
 IA-32 Visual Studio 20__ mode or Intel 64 Visual Studio 20__ mode as
-appropriate. Then run nmake as usually in that prompt box.
+appropriate. Then run C<nmake> as usual in that prompt box.
 
 Only Intel C++ Compiler v12.1 has been tested. Other versions probably will
 work. Using Intel C++ Compiler instead of Visual C has the benefit of C99
@@ -187,65 +194,65 @@ unlike GCC.
 
 =item *
 
-Make sure you are in the "win32" subdirectory under the perl toplevel.
-This directory contains a "Makefile" that will work with
-versions of nmake that come with Visual C++, and
-a GNU make "GNUmakefile" that will work for all supported compilers.
-The defaults in the gmake makefile are setup to build using MinGW/gcc.
+Make sure you are in the F<win32> subdirectory under the perl toplevel.
+This directory contains a F<Makefile> that will work with
+versions of C<nmake> that come with Visual C++, and
+a GNU make F<GNUmakefile> that will work for all supported compilers.
+The defaults in the C<gmake> makefile are set up to build with MinGW/gcc.
 
 =item *
 
-Edit the GNUmakefile (or Makefile, if you're using nmake) and change the values
-of INST_DRV and INST_TOP. You can also enable various build flags. These are
-explained in the makefiles.
+Edit the F<GNUmakefile> (or F<Makefile>, if you're using F<nmake>) and change
+the values of I<INST_DRV> and C<INST_TOP>. You can also enable various build
+flags. These are explained in the makefiles.
 
-Note that it is generally not a good idea to try to build a perl with
-INST_DRV and INST_TOP set to a path that already exists from a previous
+Note that it is generally not a good idea to try to build a C<perl> with
+C<INST_DRV> and C<INST_TOP> set to a path that already exists from a previous
 build.  In particular, this may cause problems with the
-lib/ExtUtils/t/Embed.t test, which attempts to build a test program and
-may end up building against the installed perl's lib/CORE directory rather
-than the one being tested.
+F<lib/ExtUtils/t/Embed.t> test, which attempts to build a test program and
+may end up building against the installed C<perl>'s F<lib/CORE> directory
+rather than the one being tested.
 
-You will have to make sure that CCTYPE is set correctly and that
-CCHOME points to wherever you installed your compiler.  For GCC this
+You will have to make sure that C<CCTYPE> is set correctly and that
+C<CCHOME> points to wherever you installed your compiler.  For GCC this
 should be the directory that contains the F<bin>, F<include> and
 F<lib> directories.
 
 If building with the cross-compiler provided by
 mingw-w64.org you'll need to uncomment the line that sets
-GCCCROSS in the GNUmakefile. Do this only if it's the cross-compiler - ie
-only if the bin folder doesn't contain a gcc.exe. (The cross-compiler
-does not provide a gcc.exe, g++.exe, ar.exe, etc. Instead, all of these
-executables are prefixed with 'x86_64-w64-mingw32-'.)
+C<GCCCROSS> in the F<GNUmakefile>. Do this only if it's the cross-compiler,
+ie. only if the F<bin> folder doesn't contain a F<gcc.exe>. (The cross-compiler
+does not provide a F<gcc.exe>, F<g++.exe>, F<ar.exe>, etc. Instead, all of these
+executables are prefixed with C<x86_64-w64-mingw32->.)
 
-The default value for CCHOME in the makefiles for Visual C++
+The default value for C<CCHOME> in the makefiles for Visual C++
 may not be correct for some versions.  Make sure the default exists
 and is valid.
 
-If you want build some core extensions statically into perl's dll, specify
-them in the STATIC_EXT macro.
+If you want build some core extensions statically into C<perl>'s DLL,
+specify them in the C<STATIC_EXT> macro.
 
 Be sure to read the instructions near the top of the makefiles carefully.
 
 =item *
 
-Type "gmake" (or "nmake" if you are using that make).
+Type C<gmake> (or C<nmake> if you are using that version of C<make>).
 
-This should build everything.  Specifically, it will create perl.exe,
-perl536.dll at the perl toplevel, and various other extension dll's
-under the lib\auto directory.  If the build fails for any reason, make
+This should build everything.  Specifically, it will create F<perl.exe>,
+F<perl538.dll> at the perl toplevel, and various other extension DLL's
+under the F<lib\auto> directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
-To try gmake's parallel mode, type "gmake -j2", where 2, is the maximum number
+To try C<gmake>'s parallel mode, type C<gmake -j2> where C<2> is the maximum number
 of parallel jobs you want to run. A number of things in the build process will
 run in parallel, but there are serialization points where you will see just 1
 CPU maxed out. This is normal.
 
 If you are advanced enough with building C code, here is a suggestion to speed
-up building perl, and the later C<make test>. Try to keep your PATH environmental
+up building C<perl>, and the later C<make test>. Try to keep your C<PATH> environment
 variable with the least number of folders possible (remember to keep your C
-compiler's folders there). C<C:\WINDOWS\system32> or C<C:\WINNT\system32>
-depending on your OS version should be first folder in PATH, since "cmd.exe"
+compiler's folders there). F<C:\WINDOWS\system32> or F<C:\WINNT\system32>
+depending on your OS version should be first folder in C<PATH>, since C<cmd.exe>
 is the most commonly launched program during the build and later testing.
 
 =back

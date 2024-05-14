@@ -1,11 +1,11 @@
-# DerivedDecompositionType-14.0.0.txt
-# Date: 2021-06-04, 02:19:17 GMT
-# © 2021 Unicode®, Inc.
+# DerivedDecompositionType-15.0.0.txt
+# Date: 2022-02-26, 00:38:31 GMT
+# © 2022 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-#   For documentation, see http://www.unicode.org/reports/tr44/
+#   For documentation, see https://www.unicode.org/reports/tr44/
 
 # ================================================
 
@@ -868,9 +868,11 @@ AB69          ; Super # Lm       MODIFIER LETTER SMALL TURNED W
 10781..10785  ; Super # Lm   [5] MODIFIER LETTER SUPERSCRIPT TRIANGULAR COLON..MODIFIER LETTER SMALL B WITH HOOK
 10787..107B0  ; Super # Lm  [42] MODIFIER LETTER SMALL DZ DIGRAPH..MODIFIER LETTER SMALL V WITH RIGHT HOOK
 107B2..107BA  ; Super # Lm   [9] MODIFIER LETTER SMALL CAPITAL Y..MODIFIER LETTER SMALL S WITH CURL
+1E030..1E050  ; Super # Lm  [33] MODIFIER LETTER CYRILLIC SMALL A..MODIFIER LETTER CYRILLIC SMALL PALOCHKA
+1E06B..1E06D  ; Super # Lm   [3] MODIFIER LETTER CYRILLIC SMALL ES WITH DESCENDER..MODIFIER LETTER CYRILLIC SMALL STRAIGHT U WITH STROKE
 1F16A..1F16C  ; Super # So   [3] RAISED MC SIGN..RAISED MR SIGN
 
-# Total code points: 213
+# Total code points: 249
 
 # ================================================
 
@@ -881,8 +883,9 @@ AB69          ; Super # Lm       MODIFIER LETTER SMALL TURNED W
 208E          ; Sub # Pe       SUBSCRIPT RIGHT PARENTHESIS
 2090..209C    ; Sub # Lm  [13] LATIN SUBSCRIPT SMALL LETTER A..LATIN SUBSCRIPT SMALL LETTER T
 2C7C          ; Sub # Lm       LATIN SUBSCRIPT SMALL LETTER J
+1E051..1E06A  ; Sub # Lm  [26] CYRILLIC SUBSCRIPT SMALL LETTER A..CYRILLIC SUBSCRIPT SMALL LETTER DZHE
 
-# Total code points: 38
+# Total code points: 64
 
 # ================================================
 

@@ -104,7 +104,7 @@ static void TranslateError
     sv_setpv(MY_CXT.x_dl_last_error, error);
 }
 
-static char *dlopen(char *path, int mode /* mode is ignored */)
+static char *dlopen(char *path)
 {
     int dyld_result;
     NSObjectFileImage ofile;
@@ -159,13 +159,11 @@ void *
 dl_load_file(filename, flags=0)
     char *	filename
     int		flags
-    PREINIT:
-    int mode = 1;
     CODE:
     DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s,%x):\n", filename,flags));
     if (flags & 0x01)
 	Perl_warn(aTHX_ "Can't make loaded symbols global on this platform while loading %s",filename);
-    RETVAL = dlopen(filename, mode) ;
+    RETVAL = dlopen(filename);
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%x\n", RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)

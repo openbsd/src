@@ -1,6 +1,9 @@
 #define PERL_EXT_POSIX
 #define PERL_EXT
 
+#if defined(_WIN32) && defined(__GNUC__) /* mingw compiler */
+#define _POSIX_
+#endif
 #define PERL_NO_GET_CONTEXT
 
 #include "EXTERN.h"
@@ -1018,7 +1021,7 @@ static NV my_log2(NV x)
 /* XXX nexttoward */
 
 /* GCC's FLT_ROUNDS is (wrongly) hardcoded to 1 (at least up to 11.x) */
-#if defined(PERL_IS_GCC) /* && __GNUC__ < XXX */
+#if defined(PERL_IS_GCC) /* && __GNUC__ < XXX */ || (defined(__clang__) && defined(__s390x__))
 #  define BROKEN_FLT_ROUNDS
 #endif
 
@@ -1341,9 +1344,6 @@ static NV_PAYLOAD_TYPE S_getpayload(NV nv)
 #include <termios.h>
 #endif
 #include <stdlib.h>
-#ifndef __ultrix__
-#include <string.h>
-#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -1560,77 +1560,6 @@ END_EXTERN_C
 #endif
 #endif
 
-#if ! defined(HAS_LOCALECONV) && ! defined(HAS_LOCALECONV_L)
-#   define localeconv() not_here("localeconv")
-#else
-struct lconv_offset {
-    const char *name;
-    size_t offset;
-};
-
-static const struct lconv_offset lconv_strings[] = {
-#ifdef USE_LOCALE_NUMERIC
-    {"decimal_point",     STRUCT_OFFSET(struct lconv, decimal_point)},
-    {"thousands_sep",     STRUCT_OFFSET(struct lconv, thousands_sep)},
-#  ifndef NO_LOCALECONV_GROUPING
-    {"grouping",          STRUCT_OFFSET(struct lconv, grouping)},
-#  endif
-#endif
-#ifdef USE_LOCALE_MONETARY
-    {"int_curr_symbol",   STRUCT_OFFSET(struct lconv, int_curr_symbol)},
-    {"currency_symbol",   STRUCT_OFFSET(struct lconv, currency_symbol)},
-    {"mon_decimal_point", STRUCT_OFFSET(struct lconv, mon_decimal_point)},
-#  ifndef NO_LOCALECONV_MON_THOUSANDS_SEP
-    {"mon_thousands_sep", STRUCT_OFFSET(struct lconv, mon_thousands_sep)},
-#  endif
-#  ifndef NO_LOCALECONV_MON_GROUPING
-    {"mon_grouping",      STRUCT_OFFSET(struct lconv, mon_grouping)},
-#  endif
-    {"positive_sign",     STRUCT_OFFSET(struct lconv, positive_sign)},
-    {"negative_sign",     STRUCT_OFFSET(struct lconv, negative_sign)},
-#endif
-    {NULL, 0}
-};
-
-#ifdef USE_LOCALE_NUMERIC
-
-/* The Linux man pages say these are the field names for the structure
- * components that are LC_NUMERIC; the rest being LC_MONETARY */
-#   define isLC_NUMERIC_STRING(name) (   strEQ(name, "decimal_point")   \
-                                      || strEQ(name, "thousands_sep")   \
-                                                                        \
-                                      /* There should be no harm done   \
-                                       * checking for this, even if     \
-                                       * NO_LOCALECONV_GROUPING */      \
-                                      || strEQ(name, "grouping"))
-#else
-#   define isLC_NUMERIC_STRING(name) (0)
-#endif
-
-static const struct lconv_offset lconv_integers[] = {
-#ifdef USE_LOCALE_MONETARY
-    {"int_frac_digits",   STRUCT_OFFSET(struct lconv, int_frac_digits)},
-    {"frac_digits",       STRUCT_OFFSET(struct lconv, frac_digits)},
-    {"p_cs_precedes",     STRUCT_OFFSET(struct lconv, p_cs_precedes)},
-    {"p_sep_by_space",    STRUCT_OFFSET(struct lconv, p_sep_by_space)},
-    {"n_cs_precedes",     STRUCT_OFFSET(struct lconv, n_cs_precedes)},
-    {"n_sep_by_space",    STRUCT_OFFSET(struct lconv, n_sep_by_space)},
-    {"p_sign_posn",       STRUCT_OFFSET(struct lconv, p_sign_posn)},
-    {"n_sign_posn",       STRUCT_OFFSET(struct lconv, n_sign_posn)},
-#ifdef HAS_LC_MONETARY_2008
-    {"int_p_cs_precedes",  STRUCT_OFFSET(struct lconv, int_p_cs_precedes)},
-    {"int_p_sep_by_space", STRUCT_OFFSET(struct lconv, int_p_sep_by_space)},
-    {"int_n_cs_precedes",  STRUCT_OFFSET(struct lconv, int_n_cs_precedes)},
-    {"int_n_sep_by_space", STRUCT_OFFSET(struct lconv, int_n_sep_by_space)},
-    {"int_p_sign_posn",    STRUCT_OFFSET(struct lconv, int_p_sign_posn)},
-    {"int_n_sign_posn",    STRUCT_OFFSET(struct lconv, int_n_sign_posn)},
-#endif
-#endif
-    {NULL, 0}
-};
-
-#endif /* HAS_LOCALECONV */
-
 #ifdef HAS_LONG_DOUBLE
 #  if LONG_DOUBLESIZE > NVSIZE
 #    undef HAS_LONG_DOUBLE  /* XXX until we figure out how to use them */
@@ -1819,7 +1748,12 @@ my_tzset(pTHX)
 #endif
         fix_win32_tzenv();
 #endif
+    TZSET_LOCK;
     tzset();
+    TZSET_UNLOCK;
+    /* After the unlock, another thread could change things, but this is a
+     * problem with the Posix API generally, not Perl; and the result will be
+     * self-consistent */
 }
 
 MODULE = SigSet		PACKAGE = POSIX::SigSet		PREFIX = sig
@@ -2124,138 +2058,10 @@ HV *
 localeconv()
     CODE:
 #ifndef HAS_LOCALECONV
-	localeconv(); /* A stub to call not_here(). */
+        RETVAL = NULL;
+        not_here("localeconv");
 #else
-	struct lconv *lcbuf;
-#  if defined(USE_ITHREADS)                                             \
-   && defined(HAS_POSIX_2008_LOCALE)                                    \
-   && defined(HAS_LOCALECONV_L) /* Prefer this thread-safe version */
-        bool do_free = FALSE;
-        locale_t cur = NULL;
-#  elif defined(TS_W32_BROKEN_LOCALECONV)
-        const char * save_global;
-        const char * save_thread;
-#  endif
-        DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
-
-        /* localeconv() deals with both LC_NUMERIC and LC_MONETARY, but
-         * LC_MONETARY is already in the correct locale */
-#  ifdef USE_LOCALE_MONETARY
-
-        const bool is_monetary_utf8 = _is_cur_LC_category_utf8(LC_MONETARY);
-#  endif
-#  ifdef USE_LOCALE_NUMERIC
-
-        bool is_numeric_utf8;
-
-        STORE_LC_NUMERIC_FORCE_TO_UNDERLYING();
-
-        is_numeric_utf8 = _is_cur_LC_category_utf8(LC_NUMERIC);
-#  endif
-
-	RETVAL = newHV();
-	sv_2mortal((SV*)RETVAL);
-#  if defined(USE_ITHREADS)                         \
-   && defined(HAS_POSIX_2008_LOCALE)                \
-   && defined(HAS_LOCALECONV_L)
-
-        cur = uselocale((locale_t) 0);
-        if (cur == LC_GLOBAL_LOCALE) {
-            cur = duplocale(LC_GLOBAL_LOCALE);
-            do_free = TRUE;
-        }
-
-        lcbuf = localeconv_l(cur);
-#  else
-        LOCALECONV_LOCK;    /* Prevent interference with other threads using
-                               localeconv() */
-#    ifdef TS_W32_BROKEN_LOCALECONV
-        /* This is a workaround for a Windows bug prior to VS 15, in which
-         * localeconv only looks at the global locale.  We toggle to the global
-         * locale; populate the return; then toggle back.  We have to use
-         * LC_ALL instead of the individual ones because of another bug in
-         * Windows */
-
-        save_thread  = savepv(Perl_setlocale(LC_NUMERIC, NULL));
-
-        _configthreadlocale(_DISABLE_PER_THREAD_LOCALE);
-
-        save_global  = savepv(Perl_setlocale(LC_ALL, NULL));
-
-        Perl_setlocale(LC_ALL,  save_thread);
-#    endif
-        lcbuf = localeconv();
-#  endif
-	if (lcbuf) {
-	    const struct lconv_offset *strings = lconv_strings;
-	    const struct lconv_offset *integers = lconv_integers;
-	    const char *ptr = (const char *) lcbuf;
-
-	    while (strings->name) {
-                /* This string may be controlled by either LC_NUMERIC, or
-                 * LC_MONETARY */
-                const bool is_utf8_locale =
-#  if defined(USE_LOCALE_NUMERIC) && defined(USE_LOCALE_MONETARY)
-                                        (isLC_NUMERIC_STRING(strings->name))
-                                        ? is_numeric_utf8
-                                        : is_monetary_utf8;
-#  elif defined(USE_LOCALE_NUMERIC)
-                                        is_numeric_utf8;
-#  elif defined(USE_LOCALE_MONETARY)
-                                        is_monetary_utf8;
-#  else
-                                        FALSE;
-#  endif
-
-		const char *value = *((const char **)(ptr + strings->offset));
-
-		if (value && *value) {
-                    const STRLEN value_len = strlen(value);
-
-                    /* We mark it as UTF-8 if a utf8 locale and is valid and
-                     * variant under UTF-8 */
-                    const bool is_utf8 = is_utf8_locale
-                                     &&  is_utf8_non_invariant_string(
-                                                                (U8*) value,
-                                                                value_len);
-		    (void) hv_store(RETVAL,
-                                    strings->name,
-                                    strlen(strings->name),
-                                    newSVpvn_utf8(value, value_len, is_utf8),
-                                    0);
-            }
-                strings++;
-	    }
-
-	    while (integers->name) {
-		const char value = *((const char *)(ptr + integers->offset));
-
-		if (value != CHAR_MAX)
-		    (void) hv_store(RETVAL, integers->name,
-				    strlen(integers->name), newSViv(value), 0);
-                integers++;
-            }
-	}
-#  if defined(USE_ITHREADS)                         \
-   && defined(HAS_POSIX_2008_LOCALE)                \
-   && defined(HAS_LOCALECONV_L)
-        if (do_free) {
-            freelocale(cur);
-        }
-#  else
-#    ifdef TS_W32_BROKEN_LOCALECONV
-        Perl_setlocale(LC_ALL, save_global);
-
-        _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-
-        Perl_setlocale(LC_ALL, save_thread);
-
-        Safefree(save_global);
-        Safefree(save_thread);
-#    endif
-        LOCALECONV_UNLOCK;
-#  endif
-        RESTORE_LC_NUMERIC();
+        RETVAL = Perl_localeconv(aTHX);
 #endif  /* HAS_LOCALECONV */
     OUTPUT:
 	RETVAL
@@ -3383,9 +3189,9 @@ mblen(s, n = ~0)
             memzero(&PL_mbrlen_ps, sizeof(PL_mbrlen_ps));
             RETVAL = 0;
 #else
-            MBLEN_LOCK;
+            MBLEN_LOCK_;
             RETVAL = mblen(NULL, 0);
-            MBLEN_UNLOCK;
+            MBLEN_UNLOCK_;
 #endif
         }
         else {  /* Not resetting state */
@@ -3396,29 +3202,25 @@ mblen(s, n = ~0)
             }
             else {
                 size_t len;
-                char * string = SvPV(byte_s, len);
+                char * string = SvPVbyte(byte_s, len);
                 if (n < len) len = n;
 #ifdef USE_MBRLEN
+                MBRLEN_LOCK_;
                 RETVAL = (SSize_t) mbrlen(string, len, &PL_mbrlen_ps);
+                MBRLEN_UNLOCK_;
                 if (RETVAL < 0) RETVAL = -1;    /* Use mblen() ret code for
                                                    transparency */
 #else
                 /* Locking prevents races, but locales can be switched out
                  * without locking, so this isn't a cure all */
-                MBLEN_LOCK;
+                MBLEN_LOCK_;
                 RETVAL = mblen(string, len);
-                MBLEN_UNLOCK;
+                MBLEN_UNLOCK_;
 #endif
             }
         }
     OUTPUT:
         RETVAL
-
-#if defined(HAS_MBRTOWC) && (defined(USE_ITHREADS) || ! defined(HAS_MBTOWC))
-#  define USE_MBRTOWC
-#else
-#  undef USE_MBRTOWC
-#endif
 
 int
 mbtowc(pwc, s, n = ~0)
@@ -3426,21 +3228,19 @@ mbtowc(pwc, s, n = ~0)
 	SV *		s
 	size_t		n
     CODE:
+        RETVAL = -1;
+#if ! defined(HAS_MBTOWC) && ! defined(HAS_MBRTOWC)
+        PERL_UNUSED_ARG(pwc);
+        PERL_UNUSED_ARG(s);
+        PERL_UNUSED_ARG(n);
+#else
         errno = 0;
         SvGETMAGIC(s);
         if (! SvOK(s)) { /* Initialize state */
-#ifdef USE_MBRTOWC
-            /* Initialize the shift state to all zeros in PL_mbrtowc_ps. */
-            memzero(&PL_mbrtowc_ps, sizeof(PL_mbrtowc_ps));
-            RETVAL = 0;
-#else
-            MBTOWC_LOCK;
-            RETVAL = mbtowc(NULL, NULL, 0);
-            MBTOWC_UNLOCK;
-#endif
+            mbtowc_(NULL, NULL, 0);
         }
         else {  /* Not resetting state */
-            wchar_t wc;
+            wchar_t wc = 0;
             SV * byte_s = sv_2mortal(newSVsv_nomg(s));
             if (! sv_utf8_downgrade_nomg(byte_s, TRUE)) {
                 SETERRNO(EINVAL, LIB_INVARG);
@@ -3448,17 +3248,9 @@ mbtowc(pwc, s, n = ~0)
             }
             else {
                 size_t len;
-                char * string = SvPV(byte_s, len);
+                char * string = SvPVbyte(byte_s, len);
                 if (n < len) len = n;
-#ifdef USE_MBRTOWC
-                RETVAL = (SSize_t) mbrtowc(&wc, string, len, &PL_mbrtowc_ps);
-#else
-                /* Locking prevents races, but locales can be switched out
-                 * without locking, so this isn't a cure all */
-                MBTOWC_LOCK;
-                RETVAL = mbtowc(&wc, string, len);
-                MBTOWC_UNLOCK;
-#endif
+                RETVAL = mbtowc_(&wc, string, len);
                 if (RETVAL >= 0) {
                     sv_setiv_mg(pwc, wc);
                 }
@@ -3467,6 +3259,7 @@ mbtowc(pwc, s, n = ~0)
                 }
             }
         }
+#endif
     OUTPUT:
         RETVAL
 
@@ -3487,23 +3280,27 @@ wctomb(s, wchar)
 #ifdef USE_WCRTOMB
             /* The man pages khw looked at are in agreement that this works.
              * But probably memzero would too */
+            WCRTOMB_LOCK_;
             RETVAL = wcrtomb(NULL, L'\0', &PL_wcrtomb_ps);
+            WCRTOMB_UNLOCK_;
 #else
-            WCTOMB_LOCK;
+            WCTOMB_LOCK_;
             RETVAL = wctomb(NULL, L'\0');
-            WCTOMB_UNLOCK;
+            WCTOMB_UNLOCK_;
 #endif
         }
         else {  /* Not resetting state */
             char buffer[MB_LEN_MAX];
 #ifdef USE_WCRTOMB
+            WCRTOMB_LOCK_;
             RETVAL = wcrtomb(buffer, wchar, &PL_wcrtomb_ps);
+            WCRTOMB_UNLOCK_;
 #else
             /* Locking prevents races, but locales can be switched out without
              * locking, so this isn't a cure all */
-            WCTOMB_LOCK;
+            WCTOMB_LOCK_;
             RETVAL = wctomb(buffer, wchar);
-            WCTOMB_UNLOCK;
+            WCTOMB_UNLOCK_;
 #endif
             if (RETVAL >= 0) {
                 sv_setpvn_mg(s, buffer, RETVAL);
@@ -3516,6 +3313,12 @@ int
 strcoll(s1, s2)
 	char *		s1
 	char *		s2
+    CODE:
+        LC_COLLATE_LOCK;
+        RETVAL = strcoll(s1, s2);
+        LC_COLLATE_UNLOCK;
+    OUTPUT:
+        RETVAL
 
 void
 strtod(str)
@@ -3631,24 +3434,11 @@ void
 strxfrm(src)
 	SV *		src
     CODE:
-	{
-          STRLEN srclen;
-          STRLEN dstlen;
-          STRLEN buflen;
-          char *p = SvPV(src,srclen);
-          srclen++;
-          buflen = srclen * 4 + 1;
-          ST(0) = sv_2mortal(newSV(buflen));
-          dstlen = strxfrm(SvPVX(ST(0)), p, (size_t)buflen);
-          if (dstlen >= buflen) {
-              dstlen++;
-              SvGROW(ST(0), dstlen);
-              strxfrm(SvPVX(ST(0)), p, (size_t)dstlen);
-              dstlen--;
-          }
-          SvCUR_set(ST(0), dstlen);
-	    SvPOK_only(ST(0));
-	}
+#ifdef USE_LOCALE_COLLATE
+      ST(0) = Perl_strxfrm(aTHX_ src);
+#else
+      ST(0) = src;
+#endif
 
 SysRet
 mkfifo(filename, mode)
@@ -3730,7 +3520,10 @@ asctime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = -1)
 	    mytm.tm_yday = yday;
 	    mytm.tm_isdst = isdst;
 	    if (ix) {
-	        const time_t result = mktime(&mytm);
+	        time_t result;
+                MKTIME_LOCK;
+	        result = mktime(&mytm);
+                MKTIME_UNLOCK;
 		if (result == (time_t)-1)
 		    SvOK_off(TARG);
 		else if (result == 0)
@@ -3738,7 +3531,9 @@ asctime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = -1)
 		else
 		    sv_setiv(TARG, (IV)result);
 	    } else {
+                ASCTIME_LOCK;
 		sv_setpv(TARG, asctime(&mytm));
+                ASCTIME_UNLOCK;
 	    }
 	    ST(0) = TARG;
 	    XSRETURN(1);
@@ -3788,29 +3583,19 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 	{
 	    char *buf;
             SV *sv;
+            utf8ness_t is_utf8;
 
             /* allowing user-supplied (rather than literal) formats
              * is normally frowned upon as a potential security risk;
              * but this is part of the API so we have to allow it */
             GCC_DIAG_IGNORE_STMT(-Wformat-nonliteral);
-	    buf = my_strftime(SvPV_nolen(fmt), sec, min, hour, mday, mon, year, wday, yday, isdst);
+	    buf = my_strftime8_temp(SvPV_nolen(fmt), sec, min, hour, mday, mon, year, wday, yday, isdst, &is_utf8);
             GCC_DIAG_RESTORE_STMT;
             sv = sv_newmortal();
 	    if (buf) {
                 STRLEN len = strlen(buf);
 		sv_usepvn_flags(sv, buf, len, SV_HAS_TRAILING_NUL);
-		if (       SvUTF8(fmt)
-                    || (   is_utf8_non_invariant_string((U8*) buf, len)
-#ifdef USE_LOCALE_TIME
-                        && _is_cur_LC_category_utf8(LC_TIME)
-#else   /* If can't check directly, at least can see if script is consistent,
-           under UTF-8, which gives us an extra measure of confidence. */
-
-                        && isSCRIPT_RUN((const U8 *) buf,
-                                        (const U8 *) buf + len,
-                                        TRUE) /* Means assume UTF-8 */
-#endif
-                )) {
+		if (SvUTF8(fmt) || is_utf8 == UTF8NESS_YES) {
 		    SvUTF8_on(sv);
 		}
             }
@@ -3835,8 +3620,12 @@ void
 tzname()
     PPCODE:
 	EXTEND(SP,2);
+        /* It is undefined behavior if another thread is changing this while
+         * its being read */
+        ENVr_LOCALEr_LOCK;
 	PUSHs(newSVpvn_flags(tzname[0], strlen(tzname[0]), SVs_TEMP));
 	PUSHs(newSVpvn_flags(tzname[1], strlen(tzname[1]), SVs_TEMP));
+        ENVr_LOCALEr_UNLOCK;
 
 char *
 ctermid(s = 0)

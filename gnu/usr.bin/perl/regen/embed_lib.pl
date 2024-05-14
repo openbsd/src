@@ -1,5 +1,16 @@
 #!/usr/bin/perl -w
+BEGIN {
+    for $n (qw(lib regen)) {
+        if (-e "../$n") {
+            push @INC, "../$n";
+        } elsif (-e "./$n") {
+            push @INC, "./$n";
+        }
+    }
+}
 use strict;
+use warnings;
+use HeaderParser;
 
 # read embed.fnc and regen/opcodes, needed by regen/embed.pl, makedef.pl,
 # autodoc.pl and t/porting/diag.t
@@ -7,158 +18,82 @@ use strict;
 require 5.004;	# keep this compatible, an old perl is all we may have before
                 # we build the new one
 
-# Records the current pre-processor state:
-my @state;
-# Nested structure to group functions by the pre-processor conditions that
-# control when they are compiled:
-my %groups;
-
-sub current_group {
-    my $group = \%groups;
-    # Nested #if blocks are effectively &&ed together
-    # For embed.fnc, ordering within the && isn't relevant, so we can
-    # sort them to try to group more functions together.
-    foreach (sort @state) {
-        $group->{$_} ||= {};
-        $group = $group->{$_};
-    }
-    return $group->{''} ||= [];
-}
-
-sub add_level {
-    my ($level, $indent, $wanted) = @_;
-    my $funcs = $level->{''};
-    my @entries;
-    if ($funcs) {
-        if (!defined $wanted) {
-            @entries = @$funcs;
-        } else {
-            foreach (@$funcs) {
-                if ($_->[0] =~ /[AC]/) { # 'C' is like 'A' for our purposes
-                                         # here
-                    push @entries, $_ if $wanted eq 'A';
-                } elsif ($_->[0] =~ /E/) {
-                    push @entries, $_ if $wanted eq 'E';
-                } else {
-                    push @entries, $_ if $wanted eq '';
-                }
-            }
-        }
-        @entries = sort {$a->[2] cmp $b->[2]} @entries;
-    }
-    foreach (sort grep {length $_} keys %$level) {
-        my @conditional = add_level($level->{$_}, $indent . '  ', $wanted);
-        push @entries,
-            ["#${indent}if $_"], @conditional, ["#${indent}endif"]
-                if @conditional;
-    }
-    return @entries;
-}
-
 sub setup_embed {
     my $prefix = shift || '';
-    open IN, '<', $prefix . 'embed.fnc' or die $!;
+    my $parser= HeaderParser->new(
+        pre_process_content => sub {
+            my ($self,$line_data)= @_;
+            # HeaderParser knows how to parse and normalize embed_fnc.
+            # calling this here ensures sets up the embed subpacket.
+            $self->tidy_embed_fnc_entry($line_data);
+            my $embed= $line_data->{embed}
+                or return;
+        },
+        post_process_grouped_content => sub {
+            # sort the group content by name.
+            @{$_[1]}=
+                sort {
+                    $a->{embed}{name} cmp $b->{embed}{name}
+                } @{$_[1]};
+        },
+    )->read_file($prefix . 'embed.fnc');
+    my $lines= $parser->lines();
 
-    my @embed;
-    my %seen;
-    my $macro_depth = 0;
-
-    while (<IN>) {
-        chomp;
-        next if /^:/;
-        next if /^$/;
-        while (s|\\$||) {
-            $_ .= <IN>;
-            chomp;
-        }
-        s/\s+$//;
-        my @args;
-        if (/^\s*(#|$)/) {
-            @args = $_;
-        }
-        else {
-            @args = split /\s*\|\s*/, $_;
-        }
-        if (@args == 1) {
-            if ($args[0] !~ /^#\s*(?:if|ifdef|ifndef|else|endif)/) {
-                die "Illegal line $. '$args[0]' in embed.fnc";
-            }
-            $macro_depth++ if $args[0] =~/^#\s*if(n?def)?\b/;
-            $macro_depth-- if $args[0] =~/^#\s*endif\b/;
-            die "More #endif than #if in embed.fnc:$." if $macro_depth < 0;
-        }
-        else  {
-            die "Illegal line (less than 3 fields) in embed.fnc:$.: $_"
-                unless @args >= 3;
-            my $name = $args[2];
-            # only check for duplicates outside of #if's - otherwise
-            # they may be alternate definitions of the same function
-            if ($macro_depth == 0) {
-                die "Duplicate function name: '$name' in embed.fnc:$."
-                    if exists $seen{$name};
-            }
-            $seen{$name} = 1;
-        }
-
-        push @embed, \@args;
-    }
-    die "More #if than #endif by the end of embed.fnc" if $macro_depth != 0;
-
-    close IN or die "Problem reading embed.fnc: $!";
-
-    open IN, '<', $prefix . 'regen/opcodes' or die $!;
+    # add the opcode checker functions automatically.
+    open my $in_fh, '<', $prefix . 'regen/opcodes' or die $!;
     {
         my %syms;
 
-        while (<IN>) {
-            chomp;
-            next unless $_;
-            next if /^#/;
-            my $check = (split /\t+/, $_)[2];
+        my $line_num = 0;
+        while (my $line= <$in_fh>) {
+            $line_num++;
+            chomp($line);
+            next unless $line;
+            next if $line=~/^#/;
+            my $check = (split /\t+/, $line)[2];
             next if $syms{$check}++;
 
             # These are all indirectly referenced by globals.c.
-            push @embed, ['pR', 'OP *', $check, 'NN OP *o'];
+            my $new= HeaderLine->new(
+                cond => [["defined(PERL_IN_GLOBALS_C) || defined(PERL_IN_OP_C) || defined(PERL_IN_PEEP_C)"]],
+                raw => "pR|OP *|$check|NN OP *o",
+                line => "pR|OP *|$check|NN OP *o",
+                type => "content",
+                level => 1,
+                source => 'regen/opcodes',
+                start_line_num => $line_num,
+            );
+            $parser->tidy_embed_fnc_entry($new);
+            push @$lines, $new;
         }
     }
-    close IN or die "Problem reading regen/opcodes: $!";
+    close $in_fh
+        or die "Problem reading regen/opcodes: $!";
 
     # Cluster entries in embed.fnc that have the same #ifdef guards.
     # Also, split out at the top level the three classes of functions.
-    # Output structure is actually the same as input structure - an
-    # (ordered) list of array references, where the elements in the
-    # reference determine what it is - a reference to a 1-element array is a
-    # pre-processor directive, a reference to 2+ element array is a function.
+    # The result for each group_content() calls is an arrayref containing
+    # HeaderLine objects, with the embed.fnc data prenormalized, and each
+    # conditional clause containing a sorted list of functions, with
+    # any further conditional clauses following.
+    # Note this is a normalized and relatively smart grouping, and we can
+    # handle if/elif and etc properly. At the cost of being a touch slow.
 
-    my $current = current_group();
-
-    foreach (@embed) {
-        if (@$_ > 1) {
-            push @$current, $_;
-            next;
-        }
-        $_->[0] =~ s/^#\s+/#/;
-        $_->[0] =~ /^\S*/;
-        $_->[0] =~ s/^#ifdef\s+(\S+)/#if defined($1)/;
-        $_->[0] =~ s/^#ifndef\s+(\S+)/#if !defined($1)/;
-        if ($_->[0] =~ /^#if\s*(.*)/) {
-            push @state, $1;
-        } elsif ($_->[0] =~ /^#else\s*$/) {
-            die "Unmatched #else in embed.fnc" unless @state;
-            $state[-1] = "!($state[-1])";
-        } elsif ($_->[0] =~ m!^#endif\s*(?:/\*.*\*/)?$!) {
-            die "Unmatched #endif in embed.fnc" unless @state;
-            pop @state;
-        } else {
-            die "Unhandled pre-processor directive '$_->[0]' in embed.fnc";
-        }
-        $current = current_group();
-    }
-
-    return ([add_level(\%groups, '')],
-            [add_level(\%groups, '', '')],    # core
-            [add_level(\%groups, '', 'E')],   # ext
-            [add_level(\%groups, '', 'A')]);  # api
+    return (
+        $parser->group_content($lines,
+                sub { $_[1]->{embed} }),                # everything
+        $parser->group_content($lines,
+                sub { $_[1]->{embed} &&
+                      $_[1]->{embed}{flags}=~/[AC]/ }), # only API and private API
+        $parser->group_content($lines,
+                sub { $_[1]->{embed} &&
+                      $_[1]->{embed}{flags}!~/[AC]/ &&  # otherwise Extensions
+                      $_[1]->{embed}{flags}=~/[E]/ }),
+        $parser->group_content($lines,
+                sub { $_[1]->{embed} &&
+                      $_[1]->{embed}{flags}!~/[AC]/ &&  # everything else.
+                      $_[1]->{embed}{flags}!~/[E]/ }),
+    );
 }
 
 1;

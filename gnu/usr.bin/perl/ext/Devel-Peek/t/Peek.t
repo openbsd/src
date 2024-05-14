@@ -392,7 +392,6 @@ do_test('reference to named subroutine without prototype',
       \\d+\\. $ADDR<\\d+> \\(\\d+,\\d+\\) "\\$dump2"
     OUTSIDE = $ADDR \\(MAIN\\)');
 
-if ($] >= 5.011) {
 # note the conditionals on ENGINE and INTFLAGS were introduced in 5.19.9
 do_test('reference to regexp',
         qr(tic),
@@ -406,14 +405,16 @@ do_test('reference to regexp',
     PV = $ADDR "\\(\\?\\^:tic\\)"
     CUR = 8
     LEN = 0
-    STASH = $ADDR\\t"Regexp"'
-. ($] < 5.013 ? '' :
-'
-    COMPFLAGS = 0x0 \(\)
-    EXTFLAGS = 0x680000 \(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\)
-(?:    ENGINE = $ADDR \(STANDARD\)
-)?    INTFLAGS = 0x0(?: \(\))?
+    STASH = $ADDR\\s+"Regexp"
+    COMPFLAGS = 0x0 \\(\\)
+    EXTFLAGS = 0x680000 \\(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\\)
+    ENGINE = $ADDR \\(STANDARD\\)
+    INTFLAGS = 0x0 \\(\\)
     NPARENS = 0
+    LOGICAL_NPARENS = 0
+    LOGICAL_TO_PARNO = 0x0
+    PARNO_TO_LOGICAL = 0x0
+    PARNO_TO_LOGICAL_NEXT = 0x0
     LASTPAREN = 0
     LASTCLOSEPAREN = 0
     MINLEN = 3
@@ -424,20 +425,29 @@ do_test('reference to regexp',
     SUBOFFSET = 0
     SUBCOFFSET = 0
     SUBBEG = 0x0
-(?:    ENGINE = $ADDR
-)?    MOTHER_RE = $ADDR'
-. ($] < 5.019003 ? '' : '
-    SV = REGEXP\($ADDR\) at $ADDR
+    PAREN_NAMES = 0x0
+    SUBSTRS = $ADDR
+    PPRIVATE = $ADDR
+    OFFS = $ADDR
+      \\[ 0:0 \\]
+    QR_ANONCV = 0x0
+    SAVED_COPY = 0x0
+    MOTHER_RE = $ADDR
+    SV = REGEXP\\($ADDR\\) at $ADDR
       REFCNT = 2
-      FLAGS = \(POK,pPOK\)
-      PV = $ADDR "\(\?\^:tic\)"
+      FLAGS = \\(POK,pPOK\\)
+      PV = $ADDR "\\(\\?\\^:tic\\)"
       CUR = 8
-      LEN = \d+
-      COMPFLAGS = 0x0 \(\)
-      EXTFLAGS = 0x680000 \(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\)
-(?:      ENGINE = $ADDR \(STANDARD\)
-)?      INTFLAGS = 0x0(?: \(\))?
+      LEN = \\d+
+      COMPFLAGS = 0x0 \\(\\)
+      EXTFLAGS = 0x680000 \\(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\\)
+      ENGINE = $ADDR \\(STANDARD\\)
+      INTFLAGS = 0x0 \\(\\)
       NPARENS = 0
+      LOGICAL_NPARENS = 0
+      LOGICAL_TO_PARNO = 0x0
+      PARNO_TO_LOGICAL = 0x0
+      PARNO_TO_LOGICAL_NEXT = 0x0
       LASTPAREN = 0
       LASTCLOSEPAREN = 0
       MINLEN = 3
@@ -448,42 +458,15 @@ do_test('reference to regexp',
       SUBOFFSET = 0
       SUBCOFFSET = 0
       SUBBEG = 0x0
-(?:    ENGINE = $ADDR
-)?      MOTHER_RE = 0x0
       PAREN_NAMES = 0x0
       SUBSTRS = $ADDR
       PPRIVATE = $ADDR
       OFFS = $ADDR
-      QR_ANONCV = 0x0(?:
-      SAVED_COPY = 0x0)?') . '
-    PAREN_NAMES = 0x0
-    SUBSTRS = $ADDR
-    PPRIVATE = $ADDR
-    OFFS = $ADDR
-    QR_ANONCV = 0x0(?:
-    SAVED_COPY = 0x0)?'
-));
-} else {
-do_test('reference to regexp',
-        qr(tic),
-'SV = $RV\\($ADDR\\) at $ADDR
-  REFCNT = 1
-  FLAGS = \\(ROK\\)
-  RV = $ADDR
-  SV = PVMG\\($ADDR\\) at $ADDR
-    REFCNT = 1
-    FLAGS = \\(OBJECT,SMG\\)
-    IV = 0
-    NV = 0
-    PV = 0
-    MAGIC = $ADDR
-      MG_VIRTUAL = $ADDR
-      MG_TYPE = PERL_MAGIC_qr\(r\)
-      MG_OBJ = $ADDR
-        PAT = "\(\?^:tic\)"
-        REFCNT = 2
-    STASH = $ADDR\\t"Regexp"');
-}
+        \\[ 0:0 \\]
+      QR_ANONCV = 0x0
+      SAVED_COPY = 0x0
+      MOTHER_RE = 0x0
+');
 
 do_test('reference to blessed hash',
         (bless {}, "Tac"),
@@ -1200,22 +1183,26 @@ unless ($Config{useithreads}) {
 # note the conditionals on ENGINE and INTFLAGS were introduced in 5.19.9
 do_test('UTF-8 in a regular expression',
         qr/\x{100}/,
-'SV = IV\($ADDR\) at $ADDR
+'SV = IV\\($ADDR\\) at $ADDR
   REFCNT = 1
-  FLAGS = \(ROK\)
+  FLAGS = \\(ROK\\)
   RV = $ADDR
-  SV = REGEXP\($ADDR\) at $ADDR
+  SV = REGEXP\\($ADDR\\) at $ADDR
     REFCNT = 1
     FLAGS = \(OBJECT,POK,FAKE,pPOK,UTF8\)
-    PV = $ADDR "\(\?\^u:\\\\\\\\x\{100\}\)" \[UTF8 "\(\?\^u:\\\\\\\\x\{100\}\)"\]
+    PV = $ADDR "\\(\\?\\^u:\\\\\\\\x\\{100\\}\\)" \\[UTF8 "\\(\\?\\^u:\\\\\\\\x\\{100\\}\\)"\\]
     CUR = 13
     LEN = 0
-    STASH = $ADDR	"Regexp"
-    COMPFLAGS = 0x0 \(\)
-    EXTFLAGS = $ADDR \(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\)
-(?:    ENGINE = $ADDR \(STANDARD\)
-)?    INTFLAGS = 0x0(?: \(\))?
+    STASH = $ADDR\\s+"Regexp"
+    COMPFLAGS = 0x0 \\(\\)
+    EXTFLAGS = $ADDR \\(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\\)
+(?:    ENGINE = $ADDR \\(STANDARD\\)
+)?    INTFLAGS = 0x0(?: \\(\\))?
     NPARENS = 0
+    LOGICAL_NPARENS = 0
+    LOGICAL_TO_PARNO = 0x0
+    PARNO_TO_LOGICAL = 0x0
+    PARNO_TO_LOGICAL_NEXT = 0x0
     LASTPAREN = 0
     LASTCLOSEPAREN = 0
     MINLEN = 1
@@ -1226,20 +1213,29 @@ do_test('UTF-8 in a regular expression',
     SUBOFFSET = 0
     SUBCOFFSET = 0
     SUBBEG = 0x0
-(?:    ENGINE = $ADDR
-)?    MOTHER_RE = $ADDR'
-. ($] < 5.019003 ? '' : '
-    SV = REGEXP\($ADDR\) at $ADDR
+    PAREN_NAMES = 0x0
+    SUBSTRS = $ADDR
+    PPRIVATE = $ADDR
+    OFFS = $ADDR
+      \\[ 0:0 \\]
+    QR_ANONCV = 0x0
+    SAVED_COPY = 0x0
+    MOTHER_RE = $ADDR
+    SV = REGEXP\\($ADDR\\) at $ADDR
       REFCNT = 2
-      FLAGS = \(POK,pPOK,UTF8\)
-      PV = $ADDR "\(\?\^u:\\\\\\\\x\{100\}\)" \[UTF8 "\(\?\^u:\\\\\\\\x\{100\}\)"\]
+      FLAGS = \\(POK,pPOK,UTF8\\)
+      PV = $ADDR "\\(\\?\\^u:\\\\\\\\x\\{100\\}\\)" \\[UTF8 "\\(\\?\\^u:\\\\\\\\x\\{100\\}\\)"\\]
       CUR = 13
-      LEN = \d+
-      COMPFLAGS = 0x0 \(\)
-      EXTFLAGS = $ADDR \(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\)
-(?:      ENGINE = $ADDR \(STANDARD\)
-)?      INTFLAGS = 0x0(?: \(\))?
+      LEN = \\d+
+      COMPFLAGS = 0x0 \\(\\)
+      EXTFLAGS = 0x680100 \\(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\\)
+      ENGINE = $ADDR \\(STANDARD\\)
+      INTFLAGS = 0x0 \\(\\)
       NPARENS = 0
+      LOGICAL_NPARENS = 0
+      LOGICAL_TO_PARNO = 0x0
+      PARNO_TO_LOGICAL = 0x0
+      PARNO_TO_LOGICAL_NEXT = 0x0
       LASTPAREN = 0
       LASTCLOSEPAREN = 0
       MINLEN = 1
@@ -1250,21 +1246,97 @@ do_test('UTF-8 in a regular expression',
       SUBOFFSET = 0
       SUBCOFFSET = 0
       SUBBEG = 0x0
-(?:    ENGINE = $ADDR
-)?      MOTHER_RE = 0x0
       PAREN_NAMES = 0x0
       SUBSTRS = $ADDR
       PPRIVATE = $ADDR
       OFFS = $ADDR
-      QR_ANONCV = 0x0(?:
-      SAVED_COPY = 0x0)?') . '
+        \\[ 0:0 \\]
+      QR_ANONCV = 0x0
+      SAVED_COPY = 0x0
+      MOTHER_RE = 0x0
+');
+
+do_test('Branch Reset regexp',
+        qr/(?|(foo)|(bar))(?|(baz)|(bop))/,
+'SV = IV\\($ADDR\\) at $ADDR
+  REFCNT = 1
+  FLAGS = \\(ROK\\)
+  RV = $ADDR
+  SV = REGEXP\\($ADDR\\) at $ADDR
+    REFCNT = 1
+    FLAGS = \\(OBJECT,POK,FAKE,pPOK\\)
+    PV = $ADDR "\\(\\?\\^:\\(\\?\\|\\(foo\\)\\|\\(bar\\)\\)\\(\\?\\|\\(baz\\)\\|\\(bop\\)\\)\\)"
+    CUR = 35
+    LEN = 0
+    STASH = $ADDR\\s+"Regexp"
+    COMPFLAGS = 0x0 \\(\\)
+    EXTFLAGS = 0x0 \\(\\)
+    ENGINE = $ADDR \\(STANDARD\\)
+    INTFLAGS = 0x0 \\(\\)
+    NPARENS = 4
+    LOGICAL_NPARENS = 2
+    LOGICAL_TO_PARNO = $ADDR
+      \\{ 0, 1, 3 \\}
+    PARNO_TO_LOGICAL = $ADDR
+      \\{ 0, 1, 1, 2, 2 \\}
+    PARNO_TO_LOGICAL_NEXT = $ADDR
+      \\{ 0, 2, 0, 4, 0 \\}
+    LASTPAREN = 0
+    LASTCLOSEPAREN = 0
+    MINLEN = 6
+    MINLENRET = 6
+    GOFS = 0
+    PRE_PREFIX = 4
+    SUBLEN = 0
+    SUBOFFSET = 0
+    SUBCOFFSET = 0
+    SUBBEG = 0x0
     PAREN_NAMES = 0x0
     SUBSTRS = $ADDR
     PPRIVATE = $ADDR
     OFFS = $ADDR
-    QR_ANONCV = 0x0(?:
-    SAVED_COPY = 0x0)?
+      \\[ 0:0, 0:0, 0:0, 0:0, 0:0 \\]
+    QR_ANONCV = 0x0
+    SAVED_COPY = 0x0
+    MOTHER_RE = $ADDR
+    SV = REGEXP\\($ADDR\\) at $ADDR
+      REFCNT = 2
+      FLAGS = \\(POK,pPOK\\)
+      PV = $ADDR "\\(\\?\\^:\\(\\?\\|\\(foo\\)\\|\\(bar\\)\\)\\(\\?\\|\\(baz\\)\\|\\(bop\\)\\)\\)"
+      CUR = 35
+      LEN = \\d+
+      COMPFLAGS = 0x0 \\(\\)
+      EXTFLAGS = 0x0 \\(\\)
+      ENGINE = $ADDR \\(STANDARD\\)
+      INTFLAGS = 0x0 \\(\\)
+      NPARENS = 4
+      LOGICAL_NPARENS = 2
+      LOGICAL_TO_PARNO = $ADDR
+        \\{ 0, 1, 3 \\}
+      PARNO_TO_LOGICAL = $ADDR
+        \\{ 0, 1, 1, 2, 2 \\}
+      PARNO_TO_LOGICAL_NEXT = $ADDR
+        \\{ 0, 2, 0, 4, 0 \\}
+      LASTPAREN = 0
+      LASTCLOSEPAREN = 0
+      MINLEN = 6
+      MINLENRET = 6
+      GOFS = 0
+      PRE_PREFIX = 4
+      SUBLEN = 0
+      SUBOFFSET = 0
+      SUBCOFFSET = 0
+      SUBBEG = 0x0
+      PAREN_NAMES = 0x0
+      SUBSTRS = $ADDR
+      PPRIVATE = $ADDR
+      OFFS = $ADDR
+        \\[ 0:0, 0:0, 0:0, 0:0, 0:0 \\]
+      QR_ANONCV = 0x0
+      SAVED_COPY = 0x0
+      MOTHER_RE = 0x0
 ');
+
 
 { # perl #117793: Extend SvREFCNT* to work on any perl variable type
   my %hash;
@@ -1516,6 +1588,7 @@ dumpindent is 4 at -e line 1.
      |   FLAGS = (VOID,SLABBED,MORESIB)
      |   LINE = 1
      |   PACKAGE = "t"
+     |   HINTS = 00000100
      |     |   
 5    +--entersub UNOP(0xNNN) ===> 1 [leave 0xNNN]
          TARG = 1

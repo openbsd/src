@@ -670,7 +670,7 @@ EOF
            $cc -q64 -qlongdouble -o fmodl$$ fmodl$$.c -lm
            case `./fmodl$$` in
            2147483648)
-             echo "The -q64 did the trick, will use it." >& 4
+             echo "The -q64 did the trick, will use it." >&4
              ccflags="`echo $ccflags | sed -e 's@-q32@@g'`"
              ldflags="`echo $ldflags | sed -e 's@-q32@@g'`"
              ccflags="$ccflags -q64"

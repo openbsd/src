@@ -669,6 +669,9 @@ for(__PACKAGE__) {
 	eval { utf8::upgrade($_) };
 	is $@, "", 'no error with utf8::upgrade on read-only COW';
 }
+
+is(utf8::upgrade(undef), undef, "Returns undef for undef input"); # GH #20419
+
 # This one croaks, but not because the scalar is read-only
 eval "package \x{100};\n" . <<'END'
     for(__PACKAGE__) {

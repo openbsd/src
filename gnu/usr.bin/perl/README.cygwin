@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 If you read this file _as_is_, just ignore the funny characters you
 see. It is written in the POD format (see F<pod/perlpod.pod>) which is
 specially designed to be readable as is.
@@ -31,7 +33,7 @@ L<https://www.cygwin.com/>
 
 A recent net or commercial release of Cygwin is required.
 
-At the time this document was last updated, Cygwin 1.7.16 was current.
+At the time this document was last updated, Cygwin 3.0.7 was current.
 
 
 =head2 Cygwin Configuration
@@ -41,8 +43,8 @@ that Perl builds cleanly.  These changes are B<not> required for normal
 Perl usage.
 
 B<NOTE:> The binaries that are built will run on all Win32 versions.
-They do not depend on your host system (WinXP/Win2K/Win7) or your
-Cygwin configuration (binary/text mounts, cvgserver).
+They do not depend on your host system or your
+Cygwin configuration (binary/text mounts, cygserver).
 The only dependencies come from hard-coded pathnames like F</usr/local>.
 However, your host system and Cygwin configuration will affect Perl's
 runtime behavior (see L</"TEST">).
@@ -128,11 +130,10 @@ NOTE: The BerkeleyDB library only completely works on NTFS partitions.
 A port of SysV IPC is available for Cygwin.
 
 NOTE: This has B<not> been extensively tested.  In particular,
-C<d_semctl_semun> is undefined because it fails a Configure test
-and on Win9x the I<shm*()> functions seem to hang.  It also creates
-a compile time dependency because F<perl.h> includes F<<sys/ipc.h>>
-and F<<sys/sem.h>> (which will be required in the future when compiling
-CPAN modules). CURRENTLY NOT SUPPORTED!
+C<d_semctl_semun> is undefined because it fails a Configure test.  It
+also creates a compile time dependency because F<perl.h> includes
+F<<sys/ipc.h>> and F<<sys/sem.h>> (which will be required in the
+future when compiling CPAN modules). CURRENTLY NOT SUPPORTED!
 
 =item * C<-lutil>
 
@@ -201,47 +202,14 @@ build perl from sources.
 
 =back
 
-=head2 Suspicious Warnings on Cygwin
-
-You may see some messages during Configure that seem suspicious.
-
-=over 4
-
-=item * Win9x and C<d_eofnblk>
-
-Win9x does not correctly report C<EOF> with a non-blocking read on a
-closed pipe.  You will see the following messages:
-
- But it also returns -1 to signal EOF, so be careful!
- WARNING: you can't distinguish between EOF and no data!
-
- *** WHOA THERE!!! ***
-     The recommended value for $d_eofnblk on this machine was
-     "define"!
-     Keep the recommended value? [y]
-
-At least for consistency with WinNT, you should keep the recommended
-value.
-
-=item * Compiler/Preprocessor defines
-
-The following error occurs because of the Cygwin C<#define> of
-C<_LONG_DOUBLE>:
-
-  Guessing which symbols your C compiler and preprocessor define...
-  try.c:<line#>: missing binary operator
-
-This failure does not seem to cause any problems.  With older gcc
-versions, "parse error" is reported instead of "missing binary
-operator".
-
-=back
-
 =head1 MAKE ON CYGWIN
 
 Simply run I<make> and wait:
 
-  make 2>&1 | tee log.make
+  make -jn 2>&1 | tee log.make
+
+where I<n> is the maximum number of simultaneous compilations you want;
+omitting this parameter is the same as specifying C<-j1>.
 
 =head1 TEST ON CYGWIN
 
@@ -252,7 +220,12 @@ There are two steps to running the test suite:
   cd t; ./perl harness 2>&1 | tee ../log.harness
 
 The same tests are run both times, but more information is provided when
-running as C<./perl harness>.
+running as C<./perl harness>, and you can run the tests in parallel by
+instead specifying
+
+  cd t; TEST_JOBS=n ./perl harness 2>&1 | tee ../log.harness
+
+where I<n> is the maximum number of tests to run simulataneously.
 
 Test results vary depending on your host system and your Cygwin
 configuration.  If a test can pass in some Cygwin setup, it is always
@@ -329,8 +302,8 @@ to portability, more information can be found in the Cygwin documentation.
 =item * Pathnames
 
 Cygwin pathnames are separated by forward (F</>) slashes, Universal
-Naming Codes (F<//UNC>) are also supported Since cygwin-1.7 non-POSIX
-pathnames are discouraged.  Names may contain all printable
+Naming Codes (F<//UNC>) are also supported.  Since cygwin-1.7 non-POSIX
+pathnames should not be used.  Names may contain all printable
 characters.
 
 File names are case insensitive, but case preserving.  A pathname that
@@ -419,29 +392,23 @@ or:
  as parent(0x6FB30000) != 0x6FE60000 46 [main] perl 3488 fork: child
  3588 - died waiting for dll loading, errno11
 
-See L<https://cygwin.com/faq/faq-nochunks.html#faq.using.fixing-fork-failures>
+See L<https://cygwin.com/faq/faq.html#faq.using.fixing-fork-failures>
 It helps if not too many DLLs are loaded in memory so the available address space is larger,
 e.g. stopping the MS Internet Explorer might help.
 
-Use the perlrebase or rebase utilities to resolve the conflicting dll addresses.
++Use the rebase utilities to resolve the conflicting dll addresses.
 The rebase package is included in the Cygwin setup. Use F<setup.exe>
 from L<https://cygwin.com/install.html> to install it.
 
-1. kill all perl processes and run C<perlrebase> or
+1. kill all perl processes and run
+   C<</bin/find <dir> -xdev -name \*.dll | /bin/rebase -OT ->> or
 
-2. kill all cygwin processes and services, start dash from cmd.exe and run C<rebaseall>.
-
-=item * C<chown()>
-
-On WinNT C<chown()> can change a file's user and group IDs.  On Win9x C<chown()>
-is a no-op, although this is appropriate since there is no security model.
+2. kill all cygwin processes and services, and run setup.exe.
 
 =item * Miscellaneous
 
 File locking using the C<F_GETLK> command to C<fcntl()> is a stub that
 returns C<ENOSYS>.
-
-Win9x can not C<rename()> an open file (although WinNT can).
 
 The Cygwin C<chroot()> implementation has holes (it can not restrict file
 access by native Win32 programs).
@@ -566,7 +533,7 @@ be kept as clean as possible.
  pod/perl573delta.pod pod/perl58delta.pod pod/perl581delta.pod
  pod/perl590delta.pod pod/perlhist.pod pod/perlmodlib.pod
  pod/perltoc.pod Porting/Glossary pod/perlgit.pod
- Porting/checkAUTHORS.pl
+ Porting/updateAUTHORS.pl
  dist/Cwd/Changes ext/Compress-Raw-Zlib/Changes
  dist/Time-HiRes/Changes
  ext/Compress-Raw-Zlib/README ext/Compress-Zlib/Changes
@@ -774,4 +741,4 @@ Jerry D. Hedden <jdhedden@cpan.org>.
 
 =head1 HISTORY
 
-Last updated: 2012-02-08
+Last updated: 2019-11-14

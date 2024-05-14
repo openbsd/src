@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 If you read this file _as_is_, just ignore the funny characters you
 see.  It is written in the POD format (see pod/perlpod.pod) which is
 specifically designed to be readable as is.
@@ -17,7 +19,7 @@ When perl is configured to use ithreads, it will use re-entrant library calls
 in preference to non-re-entrant versions.  There is a bug in FreeBSD's
 C<readdir_r> function in versions 4.5 and earlier that can cause a SEGV when
 reading large directories. A patch for FreeBSD libc is available
-(see L<http://www.freebsd.org/cgi/query-pr.cgi?pr=misc/30631> )
+(see L<https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=30631>)
 which has been integrated into FreeBSD 4.6.
 
 =head2 C<$^X> doesn't always contain a full path in FreeBSD
@@ -27,7 +29,7 @@ system. On FreeBSD the full path of the perl interpreter is found by using
 C<sysctl> with C<KERN_PROC_PATHNAME> if that is supported, else by reading
 the symlink F</proc/curproc/file>. FreeBSD 7 and earlier has a bug where
 either approach sometimes returns an incorrect value
-(see L<http://www.freebsd.org/cgi/query-pr.cgi?pr=35703> ).
+(see L<https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=35703>).
 In these cases perl will fall back to the old behaviour of using C's
 C<argv[0]> value for C<$^X>.
 

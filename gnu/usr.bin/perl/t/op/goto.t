@@ -11,7 +11,7 @@ BEGIN {
 
 use warnings;
 use strict;
-plan tests => 125;
+plan tests => 133;
 our $TODO;
 
 my $deprecated = 0;
@@ -901,4 +901,52 @@ is $@,'', 'goto the first parameter of a binary expression [perl #132854]';
     }
     eval { f198(); };
     is $@, "", "v5.31.3-198-gd2cd363728";
+}
+
+# GH #19188
+#
+# 'goto &xs_sub' should provide the correct caller context to an XS sub
+
+SKIP:
+{
+    skip "No XS::APItest in miniperl", 6 if is_miniperl();
+
+    require XS::APItest;
+
+    sub f_19188 { goto &XS::APItest::gimme }
+    sub g_19188{ f_19188(); }
+    my ($s, @a);
+
+    f_19188();
+    is ($XS::APItest::GIMME_V, 1, 'xs_goto void (#19188)');
+
+    $s = f_19188();
+    is ($XS::APItest::GIMME_V, 2, 'xs_goto scalar (#19188)');
+
+    @a = f_19188();
+    is ($XS::APItest::GIMME_V, 3, 'xs_goto list (#19188)');
+
+    g_19188();
+    is ($XS::APItest::GIMME_V, 1, 'xs_goto indirect void (#19188)');
+
+    $s = g_19188();
+    is ($XS::APItest::GIMME_V, 2, 'xs_goto indirect scalar (#19188)');
+
+    @a = g_19188();
+    is ($XS::APItest::GIMME_V, 3, 'xs_goto indirect list (#19188)');
+}
+
+# GH #19936 segfault on goto &xs_sub when calling sub is replaced
+SKIP:
+{
+    skip "No XS::APItest in miniperl", 2 if is_miniperl();
+
+    # utf8::is_utf8() is just an example of an XS sub
+    sub foo_19936 { *foo_19936 = {}; goto &utf8::is_utf8 }
+    ok(foo_19936("\x{100}"), "GH #19936 utf8 XS call");
+
+    # the gimme XS function accesses PL_op, which was null before the fix
+    sub bar_19936 { *bar_19936 = {}; goto &XS::APItest::gimme }
+    my @a = bar_19936();
+    is($XS::APItest::GIMME_V, 3, "GH #19936 gimme XS call");
 }

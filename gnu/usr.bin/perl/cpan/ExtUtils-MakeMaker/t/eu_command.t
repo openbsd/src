@@ -67,7 +67,14 @@ BEGIN {
 
     my ($now) = time;
     utime ($now, $now, $ARGV[0]);
-    sleep 2;
+
+    sleep 3; # note this affects the "newer file created"
+             # we used to sleep 2, but with the vagaries of sleep
+             # this meant that occasionally that test would fail
+             # on cygwin, by virtue of seeing only a one second
+             # difference. Sleeping 3 seconds should ensure
+             # that we get at least 2 seconds difference for
+             # that test.
 
     # Just checking modify time stamp, access time stamp is set
     # to the beginning of the day in Win95.

@@ -29,10 +29,7 @@ WriteMakefile
           'VERSION_FROM' => 'Cwd.pm',
           'ABSTRACT' => 'Tools for working with directory and file names',
           'AUTHOR' => 'Perl 5 Porters',
-          'DEFINE' => join(" ",
-                "-DDOUBLE_SLASHES_SPECIAL=@{[$^O eq q(qnx) || $^O eq q(nto) ? 1 : 0]}",
-                ((grep { $_ eq 'PERL_CORE=1' } @ARGV) ? '-DNO_PPPORT_H' : ()),
-          ),
+          'DEFINE' => "-DDOUBLE_SLASHES_SPECIAL=@{[$^O eq q(qnx) || $^O eq q(nto) ? 1 : 0]}",
           'PREREQ_PM' => {
                            'Carp' => '0',
                            'File::Basename' => '0',

@@ -1415,13 +1415,12 @@ abc:NaN
 2:-:-1
 invalid:-:-1
 invalid:+:1
-2:abc:1
 3::1
 
 &binf
 1:+:inf
 2:-:-inf
-3:abc:inf
+3:+inf:inf
 
 &is_nan
 123:0

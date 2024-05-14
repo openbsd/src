@@ -38,7 +38,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #  define Nullcv Null(CV*)
 #endif
 
-#define CvSTASH(sv)	(0+((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_stash)
+#define CvSTASH(sv)	(MUTABLE_HV(((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_stash))
 #define CvSTASH_set(cv,st) Perl_cvstash_set(aTHX_ cv, st)
 #define CvSTART(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_start_u.xcv_start
 #define CvROOT(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_root
@@ -107,7 +107,10 @@ See L<perlguts/Autoloading with XSUBs>.
           : 0                                           \
         )
 
-#define CVf_METHOD	0x0001	/* CV is explicitly marked as a method */
+/* CV has the `:method` attribute. This used to be called CVf_METHOD but is
+ * renamed to avoid collision with CVf_IsMETHOD */
+#define CVf_NOWARN_AMBIGUOUS	0x0001
+
 #define CVf_LVALUE	0x0002  /* CV return value can be used as lvalue */
 #define CVf_CONST	0x0004  /* inlinable sub */
 #define CVf_ISXSUB	0x0008	/* CV is an XSUB, not pure perl.  */
@@ -117,7 +120,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CVf_CLONED	0x0040	/* a clone of one of those */
 #define CVf_ANON	0x0080	/* CV is not pointed to by a GV */
 #define CVf_UNIQUE	0x0100	/* sub is only called once (eg PL_main_cv,
-                                 * require, eval). */
+                                   require, eval). */
 #define CVf_NODEBUG	0x0200	/* no DB::sub indirection for this CV
                                    (esp. useful for special XSUBs) */
 #define CVf_CVGV_RC	0x0400	/* CvGV is reference counted */
@@ -131,9 +134,13 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CVf_LEXICAL	0x10000 /* Omit package from name */
 #define CVf_ANONCONST	0x20000 /* :const - create anonconst op */
 #define CVf_SIGNATURE   0x40000 /* CV uses a signature */
+#define CVf_REFCOUNTED_ANYSV 0x80000 /* CvXSUBANY().any_sv is refcounted */
+#define CVf_IsMETHOD    0x100000 /* CV is a (real) method of a real class. Not
+                                   to be confused with what used to be called
+                                   CVf_METHOD; now CVf_NOWARN_AMBIGUOUS */
 
 /* This symbol for optimised communication between toke.c and op.c: */
-#define CVf_BUILTIN_ATTRS	(CVf_METHOD|CVf_LVALUE|CVf_ANONCONST)
+#define CVf_BUILTIN_ATTRS	(CVf_NOWARN_AMBIGUOUS|CVf_LVALUE|CVf_ANONCONST)
 
 #define CvCLONE(cv)		(CvFLAGS(cv) & CVf_CLONE)
 #define CvCLONE_on(cv)		(CvFLAGS(cv) |= CVf_CLONE)
@@ -156,9 +163,9 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvNODEBUG_on(cv)	(CvFLAGS(cv) |= CVf_NODEBUG)
 #define CvNODEBUG_off(cv)	(CvFLAGS(cv) &= ~CVf_NODEBUG)
 
-#define CvMETHOD(cv)		(CvFLAGS(cv) & CVf_METHOD)
-#define CvMETHOD_on(cv)		(CvFLAGS(cv) |= CVf_METHOD)
-#define CvMETHOD_off(cv)	(CvFLAGS(cv) &= ~CVf_METHOD)
+#define CvNOWARN_AMBIGUOUS(cv)		(CvFLAGS(cv) & CVf_NOWARN_AMBIGUOUS)
+#define CvNOWARN_AMBIGUOUS_on(cv)	(CvFLAGS(cv) |= CVf_NOWARN_AMBIGUOUS)
+#define CvNOWARN_AMBIGUOUS_off(cv)	(CvFLAGS(cv) &= ~CVf_NOWARN_AMBIGUOUS)
 
 #define CvLVALUE(cv)		(CvFLAGS(cv) & CVf_LVALUE)
 #define CvLVALUE_on(cv)		(CvFLAGS(cv) |= CVf_LVALUE)
@@ -223,6 +230,47 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvSIGNATURE(cv)		(CvFLAGS(cv) & CVf_SIGNATURE)
 #define CvSIGNATURE_on(cv)	(CvFLAGS(cv) |= CVf_SIGNATURE)
 #define CvSIGNATURE_off(cv)	(CvFLAGS(cv) &= ~CVf_SIGNATURE)
+
+/*
+
+=for apidoc m|bool|CvREFCOUNTED_ANYSV|CV *cv
+
+If true, indicates that the C<CvXSUBANY(cv).any_sv> member contains an SV
+pointer whose reference count should be decremented when the CV itself is
+freed.  In addition, C<cv_clone()> will increment the reference count, and
+C<sv_dup()> will duplicate the entire pointed-to SV if this flag is set.
+
+Any CV that wraps an XSUB has an C<ANY> union that the XSUB function is free
+to use for its own purposes.  It may be the case that the code wishes to store
+an SV in the C<any_sv> member of this union.  By setting this flag, this SV
+reference will be properly reclaimed or duplicated when the CV itself is.
+
+=for apidoc m|void|CvREFCOUNTED_ANYSV_on|CV *cv
+
+Helper macro to turn on the C<CvREFCOUNTED_ANYSV> flag.
+
+=for apidoc m|void|CvREFCOUNTED_ANYSV_off|CV *cv
+
+Helper macro to turn off the C<CvREFCOUNTED_ANYSV> flag.
+
+=cut
+*/
+
+#define CvREFCOUNTED_ANYSV(cv)          (CvFLAGS(cv) & CVf_REFCOUNTED_ANYSV)
+#define CvREFCOUNTED_ANYSV_on(cv)       (CvFLAGS(cv) |= CVf_REFCOUNTED_ANYSV)
+#define CvREFCOUNTED_ANYSV_off(cv)      (CvFLAGS(cv) &= ~CVf_REFCOUNTED_ANYSV)
+
+#define CvIsMETHOD(cv)		(CvFLAGS(cv) & CVf_IsMETHOD)
+#define CvIsMETHOD_on(cv)	(CvFLAGS(cv) |= CVf_IsMETHOD)
+#define CvIsMETHOD_off(cv)	(CvFLAGS(cv) &= ~CVf_IsMETHOD)
+
+/* Back-compat */
+#ifndef PERL_CORE
+#  define CVf_METHOD            CVf_NOWARN_AMBIGUOUS
+#  define CvMETHOD(cv)          CvNOWARN_AMBIGUOUS(cv)
+#  define CvMETHOD_on(cv)       CvNOWARN_AMBIGUOUS_on(cv)
+#  define CvMETHOD_off(cv)      CvNOWARN_AMBIGUOUS_off(cv)
+#endif
 
 /* Flags for newXS_flags  */
 #define XS_DYNAMIC_FILENAME	0x01	/* The filename isn't static  */

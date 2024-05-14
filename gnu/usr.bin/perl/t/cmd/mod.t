@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..13\n";
+print "1..15\n";
 
 print "ok 1\n" if 1;
 print "not ok 1\n" unless 1;
@@ -54,3 +54,19 @@ print "not ok 12\n" if $x > 0;
 # This used to cause a segfault
 $x = "".("".do{"foo" for (1)});
 print "ok 13\n";
+
+$x = 0;
+do { ++$x } while 0;
+if ($x == 1) {
+    print "ok 14\n";
+} else {
+    print "not ok 14 # $x\n";
+}
+
+$x = 0;
+do { ++$x } until 1;
+if ($x == 1) {
+    print "ok 15\n";
+} else {
+    print "not ok 15 # $x\n";
+}

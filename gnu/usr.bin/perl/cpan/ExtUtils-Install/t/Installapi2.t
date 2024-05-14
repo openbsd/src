@@ -11,6 +11,7 @@ use TieOut;
 use File::Path;
 use File::Spec;
 use File::Temp qw[tempdir];
+use File::Compare;
 
 use Test::More tests => 70;
 

@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 32;
+plan tests => 36;
 
 # [perl #19566]: sv_gets writes directly to its argument via
 # TARG. Test that we respect SvREADONLY.
@@ -287,6 +287,21 @@ is ${^LAST_FH}, undef, '${^LAST_FH} after readline undef';
     like $w, qr/^readline\(\) on unopened filehandle y at .*\n(?x:
                 )Undefined value assigned to typeglob at .*\n\z/,
         '[perl #123790] *x=<y> used to fail an assertion';
+}
+
+SKIP:
+{
+    skip_without_dynamic_extension("IO", 4);
+    my $tmpfile = tempfile();
+    open my $fh, ">", $tmpfile
+        or die "Cannot open $tmpfile: $!";
+    my @layers = PerlIO::get_layers($fh);
+    skip "fgetc doesn't set error flag on failure on solaris likes", 4
+        if $^O eq 'solaris' && $layers[-1] eq 'stdio';
+    ok(!$fh->error, "no error before we try to read");
+    ok(!<$fh>, "fail to readline file opened for write");
+    ok($fh->error, "error after trying to readline file opened for write");
+    ok(!close($fh), "closing the file should fail");
 }
 
 __DATA__

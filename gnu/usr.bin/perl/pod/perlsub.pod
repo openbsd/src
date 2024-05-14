@@ -8,32 +8,32 @@ perlsub - Perl subroutines
 To declare subroutines:
 X<subroutine, declaration> X<sub>
 
-    sub NAME;			  # A "forward" declaration.
-    sub NAME(PROTO);		  #  ditto, but with prototypes
-    sub NAME : ATTRS;		  #  with attributes
-    sub NAME(PROTO) : ATTRS;	  #  with attributes and prototypes
+    sub NAME;                       # A "forward" declaration.
+    sub NAME(PROTO);                #  ditto, but with prototypes
+    sub NAME : ATTRS;               #  with attributes
+    sub NAME(PROTO) : ATTRS;        #  with attributes and prototypes
 
-    sub NAME BLOCK		  # A declaration and a definition.
-    sub NAME(PROTO) BLOCK	  #  ditto, but with prototypes
-    sub NAME : ATTRS BLOCK	  #  with attributes
-    sub NAME(PROTO) : ATTRS BLOCK #  with prototypes and attributes
+    sub NAME BLOCK                  # A declaration and a definition.
+    sub NAME(PROTO) BLOCK           #  ditto, but with prototypes
+    sub NAME : ATTRS BLOCK          #  with attributes
+    sub NAME(PROTO) : ATTRS BLOCK   #  with prototypes and attributes
 
     use feature 'signatures';
-    sub NAME(SIG) BLOCK                    # with signature
-    sub NAME :ATTRS (SIG) BLOCK            # with signature, attributes
-    sub NAME :prototype(PROTO) (SIG) BLOCK # with signature, prototype
+    sub NAME(SIG) BLOCK                     # with signature
+    sub NAME :ATTRS (SIG) BLOCK             # with signature, attributes
+    sub NAME :prototype(PROTO) (SIG) BLOCK  # with signature, prototype
 
 To define an anonymous subroutine at runtime:
 X<subroutine, anonymous>
 
-    $subref = sub BLOCK;		 # no proto
-    $subref = sub (PROTO) BLOCK;	 # with proto
-    $subref = sub : ATTRS BLOCK;	 # with attributes
-    $subref = sub (PROTO) : ATTRS BLOCK; # with proto and attributes
+    $subref = sub BLOCK;                    # no proto
+    $subref = sub (PROTO) BLOCK;            # with proto
+    $subref = sub : ATTRS BLOCK;            # with attributes
+    $subref = sub (PROTO) : ATTRS BLOCK;    # with proto and attributes
 
     use feature 'signatures';
-    $subref = sub (SIG) BLOCK;           # with signature
-    $subref = sub : ATTRS(SIG) BLOCK;    # with signature, attributes
+    $subref = sub (SIG) BLOCK;          # with signature
+    $subref = sub : ATTRS(SIG) BLOCK;   # with signature, attributes
 
 To import subroutines:
 X<import>
@@ -43,10 +43,10 @@ X<import>
 To call subroutines:
 X<subroutine, call> X<call>
 
-    NAME(LIST);	   # & is optional with parentheses.
-    NAME LIST;	   # Parentheses optional if predeclared/imported.
-    &NAME(LIST);   # Circumvent prototypes.
-    &NAME;	   # Makes current @_ visible to called subroutine.
+    NAME(LIST);     # & is optional with parentheses.
+    NAME LIST;      # Parentheses optional if predeclared/imported.
+    &NAME(LIST);    # Circumvent prototypes.
+    &NAME;          # Makes current @_ visible to called subroutine.
 
 =head1 DESCRIPTION
 
@@ -70,7 +70,7 @@ X<subroutine, parameter> X<parameter>
 
 In a subroutine that uses signatures (see L</Signatures> below),
 arguments are assigned into lexical variables introduced by the
-signature.  In the current implementation of perl they are also
+signature.  In the current implementation of Perl they are also
 accessible in the C<@_> array in the same way as for non-signature
 subroutines, but accessing them in this manner is now discouraged inside
 such a signature-using subroutine.
@@ -115,11 +115,11 @@ X<subroutine, return value> X<return value> X<return>
 Example:
 
     sub max {
-	my $max = shift(@_);
-	foreach $foo (@_) {
-	    $max = $foo if $max < $foo;
-	}
-	return $max;
+        my $max = shift(@_);
+        foreach $foo (@_) {
+            $max = $foo if $max < $foo;
+        }
+        return $max;
     }
     $bestday = max($mon,$tue,$wed,$thu,$fri);
 
@@ -129,28 +129,28 @@ Example:
     #  that start with whitespace
 
     sub get_line {
-	$thisline = $lookahead;  # global variables!
-	LINE: while (defined($lookahead = <STDIN>)) {
-	    if ($lookahead =~ /^[ \t]/) {
-		$thisline .= $lookahead;
-	    }
-	    else {
-		last LINE;
-	    }
-	}
-	return $thisline;
+        $thisline = $lookahead;  # global variables!
+        LINE: while (defined($lookahead = <STDIN>)) {
+            if ($lookahead =~ /^[ \t]/) {
+                $thisline .= $lookahead;
+            }
+            else {
+                last LINE;
+            }
+        }
+        return $thisline;
     }
 
-    $lookahead = <STDIN>;	# get first line
+    $lookahead = <STDIN>;       # get first line
     while (defined($line = get_line())) {
-	...
+        ...
     }
 
 Assigning to a list of private variables to name your arguments:
 
     sub maybeset {
-	my($key, $value) = @_;
-	$Foo{$key} = $value unless $Foo{$key};
+        my($key, $value) = @_;
+        $Foo{$key} = $value unless $Foo{$key};
     }
 
 Because the assignment copies the values, this also has the effect
@@ -161,7 +161,7 @@ X<call-by-reference> X<call-by-value>
 
     upcase_in($v1, $v2);  # this changes $v1 and $v2
     sub upcase_in {
-	for (@_) { tr/a-z/A-Z/ }
+        for (@_) { tr/a-z/A-Z/ }
     }
 
 You aren't allowed to modify constants in this way, of course.  If an
@@ -177,10 +177,10 @@ of changing them in place:
 
     ($v3, $v4) = upcase($v1, $v2);  # this doesn't change $v1 and $v2
     sub upcase {
-	return unless defined wantarray;  # void context, do nothing
-	my @parms = @_;
-	for (@parms) { tr/a-z/A-Z/ }
-  	return wantarray ? @parms : $parms[0];
+        return unless defined wantarray;  # void context, do nothing
+        my @parms = @_;
+        for (@parms) { tr/a-z/A-Z/ }
+        return wantarray ? @parms : $parms[0];
     }
 
 Notice how this (unprototyped) function doesn't care whether it was
@@ -195,11 +195,11 @@ definition even if we fed it things like this:
 
 Do not, however, be tempted to do this:
 
-    (@a, @b)   = upcase(@list1, @list2);
+    (@x, @y)   = upcase(@list1, @list2);
 
 Like the flattened incoming parameter list, the return list is also
 flattened on return.  So all you have managed to do here is stored
-everything in C<@a> and made C<@b> empty.  See 
+everything in C<@x> and made C<@y> empty.  See
 L</Pass by Reference> for alternatives.
 
 A subroutine may be called using an explicit C<&> prefix.  The
@@ -220,13 +220,13 @@ time of the call is visible to subroutine instead.  This is an
 efficiency mechanism that new users may wish to avoid.
 X<recursion>
 
-    &foo(1,2,3);	# pass three arguments
-    foo(1,2,3);		# the same
+    &foo(1,2,3);        # pass three arguments
+    foo(1,2,3);         # the same
 
-    foo();		# pass a null list
-    &foo();		# the same
+    foo();              # pass a null list
+    &foo();             # the same
 
-    &foo;		# foo() get current args, like foo(@_) !!
+    &foo;               # foo() get current args, like foo(@_) !!
     use strict 'subs';
     foo;                # like foo() iff sub foo predeclared, else
                         # a compile-time error
@@ -247,9 +247,9 @@ your subroutine's name.
 
     use v5.16;
     my $factorial = sub {
-      my ($x) = @_;
-      return 1 if $x == 1;
-      return($x * __SUB__->( $x - 1 ) );
+        my ($x) = @_;
+        return 1 if $x == 1;
+        return($x * __SUB__->( $x - 1 ) );
     };
 
 The behavior of C<__SUB__> within a regex code block (such as C</(?{...})/>)
@@ -259,8 +259,8 @@ Subroutines whose names are in all upper case are reserved to the Perl
 core, as are modules whose names are in all lower case.  A subroutine in
 all capitals is a loosely-held convention meaning it will be called
 indirectly by the run-time system itself, usually due to a triggered event.
-Subroutines whose name start with a left parenthesis are also reserved the 
-same way.  The following is a list of some subroutines that currently do 
+Subroutines whose name start with a left parenthesis are also reserved the
+same way.  The following is a list of some subroutines that currently do
 special, pre-defined things.
 
 =over
@@ -279,23 +279,23 @@ C<DESTROY>, C<DOES>
 
 =item documented in L<perltie>
 
-C<BINMODE>, C<CLEAR>, C<CLOSE>, C<DELETE>, C<DESTROY>, C<EOF>, C<EXISTS>, 
-C<EXTEND>, C<FETCH>, C<FETCHSIZE>, C<FILENO>, C<FIRSTKEY>, C<GETC>, 
-C<NEXTKEY>, C<OPEN>, C<POP>, C<PRINT>, C<PRINTF>, C<PUSH>, C<READ>, 
-C<READLINE>, C<SCALAR>, C<SEEK>, C<SHIFT>, C<SPLICE>, C<STORE>, 
-C<STORESIZE>, C<TELL>, C<TIEARRAY>, C<TIEHANDLE>, C<TIEHASH>, 
+C<BINMODE>, C<CLEAR>, C<CLOSE>, C<DELETE>, C<DESTROY>, C<EOF>, C<EXISTS>,
+C<EXTEND>, C<FETCH>, C<FETCHSIZE>, C<FILENO>, C<FIRSTKEY>, C<GETC>,
+C<NEXTKEY>, C<OPEN>, C<POP>, C<PRINT>, C<PRINTF>, C<PUSH>, C<READ>,
+C<READLINE>, C<SCALAR>, C<SEEK>, C<SHIFT>, C<SPLICE>, C<STORE>,
+C<STORESIZE>, C<TELL>, C<TIEARRAY>, C<TIEHANDLE>, C<TIEHASH>,
 C<TIESCALAR>, C<UNSHIFT>, C<UNTIE>, C<WRITE>
 
 =item documented in L<PerlIO::via>
 
-C<BINMODE>, C<CLEARERR>, C<CLOSE>, C<EOF>, C<ERROR>, C<FDOPEN>, C<FILENO>, 
-C<FILL>, C<FLUSH>, C<OPEN>, C<POPPED>, C<PUSHED>, C<READ>, C<SEEK>, 
+C<BINMODE>, C<CLEARERR>, C<CLOSE>, C<EOF>, C<ERROR>, C<FDOPEN>, C<FILENO>,
+C<FILL>, C<FLUSH>, C<OPEN>, C<POPPED>, C<PUSHED>, C<READ>, C<SEEK>,
 C<SETLINEBUF>, C<SYSOPEN>, C<TELL>, C<UNREAD>, C<UTF8>, C<WRITE>
 
 =item documented in L<perlfunc>
 
-L<< C<import> | perlfunc/use >>, L<< C<unimport> | perlfunc/use >>,
-L<< C<INC> | perlfunc/require >>
+L<< C<import>|perlfunc/use >>, L<< C<unimport>|perlfunc/use >>,
+L<< C<INC>|perlfunc/require >>
 
 =item documented in L<UNIVERSAL>
 
@@ -335,7 +335,7 @@ block, after any name or attributes.
 
 For example,
 
-    sub foo :lvalue ($a, $b = 1, @c) { .... }
+    sub foo :lvalue ($x, $y = 1, @z) { .... }
 
 The signature declares lexical variables that are
 in scope for the block.  When the subroutine is called, the signature
@@ -348,7 +348,7 @@ Positional parameters are handled by simply naming scalar variables in
 the signature.  For example,
 
     sub foo ($left, $right) {
-	return $left + $right;
+        return $left + $right;
     }
 
 takes two positional parameters, which must be filled at runtime by
@@ -357,18 +357,18 @@ not permitted to pass more arguments than expected.  So the above is
 equivalent to
 
     sub foo {
-	die "Too many arguments for subroutine" unless @_ <= 2;
-	die "Too few arguments for subroutine" unless @_ >= 2;
-	my $left = $_[0];
-	my $right = $_[1];
-	return $left + $right;
+        die "Too many arguments for subroutine" unless @_ <= 2;
+        die "Too few arguments for subroutine" unless @_ >= 2;
+        my $left = $_[0];
+        my $right = $_[1];
+        return $left + $right;
     }
 
 An argument can be ignored by omitting the main part of the name from
 a parameter declaration, leaving just a bare C<$> sigil.  For example,
 
     sub foo ($first, $, $third) {
-	return "first=$first, third=$third";
+        return "first=$first, third=$third";
     }
 
 Although the ignored argument doesn't go into a variable, it is still
@@ -378,7 +378,7 @@ A positional parameter is made optional by giving a default value,
 separated from the parameter name by C<=>:
 
     sub foo ($left, $right = 0) {
-	return $left + $right;
+        return $left + $right;
     }
 
 The above subroutine may be called with either one or two arguments.
@@ -389,7 +389,7 @@ For example,
 
     my $auto_id = 0;
     sub foo ($thing, $id = $auto_id++) {
-	print "$thing has ID $id";
+        print "$thing has ID $id";
     }
 
 automatically assigns distinct sequential IDs to things for which no
@@ -398,14 +398,32 @@ refer to parameters earlier in the signature, making the default for
 one parameter vary according to the earlier parameters.  For example,
 
     sub foo ($first_name, $surname, $nickname = $first_name) {
-	print "$first_name $surname is known as \"$nickname\"";
+        print "$first_name $surname is known as \"$nickname\"";
+    }
+
+A default value expression can also be written using the C<//=> operator,
+where it will be evaluated and used if the caller omitted a value or the
+value provided was C<undef>.
+
+    sub foo ($name //= "world") {
+        print "Hello, $name";
+    }
+
+    foo(undef);  # will print "Hello, world"
+
+Similarly, the C<||=> operator can be used to provide a default
+expression to be used whenever the caller provided a false value (and
+remember that a missing or C<undef> value are also false).
+
+    sub foo ($x ||= 10) {
+        return 5 + $x;
     }
 
 An optional parameter can be nameless just like a mandatory parameter.
 For example,
 
     sub foo ($thing, $ = 1) {
-	print $thing;
+        print $thing;
     }
 
 The parameter's default value will still be evaluated if the corresponding
@@ -417,7 +435,7 @@ category is enabled.  If a nameless optional parameter's default value
 is not important, it may be omitted just as the parameter's name was:
 
     sub foo ($thing, $=) {
-	print $thing;
+        print $thing;
     }
 
 Optional positional parameters must come after all mandatory positional
@@ -431,7 +449,7 @@ After positional parameters, additional arguments may be captured in a
 slurpy parameter.  The simplest form of this is just an array variable:
 
     sub foo ($filter, @inputs) {
-	print $filter->($_) foreach @inputs;
+        print $filter->($_) foreach @inputs;
     }
 
 With a slurpy parameter in the signature, there is no upper limit on how
@@ -440,7 +458,7 @@ just like a positional parameter, in which case its only effect is to
 turn off the argument limit that would otherwise apply:
 
     sub foo ($thing, @) {
-	print $thing;
+        print $thing;
     }
 
 A slurpy parameter may instead be a hash, in which case the arguments
@@ -451,7 +469,7 @@ duplicates then the later instance takes precedence over the earlier,
 as with standard hash construction.
 
     sub foo ($filter, %inputs) {
-	print $filter->($_, $inputs{$_}) foreach sort keys %inputs;
+        print $filter->($_, $inputs{$_}) foreach sort keys %inputs;
     }
 
 A slurpy hash parameter may be nameless just like other kinds of
@@ -459,7 +477,7 @@ parameter.  It still insists that the number of arguments available to
 it be even, even though they're not being put into a variable.
 
     sub foo ($thing, %) {
-	print $thing;
+        print $thing;
     }
 
 A slurpy parameter, either array or hash, must be the last thing in the
@@ -472,7 +490,7 @@ A signature may be entirely empty, in which case all it does is check
 that the caller passed no arguments:
 
     sub foo () {
-	return 123;
+        return 123;
     }
 
 Prior to Perl 5.36 these were considered experimental, and emitted a
@@ -483,7 +501,7 @@ statement such as:
 
     no warnings 'experimental::signatures';
 
-In the current perl implementation, when using a signature the arguments
+In the current Perl implementation, when using a signature the arguments
 are still also available in the special array variable C<@_>.  However,
 accessing them via this array is now discouraged, and should not be
 relied upon in newly-written code as this ability may change in a future
@@ -532,7 +550,7 @@ of calls to the subroutine, and the signature puts argument values into
 lexical variables at runtime.  You can therefore write
 
     sub foo :prototype($$) ($left, $right) {
-	return $left + $right;
+        return $left + $right;
     }
 
 The prototype attribute, and any other attributes, must come before
@@ -545,11 +563,11 @@ X<lexical scope> X<attributes, my>
 
 Synopsis:
 
-    my $foo;	    	# declare $foo lexically local
-    my (@wid, %get); 	# declare list of variables local
-    my $foo = "flurp";	# declare $foo lexical, and init it
-    my @oof = @bar;	# declare @oof lexical, and init it
-    my $x : Foo = $y;	# similar, with an attribute applied
+    my $foo;            # declare $foo lexically local
+    my (@wid, %get);    # declare list of variables local
+    my $foo = "flurp";  # declare $foo lexical, and init it
+    my @oof = @bar;     # declare @oof lexical, and init it
+    my $x : Foo = $y;   # similar, with an attribute applied
 
 B<WARNING>: The use of attribute lists on C<my> declarations is still
 evolving.  The current semantics and interface are subject to change.
@@ -579,7 +597,7 @@ to the lexical $x variable because both the C<my> and the C<sub>
 occurred at the same scope, presumably file scope.
 
     my $x = 10;
-    sub bumpx { $x++ } 
+    sub bumpx { $x++ }
 
 An C<eval()>, however, can see lexical variables of the scope it is
 being evaluated in, so long as the names aren't hidden by declarations within
@@ -591,22 +609,22 @@ to initialize your variables.  (If no initializer is given for a
 particular variable, it is created with the undefined value.)  Commonly
 this is used to name input parameters to a subroutine.  Examples:
 
-    $arg = "fred";	  # "global" variable
+    $arg = "fred";          # "global" variable
     $n = cube_root(27);
     print "$arg thinks the root is $n\n";
- fred thinks the root is 3
+    # outputs: fred thinks the root is 3
 
     sub cube_root {
-	my $arg = shift;  # name doesn't matter
-	$arg **= 1/3;
-	return $arg;
+        my $arg = shift;  # name doesn't matter
+        $arg **= 1/3;
+        return $arg;
     }
 
 The C<my> is simply a modifier on something you might assign to.  So when
 you do assign to variables in its argument list, C<my> doesn't
 change whether those variables are viewed as a scalar or an array.  So
 
-    my ($foo) = <STDIN>;		# WRONG?
+    my ($foo) = <STDIN>;                # WRONG?
     my @FOO = <STDIN>;
 
 both supply a list context to the right-hand side, while
@@ -615,7 +633,7 @@ both supply a list context to the right-hand side, while
 
 supplies a scalar context.  But the following declares only one variable:
 
-    my $foo, $bar = 1;			# WRONG
+    my $foo, $bar = 1;                  # WRONG
 
 That has the same effect as
 
@@ -653,12 +671,12 @@ it.  Similarly, in the conditional
     } elsif ($answer =~ /^no$/i) {
         user_disagrees();
     } else {
-	chomp $answer;
+        chomp $answer;
         die "'$answer' is neither 'yes' nor 'no'";
     }
 
 the scope of $answer extends from its declaration through the rest
-of that conditional, including any C<elsif> and C<else> clauses, 
+of that conditional, including any C<elsif> and C<else> clauses,
 but not beyond it.  See L<perlsyn/"Simple Statements"> for information
 on the scope of variables in statements with modifiers.
 
@@ -701,7 +719,7 @@ Variables declared with C<my> are not part of any package and are therefore
 never fully qualified with the package name.  In particular, you're not
 allowed to try to make a package variable (or other global) lexical:
 
-    my $pack::var;	# ERROR!  Illegal syntax
+    my $pack::var;      # ERROR!  Illegal syntax
 
 In fact, a dynamic variable (also known as package or global variables)
 are still accessible using the fully qualified C<::> notation even while a
@@ -739,7 +757,8 @@ L<perlref/"Function Templates"> for something of a work-around to
 this.
 
 =head2 Persistent Private Variables
-X<state> X<state variable> X<static> X<variable, persistent> X<variable, static> X<closure>
+X<state> X<state variable> X<static> X<variable, persistent>
+X<variable, static> X<closure>
 
 There are two ways to build persistent private variables in Perl 5.10.
 First, you can simply use the C<state> feature.  Or, you can use closures,
@@ -772,7 +791,7 @@ And this example uses anonymous subroutines to create separate counters:
 
     use feature 'state';
     sub create_counter {
-	return sub { state $x; return ++$x }
+        return sub { state $x; return ++$x }
     }
 
 Also, since C<$x> is lexical, it can't be reached or modified by any Perl
@@ -789,7 +808,7 @@ of the assignment involves any parentheses is currently undefined.
 Just because a lexical variable is lexically (also called statically)
 scoped to its enclosing block, C<eval>, or C<do> FILE, this doesn't mean that
 within a function it works like a C static.  It normally works more
-like a C auto, but with implicit garbage collection.  
+like a C auto, but with implicit garbage collection.
 
 Unlike local variables in C or C++, Perl's lexical variables don't
 necessarily get recycled just because their scope has exited.
@@ -808,10 +827,10 @@ C's static variables, just enclose the whole function in an extra block,
 and put the static variable outside the function but in the block.
 
     {
-	my $secret_val = 0;
-	sub gimme_another {
-	    return ++$secret_val;
-	}
+        my $secret_val = 0;
+        sub gimme_another {
+            return ++$secret_val;
+        }
     }
     # $secret_val now becomes unreachable by the outside
     # world, but retains its value between calls to gimme_another
@@ -825,10 +844,10 @@ code block around it to make sure it gets executed before your program
 starts to run:
 
     BEGIN {
-	my $secret_val = 0;
-	sub gimme_another {
-	    return ++$secret_val;
-	}
+        my $secret_val = 0;
+        sub gimme_another {
+            return ++$secret_val;
+        }
     }
 
 See L<perlmod/"BEGIN, UNITCHECK, CHECK, INIT and END"> about the
@@ -855,19 +874,19 @@ Synopsis:
 
     # localization of values
 
-    local $foo;		       # make $foo dynamically local
-    local (@wid, %get);	       # make list of variables local
+    local $foo;                # make $foo dynamically local
+    local (@wid, %get);        # make list of variables local
     local $foo = "flurp";      # make $foo dynamic, and init it
-    local @oof = @bar;	       # make @oof dynamic, and init it
+    local @oof = @bar;        # make @oof dynamic, and init it
 
     local $hash{key} = "val";  # sets a local value for this hash entry
     delete local $hash{key};   # delete this entry for the current block
     local ($cond ? $v1 : $v2); # several types of lvalues support
-			       # localization
+                               # localization
 
     # localization of symbols
 
-    local *FH;		       # localize $FH, @FH, %FH, &FH  ...
+    local *FH;                 # localize $FH, @FH, %FH, &FH  ...
     local *merlyn = *randal;   # now $merlyn is really $randal, plus
                                #     @merlyn is really @randal, etc
     local *merlyn = 'randal';  # SAME THING: promote 'randal' to *randal
@@ -903,8 +922,8 @@ variables outside the loop.
 X<local, context>
 
 A C<local> is simply a modifier on an lvalue expression.  When you assign to
-a C<local>ized variable, the C<local> doesn't change whether its list is viewed
-as a scalar or an array.  So
+a C<local>ized variable, the C<local> doesn't change whether its list is
+viewed as a scalar or an array.  So
 
     local($foo) = <STDIN>;
     local @FOO = <STDIN>;
@@ -928,13 +947,13 @@ This feature allows code like this to work :
     { local $/ = undef; $slurp = <FILE>; }
 
 Note, however, that this restricts localization of some values ; for
-example, the following statement dies, as of perl 5.10.0, with an error
+example, the following statement dies, as of Perl 5.10.0, with an error
 I<Modification of a read-only value attempted>, because the $1 variable is
 magical and read-only :
 
     local $1 = 2;
 
-One exception is the default scalar variable: starting with perl 5.14
+One exception is the default scalar variable: starting with Perl 5.14
 C<local($_)> will always strip all magic from $_, to make it possible
 to safely reuse $_ in a subroutine.
 
@@ -964,7 +983,8 @@ will not have any effect on the internal value of the input record
 separator.
 
 =head3 Localization of elements of composite types
-X<local, composite type element> X<local, array element> X<local, hash element>
+X<local, composite type element> X<local, array element>
+X<local, hash element>
 
 It's also worth taking a moment to explain what happens when you
 C<local>ize a member of a composite type (i.e. an array or hash element).
@@ -980,20 +1000,20 @@ skipped elements with C<undef>.  For instance, if you say
     %hash = ( 'This' => 'is', 'a' => 'test' );
     @ary  = ( 0..5 );
     {
-         local($ary[5]) = 6;
-         local($hash{'a'}) = 'drill';
-         while (my $e = pop(@ary)) {
-             print "$e . . .\n";
-             last unless $e > 3;
-         }
-         if (@ary) {
-             $hash{'only a'} = 'test';
-             delete $hash{'a'};
-         }
+        local($ary[5]) = 6;
+        local($hash{'a'}) = 'drill';
+        while (my $e = pop(@ary)) {
+            print "$e . . .\n";
+            last unless $e > 3;
+        }
+        if (@ary) {
+            $hash{'only a'} = 'test';
+            delete $hash{'a'};
+        }
     }
     print join(' ', map { "$_ $hash{$_}" } sort keys %hash),".\n";
     print "The array has ",scalar(@ary)," elements: ",
-          join(', ', map { defined $_ ? $_ : 'undef' } @ary),"\n";
+        join(', ', map { defined $_ ? $_ : 'undef' } @ary),"\n";
 
 Perl will print
 
@@ -1009,7 +1029,8 @@ on array elements specified using negative indexes is particularly
 surprising, and is very likely to change.
 
 =head3 Localized deletion of elements of composite types
-X<delete> X<local, composite type element> X<local, array element> X<local, hash element>
+X<delete> X<local, composite type element> X<local, array element>
+X<local, hash element>
 
 You can use the C<delete local $array[$idx]> and C<delete local $hash{key}>
 constructs to delete a composite type entry for the current block and restore
@@ -1037,23 +1058,23 @@ scoped to the C<do> block.  Slices are
 also accepted.
 
     my %hash = (
-     a => [ 7, 8, 9 ],
-     b => 1,
+        a => [ 7, 8, 9 ],
+        b => 1,
     )
 
     {
-     my $a = delete local $hash{a};
-     # $a is [ 7, 8, 9 ]
-     # %hash is (b => 1)
+        my $x = delete local $hash{a};
+        # $x is [ 7, 8, 9 ]
+        # %hash is (b => 1)
 
-     {
-      my @nums = delete local @$a[0, 2]
-      # @nums is (7, 9)
-      # $a is [ undef, 8 ]
+        {
+            my @nums = delete local @$x[0, 2]
+            # @nums is (7, 9)
+            # $x is [ undef, 8 ]
 
-      $a[0] = 999; # will be erased when the scope ends
-     }
-     # $a is back to [ 7, 8, 9 ]
+            $x[0] = 999; # will be erased when the scope ends
+        }
+        # $x is back to [ 7, 8, 9 ]
 
     }
     # %hash is back to its original state
@@ -1068,10 +1089,10 @@ To do this, you have to declare the subroutine to return an lvalue.
 
     my $val;
     sub canmod : lvalue {
-	$val;  # or:  return $val;
+        $val;  # or:  return $val;
     }
     sub nomod {
-	$val;
+        $val;
     }
 
     canmod() = 5;   # assigns to $val
@@ -1171,11 +1192,11 @@ So, in general, "state" subroutines are faster.  But "my" subs are
 necessary if you want to create closures:
 
     sub whatever {
-	my $x = shift;
-	my sub inner {
-	    ... do something with $x ...
-	}
-	inner();
+        my $x = shift;
+        my sub inner {
+            ... do something with $x ...
+        }
+        inner();
     }
 
 In this example, a new C<$x> is created when C<whatever> is called, and
@@ -1193,12 +1214,12 @@ inside an inner scope:
     sub foo { ... }
 
     sub bar {
-	my sub foo { ... }
-	{
-	    # need to use the outer foo here
-	    our sub foo;
-	    foo();
-	}
+        my sub foo { ... }
+        {
+            # need to use the outer foo here
+            our sub foo;
+            foo();
+        }
     }
 
 and to make a subroutine visible to other packages in the same scope:
@@ -1208,9 +1229,9 @@ and to make a subroutine visible to other packages in the same scope:
     our sub do_something { ... }
 
     sub do_something_with_caller {
-	package DB;
-	() = caller 1;		# sets @DB::args
-	do_something(@args);	# uses MySneakyModule::do_something
+        package DB;
+        () = caller 1;          # sets @DB::args
+        do_something(@args);    # uses MySneakyModule::do_something
     }
 
 =head2 Passing Symbol Table Entries (typeglobs)
@@ -1223,7 +1244,7 @@ mechanism is generally easier to work with.  See below.
 
 Sometimes you don't want to pass the value of an array to a subroutine
 but rather the name of it, so that the subroutine can modify the global
-copy of it rather than working with a local copy.  In perl you can
+copy of it rather than working with a local copy.  In Perl you can
 refer to all objects of a particular name by prefixing the name
 with a star: C<*foo>.  This is often known as a "typeglob", because the
 star on the front can be thought of as a wildcard match for all the
@@ -1235,10 +1256,10 @@ subroutine.  When assigned to, it causes the name mentioned to refer to
 whatever C<*> value was assigned to it.  Example:
 
     sub doubleary {
-	local(*someary) = @_;
-	foreach $elem (@someary) {
-	    $elem *= 2;
-	}
+        local(*someary) = @_;
+        foreach $elem (@someary) {
+            $elem *= 2;
+        }
     }
     doubleary(*foo);
     doubleary(*bar);
@@ -1269,17 +1290,17 @@ I<must> use C<local> instead of C<my>.
 
 You need to give a global variable a temporary value, especially $_.
 
-The global variables, like C<@ARGV> or the punctuation variables, must be 
+The global variables, like C<@ARGV> or the punctuation variables, must be
 C<local>ized with C<local()>.  This block reads in F</etc/motd>, and splits
 it up into chunks separated by lines of equal signs, which are placed
 in C<@Fields>.
 
     {
-	local @ARGV = ("/etc/motd");
+        local @ARGV = ("/etc/motd");
         local $/ = undef;
-        local $_ = <>;	
-	@Fields = split /^\s*=+\s*$/;
-    } 
+        local $_ = <>;
+        @Fields = split /^\s*=+\s*$/;
+    }
 
 It particular, it's important to C<local>ize $_ in any routine that assigns
 to it.  Look out for implicit assignments in C<while> conditionals.
@@ -1309,9 +1330,9 @@ a local alias.
     {
         local *grow = \&shrink; # only until this block exits
         grow();                # really calls shrink()
-	move();		       # if move() grow()s, it shrink()s too
+        move();                # if move() grow()s, it shrink()s too
     }
-    grow();		       # get the real grow() again
+    grow();                    # get the real grow() again
 
 See L<perlref/"Function Templates"> for more about manipulating
 functions by name in this way.
@@ -1324,9 +1345,9 @@ You can C<local>ize just one element of an aggregate.  Usually this
 is done on dynamics:
 
     {
-	local $SIG{INT} = 'IGNORE';
-	funct();			    # uninterruptible
-    } 
+        local $SIG{INT} = 'IGNORE';
+        funct();                            # uninterruptible
+    }
     # interruptibility automatically restored here
 
 But it also works on lexically declared aggregates.
@@ -1346,15 +1367,15 @@ Here are a few simple examples.  First, let's pass in several arrays
 to a function and have it C<pop> all of then, returning a new list
 of all their former last elements:
 
-    @tailings = popmany ( \@a, \@b, \@c, \@d );
+    @tailings = popmany ( \@w, \@x, \@y, \@z );
 
     sub popmany {
-	my $aref;
-	my @retlist;
-	foreach $aref ( @_ ) {
-	    push @retlist, pop @$aref;
-	}
-	return @retlist;
+        my $aref;
+        my @retlist;
+        foreach $aref ( @_ ) {
+            push @retlist, pop @$aref;
+        }
+        return @retlist;
     }
 
 Here's how you might write a function that returns a
@@ -1362,13 +1383,13 @@ list of keys occurring in all the hashes passed to it:
 
     @common = inter( \%foo, \%bar, \%joe );
     sub inter {
-	my ($k, $href, %seen); # locals
-	foreach $href (@_) {
-	    while ( $k = each %$href ) {
-		$seen{$k}++;
-	    }
-	}
-	return grep { $seen{$_} == @_ } keys %seen;
+        my ($k, $href, %seen); # locals
+        foreach $href (@_) {
+            while ( $k = each %$href ) {
+                $seen{$k}++;
+            }
+        }
+        return grep { $seen{$_} == @_ } keys %seen;
     }
 
 So far, we're using just the normal list return mechanism.
@@ -1379,12 +1400,12 @@ a little expensive.
 
 Where people get into trouble is here:
 
-    (@a, @b) = func(@c, @d);
+    (@w, @x) = func(@y, @z);
 or
-    (%a, %b) = func(%c, %d);
+    (%w, %x) = func(%y, %z);
 
-That syntax simply won't work.  It sets just C<@a> or C<%a> and
-clears the C<@b> or C<%b>.  Plus the function didn't get passed
+That syntax simply won't work.  It sets just C<@w> or C<%w> and
+clears the C<@x> or C<%x>.  Plus the function didn't get passed
 into two separate arrays or hashes: it got one long list in C<@_>,
 as always.
 
@@ -1393,28 +1414,28 @@ cleaner code, although not so nice to look at.  Here's a function that
 takes two array references as arguments, returning the two array elements
 in order of how many elements they have in them:
 
-    ($aref, $bref) = func(\@c, \@d);
-    print "@$aref has more than @$bref\n";
+    ($wref, $xref) = func(\@y, \@z);
+    print "@$wref has more than @$xref\n";
     sub func {
-	my ($cref, $dref) = @_;
-	if (@$cref > @$dref) {
-	    return ($cref, $dref);
-	} else {
-	    return ($dref, $cref);
-	}
+        my ($yref, $zref) = @_;
+        if (@$yref > @$zref) {
+            return ($yref, $zref);
+        } else {
+            return ($zref, $yref);
+        }
     }
 
 It turns out that you can actually do this also:
 
-    (*a, *b) = func(\@c, \@d);
-    print "@a has more than @b\n";
+    (*w, *x) = func(\@y, \@z);
+    print "@w has more than @x\n";
     sub func {
-	local (*c, *d) = @_;
-	if (@c > @d) {
-	    return (\@c, \@d);
-	} else {
-	    return (\@d, \@c);
-	}
+        local (*y, *z) = @_;
+        if (@y > @z) {
+            return (\@y, \@z);
+        } else {
+            return (\@z, \@y);
+        }
     }
 
 Here we're using the typeglobs to do symbol table aliasing.  It's
@@ -1428,23 +1449,23 @@ For example:
 
     splutter(\*STDOUT);
     sub splutter {
-	my $fh = shift;
-	print $fh "her um well a hmmm\n";
+        my $fh = shift;
+        print $fh "her um well a hmmm\n";
     }
 
     $rec = get_rec(\*STDIN);
     sub get_rec {
-	my $fh = shift;
-	return scalar <$fh>;
+        my $fh = shift;
+        return scalar <$fh>;
     }
 
 If you're planning on generating new filehandles, you could do this.
 Notice to pass back just the bare *FH, not its reference.
 
     sub openit {
-	my $path = shift;
-	local *FH;
-	return open (FH, $path) ? *FH : undef;
+        my $path = shift;
+        local *FH;
+        return open (FH, $path) ? *FH : undef;
     }
 
 =head2 Prototypes
@@ -1485,22 +1506,22 @@ subroutines that work like built-in functions, here are prototypes
 for some other functions that parse almost exactly like the
 corresponding built-in.
 
-   Declared as		   Called as
+    Declared as             Called as
 
-   sub mylink ($$)	   mylink $old, $new
-   sub myvec ($$$)	   myvec $var, $offset, 1
-   sub myindex ($$;$)	   myindex &getstring, "substr"
-   sub mysyswrite ($$$;$)  mysyswrite $buf, 0, length($buf) - $off, $off
-   sub myreverse (@)	   myreverse $a, $b, $c
-   sub myjoin ($@)	   myjoin ":", $a, $b, $c
-   sub mypop (\@)	   mypop @array
-   sub mysplice (\@$$@)	   mysplice @array, 0, 2, @pushme
-   sub mykeys (\[%@])	   mykeys $hashref->%*
-   sub myopen (*;$)	   myopen HANDLE, $name
-   sub mypipe (**)	   mypipe READHANDLE, WRITEHANDLE
-   sub mygrep (&@)	   mygrep { /foo/ } $a, $b, $c
-   sub myrand (;$)	   myrand 42
-   sub mytime ()	   mytime
+    sub mylink ($$)         mylink $old, $new
+    sub myvec ($$$)         myvec $var, $offset, 1
+    sub myindex ($$;$)      myindex &getstring, "substr"
+    sub mysyswrite ($$$;$)  mysyswrite $buf, 0, length($buf) - $off, $off
+    sub myreverse (@)       myreverse $x, $y, $z
+    sub myjoin ($@)         myjoin ":", $x, $y, $z
+    sub mypop (\@)          mypop @array
+    sub mysplice (\@$$@)    mysplice @array, 0, 2, @pushme
+    sub mykeys (\[%@])      mykeys $hashref->%*
+    sub myopen (*;$)        myopen HANDLE, $name
+    sub mypipe (**)         mypipe READHANDLE, WRITEHANDLE
+    sub mygrep (&@)         mygrep { /foo/ } $x, $y, $z
+    sub myrand (;$)         myrand 42
+    sub mytime ()           mytime
 
 Any backslashed prototype character represents an actual argument
 that must start with that character (optionally preceded by C<my>,
@@ -1542,8 +1563,8 @@ follows:
     use Symbol 'qualify_to_ref';
 
     sub foo (*) {
-	my $fh = qualify_to_ref(shift, caller);
-	...
+        my $fh = qualify_to_ref(shift, caller);
+        ...
     }
 
 The C<+> prototype is a special alternative to C<$> that will act like
@@ -1580,26 +1601,26 @@ without a prototype.  If you want to force a unary function to have the
 same precedence as a list operator, add C<;> to the end of the prototype:
 
     sub mygetprotobynumber($;);
-    mygetprotobynumber $a > $b; # parsed as mygetprotobynumber($a > $b)
+    mygetprotobynumber $x > $y; # parsed as mygetprotobynumber($x > $y)
 
 The interesting thing about C<&> is that you can generate new syntax with it,
 provided it's in the initial position:
 X<&>
 
     sub try (&@) {
-	my($try,$catch) = @_;
-	eval { &$try };
-	if ($@) {
-	    local $_ = $@;
-	    &$catch;
-	}
+        my($try,$catch) = @_;
+        eval { &$try };
+        if ($@) {
+            local $_ = $@;
+            &$catch;
+        }
     }
     sub catch (&) { $_[0] }
 
     try {
-	die "phooey";
+        die "phooey";
     } catch {
-	/phooey/ and print "unphooey\n";
+        /phooey/ and print "unphooey\n";
     };
 
 That prints C<"unphooey">.  (Yes, there are still unresolved
@@ -1612,12 +1633,12 @@ And here's a reimplementation of the Perl C<grep> operator:
 X<grep>
 
     sub mygrep (&@) {
-	my $code = shift;
-	my @result;
-	foreach $_ (@_) {
-	    push(@result, $_) if &$code;
-	}
-	@result;
+        my $code = shift;
+        my @result;
+        foreach $_ (@_) {
+            push(@result, $_) if &$code;
+        }
+        @result;
     }
 
 Some folks would prefer full alphanumeric prototypes.  Alphanumerics have
@@ -1642,8 +1663,8 @@ silent impositions of differing list versus scalar contexts.  For example,
 if you decide that a function should take just one parameter, like this:
 
     sub func ($) {
-	my $n = shift;
-	print "you gave me $n\n";
+        my $n = shift;
+        print "you gave me $n\n";
     }
 
 and someone has been calling it with an array or expression
@@ -1664,10 +1685,10 @@ until after the BLOCK is completely defined.  This means that a recursive
 function with a prototype has to be predeclared for the prototype to take
 effect, like so:
 
-	sub foo($$);
-	sub foo($$) {
-		foo 1, 2;
-	}
+    sub foo($$);
+    sub foo($$) {
+        foo 1, 2;
+    }
 
 This is all very powerful, of course, and should be used only in moderation
 to make the world a better place.
@@ -1684,17 +1705,17 @@ L<constant> for an easy way to declare most constants.)
 
 The following functions would all be inlined:
 
-    sub pi ()		{ 3.14159 }		# Not exact, but close.
-    sub PI ()		{ 4 * atan2 1, 1 }	# As good as it gets,
-						# and it's inlined, too!
-    sub ST_DEV ()	{ 0 }
-    sub ST_INO ()	{ 1 }
+    sub pi ()           { 3.14159 }             # Not exact, but close.
+    sub PI ()           { 4 * atan2 1, 1 }      # As good as it gets,
+                                                # and it's inlined, too!
+    sub ST_DEV ()       { 0 }
+    sub ST_INO ()       { 1 }
 
-    sub FLAG_FOO ()	{ 1 << 8 }
-    sub FLAG_BAR ()	{ 1 << 9 }
-    sub FLAG_MASK ()	{ FLAG_FOO | FLAG_BAR }
+    sub FLAG_FOO ()     { 1 << 8 }
+    sub FLAG_BAR ()     { 1 << 9 }
+    sub FLAG_MASK ()    { FLAG_FOO | FLAG_BAR }
 
-    sub OPT_BAZ ()	{ not (0x1B58 & FLAG_MASK) }
+    sub OPT_BAZ ()      { not (0x1B58 & FLAG_MASK) }
 
     sub N () { int(OPT_BAZ) / 3 }
 
@@ -1707,12 +1728,12 @@ inner scopes.)  You can countermand inlining by using an explicit
 C<return>:
 
     sub baz_val () {
-	if (OPT_BAZ) {
-	    return 23;
-	}
-	else {
-	    return 42;
-	}
+        if (OPT_BAZ) {
+            return 23;
+        }
+        else {
+            return 42;
+        }
     }
     sub bonk_val () { return 12345 }
 
@@ -1795,19 +1816,19 @@ L<B::Deparse>.  Consider this example of two subroutines returning
 C<1>, one with a C<()> prototype causing it to be inlined, and one
 without (with deparse output truncated for clarity):
 
- $ perl -MO=Deparse -le 'sub ONE { 1 } if (ONE) { print ONE if ONE }'
- sub ONE {
-     1;
- }
- if (ONE ) {
-     print ONE() if ONE ;
- }
+    $ perl -MO=Deparse -e 'sub ONE { 1 } if (ONE) { print ONE if ONE }'
+    sub ONE {
+        1;
+    }
+    if (ONE ) {
+        print ONE() if ONE ;
+    }
 
- $ perl -MO=Deparse -le 'sub ONE () { 1 } if (ONE) { print ONE if ONE }'
- sub ONE () { 1 }
- do {
-     print 1
- };
+    $ perl -MO=Deparse -e 'sub ONE () { 1 } if (ONE) { print ONE if ONE }'
+    sub ONE () { 1 }
+    do {
+        print 1
+    };
 
 If you redefine a subroutine that was eligible for inlining, you'll
 get a warning by default.  You can use this warning to tell whether or
@@ -1852,8 +1873,8 @@ built-in name with the special package qualifier C<CORE::>.  For example,
 saying C<CORE::open()> always refers to the built-in C<open()>, even
 if the current package has imported some other subroutine called
 C<&open()> from elsewhere.  Even though it looks like a regular
-function call, it isn't: the CORE:: prefix in that case is part of Perl's
-syntax, and works for any keyword, regardless of what is in the CORE
+function call, it isn't: the C<CORE::> prefix in that case is part of Perl's
+syntax, and works for any keyword, regardless of what is in the C<CORE>
 package.  Taking a reference to it, that is, C<\&CORE::open>, only works
 for some keywords.  See L<CORE>.
 
@@ -1886,30 +1907,30 @@ that understands regular expressions.
     @EXPORT_OK = 'glob';
 
     sub import {
-	my $pkg = shift;
-	return unless @_;
-	my $sym = shift;
-	my $where = ($sym =~ s/^GLOBAL_// ? 'CORE::GLOBAL' : caller(0));
-	$pkg->export($where, $sym, @_);
+        my $pkg = shift;
+        return unless @_;
+        my $sym = shift;
+        my $where = ($sym =~ s/^GLOBAL_// ? 'CORE::GLOBAL' : caller(0));
+        $pkg->export($where, $sym, @_);
     }
 
     sub glob {
-	my $pat = shift;
-	my @got;
-	if (opendir my $d, '.') { 
-	    @got = grep /$pat/, readdir $d; 
-	    closedir $d;   
-	}
-	return @got;
+        my $pat = shift;
+        my @got;
+        if (opendir my $d, '.') {
+            @got = grep /$pat/, readdir $d;
+            closedir $d;
+        }
+        return @got;
     }
     1;
 
 And here's how it could be (ab)used:
 
-    #use REGlob 'GLOBAL_glob';	    # override glob() in ALL namespaces
+    #use REGlob 'GLOBAL_glob';      # override glob() in ALL namespaces
     package Foo;
-    use REGlob 'glob';		    # override glob() in Foo:: only
-    print for <^[a-z_]+\.pm\$>;	    # show all pragmatic modules
+    use REGlob 'glob';              # override glob() in Foo:: only
+    print for <^[a-z_]+\.pm\$>;     # show all pragmatic modules
 
 The initial comment shows a contrived, even dangerous example.
 By overriding C<glob> globally, you would be forcing the new (and
@@ -1919,9 +1940,9 @@ those namespaces.  Naturally, this should be done with extreme caution--if
 it must be done at all.
 
 The C<REGlob> example above does not implement all the support needed to
-cleanly override perl's C<glob> operator.  The built-in C<glob> has
+cleanly override Perl's C<glob> operator.  The built-in C<glob> has
 different behaviors depending on whether it appears in a scalar or list
-context, but our C<REGlob> doesn't.  Indeed, many perl built-in have such
+context, but our C<REGlob> doesn't.  Indeed, many Perl built-ins have such
 context sensitive behaviors, and these must be adequately supported by
 a properly written override.  For a fully functional example of overriding
 C<glob>, study the implementation of C<File::DosGlob> in the standard
@@ -2036,11 +2057,11 @@ Examples of valid syntax (even though the attributes are unknown):
 
 Examples of invalid syntax:
 
-    sub fnord : switch(10,foo(); # ()-string not balanced
-    sub snoid : Ugly('(');	  # ()-string not balanced
-    sub xyzzy : 5x5;		  # "5x5" not a valid identifier
-    sub plugh : Y2::north;	  # "Y2::north" not a simple identifier
-    sub snurt : foo + bar;	  # "+" not a colon or space
+    sub fnord : switch(10,foo();    # ()-string not balanced
+    sub snoid : Ugly('(');          # ()-string not balanced
+    sub xyzzy : 5x5;                # "5x5" not a valid identifier
+    sub plugh : Y2::north;          # "Y2::north" not a simple identifier
+    sub snurt : foo + bar;          # "+" not a colon or space
 
 The attribute list is passed as a list of constant strings to the code
 which associates them with the subroutine.  In particular, the second example
@@ -2055,8 +2076,11 @@ see L<attributes> and L<Attribute::Handlers>.
 =head1 SEE ALSO
 
 See L<perlref/"Function Templates"> for more about references and closures.
-See L<perlxs> if you'd like to learn about calling C subroutines from Perl.  
-See L<perlembed> if you'd like to learn about calling Perl subroutines from C.  
+See L<perlxs> if you'd like to learn about calling C subroutines from Perl.
+See L<perlembed> if you'd like to learn about calling Perl subroutines from C.
 See L<perlmod> to learn about bundling up your functions in separate files.
 See L<perlmodlib> to learn what library modules come standard on your system.
 See L<perlootut> to learn how to make object method calls.
+
+=for vi
+# ex: set sts=0 sw=4 et:

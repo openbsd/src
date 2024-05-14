@@ -5,134 +5,233 @@
 use strict;
 use warnings;
 
-use Test::More tests => 164;
+use Test::More tests => 93;
 
 use Math::BigInt   upgrade   => 'Math::BigFloat';
 use Math::BigFloat downgrade => 'Math::BigInt';
 
-# simplistic test for now
 is(Math::BigFloat->downgrade(), 'Math::BigInt', 'Math::BigFloat->downgrade()');
 is(Math::BigInt->upgrade(), 'Math::BigFloat', 'Math::BigInt->upgrade()');
 
 # bug until v1.67:
-is(Math::BigFloat->new("0.2E0"), "0.2", qq|Math::BigFloat->new("0.2E0")|);
-is(Math::BigFloat->new("0.2E1"), "2",   qq|Math::BigFloat->new("0.2E1")|);
-# until v1.67 resulted in 200:
-is(Math::BigFloat->new("0.2E2"), "20",  qq|Math::BigFloat->new("0.2E2")|);
 
-# disable, otherwise it screws calculations
-Math::BigFloat->upgrade(undef);
-is(Math::BigFloat->upgrade() || "", "", qq/Math::BigFloat->upgrade() || ""/);
+subtest 'Math::BigFloat->new("0.2E0")' => sub {
+    plan tests => 2;
+    my $x = Math::BigFloat->new("0.2E0");
+    is($x, "0.2", 'value of $x');
+    is(ref($x), "Math::BigFloat", '$x is a Math::BigFloat');
+};
 
-Math::BigFloat->div_scale(20);  # make it a bit faster
-my $x = Math::BigFloat->new(2);    # downgrades
-# the following test upgrade for bsqrt() and also makes new() NOT downgrade
-# for the bpow() side
-is(Math::BigFloat->bpow("2", "0.5"), $x->bsqrt(),
-   qq|Math::BigFloat->bpow("2", "0.5")|);
+subtest 'Math::BigFloat->new("0.2E1")' => sub {
+    plan tests => 2;
+    my $x = Math::BigFloat->new("2");
+    is($x, "2", 'value of $x');
+    is(ref($x), "Math::BigInt", '$x is downgraded to a Math::BigInt');
+};
+
+subtest 'Math::BigFloat->new("0.2E2")' => sub {
+    plan tests => 2;
+    my $x = Math::BigFloat->new("20");
+    is($x, "20", 'value of $x');
+    is(ref($x), "Math::BigInt", '$x is downgraded to a Math::BigInt');
+};
+
+# $x is a downgraded to a Math::BigInt, but bpow() and bsqrt() upgrades to
+# Math::BigFloat.
+
+Math::BigFloat -> div_scale(20);        # make it a bit faster
+
+my ($x, $y, $z);
+subtest '$x = Math::BigFloat -> new(2);' => sub {
+    plan tests => 2;
+    $x = Math::BigFloat -> new(2);     # downgrades
+    is(ref($x), 'Math::BigInt', '$x is downgraded to a Math::BigInt');
+    cmp_ok($x, "==", 2, 'value of $x');
+};
+
+subtest '$y = Math::BigFloat -> bpow("2", "0.5");' => sub {
+    plan tests => 2;
+    $y = Math::BigFloat -> bpow("2", "0.5");
+    is(ref($y), 'Math::BigFloat', '$y is a Math::BigFloat');
+    cmp_ok($y, "==", "1.4142135623730950488", 'value of $y');
+};
+
+subtest '$z = $x -> bsqrt();' => sub {
+    plan tests => 2;
+    $z = $x -> bsqrt();
+    is(ref($z), 'Math::BigFloat', '$y is a Math::BigFloat');
+    cmp_ok($z, "==", "1.4142135623730950488", 'value of $z');
+};
+
+# log_2(16) = 4
+
+subtest '$x = Math::BigFloat -> new(16); $y = $x -> blog(2);' => sub {
+    plan tests => 4;
+    $x = Math::BigFloat -> new(16);
+    is(ref($x), 'Math::BigInt', '$x is downgraded to a Math::BigInt');
+    cmp_ok($x, "==", 16, 'value of $x');
+    $y = $x -> blog(2);
+    is(ref($y), 'Math::BigInt', '$y is downgraded to a Math::BigInt');
+    cmp_ok($y, "==", 4, 'value of $y');
+};
+
+# log_16(2) = 1/4
+
+subtest '$x = Math::BigFloat -> new(2); $y = $x -> blog(16);' => sub {
+    plan tests => 4;
+    $x = Math::BigFloat -> new(2);
+    is(ref($x), 'Math::BigInt', '$x is downgraded to a Math::BigInt');
+    cmp_ok($x, "==", 2, 'value of $x');
+    $y = $x -> blog(16);
+    is(ref($y), 'Math::BigFloat', '$y is a Math::BigFloat');
+    cmp_ok($y, "==", 0.25, 'value of $y');
+};
 
 ################################################################################
 # Verify that constructors downgrade when they should.
 
 note("Enable downgrading, and see if constructors downgrade");
 
-Math::BigFloat -> downgrade("Math::BigInt");
-
-# new()
+note("testing new()");
 
 $x = Math::BigFloat -> new("0.5");
-cmp_ok($x, "==", 0.5);
-is(ref $x, "Math::BigFloat", "Creating a 0.5 does not downgrade");
+subtest '$x = Math::BigFloat -> new("0.5")' => sub {
+    plan tests => 2;
+    cmp_ok($x, "==", 0.5, 'value of $x');
+    is(ref $x, "Math::BigFloat", "does not downgrade from Math::BigFloat");
+};
 
 $x = Math::BigFloat -> new("4");
-cmp_ok($x, "==", 4, 'new("4")');
-is(ref $x, "Math::BigInt", "Creating a 4 downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> new("4")' => sub {
+    plan tests => 2;
+    cmp_ok($x, "==", 4, 'value of $x');
+    is(ref $x, "Math::BigInt", "downgrades to Math::BigInt");
+};
 
 $x = Math::BigFloat -> new("0");
-cmp_ok($x, "==", 0, 'new("0")');
-is(ref $x, "Math::BigInt", "Creating a 0 downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> new("0")' => sub {
+    plan tests => 2;
+    cmp_ok($x, "==", 0, 'value of $x');
+    is(ref $x, "Math::BigInt", "downgrades to Math::BigInt");
+};
 
 $x = Math::BigFloat -> new("1");
-cmp_ok($x, "==", 1, 'new("1")');
-is(ref $x, "Math::BigInt", "Creating a 1 downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> new("1")' => sub {
+    plan tests => 2;
+    cmp_ok($x, "==", 1, 'value of $x');
+    is(ref $x, "Math::BigInt", "downgrades to Math::BigInt");
+};
 
 $x = Math::BigFloat -> new("Inf");
-cmp_ok($x, "==", "Inf", 'new("inf")');
-is(ref $x, "Math::BigInt", "Creating an Inf downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> new("inf")' => sub {
+    plan tests => 2;
+    cmp_ok($x, "==", "Inf", 'value of $x');
+    is(ref $x, "Math::BigInt", "downgrades to Math::BigInt");
+};
 
 $x = Math::BigFloat -> new("NaN");
-is($x, "NaN", 'new("NaN")');
-is(ref $x, "Math::BigInt", "Creating a NaN downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> new("NaN")' => sub {
+    plan tests => 2;
+    is($x, "NaN", );
+    is(ref $x, "Math::BigInt", "downgrades to Math::BigInt");
+};
 
-# bzero()
+note("testing bzero()");
 
 $x = Math::BigFloat -> bzero();
-cmp_ok($x, "==", 0, "bzero()");
-is(ref $x, "Math::BigInt", "Creating a 0 downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> bzero()' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, 'value of $x');
+    is(ref $x, 'Math::BigInt', 'downgrades to Math::BigInt');
+};
 
-# bone()
+note("testing bone()");
 
 $x = Math::BigFloat -> bone();
-cmp_ok($x, "==", 1, "bone()");
-is(ref $x, "Math::BigInt", "Creating a 1 downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> bone()' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 1, 'value of $x');
+    is(ref $x, 'Math::BigInt', 'downgrades to Math::BigInt');
+};
 
-# binf()
+note("testing binf()");
 
 $x = Math::BigFloat -> binf();
-cmp_ok($x, "==", "Inf", "binf()");
-is(ref $x, "Math::BigInt", "Creating an Inf downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> binf()' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'Inf', 'value of $x');
+    is(ref $x, 'Math::BigInt', 'downgrades to Math::BigInt');
+};
 
-# bnan()
+note("testing bnan()");
 
 $x = Math::BigFloat -> bnan();
-is($x, "NaN", "bnan()");
-is(ref $x, "Math::BigInt", "Creating a NaN downgrades to Math::BigInt");
+subtest '$x = Math::BigFloat -> bnan()' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'value of $x');
+    is(ref $x, 'Math::BigInt', 'downgrades to Math::BigInt');
+};
 
-# from_dec()
+note("testing from_dec()");
 
-$x = Math::BigFloat -> from_dec("3.14e2");
-cmp_ok($x, "==", 314, 'from_dec("3.14e2")');
-is(ref $x, "Math::BigInt", 'from_dec("3.14e2") downgrades to Math::BigInt');
+$x = Math::BigFloat -> from_dec('3.14e2');
+subtest '$x = Math::BigFloat -> from_dec("3.14e2")' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 314, 'value of $x');
+    is(ref $x, 'Math::BigInt', 'downgrades to Math::BigInt');
+};
 
-# from_hex()
+note("testing from_hex()");
 
-$x = Math::BigFloat -> from_hex("0x1.3ap+8");
-cmp_ok($x, "==", 314, 'from_hex("3.14e2")');
-is(ref $x, "Math::BigInt", 'from_hex("3.14e2") downgrades to Math::BigInt');
+$x = Math::BigFloat -> from_hex('0x1.3ap+8');
+subtest '$x = Math::BigFloat -> from_hex("3.14e2")' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 314, 'value of $x');
+    is(ref $x, 'Math::BigInt', 'downgrades to Math::BigInt');
+};
 
-# from_oct()
+note("testing from_oct()");
 
-$x = Math::BigFloat -> from_oct("0o1.164p+8");
-cmp_ok($x, "==", 314, 'from_oct("0o1.164p+8")');
-is(ref $x, "Math::BigInt", 'from_oct("0o1.164p+8") downgrades to Math::BigInt');
+$x = Math::BigFloat -> from_oct('0o1.164p+8');
+subtest '$x = Math::BigFloat -> from_oct("0o1.164p+8")' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 314, 'value of $x');
+    is(ref $x, 'Math::BigInt', 'downgrades to Math::BigInt');
+};
 
-# from_bin()
+note("testing from_bin()");
 
-$x = Math::BigFloat -> from_bin("0b1.0011101p+8");
-cmp_ok($x, "==", 314, 'from_bin("0b1.0011101p+8")');
-is(ref $x, "Math::BigInt",
-   'from_bin("0b1.0011101p+8") downgrades to Math::BigInt');
+$x = Math::BigFloat -> from_bin('0b1.0011101p+8');
+subtest '$x = Math::BigFloat -> from_bin("0b1.0011101p+8")' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 314, 'value of $x');
+    is(ref $x, 'Math::BigInt', 'downgrades to Math::BigInt');
+};
 
-# from_ieee754()
+note("testing from_ieee754()");
 
 $x = Math::BigFloat -> from_ieee754("\x43\x9d\x00\x00", "binary32");
-cmp_ok($x, "==", 314, 'from_ieee754("\x43\x9d\x00\x00", "binary32")');
-is(ref $x, "Math::BigInt",
-   'from_ieee754("\x43\x9d\x00\x00", "binary32") downgrades to Math::BigInt');
+subtest '$x = Math::BigFloat -> from_ieee754("\x43\x9d\x00\x00", "binary32")' => sub {
+    plan tests => 2;
+    cmp_ok($x, "==", 314, 'value of $x');
+    is(ref $x, "Math::BigInt", 'downgrades to Math::BigInt');
+};
 
 note("Disable downgrading, and see if constructors downgrade");
 
 Math::BigFloat -> downgrade(undef);
 
-my $half = Math::BigFloat -> new("0.5");
-my $four = Math::BigFloat -> new("4");
 my $zero = Math::BigFloat -> bzero();
+my $half = Math::BigFloat -> new("0.5");
+my $one  = Math::BigFloat -> bone();
+my $four = Math::BigFloat -> new("4");
 my $inf  = Math::BigFloat -> binf();
 my $nan  = Math::BigFloat -> bnan();
 
-is(ref $half, "Math::BigFloat", "Creating a 0.5 does not downgrade");
-is(ref $four, "Math::BigFloat", "Creating a 4 does not downgrade");
 is(ref $zero, "Math::BigFloat", "Creating a 0 does not downgrade");
+is(ref $half, "Math::BigFloat", "Creating a 0.5 does not downgrade");
+is(ref $one,  "Math::BigFloat", "Creating a 1 does not downgrade");
+is(ref $four, "Math::BigFloat", "Creating a 4 does not downgrade");
 is(ref $inf,  "Math::BigFloat", "Creating an Inf does not downgrade");
 is(ref $nan,  "Math::BigFloat", "Creating a NaN does not downgrade");
 
@@ -141,352 +240,536 @@ is(ref $nan,  "Math::BigFloat", "Creating a NaN does not downgrade");
 
 Math::BigFloat -> downgrade("Math::BigInt");
 
-# This shouldn't be necessary, but it is. Fixme!
-
-Math::BigInt -> upgrade(undef);
-
-# bneg()
+note("testing bneg()");
 
 $x = $zero -> copy() -> bneg();
-cmp_ok($x, "==", 0, "-(0) = 0");
-is(ref($x), "Math::BigInt", "-(0) => Math::BigInt");
+subtest '$x = $zero -> copy() -> bneg();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, '-(0) = 0');
+    is(ref($x), 'Math::BigInt', '-(0) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bneg();
-cmp_ok($x, "==", -4, "-(4) = -4");
-is(ref($x), "Math::BigInt", "-(4) => Math::BigInt");
+subtest '$x = $four -> copy() -> bneg();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', -4, '-(4) = -4');
+    is(ref($x), 'Math::BigInt', '-(4) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bneg();
-cmp_ok($x, "==", "-inf", "-(Inf) = -Inf");
-is(ref($x), "Math::BigInt", "-(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bneg();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', '-inf', '-(Inf) = -Inf');
+    is(ref($x), 'Math::BigInt', '-(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bneg();
-is($x, "NaN", "-(NaN) = NaN");
-is(ref($x), "Math::BigInt", "-(NaN) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bneg();' => sub {
+    plan tests => 2;
+    is($x, 'NaN', '-(NaN) = NaN');
+    is(ref($x), 'Math::BigInt', '-(NaN) => Math::BigInt');
+};
 
-# bnorm()
+note("testing bnorm()");
 
 $x = $zero -> copy() -> bnorm();
-cmp_ok($x, "==", 0, "bnorm(0)");
-is(ref($x), "Math::BigInt", "bnorm(0) => Math::BigInt");
+subtest '$x = $zero -> copy() -> bnorm();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, 'value of $x');
+    is(ref($x), 'Math::BigInt', 'bnorm(0) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bnorm();
-cmp_ok($x, "==", 4, "bnorm(4)");
-is(ref($x), "Math::BigInt", "bnorm(4) => Math::BigInt");
+subtest '$x = $four -> copy() -> bnorm();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 4, 'value of $x');
+    is(ref($x), 'Math::BigInt', 'bnorm(4) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bnorm();
-cmp_ok($x, "==", "inf", "bnorm(Inf)");
-is(ref($x), "Math::BigInt", "bnorm(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bnorm();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'value of $x');
+    is(ref($x), 'Math::BigInt', 'bnorm(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bnorm();
-is($x, "NaN", "bnorm(NaN)");
-is(ref($x), "Math::BigInt", "bnorm(NaN) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bnorm();' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bnorm(NaN)');
+    is(ref($x), 'Math::BigInt', 'bnorm(NaN) => Math::BigInt');
+};
 
-# binc()
+note("testing binc()");
 
 $x = $zero -> copy() -> binc();
-cmp_ok($x, "==", 1, "binc(0)");
-is(ref($x), "Math::BigInt", "binc(0) => Math::BigInt");
+subtest '$x = $zero -> copy() -> binc();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 1, 'binc(0)');
+    is(ref($x), 'Math::BigInt', 'binc(0) => Math::BigInt');
+};
 
 $x = $four -> copy() -> binc();
-cmp_ok($x, "==", 5, "binc(4)");
-is(ref($x), "Math::BigInt", "binc(4) => Math::BigInt");
+subtest '$x = $four -> copy() -> binc();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 5, 'binc(4)');
+    is(ref($x), 'Math::BigInt', 'binc(4) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> binc();
-cmp_ok($x, "==", "inf", "binc(Inf)");
-is(ref($x), "Math::BigInt", "binc(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> binc();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'binc(Inf)');
+    is(ref($x), 'Math::BigInt', 'binc(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> binc();
-is($x, "NaN", "binc(NaN)");
-is(ref($x), "Math::BigInt", "binc(NaN) => Math::BigInt");
+subtest '$x = $nan -> copy() -> binc();' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'binc(NaN)');
+    is(ref($x), 'Math::BigInt', 'binc(NaN) => Math::BigInt');
+};
 
-# bdec()
+note("testing bdec()");
 
 $x = $zero -> copy() -> bdec();
-cmp_ok($x, "==", -1, "bdec(0)");
-is(ref($x), "Math::BigInt", "bdec(0) => Math::BigInt");
+subtest '$x = $zero -> copy() -> bdec();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', -1, 'bdec(0)');
+    is(ref($x), 'Math::BigInt', 'bdec(0) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bdec();
-cmp_ok($x, "==", 3, "bdec(4)");
-is(ref($x), "Math::BigInt", "bdec(4) => Math::BigInt");
+subtest '$x = $four -> copy() -> bdec();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 3, 'bdec(4)');
+    is(ref($x), 'Math::BigInt', 'bdec(4) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bdec();
-cmp_ok($x, "==", "inf", "bdec(Inf)");
-is(ref($x), "Math::BigInt", "bdec(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bdec();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'bdec(Inf)');
+    is(ref($x), 'Math::BigInt', 'bdec(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bdec();
-is($x, "NaN", "bdec(NaN)");
-is(ref($x), "Math::BigInt", "bdec(NaN) => Math::BigInt");
+subtest '' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bdec(NaN)');
+    is(ref($x), 'Math::BigInt', 'bdec(NaN) => Math::BigInt');
+};
 
-# badd()
+note("testing badd()");
 
 $x = $half -> copy() -> badd($nan);
-is($x, "NaN", "0.5 + NaN = NaN");
-is(ref($x), "Math::BigInt", "0.5 + NaN => Math::BigInt");
+subtest '$x = $half -> copy() -> badd($nan);' => sub {
+    plan tests => 2;
+    is($x, 'NaN', '0.5 + NaN = NaN');
+    is(ref($x), 'Math::BigInt', '0.5 + NaN => Math::BigInt');
+};
 
 $x = $half -> copy() -> badd($inf);
-cmp_ok($x, "==", "+Inf", "0.5 + Inf = Inf");
-is(ref($x), "Math::BigInt", "2.5 + Inf => Math::BigInt");
+subtest '$x = $half -> copy() -> badd($inf);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', '+Inf', '0.5 + Inf = Inf');
+    is(ref($x), 'Math::BigInt', '2.5 + Inf => Math::BigInt');
+};
 
 $x = $half -> copy() -> badd($half);
-cmp_ok($x, "==", 1, "0.5 + 0.5 = 1");
-is(ref($x), "Math::BigInt", "0.5 + 0.5 => Math::BigInt");
+subtest '$x = $half -> copy() -> badd($half);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 1, '0.5 + 0.5 = 1');
+    is(ref($x), 'Math::BigInt', '0.5 + 0.5 => Math::BigInt');
+};
 
 $x = $half -> copy() -> badd($half -> copy() -> bneg());
-cmp_ok($x, "==", 0, "0.5 + -0.5 = 0");
-is(ref($x), "Math::BigInt", "0.5 + -0.5 => Math::BigInt");
+subtest '$x = $half -> copy() -> badd($half -> copy() -> bneg());' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, '0.5 + -0.5 = 0');
+    is(ref($x), 'Math::BigInt', '0.5 + -0.5 => Math::BigInt');
+};
 
 $x = $four -> copy() -> badd($zero);
-cmp_ok($x, "==", 4, "4 + 0 = 4");
-is(ref($x), "Math::BigInt", "4 + 0 => Math::BigInt");
+subtest '$x = $four -> copy() -> badd($zero);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 4, '4 + 0 = 4');
+    is(ref($x), 'Math::BigInt', '4 + 0 => Math::BigInt');
+};
 
 $x = $zero -> copy() -> badd($four);
-cmp_ok($x, "==", 4, "0 + 4 = 4");
-is(ref($x), "Math::BigInt", "0 + 4 => Math::BigInt");
+subtest '$x = $zero -> copy() -> badd($four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 4, '0 + 4 = 4');
+    is(ref($x), 'Math::BigInt', '0 + 4 => Math::BigInt');
+};
 
 $x = $inf -> copy() -> badd($four);
-cmp_ok($x, "==", "+Inf", "Inf + 4 = Inf");
-is(ref($x), "Math::BigInt", "Inf + 4 => Math::BigInt");
+subtest '$x = $inf -> copy() -> badd($four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', '+Inf', 'Inf + 4 = Inf');
+    is(ref($x), 'Math::BigInt', 'Inf + 4 => Math::BigInt');
+};
 
 $x = $nan -> copy() -> badd($four);
-is($x, "NaN", "NaN + 4 = NaN");
-is(ref($x), "Math::BigInt", "NaN + 4 => Math::BigInt");
+subtest '$x = $nan -> copy() -> badd($four);' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'NaN + 4 = NaN');
+    is(ref($x), 'Math::BigInt', 'NaN + 4 => Math::BigInt');
+};
 
-# bsub()
+note("testing bsub()");
 
 $x = $half -> copy() -> bsub($nan);
-is($x, "NaN", "0.5 - NaN = NaN");
-is(ref($x), "Math::BigInt", "0.5 - NaN => Math::BigInt");
+subtest '$x = $half -> copy() -> bsub($nan);' => sub {
+    plan tests => 2;
+    is($x, 'NaN', '0.5 - NaN = NaN');
+    is(ref($x), 'Math::BigInt', '0.5 - NaN => Math::BigInt');
+};
 
 $x = $half -> copy() -> bsub($inf);
-cmp_ok($x, "==", "-Inf", "2.5 - Inf = -Inf");
-is(ref($x), "Math::BigInt", "2.5 - Inf => Math::BigInt");
+subtest '$x = $half -> copy() -> bsub($inf);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', '-Inf', '2.5 - Inf = -Inf');
+    is(ref($x), 'Math::BigInt', '2.5 - Inf => Math::BigInt');
+};
 
 $x = $half -> copy() -> bsub($half);
-cmp_ok($x, "==", 0, "0.5 + 0.5 = 0");
-is(ref($x), "Math::BigInt", "0.5 - 0.5 => Math::BigInt");
+subtest '$x = $half -> copy() -> bsub($half);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, '0.5 + 0.5 = 0');
+    is(ref($x), 'Math::BigInt', '0.5 - 0.5 => Math::BigInt');
+};
 
 $x = $half -> copy() -> bsub($half -> copy() -> bneg());
-cmp_ok($x, "==", 1, "0.5 - -0.5 = 1");
-is(ref($x), "Math::BigInt", "0.5 - -0.5 => Math::BigInt");
+subtest '$x = $half -> copy() -> bsub($half -> copy() -> bneg());' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 1, '0.5 - -0.5 = 1');
+    is(ref($x), 'Math::BigInt', '0.5 - -0.5 => Math::BigInt');
+};
 
 $x = $four -> copy() -> bsub($zero);
-cmp_ok($x, "==", 4, "4 - 0 = 4");
-is(ref($x), "Math::BigInt", "4 - 0 => Math::BigInt");
+subtest '$x = $four -> copy() -> bsub($zero);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 4, '4 - 0 = 4');
+    is(ref($x), 'Math::BigInt', '4 - 0 => Math::BigInt');
+};
 
 $x = $zero -> copy() -> bsub($four);
-cmp_ok($x, "==", -4, "0 - 4 = -4");
-is(ref($x), "Math::BigInt", "0 - 4 => Math::BigInt");
+subtest '$x = $zero -> copy() -> bsub($four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', -4, '0 - 4 = -4');
+    is(ref($x), 'Math::BigInt', '0 - 4 => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bsub($four);
-cmp_ok($x, "==", "Inf", "Inf - 4 = Inf");
-is(ref($x), "Math::BigInt", "Inf - 4 => Math::BigInt");
+subtest '$x = $inf -> copy() -> bsub($four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'Inf', 'Inf - 4 = Inf');
+    is(ref($x), 'Math::BigInt', 'Inf - 4 => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bsub($four);
-is($x, "NaN", "NaN - 4 = NaN");
-is(ref($x), "Math::BigInt", "NaN - 4 => Math::BigInt");
+subtest '$x = $nan -> copy() -> bsub($four);' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'NaN - 4 = NaN');
+    is(ref($x), 'Math::BigInt', 'NaN - 4 => Math::BigInt');
+};
 
-# bmul()
+note("testing bmul()");
 
 $x = $zero -> copy() -> bmul($four);
-cmp_ok($x, "==", 0, "bmul(0, 4) = 0");
-is(ref($x), "Math::BigInt", "bmul(0, 4) => Math::BigInt");
+subtest '$x = $zero -> copy() -> bmul($four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, 'bmul(0, 4) = 0');
+    is(ref($x), 'Math::BigInt', 'bmul(0, 4) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bmul($four);
-cmp_ok($x, "==", 16, "bmul(4, 4) = 16");
-is(ref($x), "Math::BigInt", "bmul(4, 4) => Math::BigInt");
+subtest '$x = $four -> copy() -> bmul($four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 16, 'bmul(4, 4) = 16');
+    is(ref($x), 'Math::BigInt', 'bmul(4, 4) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bmul($four);
-cmp_ok($x, "==", "inf", "bmul(Inf, 4) = Inf");
-is(ref($x), "Math::BigInt", "bmul(Inf, 4) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bmul($four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'bmul(Inf, 4) = Inf');
+    is(ref($x), 'Math::BigInt', 'bmul(Inf, 4) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bmul($four);
-is($x, "NaN", "bmul(NaN, 4) = NaN");
-is(ref($x), "Math::BigInt", "bmul(NaN, 4) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bmul($four);' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bmul(NaN, 4) = NaN');
+    is(ref($x), 'Math::BigInt', 'bmul(NaN, 4) => Math::BigInt');
+};
 
-$x = $four -> copy() -> bmul("0.5");
-cmp_ok($x, "==", 2, "bmul(4, 0.5) = 2");
-is(ref($x), "Math::BigInt", "bmul(4, 0.5) => Math::BigInt");
+$x = $four -> copy() -> bmul('0.5');
+subtest '' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 2, 'bmul(4, 0.5) = 2');
+    is(ref($x), 'Math::BigInt', 'bmul(4, 0.5) => Math::BigInt');
+};
 
-# bmuladd()
+note("testing bmuladd()");
 
 $x = $zero -> copy() -> bmuladd($four, $four);
-cmp_ok($x, "==", 4, "bmuladd(0, 4, 4) = 4");
-is(ref($x), "Math::BigInt", "bmuladd(0, 4, 4) => Math::BigInt");
+subtest '$x = $zero -> copy() -> bmuladd($four, $four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 4, 'bmuladd(0, 4, 4) = 4');
+    is(ref($x), 'Math::BigInt', 'bmuladd(0, 4, 4) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bmuladd($four, $four);
-cmp_ok($x, "==", 20, "bmuladd(4, 4, 4) = 20");
-is(ref($x), "Math::BigInt", "bmuladd(4, 4, 4) => Math::BigInt");
+subtest '$x = $four -> copy() -> bmuladd($four, $four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 20, 'bmuladd(4, 4, 4) = 20');
+    is(ref($x), 'Math::BigInt', 'bmuladd(4, 4, 4) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bmuladd($four, $inf);
-cmp_ok($x, "==", "inf", "bmuladd(4, 4, Inf) = Inf");
-is(ref($x), "Math::BigInt", "bmuladd(4, 4, Inf) => Math::BigInt");
+subtest '$x = $four -> copy() -> bmuladd($four, $inf);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'bmuladd(4, 4, Inf) = Inf');
+    is(ref($x), 'Math::BigInt', 'bmuladd(4, 4, Inf) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bmuladd($four, $four);
-cmp_ok($x, "==", "inf", "bmuladd(Inf, 4, 4) = Inf");
-is(ref($x), "Math::BigInt", "bmuladd(Inf, 4, 4) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bmuladd($four, $four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'bmuladd(Inf, 4, 4) = Inf');
+    is(ref($x), 'Math::BigInt', 'bmuladd(Inf, 4, 4) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bmuladd($four, $four);
-cmp_ok($x, "==", "inf", "bmuladd(Inf, 4, 4) = Inf");
-is(ref($x), "Math::BigInt", "bmuladd(Inf, 4, 4) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bmuladd($four, $four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'bmuladd(Inf, 4, 4) = Inf');
+    is(ref($x), 'Math::BigInt', 'bmuladd(Inf, 4, 4) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bmuladd($four, $four);
-is($x, "NaN", "bmuladd(NaN, 4, 4) = NaN");
-is(ref($x), "Math::BigInt", "bmuladd(NaN, 4, 4) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bmuladd($four, $four);' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bmuladd(NaN, 4, 4) = NaN');
+    is(ref($x), 'Math::BigInt', 'bmuladd(NaN, 4, 4) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bmuladd("0.5", $four);
-cmp_ok($x, "==", 6, "bmuladd(4, 0.5, 4) = 6");
-is(ref($x), "Math::BigInt", "bmuladd(4, 0.5, 4) => Math::BigInt");
+subtest '$x = $four -> copy() -> bmuladd("0.5", $four);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 6, 'bmuladd(4, 0.5, 4) = 6');
+    is(ref($x), 'Math::BigInt', 'bmuladd(4, 0.5, 4) => Math::BigInt');
+};
 
-# bdiv()
+note("testing bdiv()");
 
-# bmod()
+$x = $zero -> copy() -> bdiv($one);
+subtest '$x = $zero -> copy() -> bdiv($one);' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, 'bdiv(0, 1) = 0');
+    is(ref($x), 'Math::BigInt', 'bdiv(0, 1) => Math::BigInt');
+};
 
-# bmodpow()
+note("testing bmod()");
 
-# bpow()
+note("testing bmodpow()");
 
-# blog()
+note("testing bpow()");
 
-# bexp()
+note("testing blog()");
 
-# bnok()
+note("testing bexp()");
 
-# bsin()
+note("testing bnok()");
 
-# bcos()
+note("testing bsin()");
 
-# batan()
+note("testing bcos()");
 
-# batan()
+note("testing batan()");
 
-# bsqrt()
+note("testing batan()");
 
-# broot()
+note("testing bsqrt()");
 
-# bfac()
+note("testing broot()");
 
-# bdfac()
+note("testing bfac()");
 
-# btfac()
+note("testing bdfac()");
 
-# bmfac()
+note("testing btfac()");
 
-# blsft()
+note("testing bmfac()");
 
-# brsft()
+note("testing blsft()");
 
-# band()
+note("testing brsft()");
 
-# bior()
+note("testing band()");
 
-# bxor()
+note("testing bior()");
 
-# bnot()
+note("testing bxor()");
 
-# bround()
+note("testing bnot()");
 
-# Add tests for rounding a non-integer to an integer. Fixme!
+note("testing bround()");
+
+note("testing Add tests for rounding a non-integer to an integer. Fixme!");
 
 $x = $zero -> copy() -> bround();
-cmp_ok($x, "==", 0, "bround(0)");
-is(ref($x), "Math::BigInt", "bround(0) => Math::BigInt");
+subtest '$x = $zero -> copy() -> bround();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, 'bround(0)');
+    is(ref($x), 'Math::BigInt', 'bround(0) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bround();
-cmp_ok($x, "==", 4, "bround(4)");
-is(ref($x), "Math::BigInt", "bround(4) => Math::BigInt");
+subtest '$x = $four -> copy() -> bround();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 4, 'bround(4)');
+    is(ref($x), 'Math::BigInt', 'bround(4) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bround();
-cmp_ok($x, "==", "inf", "bround(Inf)");
-is(ref($x), "Math::BigInt", "bround(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bround();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'bround(Inf)');
+    is(ref($x), 'Math::BigInt', 'bround(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bround();
-is($x, "NaN", "bround(NaN)");
-is(ref($x), "Math::BigInt", "bround(NaN) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bround();' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bround(NaN)');
+    is(ref($x), 'Math::BigInt', 'bround(NaN) => Math::BigInt');
+};
 
-# bfround()
+note("testing bfround()");
 
-# Add tests for rounding a non-integer to an integer. Fixme!
+note("testing Add tests for rounding a non-integer to an integer. Fixme!");
 
 $x = $zero -> copy() -> bfround();
-cmp_ok($x, "==", 0, "bfround(0)");
-is(ref($x), "Math::BigInt", "bfround(0) => Math::BigInt");
+subtest '$x = $zero -> copy() -> bfround();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, 'bfround(0)');
+    is(ref($x), 'Math::BigInt', 'bfround(0) => Math::BigInt');
+};
 
 $x = $four -> copy() -> bfround();
-cmp_ok($x, "==", 4, "bfround(4)");
-is(ref($x), "Math::BigInt", "bfround(4) => Math::BigInt");
+subtest '$x = $four -> copy() -> bfround();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 4, 'bfround(4)');
+    is(ref($x), 'Math::BigInt', 'bfround(4) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bfround();
-cmp_ok($x, "==", "inf", "bfround(Inf)");
-is(ref($x), "Math::BigInt", "bfround(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bfround();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'inf', 'bfround(Inf)');
+    is(ref($x), 'Math::BigInt', 'bfround(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bfround();
-is($x, "NaN", "bfround(NaN)");
-is(ref($x), "Math::BigInt", "bfround(NaN) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bfround();' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bfround(NaN)');
+    is(ref($x), 'Math::BigInt', 'bfround(NaN) => Math::BigInt');
+};
 
-# bfloor()
+note("testing bfloor()");
 
 $x = $half -> copy() -> bfloor();
-cmp_ok($x, "==", 0, "bfloor(0)");
-is(ref($x), "Math::BigInt", "bfloor(0) => Math::BigInt");
+subtest '$x = $half -> copy() -> bfloor();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, 'bfloor(0)');
+    is(ref($x), 'Math::BigInt', 'bfloor(0) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bfloor();
-cmp_ok($x, "==", "Inf", "bfloor(Inf)");
-is(ref($x), "Math::BigInt", "bfloor(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bfloor();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'Inf', 'bfloor(Inf)');
+    is(ref($x), 'Math::BigInt', 'bfloor(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bfloor();
-is($x, "NaN", "bfloor(NaN)");
-is(ref($x), "Math::BigInt", "bfloor(NaN) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bfloor();' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bfloor(NaN)');
+    is(ref($x), 'Math::BigInt', 'bfloor(NaN) => Math::BigInt');
+};
 
-# bceil()
+note("testing bceil()");
 
 $x = $half -> copy() -> bceil();
-cmp_ok($x, "==", 1, "bceil(0)");
-is(ref($x), "Math::BigInt", "bceil(0) => Math::BigInt");
+subtest '$x = $half -> copy() -> bceil();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 1, 'bceil(0)');
+    is(ref($x), 'Math::BigInt', 'bceil(0) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bceil();
-cmp_ok($x, "==", "Inf", "bceil(Inf)");
-is(ref($x), "Math::BigInt", "bceil(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bceil();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'Inf', 'bceil(Inf)');
+    is(ref($x), 'Math::BigInt', 'bceil(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bceil();
-is($x, "NaN", "bceil(NaN)");
-is(ref($x), "Math::BigInt", "bceil(NaN) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bceil();' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bceil(NaN)');
+    is(ref($x), 'Math::BigInt', 'bceil(NaN) => Math::BigInt');
+};
 
-# bint()
+note("testing bint()");
 
 $x = $half -> copy() -> bint();
-cmp_ok($x, "==", 0, "bint(0)");
-is(ref($x), "Math::BigInt", "bint(0) => Math::BigInt");
+subtest '$x = $half -> copy() -> bint();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 0, 'bint(0)');
+    is(ref($x), 'Math::BigInt', 'bint(0) => Math::BigInt');
+};
 
 $x = $inf -> copy() -> bint();
-cmp_ok($x, "==", "Inf", "bint(Inf)");
-is(ref($x), "Math::BigInt", "bint(Inf) => Math::BigInt");
+subtest '$x = $inf -> copy() -> bint();' => sub {
+    plan tests => 2;
+    cmp_ok($x, '==', 'Inf', 'bint(Inf)');
+    is(ref($x), 'Math::BigInt', 'bint(Inf) => Math::BigInt');
+};
 
 $x = $nan -> copy() -> bint();
-is($x, "NaN", "bint(NaN)");
-is(ref($x), "Math::BigInt", "bint(NaN) => Math::BigInt");
+subtest '$x = $nan -> copy() -> bint();' => sub {
+    plan tests => 2;
+    is($x, 'NaN', 'bint(NaN)');
+    is(ref($x), 'Math::BigInt', 'bint(NaN) => Math::BigInt');
+};
 
-# bgcd()
+note("testing bgcd()");
 
-# blcm()
+note("testing blcm()");
 
-# mantissa() ?
+note("testing mantissa()");
 
-# exponent() ?
+note("testing exponent()");
 
-# parts() ?
+note("testing parts()");
 
-# sparts()
+note("testing sparts()");
 
-# nparts()
+note("testing nparts()");
 
-# eparts()
+note("testing eparts()");
 
-# dparts()
+note("testing dparts()");
 
-# fparts()
+note("testing fparts()");
 
-# numerator()
+note("testing numerator()");
 
-# denominator()
-
-#require 'upgrade.inc'; # all tests here for sharing
+note("testing denominator()");

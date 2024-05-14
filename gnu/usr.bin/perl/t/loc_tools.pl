@@ -15,20 +15,25 @@ use strict;
 use warnings;
 use feature 'state';
 
+my %known_bad_locales = (   # XXX eventually will need version info if and
+                            # when these get fixed.
+    solaris => [ 'vi_VN.UTF-8', ],  # Use of U+A8 segfaults: GH #20578
+);
+
 eval { require POSIX; import POSIX 'locale_h'; };
 my $has_locale_h = ! $@;
 
 my @known_categories = ( qw(LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY
                             LC_NUMERIC LC_TIME LC_ADDRESS LC_IDENTIFICATION
                             LC_MEASUREMENT LC_PAPER LC_TELEPHONE LC_SYNTAX
-                            LC_TOD));
+                            LC_TOD LC_NAME));
 my @platform_categories;
 
-sub is_category_valid($) {
+sub category_excluded($) {
     my $cat_name = shift =~ s/^LC_//r;
 
     # Recognize Configure option to exclude a category
-    return $Config{ccflags} !~ /\bD?NO_LOCALE_$cat_name\b/;
+    return $Config{ccflags} =~ /\bD?NO_LOCALE_$cat_name\b/;
 }
 
 # LC_ALL can be -1 on some platforms.  And, in fact the implementors could
@@ -83,6 +88,9 @@ sub _my_diag($) {
     }
 }
 
+# Larger than any real test
+my $my_count = 1_000_000;
+
 sub _my_fail($) {
     my $message = shift;
     if (defined &main::fail) {
@@ -90,9 +98,39 @@ sub _my_fail($) {
     }
     else {
         local($\, $", $,) = (undef, ' ', '');
-        print "not ok 0 $message\n";
+        print "not ok " . $my_count++ . $message . "\n";
     }
 }
+
+sub valid_locale_categories() {
+    # Returns a list of the locale categories (expressed as strings, like
+    # "LC_ALL) known to this program that are available on this platform.
+
+    return grep { ! category_excluded($_) } @platform_categories;
+}
+
+sub is_category_valid($) {
+    my $name = shift;
+    $name = 'LC_' . $name =~ s/^LC_//r;
+    return grep { $name eq $_ } valid_locale_categories();
+}
+
+# It turns out that strings generated under the control of a given locale
+# category are often affected as well by LC_CTYPE.  If the two categories
+# don't match, one can get mojibake or even core dumps.  (khw thinks it more
+# likely that it's the code set, not the locale that's critical here; but
+# didn't run experiments to verify this.)  Hence, in the code below, CTYPE and
+# the tested categories are all set to the same locale.  If CTYPE isn't
+# available on the platform, LC_ALL is instead used.  One might think to just
+# use LC_ALL all the time, but on Windows
+#    setlocale(LC_ALL, "some_borked_locale")
+# can return success, whereas setting LC_CTYPE to it fails.
+my $master_category;
+$master_category = $category_number{'CTYPE'}
+        if is_category_valid('LC_CTYPE') && defined $category_number{'CTYPE'};
+$master_category = $category_number{'ALL'}
+        if ! defined $master_category
+          && is_category_valid('LC_ALL') && defined $category_number{'ALL'};
 
 sub _trylocale ($$$$) { # For use only by other functions in this file!
 
@@ -109,7 +147,8 @@ sub _trylocale ($$$$) { # For use only by other functions in this file!
     my $list = shift;
     my $allow_incompatible = shift;
 
-    return if ! $locale || grep { $locale eq $_ } @$list;
+    my $normalized_locale = lc ($locale =~ s/\W//gr);
+    return if ! $locale || grep { $normalized_locale eq lc ($_ =~ s/\W//gr) } @$list;
 
     # This is a toy (pig latin) locale that is not fully implemented on some
     # systems
@@ -122,63 +161,73 @@ sub _trylocale ($$$$) { # For use only by other functions in this file!
     # such systems fully, but we shouldn't disable the user from using
     # locales, as it may work out for them (or not).
     return if    defined $Config{d_setlocale_accepts_any_locale_name}
-              && $locale !~ / ^ (?: C | POSIX | C\.UTF-8 ) $/ix;
+              && $locale !~ / ^ (?: C | POSIX | C\.UTF-?8 ) $/ix;
+
+    if (exists $known_bad_locales{$^O}) {
+        my @bad_locales = $known_bad_locales{$^O}->@*;
+        return if grep { $locale eq $_ } @bad_locales;
+    }
 
     $categories = [ $categories ] unless ref $categories;
 
     my $badutf8 = 0;
     my $plays_well = 1;
+    my $unsupported = 0;
 
     use warnings 'locale';
 
     local $SIG{__WARN__} = sub {
         $badutf8 = 1 if grep { /Malformed UTF-8/ } @_;
+        $unsupported = 1 if grep { /Locale .* is unsupported/i } @_;
         $plays_well = 0 if grep {
-                    /Locale .* may not work well(?#
+                    /The following characters .* may not have the same meaning as the Perl program expects(?#
                    )|The Perl program will use the expected meanings/i
             } @_;
     };
 
-    # Incompatible locales aren't warned about unless using locales.
-    use locale;
+    my $first_time = 1;
+    foreach my $category ($master_category, $categories->@*) {
+        next if ! defined $category || (! $first_time && $category == $master_category);
+        $first_time = 0;
 
-    # Sort the input so CTYPE is first, COLLATE comes after all but ALL.  This
-    # is because locale.c detects bad locales only with CTYPE, and COLLATE on
-    # some platforms can core dump if it is a bad locale.
-    my @sorted;
-    my $has_ctype = 0;
-    my $has_all = 0;
-    my $has_collate = 0;
-    foreach my $category (@$categories) {
-        die "category '$category' must instead be a number"
-                                            unless $category =~ / ^ -? \d+ $ /x;
-        if ($category_name{$category} eq 'CTYPE') {
-            $has_ctype = 1;
+        my $save_locale = setlocale($category);
+        if (! $save_locale) {
+            _my_fail("Verify could save previous locale");
+            return;
         }
-        elsif ($category_name{$category} eq 'ALL') {
-            $has_all = 1;
-        }
-        elsif ($category_name{$category} eq 'COLLATE') {
-            $has_collate = 1;
-        }
-        else {
-            push @sorted, $category unless grep { $_ == $category } @sorted;
-        }
-    }
-    push @sorted, $category_number{'COLLATE'} if $has_collate;
-    push @sorted, $category_number{'ALL'} if $has_all;
-    unshift @sorted, $category_number{'CTYPE'} if $has_ctype || ! $allow_incompatible;
 
-    foreach my $category (@sorted) {
-        return unless setlocale($category, $locale);
-        last if $badutf8 || ! $plays_well;
+        # Incompatible locales aren't warned about unless using locales.
+        use locale;
+
+        my $result = setlocale($category, $locale);
+        return unless defined $result;
+
+        no locale;
+
+        # We definitely don't want the locale set to something that is
+        # unsupported
+        if (! setlocale($category, $save_locale)) {
+            my $error_text = "\$!=$!";
+            $error_text .= "; \$^E=$^E" if $^E != $!;
+            die "Couldn't restore locale '$save_locale', category $category;"
+              . $error_text;
+        }
+        if ($badutf8) {
+            _my_fail("Verify locale name doesn't contain malformed utf8");
+            return;
+        }
+
+        return if $unsupported;
+
+        # Commas in locale names are bad in Windows, and there is a bug in
+        # some versions where setlocale() turns a legal input locale name into
+        # an illegal return value, which it can't later parse.
+        return if $result =~ /,/;
+
+        return unless $plays_well || $allow_incompatible;
     }
 
-    if ($badutf8) {
-        _my_fail("Verify locale name doesn't contain malformed utf8");
-        return;
-    }
-    push @$list, $locale if $plays_well || $allow_incompatible;
+    push @$list, $locale;
 }
 
 sub _decode_encodings { # For use only by other functions in this file!
@@ -206,13 +255,6 @@ sub _decode_encodings { # For use only by other functions in this file!
     push @enc, "65001"; # Windows UTF-8
 
     return @enc;
-}
-
-sub valid_locale_categories() {
-    # Returns a list of the locale categories (expressed as strings, like
-    # "LC_ALL) known to this program that are available on this platform.
-
-    return grep { is_category_valid($_) } @platform_categories;
 }
 
 sub locales_enabled(;$) {
@@ -318,8 +360,8 @@ sub locales_enabled(;$) {
                     unless defined $number;
             }
 
-            return 0 if     $number <= $max_bad_category_number
-                       || ! is_category_valid($name);
+            return 0 if   $number <= $max_bad_category_number
+                       || category_excluded($name);
 
 
             eval "defined &POSIX::LC_$name";
@@ -374,7 +416,9 @@ sub find_locales ($;$) {
     my $input_categories = shift;
     my $allow_incompatible = shift // 0;
 
-    my @categories = (ref $input_categories) ? $input_categories->@* : $input_categories;
+    my @categories = (ref $input_categories)
+                      ? $input_categories->@*
+                      : $input_categories;
     return unless locales_enabled(\@categories);
 
     # Note, the subroutine call above converts the $categories into a form
@@ -531,17 +575,17 @@ sub is_locale_utf8 ($) { # Return a boolean as to if core Perl thinks the input
 
     my $locale = shift;
 
-    use locale;
     no warnings 'locale'; # We may be trying out a weird locale
+    use locale;
 
     my $save_locale = setlocale(&POSIX::LC_CTYPE());
     if (! $save_locale) {
-        ok(0, "Verify could save previous locale");
+        _my_fail("Verify could save previous locale");
         return 0;
     }
 
     if (! setlocale(&POSIX::LC_CTYPE(), $locale)) {
-        ok(0, "Verify could setlocale to $locale");
+        _my_fail("Verify could setlocale to $locale");
         return 0;
     }
 
@@ -554,7 +598,7 @@ sub is_locale_utf8 ($) { # Return a boolean as to if core Perl thinks the input
     # go through testing all the locales on the platform.
     if (CORE::fc(chr utf8::unicode_to_native(0xdf)) ne "ss") {
         if ($locale =~ /UTF-?8/i) {
-            ok (0, "Verify $locale with UTF-8 in name is a UTF-8 locale");
+            _my_fail("Verify $locale with UTF-8 in name is a UTF-8 locale");
         }
     }
     else {
@@ -562,35 +606,51 @@ sub is_locale_utf8 ($) { # Return a boolean as to if core Perl thinks the input
     }
 
     die "Couldn't restore locale '$save_locale'"
-        unless setlocale(&POSIX::LC_CTYPE(), $save_locale);
+                            unless setlocale(&POSIX::LC_CTYPE(), $save_locale);
 
     return $ret;
 }
 
-sub find_utf8_ctype_locales (;$) { # Return the names of the locales that core
-                                  # Perl thinks are UTF-8 LC_CTYPE locales.
-                                  # Optional parameter is a reference to a
-                                  # list of locales to try; if omitted, this
-                                  # tries all locales it can find on the
-                                  # platform
+sub classify_locales_wrt_utf8ness($) {
+
+    # Takes the input list of locales, and returns two lists split apart from
+    # it: the UTF-8 ones, and the non-UTF-8 ones.
+
+    my $locales_ref = shift;
+    my (@utf8, @non_utf8);
+
+    if (! locales_enabled('LC_CTYPE')) {  # No CTYPE implies all are non-UTF-8
+        @non_utf8 = $locales_ref->@*;
+        return ( \@utf8, \@non_utf8 );
+    }
+
+    foreach my $locale (@$locales_ref) {
+        my $which = (is_locale_utf8($locale)) ? \@utf8 : \@non_utf8;
+        push $which->@*, $locale;
+    }
+
+    return ( \@utf8, \@non_utf8 );
+}
+
+sub find_utf8_ctype_locales (;$) {
+
+    # Return the names of the locales that core Perl thinks are UTF-8 LC_CTYPE
+    # locales.  Optional parameter is a reference to a list of locales to try;
+    # if omitted, this tries all locales it can find on the platform
+
     return unless locales_enabled('LC_CTYPE');
 
     my $locales_ref = shift;
-    my @return;
-
     if (! defined $locales_ref) {
 
         my @locales = find_locales(&POSIX::LC_CTYPE());
         $locales_ref = \@locales;
     }
 
-    foreach my $locale (@$locales_ref) {
-        push @return, $locale if is_locale_utf8($locale);
-    }
-
-    return @return;
+    my ($utf8_ref, undef) = classify_locales_wrt_utf8ness($locales_ref);
+    return unless $utf8_ref;
+    return $utf8_ref->@*;
 }
-
 
 sub find_utf8_ctype_locale (;$) { # Return the name of a locale that core Perl
                                   # thinks is a UTF-8 LC_CTYPE non-turkic
@@ -632,7 +692,9 @@ sub find_utf8_turkic_locales (;$) {
         setlocale(&POSIX::LC_CTYPE(), $locale);
         push @return, $locale if uc('i') eq "\x{130}";
     }
-    setlocale(&POSIX::LC_CTYPE(), $save_locale);
+
+    die "Couldn't restore locale '$save_locale'"
+                            unless setlocale(&POSIX::LC_CTYPE(), $save_locale);
 
     return @return;
 }

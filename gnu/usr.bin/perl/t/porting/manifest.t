@@ -60,11 +60,11 @@ while (<$m>) {
 	next;
     } elsif ($separator !~ tr/ //c) {
 	# It's all spaces
-	fail("Spaces in entry for $file in MANIFEST at line $.");
+	fail("Spaces in entry for $file in MANIFEST at line $. (run `make manisort` to fix)");
     } elsif ($separator =~ tr/\t//) {
-	fail("Mixed tabs and spaces in entry for $file in MANIFEST at line $.");
+	fail("Mixed tabs and spaces in entry for $file in MANIFEST at line $. (run `make manisort` to fix)");
     } else {
-	fail("Odd whitespace in entry for $file in MANIFEST at line $.");
+	fail("Odd whitespace in entry for $file in MANIFEST at line $. (run `make manisort` to fix)");
     }
 }
 

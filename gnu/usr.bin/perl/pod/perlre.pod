@@ -453,7 +453,8 @@ L</Overview> above.
 
 A single C</x> tells
 the regular expression parser to ignore most whitespace that is neither
-backslashed nor within a bracketed character class.  You can use this to
+backslashed nor within a bracketed character class, nor within the characters
+of a multi-character metapattern like C<(?i: ... )>.  You can use this to
 break up your regular expression into more readable parts.
 Also, the C<"#"> character is treated as a metacharacter introducing a
 comment that runs up to the pattern's closing delimiter, or to the end
@@ -1206,9 +1207,13 @@ require C<(??{})>.)
 
 Capture group contents are dynamically scoped and available to you outside the
 pattern until the end of the enclosing block or until the next successful
-match, whichever comes first.  (See L<perlsyn/"Compound Statements">.)
-You can refer to them by absolute number (using C<"$1"> instead of C<"\g1">,
-I<etc>); or by name via the C<%+> hash, using C<"$+{I<name>}">.
+match in the same scope, whichever comes first.
+See L<perlsyn/"Compound Statements"> and
+L<perlvar/"Scoping Rules of Regex Variables"> for more details.
+
+You can access the contents of a capture group by absolute number (using
+C<"$1"> instead of C<"\g1">, I<etc>); or by name via the C<%+> hash,
+using C<"$+{I<name>}">.
 
 Braces are required in referring to named capture groups, but are optional for
 absolute or relative numbered ones.  Braces are safer when creating a regex by
@@ -1990,6 +1995,18 @@ keep track of the number of nested parentheses. For example:
   /the (\S+)(?{ $color = $^N }) (\S+)(?{ $animal = $^N })/i;
   print "color = $color, animal = $animal\n";
 
+The use of this construct disables some optimisations globally in the
+pattern, and the pattern may execute much slower as a consequence.
+Use a C<*> instead of the C<?> block to create an optimistic form of
+this construct. C<(*{ ... })> should not disable any optimisations.
+
+=item C<(*{ I<code> })>
+X<(*{})> X<regex, optimistic code>
+
+This is *exactly* the same as C<(?{ I<code> })> with the exception
+that it does not disable B<any> optimisations at all in the regex engine.
+How often it is executed may vary from perl release to perl release.
+In a failing match it may not even be executed at all.
 
 =item C<(??{ I<code> })>
 X<(??{})>
@@ -2046,6 +2063,9 @@ Executing a postponed regular expression too many times without
 consuming any input string will also result in a fatal error.  The depth
 at which that happens is compiled into perl, so it can be changed with a
 custom build.
+
+The use of this construct disables some optimisations globally in the pattern,
+and the pattern may execute much slower as a consequence.
 
 =item C<(?I<PARNO>)> C<(?-I<PARNO>)> C<(?+I<PARNO>)> C<(?R)> C<(?0)>
 X<(?PARNO)> X<(?1)> X<(?R)> X<(?0)> X<(?-1)> X<(?+1)> X<(?-PARNO)> X<(?+PARNO)>
@@ -2201,7 +2221,15 @@ Full syntax: C<< (?(?=I<lookahead>)I<then>|I<else>) >>
 =item C<(?{ I<CODE> })>
 
 Treats the return value of the code block as the condition.
-Full syntax: C<< (?(?{ I<code> })I<then>|I<else>) >>
+Full syntax: C<< (?(?{ I<CODE> })I<then>|I<else>) >>
+
+Note use of this construct may globally affect the performance
+of the pattern. Consider using C<(*{ I<CODE> })>
+
+=item C<(*{ I<CODE> })>
+
+Treats the return value of the code block as the condition.
+Full syntax: C<< (?(*{ I<CODE> })I<then>|I<else>) >>
 
 =item C<(R)>
 
@@ -2703,7 +2731,7 @@ accent of some type.  These are considered to be in the script of the
 master character, and so never cause a script run to not match.
 
 The other one is "Common".  This consists of mostly punctuation, emoji,
-and characters used in mathematics and music, the ASCII digits C<0>
+characters used in mathematics and music, the ASCII digits C<0>
 through C<9>, and full-width forms of these digits.  These characters
 can appear intermixed in text in many of the world's scripts.  These
 also don't cause a script run to not match.  But like other scripts, all
@@ -3293,14 +3321,15 @@ part of this regular expression needs to be converted explicitly
 
 =head2 Embedded Code Execution Frequency
 
-The exact rules for how often C<(??{})> and C<(?{})> are executed in a pattern
-are unspecified.  In the case of a successful match you can assume that
-they DWIM and will be executed in left to right order the appropriate
-number of times in the accepting path of the pattern as would any other
-meta-pattern.  How non-accepting pathways and match failures affect the
-number of times a pattern is executed is specifically unspecified and
-may vary depending on what optimizations can be applied to the pattern
-and is likely to change from version to version.
+The exact rules for how often C<(?{})> and C<(??{})> are executed in a pattern
+are unspecified, and this is even more true of C<(*{})>.
+In the case of a successful match you can assume that they DWIM and
+will be executed in left to right order the appropriate number of times in the
+accepting path of the pattern as would any other meta-pattern. How non-
+accepting pathways and match failures affect the number of times a pattern is
+executed is specifically unspecified and may vary depending on what
+optimizations can be applied to the pattern and is likely to change from
+version to version.
 
 For instance in
 
@@ -3325,6 +3354,13 @@ example:
   "good" =~ /g(?:o(?{print "o"}))*d/;
 
 will output "o" twice.
+
+For historical and consistency reasons the use of normal code blocks
+anywhere in a pattern will disable certain optimisations. As of 5.37.7
+you can use an "optimistic" codeblock, C<(*{ ... })> as a replacement
+for C<(?{ ... })>, if you do *not* wish to disable these optimisations.
+This may result in the code block being called less often than it might
+have been had they not been optimistic.
 
 =head2 PCRE/Python Support
 

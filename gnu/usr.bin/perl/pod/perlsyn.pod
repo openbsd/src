@@ -1155,7 +1155,8 @@ shell:
 =head2 Experimental Details on given and when
 
 As previously mentioned, the "switch" feature is considered highly
-experimental; it is subject to change with little notice.  In particular,
+experimental (it is also scheduled to be removed in perl 5.42.0);
+it is subject to change with little notice.  In particular,
 C<when> has tricky behaviours that are expected to change to become less
 tricky in the future.  Do not rely upon its current (mis)implementation.
 Before Perl 5.18, C<given> also had tricky behaviours that you should still

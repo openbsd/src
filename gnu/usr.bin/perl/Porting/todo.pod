@@ -137,7 +137,7 @@ for example POSIX passes Exporter some very memory hungry data structures.
 
 =head2 makedef.pl and conditional compilation
 
-The script F<makedef.pl> that generates the list of exported symbols on
+The script F<makedef.pl> generates the list of exported symbols on
 platforms which need this. Functions are declared in F<embed.fnc>, variables
 in F<intrpvar.h>. Quite a few of the functions and variables are conditionally
 declared there, using C<#ifdef>. However, F<makedef.pl> doesn't understand the
@@ -486,7 +486,7 @@ Natively 64-bit systems need neither -Duse64bitint nor -Duse64bitall.
 On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
-options would be nice for perl 5.36.3.
+options would be nice for a future version.
 
 =head2 Profile Perl - am I hot or not?
 
@@ -1183,7 +1183,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.36.3"
+of 5.40.0"
 
 =head2 make ithreads more robust
 

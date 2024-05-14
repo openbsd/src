@@ -21,8 +21,8 @@ structure it refers.  The rest of the name tells you the particular
 value to which it refers.  Usually this name is a single I<identifier>,
 that is, a string beginning with a letter or underscore, and
 containing letters, underscores, and digits.  In some cases, it may
-be a chain of identifiers, separated by C<::> (or by the slightly
-archaic C<'>); all but the last are interpreted as names of packages,
+be a chain of identifiers, separated by C<::> (or by the deprecated C<'>);
+all but the last are interpreted as names of packages,
 to locate the namespace in which to look up the final identifier
 (see L<perlmod/Packages> for details).  For a more in-depth discussion
 on identifiers, see L</Identifier parsing>.  It's possible to
@@ -137,11 +137,12 @@ That is, any word character in the ASCII range, as long as the first
 character is not a digit.
 
 There are two package separators in Perl: A double colon (C<::>) and a single
-quote (C<'>).  Normal identifiers can start or end with a double colon, and
-can contain several parts delimited by double colons.
-Single quotes have similar rules, but with the exception that they are not
-legal at the end of an identifier: That is, C<$'foo> and C<$foo'bar> are
-legal, but C<$foo'bar'> is not.
+quote (C<'>).  Use of C<'> as the package separator is deprecated and will be
+removed in Perl 5.40.  Normal identifiers can start or end with a double
+colon, and can contain several parts delimited by double colons.  Single
+quotes have similar rules, but with the exception that they are not legal at
+the end of an identifier: That is, C<$'foo> and C<$foo'bar> are legal, but
+C<$foo'bar'> is not.
 
 Additionally, if the identifier is preceded by a sigil --
 that is, if the identifier is part of a variable name -- it

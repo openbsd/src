@@ -93,6 +93,7 @@ DBIx::Profile
 dbm(3)
 dbm_open(3)
 Devel::Apache::Profiler
+Devel::Caller
 Devel::CallParser
 Devel::Callsite
 Devel::Cover
@@ -102,6 +103,7 @@ Devel::InnerPackage
 Devel::NYTProf
 Devel::NYTProf::Apache
 Devel::PPPort
+Devel::ptkdb
 Devel::SawAmpersand
 Devel::Spy
 dirfd(3)
@@ -168,7 +170,8 @@ ioctl(2)
 IPC::Run
 IPC::Shareable
 IPC::Signal
-ispunct(2)
+isalnum(3)
+ispunct(3)
 kill(3)
 langinfo(3)
 LaTeX::Encode
@@ -334,12 +337,15 @@ Switch
 tar(1)
 Template::Declare
 Term::ReadKey
+Term::ReadLine::Gnu
+Term::ReadLine::Perl
 Term::UI
 Term::UI::History
 Test::Harness::TAP
 Test::Inline
 Test::MockObject
 Test::Unit
+Test::Vars
 Text::Autoformat
 Text::Diff
 Text::Soundex
@@ -365,6 +371,7 @@ Unicode::Tussle
 Unicode::Unihan
 unzip(1)
 utime(2)
+Variable::Magic
 Version::Requirements
 vsprintf(3)
 wait(2)
@@ -382,8 +389,9 @@ YAML
 YAML::Syck
 YAML::Tiny
 dist/data-dumper/dumper.pm	? Should you be using L<...> instead of	1
-dist/devel-ppport/ppport.pm	Apparent broken link	1
 dist/env/lib/env.pm	? Should you be using F<...> or maybe L<...> instead of	1
+dist/math-complex/lib/math/complex.pm	Verbatim line length including indents exceeds 78 by	3
+dist/math-complex/lib/math/trig.pm	Verbatim line length including indents exceeds 78 by	4
 ext/dynaloader/dynaloader.pm	Verbatim line length including indents exceeds 78 by	1
 ext/hash-util/lib/hash/util.pm	Verbatim line length including indents exceeds 78 by	2
 ext/pod-html/corpus/perlvar-copy.pod	? Should you be using L<...> instead of	-1
@@ -412,7 +420,6 @@ pod/perlrun.pod	Verbatim line length including indents exceeds 78 by	3
 pod/perlsolaris.pod	Verbatim line length including indents exceeds 78 by	-1
 pod/perltie.pod	Verbatim line length including indents exceeds 78 by	3
 pod/perltru64.pod	Verbatim line length including indents exceeds 78 by	1
-pod/perlwin32.pod	Verbatim line length including indents exceeds 78 by	1
 porting/epigraphs.pod	Verbatim line length including indents exceeds 78 by	-1
 porting/release_managers_guide.pod	Verbatim line length including indents exceeds 78 by	1
 lib/benchmark.pm	Verbatim line length including indents exceeds 78 by	2

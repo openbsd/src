@@ -23,8 +23,9 @@ typedef SSize_t PADOFFSET; /* signed so that -1 is a valid value */
 struct padlist {
     SSize_t	xpadl_max;	/* max index for which array has space */
     union {
-        PAD **	xpadlarr_alloc; /* Pointer to beginning of array of AVs.
-                                   index 0 is a padnamelist *          */
+        PAD **  xpadlarr_alloc; /* Pointer to beginning of array of AVs.
+                                   Note that a 'padnamelist *' is stored
+                                   in the 0 index of the AV. */
         struct {
             PADNAMELIST * padnl;
             PAD * pad_1;        /* this slice of PAD * array always alloced */
@@ -54,6 +55,8 @@ struct padnamelist {
 #  define PERL_PADNAME_MINIMAL
 #endif
 
+struct padname_fieldinfo;
+
 #define _PADNAME_BASE \
     char *	xpadn_pv;		\
     HV *	xpadn_ourstash;		\
@@ -61,6 +64,7 @@ struct padnamelist {
         HV *	xpadn_typestash;	\
         CV *	xpadn_protocv;		\
     } xpadn_type_u;			\
+    struct padname_fieldinfo *xpadn_fieldinfo; \
     U32		xpadn_low;		\
     U32		xpadn_high;		\
     U32		xpadn_refcnt;		\
@@ -85,6 +89,19 @@ struct padname_with_str {
 
 #define PADNAME_FROM_PV(s) \
     ((PADNAME *)((s) - STRUCT_OFFSET(struct padname_with_str, xpadn_str)))
+
+/* Most padnames are not field names. Keep all the field-related info in its
+ * own substructure, stored in ->xpadn_fieldinfo.
+ */
+struct padname_fieldinfo {
+    U32        refcount;
+    PADOFFSET  fieldix;    /* index of this field within ObjectFIELDS() array */
+    HV        *fieldstash; /* original class package which added this field */
+    OP        *defop;      /* optree fragment for defaulting expression */
+    SV        *paramname;  /* name of the :param to look for in constructor */
+    int        def_if_undef : 1; /* default op uses //= */
+    int        def_if_false : 1; /* default op uses ||= */
+};
 
 
 /* a value that PL_cop_seqmax is guaranteed never to be,
@@ -131,6 +148,8 @@ typedef enum {
 #define padadd_NO_DUP_CHECK	0x04	   /* skip warning on dups. */
 #define padadd_STALEOK		0x08	   /* allow stale lexical in active
                                             * sub, but only one level up */
+#define padadd_FIELD            0x10       /* set PADNAMEt_FIELD */
+#define padfind_FIELD_OK        0x20       /* pad_findlex is permitted to see fields */
 
 /* ASSERT_CURPAD_LEGAL and ASSERT_CURPAD_ACTIVE respectively determine
  * whether PL_comppad and PL_curpad are consistent and whether they have
@@ -160,8 +179,9 @@ typedef enum {
 
 /* Note: the following three macros are actually defined in scope.h, but
  * they are documented here for completeness, since they directly or
- * indirectly affect pads.
+ * indirectly affect pads. */
 
+/*
 =for apidoc m|void|SAVEPADSV	|PADOFFSET po
 Save a pad slot (used to restore after an iteration)
 
@@ -242,12 +262,19 @@ are often referred to as 'fake'.
 =for apidoc m|bool|PadnameIsSTATE|PADNAME * pn
 Whether this is a "state" variable.
 
+=for apidoc m|bool|PadnameIsFIELD|PADNAME * pn
+Whether this is a "field" variable.  PADNAMEs where this is true will
+have additional information available via C<PadnameFIELDINFO>.
+
 =for apidoc m|HV *|PadnameTYPE|PADNAME * pn
 The stash associated with a typed lexical.  This returns the C<%Foo::> hash
 for C<my Foo $bar>.
 
 =for apidoc Amx|SSize_t|PadnameREFCNT|PADNAME * pn
 The reference count of the pad name.
+
+=for apidoc Amx|PADNAME *|PadnameREFCNT_inc|PADNAME * pn
+Increases the reference count of the pad name.  Returns the pad name itself.
 
 =for apidoc Amx|void|PadnameREFCNT_dec|PADNAME * pn
 Lowers the reference count of the pad name.
@@ -304,6 +331,7 @@ Restore the old pad saved into the local variable C<opad> by C<PAD_SAVE_LOCAL()>
 #define PadnamelistMAX(pnl)		(pnl)->xpadnl_fill
 #define PadnamelistMAXNAMED(pnl)	(pnl)->xpadnl_max_named
 #define PadnamelistREFCNT(pnl)		(pnl)->xpadnl_refcnt
+#define PadnamelistREFCNT_inc(pnl)      Perl_padnamelist_refcnt_inc(pnl)
 #define PadnamelistREFCNT_dec(pnl)	Perl_padnamelist_free(aTHX_ pnl)
 
 #define PadARRAY(pad)		AvARRAY(pad)
@@ -315,39 +343,56 @@ Restore the old pad saved into the local variable C<opad> by C<PAD_SAVE_LOCAL()>
 #define PadnameSV(pn) \
         newSVpvn_flags(PadnamePV(pn), PadnameLEN(pn), SVs_TEMP|SVf_UTF8)
 #define PadnameFLAGS(pn)	(pn)->xpadn_flags
-#define PadnameIsOUR(pn)	(!!(pn)->xpadn_ourstash)
+#define PadnameIsOUR(pn)	cBOOL((pn)->xpadn_ourstash)
 #define PadnameOURSTASH(pn)	(pn)->xpadn_ourstash
 #define PadnameTYPE(pn)		(pn)->xpadn_type_u.xpadn_typestash
+#define PadnameHasTYPE(pn)      cBOOL(PadnameTYPE(pn))
 #define PadnamePROTOCV(pn)	(pn)->xpadn_type_u.xpadn_protocv
 #define PadnameREFCNT(pn)	(pn)->xpadn_refcnt
+#define PadnameREFCNT_inc(pn)   Perl_padname_refcnt_inc(pn)
 #define PadnameREFCNT_dec(pn)	Perl_padname_free(aTHX_ pn)
 #define PadnameOURSTASH_set(pn,s) (PadnameOURSTASH(pn) = (s))
 #define PadnameTYPE_set(pn,s)	  (PadnameTYPE(pn) = (s))
-#define PadnameOUTER(pn)	(PadnameFLAGS(pn) & PADNAMEt_OUTER)
-#define PadnameIsSTATE(pn)	(PadnameFLAGS(pn) & PADNAMEt_STATE)
-#define PadnameLVALUE(pn)	(PadnameFLAGS(pn) & PADNAMEt_LVALUE)
+#define PadnameFIELDINFO(pn)    (pn)->xpadn_fieldinfo
+#define PadnameOUTER(pn)	(PadnameFLAGS(pn) & PADNAMEf_OUTER)
+#define PadnameIsSTATE(pn)	(PadnameFLAGS(pn) & PADNAMEf_STATE)
+#define PadnameLVALUE(pn)	(PadnameFLAGS(pn) & PADNAMEf_LVALUE)
+#define PadnameIsFIELD(pn)	(PadnameFLAGS(pn) & PADNAMEf_FIELD)
 
-#define PadnameLVALUE_on(pn)	(PadnameFLAGS(pn) |= PADNAMEt_LVALUE)
-#define PadnameIsSTATE_on(pn)	(PadnameFLAGS(pn) |= PADNAMEt_STATE)
+#define PadnameLVALUE_on(pn)	(PadnameFLAGS(pn) |= PADNAMEf_LVALUE)
+#define PadnameIsSTATE_on(pn)	(PadnameFLAGS(pn) |= PADNAMEf_STATE)
 
-#define PADNAMEt_OUTER	1	/* outer lexical var */
-#define PADNAMEt_STATE	2	/* state var */
-#define PADNAMEt_LVALUE	4	/* used as lvalue */
-#define PADNAMEt_TYPED	8	/* for B; unused by core */
-#define PADNAMEt_OUR	16	/* for B; unused by core */
+#define PADNAMEf_OUTER	0x01	/* outer lexical var */
+#define PADNAMEf_STATE	0x02	/* state var */
+#define PADNAMEf_LVALUE	0x04	/* used as lvalue */
+#define PADNAMEf_TYPED	0x08	/* for B; unused by core */
+#define PADNAMEf_OUR	0x10	/* for B; unused by core */
+#define PADNAMEf_FIELD  0x20    /* field var */
 
 /* backward compatibility */
-#define SvPAD_STATE		PadnameIsSTATE
-#define SvPAD_TYPED(pn)		(!!PadnameTYPE(pn))
-#define SvPAD_OUR(pn)		(!!PadnameOURSTASH(pn))
-#define SvPAD_STATE_on		PadnameIsSTATE_on
-#define SvPAD_TYPED_on(pn)	(PadnameFLAGS(pn) |= PADNAMEt_TYPED)
-#define SvPAD_OUR_on(pn)	(PadnameFLAGS(pn) |= PADNAMEt_OUR)
-#define SvOURSTASH		PadnameOURSTASH
-#define SvOURSTASH_set		PadnameOURSTASH_set
-#define SVpad_STATE		PADNAMEt_STATE
-#define SVpad_TYPED		PADNAMEt_TYPED
-#define SVpad_OUR		PADNAMEt_OUR
+#ifndef PERL_CORE
+#  define SvPAD_STATE           PadnameIsSTATE
+#  define SvPAD_TYPED           PadnameHasTYPE
+#  define SvPAD_OUR(pn)         cBOOL(PadnameOURSTASH(pn))
+#  define SvPAD_STATE_on        PadnameIsSTATE_on
+#  define SvPAD_TYPED_on(pn)    (PadnameFLAGS(pn) |= PADNAMEf_TYPED)
+#  define SvPAD_OUR_on(pn)      (PadnameFLAGS(pn) |= PADNAMEf_OUR)
+#  define SvOURSTASH            PadnameOURSTASH
+#  define SvOURSTASH_set        PadnameOURSTASH_set
+#  define SVpad_STATE           PADNAMEf_STATE
+#  define SVpad_TYPED           PADNAMEf_TYPED
+#  define SVpad_OUR             PADNAMEf_OUR
+#  define PADNAMEt_OUTER        PADNAMEf_OUTER
+#  define PADNAMEt_STATE        PADNAMEf_STATE
+#  define PADNAMEt_LVALUE       PADNAMEf_LVALUE
+#  define PADNAMEt_TYPED        PADNAMEf_TYPED
+#  define PADNAMEt_OUR          PADNAMEf_OUR
+#endif
+
+#ifdef USE_ITHREADS
+#  define padnamelist_dup_inc(pnl,param)  PadnamelistREFCNT_inc(padnamelist_dup(pnl,param))
+#  define padname_dup_inc(pn,param)       PadnameREFCNT_inc(padname_dup(pn,param))
+#endif
 
 #ifdef DEBUGGING
 #  define PAD_SV(po)	   pad_sv(po)
@@ -445,13 +490,12 @@ ling pad (lvalue) to C<gen>.
 #define PAD_COMPNAME(po)	PAD_COMPNAME_SV(po)
 #define PAD_COMPNAME_SV(po)	(PadnamelistARRAY(PL_comppad_name)[(po)])
 #define PAD_COMPNAME_FLAGS(po)	PadnameFLAGS(PAD_COMPNAME(po))
-#define PAD_COMPNAME_FLAGS_isOUR(po) SvPAD_OUR(PAD_COMPNAME_SV(po))
+#define PAD_COMPNAME_FLAGS_isOUR(po) PadnameIsOUR(PAD_COMPNAME_SV(po))
 #define PAD_COMPNAME_PV(po)	PadnamePV(PAD_COMPNAME(po))
 
 #define PAD_COMPNAME_TYPE(po)	PadnameTYPE(PAD_COMPNAME(po))
 
-#define PAD_COMPNAME_OURSTASH(po) \
-    (SvOURSTASH(PAD_COMPNAME_SV(po)))
+#define PAD_COMPNAME_OURSTASH(po)  (PadnameOURSTASH(PAD_COMPNAME_SV(po)))
 
 #define PAD_COMPNAME_GEN(po) \
     ((STRLEN)PadnamelistARRAY(PL_comppad_name)[po]->xpadn_gen)
@@ -512,6 +556,18 @@ instead of a string/length pair.
 
 #define pad_findmy_pvs(name,flags) \
     Perl_pad_findmy_pvn(aTHX_ STR_WITH_LEN(name), flags)
+
+struct suspended_compcv
+{
+    CV *compcv;
+    STRLEN padix, constpadix;
+    STRLEN comppad_name_fill;
+    STRLEN min_intro_pending, max_intro_pending;
+    bool cv_has_eval, pad_reset_pending;
+};
+
+#define resume_compcv_final(buffer)     Perl_resume_compcv(aTHX_ buffer, false)
+#define resume_compcv_and_save(buffer)  Perl_resume_compcv(aTHX_ buffer, true)
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

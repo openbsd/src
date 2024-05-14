@@ -4,7 +4,7 @@
 #	Microsoft Visual C++ 12.0 or later
 #
 # This is set up to build a perl.exe that runs off a shared library
-# (perl536.dll).  Also makes individual DLLs for the XS extensions.
+# (perl538.dll).  Also makes individual DLLs for the XS extensions.
 #
 
 ##
@@ -37,7 +37,7 @@ INST_TOP	= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	= \5.36.3
+#INST_VER	= \5.38.2
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -120,6 +120,7 @@ DEFAULT_INC_EXCLUDES_DOT = define
 
 #
 # Uncomment this if you want to build everything in C++ mode
+# This requires at least MSVC 2019.
 #
 #USE_CPLUSPLUS	= define
 
@@ -171,7 +172,7 @@ DEFAULT_INC_EXCLUDES_DOT = define
 # set this to additionally provide a statically linked perl-static.exe.
 # Note that dynamic loading will not work with this perl, so you must
 # include required modules statically using the STATIC_EXT or ALL_STATIC
-# variables below. A static library perl536s.lib will also be created.
+# variables below. A static library perl538s.lib will also be created.
 # Ordinary perl.exe is not affected by this option.
 #
 #BUILD_STATIC	= define
@@ -432,6 +433,9 @@ INCLUDES	= -I$(COREDIR) -I.\include -I. -I..
 DEFINES		= -DWIN32 -D_CONSOLE -DNO_STRICT
 LOCDEFS		= -DPERLDLL -DPERL_CORE
 CXX_FLAG	= -TP -EHsc
+!IF "$(USE_CPLUSPLUS)" == "define"
+CXX_FLAG	= $(CXX_FLAG) -std:c++20
+!ENDIF
 EXTRACFLAGS	= -nologo -GF -W3
 
 !IF "$(CCTYPE)" == "MSVC120"
@@ -504,7 +508,7 @@ LIBBASEFILES	= $(LIBBASEFILES) msvcrt.lib vcruntime.lib
 !ENDIF
 
 # Avoid __intel_new_proc_init link error for libircmt.
-# libmmd is /MD equivelent, other variants exist.
+# libmmd is /MD equivalent, other variants exist.
 # libmmd is Intel C's math addon funcs to MS CRT, contains long doubles, C99,
 # and optimized C89 funcs
 !IF "$(__ICC)" == "define"
@@ -579,9 +583,9 @@ $(o).dll:
 
 # makedef.pl must be updated if this changes, and this should normally
 # only change when there is an incompatible revision of the public API.
-PERLIMPLIB	= ..\perl536.lib
-PERLSTATICLIB	= ..\perl536s.lib
-PERLDLL		= ..\perl536.dll
+PERLIMPLIB	= ..\perl538.lib
+PERLSTATICLIB	= ..\perl538s.lib
+PERLDLL		= ..\perl538.dll
 
 MINIPERL	= ..\miniperl.exe
 MINIDIR		= .\mini
@@ -671,6 +675,7 @@ DEL		= del
 MICROCORE_SRC	=		\
 		..\av.c		\
 		..\caretx.c	\
+		..\class.c	\
 		..\builtin.c	\
 		..\deb.c	\
 		..\doio.c	\
@@ -688,6 +693,7 @@ MICROCORE_SRC	=		\
 		..\numeric.c	\
 		..\op.c		\
 		..\pad.c	\
+		..\peep.c	\
 		..\perl.c	\
 		..\perly.c	\
 		..\pp.c		\
@@ -698,6 +704,10 @@ MICROCORE_SRC	=		\
 		..\pp_sys.c	\
 		..\reentr.c	\
 		..\regcomp.c	\
+		..\regcomp_trie.c	\
+		..\regcomp_debug.c	\
+		..\regcomp_invlist.c	\
+		..\regcomp_study.c	\
 		..\regexec.c	\
 		..\run.c	\
 		..\scope.c	\
@@ -746,6 +756,7 @@ CORE_NOCFG_H	=		\
 		..\pp.h		\
 		..\proto.h	\
 		..\regcomp.h	\
+		..\regcomp_internal.h	\
 		..\regexp.h	\
 		..\scope.h	\
 		..\sv.h		\
@@ -833,7 +844,8 @@ CFG_VARS	=					\
 		"default_inc_excludes_dot=$(DEFAULT_INC_EXCLUDES_DOT)"	\
 		"LINK_FLAGS=$(LINK_FLAGS:"=\")"		\
 		"optimize=$(OPTIMIZE:"=\")"		\
-		"WIN64=$(WIN64)"
+		"WIN64=$(WIN64)"                        \
+		"SKIP_CCHOME_CHECK=$(SKIP_CCHOME_CHECK)"
 
 #
 # Top targets
@@ -846,7 +858,15 @@ all : ..\git_version.h $(GLOBEXE) $(CONFIGPM) \
 
 regnodes : ..\regnodes.h
 
-..\regcomp$(o) : ..\regnodes.h ..\regcharclass.h
+..\regcomp$(o) : ..\regcomp.h ..\regcomp_internal.h ..\regnodes.h ..\regcharclass.h
+
+..\regcomp_debug$(o) : ..\regcomp.h ..\regcomp_internal.h ..\regnodes.h ..\regcharclass.h
+
+..\regcomp_invlist$(o) : ..\regcomp.h ..\regcomp_internal.h ..\regnodes.h ..\regcharclass.h
+
+..\regcomp_study$(o) : ..\regcomp.h ..\regcomp_internal.h ..\regnodes.h ..\regcharclass.h
+
+..\regcomp_trie$(o) : ..\regcomp.h ..\regcomp_internal.h ..\regnodes.h ..\regcharclass.h
 
 ..\regexec$(o) : ..\regnodes.h ..\regcharclass.h
 
@@ -871,7 +891,9 @@ perlglob$(o)  : perlglob.c
 ..\perl$(o) : ..\git_version.h
 
 ..\config.sh : $(CFGSH_TMPL) config_sh.PL FindExt.pm $(MINIPERL)
-	$(MINIPERL) -I..\lib config_sh.PL $(CFG_VARS) $(CFGSH_TMPL) > ..\config.sh
+	$(MINIPERL) -I..\lib config_sh.PL $(CFG_VARS) $(CFGSH_TMPL) > ..\config.sh.tmp
+	if exist ..\config.sh del /f ..\config.sh
+	rename ..\config.sh.tmp config.sh
 
 # This target is for when changes to the main config.sh happen.
 # Edit config.vc, then make perl in a minimal configuration (i.e. with MULTI,
@@ -1156,7 +1178,7 @@ utils: $(PERLEXE) ..\utils\Makefile
 	copy ..\README.tw       ..\pod\perltw.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perldelta.pod ..\pod\perl5363delta.pod
+	copy ..\pod\perldelta.pod ..\pod\perl5382delta.pod
 	cd ..\win32
 	$(PERLEXE) $(PL2BAT) $(UTILS)
 	$(MINIPERL) -I..\lib ..\autodoc.pl ..
@@ -1229,7 +1251,6 @@ distclean: realclean
 	-if exist $(LIBDIR)\MIME rmdir /s /q $(LIBDIR)\MIME
 	-if exist $(LIBDIR)\Module rmdir /s /q $(LIBDIR)\Module
 	-if exist $(LIBDIR)\Net\FTP rmdir /s /q $(LIBDIR)\Net\FTP
-	-if exist $(LIBDIR)\OpenBSD rmdir /s /q $(LIBDIR)\OpenBSD
 	-if exist $(LIBDIR)\Params rmdir /s /q $(LIBDIR)\Params
 	-if exist $(LIBDIR)\Parse rmdir /s /q $(LIBDIR)\Parse
 	-if exist $(LIBDIR)\Perl rmdir /s /q $(LIBDIR)\Perl
@@ -1257,14 +1278,15 @@ distclean: realclean
 	-if exist $(LIBDIR)\Win32API rmdir /s /q $(LIBDIR)\Win32API
 	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
 	-cd $(PODDIR) && del /f *.html *.bat roffitall \
-	    perl5363delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
+	    perl5382delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
 	    perlapi.pod perlbs2000.pod perlcn.pod perlcygwin.pod \
 	    perlfreebsd.pod perlhaiku.pod perlhpux.pod perlhurd.pod \
 	    perlintern.pod perlirix.pod perljp.pod perlko.pod perllinux.pod \
 	    perlmacosx.pod perlmodlib.pod perlopenbsd.pod perlos2.pod \
 	    perlos390.pod perlos400.pod perlplan9.pod perlqnx.pod \
 	    perlriscos.pod perlsolaris.pod perlsynology.pod perltoc.pod \
-	    perltru64.pod perltw.pod perlvos.pod perlwin32.pod
+	    perltru64.pod perltw.pod perluniprops.pod perlvos.pod \
+	    perlwin32.pod
 	-cd ..\utils && del /f h2ph splain perlbug pl2pm h2xs \
 	    perldoc perlivp libnetcfg enc2xs encguess piconv cpan streamzip *.bat \
 	    xsubpp pod2html instmodsh json_pp prove ptar ptardiff ptargrep shasum corelist zipdetails
@@ -1322,12 +1344,12 @@ test-prep : all utils ../pod/perltoc.pod
 
 test : test-prep
 	cd ..\t
-	perl.exe harness $(TEST_SWITCHES) $(TEST_FILES)
+	perl.exe harness $(TEST_ARGS) $(TEST_SWITCHES) $(TEST_FILES)
 	cd ..\win32
 
 test_porting : test-prep
 	cd ..\t
-	perl.exe harness $(TEST_SWITCHES) porting\*.t ..\lib\diagnostics.t
+	perl.exe harness $(TEST_ARGS) $(TEST_SWITCHES) porting\*.t ..\lib\diagnostics.t
 	cd ..\win32
 
 test-reonly : reonly utils
@@ -1346,7 +1368,7 @@ regen :
 test-notty : test-prep
 	set PERL_SKIP_TTY_TEST=1
 	cd ..\t
-	perl.exe harness $(TEST_SWITCHES) $(TEST_FILES)
+	perl.exe harness $(TEST_ARGS) $(TEST_SWITCHES) $(TEST_FILES)
 	cd ..\win32
 
 _test : 
@@ -1354,7 +1376,7 @@ _test :
        $(XCOPY) $(PERLDLL) ..\t\$(NULL)
        $(XCOPY) $(GLOBEXE) ..\t\$(NULL)
        cd ..\t
-       perl.exe harness $(TEST_SWITCHES) $(TEST_FILES)
+       perl.exe harness $(TEST_ARGS) $(TEST_SWITCHES) $(TEST_FILES)
        cd ..\win32
 
 _clean :

@@ -36,6 +36,7 @@
          "dist/IO",
          "dist/lib",
          "dist/Locale-Maketext",
+         "dist/Math-Complex",
          "dist/Module-CoreList",
          "dist/Net-Ping",
          "dist/PathTools",
@@ -118,6 +119,6 @@
          "url" : "https://github.com/Perl/perl5"
       }
    },
-   "version" : "5.036003",
-   "x_serialization_backend" : "JSON::PP version 4.07"
+   "version" : "5.038002",
+   "x_serialization_backend" : "JSON::PP version 4.16"
 }

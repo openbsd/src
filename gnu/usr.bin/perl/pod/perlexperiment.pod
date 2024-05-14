@@ -24,8 +24,12 @@ Introduced in Perl 5.10.0
 
 Modified in Perl 5.10.1, 5.12.0
 
+Deprecated in 5.38.0
+
+Will be removed in 5.42.0
+
 Using this feature triggers warnings in the category
-C<experimental::smartmatch>.
+C<deprecated>.
 
 The ticket for this experiment is
 L<[perl #13173]|https://github.com/Perl/perl5/issues/13173>.

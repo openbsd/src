@@ -1833,7 +1833,7 @@ and although they often accept just C<"\012">, they seldom tolerate just
 C<"\015">.  If you get in the habit of using C<"\n"> for networking,
 you may be burned some day.
 X<newline> X<line terminator> X<eol> X<end of line>
-X<\r>
+X<\n> X<\r> X<\r\n>
 
 For constructs that do interpolate, variables beginning with "C<$>"
 or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
@@ -1949,8 +1949,8 @@ Options (specified by the following modifiers) are:
         square-bracketed character classes
     p	When matching preserve a copy of the matched string so
         that ${^PREMATCH}, ${^MATCH}, ${^POSTMATCH} will be
-        defined (ignored starting in v5.20) as these are always
-        defined starting in that release
+        defined (ignored starting in v5.20 as these are always
+        defined starting in that release)
     o	Compile pattern only once.
     a   ASCII-restrict: Use ASCII for \d, \s, \w and [[:posix:]]
         character classes; specifying two a's adds the further
@@ -2055,11 +2055,24 @@ The bottom line is that using C</o> is almost never a good idea.
 =item The empty pattern C<//>
 
 If the I<PATTERN> evaluates to the empty string, the last
-I<successfully> matched regular expression is used instead.  In this
-case, only the C<g> and C<c> flags on the empty pattern are honored;
-the other flags are taken from the original pattern.  If no match has
+I<successfully> matched regular expression is used instead. In this
+case, only the C<g> and C<c> flags on the empty pattern are honored; the
+other flags are taken from the original pattern. If no match has
 previously succeeded, this will (silently) act instead as a genuine
-empty pattern (which will always match).
+empty pattern (which will always match).  Using a user supplied string as
+a pattern has the risk that if the string is empty that it triggers the
+"last successful match" behavior, which can be very confusing. In such
+cases you are recommended to replace C<m/$pattern/> with
+C<m/(?:$pattern)/> to avoid this behavior.
+
+The last successful pattern may be accessed as a variable via
+C<${^LAST_SUCCESSFUL_PATTERN}>. Matching against it, or the empty
+pattern should have the same effect, with the exception that when there
+is no last successful pattern the empty pattern will silently match,
+whereas using the C<${^LAST_SUCCESSFUL_PATTERN}> variable will produce
+undefined warnings (if warnings are enabled). You can check
+C<defined(${^LAST_SUCCESSFUL_PATTERN})> to test if there is a "last
+successful match" in the current scope.
 
 Note that it's possible to confuse Perl into thinking C<//> (the empty
 regex) is really C<//> (the defined-or operator).  Perl is usually pretty

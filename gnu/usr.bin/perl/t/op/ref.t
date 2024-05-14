@@ -265,8 +265,10 @@ is (join('', sort values %$anonhash2), 'BARXYZ');
 # Test bless operator.
 
 package MYHASH;
-
-$object = bless $main'anonhash2;
+{
+    no warnings qw(syntax deprecated);
+    $object = bless $main'anonhash2;
+}
 main::is (ref $object, 'MYHASH');
 main::is ($object->{ABC}, 'XYZ');
 
@@ -290,7 +292,10 @@ sub mymethod {
 $string = "bad";
 $object = "foo";
 $string = "good";
-$main'anonhash2 = "foo";
+{
+    no warnings qw(syntax deprecated);
+    $main'anonhash2 = "foo";
+}
 $string = "";
 
 DESTROY {
@@ -307,7 +312,10 @@ package OBJ;
 
 @ISA = ('BASEOBJ');
 
-$main'object = bless {FOO => 'foo', BAR => 'bar'};
+{
+    no warnings qw(syntax deprecated);
+    $main'object = bless {FOO => 'foo', BAR => 'bar'};
+}
 
 package main;
 
@@ -320,10 +328,13 @@ is ($object->doit("BAR"), 'bar');
 $foo = doit $object "FOO";
 main::is ($foo, 'foo');
 
-sub BASEOBJ'doit {
-    local $ref = shift;
-    die "Not an OBJ" unless ref $ref eq 'OBJ';
-    $ref->{shift()};
+{
+    no warnings qw(syntax deprecated);
+    sub BASEOBJ'doit {
+        local $ref = shift;
+        die "Not an OBJ" unless ref $ref eq 'OBJ';
+        $ref->{shift()};
+    }
 }
 
 package UNIVERSAL;

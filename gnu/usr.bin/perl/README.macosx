@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 If you read this file _as_is_, just ignore the funny characters you see.
 It is written in the POD format (see pod/perlpod.pod) which is specially
 designed to be readable as is.
@@ -10,9 +12,9 @@ perlmacosx - Perl under Mac OS X
 
 This document briefly describes Perl under Mac OS X.
 
-  curl -O https://www.cpan.org/src/perl-5.36.3.tar.gz
-  tar -xzf perl-5.36.3.tar.gz
-  cd perl-5.36.3
+  curl -O https://www.cpan.org/src/perl-5.38.2.tar.gz
+  tar -xzf perl-5.38.2.tar.gz
+  cd perl-5.38.2
   ./Configure -des -Dprefix=/usr/local/
   make
   make test
@@ -20,7 +22,7 @@ This document briefly describes Perl under Mac OS X.
 
 =head1 DESCRIPTION
 
-The latest Perl release (5.36.3 as of this writing) builds without changes
+The latest Perl release (5.38.2 as of this writing) builds without changes
 under all versions of Mac OS X from 10.3 "Panther" onwards. 
 
 In order to build your own version of Perl you will need 'make',

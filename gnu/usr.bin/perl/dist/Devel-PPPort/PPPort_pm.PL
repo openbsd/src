@@ -747,7 +747,7 @@ modify it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-See L<h2xs>, L<ppport.h>.
+See L<h2xs>, F<ppport.h>.
 
 =cut
 
@@ -756,7 +756,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = '3.68';
+$VERSION = '3.71';
 
 sub _init_data
 {

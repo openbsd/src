@@ -11,11 +11,14 @@ use Unicode::UCD qw(prop_aliases
                     num
                     charblock
                    );
+use constant DEBUG => $ENV{DEBUG} // 0;
 require './regen/regen_lib.pl';
 require './regen/charset_translations.pl';
 require './lib/unicore/UCD.pl';
 require './regen/mph.pl';
 use re "/aa";
+
+print "Starting...\n" if DEBUG;
 
 # This program outputs charclass_invlists.h, which contains various inversion
 # lists in the form of C arrays that are to be used as-is for inversion lists.
@@ -72,10 +75,10 @@ print $out_fh <<'EOF';
  * encompassing all of the Unicode BMP, and thus including all the economically
  * important world scripts.  At 12 most of them are: including Arabic,
  * Cyrillic, Greek, Hebrew, Indian subcontinent, Latin, and Thai; but not Han,
- * Japanese, nor Korean.  (The regarglen structure in regnodes.h is a U8, and
- * the trie types TRIEC and AHOCORASICKC are larger than U8 for shift values
- * above 12.)  Be sure to benchmark before changing, as larger sizes do
- * significantly slow down the test suite */
+ * Japanese, nor Korean.  The regnode sizing data structure in regnodes.h currently
+ * uses a U8, and the trie types TRIEC and AHOCORASICKC are larger than U8 for
+ * shift values above 12.)  Be sure to benchmark before changing, as larger sizes
+ * do significantly slow down the test suite. */
 
 EOF
 
@@ -346,6 +349,8 @@ sub output_invlist ($$;$) {
     my $invlist = shift;     # Reference to inversion list array
     my $charset = shift // "";  # name of character set for comment
 
+    print "  output_invlist($name) $charset\n" if DEBUG;
+
     die "No inversion list for $name" unless defined $invlist
                                              && ref $invlist eq 'ARRAY';
 
@@ -391,6 +396,8 @@ sub output_invmap ($$$$$$$) {
     my $extra_enums = shift;    # comma-separated list of our additions to the
                                 # property's standard possible values
     my $charset = shift // "";  # name of character set for comment
+
+    print "  output_invmap($name,$prop_name) $charset\n" if DEBUG;
 
     # Output the inversion map $invmap for property $prop_name, but use $name
     # as the actual data structure's name.
@@ -753,7 +760,7 @@ sub output_invmap ($$$$$$$) {
         switch_pound_if($name, $where, $charset);
 
         # The inversion lists here have to be UV because inversion lists are
-        # capable of storing any code point, and even though the the ones here
+        # capable of storing any code point, and even though the ones here
         # are only Unicode ones, which need just 21 bits, they are linked to
         # directly, rather than copied.  The inversion map and aux tables also
         # only need be 21 bits, and so we can get away with declaring them
@@ -968,6 +975,7 @@ sub mk_invlist_from_sorted_cp_list {
     return @invlist;
 }
 
+print "Reading Case Folding rules.\n" if DEBUG;
 # Read in the Case Folding rules, and construct arrays of code points for the
 # properties we need.
 my ($cp_ref, $folds_ref, $format, $default) = prop_invmap("Case_Folding");
@@ -975,6 +983,9 @@ die "Could not find inversion map for Case_Folding" unless defined $format;
 die "Incorrect format '$format' for Case_Folding inversion map"
                                                     unless $format eq 'al'
                                                            || $format eq 'a';
+print "Finished reading Case Folding rules.\n" if DEBUG;
+
+
 sub _Perl_IVCF {
 
     # This creates a map of the inversion of case folding. i.e., given a
@@ -2460,6 +2471,8 @@ end_file_pound_if;
 #
 # An initial & means to use the subroutine from this file instead of an
 # official inversion list.
+#
+print "Computing unicode properties\n" if DEBUG;
 
 # Below is the list of property names to generate.  '&' means to use the
 # subroutine to generate the inversion list instead of the generic code
@@ -3083,6 +3096,8 @@ foreach my $prop (@props) {
     }
 }
 
+print "Finished computing unicode properties\n" if DEBUG;
+
 print $out_fh "\nconst char * const deprecated_property_msgs[] = {\n\t";
 print $out_fh join ",\n\t", map { "\"$_\"" } @deprecated_messages;
 print $out_fh "\n};\n";
@@ -3163,6 +3178,7 @@ my %joined_values;
 # the C compiler.
 my @values_indices;
 
+print "Computing short unicode properties\n" if DEBUG;
 # Go through each property which is specifiable by \p{prop=value}, and create
 # a hash with the keys being the canonicalized short property names, and the
 # values for each property being all possible values that it can take on.
@@ -3194,6 +3210,7 @@ for my $property (sort { prop_name_for_cmp($a) cmp prop_name_for_cmp($b) }
         }
     }
 }
+print "Finished computing short unicode properties\n" if DEBUG;
 
 # Also include the old style block names, using the recipe given in
 # Unicode::UCD
@@ -3201,6 +3218,7 @@ foreach my $block (prop_values('block')) {
     push @{$all_values{'blk'}}, charblock((prop_invlist("block=$block"))[0]);
 }
 
+print "Creating property tables\n" if DEBUG;
 # Now create output tables for each property in @equals_properties (the keys
 # in %all_values) each containing that property's possible values as computed
 # just above.
@@ -3280,6 +3298,8 @@ output_WB_table();
 
 end_file_pound_if;
 
+print "Computing fold data\n" if DEBUG;
+
 print $out_fh <<"EOF";
 
 /* More than one code point may have the same code point as their fold.  This
@@ -3299,7 +3319,10 @@ my @sources = qw(regen/mk_invlists.pl
                );
 {
     # Depend on mktables’ own sources.  It’s a shorter list of files than
-    # those that Unicode::UCD uses.
+    # those that Unicode::UCD uses.  Some may not actually have an effect on
+    # the output of this program, but easier to just include all of them, and
+    # no real harm in doing so, as it is rare for one such to change without
+    # the others doing so as well.
     if (! open my $mktables_list, '<', $sources_list) {
 
           # This should force a rebuild once $sources_list exists
@@ -3349,6 +3372,8 @@ my $uni_pl = open_new('lib/unicore/uni_keywords.pl', '>',
 }
 
 read_only_bottom_close_and_rename($uni_pl, \@sources);
+
+print "Computing minimal perfect hash for unicode properties.\n" if DEBUG;
 
 if (my $file= $ENV{DUMP_KEYWORDS_FILE}) {
     require Data::Dumper;

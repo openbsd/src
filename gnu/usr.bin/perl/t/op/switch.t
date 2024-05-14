@@ -8,7 +8,7 @@ BEGIN {
 
 use strict;
 use warnings;
-no warnings 'experimental::smartmatch';
+no warnings 'deprecated';
 
 plan tests => 197;
 

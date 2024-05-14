@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More tests => 6;
 
 use XS::APItest;
 
@@ -19,3 +19,13 @@ for my $case (@cases) {
     like($exn, qr/\b\QCannot yet reorder sv_vcatpvfn() arguments from va_list\E\b/,
          "explicit $what index forbidden in va_list arguments");
 }
+
+# these actually test newSVpvf() but it is the same underlying logic.
+is(test_HvNAMEf(bless {}, "Whatever::You::Like"),
+    "class='Whatever::You::Like'");
+is(test_HvNAMEf_QUOTEDPREFIX(bless {}, "x" x 1000),
+    'class="xxxxxxxxxxxxxxxxxxxxxxxxxx'.
+    'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.
+    'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"..."xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.
+    'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.
+    'xxxxxxxxxxxxxxxxxxxxx"');

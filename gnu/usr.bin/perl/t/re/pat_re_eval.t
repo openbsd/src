@@ -24,7 +24,8 @@ BEGIN {
 
 our @global;
 
-plan tests => 508;  # Update this when adding/deleting tests.
+
+plan tests => 527;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -126,7 +127,66 @@ sub run_tests {
                "Postponed UTF-8 string in non-UTF-8 re doesn't match non-UTF-8";
         }
     }
+    {
+        our $this_counter;
+        ok( "ABDE" =~ /(A(A|B(*ACCEPT)|C)+D)(E)(?{ $this_counter++ })/,
+            "ACCEPT/CURLYX/EVAL - pattern should match");
+        is( "$1-$2", "AB-B",
+            "Make sure that ACCEPT works in CURLYX by using EVAL");
+    }
+    {
+        ok( "AB"=~/(A)(?(*{ 1 })B|C)/, "(?(*{ ... })yes|no) works as expected");
+        ok( "AC"=~/(A)(?(*{ 0 })B|C)/, "(?(*{ ... })yes|no) works as expected");
+    }
 
+    {
+        # Test if $^N and $+ work in (*{ }) (optimistic eval)
+        our @ctl_n = ();
+        our @plus = ();
+        my $nested_tags = qr{
+          (?<nested_tags>
+            <
+                ((\w)+)
+                (*{
+                       push @ctl_n, (defined $^N ? $^N : "undef");
+                       push @plus, (defined $+ ? $+ : "undef");
+                })
+            >
+            (?&nested_tags)*
+            </\s* \w+ \s*>
+          )
+        }x;
+
+        # note the results of this may change from perl to perl as different optimisations
+        # are added or enabled. It is testing that things *work*, not that they produce
+        # a specific output. The whole idea of optimistic eval is to have an eval that
+        # does not disable optimizations in the way a normal eval does.
+        my $c = 0;
+        for my $test (
+            # Test structure:
+            #  [ Expected result, Regex, Expected value(s) of $^N, Expected value(s) of $+, "note" ]
+            [ 1, qr#^$nested_tags$#, "bla blubb <bla><blubb></blubb></bla>", "a b a" ],
+            [ 1, qr#^($nested_tags)$#, "bla blubb <bla><blubb></blubb></bla>", "a b a" ],
+            [ 1, qr#^(|)$nested_tags$#, "bla blubb <bla><blubb></blubb></bla>", "a b a" ],
+            [ 1, qr#^(?:|)$nested_tags$#, "bla blubb <bla><blubb></blubb></bla>", "a b a" ],
+            [ 1, qr#^<(bl|bla)>$nested_tags<(/\1)>$#, "blubb /bla", "b /bla" ],
+        ) { #"#silence vim highlighting
+            $c++;
+            @ctl_n = ();
+            @plus = ();
+            my $match = (("<bla><blubb></blubb></bla>" =~ $test->[1]) ? 1 : 0);
+            push @ctl_n, (defined $^N ? $^N : "undef");
+            push @plus, (defined $+ ? $+ : "undef");
+            ok($test->[0] == $match, "(*{ ... }) match $c");
+            if ($test->[0] != $match) {
+              # unset @ctl_n and @plus
+              @ctl_n = @plus = ();
+            }
+            my $note = $test->[4] ? " - $test->[4]" : "";
+            is("@ctl_n", $test->[2], "(*{ ... }) ctl_n $c$note");
+            is("@plus", $test->[3], "(*{ ... }) plus $c$note");
+        }
+    }
 
     {
         # Test if $^N and $+ work in (?{})
@@ -162,7 +222,9 @@ sub run_tests {
             [ 1, qr#^((??{"(?:bla|)"}))((??{$nested_tags}))$#, "bla blubb <bla><blubb></blubb></bla>", "a b <bla><blubb></blubb></bla>" ],
             [ 1, qr#^((??{"(?!)?"}))((??{$nested_tags}))$#, "bla blubb <bla><blubb></blubb></bla>", "a b <bla><blubb></blubb></bla>" ],
             [ 1, qr#^((??{"(?:|<(/?bla)>)"}))((??{$nested_tags}))\1$#, "bla blubb <bla><blubb></blubb></bla>", "a b <bla><blubb></blubb></bla>" ],
-            [ 0, qr#^((??{"(?!)"}))?((??{$nested_tags}))(?!)$#, "bla blubb undef", "a b undef" ],
+            [ 0, qr#^((??{"(?!)"}))?((??{$nested_tags}))(?!)$#, # changed in perl 5.37.7
+                 "bla blubb blub blu bl b bl b undef",
+                 "a b b u l b l b undef" ],
 
         ) { #"#silence vim highlighting
             $c++;

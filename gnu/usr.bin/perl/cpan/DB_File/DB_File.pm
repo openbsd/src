@@ -165,7 +165,7 @@ use Carp;
 # Module not thread safe, so don't clone
 sub CLONE_SKIP { 1 }
 
-$VERSION = "1.857" ;
+$VERSION = "1.858" ;
 $VERSION = eval $VERSION; # needed for dev releases
 
 {
@@ -2331,23 +2331,9 @@ same terms as Perl itself.
 
 Although B<DB_File> is covered by the Perl license, the library it
 makes use of, namely Berkeley DB, is not. Berkeley DB has its own
-copyright and its own license. Please take the time to read it.
-
-Here are a few words taken from the Berkeley DB FAQ (at
-L<http://www.oracle.com/technology/products/berkeley-db/db/index.html>) regarding the license:
-
-    Do I have to license DB to use it in Perl scripts?
-
-    No. The Berkeley DB license requires that software that uses
-    Berkeley DB be freely redistributable. In the case of Perl, that
-    software is Perl, and not your scripts. Any Perl scripts that you
-    write are your property, including scripts that make use of
-    Berkeley DB. Neither the Perl license nor the Berkeley DB license
-    place any restriction on what you may do with them.
-
-If you are in any doubt about the license situation, contact either the
-Berkeley DB authors or the author of DB_File. See L<"AUTHOR"> for details.
-
+copyright and its own license.
+See L<AGPL|https://www.oracle.com/downloads/licenses/berkeleydb-oslicense.html> for more details.
+Please take the time to read the Berkeley DB license and decide how it impacts your use of this Perl module.
 
 =head1 SEE ALSO
 

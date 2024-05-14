@@ -97,7 +97,7 @@ $uc = ucfirst $u;
 is (length $uc, 1);
 is ($uc, $e_acute, "e acute -> E acute");
 
-my $have_setlocale = locales_enabled('LC_ALL');
+my $have_setlocale = locales_enabled( [ 'LC_ALL', 'LC_CTYPE' ] );
 
 SKIP: {
     if (!$have_setlocale) {

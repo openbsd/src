@@ -183,7 +183,7 @@ a whole character instead of only a single byte.
 
 The C<tr///> operator translates whole characters.  (Note that the
 C<tr///CU> functionality has been removed.  For similar functionality to
-that, see C<pack('U0', ...)> and C<pack('C0', ...)>).
+that, see S<C<pack('U0', ...)>> and S<C<pack('C0', ...)>>).
 
 =item *
 
@@ -1177,13 +1177,15 @@ C<\p{}> or C<\P{}> construct.
     if ($txt =~ /\p{IsForeign}+/) { ... }
 
 
-Note that the effect is compile-time and immutable once defined.
-However, the subroutines are passed a single parameter, which is 0 if
+The subroutines are passed a single parameter, which is 0 if
 case-sensitive matching is in effect and non-zero if caseless matching
 is in effect.  The subroutine may return different values depending on
-the value of the flag, and one set of values will immutably be in effect
-for all case-sensitive matches, and the other set for all case-insensitive
-matches.
+the value of the flag.  But the subroutine is never called more than
+once for each flag value (zero vs non-zero).  The return value is saved
+and used instead of calling the sub ever again.  If the sub is defined
+at the time the pattern is compiled, it will be called then; if not, it
+will be called the first time its value (for that flag) is needed during
+execution.
 
 Note that if the regular expression is tainted, then Perl will die rather
 than calling the subroutine when the name of the subroutine is
@@ -1679,7 +1681,7 @@ If you're writing code, such as an editor, that is supposed to be able
 to handle any Unicode text data, then you shouldn't be using these code
 points yourself, and instead allow them in the input.  If you need
 sentinels, they should instead be something that isn't legal Unicode.
-For UTF-8 data, you can use the bytes 0xC1 and 0xC2 as sentinels, as
+For UTF-8 data, you can use the bytes 0xC0 and 0xC1 as sentinels, as
 they never appear in well-formed UTF-8.  (There are equivalents for
 UTF-EBCDIC).  You can also store your Unicode code points in integer
 variables and use negative values as sentinels.

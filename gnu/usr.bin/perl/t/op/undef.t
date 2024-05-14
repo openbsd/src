@@ -10,7 +10,7 @@ use strict;
 
 my (@ary, %ary, %hash);
 
-plan 74;
+plan 88;
 
 ok !defined($a);
 
@@ -153,3 +153,58 @@ sub PVBM () { 'foo' }
 my $pvbm = PVBM;
 undef $pvbm;
 ok !defined $pvbm;
+
+# Prior to GH#20077 (Add OPpTARGET_MY optimization to OP_UNDEF), any PV
+# allocation was kept with "$x = undef" but freed with "undef $x". That
+# behaviour was carried over and is expected to still be present.
+# (I totally copied most of this block from other t/op/* files.)
+
+SKIP: {
+    skip_without_dynamic_extension("Devel::Peek", 2);
+
+    my $out = runperl(stderr => 1,
+                  progs => [ split /\n/, <<'EOS' ]);
+    require Devel::Peek;
+    my $f = q(x) x 40; $f = undef;
+    Devel::Peek::Dump($f);
+    undef $f;
+    Devel::Peek::Dump($f);
+EOS
+
+    my ($space, $first, $second) = split /SV =/, $out;
+    like($first, qr/\bPV = 0x[0-9a-f]+\b/, '$x = undef preserves PV allocation');
+    like($second, qr/\bPV = 0\b$/, 'undef $x frees PV allocation');
+}
+
+# Tests suggested for GH#20077 (Add OPpTARGET_MY optimization to OP_UNDEF)
+# (No failures were observed during development, these are just checking
+# that no failures are introduced down the line.)
+
+{
+    my $y= 1; my @x= ($y= undef);
+    is( defined($x[0]), "", 'lval undef assignment in list context');
+    is( defined($y)  , "", 'scalar undef assignment in list context');
+
+    $y= 1; my $z; sub f{$z = shift} f($y=undef);
+    is( defined($y)  , "", 'undef assignment in sub args');
+    is( defined($z)  , "", 'undef assignment reaches @_');
+
+    ($y,$z)=(1,2); sub f{} f(($y=undef),$z);
+    is( defined($y)  , "", 'undef assignment reaches @_');
+    is( $z, 2, 'undef adjacent argument is unchanged');
+}
+
+{
+    my $h= { baz => 1 }; my @k= keys %{($h=undef)||{}};
+    is( defined($h)  , "", 'scalar undef assignment in keys');
+    is( scalar @k, 0, 'undef assignment dor anonhash');
+
+    my $y= 1; my @x= \($y= undef);
+    is( defined($y)  , "", 'scalar undef assignment before reference');
+    is( scalar @x, 1, 'assignment of one element to array');
+    is( defined($x[0]->$*), "", 'assignment of undef element to array');
+}
+
+# GH#20336 - "my $x = undef" pushed &PL_sv_undef onto the stack, but
+#            should be pushing $x (i.e. a mutable copy of &PL_sv_undef)
+is( ++(my $x = undef), 1, '"my $x = undef" pushes $x onto the stack' );

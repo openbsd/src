@@ -284,7 +284,6 @@ my @s = @f["]", "a"];
 @h[glob ""];
 @h[readline ""];
 @h[m ""];
-use constant phoo => 1..3;
 @h[+phoo]; # rv2av
 @h[sort foo];
 @h[reverse foo];
@@ -364,7 +363,7 @@ OPTION fatal
 Can't use an array as a reference at - line 3.
 ########
 # op.c
-use warnings 'void' ; no warnings 'experimental::smartmatch'; close STDIN ;
+use warnings 'void' ; no warnings 'deprecated'; close STDIN ;
 #line 2
 1 x 3 ;			# OP_REPEAT (folded)
 (1) x 3 ;		# OP_REPEAT
@@ -1018,6 +1017,20 @@ sub fred () { 1 }
 *fred = sub () { 2 };
 EXPECT
 Constant subroutine main::fred redefined at - line 3.
+########
+# op.c github #20742
+use constant fred => 1, 2;
+use constant fred => 2, 3;
+EXPECT
+OPTIONS regex
+Constant subroutine main::fred redefined at .*lib/constant\.pm line \d+
+########
+# op.c related to github #20742
+# produced an assertion failure
+use constant x => 1, 2;
+sub x () { 1 }
+EXPECT
+Constant subroutine x redefined at - line 4.
 ########
 # op.c
 use feature "lexical_subs", "state";

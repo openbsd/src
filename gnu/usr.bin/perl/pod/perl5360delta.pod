@@ -325,7 +325,7 @@ block compiles, it means you're using perl v5.14.0 or later.
 We now probe for compiler support for C11 thread local storage, and where
 available use this for "implicit context" for XS extensions making API calls for
 a threaded Perl build.  This requires fewer function calls at the C level than
-POSIX thread specific storage. We continue to use the the pthreads approach if
+POSIX thread specific storage. We continue to use the pthreads approach if
 the C11 approach is not available.
 
 F<Configure> run with the defaults will build an unthreaded Perl (which is
@@ -1050,7 +1050,7 @@ that are strict in rejecting certain C99 features, particularly mixed
 declarations and code, and hence it makes sense for XS module authors to audit
 that their code does not violate this. However, doing this is now only
 possible on these earlier versions of Perl, hence these modules need to be
-changed to only add this flag for C<<$] < 5.035005>>.
+changed to only add this flag for C<< $] < 5.035005 >>.
 
 =item *
 
