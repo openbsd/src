@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ext.c,v 1.17 2024/05/14 07:35:23 tb Exp $ */
+/* $OpenBSD: x509_ext.c,v 1.18 2024/05/14 07:39:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,10 +58,6 @@
 
 #include <stdio.h>
 
-#include <openssl/asn1.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/stack.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
