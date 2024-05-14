@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.199 2024/05/13 11:17:40 semarie Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.200 2024/05/14 06:26:05 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ int nfs_create(void *);
 int nfs_flush(struct vnode *, struct ucred *, int, struct proc *, int);
 int nfs_fsync(void *);
 int nfs_getattr(void *);
-int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
 int nfs_islocked(void *);
 int nfs_link(void *);
 int nfs_lock(void *);
