@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.171 2024/04/10 07:36:25 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.172 2024/05/14 07:40:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -382,6 +382,14 @@ const struct options_table_entry options_table[] = {
 	  .maximum = INT_MAX,
 	  .default_num = 100,
 	  .text = "Maximum number of commands to keep in history."
+	},
+
+	{ .name = "search-wrapped-lines",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .default_num = 1,
+	  .text = "Whether to include full wrapped lines when searching for "
+		  "text in copy mode."
 	},
 
 	{ .name = "set-clipboard",
