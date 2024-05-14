@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_getpwnam.c,v 1.15 2024/05/14 13:28:08 op Exp $	*/
+/*	$OpenBSD: table_getpwnam.c,v 1.16 2024/05/14 13:30:37 op Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -23,11 +23,8 @@
 
 /* getpwnam(3) backend */
 static int table_getpwnam_config(struct table *);
-static int table_getpwnam_update(struct table *);
-static int table_getpwnam_open(struct table *);
 static int table_getpwnam_lookup(struct table *, enum table_service, const char *,
     char **);
-static void table_getpwnam_close(struct table *);
 
 struct table_backend table_backend_getpwnam = {
 	.name = "getpwnam",
@@ -35,9 +32,9 @@ struct table_backend table_backend_getpwnam = {
 	.config = table_getpwnam_config,
 	.add = NULL,
 	.dump = NULL,
-	.open = table_getpwnam_open,
-	.update = table_getpwnam_update,
-	.close = table_getpwnam_close,
+	.open = NULL,
+	.update = NULL,
+	.close = NULL,
 	.lookup = table_getpwnam_lookup,
 	.fetch = NULL,
 };
@@ -49,24 +46,6 @@ table_getpwnam_config(struct table *table)
 	if (table->t_config[0])
 		return 0;
 	return 1;
-}
-
-static int
-table_getpwnam_update(struct table *table)
-{
-	return 1;
-}
-
-static int
-table_getpwnam_open(struct table *table)
-{
-	return 1;
-}
-
-static void
-table_getpwnam_close(struct table *table)
-{
-	return;
 }
 
 static int
