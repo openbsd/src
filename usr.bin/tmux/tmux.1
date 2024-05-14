@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.943 2024/05/14 07:52:19 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.944 2024/05/14 09:32:37 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -3795,14 +3795,6 @@ each client.
 .It Ic prompt-history-limit Ar number
 Set the number of history items to save in the history file for each type of
 command prompt.
-.It Xo Ic search-wrapped-lines
-.Op Ic on | off
-.Xc
-Defines how
-.Nm
-handles wrapped lines when searching in copy mode.
-When disabled, lines are truncated and searching is faster, but matches may be
-missed.
 .It Xo Ic set-clipboard
 .Op Ic on | external | off
 .Xc
