@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_static.c,v 1.34 2024/02/11 09:24:26 op Exp $	*/
+/*	$OpenBSD: table_static.c,v 1.35 2024/05/14 13:28:08 op Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -43,18 +43,18 @@ static int table_static_fetch(struct table *, enum table_service, char **);
 static void table_static_close(struct table *);
 
 struct table_backend table_backend_static = {
-	"static",
-	K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|
+	.name = "static",
+	.services = K_ALIAS|K_CREDENTIALS|K_DOMAIN|K_NETADDR|K_USERINFO|
 	K_SOURCE|K_MAILADDR|K_ADDRNAME|K_MAILADDRMAP|K_RELAYHOST|
 	K_STRING|K_REGEX,
-	table_static_config,
-	table_static_add,
-	table_static_dump,
-	table_static_open,
-	table_static_update,
-	table_static_close,
-	table_static_lookup,
-	table_static_fetch
+	.config = table_static_config,
+	.add = table_static_add,
+	.dump = table_static_dump,
+	.open = table_static_open,
+	.update = table_static_update,
+	.close = table_static_close,
+	.lookup = table_static_lookup,
+	.fetch = table_static_fetch
 };
 
 static struct keycmp {
