@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.116 2024/04/23 13:34:51 jsg Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.117 2024/05/14 07:52:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -665,9 +665,18 @@ cmdq_fire_command(struct cmdq_item *item)
 
 out:
 	item->client = saved;
-	if (retval == CMD_RETURN_ERROR)
+	if (retval == CMD_RETURN_ERROR) {
+		fsp = NULL;
+		if (cmd_find_valid_state(&item->target))
+			fsp = &item->target;
+		else if (cmd_find_valid_state(&item->state->current))
+			fsp = &item->state->current;
+		else if (cmd_find_from_client(&fs, item->client, 0) == 0)
+			fsp = &fs;
+		cmdq_insert_hook(fsp != NULL ? fsp->s : NULL, item, fsp,
+		    "command-error");
 		cmdq_guard(item, "error", flags);
-	else
+	} else
 		cmdq_guard(item, "end", flags);
 	return (retval);
 }
