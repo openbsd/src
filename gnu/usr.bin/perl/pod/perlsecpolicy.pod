@@ -488,10 +488,4 @@ omitted from announcements.
 The Perl project is a non-profit volunteer effort. We do not provide
 any monetary rewards for reporting security issues in Perl.
 
-The L<Internet Bug Bounty|https://internetbugbounty.org/> offers monetary
-rewards for some Perl security issues after they are fully resolved. The
-terms of this program are available at L<HackerOne|https://hackerone.com/ibb-perl>.
-
-This program is not run by the Perl project or the Perl security team.
-
 =cut

@@ -136,7 +136,7 @@ is(join(':',200..400), join(':',@foo));
 is($h{'foo'}, '');
 is($h{''}, 'bar');
 
-if($DBM_Class eq 'SDBM_File') {
+if($DBM_Class eq 'SDBM_File' || $DBM_Class eq 'NDBM_File') {
     is(exists $h{goner1}, '');
     is(exists $h{foo}, 1);
 }

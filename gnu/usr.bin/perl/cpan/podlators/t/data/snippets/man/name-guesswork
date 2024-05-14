@@ -4,15 +4,15 @@ No guesswork in NAME
 [input]
 =head1 NAME
 
-"Stuff" (no guesswork)
+function() - man(1) $variable
 
 =head2 THINGS
 
-Oboy, is this C++ "fun" yet! (guesswork)
+function() - man(1) $variable
 
 [output]
-.SH "NAME"
-"Stuff" (no guesswork)
-.SS "\s-1THINGS\s0"
+.SH NAME
+function() \- man(1) $variable
+.SS THINGS
 .IX Subsection "THINGS"
-Oboy, is this \*(C+ \*(L"fun\*(R" yet! (guesswork)
+\&\fBfunction()\fR \- \fBman\fR\|(1) \f(CW$variable\fR

@@ -1,7 +1,9 @@
 #!perl -w
 
 # Check that the current version of perl exists in Module-CoreList data
-
+BEGIN {
+    push @INC, "." if -e "TestInit.pm";
+}
 use TestInit qw(T);
 use strict;
 use Config;

@@ -5,7 +5,7 @@
 
 cc='gcc'
 locincpth=""
-ccflags="-mpoke-function-name -DDYNAMIC_ENV_FETCH -DPERL_USE_SAFE_PUTENV"
+ccflags="-mpoke-function-name -DDYNAMIC_ENV_FETCH"
 prefix='/<Perl$Dir>'
 osname='riscos'
 libpth=' '

@@ -6,7 +6,7 @@
 # we've not yet verified that use works.
 # use strict;
 
-print "1..75\n";
+print "1..109\n";
 my $test = 0;
 
 sub failed {
@@ -55,7 +55,15 @@ sub check_retained_lines {
     # Is there a more efficient way to write this?
     my @expect_lines = (undef, map ({"$_\n"} split "\n", $prog), "\n", ';');
 
-    my @keys = grep {!$seen{$_}} grep { /eval/ } keys %::;
+    # sort in decreasing number so that $keys[0] is the from the most
+    # recent eval. In theory we should only have one, but if something
+    # breaks we might have more than one, and keys will return them in a
+    # random order, so if we dont do this then failing tests will have
+    # inconsistent results from run to run.
+    my @keys = map { $_->[0] }
+               sort { $b->[1] <=> $a->[1] }
+               map { (!$seen{$_} and /eval (\d+)/) ? [ $_, $1 ] : ()  }
+               keys %::;
 
     is ((scalar @keys), 1, "1 new eval");
 
@@ -67,7 +75,10 @@ sub check_retained_lines {
     for (0..$#expect_lines) {
 	is ($got_lines[$_], $expect_lines[$_], "Line $_ is correct");
     }
-    $seen{$keys[0]}++;
+    # if we are "leaking" evals we only want to fail the current test,
+    # so we need to mark them all seen (older code only marked $keys[0]
+    # seen and this caused tests to fail that actually worked properly.)
+    $seen{$_}++ for @keys;
 }
 
 my $name = 'foo';
@@ -90,7 +101,10 @@ for my $sep (' ', "\0") {
   my $prog = "sub $name {
     'This is $name'
   }
-1 +
+# 10 errors to triger a croak during compilation.
+1 +; 1 +; 1 +; 1 +; 1 +;
+1 +; 1 +; 1 +; 1 +; 1 +;
+1 +; # and one more for good measure.
 ";
 
   eval $prog and die;
@@ -108,7 +122,9 @@ foreach my $flags (0x0, 0x800, 0x1000, 0x1800) {
     # This is easier if we accept that the guts eval will add a trailing \n
     # for us
     my $prog = "1 + 1 + 1\n";
-    my $fail = "1 + \n";
+    my $fail = "1 +;\n" x 11; # we need 10 errors to trigger a croak during
+                              # compile, we add an extra one just for good
+                              # measure.
 
     is (eval $prog, 3, 'String eval works');
     if ($flags & 0x800) {
@@ -148,6 +164,26 @@ for (0xA, 0) {
        "evals with BEGIN{die} are correctly cleaned up");
   }
 }
+
+for (0xA, 0) {
+  local $^P = $_;
+
+  eval (my $prog = "UNITCHECK{die}\n");
+  is (!!$@, 1, "Is \$@ true?");
+  is ($@=~/UNITCHECK failed--call queue aborted/, 1,
+      "Error is expected value?");
+
+  if ($_) {
+    check_retained_lines($prog, 'eval that defines UNITCHECK that dies');
+  }
+  else {
+    my @after = grep { /eval/ } keys %::;
+
+    is (scalar @after, 0 + keys %seen,
+       "evals with UNITCHECK{die} are correctly cleaned up");
+  }
+}
+
 
 # [perl #79442] A #line "foo" directive in a string eval was not updating
 # *{"_<foo"} in threaded perls, and was not putting the right lines into

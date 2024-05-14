@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan 30;
+plan 28;
 
 use feature 'defer';
 no warnings 'experimental::defer';
@@ -251,31 +251,15 @@ no warnings 'experimental::defer';
     like($e, qr/^Oopsie \d\n/, 'defer block can throw exception during exception unwind');
 }
 
+# goto
 {
-    my $sub = sub {
-        while(1) {
-            defer { return "retval" }
-            last;
-        }
-        return "wrong";
-    };
+    ok(defined eval 'sub { defer { goto HERE; HERE: 1; } }',
+        'goto forwards within defer {} is permitted') or
+        diag("Failure was $@");
 
-    my $e = defined eval { $sub->(); 1 } ? undef : $@;
-    like($e, qr/^Can't "return" out of a "defer" block /,
-        'Cannot return out of defer block');
-}
-
-{
-    my $sub = sub {
-        while(1) {
-            defer { goto HERE }
-        }
-        HERE:
-    };
-
-    my $e = defined eval { $sub->(); 1 } ? undef : $@;
-    like($e, qr/^Can't "goto" out of a "defer" block /,
-        'Cannot goto out of defer block');
+    ok(defined eval 'sub { defer { HERE: 1; goto HERE; } }',
+        'goto backwards within defer {} is permitted') or
+        diag("Failure was $@");
 }
 
 {
@@ -289,31 +273,6 @@ no warnings 'experimental::defer';
     my $e = defined eval { $sub->(); 1 } ? undef : $@;
     like($e, qr/^Can't "goto" into a "defer" block /,
         'Cannot goto into defer block');
-}
-
-{
-    my $subA = sub {
-        my $subB = sub {};
-        while(1) {
-            defer { goto &$subB }
-        }
-    };
-
-    my $e = defined eval { $subA->(); 1 } ? undef : $@;
-    like($e, qr/^Can't "goto" out of a "defer" block at /,
-        'Cannot goto &SUB out of a "defer" block');
-}
-
-{
-    my $sub = sub {
-        LOOP: while(1) {
-            defer { last LOOP }
-        }
-    };
-
-    my $e = defined eval { $sub->(); 1 } ? undef : $@;
-    like($e, qr/^Can't "last" out of a "defer" block /,
-        'Cannot last out of defer block');
 }
 
 {

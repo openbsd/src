@@ -4,8 +4,6 @@ use Test::More;
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 use JSON::PP;
 
-BEGIN { plan skip_all => "requires Perl 5.008 or later" if $] < 5.008 }
-
 #SKIP_ALL_UNLESS_XS4_COMPAT
 
 package #

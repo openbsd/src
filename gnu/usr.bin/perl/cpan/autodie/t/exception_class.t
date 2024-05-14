@@ -43,7 +43,7 @@ like($@, qr/Bad exception class/, '$@ should contain bad exception class msg');
 ### Tests with well-formed exception class (in Klingon)
 
 my $open_success3 = eval {
-    use pujHa'ghach qw(open);         #' <-- this makes my editor happy
+    use pujHa::ghach qw(open);
     open(my $fh, '<', NO_SUCH_FILE);
     1;
 };
@@ -52,6 +52,6 @@ is($open_success3,undef,"Open should fail");
 
 isnt("$@","",'$@ should not be empty');
 
-isa_ok($@, "pujHa'ghach::Dotlh", '$@ should be a Klingon exception');
+isa_ok($@, "pujHa::ghach::Dotlh", '$@ should be a Klingon exception');
 
 like($@, qr/lujqu'/, '$@ should contain Klingon text');

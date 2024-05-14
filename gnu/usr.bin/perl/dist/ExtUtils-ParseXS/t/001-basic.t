@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 18;
+use Test::More tests => 30;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
@@ -15,7 +15,10 @@ require_ok( 'ExtUtils::ParseXS' );
 chdir('t') if -d 't';
 push @INC, '.';
 
-use Carp; $SIG{__WARN__} = \&Carp::cluck;
+$ExtUtils::ParseXS::DIE_ON_ERROR = 1;
+$ExtUtils::ParseXS::AUTHOR_WARNINGS = 1;
+
+use Carp; #$SIG{__WARN__} = \&Carp::cluck;
 
 # The linker on some platforms doesn't like loading libraries using relative
 # paths. Android won't find relative paths, and system perl on macOS will
@@ -91,6 +94,7 @@ is( $seen, 1, "Line numbers created in output file, as intended" );
     local $/ = undef;
     seek($IN, 0, 0);
     my $filecontents = <$IN>;
+    $filecontents =~ s/^#if defined\(__HP_cc\).*\n#.*\n#endif\n//gm;
     my $good_T_BOOL_re =
 qr|\QXS_EUPXS(XS_XSTest_T_BOOL)\E
 .+?
@@ -188,6 +192,182 @@ my $stderr = PrimitiveCapture::capture_stderr(sub {
 });
 like $stderr, '/No INPUT definition/', "Exercise typemap error";
 }
+#####################################################################
+
+{ # fourth block: https://github.com/Perl/perl5/issues/19661
+  my $pxs = ExtUtils::ParseXS->new;
+  tie *FH, 'Foo';
+  my ($stderr, $filename);
+  {
+    $filename = 'XSFalsePositive.xs';
+    $stderr = PrimitiveCapture::capture_stderr(sub {
+      $pxs->process_file(filename => $filename, output => \*FH, prototypes => 1);
+    });
+    TODO: {
+      local $TODO = 'GH 19661';
+      unlike $stderr,
+        qr/Warning: duplicate function definition 'do' detected in \Q$filename\E/,
+        "No 'duplicate function definition' warning observed in $filename";
+    }
+  }
+  {
+    $filename = 'XSFalsePositive2.xs';
+    $stderr = PrimitiveCapture::capture_stderr(sub {
+      $pxs->process_file(filename => $filename, output => \*FH, prototypes => 1);
+    });
+    TODO: {
+      local $TODO = 'GH 19661';
+      unlike $stderr,
+        qr/Warning: duplicate function definition 'do' detected in \Q$filename\E/,
+        "No 'duplicate function definition' warning observed in $filename";
+      }
+  }
+}
+
+#####################################################################
+
+{ # tight cpp directives
+  my $pxs = ExtUtils::ParseXS->new;
+  tie *FH, 'Foo';
+  my $stderr = PrimitiveCapture::capture_stderr(sub { eval {
+    $pxs->process_file(
+      filename => 'XSTightDirectives.xs',
+      output => \*FH,
+      prototypes => 1);
+  } or warn $@ });
+  my $content = tied(*FH)->{buf};
+  my $count = 0;
+  $count++ while $content=~/^XS_EUPXS\(XS_My_do\)\n\{/mg;
+  is $stderr, undef, "No error expected from TightDirectives.xs";
+  is $count, 2, "Saw XS_MY_do definition the expected number of times";
+}
+
+{ # Alias check
+  my $pxs = ExtUtils::ParseXS->new;
+  tie *FH, 'Foo';
+  my $stderr = PrimitiveCapture::capture_stderr(sub {
+    $pxs->process_file(
+      filename => 'XSAlias.xs',
+      output => \*FH,
+      prototypes => 1);
+  });
+  my $content = tied(*FH)->{buf};
+  my $count = 0;
+  $count++ while $content=~/^XS_EUPXS\(XS_My_do\)\n\{/mg;
+  is $stderr,
+    "Warning: Aliases 'pox' and 'dox', 'lox' have"
+    . " identical values of 1 in XSAlias.xs, line 9\n"
+    . "    (If this is deliberate use a symbolic alias instead.)\n"
+    . "Warning: Conflicting duplicate alias 'pox' changes"
+    . " definition from '1' to '2' in XSAlias.xs, line 10\n"
+    . "Warning: Aliases 'docks' and 'dox', 'lox' have"
+    . " identical values of 1 in XSAlias.xs, line 11\n"
+    . "Warning: Aliases 'xunx' and 'do' have identical values"
+    . " of 0 - the base function in XSAlias.xs, line 13\n",
+    "Saw expected warnings from XSAlias.xs in AUTHOR_WARNINGS mode";
+
+  my $expect = quotemeta(<<'EOF_CONTENT');
+         cv = newXSproto_portable("My::dachs", XS_My_do, file, "$");
+         XSANY.any_i32 = 1;
+         cv = newXSproto_portable("My::do", XS_My_do, file, "$");
+         XSANY.any_i32 = 0;
+         cv = newXSproto_portable("My::docks", XS_My_do, file, "$");
+         XSANY.any_i32 = 1;
+         cv = newXSproto_portable("My::dox", XS_My_do, file, "$");
+         XSANY.any_i32 = 1;
+         cv = newXSproto_portable("My::lox", XS_My_do, file, "$");
+         XSANY.any_i32 = 1;
+         cv = newXSproto_portable("My::pox", XS_My_do, file, "$");
+         XSANY.any_i32 = 2;
+         cv = newXSproto_portable("My::xukes", XS_My_do, file, "$");
+         XSANY.any_i32 = 0;
+         cv = newXSproto_portable("My::xunx", XS_My_do, file, "$");
+         XSANY.any_i32 = 0;
+EOF_CONTENT
+  $expect=~s/(?:\\[ ])+/\\s+/g;
+  $expect=qr/$expect/;
+  like $content, $expect, "Saw expected alias initialization";
+
+  #diag $content;
+}
+{ # Alias check with no dev warnings.
+  my $pxs = ExtUtils::ParseXS->new;
+  tie *FH, 'Foo';
+  my $stderr = PrimitiveCapture::capture_stderr(sub {
+    $pxs->process_file(
+      filename => 'XSAlias.xs',
+      output => \*FH,
+      prototypes => 1,
+      author_warnings => 0);
+  });
+  my $content = tied(*FH)->{buf};
+  my $count = 0;
+  $count++ while $content=~/^XS_EUPXS\(XS_My_do\)\n\{/mg;
+  is $stderr,
+    "Warning: Conflicting duplicate alias 'pox' changes"
+    . " definition from '1' to '2' in XSAlias.xs, line 10\n",
+    "Saw expected warnings from XSAlias.xs";
+
+  my $expect = quotemeta(<<'EOF_CONTENT');
+         cv = newXSproto_portable("My::dachs", XS_My_do, file, "$");
+         XSANY.any_i32 = 1;
+         cv = newXSproto_portable("My::do", XS_My_do, file, "$");
+         XSANY.any_i32 = 0;
+         cv = newXSproto_portable("My::docks", XS_My_do, file, "$");
+         XSANY.any_i32 = 1;
+         cv = newXSproto_portable("My::dox", XS_My_do, file, "$");
+         XSANY.any_i32 = 1;
+         cv = newXSproto_portable("My::lox", XS_My_do, file, "$");
+         XSANY.any_i32 = 1;
+         cv = newXSproto_portable("My::pox", XS_My_do, file, "$");
+         XSANY.any_i32 = 2;
+         cv = newXSproto_portable("My::xukes", XS_My_do, file, "$");
+         XSANY.any_i32 = 0;
+         cv = newXSproto_portable("My::xunx", XS_My_do, file, "$");
+         XSANY.any_i32 = 0;
+EOF_CONTENT
+  $expect=~s/(?:\\[ ])+/\\s+/g;
+  $expect=qr/$expect/;
+  like $content, $expect, "Saw expected alias initialization";
+
+  #diag $content;
+}
+{
+    my $file = $INC{"ExtUtils/ParseXS.pm"};
+    $file=~s!ExtUtils/ParseXS\.pm\z!perlxs.pod!;
+    open my $fh, "<", $file
+        or die "Failed to open '$file' for read:$!";
+    my $pod_version = "";
+    while (defined(my $line= readline($fh))) {
+        if ($line=~/\(also known as C<xsubpp>\)\s+(\d+\.\d+)/) {
+            $pod_version = $1;
+            last;
+        }
+    }
+    close $fh;
+    ok($pod_version, "Found the version from perlxs.pod");
+    is($pod_version, $ExtUtils::ParseXS::VERSION,
+        "The version in perlxs.pod should match the version of ExtUtils::ParseXS");
+}
+
+{
+    my $pxs = ExtUtils::ParseXS->new;
+    tie *FH, 'Foo';
+    my $exception;
+    my $stderr = PrimitiveCapture::capture_stderr(sub {
+        eval {
+            $pxs->process_file(
+                filename => "XSNoMap.xs",
+                output => \*FH,
+               );
+            1;
+        } or $exception = $@;
+    });
+    is($stderr, undef, "should fail to parse");
+    like($exception, qr/Could not find a typemap for C type 'S \*'/,
+         "check we throw rather than trying to deref '2'");
+}
+
 #####################################################################
 
 sub Foo::TIEHANDLE { bless {}, 'Foo' }

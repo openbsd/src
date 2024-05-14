@@ -14,10 +14,10 @@ Bar.
 =head1 NEXT
 
 [output]
-.IP "Foo" 4
+.IP Foo 4
 .IX Item "Foo"
 Bar.
-.SH "NEXT"
+.SH NEXT
 .IX Header "NEXT"
 .SH "POD ERRORS"
 .IX Header "POD ERRORS"

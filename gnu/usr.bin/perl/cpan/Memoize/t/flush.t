@@ -1,42 +1,24 @@
-#!/usr/bin/perl
-
-use lib '..';
-use Memoize 'flush_cache', 'memoize';
-print "1..8\n";
-print "ok 1\n";
-
-
+use strict; use warnings;
+use Memoize qw(flush_cache memoize);
+use Test::More tests => 9;
 
 my $V = 100;
 sub VAL { $V }
 
-memoize 'VAL';
-print "ok 2\n";
+ok eval { memoize('VAL'); 1 }, 'memozing the test function';
 
-my $c1 = VAL();
-print (($c1 == 100) ? "ok 3\n" : "not ok 3\n");
-
+is VAL(), 100, '... with the expected return value';
 $V = 200;
-$c1 = VAL();
-print (($c1 == 100) ? "ok 4\n" : "not ok 4\n");
+is VAL(), 100, '... which is expectedly sticky';
 
-flush_cache('VAL');
-$c1 = VAL();
-print (($c1 == 200) ? "ok 5\n" : "not ok 5\n");
+ok eval { flush_cache('VAL'); 1 }, 'flusing the cache by name works';
 
+is VAL(), 200, '... with the expected new return value';
 $V = 300;
-$c1 = VAL();
-print (($c1 == 200) ? "ok 6\n" : "not ok 6\n");
+is VAL(), 200, '... which is expectedly sticky';
 
-flush_cache(\&VAL);
-$c1 = VAL();
-print (($c1 == 300) ? "ok 7\n" : "not ok 7\n");
+ok eval { flush_cache(\&VAL); 1 }, 'flusing the cache by name works';
 
+is VAL(), 300, '... with the expected new return value';
 $V = 400;
-$c1 = VAL();
-print (($c1 == 300) ? "ok 8\n" : "not ok 8\n");
-
-
-
-
-
+is VAL(), 300, '... which is expectedly sticky';

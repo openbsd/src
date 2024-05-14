@@ -1409,7 +1409,7 @@ SBOX32_STATIC_INLINE void sbox32_seed_state128 (
     const U8 *seed_ch,
     U8 *state_ch
 ) {
-    U32 *seed= (U32 *)seed_ch;
+    const U32 *seed= (const U32 *)seed_ch;
     U32 *state= (U32 *)state_ch;
     U32 *state_cursor = state + 1;
     U32 *sbox32_end = state + 1 + (256 * SBOX32_MAX_LEN);
@@ -1458,7 +1458,7 @@ SBOX32_STATIC_INLINE U32 sbox32_hash_with_state(
     const U8 *key,
     const STRLEN key_len
 ) {
-    U32 *state= (U32 *)state_ch;
+    const U32 *state= (const U32 *)state_ch;
     U32 hash = *state;
     switch (key_len) {
         default: return zaphod32_hash_with_state(state_ch, key, key_len);

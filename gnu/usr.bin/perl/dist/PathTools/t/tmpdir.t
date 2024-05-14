@@ -43,7 +43,7 @@ for ('File::Spec', "File::Spec::Win32") {
     -d $ENV{TMPDIR} && -w _
        or skip "Can't create usable TMPDIR env var", 1;
     my $tmpdir2 = $_->tmpdir;
-    isn't $tmpdir2, $tmpdir1, "$_->tmpdir works with changing env";
+    isnt $tmpdir2, $tmpdir1, "$_->tmpdir works with changing env";
   }
 }
 

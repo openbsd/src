@@ -7,8 +7,6 @@ use warnings;
 
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
-BEGIN { if ($] < 5.008) { require Test::More; Test::More::plan(skip_all => "requires Perl 5.8 or later"); } };
-
 use JSON::PP;
 use Encode qw(encode decode);
 

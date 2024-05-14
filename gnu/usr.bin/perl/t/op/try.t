@@ -326,30 +326,13 @@ no warnings 'experimental::try';
     ok($finally_invoked, 'finally block still invoked for side-effects');
 }
 
-# Complaints about forbidden control flow talk about "finally" blocks, not "defer"
+# Nicer compiletime errors
 {
     my $e;
 
-    $e = defined eval {
-        try {} catch ($e) {} finally { return "123" }
-        1;
-    } ? undef : $@;
-    like($e, qr/^Can't "return" out of a "finally" block /,
-        'Cannot return out of finally block');
-
-    $e = defined eval {
-        try {} catch ($e) {} finally { goto HERE; }
-        HERE: 1;
-    } ? undef : $@;
-    like($e, qr/^Can't "goto" out of a "finally" block /,
-        'Cannot goto out of finally block');
-
-    $e = defined eval {
-        LOOP: { try {} catch ($e) {} finally { last LOOP; } }
-        1;
-    } ? undef : $@;
-    like($e, qr/^Can't "last" out of a "finally" block /,
-        'Cannot last out of finally block');
+    $e = defined eval 'try { A() } catch { B() }; 1;' ? undef : $@;
+    like($e, qr/^catch block requires a \(VAR\) at /,
+        'Parse error for catch without (VAR)');
 }
 
 done_testing;

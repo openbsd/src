@@ -74,6 +74,7 @@ init_perl(int doparse)
         if (!my_perl)
             return 0;
         perl_construct(my_perl);
+        PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
         PL_perl_destruct_level = 1;
     }
     if (!doparse)

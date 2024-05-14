@@ -60,6 +60,7 @@ Test::More->builder->no_ending(1);
 require MyOverload;
 my $cmp = Overloaded::Compare->new("foo", 42);
 my $ify = Overloaded::Ify->new("bar", 23);
+my $part = Overloaded::Partial->new('baz', 0);
 
 my @Tests = (
     [1, '==', 1],
@@ -73,6 +74,8 @@ my @Tests = (
     [$cmp, 'eq', "foo"],
     [$ify, 'eq', "bar"],
     [$ify, "==", 23],
+
+    [$part, '!=', 0, 'expected: anything else'],
 
     [1, "=", 0,  "= is not a valid comparison operator in cmp_ok()"],
     [1, "+=", 0, "+= is not a valid comparison operator in cmp_ok()"],

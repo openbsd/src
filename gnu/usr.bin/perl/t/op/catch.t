@@ -1,5 +1,11 @@
 #!perl
 
+# Test that exception catching is set up early enough when executing
+# pp_entereval() etc. There used to be a gap where an exception could
+# be raised before perl was ready to catch it.
+#
+# RT #105930: eval 'UNITCHECK{die}' crashes inside FETCH
+
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl';

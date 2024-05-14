@@ -9,12 +9,15 @@ BEGIN {
 
 use TestInit qw(T);    # T is chdir to the top level
 use strict;
-use File::Spec;
 
-find_git_or_skip('all');
+my $source_dir = find_git_or_skip('all');
 skip_all(
     "This distro may have modified some files in cpan/. Skipping validation.")
   if $ENV{'PERL_BUILD_PACKAGING'};
+
+skip_all(
+    "This is a shallow clone, this test requires history.")
+  if (-e "$source_dir/.git/shallow");
 
 my $revision_range = ''; # could use 'v5.22.0..' as default, no reason to recheck all previous commits...
 if ( $ENV{TRAVIS} && defined $ENV{TRAVIS_COMMIT_RANGE} ) {
@@ -30,8 +33,7 @@ elsif( $ENV{GITHUB_ACTIONS} && length $ENV{GITHUB_BASE_REF} ) {
     # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables
 
     # we should be on a merge commit, but double check
-    my $null = File::Spec->devnull;
-    my $branch_head = `git rev-parse "HEAD^2" 2>$null`;
+    my $branch_head = `git rev-parse -q --verify "HEAD^2"`;
     chomp $branch_head;
 
     # gives the history of the branch being merged, excluding what it is
@@ -40,7 +42,5 @@ elsif( $ENV{GITHUB_ACTIONS} && length $ENV{GITHUB_BASE_REF} ) {
         if $branch_head;
 }
 
-# This is the subset of "pretty=fuller" that checkAUTHORS.pl actually needs:
-print qx{git log --pretty=format:"Author: %an <%ae>" $revision_range | $^X Porting/checkAUTHORS.pl --tap -};
-
+exec("$^X Porting/updateAUTHORS.pl --validate $revision_range");
 # EOF

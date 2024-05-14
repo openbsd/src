@@ -159,69 +159,156 @@ built-in functions and operators.
 Note that each C<pp_> function is expected to return a pointer to the
 next op. Calls to perl subs (and eval blocks) are handled within the
 same runops loop, and do not consume extra space on the C stack. For
-example, C<pp_entersub> and C<pp_entertry> just push a C<CxSUB> or
-C<CxEVAL> block struct onto the context stack which contain the address
+example, C<pp_entersub> and C<pp_entertry> just push a C<CXt_SUB> or
+C<CXt_EVAL> block struct onto the context stack, which contain the address
 of the op following the sub call or eval. They then return the first op
 of that sub or eval block, and so execution continues of that sub or
-block. Later, a C<pp_leavesub> or C<pp_leavetry> op pops the C<CxSUB>
-or C<CxEVAL>, retrieves the return op from it, and returns it.
+block. Later, a C<pp_leavesub> or C<pp_leavetry> op pops the C<CXt_SUB>
+or C<CXt_EVAL>, retrieves the return op from it, and returns it.
 
 =head2 Exception handing
 
 Perl's exception handing (i.e. C<die> etc.) is built on top of the
 low-level C<setjmp()>/C<longjmp()> C-library functions. These basically
-provide a way to capture the current PC and SP registers and later
-restore them; i.e. a C<longjmp()> continues at the point in code where
-a previous C<setjmp()> was done, with anything further up on the C
-stack being lost. This is why code should always save values using
-C<SAVE_I<FOO>> rather than in auto variables.
-
-The perl core wraps C<setjmp()> etc in the macros C<JMPENV_PUSH> and
-C<JMPENV_JUMP>. The basic rule of perl exceptions is that C<exit>, and
-C<die> (in the absence of C<eval>) perform a C<JMPENV_JUMP(2)>, while
-C<die> within C<eval> does a C<JMPENV_JUMP(3)>.
+provide a way to capture the current PC and SP registers of the CPU and
+later restore them: i.e. a C<longjmp()> continues at the point in code
+where a previous C<setjmp()> was done, with anything further up on the C
+stack being lost. (This is why code should always save values using
+C<SAVE_I<FOO>> rather than in auto variables.)
 
 =for apidoc_section $exceptions
 =for apidoc Amh|void|JMPENV_PUSH|int v
 =for apidoc Amh|void|JMPENV_JUMP|int v
-
-At entry points to perl, such as C<perl_parse()>, C<perl_run()> and
-C<call_sv(cv, G_EVAL)> each does a C<JMPENV_PUSH>, then enter a runops
-loop or whatever, and handle possible exception returns. For a 2
-return, final cleanup is performed, such as popping stacks and calling
-C<CHECK> or C<END> blocks. Amongst other things, this is how scope
-cleanup still occurs during an C<exit>.
-
-If a C<die> can find a C<CxEVAL> block on the context stack, then the
-stack is popped to that level and the return op in that block is
-assigned to C<PL_restartop>; then a C<JMPENV_JUMP(3)> is performed.
-This normally passes control back to the guard. In the case of
-C<perl_run> and C<call_sv>, a non-null C<PL_restartop> triggers
-re-entry to the runops loop. The is the normal way that C<die> or
-C<croak> is handled within an C<eval>.
-
 =for apidoc Amnh|OP *|PL_restartop
 
-Sometimes ops are executed within an inner runops loop, such as tie,
-sort or overload code. In this case, something like
+The perl core wraps C<setjmp()> and C<longjmp()> in the macros
+C<JMPENV_PUSH> and C<JMPENV_JUMP>. The push operation, as well as setting
+a C<setjump()>, stores some temporary state in a struct local to the
+current function (allocated by C<dJMPENV>). In particular, it stores a
+pointer to the previous C<JMPENV> struct, and updates C<PL_top_env> to
+point to the newest one, forming a chain of C<JMPENV> states. Both the
+push and jump can output debugging information under C<perl -Dl>.
 
-    sub FETCH { eval { die } }
+A basic rule of the perl internals is that all interpreter exits are
+achieved via a C<JMPENV_JUMP()>. In particular:
 
-would cause a longjmp right back to the guard in C<perl_run>, popping
-both runops loops, which is clearly incorrect. One way to avoid this is
-for the tie code to do a C<JMPENV_PUSH> before executing C<FETCH> in
-the inner runops loop, but for efficiency reasons, perl in fact just
-sets a flag, using C<CATCH_SET(TRUE)>. The C<pp_require>,
-C<pp_entereval> and C<pp_entertry> ops check this flag, and if true,
-they call C<docatch>, which does a C<JMPENV_PUSH> and starts a new
-runops level to execute the code, rather than doing it on the current
-loop.
+=over
 
-As a further optimisation, on exit from the eval block in the C<FETCH>,
+=item * level 2: perl-level exit() and internals my_exit()
+
+These unwind all stacks, then perform a JMPENV_JUMP(2).
+
+=item * level 3: perl-level die() and internals croak()
+
+If currently within an eval, these pop the context stack back to the
+nearest C<CXt_EVAL> frame, set C<$@> as appropriate, set C<PL_restartop>
+to the op which follows the eval associated with that frame, then perform
+a JMPENV_JUMP(3).
+
+Otherwise, the error message is printed to C<STDERR>, then it is treated
+as an exit: unwind all stacks and perform a JMPENV_JUMP(2).
+
+=item * level 1: unused
+
+JMPENV_JUMP(1) is currently unused except in perl_run().
+
+=item * level 0: normal return.
+
+The zero value is for a normal return from JMPENV_PUSH()
+
+=back
+
+So the perl interpreter expects that, at all times, there is a suitable
+C<JMPENV_PUSH> set up (and at a suitable location within the CPU call
+stack) that can catch and process a 2- or 3-valued jump; and in the case
+of a 3, start a new runops loop to execute C<PL_restartop> and all
+remaining ops (as will be explained shortly).
+
+The entry points to the perl interpreter all provide such a facility. For
+example, perl_parse(),  perl_run() and  C<call_sv(cv, G_EVAL)> all contain
+something similar in outline to:
+
+    {
+        dJMPENV;
+        JMPENV_PUSH(ret);
+        switch (ret) {
+        case 0:                     /* normal return from JMPENV_PUSH() */
+          redo_body:
+            CALLRUNOPS(aTHX);
+            break;
+        case 2:                     /* caught longjmp(2) - exit / die */
+            break;
+        case 3:                     /* caught longjmp(3) - eval { die } */
+            PL_op = PL_restartop;
+            goto redo_body;
+        }
+
+        JMPENV_POP;
+    }
+
+A runops loop such as Perl_runops_standard() (as set up by CALLRUNOPS())
+is, at its heart, just a simple:
+
+    while ((PL_op = PL_op->op_ppaddr(aTHX))) { 1; }
+
+which calls the pp() function associated with each op, relying on that to
+return a pointer to the next op to be executed.
+
+As well as setting catches at the entry points to the perl interpreter,
+you might expect perl to also do a JMPENV_PUSH() in places like
+pp_entertry(), just before some trappable ops are executed. In fact perl
+doesn't normally do this. The drawback with doing it is that with nested
+or recursive code such as:
+
+    sub foo { my ($i) = @_; return if $i < 0; eval { foo(--$i) } }
+
+Then the C stack would quickly overflow with pairs of entries like
+
+    ...
+    #N+3 Perl_runops()
+    #N+2 Perl_pp_entertry()
+    #N+1 Perl_runops()
+    #N   Perl_pp_entertry()
+    ...
+
+Instead, perl puts its guards at the I<callers> of runops loops. Then as
+many nested subroutine calls and evals may be called as you like, all
+within the one runops loop. If an exception occurs, control passes back to
+the caller of the loop, which just immediately restarts a new loop with
+C<PL_restartop> being the next op to call.
+
+So in normal operation where there are several nested evals, there
+will be multiple C<CXt_EVAL> context stack entries, but only a single
+runops loop, guarded by a single C<JMPENV_PUSH>. Each caught eval will pop
+the next C<CXt_EVAL> off the stack, set C<PL_restartop>, then longjmp()
+back to perl_run() and continue.
+
+However, ops are sometimes executed within an inner runops loop, such as
+in a tie, sort, or overload code. In this case, something like
+
+    sub FETCH { eval { die }; .... }
+
+would, unless handled specially, cause a longjmp() right back to the guard
+in perl_run(), popping I<both> the runops loops - which is clearly
+incorrect.  One way to avoid this is for the tie code to do a
+C<JMPENV_PUSH> before executing C<FETCH> in the inner runops loop, but for
+efficiency reasons, perl in fact just temporarily sets a flag using
+C<CATCH_SET(TRUE)>. This flag warns any subsequent C<require>,
+C<entereval> or C<entertry> ops that the caller is no longer promising to
+catch any raised exceptions on their behalf.
+
+These ops check this flag, and if true, they (via docatch()) do a
+C<JMPENV_PUSH> and start a new runops loop to execute the code, rather
+than doing it with the current loop.
+
+As a consequence, on exit from the eval block in the C<FETCH> above,
 execution of the code following the block is still carried on in the
-inner loop. When an exception is raised, C<docatch> compares the
-C<JMPENV> level of the C<CxEVAL> with C<PL_top_env> and if they differ,
-just re-throws the exception. In this way any inner loops get popped.
+inner loop (i.e. the one established by the pp_entertry()). To avoid
+confusion, if a further exception is then raised, docatch() compares the
+C<JMPENV> level of the C<CXt_EVAL> with C<PL_top_env> and if they differ,
+just re-throws the exception. In this way any inner loops get popped,
+and the exception will be dealt with properly by the level which is
+expecting it.
 
 Here's an example.
 
@@ -231,31 +318,31 @@ Here's an example.
     4:     die;
     5: }
 
-To run this code, C<perl_run> is called, which does a C<JMPENV_PUSH>
-then enters a runops loop. This loop executes the eval and tie ops on
-line 1, with the eval pushing a C<CxEVAL> onto the context stack.
+To run this code, perl_run() is called, which does a JMPENV_PUSH(),
+then enters a runops loop. This loop executes the C<entereval> and C<tie>
+ops on line 1, with the C<entereval> pushing a C<CXt_EVAL> onto the context
+stack.
 
-The C<pp_tie> does a C<CATCH_SET(TRUE)>, then starts a second runops
-loop to execute the body of C<TIEARRAY>. When it executes the entertry
-op on line 3, C<CATCH_GET> is true, so C<pp_entertry> calls C<docatch>
-which does a C<JMPENV_PUSH> and starts a third runops loop, which then
-executes the die op. At this point the C call stack looks like this:
+The pp_tie() does a C<CATCH_SET(TRUE)>, then starts a second runops
+loop to execute the body of TIEARRAY(). When the loop executes the
+C<entertry> op on line 3, CATCH_GET() is true, so pp_entertry() calls
+docatch() which does a C<JMPENV_PUSH> and starts a third runops loop,
+which restarts the pp_entertry(), then executes the C<die> op. At this
+point the C call stack looks like this:
 
-    Perl_pp_die
-    Perl_runops      # third loop
-    S_docatch_body
-    S_docatch
-    Perl_pp_entertry
-    Perl_runops      # second loop
-    S_call_body
-    Perl_call_sv
-    Perl_pp_tie
-    Perl_runops      # first loop
-    S_run_body
-    perl_run
-    main
+    #10 Perl_pp_die()
+    #9  Perl_runops()      # runops loop 3
+    #8  S_docatch()        # JMPENV level 2
+    #7  Perl_pp_entertry()
+    #6  Perl_runops()      # runops loop 2
+    #5  Perl_call_sv()
+    #4  Perl_pp_tie()
+    #3  Perl_runops()      # runops loop 1
+    #2  S_run_body()
+    #1  perl_run()         # JMPENV level 1
+    #0  main()
 
-and the context and data stacks, as shown by C<-Dstv>, look like:
+and the context and data stacks, as shown by C<perl -Dstv>, look like:
 
     STACK 0: MAIN
       CX 0: BLOCK  =>
@@ -267,14 +354,14 @@ and the context and data stacks, as shown by C<-Dstv>, look like:
       CX 1: EVAL   => *
     retop=nextstate
 
-The die pops the first C<CxEVAL> off the context stack, sets
+The die() pops the first C<CXt_EVAL> off the context stack, sets
 C<PL_restartop> from it, does a C<JMPENV_JUMP(3)>, and control returns
-to the top C<docatch>. This then starts another third-level runops
-level, which executes the nextstate, pushmark and die ops on line 4. At
-the point that the second C<pp_die> is called, the C call stack looks
-exactly like that above, even though we are no longer within an inner
-eval; this is because of the optimization mentioned earlier. However,
-the context stack now looks like this, ie with the top CxEVAL popped:
+to the C<JMPENV> level set in docatch(). This then starts another
+third-level runops level, which executes the C<nextstate>, C<pushmark> and
+C<die> ops from line 4. At the point that the second pp_die() is called,
+the C call stack looks exactly like that above, even though we are no
+longer within an inner eval. However, the context stack now looks like
+this, i.e. with the top CXt_EVAL popped:
 
     STACK 0: MAIN
       CX 0: BLOCK  =>
@@ -284,35 +371,35 @@ the context stack now looks like this, ie with the top CxEVAL popped:
       CX 0: SUB    =>
       retop=(null)
 
-The die on line 4 pops the context stack back down to the CxEVAL,
+The die() on line 4 pops the context stack back down to the C<CXt_EVAL>,
 leaving it as:
 
     STACK 0: MAIN
       CX 0: BLOCK  =>
 
-As usual, C<PL_restartop> is extracted from the C<CxEVAL>, and a
-C<JMPENV_JUMP(3)> done, which pops the C stack back to the docatch:
+As usual, C<PL_restartop> is extracted from the C<CXt_EVAL>, and a
+JMPENV_JUMP(3) done, which pops the C stack back to the docatch():
 
-    S_docatch
-    Perl_pp_entertry
-    Perl_runops      # second loop
-    S_call_body
-    Perl_call_sv
-    Perl_pp_tie
-    Perl_runops      # first loop
-    S_run_body
-    perl_run
-    main
+    #8  S_docatch()        # JMPENV level 2
+    #7  Perl_pp_entertry()
+    #6  Perl_runops()      # runops loop 2
+    #5  Perl_call_sv()
+    #4  Perl_pp_tie()
+    #3  Perl_runops()      # runops loop 1
+    #2  S_run_body()
+    #1  perl_run()         # JMPENV level 1
+    #0  main()
 
-In  this case, because the C<JMPENV> level recorded in the C<CxEVAL>
-differs from the current one, C<docatch> just does a C<JMPENV_JUMP(3)>
-and the C stack unwinds to:
+In  this case, because the C<JMPENV> level recorded in the C<CXt_EVAL>
+differs from the current one, docatch() just does a JMPENV_JUMP(3)
+to re-throw the exception, and the C stack unwinds to:
 
-    perl_run
-    main
+    #1  perl_run()         # JMPENV level 1
+    #0  main()
 
-Because C<PL_restartop> is non-null, C<run_body> starts a new runops
-loop and execution continues.
+Because C<PL_restartop> is non-null, run_body() starts a new runops
+loop, and execution continues.
+
 
 =head2 INTERNAL VARIABLE TYPES
 

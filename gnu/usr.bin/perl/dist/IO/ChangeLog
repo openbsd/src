@@ -1,3 +1,17 @@
+IO 1.52
+    * Replace "define<tab>" with "define<space>" in poll.h
+
+IO 1.51
+    * #20201 bump dist/IO to v1.51, due to PR 19663
+    * [doc] Update IO::Handle synopsis. Add `my` to examples for better practice.
+    * Update IO::File synopsis. Add `my` to examples for better practice.
+    * Update IO::Dir synopsis. Add `my` to examples for better practice.
+    * IO::Socket::UNIX: Add proper hyperlink in pod
+    * IO::Socket::INET: Use proper hyperlink in pod
+    * IO::Pipe: Use proper hyperlink in pod
+    * IO::Handle: Use proper hyperlink in pod
+    * Fix dist/IO/poll.h for mingw-w64 runtimes 9.0 and later
+
 IO 1.50
    * Bump to 1.50 after cpantesters run.
 

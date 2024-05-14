@@ -30,6 +30,14 @@ my ($opt) = @ARGV;
 
 my $readme_year = readme_year();
 my $v_year = v_year();
+my $gh_readme_year;
+# git on windows renders symbolic links as a file containing
+# the file linked to
+if (-e "../.github/README.md" && -s "../.github/README.md" > 80)
+{
+  $gh_readme_year = readme_year(".github/README.md");
+}
+
 
 # Check that both copyright dates are up-to-date, but only if requested, so
 # that tests still pass for people intentionally working on older versions:
@@ -38,12 +46,22 @@ if ($opt eq '--now')
   my $current_year = (gmtime)[5] + 1900;
   is $v_year, $current_year, 'perl -v copyright includes current year';
   is $readme_year, $current_year, 'README copyright includes current year';
+  if ($gh_readme_year)
+  {
+    is ($gh_readme_year, $current_year,
+        '.github/README.md copyright includes current year');
+  }
 }
 
 # Otherwise simply check that the two copyright dates match each other:
 else
 {
   is $readme_year, $v_year, 'README and perl -v copyright dates match';
+  if ($gh_readme_year)
+  {
+    is ($gh_readme_year, $v_year,
+        '.github/README.md and perl -v copyright dates match');
+  }
 }
 
 done_testing;
@@ -52,15 +70,16 @@ done_testing;
 sub readme_year
 # returns the latest copyright year from the top-level README file
 {
+  my $file = shift || "README";
 
-  open my $readme, '<', '../README' or die "Opening README failed: $!";
+  open my $readme, '<', "../$file" or die "Opening $file failed: $!";
 
   # The copyright message is the first paragraph:
   local $/ = '';
   my $copyright_msg = <$readme>;
 
   my ($year) = $copyright_msg =~ /.*\b(\d{4,})/s
-      or die "Year not found in README copyright message '$copyright_msg'";
+      or die "Year not found in $file copyright message '$copyright_msg'";
 
   $year;
 }

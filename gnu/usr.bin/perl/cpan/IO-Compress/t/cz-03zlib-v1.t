@@ -703,7 +703,8 @@ EOM
     ($GOT, $status) = $k->inflate($rest) ;
 
     # Z_STREAM_END returned by 1.12.2, Z_DATA_ERROR for older zlib
-    if (ZLIB_VERNUM >= ZLIB_1_2_12_0)
+    # always Z_STREAM_ENDin zlib_ng
+    if (ZLIB_VERNUM >= ZLIB_1_2_12_0 || Compress::Raw::Zlib::is_zlibng)
     {
         cmp_ok $status, '==', Z_STREAM_END ;
     }

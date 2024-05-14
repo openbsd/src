@@ -197,7 +197,7 @@ have been included.
 
 =back
 
-F<regnodes.h> defines an array called C<regarglen[]> which gives the size
+F<regnodes.h> defines an array called C<PL_regnode_arg_len[]> which gives the size
 of each opcode in units of C<size regnode> (4-byte). A macro is used
 to calculate the size of an C<EXACT> node based on its C<str_len> field.
 
@@ -214,40 +214,113 @@ and equivalents for reading and setting the arguments; and C<STR_LEN()>,
 C<STRING()> and C<OPERAND()> for manipulating strings and regop bearing
 types.
 
-=head3 What regop is next?
+=head3 What regnode is next?
 
-There are three distinct concepts of "next" in the regex engine, and
-it is important to keep them clear.
+There are two distinct concepts of "next regnode" in the regex engine,
+and it is important to keep them distinct in your thinking as they
+overlap conceptually in many places, but where they don't overlap the
+difference is critical. For the majority of regnode types the two
+concepts are (nearly) identical in practice. The two types are
+C<REGNODE_AFTER> which is used heavily during compilation but only
+occasionally during execution and C<regnext> which is used heavily
+during execution, and only occasionally during compilation.
 
 =over 4
 
-=item *
+=item "REGNODE_AFTER"
 
-There is the "next regnode" from a given regnode, a value which is
-rarely useful except that sometimes it matches up in terms of value
-with one of the others, and that sometimes the code assumes this to
-always be so.
+This is the "positionally next regnode" in the compiled regex program.
+For the smaller regnode types it is C<regnode_ptr+1> under the hood, but
+as regnode sizes vary and can change over time we offer macros which
+hide the gory details.
 
-=item *
+It is heavily used in the compiler phase but is only used by a few
+select regnode types in the execution phase. It is also heavily used in
+the code for dumping the regexp program for debugging.
 
-There is the "next regop" from a given regop/regnode. This is the
-regop physically located after the current one, as determined by
-the size of the current regop. This is often useful, such as when
-dumping the structure we use this order to traverse. Sometimes the code
-assumes that the "next regnode" is the same as the "next regop", or in
-other words assumes that the sizeof a given regop type is always going
-to be one regnode large.
+There are a selection of macros which can be used to compute this as
+efficiently as possible depending on the circumstances. The canonical
+macro is C<REGNODE_AFTER()>, which is the most powerful and should handle
+any case we have, but is also potentially the slowest. There are two
+additional macros for the special case that you KNOW the current regnode
+size is constant, and you know its type or opcode. In which case you can
+use C<REGNODE_AFTER_opcode()> or C<REGNODE_AFTER_type()>.
 
-=item *
+In older versions of the regex engine C<REGNODE_AFTER()> was called
+C<NEXTOPER> but this was found to be confusing and it was renamed. There
+is also a C<REGNODE_BEFORE()>, but it is unsafe and should not be used
+in new code.
 
-There is the "regnext" from a given regop. This is the regop which
-is reached by jumping forward by the value of C<NEXT_OFF()>,
-or in a few cases for longer jumps by the C<arg1> field of the C<regnode_1>
-structure. The subroutine C<regnext()> handles this transparently.
-This is the logical successor of the node, which in some cases, like
-that of the C<BRANCH> regop, has special meaning.
+=item "regnext"
+
+This is the regnode which can be reached by jumping forward by the value
+of the C<NEXT_OFF()> member of the regnode, or in a few cases for longer
+jumps by the C<arg1> field of the C<regnode_1> structure. The subroutine
+C<regnext()> handles this transparently. In the majority of cases the
+C<regnext> for a regnode is the regnode which should be executed after the
+current one has successfully matched, but in some cases this may not be
+true. In loop control and branch control regnode types the regnext may
+signify something special, for BRANCH nodes C<regnext> is the
+next BRANCH that should be executed if the current one fails execution,
+and some loop control regnodes set the regnext to be the end of the loop
+so they can jump to their cleanup if the current iteration fails to match.
 
 =back
+
+Most regnode types do not create a branch in the execution flow, and
+leaving aside optimizations the two concepts of "next" are the same.
+For instance the C<regnext> and C<REGNODE_AFTER> of a SBOL opcode are
+the same during compilation phase. The main place this is not true is
+C<BRANCH> regnodes where the C<REGNODE_AFTER> represents the start of
+the pattern in the branch and the C<regnext> represents the linkage to
+the next BRANCH should this one fail to match, or 0 if it is the last
+branch. The looping logic for quantifiers also makes similar use of
+the distinction between the two types, with C<REGNODE_AFTER> being the
+inside of the loop construct, and the C<regnext> pointing at the end
+of the loop.
+
+During compilation the engine may not know what the regnext is for a
+given node, so during compilation C<regnext> is only used where it must
+be used and is known to be correct. At the very end of the compilation
+phase we walk the regex program and correct the regnext data as
+appropriate, and also perform various optimizations which may result in
+regnodes that were required during construction becoming redundant, or
+we may replace a large regnode with a much smaller one and filling in the
+gap with OPTIMIZED regnodes. Thus we might start with something like
+this:
+
+    BRANCH
+      EXACT "foo"
+    BRANCH
+      EXACT "bar"
+    EXACT "!"
+
+and replace it with something like:
+
+    TRIE foo|bar
+    OPTIMIZED
+    OPTIMIZED
+    OPTIMIZED
+    EXACT "!"
+
+the C<REGNODE_AFTER> for the C<TRIE> node would be an C<OPTIMIZED>
+regnode, and in theory the C<regnext> would be the same as the
+C<REGNODE_AFTER>. But it would be inefficient to execute the OPTIMIZED
+regnode as a noop three times, so the optimizer fixes the C<regnext> so
+such nodes are skipped during execution phase.
+
+During execution phases we use the C<regnext()> almost exclusively, and
+only use C<REGNODE_AFTER> in special cases where it has a well defined
+meaning for a given regnode type. For instance /x+/ results in
+
+    PLUS
+        EXACT "x"
+    END
+
+the C<regnext> of the C<PLUS> regnode is the C<END> regnode, and the
+C<REGNODE_AFTER> of the C<PLUS> regnode is the C<EXACT> regnode. The
+C<regnext> and C<REGNODE_AFTER> of the C<EXACT> regnode is the
+C<END> regnode.
 
 =head1 Process Overview
 
@@ -795,9 +868,8 @@ specific to each engine.
 
 There are two structures used to store a compiled regular expression.
 One, the C<regexp> structure described in L<perlreapi> is populated by
-the engine currently being. used and some of its fields read by perl to
+the engine currently being used and some of its fields read by perl to
 implement things such as the stringification of C<qr//>.
-
 
 The other structure is pointed to by the C<regexp> struct's
 C<pprivate> and is in addition to C<intflags> in the same struct

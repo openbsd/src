@@ -88,4 +88,65 @@ while (my ($type, $enum) = each %types) {
     }
 }
 
+{
+    package String;
+    use overload q("")=>sub { return $_[0]->val };
+    sub is_string_amg { 1 }
+    sub val { "string" }
+}
+{
+    package Num;
+    sub is_string_amg { 1 }
+    use overload q(0+) => sub { return $_[0]->val };
+    sub val { 12345 };
+}
+{
+    package NumNoFallback;
+    sub is_string_amg { undef }
+    use overload q(0+) => sub { return $_[0]->val }, fallback=>0;
+    sub val { 1234 };
+}
+{
+    package NumWithFallback;
+    sub is_string_amg { 1 }
+    use overload q(0+)=>sub { return $_[0]->val }, fallback=>1;
+    sub val { 123456 };
+}
+{
+    package NoMethod;
+    use overload q(nomethod)=> sub { $_[0]->val };
+    sub is_string_amg { 1 }
+    sub val { return(ref($_[0])||$_[0]); };
+}
+{
+    package NoOverload;
+    sub is_string_amg { 0 }
+}
+
+
+{
+    # these should be false
+
+    my $string_amg = 0x0a;
+    my $unary= 8;
+
+    foreach my $class (
+        "String",
+        "Num",
+        "NumNoFallback",
+        "NumWithFallback",
+        "NoMethod",
+        "NoOverload",
+    ) {
+        my $item= bless {}, $class;
+        my $str= eval { "$item" };
+        my $std_str= overload::StrVal($item);
+        my $ok= does_amagic_apply($item, $string_amg, $unary);
+        my $want = $class->is_string_amg;
+        is(0+$ok, $want//0, "amagic_applies($class,string_amg,AMGf_unary) works as expected");
+        is($str, $want ? $class->val : defined ($want) ? $std_str : undef,
+            "Stringified var matches amagic_applies()");
+    }
+}
+
 done_testing;

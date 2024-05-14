@@ -67,5 +67,5 @@ int dummy_parser_warning(void)
   my_p_bufptr = &PL_bufptr;
   PL_bufptr = my_bufptr;
   PL_bufptr = *my_p_bufptr;
-  return &PL_bufptr != NULL;
+  return my_p_bufptr != NULL;
 }

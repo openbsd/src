@@ -10,7 +10,7 @@ sub ok
     print "not ok $no\n" unless $ok ;
 }
 
-my $name = "test.gz";
+my $name = "test_getc_$$.gz";
 
 print "1..10\n";
 

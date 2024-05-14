@@ -33,4 +33,11 @@ use overload
     $_[0]->{num};
   };
 
+package Overloaded::Partial;
+
+our @ISA = qw(Overloaded);
+use overload
+  q{""} => sub { $_[0]->{string} },
+  q{!=} => sub { $_[0]->{num} != $_[1] };
+
 1;

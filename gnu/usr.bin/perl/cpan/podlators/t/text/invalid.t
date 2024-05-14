@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 #
 # Test Pod::Text with a document that produces only errors.
 #
@@ -6,14 +6,14 @@
 # section, which previously led to internal errors because state variables
 # weren't properly initialized.  See CPAN RT #88724.
 #
-# Copyright 2013, 2018, 2020 Russ Allbery <rra@cpan.org>
+# Copyright 2013, 2018, 2020, 2022 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.008;
+use 5.010;
 use strict;
 use warnings;
 
@@ -54,8 +54,7 @@ sub check_document {
 }
 
 # Document whose only content is an invalid command.
-## no critic (ValuesAndExpressions::ProhibitEscapedCharacters)
-my $invalid_char = chr utf8::unicode_to_native(0xa0);
+my $invalid_char = chr(utf8::unicode_to_native(0xa0));
 check_document("=$invalid_char", 'invalid command');
 
 # Document containing only a =cut.

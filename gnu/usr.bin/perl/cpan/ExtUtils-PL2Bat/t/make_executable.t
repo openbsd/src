@@ -13,6 +13,11 @@ my @test_vals = ( 0, 1, 2, 3, -1, -2, 65535, 65536, 65537, 47, 100, 200, 255, 25
 
 plan($OSNAME eq 'MSWin32' ? ( tests => (($#test_vals+1)*5)+2 ) : ( skip_all => 'Only usable on Windows' ));
 
+# the method of execution of the test script is geared to cmd.exe so ensure
+# this is used in case the user have some non-standard shell.
+# E.g. TCC/4NT doesn't quite handle the invocation correctly producing errors.
+$ENV{COMSPEC} = "$ENV{SystemRoot}\\System32\\cmd.exe";
+
 my $perl_in_fname = 'test_perl_source';
 
 open my $out, '>', $perl_in_fname or die qq{Couldn't create source file ("$perl_in_fname"): $!};

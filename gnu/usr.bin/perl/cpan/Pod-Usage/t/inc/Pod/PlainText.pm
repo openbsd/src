@@ -37,6 +37,12 @@ BEGIN {
       require Symbol;
       Symbol->import;
    }
+   if ($] < 5.008 || ord "A" == 65) {
+      *to_native = sub { return chr shift; };
+   }
+   else {
+      *to_native = sub { return chr utf8::unicode_to_native(shift); };
+   }
 }
 
 ############################################################################
@@ -52,71 +58,71 @@ BEGIN {
     'gt'        =>    '>',      # right chevron, greater-than
     'quot'      =>    '"',      # double quote
 
-    "Aacute"    =>    "\xC1",   # capital A, acute accent
-    "aacute"    =>    "\xE1",   # small a, acute accent
-    "Acirc"     =>    "\xC2",   # capital A, circumflex accent
-    "acirc"     =>    "\xE2",   # small a, circumflex accent
-    "AElig"     =>    "\xC6",   # capital AE diphthong (ligature)
-    "aelig"     =>    "\xE6",   # small ae diphthong (ligature)
-    "Agrave"    =>    "\xC0",   # capital A, grave accent
-    "agrave"    =>    "\xE0",   # small a, grave accent
-    "Aring"     =>    "\xC5",   # capital A, ring
-    "aring"     =>    "\xE5",   # small a, ring
-    "Atilde"    =>    "\xC3",   # capital A, tilde
-    "atilde"    =>    "\xE3",   # small a, tilde
-    "Auml"      =>    "\xC4",   # capital A, dieresis or umlaut mark
-    "auml"      =>    "\xE4",   # small a, dieresis or umlaut mark
-    "Ccedil"    =>    "\xC7",   # capital C, cedilla
-    "ccedil"    =>    "\xE7",   # small c, cedilla
-    "Eacute"    =>    "\xC9",   # capital E, acute accent
-    "eacute"    =>    "\xE9",   # small e, acute accent
-    "Ecirc"     =>    "\xCA",   # capital E, circumflex accent
-    "ecirc"     =>    "\xEA",   # small e, circumflex accent
-    "Egrave"    =>    "\xC8",   # capital E, grave accent
-    "egrave"    =>    "\xE8",   # small e, grave accent
-    "ETH"       =>    "\xD0",   # capital Eth, Icelandic
-    "eth"       =>    "\xF0",   # small eth, Icelandic
-    "Euml"      =>    "\xCB",   # capital E, dieresis or umlaut mark
-    "euml"      =>    "\xEB",   # small e, dieresis or umlaut mark
-    "Iacute"    =>    "\xCD",   # capital I, acute accent
-    "iacute"    =>    "\xED",   # small i, acute accent
-    "Icirc"     =>    "\xCE",   # capital I, circumflex accent
-    "icirc"     =>    "\xEE",   # small i, circumflex accent
-    "Igrave"    =>    "\xCD",   # capital I, grave accent
-    "igrave"    =>    "\xED",   # small i, grave accent
-    "Iuml"      =>    "\xCF",   # capital I, dieresis or umlaut mark
-    "iuml"      =>    "\xEF",   # small i, dieresis or umlaut mark
-    "Ntilde"    =>    "\xD1",   # capital N, tilde
-    "ntilde"    =>    "\xF1",   # small n, tilde
-    "Oacute"    =>    "\xD3",   # capital O, acute accent
-    "oacute"    =>    "\xF3",   # small o, acute accent
-    "Ocirc"     =>    "\xD4",   # capital O, circumflex accent
-    "ocirc"     =>    "\xF4",   # small o, circumflex accent
-    "Ograve"    =>    "\xD2",   # capital O, grave accent
-    "ograve"    =>    "\xF2",   # small o, grave accent
-    "Oslash"    =>    "\xD8",   # capital O, slash
-    "oslash"    =>    "\xF8",   # small o, slash
-    "Otilde"    =>    "\xD5",   # capital O, tilde
-    "otilde"    =>    "\xF5",   # small o, tilde
-    "Ouml"      =>    "\xD6",   # capital O, dieresis or umlaut mark
-    "ouml"      =>    "\xF6",   # small o, dieresis or umlaut mark
-    "szlig"     =>    "\xDF",   # small sharp s, German (sz ligature)
-    "THORN"     =>    "\xDE",   # capital THORN, Icelandic
-    "thorn"     =>    "\xFE",   # small thorn, Icelandic
-    "Uacute"    =>    "\xDA",   # capital U, acute accent
-    "uacute"    =>    "\xFA",   # small u, acute accent
-    "Ucirc"     =>    "\xDB",   # capital U, circumflex accent
-    "ucirc"     =>    "\xFB",   # small u, circumflex accent
-    "Ugrave"    =>    "\xD9",   # capital U, grave accent
-    "ugrave"    =>    "\xF9",   # small u, grave accent
-    "Uuml"      =>    "\xDC",   # capital U, dieresis or umlaut mark
-    "uuml"      =>    "\xFC",   # small u, dieresis or umlaut mark
-    "Yacute"    =>    "\xDD",   # capital Y, acute accent
-    "yacute"    =>    "\xFD",   # small y, acute accent
-    "yuml"      =>    "\xFF",   # small y, dieresis or umlaut mark
+    "Aacute"    =>    to_native(0xC1),   # capital A, acute accent
+    "aacute"    =>    to_native(0xE1),   # small a, acute accent
+    "Acirc"     =>    to_native(0xC2),   # capital A, circumflex accent
+    "acirc"     =>    to_native(0xE2),   # small a, circumflex accent
+    "AElig"     =>    to_native(0xC6),   # capital AE diphthong (ligature)
+    "aelig"     =>    to_native(0xE6),   # small ae diphthong (ligature)
+    "Agrave"    =>    to_native(0xC0),   # capital A, grave accent
+    "agrave"    =>    to_native(0xE0),   # small a, grave accent
+    "Aring"     =>    to_native(0xC5),   # capital A, ring
+    "aring"     =>    to_native(0xE5),   # small a, ring
+    "Atilde"    =>    to_native(0xC3),   # capital A, tilde
+    "atilde"    =>    to_native(0xE3),   # small a, tilde
+    "Auml"      =>    to_native(0xC4),   # capital A, dieresis or umlaut mark
+    "auml"      =>    to_native(0xE4),   # small a, dieresis or umlaut mark
+    "Ccedil"    =>    to_native(0xC7),   # capital C, cedilla
+    "ccedil"    =>    to_native(0xE7),   # small c, cedilla
+    "Eacute"    =>    to_native(0xC9),   # capital E, acute accent
+    "eacute"    =>    to_native(0xE9),   # small e, acute accent
+    "Ecirc"     =>    to_native(0xCA),   # capital E, circumflex accent
+    "ecirc"     =>    to_native(0xEA),   # small e, circumflex accent
+    "Egrave"    =>    to_native(0xC8),   # capital E, grave accent
+    "egrave"    =>    to_native(0xE8),   # small e, grave accent
+    "ETH"       =>    to_native(0xD0),   # capital Eth, Icelandic
+    "eth"       =>    to_native(0xF0),   # small eth, Icelandic
+    "Euml"      =>    to_native(0xCB),   # capital E, dieresis or umlaut mark
+    "euml"      =>    to_native(0xEB),   # small e, dieresis or umlaut mark
+    "Iacute"    =>    to_native(0xCD),   # capital I, acute accent
+    "iacute"    =>    to_native(0xED),   # small i, acute accent
+    "Icirc"     =>    to_native(0xCE),   # capital I, circumflex accent
+    "icirc"     =>    to_native(0xEE),   # small i, circumflex accent
+    "Igrave"    =>    to_native(0xCD),   # capital I, grave accent
+    "igrave"    =>    to_native(0xED),   # small i, grave accent
+    "Iuml"      =>    to_native(0xCF),   # capital I, dieresis or umlaut mark
+    "iuml"      =>    to_native(0xEF),   # small i, dieresis or umlaut mark
+    "Ntilde"    =>    to_native(0xD1),   # capital N, tilde
+    "ntilde"    =>    to_native(0xF1),   # small n, tilde
+    "Oacute"    =>    to_native(0xD3),   # capital O, acute accent
+    "oacute"    =>    to_native(0xF3),   # small o, acute accent
+    "Ocirc"     =>    to_native(0xD4),   # capital O, circumflex accent
+    "ocirc"     =>    to_native(0xF4),   # small o, circumflex accent
+    "Ograve"    =>    to_native(0xD2),   # capital O, grave accent
+    "ograve"    =>    to_native(0xF2),   # small o, grave accent
+    "Oslash"    =>    to_native(0xD8),   # capital O, slash
+    "oslash"    =>    to_native(0xF8),   # small o, slash
+    "Otilde"    =>    to_native(0xD5),   # capital O, tilde
+    "otilde"    =>    to_native(0xF5),   # small o, tilde
+    "Ouml"      =>    to_native(0xD6),   # capital O, dieresis or umlaut mark
+    "ouml"      =>    to_native(0xF6),   # small o, dieresis or umlaut mark
+    "szlig"     =>    to_native(0xDF),   # small sharp s, German (sz ligature)
+    "THORN"     =>    to_native(0xDE),   # capital THORN, Icelandic
+    "thorn"     =>    to_native(0xFE),   # small thorn, Icelandic
+    "Uacute"    =>    to_native(0xDA),   # capital U, acute accent
+    "uacute"    =>    to_native(0xFA),   # small u, acute accent
+    "Ucirc"     =>    to_native(0xDB),   # capital U, circumflex accent
+    "ucirc"     =>    to_native(0xFB),   # small u, circumflex accent
+    "Ugrave"    =>    to_native(0xD9),   # capital U, grave accent
+    "ugrave"    =>    to_native(0xF9),   # small u, grave accent
+    "Uuml"      =>    to_native(0xDC),   # capital U, dieresis or umlaut mark
+    "uuml"      =>    to_native(0xFC),   # small u, dieresis or umlaut mark
+    "Yacute"    =>    to_native(0xDD),   # capital Y, acute accent
+    "yacute"    =>    to_native(0xFD),   # small y, acute accent
+    "yuml"      =>    to_native(0xFF),   # small y, dieresis or umlaut mark
 
-    "lchevron"  =>    "\xAB",   # left chevron (double less than)
-    "rchevron"  =>    "\xBB",   # right chevron (double greater than)
+    "lchevron"  =>    to_native(0xAB),   # left chevron (double less than)
+    "rchevron"  =>    to_native(0xBB),   # right chevron (double greater than)
 );
 
 

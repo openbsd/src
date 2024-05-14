@@ -15,7 +15,7 @@ die("Getopt::Long version $want_version required--this is only version ".
     $Getopt::Long::VERSION)
   unless $Getopt::Long::VERSION ge $want_version;
 
-print "1..12\n";
+print "1..18\n";
 
 @ARGV = qw(-Foo -baR --foo bar);
 undef $opt_baR;
@@ -43,3 +43,26 @@ print ($rv ? "" : "not "); print "ok 10\n";
 print ("@ARGV" eq 'file' ? "" : "not ", "ok 11\n");
 ( $HELP && $FOO && !$BAR && $FILE eq 'foo' && $NO == 5 )
     ? print "" : print "not "; print "ok 12\n";
+
+# Test behaviour when the same option name is given twice, but not an multi-value option.
+# The option given later on the command line is used.
+#
+{
+    my $foo;
+
+    @ARGV = qw(--foo a --foo b);
+    $rd = GetOptions('foo=s' => \$foo);
+    print ($rv ? "" : "not "); print "ok 13\n";
+    print ($foo eq 'b' ? "" : "not ", "ok 14\n");
+
+    @ARGV = qw(--no-foo --foo);
+    $rd = GetOptions('foo!' => \$foo);
+    print ($rv ? "" : "not "); print "ok 15\n";
+    print ($foo eq '1' ? "" : "not ", "ok 16\n");
+
+    @ARGV = qw(--foo --no-foo);
+    $rd = GetOptions('foo!' => \$foo);
+    print ($rv ? "" : "not "); print "ok 17\n";
+    # Check it is set to an explicit 0.
+    print ($foo eq '0' ? "" : "not ", "ok 18\n");
+}

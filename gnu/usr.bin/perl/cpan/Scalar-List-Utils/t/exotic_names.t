@@ -40,8 +40,8 @@ sub caller3_ok {
         ),
         (
             $ord > 255                    ? unpack('H*', pack 'C0U', $ord )
-            : ($ord > 0x1f and $ord < 0x7f) ? sprintf "%c", $ord
-            :                                 sprintf '\%o', $ord
+            : (chr $ord =~ /[[:print:]]/) ? sprintf "%c", $ord
+            :                               sprintf '\%o', $ord
         ),
     );
 

@@ -48,7 +48,11 @@ foreach (qw(substcont split leavesub)) {
 is_deeply ([keys %debug], [], 'walkoptree_debug was not called');
 
 B::walkoptree_debug(2);
-is (B::walkoptree_debug, 1, 'walkoptree_debug() is 1');
+is (B::walkoptree_debug(), 1, 'walkoptree_debug() is 1');
+B::walkoptree_debug(0);
+is (B::walkoptree_debug(), 0, 'walkoptree_debug() is 0');
+B::walkoptree_debug(1);
+is (B::walkoptree_debug(), 1, 'walkoptree_debug() is 1 again');
 %seen = ();
 
 B::walkoptree(B::svref_2object($victim)->ROOT, "pie");

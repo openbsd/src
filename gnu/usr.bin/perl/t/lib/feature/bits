@@ -6,8 +6,7 @@ use feature 'say';
 BEGIN { %^H = () }
 say "Fail";
 EXPECT
-String found where operator expected at - line 3, near "say "Fail""
-	(Do you need to predeclare say?)
+String found where operator expected (Do you need to predeclare "say"?) at - line 3, near "say "Fail""
 syntax error at - line 3, near "say "Fail""
 Execution of - aborted due to compilation errors.
 ########
@@ -28,8 +27,7 @@ say "Hello";
 no feature 'say';
 say "Goodbye";
 EXPECT
-String found where operator expected at - line 4, near "say "Goodbye""
-	(Do you need to predeclare say?)
+String found where operator expected (Do you need to predeclare "say"?) at - line 4, near "say "Goodbye""
 syntax error at - line 4, near "say "Goodbye""
 Execution of - aborted due to compilation errors.
 ########
@@ -39,7 +37,6 @@ say "Hello";
 BEGIN { delete $^H{feature_say}; }
 say "Goodbye";
 EXPECT
-String found where operator expected at - line 4, near "say "Goodbye""
-	(Do you need to predeclare say?)
+String found where operator expected (Do you need to predeclare "say"?) at - line 4, near "say "Goodbye""
 syntax error at - line 4, near "say "Goodbye""
 Execution of - aborted due to compilation errors.

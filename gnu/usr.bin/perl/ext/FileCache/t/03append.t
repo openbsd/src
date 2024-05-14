@@ -2,7 +2,7 @@
 
 use FileCache maxopen => 2;
 our @files;
-BEGIN { @files = qw(foo bar baz quux Foo_Bar) }
+BEGIN { @files = map { "append_$_" } qw(foo bar baz quux Foo_Bar) }
 END   { 1 while unlink @files }
 
 use Test::More tests => 2;

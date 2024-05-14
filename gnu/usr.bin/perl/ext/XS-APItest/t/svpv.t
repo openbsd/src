@@ -2,11 +2,11 @@
 
 BEGIN { require 'charset_tools.pl'; }
 
-use Test::More tests => 35;
+use Test::More tests => 43;
 
 use XS::APItest;
 
-for my $func ('SvPVbyte', 'SvPVutf8') {
+for my $func ('SvPVbyte_nolen', 'SvPVutf8_nolen') {
  $g = *glob;
  $r = \1;
  is &$func($g), '*main::glob', "$func(\$glob_copy)";
@@ -30,10 +30,14 @@ tie my $scalar_bin, 'TieScalarCounter', $data_bin;
 do { my $fetch = $scalar_bin };
 is tied($scalar_bin)->{fetch}, 1;
 is tied($scalar_bin)->{store}, 0;
-is SvPVutf8_nomg($scalar_bin), $individual_B6_utf8_bytes;
+my $len;
+is SvPVutf8_nomg($scalar_bin, $len), $individual_B6_utf8_bytes;
+is $len, length($individual_B6_utf8_bytes), "check len set by SvPVutf8_nomg";
 is tied($scalar_bin)->{fetch}, 1;
 is tied($scalar_bin)->{store}, 0;
-is SvPVbyte_nomg($scalar_bin), $B6;
+undef $len;
+is SvPVbyte_nomg($scalar_bin, $len), $B6;
+is $len, length($B6), "check len set by SvPVbyte_nomg";
 is tied($scalar_bin)->{fetch}, 1;
 is tied($scalar_bin)->{store}, 0;
 
@@ -43,23 +47,34 @@ tie my $scalar_uni, 'TieScalarCounter', $data_uni;
 do { my $fetch = $scalar_uni };
 is tied($scalar_uni)->{fetch}, 1;
 is tied($scalar_uni)->{store}, 0;
-is SvPVbyte_nomg($scalar_uni), $B6;
+undef $len;
+is SvPVbyte_nomg($scalar_uni, $len), $B6;
+is $len, length($B6), "cheeck len set by SvPVbyte_nomg";
 is tied($scalar_uni)->{fetch}, 1;
 is tied($scalar_uni)->{store}, 0;
-is SvPVutf8_nomg($scalar_uni), $individual_B6_utf8_bytes;
+undef $len;
+is SvPVutf8_nomg($scalar_uni, $len), $individual_B6_utf8_bytes;
+is $len, length($individual_B6_utf8_bytes), "check len set by SvPVutf8_nomg";
 is tied($scalar_uni)->{fetch}, 1;
 is tied($scalar_uni)->{store}, 0;
 
-eval 'SvPVbyte(*{chr 256})';
-like $@, qr/^Wide character/, 'SvPVbyte fails on Unicode glob';
+undef $len;
+is SvPVutf8($scalar_bin, $len), $individual_B6_utf8_bytes;
+is $len, length $individual_B6_utf8_bytes;
+undef $len;
+is SvPVutf8($scalar_uni, $len), $individual_B6_utf8_bytes;
+is $len, length $individual_B6_utf8_bytes, "check len set by SvPVutf8";
+
+eval 'SvPVbyte_nolen(*{chr 256})';
+like $@, qr/^Wide character/, 'SvPVbyte_nolen fails on Unicode glob';
 package r { use overload '""' => sub { substr "\x{100}\xff", -1 } }
-is SvPVbyte(bless [], r::), "\xff",
-  'SvPVbyte on ref returning downgradable utf8 string';
+is SvPVbyte_nolen(bless [], r::), "\xff",
+  'SvPVbyte_nolen on ref returning downgradable utf8 string';
 
 sub TIESCALAR { bless \(my $thing = pop), shift }
 sub FETCH { ${ +shift } }
 tie $tyre, main => bless [], r::;
-is SvPVbyte($tyre), "\xff",
+is SvPVbyte_nolen($tyre), "\xff",
   'SvPVbyte on tie returning ref that returns downgradable utf8 string';
 
 package TieScalarCounter;

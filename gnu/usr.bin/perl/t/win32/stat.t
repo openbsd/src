@@ -8,6 +8,9 @@ BEGIN {
 
 use strict;
 use Fcntl ":seek";
+use Config;
+use Errno;
+use Cwd "getcwd";
 
 Win32::FsType() eq 'NTFS'
     or skip_all("need NTFS");
@@ -17,6 +20,7 @@ my (undef, $maj, $min) = Win32::GetOSVersion();
 my $vista_or_later = $maj >= 6;
 
 my $tmpfile1 = tempfile();
+my $tmpfile2 = tempfile();
 
 # test some of the win32 specific stat code, since we
 # don't depend on the CRT for some of it
@@ -101,6 +105,9 @@ if (system("mklink $tmpfile1 win32\\stat.t") == 0) {
     # our hard link no longer exists, check that is reflected in nlink
     is($st[3], $nlink-1, "check nlink updated");
 
+    is((lstat($tmpfile1))[7], length(readlink($tmpfile1)),
+       "check size matches length of link");
+
     unlink($tmpfile1);
 }
 
@@ -124,6 +131,10 @@ if (system("mklink /d $tmpfile1 win32") == 0) {
 
 if (system("mklink /j $tmpfile1 win32") == 0) {
     ok(-l $tmpfile1, "lstat sees a symlink on the directory junction");
+
+    my @st = lstat($tmpfile1);
+    is($st[7], length(readlink($tmpfile1)),
+       "check returned length matches POSIX");
 
     rmdir( $tmpfile1 );
 }
@@ -173,6 +184,19 @@ if (ok(mkdir($tmpfile1), "make a work directory")) {
     is($mst[8], $myat, "check access time");
 
     rmdir $tmpfile1;
+}
+
+ SKIP:
+{ # github 19668
+    $Config{ivsize} == 8
+        or skip "Need 64-bit int", 1;
+    open my $tmp, ">", $tmpfile1
+        or skip "Cannot create test file: $!", 1;
+    close $tmp;
+    fresh_perl_is("utime(500_000_000_000, 500_000_000_000, '$tmpfile1')",
+                  "", { stderr => 1 },
+                  "check debug output removed");
+    unlink $tmpfile1;
 }
 
 # Other stat issues possibly fixed by the stat() re-work
@@ -235,4 +259,75 @@ if (ok(mkdir($tmpfile1), "make a work directory")) {
     ok(!-e '"', qq(filename '"' shouldn't exist));
 }
 
+# https://github.com/Perl/perl5/issues/20204
+# Win32: stat/unlink fails on UNIX sockets
+SKIP:
+{
+    use IO::Socket;
+    unlink $tmpfile1;
+    my $listen = IO::Socket::UNIX->new(Local => $tmpfile1, Listen => 0)
+        or skip "Cannot create unix socket", 1;
+    ok(-S $tmpfile1, "can stat a socket");
+    ok(!-l $tmpfile1, "doesn't look like a symlink");
+    unlink $tmpfile2;
+    if (system("mklink $tmpfile2 $tmpfile1") == 0) {
+        ok(-l $tmpfile2, "symlink to socket is a symlink (via lstat)");
+        ok(-S $tmpfile2, "symlink to socket is also a socket (via stat)");
+        unlink $tmpfile2;
+    }
+    close $listen;
+    unlink $tmpfile1;
+}
+
+{
+    # if a symlink chain leads to a socket, or loops, or is broken,
+    # CreateFileA() fails, so we do our own link following.
+    # The link leading to a socket is checked above, here check loops
+    # fail, and that we get ELOOP (which isn't what MSVC returns, but
+    # try to be better).
+    if (system("mklink $tmpfile1 $tmpfile2") == 0
+        && system("mklink $tmpfile2 $tmpfile1") == 0) {
+        ok(!stat($tmpfile1), "looping symlink chain fails stat");
+        is($!+0, &Errno::ELOOP, "check error set");
+        ok(lstat($tmpfile1), "looping symlink chain passes lstat");
+
+        unlink $tmpfile2;
+        ok(!stat($tmpfile1), "broken symlink");
+        is($!+0, &Errno::ENOENT, "check error set");
+        ok(lstat($tmpfile1), "broken symlink chain passes lstat");
+    }
+    unlink $tmpfile1, $tmpfile2;
+}
+
+{
+    # $tmpfile4 -> $tmpfile1/file1 -> ../$tmpfile2 -> abspath($tmpfile3)
+    # $tmpfile3 either doesn't exist, is a file, or is a socket
+    my ($tmpfile3, $tmpfile4) = (tempfile(), tempfile());
+    ok(mkdir($tmpfile1), "make a directory");
+    my $cwd = getcwd();
+    if (system(qq(mklink $tmpfile4 $tmpfile1\\file1)) == 0
+        && system(qq(mklink $tmpfile1\\file1 ..\\$tmpfile2)) == 0
+        && system(qq(mklink $tmpfile2 "$cwd\\$tmpfile3")) == 0) {
+        ok(-l $tmpfile4, "yes, $tmpfile4 is a symlink");
+        ok(!-e $tmpfile4, "but we can't stat it");
+
+        open my $fh, ">", $tmpfile3 or die $!;
+        close $fh;
+        ok(-f $tmpfile4, "now $tmpfile4 leads to a file");
+        unlink $tmpfile3;
+
+      SKIP:
+        {
+            my $listen = IO::Socket::UNIX->new(Local => $tmpfile3, Listen => 0)
+                or skip "Cannot create unix socket", 1;
+            ok(!-f $tmpfile4, "$tmpfile4 no longer leads to a file");
+            ok(-S $tmpfile4, "now $tmpfile4 leads to a socket");
+            ok(-S "$tmpfile1/file1", "$tmpfile1/file1 should lead to a socket");
+            ok(-S $tmpfile2, "$tmpfile2 should lead to a socket");
+            unlink $tmpfile3;
+        }
+    }
+    unlink $tmpfile2, $tmpfile4, "$tmpfile1/file1";
+    rmdir $tmpfile1;
+}
 done_testing();

@@ -23,7 +23,7 @@ Should be a bullet.
 .IX Item "First level"
 Blah blah blah....
 .RS 4
-.IP "\(bu" 4
+.IP \(bu 4
 Should be a bullet.
 .RE
 .RS 4

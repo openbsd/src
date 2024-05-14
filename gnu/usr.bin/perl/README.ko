@@ -1,9 +1,10 @@
-=encoding utf8
+# vim: syntax=pod
 
 이 파일을 내용 그대로 읽고 있다면 우스꽝스러운 문자는 무시해주세요.
 이 문서는 POD로 읽을 수 있도록 POD 형식(F<pod/perlpod.pod> 문서를
 확인하세요)으로 작성되어 있습니다.
 
+=encoding utf8
 
 =head1 NAME
 

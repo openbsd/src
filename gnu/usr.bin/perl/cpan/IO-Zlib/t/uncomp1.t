@@ -17,7 +17,7 @@ hello world
 this is a test
 EOM
 
-my $name = "test$$";
+my $name = "test_uncomp1_$$";
 
 if (open(FH, ">$name"))
 {

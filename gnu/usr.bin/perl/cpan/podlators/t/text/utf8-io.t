@@ -2,7 +2,7 @@
 #
 # Test Pod::Text UTF-8 handling, with and without PerlIO.
 #
-# Copyright 2002, 2004, 2006-2010, 2012, 2014, 2018, 2020
+# Copyright 2002, 2004, 2006-2010, 2012, 2014, 2018, 2020, 2022
 #     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -42,7 +42,11 @@ for my $snippet (qw(late-encoding s-whitespace utf8)) {
 }
 
 # Load a snippet in ISO 8859-1 that forces the output to be in UTF-8.
-test_snippet_with_io('Pod::Text', 'text/utf8-iso',
-    { encoding => 'iso-8859-1' });
-test_snippet_with_io('Pod::Text', 'text/utf8-iso',
-    { encoding => 'iso-8859-1', perlio_utf8 => 1 });
+test_snippet_with_io(
+    'Pod::Text', 'text/utf8-iso',
+    { encoding => 'iso-8859-1' },
+);
+test_snippet_with_io(
+    'Pod::Text', 'text/utf8-iso',
+    { encoding => 'iso-8859-1', perlio_utf8 => 1, output => 'utf-8' },
+);

@@ -28,9 +28,6 @@ SKIP:
     elsif ($vms_no_ieee || !$Config{d_double_has_inf}) {
         skip "the IEEE infinity model is unavailable in this configuration", 1;
     }
-    elsif ($^O eq 'ultrix') {
-        skip "Ultrix enters deep nirvana instead of producing infinity.", 1;
-    }
     # The computation of $v should overflow and produce "infinity"
     # on any system whose max exponent is less than 10**1506.
     # The exact string used to represent infinity varies by OS,

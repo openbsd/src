@@ -148,7 +148,12 @@ my $maxlen1 = 0; # body
 my $maxlen2 = 0; # attachment
 for (split(/\n/, $contents)) {
         my $len = length;
-        $maxlen1 = $len if $len > $maxlen1 and !/$B/;
+        # content lines setting path-like environment variables like PATH, PERLBREW_PATH, MANPATH,...
+        #  will start "\s*xxxxPATH=" where "xxx" is zero or more non white space characters. These lines can
+        #  easily get over 1000 characters (see ok-test below) with no internal spaces, so they
+        #  will not get wrapped at white space.
+        # See also https://github.com/perl/perl5/issues/15544 for more information
+        $maxlen1 = $len if $len > $maxlen1 and !/(?:$B|^\s*\S*PATH=)/;
         $maxlen2 = $len if $len > $maxlen2 and  /$B/;
 }
 ok($maxlen1 < 1000, "[perl #128020] long body lines are wrapped: maxlen $maxlen1");

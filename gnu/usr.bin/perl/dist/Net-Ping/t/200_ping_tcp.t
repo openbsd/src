@@ -1,11 +1,10 @@
 use strict;
 
 BEGIN {
-  if ($ENV{PERL_CORE}) {
-    unless ($ENV{PERL_TEST_Net_Ping}) {
-      print "1..0 # Skip: network dependent test\n";
-        exit;
-    }
+  if ($ENV{NO_NETWORK_TESTING} ||
+      ($ENV{PERL_CORE}) && !$ENV{PERL_TEST_Net_Ping}) {
+    print "1..0 # Skip: network dependent test\n";
+    exit;
   }
   unless (eval "require Socket") {
     print "1..0 \# Skip: no Socket\n";
@@ -18,7 +17,7 @@ BEGIN {
 }
 
 # Hopefully this is never a routeable host
-my $fail_ip = $ENV{NET_PING_FAIL_IP} || "172.29.249.249";
+my $fail_ip = $ENV{NET_PING_FAIL_IP} || "192.0.2.0";
 
 # Remote network test using tcp protocol.
 #

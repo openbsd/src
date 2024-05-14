@@ -89,18 +89,9 @@
 
 /* submacros for INCPUSH_PERL5LIB */
 
-#if defined(PERL_USE_SAFE_PUTENV) && ! defined(HAS_UNSETENV)
-# 	define _INCPUSH_PERL5LIB_IF	if (perl5lib && *perl5lib != '\0')
-#else
-# 	define _INCPUSH_PERL5LIB_IF	if (perl5lib)
-#endif
+#define _INCPUSH_PERL5LIB_IF	if (perl5lib && *perl5lib != '\0')
 
 #ifndef VMS
-/*
- * It isn't possible to delete an environment variable with
- * PERL_USE_SAFE_PUTENV set unless unsetenv() is also available, so in that
- * case we treat PERL5LIB as undefined if it has a zero-length value.
- */
 # define _INCPUSH_PERL5LIB_ADD _INCPUSH_PERL5LIB_IF incpush_use_sep(perl5lib, 0, INCPUSH_ADD_OLD_VERS|INCPUSH_NOT_BASEDIR);
 #else
 /* VMS */

@@ -9,11 +9,8 @@ BEGIN {
         skip_all(q/Perl not compiled with 'useithreads'/);
     }
 
-    my $time_out_factor = $ENV{PERL_TEST_TIME_OUT_FACTOR} || 1;
-    $time_out_factor = 1 if $time_out_factor < 1;
-
     # Guard against bugs that result in deadlock
-    watchdog(1 * 60 * $time_out_factor);
+    watchdog(1 * 60);
 
     plan(11);
 }

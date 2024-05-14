@@ -1,11 +1,11 @@
-# EquivalentUnifiedIdeograph-14.0.0.txt
-# Date: 2021-03-16, 21:41:00 GMT [KL, KW]
-# © 2021 Unicode®, Inc.
+# EquivalentUnifiedIdeograph-15.0.0.txt
+# Date: 2022-04-26, 20:42:00 GMT [KL, KW]
+# © 2022 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # For documentation, see UAX #44: Unicode Character Database,
-# at http://www.unicode.org/reports/tr44/
+# at https://www.unicode.org/reports/tr44/
 #
 # This file defines the following property:
 #
@@ -62,7 +62,7 @@
 2E92       ; 5DF3  #     CJK RADICAL SNAKE
 2E93       ; 5E7A  #     CJK RADICAL THREAD
 2E94       ; 5F51  #     CJK RADICAL SNOUT ONE
-2E95       ; 5F50  #     CJK RADICAL SNOUT TWO
+2E95       ; 2B739 #     CJK RADICAL SNOUT TWO
 2E96       ; 5FC4  #     CJK RADICAL HEART ONE
 2E97       ; 5FC3  #     CJK RADICAL HEART TWO
 2E98       ; 624C  #     CJK RADICAL HAND

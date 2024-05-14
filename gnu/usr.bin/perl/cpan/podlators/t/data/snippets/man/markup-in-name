@@ -7,5 +7,5 @@ Various markup in NAME
 test - B<test> I<italics> F<file>
 
 [output]
-.SH "NAME"
+.SH NAME
 test \- test italics file

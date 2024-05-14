@@ -14,29 +14,33 @@ BAIL_OUT("No errno's are exported") unless @Errno::EXPORT_OK;
 my $err = $Errno::EXPORT_OK[0];
 my $num = &{"Errno::$err"};
 
-is($num, &{"Errno::$err"});
+is($num, &{"Errno::$err"},
+    'element in @Errno::EXPORT_OK found via sub call');
 
 $! = $num;
-ok(exists $!{$err});
+ok(exists $!{$err}, 'entry in %! reflects current value of $!');
 
 $! = 0;
-ok(! $!{$err});
+ok(! $!{$err}, 'entry in %! reflects the current value of $!');
 
-ok(join(",",sort keys(%!)) eq join(",",sort @Errno::EXPORT_OK));
+ok(join(",",sort keys(%!)) eq join(",",sort @Errno::EXPORT_OK),
+    'keys of %! match keys of @Errno::EXPORT_OK');
 
 eval { exists $!{[]} };
-ok(! $@);
+ok(! $@, "no exception recorded in %! when element's key is '[]'");
 
 eval {$!{$err} = "qunckkk" };
-like($@, qr/^ERRNO hash is read only!/);
+like($@, qr/^ERRNO hash is read only!/,
+    "can't assign to ERRNO hash: 'ERRNO hash is read only!'");
 
 eval {delete $!{$err}};
-like($@, qr/^ERRNO hash is read only!/);
+like($@, qr/^ERRNO hash is read only!/,
+    "can't delete from ERRNO hash: 'ERRNO hash is read only!'");
 
 # The following tests are in trouble if some OS picks errno values
 # through Acme::MetaSyntactic::batman
-is($!{EFLRBBB}, "");
-ok(! exists($!{EFLRBBB}));
+is($!{EFLRBBB}, "", "non-existent entry in ERRNO hash");
+ok(! exists($!{EFLRBBB}), "non-existent entry in ERRNO hash");
 
 SKIP: {
     skip("Errno does not have EINVAL", 1)

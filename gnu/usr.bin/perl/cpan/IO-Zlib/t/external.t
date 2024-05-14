@@ -70,7 +70,7 @@ ok(14, $@ =~ /^IO::Zlib::gzopen_external: mode 'xyz' is illegal /);
 # The following is a copy of the basic.t, shifted up by 14 tests,
 # the difference being that now we should be using the external gzip.
 
-my $name="test.gz";
+my $name="test_external_$$.gz";
 
 my $hello = <<EOM ;
 hello world

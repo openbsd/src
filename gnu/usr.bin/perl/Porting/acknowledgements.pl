@@ -163,5 +163,5 @@ sub commify {
 # returns a list of the authors
 sub authors {
     return
-        qx(git log --pretty=fuller $since_until | $^X Porting/checkAUTHORS.pl --who -);
+        qx($^X Porting/updateAUTHORS.pl --who $since_until);
 }

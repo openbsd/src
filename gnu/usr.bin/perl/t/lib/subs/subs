@@ -4,8 +4,7 @@ __END__
 Fred 1,2 ;
 sub Fred {}
 EXPECT
-Number found where operator expected at - line 3, near "Fred 1"
-	(Do you need to predeclare Fred?)
+Number found where operator expected (Do you need to predeclare "Fred"?) at - line 3, near "Fred 1"
 syntax error at - line 3, near "Fred 1"
 Execution of - aborted due to compilation errors.
 ########
@@ -15,10 +14,9 @@ Fred 1,2 ;
 use subs qw( Fred ) ;
 sub Fred {}
 EXPECT
-Number found where operator expected at - line 3, near "Fred 1"
-	(Do you need to predeclare Fred?)
+Number found where operator expected (Do you need to predeclare "Fred"?) at - line 3, near "Fred 1"
 syntax error at - line 3, near "Fred 1"
-BEGIN not safe after errors--compilation aborted at - line 4.
+Execution of - aborted due to compilation errors.
 ########
 
 # AOK
@@ -88,8 +86,7 @@ use open qw( :utf8 :std );
 Frèd 1,2 ;
 sub Frèd {}
 EXPECT
-Number found where operator expected at - line 5, near "Frèd 1"
-	(Do you need to predeclare Frèd?)
+Number found where operator expected (Do you need to predeclare "Frèd"?) at - line 5, near "Frèd 1"
 syntax error at - line 5, near "Frèd 1"
 Execution of - aborted due to compilation errors.
 ########
@@ -101,7 +98,6 @@ use open qw( :utf8 :std );
 use subs qw( ふれど ) ;
 sub ふれど {}
 EXPECT
-Number found where operator expected at - line 5, near "ふれど 1"
-	(Do you need to predeclare ふれど?)
+Number found where operator expected (Do you need to predeclare "ふれど"?) at - line 5, near "ふれど 1"
 syntax error at - line 5, near "ふれど 1"
-BEGIN not safe after errors--compilation aborted at - line 6.
+Execution of - aborted due to compilation errors.

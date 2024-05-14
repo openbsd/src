@@ -103,11 +103,20 @@ END
 
             );
 
+my $tmpdir;
 
 # if given args, those are inserted as components in resulting path, eg:
 # setup_recurs('dir') means instead of creating Big-Dummy/*, dir/Big-Dummy/*
 sub setup_recurs {
-    while(my($file, $text) = each %Files) {
+    my @chrs = ( "A" .. "Z", 0 .. 9 );
+    # annoyingly we cant use File::Temp here as it drags in XS code
+    # and we run under blocks to prevent XS code loads. This is a minimal
+    # patch to fix the issue.
+    $tmpdir = join "", "./temp-$$-", map { $chrs[rand(@chrs)] } 1..8;
+    mkdir($tmpdir) or die "Failed to create '$tmpdir': $!";
+    chdir($tmpdir) or die "Failed to chdir '$tmpdir': $!";
+    foreach my $file (sort keys %Files) {
+        my $text = $Files{$file};
         # Convert to a relative, native file path.
         $file = File::Spec->catfile(File::Spec->curdir, @_, split m{\/}, $file);
         $file = File::Spec->rel2abs($file);
@@ -131,9 +140,11 @@ sub teardown_recurs {
     foreach my $file (keys %Files) {
         my $dir = dirname($file);
         if( -e $dir ) {
-            rmtree($dir) || return;
+            rmtree($dir) or next;
         }
     }
+    chdir("..");
+    rmtree($tmpdir);
     return 1;
 }
 

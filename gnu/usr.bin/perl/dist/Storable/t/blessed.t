@@ -44,7 +44,7 @@ use Storable qw(freeze thaw store retrieve fd_retrieve);
    'long VSTRING' => \(my $lvstring = eval "v" . 0 x 300),
    LVALUE         => \(my $substr  = substr((my $str = "foo"), 0, 3)));
 
-my $test = 13;
+my $test = 18;
 my $tests = $test + 41 + (2 * 6 * keys %::immortals) + (3 * keys %::weird_refs);
 plan(tests => $tests);
 
@@ -413,4 +413,55 @@ is(ref $t, 'STRESS_THE_STACK');
     ok(ref $@, "and a ref thrown");
 
     unlink("store$$");
+}
+
+{
+    # trying to freeze a glob via STORABLE_freeze
+    {
+        package GlobHookedBase;
+
+        sub STORABLE_freeze {
+            return \1;
+        }
+
+        package GlobHooked;
+        our @ISA = "GlobHookedBase";
+    }
+    use Symbol ();
+    my $glob = bless Symbol::gensym(), "GlobHooked";
+    eval {
+        my $data = freeze($glob);
+    };
+    my $msg = $@;
+    like($msg, qr/Unexpected object type \(GLOB\) of class 'GlobHooked' in store_hook\(\) calling GlobHookedBase::STORABLE_freeze/,
+         "check we get the verbose message");
+}
+
+SKIP:
+{
+    $] < 5.012
+      and skip "Can't assign regexps directly before 5.12", 4;
+    my $hook_called;
+    # store regexp via hook
+    {
+        package RegexpHooked;
+        sub STORABLE_freeze {
+            ++$hook_called;
+            "$_[0]";
+        }
+        sub STORABLE_thaw {
+            my ($obj, $cloning, $serialized) = @_;
+            ++$hook_called;
+            $$obj = ${ qr/$serialized/ };
+        }
+    }
+
+    my $obj = bless qr/abc/, "RegexpHooked";
+    my $data = freeze($obj);
+    ok($data, "froze regexp blessed into hooked class");
+    ok($hook_called, "and the hook was actually called");
+    $hook_called = 0;
+    my $obj_thawed = thaw($data);
+    ok($hook_called, "hook called for thaw");
+    like("abc", $obj_thawed, "check the regexp");
 }

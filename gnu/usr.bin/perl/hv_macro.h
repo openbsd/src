@@ -20,9 +20,9 @@
  * The following 3 macros are defined in this section. The other macros defined
  * are only needed to help derive these 3.
  *
- * U8TO16_LE(x)   Read a little endian unsigned 32-bit int
+ * U8TO16_LE(x)   Read a little endian unsigned 16-bit int
  * U8TO32_LE(x)   Read a little endian unsigned 32-bit int
- * U8TO28_LE(x)   Read a little endian unsigned 32-bit int
+ * U8TO64_LE(x)   Read a little endian unsigned 64-bit int
  * ROTL32(x,r)      Rotate x left by r bits
  * ROTL64(x,r)      Rotate x left by r bits
  * ROTR32(x,r)      Rotate x right by r bits
@@ -30,7 +30,7 @@
  */
 
 #ifndef U8TO16_LE
-  #define _shifted_octet(type,ptr,idx,shift) (((type)(((U8*)(ptr))[(idx)]))<<(shift))
+  #define _shifted_octet(type,ptr,idx,shift) (((type)(((const U8*)(ptr))[(idx)]))<<(shift))
     #if defined(USE_UNALIGNED_PTR_DEREF) && (BYTEORDER == 0x1234 || BYTEORDER == 0x12345678)
         #define U8TO16_LE(ptr)   (*((const U16*)(ptr)))
         #define U8TO32_LE(ptr)   (*((const U32*)(ptr)))

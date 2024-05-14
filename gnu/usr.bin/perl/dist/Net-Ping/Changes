@@ -1,5 +1,14 @@
 CHANGES
 -------
+2.75  2022-09-01 12:44:03 rurban
+      Minor
+      - Modernized the synopsis (PR #31)
+      - Fixed a link in a comment (PR #25)
+      META Changes
+      - Remove some TEST_REQUIRES (PR #23)
+      Test fixes
+      - Support NO_NETWORK_TESTING=1 (PR #24)
+      - Fix non-routable addresses for negative tests (PR #24)
 2.74  2020-09-09 09:21:39 rurban
       Features
       - Add ICMPv6_NI_REPLY support.

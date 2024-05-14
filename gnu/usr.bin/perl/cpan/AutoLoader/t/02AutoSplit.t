@@ -149,8 +149,12 @@ foreach (@tests) {
 
   if ($args{Files}) {
     $args{Files} =~ s!/!:!gs if $^O eq 'MacOS';
+    $args{Files} =~ s!\\!/!g if $^O eq 'MSWin32';
     my (%missing, %got);
-    find (sub {$got{$File::Find::name}++ unless -d $_}, $dir);
+    find(
+        sub { (my $f = $File::Find::name) =~ s!\\!/!g; $got{$f}++ unless -d $_ },
+        $dir
+    );
     foreach (split /\n/, $args{Files}) {
       next if /^#/;
       $_ = lc($_) if $Is_VMS_lc;

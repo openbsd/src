@@ -30,6 +30,10 @@ This parts are ignored.
 #  define PERL_UNUSED_VAR(x) ((void)x)
 #endif
 
+/* Newx was introduced in 5.8.8, would also be in ppport.h */
+#ifndef Newx
+#  define Newx(v,n,t)                    New(0,v,n,t)
+#endif
 
 
 STATIC void

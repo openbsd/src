@@ -2,11 +2,14 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    require './test.pl';
+    push @INC, ".";
+    push @INC, "../lib";
+    require 'test.pl';
 }
+
 use strict;
 
-my $prefix = 'tmp'.$$;
+my $prefix = 'tmp_'._num_to_alpha($$)."_";
 
 sub skip_files{
     my($skip,$to,$next) = @_;
@@ -29,7 +32,7 @@ sub skip_files{
         if( $check eq $cmp ){
             pass( $common_mess );
         }else{
-            my($alpha) = $check =~ /\Atmp\d+([A-Z][A-Z]?)\Z/;
+            my($alpha) = $check =~ /\Atmp_[A-Z]+_([A-Z]+)\Z/;
             fail( $common_mess );
             diag( "only skipped to $alpha" );
         }
@@ -68,12 +71,15 @@ skip_files(24,'AY','AZ');
 is( tempfile(), "${prefix}AZ");
 is( tempfile(), "${prefix}BA");
 
-skip_files(26 * 24 + 24,'ZY','ZZ');
+# note that 3 character suffixes are distinct from 2 character suffixes,
+# which are distinct from 1 character suffixes. Thus 18278 files max for
+# a 3 character suffix max.
+skip_files((26 * 26 * 26) + (26*24 + 24) ,'ZZY','ZZZ');
 
-is( tempfile(), "${prefix}ZZ", 'Last available filename');
+is( tempfile(), "${prefix}ZZZ", 'Last available filename');
 ok( !eval{tempfile()}, 'Should bail after Last available filename' );
 my $err = "$@";
-like( $err, qr{^Can't find temporary file name starting}, 'check error string' );
+like( $err, qr{^panic: Too many tempfile\(\)s}, 'check error string' );
 
 {
     my $returned = runperl( progs => [
@@ -82,11 +88,15 @@ like( $err, qr{^Can't find temporary file name starting}, 'check error string' )
         'print qq[$t|];',
         'print open(FH,q[>],$t) ? qq[ok|] : qq[not ok|] ;',
         'print -e $t ? qq[ok|] : qq[not ok|];',
+        'print close(FH) ? qq[ok] : qq[not ok];', # see comment below
     ] );
-    my($filename,$opened,$existed) = split /\|/, $returned;
+    # NOTE, on Win32 we cannot unlink an open file, so we MUST
+    # close the file before the program exits.
+    my($filename,$opened,$existed,$closed) = split /\|/, $returned;
 
     is( $opened, 'ok', "$filename created" );
     is( $existed, 'ok', "$filename did exist" );
+    is( $closed, 'ok', "$filename was closed" );
     ok( !-e $filename, "$filename doesn't exist now" );
 }
 

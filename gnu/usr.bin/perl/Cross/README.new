@@ -1,3 +1,5 @@
+# vim: syntax=pod
+
 You're reading ./Cross/README.new, describing Perl cross-compilation process.
 NOTE: this file will replace ./Cross/README, after the cross-compilation scheme
 is stabilized.

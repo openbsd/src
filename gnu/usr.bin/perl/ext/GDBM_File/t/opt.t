@@ -14,7 +14,7 @@ BEGIN {
     plan(skip_all => "GDBM_File is flaky in $^O")
         if $^O =~ /darwin/;
 
-    plan(tests => 8);
+    plan(tests => 9);
     use_ok('GDBM_File');
 }
 
@@ -25,7 +25,7 @@ my $db = tie(%h, 'GDBM_File', $dbname, GDBM_WRCREAT, 0640);
 isa_ok($db, 'GDBM_File');
 SKIP: {
      my $name = eval { $db->dbname } or do {
-         skip "gdbm_setopt GET calls not implemented", 6
+         skip "gdbm_setopt GET calls not implemented", 7
              if $@ =~ /GDBM_File::dbname not implemented/;
      };
      is($db->dbname, $dbname, 'get dbname');
@@ -34,4 +34,9 @@ SKIP: {
      is($db->sync_mode, 0, 'get sync_mode');
      is($db->sync_mode(1), 1, 'set sync_mode');
      is($db->sync_mode, 1, 'get sync_mode');
+   SKIP: {
+         my ($maj, $min) = GDBM_File->GDBM_version;
+         skip "gdbm too old", 1 if $maj != 1 || $maj == 1 && $min < 9;
+         isnt($db->mmapsize, 0, "get mmapsize");
+     }
 }

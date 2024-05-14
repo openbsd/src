@@ -35,4 +35,6 @@ ok(SvIsBOOL(threads->create( sub { return !!0 } )->join),
         ':shared variable is bool inside thread');
 }
 
+is(test_bool_internals(), 0, "Bulk test internal bool related APIs");
+
 done_testing;

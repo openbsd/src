@@ -1395,7 +1395,7 @@ Aaron Crane, Adam Hartley, Andy Dougherty, Ben Cornett, Branislav
 Zahradník, brian d foy, Chris 'BinGOs' Williams, Christian Walde
 (Mithaldu), Craig A. Berry, Dagfinn Ilmari Mannsåker, Dan Book, Daniel
 Böhmer, Daniel Laügt, Dan Kogai, David Cantrell, David Mitchell, Dominic
-Hamon, E. Choroba, Ed J, Eric Herman, Eric Lindblad, Eugene Alvin Villar,
+Hamon, E. Choroba, Ed J, Eric Herman, Eugene Alvin Villar,
 Felipe Gasper, Giovanni Tataranni, Graham Knop, Graham Ollis, Hauke D,
 H.Merijn Brand, Hugo van der Sanden, Ichinose Shogo, Ivan Baidakou, Jae
 Bradley, James E Keenan, Jason McIntosh, jkahrman, John Karr, John Lightsey,

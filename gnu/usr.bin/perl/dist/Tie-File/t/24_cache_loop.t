@@ -44,8 +44,11 @@ $N++;
 #   will then try to flush the read cache---but the read cache is
 #   already empty, so you're stuck in an infinite loop.
 #
-# Five seconds should be plenty of time for it to complete if it works.
-alarm 5 unless $^P;
+# Ten seconds should be plenty of time for it to complete if it works
+# on an unloaded box. Using 20 under parallel builds seems prudent.
+my $alarm_time = $ENV{TEST_JOBS} || $ENV{HARNESS_OPTIONS} ? 20 : 10;
+local $SIG{ALRM} = sub { die "$0 Timeout after $alarm_time seconds at test 3\n" };
+alarm $alarm_time unless $^P;
 @a = "record0" .. "record9";
 print "ok 3\n";
 alarm 0;
@@ -55,6 +58,3 @@ END {
   untie @a;
   1 while unlink $file;
 }
-
-
-

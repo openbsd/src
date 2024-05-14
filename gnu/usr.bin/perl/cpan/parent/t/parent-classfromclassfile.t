@@ -18,4 +18,4 @@ use_ok('parent');
 # and does not get treated as a file:
 eval q{package Test1; require Dummy; use parent -norequire, 'Dummy::InlineChild'; };
 is $@, '', "Loading an unadorned class works";
-isn't $INC{"Dummy.pm"}, undef, 'We loaded Dummy.pm';
+isnt $INC{"Dummy.pm"}, undef, 'We loaded Dummy.pm';

@@ -17,8 +17,8 @@ price is $100."
 .IX Header "MAGIC MONEY"
 These should be identical.
 .PP
-Bippity boppity boo \*(L"The
-price is \f(CW$100\fR.\*(R"
+Bippity boppity boo "The
+price is \f(CW$100\fR."
 .PP
-Bippity boppity boo \*(L"The
-price is \f(CW$100\fR.\*(R"
+Bippity boppity boo "The
+price is \f(CW$100\fR."

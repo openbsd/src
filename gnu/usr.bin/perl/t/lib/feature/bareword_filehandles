@@ -127,8 +127,7 @@ my $x = atan2(FOO 1, 2);
 # atan2() above) could end up calling newGVREF(), producing an unexpected error message.
 EXPECT
 OPTIONS fatal
-Number found where operator expected at - line 2, near "FOO 1"
-	(Do you need to predeclare FOO?)
+Number found where operator expected (Do you need to predeclare "FOO"?) at - line 2, near "FOO 1"
 Missing comma after first argument to atan2 function at - line 2, near "2)"
 Execution of - aborted due to compilation errors.
 ########
@@ -362,6 +361,26 @@ no feature "bareword_filehandles";
 accept(FOO, CHILD);
 accept($fh, CHILD);
 accept(FOO, $fh);
+accept(*FOO, *CHILD);
+EXPECT
+OPTIONS fatal
+Bareword filehandle "FOO" not allowed under 'no feature "bareword_filehandles"' at - line 5.
+Bareword filehandle "CHILD" not allowed under 'no feature "bareword_filehandles"' at - line 5.
+Bareword filehandle "CHILD" not allowed under 'no feature "bareword_filehandles"' at - line 6.
+Bareword filehandle "FOO" not allowed under 'no feature "bareword_filehandles"' at - line 7.
+Execution of - aborted due to compilation errors.
+########
+# NAME accept some more
+accept FOO, CHILD ;
+accept $fh, CHILD ;
+accept FOO, $fh ;
+no feature "bareword_filehandles";
+accept FOO, CHILD ;
+accept $fh, CHILD ;
+accept FOO, $fh;
+package BAR {}
+accept QUUX BAR, $fh;
+sub BAR::QUUX { $fh }
 EXPECT
 OPTIONS fatal
 Bareword filehandle "FOO" not allowed under 'no feature "bareword_filehandles"' at - line 5.
@@ -495,4 +514,17 @@ say foo();
 say foo;
 -x foo();
 -x foo;
+EXPECT
+########
+# NAME method calls
+# https://github.com/Perl/perl5/issues/19704
+use feature "say";
+no feature "bareword_filehandles";
+sub foo {}
+print main->foo();
+print main->foo;
+say main->foo();
+say main->foo;
+-x main->foo();
+-x main->foo;
 EXPECT

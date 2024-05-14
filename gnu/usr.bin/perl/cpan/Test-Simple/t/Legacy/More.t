@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use lib 't/lib';
-use Test::More tests => 54;
+use Test::More tests => 57;
 
 # Make sure we don't mess with $@ or $!.  Test at bottom.
 my $Err   = "this should not be touched";
@@ -24,7 +24,24 @@ require_ok('Test::More');
 ok( 2 eq 2,             'two is two is two is two' );
 is(   "foo", "foo",       'foo is foo' );
 isnt( "foo", "bar",     'foo isnt bar');
-isn::t("foo", "bar",     'foo isn\'t bar');
+{
+    use warnings;
+    my $warning;
+    local $SIG{__WARN__}= sub { $warning = $_[0] };
+    isn::t("foo", "bar",     'foo isn\'t bar');
+    is($warning, "Use of apostrophe as package separator was deprecated in Perl 5.37.9,\n"
+               . "and will be removed in Perl 5.42.0.  You should change code that uses\n"
+               . "Test::More::isn't() to use Test::More::isnt() as a replacement"
+               . " at t/Legacy/More.t line 31\n",
+            "Got expected warning from isn::t() under use warnings");
+}
+{
+    no warnings "deprecated";
+    my $warning;
+    local $SIG{__WARN__}= sub { $warning = $_[0] };
+    isn::t("foo", "bar",     'foo isn\'t bar');
+    is($warning, undef, "No warnings from isn::t() under no warnings deprecated");
+}
 
 #'#
 like("fooble", '/^foo/',    'foo is like fooble');

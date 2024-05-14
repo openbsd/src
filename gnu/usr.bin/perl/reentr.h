@@ -1,4 +1,4 @@
-/* -*- buffer-read-only: t -*-
+/* -*- mode: C; buffer-read-only: t -*-
  *
  *    reentr.h
  *
@@ -1697,4 +1697,4 @@ typedef struct {
 
 #endif
 
-/* ex: set ro: */
+/* ex: set ro ft=c: */

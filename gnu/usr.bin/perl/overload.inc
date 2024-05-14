@@ -1,4 +1,4 @@
-/* -*- buffer-read-only: t -*-
+/* -*- mode: C; buffer-read-only: t -*-
  *
  *    overload.inc
  *
@@ -177,4 +177,4 @@ static const char * const PL_AMG_names[NofAMmeth] = {
     "(qr"
 };
 
-/* ex: set ro: */
+/* ex: set ro ft=c: */

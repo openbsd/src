@@ -5,8 +5,6 @@ use strict;
 use warnings;
 use Test::More;
 
-BEGIN { plan skip_all => 'this test is for Perl 5.8 or later' if $] < 5.008; }
-
 BEGIN { plan tests => 20 };
 
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }

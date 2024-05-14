@@ -21,7 +21,7 @@ use Safe;
 plan(tests => 3);
 
 my $c = new Safe;
-$c->permit(qw(require caller entereval unpack));
+$c->permit(qw(require caller entereval unpack rand));
 my $r = $c->reval(q{ use version; 1 });
 ok( defined $r, "Can load version.pm in a Safe compartment" ) or diag $@;
 

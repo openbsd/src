@@ -1,27 +1,12 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
 use 5.008001;
 
 use strict;
 use warnings;
-
-######################### We start with some black magic to print on failure.
-
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
-
-my $loaded = 0;
-BEGIN { $| = 1; print "1..183\n"; }
-END {print "not ok 1\n" unless $loaded;}
+use Test::More;
 use Text::Balanced qw ( extract_variable );
-$loaded = 1;
-print "ok 1\n";
-my $count=2;
-use vars qw( $DEBUG );
-sub debug { print "\t>>>",@_ if $DEBUG }
 
-######################### End of black magic.
+our $DEBUG;
+sub debug { print "\t>>>",@_ if $DEBUG }
 
 ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
@@ -34,29 +19,31 @@ while (defined($str = <DATA>))
     if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
     elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
     elsif (!$str || $str =~ /\A#/) { $neg = 0; next }
+    my $orig_str = $str;
     $str =~ s/\\n/\n/g;
     debug "\tUsing: $cmd\n";
     debug "\t   on: [$str]\n";
 
     my @res;
     my $var = eval "\@res = $cmd";
+    is $@, '', 'no error';
     debug "\t list got: [" . join("|",map {defined $_ ? $_ : '<undef>'} @res) . "]\n";
     debug "\t list left: [$str]\n";
-    print "not " if (substr($str,pos($str)||0,1) eq ';')==$neg;
-    print "ok ", $count++;
-    print " ($@)" if $@ && $DEBUG;
-    print "\n";
+    ($neg ? \&isnt : \&is)->(substr($str,pos($str)||0,1), ';', "$orig_str matched list");
 
     pos $str = 0;
     $var = eval $cmd;
+    is $@, '', 'no error';
     $var = "<undef>" unless defined $var;
     debug "\t scalar got: [$var]\n";
     debug "\t scalar left: [$str]\n";
-    print "not " if ($str =~ '\A;')==$neg;
-    print "ok ", $count++;
-    print " ($@)" if $@ && $DEBUG;
-    print "\n";
+    ($neg ? \&unlike : \&like)->( $str, qr/\A;/, "$orig_str matched scalar");
 }
+
+my @res = extract_variable('${a}');
+is $res[0], '${a}' or diag "error was: $@";
+
+done_testing;
 
 __DATA__
 

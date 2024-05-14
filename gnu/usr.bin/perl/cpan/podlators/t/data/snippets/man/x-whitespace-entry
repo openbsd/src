@@ -7,7 +7,7 @@ X<> matching whitespace
 Index entry matching a whitespace escape.X<\n>
 
 [output]
-.SH "INDEX"
+.SH INDEX
 .IX Header "INDEX"
 Index entry matching a whitespace escape.
 .IX Xref "\\n"

@@ -23,7 +23,7 @@ foreach my $t (@tests) {
     my ( $sub, $name ) = @$t;
 
     fresh_perl_is(
-        qq[sub $sub { print qq[ok\n]} &{"$sub"}; my \$d = defined *{"foo$sub"} ],
+        qq[no warnings qw(syntax deprecated); sub $sub { print qq[ok\n]} &{"$sub"}; my \$d = defined *{"foo$sub"} ],
         q[ok],
         { switches => ['-w'] },
         $name

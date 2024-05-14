@@ -87,7 +87,7 @@ sub check
 
 
 # streamzip
-# ########
+# #########
 
 {
     title "streamzip" ;
@@ -123,27 +123,33 @@ for my $method (qw(store deflate bzip2 lzma xz zstd))
     {
         if ($method eq 'lzma')
         {
-            eval { require IO::Compress::Lzma } ;
+            no warnings;
+            eval { require IO::Compress::Lzma && defined &{ 'IO::Compress::Adapter::Bzip2::mkRawZipCompObject' } } ;
             skip "Method 'lzma' needs IO::Compress::Lzma\n", 8
                 if $@;
         }
 
         if ($method eq 'zstd')
         {
-            eval { require IO::Compress::Zstd } ;
+            no warnings;
+            eval { require IO::Compress::Zstd && defined &{ 'IO::Compress::Adapter::Zstd::mkRawZipCompObject' }} ;
             skip "Method 'zstd' needs IO::Compress::Zstd\n", 8
                 if $@;
         }
 
         if ($method eq 'xz')
         {
-            eval { require IO::Compress::Xz } ;
-            skip "Method 'zstd' needs IO::Compress::Xz\n", 8
+            no warnings;
+            eval { require IO::Compress::Xz && defined &{ 'IO::Compress::Adapter::Xz::mkRawZipCompObject' }} ;
+            skip "Method 'xz' needs IO::Compress::Xz\n", 8
                 if $@;
         }
 
         {
             title "streamzip method $method" ;
+
+            skip "streaming unzip not supported with zstd\n", 7
+                if $method eq 'zstd' ;
 
             my ($infile, $outfile);
             my $lex = LexFile->new( $infile, $outfile );

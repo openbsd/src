@@ -133,12 +133,17 @@ void zaphod32_seed_state (
     const U32 *seed= (const U32 *)seed_ch;
     U32 *state= (U32 *)state_ch;
   
-    /* hex expansion of pi, skipping first two digits. pi= 3.2[43f6...]*/
-    /* pi value in hex from here:
-     * http://turner.faculty.swau.edu/mathematics/materialslibrary/pi/pibases.html*/
-    /* Ensure that the three state vectors are nonzero regardless of the seed. */
-    /* The idea of these two steps is to ensure that the 0 state comes from a seed
-     * utterly unlike that of the value we replace it with.*/
+    /* hex expansion of PI, skipping first two digits. PI= 3.2[43f6...]
+     *
+     * PI value in hex from here:
+     *
+     * http://turner.faculty.swau.edu/mathematics/materialslibrary/pi/pibases.html
+     *
+     * Ensure that the three state vectors are nonzero regardless of
+     * the seed. The idea of these two steps is to ensure that the 0
+     * state comes from a seed utterly unlike that of the value we
+     * replace it with.
+     */
     state[0]= seed[0] ^ 0x43f6a888;
     state[1]= seed[1] ^ 0x5a308d31;
     state[2]= seed[2] ^ 0x3198a2e0;
@@ -178,7 +183,7 @@ U32 zaphod32_hash_with_state(
     const U8 *key,
     const STRLEN key_len
 ) {
-    U32 *state= (U32 *)state_ch;
+    const U32 *state= (const U32 *)state_ch;
     const U8 *end;
     STRLEN len = key_len;
     U32 v0= state[0];

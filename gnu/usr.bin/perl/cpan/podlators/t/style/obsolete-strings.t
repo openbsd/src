@@ -9,7 +9,7 @@
 # The canonical version of this file is maintained in the rra-c-util package,
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
-# Copyright 2016, 2018-2019 Russ Allbery <eagle@eyrie.org>
+# Copyright 2016, 2018-2021 Russ Allbery <eagle@eyrie.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.008;
+use 5.010;
 use strict;
 use warnings;
 
@@ -48,7 +48,7 @@ my @BAD_STRINGS = qw(rra@stanford.edu RRA_MAINTAINER_TESTS);
 
 # File or directory names to always skip.
 my %SKIP = map { $_ => 1 } qw(
-  .git Changes _build blib cover_db obsolete-strings.t
+    .git .pc Changes _build blib changelog cover_db obsolete-strings.t
 );
 
 # Only run this test during automated testing, since failure doesn't indicate

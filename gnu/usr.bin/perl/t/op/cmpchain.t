@@ -7,7 +7,6 @@ BEGIN {
 }
 
 use feature "isa";
-no warnings qw(experimental::smartmatch);
 
 my @cheqop = qw(== != eq ne);
 my @nceqop = qw(<=> cmp ~~);
@@ -15,18 +14,21 @@ my @chrelop = qw(< > <= >= lt gt le ge);
 my @ncrelop = qw(isa);
 
 foreach my $c0 (@nceqop) {
+    no warnings qw(deprecated);
     foreach my $c1 (@nceqop) {
 	is eval("sub { \$a $c0 \$b $c1 \$c }"), undef,
 	    "$c0 $c1 non-associative";
     }
 }
 foreach my $c (@nceqop) {
+    no warnings qw(deprecated);
     foreach my $e (@cheqop) {
 	is eval("sub { \$a $c \$b $e \$c }"), undef, "$c $e non-associative";
 	is eval("sub { \$a $e \$b $c \$c }"), undef, "$e $c non-associative";
     }
 }
 foreach my $c (@nceqop) {
+    no warnings qw(deprecated);
     foreach my $e0 (@cheqop) {
 	foreach my $e1 (@cheqop) {
 	    is eval("sub { \$a $c \$b $e0 \$c $e1 \$d }"), undef,

@@ -1,5 +1,5 @@
 package ExtUtils::PL2Bat;
-$ExtUtils::PL2Bat::VERSION = '0.004';
+$ExtUtils::PL2Bat::VERSION = '0.005';
 use strict;
 use warnings;
 
@@ -122,7 +122,7 @@ ExtUtils::PL2Bat - Batch file creation to run perl scripts on Windows
 
 =head1 VERSION
 
-version 0.004
+version 0.005
 
 =head1 OVERVIEW
 

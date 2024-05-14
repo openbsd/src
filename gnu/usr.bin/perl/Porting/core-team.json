@@ -3,7 +3,9 @@
     "ams@toroid.org",
     "doughera@lafayette.edu",
     "jan@jandubois.com",
-    "jesse@fsck.com"
+    "jesse@fsck.com",
+    "jmac@jmac.org",
+    "xdg@xdg.me"
   ],
   "active": [
     "book@cpan.org",
@@ -11,13 +13,14 @@
     "cpan@corion.net",
     "craigberry@mac.com",
     "davem@iabyn.com",
+    "demerphq@gmail.com",
     "ether@cpan.org",
     "exodist7@gmail.com",
     "fawaka@gmail.com",
     "hv@crypt.org",
     "ilmari@ilmari.org",
     "jkeenan@cpan.org",
-    "jmac@jmac.org",
+    "haarg@haarg.org",
     "khw@cpan.org",
     "leonerd@leonerd.org.uk",
     "neilb@neilb.org",
@@ -29,7 +32,6 @@
     "stuart@perlfoundation.org",
     "toddr@cpanel.net",
     "tony@develop-help.com",
-    "wolfsage@gmail.com",
-    "xdg@xdg.me"
+    "wolfsage@gmail.com"
   ]
 }

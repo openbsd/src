@@ -78,6 +78,8 @@ unless ($ch[0] =~ m/THIS IS A GENERATED FILE/) {
     push @ch, ";;\nesac\n";
     }
 
+s/^(\s*)#(\s*)define\t\s*/${1}#${2}define /gm for @ch;
+
 open  $ch, ">", $cSH or die "Cannot write $cSH: $!\n";
 print $ch @ch;
 close $ch;

@@ -15,4 +15,4 @@ C<foo B<bar I<baz>> I<bay>>
 [output]
 .SH "FIXED FONTS"
 .IX Header "FIXED FONTS"
-\&\f(CR\*(C`foo \f(CYbar \f(CXbaz\f(CY\f(CR \f(CWbay\f(CR\*(C'\fR
+\&\f(CR\*(C`foo \fR\f(CYbar \fR\f(CXbaz\fR\f(CR \fR\f(CWbay\fR\f(CR\*(C'\fR

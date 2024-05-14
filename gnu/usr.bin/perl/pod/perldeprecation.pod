@@ -14,6 +14,73 @@ features are available.
 The deprecated features will be grouped by the version of Perl in
 which they will be removed.
 
+=head2 Unscheduled Deprecations
+
+=head3 Unicode Delimiter Will be Paired
+
+Some unicode delimiters used to be allowed as single characters but
+in the future will be part of a ballanced pair. This deprecation category
+is used to mark the ones that will change from being unpaired, to paired.
+
+Category: "deprecated::delimiter_will_be_paired"
+
+=head3 Dot In Inc
+
+The current working direct C<"."> used to be automatically included in
+C<@INC>, but in Perl 5.26 this was removed for security reasons. Ever
+since then we have produced a warning when a user uses C<do EXPR> and
+C<EXPR> does not include a path, and the file was not found in any
+directory in @INC but I<was> located C<".">. The file will not be loaded
+but a deprecated warning will be generated.
+
+Category: "deprecated::dot_in_inc"
+
+=head3 Goto Block Construct
+
+C<goto LABEL;> will produce a deprecated warning when jumping into the body
+of a loop or other block construct from outside. For instance
+
+    while (should_loop($x)) {
+        LABEL:
+            do_stuff();
+    }
+    goto LABEL;
+
+will produce a warning that this behavior is deprecated. In general you should
+just avoid doing this, the people that maintain your code will be grateful for
+your restraint.
+
+Category: "deprecated::goto_construct"
+
+=head3 Unicode Property Name
+
+Various types of unicode property name will generate deprecated warnings
+when used in a regex pattern. For instance surrogate characters will result
+in deprecation warnings.
+
+Category: "deprecated::unicode_property_name"
+
+=head2 Perl 5.42
+
+=head3 Smartmatch
+
+Smartmatch is now seen as a failed experiment and was marked as deprecated
+in Perl 5.37.10. This includes the C<when> and C<given> keywords, as well
+as the smartmatch operator C<~~>. The feature will be removed entirely in the
+Perl 5.42.0 production release.
+
+Category: "deprecated::smartmatch"
+
+=head3 Use of C<'> as a global name separator.
+
+Perl allows use of C<'> instead of C<::> to replace the parts of a
+package or global variable name, for example C<A::B> and C<A'B> are
+equivalent.
+
+C<'> will no longer be recognized as a name separator in Perl 5.42.
+
+Category: "deprecated::apostrophe_as_package_separator"
+
 =head2 Perl 5.40
 
 =head3 Downgrading a C<use VERSION> to below v5.11
@@ -37,6 +104,8 @@ disabled I<even if you had previously written> C<use strict>. This was not
 the previous behaviour of C<use VERSION>, which at present will track
 explicitly-enabled strictness flags independently.
 
+Category: "deprecated::version_downgrade"
+
 =head2 Perl 5.38
 
 =head3 Pod::Html utility functions
@@ -48,7 +117,7 @@ Perl 5.38 they will only be importable, on request, from L<Pod::Html::Util>.
 
 =head2 Perl 5.34
 
-There are no deprecations or fatalizations scheduled for Perl 5.34.
+There were no deprecations or fatalizations in Perl 5.34.
 
 =head2 Perl 5.32
 

@@ -172,11 +172,11 @@ edit the Perl Core mailing list admins to match the incoming Steering Council
 
 =item *
 
-update the GitHub "steering" team to match incoming Steering Council
+update the L<GitHub "steering" team|https://github.com/orgs/Perl/teams/perl-steering-council/members> to match incoming Steering Council
 
 =item *
 
-request that the Perl NOC update the perl-security list to include all incoming
+request that the L<Perl NOC|https://noc.perl.org> update the perl-security list to include all incoming
 Steering Council members (without removing outgoing members; the incoming Steering
 Council will decide whether this is needed)
 

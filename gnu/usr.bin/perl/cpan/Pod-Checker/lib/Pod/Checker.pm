@@ -10,7 +10,7 @@ package Pod::Checker;
 use strict;
 use warnings;
 
-our $VERSION = '1.74';  ## Current version of this package
+our $VERSION = '1.75';  ## Current version of this package
 
 =head1 NAME
 
@@ -1112,7 +1112,10 @@ sub new {
 
     $self->{'-line'} ||= $caller->{'_line'};
     $self->{'-type'} ||= $simple_link->{'type'};
-
+    # preserve raw link text for additional checks
+    $self->{'-raw-link-text'} = (exists $simple_link->{'raw'})
+                                ? "$simple_link->{'raw'}"
+                                : "";
     # Force stringification of page and node.  (This expands any E<>.)
     $self->{'-page'} = exists $simple_link->{'to'} ? "$simple_link->{'to'}" : "";
     $self->{'-node'} = exists $simple_link->{'section'} ? "$simple_link->{'section'}" : "";

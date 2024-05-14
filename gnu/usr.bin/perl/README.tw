@@ -1,8 +1,10 @@
-=encoding utf8
+# vim: syntax=pod
 
 如果你用一般的文字編輯器閱覽這份文件, 請忽略文中奇特的註記字符.
 這份文件是以 POD (簡明文件格式) 寫成; 這種格式是為了能讓人直接讀取,
 而特別設計的. 關於此格式的進一步資訊, 請參考 perlpod 線上文件.
+
+=encoding utf8
 
 =head1 NAME
 

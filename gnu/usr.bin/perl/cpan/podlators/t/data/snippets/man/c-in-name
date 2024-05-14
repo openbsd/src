@@ -7,5 +7,5 @@ C<> in NAME
 test - C<test>
 
 [output]
-.SH "NAME"
+.SH NAME
 test \- "test"

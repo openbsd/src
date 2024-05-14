@@ -70,7 +70,8 @@ SKIP: {
         if ((my $s = sprintf("%g", $in)) eq "4.2")  {
             $dot ||= $_;
         } else {
-            my $radix = localeconv()->{decimal_point};
+            use I18N::Langinfo qw(langinfo RADIXCHAR);
+            my $radix = langinfo(RADIXCHAR);
             $comma ||= $_ if $radix eq ',';
         }
 

@@ -43,4 +43,8 @@ use XS::APItest;
     # We won't test AELEM but it's likely to be the same
 }
 
+
+is(test_bool_internals(), 0, "Bulk test internal bool related APIs");
+
+
 done_testing;

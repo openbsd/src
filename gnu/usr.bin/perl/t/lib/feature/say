@@ -7,8 +7,7 @@ use warnings;
 say "Hello", "world";
 EXPECT
 Unquoted string "say" may clash with future reserved word at - line 3.
-String found where operator expected at - line 3, near "say "Hello""
-	(Do you need to predeclare say?)
+String found where operator expected (Do you need to predeclare "say"?) at - line 3, near "say "Hello""
 syntax error at - line 3, near "say "Hello""
 Execution of - aborted due to compilation errors.
 ########
@@ -32,8 +31,7 @@ use warnings;
 say "Hello", "world";
 EXPECT
 Unquoted string "say" may clash with future reserved word at - line 4.
-String found where operator expected at - line 4, near "say "Hello""
-	(Do you need to predeclare say?)
+String found where operator expected (Do you need to predeclare "say"?) at - line 4, near "say "Hello""
 syntax error at - line 4, near "say "Hello""
 Execution of - aborted due to compilation errors.
 ########
@@ -45,8 +43,7 @@ no feature;
 say "Hello", "world";
 EXPECT
 Unquoted string "say" may clash with future reserved word at - line 6.
-String found where operator expected at - line 6, near "say "Hello""
-	(Do you need to predeclare say?)
+String found where operator expected (Do you need to predeclare "say"?) at - line 6, near "say "Hello""
 syntax error at - line 6, near "say "Hello""
 Execution of - aborted due to compilation errors.
 ########
@@ -58,7 +55,6 @@ no feature 'say';
 say "Hello", "world";
 EXPECT
 Unquoted string "say" may clash with future reserved word at - line 6.
-String found where operator expected at - line 6, near "say "Hello""
-	(Do you need to predeclare say?)
+String found where operator expected (Do you need to predeclare "say"?) at - line 6, near "say "Hello""
 syntax error at - line 6, near "say "Hello""
 Execution of - aborted due to compilation errors.

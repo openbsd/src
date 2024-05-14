@@ -12,6 +12,10 @@ BEGIN {
       print "1..0 # Skip: EBCDIC\n";
       exit 0;
     }
+    if ( $] < 5.009 ) {
+        print "1..0 # Skip: Perl <= 5.9 or later required\n";
+        exit 0;
+    }
     $| = 1;
 }
 

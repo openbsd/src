@@ -29,10 +29,6 @@ is( $json->encode( [ \undef ] ), '[null]' );
 is( $json->encode( [ \{} ] ),    '[null]' );
 
 
-SKIP: {
-
-    skip "this test is for Perl 5.8 or later", 2 if( $] < 5.008 );
-
 $json->allow_unknown(0);
 
 my $fh;
@@ -48,5 +44,3 @@ is( $json->encode( [ $fh ] ),    '[null]' );
 close $fh;
 
 unlink('hoge.txt');
-
-}

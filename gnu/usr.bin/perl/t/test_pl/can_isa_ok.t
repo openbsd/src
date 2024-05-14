@@ -5,7 +5,11 @@
 use strict;
 use warnings;
 
-BEGIN { require "test.pl"; }
+BEGIN {
+    chdir 't' if -d 't';
+    push @INC, ".";
+    require 'test.pl';
+}
 
 require Test::More;
 

@@ -2,7 +2,7 @@ package Testing;
 use 5.10.0;
 use warnings;
 use Exporter 'import';
-our $VERSION = 1.33; # Let's keep this same as lib/Pod/Html.pm
+our $VERSION = 1.34; # Let's keep this same as lib/Pod/Html.pm
 $VERSION = eval $VERSION;
 our @EXPORT_OK = qw(
     setup_testing_dir
@@ -121,7 +121,7 @@ underlying operating system, I<e.g.,> with respect to path separators.  Hence,
 we cannot hard-code the expected HTML output into the C<DATA> template or any
 place else.  We have to allow C<Pod::Html::pod2html()> to massage the template
 data to get an "expected output" against which we match the "actual output"
-which come from running C<Pod::Html::pod2html()> over the text originally
+which comes from running C<Pod::Html::pod2html()> over the text originally
 slurped into memory from the F<t/*.pod> file.
 
 Granted, there is a certain amount of circularity in this testing regimen.  On
@@ -139,7 +139,8 @@ that we get consistent results out of C<pod2html()> year after year.
 Here we continue to focus on those test programs which make use of the testing
 functions exported by F<Testing> and which take a F<t/*.pod> file as input.
 
-We assume that we begin our tests from the top level of the Perl 5 core distribution and are using F<t/harness>.  Hence, to run the test files we say:
+We assume that we begin our tests from the top level of the Perl 5 core
+distribution and are using F<t/harness>.  Hence, to run the test files we say:
 
     cd t; ./perl harness ../ext/Pod-Html/t/*.t; cd -
 
@@ -147,15 +148,15 @@ The program then slurps contents of the C<DATA> handle into memory.
 
 The program then calls C<setup_testing_dir()> from this module to create a
 temporary directory and populate it as needed.  C<setup_testing_dir()> returns
-the absolute path to that directory, but at the point of return you are
-actually located two levels beneath the temporary directory in a directory whose relative path is
-F<ext/Pod-Html/>.  (This is equivalent to being in F<toplevel/ext/Pod-Html/>
-for tests in versions of Pod-Html distributed with earlier versions of
-F<perl>.)
+the absolute path to that directory, but at the point where that subroutine
+returns you are actually located two levels beneath the temporary directory in
+a directory whose relative path is F<ext/Pod-Html/>.  (This is equivalent to
+being in F<toplevel/ext/Pod-Html/> for tests in versions of Pod-Html
+distributed with earlier versions of F<perl>.)
 
-Note that this means that at the end of the program you will have to
-switch back to your starting directory so that the tempdir can automatically
-be cleaned up.  We automate this via an C<END> block.
+Note that this means that at the end of the program you will have to switch
+back to your starting directory so that the tempdir can automatically be
+cleaned up.  We automate this via an C<END> block.
 
 You then prepare arguments for our principal testing function, C<xconvert()>
 (which supersedes the former C<convert_n_test()>.  These arguments take the
@@ -433,10 +434,16 @@ Not explicitly defined, but should return a Perl-true value upon completion.
 
 =item * Comment
 
-This function essentially asks, "Are we getting the same HTML output the last time we tinkered with the code in this distribution?"  Hence, it is dependent on the particular parsing and HTML composition functionality found within C<Pod::Html::pod2html()>, which is a somewhat customized subclass of F<Pod::Simple::XHTML>.  If, in the future, we offer functionality based on other parsing classes, then the C<DATA> sections of the F<t/*.t> files will have to be revised and perhaps the guts of C<xconvert()> as well.
+This function essentially asks, "Are we getting the same HTML output the last
+time we tinkered with the code in this distribution?"  Hence, it is dependent
+on the particular parsing and HTML composition functionality found within
+C<Pod::Html::pod2html()>, which is a somewhat customized subclass of
+F<Pod::Simple::XHTML>.  If, in the future, we offer functionality based on
+other parsing classes, then the C<DATA> sections of the F<t/*.t> files will
+have to be revised and perhaps the guts of C<xconvert()> as well.
 
-This function is roughly equivalent to test helper function C<convert_n_test()> in earlier
-versions of Pod-Html.
+This function is roughly equivalent to test helper function
+C<convert_n_test()> in earlier versions of Pod-Html.
 
 =back
 

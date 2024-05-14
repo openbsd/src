@@ -26,7 +26,7 @@ package My::Test;
 # Test::Builder's own and the ending diagnostics don't come out right.
 require Test::Builder;
 my $TB = Test::Builder->create;
-$TB->plan(tests => 80);
+$TB->plan(tests => 81);
 
 sub like ($$;$) {
     $TB->like(@_);
@@ -39,6 +39,14 @@ sub is ($$;$) {
 sub main::out_ok ($$) {
     $TB->is_eq( $out->read, shift );
     $TB->is_eq( $err->read, shift );
+}
+
+sub main::out_warn_ok ($$$) {
+    $TB->is_eq( $out->read, shift );
+    $TB->is_eq( $err->read, shift );
+    my $warning_expected = shift;
+    $warning_expected =~ s/^# //mg;
+    $TB->is_eq( $main::warning, $warning_expected );
 }
 
 sub main::out_like ($$) {
@@ -59,7 +67,7 @@ $out->read;  # clear the plan from $out
 
 # This should all work in the presence of a __DIE__ handler.
 local $SIG{__DIE__} = sub { $TB->ok(0, "DIE handler called: ".join "", @_); };
-
+local $SIG{__WARN__} = sub { $main::warning = $_[0]; };
 
 my $tb = Test::More->builder;
 $tb->use_numbers(0);
@@ -134,7 +142,7 @@ ERR
 
 #line 132
 isn::t("foo", "foo",'foo isn\'t foo?' );
-out_ok( <<OUT, <<ERR );
+out_warn_ok( <<OUT, <<ERR, <<WARN );
 not ok - foo isn't foo?
 OUT
 #   Failed test 'foo isn\'t foo?'
@@ -142,6 +150,10 @@ OUT
 #          got: 'foo'
 #     expected: anything else
 ERR
+# Use of apostrophe as package separator was deprecated in Perl 5.37.9,
+# and will be removed in Perl 5.42.0.  You should change code that uses
+# Test::More::isn't() to use Test::More::isnt() as a replacement at t/Legacy/fail-more.t line 132
+WARN
 
 #line 143
 isnt(undef, undef, 'undef isnt undef?');

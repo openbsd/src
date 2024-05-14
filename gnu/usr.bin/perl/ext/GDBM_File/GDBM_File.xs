@@ -878,7 +878,7 @@ gdbm_flags(db, ...)
     PREINIT:
         int opcode = -1;
         int c_iv;
-        unsigned c_uv;
+        size_t c_uv;
         char *c_cv;
         OPTVALPTR vptr = (OPTVALPTR) &c_iv;
         size_t vsiz = sizeof(c_iv);

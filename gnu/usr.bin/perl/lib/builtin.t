@@ -1,4 +1,4 @@
-#!./perl
+#!./perl -T
 
 BEGIN {
     chdir 't' if -d 't';
@@ -6,15 +6,14 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-use strict;
-use warnings;
+use v5.36;
 no warnings 'experimental::builtin';
 
 package FetchStoreCounter {
-    sub new { my $class = shift; return bless [@_], $class }
-    sub TIESCALAR { return shift->new(@_) }
-    sub FETCH { ${shift->[0]}++ }
-    sub STORE { ${shift->[1]}++ }
+    sub TIESCALAR($class, @args) { bless \@args, $class }
+
+    sub FETCH($self)    { $self->[0]->$*++ }
+    sub STORE($self, $) { $self->[1]->$*++ }
 }
 
 # booleans
@@ -47,7 +46,9 @@ package FetchStoreCounter {
     is($fetchcount, 1, 'is_bool() invokes FETCH magic');
 
     $tied = is_bool(false);
-    is($storecount, 1, 'is_bool() TARG invokes STORE magic');
+    is($storecount, 1, 'is_bool() invokes STORE magic');
+
+    is(prototype(\&builtin::is_bool), '$', 'is_bool prototype');
 }
 
 # weakrefs
@@ -68,6 +69,10 @@ package FetchStoreCounter {
     weaken($ref);
     undef $arr;
     is($ref, undef, 'ref is now undef after arr is cleared');
+
+    is(prototype(\&builtin::weaken), '$', 'weaken prototype');
+    is(prototype(\&builtin::unweaken), '$', 'unweaken prototype');
+    is(prototype(\&builtin::is_weak), '$', 'is_weak prototype');
 }
 
 # reference queries
@@ -92,6 +97,10 @@ package FetchStoreCounter {
 
     # blessed() appears false as a boolean on package "0"
     is(blessed(bless [], "0") ? "YES" : "NO", "NO", 'blessed in boolean context handles "0" cornercase');
+
+    is(prototype(\&builtin::blessed), '$', 'blessed prototype');
+    is(prototype(\&builtin::refaddr), '$', 'refaddr prototype');
+    is(prototype(\&builtin::reftype), '$', 'reftype prototype');
 }
 
 # created_as_...
@@ -159,6 +168,9 @@ package FetchStoreCounter {
     local $1;
     "hello" =~ m/(.*)/;
     ok(created_as_string($1), 'magic string');
+
+    is(prototype(\&builtin::created_as_string), '$', 'created_as_string prototype');
+    is(prototype(\&builtin::created_as_number), '$', 'created_as_number prototype');
 }
 
 # ceil, floor
@@ -186,6 +198,9 @@ package FetchStoreCounter {
 
     $tied = floor(1.1);
     is($storecount, 1, 'floor() TARG invokes STORE magic');
+
+    is(prototype(\&builtin::ceil), '$', 'ceil prototype');
+    is(prototype(\&builtin::floor), '$', 'floor prototype');
 }
 
 # imports are lexical; should not be visible here
@@ -290,24 +305,26 @@ package FetchStoreCounter {
 {
     use builtin qw( trim );
 
-    is(trim("    Hello world!   ")      , "Hello world!"  , 'Trim spaces');
-    is(trim("\tHello world!\t")         , "Hello world!"  , 'Trim tabs');
-    is(trim("\n\n\nHello\nworld!\n")    , "Hello\nworld!" , 'Trim \n');
-    is(trim("\t\n\n\nHello world!\n \t"), "Hello world!"  , 'Trim all three');
-    is(trim("Perl")                     , "Perl"          , 'Trim nothing');
-    is(trim('')                         , ""              , 'Trim empty string');
+    is(trim("    Hello world!   ")      , "Hello world!"  , 'trim spaces');
+    is(trim("\tHello world!\t")         , "Hello world!"  , 'trim tabs');
+    is(trim("\n\n\nHello\nworld!\n")    , "Hello\nworld!" , 'trim \n');
+    is(trim("\t\n\n\nHello world!\n \t"), "Hello world!"  , 'trim all three');
+    is(trim("Perl")                     , "Perl"          , 'trim nothing');
+    is(trim('')                         , ""              , 'trim empty string');
+
+    is(prototype(\&builtin::trim), '$', 'trim prototype');
 }
 
 TODO: {
     my $warn = '';
     local $SIG{__WARN__} = sub { $warn .= join "", @_; };
 
-    is(builtin::trim(undef), "", 'Trim undef');
+    is(builtin::trim(undef), "", 'trim undef');
     like($warn    , qr/^Use of uninitialized value in subroutine entry at/,
-         'Trim undef triggers warning');
+         'trim undef triggers warning');
     local $main::TODO = "Currently uses generic value for the name of non-opcode builtins";
     like($warn    , qr/^Use of uninitialized value in trim at/,
-         'Trim undef triggers warning using actual name of builtin');
+         'trim undef triggers warning using actual name of builtin');
 }
 
 # Fancier trim tests against a regexp and unicode
@@ -315,10 +332,10 @@ TODO: {
     use builtin qw( trim );
     my $nbsp = chr utf8::unicode_to_native(0xA0);
 
-    is(trim("   \N{U+2603}       "), "\N{U+2603}", 'Trim with unicode content');
+    is(trim("   \N{U+2603}       "), "\N{U+2603}", 'trim with unicode content');
     is(trim("\N{U+2029}foobar\x{2028} "), "foobar",
-            'Trim with unicode whitespace');
-    is(trim("$nbsp foobar$nbsp    "), "foobar", 'Trim with latin1 whitespace');
+            'trim with unicode whitespace');
+    is(trim("$nbsp foobar$nbsp    "), "foobar", 'trim with latin1 whitespace');
 }
 
 # Test on a magical fetching variable
@@ -327,7 +344,7 @@ TODO: {
 
     my $str3 = "   Hello world!\t";
     $str3 =~ m/(.+Hello)/;
-    is(trim($1), "Hello", "Trim on a magical variable");
+    is(trim($1), "Hello", "trim on a magical variable");
 }
 
 # Inplace edit, my, our variables
@@ -336,10 +353,64 @@ TODO: {
 
     my $str4 = "\t\tHello world!\n\n";
     $str4 = trim($str4);
-    is($str4, "Hello world!", "Trim on an inplace variable");
+    is($str4, "Hello world!", "trim on an inplace variable");
 
     our $str2 = "\t\nHello world!\t  ";
-    is(trim($str2), "Hello world!", "Trim on an our \$var");
+    is(trim($str2), "Hello world!", "trim on an our \$var");
+}
+
+# is_tainted
+{
+    use builtin qw( is_tainted );
+
+    is(is_tainted($0), !!${^TAINT}, "\$0 is tainted (if tainting is supported)");
+    ok(!is_tainted($1), "\$1 isn't tainted");
+
+    # Invokes magic
+    tie my $tied, FetchStoreCounter => (\my $fetchcount, \my $storecount);
+
+    my $_dummy = is_tainted($tied);
+    is($fetchcount, 1, 'is_tainted() invokes FETCH magic');
+
+    $tied = is_tainted($0);
+    is($storecount, 1, 'is_tainted() invokes STORE magic');
+
+    is(prototype(\&builtin::is_tainted), '$', 'is_tainted prototype');
+}
+
+# Lexical export
+{
+    my $name;
+    BEGIN {
+        use builtin qw( export_lexically );
+
+        $name = "message";
+        export_lexically $name => sub { "Hello, world" };
+    }
+
+    is(message(), "Hello, world", 'Lexically exported sub is callable');
+    ok(!__PACKAGE__->can("message"), 'Exported sub is not visible via ->can');
+
+    is($name, "message", '$name argument was not modified by export_lexically');
+
+    our ( $scalar, @array, %hash );
+    BEGIN {
+        use builtin qw( export_lexically );
+
+        export_lexically
+            '$SCALAR' => \$scalar,
+            '@ARRAY'  => \@array,
+            '%HASH'   => \%hash;
+    }
+
+    $::scalar = "value";
+    is($SCALAR, "value", 'Lexically exported scalar is accessible');
+
+    @::array = ('a' .. 'e');
+    is(scalar @ARRAY, 5, 'Lexically exported array is accessible');
+
+    %::hash = (key => "val");
+    is($HASH{key}, "val", 'Lexically exported hash is accessible');
 }
 
 # vim: tabstop=4 shiftwidth=4 expandtab autoindent softtabstop=4

@@ -17,9 +17,9 @@ Another bullet.
 =back
 
 [output]
-.IP "\(bu" 4
+.IP \(bu 4
 A bullet.
-.IP "\(bu" 4
+.IP \(bu 4
 Another bullet.
-.IP "\(bu" 4
+.IP \(bu 4
 Also a bullet.

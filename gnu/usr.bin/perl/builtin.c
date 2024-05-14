@@ -32,6 +32,38 @@ static void S_warn_experimental_builtin(pTHX_ const char *name, bool prefix)
                      prefix ? "builtin::" : "", name);
 }
 
+/* These three utilities might want to live elsewhere to be reused from other
+ * code sometime
+ */
+#define prepare_export_lexical()  S_prepare_export_lexical(aTHX)
+static void S_prepare_export_lexical(pTHX)
+{
+    assert(PL_compcv);
+
+    /* We need to have PL_comppad / PL_curpad set correctly for lexical importing */
+    ENTER;
+    SAVESPTR(PL_comppad_name); PL_comppad_name = PadlistNAMES(CvPADLIST(PL_compcv));
+    SAVESPTR(PL_comppad);      PL_comppad      = PadlistARRAY(CvPADLIST(PL_compcv))[1];
+    SAVESPTR(PL_curpad);       PL_curpad       = PadARRAY(PL_comppad);
+}
+
+#define export_lexical(name, sv)  S_export_lexical(aTHX_ name, sv)
+static void S_export_lexical(pTHX_ SV *name, SV *sv)
+{
+    PADOFFSET off = pad_add_name_sv(name, padadd_STATE, 0, 0);
+    SvREFCNT_dec(PL_curpad[off]);
+    PL_curpad[off] = SvREFCNT_inc(sv);
+}
+
+#define finish_export_lexical()  S_finish_export_lexical(aTHX)
+static void S_finish_export_lexical(pTHX)
+{
+    intro_my();
+
+    LEAVE;
+}
+
+
 XS(XS_builtin_true);
 XS(XS_builtin_true)
 {
@@ -123,6 +155,10 @@ XS(XS_builtin_func1_scalar)
 
         case OP_FLOOR:
             Perl_pp_floor(aTHX);
+            break;
+
+        case OP_IS_TAINTED:
+            Perl_pp_is_tainted(aTHX);
             break;
 
         default:
@@ -225,6 +261,79 @@ XS(XS_builtin_trim)
     SETs(dest);
 
     XSRETURN(1);
+}
+
+XS(XS_builtin_export_lexically);
+XS(XS_builtin_export_lexically)
+{
+    dXSARGS;
+
+    warn_experimental_builtin("export_lexically", true);
+
+    if(!PL_compcv)
+        Perl_croak(aTHX_
+                "export_lexically can only be called at compile time");
+
+    if(items % 2)
+        Perl_croak(aTHX_ "Odd number of elements in export_lexically");
+
+    for(int i = 0; i < items; i += 2) {
+        SV *name = ST(i);
+        SV *ref  = ST(i+1);
+
+        if(!SvROK(ref))
+            /* diag_listed_as: Expected %s reference in export_lexically */
+            Perl_croak(aTHX_ "Expected a reference in export_lexically");
+
+        char sigil = SvPVX(name)[0];
+        SV *rv = SvRV(ref);
+
+        const char *bad = NULL;
+        switch(sigil) {
+            default:
+                /* overwrites the pointer on the stack; but this is fine, the
+                 * caller's value isn't modified */
+                ST(i) = name = sv_2mortal(Perl_newSVpvf(aTHX_ "&%" SVf, SVfARG(name)));
+
+                /* FALLTHROUGH */
+            case '&':
+                if(SvTYPE(rv) != SVt_PVCV)
+                    bad = "a CODE";
+                break;
+
+            case '$':
+                /* Permit any of SVt_NULL to SVt_PVMG. Technically this also
+                 * includes SVt_INVLIST but it isn't thought possible for pureperl
+                 * code to ever manage to see one of those. */
+                if(SvTYPE(rv) > SVt_PVMG)
+                    bad = "a SCALAR";
+                break;
+
+            case '@':
+                if(SvTYPE(rv) != SVt_PVAV)
+                    bad = "an ARRAY";
+                break;
+
+            case '%':
+                if(SvTYPE(rv) != SVt_PVHV)
+                    bad = "a HASH";
+                break;
+        }
+
+        if(bad)
+            Perl_croak(aTHX_ "Expected %s reference in export_lexically", bad);
+    }
+
+    prepare_export_lexical();
+
+    for(int i = 0; i < items; i += 2) {
+        SV *name = ST(i);
+        SV *ref  = ST(i+1);
+
+        export_lexical(name, SvRV(ref));
+    }
+
+    finish_export_lexical();
 }
 
 XS(XS_builtin_func1_void);
@@ -380,22 +489,24 @@ static const struct BuiltinFuncDescriptor builtins[] = {
     { "builtin::false",  &XS_builtin_false,  &ck_builtin_const, BUILTIN_CONST_FALSE },
 
     /* unary functions */
-    { "builtin::is_bool",  &XS_builtin_func1_scalar, &ck_builtin_func1, OP_IS_BOOL  },
-    { "builtin::weaken",   &XS_builtin_func1_void,   &ck_builtin_func1, OP_WEAKEN   },
-    { "builtin::unweaken", &XS_builtin_func1_void,   &ck_builtin_func1, OP_UNWEAKEN },
-    { "builtin::is_weak",  &XS_builtin_func1_scalar, &ck_builtin_func1, OP_IS_WEAK  },
-    { "builtin::blessed",  &XS_builtin_func1_scalar, &ck_builtin_func1, OP_BLESSED  },
-    { "builtin::refaddr",  &XS_builtin_func1_scalar, &ck_builtin_func1, OP_REFADDR  },
-    { "builtin::reftype",  &XS_builtin_func1_scalar, &ck_builtin_func1, OP_REFTYPE  },
-    { "builtin::ceil",     &XS_builtin_func1_scalar, &ck_builtin_func1, OP_CEIL     },
-    { "builtin::floor",    &XS_builtin_func1_scalar, &ck_builtin_func1, OP_FLOOR    },
-    { "builtin::trim",     &XS_builtin_trim, NULL, 0 },
+    { "builtin::is_bool",    &XS_builtin_func1_scalar, &ck_builtin_func1, OP_IS_BOOL    },
+    { "builtin::weaken",     &XS_builtin_func1_void,   &ck_builtin_func1, OP_WEAKEN     },
+    { "builtin::unweaken",   &XS_builtin_func1_void,   &ck_builtin_func1, OP_UNWEAKEN   },
+    { "builtin::is_weak",    &XS_builtin_func1_scalar, &ck_builtin_func1, OP_IS_WEAK    },
+    { "builtin::blessed",    &XS_builtin_func1_scalar, &ck_builtin_func1, OP_BLESSED    },
+    { "builtin::refaddr",    &XS_builtin_func1_scalar, &ck_builtin_func1, OP_REFADDR    },
+    { "builtin::reftype",    &XS_builtin_func1_scalar, &ck_builtin_func1, OP_REFTYPE    },
+    { "builtin::ceil",       &XS_builtin_func1_scalar, &ck_builtin_func1, OP_CEIL       },
+    { "builtin::floor",      &XS_builtin_func1_scalar, &ck_builtin_func1, OP_FLOOR      },
+    { "builtin::is_tainted", &XS_builtin_func1_scalar, &ck_builtin_func1, OP_IS_TAINTED },
+    { "builtin::trim",       &XS_builtin_trim,         &ck_builtin_func1, 0 },
 
     { "builtin::created_as_string", &XS_builtin_created_as_string, &ck_builtin_func1, 0 },
     { "builtin::created_as_number", &XS_builtin_created_as_number, &ck_builtin_func1, 0 },
 
     /* list functions */
     { "builtin::indexed", &XS_builtin_indexed, &ck_builtin_funcN, 0 },
+    { "builtin::export_lexically", &XS_builtin_export_lexically, NULL, 0 },
     { 0 }
 };
 
@@ -408,11 +519,7 @@ XS(XS_builtin_import)
         Perl_croak(aTHX_
                 "builtin::import can only be called at compile time");
 
-    /* We need to have PL_comppad / PL_curpad set correctly for lexical importing */
-    ENTER;
-    SAVESPTR(PL_comppad_name); PL_comppad_name = PadlistNAMES(CvPADLIST(PL_compcv));
-    SAVESPTR(PL_comppad);      PL_comppad      = PadlistARRAY(CvPADLIST(PL_compcv))[1];
-    SAVESPTR(PL_curpad);       PL_curpad       = PadARRAY(PL_comppad);
+    prepare_export_lexical();
 
     for(int i = 1; i < items; i++) {
         SV *sym = ST(i);
@@ -420,20 +527,16 @@ XS(XS_builtin_import)
             Perl_croak(aTHX_ builtin_not_recognised, sym);
 
         SV *ampname = sv_2mortal(Perl_newSVpvf(aTHX_ "&%" SVf, SVfARG(sym)));
-        SV *fqname  = sv_2mortal(Perl_newSVpvf(aTHX_ "builtin::%" SVf, SVfARG(sym)));
+        SV *fqname = sv_2mortal(Perl_newSVpvf(aTHX_ "builtin::%" SVf, SVfARG(sym)));
 
         CV *cv = get_cv(SvPV_nolen(fqname), SvUTF8(fqname) ? SVf_UTF8 : 0);
         if(!cv)
             Perl_croak(aTHX_ builtin_not_recognised, sym);
 
-        PADOFFSET off = pad_add_name_sv(ampname, padadd_STATE, 0, 0);
-        SvREFCNT_dec(PL_curpad[off]);
-        PL_curpad[off] = SvREFCNT_inc(cv);
+        export_lexical(ampname, (SV *)cv);
     }
 
-    intro_my();
-
-    LEAVE;
+    finish_export_lexical();
 }
 
 void

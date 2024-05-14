@@ -19,6 +19,7 @@ ExtUtils::ParseXS - converts Perl XS code into C code
                       linenumbers => 1,
                       optimize => 1,
                       prototypes => 1,
+                      die_on_error => 0,
                     );
 
   # Legacy non-OO interface using a singleton:
@@ -118,6 +119,15 @@ Default is true.
 =item B<s>
 
 I<Maintainer note:> I have no clue what this does.  Strips function prefixes?
+
+=item B<die_on_error>
+
+Normally ExtUtils::ParseXS will terminate the program with an C<exit(1)> after
+printing the details of the exception to STDERR via (warn). This can be awkward
+when it is used programmatically and not via xsubpp, so this option can be used
+to cause it to die instead by providing a true value. When not provided this
+defaults to the value of C<$ExtUtils::ParseXS::DIE_ON_ERROR> which in turn
+defaults to false.
 
 =back
 

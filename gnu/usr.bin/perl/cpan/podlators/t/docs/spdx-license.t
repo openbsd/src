@@ -9,7 +9,7 @@
 # The canonical version of this file is maintained in the rra-c-util package,
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
-# Copyright 2018-2019 Russ Allbery <eagle@eyrie.org>
+# Copyright 2018-2021 Russ Allbery <eagle@eyrie.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.008;
+use 5.010;
 use strict;
 use warnings;
 
@@ -45,8 +45,9 @@ use Test::More;
 # File name (the file without any directory component) and path patterns to
 # skip for this check.
 ## no critic (RegularExpressions::ProhibitFixedStringMatches)
+#<<<
 my @IGNORE = (
-    qr{ \A Build ( [.] (?!PL) .* )? \z }ixms,    # Generated file from Build.PL
+    qr{ \A Build ( [.] (?!PL) .* )? \z }ixms,  # Generated file from Build.PL
     qr{ \A LICENSE \z }xms,                 # Generated file, no license itself
     qr{ \A (Changes|NEWS|THANKS) \z }xms,   # Package license should be fine
     qr{ \A TODO \z }xms,                    # Package license should be fine
@@ -55,20 +56,24 @@ my @IGNORE = (
     qr{ \A (MY)? META [.] .* }xms,          # Generated file, no license itself
     qr{ [.] output \z }xms,                 # Test data
     qr{ pod2htm . [.] tmp \z }xms,          # Windows pod2html output
+    qr{ ~ \z }xms,                          # Backup files
 );
 my @IGNORE_PATHS = (
-    qr{ \A [.] / [.] git/ }xms,               # Version control files
-    qr{ \A [.] /_build/ }xms,                 # Module::Build metadata
-    qr{ \A [.] /blib/ }xms,                   # Perl build system artifacts
-    qr{ \A [.] /cover_db/ }xms,               # Artifacts from coverage testing
-    qr{ \A [.] /debian/ }xms,                 # Found in debian/* branches
-    qr{ \A [.] /docs/metadata/ }xms,          # Package license should be fine
-    qr{ \A [.] /README ( [.] .* )? \z }xms,   # Package license should be fine
-    qr{ \A [.] /share/ }xms,                  # Package license should be fine
-    qr{ \A [.] /t/data .* /metadata/ }xms,    # Test metadata
-    qr{ \A [.] /t/data .* /output/ }xms,      # Test output
-    qr{ \A [.] /t/data .* [.] json \z }xms,   # Test metadata
+    qr{ \A [.] / [.] git/ }xms,             # Version control files
+    qr{ \A [.] / [.] pc/ }xms,              # quilt metadata files
+    qr{ \A [.] /_build/ }xms,               # Module::Build metadata
+    qr{ \A [.] /blib/ }xms,                 # Perl build system artifacts
+    qr{ \A [.] /cover_db/ }xms,             # Artifacts from coverage testing
+    qr{ \A [.] /debian/ }xms,               # Found in debian/* branches
+    qr{ \A [.] /docs/metadata/ }xms,        # Package license should be fine
+    qr{ \A [.] /README ( [.] .* )? \z }xms, # Package license should be fine
+    qr{ \A [.] /share/ }xms,                # Package license should be fine
+    qr{ \A [.] /t/data/generate/ }xms,      # Test metadata
+    qr{ \A [.] /t/data/spin/ }xms,          # Test metadata
+    qr{ \A [.] /t/data/update/ }xms,        # Test output
+    qr{ \A [.] /t/data .* [.] json \z }xms, # Test metadata
 );
+#>>>
 ## use critic
 
 # Only run this test during automated testing, since failure doesn't indicate
@@ -82,7 +87,7 @@ skip_unless_automated('SPDX identifier tests');
 # Returns: undef
 sub check_file {
     my $filename = $_;
-    my $path     = $File::Find::name;
+    my $path = $File::Find::name;
 
     # Ignore files in the whitelist and binary files.
     for my $pattern (@IGNORE) {

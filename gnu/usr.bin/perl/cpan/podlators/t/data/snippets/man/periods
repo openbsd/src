@@ -7,6 +7,6 @@ Quoted periods
 This C<.> should be quoted.
 
 [output]
-.SH "PERIODS"
+.SH PERIODS
 .IX Header "PERIODS"
 This \f(CW\*(C`.\*(C'\fR should be quoted.
