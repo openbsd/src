@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.40 2024/01/31 05:49:33 guenther Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.41 2024/05/14 01:46:24 guenther Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -42,8 +42,6 @@
 #include <machine/specialreg.h>
 
 #if defined(_KERNEL) && !defined (_STANDALONE)
-
-extern int cpu_feature;
 
 static __inline void 
 invlpg(u_int64_t addr)
