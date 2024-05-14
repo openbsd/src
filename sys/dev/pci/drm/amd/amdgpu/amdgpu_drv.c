@@ -3665,7 +3665,7 @@ amdgpu_activate(struct device *self, int act)
 	struct drm_device *dev = &adev->ddev;
 	int rv = 0;
 
-	if (dev->dev == NULL || amdgpu_fatal_error)
+	if (dev->dev == NULL || amdgpu_fatal_error || adev->shutdown)
 		return (0);
 
 	switch (act) {
