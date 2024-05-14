@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.142 2024/05/12 16:49:38 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.143 2024/05/14 01:42:07 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -66,10 +66,6 @@ char cpu_model[48];
 int cpuspeed;
 
 int amd64_has_xcrypt;
-#ifdef CRYPTO
-int amd64_has_pclmul;
-int amd64_has_aesni;
-#endif
 int has_rdrand;
 int has_rdseed;
 
@@ -519,6 +515,7 @@ identifycpu(struct cpu_info *ci)
 		/* Let cpu_feature be the common bits */
 		cpu_feature &= ci->ci_feature_flags |
 		    (ci->ci_feature_eflags & CPUID_NXE);
+		cpu_ecxfeature &= curcpu_1_ecx;
 	}
 	/* cflush cacheline size is equal to bits 15-8 of ebx * 8 */
 	ci->ci_cflushsz = ((cflushsz >> 8) & 0xff) * 8;
@@ -734,16 +731,6 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_sensor.type = SENSOR_TEMP;
 		sensor_task_register(ci, intelcore_update_sensor, 5);
 		sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
-	}
-#endif
-
-#ifdef CRYPTO
-	if (CPU_IS_PRIMARY(ci)) {
-		if (cpu_ecxfeature & CPUIDECX_PCLMUL)
-			amd64_has_pclmul = 1;
-
-		if (cpu_ecxfeature & CPUIDECX_AES)
-			amd64_has_aesni = 1;
 	}
 #endif
 

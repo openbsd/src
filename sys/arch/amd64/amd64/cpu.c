@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.187 2024/05/12 16:49:38 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.188 2024/05/14 01:42:07 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -154,7 +154,7 @@ int cpuid_level = 0;		/* MIN cpuid(0).eax */
 char cpu_vendor[16] = { 0 };	/* CPU0's cpuid(0).e[bdc]x, \0 */
 int cpu_id = 0;			/* cpuid(1).eax */
 int cpu_ebxfeature = 0;		/* cpuid(1).ebx */
-int cpu_ecxfeature = 0;		/* cpuid(1).ecx */
+int cpu_ecxfeature = 0;		/* INTERSECTION(cpuid(1).ecx) */
 int cpu_feature = 0;		/* cpuid(1).edx */
 int ecpu_ecxfeature = 0;	/* cpuid(0x80000001).ecx */
 int cpu_meltdown = 0;
