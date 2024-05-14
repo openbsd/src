@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.435 2023/09/15 15:49:05 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.436 2024/05/14 10:11:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -374,13 +375,13 @@ tty_send_requests(struct tty *tty)
 		tty_puts(tty, "\033]11;?\033\\");
 	} else
 		tty->flags |= TTY_ALL_REQUEST_FLAGS;
-	tty->last_requests = time (NULL);
+	tty->last_requests = time(NULL);
 }
 
 void
 tty_repeat_requests(struct tty *tty)
 {
-	time_t	t = time (NULL);
+	time_t	t = time(NULL);
 
 	if (~tty->flags & TTY_STARTED)
 		return;

@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.205 2023/09/15 15:49:05 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.206 2024/05/14 10:11:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -258,7 +258,7 @@ server_loop(void)
 	struct client	*c;
 	u_int		 items;
 
-	current_time = time (NULL);
+	current_time = time(NULL);
 
 	do {
 		items = cmdq_next(NULL);
