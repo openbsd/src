@@ -1,4 +1,4 @@
-/* $OpenBSD: mandocdb.c,v 1.219 2022/12/26 19:16:02 jmc Exp $ */
+/* $OpenBSD: mandocdb.c,v 1.220 2024/05/14 18:38:13 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -326,7 +326,7 @@ mandocdb(int argc, char *argv[])
 		goto usage; \
 	} while (/*CONSTCOND*/0)
 
-	mparse_options = MPARSE_VALIDATE;
+	mparse_options = MPARSE_UTF8 | MPARSE_LATIN1 | MPARSE_VALIDATE;
 	path_arg = NULL;
 	op = OP_DEFAULT;
 
@@ -1987,7 +1987,21 @@ render_string(char **public, size_t *psz)
 		 */
 
 		scp++;
-		if (mandoc_escape(&scp, &seq, &seqlen) != ESCAPE_SPECIAL)
+		switch (mandoc_escape(&scp, &seq, &seqlen)) {
+		case ESCAPE_UNICODE:
+			unicode = mchars_num2uc(seq + 1, seqlen - 1);
+			break;
+		case ESCAPE_NUMBERED:
+			unicode = mchars_num2char(seq, seqlen);
+			break;
+		case ESCAPE_SPECIAL:
+			unicode = mchars_spec2cp(seq, seqlen);
+			break;
+		default:
+			unicode = -1;
+			break;
+		}
+		if (unicode <= 0)
 			continue;
 
 		/*
@@ -1996,21 +2010,17 @@ render_string(char **public, size_t *psz)
 		 */
 
 		if (write_utf8) {
-			unicode = mchars_spec2cp(seq, seqlen);
-			if (unicode <= 0)
-				continue;
 			addsz = utf8(unicode, utfbuf);
 			if (addsz == 0)
 				continue;
 			addcp = utfbuf;
 		} else {
-			addcp = mchars_spec2str(seq, seqlen, &addsz);
+			addcp = mchars_uc2str(unicode);
 			if (addcp == NULL)
 				continue;
-			if (*addcp == ASCII_NBRSP) {
+			if (*addcp == ASCII_NBRSP)
 				addcp = " ";
-				addsz = 1;
-			}
+			addsz = strlen(addcp);
 		}
 
 		/* Copy the rendered glyph into the stream. */
