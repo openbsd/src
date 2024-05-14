@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.85 2023/08/23 08:40:25 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.86 2024/05/14 07:33:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -85,12 +85,18 @@ cmd_run_shell_print(struct job *job, const char *msg)
 
 	if (cdata->wp_id != -1)
 		wp = window_pane_find_by_id(cdata->wp_id);
-	if (wp == NULL && cdata->item != NULL && cdata->client != NULL)
-		wp = server_client_get_pane(cdata->client);
-	if (wp == NULL && cmd_find_from_nothing(&fs, 0) == 0)
-		wp = fs.wp;
-	if (wp == NULL)
-		return;
+	if (wp == NULL) {
+		if (cdata->item != NULL) {
+			cmdq_print(cdata->item, "%s", msg);
+			return;
+		}
+		if (cdata->item != NULL && cdata->client != NULL)
+			wp = server_client_get_pane(cdata->client);
+		if (wp == NULL && cmd_find_from_nothing(&fs, 0) == 0)
+			wp = fs.wp;
+		if (wp == NULL)
+			return;
+	}
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme == NULL || wme->mode != &window_view_mode)
