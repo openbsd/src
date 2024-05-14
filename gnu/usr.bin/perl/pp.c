@@ -2952,12 +2952,13 @@ PP(pp_rand)
             /* env var PERL_RAND_SEED has been set so the user wants
              * consistent srand() initialization. */
             PERL_SRAND_OVERRIDE_GET(s);
+            (void)srand48_deterministic((Rand_seed_t)s);
         } else {
             /* Pseudo random initialization from context state and possible
              * random devices */
             s= (Rand_seed_t)seed();
+            (void)seedDrand01(s);
         }
-        (void)seedDrand01(s);
         PL_srand_called = TRUE;
     }
     {
@@ -3014,18 +3015,20 @@ PP(pp_srand)
                              "Integer overflow in srand");
             anum = UV_MAX;
         }
+        (void)srand48_deterministic((Rand_seed_t)anum);
     }
     else {
         if (PL_srand_override) {
             /* env var PERL_RAND_SEED has been set so the user wants
              * consistent srand() initialization. */
             PERL_SRAND_OVERRIDE_GET(anum);
+            (void)srand48_deterministic((Rand_seed_t)anum);
         } else {
             anum = seed();
+            (void)seedDrand01((Rand_seed_t)anum);
         }
     }
 
-    (void)seedDrand01((Rand_seed_t)anum);
     PL_srand_called = TRUE;
     if (anum)
         XPUSHu(anum);

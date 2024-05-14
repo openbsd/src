@@ -31,6 +31,14 @@ case "$osvers" in
 	d_setruid=$undef
 esac
 
+# OpenBSD 5.5 on has 64 bit time_t
+case "$osvers" in
+[0-4].*|5.[0-4]) ;;
+*)
+	cppflags="$cppflags -DBIG_TIME"
+	;;
+esac
+
 #
 # Not all platforms support dynamic loading...
 # For the case of "$openbsd_distribution", the hints file
@@ -47,7 +55,11 @@ alpha-2.[0-8]|mips-2.[0-8]|powerpc-2.[0-7]|m88k-[2-4].*|m88k-5.[0-2]|hppa-3.[0-5
 	test -z "$usedl" && usedl=$define
 	# We use -fPIC here because -fpic is *NOT* enough for some of the
 	# extensions like Tk on some OpenBSD platforms (ie: sparc)
-	cccdlflags="-DPIC -fPIC $cccdlflags"
+	PICFLAG=-fPIC
+	if [ -e /usr/share/mk/bsd.own.mk ]; then
+		PICFLAG=`make -f /usr/share/mk/bsd.own.mk -V PICFLAG`
+	fi
+	cccdlflags="-DPIC ${PICFLAG} $cccdlflags"
 	case "$osvers" in
 	[01].*|2.[0-7]|2.[0-7].*)
 		lddlflags="-Bshareable $lddlflags"
@@ -58,7 +70,7 @@ alpha-2.[0-8]|mips-2.[0-8]|powerpc-2.[0-7]|m88k-[2-4].*|m88k-5.[0-2]|hppa-3.[0-5
 		;;
 	*) # from 3.1 onwards
 		ld=${cc:-cc}
-		lddlflags="-shared -fPIC $lddlflags"
+		lddlflags="-shared ${PICFLAG} $lddlflags"
 		libswanted=`echo $libswanted | sed 's/ dl / /'`
 		;;
 	esac
@@ -84,6 +96,9 @@ esac
 # around for old NetBSD binaries.
 libswanted=`echo $libswanted | sed 's/ crypt / /'`
 
+# OpenBSD hasn't ever needed linking to libutil
+libswanted=`echo $libswanted | sed 's/ util / /'`
+
 # Configure can't figure this out non-interactively
 d_suidsafe=$define
 
@@ -99,6 +114,25 @@ m88k-3.4)
 *)
    test "$optimize" || optimize='-O2'
    ;;
+esac
+
+#
+# Unaligned access on alpha with -ftree-ter
+# http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59679
+# More details
+# https://rt.perl.org/Public/Bug/Display.html?id=120888
+#
+case "${ARCH}-${osvers}" in
+    alpha-*)
+    ccflags="-fno-tree-ter $ccflags"
+    ;;
+esac
+
+# Special per-arch specific ccflags
+case "${ARCH}-${osvers}" in
+    vax-*)
+    ccflags="-DUSE_PERL_ATOF=0 $ccflags"
+    ;;
 esac
 
 # This script UU/usethreads.cbu will get 'called-back' by Configure 
@@ -122,6 +156,9 @@ $define|true|[yY]*)
         	# Broken up to OpenBSD 3.6, fixed in OpenBSD 3.7
 		d_getservbyname_r=$undef ;;
 	esac
+	;;
+*)
+	libswanted=`echo $libswanted | sed 's/ pthread / /'`
 esac
 EOCBU
 
@@ -140,12 +177,12 @@ case "$openbsd_distribution" in
 	siteprefix='/usr/local'
 	siteprefixexp='/usr/local'
 	# Ports installs non-std libs in /usr/local/lib so look there too
-	locincpth='/usr/local/include'
-	loclibpth='/usr/local/lib'
+	locincpth=''
+	loclibpth=''
 	# Link perl with shared libperl
-	if [ "$usedl" = "$define" -a -r shlib_version ]; then
+	if [ "$usedl" = "$define" -a -r $src/shlib_version ]; then
 		useshrplib=true
-		libperl=`. ./shlib_version; echo libperl.so.${major}.${minor}`
+		libperl=`. $src/shlib_version; echo libperl.so.${major}.${minor}`
 	fi
 	;;
 esac
@@ -154,6 +191,9 @@ esac
 # https://marc.info/?l=openbsd-bugs&m=155364568608759&w=2
 # which is being fixed.  In the meantime, forbid POSIX 2008 locales
 d_newlocale="$undef"
+
+# OpenBSD's locale support is not that complete yet
+ccflags="-DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE $ccflags"
 
 # Seems that OpenBSD returns bogus values in _Thread_local variables in code in
 # shared objects, so we need to disable it. See GH #19109

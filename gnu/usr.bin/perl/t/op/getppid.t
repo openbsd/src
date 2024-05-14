@@ -100,7 +100,7 @@ sub fork_and_retrieve {
 		}
 	    } else {
 		# Fudge it by waiting a bit more:
-		sleep 2;
+		sleep 3;
 	    }
 	    my $ppid2 = getppid();
 	    print $w "$how,$ppid1,$ppid2\n";

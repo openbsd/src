@@ -92,6 +92,9 @@ _quick3p=
     perl5361delta 1			pod/perl5361delta.pod \
     perl5362delta 1			pod/perl5362delta.pod \
     perl5363delta 1			pod/perl5363delta.pod \
+    perl5380delta 1			pod/perl5380delta.pod \
+    perl5381delta 1			pod/perl5381delta.pod \
+    perl5382delta 1			pod/perl5382delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -112,6 +115,8 @@ _quick3p=
     perlbug 1				utils/perlbug \
     perlcall 1				pod/perlcall.pod \
     perlcheat 1				pod/perlcheat.pod \
+    perlclass 1				pod/perlclass.pod \
+    perlclassguts 1			pod/perlclassguts.pod \
     perlclib 1				pod/perlclib.pod \
     perlcommunity 1			pod/perlcommunity.pod \
     perldata 1				pod/perldata.pod \
@@ -513,8 +518,6 @@ _quick3p=
     Memoize 3p				lib/Memoize.pm \
     Memoize::AnyDBM_File 3p		lib/Memoize/AnyDBM_File.pm \
     Memoize::Expire 3p			lib/Memoize/Expire.pm \
-    Memoize::ExpireFile 3p		lib/Memoize/ExpireFile.pm \
-    Memoize::ExpireTest 3p		lib/Memoize/ExpireTest.pm \
     Memoize::NDBM_File 3p		lib/Memoize/NDBM_File.pm \
     Memoize::SDBM_File 3p		lib/Memoize/SDBM_File.pm \
     Memoize::Storable 3p		lib/Memoize/Storable.pm \
@@ -626,6 +629,7 @@ _quick3p=
     sigtrap 3p				lib/sigtrap.pm \
     Socket 3p				lib/Socket.pm \
     sort 3p				lib/sort.pm \
+    stable 3p				lib/stable.pm \
     Storable 3p				lib/Storable.pm \
     strict 3p				lib/strict.pm \
     Sub::Util 3p			lib/Sub/Util.pm \
@@ -802,7 +806,7 @@ _quick3p=
     vmsish 3p				lib/vmsish.pm \
     warnings 3p				lib/warnings.pm \
     warnings::register 3p		lib/warnings/register.pm \
-    XS::APItest 3p			ext/XS-APItest/APItest.pm \
+    XS::APItest 3p			lib/XS/APItest.pm \
     XS::Typemap 3p			ext/XS-Typemap/Typemap.pm \
     XSLoader 3p				lib/XSLoader.pm
 .  ifndef NOMAN
