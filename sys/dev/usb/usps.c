@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.10 2020/07/31 10:49:33 mglocker Exp $   */
+/*	$OpenBSD: usps.c,v 1.11 2024/05/15 04:36:28 jsg Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -242,11 +242,11 @@ usps_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensordev, &sc->sc_total_sensor.min);
 	sensor_attach(&sc->sc_sensordev, &sc->sc_total_sensor.max);
 	(void)snprintf(sc->sc_total_sensor.ave.desc,
-	    sizeof(sc->sc_total_sensor.ave.desc), "total (average)", i);
+	    sizeof(sc->sc_total_sensor.ave.desc), "total (average)");
 	(void)snprintf(sc->sc_total_sensor.min.desc,
-	    sizeof(sc->sc_total_sensor.ave.desc), "total (min)", i);
+	    sizeof(sc->sc_total_sensor.ave.desc), "total (min)");
 	(void)snprintf(sc->sc_total_sensor.max.desc,
-	    sizeof(sc->sc_total_sensor.ave.desc), "total (max)", i);
+	    sizeof(sc->sc_total_sensor.ave.desc), "total (max)");
 
 	sc->sc_sensortask = sensor_task_register(sc, usps_refresh,
 	    USPS_UPDATE_TICK);
