@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.71 2023/12/13 15:34:43 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.72 2024/05/15 08:45:03 job Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -75,6 +75,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	struct passwd	*pw;
 	struct event	 ev_sigint, ev_sigterm;
 	pid_t		 pid;
+	int		 pre = IPTOS_PREC_INTERNETCONTROL;
 
 	switch (pid = fork()) {
 	case -1:
@@ -89,6 +90,10 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	if ((xconf->ospf_socket = socket(AF_INET6,
 	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_OSPF)) == -1)
 		fatal("error creating raw socket");
+
+	if (setsockopt(xconf->ospf_socket, IPPROTO_IPV6, IPV6_TCLASS, &pre,
+	    sizeof(pre)) == -1)
+		fatal("setsockopt IPV6_TCLASS");
 
 	/* set some defaults */
 	if (if_set_mcast_loop(xconf->ospf_socket) == -1)
