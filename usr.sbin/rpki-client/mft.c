@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.113 2024/04/20 15:45:41 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.114 2024/05/15 09:19:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -512,17 +512,17 @@ mft_free(struct mft *p)
 	if (p == NULL)
 		return;
 
-	if (p->files != NULL)
-		for (i = 0; i < p->filesz; i++)
-			free(p->files[i].file);
+	for (i = 0; i < p->filesz; i++)
+		free(p->files[i].file);
 
+	free(p->path);
+	free(p->files);
+	free(p->seqnum);
 	free(p->aia);
 	free(p->aki);
 	free(p->sia);
 	free(p->ski);
-	free(p->path);
-	free(p->files);
-	free(p->seqnum);
+	free(p->crl);
 	free(p);
 }
 
