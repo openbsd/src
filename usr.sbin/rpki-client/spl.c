@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.2 2024/02/22 19:29:55 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.3 2024/05/15 14:43:32 claudio Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -190,7 +190,7 @@ spl_parse_econtent(const char *fn, struct spl *spl, const unsigned char *d,
 		case AFI_IPV4:
 			if (ipv4_seen++ > 0) {
 				warnx("%s: addressFamilyIPv4 appeared twice",
-				   fn);
+				    fn);
 				goto out;
 			}
 			if (ipv6_seen > 0) {
