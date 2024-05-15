@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.21 2024/05/12 12:20:36 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.22 2024/05/15 18:01:10 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1281,6 +1281,7 @@ ufshci_ccb_alloc(struct ufshci_softc *sc, int nccbs)
 			goto free_maps;
 
 		ccb->ccb_cookie = NULL;
+		ccb->ccb_status = CCB_STATUS_FREE;
 		ccb->ccb_slot = i;
 
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_list, ccb, ccb_entry);
@@ -1482,6 +1483,7 @@ ufshci_scsi_inquiry(struct scsi_xfer *xs)
 error2:
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	ccb->ccb_cookie = NULL;
+	ccb->ccb_status = CCB_STATUS_FREE;
 	ccb->ccb_done = NULL;
 error1:
 	xs->error = XS_DRIVER_STUFFUP;
@@ -1536,6 +1538,7 @@ ufshci_scsi_capacity16(struct scsi_xfer *xs)
 error2:
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	ccb->ccb_cookie = NULL;
+	ccb->ccb_status = CCB_STATUS_FREE;
 	ccb->ccb_done = NULL;
 error1:
 	xs->error = XS_DRIVER_STUFFUP;
@@ -1590,6 +1593,7 @@ ufshci_scsi_capacity(struct scsi_xfer *xs)
 error2:
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	ccb->ccb_cookie = NULL;
+	ccb->ccb_status = CCB_STATUS_FREE;
 	ccb->ccb_done = NULL;
 error1:
 	xs->error = XS_DRIVER_STUFFUP;
@@ -1633,6 +1637,7 @@ ufshci_scsi_sync(struct scsi_xfer *xs)
 
 error:
         ccb->ccb_cookie = NULL;
+	ccb->ccb_status = CCB_STATUS_FREE;
         ccb->ccb_done = NULL;
 
 	xs->error = XS_DRIVER_STUFFUP;
@@ -1689,6 +1694,7 @@ ufshci_scsi_io(struct scsi_xfer *xs, int dir)
 error2:
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	ccb->ccb_cookie = NULL;
+	ccb->ccb_status = CCB_STATUS_FREE;
 	ccb->ccb_done = NULL;
 error1:
 	xs->error = XS_DRIVER_STUFFUP;
