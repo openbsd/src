@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bulk.8,v 1.6 2023/04/26 19:12:49 jmc Exp $
+.\"	$OpenBSD: bulk.8,v 1.7 2024/05/15 11:06:14 sthen Exp $
 .\"
 .\"	Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: April 26 2023 $
+.Dd $Mdocdate: May 15 2024 $
 .Dt BULK 8
 .Os
 .Sh NAME
@@ -42,15 +42,15 @@ Setup a master machine with enough room for a chroot, say
 Assuming you are using a cluster of machines,
 this chroot should contain NFS exportable partitions for distfiles,
 plists, and packages (one single partition can be used for simplicity).
-A full setup currently requires on the order of 70GB for distfiles
-and 50GB for packages.
+A full setup currently requires on the order of 80GB for distfiles
+and 70GB for packages.
 Expect these numbers to grow.
 100GB for each should last a few years.
 .Pp
 It is possible to build packages without a chroot, but the space
 requirement difference is negligible (a full
 .Ox
-install is less than 1GB), and having everything chrooted means you may
+install is less than 2GB), and having everything chrooted means you may
 install useful tools to help with the process outside of the chroot
 .Po
 for instance
@@ -59,8 +59,8 @@ for instance
 .Pp
 Reserve one "scratch" partition under the chroot for WRKOBJDIR
 (for instance, mfs, async, or SSD).
-This partition should be roughly 10GB if you want to be able to
-build all ports.
+This partition should be roughly 40GB if you want to be able to
+build all ports using multiple CPU cores.
 This can often double as
 .Pa /tmp
 under the chroot.
@@ -84,8 +84,8 @@ now comes with default users for package builds, namely _pbuild and _pfetch.
 .Pp
 The default
 .Xr login.conf 5
-is appropriate for most setups, but _pbuild's datasize-cur will need
-to be bumped for a few ports, like pypy.
+is appropriate for most setups, but _pbuild's datasize-cur may need
+to be bumped for a few ports.
 Likewise, maxproc-cur is too small for machines with more than 4-6 cpus.
 .Pp
 Note that _pbuild does not need network access, and is now blocked by default
