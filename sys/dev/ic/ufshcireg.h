@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.7 2024/05/09 08:20:22 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.8 2024/05/15 20:10:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -21,7 +21,7 @@
  */
 #define UFSHCI_UCD_PRDT_MAX_SEGS	64
 #define UFSHCI_UCD_PRDT_MAX_XFER	(UFSHCI_UCD_PRDT_MAX_SEGS * PAGE_SIZE)
-#define UFSHCI_INTR_AGGR_TIMEOUT	0x64 /* 4ms */
+#define UFSHCI_INTR_AGGR_TIMEOUT	0x08 /* 320us (1 unit = 40us) */
 #define UFSHCI_MAX_UNITS		32
 
 /*
@@ -335,7 +335,7 @@ struct upiu_hdr {
 	uint8_t tc;			/* Transaction Code */
 	uint8_t flags;
 	uint8_t lun;
-	uint8_t taskid;
+	uint8_t task_tag;
 	uint8_t cmd_set_type;
 	uint8_t query;
 	uint8_t response;
