@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.41 2024/04/09 15:00:44 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.42 2024/05/15 18:10:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -858,7 +858,7 @@ X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
 
 	/* Check key ids (if present) */
 	if (akid->keyid && issuer->skid &&
-	    ASN1_OCTET_STRING_cmp(akid->keyid, issuer->skid) )
+	    ASN1_OCTET_STRING_cmp(akid->keyid, issuer->skid))
 		return X509_V_ERR_AKID_SKID_MISMATCH;
 	/* Check serial number */
 	if (akid->serial &&
