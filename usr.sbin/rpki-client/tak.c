@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.19 2024/02/21 09:17:06 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.20 2024/05/15 09:01:36 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -308,6 +308,7 @@ tak_free(struct tak *t)
 
 	free(t->aia);
 	free(t->aki);
+	free(t->sia);
 	free(t->ski);
 	free(t);
 }
