@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.263 2024/04/09 12:05:07 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.264 2024/05/15 09:09:38 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <err.h>
 #include <errno.h>
@@ -1342,6 +1344,8 @@ bgpd_rtr_connect(struct rtr_config *r)
 	struct connect_elm *ce;
 	struct sockaddr *sa;
 	socklen_t len;
+	int nodelay = 1;
+	int pre = IPTOS_PREC_INTERNETCONTROL;
 
 	if (connect_cnt >= MAX_CONNECT_CNT) {
 		log_warnx("rtr %s: too many concurrent connection requests",
@@ -1384,6 +1388,29 @@ bgpd_rtr_connect(struct rtr_config *r)
 		}
 		TAILQ_INSERT_TAIL(&connect_queue, ce, entry);
 		connect_cnt++;
+		return;
+	}
+
+	switch (r->remote_addr.aid) {
+	case AID_INET:
+		if (setsockopt(ce->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) ==
+		    -1) {
+			log_warn("rtr %s: setsockopt IP_TOS", r->descr);
+			return;
+		}
+		break;
+	case AID_INET6:
+		if (setsockopt(ce->fd, IPPROTO_IPV6, IPV6_TCLASS, &pre,
+		    sizeof(pre)) == -1) {
+			log_warn("rtr %s: setsockopt IP_TOS", r->descr);
+			return;
+		}
+		break;
+	}
+
+	if (setsockopt(ce->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay,
+	    sizeof(nodelay)) == -1) {
+		log_warn("rtr %s: setsockopt TCP_NODELAY", r->descr);
 		return;
 	}
 

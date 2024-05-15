@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.474 2024/04/24 10:41:34 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.475 2024/05/15 09:09:38 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1168,6 +1168,13 @@ session_setup_socket(struct peer *p)
 		}
 		break;
 	case AID_INET6:
+		if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_TCLASS, &pre,
+		    sizeof(pre)) == -1) {
+			log_peer_warn(&p->conf, "session_setup_socket "
+			    "setsockopt TCLASS");
+			return (-1);
+		}
+
 		if (p->conf.ebgp) {
 			/*
 			 * set hoplimit to foreign router's distance
