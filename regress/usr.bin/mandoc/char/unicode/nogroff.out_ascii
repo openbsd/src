@@ -7,6 +7,11 @@ DDEESSCCRRIIPPTTIIOONN
      BEGINTEST
      <NUL><NUL>     <control> NULL
      <SOH><SOH>     <control> START OF HEADING
+     <STX><STX>     <control> START OF TEXT
+     <ETX><ETX>     <control> END OF TEXT
+     <EOT><EOT>     <control> END OF TRANSMISSION
+     <ENQ><ENQ>     <control> ENQUIRY
+     <ACK><ACK>     <control> ACKNOWLEDGE
      <BEL><BEL>     <control> BELL
      <BS><BS>  <control> BACKSPACE
                     <control> CHARACTER TABULATION
@@ -14,12 +19,55 @@ DDEESSCCRRIIPPTTIIOONN
      <VT><VT>  <control> LINE TABULATION
      <FF><FF>  <control> FORM FEED
      <CR><CR>  <control> CARRIAGE RETURN
+     <SO><SO>  <control> SHIFT OUT
+     <SI><SI>  <control> SHIFT IN
+     <DLE><DLE>     <control> DATA LINK ESCAPE
+     <DC1><DC1>     <control> DEVICE CONTROL ONE
+     <DC2><DC2>     <control> DEVICE CONTROL TWO
+     <DC3><DC3>     <control> DEVICE CONTROL THREE
+     <DC4><DC4>     <control> DEVICE CONTROL FOUR
+     <NAK><NAK>     <control> NEGATIVE ACKNOWLEDGE
+     <SYN><SYN>     <control> SYNCHRONOUS IDLE
+     <ETB><ETB>     <control> END OF TRANSMISSION BLOCK
+     <CAN><CAN>     <control> CANCEL
+     <EM><EM>  <control> END OF MEDIUM
+     <SUB><SUB>     <control> SUBSTITUTE
      <ESC><ESC>     <control> ESCAPE
+     <FS><FS>  <control> INFORMATION SEPARATOR FOUR
+     <GS><GS>  <control> INFORMATION SEPARATOR THREE
+     <RS><RS>  <control> INFORMATION SEPARATOR TWO
+     <US><US>  <control> INFORMATION SEPARATOR INE
      <DEL><DEL>     <control> DELETE
      <80><80>  <control> 0x80
      <81><81>  <control> 0x81
      <82><82>  <control> BREAK PERMITTED HERE
      <83><83>  <control> NO BREAK HERE
+     <84><84>  <control> 0x84
+     <85><85>  <control> NEXT LINE (NEL)
+     <86><86>  <control> START OF SELECTED AREA
+     <87><87>  <control> END OF SELECTED AREA
+     <88><88>  <control> CHARACTER TABULATION SET
+     <89><89>  <control> CHARACTER TABULATION WITH JUSTIFICATION
+     <8A><8A>  <control> LINE TABULATION SET
+     <8B><8B>  <control> PARTIAL LINE FORWARD
+     <8C><8C>  <control> PARTIAL LINE BACKWARD
+     <8D><8D>  <control> REVERSE LINE FEED
+     <8E><8E>  <control> SINGLE SHIFT TWO
+     <8F><8F>  <control> SINGLE SHIFT THREE
+     <90><90>  <control> DEVICE CONTROL STRING
+     <91><91>  <control> PRIVATE USE ONE
+     <92><92>  <control> PRIVATE USE TWO
+     <93><93>  <control> SET TRANSMIT STATE
+     <94><94>  <control> CANCEL CHARACTER
+     <95><95>  <control> MESSAGE WAITING
+     <96><96>  <control> START OF GUARDED AREA
+     <97><97>  <control> END OF GUARDED AREA
+     <98><98>  <control> START OF STRING
+     <99><99>  <control> 0x99
+     <9A><9A>  <control> SINGLE CHARACTER INTRODUCER
+     <9B><9B>  <control> CONTROL SEQUENCE INTRODUCER
+     <9C><9C>  <control> STRING TERMINATOR
+     <9D><9D>  <control> OPERATING SYSTEM COMMAND
      <9E><9E>  <control> PRIVACY MESSAGE
      <9F><9F>  <control> APPLICATION PROGRAM COMMAND
      <<<< MUCH LESS-THAN

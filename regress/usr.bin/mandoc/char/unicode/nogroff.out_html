@@ -1,5 +1,10 @@
 &#xFFFD;&#xFFFD;	&lt;control&gt; NULL
 &#xFFFD;&#xFFFD;	&lt;control&gt; START OF HEADING
+&#xFFFD;&#xFFFD;	&lt;control&gt; START OF TEXT
+&#xFFFD;&#xFFFD;	&lt;control&gt; END OF TEXT
+&#xFFFD;&#xFFFD;	&lt;control&gt; END OF TRANSMISSION
+&#xFFFD;&#xFFFD;	&lt;control&gt; ENQUIRY
+&#xFFFD;&#xFFFD;	&lt;control&gt; ACKNOWLEDGE
 &#xFFFD;&#xFFFD;	&lt;control&gt; BELL
 &#xFFFD;&#xFFFD;	&lt;control&gt; BACKSPACE
 			&lt;control&gt; CHARACTER TABULATION
@@ -7,12 +12,55 @@
 &#xFFFD;&#xFFFD;	&lt;control&gt; LINE TABULATION
 &#xFFFD;&#xFFFD;	&lt;control&gt; FORM FEED
 &#xFFFD;&#xFFFD;	&lt;control&gt; CARRIAGE RETURN
+&#xFFFD;&#xFFFD;	&lt;control&gt; SHIFT OUT
+&#xFFFD;&#xFFFD;	&lt;control&gt; SHIFT IN
+&#xFFFD;&#xFFFD;	&lt;control&gt; DATA LINK ESCAPE
+&#xFFFD;&#xFFFD;	&lt;control&gt; DEVICE CONTROL ONE
+&#xFFFD;&#xFFFD;	&lt;control&gt; DEVICE CONTROL TWO
+&#xFFFD;&#xFFFD;	&lt;control&gt; DEVICE CONTROL THREE
+&#xFFFD;&#xFFFD;	&lt;control&gt; DEVICE CONTROL FOUR
+&#xFFFD;&#xFFFD;	&lt;control&gt; NEGATIVE ACKNOWLEDGE
+&#xFFFD;&#xFFFD;	&lt;control&gt; SYNCHRONOUS IDLE
+&#xFFFD;&#xFFFD;	&lt;control&gt; END OF TRANSMISSION BLOCK
+&#xFFFD;&#xFFFD;	&lt;control&gt; CANCEL
+&#xFFFD;&#xFFFD;	&lt;control&gt; END OF MEDIUM
+&#xFFFD;&#xFFFD;	&lt;control&gt; SUBSTITUTE
 &#xFFFD;&#xFFFD;	&lt;control&gt; ESCAPE
+&#xFFFD;&#xFFFD;	&lt;control&gt; INFORMATION SEPARATOR FOUR
+&#xFFFD;&#xFFFD;	&lt;control&gt; INFORMATION SEPARATOR THREE
+&#xFFFD;&#xFFFD;	&lt;control&gt; INFORMATION SEPARATOR TWO
+&#xFFFD;&#xFFFD;	&lt;control&gt; INFORMATION SEPARATOR INE
 &#xFFFD;&#xFFFD;	&lt;control&gt; DELETE
 &#xFFFD;&#xFFFD;	&lt;control&gt; 0x80
 &#xFFFD;&#xFFFD;	&lt;control&gt; 0x81
 &#xFFFD;&#xFFFD;	&lt;control&gt; BREAK PERMITTED HERE
 &#xFFFD;&#xFFFD;	&lt;control&gt; NO BREAK HERE
+&#xFFFD;&#xFFFD;	&lt;control&gt; 0x84
+&#xFFFD;&#xFFFD;	&lt;control&gt; NEXT LINE (NEL)
+&#xFFFD;&#xFFFD;	&lt;control&gt; START OF SELECTED AREA
+&#xFFFD;&#xFFFD;	&lt;control&gt; END OF SELECTED AREA
+&#xFFFD;&#xFFFD;	&lt;control&gt; CHARACTER TABULATION SET
+&#xFFFD;&#xFFFD;	&lt;control&gt; CHARACTER TABULATION WITH JUSTIFICATION
+&#xFFFD;&#xFFFD;	&lt;control&gt; LINE TABULATION SET
+&#xFFFD;&#xFFFD;	&lt;control&gt; PARTIAL LINE FORWARD
+&#xFFFD;&#xFFFD;	&lt;control&gt; PARTIAL LINE BACKWARD
+&#xFFFD;&#xFFFD;	&lt;control&gt; REVERSE LINE FEED
+&#xFFFD;&#xFFFD;	&lt;control&gt; SINGLE SHIFT TWO
+&#xFFFD;&#xFFFD;	&lt;control&gt; SINGLE SHIFT THREE
+&#xFFFD;&#xFFFD;	&lt;control&gt; DEVICE CONTROL STRING
+&#xFFFD;&#xFFFD;	&lt;control&gt; PRIVATE USE ONE
+&#xFFFD;&#xFFFD;	&lt;control&gt; PRIVATE USE TWO
+&#xFFFD;&#xFFFD;	&lt;control&gt; SET TRANSMIT STATE
+&#xFFFD;&#xFFFD;	&lt;control&gt; CANCEL CHARACTER
+&#xFFFD;&#xFFFD;	&lt;control&gt; MESSAGE WAITING
+&#xFFFD;&#xFFFD;	&lt;control&gt; START OF GUARDED AREA
+&#xFFFD;&#xFFFD;	&lt;control&gt; END OF GUARDED AREA
+&#xFFFD;&#xFFFD;	&lt;control&gt; START OF STRING
+&#xFFFD;&#xFFFD;	&lt;control&gt; 0x99
+&#xFFFD;&#xFFFD;	&lt;control&gt; SINGLE CHARACTER INTRODUCER
+&#xFFFD;&#xFFFD;	&lt;control&gt; CONTROL SEQUENCE INTRODUCER
+&#xFFFD;&#xFFFD;	&lt;control&gt; STRING TERMINATOR
+&#xFFFD;&#xFFFD;	&lt;control&gt; OPERATING SYSTEM COMMAND
 &#xFFFD;&#xFFFD;	&lt;control&gt; PRIVACY MESSAGE
 &#xFFFD;&#xFFFD;	&lt;control&gt; APPLICATION PROGRAM COMMAND
 &#x226A;&#x226A;	MUCH LESS-THAN

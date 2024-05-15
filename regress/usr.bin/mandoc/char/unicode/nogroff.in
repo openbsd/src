@@ -1,4 +1,4 @@
-.\" $OpenBSD: nogroff.in,v 1.6 2021/06/02 17:36:59 schwarze Exp $
+.\" $OpenBSD: nogroff.in,v 1.7 2024/05/15 19:37:24 schwarze Exp $
 .TH CHAR-UNICODE-NOGROFF 1 "June 2, 2021"
 .SH NAME
 char-unicode-nogroff \- characters handled differently by groff
@@ -7,6 +7,11 @@ char-unicode-nogroff \- characters handled differently by groff
 BEGINTEST
 \[u0000]\N'0'	<control> NULL
 \[u0001]\N'1'	<control> START OF HEADING
+\[u0002]\N'2'	<control> START OF TEXT
+\[u0003]\N'3'	<control> END OF TEXT
+\[u0004]\N'4'	<control> END OF TRANSMISSION
+\[u0005]\N'5'	<control> ENQUIRY
+\[u0006]\N'6'	<control> ACKNOWLEDGE
 \[u0007]\N'7'	<control> BELL
 \[u0008]\N'8'	<control> BACKSPACE
 \[u0009]\N'9'	<control> CHARACTER TABULATION
@@ -14,12 +19,55 @@ BEGINTEST
 \[u000B]\N'11'	<control> LINE TABULATION
 \[u000C]\N'12'	<control> FORM FEED
 \[u000D]\N'13'	<control> CARRIAGE RETURN
+\[u000E]\N'14'	<control> SHIFT OUT
+\[u000F]\N'15'	<control> SHIFT IN
+\[u0010]\N'16'	<control> DATA LINK ESCAPE
+\[u0011]\N'17'	<control> DEVICE CONTROL ONE
+\[u0012]\N'18'	<control> DEVICE CONTROL TWO
+\[u0013]\N'19'	<control> DEVICE CONTROL THREE
+\[u0014]\N'20'	<control> DEVICE CONTROL FOUR
+\[u0015]\N'21'	<control> NEGATIVE ACKNOWLEDGE
+\[u0016]\N'22'	<control> SYNCHRONOUS IDLE
+\[u0017]\N'23'	<control> END OF TRANSMISSION BLOCK
+\[u0018]\N'24'	<control> CANCEL
+\[u0019]\N'25'	<control> END OF MEDIUM
+\[u001A]\N'26'	<control> SUBSTITUTE
 \[u001B]\N'27'	<control> ESCAPE
+\[u001C]\N'28'	<control> INFORMATION SEPARATOR FOUR
+\[u001D]\N'29'	<control> INFORMATION SEPARATOR THREE
+\[u001E]\N'30'	<control> INFORMATION SEPARATOR TWO
+\[u001F]\N'31'	<control> INFORMATION SEPARATOR INE
 \[u007F]\N'127'	<control> DELETE
 \[u0080]\N'128'	<control> 0x80
 \[u0081]\N'129'	<control> 0x81
 \[u0082]\N'130'	<control> BREAK PERMITTED HERE
 \[u0083]\N'131'	<control> NO BREAK HERE
+\[u0084]\N'132'	<control> 0x84
+\[u0085]\N'133'	<control> NEXT LINE (NEL)
+\[u0086]\N'134'	<control> START OF SELECTED AREA
+\[u0087]\N'135'	<control> END OF SELECTED AREA
+\[u0088]\N'136'	<control> CHARACTER TABULATION SET
+\[u0089]\N'137'	<control> CHARACTER TABULATION WITH JUSTIFICATION
+\[u008A]\N'138'	<control> LINE TABULATION SET
+\[u008B]\N'139'	<control> PARTIAL LINE FORWARD
+\[u008C]\N'140'	<control> PARTIAL LINE BACKWARD
+\[u008D]\N'141'	<control> REVERSE LINE FEED
+\[u008E]\N'142'	<control> SINGLE SHIFT TWO
+\[u008F]\N'143'	<control> SINGLE SHIFT THREE
+\[u0090]\N'144'	<control> DEVICE CONTROL STRING
+\[u0091]\N'145'	<control> PRIVATE USE ONE
+\[u0092]\N'146'	<control> PRIVATE USE TWO
+\[u0093]\N'147'	<control> SET TRANSMIT STATE
+\[u0094]\N'148'	<control> CANCEL CHARACTER
+\[u0095]\N'149'	<control> MESSAGE WAITING
+\[u0096]\N'150'	<control> START OF GUARDED AREA
+\[u0097]\N'151'	<control> END OF GUARDED AREA
+\[u0098]\N'152'	<control> START OF STRING
+\[u0099]\N'153'	<control> 0x99
+\[u009A]\N'154'	<control> SINGLE CHARACTER INTRODUCER
+\[u009B]\N'155'	<control> CONTROL SEQUENCE INTRODUCER
+\[u009C]\N'156'	<control> STRING TERMINATOR
+\[u009D]\N'157'	<control> OPERATING SYSTEM COMMAND
 \[u009E]\N'158'	<control> PRIVACY MESSAGE
 \[u009F]\N'159'	<control> APPLICATION PROGRAM COMMAND
 \[u226A]\(<<	MUCH LESS-THAN

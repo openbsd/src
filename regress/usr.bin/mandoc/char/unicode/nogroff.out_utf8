@@ -7,6 +7,11 @@ DDEESSCCRRIIPPTTIIOONN
      BEGINTEST
      ��   <control> NULL
      ��   <control> START OF HEADING
+     ��   <control> START OF TEXT
+     ��   <control> END OF TEXT
+     ��   <control> END OF TRANSMISSION
+     ��   <control> ENQUIRY
+     ��   <control> ACKNOWLEDGE
      ��   <control> BELL
      ��   <control> BACKSPACE
                     <control> CHARACTER TABULATION
@@ -14,12 +19,55 @@ DDEESSCCRRIIPPTTIIOONN
      ��   <control> LINE TABULATION
      ��   <control> FORM FEED
      ��   <control> CARRIAGE RETURN
+     ��   <control> SHIFT OUT
+     ��   <control> SHIFT IN
+     ��   <control> DATA LINK ESCAPE
+     ��   <control> DEVICE CONTROL ONE
+     ��   <control> DEVICE CONTROL TWO
+     ��   <control> DEVICE CONTROL THREE
+     ��   <control> DEVICE CONTROL FOUR
+     ��   <control> NEGATIVE ACKNOWLEDGE
+     ��   <control> SYNCHRONOUS IDLE
+     ��   <control> END OF TRANSMISSION BLOCK
+     ��   <control> CANCEL
+     ��   <control> END OF MEDIUM
+     ��   <control> SUBSTITUTE
      ��   <control> ESCAPE
+     ��   <control> INFORMATION SEPARATOR FOUR
+     ��   <control> INFORMATION SEPARATOR THREE
+     ��   <control> INFORMATION SEPARATOR TWO
+     ��   <control> INFORMATION SEPARATOR INE
      ��   <control> DELETE
      ��   <control> 0x80
      ��   <control> 0x81
      ��   <control> BREAK PERMITTED HERE
      ��   <control> NO BREAK HERE
+     ��   <control> 0x84
+     ��   <control> NEXT LINE (NEL)
+     ��   <control> START OF SELECTED AREA
+     ��   <control> END OF SELECTED AREA
+     ��   <control> CHARACTER TABULATION SET
+     ��   <control> CHARACTER TABULATION WITH JUSTIFICATION
+     ��   <control> LINE TABULATION SET
+     ��   <control> PARTIAL LINE FORWARD
+     ��   <control> PARTIAL LINE BACKWARD
+     ��   <control> REVERSE LINE FEED
+     ��   <control> SINGLE SHIFT TWO
+     ��   <control> SINGLE SHIFT THREE
+     ��   <control> DEVICE CONTROL STRING
+     ��   <control> PRIVATE USE ONE
+     ��   <control> PRIVATE USE TWO
+     ��   <control> SET TRANSMIT STATE
+     ��   <control> CANCEL CHARACTER
+     ��   <control> MESSAGE WAITING
+     ��   <control> START OF GUARDED AREA
+     ��   <control> END OF GUARDED AREA
+     ��   <control> START OF STRING
+     ��   <control> 0x99
+     ��   <control> SINGLE CHARACTER INTRODUCER
+     ��   <control> CONTROL SEQUENCE INTRODUCER
+     ��   <control> STRING TERMINATOR
+     ��   <control> OPERATING SYSTEM COMMAND
      ��   <control> PRIVACY MESSAGE
      ��   <control> APPLICATION PROGRAM COMMAND
      ≪≪   MUCH LESS-THAN
