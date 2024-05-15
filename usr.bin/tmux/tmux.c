@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.211 2023/04/17 18:00:19 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.212 2024/05/15 09:59:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -237,6 +237,24 @@ make_label(const char *label, char **cause)
 fail:
 	free(base);
 	return (NULL);
+}
+
+char *
+shell_argv0(const char *shell, int is_login)
+{
+	const char	*slash, *name;
+	char		*argv0;
+
+	slash = strrchr(shell, '/');
+	if (slash != NULL && slash[1] != '\0')
+		name = slash + 1;
+	else
+		name = shell;
+	if (is_login)
+		xasprintf(&argv0, "-%s", name);
+	else
+		xasprintf(&argv0, "%s", name);
+	return (argv0);
 }
 
 void
