@@ -1,4 +1,4 @@
-/*	$OpenBSD: ociic.c,v 1.3 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: ociic.c,v 1.4 2024/05/15 22:54:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -52,6 +52,13 @@
 #define  I2C_SR_AL	(1 << 5)
 #define  I2C_SR_TIP	(1 << 1)
 #define  I2C_SR_IF	(1 << 0)
+
+/*
+ * OpenSBI on the SiFive HiFive Unmatched board implements reboot and
+ * powerdown functionality through the Dialog DA9063 Power Management
+ * IC over I2C.  The code expects the I2C controller to be enabled so
+ * we have to make sure we leave it in that state.
+ */
 
 struct ociic_softc {
 	struct device		sc_dev;
@@ -156,6 +163,8 @@ ociic_attach(struct device *parent, struct device *self, void *aux)
 		ociic_write(sc, I2C_PRER_HI, div >> 8);
 	}
 
+	ociic_set(sc, I2C_CTR, I2C_CTR_EN);
+
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = ociic_acquire_bus;
 	sc->sc_ic.ic_release_bus = ociic_release_bus;
@@ -174,18 +183,12 @@ ociic_attach(struct device *parent, struct device *self, void *aux)
 int
 ociic_acquire_bus(void *cookie, int flags)
 {
-	struct ociic_softc *sc = cookie;
-
-	ociic_set(sc, I2C_CTR, I2C_CTR_EN);
 	return 0;
 }
 
 void
 ociic_release_bus(void *cookie, int flags)
 {
-	struct ociic_softc *sc = cookie;
-
-	ociic_clr(sc, I2C_CTR, I2C_CTR_EN);
 }
 
 int
