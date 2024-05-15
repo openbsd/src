@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcivar.h,v 1.4 2024/05/09 08:06:42 mglocker Exp $ */
+/*	$OpenBSD: ufshcivar.h,v 1.5 2024/05/15 20:15:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -68,7 +68,6 @@ struct ufshci_softc {
 	uint8_t			 sc_nutmrs;
 	uint8_t			 sc_rtt;
 	uint8_t			 sc_nutrs;
-	uint8_t			 sc_taskid;
 
 	struct ufshci_dmamem	*sc_dmamem_utmrd;
 	struct ufshci_dmamem	*sc_dmamem_utrd;
