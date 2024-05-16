@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bulk.8,v 1.8 2024/05/15 11:27:36 sthen Exp $
+.\"	$OpenBSD: bulk.8,v 1.9 2024/05/16 10:14:22 tb Exp $
 .\"
 .\"	Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 15 2024 $
+.Dd $Mdocdate: May 16 2024 $
 .Dt BULK 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ Setup a master machine with enough room for a chroot, say
 Assuming you are using a cluster of machines,
 this chroot should contain NFS exportable partitions for distfiles,
 plists, and packages (one single partition can be used for simplicity).
-A full setup currently requires in the order of 100GB for distfiles
+A full setup currently requires in the order of 120GB for distfiles
 and 70GB for packages.
 Expect these numbers to grow.
 150GB for each should last a few years.
