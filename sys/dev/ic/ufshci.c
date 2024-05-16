@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.23 2024/05/15 20:10:27 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.24 2024/05/16 10:52:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1000,6 +1000,8 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	struct ufshci_utrd *utrd;
 	struct ufshci_ucd *ucd;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	uint32_t blocks;
+	uint64_t lba;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 1) */
 	slot = ccb->ccb_slot;
@@ -1044,7 +1046,16 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.hdr.device_info = 0;
 	ucd->cmd.hdr.ds_len = 0;
 
-	ucd->cmd.expected_xfer_len = htobe32(xs->datalen);
+	/*
+	 * JESD220C-2_1.pdf, page 88, d) Expected Data Transfer Length:
+	 * "When the COMMAND UPIU encodes a SCSI WRITE or SCSI READ command
+	 * (specifically WRITE (6), READ (6), WRITE (10), READ (10),
+	 * WRITE (16), or READ (16)), the value of this field shall be the
+	 * product of the Logical Block Size (bLogicalBlockSize) and the
+	 * TRANSFER LENGTH field of the CDB."
+	 */
+	scsi_cmd_rw_decode(&xs->cmd, &lba, &blocks);
+	ucd->cmd.expected_xfer_len = htobe32(UFSHCI_LBS * blocks);
 
 	memcpy(ucd->cmd.cdb, &xs->cmd, sizeof(ucd->cmd.cdb));
 

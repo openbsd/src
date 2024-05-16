@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.8 2024/05/15 20:10:27 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.9 2024/05/16 10:52:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -23,6 +23,9 @@
 #define UFSHCI_UCD_PRDT_MAX_XFER	(UFSHCI_UCD_PRDT_MAX_SEGS * PAGE_SIZE)
 #define UFSHCI_INTR_AGGR_TIMEOUT	0x08 /* 320us (1 unit = 40us) */
 #define UFSHCI_MAX_UNITS		32
+#define UFSHCI_LBS			4096 /* UFS Logical Block Size:
+						For UFS minimum size shall be
+					        4096 bytes */
 
 /*
  * Controller Capabilities Registers
