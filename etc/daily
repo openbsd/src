@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.97 2023/03/03 16:22:57 bluhm Exp $
+#	$OpenBSD: daily,v 1.98 2024/05/16 11:33:59 solene Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -135,6 +135,9 @@ done
 
 next_part "Services that should be running but aren't:"
 rcctl ls failed
+
+next_part "Services that are running but shouldn't:"
+rcctl ls rogue
 
 next_part "Filesystems which need to be dumped:"
 dump w | grep -vB1 ^Dump

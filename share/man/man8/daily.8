@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.29 2020/10/20 22:42:29 danj Exp $
+.\"	$OpenBSD: daily.8,v 1.30 2024/05/16 11:33:59 solene Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2020 $
+.Dd $Mdocdate: May 16 2024 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@ for the mount options, e.g.
 Checks daemon status.
 Lists any daemons which are enabled in
 .Xr rc.conf.local 8
-but which are not actually running.
+but which are not actually running (and vice versa).
 .It
 Reports on which file systems need to be dumped via
 .Xr dump 8 .
