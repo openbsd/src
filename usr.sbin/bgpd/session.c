@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.475 2024/05/15 09:09:38 job Exp $ */
+/*	$OpenBSD: session.c,v 1.476 2024/05/16 09:38:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1212,13 +1212,8 @@ session_setup_socket(struct peer *p)
 
 	/* limit bufsize. no biggie if it fails */
 	bsize = 65535;
-	while (bsize > 8192 && setsockopt(p->fd, SOL_SOCKET, SO_RCVBUF,
-	    &bsize, sizeof(bsize)) == -1 && errno != EINVAL)
-		bsize /= 2;
-	bsize = 65535;
-	while (bsize > 8192 && setsockopt(p->fd, SOL_SOCKET, SO_SNDBUF,
-	    &bsize, sizeof(bsize)) == -1 && errno != EINVAL)
-		bsize /= 2;
+	setsockopt(p->fd, SOL_SOCKET, SO_RCVBUF, &bsize, sizeof(bsize));
+	setsockopt(p->fd, SOL_SOCKET, SO_SNDBUF, &bsize, sizeof(bsize));
 
 	return (0);
 }
