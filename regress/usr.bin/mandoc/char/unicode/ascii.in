@@ -1,10 +1,11 @@
-.\" $OpenBSD: ascii.in,v 1.4 2017/07/04 14:53:23 schwarze Exp $
-.TH CHAR-UNICODE-ASCII 1 "October 27, 2014"
+.\" $OpenBSD: ascii.in,v 1.5 2024/05/16 18:49:00 schwarze Exp $
+.TH CHAR-UNICODE-ASCII 1 "May 16, 2024"
 .SH NAME
 char-unicode-ascii \- Unicode characters in the ASCII range
 .SH DESCRIPTION
 .nf
 BEGINTEST
+\[u0020]\N'32' 	SPACE
 \[u0022]\N'34'\(dq	QUOTATION MARK
 \[u0023]\N'35'\(sh	NUMBER SIGN
 \[u0024]\N'36'\(Do	DOLLAR SIGN

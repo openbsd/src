@@ -37,6 +37,27 @@ DDEESSCCRRIIPPTTIIOONN
      ��   <control> INFORMATION SEPARATOR THREE
      ��   <control> INFORMATION SEPARATOR TWO
      ��   <control> INFORMATION SEPARATOR INE
+     !!   EXCLAMATION MARK
+     %%   PERCENT SIGN
+     &&   AMPERSAND
+     ((   LEFT PARENTHESIS
+     ))   RIGHT PARENTHESIS
+     **   ASTERISK
+     ,,   COMMA
+     --   HYPHEN-MINUS
+     ..   FULL STOP
+     00   DIGIT ZERO
+     11   DIGIT ONE
+     99   DIGIT NINE
+     ::   COLON
+     ;;   SEMICOLON
+     <<   LESS-THAN SIGN
+     >>   GREATER-THAN SIGN
+     ??   QUESTION MARK
+     AA   LATIN CAPITAL LETTER A
+     ZZ   LATIN CAPITAL LETTER Z
+     aa   LATIN SMALL LETTER A
+     zz   LATIN SMALL LETTER Z
      ��   <control> DELETE
      ��   <control> 0x80
      ��   <control> 0x81
@@ -98,4 +119,4 @@ DDEESSCCRRIIPPTTIIOONN
      􏿿     <undefined>
      ENDTEST
 
-OpenBSD                          June 2, 2021          CHAR-UNICODE-NOGROFF(1)
+OpenBSD                          May 16, 2024          CHAR-UNICODE-NOGROFF(1)
