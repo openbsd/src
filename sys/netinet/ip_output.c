@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.398 2024/04/17 20:48:51 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.399 2024/05/16 13:01:04 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -428,8 +428,9 @@ sendit:
 #endif
 
 #ifdef IPSEC
-	if (ipsec_in_use && (flags & IP_FORWARDING) && (ipforwarding == 2) &&
-	    (m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL) == NULL)) {
+	if ((flags & IP_FORWARDING) && ipforwarding == 2 &&
+	    (!ipsec_in_use ||
+	    m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL) == NULL)) {
 		error = EHOSTUNREACH;
 		goto bad;
 	}
