@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.21 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.22 2024/05/16 13:19:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,8 +72,8 @@ int
 X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 {
 	if (x == NULL)
-		return (0);
-	return (sk_X509_EXTENSION_num(x));
+		return 0;
+	return sk_X509_EXTENSION_num(x);
 }
 LCRYPTO_ALIAS(X509v3_get_ext_count);
 
@@ -84,8 +84,8 @@ X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid, int lastpos)
 
 	obj = OBJ_nid2obj(nid);
 	if (obj == NULL)
-		return (-2);
-	return (X509v3_get_ext_by_OBJ(x, obj, lastpos));
+		return -2;
+	return X509v3_get_ext_by_OBJ(x, obj, lastpos);
 }
 LCRYPTO_ALIAS(X509v3_get_ext_by_NID);
 
@@ -97,7 +97,7 @@ X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
 	X509_EXTENSION *ex;
 
 	if (sk == NULL)
-		return (-1);
+		return -1;
 	lastpos++;
 	if (lastpos < 0)
 		lastpos = 0;
@@ -105,9 +105,9 @@ X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
 	for (; lastpos < n; lastpos++) {
 		ex = sk_X509_EXTENSION_value(sk, lastpos);
 		if (OBJ_cmp(ex->object, obj) == 0)
-			return (lastpos);
+			return lastpos;
 	}
-	return (-1);
+	return -1;
 }
 LCRYPTO_ALIAS(X509v3_get_ext_by_OBJ);
 
@@ -119,18 +119,18 @@ X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
 	X509_EXTENSION *ex;
 
 	if (sk == NULL)
-		return (-1);
+		return -1;
 	lastpos++;
 	if (lastpos < 0)
 		lastpos = 0;
 	n = sk_X509_EXTENSION_num(sk);
 	for (; lastpos < n; lastpos++) {
 		ex = sk_X509_EXTENSION_value(sk, lastpos);
-		if (((ex->critical > 0) && crit) ||
-		    ((ex->critical <= 0) && !crit))
-			return (lastpos);
+		if ((ex->critical > 0 && crit) ||
+		    (ex->critical <= 0 && !crit))
+			return lastpos;
 	}
-	return (-1);
+	return -1;
 }
 LCRYPTO_ALIAS(X509v3_get_ext_by_critical);
 
@@ -150,9 +150,9 @@ X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc)
 	X509_EXTENSION *ret;
 
 	if (x == NULL || sk_X509_EXTENSION_num(x) <= loc || loc < 0)
-		return (NULL);
+		return NULL;
 	ret = sk_X509_EXTENSION_delete(x, loc);
-	return (ret);
+	return ret;
 }
 LCRYPTO_ALIAS(X509v3_delete_ext);
 
@@ -186,16 +186,16 @@ X509v3_add_ext(STACK_OF(X509_EXTENSION) **x, X509_EXTENSION *ex, int loc)
 		goto err;
 	if (*x == NULL)
 		*x = sk;
-	return (sk);
+	return sk;
 
 err:
 	X509error(ERR_R_MALLOC_FAILURE);
 err2:
 	if (new_ex != NULL)
 		X509_EXTENSION_free(new_ex);
-	if (sk != NULL && (x != NULL && sk != *x))
+	if (sk != NULL && x != NULL && sk != *x)
 		sk_X509_EXTENSION_free(sk);
-	return (NULL);
+	return NULL;
 }
 LCRYPTO_ALIAS(X509v3_add_ext);
 
@@ -209,12 +209,12 @@ X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid, int crit,
 	obj = OBJ_nid2obj(nid);
 	if (obj == NULL) {
 		X509error(X509_R_UNKNOWN_NID);
-		return (NULL);
+		return NULL;
 	}
 	ret = X509_EXTENSION_create_by_OBJ(ex, obj, crit, data);
 	if (ret == NULL)
 		ASN1_OBJECT_free(obj);
-	return (ret);
+	return ret;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_create_by_NID);
 
@@ -224,10 +224,10 @@ X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex, const ASN1_OBJECT *obj,
 {
 	X509_EXTENSION *ret;
 
-	if ((ex == NULL) || (*ex == NULL)) {
+	if (ex == NULL || *ex == NULL) {
 		if ((ret = X509_EXTENSION_new()) == NULL) {
 			X509error(ERR_R_MALLOC_FAILURE);
-			return (NULL);
+			return NULL;
 		}
 	} else
 		ret= *ex;
@@ -239,22 +239,22 @@ X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex, const ASN1_OBJECT *obj,
 	if (!X509_EXTENSION_set_data(ret, data))
 		goto err;
 
-	if ((ex != NULL) && (*ex == NULL))
+	if (ex != NULL && *ex == NULL)
 		*ex = ret;
-	return (ret);
+	return ret;
 
 err:
-	if ((ex == NULL) || (ret != *ex))
+	if (ex == NULL || ret != *ex)
 		X509_EXTENSION_free(ret);
-	return (NULL);
+	return NULL;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_create_by_OBJ);
 
 int
 X509_EXTENSION_set_object(X509_EXTENSION *ex, const ASN1_OBJECT *obj)
 {
-	if ((ex == NULL) || (obj == NULL))
-		return (0);
+	if (ex == NULL || obj == NULL)
+		return 0;
 	ASN1_OBJECT_free(ex->object);
 	ex->object = OBJ_dup(obj);
 	return ex->object != NULL;
@@ -265,9 +265,9 @@ int
 X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
 {
 	if (ex == NULL)
-		return (0);
-	ex->critical = (crit) ? 0xFF : -1;
-	return (1);
+		return 0;
+	ex->critical = crit ? 0xFF : -1;
+	return 1;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_set_critical);
 
@@ -277,11 +277,11 @@ X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
 	int i;
 
 	if (ex == NULL)
-		return (0);
+		return 0;
 	i = ASN1_STRING_set(ex->value, data->data, data->length);
 	if (!i)
-		return (0);
-	return (1);
+		return 0;
+	return 1;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_set_data);
 
@@ -289,8 +289,8 @@ ASN1_OBJECT *
 X509_EXTENSION_get_object(X509_EXTENSION *ex)
 {
 	if (ex == NULL)
-		return (NULL);
-	return (ex->object);
+		return NULL;
+	return ex->object;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_get_object);
 
@@ -298,8 +298,8 @@ ASN1_OCTET_STRING *
 X509_EXTENSION_get_data(X509_EXTENSION *ex)
 {
 	if (ex == NULL)
-		return (NULL);
-	return (ex->value);
+		return NULL;
+	return ex->value;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_get_data);
 
@@ -307,7 +307,7 @@ int
 X509_EXTENSION_get_critical(const X509_EXTENSION *ex)
 {
 	if (ex == NULL)
-		return (0);
+		return 0;
 	if (ex->critical > 0)
 		return 1;
 	return 0;
