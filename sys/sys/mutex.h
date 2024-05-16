@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.21 2024/03/26 18:18:30 bluhm Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.22 2024/05/16 09:30:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -33,6 +33,20 @@
  * "mtx_enter(foo); mtx_enter(bar); mtx_leave(foo); mtx_leave(bar);"
  */
 
+/*
+ * To prevent lock ordering problems with the kernel lock, we need to
+ * make sure we block all interrupts that can grab the kernel lock.
+ * The simplest way to achieve this is to make sure mutexes always
+ * raise the interrupt priority level to the highest level that has
+ * interrupts that grab the kernel lock.
+ */
+#ifdef MULTIPROCESSOR
+#define __MUTEX_IPL(ipl) \
+	(((ipl) < IPL_MPFLOOR) ? IPL_MPFLOOR : (ipl))
+#else
+#define __MUTEX_IPL(ipl) (ipl)
+#endif
+
 #include <machine/mutex.h>
 
 #ifdef __USE_MI_MUTEX
@@ -47,20 +61,6 @@ struct mutex {
 	struct lock_object mtx_lock_obj;
 #endif
 };
-
-/*
- * To prevent lock ordering problems with the kernel lock, we need to
- * make sure we block all interrupts that can grab the kernel lock.
- * The simplest way to achieve this is to make sure mutexes always
- * raise the interrupt priority level to the highest level that has
- * interrupts that grab the kernel lock.
- */
-#ifdef MULTIPROCESSOR
-#define __MUTEX_IPL(ipl) \
-    (((ipl) > IPL_NONE && (ipl) < IPL_MPFLOOR) ? IPL_MPFLOOR : (ipl))
-#else
-#define __MUTEX_IPL(ipl) (ipl)
-#endif
 
 #ifdef WITNESS
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \

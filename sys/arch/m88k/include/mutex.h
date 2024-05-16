@@ -1,6 +1,4 @@
-#ifndef _M88K_MUTEX_H_
-#define _M88K_MUTEX_H_
-/*	$OpenBSD: mutex.h,v 1.8 2020/05/26 11:55:10 aoyama Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.9 2024/05/16 09:30:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -27,6 +25,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _M88K_MUTEX_H_
+#define _M88K_MUTEX_H_
+
 #include <sys/_lock.h>
 
 struct mutex {
@@ -38,20 +39,6 @@ struct mutex {
 	struct lock_object mtx_lock_obj;
 #endif
 };
-
-/*
- * To prevent lock ordering problems with the kernel lock, we need to
- * make sure we block all interrupts that can grab the kernel lock.
- * The simplest way to achieve this is to make sure mutexes always
- * raise the interrupt priority level to the highest level that has
- * interrupts that grab the kernel lock.
- */
-#ifdef MULTIPROCESSOR
-#define __MUTEX_IPL(ipl) \
-    (((ipl) > IPL_NONE && (ipl) < IPL_MPFLOOR) ? IPL_MPFLOOR : (ipl))
-#else
-#define __MUTEX_IPL(ipl) (ipl)
-#endif
 
 #ifdef WITNESS
 #define	MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
