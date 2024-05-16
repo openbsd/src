@@ -31,12 +31,17 @@ DDEESSCCRRIIPPTTIIOONN
      U+1000   0xe18080   ကက     begin of second start byte
      U+CFFF   0xecbfbf   쿿쿿   end of last normal start byte
      U+D000   0xed8080   퀀퀀   begin of last start byte
+     U+D7FB   0xed9fbb   ퟻퟻ   highest valid public three-byte
      U+D7FF   0xed9fbf   ퟿퟿       highest public three-byte
      U+D800   0xeda080   ???    lowest surrogate
      U+DFFF   0xedbfbf   ???    highest surrogate
      U+E000   0xee8080        lowest private use
      U+F8FF   0xefa3bf        highest private use
      U+F900   0xefa480   豈豈   lowest post-private
+     U+FEFF   0xefbbbf   ﻿﻿       byte-order mark
+     U+FFFC   0xefbfbc   ￼￼     object replacement character
+     U+FFFD   0xefbfbd   ��     replacement character
+     U+FFFE   0xefbfbe   ￾￾       reversed byte-order mark
      U+FFFF   0xefbfbf   ￿￿       highest three-byte
 
    FFoouurr--bbyyttee rraannggee
@@ -60,4 +65,4 @@ DDEESSCCRRIIPPTTIIOONN
      U+1FFFFF   0xf7bfbfbf     ????    highest invalid four-byte
      U+200000   0xf888808080   ?????   lowest five-byte
 
-OpenBSD                          June 2, 2021            CHAR-UNICODE-INPUT(1)
+OpenBSD                          May 16, 2024            CHAR-UNICODE-INPUT(1)
