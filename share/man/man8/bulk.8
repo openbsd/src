@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bulk.8,v 1.9 2024/05/16 10:14:22 tb Exp $
+.\"	$OpenBSD: bulk.8,v 1.10 2024/05/16 10:31:55 sthen Exp $
 .\"
 .\"	Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -59,11 +59,14 @@ for instance
 .Pp
 Reserve one "scratch" partition under the chroot for WRKOBJDIR
 (for instance, mfs, async, or SSD).
-This partition should be roughly 40GB if you want to be able to
-build all ports using multiple CPU cores.
 This can often double as
 .Pa /tmp
 under the chroot.
+The largest ports can take in excess of 20GB each (more for a debug
+build) and you may have several of these built at the same time.
+50GB is probably a reasonable minimum on an architecture which can build
+chromium, though 100GB would not be overkill, especially if you have
+many cores.
 .Pp
 Alternately, you can setup your whole chroot as a scratch partition,
 and reserve one more permanent space under it for distfiles,
