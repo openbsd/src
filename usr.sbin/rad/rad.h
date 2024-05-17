@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.26 2024/04/23 22:11:59 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.27 2024/05/17 06:50:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -97,6 +97,7 @@ struct ra_options_conf {
 	int		router_lifetime;	/* default router lifetime */
 	uint32_t	reachable_time;
 	uint32_t	retrans_timer;
+	int		source_link_addr;	/* source link-layer address */
 	uint32_t	mtu;
 	uint32_t	rdns_lifetime;
 	SIMPLEQ_HEAD(, ra_rdnss_conf)		 ra_rdnss_list;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2024/04/23 22:11:59 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2024/05/17 06:50:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -122,6 +122,7 @@ typedef struct {
 %token	CONFIGURATION OTHER LIFETIME REACHABLE TIME RETRANS TIMER
 %token	AUTO PREFIX VALID PREFERENCE PREFERRED LIFETIME ONLINK AUTONOMOUS
 %token	ADDRESS_CONFIGURATION DNS NAMESERVER SEARCH MTU NAT64 HIGH MEDIUM LOW
+%token	SOURCE LINK_LAYER
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -225,6 +226,9 @@ ra_opt_block	: DEFAULT ROUTER yesno {
 		}
 		| RETRANS TIMER NUMBER {
 			ra_options->retrans_timer = $3;
+		}
+		| SOURCE LINK_LAYER ADDRESS yesno {
+			ra_options->source_link_addr = $4;
 		}
 		| MTU NUMBER {
 			ra_options->mtu = $2;
@@ -523,6 +527,7 @@ lookup(char *s)
 		{"interface",		RA_IFACE},
 		{"lifetime",		LIFETIME},
 		{"limit",		LIMIT},
+		{"link-layer",		LINK_LAYER},
 		{"low",			LOW},
 		{"managed",		MANAGED},
 		{"medium",		MEDIUM},
@@ -539,6 +544,7 @@ lookup(char *s)
 		{"retrans",		RETRANS},
 		{"router",		ROUTER},
 		{"search",		SEARCH},
+		{"source",		SOURCE},
 		{"time",		TIME},
 		{"timer",		TIMER},
 		{"valid",		VALID},

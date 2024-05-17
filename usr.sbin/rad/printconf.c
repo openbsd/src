@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.8 2024/04/23 22:11:59 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.9 2024/05/17 06:50:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -78,6 +78,8 @@ print_ra_options(const char *indent, const struct ra_options_conf *ra_options)
 	printf("%srouter lifetime %d\n", indent, ra_options->router_lifetime);
 	printf("%sreachable time %u\n", indent, ra_options->reachable_time);
 	printf("%sretrans timer %u\n", indent, ra_options->retrans_timer);
+	printf("%ssource link-layer address %s\n", indent,
+	    yesno(ra_options->source_link_addr));
 	if (ra_options->mtu > 0)
 		printf("%smtu %u\n", indent, ra_options->mtu);
 
