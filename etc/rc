@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.574 2024/04/02 08:21:04 deraadt Exp $
+#	$OpenBSD: rc,v 1.575 2024/05/17 00:33:43 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -241,7 +241,8 @@ reorder_libs() {
 		) || { _error=true; break; }
 	done
 
-	for _bin in $_relink/usr/sbin/sshd $_relink/usr/bin/ssh-agent ; do
+	for _bin in $_relink/usr/sbin/sshd $_relink/usr/libexec/sshd-session \
+	    $_relink/usr/bin/ssh-agent ; do
 		_tmpdir=$(mktemp -dq $_relink/_rebuild.XXXXXXXXXXXX) &&
 		(
 		set -o errexit
