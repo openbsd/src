@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.154 2024/05/07 15:54:23 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.155 2024/05/17 19:11:14 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -512,22 +512,18 @@ sbmtxassertlocked(struct socket *so, struct sockbuf *sb)
  * Wait for data to arrive at/drain from a socket buffer.
  */
 int
-sbwait_locked(struct socket *so, struct sockbuf *sb)
-{
-	int prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
-
-	MUTEX_ASSERT_LOCKED(&sb->sb_mtx);
-
-	sb->sb_flags |= SB_WAIT;
-	return msleep_nsec(&sb->sb_cc, &sb->sb_mtx, prio, "sbwait",
-	    sb->sb_timeo_nsecs);
-}
-
-int
 sbwait(struct socket *so, struct sockbuf *sb)
 {
 	uint64_t timeo_nsecs;
 	int prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
+
+	if (sb->sb_flags & SB_MTXLOCK) {
+		MUTEX_ASSERT_LOCKED(&sb->sb_mtx);
+
+		sb->sb_flags |= SB_WAIT;
+		return msleep_nsec(&sb->sb_cc, &sb->sb_mtx, prio, "sbwait",
+		    sb->sb_timeo_nsecs);
+	}
 
 	soassertlocked(so);
 
@@ -540,81 +536,26 @@ sbwait(struct socket *so, struct sockbuf *sb)
 }
 
 int
-sblock(struct socket *so, struct sockbuf *sb, int flags)
+sblock(struct sockbuf *sb, int flags)
 {
-	int error = 0, prio = PSOCK;
+	int rwflags = RW_WRITE, error;
 
-	if (sb->sb_flags & SB_MTXLOCK) {
-		int rwflags = RW_WRITE;
-
-		if (!(flags & SBL_NOINTR || sb->sb_flags & SB_NOINTR))
-			rwflags |= RW_INTR;
-		if (!(flags & SBL_WAIT))
-			rwflags |= RW_NOSLEEP;
-
-		error = rw_enter(&sb->sb_lock, rwflags);
-		if (error == EBUSY)
-			error = EWOULDBLOCK;
-		return error;
-	}
-
-	soassertlocked(so);
-
-	mtx_enter(&sb->sb_mtx);
-	if ((sb->sb_flags & SB_LOCK) == 0) {
-		sb->sb_flags |= SB_LOCK;
-		goto out;
-	}
-	if ((flags & SBL_WAIT) == 0) {
-		error = EWOULDBLOCK;
-		goto out;
-	}
 	if (!(flags & SBL_NOINTR || sb->sb_flags & SB_NOINTR))
-		prio |= PCATCH;
+		rwflags |= RW_INTR;
+	if (!(flags & SBL_WAIT))
+		rwflags |= RW_NOSLEEP;
 
-	while (sb->sb_flags & SB_LOCK) {
-		sb->sb_flags |= SB_WANT;
-		mtx_leave(&sb->sb_mtx);
-		error = sosleep_nsec(so, &sb->sb_flags, prio, "sblock", INFSLP);
-		if (error)
-			return (error);
-		mtx_enter(&sb->sb_mtx);
-	}
-	sb->sb_flags |= SB_LOCK;
-out:
-	mtx_leave(&sb->sb_mtx);
+	error = rw_enter(&sb->sb_lock, rwflags);
+	if (error == EBUSY)
+		error = EWOULDBLOCK;
 
-	return (error);
+	return error;
 }
 
 void
-sbunlock_locked(struct socket *so, struct sockbuf *sb)
+sbunlock(struct sockbuf *sb)
 {
-	if (sb->sb_flags & SB_MTXLOCK) {
-		rw_exit(&sb->sb_lock);
-		return;
-	}
-
-	MUTEX_ASSERT_LOCKED(&sb->sb_mtx);
-
-	sb->sb_flags &= ~SB_LOCK;
-	if (sb->sb_flags & SB_WANT) {
-		sb->sb_flags &= ~SB_WANT;
-		wakeup(&sb->sb_flags);
-	}
-}
-
-void
-sbunlock(struct socket *so, struct sockbuf *sb)
-{
-	if (sb->sb_flags & SB_MTXLOCK) {
-		rw_exit(&sb->sb_lock);
-		return;
-	}
-
-	mtx_enter(&sb->sb_mtx);
-	sbunlock_locked(so, sb);
-	mtx_leave(&sb->sb_mtx);
+	rw_exit(&sb->sb_lock);
 }
 
 /*
@@ -1128,7 +1069,7 @@ void
 sbflush(struct socket *so, struct sockbuf *sb)
 {
 	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
-	KASSERT((sb->sb_flags & SB_LOCK) == 0);
+	rw_assert_unlocked(&sb->sb_lock);
 
 	while (sb->sb_mbcnt)
 		sbdrop(so, sb, (int)sb->sb_cc);

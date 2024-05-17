@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.334 2024/05/17 19:02:04 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.335 2024/05/17 19:11:14 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ void	soreaper(void *);
 void	soput(void *);
 int	somove(struct socket *, int);
 void	sorflush(struct socket *);
-void	sorflush_locked(struct socket *);
 
 void	filt_sordetach(struct knote *kn);
 int	filt_soread(struct knote *kn, long hint);
@@ -607,11 +606,11 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 
 #define	snderr(errno)	{ error = errno; goto release; }
 
+restart:
+	if ((error = sblock(&so->so_snd, SBLOCKWAIT(flags))) != 0)
+		goto out;
 	if (dosolock)
 		solock_shared(so);
-restart:
-	if ((error = sblock(so, &so->so_snd, SBLOCKWAIT(flags))) != 0)
-		goto out;
 	sb_mtx_lock(&so->so_snd);
 	so->so_snd.sb_state |= SS_ISSENDING;
 	do {
@@ -644,15 +643,12 @@ restart:
 		    (atomic || space < so->so_snd.sb_lowat))) {
 			if (flags & MSG_DONTWAIT)
 				snderr(EWOULDBLOCK);
-			sbunlock(so, &so->so_snd);
-
-			if (so->so_snd.sb_flags & SB_MTXLOCK)
-				error = sbwait_locked(so, &so->so_snd);
-			else
-				error = sbwait(so, &so->so_snd);
-
+			sbunlock(&so->so_snd);
+			error = sbwait(so, &so->so_snd);
 			so->so_snd.sb_state &= ~SS_ISSENDING;
 			sb_mtx_unlock(&so->so_snd);
+			if (dosolock)
+				sounlock_shared(so);
 			if (error)
 				goto out;
 			goto restart;
@@ -706,10 +702,10 @@ restart:
 release:
 	so->so_snd.sb_state &= ~SS_ISSENDING;
 	sb_mtx_unlock(&so->so_snd);
-	sbunlock(so, &so->so_snd);
-out:
 	if (dosolock)
 		sounlock_shared(so);
+	sbunlock(&so->so_snd);
+out:
 	m_freem(top);
 	m_freem(control);
 	return (error);
@@ -876,11 +872,11 @@ bad:
 	if (mp)
 		*mp = NULL;
 
+restart:
+	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
+		return (error);
 	if (dosolock)
 		solock_shared(so);
-restart:
-	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0)
-		goto out;
 	sb_mtx_lock(&so->so_rcv);
 
 	m = so->so_rcv.sb_mb;
@@ -945,25 +941,13 @@ restart:
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 1");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 1");
 
-		if (so->so_rcv.sb_flags & SB_MTXLOCK) {
-			sbunlock_locked(so, &so->so_rcv);
-			if (dosolock)
-				sounlock_shared(so);
-			error = sbwait_locked(so, &so->so_rcv);
-			sb_mtx_unlock(&so->so_rcv);
-			if (error)
-				return (error);
-			if (dosolock)
-				solock_shared(so);
-		} else {
-			sb_mtx_unlock(&so->so_rcv);
-			sbunlock(so, &so->so_rcv);
-			error = sbwait(so, &so->so_rcv);
-			if (error) {
-				sounlock_shared(so);
-				return (error);
-			}
-		}
+		sbunlock(&so->so_rcv);
+		error = sbwait(so, &so->so_rcv);
+		sb_mtx_unlock(&so->so_rcv);
+		if (dosolock)
+			sounlock_shared(so);
+		if (error)
+			return (error);
 		goto restart;
 	}
 dontblock:
@@ -1203,21 +1187,12 @@ dontblock:
 				break;
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
-			if (dosolock) {
+			if (sbwait(so, &so->so_rcv)) {
 				sb_mtx_unlock(&so->so_rcv);
-				error = sbwait(so, &so->so_rcv);
-				if (error) {
-					sbunlock(so, &so->so_rcv);
+				if (dosolock)
 					sounlock_shared(so);
-					return (0);
-				}
-				sb_mtx_lock(&so->so_rcv);
-			} else {
-				if (sbwait_locked(so, &so->so_rcv)) {
-					sb_mtx_unlock(&so->so_rcv);
-					sbunlock(so, &so->so_rcv);
-					return (0);
-				}
+				sbunlock(&so->so_rcv);
+				return (0);
 			}
 			if ((m = so->so_rcv.sb_mb) != NULL)
 				nextrecord = m->m_nextpkt;
@@ -1259,7 +1234,7 @@ dontblock:
 	    (flags & MSG_EOR) == 0 &&
 	    (so->so_rcv.sb_state & SS_CANTRCVMORE) == 0) {
 		sb_mtx_unlock(&so->so_rcv);
-		sbunlock(so, &so->so_rcv);
+		sbunlock(&so->so_rcv);
 		goto restart;
 	}
 
@@ -1270,10 +1245,9 @@ dontblock:
 		*flagsp |= flags;
 release:
 	sb_mtx_unlock(&so->so_rcv);
-	sbunlock(so, &so->so_rcv);
-out:
 	if (dosolock)
 		sounlock_shared(so);
+	sbunlock(&so->so_rcv);
 	return (error);
 }
 
@@ -1303,46 +1277,31 @@ soshutdown(struct socket *so, int how)
 }
 
 void
-sorflush_locked(struct socket *so)
+sorflush(struct socket *so)
 {
 	struct sockbuf *sb = &so->so_rcv;
 	struct mbuf *m;
 	const struct protosw *pr = so->so_proto;
 	int error;
 
-	if ((sb->sb_flags & SB_MTXLOCK) == 0)
-		soassertlocked(so);
-
-	error = sblock(so, sb, SBL_WAIT | SBL_NOINTR);
+	error = sblock(sb, SBL_WAIT | SBL_NOINTR);
 	/* with SBL_WAIT and SLB_NOINTR sblock() must not fail */
 	KASSERT(error == 0);
 
-	if (sb->sb_flags & SB_MTXLOCK)
-		solock(so);
+	solock_shared(so);
 	socantrcvmore(so);
-	if (sb->sb_flags & SB_MTXLOCK)
-		sounlock(so);
-
 	mtx_enter(&sb->sb_mtx);
 	m = sb->sb_mb;
 	memset(&sb->sb_startzero, 0,
 	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
 	sb->sb_timeo_nsecs = INFSLP;
 	mtx_leave(&sb->sb_mtx);
-	sbunlock(so, sb);
+	sounlock_shared(so);
+	sbunlock(sb);
+
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(m);
 	m_purge(m);
-}
-
-void
-sorflush(struct socket *so)
-{
-	if ((so->so_rcv.sb_flags & SB_MTXLOCK) == 0)
-		solock_shared(so);
-	sorflush_locked(so);
-	if ((so->so_rcv.sb_flags & SB_MTXLOCK) == 0)
-		sounlock_shared(so);
 }
 
 #ifdef SOCKET_SPLICE
@@ -1356,7 +1315,7 @@ sorflush(struct socket *so)
 int
 sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 {
-	struct file	*fp = NULL;
+	struct file	*fp;
 	struct socket	*sosp;
 	struct taskq	*tq;
 	int		 error = 0;
@@ -1367,6 +1326,29 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		return (EINVAL);
 	if (tv && (tv->tv_sec < 0 || !timerisvalid(tv)))
 		return (EINVAL);
+
+	/* If no fd is given, unsplice by removing existing link. */
+	if (fd < 0) {
+		if ((error = sblock(&so->so_rcv, SBL_WAIT)) != 0)
+			return (error);
+		solock(so);
+		if (so->so_options & SO_ACCEPTCONN) {
+			error = EOPNOTSUPP;
+			goto out;
+		}
+		if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) == 0 &&
+		    (so->so_proto->pr_flags & PR_CONNREQUIRED)) {
+			error = ENOTCONN;
+			goto out;
+		}
+
+		if (so->so_sp && so->so_sp->ssp_socket)
+			sounsplice(so, so->so_sp->ssp_socket, 0);
+ out:
+		sounlock(so);
+		sbunlock(&so->so_rcv);
+		return (error);
+	}
 
 	if (sosplice_taskq == NULL) {
 		rw_enter_write(&sosplice_lock);
@@ -1387,63 +1369,45 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		membar_consumer();
 	}
 
-	if (so->so_rcv.sb_flags & SB_MTXLOCK) {
-		if ((error = sblock(so, &so->so_rcv, SBL_WAIT)) != 0)
-			return (error);
-		solock(so);
-	} else {
-		solock(so);
-		if ((error = sblock(so, &so->so_rcv, SBL_WAIT)) != 0) {
-			sounlock(so);
-			return (error);
-		}
+	/* Find sosp, the drain socket where data will be spliced into. */
+	if ((error = getsock(curproc, fd, &fp)) != 0)
+		return (error);
+	sosp = fp->f_data;
+
+	if (sosp->so_proto->pr_usrreqs->pru_send !=
+	    so->so_proto->pr_usrreqs->pru_send) {
+		error = EPROTONOSUPPORT;
+		goto frele;
 	}
 
-	if (so->so_options & SO_ACCEPTCONN) {
+	if ((error = sblock(&so->so_rcv, SBL_WAIT)) != 0)
+		goto frele;
+	if ((error = sblock(&sosp->so_snd, SBL_WAIT)) != 0) {
+		sbunlock(&so->so_rcv);
+		goto frele;
+	}
+	solock(so);
+
+	if ((so->so_options & SO_ACCEPTCONN) ||
+	    (sosp->so_options & SO_ACCEPTCONN)) {
 		error = EOPNOTSUPP;
-		goto out;
+		goto release;
 	}
 	if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) == 0 &&
 	    (so->so_proto->pr_flags & PR_CONNREQUIRED)) {
 		error = ENOTCONN;
-		goto out;
-	}
-	if (so->so_sp == NULL)
-		so->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
-
-	/* If no fd is given, unsplice by removing existing link. */
-	if (fd < 0) {
-		if (so->so_sp->ssp_socket)
-			sounsplice(so, so->so_sp->ssp_socket, 0);
-		goto out;
-	}
-
-	/* Find sosp, the drain socket where data will be spliced into. */
-	if ((error = getsock(curproc, fd, &fp)) != 0)
-		goto out;
-	sosp = fp->f_data;
-	if (sosp->so_proto->pr_usrreqs->pru_send !=
-	    so->so_proto->pr_usrreqs->pru_send) {
-		error = EPROTONOSUPPORT;
-		goto out;
-	}
-	if (sosp->so_sp == NULL)
-		sosp->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
-
-	if ((error = sblock(sosp, &sosp->so_snd, SBL_WAIT)) != 0) {
-		goto out;
-	}
-
-	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
-		error = EBUSY;
-		goto release;
-	}
-	if (sosp->so_options & SO_ACCEPTCONN) {
-		error = EOPNOTSUPP;
 		goto release;
 	}
 	if ((sosp->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) == 0) {
 		error = ENOTCONN;
+		goto release;
+	}
+	if (so->so_sp == NULL)
+		so->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
+	if (sosp->so_sp == NULL)
+		sosp->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
+	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
+		error = EBUSY;
 		goto release;
 	}
 
@@ -1473,18 +1437,11 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	}
 
  release:
-	sbunlock(sosp, &sosp->so_snd);
- out:
-	if (so->so_rcv.sb_flags & SB_MTXLOCK) {
-		sounlock(so);
-		sbunlock(so, &so->so_rcv);
-	} else {
-		sbunlock(so, &so->so_rcv);
-		sounlock(so);
-	}
-
-	if (fp)
-		FRELE(fp, curproc);
+	sounlock(so);
+	sbunlock(&sosp->so_snd);
+	sbunlock(&so->so_rcv);
+ frele:
+	FRELE(fp, curproc);
 
 	return (error);
 }

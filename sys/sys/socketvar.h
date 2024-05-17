@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.130 2024/05/03 17:43:09 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.131 2024/05/17 19:11:14 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -128,13 +128,11 @@ struct socket {
 		struct klist sb_klist;	/* process selecting read/write */
 	} so_rcv, so_snd;
 #define SB_MAX		(2*1024*1024)	/* default for max chars in sockbuf */
-#define SB_LOCK		0x0001		/* lock on data queue */
-#define SB_WANT		0x0002		/* someone is waiting to lock */
-#define SB_WAIT		0x0004		/* someone is waiting for data/space */
-#define SB_ASYNC	0x0010		/* ASYNC I/O, need signals */
-#define SB_SPLICE	0x0020		/* buffer is splice source or drain */
-#define SB_NOINTR	0x0040		/* operations not interruptible */
-#define SB_MTXLOCK	0x0080		/* sblock() doesn't need solock() */
+#define SB_WAIT		0x0001		/* someone is waiting for data/space */
+#define SB_ASYNC	0x0002		/* ASYNC I/O, need signals */
+#define SB_SPLICE	0x0004		/* buffer is splice source or drain */
+#define SB_NOINTR	0x0008		/* operations not interruptible */
+#define SB_MTXLOCK	0x0010		/* sblock() doesn't need solock() */
 
 	void	(*so_upcall)(struct socket *so, caddr_t arg, int waitf);
 	caddr_t	so_upcallarg;		/* Arg for above */
@@ -315,11 +313,10 @@ sbfree(struct socket *so, struct sockbuf *sb, struct mbuf *m)
  * sleep is interruptible. Returns error without lock if
  * sleep is interrupted.
  */
-int sblock(struct socket *, struct sockbuf *, int);
+int sblock(struct sockbuf *, int);
 
 /* release lock on sockbuf sb */
-void sbunlock(struct socket *, struct sockbuf *);
-void sbunlock_locked(struct socket *, struct sockbuf *);
+void sbunlock(struct sockbuf *);
 
 #define	SB_EMPTY_FIXUP(sb) do {						\
 	if ((sb)->sb_mb == NULL) {					\
@@ -367,7 +364,6 @@ int	sbcheckreserve(u_long, u_long);
 int	sbchecklowmem(void);
 int	sbreserve(struct socket *, struct sockbuf *, u_long);
 int	sbwait(struct socket *, struct sockbuf *);
-int	sbwait_locked(struct socket *, struct sockbuf *);
 void	soinit(void);
 void	soabort(struct socket *);
 int	soaccept(struct socket *, struct mbuf *);
