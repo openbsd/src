@@ -198,7 +198,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_region_t r;
 	isc_result_t result;
-	unsigned int i, count = 0, added;
+	unsigned int i, count = 0;
 	isc_buffer_t savedbuffer, rdlen;
 	unsigned int headlen;
 	int question = 0;
@@ -287,7 +287,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 
 	savedbuffer = *target;
 	i = 0;
-	added = 0;
 
 	do {
 		/*
@@ -335,7 +334,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			isc_buffer_putuint16(&rdlen,
 					     (uint16_t)(target->used -
 							    rdlen.used - 2));
-			added++;
 		}
 
 		if (shuffle) {
