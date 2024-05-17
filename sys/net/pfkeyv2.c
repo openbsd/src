@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.260 2024/01/11 14:15:11 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.261 2024/05/17 18:58:26 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2705,7 +2705,10 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	if (namelen < 1)
 		return (EINVAL);
 	w.w_op = name[0];
-	w.w_satype = name[1];
+	if (namelen >= 2)
+		w.w_satype = name[1];
+	else
+		w.w_satype = SADB_SATYPE_UNSPEC;
 	w.w_where = oldp;
 	w.w_len = oldp ? *oldlenp : 0;
 
