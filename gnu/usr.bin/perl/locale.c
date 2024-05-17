@@ -2858,7 +2858,7 @@ Perl_setlocale(const int category, const char * locale)
 
     /* If the new locale is the same as the current one, nothing is actually
      * being changed, so do nothing. */
-    if (      strEQ(retval, locale)
+    if (      retval != NULL && strEQ(retval, locale)
         && (   ! affects_LC_NUMERIC(category)
 
 #  ifdef USE_LOCALE_NUMERIC
