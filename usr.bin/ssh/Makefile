@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.17 2019/10/31 21:22:01 djm Exp $
+#	$OpenBSD: Makefile,v 1.18 2024/05/17 00:30:23 djm Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	ssh sshd ssh-add ssh-keygen ssh-agent scp sftp-server \
+SUBDIR=	ssh sshd sshd-session \
+	ssh-add ssh-keygen ssh-agent scp sftp-server \
 	ssh-keysign ssh-keyscan sftp ssh-pkcs11-helper ssh-sk-helper
 
 distribution:
