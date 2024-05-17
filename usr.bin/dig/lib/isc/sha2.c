@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha2.c,v 1.4 2020/02/24 13:49:38 jsg Exp $ */
+/* $Id: sha2.c,v 1.5 2024/05/17 09:36:48 tb Exp $ */
 
 /*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
 /*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
@@ -87,7 +87,7 @@ isc_sha224_update(isc_sha224_t *context, const uint8_t* data, size_t len) {
 }
 
 void
-isc_sha224_final(uint8_t digest[], isc_sha224_t *context) {
+isc_sha224_final(uint8_t digest[ISC_SHA224_DIGESTLENGTH], isc_sha224_t *context) {
 	/* Sanity check: */
 	REQUIRE(context != (isc_sha224_t *)0);
 	REQUIRE(context->ctx != (EVP_MD_CTX *)0);
@@ -129,7 +129,7 @@ isc_sha256_update(isc_sha256_t *context, const uint8_t *data, size_t len) {
 }
 
 void
-isc_sha256_final(uint8_t digest[], isc_sha256_t *context) {
+isc_sha256_final(uint8_t digest[ISC_SHA256_DIGESTLENGTH], isc_sha256_t *context) {
 	/* Sanity check: */
 	REQUIRE(context != (isc_sha256_t *)0);
 	REQUIRE(context->ctx != (EVP_MD_CTX *)0);
@@ -169,7 +169,7 @@ void isc_sha512_update(isc_sha512_t *context, const uint8_t *data, size_t len) {
 				       (const void *) data, len) == 1);
 }
 
-void isc_sha512_final(uint8_t digest[], isc_sha512_t *context) {
+void isc_sha512_final(uint8_t digest[ISC_SHA512_DIGESTLENGTH], isc_sha512_t *context) {
 	/* Sanity check: */
 	REQUIRE(context != (isc_sha512_t *)0);
 	REQUIRE(context->ctx != (EVP_MD_CTX *)0);
@@ -211,7 +211,7 @@ isc_sha384_update(isc_sha384_t *context, const uint8_t* data, size_t len) {
 }
 
 void
-isc_sha384_final(uint8_t digest[], isc_sha384_t *context) {
+isc_sha384_final(uint8_t digest[ISC_SHA384_DIGESTLENGTH], isc_sha384_t *context) {
 	/* Sanity check: */
 	REQUIRE(context != (isc_sha384_t *)0);
 	REQUIRE(context->ctx != (EVP_MD_CTX *)0);
