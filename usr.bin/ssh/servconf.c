@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.406 2024/05/17 00:30:24 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.407 2024/05/17 01:17:40 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -500,7 +500,7 @@ typedef enum {
 	sAllowStreamLocalForwarding, sFingerprintHash, sDisableForwarding,
 	sExposeAuthInfo, sRDomain, sPubkeyAuthOptions, sSecurityKeyProvider,
 	sRequiredRSASize, sChannelTimeout, sUnusedConnectionTimeout,
-	sSshdMonitorPath,
+	sSshdSessionPath,
 	sDeprecated, sIgnore, sUnsupported
 } ServerOpCodes;
 
@@ -647,7 +647,7 @@ static struct {
 	{ "requiredrsasize", sRequiredRSASize, SSHCFG_ALL },
 	{ "channeltimeout", sChannelTimeout, SSHCFG_ALL },
 	{ "unusedconnectiontimeout", sUnusedConnectionTimeout, SSHCFG_ALL },
-	{ "sshdmonitorpath", sSshdMonitorPath, SSHCFG_GLOBAL },
+	{ "sshdsessionpath", sSshdSessionPath, SSHCFG_GLOBAL },
 	{ NULL, sBadOption, 0 }
 };
 
@@ -2442,7 +2442,7 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 		}
 		goto parse_time;
 
-	case sSshdMonitorPath:
+	case sSshdSessionPath:
 		charptr = &options->sshd_session_path;
 		goto parse_filename;
 
@@ -3011,7 +3011,7 @@ dump_config(ServerOptions *o)
 	dump_cfg_string(sHostKeyAlgorithms, o->hostkeyalgorithms);
 	dump_cfg_string(sPubkeyAcceptedAlgorithms, o->pubkey_accepted_algos);
 	dump_cfg_string(sRDomain, o->routing_domain);
-	dump_cfg_string(sSshdMonitorPath, o->sshd_session_path);
+	dump_cfg_string(sSshdSessionPath, o->sshd_session_path);
 
 	/* string arguments requiring a lookup */
 	dump_cfg_string(sLogLevel, log_level_name(o->log_level));
