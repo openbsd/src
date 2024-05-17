@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.21 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.22 2024/05/17 02:57:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -533,7 +533,8 @@ static int
 asn1_str2tag(const char *tagstr, int len)
 {
 	unsigned int i;
-	static const struct tag_name_st *tntmp, tnst [] = {
+	const struct tag_name_st *tntmp;
+	static const struct tag_name_st tnst[] = {
 		ASN1_GEN_STR("BOOL", V_ASN1_BOOLEAN),
 		ASN1_GEN_STR("BOOLEAN", V_ASN1_BOOLEAN),
 		ASN1_GEN_STR("NULL", V_ASN1_NULL),
