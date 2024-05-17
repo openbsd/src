@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.101 2024/02/11 01:27:45 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.102 2024/05/17 20:44:36 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -481,7 +481,7 @@ ipip_output(struct mbuf **mp, struct tdb *tdb)
 		ip6o->ip6_vfc &= ~IPV6_VERSION_MASK;
 		ip6o->ip6_vfc |= IPV6_VERSION;
 		ip6o->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6o));
-		ip6o->ip6_hlim = ip_defttl;
+		ip6o->ip6_hlim = ip6_defhlim;
 		in6_embedscope(&ip6o->ip6_src, &tdb->tdb_src.sin6, NULL, NULL);
 		in6_embedscope(&ip6o->ip6_dst, &tdb->tdb_dst.sin6, NULL, NULL);
 
