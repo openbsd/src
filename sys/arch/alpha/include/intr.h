@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.49 2019/03/24 06:19:26 visa Exp $ */
+/* $OpenBSD: intr.h,v 1.50 2024/05/17 20:07:33 miod Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -168,7 +168,7 @@ void splassert_check(int, const char *);
 
 /* IPL-lowering/restoring macros */
 #define splx(s)								\
-    ((s) == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
+    ((s) == ALPHA_PSL_IPL_0 ? spl0() : (int)alpha_pal_swpipl(s))
 
 /* IPL-raising functions/macros */
 int splraise(int);
