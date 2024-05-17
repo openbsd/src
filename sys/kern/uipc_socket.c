@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.333 2024/05/03 17:43:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.334 2024/05/17 19:02:04 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -166,6 +166,7 @@ soalloc(const struct protosw *prp, int wait)
 			break;
 		}
 		break;
+	case AF_KEY:
 	case AF_UNIX:
 		so->so_snd.sb_flags |= SB_MTXLOCK;
 		so->so_rcv.sb_flags |= SB_MTXLOCK;

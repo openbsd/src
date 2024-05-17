@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.261 2024/05/17 18:58:26 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.262 2024/05/17 19:02:04 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -443,8 +443,7 @@ pfkey_sendup(struct pkpcb *kp, struct mbuf *m0, int more)
 {
 	struct socket *so = kp->kcb_socket;
 	struct mbuf *m;
-
-	soassertlocked(so);
+	int ret;
 
 	if (more) {
 		if (!(m = m_dup_pkt(m0, 0, M_DONTWAIT)))
@@ -452,7 +451,11 @@ pfkey_sendup(struct pkpcb *kp, struct mbuf *m0, int more)
 	} else
 		m = m0;
 
-	if (!sbappendaddr(so, &so->so_rcv, &pfkey_addr, m, NULL)) {
+	mtx_enter(&so->so_rcv.sb_mtx);
+	ret = sbappendaddr(so, &so->so_rcv, &pfkey_addr, m, NULL);
+	mtx_leave(&so->so_rcv.sb_mtx);
+
+	if (ret == 0) {
 		m_freem(m);
 		return (ENOBUFS);
 	}
@@ -515,9 +518,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 		 * Send message to the specified socket, plus all
 		 * promiscuous listeners.
 		 */
-		solock(so);
 		pfkey_sendup(sotokeycb(so), packet, 0);
-		sounlock(so);
 
 		/*
 		 * Promiscuous messages contain the original message
@@ -544,10 +545,8 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 			if (kp->kcb_socket == so || kp->kcb_rdomain != rdomain)
 				continue;
 
-			keylock(kp);
 			if (kp->kcb_flags & PFKEYV2_SOCKETFLAGS_PROMISC)
 				pfkey_sendup(kp, packet, 1);
-			keyunlock(kp);
 		}
 		SRPL_LEAVE(&sr);
 		m_freem(packet);
@@ -562,18 +561,18 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 			if (kp->kcb_rdomain != rdomain)
 				continue;
 
-			keylock(kp);
 			if (kp->kcb_flags & PFKEYV2_SOCKETFLAGS_REGISTERED) {
 				if (!satype) {
 					/* Just send to everyone registered */
 					pfkey_sendup(kp, packet, 1);
 				} else {
+					keylock(kp);
 					/* Check for specified satype */
 					if ((1 << satype) & kp->kcb_reg)
 						pfkey_sendup(kp, packet, 1);
+					keyunlock(kp);
 				}
 			}
-			keyunlock(kp);
 		}
 		SRPL_LEAVE(&sr);
 		/* Free last/original copy of the packet */
@@ -595,14 +594,14 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 
 		/* Send to all registered promiscuous listeners */
 		SRPL_FOREACH(kp, &sr, &pkptable.pkp_list, kcb_list) {
+			int flags = READ_ONCE(kp->kcb_flags);
+
 			if (kp->kcb_rdomain != rdomain)
 				continue;
 
-			keylock(kp);
-			if ((kp->kcb_flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
-			    !(kp->kcb_flags & PFKEYV2_SOCKETFLAGS_REGISTERED))
+			if ((flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
+			    !(flags & PFKEYV2_SOCKETFLAGS_REGISTERED))
 				pfkey_sendup(kp, packet, 1);
-			keyunlock(kp);
 		}
 		SRPL_LEAVE(&sr);
 		m_freem(packet);
@@ -614,9 +613,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 			if (kp->kcb_rdomain != rdomain)
 				continue;
 
-			keylock(kp);
 			pfkey_sendup(kp, packet, 1);
-			keyunlock(kp);
 		}
 		SRPL_LEAVE(&sr);
 		m_freem(packet);
@@ -1196,10 +1193,8 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 			if (bkp->kcb_rdomain != kp->kcb_rdomain)
 				continue;
 
-			keylock(bkp);
 			if (bkp->kcb_flags & PFKEYV2_SOCKETFLAGS_PROMISC)
 				pfkey_sendup(bkp, packet, 1);
-			keyunlock(bkp);
 		}
 		SRPL_LEAVE(&sr);
 
@@ -2049,14 +2044,13 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 				goto ret;
 
 			SRPL_FOREACH(bkp, &sr, &pkptable.pkp_list, kcb_list) {
-				if (bkp == kp || bkp->kcb_rdomain != kp->kcb_rdomain)
+				if (bkp == kp ||
+				    bkp->kcb_rdomain != kp->kcb_rdomain)
 					continue;
 
 				if (!smsg->sadb_msg_seq ||
 				    (smsg->sadb_msg_seq == kp->kcb_pid)) {
-					keylock(bkp);
 					pfkey_sendup(bkp, packet, 1);
-					keyunlock(bkp);
 				}
 			}
 			SRPL_LEAVE(&sr);
