@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.150 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.151 2024/05/17 20:05:08 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1303,7 +1303,7 @@ callrom(void)
  * find a device matching "name" and unit number
  */
 struct device *
-getdevunit(char *name, int unit)
+getdevunit(const char *name, int unit)
 {
 	struct device *dev = TAILQ_FIRST(&alldevs);
 	char num[10], fullname[16];

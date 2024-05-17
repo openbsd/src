@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.19 2024/03/29 21:06:14 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.20 2024/05/17 20:05:08 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -150,7 +150,7 @@ void	bootstrap(int);
 int	firstchild(int);
 int	nextsibling(int);
 void	callrom(void);
-struct device *getdevunit(char *, int);
+struct device *getdevunit(const char *, int);
 int	romgetcursoraddr(int **, int **);
 int	findroot(void);
 int	findnode(int, const char *);
