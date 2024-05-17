@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.26 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.27 2024/05/17 20:03:13 miod Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -262,18 +262,14 @@ espattach_sbus(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Find the DMA by poking around the dma device structures
-	 *
 	 * What happens here is that if the dma driver has not been
-	 * configured, then this returns a NULL pointer. Then when the
-	 * dma actually gets configured, it does the opposing test, and
-	 * if the sc->sc_esp field in its softc is NULL, then tries to
-	 * find the matching esp driver.
+	 * configured, then this returns a NULL pointer.
 	 */
 	esc->sc_dma = (struct lsi64854_softc *)
 	    getdevunit("dma", sc->sc_dev.dv_unit - esp_unit_offset);
 
 	/*
-	 * and a back pointer to us, for DMA
+	 * add a back pointer to us, for DMA
 	 */
 	if (esc->sc_dma)
 		esc->sc_dma->sc_client = sc;
