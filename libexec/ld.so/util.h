@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.40 2023/12/08 12:58:27 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.41 2024/05/17 06:11:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
@@ -32,6 +32,7 @@
 #define __DL_UTIL_H__
 
 #include <sys/utsname.h>
+#include <sys/signal.h>
 #include <stdarg.h>
 #include <stddef.h>		/* for NULL */
 
@@ -72,7 +73,7 @@ long _dl_strtol(const char *nptr, char **endptr, int base);
 
 __dead void _dl_oom(void);
 __dead void _dl_die(const char *, ...) __attribute__((format (printf, 1, 2)));
-#define _dl_diedie()	_dl_thrkill(0, 9, NULL)
+#define _dl_diedie()	_dl_thrkill(0, SIGKILL, NULL)
 __END_HIDDEN_DECLS
 
 #define	_dl_round_page(x) \
