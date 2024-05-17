@@ -986,27 +986,6 @@ dns_message_takebuffer(dns_message_t *msg, isc_buffer_t **buffer);
  */
 
 isc_result_t
-dns_message_rechecksig(dns_message_t *msg, dns_view_t *view);
-/*%<
- * Reset the signature state and then if the message was signed,
- * verify the message.
- *
- * Requires:
- *
- *\li	msg is a valid parsed message.
- *\li	view is a valid view or NULL
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS		- the message was unsigned, or the message
- *				  was signed correctly.
- *
- *\li	#DNS_R_EXPECTEDTSIG	- A TSIG was expected, but not seen
- *\li	#DNS_R_UNEXPECTEDTSIG	- A TSIG was seen but not expected
- *\li	#DNS_R_TSIGVERIFYFAILURE - The TSIG failed to verify
- */
-
-isc_result_t
 dns_message_buildopt(dns_message_t *msg, dns_rdataset_t **opt,
 		     unsigned int version, uint16_t udpsize,
 		     unsigned int flags, dns_ednsopt_t *ednsopts, size_t count);

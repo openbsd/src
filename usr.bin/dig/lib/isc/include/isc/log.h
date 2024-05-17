@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.8 2020/09/14 08:40:44 florian Exp $ */
+/* $Id: log.h,v 1.9 2024/05/17 23:56:19 jsg Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -549,28 +549,6 @@ isc_log_wouldlog(isc_log_t *lctx, int level);
  * If #0 is returned, it is guaranteed that nothing would
  * be logged, allowing the caller to omit unnecessary
  * isc_log_write() calls and possible message preformatting.
- */
-
-void
-isc_log_closefilelogs(isc_log_t *lctx);
-/*%<
- * Close all open files used by #ISC_LOG_TOFILE channels.
- *
- * Notes:
- *\li	This function is provided for programs that want to use their own
- *	log rolling mechanism rather than the one provided internally.
- *	For example, a program that wanted to keep daily logs would define
- *	a channel which used #ISC_LOG_ROLLNEVER, then once a day would
- *	rename the log file and call isc_log_closefilelogs().
- *
- *\li	#ISC_LOG_TOFILEDESC channels are unaffected.
- *
- * Requires:
- *\li	lctx is a valid context.
- *
- * Ensures:
- *\li	The open files are closed and will be reopened when they are
- *	next needed.
  */
 
 void

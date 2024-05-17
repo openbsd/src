@@ -288,9 +288,6 @@ start_lookup(void);
 void
 onrun_callback(isc_task_t *task, isc_event_t *event);
 
-int
-dhmain(int argc, char **argv);
-
 void
 setup_libs(void);
 

@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.12 2020/09/15 08:15:59 deraadt Exp $ */
+/* $Id: dst_internal.h,v 1.13 2024/05/17 23:56:19 jsg Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -133,7 +133,6 @@ isc_result_t dst__hmacsha384_init(struct dst_func **funcp);
 isc_result_t dst__hmacsha512_init(struct dst_func **funcp);
 isc_result_t dst__opensslrsa_init(struct dst_func **funcp,
 				  unsigned char algorithm);
-isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
 
 /*%
  * Destructors

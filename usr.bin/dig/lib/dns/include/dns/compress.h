@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.h,v 1.5 2020/09/14 08:40:43 florian Exp $ */
+/* $Id: compress.h,v 1.6 2024/05/17 23:56:19 jsg Exp $ */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1
@@ -174,30 +174,10 @@ dns_decompress_init(dns_decompress_t *dctx, int edns,
  */
 
 void
-dns_decompress_invalidate(dns_decompress_t *dctx);
-
-/*%<
- *	Invalidates 'dctx'.
- *
- *	Requires:
- *\li		'dctx' to be initialized
- */
-
-void
 dns_decompress_setmethods(dns_decompress_t *dctx, unsigned int allowed);
 
 /*%<
  *	Sets 'dctx->allowed' to 'allowed'.
- *
- *	Requires:
- *\li		'dctx' to be initialized
- */
-
-dns_decompresstype_t
-dns_decompress_type(dns_decompress_t *dctx);
-
-/*%<
- *	Returns 'dctx->type'
  *
  *	Requires:
  *\li		'dctx' to be initialized
