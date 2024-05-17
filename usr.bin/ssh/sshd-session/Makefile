@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2024/05/17 00:30:24 djm Exp $
+#	$OpenBSD: Makefile,v 1.2 2024/05/17 00:33:25 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -48,6 +48,27 @@ DPADD+=	${LIBUTIL}
 LDADD+=	-lz
 DPADD+=	${LIBZ}
 .endif
+
+# The random relink kit, used on OpenBSD by /etc/rc
+
+CLEANFILES+= ${PROG}.tar install.sh
+
+install.sh: Makefile
+	echo "set -o errexit" > $@
+	echo "${CC} ${LDFLAGS} ${LDSTATIC} -o ${PROG}" \
+	    "\`echo " ${OBJS} "| tr ' ' '\\\n' | sort -R\`" ${LDADD} >> $@
+	echo "./${PROG} -V # test it works" >> $@
+	echo "install -c -s  -o root -g bin -m ${BINMODE} ${PROG} " \
+	    "${BINDIR}/${PROG}" >> $@
+
+${PROG}.tar: ${OBJS} install.sh
+	tar cf $@ ${OBJS} install.sh
+
+afterinstall: ${PROG}.tar
+	install -d -o root -g wheel -m 755 \
+	    ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}
+	install -o ${BINOWN} -g ${BINGRP} -m 640 \
+	    ${PROG}.tar ${DESTDIR}/usr/share/relink/${BINDIR}/${PROG}/${PROG}.tar
 
 # The random relink kit, used on OpenBSD by /etc/rc
 
