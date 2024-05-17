@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.33 2024/05/07 18:35:23 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.34 2024/05/17 16:37:10 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -252,6 +252,7 @@ struct vio_softc {
 #define VIRTIO_NET_TX_MAXNSEGS		16 /* for larger chains, defrag */
 #define VIRTIO_NET_CTRL_MAC_MC_ENTRIES	64 /* for more entries, use ALLMULTI */
 #define VIRTIO_NET_CTRL_MAC_UC_ENTRIES	 1 /* one entry for own unicast addr */
+#define VIRTIO_NET_CTRL_TIMEOUT		(5*1000*1000*1000ULL) /* 5 seconds */
 
 #define VIO_CTRL_MAC_INFO_SIZE					\
 	(2*sizeof(struct virtio_net_ctrl_mac_tbl) +		\
@@ -512,6 +513,17 @@ vio_put_lladdr(struct arpcom *ac, struct virtio_softc *vsc)
 	}
 }
 
+static int vio_needs_reset(struct vio_softc *sc)
+{
+	if (virtio_get_status(sc->sc_virtio) &
+	    VIRTIO_CONFIG_DEVICE_STATUS_DEVICE_NEEDS_RESET) {
+		printf("%s: device needs reset", sc->sc_dev.dv_xname);
+		vio_ctrl_wakeup(sc, RESET);
+		return 1;
+	}
+	return 0;
+}
+
 void
 vio_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -649,6 +661,7 @@ vio_config_change(struct virtio_softc *vsc)
 {
 	struct vio_softc *sc = (struct vio_softc *)vsc->sc_child;
 	vio_link_state(&sc->sc_ac.ac_if);
+	vio_needs_reset(sc);
 	return 1;
 }
 
@@ -703,7 +716,7 @@ vio_stop(struct ifnet *ifp, int disable)
 	virtio_reset(vsc);
 	vio_rxeof(sc);
 	if (vsc->sc_nvqs >= 3)
-		vio_ctrleof(&sc->sc_vq[VQCTL]);
+		vio_ctrl_wakeup(sc, RESET);
 	vio_tx_drain(sc);
 	if (disable)
 		vio_rx_drain(sc);
@@ -714,11 +727,8 @@ vio_stop(struct ifnet *ifp, int disable)
 	if (vsc->sc_nvqs >= 3)
 		virtio_start_vq_intr(vsc, &sc->sc_vq[VQCTL]);
 	virtio_reinit_end(vsc);
-	if (vsc->sc_nvqs >= 3) {
-		if (sc->sc_ctrl_inuse != FREE)
-			sc->sc_ctrl_inuse = RESET;
-		wakeup(&sc->sc_ctrl_inuse);
-	}
+	if (vsc->sc_nvqs >= 3)
+		vio_ctrl_wakeup(sc, FREE);
 }
 
 static inline uint16_t
@@ -1230,6 +1240,9 @@ vio_txeof(struct virtqueue *vq)
 	int r = 0;
 	int slot, len;
 
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return 0;
+
 	while (virtio_dequeue(vsc, vq, &slot, &len) == 0) {
 		struct virtio_net_hdr *hdr = &sc->sc_tx_hdrs[slot];
 		r++;
@@ -1363,32 +1376,15 @@ out:
 	return r;
 }
 
-/*
- * XXXSMP As long as some per-ifp ioctl(2)s are executed with the
- * NET_LOCK() deadlocks are possible.  So release it here.
- */
-static inline int
-vio_sleep(struct vio_softc *sc, const char *wmesg)
-{
-	int status = rw_status(&netlock);
-
-	if (status != RW_WRITE && status != RW_READ)
-		return tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO|PCATCH, wmesg,
-		    INFSLP);
-
-	return rwsleep_nsec(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH, wmesg,
-	    INFSLP);
-}
-
 int
 vio_wait_ctrl(struct vio_softc *sc)
 {
 	int r = 0;
 
 	while (sc->sc_ctrl_inuse != FREE) {
-		r = vio_sleep(sc, "viowait");
-		if (r == EINTR)
-			return r;
+		if (sc->sc_ctrl_inuse == RESET || vio_needs_reset(sc))
+			return ENXIO;
+		r = tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO, "viowait", INFSLP);
 	}
 	sc->sc_ctrl_inuse = INUSE;
 
@@ -1400,14 +1396,16 @@ vio_wait_ctrl_done(struct vio_softc *sc)
 {
 	int r = 0;
 
-	while (sc->sc_ctrl_inuse != DONE && sc->sc_ctrl_inuse != RESET) {
-		if (sc->sc_ctrl_inuse == RESET) {
-			r = 1;
-			break;
+	while (sc->sc_ctrl_inuse != DONE) {
+		if (sc->sc_ctrl_inuse == RESET || vio_needs_reset(sc))
+			return ENXIO;
+		r = tsleep_nsec(&sc->sc_ctrl_inuse, PRIBIO, "viodone",
+		    VIRTIO_NET_CTRL_TIMEOUT);
+		if (r == EWOULDBLOCK) {
+			printf("%s: ctrl queue timeout", sc->sc_dev.dv_xname);
+			vio_ctrl_wakeup(sc, RESET);
+			return ENXIO;
 		}
-		r = vio_sleep(sc, "viodone");
-		if (r == EINTR)
-			break;
 	}
 	return r;
 }

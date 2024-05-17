@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.36 2024/01/15 02:35:23 dv Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.37 2024/05/17 16:37:10 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ void		virtio_pci_write_device_config_4(struct virtio_softc *, int, uint32_t);
 void		virtio_pci_write_device_config_8(struct virtio_softc *, int, uint64_t);
 uint16_t	virtio_pci_read_queue_size(struct virtio_softc *, uint16_t);
 void		virtio_pci_setup_queue(struct virtio_softc *, struct virtqueue *, uint64_t);
+int		virtio_pci_get_status(struct virtio_softc *);
 void		virtio_pci_set_status(struct virtio_softc *, int);
 int		virtio_pci_negotiate_features(struct virtio_softc *, const struct virtio_feature_name *);
 int		virtio_pci_negotiate_features_10(struct virtio_softc *, const struct virtio_feature_name *);
@@ -155,6 +156,7 @@ struct virtio_ops virtio_pci_ops = {
 	virtio_pci_write_device_config_8,
 	virtio_pci_read_queue_size,
 	virtio_pci_setup_queue,
+	virtio_pci_get_status,
 	virtio_pci_set_status,
 	virtio_pci_negotiate_features,
 	virtio_pci_poll_intr,
@@ -273,6 +275,18 @@ virtio_pci_setup_queue(struct virtio_softc *vsc, struct virtqueue *vq,
 			    VIRTIO_MSI_QUEUE_VECTOR, vec);
 		}
 	}
+}
+
+int
+virtio_pci_get_status(struct virtio_softc *vsc)
+{
+	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
+
+	if (sc->sc_sc.sc_version_1)
+		return CREAD(sc, device_status);
+	else
+		return bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    VIRTIO_CONFIG_DEVICE_STATUS);
 }
 
 void

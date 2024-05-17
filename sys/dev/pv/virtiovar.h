@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.17 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.18 2024/05/17 16:37:10 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -154,6 +154,7 @@ struct virtio_ops {
 	void		(*write_dev_cfg_8)(struct virtio_softc *, int, uint64_t);
 	uint16_t	(*read_queue_size)(struct virtio_softc *, uint16_t);
 	void		(*setup_queue)(struct virtio_softc *, struct virtqueue *, uint64_t);
+	int		(*get_status)(struct virtio_softc *);
 	void		(*set_status)(struct virtio_softc *, int);
 	int		(*neg_features)(struct virtio_softc *, const struct virtio_feature_name *);
 	int		(*poll_intr)(void *);
@@ -197,9 +198,10 @@ struct virtio_softc {
 #define	virtio_setup_queue(sc, i, v)		(sc)->sc_ops->setup_queue(sc, i, v)
 #define	virtio_negotiate_features(sc, n)	(sc)->sc_ops->neg_features(sc, n)
 #define	virtio_poll_intr(sc)			(sc)->sc_ops->poll_intr(sc)
+#define	virtio_get_status(sc)			(sc)->sc_ops->get_status(sc)
+#define	virtio_set_status(sc, i)		(sc)->sc_ops->set_status(sc, i)
 
 /* only for transport drivers */
-#define	virtio_set_status(sc, i)		(sc)->sc_ops->set_status(sc, i)
 #define	virtio_device_reset(sc)			virtio_set_status((sc), 0)
 
 static inline int
