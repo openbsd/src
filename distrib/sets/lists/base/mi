@@ -2548,6 +2548,7 @@
 ./usr/libexec/ssh-keysign
 ./usr/libexec/ssh-pkcs11-helper
 ./usr/libexec/ssh-sk-helper
+./usr/libexec/sshd-session
 ./usr/libexec/tradcpp
 ./usr/libexec/vi.recover
 ./usr/local
@@ -2996,6 +2997,8 @@
 ./usr/share/relink/usr/lib/libcrypto.so.54.0.a
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a
+./usr/share/relink/usr/libexec/sshd-session
+./usr/share/relink/usr/libexec/sshd-session/sshd-session.tar
 ./usr/share/relink/usr/sbin
 ./usr/share/relink/usr/sbin/sshd
 ./usr/share/relink/usr/sbin/sshd/sshd.tar
