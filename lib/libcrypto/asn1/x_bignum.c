@@ -1,4 +1,4 @@
-/* $OpenBSD: x_bignum.c,v 1.13 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: x_bignum.c,v 1.14 2024/05/17 02:47:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -79,7 +79,7 @@ static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 static int bn_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
     int indent, const ASN1_PCTX *pctx);
 
-static ASN1_PRIMITIVE_FUNCS bignum_pf = {
+static const ASN1_PRIMITIVE_FUNCS bignum_pf = {
 	.app_data = NULL,
 	.flags = 0,
 	.prim_new = bn_new,
