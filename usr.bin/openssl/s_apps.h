@@ -1,4 +1,4 @@
-/* $OpenBSD: s_apps.h,v 1.7 2021/12/06 11:06:58 tb Exp $ */
+/* $OpenBSD: s_apps.h,v 1.8 2024/05/18 08:47:13 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,7 +130,6 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, char *server, char *port, int type, int af);
-int should_retry(int i);
 int extract_port(char *str, short *port_ptr);
 int extract_host_port(char *str, char **host_ptr, unsigned char *ip, char **p);
 
