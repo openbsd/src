@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.h,v 1.16 2022/09/10 16:58:51 cheloha Exp $	*/
+/*	$OpenBSD: display.h,v 1.17 2024/05/18 01:51:44 jsg Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -36,20 +36,13 @@
 /* prototypes */
 int display_resize(void);
 void i_loadave(double *);
-void u_loadave(int, double *);
 void i_timeofday(time_t *);
 void i_procstates(int, int *, int);
-void u_procstates(int, int *);
 void i_cpustates(int64_t *, int *);
-void u_cpustates(int64_t *);
 void i_memory(int *);
-void u_memory(int *);
 void i_message(void);
-void u_message(void);
 void i_header(char *);
-void u_header(char *);
 void i_process(int, char *, int);
-void u_process(int, char *, int);
 void u_endscreen(void);
 void display_header(int);
 void new_message(int, const char *, ...);
