@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.471 2024/04/23 13:34:50 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.472 2024/05/18 02:44:22 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -710,8 +710,6 @@ void	init_current_media(void);
 void	process_join_commands(void);
 
 void	process_wg_commands(void);
-
-unsigned long get_ts_map(int, int, int);
 
 void	in_status(int);
 void	in_getaddr(const char *, int);
