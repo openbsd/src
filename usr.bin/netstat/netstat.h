@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.77 2022/09/08 13:18:47 kn Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.78 2024/05/18 07:10:16 jsg Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -90,7 +90,6 @@ void	ip_stats(char *);
 void	div_stats(char *);
 void	icmp_stats(char *);
 void	igmp_stats(char *);
-void	pim_stats(char *);
 void	ah_stats(char *);
 void	ipsec_stats(char *);
 void	esp_stats(char *);
@@ -105,19 +104,14 @@ void	net80211_ifstats(char *);
 
 void	mbpr(void);
 
-void	hostpr(u_long, u_long);
-void	impstats(u_long, u_long);
-
 void	rt_stats(void);
 void	pr_rthdr(int, int);
-void	pr_encaphdr(void);
 void	pr_family(int);
 
 void	rdomainpr(void);
 
 void	ip6_stats(char *);
 void	icmp6_stats(char *);
-void	pim6_stats(char *);
 void	div6_stats(char *);
 void	rip6_stats(char *);
 void	mroute6pr(void);
@@ -141,8 +135,6 @@ char	*netname(struct sockaddr *, struct sockaddr *);
 char	*netname4(in_addr_t, in_addr_t);
 char	*mpls_op(u_int32_t);
 void	routepr(u_long, u_long, u_long, u_int);
-
-void	nsprotopr(u_long, char *);
 
 #define	IF_SHOW_FAIL	0
 #define	IF_SHOW_ERRS	1
