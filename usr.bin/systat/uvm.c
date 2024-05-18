@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.c,v 1.9 2024/05/01 12:54:27 mpi Exp $	*/
+/*	$OpenBSD: uvm.c,v 1.10 2024/05/18 09:02:34 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -38,7 +38,6 @@ int  read_uvm(void);
 int  select_uvm(void);
 
 void print_uvmexp_field(field_def *, field_def *, int *, int *, const char *);
-void print_uvmexp_line(int);
 
 struct uvmexp uvmexp;
 struct uvmexp last_uvmexp;

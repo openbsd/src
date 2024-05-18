@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.9 2023/04/19 12:58:15 jsg Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.10 2024/05/18 09:02:34 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -33,7 +33,6 @@
 
 #include "systat.h"
 
-int	check_nfs(void);
 int	select_client(void);
 int	select_server(void);
 int	read_nfs(void);

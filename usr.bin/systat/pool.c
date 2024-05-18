@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.19 2019/06/28 13:35:04 deraadt Exp $	*/
+/*	$OpenBSD: pool.c,v 1.20 2024/05/18 09:02:34 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -146,7 +146,6 @@ int	pool_cache_sort_req_callback(const void *, const void *);
 int	pool_cache_sort_put_callback(const void *, const void *);
 int	pool_cache_sort_lreq_callback(const void *, const void *);
 int	pool_cache_sort_lput_callback(const void *, const void *);
-int	pool_cache_kbd_cb(int);
 
 field_def pool_cache_fields[] = {
 	{"NAME", 12, 32, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},

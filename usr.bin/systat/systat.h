@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.25 2022/12/04 18:01:57 cheloha Exp $	*/
+/*	$OpenBSD: systat.h,v 1.26 2024/05/18 09:02:34 jsg Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -45,11 +45,8 @@
 #define	CF_LOADAV	0x2		/* display w/ load average */
 
 #define FIELD_ADDR(struct, x) (&struct[x])
-#define KREAD(addr, buf, len)  kvm_ckread((addr), (buf), (len))
 #define NVAL(indx)  namelist[(indx)].n_value
 #define NPTR(indx)  (void *)NVAL((indx))
-#define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len))
-int kvm_ckread(void *, void *, size_t);
 
 extern char	**dr_name;
 extern char	hostname[];
