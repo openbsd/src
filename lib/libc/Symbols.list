@@ -157,6 +157,7 @@ _thread_sys_nfssvc
 _thread_sys_open
 _thread_sys_openat
 _thread_sys_pathconf
+_thread_sys_pathconfat
 _thread_sys_pipe
 _thread_sys_pipe2
 _thread_sys_pledge
@@ -359,6 +360,7 @@ nfssvc
 open
 openat
 pathconf
+pathconfat
 pipe
 pipe2
 pledge

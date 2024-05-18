@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.364 2024/03/25 17:57:07 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.365 2024/05/18 05:20:22 guenther Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ int dosymlinkat(struct proc *, const char *, int, const char *);
 int dounlinkat(struct proc *, int, const char *, int);
 int dofaccessat(struct proc *, int, const char *, int, int);
 int dofstatat(struct proc *, int, const char *, struct stat *, int);
+int dopathconfat(struct proc *, int, const char *, int, int, register_t *);
 int doreadlinkat(struct proc *, int, const char *, char *, size_t,
     register_t *);
 int dochflagsat(struct proc *, int, const char *, u_int, int);
@@ -2112,16 +2113,42 @@ sys_pathconf(struct proc *p, void *v, register_t *retval)
 		syscallarg(const char *) path;
 		syscallarg(int) name;
 	} */ *uap = v;
-	int error;
+
+	return dopathconfat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, name),
+	    0, retval);
+}
+
+int
+sys_pathconfat(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_pathconfat_args /* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(int) name;
+		syscallarg(int) flag;
+	} */ *uap = v;
+
+	return dopathconfat(p, SCARG(uap, fd), SCARG(uap, path),
+	    SCARG(uap, name), SCARG(uap, flag), retval);
+}
+
+int
+dopathconfat(struct proc *p, int fd, const char *path, int name, int flag,
+    register_t *retval)
+{
+	int follow, error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	if (flag & ~AT_SYMLINK_NOFOLLOW)
+		return EINVAL;
+
+	follow = (flag & AT_SYMLINK_NOFOLLOW) ? NOFOLLOW : FOLLOW;
+	NDINITAT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_RPATH;
 	nd.ni_unveil = UNVEIL_READ;
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = VOP_PATHCONF(nd.ni_vp, SCARG(uap, name), retval);
+	error = VOP_PATHCONF(nd.ni_vp, name, retval);
 	vput(nd.ni_vp);
 	return (error);
 }

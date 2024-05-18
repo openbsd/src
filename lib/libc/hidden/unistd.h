@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.13 2023/12/12 15:30:55 deraadt Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.14 2024/05/18 05:20:22 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -110,6 +110,7 @@ PROTO_NORMAL(mkstemp);
 PROTO_NORMAL(nfssvc);
 PROTO_DEPRECATED(nice);
 PROTO_NORMAL(pathconf);
+PROTO_NORMAL(pathconfat);
 /*PROTO_CANCEL(pause);*/
 PROTO_NORMAL(pipe);
 PROTO_NORMAL(pipe2);

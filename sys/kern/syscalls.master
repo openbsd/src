@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.263 2024/05/10 09:21:01 claudio Exp $
+;	$OpenBSD: syscalls.master,v 1.264 2024/05/18 05:20:22 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -346,7 +346,8 @@
 187	OBSOL		lfs_segwait
 188	OBSOL		stat35
 189	OBSOL		fstat35
-190	OBSOL		lstat35
+190	STD		{ long sys_pathconfat(int fd, const char *path, \
+			    int name, int flag); }
 191	STD		{ long sys_pathconf(const char *path, int name); }
 192	STD		{ long sys_fpathconf(int fd, int name); }
 193	STD		{ int sys_swapctl(int cmd, const void *arg, int misc); }

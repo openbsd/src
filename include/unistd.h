@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.108 2023/12/12 15:30:55 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.109 2024/05/18 05:20:22 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -357,6 +357,9 @@ int	 isatty(int);
 int	 link(const char *, const char *);
 off_t	 lseek(int, off_t, int);
 long	 pathconf(const char *, int);
+#if __BSD_VISIBLE
+long	 pathconfat(int, const char *, int, int);
+#endif
 int	 pause(void);
 int	 pipe(int *);
 ssize_t	 read(int, void *, size_t)

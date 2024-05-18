@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.313 2024/04/05 13:55:26 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.314 2024/05/18 05:20:22 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -340,6 +340,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_statfs] = PLEDGE_RPATH,
 	[SYS_fstatfs] = PLEDGE_RPATH,
 	[SYS_pathconf] = PLEDGE_RPATH,
+	[SYS_pathconfat] = PLEDGE_RPATH,
 
 	[SYS_utimes] = PLEDGE_FATTR,
 	[SYS_futimes] = PLEDGE_FATTR,
