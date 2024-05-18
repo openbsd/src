@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.35 2024/05/18 08:47:13 jsg Exp $ */
+/* $OpenBSD: apps.h,v 1.36 2024/05/18 08:48:31 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,7 +127,6 @@
 #endif
 
 #include <unistd.h>
-extern int single_execution;
 
 extern CONF *config;
 extern char *default_config_file;
