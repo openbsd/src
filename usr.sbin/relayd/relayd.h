@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.271 2023/06/25 08:07:39 op Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.272 2024/05/18 06:34:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1210,7 +1210,6 @@ void	 hce_notify_done(struct host *, enum host_error);
 /* relay.c */
 void	 relay(struct privsep *, struct privsep_proc *);
 int	 relay_privinit(struct relay *);
-void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct rsession *, struct rsession *);
 void	 relay_close(struct rsession *, const char *, int);
 int	 relay_reset_event(struct rsession *, struct ctl_relay_event *);
@@ -1246,8 +1245,6 @@ int	 relay_test(struct protocol *, struct ctl_relay_event *);
 void	 relay_calc_skip_steps(struct relay_rules *);
 void	 relay_match(struct kvlist *, struct kv *, struct kv *,
 	    struct kvtree *);
-void	 relay_session_insert(struct rsession *);
-void	 relay_session_remove(struct rsession *);
 void	 relay_session_publish(struct rsession *);
 void	 relay_session_unpublish(struct rsession *);
 

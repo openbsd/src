@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.50 2022/12/28 21:30:18 jmc Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.51 2024/05/18 06:34:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -45,7 +45,6 @@ struct shuffle relay_shuffle;
 
 int		 relay_udp_socket(struct sockaddr_storage *, in_port_t,
 		    struct protocol *);
-void		 relay_udp_request(struct rsession *);
 void		 relay_udp_timeout(int, short, void *);
 
 void		 relay_dns_log(struct rsession *, u_int8_t *, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.81 2022/06/03 13:23:16 tb Exp $	*/
+/*	$OpenBSD: hce.c,v 1.82 2024/05/18 06:34:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -30,7 +30,6 @@
 #include "relayd.h"
 
 void	 hce_init(struct privsep *, struct privsep_proc *p, void *);
-void	 hce_sig_handler(int sig, short, void *);
 void	 hce_launch_checks(int, short, void *);
 void	 hce_setup_events(void);
 void	 hce_disable_events(void);
