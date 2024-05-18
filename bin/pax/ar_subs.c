@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.51 2023/07/10 16:28:33 jeremy Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.52 2024/05/18 05:21:38 guenther Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -146,23 +146,60 @@ list(void)
 }
 
 static int
-cmp_file_times(int mtime_flag, int ctime_flag, ARCHD *arcn, struct stat *sbp)
+cmp_file_times(int mtime_flag, int ctime_flag, ARCHD *arcn, const char *path)
 {
 	struct stat sb;
+	long res;
 
-	if (sbp == NULL) {
-		if (lstat(arcn->name, &sb) != 0)
-			return (0);
-		sbp = &sb;
+	if (path == NULL)
+		path = arcn->name;
+	if (lstat(path, &sb) != 0)
+		return (0);
+
+	/*
+	 * The target (sb) mtime might be rounded down due to the limitations
+	 * of the FS it's on.  If it's strictly greater or we don't care about
+	 * mtime, then precision doesn't matter, so check those cases first.
+	 */
+	if (ctime_flag && mtime_flag) {
+		if (timespeccmp(&arcn->sb.st_mtim, &sb.st_mtim, <=))
+			return timespeccmp(&arcn->sb.st_ctim, &sb.st_ctim, <=);
+		if (!timespeccmp(&arcn->sb.st_ctim, &sb.st_ctim, <=))
+			return 0;
+		/* <= ctim, but >= mtim */
+	} else if (ctime_flag)
+		return timespeccmp(&arcn->sb.st_ctim, &sb.st_ctim, <=);
+	else if (timespeccmp(&arcn->sb.st_mtim, &sb.st_mtim, <=))
+		return 1;
+
+	/* 
+	 * If we got here then the target arcn > sb for mtime *and* that's
+	 * the deciding factor.  Check whether they're equal after rounding
+	 * down the arcn mtime to the precision of the target path.
+	 */
+	res = pathconfat(AT_FDCWD, path, _PC_TIMESTAMP_RESOLUTION,
+	    AT_SYMLINK_NOFOLLOW);
+	if (res == -1)
+		return 0;
+
+	/* nanosecond resolution?  previous comparisons were accurate */
+	if (res == 1)
+		return 0;
+
+	/* common case: second accuracy */
+	if (res == 1000000000)
+		return arcn->sb.st_mtime <= sb.st_mtime;
+
+	if (res < 1000000000) {
+		struct timespec ts = arcn->sb.st_mtim;
+		ts.tv_nsec = (ts.tv_nsec / res) * res;
+		return timespeccmp(&ts, &sb.st_mtim, <=);
+	} else {
+		/* not a POSIX compliant FS */
+		res /= 1000000000;
+		return ((arcn->sb.st_mtime / res) * res) <= sb.st_mtime;
+		return arcn->sb.st_mtime <= ((sb.st_mtime / res) * res);
 	}
-
-	if (ctime_flag && mtime_flag)
-		return (timespeccmp(&arcn->sb.st_mtim, &sbp->st_mtim, <=) &&
-		        timespeccmp(&arcn->sb.st_ctim, &sbp->st_ctim, <=));
-	else if (ctime_flag)
-		return (timespeccmp(&arcn->sb.st_ctim, &sbp->st_ctim, <=));
-	else
-		return (timespeccmp(&arcn->sb.st_mtim, &sbp->st_mtim, <=));
 }
 
 /*
@@ -842,14 +879,12 @@ copy(void)
 			/*
 			 * if existing file is same age or newer skip
 			 */
-			res = lstat(dirbuf, &sb);
-			*dest_pt = '\0';
-
-			if (res == 0) {
+			if (cmp_file_times(uflag, Dflag, arcn, dirbuf)) {
+				*dest_pt = '\0';
 				ftree_skipped_newer(arcn);
-				if (cmp_file_times(uflag, Dflag, arcn, &sb))
-					continue;
+				continue;
 			}
+			*dest_pt = '\0';
 		}
 
 		/*
