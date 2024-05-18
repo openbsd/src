@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.10 2015/12/07 19:14:49 mmcc Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.11 2024/05/18 11:17:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -54,7 +54,6 @@ int	 mfc_start_prune_timer(struct mfc_node *);
 int	 mfc_reset_prune_timer(struct mfc_node *);
 
 int	 mfc_compare(struct mfc_node *, struct mfc_node *);
-void	 mfc_invalidate(void);
 
 RB_HEAD(mfc_tree, mfc_node)	 mfc;
 RB_PROTOTYPE(mfc_tree, mfc_node, entry, mfc_compare)

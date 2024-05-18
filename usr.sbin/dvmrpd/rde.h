@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.16 2009/09/06 09:52:14 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.17 2024/05/18 11:17:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -126,12 +126,9 @@ void		 rt_dump(pid_t);
 struct rt_node	*rt_match_origin(in_addr_t);
 
 int		 srt_check_route(struct route_report *, int);
-int		 src_compare(struct src_node *, struct src_node *);
 
 struct ds_nbr	*srt_find_ds(struct rt_node *, u_int32_t);
 void		 srt_expire_nbr(struct in_addr, unsigned int);
 void		 srt_check_downstream_ifaces(struct rt_node *, struct iface *);
-
-RB_PROTOTYPE(src_head, src_node, entry, src_compare);
 
 #endif	/* _RDE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.48 2021/01/19 09:33:38 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.49 2024/05/18 11:17:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -108,7 +108,6 @@ int		 md_list_send(struct auth_md_head *, struct imsgev *);
 int	 send_db_description(struct nbr *);
 void	 recv_db_description(struct nbr *, char *, u_int16_t);
 void	 db_sum_list_add(struct nbr *, struct lsa_hdr *);
-int	 db_sum_list_del(struct nbr *, struct lsa_hdr *);
 void	 db_sum_list_clr(struct nbr *);
 void	 db_tx_timer(int, short, void *);
 void	 start_db_tx_timer(struct nbr *);
@@ -157,7 +156,6 @@ int	 if_set_mcast_loop(int);
 int	 if_set_ip_hdrincl(int);
 
 /* lsack.c */
-int	 delay_lsa_ack(struct iface *, struct lsa_hdr *);
 int	 send_direct_ack(struct iface *, struct in_addr, void *, size_t);
 void	 recv_ls_ack(struct nbr *, char *, u_int16_t);
 int	 lsa_hdr_check(struct nbr *, struct lsa_hdr *);
@@ -173,7 +171,6 @@ void	 stop_ls_ack_tx_timer(struct iface *);
 int	 send_ls_req(struct nbr *);
 void	 recv_ls_req(struct nbr *, char *, u_int16_t);
 void	 ls_req_list_add(struct nbr *, struct lsa_hdr *);
-int	 ls_req_list_del(struct nbr *, struct lsa_hdr *);
 struct lsa_entry	*ls_req_list_get(struct nbr *, struct lsa_hdr *);
 void	 ls_req_list_free(struct nbr *, struct lsa_entry *);
 void	 ls_req_list_clr(struct nbr *);

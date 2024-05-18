@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.51 2023/06/21 09:47:03 sthen Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.52 2024/05/18 11:17:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -533,9 +533,6 @@ struct iface	*if_findname(char *);
 struct iface	*if_new(u_short, char *);
 void		 if_update(struct iface *, int, int, u_int8_t, u_int8_t,
 		    u_int64_t, u_int32_t);
-
-/* in_cksum.c */
-u_int16_t	 in_cksum(void *, size_t);
 
 /* iso_cksum.c */
 u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);

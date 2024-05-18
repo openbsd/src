@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.24 2021/01/19 12:26:38 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.25 2024/05/18 11:17:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -171,7 +171,6 @@ struct nbr_msg {
 };
 
 TAILQ_HEAD(rr_head, rr_entry);
-RB_HEAD(src_head, src_node);
 
 struct iface {
 	LIST_ENTRY(iface)	 entry;

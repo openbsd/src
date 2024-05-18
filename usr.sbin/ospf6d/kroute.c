@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.68 2023/06/21 09:47:03 sthen Exp $ */
+/*	$OpenBSD: kroute.c,v 1.69 2024/05/18 11:17:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -97,7 +97,6 @@ void		if_announce(void *);
 int		send_rtmsg(int, int, struct kroute *);
 int		dispatch_rtmsg(void);
 int		fetchtable(void);
-int		refetchtable(void);
 int		rtmsg_process(char *, size_t);
 void		kr_fib_reload_timer(int, short, void *);
 void		kr_fib_reload_arm_timer(int);

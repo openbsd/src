@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.169 2024/04/22 09:36:04 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.170 2024/05/18 11:17:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -300,7 +300,6 @@ struct rtr_session	*rtr_new(uint32_t, char *);
 struct rtr_session	*rtr_get(uint32_t);
 void			 rtr_free(struct rtr_session *);
 void			 rtr_open(struct rtr_session *, int);
-struct roa_tree		*rtr_get_roa(struct rtr_session *);
 void			 rtr_config_prep(void);
 void			 rtr_config_merge(void);
 void			 rtr_config_keep(struct rtr_session *);

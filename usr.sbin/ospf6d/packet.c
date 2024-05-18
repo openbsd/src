@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.22 2023/07/03 09:51:38 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.23 2024/05/18 11:17:30 jsg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -36,7 +36,6 @@
 #include "log.h"
 #include "ospfe.h"
 
-int		 ip_hdr_sanity_check(const struct ip6_hdr *, u_int16_t);
 int		 ospf_hdr_sanity_check(struct ospf_hdr *, u_int16_t,
 		    const struct iface *, struct in6_addr *);
 struct iface	*find_iface(struct ospfd_conf *, unsigned int,
