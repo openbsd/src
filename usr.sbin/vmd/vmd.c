@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.156 2024/04/08 12:48:26 tobhe Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.157 2024/05/18 06:45:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -53,7 +53,6 @@ int	 main(int, char **);
 int	 vmd_configure(void);
 void	 vmd_sighdlr(int sig, short event, void *arg);
 void	 vmd_shutdown(void);
-int	 vmd_control_run(void);
 int	 vmd_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_agentx(int, struct privsep_proc *, struct imsg *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.77 2024/05/02 15:46:10 mlarkin Exp $	*/
+/*	$OpenBSD: main.c,v 1.78 2024/05/18 06:45:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -49,8 +49,6 @@ int			 stat_rflag;
 
 __dead void	 usage(void);
 __dead void	 ctl_usage(struct ctl_command *);
-
-int		 vmm_action(struct parse_result *);
 
 int		 ctl_console(struct parse_result *, int, char *[]);
 int		 ctl_convert(const char *, const char *, int, size_t);

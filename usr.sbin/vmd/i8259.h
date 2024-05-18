@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.h,v 1.5 2022/09/01 22:01:40 dv Exp $ */
+/* $OpenBSD: i8259.h,v 1.6 2024/05/18 06:45:00 jsg Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -59,9 +59,6 @@
 /* PIC functions called by device emulation code */
 void i8259_assert_irq(uint8_t);
 void i8259_deassert_irq(uint8_t);
-
-/* PIC functions called by vcpu run loop code */
-int i8259_get_next_irq(uint8_t *);
 
 /* PIC functions called by the in/out exit handler */
 uint8_t vcpu_exit_i8259(struct vm_run_params *);
