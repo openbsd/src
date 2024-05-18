@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.80 2023/11/10 09:17:02 kn Exp $	*/
+/*	$OpenBSD: ps.c,v 1.81 2024/05/18 13:08:09 sobrado Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -623,9 +623,9 @@ forest_sort(struct pinfo *ki, int items)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-AacefHhjkLlmrSTuvwx] [-M core] [-N system]"
-	    " [-O fmt] [-o fmt] [-p pid]\n", __progname);
-	fprintf(stderr, "%-*s[-t tty] [-U user] [-W swap]\n",
+	fprintf(stderr, "usage: %s [[-]AacefHhjkLlmrSTuvwx] [-M core]"
+	    " [-N system] [-O fmt] [-o fmt]\n", __progname);
+	fprintf(stderr, "%-*s[-p pid] [-t tty] [-U user] [-W swap]\n",
 	    (int)strlen(__progname) + 8, "");
 	exit(1);
 }
