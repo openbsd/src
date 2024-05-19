@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.7 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: defs.h,v 1.8 2024/05/19 00:03:10 jsg Exp $	*/
 /*	$NetBSD: defs.h,v 1.2 1996/02/28 01:13:20 thorpej Exp $	*/
 
 /*-
@@ -33,41 +33,6 @@
 #undef BUFSIZE
 #define BUFSIZE		1024
 
-#define IO_READ		0
-#define IO_WRITE	1
-
-#define MAXIMUM(a, b)	((a) > (b) ? (a) : (b))
-
-/*
- * Misc. location declarations.
- */
-#define EE_SIZE			0x500
-#define EE_WC_LOC		0x04
-#define EE_CKSUM_LOC		0x0c
-#define EE_HWUPDATE_LOC		0x10
-#define EE_BANNER_ENABLE_LOC	0x20
-
-/*
- * Keyword table entry.  Contains a pointer to the keyword, the 
- * offset into the prom where the value lives, and a pointer to
- * the function that handles that value.
- */
-struct	keytabent {
-	char	*kt_keyword;		/* keyword for this entry */
-	u_int	kt_offset;		/* offset into prom of value */
-	void	(*kt_handler)(struct keytabent *, char *);
-					/* handler function for this entry */
-};
-
-/*
- * String-value table entry.  Maps a string to a numeric value and
- * vice-versa.
- */
-struct	strvaltabent {
-	char	*sv_str;		/* the string ... */
-	u_char	sv_val;			/* ... and the value */
-};
-
 /*
  * This is an entry in a table which describes a set of `exceptions'.
  * In other words, these are Openprom fields that we either can't
@@ -78,24 +43,6 @@ struct	extabent {
 	void	(*ex_handler)(struct extabent *, struct opiocdesc *, char *);
 					/* handler function for this entry */
 };
-
-/* Sun 3/4 EEPROM handlers. */
-void	ee_hwupdate(struct keytabent *, char *);
-void	ee_num8(struct keytabent *, char *);
-void	ee_num16(struct keytabent *, char *);
-void	ee_screensize(struct keytabent *, char *);
-void	ee_truefalse(struct keytabent *, char *);
-void	ee_bootdev(struct keytabent *, char *);
-void	ee_kbdtype(struct keytabent *, char *);
-void	ee_constype(struct keytabent *, char *);
-void	ee_diagpath(struct keytabent *, char *);
-void	ee_banner(struct keytabent *, char *);
-void	ee_notsupp(struct keytabent *, char *);
-
-/* Sun 3/4 EEPROM checksum routines. */
-u_char	ee_checksum(u_char *, size_t);
-void	ee_updatechecksums(void);
-void	ee_verifychecksums(void);
 
 /* OpenPROM handlers. */
 char	*op_handler(char *, char *);
