@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.30 2024/05/03 05:18:09 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.31 2024/05/19 00:05:43 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,7 +32,6 @@ void port_imsg(void *, unsigned char *, int);
 void port_omsg(void *, unsigned char *, int);
 void port_fill(void *, int);
 void port_exit(void *);
-void port_exitall(struct port *);
 
 struct midiops port_midiops = {
 	port_imsg,

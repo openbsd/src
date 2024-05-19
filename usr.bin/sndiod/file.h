@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.5 2016/01/08 16:17:31 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.6 2024/05/19 00:05:43 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -70,7 +70,6 @@ void timo_del(struct timo *);
 
 void filelist_init(void);
 void filelist_done(void);
-void filelist_unlisten(void);
 
 struct file *file_new(struct fileops *, void *, char *, unsigned int);
 void file_del(struct file *);
