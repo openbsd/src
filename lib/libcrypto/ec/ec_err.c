@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_err.c,v 1.18 2023/07/28 09:28:37 tb Exp $ */
+/* $OpenBSD: ec_err.c,v 1.19 2024/05/19 08:26:03 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -70,8 +70,7 @@ static ERR_STRING_DATA EC_str_functs[] = {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA EC_str_reasons[] =
-{
+static ERR_STRING_DATA EC_str_reasons[] = {
 	{ERR_REASON(EC_R_ASN1_ERROR), "asn1 error"},
 	{ERR_REASON(EC_R_ASN1_UNKNOWN_FIELD), "asn1 unknown field"},
 	{ERR_REASON(EC_R_BAD_SIGNATURE), "bad signature"},
