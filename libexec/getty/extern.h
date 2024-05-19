@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2015/07/16 04:31:25 tedu Exp $*/
+/*	$OpenBSD: extern.h,v 1.7 2024/05/19 10:30:43 jsg Exp $*/
 
 /*
  * Copyright (c) 1993
@@ -31,21 +31,11 @@
  *	from: @(#)extern.h	8.1 (Berkeley) 6/4/93
  */
 
-struct delayval;
-
-int	 adelay(int, struct delayval *);
 char	*autobaud(void);
-int	 delaybits(void);
 void	 gendefaults(void);
-int	 getent(char *, char *);
-int	 getflag(char *);
-long	 getnum(char *);
-char	*getstr(char *, char **);
 void	 gettable(char *, char *);
 void	 makeenv(char *[]);
 char	*portselector(void);
-void	 set_ttydefaults(int);
 void	 setchars(void);
 void	 setdefaults(void);
 void	 setflags(int);
-int	 speed(int);

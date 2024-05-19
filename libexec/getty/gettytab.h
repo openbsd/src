@@ -1,4 +1,4 @@
-/*	$OpenBSD: gettytab.h,v 1.8 2015/11/06 16:42:30 tedu Exp $*/
+/*	$OpenBSD: gettytab.h,v 1.9 2024/05/19 10:30:43 jsg Exp $*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -151,12 +151,6 @@ struct gettyflags {
 #define	NP	gettyflags[21].value
 #define	MB	gettyflags[22].value
 
-int	getent(char *, char *);
-long	getnum(char *);
-int	getflag(char *);
-char	*getstr(char *, char **);
-
 extern	struct gettyflags gettyflags[];
 extern	struct gettynums gettynums[];
 extern	struct gettystrs gettystrs[];
-extern	int hopcount;
