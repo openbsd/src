@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.300 2024/05/18 11:17:30 jsg Exp $ */
+/*	$OpenBSD: rde.h,v 1.301 2024/05/19 03:31:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -381,8 +381,6 @@ void		 peer_imsg_flush(struct rde_peer *);
 RB_PROTOTYPE(peer_tree, rde_peer, entry, peer_cmp);
 
 /* rde_attr.c */
-int		 attr_write(void *, uint16_t, uint8_t, uint8_t, void *,
-		    uint16_t);
 int		 attr_writebuf(struct ibuf *, uint8_t, uint8_t, void *,
 		    uint16_t);
 void		 attr_shutdown(void);
@@ -595,8 +593,6 @@ void		 prefix_adjout_update(struct prefix *, struct rde_peer *,
 		    struct filterstate *, struct pt_entry *, uint32_t);
 void		 prefix_adjout_withdraw(struct prefix *);
 void		 prefix_adjout_destroy(struct prefix *);
-void		 prefix_adjout_dump(struct rde_peer *, void *,
-		    void (*)(struct prefix *, void *));
 int		 prefix_dump_new(struct rde_peer *, uint8_t, unsigned int,
 		    void *, void (*)(struct prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
