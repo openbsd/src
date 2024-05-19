@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_err.c,v 1.20 2024/05/19 08:21:13 tb Exp $ */
+/* $OpenBSD: dh_err.c,v 1.21 2024/05/19 08:22:40 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -104,8 +104,8 @@ ERR_load_DH_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(DH_str_functs[0].error) == NULL) {
-		ERR_load_strings(0,DH_str_functs);
-		ERR_load_strings(0,DH_str_reasons);
+		ERR_load_strings(0, DH_str_functs);
+		ERR_load_strings(0, DH_str_reasons);
 	}
 #endif
 }
