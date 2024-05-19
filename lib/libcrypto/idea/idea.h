@@ -1,4 +1,4 @@
-/* $OpenBSD: idea.h,v 1.11 2023/07/07 12:51:58 beck Exp $ */
+/* $OpenBSD: idea.h,v 1.12 2024/05/19 07:12:50 jsg Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,7 +79,6 @@ typedef struct idea_key_st {
 	IDEA_INT data[9][6];
 } IDEA_KEY_SCHEDULE;
 
-const char *idea_options(void);
 void idea_ecb_encrypt(const unsigned char *in, unsigned char *out,
     IDEA_KEY_SCHEDULE *ks);
 void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks);

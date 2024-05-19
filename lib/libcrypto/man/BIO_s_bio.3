@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_bio.3,v 1.19 2023/04/29 12:01:53 schwarze Exp $
+.\" $OpenBSD: BIO_s_bio.3,v 1.20 2024/05/19 07:12:50 jsg Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by
@@ -53,7 +53,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 29 2023 $
+.Dd $Mdocdate: May 19 2024 $
 .Dt BIO_S_BIO 3
 .Os
 .Sh NAME
@@ -69,16 +69,6 @@
 .Nm BIO_get_read_request ,
 .Nm BIO_ctrl_get_read_request ,
 .Nm BIO_ctrl_reset_read_request
-.\" The following non-copying I/O functions are intentionally undocumented
-.\" because they seem fragile and unused by anything:
-.\" .Nm BIO_nread0
-.\" .Nm BIO_nread
-.\" .Nm BIO_nwrite0
-.\" .Nm BIO_nwrite
-.\" .Nm BIO_C_NREAD0
-.\" .Nm BIO_C_NREAD
-.\" .Nm BIO_C_NWRITE0
-.\" .Nm BIO_C_NWRITE
 .Nd BIO pair BIO
 .Sh SYNOPSIS
 .In openssl/bio.h

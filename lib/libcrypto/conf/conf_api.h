@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.h,v 1.4 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: conf_api.h,v 1.5 2024/05/19 07:12:50 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,7 +77,6 @@ STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
 int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value);
 char *_CONF_get_string(const CONF *conf, const char *section,
     const char *name);
-long _CONF_get_number(const CONF *conf, const char *section, const char *name);
 
 int _CONF_new_data(CONF *conf);
 void _CONF_free_data(CONF *conf);

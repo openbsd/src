@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.65 2023/07/28 10:05:16 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.66 2024/05/19 07:12:50 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -273,8 +273,6 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
 const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 const RSA_METHOD *RSA_PKCS1_SSLeay(void);
-
-const RSA_METHOD *RSA_null_method(void);
 
 int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2);
 

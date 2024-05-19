@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_local.h,v 1.5 2023/08/24 04:56:36 tb Exp $ */
+/* $OpenBSD: cms_local.h,v 1.6 2024/05/19 07:12:50 jsg Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -394,8 +394,6 @@ extern const ASN1_ITEM CMS_Attributes_Sign_it;
 extern const ASN1_ITEM CMS_Attributes_Verify_it;
 extern const ASN1_ITEM CMS_RecipientInfo_it;
 extern const ASN1_ITEM CMS_PasswordRecipientInfo_it;
-CMS_IssuerAndSerialNumber *CMS_IssuerAndSerialNumber_new(void);
-void CMS_IssuerAndSerialNumber_free(CMS_IssuerAndSerialNumber *a);
 
 #define CMS_SIGNERINFO_ISSUER_SERIAL    0
 #define CMS_SIGNERINFO_KEYIDENTIFIER    1
@@ -422,9 +420,6 @@ int cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert, int type);
 int cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
     ASN1_OCTET_STRING **keyid, X509_NAME **issuer, ASN1_INTEGER **sno);
 int cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert);
-
-CMS_ContentInfo *cms_CompressedData_create(int comp_nid);
-BIO *cms_CompressedData_init_bio(CMS_ContentInfo *cms);
 
 BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm);
 int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,

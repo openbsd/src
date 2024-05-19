@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.63 2024/03/02 09:22:41 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.64 2024/05/19 07:12:50 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -364,10 +364,6 @@ int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
 #define BIO_C_GET_WRITE_GUARANTEE		140
 #define BIO_C_GET_READ_REQUEST			141
 #define BIO_C_SHUTDOWN_WR			142
-#define BIO_C_NREAD0				143
-#define BIO_C_NREAD				144
-#define BIO_C_NWRITE0				145
-#define BIO_C_NWRITE				146
 #define BIO_C_RESET_READ_REQUEST		147
 #define BIO_C_SET_MD_CTX			148
 
@@ -565,11 +561,6 @@ BIO *	BIO_get_retry_BIO(BIO *bio, int *reason);
 int	BIO_get_retry_reason(BIO *bio);
 void	BIO_set_retry_reason(BIO *bio, int reason);
 BIO *	BIO_dup_chain(BIO *in);
-
-int BIO_nread0(BIO *bio, char **buf);
-int BIO_nread(BIO *bio, char **buf, int num);
-int BIO_nwrite0(BIO *bio, char **buf);
-int BIO_nwrite(BIO *bio, char **buf, int num);
 
 long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
     long argl, long ret);

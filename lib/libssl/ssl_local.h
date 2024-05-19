@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.15 2024/05/10 05:08:05 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.16 2024/05/19 07:12:50 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1305,7 +1305,6 @@ int ssl_verify_alarm_type(long type);
 
 int SSL_SESSION_ticket(SSL_SESSION *ss, unsigned char **out, size_t *out_len);
 
-const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_do_write(SSL *s, int type);
 int ssl3_send_alert(SSL *s, int level, int desc);
 int ssl3_get_req_cert_types(SSL *s, CBB *cbb);
