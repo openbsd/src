@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1216 2024/05/18 08:51:26 jsg Exp $ */
+/* $OpenBSD: tmux.h,v 1.1217 2024/05/19 03:27:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3207,8 +3207,6 @@ void	control_add_sub(struct client *, const char *, enum control_sub_type,
 void	control_remove_sub(struct client *, const char *);
 
 /* control-notify.c */
-void	control_notify_input(struct client *, struct window_pane *,
-	    const u_char *, size_t);
 void	control_notify_pane_mode_changed(int);
 void	control_notify_window_layout_changed(struct window *);
 void	control_notify_window_pane_changed(struct window *);
