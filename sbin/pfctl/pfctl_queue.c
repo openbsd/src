@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_queue.c,v 1.7 2019/06/28 13:32:45 deraadt Exp $ */
+/*	$OpenBSD: pfctl_queue.c,v 1.8 2024/05/19 10:39:40 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -66,8 +66,6 @@ void			 pfctl_insert_queue_node(const struct pf_queuespec,
 struct pfctl_queue_node	*pfctl_find_queue_node(const char *, const char *);
 void			 pfctl_print_queue_node(int, struct pfctl_queue_node *,
 			    int);
-void			 print_qstats(struct queue_stats);
-void			 pfctl_free_queue_node(struct pfctl_queue_node *);
 void			 pfctl_print_queue_nodestat(int,
 			    const struct pfctl_queue_node *);
 void			 update_avg(struct queue_stats *);
