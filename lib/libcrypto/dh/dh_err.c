@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_err.c,v 1.19 2023/07/08 15:29:03 beck Exp $ */
+/* $OpenBSD: dh_err.c,v 1.20 2024/05/19 08:21:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -65,50 +65,48 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_DH,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_DH,0,reason)
 
-static ERR_STRING_DATA DH_str_functs[]=	{
+static ERR_STRING_DATA DH_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA DH_str_reasons[]=
-	{
-{ERR_REASON(DH_R_BAD_GENERATOR)          ,"bad generator"},
-{ERR_REASON(DH_R_BN_DECODE_ERROR)        ,"bn decode error"},
-{ERR_REASON(DH_R_BN_ERROR)               ,"bn error"},
-{ERR_REASON(DH_R_DECODE_ERROR)           ,"decode error"},
-{ERR_REASON(DH_R_INVALID_PUBKEY)         ,"invalid public key"},
-{ERR_REASON(DH_R_KEYS_NOT_SET)           ,"keys not set"},
-{ERR_REASON(DH_R_KEY_SIZE_TOO_SMALL)     ,"key size too small"},
-{ERR_REASON(DH_R_MODULUS_TOO_LARGE)      ,"modulus too large"},
-{ERR_REASON(DH_R_NON_FIPS_METHOD)        ,"non fips method"},
-{ERR_REASON(DH_R_NO_PARAMETERS_SET)      ,"no parameters set"},
-{ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
-{ERR_REASON(DH_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
-{ERR_REASON(DH_R_CHECK_INVALID_J_VALUE)   ,"check invalid j value"},
-{ERR_REASON(DH_R_CHECK_INVALID_Q_VALUE)   ,"check invalid q value"},
-{ERR_REASON(DH_R_CHECK_PUBKEY_INVALID)    ,"check pubkey invalid"},
-{ERR_REASON(DH_R_CHECK_PUBKEY_TOO_LARGE)  ,"check pubkey too large"},
-{ERR_REASON(DH_R_CHECK_PUBKEY_TOO_SMALL)  ,"check pubkey too small"},
-{ERR_REASON(DH_R_CHECK_P_NOT_PRIME)       ,"check p not prime"},
-{ERR_REASON(DH_R_CHECK_P_NOT_SAFE_PRIME)  ,"check p not safe prime"},
-{ERR_REASON(DH_R_CHECK_Q_NOT_PRIME)       ,"check q not prime"},
-{ERR_REASON(DH_R_MISSING_PUBKEY)          ,"missing pubkey"},
-{ERR_REASON(DH_R_NOT_SUITABLE_GENERATOR)  ,"not suitable generator"},
-{ERR_REASON(DH_R_UNABLE_TO_CHECK_GENERATOR),"unable to check generator"},
-{0,NULL}
-	};
+static ERR_STRING_DATA DH_str_reasons[] = {
+	{ERR_REASON(DH_R_BAD_GENERATOR)          ,"bad generator"},
+	{ERR_REASON(DH_R_BN_DECODE_ERROR)        ,"bn decode error"},
+	{ERR_REASON(DH_R_BN_ERROR)               ,"bn error"},
+	{ERR_REASON(DH_R_DECODE_ERROR)           ,"decode error"},
+	{ERR_REASON(DH_R_INVALID_PUBKEY)         ,"invalid public key"},
+	{ERR_REASON(DH_R_KEYS_NOT_SET)           ,"keys not set"},
+	{ERR_REASON(DH_R_KEY_SIZE_TOO_SMALL)     ,"key size too small"},
+	{ERR_REASON(DH_R_MODULUS_TOO_LARGE)      ,"modulus too large"},
+	{ERR_REASON(DH_R_NON_FIPS_METHOD)        ,"non fips method"},
+	{ERR_REASON(DH_R_NO_PARAMETERS_SET)      ,"no parameters set"},
+	{ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
+	{ERR_REASON(DH_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
+	{ERR_REASON(DH_R_CHECK_INVALID_J_VALUE)   ,"check invalid j value"},
+	{ERR_REASON(DH_R_CHECK_INVALID_Q_VALUE)   ,"check invalid q value"},
+	{ERR_REASON(DH_R_CHECK_PUBKEY_INVALID)    ,"check pubkey invalid"},
+	{ERR_REASON(DH_R_CHECK_PUBKEY_TOO_LARGE)  ,"check pubkey too large"},
+	{ERR_REASON(DH_R_CHECK_PUBKEY_TOO_SMALL)  ,"check pubkey too small"},
+	{ERR_REASON(DH_R_CHECK_P_NOT_PRIME)       ,"check p not prime"},
+	{ERR_REASON(DH_R_CHECK_P_NOT_SAFE_PRIME)  ,"check p not safe prime"},
+	{ERR_REASON(DH_R_CHECK_Q_NOT_PRIME)       ,"check q not prime"},
+	{ERR_REASON(DH_R_MISSING_PUBKEY)          ,"missing pubkey"},
+	{ERR_REASON(DH_R_NOT_SUITABLE_GENERATOR)  ,"not suitable generator"},
+	{ERR_REASON(DH_R_UNABLE_TO_CHECK_GENERATOR),"unable to check generator"},
+	{0,NULL}
+};
 
 #endif
 
-void ERR_load_DH_strings(void)
-	{
+void
+ERR_load_DH_strings(void)
+{
 #ifndef OPENSSL_NO_ERR
-
-	if (ERR_func_error_string(DH_str_functs[0].error) == NULL)
-		{
+	if (ERR_func_error_string(DH_str_functs[0].error) == NULL) {
 		ERR_load_strings(0,DH_str_functs);
 		ERR_load_strings(0,DH_str_reasons);
-		}
-#endif
 	}
+#endif
+}
 LCRYPTO_ALIAS(ERR_load_DH_strings);

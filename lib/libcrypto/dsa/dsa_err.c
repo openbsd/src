@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_err.c,v 1.19 2023/07/08 14:28:15 beck Exp $ */
+/* $OpenBSD: dsa_err.c,v 1.20 2024/05/19 08:21:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -65,40 +65,38 @@
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_DSA,func,0)
 #define ERR_REASON(reason) ERR_PACK(ERR_LIB_DSA,0,reason)
 
-static ERR_STRING_DATA DSA_str_functs[]= {
+static ERR_STRING_DATA DSA_str_functs[] = {
 	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
-static ERR_STRING_DATA DSA_str_reasons[]=
-	{
-{ERR_REASON(DSA_R_BAD_Q_VALUE)           ,"bad q value"},
-{ERR_REASON(DSA_R_BN_DECODE_ERROR)       ,"bn decode error"},
-{ERR_REASON(DSA_R_BN_ERROR)              ,"bn error"},
-{ERR_REASON(DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
-{ERR_REASON(DSA_R_DECODE_ERROR)          ,"decode error"},
-{ERR_REASON(DSA_R_INVALID_DIGEST_TYPE)   ,"invalid digest type"},
-{ERR_REASON(DSA_R_INVALID_PARAMETERS)    ,"invalid parameters"},
-{ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
-{ERR_REASON(DSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
-{ERR_REASON(DSA_R_NEED_NEW_SETUP_VALUES) ,"need new setup values"},
-{ERR_REASON(DSA_R_NON_FIPS_DSA_METHOD)   ,"non fips dsa method"},
-{ERR_REASON(DSA_R_NO_PARAMETERS_SET)     ,"no parameters set"},
-{ERR_REASON(DSA_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
-{0,NULL}
-	};
+static ERR_STRING_DATA DSA_str_reasons[] = {
+	{ERR_REASON(DSA_R_BAD_Q_VALUE)           ,"bad q value"},
+	{ERR_REASON(DSA_R_BN_DECODE_ERROR)       ,"bn decode error"},
+	{ERR_REASON(DSA_R_BN_ERROR)              ,"bn error"},
+	{ERR_REASON(DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
+	{ERR_REASON(DSA_R_DECODE_ERROR)          ,"decode error"},
+	{ERR_REASON(DSA_R_INVALID_DIGEST_TYPE)   ,"invalid digest type"},
+	{ERR_REASON(DSA_R_INVALID_PARAMETERS)    ,"invalid parameters"},
+	{ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
+	{ERR_REASON(DSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
+	{ERR_REASON(DSA_R_NEED_NEW_SETUP_VALUES) ,"need new setup values"},
+	{ERR_REASON(DSA_R_NON_FIPS_DSA_METHOD)   ,"non fips dsa method"},
+	{ERR_REASON(DSA_R_NO_PARAMETERS_SET)     ,"no parameters set"},
+	{ERR_REASON(DSA_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
+	{0,NULL}
+};
 
 #endif
 
-void ERR_load_DSA_strings(void)
-	{
+void
+ERR_load_DSA_strings(void)
+{
 #ifndef OPENSSL_NO_ERR
-
-	if (ERR_func_error_string(DSA_str_functs[0].error) == NULL)
-		{
+	if (ERR_func_error_string(DSA_str_functs[0].error) == NULL) {
 		ERR_load_strings(0,DSA_str_functs);
 		ERR_load_strings(0,DSA_str_reasons);
-		}
-#endif
 	}
+#endif
+}
 LCRYPTO_ALIAS(ERR_load_DSA_strings);
