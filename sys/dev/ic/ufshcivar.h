@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcivar.h,v 1.5 2024/05/15 20:15:33 mglocker Exp $ */
+/*	$OpenBSD: ufshcivar.h,v 1.6 2024/05/19 20:24:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -57,7 +57,6 @@ struct ufshci_softc {
 	bus_size_t		 sc_ios;
 	bus_dma_tag_t		 sc_dmat;
 
-	uint8_t			 sc_intraggr_enabled;
 	uint8_t			 sc_iacth;
 	struct mutex		 sc_cmd_mtx;
 

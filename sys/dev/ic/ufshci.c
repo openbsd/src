@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.24 2024/05/16 10:52:11 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.25 2024/05/19 20:24:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -124,11 +124,6 @@ ufshci_intr(void *arg)
 	}
 	if (status & UFSHCI_REG_IS_UTRCS) {
 	  	DPRINTF(3, "%s: UTRCS interrupt\n", __func__);
-
-		/* Reset Interrupt Aggregation Counter and Timer. */
-		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-		    UFSHCI_REG_UTRIACR_IAEN | UFSHCI_REG_UTRIACR_CTR);
-		sc->sc_intraggr_enabled = 0;
 
 		ufshci_xfer_complete(sc);
 
@@ -371,8 +366,12 @@ ufshci_init(struct ufshci_softc *sc)
 	 */
 
 	/* 7.1.1 Host Controller Initialization: 11) */
-	reg = UFSHCI_READ_4(sc, UFSHCI_REG_UTRIACR);
-	DPRINTF(2, "%s: UTRIACR=0x%08x\n", __func__, reg);
+	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
+	    UFSHCI_REG_UTRIACR_IAEN |
+	    UFSHCI_REG_UTRIACR_IAPWEN |
+	    UFSHCI_REG_UTRIACR_CTR |
+	    UFSHCI_REG_UTRIACR_IACTH(sc->sc_iacth) |
+	    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
 
 	/*
 	 * 7.1.1 Host Controller Initialization: 12)
@@ -1247,6 +1246,11 @@ ufshci_xfer_complete(struct ufshci_softc *sc)
 
 		DPRINTF(3, "slot %d completed\n", i);
 	}
+
+	/* 7.2.3: Reset Interrupt Aggregation Counter and Timer 4) */
+	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
+	    UFSHCI_REG_UTRIACR_IAEN | UFSHCI_REG_UTRIACR_CTR);
+
 	mtx_leave(&sc->sc_cmd_mtx);
 
 	/*
@@ -1360,17 +1364,6 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 	mtx_enter(&sc->sc_cmd_mtx);
 
 	DPRINTF(3, "%s: cmd=0x%x\n", __func__, xs->cmd.opcode);
-
-	/* Schedule interrupt aggregation. */
-	if (ISSET(xs->flags, SCSI_POLL) == 0 && sc->sc_intraggr_enabled == 0) {
-		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-		    UFSHCI_REG_UTRIACR_IAEN |
-		    UFSHCI_REG_UTRIACR_IAPWEN |
-		    UFSHCI_REG_UTRIACR_CTR |
-		    UFSHCI_REG_UTRIACR_IACTH(sc->sc_iacth) |
-		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
-		sc->sc_intraggr_enabled = 1;
-	}
 
 	switch (xs->cmd.opcode) {
 
