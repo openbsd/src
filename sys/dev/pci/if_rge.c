@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.24 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.25 2024/05/20 01:51:32 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023 Kevin Lo <kevlo@openbsd.org>
@@ -209,7 +209,8 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate interrupt.
 	 */
-	if (pci_intr_map_msi(pa, &ih) == 0)
+	if (pci_intr_map_msix(pa, 0, &ih) == 0 ||
+	    pci_intr_map_msi(pa, &ih) == 0)
 		sc->rge_flags |= RGE_FLAG_MSI;
 	else if (pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
