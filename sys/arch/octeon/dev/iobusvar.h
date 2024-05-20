@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobusvar.h,v 1.4 2024/05/20 23:13:33 jsg Exp $	*/
+/*	$OpenBSD: iobusvar.h,v 1.5 2024/05/20 23:20:29 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -32,7 +32,6 @@
 #include <machine/bus.h>
 
 extern bus_space_t iobus_tag;
-extern struct machine_bus_dma_tag iobus_dma_tag;
 
 struct iobus_attach_args {
 	char		*aa_name;
