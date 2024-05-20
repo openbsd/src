@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.25 2024/05/19 20:24:02 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.26 2024/05/20 12:42:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -192,6 +192,25 @@ ufshci_attach(struct ufshci_softc *sc)
 	}
 	DPRINTF(1, "Intr. aggr. counter threshold:\nIACTH=%d\n", sc->sc_iacth);
 
+	/*
+	 * XXX:
+	 * At the moment normal interrupts work better for us than interrupt
+	 * aggregation, because:
+	 *
+	 * 	1. With interrupt aggregation enabled, the I/O performance
+	 *	   isn't better, but even slightly worse depending on the
+	 *	   UFS controller and architecture.
+	 *	2. With interrupt aggregation enabled we currently see
+	 *	   intermittent SCSI command stalling.  Probably there is a
+	 *	   race condition where new SCSI commands are getting
+	 *	   scheduled, while we miss to reset the interrupt aggregation
+	 *	   counter/timer, which leaves us with no more interrupts
+	 *	   triggered.  This needs to be fixed, but I couldn't figure
+	 *	   out yet how.
+	 */
+#if 0
+	sc->sc_flags |= UFSHCI_FLAGS_AGGR_INTR;	/* Enable intr. aggregation */
+#endif
 	ufshci_init(sc);
 
 	if (ufshci_ccb_alloc(sc, sc->sc_nutrs) != 0) {
@@ -366,12 +385,16 @@ ufshci_init(struct ufshci_softc *sc)
 	 */
 
 	/* 7.1.1 Host Controller Initialization: 11) */
-	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-	    UFSHCI_REG_UTRIACR_IAEN |
-	    UFSHCI_REG_UTRIACR_IAPWEN |
-	    UFSHCI_REG_UTRIACR_CTR |
-	    UFSHCI_REG_UTRIACR_IACTH(sc->sc_iacth) |
-	    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
+	if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR) {
+		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
+		    UFSHCI_REG_UTRIACR_IAEN |
+		    UFSHCI_REG_UTRIACR_IAPWEN |
+		    UFSHCI_REG_UTRIACR_CTR |
+		    UFSHCI_REG_UTRIACR_IACTH(sc->sc_iacth) |
+		    UFSHCI_REG_UTRIACR_IATOVAL(UFSHCI_INTR_AGGR_TIMEOUT));
+	} else {
+		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR, 0);
+	}
 
 	/*
 	 * 7.1.1 Host Controller Initialization: 12)
@@ -495,7 +518,10 @@ ufshci_utr_cmd_nop(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw0 |= UFSHCI_UTRD_DW0_DD_NO;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2c) */
-	utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+	if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR)
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+	else
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_INT;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2d) */
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
@@ -585,7 +611,10 @@ ufshci_utr_cmd_lun(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw0 |= UFSHCI_UTRD_DW0_DD_T2I;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2c) */
-	utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR)
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        else
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_INT;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2d) */
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
@@ -692,7 +721,10 @@ ufshci_utr_cmd_inquiry(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw0 |= UFSHCI_UTRD_DW0_DD_T2I;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2c) */
-	utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR)
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        else
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_INT;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2d) */
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
@@ -797,7 +829,10 @@ ufshci_utr_cmd_capacity16(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw0 |= UFSHCI_UTRD_DW0_DD_T2I;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2c) */
-	utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR)
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        else
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_INT;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2d) */
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
@@ -906,7 +941,10 @@ ufshci_utr_cmd_capacity(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw0 |= UFSHCI_UTRD_DW0_DD_T2I;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2c) */
-	utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR)
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        else
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_INT;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2d) */
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
@@ -1019,7 +1057,10 @@ ufshci_utr_cmd_io(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 		utrd->dw0 |= UFSHCI_UTRD_DW0_DD_I2T;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2c) */
-	utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR)
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        else
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_INT;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2d) */
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
@@ -1133,7 +1174,10 @@ ufshci_utr_cmd_sync(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	utrd->dw0 |= UFSHCI_UTRD_DW0_DD_I2T;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2c) */
-	utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR)
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_REG;
+        else
+		utrd->dw0 |= UFSHCI_UTRD_DW0_I_INT;
 
 	/* 7.2.1 Basic Steps when Building a UTP Transfer Request: 2d) */
 	utrd->dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
@@ -1248,8 +1292,10 @@ ufshci_xfer_complete(struct ufshci_softc *sc)
 	}
 
 	/* 7.2.3: Reset Interrupt Aggregation Counter and Timer 4) */
-	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
-	    UFSHCI_REG_UTRIACR_IAEN | UFSHCI_REG_UTRIACR_CTR);
+	if (sc->sc_flags & UFSHCI_FLAGS_AGGR_INTR) {
+		UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRIACR,
+		    UFSHCI_REG_UTRIACR_IAEN | UFSHCI_REG_UTRIACR_CTR);
+	}
 
 	mtx_leave(&sc->sc_cmd_mtx);
 

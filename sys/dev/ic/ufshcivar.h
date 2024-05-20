@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcivar.h,v 1.6 2024/05/19 20:24:02 mglocker Exp $ */
+/*	$OpenBSD: ufshcivar.h,v 1.7 2024/05/20 12:42:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -60,6 +60,8 @@ struct ufshci_softc {
 	uint8_t			 sc_iacth;
 	struct mutex		 sc_cmd_mtx;
 
+#define UFSHCI_FLAGS_AGGR_INTR	 1
+	uint8_t			 sc_flags;
 	uint32_t		 sc_ver;
 	uint32_t		 sc_cap;
 	uint32_t		 sc_hcpid;
