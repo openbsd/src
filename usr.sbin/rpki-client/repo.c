@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.57 2024/04/21 19:27:44 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.58 2024/05/20 15:51:43 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -116,13 +116,14 @@ static void		 remove_contents(char *);
  * Database of all file path accessed during a run.
  */
 struct filepath {
-	RB_ENTRY(filepath)	entry;
+	RB_ENTRY(filepath)	 entry;
 	char			*file;
 	time_t			 mtime;
+	unsigned int		 talmask;
 };
 
 static inline int
-filepathcmp(struct filepath *a, struct filepath *b)
+filepathcmp(const struct filepath *a, const struct filepath *b)
 {
 	return strcmp(a->file, b->file);
 }
@@ -133,22 +134,28 @@ RB_PROTOTYPE(filepath_tree, filepath, entry, filepathcmp);
  * Functions to lookup which files have been accessed during computation.
  */
 int
-filepath_add(struct filepath_tree *tree, char *file, time_t mtime)
+filepath_add(struct filepath_tree *tree, char *file, int id, time_t mtime)
 {
-	struct filepath *fp;
+	struct filepath *fp, *rfp;
 
-	if ((fp = malloc(sizeof(*fp))) == NULL)
+	CTASSERT(TALSZ_MAX < 8 * sizeof(fp->talmask));
+	assert(id >= 0 && id < 8 * (int)sizeof(fp->talmask));
+
+	if ((fp = calloc(1, sizeof(*fp))) == NULL)
 		err(1, NULL);
-	fp->mtime = mtime;
 	if ((fp->file = strdup(file)) == NULL)
 		err(1, NULL);
+	fp->mtime = mtime;
 
-	if (RB_INSERT(filepath_tree, tree, fp) != NULL) {
+	if ((rfp = RB_INSERT(filepath_tree, tree, fp)) != NULL) {
 		/* already in the tree */
 		free(fp->file);
 		free(fp);
-		return 0;
+		if (rfp->talmask & (1 << id))
+			return 0;
+		fp = rfp;
 	}
+	fp->talmask |= (1 << id);
 
 	return 1;
 }
@@ -906,7 +913,7 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 
 	/* write new content or mark uri as deleted. */
 	if (pt == PUB_DEL) {
-		filepath_add(&rr->deleted, uri, 0);
+		filepath_add(&rr->deleted, uri, 0, 0);
 	} else {
 		fp = filepath_find(&rr->deleted, uri);
 		if (fp != NULL) {

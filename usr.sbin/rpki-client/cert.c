@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.130 2024/04/21 19:27:44 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.131 2024/05/20 15:51:43 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -33,6 +33,8 @@ extern ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
 extern ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
 extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
+
+static int certid = TALSZ_MAX;
 
 /*
  * Append an IP address structure to our list of results.
@@ -1103,6 +1105,7 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_simple_buffer(b, &p->notafter, sizeof(p->notafter));
 	io_simple_buffer(b, &p->purpose, sizeof(p->purpose));
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
+	io_simple_buffer(b, &p->certid, sizeof(p->certid));
 	io_simple_buffer(b, &p->repoid, sizeof(p->repoid));
 	io_simple_buffer(b, &p->ipsz, sizeof(p->ipsz));
 	io_simple_buffer(b, &p->asz, sizeof(p->asz));
@@ -1136,6 +1139,7 @@ cert_read(struct ibuf *b)
 	io_read_buf(b, &p->notafter, sizeof(p->notafter));
 	io_read_buf(b, &p->purpose, sizeof(p->purpose));
 	io_read_buf(b, &p->talid, sizeof(p->talid));
+	io_read_buf(b, &p->certid, sizeof(p->certid));
 	io_read_buf(b, &p->repoid, sizeof(p->repoid));
 	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
 	io_read_buf(b, &p->asz, sizeof(p->asz));
@@ -1167,7 +1171,11 @@ cert_read(struct ibuf *b)
 static inline int
 authcmp(struct auth *a, struct auth *b)
 {
-	return strcmp(a->cert->ski, b->cert->ski);
+	if (a->cert->certid > b->cert->certid)
+		return 1;
+	if (a->cert->certid < b->cert->certid)
+		return -1;
+	return 0;
 }
 
 RB_GENERATE_STATIC(auth_tree, auth, entry, authcmp);
@@ -1185,33 +1193,48 @@ auth_tree_free(struct auth_tree *auths)
 }
 
 struct auth *
-auth_find(struct auth_tree *auths, const char *aki)
+auth_find(struct auth_tree *auths, int id)
 {
 	struct auth a;
 	struct cert c;
 
-	/* we look up the cert where the ski == aki */
-	c.ski = (char *)aki;
+	c.certid = id;
 	a.cert = &c;
 
 	return RB_FIND(auth_tree, auths, &a);
 }
 
 struct auth *
-auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *issuer)
+auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
+    struct auth *issuer)
 {
 	struct auth *na;
 
-	na = malloc(sizeof(*na));
+	na = calloc(1, sizeof(*na));
 	if (na == NULL)
 		err(1, NULL);
+
+	if (issuer == NULL) {
+		cert->certid = cert->talid;
+	} else {
+		cert->certid = ++certid;
+		if (certid > CERTID_MAX)
+			errx(1, "%s: too many certificates in store", fn);
+		na->depth = issuer->depth + 1;
+	}
+
+	if (na->depth >= MAX_CERT_DEPTH) {
+		warnx("%s: maximum certificate chain depth exhausted", fn);
+		free(na);
+		return NULL;
+	}
 
 	na->issuer = issuer;
 	na->cert = cert;
 	na->any_inherits = x509_any_inherits(cert->x509);
 
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
-		err(1, "auth tree corrupted");
+		errx(1, "auth tree corrupted");
 
 	return na;
 }

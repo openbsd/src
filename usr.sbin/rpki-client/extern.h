@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.217 2024/04/21 19:27:44 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.218 2024/05/20 15:51:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,9 @@
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
+			    __attribute__((__unused__))
 
 enum cert_as_type {
 	CERT_AS_ID, /* single identifier */
@@ -120,6 +123,7 @@ struct cert {
 	struct cert_as	*as; /* list of AS numbers and ranges */
 	size_t		 asz; /* length of "asz" */
 	int		 talid; /* cert is covered by which TAL */
+	int		 certid;
 	unsigned int	 repoid; /* repository of this cert file */
 	char		*repo; /* CA repository (rsync:// uri) */
 	char		*mft; /* manifest (rsync:// uri) */
@@ -212,6 +216,7 @@ struct mft {
 	size_t		 filesz; /* number of filenames */
 	unsigned int	 repoid;
 	int		 talid;
+	int		 certid;
 };
 
 /*
@@ -495,14 +500,16 @@ struct auth {
 	struct cert	*cert; /* owner information */
 	struct auth	*issuer; /* pointer to issuer or NULL for TA cert */
 	int		 any_inherits;
+	int		 depth;
 };
 /*
  * Tree of auth sorted by ski
  */
 RB_HEAD(auth_tree, auth);
 
-struct auth	*auth_find(struct auth_tree *, const char *);
-struct auth	*auth_insert(struct auth_tree *, struct cert *, struct auth *);
+struct auth	*auth_find(struct auth_tree *, int);
+struct auth	*auth_insert(const char *, struct auth_tree *, struct cert *,
+		    struct auth *);
 
 enum http_result {
 	HTTP_FAILED,	/* anything else */
@@ -560,6 +567,7 @@ struct entity {
 	size_t		 datasz;	/* length of optional data blob */
 	unsigned int	 repoid;	/* repository identifier */
 	int		 talid;		/* tal identifier */
+	int		 certid;
 	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
 	enum location	 location;	/* which directory the file lives in */
 };
@@ -731,10 +739,6 @@ void		 crl_tree_free(struct crl_tree *);
 
 /* Validation of our objects. */
 
-struct auth	*valid_ski_aki(const char *, struct auth_tree *,
-		    const char *, const char *, const char *);
-int		 valid_ta(const char *, struct auth_tree *,
-		    const struct cert *);
 int		 valid_cert(const char *, struct auth *, const struct cert *);
 int		 valid_roa(const char *, struct cert *, struct roa *);
 int		 valid_filehash(int, const char *, size_t);
@@ -826,7 +830,7 @@ void		 proc_http(char *, int) __attribute__((noreturn));
 void		 proc_rrdp(int) __attribute__((noreturn));
 
 /* Repository handling */
-int		 filepath_add(struct filepath_tree *, char *, time_t);
+int		 filepath_add(struct filepath_tree *, char *, int, time_t);
 void		 rrdp_clear(unsigned int);
 void		 rrdp_session_save(unsigned int, struct rrdp_session *);
 void		 rrdp_session_free(struct rrdp_session *);
@@ -981,6 +985,7 @@ int	mkpathat(int, const char *);
 
 /* Maximum number of TAL files we'll load. */
 #define	TALSZ_MAX		8
+#define	CERTID_MAX		1000000
 
 /*
  * Maximum number of elements in the sbgp-ipAddrBlock (IP) and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.114 2024/05/15 09:19:48 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.115 2024/05/20 15:51:43 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -537,6 +537,7 @@ mft_buffer(struct ibuf *b, const struct mft *p)
 
 	io_simple_buffer(b, &p->repoid, sizeof(p->repoid));
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
+	io_simple_buffer(b, &p->certid, sizeof(p->certid));
 	io_str_buffer(b, p->path);
 
 	io_str_buffer(b, p->aia);
@@ -569,6 +570,7 @@ mft_read(struct ibuf *b)
 
 	io_read_buf(b, &p->repoid, sizeof(p->repoid));
 	io_read_buf(b, &p->talid, sizeof(p->talid));
+	io_read_buf(b, &p->certid, sizeof(p->certid));
 	io_read_str(b, &p->path);
 
 	io_read_str(b, &p->aia);

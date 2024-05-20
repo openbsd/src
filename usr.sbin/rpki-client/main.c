@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.257 2024/04/08 14:02:13 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.258 2024/05/20 15:51:43 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -156,6 +156,7 @@ entity_read_req(struct ibuf *b, struct entity *ent)
 	io_read_buf(b, &ent->location, sizeof(ent->location));
 	io_read_buf(b, &ent->repoid, sizeof(ent->repoid));
 	io_read_buf(b, &ent->talid, sizeof(ent->talid));
+	io_read_buf(b, &ent->certid, sizeof(ent->certid));
 	io_read_str(b, &ent->path);
 	io_read_str(b, &ent->file);
 	io_read_str(b, &ent->mftaki);
@@ -176,6 +177,7 @@ entity_write_req(const struct entity *ent)
 	io_simple_buffer(b, &ent->location, sizeof(ent->location));
 	io_simple_buffer(b, &ent->repoid, sizeof(ent->repoid));
 	io_simple_buffer(b, &ent->talid, sizeof(ent->talid));
+	io_simple_buffer(b, &ent->certid, sizeof(ent->certid));
 	io_str_buffer(b, ent->path);
 	io_str_buffer(b, ent->file);
 	io_str_buffer(b, ent->mftaki);
@@ -191,7 +193,7 @@ entity_write_repo(const struct repo *rp)
 	enum location loc = DIR_UNKNOWN;
 	unsigned int repoid;
 	char *path, *altpath;
-	int talid = 0;
+	int talid = 0, certid = 0;
 
 	repoid = repo_id(rp);
 	path = repo_basedir(rp, 0);
@@ -201,6 +203,7 @@ entity_write_repo(const struct repo *rp)
 	io_simple_buffer(b, &loc, sizeof(loc));
 	io_simple_buffer(b, &repoid, sizeof(repoid));
 	io_simple_buffer(b, &talid, sizeof(talid));
+	io_simple_buffer(b, &certid, sizeof(certid));
 	io_str_buffer(b, path);
 	io_str_buffer(b, altpath);
 	io_buf_buffer(b, NULL, 0); /* ent->mftaki */
@@ -233,7 +236,7 @@ entityq_flush(struct entityq *q, struct repo *rp)
  */
 static void
 entityq_add(char *path, char *file, enum rtype type, enum location loc,
-    struct repo *rp, unsigned char *data, size_t datasz, int talid,
+    struct repo *rp, unsigned char *data, size_t datasz, int talid, int certid,
     char *mftaki)
 {
 	struct entity	*p;
@@ -244,6 +247,7 @@ entityq_add(char *path, char *file, enum rtype type, enum location loc,
 	p->type = type;
 	p->location = loc;
 	p->talid = talid;
+	p->certid = certid;
 	p->mftaki = mftaki;
 	p->path = path;
 	if (rp != NULL)
@@ -419,7 +423,7 @@ queue_add_from_mft(const struct mft *mft)
 		if ((mftaki = strdup(mft->aki)) == NULL)
 			err(1, NULL);
 		entityq_add(npath, nfile, f->type, f->location, rp, NULL, 0,
-		    mft->talid, mftaki);
+		    mft->talid, mft->certid, mftaki);
 	}
 }
 
@@ -442,7 +446,7 @@ queue_add_file(const char *file, enum rtype type, int talid)
 	if ((nfile = strdup(file)) == NULL)
 		err(1, NULL);
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(NULL, nfile, type, DIR_UNKNOWN, NULL, buf, len, talid,
+	entityq_add(NULL, nfile, type, DIR_UNKNOWN, NULL, buf, len, talid, 0,
 	    NULL);
 }
 
@@ -478,7 +482,7 @@ queue_add_from_tal(struct tal *tal)
 	data = tal->pkey;
 	tal->pkey = NULL;
 	entityq_add(NULL, nfile, RTYPE_CER, DIR_VALID, repo, data,
-	    tal->pkeysz, tal->id, NULL);
+	    tal->pkeysz, tal->id, tal->id, NULL);
 }
 
 /*
@@ -547,7 +551,7 @@ queue_add_from_cert(const struct cert *cert)
 	}
 
 	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0,
-	    cert->talid, NULL);
+	    cert->talid, cert->certid, NULL);
 }
 
 /*
@@ -591,7 +595,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	if (filemode)
 		goto done;
 
-	if (filepath_add(&fpt, file, mtime) == 0) {
+	if (filepath_add(&fpt, file, talid, mtime) == 0) {
 		warnx("%s: File already visited", file);
 		goto done;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.41 2024/04/21 19:27:44 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.42 2024/05/20 15:51:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -46,6 +46,50 @@ static struct auth_tree	 auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 
 struct tal		*talobj[TALSZ_MAX];
+
+struct uripath {
+	RB_ENTRY(uripath)	 entry;
+	const char		*uri;
+	struct cert		*cert;
+};
+
+static RB_HEAD(uripath_tree, uripath) uritree;
+
+static inline int
+uripathcmp(const struct uripath *a, const struct uripath *b)
+{
+	return strcmp(a->uri, b->uri);
+}
+
+RB_PROTOTYPE(uripath_tree, uripath, entry, uripathcmp);
+
+static void
+uripath_add(const char *uri, struct cert *cert)
+{
+	struct uripath *up;
+
+	if ((up = calloc(1, sizeof(*up))) == NULL)
+		err(1, NULL);
+	if ((up->uri = strdup(uri)) == NULL)
+		err(1, NULL);
+	up->cert = cert;
+	if (RB_INSERT(uripath_tree, &uritree, up) != NULL)
+		errx(1, "corrupt AIA lookup tree");
+}
+
+static struct cert *
+uripath_lookup(const char *uri)
+{
+	struct uripath needle = { .uri = uri };
+	struct uripath *up;
+
+	up = RB_FIND(uripath_tree, &uritree, &needle);
+	if (up == NULL)
+		return NULL;
+	return up->cert;
+}
+
+RB_GENERATE(uripath_tree, uripath, entry, uripathcmp);
 
 /*
  * Use the X509 CRL Distribution Points to locate the CRL needed for
@@ -132,7 +176,7 @@ parse_load_cert(char *uri)
  * tree. Once the TA is located in the chain the chain is validated in
  * reverse order.
  */
-static void
+static struct auth *
 parse_load_certchain(char *uri)
 {
 	struct cert *stack[MAX_CERT_DEPTH] = { 0 };
@@ -144,18 +188,16 @@ parse_load_certchain(char *uri)
 	int i;
 
 	for (i = 0; i < MAX_CERT_DEPTH; i++) {
+		if ((cert = uripath_lookup(uri)) != NULL) {
+			a = auth_find(&auths, cert->certid);
+			break;
+		}
 		filestack[i] = uri;
 		stack[i] = cert = parse_load_cert(uri);
 		if (cert == NULL || cert->purpose != CERT_PURPOSE_CA) {
-			warnx("failed to build authority chain");
+			warnx("failed to build authority chain: %s", uri);
 			goto fail;
 		}
-		if (auth_find(&auths, cert->ski) != NULL) {
-			assert(i == 0);
-			goto fail;
-		}
-		if ((a = auth_find(&auths, cert->aki)) != NULL)
-			break;	/* found chain to TA */
 		uri = cert->aia;
 	}
 
@@ -166,9 +208,9 @@ parse_load_certchain(char *uri)
 	}
 
 	/* TA found play back the stack and add all certs */
-	for (; i >= 0; i--) {
-		cert = stack[i];
-		uri = filestack[i];
+	for (; i > 0; i--) {
+		cert = stack[i - 1];
+		uri = filestack[i - 1];
 
 		crl = crl_get(&crlt, a);
 		if (!valid_x509(uri, ctx, cert->x509, a, crl, &errstr) ||
@@ -178,14 +220,16 @@ parse_load_certchain(char *uri)
 			goto fail;
 		}
 		cert->talid = a->cert->talid;
-		a = auth_insert(&auths, cert, a);
+		a = auth_insert(uri, &auths, cert, a);
+		uripath_add(uri, cert);
 		stack[i] = NULL;
 	}
 
-	return;
+	return a;
 fail:
 	for (i = 0; i < MAX_CERT_DEPTH; i++)
 		cert_free(stack[i]);
+	return NULL;
 }
 
 static void
@@ -195,7 +239,7 @@ parse_load_ta(struct tal *tal)
 	struct cert *cert;
 	unsigned char *f = NULL;
 	char *file;
-	size_t flen;
+	size_t flen, i;
 
 	/* does not matter which URI, all end with same filename */
 	filename = strrchr(tal->uri[0], '/');
@@ -217,11 +261,14 @@ parse_load_ta(struct tal *tal)
 		goto out;
 
 	cert->talid = tal->id;
+	auth_insert(file, &auths, cert, NULL);
+	for (i = 0; i < tal->urisz; i++) {
+		if (strncasecmp(tal->uri[i], RSYNC_PROTO, RSYNC_PROTO_LEN) != 0)
+			continue;
+		/* Add all rsync uri since any of them could be used as AIA. */
+		uripath_add(tal->uri[i], cert);
+	}
 
-	if (!valid_ta(file, &auths, cert))
-		cert_free(cert);
-	else
-		auth_insert(&auths, cert, NULL);
 out:
 	free(file);
 	free(f);
@@ -297,7 +344,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct spl *spl = NULL;
 	struct tak *tak = NULL;
 	struct tal *tal = NULL;
-	char *aia = NULL, *aki = NULL;
+	char *aia = NULL;
 	char *crl_uri = NULL;
 	time_t *expires = NULL, *notafter = NULL;
 	struct auth *a;
@@ -349,7 +396,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (aspa == NULL)
 			break;
 		aia = aspa->aia;
-		aki = aspa->aki;
 		expires = &aspa->expires;
 		notafter = &aspa->notafter;
 		break;
@@ -363,7 +409,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (cert == NULL)
 			break;
 		aia = cert->aia;
-		aki = cert->aki;
 		x509 = cert->x509;
 		if (X509_up_ref(x509) == 0)
 			errx(1, "%s: X509_up_ref failed", __func__);
@@ -381,7 +426,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (mft == NULL)
 			break;
 		aia = mft->aia;
-		aki = mft->aki;
 		expires = &mft->expires;
 		notafter = &mft->nextupdate;
 		break;
@@ -390,7 +434,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (gbr == NULL)
 			break;
 		aia = gbr->aia;
-		aki = gbr->aki;
 		expires = &gbr->expires;
 		notafter = &gbr->notafter;
 		break;
@@ -399,7 +442,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (geofeed == NULL)
 			break;
 		aia = geofeed->aia;
-		aki = geofeed->aki;
 		expires = &geofeed->expires;
 		notafter = &geofeed->notafter;
 		break;
@@ -408,7 +450,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (roa == NULL)
 			break;
 		aia = roa->aia;
-		aki = roa->aki;
 		expires = &roa->expires;
 		notafter = &roa->notafter;
 		break;
@@ -417,7 +458,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (rsc == NULL)
 			break;
 		aia = rsc->aia;
-		aki = rsc->aki;
 		expires = &rsc->expires;
 		notafter = &rsc->notafter;
 		break;
@@ -426,7 +466,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (spl == NULL)
 			break;
 		aia = spl->aia;
-		aki = spl->aki;
 		expires = &spl->expires;
 		notafter = &spl->notafter;
 		break;
@@ -435,7 +474,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (tak == NULL)
 			break;
 		aia = tak->aia;
-		aki = tak->aki;
 		expires = &tak->expires;
 		notafter = &tak->notafter;
 		break;
@@ -453,9 +491,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	if (aia != NULL) {
 		x509_get_crl(x509, file, &crl_uri);
 		parse_load_crl(crl_uri);
-		if (auth_find(&auths, aki) == NULL)
-			parse_load_certchain(aia);
-		a = auth_find(&auths, aki);
+		a = parse_load_certchain(aia);
 		c = crl_get(&crlt, a);
 
 		if ((status = valid_x509(file, ctx, x509, a, c, &errstr))) {

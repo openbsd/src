@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.135 2024/04/21 19:27:44 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.136 2024/05/20 15:51:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -87,6 +87,39 @@ repo_add(unsigned int id, char *path, char *validpath)
 }
 
 /*
+ * Return the issuer by its certificate id, or NULL on failure.
+ * Make sure the AKI is the same as the AKI listed on the Manifest,
+ * and that the SKI of the cert matches with the AKI.
+ */
+static struct auth *
+find_issuer(const char *fn, int id, const char *aki, const char *mftaki)
+{
+	struct auth *a;
+
+	a = auth_find(&auths, id);
+	if (a == NULL) {
+		warnx("%s: RFC 6487: unknown cert with SKI %s", fn, aki);
+		return NULL;
+	}
+
+	if (mftaki != NULL) {
+		if (strcmp(aki, mftaki) != 0) {
+			warnx("%s: AKI %s doesn't match Manifest AKI %s", fn,
+			    aki, mftaki);
+			return NULL;
+		}
+	}
+
+	if (strcmp(aki, a->cert->ski) != 0) {
+		warnx("%s: AKI %s doesn't match issuer SKI %s", fn,
+		    aki, a->cert->ski);
+		return NULL;
+	}
+
+	return a;
+}
+
+/*
  * Build access path to file based on repoid, path, location and file values.
  */
 static char *
@@ -137,7 +170,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 	if ((roa = roa_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, roa->ski, roa->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, roa->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -172,7 +205,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 	if ((spl = spl_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, spl->ski, spl->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, spl->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -336,7 +369,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	if (*crl == NULL)
 		*crl = parse_load_crl_from_mft(entp, mft, DIR_VALID, crlfile);
 
-	a = valid_ski_aki(file, &auths, mft->ski, mft->aki, NULL);
+	a = find_issuer(file, entp->certid, mft->aki, NULL);
 	if (!valid_x509(file, ctx, x509, a, *crl, errstr))
 		goto err;
 	X509_free(x509);
@@ -344,6 +377,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 
 	mft->repoid = entp->repoid;
 	mft->talid = a->cert->talid;
+	mft->certid = entp->certid;
 
 	now = get_current_time();
 	/* check that now is not before from */
@@ -493,7 +527,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
  */
 static struct cert *
 proc_parser_cert(char *file, const unsigned char *der, size_t len,
-    const char *mftaki)
+    const struct entity *entp)
 {
 	struct cert	*cert;
 	struct crl	*crl;
@@ -507,7 +541,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	if (cert == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, cert->ski, cert->aki, mftaki);
+	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr) ||
@@ -531,7 +565,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	 * Add validated CA certs to the RPKI auth tree.
 	 */
 	if (cert->purpose == CERT_PURPOSE_CA)
-		auth_insert(&auths, cert, a);
+		auth_insert(file, &auths, cert, a);
 
 	return cert;
 }
@@ -557,19 +591,12 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 	cert = ta_parse(file, cert, pkey, pkeysz);
 	if (cert == NULL)
 		return NULL;
-
-	if (!valid_ta(file, &auths, cert)) {
-		warnx("%s: certificate not a valid ta", file);
-		cert_free(cert);
-		return NULL;
-	}
-
 	cert->talid = talid;
 
 	/*
 	 * Add valid roots to the RPKI auth tree.
 	 */
-	auth_insert(&auths, cert, NULL);
+	auth_insert(file, &auths, cert, NULL);
 
 	return cert;
 }
@@ -590,7 +617,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 	if ((gbr = gbr_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, gbr->ski, gbr->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, gbr->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	/* return value can be ignored since nothing happens here */
@@ -623,7 +650,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 	if ((aspa = aspa_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, aspa->ski, aspa->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, aspa->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -658,7 +685,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 	if ((tak = tak_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, tak->ski, tak->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, tak->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -764,8 +791,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 				    f, flen, entp->data, entp->datasz,
 				    entp->talid);
 			else
-				cert = proc_parser_cert(file, f, flen,
-				    entp->mftaki);
+				cert = proc_parser_cert(file, f, flen, entp);
 			if (cert != NULL)
 				mtime = cert->notbefore;
 			io_simple_buffer(b, &mtime, sizeof(mtime));

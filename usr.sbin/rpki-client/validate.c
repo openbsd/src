@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.73 2024/03/19 05:04:13 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.74 2024/05/20 15:51:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -77,52 +77,6 @@ valid_ip(struct auth *a, enum afi afi,
 
 	/* If it inherits, walk up the chain. */
 	return valid_ip(a->issuer, afi, min, max);
-}
-
-/*
- * Make sure the AKI is the same as the AKI listed on the Manifest,
- * and that the SKI doesn't already exist.
- * Return the issuer by its AKI, or NULL on failure.
- */
-struct auth *
-valid_ski_aki(const char *fn, struct auth_tree *auths,
-    const char *ski, const char *aki, const char *mftaki)
-{
-	struct auth *a;
-
-	if (mftaki != NULL) {
-		if (strcmp(aki, mftaki) != 0) {
-			warnx("%s: AKI doesn't match Manifest AKI", fn);
-			return NULL;
-		}
-	}
-
-	if (auth_find(auths, ski) != NULL) {
-		warnx("%s: RFC 6487: duplicate SKI", fn);
-		return NULL;
-	}
-
-	a = auth_find(auths, aki);
-	if (a == NULL)
-		warnx("%s: RFC 6487: unknown AKI", fn);
-
-	return a;
-}
-
-/*
- * Validate a trust anchor by making sure that the SKI is unique.
- * Returns 1 if valid, 0 otherwise.
- */
-int
-valid_ta(const char *fn, struct auth_tree *auths, const struct cert *cert)
-{
-	/* SKI must not be a dupe. */
-	if (auth_find(auths, cert->ski) != NULL) {
-		warnx("%s: RFC 6487: duplicate SKI", fn);
-		return 0;
-	}
-
-	return 1;
 }
 
 /*
