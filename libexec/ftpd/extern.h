@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2021/05/23 17:01:21 jan Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2024/05/20 01:05:17 jsg Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ void	reply_r(int, const char *, ...);
 enum ret_cmd { RET_FILE, RET_LIST };
 void	retrieve(enum ret_cmd, const char *);
 void	send_file_list(char *);
-void	setproctitle(const char *, ...);
 void	statcmd(void);
 void	statfilecmd(const char *);
 void	store(const char *, const char *, int);
