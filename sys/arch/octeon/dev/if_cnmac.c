@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.85 2023/11/10 15:51:19 bluhm Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.86 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -113,7 +113,6 @@ void	cnmac_attach(struct device *, struct device *, void *);
 void	cnmac_pip_init(struct cnmac_softc *);
 void	cnmac_ipd_init(struct cnmac_softc *);
 void	cnmac_pko_init(struct cnmac_softc *);
-void	cnmac_smi_init(struct cnmac_softc *);
 
 void	cnmac_board_mac_addr(uint8_t *);
 
@@ -134,7 +133,6 @@ void	cnmac_send_queue_add(struct cnmac_softc *,
 void	cnmac_send_queue_del(struct cnmac_softc *,
 	    struct mbuf **, uint64_t **);
 int	cnmac_buf_free_work(struct cnmac_softc *, uint64_t *);
-void	cnmac_buf_ext_free(caddr_t, u_int, void *);
 
 int	cnmac_ioctl(struct ifnet *, u_long, caddr_t);
 void	cnmac_watchdog(struct ifnet *);

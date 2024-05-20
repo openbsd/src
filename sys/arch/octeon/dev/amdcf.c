@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdcf.c,v 1.9 2022/10/23 19:33:39 krw Exp $	*/
+/*	$OpenBSD: amdcf.c,v 1.10 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, Juniper Networks, Inc.
@@ -202,7 +202,6 @@ int cfi_block_finish(struct amdcf_softc *);
 void cfi_array_write(struct amdcf_softc *sc, u_int, u_int, u_int);
 void cfi_amd_write(struct amdcf_softc *, u_int, u_int, u_int);
 
-uint8_t cfi_read_qry(struct amdcf_softc *, uint64_t);
 uint8_t cfi_read(struct amdcf_softc *, bus_size_t, bus_size_t);
 void cfi_write(struct amdcf_softc *, bus_size_t, bus_size_t, uint8_t);
 int cfi_wait_ready(struct amdcf_softc *, u_int, u_int, u_int);

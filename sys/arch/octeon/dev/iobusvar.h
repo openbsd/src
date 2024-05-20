@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobusvar.h,v 1.3 2015/07/19 23:46:50 jasper Exp $	*/
+/*	$OpenBSD: iobusvar.h,v 1.4 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -53,9 +53,5 @@ struct octeon_iobus_addrs {
 int	 iobus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 void	 iobus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int	 iobus_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    bus_size_t, bus_space_handle_t *);
-
-void	*iobus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 
 #endif	/* _IOBUSVAR_H_ */

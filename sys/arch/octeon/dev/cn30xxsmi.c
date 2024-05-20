@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.11 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.12 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -41,8 +41,6 @@
 
 int	cn30xxsmi_match(struct device *, void *, void *);
 void	cn30xxsmi_attach(struct device *, struct device *, void *);
-
-void	cn30xxsmi_enable(struct cn30xxsmi_softc *);
 
 const struct cfattach octsmi_ca = {
 	sizeof(struct cn30xxsmi_softc), cn30xxsmi_match, cn30xxsmi_attach

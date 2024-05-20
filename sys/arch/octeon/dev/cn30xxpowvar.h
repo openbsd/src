@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpowvar.h,v 1.6 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxpowvar.h,v 1.7 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -363,7 +363,6 @@ cn30xxpow_tag_sw_wait(void)
 void		cn30xxpow_work_request_async(uint64_t, uint64_t);
 uint64_t	*cn30xxpow_work_response_async(uint64_t);
 void		cn30xxpow_ops_swtag(int, uint32_t);
-void		cn30xxpow_intr_set_freedback_queue(int, void *);
 
 static inline void
 cn30xxpow_config_int_pc(struct cn30xxpow_softc *sc, int unit)

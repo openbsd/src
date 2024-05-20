@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.26 2022/04/06 18:59:27 naddy Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.27 2024/05/20 23:13:33 jsg Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -58,11 +58,6 @@ void	iobusattach(struct device *, struct device *, void *);
 int	iobusprint(void *, const char *);
 int	iobussubmatch(struct device *, void *, void *);
 int	iobussearch(struct device *, void *, void *);
-
-u_int8_t iobus_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int16_t iobus_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int32_t iobus_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-u_int64_t iobus_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 void	 iobus_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    u_int8_t);

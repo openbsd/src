@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.35 2022/10/23 19:33:39 krw Exp $ */
+/*	$OpenBSD: octcf.c,v 1.36 2024/05/20 23:13:33 jsg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -123,7 +123,6 @@ int	octcfprobe(struct device *, void *, void *);
 void	octcfattach(struct device *, struct device *, void *);
 int	octcfdetach(struct device *, int);
 int	octcfactivate(struct device *, int);
-int	octcfprint(void *, char *);
 
 const struct cfattach octcf_ca = {
 	sizeof(struct octcf_softc), octcfprobe, octcfattach,

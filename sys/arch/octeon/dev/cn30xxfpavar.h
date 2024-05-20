@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpavar.h,v 1.8 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxfpavar.h,v 1.9 2024/05/20 23:13:33 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
  * All rights reserved.
@@ -45,7 +45,6 @@ struct cn30xxfpa_buf {
 	int		fb_dma_nsegs;
 };
 
-uint64_t	cn30xxfpa_int_summary(void);
 int		cn30xxfpa_buf_init(int, size_t, size_t, struct cn30xxfpa_buf **);
 void		*cn30xxfpa_buf_get(struct cn30xxfpa_buf *);
 uint64_t	cn30xxfpa_query(int);

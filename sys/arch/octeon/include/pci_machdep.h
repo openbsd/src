@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.12 2022/01/08 05:34:54 visa Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.13 2024/05/20 23:13:33 jsg Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -129,12 +129,5 @@ pci_conf_write_db(void *cookie, pcitag_t tag, int reg, pcireg_t val,
 
 #define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
 #define	pci_set_powerstate_md(c, t, s, p)
-
-/*
- * Functions used during early system configuration.
- */
-
-pcitag_t pci_make_tag_early(int, int, int);
-pcireg_t pci_conf_read_early(pcitag_t, int);
 
 #define	pci_dev_postattach(a, b)

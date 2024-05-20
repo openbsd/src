@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpkovar.h,v 1.6 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxpkovar.h,v 1.7 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -82,8 +82,6 @@ int			cn30xxpko_reset(struct cn30xxpko_softc *);
 void			cn30xxpko_config(struct cn30xxpko_softc *);
 int			cn30xxpko_port_enable(struct cn30xxpko_softc *, int);
 int			cn30xxpko_port_config(struct cn30xxpko_softc *);
-void			cn30xxpko_int_enable(struct cn30xxpko_softc *, int);
-uint64_t		cn30xxpko_int_summary(struct cn30xxpko_softc *);
 static inline uint64_t	cn30xxpko_cmd_word0(int, int, int, int, int, int,
 			    int, int, int, int, int, int, int, int, int, int);
 static inline uint64_t	cn30xxpko_cmd_word1(int, int, int, int, paddr_t);

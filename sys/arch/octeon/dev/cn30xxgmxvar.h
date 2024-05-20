@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.13 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.14 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -115,8 +115,6 @@ int		cn30xxgmx_port_enable(struct cn30xxgmx_port_softc *, int);
 int		cn30xxgmx_reset_speed(struct cn30xxgmx_port_softc *);
 int		cn30xxgmx_reset_flowctl(struct cn30xxgmx_port_softc *);
 int		cn30xxgmx_reset_timing(struct cn30xxgmx_port_softc *);
-uint64_t	cn30xxgmx_get_rx_int_reg(struct cn30xxgmx_port_softc *sc);
-uint64_t	cn30xxgmx_get_tx_int_reg(struct cn30xxgmx_port_softc *sc);
 #if NKSTAT > 0
 void		cn30xxgmx_kstat_read(struct cn30xxgmx_port_softc *,
 		    struct kstat_kv *);

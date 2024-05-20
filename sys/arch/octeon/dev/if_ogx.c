@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ogx.c,v 1.6 2021/07/29 14:11:53 visa Exp $	*/
+/*	$OpenBSD: if_ogx.c,v 1.7 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -253,7 +253,6 @@ void	ogx_fpa3_pool_init(struct ogx_node *, struct fpa3pool *, uint32_t,
 int	ogx_sgmii_link_init(struct ogx_softc *);
 void	ogx_sgmii_link_down(struct ogx_softc *);
 void	ogx_sgmii_link_change(struct ogx_softc *);
-int	ogx_sgmii_link_status(struct ogx_softc *);
 
 static inline paddr_t
 ogx_kvtophys(vaddr_t kva)

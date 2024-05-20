@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpipvar.h,v 1.5 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxpipvar.h,v 1.6 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -55,7 +55,6 @@ struct cn30xxpip_attach_args {
 
 void			cn30xxpip_init(struct cn30xxpip_attach_args *,
 			    struct cn30xxpip_softc **);
-void			cn30xxpip_gbl_ctl_debug(struct cn30xxpip_softc *);
 int			cn30xxpip_port_config(struct cn30xxpip_softc *);
 void			cn30xxpip_prt_cfg_enable(struct cn30xxpip_softc *,
 			    uint64_t, int);

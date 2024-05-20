@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxfpa.c,v 1.10 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxfpa.c,v 1.11 2024/05/20 23:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -48,7 +48,6 @@ struct cn30xxfpa_softc {
 
 void		cn30xxfpa_bootstrap(struct octeon_config *);
 void		cn30xxfpa_reset(void);
-void		cn30xxfpa_int_enable(struct cn30xxfpa_softc *, int);
 void		cn30xxfpa_buf_dma_alloc(struct cn30xxfpa_buf *);
 
 void		cn30xxfpa_init(struct cn30xxfpa_softc *);
