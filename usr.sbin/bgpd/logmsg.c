@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.13 2024/03/22 15:41:34 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.14 2024/05/20 10:00:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -165,7 +165,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 
 			if (ibuf_get_n8(&ibuf, &capa_code) == -1)
 				break;
-			
+
 			logit(LOG_ERR, "%s: %s notification: %s, %s: %s",
 			    p, dir, errnames[errcode], suberrname,
 			    log_capability(capa_code));
