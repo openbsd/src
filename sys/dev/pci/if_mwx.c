@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.2 2024/02/21 12:08:05 jsg Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.3 2024/05/20 21:22:43 martijn Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -1426,7 +1426,7 @@ mwx_txwi_alloc(struct mwx_softc *sc, int count)
 		}
 	}
 
-	for (i = count; i >= MT_PACKET_ID_FIRST; i--)
+	for (i = count - 1; i >= MT_PACKET_ID_FIRST; i--)
 		LIST_INSERT_HEAD(&q->mt_freelist, &q->mt_data[i], mt_entry);
 
 	return 0;
