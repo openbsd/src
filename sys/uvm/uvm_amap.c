@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.94 2024/04/17 13:17:31 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.95 2024/05/20 17:03:36 dv Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ amap_free(struct vm_amap *amap)
 	KASSERT((amap->am_flags & AMAP_SWAPOFF) == 0);
 
 	if (amap->am_lock != NULL) {
-		KASSERT(amap->am_lock == NULL || !rw_write_held(amap->am_lock));
+		KASSERT(!rw_write_held(amap->am_lock));
 		rw_obj_free(amap->am_lock);
 	}
 
