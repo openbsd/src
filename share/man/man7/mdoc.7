@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoc.7,v 1.181 2022/01/13 08:39:24 schwarze Exp $
+.\" $OpenBSD: mdoc.7,v 1.182 2024/05/20 18:12:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2022 $
+.Dd $Mdocdate: May 20 2024 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -439,7 +439,7 @@ in the alphabetical
 .Bl -column "Brq, Bro, Brc" description
 .It Ic \&Dd Ta document date: Cm $\&Mdocdate$ | Ar month day , year
 .It Ic \&Dt Ta document title: Ar TITLE section Op Ar arch
-.It Ic \&Os Ta operating system version: Op Ar system Op Ar version
+.It Ic \&Os Ta operating system footer: Op Ar footer text
 .It Ic \&Nm Ta document name (one argument)
 .It Ic \&Nd Ta document description (one line)
 .El
@@ -2087,31 +2087,28 @@ Examples:
 See also
 .Ic \&Oo .
 .Tg Os
-.It Ic \&Os Op Ar system Op Ar version
-Operating system version for display in the page footer.
-This is the mandatory third macro of
-any
+.It Ic \&Os Op Ar footer text
+The mandatory third macro of every
 .Nm
 file.
+Usually, do not specify any arguments,
+in particular not the operating system name and/or version.
 .Pp
-The optional
-.Ar system
-parameter specifies the relevant operating system or environment.
-It is suggested to leave it unspecified, in which case
+If no argument is given,
 .Xr mandoc 1
-uses its
+prints its
 .Fl Ios
-argument or, if that isn't specified either,
+argument in the page footer, or
 .Fa sysname
 and
 .Fa release
 as returned by
-.Xr uname 3 .
+.Xr uname 3
+by default.
 .Pp
-Examples:
-.Dl \&.Os
-.Dl \&.Os KTH/CSC/TCS
-.Dl \&.Os BSD 4.3
+Manual pages that are part of a portable software project can override
+the default by giving the project name and version number as arguments,
+but leaving it blank is never a bad choice.
 .Pp
 See also
 .Ic \&Dd
