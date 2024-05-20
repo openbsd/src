@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.31 2015/01/16 06:40:23 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.32 2024/05/20 02:00:25 jsg Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -57,7 +57,6 @@ u_int32_t OrderNum;
 char *master;
 
 extern void yppush_xfrrespprog_1(struct svc_req *request, SVCXPRT *xprt);
-extern bool_t xdr_ypreq_xfr(XDR *, struct ypreq_xfr *);
 
 static void
 usage(void)
