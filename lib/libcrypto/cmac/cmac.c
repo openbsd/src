@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.23 2024/03/02 09:30:21 tb Exp $ */
+/* $OpenBSD: cmac.c,v 1.24 2024/05/20 14:53:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -182,7 +182,7 @@ int
 CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
     const EVP_CIPHER *cipher, ENGINE *impl)
 {
-	static unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH];
+	static const unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH];
 	int block_size;
 
 	/* All zeros means restart */
