@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.43 2019/12/26 13:30:54 bluhm Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.44 2024/05/20 09:11:21 mvs Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ static struct vfsconf vfsconflist[] = {
 #endif
 
 #ifdef FUSE
-	{ &fusefs_vfsops, MOUNT_FUSEFS, 18, 0, MNT_LOCAL,
+	{ &fusefs_vfsops, MOUNT_FUSEFS, 18, 0, 0,
 	    sizeof(struct fusefs_args) },
 #endif
 
