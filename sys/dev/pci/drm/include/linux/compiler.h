@@ -24,6 +24,7 @@
 #define noinline	__attribute__((__noinline__))
 #define noinline_for_stack	 __attribute__((__noinline__))
 #define fallthrough	do {} while (0)
+#define __counted_by(x)
 
 #define __PASTE(x,y) __CONCAT(x,y)
 
