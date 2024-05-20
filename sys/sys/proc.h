@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.360 2024/04/18 10:29:39 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.361 2024/05/20 10:32:20 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ struct process {
 	struct	ucred *ps_ucred;	/* Process owner's identity. */
 
 	LIST_ENTRY(process) ps_list;	/* List of all processes. */
-	TAILQ_HEAD(,proc) ps_threads;	/* [K|S] Threads in this process. */
+	TAILQ_HEAD(,proc) ps_threads;	/* [K|m] Threads in this process. */
 
 	LIST_ENTRY(process) ps_pglist;	/* List of processes in pgrp. */
 	struct	process *ps_pptr; 	/* Pointer to parent process. */
@@ -180,8 +180,9 @@ struct process {
 	u_int	ps_flags;		/* [a] PS_* flags. */
 	int	ps_siglist;		/* Signals pending for the process. */
 
-	struct	proc *ps_single;	/* [S] Thread for single-threading. */
-	u_int	ps_singlecount;		/* [a] Not yet suspended threads. */
+	struct	proc *ps_single;	/* [m] Thread for single-threading. */
+	u_int	ps_singlecnt;		/* [m] Number of threads to suspend. */
+	u_int	ps_exitcnt;		/* [m] Number of threads in exit1. */
 
 	int	ps_traceflag;		/* Kernel trace points. */
 	struct	vnode *ps_tracevp;	/* Trace to vnode. */
@@ -252,7 +253,7 @@ struct process {
 
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_threadcnt
-	u_int	ps_threadcnt;		/* Number of threads. */
+	u_int	ps_threadcnt;		/* [m] Number of threads. */
 
 	struct	timespec ps_start;	/* starting uptime. */
 	struct	timeout ps_realit_to;	/* [m] ITIMER_REAL timeout */
@@ -322,13 +323,14 @@ struct p_inentry {
  *	U	uidinfolk
  *	l	read only reference, see lim_read_enter()
  *	o	owned (modified only) by this thread
+ *	m	this proc's' `p->p_p->ps_mtx'
  */
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;	/* [S] current run/sleep queue */
 	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
 	struct	process *p_p;		/* [I] The process of this thread. */
-	TAILQ_ENTRY(proc) p_thr_link;	/* Threads in a process linkage. */
+	TAILQ_ENTRY(proc) p_thr_link;	/* [K|m] Threads in a process linkage. */
 
 	TAILQ_ENTRY(proc) p_fut_link;	/* Threads in a futex linkage. */
 	struct	futex	*p_futex;	/* Current sleeping futex. */

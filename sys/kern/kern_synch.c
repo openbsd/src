@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.202 2024/04/18 08:59:38 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.203 2024/05/20 10:32:20 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -581,15 +581,18 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 	uint8_t newprio;
 	int s;
 
-	SCHED_LOCK(s);
 	/*
 	 * If one of the threads of a multi-threaded process called
 	 * sched_yield(2), drop its priority to ensure its siblings
 	 * can make some progress.
 	 */
+	mtx_enter(&p->p_p->ps_mtx);
 	newprio = p->p_usrpri;
 	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link)
 		newprio = max(newprio, q->p_runpri);
+	mtx_leave(&p->p_p->ps_mtx);
+
+	SCHED_LOCK(s);
 	setrunqueue(p->p_cpu, p, newprio);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();
