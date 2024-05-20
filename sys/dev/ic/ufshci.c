@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.26 2024/05/20 12:42:45 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.27 2024/05/20 20:08:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -181,15 +181,17 @@ ufshci_attach(struct ufshci_softc *sc)
 	DPRINTF(1, " BI=0x%04x\n", UFSHCI_REG_HCMID_BI(sc->sc_hcmid));
 	DPRINTF(1, " MIC=0x%04x\n", UFSHCI_REG_HCMID_MIC(sc->sc_hcmid));
 
-	if (sc->sc_nutrs > 32) {
-		printf("%s: NUTRS can't be >32 (is %d)!\n",
-		    sc->sc_dev.dv_xname, sc->sc_nutrs);
+	if (sc->sc_nutrs < UFSHCI_SLOTS_MIN ||
+	    sc->sc_nutrs > UFSHCI_SLOTS_MAX) {
+		printf("%s: Invalid NUTRS value %d (must be %d-%d)!\n",
+		    sc->sc_dev.dv_xname, sc->sc_nutrs,
+		    UFSHCI_SLOTS_MIN, UFSHCI_SLOTS_MAX);
 		return 1;
-	} else if (sc->sc_nutrs == 1) {
-		sc->sc_iacth = sc->sc_nutrs;
-	} else if (sc->sc_nutrs > 1) {
-		sc->sc_iacth = sc->sc_nutrs - 1;
 	}
+	if (sc->sc_nutrs == UFSHCI_SLOTS_MAX)
+		sc->sc_iacth = UFSHCI_INTR_AGGR_COUNT_MAX;
+	else
+		sc->sc_iacth = sc->sc_nutrs;
 	DPRINTF(1, "Intr. aggr. counter threshold:\nIACTH=%d\n", sc->sc_iacth);
 
 	/*
