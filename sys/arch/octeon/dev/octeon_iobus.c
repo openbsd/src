@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.27 2024/05/20 23:13:33 jsg Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.28 2024/05/20 23:17:10 jsg Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -58,28 +58,6 @@ void	iobusattach(struct device *, struct device *, void *);
 int	iobusprint(void *, const char *);
 int	iobussubmatch(struct device *, void *, void *);
 int	iobussearch(struct device *, void *, void *);
-
-void	 iobus_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int8_t);
-void	 iobus_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int16_t);
-void	 iobus_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int32_t);
-void	 iobus_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    u_int64_t);
-
-void	 iobus_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    u_int8_t *, bus_size_t);
-void	 iobus_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const u_int8_t *, bus_size_t);
-void	 iobus_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    u_int8_t *, bus_size_t);
-void	 iobus_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const u_int8_t *, bus_size_t);
-void	 iobus_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    u_int8_t *, bus_size_t);
-void	 iobus_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const u_int8_t *, bus_size_t);
 
 bus_addr_t iobus_pa_to_device(paddr_t);
 paddr_t	 iobus_device_to_pa(bus_addr_t);
