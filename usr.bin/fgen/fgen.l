@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.17 2024/02/14 02:40:02 jsg Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.18 2024/05/20 19:16:48 sobrado Exp $	*/
 /*	$NetBSD: fgen.l,v 1.37 2016/03/08 20:13:44 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -1007,8 +1007,8 @@ apply_macros(YY_BUFFER_STATE yinput, const char *str)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "%s: [-d level] [-o outfile] <infile>\n",
-	getprogname());
+	(void)fprintf(stderr, "usage: %s [-d level] [-o outfile] infile\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
