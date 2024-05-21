@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2024/05/21 23:16:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -60,7 +60,6 @@
 #include <machine/trap.h>
 
 extern void savectx(struct pcb *);
-extern void switch_exit(struct proc *);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.

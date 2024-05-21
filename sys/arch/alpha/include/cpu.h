@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.73 2024/03/31 07:23:29 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.74 2024/05/21 23:16:06 jsg Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -145,7 +145,6 @@ void	proc_trampoline(void);					/* MAGIC */
 void	regdump(struct trapframe *);
 void	regtoframe(struct reg *, struct trapframe *);
 void	savectx(struct pcb *);
-void    switch_exit(struct proc *);				/* MAGIC */
 void	syscall(u_int64_t, struct trapframe *);
 void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);

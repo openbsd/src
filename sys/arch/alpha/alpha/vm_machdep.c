@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.52 2023/10/24 13:20:09 claudio Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.53 2024/05/21 23:16:06 jsg Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -59,7 +59,7 @@ cpu_exit(p)
 	/*
 	 * Deactivate the exiting address space before the vmspace
 	 * is freed.  Note that we will continue to run on this
-	 * vmspace's context until the switch to idle in switch_exit().
+	 * vmspace's context until the switch to idle in sched_exit().
 	 */
 	pmap_deactivate(p);
 	sched_exit(p);

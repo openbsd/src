@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.188 2024/05/01 12:54:27 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.189 2024/05/21 23:16:06 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -418,7 +418,6 @@ void	lgdt(struct region_descriptor *);
 
 struct pcb;
 void	savectx(struct pcb *);
-void	switch_exit(struct proc *);
 void	proc_trampoline(void);
 
 /* clock.c */
