@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.26 2018/05/03 15:47:41 zhuk Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.27 2024/05/21 11:13:08 jsg Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -99,7 +99,6 @@ struct __kvm {
 __BEGIN_HIDDEN_DECLS
 void	 _kvm_err(kvm_t *kd, const char *program, const char *fmt, ...)
 	    __attribute__((__format__ (printf, 3, 4)));
-int	 _kvm_dump_mkheader(kvm_t *kd_live, kvm_t *kd_dump);
 void	 _kvm_freevtop(kvm_t *);
 int	 _kvm_initvtop(kvm_t *);
 int	 _kvm_kvatop(kvm_t *, u_long, paddr_t *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: assertion.h,v 1.5 2003/06/26 23:19:53 deraadt Exp $ */
+/* $OpenBSD: assertion.h,v 1.6 2024/05/21 11:13:08 jsg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -156,7 +156,6 @@ extern int keynote_in_action_authorizers(void *, int);
 extern struct keynote_session *keynote_find_session(int);
 extern void keynote_keylist_free(struct keylist *);
 extern void keynote_free_env(struct environment *);
-extern int  keynote_in_authorizers(void *, int);
 extern int  keynote_sremove_assertion(int, int);
 extern unsigned int keynote_stringhash(char *, unsigned int);
 extern char *keynote_get_private_key(char *);

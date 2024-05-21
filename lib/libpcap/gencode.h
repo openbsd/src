@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.21 2020/08/03 03:40:02 dlg Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.22 2024/05/21 11:13:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -189,7 +189,6 @@ struct block *gen_pf_srnr(int);
 struct block *gen_pf_ruleset(char *);
 struct block *gen_pf_reason(int);
 struct block *gen_pf_action(int);
-struct block *gen_pf_dir(int);
 
 struct block *gen_p80211_type(int, int);
 struct block *gen_p80211_fcdir(int);
