@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.28 2024/05/21 16:09:00 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.29 2024/05/21 18:19:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -249,6 +249,7 @@ ufshci_reset(struct ufshci_softc *sc)
 	 * Reset and enable host controller
 	 */
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_HCE, UFSHCI_REG_HCE_HCE);
+
 	/* 7.1.1 Host Controller Initialization: 3) */
 	for (i = 0; i < retry; i++) {
 		hce = UFSHCI_READ_4(sc, UFSHCI_REG_HCE);
@@ -362,7 +363,6 @@ ufshci_init(struct ufshci_softc *sc)
 	 */
 
 	/* 7.1.1 Host Controller Initialization: 5) */
-	//UFSHCI_WRITE_4(sc, UFSHCI_REG_IE, UFSHCI_REG_IE_UCCE |
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_IE,
 	    UFSHCI_REG_IE_UTRCE | UFSHCI_REG_IE_UTMRCE);
 
@@ -1424,7 +1424,6 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 		DPRINTF(3, "io read\n");
 		ufshci_scsi_io(xs, SCSI_DATA_IN);
 		break;
-
 	case WRITE_COMMAND:
 	case WRITE_10:
 	case WRITE_12:
@@ -1432,17 +1431,14 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 		DPRINTF(3, "io write\n");
 		ufshci_scsi_io(xs, SCSI_DATA_OUT);
 		break;
-
 	case SYNCHRONIZE_CACHE:
 		DPRINTF(3, "sync\n");
 		ufshci_scsi_sync(xs);
 		break;
-
 	case INQUIRY:
 		DPRINTF(3, "inquiry\n");
 		ufshci_scsi_inquiry(xs);
 		break;
-
 	case READ_CAPACITY_16:
 		DPRINTF(3, "capacity16\n");
 		ufshci_scsi_capacity16(xs);
@@ -1451,7 +1447,6 @@ ufshci_scsi_cmd(struct scsi_xfer *xs)
 		DPRINTF(3, "capacity\n");
 		ufshci_scsi_capacity(xs);
 		break;
-
 	case TEST_UNIT_READY:
 	case PREVENT_ALLOW:
 	case START_STOP:
