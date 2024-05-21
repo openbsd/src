@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.27 2024/05/20 20:08:04 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.28 2024/05/21 16:09:00 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -306,7 +306,8 @@ ufshci_dmamem_alloc(struct ufshci_softc *sc, size_t size)
 	udm->udm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW |
+	    (sc->sc_cap & UFSHCI_REG_CAP_64AS) ? BUS_DMA_64BIT : 0,
 	    &udm->udm_map) != 0)
 		goto udmfree;
 
@@ -1339,7 +1340,8 @@ ufshci_ccb_alloc(struct ufshci_softc *sc, int nccbs)
 
 		if (bus_dmamap_create(sc->sc_dmat, UFSHCI_UCD_PRDT_MAX_XFER,
 		    UFSHCI_UCD_PRDT_MAX_SEGS, UFSHCI_UCD_PRDT_MAX_XFER, 0,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW |
+	    	    (sc->sc_cap & UFSHCI_REG_CAP_64AS) ? BUS_DMA_64BIT : 0,
 		    &ccb->ccb_dmamap) != 0)
 			goto free_maps;
 
