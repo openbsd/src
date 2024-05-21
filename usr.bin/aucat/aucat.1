@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.122 2024/05/12 06:24:44 jsg Exp $
+.\"	$OpenBSD: aucat.1,v 1.123 2024/05/21 05:09:29 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2024 $
+.Dd $Mdocdate: May 21 2024 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -126,7 +126,7 @@ The position is expressed as the number of samples (at device sample rate).
 Audio file type.
 The following file types are supported:
 .Pp
-.Bl -tag -width auto -compact
+.Bl -tag -width autoX -compact
 .It Cm raw
 Headerless file.
 .It Cm wav
@@ -203,12 +203,12 @@ can be controlled through MIDI
 as follows:
 a MIDI channel is assigned to each stream, and the volume
 is changed using the standard volume controller (number 7).
-.Pp
 The master volume can be changed using the standard master volume
 system exclusive message.
 .Pp
 All audio files are controlled by the following MMC messages:
-.Bl -tag -width relocate -offset indent
+.Pp
+.Bl -tag -width relocateX -offset indent -compact
 .It relocate
 All files are relocated to the requested time position.
 If it is beyond the end of a file, the file is temporarily
