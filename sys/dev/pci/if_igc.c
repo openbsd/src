@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.23 2024/05/07 18:35:23 jan Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.24 2024/05/21 11:19:39 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -107,21 +107,21 @@ void	igc_setup_interface(struct igc_softc *);
 
 void	igc_init(void *);
 void	igc_start(struct ifqueue *);
-int	igc_txeof(struct tx_ring *);
+int	igc_txeof(struct igc_txring *);
 void	igc_stop(struct igc_softc *);
 int	igc_ioctl(struct ifnet *, u_long, caddr_t);
 int	igc_rxrinfo(struct igc_softc *, struct if_rxrinfo *);
-int	igc_rxfill(struct rx_ring *);
+int	igc_rxfill(struct igc_rxring *);
 void	igc_rxrefill(void *);
-int	igc_rxeof(struct rx_ring *);
+int	igc_rxeof(struct igc_rxring *);
 void	igc_rx_checksum(uint32_t, struct mbuf *, uint32_t);
 void	igc_watchdog(struct ifnet *);
 void	igc_media_status(struct ifnet *, struct ifmediareq *);
 int	igc_media_change(struct ifnet *);
 void	igc_iff(struct igc_softc *);
 void	igc_update_link_status(struct igc_softc *);
-int	igc_get_buf(struct rx_ring *, int);
-int	igc_tx_ctx_setup(struct tx_ring *, struct mbuf *, int, uint32_t *,
+int	igc_get_buf(struct igc_rxring *, int);
+int	igc_tx_ctx_setup(struct igc_txring *, struct mbuf *, int, uint32_t *,
 	    uint32_t *);
 
 void	igc_configure_queues(struct igc_softc *);
@@ -132,18 +132,18 @@ void	igc_disable_intr(struct igc_softc *);
 int	igc_intr_link(void *);
 int	igc_intr_queue(void *);
 
-int	igc_allocate_transmit_buffers(struct tx_ring *);
+int	igc_allocate_transmit_buffers(struct igc_txring *);
 int	igc_setup_transmit_structures(struct igc_softc *);
-int	igc_setup_transmit_ring(struct tx_ring *);
+int	igc_setup_transmit_ring(struct igc_txring *);
 void	igc_initialize_transmit_unit(struct igc_softc *);
 void	igc_free_transmit_structures(struct igc_softc *);
-void	igc_free_transmit_buffers(struct tx_ring *);
-int	igc_allocate_receive_buffers(struct rx_ring *);
+void	igc_free_transmit_buffers(struct igc_txring *);
+int	igc_allocate_receive_buffers(struct igc_rxring *);
 int	igc_setup_receive_structures(struct igc_softc *);
-int	igc_setup_receive_ring(struct rx_ring *);
+int	igc_setup_receive_ring(struct igc_rxring *);
 void	igc_initialize_receive_unit(struct igc_softc *);
 void	igc_free_receive_structures(struct igc_softc *);
-void	igc_free_receive_buffers(struct rx_ring *);
+void	igc_free_receive_buffers(struct igc_rxring *);
 void	igc_initialize_rss_mapping(struct igc_softc *);
 
 void	igc_get_hw_control(struct igc_softc *);
@@ -374,8 +374,8 @@ int
 igc_allocate_queues(struct igc_softc *sc)
 {
 	struct igc_queue *iq;
-	struct tx_ring *txr;
-	struct rx_ring *rxr;
+	struct igc_txring *txr;
+	struct igc_rxring *rxr;
 	int i, rsize, rxconf, tsize, txconf;
 
 	/* Allocate the top level queue structs. */
@@ -387,7 +387,7 @@ igc_allocate_queues(struct igc_softc *sc)
 	}
 
 	/* Allocate the TX ring. */
-	sc->tx_rings = mallocarray(sc->sc_nqueues, sizeof(struct tx_ring),
+	sc->tx_rings = mallocarray(sc->sc_nqueues, sizeof(struct igc_txring),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->tx_rings == NULL) {
 		printf("%s: unable to allocate TX ring\n", DEVNAME(sc));
@@ -395,7 +395,7 @@ igc_allocate_queues(struct igc_softc *sc)
 	}
 	
 	/* Allocate the RX ring. */
-	sc->rx_rings = mallocarray(sc->sc_nqueues, sizeof(struct rx_ring),
+	sc->rx_rings = mallocarray(sc->sc_nqueues, sizeof(struct igc_rxring),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->rx_rings == NULL) {
 		printf("%s: unable to allocate RX ring\n", DEVNAME(sc));
@@ -456,10 +456,12 @@ err_rx_desc:
 err_tx_desc:
 	for (txr = sc->tx_rings; txconf > 0; txr++, txconf--)
 		igc_dma_free(sc, &txr->txdma);
-	free(sc->rx_rings, M_DEVBUF, sc->sc_nqueues * sizeof(struct rx_ring));
+	free(sc->rx_rings, M_DEVBUF,
+	    sc->sc_nqueues * sizeof(struct igc_rxring));
 	sc->rx_rings = NULL;
 rx_fail:
-	free(sc->tx_rings, M_DEVBUF, sc->sc_nqueues * sizeof(struct tx_ring));
+	free(sc->tx_rings, M_DEVBUF,
+	    sc->sc_nqueues * sizeof(struct igc_txring));
 	sc->tx_rings = NULL;
 fail:
 	return ENOMEM;
@@ -833,8 +835,8 @@ igc_setup_interface(struct igc_softc *sc)
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct ifqueue *ifq = ifp->if_ifqs[i];
 		struct ifiqueue *ifiq = ifp->if_iqs[i];
-		struct tx_ring *txr = &sc->tx_rings[i];
-		struct rx_ring *rxr = &sc->rx_rings[i];
+		struct igc_txring *txr = &sc->tx_rings[i];
+		struct igc_rxring *rxr = &sc->rx_rings[i];
 
 		ifq->ifq_softc = txr;
 		txr->ifq = ifq;
@@ -849,7 +851,7 @@ igc_init(void *arg)
 {
 	struct igc_softc *sc = (struct igc_softc *)arg;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct rx_ring *rxr;
+	struct igc_rxring *rxr;
 	uint32_t ctrl = 0;
 	int i, s;
 
@@ -959,7 +961,7 @@ igc_start(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
 	struct igc_softc *sc = ifp->if_softc;
-	struct tx_ring *txr = ifq->ifq_softc;
+	struct igc_txring *txr = ifq->ifq_softc;
 	union igc_adv_tx_desc *txdesc;
 	struct igc_tx_buf *txbuf;
 	bus_dmamap_t map;
@@ -1067,7 +1069,7 @@ igc_start(struct ifqueue *ifq)
 }
 
 int
-igc_txeof(struct tx_ring *txr)
+igc_txeof(struct igc_txring *txr)
 {
 	struct igc_softc *sc = txr->sc;
 	struct ifqueue *ifq = txr->ifq;
@@ -1223,7 +1225,7 @@ int
 igc_rxrinfo(struct igc_softc *sc, struct if_rxrinfo *ifri)
 {
 	struct if_rxring_info *ifr;
-	struct rx_ring *rxr;
+	struct igc_rxring *rxr;
 	int error, i, n = 0;
 
 	ifr = mallocarray(sc->sc_nqueues, sizeof(*ifr), M_DEVBUF,
@@ -1244,7 +1246,7 @@ igc_rxrinfo(struct igc_softc *sc, struct if_rxrinfo *ifri)
 }
 
 int
-igc_rxfill(struct rx_ring *rxr)
+igc_rxfill(struct igc_rxring *rxr)
 {
 	struct igc_softc *sc = rxr->sc;
 	int i, post = 0;
@@ -1277,7 +1279,7 @@ igc_rxfill(struct rx_ring *rxr)
 void
 igc_rxrefill(void *xrxr)
 {
-	struct rx_ring *rxr = xrxr;
+	struct igc_rxring *rxr = xrxr;
 	struct igc_softc *sc = rxr->sc;
 
 	if (igc_rxfill(rxr)) {
@@ -1296,7 +1298,7 @@ igc_rxrefill(void *xrxr)
  *
  *********************************************************************/
 int
-igc_rxeof(struct rx_ring *rxr)
+igc_rxeof(struct igc_rxring *rxr)
 {
 	struct igc_softc *sc = rxr->sc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -1657,7 +1659,7 @@ igc_update_link_status(struct igc_softc *sc)
  *
  **********************************************************************/
 int
-igc_get_buf(struct rx_ring *rxr, int i)
+igc_get_buf(struct igc_rxring *rxr, int i)
 {
 	struct igc_softc *sc = rxr->sc;
 	struct igc_rx_buf *rxbuf;
@@ -1812,8 +1814,8 @@ igc_intr_queue(void *arg)
 	struct igc_queue *iq = arg;
 	struct igc_softc *sc = iq->sc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct rx_ring *rxr = iq->rxr;
-	struct tx_ring *txr = iq->txr;
+	struct igc_rxring *rxr = iq->rxr;
+	struct igc_txring *txr = iq->txr;
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		igc_txeof(txr);
@@ -1833,7 +1835,7 @@ igc_intr_queue(void *arg)
  *
  **********************************************************************/
 int
-igc_allocate_transmit_buffers(struct tx_ring *txr)
+igc_allocate_transmit_buffers(struct igc_txring *txr)
 {
 	struct igc_softc *sc = txr->sc;
 	struct igc_tx_buf *txbuf;
@@ -1875,7 +1877,7 @@ fail:
 int
 igc_setup_transmit_structures(struct igc_softc *sc)
 {
-	struct tx_ring *txr = sc->tx_rings;
+	struct igc_txring *txr = sc->tx_rings;
 	int i;
 
 	for (i = 0; i < sc->sc_nqueues; i++, txr++) {
@@ -1895,7 +1897,7 @@ fail:
  *
  **********************************************************************/
 int
-igc_setup_transmit_ring(struct tx_ring *txr)
+igc_setup_transmit_ring(struct igc_txring *txr)
 {
 	struct igc_softc *sc = txr->sc;
 
@@ -1927,7 +1929,7 @@ void
 igc_initialize_transmit_unit(struct igc_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct tx_ring *txr;
+	struct igc_txring *txr;
 	struct igc_hw *hw = &sc->hw;
 	uint64_t bus_addr;
 	uint32_t tctl, txdctl = 0;
@@ -1981,7 +1983,7 @@ igc_initialize_transmit_unit(struct igc_softc *sc)
 void
 igc_free_transmit_structures(struct igc_softc *sc)
 {
-	struct tx_ring *txr = sc->tx_rings;
+	struct igc_txring *txr = sc->tx_rings;
 	int i;
 
 	for (i = 0; i < sc->sc_nqueues; i++, txr++)
@@ -1994,7 +1996,7 @@ igc_free_transmit_structures(struct igc_softc *sc)
  *
  **********************************************************************/
 void
-igc_free_transmit_buffers(struct tx_ring *txr)
+igc_free_transmit_buffers(struct igc_txring *txr)
 {
 	struct igc_softc *sc = txr->sc;
 	struct igc_tx_buf *txbuf;
@@ -2035,7 +2037,7 @@ igc_free_transmit_buffers(struct tx_ring *txr)
  **********************************************************************/
 
 int
-igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
+igc_tx_ctx_setup(struct igc_txring *txr, struct mbuf *mp, int prod,
     uint32_t *cmd_type_len, uint32_t *olinfo_status)
 {
 	struct ether_extracted ext;
@@ -2140,7 +2142,7 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
  *
  **********************************************************************/
 int
-igc_allocate_receive_buffers(struct rx_ring *rxr)
+igc_allocate_receive_buffers(struct igc_rxring *rxr)
 {
 	struct igc_softc *sc = rxr->sc;
 	struct igc_rx_buf *rxbuf;
@@ -2183,7 +2185,7 @@ fail:
 int
 igc_setup_receive_structures(struct igc_softc *sc)
 {
-	struct rx_ring *rxr = sc->rx_rings;
+	struct igc_rxring *rxr = sc->rx_rings;
 	int i;
 
 	for (i = 0; i < sc->sc_nqueues; i++, rxr++) {
@@ -2203,7 +2205,7 @@ fail:
  *
  **********************************************************************/
 int
-igc_setup_receive_ring(struct rx_ring *rxr)
+igc_setup_receive_ring(struct igc_rxring *rxr)
 {
 	struct igc_softc *sc = rxr->sc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -2238,7 +2240,7 @@ igc_setup_receive_ring(struct rx_ring *rxr)
 void
 igc_initialize_receive_unit(struct igc_softc *sc)
 {
-        struct rx_ring *rxr = sc->rx_rings;
+        struct igc_rxring *rxr = sc->rx_rings;
         struct igc_hw *hw = &sc->hw;
 	uint32_t rctl, rxcsum, srrctl = 0;
 	int i;
@@ -2342,7 +2344,7 @@ igc_initialize_receive_unit(struct igc_softc *sc)
 void
 igc_free_receive_structures(struct igc_softc *sc)
 {
-	struct rx_ring *rxr;
+	struct igc_rxring *rxr;
 	int i;
 
 	for (i = 0, rxr = sc->rx_rings; i < sc->sc_nqueues; i++, rxr++)
@@ -2358,7 +2360,7 @@ igc_free_receive_structures(struct igc_softc *sc)
  *
  **********************************************************************/
 void
-igc_free_receive_buffers(struct rx_ring *rxr)
+igc_free_receive_buffers(struct igc_rxring *rxr)
 {
 	struct igc_softc *sc = rxr->sc;
 	struct igc_rx_buf *rxbuf;

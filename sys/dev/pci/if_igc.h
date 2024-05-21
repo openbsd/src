@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.h,v 1.3 2024/05/06 04:25:52 dlg Exp $	*/
+/*	$OpenBSD: if_igc.h,v 1.4 2024/05/21 11:19:39 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -250,14 +250,14 @@ struct igc_queue {
 	char			name[16];
 	pci_intr_handle_t	ih;
 	void			*tag;
-	struct tx_ring		*txr;
-	struct rx_ring		*rxr;
+	struct igc_txring	*txr;
+	struct igc_rxring	*rxr;
 };
 
 /*
  * The transmit ring, one per tx queue.
  */
-struct tx_ring {
+struct igc_txring {
 	struct igc_softc	*sc;
 	struct ifqueue		*ifq;
 	uint32_t		me;
@@ -273,7 +273,7 @@ struct tx_ring {
 /*
  * The Receive ring, one per rx queue.
  */
-struct rx_ring {
+struct igc_rxring {
 	struct igc_softc	*sc;
 	struct ifiqueue		*ifiq;
 	uint32_t		me;
@@ -316,8 +316,8 @@ struct igc_softc {
 	unsigned int		sc_nqueues;
 	struct igc_queue	*queues;
 
-	struct tx_ring		*tx_rings;
-	struct rx_ring		*rx_rings;
+	struct igc_txring	*tx_rings;
+	struct igc_rxring	*rx_rings;
 
 	/* Multicast array memory */
 	uint8_t			*mta;
