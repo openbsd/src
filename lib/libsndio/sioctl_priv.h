@@ -1,4 +1,4 @@
-/*	$OpenBSD: sioctl_priv.h,v 1.2 2022/12/27 17:10:07 jmc Exp $	*/
+/*	$OpenBSD: sioctl_priv.h,v 1.3 2024/05/21 06:07:06 jsg Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -49,8 +49,6 @@ struct sioctl_ops {
 };
 
 struct sioctl_hdl *_sioctl_aucat_open(const char *, unsigned int, int);
-struct sioctl_hdl *_sioctl_obsd_open(const char *, unsigned int, int);
-struct sioctl_hdl *_sioctl_fake_open(const char *, unsigned int, int);
 struct sioctl_hdl *_sioctl_sun_open(const char *, unsigned int, int);
 void _sioctl_create(struct sioctl_hdl *,
     struct sioctl_ops *, unsigned int, int);

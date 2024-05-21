@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_priv.h,v 1.11 2022/12/27 17:10:07 jmc Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.12 2024/05/21 06:07:06 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -69,7 +69,6 @@ struct sio_ops {
 struct sio_hdl *_sio_aucat_open(const char *, unsigned, int);
 struct sio_hdl *_sio_sun_open(const char *, unsigned, int);
 void _sio_create(struct sio_hdl *, struct sio_ops *, unsigned, int);
-void _sio_destroy(struct sio_hdl *);
 void _sio_onmove_cb(struct sio_hdl *, int);
 void _sio_onvol_cb(struct sio_hdl *, unsigned);
 #ifdef DEBUG
