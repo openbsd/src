@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.265 2024/04/21 17:32:10 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.266 2024/05/21 15:12:25 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -743,8 +743,12 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	/*
 	 * We are done if we have simply modified an existing address.
 	 */
-	if (!hostIsNew)
+	if (!hostIsNew) {
+		/* DAD sends RTM_CHGADDRATTR when done. */
+		if (!(ia6->ia6_flags & IN6_IFF_TENTATIVE))
+			rtm_addr(RTM_CHGADDRATTR, &ia6->ia_ifa);
 		return (error);
+	}
 
 	/*
 	 * Beyond this point, we should call in6_purgeaddr upon an error,
