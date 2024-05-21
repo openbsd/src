@@ -1,4 +1,4 @@
-/* $OpenBSD: if.h,v 1.7 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: if.h,v 1.8 2024/05/21 05:00:47 jsg Exp $	 */
 /* $EOM: if.h,v 1.2 1998/07/07 23:35:58 niklas Exp $	 */
 
 /*
@@ -35,9 +35,7 @@
 #include <sys/types.h>
 
 struct ifreq;
-struct ifconf;
 
 extern int      if_map(int (*) (char *, struct sockaddr *, void *), void *);
-extern int      siocgifconf(struct ifconf *);
 
 #endif				/* _IF_H_ */

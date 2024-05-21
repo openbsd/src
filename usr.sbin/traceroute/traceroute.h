@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.h,v 1.7 2021/09/03 09:13:00 florian Exp $	*/
+/*	$OpenBSD: traceroute.h,v 1.8 2024/05/21 05:00:48 jsg Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -166,8 +166,5 @@ extern int		 datalen;  /* How much data */
 extern char		*hostname;
 
 extern u_int16_t	 srcport;
-
-extern int verbose;
-extern int dump;
 
 extern char *__progname;

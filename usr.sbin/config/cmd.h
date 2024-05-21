@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.8 2019/08/11 17:08:33 deraadt Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.9 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -66,7 +66,6 @@ int Xlist(cmd_t *);
 int Xshow(cmd_t *);
 int Xexit(cmd_t *);
 int Xquit(cmd_t *);
-int Xtimezone(cmd_t *);
 int Xnkmempg(cmd_t *);
 
 #endif /* _CMD_H */

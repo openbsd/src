@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.34 2020/08/17 07:09:25 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.35 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -84,7 +84,6 @@ void gre_print_1(const u_char *, u_int);
 void gre_print_pptp(const u_char *, u_int, uint16_t);
 void gre_print_eoip(const u_char *, u_int, uint16_t);
 void gre_print_erspan(uint16_t, const u_char *, u_int);
-void gre_print_erspan3(const u_char *, u_int);
 void gre_sre_print(u_int16_t, u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_ip_print(u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_asn_print(u_int8_t, u_int8_t, const u_char *, u_int);

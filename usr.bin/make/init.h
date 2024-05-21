@@ -1,6 +1,6 @@
 #ifndef INIT_H
 #define INIT_H
-/*	$OpenBSD: init.h,v 1.3 2010/07/19 19:46:44 espie Exp $ */
+/*	$OpenBSD: init.h,v 1.4 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -32,6 +32,5 @@
  * modules.
  */
 extern void Init(void);
-extern void End(void);
 
 #endif

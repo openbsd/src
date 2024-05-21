@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2016/08/27 02:00:10 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2024/05/21 05:00:47 jsg Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -1131,7 +1131,7 @@ genchar(int type)
 / MODULES CALLED: signal(), wclear(), noecho(), cbreak(), initscr(), 
 /	wrefresh()
 /
-/ GLOBAL INPUTS: *stdscr, ill_sig()
+/ GLOBAL INPUTS: *stdscr
 /
 / GLOBAL OUTPUTS: Windows
 /

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.93 2023/06/20 11:52:08 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.94 2024/05/21 05:00:47 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -46,7 +46,6 @@ struct gpt_header	gh;
 struct gpt_partition	gp[NGPTPARTITIONS];
 
 const struct gpt_partition * const *sort_gpt(void);
-int			  lba_start_cmp(const void *e1, const void *e2);
 int			  lba_free(uint64_t *, uint64_t *);
 int			  add_partition(const uint8_t *, const char *, uint64_t);
 int			  find_partition(const uint8_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.18 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.19 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -349,7 +349,6 @@ void	session_config(struct session *, struct session_config *);
 void	session_task_issue(struct session *, struct task *);
 void	session_logout_issue(struct session *, struct task *);
 void	session_schedule(struct session *);
-void	session_task_login(struct connection *);
 void	session_fsm(struct session *, enum s_event, struct connection *,
 	    unsigned int);
 

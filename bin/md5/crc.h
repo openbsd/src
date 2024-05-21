@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.h,v 1.4 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: crc.h,v 1.5 2024/05/21 05:00:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <millert@openbsd.org>
@@ -28,4 +28,3 @@ void	 CKSUM_Init(CKSUM_CTX *);
 void	 CKSUM_Update(CKSUM_CTX *, const u_int8_t *, size_t);
 void	 CKSUM_Final(CKSUM_CTX *);
 char    *CKSUM_End(CKSUM_CTX *, char *);
-char    *CKSUM_Data(const u_int8_t *, size_t, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: phantglobs.h,v 1.7 2016/01/06 14:28:09 mestre Exp $	*/
+/*	$OpenBSD: phantglobs.h,v 1.8 2024/05/21 05:00:47 jsg Exp $	*/
 /*	$NetBSD: phantglobs.h,v 1.3 1995/04/24 12:24:39 cgd Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ void	genchar(int);
 int	getanswer(char *, bool);
 void	getstring(char *, int);
 void	hitmonster(double);
-void	ill_sig(int);
 double	infloat(void);
 void	initialstate(void);
 void	initplayer(struct player *);

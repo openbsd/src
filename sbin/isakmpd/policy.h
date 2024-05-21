@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.h,v 1.17 2007/08/05 09:43:09 tom Exp $	 */
+/* $OpenBSD: policy.h,v 1.18 2024/05/21 05:00:47 jsg Exp $	 */
 /* $EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
 
 /*
@@ -38,10 +38,7 @@
 
 extern int	ignore_policy;
 extern int      policy_asserts_num;
-extern int      x509_policy_asserts_num;
-extern int      x509_policy_asserts_num_alloc;
 extern char   **policy_asserts;
-extern char   **x509_policy_asserts;
 extern struct exchange *policy_exchange;
 extern struct sa *policy_sa;
 extern struct sa *policy_isakmp_sa;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.22 2023/04/21 13:39:37 op Exp $ */
+/* $OpenBSD: cmode.c,v 1.23 2024/05/21 05:00:48 jsg Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -35,7 +35,6 @@ static struct line *findnonblank(struct line *);
 static int isnonblank(const struct line *, int);
 
 void cmode_init(void);
-int cc_comment(int, int);
 
 /* Keymaps */
 

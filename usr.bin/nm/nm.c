@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.55 2022/12/04 23:50:49 cheloha Exp $	*/
+/*	$OpenBSD: nm.c,v 1.56 2024/05/21 05:00:48 jsg Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -84,7 +84,6 @@ int rev;
 int fname(const void *, const void *);
 int rname(const void *, const void *);
 int value(const void *, const void *);
-char *otherstring(struct xnlist *);
 int (*sfunc)(const void *, const void *) = fname;
 char typeletter(struct xnlist *);
 int mmbr_name(struct ar_hdr *, char **, int, int *, FILE *);

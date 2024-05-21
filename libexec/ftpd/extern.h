@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.24 2024/05/20 01:05:17 jsg Exp $	*/
+/*	$OpenBSD: extern.h,v 1.25 2024/05/21 05:00:47 jsg Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -61,8 +61,6 @@
  *	@(#)extern.h	8.2 (Berkeley) 4/4/94
  */
 
-void	blkfree(char **);
-char  **copyblk(char **);
 void	cwd(char *);
 void	delete(const char *);
 void	dologout(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.119 2024/02/06 15:36:11 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.120 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -456,7 +456,6 @@ RB_PROTOTYPE(snmp_messages, snmp_message, sm_entry, snmp_messagecmp)
 
 /* trap.c */
 void		 trap_init(void);
-int		 trap_imsg(struct imsgev *, pid_t);
 int		 trap_send(struct ber_oid *, struct ber_element *);
 
 /* smi.c */

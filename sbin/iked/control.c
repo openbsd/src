@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.38 2024/01/24 10:09:07 tobhe Exp $	*/
+/*	$OpenBSD: control.c,v 1.39 2024/05/21 05:00:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -44,7 +44,6 @@ struct ctl_conn
 	*control_connbyfd(int);
 void	 control_close(int, struct control_sock *);
 void	 control_dispatch_imsg(int, short, void *);
-void	 control_dispatch_parent(int, short, void *);
 void	 control_imsg_forward(struct imsg *);
 void	 control_imsg_forward_peerid(struct imsg *);
 void	 control_run(struct privsep *, struct privsep_proc *, void *);

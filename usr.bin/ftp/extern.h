@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.53 2022/09/15 12:47:10 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.54 2024/05/21 05:00:48 jsg Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -70,7 +70,6 @@ void	abortrecv(int);
 void	alarmtimer(int);
 int	another(int *, char ***, const char *);
 int	auto_fetch(int, char **, char *);
-void	blkfree(char **);
 void	cdup(int, char **);
 void	cmdabort(int);
 void	cmdscanner(int);

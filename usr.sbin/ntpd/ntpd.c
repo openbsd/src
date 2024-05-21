@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.132 2021/07/16 14:36:09 mestre Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.133 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,6 @@ int		auto_preconditions(const struct ntpd_conf *);
 int		main(int, char *[]);
 void		check_child(void);
 int		dispatch_imsg(struct ntpd_conf *, int, char **);
-int		dispatch_imsg_ctl(struct ntpd_conf *);
 void		reset_adjtime(void);
 int		ntpd_adjtime(double);
 void		ntpd_adjfreq(double, int);

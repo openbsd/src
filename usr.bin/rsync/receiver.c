@@ -1,4 +1,4 @@
-/*	$OpenBSD: receiver.c,v 1.32 2023/11/27 11:30:49 claudio Exp $ */
+/*	$OpenBSD: receiver.c,v 1.33 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -281,7 +281,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	if (sess->opts->del &&
 	    sess->opts->recursive &&
 	    !flist_gen_dels(sess, root, &dfl, &dflsz, fl, flsz)) {
-		ERRX1("flist_gen_local");
+		ERRX1("rsync_receiver");
 		goto out;
 	}
 

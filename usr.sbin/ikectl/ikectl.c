@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.30 2022/12/04 11:54:31 tobhe Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.31 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -45,7 +45,6 @@ struct imsgname {
 };
 
 struct imsgname *monitor_lookup(uint8_t);
-void		 monitor_id(struct imsg *);
 int		 monitor(struct imsg *);
 
 int		 show_string(struct imsg *);

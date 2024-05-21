@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.h,v 1.3 2013/12/05 14:20:53 jca Exp $ */
+/* $OpenBSD: hash.h,v 1.4 2024/05/21 05:00:48 jsg Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -60,7 +60,6 @@ struct group_entry {
 
 #define LINSIZ 1024 * 10
 
-extern void store( struct group_entry ** , char *, char * );
 extern void mstore( struct member_entry ** , char *, char *, char * );
 extern void ngstore( struct group_entry **, char *, char * );
 extern char *lookup( struct group_entry **, char * );

@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.20 2020/09/14 16:00:17 florian Exp $ */
+/*	$Id: extern.h,v 1.21 2024/05/21 05:00:48 jsg Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -241,7 +241,6 @@ int		 checkexit_ext(int *, pid_t, enum comp);
  * Base64 and URL encoding.
  * Returns a buffer or NULL on allocation error.
  */
-size_t		 base64buf(char *, const char *, size_t);
 size_t		 base64len(size_t);
 char		*base64buf_url(const char *, size_t);
 

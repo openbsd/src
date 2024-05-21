@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.h,v 1.4 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: ike_phase_1.h,v 1.5 2024/05/21 05:00:47 jsg Exp $	 */
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -47,7 +47,6 @@ extern int      ike_phase_1_responder_send_SA(struct message *);
 extern int      ike_phase_1_responder_send_ID_AUTH(struct message *);
 extern int      ike_phase_1_send_AUTH(struct message *);
 extern int      ike_phase_1_send_ID(struct message *);
-extern int      ike_phase_1_send_ID_AUTH(struct message *);
 extern int      ike_phase_1_send_KE_NONCE(struct message *, size_t);
 
 #endif				/* _IKE_PHASE_1_H_ */

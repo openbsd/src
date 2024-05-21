@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.26 2024/05/18 09:02:34 jsg Exp $	*/
+/*	$OpenBSD: systat.h,v 1.27 2024/05/21 05:00:48 jsg Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -52,13 +52,10 @@ extern char	**dr_name;
 extern char	hostname[];
 extern double	avenrun[3];
 extern kvm_t	*kd;
-extern long	ntext;
 extern int	*dk_select;
 extern int	dk_ndrive;
 extern int	hz;
 extern double	naptime;
-extern size_t	nhosts;
-extern size_t	nports;
 extern int	protos;
 extern int	verbose;
 extern int	nflag;

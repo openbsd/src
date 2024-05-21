@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.18 2017/08/29 16:47:33 otto Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.19 2024/05/21 05:00:48 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -223,7 +223,6 @@ int			 rcs_head_set(RCSFILE *, RCSNUM *);
 const RCSNUM		*rcs_branch_get(RCSFILE *);
 int			 rcs_access_add(RCSFILE *, const char *);
 int			 rcs_access_remove(RCSFILE *, const char *);
-int			 rcs_access_check(RCSFILE *, const char *);
 struct rcs_delta	*rcs_findrev(RCSFILE *, RCSNUM *);
 int			 rcs_sym_add(RCSFILE *, const char *, RCSNUM *);
 int			 rcs_sym_remove(RCSFILE *, const char *);
@@ -251,8 +250,6 @@ void			 rcs_write(RCSFILE *);
 void			 rcs_delta_stats(struct rcs_delta *, int *, int *);
 
 int	rcs_kflag_get(const char *);
-void	rcs_kflag_usage(void);
-int	rcs_kw_expand(RCSFILE *, u_char *, size_t, size_t *);
 
 RCSNUM	*rcsnum_alloc(void);
 RCSNUM	*rcsnum_parse(const char *);

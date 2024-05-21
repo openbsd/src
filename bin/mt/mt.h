@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.h,v 1.3 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: mt.h,v 1.4 2024/05/21 05:00:47 jsg Exp $	*/
 /*	$NetBSD: mt.h,v 1.1 1996/03/05 20:39:36 scottr Exp $	*/
 
 /*-
@@ -36,8 +36,6 @@ int	rmthost(char *host);
 int	rmtopen(char *tape, int mode);
 int	rmtioctl(int command, int count);
 struct mtget *rmtstatus(void);
-
-void	interrupt(int signo);	/* in case operator bangs on console */
 
 /*
  *	Exit status codes

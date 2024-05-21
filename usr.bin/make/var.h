@@ -1,6 +1,6 @@
 #ifndef VAR_H
 #define VAR_H
-/* $OpenBSD: var.h,v 1.20 2019/12/21 15:31:54 espie Exp $ */
+/* $OpenBSD: var.h,v 1.21 2024/05/21 05:00:48 jsg Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -75,9 +75,6 @@ extern void Var_Deletei(const char *, const char *);
 /* SymTable_Init(t);
  *	Inits the local symtable in a GNode. */
 extern void SymTable_Init(SymTable *);
-/* SymTable_destroy(t);
- *	Destroys the local symtable in a GNode. */
-extern void SymTable_Destroy(SymTable *);
 
 /* Several ways to parse a variable specification. */
 /* value = Var_Parse(varspec, ctxt, undef_is_bad, &length, &freeit);

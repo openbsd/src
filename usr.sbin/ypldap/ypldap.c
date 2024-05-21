@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.24 2023/03/31 03:38:26 jmatthew Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.25 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -51,7 +51,6 @@ void		 main_trash_update(struct env *);
 void		 main_end_update(struct env *);
 int		 main_create_user_groups(struct env *);
 void		 purge_config(struct env *);
-void		 reconfigure(struct env *);
 
 int		 pipe_main2client[2];
 

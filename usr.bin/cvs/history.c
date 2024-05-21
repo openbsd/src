@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.45 2017/07/20 13:39:11 okan Exp $	*/
+/*	$OpenBSD: history.c,v 1.46 2024/05/21 05:00:48 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -28,8 +28,6 @@
 
 #include "cvs.h"
 #include "remote.h"
-
-void	cvs_history_local(struct cvs_file *);
 
 static void	history_compress(char *, const char *);
 

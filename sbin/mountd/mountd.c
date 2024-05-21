@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.91 2023/03/02 16:58:43 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.92 2024/05/21 05:00:47 jsg Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -181,7 +181,6 @@ void	free_host(struct hostlist *);
 void	new_exportlist(int signo);
 void	get_exportlist(void);
 int	get_host(char *, struct grouplist *, struct grouplist *);
-int	get_num(char *);
 struct hostlist *get_ht(void);
 int	get_line(void);
 void	get_mountlist(void);

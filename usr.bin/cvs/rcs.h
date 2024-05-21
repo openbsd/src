@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.103 2017/08/28 19:33:20 otto Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.104 2024/05/21 05:00:48 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -211,7 +211,6 @@ const RCSNUM		*rcs_branch_get(RCSFILE *);
 int			 rcs_branch_set(RCSFILE *, const RCSNUM *);
 int			 rcs_access_add(RCSFILE *, const char *);
 int			 rcs_access_remove(RCSFILE *, const char *);
-int			 rcs_access_check(RCSFILE *, const char *);
 struct rcs_delta	*rcs_findrev(RCSFILE *, RCSNUM *);
 int			 rcs_sym_add(RCSFILE *, const char *, RCSNUM *);
 int			 rcs_sym_check(const char *);
@@ -229,7 +228,6 @@ void			 rcs_desc_set(RCSFILE *, const char *);
 const char		*rcs_comment_lookup(const char *);
 const char		*rcs_comment_get(RCSFILE *);
 void			 rcs_comment_set(RCSFILE *, const char *);
-BUF			*rcs_kwexp_buf(BUF *, RCSFILE *, RCSNUM *);
 void			 rcs_kwexp_set(RCSFILE *, int);
 int			 rcs_kwexp_get(RCSFILE *);
 int			 rcs_rev_add(RCSFILE *, RCSNUM *, const char *, time_t,
@@ -240,7 +238,6 @@ int			 rcs_rev_remove(RCSFILE *, RCSNUM *);
 int			 rcs_state_set(RCSFILE *, RCSNUM *, const char *);
 const char		*rcs_state_get(RCSFILE *, RCSNUM *);
 int			 rcs_state_check(const char *);
-RCSNUM			*rcs_tag_resolve(RCSFILE *, const char *);
 void			 rcs_write(RCSFILE *);
 int			 rcs_rev_write_stmp(RCSFILE *,  RCSNUM *, char *, int);
 void			 rcs_rev_write_fd(RCSFILE *, RCSNUM *, int, int);
@@ -252,8 +249,6 @@ BUF			*rcs_rev_getbuf(RCSFILE *, RCSNUM *, int);
 void			 rcs_delta_stats(struct rcs_delta *, int *, int *);
 
 int	rcs_kflag_get(const char *);
-void	rcs_kflag_usage(void);
-int	rcs_kw_expand(RCSFILE *, u_char *, size_t, size_t *);
 
 RCSNUM	*rcsnum_alloc(void);
 RCSNUM	*rcsnum_parse(const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.6 2023/09/08 05:56:22 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.7 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -157,9 +157,6 @@ struct radius_query {
 	((_m)->fd >= 0 &&					\
 	    ((_m)->capabilities & RADIUSD_MODULE_CAP_RESDECO) != 0)
 
-extern struct radiusd_module mod_standard;
-extern struct radiusd_module mod_radius;
-
 int	 parse_config(const char *, struct radiusd *);
 void	 radiusd_conf_init(struct radiusd *);
 
@@ -169,7 +166,6 @@ struct radiusd_module	*radiusd_module_load(struct radiusd *, const char *,
 void			 radiusd_module_unload(struct radiusd_module *);
 
 void		 radiusd_access_request_answer(struct radius_query *);
-int		 radiusd_access_request_fixup(struct radius_query *);
 void		 radiusd_access_request_aborted(struct radius_query *);
 void		 radius_attr_hide(const char *, const char *, const u_char *,
 		    u_char *, int);

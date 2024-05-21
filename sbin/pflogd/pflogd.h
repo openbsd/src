@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.h,v 1.7 2017/09/09 13:02:52 brynet Exp $ */
+/*	$OpenBSD: pflogd.h,v 1.8 2024/05/21 05:00:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -38,8 +38,6 @@ void	priv_init(int, int, char **);
 int	priv_init_pcap(int);
 int	priv_set_snaplen(int snaplen);
 int	priv_open_log(void);
-int	priv_move_log(void);
-int	priv_pcap_stats(struct pcap_stat *);
 
 int   init_pcap(void);
 void set_pcap_filter(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.25 2023/03/08 04:43:05 guenther Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.26 2024/05/21 05:00:47 jsg Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -30,7 +30,6 @@
 
 void rquota_service(struct svc_req *request, SVCXPRT *transp);
 void sendquota(struct svc_req *request, SVCXPRT *transp);
-void printerr_reply(SVCXPRT *transp);
 void initfs(void);
 int getfsquota(long id, char *path, struct dqblk *dqblk);
 int hasquota(struct fstab *fs, char **qfnamep);

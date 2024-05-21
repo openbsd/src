@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.68 2020/11/10 16:42:17 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.69 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -325,7 +325,6 @@ extern char		*path_dhcpd_conf;
 extern char		*path_dhcpd_db;
 
 int	main(int, char *[]);
-void	cleanup(void);
 void	lease_pinged(struct iaddr, u_int8_t *, int);
 void	lease_ping_timeout(void *);
 void	periodic_scan(void *);
@@ -333,8 +332,6 @@ void	periodic_scan(void *);
 /* conflex.c */
 extern int	 lexline, lexchar;
 extern char	*token_line, *tlname;
-extern char	 comments[4096];
-extern int	 comment_index;
 extern int	 eol_token;
 
 void	new_parse(char *);

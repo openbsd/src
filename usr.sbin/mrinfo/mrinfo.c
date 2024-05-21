@@ -99,7 +99,6 @@ vifi_t  numvifs;		/* to keep loader happy */
 char		*inet_name(u_int32_t addr);
 void		ask(u_int32_t dst);
 void		ask2(u_int32_t dst);
-u_int32_t	host_addr(char *name);
 void		usage(void);
 
 char *

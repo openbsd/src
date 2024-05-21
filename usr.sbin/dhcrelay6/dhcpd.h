@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.1 2017/03/17 14:45:16 rzalamena Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.2 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017 Rafael Zalamena <rzalamena@openbsd.org>
@@ -151,7 +151,6 @@ void setup_iflist(void);
 struct interface_info *iflist_getbyname(const char *);
 struct interface_info *iflist_getbyindex(unsigned int);
 struct interface_info *iflist_getbyaddr6(struct in6_addr *);
-int if_hasaddress(struct interface_info *);
 struct interface_info *register_interface(const char *,
     void (*)(struct protocol *));
 void dispatch(void);

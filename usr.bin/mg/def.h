@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.180 2023/04/21 13:39:37 op Exp $	*/
+/*	$OpenBSD: def.h,v 1.181 2024/05/21 05:00:48 jsg Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -754,7 +754,6 @@ extern int		 curgoal;
 extern int		 startrow;
 extern int		 epresf;
 extern int		 sgarbf;
-extern int		 mode;
 extern int		 nrow;
 extern int		 ncol;
 extern int		 ttrow;

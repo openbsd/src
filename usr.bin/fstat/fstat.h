@@ -40,7 +40,6 @@ extern int cflg;
 extern int fsflg;
 extern int sflg;
 extern int signo;
-extern int error;
 extern struct fileargs fileargs;
 
 extern char *__progname;

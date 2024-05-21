@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.36 2021/12/15 04:00:15 deraadt Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.37 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -336,12 +336,6 @@ enum ldapd_process {
 extern struct ldapd_stats	 stats;
 extern struct ldapd_config	*conf;
 
-void			 imsg_event_add(struct imsgev *iev);
-int			 imsg_compose_event(struct imsgev *iev, u_int16_t type,
-			    u_int32_t peerid, pid_t pid, int fd, void *data,
-			    u_int16_t datalen);
-int			 imsg_event_handle(struct imsgev *iev, short event);
-
 /* conn.c */
 extern struct conn_list	 conn_list;
 struct conn		*conn_by_fd(int fd);
@@ -376,7 +370,6 @@ int			 namespace_reopen_data(struct namespace *ns);
 int			 namespace_reopen_indx(struct namespace *ns);
 int			 namespace_set_data_fd(struct namespace *ns, int fd);
 int			 namespace_set_indx_fd(struct namespace *ns, int fd);
-struct namespace	*namespace_init(const char *suffix, const char *dir);
 void			 namespace_close(struct namespace *ns);
 void			 namespace_remove(struct namespace *ns);
 struct ber_element	*namespace_get(struct namespace *ns, char *dn);
@@ -435,7 +428,6 @@ char			*ldap_now(void);
 void			 control_init(struct control_sock *);
 void			 control_listen(struct control_sock *);
 void			 control_accept(int, short, void *);
-void			 control_dispatch_imsg(int, short, void *);
 void			 control_cleanup(struct control_sock *);
 int			 control_close_any(struct control_sock *);
 

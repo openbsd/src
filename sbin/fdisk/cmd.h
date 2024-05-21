@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.27 2022/07/10 20:34:31 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.28 2024/05/21 05:00:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -23,7 +23,6 @@
 #define CMD_DIRTY	0x0004
 
 int		Xreinit(const char *, struct mbr *);
-int		Xdisk(const char *, struct mbr *);
 int		Xmanual(const char *, struct mbr *);
 int		Xedit(const char *, struct mbr *);
 int		Xsetpid(const char *, struct mbr *);

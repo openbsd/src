@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.49 2023/07/18 13:06:33 claudio Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.50 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -46,7 +46,6 @@ void    client_sig_handler(int, short, void *);
 void	client_dispatch_dns(int, short, void *);
 void    client_dispatch_parent(int, short, void *);
 void    client_shutdown(void);
-void    client_connect(int, short, void *);
 void    client_configure(struct env *);
 void    client_periodic_update(int, short, void *);
 int	client_build_req(struct idm *, struct idm_req *, struct aldap_message *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2024/05/21 05:00:47 jsg Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/05/07 18:20:06 jtc Exp $	*/
 
 /*-
@@ -34,15 +34,11 @@
 
 extern char *__progname;
 
-int	c_cchars(const void *, const void *);
-int	c_modes(const void *, const void *);
 int	csearch(char ***, struct info *);
-void	checkredirect(void);
 void	gprint(struct termios *, struct winsize *, int);
 void	gread(struct termios *, char *);
 int	ksearch(char ***, struct info *);
 int	msearch(char ***, struct info *);
-void	optlist(void);
 void	print(struct termios *, struct winsize *, int, enum FMT);
 void	usage(void);
 

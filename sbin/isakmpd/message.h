@@ -1,4 +1,4 @@
-/* $OpenBSD: message.h,v 1.29 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: message.h,v 1.30 2024/05/21 05:00:47 jsg Exp $	 */
 /* $EOM: message.h,v 1.51 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -173,9 +173,6 @@ struct message {
 
 TAILQ_HEAD(msg_head, message);
 
-/* The number of different ISAKMP payloads supported.  */
-extern u_int8_t payload_index_max;
-
 extern int	message_add_payload(struct message *, u_int8_t, u_int8_t *,
 		    size_t, int);
 extern int      message_add_sa_payload(struct message *);
@@ -185,7 +182,6 @@ extern u_int8_t *message_copy(struct message *, size_t, size_t *);
 extern void     message_drop(struct message *, int, struct proto *, int, int);
 extern void     message_dump_raw(char *, struct message *, int);
 extern void     message_free(struct message *);
-extern void	message_init(void);
 extern int	message_negotiate_sa(struct message *,
 		    int (*)(struct exchange *, struct sa *, struct sa *));
 extern int      message_recv(struct message *);

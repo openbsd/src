@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_int.h,v 1.2 2018/12/14 06:33:03 schwarze Exp $ */
+/*	$OpenBSD: tbl_int.h,v 1.3 2024/05/21 05:00:48 jsg Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011,2013,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -44,4 +44,3 @@ void		 tbl_option(struct tbl_node *, int, const char *, int *);
 void		 tbl_layout(struct tbl_node *, int, const char *, int);
 void		 tbl_data(struct tbl_node *, int, const char *, int);
 void		 tbl_cdata(struct tbl_node *, int, const char *, int);
-void		 tbl_reset(struct tbl_node *);

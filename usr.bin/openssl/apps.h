@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.36 2024/05/18 08:48:31 jsg Exp $ */
+/* $OpenBSD: apps.h,v 1.37 2024/05/21 05:00:48 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,7 +149,6 @@ int ui_read(UI *ui, UI_STRING *uis);
 int ui_write(UI *ui, UI_STRING *uis);
 int ui_close(UI *ui);
 
-int should_retry(int i);
 int str2fmt(char *s);
 void program_name(char *in, char *out, int size);
 #ifdef HEADER_X509_H

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.90 2024/03/30 07:41:45 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.91 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -80,7 +80,6 @@ void			 rule_printmaps(struct bt_rule *);
  * Language builtins & functions.
  */
 uint64_t		 builtin_nsecs(struct dt_evt *);
-const char		*builtin_kstack(struct dt_evt *);
 const char		*builtin_arg(struct dt_evt *, enum bt_argtype);
 struct bt_arg		*fn_str(struct bt_arg *, struct dt_evt *, char *);
 int			 stmt_eval(struct bt_stmt *, struct dt_evt *);

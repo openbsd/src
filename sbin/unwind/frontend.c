@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.80 2023/12/14 09:59:27 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.81 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -144,7 +144,6 @@ void			 handle_route_message(struct rt_msghdr *,
 			     struct sockaddr **);
 void			 get_rtaddrs(int, struct sockaddr *,
 			     struct sockaddr **);
-void			 rtmget_default(void);
 struct pending_query	*find_pending_query(uint64_t);
 void			 parse_trust_anchor(struct trust_anchor_head *, int);
 void			 send_trust_anchors(struct trust_anchor_head *);

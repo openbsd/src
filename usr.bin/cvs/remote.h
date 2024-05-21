@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.38 2017/08/28 19:33:20 otto Exp $	*/
+/*	$OpenBSD: remote.h,v 1.39 2024/05/21 05:00:48 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -49,7 +49,6 @@ extern int server_response;
 #define CVS_SERVER_QUESTIONABLE		'?'
 
 void	cvs_client_connect_to_server(void);
-void	cvs_client_disconnect(void);
 void	cvs_client_send_logmsg(char *);
 void	cvs_client_send_request(char *, ...)
 	__attribute__((format(printf, 1, 2)));

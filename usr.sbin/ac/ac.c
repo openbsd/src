@@ -89,7 +89,6 @@ int			do_tty(char *);
 FILE			*file(char *);
 struct utmp_list	*log_in(struct utmp_list *, struct utmp *);
 struct utmp_list	*log_out(struct utmp_list *, struct utmp *);
-int			on_console(struct utmp_list *);
 void			show(char *, time_t);
 void			show_today(struct user_list *, struct utmp_list *,
 			    time_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.31 2017/07/07 09:14:26 fcambus Exp $	*/
+/*	$OpenBSD: externs.h,v 1.32 2024/05/21 05:00:48 jsg Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -66,8 +66,7 @@ extern int
     resettermname,
     linemode,
     kludgelinemode,
-    want_status_response,
-    debug;		/* Debug level */
+    want_status_response;
 
 extern cc_t escape;	/* Escape to command mode */
 extern cc_t rlogin;	/* Rlogin mode escape character */
@@ -79,10 +78,6 @@ extern char
     *prompt;		/* Prompt for command. */
 
 extern char
-    doopt[],
-    dont[],
-    will[],
-    wont[],
     will_wont_resp[],
     do_dont_resp[],
     options[],		/* All the little options */

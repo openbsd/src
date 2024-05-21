@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.39 2021/06/22 20:19:28 jmc Exp $	*/
+/*	$OpenBSD: defs.h,v 1.40 2024/05/21 05:00:48 jsg Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -184,7 +184,6 @@ ssize_t xwrite(int, void *, size_t);
 int init(int, char **, char **);
 void finish(void);
 void lostconn(void);
-void coredump(void);
 void sighandler(int);
 int sendcmd(char, const char *, ...) __attribute__((__format__ (printf, 2, 3)));
 int remline(u_char *, int, int);
@@ -193,8 +192,6 @@ char *getusername(uid_t, char *, opt_t);
 char *getgroupname(gid_t, char *, opt_t);
 int response(void);
 char *exptilde(char *, char *, size_t);
-int becomeuser(void);
-int becomeroot(void);
 int setfiletime(char *, time_t, time_t);
 char *getversion(void);
 void runcommand(char *);

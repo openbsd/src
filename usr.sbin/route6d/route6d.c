@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.100 2020/12/29 19:48:27 benno Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.101 2024/05/21 05:00:48 jsg Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -191,7 +191,6 @@ void riprecv(void);
 void ripsend(struct ifc *, struct sockaddr_in6 *, int);
 int out_filter(struct riprt *, struct ifc *);
 void init(void);
-void sockopt(struct ifc *);
 void ifconfig(void);
 void ifconfig1(const char *, const struct sockaddr *, struct ifc *, int);
 void rtrecv(void);

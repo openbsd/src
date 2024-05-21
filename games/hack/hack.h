@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.h,v 1.14 2023/06/03 15:19:38 op Exp $*/
+/*	$OpenBSD: hack.h,v 1.15 2024/05/21 05:00:47 jsg Exp $*/
 /*	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $*/
 
 /*
@@ -680,7 +680,6 @@ char *getdate(void);
 int  phase_of_the_moon(void);
 int  night(void);
 int  midnight(void);
-void gethdate(char *);
 void getlock(void);
 #ifdef MAIL
 void getmailstatus(void);

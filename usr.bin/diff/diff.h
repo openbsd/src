@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.34 2020/11/01 18:16:08 jcs Exp $	 */
+/*	$OpenBSD: diff.h,v 1.35 2024/05/21 05:00:48 jsg Exp $	 */
 
 /*
  * Copyright (c) 1991, 1993
@@ -90,9 +90,6 @@ extern regex_t	ignore_re;
 
 char	*splice(char *, char *);
 int	diffreg(char *, char *, int);
-int	easprintf(char **, const char *, ...);
-void	*emalloc(size_t);
-void	*erealloc(void *, size_t);
 void	diffdir(char *, char *, int);
 void	print_only(const char *, size_t, const char *);
 void	print_status(int, char *, char *, char *);

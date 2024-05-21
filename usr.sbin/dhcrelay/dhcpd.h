@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.23 2017/04/05 14:40:56 reyk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.24 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -139,12 +139,6 @@ struct server_list {
 #define	DHCPD_LOG_FACILITY	LOG_DAEMON
 
 /* External definitions... */
-
-/* errwarn.c */
-void error(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int warning(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
-int debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.h,v 1.8 2019/05/16 12:44:18 florian Exp $	*/
+/*	$OpenBSD: stringlist.h,v 1.9 2024/05/21 05:00:48 jsg Exp $	*/
 /*	$NetBSD: stringlist.h,v 1.2 1997/01/17 06:11:36 lukem Exp $	*/
 
 /*
@@ -47,7 +47,6 @@ __BEGIN_DECLS
 StringList	*sl_init(void);
 void		 sl_add(StringList *, char *);
 void		 sl_free(StringList *, int);
-char		*sl_find(StringList *, char *);
 __END_DECLS
 
 #endif /* _STRINGLIST_H */

@@ -1,4 +1,4 @@
-/* $OpenBSD: reader.c,v 1.34 2017/05/25 20:11:03 tedu Exp $	 */
+/* $OpenBSD: reader.c,v 1.35 2024/05/21 05:00:48 jsg Exp $	 */
 /* $NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	 */
 
 /*
@@ -84,7 +84,6 @@ char *get_tag(void);
 void declare_tokens(int);
 void declare_types(void);
 void declare_start(void);
-void handle_expect(void);
 void read_declarations(void);
 void initialize_grammar(void);
 void expand_items(void);

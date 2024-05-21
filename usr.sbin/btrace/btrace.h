@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.14 2024/02/27 12:50:33 mpi Exp $ */
+/*	$OpenBSD: btrace.h,v 1.15 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -38,7 +38,6 @@ unsigned long		 dt_get_offset(pid_t);
 /* ksyms.c */
 struct syms;
 struct syms		*kelf_open(const char *);
-void			 kelf_offset(struct syms *, unsigned long);
 void			 kelf_close(struct syms *);
 int			 kelf_snprintsym(struct syms *, char *, size_t,
 			    unsigned long, unsigned long);

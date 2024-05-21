@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.153 2023/12/20 15:36:36 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.154 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -364,7 +364,6 @@ int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *);
 
 /* server.c */
 int	setup_listeners(struct servent *, struct ntpd_conf *, u_int *);
-int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
 int	server_dispatch(int, struct ntpd_conf *);
 
 /* client.c */

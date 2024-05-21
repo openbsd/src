@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.h,v 1.7 2020/02/09 14:59:21 millert Exp $	*/
+/*	$OpenBSD: mail.local.h,v 1.8 2024/05/21 05:00:47 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-void	baditem(char *);
 int	deliver(int, char *, int);
 void	merr(int, const char *, ...);
 void	mwarn(const char *, ...);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.h,v 1.9 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: yppush.h,v 1.10 2024/05/21 05:00:48 jsg Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -39,7 +39,6 @@
 __BEGIN_DECLS
 bool_t xdr_yppush_status(XDR *, yppush_status *);
 bool_t xdr_yppushresp_xfr(XDR *, yppushresp_xfr *);
-void * yppushproc_null_1(void *, CLIENT *);
 void * yppushproc_null_1_svc(void *, struct svc_req *);
 char * yppush_err_string(enum yppush_status y);
 void yppush_xfrrespprog_1(struct svc_req *, SVCXPRT *);

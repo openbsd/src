@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.107 2024/01/16 19:07:31 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.108 2024/05/21 05:00:47 jsg Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -322,7 +322,6 @@ void _dl_link_grpsym(elf_object_t *object);
 void _dl_cache_grpsym_list_setup(elf_object_t *_object);
 void _dl_link_grpref(elf_object_t *load_group, elf_object_t *load_object);
 void _dl_link_dlopen(elf_object_t *dep);
-void _dl_unlink_dlopen(elf_object_t *dep);
 void _dl_notify_unload_shlib(elf_object_t *object);
 void _dl_unload_shlib(elf_object_t *object);
 void _dl_unload_dlopen(void);
@@ -333,7 +332,6 @@ int	_dl_match_file(struct sod *sodp, const char *name, int namelen);
 char	*_dl_find_shlib(struct sod *sodp, char **searchpath, int nohints);
 void	_dl_load_list_free(struct load_list *load_list);
 
-void _dl_find_immutables(int type, elf_object_t *object, Elf_Ehdr *);
 void _dl_push_range_size(struct range_vector *v, vaddr_t start, vsize_t len);
 void _dl_apply_immutable(elf_object_t *object);
 

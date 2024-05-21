@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.30 2024/05/17 06:50:14 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.31 2024/05/21 05:00:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -73,8 +73,6 @@ static int	main_imsg_send_config(struct rad_conf *);
 
 int	main_reload(void);
 int	main_sendboth(enum imsg_type, void *, uint16_t);
-
-void	in6_prefixlen2mask(struct in6_addr *, int len);
 
 struct rad_conf		*main_conf;
 static struct imsgev	*iev_frontend;

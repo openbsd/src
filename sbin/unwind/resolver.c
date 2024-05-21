@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.165 2024/05/10 15:02:26 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.166 2024/05/21 05:00:48 jsg Exp $	*/
 
 
 /*
@@ -181,8 +181,6 @@ void			 show_status(pid_t);
 void			 show_autoconf(pid_t);
 void			 show_mem(pid_t);
 void			 send_resolver_info(struct uw_resolver *, pid_t);
-void			 send_detailed_resolver_info(struct uw_resolver *,
-			     pid_t);
 void			 trust_anchor_resolve(void);
 void			 trust_anchor_timo(int, short, void *);
 void			 trust_anchor_resolve_done(struct uw_resolver *, void *,

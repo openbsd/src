@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.48 2024/02/27 11:28:30 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.49 2024/05/21 05:00:48 jsg Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -301,8 +301,6 @@ extern int verbose;
 
 void	rsync_log(int, const char *, ...)
 			__attribute__((format(printf, 2, 3)));
-void	rsync_warnx1(const char *, ...)
-			__attribute__((format(printf, 1, 2)));
 void	rsync_warn(int, const char *, ...)
 			__attribute__((format(printf, 2, 3)));
 void	rsync_warnx(const char *, ...)
@@ -316,7 +314,6 @@ void	rsync_errx1(const char *, ...)
 
 int	flist_del(struct sess *, int, const struct flist *, size_t);
 int	flist_gen(struct sess *, size_t, char **, struct flist **, size_t *);
-int	flist_gen_local(struct sess *, const char *, struct flist **, size_t *);
 void	flist_free(struct flist *, size_t);
 int	flist_recv(struct sess *, int, struct flist **, size_t *);
 int	flist_send(struct sess *, int, int, const struct flist *, size_t);

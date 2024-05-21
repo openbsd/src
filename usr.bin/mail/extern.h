@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.29 2018/09/16 02:38:57 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.30 2024/05/21 05:00:48 jsg Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.29 2018/09/16 02:38:57 millert Exp $
+ *	$OpenBSD: extern.h,v 1.30 2024/05/21 05:00:48 jsg Exp $
  */
 
 struct name;
@@ -147,7 +147,6 @@ struct ignoretab;
 int	 ignore1(char **, struct ignoretab *, char *);
 int	 ignoresig(int, struct sigaction *, sigset_t *);
 int	 igshow(struct ignoretab *, char *);
-void	 intr(int);
 int	 inc(void *);
 int	 incfile(void);
 int	 isdate(char *);
@@ -235,7 +234,6 @@ void	 sreset(void);
 pid_t	 start_command(char *cmd, sigset_t *nset, int infd, int outfd, ...);
 pid_t	 start_commandv(char *, sigset_t *, int, int, __va_list);
 int	 statusput(struct message *, FILE *, char *);
-void	 stop(int);
 int	 stouch(void *);
 int	 swrite(void *);
 void	 tinit(void);
@@ -247,7 +245,6 @@ int	 type(void *);
 int	 type1(int *, char *, int, int);
 int	 undeletecmd(void *);
 void	 unmark(int);
-char	**unpack(struct name *, struct name *);
 int	 unread(void *);
 void	 unregister_file(FILE *);
 int	 unset(void *);
