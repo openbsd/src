@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.10 2024/05/20 20:08:04 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.11 2024/05/22 18:10:00 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -99,10 +99,10 @@
 #define  UFSHCI_REG_IE_UTRCE		(1 <<  0) /* RW */
 /* Host Controller Status */
 #define UFSHCI_REG_HCS			0x30
-#define  UFSHCI_REG_HCS_TLUNUTPE(x)	((x << 24) & 0xff000000) /* RO */
-#define  UFSHCI_REG_HCS_TTAGUTPE(x)	((x << 16) & 0x00ff0000) /* RO */
-#define  UFSHCI_REG_HCS_UTPEC(x)	((x << 12) & 0x0000f000) /* RO */
-#define  UFSHCI_REG_HCS_UPMCRS(x)	((x <<  8) & 0x00000700) /* RO */
+#define  UFSHCI_REG_HCS_TLUNUTPE(x)	((x >> 24) & 0x000000ff) /* RO */
+#define  UFSHCI_REG_HCS_TTAGUTPE(x)	((x >> 16) & 0x000000ff) /* RO */
+#define  UFSHCI_REG_HCS_UTPEC(x)	((x >> 12) & 0x0000000f) /* RO */
+#define  UFSHCI_REG_HCS_UPMCRS(x)	((x >>  8) & 0x00000007) /* RO */
 #define  UFSHCI_REG_HCS_UCRDY		(1 << 3) /* RO */
 #define  UFSHCI_REG_HCS_UTMRLRDY	(1 << 2) /* RO */
 #define  UFSHCI_REG_HCS_UTRLRDY		(1 << 1) /* RO */
