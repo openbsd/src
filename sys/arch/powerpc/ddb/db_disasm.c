@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.20 2020/06/06 22:53:04 kettenis Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.21 2024/05/22 05:51:49 jsg Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -473,8 +473,6 @@ extract_field(u_int32_t value, u_int32_t base, u_int32_t width)
 	u_int32_t mask = (1 << width) - 1;
 	return ((value >> (31 - base)) & mask);
 }
-
-const struct opcode * search_op(const struct opcode *);
 
 char *db_BOBI_cond[] = {
 	"ge",

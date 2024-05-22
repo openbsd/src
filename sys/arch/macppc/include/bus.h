@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.26 2017/05/08 00:27:45 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.27 2024/05/22 05:51:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -58,8 +58,6 @@ struct ppc_bus_space {
 	u_int8_t	bus_io;		/* IO or memory */
 };
 #define POWERPC_BUS_TAG_BASE(x)  ((x)->bus_base)
-
-extern struct ppc_bus_space ppc_isa_io, ppc_isa_mem;
 
 /*
  * Access methods for bus resources

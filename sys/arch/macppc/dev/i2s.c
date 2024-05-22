@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.38 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.39 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@
 void	i2s_mute(u_int, int);
 int	i2s_cint(void *);
 u_int	i2s_gpio_offset(struct i2s_softc *, char *, int *);
-void	i2s_init(struct i2s_softc *, int);
 
 int	i2s_intr(void *);
 int	i2s_iintr(void *);

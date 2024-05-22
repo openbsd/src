@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.40 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.41 2024/05/22 05:51:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -206,8 +206,6 @@ struct ommmc_softc {
 
 
 /* Host controller functions called by the attachment driver. */
-int	ommmc_host_found(struct ommmc_softc *, bus_space_tag_t,
-	    bus_space_handle_t, bus_size_t, int);
 void	ommmc_power(int, void *);
 void	ommmc_shutdown(void *);
 int	ommmc_intr(void *);

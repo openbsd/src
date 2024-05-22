@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.10 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.11 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.5 2002/03/17 19:40:45 atatat Exp $	*/
 
 /*
@@ -145,7 +145,6 @@ struct zschan {
 	volatile u_char	zc_data;	/* data */
 	u_char		zc_xxx1[15];
 };
-void	zs_kgdb_init (void);
 
 #ifndef ZSCCF_CHANNEL
 #define ZSCCF_CHANNEL 0

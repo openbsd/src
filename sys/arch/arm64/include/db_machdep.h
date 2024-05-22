@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 2021/08/30 08:11:12 jasper Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -86,8 +86,6 @@ void db_machine_init (void);
 
 #define branch_taken(ins, pc, fun, regs) \
 	db_branch_taken((ins), (pc), (regs))
-
-void db_show_frame_cmd(db_expr_t, int, db_expr_t, char *);
 
 #define DDB_STATE_NOT_RUNNING	0  
 #define DDB_STATE_RUNNING	1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.7 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.8 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 06:43:05 haya Exp $	*/
 
 /*
@@ -41,8 +41,6 @@ rbus_tag_t	rbus_pccbb_parent_io(struct device *,
 		    struct pci_attach_args *);
 rbus_tag_t	rbus_pccbb_parent_mem(struct device *,
 		    struct pci_attach_args *);
-
-bus_addr_t	rbus_min_start_hint(void);
 
 void		pccbb_attach_hook(struct device *, struct device *,
 		    struct pci_attach_args *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.33 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.34 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -307,7 +307,6 @@ struct cfdriver mc_cd = {
 };
 
 void	mc_init(struct mc_softc *sc);
-void	mc_put(struct mc_softc *sc, u_int len);
 int	mc_dmaintr(void *arg);
 void	mc_reset_rxdma(struct mc_softc *sc);
 void	mc_reset_txdma(struct mc_softc *sc);

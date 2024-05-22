@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.12 2015/04/02 11:12:24 mpi Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.13 2024/05/22 05:51:49 jsg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -47,10 +47,7 @@ struct confargs {
 
 };
 
-void	set_clockintr(void (*)(struct clockframe *));
-void	set_iointr(void (*)(void *, int));
 int	badaddr(void *, u_int32_t);
-void calc_delayconst(void);
 
 typedef int (time_read_t)(time_t *sec);
 typedef int (time_write_t)(time_t sec);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.15 2024/02/23 18:19:03 cheloha Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.16 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
@@ -55,12 +55,6 @@
 #include <ddb/db_output.h>
 #include <ddb/db_run.h>
 #include <ddb/db_variables.h>
-
-
-int db_access_und_sp (struct db_variable *, db_expr_t *, int);
-int db_access_abt_sp (struct db_variable *, db_expr_t *, int);
-int db_access_irq_sp (struct db_variable *, db_expr_t *, int);
-u_int db_fetch_reg (int, db_regs_t *);
 
 int db_trapper (vaddr_t, u_int, trapframe_t *, int);
 

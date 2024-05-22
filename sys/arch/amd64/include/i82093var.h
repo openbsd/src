@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093var.h,v 1.5 2016/05/04 14:30:00 kettenis Exp $	*/
+/*	$OpenBSD: i82093var.h,v 1.6 2024/05/22 05:51:49 jsg Exp $	*/
 /* $NetBSD: i82093var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -81,16 +81,11 @@ struct ioapic_softc {
 #define APIC_IRQ_ISLEGACY(x) (!((x) & APIC_INT_VIA_APIC))
 #define APIC_IRQ_LEGACY_IRQ(x) ((x) & 0xff)
 
-void *apic_intr_establish(int, int, int, int (*)(void *), void *); 
-void apic_intr_disestablish(void *);
-
 void ioapic_print_redir(struct ioapic_softc *, char *, int);
-void ioapic_format_redir(char *, char *, int, u_int32_t, u_int32_t);
 struct ioapic_softc *ioapic_find(int);
 struct ioapic_softc *ioapic_find_bybase(int);
 
 void ioapic_enable(void);
-void lapic_vectorset(void); /* XXX */
 
 extern int ioapic_bsp_id;
 extern int nioapics;

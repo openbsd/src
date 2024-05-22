@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.183 2024/04/03 19:30:59 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.184 2024/05/22 05:51:49 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -155,8 +155,6 @@ void pmap_fill_pte32(pmap_t, vaddr_t, paddr_t, struct pte_desc *, vm_prot_t,
 
 void pmap_syncicache_user_virt(pmap_t pm, vaddr_t va);
 
-void _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags,
-    int cache);
 void pmap_remove_pted(pmap_t, struct pte_desc *);
 
 /* setup/initialization functions */

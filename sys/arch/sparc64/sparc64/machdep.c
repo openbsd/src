@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.217 2024/05/14 08:26:13 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.218 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -153,7 +153,6 @@ struct uvm_constraint_range  dma_constraint = { 0x0, (paddr_t)-1 };
 struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 
 int	physmem;
-extern	caddr_t msgbufaddr;
 
 int sparc_led_blink = 1;
 

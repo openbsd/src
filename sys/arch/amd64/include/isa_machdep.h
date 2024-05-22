@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.10 2024/05/13 00:16:09 jsg Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.11 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.2 2003/05/09 23:51:28 fvdl Exp $	*/
 
 /*-
@@ -107,17 +107,8 @@ int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
 void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg, char *);
 void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
-int	isa_mem_alloc(bus_space_tag_t, bus_size_t, bus_size_t,
-	    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *);
-void	isa_mem_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 int isa_intr_check(isa_chipset_tag_t, int, int);
-
-/*
- * for ACPI code
- */
-
-void	isa_reinit_irq(void);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED

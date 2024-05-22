@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.h,v 1.17 2018/04/11 15:44:08 bluhm Exp $	*/
+/*	$OpenBSD: gdt.h,v 1.18 2024/05/22 05:51:49 jsg Exp $	*/
 /*	$NetBSD: gdt.h,v 1.7.10.6 2002/08/19 01:22:36 sommerfeld Exp $	*/
 
 /*-
@@ -39,6 +39,5 @@ struct pmap;
 void gdt_alloc_cpu(struct cpu_info *);
 void gdt_init(void);
 void gdt_init_cpu(struct cpu_info *);
-void gdt_reload_cpu(/* XXX struct cpu_info * */ void);
 void setgdt(int, void *, size_t, int, int, int, int);
 #endif
