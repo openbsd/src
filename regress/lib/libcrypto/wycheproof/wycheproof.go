@@ -1,7 +1,7 @@
-/* $OpenBSD: wycheproof.go,v 1.159 2023/11/07 21:22:34 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.160 2024/05/22 14:03:24 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
- * Copyright (c) 2018,2019,2022,2023 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1215,6 +1215,138 @@ func runChaCha20Poly1305Test(algorithm string, wt *wycheproofTestAead) bool {
 	return openSuccess && sealSuccess
 }
 
+func runEvpChaCha20Poly1305Test(ctx *C.EVP_CIPHER_CTX, algorithm string, wt *wycheproofTestAead) bool {
+	var aead *C.EVP_CIPHER
+	switch algorithm {
+	case "CHACHA20-POLY1305":
+		aead = C.EVP_chacha20_poly1305()
+	case "XCHACHA20-POLY1305":
+		return true
+	}
+
+	key, _ := mustDecodeHexString(wt.Key, "key")
+	iv, ivLen := mustDecodeHexString(wt.IV, "iv")
+	aad, aadLen := mustDecodeHexString(wt.AAD, "aad")
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
+
+	ct, err := hex.DecodeString(wt.CT)
+	if err != nil {
+		log.Fatalf("Failed to decode ct %q: %v", wt.CT, err)
+	}
+	tag, err := hex.DecodeString(wt.Tag)
+	if err != nil {
+		log.Fatalf("Failed to decode tag %q: %v", wt.Tag, err)
+	}
+	ctLen, tagLen := len(ct), len(tag)
+
+	if C.EVP_EncryptInit_ex(ctx, aead, nil, nil, nil) != 1 {
+		log.Fatal("Failed to initialize EVP_CIPHER_CTX with cipher")
+	}
+	if C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_AEAD_SET_IVLEN, C.int(ivLen), nil) != 1 {
+		log.Fatal("Failed EVP_CTRL_AEAD_SET_IVLEN")
+	}
+	if C.EVP_EncryptInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), nil) != 1 {
+		log.Fatal("Failed EVP_EncryptInit_ex key")
+	}
+	if C.EVP_EncryptInit_ex(ctx, nil, nil, nil, (*C.uchar)(unsafe.Pointer(&iv[0]))) != 1 {
+		log.Fatal("Failed EVP_EncryptInit_ex iv")
+	}
+
+	var len C.int
+
+	if C.EVP_EncryptUpdate(ctx, nil, (*C.int)(unsafe.Pointer(&len)), (*C.uchar)(&aad[0]), (C.int)(aadLen)) != 1 {
+		log.Fatal("Failed EVP_EncryptUpdate aad")
+	}
+
+	sealed := make([]byte, ctLen + tagLen)
+	copy(sealed, msg)
+	if C.EVP_EncryptUpdate(ctx, (*C.uchar)(unsafe.Pointer(&sealed[0])), (*C.int)(unsafe.Pointer(&len)), (*C.uchar)(unsafe.Pointer(&sealed[0])), (C.int)(msgLen)) != 1 {
+		log.Fatal("Failed EVP_EncryptUpdate msg")
+	}
+	outLen := len
+	if C.EVP_EncryptFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&sealed[outLen])), (*C.int)(unsafe.Pointer(&len))) != 1 {
+		log.Fatal("Failed EVP_EncryptFinal msg")
+	}
+	outLen += len
+	if C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_AEAD_GET_TAG, (C.int)(tagLen), unsafe.Pointer(&sealed[outLen])) != 1 {
+		log.Fatal("Failed EVP_CTRL_AEAD_GET_TAG")
+	}
+	outLen += (C.int)(tagLen)
+
+	if (C.int)(ctLen + tagLen) != outLen {
+		fmt.Printf("%s\n", wt)
+	}
+
+	sealSuccess := false
+	ctMatch := bytes.Equal(ct, sealed[:ctLen])
+	tagMatch := bytes.Equal(tag, sealed[ctLen:])
+	if (ctMatch && tagMatch) == (wt.Result != "invalid") {
+		sealSuccess = true
+	} else  {
+		fmt.Printf("%s - ct match: %t tag match: %t\n", wt, ctMatch, tagMatch)
+	}
+
+	if C.EVP_DecryptInit_ex(ctx, aead, nil, nil, nil) != 1 {
+		log.Fatal("Failed to initialize EVP_CIPHER_CTX with cipher")
+	}
+	if C.EVP_DecryptInit_ex(ctx, nil, nil, (*C.uchar)(unsafe.Pointer(&key[0])), nil) != 1 {
+		log.Fatal("Failed EVP_EncryptInit_ex key")
+	}
+
+	if C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_AEAD_SET_IVLEN, C.int(ivLen), nil) != 1 {
+		log.Fatal("Failed EVP_CTRL_AEAD_SET_IVLEN")
+	}
+	if C.EVP_DecryptInit_ex(ctx, nil, nil, nil, (*C.uchar)(unsafe.Pointer(&iv[0]))) != 1 {
+		log.Fatal("Failed EVP_EncryptInit_ex iv")
+	}
+
+	if C.EVP_CIPHER_CTX_ctrl(ctx, C.EVP_CTRL_AEAD_SET_TAG, (C.int)(tagLen), unsafe.Pointer(&tag[0])) != 1 {
+		log.Fatal("Failed EVP_CTRL_AEAD_SET_TAG")
+	}
+
+	if ctLen == 0 {
+		ct = append(ct, 0)
+	}
+
+	opened := make([]byte, msgLen + tagLen)
+	copy(opened, ct)
+	if msgLen + aadLen == 0 {
+		opened = append(opened, 0)
+	}
+
+	if C.EVP_DecryptUpdate(ctx, nil, (*C.int)(unsafe.Pointer(&len)), (*C.uchar)(unsafe.Pointer(&aad[0])), C.int(aadLen)) != 1 {
+		log.Fatal("Failed EVP_EncryptUpdate msg")
+	}
+
+	if C.EVP_DecryptUpdate(ctx, (*C.uchar)(unsafe.Pointer(&opened[0])), (*C.int)(unsafe.Pointer(&len)), (*C.uchar)(unsafe.Pointer(&opened[0])), (C.int)(ctLen)) != 1 {
+		log.Fatal("Failed EVP_EncryptUpdate msg")
+	}
+	outLen = len
+
+	var ret C.int
+	if wt.Result != "invalid" {
+		ret = 1
+	}
+
+	if C.EVP_DecryptFinal_ex(ctx, (*C.uchar)(unsafe.Pointer(&opened[outLen])), (*C.int)(unsafe.Pointer(&len))) != ret {
+		log.Fatalf("Failed EVP_EncryptFinal msg %s\n", wt)
+	}
+	outLen += len
+
+	openSuccess := true
+	if (C.int)(msgLen) != outLen {
+		openSuccess = false
+		fmt.Printf("%s\n", wt)
+	}
+
+	if wt.Result != "invalid" && !bytes.Equal(opened[:outLen], msg[:msgLen]) {
+		fmt.Printf("failed %s\n", wt)
+		openSuccess = false
+	}
+
+	return sealSuccess && openSuccess
+}
+
 func (wtg *wycheproofTestGroupChaCha) run(algorithm string, variant testVariant) bool {
 	// ChaCha20-Poly1305 currently only supports nonces of length 12 (96 bits)
 	if algorithm == "CHACHA20-POLY1305" && wtg.IVSize != 96 {
@@ -1223,9 +1355,18 @@ func (wtg *wycheproofTestGroupChaCha) run(algorithm string, variant testVariant)
 
 	fmt.Printf("Running %v test group %v with IV size %d, key size %d, tag size %d...\n", algorithm, wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
+	ctx := C.EVP_CIPHER_CTX_new()
+	if ctx == nil {
+		log.Fatal("EVP_CIPHER_CTX_new() failed")
+	}
+	defer C.EVP_CIPHER_CTX_free(ctx)
+
 	success := true
 	for _, wt := range wtg.Tests {
 		if !runChaCha20Poly1305Test(algorithm, wt) {
+			success = false
+		}
+		if !runEvpChaCha20Poly1305Test(ctx, algorithm, wt) {
 			success = false
 		}
 	}
