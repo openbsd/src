@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.108 2023/08/16 08:26:35 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.109 2024/05/22 08:41:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -466,7 +466,7 @@ get_bgpid(void)
 	struct ifaddrs		*ifap, *ifa;
 	uint32_t		 ip = 0, cur, localnet;
 
-	localnet = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
+	localnet = INADDR_LOOPBACK & IN_CLASSA_NET;
 
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
@@ -476,9 +476,10 @@ get_bgpid(void)
 		    ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		cur = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
+		cur = ntohl(cur);
 		if ((cur & localnet) == localnet)	/* skip 127/8 */
 			continue;
-		if (ntohl(cur) > ntohl(ip))
+		if (cur > ip)
 			ip = cur;
 	}
 	freeifaddrs(ifap);

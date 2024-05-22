@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.624 2024/03/20 09:35:46 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.625 2024/05/22 08:41:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2647,48 +2647,49 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 
 	/* check for originator id if eq router_id drop */
 	if ((a = attr_optget(asp, ATTR_ORIGINATOR_ID)) != NULL) {
-		if (memcmp(&conf->bgpid, a->data, sizeof(conf->bgpid)) == 0) {
+		id = htonl(conf->bgpid);
+		if (memcmp(&id, a->data, sizeof(id)) == 0) {
 			/* this is coming from myself */
 			asp->flags |= F_ATTR_LOOP;
 			return;
 		}
 	} else if (conf->flags & BGPD_FLAG_REFLECTOR) {
 		if (peer->conf.ebgp)
-			id = conf->bgpid;
+			id = htonl(conf->bgpid);
 		else
 			id = htonl(peer->remote_bgpid);
 		if (attr_optadd(asp, ATTR_OPTIONAL, ATTR_ORIGINATOR_ID,
-		    &id, sizeof(uint32_t)) == -1)
+		    &id, sizeof(id)) == -1)
 			fatalx("attr_optadd failed but impossible");
 	}
 
 	/* check for own id in the cluster list */
 	if (conf->flags & BGPD_FLAG_REFLECTOR) {
+		id = htonl(conf->clusterid);
 		if ((a = attr_optget(asp, ATTR_CLUSTER_LIST)) != NULL) {
-			for (len = 0; len < a->len;
-			    len += sizeof(conf->clusterid))
+			for (len = 0; len < a->len; len += sizeof(id))
 				/* check if coming from my cluster */
-				if (memcmp(&conf->clusterid, a->data + len,
-				    sizeof(conf->clusterid)) == 0) {
+				if (memcmp(&id, a->data + len,
+				    sizeof(id)) == 0) {
 					asp->flags |= F_ATTR_LOOP;
 					return;
 				}
 
 			/* prepend own clusterid by replacing attribute */
-			len = a->len + sizeof(conf->clusterid);
+			len = a->len + sizeof(id);
 			if (len < a->len)
 				fatalx("rde_reflector: cluster-list overflow");
 			if ((p = malloc(len)) == NULL)
 				fatal("rde_reflector");
-			memcpy(p, &conf->clusterid, sizeof(conf->clusterid));
-			memcpy(p + sizeof(conf->clusterid), a->data, a->len);
+			memcpy(p, &id, sizeof(id));
+			memcpy(p + sizeof(id), a->data, a->len);
 			attr_free(asp, a);
 			if (attr_optadd(asp, ATTR_OPTIONAL, ATTR_CLUSTER_LIST,
 			    p, len) == -1)
 				fatalx("attr_optadd failed but impossible");
 			free(p);
 		} else if (attr_optadd(asp, ATTR_OPTIONAL, ATTR_CLUSTER_LIST,
-		    &conf->clusterid, sizeof(conf->clusterid)) == -1)
+		    &id, sizeof(id)) == -1)
 			fatalx("attr_optadd failed but impossible");
 	}
 }
@@ -3584,11 +3585,11 @@ rde_reload_done(void)
 	nconf = NULL;
 
 	/* sync peerself with conf */
-	peerself->remote_bgpid = ntohl(conf->bgpid);
+	peerself->remote_bgpid = conf->bgpid;
 	peerself->conf.local_as = conf->as;
 	peerself->conf.remote_as = conf->as;
 	peerself->conf.remote_addr.aid = AID_INET;
-	peerself->conf.remote_addr.v4.s_addr = conf->bgpid;
+	peerself->conf.remote_addr.v4.s_addr = htonl(conf->bgpid);
 	peerself->conf.remote_masklen = 32;
 	peerself->short_as = conf->short_as;
 

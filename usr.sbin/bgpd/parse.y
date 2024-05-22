@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.462 2024/04/24 10:41:34 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.463 2024/05/22 08:41:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -742,7 +742,7 @@ conf_main	: AS as4number		{
 				yyerror("router-id must be an IPv4 address");
 				YYERROR;
 			}
-			conf->bgpid = $2.v4.s_addr;
+			conf->bgpid = ntohl($2.v4.s_addr);
 		}
 		| HOLDTIME NUMBER	{
 			if ($2 < MIN_HOLDTIME || $2 > USHRT_MAX) {
@@ -2236,14 +2236,14 @@ peeropts	: REMOTEAS as4number	{
 				YYERROR;
 			}
 			if ((conf->flags & BGPD_FLAG_REFLECTOR) &&
-			    conf->clusterid != $2.v4.s_addr) {
+			    conf->clusterid != ntohl($2.v4.s_addr)) {
 				yyerror("only one route reflector "
 				    "cluster allowed");
 				YYERROR;
 			}
 			conf->flags |= BGPD_FLAG_REFLECTOR;
 			curpeer->conf.reflector_client = 1;
-			conf->clusterid = $2.v4.s_addr;
+			conf->clusterid = ntohl($2.v4.s_addr);
 		}
 		| DEPEND ON STRING	{
 			if (strlcpy(curpeer->conf.if_depend, $3,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.301 2024/05/19 03:31:05 jsg Exp $ */
+/*	$OpenBSD: rde.h,v 1.302 2024/05/22 08:41:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -90,7 +90,7 @@ struct rde_peer {
 	struct prefix_tree		 withdraws[AID_MAX];
 	struct filter_head		*out_rules;
 	time_t				 staletime[AID_MAX];
-	uint32_t			 remote_bgpid; /* host byte order! */
+	uint32_t			 remote_bgpid;
 	uint32_t			 path_id_tx;
 	unsigned int			 local_if_scope;
 	enum peer_state			 state;

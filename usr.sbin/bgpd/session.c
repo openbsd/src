@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.477 2024/05/20 10:01:52 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.478 2024/05/22 08:41:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1602,7 +1602,7 @@ session_open(struct peer *p)
 	errs += ibuf_add_n16(buf->buf, p->conf.local_short_as);
 	errs += ibuf_add_n16(buf->buf, holdtime);
 	/* is already in network byte order */
-	errs += ibuf_add(buf->buf, &conf->bgpid, sizeof(conf->bgpid));
+	errs += ibuf_add_n32(buf->buf, conf->bgpid);
 	errs += ibuf_add_n8(buf->buf, optparamlen);
 
 	if (extlen) {
@@ -2228,8 +2228,7 @@ parse_open(struct peer *peer)
 		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);
 	}
-	/* strore remote_bgpid in network byte order */
-	peer->remote_bgpid = htonl(bgpid);
+	peer->remote_bgpid = bgpid;
 
 	if (optparamlen != 0) {
 		struct ibuf oparams, op;
@@ -2332,8 +2331,10 @@ parse_open(struct peer *peer)
 
 	/* on iBGP sessions check for bgpid collision */
 	if (!peer->conf.ebgp && peer->remote_bgpid == conf->bgpid) {
-		log_peer_warnx(&peer->conf, "peer BGPID %u conflicts with ours",
-		    ntohl(bgpid));
+		struct in_addr ina;
+		ina.s_addr = htonl(bgpid);
+		log_peer_warnx(&peer->conf, "peer BGPID %s conflicts with ours",
+		    inet_ntoa(ina));
 		session_notification(peer, ERR_OPEN, ERR_OPEN_BGPID, NULL);
 		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);

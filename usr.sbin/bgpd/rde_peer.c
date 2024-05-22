@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.36 2024/03/20 09:35:46 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.37 2024/05/22 08:41:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -422,7 +422,7 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 		peer->stats.prefix_out_cnt = 0;
 		peer->state = PEER_DOWN;
 	}
-	peer->remote_bgpid = ntohl(sup->remote_bgpid);
+	peer->remote_bgpid = sup->remote_bgpid;
 	peer->short_as = sup->short_as;
 	peer->remote_addr = sup->remote_addr;
 	peer->local_v4_addr = sup->local_v4_addr;

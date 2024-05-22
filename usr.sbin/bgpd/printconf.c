@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.172 2024/04/24 10:41:34 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.173 2024/05/22 08:41:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -383,7 +383,7 @@ print_mainconf(struct bgpd_config *conf)
 	printf("AS %s", log_as(conf->as));
 	if (conf->as > USHRT_MAX && conf->short_as != AS_TRANS)
 		printf(" %u", conf->short_as);
-	ina.s_addr = conf->bgpid;
+	ina.s_addr = htonl(conf->bgpid);
 	printf("\nrouter-id %s\n", inet_ntoa(ina));
 
 	printf("socket \"%s\"\n", conf->csock);
@@ -800,7 +800,7 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		if (conf->clusterid == 0)
 			printf("%s\troute-reflector\n", c);
 		else {
-			ina.s_addr = conf->clusterid;
+			ina.s_addr = htonl(conf->clusterid);
 			printf("%s\troute-reflector %s\n", c,
 			    inet_ntoa(ina));
 		}

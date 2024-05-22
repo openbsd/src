@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.116 2023/07/14 10:30:53 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.117 2024/05/22 08:41:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -824,7 +824,7 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf)
 		return (-1);
 	}
 
-	if (ibuf_add(buf, &conf->bgpid, sizeof(conf->bgpid)) == -1)
+	if (ibuf_add_n32(buf, conf->bgpid) == -1)
 		goto fail;
 	nlen = strlen(mrt->rib);
 	if (nlen > 0)
