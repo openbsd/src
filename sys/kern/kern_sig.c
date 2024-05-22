@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.328 2024/05/20 10:32:20 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.329 2024/05/22 09:22:55 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1106,8 +1106,9 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 				 */
 				if (prop & SA_TTYSTOP &&
 				    pr->ps_pgrp->pg_jobc == 0) {
-					SCHED_UNLOCK(s);
-					return;
+					mask = 0;
+					prop = 0;
+					goto out;
 				}
 			}
 		}
