@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.19 2024/05/14 13:28:08 op Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.20 2024/05/22 08:41:02 op Exp $	*/
 
 /*
  * Copyright (c) 2024 Omar Polo <op@openbsd.org>
@@ -48,8 +48,7 @@ table_proc_nextid(struct table *table)
 	struct table_proc_priv	*priv = table->t_handle;
 	int			 r;
 
-	r = snprintf(priv->lastid, sizeof(priv->lastid), "%lld",
-	    (unsigned long long)arc4random());
+	r = snprintf(priv->lastid, sizeof(priv->lastid), "%08x", arc4random());
 	if (r < 0 || (size_t)r >= sizeof(priv->lastid))
 		fatal("table-proc: snprintf");
 
