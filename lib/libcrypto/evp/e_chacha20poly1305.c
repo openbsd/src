@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.35 2024/04/09 13:52:41 beck Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.36 2024/05/22 14:02:08 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
@@ -493,6 +493,8 @@ chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	/* Update with AD or plaintext/ciphertext. */
 	if (in != NULL) {
+		if (!ctx->encrypt || out == NULL)
+			CRYPTO_poly1305_update(&cpx->poly1305, in, len);
 		if (out == NULL) {
 			cpx->ad_len += len;
 			cpx->in_ad = 1;
@@ -502,8 +504,6 @@ chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 		if (ctx->encrypt && out != NULL)
 			CRYPTO_poly1305_update(&cpx->poly1305, out, len);
-		else
-			CRYPTO_poly1305_update(&cpx->poly1305, in, len);
 
 		return len;
 	}
