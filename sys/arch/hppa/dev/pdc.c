@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.41 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.42 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -53,9 +53,6 @@ int pdcret[32] PDC_ALIGNMENT;
 char pdc_consbuf[IODC_MINIOSIZ] PDC_ALIGNMENT;
 iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
-
-int pdcngetc(dev_t);
-void pdcnputc(dev_t, char *);
 
 struct consdev pdccons = { NULL, NULL, pdccngetc, pdccnputc,
      nullcnpollc, NULL, makedev(22, 0), CN_LOWPRI };

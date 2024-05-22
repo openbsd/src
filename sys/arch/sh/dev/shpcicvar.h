@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcicvar.h,v 1.6 2010/12/04 17:06:32 miod Exp $	*/
+/*	$OpenBSD: shpcicvar.h,v 1.7 2024/05/22 14:25:47 jsg Exp $	*/
 /*	$NetBSD: shpcicvar.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -43,11 +43,6 @@ int shpcic_conf_size(void *, pcitag_t);
 pcireg_t shpcic_conf_read(void *v, pcitag_t tag, int reg);
 void shpcic_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data);
 
-int shpcic_set_intr_priority(int intr, int level);
-void *shpcic_intr_establish(int evtcode, int (*ih_func)(void *), void *ih_arg,
-    const char *ih_name);
-void shpcic_intr_disestablish(void *ih);
-
 struct config_bus_space {
         u_int32_t bus_base;
         u_int32_t bus_size;
@@ -66,8 +61,6 @@ struct shpcic_softc {
         struct config_bus_space sc_membus_space;
         struct config_bus_space sc_iobus_space;
 };
-
-void pci_addr_fixup(void *v, int maxbus);
 
 /*
  * shpcic io/mem bus space

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.29 2024/02/23 18:19:03 cheloha Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.30 2024/05/22 14:25:47 jsg Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -68,8 +68,6 @@ void	m88k_db_print_frame(db_expr_t, int, db_expr_t, char *);
 void	m88k_db_registers(db_expr_t, int, db_expr_t, char *);
 void	m88k_db_where(db_expr_t, int, db_expr_t, char *);
 void	m88k_db_frame_search(db_expr_t, int, db_expr_t, char *);
-void	m88k_db_translate(db_expr_t, int, db_expr_t, char *);
-void	m88k_db_cmmucfg(db_expr_t, int, db_expr_t, char *);
 
 db_regs_t ddb_regs;
 

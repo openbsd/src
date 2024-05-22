@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.9 2022/04/16 19:19:58 naddy Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.10 2024/05/22 14:25:47 jsg Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -209,5 +209,4 @@ int	spc_find(bus_space_tag_t, bus_space_handle_t, int);
 void	spc_init(struct spc_softc *);
 void	spc_sched(struct spc_softc *);
 void	spc_scsi_cmd(struct scsi_xfer *);
-void	spc_minphys(struct buf *);
 #endif	/* _MB89352VAR_H_ */

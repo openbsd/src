@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.12 2022/08/18 06:31:36 miod Exp $	*/
+/*	$OpenBSD: glx.c,v 1.13 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -75,10 +75,6 @@ pcireg_t glx_fn4_read(int);
 void	glx_fn4_write(int, pcireg_t);
 pcireg_t glx_fn5_read(int);
 void	glx_fn5_write(int, pcireg_t);
-pcireg_t glx_fn6_read(int);
-void	glx_fn6_write(int, pcireg_t);
-pcireg_t glx_fn7_read(int);
-void	glx_fn7_write(int, pcireg_t);
 
 void
 glx_init(pci_chipset_tag_t pc, pcitag_t tag, int dev)

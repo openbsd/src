@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_gsc.c,v 1.5 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: siop_gsc.c,v 1.6 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -39,7 +39,6 @@
 
 int siop_gsc_match(struct device *, void *, void *);
 void siop_gsc_attach(struct device *, struct device *, void *);
-int siop_gsc_intr(void *);
 void siop_gsc_reset(struct siop_common_softc *);
 
 u_int8_t siop_gsc_r1(void *, bus_space_handle_t, bus_size_t);

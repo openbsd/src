@@ -1,4 +1,4 @@
-/*	$OpenBSD: wax.c,v 1.11 2018/05/14 13:54:39 kettenis Exp $	*/
+/*	$OpenBSD: wax.c,v 1.12 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -42,7 +42,6 @@
 
 int	waxmatch(struct device *, void *, void *);
 void	waxattach(struct device *, struct device *, void *);
-void	wax_gsc_attach(struct device *);
 
 const struct cfattach wax_ca = {
 	sizeof(struct device), waxmatch, waxattach

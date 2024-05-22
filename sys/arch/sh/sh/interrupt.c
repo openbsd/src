@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.17 2020/10/07 12:13:23 mpi Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.18 2024/05/22 14:25:47 jsg Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@ void intpri_intr_enable(int);
 void intpri_intr_disable(int);
 #endif
 
-void netintr(void);
 void tmu1_oneshot(void);
 int tmu1_intr(void *);
 void setsoft(int);

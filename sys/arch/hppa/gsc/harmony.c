@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.40 2022/10/26 20:19:06 kn Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.41 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -99,8 +99,6 @@ u_int32_t harmony_speed_bits(struct harmony_softc *, u_long *);
 int harmony_set_gainctl(struct harmony_softc *);
 void harmony_reset_codec(struct harmony_softc *);
 void harmony_start_cp(struct harmony_softc *);
-void harmony_tick_pb(void *);
-void harmony_tick_cp(void *);
 void harmony_try_more(struct harmony_softc *);
 
 void harmony_acc_tmo(void *);

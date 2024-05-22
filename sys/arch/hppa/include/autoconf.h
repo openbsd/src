@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.24 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.25 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -78,6 +78,5 @@ void	*cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *),
 	    void *arg, const char *name);
 void	*cpu_intr_establish(int pri, int irq, int (*handler)(void *),
 	    void *arg, const char *name);
-int	clock_intr(void *);
 
 void	dumpconf(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.21 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.22 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -137,7 +137,6 @@ void	smfb_copyrect(struct smfb *, int, int, int, int, int, int);
 void	smfb_fillrect(struct smfb *, int, int, int, int, int);
 int	smfb_copyrows(void *, int, int, int);
 int	smfb_copycols(void *, int, int, int, int);
-int	smfb_do_cursor(struct rasops_info *);
 int	smfb_erasecols(void *, int, int, int, uint32_t);
 int	smfb_eraserows(void *, int, int, uint32_t);
 int	smfb_wait(struct smfb *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.269 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.270 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -177,12 +177,6 @@ extern const u_int itlb_s[], itlbna_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
 extern const u_int itlb_t[], itlbna_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
 extern const u_int itlb_l[], itlbna_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
 extern const u_int itlb_u[], itlbna_u[], dtlb_u[], dtlbna_u[], tlbd_u[];
-int iibtlb_s(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot);
-int idbtlb_s(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot);
-int ibtlb_t(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot);
 int ibtlb_l(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
     vsize_t sz, u_int prot);
 int ibtlb_u(int i, pa_space_t sp, vaddr_t va, paddr_t pa,

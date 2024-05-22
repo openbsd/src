@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.1 2014/06/09 16:26:32 miod Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.2 2024/05/22 14:25:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -37,6 +37,5 @@ typedef union {
 } fparg;
 
 void	fpu_compare(struct trapframe *, fparg *, fparg *, u_int, u_int, u_int);
-int	fpu_emulate(struct trapframe *, u_int32_t);
 u_int	fpu_precision(u_int, u_int, u_int);
 void	fpu_store(struct trapframe *, u_int, u_int, u_int, fparg *);
