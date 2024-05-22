@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.29 2024/05/21 18:19:22 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.30 2024/05/22 11:46:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -55,7 +55,7 @@ struct cfdriver ufshci_cd = {
 };
 
 int			 ufshci_reset(struct ufshci_softc *);
-int			 ufshci_uccs_poll(struct ufshci_softc *);
+int			 ufshci_is_poll(struct ufshci_softc *, uint32_t);
 struct ufshci_dmamem	*ufshci_dmamem_alloc(struct ufshci_softc *, size_t);
 void			 ufshci_dmamem_free(struct ufshci_softc *,
 			     struct ufshci_dmamem *);
@@ -269,7 +269,7 @@ ufshci_reset(struct ufshci_softc *sc)
 }
 
 int
-ufshci_uccs_poll(struct ufshci_softc *sc)
+ufshci_is_poll(struct ufshci_softc *sc, uint32_t type)
 {
 	uint32_t status;
 	int i, retry = 25;
@@ -278,7 +278,7 @@ ufshci_uccs_poll(struct ufshci_softc *sc)
 
 	for (i = 0; i < retry; i++) {
 		status = UFSHCI_READ_4(sc, UFSHCI_REG_IS);
-		if (status & UFSHCI_REG_IS_UCCS)
+		if (status & type)
 			break;
 		delay(10);
 	}
@@ -369,7 +369,7 @@ ufshci_init(struct ufshci_softc *sc)
 	/* 7.1.1 Host Controller Initialization: 6) */
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_UICCMD,
 	    UFSHCI_REG_UICCMD_CMDOP_DME_LINKSTARTUP);
-	if (ufshci_uccs_poll(sc) != 0)
+	if (ufshci_is_poll(sc, UFSHCI_REG_IS_UCCS) != 0)
 		return -1;
 
 	/*
