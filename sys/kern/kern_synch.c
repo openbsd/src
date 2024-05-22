@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.203 2024/05/20 10:32:20 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.204 2024/05/22 09:24:11 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -521,6 +521,7 @@ unsleep(struct proc *p)
 	if (p->p_wchan != NULL) {
 		TAILQ_REMOVE(&slpque[LOOKUP(p->p_wchan)], p, p_runq);
 		p->p_wchan = NULL;
+		p->p_wmesg = NULL;
 		TRACEPOINT(sched, unsleep, p->p_tid + THREAD_PID_OFFSET,
 		    p->p_p->ps_pid);
 	}
@@ -551,6 +552,7 @@ wakeup_n(const volatile void *ident, int n)
 		if (p->p_wchan == ident) {
 			TAILQ_REMOVE(qp, p, p_runq);
 			p->p_wchan = NULL;
+			p->p_wmesg = NULL;
 			TAILQ_INSERT_TAIL(&wakeq, p, p_runq);
 			--n;
 		}
