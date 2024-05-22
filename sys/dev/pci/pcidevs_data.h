@@ -27336,6 +27336,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MT7921K",
 	},
 	{
+	    PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7922,
+	    "MT7922",
+	},
+	{
 	    PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7921,
 	    "MT7921",
 	},

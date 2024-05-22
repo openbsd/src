@@ -7557,6 +7557,7 @@
 
 /* MediaTek products */
 #define	PCI_PRODUCT_MEDIATEK_MT7921K	0x0608		/* MT7921K */
+#define	PCI_PRODUCT_MEDIATEK_MT7922	0x0616		/* MT7922 */
 #define	PCI_PRODUCT_MEDIATEK_MT7921	0x7961		/* MT7921 */
 
 /* Meinberg Funkuhren */
