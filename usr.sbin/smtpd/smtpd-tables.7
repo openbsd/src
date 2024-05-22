@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-tables.7,v 1.1 2024/05/07 12:13:43 op Exp $
+.\"	$OpenBSD: smtpd-tables.7,v 1.2 2024/05/22 08:39:50 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -18,7 +18,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 7 2024 $
+.Dd $Mdocdate: May 22 2024 $
 .Dt SMTPD-TABLES 7
 .Os
 .Sh NAME
@@ -167,7 +167,7 @@ if not found, or
 .Sq error
 upon an error.
 .It Cm fetch Ar service id
-Fetch the next item from the table.
+Fetch the next item from the table, eventually wrapping around.
 It is only supported for the
 .Ic source
 and
@@ -177,7 +177,7 @@ The result is
 .Sq found
 and the value if found,
 .Sq not-found
-if not found, or
+if the table is empty, or
 .Sq error
 upon an error.
 .El
@@ -255,14 +255,14 @@ A series of
 .Cm fetch
 requests for the
 .Cm source
-service:
+service that wraps around:
 .Bd -literal -offset indent
 table|0.1|1713795116.227321|devs|fetch|source|189bd3ee
 lookup-result|189bd3ee|found|192.168.1.7
 table|0.1|1713795120.162438|devs|fetch|source|9e4c56d4
 lookup-result|9e4c56d4|found|10.0.0.8
 table|0.1|1713795122.930928|devs|fetch|source|f2c8b906
-lookup-result|f2c8b906|not-found
+lookup-result|f2c8b906|found|192.168.1.7
 .Ed
 .Sh SEE ALSO
 .Xr smtpd 8
