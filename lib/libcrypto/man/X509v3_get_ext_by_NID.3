@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_get_ext_by_NID.3,v 1.14 2024/05/22 09:34:40 tb Exp $
+.\" $OpenBSD: X509v3_get_ext_by_NID.3,v 1.15 2024/05/22 09:44:10 tb Exp $
 .\" full merge up to: OpenSSL fd38836b Jun 20 15:25:43 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -379,13 +379,12 @@ if an error occurs.
 and
 .Fn X509v3_get_ext_by_critical
 return the extension index or \-1 if an error occurs.
-In addition
+In addition,
 .Fn X509v3_get_ext_by_NID
 returns \-2 if
 .Xr OBJ_nid2obj 3
-fails, which happens if
-.Fa nid
-has no corresponding table object.
+fails on the requested
+.Fa nid .
 .Pp
 .Fn X509v3_add_ext
 returns a stack of extensions or
