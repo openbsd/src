@@ -300,6 +300,11 @@
 #define	MT_CONN_ON_MISC			0x7c0600f0
 #define	MT_TOP_MISC2_FW_N9_RDY		0x3
 
+#define	MT_CONN_ON_LPCTL		0x7c060010
+#define	PCIE_LPCR_HOST_SET_OWN		(1U << 0)
+#define	PCIE_LPCR_HOST_CLR_OWN		(1U << 1)
+#define	PCIE_LPCR_HOST_OWN_SYNC		(1U << 2)
+
 #define	MT_WFSYS_SW_RST_B		0x18000140
 #define	WFSYS_SW_RST_B			(1U << 0)
 #define	WFSYS_SW_INIT_DONE		(1U << 4)
