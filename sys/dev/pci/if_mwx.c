@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.4 2024/05/22 08:38:57 martijn Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.5 2024/05/22 16:24:59 martijn Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -52,6 +52,7 @@
 static const struct pci_matchid mwx_devices[] = {
 	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7921 },
 	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7921K },
+	{ PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7922 },
 };
 
 #define MWX_DEBUG	1
@@ -158,9 +159,16 @@ struct mwx_vif {
 	uint8_t			scan_seq_num;
 };
 
+enum mwx_hw_type {
+	MWX_HW_MT7921,
+	MWX_HW_MT7922,
+};
+
 struct mwx_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
+
+	enum mwx_hw_type	sc_hwtype;
 
 	struct mwx_queue	sc_txq;
 	struct mwx_queue	sc_txmcuq;
@@ -1181,6 +1189,10 @@ mwx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MEDIATEK_MT7922)
+		sc->sc_hwtype = MWX_HW_MT7922;
+	else
+		sc->sc_hwtype = MWX_HW_MT7921;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,
@@ -2848,6 +2860,7 @@ mt7921_load_firmware(struct mwx_softc *sc)
 {
 	struct mt7921_patch_hdr *hdr;
 	struct mt7921_fw_trailer *fwhdr;
+	const char *rompatch, *fw;
 	u_char *buf, *fwbuf, *dl;
 	size_t buflen, fwlen, offset = 0;
 	uint32_t reg, override = 0, option = 0;
@@ -2859,8 +2872,18 @@ mt7921_load_firmware(struct mwx_softc *sc)
 		return 0;
 	}
 
-	if ((rv = loadfirmware(MT7921_ROM_PATCH, &buf, &buflen)) != 0 ||
-	    (rv = loadfirmware(MT7921_FIRMWARE_WM, &fwbuf, &fwlen)) != 0) {
+	switch (sc->sc_hwtype) {
+	case MWX_HW_MT7921:
+		rompatch = MT7921_ROM_PATCH;
+		fw = MT7921_FIRMWARE_WM;
+		break;
+	case MWX_HW_MT7922:
+		rompatch = MT7922_ROM_PATCH;
+		fw = MT7922_FIRMWARE_WM;
+		break;
+	}
+	if ((rv = loadfirmware(rompatch, &buf, &buflen)) != 0 ||
+	    (rv= loadfirmware(fw, &fwbuf, &fwlen)) != 0) {
 		printf("%s: loadfirmware error %d\n", DEVNAME(sc), rv);
 		return rv;
 	}
