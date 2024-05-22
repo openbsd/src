@@ -1,4 +1,4 @@
-/*	$OpenBSD: htbvar.h,v 1.2 2017/05/10 15:21:02 visa Exp $	*/
+/*	$OpenBSD: htbvar.h,v 1.3 2024/05/22 14:22:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -23,7 +23,6 @@ struct htb_config {
 	void		(*hc_attach_hook)(pci_chipset_tag_t);
 };
 
-extern struct mips_isa_chipset htb_isa_chipset;
 extern struct mips_bus_space htb_pci_mem_space_tag;
 extern struct mips_bus_space htb_pci_io_space_tag;
 
