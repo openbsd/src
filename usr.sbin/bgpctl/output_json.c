@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.43 2024/04/24 10:42:09 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.44 2024/05/22 08:42:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -324,7 +324,7 @@ json_neighbor(struct peer *p, struct parse_result *res)
 		    log_addr(&p->conf.remote_addr), p->conf.remote_masklen);
 	if (p->state == STATE_ESTABLISHED) {
 		struct in_addr ina;
-		ina.s_addr = p->remote_bgpid;
+		ina.s_addr = htonl(p->remote_bgpid);
 		json_do_string("bgpid", inet_ntoa(ina));
 	}
 	json_do_string("state", statenames[p->state]);

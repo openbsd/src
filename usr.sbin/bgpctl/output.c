@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.50 2024/01/31 11:23:20 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.51 2024/05/22 08:42:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -299,7 +299,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 		printf("\n");
 
 	if (p->state == STATE_ESTABLISHED) {
-		ina.s_addr = p->remote_bgpid;
+		ina.s_addr = htonl(p->remote_bgpid);
 		printf("  BGP version 4, remote router-id %s",
 		    inet_ntoa(ina));
 		printf("%s\n", fmt_auth_method(p->auth.method));

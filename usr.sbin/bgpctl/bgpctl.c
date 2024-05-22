@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.305 2024/02/01 11:37:10 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.306 2024/05/22 08:42:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1548,15 +1548,16 @@ show_mrt_capabilities(struct ibuf *b)
 static void
 show_mrt_open(struct ibuf *b)
 {
+	struct in_addr ina;
+	uint32_t bgpid;
 	uint16_t short_as, holdtime;
 	uint8_t version, optparamlen;
-	struct in_addr bgpid;
 
 	/* length check up to optparamlen already happened */
 	if (ibuf_get_n8(b, &version) == -1 ||
 	    ibuf_get_n16(b, &short_as) == -1 ||
 	    ibuf_get_n16(b, &holdtime) == -1 ||
-	    ibuf_get(b, &bgpid, sizeof(bgpid)) == -1 ||
+	    ibuf_get_n32(b, &bgpid) == -1 ||
 	    ibuf_get_n8(b, &optparamlen) == -1) {
  trunc:
 		printf("truncated message");
@@ -1564,8 +1565,9 @@ show_mrt_open(struct ibuf *b)
 	}
 
 	printf("\n    ");
+	ina.s_addr = htonl(bgpid);
 	printf("Version: %d AS: %u Holdtime: %u BGP Id: %s Paramlen: %u",
-	    version, short_as, holdtime, inet_ntoa(bgpid), optparamlen);
+	    version, short_as, holdtime, inet_ntoa(ina), optparamlen);
 	if (optparamlen != ibuf_size(b)) {
 		/* XXX missing support for RFC9072 */
 		printf("optional parameter length mismatch");
