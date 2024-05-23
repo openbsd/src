@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.28 2024/05/23 01:56:14 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.29 2024/05/23 01:57:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,8 +140,8 @@ X509v3_get_ext(const STACK_OF(X509_EXTENSION) *sk, int loc)
 {
 	if (sk == NULL || sk_X509_EXTENSION_num(sk) <= loc || loc < 0)
 		return NULL;
-	else
-		return sk_X509_EXTENSION_value(sk, loc);
+
+	return sk_X509_EXTENSION_value(sk, loc);
 }
 LCRYPTO_ALIAS(X509v3_get_ext);
 
