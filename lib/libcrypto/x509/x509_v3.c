@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.26 2024/05/23 01:50:52 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.27 2024/05/23 01:52:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -277,15 +277,10 @@ LCRYPTO_ALIAS(X509_EXTENSION_set_critical);
 int
 X509_EXTENSION_set_data(X509_EXTENSION *ext, ASN1_OCTET_STRING *data)
 {
-	int i;
-
 	if (ext == NULL)
 		return 0;
 
-	i = ASN1_STRING_set(ext->value, data->data, data->length);
-	if (!i)
-		return 0;
-	return 1;
+	return ASN1_STRING_set(ext->value, data->data, data->length);
 }
 LCRYPTO_ALIAS(X509_EXTENSION_set_data);
 
