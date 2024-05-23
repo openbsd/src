@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.24 2024/05/23 01:42:23 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.25 2024/05/23 01:43:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,11 +80,11 @@ LCRYPTO_ALIAS(X509v3_get_ext_count);
 int
 X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid, int lastpos)
 {
-	ASN1_OBJECT *obj;
+	const ASN1_OBJECT *obj;
 
-	obj = OBJ_nid2obj(nid);
-	if (obj == NULL)
+	if ((obj = OBJ_nid2obj(nid)) == NULL)
 		return -2;
+
 	return X509v3_get_ext_by_OBJ(x, obj, lastpos);
 }
 LCRYPTO_ALIAS(X509v3_get_ext_by_NID);
