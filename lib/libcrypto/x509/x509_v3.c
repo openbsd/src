@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.25 2024/05/23 01:43:51 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.26 2024/05/23 01:50:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,6 +73,7 @@ X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 {
 	if (x == NULL)
 		return 0;
+
 	return sk_X509_EXTENSION_num(x);
 }
 LCRYPTO_ALIAS(X509v3_get_ext_count);
@@ -253,8 +254,10 @@ X509_EXTENSION_set_object(X509_EXTENSION *ext, const ASN1_OBJECT *obj)
 {
 	if (ext == NULL || obj == NULL)
 		return 0;
+
 	ASN1_OBJECT_free(ext->object);
 	ext->object = OBJ_dup(obj);
+
 	return ext->object != NULL;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_set_object);
@@ -264,7 +267,9 @@ X509_EXTENSION_set_critical(X509_EXTENSION *ext, int crit)
 {
 	if (ext == NULL)
 		return 0;
+
 	ext->critical = crit ? 0xFF : -1;
+
 	return 1;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_set_critical);
@@ -276,6 +281,7 @@ X509_EXTENSION_set_data(X509_EXTENSION *ext, ASN1_OCTET_STRING *data)
 
 	if (ext == NULL)
 		return 0;
+
 	i = ASN1_STRING_set(ext->value, data->data, data->length);
 	if (!i)
 		return 0;
@@ -288,6 +294,7 @@ X509_EXTENSION_get_object(X509_EXTENSION *ext)
 {
 	if (ext == NULL)
 		return NULL;
+
 	return ext->object;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_get_object);
@@ -297,6 +304,7 @@ X509_EXTENSION_get_data(X509_EXTENSION *ext)
 {
 	if (ext == NULL)
 		return NULL;
+
 	return ext->value;
 }
 LCRYPTO_ALIAS(X509_EXTENSION_get_data);
