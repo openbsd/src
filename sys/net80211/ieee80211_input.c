@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.253 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.254 2024/05/23 11:19:13 stsp Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -189,8 +189,10 @@ ieee80211_input_hwdecrypt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			 */
 			break;
 		}
-		if (ieee80211_ccmp_get_pn(&pn, &prsc, m, k) != 0)
+		if (ieee80211_ccmp_get_pn(&pn, &prsc, m, k) != 0) {
+			ic->ic_stats.is_ccmp_dec_errs++;
 			return NULL;
+		}
 		if (rxi->rxi_flags & IEEE80211_RXI_HWDEC_SAME_PN) {
 			if (pn < *prsc) {
 				ic->ic_stats.is_ccmp_replays++;
