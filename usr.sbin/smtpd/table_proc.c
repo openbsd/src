@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.21 2024/05/23 17:05:45 op Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.22 2024/05/23 17:10:00 op Exp $	*/
 
 /*
  * Copyright (c) 2024 Omar Polo <op@openbsd.org>
@@ -186,8 +186,15 @@ table_proc_update(struct table *table)
 	r = table_proc_recv(table, "update-result");
 	if (!strcmp(r, "ok"))
 		return (1);
-	if (!strcmp(r, "error"))
+
+	if (!strncmp(r, "error", 5)) {
+		if (r[5] == '|') {
+			r += 6;
+			log_warnx("warn: table-proc: %s update failed: %s",
+			    table->t_name, r);
+		}
 		return (0);
+	}
 
 	log_warnx("warn: table-proc: failed parse reply");
 	fatalx("table-proc: exiting");
@@ -222,11 +229,17 @@ table_proc_lookup(struct table *table, enum table_service s, const char *k, char
 	table_proc_send(table, req, s, k);
 	r = table_proc_recv(table, res);
 
-	/* common replies */
 	if (!strcmp(r, "not-found"))
 		return (0);
-	if (!strcmp(r, "error"))
+
+	if (!strncmp(r, "error", 5)) {
+		if (r[5] == '|') {
+			r += 6;
+			log_warnx("warn: table-proc: %s %s failed: %s",
+			    table->t_name, req, r);
+		}
 		return (-1);
+	}
 
 	if (dst == NULL) {
 		/* check op */
@@ -261,8 +274,15 @@ table_proc_fetch(struct table *table, enum table_service s, char **dst)
 
 	if (!strcmp(r, "not-found"))
 		return (0);
-	if (!strcmp(r, "error"))
+
+	if (!strncmp(r, "error", 5)) {
+		if (r[5] == '|') {
+			r += 6;
+			log_warnx("warn: table-proc: %s fetch failed: %s",
+			    table->t_name, r);
+		}
 		return (-1);
+	}
 
 	if (strncmp(r, "found|", 6) != 0) {
 		log_warnx("warn: table-proc: failed to parse reply");

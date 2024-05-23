@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-tables.7,v 1.2 2024/05/22 08:39:50 op Exp $
+.\"	$OpenBSD: smtpd-tables.7,v 1.3 2024/05/23 17:10:00 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -18,7 +18,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 22 2024 $
+.Dd $Mdocdate: May 23 2024 $
 .Dt SMTPD-TABLES 7
 .Os
 .Sh NAME
@@ -144,7 +144,7 @@ The result is either
 .Sq ok
 on success or
 .Sq error
-upon a failure to do so.
+and a message upon a failure to do so.
 .It Cm check Ar service id query
 Check whether
 .Ar query
@@ -155,7 +155,7 @@ if found,
 .Sq not-found
 if not, or
 .Sq error
-upon an error.
+and a message upon an error.
 .It Cm lookup Ar service id query
 Look up a value in the table for given the
 .Ar query .
@@ -165,7 +165,7 @@ and the value if found,
 .Sq not-found
 if not found, or
 .Sq error
-upon an error.
+and a message upon an error.
 .It Cm fetch Ar service id
 Fetch the next item from the table, eventually wrapping around.
 It is only supported for the
@@ -179,7 +179,7 @@ and the value if found,
 .Sq not-found
 if the table is empty, or
 .Sq error
-upon an error.
+and a message upon an error.
 .El
 .Pp
 Each service has a specific format for the result.
@@ -221,12 +221,12 @@ Used to map IP addresses to hostnames.
 .Sh EXAMPLES
 Assuming the table is called
 .Dq devs ,
-here's an example of a successful
+here's an example of a failed
 .Cm update
 transaction:
 .Bd -literal -offset indent
 table|0.1|1713795097.394049|devs|update|478ff0d2
-update-result|478ff0d2|ok
+update-result|478ff0d2|error|failed to connect to the database
 .Ed
 .Pp
 A
