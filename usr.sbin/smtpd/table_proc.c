@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.20 2024/05/22 08:41:02 op Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.21 2024/05/23 17:05:45 op Exp $	*/
 
 /*
  * Copyright (c) 2024 Omar Polo <op@openbsd.org>
@@ -166,8 +166,9 @@ table_proc_open(struct table *table)
 	}
 
 	if (ferror(priv->in))
-		fatalx("table-proc: getline");
-
+		fatal("table-proc: getline");
+	if (feof(priv->in))
+		fatalx("table-proc: unexpected EOF during handshake");
 	if (services == 0)
 		fatalx("table-proc: no services registered");
 
