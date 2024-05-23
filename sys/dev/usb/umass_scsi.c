@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.64 2023/05/10 15:28:26 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.65 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,11 +32,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/malloc.h>
 
 #include <dev/usb/usb.h>
@@ -48,7 +44,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#include <scsi/scsi_disk.h>
 #include <machine/bus.h>
 
 struct umass_scsi_softc {

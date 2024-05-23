@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.38 2022/01/09 05:43:00 jsg Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.39 2024/05/23 03:21:08 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -65,8 +65,6 @@
 #include <sys/sockio.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 

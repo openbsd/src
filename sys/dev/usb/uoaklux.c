@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoaklux.c,v 1.17 2022/04/09 20:09:03 naddy Exp $   */
+/*	$OpenBSD: uoaklux.c,v 1.18 2024/05/23 03:21:09 jsg Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -21,10 +21,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/sensors.h>
 
 #include <dev/usb/usb.h>

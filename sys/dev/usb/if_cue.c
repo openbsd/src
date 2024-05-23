@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.80 2020/07/31 10:49:32 mglocker Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.81 2024/05/23 03:21:08 jsg Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -62,8 +62,6 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 

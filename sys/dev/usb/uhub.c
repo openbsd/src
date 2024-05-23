@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.97 2022/09/04 08:42:39 mglocker Exp $ */
+/*	$OpenBSD: uhub.c,v 1.98 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 

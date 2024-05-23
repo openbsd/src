@@ -1,4 +1,4 @@
-/*	$OpenBSD: upd.c,v 1.31 2021/11/15 15:36:24 anton Exp $ */
+/*	$OpenBSD: upd.c,v 1.32 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 David Higgs <higgsd@gmail.com>
@@ -24,7 +24,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/queue.h>
@@ -32,10 +31,8 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/usbhid.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/usbdi_util.h>
 
 #ifdef UPD_DEBUG
 #define DPRINTF(x)	do { printf x; } while (0)

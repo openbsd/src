@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.42 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.43 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -37,19 +37,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/fcntl.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbcdc.h>
-
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>

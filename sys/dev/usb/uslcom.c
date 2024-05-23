@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.44 2022/04/09 20:07:44 naddy Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.45 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -18,13 +18,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/tty.h>
 #include <sys/device.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>

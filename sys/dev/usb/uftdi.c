@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.78 2022/12/30 00:54:09 kevlo Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.79 2024/05/23 03:21:09 jsg Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -41,15 +41,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>
 
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>

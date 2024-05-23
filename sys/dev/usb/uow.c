@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.37 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: uow.c,v 1.38 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 
 #include <dev/onewire/onewirereg.h>
 #include <dev/onewire/onewirevar.h>
@@ -31,7 +30,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 
 #include <dev/usb/uowreg.h>
 

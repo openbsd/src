@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.52 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.53 2024/05/23 03:21:08 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,11 +25,8 @@
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 

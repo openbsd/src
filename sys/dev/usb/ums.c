@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.51 2021/11/22 11:29:17 anton Exp $ */
+/*	$OpenBSD: ums.c,v 1.52 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -37,9 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>

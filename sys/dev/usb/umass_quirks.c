@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.34 2020/08/26 13:57:20 krw Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.35 2024/05/23 03:21:09 jsg Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/buf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

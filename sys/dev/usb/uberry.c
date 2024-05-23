@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.24 2016/11/06 12:58:01 mpi Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.25 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -17,18 +17,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
-#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/endian.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

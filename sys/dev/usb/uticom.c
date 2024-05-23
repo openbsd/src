@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.35 2022/04/09 20:07:44 naddy Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.36 2024/05/23 03:21:09 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -26,10 +26,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 
 #include <machine/bus.h>

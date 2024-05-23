@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.44 2023/04/26 08:38:51 bentley Exp $ */
+/*	$OpenBSD: uts.c,v 1.45 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -17,22 +17,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/timeout.h>
-#include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/endian.h>
 
 #include <machine/intr.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/wscons/wsconsio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.50 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: umct.c,v 1.51 2024/05/23 03:21:09 jsg Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,10 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/ioctl.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/device.h>
 
@@ -48,7 +45,6 @@
 #include <dev/usb/usbcdc.h>
 
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.89 2021/08/09 07:21:48 jmatthew Exp $ */
+/*	$OpenBSD: if_url.c,v 1.90 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -48,8 +48,6 @@
 #include <sys/systm.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 

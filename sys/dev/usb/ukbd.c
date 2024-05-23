@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.89 2023/12/05 20:49:31 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.90 2024/05/23 03:21:09 jsg Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -53,9 +53,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.142 2020/07/31 10:49:32 mglocker Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.143 2024/05/23 03:21:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -94,8 +94,6 @@
 #include <sys/sockio.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 

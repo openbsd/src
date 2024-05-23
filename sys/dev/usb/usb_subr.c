@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.162 2023/10/06 16:06:11 krw Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.163 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/rwlock.h>

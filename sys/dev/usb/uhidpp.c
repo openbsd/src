@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.43 2023/01/08 06:54:51 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.44 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/sensors.h>

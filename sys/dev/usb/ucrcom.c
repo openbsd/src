@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucrcom.c,v 1.2 2022/04/09 20:07:44 naddy Exp $	*/
+/*	$OpenBSD: ucrcom.c,v 1.3 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -18,13 +18,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/tty.h>
 #include <sys/device.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>

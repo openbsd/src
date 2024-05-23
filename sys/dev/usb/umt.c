@@ -1,4 +1,4 @@
-/* $OpenBSD: umt.c,v 1.6 2024/05/13 01:15:53 jsg Exp $ */
+/* $OpenBSD: umt.c,v 1.7 2024/05/23 03:21:09 jsg Exp $ */
 /*
  * USB multitouch touchpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -22,15 +22,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/uhidev.h>
 

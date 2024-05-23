@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.90 2023/04/20 10:49:57 brynet Exp $ */
+/*	$OpenBSD: uhid.c,v 1.91 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -40,21 +40,16 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/signalvar.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <sys/vnode.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 

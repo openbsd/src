@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.43 2020/07/31 10:49:32 mglocker Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.44 2024/05/23 03:21:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -77,8 +77,6 @@
 #include <sys/sockio.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 
@@ -99,7 +97,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_mosreg.h>

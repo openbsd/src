@@ -1,4 +1,4 @@
-/*	$OpenBSD: utwitch.c,v 1.22 2021/11/15 15:36:24 anton Exp $ */
+/*	$OpenBSD: utwitch.c,v 1.23 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Yojiro UO <yuo@nui.org>
@@ -21,16 +21,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/sensors.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.109 2023/08/12 20:47:06 miod Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.110 2024/05/23 03:21:09 jsg Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -37,12 +37,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/signalvar.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
-#include <sys/conf.h>
 
 #include <machine/bus.h>
 

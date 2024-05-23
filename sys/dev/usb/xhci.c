@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.130 2023/07/20 09:43:00 claudio Exp $ */
+/* $OpenBSD: xhci.c,v 1.131 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/queue.h>

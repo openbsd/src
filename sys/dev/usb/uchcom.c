@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.35 2024/05/15 01:41:19 kevlo Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.36 2024/05/23 03:21:09 jsg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/tty.h>
 #include <sys/device.h>
@@ -46,7 +45,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 

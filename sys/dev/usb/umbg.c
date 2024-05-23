@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.28 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: umbg.c,v 1.29 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -18,8 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/sensors.h>
@@ -27,7 +25,6 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #ifdef UMBG_DEBUG

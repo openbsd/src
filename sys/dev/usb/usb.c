@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.130 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: usb.c,v 1.131 2024/05/23 03:21:09 jsg Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -42,20 +42,16 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
 #include <sys/kthread.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
-#include <sys/signalvar.h>
 #include <sys/time.h>
 #include <sys/rwlock.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.73 2021/11/05 11:38:52 mpi Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.74 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -24,17 +24,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
-#include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 
 #include <machine/bus.h>
 
 #include <net/if.h>
-#include <net/if_media.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -45,8 +41,6 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
-#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/rndis.h>

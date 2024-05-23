@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.128 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.129 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -26,12 +26,9 @@
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 

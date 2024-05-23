@@ -1,4 +1,4 @@
-/*	$OpenBSD: uonerng.c,v 1.6 2022/01/09 05:43:02 jsg Exp $ */
+/*	$OpenBSD: uonerng.c,v 1.7 2024/05/23 03:21:09 jsg Exp $ */
 /*
  * Copyright (C) 2015 Devin Reade <gdr@gno.org>
  * Copyright (C) 2015 Sean Levy <attila@stalphonsos.com>
@@ -33,14 +33,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/time.h>
 #include <sys/timeout.h>
 #include <machine/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdivar.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbcdc.h>
 

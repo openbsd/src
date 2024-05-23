@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.219 2022/04/12 19:41:11 naddy Exp $ */
+/*	$OpenBSD: ehci.c,v 1.220 2024/05/23 03:21:08 jsg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/malloc.h>
 #include <sys/device.h>

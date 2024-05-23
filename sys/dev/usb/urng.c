@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.10 2020/05/29 04:42:25 deraadt Exp $ */
+/*	$OpenBSD: urng.c,v 1.11 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -31,7 +31,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/time.h>
 #include <sys/timeout.h>
 
 #include <dev/usb/usb.h>

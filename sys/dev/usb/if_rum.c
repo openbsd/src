@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.128 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.129 2024/05/23 03:21:08 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -27,11 +27,8 @@
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 
@@ -53,7 +50,6 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_rumreg.h>

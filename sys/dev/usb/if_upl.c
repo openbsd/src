@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.79 2021/08/09 07:21:48 jmatthew Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.80 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,8 +41,6 @@
 #include <sys/timeout.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 
@@ -58,7 +56,6 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 /*

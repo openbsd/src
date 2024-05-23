@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.81 2022/08/23 15:58:57 anton Exp $ */
+/*	$OpenBSD: umass.c,v 1.82 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -126,11 +126,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>

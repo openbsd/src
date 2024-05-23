@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.134 2022/04/21 21:03:03 stsp Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.135 2024/05/23 03:21:08 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -50,10 +50,7 @@
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 #include <sys/queue.h>
 #include <sys/device.h>
 

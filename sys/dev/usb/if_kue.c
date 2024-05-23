@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.92 2020/07/31 10:49:32 mglocker Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.93 2024/05/23 03:21:08 jsg Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,8 +77,6 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 
 #include <net/if.h>

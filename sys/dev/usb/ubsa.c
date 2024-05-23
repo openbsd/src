@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.69 2022/07/02 08:50:42 visa Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.70 2024/05/23 03:21:09 jsg Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -56,12 +56,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/ioccom.h>
-#include <sys/fcntl.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.39 2023/12/04 05:28:25 mglocker Exp $   */
+/*	$OpenBSD: uthum.c,v 1.40 2024/05/23 03:21:09 jsg Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -20,15 +20,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/sensors.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 

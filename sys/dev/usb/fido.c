@@ -1,4 +1,4 @@
-/*	$OpenBSD: fido.c,v 1.5 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: fido.c,v 1.6 2024/05/23 03:21:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Reyk Floeter <reyk@openbsd.org>
@@ -20,22 +20,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/signalvar.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 
 #include <dev/usb/uhidev.h>
 #include <dev/usb/uhid.h>

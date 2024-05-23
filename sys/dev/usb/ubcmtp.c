@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.25 2023/07/02 21:44:04 bru Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.26 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -27,9 +27,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 
-#include <sys/ioctl.h>
 #include <sys/systm.h>
-#include <sys/tty.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

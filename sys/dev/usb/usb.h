@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.62 2021/01/27 17:28:19 mglocker Exp $ */
+/*	$OpenBSD: usb.h,v 1.63 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -37,7 +37,6 @@
 #define _USB_H_
 
 #include <sys/types.h>
-#include <sys/time.h>
 
 #include <sys/ioctl.h>
 

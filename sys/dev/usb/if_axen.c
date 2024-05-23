@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.32 2024/01/04 08:41:59 kevlo Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.33 2024/05/23 03:21:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -28,8 +28,6 @@
 #include <sys/sockio.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 

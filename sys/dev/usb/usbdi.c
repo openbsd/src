@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.110 2021/02/03 11:34:24 mglocker Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.111 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 

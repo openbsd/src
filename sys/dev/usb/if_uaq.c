@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uaq.c,v 1.5 2022/09/01 17:07:09 mlarkin Exp $	*/
+/*	$OpenBSD: if_uaq.c,v 1.6 2024/05/23 03:21:08 jsg Exp $	*/
 /*-
  * Copyright (c) 2021 Jonathan Matthew <jonathan@d14n.org>
  * All rights reserved.
@@ -31,10 +31,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
-#include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.13 2022/01/09 05:43:02 jsg Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.14 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -107,10 +107,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-
-#include <sys/ioctl.h>
 #include <sys/systm.h>
-#include <sys/tty.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.56 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.57 2024/05/23 03:21:09 jsg Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,16 +31,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
-#include <sys/conf.h>
 #include <sys/fcntl.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 
 #include <dev/usb/umidireg.h>
 #include <dev/usb/umidivar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.76 2022/01/09 05:43:00 jsg Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.77 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -27,19 +27,13 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  */
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
 #include <sys/kthread.h>
-#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -56,10 +50,6 @@
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 

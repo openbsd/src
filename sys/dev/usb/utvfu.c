@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.19 2022/10/28 15:02:20 kn Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.20 2024/05/23 03:21:09 jsg Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -47,7 +47,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>
-#include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/device.h>

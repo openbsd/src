@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.28 2022/04/09 20:07:44 naddy Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.29 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>
@@ -52,7 +50,6 @@
 #include <dev/usb/usbcdc.h>	/*UCDC_* stuff */
 
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>

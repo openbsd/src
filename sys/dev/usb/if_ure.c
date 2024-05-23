@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.34 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.35 2024/05/23 03:21:09 jsg Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -34,8 +34,6 @@
 #include <sys/sockio.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>

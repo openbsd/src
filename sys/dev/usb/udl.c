@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.99 2023/05/10 18:28:04 miod Exp $ */
+/*	$OpenBSD: udl.c,v 1.100 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -30,7 +30,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 

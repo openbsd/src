@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.78 2023/10/06 16:06:11 krw Exp $ */
+/*	$OpenBSD: ucom.c,v 1.79 2024/05/23 03:21:09 jsg Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -51,7 +50,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>
 

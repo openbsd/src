@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.112 2021/08/09 07:21:48 jmatthew Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.113 2024/05/23 03:21:08 jsg Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -84,8 +84,6 @@
 #include <sys/sockio.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 

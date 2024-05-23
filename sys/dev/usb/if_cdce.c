@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.82 2024/01/04 08:41:59 kevlo Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.83 2024/05/23 03:21:08 jsg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -46,8 +46,6 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 
 #include <net/if.h>

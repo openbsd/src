@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.57 2024/04/13 23:44:11 jsg Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.58 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -29,7 +29,6 @@
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/kstat.h>
@@ -44,12 +43,9 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet/ip.h>
 
 #ifdef INET6
-#include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 #endif

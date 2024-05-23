@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.11 2021/07/25 06:43:04 mglocker Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.12 2024/05/23 03:21:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -25,8 +25,6 @@
 #include <sys/sockio.h>
 #include <sys/rwlock.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <sys/device.h>
 

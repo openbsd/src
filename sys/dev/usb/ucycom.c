@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.41 2022/04/09 20:07:44 naddy Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.42 2024/05/23 03:21:09 jsg Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -40,8 +40,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/tty.h>
@@ -50,7 +48,6 @@
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 

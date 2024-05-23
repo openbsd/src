@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.20 2021/11/05 11:38:51 mpi Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.21 2024/05/23 03:21:08 jsg Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -16,22 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <sys/socket.h>
 
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
@@ -43,7 +34,6 @@
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usbdevs.h>

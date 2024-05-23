@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.10 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.11 2024/05/23 03:21:08 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -26,11 +26,8 @@
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 

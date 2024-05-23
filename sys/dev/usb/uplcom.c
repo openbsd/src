@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.80 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.81 2024/05/23 03:21:09 jsg Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,10 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/ioctl.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/device.h>
 
@@ -50,7 +47,6 @@
 #include <dev/usb/usbcdc.h>
 
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>

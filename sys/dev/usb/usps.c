@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.11 2024/05/15 04:36:28 jsg Exp $   */
+/*	$OpenBSD: usps.c,v 1.12 2024/05/23 03:21:09 jsg Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -20,15 +20,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/sensors.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
-#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
 #ifdef USPS_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.27 2023/12/21 19:40:47 miod Exp $   */
+/*	$OpenBSD: ugold.c,v 1.28 2024/05/23 03:21:09 jsg Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -26,7 +26,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
 

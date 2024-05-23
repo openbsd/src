@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.125 2023/04/02 23:57:57 dlg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.126 2024/05/23 03:21:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -21,10 +21,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/tty.h>
 
 #include <dev/usb/usb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umstc.c,v 1.7 2021/11/22 11:29:18 anton Exp $ */
+/*	$OpenBSD: umstc.c,v 1.8 2024/05/23 03:21:09 jsg Exp $ */
 
 /*
  * Copyright (c) 2020 joshua stein <jcs@jcs.org>
@@ -24,7 +24,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/atomic.h>
 #include <sys/task.h>
@@ -36,7 +35,6 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 
-#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 
 #include "audio.h"
