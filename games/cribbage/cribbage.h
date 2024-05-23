@@ -1,4 +1,4 @@
-/*	$OpenBSD: cribbage.h,v 1.12 2015/12/31 18:10:19 mestre Exp $	*/
+/*	$OpenBSD: cribbage.h,v 1.13 2024/05/23 00:45:08 jsg Exp $	*/
 /*	$NetBSD: cribbage.h,v 1.3 1995/03/21 15:08:46 cgd Exp $	*/
 
 /*
@@ -60,7 +60,6 @@ extern  bool		explain;		/* player mistakes explained */
 extern  bool		muggins;		/* player mistakes exploited */
 extern  bool		rflag;			/* if all cuts random */
 extern  bool		quiet;			/* if suppress random mess */
-extern	bool		playing;		/* currently playing game */
 
 extern  char		expl_string[128];		/* string for explanation */
 
