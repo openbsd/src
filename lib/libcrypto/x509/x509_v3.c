@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_v3.c,v 1.29 2024/05/23 01:57:32 tb Exp $ */
+/* $OpenBSD: x509_v3.c,v 1.30 2024/05/23 02:00:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,9 +187,9 @@ X509v3_add_ext(STACK_OF(X509_EXTENSION) **x, X509_EXTENSION *ext, int loc)
 		*x = sk;
 	return sk;
 
-err:
+ err:
 	X509error(ERR_R_MALLOC_FAILURE);
-err2:
+ err2:
 	if (new_ext != NULL)
 		X509_EXTENSION_free(new_ext);
 	if (sk != NULL && x != NULL && sk != *x)
@@ -242,7 +242,7 @@ X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ext, const ASN1_OBJECT *obj,
 		*ext = ret;
 	return ret;
 
-err:
+ err:
 	if (ext == NULL || ret != *ext)
 		X509_EXTENSION_free(ret);
 	return NULL;
