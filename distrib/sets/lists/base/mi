@@ -777,7 +777,7 @@
 ./usr/lib/libreadline.so.5.0
 ./usr/lib/librpcsvc.so.3.0
 ./usr/lib/libskey.so.6.0
-./usr/lib/libsndio.so.7.2
+./usr/lib/libsndio.so.7.3
 ./usr/lib/libssl.so.57.0
 ./usr/lib/libtermcap.so.15.0
 ./usr/lib/libtermlib.so.15.0
