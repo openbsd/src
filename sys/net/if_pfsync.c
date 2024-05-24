@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.325 2024/02/13 12:22:09 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.326 2024/05/24 06:38:41 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2892,7 +2892,7 @@ pfsync_upd_tcp(struct pf_state *st, const struct pfsync_state_peer *src,
 
 	if ((st->dst.state > dst->state) ||
 
-	    (st->dst.state >= TCPS_SYN_SENT &&
+	    (st->dst.state == dst->state &&
 	     SEQ_GT(st->dst.seqlo, ntohl(dst->seqlo))))
 		sync++;
 	else
