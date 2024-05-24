@@ -1,4 +1,4 @@
-.\"	$OpenBSD: check-lib-depends.1,v 1.5 2021/06/21 15:17:32 espie Exp $
+.\"	$OpenBSD: check-lib-depends.1,v 1.6 2024/05/24 11:52:45 op Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 21 2021 $
+.Dd $Mdocdate: May 24 2024 $
 .Dt CHECK-LIB-DEPENDS 1
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ Be quiet, do not emit
 .Sq Extra:
 wantlibs unless there's also an actual problem.
 .It Fl S Ar var Ns = Ns Ar value
-recognize list of libraries listed in a variable, and replace said list
+Recognize list of libraries listed in a variable, and replace said list
 with variable value.
 For instance,
 .Fl S Ar COMPILER_LIBCXX Ns = Ns Ar stdc++
