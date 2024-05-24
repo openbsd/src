@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.18 2023/05/08 16:11:41 tobias Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.19 2024/05/24 13:32:03 op Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -213,7 +213,7 @@ pwd_gettries(login_cap_t *lc)
 		if (ntries >= 0 && ntries <= INT_MAX)
 			return((int)ntries);
 		fprintf(stderr,
-		    "Warning: pwdtries out of range in /etc/login.conf");
+		    "Warning: passwordtries out of range in /etc/login.conf");
 	}
 
 	/*
