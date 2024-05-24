@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.12 2024/05/24 09:51:14 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.13 2024/05/24 20:34:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -56,6 +56,13 @@
 #define  UFSHCI_REG_HCMID_MIC(x)	((x >> 0) & 0x000000ff) /* RO */
 /* Auto-Hibernate Idle Timer */
 #define UFSHCI_REG_AHIT			0x18
+#define UFSHCI_REG_AHIT_TS(x)		(x << 10)
+#define  UFSHCI_REG_AHIT_TS_1US		0x00
+#define  UFSHCI_REG_AHIT_TS_10US	0x01
+#define  UFSHCI_REG_AHIT_TS_100US	0x02
+#define  UFSHCI_REG_AHIT_TS_1MS		0x03
+#define  UFSHCI_REG_AHIT_TS_10MS	0x04
+#define  UFSHCI_REG_AHIT_TS_100MS	0x05
 
 /*
  * Operation and Runtime Registers

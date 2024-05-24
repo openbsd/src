@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.31 2024/05/24 09:51:14 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.32 2024/05/24 20:34:06 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -111,7 +111,7 @@ int
 ufshci_intr(void *arg)
 {
 	struct ufshci_softc *sc = arg;
-	uint32_t status;
+	uint32_t status, hcs;
 	int handled = 0;
 
 	status = UFSHCI_READ_4(sc, UFSHCI_REG_IS);
@@ -130,6 +130,17 @@ ufshci_intr(void *arg)
 		ufshci_xfer_complete(sc);
 
 		handled = 1;
+	}
+	/* If Auto-Hibernate raises an interrupt, it's to yield an error. */
+	if (status & UFSHCI_REG_IS_UHES) {
+		hcs = UFSHCI_READ_4(sc, UFSHCI_REG_HCS);
+		printf("%s: Auto-Hibernate enter error UPMCRS=0x%x\n",
+		    __func__, UFSHCI_REG_HCS_UPMCRS(hcs));
+	}
+	if (status & UFSHCI_REG_IS_UHXS) {
+		hcs = UFSHCI_READ_4(sc, UFSHCI_REG_HCS);
+		printf("%s: Auto-Hibernate exit error UPMCRS=0x%x\n",
+		    __func__, UFSHCI_REG_HCS_UPMCRS(hcs));
 	}
 
 	if (handled == 0) {
@@ -221,6 +232,12 @@ ufshci_attach(struct ufshci_softc *sc)
 		printf("%s: %s: Can't allocate CCBs\n",
 		    sc->sc_dev.dv_xname, __func__);
 		return 1;
+	}
+
+	/* Enable Auto-Hibernate Idle Timer (AHIT) and set it to 150ms. */
+	if (sc->sc_cap & UFSHCI_REG_AUTOH8) {
+		UFSHCI_WRITE_4(sc, UFSHCI_REG_AHIT,
+		    UFSHCI_REG_AHIT_TS(UFSHCI_REG_AHIT_TS_1MS) | 150);
 	}
 
 	/* Attach to SCSI layer */
@@ -365,8 +382,14 @@ ufshci_init(struct ufshci_softc *sc)
 	 */
 
 	/* 7.1.1 Host Controller Initialization: 5) */
-	UFSHCI_WRITE_4(sc, UFSHCI_REG_IE,
-	    UFSHCI_REG_IE_UTRCE | UFSHCI_REG_IE_UTMRCE);
+	if (sc->sc_cap & UFSHCI_REG_AUTOH8) {
+		UFSHCI_WRITE_4(sc, UFSHCI_REG_IE,
+		    UFSHCI_REG_IE_UTRCE | UFSHCI_REG_IE_UTMRCE |
+		    UFSHCI_REG_IS_UHES | UFSHCI_REG_IS_UHXS);
+	} else {
+		UFSHCI_WRITE_4(sc, UFSHCI_REG_IE,
+		    UFSHCI_REG_IE_UTRCE | UFSHCI_REG_IE_UTMRCE);
+	}
 
 	/* 7.1.1 Host Controller Initialization: 6) */
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_UICCMD,
