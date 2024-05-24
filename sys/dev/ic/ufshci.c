@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.30 2024/05/22 11:46:06 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.31 2024/05/24 09:51:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -79,6 +79,8 @@ int			 ufshci_utr_cmd_sync(struct ufshci_softc *,
 			     struct ufshci_ccb *, struct scsi_xfer *,
 			     uint32_t, uint16_t);
 int			 ufshci_xfer_complete(struct ufshci_softc *);
+int			 ufshci_powerdown(struct ufshci_softc *);
+int			 ufshci_resume(struct ufshci_softc *);
 
 /* SCSI */
 int			 ufshci_ccb_alloc(struct ufshci_softc *, int);
@@ -1312,6 +1314,81 @@ ufshci_xfer_complete(struct ufshci_softc *sc)
 		/* 7.2.3: Process the transfer by higher OS layer 3a) */
 		if (ccb->ccb_status == CCB_STATUS_READY2FREE)
 			ccb->ccb_done(sc, ccb);
+	}
+
+	return 0;
+}
+
+int
+ufshci_activate(struct ufshci_softc *sc, int act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		DPRINTF(1, "%s: POWERDOWN\n", __func__);
+		rv = config_activate_children(&sc->sc_dev, act);
+		ufshci_powerdown(sc);
+		break;
+	case DVACT_RESUME:
+		DPRINTF(1, "%s: RESUME\n", __func__);
+		ufshci_resume(sc);
+		if (rv == 0)
+			rv = config_activate_children(&sc->sc_dev, act);
+		break;
+	default:
+		rv = config_activate_children(&sc->sc_dev, act);
+		break;
+	}
+
+	return rv;
+}
+
+int
+ufshci_powerdown(struct ufshci_softc *sc)
+{
+	uint32_t reg;
+
+	/* Send "hibernate enter" command. */
+	UFSHCI_WRITE_4(sc, UFSHCI_REG_UICCMD,
+	    UFSHCI_REG_UICCMD_CMDOP_DME_HIBERNATE_ENTER);
+	if (ufshci_is_poll(sc, UFSHCI_REG_IS_UHES) != 0) {
+		printf("%s: hibernate enter cmd failed\n", __func__);
+		return 1;
+	}
+
+	/* Check if "hibernate enter" command was executed successfully. */
+	reg = UFSHCI_READ_4(sc, UFSHCI_REG_HCS);
+	DPRINTF(1, "%s: UPMCRS=0x%x\n", __func__, UFSHCI_REG_HCS_UPMCRS(reg));
+	if (UFSHCI_REG_HCS_UPMCRS(reg) > UFSHCI_REG_HCS_UPMCRS_PWR_REMTOTE) {
+		printf("%s: hibernate enter cmd returned UPMCRS error=0x%x\n",
+		    __func__, UFSHCI_REG_HCS_UPMCRS(reg));
+		return 1;
+	}
+
+	return 0;
+}
+
+int
+ufshci_resume(struct ufshci_softc *sc)
+{
+	uint32_t reg;
+
+	/* Send "hibernate exit" command. */
+	UFSHCI_WRITE_4(sc, UFSHCI_REG_UICCMD,
+	    UFSHCI_REG_UICCMD_CMDOP_DME_HIBERNATE_EXIT);
+	if (ufshci_is_poll(sc, UFSHCI_REG_IS_UHXS) != 0) {
+		printf("%s: hibernate exit command failed\n", __func__);
+		return 1;
+	}
+
+	/* Check if "hibernate exit" command was executed successfully. */
+	reg = UFSHCI_READ_4(sc, UFSHCI_REG_HCS);
+	DPRINTF(1, "%s: UPMCRS=0x%x\n", __func__, UFSHCI_REG_HCS_UPMCRS(reg));
+	if (UFSHCI_REG_HCS_UPMCRS(reg) > UFSHCI_REG_HCS_UPMCRS_PWR_REMTOTE) {
+		printf("%s: hibernate exit cmd returned UPMCRS error=0x%x\n",
+		    __func__, UFSHCI_REG_HCS_UPMCRS(reg));
+		return 1;
 	}
 
 	return 0;

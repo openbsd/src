@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.11 2024/05/22 18:10:00 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.12 2024/05/24 09:51:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -103,6 +103,12 @@
 #define  UFSHCI_REG_HCS_TTAGUTPE(x)	((x >> 16) & 0x000000ff) /* RO */
 #define  UFSHCI_REG_HCS_UTPEC(x)	((x >> 12) & 0x0000000f) /* RO */
 #define  UFSHCI_REG_HCS_UPMCRS(x)	((x >>  8) & 0x00000007) /* RO */
+#define   UFSHCI_REG_HCS_UPMCRS_PWR_OK		0x00
+#define   UFSHCI_REG_HCS_UPMCRS_PWR_LOCAL	0x01
+#define   UFSHCI_REG_HCS_UPMCRS_PWR_REMTOTE	0x02
+#define   UFSHCI_REG_HCS_UMPCRS_PWR_BUSY	0x03
+#define   UFSHCI_REG_HCS_UMPCRS_PWR_ERROR_CAP	0x04
+#define   UFSHCI_REG_HCS_UMPCRS_PWR_FATAL_ERROR	0x05
 #define  UFSHCI_REG_HCS_UCRDY		(1 << 3) /* RO */
 #define  UFSHCI_REG_HCS_UTMRLRDY	(1 << 2) /* RO */
 #define  UFSHCI_REG_HCS_UTRLRDY		(1 << 1) /* RO */
