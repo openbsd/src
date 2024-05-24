@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.47 2022/12/26 19:16:03 jmc Exp $	*/
+/*	$OpenBSD: sock.c,v 1.48 2024/05/24 15:03:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -33,7 +33,7 @@
 #include "sock.h"
 #include "utils.h"
 
-#define SOCK_CTLDESC_SIZE	16	/* number of entries in s->ctldesc */
+#define SOCK_CTLDESC_SIZE	0x800	/* size of s->ctldesc */
 
 void sock_log(struct sock *);
 void sock_close(struct sock *);
@@ -626,8 +626,7 @@ sock_wdata(struct sock *f)
 		else if (f->midi)
 			data = abuf_rgetblk(&f->midi->obuf, &count);
 		else {
-			data = (unsigned char *)f->ctldesc +
-			    (f->wsize - f->wtodo);
+			data = f->ctldesc + (f->wsize - f->wtodo);
 			count = f->wtodo;
 		}
 		if (count > f->wtodo)
@@ -961,8 +960,7 @@ sock_hello(struct sock *f)
 			}
 			return 0;
 		}
-		f->ctldesc = xmalloc(SOCK_CTLDESC_SIZE *
-		    sizeof(struct amsg_ctl_desc));
+		f->ctldesc = xmalloc(SOCK_CTLDESC_SIZE);
 		f->ctlops = 0;
 		f->ctlsyncpending = 0;
 		return 1;
@@ -989,8 +987,10 @@ sock_execmsg(struct sock *f)
 	struct amsg *m = &f->rmsg;
 	unsigned char *data;
 	int size, ctl;
+	int cmd;
 
-	switch (ntohl(m->cmd)) {
+	cmd = ntohl(m->cmd);
+	switch (cmd) {
 	case AMSG_DATA:
 #ifdef DEBUG
 		if (log_level >= 4) {
@@ -1604,7 +1604,6 @@ sock_buildmsg(struct sock *f)
 	 * searching for the {desc,val}_mask bits
 	 */
 	if (f->ctlslot && (f->ctlops & SOCK_CTLDESC)) {
-		desc = f->ctldesc;
 		mask = f->ctlslot->self;
 		size = 0;
 		pc = &ctl_list;
@@ -1614,9 +1613,9 @@ sock_buildmsg(struct sock *f)
 				pc = &c->next;
 				continue;
 			}
-			if (size == SOCK_CTLDESC_SIZE *
-				sizeof(struct amsg_ctl_desc))
+			if (size + sizeof(struct amsg_ctl_desc) > SOCK_CTLDESC_SIZE)
 				break;
+			desc = (struct amsg_ctl_desc *)(f->ctldesc + size);
 			c->desc_mask &= ~mask;
 			c->val_mask &= ~mask;
 			type = ctlslot_visible(f->ctlslot, c) ?
@@ -1634,7 +1633,6 @@ sock_buildmsg(struct sock *f)
 			desc->maxval = htons(c->maxval);
 			desc->curval = htons(c->curval);
 			size += sizeof(struct amsg_ctl_desc);
-			desc++;
 
 			/* if this is a deleted entry unref it */
 			if (type == CTL_NONE) {
