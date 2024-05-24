@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.20 2024/04/22 10:49:01 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.21 2024/05/24 15:10:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,6 +47,7 @@ int matchpar(struct info *, char *, int);
 int matchent(struct info *, char *, int);
 int ismono(struct info *);
 void print_node(struct sioctl_node *, int);
+void print_display(struct info *);
 void print_desc(struct info *, int);
 void print_num(struct info *);
 void print_ent(struct info *, char *);
@@ -310,6 +311,9 @@ ismono(struct info *g)
 						continue;
 					if (e1->curval != e2->curval)
 						return 0;
+					if (strcmp(e1->desc.display,
+						e2->desc.display) != 0)
+						return 0;
 				}
 			}
 		}
@@ -330,6 +334,28 @@ print_node(struct sioctl_node *c, int mono)
 }
 
 /*
+ * print display string, with '(' and ')' and non-printable chars removed
+ * in order to match command syntax
+ */
+void
+print_display(struct info *p)
+{
+	char buf[SIOCTL_NAMEMAX], *s, *d;
+	unsigned int c;
+
+	s = p->desc.display;
+	d = buf;
+	while ((c = *s++) != 0) {
+		if (c == '(' || c == ')' || c < ' ')
+			continue;
+		*d++ = c;
+	}
+	*d = 0;
+	if (buf[0] != 0)
+		printf("(%s)", buf);
+}
+
+/*
  * print info about the parameter
  */
 void
@@ -342,6 +368,7 @@ print_desc(struct info *p, int mono)
 	case SIOCTL_NUM:
 	case SIOCTL_SW:
 		printf("*");
+		print_display(p);
 		break;
 	case SIOCTL_SEL:
 	case SIOCTL_VEC:
@@ -359,6 +386,8 @@ print_desc(struct info *p, int mono)
 			print_node(&e->desc.node1, mono);
 			if (p->desc.type != SIOCTL_SEL)
 				printf(":*");
+			if (e->desc.display[0] != 0)
+				print_display(e);
 			more = 1;
 		}
 	}
@@ -404,6 +433,7 @@ print_ent(struct info *e, char *comment)
 	case SIOCTL_NUM:
 		print_num(e);
 	}
+	print_display(e);
 	if (comment)
 		printf("\t# %s", comment);
 	printf("\n");
@@ -422,6 +452,7 @@ print_val(struct info *p, int mono)
 	case SIOCTL_NUM:
 	case SIOCTL_SW:
 		print_num(p);
+		print_display(p);
 		break;
 	case SIOCTL_SEL:
 	case SIOCTL_VEC:
@@ -439,6 +470,7 @@ print_val(struct info *p, int mono)
 					if (more)
 						printf(",");
 					print_node(&e->desc.node1, mono);
+					print_display(e);
 					more = 1;
 				}
 			} else {
@@ -447,6 +479,7 @@ print_val(struct info *p, int mono)
 				print_node(&e->desc.node1, mono);
 				printf(":");
 				print_num(e);
+				print_display(e);
 				more = 1;
 			}
 		}
@@ -631,6 +664,7 @@ dump(void)
 			print_node(&i->desc.node1, 0);
 			printf(":0..%d (%u)", i->desc.maxval, i->curval);
 		}
+		print_display(i);
 		printf("\n");
 	}
 }
@@ -751,6 +785,12 @@ cmd(char *line)
 						e->mode = mode;
 						nent++;
 					}
+				}
+			}
+			if (*pos == '(') {
+				while (*pos != 0) {
+					if (*pos++ == ')')
+						break;
 				}
 			}
 			if (nent == 0) {

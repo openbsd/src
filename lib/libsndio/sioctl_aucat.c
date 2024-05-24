@@ -87,6 +87,7 @@ sioctl_aucat_rdata(struct sioctl_aucat_hdl *hdl)
 			strlcpy(desc.node1.name, c->node1.name, SIOCTL_NAMEMAX);
 			desc.node1.unit = (int16_t)ntohs(c->node1.unit);
 			strlcpy(desc.func, c->func, SIOCTL_NAMEMAX);
+			strlcpy(desc.display, "", SIOCTL_DISPLAYMAX);
 			desc.type = c->type;
 			desc.addr = ntohs(c->addr);
 			desc.maxval = ntohs(c->maxval);

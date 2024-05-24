@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.14 2022/04/29 08:30:48 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.15 2024/05/24 15:10:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,8 +27,17 @@
 
 /*
  * limits
+ *
+ * For now SIOCTL_DISPLAYMAX is 12 byte only. It nicely fits in the
+ * padding of the sioctl_desc structure: this allows any binary linked
+ * to the library version with no sioctl_desc->display to work with
+ * this library version. Currently, any string reported by the lower
+ * layers fits in the 12-byte buffer. Once larger strings start
+ * being used (or the ABI changes for any other reason) increase
+ * SIOCTL_DISPLAYMAX and properly pad the sioctl_desc structure.
  */
 #define SIOCTL_NAMEMAX		12	/* max name length */
+#define SIOCTL_DISPLAYMAX	12	/* max display string length */
 
 /*
  * private ``handle'' structure
@@ -115,7 +124,7 @@ struct sioctl_desc {
 	struct sioctl_node node0;	/* affected node */
 	struct sioctl_node node1;	/* dito for SIOCTL_{VEC,LIST,SEL} */
 	unsigned int maxval;		/* max value */
-	int __pad[3];
+	char display[SIOCTL_DISPLAYMAX];	/* free-format hint */
 };
 
 /*

@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.13 2022/05/03 13:03:30 ratchov Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.14 2024/05/24 15:10:27 ratchov Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2022 $
+.Dd $Mdocdate: May 24 2024 $
 .Dt SIOCTL_OPEN 3
 .Os
 .Sh NAME
@@ -168,6 +168,7 @@ struct sioctl_desc {
 	struct sioctl_node node0;	/* affected node */
 	struct sioctl_node node1;	/* dito for SIOCTL_{VEC,LIST,SEL} */
 	unsigned int maxval;		/* max value */
+	char display[SIOCTL_DISPLAYMAX];	/* free-format hint */
 };
 .Ed
 .Pp
@@ -238,6 +239,11 @@ The
 .Fa maxval
 attribute indicates the maximum value of this control.
 For boolean control types it is set to 1.
+.Pp
+The
+.Fa display
+attribute contains an optional free-format string providing additional
+hints about the control, like the hardware model, or the units.
 .Ss Changing and reading control values
 Controls are changed with the
 .Fn sioctl_setval

@@ -53,6 +53,8 @@ struct volume
 
 struct sioctl_sun_hdl {
 	struct sioctl_hdl sioctl;
+	char display[SIOCTL_DISPLAYMAX];
+	int display_addr;
 	struct volume output, input;
 	int fd, events;
 };
@@ -147,6 +149,7 @@ init(struct sioctl_sun_hdl *hdl)
 		{AudioCinputs, AudioNvolume},
 		{AudioCinputs, AudioNinput}
 	};
+	struct audio_device getdev;
 	int i;
 
 	for (i = 0; i < sizeof(output_names) / sizeof(output_names[0]); i++) {
@@ -165,6 +168,13 @@ init(struct sioctl_sun_hdl *hdl)
 			break;
 		}
 	}
+
+	hdl->display_addr = 128;
+	if (ioctl(hdl->fd, AUDIO_GETDEV, &getdev) == -1)
+		strlcpy(hdl->display, "unknown", SIOCTL_DISPLAYMAX);
+	else
+		strlcpy(hdl->display, getdev.name, SIOCTL_DISPLAYMAX);
+	DPRINTF("init: server.device: display = %s\n", hdl->display);
 }
 
 static int
@@ -407,12 +417,27 @@ static int
 sioctl_sun_ondesc(struct sioctl_hdl *addr)
 {
 	struct sioctl_sun_hdl *hdl = (struct sioctl_sun_hdl *)addr;
+	struct sioctl_desc desc;
 
 	if (!scanvol(hdl, &hdl->output) ||
 	    !scanvol(hdl, &hdl->input)) {
 		hdl->sioctl.eof = 1;
 		return 0;
 	}
+
+	/* report "server.device" control */
+	memset(&desc, 0, sizeof(struct sioctl_desc));
+	desc.type = SIOCTL_SEL;
+	desc.maxval = 1;
+	strlcpy(desc.func, "device", SIOCTL_NAMEMAX);
+	strlcpy(desc.node0.name, "server", SIOCTL_NAMEMAX);
+	desc.node0.unit = -1;
+	strlcpy(desc.node1.name, "0", SIOCTL_NAMEMAX);
+	desc.node1.unit = -1;
+	strlcpy(desc.display, hdl->display, SIOCTL_DISPLAYMAX);
+	desc.addr = hdl->display_addr;
+	_sioctl_ondesc_cb(&hdl->sioctl, &desc, 1);
+
 	_sioctl_ondesc_cb(&hdl->sioctl, NULL, 0);
 	return 1;
 }
