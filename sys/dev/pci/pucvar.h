@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.17 2020/08/14 18:14:11 jcs Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.18 2024/05/24 04:36:26 jsg Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ struct puc_softc {
 	/* card-global dynamic data */
 	struct {
 		int		mapped;
+		u_long		type;
 		bus_addr_t	a;
 		bus_size_t	s;
 		bus_space_tag_t	t;
