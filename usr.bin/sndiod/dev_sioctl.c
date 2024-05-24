@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_sioctl.c,v 1.8 2024/04/22 10:43:55 ratchov Exp $	*/
+/*	$OpenBSD: dev_sioctl.c,v 1.9 2024/05/24 15:00:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -91,7 +91,8 @@ dev_sioctl_onval(void *arg, unsigned int addr, unsigned int val)
 	}
 
 	for (c = ctl_list; c != NULL; c = c->next) {
-		if (c->scope != CTL_HW || c->u.hw.addr != addr)
+		if (c->scope != CTL_HW || c->u.hw.dev != d ||
+		    c->u.hw.addr != addr)
 			continue;
 
 		if (log_level >= 2) {
