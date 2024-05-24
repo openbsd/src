@@ -1,4 +1,4 @@
-/*	$OpenBSD: xen.c,v 1.97 2020/06/29 06:50:52 jsg Exp $	*/
+/*	$OpenBSD: xen.c,v 1.98 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016, 2017 Mike Belopuhov
@@ -31,15 +31,11 @@
 
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/signal.h>
-#include <sys/signalvar.h>
 #include <sys/refcnt.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/stdint.h>
 #include <sys/device.h>
 #include <sys/task.h>
-#include <sys/syslog.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

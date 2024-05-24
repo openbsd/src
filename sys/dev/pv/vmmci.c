@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.10 2023/05/29 08:13:35 sf Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.11 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -18,13 +18,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
-#include <sys/signalvar.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/pool.h>
-#include <sys/proc.h>
 #include <sys/sensors.h>
 
 #include <machine/bus.h>

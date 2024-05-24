@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.9 2023/05/29 08:13:35 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.10 2024/05/24 10:05:55 jsg Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -29,7 +29,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/task.h>
 #include <sys/pool.h>

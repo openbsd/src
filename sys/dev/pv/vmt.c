@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.31 2023/09/26 08:30:13 mvs Exp $ */
+/*	$OpenBSD: vmt.c,v 1.32 2024/05/24 10:05:55 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -28,14 +28,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
-#include <sys/signalvar.h>
 #include <sys/syslog.h>
-#include <sys/proc.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/task.h>
 #include <sys/sensors.h>

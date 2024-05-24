@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.7 2023/07/28 16:54:48 dv Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.8 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <machine/bus.h>
 #include <sys/device.h>

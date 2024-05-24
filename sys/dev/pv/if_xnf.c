@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.69 2023/11/10 15:51:24 bluhm Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.70 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -17,22 +17,15 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
-#include "xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/pool.h>
 #include <sys/queue.h>
-#include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/task.h>
-#include <sys/timeout.h>
 
 #include <machine/bus.h>
 
@@ -44,10 +37,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

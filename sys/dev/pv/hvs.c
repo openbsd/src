@@ -37,8 +37,6 @@
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/task.h>
 
@@ -50,8 +48,6 @@
 #include <dev/pv/hypervvar.h>
 
 #include <scsi/scsi_all.h>
-#include <scsi/cd.h>
-#include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
 #define HVS_PROTO_VERSION_WIN6		 0x200

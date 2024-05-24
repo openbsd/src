@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.10 2024/05/14 08:26:13 jsg Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.11 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -22,11 +22,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/timetc.h>
-#include <sys/timeout.h>
-#include <sys/malloc.h>
-#include <sys/atomic.h>
 
 #include <machine/cpu.h>
 #include <machine/atomic.h>

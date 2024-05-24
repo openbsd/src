@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.10 2023/07/28 16:54:48 dv Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.11 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -18,13 +18,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/timeout.h>
+#include <sys/malloc.h>
 #include <machine/bus.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <dev/pci/pcivar.h>
 #include <dev/pv/virtioreg.h>
 #include <dev/pv/virtiovar.h>
 

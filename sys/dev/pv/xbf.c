@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.53 2023/11/08 12:01:21 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.54 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -17,14 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bio.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/task.h>
 

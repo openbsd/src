@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.24 2023/12/02 10:01:35 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.25 2024/05/24 10:05:55 jsg Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -29,9 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/mutex.h>
 #include <sys/atomic.h>
 #include <sys/malloc.h>
 

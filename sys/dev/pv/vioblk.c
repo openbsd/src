@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.37 2023/07/28 16:54:48 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.38 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -48,12 +48,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <machine/bus.h>
 
 #include <sys/device.h>
-#include <sys/stat.h>
-#include <sys/buf.h>
 #include <sys/mutex.h>
 #include <dev/pv/virtioreg.h>
 #include <dev/pv/virtiovar.h>

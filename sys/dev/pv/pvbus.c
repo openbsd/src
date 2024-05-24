@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.27 2023/01/07 06:40:21 asou Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.28 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -22,13 +22,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/timeout.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 

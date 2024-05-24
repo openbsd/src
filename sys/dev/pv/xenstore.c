@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.49 2023/04/11 00:45:08 jsg Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.50 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -19,12 +19,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
-#include <sys/ioctl.h>
 #include <sys/task.h>
 
 #include <machine/bus.h>

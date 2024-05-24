@@ -45,15 +45,10 @@
 #endif
 
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/signal.h>
-#include <sys/signalvar.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timetc.h>
 #include <sys/task.h>
-#include <sys/syslog.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -64,7 +59,6 @@
 #include <machine/i82489var.h>
 
 #include <dev/pv/pvvar.h>
-#include <dev/pv/pvreg.h>
 #include <dev/pv/hypervreg.h>
 #include <dev/pv/hypervvar.h>
 

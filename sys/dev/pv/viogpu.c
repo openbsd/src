@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.5 2024/05/14 08:26:13 jsg Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.6 2024/05/24 10:05:55 jsg Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
 

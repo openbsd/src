@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.34 2024/05/17 16:37:10 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.35 2024/05/24 10:05:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -31,10 +31,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/timeout.h>
 

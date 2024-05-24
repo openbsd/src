@@ -33,21 +33,16 @@
 
 #include "bpfilter.h"
 #include "vlan.h"
-#include "hyperv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/pool.h>
 #include <sys/queue.h>
-#include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/task.h>
-#include <sys/timeout.h>
 
 #include <machine/bus.h>
 
@@ -65,10 +60,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
