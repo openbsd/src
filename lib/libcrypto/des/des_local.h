@@ -1,4 +1,4 @@
-/* $OpenBSD: des_local.h,v 1.2 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: des_local.h,v 1.3 2024/05/24 19:21:58 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,11 +73,6 @@
 __BEGIN_HIDDEN_DECLS
 
 #define ITERATIONS 16
-#define HALF_ITERATIONS 8
-
-/* used in des_read and des_write */
-#define MAXWRITE	(1024*16)
-#define BSIZE		(MAXWRITE+4)
 
 #define c2l(c,l)	(l =((DES_LONG)(*((c)++)))    ,			\
 			 l|=((DES_LONG)(*((c)++)))<< 8L,		\
@@ -104,20 +99,6 @@ __BEGIN_HIDDEN_DECLS
 			 *((c)++)=(unsigned char)(((l)>> 8L)&0xff),	\
 			 *((c)++)=(unsigned char)(((l)>>16L)&0xff),	\
 			 *((c)++)=(unsigned char)(((l)>>24L)&0xff))
-
-/* replacements for htonl and ntohl since I have no idea what to do
- * when faced with machines with 8 byte longs. */
-#define HDRSIZE 4
-
-#define n2l(c,l)	(l =((DES_LONG)(*((c)++)))<<24L,		\
-			 l|=((DES_LONG)(*((c)++)))<<16L,		\
-			 l|=((DES_LONG)(*((c)++)))<< 8L,		\
-			 l|=((DES_LONG)(*((c)++))))
-
-#define l2n(l,c)	(*((c)++)=(unsigned char)(((l)>>24L)&0xff),	\
-			 *((c)++)=(unsigned char)(((l)>>16L)&0xff),	\
-			 *((c)++)=(unsigned char)(((l)>> 8L)&0xff),	\
-			 *((c)++)=(unsigned char)(((l)     )&0xff))
 
 /* NOTE - c is not incremented as per l2c */
 #define l2cn(l1,l2,c,n)	{						\
