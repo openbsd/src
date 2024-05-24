@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_cardbus.c,v 1.27 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: if_rtw_cardbus.c,v 1.28 2024/05/24 06:26:47 jsg Exp $	*/
 /* $NetBSD: if_rtw_cardbus.c,v 1.4 2004/12/20 21:05:34 dyoung Exp $ */
 
 /*-
@@ -71,14 +71,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h> 
-#include <sys/mbuf.h>   
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -88,10 +81,6 @@
 
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
-
-#if NBPFILTER > 0 
-#include <net/bpf.h>
-#endif 
 
 #include <machine/bus.h>
 

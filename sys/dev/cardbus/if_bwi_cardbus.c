@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.16 2022/04/06 18:59:28 naddy Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.17 2024/05/24 06:26:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -24,8 +24,6 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
 

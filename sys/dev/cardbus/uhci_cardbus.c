@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.16 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.17 2024/05/24 06:26:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -42,7 +41,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>

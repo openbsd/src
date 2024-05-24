@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.23 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.24 2024/05/24 06:26:47 jsg Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -31,9 +31,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
 #include <sys/pool.h>
 #include <sys/task.h>
 

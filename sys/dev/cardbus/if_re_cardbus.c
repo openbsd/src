@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.31 2024/01/19 03:46:15 dlg Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.32 2024/05/24 06:26:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -21,15 +21,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/endian.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

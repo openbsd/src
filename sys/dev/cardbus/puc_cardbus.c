@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc_cardbus.c,v 1.9 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: puc_cardbus.c,v 1.10 2024/05/24 06:26:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -20,10 +20,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/tty.h>
-
-#include <machine/bus.h>
-#include <dev/ic/comvar.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

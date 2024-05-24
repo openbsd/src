@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.34 2022/04/06 18:59:28 naddy Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.35 2024/05/24 06:26:47 jsg Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -31,16 +31,8 @@
  *
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <net/if.h>

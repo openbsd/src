@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.23 2022/04/06 18:59:27 naddy Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.24 2024/05/24 06:26:47 jsg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/device.h>
 
@@ -44,7 +43,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.21 2023/01/04 07:06:08 jsg Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.22 2024/05/24 06:26:47 jsg Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -34,15 +34,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h> 
-#include <sys/mbuf.h>   
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
-#include <sys/endian.h>
  
 #include <net/if.h>
 #include <net/if_media.h>
@@ -54,13 +47,11 @@
 #include <net80211/ieee80211_rssadapt.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/gpio/gpiovar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
 

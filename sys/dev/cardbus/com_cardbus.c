@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.44 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.45 2024/05/24 06:26:47 jsg Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -55,8 +55,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pcmcia/pcmciareg.h>
-
-#include "com.h"
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

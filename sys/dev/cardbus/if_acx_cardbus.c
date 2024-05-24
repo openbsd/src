@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.23 2022/04/06 18:59:28 naddy Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.24 2024/05/24 06:26:47 jsg Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -25,17 +25,11 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.32 2022/04/06 18:59:28 naddy Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.33 2024/05/24 06:26:47 jsg Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -40,28 +40,16 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
-#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
 

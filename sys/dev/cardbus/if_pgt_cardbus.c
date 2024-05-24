@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.19 2022/04/06 18:59:28 naddy Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.20 2024/05/24 06:26:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -23,12 +23,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 

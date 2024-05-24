@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.23 2022/04/06 18:59:28 naddy Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.24 2024/05/24 06:26:47 jsg Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -51,7 +50,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>

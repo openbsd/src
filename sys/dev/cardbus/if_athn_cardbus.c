@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.18 2022/07/24 17:22:12 kn Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.19 2024/05/24 06:26:47 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -23,12 +23,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 
