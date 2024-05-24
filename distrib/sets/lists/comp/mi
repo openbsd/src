@@ -336,6 +336,7 @@
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
+./usr/include/dev/ic/nvmeio.h
 ./usr/include/dev/ic/nvmereg.h
 ./usr/include/dev/ic/nvmevar.h
 ./usr/include/dev/ic/oosiopreg.h
