@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.111 2024/05/13 11:41:52 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.112 2024/05/24 12:04:07 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -42,6 +42,7 @@
 #include <dev/biovar.h>
 #include <dev/ic/nvmereg.h>
 #include <dev/ic/nvmevar.h>
+#include <dev/ic/nvmeio.h>
 
 struct cfdriver nvme_cd = {
 	NULL,
@@ -90,6 +91,9 @@ void	nvme_minphys(struct buf *, struct scsi_link *);
 int	nvme_scsi_probe(struct scsi_link *);
 void	nvme_scsi_free(struct scsi_link *);
 uint64_t nvme_scsi_size(const struct nvm_identify_namespace *);
+int	nvme_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
+int	nvme_passthrough_cmd(struct nvme_softc *, struct nvme_pt_cmd *,
+	int, int);
 
 #ifdef HIBERNATE
 #include <uvm/uvm_extern.h>
@@ -111,7 +115,8 @@ int	nvme_bioctl_disk(struct nvme_softc *, struct bioc_disk *);
 #endif	/* NBIO > 0 */
 
 const struct scsi_adapter nvme_switch = {
-	nvme_scsi_cmd, nvme_minphys, nvme_scsi_probe, nvme_scsi_free, NULL
+	nvme_scsi_cmd, nvme_minphys, nvme_scsi_probe, nvme_scsi_free,
+	nvme_scsi_ioctl
 };
 
 void	nvme_scsi_io(struct scsi_xfer *, int);
@@ -922,6 +927,107 @@ nvme_scsi_size(const struct nvm_identify_namespace *ns)
 		return ncap;
 	else
 		return nsze;
+}
+
+int
+nvme_passthrough_cmd(struct nvme_softc *sc, struct nvme_pt_cmd *pt, int dv_unit,
+    int nsid)
+{
+	struct nvme_pt_status		 pt_status;
+	struct nvme_sqe			 sqe;
+	struct nvme_dmamem		*mem = NULL;
+	struct nvme_ccb			*ccb = NULL;
+	int				 flags;
+	int				 rv = 0;
+
+	ccb = nvme_ccb_get(sc);
+	if (ccb == NULL)
+		panic("nvme_passthrough_cmd: nvme_ccb_get returned NULL");
+
+	memset(&sqe, 0, sizeof(sqe));
+	sqe.opcode = pt->pt_opcode;
+	htolem32(&sqe.nsid, pt->pt_nsid);
+	htolem32(&sqe.cdw10, pt->pt_cdw10);
+	htolem32(&sqe.cdw11, pt->pt_cdw11);
+	htolem32(&sqe.cdw12, pt->pt_cdw12);
+	htolem32(&sqe.cdw13, pt->pt_cdw13);
+	htolem32(&sqe.cdw14, pt->pt_cdw14);
+	htolem32(&sqe.cdw15, pt->pt_cdw15);
+
+	ccb->ccb_done = nvme_empty_done;
+	ccb->ccb_cookie = &sqe;
+
+	switch (pt->pt_opcode) {
+	case NVM_ADMIN_IDENTIFY:
+	case NVM_ADMIN_GET_LOG_PG:
+	case NVM_ADMIN_SELFTEST:
+		break;
+
+	default:
+		rv = ENOTTY;
+		goto done;
+	}
+
+	if (pt->pt_databuflen > 0) {
+		mem = nvme_dmamem_alloc(sc, pt->pt_databuflen);
+		if (mem == NULL) {
+			rv = ENOMEM;
+			goto done;
+		}
+		htolem64(&sqe.entry.prp[0], NVME_DMA_DVA(mem));
+		nvme_dmamem_sync(sc, mem, BUS_DMASYNC_PREREAD);
+	}
+
+	flags = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_QOP);
+
+	if (pt->pt_databuflen > 0) {
+		nvme_dmamem_sync(sc, mem, BUS_DMASYNC_POSTREAD);
+		if (flags == 0)
+			rv = copyout(NVME_DMA_KVA(mem), pt->pt_databuf,
+			    pt->pt_databuflen);
+	}
+
+	if (rv == 0 && pt->pt_statuslen > 0) {
+		pt_status.ps_dv_unit = dv_unit;
+		pt_status.ps_nsid = nsid;
+		pt_status.ps_flags = flags;
+		pt_status.ps_cc = nvme_read4(sc, NVME_CC);
+		pt_status.ps_csts = nvme_read4(sc, NVME_CSTS);
+		rv = copyout(&pt_status, pt->pt_status, pt->pt_statuslen);
+	}
+
+ done:
+	if (mem)
+		nvme_dmamem_free(sc, mem);
+	if (ccb)
+		nvme_ccb_put(sc, ccb);
+
+	return rv;
+}
+
+int
+nvme_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
+{
+	struct nvme_softc		*sc = link->bus->sb_adapter_softc;
+	struct nvme_pt_cmd		*pt = (struct nvme_pt_cmd *)addr;
+	int				 rv;
+
+	switch (cmd) {
+	case NVME_PASSTHROUGH_CMD:
+		break;
+	default:
+		return ENOTTY;
+	}
+
+	if ((pt->pt_cdw10 & 0xff) == 0)
+		pt->pt_nsid = link->target;
+
+	rv = nvme_passthrough_cmd(sc, pt, sc->sc_dev.dv_unit, link->target);
+	if (rv)
+		goto done;
+
+ done:
+	return rv;
 }
 
 uint32_t
@@ -1744,7 +1850,8 @@ int
 nvme_bioctl(struct device *self, u_long cmd, caddr_t data)
 {
 	struct nvme_softc	*sc = (struct nvme_softc *)self;
-	int error = 0;
+	struct nvme_pt_cmd	*pt;
+	int			 error = 0;
 
 	rw_enter_write(&sc->sc_lock);
 
@@ -1757,6 +1864,10 @@ nvme_bioctl(struct device *self, u_long cmd, caddr_t data)
 		break;
 	case BIOCDISK:
 		error = nvme_bioctl_disk(sc, (struct bioc_disk *)data);
+		break;
+	case NVME_PASSTHROUGH_CMD:
+		pt = (struct nvme_pt_cmd *)data;
+		error = nvme_passthrough_cmd(sc, pt, sc->sc_dev.dv_unit, -1);
 		break;
 	default:
 		printf("nvme_bioctl() Unknown command (%lu)\n", cmd);

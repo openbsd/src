@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmereg.h,v 1.14 2024/05/13 11:41:52 krw Exp $ */
+/*	$OpenBSD: nvmereg.h,v 1.15 2024/05/24 12:04:07 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -247,6 +247,7 @@ struct nvme_cqe {
 #define NVM_ADMIN_ASYNC_EV_REQ	0x0c /* Asynchronous Event Request */
 #define NVM_ADMIN_FW_ACTIVATE	0x10 /* Firmware Activate */
 #define NVM_ADMIN_FW_DOWNLOAD	0x11 /* Firmware Image Download */
+#define NVM_ADMIN_SELFTEST	0x14 /* Start self test */
 
 #define NVM_CMD_FLUSH		0x00 /* Flush */
 #define NVM_CMD_WRITE		0x01 /* Write */
