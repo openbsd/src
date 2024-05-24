@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.11 2024/05/24 15:16:09 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.12 2024/05/24 15:21:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -346,15 +346,6 @@ opt_del(struct opt *o)
 void
 opt_init(struct opt *o)
 {
-	struct dev *d;
-
-	if (strcmp(o->name, o->dev->name) != 0) {
-		for (d = dev_list; d != NULL; d = d->next) {
-			ctl_new(CTL_OPT_DEV, o, d,
-			    CTL_SEL, "", o->name, "server", -1, "device",
-			    d->name, -1, 1, o->dev == d);
-		}
-	}
 }
 
 void
@@ -499,6 +490,17 @@ opt_ref(struct opt *o)
 			/* if device changed, move everything to the new one */
 			if (d != o->dev)
 				opt_setdev(o, d);
+
+			/* create server.device control */
+			for (d = dev_list; d != NULL; d = d->next) {
+				d->refcnt++;
+				if (d->pstate == DEV_CFG)
+					dev_open(d);
+				ctl_new(CTL_OPT_DEV, o, d,
+				    CTL_SEL, dev_getdisplay(d),
+				    o->name, "server", -1, "device",
+				    d->name, -1, 1, o->dev == d);
+			}
 		}
 	}
 
@@ -512,7 +514,15 @@ opt_ref(struct opt *o)
 void
 opt_unref(struct opt *o)
 {
+	struct dev *d;
+
 	o->refcnt--;
-	if (o->refcnt == 0)
+	if (o->refcnt == 0) {
+		/* delete server.device control */
+		for (d = dev_list; d != NULL; d = d->next) {
+			if (ctl_del(CTL_OPT_DEV, o, d))
+				dev_unref(d);
+		}
 		dev_unref(o->dev);
+	}
 }
