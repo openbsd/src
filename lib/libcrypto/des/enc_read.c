@@ -1,4 +1,4 @@
-/* $OpenBSD: enc_read.c,v 1.18 2024/03/29 01:47:29 joshua Exp $ */
+/* $OpenBSD: enc_read.c,v 1.19 2024/05/24 19:16:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,168 +56,30 @@
  * [including the GNU Public Licence.]
  */
 
-#include <errno.h>
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
 
 #include "des_local.h"
 
-/* This has some uglies in it but it works - even over sockets. */
-/*extern int errno;*/
-int DES_rw_mode = DES_PCBC_MODE;
-
 /*
- * WARNINGS:
- *
- *  -  The data format used by DES_enc_write() and DES_enc_read()
- *     has a cryptographic weakness: When asked to write more
- *     than MAXWRITE bytes, DES_enc_write will split the data
- *     into several chunks that are all encrypted
- *     using the same IV.  So don't use these functions unless you
- *     are sure you know what you do (in which case you might
- *     not want to use them anyway).
- *
- *  -  This code cannot handle non-blocking sockets.
- *
- *  -  This function uses an internal state and thus cannot be
- *     used on multiple files.
+ * XXX - remove this file in the next major bump
  */
+
+int DES_rw_mode = DES_PCBC_MODE;
 
 int
 DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
     DES_cblock *iv)
 {
-	/* data to be unencrypted */
-	int net_num = 0;
-	static unsigned char *net = NULL;
-	/* extra unencrypted data
-	 * for when a block of 100 comes in but is des_read one byte at
-	 * a time. */
-	static unsigned char *unnet = NULL;
-	static int unnet_start = 0;
-	static int unnet_left = 0;
-	static unsigned char *tmpbuf = NULL;
-	int i;
-	long num = 0, rnum;
-	unsigned char *p;
-
-	if (tmpbuf == NULL) {
-		tmpbuf = malloc(BSIZE);
-		if (tmpbuf == NULL)
-			return (-1);
-	}
-	if (net == NULL) {
-		net = malloc(BSIZE);
-		if (net == NULL)
-			return (-1);
-	}
-	if (unnet == NULL) {
-		unnet = malloc(BSIZE);
-		if (unnet == NULL)
-			return (-1);
-	}
-	/* left over data from last decrypt */
-	if (unnet_left != 0) {
-		if (unnet_left < len) {
-			/* we still still need more data but will return
-			 * with the number of bytes we have - should always
-			 * check the return value */
-			memcpy(buf, &(unnet[unnet_start]),
-			    unnet_left);
-			/* eay 26/08/92 I had the next 2 lines
-			 * reversed :-( */
-			i = unnet_left;
-			unnet_start = unnet_left = 0;
-		} else {
-			memcpy(buf, &(unnet[unnet_start]), len);
-			unnet_start += len;
-			unnet_left -= len;
-			i = len;
-		}
-		return (i);
-	}
-
-	/* We need to get more data. */
-	if (len > MAXWRITE)
-		len = MAXWRITE;
-
-	/* first - get the length */
-	while (net_num < HDRSIZE) {
-		i = read(fd, (void *)&(net[net_num]), HDRSIZE - net_num);
-#ifdef EINTR
-		if ((i == -1) && (errno == EINTR))
-			continue;
-#endif
-		if (i <= 0)
-			return (0);
-		net_num += i;
-	}
-
-	/* we now have at net_num bytes in net */
-	p = net;
-	/* num=0;  */
-	n2l(p, num);
-	/* num should be rounded up to the next group of eight
-	 * we make sure that we have read a multiple of 8 bytes from the net.
-	 */
-	if ((num > MAXWRITE) || (num < 0)) /* error */
-		return (-1);
-	rnum = (num < 8) ? 8 : ((num + 7)/8*8);
-
-	net_num = 0;
-	while (net_num < rnum) {
-		i = read(fd, (void *)&(net[net_num]), rnum - net_num);
-#ifdef EINTR
-		if ((i == -1) && (errno == EINTR))
-			continue;
-#endif
-		if (i <= 0)
-			return (0);
-		net_num += i;
-	}
-
-	/* Check if there will be data left over. */
-	if (len < num) {
-		if (DES_rw_mode & DES_PCBC_MODE)
-			DES_pcbc_encrypt(net, unnet, num, sched, iv,
-			    DES_DECRYPT);
-		else
-			DES_cbc_encrypt(net, unnet, num, sched, iv,
-			    DES_DECRYPT);
-		memcpy(buf, unnet, len);
-		unnet_start = len;
-		unnet_left = num - len;
-
-		/* The following line is done because we return num
-		 * as the number of bytes read. */
-		num = len;
-	} else {
-		/* >output is a multiple of 8 byes, if len < rnum
-		 * >we must be careful.  The user must be aware that this
-		 * >routine will write more bytes than he asked for.
-		 * >The length of the buffer must be correct.
-		 * FIXED - Should be ok now 18-9-90 - eay */
-		if (len < rnum) {
-			if (DES_rw_mode & DES_PCBC_MODE)
-				DES_pcbc_encrypt(net, tmpbuf, num, sched, iv,
-				    DES_DECRYPT);
-			else
-				DES_cbc_encrypt(net, tmpbuf, num, sched, iv,
-				    DES_DECRYPT);
-
-			/* eay 26/08/92 fix a bug that returned more
-			 * bytes than you asked for (returned len bytes :-( */
-			memcpy(buf, tmpbuf, num);
-		} else {
-			if (DES_rw_mode & DES_PCBC_MODE)
-				DES_pcbc_encrypt(net, buf, num, sched, iv,
-				    DES_DECRYPT);
-			else
-				DES_cbc_encrypt(net, buf, num, sched, iv,
-				    DES_DECRYPT);
-		}
-	}
-	return num;
+	return -1;
 }
 LCRYPTO_ALIAS(DES_enc_read);
+
+int
+DES_enc_write(int fd, const void *_buf, int len,
+    DES_key_schedule *sched, DES_cblock *iv)
+{
+	return -1;
+}
+LCRYPTO_ALIAS(DES_enc_write);
