@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.8 2024/05/24 15:03:12 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.9 2024/05/24 15:16:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -60,6 +60,7 @@ struct sock {
 	struct port *port;		/* midi port */
 	struct ctlslot *ctlslot;
 	unsigned char *ctldesc;		/* temporary buffer */
+	size_t ctl_desc_size;		/* size of client amsg_ctl_desc */
 #define SOCK_CTLDESC	1		/* dump desc and send changes */
 #define SOCK_CTLVAL	2		/* send value changes */
 	unsigned int ctlops;		/* bitmap of above */

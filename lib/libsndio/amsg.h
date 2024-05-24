@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.15 2022/04/29 08:30:48 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.16 2024/05/24 15:16:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -46,6 +46,13 @@
  * limits
  */
 #define AMSG_CTL_NAMEMAX	16	/* max name length */
+#define AMSG_CTL_DISPLAYMAX	32	/* max display string length */
+
+/*
+ * Size of the struct amsg_ctl_desc expected by clients
+ * using the AMSG_CTLSUB_OLD request
+ */
+#define AMSG_OLD_DESC_SIZE	92
 
 /*
  * WARNING: since the protocol may be simultaneously used by static
@@ -69,9 +76,10 @@ struct amsg {
 #define AMSG_HELLO	10	/* say hello, check versions and so ... */
 #define AMSG_BYE	11	/* ask server to drop connection */
 #define AMSG_AUTH	12	/* send authentication cookie */
-#define AMSG_CTLSUB	13	/* ondesc/onctl subscription */
+#define AMSG_CTLSUB_OLD	13	/* amsg_ctl_desc with no "display" attribute */
 #define AMSG_CTLSET	14	/* set control value */
 #define AMSG_CTLSYNC	15	/* end of controls descriptions */
+#define AMSG_CTLSUB	16	/* ondesc/onctl subscription */
 	uint32_t cmd;
 	uint32_t __pad;
 	union {
@@ -151,7 +159,8 @@ struct amsg_ctl_desc {
 	uint16_t addr;			/* control address */
 	uint16_t maxval;
 	uint16_t curval;
-	uint32_t __pad2[3];
+	uint32_t __pad2[4];
+	char display[AMSG_CTL_DISPLAYMAX];	/* free-format hint */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.45 2024/05/19 00:05:43 jsg Exp $	*/
+/*	$OpenBSD: dev.h,v 1.46 2024/05/24 15:16:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -155,9 +155,11 @@ struct ctl {
 	} u;
 
 	unsigned int addr;		/* slot side control address */
-#define CTL_NAMEMAX	16		/* max name length */
+#define CTL_NAMEMAX	12		/* max name length */
+#define CTL_DISPLAYMAX	24		/* max name length */
 	char func[CTL_NAMEMAX];		/* parameter function name */
 	char group[CTL_NAMEMAX];	/* group aka namespace */
+	char display[CTL_DISPLAYMAX];	/* free-format hint */
 	struct ctl_node {
 		char name[CTL_NAMEMAX];	/* stream name */
 		int unit;
@@ -350,7 +352,7 @@ void slot_detach(struct slot *);
  */
 
 struct ctl *ctl_new(int, void *, void *,
-    int, char *, char *, int, char *, char *, int, int, int);
+    int, char *, char *, char *, int, char *, char *, int, int, int);
 int ctl_del(int, void *, void *);
 void ctl_log(struct ctl *);
 int ctl_setval(struct ctl *c, int val);
@@ -365,6 +367,7 @@ int ctlslot_visible(struct ctlslot *, struct ctl *);
 struct ctl *ctlslot_lookup(struct ctlslot *, int);
 void ctlslot_update(struct ctlslot *);
 
+char *dev_getdisplay(struct dev *);
 void dev_ctlsync(struct dev *);
 
 #endif /* !defined(DEV_H) */

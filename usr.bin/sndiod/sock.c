@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.48 2024/05/24 15:03:12 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.49 2024/05/24 15:16:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1284,6 +1284,7 @@ sock_execmsg(struct sock *f)
 		dev_midi_vol(s->opt->dev, s);
 		ctl_onval(CTL_SLOT_LEVEL, s, NULL, ctl);
 		break;
+	case AMSG_CTLSUB_OLD:
 	case AMSG_CTLSUB:
 #ifdef DEBUG
 		if (log_level >= 3) {
@@ -1316,6 +1317,9 @@ sock_execmsg(struct sock *f)
 				}
 				f->ctlops |= SOCK_CTLDESC;
 				f->ctlsyncpending = 1;
+				f->ctl_desc_size = (cmd == AMSG_CTLSUB) ?
+				    sizeof(struct amsg_ctl_desc) :
+				    AMSG_OLD_DESC_SIZE;
 			}
 		} else
 			f->ctlops &= ~SOCK_CTLDESC;
@@ -1613,7 +1617,7 @@ sock_buildmsg(struct sock *f)
 				pc = &c->next;
 				continue;
 			}
-			if (size + sizeof(struct amsg_ctl_desc) > SOCK_CTLDESC_SIZE)
+			if (size + f->ctl_desc_size > SOCK_CTLDESC_SIZE)
 				break;
 			desc = (struct amsg_ctl_desc *)(f->ctldesc + size);
 			c->desc_mask &= ~mask;
@@ -1632,7 +1636,14 @@ sock_buildmsg(struct sock *f)
 			desc->addr = htons(c->addr);
 			desc->maxval = htons(c->maxval);
 			desc->curval = htons(c->curval);
-			size += sizeof(struct amsg_ctl_desc);
+
+			/* old clients don't have the 'display' member */
+			if (f->ctl_desc_size >= offsetof(struct amsg_ctl_desc,
+				display) + AMSG_CTL_DISPLAYMAX) {
+				strlcpy(desc->display, c->display, AMSG_CTL_DISPLAYMAX);
+			}
+
+			size += f->ctl_desc_size;
 
 			/* if this is a deleted entry unref it */
 			if (type == CTL_NONE) {

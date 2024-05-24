@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.114 2024/05/24 15:01:53 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.115 2024/05/24 15:16:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1776,7 +1776,7 @@ slot_new(struct opt *opt, unsigned int id, char *who,
 	s->opt = opt;
 	slot_ctlname(s, ctl_name, CTL_NAMEMAX);
 	ctl_new(CTL_SLOT_LEVEL, s, NULL,
-	    CTL_NUM, "app", ctl_name, -1, "level",
+	    CTL_NUM, "", "app", ctl_name, -1, "level",
 	    NULL, -1, 127, s->vol);
 
 found:
@@ -2413,6 +2413,11 @@ ctl_log(struct ctl *c)
 	default:
 		log_puts("unknown");
 	}
+	if (c->display[0] != 0) {
+		log_puts(" (");
+		log_puts(c->display);
+		log_puts(")");
+	}
 }
 
 int
@@ -2475,7 +2480,7 @@ ctl_setval(struct ctl *c, int val)
  */
 struct ctl *
 ctl_new(int scope, void *arg0, void *arg1,
-    int type, char *gstr,
+    int type, char *display, char *gstr,
     char *str0, int unit0, char *func,
     char *str1, int unit1, int maxval, int val)
 {
@@ -2499,6 +2504,7 @@ ctl_new(int scope, void *arg0, void *arg1,
 	c->type = type;
 	strlcpy(c->func, func, CTL_NAMEMAX);
 	strlcpy(c->group, gstr, CTL_NAMEMAX);
+	strlcpy(c->display, display, CTL_DISPLAYMAX);
 	strlcpy(c->node0.name, str0, CTL_NAMEMAX);
 	c->node0.unit = unit0;
 	if (c->type == CTL_VEC || c->type == CTL_LIST || c->type == CTL_SEL) {
@@ -2644,11 +2650,32 @@ ctl_del(int scope, void *arg0, void *arg1)
 	}
 }
 
+char *
+dev_getdisplay(struct dev *d)
+{
+	struct ctl *c;
+	char *display;
+
+	display = "";
+	for (c = ctl_list; c != NULL; c = c->next) {
+		if (c->scope == CTL_HW &&
+		    c->u.hw.dev == d &&
+		    c->type == CTL_SEL &&
+		    strcmp(c->group, d->name) == 0 &&
+		    strcmp(c->node0.name, "server") == 0 &&
+		    strcmp(c->func, "device") == 0 &&
+		    c->curval == 1)
+			display = c->display;
+	}
+	return display;
+}
+
 void
 dev_ctlsync(struct dev *d)
 {
 	struct ctl *c;
 	struct ctlslot *s;
+	const char *display;
 	int found, i;
 
 	found = 0;
@@ -2676,8 +2703,21 @@ dev_ctlsync(struct dev *d)
 		}
 		d->master_enabled = 1;
 		ctl_new(CTL_DEV_MASTER, d, NULL,
-		    CTL_NUM, d->name, "output", -1, "level",
+		    CTL_NUM, "", d->name, "output", -1, "level",
 		    NULL, -1, 127, d->master);
+	}
+
+	/*
+	 * if the hardware's server.device changed, update the display name
+	 */
+	display = dev_getdisplay(d);
+	for (c = ctl_list; c != NULL; c = c->next) {
+		if (c->scope != CTL_OPT_DEV ||
+		    c->u.opt_dev.dev != d ||
+		    strcmp(c->display, display) == 0)
+			continue;
+		strlcpy(c->display, display, CTL_DISPLAYMAX);
+		c->desc_mask = ~0;
 	}
 
 	for (s = ctlslot_array, i = 0; i < DEV_NCTLSLOT; i++, s++) {
