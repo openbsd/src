@@ -1,4 +1,4 @@
-.\" $OpenBSD: DES_set_key.3,v 1.16 2023/11/16 20:27:43 schwarze Exp $
+.\" $OpenBSD: DES_set_key.3,v 1.17 2024/05/24 19:18:07 tb Exp $
 .\" full merge up to:
 .\" OpenSSL man3/DES_random_key 521738e9 Oct 5 14:58:30 2018 -0400
 .\"
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: May 24 2024 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -148,9 +148,7 @@
 .Nm DES_string_to_key ,
 .Nm DES_string_to_2keys ,
 .Nm DES_fcrypt ,
-.Nm DES_crypt ,
-.Nm DES_enc_read ,
-.Nm DES_enc_write
+.Nm DES_crypt
 .Nd DES encryption
 .Sh SYNOPSIS
 .In openssl/des.h
@@ -391,22 +389,6 @@
 .Fo DES_crypt
 .Fa "const char *buf"
 .Fa "const char *salt"
-.Fc
-.Ft int
-.Fo DES_enc_read
-.Fa "int fd"
-.Fa "void *buf"
-.Fa "int len"
-.Fa "DES_key_schedule *sched"
-.Fa "DES_cblock *iv"
-.Fc
-.Ft int
-.Fo DES_enc_write
-.Fa "int fd"
-.Fa "const void *buf"
-.Fa "int len"
-.Fa "DES_key_schedule *sched"
-.Fa "DES_cblock *iv"
 .Fc
 .Sh DESCRIPTION
 This library contains a fast implementation of the DES encryption
@@ -686,71 +668,6 @@ This function calls
 with a static array passed as the third parameter.
 This emulates the normal non-thread safe semantics of
 .Xr crypt 3 .
-.Pp
-.Fn DES_enc_write
-writes
-.Fa len
-bytes to file descriptor
-.Fa fd
-from buffer
-.Fa buf .
-The data is encrypted via
-.Em pcbc_encrypt
-(default) using
-.Fa sched
-for the key and
-.Fa iv
-as a starting vector.
-The actual data send down
-.Fa fd
-consists of 4 bytes (in network byte order) containing the length of the
-following encrypted data.
-The encrypted data then follows, padded with random data out to a
-multiple of 8 bytes.
-.Pp
-.Fn DES_enc_read
-is used to read
-.Fa len
-bytes from file descriptor
-.Fa fd
-into buffer
-.Fa buf .
-The data being read from
-.Fa fd
-is assumed to have come from
-.Fn DES_enc_write
-and is decrypted using
-.Fa sched
-for the key schedule and
-.Fa iv
-for the initial vector.
-.Pp
-.Sy Warning :
-The data format used by
-.Fn DES_enc_write
-and
-.Fn DES_enc_read
-has a cryptographic weakness: when asked to write more than
-.Dv MAXWRITE
-bytes,
-.Fn DES_enc_write
-will split the data into several chunks that are all encrypted using the
-same IV.
-So don't use these functions unless you are sure you know what
-you do (in which case you might not want to use them anyway).
-They cannot handle non-blocking sockets.
-.Fn DES_enc_read
-uses an internal state and thus cannot be used on multiple files.
-.Pp
-.Em DES_rw_mode
-is used to specify the encryption mode to use with
-.Fn DES_enc_read .
-If set to
-.Dv DES_PCBC_MODE
-(the default), DES_pcbc_encrypt is used.
-If set to
-.Dv DES_CBC_MODE ,
-DES_cbc_encrypt is used.
 .Sh RETURN VALUES
 .Fn DES_set_key ,
 .Fn DES_key_sched ,
@@ -802,10 +719,8 @@ with the MIT Kerberos library.
 .Fn DES_quad_cksum ,
 .Fn DES_string_to_key ,
 .Fn DES_string_to_2keys ,
-.Fn DES_crypt ,
-.Fn DES_enc_read ,
 and
-.Fn DES_enc_write
+.Fn DES_crypt
 appeared in SSLeay 0.4 or earlier.
 .Fn DES_ncbc_encrypt
 first appeared in SSLeay 0.4.2.
