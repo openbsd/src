@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.77 2024/02/21 09:17:06 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.78 2024/05/24 12:57:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -134,7 +134,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 
 	ipaddrblocksz = sk_ROAIPAddressFamily_num(roa_asn1->ipAddrBlocks);
 	if (ipaddrblocksz != 1 && ipaddrblocksz != 2) {
-		warnx("%s: draft-rfc6482bis: unexpected number of ipAddrBlocks "
+		warnx("%s: RFC 9582: unexpected number of ipAddrBlocks "
 		    "(got %d, expected 1 or 2)", fn, ipaddrblocksz);
 		goto out;
 	}
@@ -154,14 +154,14 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 		switch (afi) {
 		case AFI_IPV4:
 			if (ipv4_seen++ > 0) {
-				warnx("%s: RFC 6482bis section 4.3.2: "
+				warnx("%s: RFC 9582 section 4.3.2: "
 				    "IPv4 appears twice", fn);
 				goto out;
 			}
 			break;
 		case AFI_IPV6:
 			if (ipv6_seen++ > 0) {
-				warnx("%s: RFC 6482bis section 4.3.2: "
+				warnx("%s: RFC 9582 section 4.3.2: "
 				    "IPv6 appears twice", fn);
 				goto out;
 			}
@@ -169,7 +169,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 		}
 
 		if (addrsz == 0) {
-			warnx("%s: RFC 6482bis, section 4.3.2: "
+			warnx("%s: RFC 9582, section 4.3.2: "
 			    "empty ROAIPAddressFamily", fn);
 			goto out;
 		}

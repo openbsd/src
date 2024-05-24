@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.115 2024/05/20 15:51:43 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.116 2024/05/24 12:57:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -129,7 +129,7 @@ rtype_from_file_extension(const char *fn)
 
 /*
  * Validate that a filename listed on a Manifest only contains characters
- * permitted in draft-ietf-sidrops-6486bis section 4.2.2
+ * permitted in RFC 9286 section 4.2.2.
  * Also ensure that there is exactly one '.'.
  */
 static int

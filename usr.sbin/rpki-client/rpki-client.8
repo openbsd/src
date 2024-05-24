@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.103 2024/03/01 08:10:09 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.104 2024/05/24 12:57:20 tb Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2024 $
+.Dd $Mdocdate: May 24 2024 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -417,6 +417,16 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
+.%T A Profile for Route Origin Authorizations (ROAs)
+.%R RFC 9582
+.Re
+.Pp
+.Rs
+.%T On the use of the Cryptographic Message Syntax (CMS) Signing-Time Attribute in Resource Public Key Infrastructure (RPKI) Signed Objects
+.%R RFC 9589
+.Re
+.Pp
+.Rs
 .%T RPKI Signed Object for Trust Anchor Key
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-signed-tal
 .%D Oct, 2022
@@ -428,21 +438,9 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T A Profile for Route Origin Authorizations (ROAs)
-.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rfc6482bis
-.%D Nov, 2022
-.Re
-.Pp
-.Rs
 .%T A Profile for Autonomous System Provider Authorization (ASPA)
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-aspa-profile
 .%D Jun, 2023
-.Re
-.Pp
-.Rs
-.%T On the use of the CMS signing-time attribute in RPKI Signed Objects
-.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-cms-signing-time
-.%D Jan, 2024
 .Re
 .Pp
 .Rs
@@ -453,8 +451,8 @@ agreement regarding ARIN service restrictions.
 .Pp
 .Rs
 .%T Detecting RRDP Session Desynchronization
-.%U https://datatracker.ietf.org/doc/html/draft-spaghetti-sidrops-rrdp-desynchronization-00
-.%D Jan, 2024
+.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rrdp-desynchronization-00
+.%D April, 2024
 .Re
 .Pp
 .Rs

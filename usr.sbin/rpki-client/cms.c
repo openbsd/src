@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.44 2024/04/21 19:27:44 claudio Exp $ */
+/*	$OpenBSD: cms.c,v 1.45 2024/05/24 12:57:20 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -226,13 +226,14 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	}
 
 	if (!has_ct || !has_md) {
+		/* RFC 9589, section 4 */
 		warnx("%s: RFC 6488: CMS missing required "
 		    "signed attribute", fn);
 		goto out;
 	}
 
 	if (!has_st) {
-		/* RFC-to-be draft-ietf-sidrops-cms-signing-time */
+		/* RFC 9589, section 4 */
 		warnx("%s: missing CMS signing-time attribute", fn);
 		goto out;
 	}
