@@ -861,14 +861,6 @@ LIB2_DIVMOD_FUNCS = _divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
 # End of language makefile fragments.
 #
 
-Makefile: $(srcdir)/Makefile.in config.status $(srcdir)/version.c \
-   $(xmake_file) $(tmake_file) $(LANG_MAKEFILES)
-	$(SHELL) $(srcdir)/configure.frag $(srcdir) "$(SUBDIRS)" \
-		"$(xmake_file)" "$(tmake_file)"
-	cp config.status config.run
-	LANGUAGES="$(CONFIG_LANGUAGES)" $(SHELL) config.run
-	rm -f config.run
-
 config.h: cs-config.h ; @true
 hconfig.h: cs-hconfig.h ; @true
 tconfig.h: cs-tconfig.h ; @true
