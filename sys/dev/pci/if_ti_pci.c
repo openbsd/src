@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti_pci.c,v 1.7 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: if_ti_pci.c,v 1.8 2024/05/24 06:02:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -73,7 +73,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 
 #include <net/if.h>

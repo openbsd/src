@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.55 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.56 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  *
@@ -49,13 +49,9 @@
 #include <sys/timeout.h>
 #include <sys/mbuf.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/endian.h>
 #include <sys/atomic.h>
 
 #include <net/if.h>

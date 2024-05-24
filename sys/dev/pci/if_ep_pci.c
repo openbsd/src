@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.37 2023/09/11 08:41:26 mvs Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.38 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -31,16 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bpfilter.h" 
- 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/timeout.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
 
 #include <net/if.h>
@@ -49,11 +42,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
  
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-
-#include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 

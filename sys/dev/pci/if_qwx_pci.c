@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.15 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.16 2024/05/24 06:02:56 jsg Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -53,14 +53,11 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 

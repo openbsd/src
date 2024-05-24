@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.15 2022/03/11 18:00:52 mpi Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.16 2024/05/24 06:02:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -28,8 +28,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcidevs.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.108 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.109 2024/05/24 06:02:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -62,7 +62,6 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -74,10 +73,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

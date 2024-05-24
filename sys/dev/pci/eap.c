@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.64 2022/10/26 20:19:08 kn Exp $ */
+/*      $OpenBSD: eap.c,v 1.65 2024/05/24 06:02:53 jsg Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -51,7 +51,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
 

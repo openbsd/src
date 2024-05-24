@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.22 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.23 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -19,8 +19,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcidevs.h>

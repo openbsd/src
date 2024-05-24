@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.135 2022/04/16 19:19:59 naddy Exp $	*/
+/*	$OpenBSD: ips.c,v 1.136 2024/05/24 06:02:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/sensors.h>
 #include <sys/timeout.h>

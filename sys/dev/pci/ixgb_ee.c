@@ -31,16 +31,11 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_ee.c,v 1.8 2022/01/09 05:42:56 jsg Exp $ */
+/* $OpenBSD: ixgb_ee.c,v 1.9 2024/05/24 06:02:57 jsg Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

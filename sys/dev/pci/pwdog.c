@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwdog.c,v 1.12 2022/03/11 18:00:51 mpi Exp $ */
+/*	$OpenBSD: pwdog.c,v 1.13 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>

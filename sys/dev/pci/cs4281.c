@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.45 2022/10/26 20:19:08 kn Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.46 2024/05/24 06:02:53 jsg Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -43,9 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/fcntl.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcidevs.h>
@@ -54,7 +52,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/midi_if.h>
 
 #include <dev/ic/ac97.h>
 

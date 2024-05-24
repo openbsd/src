@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.15 2022/03/11 18:00:51 mpi Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.16 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -18,8 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
 

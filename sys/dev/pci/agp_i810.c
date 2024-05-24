@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.96 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.97 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -36,7 +36,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/rwlock.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

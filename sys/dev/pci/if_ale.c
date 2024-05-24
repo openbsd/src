@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.50 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.51 2024/05/24 06:02:53 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -39,10 +39,8 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
 
 #include <machine/bus.h>
 

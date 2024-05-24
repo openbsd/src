@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.26 2022/03/11 18:00:50 mpi Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.27 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -17,12 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bio.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/sensors.h>
 #include <sys/rwlock.h>

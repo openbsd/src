@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.157 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.158 2024/05/24 06:02:57 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -26,12 +26,9 @@
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/task.h>
 #include <sys/endian.h>

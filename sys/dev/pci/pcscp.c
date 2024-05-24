@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.21 2022/03/11 18:00:51 mpi Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.22 2024/05/24 06:02:58 jsg Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/buf.h>
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.20 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.21 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -57,9 +57,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
-#include <sys/socket.h>
-#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

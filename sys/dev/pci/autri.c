@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.50 2022/10/26 20:19:08 kn Exp $	*/
+/*	$OpenBSD: autri.c,v 1.51 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -38,7 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -51,7 +50,6 @@
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/ic/ac97.h>
-#include <dev/ic/mpuvar.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

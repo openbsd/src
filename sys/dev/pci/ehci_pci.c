@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.32 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.33 2024/05/24 06:02:53 jsg Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
@@ -46,7 +45,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>

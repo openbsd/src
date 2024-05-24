@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.63 2022/10/21 17:45:40 kn Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.64 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.63 2022/10/21 17:45:40 kn Exp $
+ * $Id: ahc_pci.c,v 1.64 2024/05/24 06:02:53 jsg Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -55,10 +55,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

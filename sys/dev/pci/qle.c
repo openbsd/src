@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.64 2024/04/14 00:38:26 jsg Exp $ */
+/*	$OpenBSD: qle.c,v 1.65 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -16,15 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bio.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/sensors.h>
-#include <sys/rwlock.h>
 #include <sys/task.h>
 #include <sys/timeout.h>
 
@@ -33,10 +29,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#ifdef __sparc64__
-#include <dev/ofw/openfirm.h>
-#endif
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

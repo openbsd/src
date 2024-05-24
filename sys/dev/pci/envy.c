@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.87 2022/10/26 20:19:08 kn Exp $	*/
+/*	$OpenBSD: envy.c,v 1.88 2024/05/24 06:02:53 jsg Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,7 +32,6 @@
 #include <sys/device.h>
 #include <sys/audioio.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/ic/ac97.h>

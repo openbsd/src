@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.31 2022/03/11 18:00:50 mpi Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.32 2024/05/24 06:02:58 jsg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -15,12 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bio.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.185 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.186 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -96,12 +96,8 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/mutex.h>
-#include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -121,7 +117,6 @@
 #include <net/bpf.h>
 #endif
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

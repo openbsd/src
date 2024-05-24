@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_apple.c,v 1.8 2016/05/07 22:46:54 kettenis Exp $	*/
+/*	$OpenBSD: agp_apple.c,v 1.9 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012 Martin Pieuchot <mpi@openbsd.org>
@@ -18,9 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/rwlock.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

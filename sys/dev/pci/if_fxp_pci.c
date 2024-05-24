@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.67 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.68 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -36,29 +36,19 @@
  * Intel EtherExpress Pro/100B PCI Fast Ethernet driver
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/timeout.h>
-#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
 
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/device.h>
 
 #include <netinet/if_ether.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 

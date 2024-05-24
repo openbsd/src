@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.12 2023/04/18 21:22:00 patrick Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.13 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -31,11 +31,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
-#include <sys/queue.h>
 
 #include <machine/bus.h>
 
@@ -45,7 +42,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/xhcireg.h>
 #include <dev/usb/xhcivar.h>

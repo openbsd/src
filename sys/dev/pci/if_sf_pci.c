@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf_pci.c,v 1.15 2022/03/11 18:00:48 mpi Exp $	*/
+/*	$OpenBSD: if_sf_pci.c,v 1.16 2024/05/24 06:02:56 jsg Exp $	*/
 /*	$NetBSD: if_sf_pci.c,v 1.10 2006/06/17 23:34:27 christos Exp $	*/
 
 /*-
@@ -37,12 +37,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/device.h>
 
 #include <net/if.h>

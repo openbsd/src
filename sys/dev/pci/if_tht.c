@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.147 2023/11/10 15:51:24 bluhm Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.148 2024/05/24 06:02:57 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -30,11 +30,9 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 #include <sys/time.h>

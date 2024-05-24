@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.125 2024/04/13 23:44:11 jsg Exp $ */
+/*	$OpenBSD: arc.c,v 1.126 2024/05/24 06:02:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -23,8 +23,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/device.h>

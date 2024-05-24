@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.90 2024/02/05 19:08:29 deraadt Exp $ */
+/* $OpenBSD: mfii.c,v 1.91 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -28,7 +28,6 @@
 #include <sys/atomic.h>
 #include <sys/sensors.h>
 #include <sys/rwlock.h>
-#include <sys/syslog.h>
 #include <sys/smr.h>
 
 #include <dev/biovar.h>

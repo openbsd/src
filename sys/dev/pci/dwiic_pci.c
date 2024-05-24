@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_pci.c,v 1.26 2024/04/07 01:04:58 jsg Exp $ */
+/* $OpenBSD: dwiic_pci.c,v 1.27 2024/05/24 06:02:53 jsg Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  * PCI attachment
@@ -20,7 +20,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>

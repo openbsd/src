@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.19 2022/03/11 18:00:48 mpi Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.20 2024/05/24 06:02:56 jsg Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -23,12 +23,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 

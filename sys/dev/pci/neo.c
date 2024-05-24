@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.41 2024/05/13 01:15:51 jsg Exp $       */
+/*      $OpenBSD: neo.c,v 1.42 2024/05/24 06:02:58 jsg Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -34,8 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcidevs.h>

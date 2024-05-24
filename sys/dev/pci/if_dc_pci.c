@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.78 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.79 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -34,17 +34,10 @@
  * $FreeBSD: src/sys/pci/if_dc.c,v 1.5 2000/01/12 22:24:05 wpaul Exp $
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <net/if.h>
@@ -53,10 +46,6 @@
 #include <netinet/if_ether.h>
 
 #include <net/if_media.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <dev/mii/miivar.h>
 

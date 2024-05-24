@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.43 2022/10/26 20:19:08 kn Exp $ */
+/*      $OpenBSD: sv.c,v 1.44 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -38,7 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 

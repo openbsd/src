@@ -1,4 +1,4 @@
-/*	$OpenBSD: iosf_pci.c,v 1.1 2023/04/23 00:20:26 dlg Exp $ */
+/*	$OpenBSD: iosf_pci.c,v 1.2 2024/05/24 06:02:57 jsg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -19,8 +19,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/mutex.h>
-#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 

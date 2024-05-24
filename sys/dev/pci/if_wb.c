@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.76 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.77 2024/05/24 06:02:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -91,9 +91,6 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/timeout.h>
@@ -112,7 +109,6 @@
 #include <uvm/uvm_extern.h>		/* for vtophys */
 #define	VTOPHYS(v)	vtophys((vaddr_t)(v))
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

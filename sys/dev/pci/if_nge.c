@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.98 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.99 2024/05/24 06:02:56 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -95,10 +95,7 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -117,7 +114,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #define NGE_USEIOSPACE

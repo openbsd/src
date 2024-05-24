@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.54 2024/03/06 00:11:25 jsg Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.55 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>

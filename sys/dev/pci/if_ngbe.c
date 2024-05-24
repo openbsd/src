@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngbe.c,v 1.4 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: if_ngbe.c,v 1.5 2024/05/24 06:02:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015-2017 Beijing WangXun Technology Co., Ltd.
@@ -25,8 +25,6 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 #include <sys/intrmap.h>

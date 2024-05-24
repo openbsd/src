@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.c,v 1.10 2024/04/13 23:44:11 jsg Exp $ */
+/* $OpenBSD: ixgb_hw.c,v 1.11 2024/05/24 06:02:58 jsg Exp $ */
 
 /* ixgb_hw.c
  * Shared functions for accessing and configuring the adapter
@@ -39,12 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

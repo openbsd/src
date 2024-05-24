@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.22 2023/02/04 19:19:37 cheloha Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.23 2024/05/24 06:02:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -60,7 +60,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/sensors.h>
 #include <sys/timeout.h>

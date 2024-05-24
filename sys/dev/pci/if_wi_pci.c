@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.56 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.57 2024/05/24 06:02:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <millert@openbsd.org>
@@ -44,8 +44,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
-#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

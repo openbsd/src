@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.60 2022/10/26 20:19:08 kn Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.61 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -67,8 +67,6 @@ int cs4280debug = 0;
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 

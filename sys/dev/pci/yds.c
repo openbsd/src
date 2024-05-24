@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.63 2022/10/26 20:19:08 kn Exp $	*/
+/*	$OpenBSD: yds.c,v 1.64 2024/05/24 06:02:58 jsg Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -41,11 +41,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/queue.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -53,7 +50,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/midi_if.h>
 #include <dev/ic/ac97.h>
 
 #include <machine/bus.h>

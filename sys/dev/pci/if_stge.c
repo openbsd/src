@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.73 2023/11/10 15:51:24 bluhm Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.74 2024/05/24 06:02:57 jsg Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -42,9 +42,6 @@
 #include <sys/systm.h>
 #include <sys/timeout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>

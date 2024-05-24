@@ -31,31 +31,20 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.120 2024/04/13 23:44:11 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.121 2024/05/24 06:02:53 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/socket.h>
-#include <sys/kstat.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
-#include <uvm/uvm_extern.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/pci/if_em.h>
 #include <dev/pci/if_em_hw.h>

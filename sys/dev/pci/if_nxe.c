@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.80 2023/11/10 15:51:20 bluhm Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.81 2024/05/24 06:02:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -22,11 +22,9 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/sensors.h>
@@ -39,7 +37,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

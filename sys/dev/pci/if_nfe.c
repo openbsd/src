@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.125 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.126 2024/05/24 06:02:56 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -28,10 +28,8 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
 
 #include <machine/bus.h>
 

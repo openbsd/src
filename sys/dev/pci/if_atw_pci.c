@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.19 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.20 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -39,14 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h> 
-#include <sys/mbuf.h>   
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/endian.h>
  
 #include <net/if.h>
 #include <net/if_media.h>
@@ -60,8 +53,6 @@
 #include <machine/intr.h>
 
 #include <dev/ic/atwreg.h>
-#include <dev/ic/rf3000reg.h>
-#include <dev/ic/si4136reg.h>
 #include <dev/ic/atwvar.h>
 
 #include <dev/pci/pcivar.h>

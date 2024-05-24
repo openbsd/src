@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.15 2024/05/13 01:15:51 jsg Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.16 2024/05/24 06:02:53 jsg Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <dev/ic/i82365reg.h>
@@ -47,7 +46,6 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/i82365_pcivar.h>
 
-#include <dev/isa/isavar.h>
 #include <dev/isa/i82365_isavar.h>
 
 /*

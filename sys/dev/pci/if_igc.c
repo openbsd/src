@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.24 2024/05/21 11:19:39 bluhm Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.25 2024/05/24 06:02:53 jsg Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -37,7 +37,6 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/endian.h>

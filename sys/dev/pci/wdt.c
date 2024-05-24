@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.26 2022/03/11 18:00:52 mpi Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.27 2024/05/24 06:02:58 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -29,7 +29,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>

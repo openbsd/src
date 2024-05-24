@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.24 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.25 2024/05/24 06:02:56 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -57,10 +57,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>

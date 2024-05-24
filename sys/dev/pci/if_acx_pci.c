@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_pci.c,v 1.10 2022/03/11 18:00:45 mpi Exp $  */
+/*	$OpenBSD: if_acx_pci.c,v 1.11 2024/05/24 06:02:53 jsg Exp $  */
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -25,12 +25,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 

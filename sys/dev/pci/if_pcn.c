@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.49 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.50 2024/05/24 06:02:56 jsg Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -71,9 +71,6 @@
 #include <sys/systm.h>
 #include <sys/timeout.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>

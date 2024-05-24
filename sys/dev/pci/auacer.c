@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.29 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.30 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 

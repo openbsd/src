@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.25 2024/05/20 01:51:32 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.26 2024/05/24 06:02:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023 Kevin Lo <kevlo@openbsd.org>
@@ -25,8 +25,6 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.45 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.46 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -28,8 +28,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/rwlock.h>
 

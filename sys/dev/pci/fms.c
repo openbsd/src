@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.37 2024/05/13 01:15:51 jsg Exp $ */
+/*	$OpenBSD: fms.c,v 1.38 2024/05/24 06:02:53 jsg Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/audioio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.13 2022/08/29 06:08:04 jsg Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.14 2024/05/24 06:02:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -31,7 +31,6 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

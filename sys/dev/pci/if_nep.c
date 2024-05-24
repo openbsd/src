@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.34 2022/03/11 18:00:48 mpi Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.35 2024/05/24 06:02:56 jsg Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -36,7 +36,6 @@
 #include <net/bpf.h>
 #endif
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/pci/pcireg.h>

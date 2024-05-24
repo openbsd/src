@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.147 2023/11/29 06:54:09 jmatthew Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.148 2024/05/24 06:02:58 jsg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -23,13 +23,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/rwlock.h>
 #include <sys/sensors.h>
 #include <sys/dkio.h>
-#include <sys/tree.h>
 #include <sys/task.h>
 
 #include <machine/bus.h>

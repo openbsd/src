@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.55 2022/03/11 18:00:45 mpi Exp $ */
+/* $OpenBSD: if_bce.c,v 1.56 2024/05/24 06:02:53 jsg Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -42,10 +42,7 @@
 #include <sys/timeout.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -62,7 +59,6 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/mii/miidevs.h>
 
 #include <dev/pci/if_bcereg.h>
 

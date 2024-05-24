@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.12 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.13 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -55,7 +55,6 @@
 #include <sys/proc.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/pool.h>
@@ -68,7 +67,6 @@
 #include <machine/intr.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #if NBPFILTER > 0

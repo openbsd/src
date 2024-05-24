@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.48 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.49 2024/05/24 06:02:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -34,16 +34,8 @@
  * $FreeBSD: if_xl.c,v 1.72 2000/01/09 21:12:59 wpaul Exp $
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 
 #include <net/if.h>
@@ -56,10 +48,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 /*
  * The following #define causes the code to use PIO to access the

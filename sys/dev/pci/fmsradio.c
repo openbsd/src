@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmsradio.c,v 1.8 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: fmsradio.c,v 1.9 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
@@ -39,17 +39,11 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/audioio.h>
 #include <sys/radioio.h>
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-
-#include <dev/audio_if.h>
 #include <dev/radio_if.h>
 
 #include <dev/ic/ac97.h>

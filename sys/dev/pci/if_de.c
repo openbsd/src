@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.142 2023/04/11 00:45:08 jsg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.143 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -44,11 +44,9 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

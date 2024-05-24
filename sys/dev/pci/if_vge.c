@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.77 2023/11/10 15:51:24 bluhm Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.78 2024/05/24 06:02:57 jsg Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -89,11 +89,8 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

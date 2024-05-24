@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_pci.c,v 1.18 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.19 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -36,10 +36,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-#include <sys/endian.h>
 #include <sys/sensors.h>
 
 #include <machine/bus.h>

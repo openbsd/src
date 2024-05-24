@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.17 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.18 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/systm.h>
 

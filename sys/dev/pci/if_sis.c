@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.144 2024/04/13 23:44:11 jsg Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.145 2024/05/24 06:02:56 jsg Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -63,11 +63,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>

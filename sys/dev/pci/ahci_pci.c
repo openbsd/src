@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.16 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.17 2024/05/24 06:02:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -20,22 +20,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
-#include <sys/pool.h>
 
 #include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <dev/ata/pmreg.h>
 
 #include <dev/ic/ahcireg.h>
 #include <dev/ic/ahcivar.h>

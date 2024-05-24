@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_pci.c,v 1.8 2023/11/24 08:47:35 jmatthew Exp $ */
+/*	$OpenBSD: ccp_pci.c,v 1.9 2024/05/24 06:02:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -18,11 +18,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/rwlock.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/queue.h>
 
 #include <machine/bus.h>
 

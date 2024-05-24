@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.34 2022/03/11 18:00:48 mpi Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.35 2024/05/24 06:02:56 jsg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -32,15 +32,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
 
@@ -50,10 +43,6 @@
 #include <netinet/if_ether.h>
 
 #include <net/if_media.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.22 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.23 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -31,14 +31,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/rwlock.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-#include <dev/pci/vga_pcivar.h>
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 

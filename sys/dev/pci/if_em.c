@@ -31,13 +31,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.376 2024/05/13 01:15:51 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.377 2024/05/24 06:02:53 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
 #include <dev/pci/if_em_soc.h>
-
-#include <netinet/ip6.h>
 
 /*********************************************************************
  *  Driver version

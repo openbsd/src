@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci.c,v 1.8 2022/03/11 18:00:51 mpi Exp $ */
+/*	$OpenBSD: siop_pci.c,v 1.9 2024/05/24 06:02:58 jsg Exp $ */
 /*	$NetBSD: siop_pci.c,v 1.18 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.49 2024/05/07 18:35:23 jan Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.50 2024/05/24 06:02:53 jsg Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -50,7 +50,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/stdint.h>
@@ -60,7 +59,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.114 2024/04/12 01:54:21 jsg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.115 2024/05/24 06:02:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -25,11 +25,8 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/pool.h>
-#include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/task.h>
 #include <sys/atomic.h>
@@ -40,7 +37,6 @@
 #include <machine/intr.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/toeplitz.h>
 

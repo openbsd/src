@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.75 2022/12/30 14:10:17 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.76 2024/05/24 06:02:53 jsg Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -16,12 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/queue.h>
@@ -32,11 +28,7 @@
 #include <dev/ofw/openfirm.h>
 #endif
 
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

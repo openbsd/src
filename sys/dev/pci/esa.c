@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.42 2023/09/11 08:41:26 mvs Exp $	*/
+/*	$OpenBSD: esa.c,v 1.43 2024/05/24 06:02:53 jsg Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -48,8 +48,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/exec.h>
 #include <sys/audioio.h>
 
 #include <machine/bus.h>

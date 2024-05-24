@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.24 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.25 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -33,10 +33,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -50,7 +47,6 @@
 #include <machine/autoconf.h>
 #include <dev/ofw/openfirm.h>
 #endif
-#include <machine/cpu.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

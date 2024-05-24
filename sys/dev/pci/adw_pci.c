@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw_pci.c,v 1.20 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: adw_pci.c,v 1.21 2024/05/24 06:02:53 jsg Exp $ */
 /* $NetBSD: adw_pci.c,v 1.7 2000/05/26 15:13:46 dante Exp $	 */
 
 /*
@@ -43,11 +43,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
 
 #include <machine/bus.h>
 

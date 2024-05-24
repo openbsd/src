@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.27 2022/04/16 19:19:59 naddy Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.28 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -19,11 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/rwlock.h>
-#include <sys/dkio.h>
 #include <sys/task.h>
 
 #include <machine/bus.h>

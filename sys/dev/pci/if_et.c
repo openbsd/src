@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.43 2023/11/10 15:51:20 bluhm Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.44 2024/05/24 06:02:53 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -38,15 +38,12 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/endian.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
 
 #include <machine/bus.h>
  
@@ -63,7 +60,6 @@
  
 #include <dev/mii/miivar.h>
 
-#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 

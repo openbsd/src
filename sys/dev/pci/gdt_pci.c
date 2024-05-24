@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.27 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.28 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -32,10 +32,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/queue.h>
-#include <sys/endian.h>
 
 #include <machine/bus.h>
 

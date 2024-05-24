@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.100 2024/05/08 17:52:11 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.101 2024/05/24 06:02:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -55,7 +55,6 @@
 #include <sys/proc.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/pool.h>
@@ -69,7 +68,6 @@
 #include <machine/intr.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/route.h>
 #include <net/toeplitz.h>

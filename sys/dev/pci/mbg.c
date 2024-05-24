@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.36 2024/03/23 10:38:02 sthen Exp $ */
+/*	$OpenBSD: mbg.c,v 1.37 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -18,11 +18,9 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/systm.h>
 #include <sys/sensors.h>
-#include <sys/syslog.h>
 #include <sys/time.h>
 
 #include <machine/bus.h>

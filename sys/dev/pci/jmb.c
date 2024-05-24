@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.10 2022/03/11 18:00:50 mpi Exp $ */
+/*	$OpenBSD: jmb.c,v 1.11 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -18,11 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/queue.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

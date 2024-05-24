@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.19 2014/12/19 22:44:58 guenther Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.20 2024/05/24 06:02:58 jsg Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.25 2005/06/28 00:28:42 thorpej Exp $ */
 
 /*
@@ -30,10 +30,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
-#include <sys/endian.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

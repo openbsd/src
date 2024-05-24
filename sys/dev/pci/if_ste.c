@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.70 2023/11/10 15:51:24 bluhm Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.71 2024/05/24 06:02:57 jsg Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -42,7 +42,6 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>
@@ -60,7 +59,6 @@
 
 #include <sys/device.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/pci/pcireg.h>

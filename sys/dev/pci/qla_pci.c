@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla_pci.c,v 1.9 2022/03/11 18:00:51 mpi Exp $ */
+/*	$OpenBSD: qla_pci.c,v 1.10 2024/05/24 06:02:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -17,15 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bio.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/sensors.h>
-#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 

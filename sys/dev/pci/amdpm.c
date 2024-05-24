@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.39 2023/02/04 19:19:37 cheloha Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.40 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -48,7 +48,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/timeout.h>
 #include <sys/timetc.h>

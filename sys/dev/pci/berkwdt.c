@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.11 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.12 2024/05/24 06:02:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -23,7 +23,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>

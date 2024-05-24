@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.42 2022/03/11 18:00:51 mpi Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.43 2024/05/24 06:02:58 jsg Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
 #include <sys/queue.h>
@@ -52,7 +51,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
-#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>

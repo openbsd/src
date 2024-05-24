@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.21 2022/03/11 18:00:48 mpi Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.22 2024/05/24 06:02:56 jsg Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -31,13 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/syslog.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 
 #include <net/if.h>

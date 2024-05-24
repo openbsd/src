@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.78 2023/11/10 15:51:24 bluhm Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.79 2024/05/24 06:02:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -186,9 +186,6 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
 

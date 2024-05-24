@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_base.c,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_base.c,v 1.2 2024/05/24 06:02:57 jsg Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -6,7 +6,6 @@
  */
 
 #include <dev/pci/igc_hw.h>
-#include <dev/pci/igc_i225.h>
 #include <dev/pci/if_igc.h>
 #include <dev/pci/igc_mac.h>
 #include <dev/pci/igc_base.h>

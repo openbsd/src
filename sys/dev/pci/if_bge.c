@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.404 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.405 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -81,10 +81,8 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
 #include <sys/atomic.h>
 #include <sys/kstat.h>
 
@@ -108,7 +106,6 @@
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/mii/miidevs.h>
 #include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/if_bgereg.h>

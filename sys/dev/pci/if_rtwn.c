@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.41 2023/07/14 14:28:47 kevlo Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.42 2024/05/24 06:02:56 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,14 +25,10 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/task.h>
 #include <sys/timeout.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 
@@ -43,7 +39,6 @@
 #include <net/bpf.h>
 #endif
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>

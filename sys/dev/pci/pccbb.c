@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.104 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.105 2024/05/24 06:02:58 jsg Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -40,10 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/evcount.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/task.h>

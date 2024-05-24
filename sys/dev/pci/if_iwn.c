@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.262 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.263 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -26,12 +26,10 @@
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/task.h>
 #include <sys/endian.h>

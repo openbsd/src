@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.46 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.47 2024/05/24 06:02:53 jsg Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -36,9 +36,7 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
 

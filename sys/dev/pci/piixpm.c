@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.43 2022/03/11 18:00:51 mpi Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.44 2024/05/24 06:02:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/rwlock.h>
 
 #include <machine/bus.h>

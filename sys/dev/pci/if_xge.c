@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.83 2023/11/10 15:51:24 bluhm Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.84 2024/05/24 06:02:57 jsg Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -46,9 +46,6 @@
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/endian.h>
 
@@ -68,8 +65,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-
-#include <sys/lock.h>
 
 #include <dev/pci/if_xgereg.h>
 

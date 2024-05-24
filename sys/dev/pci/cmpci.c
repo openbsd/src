@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.53 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.54 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -51,7 +51,6 @@ int cmpcidebug = 0;
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 
@@ -60,7 +59,6 @@ int cmpcidebug = 0;
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/midi_if.h>
 
 #include <dev/pci/cmpcireg.h>
 #include <dev/pci/cmpcivar.h>

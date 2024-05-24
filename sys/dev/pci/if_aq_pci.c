@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.27 2024/05/13 01:15:51 jsg Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.28 2024/05/24 06:02:53 jsg Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -84,7 +84,6 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/intrmap.h>

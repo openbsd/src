@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.40 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.41 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -36,12 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
-#include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/endian.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -57,7 +52,6 @@
 #endif
 
 #include <dev/mii/miivar.h>
-#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/gemreg.h>
 #include <dev/ic/gemvar.h>

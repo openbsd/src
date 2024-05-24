@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.28 2024/05/15 12:57:36 jsg Exp $ */
+/*	$OpenBSD: cz.c,v 1.29 2024/05/24 06:02:53 jsg Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -81,8 +81,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/fcntl.h>
 #include <sys/syslog.h>
 
 #include <dev/pci/pcireg.h>

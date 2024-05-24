@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv_pci.c,v 1.15 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.16 2024/05/24 06:02:53 jsg Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
@@ -57,8 +57,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/device.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.50 2022/03/11 18:00:45 mpi Exp $ */
+/* $OpenBSD: agp.c,v 1.51 2024/05/24 06:02:53 jsg Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -34,12 +34,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
 
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
