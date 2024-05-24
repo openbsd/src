@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.64 2023/09/15 15:49:05 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.65 2024/05/24 12:41:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -517,7 +517,7 @@ utf8_strvis(char *dst, const char *src, size_t len, int flag)
 			/* Not a complete, valid UTF-8 character. */
 			src -= ud.have;
 		}
-		if (src[0] == '$' && src < end - 1) {
+		if ((flag & VIS_DQ) && src[0] == '$' && src < end - 1) {
 			if (isalpha((u_char)src[1]) ||
 			    src[1] == '_' ||
 			    src[1] == '{')
