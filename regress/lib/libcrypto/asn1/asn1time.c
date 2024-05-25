@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.28 2024/05/25 12:47:25 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.29 2024/05/25 18:59:03 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Google Inc.
@@ -120,6 +120,18 @@ static const struct asn1_time_test asn1_gentime_tests[] = {
 			0x32, 0x33, 0x30, 0x33, 0x32, 0x37, 0x30, 0x30,
 			0x5a,
 		},
+	},
+	{
+		/* 1 second after the 32-bit epoch wraps. */
+		.str = "20380119031408Z",
+		.data = "20380119031408Z",
+		.time = 2147483648LL,
+		.der = {
+			0x18, 0x0f, 0x32, 0x30, 0x33, 0x38, 0x30, 0x31,
+			0x31, 0x39, 0x30, 0x33, 0x31, 0x34, 0x30, 0x38,
+			0x5a,
+		},
+
 	},
 };
 
@@ -280,6 +292,7 @@ asn1_gentime_test(int test_no, const struct asn1_time_test *att)
 	const unsigned char *der;
 	unsigned char *p = NULL;
 	ASN1_GENERALIZEDTIME *gt = NULL;
+	time_t t;
 	int failure = 1;
 	int len;
 	struct tm tm;
@@ -307,11 +320,18 @@ asn1_gentime_test(int test_no, const struct asn1_time_test *att)
 		goto done;
 	}
 
-	if (timegm(&tm) != att->time) {
+	if (!OPENSSL_timegm(&tm, &t)) {
 		/* things with crappy time_t should die in fire */
-		int64_t a = timegm(&tm);
-		int64_t b = att->time;
-		fprintf(stderr, "FAIL: test %d - times don't match, expected %lld got %lld\n",
+		fprintf(stderr, "FAIL: test %d - OPENSSL_timegm failed\n",
+		    test_no);
+	}
+
+	if (t != att->time) {
+		/* things with crappy time_t should die in fire */
+		int64_t a = t, b = att->time;
+
+		fprintf(stderr, "FAIL: test %d - times don't match, "
+		    "expected %lld got %lld\n",
 		    test_no, (long long)b, (long long)a);
 		goto done;
 	}
