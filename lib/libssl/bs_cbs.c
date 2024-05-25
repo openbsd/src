@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.24 2021/12/15 17:36:49 jsing Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.25 2024/05/25 15:14:26 tb Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -15,6 +15,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
