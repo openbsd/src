@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.27 2024/05/25 06:42:15 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.28 2024/05/25 12:47:25 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Google Inc.
@@ -280,7 +280,6 @@ asn1_gentime_test(int test_no, const struct asn1_time_test *att)
 	const unsigned char *der;
 	unsigned char *p = NULL;
 	ASN1_GENERALIZEDTIME *gt = NULL;
-	int64_t a;
 	int failure = 1;
 	int len;
 	struct tm tm;
@@ -308,16 +307,11 @@ asn1_gentime_test(int test_no, const struct asn1_time_test *att)
 		goto done;
 	}
 
-	if (!OPENSSL_timegm(&tm, &a)) {
-		fprintf(stderr, "FAIL: test %d - OPENSSL_timegm falied '%s'\n",
-		    test_no, att->str);
-		goto done;
-	}
-	if (a != att->time) {
+	if (timegm(&tm) != att->time) {
 		/* things with crappy time_t should die in fire */
+		int64_t a = timegm(&tm);
 		int64_t b = att->time;
-		fprintf(stderr, "FAIL: test %d - times don't match, "
-		    "expected %lld got %lld\n",
+		fprintf(stderr, "FAIL: test %d - times don't match, expected %lld got %lld\n",
 		    test_no, (long long)b, (long long)a);
 		goto done;
 	}
