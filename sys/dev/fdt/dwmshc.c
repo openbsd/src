@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmshc.c,v 1.6 2024/05/26 18:06:21 kettenis Exp $ */
+/*	$OpenBSD: dwmshc.c,v 1.7 2024/05/26 22:04:52 kettenis Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -250,7 +250,6 @@ dwmshc_attach(struct device *parent, struct device *self, void *aux)
 
 	SET(sdhc->sc_flags, SDHC_F_NOPWR0);
 	SET(capmask, (uint64_t)SDHC_DDR50_SUPP << 32);
-	SET(capmask, (uint64_t)SDHC_HIGH_SPEED_SUPP);
 
 	sdhc_host_found(sdhc, sc->sc_iot, sc->sc_ioh, sc->sc_ios, 1,
 	    capmask, capset);
