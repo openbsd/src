@@ -1,4 +1,4 @@
-/* $OpenBSD: umt.c,v 1.7 2024/05/23 03:21:09 jsg Exp $ */
+/* $OpenBSD: umt.c,v 1.8 2024/05/26 20:06:27 mglocker Exp $ */
 /*
  * USB multitouch touchpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -181,14 +181,14 @@ umt_attach(struct device *parent, struct device *self, void *aux)
 	if (hidmt_setup(self, mt, desc, size) != 0)
 		return;
 
-	hidmt_attach(mt, &umt_accessops);
-
 	if (sc->sc_quirks & UQ_ALWAYS_OPEN) {
 		/* open uhidev and keep it open */
 		umt_enable(sc);
 		/* but mark the hidmt not in use */
 		umt_disable(sc);
 	}
+
+	hidmt_attach(mt, &umt_accessops);
 }
 
 int

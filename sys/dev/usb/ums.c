@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.52 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: ums.c,v 1.53 2024/05/26 20:06:27 mglocker Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -178,14 +178,14 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 		ms->sc_loc_btn[2].pos = 2;
 	}
 
-	hidms_attach(ms, &ums_accessops);
-
 	if (sc->sc_quirks & UQ_ALWAYS_OPEN) {
 		/* open uhidev and keep it open */
 		ums_enable(sc);
 		/* but mark the hidms not in use */
 		ums_disable(sc);
 	}
+
+	hidms_attach(ms, &ums_accessops);
 }
 
 int
