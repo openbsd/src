@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.114 2024/04/13 14:19:39 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.115 2024/05/26 13:37:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1526,7 +1526,8 @@ cpu_suspend_primary(void)
 	 * wake us up by clearing the flag.
 	 */
 	cpu_suspended = 1;
-	intr_enable_wakeup();
+	arm_intr_func.setipl(IPL_NONE);
+	intr_enable();
 
 	while (cpu_suspended) {
 #if NPSCI > 0
@@ -1542,7 +1543,8 @@ cpu_suspend_primary(void)
 	}
 
 resume:
-	intr_disable_wakeup();
+	intr_disable();
+	arm_intr_func.setipl(IPL_HIGH);
 
 	/* Unmask clock interrupts. */
 	WRITE_SPECIALREG(cntv_ctl_el0,

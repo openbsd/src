@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.49 2021/12/14 18:16:14 deraadt Exp $	*/
+/*	$OpenBSD: intr.h,v 1.50 2024/05/26 13:37:32 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -128,6 +128,8 @@ void splassert_check(int, const char *);
 struct cpu_info;
 
 void intr_barrier(void *);
+void intr_enable_wakeup(void);
+void intr_disable_wakeup(void);
 
 #ifdef MULTIPROCESSOR
 void i386_send_ipi(struct cpu_info *, int);

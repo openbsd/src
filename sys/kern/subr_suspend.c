@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.16 2023/07/12 18:40:06 cheloha Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.17 2024/05/26 13:37:32 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -132,6 +132,7 @@ top:
 	s = splhigh();
 	intr_disable();	/* PSL_I for resume; PIC/APIC broken until repair */
 	cold = 2;	/* Force other code to delay() instead of tsleep() */
+	intr_enable_wakeup();
 
 	if (config_suspend_all(DVACT_SUSPEND) != 0) {
 		sleep_abort(v);
@@ -172,6 +173,7 @@ fail_pts:
 	config_suspend_all(DVACT_RESUME);
 
 fail_suspend:
+	intr_disable_wakeup();
 	cold = 0;
 	intr_enable();
 	splx(s);

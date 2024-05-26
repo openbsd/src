@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.56 2024/01/19 18:38:16 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.57 2024/05/26 13:37:31 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -354,8 +354,8 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		panic("intr_establish: non-legacy IRQ on i8259");
 #endif
 
-	flags = level & IPL_MPSAFE;
-	level &= ~IPL_MPSAFE;
+	flags = level & (IPL_MPSAFE | IPL_WAKEUP);
+	level &= ~(IPL_MPSAFE | IPL_WAKEUP);
 
 	KASSERT(level <= IPL_TTY || level >= IPL_CLOCK || flags & IPL_MPSAFE);
 
@@ -693,6 +693,52 @@ intr_barrier(void *cookie)
 	struct intrhand *ih = cookie;
 	sched_barrier(ih->ih_cpu);
 }
+
+#ifdef SUSPEND
+
+void
+intr_enable_wakeup(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct pic *pic;
+	int irq, pin;
+
+	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
+		if (ci->ci_isources[irq] == NULL)
+			continue;
+
+		if (ci->ci_isources[irq]->is_handlers->ih_flags & IPL_WAKEUP)
+			continue;
+
+		pic = ci->ci_isources[irq]->is_pic;
+		pin = ci->ci_isources[irq]->is_pin;
+		if (pic->pic_hwmask)
+			pic->pic_hwmask(pic, pin);
+	}
+}
+
+void
+intr_disable_wakeup(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct pic *pic;
+	int irq, pin;
+
+	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
+		if (ci->ci_isources[irq] == NULL)
+			continue;
+
+		if (ci->ci_isources[irq]->is_handlers->ih_flags & IPL_WAKEUP)
+			continue;
+
+		pic = ci->ci_isources[irq]->is_pic;
+		pin = ci->ci_isources[irq]->is_pin;
+		if (pic->pic_hwunmask)
+			pic->pic_hwunmask(pic, pin);
+	}
+}
+
+#endif
 
 /*
  * Add a mask to cpl, and return the old value of cpl.

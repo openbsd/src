@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.670 2024/04/29 00:29:48 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.671 2024/05/26 13:37:32 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3965,6 +3965,20 @@ intr_barrier(void *ih)
 {
 	sched_barrier(NULL);
 }
+
+#ifdef SUSPEND
+
+void
+intr_enable_wakeup(void)
+{
+}
+
+void
+intr_disable_wakeup(void)
+{
+}
+
+#endif
 
 unsigned int
 cpu_rnd_messybits(void)

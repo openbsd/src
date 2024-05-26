@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.27 2022/12/21 22:30:42 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.28 2024/05/26 13:37:31 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -888,15 +888,11 @@ intr_enable_wakeup(void)
 {
 	if (arm_intr_func.enable_wakeup)
 		arm_intr_func.enable_wakeup();
-	arm_intr_func.setipl(IPL_NONE);
-	intr_enable();
 }
 
 void
 intr_disable_wakeup(void)
 {
-	intr_disable();
-	arm_intr_func.setipl(IPL_HIGH);
 	if (arm_intr_func.disable_wakeup)
 		arm_intr_func.disable_wakeup();
 }
