@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.16 2024/05/26 13:40:54 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.17 2024/05/26 18:06:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -534,6 +534,7 @@ rkpmic_activate(struct device *self, int act)
 			val &= ~RK809_PMIC_SYS_CFG3_SLP_FUN_MASK;
 			val |= RK809_PMIC_SYS_CFG3_SLP_FUN_NONE;
 			rkpmic_reg_write(sc, RK809_PMIC_SYS_CFG3, val);
+			rkpmic_reg_write(sc, RK809_PMIC_INT_STS0, 0xff);
 		}
 		break;
 	}

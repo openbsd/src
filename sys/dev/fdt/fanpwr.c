@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.8 2023/11/12 12:41:43 patrick Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.9 2024/05/26 18:06:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -30,6 +30,7 @@
 /* Registers */
 #define FAN53555_VSEL0			0x00
 #define FAN53555_VSEL1			0x01
+#define  FAN53555_VSEL_BUCK_EN		0x80
 #define  FAN53555_VSEL_NSEL_MASK	0x3f
 #define FAN53555_CONTROL		0x02
 #define  FAN53555_CONTROL_SLEW_MASK	(0x7 << 4)
@@ -107,7 +108,11 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int node = *(int *)ia->ia_cookie;
 	uint32_t voltage, ramp_delay;
+	uint8_t vsel_sleep_en;
+	uint8_t vsel_sleep;
 	uint8_t id1, id2;
+	uint8_t vsel;
+	int snode;
 
 	pinctrl_byname(node, "default");
 
@@ -133,23 +138,36 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (sc->sc_id == FANPWR_TCS4525) {
-		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0))
+		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0)) {
 			sc->sc_vsel = TCS4525_VSEL0;
-		else
+			vsel_sleep = TCS4525_VSEL1;
+		} else {
 			sc->sc_vsel = TCS4525_VSEL1;
+			vsel_sleep = TCS4525_VSEL0;
+		}
 		sc->sc_vsel_nsel_mask = TCS4525_VSEL_NSEL_MASK;
+		vsel_sleep_en = vsel_sleep;
 	} else if (sc->sc_id == FANPWR_RK8602) {
-		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0))
+		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0)) {
 			sc->sc_vsel = RK8602_VSEL0;
-		else
+			vsel_sleep = RK8602_VSEL1;
+			vsel_sleep_en = FAN53555_VSEL1;
+		} else {
 			sc->sc_vsel = RK8602_VSEL1;
+			vsel_sleep = RK8602_VSEL0;
+			vsel_sleep_en = FAN53555_VSEL0;
+		}
 		sc->sc_vsel_nsel_mask = RK8602_VSEL_NSEL_MASK;
 	} else {
-		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0))
+		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0)) {
 			sc->sc_vsel = FAN53555_VSEL0;
-		else
+			vsel_sleep = FAN53555_VSEL1;
+		} else {
 			sc->sc_vsel = FAN53555_VSEL1;
+			vsel_sleep = FAN53555_VSEL0;
+		}
 		sc->sc_vsel_nsel_mask = FAN53555_VSEL_NSEL_MASK;
+		vsel_sleep_en = vsel_sleep;
 	}
 
 	id1 = fanpwr_read(sc, FAN53555_ID1);
@@ -246,6 +264,27 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 	regulator_register(&sc->sc_rd);
 
 	printf("\n");
+
+	snode = OF_getnodebyname(node, "regulator-state-mem");
+	if (snode) {
+		vsel = fanpwr_read(sc, vsel_sleep_en);
+		if (OF_getpropbool(snode, "regulator-on-in-suspend"))
+			vsel |= FAN53555_VSEL_BUCK_EN;
+		if (OF_getpropbool(snode, "regulator-off-in-suspend"))
+			vsel &= ~FAN53555_VSEL_BUCK_EN;
+		fanpwr_write(sc, vsel_sleep_en, vsel);
+
+		voltage = OF_getpropint(snode,
+		    "regulator-suspend-min-microvolt", 0);
+		voltage = OF_getpropint(snode,
+		    "regulator-suspend-microvolt", voltage);
+		if (voltage > 0) {
+			vsel = fanpwr_read(sc, vsel_sleep);
+			vsel &= ~sc->sc_vsel_nsel_mask;
+			vsel |= (voltage - vsel_sleep) / sc->sc_vstep;
+			fanpwr_write(sc, vsel_sleep, vsel);
+		}
+	}
 }
 
 uint8_t
