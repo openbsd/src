@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.15 2024/05/12 20:02:13 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.16 2024/05/26 13:40:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -76,7 +76,8 @@ struct rkpmic_vsel_range {
 
 struct rkpmic_regdata {
 	const char *name;
-	uint8_t reg, mask;
+	uint8_t vreg, vmask;
+	uint8_t sreg, smask;
 	const struct rkpmic_vsel_range *vsel_range;
 };
 
@@ -112,12 +113,12 @@ const struct rkpmic_vsel_range rk805_vsel_range3[] = {
 };
 
 const struct rkpmic_regdata rk805_regdata[] = {
-	{ "DCDC_REG1", 0x2f, 0x3f, rk805_vsel_range1 },
-	{ "DCDC_REG2", 0x33, 0x3f, rk805_vsel_range1 },
-	{ "DCDC_REG4", 0x38, 0x1f, rk805_vsel_range2 },
-	{ "LDO_REG1", 0x3b, 0x1f, rk805_vsel_range3 },
-	{ "LDO_REG2", 0x3d, 0x1f, rk805_vsel_range3 },
-	{ "LDO_REG3", 0x3f, 0x1f, rk805_vsel_range3 },
+	{ "DCDC_REG1", 0x2f, 0x3f, 0, 0, rk805_vsel_range1 },
+	{ "DCDC_REG2", 0x33, 0x3f, 0, 0, rk805_vsel_range1 },
+	{ "DCDC_REG4", 0x38, 0x1f, 0, 0, rk805_vsel_range2 },
+	{ "LDO_REG1", 0x3b, 0x1f, 0, 0, rk805_vsel_range3 },
+	{ "LDO_REG2", 0x3d, 0x1f, 0, 0, rk805_vsel_range3 },
+	{ "LDO_REG3", 0x3f, 0x1f, 0, 0, rk805_vsel_range3 },
 	{ }
 };
 
@@ -146,27 +147,27 @@ const struct rkpmic_vsel_range rk806_vsel_range2[] = {
 };
 
 const struct rkpmic_regdata rk806_regdata[] = {
-	{ "dcdc-reg1", 0x1a, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg2", 0x1b, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg3", 0x1c, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg4", 0x1d, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg5", 0x1e, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg6", 0x1f, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg7", 0x20, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg8", 0x21, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg9", 0x22, 0xff, rk806_vsel_range1 },
-	{ "dcdc-reg10", 0x23, 0xff, rk806_vsel_range1 },
-	{ "nldo-reg1", 0x43, 0xff, rk806_vsel_range2 },
-	{ "nldo-reg2", 0x44, 0xff, rk806_vsel_range2 },
-	{ "nldo-reg3", 0x45, 0xff, rk806_vsel_range2 },
-	{ "nldo-reg4", 0x46, 0xff, rk806_vsel_range2 },
-	{ "nldo-reg5", 0x47, 0xff, rk806_vsel_range2 },
-	{ "pldo-reg1", 0x4e, 0xff, rk806_vsel_range2 },
-	{ "pldo-reg2", 0x4f, 0xff, rk806_vsel_range2 },
-	{ "pldo-reg3", 0x50, 0xff, rk806_vsel_range2 },
-	{ "pldo-reg4", 0x51, 0xff, rk806_vsel_range2 },
-	{ "pldo-reg5", 0x52, 0xff, rk806_vsel_range2 },
-	{ "pldo-reg6", 0x53, 0xff, rk806_vsel_range2 },
+	{ "dcdc-reg1", 0x1a, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg2", 0x1b, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg3", 0x1c, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg4", 0x1d, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg5", 0x1e, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg6", 0x1f, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg7", 0x20, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg8", 0x21, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg9", 0x22, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "dcdc-reg10", 0x23, 0xff, 0, 0, rk806_vsel_range1 },
+	{ "nldo-reg1", 0x43, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "nldo-reg2", 0x44, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "nldo-reg3", 0x45, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "nldo-reg4", 0x46, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "nldo-reg5", 0x47, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "pldo-reg1", 0x4e, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "pldo-reg2", 0x4f, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "pldo-reg3", 0x50, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "pldo-reg4", 0x51, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "pldo-reg5", 0x52, 0xff, 0, 0, rk806_vsel_range2 },
+	{ "pldo-reg6", 0x53, 0xff, 0, 0, rk806_vsel_range2 },
 	{ }
 };
 
@@ -220,17 +221,17 @@ const struct rkpmic_vsel_range rk808_vsel_range5[] = {
 };
 
 const struct rkpmic_regdata rk808_regdata[] = {
-	{ "DCDC_REG1", 0x2f, 0x3f, rk808_vsel_range1 },
-	{ "DCDC_REG2", 0x33, 0x3f, rk808_vsel_range1 },
-	{ "DCDC_REG4", 0x38, 0x0f, rk808_vsel_range2 },
-	{ "LDO_REG1", 0x3b, 0x1f, rk808_vsel_range3 },
-	{ "LDO_REG2", 0x3d, 0x1f, rk808_vsel_range3 },
-	{ "LDO_REG3", 0x3f, 0x0f, rk808_vsel_range4 },
-	{ "LDO_REG4", 0x41, 0x1f, rk808_vsel_range3 },
-	{ "LDO_REG5", 0x43, 0x1f, rk808_vsel_range3 },
-	{ "LDO_REG6", 0x45, 0x1f, rk808_vsel_range5 },
-	{ "LDO_REG7", 0x47, 0x1f, rk808_vsel_range5 },
-	{ "LDO_REG8", 0x49, 0x1f, rk808_vsel_range3 },
+	{ "DCDC_REG1", 0x2f, 0x3f, 0, 0, rk808_vsel_range1 },
+	{ "DCDC_REG2", 0x33, 0x3f, 0, 0, rk808_vsel_range1 },
+	{ "DCDC_REG4", 0x38, 0x0f, 0, 0, rk808_vsel_range2 },
+	{ "LDO_REG1", 0x3b, 0x1f, 0, 0, rk808_vsel_range3 },
+	{ "LDO_REG2", 0x3d, 0x1f, 0, 0, rk808_vsel_range3 },
+	{ "LDO_REG3", 0x3f, 0x0f, 0, 0, rk808_vsel_range4 },
+	{ "LDO_REG4", 0x41, 0x1f, 0, 0, rk808_vsel_range3 },
+	{ "LDO_REG5", 0x43, 0x1f, 0, 0, rk808_vsel_range3 },
+	{ "LDO_REG6", 0x45, 0x1f, 0, 0, rk808_vsel_range5 },
+	{ "LDO_REG7", 0x47, 0x1f, 0, 0, rk808_vsel_range5 },
+	{ "LDO_REG8", 0x49, 0x1f, 0, 0, rk808_vsel_range3 },
 	{ }
 };
 
@@ -281,20 +282,22 @@ const struct rkpmic_vsel_range rk809_vsel_range4[] = {
 };
 
 const struct rkpmic_regdata rk809_regdata[] = {
-	{ "DCDC_REG1", 0xbb, 0x7f, rk809_vsel_range1 },
-	{ "DCDC_REG2", 0xbe, 0x7f, rk809_vsel_range1 },
-	{ "DCDC_REG3", 0xc1, 0x7f, rk809_vsel_range1 },
-	{ "DCDC_REG4", 0xc4, 0x7f, rk809_vsel_range2 },
-	{ "DCDC_REG5", 0xde, 0x0f, rk809_vsel_range3},
-	{ "LDO_REG1", 0xcc, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG2", 0xce, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG3", 0xd0, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG4", 0xd2, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG5", 0xd4, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG6", 0xd6, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG7", 0xd8, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG8", 0xda, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG9", 0xdc, 0x7f, rk809_vsel_range4 },
+	{ "DCDC_REG1", 0xbb, 0x7f, 0xb5, 0x01, rk809_vsel_range1 },
+	{ "DCDC_REG2", 0xbe, 0x7f, 0xb5, 0x02, rk809_vsel_range1 },
+	{ "DCDC_REG3", 0xc1, 0x7f, 0xb5, 0x04, rk809_vsel_range1 },
+	{ "DCDC_REG4", 0xc4, 0x7f, 0xb5, 0x08, rk809_vsel_range2 },
+	{ "DCDC_REG5", 0xde, 0x0f, 0xb5, 0x20, rk809_vsel_range3 },
+	{ "LDO_REG1", 0xcc, 0x7f, 0xb6, 0x01, rk809_vsel_range4 },
+	{ "LDO_REG2", 0xce, 0x7f, 0xb6, 0x02, rk809_vsel_range4 },
+	{ "LDO_REG3", 0xd0, 0x7f, 0xb6, 0x04, rk809_vsel_range4 },
+	{ "LDO_REG4", 0xd2, 0x7f, 0xb6, 0x08, rk809_vsel_range4 },
+	{ "LDO_REG5", 0xd4, 0x7f, 0xb6, 0x10, rk809_vsel_range4 },
+	{ "LDO_REG6", 0xd6, 0x7f, 0xb6, 0x20, rk809_vsel_range4 },
+	{ "LDO_REG7", 0xd8, 0x7f, 0xb6, 0x40, rk809_vsel_range4 },
+	{ "LDO_REG8", 0xda, 0x7f, 0xb6, 0x80, rk809_vsel_range4 },
+	{ "LDO_REG9", 0xdc, 0x7f, 0xb5, 0x10, rk809_vsel_range4 },
+	{ "SWITCH_REG1", 0, 0, 0xb5, 0x40, NULL },
+	{ "SWITCH_REG2", 0, 0, 0xb5, 0x80, NULL },
 	{ }
 };
 
@@ -308,20 +311,20 @@ const struct rkpmic_vsel_range rk817_boost_range[] = {
 };
 
 const struct rkpmic_regdata rk817_regdata[] = {
-	{ "DCDC_REG1", 0xbb, 0x7f, rk809_vsel_range1 },
-	{ "DCDC_REG2", 0xbe, 0x7f, rk809_vsel_range1 },
-	{ "DCDC_REG3", 0xc1, 0x7f, rk809_vsel_range1 },
-	{ "DCDC_REG4", 0xc4, 0x7f, rk809_vsel_range2 },
-	{ "LDO_REG1", 0xcc, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG2", 0xce, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG3", 0xd0, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG4", 0xd2, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG5", 0xd4, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG6", 0xd6, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG7", 0xd8, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG8", 0xda, 0x7f, rk809_vsel_range4 },
-	{ "LDO_REG9", 0xdc, 0x7f, rk809_vsel_range4 },
-	{ "BOOST", 0xde, 0x07, rk817_boost_range },
+	{ "DCDC_REG1", 0xbb, 0x7f, 0, 0, rk809_vsel_range1 },
+	{ "DCDC_REG2", 0xbe, 0x7f, 0, 0, rk809_vsel_range1 },
+	{ "DCDC_REG3", 0xc1, 0x7f, 0, 0, rk809_vsel_range1 },
+	{ "DCDC_REG4", 0xc4, 0x7f, 0, 0, rk809_vsel_range2 },
+	{ "LDO_REG1", 0xcc, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "LDO_REG2", 0xce, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "LDO_REG3", 0xd0, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "LDO_REG4", 0xd2, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "LDO_REG5", 0xd4, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "LDO_REG6", 0xd6, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "LDO_REG7", 0xd8, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "LDO_REG8", 0xda, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "LDO_REG9", 0xdc, 0x7f, 0, 0, rk809_vsel_range4 },
+	{ "BOOST", 0xde, 0x07, 0, 0, rk817_boost_range },
 	{ }
 };
 
@@ -556,7 +559,7 @@ rkpmic_intr(void *arg)
 struct rkpmic_regulator {
 	struct rkpmic_softc *rr_sc;
 
-	uint8_t rr_reg, rr_mask;
+	uint8_t rr_vreg, rr_vmask;
 	const struct rkpmic_vsel_range *rr_vsel_range;
 
 	struct regulator_device rr_rd;
@@ -564,13 +567,16 @@ struct rkpmic_regulator {
 
 uint32_t rkpmic_get_voltage(void *);
 int	rkpmic_set_voltage(void *, uint32_t);
+int	rkpmic_do_set_voltage(struct rkpmic_regulator *, uint32_t, int);
 
 void
 rkpmic_attach_regulator(struct rkpmic_softc *sc, int node)
 {
 	struct rkpmic_regulator *rr;
 	char name[32];
-	int i;
+	uint32_t voltage;
+	int i, snode;
+	uint8_t val;
 
 	name[0] = 0;
 	OF_getprop(node, "name", name, sizeof(name));
@@ -585,8 +591,8 @@ rkpmic_attach_regulator(struct rkpmic_softc *sc, int node)
 	rr = malloc(sizeof(*rr), M_DEVBUF, M_WAITOK | M_ZERO);
 	rr->rr_sc = sc;
 
-	rr->rr_reg = sc->sc_regdata[i].reg;
-	rr->rr_mask = sc->sc_regdata[i].mask;
+	rr->rr_vreg = sc->sc_regdata[i].vreg;
+	rr->rr_vmask = sc->sc_regdata[i].vmask;
 	rr->rr_vsel_range = sc->sc_regdata[i].vsel_range;
 
 	rr->rr_rd.rd_node = node;
@@ -594,6 +600,25 @@ rkpmic_attach_regulator(struct rkpmic_softc *sc, int node)
 	rr->rr_rd.rd_get_voltage = rkpmic_get_voltage;
 	rr->rr_rd.rd_set_voltage = rkpmic_set_voltage;
 	regulator_register(&rr->rr_rd);
+
+	if (sc->sc_regdata[i].smask) {
+		snode = OF_getnodebyname(node, "regulator-state-mem");
+		if (snode) {
+			val = rkpmic_reg_read(sc, sc->sc_regdata[i].sreg);
+			if (OF_getpropbool(snode, "regulator-on-in-suspend"))
+				val |= sc->sc_regdata[i].smask;
+			if (OF_getpropbool(snode, "regulator-off-in-suspend"))
+				val &= ~sc->sc_regdata[i].smask;
+			rkpmic_reg_write(sc, sc->sc_regdata[i].sreg, val);
+
+			voltage = OF_getpropint(snode,
+			    "regulator-suspend-min-microvolt", 0);
+			voltage = OF_getpropint(snode,
+			    "regulator-suspend-microvolt", voltage);
+			if (voltage > 0)
+				rkpmic_do_set_voltage(rr, voltage, 1);
+		}
+	}
 }
 
 uint32_t
@@ -604,7 +629,10 @@ rkpmic_get_voltage(void *cookie)
 	uint8_t vsel;
 	uint32_t ret = 0;
 
-	vsel = rkpmic_reg_read(rr->rr_sc, rr->rr_reg) & rr->rr_mask;
+	if (vsel_range == NULL)
+		return 0;
+
+	vsel = rkpmic_reg_read(rr->rr_sc, rr->rr_vreg) & rr->rr_vmask;
 
 	while (vsel_range->base) {
 		ret = vsel_range->base;
@@ -626,10 +654,18 @@ rkpmic_get_voltage(void *cookie)
 int
 rkpmic_set_voltage(void *cookie, uint32_t voltage)
 {
-	struct rkpmic_regulator *rr = cookie;
+	return rkpmic_do_set_voltage(cookie, voltage, 0);
+}
+
+int
+rkpmic_do_set_voltage(struct rkpmic_regulator *rr, uint32_t voltage, int sleep)
+{
 	const struct rkpmic_vsel_range *vsel_range = rr->rr_vsel_range;
 	uint32_t vmin, vmax, volt;
 	uint8_t reg, vsel;
+
+	if (vsel_range == NULL)
+		return ENODEV;
 
 	while (vsel_range->base) {
 		vmin = vsel_range->base;
@@ -658,10 +694,10 @@ rkpmic_set_voltage(void *cookie, uint32_t voltage)
 	if (vsel_range->base == 0)
 		return EINVAL;
 
-	reg = rkpmic_reg_read(rr->rr_sc, rr->rr_reg);
-	reg &= ~rr->rr_mask;
+	reg = rkpmic_reg_read(rr->rr_sc, rr->rr_vreg + sleep);
+	reg &= ~rr->rr_vmask;
 	reg |= vsel;
-	rkpmic_reg_write(rr->rr_sc, rr->rr_reg, reg);
+	rkpmic_reg_write(rr->rr_sc, rr->rr_vreg + sleep, reg);
 
 	return 0;
 }
