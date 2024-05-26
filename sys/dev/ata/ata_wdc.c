@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.52 2018/11/02 09:59:36 fcambus Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.53 2024/05/26 10:01:01 jsg Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -57,16 +57,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/stat.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/syslog.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/ata/atavar.h>

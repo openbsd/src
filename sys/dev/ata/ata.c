@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.36 2017/12/30 20:46:59 guenther Exp $      */
+/*      $OpenBSD: ata.c,v 1.37 2024/05/26 10:01:01 jsg Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -26,14 +26,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/stat.h>
-#include <sys/malloc.h>
-#include <sys/device.h>
-#include <sys/syslog.h>
 #include <sys/pool.h>
-
-#include <machine/bus.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>

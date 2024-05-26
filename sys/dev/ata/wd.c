@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.130 2022/10/23 14:39:19 krw Exp $ */
+/*	$OpenBSD: wd.c,v 1.131 2024/05/26 10:01:01 jsg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -60,12 +60,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/mutex.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -74,7 +71,6 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/timeout.h>
-#include <sys/vnode.h>
 #include <sys/dkio.h>
 #include <sys/reboot.h>
 

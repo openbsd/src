@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.154 2024/05/13 01:15:50 jsg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.155 2024/05/26 10:01:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -20,11 +20,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/queue.h>
 #include <sys/pool.h>
 
 #include <scsi/scsi_all.h>

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.120 2022/04/16 19:19:58 naddy Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.121 2024/05/26 10:01:01 jsg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -30,19 +30,12 @@
  *
  */
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/buf.h>
-#include <sys/disklabel.h>
-#include <sys/malloc.h>
-#include <sys/reboot.h>
-#include <sys/ioctl.h>
 #include <sys/timeout.h>
 #include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
 #include <scsi/scsi_tape.h>
 #include <scsi/scsiconf.h>
 
@@ -133,9 +126,6 @@ void  wdc_atapi_reset_2(struct channel_softc *, struct wdc_xfer *,
 
 void  wdc_atapi_tape_done(struct channel_softc *, struct wdc_xfer *,
 	int, struct atapi_return_args *);
-
-struct atapiscsi_softc;
-struct atapiscsi_xfer;
 
 int	atapiscsi_match(struct device *, void *, void *);
 void	atapiscsi_attach(struct device *, struct device *, void *);
