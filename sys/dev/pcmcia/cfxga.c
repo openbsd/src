@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.33 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.34 2024/05/26 03:28:54 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -324,7 +324,7 @@ cfxga_activate(struct device *dev, int act)
 		pcmcia_function_disable(sc->sc_pf);
 		break;
 	default:
-		rv = config_activate_children(self, act);
+		rv = config_activate_children(dev, act);
 		break;
 	}
 	return (rv);
