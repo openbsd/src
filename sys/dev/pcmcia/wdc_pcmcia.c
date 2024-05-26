@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.34 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.35 2024/05/26 08:46:28 jsg Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -32,19 +32,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/buf.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/syslog.h>
 
-#include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
 

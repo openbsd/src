@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.63 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.64 2024/05/26 08:46:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -52,8 +52,6 @@
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/syslog.h>
 
 #include <net/if.h>

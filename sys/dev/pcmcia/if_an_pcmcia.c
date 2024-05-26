@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.27 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.28 2024/05/26 08:46:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -29,9 +29,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/timeout.h>
-#include <sys/socket.h>
-#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

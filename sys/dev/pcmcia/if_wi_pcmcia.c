@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.76 2022/04/06 18:59:30 naddy Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.77 2024/05/26 08:46:28 jsg Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -46,9 +46,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
 #include <sys/device.h>
-#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -61,7 +59,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 

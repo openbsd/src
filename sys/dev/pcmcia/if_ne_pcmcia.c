@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.102 2023/09/11 08:41:27 mvs Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.103 2024/05/26 08:46:28 jsg Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -42,12 +41,10 @@
 
 #include <machine/bus.h>
 
-#include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
 #include <dev/mii/miivar.h>
-#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>

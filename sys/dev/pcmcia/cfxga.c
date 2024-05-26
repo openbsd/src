@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.34 2024/05/26 03:28:54 jsg Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.35 2024/05/26 08:46:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -31,11 +31,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>

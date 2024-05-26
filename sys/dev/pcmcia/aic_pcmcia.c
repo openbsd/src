@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.20 2023/09/11 08:41:27 mvs Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.21 2024/05/26 08:46:28 jsg Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 

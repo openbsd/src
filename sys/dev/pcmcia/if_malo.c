@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.99 2022/04/06 18:59:30 naddy Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.100 2024/05/26 08:46:28 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -20,11 +20,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/socket.h>
-#include <sys/tree.h>
 #include <sys/malloc.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>

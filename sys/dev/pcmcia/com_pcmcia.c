@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.61 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.62 2024/05/26 08:46:28 jsg Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -90,12 +90,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
 
 #include <machine/intr.h>
@@ -103,8 +98,6 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciadevs.h>
-
-#include "com.h"
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

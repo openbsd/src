@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.40 2023/09/11 08:41:27 mvs Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.41 2024/05/26 08:46:28 jsg Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -31,15 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/syslog.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 
@@ -49,14 +42,9 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/ic/smc91cxxvar.h>
