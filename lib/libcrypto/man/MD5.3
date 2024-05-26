@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MD5.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: MD5.3,v 1.9 2024/05/26 09:54:16 tb Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: May 26 2024 $
 .Dt MD5 3
 .Os
 .Sh NAME
@@ -123,11 +123,6 @@ and place it in
 which must have space for
 .Dv MD4_DIGEST_LENGTH No == Dv MD5_DIGEST_LENGTH No == 16
 bytes of output.
-If
-.Fa md
-is
-.Dv NULL ,
-the digest is placed in a static array.
 .Pp
 The following functions may be used if the message is not completely
 stored in memory:
@@ -194,3 +189,13 @@ and
 .Fn MD4_Final
 first appeared in OpenSSL 0.9.6 and have been available since
 .Ox 2.9 .
+.Sh CAVEATS
+Other implementations allow
+.Fa md
+in
+.Fn MD4
+and
+.Fn MD5
+to be
+.Dv NULL
+and return a static array, which is not thread safe.
