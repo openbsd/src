@@ -1,4 +1,4 @@
-/*	$OpenBSD: txphy.c,v 1.13 2023/03/30 09:24:22 kevlo Exp $	*/
+/*	$OpenBSD: txphy.c,v 1.14 2024/05/27 03:56:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -38,6 +38,7 @@
 #include <sys/errno.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_media.h>
 
 #include <dev/mii/mii.h>
