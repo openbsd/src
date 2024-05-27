@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.37 2024/01/26 11:58:37 job Exp $ */
+/* $OpenBSD: x509.c,v 1.38 2024/05/27 16:11:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1142,24 +1142,23 @@ x509_main(int argc, char **argv)
 					purpose_print(STDout, x, ptmp);
 				}
 			} else if (cfg.modulus == i) {
-				EVP_PKEY *pkey;
+				EVP_PKEY *pubkey;
 
-				pkey = X509_get0_pubkey(x);
-				if (pkey == NULL) {
+				if ((pubkey = X509_get0_pubkey(x)) == NULL) {
 					BIO_printf(bio_err,
 					    "Modulus=unavailable\n");
 					ERR_print_errors(bio_err);
 					goto end;
 				}
 				BIO_printf(STDout, "Modulus=");
-				if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
-					RSA *rsa = EVP_PKEY_get0_RSA(pkey);
+				if (EVP_PKEY_id(pubkey) == EVP_PKEY_RSA) {
+					RSA *rsa = EVP_PKEY_get0_RSA(pubkey);
 					const BIGNUM *n = NULL;
 
 					RSA_get0_key(rsa, &n, NULL, NULL);
 					BN_print(STDout, n);
-				} else if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA) {
-					DSA *dsa = EVP_PKEY_get0_DSA(pkey);
+				} else if (EVP_PKEY_id(pubkey) == EVP_PKEY_DSA) {
+					DSA *dsa = EVP_PKEY_get0_DSA(pubkey);
 					const BIGNUM *pub_key = NULL;
 
 					DSA_get0_key(dsa, &pub_key, NULL);
@@ -1170,16 +1169,15 @@ x509_main(int argc, char **argv)
 					    "Wrong Algorithm type");
 				BIO_printf(STDout, "\n");
 			} else if (cfg.pubkey == i) {
-				EVP_PKEY *pkey;
+				EVP_PKEY *pubkey;
 
-				pkey = X509_get0_pubkey(x);
-				if (pkey == NULL) {
+				if ((pubkey = X509_get0_pubkey(x)) == NULL) {
 					BIO_printf(bio_err,
 					    "Error getting public key\n");
 					ERR_print_errors(bio_err);
 					goto end;
 				}
-				PEM_write_bio_PUBKEY(STDout, pkey);
+				PEM_write_bio_PUBKEY(STDout, pubkey);
 			} else if (cfg.C == i) {
 				unsigned char *d;
 				char *m;
