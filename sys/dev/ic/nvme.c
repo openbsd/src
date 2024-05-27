@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.112 2024/05/24 12:04:07 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.113 2024/05/27 14:18:02 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -155,7 +155,9 @@ static const struct nvme_ops nvme_ops = {
 	.op_cq_done		= nvme_op_cq_done,
 };
 
+#define NVME_GONE			0xffffffff
 #define NVME_TIMO_QOP			5000	/* ms to create/delete queue */
+#define NVME_TIMO_PT			5000	/* ms to complete passthrough */
 #define NVME_TIMO_IDENT			10000	/* ms to probe/identify */
 #define NVME_TIMO_DELAYNS		10	/* ns to delay() in poll loop */
 
@@ -313,7 +315,7 @@ nvme_attach(struct nvme_softc *sc)
 		sc->sc_openings = 64;
 
 	reg = nvme_read4(sc, NVME_VS);
-	if (reg == 0xffffffff) {
+	if (reg == NVME_GONE) {
 		printf("invalid mapping\n");
 		return (1);
 	}
@@ -978,7 +980,7 @@ nvme_passthrough_cmd(struct nvme_softc *sc, struct nvme_pt_cmd *pt, int dv_unit,
 		nvme_dmamem_sync(sc, mem, BUS_DMASYNC_PREREAD);
 	}
 
-	flags = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_QOP);
+	flags = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_PT);
 
 	if (pt->pt_databuflen > 0) {
 		nvme_dmamem_sync(sc, mem, BUS_DMASYNC_POSTREAD);
@@ -1903,7 +1905,7 @@ nvme_bioctl_sdname(const struct nvme_softc *sc, int target)
 			return NULL;
 	}
 
-	if (nvme_read4(sc, NVME_VS) == 0xffffffff)
+	if (nvme_read4(sc, NVME_VS) == NVME_GONE)
 		return NULL;
 
 	return DEVNAME(sd);
@@ -1960,7 +1962,7 @@ nvme_bioctl_inq(struct nvme_softc *sc, struct bioc_inq *bi)
 	csts = nvme_read4(sc, NVME_CSTS);
 	vs = nvme_read4(sc, NVME_VS);
 
-	if (vs == 0xffffffff) {
+	if (vs == NVME_GONE) {
 		nvme_bio_status(bs, "Invalid PCIe register mapping");
 		return 0;
 	}
