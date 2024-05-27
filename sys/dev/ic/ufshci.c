@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.32 2024/05/24 20:34:06 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.33 2024/05/27 10:27:58 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -62,7 +62,8 @@ void			 ufshci_dmamem_free(struct ufshci_softc *,
 int			 ufshci_init(struct ufshci_softc *);
 int			 ufshci_doorbell_read(struct ufshci_softc *);
 void			 ufshci_doorbell_write(struct ufshci_softc *, int);
-int			 ufshci_doorbell_poll(struct ufshci_softc *, int);
+int			 ufshci_doorbell_poll(struct ufshci_softc *, int,
+			     uint32_t);
 int			 ufshci_utr_cmd_nop(struct ufshci_softc *,
 			     struct ufshci_ccb *, struct scsi_xfer *);
 int			 ufshci_utr_cmd_lun(struct ufshci_softc *,
@@ -502,20 +503,21 @@ ufshci_doorbell_write(struct ufshci_softc *sc, int slot)
 }
 
 int
-ufshci_doorbell_poll(struct ufshci_softc *sc, int slot)
+ufshci_doorbell_poll(struct ufshci_softc *sc, int slot, uint32_t timeout_ms)
 {
 	uint32_t reg;
-	int i, retry = 25;
+	uint64_t timeout_us;
 
 	DPRINTF(3, "%s\n", __func__);
 
-	for (i = 0; i < retry; i++) {
+	for (timeout_us = timeout_ms * 1000; timeout_us != 0;
+	    timeout_us -= 1000) {
 		reg = UFSHCI_READ_4(sc, UFSHCI_REG_UTRLDBR);
 		if ((reg & (1U << slot)) == 0)
 			break;
-		delay(10);
+		delay(1000);
 	}
-	if (i == retry) {
+	if (timeout_us == 0) {
 		printf("%s: %s: timeout\n", sc->sc_dev.dv_xname, __func__);
 		return -1;
 	}
@@ -1620,7 +1622,7 @@ ufshci_scsi_inquiry(struct scsi_xfer *xs)
 		goto error2;
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
-		if (ufshci_doorbell_poll(sc, ccb->ccb_slot) == 0) {
+		if (ufshci_doorbell_poll(sc, ccb->ccb_slot, xs->timeout) == 0) {
 			ccb->ccb_done(sc, ccb);
 			return;
 		}
@@ -1675,7 +1677,7 @@ ufshci_scsi_capacity16(struct scsi_xfer *xs)
 		goto error2;
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
-		if (ufshci_doorbell_poll(sc, ccb->ccb_slot) == 0) {
+		if (ufshci_doorbell_poll(sc, ccb->ccb_slot, xs->timeout) == 0) {
 			ccb->ccb_done(sc, ccb);
 			return;
 		}
@@ -1730,7 +1732,7 @@ ufshci_scsi_capacity(struct scsi_xfer *xs)
 		goto error2;
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
-		if (ufshci_doorbell_poll(sc, ccb->ccb_slot) == 0) {
+		if (ufshci_doorbell_poll(sc, ccb->ccb_slot, xs->timeout) == 0) {
 			ccb->ccb_done(sc, ccb);
 			return;
 		}
@@ -1775,7 +1777,7 @@ ufshci_scsi_sync(struct scsi_xfer *xs)
 		goto error;
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
-		if (ufshci_doorbell_poll(sc, ccb->ccb_slot) == 0) {
+		if (ufshci_doorbell_poll(sc, ccb->ccb_slot, xs->timeout) == 0) {
 			ccb->ccb_done(sc, ccb);
 			return;
 		}
@@ -1831,7 +1833,7 @@ ufshci_scsi_io(struct scsi_xfer *xs, int dir)
 		goto error2;
 
 	if (ISSET(xs->flags, SCSI_POLL)) {
-		if (ufshci_doorbell_poll(sc, ccb->ccb_slot) == 0) {
+		if (ufshci_doorbell_poll(sc, ccb->ccb_slot, xs->timeout) == 0) {
 			ccb->ccb_done(sc, ccb);
 			return;
 		}
