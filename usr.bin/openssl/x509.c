@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.38 2024/05/27 16:11:16 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.39 2024/05/27 16:12:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1159,11 +1159,11 @@ x509_main(int argc, char **argv)
 					BN_print(STDout, n);
 				} else if (EVP_PKEY_id(pubkey) == EVP_PKEY_DSA) {
 					DSA *dsa = EVP_PKEY_get0_DSA(pubkey);
-					const BIGNUM *pub_key = NULL;
+					const BIGNUM *dsa_pub_key = NULL;
 
-					DSA_get0_key(dsa, &pub_key, NULL);
+					DSA_get0_key(dsa, &dsa_pub_key, NULL);
 
-					BN_print(STDout, pub_key);
+					BN_print(STDout, dsa_pub_key);
 				} else
 					BIO_printf(STDout,
 					    "Wrong Algorithm type");
