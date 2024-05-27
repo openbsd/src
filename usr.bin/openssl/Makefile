@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2023/04/25 16:11:02 tb Exp $
+#	$OpenBSD: Makefile,v 1.13 2024/05/27 16:11:43 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -11,12 +11,12 @@ CFLAGS+= -Wformat
 CFLAGS+= -Wformat-security
 CFLAGS+= -Wimplicit
 CFLAGS+= -Wreturn-type
-#CFLAGS+= -Wshadow
 CFLAGS+= -Wtrigraphs
 CFLAGS+= -Wuninitialized
 CFLAGS+= -Wunused
 .if ${COMPILER_VERSION:L} == "clang"
 CFLAGS+= -Werror
+CFLAGS+= -Wshadow
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL
 
