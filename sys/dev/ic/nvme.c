@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.113 2024/05/27 14:18:02 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.114 2024/05/27 14:46:26 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -155,7 +155,6 @@ static const struct nvme_ops nvme_ops = {
 	.op_cq_done		= nvme_op_cq_done,
 };
 
-#define NVME_GONE			0xffffffff
 #define NVME_TIMO_QOP			5000	/* ms to create/delete queue */
 #define NVME_TIMO_PT			5000	/* ms to complete passthrough */
 #define NVME_TIMO_IDENT			10000	/* ms to probe/identify */
@@ -315,7 +314,7 @@ nvme_attach(struct nvme_softc *sc)
 		sc->sc_openings = 64;
 
 	reg = nvme_read4(sc, NVME_VS);
-	if (reg == NVME_GONE) {
+	if (reg == 0xffffffff) {
 		printf("invalid mapping\n");
 		return (1);
 	}
@@ -1905,7 +1904,7 @@ nvme_bioctl_sdname(const struct nvme_softc *sc, int target)
 			return NULL;
 	}
 
-	if (nvme_read4(sc, NVME_VS) == NVME_GONE)
+	if (nvme_read4(sc, NVME_VS) == 0xffffffff)
 		return NULL;
 
 	return DEVNAME(sd);
@@ -1962,7 +1961,7 @@ nvme_bioctl_inq(struct nvme_softc *sc, struct bioc_inq *bi)
 	csts = nvme_read4(sc, NVME_CSTS);
 	vs = nvme_read4(sc, NVME_VS);
 
-	if (vs == NVME_GONE) {
+	if (vs == 0xffffffff) {
 		nvme_bio_status(bs, "Invalid PCIe register mapping");
 		return 0;
 	}
