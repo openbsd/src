@@ -486,7 +486,6 @@
 ./usr/include/dev/mii/tlphyvar.h
 ./usr/include/dev/mii/tqphyreg.h
 ./usr/include/dev/mii/urlphyreg.h
-./usr/include/dev/mii/xmphyreg.h
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/fdt.h
