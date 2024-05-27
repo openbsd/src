@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.24 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.25 2024/05/27 04:58:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -53,8 +53,6 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
-
-#include <dev/mii/xmphyreg.h>
 
 int xmphy_probe(struct device *, void *, void *);
 void xmphy_attach(struct device *, struct device *, void *);
