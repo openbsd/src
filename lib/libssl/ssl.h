@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.236 2024/03/02 11:48:55 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.237 2024/05/27 09:12:31 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -509,11 +509,6 @@ size_t SSL_get_num_tickets(const SSL *s);
 int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets);
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx);
 STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s);
-
-#ifndef LIBRESSL_INTERNAL
-struct ssl_aead_ctx_st;
-typedef struct ssl_aead_ctx_st SSL_AEAD_CTX;
-#endif
 
 #define SSL_MAX_CERT_LIST_DEFAULT 1024*100 /* 100k max cert list :-) */
 

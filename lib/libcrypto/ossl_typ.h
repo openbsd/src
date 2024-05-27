@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.30 2023/08/11 05:10:35 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.31 2024/05/27 09:12:32 jsg Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -94,9 +94,6 @@ typedef struct bn_gencb_st BN_GENCB;
 typedef struct bio_st BIO;
 typedef struct buf_mem_st BUF_MEM;
 
-typedef struct comp_ctx_st COMP_CTX;
-typedef struct comp_method_st COMP_METHOD;
-
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 typedef struct evp_md_st EVP_MD;
@@ -130,7 +127,6 @@ typedef struct rand_meth_st RAND_METHOD;
 typedef struct x509_st X509;
 typedef struct X509_algor_st X509_ALGOR;
 typedef struct X509_crl_st X509_CRL;
-typedef struct x509_crl_method_st X509_CRL_METHOD;
 typedef struct x509_revoked_st X509_REVOKED;
 typedef struct X509_name_st X509_NAME;
 typedef struct X509_pubkey_st X509_PUBKEY;
@@ -146,9 +142,6 @@ typedef struct pkcs8_priv_key_info_st PKCS8_PRIV_KEY_INFO;
 
 typedef struct v3_ext_ctx X509V3_CTX;
 typedef struct conf_st CONF;
-
-typedef struct store_st STORE;
-typedef struct store_method_st STORE_METHOD;
 
 typedef struct ui_st UI;
 typedef struct ui_method_st UI_METHOD;
