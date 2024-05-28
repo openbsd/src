@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_extensions_test.c,v 1.1 2024/05/28 15:33:35 tb Exp $ */
+/*	$OpenBSD: x509_extensions_test.c,v 1.2 2024/05/28 15:42:09 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -575,6 +575,57 @@ test_x509v3_add1_i2d_add_append(STACK_OF(X509_EXTENSION) **extensions)
 }
 
 static int
+test_x509v3_add1_i2d_invalid_operations(STACK_OF(X509_EXTENSION) **extensions)
+{
+	BASIC_CONSTRAINTS *bc = NULL;
+	long error;
+	int crit, got, nid, op;
+	int failed = 1;
+
+	if (X509v3_get_ext_count(*extensions) != 0) {
+		fprintf(stderr, "%s: FAIL: need empty stack.\n", __func__);
+		goto err;
+	}
+
+	/*
+	 * Attempt to add a basic constraint extension with invalid operations
+	 */
+
+	nid = NID_basic_constraints;
+	bc = create_basic_constraints(1);
+	crit = 1;
+	for (op = X509V3_ADD_DELETE + 1; op <= X509V3_ADD_OP_MASK; op++) {
+		if ((got = X509V3_add1_i2d(extensions, nid, bc, crit, op)) != -1) {
+			fprintf(stderr, "%s: FAIL: operation %d "
+			    "want %d, got %d.\n", __func__, op, -1, got);
+			goto err;
+		}
+		error = ERR_get_error();
+		if (ERR_GET_REASON(error) != X509V3_R_UNSUPPORTED_OPTION) {
+			fprintf(stderr, "%s: FAIL: invalid operation %d "
+			    " pushed %d, want %d.\n", __func__, op,
+			    ERR_GET_REASON(error), X509V3_R_EXTENSION_EXISTS);
+			goto err;
+		}
+	}
+	BASIC_CONSTRAINTS_free(bc);
+	bc = NULL;
+
+	if ((got = X509v3_get_ext_count(*extensions)) != 0) {
+		fprintf(stderr, "%s: FAIL: expected 0 extensions, have %d.\n",
+		    __func__, got);
+		goto err;
+	}
+
+	failed = 0;
+
+ err:
+	BASIC_CONSTRAINTS_free(bc);
+
+	return failed;
+}
+
+static int
 test_x509v3_add1_i2d(void)
 {
 	STACK_OF(X509_EXTENSION) *extensions;
@@ -586,6 +637,7 @@ test_x509v3_add1_i2d(void)
 	failed |= test_x509v3_add1_i2d_empty_stack(&extensions);
 	failed |= test_x509v3_add1_i2d_single_nid(&extensions);
 	failed |= test_x509v3_add1_i2d_add_append(&extensions);
+	failed |= test_x509v3_add1_i2d_invalid_operations(&extensions);
 
 	sk_X509_EXTENSION_pop_free(extensions, X509_EXTENSION_free);
 
