@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.21 2023/04/30 05:02:59 tb Exp $
+#	$OpenBSD: Makefile,v 1.22 2024/05/28 15:33:35 tb Exp $
 
 PROGS =	constraints verify x509attribute x509name x509req_ext callback
-PROGS += expirecallback callbackfailures x509_asn1
+PROGS += expirecallback callbackfailures x509_asn1 x509_extensions_test
 LDADD =	-lcrypto
 DPADD =	${LIBCRYPTO}
 
