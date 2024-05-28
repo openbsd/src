@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.60 2024/05/28 08:34:52 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.61 2024/05/28 13:02:45 jsg Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -910,7 +910,8 @@ struct cfdriver qwx_cd = {
 	NULL, "qwx", DV_IFNET
 };
 
-void qwx_init_wmi_config_qca6390(struct qwx_softc *sc,
+void
+qwx_init_wmi_config_qca6390(struct qwx_softc *sc,
     struct target_resource_config *config)
 {
 	config->num_vdevs = 4;
@@ -1000,7 +1001,8 @@ qwx_hw_ipq8074_reo_setup(struct qwx_softc *sc)
 	    FIELD_PREP(HAL_REO_DEST_RING_CTRL_HASH_RING_MAP, ring_hash_map));
 }
 
-void qwx_init_wmi_config_ipq8074(struct qwx_softc *sc,
+void
+qwx_init_wmi_config_ipq8074(struct qwx_softc *sc,
     struct target_resource_config *config)
 {
 	config->num_vdevs = sc->num_radios * TARGET_NUM_VDEVS(sc);
@@ -1156,7 +1158,8 @@ qwx_hw_mac_id_to_srng_id_ipq8074(struct ath11k_hw_params *hw, int mac_id)
 	return 0;
 }
 
-int qwx_hw_mac_id_to_pdev_id_qca6390(struct ath11k_hw_params *hw, int mac_id)
+int
+qwx_hw_mac_id_to_pdev_id_qca6390(struct ath11k_hw_params *hw, int mac_id)
 {
 	return 0;
 }
@@ -1790,7 +1793,8 @@ qwx_hw_ipq8074_mac_from_pdev_id(int pdev_idx)
 	}
 }
 
-uint8_t qwx_hw_ipq6018_mac_from_pdev_id(int pdev_idx)
+uint8_t
+qwx_hw_ipq6018_mac_from_pdev_id(int pdev_idx)
 {
 	return pdev_idx;
 }
@@ -12125,8 +12129,8 @@ qwx_print_reg_rule(struct qwx_softc *sc, const char *band,
 	}
 }
 
-struct cur_reg_rule
-*qwx_create_reg_rules_from_wmi(uint32_t num_reg_rules,
+struct cur_reg_rule *
+qwx_create_reg_rules_from_wmi(uint32_t num_reg_rules,
     struct wmi_regulatory_rule_struct *wmi_reg_rule)
 {
 	struct cur_reg_rule *reg_rule_ptr;
