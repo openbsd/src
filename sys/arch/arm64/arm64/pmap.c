@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.102 2024/03/27 15:40:50 kurt Exp $ */
+/* $OpenBSD: pmap.c,v 1.103 2024/05/28 15:16:45 claudio Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -217,7 +217,7 @@ const uint64_t ap_bits_kern[8] = {
 int pmap_nasid = (1 << 8);
 
 uint32_t pmap_asid[PMAP_MAX_NASID / 32];
-uint64_t pmap_asid_gen = PMAP_MAX_NASID;
+unsigned long pmap_asid_gen = PMAP_MAX_NASID;
 struct mutex pmap_asid_mtx = MUTEX_INITIALIZER(IPL_HIGH);
 
 int
@@ -226,6 +226,8 @@ pmap_find_asid(pmap_t pm)
 	uint32_t bits;
 	int asid, bit;
 	int retry;
+
+	MUTEX_ASSERT_LOCKED(&pmap_asid_mtx);
 
 	/* Attempt to re-use the old ASID. */
 	asid = pm->pm_asid & PMAP_ASID_MASK;
@@ -262,23 +264,26 @@ pmap_rollover_asid(pmap_t pm)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
+	unsigned long gen;
 	int asid, bit;
 
-	SCHED_ASSERT_LOCKED();
 	MUTEX_ASSERT_LOCKED(&pmap_asid_mtx);
 
 	/* Start a new generation.  Mark ASID 0 as in-use again. */
-	pmap_asid_gen += PMAP_MAX_NASID;
+	gen = atomic_add_long_nv(&pmap_asid_gen, PMAP_MAX_NASID);
 	memset(pmap_asid, 0, (pmap_nasid / 32) * sizeof(uint32_t));
 	pmap_asid[0] |= (3U << 0);
 
 	/* 
 	 * Carry over all the ASIDs that are currently active into the
 	 * new generation and reserve them.
+	 * CPUs in cpu_switchto() will spin in pmap_setttb() waiting for
+	 * the mutex. In that case an old ASID will be carried over but
+	 * that is not problematic.
 	 */
 	CPU_INFO_FOREACH(cii, ci) {
 		asid = ci->ci_curpm->pm_asid & PMAP_ASID_MASK;
-		ci->ci_curpm->pm_asid = asid | pmap_asid_gen;
+		ci->ci_curpm->pm_asid = asid | gen;
 		bit = (asid & (32 - 1));
 		pmap_asid[asid / 32] |= (3U << bit);
 	}
@@ -286,7 +291,7 @@ pmap_rollover_asid(pmap_t pm)
 	/* Flush the TLBs on all CPUs. */
 	cpu_tlb_flush();
 
-	if ((pm->pm_asid & ~PMAP_ASID_MASK) == pmap_asid_gen)
+	if ((pm->pm_asid & ~PMAP_ASID_MASK) == gen)
 		return pm->pm_asid & PMAP_ASID_MASK;
 
 	return pmap_find_asid(pm);
@@ -1397,13 +1402,9 @@ void
 pmap_activate(struct proc *p)
 {
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
-	int s;
 
-	if (p == curproc && pm != curcpu()->ci_curpm) {
-		SCHED_LOCK(s);
+	if (p == curproc && pm != curcpu()->ci_curpm)
 		pmap_setttb(p);
-		SCHED_UNLOCK(s);
-	}
 }
 
 /*
@@ -2274,14 +2275,12 @@ pmap_setttb(struct proc *p)
 	struct cpu_info *ci = curcpu();
 	pmap_t pm = p->p_vmspace->vm_map.pmap;
 
-	SCHED_ASSERT_LOCKED();
-
 	/*
 	 * If the generation of the ASID for the new pmap doesn't
 	 * match the current generation, allocate a new ASID.
 	 */
 	if (pm != pmap_kernel() &&
-	    (pm->pm_asid & ~PMAP_ASID_MASK) != pmap_asid_gen)
+	    (pm->pm_asid & ~PMAP_ASID_MASK) != READ_ONCE(pmap_asid_gen))
 		pmap_allocate_asid(pm);
 
 	if (pm != pmap_kernel())
