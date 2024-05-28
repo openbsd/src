@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.49 2024/04/13 23:44:11 jsg Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.50 2024/05/28 09:27:08 jsg Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -89,7 +89,6 @@
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/cs4231reg.h>
 #include <dev/isa/ad1848var.h>
-#include <dev/isa/cs4231var.h>
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	do { if (ad1848debug) printf x; } while (0);

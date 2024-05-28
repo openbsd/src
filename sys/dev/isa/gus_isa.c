@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus_isa.c,v 1.9 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: gus_isa.c,v 1.10 2024/05/28 09:27:08 jsg Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -115,7 +115,6 @@
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ics2101var.h>
 #include <dev/isa/ad1848var.h>
-#include <dev/isa/cs4231var.h>
 #include "gusreg.h"
 #include "gusvar.h"
 
