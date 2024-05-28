@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9532.c,v 1.4 2022/04/06 18:59:28 naddy Exp $ */
+/*	$OpenBSD: pca9532.c,v 1.5 2024/05/28 13:21:13 jsg Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -48,8 +48,8 @@ struct pcaled_softc {
 int pcaled_match(struct device *, void *, void *);
 void pcaled_attach(struct device *, struct device *, void *);
 int pcaled_gpio_pin_read(void *arg, int pin);
-void pcaled_gpio_pin_write (void *arg, int pin, int value);
-void pcaled_gpio_pin_ctl (void *arg, int pin, int flags);
+void pcaled_gpio_pin_write(void *arg, int pin, int value);
+void pcaled_gpio_pin_ctl(void *arg, int pin, int flags);
 
 const struct cfattach pcaled_ca = {
 	sizeof(struct pcaled_softc), pcaled_match, pcaled_attach
@@ -150,7 +150,7 @@ fail:
 }
 
 void
-pcaled_gpio_pin_write (void *arg, int pin, int value)
+pcaled_gpio_pin_write(void *arg, int pin, int value)
 {
 	struct pcaled_softc *sc = arg;
 	uint8_t cmd, data;
@@ -177,7 +177,7 @@ fail:
 }
 
 void
-pcaled_gpio_pin_ctl (void *arg, int pin, int flags)
+pcaled_gpio_pin_ctl(void *arg, int pin, int flags)
 {
 	/* XXX all pins are inout */ 
 }
