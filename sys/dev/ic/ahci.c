@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.40 2024/04/23 13:09:21 jsg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.41 2024/05/28 01:37:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2350,9 +2350,9 @@ failall:
 			       sizeof(struct ata_fis_d2h));
 		}
 
-		ccb->ccb_done(ccb);
-
 		processed |= 1 << ccb->ccb_slot;
+
+		ccb->ccb_done(ccb);
 	}
 
 	if (need_restart) {
