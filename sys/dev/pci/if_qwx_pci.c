@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.17 2024/05/28 08:34:52 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.18 2024/05/28 09:07:32 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -96,6 +96,7 @@
 #include <dev/ic/qwxreg.h>
 #include <dev/ic/qwxvar.h>
 
+#ifdef QWX_DEBUG 
 /* Headers needed for RDDM dump */
 #include <sys/namei.h>
 #include <sys/pledge.h>
@@ -103,6 +104,7 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
+#endif
 
 #define ATH11K_PCI_IRQ_CE0_OFFSET	3
 #define ATH11K_PCI_IRQ_DP_OFFSET	14
@@ -452,7 +454,9 @@ void	qwx_mhi_init_mmio(struct qwx_pci_softc *);
 int	qwx_mhi_fw_load_bhi(struct qwx_pci_softc *, uint8_t *, size_t);
 int	qwx_mhi_fw_load_bhie(struct qwx_pci_softc *, uint8_t *, size_t);
 void	qwx_rddm_prepare(struct qwx_pci_softc *);
+#ifdef QWX_DEBUG
 void	qwx_rddm_task(void *);
+#endif
 void *	qwx_pci_event_ring_get_elem(struct qwx_pci_event_ring *, uint64_t);
 void	qwx_pci_intr_ctrl_event_mhi(struct qwx_pci_softc *, uint32_t);
 void	qwx_pci_intr_ctrl_event_ee(struct qwx_pci_softc *, uint32_t);
@@ -1042,8 +1046,9 @@ unsupported_wcn6855_soc:
 		goto err_irq_affinity_cleanup;
 	}
 #endif
+#ifdef QWX_DEBUG
 	task_set(&psc->rddm_task, qwx_rddm_task, psc);
-
+#endif
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
@@ -3468,6 +3473,7 @@ qwx_rddm_prepare(struct qwx_pci_softc *psc)
 	psc->rddm_vec = vec_adm;
 }
 
+#ifdef QWX_DEBUG
 void
 qwx_rddm_task(void *arg)
 {
@@ -3562,6 +3568,7 @@ done:
 	psc->rddm_vec = NULL;
 	DPRINTF("%s: done, error %d\n", __func__, error);
 }
+#endif
 
 void *
 qwx_pci_event_ring_get_elem(struct qwx_pci_event_ring *ring, uint64_t rp)
@@ -4073,10 +4080,22 @@ qwx_pci_intr(void *arg)
 	     sc->sc_dev.dv_xname, psc->bhi_ee, ee, psc->mhi_state, state);
 
 	if (ee == MHI_EE_RDDM) {
+		/* Firmware crash, e.g. due to invalid DMA memory access. */
 		psc->bhi_ee = ee;
 		if (!psc->rddm_triggered) {
+#ifdef QWX_DEBUG
+			/* Write fw memory dump to root's home directory. */
 			task_add(systq, &psc->rddm_task);
 			psc->rddm_triggered = 1;
+#endif
+		} else {
+			printf("%s: fatal firmware error\n",
+			   sc->sc_dev.dv_xname);
+			if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags)) {
+				/* Try to reset the device. */
+				set_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
+				task_add(systq, &sc->init_task);
+			}
 		}
 		return 1;
 	} else if (psc->bhi_ee == MHI_EE_PBL || psc->bhi_ee == MHI_EE_SBL) {
