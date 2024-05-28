@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.114 2024/05/27 14:46:26 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.115 2024/05/28 00:24:44 jsg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1897,12 +1897,12 @@ nvme_bioctl_sdname(const struct nvme_softc *sc, int target)
 	const struct sd_softc		*sd;
 
 	link = scsi_get_link(sc->sc_scsibus, target, 0);
-	if (link) {
-		sd = (struct sd_softc *)(link->device_softc);
-		if (ISSET(link->state, SDEV_S_DYING) || sd == NULL ||
-		    ISSET(sd->flags, SDF_DYING))
-			return NULL;
-	}
+	if (link == NULL)
+		return NULL;
+	sd = (struct sd_softc *)(link->device_softc);
+	if (ISSET(link->state, SDEV_S_DYING) || sd == NULL ||
+	    ISSET(sd->flags, SDF_DYING))
+		return NULL;
 
 	if (nvme_read4(sc, NVME_VS) == 0xffffffff)
 		return NULL;
