@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_mbox.c,v 1.4 2022/08/27 20:31:45 mglocker Exp $ */
+/*     $OpenBSD: bcm2835_mbox.c,v 1.5 2024/05/28 09:19:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -152,15 +152,6 @@ bcmmbox_attach(struct device *parent, struct device *self, void *aux)
 	bcmmbox_reg_write(sc, BCMMBOX_CFG, BCMMBOX_CFG_DATA_IRQ_EN);
 
 	printf("\n");
-
-	bcmmbox_write(BCMMBOX_CHANPM, (
-	    (1 << VCPROP_POWER_SDCARD) |
-	    (1 << VCPROP_POWER_UART0) |
-	    (1 << VCPROP_POWER_USB) |
-	    (1 << VCPROP_POWER_I2C0) |
-	    (1 << VCPROP_POWER_I2C1) |
-	    (1 << VCPROP_POWER_SPI) |
-	    0) << 4);
 
 	return;
 
