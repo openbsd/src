@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.20 2024/05/11 18:59:39 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.21 2024/05/28 15:40:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -244,85 +244,117 @@ X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 }
 LCRYPTO_ALIAS(X509V3_get_d2i);
 
-/* This function is a general extension append, replace and delete utility.
- * The precise operation is governed by the 'flags' value. The 'crit' and
- * 'value' arguments (if relevant) are the extensions internal structure.
- */
-
 int
 X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
     int crit, unsigned long flags)
 {
-	int extidx = -1;
-	int errcode;
-	X509_EXTENSION *ext, *extmp;
-	unsigned long ext_op = flags & X509V3_ADD_OP_MASK;
+	STACK_OF(X509_EXTENSION) *exts = *x;
+	X509_EXTENSION *ext = NULL;
+	X509_EXTENSION *existing;
+	int extidx;
+	int errcode = 0;
+	int ret = 0;
 
-	/* If appending we don't care if it exists, otherwise
-	 * look for existing extension.
-	 */
-	if (ext_op != X509V3_ADD_APPEND)
-		extidx = X509v3_get_ext_by_NID(*x, nid, -1);
+	/* See if the extension already exists. */
+	extidx = X509v3_get_ext_by_NID(*x, nid, -1);
 
-	/* See if extension exists */
-	if (extidx >= 0) {
-		/* If keep existing, nothing to do */
-		if (ext_op == X509V3_ADD_KEEP_EXISTING)
-			return 1;
-		/* If default then its an error */
-		if (ext_op == X509V3_ADD_DEFAULT) {
+	switch (flags & X509V3_ADD_OP_MASK) {
+	case X509V3_ADD_DEFAULT:
+		/* If the extension exists, adding another one is an error. */
+		if (extidx >= 0) {
 			errcode = X509V3_R_EXTENSION_EXISTS;
 			goto err;
 		}
-		/* If delete, just delete it */
-		if (ext_op == X509V3_ADD_DELETE) {
-			if ((extmp = sk_X509_EXTENSION_delete(*x, extidx)) == NULL)
-				return -1;
-			X509_EXTENSION_free(extmp);
-			return 1;
-		}
-	} else {
-		/* If replace existing or delete, error since
-		 * extension must exist
+		break;
+	case X509V3_ADD_APPEND:
+		/*
+		 * XXX - Total misfeature. If the extension exists, appending
+		 * another one will invalidate the certificate. Unfortunately
+		 * things use this, in particular Viktor's DANE code.
 		 */
-		if ((ext_op == X509V3_ADD_REPLACE_EXISTING) ||
-		    (ext_op == X509V3_ADD_DELETE)) {
+		/* Pretend the extension didn't exist and append the new one. */
+		extidx = -1;
+		break;
+	case X509V3_ADD_REPLACE:
+		/* Replace existing extension, otherwise append the new one. */
+		break;
+	case X509V3_ADD_REPLACE_EXISTING:
+		/* Can't replace a non-existent extension. */
+		if (extidx < 0) {
 			errcode = X509V3_R_EXTENSION_NOT_FOUND;
 			goto err;
 		}
+		break;
+	case X509V3_ADD_KEEP_EXISTING:
+		/* If the extension exists, there's nothing to do. */
+		if (extidx >= 0)
+			goto done;
+		break;
+	case X509V3_ADD_DELETE:
+		/* Can't delete a non-existent extension. */
+		if (extidx < 0) {
+			errcode = X509V3_R_EXTENSION_NOT_FOUND;
+			goto err;
+		}
+		if ((existing = sk_X509_EXTENSION_delete(*x, extidx)) == NULL) {
+			ret = -1;
+			goto err;
+		}
+		X509_EXTENSION_free(existing);
+		existing = NULL;
+		goto done;
+	default:
+		errcode = X509V3_R_UNSUPPORTED_OPTION; /* XXX */
+		ret = -1;
+		goto err;
 	}
 
-	/* If we get this far then we have to create an extension:
-	 * could have some flags for alternative encoding schemes...
-	 */
-
-	ext = X509V3_EXT_i2d(nid, crit, value);
-
-	if (!ext) {
+	if ((ext = X509V3_EXT_i2d(nid, crit, value)) == NULL) {
 		X509V3error(X509V3_R_ERROR_CREATING_EXTENSION);
-		return 0;
+		goto err;
 	}
 
-	/* If extension exists replace it.. */
+	/* From here, errors are fatal. */
+	ret = -1;
+
+	/* If extension exists, replace it. */
 	if (extidx >= 0) {
-		extmp = sk_X509_EXTENSION_value(*x, extidx);
-		X509_EXTENSION_free(extmp);
-		if (!sk_X509_EXTENSION_set(*x, extidx, ext))
-			return -1;
-		return 1;
+		existing = sk_X509_EXTENSION_value(*x, extidx);
+		X509_EXTENSION_free(existing);
+		existing = NULL;
+		if (sk_X509_EXTENSION_set(*x, extidx, ext) == NULL) {
+			/*
+			 * XXX - Can't happen. If it did happen, |existing| is
+			 * now a freed pointer. Nothing we can do here.
+			 */
+			goto err;
+		}
+		goto done;
 	}
 
-	if (!*x && !(*x = sk_X509_EXTENSION_new_null()))
-		return -1;
-	if (!sk_X509_EXTENSION_push(*x, ext))
-		return -1;
+	if (exts == NULL)
+		exts = sk_X509_EXTENSION_new_null();
+	if (exts == NULL)
+		goto err;
 
+	if (!sk_X509_EXTENSION_push(exts, ext))
+		goto err;
+	ext = NULL;
+
+	*x = exts;
+
+ done:
 	return 1;
 
-err:
-	if (!(flags & X509V3_ADD_SILENT))
+ err:
+	if ((flags & X509V3_ADD_SILENT) == 0 && errcode != 0)
 		X509V3error(errcode);
-	return 0;
+
+	if (exts != *x)
+		sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+	X509_EXTENSION_free(ext);
+
+	return ret;
 }
 LCRYPTO_ALIAS(X509V3_add1_i2d);
 
