@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.18 2024/05/28 09:07:32 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.19 2024/05/28 09:26:55 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -4082,21 +4082,21 @@ qwx_pci_intr(void *arg)
 	if (ee == MHI_EE_RDDM) {
 		/* Firmware crash, e.g. due to invalid DMA memory access. */
 		psc->bhi_ee = ee;
-		if (!psc->rddm_triggered) {
 #ifdef QWX_DEBUG
+		if (!psc->rddm_triggered) {
 			/* Write fw memory dump to root's home directory. */
 			task_add(systq, &psc->rddm_task);
 			psc->rddm_triggered = 1;
-#endif
-		} else {
-			printf("%s: fatal firmware error\n",
-			   sc->sc_dev.dv_xname);
-			if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags)) {
-				/* Try to reset the device. */
-				set_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
-				task_add(systq, &sc->init_task);
-			}
 		}
+#else
+		printf("%s: fatal firmware error\n",
+		   sc->sc_dev.dv_xname);
+		if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags)) {
+			/* Try to reset the device. */
+			set_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
+			task_add(systq, &sc->init_task);
+		}
+#endif
 		return 1;
 	} else if (psc->bhi_ee == MHI_EE_PBL || psc->bhi_ee == MHI_EE_SBL) {
 		int new_ee = -1, new_mhi_state = -1;
