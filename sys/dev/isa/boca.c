@@ -1,4 +1,4 @@
-/*	$OpenBSD: boca.c,v 1.17 2022/04/06 18:59:28 naddy Exp $ */
+/*	$OpenBSD: boca.c,v 1.18 2024/05/28 05:46:32 jsg Exp $ */
 /*	$NetBSD: boca.c,v 1.15 1996/05/12 23:51:50 mycroft Exp $	*/
 
 /*
@@ -74,10 +74,7 @@ struct cfdriver boca_cd = {
 };
 
 int
-bocaprobe(parent, self, aux)
-	struct device *parent;
-	void *self;
-	void *aux;
+bocaprobe(struct device *parent, void *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
@@ -126,9 +123,7 @@ out:
 }
 
 int
-bocaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+bocaprint(void *aux, const char *pnp)
 {
 	struct commulti_attach_args *ca = aux;
 
@@ -139,9 +134,7 @@ bocaprint(aux, pnp)
 }
 
 void
-bocaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+bocaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct boca_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -177,8 +170,7 @@ bocaattach(parent, self, aux)
 }
 
 int
-bocaintr(arg)
-	void *arg;
+bocaintr(void *arg)
 {
 	struct boca_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

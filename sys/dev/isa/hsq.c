@@ -1,4 +1,4 @@
-/*	$OpenBSD: hsq.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: hsq.c,v 1.8 2024/05/28 05:46:32 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Denis A. Doroshenko. All rights reserved.
@@ -120,10 +120,7 @@ struct cfdriver hsq_cd = {
 };
 
 int
-hsqprobe(parent, self, aux)
-	struct device *parent;
-	void *self;
-	void *aux;
+hsqprobe(struct device *parent, void *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
@@ -174,9 +171,7 @@ out:
 }
 
 int
-hsqprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+hsqprint(void *aux, const char *pnp)
 {
 	struct commulti_attach_args *ca = aux;
 
@@ -187,9 +182,7 @@ hsqprint(aux, pnp)
 }
 
 void
-hsqattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+hsqattach(struct device *parent, struct device *self, void *aux)
 {
 	struct hsq_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -225,8 +218,7 @@ hsqattach(parent, self, aux)
 }
 
 int
-hsqintr(arg)
-	void *arg;
+hsqintr(void *arg)
 {
 	struct hsq_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;

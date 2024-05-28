@@ -1,4 +1,4 @@
-/*	$OpenBSD: addcom_isa.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: addcom_isa.c,v 1.8 2024/05/28 05:46:32 jsg Exp $	*/
 /*	$NetBSD: addcom_isa.c,v 1.2 2000/04/21 20:13:41 explorer Exp $	*/
 
 /*
@@ -120,9 +120,7 @@ struct cfdriver addcom_cd = {
 };
 
 int
-addcomprobe(parent, self, aux)
-	struct device *parent;
-	void *self, *aux;
+addcomprobe(struct device *parent, void *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	int iobase = ia->ia_iobase;
@@ -175,9 +173,7 @@ out:
 }
 
 int
-addcomprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+addcomprint(void *aux, const char *pnp)
 {
 	struct commulti_attach_args *ca = aux;
 
@@ -188,9 +184,7 @@ addcomprint(aux, pnp)
 }
 
 void
-addcomattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+addcomattach(struct device *parent, struct device *self, void *aux)
 {
 	struct addcom_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -253,8 +247,7 @@ addcomattach(parent, self, aux)
 }
 
 int
-addcomintr(arg)
-	void *arg;
+addcomintr(void *arg)
 {
 	struct addcom_softc *sc = arg;
 	int intrd, r = 0, i;
