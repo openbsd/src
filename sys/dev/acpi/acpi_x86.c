@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.19 2024/05/27 09:31:58 kettenis Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.20 2024/05/28 09:40:40 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -98,11 +98,6 @@ gosleep(void *v)
 	acpi_resume_cpu(sc, sc->sc_state);
 
 	return ret;
-}
-
-void
-sleep_abort(void *v)
-{
 }
 
 int

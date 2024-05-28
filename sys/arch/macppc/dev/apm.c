@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.35 2023/07/08 14:44:43 tobhe Exp $	*/
+/*	$OpenBSD: apm.c,v 1.36 2024/05/28 09:40:40 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -372,11 +372,6 @@ int
 sleep_setstate(void *v)
 {
 	return 0;
-}
-
-void
-sleep_abort(void *v)
-{
 }
 
 int

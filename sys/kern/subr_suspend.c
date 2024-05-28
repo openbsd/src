@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.17 2024/05/26 13:37:32 kettenis Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.18 2024/05/28 09:40:40 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -84,7 +84,6 @@ top:
 		uvmpd_hibernate();
 		if (hibernate_alloc()) {
 			printf("failed to allocate hibernate memory\n");
-			sleep_abort(v);
 			error = ENOMEM;
 			goto fail_hiballoc;
 		}
@@ -93,7 +92,6 @@ top:
 
 	sensor_quiesce();
 	if (config_suspend_all(DVACT_QUIESCE)) {
-		sleep_abort(v);
 		error = EIO;
 		goto fail_quiesce;
 	}
@@ -135,13 +133,11 @@ top:
 	intr_enable_wakeup();
 
 	if (config_suspend_all(DVACT_SUSPEND) != 0) {
-		sleep_abort(v);
 		error = EDEADLK;
 		goto fail_suspend;
 	}
 	suspend_randomness();
 	if (sleep_setstate(v)) {
-		sleep_abort(v);
 		error = ENOTBLK;
 		goto fail_pts;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.24 2023/07/08 14:44:43 tobhe Exp $	*/
+/*	$OpenBSD: apm.c,v 1.25 2024/05/28 09:40:40 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -442,11 +442,6 @@ int
 gosleep(void *v)
 {
 	return cpu_suspend_primary();
-}
-
-void
-sleep_abort(void *v)
-{
 }
 
 int
