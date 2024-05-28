@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.25 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.26 2024/05/28 08:34:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -264,7 +264,9 @@ struct ath11k_hw_ops {
 #if notyet
 	void (*tx_mesh_enable)(struct ath11k_base *ab,
 			       struct hal_tcl_data_cmd *tcl_cmd);
-	bool (*rx_desc_get_first_msdu)(struct hal_rx_desc *desc);
+#endif
+	int (*rx_desc_get_first_msdu)(struct hal_rx_desc *desc);
+#if notyet
 	bool (*rx_desc_get_last_msdu)(struct hal_rx_desc *desc);
 #endif
 	uint8_t (*rx_desc_get_l3_pad_bytes)(struct hal_rx_desc *desc);
@@ -1745,6 +1747,14 @@ struct qwx_tx_radiotap_header {
 
 #define IWX_TX_RADIOTAP_PRESENT	0 /* TODO add more information */
 
+struct qwx_setkey_task_arg {
+	struct ieee80211_node *ni;
+	struct ieee80211_key *k;
+	int cmd;
+#define QWX_ADD_KEY	1
+#define QWX_DEL_KEY	2
+};
+
 struct qwx_softc {
 	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
@@ -1761,6 +1771,23 @@ struct qwx_softc {
 	struct task		newstate_task;
 	enum ieee80211_state	ns_nstate;
 	int			ns_arg;
+
+	/* Task for setting encryption keys and its arguments. */
+	struct task		setkey_task;
+	/*
+	 * At present we need to process at most two keys at once:
+	 * Our pairwise key and a group key.
+	 * When hostap mode is implemented this array needs to grow or
+	 * it might become a bottleneck for associations that occur at
+	 * roughly the same time.
+	 */
+	struct qwx_setkey_task_arg setkey_arg[2];
+	int setkey_cur;
+	int setkey_tail;
+	int setkey_nkeys;
+
+	int install_key_done;
+	int install_key_status;
 
 	enum ath11k_11d_state	state_11d;
 	int			completed_11d_scan;
@@ -1962,9 +1989,16 @@ struct ath11k_peer {
 struct qwx_node {
 	struct ieee80211_node ni;
 	struct ath11k_peer peer;
+	unsigned int flags;
+#define QWX_NODE_FLAG_HAVE_PAIRWISE_KEY	0x01
+#define QWX_NODE_FLAG_HAVE_GROUP_KEY	0x02
 };
 
 struct ieee80211_node *qwx_node_alloc(struct ieee80211com *);
+int	qwx_set_key(struct ieee80211com *, struct ieee80211_node *,
+    struct ieee80211_key *);
+void	qwx_delete_key(struct ieee80211com *, struct ieee80211_node *,
+    struct ieee80211_key *);
 
 void	qwx_qrtr_recv_msg(struct qwx_softc *, struct mbuf *);
 

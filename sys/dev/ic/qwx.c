@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.59 2024/05/03 14:32:11 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.60 2024/05/28 08:34:52 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -152,6 +152,11 @@ int qwx_dp_tx_send_reo_cmd(struct qwx_softc *, struct dp_rx_tid *,
     void (*func)(struct qwx_dp *, void *, enum hal_reo_cmd_status));
 void qwx_dp_rx_deliver_msdu(struct qwx_softc *, struct qwx_rx_msdu *);
 void qwx_dp_service_mon_ring(void *);
+void qwx_peer_frags_flush(struct qwx_softc *, struct ath11k_peer *);
+int qwx_wmi_vdev_install_key(struct qwx_softc *,
+    struct wmi_vdev_install_key_arg *, uint8_t);
+int qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *, struct qwx_vif *,
+    struct ieee80211_node *, struct ieee80211_key *, int);
 
 int qwx_scan(struct qwx_softc *);
 void qwx_scan_abort(struct qwx_softc *);
@@ -178,7 +183,7 @@ qwx_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	sc->fw_mode = ATH11K_FIRMWARE_MODE_NORMAL;
-	sc->crypto_mode = ATH11K_CRYPT_MODE_SW;
+	sc->crypto_mode = ATH11K_CRYPT_MODE_HW;
 	sc->frame_mode = ATH11K_HW_TXRX_NATIVE_WIFI;
 	ic->ic_state = IEEE80211_S_INIT;
 	sc->ns_nstate = IEEE80211_S_INIT;
@@ -283,6 +288,7 @@ qwx_stop(struct ifnet *ifp)
 	/* Cancel scheduled tasks and let any stale tasks finish up. */
 	task_del(systq, &sc->init_task);
 	qwx_del_task(sc, sc->sc_nswq, &sc->newstate_task);
+	qwx_del_task(sc, systq, &sc->setkey_task);
 	refcnt_finalize(&sc->task_refs, "qwxstop");
 
 	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
@@ -496,6 +502,262 @@ qwx_media_change(struct ifnet *ifp)
 }
 
 int
+qwx_queue_setkey_cmd(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k, int cmd)
+{
+	struct qwx_softc *sc = ic->ic_softc;
+	struct qwx_setkey_task_arg *a;
+
+	if (sc->setkey_nkeys >= nitems(sc->setkey_arg) ||
+	    k->k_id > WMI_MAX_KEY_INDEX)
+		return ENOSPC;
+
+	a = &sc->setkey_arg[sc->setkey_cur];
+	a->ni = ieee80211_ref_node(ni);
+	a->k = k;
+	a->cmd = cmd;
+	sc->setkey_cur = (sc->setkey_cur + 1) % nitems(sc->setkey_arg);
+	sc->setkey_nkeys++;
+	qwx_add_task(sc, systq, &sc->setkey_task);
+	return EBUSY;
+}
+
+int
+qwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct qwx_softc *sc = ic->ic_softc;
+
+	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags) ||
+	    (k->k_cipher != IEEE80211_CIPHER_CCMP &&
+	    k->k_cipher != IEEE80211_CIPHER_TKIP))
+		return ieee80211_set_key(ic, ni, k);
+
+	return qwx_queue_setkey_cmd(ic, ni, k, QWX_ADD_KEY);
+}
+
+void
+qwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct qwx_softc *sc = ic->ic_softc;
+
+	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags) ||
+	    (k->k_cipher != IEEE80211_CIPHER_CCMP &&
+	    k->k_cipher != IEEE80211_CIPHER_TKIP)) {
+		ieee80211_delete_key(ic, ni, k);
+		return;
+	}
+
+	if (ic->ic_state != IEEE80211_S_RUN) {
+		/* Keys removed implicitly when firmware station is removed. */
+		return;
+	}
+	
+	/*
+	 * net80211 calls us with a NULL node when deleting group keys,
+	 * but firmware expects a MAC address in the command.
+	 */
+	if (ni == NULL)
+		ni = ic->ic_bss;
+
+	qwx_queue_setkey_cmd(ic, ni, k, QWX_DEL_KEY);
+}
+
+int
+qwx_wmi_install_key_cmd(struct qwx_softc *sc, struct qwx_vif *arvif,
+    uint8_t *macaddr, struct ieee80211_key *k, uint32_t flags,
+    int delete_key)
+{
+	int ret;
+	struct wmi_vdev_install_key_arg arg = {
+		.vdev_id = arvif->vdev_id,
+		.key_idx = k->k_id,
+		.key_len = k->k_len,
+		.key_data = k->k_key,
+		.key_flags = flags,
+		.macaddr = macaddr,
+	};
+	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+#ifdef notyet
+	lockdep_assert_held(&arvif->ar->conf_mutex);
+
+	reinit_completion(&ar->install_key_done);
+#endif
+	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags))
+		return 0;
+
+	if (delete_key) {
+		arg.key_cipher = WMI_CIPHER_NONE;
+		arg.key_data = NULL;
+	} else {
+		switch (k->k_cipher) {
+		case IEEE80211_CIPHER_CCMP:
+			arg.key_cipher = WMI_CIPHER_AES_CCM;
+#if 0
+			/* TODO: Re-check if flag is valid */
+			key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV_MGMT;
+#endif
+			break;
+		case IEEE80211_CIPHER_TKIP:
+			arg.key_cipher = WMI_CIPHER_TKIP;
+			arg.key_txmic_len = 8;
+			arg.key_rxmic_len = 8;
+			break;
+#if 0
+		case WLAN_CIPHER_SUITE_CCMP_256:
+			arg.key_cipher = WMI_CIPHER_AES_CCM;
+			break;
+		case WLAN_CIPHER_SUITE_GCMP:
+		case WLAN_CIPHER_SUITE_GCMP_256:
+			arg.key_cipher = WMI_CIPHER_AES_GCM;
+			break;
+#endif
+		default:
+			printf("%s: cipher %u is not supported\n",
+			    sc->sc_dev.dv_xname, k->k_cipher);
+			return EOPNOTSUPP;
+		}
+#if 0
+		if (test_bit(ATH11K_FLAG_RAW_MODE, &ar->ab->dev_flags))
+			key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV |
+				      IEEE80211_KEY_FLAG_RESERVE_TAILROOM;
+#endif
+	}
+
+	sc->install_key_done = 0;
+	ret = qwx_wmi_vdev_install_key(sc, &arg, pdev_id);
+	if (ret)
+		return ret;
+
+	while (!sc->install_key_done) {
+		ret = tsleep_nsec(&sc->install_key_done, 0, "qwxinstkey",
+		    SEC_TO_NSEC(1));
+		if (ret) {
+			printf("%s: install key timeout\n",
+			    sc->sc_dev.dv_xname);
+			return -1;
+		}
+	}
+
+	return sc->install_key_status;
+}
+
+int
+qwx_add_sta_key(struct qwx_softc *sc, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct qwx_node *nq = (struct qwx_node *)ni;
+	struct ath11k_peer *peer = &nq->peer;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	int ret = 0;
+	uint32_t flags = 0;
+	const int want_keymask = (QWX_NODE_FLAG_HAVE_PAIRWISE_KEY |
+	    QWX_NODE_FLAG_HAVE_GROUP_KEY);
+
+	/*
+	 * Flush the fragments cache during key (re)install to
+	 * ensure all frags in the new frag list belong to the same key.
+	 */
+	qwx_peer_frags_flush(sc, peer);
+
+	if (k->k_flags & IEEE80211_KEY_GROUP)
+		flags |= WMI_KEY_GROUP;
+	else
+		flags |= WMI_KEY_PAIRWISE;
+
+	ret = qwx_wmi_install_key_cmd(sc, arvif, ni->ni_macaddr, k, flags, 0);
+	if (ret) {
+		printf("%s: installing crypto key failed (%d)\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ret = qwx_dp_peer_rx_pn_replay_config(sc, arvif, ni, k, 0);
+	if (ret) {
+		printf("%s: failed to offload PN replay detection %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	if (k->k_flags & IEEE80211_KEY_GROUP)
+		nq->flags |= QWX_NODE_FLAG_HAVE_GROUP_KEY;
+	else
+		nq->flags |= QWX_NODE_FLAG_HAVE_PAIRWISE_KEY;
+
+	if ((nq->flags & want_keymask) == want_keymask) {
+		DPRINTF("marking port %s valid\n",
+		    ether_sprintf(ni->ni_macaddr));
+		ni->ni_port_valid = 1;
+		ieee80211_set_link_state(ic, LINK_STATE_UP);
+	}
+
+	return 0;
+}
+
+int
+qwx_del_sta_key(struct qwx_softc *sc, struct ieee80211_node *ni,
+    struct ieee80211_key *k)
+{
+	struct qwx_node *nq = (struct qwx_node *)ni;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	int ret = 0;
+
+	ret = qwx_wmi_install_key_cmd(sc, arvif, ni->ni_macaddr, k, 0, 1);
+	if (ret) {
+		printf("%s: deleting crypto key failed (%d)\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ret = qwx_dp_peer_rx_pn_replay_config(sc, arvif, ni, k, 1);
+	if (ret) {
+		printf("%s: failed to disable PN replay detection %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	if (k->k_flags & IEEE80211_KEY_GROUP)
+		nq->flags &= ~QWX_NODE_FLAG_HAVE_GROUP_KEY;
+	else
+		nq->flags &= ~QWX_NODE_FLAG_HAVE_PAIRWISE_KEY;
+
+	return 0;
+}
+
+void
+qwx_setkey_task(void *arg)
+{
+	struct qwx_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct qwx_setkey_task_arg *a;
+	int err = 0, s = splnet();
+
+	while (sc->setkey_nkeys > 0) {
+		if (err || test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags))
+			break;
+		a = &sc->setkey_arg[sc->setkey_tail];
+		KASSERT(a->cmd == QWX_ADD_KEY || a->cmd == QWX_DEL_KEY);
+		if (ic->ic_state == IEEE80211_S_RUN) {
+			if (a->cmd == QWX_ADD_KEY)
+				err = qwx_add_sta_key(sc, a->ni, a->k);
+			else
+				err = qwx_del_sta_key(sc, a->ni, a->k);
+		}
+		ieee80211_release_node(ic, a->ni);
+		a->ni = NULL;
+		a->k = NULL;
+		sc->setkey_tail = (sc->setkey_tail + 1) %
+		    nitems(sc->setkey_arg);
+		sc->setkey_nkeys--;
+	}
+
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
+}
+
+int
 qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
@@ -510,15 +772,27 @@ qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	if (sc->ns_nstate == nstate && nstate != IEEE80211_S_SCAN &&
 	    nstate != IEEE80211_S_AUTH)
 		return 0;
-#if 0
 	if (ic->ic_state == IEEE80211_S_RUN) {
+		struct qwx_setkey_task_arg *a;
+#if 0
 		qwx_del_task(sc, systq, &sc->ba_task);
+#endif
 		qwx_del_task(sc, systq, &sc->setkey_task);
+		while (sc->setkey_nkeys > 0) {
+			a = &sc->setkey_arg[sc->setkey_tail];
+			ieee80211_release_node(ic, a->ni);
+			a->ni = NULL;
+			sc->setkey_tail = (sc->setkey_tail + 1) %
+			    nitems(sc->setkey_arg);
+			sc->setkey_nkeys--;
+		}
 		memset(sc->setkey_arg, 0, sizeof(sc->setkey_arg));
 		sc->setkey_cur = sc->setkey_tail = sc->setkey_nkeys = 0;
+#if 0
 		qwx_del_task(sc, systq, &sc->bgscan_done_task);
-	}
 #endif
+	}
+
 	sc->ns_nstate = nstate;
 	sc->ns_arg = arg;
 
@@ -893,6 +1167,13 @@ qwx_hw_mac_id_to_srng_id_qca6390(struct ath11k_hw_params *hw, int mac_id)
 	return mac_id;
 }
 
+int
+qwx_hw_ipq8074_rx_desc_get_first_msdu(struct hal_rx_desc *desc)
+{
+	return !!FIELD_GET(RX_MSDU_END_INFO2_FIRST_MSDU,
+	    le32toh(desc->u.ipq8074.msdu_end.info2));
+}
+
 uint8_t
 qwx_hw_ipq8074_rx_desc_get_l3_pad_bytes(struct hal_rx_desc *desc)
 {
@@ -1057,6 +1338,12 @@ qwx_hw_ipq8074_rx_desc_set_msdu_len(struct hal_rx_desc *desc, uint16_t len)
 	info |= FIELD_PREP(RX_MSDU_START_INFO1_MSDU_LENGTH, len);
 
 	desc->u.ipq8074.msdu_start.info1 = htole32(info);
+}
+
+int
+qwx_dp_rx_h_msdu_end_first_msdu(struct qwx_softc *sc, struct hal_rx_desc *desc)
+{
+	return sc->hw_params.hw_ops->rx_desc_get_first_msdu(desc);
 }
 
 int
@@ -1524,7 +1811,9 @@ const struct ath11k_hw_ops ipq8074_ops = {
 	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_ipq8074,
 #if notyet
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
-	.rx_desc_get_first_msdu = ath11k_hw_ipq8074_rx_desc_get_first_msdu,
+#endif
+	.rx_desc_get_first_msdu = qwx_hw_ipq8074_rx_desc_get_first_msdu,
+#if notyet
 	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
 #endif
 	.rx_desc_get_l3_pad_bytes = qwx_hw_ipq8074_rx_desc_get_l3_pad_bytes,
@@ -1576,7 +1865,9 @@ const struct ath11k_hw_ops ipq6018_ops = {
 	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_ipq8074,
 #if notyet
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
-	.rx_desc_get_first_msdu = ath11k_hw_ipq8074_rx_desc_get_first_msdu,
+#endif
+	.rx_desc_get_first_msdu = qwx_hw_ipq8074_rx_desc_get_first_msdu,
+#if notyet
 	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
 #endif
 	.rx_desc_get_l3_pad_bytes = qwx_hw_ipq8074_rx_desc_get_l3_pad_bytes,
@@ -1628,7 +1919,9 @@ const struct ath11k_hw_ops qca6390_ops = {
 	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_qca6390,
 #if notyet
 	.tx_mesh_enable = ath11k_hw_ipq8074_tx_mesh_enable,
-	.rx_desc_get_first_msdu = ath11k_hw_ipq8074_rx_desc_get_first_msdu,
+#endif
+	.rx_desc_get_first_msdu = qwx_hw_ipq8074_rx_desc_get_first_msdu,
+#if notyet
 	.rx_desc_get_last_msdu = ath11k_hw_ipq8074_rx_desc_get_last_msdu,
 #endif
 	.rx_desc_get_l3_pad_bytes = qwx_hw_ipq8074_rx_desc_get_l3_pad_bytes,
@@ -1680,7 +1973,9 @@ const struct ath11k_hw_ops qcn9074_ops = {
 	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_ipq8074,
 #if notyet
 	.tx_mesh_enable = ath11k_hw_qcn9074_tx_mesh_enable,
-	.rx_desc_get_first_msdu = ath11k_hw_qcn9074_rx_desc_get_first_msdu,
+#endif
+	.rx_desc_get_first_msdu = qwx_hw_qcn9074_rx_desc_get_first_msdu,
+#if notyet
 	.rx_desc_get_last_msdu = ath11k_hw_qcn9074_rx_desc_get_last_msdu,
 #endif
 	.rx_desc_get_l3_pad_bytes = qwx_hw_qcn9074_rx_desc_get_l3_pad_bytes,
@@ -1732,7 +2027,9 @@ const struct ath11k_hw_ops wcn6855_ops = {
 	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_qca6390,
 #if notyet
 	.tx_mesh_enable = ath11k_hw_wcn6855_tx_mesh_enable,
-	.rx_desc_get_first_msdu = ath11k_hw_wcn6855_rx_desc_get_first_msdu,
+#endif
+	.rx_desc_get_first_msdu = qwx_hw_wcn6855_rx_desc_get_first_msdu,
+#if notyet
 	.rx_desc_get_last_msdu = ath11k_hw_wcn6855_rx_desc_get_last_msdu,
 #endif
 	.rx_desc_get_l3_pad_bytes = qwx_hw_wcn6855_rx_desc_get_l3_pad_bytes,
@@ -1784,7 +2081,9 @@ const struct ath11k_hw_ops wcn6750_ops = {
 	.mac_id_to_srng_id = qwx_hw_mac_id_to_srng_id_qca6390,
 #if notyet
 	.tx_mesh_enable = ath11k_hw_qcn9074_tx_mesh_enable,
-	.rx_desc_get_first_msdu = ath11k_hw_qcn9074_rx_desc_get_first_msdu,
+#endif
+	.rx_desc_get_first_msdu = qwx_hw_qcn9074_rx_desc_get_first_msdu,
+#if notyet
 	.rx_desc_get_last_msdu = ath11k_hw_qcn9074_rx_desc_get_last_msdu,
 #endif
 	.rx_desc_get_l3_pad_bytes = qwx_hw_qcn9074_rx_desc_get_l3_pad_bytes,
@@ -12990,6 +13289,84 @@ qwx_roam_event(struct qwx_softc *sc, struct mbuf *m)
 	}
 }
 
+int
+qwx_pull_vdev_install_key_compl_ev(struct qwx_softc *sc, struct mbuf *m,
+    struct wmi_vdev_install_key_complete_arg *arg)
+{
+	const void **tb;
+	const struct wmi_vdev_install_key_compl_event *ev;
+	int ret;
+
+	tb = qwx_wmi_tlv_parse_alloc(sc, mtod(m, void *), m->m_pkthdr.len);
+	if (tb == NULL) {
+		ret = ENOMEM;
+		printf("%s: failed to parse tlv: %d\n",
+		    sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
+
+	ev = tb[WMI_TAG_VDEV_INSTALL_KEY_COMPLETE_EVENT];
+	if (!ev) {
+		printf("%s: failed to fetch vdev install key compl ev\n",
+		    sc->sc_dev.dv_xname);
+		free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+		return EPROTO;
+	}
+
+	arg->vdev_id = ev->vdev_id;
+	arg->macaddr = ev->peer_macaddr.addr;
+	arg->key_idx = ev->key_idx;
+	arg->key_flags = ev->key_flags;
+	arg->status = ev->status;
+
+	free(tb, M_DEVBUF, WMI_TAG_MAX * sizeof(*tb));
+	return 0;
+}
+
+void
+qwx_vdev_install_key_compl_event(struct qwx_softc *sc, struct mbuf *m)
+{
+	struct wmi_vdev_install_key_complete_arg install_key_compl = { 0 };
+	struct qwx_vif *arvif;
+
+	if (qwx_pull_vdev_install_key_compl_ev(sc, m,
+	    &install_key_compl) != 0) {
+		printf("%s: failed to extract install key compl event\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	DNPRINTF(QWX_D_WMI, "%s: event vdev install key ev idx %d flags %08x "
+	    "macaddr %s status %d\n", __func__, install_key_compl.key_idx,
+	    install_key_compl.key_flags,
+	    ether_sprintf((u_char *)install_key_compl.macaddr),
+	    install_key_compl.status);
+
+	TAILQ_FOREACH(arvif, &sc->vif_list, entry) {
+		if (arvif->vdev_id == install_key_compl.vdev_id)
+			break;
+	}
+	if (!arvif) {
+		printf("%s: invalid vdev id in install key compl ev %d\n",
+		    sc->sc_dev.dv_xname, install_key_compl.vdev_id);
+		return;
+	}
+
+	sc->install_key_status = 0;
+
+	if (install_key_compl.status !=
+	    WMI_VDEV_INSTALL_KEY_COMPL_STATUS_SUCCESS) {
+		printf("%s: install key failed for %s status %d\n",
+		    sc->sc_dev.dv_xname,
+		    ether_sprintf((u_char *)install_key_compl.macaddr),
+		    install_key_compl.status);
+		sc->install_key_status = install_key_compl.status;
+	}
+
+	sc->install_key_done = 1;
+	wakeup(&sc->install_key_done);
+}
+
 void
 qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 {
@@ -13060,10 +13437,10 @@ qwx_wmi_tlv_op_rx(struct qwx_softc *sc, struct mbuf *m)
 	case WMI_PDEV_BSS_CHAN_INFO_EVENTID:
 		ath11k_pdev_bss_chan_info_event(ab, skb);
 		break;
-	case WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID:
-		ath11k_vdev_install_key_compl_event(ab, skb);
-		break;
 #endif
+	case WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID:
+		qwx_vdev_install_key_compl_event(sc, m);
+		break;
 	case WMI_SERVICE_AVAILABLE_EVENTID:
 		qwx_service_available_event(sc, m);
 		break;
@@ -15813,6 +16190,16 @@ qwx_dp_rx_get_attention(struct qwx_softc *sc, struct hal_rx_desc *desc)
 	return sc->hw_params.hw_ops->rx_desc_get_attention(desc);
 }
 
+int
+qwx_dp_rx_h_attn_is_mcbc(struct qwx_softc *sc, struct hal_rx_desc *desc)
+{
+	struct rx_attention *attn = qwx_dp_rx_get_attention(sc, desc);
+
+	return qwx_dp_rx_h_msdu_end_first_msdu(sc, desc) &&
+		(!!FIELD_GET(RX_ATTENTION_INFO1_MCAST_BCAST,
+		 le32toh(attn->info1)));
+}
+
 static inline uint8_t
 qwx_dp_rx_h_msdu_end_l3pad(struct qwx_softc *sc, struct hal_rx_desc *desc)
 {
@@ -15874,6 +16261,13 @@ qwx_dp_rx_h_attn_msdu_len_err(struct qwx_softc *sc, struct hal_rx_desc *desc)
 }
 
 int
+qwx_dp_rx_h_attn_is_decrypted(struct rx_attention *attn)
+{
+	return (FIELD_GET(RX_ATTENTION_INFO2_DCRYPT_STATUS_CODE,
+	    le32toh(attn->info2)) == RX_DESC_DECRYPT_STATUS_CODE_OK);
+}
+
+int
 qwx_dp_rx_msdu_coalesce(struct qwx_softc *sc, struct qwx_rx_msdu_list *msdu_list,
     struct qwx_rx_msdu *first, struct qwx_rx_msdu *last, uint8_t l3pad_bytes,
     int msdu_len)
@@ -15908,7 +16302,13 @@ void
 qwx_dp_rx_h_undecap_nwifi(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
     uint8_t *first_hdr, enum hal_encrypt_type enctype)
 {
-	printf("%s: not implemented\n", __func__);
+	/*
+	* This function will need to do some work once we are receiving
+	* aggregated frames. For now, it needs to do nothing.
+	*/
+
+	if (!msdu->is_first_msdu)
+		printf("%s: not implemented\n", __func__);
 }
 
 void
@@ -16034,28 +16434,28 @@ qwx_dp_rx_h_undecap(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 	}
 }
 
-
-void
+int
 qwx_dp_rx_h_mpdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
     struct hal_rx_desc *rx_desc)
 {
-#if 0
-	bool  fill_crypto_hdr;
-#endif
+	struct ieee80211com *ic = &sc->sc_ic;
+	int fill_crypto_hdr = 0;
 	enum hal_encrypt_type enctype;
 	int is_decrypted = 0;
 #if 0
 	struct ath11k_skb_rxcb *rxcb;
-	struct ieee80211_hdr *hdr;
+#endif
+	struct ieee80211_frame *wh;
+#if 0
 	struct ath11k_peer *peer;
+#endif
 	struct rx_attention *rx_attention;
-	u32 err_bitmap;
+	uint32_t err_bitmap;
 
-	/* PN for multicast packets will be checked in mac80211 */
-	rxcb = ATH11K_SKB_RXCB(msdu);
-	fill_crypto_hdr = ath11k_dp_rx_h_attn_is_mcbc(ar->ab, rx_desc);
-	rxcb->is_mcbc = fill_crypto_hdr;
-
+	/* PN for multicast packets will be checked in net80211 */
+	fill_crypto_hdr = qwx_dp_rx_h_attn_is_mcbc(sc, rx_desc);
+	msdu->is_mcbc = fill_crypto_hdr;
+#if 0
 	if (rxcb->is_mcbc) {
 		rxcb->peer_id = ath11k_dp_rx_h_mpdu_start_peer_id(ar->ab, rx_desc);
 		rxcb->seq_no = ath11k_dp_rx_h_mpdu_start_seq_no(ar->ab, rx_desc);
@@ -16074,12 +16474,12 @@ qwx_dp_rx_h_mpdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 #if 0
 	}
 	spin_unlock_bh(&ar->ab->base_lock);
-
-	rx_attention = ath11k_dp_rx_get_attention(ar->ab, rx_desc);
-	err_bitmap = ath11k_dp_rx_h_attn_mpdu_err(rx_attention);
+#endif
+	rx_attention = qwx_dp_rx_get_attention(sc, rx_desc);
+	err_bitmap = qwx_dp_rx_h_attn_mpdu_err(rx_attention);
 	if (enctype != HAL_ENCRYPT_TYPE_OPEN && !err_bitmap)
-		is_decrypted = ath11k_dp_rx_h_attn_is_decrypted(rx_attention);
-
+		is_decrypted = qwx_dp_rx_h_attn_is_decrypted(rx_attention);
+#if 0
 	/* Clear per-MPDU flags while leaving per-PPDU flags intact */
 	rx_status->flag &= ~(RX_FLAG_FAILED_FCS_CRC |
 			     RX_FLAG_MMIC_ERROR |
@@ -16087,12 +16487,23 @@ qwx_dp_rx_h_mpdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 			     RX_FLAG_IV_STRIPPED |
 			     RX_FLAG_MMIC_STRIPPED);
 
-	if (err_bitmap & DP_RX_MPDU_ERR_FCS)
-		rx_status->flag |= RX_FLAG_FAILED_FCS_CRC;
+#endif
+	if (err_bitmap & DP_RX_MPDU_ERR_FCS) {
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ic->ic_stats.is_rx_decryptcrc++;
+		else
+			ic->ic_stats.is_rx_decap++;
+	}
+
+	/* XXX Trusting firmware to handle Michael MIC counter-measures... */
 	if (err_bitmap & DP_RX_MPDU_ERR_TKIP_MIC)
-		rx_status->flag |= RX_FLAG_MMIC_ERROR;
+		ic->ic_stats.is_rx_locmicfail++;
+
+	if (err_bitmap & DP_RX_MPDU_ERR_DECRYPT)
+		ic->ic_stats.is_rx_wepfail++;
 
 	if (is_decrypted) {
+#if 0
 		rx_status->flag |= RX_FLAG_DECRYPTED | RX_FLAG_MMIC_STRIPPED;
 
 		if (fill_crypto_hdr)
@@ -16101,21 +16512,23 @@ qwx_dp_rx_h_mpdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 		else
 			rx_status->flag |= RX_FLAG_IV_STRIPPED |
 					   RX_FLAG_PN_VALIDATED;
+#endif
+		msdu->rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
 	}
-
+#if 0
 	ath11k_dp_rx_h_csum_offload(ar, msdu);
 #endif
 	qwx_dp_rx_h_undecap(sc, msdu, rx_desc, enctype, is_decrypted);
-#if 0
-	if (!is_decrypted || fill_crypto_hdr)
-		return;
 
-	if (ath11k_dp_rx_h_msdu_start_decap_type(ar->ab, rx_desc) !=
+	if (is_decrypted && !fill_crypto_hdr &&
+	    qwx_dp_rx_h_msdu_start_decap_type(sc, rx_desc) !=
 	    DP_RX_DECAP_TYPE_ETHERNET2_DIX) {
-		hdr = (void *)msdu->data;
-		hdr->frame_control &= ~__cpu_to_le16(IEEE80211_FCTL_PROTECTED);
+		/* Hardware has stripped the IV. */
+		wh = mtod(msdu->m, struct ieee80211_frame *);
+		wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
 	}
-#endif
+
+	return err_bitmap ? EIO : 0;
 }
 
 int
@@ -16189,9 +16602,8 @@ qwx_dp_rx_process_msdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 
 	memset(&msdu->rxi, 0, sizeof(msdu->rxi));
 	qwx_dp_rx_h_ppdu(sc, rx_desc, &msdu->rxi);
-	qwx_dp_rx_h_mpdu(sc, msdu, rx_desc);
 
-	return 0;
+	return qwx_dp_rx_h_mpdu(sc, msdu, rx_desc);
 }
 
 void
@@ -18001,6 +18413,65 @@ qwx_wmi_send_peer_delete_cmd(struct qwx_softc *sc, const uint8_t *peer_addr,
 	    __func__, vdev_id, peer_addr);
 
 	return 0;
+}
+
+int
+qwx_wmi_vdev_install_key(struct qwx_softc *sc,
+    struct wmi_vdev_install_key_arg *arg, uint8_t pdev_id)
+{
+	struct qwx_pdev_wmi *wmi = &sc->wmi.wmi[pdev_id];
+	struct wmi_vdev_install_key_cmd *cmd;
+	struct wmi_tlv *tlv;
+	struct mbuf *m;
+	int ret, len;
+	int key_len_aligned = roundup(arg->key_len, sizeof(uint32_t));
+
+	len = sizeof(*cmd) + TLV_HDR_SIZE + key_len_aligned;
+
+	m = qwx_wmi_alloc_mbuf(len);
+	if (m == NULL)
+		return -ENOMEM;
+
+	cmd = (struct wmi_vdev_install_key_cmd *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr));
+	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
+	    WMI_TAG_VDEV_INSTALL_KEY_CMD) |
+	    FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+	cmd->vdev_id = arg->vdev_id;
+	IEEE80211_ADDR_COPY(cmd->peer_macaddr.addr, arg->macaddr);
+	cmd->key_idx = arg->key_idx;
+	cmd->key_flags = arg->key_flags;
+	cmd->key_cipher = arg->key_cipher;
+	cmd->key_len = arg->key_len;
+	cmd->key_txmic_len = arg->key_txmic_len;
+	cmd->key_rxmic_len = arg->key_rxmic_len;
+
+	if (arg->key_rsc_counter)
+		memcpy(&cmd->key_rsc_counter, &arg->key_rsc_counter,
+		       sizeof(struct wmi_key_seq_counter));
+
+	tlv = (struct wmi_tlv *)(mtod(m, uint8_t *) +
+	    sizeof(struct ath11k_htc_hdr) + sizeof(struct wmi_cmd_hdr) +
+	    sizeof(*cmd));
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
+	    FIELD_PREP(WMI_TLV_LEN, key_len_aligned);
+	if (arg->key_data)
+		memcpy(tlv->value, (uint8_t *)arg->key_data,
+		    key_len_aligned);
+
+	ret = qwx_wmi_cmd_send(wmi, m, WMI_VDEV_INSTALL_KEY_CMDID);
+	if (ret) {
+		printf("%s: failed to send WMI_VDEV_INSTALL_KEY cmd\n",
+		    sc->sc_dev.dv_xname);
+		m_freem(m);
+		return ret;
+	}
+
+	DNPRINTF(QWX_D_WMI,
+	    "%s: cmd vdev install key idx %d cipher %d len %d\n",
+	    __func__, arg->key_idx, arg->key_cipher, arg->key_len);
+
+	return ret;
 }
 
 void
@@ -23303,6 +23774,26 @@ qwx_dp_rx_frags_cleanup(struct qwx_softc *sc, struct dp_rx_tid *rx_tid,
 }
 
 void
+qwx_peer_frags_flush(struct qwx_softc *sc, struct ath11k_peer *peer)
+{
+	struct dp_rx_tid *rx_tid;
+	int i;
+#ifdef notyet
+	lockdep_assert_held(&ar->ab->base_lock);
+#endif
+	for (i = 0; i < IEEE80211_NUM_TID; i++) {
+		rx_tid = &peer->rx_tid[i];
+
+		qwx_dp_rx_frags_cleanup(sc, rx_tid, 1);
+#if 0
+		spin_unlock_bh(&ar->ab->base_lock);
+		del_timer_sync(&rx_tid->frag_timer);
+		spin_lock_bh(&ar->ab->base_lock);
+#endif
+	}
+}
+
+void
 qwx_peer_rx_tid_cleanup(struct qwx_softc *sc, struct ath11k_peer *peer)
 {
 	struct dp_rx_tid *rx_tid;
@@ -23556,6 +24047,70 @@ peer_clean:
 	return ret;
 }
 
+int
+qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *sc, struct qwx_vif *arvif,
+    struct ieee80211_node *ni, struct ieee80211_key *k, int delete_key)
+{
+	struct ath11k_hal_reo_cmd cmd = {0};
+	struct qwx_node *nq = (struct qwx_node *)ni;
+	struct ath11k_peer *peer = &nq->peer;
+	struct dp_rx_tid *rx_tid;
+	uint8_t tid;
+	int ret = 0;
+
+	/*
+	 * NOTE: Enable PN/TSC replay check offload only for unicast frames.
+	 * We use net80211 PN/TSC replay check functionality for bcast/mcast
+	 * for now.
+	 */
+	if (k->k_flags & IEEE80211_KEY_GROUP)
+		return 0;
+
+	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
+	cmd.upd0 |= HAL_REO_CMD_UPD0_PN |
+		    HAL_REO_CMD_UPD0_PN_SIZE |
+		    HAL_REO_CMD_UPD0_PN_VALID |
+		    HAL_REO_CMD_UPD0_PN_CHECK |
+		    HAL_REO_CMD_UPD0_SVLD;
+
+	switch (k->k_cipher) {
+	case IEEE80211_CIPHER_TKIP:
+	case IEEE80211_CIPHER_CCMP:
+#if 0
+	case WLAN_CIPHER_SUITE_CCMP_256:
+	case WLAN_CIPHER_SUITE_GCMP:
+	case WLAN_CIPHER_SUITE_GCMP_256:
+#endif
+		if (!delete_key) {
+			cmd.upd1 |= HAL_REO_CMD_UPD1_PN_CHECK;
+			cmd.pn_size = 48;
+		}
+		break;
+	default:
+		printf("%s: cipher %u is not supported\n",
+		    sc->sc_dev.dv_xname, k->k_cipher);
+		return EOPNOTSUPP;
+	}
+
+	for (tid = 0; tid < IEEE80211_NUM_TID; tid++) {
+		rx_tid = &peer->rx_tid[tid];
+		if (!rx_tid->active)
+			continue;
+		cmd.addr_lo = rx_tid->paddr & 0xffffffff;
+		cmd.addr_hi = (rx_tid->paddr >> 32);
+		ret = qwx_dp_tx_send_reo_cmd(sc, rx_tid,
+		    HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd, NULL);
+		if (ret) {
+			printf("%s: failed to configure rx tid %d queue "
+			    "for pn replay detection %d\n",
+			    sc->sc_dev.dv_xname, tid, ret);
+			break;
+		}
+	}
+
+	return ret;
+}
+
 enum hal_tcl_encap_type
 qwx_dp_tx_get_encap_type(struct qwx_softc *sc)
 {
@@ -23676,20 +24231,25 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 
 	ti.meta_data_flags = arvif->tcl_metadata;
 
-	if (ti.encap_type == HAL_TCL_ENCAP_TYPE_RAW) {
-#if 0
-		if (skb_cb->flags & ATH11K_SKB_CIPHER_SET) {
-			ti.encrypt_type =
-				ath11k_dp_tx_get_encrypt_type(skb_cb->cipher);
-
-			if (ieee80211_has_protected(hdr->frame_control))
-				skb_put(skb, IEEE80211_CCMP_MIC_LEN);
-		} else
-#endif
+	if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
+	    ti.encap_type == HAL_TCL_ENCAP_TYPE_RAW) {
+		k = ieee80211_get_txkey(ic, wh, ni);
+		switch (k->k_cipher) {
+		case IEEE80211_CIPHER_CCMP:
+			ti.encrypt_type = HAL_ENCRYPT_TYPE_CCMP_128;
+			m->m_pkthdr.len += IEEE80211_CCMP_MICLEN;
+			break;
+		case IEEE80211_CIPHER_TKIP:
+			ti.encrypt_type = HAL_ENCRYPT_TYPE_TKIP_MIC;
+			m->m_pkthdr.len += IEEE80211_TKIP_MICLEN;
+			break;
+		default:
+			/* Fallback to software crypto for other ciphers. */
 			ti.encrypt_type = HAL_ENCRYPT_TYPE_OPEN;
+			break;
+		}
 
-		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
-			k = ieee80211_get_txkey(ic, wh, ni);
+		if (ti.encrypt_type == HAL_ENCRYPT_TYPE_OPEN) {
 			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
 				return ENOBUFS;
 			/* 802.11 header may have moved. */
@@ -24582,6 +25142,25 @@ qwx_peer_assoc_h_basic(struct qwx_softc *sc, struct qwx_vif *arvif,
 	arg->peer_caps = ni->ni_capinfo;
 }
 
+void
+qwx_peer_assoc_h_crypto(struct qwx_softc *sc, struct qwx_vif *arvif,
+    struct ieee80211_node *ni, struct peer_assoc_params *arg)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_flags & IEEE80211_F_RSNON) {
+		arg->need_ptk_4_way = 1;
+		if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA)
+			arg->need_gtk_2_way = 1;
+	}
+#if 0
+	if (sta->mfp) {
+		/* TODO: Need to check if FW supports PMF? */
+		arg->is_pmf_enabled = true;
+	}
+#endif
+}
+
 int
 qwx_mac_rate_is_cck(uint8_t rate)
 {
@@ -24641,9 +25220,7 @@ qwx_peer_assoc_prepare(struct qwx_softc *sc, struct qwx_vif *arvif,
 
 	arg->peer_new_assoc = !reassoc;
 	qwx_peer_assoc_h_basic(sc, arvif, ni, arg);
-#if 0
 	qwx_peer_assoc_h_crypto(sc, arvif, ni, arg);
-#endif
 	qwx_peer_assoc_h_rates(ni, arg);
 	qwx_peer_assoc_h_phymode(sc, ni, arg);
 #if 0
@@ -24757,12 +25334,15 @@ qwx_run_stop(struct qwx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	struct qwx_node *nq = (void *)ic->ic_bss;
 	int ret;
 
 	sc->ops.irq_disable(sc);
 
-	if (ic->ic_opmode == IEEE80211_M_STA)
+	if (ic->ic_opmode == IEEE80211_M_STA) {
 		ic->ic_bss->ni_txrate = 0;
+		nq->flags = 0;
+	}
 
 	ret = qwx_wmi_vdev_down(sc, arvif->vdev_id, pdev_id);
 	if (ret)
@@ -24801,6 +25381,7 @@ qwx_attach(struct qwx_softc *sc)
 
 	task_set(&sc->init_task, qwx_init_task, sc);
 	task_set(&sc->newstate_task, qwx_newstate_task, sc);
+	task_set(&sc->setkey_task, qwx_setkey_task, sc);
 	timeout_set_proc(&sc->scan.timeout, qwx_scan_timeout, sc);
 #if NBPFILTER > 0
 	qwx_radiotap_attach(sc);

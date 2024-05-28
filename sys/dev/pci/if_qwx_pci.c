@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.16 2024/05/24 06:02:56 jsg Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.17 2024/05/28 08:34:52 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1086,6 +1086,8 @@ unsupported_wcn6855_soc:
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = qwx_newstate;
+	ic->ic_set_key = qwx_set_key;
+	ic->ic_delete_key = qwx_delete_key;
 #if 0
 	ic->ic_updatechan = qwx_updatechan;
 	ic->ic_updateprot = qwx_updateprot;
