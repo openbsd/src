@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.35 2024/05/24 10:05:55 jsg Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.36 2024/05/28 12:11:26 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1118,8 +1118,6 @@ vio_rxeof(struct vio_softc *sc)
 				bufs_left = hdr->num_buffers - 1;
 			else
 				bufs_left = 0;
-			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM))
-				vio_rx_offload(m, hdr);
 		} else {
 			m->m_flags &= ~M_PKTHDR;
 			m0->m_pkthdr.len += m->m_len;
@@ -1129,6 +1127,8 @@ vio_rxeof(struct vio_softc *sc)
 		}
 
 		if (bufs_left == 0) {
+			if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_CSUM))
+				vio_rx_offload(m0, hdr);
 			ml_enqueue(&ml, m0);
 			m0 = NULL;
 		}
