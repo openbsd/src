@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.27 2024/02/07 20:51:38 tb Exp $
+.\"	$OpenBSD: compress.3,v 1.28 2024/05/28 13:42:06 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -21,9 +21,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.\" This page corresponds to zlib version 1.2.3
-.\"
-.Dd $Mdocdate: February 7 2024 $
+.Dd $Mdocdate: May 28 2024 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -256,10 +254,6 @@ Checksum functions
 .Fn crc32_combine_gen "z_off_t len2"
 .Fn crc32_combine_op "uLong crc1" "uLong crc2" "uLong op"
 .Sh DESCRIPTION
-This manual page describes the
-.Nm zlib
-general purpose compression library, version 1.2.11.
-.Pp
 The
 .Nm zlib
 compression library provides in-memory compression and decompression functions,
