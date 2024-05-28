@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.170 2023/10/30 07:04:36 claudio Exp $	*/
+/*	$OpenBSD: systm.h,v 1.171 2024/05/28 12:50:23 jsg Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -91,7 +91,6 @@ extern int ncpusfound;		/* number of CPUs found */
 extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
 
-extern int maxmem;		/* max memory per process */
 extern int physmem;		/* physical memory */
 
 extern dev_t dumpdev;		/* dump device */
