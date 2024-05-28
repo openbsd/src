@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.h,v 1.11 2024/05/12 09:27:13 jsg Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.h,v 1.12 2024/05/28 12:31:24 jsg Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -79,7 +79,6 @@ void swap_key_create(struct swap_key *);
 void swap_key_delete(struct swap_key *);
 
 extern int uvm_doswapencrypt;		/* swapencrypt enabled/disabled */
-extern u_int uvm_swpkeyexpire;		/* expiry time for keys (tR) */
 extern int swap_encrypt_initialized;
 
 #endif /* _UVM_SWAP_ENCRYPT_H */
