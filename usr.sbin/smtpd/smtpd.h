@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.684 2024/05/07 12:10:06 op Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.685 2024/05/28 07:10:30 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -356,6 +356,7 @@ struct table {
 	enum table_type			 t_type;
 	char				 t_config[PATH_MAX];
 
+	unsigned int			 t_services;
 	void				*t_handle;
 	struct table_backend		*t_backend;
 };
