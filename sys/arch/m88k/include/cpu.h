@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.77 2024/03/31 07:23:29 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.78 2024/05/28 09:27:54 claudio Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -208,7 +208,6 @@ curcpu(void)
 #define	CPU_IS_RUNNING(ci)	((ci)->ci_flags & CIF_ALIVE)
 
 void	cpu_boot_secondary_processors(void);
-__dead void cpu_emergency_disable(void);
 void	cpu_unidle(struct cpu_info *);
 void	m88k_send_ipi(int, cpuid_t);
 void	m88k_broadcast_ipi(int);

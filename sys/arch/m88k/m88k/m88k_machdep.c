@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.72 2023/01/06 19:10:18 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.73 2024/05/28 09:27:54 claudio Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -499,45 +499,4 @@ atomic_init()
 	}
 #endif	/* M88100 && M88110 */
 }
-#endif	/* MULTIPROCESSOR */
-
-#ifdef MULTIPROCESSOR
-
-/*
- * This function is invoked when it turns out one secondary processor is
- * not usable.
- * Be sure to put the process currently running on it in the run queues,
- * so that another processor can take care of it.
- */
-__dead void
-cpu_emergency_disable()
-{
-	struct cpu_info *ci = curcpu();
-	struct schedstate_percpu *spc = &ci->ci_schedstate;
-	struct proc *p = curproc;
-	int s;
-	extern void savectx(struct pcb *);
-
-	if (p != NULL && p != spc->spc_idleproc) {
-		savectx(curpcb);
-
-		/*
-		 * The following is an inline yield(), without the call
-		 * to mi_switch().
-		 */
-		SCHED_LOCK(s);
-		setrunqueue(p->p_cpu, p, p->p_usrpri);
-		p->p_ru.ru_nvcsw++;
-		SCHED_UNLOCK(s);
-	}
-
-	CLR(ci->ci_flags, CIF_ALIVE);
-	set_psr(get_psr() | PSR_IND);
-	splhigh();
-
-	for (;;)
-		continue;
-	/* NOTREACHED */
-}
-
 #endif	/* MULTIPROCESSOR */
