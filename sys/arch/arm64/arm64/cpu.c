@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.116 2024/05/27 06:20:59 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.117 2024/05/29 15:32:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -87,6 +87,8 @@
 #define CPU_PART_CORTEX_A720	0xd81
 #define CPU_PART_CORTEX_X4	0xd82
 #define CPU_PART_NEOVERSE_V3	0xd84
+#define CPU_PART_CORTEX_X925	0xd85
+#define CPU_PART_CORTEX_A725	0xd87
 #define CPU_PART_CORTEX_A520AE	0xd88
 #define CPU_PART_CORTEX_A720AE	0xd89
 #define CPU_PART_NEOVERSE_N3	0xd8e
@@ -159,11 +161,13 @@ struct cpu_cores cpu_cores_arm[] = {
 	{ CPU_PART_CORTEX_A715, "Cortex-A715" },
 	{ CPU_PART_CORTEX_A720, "Cortex-A720" },
 	{ CPU_PART_CORTEX_A720AE, "Cortex-A720AE" },
+	{ CPU_PART_CORTEX_A725, "Cortex-A725" },
 	{ CPU_PART_CORTEX_X1, "Cortex-X1" },
 	{ CPU_PART_CORTEX_X1C, "Cortex-X1C" },
 	{ CPU_PART_CORTEX_X2, "Cortex-X2" },
 	{ CPU_PART_CORTEX_X3, "Cortex-X3" },
 	{ CPU_PART_CORTEX_X4, "Cortex-X4" },
+	{ CPU_PART_CORTEX_X925, "Cortex-X925" },
 	{ CPU_PART_NEOVERSE_E1, "Neoverse E1" },
 	{ CPU_PART_NEOVERSE_N1, "Neoverse N1" },
 	{ CPU_PART_NEOVERSE_N2, "Neoverse N2" },
