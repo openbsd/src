@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.85 2024/03/22 15:41:34 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.86 2024/05/29 10:34:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -98,13 +98,15 @@ log_in6addr(const struct in6_addr *addr)
 const char *
 log_sockaddr(struct sockaddr *sa, socklen_t len)
 {
-	static char	buf[NI_MAXHOST];
+	static char	buf[4][NI_MAXHOST];
+	static int	bufidx;
 
-	if (sa == NULL || getnameinfo(sa, len, buf, sizeof(buf), NULL, 0,
-	    NI_NUMERICHOST))
+	bufidx = (bufidx + 1) % 4;
+	if (sa == NULL || getnameinfo(sa, len, buf[bufidx], sizeof(buf[0]),
+	    NULL, 0, NI_NUMERICHOST))
 		return ("(unknown)");
 	else
-		return (buf);
+		return (buf[bufidx]);
 }
 
 const char *
