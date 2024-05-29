@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.91 2024/03/30 13:33:20 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.92 2024/05/29 18:55:45 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -57,9 +57,7 @@
 uint64_t roundrobin_period;	/* [I] roundrobin period (ns) */
 int	lbolt;			/* once a second sleep address */
 
-#ifdef MULTIPROCESSOR
-struct __mp_lock sched_lock;
-#endif
+struct mutex sched_lock;
 
 void			update_loadavg(void *);
 void			schedcpu(void *);
@@ -351,12 +349,11 @@ mi_switch(void)
 	struct proc *nextproc;
 	struct process *pr = p->p_p;
 	struct timespec ts;
+	int oldipl, s;
 #ifdef MULTIPROCESSOR
 	int hold_count;
-	int sched_count;
 #endif
 
-	assertwaitok();
 	KASSERT(p->p_stat != SONPROC);
 
 	SCHED_ASSERT_LOCKED();
@@ -365,7 +362,6 @@ mi_switch(void)
 	/*
 	 * Release the kernel_lock, as we are about to yield the CPU.
 	 */
-	sched_count = __mp_release_all_but_one(&sched_lock);
 	if (_kernel_lock_held())
 		hold_count = __mp_release_all(&kernel_lock);
 	else
@@ -411,6 +407,9 @@ mi_switch(void)
 
 	nextproc = sched_chooseproc();
 
+	/* preserve old IPL level so we can switch back to that */
+	oldipl = MUTEX_OLDIPL(&sched_lock);
+
 	if (p != nextproc) {
 		uvmexp.swtch++;
 		TRACEPOINT(sched, off__cpu, nextproc->p_tid + THREAD_PID_OFFSET,
@@ -426,18 +425,13 @@ mi_switch(void)
 
 	SCHED_ASSERT_LOCKED();
 
-	/*
-	 * To preserve lock ordering, we need to release the sched lock
-	 * and grab it after we grab the big lock.
-	 * In the future, when the sched lock isn't recursive, we'll
-	 * just release it here.
-	 */
-#ifdef MULTIPROCESSOR
-	__mp_unlock(&sched_lock);
-#endif
+	/* Restore proc's IPL. */
+	MUTEX_OLDIPL(&sched_lock) = oldipl;
+	SCHED_UNLOCK(s);
 
 	SCHED_ASSERT_UNLOCKED();
 
+	assertwaitok();
 	smr_idle();
 
 	/*
@@ -468,8 +462,8 @@ mi_switch(void)
 	 */
 	if (hold_count)
 		__mp_acquire_count(&kernel_lock, hold_count);
-	__mp_acquire_count(&sched_lock, sched_count + 1);
 #endif
+	SCHED_LOCK(s);
 }
 
 /*

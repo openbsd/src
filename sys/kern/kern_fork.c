@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.258 2024/05/20 10:32:20 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.259 2024/05/29 18:55:45 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -688,12 +688,8 @@ proc_trampoline_mi(void)
 	struct proc *p = curproc;
 
 	SCHED_ASSERT_LOCKED();
-
 	clear_resched(curcpu());
-
-#if defined(MULTIPROCESSOR)
-	__mp_unlock(&sched_lock);
-#endif
+	mtx_leave(&sched_lock);
 	spl0();
 
 	SCHED_ASSERT_UNLOCKED();
