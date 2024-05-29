@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.166 2024/01/23 16:13:35 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.167 2024/05/29 10:41:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -454,16 +454,18 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 static struct bgpd_addr *
 up_get_nexthop(struct rde_peer *peer, struct filterstate *state, uint8_t aid)
 {
-	struct bgpd_addr *peer_local;
+	struct bgpd_addr *peer_local = NULL;
 
 	switch (aid) {
 	case AID_INET:
 	case AID_VPN_IPv4:
-		peer_local = &peer->local_v4_addr;
+		if (peer->local_v4_addr.aid == AID_INET)
+			peer_local = &peer->local_v4_addr;
 		break;
 	case AID_INET6:
 	case AID_VPN_IPv6:
-		peer_local = &peer->local_v6_addr;
+		if (peer->local_v4_addr.aid == AID_INET6)
+			peer_local = &peer->local_v6_addr;
 		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:
@@ -613,6 +615,8 @@ up_generate_attr(struct ibuf *buf, struct rde_peer *peer,
 		case ATTR_NEXTHOP:
 			switch (aid) {
 			case AID_INET:
+				if (nh == NULL)
+					return -1;
 				if (attr_writebuf(buf, ATTR_WELL_KNOWN,
 				    ATTR_NEXTHOP, &nh->exit_nexthop.v4,
 				    sizeof(nh->exit_nexthop.v4)) == -1)
@@ -889,6 +893,8 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
 
 	switch (aid) {
 	case AID_INET6:
+		if (nh == NULL)
+			return -1;
 		/* NH LEN */
 		if (ibuf_add_n8(buf, sizeof(struct in6_addr)) == -1)
 			return -1;
@@ -898,6 +904,8 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
 			return -1;
 		break;
 	case AID_VPN_IPv4:
+		if (nh == NULL)
+			return -1;
 		/* NH LEN */
 		if (ibuf_add_n8(buf,
 		    sizeof(uint64_t) + sizeof(struct in_addr)) == -1)
@@ -911,6 +919,8 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
 			return -1;
 		break;
 	case AID_VPN_IPv6:
+		if (nh == NULL)
+			return -1;
 		/* NH LEN */
 		if (ibuf_add_n8(buf,
 		    sizeof(uint64_t) + sizeof(struct in6_addr)) == -1)
@@ -1091,10 +1101,10 @@ up_dump_update(struct ibuf *buf, struct rde_peer *peer, uint8_t aid)
 fail:
 	/* Not enough space. Drop prefix, it will never fit. */
 	pt_getaddr(p->pt, &addr);
-	log_peer_warnx(&peer->conf, "path attributes to large, "
+	log_peer_warnx(&peer->conf, "dump of path attributes failed, "
 	    "prefix %s/%d dropped", log_addr(&addr), p->pt->prefixlen);
 
-	up_prefix_free(&peer->updates[AID_INET], p, peer, 0);
+	up_prefix_free(&peer->updates[aid], p, peer, 0);
 	/* XXX should probably send a withdraw for this prefix */
 	return -1;
 }
