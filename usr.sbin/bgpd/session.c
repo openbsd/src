@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.478 2024/05/22 08:41:14 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.479 2024/05/29 10:38:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2559,6 +2559,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 				    "Received multi protocol capability: "
 				    " unknown AFI %u, safi %u pair",
 				    afi, safi);
+				peer->capa.peer.mp[AID_UNSPEC] = 1;
 				break;
 			}
 			peer->capa.peer.mp[aid] = 1;
@@ -2715,12 +2716,14 @@ capa_neg_calc(struct peer *p)
 	    (p->capa.ann.as4byte && p->capa.peer.as4byte) != 0;
 
 	/* MP: both side must agree on the AFI,SAFI pair */
+	if (p->capa.peer.mp[AID_UNSPEC])
+		hasmp = 1;
 	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (p->capa.ann.mp[i] && p->capa.peer.mp[i])
 			p->capa.neg.mp[i] = 1;
 		else
 			p->capa.neg.mp[i] = 0;
-		if (p->capa.ann.mp[i])
+		if (p->capa.ann.mp[i] || p->capa.peer.mp[i])
 			hasmp = 1;
 	}
 	/* if no MP capability present default to IPv4 unicast mode */
