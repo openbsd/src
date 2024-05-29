@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.51 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_object.c,v 1.52 2024/05/29 16:04:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -618,10 +618,11 @@ i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 	unsigned char *p;
 	int objsize;
 
-	if ((a == NULL) || (a->data == NULL))
-		return (0);
+	if (a == NULL || a->data == NULL)
+		return 0;
 
 	objsize = ASN1_object_size(0, a->length, V_ASN1_OBJECT);
+
 	if (pp == NULL)
 		return objsize;
 
@@ -631,7 +632,8 @@ i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 	p += a->length;
 
 	*pp = p;
-	return (objsize);
+
+	return objsize;
 }
 LCRYPTO_ALIAS(i2d_ASN1_OBJECT);
 
