@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.61 2024/05/28 13:02:45 jsg Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.62 2024/05/29 07:24:26 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -157,6 +157,7 @@ int qwx_wmi_vdev_install_key(struct qwx_softc *,
     struct wmi_vdev_install_key_arg *, uint8_t);
 int qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *, struct qwx_vif *,
     struct ieee80211_node *, struct ieee80211_key *, int);
+void qwx_setkey_clear(struct qwx_softc *);
 
 int qwx_scan(struct qwx_softc *);
 void qwx_scan_abort(struct qwx_softc *);
@@ -183,7 +184,45 @@ qwx_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 
 	sc->fw_mode = ATH11K_FIRMWARE_MODE_NORMAL;
-	sc->crypto_mode = ATH11K_CRYPT_MODE_HW;
+	/*
+	 * There are several known hardware/software crypto issues
+	 * on wcn6855 devices, firmware 0x1106196e. It is unclear
+	 * if these are driver or firmware bugs.
+	 *
+	 * 1) Broadcast/Multicast frames will only be received on
+	 *    encrypted networks if hardware crypto is used and a
+	 *    CCMP group key is used. Otherwise such frames never
+	 *    even trigger an interrupt. This breaks ARP and IPv6.
+	 *    This issue is known to affect the Linux ath11k vendor
+	 *    driver when software crypto mode is selected.
+	 *    Workaround: Use hardware crypto on WPA2 networks.
+	 *    However, even with hardware crypto broadcast frames
+	 *    are never received if TKIP is used as the WPA2 group
+	 *    cipher and we have no workaround for this.
+	 *
+	 * 2) Adding WEP keys for hardware crypto crashes the firmware.
+	 *    Presumably, lack of WEP support is deliberate because the
+	 *    Linux ath11k vendor driver rejects attempts to install
+	 *    WEP keys to hardware.
+	 *    Workaround: Use software crypto if WEP is enabled.
+	 *    This suffers from the broadcast issues mentioned above.
+	 *
+	 * 3) A WPA1 group key handshake message from the AP is never
+	 *    received if hardware crypto is used.
+	 *    Workaround: Use software crypto if WPA1 is enabled.
+	 *    This suffers from the broadcast issues mentioned above,
+	 *    even on WPA2 networks when WPA1 and WPA2 are both enabled.
+	 *    On OpenBSD, WPA1 is disabled by default.
+	 *
+	 * The only known fully working configurations are unencrypted
+	 * networks, and WPA2/CCMP-only networks provided WPA1 remains
+	 * disabled.
+	 */
+	if ((ic->ic_flags & IEEE80211_F_WEPON) ||
+	    (ic->ic_rsnprotos & IEEE80211_PROTO_WPA))
+		sc->crypto_mode = ATH11K_CRYPT_MODE_SW;
+	else
+		sc->crypto_mode = ATH11K_CRYPT_MODE_HW;
 	sc->frame_mode = ATH11K_HW_TXRX_NATIVE_WIFI;
 	ic->ic_state = IEEE80211_S_INIT;
 	sc->ns_nstate = IEEE80211_S_INIT;
@@ -290,6 +329,8 @@ qwx_stop(struct ifnet *ifp)
 	qwx_del_task(sc, sc->sc_nswq, &sc->newstate_task);
 	qwx_del_task(sc, systq, &sc->setkey_task);
 	refcnt_finalize(&sc->task_refs, "qwxstop");
+
+	qwx_setkey_clear(sc);
 
 	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
 
@@ -529,8 +570,8 @@ qwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct qwx_softc *sc = ic->ic_softc;
 
 	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags) ||
-	    (k->k_cipher != IEEE80211_CIPHER_CCMP &&
-	    k->k_cipher != IEEE80211_CIPHER_TKIP))
+	    k->k_cipher == IEEE80211_CIPHER_WEP40 ||
+	    k->k_cipher == IEEE80211_CIPHER_WEP104)
 		return ieee80211_set_key(ic, ni, k);
 
 	return qwx_queue_setkey_cmd(ic, ni, k, QWX_ADD_KEY);
@@ -543,8 +584,8 @@ qwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct qwx_softc *sc = ic->ic_softc;
 
 	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags) ||
-	    (k->k_cipher != IEEE80211_CIPHER_CCMP &&
-	    k->k_cipher != IEEE80211_CIPHER_TKIP)) {
+	    k->k_cipher == IEEE80211_CIPHER_WEP40 ||
+	    k->k_cipher == IEEE80211_CIPHER_WEP104) {
 		ieee80211_delete_key(ic, ni, k);
 		return;
 	}
@@ -757,6 +798,24 @@ qwx_setkey_task(void *arg)
 	splx(s);
 }
 
+void
+qwx_setkey_clear(struct qwx_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct qwx_setkey_task_arg *a;
+
+	while (sc->setkey_nkeys > 0) {
+		a = &sc->setkey_arg[sc->setkey_tail];
+		ieee80211_release_node(ic, a->ni);
+		a->ni = NULL;
+		sc->setkey_tail = (sc->setkey_tail + 1) %
+		    nitems(sc->setkey_arg);
+		sc->setkey_nkeys--;
+	}
+	memset(sc->setkey_arg, 0, sizeof(sc->setkey_arg));
+	sc->setkey_cur = sc->setkey_tail = sc->setkey_nkeys = 0;
+}
+
 int
 qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
@@ -773,21 +832,11 @@ qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	    nstate != IEEE80211_S_AUTH)
 		return 0;
 	if (ic->ic_state == IEEE80211_S_RUN) {
-		struct qwx_setkey_task_arg *a;
 #if 0
 		qwx_del_task(sc, systq, &sc->ba_task);
 #endif
 		qwx_del_task(sc, systq, &sc->setkey_task);
-		while (sc->setkey_nkeys > 0) {
-			a = &sc->setkey_arg[sc->setkey_tail];
-			ieee80211_release_node(ic, a->ni);
-			a->ni = NULL;
-			sc->setkey_tail = (sc->setkey_tail + 1) %
-			    nitems(sc->setkey_arg);
-			sc->setkey_nkeys--;
-		}
-		memset(sc->setkey_arg, 0, sizeof(sc->setkey_arg));
-		sc->setkey_cur = sc->setkey_tail = sc->setkey_nkeys = 0;
+		qwx_setkey_clear(sc);
 #if 0
 		qwx_del_task(sc, systq, &sc->bgscan_done_task);
 #endif
@@ -16021,13 +16070,15 @@ qwx_dp_rx_h_reo_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 int
 qwx_dp_rx_h_rxdma_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	int drop = 0;
 #if 0
 	ar->ab->soc_stats.rxdma_error[rxcb->err_code]++;
 #endif
 	switch (msdu->err_code) {
 	case HAL_REO_ENTR_RING_RXDMA_ECODE_TKIP_MIC_ERR:
-		drop = 1; /* OpenBSD uses TKIP in software crypto mode only */
+		ic->ic_stats.is_rx_locmicfail++;
+		drop = 1;
 		break;
 	default:
 		/* TODO: Review other rxdma error code to check if anything is
@@ -24193,7 +24244,7 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 	void *hal_tcl_desc;
 	uint8_t pool_id;
 	uint8_t hal_ring_id;
-	int ret, msdu_id;
+	int ret, msdu_id, off;
 	uint32_t ring_selector = 0;
 	uint8_t ring_map = 0;
 
@@ -24238,22 +24289,34 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 	if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
 	    ti.encap_type == HAL_TCL_ENCAP_TYPE_RAW) {
 		k = ieee80211_get_txkey(ic, wh, ni);
-		switch (k->k_cipher) {
-		case IEEE80211_CIPHER_CCMP:
-			ti.encrypt_type = HAL_ENCRYPT_TYPE_CCMP_128;
-			m->m_pkthdr.len += IEEE80211_CCMP_MICLEN;
-			break;
-		case IEEE80211_CIPHER_TKIP:
-			ti.encrypt_type = HAL_ENCRYPT_TYPE_TKIP_MIC;
-			m->m_pkthdr.len += IEEE80211_TKIP_MICLEN;
-			break;
-		default:
-			/* Fallback to software crypto for other ciphers. */
+		if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags)) {
 			ti.encrypt_type = HAL_ENCRYPT_TYPE_OPEN;
-			break;
+		} else {
+			switch (k->k_cipher) {
+			case IEEE80211_CIPHER_CCMP:
+				ti.encrypt_type = HAL_ENCRYPT_TYPE_CCMP_128;
+				if (m_makespace(m, m->m_pkthdr.len,
+				    IEEE80211_CCMP_MICLEN, &off) == NULL) {
+					m_freem(m);
+					return ENOSPC;
+				}
+				break;
+			case IEEE80211_CIPHER_TKIP:
+				ti.encrypt_type = HAL_ENCRYPT_TYPE_TKIP_MIC;
+				if (m_makespace(m, m->m_pkthdr.len,
+				    IEEE80211_TKIP_MICLEN, &off) == NULL) {
+					m_freem(m);
+					return ENOSPC;
+				}
+				break;
+			default:
+				ti.encrypt_type = HAL_ENCRYPT_TYPE_OPEN;
+				break;
+			}
 		}
 
 		if (ti.encrypt_type == HAL_ENCRYPT_TYPE_OPEN) {
+			/* Using software crypto. */
 			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
 				return ENOBUFS;
 			/* 802.11 header may have moved. */
