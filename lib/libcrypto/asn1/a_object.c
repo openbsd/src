@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.52 2024/05/29 16:04:50 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.53 2024/05/29 16:10:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -619,7 +619,7 @@ i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 	int objsize;
 
 	if (a == NULL || a->data == NULL)
-		return 0;
+		return -1;
 
 	objsize = ASN1_object_size(0, a->length, V_ASN1_OBJECT);
 
