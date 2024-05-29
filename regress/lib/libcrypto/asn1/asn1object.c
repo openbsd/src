@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.13 2024/05/29 16:49:36 tb Exp $ */
+/* $OpenBSD: asn1object.c,v 1.14 2024/05/29 17:23:05 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -349,7 +349,7 @@ asn1_object_bad_content_test(void)
 	int failed = 1;
 
 	p = asn1_object_bad_content1;
-	len = sizeof(asn1_object_bad_content1); 
+	len = sizeof(asn1_object_bad_content1);
 	if ((aobj = c2i_ASN1_OBJECT(NULL, &p, len)) != NULL) {
 		fprintf(stderr, "FAIL: c2i_ASN1_OBJECT() succeeded with bad "
 		    "content 1\n");
@@ -357,7 +357,7 @@ asn1_object_bad_content_test(void)
 	}
 
 	p = asn1_object_bad_content2;
-	len = sizeof(asn1_object_bad_content2); 
+	len = sizeof(asn1_object_bad_content2);
 	if ((aobj = c2i_ASN1_OBJECT(NULL, &p, len)) != NULL) {
 		fprintf(stderr, "FAIL: c2i_ASN1_OBJECT() succeeded with bad "
 		    "content 2\n");
