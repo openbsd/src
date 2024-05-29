@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.765 2024/05/23 08:06:22 kevlo Exp $
+$OpenBSD: usbdevs,v 1.766 2024/05/29 06:48:43 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1023,6 +1023,7 @@ product APPLE IPHONE_4S		0x12a0	iPhone 4S
 product APPLE IPHONE_6		0x12a8	iPhone 6
 product APPLE ETHERNET		0x1402	Ethernet A1277
 product APPLE BLUETOOTH2	0x8205	Bluetooth
+product APPLE BLUETOOTH3	0x8207	Bluetooth
 product APPLE BLUETOOTH		0x8300	Bluetooth
 product APPLE ISIGHT_1		0x8501	iSight
 product APPLE ISIGHT		0x8502	iSight
