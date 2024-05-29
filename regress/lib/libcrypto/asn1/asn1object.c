@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.10 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: asn1object.c,v 1.11 2024/05/29 16:19:50 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -25,9 +25,14 @@
 #include "asn1_local.h"
 
 static void
-hexdump(const unsigned char *buf, size_t len)
+hexdump(const unsigned char *buf, int len)
 {
-	size_t i;
+	int i;
+
+	if (len <= 0) {
+		fprintf(stderr, "<negative length %d>\n", len);
+		return;
+	}
 
 	for (i = 1; i <= len; i++)
 		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
@@ -223,6 +228,7 @@ do_asn1_object_test(struct asn1_object_test *aot)
 	ASN1_OBJECT *aobj = NULL;
 	uint8_t buf[1024];
 	const uint8_t *p;
+	uint8_t *der = NULL;
 	uint8_t *q;
 	int err, ret;
 	int failed = 1;
@@ -268,6 +274,15 @@ do_asn1_object_test(struct asn1_object_test *aot)
 	    aot->der_len))
 		goto failed;
 
+	der = NULL;
+	ret = i2d_ASN1_OBJECT(aobj, &der);
+	if (!asn1_compare_bytes("ASN1_OBJECT DER", der, ret, aot->der,
+	    aot->der_len))
+		goto failed;
+
+	free(der);
+	der = NULL;
+
 	ASN1_OBJECT_free(aobj);
 	aobj = NULL;
 
@@ -300,6 +315,7 @@ do_asn1_object_test(struct asn1_object_test *aot)
 
  failed:
 	ASN1_OBJECT_free(aobj);
+	free(der);
 
 	return failed;
 }
@@ -455,6 +471,7 @@ asn1_object_large_oid_test(void)
 	ASN1_OBJECT *aobj = NULL;
 	uint8_t buf[1024];
 	const uint8_t *p;
+	uint8_t *der = NULL;
 	uint8_t *q;
 	int ret;
 	int failed = 1;
@@ -475,8 +492,15 @@ asn1_object_large_oid_test(void)
 	    sizeof(asn1_large_oid_der)))
 		goto failed;
 
+	der = NULL;
+	ret = i2d_ASN1_OBJECT(aobj, &der);
+	if (!asn1_compare_bytes("ASN1_OBJECT DER", der, ret, asn1_large_oid_der,
+	    sizeof(asn1_large_oid_der)))
+		goto failed;
+
  failed:
 	ASN1_OBJECT_free(aobj);
+	free(der);
 
 	return failed;
 }
