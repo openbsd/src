@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.43 2023/07/02 19:02:28 cheloha Exp $	*/
+/*	$OpenBSD: apm.c,v 1.44 2024/05/29 06:39:13 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -277,7 +277,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EOPNOTSUPP; /* XXX */
 		break;
 	case APM_IOC_GETPOWER:
-	        power = (struct apm_power_info *)data;
+		power = (struct apm_power_info *)data;
 		error = (*get_apminfo)(power);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.57 2024/03/25 13:01:49 mvs Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.58 2024/05/29 06:39:13 jsg Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -216,7 +216,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	error = wsmux_do_open(sc, evar);
 	if (error)
-                wsevent_fini(evar);
+		wsevent_fini(evar);
 	return (error);
 }
 
