@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.104 2024/05/24 12:57:20 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.105 2024/05/29 13:27:52 tb Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2024 $
+.Dd $Mdocdate: May 29 2024 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -362,11 +362,6 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T The Profile for Algorithms and Key Sizes for Use in the Resource Public Key Infrastructure (RPKI)
-.%R RFC 6485
-.Re
-.Pp
-.Rs
 .%T A Profile for X.509 PKIX Resource Certificates
 .%R RFC 6487
 .Re
@@ -377,17 +372,17 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T The Resource Public Key Infrastructure (RPKI) Ghostbusters Record
+.%T The RPKI Ghostbusters Record
 .%R RFC 6493
 .Re
 .Pp
 .Rs
-.%T Policy Qualifiers in Resource Public Key Infrastructure (RPKI) Certificates
+.%T Policy Qualifiers in RPKI Certificates
 .%R RFC 7318
 .Re
 .Pp
 .Rs
-.%T The Profile for Algorithms and Key Sizes for Use in the Resource Public Key Infrastructure
+.%T The Profile for Algorithms and Key Sizes for Use in the RPKI
 .%R RFC 7935
 .Re
 .Pp
@@ -402,7 +397,7 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T Resource Public Key Infrastructure (RPKI) Trust Anchor Locator
+.%T RPKI Trust Anchor Locator
 .%R RFC 8630
 .Re
 .Pp
@@ -412,7 +407,7 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T Manifests for the Resource Public Key Infrastructure (RPKI)
+.%T Manifests for the RPKI
 .%R RFC 9286
 .Re
 .Pp
@@ -422,7 +417,7 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T On the use of the Cryptographic Message Syntax (CMS) Signing-Time Attribute in Resource Public Key Infrastructure (RPKI) Signed Objects
+.%T On the use of the CMS Signing-Time Attribute in RPKI Signed Objects
 .%R RFC 9589
 .Re
 .Pp
@@ -456,9 +451,15 @@ agreement regarding ARIN service restrictions.
 .Re
 .Pp
 .Rs
-.%T A profile for Signed Prefix Lists for Use in the Resource Public Key Infrastructure (RPKI)
+.%T A profile for Signed Prefix Lists for Use in the RPKI
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rpki-prefixlist-02
 .%D Jan, 2024
+.Re
+.Pp
+.Rs
+.%T Relying Party Handling of RPKI CRL Number Extensions
+.%U https://datatracker.ietf.org/doc/html/draft-spaghetti-sidrops-rpki-crl-numbers
+.%D May, 2024
 .Re
 .Sh HISTORY
 .Nm
