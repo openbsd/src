@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.170 2024/05/21 23:16:06 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.171 2024/05/29 12:21:33 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -400,6 +400,8 @@ extern int cpuid_level;
 extern int cpu_meltdown;
 extern u_int cpu_mwait_size;
 extern u_int cpu_mwait_states;
+
+int	cpu_suspend_primary(void);
 
 /* cacheinfo.c */
 void	x86_print_cacheinfo(struct cpu_info *);

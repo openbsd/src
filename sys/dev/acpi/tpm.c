@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.19 2024/05/13 01:15:50 jsg Exp $ */
+/* $OpenBSD: tpm.c,v 1.20 2024/05/29 12:21:33 kettenis Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -375,6 +375,9 @@ tpm_suspend(struct tpm_softc *sc)
 	};
 	uint8_t *command;
 	size_t commandlen;
+
+	if (sc->sc_acpi->sc_state == ACPI_STATE_S0)
+		return 0;
 
 	DPRINTF(("%s: saving state preparing for suspend\n",
 	    sc->sc_dev.dv_xname));

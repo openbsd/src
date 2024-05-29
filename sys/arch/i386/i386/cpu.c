@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.114 2023/10/24 13:20:10 claudio Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.115 2024/05/29 12:21:33 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -925,3 +925,5 @@ wbinvd_on_all_cpus(void)
 	return 0;
 }
 #endif
+
+int cpu_suspended;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.188 2024/05/14 01:42:07 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.189 2024/05/29 12:21:33 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1460,4 +1460,53 @@ wbinvd_on_all_cpus(void)
 	wbinvd();
 	return 0;
 }
+#endif
+
+int cpu_suspended;
+
+#ifdef SUSPEND
+
+void
+cpu_suspend_cycle(void)
+{
+	cpu_idle_cycle_fcn();
+}
+
+int
+cpu_suspend_primary(void)
+{
+	struct cpu_info *ci = curcpu();
+	int count = 0;
+
+	printf("suspend\n");
+
+	/* Mask clock interrupts. */
+	local_pic.pic_hwmask(&local_pic, 0);
+
+	/*
+	 * All non-wakeup interrupts should be masked at this point;
+	 * re-enable interrupts such that wakeup interrupts actually
+	 * wake us up.  Set a flag such that drivers can tell we're
+	 * suspended and change their behaviour accordingly.  They can
+	 * wake us up by clearing the flag.
+	 */
+	cpu_suspended = 1;
+	ci->ci_ilevel = IPL_NONE;
+	intr_enable();
+
+	while (cpu_suspended) {
+		cpu_suspend_cycle();
+		count++;
+	}
+
+	intr_disable();
+	ci->ci_ilevel = IPL_HIGH;
+
+	/* Unmask clock interrupts. */
+	local_pic.pic_hwunmask(&local_pic, 0);
+
+	printf("resume %d\n", count);
+	return 0;
+}
+
 #endif

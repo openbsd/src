@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.57 2024/05/26 13:37:31 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.58 2024/05/29 12:21:33 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -524,12 +524,22 @@ intr_disestablish(struct intrhand *ih)
 int
 intr_handler(struct intrframe *frame, struct intrhand *ih)
 {
+	extern int cpu_suspended;
 	struct cpu_info *ci = curcpu();
 	int floor;
 	int rc;
 #ifdef MULTIPROCESSOR
 	int need_lock;
+#endif
 
+	/*
+	 * We may not be able to mask MSIs, so block non-wakeup
+	 * interrupts while we're suspended.
+	 */
+	if (cpu_suspended && (ih->ih_flags & IPL_WAKEUP) == 0)
+		return 0;
+
+#ifdef MULTIPROCESSOR
 	if (ih->ih_flags & IPL_MPSAFE)
 		need_lock = 0;
 	else

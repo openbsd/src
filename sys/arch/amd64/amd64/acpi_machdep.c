@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.109 2024/05/26 13:37:31 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.110 2024/05/29 12:21:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -377,6 +377,9 @@ acpi_attach_machdep(struct acpi_softc *sc)
 int
 acpi_sleep_cpu(struct acpi_softc *sc, int state)
 {
+	if (state == ACPI_STATE_S0)
+		return cpu_suspend_primary();
+
 	rtcstop();
 #if NLAPIC > 0
 	lapic_disable();
@@ -458,6 +461,9 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 void
 acpi_resume_cpu(struct acpi_softc *sc, int state)
 {
+	if (state == ACPI_STATE_S0)
+		return;
+
 	cpu_init_msrs(&cpu_info_primary);
 	cpu_fix_msrs(&cpu_info_primary);
 

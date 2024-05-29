@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.428 2024/05/13 19:56:37 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.429 2024/05/29 12:21:33 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2085,6 +2085,7 @@ acpi_powerdown_task(void *arg0, int dummy)
 int
 acpi_interrupt(void *arg)
 {
+	extern int cpu_suspended;
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
 	uint32_t processed = 0, idx, jdx;
 	uint16_t sts, en;
@@ -2136,6 +2137,9 @@ acpi_interrupt(void *arg)
 			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
 			    ACPI_PM1_PWRBTN_STS);
 			sts &= ~ACPI_PM1_PWRBTN_STS;
+
+			if (cpu_suspended)
+				cpu_suspended = 0;
 
 			acpi_addtask(sc, acpi_pbtn_task, sc, 0);
 		}
