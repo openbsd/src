@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.66 2024/05/23 03:21:08 jsg Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.67 2024/05/29 07:27:33 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1640,6 +1640,11 @@ athn_usb_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    (IFF_UP | IFF_RUNNING))
 		return (0);
 
+	if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
+		/* Use software crypto for ciphers other than CCMP. */
+		return ieee80211_set_key(ic, ni, k);
+	}
+
 	/* Do it in a process context. */
 	cmd.ni = (ni != NULL) ? ieee80211_ref_node(ni) : NULL;
 	cmd.key = k;
@@ -1681,6 +1686,11 @@ athn_usb_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (!(ic->ic_if.if_flags & IFF_RUNNING) ||
 	    ic->ic_state != IEEE80211_S_RUN)
 		return;	/* Nothing to do. */
+
+	if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
+		ieee80211_delete_key(ic, ni, k);
+		return;
+	}
 
 	/* Do it in a process context. */
 	cmd.ni = (ni != NULL) ? ieee80211_ref_node(ni) : NULL;
