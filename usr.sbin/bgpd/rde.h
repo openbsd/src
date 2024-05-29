@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.302 2024/05/22 08:41:14 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.303 2024/05/29 10:36:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -680,7 +680,6 @@ void		 nexthop_update(struct kroute_nexthop *);
 struct nexthop	*nexthop_get(struct bgpd_addr *);
 struct nexthop	*nexthop_ref(struct nexthop *);
 int		 nexthop_unref(struct nexthop *);
-int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
 /* rde_update.c */
 void		 up_generate_updates(struct rde_peer *, struct rib_entry *);
