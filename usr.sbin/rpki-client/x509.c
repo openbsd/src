@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.87 2024/04/21 09:03:22 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.88 2024/05/29 13:26:24 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -787,92 +787,6 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 }
 
 /*
- * Parse X509v3 authority key identifier (AKI) from the CRL.
- * This is matched against the string from x509_get_ski() above.
- * Returns the AKI or NULL if it could not be parsed.
- * The AKI is formatted as a hex string.
- */
-char *
-x509_crl_get_aki(X509_CRL *crl, const char *fn)
-{
-	const unsigned char	*d;
-	AUTHORITY_KEYID		*akid;
-	ASN1_OCTET_STRING	*os;
-	int			 dsz, crit;
-	char			*res = NULL;
-
-	akid = X509_CRL_get_ext_d2i(crl, NID_authority_key_identifier, &crit,
-	    NULL);
-	if (akid == NULL) {
-		warnx("%s: RFC 6487 section 4.8.3: AKI: extension missing", fn);
-		return NULL;
-	}
-	if (crit != 0) {
-		warnx("%s: RFC 6487 section 4.8.3: "
-		    "AKI: extension not non-critical", fn);
-		goto out;
-	}
-	if (akid->issuer != NULL || akid->serial != NULL) {
-		warnx("%s: RFC 6487 section 4.8.3: AKI: "
-		    "authorityCertIssuer or authorityCertSerialNumber present",
-		    fn);
-		goto out;
-	}
-
-	os = akid->keyid;
-	if (os == NULL) {
-		warnx("%s: RFC 6487 section 4.8.3: AKI: "
-		    "Key Identifier missing", fn);
-		goto out;
-	}
-
-	d = os->data;
-	dsz = os->length;
-
-	if (dsz != SHA_DIGEST_LENGTH) {
-		warnx("%s: RFC 6487 section 4.8.2: AKI: "
-		    "want %d bytes SHA1 hash, have %d bytes",
-		    fn, SHA_DIGEST_LENGTH, dsz);
-		goto out;
-	}
-
-	res = hex_encode(d, dsz);
-out:
-	AUTHORITY_KEYID_free(akid);
-	return res;
-}
-
-/*
- * Retrieve CRL Number extension. Returns a printable hexadecimal representation
- * of the number which has to be freed after use.
- */
-char *
-x509_crl_get_number(X509_CRL *crl, const char *fn)
-{
-	ASN1_INTEGER		*aint;
-	int			 crit;
-	char			*res = NULL;
-
-	aint = X509_CRL_get_ext_d2i(crl, NID_crl_number, &crit, NULL);
-	if (aint == NULL) {
-		warnx("%s: RFC 6487 section 5: CRL Number missing", fn);
-		return NULL;
-	}
-	if (crit != 0) {
-		warnx("%s: RFC 5280, section 5.2.3: "
-		    "CRL Number not non-critical", fn);
-		goto out;
-	}
-
-	/* This checks that the number is non-negative and <= 20 bytes. */
-	res = x509_convert_seqnum(fn, aint);
-
- out:
-	ASN1_INTEGER_free(aint);
-	return res;
-}
-
-/*
  * Convert passed ASN1_TIME to time_t *t.
  * Returns 1 on success and 0 on failure.
  */
@@ -1008,7 +922,8 @@ x509_valid_subject(const char *fn, const X509 *x)
 }
 
 /*
- * Convert an ASN1_INTEGER into a hexstring.
+ * Convert an ASN1_INTEGER into a hexstring, enforcing that it is non-negative
+ * and representable by at most 20 octets (RFC 5280, section 4.1.2.2).
  * Returned string needs to be freed by the caller.
  */
 char *

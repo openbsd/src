@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.218 2024/05/20 15:51:43 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.219 2024/05/29 13:26:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -480,7 +480,6 @@ struct crl {
 	RB_ENTRY(crl)	 entry;
 	char		*aki;
 	char		*mftpath;
-	char		*number;
 	X509_CRL	*x509_crl;
 	time_t		 thisupdate;	/* do not use before */
 	time_t		 nextupdate;	/* do not use after */
@@ -909,8 +908,6 @@ int		 x509_get_ski(X509 *, const char *, char **);
 int		 x509_get_notbefore(X509 *, const char *, time_t *);
 int		 x509_get_notafter(X509 *, const char *, time_t *);
 int		 x509_get_crl(X509 *, const char *, char **);
-char		*x509_crl_get_aki(X509_CRL *, const char *);
-char		*x509_crl_get_number(X509_CRL *, const char *);
 char		*x509_get_pubkey(X509 *, const char *);
 char		*x509_pubkey_get_ski(X509_PUBKEY *, const char *);
 enum cert_purpose	 x509_get_purpose(X509 *, const char *);
