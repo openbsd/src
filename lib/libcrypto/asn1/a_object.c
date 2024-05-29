@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.53 2024/05/29 16:10:41 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.54 2024/05/29 16:14:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -615,7 +615,7 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **out_aobj, const unsigned char **pp, long len)
 int
 i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 {
-	unsigned char *p;
+	unsigned char *buf, *p;
 	int objsize;
 
 	if (a == NULL || a->data == NULL)
@@ -626,10 +626,19 @@ i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 	if (pp == NULL)
 		return objsize;
 
-	p = *pp;
+	if ((buf = *pp) == NULL)
+		buf = calloc(1, objsize);
+	if (buf == NULL)
+		return -1;
+
+	p = buf;
 	ASN1_put_object(&p, 0, a->length, V_ASN1_OBJECT, V_ASN1_UNIVERSAL);
 	memcpy(p, a->data, a->length);
 	p += a->length;
+
+	/* If buf was allocated, return it, otherwise return the advanced p. */
+	if (*pp == NULL)
+		p = buf;
 
 	*pp = p;
 
