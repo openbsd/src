@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.39 2024/05/29 00:48:15 jsg Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.40 2024/05/29 01:11:53 jsg Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.39 2024/05/29 00:48:15 jsg Exp $
+ * $Id: aic7xxxvar.h,v 1.40 2024/05/29 01:11:53 jsg Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -1164,15 +1164,6 @@ struct ahc_pci_identity {
 extern const struct ahc_pci_identity ahc_pci_ident_table[];
 
 /***************************** VL/EISA Declarations ***************************/
-struct aic7770_identity {
-	uint32_t		 full_id;
-	uint32_t		 id_mask;
-	const char		*name;
-	ahc_device_setup_t	*setup;
-};
-extern struct aic7770_identity aic7770_ident_table[];
-extern const int ahc_num_aic7770_devs;
-
 #define AHC_EISA_SLOT_OFFSET	0xc00
 #define AHC_EISA_IOSIZE		0x100
 

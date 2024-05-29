@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxvar.h,v 1.19 2008/07/21 04:12:21 kevlo Exp $ */
+/*	$OpenBSD: acxvar.h,v 1.20 2024/05/29 01:11:53 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -469,8 +469,6 @@ struct acx_softc {
 #define ACX_RADIO_RSSI_RADIA	78	/* 78db */
 #define ACX_RADIO_RSSI_UNKN	0	/* unknown radio */
 
-extern const struct ieee80211_rateset	acx_rates_11b;
-extern const struct ieee80211_rateset	acx_rates_11g;
 extern int				acx_beacon_intvl;
 
 void	acx100_set_param(struct acx_softc *);
