@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390var.h,v 1.13 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: dp8390var.h,v 1.14 2024/05/29 00:48:15 jsg Exp $	*/
 /*	$NetBSD: dp8390var.h,v 1.8 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
@@ -173,4 +173,3 @@ void	dp8390_rint(struct dp8390_softc *);
 
 void	dp8390_getmcaf(struct arpcom *, u_int8_t *);
 struct mbuf *dp8390_get(struct dp8390_softc *, int, u_short);
-void	dp8390_read(struct dp8390_softc *, int, u_short);

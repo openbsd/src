@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.31 2020/08/13 12:11:15 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.32 2024/05/29 00:48:15 jsg Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -357,10 +357,6 @@ typedef enum
 
 void ahc_power_state_change(struct ahc_softc *, ahc_power_state);
 #endif
-/******************************** VL/EISA *************************************/
-int aic7770_map_registers(struct ahc_softc *, u_int);
-int aic7770_map_int(struct ahc_softc *, int);
-
 /********************************* Debug **************************************/
 static __inline void	ahc_print_path(struct ahc_softc *, struct scb *);
 static __inline void	ahc_platform_dump_card_state(struct ahc_softc *);
@@ -379,15 +375,11 @@ ahc_platform_dump_card_state(struct ahc_softc *ahc)
 	       ahc->features, ahc->flags, ahc->chip, ahc->bugs);
 }
 /**************************** Transfer Settings *******************************/
-void	  ahc_notify_xfer_settings_change(struct ahc_softc *,
-					  struct ahc_devinfo *);
 void	  ahc_platform_set_tags(struct ahc_softc *, struct ahc_devinfo *, int);
 
 /************************* Initialization/Teardown ****************************/
-int	  ahc_map_int(struct ahc_softc *);
 int	  ahc_attach(struct ahc_softc *);
 int	  ahc_softc_comp(struct ahc_softc *, struct ahc_softc *);
-int	  ahc_detach(struct device *, int);
 
 /****************************** Interrupts ************************************/
 int                     ahc_platform_intr(void *);

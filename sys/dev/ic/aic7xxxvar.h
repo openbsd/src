@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.38 2022/10/21 17:45:40 kn Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.39 2024/05/29 00:48:15 jsg Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.38 2022/10/21 17:45:40 kn Exp $
+ * $Id: aic7xxxvar.h,v 1.39 2024/05/29 00:48:15 jsg Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -1184,14 +1184,7 @@ void			ahc_busy_tcl(struct ahc_softc *, u_int, u_int);
 
 /***************************** PCI Front End *********************************/
 const struct ahc_pci_identity	*ahc_find_pci_device(pcireg_t, pcireg_t, u_int);
-int			 ahc_pci_config(struct ahc_softc *,
-			    struct ahc_pci_identity *);
 int			 ahc_pci_test_register_access(struct ahc_softc *);
-
-/*************************** EISA/VL Front End ********************************/
-struct aic7770_identity *aic7770_find_device(uint32_t);
-int			 aic7770_config(struct ahc_softc *,
-			    struct aic7770_identity *, u_int);
 
 /************************** SCB and SCB queue management **********************/
 int		ahc_probe_scbs(struct ahc_softc *);

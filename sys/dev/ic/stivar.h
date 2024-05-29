@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.27 2021/05/01 20:04:33 kettenis Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.28 2024/05/29 00:48:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -138,8 +138,6 @@ struct sti_softc {
 
 int	sti_attach_common(struct sti_softc *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, u_int);
-int	sti_cnattach(struct sti_rom *, struct sti_screen *, bus_space_tag_t,
-	    bus_addr_t *, u_int);
 void	sti_describe(struct sti_softc *);
 void	sti_end_attach(void *);
 u_int	sti_rom_size(bus_space_tag_t, bus_space_handle_t);

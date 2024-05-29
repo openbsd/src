@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.60 2024/05/12 08:42:13 jsg Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.61 2024/05/29 00:48:15 jsg Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -147,7 +147,6 @@ void	com_resume(struct com_softc *);
 
 void	comdiag(void *);
 int	comspeed(long, long);
-u_char	com_cflag2lcr(tcflag_t); /* XXX undefined */
 int	comparam(struct tty *, struct termios *);
 void	comstart(struct tty *);
 void	comsoft(void *);

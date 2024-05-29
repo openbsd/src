@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.30 2022/10/21 17:45:40 kn Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.31 2024/05/29 00:48:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1329,8 +1329,6 @@ void			ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl);
 
 /***************************** PCI Front End *********************************/
 const struct ahd_pci_identity * ahd_find_pci_device(pcireg_t, pcireg_t);
-int			  ahd_pci_config(struct ahd_softc *,
-					 struct ahd_pci_identity *);
 int	ahd_pci_test_register_access(struct ahd_softc *);
 
 /************************** SCB and SCB queue management **********************/
@@ -1405,10 +1403,6 @@ int			ahd_search_qinfifo(struct ahd_softc *ahd, int target,
 					   char channel, int lun, u_int tag,
 					   role_t role, uint32_t status,
 					   ahd_search_action action);
-int			ahd_search_disc_list(struct ahd_softc *ahd, int target,
-					     char channel, int lun, u_int tag,
-					     int stop_on_first, int remove,
-					     int save_state);
 void			ahd_freeze_devq(struct ahd_softc *ahd, struct scb *scb);
 int			ahd_reset_channel(struct ahd_softc *ahd, char channel,
 					  int initiate_reset);

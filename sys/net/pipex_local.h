@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.51 2024/01/23 17:57:21 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.52 2024/05/29 00:48:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -468,7 +468,6 @@ struct mbuf           *ip_is_idle_packet (struct mbuf *, int *);
 void                  pipex_session_log (struct pipex_session *, int, const char *, ...)  __attribute__((__format__(__printf__,3,4)));
 uint32_t              pipex_sockaddr_hash_key(struct sockaddr *);
 int                   pipex_sockaddr_compar_addr(struct sockaddr *, struct sockaddr *);
-int                   pipex_ppp_enqueue (struct mbuf *, struct pipex_session *, struct mbuf_queue *);
 void                  pipex_timer_start (void);
 void                  pipex_timer_stop (void);
 void                  pipex_timer (void *);

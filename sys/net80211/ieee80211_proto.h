@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.48 2022/03/14 15:07:24 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.49 2024/05/29 00:48:15 jsg Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -119,8 +119,6 @@ extern	u_int8_t *ieee80211_add_capinfo(u_int8_t *, struct ieee80211com *,
 extern	u_int8_t *ieee80211_add_ssid(u_int8_t *, const u_int8_t *, u_int);
 extern	u_int8_t *ieee80211_add_rates(u_int8_t *,
 		const struct ieee80211_rateset *);
-extern	u_int8_t *ieee80211_add_fh_params(u_int8_t *, struct ieee80211com *,
-		const struct ieee80211_node *);
 extern	u_int8_t *ieee80211_add_ds_params(u_int8_t *, struct ieee80211com *,
 		const struct ieee80211_node *);
 extern	u_int8_t *ieee80211_add_tim(u_int8_t *, struct ieee80211com *);

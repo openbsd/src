@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.13 2022/11/02 10:41:34 kn Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.14 2024/05/29 00:48:14 jsg Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -310,7 +310,6 @@ void	gusmax_close(void *);
 int	gusintr(void *);
 int	gus_set_in_gain(caddr_t, u_int, u_char);
 int	gus_get_in_gain(caddr_t);
-int	gus_set_out_gain(caddr_t, u_int, u_char);
 int	gus_get_out_gain(caddr_t);
 int	gus_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	gusmax_set_params(void *, int, int, struct audio_params *, struct audio_params *);

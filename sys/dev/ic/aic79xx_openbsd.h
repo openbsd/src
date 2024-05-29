@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.21 2020/07/28 21:33:14 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.22 2024/05/29 00:48:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -232,9 +232,6 @@ void aic_platform_scb_free(struct ahd_softc *, struct scb *);
 #define aic_get_pci_function(pci) ((pci)->pa_function)
 #define aic_get_pci_slot(pci) ((pci)->pa_device)
 #define aic_get_pci_bus(pci) ((pci)->pa_bus)
-
-int			ahd_pci_map_registers(struct ahd_softc *);
-int			ahd_pci_map_int(struct ahd_softc *);
 /*#endif*/
 
 typedef enum
@@ -245,15 +242,11 @@ typedef enum
 	AHD_POWER_STATE_D3
 } ahd_power_state;
 
-void ahd_power_state_change(struct ahd_softc *, ahd_power_state);
-
 /********************************* Debug **************************************/
 void	ahd_print_path(struct ahd_softc *, struct scb *);
 void	ahd_platform_dump_card_state(struct ahd_softc *ahd);
 
 /**************************** Transfer Settings *******************************/
-void	  ahd_notify_xfer_settings_change(struct ahd_softc *,
-					  struct ahd_devinfo *);
 void	  ahd_platform_set_tags(struct ahd_softc *, struct ahd_devinfo *,
 				ahd_queue_alg);
 
