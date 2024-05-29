@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.11 2024/05/29 16:19:50 tb Exp $ */
+/* $OpenBSD: asn1object.c,v 1.12 2024/05/29 16:47:26 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/err.h>
+#include <openssl/objects.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -505,6 +506,43 @@ asn1_object_large_oid_test(void)
 	return failed;
 }
 
+static int
+asn1_object_i2d_errors(void)
+{
+	ASN1_OBJECT *aobj = NULL;
+	int ret;
+	int failed = 1;
+
+	if ((ret = i2d_ASN1_OBJECT(NULL, NULL)) > 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_OBJECT(NULL, NULL) returned %d, "
+		    "want <= 0\n", ret);
+		goto failed;
+	}
+
+	if ((aobj = OBJ_nid2obj(NID_undef)) == NULL) {
+		fprintf(stderr, "FAIL: OBJ_nid2obj() failed\n");
+		goto failed;
+	}
+
+	if (OBJ_get0_data(aobj) != NULL) {
+		fprintf(stderr, "FAIL: undefined obj didn't have NULL data\n");
+		goto failed;
+	}
+
+	if ((ret = i2d_ASN1_OBJECT(aobj, NULL)) > 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_OBJECT() succeeded on undefined "
+		    "object\n");
+		goto failed;
+	}
+
+	failed = 0;
+
+ failed:
+	ASN1_OBJECT_free(aobj);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -514,6 +552,7 @@ main(int argc, char **argv)
 	failed |= asn1_object_bad_content_test();
 	failed |= asn1_object_txt_test();
 	failed |= asn1_object_large_oid_test();
+	failed |= asn1_object_i2d_errors();
 
 	return (failed);
 }
