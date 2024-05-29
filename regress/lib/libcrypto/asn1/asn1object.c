@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.12 2024/05/29 16:47:26 tb Exp $ */
+/* $OpenBSD: asn1object.c,v 1.13 2024/05/29 16:49:36 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -477,8 +477,6 @@ asn1_object_large_oid_test(void)
 	int ret;
 	int failed = 1;
 
-	failed = 0;
-
 	p = asn1_large_oid_der;
 	aobj = d2i_ASN1_OBJECT(NULL, &p, sizeof(asn1_large_oid_der));
 	if (aobj == NULL) {
@@ -498,6 +496,8 @@ asn1_object_large_oid_test(void)
 	if (!asn1_compare_bytes("ASN1_OBJECT DER", der, ret, asn1_large_oid_der,
 	    sizeof(asn1_large_oid_der)))
 		goto failed;
+
+	failed = 0;
 
  failed:
 	ASN1_OBJECT_free(aobj);
