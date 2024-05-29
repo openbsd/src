@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.261 2023/10/16 10:25:46 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.262 2024/05/29 10:34:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1644,7 +1644,10 @@ TAILQ_HEAD(nexthop_queue, nexthop)	nexthop_runners =
 
 RB_HEAD(nexthop_tree, nexthop)		nexthoptable =
 					    RB_INITIALIZER(&nexthoptree);
-RB_GENERATE_STATIC(nexthop_tree, nexthop, entry, nexthop_compare);
+
+static inline int nexthop_cmp(struct nexthop *, struct nexthop *);
+
+RB_GENERATE_STATIC(nexthop_tree, nexthop, entry, nexthop_cmp);
 
 void
 nexthop_shutdown(void)
@@ -1834,7 +1837,7 @@ nexthop_get(struct bgpd_addr *nexthop)
 	if (nh == NULL) {
 		nh = calloc(1, sizeof(*nh));
 		if (nh == NULL)
-			fatal("nexthop_alloc");
+			fatal("nexthop_get");
 		rdemem.nexthop_cnt++;
 
 		LIST_INIT(&nh->prefix_h);
@@ -1882,8 +1885,8 @@ nexthop_unref(struct nexthop *nh)
 	return (1);
 }
 
-int
-nexthop_compare(struct nexthop *na, struct nexthop *nb)
+static inline int
+nexthop_cmp(struct nexthop *na, struct nexthop *nb)
 {
 	struct bgpd_addr	*a, *b;
 
