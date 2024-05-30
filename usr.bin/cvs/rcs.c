@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.321 2022/12/26 19:16:00 jmc Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.322 2024/05/30 10:25:58 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2581,6 +2581,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 			follow = 0;
 
 		free(brev);
+		brev = NULL;
 	}
 
 	if (cvs_specified_date != -1)
