@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.117 2024/05/29 15:32:06 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.118 2024/05/30 04:16:25 tb Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1485,13 +1485,14 @@ cpu_unidle(struct cpu_info *ci)
 
 #endif
 
+int cpu_suspended;
+
 #ifdef SUSPEND
 
 void cpu_hatch_primary(void);
 
 void (*cpu_suspend_cycle_fcn)(void) = cpu_wfi;
 label_t cpu_suspend_jmpbuf;
-int cpu_suspended;
 
 void
 cpu_suspend_cycle(void)
