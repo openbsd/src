@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.69 2021/02/12 14:19:11 sthen Exp $
+.\"	$OpenBSD: ssl.8,v 1.70 2024/05/30 14:06:23 tb Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 12 2021 $
+.Dd $Mdocdate: May 30 2024 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -173,62 +173,3 @@ You can also sign the key yourself, using the command:
 .Xr smtpd 8 ,
 .Xr sshd 8 ,
 .Xr starttls 8
-.Sh HISTORY
-Prior to Sept 21, 2000,
-there were problems shipping fully functional implementations of these
-protocols, as such shipment would include shipping
-.Em into
-the United States.
-RSA Data Security Inc (RSADSI) held the patent on the RSA algorithm in the
-United States, and because of this, free implementations of RSA were
-difficult to distribute and propagate.
-(The RSA patent was probably more effective at preventing the adoption of
-widespread international integrated crypto than the much maligned ITAR
-restrictions were.)
-Prior to
-.Ox 2.8 ,
-these libraries shipped without the RSA algorithm -- all such functions
-were stubbed to fail.
-Since RSA is a key component of SSL version 2, this meant that SSL version
-2 would not work at all.
-SSL version 3 and TLS version 1 allow for the exchange of keys via
-mechanisms that do not involve RSA, and would work with the shipped version
-of the libraries, assuming both ends could agree to a cipher suite and key
-exchange that did not involve RSA.
-Likewise, the SSH1 protocol in
-.Xr ssh 1
-uses RSA, so it was similarly encumbered.
-.Pp
-For instance, another typical alternative is DSA, which is not encumbered
-by commercial patents (and lawyers).
-.Pp
-The HTTPS protocol used by web browsers (in modern incarnations) allows for
-the use of SSL version 3 and TLS version 1, which in theory allows for
-encrypted web transactions without using RSA.
-Unfortunately, all the popular web browsers buy their cryptographic code
-from RSADSI.
-Predictably, RSADSI would prefer that web browsers used their patented
-algorithm, and thus their libraries do not implement any non-RSA cipher and
-keying combination.
-The result of this was that while the HTTPS protocol allowed for many
-cipher suites that did not require the use of patented algorithms, it was
-very difficult to use these with the popular commercially available
-software.
-Prior to version 2.8,
-.Ox
-allowed users to download RSA enabled versions of the shared libssl and
-libcrypto libraries which allowed users to enable full functionality without
-recompiling the applications.
-This method is now no longer needed, as the fully functional
-libraries ship with the system.
-However, this entire debacle is worth remembering when choosing
-software and vendors.
-.Pp
-Due to multiple flaws in the protocols, SSL version 2 was removed in
-.Ox 5.2
-and SSL version 3 was disabled in
-.Ox 5.7 .
-Users and programs should use TLS version 1.2 instead.
-.Pp
-This document first appeared in
-.Ox 2.5 .
