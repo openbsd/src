@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.71 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.72 2024/05/30 10:56:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -990,7 +990,7 @@ pmap_pinit_pd_pae(struct pmap *pmap)
 	if (cpu_meltdown) {
 		int i;
 
-		va = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_zero, &kd_nowait);
+		va = (vaddr_t)km_alloc(4 * NBPG, &kv_any, &kp_zero, &kd_waitok);
 		if (va == 0)
 			panic("%s: kernel_map out of virtual space!", __func__);
 		if (!pmap_extract(pmap_kernel(),
