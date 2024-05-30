@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.167 2024/05/29 10:41:12 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.168 2024/05/30 08:29:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -464,7 +464,7 @@ up_get_nexthop(struct rde_peer *peer, struct filterstate *state, uint8_t aid)
 		break;
 	case AID_INET6:
 	case AID_VPN_IPv6:
-		if (peer->local_v4_addr.aid == AID_INET6)
+		if (peer->local_v6_addr.aid == AID_INET6)
 			peer_local = &peer->local_v6_addr;
 		break;
 	case AID_FLOWSPECv4:
