@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.58 2024/05/20 15:51:43 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.59 2024/05/30 12:33:15 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1787,17 +1787,19 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 		}
 		break;
 	case FTS_D:
-		if (e->fts_level == FTS_ROOTLEVEL)
+		if (e->fts_level == FTS_ROOTLEVEL) {
 			fts_state.type = BASE_DIR;
+			fts_state.rp = NULL;
+		}
 		if (e->fts_level == 1) {
 			/* rpki.example.org or .rrdp / .rsync */
-			if (strcmp(".rsync", e->fts_name) == 0) {
+			if (strcmp(".rsync", e->fts_name) == 0)
 				fts_state.type = RSYNC_DIR;
-				fts_state.rp = NULL;
-			} else if (strcmp(".rrdp", e->fts_name) == 0) {
+			else if (strcmp(".rrdp", e->fts_name) == 0)
 				fts_state.type = RRDP_DIR;
-				fts_state.rp = NULL;
-			}
+			else
+				fts_state.type = BASE_DIR;
+			fts_state.rp = NULL;
 		}
 		if (e->fts_level == 2) {
 			/* rpki.example.org/repository or .rrdp/hashdir */
