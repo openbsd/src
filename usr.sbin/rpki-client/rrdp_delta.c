@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.13 2024/03/22 03:38:12 job Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.14 2024/05/30 09:54:59 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -220,7 +220,8 @@ delta_content_handler(void *data, const char *content, int length)
 
 	if (dxml->scope == DELTA_SCOPE_PUBLISH)
 		if (publish_add_content(dxml->pxml, content, length) == -1)
-			PARSE_FAIL(p, "parse failed - content too big");
+			PARSE_FAIL(p, "parse failed, delta element for %s too "
+			    "big", dxml->pxml->uri);
 }
 
 static void
