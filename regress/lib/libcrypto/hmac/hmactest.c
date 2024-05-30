@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmactest.c,v 1.7 2021/11/18 20:11:55 tb Exp $	*/
+/*	$OpenBSD: hmactest.c,v 1.8 2024/05/30 17:01:38 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < 4; i++) {
 		p = pt(HMAC(EVP_md5(),
 			test[i].key, test[i].key_len,
-			test[i].data, test[i].data_len, NULL, NULL),
+			test[i].data, test[i].data_len, buf, NULL),
 			MD5_DIGEST_LENGTH);
 
 		if (strcmp(p, (char *)test[i].digest) != 0) {
