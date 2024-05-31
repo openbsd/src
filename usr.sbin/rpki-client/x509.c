@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.89 2024/05/31 02:45:15 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.90 2024/05/31 11:27:34 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -882,6 +882,10 @@ x509_valid_name(const char *fn, const char *descr, const X509_NAME *xn)
  * https://lists.afrinic.net/pipermail/dbwg/2023-March/000436.html
  */
 #if 0
+			/*
+			 * XXX - For some reason RFC 8209, section 3.1.1 decided
+			 * to allow UTF8String for BGPsec Router Certificates.
+			 */
 			if (ASN1_STRING_type(as) != V_ASN1_PRINTABLESTRING) {
 				warnx("%s: RFC 6487 section 4.5: commonName is"
 				    " not PrintableString", fn);
