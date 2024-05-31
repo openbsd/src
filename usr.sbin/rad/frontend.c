@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.47 2024/05/31 16:10:02 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.48 2024/05/31 16:10:42 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -110,6 +110,7 @@ struct ra_iface {
 	int				 removed;
 	int				 link_state;
 	int				 prefix_count;
+	int				 ltime_decaying;
 	size_t				 datalen;
 	uint8_t				 data[RA_MAX_SIZE];
 };
@@ -149,12 +150,13 @@ struct icmp6_ev		*get_icmp6ev_by_rdomain(int);
 void			 unref_icmp6ev(struct ra_iface *);
 void			 set_icmp6sock(int, int);
 void			 add_new_prefix_to_ra_iface(struct ra_iface *r,
-			    struct in6_addr *, int, struct ra_prefix_conf *);
+			    struct in6_addr *, int, struct ra_prefix_conf *,
+			    uint32_t, uint32_t);
 void			 free_ra_iface(struct ra_iface *);
 int			 in6_mask2prefixlen(struct in6_addr *);
 void			 get_interface_prefixes(struct ra_iface *,
 			     struct ra_prefix_conf *, struct ifaddrs *);
-void			 build_packet(struct ra_iface *);
+int			 build_packet(struct ra_iface *);
 void			 build_leaving_packet(struct ra_iface *);
 void			 ra_output(struct ra_iface *, struct sockaddr_in6 *);
 void			 get_rtaddrs(int, struct sockaddr *,
@@ -961,14 +963,21 @@ merge_ra_interfaces(void)
 		    entry) {
 			add_new_prefix_to_ra_iface(ra_iface,
 			    &ra_prefix_conf->prefix,
-			    ra_prefix_conf->prefixlen, ra_prefix_conf);
+			    ra_prefix_conf->prefixlen, ra_prefix_conf,
+			    ND6_INFINITE_LIFETIME, ND6_INFINITE_LIFETIME);
 		}
 
 		if (ra_iface_conf->autoprefix)
 			get_interface_prefixes(ra_iface,
 			    ra_iface_conf->autoprefix, ifap);
 
-		build_packet(ra_iface);
+		if (build_packet(ra_iface)) {
+			/* packet changed; send new advertisements */
+			if (event_initialized(&ra_iface->icmp6ev->ev))
+				frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0,
+				    &ra_iface->if_index,
+				    sizeof(ra_iface->if_index));
+		}
 	}
 	freeifaddrs(ifap);
 }
@@ -1016,24 +1025,44 @@ in6_mask2prefixlen(struct in6_addr *in6)
 
 void
 get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
-    *autoprefix, struct ifaddrs *ifap)
+    *autoprefix_conf, struct ifaddrs *ifap)
 {
 	struct in6_ifreq	 ifr6;
 	struct ifaddrs		*ifa;
 	struct sockaddr_in6	*sin6;
+	uint32_t		 decaying_vltime, decaying_pltime;
 	int			 prefixlen;
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (strcmp(ra_iface->name, ifa->ifa_name) != 0)
-			continue;
 		if (ifa->ifa_addr == NULL ||
 		    ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+
+		if (strcmp(ra_iface->name, ifa->ifa_name) != 0)
 			continue;
 
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 
 		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 			continue;
+
+		memset(&ifr6, 0, sizeof(ifr6));
+		strlcpy(ifr6.ifr_name, ra_iface->name, sizeof(ifr6.ifr_name));
+		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
+
+		decaying_vltime = ND6_INFINITE_LIFETIME;
+		decaying_pltime = ND6_INFINITE_LIFETIME;
+
+		if (ioctl(ioctlsock, SIOCGIFALIFETIME_IN6,
+		    (caddr_t)&ifr6) != -1) {
+			struct in6_addrlifetime	*lifetime;
+
+			lifetime = &ifr6.ifr_ifru.ifru_lifetime;
+			if (lifetime->ia6t_preferred)
+				decaying_pltime = lifetime->ia6t_preferred;
+			if (lifetime->ia6t_expire)
+				decaying_vltime = lifetime->ia6t_expire;
+		}
 
 		memset(&ifr6, 0, sizeof(ifr6));
 		strlcpy(ifr6.ifr_name, ra_iface->name, sizeof(ifr6.ifr_name));
@@ -1051,7 +1080,8 @@ get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
 		mask_prefix(&sin6->sin6_addr, prefixlen);
 
 		add_new_prefix_to_ra_iface(ra_iface, &sin6->sin6_addr,
-		    prefixlen, autoprefix);
+		    prefixlen, autoprefix_conf, decaying_vltime,
+		    decaying_pltime);
 	}
 }
 
@@ -1072,13 +1102,41 @@ find_ra_prefix_conf(struct ra_prefix_conf_head* head, struct in6_addr *prefix,
 
 void
 add_new_prefix_to_ra_iface(struct ra_iface *ra_iface, struct in6_addr *addr,
-    int prefixlen, struct ra_prefix_conf *ra_prefix_conf)
+    int prefixlen, struct ra_prefix_conf *ra_prefix_conf,
+    uint32_t decaying_vltime, uint32_t decaying_pltime)
 {
 	struct ra_prefix_conf	*new_ra_prefix_conf;
 
-	if (find_ra_prefix_conf(&ra_iface->prefixes, addr, prefixlen)) {
-		log_debug("ignoring duplicate %s/%d prefix",
-		    in6_to_str(addr), prefixlen);
+	if ((new_ra_prefix_conf = find_ra_prefix_conf(&ra_iface->prefixes, addr,
+	    prefixlen)) != NULL) {
+		if (decaying_vltime != ND6_INFINITE_LIFETIME ||
+		    decaying_pltime != ND6_INFINITE_LIFETIME) {
+			ra_iface->ltime_decaying = 1;
+			new_ra_prefix_conf->ltime_decaying = 0;
+			if (decaying_vltime != ND6_INFINITE_LIFETIME) {
+				new_ra_prefix_conf->vltime = decaying_vltime;
+				new_ra_prefix_conf->ltime_decaying |=
+				    VLTIME_DECAYING;
+			}
+			if (decaying_pltime != ND6_INFINITE_LIFETIME) {
+				new_ra_prefix_conf->pltime = decaying_pltime;
+				new_ra_prefix_conf->ltime_decaying |=
+				    PLTIME_DECAYING;
+			}
+		} else if (new_ra_prefix_conf->ltime_decaying) {
+			struct ra_prefix_conf *pc;
+
+			new_ra_prefix_conf->ltime_decaying = 0;
+			ra_iface->ltime_decaying = 0;
+			SIMPLEQ_FOREACH(pc, &ra_iface->prefixes, entry) {
+				if (pc->ltime_decaying) {
+					ra_iface->ltime_decaying = 1;
+					break;
+				}
+			}
+		} else
+			log_debug("ignoring duplicate %s/%d prefix",
+			    in6_to_str(addr), prefixlen);
 		return;
 	}
 
@@ -1090,13 +1148,25 @@ add_new_prefix_to_ra_iface(struct ra_iface *ra_iface, struct in6_addr *addr,
 	new_ra_prefix_conf->prefixlen = prefixlen;
 	new_ra_prefix_conf->vltime = ra_prefix_conf->vltime;
 	new_ra_prefix_conf->pltime = ra_prefix_conf->pltime;
+	if (decaying_vltime != ND6_INFINITE_LIFETIME ||
+	    decaying_pltime != ND6_INFINITE_LIFETIME) {
+		ra_iface->ltime_decaying = 1;
+		if (decaying_vltime != ND6_INFINITE_LIFETIME) {
+			new_ra_prefix_conf->vltime = decaying_vltime;
+			new_ra_prefix_conf->ltime_decaying |= VLTIME_DECAYING;
+		}
+		if (decaying_pltime != ND6_INFINITE_LIFETIME) {
+			new_ra_prefix_conf->pltime = decaying_pltime;
+			new_ra_prefix_conf->ltime_decaying |= PLTIME_DECAYING;
+		}
+	}
 	new_ra_prefix_conf->aflag = ra_prefix_conf->aflag;
 	new_ra_prefix_conf->lflag = ra_prefix_conf->lflag;
 	SIMPLEQ_INSERT_TAIL(&ra_iface->prefixes, new_ra_prefix_conf, entry);
 	ra_iface->prefix_count++;
 }
 
-void
+int
 build_packet(struct ra_iface *ra_iface)
 {
 	struct nd_router_advert		*ra;
@@ -1113,13 +1183,15 @@ build_packet(struct ra_iface *ra_iface)
 	struct ra_dnssl_conf		*ra_dnssl;
 	struct ra_pref64_conf		*pref64;
 	size_t				 len, label_len;
+	time_t				 t;
+	uint32_t			 vltime, pltime;
 	uint8_t				*p, buf[RA_MAX_SIZE];
 	char				*label_start, *label_end;
 
 	ra_iface_conf = find_ra_iface_conf(&frontend_conf->ra_iface_list,
 	    ra_iface->conf_name);
 	ra_options_conf = &ra_iface_conf->ra_options;
-
+	t = time(NULL);
 	len = sizeof(*ra);
 	if (ra_iface_conf->ra_options.source_link_addr)
 		len += sizeof(*ndopt_source_link_addr);
@@ -1205,9 +1277,20 @@ build_packet(struct ra_iface *ra_iface)
 		if (ra_prefix_conf->aflag)
 			ndopt_pi->nd_opt_pi_flags_reserved |=
 			    ND_OPT_PI_FLAG_AUTO;
-		ndopt_pi->nd_opt_pi_valid_time = htonl(ra_prefix_conf->vltime);
-		ndopt_pi->nd_opt_pi_preferred_time =
-		    htonl(ra_prefix_conf->pltime);
+
+		if (ra_prefix_conf->ltime_decaying & VLTIME_DECAYING)
+			vltime = ra_prefix_conf->vltime < t ? 0 :
+			    ra_prefix_conf->vltime - t;
+		else
+			vltime = ra_prefix_conf->vltime;
+		if (ra_prefix_conf->ltime_decaying & PLTIME_DECAYING)
+			pltime = ra_prefix_conf->pltime < t ? 0 :
+			    ra_prefix_conf->pltime - t;
+		else
+			pltime = ra_prefix_conf->pltime;
+
+		ndopt_pi->nd_opt_pi_valid_time = htonl(vltime);
+		ndopt_pi->nd_opt_pi_preferred_time = htonl(pltime);
 		ndopt_pi->nd_opt_pi_prefix = ra_prefix_conf->prefix;
 
 		p += sizeof(*ndopt_pi);
@@ -1301,11 +1384,9 @@ build_packet(struct ra_iface *ra_iface)
 	    != 0) {
 		memcpy(ra_iface->data, buf, len);
 		ra_iface->datalen = len;
-		/* packet changed; tell engine to send new advertisements */
-		if (event_initialized(&ra_iface->icmp6ev->ev))
-			frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0,
-			    &ra_iface->if_index, sizeof(ra_iface->if_index));
+		return 1;
 	}
+	return 0;
 }
 
 void
@@ -1332,6 +1413,10 @@ ra_output(struct ra_iface *ra_iface, struct sockaddr_in6 *to)
 
 	if (!LINK_STATE_IS_UP(ra_iface->link_state))
 		return;
+
+	if (ra_iface->ltime_decaying)
+		/* update vltime & pltime */
+		build_packet(ra_iface);
 
 	sndmhdr.msg_name = to;
 	sndmhdr.msg_iov[0].iov_base = ra_iface->data;
