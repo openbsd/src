@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.46 2024/05/17 06:50:14 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.47 2024/05/31 16:10:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -102,6 +102,7 @@ struct ra_iface {
 	TAILQ_ENTRY(ra_iface)		 entry;
 	struct icmp6_ev			*icmp6ev;
 	struct ra_prefix_conf_head	 prefixes;
+	struct ether_addr		 hw_addr;
 	char				 name[IF_NAMESIZE];
 	char				 conf_name[IF_NAMESIZE];
 	uint32_t			 if_index;
@@ -135,9 +136,8 @@ void			 frontend_startup(void);
 void			 icmp6_receive(int, short, void *);
 void			 join_all_routers_mcast_group(struct ra_iface *);
 void			 leave_all_routers_mcast_group(struct ra_iface *);
-int			 get_link_state(char *);
 int			 get_ifrdomain(char *);
-void			 merge_ra_interface(char *, char *);
+void			 merge_ra_interface(char *, char *, struct ifaddrs *);
 void			 merge_ra_interfaces(void);
 struct ra_iface		*find_ra_iface_by_id(uint32_t);
 struct ra_iface		*find_ra_iface_by_name(char *);
@@ -153,8 +153,7 @@ void			 add_new_prefix_to_ra_iface(struct ra_iface *r,
 void			 free_ra_iface(struct ra_iface *);
 int			 in6_mask2prefixlen(struct in6_addr *);
 void			 get_interface_prefixes(struct ra_iface *,
-			     struct ra_prefix_conf *);
-int			 interface_has_linklocal_address(char *);
+			     struct ra_prefix_conf *, struct ifaddrs *);
 void			 build_packet(struct ra_iface *);
 void			 build_leaving_packet(struct ra_iface *);
 void			 ra_output(struct ra_iface *, struct sockaddr_in6 *);
@@ -737,30 +736,6 @@ find_ra_iface_conf(struct ra_iface_conf_head *head, char *if_name)
 }
 
 int
-get_link_state(char *if_name)
-{
-	struct ifaddrs	*ifap, *ifa;
-	int		 ls = LINK_STATE_UNKNOWN;
-
-	if (getifaddrs(&ifap) != 0) {
-		log_warn("getifaddrs");
-		return LINK_STATE_UNKNOWN;
-	}
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr == NULL ||
-		    ifa->ifa_addr->sa_family != AF_LINK)
-			continue;
-		if (strcmp(if_name, ifa->ifa_name) != 0)
-			continue;
-
-		ls = ((struct if_data*)ifa->ifa_data)->ifi_link_state;
-		break;
-	}
-	freeifaddrs(ifap);
-	return ls;
-}
-
-int
 get_ifrdomain(char *if_name)
 {
 	struct ifreq		 ifr;
@@ -774,27 +749,75 @@ get_ifrdomain(char *if_name)
 }
 
 void
-merge_ra_interface(char *name, char *conf_name)
+merge_ra_interface(char *if_name, char *conf_name, struct ifaddrs *ifap)
 {
 	struct ra_iface		*ra_iface;
+	struct ifaddrs		*ifa;
+	struct sockaddr_in6	*sin6;
+	struct in6_ifreq	 ifr6;
+	struct sockaddr_dl	*sdl;
+	struct ether_addr	 hw_addr;
 	uint32_t		 if_index;
-	int			 link_state, has_linklocal, ifrdomain;
+	int			 link_state = LINK_STATE_UNKNOWN;
+	int			 has_linklocal = 0, ifrdomain;
+	int			 has_hw_addr = 0;
 
-	link_state = get_link_state(name);
-	has_linklocal = interface_has_linklocal_address(name);
-	ifrdomain = get_ifrdomain(name);
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_LINK &&
+		    ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+		if (strcmp(if_name, ifa->ifa_name) != 0)
+			continue;
 
-	if ((ra_iface = find_ra_iface_by_name(name)) != NULL) {
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			link_state =
+			    ((struct if_data*)ifa->ifa_data)->ifi_link_state;
+			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+			if (sdl->sdl_type == IFT_ETHER &&
+			    sdl->sdl_alen == ETHER_ADDR_LEN) {
+				has_hw_addr = 1;
+				memcpy(&hw_addr, LLADDR(sdl), ETHER_ADDR_LEN);
+			}
+		} else if (ifa->ifa_addr->sa_family == AF_INET6) {
+			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+
+			if (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				continue;
+
+			memset(&ifr6, 0, sizeof(ifr6));
+			strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
+			memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
+			if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6,
+			    (caddr_t)&ifr6) == -1) {
+				log_warn("SIOCGIFAFLAG_IN6");
+				continue;
+			}
+
+			if (ifr6.ifr_ifru.ifru_flags6 & (IN6_IFF_TENTATIVE |
+			    IN6_IFF_DUPLICATED))
+				continue;
+			has_linklocal = 1;
+		}
+	}
+
+	ifrdomain = get_ifrdomain(if_name);
+
+	if ((ra_iface = find_ra_iface_by_name(if_name)) != NULL) {
 		ra_iface->link_state = link_state;
 		if (!LINK_STATE_IS_UP(link_state)) {
-			log_debug("%s down, removing", name);
+			log_debug("%s down, removing", if_name);
 			ra_iface->removed = 1;
 		} else if (!has_linklocal) {
 			log_debug("%s has no IPv6 link-local address, "
-			    "removing", name);
+			    "removing", if_name);
 			ra_iface->removed = 1;
 		} else if (ifrdomain == -1) {
-			log_debug("can't get rdomain for %s, removing", name);
+			log_debug("can't get rdomain for %s, removing", if_name);
+			ra_iface->removed = 1;
+		} else if (!has_hw_addr) {
+			log_debug("%s has no mac address, removing", if_name);
 			ra_iface->removed = 1;
 		} else if (ra_iface->rdomain != ifrdomain) {
 			leave_all_routers_mcast_group(ra_iface);
@@ -804,37 +827,49 @@ merge_ra_interface(char *name, char *conf_name)
 			join_all_routers_mcast_group(ra_iface);
 			ra_iface->removed = 0;
 		} else {
-			log_debug("keeping interface %s", name);
+			log_debug("keeping interface %s", if_name);
 			ra_iface->removed = 0;
 		}
+		memcpy(&ra_iface->hw_addr, &hw_addr, sizeof(hw_addr));
 		return;
 	}
 
 	if (!LINK_STATE_IS_UP(link_state)) {
-		log_debug("%s down, ignoring", name);
+		log_debug("%s down, ignoring", if_name);
 		return;
 	}
 
 	if (!has_linklocal) {
-		log_debug("%s has no IPv6 link-local address, ignoring", name);
+		log_debug("%s has no IPv6 link-local address, ignoring",
+		    if_name);
 		return;
 	}
 
-	log_debug("new interface %s", name);
-	if ((if_index = if_nametoindex(name)) == 0)
+	if (ifrdomain == -1) {
+		log_debug("can't get rdomain for %s, ignoring", if_name);
+		return;
+	}
+
+	if (!has_hw_addr) {
+		log_debug("%s has no mac address, ignoring", if_name);
+		return;
+	}
+
+	log_debug("new interface %s", if_name);
+	if ((if_index = if_nametoindex(if_name)) == 0)
 		return;
 
-	log_debug("adding interface %s", name);
+	log_debug("adding interface %s", if_name);
 	if ((ra_iface = calloc(1, sizeof(*ra_iface))) == NULL)
 		fatal("%s", __func__);
 
-	strlcpy(ra_iface->name, name, sizeof(ra_iface->name));
+	strlcpy(ra_iface->name, if_name, sizeof(ra_iface->name));
 	strlcpy(ra_iface->conf_name, conf_name,
 	    sizeof(ra_iface->conf_name));
 
 	ra_iface->if_index = if_index;
 	ra_iface->rdomain = ifrdomain;
-
+	memcpy(&ra_iface->hw_addr, &hw_addr, sizeof(hw_addr));
 	SIMPLEQ_INIT(&ra_iface->prefixes);
 
 	ra_iface->icmp6ev = get_icmp6ev_by_rdomain(ifrdomain);
@@ -850,8 +885,14 @@ merge_ra_interfaces(void)
 	struct ra_iface		*ra_iface;
 	struct ifgroupreq	 ifgr;
 	struct ifg_req		*ifg;
+	struct ifaddrs		*ifap;
 	char			*conf_name;
 	unsigned int		 len;
+
+	if (getifaddrs(&ifap) != 0) {
+		log_warn("getifaddrs");
+		return;
+	}
 
 	TAILQ_FOREACH(ra_iface, &ra_interfaces, entry)
 		ra_iface->removed = 1;
@@ -861,7 +902,7 @@ merge_ra_interfaces(void)
 
 		/* check if network interface or group */
 		if (isdigit((unsigned char)conf_name[strlen(conf_name) - 1])) {
-			merge_ra_interface(conf_name, conf_name);
+			merge_ra_interface(conf_name, conf_name, ifap);
 		} else {
 			log_debug("interface group %s", conf_name);
 
@@ -888,7 +929,7 @@ merge_ra_interfaces(void)
 			    ifg++) {
 				len -= sizeof(struct ifg_req);
 				merge_ra_interface(ifg->ifgrq_member,
-				    conf_name);
+				    conf_name, ifap);
 			}
 			free(ifgr.ifgr_groups);
 		}
@@ -925,10 +966,11 @@ merge_ra_interfaces(void)
 
 		if (ra_iface_conf->autoprefix)
 			get_interface_prefixes(ra_iface,
-			    ra_iface_conf->autoprefix);
+			    ra_iface_conf->autoprefix, ifap);
 
 		build_packet(ra_iface);
 	}
+	freeifaddrs(ifap);
 }
 
 void
@@ -972,61 +1014,14 @@ in6_mask2prefixlen(struct in6_addr *in6)
 	return (plen);
 }
 
-int
-interface_has_linklocal_address(char *name)
-{
-	struct ifaddrs		*ifap, *ifa;
-	struct sockaddr_in6	*sin6;
-	struct in6_ifreq	 ifr6;
-	int			 ret = 0;
-
-	if (getifaddrs(&ifap) != 0)
-		fatal("getifaddrs");
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (strcmp(name, ifa->ifa_name) != 0)
-			continue;
-		if (ifa->ifa_addr == NULL ||
-		    ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-
-		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
-
-		if (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
-			continue;
-
-		memset(&ifr6, 0, sizeof(ifr6));
-		strlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
-		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
-		if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6, (caddr_t)&ifr6) == -1) {
-			log_warn("SIOCGIFAFLAG_IN6");
-			continue;
-		}
-
-		if (ifr6.ifr_ifru.ifru_flags6 & (IN6_IFF_TENTATIVE |
-		    IN6_IFF_DUPLICATED))
-			continue;
-
-		ret = 1;
-		break;
-	}
-	freeifaddrs(ifap);
-	return (ret);
-}
-
 void
 get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
-    *autoprefix)
+    *autoprefix, struct ifaddrs *ifap)
 {
 	struct in6_ifreq	 ifr6;
-	struct ifaddrs		*ifap, *ifa;
+	struct ifaddrs		*ifa;
 	struct sockaddr_in6	*sin6;
 	int			 prefixlen;
-
-	log_debug("%s: %s", __func__, ra_iface->name);
-
-	if (getifaddrs(&ifap) != 0)
-		fatal("getifaddrs");
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(ra_iface->name, ifa->ifa_name) != 0)
@@ -1058,7 +1053,6 @@ get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
 		add_new_prefix_to_ra_iface(ra_iface, &sin6->sin6_addr,
 		    prefixlen, autoprefix);
 	}
-	freeifaddrs(ifap);
 }
 
 struct ra_prefix_conf*
@@ -1118,8 +1112,6 @@ build_packet(struct ra_iface *ra_iface)
 	struct ra_rdnss_conf		*ra_rdnss;
 	struct ra_dnssl_conf		*ra_dnssl;
 	struct ra_pref64_conf		*pref64;
-	struct ifaddrs			*ifap, *ifa;
-	struct sockaddr_dl		*sdl;
 	size_t				 len, label_len;
 	uint8_t				*p, buf[RA_MAX_SIZE];
 	char				*label_start, *label_end;
@@ -1187,30 +1179,9 @@ build_packet(struct ra_iface *ra_iface)
 		ndopt_source_link_addr->nd_opt_source_link_addr_type =
 		    ND_OPT_SOURCE_LINKADDR;
 		ndopt_source_link_addr->nd_opt_source_link_addr_len = 1;
-		if (getifaddrs(&ifap) != 0) {
-			ifap = NULL;
-			log_warn("getifaddrs");
-		}
-		for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-			if (ifa->ifa_addr == NULL ||
-			    ifa->ifa_addr->sa_family != AF_LINK)
-				continue;
-			if (strcmp(ra_iface->name, ifa->ifa_name) != 0)
-				continue;
-			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-			if (sdl->sdl_type != IFT_ETHER ||
-			    sdl->sdl_alen != ETHER_ADDR_LEN)
-				continue;
-			memcpy(&ndopt_source_link_addr->
-			    nd_opt_source_link_addr_hw_addr,
-			    LLADDR(sdl), ETHER_ADDR_LEN);
-			break;
-		}
-		if (ifap != NULL) {
-			freeifaddrs(ifap);
-			p += sizeof(*ndopt_source_link_addr);
-		} else
-			len -= sizeof(*ndopt_source_link_addr);
+		memcpy(&ndopt_source_link_addr->nd_opt_source_link_addr_hw_addr,
+		    &ra_iface->hw_addr, ETHER_ADDR_LEN);
+		p += sizeof(*ndopt_source_link_addr);
 	}
 
 	if (ra_options_conf->mtu > 0) {
