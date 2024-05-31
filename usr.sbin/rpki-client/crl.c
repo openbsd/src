@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.35 2024/05/29 13:26:24 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.36 2024/05/31 02:45:15 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -166,6 +166,7 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 	const unsigned char	*oder;
 	struct crl		*crl;
 	const X509_ALGOR	*palg;
+	const X509_NAME		*name;
 	const ASN1_OBJECT	*cobj;
 	const ASN1_TIME		*at;
 	int			 count, nid, rc = 0;
@@ -191,6 +192,13 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 		warnx("%s: RFC 6487 section 5: version 2 expected", fn);
 		goto out;
 	}
+
+	if ((name = X509_CRL_get_issuer(crl->x509_crl)) == NULL) {
+		warnx("%s: X509_CRL_get_issuer", fn);
+		goto out;
+	}
+	if (!x509_valid_name(fn, "issuer", name))
+		goto out;
 
 	X509_CRL_get0_signature(crl->x509_crl, NULL, &palg);
 	if (palg == NULL) {

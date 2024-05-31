@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.88 2024/05/29 13:26:24 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.89 2024/05/31 02:45:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -842,23 +842,17 @@ x509_location(const char *fn, const char *descr, const char *proto,
 }
 
 /*
- * Check that the subject only contains commonName and serialNumber.
+ * Check that subject or issuer only contain commonName and serialNumber.
  * Return 0 on failure.
  */
 int
-x509_valid_subject(const char *fn, const X509 *x)
+x509_valid_name(const char *fn, const char *descr, const X509_NAME *xn)
 {
-	const X509_NAME *xn;
 	const X509_NAME_ENTRY *ne;
 	const ASN1_OBJECT *ao;
 	const ASN1_STRING *as;
 	int cn = 0, sn = 0;
 	int i, nid;
-
-	if ((xn = X509_get_subject_name(x)) == NULL) {
-		warnx("%s: X509_get_subject_name", fn);
-		return 0;
-	}
 
 	for (i = 0; i < X509_NAME_entry_count(xn); i++) {
 		if ((ne = X509_NAME_get_entry(xn, i)) == NULL) {
@@ -874,8 +868,8 @@ x509_valid_subject(const char *fn, const X509 *x)
 		switch (nid) {
 		case NID_commonName:
 			if (cn++ > 0) {
-				warnx("%s: duplicate commonName in subject",
-				    fn);
+				warnx("%s: duplicate commonName in %s",
+				    fn, descr);
 				return 0;
 			}
 			if ((as = X509_NAME_ENTRY_get_data(ne)) == NULL) {
@@ -897,8 +891,8 @@ x509_valid_subject(const char *fn, const X509 *x)
 			break;
 		case NID_serialNumber:
 			if (sn++ > 0) {
-				warnx("%s: duplicate serialNumber in subject",
-				    fn);
+				warnx("%s: duplicate serialNumber in %s",
+				    fn, descr);
 				return 0;
 			}
 			break;
@@ -907,14 +901,14 @@ x509_valid_subject(const char *fn, const X509 *x)
 			return 0;
 		default:
 			warnx("%s: RFC 6487 section 4.5: unexpected attribute"
-			    " %s", fn, nid2str(nid));
+			    " %s in %s", fn, nid2str(nid), descr);
 			return 0;
 		}
 	}
 
 	if (cn == 0) {
-		warnx("%s: RFC 6487 section 4.5: subject missing commonName",
-		    fn);
+		warnx("%s: RFC 6487 section 4.5: %s missing commonName",
+		    fn, descr);
 		return 0;
 	}
 

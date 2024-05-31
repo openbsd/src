@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.131 2024/05/20 15:51:43 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.132 2024/05/31 02:45:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -651,6 +651,28 @@ certificate_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	return rc;
 }
 
+static int
+cert_check_subject_and_issuer(const char *fn, const X509 *x)
+{
+	const X509_NAME *name;
+
+	if ((name = X509_get_subject_name(x)) == NULL) {
+		warnx("%s: X509_get_subject_name", fn);
+		return 0;
+	}
+	if (!x509_valid_name(fn, "subject", name))
+		return 0;
+
+	if ((name = X509_get_issuer_name(x)) == NULL) {
+		warnx("%s: X509_get_issuer_name", fn);
+		return 0;
+	}
+	if (!x509_valid_name(fn, "issuer", name))
+		return 0;
+
+	return 1;
+}
+
 /*
  * Lightweight version of cert_parse_pre() for EE certs.
  * Parses the two RFC 3779 extensions, and performs some sanity checks.
@@ -671,7 +693,7 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 		goto out;
 	}
 
-	if (!x509_valid_subject(fn, x))
+	if (!cert_check_subject_and_issuer(fn, x))
 		goto out;
 
 	if (X509_get_key_usage(x) != KU_DIGITAL_SIGNATURE) {
@@ -791,7 +813,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	if (!x509_valid_subject(fn, x))
+	if (!cert_check_subject_and_issuer(fn, x))
 		goto out;
 
 	/* Look for X509v3 extensions. */
