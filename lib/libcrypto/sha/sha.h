@@ -1,4 +1,4 @@
-/* $OpenBSD: sha.h,v 1.23 2024/06/01 07:36:16 tb Exp $ */
+/* $OpenBSD: sha.h,v 1.24 2024/06/01 07:44:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,8 +102,8 @@ int SHA1_Update(SHA_CTX *c, const void *data, size_t len)
     __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int SHA1_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md)
-    __attribute__ ((__nonnull__(3)))
-    __attribute__ ((__bounded__(__buffer__, 1, 2)));
+    __attribute__ ((__bounded__(__buffer__, 1, 2)))
+    __attribute__ ((__nonnull__(3)));
 void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
 #endif
 
@@ -133,8 +133,8 @@ int SHA256_Update(SHA256_CTX *c, const void *data, size_t len)
     __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
 unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md)
-    __attribute__ ((__nonnull__(3)))
-    __attribute__ ((__bounded__(__buffer__, 1, 2)));
+    __attribute__ ((__bounded__(__buffer__, 1, 2)))
+    __attribute__ ((__nonnull__(3)));
 void SHA256_Transform(SHA256_CTX *c, const unsigned char *data);
 #endif
 
@@ -175,15 +175,15 @@ int SHA384_Update(SHA512_CTX *c, const void *data, size_t len)
     __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int SHA384_Final(unsigned char *md, SHA512_CTX *c);
 unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
-    __attribute__ ((__nonnull__(3)))
-    __attribute__ ((__bounded__(__buffer__, 1, 2)));
+    __attribute__ ((__bounded__(__buffer__, 1, 2)))
+    __attribute__ ((__nonnull__(3)));
 int SHA512_Init(SHA512_CTX *c);
 int SHA512_Update(SHA512_CTX *c, const void *data, size_t len)
     __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int SHA512_Final(unsigned char *md, SHA512_CTX *c);
 unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
-    __attribute__ ((__nonnull__(3)))
-    __attribute__ ((__bounded__(__buffer__, 1, 2)));
+    __attribute__ ((__bounded__(__buffer__, 1, 2)))
+    __attribute__ ((__nonnull__(3)));
 void SHA512_Transform(SHA512_CTX *c, const unsigned char *data);
 #endif
 

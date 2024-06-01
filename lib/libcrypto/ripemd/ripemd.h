@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.h,v 1.16 2024/06/01 07:36:16 tb Exp $ */
+/* $OpenBSD: ripemd.h,v 1.17 2024/06/01 07:44:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,8 +97,8 @@ int RIPEMD160_Update(RIPEMD160_CTX *c, const void *data, size_t len);
 int RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 unsigned char *RIPEMD160(const unsigned char *d, size_t n,
     unsigned char *md)
-    __attribute__ ((__nonnull__(3)))
-    __attribute__ ((__bounded__(__buffer__, 1, 2)));
+    __attribute__ ((__bounded__(__buffer__, 1, 2)))
+    __attribute__ ((__nonnull__(3)));
 void RIPEMD160_Transform(RIPEMD160_CTX *c, const unsigned char *b);
 #ifdef  __cplusplus
 }

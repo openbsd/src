@@ -1,4 +1,4 @@
-/* $OpenBSD: whrlpool.h,v 1.6 2024/06/01 07:36:17 tb Exp $ */
+/* $OpenBSD: whrlpool.h,v 1.7 2024/06/01 07:44:11 tb Exp $ */
 
 #include <stddef.h>
 
@@ -33,8 +33,8 @@ int WHIRLPOOL_Update	(WHIRLPOOL_CTX *c,const void *inp,size_t bytes)
 void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,const void *inp,size_t bits);
 int WHIRLPOOL_Final	(unsigned char *md,WHIRLPOOL_CTX *c);
 unsigned char *WHIRLPOOL(const void *inp,size_t bytes,unsigned char *md)
-    __attribute__ ((__nonnull__(3)))
-    __attribute__ ((__bounded__(__buffer__, 1, 2)));
+    __attribute__ ((__bounded__(__buffer__, 1, 2)))
+    __attribute__ ((__nonnull__(3)));
 #endif
 
 #ifdef __cplusplus
