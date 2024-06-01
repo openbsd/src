@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbusvar.h,v 1.5 2019/06/29 04:33:11 aoyama Exp $	*/
+/*	$OpenBSD: cbusvar.h,v 1.6 2024/06/01 00:48:16 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -22,6 +22,11 @@
 
 #include <sys/evcount.h>
 #include <sys/queue.h>
+
+#include <arch/luna88k/include/board.h>
+
+#define	PCEXMEM_BASE	PC_BASE
+#define	PCEXIO_BASE	(PC_BASE + 0x1000000)
 
 /*
  * Currently 7 level C-bus interrupts (INT0 - INT6) are supported.

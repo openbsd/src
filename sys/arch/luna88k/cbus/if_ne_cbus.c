@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_cbus.c,v 1.4 2024/05/02 09:38:59 aoyama Exp $	*/
+/*	$OpenBSD: if_ne_cbus.c,v 1.5 2024/06/01 00:48:16 aoyama Exp $	*/
 /*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
@@ -80,8 +80,6 @@
 #include <dev/ic/rtl80x9var.h>
 
 #include <arch/luna88k/cbus/cbusvar.h>
-
-#define PCEXIO_BASE		PC_BASE + 0x1000000
 
 /* bus space tag for if_ne_cbus */
 struct luna88k_bus_space_tag ne_cbus_io_bst = {

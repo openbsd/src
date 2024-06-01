@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_cbus.c,v 1.8 2024/05/02 09:38:59 aoyama Exp $	*/
+/*	$OpenBSD: i82365_cbus.c,v 1.9 2024/06/01 00:48:16 aoyama Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -75,9 +75,6 @@
 #define PCIC_CIRRUS_MISC_CTL_1			0x16
 #define  PCIC_CIRRUS_MISC_CTL_1_PULSE_MGMT_INTR	0x04
 #define  PCIC_CIRRUS_MISC_CTL_1_PULSE_SYS_IRQ	0x08
-
-#define PCEXMEM_BASE		PC_BASE
-#define PCEXIO_BASE		PC_BASE + 0x1000000
 
 /* prototypes */
 void	*pcic_cbus_chip_intr_establish(pcmcia_chipset_handle_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: necsb.c,v 1.5 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: necsb.c,v 1.6 2024/06/01 00:48:16 aoyama Exp $	*/
 /*	$NecBSD: nec86_isa.c,v 1.9 1998/09/26 11:31:11 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -47,7 +47,6 @@
 
 #include <luna88k/cbus/cbusvar.h>	/* cbus_isrlink() */
 
-#define	PCEXIO_BASE	(PC_BASE + 0x1000000)
 #define	NECSB_BASE	(PCEXIO_BASE + 0xa460)
 
 int	necsb_match(struct device *, void *, void *);

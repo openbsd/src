@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcex.c,v 1.4 2019/10/08 13:14:49 cheloha Exp $	*/
+/*	$OpenBSD: pcex.c,v 1.5 2024/06/01 00:48:16 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -37,9 +37,6 @@ extern int hz;
 #if 0
 #define PCEX_DEBUG
 #endif
-
-#define PCEXMEM_BASE	PC_BASE
-#define PCEXIO_BASE	(PC_BASE + 0x1000000)
 
 /* autoconf stuff */
 int pcex_match(struct device *, void *, void *);
