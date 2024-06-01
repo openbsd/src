@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SHA1.3,v 1.8 2024/05/26 09:54:16 tb Exp $
+.\"	$OpenBSD: SHA1.3,v 1.9 2024/06/01 12:35:23 tb Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 26 2024 $
+.Dd $Mdocdate: June 1 2024 $
 .Dt SHA1 3
 .Os
 .Sh NAME
@@ -237,9 +237,6 @@ bytes.
 Applications should use the higher level functions
 .Xr EVP_DigestInit 3
 etc.  instead of calling the hash functions directly.
-.Pp
-The predecessor of SHA-1, SHA, is also implemented, but it should be
-used only when backward compatibility is required.
 .Sh RETURN VALUES
 .Fn SHA1 ,
 .Fn SHA224 ,
@@ -254,9 +251,13 @@ The other functions return 1 for success or 0 otherwise.
 .Xr HMAC 3 ,
 .Xr RIPEMD160 3
 .Sh STANDARDS
-SHA: US Federal Information Processing Standard FIPS PUB 180 (Secure
-Hash Standard), SHA-1: US Federal Information Processing Standard FIPS
-PUB 180-1 (Secure Hash Standard), ANSI X9.30
+.Rs
+.%T Secure Hash Standard (SHS)
+.%R NIST FIPS Publication
+.%N 180-4
+.%U https://doi.org/10.6028/NIST.FIPS.180-4
+.%D 2015
+.Re
 .Sh HISTORY
 .Fn SHA1 ,
 .Fn SHA1_Init ,
