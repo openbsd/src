@@ -1,4 +1,4 @@
-/* $OpenBSD: sha.h,v 1.24 2024/06/01 07:44:11 tb Exp $ */
+/* $OpenBSD: sha.h,v 1.25 2024/06/01 08:11:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,8 +126,8 @@ int SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
     __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int SHA224_Final(unsigned char *md, SHA256_CTX *c);
 unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
-    __attribute__ ((__nonnull__(3)))
-    __attribute__ ((__bounded__(__buffer__, 1, 2)));
+    __attribute__ ((__bounded__(__buffer__, 1, 2)))
+    __attribute__ ((__nonnull__(3)));
 int SHA256_Init(SHA256_CTX *c);
 int SHA256_Update(SHA256_CTX *c, const void *data, size_t len)
     __attribute__ ((__bounded__(__buffer__, 2, 3)));
