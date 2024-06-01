@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha-merged.c,v 1.11 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: chacha-merged.c,v 1.12 2024/06/01 17:56:44 tb Exp $ */
 /*
 chacha-merged.c version 20080118
 D. J. Bernstein
@@ -6,6 +6,10 @@ Public domain.
 */
 
 #include <stdint.h>
+
+#if !defined(HAVE_ATTRIBUTE__BOUNDED__) && !defined(__OpenBSD__)
+#define __bounded__(x, y, z)
+#endif
 
 #define CHACHA_MINKEYLEN	16
 #define CHACHA_NONCELEN		8

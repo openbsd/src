@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.h,v 1.19 2024/06/01 07:44:11 tb Exp $ */
+/* $OpenBSD: md4.h,v 1.20 2024/06/01 17:56:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,10 @@
 
 #ifndef HEADER_MD4_H
 #define HEADER_MD4_H
+
+#if !defined(HAVE_ATTRIBUTE__BOUNDED__) && !defined(__OpenBSD__)
+#define __bounded__(x, y, z)
+#endif
 
 #include <openssl/opensslconf.h>
 

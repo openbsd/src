@@ -1,9 +1,13 @@
-/* $OpenBSD: whrlpool.h,v 1.7 2024/06/01 07:44:11 tb Exp $ */
+/* $OpenBSD: whrlpool.h,v 1.8 2024/06/01 17:56:44 tb Exp $ */
 
 #include <stddef.h>
 
 #ifndef HEADER_WHRLPOOL_H
 #define HEADER_WHRLPOOL_H
+
+#if !defined(HAVE_ATTRIBUTE__BOUNDED__) && !defined(__OpenBSD__)
+#define __bounded__(x, y, z)
+#endif
 
 #include <openssl/opensslconf.h>
 
