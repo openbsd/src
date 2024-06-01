@@ -1,4 +1,4 @@
-/* $OpenBSD: whirlpool.c,v 1.2 2024/03/30 03:45:47 joshua Exp $ */
+/* $OpenBSD: whirlpool.c,v 1.3 2024/06/01 07:36:17 tb Exp $ */
 /**
  * The Whirlpool hashing function.
  *
@@ -846,10 +846,7 @@ unsigned char *
 WHIRLPOOL(const void *inp, size_t bytes, unsigned char *md)
 {
 	WHIRLPOOL_CTX ctx;
-	static unsigned char m[WHIRLPOOL_DIGEST_LENGTH];
 
-	if (md == NULL)
-		md = m;
 	WHIRLPOOL_Init(&ctx);
 	WHIRLPOOL_Update(&ctx, inp, bytes);
 	WHIRLPOOL_Final(md, &ctx);

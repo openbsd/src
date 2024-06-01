@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.h,v 1.15 2023/07/08 06:52:56 jsing Exp $ */
+/* $OpenBSD: ripemd.h,v 1.16 2024/06/01 07:36:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,9 +93,12 @@ typedef struct RIPEMD160state_st {
 
 int RIPEMD160_Init(RIPEMD160_CTX *c);
 int RIPEMD160_Update(RIPEMD160_CTX *c, const void *data, size_t len);
+    __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 unsigned char *RIPEMD160(const unsigned char *d, size_t n,
-    unsigned char *md);
+    unsigned char *md)
+    __attribute__ ((__nonnull__(3)))
+    __attribute__ ((__bounded__(__buffer__, 1, 2)));
 void RIPEMD160_Transform(RIPEMD160_CTX *c, const unsigned char *b);
 #ifdef  __cplusplus
 }

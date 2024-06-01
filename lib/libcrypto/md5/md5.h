@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.h,v 1.21 2023/07/08 06:50:38 jsing Exp $ */
+/* $OpenBSD: md5.h,v 1.22 2024/06/01 07:36:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,6 +98,7 @@ int MD5_Update(MD5_CTX *c, const void *data, size_t len)
     __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int MD5_Final(unsigned char *md, MD5_CTX *c);
 unsigned char *MD5(const unsigned char *d, size_t n, unsigned char *md)
+    __attribute__ ((__nonnull__(3)))
     __attribute__ ((__bounded__(__buffer__, 1, 2)));
 void MD5_Transform(MD5_CTX *c, const unsigned char *b);
 #ifdef  __cplusplus

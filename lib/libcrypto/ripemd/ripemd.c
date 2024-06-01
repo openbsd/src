@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.18 2024/03/28 23:54:15 joshua Exp $ */
+/* $OpenBSD: ripemd.c,v 1.19 2024/06/01 07:36:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -483,14 +483,10 @@ RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c)
 LCRYPTO_ALIAS(RIPEMD160_Final);
 
 unsigned char *
-RIPEMD160(const unsigned char *d, size_t n,
-    unsigned char *md)
+RIPEMD160(const unsigned char *d, size_t n, unsigned char *md)
 {
 	RIPEMD160_CTX c;
-	static unsigned char m[RIPEMD160_DIGEST_LENGTH];
 
-	if (md == NULL)
-		md = m;
 	if (!RIPEMD160_Init(&c))
 		return NULL;
 	RIPEMD160_Update(&c, d, n);

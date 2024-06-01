@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.31 2024/03/28 04:23:02 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.32 2024/06/01 07:36:16 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -317,10 +317,6 @@ unsigned char *
 SHA224(const unsigned char *d, size_t n, unsigned char *md)
 {
 	SHA256_CTX c;
-	static unsigned char m[SHA224_DIGEST_LENGTH];
-
-	if (md == NULL)
-		md = m;
 
 	SHA224_Init(&c);
 	SHA256_Update(&c, d, n);
@@ -479,10 +475,6 @@ unsigned char *
 SHA256(const unsigned char *d, size_t n, unsigned char *md)
 {
 	SHA256_CTX c;
-	static unsigned char m[SHA256_DIGEST_LENGTH];
-
-	if (md == NULL)
-		md = m;
 
 	SHA256_Init(&c);
 	SHA256_Update(&c, d, n);

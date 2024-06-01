@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.h,v 1.17 2023/04/25 15:48:48 tb Exp $ */
+/* $OpenBSD: hmac.h,v 1.18 2024/06/01 07:36:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,8 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md,
 int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, size_t len);
 int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
-    const unsigned char *d, size_t n, unsigned char *md, unsigned int *md_len);
+    const unsigned char *d, size_t n, unsigned char *md, unsigned int *md_len)
+    __attribute__((__nonnull__ (6)));
 int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
 
 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);

@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.22 2024/03/28 08:00:08 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.23 2024/06/01 07:36:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -371,10 +371,7 @@ unsigned char *
 MD5(const unsigned char *d, size_t n, unsigned char *md)
 {
 	MD5_CTX c;
-	static unsigned char m[MD5_DIGEST_LENGTH];
 
-	if (md == NULL)
-		md = m;
 	if (!MD5_Init(&c))
 		return NULL;
 	MD5_Update(&c, d, n);

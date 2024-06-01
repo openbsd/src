@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.h,v 1.17 2023/07/08 06:47:26 jsing Exp $ */
+/* $OpenBSD: md4.h,v 1.18 2024/06/01 07:36:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,8 +92,11 @@ typedef struct MD4state_st {
 
 int MD4_Init(MD4_CTX *c);
 int MD4_Update(MD4_CTX *c, const void *data, size_t len);
+    __attribute__ ((__bounded__(__buffer__, 2, 3)));
 int MD4_Final(unsigned char *md, MD4_CTX *c);
 unsigned char *MD4(const unsigned char *d, size_t n, unsigned char *md);
+    __attribute__ ((__nonnull__(3)))
+    __attribute__ ((__bounded__(__buffer__, 1, 2)));
 void MD4_Transform(MD4_CTX *c, const unsigned char *b);
 #ifdef  __cplusplus
 }

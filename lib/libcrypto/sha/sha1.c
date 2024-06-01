@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.14 2024/03/28 07:06:12 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.15 2024/06/01 07:36:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -496,10 +496,6 @@ unsigned char *
 SHA1(const unsigned char *d, size_t n, unsigned char *md)
 {
 	SHA_CTX c;
-	static unsigned char m[SHA_DIGEST_LENGTH];
-
-	if (md == NULL)
-		md = m;
 
 	if (!SHA1_Init(&c))
 		return NULL;

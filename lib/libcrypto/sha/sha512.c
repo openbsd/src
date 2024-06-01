@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.41 2023/07/08 12:24:10 beck Exp $ */
+/* $OpenBSD: sha512.c,v 1.42 2024/06/01 07:36:16 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -345,10 +345,6 @@ unsigned char *
 SHA384(const unsigned char *d, size_t n, unsigned char *md)
 {
 	SHA512_CTX c;
-	static unsigned char m[SHA384_DIGEST_LENGTH];
-
-	if (md == NULL)
-		md = m;
 
 	SHA384_Init(&c);
 	SHA512_Update(&c, d, n);
@@ -498,10 +494,6 @@ unsigned char *
 SHA512(const unsigned char *d, size_t n, unsigned char *md)
 {
 	SHA512_CTX c;
-	static unsigned char m[SHA512_DIGEST_LENGTH];
-
-	if (md == NULL)
-		md = m;
 
 	SHA512_Init(&c);
 	SHA512_Update(&c, d, n);

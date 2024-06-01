@@ -1,4 +1,4 @@
-/* $OpenBSD: whrlpool.h,v 1.5 2014/07/10 22:45:58 jsing Exp $ */
+/* $OpenBSD: whrlpool.h,v 1.6 2024/06/01 07:36:17 tb Exp $ */
 
 #include <stddef.h>
 
@@ -28,10 +28,13 @@ typedef struct	{
 
 #ifndef OPENSSL_NO_WHIRLPOOL
 int WHIRLPOOL_Init	(WHIRLPOOL_CTX *c);
-int WHIRLPOOL_Update	(WHIRLPOOL_CTX *c,const void *inp,size_t bytes);
+int WHIRLPOOL_Update	(WHIRLPOOL_CTX *c,const void *inp,size_t bytes)
+    __attribute__ ((__bounded__(__buffer__, 2, 3)));
 void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,const void *inp,size_t bits);
 int WHIRLPOOL_Final	(unsigned char *md,WHIRLPOOL_CTX *c);
-unsigned char *WHIRLPOOL(const void *inp,size_t bytes,unsigned char *md);
+unsigned char *WHIRLPOOL(const void *inp,size_t bytes,unsigned char *md)
+    __attribute__ ((__nonnull__(3)))
+    __attribute__ ((__bounded__(__buffer__, 1, 2)));
 #endif
 
 #ifdef __cplusplus

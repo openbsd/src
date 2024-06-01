@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.34 2024/03/30 10:10:58 tb Exp $ */
+/* $OpenBSD: hmac.c,v 1.35 2024/06/01 07:36:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -263,11 +263,8 @@ HMAC(const EVP_MD *evp_md, const void *key, int key_len, const unsigned char *d,
     size_t n, unsigned char *md, unsigned int *md_len)
 {
 	HMAC_CTX c;
-	static unsigned char m[EVP_MAX_MD_SIZE];
 	const unsigned char dummy_key[1] = { 0 };
 
-	if (md == NULL)
-		md = m;
 	if (key == NULL) {
 		key = dummy_key;
 		key_len = 0;
