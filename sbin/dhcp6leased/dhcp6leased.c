@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.3 2024/06/02 15:19:05 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.4 2024/06/02 15:43:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -796,7 +796,6 @@ open_udpsock(uint32_t if_index)
 
 			}
 	}
-	freeifaddrs(ifap);
 
 	sin6->sin6_port = htons(CLIENT_PORT);
 	log_debug("%s: %s rdomain: %d", __func__, sin6_to_str(sin6),
@@ -804,7 +803,7 @@ open_udpsock(uint32_t if_index)
 
 	if ((udpsock = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
 		log_warn("socket");
-		return;
+		goto out;
 	}
 	if (setsockopt(udpsock, SOL_SOCKET, SO_REUSEADDR, &opt,
 	    sizeof(opt)) == -1)
@@ -815,16 +814,18 @@ open_udpsock(uint32_t if_index)
 		/* we might race against removal of the rdomain */
 		log_warn("setsockopt SO_RTABLE");
 		close(udpsock);
-		return;
+		goto out;
 	}
 
 	if (bind(udpsock, (struct sockaddr *)sin6, sizeof(*sin6)) == -1) {
 		close(udpsock);
-		return;
+		goto out;
 	}
 
 	main_imsg_compose_frontend(IMSG_UDPSOCK, udpsock, &if_index,
 	    sizeof(if_index));
+ out:
+	freeifaddrs(ifap);
 }
 
 void
