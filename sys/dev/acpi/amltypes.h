@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.49 2022/09/12 17:42:31 kettenis Exp $ */
+/* $OpenBSD: amltypes.h,v 1.50 2024/06/02 11:08:41 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -358,6 +358,7 @@ struct acpi_pci {
 	int				dev;
 	int				fun;
 
+	int				_s0w;
 	int				_s3d;
 	int				_s3w;
 	int				_s4d;
