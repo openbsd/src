@@ -80,6 +80,7 @@ _ftp_proxy:*:109:
 _sndiop:*:110:
 _syspatch:*:112:
 _slaacd:*:115:
+_dhcp6leased:*:116:
 dialer:*:117:
 _shutdown:*:118:
 nogroup:*:32766:
