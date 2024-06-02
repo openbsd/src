@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.5 2024/06/02 17:33:48 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.6 2024/06/02 17:38:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -762,39 +762,38 @@ open_udpsock(uint32_t if_index)
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-			if (strcmp(if_name, ifa->ifa_name) != 0)
-				continue;
-			if (ifa->ifa_addr == NULL)
-				continue;
-			switch (ifa->ifa_addr->sa_family) {
-			case AF_LINK: {
-				struct if_data		*if_data;
+		if (strcmp(if_name, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr == NULL)
+			continue;
+		switch (ifa->ifa_addr->sa_family) {
+		case AF_LINK: {
+			struct if_data		*if_data;
 
-				if_data = (struct if_data *)ifa->ifa_data;
-				rdomain = if_data->ifi_rdomain;
-				break;
-			}
-			case AF_INET6: {
-				struct sockaddr_in6 *s6;
-				s6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if_data = (struct if_data *)ifa->ifa_data;
+			rdomain = if_data->ifi_rdomain;
+			break;
+		}
+		case AF_INET6: {
+			struct sockaddr_in6 *s6;
+			s6 = (struct sockaddr_in6 *)ifa->ifa_addr;
 #ifdef __KAME__
-				if (IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr) &&
-				    s6->sin6_scope_id == 0) {
-					s6->sin6_scope_id =
-					    ntohs(*(u_int16_t *)
-						&s6->sin6_addr.s6_addr[2]);
-					s6->sin6_addr.s6_addr[2] =
-					    s6->sin6_addr.s6_addr[3] = 0;
-				}
+			if (IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr) &&
+			    s6->sin6_scope_id == 0) {
+				s6->sin6_scope_id = ntohs(*(u_int16_t *)
+				    &s6->sin6_addr.s6_addr[2]);
+				s6->sin6_addr.s6_addr[2] =
+				    s6->sin6_addr.s6_addr[3] = 0;
+			}
 #endif
-				if (IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr))
-					sin6 = s6;
-				break;
-			}
-			default:
-				break;
+			if (IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr))
+				sin6 = s6;
+			break;
+		}
+		default:
+			break;
 
-			}
+		}
 	}
 
 	if(sin6 == NULL) {
