@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2024/06/02 13:35:52 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2024/06/02 17:26:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2018, 2024 Florian Obser <florian@openbsd.org>
@@ -609,7 +609,6 @@ popfile(void)
 struct dhcp6leased_conf *
 parse_config(const char *filename)
 {
-	extern const char	 default_conffile[];
 	struct sym		*sym, *next;
 	struct iface_conf	*iface;
 	struct iface_ia_conf	*ia_conf;
