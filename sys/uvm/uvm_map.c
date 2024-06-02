@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.328 2024/04/02 08:39:17 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.329 2024/06/02 15:31:57 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1659,7 +1659,7 @@ uvm_map_inentry(struct proc *p, struct p_inentry *ie, vaddr_t addr,
 		ok = uvm_map_inentry_fix(p, ie, addr, fn, serial);
 		if (!ok) {
 			KERNEL_LOCK();
-			printf(fmt, p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+			uprintf(fmt, p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
 			    addr, ie->ie_start, ie->ie_end-1);
 			p->p_p->ps_acflag |= AMAP;
 			sv.sival_ptr = (void *)PROC_PC(p);
@@ -1685,11 +1685,8 @@ uvm_map_is_stack_remappable(struct vm_map *map, vaddr_t addr, vaddr_t sz,
 
 	vm_map_assert_anylock(map);
 
-	if (!uvm_map_lookup_entry(map, addr, &first)) {
-		printf("map stack 0x%lx-0x%lx of map %p failed: no mapping\n",
-		    addr, end, map);
+	if (!uvm_map_lookup_entry(map, addr, &first))
 		return FALSE;
-	}
 
 	/*
 	 * Check that the address range exists and is contiguous.
@@ -1707,16 +1704,10 @@ uvm_map_is_stack_remappable(struct vm_map *map, vaddr_t addr, vaddr_t sz,
 		}
 #endif
 
-		if (prev != NULL && prev->end != iter->start) {
-			printf("map stack 0x%lx-0x%lx of map %p failed: "
-			    "hole in range\n", addr, end, map);
+		if (prev != NULL && prev->end != iter->start)
 			return FALSE;
-		}
-		if (iter->start == iter->end || UVM_ET_ISHOLE(iter)) {
-			printf("map stack 0x%lx-0x%lx of map %p failed: "
-			    "hole in range\n", addr, end, map);
+		if (iter->start == iter->end || UVM_ET_ISHOLE(iter))
 			return FALSE;
-		}
 		if (sigaltstack_check) {
 			if (iter->protection != (PROT_READ | PROT_WRITE))
 				return FALSE;
@@ -1740,7 +1731,6 @@ uvm_map_remap_as_stack(struct proc *p, vaddr_t addr, vaddr_t sz)
 {
 	vm_map_t map = &p->p_vmspace->vm_map;
 	vaddr_t start, end;
-	int error;
 	int flags = UVM_MAPFLAG(PROT_READ | PROT_WRITE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC,
 	    MAP_INHERIT_COPY, MADV_NORMAL,
@@ -1767,11 +1757,7 @@ uvm_map_remap_as_stack(struct proc *p, vaddr_t addr, vaddr_t sz)
 	 * placed upon the region, which prevents an attacker from pivoting
 	 * into pre-placed MAP_STACK space.
 	 */
-	error = uvm_mapanon(map, &start, end - start, 0, flags);
-	if (error != 0)
-		printf("map stack for pid %d failed\n", p->p_p->ps_pid);
-
-	return error;
+	return uvm_mapanon(map, &start, end - start, 0, flags);
 }
 
 /*
