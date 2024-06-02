@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.2 2024/06/02 13:35:52 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.3 2024/06/02 15:19:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -796,6 +796,8 @@ open_udpsock(uint32_t if_index)
 
 			}
 	}
+	freeifaddrs(ifap);
+
 	sin6->sin6_port = htons(CLIENT_PORT);
 	log_debug("%s: %s rdomain: %d", __func__, sin6_to_str(sin6),
 	    rdomain);

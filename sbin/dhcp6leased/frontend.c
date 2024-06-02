@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.5 2024/06/02 14:07:19 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.6 2024/06/02 15:19:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -572,7 +572,7 @@ update_iface(uint32_t if_index)
 		}
 	}
  out:
-
+	freeifaddrs(ifap);
 	iface = get_iface_by_id(if_index);
 	if (iface == NULL) {
 		if ((iface = calloc(1, sizeof(*iface))) == NULL)
