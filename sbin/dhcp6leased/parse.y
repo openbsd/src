@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2024/06/02 17:26:54 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2024/06/02 17:44:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2018, 2024 Florian Obser <florian@openbsd.org>
@@ -792,7 +792,7 @@ addressing_plan(struct iface_ia_conf *ia_conf)
 {
 	struct iface_pd_conf	*pd_conf;
 	uint64_t		*p, lo_counter, hi_counter, lo_shift, hi_shift;
-	int			 prev_plen;
+	int			 prev_plen = -1;
 
 	lo_counter = hi_counter = 0;
 
