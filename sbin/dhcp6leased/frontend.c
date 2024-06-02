@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.4 2024/06/02 13:55:37 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.5 2024/06/02 14:07:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -84,7 +84,6 @@ void		 set_udpsock(int, uint32_t);
 void		 iface_data_from_imsg(struct iface*, struct imsg_req_dhcp *);
 ssize_t		 build_packet(uint8_t, struct iface *, char *);
 void		 send_packet(uint8_t, struct iface *);
-void		 udp_send_packet(struct iface *, uint8_t *, ssize_t);
 int		 iface_conf_cmp(struct iface_conf *, struct iface_conf *);
 
 LIST_HEAD(, iface)		 interfaces;
@@ -92,6 +91,7 @@ struct dhcp6leased_conf		*frontend_conf;
 static struct imsgev		*iev_main;
 static struct imsgev		*iev_engine;
 struct event			 ev_route;
+struct sockaddr_in6		 dst;
 int				 ioctlsock;
 
 uint8_t				 dhcp_packet[1500];
@@ -159,6 +159,14 @@ frontend(int debug, int verbose)
 	    utsname.sysname, utsname.release, utsname.machine);
 	if (vendor_class_len == -1)
 		fatal("Cannot generate vendor-class-data");
+
+	memset(&dst, 0, sizeof(dst));
+	dst.sin6_family = AF_INET6;
+	if (inet_pton(AF_INET6, ALL_DHCP_RELAY_AGENTS_AND_SERVERS,
+	    &dst.sin6_addr.s6_addr) != 1)
+		fatal("inet_pton");
+
+	dst.sin6_port = ntohs(SERVER_PORT);
 
 	event_init();
 
@@ -932,29 +940,14 @@ send_packet(uint8_t message_type, struct iface *iface)
 	    == NULL)
 		return; /* iface went away, nothing to do */
 
-	log_debug("%s on %s", message_type == DHCPSOLICIT ? "DHCPSOLICIT" :
-	    "DHCPREQUEST", if_name);
+	log_debug("%s on %s", dhcp_message_type2str(message_type), if_name);
 
 	pkt_len = build_packet(message_type, iface, if_name);
-	udp_send_packet(iface, dhcp_packet, pkt_len);
-}
 
-void
-udp_send_packet(struct iface *iface, uint8_t *packet, ssize_t len)
-{
-	struct sockaddr_in6	to;
+	dst.sin6_scope_id = iface->ifinfo.if_index;
 
-	memset(&to, 0, sizeof(to));
-	to.sin6_family = AF_INET6;
-	if (inet_pton(AF_INET6, ALL_DHCP_RELAY_AGENTS_AND_SERVERS,
-	    &to.sin6_addr.s6_addr) != 1)
-		fatal("inet_pton");
-
-	to.sin6_port = ntohs(SERVER_PORT);
-	to.sin6_scope_id = iface->ifinfo.if_index;
-
-	if (sendto(EVENT_FD(&iface->udpev), packet, len, 0,
-	    (struct sockaddr *)&to, sizeof(to)) == -1)
+	if (sendto(EVENT_FD(&iface->udpev), dhcp_packet, pkt_len, 0,
+	    (struct sockaddr *)&dst, sizeof(dst)) == -1)
 		log_warn("sendto");
 }
 
