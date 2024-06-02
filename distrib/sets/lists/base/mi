@@ -6580,6 +6580,7 @@
 ./var/cron/tabs
 ./var/db
 ./var/db/acpi
+./var/db/dhcp6leased
 ./var/db/dhcpleased
 ./var/db/ldap
 ./var/db/ns
