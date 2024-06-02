@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp6leased.conf.5,v 1.1 2024/06/02 12:28:05 florian Exp $
+.\"	$OpenBSD: dhcp6leased.conf.5,v 1.2 2024/06/02 22:41:42 jsg Exp $
 .\"
 .\" Copyright (c) 2018, 2021, 2024 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -79,7 +79,7 @@ For example if a /64 and /60 prefix are to be assigned to network interfaces,
 requests a /59 prefix.
 The prefix is then split into two /60 prefixes and the first /64 out of the
 first /60 prefix is assigned to the first interface.
-The sencond /60 prefix from the delegated /59 is assigned to the
+The second /60 prefix from the delegated /59 is assigned to the
 second interface.
 This leaves 15 unused /64 prefixes in the first /60.
 .Pp
