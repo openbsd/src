@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.158 2024/05/13 06:48:26 jsg Exp $	*/
+/*	$OpenBSD: util.c,v 1.159 2024/06/02 23:26:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -38,8 +38,6 @@
 #include "smtpd.h"
 #include "log.h"
 
-const char *log_in6addr(const struct in6_addr *);
-const char *log_sockaddr(struct sockaddr *);
 static int  parse_mailname_file(char *, size_t);
 
 int	tracing = 0;

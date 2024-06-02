@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.685 2024/05/28 07:10:30 op Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.686 2024/06/02 23:26:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1261,11 +1261,6 @@ struct rule {
 /* aliases.c */
 int aliases_get(struct expand *, const char *);
 int aliases_virtual_get(struct expand *, const struct mailaddr *);
-int alias_parse(struct expandnode *, const char *);
-
-
-/* auth.c */
-struct auth_backend *auth_backend_lookup(enum auth_type);
 
 
 /* bounce.c */
@@ -1402,7 +1397,6 @@ void lka_filter_end(uint64_t);
 void lka_filter_protocol(uint64_t, enum filter_phase, const char *);
 void lka_filter_data_begin(uint64_t);
 void lka_filter_data_end(uint64_t);
-int lka_filter_response(uint64_t, const char *, const char *);
 
 
 /* lka_session.c */
@@ -1609,12 +1603,6 @@ int smtp_session(struct listener *, int, const struct sockaddr_storage *,
 void smtp_session_imsg(struct mproc *, struct imsg *);
 
 
-/* smtpf_session.c */
-int smtpf_session(struct listener *, int, const struct sockaddr_storage *,
-    const char *);
-void smtpf_session_imsg(struct mproc *, struct imsg *);
-
-
 /* smtpd.c */
 void imsg_dispatch(struct mproc *, struct imsg *);
 const char *proc_name(enum smtp_proc_type);
@@ -1670,7 +1658,6 @@ void	table_close_all(struct smtpd *);
 
 
 /* to.c */
-int email_to_mailaddr(struct mailaddr *, char *);
 int text_to_netaddr(struct netaddr *, const char *);
 int text_to_mailaddr(struct mailaddr *, const char *);
 int text_to_relayhost(struct relayhost *, const char *);
@@ -1714,7 +1701,6 @@ int  lowercase(char *, const char *, size_t);
 void xlowercase(char *, const char *, size_t);
 int  uppercase(char *, const char *, size_t);
 uint64_t generate_uid(void);
-int availdesc(void);
 int ckdir(const char *, mode_t, uid_t, gid_t, int);
 int rmtree(char *, int);
 int mvpurge(char *, char *);
@@ -1730,8 +1716,6 @@ char *strip(char *);
 int io_xprint(struct io *, const char *);
 int io_xprintf(struct io *, const char *, ...)
     __attribute__((__format__ (printf, 2, 3)));
-void log_envelope(const struct envelope *, const char *, const char *,
-    const char *);
 int session_socket_error(int);
 int getmailname(char *, size_t);
 int base64_encode(unsigned char const *, size_t, char *, size_t);
