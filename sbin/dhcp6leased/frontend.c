@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.3 2024/06/02 13:35:52 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.4 2024/06/02 13:55:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -33,7 +33,6 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/udp.h>
 
 #include <arpa/inet.h>
 
