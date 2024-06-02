@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.4 2024/06/02 15:43:24 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.5 2024/06/02 17:33:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -750,8 +750,8 @@ void
 open_udpsock(uint32_t if_index)
 {
 	struct ifaddrs		*ifap, *ifa;
-	struct sockaddr_in6	*sin6;
-	int			 udpsock = -1, rdomain, opt = 1;
+	struct sockaddr_in6	*sin6 = NULL;
+	int			 udpsock = -1, rdomain = -1, opt = 1;
 	char			 if_name[IF_NAMESIZE];
 
 	if (if_indextoname(if_index, if_name) == NULL) {
@@ -795,6 +795,18 @@ open_udpsock(uint32_t if_index)
 				break;
 
 			}
+	}
+
+	if(sin6 == NULL) {
+		log_warnx("%s: missing link-local address on %s", __func__,
+		    if_name);
+		goto out;
+	}
+
+	if(rdomain == -1) {
+		log_warnx("%s: cannot find rdomain for %s", __func__,
+		    if_name);
+		goto out;
 	}
 
 	sin6->sin6_port = htons(CLIENT_PORT);
