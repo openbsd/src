@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.1 2024/06/02 12:28:05 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.2 2024/06/02 12:41:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -156,8 +156,10 @@ enum imsg_type {
 	IMSG_RECONF_IFACE_IA_END,
 	IMSG_RECONF_IFACE_END,
 	IMSG_RECONF_END,
-	IMSG_SEND_DISCOVER,
+	IMSG_SEND_SOLICIT,
 	IMSG_SEND_REQUEST,
+	IMSG_SEND_RENEW,
+	IMSG_SEND_REBIND,
 	IMSG_SOCKET_IPC,
 	IMSG_OPEN_UDPSOCK,
 	IMSG_UDPSOCK,

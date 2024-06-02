@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.1 2024/06/02 12:28:05 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.2 2024/06/02 12:41:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -459,7 +459,10 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_INTERFACE_INFO:
 			control_imsg_relay(&imsg);
 			break;
-		case IMSG_SEND_DISCOVER: {
+		case IMSG_SEND_SOLICIT:
+		case IMSG_SEND_REQUEST:
+		case IMSG_SEND_RENEW:
+		case IMSG_SEND_REBIND: {
 			struct imsg_req_dhcp	 imsg_req_dhcp;
 			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_req_dhcp))
 				fatalx("%s: IMSG_SEND_DISCOVER wrong "
@@ -474,25 +477,20 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 				break;
 
 			iface_data_from_imsg(iface, &imsg_req_dhcp);
-			send_packet(DHCPSOLICIT, iface);
-			break;
-		}
-		case IMSG_SEND_REQUEST: {
-			struct imsg_req_dhcp	 imsg_req_dhcp;
-			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_req_dhcp))
-				fatalx("%s: IMSG_SEND_REQUEST wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			memcpy(&imsg_req_dhcp, imsg.data,
-			    sizeof(imsg_req_dhcp));
-
-			iface = get_iface_by_id(imsg_req_dhcp.if_index);
-
-			if (iface == NULL)
+			switch (imsg.hdr.type) {
+			case IMSG_SEND_SOLICIT:
+				send_packet(DHCPSOLICIT, iface);
 				break;
-
-			iface_data_from_imsg(iface, &imsg_req_dhcp);
-			send_packet(DHCPREQUEST, iface);
+			case IMSG_SEND_REQUEST:
+				send_packet(DHCPREQUEST, iface);
+				break;
+			case IMSG_SEND_RENEW:
+				send_packet(DHCPRENEW, iface);
+				break;
+			case IMSG_SEND_REBIND:
+				send_packet(DHCPREBIND, iface);
+				break;
+			}
 			break;
 		}
 		default:
@@ -811,6 +809,8 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 	switch(message_type) {
 	case DHCPSOLICIT:
 	case DHCPREQUEST:
+	case DHCPRENEW:
+	case DHCPREBIND:
 		break;
 	default:
 		fatalx("%s: %s not implemented", __func__,
@@ -834,13 +834,22 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 	memcpy(p, &duid, sizeof(struct dhcp_duid));
 	p += sizeof(struct dhcp_duid);
 
-	if (message_type == DHCPREQUEST) {
+	switch(message_type) {
+	case DHCPSOLICIT:
+	case DHCPREBIND:
+		break;
+	case DHCPREQUEST:
+	case DHCPRENEW:
 		opt_hdr.code = htons(DHO_SERVERID);
 		opt_hdr.len = htons(iface->serverid_len);
 		memcpy(p, &opt_hdr, sizeof(struct dhcp_option_hdr));
 		p += sizeof(struct dhcp_option_hdr);
 		memcpy(p, iface->serverid, iface->serverid_len);
 		p += iface->serverid_len;
+		break;
+	default:
+		fatalx("%s: %s not implemented", __func__,
+		    dhcp_message_type2str(message_type));
 	}
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
 		struct prefix *pd;
@@ -869,6 +878,8 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 			iaprefix.prefix_len = ia_conf->prefix_len;
 			break;
 		case DHCPREQUEST:
+		case DHCPRENEW:
+		case DHCPREBIND:
 			pd = &iface->pds[ia_conf->id - 1];
 			iaprefix.prefix_len = pd->prefix_len;
 			memcpy(&iaprefix.prefix, &pd->prefix,

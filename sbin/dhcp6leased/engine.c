@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.1 2024/06/02 12:28:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.2 2024/06/02 12:41:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -686,7 +686,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 	struct dhcp_iapd	 iapd;
 	struct prefix		 *pds = NULL;
 	size_t			 rem;
-	uint32_t		 t1, t2;
+	uint32_t		 t1, t2, lease_time;
 	int			 serverid_len;
 	uint8_t			 serverid[SERVERID_SIZE];
 	uint8_t			*p;
@@ -712,7 +712,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 	if (pds == NULL)
 		fatal("%s: calloc", __func__);
 
-	serverid_len = t1 = t2 = 0;
+	serverid_len = t1 = t2 = lease_time = 0;
 
 	p = dhcp->packet;
 	rem = dhcp->len;
@@ -828,6 +828,10 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 			    ia_conf->prefix_len);
 			goto out;
 		}
+
+		if (lease_time < pd->vltime)
+			lease_time = pd->vltime;
+
 		log_debug("%s: pltime: %u, vltime: %u, prefix: %s/%u",
 		    __func__, pd->pltime, pd->vltime, inet_ntop(AF_INET6,
 		    &pd->prefix, ntopbuf, INET6_ADDRSTRLEN), pd->prefix_len);
@@ -864,8 +868,13 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 		state_transition(iface, IF_REQUESTING);
 		break;
 	case DHCPREPLY:
-		/* XXX rapid commit, rebinding, renewing */
-		if (iface->state != IF_REQUESTING) {
+		/* XXX rapid commit */
+		switch(iface->state) {
+		case IF_REQUESTING:
+		case IF_RENEWING:
+		case IF_REBINDING:
+			break;
+		default:
 			log_debug("%s: ignoring unexpected %s", __func__,
 			    dhcp_message_type2str(hdr.msg_type));
 			goto out;
@@ -878,6 +887,8 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 		/* XXX handle t1 = 0 or t2 = 0 */
 		iface->t1 = t1;
 		iface->t2 = t2;
+		iface->lease_time = lease_time;
+		clock_gettime(CLOCK_MONOTONIC, &iface->request_time);
 		state_transition(iface, IF_BOUND);
 		break;
 	case DHCPRECONFIGURE:
@@ -1054,8 +1065,15 @@ XXXX
 		break;
 	case IF_BOUND:
 		iface->timo.tv_sec = iface->t1;
-		if (old_state == IF_REQUESTING || old_state == IF_REBOOTING) {
+		switch(old_state) {
+		case IF_REQUESTING:
+		case IF_RENEWING:
+		case IF_REBINDING:
+		case IF_REBOOTING:
 			configure_interfaces(iface);
+			break;
+		default:
+			break;
 		}
 		break;
 	case IF_RENEWING:
@@ -1128,7 +1146,7 @@ iface_timeout(int fd, short events, void *arg)
 		timespecsub(&now, &iface->request_time, &res);
 		log_debug("%s: res.tv_sec: %lld, t2: %u", __func__,
 		    res.tv_sec, iface->t2);
-		if (res.tv_sec > iface->t2)
+		if (res.tv_sec >= iface->t2)
 			state_transition(iface, IF_REBINDING);
 		else
 			state_transition(iface, IF_RENEWING);
@@ -1146,6 +1164,7 @@ iface_timeout(int fd, short events, void *arg)
 	}
 }
 
+/* XXX can this be merged into dhcp_request()? */
 void
 request_dhcp_discover(struct dhcp6leased_iface *iface)
 {
@@ -1161,7 +1180,7 @@ request_dhcp_discover(struct dhcp6leased_iface *iface)
 		imsg.elapsed_time = 0xffff;
 	else
 		imsg.elapsed_time = res.tv_sec * 100;
-	engine_imsg_compose_frontend(IMSG_SEND_DISCOVER, 0, &imsg, sizeof(imsg));
+	engine_imsg_compose_frontend(IMSG_SEND_SOLICIT, 0, &imsg, sizeof(imsg));
 }
 
 void
@@ -1195,19 +1214,29 @@ request_dhcp_request(struct dhcp6leased_iface *iface)
 		fatalx("XXX state IF_REBOOTING in %s not IMPL", __func__);
 		break;
 	case IF_REQUESTING:
+	case IF_RENEWING:
+	case IF_REBINDING:
 		imsg.serverid_len = iface->serverid_len;
 		memcpy(imsg.serverid, iface->serverid, SERVERID_SIZE);
 		memcpy(imsg.pds, iface->pds, sizeof(iface->pds));
 		break;
+	}
+	switch (iface->state) {
+	case IF_REQUESTING:
+		engine_imsg_compose_frontend(IMSG_SEND_REQUEST, 0, &imsg,
+		    sizeof(imsg));
+		break;
 	case IF_RENEWING:
-		fatalx("XXX state IF_RENEWING in %s not IMPL", __func__);
+		engine_imsg_compose_frontend(IMSG_SEND_RENEW, 0, &imsg,
+		    sizeof(imsg));
 		break;
 	case IF_REBINDING:
-		fatalx("XXX state IF_REBINDING in %s not IMPL", __func__);
+		engine_imsg_compose_frontend(IMSG_SEND_REBIND, 0, &imsg,
+		    sizeof(imsg));
 		break;
+	default:
+		fatalx("%s: wrong state", __func__);
 	}
-
-	engine_imsg_compose_frontend(IMSG_SEND_REQUEST, 0, &imsg, sizeof(imsg));
 }
 
 void
