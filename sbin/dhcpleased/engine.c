@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.43 2024/02/13 12:53:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.44 2024/06/02 12:39:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1544,7 +1544,7 @@ iface_timeout(int fd, short events, void *arg)
 		timespecsub(&now, &iface->request_time, &res);
 		log_debug("%s: res.tv_sec: %lld, rebinding_time: %u", __func__,
 		    res.tv_sec, iface->rebinding_time);
-		if (res.tv_sec > iface->rebinding_time)
+		if (res.tv_sec >= iface->rebinding_time)
 			state_transition(iface, IF_REBINDING);
 		else
 			state_transition(iface, IF_RENEWING);
