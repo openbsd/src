@@ -132,6 +132,10 @@ FunctionPass *createX86DomainReassignmentPass();
 /// ROP friendly instructions with alternatives.
 FunctionPass *createX86FixupGadgetsPass();
 
+/// Return a Machine Function pass that attempts to replace
+/// RET instructions with a cleaning sequence
+FunctionPass *createX86RetCleanPass();
+
 /// This pass replaces EVEX encoded of AVX-512 instructiosn by VEX
 /// encoding when possible in order to reduce code size.
 FunctionPass *createX86EvexToVexInsts();

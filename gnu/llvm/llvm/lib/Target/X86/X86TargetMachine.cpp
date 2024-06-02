@@ -596,6 +596,8 @@ void X86PassConfig::addPreEmitPass2() {
   addPass(createX86IndirectThunksPass());
   addPass(createX86ReturnThunksPass());
 
+  addPass(createX86RetCleanPass());
+
   // Insert extra int3 instructions after trailing call instructions to avoid
   // issues in the unwinder.
   if (TT.isOSWindows() && TT.getArch() == Triple::x86_64)

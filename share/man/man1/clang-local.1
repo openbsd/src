@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.23 2022/02/18 00:39:18 jca Exp $
+.\" $OpenBSD: clang-local.1,v 1.24 2024/06/02 15:40:43 deraadt Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: June 2 2024 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -116,6 +116,13 @@ includes a security pass that exchanges some ROP-friendly instructions
 with safer alternatives on i386 and amd64.
 This can be disabled with the
 .Fl fno-fixup-gadgets
+option.
+.It
+.Nm clang
+includes a security pass that can clear the return address on the
+stack upon return from calling a function, on i386 and amd64.
+This can be enabled with the
+.Fl fret-clean
 option.
 .It
 .Nm clang

@@ -6402,6 +6402,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString(Twine("-x86-fixup-gadgets=true")));
   }
 
+  // -ret-clean
+  if (Arg *A = Args.getLastArg(options::OPT_fno_ret_clean,
+                               options::OPT_fret_clean)) {
+    CmdArgs.push_back(Args.MakeArgString(Twine("-mllvm")));
+    if (A->getOption().matches(options::OPT_fno_ret_clean))
+      CmdArgs.push_back(Args.MakeArgString(Twine("-x86-ret-clean=false")));
+    else if (A->getOption().matches(options::OPT_fret_clean))
+      CmdArgs.push_back(Args.MakeArgString(Twine("-x86-ret-clean=true")));
+  }
+
   RenderSCPOptions(TC, Args, CmdArgs);
   RenderTrivialAutoVarInitOptions(D, TC, Args, CmdArgs);
 

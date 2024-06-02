@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.19 2024/06/02 15:40:42 deraadt Exp $
 
 LIB=	LLVMX86CodeGen
 NOPROFILE=
@@ -25,6 +25,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86FastISel.cpp \
 	X86FixupBWInsts.cpp \
 	X86FixupGadgets.cpp \
+	X86RetClean.cpp \
 	X86FixupLEAs.cpp \
 	X86AvoidStoreForwardingBlocks.cpp \
 	X86DynAllocaExpander.cpp \

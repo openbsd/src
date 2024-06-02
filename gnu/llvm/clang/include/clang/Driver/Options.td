@@ -2857,6 +2857,10 @@ def fno_fixup_gadgets : Flag<["-"], "fno-fixup-gadgets">, Group<f_Group>, Flags<
   HelpText<"Disable FixupGadgets pass (x86 only)">;
 def ffixup_gadgets : Flag<["-"], "ffixup-gadgets">, Group<f_Group>, Flags<[CoreOption]>,
   HelpText<"Replace ROP friendly instructions with safe alternatives (x86 only)">;
+def fno_ret_clean : Flag<["-"], "fno-ret-clean">, Group<f_Group>, Flags<[CoreOption]>,
+  HelpText<"Disable ret-clean pass">;
+def fret_clean : Flag<["-"], "fret-clean">, Group<f_Group>, Flags<[CoreOption]>,
+  HelpText<"Clean return address from stack after call">;
 def ftrivial_auto_var_init_stop_after : Joined<["-"], "ftrivial-auto-var-init-stop-after=">, Group<f_Group>,
   Flags<[CC1Option, CoreOption]>, HelpText<"Stop initializing trivial automatic stack variables after the specified number of instances">,
   MarshallingInfoInt<LangOpts<"TrivialAutoVarInitStopAfter">>;
