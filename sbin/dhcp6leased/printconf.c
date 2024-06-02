@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2024/06/02 12:28:05 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.2 2024/06/02 13:35:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2024 Florian Obser <florian@openbsd.org>
@@ -25,7 +25,6 @@
 #include <net/if.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 
 #include <arpa/inet.h>
 

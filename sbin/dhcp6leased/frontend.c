@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.2 2024/06/02 12:41:46 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.3 2024/06/02 13:35:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -32,7 +32,6 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 
@@ -555,15 +554,6 @@ update_iface(uint32_t if_index)
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_LINK: {
 			struct if_data		*if_data;
-			struct sockaddr_dl	*sdl;
-
-			sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-			if ((sdl->sdl_type != IFT_ETHER &&
-			    sdl->sdl_type != IFT_CARP) ||
-			    sdl->sdl_alen != ETHER_ADDR_LEN)
-				continue;
-			memcpy(ifinfo.hw_address.ether_addr_octet,
-			    LLADDR(sdl), ETHER_ADDR_LEN);
 
 			if_data = (struct if_data *)ifa->ifa_data;
 			ifinfo.link_state = if_data->ifi_link_state;
@@ -580,7 +570,6 @@ update_iface(uint32_t if_index)
 	if (iface == NULL) {
 		if ((iface = calloc(1, sizeof(*iface))) == NULL)
 			fatal("calloc");
-		//iface->send_solicit = 1;
 		memcpy(&iface->ifinfo, &ifinfo, sizeof(iface->ifinfo));
 		LIST_INSERT_HEAD(&interfaces, iface, entries);
 		frontend_imsg_compose_main(IMSG_OPEN_UDPSOCK, 0,
@@ -627,15 +616,6 @@ XXX
 	ifinfo.rdomain = ifm->ifm_tableid;
 	ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING);
-
-	if (sdl != NULL && (sdl->sdl_type == IFT_ETHER ||
-	    sdl->sdl_type == IFT_CARP) && sdl->sdl_alen == ETHER_ADDR_LEN)
-		memcpy(ifinfo.hw_address.ether_addr_octet, LLADDR(sdl),
-		    ETHER_ADDR_LEN);
-	else if (iface == NULL) {
-		log_warnx("Could not find AF_LINK address for %s.", if_name);
-		return;
-	}
 
 	if (iface == NULL) {
 		if ((iface = calloc(1, sizeof(*iface))) == NULL)

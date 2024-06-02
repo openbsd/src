@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.2 2024/06/02 12:41:46 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.3 2024/06/02 13:35:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -30,7 +30,6 @@
 #include <net/route.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 
@@ -93,7 +92,6 @@ struct dhcp6leased_iface {
 	uint32_t			 if_index;
 	int				 rdomain;
 	int				 running;
-	struct ether_addr		 hw_address;
 	int				 link_state;
 	uint8_t				 xid[XID_SIZE];
 	int				 serverid_len;
@@ -604,17 +602,9 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 		iface->rdomain = imsg_ifinfo->rdomain;
 		iface->running = imsg_ifinfo->running;
 		iface->link_state = imsg_ifinfo->link_state;
-		memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
-		    sizeof(struct ether_addr));
 		LIST_INSERT_HEAD(&dhcp6leased_interfaces, iface, entries);
 		need_refresh = 1;
 	} else {
-		if (memcmp(&iface->hw_address, &imsg_ifinfo->hw_address,
-		    sizeof(struct ether_addr)) != 0) {
-			memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
-			    sizeof(struct ether_addr));
-			need_refresh = 1;
-		}
 		if (imsg_ifinfo->rdomain != iface->rdomain) {
 			iface->rdomain = imsg_ifinfo->rdomain;
 			need_refresh = 1;

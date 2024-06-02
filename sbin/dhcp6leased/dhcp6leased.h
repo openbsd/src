@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.2 2024/06/02 12:41:46 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.3 2024/06/02 13:35:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -217,7 +217,6 @@ struct imsg_ifinfo {
 	int			rdomain;
 	int			running;
 	int			link_state;
-	struct ether_addr	hw_address;
 	char			lease[LEASE_SIZE];
 };
 

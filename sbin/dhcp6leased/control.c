@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2024/06/02 12:28:05 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2024/06/02 13:35:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,7 +24,6 @@
 
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 
 #include <errno.h>
 #include <event.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.1 2024/06/02 12:28:05 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.2 2024/06/02 13:35:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -32,7 +32,6 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <netinet6/in6_var.h>
 
 #include <arpa/inet.h>
