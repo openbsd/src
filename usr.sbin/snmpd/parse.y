@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.90 2024/02/20 12:32:48 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.91 2024/06/03 06:14:32 anton Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -141,6 +141,8 @@ static size_t			 ntrapaddresses = 0;
 static uint8_t			 engineid[SNMPD_MAXENGINEIDLEN];
 static int32_t			 enginepen;
 static size_t			 engineidlen;
+
+static unsigned char		 sha256[SHA256_DIGEST_LENGTH];
 
 int		 resolve_oid(struct ber_oid *, struct oid_sym *);
 int		 resolve_oids(void);
@@ -708,7 +710,7 @@ enginefmt	: IP4 STRING			{
 			}
 			engineid[engineidlen++] = SNMP_ENGINEID_FMT_HH;
 			memcpy(engineid + engineidlen,
-			    SHA256($2, strlen($2), NULL),
+			    SHA256($2, strlen($2), sha256),
 			    sizeof(engineid) - engineidlen);
 			engineidlen = sizeof(engineid);
 			engineid[0] |= SNMP_ENGINEID_NEW;
@@ -761,7 +763,7 @@ enginefmt_local	: enginefmt
 
 			engineid[engineidlen++] = SNMP_ENGINEID_FMT_HH;
 			memcpy(engineid + engineidlen,
-			    SHA256(hostname, strlen(hostname), NULL),
+			    SHA256(hostname, strlen(hostname), sha256),
 			    sizeof(engineid) - engineidlen);
 			engineidlen = sizeof(engineid);
 			engineid[0] |= SNMP_ENGINEID_NEW;
@@ -1860,7 +1862,7 @@ parse_config(const char *filename, u_int flags)
 		conf->sc_engineid[conf->sc_engineid_len++] |=
 		    SNMP_ENGINEID_FMT_HH;
 		memcpy(conf->sc_engineid + conf->sc_engineid_len,
-		    SHA256(hostname, strlen(hostname), NULL),
+		    SHA256(hostname, strlen(hostname), sha256),
 		    sizeof(conf->sc_engineid) - conf->sc_engineid_len);
 		conf->sc_engineid_len = sizeof(conf->sc_engineid);
 		conf->sc_engineid[0] |= SNMP_ENGINEID_NEW;
