@@ -1,4 +1,4 @@
-/*	$OpenBSD: manager.c,v 1.8 2024/04/26 04:44:43 jsg Exp $ */
+/*	$OpenBSD: manager.c,v 1.9 2024/06/03 08:02:22 anton Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include "manager.h"
+#include "pty.h"
 
 extern char *__progname;
 
@@ -89,20 +90,18 @@ clear_coredump(int *ret, const char *test_name)
 
 
 static int
-grab_syscall(pid_t pid)
+grab_syscall(pid_t pid, char *output)
 {
 	int		 ret = -1;
 	char		*pattern;
 	regex_t		 regex;
 	regmatch_t	 matches[2];
-	FILE		*fd;
-	char		 line[1024];
 	int		 error;
 	const char	*errstr;
 
 	/* build searched string */
 	error = asprintf(&pattern,
-	    "^%s\\[%d\\]: pledge \"[a-z]+\", syscall ([0-9]+)\n?$",
+	    "%s\\[%d\\]: pledge \"[a-z]+\", syscall ([0-9]+)",
 	    __progname, pid);
 	if (error <= 0) {
 		warn("asprintf pattern");
@@ -119,56 +118,28 @@ grab_syscall(pid_t pid)
 		goto out;
 	}
 
-	/* call dmesg */
-	if ((fd = popen("/sbin/dmesg", "r")) == NULL) {
-		warn("popen /sbin/dmesg");
-		goto out;
-	}
-
 	/* search the string */
-	while (1) {
-		/* read a line */
-		fgets(line, sizeof(line), fd);
-
-		/* error checking */
-		if (ferror(fd)) {
-			ret = -1;
-			goto out;
-		}
-
-		/* quit */
-		if (feof(fd))
-			break;
-
-		/* check if found */
-		error = regexec(&regex, line, 2, matches, 0);
-		if (error == REG_NOMATCH)
-			continue;
-		if (error) {
-			warnx("regexec pattern=%s line=%s error=%d",
-			    pattern, line, error);
-			ret = -1;
-			goto out;
-		}
-
-		/* convert it */
-		line[matches[1].rm_eo] = '\0';
-		ret = strtonum(&line[matches[1].rm_so], 0, 255, &errstr);
-		if (errstr) {
-			warnx("strtonum: number=%s error=%s",
-			    &line[matches[1].rm_so], errstr);
-			ret = -1;
-			goto out;
-		}
+	error = regexec(&regex, output, 2, matches, 0);
+	if (error == REG_NOMATCH) {
+		ret = 0;
+		goto out;
+	}
+	if (error) {
+		warnx("regexec pattern=%s output=%s error=%d",
+		    pattern, output, error);
+		ret = -1;
+		goto out;
 	}
 
-	/* cleanup */
-	if (pclose(fd) == -1)
+	/* convert it */
+	output[matches[1].rm_eo] = '\0';
+	ret = strtonum(&output[matches[1].rm_so], 0, 255, &errstr);
+	if (errstr) {
+		warnx("strtonum: number=%s error=%s",
+		    &output[matches[1].rm_so], errstr);
+		ret = -1;
 		goto out;
-
-	/* not found */
-	if (ret == -1)
-		ret = 0;
+	}
 
 out:
 	free(pattern);
@@ -198,6 +169,7 @@ void
 _start_test(int *ret, const char *test_name, const char *request,
     void (*test_func)(void))
 {
+	struct pty pty = {0};
 	int fildes[2];
 	pid_t pid;
 	int status;
@@ -228,6 +200,11 @@ _start_test(int *ret, const char *test_name, const char *request,
 		return;
 	}
 
+	if (pty_open(&pty)) {
+		*ret = EXIT_FAILURE;
+		return;
+	}
+
 	/* fork and launch the test */
 	switch (pid = fork()) {
 	case -1:
@@ -245,8 +222,18 @@ _start_test(int *ret, const char *test_name, const char *request,
 			if (errno != EINTR)
 				err(errno, "dup2");
 
+		if (pty_detach(&pty)) {
+			*ret = EXIT_FAILURE;
+			return;
+		}
+
 		/* create a new session (for kill) */
 		setsid();
+
+		if (pty_attach(&pty)) {
+			*ret = EXIT_FAILURE;
+			return;
+		}
 
 		/* set pledge policy */
 		if (request && pledge(request, NULL) != 0)
@@ -261,6 +248,11 @@ _start_test(int *ret, const char *test_name, const char *request,
 
 		_exit(EXIT_SUCCESS);
 		/* NOTREACHED */
+	}
+
+	if (pty_drain(&pty)) {
+		*ret = EXIT_FAILURE;
+		return;
 	}
 
 	/* copy pipe to output */
@@ -331,7 +323,7 @@ _start_test(int *ret, const char *test_name, const char *request,
 
 		/* grab pledged syscall from dmesg */
 		if (signal == SIGKILL || signal == SIGABRT) {
-			int syscall = grab_syscall(pid);
+			int syscall = grab_syscall(pid, pty_buffer(&pty));
 			switch (syscall) {
 			case -1:	/* error */
 				warn("test(%s): grab_syscall pid=%d", test_name,
@@ -351,6 +343,8 @@ _start_test(int *ret, const char *test_name, const char *request,
 
 	if (WIFSTOPPED(status))
 		printf(" stop=%d", WSTOPSIG(status));
+
+	pty_close(&pty);
 
 	printf("\n");
 }
