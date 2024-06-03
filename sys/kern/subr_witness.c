@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.52 2024/05/03 13:47:31 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.53 2024/06/03 14:34:19 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -438,11 +438,6 @@ static struct lock_class lock_class_kernel_lock = {
 	.lc_flags = LC_SLEEPLOCK | LC_RECURSABLE | LC_SLEEPABLE
 };
 
-static struct lock_class lock_class_sched_lock = {
-	.lc_name = "sched_lock",
-	.lc_flags = LC_SPINLOCK | LC_RECURSABLE
-};
-
 static struct lock_class lock_class_mutex = {
 	.lc_name = "mutex",
 	.lc_flags = LC_SPINLOCK
@@ -461,7 +456,6 @@ static struct lock_class lock_class_rrwlock = {
 
 static struct lock_class *lock_classes[] = {
 	&lock_class_kernel_lock,
-	&lock_class_sched_lock,
 	&lock_class_mutex,
 	&lock_class_rwlock,
 	&lock_class_rrwlock,
