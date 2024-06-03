@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.18 2020/07/30 17:45:44 millert Exp $
+#	$OpenBSD: Makefile,v 1.19 2024/06/03 00:55:05 millert Exp $
 
+WARNINGS=Yes
 PROG=	awk
 SRCS=	awkgram.tab.c lex.c b.c main.c parse.c proctab.c tran.c lib.c run.c
 LDADD=	-lm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.23 2023/11/22 01:01:21 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.24 2024/06/03 00:55:05 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -204,5 +204,9 @@ extern	Cell	*gensub(Node **, int);
 
 extern	FILE	*popen(const char *, const char *);
 extern	int	pclose(FILE *);
+
+extern	int	u8_nextlen(const char *s);
+extern	int	u8_rune(int *, const char *);
+extern	int	runetochar(char *str, int c);
 
 extern  const char	*flags2str(int flags);

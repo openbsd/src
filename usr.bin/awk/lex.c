@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.32 2023/11/25 16:31:33 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.33 2024/06/03 00:55:05 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -378,8 +378,6 @@ int yylex(void)
 		}
 	}
 }
-
-extern int runetochar(char *str, int c);
 
 int string(void)
 {

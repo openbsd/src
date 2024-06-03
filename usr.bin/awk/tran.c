@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.39 2024/05/04 22:59:21 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.40 2024/06/03 00:55:05 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -644,7 +644,7 @@ const char *flags2str(int flags)
 		if ((flags & flagtab[i].value) != 0) {
 			len = snprintf(cp, sizeof(buf) - (cp - buf),
 			    "%s%s", cp > buf ? "|" : "", flagtab[i].name);
-			if (len < 0 || len >= sizeof(buf) - (cp - buf))
+			if (len < 0 || (size_t)len >= sizeof(buf) - (cp - buf))
 				FATAL("out of space in flags2str");
 			cp += len;
 		}

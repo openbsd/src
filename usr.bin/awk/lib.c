@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.57 2024/05/05 02:55:34 jsg Exp $	*/
+/*	$OpenBSD: lib.c,v 1.58 2024/06/03 00:55:05 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -34,8 +34,6 @@ THIS SOFTWARE.
 #include <limits.h>
 #include <math.h>
 #include "awk.h"
-
-extern int u8_nextlen(const char *s);
 
 char	EMPTY[] = { '\0' };
 FILE	*infile	= NULL;
@@ -757,7 +755,7 @@ void WARNING(const char *fmt, ...)
 	error();
 }
 
-void error()
+void error(void)
 {
 	extern Node *curnode;
 

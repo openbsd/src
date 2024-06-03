@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.52 2024/05/04 22:59:21 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.53 2024/06/03 00:55:05 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -81,9 +81,6 @@ int	patlen;
 fa	*fatab[NFA];
 int	nfatab	= 0;	/* entries in fatab */
 
-extern int u8_nextlen(const char *s);
-
-
 /* utf-8 mechanism:
 
    For most of Awk, utf-8 strings just "work", since they look like
@@ -117,7 +114,6 @@ static int entry_cmp(const void *l, const void *r);
 static int get_gototab(fa*, int, int);
 static int set_gototab(fa*, int, int, int);
 static void clear_gototab(fa*, int);
-extern int u8_rune(int *, const char *);
 
 static int *
 intalloc(size_t n, const char *f)
@@ -347,7 +343,8 @@ void freetr(Node *p)	/* free parse tree */
 /* in the parsing of regular expressions, metacharacters like . have */
 /* to be seen literally;  \056 is not a metacharacter. */
 
-int hexstr(const uschar **pp, int max)	/* find and eval hex string at pp, return new p */
+static int
+hexstr(const uschar **pp, int max)	/* find and eval hex string at pp, return new p */
 {			/* only pick up one 8-bit byte (2 chars) */
 	const uschar *p;
 	int n = 0;
