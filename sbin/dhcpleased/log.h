@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.3 2021/12/13 18:28:39 deraadt Exp $ */
+/*	$OpenBSD: log.h,v 1.4 2024/06/03 17:58:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,16 +44,16 @@ __dead void fatal(const char *, ...)
 __dead void fatalx(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 #else
-#define log_init(x...)		do {} while(0)
-#define log_procinit(x...)	do {} while(0)
-#define log_setverbose(x...)	do {} while(0)
+#define log_init(x...)		do {} while (0)
+#define log_procinit(x...)	do {} while (0)
+#define log_setverbose(x...)	do {} while (0)
 #define log_getverbose(x...)	(0)
-#define log_warn(x...)		do {} while(0)
-#define log_warnx(x...)		do {} while(0)
-#define log_info(x...)		do {} while(0)
-#define log_debug(x...)		do {} while(0)
-#define logit(x...)		do {} while(0)
-#define vlog(x...)		do {} while(0)
+#define log_warn(x...)		do {} while (0)
+#define log_warnx(x...)		do {} while (0)
+#define log_info(x...)		do {} while (0)
+#define log_debug(x...)		do {} while (0)
+#define logit(x...)		do {} while (0)
+#define vlog(x...)		do {} while (0)
 #define fatal(x...)		exit(1)
 #define fatalx(x...)		exit(1)
 #endif	/* SMALL */

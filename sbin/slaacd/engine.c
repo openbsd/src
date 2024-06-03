@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.89 2024/04/21 17:33:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.90 2024/06/03 17:58:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -782,7 +782,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	LIST_FOREACH(addr_proposal, &iface->addr_proposals, entries) {
 		memset(&cei_addr_proposal, 0, sizeof(cei_addr_proposal));
 		cei_addr_proposal.id = addr_proposal->id;
-		if(strlcpy(cei_addr_proposal.state,
+		if (strlcpy(cei_addr_proposal.state,
 		    proposal_state_name(addr_proposal->state),
 		    sizeof(cei_addr_proposal.state)) >=
 		    sizeof(cei_addr_proposal.state))
@@ -811,7 +811,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	LIST_FOREACH(dfr_proposal, &iface->dfr_proposals, entries) {
 		memset(&cei_dfr_proposal, 0, sizeof(cei_dfr_proposal));
 		cei_dfr_proposal.id = dfr_proposal->id;
-		if(strlcpy(cei_dfr_proposal.state,
+		if (strlcpy(cei_dfr_proposal.state,
 		    proposal_state_name(dfr_proposal->state),
 		    sizeof(cei_dfr_proposal.state)) >=
 		    sizeof(cei_dfr_proposal.state))
@@ -823,7 +823,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		    cei_dfr_proposal.addr));
 		cei_dfr_proposal.router_lifetime =
 		    dfr_proposal->router_lifetime;
-		if(strlcpy(cei_dfr_proposal.rpref,
+		if (strlcpy(cei_dfr_proposal.rpref,
 		    rpref_name[dfr_proposal->rpref],
 		    sizeof(cei_dfr_proposal.rpref)) >=
 		    sizeof(cei_dfr_proposal.rpref))
@@ -840,7 +840,7 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	LIST_FOREACH(rdns_proposal, &iface->rdns_proposals, entries) {
 		memset(&cei_rdns_proposal, 0, sizeof(cei_rdns_proposal));
 		cei_rdns_proposal.id = rdns_proposal->id;
-		if(strlcpy(cei_rdns_proposal.state,
+		if (strlcpy(cei_rdns_proposal.state,
 		    proposal_state_name(rdns_proposal->state),
 		    sizeof(cei_rdns_proposal.state)) >=
 		    sizeof(cei_rdns_proposal.state))
@@ -1524,7 +1524,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 			in6 = (struct in6_addr*) (p + 6);
 			for (i=0; i < (nd_opt_hdr->nd_opt_len - 1)/2; i++,
 			    in6++) {
-				if((rdns = calloc(1, sizeof(*rdns))) == NULL)
+				if ((rdns = calloc(1, sizeof(*rdns))) == NULL)
 					fatal("calloc");
 				memcpy(&rdns->rdns, in6, sizeof(rdns->rdns));
 				LIST_INSERT_HEAD(&radv->rdns_servers, rdns,

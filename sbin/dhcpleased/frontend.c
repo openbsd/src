@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.33 2024/01/26 21:14:08 jan Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.34 2024/06/03 17:58:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -797,7 +797,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
 		if_index = ifan->ifan_index;
-                if (ifan->ifan_what == IFAN_DEPARTURE) {
+		if (ifan->ifan_what == IFAN_DEPARTURE) {
 			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
 			    &if_index, sizeof(if_index));
 			remove_iface(if_index);

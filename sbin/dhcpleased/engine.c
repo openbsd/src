@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.44 2024/06/02 12:39:26 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.45 2024/06/03 17:58:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1819,7 +1819,7 @@ send_rdns_proposal(struct dhcpleased_iface *iface)
 	imsg.rdomain = iface->rdomain;
 	for (imsg.rdns_count = 0; imsg.rdns_count < MAX_RDNS_COUNT &&
 		 iface->nameservers[imsg.rdns_count].s_addr != INADDR_ANY;
-	     imsg.rdns_count++)
+	    imsg.rdns_count++)
 		;
 	memcpy(imsg.rdns, iface->nameservers, sizeof(imsg.rdns));
 	engine_imsg_compose_main(IMSG_PROPOSE_RDNS, 0, &imsg, sizeof(imsg));
