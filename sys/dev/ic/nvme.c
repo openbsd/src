@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.115 2024/05/28 00:24:44 jsg Exp $ */
+/*	$OpenBSD: nvme.c,v 1.116 2024/06/03 12:01:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1741,8 +1741,6 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		my->sq_tail = 0;
 		my->cq_head = 0;
 		my->cqe_phase = NVME_CQE_PHASE;
-
-		pmap_extract(pmap_kernel(), (vaddr_t)page, &page_phys);
 
 		memset(&qsqe, 0, sizeof(qsqe));
 		qsqe.opcode = NVM_ADMIN_ADD_IOCQ;
