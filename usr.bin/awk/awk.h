@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.31 2023/11/25 16:31:33 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.32 2024/06/03 00:58:04 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -179,7 +179,6 @@ typedef struct Node {
 #define	NIL	((Node *) 0)
 
 extern Node	*winner;
-extern Node	*nullstat;
 extern Node	*nullnode;
 
 /* ctypes */

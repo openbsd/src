@@ -25,6 +25,10 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the 
 second edition of the AWK book was published in September 2023.
 
+May 27, 2024
+	Spelling fixes and removal of unneeded prototypes and extern.
+	Thanks to Jonathan Gray.
+
 May 4, 2024
 	Fixed a use-after-free bug with ARGV for "delete ARGV".
 	Also ENVtab is no longer global. Thanks to Benjamin Sturz
