@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.138 2023/12/13 11:34:56 job Exp $
+#	$OpenBSD: changelist,v 1.139 2024/06/03 10:07:27 florian Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -25,6 +25,7 @@
 /etc/daily.local
 /etc/defaultdomain
 /etc/dhcpd.conf
+/etc/dhcp6leased.conf
 /etc/dhcpleased.conf
 /etc/disktab
 /etc/distfile
