@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.22 2016/01/10 13:35:09 mestre Exp $	*/
+/*	$OpenBSD: io.c,v 1.23 2024/06/03 09:43:10 otto Exp $	*/
 /*	$NetBSD: io.c,v 1.9 1997/07/09 06:25:47 phil Exp $	*/
 
 /*-
@@ -505,14 +505,12 @@ get_line(void)
 {
 	size_t pos;
 	int c, oy, ox;
-	WINDOW *oscr;
 
-	oscr = stdscr;
-	stdscr = Msgwin;
-	getyx(stdscr, oy, ox);
-	refresh();
+	getyx(Msgwin, oy, ox);
+	wrefresh(Msgwin);
 	/* loop reading in the string, and put it in a temporary buffer */
-	for (pos = 0; (c = readchar()) != '\n'; clrtoeol(), refresh()) {
+	for (pos = 0; (c = readchar()) != '\n'; wclrtoeol(Msgwin),
+	    wrefresh(Msgwin)) {
 		if (c == -1)
 			continue;
 		if (c == ' ' && (pos == 0 || linebuf[pos - 1] == ' '))
@@ -522,13 +520,13 @@ get_line(void)
 				int i;
 				pos--;
 				for (i = strlen(unctrl(linebuf[pos])); i; i--)
-					addch('\b');
+					waddch(Msgwin, '\b');
 			}
 			continue;
 		}
 		if (c == killchar()) {
 			pos = 0;
-			move(oy, ox);
+			wmove(Msgwin, oy, ox);
 			continue;
 		}
 		if (pos >= LINESIZE - 1 || !(isalnum(c) || c == ' ')) {
@@ -538,12 +536,11 @@ get_line(void)
 		if (islower(c))
 			c = toupper(c);
 		linebuf[pos++] = c;
-		addstr(unctrl(c));
+		waddstr(Msgwin, unctrl(c));
 		Mpos++;
 	}
 	while (pos < sizeof(linebuf))
 		linebuf[pos++] = '\0';
-	stdscr = oscr;
 	return (linebuf);
 }
 
