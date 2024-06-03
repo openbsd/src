@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.6 2024/06/02 17:38:44 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.7 2024/06/03 11:08:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -648,8 +648,8 @@ main_imsg_send_config(struct dhcp6leased_conf *xconf)
 	struct iface_ia_conf	*ia_conf;
 	struct iface_pd_conf	*pd_conf;
 
-	main_imsg_compose_frontend(IMSG_RECONF_CONF, -1, NULL, 0);
-	main_imsg_compose_engine(IMSG_RECONF_CONF, -1, NULL, 0);
+	main_imsg_compose_frontend(IMSG_RECONF_CONF, -1, xconf, sizeof(*xconf));
+	main_imsg_compose_engine(IMSG_RECONF_CONF, -1, xconf, sizeof(*xconf));
 
 	/* Send the interface list to the frontend & engine. */
 	SIMPLEQ_FOREACH(iface_conf, &xconf->iface_list, entry) {
@@ -897,6 +897,8 @@ merge_config(struct dhcp6leased_conf *conf, struct dhcp6leased_conf *xconf)
 		}
 		free(iface_conf);
 	}
+
+	conf->rapid_commit = xconf->rapid_commit;
 
 	/* Add new interfaces. */
 	SIMPLEQ_CONCAT(&conf->iface_list, &xconf->iface_list);

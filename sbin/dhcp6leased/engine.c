@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.4 2024/06/02 13:55:37 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.5 2024/06/03 11:08:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -444,9 +444,15 @@ engine_dispatch_main(int fd, short event, void *bula)
 			if (nconf != NULL)
 				fatalx("%s: IMSG_RECONF_CONF already in "
 				    "progress", __func__);
+			if (IMSG_DATA_SIZE(imsg) !=
+			    sizeof(struct dhcp6leased_conf))
+				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			if ((nconf = malloc(sizeof(struct dhcp6leased_conf))) ==
 			    NULL)
 				fatal(NULL);
+			memcpy(nconf, imsg.data,
+			    sizeof(struct dhcp6leased_conf));
 			SIMPLEQ_INIT(&nconf->iface_list);
 			break;
 		case IMSG_RECONF_IFACE:
@@ -676,7 +682,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 	struct prefix		 *pds = NULL;
 	size_t			 rem;
 	uint32_t		 t1, t2, lease_time;
-	int			 serverid_len;
+	int			 serverid_len, rapid_commit = 0;
 	uint8_t			 serverid[SERVERID_SIZE];
 	uint8_t			*p;
 	char			 ifnamebuf[IF_NAMESIZE], *if_name;
@@ -787,6 +793,14 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 				    sizeof(struct dhcp_iapd),
 				    &pds[ntohl(iapd.iaid) -1]);
 			break;
+		case DHO_RAPID_COMMIT:
+			if (opt_hdr.len != 0) {
+				log_warnx("%s: invalid rapid commit option",
+				    __func__);
+				goto out;
+			}
+			rapid_commit = 1;
+			break;
 		default:
 			log_debug("unhandled option: %u", opt_hdr.code);
 			break;
@@ -857,12 +871,15 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 		state_transition(iface, IF_REQUESTING);
 		break;
 	case DHCPREPLY:
-		/* XXX rapid commit */
 		switch(iface->state) {
 		case IF_REQUESTING:
 		case IF_RENEWING:
 		case IF_REBINDING:
 			break;
+		case IF_INIT:
+			if (rapid_commit && engine_conf->rapid_commit)
+				break;
+			/* fall through */
 		default:
 			log_debug("%s: ignoring unexpected %s", __func__,
 			    dhcp_message_type2str(hdr.msg_type));
@@ -1060,6 +1077,12 @@ XXXX
 		case IF_REBINDING:
 		case IF_REBOOTING:
 			configure_interfaces(iface);
+			break;
+		case IF_INIT:
+			if (engine_conf->rapid_commit)
+				configure_interfaces(iface);
+			else
+				fatal("invalid transition Init -> Bound");
 			break;
 		default:
 			break;

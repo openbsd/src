@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2024/06/02 17:44:06 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2024/06/03 11:08:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2018, 2024 Florian Obser <florian@openbsd.org>
@@ -111,7 +111,7 @@ typedef struct {
 
 %}
 
-%token	ERROR DELEGATION FOR ON PREFIX REQUEST
+%token	ERROR DELEGATION FOR ON PREFIX REQUEST RAPID COMMIT
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -122,6 +122,7 @@ typedef struct {
 grammar		: /* empty */
 		| grammar '\n'
 		| grammar varset '\n'
+		| grammar conf_main '\n'
 		| grammar ia_pd '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
@@ -164,6 +165,10 @@ optnl		: '\n' optnl		/* zero or more newlines */
 		;
 
 nl		: '\n' optnl		/* one or more newlines */
+		;
+conf_main	: REQUEST RAPID COMMIT {
+			conf->rapid_commit = 1;
+		}
 		;
 
 ia_pd		: REQUEST PREFIX DELEGATION ON STRING FOR {
@@ -253,10 +258,12 @@ lookup(char *s)
 {
 	/* This has to be sorted always. */
 	static const struct keywords keywords[] = {
+		{"commit",	COMMIT},
 		{"delegation",	DELEGATION},
 		{"for",		FOR},
 		{"on",		ON},
 		{"prefix",	PREFIX},
+		{"rapid",	RAPID},
 		{"request",	REQUEST},
 	};
 	const struct keywords	*p;

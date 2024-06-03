@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.6 2024/06/02 15:19:05 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.7 2024/06/03 11:08:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -322,9 +322,15 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			if (nconf != NULL)
 				fatalx("%s: IMSG_RECONF_CONF already in "
 				    "progress", __func__);
+			if (IMSG_DATA_SIZE(imsg) !=
+			    sizeof(struct dhcp6leased_conf))
+				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			if ((nconf = malloc(sizeof(struct dhcp6leased_conf))) ==
 			    NULL)
 				fatal(NULL);
+			memcpy(nconf, imsg.data,
+			    sizeof(struct dhcp6leased_conf));
 			SIMPLEQ_INIT(&nconf->iface_list);
 			break;
 		case IMSG_RECONF_IFACE:
@@ -899,12 +905,12 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 	memcpy(p, &elapsed_time, sizeof(uint16_t));
 	p += sizeof(uint16_t);
 
-#ifdef notyet
-	opt_hdr.code = htons(DHO_RAPID_COMMIT);
-	opt_hdr.len = htons(0);
-	memcpy(p, &opt_hdr, sizeof(struct dhcp_option_hdr));
-	p += sizeof(struct dhcp_option_hdr);
-#endif
+	if (message_type == DHCPSOLICIT && frontend_conf->rapid_commit) {
+		opt_hdr.code = htons(DHO_RAPID_COMMIT);
+		opt_hdr.len = htons(0);
+		memcpy(p, &opt_hdr, sizeof(struct dhcp_option_hdr));
+		p += sizeof(struct dhcp_option_hdr);
+	}
 
 	opt_hdr.code = htons(DHO_VENDOR_CLASS);
 	opt_hdr.len = htons(sizeof(struct dhcp_vendor_class) +

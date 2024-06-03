@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2024/06/02 13:35:52 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.3 2024/06/03 11:08:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2024 Florian Obser <florian@openbsd.org>
@@ -99,6 +99,9 @@ void
 print_config(struct dhcp6leased_conf *conf, int verbose)
 {
 	struct iface_conf	*iface;
+
+	if (conf->rapid_commit)
+		printf("request rapid commit\n\n");
 
 	SIMPLEQ_FOREACH(iface, &conf->iface_list, entry)
 		print_iface_conf(iface, verbose);

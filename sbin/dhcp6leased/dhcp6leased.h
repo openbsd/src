@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.3 2024/06/02 13:35:52 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.4 2024/06/03 11:08:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -210,6 +210,7 @@ struct iface_conf {
 
 struct dhcp6leased_conf {
 	SIMPLEQ_HEAD(iface_conf_head, iface_conf)	iface_list;
+	int						rapid_commit;
 };
 
 struct imsg_ifinfo {
