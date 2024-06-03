@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.90 2024/05/31 11:27:34 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.91 2024/06/03 12:58:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -467,8 +467,8 @@ out:
 }
 
 /*
- * Parse the Subject Information Access (SIA) extension
- * See RFC 6487, section 4.8.8 for details.
+ * Parse the Subject Information Access (SIA) extension for an EE cert.
+ * See RFC 6487, section 4.8.8.2 for details.
  * Returns NULL on failure, on success returns the SIA signedObject URI
  * (which has to be freed after use).
  */

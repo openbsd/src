@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.132 2024/05/31 02:45:15 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.133 2024/06/03 12:58:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -495,7 +495,8 @@ sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 }
 
 /*
- * Parse "Subject Information Access" extension, RFC 6487 4.8.8.
+ * Parse "Subject Information Access" extension for a CA cert,
+ * RFC 6487, section 4.8.8.1 and RFC 8182, section 3.2.
  * Returns zero on failure, non-zero on success.
  */
 static int
@@ -505,7 +506,10 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	ACCESS_DESCRIPTION	*ad;
 	ASN1_OBJECT		*oid;
 	const char		*mftfilename;
+	char			*carepo = NULL, *rpkimft = NULL;
 	int			 i, rc = 0;
+
+	assert(cert->repo == NULL && cert->mft == NULL && cert->notify == NULL);
 
 	if (X509_EXTENSION_get_critical(ext)) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
@@ -525,13 +529,35 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		oid = ad->method;
 
 		if (OBJ_cmp(oid, carepo_oid) == 0) {
-			if (!x509_location(fn, "SIA: caRepository",
-			    RSYNC_PROTO, ad->location, &cert->repo))
+			if (!x509_location(fn, "SIA: caRepository", NULL,
+			    ad->location, &carepo))
 				goto out;
+			if (cert->repo == NULL && strncasecmp(carepo,
+			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
+				cert->repo = carepo;
+				carepo = NULL;
+				continue;
+			}
+			if (verbose)
+				warnx("%s: RFC 6487 section 4.8.8: SIA: "
+				    "ignoring location %s", fn, carepo);
+			free(carepo);
+			carepo = NULL;
 		} else if (OBJ_cmp(oid, manifest_oid) == 0) {
-			if (!x509_location(fn, "SIA: rpkiManifest",
-			    RSYNC_PROTO, ad->location, &cert->mft))
+			if (!x509_location(fn, "SIA: rpkiManifest", NULL,
+			    ad->location, &rpkimft))
 				goto out;
+			if (cert->mft == NULL && strncasecmp(rpkimft,
+			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
+				cert->mft = rpkimft;
+				rpkimft = NULL;
+				continue;
+			}
+			if (verbose)
+				warnx("%s: RFC 6487 section 4.8.8: SIA: "
+				    "ignoring location %s", fn, rpkimft);
+			free(rpkimft);
+			rpkimft = NULL;
 		} else if (OBJ_cmp(oid, notify_oid) == 0) {
 			if (!x509_location(fn, "SIA: rpkiNotify",
 			    HTTPS_PROTO, ad->location, &cert->notify))
@@ -844,6 +870,10 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		case NID_sinfo_access:
 			if (sia++ > 0)
 				goto dup;
+			/*
+			 * This will fail for BGPsec certs, but they must omit
+			 * this extension anyway (RFC 8209, section 3.1.3.3).
+			 */
 			if (!sbgp_sia(fn, cert, ext))
 				goto out;
 			break;
