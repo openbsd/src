@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uname.1,v 1.19 2023/10/09 19:28:42 schwarze Exp $
+.\"	$OpenBSD: uname.1,v 1.20 2024/06/03 15:55:52 florian Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)du.1	6.13 (Berkeley) 6/20/91
 .\"
-.Dd $Mdocdate: October 9 2023 $
+.Dd $Mdocdate: June 3 2024 $
 .Dt UNAME 1
 .Os
 .Sh NAME
@@ -73,34 +73,8 @@ On
 .Ox ,
 the format is
 .Sm off
-.Ar digit . digit Bq \- Ar flavor .
+.Ar digit . digit .
 .Sm on
-.Pp
-The meaning of the
-.Pf \- Ar flavor
-suffix is as follows:
-.Bl -tag -width "no suffix"
-.It \-beta
-A development version preceding the
-.Ar digit . Ns Ar digit
-release.
-.It no suffix
-A public release,
-or a development version very closely preceding that release.
-.It \-stable
-A branch based on the
-.Ar digit . Ns Ar digit
-release that only contains patches to fix very important bugs.
-.It \-current
-A development version coming after the
-.Ar digit . Ns Ar digit
-release.
-Some time before the subsequent release, the second
-.Ar digit
-is incremented and the
-.Pf \- Ar flavor
-switched to \-beta.
-.El
 .It Fl s
 Print the operating system name.
 On
