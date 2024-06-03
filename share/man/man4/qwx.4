@@ -1,4 +1,4 @@
-.\" $OpenBSD: qwx.4,v 1.5 2024/05/29 09:04:12 stsp Exp $
+.\" $OpenBSD: qwx.4,v 1.6 2024/06/03 14:59:22 jsg Exp $
 .\"
 .\" Copyright (c) 2022 Martin Pieuchot <mpi@openbsd.org>
 .\" Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2024 $
+.Dd $Mdocdate: June 3 2024 $
 .Dt QWX 4
 .Os
 .Sh NAME
@@ -96,5 +96,5 @@ capabilities offered by the hardware.
 .Sh BUGS
 Broadcast and Multicast frames are only received on networks which
 do not use encryption or which use WPA2 with group cipher CCMP.
-This prevents ARP and IPv6 from working correcly on other types of
+This prevents ARP and IPv6 from working correctly on other types of
 networks.
