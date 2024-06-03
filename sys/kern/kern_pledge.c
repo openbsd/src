@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.315 2024/06/02 15:31:56 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.316 2024/06/03 03:41:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1002,8 +1002,8 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 	snprintf(buf, sizeof(buf), "%s(%d): pledge sysctl %d:",
 	    p->p_p->ps_comm, p->p_p->ps_pid, miblen);
 	for (i = 0; i < miblen; i++) {
-		char *p = buf + strlen(buf);
-		snprintf(p, sizeof(buf) - (p - buf), " %d", mib[i]);
+		char *s = buf + strlen(buf);
+		snprintf(s, sizeof(buf) - (s - buf), " %d", mib[i]);
 	}
 	uprintf("%s\n", buf);
 
