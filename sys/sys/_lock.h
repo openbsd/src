@@ -1,4 +1,4 @@
-/*	$OpenBSD: _lock.h,v 1.4 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: _lock.h,v 1.5 2024/06/03 12:46:59 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -50,7 +50,6 @@
 
 enum lock_class_index {
 	LO_CLASS_KERNEL_LOCK,
-	LO_CLASS_SCHED_LOCK,
 	LO_CLASS_MUTEX,
 	LO_CLASS_RWLOCK,
 	LO_CLASS_RRWLOCK
