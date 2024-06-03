@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.204 2024/05/22 09:24:11 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.205 2024/06/03 12:48:25 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -332,7 +332,6 @@ void
 sleep_setup(const volatile void *ident, int prio, const char *wmesg)
 {
 	struct proc *p = curproc;
-	int s;
 
 #ifdef DIAGNOSTIC
 	if (p->p_flag & P_CANTSLEEP)
@@ -346,7 +345,7 @@ sleep_setup(const volatile void *ident, int prio, const char *wmesg)
 	if (p->p_flag & P_WEXIT)
 		CLR(prio, PCATCH);
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 
 	TRACEPOINT(sched, sleep, NULL);
 
@@ -360,14 +359,14 @@ sleep_setup(const volatile void *ident, int prio, const char *wmesg)
 		atomic_setbits_int(&p->p_flag, P_SINTR);
 	p->p_stat = SSLEEP;
 
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 int
 sleep_finish(int timo, int do_sleep)
 {
 	struct proc *p = curproc;
-	int s, catch, error = 0, error1 = 0;
+	int catch, error = 0, error1 = 0;
 
 	catch = p->p_flag & P_SINTR;
 
@@ -392,7 +391,7 @@ sleep_finish(int timo, int do_sleep)
 		}
 	}
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	/*
 	 * If the wakeup happens while going to sleep, p->p_wchan
 	 * will be NULL. In that case unwind immediately but still
@@ -419,7 +418,7 @@ sleep_finish(int timo, int do_sleep)
 #endif
 
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 
 	/*
 	 * Even though this belongs to the signal handling part of sleep,
@@ -503,11 +502,10 @@ void
 endtsleep(void *arg)
 {
 	struct proc *p = arg;
-	int s;
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	wakeup_proc(p, P_TIMEOUT);
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 /*
@@ -536,11 +534,10 @@ wakeup_n(const volatile void *ident, int n)
 	struct slpque *qp, wakeq;
 	struct proc *p;
 	struct proc *pnext;
-	int s;
 
 	TAILQ_INIT(&wakeq);
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	qp = &slpque[LOOKUP(ident)];
 	for (p = TAILQ_FIRST(qp); p != NULL && n != 0; p = pnext) {
 		pnext = TAILQ_NEXT(p, p_runq);
@@ -564,7 +561,7 @@ wakeup_n(const volatile void *ident, int n)
 		if (p->p_stat == SSLEEP)
 			setrunnable(p);
 	}
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 /*
@@ -581,7 +578,6 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 {
 	struct proc *q;
 	uint8_t newprio;
-	int s;
 
 	/*
 	 * If one of the threads of a multi-threaded process called
@@ -594,11 +590,11 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 		newprio = max(newprio, q->p_runpri);
 	mtx_leave(&p->p_p->ps_mtx);
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	setrunqueue(p->p_cpu, p, newprio);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 
 	return (0);
 }

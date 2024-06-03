@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.329 2024/05/22 09:22:55 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.330 2024/06/03 12:48:25 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -843,14 +843,12 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 		 */
 		if (((pr->ps_flags & (PS_TRACED | PS_PPWAIT)) == PS_TRACED) &&
 		    signum != SIGKILL && (p->p_sigmask & mask) != 0) {
-			int s;
-
 			single_thread_set(p, SINGLE_SUSPEND | SINGLE_NOWAIT);
 			pr->ps_xsig = signum;
 
-			SCHED_LOCK(s);
+			SCHED_LOCK();
 			proc_stop(p, 1);
-			SCHED_UNLOCK(s);
+			SCHED_UNLOCK();
 
 			signum = pr->ps_xsig;
 			single_thread_clear(p, 0);
@@ -920,7 +918,7 @@ psignal(struct proc *p, int signum)
 void
 ptsignal(struct proc *p, int signum, enum signal_type type)
 {
-	int s, prop;
+	int prop;
 	sig_t action, altaction = SIG_DFL;
 	sigset_t mask, sigmask;
 	int *siglist;
@@ -1063,7 +1061,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			if (q != p)
 				ptsignal(q, signum, SPROPAGATED);
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 
 	switch (p->p_stat) {
 
@@ -1252,7 +1250,7 @@ out:
 		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 	}
 
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 	if (wakeparent)
 		wakeup(pr->ps_pptr);
 }
@@ -1299,7 +1297,6 @@ cursig(struct proc *p, struct sigctx *sctx)
 	struct process *pr = p->p_p;
 	int signum, mask, prop;
 	sigset_t ps_siglist;
-	int s;
 
 	KASSERT(p == curproc);
 
@@ -1340,9 +1337,9 @@ cursig(struct proc *p, struct sigctx *sctx)
 			single_thread_set(p, SINGLE_SUSPEND | SINGLE_NOWAIT);
 			pr->ps_xsig = signum;
 
-			SCHED_LOCK(s);
+			SCHED_LOCK();
 			proc_stop(p, 1);
-			SCHED_UNLOCK(s);
+			SCHED_UNLOCK();
 
 			/*
 			 * re-take the signal before releasing
@@ -1415,9 +1412,9 @@ cursig(struct proc *p, struct sigctx *sctx)
 				    prop & SA_TTYSTOP))
 					break;	/* == ignore */
 				pr->ps_xsig = signum;
-				SCHED_LOCK(s);
+				SCHED_LOCK();
 				proc_stop(p, 1);
-				SCHED_UNLOCK(s);
+				SCHED_UNLOCK();
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
@@ -2064,7 +2061,6 @@ int
 single_thread_check_locked(struct proc *p, int deep)
 {
 	struct process *pr = p->p_p;
-	int s;
 
 	MUTEX_ASSERT_LOCKED(&pr->ps_mtx);
 
@@ -2093,10 +2089,10 @@ single_thread_check_locked(struct proc *p, int deep)
 		/* not exiting and don't need to unwind, so suspend */
 		mtx_leave(&pr->ps_mtx);
 
-		SCHED_LOCK(s);
+		SCHED_LOCK();
 		p->p_stat = SSTOP;
 		mi_switch();
-		SCHED_UNLOCK(s);
+		SCHED_UNLOCK();
 		mtx_enter(&pr->ps_mtx);
 	} while (pr->ps_single != NULL);
 
@@ -2129,7 +2125,7 @@ single_thread_set(struct proc *p, int flags)
 {
 	struct process *pr = p->p_p;
 	struct proc *q;
-	int error, s, mode = flags & SINGLE_MASK;
+	int error, mode = flags & SINGLE_MASK;
 
 	KASSERT(curproc == p);
 
@@ -2161,7 +2157,7 @@ single_thread_set(struct proc *p, int flags)
 	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		if (q == p)
 			continue;
-		SCHED_LOCK(s);
+		SCHED_LOCK();
 		atomic_setbits_int(&q->p_flag, P_SUSPSINGLE);
 		switch (q->p_stat) {
 		case SIDL:
@@ -2194,7 +2190,7 @@ single_thread_set(struct proc *p, int flags)
 		case SRUN:
 			break;
 		}
-		SCHED_UNLOCK(s);
+		SCHED_UNLOCK();
 	}
 
 	/* count ourselfs out */
@@ -2235,7 +2231,6 @@ single_thread_clear(struct proc *p, int flag)
 {
 	struct process *pr = p->p_p;
 	struct proc *q;
-	int s;
 
 	KASSERT(pr->ps_single == p);
 	KASSERT(curproc == p);
@@ -2254,7 +2249,7 @@ single_thread_clear(struct proc *p, int flag)
 		 * then clearing that either makes it runnable or puts
 		 * it back into some sleep queue
 		 */
-		SCHED_LOCK(s);
+		SCHED_LOCK();
 		if (q->p_stat == SSTOP && (q->p_flag & flag) == 0) {
 			if (q->p_wchan == NULL)
 				setrunnable(q);
@@ -2263,7 +2258,7 @@ single_thread_clear(struct proc *p, int flag)
 				q->p_stat = SSLEEP;
 			}
 		}
-		SCHED_UNLOCK(s);
+		SCHED_UNLOCK();
 	}
 	mtx_leave(&pr->ps_mtx);
 }

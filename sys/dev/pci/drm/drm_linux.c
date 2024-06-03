@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.112 2024/03/30 13:33:20 mpi Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.113 2024/06/03 12:48:25 claudio Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -114,14 +114,13 @@ void
 __set_current_state(int state)
 {
 	struct proc *p = curproc;
-	int s;
 
 	KASSERT(state == TASK_RUNNING);
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	unsleep(p);
 	p->p_stat = SONPROC;
 	atomic_clearbits_int(&p->p_flag, P_WSLEEP);
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 void
@@ -159,11 +158,11 @@ schedule_timeout_uninterruptible(long timeout)
 int
 wake_up_process(struct proc *p)
 {
-	int s, rv;
+	int rv;
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	rv = wakeup_proc(p, 0);
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 	return rv;
 }
 

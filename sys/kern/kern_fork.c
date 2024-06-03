@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.259 2024/05/29 18:55:45 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.260 2024/06/03 12:48:25 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -329,14 +329,13 @@ static inline void
 fork_thread_start(struct proc *p, struct proc *parent, int flags)
 {
 	struct cpu_info *ci;
-	int s;
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	ci = sched_choosecpu_fork(parent, flags);
 	TRACEPOINT(sched, fork, p->p_tid + THREAD_PID_OFFSET,
 	    p->p_p->ps_pid, CPU_INFO_UNIT(ci));
 	setrunqueue(ci, p, p->p_usrpri);
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 int

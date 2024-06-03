@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.221 2024/05/20 10:32:20 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.222 2024/06/03 12:48:25 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -119,7 +119,6 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	struct process *pr, *qr, *nqr;
 	struct rusage *rup;
 	struct timespec ts;
-	int s;
 
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
@@ -329,9 +328,9 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		timespecclear(&ts);
 	else
 		timespecsub(&ts, &curcpu()->ci_schedstate.spc_runtime, &ts);
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	tuagg_locked(pr, p, &ts);
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 
 	/*
 	 * clear %cpu usage during swap

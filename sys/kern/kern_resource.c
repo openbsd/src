@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.83 2024/05/22 09:20:22 claudio Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.84 2024/06/03 12:48:25 claudio Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -198,7 +198,6 @@ donice(struct proc *curp, struct process *chgpr, int n)
 {
 	struct ucred *ucred = curp->p_ucred;
 	struct proc *p;
-	int s;
 
 	if (ucred->cr_uid != 0 && ucred->cr_ruid != 0 &&
 	    ucred->cr_uid != chgpr->ps_ucred->cr_uid &&
@@ -213,11 +212,11 @@ donice(struct proc *curp, struct process *chgpr, int n)
 		return (EACCES);
 	chgpr->ps_nice = n;
 	mtx_enter(&chgpr->ps_mtx);
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	TAILQ_FOREACH(p, &chgpr->ps_threads, p_thr_link) {
 		setpriority(p, p->p_estcpu, n);
 	}
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 	mtx_leave(&chgpr->ps_mtx);
 	return (0);
 }
@@ -396,11 +395,9 @@ tuagg_locked(struct process *pr, struct proc *p, const struct timespec *ts)
 void
 tuagg(struct process *pr, struct proc *p)
 {
-	int s;
-
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	tuagg_locked(pr, p, NULL);
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 /*
@@ -537,13 +534,12 @@ rucheck(void *arg)
 	struct rlimit rlim;
 	struct process *pr = arg;
 	time_t runtime;
-	int s;
 
 	KERNEL_ASSERT_LOCKED();
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	runtime = pr->ps_tu.tu_runtime.tv_sec;
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 
 	mtx_enter(&pr->ps_mtx);
 	rlim = pr->ps_limit->pl_rlimit[RLIMIT_CPU];

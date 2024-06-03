@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.97 2024/04/02 08:27:22 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.98 2024/06/03 12:48:25 claudio Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -283,7 +283,6 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 	struct proc *t;				/* target thread */
 	struct process *tr;			/* target process */
 	int error = 0;
-	int s;
 
 	switch (req) {
 	case PT_TRACE_ME:
@@ -492,10 +491,10 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
 			tr->ps_xsig = data;
-			SCHED_LOCK(s);
+			SCHED_LOCK();
 			unsleep(t);
 			setrunnable(t);
-			SCHED_UNLOCK(s);
+			SCHED_UNLOCK();
 		} else {
 			if (data != 0)
 				psignal(t, data);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.92 2024/05/29 18:55:45 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.93 2024/06/03 12:48:25 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -230,7 +230,6 @@ schedcpu(void *unused)
 	static struct timeout to = TIMEOUT_INITIALIZER(schedcpu, NULL);
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	struct proc *p;
-	int s;
 	unsigned int newcpu;
 
 	LIST_FOREACH(p, &allproc, p_list) {
@@ -253,7 +252,7 @@ schedcpu(void *unused)
 		 */
 		if (p->p_slptime > 1)
 			continue;
-		SCHED_LOCK(s);
+		SCHED_LOCK();
 		/*
 		 * p_pctcpu is only for diagnostic tools such as ps.
 		 */
@@ -275,7 +274,7 @@ schedcpu(void *unused)
 			remrunqueue(p);
 			setrunqueue(p->p_cpu, p, p->p_usrpri);
 		}
-		SCHED_UNLOCK(s);
+		SCHED_UNLOCK();
 	}
 	wakeup(&lbolt);
 	timeout_add_sec(&to, 1);
@@ -313,13 +312,12 @@ void
 yield(void)
 {
 	struct proc *p = curproc;
-	int s;
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	setrunqueue(p->p_cpu, p, p->p_usrpri);
 	p->p_ru.ru_nvcsw++;
 	mi_switch();
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 /*
@@ -332,13 +330,12 @@ void
 preempt(void)
 {
 	struct proc *p = curproc;
-	int s;
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	setrunqueue(p->p_cpu, p, p->p_usrpri);
 	p->p_ru.ru_nivcsw++;
 	mi_switch();
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 void
@@ -349,7 +346,7 @@ mi_switch(void)
 	struct proc *nextproc;
 	struct process *pr = p->p_p;
 	struct timespec ts;
-	int oldipl, s;
+	int oldipl;
 #ifdef MULTIPROCESSOR
 	int hold_count;
 #endif
@@ -427,7 +424,7 @@ mi_switch(void)
 
 	/* Restore proc's IPL. */
 	MUTEX_OLDIPL(&sched_lock) = oldipl;
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 
 	SCHED_ASSERT_UNLOCKED();
 
@@ -463,7 +460,7 @@ mi_switch(void)
 	if (hold_count)
 		__mp_acquire_count(&kernel_lock, hold_count);
 #endif
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 }
 
 /*
@@ -551,15 +548,14 @@ schedclock(struct proc *p)
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	uint32_t newcpu;
-	int s;
 
 	if (p == spc->spc_idleproc || spc->spc_spinning)
 		return;
 
-	SCHED_LOCK(s);
+	SCHED_LOCK();
 	newcpu = ESTCPULIM(p->p_estcpu + 1);
 	setpriority(p, newcpu, p->p_p->ps_nice);
-	SCHED_UNLOCK(s);
+	SCHED_UNLOCK();
 }
 
 void (*cpu_setperf)(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.71 2024/05/29 18:55:45 claudio Exp $	*/
+/*	$OpenBSD: sched.h,v 1.72 2024/06/03 12:48:25 claudio Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -201,28 +201,12 @@ void remrunqueue(struct proc *);
 
 extern struct mutex sched_lock;
 
-#define	SCHED_ASSERT_LOCKED()						\
-do {									\
-	MUTEX_ASSERT_LOCKED(&sched_lock);				\
-} while (0)
-#define	SCHED_ASSERT_UNLOCKED()						\
-do {									\
-	MUTEX_ASSERT_UNLOCKED(&sched_lock);				\
-} while (0)
+#define	SCHED_ASSERT_LOCKED()	MUTEX_ASSERT_LOCKED(&sched_lock)
+#define	SCHED_ASSERT_UNLOCKED()	MUTEX_ASSERT_UNLOCKED(&sched_lock)
 
 #define	SCHED_LOCK_INIT()	mtx_init(&sched_lock, IPL_SCHED)
-
-#define	SCHED_LOCK(s)							\
-do {									\
-	(s) = 0; /* XXX cleanup useless argument */			\
-	mtx_enter(&sched_lock);						\
-} while (/* CONSTCOND */ 0)
-
-#define	SCHED_UNLOCK(s)							\
-do {									\
-	(void)s; /* XXX cleanup useless argument */			\
-	mtx_leave(&sched_lock);						\
-} while (/* CONSTCOND */ 0)
+#define	SCHED_LOCK()		mtx_enter(&sched_lock)
+#define	SCHED_UNLOCK()		mtx_leave(&sched_lock)
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */
