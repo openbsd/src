@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.167 2024/05/03 13:48:29 dv Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.168 2024/06/03 20:53:00 dv Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2408,6 +2408,8 @@ pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)
 	struct vmx_invept_descriptor vid;
 #endif /* NVMM > 0 */
 
+	mtx_enter(&pmap->pm_mtx);
+
 	DPRINTF("%s: sgpa=0x%llx egpa=0x%llx\n", __func__, (uint64_t)sgpa,
 	    (uint64_t)egpa);
 	for (v = sgpa; v < egpa + PAGE_SIZE; v += PAGE_SIZE)
@@ -2422,6 +2424,8 @@ pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)
 		invept(IA32_VMX_INVEPT_SINGLE_CTX, &vid);
 	}
 #endif /* NVMM > 0 */
+
+	mtx_leave(&pmap->pm_mtx);
 }
 
 void
@@ -2432,6 +2436,8 @@ pmap_do_remove_ept(struct pmap *pmap, paddr_t gpa)
 	paddr_t npa3, npa2, npa1;
 	pd_entry_t *pd4, *pd3, *pd2, *pd1;
 	pd_entry_t *pptes;
+
+	MUTEX_ASSERT_LOCKED(&pmap->pm_mtx);
 
 	l4idx = (gpa & L4_MASK) >> L4_SHIFT; /* PML4E idx */
 	l3idx = (gpa & L3_MASK) >> L3_SHIFT; /* PDPTE idx */
@@ -2510,6 +2516,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 	struct vm_page *ptp, *pptp;
 	paddr_t npa;
 	struct uvm_object *obj;
+	int ret = 0;
 
 	if (gpa > MAXDSIZ)
 		return ENOMEM;
@@ -2519,11 +2526,15 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 	l2idx = (gpa & L2_MASK) >> L2_SHIFT; /* PDE idx */
 	l1idx = (gpa & L1_MASK) >> L1_SHIFT; /* PTE idx */
 
+	mtx_enter(&pmap->pm_mtx);
+
 	/* Start at PML4 / top level */
 	pd = (pd_entry_t *)pmap->pm_pdir;
 
-	if (pd == NULL)
-		return ENOMEM;
+	if (pd == NULL) {
+		ret = ENOMEM;
+		goto unlock;
+	}
 
 	/* npa = physaddr of PDPT */
 	npa = pd[l4idx] & PMAP_PA_MASK;
@@ -2535,8 +2546,11 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 		ptp = uvm_pagealloc(obj, ptp_va2o(gpa, 3), NULL,
 		    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 
-		if (ptp == NULL)
-			return ENOMEM;
+		if (ptp == NULL) {
+			ret = ENOMEM;
+			goto unlock;
+		}
+		atomic_clearbits_int(&ptp->pg_flags, PG_BUSY);
 
 		/*
 		 * New PDPT page - we are setting the first entry, so set
@@ -2576,8 +2590,11 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 		ptp = uvm_pagealloc(obj, ptp_va2o(gpa, 2), NULL,
 		    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 
-		if (ptp == NULL)
-			return ENOMEM;
+		if (ptp == NULL) {
+			ret = ENOMEM;
+			goto unlock;
+		}
+		atomic_clearbits_int(&ptp->pg_flags, PG_BUSY);
 
 		/*
 		 * New PD page - we are setting the first entry, so set
@@ -2617,8 +2634,11 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 		ptp = uvm_pagealloc(obj, ptp_va2o(gpa, 1), NULL,
 		    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 
-		if (ptp == NULL)
-			return ENOMEM;
+		if (ptp == NULL) {
+			ret = ENOMEM;
+			goto unlock;
+		}
+		atomic_clearbits_int(&ptp->pg_flags, PG_BUSY);
 
 		pptp->wire_count++;
 
@@ -2661,7 +2681,10 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 
 	pd[l1idx] = npte;
 
-	return 0;
+unlock:
+	mtx_leave(&pmap->pm_mtx);
+
+	return ret;
 }
 
 /*
