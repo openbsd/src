@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.4 2024/06/03 11:08:31 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.5 2024/06/03 18:10:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -219,13 +219,6 @@ struct imsg_ifinfo {
 	int			running;
 	int			link_state;
 	char			lease[LEASE_SIZE];
-};
-
-struct imsg_propose_rdns {
-	uint32_t		if_index;
-	int			rdomain;
-	int			rdns_count;
-	struct in_addr		rdns[MAX_RDNS_COUNT];
 };
 
 struct imsg_dhcp {
