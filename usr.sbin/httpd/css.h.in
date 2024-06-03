@@ -3,6 +3,7 @@ body {
     background-color: white; 
     color: black; 
     font-family: sans-serif;
+    font-variant-emoji: text;
 }
 table {
     border-collapse: collapse; 
@@ -18,7 +19,6 @@ tr.sort th.sorted { font-weight: bold; }
 tr.sort th::after { content: "\a0\2195"; }
 tr.dir td:nth-child(2n+1) { 
     font-weight: bold; 
-    font-style: italic; 
 }
 td, th { padding: 2pt 2em; }
 td:first-child, th:first-child { padding-left: 5pt; }
