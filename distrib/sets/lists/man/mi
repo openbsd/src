@@ -2236,9 +2236,9 @@
 ./usr/share/man/man5/dhclient.conf.5
 ./usr/share/man/man5/dhclient.leases.5
 ./usr/share/man/man5/dhcp-options.5
+./usr/share/man/man5/dhcp6leased.conf.5
 ./usr/share/man/man5/dhcpd.conf.5
 ./usr/share/man/man5/dhcpd.leases.5
-./usr/share/man/man5/dhcp6leased.conf.5
 ./usr/share/man/man5/dhcpleased.conf.5
 ./usr/share/man/man5/dir.5
 ./usr/share/man/man5/disklabel.5
@@ -2437,9 +2437,9 @@
 ./usr/share/man/man8/daily.8
 ./usr/share/man/man8/dev_mkdb.8
 ./usr/share/man/man8/dhclient.8
+./usr/share/man/man8/dhcp6leased.8
 ./usr/share/man/man8/dhcpd.8
 ./usr/share/man/man8/dhcpleasectl.8
-./usr/share/man/man8/dhcp6leased.8
 ./usr/share/man/man8/dhcpleased.8
 ./usr/share/man/man8/dhcrelay.8
 ./usr/share/man/man8/dhcrelay6.8
