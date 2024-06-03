@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.5 2024/06/03 11:08:31 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.6 2024/06/03 15:52:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -820,12 +820,12 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
 		struct prefix	*pd = &pds[ia_conf->id - 1];
 
-		if(pd->prefix_len == 0) {
+		if (pd->prefix_len == 0) {
 			log_warnx("%s: no IA for IAID %d found", __func__,
 			    ia_conf->id);
 			goto out;
 		}
-		if(pd->prefix_len > ia_conf->prefix_len) {
+		if (pd->prefix_len > ia_conf->prefix_len) {
 			log_warnx("%s: prefix for IAID %d too small: %d > %d",
 			    __func__, ia_conf->id, pd->prefix_len,
 			    ia_conf->prefix_len);

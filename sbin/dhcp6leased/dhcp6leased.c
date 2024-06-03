@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.7 2024/06/03 11:08:31 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.8 2024/06/03 15:52:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -796,13 +796,13 @@ open_udpsock(uint32_t if_index)
 		}
 	}
 
-	if(sin6 == NULL) {
+	if (sin6 == NULL) {
 		log_warnx("%s: missing link-local address on %s", __func__,
 		    if_name);
 		goto out;
 	}
 
-	if(rdomain == -1) {
+	if (rdomain == -1) {
 		log_warnx("%s: cannot find rdomain for %s", __func__,
 		    if_name);
 		goto out;
@@ -946,7 +946,7 @@ get_uuid(void) {
  gen:
 		uuid_create(&uuid, NULL);
 		uuid_to_string(&uuid, &str, &status);
-		if(status != uuid_s_ok)
+		if (status != uuid_s_ok)
 			fatalx("failed to generate uuid string representation");
 
 		len = snprintf(strbuf, sizeof(strbuf), "%s\n", str);
@@ -983,7 +983,7 @@ get_uuid(void) {
 
 		uuid_from_string(strbuf, &uuid, &status);
 
-		if(status != uuid_s_ok) {
+		if (status != uuid_s_ok) {
 			log_warnx("failed to convert string to uuid: %s - %d",
 			    strbuf, status);
 			goto gen;
