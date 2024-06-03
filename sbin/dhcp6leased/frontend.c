@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.7 2024/06/03 11:08:31 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.8 2024/06/03 15:53:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -721,7 +721,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
 		if_index = ifan->ifan_index;
-                if (ifan->ifan_what == IFAN_DEPARTURE) {
+		if (ifan->ifan_what == IFAN_DEPARTURE) {
 			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
 			    &if_index, sizeof(if_index));
 			remove_iface(if_index);
@@ -799,7 +799,7 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 	uint16_t			 request_option_code, elapsed_time;
 	uint8_t				*p;
 
-	switch(message_type) {
+	switch (message_type) {
 	case DHCPSOLICIT:
 	case DHCPREQUEST:
 	case DHCPRENEW:
@@ -827,7 +827,7 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 	memcpy(p, &duid, sizeof(struct dhcp_duid));
 	p += sizeof(struct dhcp_duid);
 
-	switch(message_type) {
+	switch (message_type) {
 	case DHCPSOLICIT:
 	case DHCPREBIND:
 		break;
@@ -866,7 +866,7 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 
 		memset(&iaprefix, 0, sizeof(struct dhcp_iaprefix));
 
-		switch(message_type) {
+		switch (message_type) {
 		case DHCPSOLICIT:
 			iaprefix.prefix_len = ia_conf->prefix_len;
 			break;

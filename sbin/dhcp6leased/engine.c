@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.6 2024/06/03 15:52:17 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.7 2024/06/03 15:53:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -725,7 +725,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 		    dhcp_message_type2str(hdr.msg_type), hdr.xid[0], hdr.xid[1],
 		    hdr.xid[2]);
 
-	while(rem >= sizeof(struct dhcp_option_hdr)) {
+	while (rem >= sizeof(struct dhcp_option_hdr)) {
 		memcpy(&opt_hdr, p, sizeof(struct dhcp_option_hdr));
 		opt_hdr.code = ntohs(opt_hdr.code);
 		opt_hdr.len = ntohs(opt_hdr.len);
@@ -871,7 +871,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 		state_transition(iface, IF_REQUESTING);
 		break;
 	case DHCPREPLY:
-		switch(iface->state) {
+		switch (iface->state) {
 		case IF_REQUESTING:
 		case IF_RENEWING:
 		case IF_REBINDING:
@@ -920,7 +920,7 @@ parse_ia_pd_options(uint8_t *p, size_t len, struct prefix *prefix)
 	uint16_t		 status_code;
 	char			 ntopbuf[INET6_ADDRSTRLEN], *visbuf;
 
-	while(len >= sizeof(struct dhcp_option_hdr)) {
+	while (len >= sizeof(struct dhcp_option_hdr)) {
 		memcpy(&opt_hdr, p, sizeof(struct dhcp_option_hdr));
 		opt_hdr.code = ntohs(opt_hdr.code);
 		opt_hdr.len = ntohs(opt_hdr.len);
@@ -1071,7 +1071,7 @@ XXXX
 		break;
 	case IF_BOUND:
 		iface->timo.tv_sec = iface->t1;
-		switch(old_state) {
+		switch (old_state) {
 		case IF_REQUESTING:
 		case IF_RENEWING:
 		case IF_REBINDING:

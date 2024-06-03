@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.8 2024/06/03 15:52:17 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.9 2024/06/03 15:53:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -133,17 +133,17 @@ int
 main(int argc, char *argv[])
 {
 	struct event	 ev_sigint, ev_sigterm, ev_sighup;
-	int	    	 ch;
-	int	    	 debug = 0, engine_flag = 0, frontend_flag = 0;
-	int	    	 verbose = 0, no_action = 0;
-	char	    	*saved_argv0;
-	int	    	 pipe_main2frontend[2];
-	int	    	 pipe_main2engine[2];
-	int	    	 frontend_routesock, rtfilter, lockfd;
-	int	    	 rtable_any = RTABLE_ANY;
-	char	    	*csock = _PATH_CTRL_SOCKET;
-	int	    	 control_fd;
-	uint8_t	    	*uuid;
+	int		 ch;
+	int		 debug = 0, engine_flag = 0, frontend_flag = 0;
+	int		 verbose = 0, no_action = 0;
+	char		*saved_argv0;
+	int		 pipe_main2frontend[2];
+	int		 pipe_main2engine[2];
+	int		 frontend_routesock, rtfilter, lockfd;
+	int		 rtable_any = RTABLE_ANY;
+	char		*csock = _PATH_CTRL_SOCKET;
+	int		 control_fd;
+	uint8_t		*uuid;
 
 	log_init(1, LOG_DAEMON);	/* Log to stderr until daemonized. */
 	log_setverbose(1);
@@ -883,11 +883,11 @@ merge_config(struct dhcp6leased_conf *conf, struct dhcp6leased_conf *xconf)
 	/* Remove & discard existing interfaces. */
 	while ((iface_conf = SIMPLEQ_FIRST(&conf->iface_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&conf->iface_list, entry);
-		while((ia_conf =
+		while ((ia_conf =
 		    SIMPLEQ_FIRST(&iface_conf->iface_ia_list)) != NULL) {
 			SIMPLEQ_REMOVE_HEAD(&iface_conf->iface_ia_list,
 			    entry);
-			while((pd_conf =
+			while ((pd_conf =
 			    SIMPLEQ_FIRST(&ia_conf->iface_pd_list)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&ia_conf->iface_pd_list,
 				    entry);
