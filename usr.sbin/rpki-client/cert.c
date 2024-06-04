@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.134 2024/06/04 04:17:18 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.135 2024/06/04 14:07:10 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -506,7 +506,7 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	ACCESS_DESCRIPTION	*ad;
 	ASN1_OBJECT		*oid;
 	const char		*mftfilename;
-	char			*carepo = NULL, *rpkimft = NULL;
+	char			*carepo = NULL, *rpkimft = NULL, *notify = NULL;
 	int			 i, rc = 0;
 
 	assert(cert->repo == NULL && cert->mft == NULL && cert->notify == NULL);
@@ -560,14 +560,23 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 			rpkimft = NULL;
 		} else if (OBJ_cmp(oid, notify_oid) == 0) {
 			if (!x509_location(fn, "SIA: rpkiNotify",
-			    ad->location, &cert->notify))
+			    ad->location, &notify))
 				goto out;
-			if (strncasecmp(cert->notify, HTTPS_PROTO,
+			if (strncasecmp(notify, HTTPS_PROTO,
 			    HTTPS_PROTO_LEN) != 0) {
 				warnx("%s: non-https uri in rpkiNotify: %s",
 				    fn, cert->notify);
+				free(notify);
 				goto out;
 			}
+			if (cert->notify != NULL) {
+				warnx("%s: unexpected rpkiNotify accessMethod",
+				    fn);
+				free(notify);
+				goto out;
+			}
+			cert->notify = notify;
+			notify = NULL;
 		}
 	}
 
