@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.91 2024/06/03 12:58:39 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.92 2024/06/04 04:17:18 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -456,7 +456,7 @@ x509_get_aia(X509 *x, const char *fn, char **aia)
 		goto out;
 	}
 
-	if (!x509_location(fn, "AIA: caIssuers", NULL, ad->location, aia))
+	if (!x509_location(fn, "AIA: caIssuers", ad->location, aia))
 		goto out;
 
 	rc = 1;
@@ -522,9 +522,7 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 			goto out;
 		}
 
-		/* Don't fail on non-rsync URI, so check this afterward. */
-		if (!x509_location(fn, "SIA: signedObject", NULL, ad->location,
-		    sia))
+		if (!x509_location(fn, "SIA: signedObject", ad->location, sia))
 			goto out;
 
 		if (rsync_found)
@@ -764,9 +762,7 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 	for (i = 0; i < sk_GENERAL_NAME_num(names); i++) {
 		name = sk_GENERAL_NAME_value(names, i);
 
-		/* Don't fail on non-rsync URI, so check this afterward. */
-		if (!x509_location(fn, "CRL distribution point", NULL, name,
-		    crl))
+		if (!x509_location(fn, "CRL distribution point", name, crl))
 			goto out;
 
 		if (strncasecmp(*crl, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
@@ -812,8 +808,8 @@ x509_get_time(const ASN1_TIME *at, time_t *t)
  * Returns 0 on failure and 1 on success.
  */
 int
-x509_location(const char *fn, const char *descr, const char *proto,
-    GENERAL_NAME *location, char **out)
+x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
+    char **out)
 {
 	ASN1_IA5STRING	*uri;
 
@@ -824,7 +820,7 @@ x509_location(const char *fn, const char *descr, const char *proto,
 
 	uri = location->d.uniformResourceIdentifier;
 
-	if (!valid_uri(uri->data, uri->length, proto)) {
+	if (!valid_uri(uri->data, uri->length, NULL)) {
 		warnx("%s: RFC 6487 section 4.8: %s bad location", fn, descr);
 		return 0;
 	}

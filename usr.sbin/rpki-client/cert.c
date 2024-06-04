@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.133 2024/06/03 12:58:39 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.134 2024/06/04 04:17:18 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -529,7 +529,7 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		oid = ad->method;
 
 		if (OBJ_cmp(oid, carepo_oid) == 0) {
-			if (!x509_location(fn, "SIA: caRepository", NULL,
+			if (!x509_location(fn, "SIA: caRepository",
 			    ad->location, &carepo))
 				goto out;
 			if (cert->repo == NULL && strncasecmp(carepo,
@@ -544,7 +544,7 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 			free(carepo);
 			carepo = NULL;
 		} else if (OBJ_cmp(oid, manifest_oid) == 0) {
-			if (!x509_location(fn, "SIA: rpkiManifest", NULL,
+			if (!x509_location(fn, "SIA: rpkiManifest",
 			    ad->location, &rpkimft))
 				goto out;
 			if (cert->mft == NULL && strncasecmp(rpkimft,
@@ -560,8 +560,14 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 			rpkimft = NULL;
 		} else if (OBJ_cmp(oid, notify_oid) == 0) {
 			if (!x509_location(fn, "SIA: rpkiNotify",
-			    HTTPS_PROTO, ad->location, &cert->notify))
+			    ad->location, &cert->notify))
 				goto out;
+			if (strncasecmp(cert->notify, HTTPS_PROTO,
+			    HTTPS_PROTO_LEN) != 0) {
+				warnx("%s: non-https uri in rpkiNotify: %s",
+				    fn, cert->notify);
+				goto out;
+			}
 		}
 	}
 
