@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.226 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.227 2024/06/04 08:26:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011,2020 Theo de Raadt.
@@ -261,7 +261,7 @@ dequeue_randomness(void *v)
 		add_entropy_words(buf, 2);
 	}
 	/* and some probably more damaged */
-	startc = rnd_event_cons;
+	startc = atomic_add_int_nv(&rnd_event_cons, QEVCONSUME) - QEVCONSUME;
 	for (i = 0; i < QEVCONSUME; i++) {
 		u_int e = (startc + i) & (QEVLEN-1);
 
@@ -269,7 +269,6 @@ dequeue_randomness(void *v)
 		buf[1] = rnd_event_space[e].re_val;
 		add_entropy_words(buf, 2);
 	}
-	rnd_event_cons = startp + QEVCONSUME;
 }
 
 /*
