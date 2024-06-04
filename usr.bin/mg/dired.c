@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.103 2024/06/04 06:48:34 op Exp $	*/
+/*	$OpenBSD: dired.c,v 1.104 2024/06/04 06:51:15 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -1125,7 +1125,7 @@ dired_jump(int f, int n)
 	for (i = 0; i <= curbp->b_nmodes; i++) {
 		modename = curbp->b_modes[i]->p_name;
 		if (strncmp(modename, "dired", 5) == 0)
-			return (dobeep_msg("In dired mode already"));
+			return (d_updirectory(f, n));
 	}
 
 	if (getbufcwd(dname, sizeof(dname)) != TRUE)
