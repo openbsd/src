@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.61 2024/04/03 19:30:59 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.62 2024/06/04 17:31:59 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -602,7 +602,11 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 	slbd = pmap_slbd_lookup(pm, va);
 	if (slbd == NULL) {
 		slbd = pmap_slbd_alloc(pm, va);
-		KASSERT(slbd);
+		if (slbd == NULL) {
+			if ((flags & PMAP_CANFAIL) == 0)
+				panic("%s: unable to allocate slbd", __func__);
+			return ENOMEM;
+		}
 	}
 
 	vp1 = slbd->slbd_vp;
