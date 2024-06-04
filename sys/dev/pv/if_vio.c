@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.36 2024/05/28 12:11:26 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.37 2024/06/04 09:51:52 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -124,7 +124,7 @@ static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_MQ,			"MQ" },
 	{ VIRTIO_NET_F_CTRL_MAC_ADDR,		"CtrlMAC" },
 #endif
-	{ 0,				NULL }
+	{ 0,					NULL }
 };
 
 /* Status */
@@ -586,8 +586,8 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 		virtio_postpone_intr_far(&sc->sc_vq[VQTX]);
 	else
 		virtio_stop_vq_intr(vsc, &sc->sc_vq[VQTX]);
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)
-	    && virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_RX)) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ) &&
+	    virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_RX)) {
 		if (virtio_alloc_vq(vsc, &sc->sc_vq[VQCTL], 2, NBPG, 1,
 		    "control") == 0) {
 			sc->sc_vq[VQCTL].vq_done = vio_ctrleof;
@@ -1036,7 +1036,7 @@ vio_populate_rx_mbufs(struct vio_softc *sc)
 			break;
 		}
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_rx_dmamaps[slot], 0,
-		    MCLBYTES, BUS_DMASYNC_PREREAD);
+		    sc->sc_rx_dmamaps[slot]->dm_mapsize, BUS_DMASYNC_PREREAD);
 		if (mrg_rxbuf) {
 			virtio_enqueue(vq, slot, sc->sc_rx_dmamaps[slot], 0);
 		} else {
@@ -1101,7 +1101,7 @@ vio_rxeof(struct vio_softc *sc)
 	while (virtio_dequeue(vsc, vq, &slot, &len) == 0) {
 		r = 1;
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_rx_dmamaps[slot], 0,
-		    MCLBYTES, BUS_DMASYNC_POSTREAD);
+		    sc->sc_rx_dmamaps[slot]->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		m = sc->sc_rx_mbufs[slot];
 		KASSERT(m != NULL);
 		bus_dmamap_unload(vsc->sc_dmat, sc->sc_rx_dmamaps[slot]);
@@ -1134,9 +1134,8 @@ vio_rxeof(struct vio_softc *sc)
 		}
 	}
 	if (m0 != NULL) {
-		DPRINTF("%s: expected %d buffers, got %d\n", __func__,
-		    (int)hdr->num_buffers,
-		    (int)hdr->num_buffers - bufs_left);
+		DPRINTF("%s: expected %u buffers, got %u\n", __func__,
+		    hdr->num_buffers, hdr->num_buffers - bufs_left);
 		ifp->if_ierrors++;
 		m_freem(m0);
 	}
@@ -1247,8 +1246,7 @@ vio_txeof(struct virtqueue *vq)
 		VIO_DMAMEM_SYNC(vsc, sc, hdr, sc->sc_hdr_size,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_sync(vsc->sc_dmat, sc->sc_tx_dmamaps[slot], 0,
-		    sc->sc_tx_dmamaps[slot]->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
+		    sc->sc_tx_dmamaps[slot]->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		m = sc->sc_tx_mbufs[slot];
 		bus_dmamap_unload(vsc->sc_dmat, sc->sc_tx_dmamaps[slot]);
 		sc->sc_tx_mbufs[slot] = NULL;
@@ -1368,7 +1366,7 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 		r = EIO;
 	}
 
-	DPRINTF("%s: cmd %d %d: %d\n", __func__, cmd, (int)onoff, r);
+	DPRINTF("%s: cmd %d %d: %d\n", __func__, cmd, onoff, r);
 out:
 	vio_ctrl_wakeup(sc, FREE);
 	return r;
