@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.92 2024/06/04 04:17:18 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.93 2024/06/04 14:17:24 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
@@ -413,13 +414,14 @@ x509_pubkey_get_ski(X509_PUBKEY *pubkey, const char *fn)
  * (which has to be freed after use).
  */
 int
-x509_get_aia(X509 *x, const char *fn, char **aia)
+x509_get_aia(X509 *x, const char *fn, char **out_aia)
 {
 	ACCESS_DESCRIPTION		*ad;
 	AUTHORITY_INFO_ACCESS		*info;
 	int				 crit, rc = 0;
 
-	*aia = NULL;
+	assert(*out_aia == NULL);
+
 	info = X509_get_ext_d2i(x, NID_info_access, &crit, NULL);
 	if (info == NULL) {
 		if (crit != -1) {
@@ -456,12 +458,12 @@ x509_get_aia(X509 *x, const char *fn, char **aia)
 		goto out;
 	}
 
-	if (!x509_location(fn, "AIA: caIssuers", ad->location, aia))
+	if (!x509_location(fn, "AIA: caIssuers", ad->location, out_aia))
 		goto out;
 
 	rc = 1;
 
-out:
+ out:
 	AUTHORITY_INFO_ACCESS_free(info);
 	return rc;
 }
@@ -473,14 +475,14 @@ out:
  * (which has to be freed after use).
  */
 int
-x509_get_sia(X509 *x, const char *fn, char **sia)
+x509_get_sia(X509 *x, const char *fn, char **out_sia)
 {
 	ACCESS_DESCRIPTION		*ad;
 	AUTHORITY_INFO_ACCESS		*info;
 	ASN1_OBJECT			*oid;
-	int				 i, crit, rsync_found = 0;
+	int				 i, crit, rc = 0;
 
-	*sia = NULL;
+	assert(*out_sia == NULL);
 
 	info = X509_get_ext_d2i(x, NID_sinfo_access, &crit, NULL);
 	if (info == NULL) {
@@ -498,6 +500,8 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 	}
 
 	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(info); i++) {
+		char	*sia;
+
 		ad = sk_ACCESS_DESCRIPTION_value(info, i);
 		oid = ad->method;
 
@@ -522,51 +526,50 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 			goto out;
 		}
 
-		if (!x509_location(fn, "SIA: signedObject", ad->location, sia))
+		sia = NULL;
+		if (!x509_location(fn, "SIA: signedObject", ad->location, &sia))
 			goto out;
 
-		if (rsync_found)
-			continue;
-
-		if (strncasecmp(*sia, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
-			const char *p = *sia + RSYNC_PROTO_LEN;
+		if (*out_sia == NULL && strncasecmp(sia, RSYNC_PROTO,
+		    RSYNC_PROTO_LEN) == 0) {
+			const char *p = sia + RSYNC_PROTO_LEN;
 			size_t fnlen, plen;
 
-			rsync_found = 1;
-
-			if (filemode)
+			if (filemode) {
+				*out_sia = sia;
 				continue;
+			}
 
 			fnlen = strlen(fn);
 			plen = strlen(p);
 
 			if (fnlen < plen || strcmp(p, fn + fnlen - plen) != 0) {
 				warnx("%s: mismatch between pathname and SIA "
-				    "(%s)", fn, *sia);
+				    "(%s)", fn, sia);
+				free(sia);
 				goto out;
 			}
 
+			*out_sia = sia;
 			continue;
 		}
-
-		free(*sia);
-		*sia = NULL;
+		if (verbose)
+			warnx("%s: RFC 6487 section 4.8.8: SIA: "
+			    "ignoring location %s", fn, sia);
+		free(sia);
 	}
 
-	if (!rsync_found) {
+	if (*out_sia == NULL) {
 		warnx("%s: RFC 6487 section 4.8.8.2: "
 		    "SIA without rsync accessLocation", fn);
 		goto out;
 	}
 
-	AUTHORITY_INFO_ACCESS_free(info);
-	return 1;
+	rc = 1;
 
  out:
-	free(*sia);
-	*sia = NULL;
 	AUTHORITY_INFO_ACCESS_free(info);
-	return 0;
+	return rc;
 }
 
 /*
@@ -698,15 +701,16 @@ x509_any_inherits(X509 *x)
  * after use.
  */
 int
-x509_get_crl(X509 *x, const char *fn, char **crl)
+x509_get_crl(X509 *x, const char *fn, char **out_crl)
 {
 	CRL_DIST_POINTS		*crldp;
 	DIST_POINT		*dp;
 	GENERAL_NAMES		*names;
 	GENERAL_NAME		*name;
-	int			 i, crit, rsync_found = 0;
+	int			 i, crit, rc = 0;
 
-	*crl = NULL;
+	assert(*out_crl == NULL);
+
 	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &crit, NULL);
 	if (crldp == NULL) {
 		if (crit != -1) {
@@ -760,26 +764,35 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 
 	names = dp->distpoint->name.fullname;
 	for (i = 0; i < sk_GENERAL_NAME_num(names); i++) {
+		char	*crl = NULL;
+
 		name = sk_GENERAL_NAME_value(names, i);
 
-		if (!x509_location(fn, "CRL distribution point", name, crl))
+		if (!x509_location(fn, "CRL distribution point", name, &crl))
 			goto out;
 
-		if (strncasecmp(*crl, RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
-			rsync_found = 1;
-			goto out;
+		if (*out_crl == NULL && strncasecmp(crl, RSYNC_PROTO,
+		    RSYNC_PROTO_LEN) == 0) {
+			*out_crl = crl;
+			continue;
 		}
-
-		free(*crl);
-		*crl = NULL;
+		if (verbose)
+			warnx("%s: ignoring CRL distribution point %s",
+			    fn, crl);
+		free(crl);
 	}
 
-	warnx("%s: RFC 6487 section 4.8.6: no rsync URI "
-	    "in CRL distributionPoint", fn);
+	if (*out_crl == NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: no rsync URI "
+		    "in CRL distributionPoint", fn);
+		goto out;
+	}
+
+	rc = 1;
 
  out:
 	CRL_DIST_POINTS_free(crldp);
-	return rsync_found;
+	return rc;
 }
 
 /*
@@ -813,6 +826,8 @@ x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
 {
 	ASN1_IA5STRING	*uri;
 
+	assert(*out == NULL);
+
 	if (location->type != GEN_URI) {
 		warnx("%s: RFC 6487 section 4.8: %s not URI", fn, descr);
 		return 0;
@@ -823,12 +838,6 @@ x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
 	if (!valid_uri(uri->data, uri->length, NULL)) {
 		warnx("%s: RFC 6487 section 4.8: %s bad location", fn, descr);
 		return 0;
-	}
-
-	if (*out != NULL) {
-		warnx("%s: RFC 6487 section 4.8: multiple %s specified, "
-		    "using the first one", fn, descr);
-		return 1;
 	}
 
 	if ((*out = strndup(uri->data, uri->length)) == NULL)
