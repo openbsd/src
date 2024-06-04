@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.106 2023/12/07 14:53:31 sthen Exp $
+# $OpenBSD: services,v 1.107 2024/06/04 18:13:23 landry Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -274,6 +274,7 @@ afs3-update	7008/udp			# AFS server to server update
 afs3-rmtsys	7009/tcp			# AFS remote cache manager service
 afs3-rmtsys	7009/udp			# AFS remote cache manager service
 puppet		8140/tcp			# Puppet master service
+matrix-fed	8448/tcp			# Matrix Federation Protocol
 ub-dns-control	8953/tcp			# unbound dns nameserver control
 git		9418/tcp			# git pack transfer service
 git		9418/udp			# git pack transfer service
