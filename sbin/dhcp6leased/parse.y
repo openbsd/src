@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2024/06/03 15:53:26 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2024/06/04 15:48:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2018, 2024 Florian Obser <florian@openbsd.org>
@@ -176,8 +176,8 @@ ia_pd		: REQUEST PREFIX DELEGATION ON STRING FOR {
 			iface_ia_conf = calloc(1, sizeof(*iface_ia_conf));
 			if (iface_ia_conf == NULL)
 				err(1, "%s: calloc", __func__);
-			iface_ia_conf->id = ++iface_conf->ia_count;
-			if (iface_ia_conf->id > MAX_IA) {
+			iface_ia_conf->id = iface_conf->ia_count++;
+			if (iface_conf->ia_count > MAX_IA) {
 				yyerror("Too many prefix delegation requests");
 				YYERROR;
 			}

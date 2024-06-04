@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.8 2024/06/03 15:53:26 deraadt Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.9 2024/06/04 15:48:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -362,7 +362,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			SIMPLEQ_INIT(&iface_ia_conf->iface_pd_list);
 			SIMPLEQ_INSERT_TAIL(&iface_conf->iface_ia_list,
 			    iface_ia_conf, entry);
-			iface_conf->ia_count++;
+			iface_ia_conf->id = iface_conf->ia_count++;
 			if (iface_conf->ia_count > MAX_IA)
 				fatalx("Too many prefix delegation requests.");
 			break;
@@ -873,7 +873,7 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 		case DHCPREQUEST:
 		case DHCPRENEW:
 		case DHCPREBIND:
-			pd = &iface->pds[ia_conf->id - 1];
+			pd = &iface->pds[ia_conf->id];
 			iaprefix.prefix_len = pd->prefix_len;
 			memcpy(&iaprefix.prefix, &pd->prefix,
 			    sizeof(struct in6_addr));

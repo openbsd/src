@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.7 2024/06/03 15:53:26 deraadt Exp $	*/
+/*	$OpenBSD: engine.c,v 1.8 2024/06/04 15:48:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -484,7 +484,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 			SIMPLEQ_INIT(&iface_ia_conf->iface_pd_list);
 			SIMPLEQ_INSERT_TAIL(&iface_conf->iface_ia_list,
 			    iface_ia_conf, entry);
-			iface_conf->ia_count++;
+			iface_ia_conf->id = iface_conf->ia_count++;
 			if (iface_conf->ia_count > MAX_IA)
 				fatalx("Too many prefix delegation requests.");
 			break;
@@ -787,11 +787,11 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 			log_debug("%s: IA_PD, IAID: %08x, T1: %u, T2: %u",
 			    __func__, ntohl(iapd.iaid), ntohl(iapd.t1),
 			    ntohl(iapd.t2));
-			if (ntohl(iapd.iaid) <= iface_conf->ia_count)
+			if (ntohl(iapd.iaid) < iface_conf->ia_count)
 				parse_ia_pd_options(p +
 				    sizeof(struct dhcp_iapd), opt_hdr.len -
 				    sizeof(struct dhcp_iapd),
-				    &pds[ntohl(iapd.iaid) -1]);
+				    &pds[ntohl(iapd.iaid)]);
 			break;
 		case DHO_RAPID_COMMIT:
 			if (opt_hdr.len != 0) {
@@ -818,7 +818,7 @@ parse_dhcp(struct dhcp6leased_iface *iface, struct imsg_dhcp *dhcp)
 
 
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
-		struct prefix	*pd = &pds[ia_conf->id - 1];
+		struct prefix	*pd = &pds[ia_conf->id];
 
 		if (pd->prefix_len == 0) {
 			log_warnx("%s: no IA for IAID %d found", __func__,
@@ -1280,7 +1280,7 @@ configure_interfaces(struct dhcp6leased_iface *iface)
 	}
 
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
-		struct prefix	*pd = &iface->pds[ia_conf->id - 1];
+		struct prefix	*pd = &iface->pds[ia_conf->id];
 
 		SIMPLEQ_FOREACH(pd_conf, &ia_conf->iface_pd_list, entry) {
 			send_configure_interface(pd_conf, pd);
