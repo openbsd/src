@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.87 2024/06/03 00:55:05 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.88 2024/06/04 14:40:46 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -602,20 +602,18 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 /* return length 1..4 if yes, 0 if no */
 static int u8_isutf(const char *s)
 {
-	int n, ret;
+	int ret;
 	unsigned char c;
 
 	c = s[0];
-	if (c < 128 || awk_mb_cur_max == 1)
-		return 1; /* what if it's 0? */
-
-	n = strlen(s);
-	if (n >= 2 && ((c>>5) & 0x7) == 0x6 && (s[1] & 0xC0) == 0x80) {
+	if (c < 128 || awk_mb_cur_max == 1) {
+		ret = 1; /* what if it's 0? */
+	} else if (((c>>5) & 0x7) == 0x6 && (s[1] & 0xC0) == 0x80) {
 		ret = 2; /* 110xxxxx 10xxxxxx */
-	} else if (n >= 3 && ((c>>4) & 0xF) == 0xE && (s[1] & 0xC0) == 0x80
+	} else if (((c>>4) & 0xF) == 0xE && (s[1] & 0xC0) == 0x80
 			 && (s[2] & 0xC0) == 0x80) {
 		ret = 3; /* 1110xxxx 10xxxxxx 10xxxxxx */
-	} else if (n >= 4 && ((c>>3) & 0x1F) == 0x1E && (s[1] & 0xC0) == 0x80
+	} else if (((c>>3) & 0x1F) == 0x1E && (s[1] & 0xC0) == 0x80
 			 && (s[2] & 0xC0) == 0x80 && (s[3] & 0xC0) == 0x80) {
 		ret = 4; /* 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
 	} else {
@@ -1018,7 +1016,7 @@ Cell *substr(Node **a, int nnn)		/* substr(a[0], a[1], a[2]) */
 	DPRINTF("substr: m=%d, n=%d, s=%s\n", m, n, s);
 	y = gettemp();
 	mb = u8_char2byte(s, m-1); /* byte offset of start char in s */
-	nb = u8_char2byte(s, m-1+n);  /* byte offset of end+1 char in s */
+	nb = mb + u8_char2byte(&s[mb], n);  /* byte offset of end+1 char in s */
 
 	temp = s[nb];	/* with thanks to John Linderman */
 	s[nb] = '\0';
