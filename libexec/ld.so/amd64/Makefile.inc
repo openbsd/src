@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2019/10/20 03:44:49 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2024/06/04 15:14:45 deraadt Exp $
 
 CFLAGS += -fPIC -mno-sse2 -mno-sse -mno-3dnow -mno-mmx
+CFLAGS +=-fret-clean
 AFLAGS += -fpic
 LD_SCRIPT = ${.CURDIR}/${MACHINE_CPU}/ld.script
 

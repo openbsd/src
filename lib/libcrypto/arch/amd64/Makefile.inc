@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.27 2024/03/29 11:00:57 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.28 2024/06/04 15:14:45 deraadt Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -83,3 +83,5 @@ GENERATED+=x86_64cpuid.S
 x86_64cpuid.S: ${LCRYPTO_SRC}/x86_64cpuid.pl ${EXTRA_PL}
 	(cd ${LCRYPTO_SRC}/${dir} ; \
 		/usr/bin/perl ./x86_64cpuid.pl) > ${.TARGET}
+
+CFLAGS+=-fret-clean

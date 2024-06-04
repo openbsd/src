@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.134 2023/09/06 01:47:36 jsg Exp $
+#	$OpenBSD: Makefile.amd64,v 1.135 2024/06/04 15:14:45 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -73,6 +73,7 @@ CMACHFLAGS+=	-mno-retpoline -fcf-protection=none
 .endif
 .else
 CMACHFLAGS+=	-mretpoline-external-thunk -fcf-protection=branch
+CMACHFLAGS+=	-fret-clean
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
