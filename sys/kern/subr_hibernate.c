@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.139 2024/04/30 17:12:19 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.140 2024/06/04 20:31:35 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -36,7 +36,7 @@
 #include <machine/hibernate.h>
 
 /* Make sure the signature can fit in one block */
-CTASSERT(sizeof(union hibernate_info) <= DEV_BSIZE);
+CTASSERT((offsetof(union hibernate_info, sec_size) + sizeof(u_int32_t)) <= DEV_BSIZE);
 
 /*
  * Hibernate piglet layout information
@@ -97,6 +97,8 @@ int	hib_debug = 99;
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)
 #endif
+
+#define	ROUNDUP(_x, _y)	((((_x)+(_y)-1)/(_y))*(_y))
 
 #ifndef NO_PROPOLICE
 extern long __guard_local;
@@ -592,6 +594,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	/* Make sure we have a swap partition. */
 	part = DISKPART(hib->dev);
 	if (dl.d_npartitions <= part ||
+	    dl.d_secsize > sizeof(union hibernate_info) ||
 	    dl.d_partitions[part].p_fstype != FS_SWAP ||
 	    DL_GETPSIZE(&dl.d_partitions[part]) == 0)
 		return (1);
@@ -600,8 +603,9 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	hib->magic = HIBERNATE_MAGIC;
 
 	/* Calculate signature block location */
-	hib->sig_offset = DL_GETPSIZE(&dl.d_partitions[part]) -
-	    sizeof(union hibernate_info)/DEV_BSIZE;
+	hib->sec_size = dl.d_secsize;
+	hib->sig_offset = DL_GETPSIZE(&dl.d_partitions[part]) - 1;
+	hib->sig_offset = DL_SECTOBLK(&dl, hib->sig_offset);
 
 	SHA256Init(&ctx);
 	SHA256Update(&ctx, version, strlen(version));
@@ -629,8 +633,10 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		 * a matching HIB_DONE call performed after the write is
 		 * completed.
 		 */
-		if (hib->io_func(hib->dev, DL_GETPOFFSET(&dl.d_partitions[part]),
-		    (vaddr_t)NULL, DL_GETPSIZE(&dl.d_partitions[part]),
+		if (hib->io_func(hib->dev,
+		    DL_SECTOBLK(&dl, DL_GETPOFFSET(&dl.d_partitions[part])),
+		    (vaddr_t)NULL,
+		    DL_SECTOBLK(&dl, DL_GETPSIZE(&dl.d_partitions[part])),
 		    HIB_INIT, hib->io_page))
 			goto fail;
 
@@ -877,9 +883,12 @@ hibernate_deflate(union hibernate_info *hib, paddr_t src,
 int
 hibernate_write_signature(union hibernate_info *hib)
 {
+	memset(&disk_hib, 0, hib->sec_size);
+	memcpy(&disk_hib, hib, DEV_BSIZE);
+
 	/* Write hibernate info to disk */
 	return (hib->io_func(hib->dev, hib->sig_offset,
-	    (vaddr_t)hib, DEV_BSIZE, HIB_W,
+	    (vaddr_t)&disk_hib, hib->sec_size, HIB_W,
 	    hib->io_page));
 }
 
@@ -921,19 +930,21 @@ hibernate_write_chunktable(union hibernate_info *hib)
 int
 hibernate_clear_signature(union hibernate_info *hib)
 {
-	union hibernate_info blank_hiber_info;
+	uint8_t buf[DEV_BSIZE];
 
 	/* Zero out a blank hiber_info */
-	memset(&blank_hiber_info, 0, sizeof(union hibernate_info));
+	memcpy(&buf, &disk_hib, sizeof(buf));
+	memset(&disk_hib, 0, hib->sec_size);
 
 	/* Write (zeroed) hibernate info to disk */
 	DPRINTF("clearing hibernate signature block location: %lld\n",
 		hib->sig_offset);
 	if (hibernate_block_io(hib,
 	    hib->sig_offset,
-	    DEV_BSIZE, (vaddr_t)&blank_hiber_info, 1))
+	    hib->sec_size, (vaddr_t)&disk_hib, 1))
 		printf("Warning: could not clear hibernate signature\n");
 
+	memcpy(&disk_hib, buf, sizeof(buf));
 	return (0);
 }
 
@@ -1110,7 +1121,8 @@ hibernate_reprotect_ssp(vaddr_t va)
 void
 hibernate_resume(void)
 {
-	union hibernate_info hib;
+	uint8_t buf[DEV_BSIZE];
+	union hibernate_info *hib = (union hibernate_info *)&buf;
 	int s;
 #ifndef NO_PROPOLICE
 	vsize_t off = (vaddr_t)&__guard_local -
@@ -1119,8 +1131,8 @@ hibernate_resume(void)
 #endif
 
 	/* Get current running machine's hibernate info */
-	memset(&hib, 0, sizeof(hib));
-	if (get_hibernate_info(&hib, 0)) {
+	memset(buf, 0, sizeof(buf));
+	if (get_hibernate_info(hib, 0)) {
 		DPRINTF("couldn't retrieve machine's hibernate info\n");
 		return;
 	}
@@ -1129,11 +1141,11 @@ hibernate_resume(void)
 	s = splbio();
 
 	DPRINTF("reading hibernate signature block location: %lld\n",
-		hib.sig_offset);
+		hib->sig_offset);
 
-	if (hibernate_block_io(&hib,
-	    hib.sig_offset,
-	    DEV_BSIZE, (vaddr_t)&disk_hib, 0)) {
+	if (hibernate_block_io(hib,
+	    hib->sig_offset,
+	    hib->sec_size, (vaddr_t)&disk_hib, 0)) {
 		DPRINTF("error in hibernate read\n");
 		splx(s);
 		return;
@@ -1151,7 +1163,7 @@ hibernate_resume(void)
 	 * We (possibly) found a hibernate signature. Clear signature first,
 	 * to prevent accidental resume or endless resume cycles later.
 	 */
-	if (hibernate_clear_signature(&hib)) {
+	if (hibernate_clear_signature(hib)) {
 		DPRINTF("error clearing hibernate signature block\n");
 		splx(s);
 		return;
@@ -1161,12 +1173,12 @@ hibernate_resume(void)
 	 * If on-disk and in-memory hibernate signatures match,
 	 * this means we should do a resume from hibernate.
 	 */
-	if (hibernate_compare_signature(&hib, &disk_hib)) {
+	if (hibernate_compare_signature(hib, &disk_hib)) {
 		DPRINTF("mismatched hibernate signature block\n");
 		splx(s);
 		return;
 	}
-	disk_hib.dev = hib.dev;
+	disk_hib.dev = hib->dev;
 
 #ifdef MULTIPROCESSOR
 	/* XXX - if we fail later, we may need to rehatch APs on some archs */
@@ -1237,8 +1249,9 @@ fail:
 void
 hibernate_unpack_image(union hibernate_info *hib)
 {
+	uint8_t buf[DEV_BSIZE];
 	struct hibernate_disk_chunk *chunks;
-	union hibernate_info local_hib;
+	union hibernate_info *local_hib = (union hibernate_info *)&buf;
 	paddr_t image_cur = global_pig_start;
 	short i, *fchunks;
 	char *pva;
@@ -1251,11 +1264,11 @@ hibernate_unpack_image(union hibernate_info *hib)
 	chunks = (struct hibernate_disk_chunk *)(pva + HIBERNATE_CHUNK_SIZE);
 
 	/* Can't use hiber_info that's passed in after this point */
-	bcopy(hib, &local_hib, sizeof(union hibernate_info));
-	local_hib.retguard_ofs = 0;
+	memcpy(buf, hib, sizeof(buf));
+	local_hib->retguard_ofs = 0;
 
 	/* VA == PA */
-	local_hib.piglet_va = local_hib.piglet_pa;
+	local_hib->piglet_va = local_hib->piglet_pa;
 
 	/*
 	 * Point of no return. Once we pass this point, only kernel code can
@@ -1271,12 +1284,12 @@ hibernate_unpack_image(union hibernate_info *hib)
 	DPRINTF("hibernate: activating alt. pagetable and starting unpack\n");
 	hibernate_activate_resume_pt_machdep();
 
-	for (i = 0; i < local_hib.chunk_ctr; i++) {
+	for (i = 0; i < local_hib->chunk_ctr; i++) {
 		/* Reset zlib for inflate */
-		if (hibernate_zlib_reset(&local_hib, 0) != Z_OK)
+		if (hibernate_zlib_reset(local_hib, 0) != Z_OK)
 			panic("hibernate failed to reset zlib for inflate");
 
-		hibernate_process_chunk(&local_hib, &chunks[fchunks[i]],
+		hibernate_process_chunk(local_hib, &chunks[fchunks[i]],
 		    image_cur);
 
 		image_cur += chunks[fchunks[i]].compressed_size;
@@ -1446,7 +1459,7 @@ int
 hibernate_write_chunks(union hibernate_info *hib)
 {
 	paddr_t range_base, range_end, inaddr, temp_inaddr;
-	size_t nblocks, out_remaining, used;
+	size_t out_remaining, used;
 	struct hibernate_disk_chunk *chunks;
 	vaddr_t hibernate_io_page = hib->piglet_va + PAGE_SIZE;
 	daddr_t blkctr = 0;
@@ -1553,8 +1566,6 @@ hibernate_write_chunks(union hibernate_info *hib)
 
 				if (out_remaining == 0) {
 					/* Filled up the page */
-					nblocks = PAGE_SIZE / DEV_BSIZE;
-
 					if ((err = hib->io_func(hib->dev,
 					    blkctr + hib->image_offset,
 					    (vaddr_t)hibernate_io_page,
@@ -1563,8 +1574,7 @@ hibernate_write_chunks(union hibernate_info *hib)
 						    err);
 						return (err);
 					}
-
-					blkctr += nblocks;
+					blkctr += PAGE_SIZE / DEV_BSIZE;
 				}
 			}
 		}
@@ -1600,22 +1610,18 @@ hibernate_write_chunks(union hibernate_info *hib)
 
 		out_remaining = hibernate_state->hib_stream.avail_out;
 
-		used = 2 * PAGE_SIZE - out_remaining;
-		nblocks = used / DEV_BSIZE;
-
-		/* Round up to next block if needed */
-		if (used % DEV_BSIZE != 0)
-			nblocks ++;
+		/* Round up to next sector if needed */
+		used = ROUNDUP(2 * PAGE_SIZE - out_remaining, hib->sec_size);
 
 		/* Write final block(s) for this chunk */
 		if ((err = hib->io_func(hib->dev, blkctr + hib->image_offset,
-		    (vaddr_t)hibernate_io_page, nblocks*DEV_BSIZE,
+		    (vaddr_t)hibernate_io_page, used,
 		    HIB_W, hib->io_page))) {
 			DPRINTF("hib final write error %d\n", err);
 			return (err);
 		}
 
-		blkctr += nblocks;
+		blkctr += used / DEV_BSIZE;
 
 		chunks[i].compressed_size = (blkctr + hib->image_offset -
 		    chunks[i].offset) * DEV_BSIZE;
@@ -1905,7 +1911,8 @@ hibernate_read_chunks(union hibernate_info *hib, paddr_t pig_start,
 int
 hibernate_suspend(void)
 {
-	union hibernate_info hib;
+	uint8_t buf[DEV_BSIZE];
+	union hibernate_info *hib = (union hibernate_info *)&buf;
 	u_long start, end;
 
 	/*
@@ -1913,13 +1920,13 @@ hibernate_suspend(void)
 	 * This also allocates a piglet whose physaddr is stored in
 	 * hib->piglet_pa and vaddr stored in hib->piglet_va
 	 */
-	if (get_hibernate_info(&hib, 1)) {
+	if (get_hibernate_info(hib, 1)) {
 		DPRINTF("failed to obtain hibernate info\n");
 		return (1);
 	}
 
 	/* Find a page-addressed region in swap [start,end] */
-	if (uvm_hibswap(hib.dev, &start, &end)) {
+	if (uvm_hibswap(hib->dev, &start, &end)) {
 		printf("hibernate: cannot find any swap\n");
 		return (1);
 	}
@@ -1936,26 +1943,26 @@ hibernate_suspend(void)
 	    &retguard_end_phys);
 
 	/* Calculate block offsets in swap */
-	hib.image_offset = ctod(start);
+	hib->image_offset = ctod(start);
 
 	DPRINTF("hibernate @ block %lld max-length %lu blocks\n",
-	    hib.image_offset, ctod(end) - ctod(start) + 1);
+	    hib->image_offset, ctod(end) - ctod(start) + 1);
 
 	pmap_activate(curproc);
 	DPRINTF("hibernate: writing chunks\n");
-	if (hibernate_write_chunks(&hib)) {
+	if (hibernate_write_chunks(hib)) {
 		DPRINTF("hibernate_write_chunks failed\n");
 		return (1);
 	}
 
 	DPRINTF("hibernate: writing chunktable\n");
-	if (hibernate_write_chunktable(&hib)) {
+	if (hibernate_write_chunktable(hib)) {
 		DPRINTF("hibernate_write_chunktable failed\n");
 		return (1);
 	}
 
 	DPRINTF("hibernate: writing signature\n");
-	if (hibernate_write_signature(&hib)) {
+	if (hibernate_write_signature(hib)) {
 		DPRINTF("hibernate_write_signature failed\n");
 		return (1);
 	}
@@ -1967,7 +1974,7 @@ hibernate_suspend(void)
 	 * Give the device-specific I/O function a notification that we're
 	 * done, and that it can clean up or shutdown as needed.
 	 */
-	hib.io_func(hib.dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib.io_page);
+	hib->io_func(hib->dev, 0, (vaddr_t)NULL, 0, HIB_DONE, hib->io_page);
 	return (0);
 }
 

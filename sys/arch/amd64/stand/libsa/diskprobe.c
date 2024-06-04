@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.27 2022/09/01 13:45:26 krw Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.28 2024/06/04 20:31:35 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -390,9 +390,10 @@ bootdev_has_hibernate(void)
 void
 check_hibernate(struct diskinfo *dip)
 {
+	uint8_t buf[DEV_BSIZE];
 	daddr_t sec;
 	int error;
-	union hibernate_info hib;
+	union hibernate_info *hib = (union hibernate_info *)&buf;
 
 	/* read hibernate */
 	if (dip->disklabel.d_partitions[1].p_fstype != FS_SWAP ||
@@ -400,11 +401,10 @@ check_hibernate(struct diskinfo *dip)
 		return;
 
 	sec = DL_GETPOFFSET(&dip->disklabel.d_partitions[1]) +
-	    DL_GETPSIZE(&dip->disklabel.d_partitions[1]) -
-            (sizeof(union hibernate_info) / DEV_BSIZE);
+	    DL_GETPSIZE(&dip->disklabel.d_partitions[1]) - 1;
 
-	error = dip->strategy(dip, F_READ, sec, sizeof hib, &hib,
-	    NULL);
-	if (error == 0 && hib.magic == HIBERNATE_MAGIC)
+	error = dip->strategy(dip, F_READ, DL_SECTOBLK(&dip->disklabel, sec),
+	    sizeof buf, &buf, NULL);
+	if (error == 0 && hib->magic == HIBERNATE_MAGIC)
 		dip->bios_info.flags |= BDI_HIBVALID; /* Hibernate present */
 }

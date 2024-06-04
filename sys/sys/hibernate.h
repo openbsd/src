@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.45 2022/01/17 02:54:28 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.46 2024/06/04 20:31:35 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -106,10 +106,11 @@ union hibernate_info {
 		long				guard;
 #endif /* ! NO_PROPOLICE */
 		u_int32_t			retguard_ofs;
+		u_int32_t			sec_size;
 	};
 
-	/* XXX - remove restriction to have this union fit in a single block */
-	char pad[512]; /* Pad to 512 bytes */
+	/* XXX - remove restriction to have the struct fit in a single block */
+	char pad[4096]; /* Pad to largest allowable disk sector size in bytes */
 };
 
 void	*hib_alloc(struct hiballoc_arena*, size_t);

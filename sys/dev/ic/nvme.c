@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.116 2024/06/03 12:01:57 mglocker Exp $ */
+/*	$OpenBSD: nvme.c,v 1.117 2024/06/04 20:31:35 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1695,6 +1695,7 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 
 		daddr_t			poffset;
 		size_t			psize;
+		u_int32_t		secsize;
 	} *my = page;
 	struct nvme_sqe_io *isqe;
 	struct nvme_cqe *icqe;
@@ -1707,6 +1708,8 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	if (op == HIB_INIT) {
 		struct device *disk;
 		struct device *scsibus;
+		struct nvm_identify_namespace *ns;
+		struct nvm_namespace_format *f;
 		extern struct cfdriver sd_cd;
 		struct scsi_link *link;
 		struct scsibus_softc *bus_sc;
@@ -1729,9 +1732,12 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		}
 		if (my->nsid == 0)
 			return (EIO);
+		ns = my->sc->sc_namespaces[my->nsid].ident;
+		f = &ns->lbaf[NVME_ID_NS_FLBAS(ns->flbas)];
 
 		my->poffset = blkno;
 		my->psize = size;
+		my->secsize = 1 << f->lbads;
 
 		memset(NVME_DMA_KVA(my->sc->sc_hib_q->q_cq_dmamem), 0,
 		    my->sc->sc_hib_q->q_entries * sizeof(struct nvme_cqe));
@@ -1771,6 +1777,9 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	if (op != HIB_W)
 		return (0);
 
+	if (blkno + (size / DEV_BSIZE) > my->psize)
+		return E2BIG;
+
 	isqe = NVME_DMA_KVA(my->sc->sc_hib_q->q_sq_dmamem);
 	isqe += my->sq_tail;
 	if (++my->sq_tail == my->sc->sc_hib_q->q_entries)
@@ -1796,8 +1805,8 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		}
 	}
 
-	isqe->slba = blkno + my->poffset;
-	isqe->nlb = (size / DEV_BSIZE) - 1;
+	isqe->slba = (blkno + my->poffset) / (my->secsize / DEV_BSIZE);
+	isqe->nlb = (size / my->secsize) - 1;
 	isqe->cid = blkno % 0xffff;
 
 	nvme_write4(my->sc, NVME_SQTDBL(NVME_HIB_Q, my->sc->sc_dstrd),
