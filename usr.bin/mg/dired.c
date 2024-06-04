@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.102 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: dired.c,v 1.103 2024/06/04 06:48:34 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -34,6 +34,7 @@ static int	 d_otherwindow(int, int);
 static int	 d_undel(int, int);
 static int	 d_undelbak(int, int);
 static int	 d_findfile(int, int);
+static int	 d_updirectory(int, int);
 static int	 d_ffotherwindow(int, int);
 static int	 d_expunge(int, int);
 static int	 d_copy(int, int);
@@ -122,6 +123,10 @@ static PF diredcz[] = {
 	d_create_directory	/* + */
 };
 
+static PF diredcaret[] = {
+	d_updirectory /* ^ */
+};
+
 static PF direda[] = {
 	d_filevisitalt,		/* a */
 	rescan,			/* b */
@@ -172,9 +177,9 @@ static struct KEYMAPE (1) d_backpagemap = {
 	}
 };
 
-static struct KEYMAPE (7) diredmap = {
-	7,
-	7,
+static struct KEYMAPE (8) diredmap = {
+	8,
+	8,
 	rescan,
 	{
 		{
@@ -189,6 +194,9 @@ static struct KEYMAPE (7) diredmap = {
 		},
 		{
 			CCHR('Z'), '+', diredcz, (KEYMAP *) & metamap
+		},
+		{
+			'^', '^', diredcaret, NULL
 		},
 		{
 			'a', 'j', direda, NULL
@@ -224,6 +232,7 @@ dired_init(void)
 	funmap_add(d_undel, "dired-unmark", 0);
 	funmap_add(d_undelbak, "dired-unmark-backward", 0);
 	funmap_add(d_killbuffer_cmd, "quit-window", 0);
+	funmap_add(d_updirectory, "dired-up-directory", 0);
 	maps_add((KEYMAP *)&diredmap, "dired");
 	dobindkey(fundamental_map, "dired", "^Xd");
 }
@@ -353,6 +362,28 @@ d_findfile(int f, int n)
 		bp = dired_(fname);
 	else
 		bp = findbuffer(fname);
+	if (bp == NULL)
+		return (FALSE);
+	curbp = bp;
+	if (showbuffer(bp, curwp, WFFULL) != TRUE)
+		return (FALSE);
+	if (bp->b_fname[0] != 0)
+		return (TRUE);
+	return (readin(fname));
+}
+
+int
+d_updirectory(int f, int n)
+{
+	struct buffer	*bp;
+	int		 ret;
+	char		 fname[NFILEN];
+
+	ret = snprintf(fname, sizeof(fname), "%s..", curbp->b_fname);
+	if (ret < 0 || (size_t)ret >= sizeof(fname))
+		return (ABORT); /* Name is too long. */
+
+	bp = dired_(fname);
 	if (bp == NULL)
 		return (FALSE);
 	curbp = bp;

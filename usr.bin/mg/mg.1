@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.136 2023/10/16 08:33:16 op Exp $
+.\"	$OpenBSD: mg.1,v 1.137 2024/06/04 06:48:34 op Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: October 16 2023 $
+.Dd $Mdocdate: June 4 2024 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -1055,6 +1055,8 @@ dired-next-line
 dired-shell-command
 .It +
 dired-create-directory
+.It ^
+dired-up-directory
 .It a
 dired-find-alternate-file
 .It c
@@ -1130,6 +1132,8 @@ Remove the deletion flag for the file on the current line.
 .It Ic dired-unmark-backward
 Remove the deletion flag from the file listed on the previous line
 of the dired buffer, then move up to that line.
+.It Ic dired-up-directory
+Open a dired buffer in the parent directory.
 .It Ic quit-window
 Close the current dired buffer.
 .El
