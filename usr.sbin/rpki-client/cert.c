@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.135 2024/06/04 14:07:10 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.136 2024/06/04 14:10:53 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -577,6 +577,13 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 			}
 			cert->notify = notify;
 			notify = NULL;
+		} else {
+			char buf[128];
+
+			OBJ_obj2txt(buf, sizeof(buf), oid, 0);
+			warnx("%s: RFC 6487 section 4.8.8.1: unexpected"
+			    " accessMethod: %s", fn, buf);
+			goto out;
 		}
 	}
 
