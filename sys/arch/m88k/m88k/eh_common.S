@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.65 2023/10/24 13:20:10 claudio Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.66 2024/06/05 19:22:04 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2202,21 +2202,18 @@ ASLOCAL(do_softint)
 	br	1b
 
 /*
- * void proc_trampoline(void (*func)(void *), void *proc)
+ * void proc_trampoline()
  *
  * When a process setup by cpu_fork() resumes, it will find itself in
- * proc_trampoline, with r31 pointing to a ksigframe. proc_trampoline will
- * load func and proc values from ksigframe, call the function, and on return
- * pop off the ksigframe. Then, it will return to userland.
+ * proc_trampoline, with r14 and r15 referring to a function and its
+ * argument. proc_trampoline will call the function, and return to userland.
  */
 
 ENTRY(proc_trampoline)
 	bsr	proc_trampoline_mi
 
-	ld	%r1,  %r31, 0		/* load func */
-	ld	%r2,  %r31, 4 		/* load arg */
-	jsr.n	%r1
-	 addu	%r31, %r31, 8		/* release ksigframe */
+	jsr.n	%r14
+	 or	%r2,  %r15, 0		/* arg */
 
 /*
  * Load FPTR with a pointer to the trap frame for the current proc and
