@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.9 2024/06/03 15:53:26 deraadt Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.10 2024/06/05 16:11:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -726,9 +726,28 @@ configure_address(struct imsg_configure_address *address)
 }
 
 void
-deconfigure_address(struct imsg_configure_address *imsg)
+deconfigure_address(struct imsg_configure_address *address)
 {
-	fatalx("%s: not implemented", __func__); /* XXX */
+	struct in6_ifreq	 in6_ridreq;
+	char			*if_name;
+
+	memset(&in6_ridreq, 0, sizeof(in6_ridreq));
+
+	if_name = if_indextoname(address->if_index, in6_ridreq.ifr_name);
+	if (if_name == NULL) {
+		log_warnx("%s: cannot find interface %d", __func__,
+		    address->if_index);
+		return;
+	}
+
+	memcpy(&in6_ridreq.ifr_addr, &address->addr,
+	    sizeof(in6_ridreq.ifr_addr));
+
+	log_debug("%s: %s", __func__, if_name);
+
+	if (ioctl(ioctl_sock, SIOCDIFADDR_IN6, &in6_ridreq) == -1 &&
+	    errno != EADDRNOTAVAIL)
+		log_warn("%s: cannot remove address", __func__);
 }
 
 const char*
