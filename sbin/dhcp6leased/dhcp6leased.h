@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.6 2024/06/05 16:14:12 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.7 2024/06/05 16:15:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -37,13 +37,8 @@
 #define	XID_SIZE		3
 #define	SERVERID_SIZE		130 /* 2 octet type, max 128 octets data */
 #define	MAX_IA			32
-#define	LEASE_VERSION		"version: 2"
-#define	LEASE_IP_PREFIX		"ip: "
-#define	LEASE_NEXTSERVER_PREFIX	"next-server: "
-#define	LEASE_BOOTFILE_PREFIX	"filename: "
-#define	LEASE_HOSTNAME_PREFIX	"host-name: "
-#define	LEASE_DOMAIN_PREFIX	"domain-name: "
 #define	LEASE_SIZE		4096
+#define	LEASE_IA_PD_PREFIX	"ia_pd "
 /* MAXDNAME from arpa/namesr.h */
 #define	DHCP6LEASED_MAX_DNSSL	1025
 #define	MAX_RDNS_COUNT		8 /* max nameserver in a RTM_PROPOSAL */
@@ -177,6 +172,7 @@ enum imsg_type {
 	IMSG_CONFIGURE_ADDRESS,
 	IMSG_DECONFIGURE_ADDRESS,
 	IMSG_REQUEST_REBOOT,
+	IMSG_WRITE_LEASE,
 };
 
 struct ctl_engine_info {
@@ -217,12 +213,19 @@ struct dhcp6leased_conf {
 	int						rapid_commit;
 };
 
+struct prefix {
+	struct in6_addr	 prefix;
+	int		 prefix_len;
+	uint32_t	 vltime;
+	uint32_t	 pltime;
+};
+
 struct imsg_ifinfo {
 	uint32_t		if_index;
 	int			rdomain;
 	int			running;
 	int			link_state;
-	char			lease[LEASE_SIZE];
+	struct prefix		pds[MAX_IA];
 };
 
 struct imsg_dhcp {
@@ -231,19 +234,17 @@ struct imsg_dhcp {
 	uint8_t			packet[1500];
 };
 
-struct prefix {
-	struct in6_addr	 prefix;
-	int		 prefix_len;
-	uint32_t	 vltime;
-	uint32_t	 pltime;
-};
-
 struct imsg_req_dhcp {
 	uint32_t		 if_index;
 	int			 elapsed_time;
 	uint8_t			 xid[XID_SIZE];
 	int			 serverid_len;
 	uint8_t			 serverid[SERVERID_SIZE];
+	struct prefix		 pds[MAX_IA];
+};
+
+struct imsg_lease_info {
+	uint32_t		 if_index;
 	struct prefix		 pds[MAX_IA];
 };
 
@@ -268,6 +269,25 @@ int			*changed_ifaces(struct dhcp6leased_conf *, struct
 void	print_config(struct dhcp6leased_conf *, int);
 
 /* parse.y */
-struct dhcp6leased_conf	*parse_config(const char *);
-int			 cmdline_symset(char *);
+struct file {
+	TAILQ_ENTRY(file)	 entry;
+	FILE			*stream;
+	char			*name;
+	size_t			 ungetpos;
+	size_t			 ungetsize;
+	u_char			*ungetbuf;
+	int			 eof_reached;
+	int			 lineno;
+	int			 errors;
+};
 
+struct dhcp6leased_conf	*parse_config(const char *);
+struct file		*pushfile(const char *, int);
+int			 popfile(void);
+int			 kw_cmp(const void *, const void *);
+int			 lgetc(int);
+void			 lungetc(int);
+int			 findeol(void);
+
+/* parse_lease.y */
+void	parse_lease(const char*, struct imsg_ifinfo *);

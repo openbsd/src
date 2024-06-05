@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2024/06/04 15:48:47 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2024/06/05 16:15:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2018, 2024 Florian Obser <florian@openbsd.org>
@@ -52,31 +52,15 @@
 #include "frontend.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
-static struct file {
-	TAILQ_ENTRY(file)	 entry;
-	FILE			*stream;
-	char			*name;
-	size_t			 ungetpos;
-	size_t			 ungetsize;
-	u_char			*ungetbuf;
-	int			 eof_reached;
-	int			 lineno;
-	int			 errors;
-} *file, *topfile;
-struct file	*pushfile(const char *, int);
-int		 popfile(void);
+struct file 	 *file, *topfile;
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
 int		 yyerror(const char *, ...)
     __attribute__((__format__ (printf, 1, 2)))
     __attribute__((__nonnull__ (1)));
-int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 igetc(void);
-int		 lgetc(int);
-void		 lungetc(int);
-int		 findeol(void);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -697,23 +681,6 @@ symset(const char *nam, const char *val, int persist)
 	sym->persist = persist;
 	TAILQ_INSERT_TAIL(&symhead, sym, entry);
 	return (0);
-}
-
-int
-cmdline_symset(char *s)
-{
-	char	*sym, *val;
-	int	ret;
-
-	if ((val = strrchr(s, '=')) == NULL)
-		return (-1);
-	sym = strndup(s, val - s);
-	if (sym == NULL)
-		errx(1, "%s: strndup", __func__);
-	ret = symset(sym, val + 1, 1);
-	free(sym);
-
-	return (ret);
 }
 
 char *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.10 2024/06/05 16:11:26 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.11 2024/06/05 16:15:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -78,6 +78,7 @@ void	 configure_address(struct imsg_configure_address *);
 void	 deconfigure_address(struct imsg_configure_address *);
 void	 read_lease_file(struct imsg_ifinfo *);
 uint8_t	*get_uuid(void);
+void	 write_lease_file(struct imsg_lease_info *);
 
 int	 main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 int	 main_imsg_compose_frontend(int, int, void *, uint16_t);
@@ -309,7 +310,8 @@ main(int argc, char *argv[])
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil");
 
-	if (pledge("stdio inet rpath wpath sendfd wroute", NULL) == -1)
+	if (pledge("stdio inet rpath wpath cpath fattr sendfd wroute", NULL)
+	    == -1)
 		fatal("pledge");
 
 	main_imsg_compose_frontend(IMSG_ROUTESOCK, frontend_routesock, NULL, 0);
@@ -541,6 +543,17 @@ main_dispatch_engine(int fd, short event, void *bula)
 			memcpy(&imsg_configure_address, imsg.data,
 			    sizeof(imsg_configure_address));
 			deconfigure_address(&imsg_configure_address);
+			break;
+		}
+		case IMSG_WRITE_LEASE:  {
+			struct imsg_lease_info imsg_lease_info;
+			if (IMSG_DATA_SIZE(imsg) !=
+			    sizeof(imsg_lease_info))
+				fatalx("%s: IMSG_WRITE_LEASE wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
+			memcpy(&imsg_lease_info, imsg.data,
+			    sizeof(imsg_lease_info));
+			write_lease_file(&imsg_lease_info);
 			break;
 		}
 		default:
@@ -859,16 +872,98 @@ open_udpsock(uint32_t if_index)
 }
 
 void
+write_lease_file(struct imsg_lease_info *imsg_lease_info)
+{
+	struct iface_conf	*iface_conf;
+	uint32_t		 i;
+	int			 len, fd, rem;
+	char			 if_name[IF_NAMESIZE];
+	char			 lease_buf[LEASE_SIZE];
+	char			 lease_file_buf[sizeof(_PATH_LEASE) +
+	    IF_NAMESIZE];
+	char			 tmpl[] = _PATH_LEASE"XXXXXXXXXX";
+	char			 ntopbuf[INET6_ADDRSTRLEN];
+	char			*p;
+
+	if (no_lease_files)
+		return;
+
+	if (if_indextoname(imsg_lease_info->if_index, if_name) == NULL) {
+		log_warnx("%s: cannot find interface %d", __func__,
+		    imsg_lease_info->if_index);
+		return;
+	}
+
+	if ((iface_conf = find_iface_conf(&main_conf->iface_list, if_name))
+	    == NULL) {
+		log_debug("%s: no interface configuration for %s", __func__,
+		    if_name);
+		return;
+	}
+
+	len = snprintf(lease_file_buf, sizeof(lease_file_buf), "%s%s",
+	    _PATH_LEASE, if_name);
+	if (len == -1 || (size_t) len >= sizeof(lease_file_buf)) {
+		log_warnx("%s: failed to encode lease path for %s", __func__,
+		    if_name);
+		return;
+	}
+
+	p = lease_buf;
+	rem = sizeof(lease_buf);
+
+	for (i = 0; i < iface_conf->ia_count; i++) {
+		len = snprintf(p, rem, "%s%d %s %d\n", LEASE_IA_PD_PREFIX,
+		    i, inet_ntop(AF_INET6, &imsg_lease_info->pds[i].prefix,
+		    ntopbuf, INET6_ADDRSTRLEN),
+		    imsg_lease_info->pds[i].prefix_len);
+		if (len == -1 || len >= rem) {
+			log_warnx("%s: failed to encode lease for %s", __func__,
+			    if_name);
+			return;
+		}
+		p += len;
+		rem -= len;
+	}
+
+	len = sizeof(lease_buf) - rem;
+
+	if ((fd = mkstemp(tmpl)) == -1) {
+		log_warn("%s: mkstemp", __func__);
+		return;
+	}
+
+	if (write(fd, lease_buf, len) < len)
+		goto err;
+
+	if (fchmod(fd, 0644) == -1)
+		goto err;
+
+	if (close(fd) == -1)
+		goto err;
+	fd = -1;
+
+	if (rename(tmpl, lease_file_buf) == -1)
+		goto err;
+	return;
+ err:
+	log_warn("%s", __func__);
+	if (fd != -1)
+		close(fd);
+	unlink(tmpl);
+}
+
+void
 read_lease_file(struct imsg_ifinfo *imsg_ifinfo)
 {
-	int	 len, fd;
+	int	 len;
 	char	 if_name[IF_NAMESIZE];
 	char	 lease_file_buf[sizeof(_PATH_LEASE) + IF_NAMESIZE];
 
 	if (no_lease_files)
 		return;
 
-	memset(imsg_ifinfo->lease, 0, sizeof(imsg_ifinfo->lease));
+	memset(imsg_ifinfo->pds, 0, sizeof(imsg_ifinfo->pds));
 
 	if (if_indextoname(imsg_ifinfo->if_index, if_name) == NULL) {
 		log_warnx("%s: cannot find interface %d", __func__,
@@ -883,13 +978,22 @@ read_lease_file(struct imsg_ifinfo *imsg_ifinfo)
 		    if_name);
 		return;
 	}
+	parse_lease(lease_file_buf, imsg_ifinfo);
 
-	if ((fd = open(lease_file_buf, O_RDONLY)) == -1)
-		return;
+	if (log_getverbose() > 1) {
+		int	 i;
+		char	 ntopbuf[INET6_ADDRSTRLEN];
 
-	/* no need for error handling, we'll just do a DHCP discover */
-	read(fd, imsg_ifinfo->lease, sizeof(imsg_ifinfo->lease) - 1);
-	close(fd);
+		for (i = 0; i < MAX_IA; i++) {
+			if (imsg_ifinfo->pds[i].prefix_len == 0)
+				continue;
+
+			log_debug("%s: %s: %d %s/%d", __func__, if_name, i,
+			    inet_ntop(AF_INET6, &imsg_ifinfo->pds[i].prefix,
+			    ntopbuf, INET6_ADDRSTRLEN),
+			    imsg_ifinfo->pds[i].prefix_len);
+		}
+	}
 }
 
 void
