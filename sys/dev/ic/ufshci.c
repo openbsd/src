@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.33 2024/05/27 10:27:58 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.34 2024/06/05 04:58:05 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -42,6 +42,13 @@
 #include <dev/ic/ufshcivar.h>
 #include <dev/ic/ufshcireg.h>
 
+#ifdef HIBERNATE
+#include <uvm/uvm_extern.h>
+#include <sys/hibernate.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
+#endif
+
 #ifdef UFSHCI_DEBUG
 int ufshci_dbglvl = 1;
 #define DPRINTF(l, x...)	do { if ((l) <= ufshci_dbglvl) printf(x); } \
@@ -59,7 +66,9 @@ int			 ufshci_is_poll(struct ufshci_softc *, uint32_t);
 struct ufshci_dmamem	*ufshci_dmamem_alloc(struct ufshci_softc *, size_t);
 void			 ufshci_dmamem_free(struct ufshci_softc *,
 			     struct ufshci_dmamem *);
+int			 ufshci_alloc(struct ufshci_softc *);
 int			 ufshci_init(struct ufshci_softc *);
+int			 ufshci_disable(struct ufshci_softc *);
 int			 ufshci_doorbell_read(struct ufshci_softc *);
 void			 ufshci_doorbell_write(struct ufshci_softc *, int);
 int			 ufshci_doorbell_poll(struct ufshci_softc *, int,
@@ -103,6 +112,11 @@ void			 ufshci_scsi_io_done(struct ufshci_softc *,
 			     struct ufshci_ccb *);
 void			 ufshci_scsi_done(struct ufshci_softc *,
 			     struct ufshci_ccb *);
+
+#if HIBERNATE
+int			 ufshci_hibernate_io(dev_t, daddr_t, vaddr_t, size_t,
+			     int, void *);
+#endif
 
 const struct scsi_adapter ufshci_switch = {
 	ufshci_scsi_cmd, NULL, NULL, NULL, NULL
@@ -227,6 +241,8 @@ ufshci_attach(struct ufshci_softc *sc)
 #if 0
 	sc->sc_flags |= UFSHCI_FLAGS_AGGR_INTR;	/* Enable intr. aggregation */
 #endif
+	/* Allocate the DMA buffers and initialize the controller. */
+	ufshci_alloc(sc);
 	ufshci_init(sc);
 
 	if (ufshci_ccb_alloc(sc, sc->sc_nutrs) != 0) {
@@ -372,6 +388,39 @@ ufshci_dmamem_free(struct ufshci_softc *sc, struct ufshci_dmamem *udm)
 }
 
 int
+ufshci_alloc(struct ufshci_softc *sc)
+{
+	/* 7.1.1 Host Controller Initialization: 13) */
+	sc->sc_dmamem_utmrd = ufshci_dmamem_alloc(sc,
+	    sizeof(struct ufshci_utmrd) * sc->sc_nutmrs);
+	if (sc->sc_dmamem_utmrd == NULL) {
+		printf("%s: Can't allocate DMA memory for UTMRD\n",
+		    sc->sc_dev.dv_xname);
+		return -1;
+	}
+
+	/* 7.1.1 Host Controller Initialization: 15) */
+	sc->sc_dmamem_utrd = ufshci_dmamem_alloc(sc,
+	    sizeof(struct ufshci_utrd) * sc->sc_nutrs);
+	if (sc->sc_dmamem_utrd == NULL) {
+		printf("%s: Can't allocate DMA memory for UTRD\n",
+		    sc->sc_dev.dv_xname);
+		return -1;
+	}
+
+	/* Allocate UCDs. */
+	sc->sc_dmamem_ucd = ufshci_dmamem_alloc(sc,
+	    sizeof(struct ufshci_ucd) * sc->sc_nutrs);
+	if (sc->sc_dmamem_ucd == NULL) {
+		printf("%s: Can't allocate DMA memory for UCD\n",
+		    sc->sc_dev.dv_xname);
+		return -1;
+	}
+
+	return 0;
+}
+
+int
 ufshci_init(struct ufshci_softc *sc)
 {
 	uint32_t reg;
@@ -430,43 +479,17 @@ ufshci_init(struct ufshci_softc *sc)
 	 * TODO: More UIC commands to issue?
 	 */
 
-	/* 7.1.1 Host Controller Initialization: 13) */
-	sc->sc_dmamem_utmrd = ufshci_dmamem_alloc(sc,
-	    sizeof(struct ufshci_utmrd) * sc->sc_nutmrs);
-	if (sc->sc_dmamem_utmrd == NULL) {
-		printf("%s: Can't allocate DMA memory for UTMRD\n",
-		    sc->sc_dev.dv_xname);
-		return -1;
-	}
 	/* 7.1.1 Host Controller Initialization: 14) */
 	dva = UFSHCI_DMA_DVA(sc->sc_dmamem_utmrd);
 	DPRINTF(2, "%s: utmrd dva=%llu\n", __func__, dva);
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTMRLBA, (uint32_t)dva);
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTMRLBAU, (uint32_t)(dva >> 32));
 
-	/* 7.1.1 Host Controller Initialization: 15) */
-	sc->sc_dmamem_utrd = ufshci_dmamem_alloc(sc,
-	    sizeof(struct ufshci_utrd) * sc->sc_nutrs);
-	if (sc->sc_dmamem_utrd == NULL) {
-		printf("%s: Can't allocate DMA memory for UTRD\n",
-		    sc->sc_dev.dv_xname);
-		return -1;
-	}
 	/* 7.1.1 Host Controller Initialization: 16) */
 	dva = UFSHCI_DMA_DVA(sc->sc_dmamem_utrd);
 	DPRINTF(2, "%s: utrd dva=%llu\n", __func__, dva);
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRLBA, (uint32_t)dva);
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRLBAU, (uint32_t)(dva >> 32));
-
-
-	/* Allocate UCDs. */
-	sc->sc_dmamem_ucd = ufshci_dmamem_alloc(sc,
-	    sizeof(struct ufshci_ucd) * sc->sc_nutrs);
-	if (sc->sc_dmamem_ucd == NULL) {
-		printf("%s: Can't allocate DMA memory for UCD\n",
-		    sc->sc_dev.dv_xname);
-		return -1;
-	}
 
 	/* 7.1.1 Host Controller Initialization: 17) */
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTMRLRSR, UFSHCI_REG_UTMRLRSR_START);
@@ -478,6 +501,19 @@ ufshci_init(struct ufshci_softc *sc)
 	/* TODO: bMaxNumOfRTT will be set as the minimum value of
 	 * bDeviceRTTCap and NORTT. ???
 	 */
+
+	return 0;
+}
+
+int
+ufshci_disable(struct ufshci_softc *sc)
+{
+	/* Stop run queues. */
+	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTMRLRSR, UFSHCI_REG_UTMRLRSR_STOP);
+	UFSHCI_WRITE_4(sc, UFSHCI_REG_UTRLRSR, UFSHCI_REG_UTRLRSR_STOP);
+
+	/* Disable interrupts. */
+	UFSHCI_WRITE_4(sc, UFSHCI_REG_IE, 0);
 
 	return 0;
 }
@@ -1353,11 +1389,11 @@ ufshci_activate(struct ufshci_softc *sc, int act)
 	case DVACT_POWERDOWN:
 		DPRINTF(1, "%s: POWERDOWN\n", __func__);
 		rv = config_activate_children(&sc->sc_dev, act);
-		ufshci_powerdown(sc);
+		ufshci_disable(sc);
 		break;
 	case DVACT_RESUME:
 		DPRINTF(1, "%s: RESUME\n", __func__);
-		ufshci_resume(sc);
+		rv = ufshci_init(sc);
 		if (rv == 0)
 			rv = config_activate_children(&sc->sc_dev, act);
 		break;
@@ -1367,56 +1403,6 @@ ufshci_activate(struct ufshci_softc *sc, int act)
 	}
 
 	return rv;
-}
-
-int
-ufshci_powerdown(struct ufshci_softc *sc)
-{
-	uint32_t reg;
-
-	/* Send "hibernate enter" command. */
-	UFSHCI_WRITE_4(sc, UFSHCI_REG_UICCMD,
-	    UFSHCI_REG_UICCMD_CMDOP_DME_HIBERNATE_ENTER);
-	if (ufshci_is_poll(sc, UFSHCI_REG_IS_UHES) != 0) {
-		printf("%s: hibernate enter cmd failed\n", __func__);
-		return 1;
-	}
-
-	/* Check if "hibernate enter" command was executed successfully. */
-	reg = UFSHCI_READ_4(sc, UFSHCI_REG_HCS);
-	DPRINTF(1, "%s: UPMCRS=0x%x\n", __func__, UFSHCI_REG_HCS_UPMCRS(reg));
-	if (UFSHCI_REG_HCS_UPMCRS(reg) > UFSHCI_REG_HCS_UPMCRS_PWR_REMTOTE) {
-		printf("%s: hibernate enter cmd returned UPMCRS error=0x%x\n",
-		    __func__, UFSHCI_REG_HCS_UPMCRS(reg));
-		return 1;
-	}
-
-	return 0;
-}
-
-int
-ufshci_resume(struct ufshci_softc *sc)
-{
-	uint32_t reg;
-
-	/* Send "hibernate exit" command. */
-	UFSHCI_WRITE_4(sc, UFSHCI_REG_UICCMD,
-	    UFSHCI_REG_UICCMD_CMDOP_DME_HIBERNATE_EXIT);
-	if (ufshci_is_poll(sc, UFSHCI_REG_IS_UHXS) != 0) {
-		printf("%s: hibernate exit command failed\n", __func__);
-		return 1;
-	}
-
-	/* Check if "hibernate exit" command was executed successfully. */
-	reg = UFSHCI_READ_4(sc, UFSHCI_REG_HCS);
-	DPRINTF(1, "%s: UPMCRS=0x%x\n", __func__, UFSHCI_REG_HCS_UPMCRS(reg));
-	if (UFSHCI_REG_HCS_UPMCRS(reg) > UFSHCI_REG_HCS_UPMCRS_PWR_REMTOTE) {
-		printf("%s: hibernate exit cmd returned UPMCRS error=0x%x\n",
-		    __func__, UFSHCI_REG_HCS_UPMCRS(reg));
-		return 1;
-	}
-
-	return 0;
 }
 
 /* SCSI */
@@ -1928,3 +1914,155 @@ ufshci_scsi_done(struct ufshci_softc *sc, struct ufshci_ccb *ccb)
 	xs->resid = 0;
 	scsi_done(xs);
 }
+
+#if HIBERNATE
+int
+ufshci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
+    int op, void *page)
+{
+	struct ufshci_hibernate_page {
+		struct ufshci_utrd utrd;
+		struct ufshci_ucd ucd;
+
+		struct ufshci_softc *sc;	/* Copy of softc */
+
+		daddr_t	poffset;		/* Start of SWAP partition */
+		size_t psize;			/* Size of SWAP partition */
+		uint32_t secsize;		/* Our sector size */
+	} *my = page;
+	paddr_t data_phys, page_phys;
+	uint64_t data_bus_phys, page_bus_phys;
+	uint64_t timeout_us;
+	int off, len, slot;
+	uint32_t blocks, reg;
+	uint64_t lba;
+
+	if (op == HIB_INIT) {
+		struct device *disk;
+		struct device *scsibus;
+		extern struct cfdriver sd_cd;
+
+		/* Find ufshci softc. */
+		disk = disk_lookup(&sd_cd, DISKUNIT(dev));
+		if (disk == NULL)
+			return ENOTTY;
+		scsibus = disk->dv_parent;
+		my->sc = (struct ufshci_softc *)disk->dv_parent->dv_parent;
+
+		/* Stop run queues and disable interrupts. */
+		ufshci_disable(my->sc);
+
+		/* Tell the controler the new hibernate UTRD address. */
+		pmap_extract(pmap_kernel(), (vaddr_t)page, &page_phys);
+		page_bus_phys = page_phys + ((void *)&my->utrd - page);
+		UFSHCI_WRITE_4(my->sc, UFSHCI_REG_UTRLBA,
+		    (uint32_t)page_bus_phys);
+		UFSHCI_WRITE_4(my->sc, UFSHCI_REG_UTRLBAU,
+		    (uint32_t)(page_bus_phys >> 32));
+
+		/* Start run queues. */
+		UFSHCI_WRITE_4(my->sc, UFSHCI_REG_UTMRLRSR,
+		    UFSHCI_REG_UTMRLRSR_START);
+		UFSHCI_WRITE_4(my->sc, UFSHCI_REG_UTRLRSR,
+		    UFSHCI_REG_UTRLRSR_START);
+
+		my->poffset = blkno;
+		my->psize = size;
+		my->secsize = UFSHCI_LBS;
+
+		return 0;
+	}
+
+	if (op != HIB_W)
+		return 0;
+
+	if (blkno + (size / DEV_BSIZE) > my->psize)
+		return E2BIG;
+	blocks = size / my->secsize;
+	lba = (blkno + my->poffset) / (my->secsize / DEV_BSIZE);
+
+	/*
+	 * The following code is a ripped down version of ufshci_utr_cmd_io()
+	 * adapted for hibernate.
+	 */
+	slot = 0; /* We only use the first slot for hibernate */
+
+	memset(&my->utrd, 0, sizeof(struct ufshci_utrd));
+
+	my->utrd.dw0 = UFSHCI_UTRD_DW0_CT_UFS;
+	my->utrd.dw0 |= UFSHCI_UTRD_DW0_DD_I2T;
+	my->utrd.dw0 |= UFSHCI_UTRD_DW0_I_REG;
+	my->utrd.dw2 = UFSHCI_UTRD_DW2_OCS_IOV;
+
+	memset(&my->ucd, 0, sizeof(struct ufshci_ucd));
+
+	my->ucd.cmd.hdr.tc = UPIU_TC_I2T_COMMAND;
+	my->ucd.cmd.hdr.flags = (1 << 5); /* Bit-5 = Write */
+
+	my->ucd.cmd.hdr.lun = 0;
+	my->ucd.cmd.hdr.task_tag = slot;
+	my->ucd.cmd.hdr.cmd_set_type = 0; /* SCSI command */
+	my->ucd.cmd.hdr.query = 0;
+	my->ucd.cmd.hdr.response = 0;
+	my->ucd.cmd.hdr.status = 0;
+	my->ucd.cmd.hdr.ehs_len = 0;
+	my->ucd.cmd.hdr.device_info = 0;
+	my->ucd.cmd.hdr.ds_len = 0;
+
+	my->ucd.cmd.expected_xfer_len = htobe32(UFSHCI_LBS * blocks);
+	my->ucd.cmd.cdb[0] = WRITE_10; /* 0x2a */
+	my->ucd.cmd.cdb[1] = (1 << 3); /* FUA: Force Unit Access */
+	my->ucd.cmd.cdb[2] = (lba >> 24) & 0xff;
+	my->ucd.cmd.cdb[3] = (lba >> 16) & 0xff;
+	my->ucd.cmd.cdb[4] = (lba >>  8) & 0xff;
+	my->ucd.cmd.cdb[5] = (lba >>  0) & 0xff;
+	my->ucd.cmd.cdb[7] = (blocks >> 8) & 0xff;
+	my->ucd.cmd.cdb[8] = (blocks >> 0) & 0xff;
+
+	pmap_extract(pmap_kernel(), (vaddr_t)page, &page_phys);
+	page_bus_phys = page_phys + ((void *)&my->ucd - page);
+	my->utrd.dw4 = (uint32_t)page_bus_phys;
+	my->utrd.dw5 = (uint32_t)(page_bus_phys >> 32);
+
+	off = sizeof(struct upiu_command) / 4; /* DWORD offset */
+	my->utrd.dw6 = UFSHCI_UTRD_DW6_RUO(off);
+
+	len = sizeof(struct upiu_response) / 4; /* DWORD length */
+	my->utrd.dw6 |= UFSHCI_UTRD_DW6_RUL(len);
+
+	off = (sizeof(struct upiu_command) + sizeof(struct upiu_response)) / 4;
+	my->utrd.dw7 = UFSHCI_UTRD_DW7_PRDTO(off);
+
+	my->utrd.dw7 |= UFSHCI_UTRD_DW7_PRDTL(1); /* dm_nsegs */
+
+	pmap_extract(pmap_kernel(), (vaddr_t)addr, &data_phys);
+	data_bus_phys = data_phys;
+	my->ucd.prdt[0].dw0 = (uint32_t)data_bus_phys;
+	my->ucd.prdt[0].dw1 = (uint32_t)(data_bus_phys >> 32);
+	my->ucd.prdt[0].dw2 = 0;
+	my->ucd.prdt[0].dw3 = size - 1; /* ds_len */
+
+	if (UFSHCI_READ_4(my->sc, UFSHCI_REG_UTRLRSR) != 1)
+		return EIO;
+
+	ufshci_doorbell_write(my->sc, slot);
+
+	/* ufshci_doorbell_poll() adaption for hibernate. */
+	for (timeout_us = 1000000 * 1000; timeout_us != 0;
+	    timeout_us -= 1000) {
+		reg = UFSHCI_READ_4(my->sc, UFSHCI_REG_UTRLDBR);
+		if ((reg & (1U << slot)) == 0)
+			break;
+		delay(1000);
+	}
+	if (timeout_us == 0)
+		return EIO;
+	UFSHCI_WRITE_4(my->sc, UFSHCI_REG_UTRLCNR, (1U << slot));
+
+	/* Check if the command was succesfully executed. */
+	if (my->utrd.dw2 != UFSHCI_UTRD_DW2_OCS_SUCCESS)
+		return EIO;
+
+	return 0;
+}
+#endif /* HIBERNATE */
