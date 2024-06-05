@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.8 2024/06/04 15:48:47 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.9 2024/06/05 10:48:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -1295,6 +1295,9 @@ send_configure_interface(struct iface_pd_conf *pd_conf, struct prefix *pd)
 	uint32_t			 if_index;
 	int				 i;
 	char				 ntopbuf[INET6_ADDRSTRLEN];
+
+	if (pd->prefix_len == 0)
+		return;
 
 	if (strcmp(pd_conf->name, "reserve") == 0)
 		return;
