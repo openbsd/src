@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.5 2024/06/03 18:10:04 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.6 2024/06/05 16:14:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -17,6 +17,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef nitems
+#define	nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 #define	_PATH_LOCKFILE		"/dev/dhcp6leased.lock"
 #define	_PATH_CONF_FILE		"/etc/dhcp6leased.conf"

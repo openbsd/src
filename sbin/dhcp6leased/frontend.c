@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.10 2024/06/05 10:25:07 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.11 2024/06/05 16:14:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -795,8 +795,11 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 	struct dhcp_iapd		 iapd;
 	struct dhcp_iaprefix		 iaprefix;
 	struct dhcp_vendor_class	 vendor_class;
+	size_t				 i;
 	ssize_t				 len;
 	uint16_t			 request_option_code, elapsed_time;
+	const uint16_t			 options[] = {DHO_SOL_MAX_RT,
+					     DHO_INF_MAX_RT};
 	uint8_t				*p;
 
 	switch (message_type) {
@@ -890,15 +893,14 @@ build_packet(uint8_t message_type, struct iface *iface, char *if_name)
 	}
 
 	opt_hdr.code = htons(DHO_ORO);
-	opt_hdr.len = htons(2 * 2);
+	opt_hdr.len = htons(sizeof(request_option_code) * nitems(options));
 	memcpy(p, &opt_hdr, sizeof(struct dhcp_option_hdr));
 	p += sizeof(struct dhcp_option_hdr);
-	request_option_code = htons(DHO_SOL_MAX_RT);
-	memcpy(p, &request_option_code, sizeof(uint16_t));
-	p += sizeof(uint16_t);
-	request_option_code = htons(DHO_INF_MAX_RT);
-	memcpy(p, &request_option_code, sizeof(uint16_t));
-	p += sizeof(uint16_t);
+	for (i = 0; i < nitems(options); i++) {
+		request_option_code = htons(options[i]);
+		memcpy(p, &request_option_code, sizeof(uint16_t));
+		p += sizeof(uint16_t);
+	}
 
 	opt_hdr.code = htons(DHO_ELAPSED_TIME);
 	opt_hdr.len = htons(2);
