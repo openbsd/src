@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.140 2024/06/04 20:31:35 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.141 2024/06/05 11:04:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -72,6 +72,7 @@ vaddr_t hibernate_rle_page;
 
 /* Hibernate info as read from disk during resume */
 union hibernate_info disk_hib;
+struct bdevsw *bdsw;
 
 /*
  * Global copy of the pig start address. This needs to be a global as we
@@ -1004,18 +1005,9 @@ hibernate_block_io(union hibernate_info *hib, daddr_t blkctr,
     size_t xfer_size, vaddr_t dest, int iswrite)
 {
 	struct buf *bp;
-	struct bdevsw *bdsw;
 	int error;
 
 	bp = geteblk(xfer_size);
-	bdsw = &bdevsw[major(hib->dev)];
-
-	error = (*bdsw->d_open)(hib->dev, FREAD, S_IFCHR, curproc);
-	if (error) {
-		printf("hibernate_block_io open failed\n");
-		return (1);
-	}
-
 	if (iswrite)
 		bcopy((caddr_t)dest, bp->b_data, xfer_size);
 
@@ -1030,26 +1022,13 @@ hibernate_block_io(union hibernate_info *hib, daddr_t blkctr,
 	if (error) {
 		printf("hib block_io biowait error %d blk %lld size %zu\n",
 			error, (long long)blkctr, xfer_size);
-		error = (*bdsw->d_close)(hib->dev, 0, S_IFCHR,
-		    curproc);
-		if (error)
-			printf("hibernate_block_io error close failed\n");
-		return (1);
-	}
-
-	error = (*bdsw->d_close)(hib->dev, FREAD, S_IFCHR, curproc);
-	if (error) {
-		printf("hibernate_block_io close failed\n");
-		return (1);
-	}
-
-	if (!iswrite)
+	} else if (!iswrite)
 		bcopy(bp->b_data, (caddr_t)dest, xfer_size);
 
 	bp->b_flags |= B_INVAL;
 	brelse(bp);
 
-	return (0);
+	return (error != 0);
 }
 
 /*
@@ -1140,6 +1119,13 @@ hibernate_resume(void)
 	/* Read hibernate info from disk */
 	s = splbio();
 
+	bdsw = &bdevsw[major(hib->dev)];
+	if ((*bdsw->d_open)(hib->dev, FREAD, S_IFCHR, curproc)) {
+		printf("hibernate_resume device open failed\n");
+		splx(s);
+		return;
+	}
+
 	DPRINTF("reading hibernate signature block location: %lld\n",
 		hib->sig_offset);
 
@@ -1147,16 +1133,14 @@ hibernate_resume(void)
 	    hib->sig_offset,
 	    hib->sec_size, (vaddr_t)&disk_hib, 0)) {
 		DPRINTF("error in hibernate read\n");
-		splx(s);
-		return;
+		goto fail;
 	}
 
 	/* Check magic number */
 	if (disk_hib.magic != HIBERNATE_MAGIC) {
 		DPRINTF("wrong magic number in hibernate signature: %x\n",
 			disk_hib.magic);
-		splx(s);
-		return;
+		goto fail;
 	}
 
 	/*
@@ -1165,8 +1149,7 @@ hibernate_resume(void)
 	 */
 	if (hibernate_clear_signature(hib)) {
 		DPRINTF("error clearing hibernate signature block\n");
-		splx(s);
-		return;
+		goto fail;
 	}
 
 	/*
@@ -1175,8 +1158,7 @@ hibernate_resume(void)
 	 */
 	if (hibernate_compare_signature(hib, &disk_hib)) {
 		DPRINTF("mismatched hibernate signature block\n");
-		splx(s);
-		return;
+		goto fail;
 	}
 	disk_hib.dev = hib->dev;
 
@@ -1189,6 +1171,9 @@ hibernate_resume(void)
 	/* Read the image from disk into the image (pig) area */
 	if (hibernate_read_image(&disk_hib))
 		goto fail;
+	if ((*bdsw->d_close)(hib->dev, 0, S_IFCHR, curproc))
+		printf("hibernate_resume device close failed\n");
+	bdsw = NULL;
 
 	DPRINTF("hibernate: quiescing devices\n");
 	if (config_suspend_all(DVACT_QUIESCE) != 0)
@@ -1235,8 +1220,11 @@ hibernate_resume(void)
 	hibernate_unpack_image(&disk_hib);
 
 fail:
+	if (!bdsw)
+		printf("\nUnable to resume hibernated image\n");
+	else if ((*bdsw->d_close)(hib->dev, 0, S_IFCHR, curproc))
+		printf("hibernate_resume device close failed\n");
 	splx(s);
-	printf("\nUnable to resume hibernated image\n");
 }
 
 /*
