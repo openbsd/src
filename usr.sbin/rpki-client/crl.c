@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.36 2024/05/31 02:45:15 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.37 2024/06/05 13:36:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -132,7 +132,7 @@ crl_check_revoked(const char *fn, X509_CRL *x509_crl)
 		 * to a bug in rpki-rs/Krill. So silently accept this for now.
 		 * https://github.com/NLnetLabs/krill/issues/1197
 		 */
-		if (verbose > 0)
+		if (verbose > 1)
 			warnx("%s: RFC 5280, section 5.1.2.6: revoked "
 			    "certificate list without entries disallowed", fn);
 		return 1;
