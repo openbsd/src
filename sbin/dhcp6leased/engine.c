@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.10 2024/06/05 16:11:26 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.11 2024/06/05 16:12:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -132,7 +132,6 @@ void			 state_transition(struct dhcp6leased_iface *, enum
 void			 iface_timeout(int, short, void *);
 void			 request_dhcp_discover(struct dhcp6leased_iface *);
 void			 request_dhcp_request(struct dhcp6leased_iface *);
-void			 log_lease(struct dhcp6leased_iface *, int);
 void			 configure_interfaces(struct dhcp6leased_iface *);
 void			 deconfigure_interfaces(struct dhcp6leased_iface *);
 void			 send_reconfigure_interface(struct iface_pd_conf *,
@@ -1259,12 +1258,6 @@ request_dhcp_request(struct dhcp6leased_iface *iface)
 	default:
 		fatalx("%s: wrong state", __func__);
 	}
-}
-
-void
-log_lease(struct dhcp6leased_iface *iface, int deconfigure)
-{
-	fatalx("%s: not implemented", __func__); /* XXX */
 }
 
 /* XXX we need to install a reject route for the delegated prefix */
