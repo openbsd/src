@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_prf.c,v 1.9 2024/02/03 15:58:34 beck Exp $ */
+/* $OpenBSD: tls_prf.c,v 1.10 2024/06/05 04:50:36 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -33,7 +33,7 @@ struct tls_prf_test {
 	const unsigned char out[TLS_PRF_OUT_LEN];
 };
 
-static struct tls_prf_test tls_prf_tests[] = {
+static const struct tls_prf_test tls_prf_tests[] = {
 	{
 		.desc = "MD5+SHA1",
 		.ssl_method = TLSv1_method,
@@ -127,7 +127,7 @@ hexdump(const unsigned char *buf, size_t len)
 }
 
 static int
-do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
+do_tls_prf_test(int test_no, const struct tls_prf_test *tpt)
 {
 	unsigned char *out = NULL;
 	const SSL_CIPHER *cipher;
