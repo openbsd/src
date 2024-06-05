@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.21 2024/05/06 09:54:38 stsp Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.22 2024/06/05 10:19:55 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -21,6 +21,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +101,53 @@ dwqe_have_tx_csum_offload(struct dwqe_softc *sc)
 }
 
 int
+dwqe_have_tx_vlan_offload(struct dwqe_softc *sc)
+{
+#if NVLAN > 0
+	return (sc->sc_hw_feature[0] & GMAC_MAC_HW_FEATURE0_SAVLANINS);
+#else
+	return 0;
+#endif
+}
+
+void
+dwqe_set_vlan_rx_mode(struct dwqe_softc *sc)
+{
+#if NVLAN > 0
+	uint32_t reg;
+
+	/* Enable outer VLAN tag stripping on Rx. */
+	reg = dwqe_read(sc, GMAC_VLAN_TAG_CTRL);
+	reg |= GMAC_VLAN_TAG_CTRL_EVLRXS | GMAC_VLAN_TAG_CTRL_STRIP_ALWAYS;
+	dwqe_write(sc, GMAC_VLAN_TAG_CTRL, reg);
+#endif
+}
+
+void
+dwqe_set_vlan_tx_mode(struct dwqe_softc *sc)
+{
+#if NVLAN > 0
+	uint32_t reg;
+
+	reg = dwqe_read(sc, GMAC_VLAN_TAG_INCL);
+
+	/* Enable insertion of outer VLAN tag. */
+	reg |= GMAC_VLAN_TAG_INCL_INSERT;
+
+	/*
+	 * Generate C-VLAN tags (type 0x8100, 802.1Q). Setting this
+	 * bit would result in S-VLAN tags (type 0x88A8, 802.1ad).
+	 */
+	reg &= ~GMAC_VLAN_TAG_INCL_CSVL;
+
+	/* Use VLAN tags provided in Tx context descriptors. */
+	reg |= GMAC_VLAN_TAG_INCL_VLTI;
+
+	dwqe_write(sc, GMAC_VLAN_TAG_INCL, reg);
+#endif
+}
+
+int
 dwqe_attach(struct dwqe_softc *sc)
 {
 	struct ifnet *ifp;
@@ -127,6 +175,8 @@ dwqe_attach(struct dwqe_softc *sc)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	if (dwqe_have_tx_vlan_offload(sc))
+		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 	if (dwqe_have_tx_csum_offload(sc)) {
 		ifp->if_capabilities |= (IFCAP_CSUM_IPv4 |
 		    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
@@ -217,6 +267,14 @@ dwqe_attach(struct dwqe_softc *sc)
 
 	if (!sc->sc_fixed_link)
 		dwqe_mii_attach(sc);
+
+	/*
+	 * All devices support VLAN tag stripping on Rx but inserting
+	 * VLAN tags during Tx is an optional feature.
+	 */
+	dwqe_set_vlan_rx_mode(sc);
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
+		dwqe_set_vlan_tx_mode(sc);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -329,7 +387,8 @@ dwqe_start(struct ifqueue *ifq)
 	used = 0;
 
 	for (;;) {
-		if (used + DWQE_NTXSEGS + 1 > left) {
+		/* VLAN tags require an extra Tx context descriptor. */
+		if (used + DWQE_NTXSEGS + 2 > left) {
 			ifq_set_oactive(ifq);
 			break;
 		}
@@ -715,6 +774,21 @@ dwqe_rx_csum(struct dwqe_softc *sc, struct mbuf *m, struct dwqe_desc *rxd)
 }
 
 void
+dwqe_vlan_strip(struct dwqe_softc *sc, struct mbuf *m, struct dwqe_desc *rxd)
+{
+#if NVLAN > 0
+	uint16_t tag;
+
+	if ((rxd->sd_tdes3 & RDES3_RDES0_VALID) &&
+	    (rxd->sd_tdes3 & RDES3_LD)) {
+		tag = rxd->sd_tdes0 & RDES0_OVT;
+		m->m_pkthdr.ether_vtag = le16toh(tag);
+		m->m_flags |= M_VLANTAG;
+	}
+#endif
+}
+
+void
 dwqe_rx_proc(struct dwqe_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
@@ -763,6 +837,7 @@ dwqe_rx_proc(struct dwqe_softc *sc)
 			m->m_pkthdr.len = m->m_len = len;
 
 			dwqe_rx_csum(sc, m, rxd);
+			dwqe_vlan_strip(sc, m, rxd);
 			ml_enqueue(&ml, m);
 		}
 
@@ -1107,12 +1182,34 @@ dwqe_tx_csum(struct dwqe_softc *sc, struct mbuf *m, struct dwqe_desc *txd)
 		txd->sd_tdes3 |= TDES3_CSUM_IPHDR_PAYLOAD_PSEUDOHDR;
 }
 
+uint16_t
+dwqe_set_tx_context_desc(struct dwqe_softc *sc, struct mbuf *m, int idx)
+{
+	uint16_t tag = 0;
+#if NVLAN > 0
+	struct dwqe_desc *ctxt_txd;
+
+	if ((m->m_flags & M_VLANTAG) == 0)
+		return 0;
+
+	tag = m->m_pkthdr.ether_vtag;
+	if (tag) {
+		ctxt_txd = &sc->sc_txdesc[idx];
+		ctxt_txd->sd_tdes3 |= (htole16(tag) & TDES3_VLAN_TAG);
+		ctxt_txd->sd_tdes3 |= TDES3_VLAN_TAG_VALID;
+		ctxt_txd->sd_tdes3 |= (TDES3_CTXT | TDES3_OWN);
+	}
+#endif
+	return tag;
+}
+
 int
 dwqe_encap(struct dwqe_softc *sc, struct mbuf *m, int *idx, int *used)
 {
 	struct dwqe_desc *txd, *txd_start;
 	bus_dmamap_t map;
 	int cur, frag, i;
+	uint16_t vlan_tag = 0;
 
 	cur = frag = *idx;
 	map = sc->sc_txbuf[cur].tb_map;
@@ -1128,6 +1225,17 @@ dwqe_encap(struct dwqe_softc *sc, struct mbuf *m, int *idx, int *used)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
+	if (dwqe_have_tx_vlan_offload(sc)) {
+		vlan_tag = dwqe_set_tx_context_desc(sc, m, frag);
+		if (vlan_tag) {
+			(*used)++;
+			if (frag == (DWQE_NTXDESC - 1))
+				frag = 0;
+			else
+				frag++;
+		}
+	}
+
 	txd = txd_start = &sc->sc_txdesc[frag];
 	for (i = 0; i < map->dm_nsegs; i++) {
 		/* TODO: check for 32-bit vs 64-bit support */
@@ -1140,6 +1248,8 @@ dwqe_encap(struct dwqe_softc *sc, struct mbuf *m, int *idx, int *used)
 		if (i == 0) {
 			txd->sd_tdes3 |= TDES3_FS;
 			dwqe_tx_csum(sc, m, txd);
+			if (vlan_tag)
+				txd->sd_tdes2 |= TDES2_VLAN_TAG_INSERT;
 		}
 		if (i == (map->dm_nsegs - 1)) {
 			txd->sd_tdes2 |= TDES2_IC;

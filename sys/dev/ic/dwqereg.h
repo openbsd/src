@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqereg.h,v 1.9 2024/05/06 09:54:38 stsp Exp $	*/
+/*	$OpenBSD: dwqereg.h,v 1.10 2024/06/05 10:19:55 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -44,6 +44,19 @@
 #define  GMAC_INT_MASK_LPIIM		(1 << 10)
 #define  GMAC_INT_MASK_PIM		(1 << 3)
 #define  GMAC_INT_MASK_RIM		(1 << 0)
+#define GMAC_VLAN_TAG_CTRL	0x0050
+#define  GMAC_VLAN_TAG_CTRL_EVLRXS		(1 << 24)
+#define  GMAC_VLAN_TAG_CTRL_STRIP_ALWAYS	((1 << 21) | (1 << 22))	
+#define GMAC_VLAN_TAG_DATA	0x0054
+#define GMAC_VLAN_TAG_INCL	0x0060
+#define  GMAC_VLAN_TAG_INCL_VLTI	(1 << 20)
+#define  GMAC_VLAN_TAG_INCL_CSVL	(1 << 19)
+#define  GMAC_VLAN_TAG_INCL_DELETE	0x10000
+#define  GMAC_VLAN_TAG_INCL_INSERT	0x20000
+#define  GMAC_VLAN_TAG_INCL_REPLACE	0x30000
+#define  GMAC_VLAN_TAG_INCL_VLT		0x0ffff
+#define  GMAC_VLAN_TAG_INCL_RDWR	(1U << 30)
+#define  GMAC_VLAN_TAG_INCL_BUSY	(1U << 31)
 #define GMAC_QX_TX_FLOW_CTRL(x)	(0x0070 + (x) * 4)
 #define  GMAC_QX_TX_FLOW_CTRL_PT_SHIFT	16
 #define  GMAC_QX_TX_FLOW_CTRL_TFE	(1 << 0)
@@ -64,6 +77,7 @@
 #define GMAC_MAC_HW_FEATURE(x)	(0x011c + (x) * 0x4)
 #define  GMAC_MAC_HW_FEATURE0_TXCOESEL	(1 << 14)
 #define  GMAC_MAC_HW_FEATURE0_RXCOESEL	(1 << 16)
+#define  GMAC_MAC_HW_FEATURE0_SAVLANINS	(1 << 27)
 #define  GMAC_MAC_HW_FEATURE1_TXFIFOSIZE(x) (((x) >> 6) & 0x1f)
 #define  GMAC_MAC_HW_FEATURE1_RXFIFOSIZE(x) (((x) >> 0) & 0x1f)
 #define GMAC_MAC_MDIO_ADDR	0x0200
@@ -230,6 +244,12 @@ struct dwqe_desc {
 	uint32_t sd_tdes3;
 };
 
+/* Tx context descriptor bits (host to device); precedes regular descriptor */
+#define TDES3_CTXT		(1 << 30)
+#define TDES3_VLAN_TAG_VALID	(1 << 16)
+#define TDES3_VLAN_TAG		0xffff	
+/* Bit 31 is the OWN bit, as in regular Tx descriptor. */
+
 /* Tx bits (read format; host to device) */
 #define TDES2_HDR_LEN		0x000003ff	/* if TSO is enabled */
 #define TDES2_BUF1_LEN		0x00003fff	/* if TSO is disabled */
@@ -250,6 +270,11 @@ struct dwqe_desc {
 #define   TDES3_CSUM_IPHDR_PAYLOAD		(0x2 << 16)
 #define   TDES3_CSUM_IPHDR_PAYLOAD_PSEUDOHDR	(0x3 << 16)
 #define TDES3_TSO_EN		(1 << 18)
+#define TDES3_CPC		((1 << 26) | (1 << 27)) /* if TSO is disabled */
+#define   TDES3_CPC_CRC_AND_PAD		(0x0 << 26)
+#define   TDES3_CPC_CRC_NO_PAD		(0x1 << 26)
+#define   TDES3_CPC_DISABLE		(0x2 << 26)
+#define   TDES3_CPC_CRC_REPLACE		(0x3 << 26)
 #define TDES3_LS		(1 << 28)
 #define TDES3_FS		(1 << 29)
 #define TDES3_OWN		(1U << 31)
@@ -268,6 +293,8 @@ struct dwqe_desc {
 #define RDES3_OWN		(1U << 31)
 
 /* Rx bits (writeback format; device to host) */
+#define RDES0_IVT		0xffff0000
+#define RDES0_OVT		0x0000ffff
 #define RDES1_IP_PAYLOAD_TYPE	0x7
 #define   RDES1_IP_PAYLOAD_UNKNOWN	0x0
 #define   RDES1_IP_PAYLOAD_UDP		0x1
