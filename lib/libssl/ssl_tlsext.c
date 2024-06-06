@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.149 2024/04/16 17:46:30 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.150 2024/06/06 16:13:12 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1472,7 +1472,8 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	size_t i, j, client_groups_index;
 	int preferred_group_found = 0;
 	int decode_error;
-	uint16_t group, client_preferred_group;
+	uint16_t client_preferred_group = 0;
+	uint16_t group;
 	CBS client_shares, key_exchange;
 
 	/*
