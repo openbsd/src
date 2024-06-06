@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.42 2024/05/20 15:51:43 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.43 2024/06/06 07:19:10 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -526,9 +526,15 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			constraints_validate(file, cert);
 		}
 	} else if (is_ta) {
+		expires = NULL;
+		notafter = NULL;
 		if ((tal = find_tal(cert)) != NULL) {
 			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
 			status = (cert != NULL);
+			if (status) {
+				expires = &cert->expires;
+				notafter = &cert->notafter;
+			}
 			if (outformats & FORMAT_JSON)
 				json_do_string("tal", tal->descr);
 			else
@@ -538,7 +544,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		} else {
 			cert_free(cert);
 			cert = NULL;
-			expires = NULL;
 			status = 0;
 		}
 	}
