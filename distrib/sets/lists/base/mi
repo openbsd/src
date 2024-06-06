@@ -2651,6 +2651,7 @@
 ./usr/sbin/cryptoadm
 ./usr/sbin/cryptoinit
 ./usr/sbin/dev_mkdb
+./usr/sbin/dhcp6leasectl
 ./usr/sbin/dhcpd
 ./usr/sbin/dhcpleasectl
 ./usr/sbin/dhcrelay

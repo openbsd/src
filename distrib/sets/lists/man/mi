@@ -2437,6 +2437,7 @@
 ./usr/share/man/man8/daily.8
 ./usr/share/man/man8/dev_mkdb.8
 ./usr/share/man/man8/dhclient.8
+./usr/share/man/man8/dhcp6leasectl.8
 ./usr/share/man/man8/dhcp6leased.8
 ./usr/share/man/man8/dhcpd.8
 ./usr/share/man/man8/dhcpleasectl.8
