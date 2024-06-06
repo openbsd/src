@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.138 2024/06/06 07:20:15 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.139 2024/06/06 11:53:09 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1119,6 +1119,10 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 	}
 	if (p->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		warnx("%s: BGPsec cert cannot be a trust anchor", fn);
+		goto badcert;
+	}
+	if (X509_verify(p->x509, pk) != 1) {
+		warnx("%s: failed to verify signature", fn);
 		goto badcert;
 	}
 	if (x509_any_inherits(p->x509)) {
