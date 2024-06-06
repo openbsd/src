@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.53 2024/05/29 13:26:24 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.54 2024/06/06 05:57:36 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -210,7 +210,6 @@ ip_resources_print(struct cert_ip *ips, size_t ipsz, size_t asz)
 	char buf1[64], buf2[64];
 	size_t i;
 	int sockt;
-
 
 	for (i = 0; i < ipsz; i++) {
 		if (outformats & FORMAT_JSON)
