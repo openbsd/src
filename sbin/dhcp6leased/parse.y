@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2024/06/05 16:15:47 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2024/06/06 06:26:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018, 2024 Florian Obser <florian@openbsd.org>
@@ -168,17 +168,17 @@ ia_pd		: REQUEST PREFIX DELEGATION ON STRING FOR {
 			SIMPLEQ_INIT(&iface_ia_conf->iface_pd_list);
 			SIMPLEQ_INSERT_TAIL(&iface_conf->iface_ia_list,
 			    iface_ia_conf, entry);
-		} '{' iface_block '}' {
+		} iface_block {
 			iface_conf = NULL;
 			iface_ia_conf = NULL;
 		}
 		;
 
-iface_block	: optnl ifaceopts_l
-		| optnl
+iface_block	: '{' optnl ifaceopts_l '}'
+		| ifaceoptsl
 		;
 
-ifaceopts_l	: ifaceopts_l ifaceoptsl nl
+ifaceopts_l	: ifaceopts_l ifaceoptsl optnl
 		| ifaceoptsl optnl
 		;
 
