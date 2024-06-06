@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.139 2024/06/06 11:53:09 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.140 2024/06/06 12:38:02 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1121,6 +1121,10 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		warnx("%s: BGPsec cert cannot be a trust anchor", fn);
 		goto badcert;
 	}
+	/*
+	 * Do not replace with a <= 0 check since OpenSSL 3 broke that:
+	 * https://github.com/openssl/openssl/issues/24575
+	 */
 	if (X509_verify(p->x509, pk) != 1) {
 		warnx("%s: failed to verify signature", fn);
 		goto badcert;
