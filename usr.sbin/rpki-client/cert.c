@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.136 2024/06/04 14:10:53 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.137 2024/06/06 03:29:52 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1073,7 +1073,6 @@ struct cert *
 ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
     size_t pkeysz)
 {
-	ASN1_TIME	*notBefore, *notAfter;
 	EVP_PKEY	*pk, *opk;
 	time_t		 now = get_current_time();
 
@@ -1095,20 +1094,11 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		    "pubkey does not match TAL pubkey", fn);
 		goto badcert;
 	}
-
-	if ((notBefore = X509_get_notBefore(p->x509)) == NULL) {
-		warnx("%s: certificate has invalid notBefore", fn);
-		goto badcert;
-	}
-	if ((notAfter = X509_get_notAfter(p->x509)) == NULL) {
-		warnx("%s: certificate has invalid notAfter", fn);
-		goto badcert;
-	}
-	if (X509_cmp_time(notBefore, &now) != -1) {
+	if (p->notbefore >= now) {
 		warnx("%s: certificate not yet valid", fn);
 		goto badcert;
 	}
-	if (X509_cmp_time(notAfter, &now) != 1) {
+	if (p->notafter <= now) {
 		warnx("%s: certificate has expired", fn);
 		goto badcert;
 	}
@@ -1139,7 +1129,7 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 	EVP_PKEY_free(pk);
 	return p;
 
-badcert:
+ badcert:
 	EVP_PKEY_free(pk);
 	cert_free(p);
 	return NULL;
