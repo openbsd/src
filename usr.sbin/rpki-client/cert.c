@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.137 2024/06/06 03:29:52 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.138 2024/06/06 07:20:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1103,17 +1103,17 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		goto badcert;
 	}
 	if (p->aki != NULL && strcmp(p->aki, p->ski)) {
-		warnx("%s: RFC 6487 section 8.4.2: "
+		warnx("%s: RFC 6487 section 4.8.3: "
 		    "trust anchor AKI, if specified, must match SKI", fn);
 		goto badcert;
 	}
 	if (p->aia != NULL) {
-		warnx("%s: RFC 6487 section 8.4.7: "
+		warnx("%s: RFC 6487 section 4.8.7: "
 		    "trust anchor must not have AIA", fn);
 		goto badcert;
 	}
 	if (p->crl != NULL) {
-		warnx("%s: RFC 6487 section 8.4.2: "
+		warnx("%s: RFC 6487 section 4.8.6: "
 		    "trust anchor may not specify CRL resource", fn);
 		goto badcert;
 	}
