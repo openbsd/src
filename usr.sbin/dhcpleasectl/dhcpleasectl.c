@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleasectl.c,v 1.7 2021/09/16 06:23:01 jmc Exp $	*/
+/*	$OpenBSD: dhcpleasectl.c,v 1.8 2024/06/06 15:07:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
@@ -287,23 +287,23 @@ show_interface_msg(struct ctl_engine_info *cei)
 			/* round up */
 			if (s - d * 86400 > 43200)
 				d++;
-			printf("\tlease %lld days\n", d);
+			printf("\tlease %lld day%s\n", d, d  > 1 ? "s" : "");
 		} else if (s > 3600) {
 			h = s / 3600;
 
 			/* round up */
 			if (s - h * 3600 > 1800)
 				h++;
-			printf("\tlease %lld hours\n", h);
+			printf("\tlease %lld hour%s\n", h, h > 1 ? "s" : "");
 		} else if (s > 60) {
 			m = s / 60;
 
 			/* round up */
 			if (s - m * 60 > 30)
 				m++;
-			printf("\tlease %lld minutes\n", m);
+			printf("\tlease %lld minute%s\n", m, m > 1 ? "s" : "");
 		} else
-			printf("\tlease %lld seconds\n", s);
+			printf("\tlease %lld second%s\n", s, s > 1 ? "s" : "");
 	}
 	if (cei->server_identifier.s_addr != INADDR_ANY) {
 		if (inet_ntop(AF_INET, &cei->server_identifier, ipbuf,
