@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.7 2024/06/05 16:15:47 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.8 2024/06/06 15:15:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -175,6 +175,13 @@ enum imsg_type {
 	IMSG_WRITE_LEASE,
 };
 
+struct prefix {
+	struct in6_addr	 prefix;
+	int		 prefix_len;
+	uint32_t	 vltime;
+	uint32_t	 pltime;
+};
+
 struct ctl_engine_info {
 	uint32_t		if_index;
 	int			running;
@@ -184,6 +191,7 @@ struct ctl_engine_info {
 	uint32_t		lease_time;
 	uint32_t		t1;
 	uint32_t		t2;
+	struct prefix		pds[MAX_IA];
 };
 
 struct iface_pd_conf {
@@ -211,13 +219,6 @@ struct iface_conf {
 struct dhcp6leased_conf {
 	SIMPLEQ_HEAD(iface_conf_head, iface_conf)	iface_list;
 	int						rapid_commit;
-};
-
-struct prefix {
-	struct in6_addr	 prefix;
-	int		 prefix_len;
-	uint32_t	 vltime;
-	uint32_t	 pltime;
 };
 
 struct imsg_ifinfo {

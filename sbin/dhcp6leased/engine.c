@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.12 2024/06/05 16:15:47 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.13 2024/06/06 15:15:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -572,6 +572,7 @@ send_interface_info(struct dhcp6leased_iface *iface, pid_t pid)
 	cei.lease_time = iface->lease_time;
 	cei.t1 = iface->t1;
 	cei.t2 = iface->t2;
+	memcpy(&cei.pds, &iface->pds, sizeof(cei.pds));
 	engine_imsg_compose_frontend(IMSG_CTL_SHOW_INTERFACE_INFO, pid, &cei,
 	    sizeof(cei));
 }
