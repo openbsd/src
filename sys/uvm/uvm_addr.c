@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.34 2024/05/13 01:15:53 jsg Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.35 2024/06/07 06:04:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -24,8 +24,6 @@
 #include <uvm/uvm_addr.h>
 #include <sys/pool.h>
 
-/* Max gap between hint allocations. */
-#define UADDR_HINT_MAXGAP	(4 * PAGE_SIZE)
 /* Number of pivots in pivot allocator. */
 #define NUM_PIVOTS		16
 /*
