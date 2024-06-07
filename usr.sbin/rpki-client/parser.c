@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.136 2024/05/20 15:51:43 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.137 2024/06/07 08:33:12 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -570,35 +570,95 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	return cert;
 }
 
-/*
- * Root certificates come from TALs (has a pkey and is self-signed).
- * Parse the certificate, ensure that its public key matches the
- * known public key from the TAL, and then validate the RPKI
- * content.
- *
- * This returns a certificate (which must not be freed) or NULL on
- * parse failure.
- */
-static struct cert *
-proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
-    unsigned char *pkey, size_t pkeysz, int talid)
+static int
+proc_parser_ta_cmp(const struct cert *cert1, const struct cert *cert2)
 {
-	struct cert		*cert;
+	const ASN1_INTEGER *serial1, *serial2;
 
-	/* Extract certificate data. */
-
-	cert = cert_parse_pre(file, der, len);
-	cert = ta_parse(file, cert, pkey, pkeysz);
-	if (cert == NULL)
-		return NULL;
-	cert->talid = talid;
+	if (cert1 == NULL)
+		return -1;
+	if (cert2 == NULL)
+		return 1;
 
 	/*
-	 * Add valid roots to the RPKI auth tree.
+	 * Good tie breakers are not obvious. While RFC 6487 and other sources
+	 * advise against backdating, it's explicitly allowed and some TAs do.
+	 * Some TAs have also re-issued with new dates and old serialNumber.
+	 * Ignore the notAfter as hopefully future best practices will encourage
+	 * significant reduction of some egregiously long TA validity periods
+	 * and we want to pick such certs up.
 	 */
-	auth_insert(file, &auths, cert, NULL);
 
-	return cert;
+	if (cert1->notbefore < cert2->notbefore)
+		return -1;
+	if (cert1->notbefore > cert2->notbefore)
+		return 1;
+
+	/*
+	 * The serialNumber isn't monotonic and some TAs use semi-random ones.
+	 * If the number changed prefer the freshly-fetched cert.
+	 */
+
+	serial1 = X509_get0_serialNumber(cert1->x509);
+	serial2 = X509_get0_serialNumber(cert2->x509);
+
+	return ASN1_INTEGER_cmp(serial1, serial2) != 0;
+}
+
+/*
+ * Root certificates come from TALs. Inspect and validate both options and
+ * compare the two. The cert in out_cert must not be freed. Returns the file
+ * name of the chosen TA.
+ */
+static char *
+proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
+{
+	struct cert		*cert1 = NULL, *cert2 = NULL;
+	char			*file1 = NULL, *file2 = NULL;
+	unsigned char		*der = NULL, *pkey = entp->data;
+	size_t			 der_len = 0, pkeysz = entp->datasz;
+	int			 cmp;
+
+	*out_cert = NULL;
+
+	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
+	der = load_file(file2, &der_len);
+	cert2 = cert_parse_pre(file2, der, der_len);
+	free(der);
+	cert2 = ta_parse(file2, cert2, pkey, pkeysz);
+
+	if (!noop) {
+		file1 = parse_filepath(entp->repoid, entp->path, entp->file,
+		    DIR_TEMP);
+		der = load_file(file1, &der_len);
+		cert1 = cert_parse_pre(file1, der, der_len);
+		free(der);
+		cert1 = ta_parse(file1, cert1, pkey, pkeysz);
+	}
+
+	if ((cmp = proc_parser_ta_cmp(cert1, cert2)) > 0) {
+		cert_free(cert2);
+		free(file2);
+
+		cert1->talid = entp->talid;
+		auth_insert(file1, &auths, cert1, NULL);
+
+		*out_cert = cert1;
+		return file1;
+	} else {
+		if (cmp < 0 && cert1 != NULL && cert2 != NULL)
+			warnx("%s: cached TA is newer", entp->file);
+		cert_free(cert1);
+		free(file1);
+
+		if (cert2 != 0) {
+			cert2->talid = entp->talid;
+			auth_insert(file2, &auths, cert2, NULL);
+		}
+
+		*out_cert = cert2;
+		return file2;
+	}
 }
 
 /*
@@ -784,14 +844,13 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
-			file = parse_load_file(entp, &f, &flen);
-			io_str_buffer(b, file);
-			if (entp->data != NULL)
-				cert = proc_parser_root_cert(file,
-				    f, flen, entp->data, entp->datasz,
-				    entp->talid);
-			else
+			if (entp->data != NULL) {
+				file = proc_parser_root_cert(entp, &cert);
+			} else {
+				file = parse_load_file(entp, &f, &flen);
 				cert = proc_parser_cert(file, f, flen, entp);
+			}
+			io_str_buffer(b, file);
 			if (cert != NULL)
 				mtime = cert->notbefore;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
