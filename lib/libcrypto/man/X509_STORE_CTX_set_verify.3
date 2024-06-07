@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_set_verify.3,v 1.7 2023/08/10 16:15:42 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_set_verify.3,v 1.8 2024/06/07 05:51:39 tb Exp $
 .\"
 .\" Copyright (c) 2021, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2023 Job Snijders <job@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2023 $
+.Dd $Mdocdate: June 7 2024 $
 .Dt X509_STORE_CTX_SET_VERIFY 3
 .Os
 .Sh NAME
@@ -142,6 +142,28 @@ function provided by the user should check whether a given certificate
 was issued using the CA certificate
 .Fa issuer ,
 and must return 0 on failure and 1 on success.
+The default implementation ignores the
+.Fa ctx
+argument and returns success if and only if
+.Xr X509_check_issued 3
+returns
+.Dv X509_V_OK .
+It is important to pay close attention to the order of the
+.Fa issuer
+and
+.Fa subject
+arguments.
+In
+.Xr X509_check_issued 3
+the
+.Fa issuer
+precedes the
+.Fa subject
+while in
+.Fn check_issued
+the
+.Fa subject
+comes first.
 .Sh RETURN VALUES
 .Fn X509_STORE_CTX_verify_fn
 is supposed to return 1 to indicate that the chain is valid
@@ -221,3 +243,14 @@ and
 .Fn X509_STORE_CTX_get_check_issued
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 7.3 .
+.Sh BUGS
+The reversal of order of
+.Fa subject
+and
+.Fa issuer
+between
+.Fn check_issued
+and
+.Xr X509_check_issued 3
+is very confusing.
+It has led to bugs and will cause many more.
