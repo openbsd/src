@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_cmp.3,v 1.3 2021/07/02 10:50:39 schwarze Exp $
+.\" $OpenBSD: X509_cmp.3,v 1.4 2024/06/07 14:00:09 job Exp $
 .\" full merge up to: OpenSSL ea5d4b89 Jun 6 11:42:02 2019 +0800
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 2 2021 $
+.Dd $Mdocdate: June 7 2024 $
 .Dt X509_CMP 3
 .Os
 .Sh NAME
@@ -123,8 +123,10 @@
 .Fn X509_cmp
 compares two X.509 certificates using
 .Xr memcmp 3
-on the SHA1 hashes of their canonical (DER) representations as generated with
+on the hashes of their canonical (DER) representations as generated with
 .Xr X509_digest 3 .
+The digest function is implementation-specific: LibreSSL uses SHA-512, other
+implementations use SHA-1.
 .Pp
 .Fn X509_NAME_cmp
 compares two X.501
@@ -172,8 +174,10 @@ structures using
 .Fn X509_CRL_match
 compares two certificate revocation lists using
 .Xr memcmp 3
-on the SHA1 hashes of their canonical (DER) representations as generated with
+on the hashes of their canonical (DER) representations as generated with
 .Xr X509_CRL_digest 3 .
+The digest function is implementation-specific: LibreSSL uses SHA-512, other
+implementations use SHA-1.
 .Sh RETURN VALUES
 All these functions return 0 to indicate a match or a non-zero value
 to indicate a mismatch.
