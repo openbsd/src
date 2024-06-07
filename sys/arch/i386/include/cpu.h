@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.189 2024/05/21 23:16:06 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.190 2024/06/07 16:53:35 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -375,6 +375,7 @@ extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 extern void (*cpu_idle_enter_fcn)(void);
 extern void (*cpu_idle_cycle_fcn)(void);
 extern void (*cpu_idle_leave_fcn)(void);
+extern void (*cpu_suspend_cycle_fcn)(void);
 
 extern int cpuspeed;
 

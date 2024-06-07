@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.671 2024/05/26 13:37:32 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.672 2024/06/07 16:53:35 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -167,6 +167,7 @@ char machine[] = MACHINE;
 void (*cpu_idle_leave_fcn)(void) = NULL;
 void (*cpu_idle_cycle_fcn)(void) = NULL;
 void (*cpu_idle_enter_fcn)(void) = NULL;
+void (*cpu_suspend_cycle_fcn)(void);
 
 
 struct uvm_constraint_range  isa_constraint = { 0x0, 0x00ffffffUL };

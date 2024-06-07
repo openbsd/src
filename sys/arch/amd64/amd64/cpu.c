@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.189 2024/05/29 12:21:33 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.190 2024/06/07 16:53:35 kettenis Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1469,7 +1469,10 @@ int cpu_suspended;
 void
 cpu_suspend_cycle(void)
 {
-	cpu_idle_cycle_fcn();
+	if (cpu_suspend_cycle_fcn)
+		cpu_suspend_cycle_fcn();
+	else
+		cpu_idle_cycle_fcn();
 }
 
 int

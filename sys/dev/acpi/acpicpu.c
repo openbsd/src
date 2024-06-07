@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.92 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.93 2024/06/07 16:53:35 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -172,6 +172,7 @@ void	acpicpu_add_cstate(struct acpicpu_softc *_sc, int _state, int _method,
 	    int _flags, int _latency, int _power, uint64_t _address);
 void	acpicpu_set_pdc(struct acpicpu_softc *);
 void	acpicpu_idle(void);
+void	acpicpu_suspend(void);
 
 #if 0
 void    acpicpu_set_throttle(struct acpicpu_softc *, int);
@@ -747,6 +748,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		extern uint32_t acpi_force_bm;
 
 		cpu_idle_cycle_fcn = &acpicpu_idle;
+		cpu_suspend_cycle_fcn = &acpicpu_suspend;
 
 		/*
 		 * C3 (and maybe C2?) needs BM_RLD to be set to
@@ -1276,4 +1278,67 @@ acpicpu_idle(void)
 	itime >>= 1;
 	sc->sc_prev_sleep = (sc->sc_prev_sleep + (sc->sc_prev_sleep >> 1)
 	    + itime) >> 1;
+}
+
+void
+acpicpu_suspend(void)
+{
+	extern int cpu_suspended;
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc = (struct acpicpu_softc *)ci->ci_acpicpudev;
+	struct acpi_cstate *best, *cx;
+
+	if (sc == NULL) {
+		__asm volatile("sti");
+		panic("null acpicpu");
+	}
+
+	/*
+	 * Find the lowest usable state.
+	 */
+	best = cx = SLIST_FIRST(&sc->sc_cstates);
+	while ((cx->flags & CST_FLAG_SKIP)) {
+		if ((cx = SLIST_NEXT(cx, link)) == NULL)
+			break;
+		best = cx;
+	}
+
+	switch (best->method) {
+	default:
+	case CST_METH_HALT:
+		__asm volatile("sti; hlt");
+		break;
+
+	case CST_METH_IO_HALT:
+		inb((u_short)best->address);
+		__asm volatile("sti; hlt");
+		break;
+
+	case CST_METH_MWAIT:
+		{
+		unsigned int hints;
+
+		hints = (unsigned)best->address;
+		/* intel errata AAI65: cflush before monitor */
+		if (ci->ci_cflushsz != 0 &&
+		    strcmp(cpu_vendor, "GenuineIntel") == 0) {
+			membar_sync();
+			clflush((unsigned long)&cpu_suspended);
+			membar_sync();
+		}
+
+		monitor(&cpu_suspended, 0, 0);
+		if (cpu_suspended || !CPU_IS_PRIMARY(ci))
+			mwait(0, hints);
+
+		break;
+		}
+
+	case CST_METH_GAS_IO:
+		inb((u_short)best->address);
+		/* something harmless to give system time to change state */
+		acpi_read_pmreg(acpi_softc, ACPIREG_PM1_STS, 0);
+		break;
+
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.38 2023/10/30 12:50:59 mvs Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.39 2024/06/07 16:53:35 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -128,7 +128,10 @@ x86_64_ipi_halt(struct cpu_info *ci)
 	wbinvd();
 
 	for(;;) {
-		__asm volatile("hlt");
+		if (cpu_suspend_cycle_fcn)
+			cpu_suspend_cycle_fcn();
+		else
+			__asm volatile("hlt");
 	}
 }
 

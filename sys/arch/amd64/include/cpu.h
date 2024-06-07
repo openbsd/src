@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.171 2024/05/29 12:21:33 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.172 2024/06/07 16:53:35 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -420,6 +420,7 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 int	amd64_pa_used(paddr_t);
 #define	cpu_idle_enter()	do { /* nothing */ } while (0)
 extern void (*cpu_idle_cycle_fcn)(void);
+extern void (*cpu_suspend_cycle_fcn)(void);
 #define	cpu_idle_cycle()	(*cpu_idle_cycle_fcn)()
 #define	cpu_idle_leave()	do { /* nothing */ } while (0)
 extern void (*initclock_func)(void);

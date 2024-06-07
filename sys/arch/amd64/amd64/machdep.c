@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.293 2024/04/29 00:29:48 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.294 2024/06/07 16:53:35 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -162,6 +162,7 @@ char machine[] = MACHINE;
  */
 void cpu_idle_cycle_hlt(void);
 void (*cpu_idle_cycle_fcn)(void) = &cpu_idle_cycle_hlt;
+void (*cpu_suspend_cycle_fcn)(void);
 
 /* the following is used externally for concurrent handlers */
 int setperf_prio = 0;
