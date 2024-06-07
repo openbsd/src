@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.137 2024/06/07 08:33:12 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.138 2024/06/07 11:48:05 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -581,12 +581,15 @@ proc_parser_ta_cmp(const struct cert *cert1, const struct cert *cert2)
 		return 1;
 
 	/*
-	 * Good tie breakers are not obvious. While RFC 6487 and other sources
-	 * advise against backdating, it's explicitly allowed and some TAs do.
-	 * Some TAs have also re-issued with new dates and old serialNumber.
-	 * Ignore the notAfter as hopefully future best practices will encourage
-	 * significant reduction of some egregiously long TA validity periods
-	 * and we want to pick such certs up.
+	 * The standards don't specify tiebreakers. While RFC 6487 and other
+	 * sources advise against backdating, it's explicitly allowed and some
+	 * TAs do. Some TAs have also re-issued with new dates and old
+	 * serialNumber.
+	 * Our tiebreaker logic: a more recent notBefore is taken to mean a
+	 * more recent issuance, and thus preferable. Given equal notBefore
+	 * values, prefer the TA cert with the narrower validity window. This
+	 * hopefully encourages TA operators to reduce egregiously long TA
+	 * validity periods.
 	 */
 
 	if (cert1->notbefore < cert2->notbefore)
@@ -594,9 +597,15 @@ proc_parser_ta_cmp(const struct cert *cert1, const struct cert *cert2)
 	if (cert1->notbefore > cert2->notbefore)
 		return 1;
 
+	if (cert1->notafter > cert2->notafter)
+		return -1;
+	if (cert1->notafter < cert2->notafter)
+		return 1;
+
 	/*
 	 * The serialNumber isn't monotonic and some TAs use semi-random ones.
-	 * If the number changed prefer the freshly-fetched cert.
+	 * If the freshly-fetched cert's serial number is different from the
+	 * cached one, prefer the freshly-fetched cert.
 	 */
 
 	serial1 = X509_get0_serialNumber(cert1->x509);
