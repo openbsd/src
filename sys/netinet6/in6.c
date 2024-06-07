@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.266 2024/05/21 15:12:25 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.267 2024/06/07 09:48:19 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
     struct in6_ifaddr *ia6)
 {
 	int error = 0, hostIsNew = 0, plen = -1;
-	struct sockaddr_in6 dst6;
+	struct sockaddr_in6 dst6, gw6;
 	struct in6_addrlifetime *lt;
 	struct in6_multi_mship *imm;
 	struct rtentry *rt;
@@ -604,7 +604,13 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
 	}
 
-	dst6 = ifra->ifra_dstaddr;
+	if (ifra->ifra_flags & IN6_IFF_AUTOCONF) {
+		gw6 = ifra->ifra_dstaddr;
+		memset(&dst6, 0, sizeof(dst6));
+	} else {
+		dst6 = ifra->ifra_dstaddr;
+		memset(&gw6, 0, sizeof(gw6));
+	}
 	if (dst6.sin6_family == AF_INET6) {
 		error = in6_check_embed_scope(&dst6, ifp->if_index);
 		if (error)
@@ -613,6 +619,11 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (((ifp->if_flags & IFF_POINTOPOINT) ||
 		    (ifp->if_flags & IFF_LOOPBACK)) && plen != 128)
 			return (EINVAL);
+	}
+	if (gw6.sin6_family == AF_INET6) {
+		error = in6_check_embed_scope(&gw6, ifp->if_index);
+		if (error)
+			return error;
 	}
 	/* lifetime consistency check */
 	lt = &ifra->ifra_lifetime;
@@ -702,10 +713,10 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	}
 
 	if ((ifra->ifra_flags & IN6_IFF_AUTOCONF) &&
-	    dst6.sin6_family == AF_INET6 &&
+	    gw6.sin6_family == AF_INET6 &&
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia6->ia_gwaddr.sin6_addr)) {
 		/* Set or update announcing router */
-		ia6->ia_gwaddr = dst6;
+		ia6->ia_gwaddr = gw6;
 	}
 
 	/*
