@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleasectl.8,v 1.5 2023/03/02 17:09:54 jmc Exp $
+.\"	$OpenBSD: dhcpleasectl.8,v 1.6 2024/06/07 17:38:22 jmc Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: June 7 2024 $
 .Dt DHCPLEASECTL 8
 .Os
 .Sh NAME
@@ -52,9 +52,7 @@ to communicate with
 Specify the maximum number of seconds to wait for
 .Ar interface
 to be configured.
-The default is to wait 10 seconds unless
-.Fl l
-is specified.
+The default is 10 seconds.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/dhcpleased.sockXX" -compact
