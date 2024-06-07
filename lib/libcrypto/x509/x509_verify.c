@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.69 2024/04/08 23:46:21 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.70 2024/06/07 06:21:40 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -528,7 +528,7 @@ x509_verify_potential_parent(struct x509_verify_ctx *ctx, X509 *parent,
 		return (ctx->xsc->check_issued(ctx->xsc, child, parent));
 
 	/* XXX key usage */
-	return X509_check_issued(child, parent) != X509_V_OK;
+	return X509_check_issued(parent, child) == X509_V_OK;
 }
 
 static int
