@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.93 2024/06/04 14:17:24 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.94 2024/06/07 08:36:54 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -279,6 +279,7 @@ x509_get_purpose(X509 *x, const char *fn)
 			goto out;
 		}
 		purpose = CERT_PURPOSE_CA;
+		/* XXX - we may want to check EXFLAG_SI and add a TA purpose. */
 		goto out;
 	}
 

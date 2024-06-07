@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.140 2024/06/06 12:38:02 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.141 2024/06/07 08:36:54 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1117,6 +1117,10 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		    "trust anchor may not specify CRL resource", fn);
 		goto badcert;
 	}
+	/*
+	 * XXX - this check for BGPsec router certs doesn't make all that much
+	 * sense. Consider introducing a TA purpose for self-issued CA certs.
+	 */
 	if (p->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		warnx("%s: BGPsec cert cannot be a trust anchor", fn);
 		goto badcert;
