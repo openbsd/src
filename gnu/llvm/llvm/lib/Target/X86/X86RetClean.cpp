@@ -96,6 +96,10 @@ bool RetCleanPass::runOnMachineFunction(MachineFunction &MF) {
 
   bool modified = false;
 
+  // It a setjmp-like function is called by this function, we should not clean
+  if (MF.exposesReturnsTwice())
+    return false;
+
   for (auto &MBB : MF) {
     std::vector<MachineInstr*> fixups;
     bool foundcall = false;
