@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.44 2023/04/26 16:53:58 claudio Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.45 2024/06/07 10:14:29 jsg Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -67,12 +67,6 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
  * Stack trace.
  */
 #define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
-
-#define	NONE		0
-#define	TRAP		1
-#define	SYSCALL		2
-#define	INTERRUPT	3
-#define	AST		4
 
 int db_i386_numargs(struct callframe *);
 
