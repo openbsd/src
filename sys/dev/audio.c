@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.206 2023/02/10 14:34:16 visa Exp $	*/
+/*	$OpenBSD: audio.c,v 1.207 2024/06/07 08:48:10 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,8 +47,6 @@
 #define DPRINTF(...) do {} while(0)
 #define DPRINTFN(n, ...) do {} while(0)
 #endif
-
-#define IPL_SOFTAUDIO		IPL_SOFTNET
 
 #define DEVNAME(sc)		((sc)->dev.dv_xname)
 #define AUDIO_UNIT(n)		(minor(n) & 0x0f)
