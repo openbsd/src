@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.195 2022/05/03 09:18:11 claudio Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.196 2024/06/07 13:15:25 jsg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -333,8 +333,6 @@ esp_zeroize(struct tdb *tdbp)
 	tdbp->tdb_cryptoid = 0;
 	return error;
 }
-
-#define MAXBUFSIZ (AH_ALEN_MAX > ESP_MAX_IVS ? AH_ALEN_MAX : ESP_MAX_IVS)
 
 /*
  * ESP input processing, called (eventually) through the protocol switch.
