@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.141 2024/04/06 14:23:27 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.142 2024/06/07 08:37:59 jsg Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -134,34 +134,6 @@ struct rttimer_queue ip6_mrouterq;
 int		ip6_mrouter_ver = 0;
 int		ip6_mrtproto;    /* for netstat only */
 struct mrt6stat	mrt6stat;
-
-#define NO_RTE_FOUND	0x1
-#define RTE_FOUND	0x2
-
-/*
- * Macros to compute elapsed time efficiently
- * Borrowed from Van Jacobson's scheduling code
- */
-#define TV_DELTA(a, b, delta) do { \
-	    int xxs; \
-		\
-	    delta = (a).tv_usec - (b).tv_usec; \
-	    if ((xxs = (a).tv_sec - (b).tv_sec)) { \
-	       switch (xxs) { \
-		      case 2: \
-			  delta += 1000000; \
-			      /* FALLTHROUGH */ \
-		      case 1: \
-			  delta += 1000000; \
-			  break; \
-		      default: \
-			  delta += (1000000 * xxs); \
-	       } \
-	    } \
-} while (0)
-
-#define TV_LT(a, b) (((a).tv_usec < (b).tv_usec && \
-	      (a).tv_sec <= (b).tv_sec) || (a).tv_sec < (b).tv_sec)
 
 int get_sg6_cnt(struct sioc_sg_req6 *, unsigned int);
 int get_mif6_cnt(struct sioc_mif_req6 *, unsigned int);
