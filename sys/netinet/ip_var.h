@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.117 2024/04/17 20:48:51 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.118 2024/06/07 18:24:16 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -204,10 +204,11 @@ struct ipoffnxt {
 };
 
 /* flags passed to ip_output */
-#define	IP_FORWARDING		0x1		/* most of ip header exists */
-#define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
-#define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
-#define	IP_MTUDISC		0x0800		/* pmtu discovery, set DF */
+#define IP_FORWARDING		0x0001	/* most of ip header exists */
+#define IP_RAWOUTPUT		0x0002	/* raw ip header exists */
+#define IP_REDIRECT		0x0004	/* redirected by pf or source route */
+#define IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
+#define IP_MTUDISC		0x0800	/* pmtu discovery, set DF */
 
 extern struct ipstat ipstat;
 extern int ip_defttl;			/* default IP ttl */
@@ -221,11 +222,12 @@ extern int ipport_firstauto;		/* min port for port allocation */
 extern int ipport_lastauto;		/* max port for port allocation */
 extern int ipport_hifirstauto;		/* min dynamic/private port number */
 extern int ipport_hilastauto;		/* max dynamic/private port number */
-extern int ipforwarding;		/* enable IP forwarding */
+extern int ip_forwarding;		/* enable IP forwarding */
 #ifdef MROUTING
 extern int ipmforwarding;		/* enable multicast forwarding */
 #endif
 extern int ipmultipath;			/* enable multipath routing */
+extern int ip_directedbcast;		/* accept all broadcast packets */
 extern unsigned int la_hold_total;
 
 extern const struct pr_usrreqs rip_usrreqs;

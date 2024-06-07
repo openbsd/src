@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1196 2024/05/14 08:26:13 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1197 2024/06/07 18:24:16 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7958,12 +7958,17 @@ done:
 		switch (pd.naf) {
 		case AF_INET:
 			if (pd.dir == PF_IN) {
-				if (ipforwarding == 0) {
+				int flags;
+
+				if (ip_forwarding == 0) {
 					ipstat_inc(ips_cantforward);
 					action = PF_DROP;
 					break;
 				}
-				ip_forward(pd.m, ifp, NULL, 1);
+				flags = IP_FORWARDING | IP_REDIRECT;
+				if (ip_directedbcast)
+					SET(flags, IP_ALLOWBROADCAST);
+				ip_forward(pd.m, ifp, NULL, flags);
 			} else
 				ip_output(pd.m, NULL, NULL, 0, NULL, NULL, 0);
 			break;

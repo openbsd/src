@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.117 2024/04/16 12:56:39 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.118 2024/06/07 18:24:16 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  * of codes and types.
  *
  * If not forwarding, just drop the packet.  This could be confusing
- * if ipforwarding was zero but some routing protocol was advancing
+ * if ip6_forwarding was zero but some routing protocol was advancing
  * us as a gateway to somewhere.  However, we must let the routing
  * protocol deal with that.
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.192 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.193 2024/06/07 18:24:16 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -589,7 +589,7 @@ reflect:
 		struct sockaddr_in ssrc;
 		struct rtentry *newrt = NULL;
 
-		if (icmp_rediraccept == 0 || ipforwarding == 1)
+		if (icmp_rediraccept == 0 || ip_forwarding == 1)
 			goto freeit;
 		if (code > 3)
 			goto badcode;

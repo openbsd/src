@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.394 2024/05/08 13:01:30 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.395 2024/06/07 18:24:16 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -84,10 +84,10 @@
 #endif
 
 /* values controllable via sysctl */
-int	ipforwarding = 0;
+int	ip_forwarding = 0;
 int	ipmforwarding = 0;
 int	ipmultipath = 0;
-int	ipsendredirects = 1;
+int	ip_sendredirects = 1;
 int	ip_dosourceroute = 0;
 int	ip_defttl = IPDEFTTL;
 int	ip_mtudisc = 1;
@@ -108,8 +108,8 @@ const struct sysctl_bounded_args ipctl_vars[] = {
 #ifdef MROUTING
 	{ IPCTL_MRTPROTO, &ip_mrtproto, SYSCTL_INT_READONLY },
 #endif
-	{ IPCTL_FORWARDING, &ipforwarding, 0, 2 },
-	{ IPCTL_SENDREDIRECTS, &ipsendredirects, 0, 1 },
+	{ IPCTL_FORWARDING, &ip_forwarding, 0, 2 },
+	{ IPCTL_SENDREDIRECTS, &ip_sendredirects, 0, 1 },
 	{ IPCTL_DEFTTL, &ip_defttl, 0, 255 },
 	{ IPCTL_DIRECTEDBCAST, &ip_directedbcast, 0, 1 },
 	{ IPCTL_IPPORT_FIRSTAUTO, &ipport_firstauto, 0, 65535 },
@@ -137,8 +137,8 @@ static struct mbuf_queue	ipsendraw_mq;
 extern struct niqueue		arpinq;
 
 int	ip_ours(struct mbuf **, int *, int, int);
-int	ip_dooptions(struct mbuf *, struct ifnet *);
-int	in_ouraddr(struct mbuf *, struct ifnet *, struct route *);
+int	ip_dooptions(struct mbuf *, struct ifnet *, int);
+int	in_ouraddr(struct mbuf *, struct ifnet *, struct route *, int);
 
 int		ip_fragcheck(struct mbuf **, int *);
 struct mbuf *	ip_reass(struct ipqent *, struct ipq *);
@@ -431,7 +431,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 #if NPF > 0
 	struct in_addr odst;
 #endif
-	int pfrdr = 0;
+	int flags = 0;
 
 	KASSERT(*offp == 0);
 
@@ -461,8 +461,14 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto bad;
 
 	ip = mtod(m, struct ip *);
-	pfrdr = odst.s_addr != ip->ip_dst.s_addr;
+	if (odst.s_addr != ip->ip_dst.s_addr)
+		SET(flags, IP_REDIRECT);
 #endif
+
+	if (ip_forwarding != 0)
+		SET(flags, IP_FORWARDING);
+	if (ip_directedbcast)
+		SET(flags, IP_ALLOWBROADCAST);
 
 	hlen = ip->ip_hl << 2;
 
@@ -472,7 +478,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	 * error was detected (causing an icmp message
 	 * to be sent and the original packet to be freed).
 	 */
-	if (hlen > sizeof (struct ip) && ip_dooptions(m, ifp)) {
+	if (hlen > sizeof (struct ip) && ip_dooptions(m, ifp, flags)) {
 		m = *mp = NULL;
 		goto bad;
 	}
@@ -483,7 +489,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto out;
 	}
 
-	switch(in_ouraddr(m, ifp, &ro)) {
+	switch(in_ouraddr(m, ifp, &ro, flags)) {
 	case 2:
 		goto bad;
 	case 1:
@@ -565,7 +571,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	/*
 	 * Not for us; forward if possible and desirable.
 	 */
-	if (ipforwarding == 0) {
+	if (!ISSET(flags, IP_FORWARDING)) {
 		ipstat_inc(ips_cantforward);
 		goto bad;
 	}
@@ -585,7 +591,7 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 #endif /* IPSEC */
 
-	ip_forward(m, ifp, &ro, pfrdr);
+	ip_forward(m, ifp, &ro, flags);
 	*mp = NULL;
 	rtfree(ro.ro_rt);
 	return IPPROTO_DONE;
@@ -807,7 +813,7 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af, int shared)
 #undef IPSTAT_INC
 
 int
-in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct route *ro)
+in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 {
 	struct rtentry		*rt;
 	struct ip		*ip;
@@ -837,7 +843,8 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct route *ro)
 		 * if it is received on the interface with that address.
 		 */
 		if (ISSET(rt->rt_flags, RTF_BROADCAST) &&
-		    (!ip_directedbcast || rt->rt_ifidx == ifp->if_index)) {
+		    (!ISSET(flags, IP_ALLOWBROADCAST) ||
+		    rt->rt_ifidx == ifp->if_index)) {
 			match = 1;
 
 			/* Make sure M_BCAST is set */
@@ -876,7 +883,8 @@ in_ouraddr(struct mbuf *m, struct ifnet *ifp, struct route *ro)
 				break;
 			}
 		}
-	} else if (ipforwarding == 0 && rt->rt_ifidx != ifp->if_index &&
+	} else if (!ISSET(flags, IP_FORWARDING) &&
+	    rt->rt_ifidx != ifp->if_index &&
 	    !((ifp->if_flags & IFF_LOOPBACK) || (ifp->if_type == IFT_ENC) ||
 	    (m->m_pkthdr.pf.flags & PF_TAG_TRANSLATE_LOCALHOST))) {
 		/* received on wrong interface. */
@@ -1150,7 +1158,7 @@ ip_flush(void)
  * 0 if the packet should be processed further.
  */
 int
-ip_dooptions(struct mbuf *m, struct ifnet *ifp)
+ip_dooptions(struct mbuf *m, struct ifnet *ifp, int flags)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	unsigned int rtableid = m->m_pkthdr.ph_rtableid;
@@ -1371,8 +1379,8 @@ ip_dooptions(struct mbuf *m, struct ifnet *ifp)
 		}
 	}
 	KERNEL_UNLOCK();
-	if (forward && ipforwarding > 0) {
-		ip_forward(m, ifp, NULL, 1);
+	if (forward && ISSET(flags, IP_FORWARDING)) {
+		ip_forward(m, ifp, NULL, flags | IP_REDIRECT);
 		return (1);
 	}
 	return (0);
@@ -1514,7 +1522,7 @@ const u_char inetctlerrmap[PRC_NCMDS] = {
  * of codes and types.
  *
  * If not forwarding, just drop the packet.  This could be confusing
- * if ipforwarding was zero but some routing protocol was advancing
+ * if ip_forwarding was zero but some routing protocol was advancing
  * us as a gateway to somewhere.  However, we must let the routing
  * protocol deal with that.
  *
@@ -1522,7 +1530,7 @@ const u_char inetctlerrmap[PRC_NCMDS] = {
  * via a source route.
  */
 void
-ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int srcrt)
+ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 {
 	struct mbuf mfake, *mcopy;
 	struct ip *ip = mtod(m, struct ip *);
@@ -1588,7 +1596,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int srcrt)
 	if ((rt->rt_ifidx == ifp->if_index) &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
-	    ipsendredirects && !srcrt &&
+	    ip_sendredirects && !ISSET(flags, IP_REDIRECT) &&
 	    !arpproxy(satosin(rt_key(rt))->sin_addr, m->m_pkthdr.ph_rtableid)) {
 		if ((ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_netmask) ==
 		    ifatoia(rt->rt_ifa)->ia_net) {
@@ -1602,9 +1610,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int srcrt)
 		}
 	}
 
-	error = ip_output(m, NULL, ro,
-	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
-	    NULL, NULL, 0);
+	error = ip_output(m, NULL, ro, flags | IP_FORWARDING, NULL, NULL, 0);
 	rt = ro->ro_rt;
 	if (error)
 		ipstat_inc(ips_cantforward);
