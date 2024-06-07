@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.86 2024/05/21 19:49:06 jan Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.87 2024/06/07 08:44:25 jan Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -114,6 +114,8 @@ struct vmxnet3_comp_ring {
 	};
 	u_int next;
 	u_int32_t gen;
+	struct mbuf *sendmp;
+	struct mbuf *lastmp;
 };
 
 struct vmxnet3_txqueue {
@@ -160,6 +162,7 @@ struct vmxnet3_softc {
 	struct vmxnet3_queue *sc_q;
 	struct intrmap *sc_intrmap;
 
+	u_int sc_vrrs;
 	struct vmxnet3_driver_shared *sc_ds;
 	u_int8_t *sc_mcast;
 	struct vmxnet3_upt1_rss_conf *sc_rss;
@@ -170,7 +173,7 @@ struct vmxnet3_softc {
 #endif
 };
 
-#define JUMBO_LEN (1024 * 9)
+#define JUMBO_LEN ((16 * 1024) - 1)
 #define DMAADDR(map) ((map)->dm_segs[0].ds_addr)
 
 #define READ_BAR0(sc, reg) bus_space_read_4((sc)->sc_iot0, (sc)->sc_ioh0, reg)
@@ -273,15 +276,21 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* Vmxnet3 Revision Report and Selection */
 	ver = READ_BAR1(sc, VMXNET3_BAR1_VRRS);
-	if ((ver & 0x1) == 0) {
+	if (ISSET(ver, 0x2)) {
+		sc->sc_vrrs = 2;
+	} else if (ISSET(ver, 0x1)) {
+		sc->sc_vrrs = 1;
+	} else {
 		printf(": unsupported hardware version 0x%x\n", ver);
 		return;
 	}
-	WRITE_BAR1(sc, VMXNET3_BAR1_VRRS, 1);
+	WRITE_BAR1(sc, VMXNET3_BAR1_VRRS, sc->sc_vrrs);
 
+	/* UPT Version Report and Selection */
 	ver = READ_BAR1(sc, VMXNET3_BAR1_UVRS);
-	if ((ver & 0x1) == 0) {
+	if (!ISSET(ver, 0x1)) {
 		printf(": incompatible UPT version 0x%x\n", ver);
 		return;
 	}
@@ -409,6 +418,11 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
+
+	if (sc->sc_vrrs == 2) {
+		ifp->if_xflags |= IFXF_LRO;
+		ifp->if_capabilities |= IFCAP_LRO;
+	}
 
 #if NVLAN > 0
 	if (sc->sc_ds->upt_features & UPT1_F_VLAN)
@@ -704,6 +718,10 @@ vmxnet3_rxfill(struct vmxnet3_rxring *ring)
 	uint32_t rgen;
 	uint32_t type = htole32(VMXNET3_BTYPE_HEAD << VMXNET3_RX_BTYPE_S);
 
+	/* Second ring just contains packet bodies. */
+	if (ring->rid == 1)
+		type = htole32(VMXNET3_BTYPE_BODY << VMXNET3_RX_BTYPE_S);
+
 	MUTEX_ASSERT_LOCKED(&ring->mtx);
 
 	slots = if_rxr_get(&ring->rxr, NRXDESC);
@@ -781,17 +799,17 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		    VMX_DMA_LEN(&ring->dmamem));
 		bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&ring->dmamem),
 		    0, VMX_DMA_LEN(&ring->dmamem), BUS_DMASYNC_PREWRITE);
-	}
 
-	/* XXX only fill ring 0 */
-	ring = &rq->cmd_ring[0];
-	mtx_enter(&ring->mtx);
-	vmxnet3_rxfill(ring);
-	mtx_leave(&ring->mtx);
+		mtx_enter(&ring->mtx);
+		vmxnet3_rxfill(ring);
+		mtx_leave(&ring->mtx);
+	}
 
 	comp_ring = &rq->comp_ring;
 	comp_ring->next = 0;
 	comp_ring->gen = VMX_RXC_GEN;
+	comp_ring->sendmp = NULL;
+	comp_ring->lastmp = NULL;
 
 	memset(VMX_DMA_KVA(&comp_ring->dmamem), 0,
 	    VMX_DMA_LEN(&comp_ring->dmamem));
@@ -1074,9 +1092,9 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	bus_dmamap_t map;
-	unsigned int idx, len;
+	unsigned int idx;
 	unsigned int next, rgen;
-	unsigned int done = 0;
+	unsigned int rid, done[2] = {0, 0};
 
 	next = comp_ring->next;
 	rgen = comp_ring->gen;
@@ -1096,11 +1114,14 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 
 		idx = letoh32((rxcd->rxc_word0 >> VMXNET3_RXC_IDX_S) &
 		    VMXNET3_RXC_IDX_M);
+
 		if (letoh32((rxcd->rxc_word0 >> VMXNET3_RXC_QID_S) &
 		    VMXNET3_RXC_QID_M) < sc->sc_nqueues)
-			ring = &rq->cmd_ring[0];
+			rid = 0;
 		else
-			ring = &rq->cmd_ring[1];
+			rid = 1;
+
+		ring = &rq->cmd_ring[rid];
 
 		m = ring->m[idx];
 		KASSERT(m != NULL);
@@ -1111,31 +1132,62 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		    BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, map);
 
-		done++;
+		done[rid]++;
+
+		/*
+		 * A receive descriptor of type 4 which is flaged as start of
+		 * packet, contains the number of TCP segment of an LRO packet.
+		 */
+		if (letoh32((rxcd->rxc_word3 & VMXNET3_RXC_TYPE_M) >>
+		    VMXNET3_RXC_TYPE_S) == 4 &&
+		    ISSET(rxcd->rxc_word0, VMXNET3_RXC_SOP)) {
+			m->m_pkthdr.ph_mss = letoh32(rxcd->rxc_word1 &
+			    VMXNET3_RXC_SEG_CNT_M);
+		}
+
+		m->m_len = letoh32((rxcd->rxc_word2 >> VMXNET3_RXC_LEN_S) &
+		    VMXNET3_RXC_LEN_M);
+
+		if (comp_ring->sendmp == NULL) {
+			comp_ring->sendmp = comp_ring->lastmp = m;
+			comp_ring->sendmp->m_pkthdr.len = 0;
+		} else {
+			CLR(m->m_flags, M_PKTHDR);
+			comp_ring->lastmp->m_next = m;
+			comp_ring->lastmp = m;
+		}
+		comp_ring->sendmp->m_pkthdr.len += m->m_len;
+
+		if (!ISSET(rxcd->rxc_word0, VMXNET3_RXC_EOP))
+			continue;
+
+		/*
+		 * End of Packet
+		 */
 
 		if (letoh32(rxcd->rxc_word2 & VMXNET3_RXC_ERROR)) {
 			ifp->if_ierrors++;
-			m_freem(m);
+			m_freem(comp_ring->sendmp);
+			comp_ring->sendmp = comp_ring->lastmp = NULL;
 			continue;
 		}
 
-		len = letoh32((rxcd->rxc_word2 >> VMXNET3_RXC_LEN_S) &
-		    VMXNET3_RXC_LEN_M);
-		if (len < VMXNET3_MIN_MTU) {
-			m_freem(m);
+		if (comp_ring->sendmp->m_pkthdr.len < VMXNET3_MIN_MTU) {
+			m_freem(comp_ring->sendmp);
+			comp_ring->sendmp = comp_ring->lastmp = NULL;
 			continue;
 		}
-		m->m_pkthdr.len = m->m_len = len;
-
-		vmxnet3_rx_offload(rxcd, m);
 
 		if (((letoh32(rxcd->rxc_word0) >> VMXNET3_RXC_RSSTYPE_S) &
 		    VMXNET3_RXC_RSSTYPE_M) != VMXNET3_RXC_RSSTYPE_NONE) {
-			m->m_pkthdr.ph_flowid = letoh32(rxcd->rxc_word1);
-			SET(m->m_pkthdr.csum_flags, M_FLOWID);
+			comp_ring->sendmp->m_pkthdr.ph_flowid =
+			    letoh32(rxcd->rxc_word1);
+			SET(comp_ring->sendmp->m_pkthdr.csum_flags, M_FLOWID);
 		}
 
-		ml_enqueue(&ml, m);
+		vmxnet3_rx_offload(rxcd, comp_ring->sendmp);
+		ml_enqueue(&ml, comp_ring->sendmp);
+		comp_ring->sendmp = comp_ring->lastmp = NULL;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&comp_ring->dmamem),
@@ -1144,19 +1196,20 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 	comp_ring->next = next;
 	comp_ring->gen = rgen;
 
-	if (done == 0)
-		return;
+	for (int i = 0; i < 2; i++) {
+		if (done[i] == 0)
+			continue;
 
-	ring = &rq->cmd_ring[0];
+		ring = &rq->cmd_ring[i];
 
-	if (ifiq_input(rq->ifiq, &ml))
-		if_rxr_livelocked(&ring->rxr);
+		if (ifiq_input(rq->ifiq, &ml))
+			if_rxr_livelocked(&ring->rxr);
 
-	/* XXX Should we (try to) allocate buffers for ring 2 too? */
-	mtx_enter(&ring->mtx);
-	if_rxr_put(&ring->rxr, done);
-	vmxnet3_rxfill(ring);
-	mtx_leave(&ring->mtx);
+		mtx_enter(&ring->mtx);
+		if_rxr_put(&ring->rxr, done[i]);
+		vmxnet3_rxfill(ring);
+		mtx_leave(&ring->mtx);
+	}
 }
 
 void
@@ -1211,6 +1264,8 @@ vmxnet3_iff(struct vmxnet3_softc *sc)
 void
 vmxnet3_rx_offload(struct vmxnet3_rxcompdesc *rxcd, struct mbuf *m)
 {
+	uint32_t pkts;
+
 	/*
 	 * VLAN Offload
 	 */
@@ -1242,6 +1297,45 @@ vmxnet3_rx_offload(struct vmxnet3_rxcompdesc *rxcd, struct mbuf *m)
 			SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK);
 		else if (ISSET(rxcd->rxc_word3, VMXNET3_RXC_UDP))
 			SET(m->m_pkthdr.csum_flags, M_UDP_CSUM_IN_OK);
+	}
+
+	/*
+	 * TCP Large Receive Offload
+	 */
+
+	pkts = m->m_pkthdr.ph_mss;
+	m->m_pkthdr.ph_mss = 0;
+
+	if (pkts > 1) {
+		struct ether_extracted ext;
+		uint32_t paylen;
+
+		ether_extract_headers(m, &ext);
+
+		paylen = ext.iplen;
+		if (ext.ip4 || ext.ip6)
+			paylen -= ext.iphlen;
+
+		if (ext.tcp) {
+			paylen -= ext.tcphlen;
+			tcpstat_inc(tcps_inhwlro);
+			tcpstat_add(tcps_inpktlro, pkts);
+		} else {
+			tcpstat_inc(tcps_inbadlro);
+		}
+
+		/*
+		 * If we gonna forward this packet, we have to mark it as TSO,
+		 * set a correct mss, and recalculate the TCP checksum.
+		 */
+		if (ext.tcp && paylen >= pkts) {
+			SET(m->m_pkthdr.csum_flags, M_TCP_TSO);
+			m->m_pkthdr.ph_mss = paylen / pkts;
+		}
+		if (ext.tcp &&
+		    ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_IN_OK)) {
+			SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
+		}
 	}
 }
 
@@ -1308,6 +1402,13 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 		vmxnet3_stop(ifp);
 		return EIO;
 	}
+
+	/* TCP Large Receive Offload */
+	if (ISSET(ifp->if_xflags, IFXF_LRO))
+		SET(sc->sc_ds->upt_features, UPT1_F_LRO);
+	else
+		CLR(sc->sc_ds->upt_features, UPT1_F_LRO);
+	WRITE_CMD(sc, VMXNET3_CMD_SET_FEATURE);
 
 	/* Program promiscuous mode and multicast filters. */
 	vmxnet3_iff(sc);

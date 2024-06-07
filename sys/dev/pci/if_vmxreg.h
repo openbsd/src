@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmxreg.h,v 1.9 2020/07/07 01:36:49 dlg Exp $	*/
+/*	$OpenBSD: if_vmxreg.h,v 1.10 2024/06/07 08:44:25 jan Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -76,6 +76,7 @@ enum UPT1_RxStats {
 #define VMXNET3_CMD_RESET	0xcafe0002	/* reset device */
 #define VMXNET3_CMD_SET_RXMODE	0xcafe0003	/* set interface flags */
 #define VMXNET3_CMD_SET_FILTER	0xcafe0004	/* set address filter */
+#define VMXNET3_CMD_SET_FEATURE	0xcafe0009	/* set features */
 #define VMXNET3_CMD_GET_STATUS	0xf00d0000	/* get queue errors */
 #define VMXNET3_CMD_GET_STATS	0xf00d0001
 #define VMXNET3_CMD_GET_LINK	0xf00d0002	/* get link status */
@@ -189,6 +190,7 @@ struct vmxnet3_rxcompdesc {
 	u_int32_t		rxc_word1;
 #define VMXNET3_RXC_RSSHASH_M	0xffffffff	/* RSS hash value */
 #define VMXNET3_RXC_RSSHASH_S	0
+#define VMXNET3_RXC_SEG_CNT_M	0x000000ff	/* No. of seg. in LRO pkt */
 
 	u_int32_t		rxc_word2;
 #define VMXNET3_RXC_LEN_M	0x00003fff
@@ -210,6 +212,7 @@ struct vmxnet3_rxcompdesc {
 #define VMXNET3_RXC_FRAGMENT	0x00400000	/* IP fragment */
 #define VMXNET3_RXC_FCS		0x00800000	/* frame CRC correct */
 #define VMXNET3_RXC_TYPE_M	0x7f000000
+#define VMXNET3_RXC_TYPE_S	24
 #define VMXNET3_RXC_GEN_M	0x00000001U
 #define VMXNET3_RXC_GEN_S	31
 } __packed;
