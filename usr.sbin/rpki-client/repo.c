@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.59 2024/05/30 12:33:15 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.60 2024/06/07 08:22:53 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -78,7 +78,6 @@ struct tarepo {
 	SLIST_ENTRY(tarepo)	 entry;
 	char			*descr;
 	char			*basedir;
-	char			*temp;
 	char			**uri;
 	size_t			 urisz;
 	size_t			 uriidx;
@@ -322,7 +321,7 @@ repo_done(const void *vp, int ok)
  * If temp is set add Xs for mkostemp.
  */
 static char *
-ta_filename(const struct tarepo *tr, int temp)
+ta_filename(const struct tarepo *tr)
 {
 	const char *file;
 	char *nfile;
@@ -331,8 +330,7 @@ ta_filename(const struct tarepo *tr, int temp)
 	file = strrchr(tr->uri[0], '/');
 	assert(file);
 
-	if (asprintf(&nfile, "%s%s%s", tr->basedir, file,
-	    temp ? ".XXXXXXXX" : "") == -1)
+	if (asprintf(&nfile, "%s%s", tr->basedir, file) == -1)
 		err(1, NULL);
 
 	return nfile;
@@ -367,18 +365,21 @@ ta_fetch(struct tarepo *tr)
 		 */
 		rsync_fetch(tr->id, tr->uri[tr->uriidx], tr->basedir, NULL);
 	} else {
+		char *temp;
 		int fd;
 
-		tr->temp = ta_filename(tr, 1);
-		fd = mkostemp(tr->temp, O_CLOEXEC);
+		temp = ta_filename(tr);
+		fd = open(temp,
+		    O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC,
+		    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 		if (fd == -1) {
-			warn("mkostemp: %s", tr->temp);
+			warn("open: %s", temp);
+			free(temp);
 			http_finish(tr->id, HTTP_FAILED, NULL);
 			return;
 		}
-		if (fchmod(fd, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) == -1)
-			warn("fchmod: %s", tr->temp);
 
+		free(temp);
 		http_fetch(tr->id, tr->uri[tr->uriidx], NULL, fd);
 	}
 }
@@ -392,12 +393,21 @@ ta_get(struct tal *tal)
 
 	if ((tr = calloc(1, sizeof(*tr))) == NULL)
 		err(1, NULL);
+
 	tr->id = ++repoid;
 	SLIST_INSERT_HEAD(&tarepos, tr, entry);
 
 	if ((tr->descr = strdup(tal->descr)) == NULL)
 		err(1, NULL);
-	tr->basedir = repo_dir(tal->descr, "ta", 0);
+	tr->basedir = repo_dir(tal->descr, ".ta", 0);
+
+	/* create base directory */
+	if (mkpath(tr->basedir) == -1) {
+		warn("mkpath %s", tr->basedir);
+		tr->state = REPO_FAILED;
+		repo_done(tr, 0);
+		return tr;
+	}
 
 	/* steal URI information from TAL */
 	tr->urisz = tal->urisz;
@@ -430,7 +440,6 @@ ta_free(void)
 		SLIST_REMOVE_HEAD(&tarepos, entry);
 		free(tr->descr);
 		free(tr->basedir);
-		free(tr->temp);
 		free(tr->uri);
 		free(tr);
 	}
@@ -1070,20 +1079,12 @@ http_finish(unsigned int id, enum http_result res, const char *last_mod)
 
 	/* Move downloaded TA file into place, or unlink on failure. */
 	if (res == HTTP_OK) {
-		char *file;
-
-		file = ta_filename(tr, 0);
-		if (rename(tr->temp, file) == -1)
-			warn("rename to %s", file);
-		free(file);
-
 		logx("ta/%s: loaded from network", tr->descr);
 		tr->state = REPO_DONE;
 		stats.http_repos++;
 		repo_done(tr, 1);
 	} else {
-		if (unlink(tr->temp) == -1 && errno != ENOENT)
-			warn("unlink %s", tr->temp);
+		remove_contents(tr->basedir);
 
 		tr->uriidx++;
 		warnx("ta/%s: load from network failed", tr->descr);
@@ -1632,15 +1633,19 @@ repo_move_valid(struct filepath_tree *tree)
 	struct filepath *fp, *nfp;
 	size_t rsyncsz = strlen(".rsync/");
 	size_t rrdpsz = strlen(".rrdp/");
+	size_t tasz = strlen(".ta/");
 	char *fn, *base;
 
 	RB_FOREACH_SAFE(fp, filepath_tree, tree, nfp) {
 		if (strncmp(fp->file, ".rsync/", rsyncsz) != 0 &&
-		    strncmp(fp->file, ".rrdp/", rrdpsz) != 0)
+		    strncmp(fp->file, ".rrdp/", rrdpsz) != 0 &&
+		    strncmp(fp->file, ".ta/", tasz) != 0)
 			continue; /* not a temporary file path */
 
 		if (strncmp(fp->file, ".rsync/", rsyncsz) == 0) {
 			fn = fp->file + rsyncsz;
+		} else if (strncmp(fp->file, ".ta/", tasz) == 0) {
+			fn = fp->file + 1; /* just skip the '.' */
 		} else {
 			base = strchr(fp->file + rrdpsz, '/');
 			assert(base != NULL);
@@ -1690,8 +1695,8 @@ repo_move_valid(struct filepath_tree *tree)
 }
 
 struct fts_state {
-	enum { BASE_DIR, RSYNC_DIR, RRDP_DIR }	type;
-	struct repo				*rp;
+	enum { BASE_DIR, RSYNC_DIR, TA_DIR, RRDP_DIR }	type;
+	struct repo					*rp;
 } fts_state;
 
 static const struct rrdprepo *
@@ -1768,8 +1773,9 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
  unlink:
 			if (unlink(e->fts_accpath) == -1) {
 				warn("unlink %s", path);
-			} else if (fts_state.type == RSYNC_DIR) {
-				/* no need to keep rsync files */
+			} else if (fts_state.type == RSYNC_DIR ||
+			     fts_state.type == TA_DIR) {
+				/* no need to keep rsync or ta files */
 				if (verbose > 1)
 					logx("deleted superfluous %s", path);
 				if (fts_state.rp != NULL)
@@ -1792,9 +1798,11 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 			fts_state.rp = NULL;
 		}
 		if (e->fts_level == 1) {
-			/* rpki.example.org or .rrdp / .rsync */
+			/* rpki.example.org or .rrdp / .rsync / .ta */
 			if (strcmp(".rsync", e->fts_name) == 0)
 				fts_state.type = RSYNC_DIR;
+			else if (strcmp(".ta", e->fts_name) == 0)
+				fts_state.type = TA_DIR;
 			else if (strcmp(".rrdp", e->fts_name) == 0)
 				fts_state.type = RRDP_DIR;
 			else
@@ -1805,6 +1813,8 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 			/* rpki.example.org/repository or .rrdp/hashdir */
 			if (fts_state.type == BASE_DIR)
 				fts_state.rp = repo_bypath(path);
+			if (fts_state.type == TA_DIR)
+				fts_state.rp = repo_bypath(path + 1);
 			/*
 			 * special handling for rrdp directories,
 			 * clear them if they are not used anymore but
@@ -1826,7 +1836,8 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 			/* do not remove .rsync and .rrdp */
 			fts_state.rp = NULL;
 			if (fts_state.type == RRDP_DIR ||
-			    fts_state.type == RSYNC_DIR)
+			    fts_state.type == RSYNC_DIR ||
+			    fts_state.type == TA_DIR)
 				break;
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.258 2024/05/20 15:51:43 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.259 2024/06/07 08:22:53 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -481,7 +481,7 @@ queue_add_from_tal(struct tal *tal)
 	/* steal the pkey from the tal structure */
 	data = tal->pkey;
 	tal->pkey = NULL;
-	entityq_add(NULL, nfile, RTYPE_CER, DIR_VALID, repo, data,
+	entityq_add(NULL, nfile, RTYPE_CER, DIR_UNKNOWN, repo, data,
 	    tal->pkeysz, tal->id, tal->id, NULL);
 }
 
