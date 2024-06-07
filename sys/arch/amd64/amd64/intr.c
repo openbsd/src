@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.58 2024/05/29 12:21:33 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.59 2024/06/07 06:26:23 jsg Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -558,8 +558,6 @@ intr_handler(struct intrframe *frame, struct intrhand *ih)
 #endif
 	return rc;
 }
-
-#define CONCAT(x,y)	__CONCAT(x,y)
 
 /*
  * Fake interrupt handler structures for the benefit of symmetry with
