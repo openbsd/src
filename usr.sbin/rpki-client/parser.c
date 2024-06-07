@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.138 2024/06/07 11:48:05 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.139 2024/06/07 13:24:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -573,8 +573,6 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 static int
 proc_parser_ta_cmp(const struct cert *cert1, const struct cert *cert2)
 {
-	const ASN1_INTEGER *serial1, *serial2;
-
 	if (cert1 == NULL)
 		return -1;
 	if (cert2 == NULL)
@@ -603,15 +601,14 @@ proc_parser_ta_cmp(const struct cert *cert1, const struct cert *cert2)
 		return 1;
 
 	/*
-	 * The serialNumber isn't monotonic and some TAs use semi-random ones.
-	 * If the freshly-fetched cert's serial number is different from the
-	 * cached one, prefer the freshly-fetched cert.
+	 * Both certs are valid from our perspective. If anything changed,
+	 * prefer the freshly-fetched one. We rely on cert_parse_pre() having
+	 * cached the extensions and thus libcrypto has already computed the
+	 * certs' hashes (SHA-1 for OpenSSL, SHA-512 for LibreSSL). The below
+	 * compares them.
 	 */
 
-	serial1 = X509_get0_serialNumber(cert1->x509);
-	serial2 = X509_get0_serialNumber(cert2->x509);
-
-	return ASN1_INTEGER_cmp(serial1, serial2) != 0;
+	return X509_cmp(cert1->x509, cert2->x509) != 0;
 }
 
 /*
