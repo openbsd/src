@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.153 2024/01/23 17:57:21 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.154 2024/06/07 13:43:21 jsg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -103,9 +103,6 @@ int pipex_prune = 1;			/* [I] walk list every seconds */
 
 struct mbuf_queue pipexoutq = MBUF_QUEUE_INITIALIZER(
     IFQ_MAXLEN, IPL_SOFTNET);
-
-/* borrow an mbuf pkthdr field */
-#define ph_ppp_proto ether_vtag
 
 #ifdef PIPEX_DEBUG
 int pipex_debug = 0;		/* [A] systcl net.inet.ip.pipex_debug */
