@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.96 2024/06/08 13:31:38 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.97 2024/06/08 13:32:30 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -351,6 +351,13 @@ x509_get_purpose(X509 *x, const char *fn)
 		warnx("%s: EKU: extension must not be marked critical", fn);
 		goto out;
 	}
+
+	/*
+	 * XXX - this isn't quite correct: other EKU OIDs are allowed per
+	 * RFC 8209, section 3.1.3.2, e.g., anyEKU could potentially help
+	 * avoid tripping up validators that don't know about the BGPsec
+	 * router purpose. Drop check or downgrade from error to warning?
+	 */
 	if (sk_ASN1_OBJECT_num(eku) != 1) {
 		warnx("%s: EKU: expected 1 purpose, have %d", fn,
 		    sk_ASN1_OBJECT_num(eku));
