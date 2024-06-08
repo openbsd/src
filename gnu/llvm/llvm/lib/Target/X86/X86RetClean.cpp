@@ -96,7 +96,7 @@ bool RetCleanPass::runOnMachineFunction(MachineFunction &MF) {
 
   bool modified = false;
 
-  // It a setjmp-like function is called by this function, we should not clean
+  // If a setjmp-like function is called by this function, we should not clean
   if (MF.exposesReturnsTwice())
     return false;
 
