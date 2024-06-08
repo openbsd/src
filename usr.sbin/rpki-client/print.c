@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.54 2024/06/06 05:57:36 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.55 2024/06/08 13:30:35 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -63,6 +63,25 @@ nid2str(int nid)
 	snprintf(buf, sizeof(buf), "nid %d (%s)", nid, name);
 
 	return buf;
+}
+
+const char *
+purpose2str(enum cert_purpose purpose)
+{
+	switch (purpose) {
+	case CERT_PURPOSE_INVALID:
+		return "invalid cert";
+	case CERT_PURPOSE_TA:
+		return "TA cert";
+	case CERT_PURPOSE_CA:
+		return "CA cert";
+	case CERT_PURPOSE_EE:
+		return "EE cert";
+	case CERT_PURPOSE_BGPSEC_ROUTER:
+		return "BGPsec Router cert";
+	default:
+		return "unknown certificate purpose";
+	}
 }
 
 char *
