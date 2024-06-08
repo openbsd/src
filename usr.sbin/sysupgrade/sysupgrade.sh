@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.49 2023/10/12 12:31:15 kn Exp $
+# $OpenBSD: sysupgrade.sh,v 1.50 2024/06/08 06:05:40 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -139,16 +139,21 @@ unpriv -f SHA256.sig ftp -N sysupgrade -Vmo SHA256.sig ${URL}SHA256.sig
 _KEY=openbsd-${_KERNV[0]%.*}${_KERNV[0]#*.}-base.pub
 _NEXTKEY=openbsd-${NEXT_VERSION%.*}${NEXT_VERSION#*.}-base.pub
 
-read _LINE <SHA256.sig
-case ${_LINE} in
-*\ ${_KEY})	SIGNIFY_KEY=/etc/signify/${_KEY} ;;
-*\ ${_NEXTKEY})	SIGNIFY_KEY=/etc/signify/${_NEXTKEY} ;;
-*)		err "invalid signing key" ;;
-esac
+if $SNAP; then
+	unpriv -f SHA256 signify -Ve -x SHA256.sig -m SHA256
+else
+	read _LINE <SHA256.sig
+	case ${_LINE} in
+	*\ ${_KEY})	SIGNIFY_KEY=/etc/signify/${_KEY} ;;
+	*\ ${_NEXTKEY})	SIGNIFY_KEY=/etc/signify/${_NEXTKEY} ;;
+	*)		err "invalid signing key" ;;
+	esac
 
-[[ -f ${SIGNIFY_KEY} ]] || err "cannot find ${SIGNIFY_KEY}"
+	[[ -f ${SIGNIFY_KEY} ]] || err "cannot find ${SIGNIFY_KEY}"
 
-unpriv -f SHA256 signify -Ve -p "${SIGNIFY_KEY}" -x SHA256.sig -m SHA256
+	unpriv -f SHA256 signify -Ve -p "${SIGNIFY_KEY}" -x SHA256.sig -m SHA256
+fi
+
 rm SHA256.sig
 
 if cmp -s /var/db/installed.SHA256 SHA256 && ! $FORCE; then
