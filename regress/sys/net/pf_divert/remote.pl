@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-#	$OpenBSD: remote.pl,v 1.9 2017/12/18 17:01:27 bluhm Exp $
+#	$OpenBSD: remote.pl,v 1.10 2024/06/08 22:50:40 bluhm Exp $
 
-# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2024 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -272,4 +272,5 @@ sub copy_prefix {
 		chomp;
 		print $dst "$prefix: $_\n" if length;
 	}
+	$src->clearerr();
 }
