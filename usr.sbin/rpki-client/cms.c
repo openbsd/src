@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.45 2024/05/24 12:57:20 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.46 2024/06/08 13:28:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -324,11 +324,8 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 
-	/* Cache X509v3 extensions, see X509_check_ca(3). */
-	if (X509_check_purpose(*xp, -1, -1) <= 0) {
-		warnx("%s: could not cache X509v3 extensions", fn);
+	if (!x509_cache_extensions(*xp, fn))
 		goto out;
-	}
 
 	if (!x509_get_notafter(*xp, fn, &notafter))
 		goto out;
