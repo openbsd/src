@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.44 2024/06/08 13:31:38 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.45 2024/06/08 13:34:59 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -404,7 +404,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		cert = cert_parse_pre(file, buf, len);
 		if (cert == NULL)
 			break;
-		is_ta = X509_get_extension_flags(cert->x509) & EXFLAG_SS;
+		is_ta = (cert->purpose == CERT_PURPOSE_TA);
 		if (!is_ta)
 			cert = cert_parse(file, cert);
 		if (cert == NULL)
