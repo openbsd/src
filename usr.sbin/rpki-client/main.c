@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.259 2024/06/07 08:22:53 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.260 2024/06/08 13:31:38 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -618,6 +618,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		}
 		cert = cert_read(b);
 		switch (cert->purpose) {
+		case CERT_PURPOSE_TA:
 		case CERT_PURPOSE_CA:
 			queue_add_from_cert(cert);
 			break;
@@ -626,7 +627,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 			repo_stat_inc(rp, talid, type, STYPE_BGPSEC);
 			break;
 		default:
-			errx(1, "unexpected cert purpose received");
+			errx(1, "unexpected %s", purpose2str(cert->purpose));
 			break;
 		}
 		cert_free(cert);

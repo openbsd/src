@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.142 2024/06/08 13:28:35 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.143 2024/06/08 13:31:37 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -957,11 +957,12 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	if (!x509_get_notafter(x, fn, &cert->notafter))
 		goto out;
-	cert->purpose = x509_get_purpose(x, fn);
 
 	/* Validation on required fields. */
-
+	cert->purpose = x509_get_purpose(x, fn);
 	switch (cert->purpose) {
+	case CERT_PURPOSE_TA:
+		/* XXX - caller should indicate if it expects TA or CA cert */
 	case CERT_PURPOSE_CA:
 		if ((pkey = X509_get0_pubkey(x)) == NULL) {
 			warnx("%s: X509_get0_pubkey failed", fn);
@@ -1015,6 +1016,9 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			goto out;
 		}
 		break;
+	case CERT_PURPOSE_EE:
+		warn("%s: unexpected EE cert", fn);
+		goto out;
 	default:
 		warnx("%s: x509_get_purpose failed in %s", fn, __func__);
 		goto out;

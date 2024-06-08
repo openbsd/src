@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.43 2024/06/06 07:19:10 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.44 2024/06/08 13:31:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -157,7 +157,8 @@ parse_load_cert(char *uri)
 	if (cert == NULL)
 		goto done;
 	if (cert->purpose != CERT_PURPOSE_CA) {
-		warnx("AIA reference to bgpsec cert %s", uri);
+		warnx("AIA reference to %s in %s",
+		    purpose2str(cert->purpose), uri);
 		goto done;
 	}
 	/* try to load the CRL of this cert */
