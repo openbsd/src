@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.69 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.70 2024/06/08 00:24:00 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -137,9 +137,6 @@ static struct timecounter i8254_timecounter = {
 };
 struct mutex timer_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 u_long rtclock_tval;
-
-#define	SECMIN	((unsigned)60)			/* seconds per minute */
-#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
 
 u_int
 mc146818_read(void *sc, u_int reg)
