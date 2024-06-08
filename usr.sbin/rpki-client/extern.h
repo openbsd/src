@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.222 2024/06/08 13:28:35 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.223 2024/06/08 13:29:54 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -107,8 +107,10 @@ struct cert_ip {
 
 enum cert_purpose {
 	CERT_PURPOSE_INVALID,
+	CERT_PURPOSE_TA,
 	CERT_PURPOSE_CA,
-	CERT_PURPOSE_BGPSEC_ROUTER
+	CERT_PURPOSE_EE,
+	CERT_PURPOSE_BGPSEC_ROUTER,
 };
 
 /*
