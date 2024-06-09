@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.36 2024/02/25 19:15:50 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.37 2024/06/09 21:15:29 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -170,7 +170,7 @@ void	mp_setperf(int);
 
 void signotify(struct proc *);
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
+#define CPU_BUSY_CYCLE()	__asm volatile ("" ::: "memory")
 
 #define curpcb			curcpu()->ci_curpcb
 

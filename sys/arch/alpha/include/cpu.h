@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.74 2024/05/21 23:16:06 jsg Exp $ */
+/* $OpenBSD: cpu.h,v 1.75 2024/06/09 21:15:29 jca Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -264,6 +264,8 @@ do {									\
 	struct cpu_info *__ci = curcpu();				\
 	int __s;							\
 									\
+	__asm volatile ("" ::: "memory");				\
+									\
 	if (__ci->ci_ipis != 0) {					\
 		__s = splipi();						\
 		alpha_ipi_process_with_frame(__ci);			\
@@ -277,7 +279,7 @@ do {									\
 #define	CPU_IS_PRIMARY(ci)		1
 #define	CPU_IS_RUNNING(ci)		1
 #define cpu_unidle(ci)			do { /* nothing */ } while (0)
-#define CPU_BUSY_CYCLE()		do {} while (0)
+#define CPU_BUSY_CYCLE()		__asm volatile ("" ::: "memory")
 
 #endif /* MULTIPROCESSOR */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.104 2024/02/25 19:15:50 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.105 2024/06/09 21:15:29 jca Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -165,7 +165,7 @@ curcpu(void)
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = &cpu_info[0]; cii < ncpus; cii++, ci++)
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
+#define CPU_BUSY_CYCLE()	__asm volatile ("" ::: "memory")
 
 /* types */
 enum hppa_cpu_type {

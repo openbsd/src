@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.190 2024/06/07 16:53:35 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.191 2024/06/09 21:15:29 jca Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -262,7 +262,7 @@ void cpu_unidle(struct cpu_info *);
 #define cpu_kick(ci)
 #define cpu_unidle(ci)
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
+#define CPU_BUSY_CYCLE()	__asm volatile ("" ::: "memory")
 
 #endif
 

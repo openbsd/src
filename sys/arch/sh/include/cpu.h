@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.38 2024/03/31 07:23:29 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.39 2024/06/09 21:15:29 jca Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ extern struct cpu_info cpu_info_store;
 #define MAXCPUS	1
 #define cpu_unidle(ci)
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
+#define CPU_BUSY_CYCLE()	__asm volatile ("" ::: "memory")
 
 
 /*

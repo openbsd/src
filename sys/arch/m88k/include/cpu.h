@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.78 2024/05/28 09:27:54 claudio Exp $ */
+/*	$OpenBSD: cpu.h,v 1.79 2024/06/09 21:15:29 jca Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -221,7 +221,7 @@ void	m88k_broadcast_ipi(int);
 
 #endif	/* MULTIPROCESSOR */
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
+#define CPU_BUSY_CYCLE()	__asm volatile ("" ::: "memory")
 
 struct cpu_info *set_cpu_number(cpuid_t);
 

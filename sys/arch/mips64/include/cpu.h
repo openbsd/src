@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.146 2024/02/25 19:15:50 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.147 2024/06/09 21:15:29 jca Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -258,7 +258,7 @@ void	smp_rendezvous_cpus(unsigned long, void (*)(void *), void *arg);
 #define get_cpu_info(i)			(&cpu_info_primary)
 #endif
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
+#define CPU_BUSY_CYCLE()	__asm volatile ("" ::: "memory")
 
 extern void (*md_initclock)(void);
 extern void (*md_startclock)(struct cpu_info *);
