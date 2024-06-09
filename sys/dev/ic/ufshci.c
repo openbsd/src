@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.34 2024/06/05 04:58:05 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.35 2024/06/09 03:21:54 jsg Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -89,8 +89,6 @@ int			 ufshci_utr_cmd_sync(struct ufshci_softc *,
 			     struct ufshci_ccb *, struct scsi_xfer *,
 			     uint32_t, uint16_t);
 int			 ufshci_xfer_complete(struct ufshci_softc *);
-int			 ufshci_powerdown(struct ufshci_softc *);
-int			 ufshci_resume(struct ufshci_softc *);
 
 /* SCSI */
 int			 ufshci_ccb_alloc(struct ufshci_softc *, int);
