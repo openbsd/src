@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.18 2018/10/04 05:00:40 guenther Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.19 2024/06/09 03:12:59 jsg Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -86,21 +86,6 @@ extern void Xintr_lapic_ltimer(void);
 extern void Xresume_lapic_ltimer(void);
 extern void Xrecurse_lapic_ltimer(void);
 #define LAPIC_TIMER_VECTOR		0xc0
-
-/*
- * 'pin numbers' for local APIC
- */
-#define LAPIC_PIN_TIMER		0
-#define LAPIC_PIN_PCINT		2
-#define LAPIC_PIN_LVINT0	3
-#define LAPIC_PIN_LVINT1	4
-#define LAPIC_PIN_LVERR		5
-
-extern void Xintr_lapic0(void);
-extern void Xintr_lapic2(void);
-extern void Xintr_lapic3(void);
-extern void Xintr_lapic4(void);
-extern void Xintr_lapic5(void);
 
 /*
  * Vector used for Xen HVM Event Channel Interrupts.
