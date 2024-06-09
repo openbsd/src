@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.36 2018/12/23 16:06:24 gilles Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.37 2024/06/09 10:13:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -135,8 +135,9 @@ enum table_service {
 	K_RELAYHOST	= 0x200,	/* returns struct relayhost	*/
 	K_STRING	= 0x400,
 	K_REGEX		= 0x800,
+	K_AUTH		= 0x1000,
 };
-#define K_ANY		  0xfff
+#define K_ANY		  0xffff
 
 enum {
 	PROC_TABLE_OK,

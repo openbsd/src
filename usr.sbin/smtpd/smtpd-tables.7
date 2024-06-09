@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-tables.7,v 1.3 2024/05/23 17:10:00 op Exp $
+.\"	$OpenBSD: smtpd-tables.7,v 1.4 2024/06/09 10:13:05 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -18,7 +18,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 23 2024 $
+.Dd $Mdocdate: June 9 2024 $
 .Dt SMTPD-TABLES 7
 .Os
 .Sh NAME
@@ -191,6 +191,10 @@ The services and their result format are as follows:
 .Bl -tag -width mailaddrmap -compact
 .It Ic alias
 One or more aliases separated by a comma.
+.It Ic auth
+Only usable for check.
+Lookup key is username and cleartext password separated by
+.Sq \&: .
 .It Ic domain
 A domain name.
 .\" XXX are wildcards allowed?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.53 2024/05/28 07:10:30 op Exp $	*/
+/*	$OpenBSD: table.c,v 1.54 2024/06/09 10:13:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -83,6 +83,7 @@ table_service_name(enum table_service s)
 	case K_RELAYHOST:	return "relayhost";
 	case K_STRING:		return "string";
 	case K_REGEX:		return "regex";
+	case K_AUTH:		return "auth";
 	}
 	return "???";
 }
@@ -116,6 +117,8 @@ table_service_from_name(const char *service)
 		return K_STRING;
 	if (!strcmp(service, "regex"))
 		return K_REGEX;
+	if (!strcmp(service, "auth"))
+		return K_AUTH;
 	return (-1);
 }
 

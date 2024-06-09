@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.248 2024/01/20 09:01:03 claudio Exp $	*/
+/*	$OpenBSD: lka.c,v 1.249 2024/06/09 10:13:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -720,6 +720,7 @@ static int
 lka_authenticate(const char *tablename, const char *user, const char *password)
 {
 	struct table		*table;
+	char	       		 offloadkey[LINE_MAX];
 	union lookup		 lk;
 
 	log_debug("debug: lka: authenticating for %s:%s", tablename, user);
@@ -728,6 +729,26 @@ lka_authenticate(const char *tablename, const char *user, const char *password)
 		log_warnx("warn: could not find table %s needed for authentication",
 		    tablename);
 		return (LKA_TEMPFAIL);
+	}
+
+	/* table backend supports authentication offloading */
+	if (table_check_service(table, K_AUTH)) {
+		if (!bsnprintf(offloadkey, sizeof(offloadkey), "%s:%s",
+		    user, password)) {
+			log_warnx("warn: key serialization failed for %s:%s",
+			    tablename, user);
+			return (LKA_TEMPFAIL);
+		}
+		switch (table_match(table, K_AUTH, offloadkey)) {
+		case -1:
+			log_warnx("warn: user credentials lookup fail for %s:%s",
+			    tablename, user);
+			return (LKA_TEMPFAIL);
+		case 0:
+			return (LKA_PERMFAIL);
+		default:
+			return (LKA_OK);
+		}
 	}
 
 	switch (table_lookup(table, K_CREDENTIALS, user, &lk)) {
