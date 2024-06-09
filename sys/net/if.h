@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.216 2024/04/11 15:08:18 bluhm Exp $	*/
+/*	$OpenBSD: if.h,v 1.217 2024/06/09 16:25:28 jan Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -249,6 +249,7 @@ struct if_status_description {
 #define	IFCAP_CSUM_UDPv4	0x00000004	/* can do IPv4/UDP csum */
 #define	IFCAP_VLAN_MTU		0x00000010	/* VLAN-compatible MTU */
 #define	IFCAP_VLAN_HWTAGGING	0x00000020	/* hardware VLAN tag support */
+#define	IFCAP_VLAN_HWOFFLOAD	0x00000040	/* hw offload w/ inline tag */
 #define	IFCAP_CSUM_TCPv6	0x00000080	/* can do IPv6/TCP checksums */
 #define	IFCAP_CSUM_UDPv6	0x00000100	/* can do IPv6/UDP checksums */
 #define	IFCAP_TSOv4		0x00001000	/* IPv4/TCP segment offload */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.218 2023/12/23 10:52:54 bluhm Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.219 2024/06/09 16:25:28 jan Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -523,7 +523,7 @@ vlan_up(struct vlan_softc *sc)
 	/*
 	 * Note: In cases like vio(4) and em(4) where the offsets of the
 	 * csum can be freely defined, we could actually do csum offload
-	 * for VLAN and QINQ packets.
+	 * for QINQ packets.
 	 */
 	if (sc->sc_type != ETHERTYPE_VLAN) {
 		/*
@@ -531,10 +531,14 @@ vlan_up(struct vlan_softc *sc)
 		 * ethernet type (0x8100).
 		 */
 		ifp->if_capabilities = 0;
-	} else if (ISSET(ifp0->if_capabilities, IFCAP_VLAN_HWTAGGING)) {
+	} else if (ISSET(ifp0->if_capabilities, IFCAP_VLAN_HWTAGGING) ||
+	    ISSET(ifp0->if_capabilities, IFCAP_VLAN_HWOFFLOAD)) {
 		/*
 		 * Chips that can do hardware-assisted VLAN encapsulation, can
 		 * calculate the correct checksum for VLAN tagged packets.
+		 *
+		 * Hardware which does checksum offloading, but not VLAN tag
+		 * injection, have to set IFCAP_VLAN_HWOFFLOAD.
 		 */
 		ifp->if_capabilities = ifp0->if_capabilities &
 		    (IFCAP_CSUM_MASK | IFCAP_TSOv4 | IFCAP_TSOv6);

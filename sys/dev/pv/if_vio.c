@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.37 2024/06/04 09:51:52 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.38 2024/06/09 16:25:28 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -604,7 +604,11 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = vio_start;
 	ifp->if_ioctl = vio_ioctl;
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = 0;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	ifp->if_capabilities |= IFCAP_VLAN_HWOFFLOAD;
+#endif
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM))
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|
 		    IFCAP_CSUM_TCPv6|IFCAP_CSUM_UDPv6;

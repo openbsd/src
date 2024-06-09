@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.472 2024/05/18 02:44:22 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.473 2024/06/09 16:25:27 jan Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -125,7 +125,7 @@
 
 #define HWFEATURESBITS							\
 	"\024\1CSUM_IPv4\2CSUM_TCPv4\3CSUM_UDPv4"			\
-	"\5VLAN_MTU\6VLAN_HWTAGGING\10CSUM_TCPv6"			\
+	"\5VLAN_MTU\6VLAN_HWTAGGING\7VLAN_HWOFFLOAD\10CSUM_TCPv6"	\
 	"\11CSUM_UDPv6\15TSOv4\16TSOv6\17LRO\20WOL"
 
 struct ifencap {
