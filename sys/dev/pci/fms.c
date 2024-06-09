@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.38 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: fms.c,v 1.39 2024/06/09 05:18:12 jsg Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -117,9 +117,6 @@ int	fms_attach_codec(void *, struct ac97_codec_if *);
 int	fms_read_codec(void *, u_int8_t, u_int16_t *);
 int	fms_write_codec(void *, u_int8_t, u_int16_t);
 void	fms_reset_codec(void *);
-
-int	fms_allocmem(struct fms_softc *, size_t, size_t,
-			  struct fms_dma *);
 
 int
 fms_match(struct device *parent, void *match, void *aux)

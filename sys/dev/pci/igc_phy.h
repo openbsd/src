@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_phy.h,v 1.2 2022/05/11 06:14:15 kevlo Exp $	*/
+/*	$OpenBSD: igc_phy.h,v 1.3 2024/06/09 05:18:12 jsg Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -20,13 +20,8 @@ int	igc_check_downshift_generic(struct igc_hw *);
 int	igc_check_reset_block_generic(struct igc_hw *);
 int	igc_get_phy_id(struct igc_hw *);
 int	igc_phy_hw_reset_generic(struct igc_hw *);
-int	igc_phy_reset_dsp_generic(struct igc_hw *);
-int	igc_set_d3_lplu_state_generic(struct igc_hw *, bool);
 int	igc_setup_copper_link_generic(struct igc_hw *);
 int	igc_phy_has_link_generic(struct igc_hw *, uint32_t, uint32_t, bool *);
-int	igc_determine_phy_address(struct igc_hw *);
-int	igc_enable_phy_wakeup_reg_access_bm(struct igc_hw *, uint16_t *);
-int	igc_disable_phy_wakeup_reg_access_bm(struct igc_hw *, uint16_t *);
 void	igc_power_up_phy_copper(struct igc_hw *);
 void	igc_power_down_phy_copper(struct igc_hw *);
 int	igc_read_phy_reg_mdic(struct igc_hw *, uint32_t offset, uint16_t *);

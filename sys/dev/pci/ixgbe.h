@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.35 2024/04/12 19:27:43 jan Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.36 2024/06/09 05:18:12 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -268,10 +268,6 @@ int32_t ixgbe_init_hw(struct ixgbe_hw *hw);
 enum ixgbe_media_type ixgbe_get_media_type(struct ixgbe_hw *hw);
 int32_t ixgbe_identify_phy(struct ixgbe_hw *hw);
 void ixgbe_flap_tx_laser(struct ixgbe_hw *hw);
-int32_t ixgbe_setup_link(struct ixgbe_hw *hw, ixgbe_link_speed speed,
-			 bool autoneg_wait_to_complete);
-int32_t ixgbe_setup_mac_link(struct ixgbe_hw *hw, ixgbe_link_speed speed,
-			 bool autoneg_wait_to_complete);
 int32_t ixgbe_check_link(struct ixgbe_hw *hw, ixgbe_link_speed *speed,
 			 bool *link_up, bool link_up_wait_to_complete);
 

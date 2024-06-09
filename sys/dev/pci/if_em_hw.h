@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.94 2024/05/13 01:15:51 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.95 2024/06/09 05:18:12 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -408,8 +408,6 @@ struct em_host_mng_dhcp_cookie{
 };
 
 int32_t em_read_part_num(struct em_hw *hw, uint32_t *part_num);
-int32_t em_mng_write_dhcp_info(struct em_hw *hw, uint8_t *buffer,
-                                  uint16_t length);
 boolean_t em_check_mng_mode(struct em_hw *hw);
 boolean_t em_enable_tx_pkt_filtering(struct em_hw *hw);
 int32_t em_read_eeprom(struct em_hw *hw, uint16_t reg, uint16_t words, uint16_t *data);
