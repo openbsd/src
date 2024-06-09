@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2024/06/09 17:24:19 deraadt Exp $
 
 CDROM=		install${OSrev}.iso
 RELXDIR?=	/home/relx-${MACHINE}
@@ -7,7 +7,7 @@ RELDIR?=	/home/rel-${MACHINE}
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/game${OSrev}.tgz ${RELDIR}/man${OSrev}.tgz \
 		${RELDIR}/bsd ${RELDIR}/bsd.mp ${RELDIR}/bsd.rd \
-		${RELDIR}/INSTALL.${MACHINE}
+		${RELDIR}/INSTALL.${MACHINE} ${RELDIR}/BUILDINFO
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
 
