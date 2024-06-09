@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.42 2024/03/05 18:54:29 kn Exp $
+# $OpenBSD: security,v 1.43 2024/06/09 18:31:17 afresh1 Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -30,6 +30,7 @@ require File::Find;
 
 use constant {
 	BACKUP_DIR => '/var/backups/',
+	RELINK_DIR => '/usr/share/relink/',
 };
 
 $ENV{PATH} = '/bin:/usr/bin:/sbin:/usr/sbin';
@@ -574,6 +575,7 @@ sub find_special_files {
 		# SUID/SGID files
 		my $file = {};
 		if (-f _ && $mode & (S_ISUID | S_ISGID)) {
+			return if -e RELINK_DIR . $_;
 			$setuid_files->{$File::Find::name} = $file;
 			$uudecode_is_setuid = 1
 			    if basename($_) eq 'uudecode';
@@ -660,6 +662,7 @@ sub check_filelist {
 		push @{$changed{additions}}, [ @{$files->{$f}}{@fields}, $f ];
 	}
 	foreach my $f (sort keys %current) {
+		next if $mode eq 'setuid' && -e RELINK_DIR . $f;
 		push @{$changed{deletions}}, [ @{$current{$f}}{@fields}, $f ];
 	};
 
