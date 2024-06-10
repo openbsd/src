@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.21 2024/04/30 17:03:05 op Exp $	*/
+/*	$OpenBSD: msg.h,v 1.22 2024/06/10 04:10:25 jsg Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -85,25 +85,7 @@ struct que {
 	if (--(q)->que_references == 0 && (q)->que_flags & MSGQ_DYING)	\
 		wakeup_one(&(q)->que_references);			\
 } while (0)
-#endif
 
-/*
- * Structure describing a message.  The SVID doesn't suggest any
- * particular name for this structure.  There is a reference in the
- * msgop man page that reads "The structure mymsg is an example of what
- * this user defined buffer might look like, and includes the following
- * members:".  This sentence is followed by two lines equivalent
- * to the mtype and mtext field declarations below.  It isn't clear
- * if "mymsg" refers to the name of the structure type or the name of an
- * instance of the structure...
- */
-struct mymsg {
-	long	mtype;		/* message type (+ve integer) */
-	char	mtext[1];	/* message body */
-};
-
-
-#ifdef _KERNEL
 /*
  * Based on the configuration parameters described in an SVR2 (yes, two)
  * config(1m) man page.
