@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.98 2024/06/10 10:50:13 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.99 2024/06/10 12:44:06 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -277,7 +277,7 @@ x509_get_purpose(X509 *x, const char *fn)
 	BASIC_CONSTRAINTS		*bc = NULL;
 	EXTENDED_KEY_USAGE		*eku = NULL;
 	const X509_EXTENSION		*ku;
-	int				 crit, ext_flags, is_ca, ku_idx;
+	int				 crit, ext_flags, i, is_ca, ku_idx;
 	enum cert_purpose		 purpose = CERT_PURPOSE_INVALID;
 
 	if (!x509_cache_extensions(x, fn))
@@ -388,20 +388,15 @@ x509_get_purpose(X509 *x, const char *fn)
 	}
 
 	/*
-	 * XXX - this isn't quite correct: other EKU OIDs are allowed per
-	 * RFC 8209, section 3.1.3.2, e.g., anyEKU could potentially help
-	 * avoid tripping up validators that don't know about the BGPsec
-	 * router purpose. Drop check or downgrade from error to warning?
+	 * Per RFC 8209, section 3.1.3.2 the id-kp-bgpsec-router OID must be
+	 * present and others are allowed, which we don't need to recognize.
+	 * This matches RFC 5280, section 4.2.1.12.
 	 */
-	if (sk_ASN1_OBJECT_num(eku) != 1) {
-		warnx("%s: EKU: expected 1 purpose, have %d", fn,
-		    sk_ASN1_OBJECT_num(eku));
-		goto out;
-	}
-
-	if (OBJ_cmp(bgpsec_oid, sk_ASN1_OBJECT_value(eku, 0)) == 0) {
-		purpose = CERT_PURPOSE_BGPSEC_ROUTER;
-		goto out;
+	for (i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
+		if (OBJ_cmp(bgpsec_oid, sk_ASN1_OBJECT_value(eku, i)) == 0) {
+			purpose = CERT_PURPOSE_BGPSEC_ROUTER;
+			break;
+		}
 	}
 
  out:
