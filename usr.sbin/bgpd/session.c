@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.479 2024/05/29 10:38:24 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.480 2024/06/10 12:51:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1254,7 +1254,11 @@ get_alternate_addr(struct bgpd_addr *local, struct bgpd_addr *remote,
 		    match->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (sa_equal(local, match->ifa_addr)) {
-			if (match->ifa_flags & IFF_POINTOPOINT &&
+			if (remote->aid == AID_INET6 &&
+			    IN6_IS_ADDR_LINKLOCAL(&remote->v6)) {
+				/* IPv6 LLA are by definition connected */
+				connected = 1;
+			} else if (match->ifa_flags & IFF_POINTOPOINT &&
 			    match->ifa_dstaddr != NULL) {
 				if (sa_equal(remote, match->ifa_dstaddr))
 					connected = 1;
