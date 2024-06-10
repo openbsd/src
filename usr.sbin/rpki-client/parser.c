@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.139 2024/06/07 13:24:35 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.140 2024/06/10 11:49:29 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -686,7 +686,6 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 	a = find_issuer(file, entp->certid, gbr->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
-	/* return value can be ignored since nothing happens here */
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		X509_free(x509);
