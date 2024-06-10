@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.38 2024/06/09 16:25:28 jan Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.39 2024/06/10 18:21:59 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -844,7 +844,8 @@ again:
 			break;
 		}
 		if (r != 0)
-			panic("enqueue_prep for a tx buffer: %d", r);
+			panic("%s: enqueue_prep for tx buffer: %d",
+			    sc->sc_dev.dv_xname, r);
 
 		hdr = &sc->sc_tx_hdrs[slot];
 		memset(hdr, 0, sc->sc_hdr_size);
@@ -1025,7 +1026,8 @@ vio_populate_rx_mbufs(struct vio_softc *sc)
 		if (r == EAGAIN)
 			break;
 		if (r != 0)
-			panic("enqueue_prep for rx buffers: %d", r);
+			panic("%s: enqueue_prep for rx buffer: %d",
+			    sc->sc_dev.dv_xname, r);
 		if (sc->sc_rx_mbufs[slot] == NULL) {
 			r = vio_add_rx_mbuf(sc, slot);
 			if (r != 0) {
@@ -1341,10 +1343,12 @@ vio_ctrl_rx(struct vio_softc *sc, int cmd, int onoff)
 
 	r = virtio_enqueue_prep(vq, &slot);
 	if (r != 0)
-		panic("%s: control vq busy!?", sc->sc_dev.dv_xname);
+		panic("%s: %s virtio_enqueue_prep: control vq busy",
+		    sc->sc_dev.dv_xname, __func__);
 	r = virtio_enqueue_reserve(vq, slot, 3);
 	if (r != 0)
-		panic("%s: control vq busy!?", sc->sc_dev.dv_xname);
+		panic("%s: %s virtio_enqueue_reserve: control vq busy",
+		    sc->sc_dev.dv_xname, __func__);
 	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_cmd,
 	    sizeof(*sc->sc_ctrl_cmd), 1);
 	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_rx,
@@ -1463,10 +1467,12 @@ vio_set_rx_filter(struct vio_softc *sc)
 
 	r = virtio_enqueue_prep(vq, &slot);
 	if (r != 0)
-		panic("%s: control vq busy!?", sc->sc_dev.dv_xname);
+		panic("%s: %s virtio_enqueue_prep: control vq busy",
+		    sc->sc_dev.dv_xname, __func__);
 	r = virtio_enqueue_reserve(vq, slot, 4);
 	if (r != 0)
-		panic("%s: control vq busy!?", sc->sc_dev.dv_xname);
+		panic("%s: %s virtio_enqueue_reserve: control vq busy",
+		    sc->sc_dev.dv_xname, __func__);
 	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_cmd,
 	    sizeof(*sc->sc_ctrl_cmd), 1);
 	VIO_DMAMEM_ENQUEUE(sc, vq, slot, sc->sc_ctrl_mac_tbl_uc,
