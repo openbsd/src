@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.116 2024/05/24 12:57:20 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.117 2024/06/11 10:38:40 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -366,9 +366,8 @@ mft_parse_econtent(const char *fn, struct mft *mft, const unsigned char *d,
 
 	if (OBJ_obj2nid(mft_asn1->fileHashAlg) != NID_sha256) {
 		warnx("%s: RFC 6486 section 4.2.1: fileHashAlg: "
-		    "want SHA256 object, have %s (NID %d)", fn,
-		    ASN1_tag2str(OBJ_obj2nid(mft_asn1->fileHashAlg)),
-		    OBJ_obj2nid(mft_asn1->fileHashAlg));
+		    "want SHA256 object, have %s", fn,
+		    nid2str(OBJ_obj2nid(mft_asn1->fileHashAlg)));
 		goto out;
 	}
 

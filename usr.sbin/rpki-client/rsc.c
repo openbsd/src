@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.34 2024/02/21 09:17:06 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.35 2024/06/11 10:38:40 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -253,8 +253,8 @@ rsc_check_digesttype(const char *fn, struct rsc *rsc, const X509_ALGOR *alg)
 	}
 
 	if ((nid = OBJ_obj2nid(obj)) != NID_sha256) {
-		warnx("%s: RSC DigestAlgorithmIdentifier: want SHA256, have %s"
-		    " (NID %d)", fn, ASN1_tag2str(nid), nid);
+		warnx("%s: RSC DigestAlgorithmIdentifier: want SHA256, have %s",
+		    fn, nid2str(nid));
 		return 0;
 	}
 
