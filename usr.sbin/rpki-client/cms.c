@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.46 2024/06/08 13:28:35 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.47 2024/06/11 12:44:00 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <assert.h>
 #include <err.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -287,7 +286,21 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	/* Compare content-type with eContentType */
 	octype = CMS_signed_get0_data_by_OBJ(si, cnt_type_oid,
 	    -3, V_ASN1_OBJECT);
-	assert(octype != NULL);
+	/*
+	 * Since lastpos == -3, octype can be NULL for 4 reasons:
+	 * 1. requested attribute OID is missing
+	 * 2. signedAttrs contains multiple attributes with requested OID
+	 * 3. attribute with requested OID has multiple values (malformed)
+	 * 4. X509_ATTRIBUTE_get0_data() returns NULL. This is also malformed,
+	 *    but libcrypto will create, sign, and verify such objects.
+	 * Reasons 1 and 2 are excluded because has_ct == 1. We don't know which
+	 * one of 3 or 4 we hit. Doesn't matter, drop the garbage on the floor.
+	 */
+	if (octype == NULL) {
+		warnx("%s: RFC 6488, section 2.1.6.4.1: malformed value "
+		    "for content-type attribute", fn);
+		goto out;
+	}
 	if (OBJ_cmp(obj, octype) != 0) {
 		OBJ_obj2txt(buf, sizeof(buf), obj, 1);
 		OBJ_obj2txt(obuf, sizeof(obuf), octype, 1);
