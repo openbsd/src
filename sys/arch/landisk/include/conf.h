@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.7 2022/06/28 14:43:50 visa Exp $	*/
+/*	$OpenBSD: conf.h,v 1.8 2024/06/11 09:55:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,6 @@
 
 #ifndef _MACHINE_CONF_H_
 #define	_MACHINE_CONF_H_
- 
 
 #include <sys/conf.h>
 
@@ -51,27 +50,11 @@ cdev_decl(mm);
 
 bdev_decl(wd);
 cdev_decl(wd);
-bdev_decl(fd);
-cdev_decl(fd);
 
 /* Character device declarations */
 
-/* open, close, read, write, ioctl */
-#define	cdev_rtc_init(c,n)	cdev__ocrwi_init(c,n)
-
-/* open, close, ioctl, kqueue */
-#define cdev_apm_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, \
-	(dev_type_mmap((*))) enodev, 0, 0, dev_init(c,n,kqfilter) }
-
 cdev_decl(com);
-cdev_decl(rtc);
-cdev_decl(wsfont);
 cdev_decl(pci);
-cdev_decl(apm);
-cdev_decl(spkr);
 cdev_decl(scif);
 
 #endif	/* _MACHINE_CONF_H_ */
