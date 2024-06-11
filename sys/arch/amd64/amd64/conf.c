@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.78 2023/03/06 17:20:05 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.79 2024/06/11 03:28:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -117,14 +117,6 @@ cdev_decl(pcmcia);
 #endif
 #include "spkr.h"
 cdev_decl(spkr);
-#if 0 /* old (non-wsmouse) drivers */
-#include "mms.h"
-cdev_decl(mms);
-#include "lms.h"
-cdev_decl(lms);
-#include "opms.h"
-cdev_decl(pms);
-#endif
 #include "cy.h"
 cdev_decl(cy);
 #include "tun.h"

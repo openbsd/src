@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.20 2022/06/28 14:43:50 visa Exp $	*/
+/*	$OpenBSD: conf.h,v 1.21 2024/06/11 03:28:42 jsg Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
-cdev_decl(pms);
 
 bdev_decl(fd);
 cdev_decl(fd);
@@ -47,12 +46,6 @@ cdev_decl(fd);
 	(dev_type_mmap((*))) enodev, 0, 0, dev_init(c,n,kqfilter) }
 
 cdev_decl(spkr);
-
-cdev_decl(mms);
-
-cdev_decl(lms);
-
-cdev_decl(pms);
 
 cdev_decl(joy);
 
