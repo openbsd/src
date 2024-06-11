@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.62 2024/05/29 07:24:26 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.63 2024/06/11 10:06:35 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -23150,7 +23150,8 @@ qwx_init_task(void *arg)
 	int s = splnet();
 	rw_enter_write(&sc->ioctl_rwl);
 
-	qwx_stop(ifp);
+	if (ifp->if_flags & IFF_RUNNING)
+		qwx_stop(ifp);
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP)
 		qwx_init(ifp);

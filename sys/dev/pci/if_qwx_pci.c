@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.19 2024/05/28 09:26:55 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.20 2024/06/11 10:06:35 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -4091,7 +4091,9 @@ qwx_pci_intr(void *arg)
 #else
 		printf("%s: fatal firmware error\n",
 		   sc->sc_dev.dv_xname);
-		if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags)) {
+		if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags) &&
+		    (sc->sc_ic.ic_if.if_flags & (IFF_UP | IFF_RUNNING)) ==
+		    (IFF_UP | IFF_RUNNING)) {
 			/* Try to reset the device. */
 			set_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
 			task_add(systq, &sc->init_task);
