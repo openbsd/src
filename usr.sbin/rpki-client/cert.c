@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.145 2024/06/10 10:50:13 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.146 2024/06/11 07:27:14 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -797,9 +797,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	int			 i, extsz;
 	X509			*x = NULL;
 	X509_EXTENSION		*ext = NULL;
-	const X509_ALGOR	*palg;
 	const ASN1_BIT_STRING	*piuid = NULL, *psuid = NULL;
-	const ASN1_OBJECT	*cobj;
 	ASN1_OBJECT		*obj;
 	EVP_PKEY		*pkey;
 	int			 nid, ip, as, sia, cp, crldp, aia, aki, ski,
@@ -832,13 +830,10 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	X509_get0_signature(NULL, &palg, x);
-	if (palg == NULL) {
-		warnx("%s: X509_get0_signature", fn);
+	if ((nid = X509_get_signature_nid(x)) == NID_undef) {
+		warnx("%s: unknown signature type", fn);
 		goto out;
 	}
-	X509_ALGOR_get0(&cobj, NULL, NULL, palg);
-	nid = OBJ_obj2nid(cobj);
 	if (experimental && nid == NID_ecdsa_with_SHA256) {
 		if (verbose)
 			warnx("%s: P-256 support is experimental", fn);

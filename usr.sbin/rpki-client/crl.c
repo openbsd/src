@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.37 2024/06/05 13:36:28 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.38 2024/06/11 07:27:14 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -165,9 +165,7 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	const unsigned char	*oder;
 	struct crl		*crl;
-	const X509_ALGOR	*palg;
 	const X509_NAME		*name;
-	const ASN1_OBJECT	*cobj;
 	const ASN1_TIME		*at;
 	int			 count, nid, rc = 0;
 
@@ -200,13 +198,10 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 	if (!x509_valid_name(fn, "issuer", name))
 		goto out;
 
-	X509_CRL_get0_signature(crl->x509_crl, NULL, &palg);
-	if (palg == NULL) {
-		warnx("%s: X509_CRL_get0_signature", fn);
+	if ((nid = X509_CRL_get_signature_nid(crl->x509_crl)) == NID_undef) {
+		warnx("%s: unknown signature type", fn);
 		goto out;
 	}
-	X509_ALGOR_get0(&cobj, NULL, NULL, palg);
-	nid = OBJ_obj2nid(cobj);
 	if (experimental && nid == NID_ecdsa_with_SHA256) {
 		if (verbose)
 			warnx("%s: P-256 support is experimental", fn);
