@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.75 2022/09/02 20:06:56 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.76 2024/06/11 06:11:50 jsg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -78,9 +78,6 @@ int nblkdev = nitems(bdevsw);
 
 #include "pty.h"
 #include "zstty.h"
-
-cdev_decl(kbd);
-cdev_decl(ms);
 
 #include "com.h"
 cdev_decl(com);
