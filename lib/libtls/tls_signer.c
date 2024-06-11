@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.12 2024/03/28 06:55:02 joshua Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.13 2024/06/11 16:35:24 op Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -16,10 +16,19 @@
  */
 
 #include <limits.h>
+#include <pthread.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <openssl/ecdsa.h>
+#include <openssl/bio.h>
+#include <openssl/ec.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/rsa.h>
+#include <openssl/x509.h>
 
 #include "tls.h"
 #include "tls_internal.h"
