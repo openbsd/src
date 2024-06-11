@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.177 2024/06/11 03:28:42 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.178 2024/06/11 09:21:32 jsg Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -140,7 +140,6 @@ cdev_decl(cztty);
 #include "nvram.h"
 cdev_decl(nvram);
 #include "drm.h"
-cdev_decl(drm);
 
 #include "wsdisplay.h"
 #include "wskbd.h"

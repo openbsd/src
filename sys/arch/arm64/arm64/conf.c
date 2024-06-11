@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2023/03/06 17:20:06 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2024/06/11 09:21:32 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -100,7 +100,6 @@ cdev_decl(lpt);
 #include "ucom.h"
 #include "radio.h"
 #include "drm.h"
-cdev_decl(drm);
 
 #include "wsdisplay.h"
 #include "wskbd.h"

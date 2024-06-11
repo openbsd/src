@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.89 2024/03/29 21:17:13 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.90 2024/06/11 09:21:32 jsg Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -84,7 +84,6 @@
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc64 */
 
 #include "drm.h"
-cdev_decl(drm);
 
 #include "wsdisplay.h"
 #include "wskbd.h"

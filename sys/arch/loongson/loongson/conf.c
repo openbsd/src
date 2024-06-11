@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.34 2023/04/13 02:19:05 jsg Exp $ */
+/*	$OpenBSD: conf.c,v 1.35 2024/06/11 09:21:32 jsg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,6 @@ cdev_decl(fd);
 #include "com.h"
 cdev_decl(com);
 #include "drm.h"
-cdev_decl(drm);
 #include "lpt.h"
 cdev_decl(lpt);
 #include "ch.h"

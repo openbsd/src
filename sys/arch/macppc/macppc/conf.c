@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.76 2024/06/11 06:11:50 jsg Exp $ */
+/*	$OpenBSD: conf.c,v 1.77 2024/06/11 09:21:32 jsg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -102,7 +102,6 @@ cdev_decl(com);
 
 #include "apm.h"
 #include "drm.h"
-cdev_decl(drm);
 
 #include "wsmux.h"
 

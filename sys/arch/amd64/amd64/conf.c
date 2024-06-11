@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.79 2024/06/11 03:28:42 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.80 2024/06/11 09:21:32 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -141,7 +141,6 @@ cdev_decl(cztty);
 #include "nvram.h"
 cdev_decl(nvram);
 #include "drm.h"
-cdev_decl(drm);
 #include "viocon.h"
 cdev_decl(viocon);
 
