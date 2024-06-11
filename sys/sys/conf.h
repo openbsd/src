@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.162 2024/06/10 04:59:15 jsg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.163 2024/06/11 01:49:17 jsg Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -581,8 +581,6 @@ cdev_decl(ch);
 
 bdev_decl(sd);
 cdev_decl(sd);
-
-cdev_decl(ses);
 
 cdev_decl(st);
 
