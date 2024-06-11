@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.59 2023/10/24 13:20:09 claudio Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.60 2024/06/11 15:44:55 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -836,6 +836,10 @@ cpu_opp_mountroot(struct device *self)
 			min = ot->ot_opp_hz_min;
 			max = ot->ot_opp_hz_max;
 			level_hz = clock_get_frequency(ci->ci_node, NULL);
+			if (level_hz < min)
+				level_hz = min;
+			if (level_hz > max)
+				level_hz = max;
 			level = howmany(100 * (level_hz - min), (max - min));
 		}
 
