@@ -1,5 +1,6 @@
-/*	$OpenBSD: crl.c,v 1.38 2024/06/11 07:27:14 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.39 2024/06/11 07:30:47 tb Exp $ */
 /*
+ * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
