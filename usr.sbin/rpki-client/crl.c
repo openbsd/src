@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.39 2024/06/11 07:30:47 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.40 2024/06/11 15:33:46 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -132,6 +132,7 @@ crl_check_revoked(const char *fn, X509_CRL *x509_crl)
 		 * XXX - as of May 2024, ~15% of RPKI CRLs fail this check due
 		 * to a bug in rpki-rs/Krill. So silently accept this for now.
 		 * https://github.com/NLnetLabs/krill/issues/1197
+		 * https://github.com/NLnetLabs/rpki-rs/pull/295
 		 */
 		if (verbose > 1)
 			warnx("%s: RFC 5280, section 5.1.2.6: revoked "
