@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.47 2024/06/11 12:44:00 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.48 2024/06/11 13:09:02 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -291,7 +291,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	 * 1. requested attribute OID is missing
 	 * 2. signedAttrs contains multiple attributes with requested OID
 	 * 3. attribute with requested OID has multiple values (malformed)
-	 * 4. X509_ATTRIBUTE_get0_data() returns NULL. This is also malformed,
+	 * 4. X509_ATTRIBUTE_get0_data() returned NULL. This is also malformed,
 	 *    but libcrypto will create, sign, and verify such objects.
 	 * Reasons 1 and 2 are excluded because has_ct == 1. We don't know which
 	 * one of 3 or 4 we hit. Doesn't matter, drop the garbage on the floor.
