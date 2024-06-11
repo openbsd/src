@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.430 2024/06/02 11:08:41 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.431 2024/06/11 17:35:26 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
+#include <sys/reboot.h>
 #include <sys/sched.h>
 
 #include <machine/conf.h>
@@ -726,8 +727,10 @@ acpi_pci_min_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 		if (pdev->bus == bus && pdev->dev == dev && pdev->fun == fun) {
 			switch (acpi_softc->sc_state) {
 			case ACPI_STATE_S0:
-				defaultstate = PCI_PMCSR_STATE_D3;
-				state = pdev->_s0w;
+				if (boothowto & RB_POWERDOWN) {
+					defaultstate = PCI_PMCSR_STATE_D3;
+					state = pdev->_s0w;
+				}
 				break;
 			case ACPI_STATE_S3:
 				defaultstate = PCI_PMCSR_STATE_D3;
