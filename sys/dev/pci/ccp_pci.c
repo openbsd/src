@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_pci.c,v 1.9 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: ccp_pci.c,v 1.10 2024/06/12 12:54:54 bluhm Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -32,6 +32,11 @@
 
 int	ccp_pci_match(struct device *, void *, void *);
 void	ccp_pci_attach(struct device *, struct device *, void *);
+
+#ifdef __amd64__
+void	psp_pci_attach(struct device *, struct device *, void *);
+int	psp_pci_intr(void *);
+#endif
 
 const struct cfattach ccp_pci_ca = {
 	sizeof(struct ccp_softc),
@@ -69,10 +74,67 @@ ccp_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (pci_mapreg_map(pa, CCP_PCI_BAR, memtype, 0,
-	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0) != 0) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_size, 0) != 0) {
 		printf(": cannot map registers\n");
 		return;
 	}
 
+#ifdef __amd64__
+	psp_pci_attach(parent, self, aux);
+#endif
+
 	ccp_attach(sc);
 }
+
+#ifdef __amd64__
+void
+psp_pci_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct ccp_softc *sc = (struct ccp_softc *)self;
+	struct pci_attach_args *pa = aux;
+	pci_intr_handle_t ih;
+	const char *intrstr = NULL;
+
+	sc->sc_dmat = pa->pa_dmat;
+
+	sc->sc_capabilities = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    PSP_REG_CAPABILITIES);
+
+	/* clear and disable interrupts */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTEN, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTSTS, -1);
+
+	if (pci_intr_map_msix(pa, 0, &ih) != 0 &&
+	    pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
+		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
+		return;
+	}
+
+	intrstr = pci_intr_string(pa->pa_pc, ih);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, psp_pci_intr,
+	    sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih != NULL)
+		printf(": %s", intrstr);
+
+	if (psp_attach(sc)) {
+		/* enable interrupts */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTEN, -1);
+	}
+}
+
+int
+psp_pci_intr(void *arg)
+{
+	struct ccp_softc *sc = arg;
+	uint32_t status;
+
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTSTS);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTSTS, status);
+
+	if (sc->sc_sev_intr)
+		return (sc->sc_sev_intr(sc, status));
+
+	return (1);
+}
+#endif	/* __amd64__ */
