@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.147 2024/06/12 04:01:20 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.148 2024/06/12 10:03:09 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -34,7 +34,7 @@ extern ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
 extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
 
-static int certid = TALSZ_MAX;
+int certid = TALSZ_MAX;
 
 /*
  * Append an IP address structure to our list of results.
@@ -1271,8 +1271,12 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 		cert->certid = cert->talid;
 	} else {
 		cert->certid = ++certid;
-		if (certid > CERTID_MAX)
-			errx(1, "%s: too many certificates in store", fn);
+		if (certid > CERTID_MAX) {
+			if (certid == CERTID_MAX + 1)
+				warnx("%s: too many certificates in store", fn);
+			free(na);
+			return NULL;
+		}
 		na->depth = issuer->depth + 1;
 	}
 

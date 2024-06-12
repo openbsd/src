@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.140 2024/06/10 11:49:29 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.141 2024/06/12 10:03:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -37,6 +37,8 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+extern int certid;
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
@@ -98,7 +100,9 @@ find_issuer(const char *fn, int id, const char *aki, const char *mftaki)
 
 	a = auth_find(&auths, id);
 	if (a == NULL) {
-		warnx("%s: RFC 6487: unknown cert with SKI %s", fn, aki);
+		if (certid <= CERTID_MAX)
+			warnx("%s: RFC 6487: unknown cert with SKI %s", fn,
+			    aki);
 		return NULL;
 	}
 
@@ -171,6 +175,11 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 		return NULL;
 
 	a = find_issuer(file, entp->certid, roa->aki, entp->mftaki);
+	if (a == NULL) {
+		X509_free(x509);
+		roa_free(roa);
+		return NULL;
+	}
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -206,6 +215,11 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 		return NULL;
 
 	a = find_issuer(file, entp->certid, spl->aki, entp->mftaki);
+	if (a == NULL) {
+		X509_free(x509);
+		spl_free(spl);
+		return NULL;
+	}
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -370,6 +384,8 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 		*crl = parse_load_crl_from_mft(entp, mft, DIR_VALID, crlfile);
 
 	a = find_issuer(file, entp->certid, mft->aki, NULL);
+	if (a == NULL)
+		goto err;
 	if (!valid_x509(file, ctx, x509, a, *crl, errstr))
 		goto err;
 	X509_free(x509);
@@ -494,7 +510,8 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 				err2 = err1;
 			if (err2 == NULL)
 				err2 = "no valid manifest available";
-			warnx("%s: %s", file2, err2);
+			if (certid <= CERTID_MAX)
+				warnx("%s: %s", file2, err2);
 		}
 
 		mft_free(mft1);
@@ -542,6 +559,10 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 		return NULL;
 
 	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
+	if (a == NULL) {
+		cert_free(cert);
+		return NULL;
+	}
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr) ||
@@ -684,6 +705,11 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 		return NULL;
 
 	a = find_issuer(file, entp->certid, gbr->aki, entp->mftaki);
+	if (a == NULL) {
+		X509_free(x509);
+		gbr_free(gbr);
+		return NULL;
+	}
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -716,6 +742,11 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 		return NULL;
 
 	a = find_issuer(file, entp->certid, aspa->aki, entp->mftaki);
+	if (a == NULL) {
+		X509_free(x509);
+		aspa_free(aspa);
+		return NULL;
+	}
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -751,6 +782,8 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 		return NULL;
 
 	a = find_issuer(file, entp->certid, tak->aki, entp->mftaki);
+	if (a == NULL)
+		goto out;
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -1075,6 +1108,9 @@ proc_parser(int fd)
 	msgbuf_clear(&msgq);
 
 	ibuf_free(inbuf);
+
+	if (certid > CERTID_MAX)
+		errx(1, "processing incomplete: too many certificates");
 
 	exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.45 2024/06/08 13:34:59 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.46 2024/06/12 10:03:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -191,6 +191,10 @@ parse_load_certchain(char *uri)
 	for (i = 0; i < MAX_CERT_DEPTH; i++) {
 		if ((cert = uripath_lookup(uri)) != NULL) {
 			a = auth_find(&auths, cert->certid);
+			if (a == NULL) {
+				warnx("failed to find issuer for %s", uri);
+				goto fail;
+			}
 			break;
 		}
 		filestack[i] = uri;
