@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.111 2024/03/02 10:59:41 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.112 2024/06/12 03:55:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -693,8 +693,8 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 #endif
 
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
-void		X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
-		    const ASN1_BIT_STRING **psuid);
+void		X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **issuerUID,
+		    const ASN1_BIT_STRING **subjectUID);
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 int 		X509_set_version(X509 *x, long version);
 long		X509_get_version(const X509 *x);
