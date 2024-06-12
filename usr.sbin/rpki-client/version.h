@@ -1,3 +1,3 @@
-/* $OpenBSD: version.h,v 1.22 2024/03/01 16:27:34 tb Exp $ */
+/* $OpenBSD: version.h,v 1.23 2024/06/12 04:11:19 tb Exp $ */
 
-#define RPKI_VERSION	"9.0"
+#define RPKI_VERSION	"9.1"
