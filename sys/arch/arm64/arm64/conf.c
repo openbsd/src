@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2024/06/11 09:21:32 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 2024/06/12 02:50:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -236,6 +236,8 @@ struct cdevsw	cdevsw[] =
 };
 int	nchrdev = nitems(cdevsw);
 
+int	mem_no = 2;	/* major device number of memory special file */
+
 /*
  * Swapdev is a fake device implemented
  * in sw.c used only internally to get to swstrategy.
@@ -245,7 +247,7 @@ int	nchrdev = nitems(cdevsw);
  * confuse, e.g. the hashing routines. Instead, /dev/drum is
  * provided as a character (raw) device.
  */
-dev_t	swapdev = makedev(BMAJ_SW, 0);
+dev_t	swapdev = makedev(1, 0);
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
@@ -253,8 +255,7 @@ dev_t	swapdev = makedev(BMAJ_SW, 0);
 int
 iskmemdev(dev_t dev)
 {
-
-	return (major(dev) == CMAJ_MM && minor(dev) < 2);
+	return (major(dev) == mem_no && minor(dev) < 2);
 }
 
 /*
@@ -263,14 +264,13 @@ iskmemdev(dev_t dev)
 int
 iszerodev(dev_t dev)
 {
-
-	return (major(dev) == CMAJ_MM && minor(dev) == 12);
+	return (major(dev) == mem_no && minor(dev) == 12);
 }
 
 dev_t
 getnulldev(void)
 {
-	return makedev(CMAJ_MM, 2);
+	return makedev(mem_no, 2);
 }
 
 const int chrtoblktbl[] = {
@@ -347,8 +347,8 @@ dev_rawpart(struct device *dv)
 
 	switch (majdev) {
 	/* add here any device you want to be checksummed on boot */
-	case BMAJ_WD:
-	case BMAJ_SD:
+	case 0:		/* wd */
+	case 4:		/* sd */
 		return (MAKEDISKDEV(majdev, dv->dv_unit, RAW_PART));
 		break;
 	default:

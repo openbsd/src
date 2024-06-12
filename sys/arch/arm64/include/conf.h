@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.4 2022/06/28 14:43:50 visa Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 2024/06/12 02:50:25 jsg Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -57,44 +57,5 @@ cdev_decl(openprom);
 
 cdev_decl(apm);
 cdev_decl(acpiapm);
-
-/*
- * These numbers have to be in sync with bdevsw/cdevsw.
- */
-
-#define BMAJ_WD		0
-#define BMAJ_SW		1
-#define BMAJ_SD		4
-#define BMAJ_ST		5
-
-#define CMAJ_MM		2
-#define CMAJ_PTS	5
-#define CMAJ_PTC	6
-#define CMAJ_COM	8
-#define CMAJ_WSDISPLAY	12
-#define CMAJ_ST		14
-#define CMAJ_LPT	16
-#define CMAJ_CH		17
-#define CMAJ_UK		20
-#define CMAJ_BPF	23
-#define CMAJ_TUN	40
-#define CMAJ_AUDIO	42
-#define CMAJ_VIDEO	44
-#define CMAJ_BKTR	49
-#define CMAJ_MIDI	52
-#define CMAJ_USB	61
-#define CMAJ_UHID	62
-#define CMAJ_UGEN	63
-#define CMAJ_ULPT	64
-#define CMAJ_UCOM	66
-#define CMAJ_WSKBD	67
-#define CMAJ_WSMOUSE	68
-#ifdef USER_PCICONF
-#define CMAJ_PCI	72
-#endif
-#define CMAJ_RADIO	76
-#define CMAJ_DRM	87
-#define CMAJ_GPIO	88
-#define CMAJ_VSCSI	89
 
 #endif	/* _MACHINE_CONF_H_ */
