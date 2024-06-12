@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.146 2024/06/11 07:27:14 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.147 2024/06/12 04:01:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -797,7 +797,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	int			 i, extsz;
 	X509			*x = NULL;
 	X509_EXTENSION		*ext = NULL;
-	const ASN1_BIT_STRING	*piuid = NULL, *psuid = NULL;
+	const ASN1_BIT_STRING	*issuer_uid = NULL, *subject_uid = NULL;
 	ASN1_OBJECT		*obj;
 	EVP_PKEY		*pkey;
 	int			 nid, ip, as, sia, cp, crldp, aia, aki, ski,
@@ -843,8 +843,8 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	X509_get0_uids(x, &piuid, &psuid);
-	if (piuid != NULL || psuid != NULL) {
+	X509_get0_uids(x, &issuer_uid, &subject_uid);
+	if (issuer_uid != NULL || subject_uid != NULL) {
 		warnx("%s: issuer or subject unique identifiers not allowed",
 		    fn);
 		goto out;
