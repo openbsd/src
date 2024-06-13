@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.4 2024/06/12 12:54:54 bluhm Exp $ */
+/*	$OpenBSD: ccp.c,v 1.5 2024/06/13 17:59:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -58,7 +58,7 @@ ccp_attach(struct ccp_softc *sc)
 	timeout_set(&sc->sc_tick, ccp_rng, sc);
 	ccp_rng(sc);
 
-	if (sc->sc_psp_attached)
+	if (sc->sc_psp_attached != 0)
 		printf(", RNG\n");
 	else
 		printf(": RNG\n");
@@ -127,8 +127,6 @@ psp_attach(struct ccp_softc *sc)
 	if (psp_get_pstatus(&pst) || pst.state != 0)
 		goto fail_3;
 
-	printf(", SEV");
-
 	/*
          * create and map Trusted Memory Region (TMR); size 1 Mbyte,
          * needs to be aligend to 1 Mbyte.
@@ -158,6 +156,8 @@ psp_attach(struct ccp_softc *sc)
 	if (psp_init(&init))
 		goto fail_7;
 
+	printf(", SEV");
+
 	psp_get_pstatus(&pst);
 	if ((pst.state == 1) && (pst.cfges_build & 0x1))
 		printf(", SEV-ES");
@@ -184,6 +184,7 @@ fail_0:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmd_map);
 
 	ccp_softc = NULL;
+	sc->sc_psp_attached = -1;
 
 	return (0);
 }
@@ -240,11 +241,8 @@ ccp_docmd(struct ccp_softc *sc, int cmd, uint64_t paddr)
 
 	/* Did PSP sent a response code? */
 	if (status & PSP_CMDRESP_RESPONSE) {
-		if ((status & PSP_STATUS_MASK) != PSP_STATUS_SUCCESS) {
-			printf("%s: command failed: 0x%x\n", __func__,
-			    (status & PSP_STATUS_MASK));
+		if ((status & PSP_STATUS_MASK) != PSP_STATUS_SUCCESS)
 			return (1);
-		}
 	}
 
 	return (0);
@@ -265,11 +263,10 @@ psp_init(struct psp_init *uinit)
 	init->tmr_length = uinit->tmr_length;
 
 	ret = ccp_docmd(sc, PSP_CMD_INIT, sc->sc_cmd_map->dm_segs[0].ds_addr);
-
-	wbinvd_on_all_cpus();
-
 	if (ret != 0)
 		return (EIO);
+
+	wbinvd_on_all_cpus();
 
 	return (0);
 }

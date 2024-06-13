@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccpvar.h,v 1.2 2024/06/12 12:54:54 bluhm Exp $ */
+/*	$OpenBSD: ccpvar.h,v 1.3 2024/06/13 17:59:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -26,7 +26,6 @@ struct ccp_softc {
 
 	struct timeout		sc_tick;
 
-	bus_size_t		sc_size;
 	int			sc_psp_attached;
 
 #ifdef __amd64__

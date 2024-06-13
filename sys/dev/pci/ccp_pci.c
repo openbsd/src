@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_pci.c,v 1.10 2024/06/12 12:54:54 bluhm Exp $ */
+/*	$OpenBSD: ccp_pci.c,v 1.11 2024/06/13 17:59:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -74,7 +74,7 @@ ccp_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (pci_mapreg_map(pa, CCP_PCI_BAR, memtype, 0,
-	    &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_size, 0) != 0) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0) != 0) {
 		printf(": cannot map registers\n");
 		return;
 	}
@@ -107,7 +107,6 @@ psp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_intr_map_msix(pa, 0, &ih) != 0 &&
 	    pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 		return;
 	}
 
@@ -117,10 +116,14 @@ psp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ih != NULL)
 		printf(": %s", intrstr);
 
-	if (psp_attach(sc)) {
-		/* enable interrupts */
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTEN, -1);
+	if (!psp_attach(sc)) {
+		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+		return;
 	}
+
+	/* enable interrupts */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PSP_REG_INTEN, -1);
 }
 
 int
