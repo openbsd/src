@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.113 2024/06/03 12:48:25 claudio Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.114 2024/06/13 18:05:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1519,6 +1519,12 @@ acpi_format_exception(acpi_status status)
 	default:
 		return "unknown";
 	}
+}
+
+int
+acpi_target_system_state(void)
+{
+	return acpi_softc->sc_state;
 }
 
 #endif

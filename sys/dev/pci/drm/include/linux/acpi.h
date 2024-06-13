@@ -86,4 +86,6 @@ struct notifier_block;
 int register_acpi_notifier(struct notifier_block *);
 int unregister_acpi_notifier(struct notifier_block *);
 
+int acpi_target_system_state(void);
+
 #endif
