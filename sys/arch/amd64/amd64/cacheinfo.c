@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.14 2024/05/08 18:00:55 guenther Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.15 2024/06/13 02:19:20 guenther Exp $	*/
 
 /*
  * Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
@@ -246,8 +246,8 @@ intel_print_cacheinfo(struct cpu_info *ci, u_int fn)
 			}
 			/* print lower levels that were the same */
 			for (i = 0; i < leaf; i++)
-				intel_print_one_cache(ci, i, prev_cache[leaf][0],
-				    prev_cache[leaf][1], prev_cache[leaf][2]);
+				intel_print_one_cache(ci, i, prev_cache[i][0],
+				    prev_cache[i][1], prev_cache[i][2]);
 			/* print this (differing) level and higher levels */
 			goto printit;
 		}
