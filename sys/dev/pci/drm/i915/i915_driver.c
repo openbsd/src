@@ -2308,19 +2308,25 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	intel_device_info_driver_create(dev_priv, dev->pdev->device, info);
 
 	mmio_bar = (GRAPHICS_VER(dev_priv) == 2) ? 0x14 : 0x10;
-	/* Before gen4, the registers and the GTT are behind different BARs.
+
+	/* from intel_uncore_setup_mmio() */
+
+	/*
+	 * Before gen4, the registers and the GTT are behind different BARs.
 	 * However, from gen4 onwards, the registers and the GTT are shared
 	 * in the same BAR, so we want to restrict this ioremap from
 	 * clobbering the GTT which we want ioremap_wc instead. Fortunately,
 	 * the register BAR remains the same size for all the earlier
 	 * generations up to Ironlake.
+	 * For dgfx chips register range is expanded to 4MB, and this larger
+	 * range is also used for integrated gpus beginning with Meteor Lake.
 	 */
-	if (GRAPHICS_VER(dev_priv) < 5)
-		mmio_size = 512 * 1024;
-	else if (IS_DGFX(dev_priv))
+	if (IS_DGFX(dev_priv) || GRAPHICS_VER_FULL(dev_priv) >= IP_VER(12, 70))
 		mmio_size = 4 * 1024 * 1024;
-	else
+	else if (GRAPHICS_VER(dev_priv) >= 5)
 		mmio_size = 2 * 1024 * 1024;
+	else
+		mmio_size = 512 * 1024;
 
 	mmio_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, mmio_bar);
 	if (pci_mapreg_map(pa, mmio_bar, mmio_type, BUS_SPACE_MAP_LINEAR,
