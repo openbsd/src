@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.227 2024/06/04 08:26:11 claudio Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.228 2024/06/14 10:17:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011,2020 Theo de Raadt.
@@ -172,8 +172,8 @@ const struct filterops randomwrite_filtops = {
 /*
  * This function mixes entropy and timing into the entropy input ring.
  */
-void
-enqueue_randomness(u_int val)
+static void
+add_event_data(u_int val)
 {
 	struct rand_event *rep;
 	int e;
@@ -182,6 +182,12 @@ enqueue_randomness(u_int val)
 	rep = &rnd_event_space[e];
 	rep->re_time += cpu_rnd_messybits();
 	rep->re_val += val;
+}
+
+void
+enqueue_randomness(u_int val)
+{
+	add_event_data(val);
 
 	if (rnd_cold) {
 		dequeue_randomness(NULL);
@@ -248,9 +254,6 @@ dequeue_randomness(void *v)
 	u_int32_t buf[2];
 	u_int startp, startc, i;
 
-	if (!rnd_cold)
-		timeout_del(&rnd_timeout);
-
 	/* Some very new damage */
 	startp = rnd_event_prod - QEVCONSUME;
 	for (i = 0; i < QEVCONSUME; i++) {
@@ -304,10 +307,8 @@ extract_entropy(u_int8_t *buf)
 
 	/*
 	 * Modify pool so next hash will produce different results.
-	 * During boot-time enqueue/dequeue stage, avoid recursion.
-	*/
-	if (!rnd_cold)
-		enqueue_randomness(extract_pool[0]);
+	 */
+	add_event_data(extract_pool[0]);
 	dequeue_randomness(NULL);
 
 	/* Wipe data from memory */
