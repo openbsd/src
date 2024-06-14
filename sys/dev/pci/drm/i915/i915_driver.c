@@ -2258,6 +2258,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	int mmio_bar, mmio_size, mmio_type;
 	int ret;
 
+	dev_priv->pa = pa;
 	dev_priv->pc = pa->pa_pc;
 	dev_priv->tag = pa->pa_tag;
 	dev_priv->iot = pa->pa_iot;

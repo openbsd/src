@@ -239,6 +239,7 @@ struct inteldrm_softc {
 	struct i915_dsm dsm;
 
 #ifdef __OpenBSD__
+	struct pci_attach_args *pa;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	struct extent *memex;

@@ -812,6 +812,10 @@ probe_gmdid_display(struct drm_i915_private *i915, u16 *ver, u16 *rel, u16 *step
 	void __iomem *addr;
 	u32 val;
 	int i;
+	int mmio_bar, mmio_size, mmio_type;
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t memsize;
 
 	/* The caller expects to ver, rel and step to be initialized
 	 * here, and there's no good way to check when there was a
@@ -822,9 +826,7 @@ probe_gmdid_display(struct drm_i915_private *i915, u16 *ver, u16 *rel, u16 *step
 	*rel = 0;
 	*step = 0;
 
-	STUB();
-	return &no_display;
-#ifdef notyet
+#ifdef __linux__
 	addr = pci_iomap_range(pdev, 0, i915_mmio_reg_offset(GMD_ID_DISPLAY), sizeof(u32));
 	if (!addr) {
 		drm_err(&i915->drm, "Cannot map MMIO BAR to read display GMD_ID\n");
@@ -833,6 +835,19 @@ probe_gmdid_display(struct drm_i915_private *i915, u16 *ver, u16 *rel, u16 *step
 
 	val = ioread32(addr);
 	pci_iounmap(pdev, addr);
+#else
+	mmio_bar = 0x10;
+	mmio_type = pci_mapreg_type(i915->pc, i915->tag, mmio_bar);
+	if (pci_mapreg_map(i915->pa, mmio_bar, mmio_type, 0,
+	    &bst, &bsh, NULL, &memsize, 0)) {
+		drm_err(&i915->drm, "Cannot map MMIO BAR to read display GMD_ID\n");
+		return &no_display;
+	}
+
+	val = bus_space_read_4(bst, bsh, i915_mmio_reg_offset(GMD_ID_DISPLAY));
+
+	bus_space_unmap(bst, bsh, memsize);
+#endif
 
 	if (val == 0) {
 		drm_dbg_kms(&i915->drm, "Device doesn't have display\n");
@@ -851,7 +866,6 @@ probe_gmdid_display(struct drm_i915_private *i915, u16 *ver, u16 *rel, u16 *step
 	drm_err(&i915->drm, "Unrecognized display IP version %d.%02d; disabling display.\n",
 		*ver, *rel);
 	return &no_display;
-#endif
 }
 
 const struct intel_display_device_info *
