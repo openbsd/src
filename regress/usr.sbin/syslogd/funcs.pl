@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.40 2022/03/25 14:15:10 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.41 2024/06/14 15:12:57 bluhm Exp $
 
 # Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -16,8 +16,6 @@
 
 use strict;
 use warnings;
-no warnings 'experimental::smartmatch';
-use feature 'switch';
 use Errno;
 use List::Util qw(first);
 use Socket;
@@ -152,12 +150,10 @@ sub generate_chars {
 	my $char = '0';
 	for (my $i = 0; $i < $len; $i++) {
 		$msg .= $char;
-		given ($char) {
-			when(/9/)       { $char = 'A' }
-			when(/Z/)       { $char = 'a' }
-			when(/z/)       { $char = '0' }
-			default         { $char++ }
-		}
+		if    ($char =~ /9/) { $char = 'A' }
+		elsif ($char =~ /Z/) { $char = 'a' }
+		elsif ($char =~ /z/) { $char = '0' }
+		else                 { $char++ }
 	}
 	return $msg;
 }

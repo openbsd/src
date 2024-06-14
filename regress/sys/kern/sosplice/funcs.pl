@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.9 2017/11/08 22:14:02 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.10 2024/06/14 15:12:57 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -16,8 +16,6 @@
 
 use strict;
 use warnings;
-no warnings 'experimental::smartmatch';
-use feature 'switch';
 use Errno;
 use Digest::MD5;
 use IO::Socket qw(sockatmark);
@@ -40,13 +38,11 @@ sub write_stream {
 		$ctx->add($char);
 		print $char
 		    or die ref($self), " print failed: $!";
-		given ($char) {
-			when(/9/)	{ $char = 'A' }
-			when(/Z/)	{ $char = 'a' }
-			when(/z/)	{ $char = "\n" }
-			when(/\n/)	{ print STDERR "."; $char = '0' }
-			default		{ $char++ }
-		}
+		if ($char =~ /9/)     { $char = 'A' }
+		elsif ($char =~ /Z/)  { $char = 'a' }
+		elsif ($char =~ /z/)  { $char = "\n" }
+		elsif ($char =~ /\n/) { print STDERR "."; $char = '0' }
+		else                  { $char++ }
 		if ($self->{sleep}) {
 			IO::Handle::flush(\*STDOUT);
 			sleep $self->{sleep};
@@ -73,28 +69,31 @@ sub write_oob {
 	my $char = '0';
 	for (my $i = 1; $i < $len; $i++) {
 		$msg .= $char;
-		given ($char) {
-			when(/9/) {
-				$ctx->add("[$char]");
-				defined(send(STDOUT, $msg, MSG_OOB))
-				    or die ref($self), " send OOB failed: $!";
-				# If tcp urgent data is sent too fast,
-				# it may get overwritten and lost.
-				sleep .1;
-				$msg = "";
-				$char = 'A';
-			}
-			when(/Z/)	{ $ctx->add($char); $char = 'a' }
-			when(/z/)	{ $ctx->add($char); $char = "\n" }
-			when(/\n/) {
-				$ctx->add($char);
-				defined(send(STDOUT, $msg, 0))
-				    or die ref($self), " send failed: $!";
-				print STDERR ".";
-				$msg = "";
-				$char = '0';
-			}
-			default		{ $ctx->add($char); $char++ }
+		if ($char =~ /9/) {
+			$ctx->add("[$char]");
+			defined(send(STDOUT, $msg, MSG_OOB))
+			    or die ref($self), " send OOB failed: $!";
+			# If tcp urgent data is sent too fast,
+			# it may get overwritten and lost.
+			sleep .1;
+			$msg = "";
+			$char = 'A';
+		} elsif ($char =~ /Z/) {
+			$ctx->add($char);
+			$char = 'a';
+		} elsif ($char =~ /z/) {
+			$ctx->add($char);
+			$char = "\n";
+		} elsif ($char =~ /\n/) {
+			$ctx->add($char);
+			defined(send(STDOUT, $msg, 0))
+			    or die ref($self), " send failed: $!";
+			print STDERR ".";
+			$msg = "";
+			$char = '0';
+		} else {
+			$ctx->add($char);
+			$char++;
 		}
 	}
 	if ($len) {
@@ -125,13 +124,11 @@ sub write_datagram {
 		for (my $i = 1; $i < $l; $i++) {
 			$ctx->add($char);
 			$string .= $char;
-			given ($char) {
-				when(/9/)  { $char = 'A' }
-				when(/Z/)  { $char = 'a' }
-				when(/z/)  { $char = "\n" }
-				when(/\n/) { $char = '0' }
-				default	   { $char++ }
-			}
+			if    ($char =~ /9/)  { $char = 'A' }
+			elsif ($char =~ /Z/)  { $char = 'a' }
+			elsif ($char =~ /z/)  { $char = "\n" }
+			elsif ($char =~ /\n/) { $char = '0' }
+			else                  { $char++ }
 		}
 		if ($l) {
 			$ctx->add("\n");
@@ -311,10 +308,12 @@ sub relay_copy {
 	my $self = shift;
 	my $protocol = $self->{protocol} || "tcp";
 
-	given ($protocol) {
-		when (/tcp/)	{ relay_copy_stream($self, @_) }
-		when (/udp/)	{ relay_copy_datagram($self, @_) }
-		default	{ die ref($self), " unknown protocol name: $protocol" }
+	if ($protocol =~ /tcp/) {
+		relay_copy_stream($self, @_);
+	} elsif ($protocol =~ /udp/) {
+		relay_copy_datagram($self, @_);
+	} else {
+		die ref($self), " unknown protocol name: $protocol";
 	}
 }
 
@@ -437,10 +436,12 @@ sub relay_splice {
 	my $self = shift;
 	my $protocol = $self->{protocol} || "tcp";
 
-	given ($protocol) {
-		when (/tcp/)	{ relay_splice_stream($self, @_) }
-		when (/udp/)	{ relay_splice_datagram($self, @_) }
-		default	{ die ref($self), " unknown protocol name: $protocol" }
+	if ($protocol =~ /tcp/) {
+		relay_splice_stream($self, @_);
+	} elsif ($protocol =~ /udp/) {
+		relay_splice_datagram($self, @_);
+	} else {
+		die ref($self), " unknown protocol name: $protocol";
 	}
 }
 
@@ -448,10 +449,12 @@ sub relay {
 	my $self = shift;
 	my $forward = $self->{forward};
 
-	given ($forward) {
-		when (/copy/)	{ relay_copy($self, @_) }
-		when (/splice/)	{ relay_splice($self, @_) }
-		default	{ die ref($self), " unknown forward name: $forward" }
+	if ($forward =~ /copy/) {
+		relay_copy($self, @_);
+	} elsif ($forward =~ /splice/) {
+		relay_splice($self, @_);
+	} else {
+		die ref($self), " unknown forward name: $forward";
 	}
 
 	my $soerror;

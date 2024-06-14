@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.25 2021/12/22 11:50:28 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.26 2024/06/14 15:12:57 bluhm Exp $
 
 # Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -16,8 +16,6 @@
 
 use strict;
 use warnings;
-no warnings 'experimental::smartmatch';
-use feature 'switch';
 use Errno;
 use Digest::MD5;
 use Socket;
@@ -125,13 +123,11 @@ sub write_char {
 		$ctx->add($char);
 		print $char
 		    or die ref($self), " print failed: $!";
-		given ($char) {
-			when(/9/)	{ $char = 'A' }
-			when(/Z/)	{ $char = 'a' }
-			when(/z/)	{ $char = "\n" }
-			when(/\n/)	{ print STDERR "."; $char = '0' }
-			default		{ $char++ }
-		}
+		if    ($char =~ /9/)  { $char = 'A' }
+		elsif ($char =~ /Z/)  { $char = 'a' }
+		elsif ($char =~ /z/)  { $char = "\n" }
+		elsif ($char =~ /\n/) { print STDERR "."; $char = '0' }
+		else                  { $char++ }
 		if ($self->{sleep}) {
 			IO::Handle::flush(\*STDOUT);
 			sleep $self->{sleep};
@@ -521,6 +517,15 @@ sub check_logs {
 	    and die "relayd lost child";
 }
 
+sub array_eq {
+	my ($a, $b) = @_;
+	return if @$a != @$b;
+	for (my $i = 0; $i < @$a; $i++) {
+		return if $$a[$i] ne $$b[$i];
+	}
+	return 1;
+}
+
 sub check_len {
 	my ($c, $r, $s, %args) = @_;
 
@@ -531,7 +536,7 @@ sub check_len {
 	    unless $args{client}{nocheck};
 	@slen = $s->loggrep(qr/^LEN: /) or die "no server len"
 	    unless $args{server}{nocheck};
-	!@clen || !@slen || @clen ~~ @slen
+	!@clen || !@slen || array_eq \@clen, \@slen
 	    or die "client: @clen", "server: @slen", "len mismatch";
 	!defined($args{len}) || !$clen[0] || $clen[0] eq "LEN: $args{len}\n"
 	    or die "client: $clen[0]", "len $args{len} expected";

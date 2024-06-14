@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.9 2021/12/22 15:54:01 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.10 2024/06/14 15:12:57 bluhm Exp $
 
 # Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -16,10 +16,9 @@
 
 use strict;
 use warnings;
-no warnings 'experimental::smartmatch';
-use feature 'switch';
 use Errno;
 use Digest::MD5;
+use POSIX;
 use Socket;
 use Socket6;
 use IO::Socket;
@@ -63,13 +62,11 @@ sub write_char {
 		$ctx->add($char);
 		print $char
 		    or die ref($self), " print failed: $!";
-		given ($char) {
-			when(/9/)	{ $char = 'A' }
-			when(/Z/)	{ $char = 'a' }
-			when(/z/)	{ $char = "\n" }
-			when(/\n/)	{ print STDERR "."; $char = '0' }
-			default		{ $char++ }
-		}
+		if    ($char =~ /9/)  { $char = 'A' }
+		elsif ($char =~ /Z/)  { $char = 'a' }
+		elsif ($char =~ /z/)  { $char = "\n" }
+		elsif ($char =~ /\n/) { print STDERR "."; $char = '0' }
+		else                  { $char++ }
 		if ($self->{sleep}) {
 			IO::Handle::flush(\*STDOUT);
 			sleep $self->{sleep};
@@ -313,7 +310,6 @@ sub read_multipart {
 
 	print STDERR "LEN: ", $len, "\n";
 	print STDERR "MD5: ", $ctx->hexdigest, "\n";
-	
 }
 
 sub errignore {
