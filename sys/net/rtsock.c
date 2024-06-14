@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.373 2023/12/03 10:51:17 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.374 2024/06/14 08:32:22 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -313,10 +313,12 @@ route_rcvd(struct socket *so)
 	 * If we are in a FLUSH state, check if the buffer is
 	 * empty so that we can clear the flag.
 	 */
+
+	mtx_enter(&so->so_rcv.sb_mtx);
 	if (((rop->rop_flags & ROUTECB_FLAG_FLUSH) != 0) &&
-	    ((sbspace(rop->rop_socket, &rop->rop_socket->so_rcv) ==
-	    rop->rop_socket->so_rcv.sb_hiwat)))
+	    ((sbspace(so, &so->so_rcv) == so->so_rcv.sb_hiwat)))
 		rop->rop_flags &= ~ROUTECB_FLAG_FLUSH;
+	mtx_leave(&so->so_rcv.sb_mtx);
 }
 
 int
@@ -478,8 +480,14 @@ rtm_senddesync(struct socket *so)
 	 */
 	desync_mbuf = rtm_msg1(RTM_DESYNC, NULL);
 	if (desync_mbuf != NULL) {
-		if (sbappendaddr(so, &so->so_rcv, &route_src,
-		    desync_mbuf, NULL) != 0) {
+		int ret;
+
+		mtx_enter(&so->so_rcv.sb_mtx);
+		ret = sbappendaddr(so, &so->so_rcv, &route_src,
+		    desync_mbuf, NULL);
+		mtx_leave(&so->so_rcv.sb_mtx);
+
+		if (ret != 0) {
 			rop->rop_flags &= ~ROUTECB_FLAG_DESYNC;
 			sorwakeup(rop->rop_socket);
 			return;
@@ -586,6 +594,7 @@ rtm_sendup(struct socket *so, struct mbuf *m0)
 {
 	struct rtpcb *rop = sotortpcb(so);
 	struct mbuf *m;
+	int send_desync = 0;
 
 	soassertlocked(so);
 
@@ -593,8 +602,13 @@ rtm_sendup(struct socket *so, struct mbuf *m0)
 	if (m == NULL)
 		return (ENOMEM);
 
+	mtx_enter(&so->so_rcv.sb_mtx);
 	if (sbspace(so, &so->so_rcv) < (2 * MSIZE) ||
-	    sbappendaddr(so, &so->so_rcv, &route_src, m, NULL) == 0) {
+	    sbappendaddr(so, &so->so_rcv, &route_src, m, NULL) == 0)
+		send_desync = 1;
+	mtx_leave(&so->so_rcv.sb_mtx);
+
+	if (send_desync) {
 		/* Flag socket as desync'ed and flush required */
 		rop->rop_flags |= ROUTECB_FLAG_DESYNC | ROUTECB_FLAG_FLUSH;
 		rtm_senddesync(so);
