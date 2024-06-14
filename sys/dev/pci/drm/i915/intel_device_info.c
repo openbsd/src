@@ -290,20 +290,25 @@ static void intel_device_info_subplatform_init(struct drm_i915_private *i915)
 
 static void ip_ver_read(struct drm_i915_private *i915, u32 offset, struct intel_ip_version *ip)
 {
-	STUB();
-#ifdef notyet
+#ifdef __linux__
 	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
 	void __iomem *addr;
+#endif
 	u32 val;
 	u8 expected_ver = ip->ver;
 	u8 expected_rel = ip->rel;
 
+#ifdef __linux__
 	addr = pci_iomap_range(pdev, 0, offset, sizeof(u32));
 	if (drm_WARN_ON(&i915->drm, !addr))
 		return;
 
 	val = ioread32(addr);
 	pci_iounmap(pdev, addr);
+#else
+	val = bus_space_read_4(i915->vga_regs->bst, i915->vga_regs->bsh,
+	    offset);
+#endif
 
 	ip->ver = REG_FIELD_GET(GMD_ID_ARCH_MASK, val);
 	ip->rel = REG_FIELD_GET(GMD_ID_RELEASE_MASK, val);
@@ -314,7 +319,6 @@ static void ip_ver_read(struct drm_i915_private *i915, u32 offset, struct intel_
 		drm_dbg(&i915->drm,
 			"Hardware reports GMD IP version %u.%u (REG[0x%x] = 0x%08x) but minimum expected is %u.%u\n",
 			ip->ver, ip->rel, offset, val, expected_ver, expected_rel);
-#endif
 }
 
 /*
