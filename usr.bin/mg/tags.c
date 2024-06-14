@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.27 2023/03/29 19:09:04 op Exp $	*/
+/*	$OpenBSD: tags.c,v 1.28 2024/06/14 13:59:26 op Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -340,7 +340,7 @@ int
 addctag(char *s)
 {
 	struct ctag *t = NULL;
-	char *l;
+	char *l, *c;
 
 	if ((t = malloc(sizeof(struct ctag))) == NULL) {
 		dobeep();
@@ -357,6 +357,15 @@ addctag(char *s)
 	*l++ = '\0';
 	if (*l == '\0')
 		goto cleanup;
+
+	/*
+	 * Newer universal ctags format abuse vi comments in the
+	 * pattern to store extra metadata.  Since we don't support it
+	 * remove it so the pattern is not mangled.
+	 */
+	if ((c = strstr(l, ";\"")) != NULL)
+		*c = '\0';
+
 	t->pat = strip(l, strlen(l));
 	if (RB_INSERT(tagtree, &tags, t) != NULL) {
 		free(t);
