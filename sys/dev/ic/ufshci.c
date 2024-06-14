@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.36 2024/06/14 13:38:15 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.37 2024/06/14 20:52:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -131,7 +131,7 @@ ufshci_intr(void *arg)
 	DPRINTF(3, "%s: status=0x%08x\n", __func__, status);
 
 	if (status == 0)
-		return 0;
+		return handled;
 
 	if (status & UFSHCI_REG_IS_UCCS) {
 		DPRINTF(3, "%s: UCCS interrupt\n", __func__);
@@ -149,11 +149,13 @@ ufshci_intr(void *arg)
 		hcs = UFSHCI_READ_4(sc, UFSHCI_REG_HCS);
 		printf("%s: Auto-Hibernate enter error UPMCRS=0x%x\n",
 		    __func__, UFSHCI_REG_HCS_UPMCRS(hcs));
+		handled = 1;
 	}
 	if (status & UFSHCI_REG_IS_UHXS) {
 		hcs = UFSHCI_READ_4(sc, UFSHCI_REG_HCS);
 		printf("%s: Auto-Hibernate exit error UPMCRS=0x%x\n",
 		    __func__, UFSHCI_REG_HCS_UPMCRS(hcs));
+		handled = 1;
 	}
 
 	if (handled == 0) {
@@ -164,7 +166,7 @@ ufshci_intr(void *arg)
 	/* ACK interrupt */
 	UFSHCI_WRITE_4(sc, UFSHCI_REG_IS, status);
 
-	return 1;
+	return handled;
 }
 
 int
