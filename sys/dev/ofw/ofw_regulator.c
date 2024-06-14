@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.19 2023/04/15 03:19:43 dlg Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.20 2024/06/14 20:00:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -55,6 +55,11 @@ regulator_register(struct regulator_device *rd)
 
 	rd->rd_ramp_delay =
 	    OF_getpropint(rd->rd_node, "regulator-ramp-delay", 0);
+
+	rd->rd_coupled =
+	    OF_getpropint(rd->rd_node, "regulator-coupled-with", 0);
+	rd->rd_max_spread =
+	    OF_getpropint(rd->rd_node, "regulator-coupled-max-spread", 0);
 
 	if (rd->rd_get_voltage && rd->rd_set_voltage) {
 		uint32_t voltage = rd->rd_get_voltage(rd->rd_cookie);
@@ -248,6 +253,10 @@ regulator_set_voltage(uint32_t phandle, uint32_t voltage)
 	/* Check limits. */
 	if (rd && (voltage < rd->rd_volt_min || voltage > rd->rd_volt_max))
 		return EINVAL;
+
+	/* XXX Coupled regulators are unsupported for now. */
+	if (rd && rd->rd_coupled)
+		return ENOTSUP;
 
 	if (rd && rd->rd_set_voltage) {
 		regulator_do_notify(rd->rd_phandle, voltage);
