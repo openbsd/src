@@ -280,7 +280,7 @@ static void ext_pwm_set_backlight(const struct drm_connector_state *conn_state, 
 	struct intel_panel *panel = &to_intel_connector(conn_state->connector)->panel;
 
 	pwm_set_relative_duty_cycle(&panel->backlight.pwm_state, level, 100);
-	pwm_apply_state(panel->backlight.pwm, &panel->backlight.pwm_state);
+	pwm_apply_might_sleep(panel->backlight.pwm, &panel->backlight.pwm_state);
 #endif
 }
 
@@ -436,7 +436,7 @@ static void ext_pwm_disable_backlight(const struct drm_connector_state *old_conn
 	intel_backlight_set_pwm_level(old_conn_state, level);
 
 	panel->backlight.pwm_state.enabled = false;
-	pwm_apply_state(panel->backlight.pwm, &panel->backlight.pwm_state);
+	pwm_apply_might_sleep(panel->backlight.pwm, &panel->backlight.pwm_state);
 #endif
 }
 
@@ -761,7 +761,7 @@ static void ext_pwm_enable_backlight(const struct intel_crtc_state *crtc_state,
 
 	pwm_set_relative_duty_cycle(&panel->backlight.pwm_state, level, 100);
 	panel->backlight.pwm_state.enabled = true;
-	pwm_apply_state(panel->backlight.pwm, &panel->backlight.pwm_state);
+	pwm_apply_might_sleep(panel->backlight.pwm, &panel->backlight.pwm_state);
 #endif
 }
 
