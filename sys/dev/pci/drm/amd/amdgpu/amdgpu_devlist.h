@@ -235,5 +235,8 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x1901 },	/* Radeon 740M */
 
 	/* GC 11.5.0, DCN 3.5.0, APU, linux >= 6.7 */
-	/* GC 11.5.1, DCN 3.5.0, APU, linux >= 6.9 */
+	/* GC 11.5.1, DCN 3.5.1, APU, linux >= 6.9 */
+
+	/* GC 12.0.0, DCN 4.0.1, dGPU, linux ?, amd-staging-drm-next */
+	/* GC 12.0.1, DCN 4.0.1, dGPU, linux ?, amd-staging-drm-next */
 };
