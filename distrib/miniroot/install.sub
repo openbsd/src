@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1264 2024/05/12 19:47:14 kn Exp $
+#	$OpenBSD: install.sub,v 1.1265 2024/06/15 15:05:15 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1664,7 +1664,8 @@ install_files() {
 	_get_sets=$resp
 
 	# Reorder $_get_sets.
-	_get_sets=$(for s in $ALLSETS; do isin "$s" $_get_sets && echo $s; done)
+	_get_sets=$(for s in $ALLSETS; do isin "$s" $_get_sets && echo $s; done;
+	    isin "BUILDINFO" $_files && echo "BUILDINFO")
 
 	# Note which sets didn't verify ok.
 	_unver=$_get_sets
@@ -1807,6 +1808,9 @@ install_files() {
 				file:///mnt/var/sysmerge/${_f%%base*}etc.tgz |
 				tar -zxphf - -C /mnt
 			fi
+			;;
+		*BUILDINFO) $_unpriv ftp -D Installing -Vmo - "$_fsrc" \
+			    > "/mnt/var/db/installed.$_f"
 			;;
 		*)	# Make a backup of the existing ramdisk kernel in the
 			# bsd.rd only download/verify/install case.
