@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.59 2024/06/07 06:26:23 jsg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.60 2024/06/15 18:01:44 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -72,6 +72,8 @@ struct pic softintr_pic = {
 	NULL,
 	NULL,
 };
+
+int intr_suspended;
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -524,7 +526,6 @@ intr_disestablish(struct intrhand *ih)
 int
 intr_handler(struct intrframe *frame, struct intrhand *ih)
 {
-	extern int cpu_suspended;
 	struct cpu_info *ci = curcpu();
 	int floor;
 	int rc;
@@ -536,7 +537,7 @@ intr_handler(struct intrframe *frame, struct intrhand *ih)
 	 * We may not be able to mask MSIs, so block non-wakeup
 	 * interrupts while we're suspended.
 	 */
-	if (cpu_suspended && (ih->ih_flags & IPL_WAKEUP) == 0)
+	if (intr_suspended && (ih->ih_flags & IPL_WAKEUP) == 0)
 		return 0;
 
 #ifdef MULTIPROCESSOR
@@ -723,6 +724,8 @@ intr_enable_wakeup(void)
 		if (pic->pic_hwmask)
 			pic->pic_hwmask(pic, pin);
 	}
+
+	intr_suspended = 1;
 }
 
 void
@@ -731,6 +734,8 @@ intr_disable_wakeup(void)
 	struct cpu_info *ci = curcpu();
 	struct pic *pic;
 	int irq, pin;
+
+	intr_suspended = 0;
 
 	for (irq = 0; irq < MAX_INTR_SOURCES; irq++) {
 		if (ci->ci_isources[irq] == NULL)
