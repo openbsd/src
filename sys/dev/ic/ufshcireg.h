@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.13 2024/05/24 20:34:06 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.14 2024/06/15 18:26:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -25,6 +25,7 @@
 #define UFSHCI_INTR_AGGR_COUNT_MAX	31
 #define UFSHCI_SLOTS_MIN		1
 #define UFSHCI_SLOTS_MAX		32
+#define UFSHCI_TARGETS_MAX		1
 #define UFSHCI_LBS			4096 /* UFS Logical Block Size:
 						For UFS minimum size shall be
 					        4096 bytes */

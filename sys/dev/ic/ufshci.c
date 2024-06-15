@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.37 2024/06/14 20:52:07 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.38 2024/06/15 18:26:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -263,8 +263,8 @@ ufshci_attach(struct ufshci_softc *sc)
 	/* Attach to SCSI layer */
 	saa.saa_adapter = &ufshci_switch;
 	saa.saa_adapter_softc = sc;
-	saa.saa_adapter_buswidth = 2; /* XXX: What's the right value? */
-	saa.saa_luns = 1; /* XXX: Should we use ufshci_utr_cmd_lun() */
+	saa.saa_adapter_buswidth = UFSHCI_TARGETS_MAX + 1;
+	saa.saa_luns = 1;
 	saa.saa_adapter_target = 0;
 	saa.saa_openings = sc->sc_nutrs;
 	saa.saa_pool = &sc->sc_iopool;
