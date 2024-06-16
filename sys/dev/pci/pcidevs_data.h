@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2075 2024/05/21 07:03:55 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2077 2024/06/16 16:20:51 kn Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -36048,6 +36048,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "1221",
 	},
 	{
+	    PCI_VENDOR_ZHAOXIN, PCI_PRODUCT_ZHAOXIN_STORX_AHCI,
+	    "StorX AHCI",
+	},
+	{
 	    PCI_VENDOR_ZIATECH, PCI_PRODUCT_ZIATECH_ZT8905,
 	    "PCI-ST32",
 	},
@@ -37278,6 +37282,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_UMIS,
 	    "Union Memory",
+	},
+	{
+	    PCI_VENDOR_ZHAOXIN,
+	    "Zhaoxin",
 	},
 	{
 	    PCI_VENDOR_BAIKAL,
