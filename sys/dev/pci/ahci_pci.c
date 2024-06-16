@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.17 2024/05/24 06:02:53 jsg Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.18 2024/06/16 18:00:08 kn Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -70,6 +70,8 @@ int			ahci_amd_hudson2_attach(struct ahci_softc *,
 int			ahci_intel_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_samsung_attach(struct ahci_softc *,
+			    struct pci_attach_args *);
+int			ahci_storx_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
@@ -148,7 +150,10 @@ static const struct ahci_device ahci_devices[] = {
 	    NULL,		ahci_samsung_attach },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8251_SATA,
-	  ahci_no_match,	ahci_vt8251_attach }
+	  ahci_no_match,	ahci_vt8251_attach },
+
+	{ PCI_VENDOR_ZHAOXIN,	PCI_PRODUCT_ZHAOXIN_STORX_AHCI,
+	  NULL,			ahci_storx_attach },
 };
 
 int			ahci_pci_match(struct device *, void *, void *);
@@ -279,6 +284,19 @@ ahci_samsung_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 	 * as the XP941 SSD controller.
 	 * https://bugzilla.kernel.org/show_bug.cgi?id=60731
 	 * https://bugzilla.kernel.org/show_bug.cgi?id=89171
+	 */
+	sc->sc_flags |= AHCI_F_NO_MSI;
+
+	return (0);
+}
+
+int
+ahci_storx_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	/*
+	 * Disable MSI with the ZX-100/ZX-200/ZX-E StorX AHCI Controller
+	 * in the Unchartevice 6640MA notebook, otherwise ahci(4) hangs
+	 * with SATA speed set to "Gen3" in BIOS.
 	 */
 	sc->sc_flags |= AHCI_F_NO_MSI;
 
