@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.143 2024/05/14 01:42:07 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.144 2024/06/16 14:01:26 kn Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -727,7 +727,8 @@ identifycpu(struct cpu_info *ci)
 	}
 
 #ifndef SMALL_KERNEL
-	if (CPU_IS_PRIMARY(ci) && (ci->ci_feature_tpmflags & TPM_SENSOR)) {
+	if (CPU_IS_PRIMARY(ci) && (ci->ci_feature_tpmflags & TPM_SENSOR) &&
+	    ci->ci_vendor == CPUV_INTEL) {
 		ci->ci_sensor.type = SENSOR_TEMP;
 		sensor_task_register(ci, intelcore_update_sensor, 5);
 		sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
