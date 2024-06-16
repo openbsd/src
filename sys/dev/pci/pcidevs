@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2076 2024/05/22 16:24:59 martijn Exp $
+$OpenBSD: pcidevs,v 1.2077 2024/06/16 16:20:51 kn Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -346,6 +346,7 @@ vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	SKHYNIX		0x1c5c	SK hynix
 vendor	ADATA		0x1cc1	ADATA Technology
 vendor	UMIS		0x1cc4	Union Memory
+vendor	ZHAOXIN		0x1d17	Zhaoxin
 vendor	BAIKAL		0x1d39	Baikal Electronics
 vendor	AQUANTIA	0x1d6a	Aquantia
 vendor	ROCKCHIP	0x1d87	Rockchip
@@ -10038,6 +10039,9 @@ product YMTC PC005		0x1001	PC005
 
 /* Zeinet products */
 product ZEINET 1221		0x0001	1221
+
+/* Zhaoxin products */
+product ZHAOXIN STORX_AHCI	0x9083	StorX AHCI
 
 /* Ziatech products */
 product ZIATECH ZT8905		0x8905	PCI-ST32
