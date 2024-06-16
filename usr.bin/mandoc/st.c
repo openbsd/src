@@ -1,4 +1,4 @@
-/* $OpenBSD: st.c,v 1.14 2022/01/13 08:39:24 schwarze Exp $ */
+/* $OpenBSD: st.c,v 1.15 2024/06/16 18:33:05 job Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,6 +35,7 @@ LINE("-p1003.1-96",	"ISO/IEC 9945-1:1996 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.1-2001",	"IEEE Std 1003.1-2001 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.1-2004",	"IEEE Std 1003.1-2004 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.1-2008",	"IEEE Std 1003.1-2008 (\\(lqPOSIX.1\\(rq)")
+LINE("-p1003.1-2024",	"IEEE Std 1003.1-2024 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.1",	"IEEE Std 1003.1 (\\(lqPOSIX.1\\(rq)")
 LINE("-p1003.1b",	"IEEE Std 1003.1b (\\(lqPOSIX.1b\\(rq)")
 LINE("-p1003.1b-93",	"IEEE Std 1003.1b-1993 (\\(lqPOSIX.1b\\(rq)")
