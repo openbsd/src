@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.1,v 1.8 2023/11/03 19:16:31 cheloha Exp $
+.\"	$OpenBSD: timeout.1,v 1.9 2024/06/16 18:33:56 job Exp $
 .\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
 .\"
-.Dd $Mdocdate: November 3 2023 $
+.Dd $Mdocdate: June 16 2024 $
 .Dt TIMEOUT 1
 .Os
 .Sh NAME
@@ -118,6 +118,12 @@ returns the exit status of the
 .Sh SEE ALSO
 .Xr kill 1 ,
 .Xr signal 3
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2024
+specification.
 .Sh HISTORY
 The
 .Nm
