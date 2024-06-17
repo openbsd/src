@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_extensions_test.c,v 1.2 2024/05/28 15:42:09 tb Exp $ */
+/*	$OpenBSD: x509_extensions_test.c,v 1.3 2024/06/17 05:04:54 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -27,6 +27,9 @@
 #define ASN1_BOOLEAN_TRUE	0xff
 #define ASN1_BOOLEAN_FALSE	0x00
 
+#define X509V3_EXT_CRITICAL	1
+#define X509V3_EXT_NONCRITICAL	0
+
 static BASIC_CONSTRAINTS *
 create_basic_constraints(int ca)
 {
@@ -38,6 +41,20 @@ create_basic_constraints(int ca)
 	bc->ca = ca ? ASN1_BOOLEAN_TRUE : ASN1_BOOLEAN_FALSE;
 
 	return bc;
+}
+
+static X509_EXTENSION *
+ext_create_basic_constraints(int ca, int critical)
+{
+	X509_EXTENSION *ext;
+	BASIC_CONSTRAINTS *bc;
+
+	bc = create_basic_constraints(ca);
+	if ((ext = X509V3_EXT_i2d(NID_basic_constraints, critical, bc)) == NULL)
+		errx(1, "X509V3_EXT_i2d");
+	BASIC_CONSTRAINTS_free(bc);
+
+	return ext;
 }
 
 static int
@@ -644,12 +661,259 @@ test_x509v3_add1_i2d(void)
 	return failed;
 }
 
+static int
+test_x509v3_get_d2i_null(void)
+{
+	X509_EXTENSION *ext;
+	int crit, idx;
+	int failed = 1;
+
+	if ((ext = X509V3_get_d2i(NULL, NID_undef, NULL, NULL)) != NULL) {
+		fprintf(stderr, "FAIL: %s: expected X509V3_get_d2i with three "
+		    "NULL arguments to return NULL\n", __func__);
+		goto err;
+	}
+
+	idx = -5;
+	if (X509V3_get_d2i(NULL, NID_undef, &crit, &idx) != NULL) {
+		/* Leaks whatever garbage libcrypto decoded. What to do... */
+		fprintf(stderr, "FAIL: %s: expected X509V3_get_d2i NULL stack"
+		    "to return NULL\n", __func__);
+		goto err;
+	}
+
+	if (crit != -1 || idx != -1) {
+		fprintf(stderr, "FAIL: %s: crit: want: %d, got: %d; "
+		    "idx: want: %d, got: %d\n", __func__, -1, crit, -1, idx);
+		goto err;
+	}
+
+	failed = 0;
+
+ err:
+	X509_EXTENSION_free(ext);
+
+	return failed;
+}
+
+static int
+test_x509v3_get_d2i_multiple_basic_constraints(void)
+{
+	STACK_OF(X509_EXTENSION) *exts = NULL;
+	ASN1_BIT_STRING *abs = NULL;
+	BASIC_CONSTRAINTS *bc = NULL;
+	X509_EXTENSION *ext;
+	int crit, idx;
+	int ca, nid;
+	int failed = 1;
+
+	/*
+	 * Create extension stack containing three basic constraints extensions:
+	 * 1. critical CA basic constraints,
+	 * 2. non-critical CA basic constraints,
+	 * 3. critical non-CA basic constraints.
+	 */
+
+	if ((exts = sk_X509_EXTENSION_new_null()) == NULL)
+		errx(1, "sk_X509_EXTENSION_new_null");
+
+	ca = 1;
+	ext = ext_create_basic_constraints(ca, X509V3_EXT_CRITICAL);
+
+	if (sk_X509_EXTENSION_push(exts, ext) <= 0)
+		errx(1, "sk_X509_EXTENSION_push");
+	ext = NULL;
+
+	ca = 1;
+	ext = ext_create_basic_constraints(ca, X509V3_EXT_NONCRITICAL);
+
+	if (sk_X509_EXTENSION_push(exts, ext) <= 0)
+		errx(1, "sk_X509_EXTENSION_push");
+	ext = NULL;
+
+	ca = 0;
+	ext = ext_create_basic_constraints(ca, X509V3_EXT_CRITICAL);
+
+	if (sk_X509_EXTENSION_push(exts, ext) <= 0)
+		errx(1, "sk_X509_EXTENSION_push");
+	ext = NULL;
+
+	/*
+	 * There is no key usage in this stack, so we shouldn't find any.
+	 */
+
+	nid = NID_key_usage;
+	if ((abs = X509V3_get_d2i(exts, nid, &crit, NULL)) != NULL) {
+		fprintf(stderr, "FAIL: %s: found key usage extension\n",
+		    __func__);
+		goto err;
+	}
+	if (crit != -1) {
+		fprintf(stderr, "FAIL: %s: key usage: crit: want %d, got %d\n",
+		    __func__, -1, crit);
+		goto err;
+	}
+
+	/*
+	 * If we pass no idx and look for basic constraints,
+	 * we should fail with crit == -2.
+	 */
+
+	nid = NID_basic_constraints;
+	if ((bc = X509V3_get_d2i(exts, nid, &crit, NULL)) != NULL) {
+		fprintf(stderr, "FAIL: %s (NULL idx): did not expect to find "
+		    "basic constraints\n", __func__);
+		goto err;
+	}
+	if (crit != -2) {
+		fprintf(stderr, "FAIL: %s: basic constraints, no idx: \n"
+		    "crit: want %d, got %d\n", __func__, -2, crit);
+		goto err;
+	}
+
+	/*
+	 * If we pass idx = -1 and look for basic constraints, we should find
+	 * the first one: it is critical at idx = 0, with ca bit set to true.
+	 */
+
+	nid = NID_basic_constraints;
+	idx = -1;
+	if ((bc = X509V3_get_d2i(exts, nid, &crit, &idx)) == NULL) {
+		fprintf(stderr, "FAIL: %s (idx %d): expected to find"
+		    "basic constraints\n", __func__, -1);
+		goto err;
+	}
+	if (crit != 1) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "crit: want %d, got %d\n", __func__, -1, 1, crit);
+		goto err;
+	}
+	if (idx != 0) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "idx: want %d, got %d\n", __func__, -1, 0, idx);
+		goto err;
+	}
+	if (bc->ca != ASN1_BOOLEAN_TRUE) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "cA bit: want %x, got %x\n", __func__, -1,
+		    ASN1_BOOLEAN_TRUE, bc->ca);
+		goto err;
+	}
+	BASIC_CONSTRAINTS_free(bc);
+	bc = NULL;
+
+	/*
+	 * Now pass idx = 0 and look for basic constraints, we should find
+	 * the second one: non-critical at idx = 1, with ca bit set to true.
+	 */
+
+	nid = NID_basic_constraints;
+	idx = 0;
+	if ((bc = X509V3_get_d2i(exts, nid, &crit, &idx)) == NULL) {
+		fprintf(stderr, "FAIL: %s (idx %d): expected to find"
+		    "basic constraints\n", __func__, 0);
+		goto err;
+	}
+	if (crit != 0) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "crit: want %d, got %d\n", __func__, 0, 0, crit);
+		goto err;
+	}
+	if (idx != 1) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "idx: want %d, got %d\n", __func__, 0, 1, idx);
+		goto err;
+	}
+	if (bc->ca != ASN1_BOOLEAN_TRUE) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "cA bit: want %x, got %x\n", __func__, 0,
+		    ASN1_BOOLEAN_TRUE, bc->ca);
+		goto err;
+	}
+	BASIC_CONSTRAINTS_free(bc);
+	bc = NULL;
+
+	/*
+	 * Now pass idx = 1 and look for basic constraints, we should find the
+	 * third one: critical at idx = 2, with ca bit set to false.
+	 */
+
+	nid = NID_basic_constraints;
+	idx = 1;
+	if ((bc = X509V3_get_d2i(exts, nid, &crit, &idx)) == NULL) {
+		fprintf(stderr, "FAIL: %s (idx %d): expected to find"
+		    "basic constraints\n", __func__, 1);
+		goto err;
+	}
+	if (crit != 1) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "crit: want %d, got %d\n", __func__, 1, 0, crit);
+		goto err;
+	}
+	if (idx != 2) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "idx: want %d, got %d\n", __func__, 1, 2, idx);
+		goto err;
+	}
+	if (bc->ca != ASN1_BOOLEAN_FALSE) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "cA bit: want %x, got %x\n", __func__, 1,
+		    ASN1_BOOLEAN_FALSE, bc->ca);
+		goto err;
+	}
+	BASIC_CONSTRAINTS_free(bc);
+	bc = NULL;
+
+	/*
+	 * Finally, pass idx = 2 and we should find no basic constraints.
+	 */
+
+	nid = NID_basic_constraints;
+	idx = 2;
+	if ((bc = X509V3_get_d2i(exts, nid, &crit, &idx)) != NULL) {
+		fprintf(stderr, "FAIL: %s (idx %d): expected to find"
+		    "no basic constraints\n", __func__, 2);
+		goto err;
+	}
+	if (crit != -1) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "crit: want %d, got %d\n", __func__, 2, -1, crit);
+		goto err;
+	}
+	if (idx != -1) {
+		fprintf(stderr, "FAIL: %s: basic constraints (idx %d): "
+		    "idx: want %d, got %d\n", __func__, 2, -1, idx);
+		goto err;
+	}
+
+	failed = 0;
+
+ err:
+	sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+	ASN1_BIT_STRING_free(abs);
+	BASIC_CONSTRAINTS_free(bc);
+
+	return failed;
+}
+
+static int
+test_x509v3_get_d2i(void)
+{
+	int failed = 0;
+
+	failed |= test_x509v3_get_d2i_null();
+	failed |= test_x509v3_get_d2i_multiple_basic_constraints();
+
+	return failed;
+}
+
 int
 main(void)
 {
 	int failed = 0;
 
 	failed |= test_x509v3_add1_i2d();
+	failed |= test_x509v3_get_d2i();
 
 	return failed;
 }
