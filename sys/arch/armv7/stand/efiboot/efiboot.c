@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.40 2022/12/22 15:44:02 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.41 2024/06/17 09:12:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -36,6 +36,7 @@
 
 #include "efidev.h"
 #include "efiboot.h"
+#include "efidt.h"
 #include "fdt.h"
 
 EFI_SYSTEM_TABLE	*ST;
@@ -59,6 +60,7 @@ static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 static EFI_GUID		 gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 static EFI_GUID		 fdt_guid = FDT_TABLE_GUID;
+static EFI_GUID		 dt_fixup_guid = EFI_DT_FIXUP_PROTOCOL_GUID;
 
 #define efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 
@@ -1004,12 +1006,18 @@ efi_fdt(void)
 	return fdt_sys;
 }
 
+#define EXTRA_DT_SPACE	(32 * 1024)
+
 int
 fdt_load_override(char *file)
 {
+	EFI_DT_FIXUP_PROTOCOL *dt_fixup;
 	EFI_PHYSICAL_ADDRESS addr;
 	char path[MAXPATHLEN];
+	EFI_STATUS status;
 	struct stat sb;
+	size_t dt_size;
+	UINTN sz;
 	int fd;
 
 	if (file == NULL && fdt_override) {
@@ -1027,7 +1035,8 @@ fdt_load_override(char *file)
 		printf("cannot open %s\n", path);
 		return 0;
 	}
-	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(sb.st_size),
+	dt_size = sb.st_size + EXTRA_DT_SPACE;
+	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(dt_size),
 	    PAGE_SIZE, EfiLoaderData, &addr) != EFI_SUCCESS) {
 		printf("cannot allocate memory for %s\n", path);
 		return 0;
@@ -1037,9 +1046,18 @@ fdt_load_override(char *file)
 		return 0;
 	}
 
+	status = BS->LocateProtocol(&dt_fixup_guid, NULL, (void **)&dt_fixup);
+	if (status == EFI_SUCCESS) {
+		sz = dt_size;
+		status = dt_fixup->Fixup(dt_fixup, (void *)addr, &sz,
+		    EFI_DT_APPLY_FIXUPS | EFI_DT_RESERVE_MEMORY);
+		if (status != EFI_SUCCESS)
+			panic("DT fixup failed: 0x%lx", status);
+	}
+
 	if (!fdt_init((void *)addr)) {
 		printf("invalid device tree\n");
-		BS->FreePages(addr, EFI_SIZE_TO_PAGES(sb.st_size));
+		BS->FreePages(addr, EFI_SIZE_TO_PAGES(dt_size));
 		return 0;
 	}
 
@@ -1050,7 +1068,7 @@ fdt_load_override(char *file)
 	}
 
 	fdt_override = (void *)addr;
-	fdt_override_size = sb.st_size;
+	fdt_override_size = dt_size;
 	return 0;
 }
 
