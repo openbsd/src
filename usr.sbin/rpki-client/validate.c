@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.75 2024/06/12 10:03:09 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.76 2024/06/17 18:52:50 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -303,6 +303,10 @@ build_chain(const struct auth *a, STACK_OF(X509) **intermediates,
 {
 	*intermediates = NULL;
 	*root = NULL;
+
+	/* XXX - this should be removed, but filemode relies on it. */
+	if (a == NULL)
+		return;
 
 	if ((*intermediates = sk_X509_new_null()) == NULL)
 		err(1, "sk_X509_new_null");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.41 2024/06/12 10:03:09 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.42 2024/06/17 18:52:50 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -295,6 +295,10 @@ struct crl *
 crl_get(struct crl_tree *crlt, const struct auth *a)
 {
 	struct crl	find;
+
+	/* XXX - this should be removed, but filemode relies on it. */
+	if (a == NULL)
+		return NULL;
 
 	find.aki = a->cert->ski;
 	find.mftpath = a->cert->mft;
