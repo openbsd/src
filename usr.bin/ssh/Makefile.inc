@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.93 2024/06/04 15:14:45 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.94 2024/06/17 08:30:29 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -37,7 +37,7 @@ WARNINGS=yes
 
 OPENSSL?=	yes
 ZLIB?=		yes
-DSAKEY?=	yes
+DSAKEY?=	no
 
 .if (${OPENSSL:L} == "yes")
 CFLAGS+=	-DWITH_OPENSSL
