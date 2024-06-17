@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.46 2024/06/12 10:03:09 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.47 2024/06/17 18:54:36 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -227,7 +227,7 @@ parse_load_certchain(char *uri)
 		cert->talid = a->cert->talid;
 		a = auth_insert(uri, &auths, cert, a);
 		uripath_add(uri, cert);
-		stack[i] = NULL;
+		stack[i - 1] = NULL;
 	}
 
 	return a;
