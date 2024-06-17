@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.90 2020/09/14 11:30:25 martijn Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.91 2024/06/17 08:36:56 sashan Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -584,11 +584,14 @@ int
 disable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 {
 	struct host	*h;
-	struct table	*table;
+	struct table	*table, *t;
+	int	 host_byname = 0;
 
 	if (host == NULL) {
-		if (id->id == EMPTY_ID)
+		if (id->id == EMPTY_ID) {
 			host = host_findbyname(env, id->name);
+			host_byname = 1;
+		}
 		else
 			host = host_find(env, id->id);
 		if (host == NULL || host->conf.parentid)
@@ -625,6 +628,16 @@ disable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 		/* Disable all children */
 		SLIST_FOREACH(h, &host->children, child)
 			disable_host(c, id, h);
+
+		/* Disable hosts with same name on all tables */
+		if (host_byname)
+			TAILQ_FOREACH(t, env->sc_tables, entry)
+				TAILQ_FOREACH(h, &t->hosts, entry)
+					if (strcmp(h->conf.name,
+					    host->conf.name) == 0 &&
+					    h->conf.id != host->conf.id &&
+					    !h->conf.parentid)
+						disable_host(c, id, h);
 		pfe_sync();
 	}
 	return (0);
@@ -634,10 +647,15 @@ int
 enable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 {
 	struct host	*h;
+	struct table	*t;
+	int	 host_byname = 0;
+
 
 	if (host == NULL) {
-		if (id->id == EMPTY_ID)
+		if (id->id == EMPTY_ID) {
 			host = host_findbyname(env, id->name);
+			host_byname = 1;
+		}
 		else
 			host = host_find(env, id->id);
 		if (host == NULL || host->conf.parentid)
@@ -666,6 +684,16 @@ enable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 		/* Enable all children */
 		SLIST_FOREACH(h, &host->children, child)
 			enable_host(c, id, h);
+
+		/* Enable hosts with same name on all tables */
+		if (host_byname)
+			TAILQ_FOREACH(t, env->sc_tables, entry)
+				TAILQ_FOREACH(h, &t->hosts, entry)
+					if (strcmp(h->conf.name,
+					    host->conf.name) == 0 &&
+					    h->conf.id != host->conf.id &&
+					    !h->conf.parentid)
+						enable_host(c, id, h);
 		pfe_sync();
 	}
 	return (0);
