@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.22 2024/06/17 05:31:26 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.23 2024/06/17 05:38:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -187,7 +187,8 @@ LCRYPTO_ALIAS(X509V3_EXT_d2i);
  */
 
 void *
-X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
+X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x509_exts, int nid, int *crit,
+    int *idx)
 {
 	X509_EXTENSION *ext;
 	int lastpos = idx == NULL ? -1 : *idx;
@@ -201,11 +202,11 @@ X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 	 * Nothing to do if no extensions, unknown nid, or missing extension.
 	 */
 
-	if (x == NULL)
+	if (x509_exts == NULL)
 		return NULL;
-	if ((lastpos = X509v3_get_ext_by_NID(x, nid, lastpos)) < 0)
+	if ((lastpos = X509v3_get_ext_by_NID(x509_exts, nid, lastpos)) < 0)
 		return NULL;
-	if ((ext = X509v3_get_ext(x, lastpos)) == NULL)
+	if ((ext = X509v3_get_ext(x509_exts, lastpos)) == NULL)
 		return NULL;
 
 	/*
@@ -214,7 +215,7 @@ X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 	 * don't care and set *idx to the index of the first extension found.
 	 */
 
-	if (idx == NULL && X509v3_get_ext_by_NID(x, nid, lastpos) > 0) {
+	if (idx == NULL && X509v3_get_ext_by_NID(x509_exts, nid, lastpos) > 0) {
 		if (crit != NULL)
 			*crit = -2;
 		return NULL;
@@ -236,10 +237,10 @@ X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 LCRYPTO_ALIAS(X509V3_get_d2i);
 
 int
-X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
+X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x509_exts, int nid, void *value,
     int crit, unsigned long flags)
 {
-	STACK_OF(X509_EXTENSION) *exts = *x;
+	STACK_OF(X509_EXTENSION) *exts = *x509_exts;
 	X509_EXTENSION *ext = NULL;
 	X509_EXTENSION *existing;
 	int extidx;
@@ -247,7 +248,7 @@ X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 	int ret = 0;
 
 	/* See if the extension already exists. */
-	extidx = X509v3_get_ext_by_NID(*x, nid, -1);
+	extidx = X509v3_get_ext_by_NID(*x509_exts, nid, -1);
 
 	switch (flags & X509V3_ADD_OP_MASK) {
 	case X509V3_ADD_DEFAULT:
@@ -287,7 +288,8 @@ X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 			errcode = X509V3_R_EXTENSION_NOT_FOUND;
 			goto err;
 		}
-		if ((existing = sk_X509_EXTENSION_delete(*x, extidx)) == NULL) {
+		if ((existing = sk_X509_EXTENSION_delete(*x509_exts,
+		    extidx)) == NULL) {
 			ret = -1;
 			goto err;
 		}
@@ -310,10 +312,10 @@ X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 
 	/* If extension exists, replace it. */
 	if (extidx >= 0) {
-		existing = sk_X509_EXTENSION_value(*x, extidx);
+		existing = sk_X509_EXTENSION_value(*x509_exts, extidx);
 		X509_EXTENSION_free(existing);
 		existing = NULL;
-		if (sk_X509_EXTENSION_set(*x, extidx, ext) == NULL) {
+		if (sk_X509_EXTENSION_set(*x509_exts, extidx, ext) == NULL) {
 			/*
 			 * XXX - Can't happen. If it did happen, |existing| is
 			 * now a freed pointer. Nothing we can do here.
@@ -332,7 +334,7 @@ X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 		goto err;
 	ext = NULL;
 
-	*x = exts;
+	*x509_exts = exts;
 
  done:
 	return 1;
@@ -341,7 +343,7 @@ X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
 	if ((flags & X509V3_ADD_SILENT) == 0 && errcode != 0)
 		X509V3error(errcode);
 
-	if (exts != *x)
+	if (exts != *x509_exts)
 		sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 	X509_EXTENSION_free(ext);
 
