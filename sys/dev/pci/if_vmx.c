@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.87 2024/06/07 08:44:25 jan Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.88 2024/06/17 11:13:43 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1619,6 +1619,8 @@ vmxnet3_start(struct ifqueue *ifq)
 	rgen = ring->gen;
 
 	for (;;) {
+		int hdrlen;
+
 		if (free <= NTXSEGS) {
 			ifq_set_oactive(ifq);
 			break;
@@ -1627,6 +1629,30 @@ vmxnet3_start(struct ifqueue *ifq)
 		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			break;
+
+		/*
+		 * Headers for Ether, IP, TCP including options must lay in
+		 * first mbuf to support TSO.  Usually our stack gets that
+		 * right. To avoid packet parsing here, make a rough estimate
+		 * for simple IPv4.  Cases seen in the wild contain only ether 
+		 * header in separate mbuf.  To support IPv6 with TCP options,
+		 * move as much as possible into first mbuf.  Realloc mbuf
+		 * before bus dma load.
+		 */
+		hdrlen = sizeof(struct ether_header) + sizeof(struct ip) +
+		    sizeof(struct tcphdr);
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) &&
+		    m->m_len < hdrlen && hdrlen <= m->m_pkthdr.len) {
+			hdrlen = MHLEN;
+			/* m_pullup preserves alignment, reserve space */
+			hdrlen -= mtod(m, unsigned long) & (sizeof(long) - 1);
+			if (hdrlen > m->m_pkthdr.len)
+				hdrlen = m->m_pkthdr.len;
+			if ((m = m_pullup(m, hdrlen)) == NULL) {
+				ifq->ifq_errors++;
+				continue;
+			}
+		}
 
 		map = ring->dmap[prod];
 
