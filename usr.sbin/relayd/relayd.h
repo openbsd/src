@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.272 2024/05/18 06:34:46 jsg Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.273 2024/06/17 08:02:57 sashan Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -402,6 +402,7 @@ union hashkey {
 #define F_TLSINSPECT		0x04000000
 #define F_HASHKEY		0x08000000
 #define F_AGENTX_TRAPONLY	0x10000000
+#define F_PFLOG			0x20000000
 
 #define F_BITS								\
 	"\10\01DISABLE\02BACKUP\03USED\04DOWN\05ADD\06DEL\07CHANGED"	\

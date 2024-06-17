@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.65 2023/09/14 09:54:31 yasuoka Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.66 2024/06/17 08:02:57 sashan Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -376,6 +376,11 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		}
 		rio.rule.direction = PF_IN;
 		rio.rule.keep_state = PF_STATE_NORMAL;
+
+		if (rdr->conf.flags & F_PFLOG)
+			rio.rule.log = 1;
+		else
+			rio.rule.log = 0; /* allow change via reload */
 
 		switch (t->conf.fwdmode) {
 		case FWD_NORMAL:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.207 2023/10/29 11:27:11 kn Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.208 2024/06/17 08:02:57 sashan Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2023 $
+.Dd $Mdocdate: June 17 2024 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -517,6 +517,7 @@ At least one entry for the main table is mandatory.
 .Op ip-proto
 .Ic port Ar port
 .Op Ic interface Ar name
+.Op Ic pflog
 .Xc
 Specify an
 .Ar address
@@ -540,6 +541,12 @@ or
 it defaults to
 .Cm tcp .
 The rule can be optionally restricted to a given interface name.
+The optional
+.Ic pflog
+keyword will add
+.Cm log
+to the rule. The logged packets are sent to
+.Xr pflog 4 .
 .It Xo
 .Op Ic match
 .Ic pftag Ar name

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.255 2023/10/29 11:27:11 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.256 2024/06/17 08:02:57 sashan Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -179,14 +179,14 @@ typedef struct {
 %token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS CONTEXT ERRORS STATE CHANGES CHECKS
-%token	WEBSOCKETS
+%token	WEBSOCKETS PFLOG
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	context hostname interface table value path
 %type	<v.number>	http_type loglevel quick
 %type	<v.number>	dstmode flag forwardmode retry
 %type	<v.number>	opttls opttlsclient
-%type	<v.number>	redirect_proto relay_proto match
+%type	<v.number>	redirect_proto relay_proto match pflog
 %type	<v.number>	action ruleaf key_option
 %type	<v.port>	port
 %type	<v.host>	host
@@ -605,7 +605,7 @@ rdroptsl	: forwardmode TO tablespec interface	{
 			$3->conf.rdrid = rdr->conf.id;
 			$3->conf.flags |= F_USED;
 		}
-		| LISTEN ON STRING redirect_proto port interface {
+		| LISTEN ON STRING redirect_proto port interface pflog {
 			if (host($3, &rdr->virts,
 			    SRV_MAX_VIRTS, &$5, $6, $4) <= 0) {
 				yyerror("invalid virtual ip: %s", $3);
@@ -618,6 +618,8 @@ rdroptsl	: forwardmode TO tablespec interface	{
 			if (rdr->conf.port == 0)
 				rdr->conf.port = $5.val[0];
 			tableport = rdr->conf.port;
+			if ($7)
+				rdr->conf.flags |= F_PFLOG;
 		}
 		| DISABLE		{ rdr->conf.flags |= F_DISABLE; }
 		| STICKYADDR		{ rdr->conf.flags |= F_STICKY; }
@@ -649,6 +651,10 @@ rdroptsl	: forwardmode TO tablespec interface	{
 
 match		: /* empty */		{ $$ = 0; }
 		| MATCH			{ $$ = 1; }
+		;
+
+pflog		: /* empty */		{ $$ = 0; }
+		| PFLOG			{ $$ = 1; }
 		;
 
 forwardmode	: FORWARD		{ $$ = FWD_NORMAL; }
@@ -2454,6 +2460,7 @@ lookup(char *s)
 		{ "pass",		PASS },
 		{ "password",		PASSWORD },
 		{ "path",		PATH },
+		{ "pflog",		PFLOG },
 		{ "pftag",		PFTAG },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },
