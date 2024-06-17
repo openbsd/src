@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.21 2024/05/28 15:40:38 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.22 2024/06/17 05:31:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -178,69 +178,60 @@ X509V3_EXT_d2i(X509_EXTENSION *ext)
 }
 LCRYPTO_ALIAS(X509V3_EXT_d2i);
 
-/* Get critical flag and decoded version of extension from a NID.
- * The "idx" variable returns the last found extension and can
- * be used to retrieve multiple extensions of the same NID.
- * However multiple extensions with the same NID is usually
- * due to a badly encoded certificate so if idx is NULL we
- * choke if multiple extensions exist.
- * The "crit" variable is set to the critical value.
- * The return value is the decoded extension or NULL on
- * error. The actual error can have several different causes,
- * the value of *crit reflects the cause:
- * >= 0, extension found but not decoded (reflects critical value).
- * -1 extension not found.
- * -2 extension occurs more than once.
+/*
+ * This API is only safe to call with known nid, crit != NULL and idx == NULL.
+ * On NULL return, crit acts as a failure indicator: crit == -1 means an
+ * extension of type nid was not present, crit != -1 is fatal: crit == -2
+ * means multiple extensions of type nid are present; if crit is 0 or 1, this
+ * implies the extension was found but could not be decoded.
  */
 
 void *
 X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 {
-	int lastpos, i;
-	X509_EXTENSION *ex, *found_ex = NULL;
+	X509_EXTENSION *ext;
+	int lastpos = idx == NULL ? -1 : *idx;
 
-	if (!x) {
-		if (idx)
-			*idx = -1;
-		if (crit)
-			*crit = -1;
+	if (crit != NULL)
+		*crit = -1;
+	if (idx != NULL)
+		*idx = -1;
+
+	/*
+	 * Nothing to do if no extensions, unknown nid, or missing extension.
+	 */
+
+	if (x == NULL)
+		return NULL;
+	if ((lastpos = X509v3_get_ext_by_NID(x, nid, lastpos)) < 0)
+		return NULL;
+	if ((ext = X509v3_get_ext(x, lastpos)) == NULL)
+		return NULL;
+
+	/*
+	 * API madness. Only check for a second extension of type nid if
+	 * idx == NULL. Indicate this by setting *crit to -2. If idx != NULL,
+	 * don't care and set *idx to the index of the first extension found.
+	 */
+
+	if (idx == NULL && X509v3_get_ext_by_NID(x, nid, lastpos) > 0) {
+		if (crit != NULL)
+			*crit = -2;
 		return NULL;
 	}
-	if (idx)
-		lastpos = *idx + 1;
-	else
-		lastpos = 0;
-	if (lastpos < 0)
-		lastpos = 0;
-	for (i = lastpos; i < sk_X509_EXTENSION_num(x); i++) {
-		ex = sk_X509_EXTENSION_value(x, i);
-		if (OBJ_obj2nid(ex->object) == nid) {
-			if (idx) {
-				*idx = i;
-				found_ex = ex;
-				break;
-			} else if (found_ex) {
-				/* Found more than one */
-				if (crit)
-					*crit = -2;
-				return NULL;
-			}
-			found_ex = ex;
-		}
-	}
-	if (found_ex) {
-		/* Found it */
-		if (crit)
-			*crit = X509_EXTENSION_get_critical(found_ex);
-		return X509V3_EXT_d2i(found_ex);
-	}
 
-	/* Extension not found */
-	if (idx)
-		*idx = -1;
-	if (crit)
-		*crit = -1;
-	return NULL;
+	/*
+	 * Another beautiful API detail: *crit will be set to 0 or 1, so if the
+	 * extension fails to decode, we can deduce this from return value NULL
+	 * and crit != -1.
+	 */
+
+	if (crit != NULL)
+		*crit = X509_EXTENSION_get_critical(ext);
+	if (idx != NULL)
+		*idx = lastpos;
+
+	return X509V3_EXT_d2i(ext);
 }
 LCRYPTO_ALIAS(X509V3_get_d2i);
 
