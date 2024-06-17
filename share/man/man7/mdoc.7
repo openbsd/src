@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoc.7,v 1.183 2024/05/20 18:40:53 schwarze Exp $
+.\" $OpenBSD: mdoc.7,v 1.184 2024/06/17 15:35:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 20 2024 $
+.Dd $Mdocdate: June 17 2024 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -2552,7 +2552,7 @@ It is used as the basis for UNIX 03 certification.
 .br
 The second and last Technical Corrigendum.
 .El
-.It Single UNIX Specification version 4
+.It POSIX issues 7 and 8
 .Pp
 .Bl -tag -width "-p1003.1g-2000" -compact
 .It \-p1003.1-2008
@@ -2560,8 +2560,18 @@ The second and last Technical Corrigendum.
 .It \-susv4
 .St -susv4
 .br
-This standard is also called
-X/Open Portability Guide version 7.
+This standard is based on C99.
+It is also called the
+Open Group Standard Base Specifications, Issue 7.
+.El
+.Pp
+.Bl -tag -width "-p1003.1g-2000" -compact
+.It \-p1003.1-2024
+.St -p1003.1-2024
+.br
+This standard is based on C17.
+It is also called the
+Open Group Standard Base Specifications, Issue 8.
 .El
 .It Other standards
 .Pp
