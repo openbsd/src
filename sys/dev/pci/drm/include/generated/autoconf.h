@@ -93,5 +93,5 @@
 #endif
 
 #if defined(SUSPEND) || defined(HIBERNATE)
-#define CONFIG_PM_SLEEP
+#define CONFIG_PM_SLEEP				1
 #endif
