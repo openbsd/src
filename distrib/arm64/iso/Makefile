@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.10 2024/06/09 17:24:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2024/06/18 01:31:48 deraadt Exp $
 
 FS=		install${OSrev}.img
-FSSIZE=		1136400
+FSSIZE=		1236400
 CDROM=		install${OSrev}.iso
 
 MOUNT_POINT=	/mnt
