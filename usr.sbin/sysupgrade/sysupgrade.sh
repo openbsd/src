@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.50 2024/06/08 06:05:40 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.51 2024/06/18 14:57:59 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -161,9 +161,9 @@ if cmp -s /var/db/installed.SHA256 SHA256 && ! $FORCE; then
 	exit 0
 fi
 
-# INSTALL.*, bsd*, *.tgz
+# BUILDINFO INSTALL.*, bsd*, *.tgz
 SETS=$(sed -n -e 's/^SHA256 (\(.*\)) .*/\1/' \
-    -e '/^INSTALL\./p;/^bsd/p;/\.tgz$/p' SHA256)
+    -e '/^BUILDINFO$/p;/^INSTALL\./p;/^bsd/p;/\.tgz$/p' SHA256)
 
 OLD_FILES=$(ls)
 OLD_FILES=$(rmel SHA256 $OLD_FILES)
@@ -185,6 +185,15 @@ done
 if [[ -n ${DL} ]]; then
 	echo Verifying sets.
 	unpriv cksum -qC SHA256 ${DL}
+fi
+
+if [[ -e /var/db/installed.BUILDINFO && -e BUILDINFO ]]; then
+	installed_build_ts=$(cut -f3 -d' ' /var/db/installed.BUILDINFO)
+	build_ts=$(cut -f3 -d' ' BUILDINFO)
+	if (( $build_ts < $installed_build_ts )) && ! $FORCE; then
+		echo "New snapshot is older than installed snapshot. Use -f to force upgrade."
+		exit 1
+	fi
 fi
 
 cat <<__EOT >/auto_upgrade.conf
