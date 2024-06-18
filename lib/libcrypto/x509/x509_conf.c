@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.15 2024/06/18 09:35:09 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.16 2024/06/18 09:41:33 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -291,7 +291,7 @@ v3_generic_extension(const char *name, const char *value, int crit, int gen_type
 	long ext_len = 0;
 	ASN1_OBJECT *obj = NULL;
 	ASN1_OCTET_STRING *oct = NULL;
-	X509_EXTENSION *extension = NULL;
+	X509_EXTENSION *ext = NULL;
 
 	if ((obj = OBJ_txt2obj(name, 0)) == NULL) {
 		X509V3error(X509V3_R_EXTENSION_NAME_ERROR);
@@ -323,13 +323,14 @@ v3_generic_extension(const char *name, const char *value, int crit, int gen_type
 	oct->length = ext_len;
 	ext_der = NULL;
 
-	extension = X509_EXTENSION_create_by_OBJ(NULL, obj, crit, oct);
+	ext = X509_EXTENSION_create_by_OBJ(NULL, obj, crit, oct);
 
  err:
 	ASN1_OBJECT_free(obj);
 	ASN1_OCTET_STRING_free(oct);
 	free(ext_der);
-	return extension;
+
+	return ext;
 }
 
 static unsigned char *
