@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.101 2024/02/13 12:25:11 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.102 2024/06/18 05:08:41 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1985,13 +1985,13 @@ ca_x509_subjectaltname_do(X509 *cert, int mode, const char *logmsg,
 	GENERAL_NAME *entry;
 	ASN1_STRING *cstr;
 	char idstr[IKED_ID_SIZE];
-	int idx, ret, i, type, len;
+	int crit, ret, i, type, len;
 	const uint8_t *data;
 
 	ret = -1;
-	idx = -1;
-	while ((stack = X509_get_ext_d2i(cert, NID_subject_alt_name,
-	    NULL, &idx)) != NULL) {
+	crit = -1;
+	if ((stack = X509_get_ext_d2i(cert, NID_subject_alt_name,
+	    &crit, NULL)) != NULL) {
 		for (i = 0; i < sk_GENERAL_NAME_num(stack); i++) {
 			entry = sk_GENERAL_NAME_value(stack, i);
 			switch (entry->type) {
@@ -2071,12 +2071,14 @@ ca_x509_subjectaltname_do(X509 *cert, int mode, const char *logmsg,
 			}
 		}
 		sk_GENERAL_NAME_pop_free(stack, GENERAL_NAME_free);
-		if (ret != -1)
-			break;
-	}
-	if (idx == -1)
+	} else if (crit == -2)
+		log_info("%s: multiple subjectAltName extensions are invalid",
+		    __func__);
+	else if (crit == -1)
 		log_debug("%s: did not find subjectAltName in certificate",
 		    __func__);
+	else
+		log_debug("%s: failed to decode subjectAltName", __func__);
 	return ret;
 }
 
