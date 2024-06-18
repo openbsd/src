@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_bitst.c,v 1.4 2023/04/21 06:11:56 tb Exp $ */
+/* $OpenBSD: x509_bitst.c,v 1.5 2024/06/18 08:29:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -157,7 +157,7 @@ STACK_OF(CONF_VALUE) *
 i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits,
     STACK_OF(CONF_VALUE) *ret)
 {
-	BIT_STRING_BITNAME *bnam;
+	const BIT_STRING_BITNAME *bnam;
 	STACK_OF(CONF_VALUE) *free_ret = NULL;
 
 	if (ret == NULL) {
@@ -188,7 +188,7 @@ v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	CONF_VALUE *val;
 	ASN1_BIT_STRING *bs;
 	int i;
-	BIT_STRING_BITNAME *bnam;
+	const BIT_STRING_BITNAME *bnam;
 
 	if (!(bs = ASN1_BIT_STRING_new())) {
 		X509V3error(ERR_R_MALLOC_FAILURE);

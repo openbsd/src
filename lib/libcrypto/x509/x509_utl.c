@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.17 2023/05/12 19:02:10 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.18 2024/06/18 08:29:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -210,7 +210,7 @@ LCRYPTO_ALIAS(i2s_ASN1_ENUMERATED);
 char *
 i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *e)
 {
-	BIT_STRING_BITNAME *enam;
+	const BIT_STRING_BITNAME *enam;
 	long strval;
 
 	strval = ASN1_ENUMERATED_get(e);
