@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.34 2023/06/10 07:19:39 op Exp $
+.\"	$OpenBSD: test.1,v 1.35 2024/06/18 16:41:39 schwarze Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)test.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: June 10 2023 $
+.Dd $Mdocdate: June 18 2024 $
 .Dt TEST 1
 .Os
 .Sh NAME
@@ -110,6 +110,8 @@ is set.
 True if
 .Ar file
 exists and is a symbolic link.
+Identical to
+.Fl L .
 .It Fl k Ar file
 True if
 .Ar file
@@ -118,11 +120,8 @@ exists and its sticky bit is set.
 True if
 .Ar file
 exists and is a symbolic link.
-This operator is for compatibility purposes.
-Do not rely on its existence;
-use
-.Fl h
-instead.
+Identical to
+.Fl h .
 .It Fl n Ar string
 True if the length of
 .Ar string

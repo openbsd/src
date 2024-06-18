@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.20 2022/10/11 13:40:38 jsg Exp $	*/
+/*	$OpenBSD: test.c,v 1.21 2024/06/18 16:41:39 schwarze Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct t_op {
 	{"-t",	FILTT,	UNOP},
 	{"-z",	STREZ,	UNOP},
 	{"-n",	STRNZ,	UNOP},
-	{"-h",	FILSYM,	UNOP},		/* for backwards compat */
+	{"-h",	FILSYM,	UNOP},
 	{"-O",	FILUID,	UNOP},
 	{"-G",	FILGID,	UNOP},
 	{"-L",	FILSYM,	UNOP},
