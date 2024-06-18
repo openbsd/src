@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_conf.c,v 1.11 2024/06/18 05:35:30 tb Exp $ */
+/* $OpenBSD: x509_conf.c,v 1.12 2024/06/18 05:37:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -227,8 +227,8 @@ do_ext_i2d(const X509V3_EXT_METHOD *method, int ext_nid, int crit,
 	free(ext_der);
 	ASN1_OCTET_STRING_free(ext_oct);
 	X509V3error(ERR_R_MALLOC_FAILURE);
-	return NULL;
 
+	return NULL;
 }
 
 /* Given an internal structure, nid and critical flag create an extension */
