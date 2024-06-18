@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.53 2024/05/26 10:01:01 jsg Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.54 2024/06/18 09:08:02 jsg Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -808,23 +808,3 @@ wdc_ata_err(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 		ata_bio->flags |= ATA_CORR;
 	return WDC_ATA_NOERR;
 }
-
-#if 0
-int
-wdc_ata_addref(drvp)
-	struct ata_drive_datas *drvp;
-{
-	struct channel_softc *chp = drvp->chnl_softc;
-
-	return (wdc_addref(chp));
-}
-
-void
-wdc_ata_delref(drvp)
-	struct ata_drive_datas *drvp;
-{
-	struct channel_softc *chp = drvp->chnl_softc;
-
-	wdc_delref(chp);
-}
-#endif
